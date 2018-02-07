@@ -3,3 +3,4 @@ syntax: glob
 .idea/*
 target/*
 *.iml
+*.log

@@ -1,9 +1,11 @@
 package org.jetbrains.research.kex.config
 
 import org.apache.commons.cli.*
+import org.slf4j.LoggerFactory
 import org.apache.commons.cli.CommandLine as Cmd
 
 class CmdConfig(args: Array<String>) : Config {
+    private val log = LoggerFactory.getLogger(CmdConfig::class.java)
     private val options = Options()
     private var cmd: Cmd? = null
 
@@ -15,6 +17,7 @@ class CmdConfig(args: Array<String>) : Config {
         try {
             cmd = parser.parse(options, args)
         } catch (e: ParseException) {
+            log.error("Error parsing command line arguments: ${e.message}")
             printHelp()
             System.exit(1)
         }
@@ -38,6 +41,6 @@ class CmdConfig(args: Array<String>) : Config {
 
     fun printHelp() {
         val helpFormatter = HelpFormatter()
-        helpFormatter.printHelp("utility-name", options)
+        helpFormatter.printHelp("kex", options)
     }
 }

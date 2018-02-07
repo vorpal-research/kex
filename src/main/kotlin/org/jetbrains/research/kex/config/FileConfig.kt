@@ -2,7 +2,7 @@ package org.jetbrains.research.kex.config
 
 import java.util.*
 
-class PropertyConfig(configFile: String) : Config {
+class FileConfig(configFile: String) : Config {
     private val properties = Properties()
 
     init {
