@@ -1,7 +1,6 @@
 package org.jetbrains.research.kex.driver
 
 import org.jetbrains.research.kex.config.GlobalConfig
-import org.jetbrains.research.kex.config.PropertyConfig
 import soot.G
 import soot.PackManager
 import soot.Scene

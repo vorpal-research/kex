@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+
+<configuration>
+    <appender name="stdout" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} %-5p [%t][%c] - %m%n</pattern>
+        </encoder>
+    </appender>
+    <appender name="kexFileLogger" class="ch.qos.logback.core.FileAppender">
+        <file>kex.log</file>
+        <encoder>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} %-5p [%t][%c] - %m%n</pattern>
+        </encoder>
+    </appender>
+    <appender name="sootFileLogger" class="ch.qos.logback.core.FileAppender">
+        <file>soot.log</file>
+        <encoder>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} %-5p [%t][%c] - %m%n</pattern>
+        </encoder>
+    </appender>
+
+    <logger name="org.jetbrains.research" level="ALL" additivity="false">
+        <appender-ref ref="stdout"/>
+        <appender-ref ref="kexFileLogger"/>
+    </logger>
+
+    <logger name="soot" level="error" additivity="false">
+        <appender-ref ref="sootFileLogger"/>
+    </logger>
+
+    <root level="debug">
+        <appender-ref ref="stdout"/>
+    </root>
+</configuration>
