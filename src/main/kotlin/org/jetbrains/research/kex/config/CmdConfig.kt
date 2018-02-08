@@ -2,6 +2,8 @@ package org.jetbrains.research.kex.config
 
 import org.apache.commons.cli.*
 import org.slf4j.LoggerFactory
+import java.io.PrintWriter
+import java.io.StringWriter
 import org.apache.commons.cli.CommandLine as Cmd
 
 class CmdConfig(args: Array<String>) : Config {
@@ -41,6 +43,10 @@ class CmdConfig(args: Array<String>) : Config {
 
     fun printHelp() {
         val helpFormatter = HelpFormatter()
-        helpFormatter.printHelp("kex", options)
+        val sw = StringWriter()
+        val pw = PrintWriter(sw)
+        helpFormatter.printHelp(pw, 80, "kex", null, options, 1, 3, null)
+
+        log.debug("$sw")
     }
 }

@@ -24,7 +24,7 @@
         <appender-ref ref="kexFileLogger"/>
     </logger>
 
-    <logger name="soot" level="error" additivity="false">
+    <logger name="soot" level="ALL" additivity="false">
         <appender-ref ref="sootFileLogger"/>
     </logger>
 

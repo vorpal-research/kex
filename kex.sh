@@ -1,4 +1,4 @@
 #!/bin/bash
 
-java -Dlogback.configurationFile=/logback.xml \
-    -jar target/kex-*-jar-with-dependencies.jar $@
+rm *.log
+java -jar target/kex-*-jar-with-dependencies.jar $@
