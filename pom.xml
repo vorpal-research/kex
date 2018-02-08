@@ -20,6 +20,7 @@
         <soot.version>3.0.0-SNAPSHOT</soot.version>
 
         <compiler-plugin.version>3.5.1</compiler-plugin.version>
+        <sout-to-slf4j.version>1.0.2</sout-to-slf4j.version>
     </properties>
 
     <dependencies>
@@ -62,6 +63,11 @@
             <groupId>ch.qos.logback</groupId>
             <artifactId>logback-classic</artifactId>
             <version>${logback.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>uk.org.lidalia</groupId>
+            <artifactId>sysout-over-slf4j</artifactId>
+            <version>${sout-to-slf4j.version}</version>
         </dependency>
     </dependencies>
 
