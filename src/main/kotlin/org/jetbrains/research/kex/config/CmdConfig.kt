@@ -30,11 +30,11 @@ class CmdConfig(args: Array<String>) : Config {
         jarOpt.isRequired = true
         options.addOption(jarOpt)
 
-        val mainOpt = Option("m", "main", true, "main class of project")
+        val mainOpt = Option("p", "package", true, "analyzed package")
         mainOpt.isRequired = true
         options.addOption(mainOpt)
 
-        val propOpt = Option("p", "properties", true, "custom properties file")
+        val propOpt = Option(null, "properties", true, "custom properties file")
         propOpt.isRequired = false
         options.addOption(propOpt)
     }
