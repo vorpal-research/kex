@@ -2,10 +2,7 @@ package org.jetbrains.research.kex.driver
 
 import org.jetbrains.research.kex.config.GlobalConfig
 import org.jetbrains.research.kex.util.loggerFor
-import soot.G
-import soot.PackManager
-import soot.Scene
-import soot.SootClass
+import soot.*
 import soot.options.Options
 
 class SootDriver private constructor() {
@@ -39,8 +36,14 @@ class SootDriver private constructor() {
         log.debug("Soot configured")
     }
 
-    fun getClass(name: String): SootClass = Scene.v().getSootClass(name)
-    fun getClasses(): Collection<SootClass> = Scene.v().classes
+    fun getClass(name: String): SootClass = Scene.v().loadClassAndSupport(name)
+
+    fun getAllClasses(): Collection<SootClass> = Scene.v().classes
+    fun getClasses(): Collection<SootClass> =
+            Scene.v().classes.filter { !it.name.matches(Regex("java.*|kotlin.*|sun.*|jdk.*")) }
+
+    fun getApplicationClasses(): Collection<SootClass> =
+            Scene.v().applicationClasses
 
     private object Holder { val INSTANCE = SootDriver() }
 
