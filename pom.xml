@@ -10,18 +10,17 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <kotlin.version>1.2.21</kotlin.version>
+        <kotlin.version>1.2.30</kotlin.version>
         <junit.version>4.12</junit.version>
         <exec.main>org.jetbrains.research.kex.MainKt</exec.main>
 
         <logback.version>1.2.3</logback.version>
         <slf4j.version>1.7.25</slf4j.version>
         <commons-cli.version>1.4</commons-cli.version>
-        <soot.version>3.0.0-SNAPSHOT</soot.version>
 
         <compiler-plugin.version>3.5.1</compiler-plugin.version>
         <sout-to-slf4j.version>1.0.2</sout-to-slf4j.version>
-        <asm.version>3.3.1</asm.version>
+        <asm.version>5.2</asm.version>
     </properties>
 
     <dependencies>
@@ -35,18 +34,6 @@
             <artifactId>kotlin-test</artifactId>
             <version>${kotlin.version}</version>
             <scope>test</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>ca.mcgill.sable</groupId>
-            <artifactId>soot</artifactId>
-            <version>${soot.version}</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>org.slf4j</groupId>
-                    <artifactId>slf4j-simple</artifactId>
-                </exclusion>
-            </exclusions>
         </dependency>
 
         <dependency>
@@ -71,7 +58,7 @@
             <version>${sout-to-slf4j.version}</version>
         </dependency>
         <dependency>
-            <groupId>asm</groupId>
+            <groupId>org.ow2.asm</groupId>
             <artifactId>asm-all</artifactId>
             <version>${asm.version}</version>
         </dependency>
