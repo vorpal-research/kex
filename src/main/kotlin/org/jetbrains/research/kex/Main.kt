@@ -2,14 +2,14 @@ package org.jetbrains.research.kex
 
 import org.objectweb.asm.ClassReader
 import org.objectweb.asm.ClassWriter
-import org.objectweb.asm.Opcodes
 import org.objectweb.asm.tree.ClassNode
 import org.jetbrains.research.kex.asm.CoverageTransformer
 import org.jetbrains.research.kex.config.CmdConfig
 import org.jetbrains.research.kex.config.GlobalConfig
 import org.jetbrains.research.kex.config.FileConfig
 import org.jetbrains.research.kex.util.loggerFor
-import org.jetbrains.research.kex.util.assert
+import org.objectweb.asm.tree.MethodNode
+import org.objectweb.asm.util.CheckClassAdapter
 import uk.org.lidalia.sysoutslf4j.context.LogLevel
 import uk.org.lidalia.sysoutslf4j.context.SysOutOverSLF4J
 import java.io.FileOutputStream
@@ -39,16 +39,19 @@ fun main(args: Array<String>) {
             if (!realName.contains(packageName)) continue
 
             val url = URL("jar:file:$jarName!/${entry.name}")
-            val cn = ClassNode(Opcodes.ASM4)
+            val cn = ClassNode()
             val cr = ClassReader(url.openStream())
             cr.accept(cn, 0)
 
-            CoverageTransformer(null).transform(cn)
+            cn.methods.forEach { it ->
+                CoverageTransformer().transform(it as MethodNode)
+            }
 
             val cw = ClassWriter(ClassWriter.COMPUTE_FRAMES)
-            cn.accept(cw)
+            val cca = CheckClassAdapter(cw)
+            cn.accept(cca)
 
-            val fos = FileOutputStream("$realName.class")
+            val fos = FileOutputStream("${realName.split('.').last()}.class")
             fos.write(cw.toByteArray())
             fos.close()
         }

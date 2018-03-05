@@ -12,20 +12,10 @@
             <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} %-5p [%t][%c] - %m%n</pattern>
         </encoder>
     </appender>
-    <appender name="sootFileLogger" class="ch.qos.logback.core.FileAppender">
-        <file>soot.log</file>
-        <encoder>
-            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} %-5p [%t][%c] - %m%n</pattern>
-        </encoder>
-    </appender>
 
     <logger name="org.jetbrains.research" level="ALL" additivity="false">
         <appender-ref ref="kexFileLogger"/>
         <appender-ref ref="stdout"/>
-    </logger>
-
-    <logger name="soot" level="ALL" additivity="false">
-        <appender-ref ref="sootFileLogger"/>
     </logger>
 
     <root level="debug">
