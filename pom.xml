@@ -20,7 +20,6 @@
 
         <compiler-plugin.version>3.5.1</compiler-plugin.version>
         <sout-to-slf4j.version>1.0.2</sout-to-slf4j.version>
-        <asm.version>5.2</asm.version>
     </properties>
 
     <dependencies>
@@ -57,21 +56,8 @@
             <artifactId>sysout-over-slf4j</artifactId>
             <version>${sout-to-slf4j.version}</version>
         </dependency>
-        <dependency>
-            <groupId>org.ow2.asm</groupId>
-            <artifactId>asm-all</artifactId>
-            <version>${asm.version}</version>
-        </dependency>
 
     </dependencies>
-
-    <repositories>
-        <repository>
-            <id>soot-snapshot</id>
-            <name>soot snapshots</name>
-            <url>https://soot-build.cs.uni-paderborn.de/nexus/repository/soot-snapshot/</url>
-        </repository>
-    </repositories>
 
     <build>
         <sourceDirectory>${project.basedir}/src/main/kotlin</sourceDirectory>

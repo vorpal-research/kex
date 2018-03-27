@@ -1,6 +1,6 @@
 package org.jetbrains.research.kex.config
 
-class GlobalConfig private constructor() : Config {
+object GlobalConfig : Config {
     private val sources = mutableListOf<Config>()
 
     override fun getStringValue(param: String): String? {
@@ -12,14 +12,8 @@ class GlobalConfig private constructor() : Config {
         return ret
     }
 
-    private object Holder { val instance = GlobalConfig() }
-
-    companion object {
-        val instance: GlobalConfig by lazy { Holder.instance }
-
-        fun initialize(sources: List<Config>) {
-            instance.sources.clear()
-            instance.sources.addAll(sources)
-        }
+    fun initialize(sources: List<Config>) {
+        this.sources.clear()
+        this.sources.addAll(sources)
     }
 }
