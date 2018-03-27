@@ -31,7 +31,7 @@ class CmdConfig(args: Array<String>) : Config, Loggable {
         options.addOption(jarOpt)
 
         val mainOpt = Option("p", "package", true, "analyzed package")
-        mainOpt.isRequired = true
+        mainOpt.isRequired = false
         options.addOption(mainOpt)
 
         val propOpt = Option(null, "properties", true, "custom properties file")
