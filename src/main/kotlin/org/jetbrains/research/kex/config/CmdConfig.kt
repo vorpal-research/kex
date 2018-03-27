@@ -1,13 +1,13 @@
 package org.jetbrains.research.kex.config
 
 import org.apache.commons.cli.*
+import org.jetbrains.research.kex.util.Loggable
 import org.slf4j.LoggerFactory
 import java.io.PrintWriter
 import java.io.StringWriter
 import org.apache.commons.cli.CommandLine as Cmd
 
-class CmdConfig(args: Array<String>) : Config {
-    private val log = LoggerFactory.getLogger(CmdConfig::class.java)
+class CmdConfig(args: Array<String>) : Config, Loggable {
     private val options = Options()
     private var cmd: Cmd? = null
 
