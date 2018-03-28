@@ -8,6 +8,25 @@ import org.jetbrains.research.kfg.visitor.MethodVisitor
 
 
 class JumpInstrumenter(method: Method) : MethodVisitor(method), Loggable {
+    override fun visitReturnInst(inst: ReturnInst) {
+        val bb = inst.parent!!
+
+        val builder = SystemOutWrapper("sout")
+        builder.println("Leaving method $method")
+
+        bb.insertBefore(inst, *builder.insns.toTypedArray())
+    }
+
+    override fun visitThrowInst(inst: ThrowInst) {
+        val bb = inst.parent!!
+
+        val builder = SystemOutWrapper("sout")
+        builder.print("Leaving method $method, throw ")
+        builder.println(inst.getThrowable())
+
+        bb.insertBefore(inst, *builder.insns.toTypedArray())
+    }
+
     override fun visitJumpInst(inst: JumpInst) {
         val bb = inst.parent!!
 
@@ -32,6 +51,24 @@ class JumpInstrumenter(method: Method) : MethodVisitor(method), Loggable {
 
         bb.insertBefore(condition, *sb.insns.toTypedArray())
         bb.insertBefore(condition, *sout.insns.toTypedArray())
+    }
+
+    override fun visitSwitchInst(inst: SwitchInst) {
+        val bb = inst.parent!!
+
+        val builder = SystemOutWrapper("sout")
+        builder.println("Leaving ${bb.name}")
+
+        bb.insertBefore(inst, *builder.insns.toTypedArray())
+    }
+
+    override fun visitTableSwitchInst(inst: TableSwitchInst) {
+        val bb = inst.parent!!
+
+        val builder = SystemOutWrapper("sout")
+        builder.println("Leaving ${bb.name}")
+
+        bb.insertBefore(inst, *builder.insns.toTypedArray())
     }
 
     override fun visit() {
