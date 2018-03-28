@@ -4,10 +4,10 @@ import org.jetbrains.research.kex.config.CmdConfig
 import org.jetbrains.research.kex.config.GlobalConfig
 import org.jetbrains.research.kex.config.FileConfig
 import org.jetbrains.research.kex.util.loggerFor
-import org.jetbrains.research.kex.util.debug
+import org.jetbrains.research.kex.asm.JumpInstrumenter
 import org.jetbrains.research.kfg.CM
 import org.jetbrains.research.kfg.Package
-import org.jetbrains.research.kfg.util.writeClass
+import org.jetbrains.research.kfg.util.writeJar
 import uk.org.lidalia.sysoutslf4j.context.LogLevel
 import uk.org.lidalia.sysoutslf4j.context.SysOutOverSLF4J
 import java.util.jar.JarFile
@@ -30,8 +30,10 @@ fun main(args: Array<String>) {
     CM.parseJar(jar, `package`)
 
     log.debug("Running with jar ${jar.name} and package $`package`")
-    for (it in CM.classes.values) {
-        log.debug(it)
-        writeClass(it, "${it.name}.class")
+    for (it in CM.getConcreteClasses()) {
+        for ((_, method) in it.methods) {
+            if (!method.isAbstract()) JumpInstrumenter(method).visit()
+        }
     }
+    writeJar(jar, `package`, "instrumented")
 }
