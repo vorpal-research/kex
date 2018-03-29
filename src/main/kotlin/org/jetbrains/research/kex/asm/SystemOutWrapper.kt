@@ -4,6 +4,7 @@ import org.jetbrains.research.kfg.CM
 import org.jetbrains.research.kfg.IF
 import org.jetbrains.research.kfg.TF
 import org.jetbrains.research.kfg.VF
+import org.jetbrains.research.kfg.ir.MethodDesc
 import org.jetbrains.research.kfg.ir.value.Value
 import org.jetbrains.research.kfg.ir.value.instruction.CallOpcode
 
@@ -17,24 +18,26 @@ class SystemOutWrapper(name: String) {
     fun print(string: String) = print(VF.getStringConstant(string))
     fun print(value: Value) {
         val printArg = when {
-            value.type.isPrimary() -> value.type.getAsmDesc()
-            value.type == TF.getString() -> value.type.getAsmDesc()
-            else -> TF.getObject().getAsmDesc()
+            value.type.isPrimary() -> value.type
+            value.type == TF.getString() -> value.type
+            else -> TF.getObject()
         }
-        val printMethod = `class`.getMethod("print", "($printArg)${TF.getVoidType().getAsmDesc()}")
-        val append = IF.getCall(CallOpcode.Virtual(), printMethod, printStream, sout, arrayOf(value))
+        val desc = MethodDesc(arrayOf(printArg), TF.getVoidType())
+        val printMethod = `class`.getMethod("print", desc)
+        val append = IF.getCall(CallOpcode.Virtual(), printMethod, printStream, sout, arrayOf(value), false)
         insns.add(append)
     }
 
     fun println(string: String) = println(VF.getStringConstant(string))
     fun println(value: Value) {
         val printArg = when {
-            value.type.isPrimary() -> value.type.getAsmDesc()
-            value.type == TF.getString() -> value.type.getAsmDesc()
-            else -> TF.getObject().getAsmDesc()
+            value.type.isPrimary() -> value.type
+            value.type == TF.getString() -> value.type
+            else -> TF.getObject()
         }
-        val printMethod = `class`.getMethod("println", "($printArg)${TF.getVoidType().getAsmDesc()}")
-        val append = IF.getCall(CallOpcode.Virtual(), printMethod, printStream, sout, arrayOf(value))
+        val desc = MethodDesc(arrayOf(printArg), TF.getVoidType())
+        val printMethod = `class`.getMethod("println", desc)
+        val append = IF.getCall(CallOpcode.Virtual(), printMethod, printStream, sout, arrayOf(value), false)
         insns.add(append)
     }
 }
