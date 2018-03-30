@@ -1,4 +1,7 @@
 #!/bin/bash
 
 rm *.log
-java -jar target/kex-*-jar-with-dependencies.jar $@
+java \
+	-Djava.security.manager \
+	-Djava.security.policy==kex.policy \
+	-jar target/kex-*-jar-with-dependencies.jar $@
