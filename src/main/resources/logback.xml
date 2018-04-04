@@ -8,6 +8,7 @@
     </appender>
     <appender name="kexFileLogger" class="ch.qos.logback.core.FileAppender">
         <file>kex.log</file>
+        <param name="Append" value="false" />
         <encoder>
             <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} %-5p [%t][%c] - %m%n</pattern>
         </encoder>
