@@ -3,7 +3,7 @@ package org.jetbrains.research.kex.driver
 import io.github.benas.randombeans.EnhancedRandomBuilder
 import io.github.benas.randombeans.api.EnhancedRandom
 import io.github.benas.randombeans.api.ObjectGenerationException
-import org.jetbrains.research.kex.UnexpectedException
+import org.jetbrains.research.kex.UnknownTypeException
 import org.jetbrains.research.kex.config.GlobalConfig
 import org.jetbrains.research.kex.util.Loggable
 import java.lang.reflect.ParameterizedType
@@ -36,7 +36,7 @@ class RandomDriver : Loggable {
                 val value = generate(genType)
                 it.set(`object`, value)
             }
-        } else throw UnexpectedException("Unknown type $type")
+        } else throw UnknownTypeException("Unknown type $type")
         return `object`
     }
 
@@ -53,7 +53,7 @@ class RandomDriver : Loggable {
                     is Class<*> -> generateClass(type)
                     is ParameterizedType -> generateParameterized(type)
                     is TypeVariable<*> -> generateTypeVariable(type)
-                    else -> throw UnexpectedException("Unknown type $type")
+                    else -> throw UnknownTypeException("Unknown type $type")
                 }
             } catch (exc: ObjectGenerationException) {
                 log.debug("Failed when trying to generate object: ${exc.message}")
