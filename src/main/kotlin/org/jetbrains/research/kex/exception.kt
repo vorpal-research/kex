@@ -1,3 +1,3 @@
 package org.jetbrains.research.kex
 
-class UnexpectedException(msg: String) : Exception(msg)
+class UnknownTypeException(msg: String) : Exception(msg)
