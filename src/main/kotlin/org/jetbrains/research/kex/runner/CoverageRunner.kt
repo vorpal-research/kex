@@ -1,7 +1,11 @@
 package org.jetbrains.research.kex.runner
 
+import com.github.h0tk3y.betterParse.grammar.parseToEnd
 import org.jetbrains.research.kex.UnknownTypeException
+import org.jetbrains.research.kex.asm.Action
+import org.jetbrains.research.kex.asm.ActionParser
 import org.jetbrains.research.kex.driver.RandomDriver
+import com.github.h0tk3y.betterParse.parser.ParseException
 import org.jetbrains.research.kex.util.Loggable
 import org.jetbrains.research.kex.util.loggerFor
 import org.jetbrains.research.kfg.ir.BasicBlock
@@ -86,10 +90,19 @@ class CoverageRunner(val method: KfgMethod, val loader: ClassLoader) : Loggable 
             val output = Scanner(ByteArrayInputStream(outputStream.toByteArray()))
             val error = ByteArrayInputStream(errorStream.toByteArray())
 
+            val parser = ActionParser()
+            val actions = mutableListOf<Action>()
             while (output.hasNextLine()) {
-                output.nextLine()
+                val line = output.nextLine()
+                if (line.startsWith("instrumented")) {
+                    val new = line.drop(12).trim()
+                    actions.add(parser.parseToEnd(new))
+                }
             }
+        } catch (e: ParseException) {
+            log.debug("Failed to parse $method output: $e")
         } catch (e: Exception) {
+            println(e)
         }
     }
 }
