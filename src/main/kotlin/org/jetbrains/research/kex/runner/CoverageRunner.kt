@@ -6,11 +6,14 @@ import org.jetbrains.research.kex.asm.Action
 import org.jetbrains.research.kex.asm.ActionParser
 import org.jetbrains.research.kex.driver.RandomDriver
 import com.github.h0tk3y.betterParse.parser.ParseException
+import org.apache.commons.lang3.builder.ReflectionToStringBuilder
+import org.apache.commons.lang3.builder.ToStringStyle
 import org.jetbrains.research.kex.util.Loggable
 import org.jetbrains.research.kex.util.loggerFor
 import org.jetbrains.research.kfg.ir.BasicBlock
 import org.jetbrains.research.kfg.ir.Method as KfgMethod
 import org.jetbrains.research.kfg.type.*
+import org.jetbrains.research.kfg.util.viewCfg
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import java.io.PrintStream

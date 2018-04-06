@@ -4,6 +4,7 @@ import org.jetbrains.research.kfg.CM
 import org.jetbrains.research.kfg.IF
 import org.jetbrains.research.kfg.TF
 import org.jetbrains.research.kfg.VF
+import org.jetbrains.research.kfg.ir.Field
 import org.jetbrains.research.kfg.ir.MethodDesc
 import org.jetbrains.research.kfg.ir.value.Value
 import org.jetbrains.research.kfg.ir.value.instruction.CallOpcode
@@ -89,36 +90,102 @@ class SystemOutWrapper(name: String) {
     }
 }
 
-//class ValuePrinter {
-//    val insns = mutableListOf<Instruction>()
-//
-//    fun print(value: Value): Instruction {
-//        val type = value.type
-//        val sb = StringBuilderWrapper("sb")
-//        sb.append("${value.name} == ")
-//        if (type.isPrimary() || type == TF.getString()) {
-//            sb.append(value)
-//        } else if (type is ArrayType) {
-//            sb.append("array ")
-//            val cast = IF.getCast(TF.getObject(), value)
-//            sb.append(cast)
-//            insns.add(cast)
-//        } else if (type is ClassType) {
-//            sb.append("class ")
-//            val cast = IF.getCast(TF.getObject(), value)
-//            insns.add(cast)
-//            sb.append(cast)
-//            sb.append(" {")
-//            type.`class`.fields.filter { it.value.isPublic() }.forEach { name, field ->
-//                val getField = IF.getFieldLoad(value, field)
-//                insns.add(getField)
-//                sb.append("field $name ")
-//                sb.append(getField)
-//            }
-//            sb.append("}")
-//        }
-//        val result = sb.to_string()
-//        insns.addAll(sb.insns)
-//        return result
-//    }
-//}
+class ReflectionWrapper {
+    val classClass = CM.getByName("java/lang/Class")
+    val fieldClass = CM.getByName("java/lang/reflect/Field")
+
+    fun getClass(value: Value): Instruction {
+        val type = value.type as ClassType
+        val desc = MethodDesc(arrayOf(), TF.getRefType(classClass))
+        val getClassMethod = type.`class`.getMethod("getClass", desc)
+        return IF.getCall(CallOpcode.Virtual(), "klass", getClassMethod, type.`class`, value, arrayOf())
+    }
+
+    fun getDeclaredField(`class`: Value, name: String): Instruction {
+        val getFieldMethod = classClass.getMethod("getDeclaredField", MethodDesc(arrayOf(TF.getString()), TF.getRefType(fieldClass)))
+        return IF.getCall(CallOpcode.Virtual(), name, getFieldMethod, classClass, `class`, arrayOf(VF.getStringConstant(name)))
+    }
+
+    fun setAccessible(field: Value): Instruction {
+        val setAccessibleMethod = fieldClass.getMethod("setAccessible", MethodDesc(arrayOf(TF.getBoolType()), TF.getVoidType()))
+        return IF.getCall(CallOpcode.Virtual(), "set", setAccessibleMethod, fieldClass, field, arrayOf(VF.getBoolConstant(true)))
+    }
+
+    fun getField(field: Value, owner: Value): Instruction {
+        val getMethod = fieldClass.getMethod("get", MethodDesc(arrayOf(TF.getObject()), TF.getObject()))
+        return IF.getCall(CallOpcode.Virtual(), "get", getMethod, fieldClass, field, arrayOf(owner))
+    }
+}
+
+class ValuePrinter {
+    val reflection = ReflectionWrapper()
+    val insns = mutableListOf<Instruction>()
+    val system = CM.getByName("java/lang/System")
+
+    private fun getIdentityHashCode(value: Value): Instruction {
+        val hashCodeMethod = system.getMethod("identityHashCode", MethodDesc(arrayOf(TF.getObject()), TF.getIntType()))
+        val result = IF.getCall(CallOpcode.Static(), "hash", hashCodeMethod, system, arrayOf(value))
+        insns.add(result)
+        return result
+    }
+
+    private fun printField(owner: Value, `class`: Value, field: Field): Instruction {
+        val sb = StringBuilderWrapper("sb")
+        val fld = reflection.getDeclaredField(`class`, field.name)
+        insns.add(fld)
+        val setAccessible = reflection.setAccessible(fld)
+        insns.add(setAccessible)
+        val get = reflection.getField(fld, owner)
+        insns.add(get)
+        sb.append("${field.name} == ")
+        val fldPrinter = ValuePrinter()
+        val str = fldPrinter.print(get)
+        insns.addAll(fldPrinter.insns)
+        sb.append(str)
+        sb.append(", ")
+        val res = sb.to_string()
+        insns.addAll(sb.insns)
+        return res
+    }
+
+    private fun printClass(value: Value, type: ClassType): Instruction {
+        val sb = StringBuilderWrapper("sb")
+        sb.append("class ")
+        sb.append(type.`class`.getFullname().replace('/', '.'))
+        sb.append("@")
+        val hash = getIdentityHashCode(value)
+        sb.append(print(hash))
+        sb.append("{")
+        val `class` = reflection.getClass(value)
+        insns.add(`class`)
+        type.`class`.fields.forEach { _, field ->
+            sb.append(printField(value, `class`, field))
+        }
+        sb.append("}")
+        val res = sb.to_string()
+        insns.addAll(sb.insns)
+        return res
+    }
+
+    fun print(value: Value): Instruction {
+        val type = value.type
+        val sb = StringBuilderWrapper("sb")
+        if (type.isPrimary()) {
+            sb.append(value)
+        } else if (type == TF.getString()) {
+            sb.append("\"")
+            sb.append(value)
+            sb.append("\"")
+        } else if (type is ArrayType) {
+            sb.append("array ")
+            val cast = IF.getCast(TF.getObject(), value)
+            sb.append(cast)
+            insns.add(cast)
+        } else if (type is ClassType) {
+            sb.append(printClass(value, type))
+        }
+        val result = sb.to_string()
+        insns.addAll(sb.insns)
+        return result
+    }
+}
