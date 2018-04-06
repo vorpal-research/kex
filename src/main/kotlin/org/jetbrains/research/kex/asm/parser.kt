@@ -55,7 +55,6 @@ class ActionParser : Grammar<Action>() {
     val num by token("\\d+")
     val word by token("\\w+")
     val string by token("\"[\\w\\s\\.@\\d]*\"")
-    val newline by token("(\\r\\n|\\r|\\n)\\s*")
 
     fun getTracker() = trackers.peek() ?: throw UnknownNameException("No slot tracker defined")
 
