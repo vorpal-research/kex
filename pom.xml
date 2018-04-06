@@ -20,6 +20,7 @@
 
         <compiler-plugin.version>3.5.1</compiler-plugin.version>
         <random-beans.version>random-beans-parent-3.7.0</random-beans.version>
+        <better-parse.version>0.3.2</better-parse.version>
     </properties>
 
     <repositories>
@@ -69,6 +70,12 @@
             <groupId>com.github.benas</groupId>
             <artifactId>random-beans</artifactId>
             <version>${random-beans.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.github.h0tk3y</groupId>
+            <artifactId>better-parse</artifactId>
+            <version>${better-parse.version}</version>
         </dependency>
     </dependencies>
 
