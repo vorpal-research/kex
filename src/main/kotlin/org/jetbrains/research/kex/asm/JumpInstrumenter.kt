@@ -13,7 +13,7 @@ class JumpInstrumenter(method: Method) : MethodVisitor(method), Loggable {
         val bb = inst.parent!!
 
         val builder = SystemOutWrapper("sout")
-        builder.println("instrumented ${bb.name} exit;")
+        builder.println("instrumented exit ${bb.name};")
         builder.print("instrumented return ${method.getPrototype().replace('/', '.')}; ")
         val printer = ValuePrinter()
         if (inst.hasReturnValue()) {
@@ -34,10 +34,15 @@ class JumpInstrumenter(method: Method) : MethodVisitor(method), Loggable {
         val bb = inst.parent!!
 
         val builder = SystemOutWrapper("sout")
-        builder.print("instrumented ${method.getPrototype().replace('/', '.')} throw ")
-        builder.println("${inst.getThrowable().name}")
+        builder.print("instrumented throw ${method.getPrototype().replace('/', '.')}; ")
+        val printer = ValuePrinter()
+        builder.print("${inst.getThrowable().name} == ")
+        val str = printer.print(inst.getThrowable())
+        builder.println(str)
 
+        insertedInsts.addAll(printer.insns)
         insertedInsts.addAll(builder.insns)
+        bb.insertBefore(inst, *printer.insns.toTypedArray())
         bb.insertBefore(inst, *builder.insns.toTypedArray())
     }
 
@@ -45,7 +50,7 @@ class JumpInstrumenter(method: Method) : MethodVisitor(method), Loggable {
         val bb = inst.parent!!
 
         val builder = SystemOutWrapper("sout")
-        builder.println("instrumented ${bb.name} exit;")
+        builder.println("instrumented exit ${bb.name};")
 
         insertedInsts.addAll(builder.insns)
         bb.insertBefore(inst, *builder.insns.toTypedArray())
@@ -57,7 +62,7 @@ class JumpInstrumenter(method: Method) : MethodVisitor(method), Loggable {
 
         val sout = SystemOutWrapper("sout")
         val printer = ValuePrinter()
-        sout.print("instrumented ${bb.name} branch: ${condition.getLhv().name} == ")
+        sout.print("instrumented branch ${bb.name}; ${condition.getLhv().name} == ")
         val lhv = printer.print(condition.getLhv())
         val rhv = printer.print(condition.getRhv())
         sout.print(lhv)
@@ -74,7 +79,7 @@ class JumpInstrumenter(method: Method) : MethodVisitor(method), Loggable {
         val bb = inst.parent!!
 
         val builder = SystemOutWrapper("sout")
-        builder.print("instrumented ${bb.name} switch: ${inst.getKey().name} == ")
+        builder.print("instrumented switch ${bb.name}; ${inst.getKey().name} == ")
         val printer = ValuePrinter()
         val str = printer.print(inst.getKey())
         builder.println(str)
@@ -89,7 +94,7 @@ class JumpInstrumenter(method: Method) : MethodVisitor(method), Loggable {
         val bb = inst.parent!!
 
         val builder = SystemOutWrapper("sout")
-        builder.print("instrumented ${bb.name} tableswitch: ${inst.getIndex().name} == ")
+        builder.print("instrumented tableswitch ${bb.name}; ${inst.getIndex().name} == ")
         val printer = ValuePrinter()
         val str = printer.print(inst.getIndex())
         builder.println(str)
@@ -104,7 +109,7 @@ class JumpInstrumenter(method: Method) : MethodVisitor(method), Loggable {
         super.visitBasicBlock(bb)
 
         val builder = SystemOutWrapper("sout")
-        builder.println("instrumented ${bb.name} enter;")
+        builder.println("instrumented enter ${bb.name};")
 
         insertedInsts.addAll(builder.insns)
         bb.insertBefore(bb.front(), *builder.insns.toTypedArray())
