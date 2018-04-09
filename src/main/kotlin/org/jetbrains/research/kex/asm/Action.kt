@@ -15,31 +15,146 @@ import org.jetbrains.research.kfg.ir.value.SlotTracker
 import org.jetbrains.research.kfg.ir.value.Value
 import org.jetbrains.research.kfg.type.ClassType
 import org.jetbrains.research.kfg.type.parseStringToType
+import org.jetbrains.research.kfg.util.defaultHashCode
 import java.util.*
 
 interface ActionValue
-object NullValue : ActionValue
-class KfgValue(val value: Value) : ActionValue
-class BooleanValue(val value: Boolean) : ActionValue
-class LongValue(val value: Long) : ActionValue
-class DoubleValue(val value: Double) : ActionValue
-class StringValue(val value: String) : ActionValue
-class ObjectValue(val type: Class, val identifier: Int, val fields: Map<String, ActionValue>) : ActionValue
-class Equation(val lhv: ActionValue, val rhv: ActionValue)
+object NullValue : ActionValue {
+    override fun toString() = "null"
+}
+
+class KfgValue(val value: Value) : ActionValue {
+    override fun hashCode() = defaultHashCode(value)
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (this.javaClass != other?.javaClass) return false
+        other as KfgValue
+        return this.value == other.value
+    }
+
+    override fun toString() = value.toString()
+}
+
+class BooleanValue(val value: Boolean) : ActionValue {
+    override fun hashCode() = defaultHashCode(value)
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (this.javaClass != other?.javaClass) return false
+        other as BooleanValue
+        return this.value == other.value
+    }
+
+    override fun toString() = value.toString()
+}
+
+class LongValue(val value: Long) : ActionValue {
+    override fun hashCode() = defaultHashCode(value)
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (this.javaClass != other?.javaClass) return false
+        other as LongValue
+        return this.value == other.value
+    }
+
+    override fun toString() = value.toString()
+}
+
+class DoubleValue(val value: Double) : ActionValue {
+    override fun hashCode() = defaultHashCode(value)
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (this.javaClass != other?.javaClass) return false
+        other as DoubleValue
+        return this.value == other.value
+    }
+
+    override fun toString() = value.toString()
+}
+
+class StringValue(val value: String) : ActionValue {
+    override fun hashCode() = defaultHashCode(value)
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (this.javaClass != other?.javaClass) return false
+        other as StringValue
+        return this.value == other.value
+    }
+
+    override fun toString() = value
+}
+
+class ObjectValue(val type: Class, val identifier: Int, val fields: Map<String, ActionValue>) : ActionValue {
+    override fun hashCode() = identifier
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (this.javaClass != other?.javaClass) return false
+        other as ObjectValue
+        return this.identifier == other.identifier
+    }
+
+    override fun toString(): String {
+        val sb = StringBuilder()
+        sb.append("$type@$identifier {")
+        val fieldNames = fields.keys
+        val fieldValues = fields.values.toList()
+        fieldNames.withIndex().take(1).forEach { (indx, name) ->
+            sb.append("$name = ")
+            sb.append(fieldValues[indx].toString())
+        }
+        fieldNames.withIndex().drop(1).forEach { (indx, name) ->
+            sb.append(", $name = ")
+            sb.append(fieldValues[indx].toString())
+        }
+        sb.append("}")
+        return sb.toString()
+    }
+}
+
+class Equation(val lhv: ActionValue, val rhv: ActionValue) {
+    override fun toString() = "$lhv == $rhv"
+}
 
 interface Action
 abstract class MethodAction(val method: Method) : Action
 abstract class BlockAction(val bb: BasicBlock) : Action
 
-class MethodEntry(method: Method) : MethodAction(method)
-class MethodReturn(method: Method, val `return`: Equation?) : MethodAction(method)
-class MethodThrow(method: Method, val throwable: KfgValue) : MethodAction(method)
+class MethodEntry(method: Method) : MethodAction(method) {
+    override fun toString() = "enter $method;"
+}
 
-class BlockEntry(bb: BasicBlock) : BlockAction(bb)
-class BlockJump(bb: BasicBlock) : BlockAction(bb)
-class BlockBranch(bb: BasicBlock, val conditions: List<Equation>) : BlockAction(bb)
-class BlockSwitch(bb: BasicBlock, val key: Equation) : BlockAction(bb)
-class BlockTableSwitch(bb: BasicBlock, val key: Equation) : BlockAction(bb)
+class MethodReturn(method: Method, val `return`: Equation?) : MethodAction(method) {
+    override fun toString() = "return $method; ${`return` ?: "void"}"
+}
+
+class MethodThrow(method: Method, val throwable: Equation) : MethodAction(method) {
+    override fun toString() = "throw $method; $throwable"
+}
+
+class BlockEntry(bb: BasicBlock) : BlockAction(bb) {
+    override fun toString() = "enter ${bb.name};"
+}
+
+class BlockJump(bb: BasicBlock) : BlockAction(bb) {
+    override fun toString() = "exit ${bb.name};"
+}
+
+class BlockBranch(bb: BasicBlock, val conditions: List<Equation>) : BlockAction(bb) {
+    override fun toString(): String {
+        val sb = StringBuilder()
+        sb.append("branch ${bb.name}; ")
+        conditions.take(1).forEach { sb.append(it.toString()) }
+        conditions.drop(1).forEach { sb.append("; $it") }
+        return sb.toString()
+    }
+}
+
+class BlockSwitch(bb: BasicBlock, val key: Equation) : BlockAction(bb) {
+    override fun toString() = "exit ${bb.name}; $key"
+}
+
+class BlockTableSwitch(bb: BasicBlock, val key: Equation) : BlockAction(bb) {
+    override fun toString() = "exit ${bb.name}; $key"
+}
 
 class ActionParser : Grammar<Action>() {
     var trackers = Stack<SlotTracker>()
@@ -138,7 +253,9 @@ class ActionParser : Grammar<Action>() {
     val nullValueParser by `null` use { NullValue }
     val booleanValueParser by (`true` or `false`) use { BooleanValue(text.toBoolean()) }
     val longValueParser by (optional(minus) and num) use { LongValue(((t1?.text ?: "") + t2.text).toLong()) }
-    val doubleValueParser by (optional(minus) and doubleNum) use { DoubleValue(((t1?.text ?: "") + t2.text).toDouble()) }
+    val doubleValueParser by (optional(minus) and doubleNum) use {
+        DoubleValue(((t1?.text ?: "") + t2.text).toDouble())
+    }
     val stringValueParser by string use { StringValue(text.drop(1).dropLast(1)) }
     val objectValueParser: Parser<ActionValue> by (typeName and -at and num and
             -openCurlyBrace and
@@ -172,13 +289,13 @@ class ActionParser : Grammar<Action>() {
         ret
     }
 
-    val methodThrowParser by (methodName and -space and -`throw` and -space and kfgValueParser) use { MethodThrow(t1, t2) }
+    val methodThrowParser by (-`throw` and -space and methodName and -space and equationParser) use { MethodThrow(t1, t2) }
 
-    val blockEntryParser by (blockName and -space and -enter and -semicolon) use { BlockEntry(this) }
-    val blockJumpParser by (blockName and -space and -exit and -semicolon) use { BlockJump(this) }
-    val blockBranchParser by (blockName and -space and -branch and -colonAndSpace and equationList) use { BlockBranch(t1, t2) }
-    val blockSwitchParser by (blockName and -space and -switch and -colonAndSpace and equationParser) use { BlockSwitch(t1, t2) }
-    val blockTableSwitchParser by (blockName and -space and -tableswitch and -colonAndSpace and equationParser) use { BlockTableSwitch(t1, t2) }
+    val blockEntryParser by (-enter and -space and blockName and -semicolon) use { BlockEntry(this) }
+    val blockJumpParser by (-exit and -space and blockName and -semicolon) use { BlockJump(this) }
+    val blockBranchParser by (-branch and -space and blockName and -semicolonAndSpace and equationList) use { BlockBranch(t1, t2) }
+    val blockSwitchParser by (-switch and -space and blockName and -semicolonAndSpace and equationParser) use { BlockSwitch(t1, t2) }
+    val blockTableSwitchParser by (-tableswitch and -space and blockName and -semicolonAndSpace and equationParser) use { BlockTableSwitch(t1, t2) }
 
     override val rootParser by (methodEntryParser or methodReturnParser or methodThrowParser or
             blockEntryParser or blockJumpParser or blockBranchParser or blockSwitchParser or blockTableSwitchParser)
