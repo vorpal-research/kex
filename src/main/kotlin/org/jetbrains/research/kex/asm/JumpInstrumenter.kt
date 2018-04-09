@@ -13,13 +13,15 @@ class JumpInstrumenter(method: Method) : MethodVisitor(method), Loggable {
         val bb = inst.parent!!
 
         val builder = SystemOutWrapper("sout")
-        builder.println("instrumented ${bb.name} exit")
-        builder.print("instrumented ${method.getPrototype().replace('/', '.')} exit")
+        builder.println("instrumented ${bb.name} exit;")
+        builder.print("instrumented return ${method.getPrototype().replace('/', '.')}; ")
         val printer = ValuePrinter()
         if (inst.hasReturnValue()) {
-            builder.print(": ${inst.getReturnValue().name} == ")
+            builder.print("${inst.getReturnValue().name} == ")
             val str = printer.print(inst.getReturnValue())
             builder.println(str)
+        } else {
+            builder.println("void")
         }
 
         insertedInsts.addAll(printer.insns)
@@ -43,7 +45,7 @@ class JumpInstrumenter(method: Method) : MethodVisitor(method), Loggable {
         val bb = inst.parent!!
 
         val builder = SystemOutWrapper("sout")
-        builder.println("instrumented ${bb.name} exit")
+        builder.println("instrumented ${bb.name} exit;")
 
         insertedInsts.addAll(builder.insns)
         bb.insertBefore(inst, *builder.insns.toTypedArray())
@@ -102,7 +104,7 @@ class JumpInstrumenter(method: Method) : MethodVisitor(method), Loggable {
         super.visitBasicBlock(bb)
 
         val builder = SystemOutWrapper("sout")
-        builder.println("instrumented ${bb.name} enter")
+        builder.println("instrumented ${bb.name} enter;")
 
         insertedInsts.addAll(builder.insns)
         bb.insertBefore(bb.front(), *builder.insns.toTypedArray())
@@ -113,7 +115,7 @@ class JumpInstrumenter(method: Method) : MethodVisitor(method), Loggable {
         val bb = method.getEntry()
 
         val builder = SystemOutWrapper("sout")
-        builder.println("instrumented ${method.getPrototype().replace('/', '.')} enter")
+        builder.println("instrumented enter ${method.getPrototype().replace('/', '.')};")
 
         insertedInsts.addAll(builder.insns)
         bb.insertBefore(bb.front(), *builder.insns.toTypedArray())
