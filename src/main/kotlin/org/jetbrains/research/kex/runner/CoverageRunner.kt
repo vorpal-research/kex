@@ -6,14 +6,12 @@ import org.jetbrains.research.kex.asm.Action
 import org.jetbrains.research.kex.asm.ActionParser
 import org.jetbrains.research.kex.driver.RandomDriver
 import com.github.h0tk3y.betterParse.parser.ParseException
-import org.apache.commons.lang3.builder.ReflectionToStringBuilder
-import org.apache.commons.lang3.builder.ToStringStyle
 import org.jetbrains.research.kex.util.Loggable
+import org.jetbrains.research.kex.util.error
 import org.jetbrains.research.kex.util.loggerFor
 import org.jetbrains.research.kfg.ir.BasicBlock
 import org.jetbrains.research.kfg.ir.Method as KfgMethod
 import org.jetbrains.research.kfg.type.*
-import org.jetbrains.research.kfg.util.viewCfg
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import java.io.PrintStream
@@ -87,25 +85,31 @@ class CoverageRunner(val method: KfgMethod, val loader: ClassLoader) : Loggable 
         val instance = if (method.isStatic()) null else random.generate(javaClass)
         val args = javaMethod.genericParameterTypes.map { random.generate(it) }.toTypedArray()
 
-        try {
-            val (outputStream, errorStream) = invoke(javaMethod, instance, args)
+        val (outputStream, errorStream) = try {
+            invoke(javaMethod, instance, args)
+        } catch (e: Exception) {
+            log.error("Failed when running method $method")
+            log.error("Exception: $e")
+            ByteArrayOutputStream() to ByteArrayOutputStream()
+        }
 
-            val output = Scanner(ByteArrayInputStream(outputStream.toByteArray()))
-            val error = ByteArrayInputStream(errorStream.toByteArray())
+        val output = Scanner(ByteArrayInputStream(outputStream.toByteArray()))
+        val error = ByteArrayInputStream(errorStream.toByteArray())
 
-            val parser = ActionParser()
-            val actions = mutableListOf<Action>()
-            while (output.hasNextLine()) {
-                val line = output.nextLine()
-                if (line.startsWith("instrumented")) {
-                    val new = line.drop(12).trim()
-                    actions.add(parser.parseToEnd(new))
+        val parser = ActionParser()
+        val actions = mutableListOf<Action>()
+        while (output.hasNextLine()) {
+            val line = output.nextLine()
+            if (line.startsWith("instrumented")) {
+                try {
+                    val trimmed = line.drop(12).trim()
+                    actions.add(parser.parseToEnd(trimmed))
+                } catch (e: ParseException) {
+                    log.error("Failed to parse $method output: $e")
+                    log.error("Failed line: $line")
+                    return
                 }
             }
-        } catch (e: ParseException) {
-            log.debug("Failed to parse $method output: $e")
-        } catch (e: Exception) {
-            println(e)
         }
     }
 }

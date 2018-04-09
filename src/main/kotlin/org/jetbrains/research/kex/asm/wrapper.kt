@@ -142,7 +142,6 @@ class ValuePrinter {
         val str = fldPrinter.print(get)
         insns.addAll(fldPrinter.insns)
         sb.append(str)
-        sb.append(", ")
         val res = sb.to_string()
         insns.addAll(sb.insns)
         return res
@@ -150,7 +149,6 @@ class ValuePrinter {
 
     private fun printClass(value: Value, type: ClassType): Instruction {
         val sb = StringBuilderWrapper("sb")
-        sb.append("class ")
         sb.append(type.`class`.getFullname().replace('/', '.'))
         sb.append("@")
         val hash = getIdentityHashCode(value)
@@ -158,8 +156,13 @@ class ValuePrinter {
         sb.append("{")
         val `class` = reflection.getClass(value)
         insns.add(`class`)
-        type.`class`.fields.forEach { _, field ->
-            sb.append(printField(value, `class`, field))
+        val fields = type.`class`.fields.values
+        fields.take(1).forEach {
+            sb.append(printField(value, `class`, it))
+        }
+        fields.drop(1).forEach {
+            sb.append(", ")
+            sb.append(printField(value, `class`, it))
         }
         sb.append("}")
         val res = sb.to_string()
