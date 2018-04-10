@@ -4,7 +4,7 @@ import org.jetbrains.research.kex.config.CmdConfig
 import org.jetbrains.research.kex.config.GlobalConfig
 import org.jetbrains.research.kex.config.FileConfig
 import org.jetbrains.research.kex.util.loggerFor
-import org.jetbrains.research.kex.asm.JumpInstrumenter
+import org.jetbrains.research.kex.asm.TraceInstrumenter
 import org.jetbrains.research.kex.runner.CoverageRunner
 import org.jetbrains.research.kfg.CM
 import org.jetbrains.research.kfg.Package
@@ -37,7 +37,7 @@ fun main(args: Array<String>) {
     for (`class` in CM.getConcreteClasses()) {
         for ((_, method) in `class`.methods) {
             if (!method.isAbstract() && method.name != "<init>") {
-                val instrumenter = JumpInstrumenter(method)
+                val instrumenter = TraceInstrumenter(method)
                 instrumenter.visit()
                 writeClass(`class`, "${target.canonicalPath}/${`class`.getFullname()}.class")
                 val loader = URLClassLoader(arrayOf(target.toURI().toURL()))

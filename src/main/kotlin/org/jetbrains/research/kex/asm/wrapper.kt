@@ -9,6 +9,7 @@ import org.jetbrains.research.kfg.ir.MethodDesc
 import org.jetbrains.research.kfg.ir.value.Value
 import org.jetbrains.research.kfg.ir.value.instruction.CallOpcode
 import org.jetbrains.research.kfg.ir.value.instruction.Instruction
+import org.jetbrains.research.kfg.ir.value.instruction.UnaryOpcode
 import org.jetbrains.research.kfg.type.ArrayType
 import org.jetbrains.research.kfg.type.ClassType
 import org.jetbrains.research.kfg.type.NullType
@@ -170,6 +171,24 @@ class ValuePrinter {
         return res
     }
 
+    private fun printArray(value: Value, type: ArrayType): Instruction {
+        val sb = StringBuilderWrapper("sb")
+        sb.append("array")
+        sb.append("@")
+        val hash = getIdentityHashCode(value)
+        sb.append(print(hash))
+        sb.append("{")
+        sb.append(type.toString().replace('/', '.'))
+        sb.append(", ")
+        val length = IF.getUnary(UnaryOpcode.LENGTH, value)
+        insns.add(length)
+        sb.append(print(length))
+        sb.append("}")
+        val res = sb.to_string()
+        insns.addAll(sb.insns)
+        return res
+    }
+
     fun print(value: Value): Instruction {
         val type = value.type
         val sb = StringBuilderWrapper("sb")
@@ -180,10 +199,7 @@ class ValuePrinter {
             sb.append(value)
             sb.append("\"")
         } else if (type is ArrayType) {
-            sb.append("array ")
-            val cast = IF.getCast(TF.getObject(), value)
-            sb.append(cast)
-            insns.add(cast)
+            sb.append(printArray(value, type))
         } else if (type is ClassType) {
             sb.append(printClass(value, type))
         }
