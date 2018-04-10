@@ -1,4 +1,4 @@
-package org.jetbrains.research.kex.asm
+package org.jetbrains.research.kex.runner
 
 import com.github.h0tk3y.betterParse.combinators.*
 import com.github.h0tk3y.betterParse.grammar.Grammar
@@ -14,6 +14,7 @@ import org.jetbrains.research.kfg.ir.MethodDesc
 import org.jetbrains.research.kfg.ir.value.SlotTracker
 import org.jetbrains.research.kfg.ir.value.Value
 import org.jetbrains.research.kfg.type.ClassType
+import org.jetbrains.research.kfg.type.Type
 import org.jetbrains.research.kfg.type.parseStringToType
 import org.jetbrains.research.kfg.util.defaultHashCode
 import java.util.*
@@ -83,6 +84,18 @@ class StringValue(val value: String) : ActionValue {
     override fun toString() = value
 }
 
+class ArrayValue(val identifier: Int, val component: Type, val length: Int) : ActionValue {
+    override fun hashCode() = identifier
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (this.javaClass != other?.javaClass) return false
+        other as ArrayValue
+        return this.identifier == other.identifier
+    }
+
+    override fun toString() = "array@$identifier{$component, $length}"
+}
+
 class ObjectValue(val type: Class, val identifier: Int, val fields: Map<String, ActionValue>) : ActionValue {
     override fun hashCode() = identifier
     override fun equals(other: Any?): Boolean {
@@ -116,44 +129,61 @@ class Equation(val lhv: ActionValue, val rhv: ActionValue) {
 
 interface Action
 abstract class MethodAction(val method: Method) : Action
-abstract class BlockAction(val bb: BasicBlock) : Action
+abstract class MethodEntryAction(method: Method) : MethodAction(method)
+abstract class MethodExitAction(method: Method) : MethodAction(method)
 
-class MethodEntry(method: Method) : MethodAction(method) {
+abstract class BlockAction(val bb: BasicBlock) : Action
+abstract class BlockEntryAction(bb: BasicBlock) : BlockAction(bb)
+abstract class BlockExitAction(bb: BasicBlock) : BlockAction(bb)
+
+class MethodEntry(method: Method) : MethodEntryAction(method) {
     override fun toString() = "enter $method;"
 }
 
-class MethodReturn(method: Method, val `return`: Equation?) : MethodAction(method) {
-    override fun toString() = "return $method; ${`return` ?: "void"}"
+class MethodInstance(method: Method, val instance: Equation) : MethodEntryAction(method) {
+    override fun toString() = "instance $method; $instance;"
 }
 
-class MethodThrow(method: Method, val throwable: Equation) : MethodAction(method) {
-    override fun toString() = "throw $method; $throwable"
-}
-
-class BlockEntry(bb: BasicBlock) : BlockAction(bb) {
-    override fun toString() = "enter ${bb.name};"
-}
-
-class BlockJump(bb: BasicBlock) : BlockAction(bb) {
-    override fun toString() = "exit ${bb.name};"
-}
-
-class BlockBranch(bb: BasicBlock, val conditions: List<Equation>) : BlockAction(bb) {
+class MethodArgs(method: Method, val args: List<Equation>) : MethodEntryAction(method) {
     override fun toString(): String {
         val sb = StringBuilder()
-        sb.append("branch ${bb.name}; ")
-        conditions.take(1).forEach { sb.append(it.toString()) }
-        conditions.drop(1).forEach { sb.append("; $it") }
+        sb.append("arguments $method;")
+        args.forEach { sb.append(" $it;") }
         return sb.toString()
     }
 }
 
-class BlockSwitch(bb: BasicBlock, val key: Equation) : BlockAction(bb) {
-    override fun toString() = "exit ${bb.name}; $key"
+class MethodReturn(method: Method, val `return`: Equation?) : MethodExitAction(method) {
+    override fun toString() = "return $method; ${`return` ?: "void"}"
 }
 
-class BlockTableSwitch(bb: BasicBlock, val key: Equation) : BlockAction(bb) {
-    override fun toString() = "exit ${bb.name}; $key"
+class MethodThrow(method: Method, val throwable: Equation) : MethodExitAction(method) {
+    override fun toString() = "throw $method; $throwable"
+}
+
+class BlockEntry(bb: BasicBlock) : BlockEntryAction(bb) {
+    override fun toString() = "enter ${bb.name};"
+}
+
+class BlockJump(bb: BasicBlock) : BlockExitAction(bb) {
+    override fun toString() = "exit ${bb.name};"
+}
+
+class BlockBranch(bb: BasicBlock, val conditions: List<Equation>) : BlockExitAction(bb) {
+    override fun toString(): String {
+        val sb = StringBuilder()
+        sb.append("branch ${bb.name};")
+        conditions.forEach { sb.append(" $it;") }
+        return sb.toString()
+    }
+}
+
+class BlockSwitch(bb: BasicBlock, val key: Equation) : BlockExitAction(bb) {
+    override fun toString() = "exit ${bb.name}; $key;"
+}
+
+class BlockTableSwitch(bb: BasicBlock, val key: Equation) : BlockExitAction(bb) {
+    override fun toString() = "exit ${bb.name}; $key;"
 }
 
 class ActionParser : Grammar<Action>() {
@@ -173,6 +203,9 @@ class ActionParser : Grammar<Action>() {
     val `true` by token("true")
     val `false` by token("false")
     val `null` by token("null")
+    val array by token("array")
+    val arguments by token("arguments")
+    val instance by token("instance")
     val arg by token("arg\\$")
 
     val keyword by `this` or
@@ -212,6 +245,7 @@ class ActionParser : Grammar<Action>() {
     val colonAndSpace by colon and space
     val semicolonAndSpace by semicolon and space
     val commaAndSpace by comma and space
+    val spacedSemicolon by semicolon and optional(space)
 
     val anyWord by (word use { text }) or
             ((keyword and optional(num)) use { t1.text + (t2?.text ?: "") })
@@ -252,11 +286,16 @@ class ActionParser : Grammar<Action>() {
     val kfgValueParser by valueName use { KfgValue(this) }
     val nullValueParser by `null` use { NullValue }
     val booleanValueParser by (`true` or `false`) use { BooleanValue(text.toBoolean()) }
-    val longValueParser by (optional(minus) and num) use { LongValue(((t1?.text ?: "") + t2.text).toLong()) }
+    val longValueParser by (optional(minus) and num) use {
+        LongValue(((t1?.text ?: "") + t2.text).toLong())
+    }
     val doubleValueParser by (optional(minus) and doubleNum) use {
         DoubleValue(((t1?.text ?: "") + t2.text).toDouble())
     }
     val stringValueParser by string use { StringValue(text.drop(1).dropLast(1)) }
+    val arrayValueParser by (-array and -at and num and -openCurlyBrace and typeName and -commaAndSpace and num and -closeCurlyBrace) use {
+        ArrayValue(t1.text.toInt(), t2, t3.text.toInt())
+    }
     val objectValueParser: Parser<ActionValue> by (typeName and -at and num and
             -openCurlyBrace and
             optional(separatedTerms(word and -space and -equality and -space and parser(this::valueParser), commaAndSpace)) and
@@ -273,30 +312,40 @@ class ActionParser : Grammar<Action>() {
             longValueParser or
             doubleValueParser or
             stringValueParser or
+            arrayValueParser or
             objectValueParser
 
     val equationParser by (valueParser and -space and -equality and -space and valueParser) use { Equation(t1, t2) }
     val equationList by separatedTerms(equationParser, semicolonAndSpace)
 
     // action
-    val methodEntryParser by (-enter and -space and methodName and -semicolon) use {
+    val methodEntryParser by (-enter and -space and methodName and -spacedSemicolon) use {
         trackers.push(this.slottracker)
         MethodEntry(this)
     }
-    val methodReturnParser by (-`return` and -space and methodName and -semicolonAndSpace and ((word use { null }) or equationParser)) use {
+
+    val methodInstanceParser by (-instance and -space and methodName and -semicolonAndSpace and equationParser and -spacedSemicolon) use {
+        MethodInstance(t1, t2)
+    }
+
+    val methodArgsParser by (-arguments and -space and methodName and -semicolonAndSpace and equationList and -spacedSemicolon) use {
+        MethodArgs(t1, t2)
+    }
+
+    val methodReturnParser by (-`return` and -space and methodName and -semicolonAndSpace and ((word use { null }) or equationParser and -spacedSemicolon)) use {
         val ret = MethodReturn(t1, t2)
         trackers.pop()
         ret
     }
 
-    val methodThrowParser by (-`throw` and -space and methodName and -space and equationParser) use { MethodThrow(t1, t2) }
+    val methodThrowParser by (-`throw` and -space and methodName and -space and equationParser and -spacedSemicolon) use { MethodThrow(t1, t2) }
 
-    val blockEntryParser by (-enter and -space and blockName and -semicolon) use { BlockEntry(this) }
-    val blockJumpParser by (-exit and -space and blockName and -semicolon) use { BlockJump(this) }
-    val blockBranchParser by (-branch and -space and blockName and -semicolonAndSpace and equationList) use { BlockBranch(t1, t2) }
-    val blockSwitchParser by (-switch and -space and blockName and -semicolonAndSpace and equationParser) use { BlockSwitch(t1, t2) }
-    val blockTableSwitchParser by (-tableswitch and -space and blockName and -semicolonAndSpace and equationParser) use { BlockTableSwitch(t1, t2) }
+    val blockEntryParser by (-enter and -space and blockName and -spacedSemicolon) use { BlockEntry(this) }
+    val blockJumpParser by (-exit and -space and blockName and -spacedSemicolon) use { BlockJump(this) }
+    val blockBranchParser by (-branch and -space and blockName and -semicolonAndSpace and equationList and -spacedSemicolon) use { BlockBranch(t1, t2) }
+    val blockSwitchParser by (-switch and -space and blockName and -semicolonAndSpace and equationParser and -spacedSemicolon) use { BlockSwitch(t1, t2) }
+    val blockTableSwitchParser by (-tableswitch and -space and blockName and -semicolonAndSpace and equationParser and -spacedSemicolon) use { BlockTableSwitch(t1, t2) }
 
-    override val rootParser by (methodEntryParser or methodReturnParser or methodThrowParser or
+    override val rootParser by (methodEntryParser or methodInstanceParser or methodArgsParser or methodReturnParser or methodThrowParser or
             blockEntryParser or blockJumpParser or blockBranchParser or blockSwitchParser or blockTableSwitchParser)
 }

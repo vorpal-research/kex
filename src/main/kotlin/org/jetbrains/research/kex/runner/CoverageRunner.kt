@@ -2,15 +2,11 @@ package org.jetbrains.research.kex.runner
 
 import com.github.h0tk3y.betterParse.grammar.parseToEnd
 import org.jetbrains.research.kex.UnknownTypeException
-import org.jetbrains.research.kex.asm.Action
-import org.jetbrains.research.kex.asm.ActionParser
 import org.jetbrains.research.kex.driver.RandomDriver
 import com.github.h0tk3y.betterParse.parser.ParseException
+import org.jetbrains.research.kex.asm.TraceInstrumenter
 import org.jetbrains.research.kex.util.Loggable
-import org.jetbrains.research.kex.util.debug
-import org.jetbrains.research.kex.util.error
 import org.jetbrains.research.kex.util.loggerFor
-import org.jetbrains.research.kfg.ir.BasicBlock
 import org.jetbrains.research.kfg.ir.Method as KfgMethod
 import org.jetbrains.research.kfg.type.*
 import java.io.ByteArrayInputStream
@@ -70,8 +66,6 @@ internal fun invoke(method: Method, instance: Any?, args: Array<Any>): Pair<Byte
     return output to error
 }
 
-data class InvocationResult(val method: KfgMethod, val instance: Any?, val args: Array<Any>, val coverage: Set<BasicBlock>)
-
 class CoverageRunner(val method: KfgMethod, val loader: ClassLoader) : Loggable {
     private val random = RandomDriver()
     private val javaClass: Class<*> = loader.loadClass(method.`class`.getFullname().replace('/', '.'))
@@ -99,11 +93,12 @@ class CoverageRunner(val method: KfgMethod, val loader: ClassLoader) : Loggable 
 
         val parser = ActionParser()
         val actions = mutableListOf<Action>()
+        val tracePrefix = TraceInstrumenter.tracePrefix
         while (output.hasNextLine()) {
             val line = output.nextLine()
-            if (line.startsWith("instrumented")) {
+            if (line.startsWith(tracePrefix)) {
                 try {
-                    val trimmed = line.drop(12).trim()
+                    val trimmed = line.drop(tracePrefix.length + 1).trim()
                     actions.add(parser.parseToEnd(trimmed))
                 } catch (e: ParseException) {
                     log.error("Failed to parse $method output: $e")
