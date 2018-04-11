@@ -37,7 +37,7 @@ internal fun getClass(type: Type, loader: ClassLoader): Class<*> = when (type) {
     else -> throw UnknownTypeException("Unknown type $type")
 }
 
-internal fun invoke(method: Method, instance: Any?, args: Array<Any>): Pair<ByteArrayOutputStream, ByteArrayOutputStream> {
+internal fun invoke(method: Method, instance: Any?, args: Array<Any?>): Pair<ByteArrayOutputStream, ByteArrayOutputStream> {
     val log = loggerFor("org.jetbrains.research.kex.runner.invoke")
     log.debug("Running $method")
     log.debug("Instance: $instance")
@@ -84,12 +84,13 @@ class CoverageRunner(val method: KfgMethod, val loader: ClassLoader) : Loggable 
         val instance = if (method.isStatic()) null else random.generate(javaClass)
         val args = javaMethod.genericParameterTypes.map { random.generate(it) }.toTypedArray()
 
-        val (outputStream, errorStream) = try {
-            invoke(javaMethod, instance, args)
+        val (outputStream, errorStream, exception) = try {
+            val (sout, serr) = invoke(javaMethod, instance, args)
+            Triple(sout, serr, null)
         } catch (e: Exception) {
             log.error("Failed when running method $method")
             log.error("Exception: $e")
-            ByteArrayOutputStream() to ByteArrayOutputStream()
+            Triple(ByteArrayOutputStream(), ByteArrayOutputStream(), e)
         }
 
         val output = Scanner(ByteArrayInputStream(outputStream.toByteArray()))
@@ -102,7 +103,7 @@ class CoverageRunner(val method: KfgMethod, val loader: ClassLoader) : Loggable 
             val line = output.nextLine()
             if (line.startsWith(tracePrefix)) {
                 try {
-                    val trimmed = line.drop(tracePrefix.length + 1).trim()
+                    val trimmed = line.removePrefix(tracePrefix).drop(1)
                     actions.add(parser.parseToEnd(trimmed))
                 } catch (e: ParseException) {
                     log.error("Failed to parse $method output: $e")
@@ -111,6 +112,6 @@ class CoverageRunner(val method: KfgMethod, val loader: ClassLoader) : Loggable 
                 }
             }
         }
-        MethodInfo.parse(actions).forEach { CoverageManager.addInfo(it.method, it) }
+        MethodInfo.parse(actions, exception).forEach { CoverageManager.addInfo(it.method, it) }
     })
 }

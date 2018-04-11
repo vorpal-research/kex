@@ -15,16 +15,18 @@ data class BlockInfo internal constructor(val bb: BasicBlock, val predecessor: B
 
 class MethodInfo internal constructor(val method: Method, val instance: ActionValue?,
                                       val args: Array<ActionValue>, val blocks: Map<BasicBlock, List<BlockInfo>>,
-                                      val retval: ActionValue?, val throwval: ActionValue?) {
+                                      val retval: ActionValue?, val throwval: ActionValue?,
+                                      val exception: Exception?) {
     fun getBlockInfo(bb: BasicBlock) = blocks.getValue(bb)
 
     companion object {
-        fun parse(actions: List<Action>): List<MethodInfo> {
+        fun parse(actions: List<Action>, exception: Exception?): List<MethodInfo> {
             val log = loggerFor(this::class.java)
 
             class Info(var instance: ActionValue?,
                        var args: Array<ActionValue>, var blocks: MutableMap<BasicBlock, MutableList<BlockInfo>>,
-                       var retval: ActionValue?, var throwval: ActionValue?)
+                       var retval: ActionValue?, var throwval: ActionValue?,
+                       val exception: Exception?)
 
             val infos = Stack<Info>()
             val methodStack = Stack<Method>()
@@ -34,7 +36,7 @@ class MethodInfo internal constructor(val method: Method, val instance: ActionVa
                 when (action) {
                     is MethodEntry -> {
                         methodStack.push(action.method)
-                        infos.push(Info(null, arrayOf(), mutableMapOf(), null, null))
+                        infos.push(Info(null, arrayOf(), mutableMapOf(), null, null, exception))
                     }
                     is MethodInstance -> {
                         assert(methodStack.peek() == action.method, { log.error("Incorrect action format: Instance action for wrong method") })
@@ -51,7 +53,7 @@ class MethodInfo internal constructor(val method: Method, val instance: ActionVa
                         val info = infos.peek()
                         info.retval = action.`return`?.rhv
 
-                        result.add(MethodInfo(methodStack.pop(), info.instance, info.args, info.blocks, info.retval, info.throwval))
+                        result.add(MethodInfo(methodStack.pop(), info.instance, info.args, info.blocks, info.retval, info.throwval, info.exception))
                         infos.pop()
                     }
                     is MethodThrow -> {
@@ -59,10 +61,10 @@ class MethodInfo internal constructor(val method: Method, val instance: ActionVa
                         val info = infos.peek()
                         info.throwval = action.throwable.rhv
 
-                        result.add(MethodInfo(methodStack.pop(), info.instance, info.args, info.blocks, info.retval, info.throwval))
+                        result.add(MethodInfo(methodStack.pop(), info.instance, info.args, info.blocks, info.retval, info.throwval, info.exception))
                         infos.pop()
                     }
-                    is BlockEntry -> {
+                    is BlockEntryAction -> {
                         val bb = action.bb
                         assert(methodStack.peek() == bb.parent, { log.error("Incorrect action format: Block action for wrong method") })
                         val info = infos.peek()
@@ -71,25 +73,7 @@ class MethodInfo internal constructor(val method: Method, val instance: ActionVa
                         previousBlock = bInfo
                         info.blocks.getOrPut(bb, { mutableListOf() }).add(bInfo)
                     }
-                    is BlockJump -> {
-                        val bb = action.bb
-                        assert(methodStack.peek() == bb.parent, { log.error("Incorrect action format: Block action for wrong method") })
-                        assert(previousBlock != null, { log.error("Incorrect action format: Block exit without entering") })
-                        previousBlock?.outputAction = action
-                    }
-                    is BlockBranch -> {
-                        val bb = action.bb
-                        assert(methodStack.peek() == bb.parent, { log.error("Incorrect action format: Block action for wrong method") })
-                        assert(previousBlock != null, { log.error("Incorrect action format: Block exit without entering") })
-                        previousBlock?.outputAction = action
-                    }
-                    is BlockSwitch -> {
-                        val bb = action.bb
-                        assert(methodStack.peek() == bb.parent, { log.error("Incorrect action format: Block action for wrong method") })
-                        assert(previousBlock != null, { log.error("Incorrect action format: Block exit without entering") })
-                        previousBlock?.outputAction = action
-                    }
-                    is BlockTableSwitch -> {
+                    is BlockExitAction -> {
                         val bb = action.bb
                         assert(methodStack.peek() == bb.parent, { log.error("Incorrect action format: Block action for wrong method") })
                         assert(previousBlock != null, { log.error("Incorrect action format: Block exit without entering") })
@@ -99,7 +83,7 @@ class MethodInfo internal constructor(val method: Method, val instance: ActionVa
             }
             while (methodStack.isNotEmpty()) {
                 val info = infos.peek()
-                result.add(MethodInfo(methodStack.pop(), info.instance, info.args, info.blocks, info.retval, info.throwval))
+                result.add(MethodInfo(methodStack.pop(), info.instance, info.args, info.blocks, info.retval, info.throwval, info.exception))
                 infos.pop()
             }
             return result

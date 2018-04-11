@@ -25,7 +25,7 @@ class RandomDriver : Loggable {
 
     private fun <T> generateClass(`class`: Class<T>) = randomizer.nextObject(`class`)
 
-    private fun generateParameterized(type: ParameterizedType): Any {
+    private fun generateParameterized(type: ParameterizedType): Any? {
         val rawType = type.rawType
         val `object` = generate(rawType)
         if (rawType is Class<*>) {
@@ -40,13 +40,13 @@ class RandomDriver : Loggable {
         return `object`
     }
 
-    private fun generateTypeVariable(type: TypeVariable<*>): Any {
+    private fun generateTypeVariable(type: TypeVariable<*>): Any? {
         val bounds = type.bounds
         assert(bounds.size == 1, { log.debug("Unexpected size of type variable bounds: ${bounds.map { it.typeName }}") })
         return generate(bounds.first())
     }
 
-    fun generate(type: Type): Any {
+    fun generate(type: Type): Any? {
         repeat(attempts, {
             try {
                 return when (type) {
