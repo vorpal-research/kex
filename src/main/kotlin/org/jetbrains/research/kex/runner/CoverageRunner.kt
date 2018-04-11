@@ -1,10 +1,11 @@
 package org.jetbrains.research.kex.runner
 
 import com.github.h0tk3y.betterParse.grammar.parseToEnd
+import com.github.h0tk3y.betterParse.parser.ParseException
 import org.jetbrains.research.kex.UnknownTypeException
 import org.jetbrains.research.kex.driver.RandomDriver
-import com.github.h0tk3y.betterParse.parser.ParseException
 import org.jetbrains.research.kex.asm.TraceInstrumenter
+import org.jetbrains.research.kex.config.GlobalConfig
 import org.jetbrains.research.kex.util.Loggable
 import org.jetbrains.research.kex.util.loggerFor
 import org.jetbrains.research.kfg.ir.Method as KfgMethod
@@ -15,6 +16,8 @@ import java.io.PrintStream
 import java.lang.reflect.InvocationTargetException
 import java.lang.reflect.Method
 import java.util.*
+
+internal val runs = GlobalConfig.getIntValue("runner.runs", 10)
 
 internal fun getClass(type: Type, loader: ClassLoader): Class<*> = when (type) {
     is BoolType -> Boolean::class.java
@@ -76,7 +79,8 @@ class CoverageRunner(val method: KfgMethod, val loader: ClassLoader) : Loggable 
         javaMethod = javaClass.getDeclaredMethod(method.name, *argumentTypes)
     }
 
-    fun run() {
+    fun run() = repeat(runs, {
+        if (CoverageManager.isCovered(method)) return
         val instance = if (method.isStatic()) null else random.generate(javaClass)
         val args = javaMethod.genericParameterTypes.map { random.generate(it) }.toTypedArray()
 
@@ -107,5 +111,6 @@ class CoverageRunner(val method: KfgMethod, val loader: ClassLoader) : Loggable 
                 }
             }
         }
-    }
+        MethodInfo.parse(actions).forEach { CoverageManager.addInfo(it.method, it) }
+    })
 }
