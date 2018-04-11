@@ -118,5 +118,15 @@ object CoverageManager {
     fun addInfo(method: Method, info: MethodInfo) = methods.getOrPut(method, { mutableListOf() }).add(info)
 
     fun isCovered(bb: BasicBlock) = getBlockInfos(bb).fold(false, { acc, it -> acc or it.hasOutput() })
-    fun isCovered(method: Method) = method.basicBlocks.map { isCovered(it) }.fold(true, { acc, it -> acc and it })
+    fun isBodyCovered(method: Method): Boolean {
+        val bodyBLocks = method.getBodyBlocks()
+        var res = true
+        for (it in bodyBLocks) {
+            val cov = isCovered(it)
+            res = res and cov
+        }
+        return res
+    }// = method.getBodyBlocks().map { isCovered(it) }.fold(true, { acc, it -> acc and it })
+    fun isCatchCovered(method: Method) = method.getCatchBlocks().map { isCovered(it) }.fold(true, { acc, it -> acc and it })
+    fun isFullCovered(method: Method) = isBodyCovered(method) and isCatchCovered(method)
 }

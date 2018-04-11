@@ -80,7 +80,7 @@ class CoverageRunner(val method: KfgMethod, val loader: ClassLoader) : Loggable 
     }
 
     fun run() = repeat(runs, {
-        if (CoverageManager.isCovered(method)) return
+        if (CoverageManager.isBodyCovered(method)) return
         val instance = if (method.isStatic()) null else random.generate(javaClass)
         val args = javaMethod.genericParameterTypes.map { random.generate(it) }.toTypedArray()
 
