@@ -14,7 +14,7 @@ import org.jetbrains.research.kfg.type.ArrayType
 import org.jetbrains.research.kfg.type.ClassType
 import org.jetbrains.research.kfg.type.NullType
 
-class StringBuilderWrapper(name: String) {
+class StringBuilderWrapper(val name: String) {
     val `class` = CM.getByName("java/lang/StringBuilder")
     val stringBuilderType = TF.getRefType(`class`)
     val builder = IF.getNew(name, stringBuilderType)
@@ -51,7 +51,7 @@ class StringBuilderWrapper(name: String) {
     fun to_string(): Instruction {
         val desc = MethodDesc(arrayOf(), TF.getString())
         val toStringMethod = `class`.getMethod("toString", desc)
-        val string = IF.getCall(CallOpcode.Virtual(), "${builder.name}Str", toStringMethod, `class`, builder, arrayOf())
+        val string = IF.getCall(CallOpcode.Virtual(), "${name}Str", toStringMethod, `class`, builder, arrayOf())
         insns.add(string)
         return string
     }
@@ -96,7 +96,7 @@ class ReflectionWrapper {
     val fieldClass = CM.getByName("java/lang/reflect/Field")
 
     fun getClass(value: Value): Instruction {
-        val type = value.type as ClassType
+        val type = TF.getObject() as ClassType
         val desc = MethodDesc(arrayOf(), TF.getRefType(classClass))
         val getClassMethod = type.`class`.getMethod("getClass", desc)
         return IF.getCall(CallOpcode.Virtual(), "klass", getClassMethod, type.`class`, value, arrayOf())

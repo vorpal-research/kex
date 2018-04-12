@@ -16,17 +16,17 @@ data class BlockInfo internal constructor(val bb: BasicBlock, val predecessor: B
 class MethodInfo internal constructor(val method: Method, val instance: ActionValue?,
                                       val args: Array<ActionValue>, val blocks: Map<BasicBlock, List<BlockInfo>>,
                                       val retval: ActionValue?, val throwval: ActionValue?,
-                                      val exception: Exception?) {
+                                      val exception: Throwable?) {
     fun getBlockInfo(bb: BasicBlock) = blocks.getValue(bb)
 
     companion object {
-        fun parse(actions: List<Action>, exception: Exception?): List<MethodInfo> {
+        fun parse(actions: List<Action>, exception: Throwable?): List<MethodInfo> {
             val log = loggerFor(this::class.java)
 
             class Info(var instance: ActionValue?,
                        var args: Array<ActionValue>, var blocks: MutableMap<BasicBlock, MutableList<BlockInfo>>,
                        var retval: ActionValue?, var throwval: ActionValue?,
-                       val exception: Exception?)
+                       val exception: Throwable?)
 
             val infos = Stack<Info>()
             val methodStack = Stack<Method>()

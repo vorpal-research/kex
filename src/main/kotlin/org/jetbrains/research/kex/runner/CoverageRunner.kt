@@ -2,12 +2,14 @@ package org.jetbrains.research.kex.runner
 
 import com.github.h0tk3y.betterParse.grammar.parseToEnd
 import com.github.h0tk3y.betterParse.parser.ParseException
+import org.jetbrains.research.kex.InvocationTimeoutException
 import org.jetbrains.research.kex.UnknownTypeException
 import org.jetbrains.research.kex.driver.RandomDriver
 import org.jetbrains.research.kex.asm.TraceInstrumenter
 import org.jetbrains.research.kex.config.GlobalConfig
 import org.jetbrains.research.kex.util.Loggable
 import org.jetbrains.research.kex.util.loggerFor
+import org.jetbrains.research.kfg.ir.value.instruction.isExceptionThrowing
 import org.jetbrains.research.kfg.ir.Method as KfgMethod
 import org.jetbrains.research.kfg.type.*
 import java.io.ByteArrayInputStream
@@ -18,6 +20,7 @@ import java.lang.reflect.Method
 import java.util.*
 
 internal val runs = GlobalConfig.getIntValue("runner.runs", 10)
+internal val timeout = GlobalConfig.getLongValue("runner.timeout", 1000L)
 
 internal fun getClass(type: Type, loader: ClassLoader): Class<*> = when (type) {
     is BoolType -> Boolean::class.java
@@ -37,36 +40,56 @@ internal fun getClass(type: Type, loader: ClassLoader): Class<*> = when (type) {
     else -> throw UnknownTypeException("Unknown type $type")
 }
 
-internal fun invoke(method: Method, instance: Any?, args: Array<Any?>): Pair<ByteArrayOutputStream, ByteArrayOutputStream> {
+internal class InvocationResult {
+    val output = ByteArrayOutputStream()
+    val error = ByteArrayOutputStream()
+    var exception: Throwable? = null
+
+    operator fun component1() = output
+    operator fun component2() = error
+    operator fun component3() = exception
+}
+
+internal fun invoke(method: Method, instance: Any?, args: Array<Any?>): InvocationResult {
     val log = loggerFor("org.jetbrains.research.kex.runner.invoke")
     log.debug("Running $method")
     log.debug("Instance: $instance")
     log.debug("Args: ${args.map { it.toString() }}")
 
-    val output = ByteArrayOutputStream()
-    val error = ByteArrayOutputStream()
+    val result = InvocationResult()
     if (!method.isAccessible) method.isAccessible = true
 
     val oldOut = System.out
     val oldErr = System.err
+    System.setOut(PrintStream(result.output))
+    System.setErr(PrintStream(result.error))
+
     try {
-        System.setOut(PrintStream(output))
-        System.setErr(PrintStream(error))
-
-        method.invoke(instance, *args)
-
+        val thread = Thread {
+            try {
+                method.invoke(instance, *args)
+            } catch (e: InvocationTargetException) {
+                System.setOut(oldOut)
+                System.setErr(oldErr)
+                log.debug("Invocation exception ${e.targetException}")
+                result.exception = e.targetException
+            }
+        }
+        thread.start()
+        thread.join(timeout)
+        thread.stop()
         System.setOut(oldOut)
         System.setErr(oldErr)
-
-        log.debug("Invocation output: $output")
-        if (error.toString().isNotEmpty()) log.debug("Invocation err: $error")
-    } catch (e: InvocationTargetException) {
+    } catch (e: ThreadDeath) {
         System.setOut(oldOut)
         System.setErr(oldErr)
-        log.debug("Invocation exception ${e.targetException}")
-        throw e
+        log.debug("Killed thread")
+        throw e.cause ?: InvocationTimeoutException("Timeout $timeout")
     }
-    return output to error
+
+    log.debug("Invocation output: ${result.output}")
+    if (result.error.toString().isNotEmpty()) log.debug("Invocation err: ${result.error}")
+    return result
 }
 
 class CoverageRunner(val method: KfgMethod, val loader: ClassLoader) : Loggable {
@@ -85,12 +108,13 @@ class CoverageRunner(val method: KfgMethod, val loader: ClassLoader) : Loggable 
         val args = javaMethod.genericParameterTypes.map { random.generate(it) }.toTypedArray()
 
         val (outputStream, errorStream, exception) = try {
-            val (sout, serr) = invoke(javaMethod, instance, args)
-            Triple(sout, serr, null)
+            invoke(javaMethod, instance, args)
         } catch (e: Exception) {
             log.error("Failed when running method $method")
             log.error("Exception: $e")
-            Triple(ByteArrayOutputStream(), ByteArrayOutputStream(), e)
+            val result = InvocationResult()
+            result.exception = e
+            result
         }
 
         val output = Scanner(ByteArrayInputStream(outputStream.toByteArray()))
