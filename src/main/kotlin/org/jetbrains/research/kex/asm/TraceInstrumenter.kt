@@ -44,7 +44,8 @@ class TraceInstrumenter(method: Method) : MethodVisitor(method), Loggable {
         val printer = ValuePrinter()
         builder.print("${inst.getThrowable().name} == ")
         val str = printer.print(inst.getThrowable())
-        builder.println(str)
+        builder.print(str)
+        builder.println(";")
 
         insertedInsts.addAll(printer.insns)
         insertedInsts.addAll(builder.insns)

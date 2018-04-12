@@ -338,7 +338,7 @@ class ActionParser : Grammar<Action>() {
         ret
     }
 
-    val methodThrowParser by (-`throw` and -space and methodName and -space and equationParser and -spacedSemicolon) use { MethodThrow(t1, t2) }
+    val methodThrowParser by (-`throw` and -space and methodName and -semicolonAndSpace and equationParser and -spacedSemicolon) use { MethodThrow(t1, t2) }
 
     val blockEntryParser by (-enter and -space and blockName and -spacedSemicolon) use { BlockEntry(this) }
     val blockJumpParser by (-exit and -space and blockName and -spacedSemicolon) use { BlockJump(this) }

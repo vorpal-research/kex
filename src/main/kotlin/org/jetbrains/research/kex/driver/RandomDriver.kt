@@ -15,11 +15,15 @@ internal val maxCollectionSize = GlobalConfig.getIntValue("random.maxCollectionS
 internal val minStringLength = GlobalConfig.getIntValue("random.minStringLength", 0)
 internal val maxStringLength = GlobalConfig.getIntValue("random.maxStringLength", 1000)
 internal val attempts = GlobalConfig.getIntValue("random.generationAttempts", 1)
+internal val excludes = GlobalConfig.getMultipleStringValue("random.excludes")
 
 class RandomDriver : Loggable {
     private val randomizer: EnhancedRandom = EnhancedRandomBuilder.aNewEnhancedRandomBuilder()
             .scanClasspathForConcreteTypes(true)
             .collectionSizeRange(minCollectionSize, maxCollectionSize)
+            .exclude(*excludes.mapNotNull {
+                try { Class.forName(it) } catch (e: ClassNotFoundException) { null }
+            }.toTypedArray())
             .stringLengthRange(minStringLength, maxStringLength)
             .build()
 
