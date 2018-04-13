@@ -219,6 +219,9 @@ class ActionParser : Grammar<Action>() {
             `true` or
             `false` or
             `null` or
+            instance or
+            array or
+            arguments or
             arg
 
     // symbol tokens
@@ -238,7 +241,7 @@ class ActionParser : Grammar<Action>() {
     val minus by token("-")
     val doubleNum by token("\\d+\\.\\d+")
     val num by token("\\d+")
-    val word by token("[a-zA-Z][\\w$]*")
+    val word by token("[a-zA-Z$][\\w$]*")
     val at by token("@")
     val string by token("\"[\\w\\s\\.@>=<]*\"")
 
@@ -248,7 +251,9 @@ class ActionParser : Grammar<Action>() {
     val spacedSemicolon by semicolon and optional(space)
 
     val anyWord by (word use { text }) or
-            ((keyword and optional(num)) use { t1.text + (t2?.text ?: "") })
+            ((keyword and word) use { t1.text + t2.text }) or
+            ((keyword and num) use { t1.text + t2.text }) or
+            (keyword use { text })
 
     // equation
     val valueName by ((`this` use { text }) or
@@ -271,14 +276,14 @@ class ActionParser : Grammar<Action>() {
         val typeName = t1.fold("", { acc, curr -> "$acc/$curr" }).drop(1)
         parseStringToType("$typeName$braces")
     }
-    val args by separatedTerms(typeName, commaAndSpace)
+    val args by separatedTerms(typeName, commaAndSpace, true)
     val methodName by ((separatedTerms(word, dot) use { map { it.text } }) and
-            -openBracket and optional(args) and -closeBracket and
+            -openBracket and args and -closeBracket and
             -colonAndSpace and
             typeName) use {
         val `class` = CM.getByName(t1.dropLast(1).fold("", { acc, curr -> "$acc/$curr" }).drop(1))
         val methodName = t1.takeLast(1).firstOrNull() ?: throw UnknownNameException("Undefined method $t1")
-        val args = t2?.toTypedArray() ?: arrayOf()
+        val args = t2.toTypedArray()
         val rettype = t3
         `class`.getMethod(methodName, MethodDesc(args, rettype))
     }
@@ -296,13 +301,13 @@ class ActionParser : Grammar<Action>() {
     val arrayValueParser by (-array and -at and num and -openCurlyBrace and typeName and -commaAndSpace and num and -closeCurlyBrace) use {
         ArrayValue(t1.text.toInt(), t2, t3.text.toInt())
     }
-    val objectValueParser: Parser<ActionValue> by (typeName and -at and num and
-            -openCurlyBrace and
-            optional(separatedTerms(word and -space and -equality and -space and parser(this::valueParser), commaAndSpace)) and
-            -closeCurlyBrace) use {
+    val objectFields by separatedTerms(anyWord and -space and -equality and -space and parser(this::valueParser), commaAndSpace, true) use {
+        map { it.t1 to it.t2 }.toMap()
+    }
+    val objectValueParser: Parser<ActionValue> by (typeName and -at and num and -openCurlyBrace and objectFields and -closeCurlyBrace) use {
         val type = (t1 as? ClassType)?.`class` ?: throw UnexpectedTypeException("Unexpected class type $t1")
         val identifier = t2.text.toInt()
-        val fields = t3?.map { it.t1.text to it.t2 }?.toMap() ?: mapOf()
+        val fields = t3
         ObjectValue(type, identifier, fields)
     }
 

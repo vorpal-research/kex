@@ -17,6 +17,8 @@ internal val maxStringLength = GlobalConfig.getIntValue("random.maxStringLength"
 internal val attempts = GlobalConfig.getIntValue("random.generationAttempts", 1)
 internal val excludes = GlobalConfig.getMultipleStringValue("random.excludes")
 
+class GenerationException(msg: String) : Exception(msg)
+
 class RandomDriver : Loggable {
     private val randomizer: EnhancedRandom = EnhancedRandomBuilder.aNewEnhancedRandomBuilder()
             .scanClasspathForConcreteTypes(true)
@@ -59,10 +61,8 @@ class RandomDriver : Loggable {
                     is TypeVariable<*> -> generateTypeVariable(type)
                     else -> throw UnknownTypeException("Unknown type $type")
                 }
-            } catch (exc: ObjectGenerationException) {
-                log.debug("Failed when trying to generate object: ${exc.message}")
-            }
+            } catch (exc: ObjectGenerationException) {}
         })
-        throw ObjectGenerationException("Unable to generate a random instance of type $type")
+        throw GenerationException("Unable to generate a random instance of type $type")
     }
 }
