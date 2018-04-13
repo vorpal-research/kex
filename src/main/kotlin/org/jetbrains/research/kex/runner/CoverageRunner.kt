@@ -81,7 +81,7 @@ internal fun invoke(method: Method, instance: Any?, args: Array<Any?>): Invocati
         System.setErr(oldErr)
     }
 
-    log.debug("Invocation output: ${result.output}")
+    log.debug("Invocation output:\n${result.output}")
     if (result.error.toString().isNotEmpty()) log.debug("Invocation err: ${result.error}")
     return result
 }
@@ -96,7 +96,7 @@ class CoverageRunner(val method: KfgMethod, val loader: ClassLoader) : Loggable 
         javaMethod = javaClass.getDeclaredMethod(method.name, *argumentTypes)
     }
 
-    fun run() = repeat(runs, {
+    fun run() = repeat(runs) {
         if (CoverageManager.isBodyCovered(method)) return
         val (instance, args) = try {
             val i = (if (method.isStatic()) null else random.generate(javaClass))
@@ -139,5 +139,5 @@ class CoverageRunner(val method: KfgMethod, val loader: ClassLoader) : Loggable 
             }
         }
         MethodInfo.parse(actions, exception).forEach { CoverageManager.addInfo(it.method, it) }
-    })
+    }
 }

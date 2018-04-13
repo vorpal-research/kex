@@ -9,7 +9,7 @@ import org.jetbrains.research.kex.runner.CoverageRunner
 import org.jetbrains.research.kfg.CM
 import org.jetbrains.research.kfg.Package
 import org.jetbrains.research.kfg.util.writeClass
-import org.jetbrains.research.kfg.util.writeJar
+import org.jetbrains.research.kfg.util.writeClassesToTarget
 import java.io.File
 import java.net.URLClassLoader
 import java.util.jar.JarFile
@@ -32,7 +32,7 @@ fun main(args: Array<String>) {
 
     log.debug("Running with jar ${jar.name} and package $`package`")
     val target = File("instrumented/")
-    writeJar(jar, `package`, target)
+    writeClassesToTarget(jar, target, `package`, true) // write all classes to target, so they will be seen by ClassLoader
 
     for (`class` in CM.getConcreteClasses()) {
         for ((_, method) in `class`.methods) {
