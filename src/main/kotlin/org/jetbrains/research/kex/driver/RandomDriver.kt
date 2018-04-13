@@ -10,6 +10,7 @@ import java.lang.reflect.ParameterizedType
 import java.lang.reflect.Type
 import java.lang.reflect.TypeVariable
 
+internal val depth = GlobalConfig.getIntValue("random.depth", 10)
 internal val minCollectionSize = GlobalConfig.getIntValue("random.minCollectionSize", 0)
 internal val maxCollectionSize = GlobalConfig.getIntValue("random.maxCollectionSize", 1000)
 internal val minStringLength = GlobalConfig.getIntValue("random.minStringLength", 0)
@@ -26,6 +27,7 @@ class RandomDriver : Loggable {
             .exclude(*excludes.mapNotNull {
                 try { Class.forName(it) } catch (e: ClassNotFoundException) { null }
             }.toTypedArray())
+            .randomizationDepth(depth)
             .stringLengthRange(minStringLength, maxStringLength)
             .build()
 
