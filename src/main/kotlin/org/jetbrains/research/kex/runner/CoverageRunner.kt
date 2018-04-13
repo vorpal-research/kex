@@ -2,14 +2,13 @@ package org.jetbrains.research.kex.runner
 
 import com.github.h0tk3y.betterParse.grammar.parseToEnd
 import com.github.h0tk3y.betterParse.parser.ParseException
-import org.jetbrains.research.kex.InvocationTimeoutException
 import org.jetbrains.research.kex.UnknownTypeException
 import org.jetbrains.research.kex.driver.RandomDriver
 import org.jetbrains.research.kex.asm.TraceInstrumenter
 import org.jetbrains.research.kex.config.GlobalConfig
+import org.jetbrains.research.kex.driver.GenerationException
 import org.jetbrains.research.kex.util.Loggable
 import org.jetbrains.research.kex.util.loggerFor
-import org.jetbrains.research.kfg.ir.value.instruction.isExceptionThrowing
 import org.jetbrains.research.kfg.ir.Method as KfgMethod
 import org.jetbrains.research.kfg.type.*
 import java.io.ByteArrayInputStream
@@ -64,27 +63,22 @@ internal fun invoke(method: Method, instance: Any?, args: Array<Any?>): Invocati
     System.setOut(PrintStream(result.output))
     System.setErr(PrintStream(result.error))
 
-    try {
-        val thread = Thread {
-            try {
-                method.invoke(instance, *args)
-            } catch (e: InvocationTargetException) {
-                System.setOut(oldOut)
-                System.setErr(oldErr)
-                log.debug("Invocation exception ${e.targetException}")
-                result.exception = e.targetException
-            }
+    val thread = Thread {
+        try {
+            method.invoke(instance, *args)
+        } catch (e: InvocationTargetException) {
+            System.setOut(oldOut)
+            System.setErr(oldErr)
+            log.debug("Invocation exception ${e.targetException}")
+            result.exception = e.targetException
         }
-        thread.start()
-        thread.join(timeout)
-        thread.stop()
+    }
+    thread.start()
+    thread.join(timeout)
+    thread.stop()
+    if (result.exception == null) {
         System.setOut(oldOut)
         System.setErr(oldErr)
-    } catch (e: ThreadDeath) {
-        System.setOut(oldOut)
-        System.setErr(oldErr)
-        log.debug("Killed thread")
-        throw e.cause ?: InvocationTimeoutException("Timeout $timeout")
     }
 
     log.debug("Invocation output: ${result.output}")
@@ -104,8 +98,16 @@ class CoverageRunner(val method: KfgMethod, val loader: ClassLoader) : Loggable 
 
     fun run() = repeat(runs, {
         if (CoverageManager.isBodyCovered(method)) return
-        val instance = if (method.isStatic()) null else random.generate(javaClass)
-        val args = javaMethod.genericParameterTypes.map { random.generate(it) }.toTypedArray()
+        val (instance, args) = try {
+            val i = (if (method.isStatic()) null else random.generate(javaClass))
+            val a = javaMethod.genericParameterTypes.map { random.generate(it) }.toTypedArray()
+            i to a
+        } catch (e: GenerationException) {
+            log.debug("Cannot invoke $method")
+            log.debug("Cause: ${e.message}")
+            log.debug("Skipping method")
+            return
+        }
 
         val (outputStream, errorStream, exception) = try {
             invoke(javaMethod, instance, args)
@@ -118,7 +120,7 @@ class CoverageRunner(val method: KfgMethod, val loader: ClassLoader) : Loggable 
         }
 
         val output = Scanner(ByteArrayInputStream(outputStream.toByteArray()))
-        val error = ByteArrayInputStream(errorStream.toByteArray())
+        val error = Scanner(ByteArrayInputStream(errorStream.toByteArray()))
 
         val parser = ActionParser()
         val actions = mutableListOf<Action>()
@@ -126,12 +128,12 @@ class CoverageRunner(val method: KfgMethod, val loader: ClassLoader) : Loggable 
         while (output.hasNextLine()) {
             val line = output.nextLine()
             if (line.startsWith(tracePrefix)) {
+                val trimmed = line.removePrefix(tracePrefix).drop(1)
                 try {
-                    val trimmed = line.removePrefix(tracePrefix).drop(1)
                     actions.add(parser.parseToEnd(trimmed))
                 } catch (e: ParseException) {
                     log.error("Failed to parse $method output: $e")
-                    log.error("Failed line: $line")
+                    log.error("Failed line: $trimmed")
                     return
                 }
             }
