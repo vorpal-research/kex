@@ -75,7 +75,8 @@ internal fun invoke(method: Method, instance: Any?, args: Array<Any?>): Invocati
     }
     thread.start()
     thread.join(timeout)
-    thread.stop()
+    @Suppress("DEPRECATION") thread.stop()
+
     if (result.exception == null) {
         System.setOut(oldOut)
         System.setErr(oldErr)
@@ -120,7 +121,7 @@ class CoverageRunner(val method: KfgMethod, val loader: ClassLoader) : Loggable 
         }
 
         val output = Scanner(ByteArrayInputStream(outputStream.toByteArray()))
-        val error = Scanner(ByteArrayInputStream(errorStream.toByteArray()))
+//        val error = Scanner(ByteArrayInputStream(errorStream.toByteArray()))
 
         val parser = ActionParser()
         val actions = mutableListOf<Action>()
