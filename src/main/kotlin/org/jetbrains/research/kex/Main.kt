@@ -5,6 +5,7 @@ import org.jetbrains.research.kex.config.GlobalConfig
 import org.jetbrains.research.kex.config.FileConfig
 import org.jetbrains.research.kex.util.loggerFor
 import org.jetbrains.research.kex.asm.TraceInstrumenter
+import org.jetbrains.research.kex.runner.CoverageManager
 import org.jetbrains.research.kex.runner.CoverageRunner
 import org.jetbrains.research.kfg.CM
 import org.jetbrains.research.kfg.Package
@@ -36,13 +37,29 @@ fun main(args: Array<String>) {
 
     for (`class` in CM.getConcreteClasses()) {
         for ((_, method) in `class`.methods) {
+            val classFileName = "${target.canonicalPath}/${`class`.getFullname()}.class"
             if (!method.isAbstract() && method.name != "<init>" && method.name != "<clinit>") {
                 val instrumenter = TraceInstrumenter(method)
                 instrumenter.visit()
-                writeClass(`class`, "${target.canonicalPath}/${`class`.getFullname()}.class")
+                writeClass(`class`, classFileName)
                 val loader = URLClassLoader(arrayOf(target.toURI().toURL()))
                 CoverageRunner(method, loader).run()
                 instrumenter.insertedInsts.forEach { it.parent?.remove(it) }
+            }
+            writeClass(`class`, classFileName)
+        }
+    }
+    log.info("Results:")
+    val cm = CoverageManager
+    for (`class` in CM.getConcreteClasses()) {
+        for ((_, method) in `class`.methods) {
+            if (!method.isAbstract() && method.name != "<init>" && method.name != "<clinit>") {
+                if (cm.isFullCovered(method))
+                    log.info("\"$method\" full covered")
+                else if (cm.isBodyCovered(method))
+                    log.info("\"$method\" body covered")
+                else
+                    log.info("\"$method\" is not covered")
             }
         }
     }
