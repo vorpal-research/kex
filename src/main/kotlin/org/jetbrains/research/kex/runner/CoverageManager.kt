@@ -95,9 +95,9 @@ object CoverageManager {
     private val methods = mutableMapOf<Method, MutableList<MethodInfo>>()
 
     fun getMethodInfos(method: Method): List<MethodInfo> = methods.getOrPut(method, { mutableListOf() })
-    fun getBlockInfos(bb: BasicBlock): List<BlockInfo> = getMethodInfos(bb.parent).map {
+    fun getBlockInfos(bb: BasicBlock): List<BlockInfo> = if (bb.parent != null) getMethodInfos(bb.parent!!).map {
         it.blocks[bb] ?: listOf()
-    }.flatten()
+    }.flatten() else listOf()
 
     fun addInfo(method: Method, info: MethodInfo) = methods.getOrPut(method, { mutableListOf() }).add(info)
 
