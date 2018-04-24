@@ -110,7 +110,7 @@ class CoverageRunner(val method: KfgMethod, val loader: ClassLoader) : Loggable 
             return
         }
 
-        val (outputStream, errorStream, exception) = try {
+        val (outputStream, _, exception) = try {
             invoke(javaMethod, instance, args)
         } catch (e: Exception) {
             log.error("Failed when running method $method")

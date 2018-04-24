@@ -1,5 +1,6 @@
 package org.jetbrains.research.kex
 
+import org.jetbrains.research.kex.asm.LoopDeroller
 import org.jetbrains.research.kex.config.CmdConfig
 import org.jetbrains.research.kex.config.GlobalConfig
 import org.jetbrains.research.kex.config.FileConfig
@@ -9,6 +10,9 @@ import org.jetbrains.research.kex.runner.CoverageManager
 import org.jetbrains.research.kex.runner.CoverageRunner
 import org.jetbrains.research.kfg.CM
 import org.jetbrains.research.kfg.Package
+import org.jetbrains.research.kfg.analysis.IRVerifier
+import org.jetbrains.research.kfg.analysis.LoopAnalysis
+import org.jetbrains.research.kfg.analysis.LoopSimplifier
 import org.jetbrains.research.kfg.util.writeClass
 import org.jetbrains.research.kfg.util.writeClassesToTarget
 import java.io.File
@@ -61,6 +65,20 @@ fun main(args: Array<String>) {
                 else
                     log.info("\"$method\" is not covered")
             }
+        }
+    }
+
+    for (`class` in CM.getConcreteClasses()) {
+        for ((_, method) in `class`.methods) {
+            val la = LoopAnalysis(method)
+            la.visit()
+            if (la.loops.isNotEmpty()) {
+                val simplifier = LoopSimplifier(method)
+                simplifier.visit()
+                val deroller = LoopDeroller(method)
+                deroller.visit()
+            }
+            IRVerifier(method).visit()
         }
     }
 }
