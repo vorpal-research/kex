@@ -10,7 +10,6 @@ import org.jetbrains.research.kfg.ir.Method
 import org.jetbrains.research.kfg.ir.value.BlockUser
 import org.jetbrains.research.kfg.ir.value.Value
 import org.jetbrains.research.kfg.ir.value.instruction.PhiInst
-import org.jetbrains.research.kfg.util.GraphNode
 import org.jetbrains.research.kfg.util.TopologicalSorter
 import org.jetbrains.research.kfg.visitor.LoopVisitor
 
@@ -25,9 +24,8 @@ class LoopDeroller(method: Method) : LoopVisitor(method), Loggable {
         assert(header.successors.size == 2, { log.debug("Loop header have too many successors") })
         val exit = loop.getLoopExits().first()
 
-        val nodes = loop.body.map { it as GraphNode }.toSet()
-        val (order, _) = TopologicalSorter(nodes).sort(header)
-        val blockOrder = order.map { it as BasicBlock }.filter { it in loop.body }.reversed()
+        val (order, _) = TopologicalSorter(loop.body).sort(header)
+        val blockOrder = order.filter { it in loop.body }.reversed()
 
         val currentInsts = mutableMapOf<Value, Value>()
         loop.body.flatten().forEach { currentInsts[it] = it }
@@ -38,6 +36,9 @@ class LoopDeroller(method: Method) : LoopVisitor(method), Loggable {
         val body = loop.body.toTypedArray()
         body.forEach { loop.removeBlock(it) }
 
+        val loopThrowers = method.catchEntries.map { catch ->
+            catch to body.filter { it.handlers.contains(catch) }
+        }.toMap()
         for (iteration in 0 until derollCount) {
             val currentBlocks = mutableMapOf<BasicBlock, BasicBlock>()
             for (block in body) currentBlocks[block] = BodyBlock("${block.name.name}.deroll")
@@ -49,7 +50,7 @@ class LoopDeroller(method: Method) : LoopVisitor(method), Loggable {
                     predecessor.addSuccessors(derolled)
                     derolled.addPredecessor(predecessor)
                 } else {
-                    val predecessors = original.predecessors.map { currentBlocks[it]!! }
+                    val predecessors = original.predecessors.map { currentBlocks.getValue(it) }
                     derolled.addPredecessors(*predecessors.toTypedArray())
                     predecessors.forEach { it.addSuccessor(derolled) }
                 }
@@ -61,7 +62,7 @@ class LoopDeroller(method: Method) : LoopVisitor(method), Loggable {
                 successors.forEach { it.addPredecessor(derolled) }
             }
             for (block in blockOrder) {
-                val newBlock = currentBlocks[block]!!
+                val newBlock = currentBlocks.getValue(block)
                 for (inst in block) {
                     val updated = inst.update(currentInsts)
                     currentInsts[inst] = updated
@@ -70,7 +71,7 @@ class LoopDeroller(method: Method) : LoopVisitor(method), Loggable {
                         currentBlocks.forEach { (original, derolled) -> updated.replaceUsesOf(original, derolled) }
                     }
                     if (updated is PhiInst && block == header) {
-                        mapOf(currentBlocks[latch]!! to predecessor).forEach { o, t -> updated.replaceUsesOf(o, t) }
+                        mapOf(currentBlocks.getValue(latch) to predecessor).forEach { o, t -> updated.replaceUsesOf(o, t) }
                     }
                 }
             }
@@ -91,14 +92,21 @@ class LoopDeroller(method: Method) : LoopVisitor(method), Loggable {
                 }
             }
 
-            predecessor = currentBlocks[latch]!!
-            prevHeader = currentBlocks[header]!!
+            predecessor = currentBlocks.getValue(latch)
+            prevHeader = currentBlocks.getValue(header)
 
             currentBlocks.forEach {
                 loop.addBlock(it.value)
             }
+            loopThrowers.forEach { catch, throwers ->
+                val derolledThrowers = throwers.map { currentBlocks.getValue(it) }
+                derolledThrowers.forEach {
+                    it.addHandler(catch)
+                    catch.addThrowers(listOf(it))
+                }
+            }
             body.forEach {
-                method.addBefore(header, currentBlocks[it]!!)
+                method.addBefore(header, currentBlocks.getValue(it))
             }
             for ((_, derolled) in currentBlocks) loop.parent?.addBlock(derolled)
         }
@@ -114,6 +122,12 @@ class LoopDeroller(method: Method) : LoopVisitor(method), Loggable {
                 block.removeSuccessor(it)
             }
             method.remove(block)
+        }
+        loopThrowers.forEach { catch, throwers ->
+            throwers.forEach {
+                catch.removeThrower(it)
+                it.removeHandler(catch)
+            }
         }
     }
 
