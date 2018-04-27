@@ -2,7 +2,7 @@ package org.jetbrains.research.kex.config
 
 import org.apache.commons.cli.*
 import org.jetbrains.research.kex.util.Loggable
-import org.slf4j.LoggerFactory
+import org.jetbrains.research.kex.util.exit
 import java.io.PrintWriter
 import java.io.StringWriter
 import org.apache.commons.cli.CommandLine as Cmd
@@ -19,9 +19,10 @@ class CmdConfig(args: Array<String>) : Config, Loggable {
         try {
             cmd = parser.parse(options, args)
         } catch (e: ParseException) {
-            log.error("Error parsing command line arguments: ${e.message}")
-            printHelp()
-            System.exit(1)
+            exit {
+                log.error("Error parsing command line arguments: ${e.message}")
+                printHelp()
+            }
         }
     }
 
