@@ -1,4 +1,4 @@
-package org.jetbrains.research.kex.asm
+package org.jetbrains.research.kex.asm.util
 
 import org.jetbrains.research.kfg.CM
 import org.jetbrains.research.kfg.IF

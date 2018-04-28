@@ -1,4 +1,4 @@
-package org.jetbrains.research.kex.asm
+package org.jetbrains.research.kex.asm.transform
 
 import org.jetbrains.research.kex.config.GlobalConfig
 import org.jetbrains.research.kex.util.Loggable
@@ -150,7 +150,6 @@ class LoopDeroller(method: Method) : LoopVisitor(method), Loggable {
                 if (cmp.getLhv() is IntConstant) cmp.getRhv() to (cmp.getLhv() as IntConstant)
                 else if (cmp.getRhv() is IntConstant) cmp.getLhv() to (cmp.getRhv() as IntConstant)
                 else return -1
-        val continueOnTrue = loop.contains(branch.getTrueSuccessor())
 
         val (init, updated) = if (value is PhiInst) {
             val incomings = value.getIncomings()
