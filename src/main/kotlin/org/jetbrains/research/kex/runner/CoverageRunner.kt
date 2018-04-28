@@ -4,7 +4,7 @@ import com.github.h0tk3y.betterParse.grammar.parseToEnd
 import com.github.h0tk3y.betterParse.parser.ParseException
 import org.jetbrains.research.kex.UnknownTypeException
 import org.jetbrains.research.kex.driver.RandomDriver
-import org.jetbrains.research.kex.asm.TraceInstrumenter
+import org.jetbrains.research.kex.asm.transform.TraceInstrumenter
 import org.jetbrains.research.kex.config.GlobalConfig
 import org.jetbrains.research.kex.driver.GenerationException
 import org.jetbrains.research.kex.util.Loggable

@@ -29,6 +29,8 @@ object TermFactory : Loggable {
         else -> unreachable { log.error("Unknown constant type: $const") }
     }
 
+    fun getTrue() = getBool(true)
+    fun getFalse() = getBool(false)
     fun getBool(value: Boolean) = ConstBoolTerm(value)
     fun getBool(const: BoolConstant) = getBool(const.value)
     fun getByte(value: Byte) = ConstByteTerm(value)
@@ -56,6 +58,7 @@ object TermFactory : Loggable {
 
     fun getArrayLoad(type: Type, arrayRef: Term, index: Term) = ArrayLoadTerm(type, arrayRef, index)
     fun getFieldLoad(type: Type, objectRef: Term, fieldName: Term) = FieldLoadTerm(type, objectRef.type, arrayOf(objectRef, fieldName))
+    fun getFieldLoad(type: Type, classType: Class, fieldName: Term) = getFieldLoad(type, TF.getRefType(classType), fieldName)
     fun getFieldLoad(type: Type, classType: Type, fieldName: Term) = FieldLoadTerm(type, classType, arrayOf(fieldName))
 
     fun getBinary(lhv: Term, rhv: Term, opcode: BinaryOpcode): Term {
@@ -77,7 +80,7 @@ object TermFactory : Loggable {
         return CmpTerm(resType, opcode, lhv, rhv)
     }
 
-    fun getInstanceOf(type: Type, checkedType: Type, operand: Term) = InstanceOfTerm(type, checkedType, operand)
+    fun getInstanceOf(checkedType: Type, operand: Term) = InstanceOfTerm(checkedType, operand)
 
     fun getValueTerm(value: Value) = when (value) {
         is Argument -> getArgument(value)

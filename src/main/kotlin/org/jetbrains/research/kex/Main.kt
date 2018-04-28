@@ -1,11 +1,11 @@
 package org.jetbrains.research.kex
 
-import org.jetbrains.research.kex.asm.LoopDeroller
+import org.jetbrains.research.kex.asm.transform.LoopDeroller
 import org.jetbrains.research.kex.config.CmdConfig
 import org.jetbrains.research.kex.config.GlobalConfig
 import org.jetbrains.research.kex.config.FileConfig
 import org.jetbrains.research.kex.util.loggerFor
-import org.jetbrains.research.kex.asm.TraceInstrumenter
+import org.jetbrains.research.kex.asm.transform.TraceInstrumenter
 import org.jetbrains.research.kex.runner.CoverageManager
 import org.jetbrains.research.kex.runner.CoverageRunner
 import org.jetbrains.research.kfg.CM

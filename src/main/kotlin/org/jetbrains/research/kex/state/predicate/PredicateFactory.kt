@@ -5,9 +5,8 @@ import org.jetbrains.research.kex.util.Loggable
 import org.jetbrains.research.kfg.type.ArrayType
 
 object PredicateFactory : Loggable {
-    fun getArrayStore(arrayRef: Term, storeTerm: Term, type: PredicateType = PredicateType.State()) = StorePredicate(arrayRef, storeTerm, type)
-
-    fun getArrayLoad(lhv: Term, loadTerm: Term) = getEqualityPredicate(lhv, loadTerm)
+    fun getStore(`object`: Term, storeTerm: Term, type: PredicateType = PredicateType.State()) = StorePredicate(`object`, storeTerm, type)
+    fun getLoad(lhv: Term, loadTerm: Term) = getEquality(lhv, loadTerm)
 
     fun getNew(lhv: Term) = NewPredicate(lhv)
     fun getNewArray(lhv: Term, numElements: Term, type: PredicateType = PredicateType.State()): Predicate {
@@ -25,5 +24,10 @@ object PredicateFactory : Loggable {
         return MultiNewArrayPredicate(lhv, dimensions, current, type)
     }
 
-    fun getEqualityPredicate(lhv: Term, rhv: Term, type: PredicateType = PredicateType.State()) = EqualityPredicate(lhv, rhv, type)
+    fun getEquality(lhv: Term, rhv: Term, type: PredicateType = PredicateType.State()) = EqualityPredicate(lhv, rhv, type)
+
+    fun getBoolean(lhv: Term, rhv: Term) = getEquality(lhv, rhv, PredicateType.Path())
+
+    fun getDefaultSwitchPredicate(cond: Term, cases: Array<Term>, type: PredicateType = PredicateType.State())
+            = DefaultSwitchPredicate(cond, cases, type)
 }
