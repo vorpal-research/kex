@@ -82,6 +82,8 @@ object TermFactory : Loggable {
 
     fun getInstanceOf(checkedType: Type, operand: Term) = InstanceOfTerm(checkedType, operand)
 
+    fun getReturn(method: Method) = ReturnValueTerm(method)
+
     fun getValueTerm(value: Value) = when (value) {
         is Argument -> getArgument(value)
         is Constant -> getConstant(value)

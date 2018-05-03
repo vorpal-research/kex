@@ -13,14 +13,11 @@ import org.jetbrains.research.kfg.ir.value.instruction.*
 import org.jetbrains.research.kfg.visitor.MethodVisitor
 
 class PredicateBuilder(method: Method) : MethodVisitor(method), Loggable {
-    data class PhiPredicateKey(val bb: BasicBlock, val inst: Instruction)
-    data class TerminatePredicateKey(val bb: BasicBlock, val inst: TerminateInst)
-
     val tf = TermFactory
     val pf = PredicateFactory
     val predicateMap = mutableMapOf<Instruction, Predicate>()
-    val phiPredicateMap = mutableMapOf<PhiPredicateKey, Predicate>()
-    val terminatePredicateMap = mutableMapOf<TerminatePredicateKey, Predicate>()
+    val phiPredicateMap = mutableMapOf<Pair<BasicBlock, Instruction>, Predicate>()
+    val terminatePredicateMap = mutableMapOf<Pair<BasicBlock, TerminateInst>, Predicate>()
 
     override fun visitArrayLoadInst(inst: ArrayLoadInst) {
         val lhv = tf.getValueTerm(inst)
@@ -57,17 +54,15 @@ class PredicateBuilder(method: Method) : MethodVisitor(method), Loggable {
 
     override fun visitBranchInst(inst: BranchInst) {
         val cond = tf.getValueTerm(inst.getCond())
-        terminatePredicateMap[TerminatePredicateKey(inst.getTrueSuccessor(), inst)] = pf.getBoolean(
+        terminatePredicateMap[inst.getTrueSuccessor() to inst] = pf.getBoolean(
                 cond,
                 tf.getTrue()
         )
-        terminatePredicateMap[TerminatePredicateKey(inst.getFalseSuccessor(), inst)] = pf.getBoolean(
+        terminatePredicateMap[inst.getFalseSuccessor() to inst] = pf.getBoolean(
                 cond,
                 tf.getFalse()
         )
     }
-
-    override fun visitCallInst(inst: CallInst) {}
 
     override fun visitCastInst(inst: CastInst) {
         val lhv = tf.getValueTerm(inst)
@@ -79,8 +74,6 @@ class PredicateBuilder(method: Method) : MethodVisitor(method), Loggable {
         predicateMap[inst] = pf.getEquality(lhv, rhv)
     }
 
-    override fun visitCatchInst(inst: CatchInst) {}
-
     override fun visitCmpInst(inst: CmpInst) {
         val lhv = tf.getValueTerm(inst)
         val rhv = tf.getCmp(
@@ -91,9 +84,6 @@ class PredicateBuilder(method: Method) : MethodVisitor(method), Loggable {
 
         predicateMap[inst] = pf.getEquality(lhv, rhv)
     }
-
-    override fun visitEnterMonitorInst(inst: EnterMonitorInst) {}
-    override fun visitExitMonitorInst(inst: ExitMonitorInst) {}
 
     override fun visitFieldLoadInst(inst: FieldLoadInst) {
         val lhv = tf.getValueTerm(inst)
@@ -166,7 +156,7 @@ class PredicateBuilder(method: Method) : MethodVisitor(method), Loggable {
         for ((from, value) in inst.getIncomings()) {
             val lhv = tf.getValueTerm(inst)
             val rhv = tf.getValueTerm(value)
-            phiPredicateMap[PhiPredicateKey(from, inst)] = pf.getEquality(lhv, rhv)
+            phiPredicateMap[from to inst] = pf.getEquality(lhv, rhv)
         }
     }
 
@@ -180,19 +170,16 @@ class PredicateBuilder(method: Method) : MethodVisitor(method), Loggable {
         predicateMap[inst] = pf.getEquality(lhv, rhv)
     }
 
-    override fun visitJumpInst(inst: JumpInst) {}
-
-    override fun visitReturnInst(inst: ReturnInst) {}
     override fun visitSwitchInst(inst: SwitchInst) {
         val key = tf.getValueTerm(inst.getKey())
-        for ((value, to) in inst.getBranches()) {
-            terminatePredicateMap[TerminatePredicateKey(to, inst)] = pf.getEquality(
+        for ((value, successor) in inst.getBranches()) {
+            terminatePredicateMap[successor to inst] = pf.getEquality(
                     key,
                     tf.getValueTerm(value),
                     PredicateType.Path()
             )
         }
-        terminatePredicateMap[TerminatePredicateKey(inst.getDefault(), inst)] = pf.getDefaultSwitchPredicate(
+        terminatePredicateMap[inst.getDefault() to inst] = pf.getDefaultSwitchPredicate(
                 key,
                 inst.getBranches().keys.map { tf.getValueTerm(it) }.toTypedArray(),
                 PredicateType.Path()
@@ -203,19 +190,35 @@ class PredicateBuilder(method: Method) : MethodVisitor(method), Loggable {
         val key = tf.getValueTerm(inst.getIndex())
         val min = inst.getMin() as? IntConstant ?: unreachable({ log.error("Unexpected min type in tableSwitchInst") })
         val max = inst.getMax() as? IntConstant ?: unreachable({ log.error("Unexpected max type in tableSwitchInst") })
-        for ((index, to) in inst.getBranches().withIndex()) {
-            terminatePredicateMap[TerminatePredicateKey(to, inst)] = pf.getEquality(
+        for ((index, successor) in inst.getBranches().withIndex()) {
+            terminatePredicateMap[successor to inst] = pf.getEquality(
                     key,
                     tf.getInt(min.value + index),
                     PredicateType.Path()
             )
         }
-        terminatePredicateMap[TerminatePredicateKey(inst.getDefault(), inst)] = pf.getDefaultSwitchPredicate(
+        terminatePredicateMap[inst.getDefault() to inst] = pf.getDefaultSwitchPredicate(
                 key,
                 (min.value..max.value).map { tf.getInt(it) }.toTypedArray(),
                 PredicateType.Path()
         )
     }
 
+    override fun visitReturnInst(inst: ReturnInst) {
+        if (inst.hasReturnValue()) {
+            val lhv = tf.getReturn(method)
+            val rhv = tf.getValueTerm(inst.getReturnValue())
+
+            predicateMap[inst] = pf.getEquality(lhv, rhv)
+        }
+    }
+
+    // ignored instructions
+    override fun visitCallInst(inst: CallInst) {}
+
+    override fun visitCatchInst(inst: CatchInst) {}
+    override fun visitEnterMonitorInst(inst: EnterMonitorInst) {}
+    override fun visitExitMonitorInst(inst: ExitMonitorInst) {}
+    override fun visitJumpInst(inst: JumpInst) {}
     override fun visitThrowInst(inst: ThrowInst) {}
 }
