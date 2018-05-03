@@ -10,7 +10,6 @@ class FieldLoadTerm(type: Type, val classType: Type, operands: Array<Term>) : Te
 
     override fun print(): String {
         val sb = StringBuilder()
-        sb.append("$name = ")
         if (isStatic) sb.append(classType)
         else sb.append(getObjectRef())
         sb.append(".${getFieldName()}")

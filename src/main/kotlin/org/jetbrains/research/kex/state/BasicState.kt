@@ -33,4 +33,15 @@ class BasicState() : PredicateState() {
         other as BasicState
         return this.predicates.toTypedArray().contentEquals(other.predicates().toTypedArray())
     }
+
+    override fun addPredicate(predicate: Predicate) = BasicState(predicates.plus(predicate))
+
+    override fun slice(state: PredicateState): PredicateState? = when (state) {
+        is BasicState -> {
+            val base = predicates().take(state.size()).toTypedArray()
+            if (base.contentEquals(state.predicates().toTypedArray())) BasicState(predicates().drop(state.size()))
+            else null
+        }
+        else -> null
+    }
 }

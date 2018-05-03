@@ -27,4 +27,12 @@ class ChoiceState(val choices: List<PredicateState>) : PredicateState() {
         other as ChoiceState
         return this.choices.toTypedArray().contentEquals(other.choices.toTypedArray())
     }
+
+    override fun addPredicate(predicate: Predicate) = ChoiceState(choices.map { it + predicate })
+
+    override fun slice(state: PredicateState): PredicateState? {
+        val slices = choices.map { it.slice(state) }
+        val filtered = slices.filterNotNull()
+        return if (slices.size == filtered.size) ChoiceState(filtered) else null
+    }
 }
