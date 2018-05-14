@@ -49,7 +49,7 @@ class PredicateStateAnalysis(method: Method) : MethodVisitor(method), Loggable {
     }
 
     private fun processBasicBlock(bb: BasicBlock) {
-        var inState = getBasicBlockState(bb) ?: return
+        var inState = getBlockEntryState(bb) ?: return
 
         for (inst in bb) {
             val predicate = predicateBuilder.predicateMap[inst]
@@ -62,7 +62,7 @@ class PredicateStateAnalysis(method: Method) : MethodVisitor(method), Loggable {
         blockStates[bb] = inState
     }
 
-    private fun getBasicBlockState(bb: BasicBlock): PredicateState? {
+    private fun getBlockEntryState(bb: BasicBlock): PredicateState? {
         if (bb in method.getCatchBlocks()) return unreachable({ log.error("Catch blocks are not supported yet") })
 
         val idom = domTree.getIdom(bb) ?: return initialState
@@ -73,8 +73,8 @@ class PredicateStateAnalysis(method: Method) : MethodVisitor(method), Loggable {
         for (predecessor in bb.predecessors) {
             val predState = StateBuilder(blockStates[predecessor] ?: continue)
 
-            val terminatePredicate = predicateBuilder.terminatePredicateMap[bb to predecessor.getTerminator()]
-            if (terminatePredicate != null) predState += terminatePredicate
+            val terminatorPredicate = predicateBuilder.terminatorPredicateMap[bb to predecessor.getTerminator()]
+            if (terminatorPredicate != null) predState += terminatorPredicate
 
             for (phi in bb.instructions.mapNotNull { it as? PhiInst }) {
                 predState += predicateBuilder.phiPredicateMap.getValue(predecessor to phi)
@@ -85,10 +85,10 @@ class PredicateStateAnalysis(method: Method) : MethodVisitor(method), Loggable {
             choices.add(sliced)
         }
 
-        val result =
-                if (choices.isEmpty()) null
-                else if (choices.size == 1) (StateBuilder(base) + choices.first()).apply()
-                else (StateBuilder(base) + ChoiceState(choices)).apply()
-        return result
+        return when {
+            choices.isEmpty() -> null
+            choices.size == 1 -> (StateBuilder(base) + choices.first()).apply()
+            else -> (StateBuilder(base) + ChoiceState(choices)).apply()
+        }
     }
 }

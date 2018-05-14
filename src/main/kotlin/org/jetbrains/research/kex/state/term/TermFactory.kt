@@ -26,6 +26,7 @@ object TermFactory : Loggable {
         is FloatConstant -> getFloat(const)
         is DoubleConstant -> getDouble(const)
         is StringConstant -> getString(const)
+        is NullConstant -> getNull()
         else -> unreachable { log.error("Unknown constant type: $const") }
     }
 
@@ -47,6 +48,7 @@ object TermFactory : Loggable {
     fun getDouble(const: DoubleConstant) = getDouble(const.value)
     fun getString(value: String) = ConstStringTerm(value)
     fun getString(const: StringConstant) = getString(const.value)
+    fun getNull() = NullTerm()
 
     fun getUnaryTerm(operand: Term, opcode: UnaryOpcode) = when (opcode) {
         UnaryOpcode.NEG -> getNegTerm(operand)
@@ -68,7 +70,7 @@ object TermFactory : Loggable {
     }
 
     fun getCall(type: Type, method: Method, arguments: Array<Term>) = CallTerm(type, method, arguments)
-    fun getCall(type: Type, method: Method, objectRef: Term, arguments: Array<Term>) = CallTerm(type, method, arrayOf(objectRef).plus(arguments))
+    fun getCall(type: Type, method: Method, objectRef: Term, arguments: Array<Term>) = CallTerm(type, method, objectRef, arguments)
 
     fun getCast(type: Type, operand: Term) = CastTerm(type, operand)
     fun getCmp(lhv: Term, rhv: Term, opcode: CmpOpcode): Term {

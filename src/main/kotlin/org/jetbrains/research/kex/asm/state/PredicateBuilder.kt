@@ -17,7 +17,7 @@ class PredicateBuilder(method: Method) : MethodVisitor(method), Loggable {
     val pf = PredicateFactory
     val predicateMap = mutableMapOf<Instruction, Predicate>()
     val phiPredicateMap = mutableMapOf<Pair<BasicBlock, Instruction>, Predicate>()
-    val terminatePredicateMap = mutableMapOf<Pair<BasicBlock, TerminateInst>, Predicate>()
+    val terminatorPredicateMap = mutableMapOf<Pair<BasicBlock, TerminateInst>, Predicate>()
 
     override fun visitArrayLoadInst(inst: ArrayLoadInst) {
         val lhv = tf.getValueTerm(inst)
@@ -54,14 +54,29 @@ class PredicateBuilder(method: Method) : MethodVisitor(method), Loggable {
 
     override fun visitBranchInst(inst: BranchInst) {
         val cond = tf.getValueTerm(inst.getCond())
-        terminatePredicateMap[inst.getTrueSuccessor() to inst] = pf.getBoolean(
+        terminatorPredicateMap[inst.getTrueSuccessor() to inst] = pf.getBoolean(
                 cond,
                 tf.getTrue()
         )
-        terminatePredicateMap[inst.getFalseSuccessor() to inst] = pf.getBoolean(
+        terminatorPredicateMap[inst.getFalseSuccessor() to inst] = pf.getBoolean(
                 cond,
                 tf.getFalse()
         )
+    }
+
+    override fun visitCallInst(inst: CallInst) {
+        val args = inst.getArgs().map { tf.getValueTerm(it) }.toTypedArray()
+        val lhv = if (inst.type.isVoid()) null else tf.getValueTerm(inst)
+        val callTerm = if (inst.isStatic) {
+            tf.getCall(inst.type, inst.method, args)
+        } else {
+            val callee = tf.getValueTerm(inst.getCallee()!!)
+            tf.getCall(inst.type, inst.method, callee, args)
+        }
+
+        val predicate = if (lhv == null) pf.getCall(callTerm) else pf.getCall(lhv, callTerm)
+
+        predicateMap[inst] = predicate
     }
 
     override fun visitCastInst(inst: CastInst) {
@@ -173,13 +188,13 @@ class PredicateBuilder(method: Method) : MethodVisitor(method), Loggable {
     override fun visitSwitchInst(inst: SwitchInst) {
         val key = tf.getValueTerm(inst.getKey())
         for ((value, successor) in inst.getBranches()) {
-            terminatePredicateMap[successor to inst] = pf.getEquality(
+            terminatorPredicateMap[successor to inst] = pf.getEquality(
                     key,
                     tf.getValueTerm(value),
                     PredicateType.Path()
             )
         }
-        terminatePredicateMap[inst.getDefault() to inst] = pf.getDefaultSwitchPredicate(
+        terminatorPredicateMap[inst.getDefault() to inst] = pf.getDefaultSwitchPredicate(
                 key,
                 inst.getBranches().keys.map { tf.getValueTerm(it) }.toTypedArray(),
                 PredicateType.Path()
@@ -191,13 +206,13 @@ class PredicateBuilder(method: Method) : MethodVisitor(method), Loggable {
         val min = inst.getMin() as? IntConstant ?: unreachable({ log.error("Unexpected min type in tableSwitchInst") })
         val max = inst.getMax() as? IntConstant ?: unreachable({ log.error("Unexpected max type in tableSwitchInst") })
         for ((index, successor) in inst.getBranches().withIndex()) {
-            terminatePredicateMap[successor to inst] = pf.getEquality(
+            terminatorPredicateMap[successor to inst] = pf.getEquality(
                     key,
                     tf.getInt(min.value + index),
                     PredicateType.Path()
             )
         }
-        terminatePredicateMap[inst.getDefault() to inst] = pf.getDefaultSwitchPredicate(
+        terminatorPredicateMap[inst.getDefault() to inst] = pf.getDefaultSwitchPredicate(
                 key,
                 (min.value..max.value).map { tf.getInt(it) }.toTypedArray(),
                 PredicateType.Path()
@@ -214,8 +229,6 @@ class PredicateBuilder(method: Method) : MethodVisitor(method), Loggable {
     }
 
     // ignored instructions
-    override fun visitCallInst(inst: CallInst) {}
-
     override fun visitCatchInst(inst: CatchInst) {}
     override fun visitEnterMonitorInst(inst: EnterMonitorInst) {}
     override fun visitExitMonitorInst(inst: ExitMonitorInst) {}

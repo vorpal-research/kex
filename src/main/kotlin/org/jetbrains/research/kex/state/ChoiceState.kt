@@ -7,9 +7,9 @@ class ChoiceState(val choices: List<PredicateState>) : PredicateState() {
     override fun print(): String {
         val sb = StringBuilder()
         sb.appendln("(BEGIN")
-        choices.take(1).forEach { sb.appendln(" <OR> $it") }
-        choices.drop(1).forEach { sb.appendln(", <OR> $it") }
-        sb.append("END)")
+        choices.take(1).forEach { sb.append(" <OR> $it") }
+        choices.drop(1).forEach { sb.append(", <OR> $it") }
+        sb.append(" END)")
         return sb.toString()
     }
 
@@ -28,7 +28,7 @@ class ChoiceState(val choices: List<PredicateState>) : PredicateState() {
         return this.choices.toTypedArray().contentEquals(other.choices.toTypedArray())
     }
 
-    override fun addPredicate(predicate: Predicate) = ChoiceState(choices.map { it + predicate })
+    override fun addPredicate(predicate: Predicate) = ChainState(ChoiceState(choices), BasicState(arrayListOf(predicate)))
 
     override fun slice(state: PredicateState): PredicateState? {
         val slices = choices.map { it.slice(state) }
