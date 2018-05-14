@@ -81,14 +81,13 @@ fun main(args: Array<String>) {
                 deroller.visit()
             }
             IRVerifier(method).visit()
-            if (method.catchEntries.isEmpty()) {
-                val psa = PredicateStateAnalysis(method)
-                psa.visit()
-                val state = psa.getInstructionState(method.last().last())
-                log.debug(method)
-                log.debug(state)
-                log.debug()
-            }
+
+            val psa = PredicateStateAnalysis(method)
+            psa.visit()
+            val state = psa.getInstructionState(method.last().last())
+            log.debug(method)
+            log.debug(state)
+            log.debug()
         }
     }
 }

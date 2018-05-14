@@ -13,15 +13,15 @@ import org.jetbrains.research.kfg.visitor.MethodVisitor
 import java.util.*
 
 class PredicateStateAnalysis(method: Method) : MethodVisitor(method), Loggable {
-    val blockStates = mutableMapOf<BasicBlock, PredicateState>()
-    val instructionStates = mutableMapOf<Instruction, PredicateState>()
-    val initialState = BasicState()
+    private val blockStates = mutableMapOf<BasicBlock, PredicateState>()
+    private val instructionStates = mutableMapOf<Instruction, PredicateState>()
+    private val initialState = BasicState()
 
-    val order = mutableListOf<BasicBlock>()
-    val domTree = DominatorTree<BasicBlock>()
-    val predicateBuilder = PredicateBuilder(method)
+    private val order = mutableListOf<BasicBlock>()
+    private val domTree = DominatorTree<BasicBlock>()
+    private val predicateBuilder = PredicateBuilder(method)
 
-    fun getInstructionState(inst: Instruction): PredicateState = instructionStates.getOrPut(inst) {
+    fun getInstructionState(inst: Instruction): PredicateState? = instructionStates.getOrElse(inst) {
         val active = mutableSetOf<BasicBlock>()
         val queue = ArrayDeque<BasicBlock>()
         queue.push(inst.parent ?: unreachable({ log.error(" Trying to get state for instruction without parent") }))
@@ -37,7 +37,7 @@ class PredicateStateAnalysis(method: Method) : MethodVisitor(method), Loggable {
             queue.pop()
         }
         order.filter { it in active }.forEach { processBasicBlock(it) }
-        instructionStates[inst]!!
+        instructionStates[inst]
     }
 
     override fun visit() {
@@ -49,6 +49,7 @@ class PredicateStateAnalysis(method: Method) : MethodVisitor(method), Loggable {
     }
 
     private fun processBasicBlock(bb: BasicBlock) {
+        if (bb in method.getCatchBlocks()) return
         var inState = getBlockEntryState(bb) ?: return
 
         for (inst in bb) {
