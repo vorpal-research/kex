@@ -81,8 +81,8 @@ class PredicateStateAnalysis(method: Method) : MethodVisitor(method), Loggable {
                 predState += predicateBuilder.phiPredicateMap.getValue(predecessor to phi)
             }
 
-            val sliced = predState.apply().slice(base)
-                    ?: unreachable({ log.error("Cannot slice state on int's predecessor") })
+            val sliced = predState.apply().sliceOn(base)
+                    ?: unreachable({ log.error("Cannot slice state on it's predecessor") })
             choices.add(sliced)
         }
 
