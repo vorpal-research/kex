@@ -29,12 +29,12 @@ class ChainState(val base: PredicateState, val curr: PredicateState) : Predicate
 
     override fun addPredicate(predicate: Predicate) = ChainState(base, curr + predicate)
 
-    override fun slice(state: PredicateState): PredicateState? {
+    override fun sliceOn(state: PredicateState): PredicateState? {
         if (this == state) return BasicState()
         if (base == state) return curr
-        val baseSlice = base.slice(state)
+        val baseSlice = base.sliceOn(state)
         if (baseSlice != null) return ChainState(baseSlice, curr)
-        if (state is ChainState && state.base == base) return curr.slice(state.curr)
+        if (state is ChainState && state.base == base) return curr.sliceOn(state.curr)
         return null
     }
 }

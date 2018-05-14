@@ -47,5 +47,5 @@ abstract class PredicateState {
     abstract fun addPredicate(predicate: Predicate): PredicateState
     operator fun plus(predicate: Predicate) = addPredicate(predicate)
 
-    abstract fun slice(state: PredicateState): PredicateState?
+    abstract fun sliceOn(state: PredicateState): PredicateState?
 }
