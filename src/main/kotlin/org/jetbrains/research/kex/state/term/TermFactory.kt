@@ -9,6 +9,7 @@ import org.jetbrains.research.kfg.ir.value.*
 import org.jetbrains.research.kfg.ir.value.instruction.BinaryOpcode
 import org.jetbrains.research.kfg.ir.value.instruction.CmpOpcode
 import org.jetbrains.research.kfg.ir.value.instruction.UnaryOpcode
+import org.jetbrains.research.kfg.type.ClassType
 import org.jetbrains.research.kfg.type.Type
 import org.jetbrains.research.kfg.type.mergeTypes
 
@@ -27,6 +28,7 @@ object TermFactory : Loggable {
         is DoubleConstant -> getDouble(const)
         is StringConstant -> getString(const)
         is NullConstant -> getNull()
+        is ClassConstant -> getClass(const)
         else -> unreachable { log.error("Unknown constant type: $const") }
     }
 
@@ -49,6 +51,9 @@ object TermFactory : Loggable {
     fun getString(value: String) = ConstStringTerm(value)
     fun getString(const: StringConstant) = getString(const.value)
     fun getNull() = NullTerm()
+    fun getClass(`class`: Class) = ConstClassTerm(`class`)
+    fun getClass(const: ClassConstant) = ConstClassTerm((const.type as? ClassType)?.`class`
+            ?: unreachable({ log.debug("Non-ref type of class constant") }))
 
     fun getUnaryTerm(operand: Term, opcode: UnaryOpcode) = when (opcode) {
         UnaryOpcode.NEG -> getNegTerm(operand)
