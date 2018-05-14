@@ -5,6 +5,9 @@ import org.jetbrains.research.kex.util.Loggable
 import org.jetbrains.research.kfg.type.ArrayType
 
 object PredicateFactory : Loggable {
+    fun getCall(callTerm: Term, type: PredicateType = PredicateType.State()) = CallPredicate(callTerm, type)
+    fun getCall(lhv: Term, callTerm: Term, type: PredicateType = PredicateType.State()) = CallPredicate(lhv, callTerm, type)
+
     fun getStore(`object`: Term, storeTerm: Term, type: PredicateType = PredicateType.State()) = StorePredicate(`object`, storeTerm, type)
     fun getLoad(lhv: Term, loadTerm: Term) = getEquality(lhv, loadTerm)
 
