@@ -12,9 +12,7 @@ class ChainState(val base: PredicateState, val curr: PredicateState) : Predicate
         return sb.toString()
     }
 
-    override fun map(transform: (Predicate) -> Predicate) = ChainState(base.map(transform), curr.map(transform))
-    override fun mapNotNull(transform: (Predicate) -> Predicate?) = ChainState(base.mapNotNull(transform), curr.mapNotNull(transform))
-    override fun filter(predicate: (Predicate) -> Boolean) = ChainState(base.filter(predicate), curr.filter(predicate))
+    override fun fmap(transform: (PredicateState) -> PredicateState) = ChainState(transform(base), transform(curr))
     override fun reverse() = ChainState(curr.reverse(), base.reverse())
 
     override fun size() = base.size() + curr.size()

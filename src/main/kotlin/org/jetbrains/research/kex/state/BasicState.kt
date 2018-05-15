@@ -21,6 +21,7 @@ class BasicState() : PredicateState() {
     }
 
     override fun map(transform: (Predicate) -> Predicate) = BasicState(predicates().map(transform))
+    override fun fmap(transform: (PredicateState) -> PredicateState) = transform(this)
     override fun mapNotNull(transform: (Predicate) -> Predicate?) = BasicState(predicates().mapNotNull(transform))
     override fun filter(predicate: (Predicate) -> Boolean) = BasicState(predicates().filter(predicate))
     override fun reverse(): PredicateState = BasicState(predicates().reversed())

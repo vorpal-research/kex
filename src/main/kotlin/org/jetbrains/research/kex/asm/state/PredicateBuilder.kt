@@ -22,7 +22,6 @@ class PredicateBuilder(method: Method) : MethodVisitor(method), Loggable {
     override fun visitArrayLoadInst(inst: ArrayLoadInst) {
         val lhv = tf.getValueTerm(inst)
         val rhv = tf.getArrayLoad(
-                inst.type,
                 tf.getValueTerm(inst.getArrayRef()),
                 tf.getValueTerm(inst.getIndex())
         )
@@ -32,7 +31,6 @@ class PredicateBuilder(method: Method) : MethodVisitor(method), Loggable {
 
     override fun visitArrayStoreInst(inst: ArrayStoreInst) {
         val lhv = tf.getArrayLoad(
-                inst.type,
                 tf.getValueTerm(inst.getArrayRef()),
                 tf.getValueTerm(inst.getIndex())
         )
@@ -68,10 +66,10 @@ class PredicateBuilder(method: Method) : MethodVisitor(method), Loggable {
         val args = inst.getArgs().map { tf.getValueTerm(it) }.toTypedArray()
         val lhv = if (inst.type.isVoid()) null else tf.getValueTerm(inst)
         val callTerm = if (inst.isStatic) {
-            tf.getCall(inst.type, inst.method, args)
+            tf.getCall(inst.method, args)
         } else {
             val callee = tf.getValueTerm(inst.getCallee()!!)
-            tf.getCall(inst.type, inst.method, callee, args)
+            tf.getCall(inst.method, callee, args)
         }
 
         val predicate = if (lhv == null) pf.getCall(callTerm) else pf.getCall(lhv, callTerm)

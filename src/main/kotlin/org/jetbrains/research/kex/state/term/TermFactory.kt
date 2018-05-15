@@ -9,6 +9,7 @@ import org.jetbrains.research.kfg.ir.value.*
 import org.jetbrains.research.kfg.ir.value.instruction.BinaryOpcode
 import org.jetbrains.research.kfg.ir.value.instruction.CmpOpcode
 import org.jetbrains.research.kfg.ir.value.instruction.UnaryOpcode
+import org.jetbrains.research.kfg.type.ArrayType
 import org.jetbrains.research.kfg.type.ClassType
 import org.jetbrains.research.kfg.type.Type
 import org.jetbrains.research.kfg.type.mergeTypes
@@ -63,7 +64,11 @@ object TermFactory : Loggable {
     fun getArrayLength(arrayRef: Term) = ArrayLengthTerm(arrayRef)
     fun getNegTerm(operand: Term) = NegTerm(operand)
 
-    fun getArrayLoad(type: Type, arrayRef: Term, index: Term) = ArrayLoadTerm(type, arrayRef, index)
+    fun getArrayLoad(arrayRef: Term, index: Term): Term {
+        val arrayType = arrayRef.type as? ArrayType ?: unreachable { log.debug("Non-array type of array load term operand") }
+        return ArrayLoadTerm(arrayType.component, arrayRef, index)
+    }
+
     fun getFieldLoad(type: Type, objectRef: Term, fieldName: Term) = FieldLoadTerm(type, objectRef.type, arrayOf(objectRef, fieldName))
     fun getFieldLoad(type: Type, classType: Class, fieldName: Term) = getFieldLoad(type, TF.getRefType(classType), fieldName)
     fun getFieldLoad(type: Type, classType: Type, fieldName: Term) = FieldLoadTerm(type, classType, arrayOf(fieldName))
@@ -74,8 +79,8 @@ object TermFactory : Loggable {
         return BinaryTerm(merged, opcode, lhv, rhv)
     }
 
-    fun getCall(type: Type, method: Method, arguments: Array<Term>) = CallTerm(type, method, arguments)
-    fun getCall(type: Type, method: Method, objectRef: Term, arguments: Array<Term>) = CallTerm(type, method, objectRef, arguments)
+    fun getCall(method: Method, arguments: Array<Term>) = CallTerm(method.desc.retval, method, arguments)
+    fun getCall(method: Method, objectRef: Term, arguments: Array<Term>) = CallTerm(method.desc.retval, method, objectRef, arguments)
 
     fun getCast(type: Type, operand: Term) = CastTerm(type, operand)
     fun getCmp(lhv: Term, rhv: Term, opcode: CmpOpcode): Term {

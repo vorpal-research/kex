@@ -1,6 +1,7 @@
 package org.jetbrains.research.kex.state.predicate
 
 import org.jetbrains.research.kex.state.term.Term
+import org.jetbrains.research.kex.state.transformer.Transformer
 import org.jetbrains.research.kfg.type.Type
 
 class MultiNewArrayPredicate(lhv: Term, dimentions: Array<Term>, val elementType: Type, type: PredicateType = PredicateType.State())
@@ -14,5 +15,14 @@ class MultiNewArrayPredicate(lhv: Term, dimentions: Array<Term>, val elementType
         sb.append("${getLhv()} = new $elementType")
         getDimentions().forEach { sb.append("[$it]") }
         return sb.toString()
+    }
+
+    override fun <T> accept(t: Transformer<T>): Predicate {
+        val lhv = t.transform(getLhv())
+        val dimentions = getDimentions().map { t.transform(it) }.toTypedArray()
+        return when {
+            lhv == getLhv() && dimentions.contentEquals(getDimentions()) -> this
+            else -> t.pf.getMultipleNewArray(lhv, dimentions, type)
+        }
     }
 }

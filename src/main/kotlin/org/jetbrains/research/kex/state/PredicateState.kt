@@ -34,10 +34,12 @@ abstract class PredicateState {
 
     override fun toString() = print()
 
-    abstract fun map(transform: (Predicate) -> Predicate): PredicateState
-    abstract fun mapNotNull(transform: (Predicate) -> Predicate?): PredicateState
-    abstract fun filter(predicate: (Predicate) -> Boolean): PredicateState
+    open fun map(transform: (Predicate) -> Predicate): PredicateState = fmap { ps -> ps.map(transform) }
+    open fun mapNotNull(transform: (Predicate) -> Predicate?): PredicateState = fmap { ps -> ps.mapNotNull(transform) }
+    open fun filter(predicate: (Predicate) -> Boolean): PredicateState = fmap { ps -> ps.filter(predicate) }
     fun filterNot(predicate: (Predicate) -> Boolean) = filter { it -> !predicate(it) }
+
+    abstract fun fmap(transform: (PredicateState) -> PredicateState): PredicateState
     abstract fun reverse(): PredicateState
 
     abstract fun size(): Int
