@@ -13,9 +13,7 @@ class ChoiceState(val choices: List<PredicateState>) : PredicateState() {
         return sb.toString()
     }
 
-    override fun map(transform: (Predicate) -> Predicate) = ChoiceState(choices.map { it.map(transform) })
-    override fun mapNotNull(transform: (Predicate) -> Predicate?) = ChoiceState(choices.map { it.mapNotNull(transform) })
-    override fun filter(predicate: (Predicate) -> Boolean) = ChoiceState(choices.map { it.filter(predicate) })
+    override fun fmap(transform: (PredicateState) -> PredicateState): PredicateState = ChoiceState(choices.map { transform(it) })
     override fun reverse() = ChoiceState(choices.map { it.reverse() })
 
     override fun size() = choices.fold(0) { acc, it -> acc + it.size() }

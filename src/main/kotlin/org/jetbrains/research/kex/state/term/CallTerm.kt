@@ -1,5 +1,6 @@
 package org.jetbrains.research.kex.state.term
 
+import org.jetbrains.research.kex.state.transformer.Transformer
 import org.jetbrains.research.kfg.ir.Method
 import org.jetbrains.research.kfg.type.Type
 
@@ -32,5 +33,15 @@ class CallTerm : Term {
         arguments.drop(1).forEach { sb.append(", $it") }
         sb.append(")")
         return sb.toString()
+    }
+
+    override fun <T> accept(t: Transformer<T>): Term {
+        val objectRef = if (isStatic) null else t.transform(getObjectRef()!!)
+        val arguments = getArguments().map { t.transform(it) }.toTypedArray()
+        return when {
+            objectRef == getObjectRef() && arguments.contentEquals(getArguments()) -> this
+            objectRef == null -> t.tf.getCall(method, arguments)
+            else -> t.tf.getCall(method, objectRef, arguments)
+        }
     }
 }

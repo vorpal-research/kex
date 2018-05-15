@@ -1,5 +1,6 @@
 package org.jetbrains.research.kex.state.term
 
+import org.jetbrains.research.kex.state.transformer.Transformer
 import org.jetbrains.research.kfg.type.Type
 import org.jetbrains.research.kfg.util.defaultHashCode
 
@@ -15,4 +16,5 @@ abstract class Term(val name: String, val type: Type, val subterms: Array<Term>)
     override fun toString() = print()
 
     abstract fun print(): String
+    abstract fun <T> accept(t: Transformer<T>): Term
 }

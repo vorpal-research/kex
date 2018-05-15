@@ -11,7 +11,7 @@ object PredicateFactory : Loggable {
     fun getStore(`object`: Term, storeTerm: Term, type: PredicateType = PredicateType.State()) = StorePredicate(`object`, storeTerm, type)
     fun getLoad(lhv: Term, loadTerm: Term) = getEquality(lhv, loadTerm)
 
-    fun getNew(lhv: Term) = NewPredicate(lhv)
+    fun getNew(lhv: Term, type: PredicateType = PredicateType.State()) = NewPredicate(lhv, type)
     fun getNewArray(lhv: Term, numElements: Term, type: PredicateType = PredicateType.State()): Predicate {
         val arrayType = lhv.type as? ArrayType
                 ?: error(log.error("Trying to create new array predicate with non-array type"))
@@ -33,4 +33,7 @@ object PredicateFactory : Loggable {
 
     fun getDefaultSwitchPredicate(cond: Term, cases: Array<Term>, type: PredicateType = PredicateType.State())
             = DefaultSwitchPredicate(cond, cases, type)
+
+    fun getCatch(throwable: Term, type: PredicateType = PredicateType.State()) = CatchPredicate(throwable, type)
+    fun getThrow(throwable: Term, type: PredicateType = PredicateType.State()) = ThrowPredicate(throwable, type)
 }

@@ -1,6 +1,7 @@
 package org.jetbrains.research.kex.state.predicate
 
 import org.jetbrains.research.kex.state.term.Term
+import org.jetbrains.research.kex.state.transformer.Transformer
 import org.jetbrains.research.kfg.util.defaultHashCode
 
 sealed class PredicateType(val name: String) {
@@ -13,6 +14,8 @@ sealed class PredicateType(val name: String) {
 }
 
 abstract class Predicate(val type: PredicateType, protected val operands: Array<Term>) {
+    abstract fun <T> accept(t: Transformer<T>): Predicate
+
     abstract fun print(): String
     override fun toString() = "$type ${print()}"
 
