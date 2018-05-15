@@ -7,7 +7,7 @@ class NegTerm(operand: Term) : Term("", operand.type, arrayOf(operand)) {
 
     override fun print() = "-${getOperand()}"
 
-    override fun <T> accept(t: Transformer<T>): Term {
+    override fun <T: Transformer<T>> accept(t: Transformer<T>): Term {
         val operand = t.transform(getOperand())
         return if (operand == getOperand()) this else t.tf.getNegTerm(operand)
     }

@@ -8,7 +8,7 @@ class ArrayLengthTerm(arrayRef: Term) : Term("", TF.getIntType(), arrayOf(arrayR
 
     override fun print() = "${getArrayRef()}.length"
 
-    override fun <T> accept(t: Transformer<T>): Term {
+    override fun <T: Transformer<T>> accept(t: Transformer<T>): Term {
         val arrayRef = t.transform(getArrayRef())
         return when {
             arrayRef == getArrayRef() -> this

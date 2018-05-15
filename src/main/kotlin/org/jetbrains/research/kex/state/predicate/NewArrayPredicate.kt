@@ -12,7 +12,7 @@ class NewArrayPredicate(lhv: Term, numElements: Term, val elementType: Type, typ
 
     override fun print() = "${getLhv()} = new $elementType[${getNumElements()}]"
 
-    override fun <T> accept(t: Transformer<T>): Predicate {
+    override fun <T: Transformer<T>> accept(t: Transformer<T>): Predicate {
         val lhv = t.transform(getLhv())
         val numElements = t.transform(getNumElements())
         return when {

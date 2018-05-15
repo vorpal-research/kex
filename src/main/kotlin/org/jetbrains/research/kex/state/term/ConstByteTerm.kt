@@ -5,5 +5,5 @@ import org.jetbrains.research.kfg.TF
 
 class ConstByteTerm(val value: Byte) : Term(value.toString(), TF.getByteType(), arrayOf()) {
     override fun print() = name
-    override fun <T> accept(t: Transformer<T>) = this
+    override fun <T: Transformer<T>> accept(t: Transformer<T>) = this
 }

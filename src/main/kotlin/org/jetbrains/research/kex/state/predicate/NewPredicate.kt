@@ -8,7 +8,7 @@ class NewPredicate(lhv: Term, type: PredicateType = PredicateType.State()) : Pre
 
     override fun print() = "${getLhv()} = new ${getLhv().type}"
 
-    override fun <T> accept(t: Transformer<T>): Predicate {
+    override fun <T: Transformer<T>> accept(t: Transformer<T>): Predicate {
         val lhv = t.transform(getLhv())
         return when {
             lhv == getLhv() -> this

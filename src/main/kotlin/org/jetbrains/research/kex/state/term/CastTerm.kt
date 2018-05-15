@@ -7,7 +7,7 @@ class CastTerm(type: Type, operand: Term) : Term("", type, arrayOf(operand)) {
     fun getOperand() = subterms[0]
     override fun print() = "($type) ${getOperand()}"
 
-    override fun <T> accept(t: Transformer<T>): Term {
+    override fun <T: Transformer<T>> accept(t: Transformer<T>): Term {
         val operand = t.transform(getOperand())
         return when {
             operand == getOperand() -> this

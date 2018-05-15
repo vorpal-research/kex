@@ -19,7 +19,7 @@ class CallPredicate : Predicate {
     fun getLhv() = if (hasLhv) operands[0] else null
     fun getCall() = if (hasLhv) operands[1] else operands[0]
 
-    override fun <T> accept(t: Transformer<T>): Predicate {
+    override fun <T: Transformer<T>> accept(t: Transformer<T>): Predicate {
         val lhv = if (hasLhv) t.transform(getLhv()!!) else null
         val call = t.transform(getCall())
         return when {

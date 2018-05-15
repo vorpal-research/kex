@@ -18,7 +18,7 @@ class DefaultSwitchPredicate(cond: Term, cases: Array<Term>, type: PredicateType
         return sb.toString()
     }
 
-    override fun <T> accept(t: Transformer<T>): Predicate {
+    override fun <T: Transformer<T>> accept(t: Transformer<T>): Predicate {
         val cond = t.transform(getCond())
         val cases = getCases().map { t.transform(it) }.toTypedArray()
         return when {

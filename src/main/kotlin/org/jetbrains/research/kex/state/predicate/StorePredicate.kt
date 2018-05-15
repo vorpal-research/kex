@@ -9,7 +9,7 @@ class StorePredicate(lhv: Term, rhv: Term, type: PredicateType = PredicateType.S
 
     override fun print() = "${getLhv()} = ${getStoreVal()}"
 
-    override fun <T> accept(t: Transformer<T>): Predicate {
+    override fun <T: Transformer<T>> accept(t: Transformer<T>): Predicate {
         val lhv = t.transform(getLhv())
         val store = t.transform(getStoreVal())
         return when {

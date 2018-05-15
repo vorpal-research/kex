@@ -17,7 +17,7 @@ class FieldLoadTerm(type: Type, val classType: Type, operands: Array<Term>) : Te
         return sb.toString()
     }
 
-    override fun <T> accept(t: Transformer<T>): Term {
+    override fun <T: Transformer<T>> accept(t: Transformer<T>): Term {
         val objectRef = if (isStatic) null else t.transform(getObjectRef()!!)
         val fieldName = t.transform(getFieldName())
         return when {

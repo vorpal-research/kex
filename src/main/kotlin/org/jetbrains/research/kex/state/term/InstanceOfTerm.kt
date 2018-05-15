@@ -9,7 +9,7 @@ class InstanceOfTerm(val checkedType: Type, operand: Term) : Term("", TF.getBool
     fun getOperand() = subterms[0]
     override fun print() = "${getOperand()} instanceof $checkedType"
 
-    override fun <T> accept(t: Transformer<T>): Term {
+    override fun <T: Transformer<T>> accept(t: Transformer<T>): Term {
         val operand = t.transform(getOperand())
         return if (operand == getOperand()) this else t.tf.getInstanceOf(checkedType, operand)
     }

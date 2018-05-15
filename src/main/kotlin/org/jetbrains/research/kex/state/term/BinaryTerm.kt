@@ -11,7 +11,7 @@ class BinaryTerm(type: Type, val opcode: BinaryOpcode, lhv: Term, rhv: Term) : T
 
     override fun print() = "${getLhv()} $opcode ${getRhv()}"
 
-    override fun <T> accept(t: Transformer<T>): Term {
+    override fun <T: Transformer<T>> accept(t: Transformer<T>): Term {
         val lhv = t.transform(getLhv())
         val rhv = t.transform(getRhv())
         return when {

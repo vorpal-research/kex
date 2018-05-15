@@ -9,7 +9,7 @@ class EqualityPredicate(lhv: Term, rhv: Term, type: PredicateType = PredicateTyp
 
     override fun print() = "${getLhv()} = ${getRhv()}"
 
-    override fun <T> accept(t: Transformer<T>): Predicate {
+    override fun <T: Transformer<T>> accept(t: Transformer<T>): Predicate {
         val lhv = t.transform(getLhv())
         val rhv = t.transform(getRhv())
         return when {
