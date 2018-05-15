@@ -9,12 +9,15 @@ import org.jetbrains.research.kex.util.loggerFor
 import org.jetbrains.research.kex.asm.transform.TraceInstrumenter
 import org.jetbrains.research.kex.runner.CoverageManager
 import org.jetbrains.research.kex.runner.CoverageRunner
+import org.jetbrains.research.kex.state.transformer.StateOptimizer
 import org.jetbrains.research.kex.util.debug
+import org.jetbrains.research.kex.util.unreachable
 import org.jetbrains.research.kfg.CM
 import org.jetbrains.research.kfg.Package
 import org.jetbrains.research.kfg.analysis.IRVerifier
 import org.jetbrains.research.kfg.analysis.LoopAnalysis
 import org.jetbrains.research.kfg.analysis.LoopSimplifier
+import org.jetbrains.research.kfg.util.viewCfg
 import org.jetbrains.research.kfg.util.writeClass
 import org.jetbrains.research.kfg.util.writeClassesToTarget
 import java.io.File
@@ -84,9 +87,9 @@ fun main(args: Array<String>) {
 
             val psa = PredicateStateAnalysis(method)
             psa.visit()
-            val state = psa.getInstructionState(method.last().last())
+            val state = psa.getInstructionState(method.last().last()) ?: continue
             log.debug(method)
-            log.debug(state)
+            log.debug(StateOptimizer().transform(state))
             log.debug()
         }
     }

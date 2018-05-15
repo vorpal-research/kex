@@ -1,10 +1,11 @@
 package org.jetbrains.research.kex.state.term
 
+import org.jetbrains.research.kex.state.Sealed
 import org.jetbrains.research.kex.state.transformer.Transformer
 import org.jetbrains.research.kfg.type.Type
 import org.jetbrains.research.kfg.util.defaultHashCode
 
-abstract class Term(val name: String, val type: Type, val subterms: Array<Term>) {
+abstract class Term(val name: String, val type: Type, val subterms: Array<Term>) : Sealed {
     companion object {
         val terms = mapOf<String, Class<*>>(
                 "Argument" to ArgumentTerm::class.java,
@@ -34,6 +35,9 @@ abstract class Term(val name: String, val type: Type, val subterms: Array<Term>)
 
         val reverse = terms.map { it.value to it.key }.toMap()
     }
+
+    override fun getSubtypes() = terms
+    override fun getReverseMapping() = reverse
 
     override fun hashCode() = defaultHashCode(name, type, *subterms)
     override fun equals(other: Any?): Boolean {
