@@ -5,5 +5,5 @@ import org.jetbrains.research.kfg.TF
 
 class ConstLongTerm(val value: Long) : Term(value.toString(), TF.getLongType(), arrayOf()) {
     override fun print() = name
-    override fun <T> accept(t: Transformer<T>) = this
+    override fun <T: Transformer<T>> accept(t: Transformer<T>) = this
 }

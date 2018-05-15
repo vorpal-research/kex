@@ -5,5 +5,5 @@ import org.jetbrains.research.kfg.TF
 
 class ConstBoolTerm(val value: Boolean) : Term(value.toString(), TF.getBoolType(), arrayOf()) {
     override fun print() = name
-    override fun <T> accept(t: Transformer<T>) = this
+    override fun <T: Transformer<T>> accept(t: Transformer<T>) = this
 }

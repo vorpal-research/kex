@@ -10,7 +10,7 @@ class CmpTerm(type: Type, val opcode: CmpOpcode, lhv: Term, rhv: Term) : Term(""
     fun getRhv() = subterms[1]
     override fun print() = "${getLhv()} $opcode ${getRhv()}"
 
-    override fun <T> accept(t: Transformer<T>): Term {
+    override fun <T: Transformer<T>> accept(t: Transformer<T>): Term {
         val lhv = t.transform(getLhv())
         val rhv = t.transform(getRhv())
         return when {

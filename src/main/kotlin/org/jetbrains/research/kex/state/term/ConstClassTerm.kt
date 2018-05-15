@@ -6,5 +6,5 @@ import org.jetbrains.research.kfg.ir.Class
 
 class ConstClassTerm(val `class`: Class) : Term("$`class`.class", TF.getRefType(`class`), arrayOf()) {
     override fun print() = name
-    override fun <T> accept(t: Transformer<T>) = this
+    override fun <T: Transformer<T>> accept(t: Transformer<T>) = this
 }

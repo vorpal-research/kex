@@ -14,7 +14,22 @@ sealed class PredicateType(val name: String) {
 }
 
 abstract class Predicate(val type: PredicateType, protected val operands: Array<Term>) {
-    abstract fun <T> accept(t: Transformer<T>): Predicate
+    companion object {
+        val predicates = mapOf<String, Class<*>>(
+                "Call" to CallPredicate::class.java,
+                "Catch" to CatchPredicate::class.java,
+                "DefaultSwitchPredicate" to DefaultSwitchPredicate::class.java,
+                "Equality" to EqualityPredicate::class.java,
+                "MultiNewArray" to MultiNewArrayPredicate::class.java,
+                "NewArray" to NewArrayPredicate::class.java,
+                "New" to NewPredicate::class.java,
+                "Store" to StorePredicate::class.java,
+                "Throw" to ThrowPredicate::class.java
+        )
+        val reverse = predicates.map { it.value to it.key }.toMap()
+    }
+
+    abstract fun <T: Transformer<T>> accept(t: Transformer<T>): Predicate
 
     abstract fun print(): String
     override fun toString() = "$type ${print()}"

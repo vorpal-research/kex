@@ -17,7 +17,7 @@ class MultiNewArrayPredicate(lhv: Term, dimentions: Array<Term>, val elementType
         return sb.toString()
     }
 
-    override fun <T> accept(t: Transformer<T>): Predicate {
+    override fun <T: Transformer<T>> accept(t: Transformer<T>): Predicate {
         val lhv = t.transform(getLhv())
         val dimentions = getDimentions().map { t.transform(it) }.toTypedArray()
         return when {

@@ -5,5 +5,5 @@ import org.jetbrains.research.kfg.ir.Method
 
 class ReturnValueTerm(val method: Method) : Term("<retval>", method.desc.retval, arrayOf()) {
     override fun print() = name
-    override fun <T> accept(t: Transformer<T>) = this
+    override fun <T: Transformer<T>> accept(t: Transformer<T>) = this
 }
