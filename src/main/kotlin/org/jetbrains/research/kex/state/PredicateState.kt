@@ -2,6 +2,11 @@ package org.jetbrains.research.kex.state
 
 import org.jetbrains.research.kex.state.predicate.Predicate
 
+interface Sealed {
+    fun getSubtypes(): Map<String, Class<*>>
+    fun getReverseMapping(): Map<Class<*>, String>
+}
+
 class StateBuilder() {
     var current: PredicateState = BasicState()
 
@@ -29,7 +34,20 @@ class StateBuilder() {
     fun apply() = current
 }
 
-abstract class PredicateState {
+abstract class PredicateState : Sealed {
+    companion object {
+        val states = mapOf<String, Class<*>>(
+                "Basic" to BasicState::class.java,
+                "Chain" to ChainState::class.java,
+                "Choice" to ChoiceState::class.java
+        )
+
+        val reverse = states.map { it.value to it.key }.toMap()
+    }
+
+    override fun getSubtypes() = states
+    override fun getReverseMapping() = reverse
+
     abstract fun print(): String
 
     override fun toString() = print()

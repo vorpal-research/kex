@@ -1,5 +1,6 @@
 package org.jetbrains.research.kex.state.predicate
 
+import org.jetbrains.research.kex.state.Sealed
 import org.jetbrains.research.kex.state.term.Term
 import org.jetbrains.research.kex.state.transformer.Transformer
 import org.jetbrains.research.kfg.util.defaultHashCode
@@ -9,16 +10,16 @@ sealed class PredicateType(val name: String) {
         return "@$name"
     }
 
-    class Path() : PredicateType("P")
-    class State() : PredicateType("S")
+    class Path : PredicateType("P")
+    class State : PredicateType("S")
 }
 
-abstract class Predicate(val type: PredicateType, protected val operands: Array<Term>) {
+abstract class Predicate(val type: PredicateType, protected val operands: Array<Term>) : Sealed {
     companion object {
         val predicates = mapOf<String, Class<*>>(
                 "Call" to CallPredicate::class.java,
                 "Catch" to CatchPredicate::class.java,
-                "DefaultSwitchPredicate" to DefaultSwitchPredicate::class.java,
+                "DefaultSwitch" to DefaultSwitchPredicate::class.java,
                 "Equality" to EqualityPredicate::class.java,
                 "MultiNewArray" to MultiNewArrayPredicate::class.java,
                 "NewArray" to NewArrayPredicate::class.java,
@@ -29,7 +30,10 @@ abstract class Predicate(val type: PredicateType, protected val operands: Array<
         val reverse = predicates.map { it.value to it.key }.toMap()
     }
 
-    abstract fun <T: Transformer<T>> accept(t: Transformer<T>): Predicate
+    override fun getSubtypes() = predicates
+    override fun getReverseMapping() = reverse
+
+    abstract fun <T : Transformer<T>> accept(t: Transformer<T>): Predicate
 
     abstract fun print(): String
     override fun toString() = "$type ${print()}"
