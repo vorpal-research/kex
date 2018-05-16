@@ -69,9 +69,9 @@ object TermFactory : Loggable {
         return ArrayLoadTerm(arrayType.component, arrayRef, index)
     }
 
-    fun getFieldLoad(type: Type, objectRef: Term, fieldName: Term) = FieldLoadTerm(type, objectRef.type, arrayOf(objectRef, fieldName))
+    fun getFieldLoad(type: Type, objectRef: Term, fieldName: Term) = FieldLoadTerm(type, objectRef.type, listOf(objectRef, fieldName))
     fun getFieldLoad(type: Type, classType: Class, fieldName: Term) = getFieldLoad(type, TF.getRefType(classType), fieldName)
-    fun getFieldLoad(type: Type, classType: Type, fieldName: Term) = FieldLoadTerm(type, classType, arrayOf(fieldName))
+    fun getFieldLoad(type: Type, classType: Type, fieldName: Term) = FieldLoadTerm(type, classType, listOf(fieldName))
 
     fun getBinary(lhv: Term, rhv: Term, opcode: BinaryOpcode): Term {
         val merged = mergeTypes(setOf(lhv.type, rhv.type))
@@ -79,8 +79,8 @@ object TermFactory : Loggable {
         return BinaryTerm(merged, opcode, lhv, rhv)
     }
 
-    fun getCall(method: Method, arguments: Array<Term>) = CallTerm(method.desc.retval, method, arguments)
-    fun getCall(method: Method, objectRef: Term, arguments: Array<Term>) = CallTerm(method.desc.retval, method, objectRef, arguments)
+    fun getCall(method: Method, arguments: List<Term>) = CallTerm(method.desc.retval, method, arguments)
+    fun getCall(method: Method, objectRef: Term, arguments: List<Term>) = CallTerm(method.desc.retval, method, objectRef, arguments)
 
     fun getCast(type: Type, operand: Term) = CastTerm(type, operand)
     fun getCmp(lhv: Term, rhv: Term, opcode: CmpOpcode): Term {

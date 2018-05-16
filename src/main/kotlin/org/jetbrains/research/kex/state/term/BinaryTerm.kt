@@ -5,7 +5,7 @@ import org.jetbrains.research.kfg.ir.value.instruction.BinaryOpcode
 import org.jetbrains.research.kfg.type.Type
 import org.jetbrains.research.kfg.util.defaultHashCode
 
-class BinaryTerm(type: Type, val opcode: BinaryOpcode, lhv: Term, rhv: Term) : Term("", type, arrayOf(lhv, rhv)) {
+class BinaryTerm(type: Type, val opcode: BinaryOpcode, lhv: Term, rhv: Term) : Term("", type, listOf(lhv, rhv)) {
     fun getLhv() = subterms[0]
     fun getRhv() = subterms[1]
 

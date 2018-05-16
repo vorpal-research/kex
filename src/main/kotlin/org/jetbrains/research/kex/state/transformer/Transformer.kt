@@ -12,15 +12,15 @@ interface Transformer<T : Transformer<T>> : Loggable {
 
     @Suppress("UNCHECKED_CAST")
     private fun <T : Sealed> delegate(argument: T, type: String): T {
-        val `class` = argument.getReverseMapping().getValue(argument.javaClass)
-        val argType = argument.getSubtypes().getValue(`class`)
-        val transformName = this.javaClass.getDeclaredMethod("transform$`class`", argType)
+        val subtypeName = argument.getReverseMapping().getValue(argument.javaClass)
+        val subtype = argument.getSubtypes().getValue(subtypeName)
+        val transformName = this.javaClass.getDeclaredMethod("transform$subtypeName", subtype)
         val res = transformName.invoke(this, argument) as? T
-                ?: unreachable { log.debug("Unexpected null in transformer invocation ") }
+                ?: unreachable { log.debug("Unexpected null in transformer invocation") }
 
-        val transformClass = this.javaClass.getDeclaredMethod("transform$`class`$type", argType)
+        val transformClass = this.javaClass.getDeclaredMethod("transform$subtypeName$type", subtype)
         return transformClass.invoke(this, res) as? T
-                ?: unreachable { log.debug("Unexpected null in transformer invocation ") }
+                ?: unreachable { log.debug("Unexpected null in transformer invocation") }
     }
 
     ////////////////////////////////////////////////////////////////////
