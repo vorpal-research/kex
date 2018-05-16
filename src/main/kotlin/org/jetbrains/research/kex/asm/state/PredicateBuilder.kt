@@ -63,7 +63,7 @@ class PredicateBuilder(method: Method) : MethodVisitor(method), Loggable {
     }
 
     override fun visitCallInst(inst: CallInst) {
-        val args = inst.getArgs().map { tf.getValueTerm(it) }.toTypedArray()
+        val args = inst.getArgs().map { tf.getValueTerm(it) }
         val lhv = if (inst.type.isVoid()) null else tf.getValueTerm(inst)
         val callTerm = if (inst.isStatic) {
             tf.getCall(inst.method, args)
@@ -148,7 +148,7 @@ class PredicateBuilder(method: Method) : MethodVisitor(method), Loggable {
 
     override fun visitMultiNewArrayInst(inst: MultiNewArrayInst) {
         val lhv = tf.getValueTerm(inst)
-        val dimensions = inst.getDimensions().map { tf.getValueTerm(it) }.toTypedArray()
+        val dimensions = inst.getDimensions().map { tf.getValueTerm(it) }
 
         predicateMap[inst] = pf.getMultipleNewArray(lhv, dimensions)
     }
@@ -194,7 +194,7 @@ class PredicateBuilder(method: Method) : MethodVisitor(method), Loggable {
         }
         terminatorPredicateMap[inst.getDefault() to inst] = pf.getDefaultSwitchPredicate(
                 key,
-                inst.getBranches().keys.map { tf.getValueTerm(it) }.toTypedArray(),
+                inst.getBranches().keys.map { tf.getValueTerm(it) },
                 PredicateType.Path()
         )
     }
@@ -212,7 +212,7 @@ class PredicateBuilder(method: Method) : MethodVisitor(method), Loggable {
         }
         terminatorPredicateMap[inst.getDefault() to inst] = pf.getDefaultSwitchPredicate(
                 key,
-                (min.value..max.value).map { tf.getInt(it) }.toTypedArray(),
+                (min.value..max.value).map { tf.getInt(it) },
                 PredicateType.Path()
         )
     }

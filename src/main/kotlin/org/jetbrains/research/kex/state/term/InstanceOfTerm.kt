@@ -5,7 +5,7 @@ import org.jetbrains.research.kfg.TF
 import org.jetbrains.research.kfg.type.Type
 import org.jetbrains.research.kfg.util.defaultHashCode
 
-class InstanceOfTerm(val checkedType: Type, operand: Term) : Term("", TF.getBoolType(), arrayOf(operand)) {
+class InstanceOfTerm(val checkedType: Type, operand: Term) : Term("", TF.getBoolType(), listOf(operand)) {
     fun getOperand() = subterms[0]
     override fun print() = "${getOperand()} instanceof $checkedType"
 

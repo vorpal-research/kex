@@ -7,12 +7,12 @@ class CallPredicate : Predicate {
     val hasLhv: Boolean
 
     constructor(callTerm: Term, type: PredicateType = PredicateType.State())
-            : super(type, arrayOf(callTerm)) {
+            : super(type, listOf(callTerm)) {
         hasLhv = false
     }
 
     constructor(lhv: Term, callTerm: Term, type: PredicateType = PredicateType.State())
-            : super(type, arrayOf(lhv, callTerm)) {
+            : super(type, listOf(lhv, callTerm)) {
         hasLhv = true
     }
 

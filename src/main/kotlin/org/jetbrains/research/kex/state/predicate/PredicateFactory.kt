@@ -18,7 +18,7 @@ object PredicateFactory : Loggable {
         return NewArrayPredicate(lhv, numElements, arrayType.component, type)
     }
 
-    fun getMultipleNewArray(lhv: Term, dimensions: Array<Term>, type: PredicateType = PredicateType.State()): Predicate {
+    fun getMultipleNewArray(lhv: Term, dimensions: List<Term>, type: PredicateType = PredicateType.State()): Predicate {
         var current = lhv.type
         dimensions.forEach {
             current = (current as? ArrayType
@@ -31,7 +31,7 @@ object PredicateFactory : Loggable {
 
     fun getBoolean(lhv: Term, rhv: Term) = getEquality(lhv, rhv, PredicateType.Path())
 
-    fun getDefaultSwitchPredicate(cond: Term, cases: Array<Term>, type: PredicateType = PredicateType.State())
+    fun getDefaultSwitchPredicate(cond: Term, cases: List<Term>, type: PredicateType = PredicateType.State())
             = DefaultSwitchPredicate(cond, cases, type)
 
     fun getCatch(throwable: Term, type: PredicateType = PredicateType.State()) = CatchPredicate(throwable, type)

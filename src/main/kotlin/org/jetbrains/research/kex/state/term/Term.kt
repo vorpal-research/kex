@@ -2,10 +2,11 @@ package org.jetbrains.research.kex.state.term
 
 import org.jetbrains.research.kex.state.Sealed
 import org.jetbrains.research.kex.state.transformer.Transformer
+import org.jetbrains.research.kex.util.contentEquals
 import org.jetbrains.research.kfg.type.Type
 import org.jetbrains.research.kfg.util.defaultHashCode
 
-abstract class Term(val name: String, val type: Type, val subterms: Array<Term>) : Sealed {
+abstract class Term(val name: String, val type: Type, val subterms: List<Term>) : Sealed {
     companion object {
         val terms = mapOf<String, Class<*>>(
                 "Argument" to ArgumentTerm::class.java,
@@ -36,10 +37,11 @@ abstract class Term(val name: String, val type: Type, val subterms: Array<Term>)
         val reverse = terms.map { it.value to it.key }.toMap()
     }
 
-    override fun getSubtypes() = terms
-    override fun getReverseMapping() = reverse
+    abstract fun print(): String
+    abstract fun <T : Transformer<T>> accept(t: Transformer<T>): Term
 
-    override fun hashCode() = defaultHashCode(name, type, *subterms)
+    override fun toString() = print()
+    override fun hashCode() = defaultHashCode(name, type, subterms)
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (other?.javaClass != this.javaClass) return false
@@ -47,8 +49,6 @@ abstract class Term(val name: String, val type: Type, val subterms: Array<Term>)
         return this.name == other.name && this.type == other.type && this.subterms.contentEquals(other.subterms)
     }
 
-    override fun toString() = print()
-
-    abstract fun print(): String
-    abstract fun <T: Transformer<T>> accept(t: Transformer<T>): Term
+    override fun getSubtypes() = terms
+    override fun getReverseMapping() = reverse
 }

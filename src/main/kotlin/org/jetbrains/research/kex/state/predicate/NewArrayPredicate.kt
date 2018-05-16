@@ -5,7 +5,7 @@ import org.jetbrains.research.kex.state.transformer.Transformer
 import org.jetbrains.research.kfg.type.Type
 
 class NewArrayPredicate(lhv: Term, numElements: Term, val elementType: Type, type: PredicateType = PredicateType.State())
-    : Predicate(type, arrayOf(lhv, numElements)) {
+    : Predicate(type, listOf(lhv, numElements)) {
 
     fun getLhv() = operands[0]
     fun getNumElements() = operands[1]

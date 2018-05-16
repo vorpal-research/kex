@@ -2,11 +2,12 @@ package org.jetbrains.research.kex.state.predicate
 
 import org.jetbrains.research.kex.state.term.Term
 import org.jetbrains.research.kex.state.transformer.Transformer
+import org.jetbrains.research.kex.util.contentEquals
 
-class DefaultSwitchPredicate(cond: Term, cases: Array<Term>, type: PredicateType = PredicateType.State())
-    : Predicate(type, arrayOf(cond).plus(cases)) {
+class DefaultSwitchPredicate(cond: Term, cases: List<Term>, type: PredicateType = PredicateType.State())
+    : Predicate(type, listOf(cond).plus(cases)) {
     fun getCond() = operands[0]
-    fun getCases() = operands.drop(1).toTypedArray()
+    fun getCases() = operands.drop(1)
 
     override fun print(): String {
         val sb = StringBuilder()
@@ -20,7 +21,7 @@ class DefaultSwitchPredicate(cond: Term, cases: Array<Term>, type: PredicateType
 
     override fun <T: Transformer<T>> accept(t: Transformer<T>): Predicate {
         val cond = t.transform(getCond())
-        val cases = getCases().map { t.transform(it) }.toTypedArray()
+        val cases = getCases().map { t.transform(it) }
         return when {
             cond == getCond() && cases.contentEquals(getCases()) -> this
             else -> t.pf.getDefaultSwitchPredicate(cond, cases, type)
