@@ -9,6 +9,7 @@ import org.jetbrains.research.kex.util.loggerFor
 import org.jetbrains.research.kex.asm.transform.TraceInstrumenter
 import org.jetbrains.research.kex.runner.CoverageManager
 import org.jetbrains.research.kex.runner.CoverageRunner
+import org.jetbrains.research.kex.state.transformer.ConstantPropagator
 import org.jetbrains.research.kex.state.transformer.StateOptimizer
 import org.jetbrains.research.kex.util.debug
 import org.jetbrains.research.kex.util.unreachable
@@ -88,8 +89,11 @@ fun main(args: Array<String>) {
             val psa = PredicateStateAnalysis(method)
             psa.visit()
             val state = psa.getInstructionState(method.last().last()) ?: continue
+            val optimized = StateOptimizer().transform(state)
             log.debug(method)
-            log.debug(StateOptimizer().transform(state))
+            log.debug(optimized)
+            log.debug("Constant propagator")
+            log.debug(ConstantPropagator().transform(optimized))
             log.debug()
         }
     }

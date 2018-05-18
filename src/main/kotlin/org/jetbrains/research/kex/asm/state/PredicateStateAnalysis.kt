@@ -24,7 +24,7 @@ class PredicateStateAnalysis(method: Method) : MethodVisitor(method), Loggable {
     fun getInstructionState(inst: Instruction): PredicateState? = instructionStates.getOrElse(inst) {
         val active = mutableSetOf<BasicBlock>()
         val queue = ArrayDeque<BasicBlock>()
-        queue.push(inst.parent ?: unreachable({ log.error(" Trying to get state for instruction without parent") }))
+        queue.push(inst.parent ?: unreachable { log.error("Trying to get state for instruction without parent") })
         while (queue.isNotEmpty()) {
             val current = queue.first
             if (current !in active) {
@@ -44,7 +44,7 @@ class PredicateStateAnalysis(method: Method) : MethodVisitor(method), Loggable {
         predicateBuilder.visit()
         val (order, cycled) = TopologicalSorter(method.basicBlocks.toSet()).sort(method.getEntry())
         domTree.putAll(DominatorTreeBuilder(method.basicBlocks.toSet()).build())
-        assert(cycled.isEmpty(), { log.error("No topological sorting for $method") })
+        assert(cycled.isEmpty()) { log.error("No topological sorting for $method") }
         this.order.addAll(order.reversed())
     }
 
@@ -64,7 +64,7 @@ class PredicateStateAnalysis(method: Method) : MethodVisitor(method), Loggable {
     }
 
     private fun getBlockEntryState(bb: BasicBlock): PredicateState? {
-        if (bb in method.getCatchBlocks()) return unreachable({ log.error("Catch blocks are not supported yet") })
+        if (bb in method.getCatchBlocks()) return unreachable { log.error("Catch blocks are not supported yet") }
 
         val idom = domTree.getIdom(bb) ?: return initialState
 
@@ -82,7 +82,7 @@ class PredicateStateAnalysis(method: Method) : MethodVisitor(method), Loggable {
             }
 
             val sliced = predState.apply().sliceOn(base)
-                    ?: unreachable({ log.error("Cannot slice state on it's predecessor") })
+                    ?: unreachable { log.error("Cannot slice state on it's predecessor") }
             choices.add(sliced)
         }
 
