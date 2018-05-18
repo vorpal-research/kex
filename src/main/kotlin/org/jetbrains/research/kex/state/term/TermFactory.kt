@@ -33,6 +33,16 @@ object TermFactory : Loggable {
         else -> unreachable { log.error("Unknown constant type: $const") }
     }
 
+    fun <T : Number> getConstant(number: T) = when (number) {
+        is Long -> getLong(number)
+        is Int -> getInt(number)
+        is Short -> getShort(number)
+        is Byte -> getByte(number)
+        is Double -> getDouble(number)
+        is Float -> getFloat(number)
+        else -> unreachable("Unknown numeric type")
+    }
+
     fun getTrue() = getBool(true)
     fun getFalse() = getBool(false)
     fun getBool(value: Boolean) = ConstBoolTerm(value)
@@ -65,7 +75,8 @@ object TermFactory : Loggable {
     fun getNegTerm(operand: Term) = NegTerm(operand)
 
     fun getArrayLoad(arrayRef: Term, index: Term): Term {
-        val arrayType = arrayRef.type as? ArrayType ?: unreachable { log.debug("Non-array type of array load term operand") }
+        val arrayType = arrayRef.type as? ArrayType
+                ?: unreachable { log.debug("Non-array type of array load term operand") }
         return ArrayLoadTerm(arrayType.component, arrayRef, index)
     }
 
