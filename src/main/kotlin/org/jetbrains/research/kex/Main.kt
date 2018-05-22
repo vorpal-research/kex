@@ -1,5 +1,9 @@
 package org.jetbrains.research.kex
 
+import com.microsoft.z3.Context
+import com.microsoft.z3.Expr
+import com.microsoft.z3.FuncDecl
+import com.microsoft.z3.Sort
 import org.jetbrains.research.kex.asm.state.PredicateStateAnalysis
 import org.jetbrains.research.kex.asm.transform.LoopDeroller
 import org.jetbrains.research.kex.config.CmdConfig
@@ -9,6 +13,7 @@ import org.jetbrains.research.kex.util.loggerFor
 import org.jetbrains.research.kex.asm.transform.TraceInstrumenter
 import org.jetbrains.research.kex.runner.CoverageManager
 import org.jetbrains.research.kex.runner.CoverageRunner
+import org.jetbrains.research.kex.smt.SMTEngineProxy
 import org.jetbrains.research.kex.state.transformer.ConstantPropagator
 import org.jetbrains.research.kex.state.transformer.StateOptimizer
 import org.jetbrains.research.kex.util.debug
@@ -74,27 +79,33 @@ fun main(args: Array<String>) {
 //        }
 //    }
 
-    for (`class` in CM.getConcreteClasses()) {
-        for ((_, method) in `class`.methods) {
-            val la = LoopAnalysis(method)
-            la.visit()
-            if (la.loops.isNotEmpty()) {
-                val simplifier = LoopSimplifier(method)
-                simplifier.visit()
-                val deroller = LoopDeroller(method)
-                deroller.visit()
-            }
-            IRVerifier(method).visit()
+//    for (`class` in CM.getConcreteClasses()) {
+//        for ((_, method) in `class`.methods) {
+//            val la = LoopAnalysis(method)
+//            la.visit()
+//            if (la.loops.isNotEmpty()) {
+//                val simplifier = LoopSimplifier(method)
+//                simplifier.visit()
+//                val deroller = LoopDeroller(method)
+//                deroller.visit()
+//            }
+//            IRVerifier(method).visit()
+//
+//            val psa = PredicateStateAnalysis(method)
+//            psa.visit()
+//            val state = psa.getInstructionState(method.last().last()) ?: continue
+//            val optimized = StateOptimizer().transform(state)
+//            log.debug(method)
+//            log.debug(optimized)
+//            log.debug("Constant propagator")
+//            log.debug(ConstantPropagator().transform(optimized))
+//            log.debug()
+//        }
+//    }
 
-            val psa = PredicateStateAnalysis(method)
-            psa.visit()
-            val state = psa.getInstructionState(method.last().last()) ?: continue
-            val optimized = StateOptimizer().transform(state)
-            log.debug(method)
-            log.debug(optimized)
-            log.debug("Constant propagator")
-            log.debug(ConstantPropagator().transform(optimized))
-            log.debug()
-        }
-    }
+    val ctx = Context()
+
+    val proxy = SMTEngineProxy<Context, Expr, Sort, FuncDecl>()
+    val bs = proxy.getBoolSort(ctx)
+    log.debug(bs::class.java)
 }

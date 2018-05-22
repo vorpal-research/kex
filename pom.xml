@@ -22,6 +22,8 @@
         <compiler-plugin.version>3.5.1</compiler-plugin.version>
         <random-beans.version>random-beans-parent-3.7.0</random-beans.version>
         <better-parse.version>0.3.2</better-parse.version>
+
+        <z3.version>z3-4.4.1-1558-gf96cfea</z3.version>
     </properties>
 
     <repositories>
@@ -42,6 +44,11 @@
             <artifactId>kotlin-test-junit</artifactId>
             <version>${kotlin.version}</version>
             <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.jetbrains.kotlin</groupId>
+            <artifactId>kotlin-reflect</artifactId>
+            <version>${kotlin.version}</version>
         </dependency>
 
         <dependency>
@@ -78,6 +85,12 @@
             <artifactId>better-parse</artifactId>
             <version>${better-parse.version}</version>
         </dependency>
+
+        <dependency>
+            <groupId>org.sosy-lab</groupId>
+            <artifactId>javasmt-solver-z3</artifactId>
+            <version>${z3.version}</version>
+        </dependency>
     </dependencies>
 
     <build>
@@ -97,13 +110,17 @@
                     <execution>
                         <id>compile</id>
                         <phase>compile</phase>
-                        <goals> <goal>compile</goal> </goals>
+                        <goals>
+                            <goal>compile</goal>
+                        </goals>
                     </execution>
 
                     <execution>
                         <id>test-compile</id>
                         <phase>test-compile</phase>
-                        <goals> <goal>test-compile</goal> </goals>
+                        <goals>
+                            <goal>test-compile</goal>
+                        </goals>
                     </execution>
                 </executions>
             </plugin>
@@ -146,7 +163,9 @@
                     <execution>
                         <id>make-assembly</id>
                         <phase>package</phase>
-                        <goals> <goal>single</goal> </goals>
+                        <goals>
+                            <goal>single</goal>
+                        </goals>
                         <configuration>
                             <archive>
                                 <manifest>
