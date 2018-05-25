@@ -127,10 +127,10 @@ class SMTImpl<Context_t : Any, Expr_t : Any, Sort_t : Any, Function_t : Any> : L
         fun binary(opcode: SMTEngine.Opcode, other: BitVector): ValueExpr {
             val maxsize = max(getBitsize(), other.getBitsize())
             val lhv = engine.sext(ctx, maxsize, expr)
-            val rhv = engine.sext(ctx, maxsize, expr)
+            val rhv = engine.sext(ctx, maxsize, other.expr)
 
             val nexpr = engine.binary(ctx, opcode, lhv, rhv)
-            val nax = spliceAxioms(ctx, lhv, rhv)
+            val nax = spliceAxioms(ctx, axiom, other.axiom)
             return ValueExpr(ctx, nexpr, nax)
         }
 
@@ -158,6 +158,49 @@ class SMTImpl<Context_t : Any, Expr_t : Any, Sort_t : Any, Function_t : Any> : L
         operator fun times(other: BitVector) = mul(other)
         operator fun div(other: BitVector) = divide(other)
         operator fun rem(other: BitVector) = mod(other)
+    }
+
+    inner class Real : ValueExpr {
+        constructor(ctx: Context_t, expr: Expr_t) : super(ctx, expr) {
+            assert(engine.isFP(ctx, expr)) { log.error("FP created from non-fp expr") }
+        }
+
+        constructor(ctx: Context_t, expr: Expr_t, axiom: Expr_t) : super(ctx, expr, axiom) {
+            assert(engine.isFP(ctx, expr)) { log.error("FP created from non-fp expr") }
+        }
+
+        constructor(other: ValueExpr) : super(other) {
+            assert(engine.isFP(ctx, expr)) { log.error("FP created from non-fp expr") }
+        }
+
+        override fun withAxiom(ax: ValueExpr) =
+                Real(ctx, expr, spliceAxioms(ctx, axiom, ax.expr, ax.axiom))
+
+        fun getEBitsize() = engine.fpEBitsize(ctx, getSort())
+        fun getSBitsize() = engine.fpSBitsize(ctx, getSort())
+
+        fun binary(opcode: SMTEngine.Opcode, other: Real): ValueExpr {
+            val nexpr = engine.binary(ctx, opcode, expr, other.expr)
+            val nax = spliceAxioms(ctx, axiom, other.axiom)
+            return ValueExpr(ctx, nexpr, nax)
+        }
+
+        infix fun eq(other: Real) = binary(SMTEngine.Opcode.EQ, other)
+
+        infix fun neq(other: Real) = binary(SMTEngine.Opcode.NEQ, other)
+        infix fun add(other: Real) = binary(SMTEngine.Opcode.ADD, other)
+        infix fun sub(other: Real) = binary(SMTEngine.Opcode.SUB, other)
+        infix fun mul(other: Real) = binary(SMTEngine.Opcode.MUL, other)
+        infix fun divide(other: Real) = binary(SMTEngine.Opcode.DIV, other)
+        infix fun gt(other: Real) = binary(SMTEngine.Opcode.GT, other)
+        infix fun ge(other: Real) = binary(SMTEngine.Opcode.GE, other)
+        infix fun lt(other: Real) = binary(SMTEngine.Opcode.LT, other)
+        infix fun le(other: Real) = binary(SMTEngine.Opcode.LE, other)
+
+        operator fun plus(other: Real) = add(other)
+        operator fun minus(other: Real) = sub(other)
+        operator fun times(other: Real) = mul(other)
+        operator fun div(other: Real) = divide(other)
     }
 
     fun ValueExpr.toBool(): Bool {

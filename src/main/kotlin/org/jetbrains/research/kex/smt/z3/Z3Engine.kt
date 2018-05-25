@@ -9,12 +9,19 @@ object Z3Engine : SMTEngine<Context, Expr, Sort, FuncDecl>() {
     override fun getSort(ctx: Context, expr: Expr) = expr.sort
     override fun getBoolSort(ctx: Context): Sort = ctx.boolSort
     override fun getBVSort(ctx: Context, size: Int): Sort = ctx.mkBitVecSort(size)
+    override fun getFPSort(ctx: Context, esize: Int, ssize: Int): Sort = ctx.mkFPSort(esize, ssize)
+    override fun getFloatSort(ctx: Context): Sort = ctx.mkFPSortSingle()
+    override fun getDoubleSort(ctx: Context): Sort = ctx.mkFPSortDouble()
     override fun getArraySort(ctx: Context, domain: Sort, range: Sort): Sort = ctx.mkArraySort(domain, range)
 
     override fun isBool(ctx: Context, expr: Expr) = expr.isBool
     override fun isBV(ctx: Context, expr: Expr) = expr.isBV
+    override fun isFP(ctx: Context, expr: Expr): Boolean = expr.sort is FPSort
     override fun isArray(ctx: Context, expr: Expr) = expr.isArray
     override fun bvBitsize(ctx: Context, sort: Sort) = sort.castTo<BitVecSort>().size
+    override fun fpEBitsize(ctx: Context, sort: Sort): Int = sort.castTo<FPSort>().eBits
+    override fun fpSBitsize(ctx: Context, sort: Sort): Int = sort.castTo<FPSort>().sBits
+
 
     override fun hash(ctx: Context, expr: Expr) = expr.hashCode()
     override fun name(ctx: Context, expr: Expr) = expr.toString()
@@ -29,6 +36,9 @@ object Z3Engine : SMTEngine<Context, Expr, Sort, FuncDecl>() {
     override fun makeNumericConst(ctx: Context, value: Int) = ctx.mkNumeral(value, getBVSort(ctx, intWidth))
     override fun makeNumericConst(ctx: Context, value: Long) = ctx.mkNumeral(value, getBVSort(ctx, longWidth))
     override fun makeNumericConst(ctx: Context, sort: Sort, value: Long): Expr = ctx.mkNumeral(value, sort)
+    override fun makeFPConst(ctx: Context, value: Int): Expr = ctx.mkFPNumeral(value, getDoubleSort(ctx).castTo())
+    override fun makeFPConst(ctx: Context, value: Float): Expr = ctx.mkFPNumeral(value, getFloatSort(ctx).castTo())
+    override fun makeFPConst(ctx: Context, value: Double): Expr = ctx.mkFPNumeral(value, getDoubleSort(ctx).castTo())
 
     override fun makeArrayConst(ctx: Context, sort: Sort, expr: Expr) = TODO()
 
@@ -46,15 +56,47 @@ object Z3Engine : SMTEngine<Context, Expr, Sort, FuncDecl>() {
     override fun binary(ctx: Context, opcode: Opcode, lhv: Expr, rhv: Expr) = when (opcode) {
         Opcode.EQ -> eq(ctx, lhv, rhv)
         Opcode.NEQ -> neq(ctx, lhv, rhv)
-        Opcode.ADD -> add(ctx, lhv.castTo(), rhv.castTo())
-        Opcode.SUB -> sub(ctx, lhv.castTo(), rhv.castTo())
-        Opcode.MUL -> mul(ctx, lhv.castTo(), rhv.castTo())
-        Opcode.DIV -> sdiv(ctx, lhv.castTo(), rhv.castTo())
+        Opcode.ADD -> when {
+            (lhv is BitVecExpr) and (rhv is BitVecExpr) -> add(ctx, lhv.castTo<BitVecExpr>(), rhv.castTo())
+            (lhv is FPExpr) and (rhv is FPExpr) -> add(ctx, lhv.castTo<FPExpr>(), rhv.castTo())
+            else -> unreachable { log.error("Unexpected and arguments: $lhv and $rhv") }
+        }
+        Opcode.SUB -> when {
+            (lhv is BitVecExpr) and (rhv is BitVecExpr) -> sub(ctx, lhv.castTo<BitVecExpr>(), rhv.castTo())
+            (lhv is FPExpr) and (rhv is FPExpr) -> sub(ctx, lhv.castTo<FPExpr>(), rhv.castTo())
+            else -> unreachable { log.error("Unexpected and arguments: $lhv and $rhv") }
+        }
+        Opcode.MUL -> when {
+            (lhv is BitVecExpr) and (rhv is BitVecExpr) -> mul(ctx, lhv.castTo<BitVecExpr>(), rhv.castTo())
+            (lhv is FPExpr) and (rhv is FPExpr) -> mul(ctx, lhv.castTo<FPExpr>(), rhv.castTo())
+            else -> unreachable { log.error("Unexpected and arguments: $lhv and $rhv") }
+        }
+        Opcode.DIV -> when {
+            (lhv is BitVecExpr) and (rhv is BitVecExpr) -> sdiv(ctx, lhv.castTo<BitVecExpr>(), rhv.castTo())
+            (lhv is FPExpr) and (rhv is FPExpr) -> sdiv(ctx, lhv.castTo<FPExpr>(), rhv.castTo())
+            else -> unreachable { log.error("Unexpected and arguments: $lhv and $rhv") }
+        }
         Opcode.MOD -> smod(ctx, lhv.castTo(), rhv.castTo())
-        Opcode.GT -> gt(ctx, lhv.castTo(), rhv.castTo())
-        Opcode.GE -> ge(ctx, lhv.castTo(), rhv.castTo())
-        Opcode.LT -> lt(ctx, lhv.castTo(), rhv.castTo())
-        Opcode.LE -> le(ctx, lhv.castTo(), rhv.castTo())
+        Opcode.GT -> when {
+            (lhv is BitVecExpr) and (rhv is BitVecExpr) -> gt(ctx, lhv.castTo<BitVecExpr>(), rhv.castTo())
+            (lhv is FPExpr) and (rhv is FPExpr) -> gt(ctx, lhv.castTo<FPExpr>(), rhv.castTo())
+            else -> unreachable { log.error("Unexpected and arguments: $lhv and $rhv") }
+        }
+        Opcode.GE -> when {
+            (lhv is BitVecExpr) and (rhv is BitVecExpr) -> ge(ctx, lhv.castTo<BitVecExpr>(), rhv.castTo())
+            (lhv is FPExpr) and (rhv is FPExpr) -> ge(ctx, lhv.castTo<FPExpr>(), rhv.castTo())
+            else -> unreachable { log.error("Unexpected and arguments: $lhv and $rhv") }
+        }
+        Opcode.LT -> when {
+            (lhv is BitVecExpr) and (rhv is BitVecExpr) -> lt(ctx, lhv.castTo<BitVecExpr>(), rhv.castTo())
+            (lhv is FPExpr) and (rhv is FPExpr) -> lt(ctx, lhv.castTo<FPExpr>(), rhv.castTo())
+            else -> unreachable { log.error("Unexpected and arguments: $lhv and $rhv") }
+        }
+        Opcode.LE -> when {
+            (lhv is BitVecExpr) and (rhv is BitVecExpr) -> le(ctx, lhv.castTo<BitVecExpr>(), rhv.castTo())
+            (lhv is FPExpr) and (rhv is FPExpr) -> le(ctx, lhv.castTo<FPExpr>(), rhv.castTo())
+            else -> unreachable { log.error("Unexpected and arguments: $lhv and $rhv") }
+        }
         Opcode.SHL -> shl(ctx, lhv.castTo(), rhv.castTo())
         Opcode.SHR -> lshr(ctx, lhv.castTo(), rhv.castTo())
         Opcode.ASHR -> ashr(ctx, lhv.castTo(), rhv.castTo())
@@ -79,20 +121,39 @@ object Z3Engine : SMTEngine<Context, Expr, Sort, FuncDecl>() {
 
     private fun eq(ctx: Context, lhv: Expr, rhv: Expr) = ctx.mkEq(lhv, rhv)
     private fun neq(ctx: Context, lhv: Expr, rhv: Expr) = ctx.mkNot(eq(ctx, lhv, rhv))
+
     private fun add(ctx: Context, lhv: BitVecExpr, rhv: BitVecExpr) = ctx.mkBVAdd(lhv, rhv)
+    private fun add(ctx: Context, lhv: FPExpr, rhv: FPExpr) = ctx.mkFPAdd(ctx.mkFPRNA(), lhv, rhv)
+
     private fun sub(ctx: Context, lhv: BitVecExpr, rhv: BitVecExpr) = ctx.mkBVSub(lhv, rhv)
+    private fun sub(ctx: Context, lhv: FPExpr, rhv: FPExpr) = ctx.mkFPSub(ctx.mkFPRNA(), lhv, rhv)
+
     private fun mul(ctx: Context, lhv: BitVecExpr, rhv: BitVecExpr) = ctx.mkBVMul(lhv, rhv)
+    private fun mul(ctx: Context, lhv: FPExpr, rhv: FPExpr) = ctx.mkFPMul(ctx.mkFPRNA(), lhv, rhv)
+
     private fun sdiv(ctx: Context, lhv: BitVecExpr, rhv: BitVecExpr) = ctx.mkBVSDiv(lhv, rhv)
+    private fun sdiv(ctx: Context, lhv: FPExpr, rhv: FPExpr) = ctx.mkFPDiv(ctx.mkFPRNA(), lhv, rhv)
+
     private fun udiv(ctx: Context, lhv: BitVecExpr, rhv: BitVecExpr) = ctx.mkBVUDiv(lhv, rhv)
     private fun smod(ctx: Context, lhv: BitVecExpr, rhv: BitVecExpr) = ctx.mkBVSMod(lhv, rhv)
     private fun umod(ctx: Context, lhv: BitVecExpr, rhv: BitVecExpr) = ctx.mkBVURem(lhv, rhv)
+
     private fun gt(ctx: Context, lhv: BitVecExpr, rhv: BitVecExpr) = ctx.mkBVSGT(lhv, rhv)
+    private fun gt(ctx: Context, lhv: FPExpr, rhv: FPExpr) = ctx.mkFPGt(lhv, rhv)
+
     private fun ge(ctx: Context, lhv: BitVecExpr, rhv: BitVecExpr) = ctx.mkBVSGE(lhv, rhv)
+    private fun ge(ctx: Context, lhv: FPExpr, rhv: FPExpr) = ctx.mkFPGEq(lhv, rhv)
+
     private fun lt(ctx: Context, lhv: BitVecExpr, rhv: BitVecExpr) = ctx.mkBVSLT(lhv, rhv)
+    private fun lt(ctx: Context, lhv: FPExpr, rhv: FPExpr) = ctx.mkFPLt(lhv, rhv)
+
     private fun le(ctx: Context, lhv: BitVecExpr, rhv: BitVecExpr) = ctx.mkBVSLE(lhv, rhv)
+    private fun le(ctx: Context, lhv: FPExpr, rhv: FPExpr) = ctx.mkFPLEq(lhv, rhv)
+
     private fun shl(ctx: Context, lhv: BitVecExpr, rhv: BitVecExpr) = ctx.mkBVSHL(lhv, rhv)
     private fun lshr(ctx: Context, lhv: BitVecExpr, rhv: BitVecExpr) = ctx.mkBVLSHR(lhv, rhv)
     private fun ashr(ctx: Context, lhv: BitVecExpr, rhv: BitVecExpr) = ctx.mkBVASHR(lhv, rhv)
+
     private fun and(ctx: Context, lhv: BoolExpr, rhv: BoolExpr) = ctx.mkAnd(lhv, rhv)
     private fun or(ctx: Context, lhv: BoolExpr, rhv: BoolExpr) = ctx.mkOr(lhv, rhv)
     private fun xor(ctx: Context, lhv: BoolExpr, rhv: BoolExpr) = ctx.mkXor(lhv, rhv)
