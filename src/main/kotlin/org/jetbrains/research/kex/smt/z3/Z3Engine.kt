@@ -14,14 +14,37 @@ object Z3Engine : SMTEngine<Context, Expr, Sort, FuncDecl>() {
     override fun getDoubleSort(ctx: Context): Sort = ctx.mkFPSortDouble()
     override fun getArraySort(ctx: Context, domain: Sort, range: Sort): Sort = ctx.mkArraySort(domain, range)
 
-    override fun isBool(ctx: Context, expr: Expr) = expr.isBool
-    override fun isBV(ctx: Context, expr: Expr) = expr.isBV
-    override fun isFP(ctx: Context, expr: Expr): Boolean = expr.sort is FPSort
-    override fun isArray(ctx: Context, expr: Expr) = expr.isArray
+    override fun isBoolSort(ctx: Context, sort: Sort) = sort is BoolSort
+    override fun isBVSort(ctx: Context, sort: Sort) = sort is BitVecSort
+    override fun isFPSort(ctx: Context, sort: Sort): Boolean = sort is FPSort
+    override fun isArraySort(ctx: Context, sort: Sort) = sort is ArraySort
     override fun bvBitsize(ctx: Context, sort: Sort) = sort.castTo<BitVecSort>().size
     override fun fpEBitsize(ctx: Context, sort: Sort): Int = sort.castTo<FPSort>().eBits
     override fun fpSBitsize(ctx: Context, sort: Sort): Int = sort.castTo<FPSort>().sBits
 
+    override fun bool2bv(ctx: Context, expr: Expr, sort: Sort) =
+            ite(ctx, expr, makeNumericConst(ctx, sort, 1), makeNumericConst(ctx, sort, 0))
+
+    override fun bv2bool(ctx: Context, expr: Expr) =
+            binary(ctx, SMTEngine.Opcode.NEQ, expr, makeNumericConst(ctx, getSort(ctx, expr), 0))
+
+    override fun bv2bv(ctx: Context, expr: Expr, sort: Sort): Expr {
+        val curSize = getSort(ctx, expr).castTo<BitVecSort>().size
+        val castSize = sort.castTo<BitVecSort>().size
+        return when {
+            curSize == castSize -> expr
+            curSize > castSize -> sext(ctx, castSize, expr)
+            else -> unreachable { log.error("Unable to shrunk BV from $curSize to $castSize bits") }
+        }
+    }
+
+    override fun bv2float(ctx: Context, expr: Expr, sort: Sort) = ctx.mkFPToFP(expr.castTo(), sort.castTo())
+
+    override fun float2bv(ctx: Context, expr: Expr, sort: Sort) =
+            ctx.mkFPToBV(ctx.mkFPRTZ(), expr.castTo(), sort.castTo<BitVecSort>().size, true)
+
+    override fun float2float(ctx: Context, expr: Expr, sort: Sort) =
+            ctx.mkFPToFP(sort.castTo(), ctx.mkFPRTZ(), expr.castTo())
 
     override fun hash(ctx: Context, expr: Expr) = expr.hashCode()
     override fun name(ctx: Context, expr: Expr) = expr.toString()
@@ -117,6 +140,7 @@ object Z3Engine : SMTEngine<Context, Expr, Sort, FuncDecl>() {
         }
         Opcode.IMPLIES -> implies(ctx, lhv.castTo(), rhv.castTo())
         Opcode.IFF -> iff(ctx, lhv.castTo(), rhv.castTo())
+        Opcode.CONCAT -> concat(ctx, lhv.castTo(), rhv.castTo())
     }
 
     private fun eq(ctx: Context, lhv: Expr, rhv: Expr) = ctx.mkEq(lhv, rhv)
@@ -162,6 +186,7 @@ object Z3Engine : SMTEngine<Context, Expr, Sort, FuncDecl>() {
     private fun xor(ctx: Context, lhv: BitVecExpr, rhv: BitVecExpr) = ctx.mkBVXOR(lhv, rhv)
     private fun implies(ctx: Context, lhv: BoolExpr, rhv: BoolExpr) = ctx.mkImplies(lhv, rhv)
     private fun iff(ctx: Context, lhv: BoolExpr, rhv: BoolExpr) = ctx.mkIff(lhv, rhv)
+    private fun concat(ctx: Context, lhv: BitVecExpr, rhv: BitVecExpr) = ctx.mkConcat(lhv, rhv)
 
     override fun conjunction(ctx: Context, vararg exprs: Expr): Expr {
         val boolExprs = exprs.map { it.castTo<BoolExpr>() }.toTypedArray()
@@ -169,4 +194,12 @@ object Z3Engine : SMTEngine<Context, Expr, Sort, FuncDecl>() {
     }
 
     override fun sext(ctx: Context, n: Int, expr: Expr) = ctx.mkSignExt(n, expr.castTo())
+    override fun zext(ctx: Context, n: Int, expr: Expr) = ctx.mkZeroExt(n, expr.castTo())
+
+    override fun load(ctx: Context, array: Expr, index: Expr): Expr = ctx.mkSelect(array.castTo(), index)
+    override fun store(ctx: Context, array: Expr, index: Expr, value: Expr): Expr = ctx.mkStore(array.castTo(), index, value)
+
+    override fun ite(ctx: Context, cond: Expr, lhv: Expr, rhv: Expr): Expr = ctx.mkITE(cond.castTo(), lhv, rhv)
+
+    override fun extract(ctx: Context, bv: Expr, high: Int, low: Int): Expr = ctx.mkExtract(high, low, bv.castTo())
 }

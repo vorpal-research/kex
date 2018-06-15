@@ -1,9 +1,12 @@
 package org.jetbrains.research.kex.smt
 
 import org.jetbrains.research.kex.util.Loggable
+import org.jetbrains.research.kex.util.castTo
+import org.jetbrains.research.kex.util.uncheckedCastTo
 import org.jetbrains.research.kex.util.unreachable
 import org.jetbrains.research.kfg.util.defaultHashCode
 import kotlin.math.max
+import kotlin.math.min
 
 class SMTImpl<Context_t : Any, Expr_t : Any, Sort_t : Any, Function_t : Any> : Loggable {
     val engine = SMTEngineProxy<Context_t, Expr_t, Sort_t, Function_t>()
@@ -106,7 +109,7 @@ class SMTImpl<Context_t : Any, Expr_t : Any, Sort_t : Any, Function_t : Any> : L
                 Bool(ctx, engine.binary(ctx, SMTEngine.Opcode.IFF, expr, other.expr), spliceAxioms(ctx, axiom, other.axiom))
     }
 
-    inner class BitVector : ValueExpr {
+    open inner class BitVector : ValueExpr {
         constructor(ctx: Context_t, expr: Expr_t) : super(ctx, expr) {
             assert(engine.isBV(ctx, expr)) { log.error("BV created from non-bv expr") }
         }
@@ -123,8 +126,10 @@ class SMTImpl<Context_t : Any, Expr_t : Any, Sort_t : Any, Function_t : Any> : L
                 BitVector(ctx, expr, spliceAxioms(ctx, axiom, ax.expr, ax.axiom))
 
         fun getBitsize() = engine.bvBitsize(ctx, getSort())
+        fun extract(high: Int, low: Int) =
+                BitVector(ctx, engine.extract(ctx, expr, high, low), axiom)
 
-        fun binary(opcode: SMTEngine.Opcode, other: BitVector): ValueExpr {
+        open fun binary(opcode: SMTEngine.Opcode, other: BitVector): ValueExpr {
             val maxsize = max(getBitsize(), other.getBitsize())
             val lhv = engine.sext(ctx, maxsize, expr)
             val rhv = engine.sext(ctx, maxsize, other.expr)
@@ -138,9 +143,13 @@ class SMTImpl<Context_t : Any, Expr_t : Any, Sort_t : Any, Function_t : Any> : L
 
         infix fun neq(other: BitVector) = binary(SMTEngine.Opcode.NEQ, other)
         infix fun add(other: BitVector) = binary(SMTEngine.Opcode.ADD, other)
+        infix fun add(other: Int) = binary(SMTEngine.Opcode.ADD, makeBV(ctx, getBitsize(), other.toLong()))
         infix fun sub(other: BitVector) = binary(SMTEngine.Opcode.SUB, other)
+        infix fun sub(other: Int) = binary(SMTEngine.Opcode.SUB, makeBV(ctx, getBitsize(), other.toLong()))
         infix fun mul(other: BitVector) = binary(SMTEngine.Opcode.MUL, other)
+        infix fun mul(other: Int) = binary(SMTEngine.Opcode.MUL, makeBV(ctx, getBitsize(), other.toLong()))
         infix fun divide(other: BitVector) = binary(SMTEngine.Opcode.DIV, other)
+        infix fun divide(other: Int) = binary(SMTEngine.Opcode.DIV, makeBV(ctx, getBitsize(), other.toLong()))
         infix fun mod(other: BitVector) = binary(SMTEngine.Opcode.MOD, other)
         infix fun gt(other: BitVector) = binary(SMTEngine.Opcode.GT, other)
         infix fun ge(other: BitVector) = binary(SMTEngine.Opcode.GE, other)
@@ -154,10 +163,64 @@ class SMTImpl<Context_t : Any, Expr_t : Any, Sort_t : Any, Function_t : Any> : L
         infix fun xor(other: BitVector) = binary(SMTEngine.Opcode.XOR, other)
 
         operator fun plus(other: BitVector) = add(other)
+        operator fun plus(other: Int) = add(other)
         operator fun minus(other: BitVector) = sub(other)
+        operator fun minus(other: Int) = sub(other)
         operator fun times(other: BitVector) = mul(other)
+        operator fun times(other: Int) = mul(other)
         operator fun div(other: BitVector) = divide(other)
+        operator fun div(other: Int) = divide(other)
         operator fun rem(other: BitVector) = mod(other)
+    }
+
+    inner class BV64 : BitVector {
+        constructor(ctx: Context_t, expr: Expr_t) : super(ctx, expr) {
+            assert(engine.isBV(ctx, expr)) { log.error("BV created from non-bv expr") }
+            assert(engine.bvBitsize(ctx, getSort()) == 64) { log.error("BV64 created from non-bv64 expr") }
+        }
+
+        constructor(ctx: Context_t, expr: Expr_t, axiom: Expr_t) : super(ctx, expr, axiom) {
+            assert(engine.isBV(ctx, expr)) { log.error("BV created from non-bv expr") }
+            assert(engine.bvBitsize(ctx, getSort()) == 64) { log.error("BV64 created from non-bv64 expr") }
+        }
+
+        constructor(other: ValueExpr) : super(other) {
+            assert(engine.isBV(ctx, expr)) { log.error("BV created from non-bv expr") }
+            assert(engine.bvBitsize(ctx, getSort()) == 64) { log.error("BV64 created from non-bv64 expr") }
+        }
+
+        override fun binary(opcode: SMTEngine.Opcode, other: BitVector): ValueExpr {
+            return if (other is BV64) {
+                ValueExpr(ctx,
+                        engine.binary(ctx, opcode, expr, other.expr),
+                        spliceAxioms(ctx, axiom, other.axiom))
+            } else super.binary(opcode, other)
+        }
+    }
+
+    inner class BV32 : BitVector {
+        constructor(ctx: Context_t, expr: Expr_t) : super(ctx, expr) {
+            assert(engine.isBV(ctx, expr)) { log.error("BV created from non-bv expr") }
+            assert(engine.bvBitsize(ctx, getSort()) == 32) { log.error("BV32 created from non-bv32 expr") }
+        }
+
+        constructor(ctx: Context_t, expr: Expr_t, axiom: Expr_t) : super(ctx, expr, axiom) {
+            assert(engine.isBV(ctx, expr)) { log.error("BV created from non-bv expr") }
+            assert(engine.bvBitsize(ctx, getSort()) == 32) { log.error("BV32 created from non-bv32 expr") }
+        }
+
+        constructor(other: ValueExpr) : super(other) {
+            assert(engine.isBV(ctx, expr)) { log.error("BV created from non-bv expr") }
+            assert(engine.bvBitsize(ctx, getSort()) == 32) { log.error("BV32 created from non-bv32 expr") }
+        }
+
+        override fun binary(opcode: SMTEngine.Opcode, other: BitVector): ValueExpr {
+            return if (other is BV32) {
+                ValueExpr(ctx,
+                        engine.binary(ctx, opcode, expr, other.expr),
+                        spliceAxioms(ctx, axiom, other.axiom))
+            } else super.binary(opcode, other)
+        }
     }
 
     inner class Real : ValueExpr {
@@ -203,23 +266,96 @@ class SMTImpl<Context_t : Any, Expr_t : Any, Sort_t : Any, Function_t : Any> : L
         operator fun div(other: Real) = divide(other)
     }
 
+    inner class SMTArray<Element : ValueExpr, Index : ValueExpr> : ValueExpr {
+        constructor(ctx: Context_t, expr: Expr_t) : super(ctx, expr) {
+            assert(engine.isArray(ctx, expr)) { log.error("Array created from non-array expr") }
+        }
+
+        constructor(ctx: Context_t, expr: Expr_t, axiom: Expr_t) : super(ctx, expr, axiom) {
+            assert(engine.isArray(ctx, expr)) { log.error("Array created from non-array expr") }
+        }
+
+        constructor(other: ValueExpr) : super(other) {
+            assert(engine.isArray(ctx, expr)) { log.error("Array created from non-array expr") }
+        }
+
+        fun load(index: Index) =
+                ValueExpr(ctx, engine.load(ctx, expr, index.expr))
+
+        fun store(index: Index, value: Element): SMTArray<Element, Index> =
+                SMTArray(ctx, engine.store(ctx, expr, index.expr, value.expr))
+
+        fun store(cases: List<Pair<Index, Element>>): SMTArray<Element, Index> {
+            val base: Expr_t = cases.fold(expr) { expr, pair -> engine.store(ctx, expr, pair.first.expr, pair.second.expr) }
+            return SMTArray(ctx, base)
+        }
+    }
+
+    inner class Memory<in Index : BitVector, Byte : BitVector>(val byteSize: Int, val inner: SMTArray<Byte, Index>) {
+        val ctx = inner.ctx
+
+        fun load(index: Index, elementSize: Int): BitVector {
+            val bytes = (0..((elementSize - 1) / byteSize)).map {
+                inner.load((index + it).uncheckedCastTo())
+            }
+            var expr = bytes.first().expr
+            var axiom = bytes.first().axiom
+            bytes.drop(1).forEach {
+                expr = engine.binary(ctx, SMTEngine.Opcode.CONCAT, expr, it.expr)
+                axiom = spliceAxioms(ctx, axiom, it.axiom)
+            }
+            return BitVector(ctx, expr, axiom)
+        }
+
+        fun store(index: Index, element: BitVector): Memory<Index, Byte> {
+            val elementSize = element.getBitsize()
+            var start = 0
+            val cases = mutableListOf<Pair<Index, Byte>>()
+            while (start < elementSize) {
+                val hi = min(start + byteSize - 1, elementSize - 1)
+                cases.add((index + start).uncheckedCastTo<Index>() to element.extract(hi, start).uncheckedCastTo())
+                start += byteSize
+            }
+            return Memory(byteSize, inner.store(cases))
+        }
+
+        fun store(index: Index, element: ValueExpr) = store(index, element.castTo())
+    }
+
+    fun ValueExpr.convert(sort: Sort_t) = when {
+        engine.isBoolSort(ctx, sort) -> toBool()
+        engine.isBVSort(ctx, sort) -> toBV(sort)
+        engine.isFPSort(ctx, sort) -> toFloat(sort)
+        else -> unreachable { log.error("Trying to convert value to unknown sort") }
+    }
+
     fun ValueExpr.toBool(): Bool {
         val newExpr = when {
             engine.isBool(ctx, expr) -> expr
-            engine.isBV(ctx, expr) -> engine.binary(ctx, SMTEngine.Opcode.NEQ, expr, engine.makeNumericConst(ctx, getSort(), 0))
+            engine.isBV(ctx, expr) -> engine.bv2bool(ctx, expr)
             else -> unreachable { log.debug("Unexpected SMT expr type in cast") }
         }
         return Bool(ctx, newExpr, axiom)
     }
 
-    fun ValueExpr.toBV(): BitVector {
+    fun ValueExpr.toBV(sort: Sort_t): BitVector {
         val newExpr = when {
-            engine.isBool(ctx, expr) -> TODO()
-            engine.isBV(ctx, expr) -> expr
+            engine.isBool(ctx, expr) -> engine.bool2bv(ctx, expr, sort)
+            engine.isBV(ctx, expr) -> engine.bv2bv(ctx, expr, sort)
             else -> unreachable { log.debug("Unexpected SMT expr type in cast") }
         }
         return BitVector(ctx, newExpr, axiom)
     }
+
+    fun ValueExpr.toFloat(sort: Sort_t): BitVector {
+        val newExpr = when {
+            engine.isBV(ctx, expr) -> engine.bv2float(ctx, expr, sort)
+            engine.isFP(ctx, expr) -> engine.float2float(ctx, expr, sort)
+            else -> unreachable { log.debug("Unexpected SMT expr type in cast") }
+        }
+        return BitVector(ctx, newExpr, axiom)
+    }
+
 
     fun makeBool(ctx: Context_t, value: Boolean) =
             Bool(ctx, engine.makeBoolConst(ctx, value))
@@ -235,6 +371,9 @@ class SMTImpl<Context_t : Any, Expr_t : Any, Sort_t : Any, Function_t : Any> : L
 
     fun makeBV(ctx: Context_t, value: Long) =
             BitVector(ctx, engine.makeNumericConst(ctx, value))
+
+    fun makeBV(ctx: Context_t, size: Int, value: Long) =
+            BitVector(ctx, engine.makeNumericConst(ctx, engine.getBVSort(ctx, size), value))
 
     fun makeBVVar(ctx: Context_t, name: String, bitsize: Int) =
             BitVector(ctx, engine.makeVar(ctx, engine.getBVSort(ctx, bitsize), name))

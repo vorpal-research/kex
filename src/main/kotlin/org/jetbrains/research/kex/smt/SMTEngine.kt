@@ -35,7 +35,8 @@ abstract class SMTEngine<in Context_t : Any, Expr_t : Any, Sort_t : Any, Functio
         OR,
         XOR,
         IMPLIES,
-        IFF
+        IFF,
+        CONCAT
     }
 
     abstract fun getSort(ctx: Context_t, expr: Expr_t): Sort_t
@@ -45,13 +46,25 @@ abstract class SMTEngine<in Context_t : Any, Expr_t : Any, Sort_t : Any, Functio
     abstract fun getFloatSort(ctx: Context_t): Sort_t
     abstract fun getDoubleSort(ctx: Context_t): Sort_t
     abstract fun getArraySort(ctx: Context_t, domain: Sort_t, range: Sort_t): Sort_t
-    abstract fun isBool(ctx: Context_t, expr: Expr_t): Boolean
-    abstract fun isBV(ctx: Context_t, expr: Expr_t): Boolean
-    abstract fun isFP(ctx: Context_t, expr: Expr_t): Boolean
-    abstract fun isArray(ctx: Context_t, expr: Expr_t): Boolean
+    abstract fun isBoolSort(ctx: Context_t, sort: Sort_t): Boolean
+    abstract fun isBVSort(ctx: Context_t, sort: Sort_t): Boolean
+    abstract fun isFPSort(ctx: Context_t, sort: Sort_t): Boolean
+    abstract fun isArraySort(ctx: Context_t, sort: Sort_t): Boolean
+
+    fun isBool(ctx: Context_t, expr: Expr_t) = isBoolSort(ctx, getSort(ctx, expr))
+    fun isBV(ctx: Context_t, expr: Expr_t) = isBVSort(ctx, getSort(ctx, expr))
+    fun isFP(ctx: Context_t, expr: Expr_t) = isFPSort(ctx, getSort(ctx, expr))
+    fun isArray(ctx: Context_t, expr: Expr_t) = isArraySort(ctx, getSort(ctx, expr))
     abstract fun bvBitsize(ctx: Context_t, sort: Sort_t): Int
     abstract fun fpEBitsize(ctx: Context_t, sort: Sort_t): Int
     abstract fun fpSBitsize(ctx: Context_t, sort: Sort_t): Int
+
+    abstract fun bool2bv(ctx: Context_t, expr: Expr_t, sort: Sort_t): Expr_t
+    abstract fun bv2bool(ctx: Context_t, expr: Expr_t): Expr_t
+    abstract fun bv2bv(ctx: Context_t, expr: Expr_t, sort: Sort_t): Expr_t
+    abstract fun bv2float(ctx: Context_t, expr: Expr_t, sort: Sort_t): Expr_t
+    abstract fun float2bv(ctx: Context_t, expr: Expr_t, sort: Sort_t): Expr_t
+    abstract fun float2float(ctx: Context_t, expr: Expr_t, sort: Sort_t): Expr_t
 
     abstract fun hash(ctx: Context_t, expr: Expr_t): Int
     abstract fun name(ctx: Context_t, expr: Expr_t): String
@@ -80,7 +93,15 @@ abstract class SMTEngine<in Context_t : Any, Expr_t : Any, Sort_t : Any, Functio
 
     abstract fun conjunction(ctx: Context_t, vararg exprs: Expr_t): Expr_t
 
+    abstract fun zext(ctx: Context_t, n: Int, expr: Expr_t): Expr_t
     abstract fun sext(ctx: Context_t, n: Int, expr: Expr_t): Expr_t
+
+    abstract fun load(ctx: Context_t, array: Expr_t, index: Expr_t): Expr_t
+    abstract fun store(ctx: Context_t, array: Expr_t, index: Expr_t, value: Expr_t): Expr_t
+
+    abstract fun ite(ctx: Context_t, cond: Expr_t, lhv: Expr_t, rhv: Expr_t): Expr_t
+
+    abstract fun extract(ctx: Context_t, bv: Expr_t, high: Int, low: Int): Expr_t
 }
 
 class SMTEngineProxy<in Context_t : Any, Expr_t : Any, Sort_t : Any, Function_t : Any>
@@ -108,7 +129,7 @@ class SMTEngineProxy<in Context_t : Any, Expr_t : Any, Sort_t : Any, Function_t 
 
     @Suppress("UNCHECKED_CAST")
     private fun <ResT> proxy(ctx: Context_t, methodName: String, vararg args: Any): ResT =
-            proxyInvoke(ctx, methodName, args) as? ResT
+            proxyInvoke(ctx, methodName, *args) as? ResT
                     ?: unreachable { log.error("SMT engine returned incorrect type object") }
 
     private fun getMethodName() = Throwable().stackTrace.drop(1).first().methodName
@@ -121,13 +142,20 @@ class SMTEngineProxy<in Context_t : Any, Expr_t : Any, Sort_t : Any, Function_t 
     override fun getDoubleSort(ctx: Context_t): Sort_t = proxy(ctx, getMethodName())
     override fun getArraySort(ctx: Context_t, domain: Sort_t, range: Sort_t): Sort_t = proxy(ctx, getMethodName(), ctx, domain, range)
 
-    override fun isBool(ctx: Context_t, expr: Expr_t): Boolean = proxy(ctx, getMethodName(), ctx, expr)
-    override fun isBV(ctx: Context_t, expr: Expr_t): Boolean = proxy(ctx, getMethodName(), ctx, expr)
-    override fun isFP(ctx: Context_t, expr: Expr_t): Boolean = proxy(ctx, getMethodName(), ctx, expr)
-    override fun isArray(ctx: Context_t, expr: Expr_t): Boolean = proxy(ctx, getMethodName(), ctx, expr)
-    override fun bvBitsize(ctx: Context_t, sort: Sort_t): Int = proxy(ctx, getMethodName(), ctx, sort)
-    override fun fpEBitsize(ctx: Context_t, sort: Sort_t): Int = proxy(ctx, getMethodName(), ctx, sort)
-    override fun fpSBitsize(ctx: Context_t, sort: Sort_t): Int = proxy(ctx, getMethodName(), ctx, sort)
+    override fun bool2bv(ctx: Context_t, expr: Expr_t, sort: Sort_t): Expr_t = proxy(ctx, getMethodName(), expr, sort)
+    override fun bv2bool(ctx: Context_t, expr: Expr_t): Expr_t = proxy(ctx, getMethodName(), expr)
+    override fun bv2bv(ctx: Context_t, expr: Expr_t, sort: Sort_t): Expr_t = proxy(ctx, getMethodName(), expr, sort)
+    override fun bv2float(ctx: Context_t, expr: Expr_t, sort: Sort_t): Expr_t = proxy(ctx, getMethodName(), expr, sort)
+    override fun float2bv(ctx: Context_t, expr: Expr_t, sort: Sort_t): Expr_t = proxy(ctx, getMethodName(), expr, sort)
+    override fun float2float(ctx: Context_t, expr: Expr_t, sort: Sort_t): Expr_t = proxy(ctx, getMethodName(), expr, sort)
+
+    override fun isBoolSort(ctx: Context_t, sort: Sort_t): Boolean = proxy(ctx, getMethodName(), sort)
+    override fun isBVSort(ctx: Context_t, sort: Sort_t): Boolean = proxy(ctx, getMethodName(), sort)
+    override fun isFPSort(ctx: Context_t, sort: Sort_t): Boolean = proxy(ctx, getMethodName(), sort)
+    override fun isArraySort(ctx: Context_t, sort: Sort_t): Boolean = proxy(ctx, getMethodName(), sort)
+    override fun bvBitsize(ctx: Context_t, sort: Sort_t): Int = proxy(ctx, getMethodName(), sort)
+    override fun fpEBitsize(ctx: Context_t, sort: Sort_t): Int = proxy(ctx, getMethodName(), sort)
+    override fun fpSBitsize(ctx: Context_t, sort: Sort_t): Int = proxy(ctx, getMethodName(), sort)
 
     override fun hash(ctx: Context_t, expr: Expr_t): Int = proxy(ctx, getMethodName(), ctx, expr)
     override fun name(ctx: Context_t, expr: Expr_t): String = proxy(ctx, getMethodName(), ctx, expr)
@@ -157,5 +185,17 @@ class SMTEngineProxy<in Context_t : Any, Expr_t : Any, Sort_t : Any, Function_t 
     override fun negate(ctx: Context_t, expr: Expr_t): Expr_t = proxy(ctx, getMethodName(), expr)
     override fun binary(ctx: Context_t, opcode: Opcode, lhv: Expr_t, rhv: Expr_t): Expr_t = proxy(ctx, getMethodName(), opcode, lhv, rhv)
     override fun conjunction(ctx: Context_t, vararg exprs: Expr_t): Expr_t = proxy(ctx, getMethodName(), exprs)
+
+    override fun zext(ctx: Context_t, n: Int, expr: Expr_t): Expr_t = proxy(ctx, getMethodName(), n, expr)
     override fun sext(ctx: Context_t, n: Int, expr: Expr_t): Expr_t = proxy(ctx, getMethodName(), n, expr)
+
+    override fun load(ctx: Context_t, array: Expr_t, index: Expr_t): Expr_t = proxy(ctx, getMethodName(), array, index)
+    override fun store(ctx: Context_t, array: Expr_t, index: Expr_t, value: Expr_t): Expr_t =
+            proxy(ctx, getMethodName(), array, index, value)
+
+    override fun ite(ctx: Context_t, cond: Expr_t, lhv: Expr_t, rhv: Expr_t): Expr_t =
+            proxy(ctx, getMethodName(), cond, lhv, rhv)
+
+    override fun extract(ctx: Context_t, bv: Expr_t, high: Int, low: Int): Expr_t =
+            proxy(ctx, getMethodName(), bv, high, low)
 }
