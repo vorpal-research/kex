@@ -291,6 +291,14 @@ class SMTImpl<Context_t : Any, Expr_t : Any, Sort_t : Any, Function_t : Any> : L
         }
     }
 
+    fun <Element : ValueExpr, Index : ValueExpr> merge(default: SMTArray<Element, Index>,
+                                                       cases: List<Pair<Bool, SMTArray<Element, Index>>>): SMTArray<Element, Index> {
+        return cases.fold(default) { acc, pair ->
+            val ctx = pair.first.ctx
+            SMTArray(ctx, engine.ite(ctx, pair.first.expr, acc.expr, pair.second.expr), spliceAxioms(ctx, acc.axiom, pair.second.axiom))
+        }
+    }
+
     inner class Memory<in Index : BitVector, Byte : BitVector>(val byteSize: Int, val inner: SMTArray<Byte, Index>) {
         val ctx = inner.ctx
 
@@ -320,6 +328,12 @@ class SMTImpl<Context_t : Any, Expr_t : Any, Sort_t : Any, Function_t : Any> : L
         }
 
         fun store(index: Index, element: ValueExpr) = store(index, element.castTo())
+    }
+
+    fun <Index : BitVector, Byte : BitVector> merge(default: Memory<Index, Byte>,
+                                                    cases: List<Pair<Bool, Memory<Index, Byte>>>): Memory<Index, Byte> {
+        val inners = cases.map { it.first to it.second.inner }
+        return Memory(default.byteSize, merge(default.inner, inners))
     }
 
     fun ValueExpr.convert(sort: Sort_t) = when {
@@ -361,7 +375,7 @@ class SMTImpl<Context_t : Any, Expr_t : Any, Sort_t : Any, Function_t : Any> : L
             Bool(ctx, engine.makeBoolConst(ctx, value))
 
     fun makeBoolVar(ctx: Context_t, name: String) =
-            Bool(ctx, engine.makeVar(ctx, engine.getBoolSort(ctx), name))
+            Bool(ctx, engine.makeVar(ctx, engine.getBoolSort(ctx), name, false))
 
     fun makeBV(ctx: Context_t, value: Short) =
             BitVector(ctx, engine.makeNumericConst(ctx, value))
@@ -376,17 +390,17 @@ class SMTImpl<Context_t : Any, Expr_t : Any, Sort_t : Any, Function_t : Any> : L
             BitVector(ctx, engine.makeNumericConst(ctx, engine.getBVSort(ctx, size), value))
 
     fun makeBVVar(ctx: Context_t, name: String, bitsize: Int) =
-            BitVector(ctx, engine.makeVar(ctx, engine.getBVSort(ctx, bitsize), name))
+            BitVector(ctx, engine.makeVar(ctx, engine.getBVSort(ctx, bitsize), name, false))
 
     fun makeBVVar(ctx: Context_t, name: String, sort: Sort_t) =
-            BitVector(ctx, engine.makeVar(ctx, sort, name))
+            BitVector(ctx, engine.makeVar(ctx, sort, name, false))
 
     fun makeIntVar(ctx: Context_t, name: String) =
-            BitVector(ctx, engine.makeVar(ctx, engine.getBVSort(ctx, SMTEngine.intWidth), name))
+            BitVector(ctx, engine.makeVar(ctx, engine.getBVSort(ctx, SMTEngine.intWidth), name, false))
 
     fun makeShortVar(ctx: Context_t, name: String) =
-            BitVector(ctx, engine.makeVar(ctx, engine.getBVSort(ctx, SMTEngine.shortWidth), name))
+            BitVector(ctx, engine.makeVar(ctx, engine.getBVSort(ctx, SMTEngine.shortWidth), name, false))
 
     fun makeLongVar(ctx: Context_t, name: String) =
-            BitVector(ctx, engine.makeVar(ctx, engine.getBVSort(ctx, SMTEngine.longWidth), name))
+            BitVector(ctx, engine.makeVar(ctx, engine.getBVSort(ctx, SMTEngine.longWidth), name, false))
 }

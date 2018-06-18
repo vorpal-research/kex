@@ -52,7 +52,9 @@ object Z3Engine : SMTEngine<Context, Expr, Sort, FuncDecl>() {
     override fun simplify(ctx: Context, expr: Expr): Expr = expr.simplify()
     override fun equality(ctx: Context, lhv: Expr, rhv: Expr) = lhv == rhv
 
-    override fun makeVar(ctx: Context, sort: Sort, name: String) = ctx.mkConst(name, sort)
+    override fun makeVar(ctx: Context, sort: Sort, name: String, fresh: Boolean) =
+            if (fresh) ctx.mkFreshConst(name, sort) else ctx.mkConst(name, sort)
+
     override fun makeBoolConst(ctx: Context, value: Boolean) = ctx.mkBool(value)
 
     override fun makeNumericConst(ctx: Context, value: Short) = ctx.mkNumeral(value.toInt(), getBVSort(ctx, shortWidth))
