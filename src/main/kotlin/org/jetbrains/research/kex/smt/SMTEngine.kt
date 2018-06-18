@@ -73,7 +73,7 @@ abstract class SMTEngine<in Context_t : Any, Expr_t : Any, Sort_t : Any, Functio
     abstract fun simplify(ctx: Context_t, expr: Expr_t): Expr_t
     abstract fun equality(ctx: Context_t, lhv: Expr_t, rhv: Expr_t): Boolean
 
-    abstract fun makeVar(ctx: Context_t, sort: Sort_t, name: String): Expr_t
+    abstract fun makeVar(ctx: Context_t, sort: Sort_t, name: String, fresh: Boolean): Expr_t
 
     abstract fun makeBoolConst(ctx: Context_t, value: Boolean): Expr_t
     abstract fun makeNumericConst(ctx: Context_t, value: Short): Expr_t
@@ -165,7 +165,7 @@ class SMTEngineProxy<in Context_t : Any, Expr_t : Any, Sort_t : Any, Function_t 
 
     override fun equality(ctx: Context_t, lhv: Expr_t, rhv: Expr_t): Boolean = proxy(ctx, getMethodName(), ctx, lhv, rhv)
 
-    override fun makeVar(ctx: Context_t, sort: Sort_t, name: String): Expr_t = proxy(ctx, getMethodName(), ctx, sort, name)
+    override fun makeVar(ctx: Context_t, sort: Sort_t, name: String, fresh: Boolean): Expr_t = proxy(ctx, getMethodName(), sort, name, fresh)
 
     override fun makeBoolConst(ctx: Context_t, value: Boolean): Expr_t = proxy(ctx, getMethodName(), ctx, value)
 
