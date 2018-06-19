@@ -143,13 +143,21 @@ class SMTImpl<Context_t : Any, Expr_t : Any, Sort_t : Any, Function_t : Any> : L
 
         infix fun neq(other: BitVector) = binary(SMTEngine.Opcode.NEQ, other)
         infix fun add(other: BitVector) = binary(SMTEngine.Opcode.ADD, other)
-        infix fun add(other: Int) = binary(SMTEngine.Opcode.ADD, makeBV(ctx, getBitsize(), other.toLong()))
+        infix fun add(other: Int) =
+                binary(SMTEngine.Opcode.ADD, BitVector(ctx, engine.makeNumericConst(ctx, engine.getBVSort(ctx, getBitsize()), other.toLong())))
+
         infix fun sub(other: BitVector) = binary(SMTEngine.Opcode.SUB, other)
-        infix fun sub(other: Int) = binary(SMTEngine.Opcode.SUB, makeBV(ctx, getBitsize(), other.toLong()))
+        infix fun sub(other: Int) =
+                binary(SMTEngine.Opcode.SUB, BitVector(ctx, engine.makeNumericConst(ctx, engine.getBVSort(ctx, getBitsize()), other.toLong())))
+
         infix fun mul(other: BitVector) = binary(SMTEngine.Opcode.MUL, other)
-        infix fun mul(other: Int) = binary(SMTEngine.Opcode.MUL, makeBV(ctx, getBitsize(), other.toLong()))
+        infix fun mul(other: Int) =
+                binary(SMTEngine.Opcode.MUL, BitVector(ctx, engine.makeNumericConst(ctx, engine.getBVSort(ctx, getBitsize()), other.toLong())))
+
         infix fun divide(other: BitVector) = binary(SMTEngine.Opcode.DIV, other)
-        infix fun divide(other: Int) = binary(SMTEngine.Opcode.DIV, makeBV(ctx, getBitsize(), other.toLong()))
+        infix fun divide(other: Int) =
+                binary(SMTEngine.Opcode.DIV, BitVector(ctx, engine.makeNumericConst(ctx, engine.getBVSort(ctx, getBitsize()), other.toLong())))
+
         infix fun mod(other: BitVector) = binary(SMTEngine.Opcode.MOD, other)
         infix fun gt(other: BitVector) = binary(SMTEngine.Opcode.GT, other)
         infix fun ge(other: BitVector) = binary(SMTEngine.Opcode.GE, other)
@@ -369,38 +377,4 @@ class SMTImpl<Context_t : Any, Expr_t : Any, Sort_t : Any, Function_t : Any> : L
         }
         return BitVector(ctx, newExpr, axiom)
     }
-
-
-    fun makeBool(ctx: Context_t, value: Boolean) =
-            Bool(ctx, engine.makeBoolConst(ctx, value))
-
-    fun makeBoolVar(ctx: Context_t, name: String) =
-            Bool(ctx, engine.makeVar(ctx, engine.getBoolSort(ctx), name, false))
-
-    fun makeBV(ctx: Context_t, value: Short) =
-            BitVector(ctx, engine.makeNumericConst(ctx, value))
-
-    fun makeBV(ctx: Context_t, value: Int) =
-            BitVector(ctx, engine.makeNumericConst(ctx, value))
-
-    fun makeBV(ctx: Context_t, value: Long) =
-            BitVector(ctx, engine.makeNumericConst(ctx, value))
-
-    fun makeBV(ctx: Context_t, size: Int, value: Long) =
-            BitVector(ctx, engine.makeNumericConst(ctx, engine.getBVSort(ctx, size), value))
-
-    fun makeBVVar(ctx: Context_t, name: String, bitsize: Int) =
-            BitVector(ctx, engine.makeVar(ctx, engine.getBVSort(ctx, bitsize), name, false))
-
-    fun makeBVVar(ctx: Context_t, name: String, sort: Sort_t) =
-            BitVector(ctx, engine.makeVar(ctx, sort, name, false))
-
-    fun makeIntVar(ctx: Context_t, name: String) =
-            BitVector(ctx, engine.makeVar(ctx, engine.getBVSort(ctx, SMTEngine.intWidth), name, false))
-
-    fun makeShortVar(ctx: Context_t, name: String) =
-            BitVector(ctx, engine.makeVar(ctx, engine.getBVSort(ctx, SMTEngine.shortWidth), name, false))
-
-    fun makeLongVar(ctx: Context_t, name: String) =
-            BitVector(ctx, engine.makeVar(ctx, engine.getBVSort(ctx, SMTEngine.longWidth), name, false))
 }

@@ -8,7 +8,7 @@ import kotlin.reflect.KClass
 
 abstract class SMTEngine<in Context_t : Any, Expr_t : Any, Sort_t : Any, Function_t : Any> : Loggable {
     companion object {
-        const val shortWidth = 16
+        const val shortWidth = 32
         const val intWidth = 32
         const val longWidth = 64
 
