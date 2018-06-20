@@ -11,6 +11,7 @@
     <modules>
         <module>smt-context-generator</module>
         <module>core</module>
+        <module>kfg</module>
     </modules>
 
 </project>
