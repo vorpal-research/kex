@@ -50,7 +50,7 @@ internal class InvocationResult {
 }
 
 internal fun invoke(method: Method, instance: Any?, args: Array<Any?>): InvocationResult {
-    val log = loggerFor("org.jetbrains.research.kex.runner.invoke")
+    val log = loggerFor("invoke")
     log.debug("Running $method")
     log.debug("Instance: $instance")
     log.debug("Args: ${args.map { it.toString() }}")
