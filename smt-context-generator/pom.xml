@@ -14,20 +14,6 @@
     <artifactId>smt-context-generator</artifactId>
 
     <properties>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <kotlin.version>1.2.30</kotlin.version>
-        <kotlin.coroutine.version>0.21</kotlin.coroutine.version>
-        <junit.version>4.12</junit.version>
-
-        <logback.version>1.2.3</logback.version>
-        <slf4j.version>1.7.25</slf4j.version>
-        <commons-cli.version>1.4</commons-cli.version>
-
-        <compiler-plugin.version>3.5.1</compiler-plugin.version>
-        <random-beans.version>random-beans-parent-3.7.0</random-beans.version>
-        <better-parse.version>0.3.2</better-parse.version>
-
-        <z3.version>z3-4.4.1-1558-gf96cfea</z3.version>
         <velocity.version>1.7</velocity.version>
     </properties>
 
@@ -49,6 +35,12 @@
             <artifactId>kotlin-test-junit</artifactId>
             <version>${kotlin.version}</version>
             <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.velocity</groupId>
+            <artifactId>velocity</artifactId>
+            <version>${velocity.version}</version>
         </dependency>
     </dependencies>
 
@@ -126,11 +118,6 @@
                             <goal>single</goal>
                         </goals>
                         <configuration>
-                            <archive>
-                                <manifest>
-                                    <mainClass>${exec.main}</mainClass>
-                                </manifest>
-                            </archive>
                             <descriptorRefs>
                                 <descriptorRef>jar-with-dependencies</descriptorRef>
                             </descriptorRefs>

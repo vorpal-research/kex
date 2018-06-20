@@ -14,4 +14,11 @@
         <module>kfg</module>
     </modules>
 
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <kotlin.version>1.2.30</kotlin.version>
+        <junit.version>4.12</junit.version>
+        <compiler-plugin.version>3.5.1</compiler-plugin.version>
+    </properties>
+
 </project>
