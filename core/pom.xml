@@ -12,22 +12,16 @@
     <artifactId>core</artifactId>
 
     <properties>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <kotlin.version>1.2.30</kotlin.version>
-        <kotlin.coroutine.version>0.21</kotlin.coroutine.version>
-        <junit.version>4.12</junit.version>
         <exec.main>org.jetbrains.research.kex.MainKt</exec.main>
 
         <logback.version>1.2.3</logback.version>
         <slf4j.version>1.7.25</slf4j.version>
         <commons-cli.version>1.4</commons-cli.version>
 
-        <compiler-plugin.version>3.5.1</compiler-plugin.version>
         <random-beans.version>random-beans-parent-3.7.0</random-beans.version>
         <better-parse.version>0.3.2</better-parse.version>
 
-        <z3.version>z3-4.4.1-1558-gf96cfea</z3.version>
-        <velocity.version>1.7</velocity.version>
+        <z3.version>1.0</z3.version>
     </properties>
 
     <repositories>
@@ -103,13 +97,7 @@
         <dependency>
             <groupId>com.microsoft</groupId>
             <artifactId>z3</artifactId>
-            <version>1.0</version>
-        </dependency>
-
-        <dependency>
-            <groupId>org.apache.velocity</groupId>
-            <artifactId>velocity</artifactId>
-            <version>${velocity.version}</version>
+            <version>${z3.version}</version>
         </dependency>
     </dependencies>
 
@@ -127,6 +115,29 @@
                 <version>${kotlin.version}</version>
 
                 <executions>
+                    <execution>
+                        <id>kapt</id>
+                        <goals>
+                            <goal>kapt</goal>
+                        </goals>
+                        <configuration>
+                            <sourceDirs>
+                                <sourceDir>${project.basedir}/src/main/kotlin</sourceDir>
+                            </sourceDirs>
+                            <annotationProcessorPaths>
+                                <annotationProcessorPath>
+                                    <groupId>org.jetbrains.research</groupId>
+                                    <artifactId>smt-context-generator</artifactId>
+                                    <version>0.1</version>
+                                </annotationProcessorPath>
+                            </annotationProcessorPaths>
+                            <annotationProcessors>
+                                <annotationProcessor>
+                                    org.jetbrains.research.kex.smtinstance.SMTInstanceGenerator
+                                </annotationProcessor>
+                            </annotationProcessors>
+                        </configuration>
+                    </execution>
                     <execution>
                         <id>compile</id>
                         <phase>compile</phase>

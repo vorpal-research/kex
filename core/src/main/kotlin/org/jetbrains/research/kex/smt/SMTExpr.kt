@@ -1,5 +1,6 @@
 package org.jetbrains.research.kex.smt
 
+import org.jetbrains.research.kex.smtinstance.SMTInstance
 import org.jetbrains.research.kex.util.Loggable
 import org.jetbrains.research.kex.util.castTo
 import org.jetbrains.research.kex.util.uncheckedCastTo
@@ -8,6 +9,7 @@ import org.jetbrains.research.kfg.util.defaultHashCode
 import kotlin.math.max
 import kotlin.math.min
 
+@SMTInstance(solver = "Z3", context = "Context")
 class SMTImpl<Context_t : Any, Expr_t : Any, Sort_t : Any, Function_t : Any> : Loggable {
     val engine = SMTEngineProxy<Context_t, Expr_t, Sort_t, Function_t>()
 

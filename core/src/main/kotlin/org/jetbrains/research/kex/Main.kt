@@ -1,34 +1,13 @@
 package org.jetbrains.research.kex
 
-import com.microsoft.z3.Context
-import com.microsoft.z3.Expr
-import com.microsoft.z3.FuncDecl
-import com.microsoft.z3.Sort
-import org.jetbrains.research.kex.asm.state.PredicateStateAnalysis
-import org.jetbrains.research.kex.asm.transform.LoopDeroller
 import org.jetbrains.research.kex.config.CmdConfig
 import org.jetbrains.research.kex.config.GlobalConfig
 import org.jetbrains.research.kex.config.FileConfig
 import org.jetbrains.research.kex.util.loggerFor
-import org.jetbrains.research.kex.asm.transform.TraceInstrumenter
-import org.jetbrains.research.kex.driver.TemplateDriver
-import org.jetbrains.research.kex.runner.CoverageManager
-import org.jetbrains.research.kex.runner.CoverageRunner
-import org.jetbrains.research.kex.smt.SMTEngineProxy
-import org.jetbrains.research.kex.state.transformer.ConstantPropagator
-import org.jetbrains.research.kex.state.transformer.StateOptimizer
-import org.jetbrains.research.kex.util.debug
-import org.jetbrains.research.kex.util.unreachable
 import org.jetbrains.research.kfg.CM
 import org.jetbrains.research.kfg.Package
-import org.jetbrains.research.kfg.analysis.IRVerifier
-import org.jetbrains.research.kfg.analysis.LoopAnalysis
-import org.jetbrains.research.kfg.analysis.LoopSimplifier
-import org.jetbrains.research.kfg.util.viewCfg
-import org.jetbrains.research.kfg.util.writeClass
 import org.jetbrains.research.kfg.util.writeClassesToTarget
 import java.io.File
-import java.net.URLClassLoader
 import java.util.jar.JarFile
 
 fun main(args: Array<String>) {
@@ -109,6 +88,4 @@ fun main(args: Array<String>) {
 //    val proxy = SMTEngineProxy<Context, Expr, Sort, FuncDecl>()
 //    val bs = proxy.getBoolSort(ctx)
 //    log.debug(bs::class.java)
-    val templater = TemplateDriver()
-    templater.run()
 }
