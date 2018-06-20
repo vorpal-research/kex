@@ -11,6 +11,7 @@ import org.jetbrains.research.kex.config.GlobalConfig
 import org.jetbrains.research.kex.config.FileConfig
 import org.jetbrains.research.kex.util.loggerFor
 import org.jetbrains.research.kex.asm.transform.TraceInstrumenter
+import org.jetbrains.research.kex.driver.TemplateDriver
 import org.jetbrains.research.kex.runner.CoverageManager
 import org.jetbrains.research.kex.runner.CoverageRunner
 import org.jetbrains.research.kex.smt.SMTEngineProxy
@@ -102,10 +103,12 @@ fun main(args: Array<String>) {
 //            log.debug()
 //        }
 //    }
-
-    val ctx = Context()
-
-    val proxy = SMTEngineProxy<Context, Expr, Sort, FuncDecl>()
-    val bs = proxy.getBoolSort(ctx)
-    log.debug(bs::class.java)
+//
+//    val ctx = Context()
+//
+//    val proxy = SMTEngineProxy<Context, Expr, Sort, FuncDecl>()
+//    val bs = proxy.getBoolSort(ctx)
+//    log.debug(bs::class.java)
+    val templater = TemplateDriver()
+    templater.run()
 }
