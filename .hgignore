@@ -5,3 +5,5 @@ target/*
 *.iml
 *.log
 instrumented/*
+repo/*
+core/src/main/generated/*

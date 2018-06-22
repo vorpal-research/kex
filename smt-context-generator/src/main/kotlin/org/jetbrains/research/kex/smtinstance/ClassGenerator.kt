@@ -2,11 +2,13 @@ package org.jetbrains.research.kex.smtinstance
 
 import org.apache.velocity.VelocityContext
 import org.apache.velocity.app.VelocityEngine
-import java.io.StringWriter
+import org.apache.velocity.runtime.RuntimeConstants
+import java.io.Writer
 
-class ClassGenerator(val parameters: Map<String, String>, val template: String) {
-    fun doit() {
+class ClassGenerator(val parameters: Map<String, Any>, val path: String, val template: String) {
+    fun doit(writer: Writer) {
         val engine = VelocityEngine()
+        engine.setProperty(RuntimeConstants.FILE_RESOURCE_LOADER_PATH, path)
         engine.init()
 
         val context = VelocityContext()
@@ -14,8 +16,6 @@ class ClassGenerator(val parameters: Map<String, String>, val template: String) 
 
         val template = engine.getTemplate(template)
 
-        val writer = StringWriter()
         template.merge(context, writer)
-        println(writer)
     }
 }
