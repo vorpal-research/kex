@@ -69,14 +69,13 @@ abstract class SMTEngine<in Context_t : Any, Expr_t : Any, Sort_t : Any, Functio
 
     abstract fun makeVar(ctx: Context_t, sort: Sort_t, name: String, fresh: Boolean): Expr_t
 
-    abstract fun makeBoolConst(ctx: Context_t, value: Boolean): Expr_t
-    abstract fun makeNumericConst(ctx: Context_t, value: Short): Expr_t
-    abstract fun makeNumericConst(ctx: Context_t, value: Int): Expr_t
-    abstract fun makeNumericConst(ctx: Context_t, value: Long): Expr_t
+    abstract fun makeBooleanConst(ctx: Context_t, value: Boolean): Expr_t
+    abstract fun makeIntConst(ctx: Context_t, value: Short): Expr_t
+    abstract fun makeIntConst(ctx: Context_t, value: Int): Expr_t
+    abstract fun makeLongConst(ctx: Context_t, value: Long): Expr_t
     abstract fun makeNumericConst(ctx: Context_t, sort: Sort_t, value: Long): Expr_t
-    abstract fun makeFPConst(ctx: Context_t, value: Int): Expr_t
-    abstract fun makeFPConst(ctx: Context_t, value: Float): Expr_t
-    abstract fun makeFPConst(ctx: Context_t, value: Double): Expr_t
+    abstract fun makeFloatConst(ctx: Context_t, value: Float): Expr_t
+    abstract fun makeDoubleConst(ctx: Context_t, value: Double): Expr_t
     abstract fun makeArrayConst(ctx: Context_t, sort: Sort_t, expr: Expr_t): Expr_t
     abstract fun makeFunction(ctx: Context_t, name: String, retSort: Sort_t, args: List<Sort_t>): Function_t
 
