@@ -2,6 +2,7 @@ package org.jetbrains.research.kex.util
 
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import kotlin.reflect.KClass
 
 interface Loggable {
     val log: Logger
@@ -10,6 +11,7 @@ interface Loggable {
 
 fun loggerFor(name: String): Logger = LoggerFactory.getLogger(name)
 fun <T> loggerFor(clazz: Class<T>): Logger = LoggerFactory.getLogger(clazz)
+fun <T : Any> loggerFor(clazz: KClass<T>): Logger = LoggerFactory.getLogger(clazz.java)
 
 fun Logger.trace() = this.trace("")
 fun <T> Logger.trace(t: T) = this.trace(t.toString())

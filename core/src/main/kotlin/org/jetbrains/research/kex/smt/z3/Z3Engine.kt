@@ -56,15 +56,14 @@ object Z3Engine : SMTEngine<Context, Expr, Sort, FuncDecl>() {
     override fun makeVar(ctx: Context, sort: Sort, name: String, fresh: Boolean) =
             if (fresh) ctx.mkFreshConst(name, sort) else ctx.mkConst(name, sort)
 
-    override fun makeBoolConst(ctx: Context, value: Boolean) = ctx.mkBool(value)
+    override fun makeBooleanConst(ctx: Context, value: Boolean) = ctx.mkBool(value)
 
-    override fun makeNumericConst(ctx: Context, value: Short) = ctx.mkNumeral(value.toInt(), getBVSort(ctx, WORD))
-    override fun makeNumericConst(ctx: Context, value: Int) = ctx.mkNumeral(value, getBVSort(ctx, WORD))
-    override fun makeNumericConst(ctx: Context, value: Long) = ctx.mkNumeral(value, getBVSort(ctx, DWORD))
+    override fun makeIntConst(ctx: Context, value: Short) = ctx.mkNumeral(value.toInt(), getBVSort(ctx, WORD))
+    override fun makeIntConst(ctx: Context, value: Int) = ctx.mkNumeral(value, getBVSort(ctx, WORD))
+    override fun makeLongConst(ctx: Context, value: Long) = ctx.mkNumeral(value, getBVSort(ctx, DWORD))
     override fun makeNumericConst(ctx: Context, sort: Sort, value: Long): Expr = ctx.mkNumeral(value, sort)
-    override fun makeFPConst(ctx: Context, value: Int): Expr = ctx.mkFPNumeral(value, getDoubleSort(ctx).castTo())
-    override fun makeFPConst(ctx: Context, value: Float): Expr = ctx.mkFPNumeral(value, getFloatSort(ctx).castTo())
-    override fun makeFPConst(ctx: Context, value: Double): Expr = ctx.mkFPNumeral(value, getDoubleSort(ctx).castTo())
+    override fun makeFloatConst(ctx: Context, value: Float): Expr = ctx.mkFPNumeral(value, getFloatSort(ctx).castTo())
+    override fun makeDoubleConst(ctx: Context, value: Double): Expr = ctx.mkFPNumeral(value, getDoubleSort(ctx).castTo())
 
     override fun makeArrayConst(ctx: Context, sort: Sort, expr: Expr) = TODO()
 
