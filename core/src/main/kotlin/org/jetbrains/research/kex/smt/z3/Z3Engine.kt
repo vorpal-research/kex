@@ -9,18 +9,19 @@ object Z3Engine : SMTEngine<Context, Expr, Sort, FuncDecl>() {
     override fun getSort(ctx: Context, expr: Expr) = expr.sort
     override fun getBoolSort(ctx: Context): Sort = ctx.boolSort
     override fun getBVSort(ctx: Context, size: Int): Sort = ctx.mkBitVecSort(size)
-    override fun getFPSort(ctx: Context, esize: Int, ssize: Int): Sort = ctx.mkFPSort(esize, ssize)
     override fun getFloatSort(ctx: Context): Sort = ctx.mkFPSortSingle()
     override fun getDoubleSort(ctx: Context): Sort = ctx.mkFPSortDouble()
     override fun getArraySort(ctx: Context, domain: Sort, range: Sort): Sort = ctx.mkArraySort(domain, range)
 
     override fun isBoolSort(ctx: Context, sort: Sort) = sort is BoolSort
     override fun isBVSort(ctx: Context, sort: Sort) = sort is BitVecSort
-    override fun isFPSort(ctx: Context, sort: Sort): Boolean = sort is FPSort
     override fun isArraySort(ctx: Context, sort: Sort) = sort is ArraySort
+    override fun isFloatSort(ctx: Context, sort: Sort) = sort is FPSort && sort == ctx.mkFPSortSingle()
+    override fun isDoubleSort(ctx: Context, sort: Sort) = sort is FPSort && sort == ctx.mkFPSortDouble()
+
     override fun bvBitsize(ctx: Context, sort: Sort) = sort.castTo<BitVecSort>().size
-    override fun fpEBitsize(ctx: Context, sort: Sort): Int = sort.castTo<FPSort>().eBits
-    override fun fpSBitsize(ctx: Context, sort: Sort): Int = sort.castTo<FPSort>().sBits
+    override fun floatEBitsize(ctx: Context, sort: Sort): Int = sort.castTo<FPSort>().eBits
+    override fun floatSBitsize(ctx: Context, sort: Sort): Int = sort.castTo<FPSort>().sBits
 
     override fun bool2bv(ctx: Context, expr: Expr, sort: Sort) =
             ite(ctx, expr, makeNumericConst(ctx, sort, 1), makeNumericConst(ctx, sort, 0))
@@ -57,9 +58,9 @@ object Z3Engine : SMTEngine<Context, Expr, Sort, FuncDecl>() {
 
     override fun makeBoolConst(ctx: Context, value: Boolean) = ctx.mkBool(value)
 
-    override fun makeNumericConst(ctx: Context, value: Short) = ctx.mkNumeral(value.toInt(), getBVSort(ctx, shortWidth))
-    override fun makeNumericConst(ctx: Context, value: Int) = ctx.mkNumeral(value, getBVSort(ctx, intWidth))
-    override fun makeNumericConst(ctx: Context, value: Long) = ctx.mkNumeral(value, getBVSort(ctx, longWidth))
+    override fun makeNumericConst(ctx: Context, value: Short) = ctx.mkNumeral(value.toInt(), getBVSort(ctx, WORD))
+    override fun makeNumericConst(ctx: Context, value: Int) = ctx.mkNumeral(value, getBVSort(ctx, WORD))
+    override fun makeNumericConst(ctx: Context, value: Long) = ctx.mkNumeral(value, getBVSort(ctx, DWORD))
     override fun makeNumericConst(ctx: Context, sort: Sort, value: Long): Expr = ctx.mkNumeral(value, sort)
     override fun makeFPConst(ctx: Context, value: Int): Expr = ctx.mkFPNumeral(value, getDoubleSort(ctx).castTo())
     override fun makeFPConst(ctx: Context, value: Float): Expr = ctx.mkFPNumeral(value, getFloatSort(ctx).castTo())
@@ -96,7 +97,7 @@ object Z3Engine : SMTEngine<Context, Expr, Sort, FuncDecl>() {
             (lhv is FPExpr) and (rhv is FPExpr) -> mul(ctx, lhv.castTo<FPExpr>(), rhv.castTo())
             else -> unreachable { log.error("Unexpected and arguments: $lhv and $rhv") }
         }
-        Opcode.DIV -> when {
+        Opcode.DIVIDE -> when {
             (lhv is BitVecExpr) and (rhv is BitVecExpr) -> sdiv(ctx, lhv.castTo<BitVecExpr>(), rhv.castTo())
             (lhv is FPExpr) and (rhv is FPExpr) -> sdiv(ctx, lhv.castTo<FPExpr>(), rhv.castTo())
             else -> unreachable { log.error("Unexpected and arguments: $lhv and $rhv") }

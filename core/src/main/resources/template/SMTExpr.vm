@@ -1,0 +1,340 @@
+package ${packageName}
+
+import ${import}.*
+import org.jetbrains.research.kex.smt.${solver.toLowerCase()}.${solver}Engine
+import org.jetbrains.research.kex.smt.${solver}SMTExpr
+import org.jetbrains.research.kex.smt.SMTEngine
+
+import org.jetbrains.research.kex.util.Loggable
+import org.jetbrains.research.kex.util.castTo
+import org.jetbrains.research.kex.util.uncheckedCastTo
+import org.jetbrains.research.kex.util.unreachable
+import org.jetbrains.research.kfg.util.defaultHashCode
+import kotlin.math.max
+import kotlin.math.min
+
+val engine = ${solver}Engine
+
+fun defaultAxiom(ctx: $context) = engine.makeBoolConst(ctx, true)
+
+fun spliceAxioms(ctx: $context, lhv: $expr, rhv: $expr) = when {
+    engine.equality(ctx, lhv, defaultAxiom(ctx)) -> rhv
+    engine.equality(ctx, rhv, defaultAxiom(ctx)) -> lhv
+    else -> engine.conjunction(ctx, lhv, rhv)
+}
+
+fun spliceAxioms(ctx: $context, e0: $expr, e1: $expr, e2: $expr) = when {
+    engine.equality(ctx, e0, defaultAxiom(ctx)) -> spliceAxioms(ctx, e1, e2)
+    engine.equality(ctx, e1, defaultAxiom(ctx)) -> spliceAxioms(ctx, e0, e2)
+    engine.equality(ctx, e2, defaultAxiom(ctx)) -> spliceAxioms(ctx, e0, e1)
+    else -> engine.conjunction(ctx, e0, e1, e2)
+}
+
+open class ${solver}ValueExpr : ${solver}SMTExpr, Loggable {
+    val ctx: $context
+    val expr: $expr
+    val axiom: $expr
+
+    constructor(ctx: $context, expr: $expr, axiom: $expr) : super() {
+        this.ctx = ctx
+        this.expr = expr
+        this.axiom = axiom
+    }
+
+    constructor(ctx: $context, expr: $expr) : super() {
+        this.ctx = ctx
+        this.expr = expr
+        this.axiom = defaultAxiom(ctx)
+    }
+
+    constructor(other: ${solver}ValueExpr) : this(other.ctx, other.expr, other.axiom)
+
+    override fun toString() = engine.toString(ctx, expr)
+    override fun hashCode() = defaultHashCode(engine.hash(ctx, expr), engine.hash(ctx, axiom))
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other?.javaClass != this.javaClass) return false
+        other as ${solver}ValueExpr
+        return engine.equality(ctx, expr, other.expr) and engine.equality(ctx, expr, other.axiom)
+    }
+
+    fun name() = engine.name(ctx, expr)
+    fun getSort() = engine.getSort(ctx, expr)
+
+    fun asAxiom() = spliceAxioms(ctx, expr, axiom)
+    open fun withAxiom(ax: ${solver}ValueExpr) = ${solver}ValueExpr(ctx, expr, ax.asAxiom())
+
+    open fun simplify() = ${solver}ValueExpr(ctx, engine.simplify(ctx, expr), engine.simplify(ctx, expr))
+}
+
+class ${solver}Bool : ${solver}ValueExpr {
+    constructor(ctx: $context, expr: $expr) : super(ctx, expr) {
+        assert(engine.isBool(ctx, expr)) { log.error("Bool created from non-bool expr") }
+    }
+
+    constructor(ctx: $context, expr: $expr, axiom: $expr) : super(ctx, expr, axiom) {
+        assert(engine.isBool(ctx, expr)) { log.error("Bool created from non-bool expr") }
+    }
+
+    constructor(other: ${solver}ValueExpr) : super(other) {
+        assert(engine.isBool(ctx, expr)) { log.error("Bool created from non-bool expr") }
+    }
+
+    override fun withAxiom(ax: ${solver}ValueExpr) = ${solver}Bool(ctx, expr, spliceAxioms(ctx, axiom, ax.expr, ax.axiom))
+
+    fun getBitsize() = 1
+    override fun simplify() = ${solver}Bool(super.simplify())
+
+#set($opcodes = ["EQ", "NEQ", "AND", "OR", "XOR", "IMPLIES", "IFF"])
+
+#foreach($opcode in $opcodes)
+    infix fun ${opcode.toLowerCase()}(other: ${solver}Bool) =
+            ${solver}Bool(ctx, engine.binary(ctx, SMTEngine.Opcode.${opcode}, expr, other.expr), spliceAxioms(ctx, axiom, other.axiom))
+#end
+}
+
+open class ${solver}BV : ${solver}ValueExpr {
+    constructor(ctx: $context, expr: $expr) : super(ctx, expr) {
+        assert(engine.isBV(ctx, expr)) { log.error("BV created from non-bv expr") }
+    }
+
+    constructor(ctx: $context, expr: $expr, axiom: $expr) : super(ctx, expr, axiom) {
+        assert(engine.isBV(ctx, expr)) { log.error("BV created from non-bv expr") }
+    }
+
+    constructor(other: ${solver}ValueExpr) : super(other) {
+        assert(engine.isBV(ctx, expr)) { log.error("BV created from non-bv expr") }
+    }
+
+    override fun withAxiom(ax: ${solver}ValueExpr) = ${solver}BV(ctx, expr, spliceAxioms(ctx, axiom, ax.expr, ax.axiom))
+
+    fun getBitsize() = engine.bvBitsize(ctx, getSort())
+    fun extract(high: Int, low: Int) = ${solver}BV(ctx, engine.extract(ctx, expr, high, low), axiom)
+
+    open fun binary(opcode: SMTEngine.Opcode, other: ${solver}BV): ${solver}ValueExpr {
+        val maxsize = max(getBitsize(), other.getBitsize())
+        val lhv = engine.sext(ctx, maxsize, expr)
+        val rhv = engine.sext(ctx, maxsize, other.expr)
+
+        val nexpr = engine.binary(ctx, opcode, lhv, rhv)
+        val nax = spliceAxioms(ctx, axiom, other.axiom)
+        return ${solver}ValueExpr(ctx, nexpr, nax)
+    }
+
+#set($opcodes = ["EQ", "NEQ", "ADD", "SUB", "MUL", "DIVIDE", "MOD", "GT", "GE", "LT", "LE", "SHL", "SHR", "ASHR", "AND", "OR", "XOR"])
+
+#foreach($opcode in $opcodes)
+    infix fun ${opcode.toLowerCase()}(other: ${solver}BV) = binary(SMTEngine.Opcode.$opcode, other)
+#end
+
+#set($opcodes = ["ADD", "SUB", "MUL", "DIVIDE"])
+#foreach($opcode in $opcodes)
+    infix fun ${opcode.toLowerCase()}(other: Int) =
+        binary(SMTEngine.Opcode.$opcode, ${solver}BV(ctx, engine.makeNumericConst(ctx, engine.getBVSort(ctx, getBitsize()), other.toLong())))
+#end
+
+    operator fun plus(other: ${solver}BV) = add(other)
+    operator fun plus(other: Int) = add(other)
+    operator fun minus(other: ${solver}BV) = sub(other)
+    operator fun minus(other: Int) = sub(other)
+    operator fun times(other: ${solver}BV) = mul(other)
+    operator fun times(other: Int) = mul(other)
+    operator fun div(other: ${solver}BV) = divide(other)
+    operator fun div(other: Int) = divide(other)
+    operator fun rem(other: ${solver}BV) = mod(other)
+}
+
+#set($widths = [32, 64])
+
+#foreach($width in $widths)
+class ${solver}BV$width : ${solver}BV {
+    companion object {
+        const val BITWIDTH = $width
+
+        fun getSort(ctx: $context) = engine.getBVSort(ctx, BITWIDTH)
+    }
+
+    constructor(ctx: $context, expr: $expr) : super(ctx, expr) {
+        assert(engine.isBV(ctx, expr)) { log.error("BV created from non-bv expr") }
+        assert(engine.bvBitsize(ctx, getSort()) == BITWIDTH) { log.error("BV$width created from non-bv$width expr") }
+    }
+
+    constructor(ctx: $context, expr: $expr, axiom: $expr) : super(ctx, expr, axiom) {
+        assert(engine.isBV(ctx, expr)) { log.error("BV created from non-bv expr") }
+        assert(engine.bvBitsize(ctx, getSort()) == BITWIDTH) { log.error("BV$width created from non-bv$width expr") }
+    }
+
+    constructor(other: ${solver}ValueExpr) : super(other) {
+        assert(engine.isBV(ctx, expr)) { log.error("BV created from non-bv expr") }
+        assert(engine.bvBitsize(ctx, getSort()) == BITWIDTH) { log.error("BV$width created from non-bv$width expr") }
+    }
+
+    override fun binary(opcode: SMTEngine.Opcode, other: ${solver}BV) =
+        if (other is ${solver}BV$width) {
+            ${solver}ValueExpr(ctx, engine.binary(ctx, opcode, expr, other.expr), spliceAxioms(ctx, axiom, other.axiom))
+        } else super.binary(opcode, other)
+}
+
+#end
+
+#set($floats = ["Float", "Double"])
+
+#foreach($float in $floats)
+class $solver$float : ${solver}ValueExpr {
+    constructor(ctx: $context, expr: $expr) : super(ctx, expr) {
+        assert(engine.is$float(ctx, expr)) { log.error("$float created from non-${float.toLowerCase()} expr") }
+    }
+
+    constructor(ctx: $context, expr: $expr, axiom: $expr) : super(ctx, expr, axiom) {
+        assert(engine.is$float(ctx, expr)) { log.error("$float created from non-${float.toLowerCase()} expr") }
+    }
+
+    constructor(other: ${solver}ValueExpr) : super(other) {
+        assert(engine.is$float(ctx, expr)) { log.error("$float created from non-${float.toLowerCase()} expr") }
+    }
+
+    override fun withAxiom(ax: ${solver}ValueExpr) = ${solver}${float}(ctx, expr, spliceAxioms(ctx, axiom, ax.expr, ax.axiom))
+
+    fun getEBitsize() = engine.floatEBitsize(ctx, getSort())
+    fun getSBitsize() = engine.floatSBitsize(ctx, getSort())
+
+    fun binary(opcode: SMTEngine.Opcode, other: ${solver}$float): ${solver}ValueExpr {
+        val nexpr = engine.binary(ctx, opcode, expr, other.expr)
+        val nax = spliceAxioms(ctx, axiom, other.axiom)
+        return ${solver}ValueExpr(ctx, nexpr, nax)
+    }
+
+    #set($opcodes = ["EQ", "NEQ", "ADD", "SUB", "MUL", "DIVIDE", "GT", "GE", "LT", "LE"])
+
+    #foreach($opcode in $opcodes)
+    infix fun ${opcode.toLowerCase()}(other: ${solver}$float) = binary(SMTEngine.Opcode.$opcode, other)
+    #end
+
+    operator fun plus(other: ${solver}$float) = add(other)
+    operator fun minus(other: ${solver}$float) = sub(other)
+    operator fun times(other: ${solver}$float) = mul(other)
+    operator fun div(other: ${solver}$float) = divide(other)
+}
+
+#end
+
+class ${solver}Array<Element : ${solver}ValueExpr, in Index : ${solver}ValueExpr> : ${solver}ValueExpr {
+    companion object {
+        fun <Element : ${solver}ValueExpr, Index : ${solver}ValueExpr> merge(default: ${solver}Array<Element, Index>,
+            cases: List<Pair<${solver}Bool, ${solver}Array<Element, Index>>>): ${solver}Array<Element, Index> {
+            return cases.fold(default) { acc, pair ->
+                val ctx = pair.first.ctx
+                ${solver}Array(ctx, engine.ite(ctx, pair.first.expr, acc.expr, pair.second.expr), spliceAxioms(ctx, acc.axiom, pair.second.axiom))
+            }
+        }
+    }
+
+    constructor(ctx: $context, expr: $expr) : super(ctx, expr) {
+        assert(engine.isArray(ctx, expr)) { log.error("Array created from non-array expr") }
+    }
+
+    constructor(ctx: $context, expr: $expr, axiom: $expr) : super(ctx, expr, axiom) {
+        assert(engine.isArray(ctx, expr)) { log.error("Array created from non-array expr") }
+    }
+
+    constructor(other: ${solver}ValueExpr) : super(other) {
+        assert(engine.isArray(ctx, expr)) { log.error("Array created from non-array expr") }
+    }
+
+    fun load(index: Index) = ${solver}ValueExpr(ctx, engine.load(ctx, expr, index.expr))
+
+    fun store(index: Index, value: Element): ${solver}Array<Element, Index> =
+        ${solver}Array(ctx, engine.store(ctx, expr, index.expr, value.expr))
+
+    fun store(cases: List<Pair<Index, Element>>): ${solver}Array<Element, Index> {
+        val base: $expr = cases.fold(expr) { expr, pair -> engine.store(ctx, expr, pair.first.expr, pair.second.expr) }
+        return ${solver}Array(ctx, base)
+    }
+}
+
+class ${solver}Memory<in Index : ${solver}BV, Byte : ${solver}BV>(val byteSize: Int, val inner: ${solver}Array<Byte, Index>) {
+    companion object {
+        fun <Index : ${solver}BV, Byte : ${solver}BV> merge(default: ${solver}Memory<Index, Byte>,
+                cases: List<Pair<${solver}Bool, ${solver}Memory<Index, Byte>>>): ${solver}Memory<Index, Byte> {
+            val inners = cases.map { it.first to it.second.inner }
+            return ${solver}Memory(default.byteSize, ${solver}Array.merge(default.inner, inners))
+        }
+    }
+
+    val ctx = inner.ctx
+
+    fun load(index: Index, elementSize: Int): ${solver}BV {
+        val bytes = (0..((elementSize - 1) / byteSize)).map {
+        inner.load((index + it).uncheckedCastTo())
+        }
+        var expr = bytes.first().expr
+        var axiom = bytes.first().axiom
+        bytes.drop(1).forEach {
+            expr = engine.binary(ctx, SMTEngine.Opcode.CONCAT, expr, it.expr)
+            axiom = spliceAxioms(ctx, axiom, it.axiom)
+        }
+        return ${solver}BV(ctx, expr, axiom)
+    }
+
+    fun store(index: Index, element: ${solver}BV): ${solver}Memory<Index, Byte> {
+        val elementSize = element.getBitsize()
+        var start = 0
+        val cases = mutableListOf<Pair<Index, Byte>>()
+        while (start < elementSize) {
+            val hi = min(start + byteSize - 1, elementSize - 1)
+            cases.add((index + start).uncheckedCastTo<Index>() to element.extract(hi, start).uncheckedCastTo())
+            start += byteSize
+        }
+        return ${solver}Memory(byteSize, inner.store(cases))
+    }
+
+    fun store(index: Index, element: ${solver}ValueExpr) = store(index, element.castTo())
+}
+
+
+fun ${solver}ValueExpr.convert(sort: $sort) = when {
+    engine.isBoolSort(ctx, sort) -> toBool()
+    engine.isBVSort(ctx, sort) -> toBV(sort)
+#foreach($float in $floats)
+    engine.is${float}Sort(ctx, sort) -> to$float()
+#end
+    else -> unreachable { log.error("Trying to convert value to unknown sort") }
+}
+
+fun ${solver}ValueExpr.toBool(): ${solver}Bool {
+    val newExpr = when {
+        engine.isBool(ctx, expr) -> expr
+        engine.isBV(ctx, expr) -> engine.bv2bool(ctx, expr)
+        else -> unreachable { log.debug("Unexpected SMT expr type in cast") }
+    }
+    return ${solver}Bool(ctx, newExpr, axiom)
+}
+
+fun ${solver}ValueExpr.toBV(sort: $sort): ${solver}BV {
+    val newExpr = when {
+        engine.isBool(ctx, expr) -> engine.bool2bv(ctx, expr, sort)
+        engine.isBV(ctx, expr) -> engine.bv2bv(ctx, expr, sort)
+        else -> unreachable { log.debug("Unexpected SMT expr type in cast") }
+    }
+    return ${solver}BV(ctx, newExpr, axiom)
+}
+
+fun ${solver}ValueExpr.toFloat(): ${solver}Float {
+    val newExpr = when {
+        engine.isBV(ctx, expr) -> engine.bv2float(ctx, expr, engine.getFloatSort(ctx))
+        engine.isFloat(ctx, expr) -> this.expr
+        engine.isDouble(ctx, expr) -> engine.float2float(ctx, expr, engine.getFloatSort(ctx))
+        else -> unreachable { log.debug("Unexpected SMT expr type in cast") }
+    }
+    return ${solver}Float(ctx, newExpr, axiom)
+}
+
+fun ${solver}ValueExpr.toDouble(): ${solver}Double {
+    val newExpr = when {
+        engine.isBV(ctx, expr) -> engine.bv2float(ctx, expr, engine.getDoubleSort(ctx))
+        engine.isFloat(ctx, expr) -> engine.float2float(ctx, expr, engine.getDoubleSort(ctx))
+        engine.isDouble(ctx, expr) -> this.expr
+        else -> unreachable { log.debug("Unexpected SMT expr type in cast") }
+    }
+    return ${solver}Double(ctx, newExpr, axiom)
+}
