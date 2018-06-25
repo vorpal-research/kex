@@ -1,0 +1,68 @@
+package ${packageName}
+
+import ${importPackage}.*
+import org.jetbrains.research.kex.smt.${solver}SMTExprFactory
+import org.jetbrains.research.kfg.type.*
+import org.jetbrains.research.kex.util.*
+
+#set($valexpr = "${solver}ValueExpr")
+#set($Bool = "${solver}Bool")
+#set($Bitvector = "${solver}BV")
+#set($Bitvector32 = "${solver}BV32")
+#set($Bitvector64 = "${solver}BV64")
+#set($Float = "${solver}Float")
+#set($Double = "${solver}Double")
+#set($Array = "${solver}Array")
+#set($Memory = "${solver}Memory")
+
+typealias Bool_ = $Bool
+typealias Ptr_ = $Bitvector32
+typealias Short_ = $Bitvector32
+typealias Int_ = $Bitvector32
+typealias Long_ = $Bitvector64
+typealias Float_ = $Float
+typealias Double_ = $Double
+typealias Memory_ = $Memory< Ptr_ >
+typealias Dynamic_ = $valexpr
+
+class ${solver}ExprFactory : ${solver}SMTExprFactory(), Loggable {
+    val ctx = $context()
+
+#macro(generateMakes $type $basetype)
+    #set($underlined = "${type}_")
+    fun make$type(name: String, fresh: Boolean = false) =
+            if (fresh) ${underlined}.makeFreshVar(ctx, name) else ${underlined}.makeVar(ctx, name)
+    fun make${type}Const(value: $basetype) = ${underlined}.makeConst(ctx, value)
+#end
+
+#generateMakes("Ptr" "Int")
+    fun makeNull() = makePtrConst(0)
+
+#generateMakes("Bool", "Boolean")
+    fun makeTrue() = makeBoolConst(true)
+    fun makeFalse() = makeBoolConst(false)
+
+#generateMakes("Short", "Int")
+    fun makeShortConst(value: Short) = makeShortConst(value.toInt())
+
+#generateMakes("Int", "Int")
+
+#generateMakes("Long", "Long")
+
+#generateMakes("Float", "Float")
+
+#generateMakes("Double", "Double")
+
+    fun makeEmptyMemory(id: String) = Memory_.makeFree < Ptr_ >(ctx, id)
+    fun makeDefaultMemory(id: String, default: Int) =
+        Memory_.makeDefault< Ptr_ >(ctx, id, Byte_.makeConst(ctx, default))
+
+#set($types = ["Bool", "Short", "Int", "Long", "Float", "Double"])
+    fun getVarByType(type: Type, name: String, fresh: Boolean = false) = when(type) {
+#foreach($type in $types)
+        is ${type}Type -> make${type}(name, fresh)
+#end
+        is ClassType -> makePtr(name, fresh)
+        else -> unreachable { log.error("Unknown type in ExprFactory: $type") }
+    }
+}

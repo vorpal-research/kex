@@ -174,11 +174,16 @@ $modifiers class $fullname : $parent {
 #set($widths = [32, 64])
 #foreach($width in $widths)
 class $self$width : $self {
+#if($width == 32)
+    #set($base = "Int")
+#else
+    #set($base = "Long")
+#end
     companion object {
         const val BITWIDTH = $width
 
         fun getStaticSort(ctx: $context) = engine.getBVSort(ctx, BITWIDTH)
-#generateStatics("$self$width", "Boolean")
+#generateStatics("$self$width", $base)
     }
 
     #constructors("BV")
