@@ -76,7 +76,7 @@ abstract class SMTEngine<in Context_t : Any, Expr_t : Any, Sort_t : Any, Functio
     abstract fun makeNumericConst(ctx: Context_t, sort: Sort_t, value: Long): Expr_t
     abstract fun makeFloatConst(ctx: Context_t, value: Float): Expr_t
     abstract fun makeDoubleConst(ctx: Context_t, value: Double): Expr_t
-    abstract fun makeArrayConst(ctx: Context_t, sort: Sort_t, expr: Expr_t): Expr_t
+    abstract fun makeConstArray(ctx: Context_t, sort: Sort_t, expr: Expr_t): Expr_t
     abstract fun makeFunction(ctx: Context_t, name: String, retSort: Sort_t, args: List<Sort_t>): Function_t
 
     abstract fun apply(ctx: Context_t, f: Function_t, args: List<Expr_t>): Expr_t

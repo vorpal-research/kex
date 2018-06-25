@@ -94,6 +94,7 @@
             <artifactId>better-parse</artifactId>
             <version>${better-parse.version}</version>
         </dependency>
+
         <dependency>
             <groupId>com.microsoft</groupId>
             <artifactId>z3</artifactId>
@@ -133,7 +134,10 @@
                             </annotationProcessorPaths>
                             <annotationProcessors>
                                 <annotationProcessor>
-                                    org.jetbrains.research.kex.smtinstance.SMTInstanceGenerator
+                                    org.jetbrains.research.kex.smtinstance.SMTExprGenerator
+                                </annotationProcessor>
+                                <annotationProcessor>
+                                    org.jetbrains.research.kex.smtinstance.SMTMemoryGenerator
                                 </annotationProcessor>
                             </annotationProcessors>
                             <annotationProcessorArgs>

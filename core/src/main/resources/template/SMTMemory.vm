@@ -1,0 +1,79 @@
+package ${packageName}
+
+import ${import}.*
+import org.jetbrains.research.kex.smt.SMTEngine
+import org.jetbrains.research.kex.smt.${solver}SMTMemory
+import org.jetbrains.research.kex.util.*
+import kotlin.math.min
+
+#set($valexpr = "${solver}ValueExpr")
+#set($Bool = "${solver}Bool")
+#set($Bitvector = "${solver}BV")
+#set($Float = "${solver}Float")
+#set($Double = "${solver}Double")
+#set($Array = "${solver}Array")
+#set($Memory = "${solver}Memory")
+
+private val engine = ${solver}Engine
+
+#if($bytesize == 32)
+private typealias Byte = ${solver}BV32
+#elseif($bytesize == 64)
+private typealias Byte = ${solver}BV64
+#else
+private typealias Byte = $Bitvector
+#end
+
+#set($self = $Memory)
+class $self< in Index : $Bitvector >(val inner: $Array< Byte, Index >) : ${solver}SMTMemory() {
+    companion object {
+        const val byteSize = $bytesize
+
+        fun < Index : $Bitvector > merge(default: $self< Index >, cases: List< Pair< $Bool, $self< Index >>>): $self< Index > {
+            val inners = cases.map { it.first to it.second.inner }
+            return $self(${Array}.merge(default.inner, inners))
+        }
+
+        inline fun < reified Index : $Bitvector > makeDefault(ctx: $context, name: String, default: Byte) =
+            $self< Index >(${Array}.makeDefault< Byte, Index >(ctx, name, default))
+
+        inline fun < reified Index : $Bitvector > makeFree(ctx: $context, name: String) =
+            $self< Index >(${Array}.makeFree< Byte, Index >(ctx, name))
+
+        inline fun < reified Index : $Bitvector > makeVar(ctx: $context, name: String) =
+            $self< Index >(${Array}.makeVar< Byte, Index >(ctx, name))
+    }
+
+    val ctx = inner.ctx
+
+    fun load(index: Index) = inner[index]
+    fun load(index: Index, elementSize: Int): $Bitvector {
+        val bytes = (0..((elementSize - 1) / byteSize)).map {
+            inner.load((index + it).uncheckedCastTo())
+        }
+        var expr = bytes.first().expr
+        var axiom = bytes.first().axiom
+        bytes.drop(1).forEach {
+            expr = engine.binary(ctx, SMTEngine.Opcode.CONCAT, expr, it.expr)
+            axiom = spliceAxioms(ctx, axiom, it.axiom)
+        }
+        return $Bitvector(ctx, expr, axiom)
+    }
+
+    fun store(index: Index, element: $Bitvector): $self< Index > {
+        val elementSize = element.getBitsize()
+        var start = 0
+        val cases = mutableListOf< Pair< Index, Byte >>()
+        while (start < elementSize) {
+            val hi = min(start + byteSize - 1, elementSize - 1)
+            cases.add((index + start).uncheckedCastTo< Index >() to element.extract(hi, start).toBV(Byte.getStaticSort(ctx)).uncheckedCastTo())
+            start += byteSize
+        }
+        return $self(inner.store(cases))
+    }
+
+    fun store(index: Index, element: $valexpr) = store(index, element.toBV())
+
+    operator fun get(index: Index) = load(index)
+    operator fun set(index: Index, value: $Bitvector) = store(index, value)
+}

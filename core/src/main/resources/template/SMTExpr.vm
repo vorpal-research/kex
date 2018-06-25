@@ -8,11 +8,8 @@ import org.jetbrains.research.kex.smt.SMTEngine
 import org.jetbrains.research.kex.util.*
 import org.jetbrains.research.kfg.util.defaultHashCode
 import kotlin.math.max
-import kotlin.math.min
 
-#set($classes = [])
-
-val engine = ${solver}Engine
+private val engine = ${solver}Engine
 
 fun defaultAxiom(ctx: $context) = engine.makeBooleanConst(ctx, true)
 
@@ -36,11 +33,10 @@ fun spliceAxioms(ctx: $context, e0: $expr, e1: $expr, e2: $expr) = when {
 #set($Double = "${solver}Double")
 #set($Array = "${solver}Array")
 
-
 open class $valexpr : ${solver}SMTExpr, Loggable {
     companion object {
-#set($classes  = ["Bool", "BV32", "BV64", "BV", "Float", "Double"])
         inline fun < reified Type: $valexpr> getStaticSort(ctx: $context) = when (Type::class) {
+#set($classes  = ["Bool", "BV32", "BV64", "BV", "Float", "Double"])
 #foreach($class in $classes)
             $solver$class::class -> $solver${class}.getStaticSort(ctx)
 #end
@@ -141,7 +137,7 @@ $modifiers class $fullname : $parent {
     override fun withAxiom(ax: $valexpr) = $self(ctx, expr, spliceAxioms(ctx, axiom, ax.expr, ax.axiom))
 
     fun getBitsize() = engine.bvBitsize(ctx, getSort())
-    fun extract(high: Int, low: Int) = $self(ctx, engine.extract(ctx, expr, high, low), axiom)
+    open fun extract(high: Int, low: Int) = $self(ctx, engine.extract(ctx, expr, high, low), axiom)
 
     open fun binary(opcode: SMTEngine.Opcode, other: $self): $valexpr {
         val maxsize = max(getBitsize(), other.getBitsize())
@@ -154,7 +150,6 @@ $modifiers class $fullname : $parent {
     }
 
 #set($opcodes = ["EQ", "NEQ", "ADD", "SUB", "MUL", "DIVIDE", "MOD", "GT", "GE", "LT", "LE", "SHL", "SHR", "ASHR", "AND", "OR", "XOR"])
-
 #foreach($opcode in $opcodes)
     infix fun ${opcode.toLowerCase()}(other: $self) = binary(SMTEngine.Opcode.$opcode, other)
 #end
@@ -177,7 +172,6 @@ $modifiers class $fullname : $parent {
 }
 
 #set($widths = [32, 64])
-
 #foreach($width in $widths)
 class $self$width : $self {
     companion object {
@@ -188,6 +182,7 @@ class $self$width : $self {
     }
 
     #constructors("BV")
+    override fun extract(high: Int, low: Int) = $self$width(ctx, engine.extract(ctx, expr, high, low), axiom)
     override fun withAxiom(ax: $valexpr) = $self$width(ctx, expr, spliceAxioms(ctx, axiom, ax.expr, ax.axiom))
     override fun binary(opcode: SMTEngine.Opcode, other: $self) =
         if (other is $self$width) {
@@ -198,7 +193,6 @@ class $self$width : $self {
 #end
 
 #set($floats = ["Float", "Double"])
-
 #foreach($float in $floats)
 #generateClass("$solver$float", $float, "", $valexpr, "engine.get${float}Sort(ctx)", $float)
     override fun withAxiom(ax: $valexpr) = $self(ctx, expr, spliceAxioms(ctx, axiom, ax.expr, ax.axiom))
@@ -212,8 +206,7 @@ class $self$width : $self {
         return $valexpr(ctx, nexpr, nax)
     }
 
-    #set($opcodes = ["EQ", "NEQ", "ADD", "SUB", "MUL", "DIVIDE", "GT", "GE", "LT", "LE"])
-
+#set($opcodes = ["EQ", "NEQ", "ADD", "SUB", "MUL", "DIVIDE", "GT", "GE", "LT", "LE"])
 #foreach($opcode in $opcodes)
     infix fun ${opcode.toLowerCase()}(other: $self) = binary(SMTEngine.Opcode.$opcode, other)
 #end
@@ -236,6 +229,19 @@ class $self< Element : $valexpr, in Index : $valexpr > : $valexpr {
                 $self(ctx, engine.ite(ctx, pair.first.expr, acc.expr, pair.second.expr), spliceAxioms(ctx, acc.axiom, pair.second.axiom))
             }
         }
+
+        inline fun < Element : $valexpr, reified Index : $valexpr > makeDefault(ctx: $context, name: String, default: Element) =
+            $self< Element, Index >(ctx, ${solver}Engine.makeConstArray(ctx, ${valexpr}.getStaticSort< Index >(ctx), default.expr))
+
+        inline fun < reified Element : $valexpr, reified Index : $valexpr > makeFree(ctx: $context, name: String): $self< Element, Index > {
+            val sort = ${solver}Engine.getArraySort(ctx, ${valexpr}.getStaticSort< Element >(ctx), ${valexpr}.getStaticSort< Index >(ctx))
+            return $self< Element, Index >(ctx, ${solver}Engine.makeVar(ctx, sort, name, true))
+        }
+
+        inline fun < reified Element : $valexpr, reified Index : $valexpr > makeVar(ctx: $context, name: String): $self< Element, Index > {
+            val sort = ${solver}Engine.getArraySort(ctx, ${valexpr}.getStaticSort< Element >(ctx), ${valexpr}.getStaticSort< Index >(ctx))
+            return $self< Element, Index >(ctx, ${solver}Engine.makeVar(ctx, sort, name, false))
+        }
     }
 
     #constructors("Array")
@@ -249,48 +255,10 @@ class $self< Element : $valexpr, in Index : $valexpr > : $valexpr {
         val base: $expr = cases.fold(expr) { expr, pair -> engine.store(ctx, expr, pair.first.expr, pair.second.expr) }
         return $self(ctx, base)
     }
+
+    operator fun get(index: Index) = load(index)
+    operator fun set(index: Index, value: Element) = store(index, value)
 }
-
-#set($self = "${solver}Memory")
-class $self< in Index : $Bitvector, Byte : $Bitvector >(val byteSize: Int, val inner: $Array< Byte, Index >) {
-    companion object {
-        fun < Index : $Bitvector, Byte : $Bitvector > merge(default: $self< Index, Byte >,
-                cases: List< Pair< $Bool, $self< Index, Byte >>>): $self< Index, Byte > {
-            val inners = cases.map { it.first to it.second.inner }
-            return $self(default.byteSize, ${Array}.merge(default.inner, inners))
-        }
-    }
-
-    val ctx = inner.ctx
-
-    fun load(index: Index, elementSize: Int): $Bitvector {
-        val bytes = (0..((elementSize - 1) / byteSize)).map {
-        inner.load((index + it).uncheckedCastTo())
-        }
-        var expr = bytes.first().expr
-        var axiom = bytes.first().axiom
-        bytes.drop(1).forEach {
-            expr = engine.binary(ctx, SMTEngine.Opcode.CONCAT, expr, it.expr)
-            axiom = spliceAxioms(ctx, axiom, it.axiom)
-        }
-        return $Bitvector(ctx, expr, axiom)
-    }
-
-    fun store(index: Index, element: $Bitvector): $self< Index, Byte > {
-        val elementSize = element.getBitsize()
-        var start = 0
-        val cases = mutableListOf< Pair< Index, Byte >>()
-        while (start < elementSize) {
-            val hi = min(start + byteSize - 1, elementSize - 1)
-            cases.add((index + start).uncheckedCastTo< Index >() to element.extract(hi, start).uncheckedCastTo())
-            start += byteSize
-        }
-        return $self(byteSize, inner.store(cases))
-    }
-
-    fun store(index: Index, element: $valexpr) = store(index, element.castTo())
-}
-
 
 fun ${valexpr}.convert(sort: $sort) = when {
     engine.isBoolSort(ctx, sort) -> toBool()
@@ -314,6 +282,18 @@ fun ${valexpr}.toBV(sort: $sort): $Bitvector {
     val newExpr = when {
         engine.isBool(ctx, expr) -> engine.bool2bv(ctx, expr, sort)
         engine.isBV(ctx, expr) -> engine.bv2bv(ctx, expr, sort)
+        engine.isFP(ctx, expr) -> engine.float2bv(ctx, expr, sort)
+        else -> unreachable { log.debug("Unexpected SMT expr type in cast") }
+    }
+    return $Bitvector(ctx, newExpr, axiom)
+}
+
+fun ${valexpr}.toBV(): $Bitvector {
+    val newExpr = when {
+        engine.isBool(ctx, expr) -> engine.bool2bv(ctx, expr, engine.getBVSort(ctx, SMTEngine.WORD))
+        engine.isBV(ctx, expr) -> this.expr
+        engine.isFloat(ctx, expr) -> engine.float2bv(ctx, expr, engine.getBVSort(ctx, SMTEngine.WORD))
+        engine.isDouble(ctx, expr) -> engine.float2bv(ctx, expr, engine.getBVSort(ctx, SMTEngine.DWORD))
         else -> unreachable { log.debug("Unexpected SMT expr type in cast") }
     }
     return $Bitvector(ctx, newExpr, axiom)

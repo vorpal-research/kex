@@ -65,7 +65,7 @@ object Z3Engine : SMTEngine<Context, Expr, Sort, FuncDecl>() {
     override fun makeFloatConst(ctx: Context, value: Float): Expr = ctx.mkFPNumeral(value, getFloatSort(ctx).castTo())
     override fun makeDoubleConst(ctx: Context, value: Double): Expr = ctx.mkFPNumeral(value, getDoubleSort(ctx).castTo())
 
-    override fun makeArrayConst(ctx: Context, sort: Sort, expr: Expr) = TODO()
+    override fun makeConstArray(ctx: Context, sort: Sort, expr: Expr): Expr = ctx.mkConstArray(sort, expr)
 
     override fun makeFunction(ctx: Context, name: String, retSort: Sort, args: List<Sort>) =
             ctx.mkFuncDecl(name, args.toTypedArray(), retSort)
