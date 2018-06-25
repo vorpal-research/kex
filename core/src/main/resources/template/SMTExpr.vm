@@ -1,6 +1,6 @@
 package ${packageName}
 
-import ${import}.*
+import ${importPackage}.*
 import org.jetbrains.research.kex.smt.${solver.toLowerCase()}.${solver}Engine
 import org.jetbrains.research.kex.smt.${solver}SMTExpr
 import org.jetbrains.research.kex.smt.SMTEngine
