@@ -1,6 +1,6 @@
 package ${packageName}
 
-import ${import}.*
+import ${importPackage}.*
 import org.jetbrains.research.kex.smt.SMTEngine
 import org.jetbrains.research.kex.smt.${solver}SMTMemory
 import org.jetbrains.research.kex.util.*
@@ -16,9 +16,9 @@ import kotlin.math.min
 
 private val engine = ${solver}Engine
 
-#if($bytesize == 32)
+#if($byteSize == 32)
 private typealias Byte = ${solver}BV32
-#elseif($bytesize == 64)
+#elseif($byteSize == 64)
 private typealias Byte = ${solver}BV64
 #else
 private typealias Byte = $Bitvector
@@ -27,7 +27,7 @@ private typealias Byte = $Bitvector
 #set($self = $Memory)
 class $self< in Index : $Bitvector >(val inner: $Array< Byte, Index >) : ${solver}SMTMemory() {
     companion object {
-        const val byteSize = $bytesize
+        const val byteSize = $byteSize
 
         fun < Index : $Bitvector > merge(default: $self< Index >, cases: List< Pair< $Bool, $self< Index >>>): $self< Index > {
             val inners = cases.map { it.first to it.second.inner }

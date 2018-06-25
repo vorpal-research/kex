@@ -134,10 +134,7 @@
                             </annotationProcessorPaths>
                             <annotationProcessors>
                                 <annotationProcessor>
-                                    org.jetbrains.research.kex.smtinstance.SMTExprGenerator
-                                </annotationProcessor>
-                                <annotationProcessor>
-                                    org.jetbrains.research.kex.smtinstance.SMTMemoryGenerator
+                                    org.jetbrains.research.kex.smt.SMTProcessor
                                 </annotationProcessor>
                             </annotationProcessors>
                             <annotationProcessorArgs>

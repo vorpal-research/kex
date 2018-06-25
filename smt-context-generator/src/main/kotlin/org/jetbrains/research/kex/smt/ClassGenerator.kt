@@ -1,4 +1,4 @@
-package org.jetbrains.research.kex.smtinstance
+package org.jetbrains.research.kex.smt
 
 import org.apache.velocity.VelocityContext
 import org.apache.velocity.app.VelocityEngine
