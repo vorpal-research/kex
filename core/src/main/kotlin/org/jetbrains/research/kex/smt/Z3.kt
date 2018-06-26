@@ -8,3 +8,6 @@ abstract class Z3SMTMemory
 
 @SMTExprFactory(solver = "Z3", importPackage = "com.microsoft.z3", context = "Context")
 abstract class Z3SMTExprFactory
+
+@SMTContext(solver = "Z3", importPackage = "com.microsoft.z3", context = "Context")
+abstract class Z3SMTContext

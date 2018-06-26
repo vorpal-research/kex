@@ -34,6 +34,9 @@ class SMTProcessor : AbstractProcessor() {
             getElementsAnnotatedWith(SMTExprFactory::class.java)?.forEach {
                 processAnnotation(it, SMTExprFactory::class, "ExprFactory")
             }
+            getElementsAnnotatedWith(SMTContext::class.java)?.forEach {
+                processAnnotation(it, SMTContext::class, "Context")
+            }
             Unit
         }
         return true
@@ -43,7 +46,8 @@ class SMTProcessor : AbstractProcessor() {
     override fun getSupportedAnnotationTypes() = setOf(
             "org.jetbrains.research.kex.smt.SMTExpr",
             "org.jetbrains.research.kex.smt.SMTMemory",
-            "org.jetbrains.research.kex.smt.SMTExprFactory"
+            "org.jetbrains.research.kex.smt.SMTExprFactory",
+            "org.jetbrains.research.kex.smt.SMTContext"
     )
     override fun getSupportedOptions() = setOf(CODEGEN_DIR)
 

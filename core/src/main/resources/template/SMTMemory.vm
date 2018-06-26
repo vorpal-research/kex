@@ -1,18 +1,6 @@
-package ${packageName}
-
-import ${importPackage}.*
-import org.jetbrains.research.kex.smt.SMTEngine
+#parse("definitions.vm")
 import org.jetbrains.research.kex.smt.${solver}SMTMemory
-import org.jetbrains.research.kex.util.*
 import kotlin.math.min
-
-#set($valexpr = "${solver}ValueExpr")
-#set($Bool = "${solver}Bool")
-#set($Bitvector = "${solver}BV")
-#set($Float = "${solver}Float")
-#set($Double = "${solver}Double")
-#set($Array = "${solver}Array")
-#set($Memory = "${solver}Memory")
 
 private val engine = ${solver}Engine
 
@@ -46,7 +34,6 @@ class $self< in Index : $Bitvector >(val inner: $Array< Byte_, Index >) : ${solv
 
     val ctx = inner.ctx
 
-    fun load(index: Index) = inner[index]
     fun load(index: Index, elementSize: Int): $Bitvector {
         val bytes = (0..((elementSize - 1) / byteSize)).map {
             inner.load((index + it).uncheckedCastTo())
@@ -59,6 +46,7 @@ class $self< in Index : $Bitvector >(val inner: $Array< Byte_, Index >) : ${solv
         }
         return $Bitvector(ctx, expr, axiom)
     }
+    inline fun < reified T : $valexpr > load(index: Index) = load(index, ${valexpr}.getStaticBitsize< T >(ctx)).convert< T >()
 
     fun store(index: Index, element: $Bitvector): $self< Index > {
         val elementSize = element.getBitsize()
@@ -72,8 +60,9 @@ class $self< in Index : $Bitvector >(val inner: $Array< Byte_, Index >) : ${solv
         return $self(inner.store(cases))
     }
 
-    fun store(index: Index, element: $valexpr) = store(index, element.toBV())
+    fun < T : $valexpr > store(index: Index, element: T) = store(index, element.toBV())
 
-    operator fun get(index: Index) = load(index)
+    operator fun get(index: Index) = inner[index].convert< Byte_ >()
     operator fun set(index: Index, value: $Bitvector) = store(index, value)
+    operator fun < T : $valexpr > set(index: Index, value: T) = store(index, value)
 }

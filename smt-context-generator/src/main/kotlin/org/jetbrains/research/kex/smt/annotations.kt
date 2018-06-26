@@ -20,3 +20,9 @@ annotation class SMTExprFactory(
         val importPackage: String,
         val context: String
 )
+
+annotation class SMTContext(
+        val solver: String,
+        val importPackage: String,
+        val context: String
+)

@@ -1,12 +1,5 @@
-package ${packageName}
-
-import ${importPackage}.*
-import org.jetbrains.research.kex.smt.${solver.toLowerCase()}.${solver}Engine
+#parse("definitions.vm")
 import org.jetbrains.research.kex.smt.${solver}SMTExpr
-import org.jetbrains.research.kex.smt.SMTEngine
-
-import org.jetbrains.research.kex.util.*
-import org.jetbrains.research.kfg.util.defaultHashCode
 import kotlin.math.max
 
 private val engine = ${solver}Engine
@@ -26,21 +19,20 @@ fun spliceAxioms(ctx: $context, e0: $expr, e1: $expr, e2: $expr) = when {
     else -> engine.conjunction(ctx, e0, e1, e2)
 }
 
-#set($valexpr = "${solver}ValueExpr")
-#set($Bool = "${solver}Bool")
-#set($Bitvector = "${solver}BV")
-#set($Float = "${solver}Float")
-#set($Double = "${solver}Double")
-#set($Array = "${solver}Array")
-
 open class $valexpr : ${solver}SMTExpr, Loggable {
     companion object {
-        inline fun < reified Type: $valexpr> getStaticSort(ctx: $context) = when (Type::class) {
-#set($classes  = ["Bool", "BV32", "BV64", "BV", "Float", "Double"])
-#foreach($class in $classes)
-            $solver$class::class -> $solver${class}.getStaticSort(ctx)
+        inline fun < reified Type : $valexpr> getStaticSort(ctx: $context) = when (Type::class) {
+#foreach($class in $exprClasses)
+            $class::class -> ${class}.getStaticSort(ctx)
 #end
             else -> unreachable { loggerFor($valexpr::class).error("Trying to get static sort of non-simple SMTExpr") }
+        }
+
+        inline fun < reified Type : $valexpr > getStaticBitsize(ctx: $context) = when (Type::class) {
+#foreach($class in $exprClasses)
+            $class::class -> ${class}.getStaticBitsize(ctx)
+#end
+            else -> unreachable { loggerFor($valexpr::class).error("Trying to get static bitsize of non-simple SMTExpr") }
         }
     }
 
@@ -113,6 +105,7 @@ open class $valexpr : ${solver}SMTExpr, Loggable {
 #set($self = $fullname)
 $modifiers class $fullname : $parent {
     companion object {
+        fun getStaticBitsize(ctx: $context) = engine.getSortBitsize(ctx, getStaticSort(ctx))
         fun getStaticSort(ctx: $context) = $staticSort
 #generateStatics($fullname, $basetype)
     }
@@ -123,7 +116,6 @@ $modifiers class $fullname : $parent {
 #generateClass($Bool, "Bool", "", $valexpr, "engine.getBoolSort(ctx)", "Boolean")
     override fun withAxiom(ax: $valexpr) = $self(ctx, expr, spliceAxioms(ctx, axiom, ax.expr, ax.axiom))
 
-    fun getBitsize() = 1
     override fun simplify() = $self(super.simplify())
 
 #set($opcodes = ["EQ", "NEQ", "AND", "OR", "XOR", "IMPLIES", "IFF"])
@@ -180,9 +172,10 @@ class $self$width : $self {
     #set($base = "Long")
 #end
     companion object {
-        const val BITWIDTH = $width
+        const val BITSIZE = $width
+        fun getStaticBitsize(ctx: $context) = BITSIZE
 
-        fun getStaticSort(ctx: $context) = engine.getBVSort(ctx, BITWIDTH)
+        fun getStaticSort(ctx: $context) = engine.getBVSort(ctx, BITSIZE)
 #generateStatics("$self$width", $base)
     }
 
@@ -256,13 +249,23 @@ class $self< Element : $valexpr, in Index : $valexpr > : $valexpr {
     fun store(index: Index, value: Element): $self< Element, Index > =
         $self(ctx, engine.store(ctx, expr, index.expr, value.expr))
 
-    fun store(cases: List< Pair< Index, Element >>):$self<Element, Index > {
+    fun store(cases: List< Pair< Index, Element >>):$self< Element, Index > {
         val base: $expr = cases.fold(expr) { expr, pair -> engine.store(ctx, expr, pair.first.expr, pair.second.expr) }
         return $self(ctx, base)
     }
 
     operator fun get(index: Index) = load(index)
     operator fun set(index: Index, value: Element) = store(index, value)
+}
+
+inline fun < reified T : $valexpr > ${valexpr}.convert() = when (T::class) {
+    $Bool::class -> toBool() as T
+    $Bitvector32::class -> toBV(${Bitvector32}.getStaticSort(ctx)) as T
+    $Bitvector64::class -> toBV(${Bitvector64}.getStaticSort(ctx)) as T
+    $Bitvector::class -> toBV() as T
+    $Float::class -> toFloat() as T
+    $Double::class -> toDouble() as T
+    else -> unreachable { log.error("Unknown expression type") }
 }
 
 fun ${valexpr}.convert(sort: $sort) = when {
