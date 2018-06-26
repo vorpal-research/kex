@@ -1,6 +1,7 @@
 package org.jetbrains.research.kex.smt
 
 import org.jetbrains.research.kex.util.Loggable
+import org.jetbrains.research.kex.util.unreachable
 
 abstract class SMTEngine<in Context_t : Any, Expr_t : Any, Sort_t : Any, Function_t : Any> : Loggable {
     companion object {
@@ -52,6 +53,14 @@ abstract class SMTEngine<in Context_t : Any, Expr_t : Any, Sort_t : Any, Functio
     abstract fun bvBitsize(ctx: Context_t, sort: Sort_t): Int
     abstract fun floatEBitsize(ctx: Context_t, sort: Sort_t): Int
     abstract fun floatSBitsize(ctx: Context_t, sort: Sort_t): Int
+    fun getSortBitsize(ctx: Context_t, sort: Sort_t): Int = when {
+        isBoolSort(ctx, sort) -> WORD
+        isBVSort(ctx, sort) -> bvBitsize(ctx, sort)
+        isFloatSort(ctx, sort) -> WORD
+        isDoubleSort(ctx, sort) -> DWORD
+        else -> unreachable { log.error("Trying to get bitsize of unknown sort $sort") }
+    }
+    fun getExprBitsize(ctx: Context_t, expr: Expr_t) = getSortBitsize(ctx, getSort(ctx, expr))
 
     abstract fun bool2bv(ctx: Context_t, expr: Expr_t, sort: Sort_t): Expr_t
     abstract fun bv2bool(ctx: Context_t, expr: Expr_t): Expr_t

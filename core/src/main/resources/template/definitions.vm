@@ -1,0 +1,20 @@
+package ${packageName}
+
+import ${importPackage}.*
+import org.jetbrains.research.kex.smt.${solver.toLowerCase()}.${solver}Engine
+import org.jetbrains.research.kex.smt.SMTEngine
+import org.jetbrains.research.kfg.type.*
+import org.jetbrains.research.kex.util.*
+import org.jetbrains.research.kfg.util.defaultHashCode
+
+#set($valexpr = "${solver}ValueExpr")
+#set($Bool = "${solver}Bool")
+#set($Bitvector = "${solver}BV")
+#set($Bitvector32 = "${solver}BV32")
+#set($Bitvector64 = "${solver}BV64")
+#set($Float = "${solver}Float")
+#set($Double = "${solver}Double")
+#set($Array = "${solver}Array")
+#set($Memory = "${solver}Memory")
+
+#set($exprClasses = [$Bool, $Bitvector32, $Bitvector64, $Bitvector, $Float, $Double])

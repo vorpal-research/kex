@@ -1,0 +1,56 @@
+#parse("definitions.vm")
+import org.jetbrains.research.kex.smt.${solver}SMTContext
+
+class VersionedMemory(val memory: Memory_, val version: Long = 0) {
+    companion object {
+        fun merge(name: String, default: VersionedMemory, cases: List< Pair< Bool_, VersionedMemory >>): VersionedMemory {
+            val maxVersion = cases.maxBy { it.second.version }?.second?.version ?: default.version
+            return if (maxVersion == default.version) default else {
+                val memories = cases.map { it.first to it.second.memory }
+                VersionedMemory(Memory_.merge(default.memory, memories), maxVersion + 1)
+            }
+        }
+    }
+
+    inline fun < reified T : $valexpr > load(ptr: Ptr_) = memory.load< T >(ptr)
+    fun load(index: Ptr_, elementSize: Int) = memory.load(index, elementSize)
+
+    fun < T : Dynamic_ > store(index: Ptr_, element: T): VersionedMemory {
+        val newMemory = memory.store(index, element)
+        return VersionedMemory(newMemory, version + 1)
+    }
+
+    operator fun get(index: Ptr_) = memory[index]
+    operator fun < T : Dynamic_ > set(index: Ptr_, element: T) = store(index, element)
+}
+
+class ${solver}Context : ${solver}SMTContext() {
+    companion object {
+        const val MEMORY_NAME = "__memory__"
+        const val BOUNDS_NAME = "__bounds__"
+    }
+    val factory = ${solver}ExprFactory()
+    private val localPointer = 0L
+
+    var memory = VersionedMemory(factory.makeDefaultMemory(MEMORY_NAME, 0))
+    var bounds = VersionedMemory(factory.makeEmptyMemory(BOUNDS_NAME))
+
+    init {
+        initBounds()
+    }
+
+    private fun initBounds() {
+        bounds.store(factory.makeNull(), factory.makeIntConst(-1))
+    }
+
+    fun readMemory(ptr: Ptr_, bitsize: Int) = memory.load(ptr, bitsize)
+    inline fun < reified T : $valexpr > readMemory(ptr: Ptr_) = memory.load< T >(ptr)
+    fun < T : $valexpr > writeMemory(ptr: Ptr_, value: T) {
+        memory = memory.store(ptr, value)
+    }
+
+    fun readBound(ptr: Ptr_): Int_ = bounds.load< Int_ >(ptr)
+    fun writeBound(ptr: Ptr_, bound: Int_) {
+        bounds = bounds.store(ptr, bound)
+    }
+}

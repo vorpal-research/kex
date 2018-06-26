@@ -1,19 +1,5 @@
-package ${packageName}
-
-import ${importPackage}.*
+#parse("definitions.vm")
 import org.jetbrains.research.kex.smt.${solver}SMTExprFactory
-import org.jetbrains.research.kfg.type.*
-import org.jetbrains.research.kex.util.*
-
-#set($valexpr = "${solver}ValueExpr")
-#set($Bool = "${solver}Bool")
-#set($Bitvector = "${solver}BV")
-#set($Bitvector32 = "${solver}BV32")
-#set($Bitvector64 = "${solver}BV64")
-#set($Float = "${solver}Float")
-#set($Double = "${solver}Double")
-#set($Array = "${solver}Array")
-#set($Memory = "${solver}Memory")
 
 typealias Bool_ = $Bool
 typealias Ptr_ = $Bitvector32
