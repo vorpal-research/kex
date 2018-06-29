@@ -6,9 +6,9 @@ import org.jetbrains.research.kex.util.unreachable
 import org.jetbrains.research.kfg.ir.BasicBlock
 import org.jetbrains.research.kfg.ir.Method
 import org.jetbrains.research.kfg.ir.value.instruction.*
-import org.jetbrains.research.kfg.util.DominatorTree
-import org.jetbrains.research.kfg.util.DominatorTreeBuilder
-import org.jetbrains.research.kfg.util.TopologicalSorter
+import org.jetbrains.research.kex.algorithm.DominatorTree
+import org.jetbrains.research.kex.algorithm.DominatorTreeBuilder
+import org.jetbrains.research.kex.algorithm.TopologicalSorter
 import org.jetbrains.research.kfg.visitor.MethodVisitor
 import java.util.*
 
@@ -42,6 +42,7 @@ class PredicateStateAnalysis(method: Method) : MethodVisitor(method), Loggable {
 
     override fun visit() {
         predicateBuilder.visit()
+        if (method.isAbstract()) return
         val (order, cycled) = TopologicalSorter(method.basicBlocks.toSet()).sort(method.getEntry())
         domTree.putAll(DominatorTreeBuilder(method.basicBlocks.toSet()).build())
         assert(cycled.isEmpty()) { log.error("No topological sorting for $method") }

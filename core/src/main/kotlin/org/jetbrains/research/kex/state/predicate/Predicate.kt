@@ -4,7 +4,7 @@ import org.jetbrains.research.kex.state.Sealed
 import org.jetbrains.research.kex.state.term.Term
 import org.jetbrains.research.kex.state.transformer.Transformer
 import org.jetbrains.research.kex.util.contentEquals
-import org.jetbrains.research.kfg.util.defaultHashCode
+import org.jetbrains.research.kex.util.defaultHashCode
 
 sealed class PredicateType(val name: String) {
     override fun toString(): String {

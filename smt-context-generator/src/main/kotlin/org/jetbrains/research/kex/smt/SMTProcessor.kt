@@ -1,5 +1,6 @@
 package org.jetbrains.research.kex.smt
 
+import org.jetbrains.research.kex.util.unreachable
 import java.io.File
 import javax.annotation.processing.AbstractProcessor
 import javax.annotation.processing.RoundEnvironment
@@ -20,8 +21,8 @@ class SMTProcessor : AbstractProcessor() {
         const val TEMPLATE_DIR = "template.dir"
     }
 
-    val targetDirectory: String get() = processingEnv.options[CODEGEN_DIR] ?: "./"
-    val templates: String get() = processingEnv.options[TEMPLATE_DIR] ?: "./"
+    val targetDirectory get() = processingEnv.options[CODEGEN_DIR] ?: unreachable { error("No codegen directory") }
+    val templates get() = processingEnv.options[TEMPLATE_DIR] ?: unreachable { error("No template directory") }
 
     override fun process(annotations: MutableSet<out TypeElement>?, roundEnv: RoundEnvironment?): Boolean {
         roundEnv?.run {
@@ -49,17 +50,20 @@ class SMTProcessor : AbstractProcessor() {
             "org.jetbrains.research.kex.smt.SMTExprFactory",
             "org.jetbrains.research.kex.smt.SMTContext"
     )
+
     override fun getSupportedOptions() = setOf(CODEGEN_DIR)
 
     private fun <T : Annotation> processAnnotation(element: Element, annotation: KClass<T>, nameTemplate: String) {
         val `class` = element.simpleName.toString()
         val `package` = processingEnv.elementUtils.getPackageOf(element).toString()
-        val anno = element.getAnnotation(annotation.java) ?: return
+        val anno = element.getAnnotation(annotation.java)
+                ?: unreachable { error("Element $element have no annotation $annotation") }
 
         val parameters = mutableMapOf<String, Any>()
         for (property in annotation.declaredMemberProperties) {
             val prop = anno::class.memberFunctions.first { it.name == property.name }
-            parameters[property.name] = prop.call(anno) ?: "unknown"
+            parameters[property.name] = prop.call(anno)
+                    ?: unreachable { error("Annotation $anno have no property named ${property.name}") }
         }
         val solver = parameters.getValue("solver") as String
         val newPackage = "$`package`.${solver.toLowerCase()}"
@@ -68,10 +72,7 @@ class SMTProcessor : AbstractProcessor() {
         parameters["packageName"] = newPackage
         parameters["className"] = newClass
 
-        processingEnv.messager.printMessage(
-                Diagnostic.Kind.NOTE,
-                "Generating $nameTemplate for $`class` in package $`package` with parameters $parameters"
-        )
+        info("Generating $nameTemplate for $`class` in package $`package` with parameters $parameters")
         writeClass(newPackage, newClass, parameters, "SMT$nameTemplate")
     }
 
@@ -82,4 +83,7 @@ class SMTProcessor : AbstractProcessor() {
         ClassGenerator(parameters, templates, "$template.vm").doit(fileWriter)
         fileWriter.close()
     }
+
+    private fun error(msg: String) = processingEnv.messager.printMessage(Diagnostic.Kind.ERROR, msg)
+    private fun info(msg: String) = processingEnv.messager.printMessage(Diagnostic.Kind.NOTE, msg)
 }

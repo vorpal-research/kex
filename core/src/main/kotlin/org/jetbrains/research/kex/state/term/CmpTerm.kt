@@ -3,7 +3,7 @@ package org.jetbrains.research.kex.state.term
 import org.jetbrains.research.kex.state.transformer.Transformer
 import org.jetbrains.research.kfg.ir.value.instruction.CmpOpcode
 import org.jetbrains.research.kfg.type.Type
-import org.jetbrains.research.kfg.util.defaultHashCode
+import org.jetbrains.research.kex.util.defaultHashCode
 
 class CmpTerm(type: Type, val opcode: CmpOpcode, lhv: Term, rhv: Term) : Term("", type, listOf(lhv, rhv)) {
     fun getLhv() = subterms[0]

@@ -11,7 +11,7 @@ import org.jetbrains.research.kfg.ir.value.BlockUser
 import org.jetbrains.research.kfg.ir.value.IntConstant
 import org.jetbrains.research.kfg.ir.value.Value
 import org.jetbrains.research.kfg.ir.value.instruction.*
-import org.jetbrains.research.kfg.util.TopologicalSorter
+import org.jetbrains.research.kex.algorithm.TopologicalSorter
 import org.jetbrains.research.kfg.visitor.LoopVisitor
 import kotlin.math.abs
 

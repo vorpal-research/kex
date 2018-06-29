@@ -201,8 +201,8 @@ class PredicateBuilder(method: Method) : MethodVisitor(method), Loggable {
 
     override fun visitTableSwitchInst(inst: TableSwitchInst) {
         val key = tf.getValueTerm(inst.getIndex())
-        val min = inst.getMin() as? IntConstant ?: unreachable({ log.error("Unexpected min type in tableSwitchInst") })
-        val max = inst.getMax() as? IntConstant ?: unreachable({ log.error("Unexpected max type in tableSwitchInst") })
+        val min = inst.getMin() as? IntConstant ?: unreachable { log.error("Unexpected min type in tableSwitchInst") }
+        val max = inst.getMax() as? IntConstant ?: unreachable { log.error("Unexpected max type in tableSwitchInst") }
         for ((index, successor) in inst.getBranches().withIndex()) {
             terminatorPredicateMap[successor to inst] = pf.getEquality(
                     key,
@@ -228,6 +228,7 @@ class PredicateBuilder(method: Method) : MethodVisitor(method), Loggable {
 
     // ignored instructions
     override fun visitCatchInst(inst: CatchInst) {}
+
     override fun visitEnterMonitorInst(inst: EnterMonitorInst) {}
     override fun visitExitMonitorInst(inst: ExitMonitorInst) {}
     override fun visitJumpInst(inst: JumpInst) {}
