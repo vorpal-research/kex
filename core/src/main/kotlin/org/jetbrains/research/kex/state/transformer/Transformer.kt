@@ -10,8 +10,7 @@ interface Transformer<T : Transformer<T>> : Loggable {
     val pf: PredicateFactory get() = PredicateFactory
     val tf: TermFactory get() = TermFactory
 
-    @Suppress("UNCHECKED_CAST")
-    private fun <T : Sealed> delegate(argument: T, type: String): T {
+    private inline fun < reified T : Sealed> delegate(argument: T, type: String): T {
         val subtypeName = argument.getReverseMapping().getValue(argument.javaClass)
         val subtype = argument.getSubtypes().getValue(subtypeName)
         val transformName = this.javaClass.getDeclaredMethod("transform$subtypeName", subtype)

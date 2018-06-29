@@ -6,28 +6,16 @@
         <artifactId>kex</artifactId>
         <groupId>org.jetbrains.research</groupId>
         <version>0.1</version>
-        <relativePath>../pom.xml</relativePath>
     </parent>
-    <packaging>jar</packaging>
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>smt-context-generator</artifactId>
-
-    <properties>
-        <velocity.version>1.7</velocity.version>
-    </properties>
+    <artifactId>util</artifactId>
 
     <dependencies>
         <dependency>
-            <groupId>org.jetbrains.research</groupId>
-            <artifactId>util</artifactId>
-            <version>0.1</version>
-        </dependency>
-
-        <dependency>
-            <groupId>org.apache.velocity</groupId>
-            <artifactId>velocity</artifactId>
-            <version>${velocity.version}</version>
+            <groupId>info.leadinglight</groupId>
+            <artifactId>jdot</artifactId>
+            <version>1.0</version>
         </dependency>
     </dependencies>
 

@@ -3,7 +3,7 @@ package org.jetbrains.research.kex.state.term
 import org.jetbrains.research.kex.state.transformer.Transformer
 import org.jetbrains.research.kfg.TF
 import org.jetbrains.research.kfg.type.Type
-import org.jetbrains.research.kfg.util.defaultHashCode
+import org.jetbrains.research.kex.util.defaultHashCode
 
 class InstanceOfTerm(val checkedType: Type, operand: Term) : Term("", TF.getBoolType(), listOf(operand)) {
     fun getOperand() = subterms[0]

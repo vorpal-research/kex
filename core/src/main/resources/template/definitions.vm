@@ -5,7 +5,7 @@ import org.jetbrains.research.kex.smt.${solver.toLowerCase()}.${solver}Engine
 import org.jetbrains.research.kex.smt.SMTEngine
 import org.jetbrains.research.kfg.type.*
 import org.jetbrains.research.kex.util.*
-import org.jetbrains.research.kfg.util.defaultHashCode
+import org.jetbrains.research.kex.util.defaultHashCode
 
 #set($valexpr = "${solver}ValueExpr")
 #set($Bool = "${solver}Bool")

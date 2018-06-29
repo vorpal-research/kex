@@ -1,7 +1,7 @@
 package org.jetbrains.research.kex.state
 
 import org.jetbrains.research.kex.state.predicate.Predicate
-import org.jetbrains.research.kfg.util.defaultHashCode
+import org.jetbrains.research.kex.util.defaultHashCode
 
 class BasicState() : PredicateState() {
     protected val predicates = mutableListOf<Predicate>()
