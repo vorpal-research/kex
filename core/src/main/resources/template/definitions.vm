@@ -18,3 +18,5 @@ import org.jetbrains.research.kex.util.defaultHashCode
 #set($Memory = "${solver}Memory")
 
 #set($exprClasses = [$Bool, $Bitvector32, $Bitvector64, $Bitvector, $Float, $Double])
+
+#set($factory = "${solver}ExprFactory")
