@@ -38,6 +38,10 @@ class CmdConfig(args: Array<String>) : Config, Loggable {
         val propOpt = Option(null, "properties", true, "custom properties file")
         propOpt.isRequired = false
         options.addOption(propOpt)
+
+        val randomOpt = Option(null, "use-random-generator", false, "use random object generation")
+        randomOpt.isRequired = false
+        options.addOption(randomOpt)
     }
 
     override fun getStringValue(param: String): String? = cmd?.getOptionValue(param)

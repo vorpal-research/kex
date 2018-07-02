@@ -14,7 +14,7 @@ class Mutable<T : Any?> {
     fun valid() = data != null
     fun unwrap() = data!!
 
-    override fun hashCode() = 0
+    override fun hashCode() = this.data?.hashCode() ?: 0
     override fun equals(other: Any?) = this.data == (other as? Mutable<*>)?.data
 
     infix fun `=`(other: T): T {

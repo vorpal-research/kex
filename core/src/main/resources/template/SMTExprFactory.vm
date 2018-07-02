@@ -11,7 +11,7 @@ typealias Double_ = $Double
 typealias Memory_ = $Memory< Ptr_ >
 typealias Dynamic_ = $valexpr
 
-class ${solver}ExprFactory : ${solver}SMTExprFactory(), Loggable {
+class $factory : ${solver}SMTExprFactory(), Loggable {
     val ctx = $context()
 
 #macro(generateMakes $type $basetype)
