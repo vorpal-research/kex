@@ -1,8 +1,9 @@
 package org.jetbrains.research.kex.state.term
 
 import org.jetbrains.research.kex.state.transformer.Transformer
+import org.jetbrains.research.kfg.type.Type
 
-class NegTerm(operand: Term) : Term("", operand.type, listOf(operand)) {
+class NegTerm(type: Type, operand: Term) : Term("", type, listOf(operand)) {
     fun getOperand() = subterms[0]
 
     override fun print() = "-${getOperand()}"

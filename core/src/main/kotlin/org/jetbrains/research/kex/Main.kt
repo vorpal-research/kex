@@ -5,9 +5,7 @@ import org.jetbrains.research.kex.asm.transform.LoopDeroller
 import org.jetbrains.research.kex.config.CmdConfig
 import org.jetbrains.research.kex.config.GlobalConfig
 import org.jetbrains.research.kex.config.FileConfig
-import org.jetbrains.research.kex.state.transformer.AliasAnalyzer
-import org.jetbrains.research.kex.state.transformer.ConstantPropagator
-import org.jetbrains.research.kex.state.transformer.StateOptimizer
+import org.jetbrains.research.kex.state.transformer.*
 import org.jetbrains.research.kex.util.debug
 import org.jetbrains.research.kex.util.loggerFor
 import org.jetbrains.research.kfg.CM
@@ -90,6 +88,11 @@ fun main(args: Array<String>) {
             log.debug("Constant propagator")
             val propagated = ConstantPropagator().transform(optimized)
             log.debug(propagated)
+            log.debug()
+            val memspacer = MemorySpacer(propagated)
+            val res = memspacer.transform(propagated)
+            log.debug("Memspaced")
+            log.debug(res)
             log.debug()
         }
     }

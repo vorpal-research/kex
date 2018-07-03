@@ -23,8 +23,8 @@ class DisjointSet<T : Any?>(private val children: MutableSet<Subset<T>> = mutabl
     fun findUnsafe(element: Subset<T>?) = element?.getRoot()
 
     fun join(lhv: Subset<T>, rhv: Subset<T>): Subset<T> {
-        val lhvRoot = lhv.getRoot()
-        val rhvRoot = rhv.getRoot()
+        val lhvRoot = find(lhv)
+        val rhvRoot = find(rhv)
 
         return when {
             lhvRoot == rhvRoot -> lhvRoot
@@ -39,7 +39,7 @@ class DisjointSet<T : Any?>(private val children: MutableSet<Subset<T>> = mutabl
             else -> {
                 rhvRoot.parent = lhvRoot
                 ++rhvRoot.rank
-                lhvRoot
+                rhvRoot
             }
         }
     }

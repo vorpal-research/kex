@@ -15,7 +15,7 @@ class CmpTerm(type: Type, val opcode: CmpOpcode, lhv: Term, rhv: Term) : Term(""
         val rhv = t.transform(getRhv())
         return when {
             lhv == getLhv() && rhv == getRhv() -> this
-            else -> t.tf.getCmp(lhv, rhv, opcode)
+            else -> t.tf.getCmp(opcode, lhv, rhv)
         }
     }
 
