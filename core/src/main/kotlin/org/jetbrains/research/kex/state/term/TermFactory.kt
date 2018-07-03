@@ -15,9 +15,10 @@ import org.jetbrains.research.kfg.type.Type
 import org.jetbrains.research.kfg.type.mergeTypes
 
 object TermFactory : Loggable {
-    fun getThis(type: Type) = ValueTerm(type, "this")
+    fun getThis(type: Type) = getValue(type, "this")
     fun getThis(`class`: Class) = getThis(TF.getRefType(`class`))
-    fun getArgument(argument: Argument) = ArgumentTerm(argument.index, argument.type)
+    fun getArgument(argument: Argument) = getArgument(argument.type, argument.index)
+    fun getArgument(type: Type, index: Int) = ArgumentTerm(type, index)
 
     fun getConstant(const: Constant) = when (const) {
         is BoolConstant -> getBool(const)
@@ -59,7 +60,8 @@ object TermFactory : Loggable {
     fun getFloat(const: FloatConstant) = getFloat(const.value)
     fun getDouble(value: Double) = ConstDoubleTerm(value)
     fun getDouble(const: DoubleConstant) = getDouble(const.value)
-    fun getString(value: String) = ConstStringTerm(value)
+    fun getString(type: Type, value: String) = ConstStringTerm(type, value)
+    fun getString(value: String) = ConstStringTerm(TF.getString(), value)
     fun getString(const: StringConstant) = getString(const.value)
     fun getNull() = NullTerm()
     fun getClass(`class`: Class) = ConstClassTerm(`class`)
@@ -71,46 +73,58 @@ object TermFactory : Loggable {
         UnaryOpcode.LENGTH -> getArrayLength(operand)
     }
 
-    fun getArrayLength(arrayRef: Term) = ArrayLengthTerm(arrayRef)
-    fun getNegTerm(operand: Term) = NegTerm(operand)
+    fun getArrayLength(arrayRef: Term) = getArrayLength(TF.getIntType(), arrayRef)
+    fun getArrayLength(type: Type, arrayRef: Term) = ArrayLengthTerm(type, arrayRef)
+    fun getNegTerm(operand: Term) = getNegTerm(operand.type, operand)
+    fun getNegTerm(type: Type, operand: Term) = NegTerm(type, operand)
 
     fun getArrayLoad(arrayRef: Term, index: Term): Term {
         val arrayType = arrayRef.type as? ArrayType
                 ?: unreachable { log.debug("Non-array type of array load term operand") }
-        return ArrayLoadTerm(arrayType.component, arrayRef, index)
+        return getArrayLoad(arrayType.component, arrayRef, index)
     }
+
+    fun getArrayLoad(type: Type, arrayRef: Term, index: Term) = ArrayLoadTerm(type, arrayRef, index)
 
     fun getFieldLoad(type: Type, objectRef: Term, fieldName: Term) = FieldLoadTerm(type, objectRef.type, listOf(objectRef, fieldName))
     fun getFieldLoad(type: Type, classType: Class, fieldName: Term) = getFieldLoad(type, TF.getRefType(classType), fieldName)
     fun getFieldLoad(type: Type, classType: Type, fieldName: Term) = FieldLoadTerm(type, classType, listOf(fieldName))
 
-    fun getBinary(lhv: Term, rhv: Term, opcode: BinaryOpcode): Term {
+    fun getBinary(opcode: BinaryOpcode, lhv: Term, rhv: Term): Term {
         val merged = mergeTypes(setOf(lhv.type, rhv.type))
                 ?: error(log.error("Cannot merge types of binary term operands: $lhv and $rhv"))
-        return BinaryTerm(merged, opcode, lhv, rhv)
+        return getBinary(merged, opcode, lhv, rhv)
     }
+    fun getBinary(type: Type, opcode: BinaryOpcode, lhv: Term, rhv: Term) = BinaryTerm(type, opcode, lhv, rhv)
 
-    fun getCall(method: Method, arguments: List<Term>) = CallTerm(method.desc.retval, method, arguments)
-    fun getCall(method: Method, objectRef: Term, arguments: List<Term>) = CallTerm(method.desc.retval, method, objectRef, arguments)
+    fun getCall(method: Method, arguments: List<Term>) = getCall(method.desc.retval, method, arguments)
+    fun getCall(method: Method, objectRef: Term, arguments: List<Term>) = getCall(method.desc.retval, method, objectRef, arguments)
+    fun getCall(type: Type, method: Method, arguments: List<Term>) = CallTerm(type, method, arguments)
+    fun getCall(type: Type, method: Method, objectRef: Term, arguments: List<Term>) = CallTerm(type, method, objectRef, arguments)
 
     fun getCast(type: Type, operand: Term) = CastTerm(type, operand)
-    fun getCmp(lhv: Term, rhv: Term, opcode: CmpOpcode): Term {
+    fun getCmp(opcode: CmpOpcode, lhv: Term, rhv: Term): Term {
         val resType = when (opcode) {
             is CmpOpcode.Cmpg -> TF.getIntType()
             is CmpOpcode.Cmpl -> TF.getIntType()
             else -> TF.getBoolType()
         }
-        return CmpTerm(resType, opcode, lhv, rhv)
+        return getCmp(resType, opcode, lhv, rhv)
     }
+
+    fun getCmp(type: Type, opcode: CmpOpcode, lhv: Term, rhv: Term) = CmpTerm(type, opcode, lhv, rhv)
 
     fun getInstanceOf(checkedType: Type, operand: Term) = InstanceOfTerm(checkedType, operand)
 
-    fun getReturn(method: Method) = ReturnValueTerm(method)
+    fun getReturn(method: Method) = getReturn(method.desc.retval, method)
+    fun getReturn(type: Type, method: Method) = ReturnValueTerm(type, method)
 
-    fun getValueTerm(value: Value) = when (value) {
+    fun getValue(value: Value) = when (value) {
         is Argument -> getArgument(value)
         is Constant -> getConstant(value)
         is ThisRef -> getThis(value.type)
-        else -> ValueTerm(value.type, value.toString())
+        else -> getValue(value.type, value.toString())
     }
+    fun getValue(type: Type, name: String) = getValue(type, getString(name))
+    fun getValue(type: Type, name: Term) = ValueTerm(type, name)
 }

@@ -57,7 +57,9 @@ class AliasAnalyzer : Transformer<AliasAnalyzer> {
             }
             else -> quasi()
         }
-        return lhv `=` rhv `=` result
+        lhv.data = result.data
+        rhv.data = result.data
+        return result//lhv `=` rhv `=` result
     }
 
     fun get(term: Term): Token = when {
@@ -119,7 +121,9 @@ class AliasAnalyzer : Transformer<AliasAnalyzer> {
         val ls = get(predicate.getLhv())
         val rs = get(predicate.getRhv())
 
-        join(pointsTo(ls), pointsTo(rs))
+        val lspt = pointsTo(ls)
+        val rspt = pointsTo(rs)
+        join(lspt, rspt)
         return predicate
     }
 
@@ -165,6 +169,13 @@ class AliasAnalyzer : Transformer<AliasAnalyzer> {
         val ls = pointsTo(get(lhv))
         val rs = pointsTo(get(rhv))
         return if (ls.valid() and rs.valid()) ls.unwrap().getRoot() == rs.unwrap().getRoot() else false
+    }
+
+    fun getDereferenced(term: Term): Token {
+        val gt = get(term)
+        val pt = pointsTo(gt)
+        val fnd = relations.findUnsafe(pt.data)
+        return fnd.wrap()
     }
 
     fun asGraph(): List<GraphView> {

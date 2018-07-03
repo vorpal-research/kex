@@ -16,7 +16,7 @@ class BinaryTerm(type: Type, val opcode: BinaryOpcode, lhv: Term, rhv: Term) : T
         val rhv = t.transform(getRhv())
         return when {
             lhv == getLhv() && rhv == getRhv() -> this
-            else -> t.tf.getBinary(lhv, rhv, opcode)
+            else -> t.tf.getBinary(opcode, lhv, rhv)
         }
     }
 
