@@ -16,6 +16,7 @@ class Subset<T : Any?>(val data: T) {
 
     override fun hashCode() = 0
     override fun equals(other: Any?) = this === other
+    override fun toString() = "Subset $data"
 }
 
 class DisjointSet<T : Any?>(private val children: MutableSet<Subset<T>> = mutableSetOf()) : MutableSet<Subset<T>> by children {
@@ -38,8 +39,33 @@ class DisjointSet<T : Any?>(private val children: MutableSet<Subset<T>> = mutabl
             }
             else -> {
                 rhvRoot.parent = lhvRoot
-                ++rhvRoot.rank
+                ++lhvRoot.rank
+                lhvRoot
+            }
+        }
+    }
+
+    fun joinUnsafe(lhv: Subset<T>?, rhv: Subset<T>?): Subset<T>? {
+        val lhvRoot = findUnsafe(lhv)
+        val rhvRoot = findUnsafe(rhv)
+
+        if (lhvRoot == null) return null
+        if (rhvRoot == null) return null
+
+        return when {
+            lhvRoot == rhvRoot -> lhvRoot
+            lhvRoot.rank < rhvRoot.rank -> {
+                lhvRoot.parent = rhvRoot
                 rhvRoot
+            }
+            lhvRoot.rank > rhvRoot.rank -> {
+                rhvRoot.parent = lhvRoot
+                lhvRoot
+            }
+            else -> {
+                rhvRoot.parent = lhvRoot
+                ++lhvRoot.rank
+                lhvRoot
             }
         }
     }

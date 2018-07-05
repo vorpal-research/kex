@@ -90,9 +90,7 @@ fun main(args: Array<String>) {
             log.debug(propagated)
             log.debug()
             val memspacer = MemorySpacer(propagated)
-            val res = memspacer.transform(propagated)
-            log.debug("Memspaced")
-            log.debug(res)
+            memspacer.transform(propagated)
             log.debug()
         }
     }

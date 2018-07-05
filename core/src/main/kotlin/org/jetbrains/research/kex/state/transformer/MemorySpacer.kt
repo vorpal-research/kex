@@ -8,12 +8,26 @@ import org.jetbrains.research.kfg.type.ClassType
 import org.jetbrains.research.kfg.type.Reference
 import org.jetbrains.research.kfg.type.Type
 
-interface Memspaced<T : Reference> {
+interface Memspaced<out T : Reference> {
     val memspace: Int
 }
 
-class MemspacedClassType(override val memspace: Int, `class`: Class) : ClassType(`class`), Memspaced<ClassType>
-class MemspacedArrayType(override val memspace: Int, component: Type) : ArrayType(component), Memspaced<ArrayType>
+class MemspacedClassType(override val memspace: Int, `class`: Class) : ClassType(`class`), Memspaced<ClassType> {
+    override fun hashCode() = super.hashCode()
+    override fun equals(other: Any?) = when {
+        this === other -> true
+        other is ClassType -> this.`class` == other.`class`
+        else -> false
+    }
+}
+class MemspacedArrayType(override val memspace: Int, component: Type) : ArrayType(component), Memspaced<ArrayType> {
+    override fun hashCode() = super.hashCode()
+    override fun equals(other: Any?) = when {
+        this === other -> true
+        other is ArrayType -> this.component == other.component
+        else -> false
+    }
+}
 
 fun Type.memspaced(memspace: Int) = when (this) {
     is ClassType -> MemspacedClassType(memspace, `class`)
