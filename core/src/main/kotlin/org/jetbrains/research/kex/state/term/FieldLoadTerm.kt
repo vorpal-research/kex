@@ -1,6 +1,7 @@
 package org.jetbrains.research.kex.state.term
 
 import org.jetbrains.research.kex.state.transformer.Transformer
+import org.jetbrains.research.kex.util.defaultHashCode
 import org.jetbrains.research.kex.util.unreachable
 import org.jetbrains.research.kfg.type.Type
 
@@ -21,8 +22,16 @@ class FieldLoadTerm(type: Type, val classType: Type, operands: List<Term>) : Ter
         return sb.toString()
     }
 
+    override fun hashCode() = defaultHashCode(classType, super.hashCode())
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (this.javaClass != other?.javaClass) return false
+        other as FieldLoadTerm
+        return this.classType == other.classType && super.equals(other)
+    }
+
     override fun <T: Transformer<T>> accept(t: Transformer<T>): Term {
-        val objectRef = if (isStatic) null else t.transform(getObjectRef()!!)
+        val objectRef = if (isStatic) null else t.transform(getObjectRef())
         val fieldName = t.transform(getFieldName())
         return when {
             objectRef == null -> t.tf.getFieldLoad(type, classType, fieldName)
