@@ -38,6 +38,9 @@ class SMTProcessor : AbstractProcessor() {
             getElementsAnnotatedWith(SMTContext::class.java)?.forEach {
                 processAnnotation(it, SMTContext::class, "Context")
             }
+            getElementsAnnotatedWith(SMTConverter::class.java)?.forEach {
+                processAnnotation(it, SMTConverter::class, "Converter")
+            }
             Unit
         }
         return true
@@ -48,7 +51,8 @@ class SMTProcessor : AbstractProcessor() {
             "org.jetbrains.research.kex.smt.SMTExpr",
             "org.jetbrains.research.kex.smt.SMTMemory",
             "org.jetbrains.research.kex.smt.SMTExprFactory",
-            "org.jetbrains.research.kex.smt.SMTContext"
+            "org.jetbrains.research.kex.smt.SMTContext",
+            "org.jetbrains.research.kex.smt.SMTConverter"
     )
 
     override fun getSupportedOptions() = setOf(CODEGEN_DIR)
@@ -70,7 +74,6 @@ class SMTProcessor : AbstractProcessor() {
         val newClass = "$solver$nameTemplate"
 
         parameters["packageName"] = newPackage
-        parameters["className"] = newClass
 
         info("Generating $nameTemplate for $`class` in package $`package` with parameters $parameters")
         writeClass(newPackage, newClass, parameters, "SMT$nameTemplate")

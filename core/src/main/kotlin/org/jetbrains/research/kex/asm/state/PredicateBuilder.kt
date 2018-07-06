@@ -146,18 +146,11 @@ class PredicateBuilder(method: Method) : MethodVisitor(method), Loggable {
         predicateMap[inst] = pf.getEquality(lhv, rhv)
     }
 
-    override fun visitMultiNewArrayInst(inst: MultiNewArrayInst) {
+    override fun visitNewArrayInst(inst: NewArrayInst) {
         val lhv = tf.getValue(inst)
         val dimensions = inst.getDimensions().map { tf.getValue(it) }
 
-        predicateMap[inst] = pf.getMultipleNewArray(lhv, dimensions)
-    }
-
-    override fun visitNewArrayInst(inst: NewArrayInst) {
-        val lhv = tf.getValue(inst)
-        val numElements = tf.getValue(inst.getCount())
-
-        predicateMap[inst] = pf.getNewArray(lhv, numElements)
+        predicateMap[inst] = pf.getNewArray(lhv, dimensions)
     }
 
     override fun visitNewInst(inst: NewInst) {

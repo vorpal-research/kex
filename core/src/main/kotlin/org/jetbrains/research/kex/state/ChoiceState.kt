@@ -3,7 +3,7 @@ package org.jetbrains.research.kex.state
 import org.jetbrains.research.kex.state.predicate.Predicate
 import org.jetbrains.research.kex.util.defaultHashCode
 
-class ChoiceState(val choices: List<PredicateState>) : PredicateState() {
+class ChoiceState(val choices: List<PredicateState>) : PredicateState(), Iterable<PredicateState> {
     override fun print(): String {
         val sb = StringBuilder()
         sb.appendln("(BEGIN")
@@ -33,4 +33,6 @@ class ChoiceState(val choices: List<PredicateState>) : PredicateState() {
         val filtered = slices.filterNotNull()
         return if (slices.size == filtered.size) ChoiceState(filtered) else null
     }
+
+    override fun iterator() = choices.iterator()
 }

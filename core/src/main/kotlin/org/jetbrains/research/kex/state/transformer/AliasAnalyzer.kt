@@ -129,15 +129,6 @@ class AliasAnalyzer : Transformer<AliasAnalyzer> {
         return predicate
     }
 
-    override fun transformMultiNewArrayPredicate(predicate: MultiNewArrayPredicate): Predicate {
-        nonaliased.add(predicate.getLhv())
-        nonFreeTerms.add(predicate.getLhv())
-
-        val ls = get(predicate.getLhv())
-        pointsTo[ls] = quasi()
-        return predicate
-    }
-
     override fun transformNewArrayPredicate(predicate: NewArrayPredicate): Predicate {
         nonaliased.add(predicate.getLhv())
         nonFreeTerms.add(predicate.getLhv())

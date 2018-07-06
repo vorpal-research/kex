@@ -3,7 +3,7 @@ package org.jetbrains.research.kex.state
 import org.jetbrains.research.kex.state.predicate.Predicate
 import org.jetbrains.research.kex.util.defaultHashCode
 
-class BasicState() : PredicateState() {
+class BasicState() : PredicateState(), Iterable<Predicate> {
     protected val predicates = mutableListOf<Predicate>()
 
     constructor(predicates: List<Predicate>) : this() {
@@ -45,4 +45,6 @@ class BasicState() : PredicateState() {
         }
         else -> null
     }
+
+    override fun iterator() = predicates.iterator()
 }

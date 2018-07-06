@@ -22,7 +22,6 @@ abstract class Predicate(val type: PredicateType, val operands: List<Term>) : Se
                 "Catch" to CatchPredicate::class.java,
                 "DefaultSwitch" to DefaultSwitchPredicate::class.java,
                 "Equality" to EqualityPredicate::class.java,
-                "MultiNewArray" to MultiNewArrayPredicate::class.java,
                 "NewArray" to NewArrayPredicate::class.java,
                 "New" to NewPredicate::class.java,
                 "Store" to StorePredicate::class.java,

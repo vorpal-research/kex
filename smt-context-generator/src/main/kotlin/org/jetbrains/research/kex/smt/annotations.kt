@@ -26,3 +26,8 @@ annotation class SMTContext(
         val importPackage: String,
         val context: String
 )
+
+annotation class SMTConverter(
+        val solver: String,
+        val importPackage: String
+)

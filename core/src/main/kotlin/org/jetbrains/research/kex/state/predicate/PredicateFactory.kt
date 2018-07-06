@@ -12,19 +12,13 @@ object PredicateFactory : Loggable {
     fun getLoad(lhv: Term, loadTerm: Term) = getEquality(lhv, loadTerm)
 
     fun getNew(lhv: Term, type: PredicateType = PredicateType.State()) = NewPredicate(lhv, type)
-    fun getNewArray(lhv: Term, numElements: Term, type: PredicateType = PredicateType.State()): Predicate {
-        val arrayType = lhv.type as? ArrayType
-                ?: error(log.error("Trying to create new array predicate with non-array type"))
-        return NewArrayPredicate(lhv, numElements, arrayType.component, type)
-    }
-
-    fun getMultipleNewArray(lhv: Term, dimensions: List<Term>, type: PredicateType = PredicateType.State()): Predicate {
+    fun getNewArray(lhv: Term, dimensions: List<Term>, type: PredicateType = PredicateType.State()): Predicate {
         var current = lhv.type
         dimensions.forEach {
             current = (current as? ArrayType
                     ?: error(log.error("Trying to create new array predicate with non-array type"))).component
         }
-        return MultiNewArrayPredicate(lhv, dimensions, current, type)
+        return NewArrayPredicate(lhv, dimensions, current, type)
     }
 
     fun getEquality(lhv: Term, rhv: Term, type: PredicateType = PredicateType.State()) = EqualityPredicate(lhv, rhv, type)
