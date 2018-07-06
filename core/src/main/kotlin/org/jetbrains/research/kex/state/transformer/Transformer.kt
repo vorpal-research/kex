@@ -57,7 +57,6 @@ interface Transformer<T : Transformer<T>> : Loggable {
     fun transformCatch(predicate: CatchPredicate) = predicate.accept(this)
     fun transformDefaultSwitch(predicate: DefaultSwitchPredicate) = predicate.accept(this)
     fun transformEquality(predicate: EqualityPredicate) = predicate.accept(this)
-    fun transformMultiNewArray(predicate: MultiNewArrayPredicate) = predicate.accept(this)
     fun transformNewArray(predicate: NewArrayPredicate) = predicate.accept(this)
     fun transformNew(predicate: NewPredicate) = predicate.accept(this)
     fun transformStore(predicate: StorePredicate) = predicate.accept(this)
@@ -67,7 +66,6 @@ interface Transformer<T : Transformer<T>> : Loggable {
     fun transformCatchPredicate(predicate: CatchPredicate): Predicate = predicate
     fun transformDefaultSwitchPredicate(predicate: DefaultSwitchPredicate): Predicate = predicate
     fun transformEqualityPredicate(predicate: EqualityPredicate): Predicate = predicate
-    fun transformMultiNewArrayPredicate(predicate: MultiNewArrayPredicate): Predicate = predicate
     fun transformNewArrayPredicate(predicate: NewArrayPredicate): Predicate = predicate
     fun transformNewPredicate(predicate: NewPredicate): Predicate = predicate
     fun transformStorePredicate(predicate: StorePredicate): Predicate = predicate

@@ -31,6 +31,9 @@ class $self : ${solver}SMTContext {
         const val MEMORY_NAME = "__memory__"
         const val BOUNDS_NAME = "__bounds__"
 
+        fun memoryName(memspace: Int) = "${MEMORY_NAME}$memspace"
+        fun boundsName(memspace: Int) = "${BOUNDS_NAME}$memspace"
+
         fun mergeContexts(name: String, default: $self, choices: Map< Bool_, $self >): $self {
             val maxLocal = max(default.localPointer, choices.map { it.value.localPointer }.max() ?: 0)
             val maxStatic = max(default.staticPointer, choices.map { it.value.staticPointer }.max() ?: 0)
@@ -41,8 +44,8 @@ class $self : ${solver}SMTContext {
             }
 
             val memArrays = ids.map { id ->
-                val alternatives = choices.map { it.key to it.value.getMemory(id) }
-                id to VersionedMemory.merge(name, default.getMemory(id), alternatives)
+                val alternatives = choices.map { it.key to it.value.get(id) }
+                id to VersionedMemory.merge(name, default.get(id), alternatives)
             }.toMap()
             return $self(default.factory, maxLocal, maxStatic, memArrays)
         }
@@ -51,43 +54,40 @@ class $self : ${solver}SMTContext {
     val factory: $factory
     private var localPointer: Int
     private var staticPointer: Int
-    val memories: MutableMap< Int, VersionedMemory >
-    val bounds: MutableMap< Int, VersionedMemory >
+    private var memories: MutableMap< String, VersionedMemory >
 
     constructor(factory: $factory, localPointer: Int, staticPointer: Int,
-                memories: Map< Int, VersionedMemory >, bounds: Map< Int, VersionedMemory >) {
+                memories: Map< String, VersionedMemory >) {
         this.factory = factory
         this.localPointer = localPointer
         this.staticPointer = staticPointer
         this.memories = memories.toMutableMap()
-        this.bounds = bounds.toMutableMap()
 
         initBounds(0)
     }
 
-    constructor(factory: $factory, localPointer: Int, staticPointer: Int, memories: Map< Int, VersionedMemory >)
-                : this(factory, localPointer, staticPointer, memories, mapOf())
-
     constructor(factory: $factory, localPointer: Int, staticPointer: Int)
-                : this(factory, localPointer, staticPointer, mapOf(), mapOf())
+                : this(factory, localPointer, staticPointer, mapOf())
+
+    constructor(ctx: $self) : this(ctx.factory, ctx.localPointer, ctx.staticPointer, ctx.memories)
 
     constructor() : this($factory(), 0, 0)
 
-    fun memoryName(memspace: Int) = "${MEMORY_NAME}$memspace"
-    fun boundsName(memspace: Int) = "${BOUNDS_NAME}$memspace"
+    fun getMemory(memspace: Int) = memories.getOrPut(memoryName(memspace)) { VersionedMemory(factory.makeDefaultMemory(memoryName(memspace), 0)) }
+    private fun setMemory(memspace: Int, mem: VersionedMemory) { memories[memoryName(memspace)] = mem }
 
-    fun getMemory(memspace: Int) = memories.getOrPut(memspace) { VersionedMemory(factory.makeDefaultMemory(memoryName(memspace), 0)) }
-    private fun setMemory(memspace: Int, mem: VersionedMemory) { memories[memspace] = mem }
-
-    fun getBounds(memspace: Int) = bounds.getOrPut(memspace) { VersionedMemory(factory.makeDefaultMemory(boundsName(memspace), 0)) }
-    private fun setBounds(memspace: Int, bnd: VersionedMemory) { bounds[memspace] = bnd }
+    fun getBounds(memspace: Int) = memories.getOrPut(boundsName(memspace)) { VersionedMemory(factory.makeDefaultMemory(boundsName(memspace), 0)) }
+    private fun setBounds(memspace: Int, bnd: VersionedMemory) { memories[boundsName(memspace)] = bnd }
 
     private fun initBounds(memspace: Int) {
         val bnds = getBounds(memspace).store(factory.makeNull(), factory.makeIntConst(-1))
         setBounds(memspace, bnds)
     }
 
-    fun readMemory(ptr: Ptr_, bitsize: Int, memspace: Int) = getMemory(memspace).load(ptr, bitsize)
+    private fun get(id: String) = memories.getOrPut(id) { VersionedMemory(factory.makeDefaultMemory(id, 0)) }
+
+
+fun readMemory(ptr: Ptr_, bitsize: Int, memspace: Int) = getMemory(memspace).load(ptr, bitsize)
     inline fun < reified T : $valexpr > readMemory(ptr: Ptr_, memspace: Int) = getMemory(memspace).load< T >(ptr)
     fun < T : $valexpr > writeMemory(ptr: Ptr_, value: T, memspace: Int) {
         val mem = getMemory(memspace).store(ptr, value)
@@ -116,5 +116,11 @@ class $self : ${solver}SMTContext {
         return res
     }
 
-    fun switchOn(name: String, contexts: Map< Bool_, $self >) = mergeContexts(name, this, contexts)
+    fun switchOn(name: String, contexts: Map< Bool_, Z3Context >): Z3Context {
+        val merged =  mergeContexts(name, this, contexts)
+        this.memories = merged.memories
+        this.localPointer = merged.localPointer
+        this.staticPointer = merged.staticPointer
+        return this
+    }
 }

@@ -11,3 +11,6 @@ abstract class Z3SMTExprFactory
 
 @SMTContext(solver = "Z3", importPackage = "com.microsoft.z3", context = "Context")
 abstract class Z3SMTContext
+
+@SMTConverter(solver = "Z3", importPackage = "com.microsoft.z3")
+abstract class Z3SMTConverter

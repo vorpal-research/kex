@@ -1,6 +1,7 @@
 package org.jetbrains.research.kex.state
 
 import org.jetbrains.research.kex.state.predicate.Predicate
+import org.jetbrains.research.kex.state.predicate.PredicateType
 
 interface Sealed {
     fun getSubtypes(): Map<String, Class<*>>
@@ -52,10 +53,11 @@ abstract class PredicateState : Sealed {
 
     override fun toString() = print()
 
-    open fun map(transform: (Predicate) -> Predicate): PredicateState = fmap { ps -> ps.map(transform) }
-    open fun mapNotNull(transform: (Predicate) -> Predicate?): PredicateState = fmap { ps -> ps.mapNotNull(transform) }
-    open fun filter(predicate: (Predicate) -> Boolean): PredicateState = fmap { ps -> ps.filter(predicate) }
-    fun filterNot(predicate: (Predicate) -> Boolean) = filter { it -> !predicate(it) }
+    open fun map(transform: (Predicate) -> Predicate): PredicateState = fmap { it.map(transform) }
+    open fun mapNotNull(transform: (Predicate) -> Predicate?): PredicateState = fmap { it.mapNotNull(transform) }
+    open fun filter(predicate: (Predicate) -> Boolean): PredicateState = fmap { it.filter(predicate) }
+    fun filterNot(predicate: (Predicate) -> Boolean) = filter { !predicate(it) }
+    fun filterByType(type: PredicateType) = filter { it.type == type }
 
     abstract fun fmap(transform: (PredicateState) -> PredicateState): PredicateState
     abstract fun reverse(): PredicateState

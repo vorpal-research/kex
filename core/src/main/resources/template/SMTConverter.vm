@@ -1,0 +1,180 @@
+#parse("definitions.vm")
+import org.jetbrains.research.kex.state.*
+import org.jetbrains.research.kex.state.predicate.*
+import org.jetbrains.research.kex.state.term.*
+
+object ${solver}Converter : Loggable {
+    fun convert(ps: PredicateState, ef: $factory, ctx: ${solver}Context, extractPath: Boolean = false): Bool_ = when (ps) {
+#set($states = ["Basic", "Chain", "Choice"])
+#foreach($state in $states)
+        is ${state}State -> convert(ps, ef, ctx, extractPath)
+#end
+        else -> unreachable { log.error("Unknown PS type: $ps") }
+    }
+
+    fun convert(basic: BasicState, ef: $factory, ctx: ${solver}Context, extractPath: Boolean = false): Bool_ =
+        basic.predicates().foldRight(ef.makeTrue()) { predicate, acc -> acc and convert(predicate, ef, ctx) }
+
+    fun convert(chain: ChainState, ef: $factory, ctx: ${solver}Context, extractPath: Boolean = false): Bool_ =
+        ef.makeTrue() and convert(chain.base, ef, ctx) and convert(chain.curr, ef, ctx)
+
+    fun convert(choice: ChoiceState, ef: $factory, ctx: ${solver}Context, extractPath: Boolean = false): Bool_ {
+        var res = ef.makeFalse()
+        val contexts = mutableMapOf< Bool_, Z3Context >()
+        for (branch in choice) {
+            val newCtx = Z3Context(ctx)
+            val state = convert(branch, ef, newCtx, extractPath)
+
+            res = res or state
+            if (!extractPath) {
+                val path = branch.filterByType(PredicateType.Path())
+                contexts[convert(path, ef, newCtx, true)] = newCtx
+            }
+        }
+        ctx.switchOn("choice", contexts)
+        return res
+    }
+
+#set($predicates = ["Call", "Catch", "DefaultSwitch", "Equality", "NewArray", "New", "Store", "Throw"])
+    fun convert(predicate: Predicate, ef: $factory, ctx: ${solver}Context): Bool_ = when (predicate) {
+#foreach($predicate in $predicates)
+        is ${predicate}Predicate -> convert(predicate, ef, ctx)
+#end
+        else -> unreachable { log.error("Unknown predicate type: $predicate") }
+    }
+
+    fun convert(call: CallPredicate, ef: $factory, ctx: ${solver}Context): Bool_ = ef.makeTrue()
+    fun convert(catch: CatchPredicate, ef: $factory, ctx: ${solver}Context): Bool_ = ef.makeTrue()
+    fun convert(`throw`: ThrowPredicate, ef: $factory, ctx: ${solver}Context): Bool_ = ef.makeTrue()
+
+    fun convert(defaultswitch: DefaultSwitchPredicate, ef: $factory, ctx: ${solver}Context): Bool_ {
+        var res = ef.makeTrue()
+        val cond = convert(defaultswitch.getCond(), ef, ctx) as? Int_
+                        ?: unreachable { log.error("Non-integer term in switch") }
+        for (case in defaultswitch.getCases()) {
+            val case_ = convert(case, ef, ctx) as? Int_ ?: unreachable { log.error("Non-integer term in switch") }
+            res = res and (cond neq case_).toBool()
+        }
+        return res
+    }
+
+    fun convert(equality: EqualityPredicate, ef: $factory, ctx: ${solver}Context): Bool_ {
+        val lhv = convert(equality.getLhv(), ef, ctx)
+        val rhv = convert(equality.getRhv(), ef, ctx)
+        return lhv eq rhv
+    }
+
+    fun convert(newarray: NewArrayPredicate, ef: $factory, ctx: ${solver}Context): Bool_ {
+        TODO()
+    }
+
+    fun convert(new: NewPredicate, ef: $factory, ctx: ${solver}Context): Bool_ {
+        TODO()
+    }
+
+    fun convert(store: StorePredicate, ef: $factory, ctx: ${solver}Context): Bool_ {
+        TODO()
+    }
+
+#set($terms = ["Argument", "ArrayLength", "ArrayLoad", "Binary", "Call", "Cast", "Cmp",
+    "ConstBool", "ConstByte", "ConstChar", "ConstClass", "ConstDouble", "ConstFloat", "ConstInt", "ConstLong",
+    "ConstShort", "ConstString", "FieldLoad", "InstanceOf", "Neg", "Null", "ReturnValue", "Value"])
+    fun convert(term: Term, ef: $factory, ctx: ${solver}Context): Dynamic_ = when (term) {
+#foreach($term in $terms)
+        is ${term}Term -> convert(term, ef, ctx)
+#end
+        else -> unreachable { log.error("Unknown term type: $term") }
+    }
+
+    fun convert(argument: ArgumentTerm, ef: $factory, ctx: ${solver}Context): Dynamic_ {
+        TODO()
+    }
+
+    fun convert(arraylength: ArrayLengthTerm, ef: $factory, ctx: ${solver}Context): Dynamic_ {
+        TODO()
+    }
+
+    fun convert(arrayload: ArrayLoadTerm, ef: $factory, ctx: ${solver}Context): Dynamic_ {
+        TODO()
+    }
+
+    fun convert(binary: BinaryTerm, ef: $factory, ctx: ${solver}Context): Dynamic_ {
+        TODO()
+    }
+
+    fun convert(call: CallTerm, ef: $factory, ctx: ${solver}Context): Dynamic_ {
+        TODO()
+    }
+
+    fun convert(cast: CastTerm, ef: $factory, ctx: ${solver}Context): Dynamic_ {
+        TODO()
+    }
+
+    fun convert(cmp: CmpTerm, ef: $factory, ctx: ${solver}Context): Dynamic_ {
+        TODO()
+    }
+
+    fun convert(constbool: ConstBoolTerm, ef: $factory, ctx: ${solver}Context): Dynamic_ {
+        TODO()
+    }
+
+    fun convert(constbyte: ConstByteTerm, ef: $factory, ctx: ${solver}Context): Dynamic_ {
+        TODO()
+    }
+
+    fun convert(constchar: ConstCharTerm, ef: $factory, ctx: ${solver}Context): Dynamic_ {
+        TODO()
+    }
+
+    fun convert(constclass: ConstClassTerm, ef: $factory, ctx: ${solver}Context): Dynamic_ {
+        TODO()
+    }
+
+    fun convert(constdouble: ConstDoubleTerm, ef: $factory, ctx: ${solver}Context): Dynamic_ {
+        TODO()
+    }
+
+    fun convert(constfloat: ConstFloatTerm, ef: $factory, ctx: ${solver}Context): Dynamic_ {
+        TODO()
+    }
+
+    fun convert(constint: ConstIntTerm, ef: $factory, ctx: ${solver}Context): Dynamic_ {
+        TODO()
+    }
+
+    fun convert(constlong: ConstLongTerm, ef: $factory, ctx: ${solver}Context): Dynamic_ {
+        TODO()
+    }
+
+    fun convert(constshort: ConstShortTerm, ef: $factory, ctx: ${solver}Context): Dynamic_ {
+        TODO()
+    }
+
+    fun convert(conststring: ConstStringTerm, ef: $factory, ctx: ${solver}Context): Dynamic_ {
+        TODO()
+    }
+
+    fun convert(fieldload: FieldLoadTerm, ef: $factory, ctx: ${solver}Context): Dynamic_ {
+        TODO()
+    }
+
+    fun convert(instanceof: InstanceOfTerm, ef: $factory, ctx: ${solver}Context): Dynamic_ {
+        TODO()
+    }
+
+    fun convert(neg: NegTerm, ef: $factory, ctx: ${solver}Context): Dynamic_ {
+        TODO()
+    }
+
+    fun convert(`null`: NullTerm, ef: $factory, ctx: ${solver}Context): Dynamic_ {
+        TODO()
+    }
+
+    fun convert(returnvalue: ReturnValueTerm, ef: $factory, ctx: ${solver}Context): Dynamic_ {
+        TODO()
+    }
+
+    fun convert(value: ValueTerm, ef: $factory, ctx: ${solver}Context): Dynamic_ {
+        TODO()
+    }
+}

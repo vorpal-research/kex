@@ -70,6 +70,13 @@ open class $valexpr : ${solver}SMTExpr, Loggable {
     open fun withAxiom(ax: $valexpr) = $valexpr(ctx, expr, ax.asAxiom())
 
     open fun simplify() = $valexpr(ctx, engine.simplify(ctx, expr), engine.simplify(ctx, expr))
+
+    infix fun eq(other: $valexpr): $Bool = when {
+#foreach($class in $exprClasses)
+        this is $class && other is $class -> eq(other)
+#end
+        else -> unreachable { log.error("Invalid operands of `eq`: $this and $other") }
+    }
 }
 
 #macro(constructors $class)
@@ -141,15 +148,19 @@ $modifiers class $fullname : $parent {
         return $valexpr(ctx, nexpr, nax)
     }
 
-#set($opcodes = ["EQ", "NEQ", "ADD", "SUB", "MUL", "DIVIDE", "MOD", "GT", "GE", "LT", "LE", "SHL", "SHR", "ASHR", "AND", "OR", "XOR"])
+#set($opcodes = ["EQ", "NEQ", "GT", "GE", "LT", "LE"])
 #foreach($opcode in $opcodes)
-    infix fun ${opcode.toLowerCase()}(other: $self) = binary(SMTEngine.Opcode.$opcode, other)
+    infix fun ${opcode.toLowerCase()}(other: $self) = binary(SMTEngine.Opcode.$opcode, other).toBool()
+#end
+#set($opcodes = ["ADD", "SUB", "MUL", "DIVIDE", "MOD", "SHL", "SHR", "ASHR", "AND", "OR", "XOR"])
+#foreach($opcode in $opcodes)
+    infix fun ${opcode.toLowerCase()}(other: $self) = binary(SMTEngine.Opcode.$opcode, other).toBV()
 #end
 
 #set($opcodes = ["ADD", "SUB", "MUL", "DIVIDE"])
 #foreach($opcode in $opcodes)
     infix fun ${opcode.toLowerCase()}(other: Int) =
-        binary(SMTEngine.Opcode.$opcode, $self(ctx, engine.makeNumericConst(ctx, engine.getBVSort(ctx, getBitsize()), other.toLong())))
+        binary(SMTEngine.Opcode.$opcode, $self(ctx, engine.makeNumericConst(ctx, engine.getBVSort(ctx, getBitsize()), other.toLong()))).toBV()
 #end
 
     operator fun plus(other: $self) = add(other)
@@ -180,7 +191,7 @@ class $self$width : $self {
     }
 
     #constructors("BV")
-    override fun extract(high: Int, low: Int) = $self$width(ctx, engine.extract(ctx, expr, high, low), axiom)
+    override fun extract(high: Int, low: Int) = $self(ctx, engine.extract(ctx, expr, high, low), axiom)
     override fun withAxiom(ax: $valexpr) = $self$width(ctx, expr, spliceAxioms(ctx, axiom, ax.expr, ax.axiom))
     override fun binary(opcode: SMTEngine.Opcode, other: $self) =
         if (other is $self$width) {
@@ -204,9 +215,13 @@ class $self$width : $self {
         return $valexpr(ctx, nexpr, nax)
     }
 
-#set($opcodes = ["EQ", "NEQ", "ADD", "SUB", "MUL", "DIVIDE", "GT", "GE", "LT", "LE"])
+#set($opcodes = ["EQ", "NEQ", "GT", "GE", "LT", "LE"])
 #foreach($opcode in $opcodes)
-    infix fun ${opcode.toLowerCase()}(other: $self) = binary(SMTEngine.Opcode.$opcode, other)
+    infix fun ${opcode.toLowerCase()}(other: $self) = binary(SMTEngine.Opcode.$opcode, other).toBool()
+#end
+#set($opcodes = ["ADD", "SUB", "MUL", "DIVIDE"])
+#foreach($opcode in $opcodes)
+    infix fun ${opcode.toLowerCase()}(other: $self) = binary(SMTEngine.Opcode.$opcode, other).to$float()
 #end
 
     operator fun plus(other: $self) = add(other)
