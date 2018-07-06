@@ -65,15 +65,28 @@ object ${solver}Converter : Loggable {
     }
 
     fun convert(newarray: NewArrayPredicate, ef: $factory, ctx: ${solver}Context): Bool_ {
-        TODO()
+        val memspace = (newarray.getLhv().type as? Memspaced<*>)?.memspace ?: 0
+        val lhv = convert(newarray.getLhv(), ef, ctx) as? Ptr_ ?: unreachable { log.error("Non-ptr term in `new`") }
+            val elementSize = ${factory}.getTypeSizeExpanded(newarray.elementType)
+            val totalSize = newarray.getDimentions().fold(elementSize) { acc: Int, term: Term ->
+            acc * ((term as? ConstIntTerm)?.value ?: 1024)
+        }
+        return lhv eq ctx.getLocalPtr(memspace, totalSize)
     }
 
     fun convert(new: NewPredicate, ef: $factory, ctx: ${solver}Context): Bool_ {
-        TODO()
+        val memspace = (new.getLhv().type as? Memspaced<*>)?.memspace ?: 0
+        val lhv = convert(new.getLhv(), ef, ctx) as? Ptr_ ?: unreachable { log.error("Non-ptr term in `new`") }
+        val elementSize = ${factory}.getTypeSizeExpanded(new.getLhv().type)
+        return lhv eq ctx.getLocalPtr(memspace, elementSize)
     }
 
     fun convert(store: StorePredicate, ef: $factory, ctx: ${solver}Context): Bool_ {
-        TODO()
+        val memspace = (store.getLhv().type as? Memspaced<*>)?.memspace ?: 0
+        val ptr = convert(store.getLhv(), ef, ctx) as? Ptr_ ?: unreachable { log.error("Non-ptr term in `new`") }
+        val value = convert(store.getStoreVal(), ef, ctx)
+        ctx.writeMemory(ptr, value, memspace)
+        return ef.makeTrue()
     }
 
 #set($terms = ["Argument", "ArrayLength", "ArrayLoad", "Binary", "Call", "Cast", "Cmp",
@@ -86,12 +99,14 @@ object ${solver}Converter : Loggable {
         else -> unreachable { log.error("Unknown term type: $term") }
     }
 
-    fun convert(argument: ArgumentTerm, ef: $factory, ctx: ${solver}Context): Dynamic_ {
-        TODO()
-    }
+    fun convert(argument: ArgumentTerm, ef: $factory, ctx: ${solver}Context): Dynamic_ = ef.getVarByType(argument.type, argument.name)
 
     fun convert(arraylength: ArrayLengthTerm, ef: $factory, ctx: ${solver}Context): Dynamic_ {
-        TODO()
+        val memspace = (arraylength.getArrayRef().type as? Memspaced<*>)?.memspace ?: 0
+        val ptr = convert(arraylength.getArrayRef(), ef, ctx) as? Ptr_
+                ?: unreachable { log.error("Non-ptr term in `arraylength`") }
+
+        return ctx.readBound(ptr, memspace)
     }
 
     fun convert(arrayload: ArrayLoadTerm, ef: $factory, ctx: ${solver}Context): Dynamic_ {
