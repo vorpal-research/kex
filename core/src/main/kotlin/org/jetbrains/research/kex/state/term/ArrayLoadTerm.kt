@@ -1,6 +1,8 @@
 package org.jetbrains.research.kex.state.term
 
 import org.jetbrains.research.kex.state.transformer.Transformer
+import org.jetbrains.research.kex.util.unreachable
+import org.jetbrains.research.kfg.type.ArrayType
 import org.jetbrains.research.kfg.type.Type
 
 class ArrayLoadTerm(type: Type, arrayRef: Term, index: Term) : Term("", type, listOf(arrayRef, index)) {

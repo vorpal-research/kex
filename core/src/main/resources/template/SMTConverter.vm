@@ -3,7 +3,11 @@ import org.jetbrains.research.kex.state.*
 import org.jetbrains.research.kex.state.predicate.*
 import org.jetbrains.research.kex.state.term.*
 import org.jetbrains.research.kex.state.transformer.Memspaced
+import org.jetbrains.research.kfg.ir.value.instruction.BinaryOpcode
 import org.jetbrains.research.kfg.ir.value.instruction.CmpOpcode
+import org.jetbrains.research.kex.config.GlobalConfig
+
+val defaultAllocSize = GlobalConfig.getIntValue("smt.defaultAllocationSize", 1024)
 
 object ${solver}Converter : Loggable {
     fun convert(ps: PredicateState, ef: $factory, ctx: ${solver}Context, extractPath: Boolean = false): Bool_ = when (ps) {
@@ -71,7 +75,7 @@ object ${solver}Converter : Loggable {
         val lhv = convert(newarray.getLhv(), ef, ctx) as? Ptr_ ?: unreachable { log.error("Non-ptr term in `new`") }
             val elementSize = ${factory}.getTypeSizeExpanded(newarray.elementType)
             val totalSize = newarray.getDimentions().fold(elementSize) { acc: Int, term: Term ->
-            acc * ((term as? ConstIntTerm)?.value ?: 1024)
+            acc * ((term as? ConstIntTerm)?.value ?: defaultAllocSize)
         }
         return lhv eq ctx.getLocalPtr(memspace, totalSize)
     }
@@ -116,15 +120,36 @@ object ${solver}Converter : Loggable {
     }
 
     fun convert(binary: BinaryTerm, ef: $factory, ctx: ${solver}Context): Dynamic_ {
-        TODO()
+        val lhv = convert(binary.getLhv(), ef, ctx)
+        val rhv = convert(binary.getRhv(), ef, ctx)
+        return when (binary.opcode) {
+            is BinaryOpcode.Add -> lhv + rhv
+            is BinaryOpcode.Sub -> lhv - rhv
+            is BinaryOpcode.Mul -> lhv * rhv
+            is BinaryOpcode.Div -> lhv / rhv
+            is BinaryOpcode.Rem -> lhv % rhv
+            is BinaryOpcode.Shl -> lhv shl rhv
+            is BinaryOpcode.Shr -> lhv ashr rhv
+            is BinaryOpcode.Ushr -> lhv shr rhv
+            is BinaryOpcode.And -> lhv and rhv
+            is BinaryOpcode.Or -> lhv or rhv
+            is BinaryOpcode.Xor -> lhv xor rhv
+        }
     }
 
-    fun convert(call: CallTerm, ef: $factory, ctx: ${solver}Context): Dynamic_ {
-        TODO()
-    }
+    fun convert(call: CallTerm, ef: $factory, ctx: ${solver}Context): Dynamic_ =
+        ef.getVarByType(call.type, call.name)
 
     fun convert(cast: CastTerm, ef: $factory, ctx: ${solver}Context): Dynamic_ {
-        TODO()
+        val op = convert(cast.getOperand(), ef, ctx)
+        return when (cast.type) {
+            is LongType -> op.convert< Long_ >()
+            is Integral -> op.convert< Int_ >()
+            is FloatType -> op.convert< Float_ >()
+            is DoubleType -> op.convert< Double_ >()
+            is ClassType -> op
+            else -> unreachable { log.error("Invalid cast $cast") }
+        }
     }
 
 #macro(fcmp $opcode $default)
@@ -185,11 +210,9 @@ object ${solver}Converter : Loggable {
 
     fun convert(`null`: NullTerm, ef: Z3ExprFactory, ctx: Z3Context): Dynamic_ = ef.makeNull()
 
-    fun convert(returnvalue: ReturnValueTerm, ef: $factory, ctx: ${solver}Context): Dynamic_ {
-        TODO()
-    }
+    fun convert(`return`: ReturnValueTerm, ef: Z3ExprFactory, ctx: Z3Context): Dynamic_ =
+        ef.getVarByType(`return`.type, `return`.name)
 
-    fun convert(value: ValueTerm, ef: $factory, ctx: ${solver}Context): Dynamic_ {
-        TODO()
-    }
+    fun convert(value: ValueTerm, ef: Z3ExprFactory, ctx: Z3Context): Dynamic_ =
+        ef.getVarByType(value.type, value.name)
 }
