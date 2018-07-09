@@ -71,15 +71,46 @@ open class $valexpr : ${solver}SMTExpr, Loggable {
 
     open fun simplify() = $valexpr(ctx, engine.simplify(ctx, expr), engine.simplify(ctx, expr))
 
-#set($opcodes = ["EQ", "NEQ", "GT", "GE", "LT", "LE"])
+#set($opcodes = ["ADD", "SUB", "MUL", "DIVIDE"])
 #foreach($opcode in $opcodes)
-    infix fun ${opcode.toLowerCase()}(other: $valexpr): $Bool = when {
-#foreach($class in $exprClasses)
-        this is $class && other is $class -> ${opcode.toLowerCase()}(other)
+    infix fun ${opcode.toLowerCase()}(other: $valexpr): $valexpr = when {
+#foreach($class in $numClasses)
+            this is $class && other is $class -> ${opcode.toLowerCase()}(other)
 #end
         else -> unreachable { log.error("Invalid operands of `${opcode.toLowerCase()}`: $this and $other") }
     }
 #end
+#set($opcodes = ["MOD", "SHL", "SHR", "ASHR"])
+#foreach($opcode in $opcodes)
+    infix fun ${opcode.toLowerCase()}(other: $valexpr): $valexpr = when {
+        this is $Bitvector && other is $Bitvector -> ${opcode.toLowerCase()}(other)
+        else -> unreachable { log.error("Invalid operands of `${opcode.toLowerCase()}`: $this and $other") }
+    }
+#end
+
+#set($opcodes = ["EQ", "NEQ", "GT", "GE", "LT", "LE"])
+#foreach($opcode in $opcodes)
+    infix fun ${opcode.toLowerCase()}(other: $valexpr): $Bool = when {
+    #foreach($class in $exprClasses)
+    this is $class && other is $class -> ${opcode.toLowerCase()}(other)
+    #end
+        else -> unreachable { log.error("Invalid operands of `${opcode.toLowerCase()}`: $this and $other") }
+    }
+#end
+
+#set($opcodes = ["AND", "OR", "XOR"])
+#foreach($opcode in $opcodes)
+    infix fun ${opcode.toLowerCase()}(other: $valexpr): $valexpr = when {
+        this is $Bool && other is $Bool -> ${opcode.toLowerCase()}(other)
+        this is $Bitvector && other is $Bitvector -> ${opcode.toLowerCase()}(other)
+        else -> unreachable { log.error("Invalid operands of `${opcode.toLowerCase()}`: $this and $other") }
+    }
+#end
+    operator fun plus(other: $valexpr) = add(other)
+    operator fun minus(other: $valexpr) = sub(other)
+    operator fun times(other: $valexpr) = mul(other)
+    operator fun div(other: $valexpr) = divide(other)
+    operator fun rem(other: $valexpr) = mod(other)
 }
 
 #macro(constructors $class)
@@ -304,6 +335,8 @@ fun ${valexpr}.toBool(): $Bool {
     }
     return $Bool(ctx, newExpr, axiom)
 }
+
+fun ${valexpr}.toBV(width: Int) = toBV(engine.getBVSort(ctx, width))
 
 fun ${valexpr}.toBV(sort: $sort): $Bitvector {
     val newExpr = when {
