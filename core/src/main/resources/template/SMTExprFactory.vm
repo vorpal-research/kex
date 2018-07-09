@@ -12,6 +12,22 @@ typealias Memory_ = $Memory< Ptr_ >
 typealias Dynamic_ = $valexpr
 
 class $factory : ${solver}SMTExprFactory(), Loggable {
+    companion object {
+        fun getTypeSize(type: Type) = when (type) {
+            is LongType -> SMTEngine.DWORD
+            is Integral -> SMTEngine.WORD
+            is FloatType -> SMTEngine.WORD
+            is DoubleType -> SMTEngine.DWORD
+            is Reference -> SMTEngine.WORD
+            else -> unreachable { loggerFor(Z3ExprFactory::class).error("Unexpected type: $type") }
+        }
+
+        fun getTypeSizeExpanded(type: Type) = when (type) {
+            is ClassType -> type.`class`.fields.keys.fold(0) { acc, fieldKey -> acc + getTypeSize(fieldKey.type) }
+            else -> getTypeSize(type)
+        }
+    }
+
     val ctx = $context()
 
 #macro(generateMakes $type $basetype)
@@ -51,4 +67,10 @@ class $factory : ${solver}SMTExprFactory(), Loggable {
         is ClassType -> makePtr(name, fresh)
         else -> unreachable { log.error("Unknown type in ExprFactory: $type") }
     }
+
+    inline fun < T : Dynamic_, reified U : Dynamic_ > switch(value: T, cases: Map< T, U >, default: U) =
+        cases.toList().fold(default) { acc, pair -> `if`(value eq pair.first).then(pair.second).`else`(acc) }
+
+    inline fun < reified U : Dynamic_ > switch(cases: Map< Bool_, U >, default: U) =
+        cases.toList().fold(default) { acc, pair -> `if`(pair.first).then(pair.second).`else`(acc) }
 }
