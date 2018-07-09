@@ -71,12 +71,15 @@ open class $valexpr : ${solver}SMTExpr, Loggable {
 
     open fun simplify() = $valexpr(ctx, engine.simplify(ctx, expr), engine.simplify(ctx, expr))
 
-    infix fun eq(other: $valexpr): $Bool = when {
+#set($opcodes = ["EQ", "NEQ", "GT", "GE", "LT", "LE"])
+#foreach($opcode in $opcodes)
+    infix fun ${opcode.toLowerCase()}(other: $valexpr): $Bool = when {
 #foreach($class in $exprClasses)
-        this is $class && other is $class -> eq(other)
+        this is $class && other is $class -> ${opcode.toLowerCase()}(other)
 #end
-        else -> unreachable { log.error("Invalid operands of `eq`: $this and $other") }
+        else -> unreachable { log.error("Invalid operands of `${opcode.toLowerCase()}`: $this and $other") }
     }
+#end
 }
 
 #macro(constructors $class)
@@ -130,6 +133,7 @@ $modifiers class $fullname : $parent {
     infix fun ${opcode.toLowerCase()}(other: $self) =
     $self(ctx, engine.binary(ctx, SMTEngine.Opcode.${opcode}, expr, other.expr), spliceAxioms(ctx, axiom, other.axiom))
 #end
+    operator fun not(): $self = $self(ctx, engine.negate(ctx, expr), axiom)
 }
 
 #generateClass($Bitvector, "BV", "open", $valexpr, "engine.getBVSort(ctx, SMTEngine.WORD * 8)", "Long")
@@ -341,3 +345,24 @@ fun ${valexpr}.toDouble(): $Double {
     }
     return $Double(ctx, newExpr, axiom)
 }
+
+class Ifer {
+    inner class Thener(val cond: $Bool) {
+        inner class Elser< out T : $valexpr >(val cond: $Bool, val `true`: T) {
+            fun engine() = engine
+
+            inline fun < reified T : $valexpr > `else`(`false`: T): T {
+                val ctx = cond.ctx
+                val expr = engine().ite(ctx, cond.expr, `true`.expr, `false`.expr)
+                val axiom = spliceAxioms(ctx, `true`.axiom, `false`.axiom)
+                return $valexpr(ctx, expr, axiom).convert()
+            }
+        }
+
+        inline fun < reified T : $valexpr > then(`true`: T) = Elser(cond, `true`)
+    }
+
+    operator fun invoke(cond: $Bool) = Thener(cond)
+}
+
+fun `if`(cond: $Bool) = Ifer()(cond)

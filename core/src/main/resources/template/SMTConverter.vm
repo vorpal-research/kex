@@ -2,6 +2,8 @@
 import org.jetbrains.research.kex.state.*
 import org.jetbrains.research.kex.state.predicate.*
 import org.jetbrains.research.kex.state.term.*
+import org.jetbrains.research.kex.state.transformer.Memspaced
+import org.jetbrains.research.kfg.ir.value.instruction.CmpOpcode
 
 object ${solver}Converter : Loggable {
     fun convert(ps: PredicateState, ef: $factory, ctx: ${solver}Context, extractPath: Boolean = false): Bool_ = when (ps) {
@@ -125,47 +127,46 @@ object ${solver}Converter : Loggable {
         TODO()
     }
 
+#macro(fcmp $opcode $default)
+            is CmpOpcode.$opcode -> {
+                val lhvf = lhv as? Float_ ?: unreachable { log.error("Non-float operands of `${opcode.toLowerCase()}`") }
+                val rhvf = rhv as? Float_ ?: unreachable { log.error("Non-float operands of `${opcode.toLowerCase()}`") }
+                val cases = mapOf(
+                    (lhvf gt rhvf) to ef.makeIntConst(1),
+                    (lhvf eq rhvf) to ef.makeIntConst(0),
+                    (lhvf lt rhvf) to ef.makeIntConst(-1)
+                )
+                ef.switch(cases, ef.makeIntConst($default))
+            }
+#end
     fun convert(cmp: CmpTerm, ef: $factory, ctx: ${solver}Context): Dynamic_ {
+        val lhv = convert(cmp.getLhv(), ef, ctx)
+        val rhv = convert(cmp.getRhv(),ef, ctx)
+#set($opcodes = ["Eq", "Neq", "Lt", "Gt", "Le", "Ge"])
+        return when (cmp.opcode) {
+#foreach($opcode in $opcodes)
+            is CmpOpcode.$opcode -> lhv ${opcode.toLowerCase()} rhv
+#end
+#fcmp("Cmpg", 1)
+#fcmp("Cmpl", -1)
+        }
+    }
+
+    fun convert(const: ConstBoolTerm, ef: Z3ExprFactory, ctx: Z3Context): Dynamic_ = ef.makeBoolConst(const.value)
+    fun convert(const: ConstByteTerm, ef: Z3ExprFactory, ctx: Z3Context): Dynamic_ = ef.makeIntConst(const.value.toInt())
+    fun convert(const: ConstCharTerm, ef: Z3ExprFactory, ctx: Z3Context): Dynamic_ = ef.makeIntConst(const.value.toInt())
+
+    fun convert(const: ConstClassTerm, ef: Z3ExprFactory, ctx: Z3Context): Dynamic_ {
         TODO()
     }
 
-    fun convert(constbool: ConstBoolTerm, ef: $factory, ctx: ${solver}Context): Dynamic_ {
-        TODO()
-    }
+    fun convert(const: ConstDoubleTerm, ef: Z3ExprFactory, ctx: Z3Context): Dynamic_ = ef.makeDoubleConst(const.value)
+    fun convert(const: ConstFloatTerm, ef: Z3ExprFactory, ctx: Z3Context): Dynamic_ = ef.makeFloatConst(const.value)
+    fun convert(const: ConstIntTerm, ef: Z3ExprFactory, ctx: Z3Context): Dynamic_ = ef.makeIntConst(const.value)
+    fun convert(const: ConstLongTerm, ef: Z3ExprFactory, ctx: Z3Context): Dynamic_ = ef.makeLongConst(const.value)
+    fun convert(const: ConstShortTerm, ef: Z3ExprFactory, ctx: Z3Context): Dynamic_ = ef.makeIntConst(const.value.toInt())
 
-    fun convert(constbyte: ConstByteTerm, ef: $factory, ctx: ${solver}Context): Dynamic_ {
-        TODO()
-    }
-
-    fun convert(constchar: ConstCharTerm, ef: $factory, ctx: ${solver}Context): Dynamic_ {
-        TODO()
-    }
-
-    fun convert(constclass: ConstClassTerm, ef: $factory, ctx: ${solver}Context): Dynamic_ {
-        TODO()
-    }
-
-    fun convert(constdouble: ConstDoubleTerm, ef: $factory, ctx: ${solver}Context): Dynamic_ {
-        TODO()
-    }
-
-    fun convert(constfloat: ConstFloatTerm, ef: $factory, ctx: ${solver}Context): Dynamic_ {
-        TODO()
-    }
-
-    fun convert(constint: ConstIntTerm, ef: $factory, ctx: ${solver}Context): Dynamic_ {
-        TODO()
-    }
-
-    fun convert(constlong: ConstLongTerm, ef: $factory, ctx: ${solver}Context): Dynamic_ {
-        TODO()
-    }
-
-    fun convert(constshort: ConstShortTerm, ef: $factory, ctx: ${solver}Context): Dynamic_ {
-        TODO()
-    }
-
-    fun convert(conststring: ConstStringTerm, ef: $factory, ctx: ${solver}Context): Dynamic_ {
+    fun convert(const: ConstStringTerm, ef: Z3ExprFactory, ctx: Z3Context): Dynamic_ {
         TODO()
     }
 
@@ -178,12 +179,11 @@ object ${solver}Converter : Loggable {
     }
 
     fun convert(neg: NegTerm, ef: $factory, ctx: ${solver}Context): Dynamic_ {
-        TODO()
+        val operand = convert(neg.getOperand(), ef, ctx) as? Bool_ ?: unreachable { log.error("Non-bool term in `neg`") }
+        return !operand
     }
 
-    fun convert(`null`: NullTerm, ef: $factory, ctx: ${solver}Context): Dynamic_ {
-        TODO()
-    }
+    fun convert(`null`: NullTerm, ef: Z3ExprFactory, ctx: Z3Context): Dynamic_ = ef.makeNull()
 
     fun convert(returnvalue: ReturnValueTerm, ef: $factory, ctx: ${solver}Context): Dynamic_ {
         TODO()
