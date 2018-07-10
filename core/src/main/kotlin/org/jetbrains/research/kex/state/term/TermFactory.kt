@@ -64,9 +64,12 @@ object TermFactory : Loggable {
     fun getString(value: String) = ConstStringTerm(TF.getString(), value)
     fun getString(const: StringConstant) = getString(const.value)
     fun getNull() = NullTerm()
-    fun getClass(`class`: Class) = ConstClassTerm(`class`)
-    fun getClass(const: ClassConstant) = ConstClassTerm((const.type as? ClassType)?.`class`
-            ?: unreachable({ log.debug("Non-ref type of class constant") }))
+    fun getClass(`class`: Class) = getClass(TF.getRefType(`class`), `class`)
+    fun getClass(type: Type, `class`: Class) = ConstClassTerm(type, `class`)
+    fun getClass(type: Type) = ConstClassTerm(type,
+            (type as? ClassType)?.`class` ?: unreachable({ log.debug("Non-ref type of class constant") }))
+    fun getClass(const: ClassConstant) = ConstClassTerm(const.type,
+            (const.type as? ClassType)?.`class` ?: unreachable({ log.debug("Non-ref type of class constant") }))
 
     fun getUnaryTerm(operand: Term, opcode: UnaryOpcode) = when (opcode) {
         UnaryOpcode.NEG -> getNegTerm(operand)
@@ -86,21 +89,27 @@ object TermFactory : Loggable {
 
     fun getArrayLoad(type: Type, arrayRef: Term, index: Term) = ArrayLoadTerm(type, arrayRef, index)
 
-    fun getFieldLoad(type: Type, objectRef: Term, fieldName: Term) = FieldLoadTerm(type, objectRef.type, listOf(objectRef, fieldName))
+    fun getFieldLoad(type: Type, objectRef: Term, fieldName: Term) = FieldLoadTerm(type, objectRef, fieldName)
     fun getFieldLoad(type: Type, classType: Class, fieldName: Term) = getFieldLoad(type, TF.getRefType(classType), fieldName)
-    fun getFieldLoad(type: Type, classType: Type, fieldName: Term) = FieldLoadTerm(type, classType, listOf(fieldName))
+    fun getFieldLoad(type: Type, classType: Type, fieldName: Term) = FieldLoadTerm(type, getClass(classType), fieldName)
 
     fun getBinary(opcode: BinaryOpcode, lhv: Term, rhv: Term): Term {
         val merged = mergeTypes(setOf(lhv.type, rhv.type))
                 ?: error(log.error("Cannot merge types of binary term operands: $lhv and $rhv"))
         return getBinary(merged, opcode, lhv, rhv)
     }
+
     fun getBinary(type: Type, opcode: BinaryOpcode, lhv: Term, rhv: Term) = BinaryTerm(type, opcode, lhv, rhv)
 
     fun getCall(method: Method, arguments: List<Term>) = getCall(method.desc.retval, method, arguments)
-    fun getCall(method: Method, objectRef: Term, arguments: List<Term>) = getCall(method.desc.retval, method, objectRef, arguments)
-    fun getCall(type: Type, method: Method, arguments: List<Term>) = CallTerm(type, method, arguments)
-    fun getCall(type: Type, method: Method, objectRef: Term, arguments: List<Term>) = CallTerm(type, method, objectRef, arguments)
+    fun getCall(method: Method, objectRef: Term, arguments: List<Term>) =
+            getCall(method.desc.retval, objectRef, method, arguments)
+
+    fun getCall(type: Type, method: Method, arguments: List<Term>) =
+            CallTerm(type, getClass(method.`class`), method, arguments)
+
+    fun getCall(type: Type, objectRef: Term, method: Method, arguments: List<Term>) =
+            CallTerm(type, objectRef, method, arguments)
 
     fun getCast(type: Type, operand: Term) = CastTerm(type, operand)
     fun getCmp(opcode: CmpOpcode, lhv: Term, rhv: Term): Term {
@@ -125,6 +134,7 @@ object TermFactory : Loggable {
         is ThisRef -> getThis(value.type)
         else -> getValue(value.type, value.toString())
     }
+
     fun getValue(type: Type, name: String) = getValue(type, getString(name))
     fun getValue(type: Type, name: Term) = ValueTerm(type, name)
 }
