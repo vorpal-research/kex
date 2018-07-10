@@ -34,9 +34,10 @@ class FieldLoadTerm(type: Type, val classType: Type, operands: List<Term>) : Ter
         val objectRef = if (isStatic) null else t.transform(getObjectRef())
         val fieldName = t.transform(getFieldName())
         return when {
-            objectRef == null -> t.tf.getFieldLoad(type, classType, fieldName)
+            objectRef == null && fieldName == getFieldName() -> this
+            objectRef == null && fieldName != getFieldName() -> t.tf.getFieldLoad(type, classType, fieldName)
             objectRef == getObjectRef() && fieldName == getFieldName() -> this
-            else -> t.tf.getFieldLoad(type, objectRef, fieldName)
+            else -> t.tf.getFieldLoad(type, objectRef!!, fieldName)
         }
     }
 }

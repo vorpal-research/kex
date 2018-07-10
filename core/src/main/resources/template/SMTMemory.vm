@@ -46,7 +46,8 @@ class $self< in Index : $Bitvector >(val inner: $Array< Byte_, Index >) : ${solv
         }
         return $Bitvector(ctx, expr, axiom)
     }
-    inline fun < reified T : $valexpr > load(index: Index) = load(index, ${valexpr}.getStaticBitsize< T >(ctx)).convert< T >()
+    inline fun < reified T : $valexpr > load(index: Index) =
+        ${valexpr}.forceCast< T >(load(index, ${valexpr}.getStaticBitsize< T >(ctx)))
 
     fun store(index: Index, element: $Bitvector): $self< Index > {
         val elementSize = element.getBitsize()
@@ -62,7 +63,7 @@ class $self< in Index : $Bitvector >(val inner: $Array< Byte_, Index >) : ${solv
 
     fun < T : $valexpr > store(index: Index, element: T) = store(index, element.toBV())
 
-    operator fun get(index: Index) = inner[index].convert< Byte_ >()
+    operator fun get(index: Index) = Byte_.forceCast(inner[index])
     operator fun set(index: Index, value: $Bitvector) = store(index, value)
     operator fun < T : $valexpr > set(index: Index, value: T) = store(index, value)
 }

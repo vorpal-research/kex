@@ -147,13 +147,24 @@ class AliasAnalyzer : Transformer<AliasAnalyzer> {
         return predicate
     }
 
-    override fun transformStorePredicate(predicate: StorePredicate): Predicate {
-        val ls = get(predicate.getLhv())
-        val rs = get(predicate.getStoreVal())
+    override fun transformArrayStorePredicate(predicate: ArrayStorePredicate): Predicate {
+        val ls = get(predicate.getArrayRef())
+        val rs = get(predicate.getValue())
         val res = join(pointsTo(ls), rs)
         pointsTo[ls] = res
         return predicate
     }
+
+    override fun transformFieldStorePredicate(predicate: FieldStorePredicate): Predicate {
+        if (predicate.isStatic) return predicate
+
+        val ls = get(predicate.getObjectRef())
+        val rs = get(predicate.getValue())
+        val res = join(pointsTo(ls), rs)
+        pointsTo[ls] = res
+        return predicate
+    }
+
 
     fun mayAlias(lhv: Term, rhv: Term): Boolean {
         if (lhv === rhv) return true

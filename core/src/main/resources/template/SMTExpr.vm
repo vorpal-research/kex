@@ -28,6 +28,13 @@ open class $valexpr : ${solver}SMTExpr, Loggable {
             else -> unreachable { loggerFor($valexpr::class).error("Trying to get static sort of non-simple SMTExpr") }
         }
 
+        inline fun < reified Type : $valexpr> forceCast(value: $valexpr) = when (Type::class) {
+#foreach($class in $exprClasses)
+            $class::class -> ${class}.forceCast(value)
+#end
+            else -> unreachable { loggerFor($valexpr::class).error("Trying to forceCast to non-simple SMTExpr") }
+        } as Type
+
         inline fun < reified Type : $valexpr > getStaticBitsize(ctx: $context) = when (Type::class) {
 #foreach($class in $exprClasses)
             $class::class -> ${class}.getStaticBitsize(ctx)
@@ -149,6 +156,8 @@ $modifiers class $fullname : $parent {
         fun getStaticBitsize(ctx: $context) = engine.getSortBitsize(ctx, getStaticSort(ctx))
         fun getStaticSort(ctx: $context) = $staticSort
 #generateStatics($fullname, $basetype)
+
+        fun forceCast(value: $valexpr) = value.to${simplename}()
     }
 
 #constructors($simplename)
@@ -175,8 +184,8 @@ $modifiers class $fullname : $parent {
 
     open fun binary(opcode: SMTEngine.Opcode, other: $self): $Bitvector {
         val maxsize = max(getBitsize(), other.getBitsize())
-        val lhv = if (getBitsize() < maxsize) engine.sext(ctx, maxsize, expr) else expr
-        val rhv = if (other.getBitsize() < maxsize) engine.sext(ctx, maxsize, other.expr) else other.expr
+        val lhv = engine.sext(ctx, maxsize, expr)
+        val rhv = engine.sext(ctx, maxsize, other.expr)
 
         val nexpr = engine.binary(ctx, opcode, lhv, rhv)
         val nax = spliceAxioms(ctx, axiom, other.axiom)
@@ -223,6 +232,8 @@ class $self$width : $self {
 
         fun getStaticSort(ctx: $context) = engine.getBVSort(ctx, BITSIZE)
 #generateStatics("$self$width", $base)
+
+        fun forceCast(value: $valexpr) = value.toBV$width()
     }
 
     #constructors("BV")
@@ -307,16 +318,16 @@ class $self< Element : $valexpr, in Index : $valexpr > : $valexpr {
     operator fun get(index: Index) = load(index)
     operator fun set(index: Index, value: Element) = store(index, value)
 }
-
-inline fun < reified T : $valexpr > ${valexpr}.convert() = when (T::class) {
-    $Bool::class -> toBool() as T
-    $Bitvector32::class -> toBV(${Bitvector32}.getStaticSort(ctx)) as T
-    $Bitvector64::class -> toBV(${Bitvector64}.getStaticSort(ctx)) as T
-    $Bitvector::class -> toBV() as T
-    $Float::class -> toFloat() as T
-    $Double::class -> toDouble() as T
-    else -> unreachable { log.error("Unknown expression type") }
-}
+##
+##inline fun < reified T : $valexpr > ${valexpr}.convert() = when (T::class) {
+##    $Bool::class -> toBool()
+##    $Bitvector32::class -> toBV(${Bitvector32}.getStaticSort(ctx))
+##    $Bitvector64::class -> toBV(${Bitvector64}.getStaticSort(ctx))
+##    $Bitvector::class -> toBV()
+##    $Float::class -> toFloat()
+##    $Double::class -> toDouble()
+##    else -> unreachable { log.error("Unknown expression type") }
+##} as T
 
 fun ${valexpr}.convert(sort: $sort) = when {
     engine.isBoolSort(ctx, sort) -> toBool()
@@ -336,6 +347,8 @@ fun ${valexpr}.toBool(): $Bool {
     return $Bool(ctx, newExpr, axiom)
 }
 
+fun ${valexpr}.toBV32() = toBV(32) as? $Bitvector32 ?: unreachable { log.error("Cast failure") }
+fun ${valexpr}.toBV64() = toBV(64) as? $Bitvector64 ?: unreachable { log.error("Cast failure") }
 fun ${valexpr}.toBV(width: Int) = toBV(engine.getBVSort(ctx, width))
 
 fun ${valexpr}.toBV(sort: $sort): $Bitvector {
@@ -392,7 +405,7 @@ class Ifer {
                 val ctx = cond.ctx
                 val expr = engine().ite(ctx, cond.expr, `true`.expr, `false`.expr)
                 val axiom = spliceAxioms(ctx, `true`.axiom, `false`.axiom)
-                return $valexpr(ctx, expr, axiom).convert()
+                return ${valexpr}.forceCast< T >($valexpr(ctx, expr, axiom))
             }
         }
 

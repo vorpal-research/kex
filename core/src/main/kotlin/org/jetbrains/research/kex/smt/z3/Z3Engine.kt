@@ -195,8 +195,15 @@ object Z3Engine : SMTEngine<Context, Expr, Sort, FuncDecl>() {
         return ctx.mkAnd(*boolExprs)
     }
 
-    override fun sext(ctx: Context, n: Int, expr: Expr) = ctx.mkSignExt(n, expr.castTo())
-    override fun zext(ctx: Context, n: Int, expr: Expr) = ctx.mkZeroExt(n, expr.castTo())
+    override fun sext(ctx: Context, n: Int, expr: Expr): Expr {
+        val exprBitsize = bvBitsize(ctx, getSort(ctx, expr))
+        return if (exprBitsize < n) ctx.mkSignExt(n - exprBitsize, expr.castTo()) else expr
+    }
+
+    override fun zext(ctx: Context, n: Int, expr: Expr): Expr {
+        val exprBitsize = bvBitsize(ctx, getSort(ctx, expr))
+        return if (exprBitsize < n) ctx.mkZeroExt(n - exprBitsize, expr.castTo()) else expr
+    }
 
     override fun load(ctx: Context, array: Expr, index: Expr): Expr = ctx.mkSelect(array.castTo(), index)
     override fun store(ctx: Context, array: Expr, index: Expr, value: Expr): Expr = ctx.mkStore(array.castTo(), index, value)
