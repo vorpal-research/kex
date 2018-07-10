@@ -68,7 +68,8 @@ object ${solver}Converter : Loggable {
     fun convert(equality: EqualityPredicate, ef: $factory, ctx: ${solver}Context): Bool_ {
         val lhv = convert(equality.getLhv(), ef, ctx)
         val rhv = convert(equality.getRhv(), ef, ctx)
-        return lhv eq rhv
+        val rhvn = if (rhv is Bool_) rhv.toBV() else rhv
+        return lhv eq rhvn
     }
 
     fun convert(newarray: NewArrayPredicate, ef: $factory, ctx: ${solver}Context): Bool_ {
@@ -78,7 +79,9 @@ object ${solver}Converter : Loggable {
             val totalSize = newarray.getDimentions().fold(elementSize) { acc: Int, term: Term ->
             acc * ((term as? ConstIntTerm)?.value ?: defaultAllocSize)
         }
-        return lhv eq ctx.getLocalPtr(memspace, totalSize)
+        val ptr = ctx.getLocalPtr(memspace, totalSize)
+        ctx.writeBound(ptr, ef.makeIntConst(totalSize), memspace)
+        return lhv eq ptr
     }
 
     fun convert(new: NewPredicate, ef: $factory, ctx: ${solver}Context): Bool_ {
@@ -122,20 +125,21 @@ object ${solver}Converter : Loggable {
                             ?: unreachable { log.error("Non-ptr operand of array load") }
         val index = convert(arrayload.getIndex(), ef, ctx) as? Int_
                             ?: unreachable { log.error("Non-integer index of array load") }
-        val valuePtr = (arrayref + index) as Ptr_
+        val valuePtr = (arrayref + index).convert< Ptr_ >()
         val baseBound = ctx.readBound(arrayref, memspace)
-        val ptrBound = (baseBound - index) as Int_
+        val ptrBound = (baseBound - index).convert< Int_ >()
         ctx.writeBound(valuePtr, ptrBound, memspace)
 
         val ret = ctx.readMemory(valuePtr, ${factory}.getTypeSize(arrayload.type), memspace)
-        return when (arrayload.type) {
-            is LongType -> ret.convert< Long_ >()
-            is Integral -> ret.convert< Int_ >()
-            is FloatType -> ret.convert< Float_ >()
-            is DoubleType -> ret.convert< Double_ >()
-            is ClassType -> ret.convert< Ptr_ >()
-            else -> unreachable { log.error("Invalid cast $ret") }
-        }
+        return ret
+##        return when (arrayload.type) {
+##            is LongType -> ret.convert< Long_ >()
+##            is Integral -> ret.convert< Int_ >()
+##            is FloatType -> ret.convert< Float_ >()
+##            is DoubleType -> ret.convert< Double_ >()
+##            is ClassType -> ret.convert< Ptr_ >()
+##            else -> unreachable { log.error("Invalid cast $ret") }
+##        }
     }
 
     fun convert(binary: BinaryTerm, ef: $factory, ctx: ${solver}Context): Dynamic_ {
@@ -161,14 +165,15 @@ object ${solver}Converter : Loggable {
 
     fun convert(cast: CastTerm, ef: $factory, ctx: ${solver}Context): Dynamic_ {
         val op = convert(cast.getOperand(), ef, ctx)
-        return when (cast.type) {
-            is LongType -> op.convert< Long_ >()
-            is Integral -> op.convert< Int_ >()
-            is FloatType -> op.convert< Float_ >()
-            is DoubleType -> op.convert< Double_ >()
-            is ClassType -> op
-            else -> unreachable { log.error("Invalid cast $cast") }
-        }
+        return op
+##        return when (cast.type) {
+##            is LongType -> op.convert< Long_ >()
+##            is Integral -> op.convert< Int_ >()
+##            is FloatType -> op.convert< Float_ >()
+##            is DoubleType -> op.convert< Double_ >()
+##            is ClassType -> op.convert< Ptr_ >()
+##            else -> unreachable { log.error("Invalid cast $cast") }
+##        }
     }
 
 #macro(fcmp $opcode $default)
@@ -236,7 +241,7 @@ object ${solver}Converter : Loggable {
 
             val fieldptr = (obj + offset).convert< Ptr_ >()
             ctx.writeBound(fieldptr, (baseBound - offset).convert(), memspace)
-            ctx.readMemory(fieldptr, memspace)
+            ctx.readMemory(fieldptr, ${factory}.getTypeSize(fieldload.type), memspace)
         }
 
     fun convert(instanceof: InstanceOfTerm, ef: $factory, ctx: ${solver}Context): Dynamic_ =
