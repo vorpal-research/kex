@@ -1,6 +1,7 @@
 package org.jetbrains.research.kex.state.predicate
 
 import org.jetbrains.research.kex.state.term.Term
+import org.jetbrains.research.kex.state.term.TermFactory
 import org.jetbrains.research.kex.util.Loggable
 import org.jetbrains.research.kfg.type.ArrayType
 import org.jetbrains.research.kfg.ir.Class
@@ -16,7 +17,7 @@ object PredicateFactory : Loggable {
     fun getFieldStore(objectRef: Term, fieldName: Term, fieldType: Type, value: Term, type: PredicateType = PredicateType.State()) =
             FieldStorePredicate(objectRef, fieldName, fieldType, value, type)
     fun getFieldStore(classType: Class, fieldName: Term, fieldType: Type, value: Term, type: PredicateType = PredicateType.State()) =
-            FieldStorePredicate(classType, fieldName, fieldType, value, type)
+            FieldStorePredicate(TermFactory.getClass(classType), fieldName, fieldType, value, type)
 
     fun getLoad(lhv: Term, loadTerm: Term) = getEquality(lhv, loadTerm)
 

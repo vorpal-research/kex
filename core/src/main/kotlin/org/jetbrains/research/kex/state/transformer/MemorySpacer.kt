@@ -43,17 +43,12 @@ fun Term.withMemspace(memspace: Int): Term {
         is ArrayLengthTerm -> tf.getArrayLength(memspaced, getArrayRef())
         is ArrayLoadTerm -> tf.getArrayLoad(memspaced, getArrayRef(), getIndex())
         is BinaryTerm -> tf.getBinary(memspaced, opcode, getLhv(), getRhv())
-        is CallTerm -> when {
-            isStatic -> tf.getCall(memspaced, method, getArguments())
-            else -> tf.getCall(memspaced, method, getObjectRef(), getArguments())
-        }
+        is CallTerm -> tf.getCall(memspaced, getOwner(), method, getArguments())
         is CastTerm -> tf.getCast(memspaced, getOperand())
         is CmpTerm -> tf.getCmp(memspaced, opcode, getLhv(), getRhv())
         is ConstStringTerm -> tf.getString(memspaced, name)
-        is FieldLoadTerm -> when {
-            isStatic -> tf.getFieldLoad(memspaced, classType, getFieldName())
-            else -> tf.getFieldLoad(memspaced, getObjectRef(), getFieldName())
-        }
+        is ConstClassTerm -> tf.getClass(memspaced, `class`)
+        is FieldLoadTerm -> tf.getFieldLoad(memspaced, getOwner(), getFieldName())
         is NegTerm -> tf.getNegTerm(memspaced, getOperand())
         is ReturnValueTerm -> tf.getReturn(memspaced, method)
         is ValueTerm -> tf.getValue(memspaced, getValueName())

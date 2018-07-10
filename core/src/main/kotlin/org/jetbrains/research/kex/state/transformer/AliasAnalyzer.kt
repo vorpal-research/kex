@@ -102,16 +102,13 @@ class AliasAnalyzer : Transformer<AliasAnalyzer> {
     }
 
     override fun transformFieldLoadTerm(term: FieldLoadTerm): Term {
-        if (term.isStatic) {
-            nonFreeTerms.add(term)
-        }
         val ts = get(term)
-        if (!term.isStatic) {
-            val lhs = get(term.getObjectRef())
-            val res = join(pointsTo(lhs), pointsTo(ts))
-            pointsTo[lhs] = res
-            pointsTo[ts] = res
-        }
+
+        val lhs = get(term.getOwner())
+        val rs = join(pointsTo(lhs), pointsTo(ts))
+        pointsTo[lhs] = rs
+        pointsTo[ts] = rs
+
         val res = join(spaces(term.type), pointsTo(ts))
         pointsTo[ts] = res
         return term
@@ -156,9 +153,7 @@ class AliasAnalyzer : Transformer<AliasAnalyzer> {
     }
 
     override fun transformFieldStorePredicate(predicate: FieldStorePredicate): Predicate {
-        if (predicate.isStatic) return predicate
-
-        val ls = get(predicate.getObjectRef())
+        val ls = get(predicate.getOwner())
         val rs = get(predicate.getValue())
         val res = join(pointsTo(ls), rs)
         pointsTo[ls] = res

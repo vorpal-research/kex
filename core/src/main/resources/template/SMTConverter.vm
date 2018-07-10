@@ -84,20 +84,14 @@ object ${solver}Converter : Loggable {
 
     fun convert(store: FieldStorePredicate, ef: $factory, ctx: ${solver}Context): Bool_ {
         val value = convert(store.getValue(), ef, ctx)
-        if (store.isStatic) {
-            val size = ${factory}.getTypeSize(store.fieldType)
-            val ptr = ctx.getStaticPtr(0, size)
-            ctx.writeMemory(ptr, value, 0)
-        } else {
-            val memspace = (store.getObjectRef().type as? Memspaced<*>)?.memspace ?: 0
-            val ptr = convert(store.getObjectRef(), ef, ctx) as? Ptr_
-                    ?: unreachable { log.error("Non-ptr ref in field load") }
-            val name = store.getFieldName().name
-            val offset = ${factory}.getFieldOffset(store.`class`, Class.FieldKey(name, store.fieldType))
+        val memspace = (store.getOwner().type as? Memspaced<*>)?.memspace ?: 0
+        val ptr = convert(store.getOwner(), ef, ctx) as? Ptr_
+                ?: unreachable { log.error("Non-ptr ref in field load") }
+        val name = store.getFieldName().name
+        val offset = Z3ExprFactory.getFieldOffset(store.getClass(), Class.FieldKey(name, store.fieldType))
 
-            val fieldptr = Ptr_.forceCast(ptr + offset)
-            ctx.writeMemory(fieldptr, value, memspace)
-        }
+        val fieldptr = Ptr_.forceCast(ptr + offset)
+        ctx.writeMemory(fieldptr, value, memspace)
         return ef.makeTrue()
     }
 
@@ -245,25 +239,16 @@ object ${solver}Converter : Loggable {
     }
 
     fun convert(fieldload: FieldLoadTerm, ef: $factory, ctx: ${solver}Context): Dynamic_ {
-        val res = if (fieldload.isStatic) {
-            val size = Z3ExprFactory.getTypeSize(fieldload.type)
-            val ptr = ctx.getStaticPtr(0, size)
-            ctx.writeBound(ptr, ef.makeIntConst(size), 0)
-            ctx.readMemory(ptr, ${factory}.getTypeSize(fieldload.type), 0)
-        } else {
-            val memspace = (fieldload.getObjectRef().type as? Memspaced<*>)?.memspace ?: 0
-            val obj = convert(fieldload.getObjectRef(), ef, ctx) as? Ptr_
+        val memspace = (fieldload.getOwner().type as? Memspaced<*>)?.memspace ?: 0
+        val obj = convert(fieldload.getOwner(), ef, ctx) as? Ptr_
             ?: unreachable { log.error("Non-ptr ref in field load") }
-            val `class` = (fieldload.classType as? ClassType)?.`class`
-            ?: unreachable { log.error("Non-class type in field load") }
-            val name = fieldload.getFieldName().name
-            val offset = Z3ExprFactory.getFieldOffset(`class`, Class.FieldKey(name, fieldload.type))
-            val baseBound = ctx.readBound(obj, memspace)
+        val name = fieldload.getFieldName().name
+        val offset = Z3ExprFactory.getFieldOffset(fieldload.getClass(), Class.FieldKey(name, fieldload.type))
+        val baseBound = ctx.readBound(obj, memspace)
 
-            val fieldptr = Ptr_.forceCast(obj + offset)
-            ctx.writeBound(fieldptr, Int_.forceCast(baseBound - offset), memspace)
-            ctx.readMemory(fieldptr, ${factory}.getTypeSize(fieldload.type), memspace)
-        }
+        val fieldptr = Ptr_.forceCast(obj + offset)
+        ctx.writeBound(fieldptr, Int_.forceCast(baseBound - offset), memspace)
+        val res = ctx.readMemory(fieldptr, Z3ExprFactory.getTypeSize(fieldload.type), memspace)
         return when (fieldload.type) {
             is LongType -> Long_.forceCast(res)
             is Integral -> Int_.forceCast(res)
