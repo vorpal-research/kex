@@ -38,9 +38,10 @@ class $self : ${solver}SMTContext {
             val maxLocal = max(default.localPointer, choices.map { it.value.localPointer }.max() ?: 0)
             val maxStatic = max(default.staticPointer, choices.map { it.value.staticPointer }.max() ?: 0)
 
-            val ids = choices.values.fold(default.memories.keys) { acc, ctx ->
-                acc.addAll(ctx.memories.keys)
-                acc
+            val ids = mutableSetOf< String >()
+            ids.addAll(default.memories.keys)
+            choices.values.forEach { ctx ->
+                ids.addAll(ctx.memories.keys)
             }
 
             val memArrays = ids.map { id ->

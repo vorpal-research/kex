@@ -345,7 +345,11 @@ fun ${valexpr}.toBV(sort: $sort): $Bitvector {
         engine.isFP(ctx, expr) -> engine.float2bv(ctx, expr, sort)
         else -> unreachable { log.debug("Unexpected SMT expr type in cast") }
     }
-    return $Bitvector(ctx, newExpr, axiom)
+    return when (engine.bvBitsize(ctx, sort)) {
+        32 -> $Bitvector32(ctx, newExpr, axiom)
+        64 -> $Bitvector64(ctx, newExpr, axiom)
+        else -> $Bitvector(ctx, newExpr, axiom)
+    }
 }
 
 fun ${valexpr}.toBV(): $Bitvector {

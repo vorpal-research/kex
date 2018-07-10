@@ -78,6 +78,7 @@ class $factory : ${solver}SMTExprFactory(), Loggable {
         is ${type}Type -> make${type}(name, fresh)
 #end
         is ClassType -> makePtr(name, fresh)
+        is ArrayType -> makePtr(name, fresh)
         else -> unreachable { log.error("Unknown type in ExprFactory: $type") }
     }
 
