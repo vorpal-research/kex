@@ -3,6 +3,7 @@ import org.jetbrains.research.kex.state.*
 import org.jetbrains.research.kex.state.predicate.*
 import org.jetbrains.research.kex.state.term.*
 import org.jetbrains.research.kex.state.transformer.Memspaced
+import org.jetbrains.research.kfg.ir.Class
 import org.jetbrains.research.kfg.ir.value.instruction.BinaryOpcode
 import org.jetbrains.research.kfg.ir.value.instruction.CmpOpcode
 import org.jetbrains.research.kex.config.GlobalConfig
@@ -26,9 +27,9 @@ object ${solver}Converter : Loggable {
 
     fun convert(choice: ChoiceState, ef: $factory, ctx: ${solver}Context, extractPath: Boolean = false): Bool_ {
         var res = ef.makeFalse()
-        val contexts = mutableMapOf< Bool_, Z3Context >()
+        val contexts = mutableMapOf< Bool_, ${solver}Context >()
         for (branch in choice) {
-            val newCtx = Z3Context(ctx)
+            val newCtx = ${solver}Context(ctx)
             val state = convert(branch, ef, newCtx, extractPath)
 
             res = res or state
@@ -116,7 +117,25 @@ object ${solver}Converter : Loggable {
     }
 
     fun convert(arrayload: ArrayLoadTerm, ef: $factory, ctx: ${solver}Context): Dynamic_ {
-        TODO()
+        val memspace = (arrayload.getArrayRef().type as? Memspaced<*>)?.memspace ?: 0
+        val arrayref = convert(arrayload.getArrayRef(), ef, ctx) as? Ptr_
+                            ?: unreachable { log.error("Non-ptr operand of array load") }
+        val index = convert(arrayload.getIndex(), ef, ctx) as? Int_
+                            ?: unreachable { log.error("Non-integer index of array load") }
+        val valuePtr = (arrayref + index) as Ptr_
+        val baseBound = ctx.readBound(arrayref, memspace)
+        val ptrBound = (baseBound - index) as Int_
+        ctx.writeBound(valuePtr, ptrBound, memspace)
+
+        val ret = ctx.readMemory(valuePtr, ${factory}.getTypeSize(arrayload.type), memspace)
+        return when (arrayload.type) {
+            is LongType -> ret.convert< Long_ >()
+            is Integral -> ret.convert< Int_ >()
+            is FloatType -> ret.convert< Float_ >()
+            is DoubleType -> ret.convert< Double_ >()
+            is ClassType -> ret.convert< Ptr_ >()
+            else -> unreachable { log.error("Invalid cast $ret") }
+        }
     }
 
     fun convert(binary: BinaryTerm, ef: $factory, ctx: ${solver}Context): Dynamic_ {
@@ -177,42 +196,62 @@ object ${solver}Converter : Loggable {
         }
     }
 
-    fun convert(const: ConstBoolTerm, ef: Z3ExprFactory, ctx: Z3Context): Dynamic_ = ef.makeBoolConst(const.value)
-    fun convert(const: ConstByteTerm, ef: Z3ExprFactory, ctx: Z3Context): Dynamic_ = ef.makeIntConst(const.value.toInt())
-    fun convert(const: ConstCharTerm, ef: Z3ExprFactory, ctx: Z3Context): Dynamic_ = ef.makeIntConst(const.value.toInt())
+    fun convert(const: ConstBoolTerm, ef: $factory, ctx: ${solver}Context): Dynamic_ = ef.makeBoolConst(const.value)
+    fun convert(const: ConstByteTerm, ef: $factory, ctx: ${solver}Context): Dynamic_ = ef.makeIntConst(const.value.toInt())
+    fun convert(const: ConstCharTerm, ef: $factory, ctx: ${solver}Context): Dynamic_ = ef.makeIntConst(const.value.toInt())
 
-    fun convert(const: ConstClassTerm, ef: Z3ExprFactory, ctx: Z3Context): Dynamic_ {
-        TODO()
+    fun convert(const: ConstClassTerm, ef: $factory, ctx: ${solver}Context): Dynamic_ =
+        ef.getVarByType(const.type, const.name)
+
+    fun convert(const: ConstDoubleTerm, ef: $factory, ctx: ${solver}Context): Dynamic_ = ef.makeDoubleConst(const.value)
+    fun convert(const: ConstFloatTerm, ef: $factory, ctx: ${solver}Context): Dynamic_ = ef.makeFloatConst(const.value)
+    fun convert(const: ConstIntTerm, ef: $factory, ctx: ${solver}Context): Dynamic_ = ef.makeIntConst(const.value)
+    fun convert(const: ConstLongTerm, ef: $factory, ctx: ${solver}Context): Dynamic_ = ef.makeLongConst(const.value)
+    fun convert(const: ConstShortTerm, ef: $factory, ctx: ${solver}Context): Dynamic_ = ef.makeIntConst(const.value.toInt())
+
+    fun convert(const: ConstStringTerm, ef: $factory, ctx: ${solver}Context): Dynamic_ {
+        val memspace = (const.type as? Memspaced<*>)?.memspace ?: 0
+
+        val size = const.name.length
+        val res = ctx.getLocalPtr(memspace, size)
+        ctx.writeBound(res, ef.makeIntConst(size), memspace)
+        return res
     }
 
-    fun convert(const: ConstDoubleTerm, ef: Z3ExprFactory, ctx: Z3Context): Dynamic_ = ef.makeDoubleConst(const.value)
-    fun convert(const: ConstFloatTerm, ef: Z3ExprFactory, ctx: Z3Context): Dynamic_ = ef.makeFloatConst(const.value)
-    fun convert(const: ConstIntTerm, ef: Z3ExprFactory, ctx: Z3Context): Dynamic_ = ef.makeIntConst(const.value)
-    fun convert(const: ConstLongTerm, ef: Z3ExprFactory, ctx: Z3Context): Dynamic_ = ef.makeLongConst(const.value)
-    fun convert(const: ConstShortTerm, ef: Z3ExprFactory, ctx: Z3Context): Dynamic_ = ef.makeIntConst(const.value.toInt())
+    fun convert(fieldload: FieldLoadTerm, ef: $factory, ctx: ${solver}Context): Dynamic_ =
+        if (fieldload.isStatic) {
+            val size = Z3ExprFactory.getTypeSize(fieldload.type)
+            val ptr = ctx.getStaticPtr(0, size)
+            ctx.writeBound(ptr, ef.makeIntConst(size), 0)
+            ptr
+        } else {
+            val memspace = (fieldload.getObjectRef().type as? Memspaced<*>)?.memspace ?: 0
+            val obj = convert(fieldload.getObjectRef(), ef, ctx) as? Ptr_
+            ?: unreachable { log.error("Non-ptr ref in field load") }
+            val `class` = (fieldload.classType as? ClassType)?.`class`
+            ?: unreachable { log.error("Non-class type in field load") }
+            val name = fieldload.getFieldName().name
+            val offset = Z3ExprFactory.getFieldOffset(`class`, Class.FieldKey(name, fieldload.type))
+            val baseBound = ctx.readBound(obj, memspace)
 
-    fun convert(const: ConstStringTerm, ef: Z3ExprFactory, ctx: Z3Context): Dynamic_ {
-        TODO()
-    }
+            val fieldptr = (obj + offset).convert< Ptr_ >()
+            ctx.writeBound(fieldptr, (baseBound - offset).convert(), memspace)
+            ctx.readMemory(fieldptr, memspace)
+        }
 
-    fun convert(fieldload: FieldLoadTerm, ef: $factory, ctx: ${solver}Context): Dynamic_ {
-        TODO()
-    }
-
-    fun convert(instanceof: InstanceOfTerm, ef: $factory, ctx: ${solver}Context): Dynamic_ {
-        TODO()
-    }
+    fun convert(instanceof: InstanceOfTerm, ef: $factory, ctx: ${solver}Context): Dynamic_ =
+        ef.getVarByType(instanceof.type, instanceof.name)
 
     fun convert(neg: NegTerm, ef: $factory, ctx: ${solver}Context): Dynamic_ {
         val operand = convert(neg.getOperand(), ef, ctx) as? Bool_ ?: unreachable { log.error("Non-bool term in `neg`") }
         return !operand
     }
 
-    fun convert(`null`: NullTerm, ef: Z3ExprFactory, ctx: Z3Context): Dynamic_ = ef.makeNull()
+    fun convert(`null`: NullTerm, ef: $factory, ctx: ${solver}Context): Dynamic_ = ef.makeNull()
 
-    fun convert(`return`: ReturnValueTerm, ef: Z3ExprFactory, ctx: Z3Context): Dynamic_ =
+    fun convert(`return`: ReturnValueTerm, ef: $factory, ctx: ${solver}Context): Dynamic_ =
         ef.getVarByType(`return`.type, `return`.name)
 
-    fun convert(value: ValueTerm, ef: Z3ExprFactory, ctx: Z3Context): Dynamic_ =
+    fun convert(value: ValueTerm, ef: $factory, ctx: ${solver}Context): Dynamic_ =
         ef.getVarByType(value.type, value.name)
 }

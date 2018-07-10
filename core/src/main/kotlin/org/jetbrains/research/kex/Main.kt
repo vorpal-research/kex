@@ -5,6 +5,7 @@ import org.jetbrains.research.kex.asm.transform.LoopDeroller
 import org.jetbrains.research.kex.config.CmdConfig
 import org.jetbrains.research.kex.config.GlobalConfig
 import org.jetbrains.research.kex.config.FileConfig
+import org.jetbrains.research.kex.smt.z3.*
 import org.jetbrains.research.kex.state.transformer.*
 import org.jetbrains.research.kex.util.debug
 import org.jetbrains.research.kex.util.loggerFor
@@ -90,7 +91,12 @@ fun main(args: Array<String>) {
             log.debug(propagated)
             log.debug()
             val memspacer = MemorySpacer(propagated)
-            memspacer.transform(propagated)
+            val memspaced = memspacer.transform(propagated)
+            log.debug()
+            val ef = Z3ExprFactory()
+            val ctx = Z3Context(ef, 0, 0)
+            val smt = Z3Converter.convert(memspaced, ef, ctx)
+            log.debug(smt)
             log.debug()
         }
     }

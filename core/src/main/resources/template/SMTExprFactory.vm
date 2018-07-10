@@ -1,5 +1,6 @@
 #parse("definitions.vm")
 import org.jetbrains.research.kex.smt.${solver}SMTExprFactory
+import org.jetbrains.research.kfg.ir.Class
 
 typealias Bool_ = $Bool
 typealias Ptr_ = $Bitvector32
@@ -13,6 +14,18 @@ typealias Dynamic_ = $valexpr
 
 class $factory : ${solver}SMTExprFactory(), Loggable {
     companion object {
+        private val classOffsets = mutableMapOf< Class, MutableMap< Class.FieldKey, Int >>()
+
+        fun getFieldOffset(`class`: Class, field: Class.FieldKey) = classOffsets.getOrPut(`class`) {
+            val offsets = mutableMapOf< Class.FieldKey, Int >()
+            var offset = 0
+            for (key in `class`.fields.keys) {
+                offsets[key] = 0
+                offset += getTypeSize(key.type)
+            }
+            offsets
+        }.getValue(field)
+
         fun getTypeSize(type: Type) = when (type) {
             is LongType -> SMTEngine.DWORD
             is Integral -> SMTEngine.WORD
