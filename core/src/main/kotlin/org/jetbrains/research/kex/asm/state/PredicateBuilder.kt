@@ -30,13 +30,11 @@ class PredicateBuilder(method: Method) : MethodVisitor(method), Loggable {
     }
 
     override fun visitArrayStoreInst(inst: ArrayStoreInst) {
-        val lhv = tf.getArrayLoad(
-                tf.getValue(inst.getArrayRef()),
-                tf.getValue(inst.getIndex())
-        )
-        val rhv = tf.getValue(inst.getValue())
+        val ref = tf.getValue(inst.getArrayRef())
+        val indx = tf.getValue(inst.getIndex())
+        val value = tf.getValue(inst.getValue())
 
-        predicateMap[inst] = pf.getStore(lhv, rhv)
+        predicateMap[inst] = pf.getArrayStore(ref, indx, value)
     }
 
     override fun visitBinaryInst(inst: BinaryInst) {
@@ -133,7 +131,14 @@ class PredicateBuilder(method: Method) : MethodVisitor(method), Loggable {
         }
         val rhv = tf.getValue(inst.getValue())
 
-        predicateMap[inst] = pf.getEquality(lhv, rhv)
+        val objectRef = if (inst.isStatic) null else tf.getValue(inst.getOwner()!!)
+        val name = tf.getString(inst.field.name)
+        val value = tf.getValue(inst.getValue())
+
+        predicateMap[inst] = when {
+            objectRef != null -> pf.getFieldStore(objectRef, name, inst.field.type, value)
+            else -> pf.getFieldStore(inst.field.`class`, name, inst.field.type, value)
+        }
     }
 
     override fun visitInstanceOfInst(inst: InstanceOfInst) {

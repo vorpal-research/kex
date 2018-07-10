@@ -53,22 +53,24 @@ interface Transformer<T : Transformer<T>> : Loggable {
     ////////////////////////////////////////////////////////////////////
     fun transformPredicate(predicate: Predicate) = predicate
 
+    fun transformArrayStore(predicate: ArrayStorePredicate) = predicate.accept(this)
     fun transformCall(predicate: CallPredicate) = predicate.accept(this)
     fun transformCatch(predicate: CatchPredicate) = predicate.accept(this)
     fun transformDefaultSwitch(predicate: DefaultSwitchPredicate) = predicate.accept(this)
     fun transformEquality(predicate: EqualityPredicate) = predicate.accept(this)
+    fun transformFieldStore(predicate: FieldStorePredicate) = predicate.accept(this)
     fun transformNewArray(predicate: NewArrayPredicate) = predicate.accept(this)
     fun transformNew(predicate: NewPredicate) = predicate.accept(this)
-    fun transformStore(predicate: StorePredicate) = predicate.accept(this)
     fun transformThrow(predicate: ThrowPredicate) = predicate.accept(this)
 
     fun transformCallPredicate(predicate: CallPredicate): Predicate = predicate
     fun transformCatchPredicate(predicate: CatchPredicate): Predicate = predicate
     fun transformDefaultSwitchPredicate(predicate: DefaultSwitchPredicate): Predicate = predicate
     fun transformEqualityPredicate(predicate: EqualityPredicate): Predicate = predicate
+    fun transformFieldStorePredicate(predicate: FieldStorePredicate): Predicate = predicate
     fun transformNewArrayPredicate(predicate: NewArrayPredicate): Predicate = predicate
     fun transformNewPredicate(predicate: NewPredicate): Predicate = predicate
-    fun transformStorePredicate(predicate: StorePredicate): Predicate = predicate
+    fun transformArrayStorePredicate(predicate: ArrayStorePredicate): Predicate = predicate
     fun transformThrowPredicate(predicate: ThrowPredicate): Predicate = predicate
 
     ////////////////////////////////////////////////////////////////////

@@ -3,12 +3,21 @@ package org.jetbrains.research.kex.state.predicate
 import org.jetbrains.research.kex.state.term.Term
 import org.jetbrains.research.kex.util.Loggable
 import org.jetbrains.research.kfg.type.ArrayType
+import org.jetbrains.research.kfg.ir.Class
+import org.jetbrains.research.kfg.type.Type
 
 object PredicateFactory : Loggable {
     fun getCall(callTerm: Term, type: PredicateType = PredicateType.State()) = CallPredicate(callTerm, type)
     fun getCall(lhv: Term, callTerm: Term, type: PredicateType = PredicateType.State()) = CallPredicate(lhv, callTerm, type)
 
-    fun getStore(`object`: Term, storeTerm: Term, type: PredicateType = PredicateType.State()) = StorePredicate(`object`, storeTerm, type)
+    fun getArrayStore(arrayRef: Term, index: Term, value: Term, type: PredicateType = PredicateType.State())
+            = ArrayStorePredicate(arrayRef, index, value, type)
+
+    fun getFieldStore(objectRef: Term, fieldName: Term, fieldType: Type, value: Term, type: PredicateType = PredicateType.State()) =
+            FieldStorePredicate(objectRef, fieldName, fieldType, value, type)
+    fun getFieldStore(classType: Class, fieldName: Term, fieldType: Type, value: Term, type: PredicateType = PredicateType.State()) =
+            FieldStorePredicate(classType, fieldName, fieldType, value, type)
+
     fun getLoad(lhv: Term, loadTerm: Term) = getEquality(lhv, loadTerm)
 
     fun getNew(lhv: Term, type: PredicateType = PredicateType.State()) = NewPredicate(lhv, type)
