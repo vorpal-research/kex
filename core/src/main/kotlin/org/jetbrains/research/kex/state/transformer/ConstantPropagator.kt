@@ -63,25 +63,25 @@ class ConstantPropagator : Transformer<ConstantPropagator> {
         val lhv = getConstantValue(term.getLhv()) ?: return term
         val rhv = getConstantValue(term.getRhv()) ?: return term
         val (nlhv, nrhv) = toCompatibleTypes(lhv, rhv)
-        val cmp = when (term.opcode) {
+        return when (term.opcode) {
             is CmpOpcode.Eq -> when (nlhv) {
-                is Double -> (nlhv - nrhv.toDouble()) < epsilon
-                is Float -> (nlhv - nrhv.toFloat()) < epsilon
-                else -> nlhv == nrhv
-            }.toInt()
+                is Double -> tf.getBool((nlhv - nrhv.toDouble()) < epsilon)
+                is Float -> tf.getBool((nlhv - nrhv.toFloat()) < epsilon)
+                else -> tf.getBool(nlhv == nrhv)
+            }
             is CmpOpcode.Neq -> when (nlhv) {
-                is Double -> (nlhv - nrhv.toDouble()) >= epsilon
-                is Float -> (nlhv - nrhv.toFloat()) >= epsilon
-                else -> nlhv != nrhv
-            }.toInt()
-            is CmpOpcode.Lt -> (nlhv < nrhv).toInt()
-            is CmpOpcode.Gt -> (nlhv > nrhv).toInt()
-            is CmpOpcode.Le -> (nlhv <= nrhv).toInt()
-            is CmpOpcode.Ge -> (nlhv >= nrhv).toInt()
-            is CmpOpcode.Cmpg -> nlhv.compareTo(nrhv)
-            is CmpOpcode.Cmpl -> nlhv.compareTo(nrhv)
+                is Double -> tf.getBool((nlhv - nrhv.toDouble()) >= epsilon)
+                is Float -> tf.getBool((nlhv - nrhv.toFloat()) >= epsilon)
+                else -> tf.getBool(nlhv != nrhv)
+            }
+            is CmpOpcode.Lt -> tf.getBool(nlhv < nrhv)
+            is CmpOpcode.Gt -> tf.getBool(nlhv > nrhv)
+            is CmpOpcode.Le -> tf.getBool(nlhv <= nrhv)
+            is CmpOpcode.Ge -> tf.getBool(nlhv >= nrhv)
+            is CmpOpcode.Cmp -> tf.getInt(nlhv.compareTo(nrhv))
+            is CmpOpcode.Cmpg -> tf.getInt(nlhv.compareTo(nrhv))
+            is CmpOpcode.Cmpl -> tf.getInt(nlhv.compareTo(nrhv))
         }
-        return tf.getConstant(cmp)
     }
 
     override fun transformNegTerm(term: NegTerm): Term {

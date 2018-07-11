@@ -85,6 +85,7 @@ fun main(args: Array<String>) {
             val state = psa.getInstructionState(method.last().last()) ?: continue
             val optimized = StateOptimizer().transform(state)
             log.debug(method)
+            log.debug(method.print())
             log.debug(optimized)
             log.debug("Constant propagator")
             val propagated = ConstantPropagator().transform(optimized)

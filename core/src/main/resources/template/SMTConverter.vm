@@ -78,8 +78,7 @@ object ${solver}Converter : Loggable {
     fun convert(equality: EqualityPredicate, ef: $factory, ctx: ${solver}Context): Bool_ {
         val lhv = convert(equality.getLhv(), ef, ctx)
         val rhv = convert(equality.getRhv(), ef, ctx)
-        val rhvn = if (rhv is Bool_) rhv.toBV() else rhv
-        return lhv eq rhvn
+        return lhv eq rhv
     }
 
     fun convert(store: FieldStorePredicate, ef: $factory, ctx: ${solver}Context): Bool_ {
@@ -191,10 +190,10 @@ object ${solver}Converter : Loggable {
         }
     }
 
-#macro(fcmp $opcode $default)
+#macro(cmp $opcode $default $type)
             is CmpOpcode.$opcode -> {
-                val lhvf = lhv as? Float_ ?: unreachable { log.error("Non-float operands of `${opcode.toLowerCase()}`") }
-                val rhvf = rhv as? Float_ ?: unreachable { log.error("Non-float operands of `${opcode.toLowerCase()}`") }
+                val lhvf = lhv as? $type ?: unreachable { log.error("Non-${type.toLowerCase()} operands of `${opcode.toLowerCase()}`") }
+                val rhvf = rhv as? $type ?: unreachable { log.error("Non-${type.toLowerCase()} operands of `${opcode.toLowerCase()}`") }
                 val cases = mapOf(
                     (lhvf gt rhvf) to ef.makeIntConst(1),
                     (lhvf eq rhvf) to ef.makeIntConst(0),
@@ -211,8 +210,9 @@ object ${solver}Converter : Loggable {
 #foreach($opcode in $opcodes)
             is CmpOpcode.$opcode -> lhv ${opcode.toLowerCase()} rhv
 #end
-#fcmp("Cmpg", 1)
-#fcmp("Cmpl", -1)
+#cmp("Cmp", 1, "Long_")
+#cmp("Cmpg", 1, "Float_")
+#cmp("Cmpl", -1, "Double_")
         }
     }
 
