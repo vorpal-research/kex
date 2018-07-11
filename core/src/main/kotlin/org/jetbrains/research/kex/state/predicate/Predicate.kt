@@ -12,8 +12,24 @@ sealed class PredicateType(val name: String) {
         return "@$name"
     }
 
-    class Path : PredicateType("P")
-    class State : PredicateType("S")
+    class Path : PredicateType("P") {
+        override fun hashCode() = defaultHashCode(name)
+        override fun equals(other: Any?) = when {
+            this === other -> true
+            other == null -> false
+            other is Path -> true
+            else -> false
+        }
+    }
+    class State : PredicateType("S") {
+        override fun hashCode() = defaultHashCode(name)
+        override fun equals(other: Any?) = when {
+            this === other -> true
+            other == null -> false
+            other is State -> true
+            else -> false
+        }
+    }
 }
 
 abstract class Predicate(val type: PredicateType, val operands: List<Term>) : Sealed, Loggable {

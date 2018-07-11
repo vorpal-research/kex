@@ -92,20 +92,19 @@ fun main(args: Array<String>) {
             psa.visit()
             val state = psa.getInstructionState(method.last().last()) ?: continue
             val optimized = StateOptimizer().transform(state)
-            log.debug(method)
-            log.debug(method.print())
-            log.debug(optimized)
-            log.debug("Constant propagator")
+            log.run {
+                debug(method)
+                debug(method.print())
+                debug(optimized)
+            }
             val propagated = ConstantPropagator().transform(optimized)
-            log.debug(propagated)
-            log.debug()
-            val memspacer = MemorySpacer(propagated)
-            val memspaced = memspacer.transform(propagated)
-            log.debug()
+            log.debug("Constant propagated: $propagated")
+
+            val memspaced = MemorySpacer(propagated).transform(propagated)
             val ef = Z3ExprFactory()
-            val ctx = Z3Context(ef, 0, 0)
-            val smt = Z3Converter.convert(memspaced, ef, ctx)
-            log.debug(smt)
+            val solver = Z3Solver(ef)
+            val result = solver.isReachable(memspaced)
+            log.debug(result)
             log.debug()
         }
     }
