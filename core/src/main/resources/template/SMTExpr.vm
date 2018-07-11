@@ -95,7 +95,7 @@ open class $valexpr : ${solver}SMTExpr, Loggable {
     }
 #end
 
-#set($opcodes = ["EQ", "NEQ", "GT", "GE", "LT", "LE"])
+#set($opcodes = ["EQ", "NEQ"])
 #foreach($opcode in $opcodes)
     infix fun ${opcode.toLowerCase()}(other: $valexpr): $Bool = when {
     #foreach($class in $exprClasses)
@@ -103,6 +103,16 @@ open class $valexpr : ${solver}SMTExpr, Loggable {
     #end
         else -> unreachable { log.error("Invalid operands of `${opcode.toLowerCase()}`: $this and $other") }
     }
+#end
+
+#set($opcodes = ["GT", "GE", "LT", "LE"])
+#foreach($opcode in $opcodes)
+infix fun ${opcode.toLowerCase()}(other: $valexpr): $Bool = when {
+    #foreach($class in $numClasses)
+    this is $class && other is $class -> ${opcode.toLowerCase()}(other)
+    #end
+else -> unreachable { log.error("Invalid operands of `${opcode.toLowerCase()}`: $this and $other") }
+}
 #end
 
 #set($opcodes = ["AND", "OR", "XOR"])
