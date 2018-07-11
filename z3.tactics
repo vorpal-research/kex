@@ -1,0 +1,58 @@
+[
+  {
+    "name": "simplify.01",
+    "type": "simplify",
+    "params": []
+  },
+  {
+    "name": "propagate-values.01",
+    "type": "propagate-values",
+    "params": []
+  },
+  {
+    "name": "solve-eqs.01",
+    "type": "solve-eqs",
+    "params": []
+  },
+  {
+    "name": "elim-uncnstr.01",
+    "type": "elim-uncnstr",
+    "params": []
+  },
+  {
+    "name": "simplify.02",
+    "type": "simplify",
+    "params": [
+      {
+        "key": "som",
+        "value": true
+      },
+      {
+        "key": "pull_cheap_ite",
+        "value": true
+      },
+      {
+        "key": "push_ite_bv",
+        "value": true
+      },
+      {
+        "key": "local_ctx",
+        "value": true
+      },
+      {
+        "key": "local_ctx_limit",
+        "value": 100000
+      }
+    ]
+  },
+  {
+    "name": "max-bv-sharing.01",
+    "type": "max-bv-sharing",
+    "params": []
+  },
+  {
+    "name": "smt.01",
+    "type": "smt",
+    "params": []
+  }
+]

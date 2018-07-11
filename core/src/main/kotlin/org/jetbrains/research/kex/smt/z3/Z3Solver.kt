@@ -2,10 +2,9 @@ package org.jetbrains.research.kex.smt.z3
 
 import com.microsoft.z3.*
 import org.jetbrains.research.kex.config.GlobalConfig
-import org.jetbrains.research.kex.util.Loggable
-import org.jetbrains.research.kex.util.castTo
-import org.jetbrains.research.kex.util.debug
-import org.jetbrains.research.kex.util.unreachable
+import org.jetbrains.research.kex.state.PredicateState
+import org.jetbrains.research.kex.state.predicate.PredicateType
+import org.jetbrains.research.kex.util.*
 
 private val timeout = GlobalConfig.getIntValue("smt.timeout", 3)
 
@@ -17,8 +16,28 @@ class Z3Solver(val ef: Z3ExprFactory) : Loggable {
         class UnknownResult(status: Status, val reason: String) : Result(status)
     }
 
-    fun check(state: Bool_, query: Bool_, ctx: Z3Context): Result {
-        val solver = tactic().solver ?: unreachable { log.error("Can't create solver") }
+    fun isReachable(state: PredicateState) = isPathPossible(state, state.filterByType(PredicateType.Path()))
+    fun isPathPossible(state: PredicateState, path: PredicateState) = isViolated(state, path)
+    fun isViolated(state: PredicateState, query: PredicateState): Result {
+        log.run {
+            debug("Z3 solver check")
+            debug("State: $state")
+            debug("Query: $query")
+        }
+
+        val ctx = Z3Context(ef, 0, 0)
+
+        val z3State = Z3Converter.convert(state, ef, ctx)
+        val z3query = Z3Converter.convert(query, ef, ctx)
+
+        log.debug("Check started")
+        val result = check(z3State, z3query, ctx)
+        log.debug("Check finished")
+        return result
+    }
+
+    private fun check(state: Bool_, query: Bool_, ctx: Z3Context): Result {
+        val solver = buildTactics().solver ?: unreachable { log.error("Can't create solver") }
 
         val state_ = state.simplify()
         val query_ = query.simplify()
@@ -36,13 +55,15 @@ class Z3Solver(val ef: Z3ExprFactory) : Loggable {
 
         log.debug("Running z3 solver")
         val result = solver.check(pred.expr) ?: unreachable { log.error("Solver error") }
-        log.debug("Solver finished")
-        log.debug("Acquired result: $result")
-        log.debug("With:")
+        log.run {
+            debug("Solver finished")
+            debug("Acquired result: $result")
+            debug("With:")
+        }
 
         return when (result) {
             Status.SATISFIABLE -> {
-                val model = solver.model ?: unreachable { log.error("Solver result does not contain model")}
+                val model = solver.model ?: unreachable { log.error("Solver result does not contain model") }
                 log.debug(model)
                 Result.SatResult(result, model)
             }
@@ -59,12 +80,21 @@ class Z3Solver(val ef: Z3ExprFactory) : Loggable {
         }
     }
 
-    fun tactic(): Tactic {
+    private fun buildTactics(): Tactic {
         val ctx = ef.ctx
-        val params = ctx.mkParams()
-        params.add("elim_and", true);
-        params.add("sort_store", true);
-        val tactic = ctx.mkTactic("solverTactic")
-        return ctx.with(tactic, params)
+        val tactic = Z3Tactics.load().map {
+            val tactic = ctx.mkTactic(it.type)
+            val params = ctx.mkParams()
+            it.params.forEach { (name, value) ->
+                when (value) {
+                    is Value.BoolValue -> params.add(name, value.value)
+                    is Value.IntValue -> params.add(name, value.value)
+                    is Value.DoubleValue -> params.add(name, value.value)
+                    is Value.StringValue -> params.add(name, value.value)
+                }
+            }
+            ctx.with(tactic, params)
+        }.reduce { a, b -> ctx.andThen(a, b) }
+        return ctx.tryFor(tactic, timeout)
     }
 }
