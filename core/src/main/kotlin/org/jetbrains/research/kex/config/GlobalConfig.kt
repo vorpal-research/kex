@@ -13,7 +13,7 @@ object GlobalConfig : Config {
     }
 
     fun initialize(sources: List<Config>) {
-        this.sources.clear()
-        this.sources.addAll(sources)
+        GlobalConfig.sources.clear()
+        GlobalConfig.sources.addAll(sources)
     }
 }

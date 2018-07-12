@@ -7,7 +7,6 @@ import org.jetbrains.research.kex.config.GlobalConfig
 import org.jetbrains.research.kex.util.loggerFor
 import org.jetbrains.research.kex.util.unreachable
 import java.io.File
-import java.io.FileReader
 
 private val tacticsFile = GlobalConfig.getStringValue("z3.tacticsFile", "")
 
@@ -26,12 +25,13 @@ private val klaxon = Klaxon()
         .convert(Value::class, { Value.fromJson(it) }, { it.toJson() }, true)
 
 class Z3Tactics(elements: Collection<Z3Tactic>) : ArrayList<Z3Tactic>(elements) {
-    public fun toJson() = klaxon.toJsonString(this)
+    fun toJson() = klaxon.toJsonString(this)
 
     companion object {
-        public fun load(): Z3Tactics = fromJson(File(tacticsFile).readText())
+        fun load(): Z3Tactics = fromJson(File(tacticsFile).readText())
 
-        public fun fromJson(json: String) = Z3Tactics(klaxon.parseArray<Z3Tactic>(json)!!)
+        fun fromJson(json: String) = Z3Tactics(klaxon.parseArray(json)
+                ?: unreachable { loggerFor(Z3Tactics::class).error("Cannot parse Z3Tactics from string $json") })
     }
 }
 
@@ -52,7 +52,7 @@ sealed class Value {
     class DoubleValue(val value: Double) : Value()
     class StringValue(val value: String) : Value()
 
-    public fun toJson(): String = klaxon.toJsonString(when (this) {
+    fun toJson(): String = klaxon.toJsonString(when (this) {
         is BoolValue -> this.value
         is IntValue -> this.value
         is DoubleValue -> this.value
@@ -60,7 +60,7 @@ sealed class Value {
     })
 
     companion object {
-        public fun fromJson(jv: JsonValue): Value = when (jv.inside) {
+        fun fromJson(jv: JsonValue): Value = when (jv.inside) {
             is Boolean -> BoolValue(jv.boolean!!)
             is Int -> IntValue(jv.int!!)
             is Double -> DoubleValue(jv.double!!)

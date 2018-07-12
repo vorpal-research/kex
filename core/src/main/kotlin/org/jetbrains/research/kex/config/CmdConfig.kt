@@ -2,24 +2,24 @@ package org.jetbrains.research.kex.config
 
 import org.apache.commons.cli.*
 import org.jetbrains.research.kex.util.Loggable
-import org.jetbrains.research.kex.util.exit
+import org.jetbrains.research.kex.util.unreachable
 import java.io.PrintWriter
 import java.io.StringWriter
 import org.apache.commons.cli.CommandLine as Cmd
 
 class CmdConfig(args: Array<String>) : Config, Loggable {
     private val options = Options()
-    private var cmd: Cmd? = null
+    private val cmd: Cmd
 
     init {
         setupOptions()
 
         val parser = DefaultParser()
 
-        try {
-            cmd = parser.parse(options, args)
+        cmd = try {
+            parser.parse(options, args)
         } catch (e: ParseException) {
-            exit {
+            unreachable {
                 log.error("Error parsing command line arguments: ${e.message}")
                 printHelp()
             }
@@ -44,7 +44,7 @@ class CmdConfig(args: Array<String>) : Config, Loggable {
         options.addOption(randomOpt)
     }
 
-    override fun getStringValue(param: String): String? = cmd?.getOptionValue(param)
+    override fun getStringValue(param: String): String? = cmd.getOptionValue(param)
 
     fun printHelp() {
         val helpFormatter = HelpFormatter()

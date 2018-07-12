@@ -1,4 +1,5 @@
 #parse("definitions.vm")
+import org.jetbrains.research.kex.smt.${solver}SMTConverter
 import org.jetbrains.research.kex.state.*
 import org.jetbrains.research.kex.state.predicate.*
 import org.jetbrains.research.kex.state.term.*
@@ -10,7 +11,7 @@ import org.jetbrains.research.kex.config.GlobalConfig
 
 val defaultAllocSize = GlobalConfig.getIntValue("smt.defaultAllocationSize", 1024)
 
-object ${solver}Converter : Loggable {
+object ${solver}Converter : ${solver}SMTConverter(), Loggable {
     fun convert(ps: PredicateState, ef: $factory, ctx: ${solver}Context, extractPath: Boolean = false): Bool_ = when (ps) {
 #set($states = ["Basic", "Chain", "Choice"])
 #foreach($state in $states)

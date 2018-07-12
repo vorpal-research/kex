@@ -1,12 +1,12 @@
 package org.jetbrains.research.kex.state.transformer
 
-import org.jetbrains.research.kex.algorithm.GraphView
-import org.jetbrains.research.kex.algorithm.viewCfg
 import org.jetbrains.research.kex.collections.DisjointSet
 import org.jetbrains.research.kex.collections.Subset
 import org.jetbrains.research.kex.state.predicate.*
 import org.jetbrains.research.kex.state.term.*
 import org.jetbrains.research.kfg.type.Type
+import org.jetbrains.research.kfg.util.GraphView
+import org.jetbrains.research.kfg.util.viewCfg
 
 typealias Token = Subset<Term?>?
 
