@@ -31,12 +31,16 @@ class Z3Solver(val ef: Z3ExprFactory) : AbstractSMTSolver {
         val z3query = Z3Converter.convert(query, ef, ctx)
 
         log.debug("Check started")
-        val result = check(z3State, z3query, ctx)
+        val result = check(z3State, z3query)
         log.debug("Check finished")
-        return result
+        return when (result.first) {
+            Status.UNSATISFIABLE -> Result.UnsatResult()
+            Status.UNKNOWN -> Result.UnknownResult(result.second as String)
+            Status.SATISFIABLE -> Result.SatResult(SMTModel(mutableMapOf(), mutableMapOf(), mutableMapOf()))
+        }
     }
 
-    private fun check(state: Bool_, query: Bool_, ctx: Z3Context): Result {
+    private fun check(state: Bool_, query: Bool_): Pair<Status, Any> {
         val solver = buildTactics().solver ?: unreachable { log.error("Can't create solver") }
 
         val state_ = state.simplify()
@@ -65,18 +69,17 @@ class Z3Solver(val ef: Z3ExprFactory) : AbstractSMTSolver {
             Status.SATISFIABLE -> {
                 val model = solver.model ?: unreachable { log.error("Solver result does not contain model") }
                 log.debug(model)
-                TODO()
-//                Result.SatResult(collectModel(sta))
+                result to model
             }
             Status.UNSATISFIABLE -> {
                 val core = solver.unsatCore.toList()
                 log.debug(core)
-                Result.UnsatResult()
+                result to core
             }
             Status.UNKNOWN -> {
                 val reason = solver.reasonUnknown
                 log.debug(reason)
-                Result.UnknownResult(reason)
+                result to reason
             }
         }
     }
@@ -99,5 +102,5 @@ class Z3Solver(val ef: Z3ExprFactory) : AbstractSMTSolver {
         return ctx.tryFor(tactic, timeout)
     }
 
-    private fun collectModel(state: PredicateState, ctx: Z3Context, model: Model): SMTModel = TODO()
+//    private fun collectModel(state: PredicateState, ctx: Z3Context, model: Model): SMTModel = TODO()
 }

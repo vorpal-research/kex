@@ -67,17 +67,17 @@
         <dependency>
             <groupId>org.jetbrains.research</groupId>
             <artifactId>kfg</artifactId>
-            <version>${version}</version>
+            <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>org.jetbrains.research</groupId>
             <artifactId>smt-context-generator</artifactId>
-            <version>${version}</version>
+            <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>org.jetbrains.research</groupId>
             <artifactId>kex-util</artifactId>
-            <version>${version}</version>
+            <version>${project.version}</version>
         </dependency>
 
         <dependency>
