@@ -18,8 +18,8 @@ import java.lang.reflect.InvocationTargetException
 import java.lang.reflect.Method
 import java.util.*
 
-internal val runs = GlobalConfig.getIntValue("runner.runs", 10)
-internal val timeout = GlobalConfig.getLongValue("runner.timeout", 1000L)
+internal val runs = GlobalConfig.getIntValue("runner", "runs", 10)
+internal val timeout = GlobalConfig.getLongValue("runner", "timeout", 1000L)
 
 internal fun getClass(type: Type, loader: ClassLoader): Class<*> = when (type) {
     is BoolType -> Boolean::class.java

@@ -28,11 +28,11 @@ fun main(args: Array<String>) {
 
     val config = GlobalConfig
     val cmd = CmdConfig(args)
-    val properties = cmd.getStringValue("properties", "system.properties")
+    val properties = cmd.getCmdValue( "config", "kex.ini")
     config.initialize(listOf(cmd, FileConfig(properties)))
 
-    val jarName = config.getStringValue("jar")
-    val packageName = config.getStringValue("package", "*")
+    val jarName = cmd.getCmdValue("jar")
+    val packageName = cmd.getCmdValue("package", "*")
     assert(jarName != null, cmd::printHelp)
 
     val jar = JarFile(jarName)
@@ -43,7 +43,7 @@ fun main(args: Array<String>) {
     val target = File("instrumented/")
     writeClassesToTarget(jar, target, `package`, true) // write all classes to target, so they will be seen by ClassLoader
 
-    val runner = config.getBooleanValue("runner", false)
+    val runner = config.getBooleanValue("runner", "use-runner", false)
     if (runner) {
         for (`class` in CM.getConcreteClasses()) {
             for ((_, method) in `class`.methods) {
