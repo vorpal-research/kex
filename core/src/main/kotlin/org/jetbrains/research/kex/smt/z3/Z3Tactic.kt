@@ -8,7 +8,7 @@ import org.jetbrains.research.kex.util.loggerFor
 import org.jetbrains.research.kex.util.unreachable
 import java.io.File
 
-private val tacticsFile = GlobalConfig.getStringValue("z3.tacticsFile", "")
+private val tacticsFile = GlobalConfig.getStringValue("z3", "tacticsFile")
 
 private fun <T> Klaxon.convert(k: kotlin.reflect.KClass<*>,
                                fromJson: (JsonValue) -> T,

@@ -27,7 +27,7 @@ class CmdConfig(args: Array<String>) : Config, Loggable {
                 printHelp()
             }
         }
-        val optValues = cmd.getOptionValues("option")
+        val optValues = cmd.getOptionValues("option") ?: arrayOf()
         for (index in 0 until optValues.size step 3) {
             try {
                 val section = optValues[index]
