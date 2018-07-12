@@ -16,6 +16,7 @@
 
         <logback.version>1.2.3</logback.version>
         <slf4j.version>1.7.25</slf4j.version>
+        <ini4j.version>0.5.4</ini4j.version>
         <commons-cli.version>1.4</commons-cli.version>
 
         <random-beans.version>random-beans-parent-3.7.0</random-beans.version>
@@ -47,7 +48,11 @@
             <artifactId>commons-cli</artifactId>
             <version>${commons-cli.version}</version>
         </dependency>
-
+        <dependency>
+            <groupId>org.ini4j</groupId>
+            <artifactId>ini4j</artifactId>
+            <version>${ini4j.version}</version>
+        </dependency>
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
@@ -62,15 +67,13 @@
         <dependency>
             <groupId>org.jetbrains.research</groupId>
             <artifactId>kfg</artifactId>
-            <version>0.1</version>
+            <version>${version}</version>
         </dependency>
-
         <dependency>
             <groupId>org.jetbrains.research</groupId>
             <artifactId>smt-context-generator</artifactId>
-            <version>0.1</version>
+            <version>${version}</version>
         </dependency>
-
         <dependency>
             <groupId>org.jetbrains.research</groupId>
             <artifactId>kex-util</artifactId>
@@ -82,19 +85,16 @@
             <artifactId>random-beans</artifactId>
             <version>${random-beans.version}</version>
         </dependency>
-
         <dependency>
             <groupId>com.beust</groupId>
             <artifactId>klaxon</artifactId>
             <version>${klaxon.version}</version>
         </dependency>
-
         <dependency>
             <groupId>com.github.h0tk3y</groupId>
             <artifactId>better-parse</artifactId>
             <version>${better-parse.version}</version>
         </dependency>
-
 
         <dependency>
             <groupId>com.microsoft</groupId>

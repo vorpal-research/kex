@@ -9,7 +9,7 @@ import org.jetbrains.research.kex.state.PredicateState
 import org.jetbrains.research.kex.state.predicate.PredicateType
 import org.jetbrains.research.kex.util.*
 
-private val timeout = GlobalConfig.getIntValue("smt.timeout", 3)
+private val timeout = GlobalConfig.getIntValue("smt", "timeout", 3)
 
 class Z3Solver(val ef: Z3ExprFactory) : AbstractSMTSolver {
 

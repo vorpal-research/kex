@@ -10,13 +10,13 @@ import java.lang.reflect.ParameterizedType
 import java.lang.reflect.Type
 import java.lang.reflect.TypeVariable
 
-internal val depth = GlobalConfig.getIntValue("random.depth", 10)
-internal val minCollectionSize = GlobalConfig.getIntValue("random.minCollectionSize", 0)
-internal val maxCollectionSize = GlobalConfig.getIntValue("random.maxCollectionSize", 1000)
-internal val minStringLength = GlobalConfig.getIntValue("random.minStringLength", 0)
-internal val maxStringLength = GlobalConfig.getIntValue("random.maxStringLength", 1000)
-internal val attempts = GlobalConfig.getIntValue("random.generationAttempts", 1)
-internal val excludes = GlobalConfig.getMultipleStringValue("random.excludes")
+internal val depth = GlobalConfig.getIntValue("random", "depth", 10)
+internal val minCollectionSize = GlobalConfig.getIntValue("random", "minCollectionSize", 0)
+internal val maxCollectionSize = GlobalConfig.getIntValue("random", "maxCollectionSize", 1000)
+internal val minStringLength = GlobalConfig.getIntValue("random", "minStringLength", 0)
+internal val maxStringLength = GlobalConfig.getIntValue("random", "maxStringLength", 1000)
+internal val attempts = GlobalConfig.getIntValue("random", "generationAttempts", 1)
+internal val excludes = GlobalConfig.getMultipleStringValue("random", "excludes")
 
 class GenerationException(msg: String) : Exception(msg)
 

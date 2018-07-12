@@ -15,7 +15,7 @@ import org.jetbrains.research.kfg.util.TopologicalSorter
 import org.jetbrains.research.kfg.visitor.LoopVisitor
 import kotlin.math.abs
 
-val derollCount = GlobalConfig.getIntValue("loop.deroll-count", 3)
+val derollCount = GlobalConfig.getIntValue("loop", "deroll-count", 3)
 
 class LoopDeroller(method: Method) : LoopVisitor(method), Loggable {
     override fun visitLoop(loop: Loop) {

@@ -28,8 +28,8 @@ interface AbstractSMTSolver : Loggable {
     fun isViolated(state: PredicateState, query: PredicateState): Result
 }
 
-val engine = GlobalConfig.getStringValue("smt.engine")
-        ?: unreachable { loggerFor("SMTEngine").error("No SMT engine specified") }
+val engine = GlobalConfig.getStringValue("smt", "engine")
+        ?: unreachable { loggerFor("SMTSolver").error("No SMT engine specified") }
 
 class SMTProxySolver(
         val solver: AbstractSMTSolver = when (engine) {
