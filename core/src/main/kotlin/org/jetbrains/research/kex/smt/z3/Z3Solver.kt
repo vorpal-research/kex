@@ -2,23 +2,23 @@ package org.jetbrains.research.kex.smt.z3
 
 import com.microsoft.z3.*
 import org.jetbrains.research.kex.config.GlobalConfig
+import org.jetbrains.research.kex.smt.AbstractSMTSolver
+import org.jetbrains.research.kex.smt.SMTModel
+import org.jetbrains.research.kex.smt.Result
 import org.jetbrains.research.kex.state.PredicateState
 import org.jetbrains.research.kex.state.predicate.PredicateType
 import org.jetbrains.research.kex.util.*
 
 private val timeout = GlobalConfig.getIntValue("smt.timeout", 3)
 
-class Z3Solver(val ef: Z3ExprFactory) : Loggable {
+class Z3Solver(val ef: Z3ExprFactory) : AbstractSMTSolver {
 
-    sealed class Result(val status: Status) {
-        class SatResult(status: Status, val model: Model) : Result(status)
-        class UnsatResult(status: Status, val core: List<Expr>) : Result(status)
-        class UnknownResult(status: Status, val reason: String) : Result(status)
-    }
+    override fun isReachable(state: PredicateState) =
+            isPathPossible(state, state.filterByType(PredicateType.Path()))
 
-    fun isReachable(state: PredicateState) = isPathPossible(state, state.filterByType(PredicateType.Path()))
-    fun isPathPossible(state: PredicateState, path: PredicateState) = isViolated(state, path)
-    fun isViolated(state: PredicateState, query: PredicateState): Result {
+    override fun isPathPossible(state: PredicateState, path: PredicateState) = isViolated(state, path)
+
+    override fun isViolated(state: PredicateState, query: PredicateState): Result {
         log.run {
             debug("Z3 solver check")
             debug("State: $state")
@@ -65,17 +65,18 @@ class Z3Solver(val ef: Z3ExprFactory) : Loggable {
             Status.SATISFIABLE -> {
                 val model = solver.model ?: unreachable { log.error("Solver result does not contain model") }
                 log.debug(model)
-                Result.SatResult(result, model)
+                TODO()
+//                Result.SatResult(collectModel(sta))
             }
             Status.UNSATISFIABLE -> {
                 val core = solver.unsatCore.toList()
                 log.debug(core)
-                Result.UnsatResult(result, core)
+                Result.UnsatResult()
             }
             Status.UNKNOWN -> {
                 val reason = solver.reasonUnknown
                 log.debug(reason)
-                Result.UnknownResult(result, reason)
+                Result.UnknownResult(reason)
             }
         }
     }
@@ -97,4 +98,6 @@ class Z3Solver(val ef: Z3ExprFactory) : Loggable {
         }.reduce { a, b -> ctx.andThen(a, b) }
         return ctx.tryFor(tactic, timeout)
     }
+
+    private fun collectModel(state: PredicateState, ctx: Z3Context, model: Model): SMTModel = TODO()
 }

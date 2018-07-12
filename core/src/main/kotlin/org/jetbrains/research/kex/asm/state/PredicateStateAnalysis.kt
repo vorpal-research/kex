@@ -6,9 +6,9 @@ import org.jetbrains.research.kex.util.unreachable
 import org.jetbrains.research.kfg.ir.BasicBlock
 import org.jetbrains.research.kfg.ir.Method
 import org.jetbrains.research.kfg.ir.value.instruction.*
-import org.jetbrains.research.kex.algorithm.DominatorTree
-import org.jetbrains.research.kex.algorithm.DominatorTreeBuilder
-import org.jetbrains.research.kex.algorithm.TopologicalSorter
+import org.jetbrains.research.kfg.util.DominatorTree
+import org.jetbrains.research.kfg.util.DominatorTreeBuilder
+import org.jetbrains.research.kfg.util.TopologicalSorter
 import org.jetbrains.research.kfg.visitor.MethodVisitor
 import java.util.*
 

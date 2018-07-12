@@ -12,13 +12,12 @@
         <module>smt-context-generator</module>
         <module>core</module>
         <module>kfg</module>
-        <module>util</module>
+        <module>kex-util</module>
     </modules>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <kotlin.version>1.2.30</kotlin.version>
-        <junit.version>4.12</junit.version>
         <compiler-plugin.version>3.5.1</compiler-plugin.version>
     </properties>
 
@@ -38,12 +37,6 @@
             <groupId>org.jetbrains.kotlin</groupId>
             <artifactId>kotlin-reflect</artifactId>
             <version>${kotlin.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.jetbrains.kotlin</groupId>
-            <artifactId>kotlin-test</artifactId>
-            <version>${kotlin.version}</version>
-            <scope>test</scope>
         </dependency>
     </dependencies>
 </project>
