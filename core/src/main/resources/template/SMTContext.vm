@@ -4,6 +4,7 @@ import kotlin.math.max
 
 class VersionedMemory(val memory: Memory_, val version: Long = 0) {
     companion object {
+        @Suppress("UNUSED_PARAMETER")
         fun merge(name: String, default: VersionedMemory, cases: List< Pair< Bool_, VersionedMemory >>): VersionedMemory {
             val maxVersion = cases.maxBy { it.second.version }?.second?.version ?: default.version
             return if (maxVersion == default.version) default else {

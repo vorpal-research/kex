@@ -11,6 +11,7 @@ import org.jetbrains.research.kex.config.GlobalConfig
 
 val defaultAllocSize = GlobalConfig.getIntValue("smt", "defaultAllocationSize", 1024)
 
+@Suppress("UNUSED_PARAMETER")
 object ${solver}Converter : ${solver}SMTConverter(), Loggable {
     fun convert(ps: PredicateState, ef: $factory, ctx: ${solver}Context, extractPath: Boolean = false): Bool_ = when (ps) {
 #set($states = ["Basic", "Chain", "Choice"])

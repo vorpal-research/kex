@@ -116,21 +116,6 @@ class PredicateBuilder(method: Method) : MethodVisitor(method), Loggable {
     }
 
     override fun visitFieldStoreInst(inst: FieldStoreInst) {
-        val lhv = if (inst.hasOwner()) {
-            tf.getFieldLoad(
-                    inst.type,
-                    tf.getValue(inst.getOwner()!!),
-                    tf.getString(inst.field.name)
-            )
-        } else {
-            tf.getFieldLoad(
-                    inst.type,
-                    inst.field.`class`,
-                    tf.getString(inst.field.name)
-            )
-        }
-        val rhv = tf.getValue(inst.getValue())
-
         val objectRef = if (inst.isStatic) null else tf.getValue(inst.getOwner()!!)
         val name = tf.getString(inst.field.name)
         val value = tf.getValue(inst.getValue())

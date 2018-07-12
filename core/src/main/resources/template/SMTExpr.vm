@@ -238,6 +238,7 @@ class $self$width : $self {
 #end
     companion object {
         const val BITSIZE = $width
+        @Suppress("UNUSED_PARAMETER")
         fun getStaticBitsize(ctx: $context) = BITSIZE
 
         fun getStaticSort(ctx: $context) = engine.getBVSort(ctx, BITSIZE)
@@ -299,6 +300,7 @@ class $self< Element : $valexpr, in Index : $valexpr > : $valexpr {
             }
         }
 
+        @Suppress("UNUSED_PARAMETER")
         inline fun < Element : $valexpr, reified Index : $valexpr > makeDefault(ctx: $context, name: String, default: Element) =
             $self< Element, Index >(ctx, ${solver}Engine.makeConstArray(ctx, ${valexpr}.getStaticSort< Index >(ctx), default.expr))
 
@@ -328,16 +330,6 @@ class $self< Element : $valexpr, in Index : $valexpr > : $valexpr {
     operator fun get(index: Index) = load(index)
     operator fun set(index: Index, value: Element) = store(index, value)
 }
-##
-##inline fun < reified T : $valexpr > ${valexpr}.convert() = when (T::class) {
-##    $Bool::class -> toBool()
-##    $Bitvector32::class -> toBV(${Bitvector32}.getStaticSort(ctx))
-##    $Bitvector64::class -> toBV(${Bitvector64}.getStaticSort(ctx))
-##    $Bitvector::class -> toBV()
-##    $Float::class -> toFloat()
-##    $Double::class -> toDouble()
-##    else -> unreachable { log.error("Unknown expression type") }
-##} as T
 
 fun ${valexpr}.convert(sort: $sort) = when {
     engine.isBoolSort(ctx, sort) -> toBool()
