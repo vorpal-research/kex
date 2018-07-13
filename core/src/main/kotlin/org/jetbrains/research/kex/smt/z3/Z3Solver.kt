@@ -1,12 +1,18 @@
 package org.jetbrains.research.kex.smt.z3
 
+import com.github.h0tk3y.betterParse.combinators.separatedTerms
 import com.microsoft.z3.*
 import org.jetbrains.research.kex.config.GlobalConfig
 import org.jetbrains.research.kex.smt.AbstractSMTSolver
+import org.jetbrains.research.kex.smt.MemoryShape
 import org.jetbrains.research.kex.smt.SMTModel
 import org.jetbrains.research.kex.smt.Result
 import org.jetbrains.research.kex.state.PredicateState
 import org.jetbrains.research.kex.state.predicate.PredicateType
+import org.jetbrains.research.kex.state.term.Term
+import org.jetbrains.research.kex.state.transformer.Memspaced
+import org.jetbrains.research.kex.state.transformer.PointerCollector
+import org.jetbrains.research.kex.state.transformer.VariableCollector
 import org.jetbrains.research.kex.util.*
 
 private val timeout = GlobalConfig.getIntValue("smt", "timeout", 3)
@@ -36,7 +42,7 @@ class Z3Solver(val ef: Z3ExprFactory) : AbstractSMTSolver {
         return when (result.first) {
             Status.UNSATISFIABLE -> Result.UnsatResult()
             Status.UNKNOWN -> Result.UnknownResult(result.second as String)
-            Status.SATISFIABLE -> Result.SatResult(SMTModel(mutableMapOf(), mutableMapOf(), mutableMapOf()))
+            Status.SATISFIABLE -> Result.SatResult(collectModel(ctx, result.second as Model, state))
         }
     }
 
@@ -102,5 +108,64 @@ class Z3Solver(val ef: Z3ExprFactory) : AbstractSMTSolver {
         return ctx.tryFor(tactic, timeout)
     }
 
-//    private fun collectModel(state: PredicateState, ctx: Z3Context, model: Model): SMTModel = TODO()
+    private fun collectModel(ctx: Z3Context, model: Model, vararg states: PredicateState): SMTModel {
+        val ptrCollector = PointerCollector()
+        val varCollector = VariableCollector()
+        states.forEach {
+            ptrCollector.transform(it)
+            varCollector.transform(it)
+        }
+
+        val ptrs = ptrCollector.ptrs
+        val vars = varCollector.variables
+
+        val assignments = vars.map {
+            val expr = Z3Converter.convert(it, ef, ctx)
+            val z3expr = expr.expr
+
+            log.debug("Evaluating $z3expr")
+            val evaluatedExpr = model.evaluate(z3expr, true)
+            it to Z3Unlogic.undo(evaluatedExpr)
+        }.toMap()
+
+        val memories = mutableMapOf<Int, Pair<MutableMap<Term, Term>, MutableMap<Term, Term>>>()
+        val bounds =  mutableMapOf<Int, Pair<MutableMap<Term, Term>, MutableMap<Term, Term>>>()
+
+        ptrs.forEach { ptr ->
+            val memspace = (ptr.type as? Memspaced<*>)?.memspace ?: 0
+
+            val startMem = ctx.getInitialMemory(memspace)
+            val endMem = ctx.getMemory(memspace)
+
+            val startBounds = ctx.getBounds(memspace)
+            val endBounds = ctx.getBounds(memspace)
+
+            val eptr = Z3Converter.convert(ptr, ef, ctx) as? Ptr_ ?: unreachable { log.error("Non-ptr expr for pointer $ptr") }
+
+            val startV = startMem.load(eptr, Z3ExprFactory.getTypeSize(ptr.type))
+            val endV = endMem.load(eptr, Z3ExprFactory.getTypeSize(ptr.type))
+
+            val startB = startBounds[eptr]
+            val endB = endBounds[eptr]
+
+
+            val modelPtr = Z3Unlogic.undo(model.evaluate(eptr.expr, true))
+            val modelStartV = Z3Unlogic.undo(model.evaluate(startV.expr, true))
+            val modelEndV = Z3Unlogic.undo(model.evaluate(endV.expr, true))
+            val modelStartB = Z3Unlogic.undo(model.evaluate(startB.expr, true))
+            val modelEndB = Z3Unlogic.undo(model.evaluate(endB.expr, true))
+
+            memories.getOrPut(memspace) { mutableMapOf<Term, Term>() to mutableMapOf<Term, Term>() }
+            memories.getValue(memspace).first[modelPtr] = modelStartV
+            memories.getValue(memspace).second[modelPtr] = modelEndV
+
+            bounds.getOrPut(memspace) { mutableMapOf<Term, Term>() to mutableMapOf<Term, Term>() }
+            bounds.getValue(memspace).first[modelPtr] = modelStartB
+            bounds.getValue(memspace).second[modelPtr] = modelEndB
+        }
+
+        return SMTModel(assignments,
+                memories.map { it.key to MemoryShape(it.value.first, it.value.second) }.toMap(),
+                bounds.map { it.key to MemoryShape(it.value.first, it.value.second) }.toMap())
+    }
 }
