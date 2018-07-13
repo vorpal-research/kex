@@ -56,6 +56,7 @@ class $self : ${solver}SMTContext {
     val factory: $factory
     private var localPointer: Int
     private var staticPointer: Int
+    private var initialMemories = mutableMapOf< String, VersionedMemory >()
     private var memories: MutableMap< String, VersionedMemory >
 
     constructor(factory: $factory, localPointer: Int, staticPointer: Int,
@@ -64,6 +65,8 @@ class $self : ${solver}SMTContext {
         this.localPointer = localPointer
         this.staticPointer = staticPointer
         this.memories = memories.toMutableMap()
+
+        initialMemories[MEMORY_NAME] = VersionedMemory(factory.makeEmptyMemory(MEMORY_NAME))
 
         initBounds(0)
     }
@@ -75,10 +78,11 @@ class $self : ${solver}SMTContext {
 
     constructor() : this($factory(), 0, 0)
 
-    fun getMemory(memspace: Int) = memories.getOrPut(memoryName(memspace)) { VersionedMemory(factory.makeDefaultMemory(memoryName(memspace), 0)) }
+    private fun getInitialMemory(id: String) = initialMemories.getOrPut(id) { VersionedMemory(factory.makeEmptyMemory(id)) }
+    fun getMemory(memspace: Int) = memories.getOrPut(memoryName(memspace)) { getInitialMemory(memoryName(memspace)) }
     private fun setMemory(memspace: Int, mem: VersionedMemory) { memories[memoryName(memspace)] = mem }
 
-    fun getBounds(memspace: Int) = memories.getOrPut(boundsName(memspace)) { VersionedMemory(factory.makeDefaultMemory(boundsName(memspace), 0)) }
+    fun getBounds(memspace: Int) = memories.getOrPut(boundsName(memspace)) { VersionedMemory(factory.makeEmptyMemory(boundsName(memspace))) }
     private fun setBounds(memspace: Int, bnd: VersionedMemory) { memories[boundsName(memspace)] = bnd }
 
     private fun initBounds(memspace: Int) {
@@ -86,8 +90,10 @@ class $self : ${solver}SMTContext {
         setBounds(memspace, bnds)
     }
 
-    private fun get(id: String) = memories.getOrPut(id) { VersionedMemory(factory.makeDefaultMemory(id, 0)) }
+    private fun get(id: String) = memories.getOrPut(id) { getInitialMemory(id) }
 
+
+    fun getInitialMemory(memspace: Int) = initialMemories.getOrElse(memoryName(memspace)) { getMemory(memspace) }
 
 fun readMemory(ptr: Ptr_, bitsize: Int, memspace: Int) = getMemory(memspace).load(ptr, bitsize)
     inline fun < reified T : $valexpr > readMemory(ptr: Ptr_, memspace: Int) = getMemory(memspace).load< T >(ptr)

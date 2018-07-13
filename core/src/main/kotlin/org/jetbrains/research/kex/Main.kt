@@ -8,6 +8,7 @@ import org.jetbrains.research.kex.config.GlobalConfig
 import org.jetbrains.research.kex.config.FileConfig
 import org.jetbrains.research.kex.runner.CoverageManager
 import org.jetbrains.research.kex.runner.CoverageRunner
+import org.jetbrains.research.kex.smt.Result
 import org.jetbrains.research.kex.smt.SMTProxySolver
 import org.jetbrains.research.kex.state.transformer.*
 import org.jetbrains.research.kex.util.debug
@@ -103,6 +104,7 @@ fun main(args: Array<String>) {
             val memspaced = MemorySpacer(propagated).transform(propagated)
             val result = SMTProxySolver().isReachable(memspaced)
             log.debug(result)
+            if (result is Result.SatResult) log.debug(result.model)
             log.debug()
         }
     }
