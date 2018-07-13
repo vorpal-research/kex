@@ -98,19 +98,20 @@ class PredicateBuilder(method: Method) : MethodVisitor(method), Loggable {
 
     override fun visitFieldLoadInst(inst: FieldLoadInst) {
         val lhv = tf.getValue(inst)
-        val rhv = if (inst.hasOwner()) {
-            tf.getFieldLoad(
+        val field = if (inst.hasOwner()) {
+            tf.getField(
                     inst.type,
                     tf.getValue(inst.getOwner()!!),
                     tf.getString(inst.field.name)
             )
         } else {
-            tf.getFieldLoad(
+            tf.getField(
                     inst.type,
                     inst.field.`class`,
                     tf.getString(inst.field.name)
             )
         }
+        val rhv = tf.getFieldLoad(inst.type, field)
 
         predicateMap[inst] = pf.getEquality(lhv, rhv)
     }
@@ -120,10 +121,11 @@ class PredicateBuilder(method: Method) : MethodVisitor(method), Loggable {
         val name = tf.getString(inst.field.name)
         val value = tf.getValue(inst.getValue())
 
-        predicateMap[inst] = when {
-            objectRef != null -> pf.getFieldStore(objectRef, name, inst.field.type, value)
-            else -> pf.getFieldStore(inst.field.`class`, name, inst.field.type, value)
+        val field = when {
+            objectRef != null -> tf.getField(inst.field.type, objectRef, name)
+            else -> tf.getField(inst.field.type, inst.field.`class`, name)
         }
+        predicateMap[inst] = pf.getFieldStore(field, inst.field.type, value)
     }
 
     override fun visitInstanceOfInst(inst: InstanceOfInst) {

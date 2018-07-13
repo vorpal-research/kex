@@ -1,9 +1,6 @@
 package org.jetbrains.research.kex.state.transformer
 
-import org.jetbrains.research.kex.state.term.ArgumentTerm
-import org.jetbrains.research.kex.state.term.ReturnValueTerm
-import org.jetbrains.research.kex.state.term.Term
-import org.jetbrains.research.kex.state.term.ValueTerm
+import org.jetbrains.research.kex.state.term.*
 
 class VariableCollector : Transformer<VariableCollector> {
     val variables = mutableSetOf<Term>()
@@ -19,6 +16,11 @@ class VariableCollector : Transformer<VariableCollector> {
     }
 
     override fun transformReturnValueTerm(term: ReturnValueTerm): Term {
+        variables.add(term)
+        return term
+    }
+
+    override fun transformFieldTerm(term: FieldTerm): Term {
         variables.add(term)
         return term
     }

@@ -103,6 +103,7 @@ interface Transformer<T : Transformer<T>> : Loggable {
     fun transformConstShort(term: ConstShortTerm): Term = term.accept(this)
     fun transformConstString(term: ConstStringTerm): Term = term.accept(this)
     fun transformFieldLoad(term: FieldLoadTerm): Term = term.accept(this)
+    fun transformField(term: FieldTerm): Term = term.accept(this)
     fun transformInstanceOf(term: InstanceOfTerm): Term = term.accept(this)
     fun transformNeg(term: NegTerm): Term = term.accept(this)
     fun transformNull(term: NullTerm): Term = term.accept(this)
@@ -127,6 +128,7 @@ interface Transformer<T : Transformer<T>> : Loggable {
     fun transformConstShortTerm(term: ConstShortTerm): Term = term
     fun transformConstStringTerm(term: ConstStringTerm): Term = term
     fun transformFieldLoadTerm(term: FieldLoadTerm): Term = term
+    fun transformFieldTerm(term: FieldTerm): Term = term
     fun transformInstanceOfTerm(term: InstanceOfTerm): Term = term
     fun transformNegTerm(term: NegTerm): Term = term
     fun transformNullTerm(term: NullTerm): Term = term

@@ -6,21 +6,17 @@ import org.jetbrains.research.kex.util.unreachable
 import org.jetbrains.research.kfg.type.ClassType
 import org.jetbrains.research.kfg.type.Type
 
-class FieldLoadTerm(type: Type, owner: Term, name: Term) : Term("", type, listOf(owner, name)) {
-    fun getOwner() = subterms[0]
-    fun getFieldName() = subterms[1]
-    fun getClass() = (getOwner().type as? ClassType)?.`class` ?: unreachable { log.error("Non-class owner of field") }
+class FieldLoadTerm(type: Type, fieldRef: Term) : Term("", type, listOf(fieldRef)) {
+    fun getField() = subterms[0]
+    fun isStatic() = (getField() as? FieldTerm)?.isStatic() ?: unreachable { log.error("Non-field term in field load") }
 
-    fun isStatic() = getOwner() is ConstClassTerm
-
-    override fun print() = "${getOwner()}.${getFieldName()}"
+    override fun print() = "*(${getField()})"
 
     override fun <T: Transformer<T>> accept(t: Transformer<T>): Term {
-        val owner = t.transform(getOwner())
-        val fieldName = t.transform(getFieldName())
+        val field = t.transform(getField())
         return when {
-            owner == getOwner() && fieldName == getFieldName() -> this
-            else -> t.tf.getFieldLoad(type, owner, fieldName)
+            field == getField() -> this
+            else -> t.tf.getFieldLoad(type, field)
         }
     }
 }

@@ -104,7 +104,7 @@ class AliasAnalyzer : Transformer<AliasAnalyzer> {
     override fun transformFieldLoadTerm(term: FieldLoadTerm): Term {
         val ts = get(term)
 
-        val lhs = get(term.getOwner())
+        val lhs = get(term.getField())
         val rs = join(pointsTo(lhs), pointsTo(ts))
         pointsTo[lhs] = rs
         pointsTo[ts] = rs
@@ -153,7 +153,7 @@ class AliasAnalyzer : Transformer<AliasAnalyzer> {
     }
 
     override fun transformFieldStorePredicate(predicate: FieldStorePredicate): Predicate {
-        val ls = get(predicate.getOwner())
+        val ls = get(predicate.getField())
         val rs = get(predicate.getValue())
         val res = join(pointsTo(ls), rs)
         pointsTo[ls] = res
