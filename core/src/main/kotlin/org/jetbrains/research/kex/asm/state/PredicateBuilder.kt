@@ -21,10 +21,7 @@ class PredicateBuilder(method: Method) : MethodVisitor(method), Loggable {
 
     override fun visitArrayLoadInst(inst: ArrayLoadInst) {
         val lhv = tf.getValue(inst)
-        val rhv = tf.getArrayLoad(
-                tf.getValue(inst.getArrayRef()),
-                tf.getValue(inst.getIndex())
-        )
+        val rhv = tf.getArrayLoad(tf.getValue(inst.getArrayRef()))
 
         predicateMap[inst] = pf.getLoad(lhv, rhv)
     }
@@ -32,9 +29,10 @@ class PredicateBuilder(method: Method) : MethodVisitor(method), Loggable {
     override fun visitArrayStoreInst(inst: ArrayStoreInst) {
         val ref = tf.getValue(inst.getArrayRef())
         val indx = tf.getValue(inst.getIndex())
+        val arrayRef = tf.getArrayIndex(ref, indx)
         val value = tf.getValue(inst.getValue())
 
-        predicateMap[inst] = pf.getArrayStore(ref, indx, value)
+        predicateMap[inst] = pf.getArrayStore(arrayRef, value)
     }
 
     override fun visitBinaryInst(inst: BinaryInst) {

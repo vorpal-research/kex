@@ -55,10 +55,8 @@ object ${solver}Converter : ${solver}SMTConverter(), Loggable {
     fun convert(store: ArrayStorePredicate, ef: $factory, ctx: ${solver}Context): Bool_ {
         val memspace = (store.getArrayRef().type as? Memspaced<*>)?.memspace ?: 0
         val ptr = convert(store.getArrayRef(), ef, ctx) as? Ptr_ ?: unreachable { log.error("Non-ptr ref term in `store`") }
-        val shift = convert(store.getIndex(), ef, ctx) as? Int_ ?: unreachable { log.error("Non-int index term in `store`") }
-        val element = Ptr_.forceCast(ptr + (shift + ${factory}.getTypeSize(store.getComponentType())))
         val value = convert(store.getValue(), ef, ctx)
-        ctx.writeMemory(element, value, memspace)
+        ctx.writeMemory(ptr, value, memspace)
         return ef.makeTrue()
     }
 
@@ -108,10 +106,11 @@ object ${solver}Converter : ${solver}SMTConverter(), Loggable {
         val memspace = (new.getLhv().type as? Memspaced<*>)?.memspace ?: 0
         val lhv = convert(new.getLhv(), ef, ctx) as? Ptr_ ?: unreachable { log.error("Non-ptr term in `new`") }
         val elementSize = ${factory}.getTypeSizeExpanded(new.getLhv().type)
+        ctx.writeBound(lhv, ef.makeIntConst(elementSize), memspace)
         return lhv eq ctx.getLocalPtr(memspace, elementSize)
     }
 
-#set($terms = ["Argument", "ArrayLength", "ArrayLoad", "Binary", "Call", "Cast", "Cmp",
+#set($terms = ["Argument", "ArrayIndex", "ArrayLength", "ArrayLoad", "Binary", "Call", "Cast", "Cmp",
     "ConstBool", "ConstByte", "ConstChar", "ConstClass", "ConstDouble", "ConstFloat", "ConstInt", "ConstLong",
     "ConstShort", "ConstString", "FieldLoad", "Field", "InstanceOf", "Neg", "Null", "ReturnValue", "Value"])
     fun convert(term: Term, ef: $factory, ctx: ${solver}Context): Dynamic_ = when (term) {
@@ -122,6 +121,19 @@ object ${solver}Converter : ${solver}SMTConverter(), Loggable {
     }
 
     fun convert(argument: ArgumentTerm, ef: $factory, ctx: ${solver}Context): Dynamic_ = ef.getVarByType(argument.type, argument.name)
+
+    fun convert(arrayindex: ArrayIndexTerm, ef: $factory, ctx: ${solver}Context): Dynamic_ {
+        val memspace = (arrayindex.getArrayRef().type as? Memspaced<*>)?.memspace ?: 0
+        val arrayref = convert(arrayindex.getArrayRef(), ef, ctx) as? Ptr_
+                ?: unreachable { log.error("Non-ptr operand of array load") }
+        val index = (convert(arrayindex.getIndex(), ef, ctx) as? Int_
+            ?: unreachable { log.error("Non-integer index of array load") }) * ${factory}.getTypeSize(arrayindex.type)
+        val valuePtr = Ptr_.forceCast(arrayref + index)
+        val baseBound = ctx.readBound(arrayref, memspace)
+        val ptrBound = Int_.forceCast(baseBound - index)
+        ctx.writeBound(valuePtr, ptrBound, memspace)
+        return valuePtr
+    }
 
     fun convert(arraylength: ArrayLengthTerm, ef: $factory, ctx: ${solver}Context): Dynamic_ {
         val memspace = (arraylength.getArrayRef().type as? Memspaced<*>)?.memspace ?: 0
@@ -135,14 +147,8 @@ object ${solver}Converter : ${solver}SMTConverter(), Loggable {
         val memspace = (arrayload.getArrayRef().type as? Memspaced<*>)?.memspace ?: 0
         val arrayref = convert(arrayload.getArrayRef(), ef, ctx) as? Ptr_
                             ?: unreachable { log.error("Non-ptr operand of array load") }
-        val index = convert(arrayload.getIndex(), ef, ctx) as? Int_
-                            ?: unreachable { log.error("Non-integer index of array load") }
-        val valuePtr = Ptr_.forceCast(arrayref + index)
-        val baseBound = ctx.readBound(arrayref, memspace)
-        val ptrBound = Int_.forceCast(baseBound - index)
-        ctx.writeBound(valuePtr, ptrBound, memspace)
 
-        val ret = ctx.readMemory(valuePtr, ${factory}.getTypeSize(arrayload.type), memspace)
+        val ret = ctx.readMemory(arrayref, ${factory}.getTypeSize(arrayload.type), memspace)
         return when (arrayload.type) {
             is LongType -> Long_.forceCast(ret)
             is Integral -> Int_.forceCast(ret)
