@@ -85,13 +85,9 @@ object ${solver}Converter : ${solver}SMTConverter(), Loggable {
 
     fun convert(store: FieldStorePredicate, ef: $factory, ctx: ${solver}Context): Bool_ {
         val value = convert(store.getValue(), ef, ctx)
-        val memspace = (store.getOwner().type as? Memspaced<*>)?.memspace ?: 0
-        val ptr = convert(store.getOwner(), ef, ctx) as? Ptr_
+        val memspace = (store.getField().type as? Memspaced<*>)?.memspace ?: 0
+        val fieldptr = convert(store.getField(), ef, ctx) as? Ptr_
                 ?: unreachable { log.error("Non-ptr ref in field load") }
-        val name = store.getFieldName().name
-        val offset = Z3ExprFactory.getFieldOffset(store.getClass(), Class.FieldKey(name, store.fieldType))
-
-        val fieldptr = Ptr_.forceCast(ptr + offset)
         ctx.writeMemory(fieldptr, value, memspace)
         return ef.makeTrue()
     }
@@ -117,7 +113,7 @@ object ${solver}Converter : ${solver}SMTConverter(), Loggable {
 
 #set($terms = ["Argument", "ArrayLength", "ArrayLoad", "Binary", "Call", "Cast", "Cmp",
     "ConstBool", "ConstByte", "ConstChar", "ConstClass", "ConstDouble", "ConstFloat", "ConstInt", "ConstLong",
-    "ConstShort", "ConstString", "FieldLoad", "InstanceOf", "Neg", "Null", "ReturnValue", "Value"])
+    "ConstShort", "ConstString", "FieldLoad", "Field", "InstanceOf", "Neg", "Null", "ReturnValue", "Value"])
     fun convert(term: Term, ef: $factory, ctx: ${solver}Context): Dynamic_ = when (term) {
 #foreach($term in $terms)
         is ${term}Term -> convert(term, ef, ctx)
@@ -241,16 +237,11 @@ object ${solver}Converter : ${solver}SMTConverter(), Loggable {
     }
 
     fun convert(fieldload: FieldLoadTerm, ef: $factory, ctx: ${solver}Context): Dynamic_ {
-        val memspace = (fieldload.getOwner().type as? Memspaced<*>)?.memspace ?: 0
-        val obj = convert(fieldload.getOwner(), ef, ctx) as? Ptr_
+        val memspace = (fieldload.getField().type as? Memspaced<*>)?.memspace ?: 0
+        val field = convert(fieldload.getField(), ef, ctx) as? Ptr_
             ?: unreachable { log.error("Non-ptr ref in field load") }
-        val name = fieldload.getFieldName().name
-        val offset = Z3ExprFactory.getFieldOffset(fieldload.getClass(), Class.FieldKey(name, fieldload.type))
-        val baseBound = ctx.readBound(obj, memspace)
 
-        val fieldptr = Ptr_.forceCast(obj + offset)
-        ctx.writeBound(fieldptr, Int_.forceCast(baseBound - offset), memspace)
-        val res = ctx.readMemory(fieldptr, Z3ExprFactory.getTypeSize(fieldload.type), memspace)
+        val res = ctx.readMemory(field, Z3ExprFactory.getTypeSize(fieldload.type), memspace)
         return when (fieldload.type) {
             is LongType -> Long_.forceCast(res)
             is Integral -> Int_.forceCast(res)
@@ -260,6 +251,19 @@ object ${solver}Converter : ${solver}SMTConverter(), Loggable {
             is ArrayType -> Ptr_.forceCast(res)
             else -> unreachable { log.error("Unable to cast load result $res to ${ fieldload.type }") }
         }
+    }
+
+    fun convert(field: FieldTerm, ef: $factory, ctx: ${solver}Context): Dynamic_ {
+        val memspace = (field.getOwner().type as? Memspaced<*>)?.memspace ?: 0
+        val obj = convert(field.getOwner(), ef, ctx) as? Ptr_
+        ?: unreachable { log.error("Non-ptr ref in field load") }
+        val name = field.getFieldName().name
+        val offset = Z3ExprFactory.getFieldOffset(field.getClass(), Class.FieldKey(name, field.type))
+        val baseBound = ctx.readBound(obj, memspace)
+
+        val fieldptr = Ptr_.forceCast(obj + offset)
+        ctx.writeBound(fieldptr, Int_.forceCast(baseBound - offset), memspace)
+        return fieldptr
     }
 
     fun convert(instanceof: InstanceOfTerm, ef: $factory, ctx: ${solver}Context): Dynamic_ =

@@ -14,7 +14,7 @@ class PointerCollector : Transformer<PointerCollector> {
     }
 
     override fun transformFieldStorePredicate(predicate: FieldStorePredicate): Predicate {
-        ptrs.add(predicate.getOwner())
+        ptrs.add(predicate.getField())
         return predicate
     }
 
@@ -29,7 +29,7 @@ class PointerCollector : Transformer<PointerCollector> {
     }
 
     override fun transformFieldLoadTerm(term: FieldLoadTerm): Term {
-        ptrs.add(term.getOwner())
+        ptrs.add(term.getField())
         return term
     }
 

@@ -28,6 +28,7 @@ abstract class Term(val name: String, val type: Type, val subterms: List<Term>) 
                 "ConstShort" to ConstShortTerm::class.java,
                 "ConstString" to ConstStringTerm::class.java,
                 "FieldLoad" to FieldLoadTerm::class.java,
+                "Field" to FieldTerm::class.java,
                 "InstanceOf" to InstanceOfTerm::class.java,
                 "Neg" to NegTerm::class.java,
                 "Null" to NullTerm::class.java,

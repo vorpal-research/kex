@@ -89,9 +89,7 @@ object TermFactory : Loggable {
 
     fun getArrayLoad(type: Type, arrayRef: Term, index: Term) = ArrayLoadTerm(type, arrayRef, index)
 
-    fun getFieldLoad(type: Type, objectRef: Term, fieldName: Term) = FieldLoadTerm(type, objectRef, fieldName)
-    fun getFieldLoad(type: Type, classType: Class, fieldName: Term) = getFieldLoad(type, TF.getRefType(classType), fieldName)
-    fun getFieldLoad(type: Type, classType: Type, fieldName: Term) = FieldLoadTerm(type, getClass(classType), fieldName)
+    fun getFieldLoad(type: Type, field: Term) = FieldLoadTerm(type, field)
 
     fun getBinary(opcode: BinaryOpcode, lhv: Term, rhv: Term): Term {
         val merged = mergeTypes(setOf(lhv.type, rhv.type))
@@ -122,6 +120,9 @@ object TermFactory : Loggable {
     }
 
     fun getCmp(type: Type, opcode: CmpOpcode, lhv: Term, rhv: Term) = CmpTerm(type, opcode, lhv, rhv)
+
+    fun getField(type: Type, owner: Term, name: Term) = FieldTerm(type, owner, name)
+    fun getField(type: Type, classType: Class, name: Term) = FieldTerm(type, getClass(classType), name)
 
     fun getInstanceOf(checkedType: Type, operand: Term) = InstanceOfTerm(checkedType, operand)
 

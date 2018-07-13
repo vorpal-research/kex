@@ -14,10 +14,8 @@ object PredicateFactory : Loggable {
     fun getArrayStore(arrayRef: Term, index: Term, value: Term, type: PredicateType = PredicateType.State())
             = ArrayStorePredicate(arrayRef, index, value, type)
 
-    fun getFieldStore(objectRef: Term, fieldName: Term, fieldType: Type, value: Term, type: PredicateType = PredicateType.State()) =
-            FieldStorePredicate(objectRef, fieldName, fieldType, value, type)
-    fun getFieldStore(classType: Class, fieldName: Term, fieldType: Type, value: Term, type: PredicateType = PredicateType.State()) =
-            FieldStorePredicate(TermFactory.getClass(classType), fieldName, fieldType, value, type)
+    fun getFieldStore(field: Term, fieldType: Type, value: Term, type: PredicateType = PredicateType.State()) =
+            FieldStorePredicate(field, fieldType, value, type)
 
     fun getLoad(lhv: Term, loadTerm: Term) = getEquality(lhv, loadTerm)
 
