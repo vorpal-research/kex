@@ -86,6 +86,7 @@ interface Transformer<T : Transformer<T>> : Loggable {
     fun transformTerm(term: Term) = term
 
     fun transformArgument(term: ArgumentTerm): Term = term.accept(this)
+    fun transformArrayIndex(term: ArrayIndexTerm): Term = term.accept(this)
     fun transformArrayLength(term: ArrayLengthTerm): Term = term.accept(this)
     fun transformArrayLoad(term: ArrayLoadTerm): Term = term.accept(this)
     fun transformBinary(term: BinaryTerm): Term = term.accept(this)
@@ -111,6 +112,7 @@ interface Transformer<T : Transformer<T>> : Loggable {
     fun transformValue(term: ValueTerm): Term = term.accept(this)
 
     fun transformArgumentTerm(term: ArgumentTerm): Term = term
+    fun transformArrayIndexTerm(term: ArrayIndexTerm): Term = term
     fun transformArrayLengthTerm(term: ArrayLengthTerm): Term = term
     fun transformArrayLoadTerm(term: ArrayLoadTerm): Term = term
     fun transformBinaryTerm(term: BinaryTerm): Term = term

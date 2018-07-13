@@ -11,6 +11,7 @@ abstract class Term(val name: String, val type: Type, val subterms: List<Term>) 
     companion object {
         val terms = mapOf<String, Class<*>>(
                 "Argument" to ArgumentTerm::class.java,
+                "ArrayIndex" to ArrayIndexTerm::class.java,
                 "ArrayLength" to ArrayLengthTerm::class.java,
                 "ArrayLoad" to ArrayLoadTerm::class.java,
                 "Binary" to BinaryTerm::class.java,

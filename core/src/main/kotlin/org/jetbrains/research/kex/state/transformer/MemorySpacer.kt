@@ -40,8 +40,9 @@ fun Term.withMemspace(memspace: Int): Term {
     val tf = TermFactory
     return when (this) {
         is ArgumentTerm -> tf.getArgument(memspaced, index)
+        is ArrayIndexTerm -> tf.getArrayIndex(memspaced, getArrayRef(), getIndex())
         is ArrayLengthTerm -> tf.getArrayLength(memspaced, getArrayRef())
-        is ArrayLoadTerm -> tf.getArrayLoad(memspaced, getArrayRef(), getIndex())
+        is ArrayLoadTerm -> tf.getArrayLoad(memspaced, getArrayRef())
         is BinaryTerm -> tf.getBinary(memspaced, opcode, getLhv(), getRhv())
         is CallTerm -> tf.getCall(memspaced, getOwner(), method, getArguments())
         is CastTerm -> tf.getCast(memspaced, getOperand())

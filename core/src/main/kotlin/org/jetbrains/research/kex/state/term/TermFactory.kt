@@ -68,6 +68,7 @@ object TermFactory : Loggable {
     fun getClass(type: Type, `class`: Class) = ConstClassTerm(type, `class`)
     fun getClass(type: Type) = ConstClassTerm(type,
             (type as? ClassType)?.`class` ?: unreachable({ log.debug("Non-ref type of class constant") }))
+
     fun getClass(const: ClassConstant) = ConstClassTerm(const.type,
             (const.type as? ClassType)?.`class` ?: unreachable({ log.debug("Non-ref type of class constant") }))
 
@@ -78,16 +79,24 @@ object TermFactory : Loggable {
 
     fun getArrayLength(arrayRef: Term) = getArrayLength(TF.getIntType(), arrayRef)
     fun getArrayLength(type: Type, arrayRef: Term) = ArrayLengthTerm(type, arrayRef)
+
+    fun getArrayIndex(arrayRef: Term, index: Term): Term {
+        val arrayType = arrayRef.type as? ArrayType
+                ?: unreachable { log.debug("Non-array type of array load term operand") }
+        return getArrayIndex(arrayType, arrayRef, index)
+    }
+    fun getArrayIndex(type: Type, arrayRef: Term, index: Term) = ArrayIndexTerm(type, arrayRef, index)
+
     fun getNegTerm(operand: Term) = getNegTerm(operand.type, operand)
     fun getNegTerm(type: Type, operand: Term) = NegTerm(type, operand)
 
-    fun getArrayLoad(arrayRef: Term, index: Term): Term {
+    fun getArrayLoad(arrayRef: Term): Term {
         val arrayType = arrayRef.type as? ArrayType
                 ?: unreachable { log.debug("Non-array type of array load term operand") }
-        return getArrayLoad(arrayType.component, arrayRef, index)
+        return getArrayLoad(arrayType.component, arrayRef)
     }
 
-    fun getArrayLoad(type: Type, arrayRef: Term, index: Term) = ArrayLoadTerm(type, arrayRef, index)
+    fun getArrayLoad(type: Type, arrayRef: Term) = ArrayLoadTerm(type, arrayRef)
 
     fun getFieldLoad(type: Type, field: Term) = FieldLoadTerm(type, field)
 

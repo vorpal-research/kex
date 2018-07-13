@@ -11,8 +11,8 @@ object PredicateFactory : Loggable {
     fun getCall(callTerm: Term, type: PredicateType = PredicateType.State()) = CallPredicate(callTerm, type)
     fun getCall(lhv: Term, callTerm: Term, type: PredicateType = PredicateType.State()) = CallPredicate(lhv, callTerm, type)
 
-    fun getArrayStore(arrayRef: Term, index: Term, value: Term, type: PredicateType = PredicateType.State())
-            = ArrayStorePredicate(arrayRef, index, value, type)
+    fun getArrayStore(arrayRef: Term, value: Term, type: PredicateType = PredicateType.State())
+            = ArrayStorePredicate(arrayRef, value, type)
 
     fun getFieldStore(field: Term, fieldType: Type, value: Term, type: PredicateType = PredicateType.State()) =
             FieldStorePredicate(field, fieldType, value, type)
