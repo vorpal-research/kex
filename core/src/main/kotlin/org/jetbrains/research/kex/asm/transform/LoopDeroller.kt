@@ -11,6 +11,7 @@ import org.jetbrains.research.kfg.ir.value.BlockUser
 import org.jetbrains.research.kfg.ir.value.IntConstant
 import org.jetbrains.research.kfg.ir.value.Value
 import org.jetbrains.research.kfg.ir.value.instruction.*
+import org.jetbrains.research.kfg.ir.viewCfg
 import org.jetbrains.research.kfg.util.TopologicalSorter
 import org.jetbrains.research.kfg.visitor.LoopVisitor
 import kotlin.math.abs
@@ -23,7 +24,7 @@ class LoopDeroller(method: Method) : LoopVisitor(method), Loggable {
         val header = loop.header
         val preheader = loop.getPreheader()
         val latch = loop.getLatch()
-        assert(header.successors.size == 2, { log.error("Loop header have too many successors") })
+//        assert(header.successors.size == 2, { log.error("Loop header have too many successors") })
         val exit = loop.getLoopExits().first()
 
         val (order, _) = TopologicalSorter(loop.body).sort(header)

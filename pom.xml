@@ -13,6 +13,7 @@
         <module>core</module>
         <module>kfg</module>
         <module>kex-util</module>
+        <module>kex-test</module>
     </modules>
 
     <properties>

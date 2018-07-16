@@ -18,6 +18,7 @@ import org.jetbrains.research.kfg.Package
 import org.jetbrains.research.kfg.analysis.IRVerifier
 import org.jetbrains.research.kfg.analysis.LoopAnalysis
 import org.jetbrains.research.kfg.analysis.LoopSimplifier
+import org.jetbrains.research.kfg.ir.viewCfg
 import org.jetbrains.research.kfg.util.writeClass
 import org.jetbrains.research.kfg.util.writeClassesToTarget
 import java.io.File
