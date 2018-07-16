@@ -7,6 +7,7 @@ import org.jetbrains.research.kex.state.term.Term
 import org.jetbrains.research.kex.state.term.TermFactory
 import org.jetbrains.research.kex.util.Loggable
 import org.jetbrains.research.kex.util.unreachable
+import java.lang.Math.pow
 
 object Z3Unlogic : Loggable {
     val tf = TermFactory
@@ -31,19 +32,22 @@ object Z3Unlogic : Loggable {
     }
 
     fun undoFloat(expr: FPNum): Term {
-        val str = expr.toString()
-        return when (expr.eBits + expr.sBits) {
-            SMTEngine.WORD ->  when (str) {
-                "+zero"-> tf.getFloat(0.0F)
-                "-zero"-> tf.getFloat(0.0F)
-                else -> tf.getFloat(str.toFloat())
+        val isDouble = (expr.eBits + expr.sBits) == SMTEngine.DWORD
+        val termifier = { a: Double -> when {
+            isDouble -> tf.getDouble(a)
+            else -> tf.getFloat(a.toFloat())
+        }}
+        return when {
+            expr.isZero -> termifier(0.0)
+            expr.isNaN -> termifier(Double.NaN)
+            expr.isInf -> termifier(if(expr.isPositive) Double.POSITIVE_INFINITY else Double.NEGATIVE_INFINITY)
+            else -> {
+                val sign = if (expr.sign) -1.0 else 1.0
+                val significand = expr.significand.toDouble()
+                val exponent = pow(2.0, expr.getExponentInt64(false).toDouble())
+                val res = sign * significand * exponent
+                return termifier(res)
             }
-            SMTEngine.DWORD -> when (str) {
-                "+zero"-> tf.getDouble(0.0)
-                "-zero"-> tf.getDouble(0.0)
-                else -> tf.getDouble(str.toDouble())
-            }
-            else -> unreachable { log.error("Trying to undo bv with unexpected size: ebits = ${expr.eBits}, sbits = ${expr.sBits}") }
         }
     }
 }
