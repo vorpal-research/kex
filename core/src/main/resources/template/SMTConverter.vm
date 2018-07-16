@@ -22,7 +22,7 @@ object ${solver}Converter : ${solver}SMTConverter(), Loggable {
     }
 
     fun convert(basic: BasicState, ef: $factory, ctx: ${solver}Context, extractPath: Boolean = false): Bool_ =
-        basic.predicates().foldRight(ef.makeTrue()) { predicate, acc -> acc and convert(predicate, ef, ctx) }
+        basic.predicates().fold(ef.makeTrue()) { acc, predicate -> acc and convert(predicate, ef, ctx) }
 
     fun convert(chain: ChainState, ef: $factory, ctx: ${solver}Context, extractPath: Boolean = false): Bool_ =
         ef.makeTrue() and convert(chain.base, ef, ctx) and convert(chain.curr, ef, ctx)
@@ -140,7 +140,12 @@ object ${solver}Converter : ${solver}SMTConverter(), Loggable {
         val ptr = convert(arraylength.getArrayRef(), ef, ctx) as? Ptr_
                 ?: unreachable { log.error("Non-ptr term in `arraylength`") }
 
-        return ctx.readBound(ptr, memspace)
+        val bound = ctx.readBound(ptr, memspace)
+        val elementType = (arraylength.getArrayRef().type as? ArrayType)?.component
+                ?: unreachable { log.error("Non-array type of array ref term") }
+        val elementSize = Z3ExprFactory.getTypeSizeExpanded(elementType)
+        val size = bound / elementSize
+        return size
     }
 
     fun convert(arrayload: ArrayLoadTerm, ef: $factory, ctx: ${solver}Context): Dynamic_ {
