@@ -4,6 +4,7 @@ import com.microsoft.z3.*
 import org.jetbrains.research.kex.smt.SMTEngine
 import org.jetbrains.research.kex.util.castTo
 import org.jetbrains.research.kex.util.unreachable
+import kotlin.math.exp
 
 object Z3Engine : SMTEngine<Context, Expr, Sort, FuncDecl>() {
     override fun getSort(ctx: Context, expr: Expr) = expr.sort
@@ -39,7 +40,8 @@ object Z3Engine : SMTEngine<Context, Expr, Sort, FuncDecl>() {
         }
     }
 
-    override fun bv2float(ctx: Context, expr: Expr, sort: Sort) = ctx.mkFPToFP(expr.castTo(), sort.castTo())
+    override fun bv2float(ctx: Context, expr: Expr, sort: Sort) =
+            ctx.mkFPToFP(ctx.mkFPRTZ(), expr.castTo(), sort.castTo(), true)
 
     override fun float2bv(ctx: Context, expr: Expr, sort: Sort) =
             ctx.mkFPToBV(ctx.mkFPRTZ(), expr.castTo(), sort.castTo<BitVecSort>().size, true)
