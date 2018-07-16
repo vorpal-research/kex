@@ -192,14 +192,14 @@ $modifiers class $fullname : $parent {
     fun getBitsize() = engine.bvBitsize(ctx, getSort())
     open fun extract(high: Int, low: Int) = $self(ctx, engine.extract(ctx, expr, high, low), axiom)
 
-    open fun binary(opcode: SMTEngine.Opcode, other: $self): $Bitvector {
+    open fun binary(opcode: SMTEngine.Opcode, other: $self): $valexpr {
         val maxsize = max(getBitsize(), other.getBitsize())
         val lhv = engine.sext(ctx, maxsize, expr)
         val rhv = engine.sext(ctx, maxsize, other.expr)
 
         val nexpr = engine.binary(ctx, opcode, lhv, rhv)
         val nax = spliceAxioms(ctx, axiom, other.axiom)
-        return $Bitvector(ctx, nexpr, nax)
+        return $valexpr(ctx, nexpr, nax)
     }
 
 #set($opcodes = ["EQ", "NEQ", "GT", "GE", "LT", "LE"])
@@ -252,7 +252,7 @@ class $self$width : $self {
     override fun withAxiom(ax: $valexpr) = $self$width(ctx, expr, spliceAxioms(ctx, axiom, ax.expr, ax.axiom))
     override fun binary(opcode: SMTEngine.Opcode, other: $self) =
         if (other is $self$width) {
-            $self$width(ctx, engine.binary(ctx, opcode, expr, other.expr), spliceAxioms(ctx, axiom, other.axiom))
+            $valexpr(ctx, engine.binary(ctx, opcode, expr, other.expr), spliceAxioms(ctx, axiom, other.axiom))
         } else super.binary(opcode, other)
 }
 

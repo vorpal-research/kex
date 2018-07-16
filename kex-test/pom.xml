@@ -6,34 +6,14 @@
         <artifactId>kex</artifactId>
         <groupId>org.jetbrains.research</groupId>
         <version>0.1</version>
-        <relativePath>../pom.xml</relativePath>
     </parent>
-    <packaging>jar</packaging>
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>smt-context-generator</artifactId>
+    <artifactId>kex-test</artifactId>
 
-    <properties>
-        <velocity.version>1.7</velocity.version>
-    </properties>
-
-    <dependencies>
-        <dependency>
-            <groupId>org.jetbrains.research</groupId>
-            <artifactId>kex-util</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-
-        <dependency>
-            <groupId>org.apache.velocity</groupId>
-            <artifactId>velocity</artifactId>
-            <version>${velocity.version}</version>
-        </dependency>
-    </dependencies>
 
     <build>
         <sourceDirectory>${project.basedir}/src/main/kotlin</sourceDirectory>
-        <testSourceDirectory>${project.basedir}/src/test/kotlin</testSourceDirectory>
 
         <plugins>
             <plugin>
@@ -50,14 +30,6 @@
                         <phase>compile</phase>
                         <goals>
                             <goal>compile</goal>
-                        </goals>
-                    </execution>
-
-                    <execution>
-                        <id>test-compile</id>
-                        <phase>test-compile</phase>
-                        <goals>
-                            <goal>test-compile</goal>
                         </goals>
                     </execution>
                 </executions>

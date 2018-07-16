@@ -79,6 +79,12 @@
             <artifactId>kex-util</artifactId>
             <version>${project.version}</version>
         </dependency>
+        <dependency>
+            <groupId>org.jetbrains.research</groupId>
+            <artifactId>kex-test</artifactId>
+            <version>${project.version}</version>
+            <scope>test</scope>
+        </dependency>
 
         <dependency>
             <groupId>com.github.benas</groupId>
@@ -167,8 +173,7 @@
                         <phase>test-compile</phase>
                         <configuration>
                             <sourceDirs>
-                                <sourceDir>${project.basedir}/src/main/kotlin</sourceDir>
-                                <sourceDir>${project.basedir}/src/main/generated</sourceDir>
+                                <sourceDir>${project.basedir}/src/test/kotlin</sourceDir>
                             </sourceDirs>
                         </configuration>
                         <goals>
@@ -180,29 +185,20 @@
 
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-compiler-plugin</artifactId>
-                <version>${compiler-plugin.version}</version>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>2.22.0</version>
+                <configuration>
+                    <systemPropertyVariables>
+                        <root.dir>${project.parent.basedir.canonicalPath}</root.dir>
+                    </systemPropertyVariables>
+                    <includes>
+                        <include>**/*Test.*</include>
+                    </includes>
+                </configuration>
                 <executions>
                     <execution>
-                        <id>default-compile</id>
-                        <phase>none</phase>
-                    </execution>
-                    <execution>
-                        <id>default-testCompile</id>
-                        <phase>none</phase>
-                    </execution>
-                    <execution>
-                        <id>java-compile</id>
-                        <phase>compile</phase>
                         <goals>
-                            <goal>compile</goal>
-                        </goals>
-                    </execution>
-                    <execution>
-                        <id>java-test-compile</id>
-                        <phase>test-compile</phase>
-                        <goals>
-                            <goal>testCompile</goal>
+                            <goal>test</goal>
                         </goals>
                     </execution>
                 </executions>
