@@ -69,7 +69,7 @@ class $factory : ${solver}SMTExprFactory(), Loggable {
 
 #generateMakes("Double", "Double")
 
-    fun makeEmptyMemory(id: String) = Memory_.makeFree < Ptr_ >(ctx, id)
+    fun makeEmptyMemory(id: String) = makeDefaultMemory(id, 0xFF)
     fun makeDefaultMemory(id: String, default: Int) =
         Memory_.makeDefault< Ptr_ >(ctx, id, Byte_.makeConst(ctx, default))
 
@@ -88,4 +88,6 @@ class $factory : ${solver}SMTExprFactory(), Loggable {
 
     inline fun < reified U : Dynamic_ > switch(cases: Map< Bool_, U >, default: U) =
         cases.toList().fold(default) { acc, pair -> `if`(pair.first).then(pair.second).`else`(acc) }
+
+    inline fun < reified U : Dynamic_ > if_(cond: Bool_) = `if`(cond)
 }

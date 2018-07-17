@@ -6,6 +6,7 @@ import org.jetbrains.research.kfg.CM
 import org.jetbrains.research.kfg.analysis.LoopAnalysis
 import org.jetbrains.research.kfg.analysis.LoopSimplifier
 import org.jetbrains.research.kfg.ir.Method
+import org.jetbrains.research.kfg.ir.viewCfg
 import org.junit.Assert.*
 import kotlin.test.Test
 
@@ -20,9 +21,6 @@ class PredicateStateAnalysisTest : KexTest() {
             val deroller = LoopDeroller(method)
             deroller.visit()
         }
-        val predicateBuilder = PredicateBuilder(method)
-        predicateBuilder.visit()
-
 
         val psa = PredicateStateAnalysis(method)
         psa.visit()

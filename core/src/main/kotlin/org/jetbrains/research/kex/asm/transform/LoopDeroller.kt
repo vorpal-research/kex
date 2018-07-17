@@ -117,9 +117,8 @@ class LoopDeroller(method: Method) : LoopVisitor(method), Loggable {
             }
             for ((_, derolled) in currentBlocks) loop.parent?.addBlock(derolled)
         }
-        predecessor.replaceUsesOf(prevHeader, exit)
+        predecessor.replaceSuccessorUsesOf(prevHeader, exit)
         predecessor.getTerminator().replaceUsesOf(prevHeader, exit)
-        predecessor.removeSuccessor(prevHeader)
         predecessor.addSuccessors(exit)
         body.forEach { block ->
             block.predecessors.toTypedArray().forEach {
