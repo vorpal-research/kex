@@ -6,7 +6,6 @@ import org.jetbrains.research.kfg.analysis.IRVerifier
 import org.jetbrains.research.kfg.analysis.LoopAnalysis
 import org.jetbrains.research.kfg.analysis.LoopSimplifier
 import org.jetbrains.research.kfg.ir.ConcreteClass
-import org.jetbrains.research.kfg.ir.viewCfg
 import kotlin.test.Test
 import kotlin.test.assertTrue
 

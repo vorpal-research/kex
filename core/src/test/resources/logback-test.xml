@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+
+<configuration>
+    <appender name="stdout" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%-5p [%t] - %m%n</pattern>
+        </encoder>
+    </appender>
+
+    <logger name="org.jetbrains.research" level="error" additivity="false">
+        <appender-ref ref="stdout"/>
+    </logger>
+
+    <root level="error">
+        <appender-ref ref="stdout"/>
+    </root>
+</configuration>
