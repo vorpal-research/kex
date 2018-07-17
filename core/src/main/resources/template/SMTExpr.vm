@@ -1,4 +1,5 @@
 #parse("definitions.vm")
+import org.jetbrains.research.kex.util.loggerFor
 import org.jetbrains.research.kex.smt.${solver}SMTExpr
 import kotlin.math.max
 

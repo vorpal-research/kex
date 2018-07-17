@@ -1,4 +1,5 @@
 #parse("definitions.vm")
+import org.jetbrains.research.kex.util.uncheckedCastTo
 import org.jetbrains.research.kex.smt.${solver}SMTMemory
 import kotlin.math.min
 

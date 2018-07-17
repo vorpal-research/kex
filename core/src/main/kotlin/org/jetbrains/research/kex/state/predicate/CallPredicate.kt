@@ -2,6 +2,7 @@ package org.jetbrains.research.kex.state.predicate
 
 import org.jetbrains.research.kex.state.term.Term
 import org.jetbrains.research.kex.state.transformer.Transformer
+import org.jetbrains.research.kex.util.unreachable
 
 class CallPredicate : Predicate {
     val hasLhv: Boolean
@@ -16,11 +17,12 @@ class CallPredicate : Predicate {
         hasLhv = true
     }
 
-    fun getLhv() = if (hasLhv) operands[0] else null
+    fun getLhvUnsafe() = if (hasLhv) operands[0] else null
+    fun getLhv() = if (hasLhv) operands[0] else unreachable { log.error("Trying to get lhv of void call") }
     fun getCall() = if (hasLhv) operands[1] else operands[0]
 
     override fun <T: Transformer<T>> accept(t: Transformer<T>): Predicate {
-        val lhv = if (hasLhv) t.transform(getLhv()!!) else null
+        val lhv = if (hasLhv) t.transform(getLhv()) else null
         val call = t.transform(getCall())
         return when {
             lhv == getLhv() && call == getCall() -> this
