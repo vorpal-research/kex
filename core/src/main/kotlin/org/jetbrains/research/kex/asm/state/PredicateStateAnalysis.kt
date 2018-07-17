@@ -21,7 +21,7 @@ class PredicateStateAnalysis(method: Method) : MethodVisitor(method), Loggable {
     private val domTree = DominatorTree<BasicBlock>()
     private val predicateBuilder = PredicateBuilder(method)
 
-    fun getInstructionState(inst: Instruction): PredicateState? = instructionStates.getOrElse(inst) {
+    fun getInstructionState(inst: Instruction): PredicateState = instructionStates.getOrElse(inst) {
         val active = mutableSetOf<BasicBlock>()
         val queue = ArrayDeque<BasicBlock>()
         queue.push(inst.parent ?: unreachable { log.error("Trying to get state for instruction without parent") })
@@ -37,7 +37,7 @@ class PredicateStateAnalysis(method: Method) : MethodVisitor(method), Loggable {
             queue.pop()
         }
         order.filter { it in active }.forEach { processBasicBlock(it) }
-        instructionStates[inst]
+        instructionStates.getValue(inst)
     }
 
     override fun visit() {
