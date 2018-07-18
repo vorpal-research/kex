@@ -26,7 +26,7 @@ class PredicateBuilder(method: Method) : MethodVisitor(method), Loggable {
         val arrayRef = tf.getArrayIndex(ref, indx)
         val load = tf.getArrayLoad(arrayRef)
 
-        predicateMap[inst] = pf.getLoad(lhv, load)
+        predicateMap[inst] = pf.getLoad(lhv, load, location = inst.location)
     }
 
     override fun visitArrayStoreInst(inst: ArrayStoreInst) {
@@ -35,7 +35,7 @@ class PredicateBuilder(method: Method) : MethodVisitor(method), Loggable {
         val arrayRef = tf.getArrayIndex(ref, indx)
         val value = tf.getValue(inst.getValue())
 
-        predicateMap[inst] = pf.getArrayStore(arrayRef, value)
+        predicateMap[inst] = pf.getArrayStore(arrayRef, value, location = inst.location)
     }
 
     override fun visitBinaryInst(inst: BinaryInst) {
@@ -46,18 +46,20 @@ class PredicateBuilder(method: Method) : MethodVisitor(method), Loggable {
                 tf.getValue(inst.getRhv())
         )
 
-        predicateMap[inst] = pf.getEquality(lhv, rhv)
+        predicateMap[inst] = pf.getEquality(lhv, rhv, location = inst.location)
     }
 
     override fun visitBranchInst(inst: BranchInst) {
         val cond = tf.getValue(inst.getCond())
         terminatorPredicateMap[inst.getTrueSuccessor() to inst] = pf.getBoolean(
                 cond,
-                tf.getTrue()
+                tf.getTrue(),
+                location = inst.location
         )
         terminatorPredicateMap[inst.getFalseSuccessor() to inst] = pf.getBoolean(
                 cond,
-                tf.getFalse()
+                tf.getFalse(),
+                location = inst.location
         )
     }
 
@@ -71,7 +73,10 @@ class PredicateBuilder(method: Method) : MethodVisitor(method), Loggable {
             tf.getCall(inst.method, callee, args)
         }
 
-        val predicate = if (lhv == null) pf.getCall(callTerm) else pf.getCall(lhv, callTerm)
+        val predicate = when (lhv) {
+            null -> pf.getCall(callTerm, location = inst.location)
+            else -> pf.getCall(lhv, callTerm, location = inst.location)
+        }
 
         predicateMap[inst] = predicate
     }
@@ -83,7 +88,7 @@ class PredicateBuilder(method: Method) : MethodVisitor(method), Loggable {
                 tf.getValue(inst.getOperand())
         )
 
-        predicateMap[inst] = pf.getEquality(lhv, rhv)
+        predicateMap[inst] = pf.getEquality(lhv, rhv, location = inst.location)
     }
 
     override fun visitCmpInst(inst: CmpInst) {
@@ -94,7 +99,7 @@ class PredicateBuilder(method: Method) : MethodVisitor(method), Loggable {
                 tf.getValue(inst.getRhv())
         )
 
-        predicateMap[inst] = pf.getEquality(lhv, rhv)
+        predicateMap[inst] = pf.getEquality(lhv, rhv, location = inst.location)
     }
 
     override fun visitFieldLoadInst(inst: FieldLoadInst) {
@@ -114,7 +119,7 @@ class PredicateBuilder(method: Method) : MethodVisitor(method), Loggable {
         }
         val rhv = tf.getFieldLoad(inst.type, field)
 
-        predicateMap[inst] = pf.getEquality(lhv, rhv)
+        predicateMap[inst] = pf.getEquality(lhv, rhv, location = inst.location)
     }
 
     override fun visitFieldStoreInst(inst: FieldStoreInst) {
@@ -126,7 +131,7 @@ class PredicateBuilder(method: Method) : MethodVisitor(method), Loggable {
             objectRef != null -> tf.getField(inst.field.type, objectRef, name)
             else -> tf.getField(inst.field.type, inst.field.`class`, name)
         }
-        predicateMap[inst] = pf.getFieldStore(field, inst.field.type, value)
+        predicateMap[inst] = pf.getFieldStore(field, inst.field.type, value, location = inst.location)
     }
 
     override fun visitInstanceOfInst(inst: InstanceOfInst) {
@@ -136,26 +141,26 @@ class PredicateBuilder(method: Method) : MethodVisitor(method), Loggable {
                 tf.getValue(inst.getOperand())
         )
 
-        predicateMap[inst] = pf.getEquality(lhv, rhv)
+        predicateMap[inst] = pf.getEquality(lhv, rhv, location = inst.location)
     }
 
     override fun visitNewArrayInst(inst: NewArrayInst) {
         val lhv = tf.getValue(inst)
         val dimensions = inst.getDimensions().map { tf.getValue(it) }
 
-        predicateMap[inst] = pf.getNewArray(lhv, dimensions)
+        predicateMap[inst] = pf.getNewArray(lhv, dimensions, location = inst.location)
     }
 
     override fun visitNewInst(inst: NewInst) {
         val lhv = tf.getValue(inst)
-        predicateMap[inst] = pf.getNew(lhv)
+        predicateMap[inst] = pf.getNew(lhv, location = inst.location)
     }
 
     override fun visitPhiInst(inst: PhiInst) {
         for ((from, value) in inst.getIncomings()) {
             val lhv = tf.getValue(inst)
             val rhv = tf.getValue(value)
-            phiPredicateMap[from to inst] = pf.getEquality(lhv, rhv)
+            phiPredicateMap[from to inst] = pf.getEquality(lhv, rhv, location = inst.location)
         }
     }
 
@@ -166,7 +171,7 @@ class PredicateBuilder(method: Method) : MethodVisitor(method), Loggable {
                 inst.opcode
         )
 
-        predicateMap[inst] = pf.getEquality(lhv, rhv)
+        predicateMap[inst] = pf.getEquality(lhv, rhv, location = inst.location)
     }
 
     override fun visitSwitchInst(inst: SwitchInst) {
@@ -175,13 +180,15 @@ class PredicateBuilder(method: Method) : MethodVisitor(method), Loggable {
             terminatorPredicateMap[successor to inst] = pf.getEquality(
                     key,
                     tf.getValue(value),
-                    PredicateType.Path()
+                    PredicateType.Path(),
+                    inst.location
             )
         }
         terminatorPredicateMap[inst.getDefault() to inst] = pf.getDefaultSwitchPredicate(
                 key,
                 inst.getBranches().keys.map { tf.getValue(it) },
-                PredicateType.Path()
+                PredicateType.Path(),
+                inst.location
         )
     }
 
@@ -193,13 +200,15 @@ class PredicateBuilder(method: Method) : MethodVisitor(method), Loggable {
             terminatorPredicateMap[successor to inst] = pf.getEquality(
                     key,
                     tf.getInt(min.value + index),
-                    PredicateType.Path()
+                    PredicateType.Path(),
+                    inst.location
             )
         }
         terminatorPredicateMap[inst.getDefault() to inst] = pf.getDefaultSwitchPredicate(
                 key,
                 (min.value..max.value).map { tf.getInt(it) },
-                PredicateType.Path()
+                PredicateType.Path(),
+                inst.location
         )
     }
 
@@ -208,7 +217,7 @@ class PredicateBuilder(method: Method) : MethodVisitor(method), Loggable {
             val lhv = tf.getReturn(method)
             val rhv = tf.getValue(inst.getReturnValue())
 
-            predicateMap[inst] = pf.getEquality(lhv, rhv)
+            predicateMap[inst] = pf.getEquality(lhv, rhv, location = inst.location)
         }
     }
 
