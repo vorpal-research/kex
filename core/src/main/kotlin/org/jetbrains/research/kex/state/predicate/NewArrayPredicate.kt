@@ -3,10 +3,15 @@ package org.jetbrains.research.kex.state.predicate
 import org.jetbrains.research.kex.state.term.Term
 import org.jetbrains.research.kex.state.transformer.Transformer
 import org.jetbrains.research.kex.util.contentEquals
+import org.jetbrains.research.kfg.ir.Location
 import org.jetbrains.research.kfg.type.Type
 
-class NewArrayPredicate(lhv: Term, dimentions: List<Term>, val elementType: Type, type: PredicateType = PredicateType.State())
-    : Predicate(type, listOf(lhv).plus(dimentions)) {
+class NewArrayPredicate(lhv: Term,
+                        dimentions: List<Term>,
+                        val elementType: Type,
+                        type: PredicateType = PredicateType.State(),
+                        location: Location = Location()) :
+        Predicate(type, location, listOf(lhv).plus(dimentions)) {
     fun getLhv() = operands[0]
     fun getDimentions() = operands.drop(1)
     fun getNumDimentions() = operands.size - 1
@@ -18,7 +23,7 @@ class NewArrayPredicate(lhv: Term, dimentions: List<Term>, val elementType: Type
         return sb.toString()
     }
 
-    override fun <T: Transformer<T>> accept(t: Transformer<T>): Predicate {
+    override fun <T : Transformer<T>> accept(t: Transformer<T>): Predicate {
         val lhv = t.transform(getLhv())
         val dimentions = getDimentions().map { t.transform(it) }
         return when {

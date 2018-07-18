@@ -3,17 +3,18 @@ package org.jetbrains.research.kex.state.predicate
 import org.jetbrains.research.kex.state.term.Term
 import org.jetbrains.research.kex.state.transformer.Transformer
 import org.jetbrains.research.kex.util.unreachable
+import org.jetbrains.research.kfg.ir.Location
 
 class CallPredicate : Predicate {
     val hasLhv: Boolean
 
-    constructor(callTerm: Term, type: PredicateType = PredicateType.State())
-            : super(type, listOf(callTerm)) {
+    constructor(callTerm: Term, type: PredicateType = PredicateType.State(), location: Location = Location())
+            : super(type, location, listOf(callTerm)) {
         hasLhv = false
     }
 
-    constructor(lhv: Term, callTerm: Term, type: PredicateType = PredicateType.State())
-            : super(type, listOf(lhv, callTerm)) {
+    constructor(lhv: Term, callTerm: Term, type: PredicateType = PredicateType.State(), location: Location = Location())
+            : super(type, location, listOf(lhv, callTerm)) {
         hasLhv = true
     }
 

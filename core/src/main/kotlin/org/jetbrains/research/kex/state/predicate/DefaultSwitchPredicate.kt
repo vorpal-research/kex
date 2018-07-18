@@ -3,9 +3,10 @@ package org.jetbrains.research.kex.state.predicate
 import org.jetbrains.research.kex.state.term.Term
 import org.jetbrains.research.kex.state.transformer.Transformer
 import org.jetbrains.research.kex.util.contentEquals
+import org.jetbrains.research.kfg.ir.Location
 
-class DefaultSwitchPredicate(cond: Term, cases: List<Term>, type: PredicateType = PredicateType.State())
-    : Predicate(type, listOf(cond).plus(cases)) {
+class DefaultSwitchPredicate(cond: Term, cases: List<Term>, type: PredicateType = PredicateType.State(), location: Location = Location())
+    : Predicate(type, location, listOf(cond).plus(cases)) {
     fun getCond() = operands[0]
     fun getCases() = operands.drop(1)
 
