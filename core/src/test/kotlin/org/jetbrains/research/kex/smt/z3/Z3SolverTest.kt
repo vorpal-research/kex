@@ -40,13 +40,11 @@ class Z3SolverTest : KexTest() {
             val solver = ef.ctx.mkSolver()
             solver.add(e.axiom as BoolExpr)
             solver.add(Z3Engine.negate(ef.ctx, e.expr) as BoolExpr)
-            val res = solver.check()
             (solver.check() == Status.UNSATISFIABLE)
         }
 
         val memory = ef.makeEmptyMemory("mem")
         for (i in 0..128) {
-            val res = memory[ef.makePtrConst(i)]
             assertTrue(checkExpr(memory[ef.makePtrConst(i)] eq Byte_.makeConst(ef.ctx, 0xFF)))
         }
     }
