@@ -18,7 +18,7 @@ import org.jetbrains.research.kfg.Package
 import org.jetbrains.research.kfg.analysis.IRVerifier
 import org.jetbrains.research.kfg.analysis.LoopAnalysis
 import org.jetbrains.research.kfg.analysis.LoopSimplifier
-import org.jetbrains.research.kfg.ir.viewCfg
+import org.jetbrains.research.kfg.util.Flags
 import org.jetbrains.research.kfg.util.writeClass
 import org.jetbrains.research.kfg.util.writeClassesToTarget
 import java.io.File
@@ -39,7 +39,7 @@ fun main(args: Array<String>) {
 
     val jar = JarFile(jarName)
     val `package` = Package(packageName.replace('.', '/'))
-    CM.parseJar(jar, `package`)
+    CM.parseJar(jar, `package`, Flags.getNoFrames())
 
     log.debug("Running with jar ${jar.name} and package $`package`")
     val target = File("instrumented/")
@@ -92,7 +92,7 @@ fun main(args: Array<String>) {
 
             val psa = PredicateStateAnalysis(method)
             psa.visit()
-            val state = psa.getInstructionState(method.last().last()) ?: continue
+            val state = psa.getInstructionState(method.last().last())
             val optimized = StateOptimizer().transform(state)
             log.run {
                 debug(method)
