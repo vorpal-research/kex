@@ -6,6 +6,7 @@ import org.jetbrains.research.kex.asm.transform.TraceInstrumenter
 import org.jetbrains.research.kex.config.CmdConfig
 import org.jetbrains.research.kex.config.GlobalConfig
 import org.jetbrains.research.kex.config.FileConfig
+import org.jetbrains.research.kex.config.RuntimeConfig
 import org.jetbrains.research.kex.runner.CoverageManager
 import org.jetbrains.research.kex.runner.CoverageRunner
 import org.jetbrains.research.kex.smt.Result
@@ -31,7 +32,7 @@ fun main(args: Array<String>) {
     val config = GlobalConfig
     val cmd = CmdConfig(args)
     val properties = cmd.getCmdValue( "config", "kex.ini")
-    config.initialize(listOf(cmd, FileConfig(properties)))
+    config.initialize(listOf(cmd, FileConfig(properties), RuntimeConfig))
 
     val jarName = cmd.getCmdValue("jar")
     val packageName = cmd.getCmdValue("package", "*")
