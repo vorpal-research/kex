@@ -32,7 +32,7 @@ fun main(args: Array<String>) {
     val config = GlobalConfig
     val cmd = CmdConfig(args)
     val properties = cmd.getCmdValue( "config", "kex.ini")
-    config.initialize(listOf(cmd, FileConfig(properties), RuntimeConfig))
+    config.initialize(cmd, RuntimeConfig, FileConfig(properties))
 
     val jarName = cmd.getCmdValue("jar")
     val packageName = cmd.getCmdValue("package", "*")

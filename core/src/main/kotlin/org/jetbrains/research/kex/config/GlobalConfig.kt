@@ -16,4 +16,6 @@ object GlobalConfig : Config {
         GlobalConfig.sources.clear()
         GlobalConfig.sources.addAll(sources)
     }
+
+    fun initialize(vararg sources: Config) = initialize(sources.toList())
 }
