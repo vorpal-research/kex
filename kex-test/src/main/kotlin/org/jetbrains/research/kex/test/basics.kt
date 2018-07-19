@@ -32,11 +32,15 @@ class BasicTests {
         return x
     }
 
-    fun testUnreachableIf(): Int {
-        val y = if (10 > 15) {
+    fun testUnreachableIf(x: Int): Int {
+        val set = "asdasdal;djadslas;d".length
+        val z = 10
+        val y = if (x > z && x < 0) {
+            println("lol")
             142
         } else {
-            -15
+            println("lol2")
+            x- 2 * x
         }
         return y
     }

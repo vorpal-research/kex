@@ -26,9 +26,14 @@ class CallPredicate : Predicate {
         val lhv = if (hasLhv) t.transform(getLhv()) else null
         val call = t.transform(getCall())
         return when {
-            lhv == getLhv() && call == getCall() -> this
-            hasLhv -> t.pf.getCall(lhv!!, call, type)
-            else -> t.pf.getCall(call, type)
+            hasLhv -> when {
+                lhv == getLhv() && call == getCall() -> this
+                else -> t.pf.getCall(lhv!!, call, type)
+            }
+            else -> when {
+                call == getCall() -> this
+                else -> t.pf.getCall(call, type)
+            }
         }
     }
 

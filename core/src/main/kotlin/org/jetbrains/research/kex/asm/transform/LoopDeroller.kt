@@ -72,13 +72,21 @@ class LoopDeroller(method: Method) : LoopVisitor(method), Loggable {
                 val newBlock = currentBlocks.getValue(block)
                 for (inst in block) {
                     val updated = inst.update(currentInsts)
+                    updated.location = inst.location
                     currentInsts[inst] = updated
                     newBlock.addInstruction(updated)
                     if (updated is BlockUser) {
                         currentBlocks.forEach { (original, derolled) -> updated.replaceUsesOf(original, derolled) }
                     }
                     if (updated is PhiInst && block == header) {
-                        mapOf(currentBlocks.getValue(latch) to predecessor).forEach { o, t -> updated.replaceUsesOf(o, t) }
+                        val map = mapOf(currentBlocks.getValue(latch) to predecessor)
+                        val previousMap = updated.getIncomings()
+                        map.forEach { o, t -> updated.replaceUsesOf(o, t) }
+                        if (updated.getPredecessors().toSet().size == 1) {
+                            val actual = previousMap.getValue(predecessor)
+                            updated.replaceAllUsesWith(actual)
+                            currentInsts[inst] = actual
+                        }
                     }
                 }
             }
