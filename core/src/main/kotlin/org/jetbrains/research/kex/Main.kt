@@ -9,6 +9,7 @@ import org.jetbrains.research.kex.config.FileConfig
 import org.jetbrains.research.kex.config.RuntimeConfig
 import org.jetbrains.research.kex.runner.CoverageManager
 import org.jetbrains.research.kex.runner.CoverageRunner
+import org.jetbrains.research.kex.smt.Checker
 import org.jetbrains.research.kex.smt.Result
 import org.jetbrains.research.kex.smt.SMTProxySolver
 import org.jetbrains.research.kex.state.transformer.*
@@ -91,20 +92,11 @@ fun main(args: Array<String>) {
             }
             IRVerifier(method).visit()
 
+            log.debug(method)
             val psa = PredicateStateAnalysis(method)
             psa.visit()
-            val state = psa.getInstructionState(method.last().last())
-            val optimized = StateOptimizer().transform(state)
-            log.run {
-                debug(method)
-                debug(method.print())
-                debug(optimized)
-            }
-            val propagated = ConstantPropagator().transform(optimized)
-            log.debug("Constant propagated: $propagated")
-
-            val memspaced = MemorySpacer(propagated).transform(propagated)
-            val result = SMTProxySolver().isReachable(memspaced)
+            val checker = Checker(method, psa)
+            val result = checker.checkReachable(method.last().last())
             log.debug(result)
             if (result is Result.SatResult) log.debug(result.model)
             log.debug()
