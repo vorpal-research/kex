@@ -93,7 +93,7 @@ object ${solver}Converter : ${solver}SMTConverter(), Loggable {
     fun convert(newarray: NewArrayPredicate, ef: $factory, ctx: ${solver}Context): Bool_ {
         val memspace = (newarray.getLhv().type as? Memspaced<*>)?.memspace ?: 0
         val lhv = convert(newarray.getLhv(), ef, ctx) as? Ptr_ ?: unreachable { log.error("Non-ptr term in `new`") }
-            val elementSize = ${factory}.getTypeSizeExpanded(newarray.elementType)
+            val elementSize = ${factory}.getTypeSize(newarray.elementType)
             val totalSize = newarray.getDimentions().fold(elementSize) { acc: Int, term: Term ->
             acc * ((term as? ConstIntTerm)?.value ?: defaultAllocSize)
         }
@@ -143,7 +143,7 @@ object ${solver}Converter : ${solver}SMTConverter(), Loggable {
         val bound = ctx.readBound(ptr, memspace)
         val elementType = (arraylength.getArrayRef().type as? ArrayType)?.component
                 ?: unreachable { log.error("Non-array type of array ref term") }
-        val elementSize = Z3ExprFactory.getTypeSizeExpanded(elementType)
+        val elementSize = Z3ExprFactory.getTypeSize(elementType)
         val size = bound / elementSize
         return size
     }
