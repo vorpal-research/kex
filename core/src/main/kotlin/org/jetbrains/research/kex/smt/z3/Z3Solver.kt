@@ -1,6 +1,5 @@
 package org.jetbrains.research.kex.smt.z3
 
-import com.github.h0tk3y.betterParse.combinators.separatedTerms
 import com.microsoft.z3.*
 import org.jetbrains.research.kex.config.GlobalConfig
 import org.jetbrains.research.kex.smt.AbstractSMTSolver
@@ -15,7 +14,7 @@ import org.jetbrains.research.kex.state.transformer.PointerCollector
 import org.jetbrains.research.kex.state.transformer.VariableCollector
 import org.jetbrains.research.kex.util.*
 
-private val timeout = GlobalConfig.getIntValue("smt", "timeout", 3)
+private val timeout = GlobalConfig.getIntValue("smt", "timeout", 3) * 1000
 
 class Z3Solver(val ef: Z3ExprFactory) : AbstractSMTSolver {
 
@@ -31,7 +30,7 @@ class Z3Solver(val ef: Z3ExprFactory) : AbstractSMTSolver {
             debug("Query: $query")
         }
 
-        val ctx = Z3Context(ef, 0, 0)
+        val ctx = Z3Context(ef, (1 shl 8) + 1, (1 shl 24) + 1)
 
         val z3State = Z3Converter.convert(state, ef, ctx)
         val z3query = Z3Converter.convert(query, ef, ctx)

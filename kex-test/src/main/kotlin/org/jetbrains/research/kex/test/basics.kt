@@ -65,4 +65,22 @@ class BasicTests {
         println(x)
         return x
     }
+
+    fun testArray(): Int {
+        val array = arrayOf(
+                arrayOf(0, 1, 2, 3, 4),
+                arrayOf(5, 6, 7, 8, 9),
+                arrayOf(10, 11, 12, 13, 14)
+        )
+        if (array[4][4] > 10) {
+            Intrinsics.assertReachable()
+        }
+        if (array.size > 2) {
+            Intrinsics.assertReachable()
+        }
+        if (array[0].size > 4) {
+            Intrinsics.assertReachable()
+        }
+        return array.flatten().reduce { a, b -> a + b}
+    }
 }

@@ -11,8 +11,6 @@ import org.jetbrains.research.kex.runner.CoverageManager
 import org.jetbrains.research.kex.runner.CoverageRunner
 import org.jetbrains.research.kex.smt.Checker
 import org.jetbrains.research.kex.smt.Result
-import org.jetbrains.research.kex.smt.SMTProxySolver
-import org.jetbrains.research.kex.state.transformer.*
 import org.jetbrains.research.kex.util.debug
 import org.jetbrains.research.kex.util.loggerFor
 import org.jetbrains.research.kfg.CM
