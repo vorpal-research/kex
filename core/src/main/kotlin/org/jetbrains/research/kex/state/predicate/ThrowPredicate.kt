@@ -6,14 +6,14 @@ import org.jetbrains.research.kfg.ir.Location
 
 class ThrowPredicate(throwable: Term, type: PredicateType = PredicateType.State(), location: Location = Location()) :
         Predicate(type, location, listOf(throwable)) {
-    fun getThrowable() = operands[0]
+    val throwable get() = operands[0]
 
-    override fun print() = "throw ${getThrowable()}"
+    override fun print() = "throw $throwable"
 
     override fun <T: Transformer<T>> accept(t: Transformer<T>): Predicate {
-        val throwable = t.transform(getThrowable())
+        val tthrowable = t.transform(throwable)
         return when {
-            throwable == getThrowable() -> this
+            tthrowable == throwable -> this
             else -> t.pf.getThrow(throwable, type)
         }
     }

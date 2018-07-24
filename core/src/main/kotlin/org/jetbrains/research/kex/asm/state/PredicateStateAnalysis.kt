@@ -13,22 +13,23 @@ import org.jetbrains.research.kfg.visitor.MethodVisitor
 import java.util.*
 
 class PredicateStateAnalysis(method: Method) : MethodVisitor(method), Loggable {
-    private val blockStates = mutableMapOf<BasicBlock, PredicateState>()
-    private val instructionStates = mutableMapOf<Instruction, PredicateState>()
+    private val blockStates = hashMapOf<BasicBlock, PredicateState>()
+    private val instructionStates = hashMapOf<Instruction, PredicateState>()
     private val initialState = BasicState()
 
-    private val order = mutableListOf<BasicBlock>()
+    private val order = arrayListOf<BasicBlock>()
     private val domTree = DominatorTree<BasicBlock>()
     private val predicateBuilder = PredicateBuilder(method)
 
     fun getInstructionState(inst: Instruction): PredicateState = instructionStates.getOrElse(inst) {
-        val active = mutableSetOf<BasicBlock>()
+        val active = hashSetOf<BasicBlock>()
+
         val queue = ArrayDeque<BasicBlock>()
-        queue.push(inst.parent ?: unreachable { log.error("Trying to get state for instruction without parent") })
+        queue.push(inst.parent!!)
+
         while (queue.isNotEmpty()) {
             val current = queue.first
             if (current !in active) {
-
                 active.add(current)
                 for (predecessor in current.predecessors) {
                     if (!instructionStates.containsKey(predecessor.terminator)) queue.addLast(predecessor)
@@ -43,9 +44,11 @@ class PredicateStateAnalysis(method: Method) : MethodVisitor(method), Loggable {
     override fun visit() {
         predicateBuilder.visit()
         if (method.isAbstract()) return
+
         val (order, cycled) = TopologicalSorter(method.basicBlocks.toSet()).sort(method.getEntry())
         domTree.putAll(DominatorTreeBuilder(method.basicBlocks.toSet()).build())
-        assert(cycled.isEmpty()) { log.error("No topological sorting for $method") }
+        require(cycled.isEmpty()) { log.error("No topological sorting for $method") }
+
         this.order.addAll(order.reversed())
     }
 
@@ -55,7 +58,10 @@ class PredicateStateAnalysis(method: Method) : MethodVisitor(method), Loggable {
 
         for (inst in bb) {
             val predicate = predicateBuilder.predicateMap[inst]
-            val instState = if (predicate != null) (StateBuilder(inState) + predicate).apply() else inState
+            val instState = when {
+                predicate != null -> (StateBuilder(inState) + predicate).apply()
+                else -> inState
+            }
             instructionStates[inst] = instState
 
             inState = instState

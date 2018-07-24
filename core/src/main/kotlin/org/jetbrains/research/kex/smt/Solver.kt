@@ -33,9 +33,6 @@ val engine = GlobalConfig.getStringValue("smt", "engine")
 
 class SMTProxySolver(
         val solver: AbstractSMTSolver = when (engine) {
-            "z3" -> {
-                val ef = Z3ExprFactory()
-                Z3Solver(ef)
-            }
+            "z3" -> Z3Solver(Z3ExprFactory())
             else -> unreachable { loggerFor(SMTProxySolver::class).error("Unknown smt engine: $engine") }
         }) : AbstractSMTSolver by solver

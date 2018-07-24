@@ -49,7 +49,8 @@ abstract class Predicate(val type: PredicateType, val location: Location, val op
         val reverse = predicates.map { it.value to it.key }.toMap()
     }
 
-    fun getNumOperands() = operands.size
+    val size: Int
+        get() = operands.size
 
     abstract fun print(): String
     abstract fun <T : Transformer<T>> accept(t: Transformer<T>): Predicate

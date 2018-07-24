@@ -29,7 +29,7 @@ object ${solver}Converter : ${solver}SMTConverter(), Loggable {
 
     fun convert(choice: ChoiceState, ef: $factory, ctx: ${solver}Context, extractPath: Boolean = false): Bool_ {
         var res = ef.makeFalse()
-        val contexts = mutableMapOf< Bool_, ${solver}Context >()
+        val contexts = hashMapOf< Bool_, ${solver}Context >()
         for (branch in choice) {
             val newCtx = ${solver}Context(ctx)
             val state = convert(branch, ef, newCtx, extractPath)
@@ -53,9 +53,9 @@ object ${solver}Converter : ${solver}SMTConverter(), Loggable {
     }
 
     fun convert(store: ArrayStorePredicate, ef: $factory, ctx: ${solver}Context): Bool_ {
-        val memspace = (store.getArrayRef().type as? Memspaced<*>)?.memspace ?: 0
-        val ptr = convert(store.getArrayRef(), ef, ctx) as? Ptr_ ?: unreachable { log.error("Non-ptr ref term in `store`") }
-        val value = convert(store.getValue(), ef, ctx)
+        val memspace = (store.arrayRef.type as? Memspaced<*>)?.memspace ?: 0
+        val ptr = convert(store.arrayRef, ef, ctx) as? Ptr_ ?: unreachable { log.error("Non-ptr ref term in `store`") }
+        val value = convert(store.value, ef, ctx)
         ctx.writeMemory(ptr, value, memspace)
         return ef.makeTrue()
     }
@@ -66,9 +66,9 @@ object ${solver}Converter : ${solver}SMTConverter(), Loggable {
 
     fun convert(defaultswitch: DefaultSwitchPredicate, ef: $factory, ctx: ${solver}Context): Bool_ {
         var res = ef.makeTrue()
-        val cond = convert(defaultswitch.getCond(), ef, ctx) as? Int_
+        val cond = convert(defaultswitch.cond, ef, ctx) as? Int_
                         ?: unreachable { log.error("Non-integer term in switch") }
-        for (case in defaultswitch.getCases()) {
+        for (case in defaultswitch.cases) {
             val case_ = convert(case, ef, ctx) as? Int_ ?: unreachable { log.error("Non-integer term in switch") }
             res = res and (cond neq case_).toBool()
         }
@@ -76,25 +76,25 @@ object ${solver}Converter : ${solver}SMTConverter(), Loggable {
     }
 
     fun convert(equality: EqualityPredicate, ef: $factory, ctx: ${solver}Context): Bool_ {
-        val lhv = convert(equality.getLhv(), ef, ctx)
-        val rhv = convert(equality.getRhv(), ef, ctx)
+        val lhv = convert(equality.lhv, ef, ctx)
+        val rhv = convert(equality.rhv, ef, ctx)
         return lhv eq rhv
     }
 
     fun convert(store: FieldStorePredicate, ef: $factory, ctx: ${solver}Context): Bool_ {
-        val value = convert(store.getValue(), ef, ctx)
-        val memspace = (store.getField().type as? Memspaced<*>)?.memspace ?: 0
-        val fieldptr = convert(store.getField(), ef, ctx) as? Ptr_
+        val value = convert(store.value, ef, ctx)
+        val memspace = (store.field.type as? Memspaced<*>)?.memspace ?: 0
+        val fieldptr = convert(store.field, ef, ctx) as? Ptr_
                 ?: unreachable { log.error("Non-ptr ref in field load") }
         ctx.writeMemory(fieldptr, value, memspace)
         return ef.makeTrue()
     }
 
     fun convert(newarray: NewArrayPredicate, ef: $factory, ctx: ${solver}Context): Bool_ {
-        val memspace = (newarray.getLhv().type as? Memspaced<*>)?.memspace ?: 0
-        val lhv = convert(newarray.getLhv(), ef, ctx) as? Ptr_ ?: unreachable { log.error("Non-ptr term in `new`") }
+        val memspace = (newarray.lhv.type as? Memspaced<*>)?.memspace ?: 0
+        val lhv = convert(newarray.lhv, ef, ctx) as? Ptr_ ?: unreachable { log.error("Non-ptr term in `new`") }
             val elementSize = ${factory}.getTypeSize(newarray.elementType)
-            val totalSize = newarray.getDimentions().fold(elementSize) { acc: Int, term: Term ->
+            val totalSize = newarray.dimentions.fold(elementSize) { acc: Int, term: Term ->
             acc * ((term as? ConstIntTerm)?.value ?: defaultAllocSize)
         }
         val ptr = ctx.getLocalPtr(memspace, totalSize)
@@ -103,9 +103,9 @@ object ${solver}Converter : ${solver}SMTConverter(), Loggable {
     }
 
     fun convert(new: NewPredicate, ef: $factory, ctx: ${solver}Context): Bool_ {
-        val memspace = (new.getLhv().type as? Memspaced<*>)?.memspace ?: 0
-        val lhv = convert(new.getLhv(), ef, ctx) as? Ptr_ ?: unreachable { log.error("Non-ptr term in `new`") }
-        val elementSize = ${factory}.getTypeSizeExpanded(new.getLhv().type)
+        val memspace = (new.lhv.type as? Memspaced<*>)?.memspace ?: 0
+        val lhv = convert(new.lhv, ef, ctx) as? Ptr_ ?: unreachable { log.error("Non-ptr term in `new`") }
+        val elementSize = ${factory}.getTypeSizeExpanded(new.lhv.type)
         ctx.writeBound(lhv, ef.makeIntConst(elementSize), memspace)
         return lhv eq ctx.getLocalPtr(memspace, elementSize)
     }
@@ -123,10 +123,10 @@ object ${solver}Converter : ${solver}SMTConverter(), Loggable {
     fun convert(argument: ArgumentTerm, ef: $factory, ctx: ${solver}Context): Dynamic_ = ef.getVarByType(argument.type, argument.name)
 
     fun convert(arrayindex: ArrayIndexTerm, ef: $factory, ctx: ${solver}Context): Dynamic_ {
-        val memspace = (arrayindex.getArrayRef().type as? Memspaced<*>)?.memspace ?: 0
-        val arrayref = convert(arrayindex.getArrayRef(), ef, ctx) as? Ptr_
+        val memspace = (arrayindex.arrayRef.type as? Memspaced<*>)?.memspace ?: 0
+        val arrayref = convert(arrayindex.arrayRef, ef, ctx) as? Ptr_
                 ?: unreachable { log.error("Non-ptr operand of array load") }
-        val index = (convert(arrayindex.getIndex(), ef, ctx) as? Int_
+        val index = (convert(arrayindex.index, ef, ctx) as? Int_
             ?: unreachable { log.error("Non-integer index of array load") }) * ${factory}.getTypeSize(arrayindex.type)
         val valuePtr = Ptr_.forceCast(arrayref + index)
         val baseBound = ctx.readBound(arrayref, memspace)
@@ -136,12 +136,12 @@ object ${solver}Converter : ${solver}SMTConverter(), Loggable {
     }
 
     fun convert(arraylength: ArrayLengthTerm, ef: $factory, ctx: ${solver}Context): Dynamic_ {
-        val memspace = (arraylength.getArrayRef().type as? Memspaced<*>)?.memspace ?: 0
-        val ptr = convert(arraylength.getArrayRef(), ef, ctx) as? Ptr_
+        val memspace = (arraylength.arrayRef.type as? Memspaced<*>)?.memspace ?: 0
+        val ptr = convert(arraylength.arrayRef, ef, ctx) as? Ptr_
                 ?: unreachable { log.error("Non-ptr term in `arraylength`") }
 
         val bound = ctx.readBound(ptr, memspace)
-        val elementType = (arraylength.getArrayRef().type as? ArrayType)?.component
+        val elementType = (arraylength.arrayRef.type as? ArrayType)?.component
                 ?: unreachable { log.error("Non-array type of array ref term") }
         val elementSize = Z3ExprFactory.getTypeSize(elementType)
         val size = bound / elementSize
@@ -149,8 +149,8 @@ object ${solver}Converter : ${solver}SMTConverter(), Loggable {
     }
 
     fun convert(arrayload: ArrayLoadTerm, ef: $factory, ctx: ${solver}Context): Dynamic_ {
-        val memspace = (arrayload.getArrayRef().type as? Memspaced<*>)?.memspace ?: 0
-        val arrayref = convert(arrayload.getArrayRef(), ef, ctx) as? Ptr_
+        val memspace = (arrayload.arrayRef.type as? Memspaced<*>)?.memspace ?: 0
+        val arrayref = convert(arrayload.arrayRef, ef, ctx) as? Ptr_
                             ?: unreachable { log.error("Non-ptr operand of array load") }
 
         val ret = ctx.readMemory(arrayref, ${factory}.getTypeSize(arrayload.type), memspace)
@@ -166,8 +166,8 @@ object ${solver}Converter : ${solver}SMTConverter(), Loggable {
     }
 
     fun convert(binary: BinaryTerm, ef: $factory, ctx: ${solver}Context): Dynamic_ {
-        val lhv = convert(binary.getLhv(), ef, ctx)
-        val rhv = convert(binary.getRhv(), ef, ctx)
+        val lhv = convert(binary.lhv, ef, ctx)
+        val rhv = convert(binary.rhv, ef, ctx)
         return when (binary.opcode) {
             is BinaryOpcode.Add -> lhv + rhv
             is BinaryOpcode.Sub -> lhv - rhv
@@ -187,7 +187,7 @@ object ${solver}Converter : ${solver}SMTConverter(), Loggable {
         ef.getVarByType(call.type, call.name)
 
     fun convert(cast: CastTerm, ef: $factory, ctx: ${solver}Context): Dynamic_ {
-        val op = convert(cast.getOperand(), ef, ctx)
+        val op = convert(cast.operand, ef, ctx)
         return when (cast.type) {
             is LongType -> Long_.forceCast(op)
             is Integral -> Int_.forceCast(op)
@@ -212,8 +212,8 @@ object ${solver}Converter : ${solver}SMTConverter(), Loggable {
             }
 #end
     fun convert(cmp: CmpTerm, ef: $factory, ctx: ${solver}Context): Dynamic_ {
-        val lhv = convert(cmp.getLhv(), ef, ctx)
-        val rhv = convert(cmp.getRhv(),ef, ctx)
+        val lhv = convert(cmp.lhv, ef, ctx)
+        val rhv = convert(cmp.rhv,ef, ctx)
 #set($opcodes = ["Eq", "Neq", "Lt", "Gt", "Le", "Ge"])
         return when (cmp.opcode) {
 #foreach($opcode in $opcodes)
@@ -248,8 +248,8 @@ object ${solver}Converter : ${solver}SMTConverter(), Loggable {
     }
 
     fun convert(fieldload: FieldLoadTerm, ef: $factory, ctx: ${solver}Context): Dynamic_ {
-        val memspace = (fieldload.getField().type as? Memspaced<*>)?.memspace ?: 0
-        val field = convert(fieldload.getField(), ef, ctx) as? Ptr_
+        val memspace = (fieldload.field.type as? Memspaced<*>)?.memspace ?: 0
+        val field = convert(fieldload.field, ef, ctx) as? Ptr_
             ?: unreachable { log.error("Non-ptr ref in field load") }
 
         val res = ctx.readMemory(field, Z3ExprFactory.getTypeSize(fieldload.type), memspace)
@@ -265,10 +265,10 @@ object ${solver}Converter : ${solver}SMTConverter(), Loggable {
     }
 
     fun convert(field: FieldTerm, ef: $factory, ctx: ${solver}Context): Dynamic_ {
-        val memspace = (field.getOwner().type as? Memspaced<*>)?.memspace ?: 0
-        val obj = convert(field.getOwner(), ef, ctx) as? Ptr_
+        val memspace = (field.owner.type as? Memspaced<*>)?.memspace ?: 0
+        val obj = convert(field.owner, ef, ctx) as? Ptr_
         ?: unreachable { log.error("Non-ptr ref in field load") }
-        val name = field.getFieldName().name
+        val name = field.fieldName.name
         val offset = Z3ExprFactory.getFieldOffset(field.getClass(), Class.FieldKey(name, field.type))
         val baseBound = ctx.readBound(obj, memspace)
 
@@ -281,7 +281,7 @@ object ${solver}Converter : ${solver}SMTConverter(), Loggable {
         ef.getVarByType(instanceof.type, instanceof.name)
 
     fun convert(neg: NegTerm, ef: $factory, ctx: ${solver}Context): Dynamic_ {
-        val operand = convert(neg.getOperand(), ef, ctx) as? Bool_ ?: unreachable { log.error("Non-bool term in `neg`") }
+        val operand = convert(neg.operand, ef, ctx) as? Bool_ ?: unreachable { log.error("Non-bool term in `neg`") }
         return !operand
     }
 

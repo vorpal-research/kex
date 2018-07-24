@@ -6,8 +6,6 @@ import org.jetbrains.research.kex.util.unreachable
 import org.jetbrains.research.kfg.ir.Location
 
 class CallPredicate : Predicate {
-    val hasLhv: Boolean
-
     constructor(callTerm: Term, type: PredicateType = PredicateType.State(), location: Location = Location())
             : super(type, location, listOf(callTerm)) {
         hasLhv = false
@@ -18,29 +16,31 @@ class CallPredicate : Predicate {
         hasLhv = true
     }
 
-    fun getLhvUnsafe() = if (hasLhv) operands[0] else null
-    fun getLhv() = if (hasLhv) operands[0] else unreachable { log.error("Trying to get lhv of void call") }
-    fun getCall() = if (hasLhv) operands[1] else operands[0]
+    val hasLhv: Boolean
+    val lhv get() = if (hasLhv) operands[0] else unreachable { log.error("Trying to get lhv of void call") }
+    val call get() = if (hasLhv) operands[1] else operands[0]
 
-    override fun <T: Transformer<T>> accept(t: Transformer<T>): Predicate {
-        val lhv = if (hasLhv) t.transform(getLhv()) else null
-        val call = t.transform(getCall())
+    fun getLhvUnsafe() = if (hasLhv) operands[0] else null
+
+    override fun <T : Transformer<T>> accept(t: Transformer<T>): Predicate {
+        val tlhv = if (hasLhv) t.transform(lhv) else null
+        val tcall = t.transform(call)
         return when {
             hasLhv -> when {
-                lhv == getLhv() && call == getCall() -> this
-                else -> t.pf.getCall(lhv!!, call, type)
+                tlhv == lhv && tcall == call -> this
+                else -> t.pf.getCall(tlhv!!, tcall, type)
             }
             else -> when {
-                call == getCall() -> this
-                else -> t.pf.getCall(call, type)
+                tcall == call -> this
+                else -> t.pf.getCall(tcall, type)
             }
         }
     }
 
     override fun print(): String {
         val sb = StringBuilder()
-        if (hasLhv) sb.append("${getLhv()} = ")
-        sb.append(getCall())
+        if (hasLhv) sb.append("$lhv = ")
+        sb.append(call)
         return sb.toString()
     }
 }

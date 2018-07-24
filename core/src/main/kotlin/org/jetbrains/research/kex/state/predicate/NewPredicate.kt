@@ -6,14 +6,14 @@ import org.jetbrains.research.kfg.ir.Location
 
 class NewPredicate(lhv: Term, type: PredicateType = PredicateType.State(), location: Location = Location()) :
         Predicate(type, location, listOf(lhv)) {
-    fun getLhv() = operands[0]
+    val lhv get() = operands[0]
 
-    override fun print() = "${getLhv()} = new ${getLhv().type}"
+    override fun print() = "$lhv = new ${lhv.type}"
 
     override fun <T : Transformer<T>> accept(t: Transformer<T>): Predicate {
-        val lhv = t.transform(getLhv())
+        val tlhv = t.transform(lhv)
         return when {
-            lhv == getLhv() -> this
+            tlhv == lhv -> this
             else -> t.pf.getNew(lhv, type)
         }
     }

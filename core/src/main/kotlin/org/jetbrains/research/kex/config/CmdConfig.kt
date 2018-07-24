@@ -11,7 +11,7 @@ import org.apache.commons.cli.CommandLine as Cmd
 
 class CmdConfig(args: Array<String>) : Config, Loggable {
     private val options = Options()
-    private val commandLineOptions = mutableMapOf<String, MutableMap<String, String>>()
+    private val commandLineOptions = hashMapOf<String, MutableMap<String, String>>()
     private val cmd: Cmd
 
     init {
@@ -33,7 +33,7 @@ class CmdConfig(args: Array<String>) : Config, Loggable {
                 val section = optValues[index]
                 val name = optValues[index + 1]
                 val value = optValues[index + 2]
-                commandLineOptions.getOrPut(section) { mutableMapOf() }[name] = value
+                commandLineOptions.getOrPut(section, ::hashMapOf)[name] = value
             } catch (e: IndexOutOfBoundsException) {
                 exit {
                     log.error("Not enough arguments for `option`")

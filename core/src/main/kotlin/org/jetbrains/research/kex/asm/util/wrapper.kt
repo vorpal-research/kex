@@ -18,7 +18,7 @@ class StringBuilderWrapper(val name: String) {
     val `class` = CM.getByName("java/lang/StringBuilder")
     val stringBuilderType = TF.getRefType(`class`)
     val builder = IF.getNew(name, stringBuilderType)
-    val insns = mutableListOf(builder)
+    val insns = arrayListOf(builder)
 
     init {
         val desc = MethodDesc(arrayOf(), TF.getVoidType())
@@ -32,10 +32,9 @@ class StringBuilderWrapper(val name: String) {
     }
 
     fun append(str: String) = append(VF.getStringConstant(str))
-    fun append(value: Value) {
-        if (value.type is NullType) {
-            append("null")
-        } else {
+    fun append(value: Value): Boolean = when {
+        value.type === NullType -> append("null")
+        else -> {
             val appendArg = when {
                 value.type.isPrimary() -> value.type
                 value.type == TF.getString() -> value.type
@@ -48,7 +47,7 @@ class StringBuilderWrapper(val name: String) {
         }
     }
 
-    fun to_string(): Instruction {
+    fun toStringWrapper(): Instruction {
         val desc = MethodDesc(arrayOf(), TF.getString())
         val toStringMethod = `class`.getMethod("toString", desc)
         val string = IF.getCall(CallOpcode.Virtual(), "${name}Str", toStringMethod, `class`, builder, arrayOf())
@@ -62,7 +61,7 @@ class SystemOutWrapper(name: String) {
     val `class` = CM.getByName("java/lang/System")
     val field = `class`.getField("out", TF.getRefType(printStream))
     val sout = IF.getFieldLoad(name, field)
-    val insns = mutableListOf(sout)
+    val insns = arrayListOf(sout)
 
     fun print(string: String) = print(VF.getStringConstant(string))
     fun print(value: Value) {
@@ -71,6 +70,7 @@ class SystemOutWrapper(name: String) {
             value.type == TF.getString() -> value.type
             else -> TF.getObject()
         }
+
         val desc = MethodDesc(arrayOf(printArg), TF.getVoidType())
         val printMethod = `class`.getMethod("print", desc)
         val append = IF.getCall(CallOpcode.Virtual(), printMethod, printStream, sout, arrayOf(value), false)
@@ -120,7 +120,7 @@ class ReflectionWrapper {
 
 class ValuePrinter {
     val reflection = ReflectionWrapper()
-    val insns = mutableListOf<Instruction>()
+    val insns = arrayListOf<Instruction>()
     val system = CM.getByName("java/lang/System")
 
     private fun getIdentityHashCode(value: Value): Instruction {
@@ -143,7 +143,7 @@ class ValuePrinter {
         val str = fldPrinter.print(get)
         insns.addAll(fldPrinter.insns)
         sb.append(str)
-        val res = sb.to_string()
+        val res = sb.toStringWrapper()
         insns.addAll(sb.insns)
         return res
     }
@@ -166,7 +166,7 @@ class ValuePrinter {
             sb.append(printField(value, `class`, it))
         }
         sb.append("}")
-        val res = sb.to_string()
+        val res = sb.toStringWrapper()
         insns.addAll(sb.insns)
         return res
     }
@@ -184,7 +184,7 @@ class ValuePrinter {
         insns.add(length)
         sb.append(print(length))
         sb.append("}")
-        val res = sb.to_string()
+        val res = sb.toStringWrapper()
         insns.addAll(sb.insns)
         return res
     }
@@ -192,18 +192,17 @@ class ValuePrinter {
     fun print(value: Value): Instruction {
         val type = value.type
         val sb = StringBuilderWrapper("sb")
-        if (type.isPrimary()) {
-            sb.append(value)
-        } else if (type == TF.getString()) {
-            sb.append("\"")
-            sb.append(value)
-            sb.append("\"")
-        } else if (type is ArrayType) {
-            sb.append(printArray(value, type))
-        } else if (type is ClassType) {
-            sb.append(printClass(value, type))
+        when {
+            type.isPrimary() -> sb.append(value)
+            type == TF.getString() -> {
+                sb.append("\"")
+                sb.append(value)
+                sb.append("\"")
+            }
+            type is ArrayType -> sb.append(printArray(value, type))
+            type is ClassType -> sb.append(printClass(value, type))
         }
-        val result = sb.to_string()
+        val result = sb.toStringWrapper()
         insns.addAll(sb.insns)
         return result
     }

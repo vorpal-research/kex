@@ -9,8 +9,8 @@ class ConstantPropagator : Transformer<ConstantPropagator> {
     private val epsilon = 0.00001
 
     override fun transformBinaryTerm(term: BinaryTerm): Term {
-        val lhv = getConstantValue(term.getLhv()) ?: return term
-        val rhv = getConstantValue(term.getRhv()) ?: return term
+        val lhv = getConstantValue(term.lhv) ?: return term
+        val rhv = getConstantValue(term.rhv) ?: return term
         return when (term.opcode) {
             is BinaryOpcode.Add -> {
                 val (nlhv, nrhv) = toCompatibleTypes(lhv, rhv)
@@ -60,8 +60,8 @@ class ConstantPropagator : Transformer<ConstantPropagator> {
     }
 
     override fun transformCmpTerm(term: CmpTerm): Term {
-        val lhv = getConstantValue(term.getLhv()) ?: return term
-        val rhv = getConstantValue(term.getRhv()) ?: return term
+        val lhv = getConstantValue(term.lhv) ?: return term
+        val rhv = getConstantValue(term.rhv) ?: return term
         val (nlhv, nrhv) = toCompatibleTypes(lhv, rhv)
         return when (term.opcode) {
             is CmpOpcode.Eq -> when (nlhv) {
@@ -85,7 +85,7 @@ class ConstantPropagator : Transformer<ConstantPropagator> {
     }
 
     override fun transformNegTerm(term: NegTerm): Term {
-        val operand = getConstantValue(term.getOperand()) ?: return term
+        val operand = getConstantValue(term.operand) ?: return term
         return tf.getConstant(operand)
     }
 
