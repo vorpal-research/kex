@@ -81,18 +81,19 @@ open class $valexpr : ${solver}SMTExpr, Loggable {
 
 #set($opcodes = ["ADD", "SUB", "MUL", "DIVIDE"])
 #foreach($opcode in $opcodes)
+#* @vtlvariable name="opcode" type="java.lang.String" *#
     infix fun ${opcode.toLowerCase()}(other: $valexpr): $valexpr = when {
 #foreach($class in $numClasses)
             this is $class && other is $class -> ${opcode.toLowerCase()}(other)
 #end
-        else -> unreachable { log.error("Invalid operands of `${opcode.toLowerCase()}`: $this and $other") }
+        else -> unreachable { log.error("Invalid operands of `${opcode.toLowerCase()}`: ${ this } and ${ other }") }
     }
 #end
 #set($opcodes = ["MOD", "SHL", "SHR", "ASHR"])
 #foreach($opcode in $opcodes)
     infix fun ${opcode.toLowerCase()}(other: $valexpr): $valexpr = when {
         this is $Bitvector && other is $Bitvector -> ${opcode.toLowerCase()}(other)
-        else -> unreachable { log.error("Invalid operands of `${opcode.toLowerCase()}`: $this and $other") }
+        else -> unreachable { log.error("Invalid operands of `${opcode.toLowerCase()}`: ${ this } and ${ other }") }
     }
 #end
 
@@ -102,7 +103,7 @@ open class $valexpr : ${solver}SMTExpr, Loggable {
     #foreach($class in $exprClasses)
     this is $class && other is $class -> ${opcode.toLowerCase()}(other)
     #end
-        else -> unreachable { log.error("Invalid operands of `${opcode.toLowerCase()}`: $this and $other") }
+        else -> unreachable { log.error("Invalid operands of `${opcode.toLowerCase()}`: ${ this } and ${ other }") }
     }
 #end
 
@@ -112,7 +113,7 @@ infix fun ${opcode.toLowerCase()}(other: $valexpr): $Bool = when {
     #foreach($class in $numClasses)
     this is $class && other is $class -> ${opcode.toLowerCase()}(other)
     #end
-else -> unreachable { log.error("Invalid operands of `${opcode.toLowerCase()}`: $this and $other") }
+else -> unreachable { log.error("Invalid operands of `${opcode.toLowerCase()}`: ${ this } and ${ other }") }
 }
 #end
 
@@ -121,7 +122,7 @@ else -> unreachable { log.error("Invalid operands of `${opcode.toLowerCase()}`: 
     infix fun ${opcode.toLowerCase()}(other: $valexpr): $valexpr = when {
         this is $Bool && other is $Bool -> ${opcode.toLowerCase()}(other)
         this is $Bitvector && other is $Bitvector -> ${opcode.toLowerCase()}(other)
-        else -> unreachable { log.error("Invalid operands of `${opcode.toLowerCase()}`: $this and $other") }
+        else -> unreachable { log.error("Invalid operands of `${opcode.toLowerCase()}`: ${ this } and ${ other }") }
     }
 #end
     operator fun plus(other: $valexpr) = add(other)
@@ -132,6 +133,7 @@ else -> unreachable { log.error("Invalid operands of `${opcode.toLowerCase()}`: 
 }
 
 #macro(constructors $class)
+#* @vtlvariable name="class" type="java.lang.String" *#
     constructor(ctx: $context, expr: $expr) : super(ctx, expr) {
         assert(engine.is$class(ctx, expr)) { log.error("$class created from non-${class.toLowerCase()} expr") }
     }

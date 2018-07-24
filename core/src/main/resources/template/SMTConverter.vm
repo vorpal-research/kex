@@ -18,7 +18,7 @@ object ${solver}Converter : ${solver}SMTConverter(), Loggable {
 #foreach($state in $states)
         is ${state}State -> convert(ps, ef, ctx, extractPath)
 #end
-        else -> unreachable { log.error("Unknown PS type: $ps") }
+        else -> unreachable { log.error("Unknown PS type: ${ ps }") }
     }
 
     fun convert(basic: BasicState, ef: $factory, ctx: ${solver}Context, extractPath: Boolean = false): Bool_ =
@@ -49,7 +49,7 @@ object ${solver}Converter : ${solver}SMTConverter(), Loggable {
 #foreach($predicate in $predicates)
         is ${predicate}Predicate -> convert(predicate, ef, ctx)
 #end
-        else -> unreachable { log.error("Unknown predicate type: $predicate") }
+        else -> unreachable { log.error("Unknown predicate type: ${ predicate }") }
     }
 
     fun convert(store: ArrayStorePredicate, ef: $factory, ctx: ${solver}Context): Bool_ {
@@ -117,7 +117,7 @@ object ${solver}Converter : ${solver}SMTConverter(), Loggable {
 #foreach($term in $terms)
         is ${term}Term -> convert(term, ef, ctx)
 #end
-        else -> unreachable { log.error("Unknown term type: $term") }
+        else -> unreachable { log.error("Unknown term type: ${ term }") }
     }
 
     fun convert(argument: ArgumentTerm, ef: $factory, ctx: ${solver}Context): Dynamic_ = ef.getVarByType(argument.type, argument.name)
@@ -161,7 +161,7 @@ object ${solver}Converter : ${solver}SMTConverter(), Loggable {
             is DoubleType -> Double_.forceCast(ret)
             is ClassType -> Ptr_.forceCast(ret)
             is ArrayType -> Ptr_.forceCast(ret)
-            else -> unreachable { log.error("Unable to cast load result $ret to ${ arrayload.type }") }
+            else -> unreachable { log.error("Unable to cast load result ${ ret } to ${ arrayload.type }") }
         }
     }
 
@@ -195,11 +195,13 @@ object ${solver}Converter : ${solver}SMTConverter(), Loggable {
             is DoubleType -> Double_.forceCast(op)
             is ClassType -> Ptr_.forceCast(op)
             is ArrayType -> Ptr_.forceCast(op)
-            else -> unreachable { log.error("Invalid cast $cast") }
+            else -> unreachable { log.error("Invalid cast ${ cast }") }
         }
     }
 
 #macro(cmp $opcode $default $type)
+    #* @vtlvariable name="type" type="java.lang.String" *#
+    #* @vtlvariable name="opcode" type="java.lang.String" *#
             is CmpOpcode.$opcode -> {
                 val lhvf = lhv as? $type ?: unreachable { log.error("Non-${type.toLowerCase()} operands of `${opcode.toLowerCase()}`") }
                 val rhvf = rhv as? $type ?: unreachable { log.error("Non-${type.toLowerCase()} operands of `${opcode.toLowerCase()}`") }
@@ -260,7 +262,7 @@ object ${solver}Converter : ${solver}SMTConverter(), Loggable {
             is DoubleType -> Double_.forceCast(res)
             is ClassType -> Ptr_.forceCast(res)
             is ArrayType -> Ptr_.forceCast(res)
-            else -> unreachable { log.error("Unable to cast load result $res to ${ fieldload.type }") }
+            else -> unreachable { log.error("Unable to cast load result ${ res } to ${ fieldload.type }") }
         }
     }
 

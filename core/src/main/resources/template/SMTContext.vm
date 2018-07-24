@@ -32,8 +32,8 @@ class $self : ${solver}SMTContext {
         const val MEMORY_NAME = "__memory__"
         const val BOUNDS_NAME = "__bounds__"
 
-        fun memoryName(memspace: Int) = "${MEMORY_NAME}$memspace"
-        fun boundsName(memspace: Int) = "${BOUNDS_NAME}$memspace"
+        fun memoryName(memspace: Int) = "${ MEMORY_NAME }${ memspace }"
+        fun boundsName(memspace: Int) = "${ BOUNDS_NAME }${ memspace }"
 
         fun mergeContexts(name: String, default: $self, choices: Map< Bool_, $self >): $self {
             val maxLocal = max(default.localPointer, choices.map { it.value.localPointer }.max() ?: 0)
