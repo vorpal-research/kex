@@ -1,4 +1,9 @@
 #* @implicitly included *#
+#* @vtlvariable name="byteSize" type="java.lang.Integer" *#
+#* @vtlvariable name="sort" type="java.lang.String" *#
+#* @vtlvariable name="self" type="java.lang.String" *#
+#* @vtlvariable name="expr" type="java.lang.String" *#
+#* @vtlvariable name="context" type="java.lang.String" *#
 #* @vtlvariable name="solver" type="java.lang.String" *#
 #* @vtlvariable name="importPackage" type="java.lang.String" *#
 #* @vtlvariable name="packageName" type="java.lang.String" *#

@@ -33,7 +33,7 @@ class $factory : ${solver}SMTExprFactory(), Loggable {
             is FloatType -> SMTEngine.WORD
             is DoubleType -> SMTEngine.DWORD
             is Reference -> SMTEngine.WORD
-            else -> unreachable { loggerFor(Z3ExprFactory::class).error("Unexpected type: $type") }
+            else -> unreachable { loggerFor(Z3ExprFactory::class).error("Unexpected type: ${ type }") }
         }
 
         fun getTypeSizeExpanded(type: Type) = when (type) {
@@ -80,7 +80,7 @@ class $factory : ${solver}SMTExprFactory(), Loggable {
 #end
         is ClassType -> makePtr(name, fresh)
         is ArrayType -> makePtr(name, fresh)
-        else -> unreachable { log.error("Unknown type in ExprFactory: $type") }
+        else -> unreachable { log.error("Unknown type in ExprFactory: ${ type }") }
     }
 
     inline fun < T : Dynamic_, reified U : Dynamic_ > switch(value: T, cases: Map< T, U >, default: U) =
