@@ -36,26 +36,29 @@ class RandomDriver : Loggable {
     private fun generateParameterized(type: ParameterizedType): Any? {
         val rawType = type.rawType
         val `object` = generate(rawType)
-        if (rawType is Class<*>) {
-            val typeParams = rawType.typeParameters.zip(type.actualTypeArguments).toMap()
-            for (it in rawType.declaredFields) {
-                val genType = typeParams[it.genericType as? TypeVariable<*>] ?: it.genericType
-                it.isAccessible = true
-                val value = generate(genType)
-                it.set(`object`, value)
+        when (rawType) {
+            is Class<*> -> {
+                val typeParams = rawType.typeParameters.zip(type.actualTypeArguments).toMap()
+                for (it in rawType.declaredFields) {
+                    val genType = typeParams[it.genericType as? TypeVariable<*>] ?: it.genericType
+                    it.isAccessible = true
+                    val value = generate(genType)
+                    it.set(`object`, value)
+                }
             }
-        } else throw UnknownTypeException("Unknown type $type")
+            else -> throw UnknownTypeException("Unknown type $type")
+        }
         return `object`
     }
 
     private fun generateTypeVariable(type: TypeVariable<*>): Any? {
         val bounds = type.bounds
-        assert(bounds.size == 1, { log.debug("Unexpected size of type variable bounds: ${bounds.map { it.typeName }}") })
+        require(bounds.size == 1) { log.debug("Unexpected size of type variable bounds: ${bounds.map { it.typeName }}") }
         return generate(bounds.first())
     }
 
     fun generate(type: Type): Any? {
-        repeat(attempts, {
+        repeat(attempts) {
             try {
                 return when (type) {
                     is Class<*> -> generateClass(type)
@@ -64,7 +67,7 @@ class RandomDriver : Loggable {
                     else -> throw UnknownTypeException("Unknown type $type")
                 }
             } catch (exc: ObjectGenerationException) {}
-        })
+        }
         throw GenerationException("Unable to generate a random instance of type $type")
     }
 }

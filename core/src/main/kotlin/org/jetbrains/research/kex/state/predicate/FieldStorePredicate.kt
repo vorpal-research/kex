@@ -12,17 +12,16 @@ class FieldStorePredicate(field: Term,
                           value: Term,
                           type: PredicateType = PredicateType.State(),
                           location: Location = Location()) : Predicate(type, location, listOf(field, value)) {
-
-    fun getField() = operands[0]
-    fun getValue() = operands[1]
-    override fun print() = "*(${getField()}) = ${getValue()}"
+    val field get() = operands[0]
+    val value get() = operands[1]
+    override fun print() = "*($field) = $value"
 
     override fun <T : Transformer<T>> accept(t: Transformer<T>): Predicate {
-        val field = t.transform(getField())
-        val value = t.transform(getValue())
+        val tfield = t.transform(field)
+        val tvalue = t.transform(value)
         return when {
-            field == getField() && value == getValue() -> this
-            else -> t.pf.getFieldStore(field, fieldType, value, type)
+            tfield == field && tvalue == value -> this
+            else -> t.pf.getFieldStore(tfield, fieldType, tvalue, type)
         }
     }
 

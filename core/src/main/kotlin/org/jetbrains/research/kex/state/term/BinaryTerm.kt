@@ -6,17 +6,17 @@ import org.jetbrains.research.kfg.type.Type
 import org.jetbrains.research.kex.util.defaultHashCode
 
 class BinaryTerm(type: Type, val opcode: BinaryOpcode, lhv: Term, rhv: Term) : Term("", type, listOf(lhv, rhv)) {
-    fun getLhv() = subterms[0]
-    fun getRhv() = subterms[1]
+    val lhv get() = subterms[0]
+    val rhv get() = subterms[1]
 
-    override fun print() = "${getLhv()} $opcode ${getRhv()}"
+    override fun print() = "$lhv $opcode $rhv"
 
     override fun <T: Transformer<T>> accept(t: Transformer<T>): Term {
-        val lhv = t.transform(getLhv())
-        val rhv = t.transform(getRhv())
+        val tlhv = t.transform(lhv)
+        val trhv = t.transform(rhv)
         return when {
-            lhv == getLhv() && rhv == getRhv() -> this
-            else -> t.tf.getBinary(opcode, lhv, rhv)
+            tlhv == lhv && trhv == rhv -> this
+            else -> t.tf.getBinary(opcode, tlhv, trhv)
         }
     }
 

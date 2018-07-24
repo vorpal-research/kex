@@ -15,9 +15,9 @@ import org.jetbrains.research.kfg.visitor.MethodVisitor
 class PredicateBuilder(method: Method) : MethodVisitor(method), Loggable {
     val tf = TermFactory
     val pf = PredicateFactory
-    val predicateMap = mutableMapOf<Instruction, Predicate>()
-    val phiPredicateMap = mutableMapOf<Pair<BasicBlock, Instruction>, Predicate>()
-    val terminatorPredicateMap = mutableMapOf<Pair<BasicBlock, TerminateInst>, Predicate>()
+    val predicateMap = hashMapOf<Instruction, Predicate>()
+    val phiPredicateMap = hashMapOf<Pair<BasicBlock, Instruction>, Predicate>()
+    val terminatorPredicateMap = hashMapOf<Pair<BasicBlock, TerminateInst>, Predicate>()
 
     override fun visitArrayLoadInst(inst: ArrayLoadInst) {
         val lhv = tf.getValue(inst)
@@ -66,11 +66,12 @@ class PredicateBuilder(method: Method) : MethodVisitor(method), Loggable {
     override fun visitCallInst(inst: CallInst) {
         val args = inst.args.map { tf.getValue(it) }
         val lhv = if (inst.type.isVoid()) null else tf.getValue(inst)
-        val callTerm = if (inst.isStatic) {
-            tf.getCall(inst.method, args)
-        } else {
-            val callee = tf.getValue(inst.callee)
-            tf.getCall(inst.method, callee, args)
+        val callTerm = when {
+            inst.isStatic -> tf.getCall(inst.method, args)
+            else -> {
+                val callee = tf.getValue(inst.callee)
+                tf.getCall(inst.method, callee, args)
+            }
         }
 
         val predicate = when (lhv) {
@@ -104,14 +105,13 @@ class PredicateBuilder(method: Method) : MethodVisitor(method), Loggable {
 
     override fun visitFieldLoadInst(inst: FieldLoadInst) {
         val lhv = tf.getValue(inst)
-        val field = if (inst.hasOwner) {
-            tf.getField(
+        val field = when {
+            inst.hasOwner -> tf.getField(
                     inst.type,
                     tf.getValue(inst.owner),
                     tf.getString(inst.field.name)
             )
-        } else {
-            tf.getField(
+            else -> tf.getField(
                     inst.type,
                     inst.field.`class`,
                     tf.getString(inst.field.name)
@@ -222,10 +222,10 @@ class PredicateBuilder(method: Method) : MethodVisitor(method), Loggable {
     }
 
     // ignored instructions
-    override fun visitCatchInst(inst: CatchInst) {}
+    override fun visitCatchInst(inst: CatchInst) = Unit
 
-    override fun visitEnterMonitorInst(inst: EnterMonitorInst) {}
-    override fun visitExitMonitorInst(inst: ExitMonitorInst) {}
-    override fun visitJumpInst(inst: JumpInst) {}
-    override fun visitThrowInst(inst: ThrowInst) {}
+    override fun visitEnterMonitorInst(inst: EnterMonitorInst) = Unit
+    override fun visitExitMonitorInst(inst: ExitMonitorInst) = Unit
+    override fun visitJumpInst(inst: JumpInst) = Unit
+    override fun visitThrowInst(inst: ThrowInst) = Unit
 }

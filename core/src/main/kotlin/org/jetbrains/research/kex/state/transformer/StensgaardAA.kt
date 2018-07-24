@@ -71,7 +71,7 @@ class AliasAnalyzer : Transformer<AliasAnalyzer> {
 
     override fun transformArrayLoadTerm(term: ArrayLoadTerm): Term {
         val ts = get(term)
-        val loads = get(term.getArrayRef())
+        val loads = get(term.arrayRef)
         val res = join(pointsTo(loads), pointsTo(ts))
         pointsTo[loads] = res
         pointsTo[ts] = res
@@ -80,8 +80,8 @@ class AliasAnalyzer : Transformer<AliasAnalyzer> {
 
     override fun transformBinaryTerm(term: BinaryTerm): Term {
         val ts = get(term)
-        val lts = get(term.getLhv())
-        val rts = get(term.getRhv())
+        val lts = get(term.lhv)
+        val rts = get(term.rhv)
         val res1 = join(pointsTo(ts), pointsTo(lts))
         pointsTo[ts] = res1
         pointsTo[lts] = res1
@@ -94,7 +94,7 @@ class AliasAnalyzer : Transformer<AliasAnalyzer> {
 
     override fun transformCastTerm(term: CastTerm): Term {
         val ts = get(term)
-        val operand = get(term.getOperand())
+        val operand = get(term.operand)
         val res = join(pointsTo(ts), pointsTo(operand))
         pointsTo[ts] = res
         pointsTo[operand] = res
@@ -104,7 +104,7 @@ class AliasAnalyzer : Transformer<AliasAnalyzer> {
     override fun transformFieldLoadTerm(term: FieldLoadTerm): Term {
         val ts = get(term)
 
-        val lhs = get(term.getField())
+        val lhs = get(term.field)
         val rs = join(pointsTo(lhs), pointsTo(ts))
         pointsTo[lhs] = rs
         pointsTo[ts] = rs
@@ -115,10 +115,10 @@ class AliasAnalyzer : Transformer<AliasAnalyzer> {
     }
 
     override fun transformEqualityPredicate(predicate: EqualityPredicate): Predicate {
-        if (predicate.type is PredicateType.State) nonFreeTerms.add(predicate.getLhv())
+        if (predicate.type is PredicateType.State) nonFreeTerms.add(predicate.lhv)
 
-        val ls = get(predicate.getLhv())
-        val rs = get(predicate.getRhv())
+        val ls = get(predicate.lhv)
+        val rs = get(predicate.rhv)
 
         val res = join(pointsTo(ls), pointsTo(rs))
         pointsTo[ls] = res
@@ -127,34 +127,34 @@ class AliasAnalyzer : Transformer<AliasAnalyzer> {
     }
 
     override fun transformNewArrayPredicate(predicate: NewArrayPredicate): Predicate {
-        nonaliased.add(predicate.getLhv())
-        nonFreeTerms.add(predicate.getLhv())
+        nonaliased.add(predicate.lhv)
+        nonFreeTerms.add(predicate.lhv)
 
-        val ls = get(predicate.getLhv())
+        val ls = get(predicate.lhv)
         pointsTo[ls] = quasi()
         return predicate
     }
 
     override fun transformNewPredicate(predicate: NewPredicate): Predicate {
-        nonaliased.add(predicate.getLhv())
-        nonFreeTerms.add(predicate.getLhv())
+        nonaliased.add(predicate.lhv)
+        nonFreeTerms.add(predicate.lhv)
 
-        val ls = get(predicate.getLhv())
+        val ls = get(predicate.lhv)
         pointsTo[ls] = quasi()
         return predicate
     }
 
     override fun transformArrayStorePredicate(predicate: ArrayStorePredicate): Predicate {
-        val ls = get(predicate.getArrayRef())
-        val rs = get(predicate.getValue())
+        val ls = get(predicate.arrayRef)
+        val rs = get(predicate.value)
         val res = join(pointsTo(ls), rs)
         pointsTo[ls] = res
         return predicate
     }
 
     override fun transformFieldStorePredicate(predicate: FieldStorePredicate): Predicate {
-        val ls = get(predicate.getField())
-        val rs = get(predicate.getValue())
+        val ls = get(predicate.field)
+        val rs = get(predicate.value)
         val res = join(pointsTo(ls), rs)
         pointsTo[ls] = res
         return predicate

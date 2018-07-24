@@ -12,23 +12,23 @@ class NewArrayPredicate(lhv: Term,
                         type: PredicateType = PredicateType.State(),
                         location: Location = Location()) :
         Predicate(type, location, listOf(lhv).plus(dimentions)) {
-    fun getLhv() = operands[0]
-    fun getDimentions() = operands.drop(1)
-    fun getNumDimentions() = operands.size - 1
+    val lhv get() = operands[0]
+    val dimentions get() = operands.drop(1)
+    val numDimentions get() = operands.size - 1
 
     override fun print(): String {
         val sb = StringBuilder()
-        sb.append("${getLhv()} = new $elementType")
-        getDimentions().forEach { sb.append("[$it]") }
+        sb.append("$lhv = new $elementType")
+        dimentions.forEach { sb.append("[$it]") }
         return sb.toString()
     }
 
     override fun <T : Transformer<T>> accept(t: Transformer<T>): Predicate {
-        val lhv = t.transform(getLhv())
-        val dimentions = getDimentions().map { t.transform(it) }
+        val tlhv = t.transform(lhv)
+        val tdimentions = dimentions.map { t.transform(it) }
         return when {
-            lhv == getLhv() && dimentions.contentEquals(getDimentions()) -> this
-            else -> t.pf.getNewArray(lhv, dimentions, type)
+            tlhv == lhv && tdimentions.contentEquals(dimentions) -> this
+            else -> t.pf.getNewArray(tlhv, tdimentions, type)
         }
     }
 }

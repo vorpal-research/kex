@@ -8,17 +8,18 @@ import org.jetbrains.research.kfg.type.ArrayType
 
 class ArrayStorePredicate(arrayRef: Term, value: Term, type: PredicateType = PredicateType.State(), location: Location = Location())
     : Predicate(type, location, listOf(arrayRef, value)) {
-    fun getArrayRef() = operands[0]
-    fun getValue() = operands[1]
-    fun getComponentType() = (getArrayRef().type as? ArrayType)?.component ?: unreachable { log.error("Non-array type of array ref") }
+    val arrayRef get() = operands[0]
+    val value get() = operands[1]
+    val componentType
+        get() = (arrayRef.type as? ArrayType)?.component ?: unreachable { log.error("Non-array type of array ref") }
 
-    override fun print() = "*(${getArrayRef()}) = ${getValue()}"
+    override fun print() = "*($arrayRef) = $value"
 
-    override fun <T: Transformer<T>> accept(t: Transformer<T>): Predicate {
-        val ref = t.transform(getArrayRef())
-        val store = t.transform(getValue())
+    override fun <T : Transformer<T>> accept(t: Transformer<T>): Predicate {
+        val ref = t.transform(arrayRef)
+        val store = t.transform(value)
         return when {
-            ref == getArrayRef() && store == getValue() -> this
+            ref == arrayRef && store == value -> this
             else -> t.pf.getArrayStore(ref, store, type)
         }
     }

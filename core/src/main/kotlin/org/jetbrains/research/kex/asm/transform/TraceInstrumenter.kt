@@ -14,21 +14,24 @@ class TraceInstrumenter(method: Method) : MethodVisitor(method), Loggable {
     companion object {
         const val tracePrefix = "trace"
     }
+
     val insertedInsts = mutableListOf<Instruction>()
 
     override fun visitReturnInst(inst: ReturnInst) {
         val bb = inst.parent!!
 
         val builder = SystemOutWrapper("sout")
-        builder.println("${tracePrefix} exit ${bb.name};")
-        builder.print("${tracePrefix} return ${method.getPrototype().replace('/', '.')}; ")
+        builder.println("$tracePrefix exit ${bb.name};")
+        builder.print("$tracePrefix return ${method.getPrototype().replace('/', '.')}; ")
+
         val printer = ValuePrinter()
-        if (inst.hasReturnValue) {
-            builder.print("${inst.returnValue.name} == ")
-            val str = printer.print(inst.returnValue)
-            builder.print(str)
-        } else {
-            builder.print("void")
+        when {
+            inst.hasReturnValue -> {
+                builder.print("${inst.returnValue.name} == ")
+                val str = printer.print(inst.returnValue)
+                builder.print(str)
+            }
+            else -> builder.print("void")
         }
         builder.println(";")
 
@@ -43,6 +46,7 @@ class TraceInstrumenter(method: Method) : MethodVisitor(method), Loggable {
 
         val builder = SystemOutWrapper("sout")
         builder.print("$tracePrefix throw ${method.getPrototype().replace('/', '.')}; ")
+
         val printer = ValuePrinter()
         builder.print("${inst.throwable.name} == ")
         val str = printer.print(inst.throwable)
@@ -59,7 +63,7 @@ class TraceInstrumenter(method: Method) : MethodVisitor(method), Loggable {
         val bb = inst.parent!!
 
         val builder = SystemOutWrapper("sout")
-        builder.println("${tracePrefix} exit ${bb.name};")
+        builder.println("$tracePrefix exit ${bb.name};")
 
         insertedInsts.addAll(builder.insns)
         bb.insertBefore(inst, *builder.insns.toTypedArray())
@@ -71,7 +75,7 @@ class TraceInstrumenter(method: Method) : MethodVisitor(method), Loggable {
 
         val sout = SystemOutWrapper("sout")
         val printer = ValuePrinter()
-        sout.print("${tracePrefix} branch ${bb.name}; ${condition.lhv.name} == ")
+        sout.print("$tracePrefix branch ${bb.name}; ${condition.lhv.name} == ")
         val lhv = printer.print(condition.lhv)
         val rhv = printer.print(condition.rhv)
         sout.print(lhv)
@@ -89,7 +93,7 @@ class TraceInstrumenter(method: Method) : MethodVisitor(method), Loggable {
         val bb = inst.parent!!
 
         val builder = SystemOutWrapper("sout")
-        builder.print("${tracePrefix} switch ${bb.name}; ${inst.key.name} == ")
+        builder.print("$tracePrefix switch ${bb.name}; ${inst.key.name} == ")
         val printer = ValuePrinter()
         val str = printer.print(inst.key)
         builder.print(str)
@@ -105,7 +109,7 @@ class TraceInstrumenter(method: Method) : MethodVisitor(method), Loggable {
         val bb = inst.parent!!
 
         val builder = SystemOutWrapper("sout")
-        builder.print("${tracePrefix} tableswitch ${bb.name}; ${inst.index.name} == ")
+        builder.print("$tracePrefix tableswitch ${bb.name}; ${inst.index.name} == ")
         val printer = ValuePrinter()
         val str = printer.print(inst.index)
         builder.print(str)
@@ -121,7 +125,7 @@ class TraceInstrumenter(method: Method) : MethodVisitor(method), Loggable {
         super.visitBasicBlock(bb)
 
         val builder = SystemOutWrapper("sout")
-        builder.println("${tracePrefix} enter ${bb.name};")
+        builder.println("$tracePrefix enter ${bb.name};")
 
         insertedInsts.addAll(builder.insns)
         bb.insertBefore(bb.first(), *builder.insns.toTypedArray())
@@ -133,14 +137,14 @@ class TraceInstrumenter(method: Method) : MethodVisitor(method), Loggable {
         val methodName = method.getPrototype().replace('/', '.')
 
         val builder = SystemOutWrapper("sout")
-        builder.println("${tracePrefix} enter $methodName;")
+        builder.println("$tracePrefix enter $methodName;")
 
         val args = method.desc.args
         val printer = ValuePrinter()
         if (!method.isStatic()) {
             val thisType = TF.getRefType(method.`class`)
             val `this` = VF.getThis(thisType)
-            builder.print("${tracePrefix} instance $methodName; this == ")
+            builder.print("$tracePrefix instance $methodName; this == ")
             val str = printer.print(`this`)
             builder.print(str)
             builder.println(";")

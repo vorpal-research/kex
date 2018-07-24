@@ -39,7 +39,7 @@ class $self : ${solver}SMTContext {
             val maxLocal = max(default.localPointer, choices.map { it.value.localPointer }.max() ?: 0)
             val maxStatic = max(default.staticPointer, choices.map { it.value.staticPointer }.max() ?: 0)
 
-            val ids = mutableSetOf< String >()
+            val ids = hashSetOf< String >()
             ids.addAll(default.memories.keys)
             choices.values.forEach { ctx ->
                 ids.addAll(ctx.memories.keys)
@@ -56,7 +56,7 @@ class $self : ${solver}SMTContext {
     val factory: $factory
     private var localPointer: Int
     private var staticPointer: Int
-    private var initialMemories = mutableMapOf< String, VersionedMemory >()
+    private var initialMemories = hashMapOf< String, VersionedMemory >()
     private var memories: MutableMap< String, VersionedMemory >
 
     constructor(factory: $factory, localPointer: Int, staticPointer: Int,

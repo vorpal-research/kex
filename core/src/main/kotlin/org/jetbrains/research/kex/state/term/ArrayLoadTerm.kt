@@ -6,15 +6,15 @@ import org.jetbrains.research.kfg.type.ArrayType
 import org.jetbrains.research.kfg.type.Type
 
 class ArrayLoadTerm(type: Type, arrayRef: Term) : Term("", type, listOf(arrayRef)) {
-    fun getArrayRef() = subterms[0]
+    val arrayRef get() = subterms[0]
 
-    override fun print() = "*(${getArrayRef()})"
+    override fun print() = "*($arrayRef)"
 
     override fun <T: Transformer<T>> accept(t: Transformer<T>): Term {
-        val arrayRef = t.transform(getArrayRef())
+        val tarrayRef = t.transform(arrayRef)
         return when {
-            arrayRef == getArrayRef() -> this
-            else -> t.tf.getArrayLoad(type, arrayRef)
+            tarrayRef == arrayRef -> this
+            else -> t.tf.getArrayLoad(type, tarrayRef)
         }
     }
 }

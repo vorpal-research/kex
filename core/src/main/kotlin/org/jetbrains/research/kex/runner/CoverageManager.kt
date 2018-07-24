@@ -9,8 +9,8 @@ data class BlockInfo internal constructor(val bb: BasicBlock, val predecessor: B
     var outputAction: BlockExitAction? = null
         internal set
 
-    fun hasPredecessor() = predecessor != null
-    fun hasOutput() = outputAction != null
+    val hasPredecessor get() = predecessor != null
+    val hasOutput get() = outputAction != null
 }
 
 class MethodInfo internal constructor(val method: Method, val instance: ActionValue?,
@@ -30,26 +30,27 @@ class MethodInfo internal constructor(val method: Method, val instance: ActionVa
 
             val infos = Stack<Info>()
             val methodStack = Stack<Method>()
-            val result = mutableListOf<MethodInfo>()
+            val result = arrayListOf<MethodInfo>()
             var previousBlock: BlockInfo? = null
+
             for (action in actions) {
                 when (action) {
                     is MethodEntry -> {
                         methodStack.push(action.method)
-                        infos.push(Info(null, arrayOf(), mutableMapOf(), null, null, exception))
+                        infos.push(Info(null, arrayOf(), hashMapOf(), null, null, exception))
                     }
                     is MethodInstance -> {
-                        assert(methodStack.peek() == action.method, { log.error("Incorrect action format: Instance action for wrong method") })
+                        require(methodStack.peek() == action.method) { log.error("Incorrect action format: Instance action for wrong method") }
                         val info = infos.peek()
                         info.instance = action.instance.rhv
                     }
                     is MethodArgs -> {
-                        assert(methodStack.peek() == action.method, { log.error("Incorrect action format: Arg action for wrong method") })
+                        require(methodStack.peek() == action.method) { log.error("Incorrect action format: Arg action for wrong method") }
                         val info = infos.peek()
                         info.args = action.args.map { it.rhv }.toTypedArray()
                     }
                     is MethodReturn -> {
-                        assert(methodStack.peek() == action.method, { log.error("Incorrect action format: Return action for wrong method") })
+                        require(methodStack.peek() == action.method) { log.error("Incorrect action format: Return action for wrong method") }
                         val info = infos.peek()
                         info.retval = action.`return`?.rhv
 
@@ -57,7 +58,7 @@ class MethodInfo internal constructor(val method: Method, val instance: ActionVa
                         infos.pop()
                     }
                     is MethodThrow -> {
-                        assert(methodStack.peek() == action.method, { log.error("Incorrect action format: Throw action for wrong method") })
+                        require(methodStack.peek() == action.method) { log.error("Incorrect action format: Throw action for wrong method") }
                         val info = infos.peek()
                         info.throwval = action.throwable.rhv
 
@@ -66,17 +67,17 @@ class MethodInfo internal constructor(val method: Method, val instance: ActionVa
                     }
                     is BlockEntryAction -> {
                         val bb = action.bb
-                        assert(methodStack.peek() == bb.parent, { log.error("Incorrect action format: Block action for wrong method") })
+                        require(methodStack.peek() == bb.parent) { log.error("Incorrect action format: Block action for wrong method") }
                         val info = infos.peek()
 
                         val bInfo = BlockInfo(bb, previousBlock)
                         previousBlock = bInfo
-                        info.blocks.getOrPut(bb, { mutableListOf() }).add(bInfo)
+                        info.blocks.getOrPut(bb, ::arrayListOf).add(bInfo)
                     }
                     is BlockExitAction -> {
                         val bb = action.bb
-                        assert(methodStack.peek() == bb.parent, { log.error("Incorrect action format: Block action for wrong method") })
-                        assert(previousBlock != null, { log.error("Incorrect action format: Block exit without entering") })
+                        require(methodStack.peek() == bb.parent) { log.error("Incorrect action format: Block action for wrong method") }
+                        requireNotNull(previousBlock) { log.error("Incorrect action format: Block exit without entering") }
                         previousBlock?.outputAction = action
                     }
                 }
@@ -92,26 +93,20 @@ class MethodInfo internal constructor(val method: Method, val instance: ActionVa
 }
 
 object CoverageManager {
-    private val methods = mutableMapOf<Method, MutableList<MethodInfo>>()
+    private val methods = hashMapOf<Method, MutableList<MethodInfo>>()
 
-    fun getMethodInfos(method: Method): List<MethodInfo> = methods.getOrPut(method, { mutableListOf() })
-    fun getBlockInfos(bb: BasicBlock): List<BlockInfo> = if (bb.parent != null) getMethodInfos(bb.parent!!).map {
-        it.blocks[bb] ?: listOf()
-    }.flatten() else listOf()
+    fun getMethodInfos(method: Method): List<MethodInfo> = methods.getOrPut(method, ::arrayListOf)
+    fun getBlockInfos(bb: BasicBlock): List<BlockInfo> = when {
+        bb.parent != null -> getMethodInfos(bb.parent!!).map { it.blocks[bb] ?: listOf() }.flatten()
+        else -> listOf()
+    }
 
-    fun addInfo(method: Method, info: MethodInfo) = methods.getOrPut(method, { mutableListOf() }).add(info)
+    fun addInfo(method: Method, info: MethodInfo) = methods.getOrPut(method, ::arrayListOf).add(info)
 
-    fun isCovered(bb: BasicBlock) = getBlockInfos(bb).fold(false) { acc, it -> acc or it.hasOutput() }
+    fun isCovered(bb: BasicBlock) = getBlockInfos(bb).fold(false) { acc, it -> acc or it.hasOutput }
     fun isPartlyCovered(method: Method): Boolean = method.basicBlocks.fold(false) { acc, bb -> acc or isCovered(bb) }
-    fun isBodyCovered(method: Method): Boolean {
-        val bodyBLocks = method.getBodyBlocks()
-        var res = true
-        for (it in bodyBLocks) {
-            val cov = isCovered(it)
-            res = res and cov
-        }
-        return res
-    }// = method.getBodyBlocks().map { isCovered(it) }.fold(true, { acc, it -> acc and it })
+    fun isBodyCovered(method: Method) = method.getBodyBlocks().map { isCovered(it) }.fold(true) { acc, it -> acc and it }
+
     fun isCatchCovered(method: Method) = method.getCatchBlocks().map { isCovered(it) }.fold(true) { acc, it -> acc and it }
     fun isFullCovered(method: Method) = isBodyCovered(method) and isCatchCovered(method)
 }

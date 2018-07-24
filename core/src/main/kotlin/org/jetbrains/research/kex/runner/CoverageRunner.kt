@@ -100,7 +100,10 @@ class CoverageRunner(val method: KfgMethod, val loader: ClassLoader) : Loggable 
     fun run() = repeat(runs) {
         if (CoverageManager.isBodyCovered(method)) return
         val (instance, args) = try {
-            val i = (if (method.isStatic()) null else random.generate(javaClass))
+            val i = when {
+                method.isStatic() -> null
+                else -> random.generate(javaClass)
+            }
             val a = javaMethod.genericParameterTypes.map { random.generate(it) }.toTypedArray()
             i to a
         } catch (e: GenerationException) {
@@ -124,7 +127,7 @@ class CoverageRunner(val method: KfgMethod, val loader: ClassLoader) : Loggable 
 //        val error = Scanner(ByteArrayInputStream(errorStream.toByteArray()))
 
         val parser = ActionParser()
-        val actions = mutableListOf<Action>()
+        val actions = arrayListOf<Action>()
         val tracePrefix = TraceInstrumenter.tracePrefix
         while (output.hasNextLine()) {
             val line = output.nextLine()

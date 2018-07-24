@@ -53,7 +53,7 @@ class $self< in Index : $Bitvector >(val inner: $Array< Byte_, Index >) : ${solv
     fun store(index: Index, element: $Bitvector): $self< Index > {
         val elementSize = element.getBitsize()
         var start = 0
-        val cases = mutableListOf< Pair< Index, Byte_ >>()
+        val cases = arrayListOf< Pair< Index, Byte_ >>()
         while (start < elementSize) {
             val hi = min(start + byteSize - 1, elementSize - 1)
             cases.add((index + start).uncheckedCastTo< Index >() to element.extract(hi, start).toBV(Byte_.getStaticSort(ctx)).uncheckedCastTo())

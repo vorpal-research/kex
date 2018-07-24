@@ -130,7 +130,7 @@ class Z3Solver(val ef: Z3ExprFactory) : AbstractSMTSolver {
         val memories = mutableMapOf<Int, Pair<MutableMap<Term, Term>, MutableMap<Term, Term>>>()
         val bounds =  mutableMapOf<Int, Pair<MutableMap<Term, Term>, MutableMap<Term, Term>>>()
 
-        ptrs.forEach { ptr ->
+        for (ptr in ptrs) {
             val memspace = (ptr.type as? Memspaced<*>)?.memspace ?: 0
 
             val startMem = ctx.getInitialMemory(memspace)

@@ -6,12 +6,12 @@ import org.jetbrains.research.kfg.type.Type
 import org.jetbrains.research.kex.util.defaultHashCode
 
 class InstanceOfTerm(val checkedType: Type, operand: Term) : Term("", TF.getBoolType(), listOf(operand)) {
-    fun getOperand() = subterms[0]
-    override fun print() = "${getOperand()} instanceof $checkedType"
+    val operand get() = subterms[0]
+    override fun print() = "$operand instanceof $checkedType"
 
     override fun <T: Transformer<T>> accept(t: Transformer<T>): Term {
-        val operand = t.transform(getOperand())
-        return if (operand == getOperand()) this else t.tf.getInstanceOf(checkedType, operand)
+        val toperand = t.transform(operand)
+        return if (toperand == operand) this else t.tf.getInstanceOf(checkedType, toperand)
     }
 
     override fun hashCode() = defaultHashCode(super.hashCode(), checkedType)

@@ -27,18 +27,18 @@ class PredicateBuilderTest : KexTest() {
                 assertTrue(predicate is EqualityPredicate)
                 predicate as EqualityPredicate
 
-                val lhv = predicate.getLhv()
+                val lhv = predicate.lhv
                 assertEquals(lhv, tf.getValue(inst))
 
-                val rhv = predicate.getRhv()
+                val rhv = predicate.rhv
                 assertTrue(rhv is ArrayLoadTerm)
                 rhv as ArrayLoadTerm
 
-                val ref = rhv.getArrayRef()
+                val ref = rhv.arrayRef
                 assertTrue(ref is ArrayIndexTerm)
                 ref as ArrayIndexTerm
-                assertEquals(ref.getArrayRef(), tf.getValue(inst.arrayRef))
-                assertEquals(ref.getIndex(), tf.getValue(inst.index))
+                assertEquals(ref.arrayRef, tf.getValue(inst.arrayRef))
+                assertEquals(ref.index, tf.getValue(inst.index))
             }
 
             override fun visitArrayStoreInst(inst: ArrayStoreInst) {
@@ -48,14 +48,14 @@ class PredicateBuilderTest : KexTest() {
                 assertTrue(predicate is ArrayStorePredicate)
                 predicate as ArrayStorePredicate
 
-                val value = predicate.getValue()
+                val value = predicate.value
                 assertEquals(value, tf.getValue(inst.value))
 
-                val ref = predicate.getArrayRef()
+                val ref = predicate.arrayRef
                 assertTrue(ref is ArrayIndexTerm)
                 ref as ArrayIndexTerm
-                assertEquals(ref.getArrayRef(), tf.getValue(inst.arrayRef))
-                assertEquals(ref.getIndex(), tf.getValue(inst.index))
+                assertEquals(ref.arrayRef, tf.getValue(inst.arrayRef))
+                assertEquals(ref.index, tf.getValue(inst.index))
             }
 
             override fun visitBinaryInst(inst: BinaryInst) {
@@ -65,16 +65,16 @@ class PredicateBuilderTest : KexTest() {
                 assertTrue(predicate is EqualityPredicate)
                 predicate as EqualityPredicate
 
-                assertEquals(predicate.getLhv(), tf.getValue(inst))
+                assertEquals(predicate.lhv, tf.getValue(inst))
 
-                val rhv = predicate.getRhv()
+                val rhv = predicate.rhv
                 assertTrue(rhv is BinaryTerm)
                 rhv as BinaryTerm
 
                 assertEquals(rhv.opcode, inst.opcode)
                 assertEquals(mergeTypes(setOf(inst.lhv.type, inst.rhv.type)), rhv.type)
-                assertEquals(rhv.getLhv(), tf.getValue(inst.lhv))
-                assertEquals(rhv.getRhv(), tf.getValue(inst.rhv))
+                assertEquals(rhv.lhv, tf.getValue(inst.lhv))
+                assertEquals(rhv.rhv, tf.getValue(inst.rhv))
             }
 
             override fun visitBranchInst(inst: BranchInst) {
@@ -108,7 +108,7 @@ class PredicateBuilderTest : KexTest() {
                     val callee = tf.getValue(inst.callee)
                     tf.getCall(inst.method, callee, args)
                 }
-                assertEquals(callTerm, predicate.getCall())
+                assertEquals(callTerm, predicate.call)
             }
 
             override fun visitCastInst(inst: CastInst) {
@@ -118,8 +118,8 @@ class PredicateBuilderTest : KexTest() {
                 assertTrue(predicate is EqualityPredicate)
                 predicate as EqualityPredicate
 
-                assertEquals(predicate.getLhv(), tf.getValue(inst))
-                assertEquals(predicate.getRhv(), tf.getCast(inst.type, tf.getValue(inst.operand)))
+                assertEquals(predicate.lhv, tf.getValue(inst))
+                assertEquals(predicate.rhv, tf.getCast(inst.type, tf.getValue(inst.operand)))
             }
 
             override fun visitCmpInst(inst: CmpInst) {
@@ -129,8 +129,8 @@ class PredicateBuilderTest : KexTest() {
                 assertTrue(predicate is EqualityPredicate)
                 predicate as EqualityPredicate
 
-                assertEquals(predicate.getLhv(), tf.getValue(inst))
-                assertEquals(predicate.getRhv(), tf.getCmp(inst.opcode, tf.getValue(inst.lhv), tf.getValue(inst.rhv)))
+                assertEquals(predicate.lhv, tf.getValue(inst))
+                assertEquals(predicate.rhv, tf.getCmp(inst.opcode, tf.getValue(inst.lhv), tf.getValue(inst.rhv)))
             }
 
             override fun visitFieldLoadInst(inst: FieldLoadInst) {
@@ -140,22 +140,22 @@ class PredicateBuilderTest : KexTest() {
                 assertTrue(predicate is EqualityPredicate)
                 predicate as EqualityPredicate
 
-                assertEquals(predicate.getLhv(), tf.getValue(inst))
+                assertEquals(predicate.lhv, tf.getValue(inst))
 
-                val rhv = predicate.getRhv()
+                val rhv = predicate.rhv
                 assertTrue(rhv is FieldLoadTerm)
                 rhv as FieldLoadTerm
 
-                val field = rhv.getField()
+                val field = rhv.field
                 assertTrue(field is FieldTerm)
                 field as FieldTerm
 
-                assertEquals(rhv.isStatic(), inst.isStatic)
-                assertEquals(field.getOwner(), when {
+                assertEquals(rhv.isStatic, inst.isStatic)
+                assertEquals(field.owner, when {
                     inst.isStatic -> tf.getClass(inst.field.`class`)
                     else -> tf.getValue(inst.owner)
                 })
-                assertEquals(field.getFieldName(), tf.getString(inst.field.name))
+                assertEquals(field.fieldName, tf.getString(inst.field.name))
             }
 
             override fun visitFieldStoreInst(inst: FieldStoreInst) {
@@ -165,18 +165,18 @@ class PredicateBuilderTest : KexTest() {
                 assertTrue(predicate is FieldStorePredicate)
                 predicate as FieldStorePredicate
 
-                assertEquals(predicate.getValue(), tf.getValue(inst.value))
+                assertEquals(predicate.value, tf.getValue(inst.value))
 
-                val rhv = predicate.getField()
+                val rhv = predicate.field
                 assertTrue(rhv is FieldTerm)
                 rhv as FieldTerm
 
-                assertEquals(rhv.isStatic(), inst.isStatic)
-                assertEquals(rhv.getOwner(), when {
+                assertEquals(rhv.isStatic, inst.isStatic)
+                assertEquals(rhv.owner, when {
                     inst.isStatic -> tf.getClass(inst.field.`class`)
                     else -> tf.getValue(inst.owner)
                 })
-                assertEquals(rhv.getFieldName(), tf.getString(inst.field.name))
+                assertEquals(rhv.fieldName, tf.getString(inst.field.name))
             }
 
             override fun visitInstanceOfInst(inst: InstanceOfInst) {
@@ -186,8 +186,8 @@ class PredicateBuilderTest : KexTest() {
                 assertTrue(predicate is EqualityPredicate)
                 predicate as EqualityPredicate
 
-                assertEquals(predicate.getLhv(), tf.getValue(inst))
-                assertEquals(predicate.getRhv(), tf.getInstanceOf(inst.targetType, tf.getValue(inst.operand)))
+                assertEquals(predicate.lhv, tf.getValue(inst))
+                assertEquals(predicate.rhv, tf.getInstanceOf(inst.targetType, tf.getValue(inst.operand)))
             }
 
             override fun visitNewArrayInst(inst: NewArrayInst) {
@@ -197,10 +197,10 @@ class PredicateBuilderTest : KexTest() {
                 assertTrue(predicate is NewArrayPredicate)
                 predicate as NewArrayPredicate
 
-                assertEquals(predicate.getLhv(), tf.getValue(inst))
+                assertEquals(predicate.lhv, tf.getValue(inst))
 
                 val dimensions = inst.dimensions.map { tf.getValue(it) }
-                assertArrayEquals(predicate.getDimentions().toTypedArray(), dimensions.toTypedArray())
+                assertArrayEquals(predicate.dimentions.toTypedArray(), dimensions.toTypedArray())
             }
 
             override fun visitNewInst(inst: NewInst) {
@@ -210,7 +210,7 @@ class PredicateBuilderTest : KexTest() {
                 assertTrue(predicate is NewPredicate)
                 predicate as NewPredicate
 
-                assertEquals(predicate.getLhv(), tf.getValue(inst))
+                assertEquals(predicate.lhv, tf.getValue(inst))
             }
 
             override fun visitPhiInst(inst: PhiInst) {
@@ -231,18 +231,18 @@ class PredicateBuilderTest : KexTest() {
                 assertTrue(predicate is EqualityPredicate)
                 predicate as EqualityPredicate
 
-                assertEquals(predicate.getLhv(), tf.getValue(inst))
-                val rhv = predicate.getRhv()
+                assertEquals(predicate.lhv, tf.getValue(inst))
+                val rhv = predicate.rhv
                 when (inst.opcode) {
                     UnaryOpcode.NEG -> {
                         assertTrue(rhv is NegTerm)
                         rhv as NegTerm
-                        assertEquals(rhv.getOperand(), tf.getValue(inst.operand))
+                        assertEquals(rhv.operand, tf.getValue(inst.operand))
                     }
                     UnaryOpcode.LENGTH -> {
                         assertTrue(rhv is ArrayLengthTerm)
                         rhv as ArrayLengthTerm
-                        assertEquals(rhv.getArrayRef(), tf.getValue(inst.operand))
+                        assertEquals(rhv.arrayRef, tf.getValue(inst.operand))
                     }
                 }
             }
@@ -292,8 +292,8 @@ class PredicateBuilderTest : KexTest() {
                     assertTrue(predicate is EqualityPredicate)
                     predicate as EqualityPredicate
 
-                    val returnValue = predicate.getLhv()
-                    val returnableValue = predicate.getRhv()
+                    val returnValue = predicate.lhv
+                    val returnableValue = predicate.rhv
 
                     assertEquals(returnValue, tf.getReturn(inst.returnType, builder.method))
                     assertEquals(returnableValue, tf.getValue(inst.returnValue))

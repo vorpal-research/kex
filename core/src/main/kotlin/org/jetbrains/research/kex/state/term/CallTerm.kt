@@ -8,13 +8,13 @@ import org.jetbrains.research.kfg.type.Type
 class CallTerm(type: Type, owner: Term, val method: Method, operands: List<Term>)
     : Term("", type, listOf(owner).plus(operands)) {
 
-    fun getOwner() = subterms[0]
-    fun getArguments() = subterms.drop(1)
+    val owner get() = subterms[0]
+    val arguments get() = subterms.drop(1)
 
     override fun print(): String {
         val sb = StringBuilder()
-        sb.append("${getOwner()}.${method.name}(")
-        val arguments = getArguments()
+        sb.append("${owner}.${method.name}(")
+        val arguments = arguments
         arguments.take(1).forEach { sb.append(it) }
         arguments.drop(1).forEach { sb.append(", $it") }
         sb.append(")")
@@ -22,11 +22,11 @@ class CallTerm(type: Type, owner: Term, val method: Method, operands: List<Term>
     }
 
     override fun <T: Transformer<T>> accept(t: Transformer<T>): Term {
-        val owner = t.transform(getOwner())
-        val arguments = getArguments().map { t.transform(it) }
+        val towner = t.transform(owner)
+        val targuments = arguments.map { t.transform(it) }
         return when {
-            owner == getOwner() && arguments.contentEquals(getArguments()) -> this
-            else -> t.tf.getCall(method, owner, arguments)
+            towner == owner && targuments.contentEquals(arguments) -> this
+            else -> t.tf.getCall(method, towner, targuments)
         }
     }
 }
