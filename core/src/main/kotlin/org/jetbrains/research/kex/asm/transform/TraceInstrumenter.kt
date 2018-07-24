@@ -23,9 +23,9 @@ class TraceInstrumenter(method: Method) : MethodVisitor(method), Loggable {
         builder.println("${tracePrefix} exit ${bb.name};")
         builder.print("${tracePrefix} return ${method.getPrototype().replace('/', '.')}; ")
         val printer = ValuePrinter()
-        if (inst.hasReturnValue()) {
-            builder.print("${inst.getReturnValue().name} == ")
-            val str = printer.print(inst.getReturnValue())
+        if (inst.hasReturnValue) {
+            builder.print("${inst.returnValue.name} == ")
+            val str = printer.print(inst.returnValue)
             builder.print(str)
         } else {
             builder.print("void")
@@ -42,10 +42,10 @@ class TraceInstrumenter(method: Method) : MethodVisitor(method), Loggable {
         val bb = inst.parent!!
 
         val builder = SystemOutWrapper("sout")
-        builder.print("${tracePrefix} throw ${method.getPrototype().replace('/', '.')}; ")
+        builder.print("$tracePrefix throw ${method.getPrototype().replace('/', '.')}; ")
         val printer = ValuePrinter()
-        builder.print("${inst.getThrowable().name} == ")
-        val str = printer.print(inst.getThrowable())
+        builder.print("${inst.throwable.name} == ")
+        val str = printer.print(inst.throwable)
         builder.print(str)
         builder.println(";")
 
@@ -66,16 +66,16 @@ class TraceInstrumenter(method: Method) : MethodVisitor(method), Loggable {
     }
 
     override fun visitBranchInst(inst: BranchInst) {
-        val condition = inst.getCond() as CmpInst
+        val condition = inst.cond as CmpInst
         val bb = inst.parent!!
 
         val sout = SystemOutWrapper("sout")
         val printer = ValuePrinter()
-        sout.print("${tracePrefix} branch ${bb.name}; ${condition.getLhv().name} == ")
-        val lhv = printer.print(condition.getLhv())
-        val rhv = printer.print(condition.getRhv())
+        sout.print("${tracePrefix} branch ${bb.name}; ${condition.lhv.name} == ")
+        val lhv = printer.print(condition.lhv)
+        val rhv = printer.print(condition.rhv)
         sout.print(lhv)
-        sout.print("; ${condition.getRhv().name} == ")
+        sout.print("; ${condition.rhv.name} == ")
         sout.print(rhv)
         sout.println(";")
 
@@ -89,9 +89,9 @@ class TraceInstrumenter(method: Method) : MethodVisitor(method), Loggable {
         val bb = inst.parent!!
 
         val builder = SystemOutWrapper("sout")
-        builder.print("${tracePrefix} switch ${bb.name}; ${inst.getKey().name} == ")
+        builder.print("${tracePrefix} switch ${bb.name}; ${inst.key.name} == ")
         val printer = ValuePrinter()
-        val str = printer.print(inst.getKey())
+        val str = printer.print(inst.key)
         builder.print(str)
         builder.println(";")
 
@@ -105,9 +105,9 @@ class TraceInstrumenter(method: Method) : MethodVisitor(method), Loggable {
         val bb = inst.parent!!
 
         val builder = SystemOutWrapper("sout")
-        builder.print("${tracePrefix} tableswitch ${bb.name}; ${inst.getIndex().name} == ")
+        builder.print("${tracePrefix} tableswitch ${bb.name}; ${inst.index.name} == ")
         val printer = ValuePrinter()
-        val str = printer.print(inst.getIndex())
+        val str = printer.print(inst.index)
         builder.print(str)
         builder.println(";")
 
@@ -124,7 +124,7 @@ class TraceInstrumenter(method: Method) : MethodVisitor(method), Loggable {
         builder.println("${tracePrefix} enter ${bb.name};")
 
         insertedInsts.addAll(builder.insns)
-        bb.insertBefore(bb.front(), *builder.insns.toTypedArray())
+        bb.insertBefore(bb.first(), *builder.insns.toTypedArray())
     }
 
     override fun visit() {
@@ -158,7 +158,7 @@ class TraceInstrumenter(method: Method) : MethodVisitor(method), Loggable {
 
         insertedInsts.addAll(printer.insns)
         insertedInsts.addAll(builder.insns)
-        bb.insertBefore(bb.front(), *builder.insns.toTypedArray())
-        bb.insertBefore(bb.front(), *printer.insns.toTypedArray())
+        bb.insertBefore(bb.first(), *builder.insns.toTypedArray())
+        bb.insertBefore(bb.first(), *printer.insns.toTypedArray())
     }
 }

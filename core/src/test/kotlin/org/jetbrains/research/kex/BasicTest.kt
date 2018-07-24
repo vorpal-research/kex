@@ -29,11 +29,11 @@ class BasicTest : KexTest() {
                 assertTrue(result is Result.SatResult)
 
                 inst as CallInst
-                val assertionsArray = inst.getArgs().first()
+                val assertionsArray = inst.args.first()
                 val assertions = method.flatten()
                         .mapNotNull { it as? ArrayStoreInst }
-                        .filter { it.getArrayRef() == assertionsArray }
-                        .map { it.getValue() }
+                        .filter { it.arrayRef == assertionsArray }
+                        .map { it.value }
 
                 val model = (result as Result.SatResult).model
                 log.debug("Acquired model: $model")
