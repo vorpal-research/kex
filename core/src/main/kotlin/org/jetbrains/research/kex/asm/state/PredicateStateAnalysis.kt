@@ -31,7 +31,7 @@ class PredicateStateAnalysis(method: Method) : MethodVisitor(method), Loggable {
 
                 active.add(current)
                 for (predecessor in current.predecessors) {
-                    if (!instructionStates.containsKey(predecessor.getTerminator())) queue.addLast(predecessor)
+                    if (!instructionStates.containsKey(predecessor.terminator)) queue.addLast(predecessor)
                 }
             }
             queue.pop()
@@ -75,7 +75,7 @@ class PredicateStateAnalysis(method: Method) : MethodVisitor(method), Loggable {
         for (predecessor in bb.predecessors) {
             val predState = StateBuilder(blockStates[predecessor] ?: continue)
 
-            val terminatorPredicate = predicateBuilder.terminatorPredicateMap[bb to predecessor.getTerminator()]
+            val terminatorPredicate = predicateBuilder.terminatorPredicateMap[bb to predecessor.terminator]
             if (terminatorPredicate != null) predState += terminatorPredicate
 
             for (phi in bb.instructions.mapNotNull { it as? PhiInst }) {

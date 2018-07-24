@@ -4,7 +4,7 @@ import org.jetbrains.research.kex.state.BasicState
 import org.jetbrains.research.kex.state.ChainState
 import org.jetbrains.research.kex.state.PredicateState
 
-class StateOptimizer : Transformer<StateOptimizer> {
+class Optimizer : Transformer<Optimizer> {
     private val cache = mutableMapOf<Pair<PredicateState, PredicateState>, PredicateState?>()
 
     override fun transformChainState(ps: ChainState): PredicateState {

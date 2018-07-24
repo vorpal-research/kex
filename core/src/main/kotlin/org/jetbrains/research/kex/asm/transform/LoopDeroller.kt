@@ -22,10 +22,9 @@ class LoopDeroller(method: Method) : LoopVisitor(method), Loggable {
     override fun visitLoop(loop: Loop) {
         super.visitLoop(loop)
         val header = loop.header
-        val preheader = loop.getPreheader()
-        val latch = loop.getLatch()
-//        assert(header.successors.size == 2, { log.error("Loop header have too many successors") })
-        val exit = loop.getLoopExits().first()
+        val preheader = loop.preheader
+        val latch = loop.latch
+        val exit = loop.loopExits.first()
 
         val (order, _) = TopologicalSorter(loop.body).sort(header)
         val blockOrder = order.filter { it in loop.body }.reversed()
@@ -52,7 +51,7 @@ class LoopDeroller(method: Method) : LoopVisitor(method), Loggable {
 
             for ((original, derolled) in currentBlocks) {
                 if (original == header) {
-                    predecessor.getTerminator().replaceUsesOf(prevHeader, derolled)
+                    predecessor.terminator.replaceUsesOf(prevHeader, derolled)
                     predecessor.removeSuccessor(prevHeader)
                     predecessor.addSuccessors(derolled)
                     derolled.addPredecessor(predecessor)
@@ -80,9 +79,9 @@ class LoopDeroller(method: Method) : LoopVisitor(method), Loggable {
                     }
                     if (updated is PhiInst && block == header) {
                         val map = mapOf(currentBlocks.getValue(latch) to predecessor)
-                        val previousMap = updated.getIncomings()
+                        val previousMap = updated.incomings
                         map.forEach { o, t -> updated.replaceUsesOf(o, t) }
-                        if (updated.getPredecessors().toSet().size == 1) {
+                        if (updated.predecessors.toSet().size == 1) {
                             val actual = previousMap.getValue(predecessor)
                             updated.replaceAllUsesWith(actual)
                             currentInsts[inst] = actual
@@ -93,7 +92,7 @@ class LoopDeroller(method: Method) : LoopVisitor(method), Loggable {
             for (it in currentBlocks.values.flatten()) {
                 if (it is PhiInst) {
                     val bb = it.parent!!
-                    val incomings = it.getIncomings().filter { it.key in bb.predecessors }
+                    val incomings = it.incomings.filter { it.key in bb.predecessors }
                     val phiValue = if (incomings.size == 1) {
                         bb.remove(it)
                         incomings.values.first()
@@ -126,7 +125,7 @@ class LoopDeroller(method: Method) : LoopVisitor(method), Loggable {
             for ((_, derolled) in currentBlocks) loop.parent?.addBlock(derolled)
         }
         predecessor.replaceSuccessorUsesOf(prevHeader, exit)
-        predecessor.getTerminator().replaceUsesOf(prevHeader, exit)
+        predecessor.terminator.replaceUsesOf(prevHeader, exit)
         predecessor.addSuccessors(exit)
         body.forEach { block ->
             block.predecessors.toTypedArray().forEach {
@@ -149,18 +148,18 @@ class LoopDeroller(method: Method) : LoopVisitor(method), Loggable {
 
     private fun getConstantTripCount(loop: Loop): Int {
         val header = loop.header
-        val preheader = loop.getPreheader()
-        val latch = loop.getLatch()
+        val preheader = loop.preheader
+        val latch = loop.latch
 
-        val branch = header.getTerminator() as? BranchInst ?: return -1
-        val cmp = branch.getCond() as? CmpInst ?: return -1
+        val branch = header.terminator as? BranchInst ?: return -1
+        val cmp = branch.cond as? CmpInst ?: return -1
         val (value, max) =
-                if (cmp.getLhv() is IntConstant) cmp.getRhv() to (cmp.getLhv() as IntConstant)
-                else if (cmp.getRhv() is IntConstant) cmp.getLhv() to (cmp.getRhv() as IntConstant)
+                if (cmp.lhv is IntConstant) cmp.rhv to (cmp.lhv as IntConstant)
+                else if (cmp.rhv is IntConstant) cmp.lhv to (cmp.rhv as IntConstant)
                 else return -1
 
         val (init, updated) = if (value is PhiInst) {
-            val incomings = value.getIncomings()
+            val incomings = value.incomings
             assert(incomings.size == 2, { log.error("Unexpected number of header incomings") })
             incomings.getValue(preheader) to incomings.getValue(latch)
         } else return -1
@@ -169,8 +168,8 @@ class LoopDeroller(method: Method) : LoopVisitor(method), Loggable {
 
         val update = if (updated is BinaryInst) {
             val (updateValue, updateSize) =
-                    if (updated.getRhv() is IntConstant) updated.getLhv() to (updated.getRhv() as IntConstant)
-                    else if (updated.getLhv() is IntConstant) updated.getRhv() to (updated.getLhv() as IntConstant)
+                    if (updated.rhv is IntConstant) updated.lhv to (updated.rhv as IntConstant)
+                    else if (updated.lhv is IntConstant) updated.rhv to (updated.lhv as IntConstant)
                     else return -1
             if (updateValue != value) return -1
             if (init.value > max.value && updated.opcode is BinaryOpcode.Sub) updateSize
