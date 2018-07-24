@@ -1,0 +1,4 @@
+#* @implicitly included *#
+#* @vtlvariable name="solver" type="java.lang.String" *#
+#* @vtlvariable name="importPackage" type="java.lang.String" *#
+#* @vtlvariable name="packageName" type="java.lang.String" *#
