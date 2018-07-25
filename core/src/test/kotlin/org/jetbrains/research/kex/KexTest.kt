@@ -5,7 +5,6 @@ import org.jetbrains.research.kex.asm.transform.LoopDeroller
 import org.jetbrains.research.kex.config.FileConfig
 import org.jetbrains.research.kex.config.GlobalConfig
 import org.jetbrains.research.kex.config.RuntimeConfig
-import org.jetbrains.research.kex.util.Loggable
 import org.jetbrains.research.kfg.CM
 import org.jetbrains.research.kfg.Package
 import org.jetbrains.research.kfg.analysis.LoopAnalysis
@@ -16,7 +15,7 @@ import org.jetbrains.research.kfg.ir.value.instruction.Instruction
 import org.jetbrains.research.kfg.util.Flags
 import java.util.jar.JarFile
 
-abstract class KexTest : Loggable {
+abstract class KexTest {
     val packageName = "org/jetbrains/research/kex/test"
 
     init {

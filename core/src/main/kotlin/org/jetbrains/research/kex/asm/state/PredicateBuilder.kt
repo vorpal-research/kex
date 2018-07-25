@@ -4,7 +4,7 @@ import org.jetbrains.research.kex.state.predicate.Predicate
 import org.jetbrains.research.kex.state.predicate.PredicateFactory
 import org.jetbrains.research.kex.state.predicate.PredicateType
 import org.jetbrains.research.kex.state.term.TermFactory
-import org.jetbrains.research.kex.util.Loggable
+import org.jetbrains.research.kex.util.log
 import org.jetbrains.research.kex.util.unreachable
 import org.jetbrains.research.kfg.ir.BasicBlock
 import org.jetbrains.research.kfg.ir.Method
@@ -12,7 +12,7 @@ import org.jetbrains.research.kfg.ir.value.IntConstant
 import org.jetbrains.research.kfg.ir.value.instruction.*
 import org.jetbrains.research.kfg.visitor.MethodVisitor
 
-class PredicateBuilder(method: Method) : MethodVisitor(method), Loggable {
+class PredicateBuilder(method: Method) : MethodVisitor(method) {
     val tf = TermFactory
     val pf = PredicateFactory
     val predicateMap = hashMapOf<Instruction, Predicate>()

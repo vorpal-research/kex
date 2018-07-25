@@ -5,8 +5,8 @@ import org.jetbrains.research.kex.state.term.Term
 
 class Slicer(val state: PredicateState, val query: PredicateState) : Transformer<Slicer> {
     val aa = AliasAnalyzer()
-    val silceVars = mutableSetOf<Term>()
-    val slicePtrs = mutableSetOf<Term>()
+    val silceVars = hashSetOf<Term>()
+    val slicePtrs = hashSetOf<Term>()
 
 
     init {

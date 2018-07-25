@@ -4,15 +4,15 @@ import org.jetbrains.research.kex.asm.state.PredicateStateAnalysis
 import org.jetbrains.research.kex.asm.transform.LoopDeroller
 import org.jetbrains.research.kex.asm.transform.TraceInstrumenter
 import org.jetbrains.research.kex.config.CmdConfig
-import org.jetbrains.research.kex.config.GlobalConfig
 import org.jetbrains.research.kex.config.FileConfig
+import org.jetbrains.research.kex.config.GlobalConfig
 import org.jetbrains.research.kex.config.RuntimeConfig
 import org.jetbrains.research.kex.runner.CoverageManager
 import org.jetbrains.research.kex.runner.CoverageRunner
 import org.jetbrains.research.kex.smt.Checker
 import org.jetbrains.research.kex.smt.Result
 import org.jetbrains.research.kex.util.debug
-import org.jetbrains.research.kex.util.loggerFor
+import org.jetbrains.research.kex.util.log
 import org.jetbrains.research.kfg.CM
 import org.jetbrains.research.kfg.Package
 import org.jetbrains.research.kfg.analysis.IRVerifier
@@ -26,8 +26,6 @@ import java.net.URLClassLoader
 import java.util.jar.JarFile
 
 fun main(args: Array<String>) {
-    val log = loggerFor("org.jetbrains.research.kex.Main")
-
     val config = GlobalConfig
     val cmd = CmdConfig(args)
     val properties = cmd.getCmdValue( "config", "kex.ini")

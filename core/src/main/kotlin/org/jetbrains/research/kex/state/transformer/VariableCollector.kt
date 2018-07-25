@@ -3,7 +3,7 @@ package org.jetbrains.research.kex.state.transformer
 import org.jetbrains.research.kex.state.term.*
 
 class VariableCollector : Transformer<VariableCollector> {
-    val variables = mutableSetOf<Term>()
+    val variables = hashSetOf<Term>()
 
     override fun transformArgumentTerm(term: ArgumentTerm): Term {
         variables.add(term)

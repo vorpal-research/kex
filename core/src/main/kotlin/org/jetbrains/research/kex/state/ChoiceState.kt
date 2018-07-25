@@ -16,7 +16,7 @@ class ChoiceState(val choices: List<PredicateState>) : PredicateState(), Iterabl
     override fun fmap(transform: (PredicateState) -> PredicateState): PredicateState = ChoiceState(choices.map { transform(it) })
     override fun reverse() = ChoiceState(choices.map { it.reverse() })
 
-    override fun size() = choices.fold(0) { acc, it -> acc + it.size() }
+    override val size get() = choices.fold(0) { acc, it -> acc + it.size }
 
     override fun hashCode() = defaultHashCode(*choices.toTypedArray())
     override fun equals(other: Any?): Boolean {

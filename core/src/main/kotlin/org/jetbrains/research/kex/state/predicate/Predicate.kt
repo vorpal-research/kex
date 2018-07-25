@@ -3,7 +3,6 @@ package org.jetbrains.research.kex.state.predicate
 import org.jetbrains.research.kex.state.Sealed
 import org.jetbrains.research.kex.state.term.Term
 import org.jetbrains.research.kex.state.transformer.Transformer
-import org.jetbrains.research.kex.util.Loggable
 import org.jetbrains.research.kex.util.contentEquals
 import org.jetbrains.research.kex.util.defaultHashCode
 import org.jetbrains.research.kfg.ir.Location
@@ -33,7 +32,7 @@ sealed class PredicateType(val name: String) {
     }
 }
 
-abstract class Predicate(val type: PredicateType, val location: Location, val operands: List<Term>) : Sealed, Loggable {
+abstract class Predicate(val type: PredicateType, val location: Location, val operands: List<Term>) : Sealed {
     companion object {
         val predicates = mapOf<String, Class<*>>(
                 "ArrayStore" to ArrayStorePredicate::class.java,

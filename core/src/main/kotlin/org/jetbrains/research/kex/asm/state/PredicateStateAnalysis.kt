@@ -1,18 +1,22 @@
 package org.jetbrains.research.kex.asm.state
 
-import org.jetbrains.research.kex.state.*
-import org.jetbrains.research.kex.util.Loggable
+import org.jetbrains.research.kex.state.BasicState
+import org.jetbrains.research.kex.state.ChoiceState
+import org.jetbrains.research.kex.state.PredicateState
+import org.jetbrains.research.kex.state.StateBuilder
+import org.jetbrains.research.kex.util.log
 import org.jetbrains.research.kex.util.unreachable
 import org.jetbrains.research.kfg.ir.BasicBlock
 import org.jetbrains.research.kfg.ir.Method
-import org.jetbrains.research.kfg.ir.value.instruction.*
+import org.jetbrains.research.kfg.ir.value.instruction.Instruction
+import org.jetbrains.research.kfg.ir.value.instruction.PhiInst
 import org.jetbrains.research.kfg.util.DominatorTree
 import org.jetbrains.research.kfg.util.DominatorTreeBuilder
 import org.jetbrains.research.kfg.util.TopologicalSorter
 import org.jetbrains.research.kfg.visitor.MethodVisitor
 import java.util.*
 
-class PredicateStateAnalysis(method: Method) : MethodVisitor(method), Loggable {
+class PredicateStateAnalysis(method: Method) : MethodVisitor(method) {
     private val blockStates = hashMapOf<BasicBlock, PredicateState>()
     private val instructionStates = hashMapOf<Instruction, PredicateState>()
     private val initialState = BasicState()

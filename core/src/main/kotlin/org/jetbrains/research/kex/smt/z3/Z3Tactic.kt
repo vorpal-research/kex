@@ -4,7 +4,7 @@ import com.beust.klaxon.Converter
 import com.beust.klaxon.JsonValue
 import com.beust.klaxon.Klaxon
 import org.jetbrains.research.kex.config.GlobalConfig
-import org.jetbrains.research.kex.util.loggerFor
+import org.jetbrains.research.kex.util.log
 import org.jetbrains.research.kex.util.unreachable
 import java.io.File
 
@@ -31,7 +31,7 @@ class Z3Tactics(elements: Collection<Z3Tactic>) : ArrayList<Z3Tactic>(elements) 
         fun load(): Z3Tactics = fromJson(File(tacticsFile).readText())
 
         fun fromJson(json: String) = Z3Tactics(klaxon.parseArray(json)
-                ?: unreachable { loggerFor(Z3Tactics::class).error("Cannot parse Z3Tactics from string $json") })
+                ?: unreachable { log.error("Cannot parse Z3Tactics from string $json") })
     }
 }
 

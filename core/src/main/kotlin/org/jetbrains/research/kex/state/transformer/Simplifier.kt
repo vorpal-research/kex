@@ -12,8 +12,8 @@ class Simplifier : Transformer<Simplifier> {
     }
 
     override fun transformChainState(ps: ChainState) = when {
-        ps.base.isEmpty() -> ps.curr
-        ps.curr.isEmpty() -> ps.base
+        ps.base.isEmpty -> ps.curr
+        ps.curr.isEmpty -> ps.base
         else -> ps
     }
 }

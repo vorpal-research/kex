@@ -1,6 +1,7 @@
 package org.jetbrains.research.kex.asm.transform
 
 import org.jetbrains.research.kex.KexTest
+import org.jetbrains.research.kex.util.log
 import org.jetbrains.research.kfg.CM
 import org.jetbrains.research.kfg.analysis.IRVerifier
 import org.jetbrains.research.kfg.analysis.LoopAnalysis
@@ -14,7 +15,7 @@ class LoopDerollerTest : KexTest() {
     val `class` = CM.getByName(className)
 
     init {
-        assert(`class` is ConcreteClass) { log.error("Could not load class `$className`") }
+        require(`class` is ConcreteClass) { log.error("Could not load class `$className`") }
     }
 
     @Test

@@ -1,6 +1,6 @@
 package org.jetbrains.research.kex.runner
 
-import org.jetbrains.research.kex.util.loggerFor
+import org.jetbrains.research.kex.util.log
 import org.jetbrains.research.kfg.ir.BasicBlock
 import org.jetbrains.research.kfg.ir.Method
 import java.util.*
@@ -21,8 +21,6 @@ class MethodInfo internal constructor(val method: Method, val instance: ActionVa
 
     companion object {
         fun parse(actions: List<Action>, exception: Throwable?): List<MethodInfo> {
-            val log = loggerFor(this::class.java)
-
             class Info(var instance: ActionValue?,
                        var args: Array<ActionValue>, var blocks: MutableMap<BasicBlock, MutableList<BlockInfo>>,
                        var retval: ActionValue?, var throwval: ActionValue?,

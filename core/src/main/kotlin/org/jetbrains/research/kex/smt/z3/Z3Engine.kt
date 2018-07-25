@@ -3,8 +3,8 @@ package org.jetbrains.research.kex.smt.z3
 import com.microsoft.z3.*
 import org.jetbrains.research.kex.smt.SMTEngine
 import org.jetbrains.research.kex.util.castTo
+import org.jetbrains.research.kex.util.log
 import org.jetbrains.research.kex.util.unreachable
-import kotlin.math.exp
 
 object Z3Engine : SMTEngine<Context, Expr, Sort, FuncDecl>() {
     override fun getSort(ctx: Context, expr: Expr) = expr.sort
