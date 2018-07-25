@@ -47,4 +47,6 @@ class BasicState() : PredicateState(), Iterable<Predicate> {
     }
 
     override fun iterator() = preds.iterator()
+
+    override fun simplify(): PredicateState = this
 }

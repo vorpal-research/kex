@@ -6,7 +6,6 @@ import org.jetbrains.research.kex.state.predicate.PredicateType
 import org.jetbrains.research.kex.state.transformer.ConstantPropagator
 import org.jetbrains.research.kex.state.transformer.MemorySpacer
 import org.jetbrains.research.kex.state.transformer.Optimizer
-import org.jetbrains.research.kex.state.transformer.Simplifier
 import org.jetbrains.research.kex.util.log
 import org.jetbrains.research.kfg.ir.Method
 import org.jetbrains.research.kfg.ir.value.instruction.Instruction
@@ -17,7 +16,7 @@ class Checker(val method: Method, val psa: PredicateStateAnalysis) {
 
         val propagated = ConstantPropagator().transform(optimized)
         val memspaced = MemorySpacer(propagated).transform(propagated)
-        val simplified = Simplifier().transform(memspaced)
+        val simplified = memspaced.simplify()
         return simplified
     }
 
@@ -25,9 +24,17 @@ class Checker(val method: Method, val psa: PredicateStateAnalysis) {
         log.debug("Checking reachability of ${inst.print()}")
 
         val state = psa.getInstructionState(inst)
-        val path = state.filterByType(PredicateType.Path())
         val finalState = prepareState(state)
+
+        val path = finalState.filterByType(PredicateType.Path())
         val finalPath = prepareState(path)
+
+//        val aa = StensgaardAA()
+//        aa.transform(finalState)
+//        val slicer = Slicer(finalState, finalPath, aa)
+//        val sliced = slicer.transform(finalState)
+//        log.debug("State: $finalState")
+//        log.debug("Sliced: $sliced")
 
         log.debug("State: $finalState")
         log.debug("Path: $finalPath")
