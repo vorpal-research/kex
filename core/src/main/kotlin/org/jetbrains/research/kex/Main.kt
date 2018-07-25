@@ -33,7 +33,7 @@ fun main(args: Array<String>) {
 
     val jarName = cmd.getCmdValue("jar")
     val packageName = cmd.getCmdValue("package", "*")
-    assert(jarName != null, cmd::printHelp)
+    require(jarName != null, cmd::printHelp)
 
     val jar = JarFile(jarName)
     val `package` = Package(packageName.replace('.', '/'))
