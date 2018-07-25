@@ -9,6 +9,6 @@ fun exit(lazyMessage: () -> Any) = exit<Unit>(lazyMessage)
 fun <T> exit(message: String): T = exit<T>({ message })
 fun <T> exit(lazyMessage: () -> Any): T {
     lazyMessage()
-    assert(false)
+    require(false)
     TODO()
 }

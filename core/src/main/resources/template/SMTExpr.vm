@@ -134,15 +134,15 @@ else -> unreachable { log.error("Invalid operands of `${opcode.toLowerCase()}`: 
 #macro(constructors $class)
 #* @vtlvariable name="class" type="java.lang.String" *#
     constructor(ctx: $context, expr: $expr) : super(ctx, expr) {
-        assert(engine.is$class(ctx, expr)) { log.error("$class created from non-${class.toLowerCase()} expr") }
+        require(engine.is$class(ctx, expr)) { log.error("$class created from non-${class.toLowerCase()} expr") }
     }
 
     constructor(ctx: $context, expr: $expr, axiom: $expr) : super(ctx, expr, axiom) {
-        assert(engine.is$class(ctx, expr)) { log.error("$class created from non-${class.toLowerCase()} expr") }
+        require(engine.is$class(ctx, expr)) { log.error("$class created from non-${class.toLowerCase()} expr") }
     }
 
     constructor(other: $valexpr) : super(other) {
-        assert(engine.is$class(ctx, expr)) { log.error("$class created from non-${class.toLowerCase()} expr") }
+        require(engine.is$class(ctx, expr)) { log.error("$class created from non-${class.toLowerCase()} expr") }
     }
 #end
 
