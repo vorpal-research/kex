@@ -147,8 +147,10 @@ class Slicer(val state: PredicateState, query: PredicateState, val aa: AliasAnal
                             .forEach { addSliceTerm(it) }
                 }
                 addCFGDeps(predicate)
-                return predicate
+            } else {
+                removablePredicates.add(predicate)
             }
+            return predicate
         }
 
         val reciever = Predicate.getReciever(predicate)

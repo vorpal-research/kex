@@ -1,45 +1,48 @@
 package org.jetbrains.research.kex.smt
 
 import org.jetbrains.research.kex.asm.state.PredicateStateAnalysis
-import org.jetbrains.research.kex.state.PredicateState
+import org.jetbrains.research.kex.config.GlobalConfig
 import org.jetbrains.research.kex.state.predicate.PredicateType
-import org.jetbrains.research.kex.state.transformer.ConstantPropagator
-import org.jetbrains.research.kex.state.transformer.MemorySpacer
-import org.jetbrains.research.kex.state.transformer.Optimizer
+import org.jetbrains.research.kex.state.transformer.*
 import org.jetbrains.research.kex.util.log
 import org.jetbrains.research.kfg.ir.Method
 import org.jetbrains.research.kfg.ir.value.instruction.Instruction
 
-class Checker(val method: Method, val psa: PredicateStateAnalysis) {
-    private fun prepareState(state: PredicateState): PredicateState {
-        val optimized = Optimizer().transform(state)
+val isMemspacingEnabled = GlobalConfig.getBooleanValue("smt", "memspacing", true)
+val isSlicingEnabled = GlobalConfig.getBooleanValue("smt", "slicing", false)
 
-        val propagated = ConstantPropagator().transform(optimized)
-        val memspaced = MemorySpacer(propagated).transform(propagated)
-        val simplified = memspaced.simplify()
-        return simplified
-    }
+class Checker(val method: Method, val psa: PredicateStateAnalysis) {
 
     fun checkReachable(inst: Instruction): Result {
         log.debug("Checking reachability of ${inst.print()}")
 
-        val state = psa.getInstructionState(inst)
-        val finalState = prepareState(state)
+        var state = psa.getInstructionState(inst)
+        log.debug("State: $state")
 
-        val path = finalState.filterByType(PredicateType.Path())
-        val finalPath = prepareState(path)
+        state = Optimizer.transform(state).simplify()
+        state = ConstantPropagator.transform(state).simplify()
 
-//        val aa = StensgaardAA()
-//        aa.transform(finalState)
-//        val slicer = Slicer(finalState, finalPath, aa)
-//        val sliced = slicer.transform(finalState)
-//        log.debug("State: $finalState")
-//        log.debug("Sliced: $sliced")
+        if (isMemspacingEnabled) {
+            log.debug("Memspacing started...")
+            state = MemorySpacer(state).transform(state).simplify()
+            log.debug("Memspacing finished")
+        }
 
-        log.debug("State: $finalState")
-        log.debug("Path: $finalPath")
+        val aa = StensgaardAA()
+        aa.transform(state)
 
-        val result = SMTProxySolver().isPathPossible(finalState, finalPath)
+        val query = state.filterByType(PredicateType.Path()).simplify()
+
+        if (isSlicingEnabled) {
+            log.debug("Slicing started...")
+            state = Slicer(state, query, aa).transform(state)
+            log.debug("Slicing finished")
+        }
+
+        log.debug("Simplified state: $state")
+        log.debug("Path: $query")
+
+        val result = SMTProxySolver().isPathPossible(state, query)
         log.debug("Acquired result:")
         when (result) {
             is Result.SatResult -> log.debug("Reachable")

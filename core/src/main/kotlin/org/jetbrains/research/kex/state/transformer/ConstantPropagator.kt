@@ -5,7 +5,7 @@ import org.jetbrains.research.kex.util.*
 import org.jetbrains.research.kfg.ir.value.instruction.BinaryOpcode
 import org.jetbrains.research.kfg.ir.value.instruction.CmpOpcode
 
-class ConstantPropagator : Transformer<ConstantPropagator> {
+object ConstantPropagator : Transformer<ConstantPropagator> {
     private val epsilon = 0.00001
 
     override fun transformBinaryTerm(term: BinaryTerm): Term {
