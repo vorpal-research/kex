@@ -3,10 +3,10 @@ package org.jetbrains.research.kex.state.transformer
 import org.jetbrains.research.kex.state.*
 import org.jetbrains.research.kex.state.predicate.*
 import org.jetbrains.research.kex.state.term.*
-import org.jetbrains.research.kex.util.Loggable
+import org.jetbrains.research.kex.util.log
 import org.jetbrains.research.kex.util.unreachable
 
-interface Transformer<T : Transformer<T>> : Loggable {
+interface Transformer<T : Transformer<T>> {
     val pf: PredicateFactory get() = PredicateFactory
     val tf: TermFactory get() = TermFactory
 

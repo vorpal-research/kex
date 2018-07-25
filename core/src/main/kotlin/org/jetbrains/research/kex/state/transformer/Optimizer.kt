@@ -5,11 +5,11 @@ import org.jetbrains.research.kex.state.ChainState
 import org.jetbrains.research.kex.state.PredicateState
 
 class Optimizer : Transformer<Optimizer> {
-    private val cache = mutableMapOf<Pair<PredicateState, PredicateState>, PredicateState?>()
+    private val cache = hashMapOf<Pair<PredicateState, PredicateState>, PredicateState?>()
 
     override fun transformChainState(ps: ChainState): PredicateState {
         var merged = merge(ps.base, ps.curr)
-        val res = when {
+        return when {
             merged != null -> merged
             ps.base is ChainState && ps.curr is BasicState -> {
                 merged = merge(ps.base.curr, ps.curr)
@@ -22,8 +22,7 @@ class Optimizer : Transformer<Optimizer> {
                 else null
             }
             else -> null
-        }
-        return if (res == null) ps else res
+        } ?: ps
     }
 
     fun merge(first: PredicateState, second: PredicateState): PredicateState? {
@@ -32,7 +31,7 @@ class Optimizer : Transformer<Optimizer> {
         return when {
             m != null -> m
             first is BasicState && second is BasicState -> {
-                val merged = BasicState(first.predicates() + second.predicates())
+                val merged = BasicState(first.predicates + second.predicates)
                 cache[key] = merged
                 merged
             }

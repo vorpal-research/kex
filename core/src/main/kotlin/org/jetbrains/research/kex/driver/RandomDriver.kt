@@ -3,9 +3,8 @@ package org.jetbrains.research.kex.driver
 import io.github.benas.randombeans.EnhancedRandomBuilder
 import io.github.benas.randombeans.api.EnhancedRandom
 import io.github.benas.randombeans.api.ObjectGenerationException
-import org.jetbrains.research.kex.UnknownTypeException
 import org.jetbrains.research.kex.config.GlobalConfig
-import org.jetbrains.research.kex.util.Loggable
+import org.jetbrains.research.kex.util.log
 import java.lang.reflect.ParameterizedType
 import java.lang.reflect.Type
 import java.lang.reflect.TypeVariable
@@ -18,9 +17,14 @@ internal val maxStringLength = GlobalConfig.getIntValue("random", "maxStringLeng
 internal val attempts = GlobalConfig.getIntValue("random", "generationAttempts", 1)
 internal val excludes = GlobalConfig.getMultipleStringValue("random", "excludes")
 
-class GenerationException(msg: String) : Exception(msg)
+abstract class RandomEngineError(msg: String) : Exception(msg)
 
-class RandomDriver : Loggable {
+class GenerationException(msg: String) : RandomEngineError(msg)
+
+class UnknownTypeException(msg: String) : RandomEngineError(msg)
+
+
+class RandomDriver {
     private val randomizer: EnhancedRandom = EnhancedRandomBuilder.aNewEnhancedRandomBuilder()
             .scanClasspathForConcreteTypes(true)
             .collectionSizeRange(minCollectionSize, maxCollectionSize)
@@ -46,7 +50,7 @@ class RandomDriver : Loggable {
                     it.set(`object`, value)
                 }
             }
-            else -> throw UnknownTypeException("Unknown type $type")
+            else -> throw UnknownTypeException(type.toString())
         }
         return `object`
     }
@@ -64,7 +68,7 @@ class RandomDriver : Loggable {
                     is Class<*> -> generateClass(type)
                     is ParameterizedType -> generateParameterized(type)
                     is TypeVariable<*> -> generateTypeVariable(type)
-                    else -> throw UnknownTypeException("Unknown type $type")
+                    else -> throw UnknownTypeException(type.toString())
                 }
             } catch (exc: ObjectGenerationException) {}
         }

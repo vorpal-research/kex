@@ -1,15 +1,14 @@
 package org.jetbrains.research.kex.config
 
 import org.apache.commons.cli.*
-import org.ini4j.spi.OptionsBuilder
-import org.jetbrains.research.kex.util.Loggable
 import org.jetbrains.research.kex.util.exit
+import org.jetbrains.research.kex.util.log
 import org.jetbrains.research.kex.util.unreachable
 import java.io.PrintWriter
 import java.io.StringWriter
 import org.apache.commons.cli.CommandLine as Cmd
 
-class CmdConfig(args: Array<String>) : Config, Loggable {
+class CmdConfig(args: Array<String>) : Config {
     private val options = Options()
     private val commandLineOptions = hashMapOf<String, MutableMap<String, String>>()
     private val cmd: Cmd

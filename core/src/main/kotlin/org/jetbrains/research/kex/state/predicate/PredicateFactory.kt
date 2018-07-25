@@ -1,19 +1,18 @@
 package org.jetbrains.research.kex.state.predicate
 
 import org.jetbrains.research.kex.state.term.Term
-import org.jetbrains.research.kex.state.term.TermFactory
-import org.jetbrains.research.kex.util.Loggable
-import org.jetbrains.research.kfg.type.ArrayType
-import org.jetbrains.research.kfg.ir.Class
+import org.jetbrains.research.kex.util.log
+import org.jetbrains.research.kex.util.unreachable
 import org.jetbrains.research.kfg.ir.Location
+import org.jetbrains.research.kfg.type.ArrayType
 import org.jetbrains.research.kfg.type.Type
 
-object PredicateFactory : Loggable {
+object PredicateFactory {
     fun getCall(callTerm: Term, type: PredicateType = PredicateType.State(), location: Location = Location()) =
             CallPredicate(callTerm, type, location)
 
     fun getCall(lhv: Term, callTerm: Term, type: PredicateType = PredicateType.State(), location: Location = Location()) =
-            CallPredicate(lhv, callTerm, type)
+            CallPredicate(lhv, callTerm, type, location)
 
     fun getArrayStore(arrayRef: Term, value: Term, type: PredicateType = PredicateType.State(), location: Location = Location()) =
             ArrayStorePredicate(arrayRef, value, type, location)
@@ -25,11 +24,11 @@ object PredicateFactory : Loggable {
 
     fun getNew(lhv: Term, type: PredicateType = PredicateType.State(), location: Location = Location()) =
             NewPredicate(lhv, type, location)
+
     fun getNewArray(lhv: Term, dimensions: List<Term>, type: PredicateType = PredicateType.State(), location: Location = Location()): Predicate {
         var current = lhv.type
         dimensions.forEach {
-            current = (current as? ArrayType
-                    ?: error(log.error("Trying to create new array predicate with non-array type"))).component
+            current = (current as? ArrayType)?.component ?: unreachable { log.error("Trying to create new array predicate with non-array type") }
         }
         return NewArrayPredicate(lhv, dimensions, current, type, location)
     }

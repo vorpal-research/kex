@@ -1,6 +1,6 @@
 package org.jetbrains.research.kex.state.term
 
-import org.jetbrains.research.kex.util.Loggable
+import org.jetbrains.research.kex.util.log
 import org.jetbrains.research.kex.util.unreachable
 import org.jetbrains.research.kfg.TF
 import org.jetbrains.research.kfg.ir.Class
@@ -14,7 +14,7 @@ import org.jetbrains.research.kfg.type.ClassType
 import org.jetbrains.research.kfg.type.Type
 import org.jetbrains.research.kfg.type.mergeTypes
 
-object TermFactory : Loggable {
+object TermFactory {
     fun getThis(type: Type) = getValue(type, "this")
     fun getThis(`class`: Class) = getThis(TF.getRefType(`class`))
     fun getArgument(argument: Argument) = getArgument(argument.type, argument.index)

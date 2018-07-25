@@ -33,15 +33,15 @@ class ConstantPropagator : Transformer<ConstantPropagator> {
                 tf.getConstant(nlhv % nrhv)
             }
             is BinaryOpcode.Shl -> {
-                val bits = rhv as? Int ?: unreachable { log.debug("Non-integer bit count in shift operation") }
+                val bits = rhv as? Int ?: unreachable { log.error("Non-integer bit count in shift operation") }
                 tf.getConstant(lhv.shl(bits))
             }
             is BinaryOpcode.Shr -> {
-                val bits = rhv as? Int ?: unreachable { log.debug("Non-integer bit count in shift operation") }
+                val bits = rhv as? Int ?: unreachable { log.error("Non-integer bit count in shift operation") }
                 tf.getConstant(lhv.shr(bits))
             }
             is BinaryOpcode.Ushr -> {
-                val bits = rhv as? Int ?: unreachable { log.debug("Non-integer bit count in shift operation") }
+                val bits = rhv as? Int ?: unreachable { log.error("Non-integer bit count in shift operation") }
                 tf.getConstant(lhv.ushr(bits))
             }
             is BinaryOpcode.And -> {
@@ -91,15 +91,15 @@ class ConstantPropagator : Transformer<ConstantPropagator> {
 
     private fun toCompatibleTypes(lhv: Number, rhv: Number): Pair<Number, Number> = when (lhv) {
         is Long -> {
-            val rhvl = rhv as? Long ?: unreachable { log.debug("Non-compatible types in binary term: $lhv and $rhv") }
+            val rhvl = rhv as? Long ?: unreachable { log.error("Non-compatible types in binary term: $lhv and $rhv") }
             lhv to rhvl
         }
         is Float -> {
-            val rhvf = rhv as? Float ?: unreachable { log.debug("Non-compatible types in binary term: $lhv and $rhv") }
+            val rhvf = rhv as? Float ?: unreachable { log.error("Non-compatible types in binary term: $lhv and $rhv") }
             lhv to rhvf
         }
         is Double -> {
-            val rhvd = rhv as? Double ?: unreachable { log.debug("Non-compatible types in binary term: $lhv and $rhv") }
+            val rhvd = rhv as? Double ?: unreachable { log.error("Non-compatible types in binary term: $lhv and $rhv") }
             lhv to rhvd
         }
         else -> lhv.toInt() to rhv.toInt()

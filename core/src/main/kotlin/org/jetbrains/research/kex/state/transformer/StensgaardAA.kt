@@ -12,11 +12,11 @@ typealias Token = Subset<Term?>?
 
 class AliasAnalyzer : Transformer<AliasAnalyzer> {
     val relations = DisjointSet<Term?>()
-    val pointsTo = mutableMapOf<Token, Token>()
-    val mapping = mutableMapOf<Term, Token>()
-    val nonaliased = mutableSetOf<Term>()
-    val spaces = mutableMapOf<Type, Token>()
-    val nonFreeTerms = mutableSetOf<Term>()
+    val pointsTo = hashMapOf<Token, Token>()
+    val mapping = hashMapOf<Term, Token>()
+    val nonaliased = hashSetOf<Term>()
+    val spaces = hashMapOf<Type, Token>()
+    val nonFreeTerms = hashSetOf<Term>()
 
     fun pointsTo(token: Token) = pointsTo.getOrPut(token) { null }
     fun spaces(type: Type) = spaces.getOrPut(type) { null }

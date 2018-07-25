@@ -6,7 +6,7 @@ import org.jetbrains.research.kex.state.predicate.Predicate
 import org.jetbrains.research.kex.state.term.*
 
 class PointerCollector : Transformer<PointerCollector> {
-    val ptrs = mutableSetOf<Term>()
+    val ptrs = hashSetOf<Term>()
 
     override fun transformArrayStorePredicate(predicate: ArrayStorePredicate): Predicate {
         ptrs.add(predicate.arrayRef)

@@ -2,7 +2,6 @@ package org.jetbrains.research.kex.asm.transform
 
 import org.jetbrains.research.kex.asm.util.SystemOutWrapper
 import org.jetbrains.research.kex.asm.util.ValuePrinter
-import org.jetbrains.research.kex.util.Loggable
 import org.jetbrains.research.kfg.TF
 import org.jetbrains.research.kfg.VF
 import org.jetbrains.research.kfg.ir.BasicBlock
@@ -10,7 +9,7 @@ import org.jetbrains.research.kfg.ir.Method
 import org.jetbrains.research.kfg.ir.value.instruction.*
 import org.jetbrains.research.kfg.visitor.MethodVisitor
 
-class TraceInstrumenter(method: Method) : MethodVisitor(method), Loggable {
+class TraceInstrumenter(method: Method) : MethodVisitor(method) {
     companion object {
         const val tracePrefix = "trace"
     }

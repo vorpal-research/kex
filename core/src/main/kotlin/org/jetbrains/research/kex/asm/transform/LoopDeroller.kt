@@ -1,7 +1,7 @@
 package org.jetbrains.research.kex.asm.transform
 
 import org.jetbrains.research.kex.config.GlobalConfig
-import org.jetbrains.research.kex.util.Loggable
+import org.jetbrains.research.kex.util.log
 import org.jetbrains.research.kfg.IF
 import org.jetbrains.research.kfg.analysis.Loop
 import org.jetbrains.research.kfg.ir.BasicBlock
@@ -17,7 +17,7 @@ import kotlin.math.abs
 
 val derollCount = GlobalConfig.getIntValue("loop", "deroll-count", 3)
 
-class LoopDeroller(method: Method) : LoopVisitor(method), Loggable {
+class LoopDeroller(method: Method) : LoopVisitor(method) {
     override fun visitLoop(loop: Loop) {
         super.visitLoop(loop)
         val header = loop.header

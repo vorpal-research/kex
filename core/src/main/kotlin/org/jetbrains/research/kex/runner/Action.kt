@@ -4,8 +4,8 @@ import com.github.h0tk3y.betterParse.combinators.*
 import com.github.h0tk3y.betterParse.grammar.Grammar
 import com.github.h0tk3y.betterParse.grammar.parser
 import com.github.h0tk3y.betterParse.parser.Parser
-import org.jetbrains.research.kex.UnexpectedTypeException
-import org.jetbrains.research.kex.UnknownNameException
+import org.jetbrains.research.kex.util.log
+import org.jetbrains.research.kex.util.unreachable
 import org.jetbrains.research.kfg.CM
 import org.jetbrains.research.kfg.ir.BasicBlock
 import org.jetbrains.research.kfg.ir.Class
@@ -16,95 +16,45 @@ import org.jetbrains.research.kfg.ir.value.Value
 import org.jetbrains.research.kfg.type.ClassType
 import org.jetbrains.research.kfg.type.Type
 import org.jetbrains.research.kfg.type.parseStringToType
-import org.jetbrains.research.kex.util.defaultHashCode
 import java.util.*
 
-interface ActionValue
-object NullValue : ActionValue {
+abstract class ActionParseError(msg: String) : Exception(msg)
+
+class UnknownTypeError(msg: String) : ActionParseError(msg)
+
+class UnknownNameError(msg: String) : ActionParseError(msg)
+
+
+sealed class ActionValue
+object NullValue : ActionValue() {
     override fun toString() = "null"
 }
 
-class KfgValue(val value: Value) : ActionValue {
-    override fun hashCode() = defaultHashCode(value)
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (this.javaClass != other?.javaClass) return false
-        other as KfgValue
-        return this.value == other.value
-    }
-
+data class KfgValue(val value: Value) : ActionValue() {
     override fun toString() = value.toString()
 }
 
-class BooleanValue(val value: Boolean) : ActionValue {
-    override fun hashCode() = defaultHashCode(value)
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (this.javaClass != other?.javaClass) return false
-        other as BooleanValue
-        return this.value == other.value
-    }
-
+data class BooleanValue(val value: Boolean) : ActionValue() {
     override fun toString() = value.toString()
 }
 
-class LongValue(val value: Long) : ActionValue {
-    override fun hashCode() = defaultHashCode(value)
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (this.javaClass != other?.javaClass) return false
-        other as LongValue
-        return this.value == other.value
-    }
-
+data class LongValue(val value: Long) : ActionValue() {
     override fun toString() = value.toString()
 }
 
-class DoubleValue(val value: Double) : ActionValue {
-    override fun hashCode() = defaultHashCode(value)
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (this.javaClass != other?.javaClass) return false
-        other as DoubleValue
-        return this.value == other.value
-    }
-
+data class DoubleValue(val value: Double) : ActionValue() {
     override fun toString() = value.toString()
 }
 
-class StringValue(val value: String) : ActionValue {
-    override fun hashCode() = defaultHashCode(value)
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (this.javaClass != other?.javaClass) return false
-        other as StringValue
-        return this.value == other.value
-    }
-
+data class StringValue(val value: String) : ActionValue() {
     override fun toString() = value
 }
 
-class ArrayValue(val identifier: Int, val component: Type, val length: Int) : ActionValue {
-    override fun hashCode() = identifier
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (this.javaClass != other?.javaClass) return false
-        other as ArrayValue
-        return this.identifier == other.identifier
-    }
-
+data class ArrayValue(val identifier: Int, val component: Type, val length: Int) : ActionValue() {
     override fun toString() = "array@$identifier{$component, $length}"
 }
 
-class ObjectValue(val type: Class, val identifier: Int, val fields: Map<String, ActionValue>) : ActionValue {
-    override fun hashCode() = identifier
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (this.javaClass != other?.javaClass) return false
-        other as ObjectValue
-        return this.identifier == other.identifier
-    }
-
+data class ObjectValue(val type: Class, val identifier: Int, val fields: Map<String, ActionValue>) : ActionValue() {
     override fun toString(): String {
         val sb = StringBuilder()
         sb.append("$type@$identifier {")
@@ -123,18 +73,18 @@ class ObjectValue(val type: Class, val identifier: Int, val fields: Map<String, 
     }
 }
 
-class Equation(val lhv: ActionValue, val rhv: ActionValue) {
+data class Equation(val lhv: ActionValue, val rhv: ActionValue) {
     override fun toString() = "$lhv == $rhv"
 }
 
 interface Action
-abstract class MethodAction(val method: Method) : Action
-abstract class MethodEntryAction(method: Method) : MethodAction(method)
-abstract class MethodExitAction(method: Method) : MethodAction(method)
+sealed class MethodAction(val method: Method) : Action
+sealed class MethodEntryAction(method: Method) : MethodAction(method)
+sealed class MethodExitAction(method: Method) : MethodAction(method)
 
-abstract class BlockAction(val bb: BasicBlock) : Action
-abstract class BlockEntryAction(bb: BasicBlock) : BlockAction(bb)
-abstract class BlockExitAction(bb: BasicBlock) : BlockAction(bb)
+sealed class BlockAction(val bb: BasicBlock) : Action
+sealed class BlockEntryAction(bb: BasicBlock) : BlockAction(bb)
+sealed class BlockExitAction(bb: BasicBlock) : BlockAction(bb)
 
 class MethodEntry(method: Method) : MethodEntryAction(method) {
     override fun toString() = "enter $method;"
@@ -189,7 +139,8 @@ class BlockTableSwitch(bb: BasicBlock, val key: Equation) : BlockExitAction(bb) 
 class ActionParser : Grammar<Action>() {
     private var trackers = Stack<SlotTracker>()
 
-    private fun getTracker() = trackers.peek() ?: throw UnknownNameException("No slot tracker defined")
+    private val tracker: SlotTracker
+        get() = trackers.peek() ?: unreachable { log.error("No slot trackers defined") }
 
     // keyword tokens
     private val `this` by token("this")
@@ -256,19 +207,20 @@ class ActionParser : Grammar<Action>() {
             (keyword use { text })
 
     // equation
-    private val valueName by ((`this` use { text }) or
-            ((arg and num) use { t1.text + t2.text }) or
-            ((percent and anyWord and optional(-dot and separatedTerms(anyWord, dot))) use {
-                t1.text + t2 + (t3?.fold("", { acc, curr -> "$acc.$curr" }) ?: "")
-            }) or
-            ((percent and num) use { t1.text + t2.text })
+    private val valueName by (
+            (`this` use { text }) or
+                    ((arg and num) use { t1.text + t2.text }) or
+                    ((percent and anyWord and optional(-dot and separatedTerms(anyWord, dot))) use {
+                        t1.text + t2 + (t3?.fold("", { acc, curr -> "$acc.$curr" }) ?: "")
+                    }) or
+                    ((percent and num) use { t1.text + t2.text })
             ) use {
-        getTracker().getValue(this) ?: throw UnknownNameException("Undefined name $this")
+        tracker.getValue(this) ?: throw UnknownNameError(this)
     }
 
     private val blockName by (percent and anyWord and optional(-dot and separatedTerms(anyWord, dot))) use {
         val name = t1.text + t2 + (t3?.fold("", { acc, curr -> "$acc.$curr" }) ?: "")
-        getTracker().getBlock(name) ?: throw UnknownNameException("Undefined name $name")
+        tracker.getBlock(name) ?: throw UnknownNameError(name)
     }
 
     private val typeName by (separatedTerms(word, dot) use { map { it.text } } and zeroOrMore(openSquareBrace and closeSquareBrace)) use {
@@ -282,7 +234,7 @@ class ActionParser : Grammar<Action>() {
             -colonAndSpace and
             typeName) use {
         val `class` = CM.getByName(t1.dropLast(1).fold("", { acc, curr -> "$acc/$curr" }).drop(1))
-        val methodName = t1.takeLast(1).firstOrNull() ?: throw UnknownNameException("Undefined method $t1")
+        val methodName = t1.takeLast(1).firstOrNull() ?: throw UnknownNameError(t1.toString())
         val args = t2.toTypedArray()
         val rettype = t3
         `class`.getMethod(methodName, MethodDesc(args, rettype))
@@ -305,7 +257,7 @@ class ActionParser : Grammar<Action>() {
         map { it.t1 to it.t2 }.toMap()
     }
     private val objectValueParser: Parser<ActionValue> by (typeName and -at and num and -openCurlyBrace and objectFields and -closeCurlyBrace) use {
-        val type = (t1 as? ClassType)?.`class` ?: throw UnexpectedTypeException("Unexpected class type $t1")
+        val type = (t1 as? ClassType)?.`class` ?: throw UnknownTypeError(t1.toString())
         val identifier = t2.text.toInt()
         val fields = t3
         ObjectValue(type, identifier, fields)

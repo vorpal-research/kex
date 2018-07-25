@@ -1,6 +1,7 @@
 package org.jetbrains.research.kex.state.term
 
 import org.jetbrains.research.kex.state.transformer.Transformer
+import org.jetbrains.research.kex.util.log
 import org.jetbrains.research.kex.util.unreachable
 import org.jetbrains.research.kfg.type.ClassType
 import org.jetbrains.research.kfg.type.Type

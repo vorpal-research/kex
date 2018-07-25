@@ -4,8 +4,7 @@ import org.jetbrains.research.kex.config.GlobalConfig
 import org.jetbrains.research.kex.smt.z3.Z3ExprFactory
 import org.jetbrains.research.kex.smt.z3.Z3Solver
 import org.jetbrains.research.kex.state.PredicateState
-import org.jetbrains.research.kex.util.Loggable
-import org.jetbrains.research.kex.util.loggerFor
+import org.jetbrains.research.kex.util.log
 import org.jetbrains.research.kex.util.unreachable
 
 sealed class Result {
@@ -22,17 +21,17 @@ sealed class Result {
     }
 }
 
-interface AbstractSMTSolver : Loggable {
+interface AbstractSMTSolver {
     fun isReachable(state: PredicateState): Result
     fun isPathPossible(state: PredicateState, path: PredicateState): Result
     fun isViolated(state: PredicateState, query: PredicateState): Result
 }
 
 val engine = GlobalConfig.getStringValue("smt", "engine")
-        ?: unreachable { loggerFor("SMTSolver").error("No SMT engine specified") }
+        ?: unreachable { log.error("No SMT engine specified") }
 
 class SMTProxySolver(
         val solver: AbstractSMTSolver = when (engine) {
             "z3" -> Z3Solver(Z3ExprFactory())
-            else -> unreachable { loggerFor(SMTProxySolver::class).error("Unknown smt engine: $engine") }
+            else -> unreachable { log.error("Unknown smt engine: $engine") }
         }) : AbstractSMTSolver by solver

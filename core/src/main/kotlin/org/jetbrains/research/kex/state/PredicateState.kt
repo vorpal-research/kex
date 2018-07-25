@@ -24,8 +24,8 @@ class StateBuilder() {
     }
 
     operator fun plus(state: PredicateState) =
-            if (state.isEmpty()) this
-            else if (current.isEmpty()) StateBuilder(state)
+            if (state.isEmpty) this
+            else if (current.isEmpty) StateBuilder(state)
             else StateBuilder(ChainState(current, state))
 
     operator fun plusAssign(state: PredicateState) {
@@ -46,6 +46,10 @@ abstract class PredicateState : Sealed {
         val reverse = states.map { it.value to it.key }.toMap()
     }
 
+    abstract val size: Int
+    val isEmpty get() = size == 0
+    val isNotEmpty get() = !isEmpty
+
     override fun getSubtypes() = states
     override fun getReverseMapping() = reverse
 
@@ -61,10 +65,6 @@ abstract class PredicateState : Sealed {
 
     abstract fun fmap(transform: (PredicateState) -> PredicateState): PredicateState
     abstract fun reverse(): PredicateState
-
-    abstract fun size(): Int
-    fun isEmpty() = size() == 0
-    fun isNotEmpty() = !isEmpty()
 
     abstract fun addPredicate(predicate: Predicate): PredicateState
     operator fun plus(predicate: Predicate) = addPredicate(predicate)

@@ -2,12 +2,11 @@ package org.jetbrains.research.kex.state.term
 
 import org.jetbrains.research.kex.state.Sealed
 import org.jetbrains.research.kex.state.transformer.Transformer
-import org.jetbrains.research.kex.util.Loggable
 import org.jetbrains.research.kex.util.contentEquals
-import org.jetbrains.research.kfg.type.Type
 import org.jetbrains.research.kex.util.defaultHashCode
+import org.jetbrains.research.kfg.type.Type
 
-abstract class Term(val name: String, val type: Type, val subterms: List<Term>) : Sealed, Loggable {
+abstract class Term(val name: String, val type: Type, val subterms: List<Term>) : Sealed {
     companion object {
         val terms = mapOf<String, Class<*>>(
                 "Argument" to ArgumentTerm::class.java,

@@ -5,13 +5,13 @@ import org.jetbrains.research.kex.state.PredicateState
 import org.jetbrains.research.kex.state.predicate.PredicateType
 import org.jetbrains.research.kex.state.transformer.ConstantPropagator
 import org.jetbrains.research.kex.state.transformer.MemorySpacer
-import org.jetbrains.research.kex.state.transformer.Simplifier
 import org.jetbrains.research.kex.state.transformer.Optimizer
-import org.jetbrains.research.kex.util.Loggable
+import org.jetbrains.research.kex.state.transformer.Simplifier
+import org.jetbrains.research.kex.util.log
 import org.jetbrains.research.kfg.ir.Method
 import org.jetbrains.research.kfg.ir.value.instruction.Instruction
 
-class Checker(val method: Method, val psa: PredicateStateAnalysis) : Loggable {
+class Checker(val method: Method, val psa: PredicateStateAnalysis) {
     private fun prepareState(state: PredicateState): PredicateState {
         val optimized = Optimizer().transform(state)
 

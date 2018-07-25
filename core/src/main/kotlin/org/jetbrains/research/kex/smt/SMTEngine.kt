@@ -1,9 +1,9 @@
 package org.jetbrains.research.kex.smt
 
-import org.jetbrains.research.kex.util.Loggable
+import org.jetbrains.research.kex.util.log
 import org.jetbrains.research.kex.util.unreachable
 
-abstract class SMTEngine<in Context_t : Any, Expr_t : Any, Sort_t : Any, Function_t : Any> : Loggable {
+abstract class SMTEngine<in Context_t : Any, Expr_t : Any, Sort_t : Any, Function_t : Any> {
     companion object {
         const val WORD = 32
         const val DWORD = 64

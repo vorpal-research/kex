@@ -1,15 +1,18 @@
 package org.jetbrains.research.kex.smt.z3
 
-import com.microsoft.z3.*
+import com.microsoft.z3.BitVecNum
+import com.microsoft.z3.BoolExpr
+import com.microsoft.z3.Expr
+import com.microsoft.z3.FPNum
 import com.microsoft.z3.enumerations.Z3_lbool
 import org.jetbrains.research.kex.smt.SMTEngine
 import org.jetbrains.research.kex.state.term.Term
 import org.jetbrains.research.kex.state.term.TermFactory
-import org.jetbrains.research.kex.util.Loggable
+import org.jetbrains.research.kex.util.log
 import org.jetbrains.research.kex.util.unreachable
 import java.lang.Math.pow
 
-object Z3Unlogic : Loggable {
+object Z3Unlogic {
     val tf = TermFactory
 
     fun undo(expr: Expr): Term = when (expr) {

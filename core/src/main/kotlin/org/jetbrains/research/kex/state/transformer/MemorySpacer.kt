@@ -2,6 +2,7 @@ package org.jetbrains.research.kex.state.transformer
 
 import org.jetbrains.research.kex.state.PredicateState
 import org.jetbrains.research.kex.state.term.*
+import org.jetbrains.research.kex.util.log
 import org.jetbrains.research.kfg.ir.Class
 import org.jetbrains.research.kfg.type.ArrayType
 import org.jetbrains.research.kfg.type.ClassType
@@ -63,7 +64,7 @@ fun Term.withMemspace(memspace: Int): Term {
 
 class MemorySpacer(ps: PredicateState) : Transformer<MemorySpacer> {
     val aa = AliasAnalyzer()
-    val indices = mutableMapOf<Token, Int>()
+    val indices = hashMapOf<Token, Int>()
     var index = 0
 
     init {

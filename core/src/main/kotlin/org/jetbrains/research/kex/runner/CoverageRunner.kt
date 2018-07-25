@@ -2,14 +2,11 @@ package org.jetbrains.research.kex.runner
 
 import com.github.h0tk3y.betterParse.grammar.parseToEnd
 import com.github.h0tk3y.betterParse.parser.ParseException
-import org.jetbrains.research.kex.UnknownTypeException
-import org.jetbrains.research.kex.driver.RandomDriver
 import org.jetbrains.research.kex.asm.transform.TraceInstrumenter
 import org.jetbrains.research.kex.config.GlobalConfig
 import org.jetbrains.research.kex.driver.GenerationException
-import org.jetbrains.research.kex.util.Loggable
-import org.jetbrains.research.kex.util.loggerFor
-import org.jetbrains.research.kfg.ir.Method as KfgMethod
+import org.jetbrains.research.kex.driver.RandomDriver
+import org.jetbrains.research.kex.util.log
 import org.jetbrains.research.kfg.type.*
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
@@ -17,6 +14,7 @@ import java.io.PrintStream
 import java.lang.reflect.InvocationTargetException
 import java.lang.reflect.Method
 import java.util.*
+import org.jetbrains.research.kfg.ir.Method as KfgMethod
 
 internal val runs = GlobalConfig.getIntValue("runner", "runs", 10)
 internal val timeout = GlobalConfig.getLongValue("runner", "timeout", 1000L)
@@ -36,7 +34,7 @@ internal fun getClass(type: Type, loader: ClassLoader): Class<*> = when (type) {
     } catch (e: ClassNotFoundException) {
         ClassLoader.getSystemClassLoader().loadClass(type.`class`.getFullname().replace('/', '.'))
     }
-    else -> throw UnknownTypeException("Unknown type $type")
+    else -> throw UnknownTypeError(type.toString())
 }
 
 internal class InvocationResult {
@@ -50,7 +48,6 @@ internal class InvocationResult {
 }
 
 internal fun invoke(method: Method, instance: Any?, args: Array<Any?>): InvocationResult {
-    val log = loggerFor("invoke")
     log.debug("Running $method")
     log.debug("Instance: $instance")
     log.debug("Args: ${args.map { it.toString() }}")
@@ -87,7 +84,7 @@ internal fun invoke(method: Method, instance: Any?, args: Array<Any?>): Invocati
     return result
 }
 
-class CoverageRunner(val method: KfgMethod, val loader: ClassLoader) : Loggable {
+class CoverageRunner(val method: KfgMethod, val loader: ClassLoader) {
     private val random = RandomDriver()
     private val javaClass: Class<*> = loader.loadClass(method.`class`.getFullname().replace('/', '.'))
     private val javaMethod: java.lang.reflect.Method

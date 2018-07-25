@@ -4,13 +4,13 @@ import org.jetbrains.research.kex.state.predicate.Predicate
 import org.jetbrains.research.kex.util.defaultHashCode
 
 class BasicState() : PredicateState(), Iterable<Predicate> {
-    protected val predicates = mutableListOf<Predicate>()
+    protected val preds = arrayListOf<Predicate>()
+    val predicates: List<Predicate>
+        get() = preds
 
     constructor(predicates: List<Predicate>) : this() {
-        this.predicates.addAll(predicates)
+        this.preds.addAll(predicates)
     }
-
-    fun predicates(): List<Predicate> = predicates
 
     override fun print(): String {
         val sb = StringBuilder()
@@ -20,31 +20,31 @@ class BasicState() : PredicateState(), Iterable<Predicate> {
         return sb.toString()
     }
 
-    override fun map(transform: (Predicate) -> Predicate) = BasicState(predicates().map(transform))
+    override fun map(transform: (Predicate) -> Predicate) = BasicState(predicates.map(transform))
     override fun fmap(transform: (PredicateState) -> PredicateState) = transform(this)
-    override fun mapNotNull(transform: (Predicate) -> Predicate?) = BasicState(predicates().mapNotNull(transform))
-    override fun filter(predicate: (Predicate) -> Boolean) = BasicState(predicates().filter(predicate))
-    override fun reverse(): PredicateState = BasicState(predicates().reversed())
-    override fun size() = predicates().size
+    override fun mapNotNull(transform: (Predicate) -> Predicate?) = BasicState(predicates.mapNotNull(transform))
+    override fun filter(predicate: (Predicate) -> Boolean) = BasicState(predicates.filter(predicate))
+    override fun reverse(): PredicateState = BasicState(predicates.reversed())
+    override val size get() = predicates.size
 
-    override fun hashCode() = defaultHashCode(*predicates.toTypedArray())
+    override fun hashCode() = defaultHashCode(*preds.toTypedArray())
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (other?.javaClass != this.javaClass) return false
         other as BasicState
-        return this.predicates.toTypedArray().contentEquals(other.predicates().toTypedArray())
+        return this.preds.toTypedArray().contentEquals(other.predicates.toTypedArray())
     }
 
-    override fun addPredicate(predicate: Predicate) = BasicState(predicates.plus(predicate))
+    override fun addPredicate(predicate: Predicate) = BasicState(preds.plus(predicate))
 
     override fun sliceOn(state: PredicateState): PredicateState? = when (state) {
         is BasicState -> {
-            val base = predicates().take(state.size()).toTypedArray()
-            if (base.contentEquals(state.predicates().toTypedArray())) BasicState(predicates().drop(state.size()))
+            val base = predicates.take(state.size).toTypedArray()
+            if (base.contentEquals(state.predicates.toTypedArray())) BasicState(predicates.drop(state.size))
             else null
         }
         else -> null
     }
 
-    override fun iterator() = predicates.iterator()
+    override fun iterator() = preds.iterator()
 }

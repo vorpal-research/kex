@@ -1,5 +1,4 @@
 #parse("definitions.vm")
-import org.jetbrains.research.kex.util.loggerFor
 import org.jetbrains.research.kex.smt.${solver}SMTExprFactory
 import org.jetbrains.research.kfg.ir.Class
 
@@ -13,7 +12,7 @@ typealias Double_ = $Double
 typealias Memory_ = $Memory< Ptr_ >
 typealias Dynamic_ = $valexpr
 
-class $factory : ${solver}SMTExprFactory(), Loggable {
+class $factory : ${solver}SMTExprFactory() {
     companion object {
         private val classOffsets = hashMapOf< Class, MutableMap< Class.FieldKey, Int >>()
 
@@ -33,7 +32,7 @@ class $factory : ${solver}SMTExprFactory(), Loggable {
             is FloatType -> SMTEngine.WORD
             is DoubleType -> SMTEngine.DWORD
             is Reference -> SMTEngine.WORD
-            else -> unreachable { loggerFor(Z3ExprFactory::class).error("Unexpected type: ${ type }") }
+            else -> unreachable { log.error("Unexpected type: ${ type }") }
         }
 
         fun getTypeSizeExpanded(type: Type) = when (type) {
