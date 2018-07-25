@@ -137,3 +137,13 @@ interface Transformer<T : Transformer<T>> {
     fun transformReturnValueTerm(term: ReturnValueTerm): Term = term
     fun transformValueTerm(term: ValueTerm): Term = term
 }
+
+
+interface DeletingTransformer<T> : Transformer<DeletingTransformer<T>> {
+    val removablePredicates: MutableSet<Predicate>
+
+    override fun transform(ps: PredicateState): PredicateState {
+        val result = super.transform(ps)
+        return result.filter { it in removablePredicates }.simplify()
+    }
+}
