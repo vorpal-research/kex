@@ -35,4 +35,15 @@ class ChainState(val base: PredicateState, val curr: PredicateState) : Predicate
         if (state is ChainState && state.base == base) return curr.sliceOn(state.curr)
         return null
     }
+
+    override fun simplify(): PredicateState {
+        val sbase = base.simplify()
+        val scurr = curr.simplify()
+        return when {
+            sbase.isNotEmpty && scurr.isNotEmpty -> ChainState(base, curr)
+            sbase.isNotEmpty -> sbase
+            scurr.isNotEmpty -> scurr
+            else -> BasicState()
+        }
+    }
 }

@@ -10,7 +10,11 @@ import org.jetbrains.research.kfg.util.viewCfg
 
 typealias Token = Subset<Term?>?
 
-class AliasAnalyzer : Transformer<AliasAnalyzer> {
+interface AliasAnalysis {
+    fun mayAlias(lhv: Term, rhv: Term): Boolean
+}
+
+class StensgaardAA : Transformer<StensgaardAA>, AliasAnalysis {
     val relations = DisjointSet<Term?>()
     val pointsTo = hashMapOf<Token, Token>()
     val mapping = hashMapOf<Term, Token>()
@@ -161,7 +165,7 @@ class AliasAnalyzer : Transformer<AliasAnalyzer> {
     }
 
 
-    fun mayAlias(lhv: Term, rhv: Term): Boolean {
+    override fun mayAlias(lhv: Term, rhv: Term): Boolean {
         if (lhv === rhv) return true
 
         if (nonaliased.contains(lhv) && nonaliased.contains(rhv)) return false

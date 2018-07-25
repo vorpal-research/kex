@@ -70,4 +70,6 @@ abstract class PredicateState : Sealed {
     operator fun plus(predicate: Predicate) = addPredicate(predicate)
 
     abstract fun sliceOn(state: PredicateState): PredicateState?
+
+    abstract fun simplify(): PredicateState
 }

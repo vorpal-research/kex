@@ -21,6 +21,7 @@ sealed class PredicateType(val name: String) {
             else -> false
         }
     }
+
     class State : PredicateType("S") {
         override fun hashCode() = defaultHashCode(name)
         override fun equals(other: Any?) = when {
@@ -46,6 +47,12 @@ abstract class Predicate(val type: PredicateType, val location: Location, val op
                 "Throw" to ThrowPredicate::class.java
         )
         val reverse = predicates.map { it.value to it.key }.toMap()
+
+        fun getReciever(predicate: Predicate): Term? = when (predicate) {
+            is DefaultSwitchPredicate, is EqualityPredicate, is NewArrayPredicate,
+            is NewPredicate, is ArrayStorePredicate, is FieldStorePredicate -> predicate.operands[0]
+            else -> null
+        }
     }
 
     val size: Int

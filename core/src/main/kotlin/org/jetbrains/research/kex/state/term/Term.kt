@@ -37,6 +37,11 @@ abstract class Term(val name: String, val type: Type, val subterms: List<Term>) 
         )
 
         val reverse = terms.map { it.value to it.key }.toMap()
+
+        fun isNamed(term: Term) = when (term) {
+            is ArgumentTerm, is ReturnValueTerm, is ValueTerm, is ArrayIndexTerm, is FieldTerm -> true
+            else -> false
+        }
     }
 
     abstract fun print(): String

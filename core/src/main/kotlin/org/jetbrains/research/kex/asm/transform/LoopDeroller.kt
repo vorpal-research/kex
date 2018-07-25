@@ -78,8 +78,6 @@ class LoopDeroller(method: Method) : LoopVisitor(method) {
                 val newBlock = currentBlocks.getValue(block)
                 for (inst in block) {
                     val updated = inst.update(currentInsts)
-                    log.debug("Old inst: ${inst.print()}")
-                    log.debug("Updated inst: ${updated.print()}")
                     updated.location = inst.location
                     currentInsts[inst] = updated
                     newBlock.addInstruction(updated)
@@ -95,7 +93,6 @@ class LoopDeroller(method: Method) : LoopVisitor(method) {
 
                         if (updated.predecessors.toSet().size == 1) {
                             val actual = previousMap.getValue(predecessor)
-                            log.debug("Updeted inst is changed to incoming from ${predecessor.name}")
                             updated.replaceAllUsesWith(actual)
                             currentInsts[inst] = actual
                         }

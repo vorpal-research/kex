@@ -63,7 +63,7 @@ fun Term.withMemspace(memspace: Int): Term {
 }
 
 class MemorySpacer(ps: PredicateState) : Transformer<MemorySpacer> {
-    val aa = AliasAnalyzer()
+    val aa = StensgaardAA()
     val indices = hashMapOf<Token, Int>()
     var index = 0
 
