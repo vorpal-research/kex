@@ -6,7 +6,9 @@ import org.jetbrains.research.kfg.ir.Location
 
 class ThrowPredicate(throwable: Term, type: PredicateType = PredicateType.State(), location: Location = Location()) :
         Predicate(type, location, listOf(throwable)) {
-    val throwable get() = operands[0]
+
+    val throwable: Term
+        get() = operands[0]
 
     override fun print() = "throw $throwable"
 

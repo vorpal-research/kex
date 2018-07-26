@@ -98,7 +98,7 @@ class CoverageRunner(val method: KfgMethod, val loader: ClassLoader) {
         if (CoverageManager.isBodyCovered(method)) return
         val (instance, args) = try {
             val i = when {
-                method.isStatic() -> null
+                method.isStatic -> null
                 else -> random.generate(javaClass)
             }
             val a = javaMethod.genericParameterTypes.map { random.generate(it) }.toTypedArray()

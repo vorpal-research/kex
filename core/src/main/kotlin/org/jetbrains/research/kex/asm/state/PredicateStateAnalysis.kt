@@ -47,9 +47,9 @@ class PredicateStateAnalysis(method: Method) : MethodVisitor(method) {
 
     override fun visit() {
         predicateBuilder.visit()
-        if (method.isAbstract()) return
+        if (method.isAbstract) return
 
-        val (order, cycled) = TopologicalSorter(method.basicBlocks.toSet()).sort(method.getEntry())
+        val (order, cycled) = TopologicalSorter(method.basicBlocks.toSet()).sort(method.entry)
         domTree.putAll(DominatorTreeBuilder(method.basicBlocks.toSet()).build())
         require(cycled.isEmpty()) { log.error("No topological sorting for $method") }
 

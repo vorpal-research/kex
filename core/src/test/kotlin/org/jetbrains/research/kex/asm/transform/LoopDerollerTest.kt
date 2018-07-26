@@ -21,7 +21,7 @@ class LoopDerollerTest : KexTest() {
     @Test
     fun loopTest() {
         for ((_, method) in `class`.methods) {
-            if (method.isAbstract()) continue
+            if (method.isAbstract) continue
 
             val la = LoopAnalysis(method)
             la.visit()

@@ -48,7 +48,7 @@ fun main(args: Array<String>) {
         for (`class` in CM.getConcreteClasses()) {
             for ((_, method) in `class`.methods) {
                 val classFileName = "${target.canonicalPath}/${`class`.getFullname()}.class"
-                if (!method.isAbstract() && method.name != "<init>" && method.name != "<clinit>") {
+                if (!method.isAbstract && method.name != "<init>" && method.name != "<clinit>") {
                     val instrumenter = TraceInstrumenter(method)
                     instrumenter.visit()
                     writeClass(`class`, classFileName)
@@ -63,13 +63,12 @@ fun main(args: Array<String>) {
         val cm = CoverageManager
         for (`class` in CM.getConcreteClasses()) {
             for ((_, method) in `class`.methods) {
-                if (!method.isAbstract() && method.name != "<init>" && method.name != "<clinit>") {
-                    if (cm.isFullCovered(method))
-                        log.info("\"$method\" full covered")
-                    else if (cm.isBodyCovered(method))
-                        log.info("\"$method\" body covered")
-                    else
-                        log.info("\"$method\" is not covered")
+                if (!method.isAbstract && method.name != "<init>" && method.name != "<clinit>") {
+                    when {
+                        cm.isFullCovered(method) -> log.info("\"$method\" full covered")
+                        cm.isBodyCovered(method) -> log.info("\"$method\" body covered")
+                        else -> log.info("\"$method\" is not covered")
+                    }
                 }
             }
         }
@@ -77,7 +76,7 @@ fun main(args: Array<String>) {
 
     for (`class` in CM.getConcreteClasses()) {
         for ((_, method) in `class`.methods) {
-            if (method.isAbstract()) continue
+            if (method.isAbstract) continue
             val la = LoopAnalysis(method)
             la.visit()
             if (la.loops.isNotEmpty()) {

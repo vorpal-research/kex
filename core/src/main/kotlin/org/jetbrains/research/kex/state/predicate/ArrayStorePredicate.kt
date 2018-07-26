@@ -6,12 +6,18 @@ import org.jetbrains.research.kex.util.log
 import org.jetbrains.research.kex.util.unreachable
 import org.jetbrains.research.kfg.ir.Location
 import org.jetbrains.research.kfg.type.ArrayType
+import org.jetbrains.research.kfg.type.Type
 
 class ArrayStorePredicate(arrayRef: Term, value: Term, type: PredicateType = PredicateType.State(), location: Location = Location())
     : Predicate(type, location, listOf(arrayRef, value)) {
-    val arrayRef get() = operands[0]
-    val value get() = operands[1]
-    val componentType
+
+    val arrayRef: Term
+        get() = operands[0]
+
+    val value: Term
+        get() = operands[1]
+
+    val componentType: Type
         get() = (arrayRef.type as? ArrayType)?.component ?: unreachable { log.error("Non-array type of array ref") }
 
     override fun print() = "*($arrayRef) = $value"

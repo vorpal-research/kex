@@ -30,7 +30,7 @@ class PredicateStateAnalysisTest : KexTest() {
     fun testSimplePSA() {
         for (`class` in CM.getConcreteClasses()) {
             for ((_, method) in `class`.methods) {
-                if (method.isAbstract()) continue
+                if (method.isAbstract) continue
 
                 val psa = performPSA(method)
 

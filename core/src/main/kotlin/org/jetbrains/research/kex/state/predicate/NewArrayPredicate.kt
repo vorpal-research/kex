@@ -12,9 +12,14 @@ class NewArrayPredicate(lhv: Term,
                         type: PredicateType = PredicateType.State(),
                         location: Location = Location()) :
         Predicate(type, location, listOf(lhv).plus(dimentions)) {
-    val lhv get() = operands[0]
-    val dimentions get() = operands.drop(1)
-    val numDimentions get() = operands.size - 1
+    val lhv: Term
+        get() = operands[0]
+
+    val dimentions: List<Term>
+        get() = operands.drop(1)
+
+    val numDimentions: Int
+        get() = operands.size - 1
 
     override fun print(): String {
         val sb = StringBuilder()

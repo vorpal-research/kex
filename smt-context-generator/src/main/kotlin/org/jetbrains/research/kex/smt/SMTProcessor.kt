@@ -21,8 +21,11 @@ class SMTProcessor : AbstractProcessor() {
         const val TEMPLATE_DIR = "template.dir"
     }
 
-    val targetDirectory get() = processingEnv.options[CODEGEN_DIR] ?: unreachable { error("No codegen directory") }
-    val templates get() = processingEnv.options[TEMPLATE_DIR] ?: unreachable { error("No template directory") }
+    val targetDirectory: String
+        get() = processingEnv.options[CODEGEN_DIR] ?: unreachable { error("No codegen directory") }
+
+    val templates: String
+        get() = processingEnv.options[TEMPLATE_DIR] ?: unreachable { error("No template directory") }
 
     override fun process(annotations: MutableSet<out TypeElement>?, roundEnv: RoundEnvironment?): Boolean {
         roundEnv?.run {

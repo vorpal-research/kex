@@ -47,8 +47,12 @@ abstract class PredicateState : Sealed {
     }
 
     abstract val size: Int
-    val isEmpty get() = size == 0
-    val isNotEmpty get() = !isEmpty
+
+    val isEmpty: Boolean
+        get() = size == 0
+
+    val isNotEmpty: Boolean
+        get() = !isEmpty
 
     override fun getSubtypes() = states
     override fun getReverseMapping() = reverse

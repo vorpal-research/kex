@@ -18,8 +18,12 @@ class CallPredicate : Predicate {
     }
 
     val hasLhv: Boolean
-    val lhv get() = if (hasLhv) operands[0] else unreachable { log.error("Trying to get lhv of void call") }
-    val call get() = if (hasLhv) operands[1] else operands[0]
+
+    val lhv: Term
+        get() = if (hasLhv) operands[0] else unreachable { log.error("Trying to get lhv of void call") }
+
+    val call: Term
+        get() = if (hasLhv) operands[1] else operands[0]
 
     fun getLhvUnsafe() = if (hasLhv) operands[0] else null
 

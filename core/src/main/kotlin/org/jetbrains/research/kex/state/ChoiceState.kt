@@ -5,6 +5,9 @@ import org.jetbrains.research.kex.state.predicate.PredicateType
 import org.jetbrains.research.kex.util.defaultHashCode
 
 class ChoiceState(val choices: List<PredicateState>) : PredicateState(), Iterable<PredicateState> {
+    override val size: Int
+        get() = choices.fold(0) { acc, it -> acc + it.size }
+
     override fun print(): String {
         val sb = StringBuilder()
         sb.appendln("(BEGIN")
@@ -16,8 +19,6 @@ class ChoiceState(val choices: List<PredicateState>) : PredicateState(), Iterabl
 
     override fun fmap(transform: (PredicateState) -> PredicateState): PredicateState = ChoiceState(choices.map { transform(it) })
     override fun reverse() = ChoiceState(choices.map { it.reverse() })
-
-    override val size get() = choices.fold(0) { acc, it -> acc + it.size }
 
     override fun hashCode() = defaultHashCode(*choices.toTypedArray())
     override fun equals(other: Any?): Boolean {

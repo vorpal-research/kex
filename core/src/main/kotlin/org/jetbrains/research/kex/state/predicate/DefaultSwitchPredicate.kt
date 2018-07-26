@@ -7,8 +7,11 @@ import org.jetbrains.research.kfg.ir.Location
 
 class DefaultSwitchPredicate(cond: Term, cases: List<Term>, type: PredicateType = PredicateType.State(), location: Location = Location())
     : Predicate(type, location, listOf(cond).plus(cases)) {
-    val cond get() = operands[0]
-    val cases get() = operands.drop(1)
+    val cond: Term
+        get() = operands[0]
+
+    val cases: List<Term>
+        get() = operands.drop(1)
 
     override fun print(): String {
         val sb = StringBuilder()

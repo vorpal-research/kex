@@ -6,8 +6,12 @@ import org.jetbrains.research.kfg.ir.Location
 
 class EqualityPredicate(lhv: Term, rhv: Term, type: PredicateType = PredicateType.State(), location: Location = Location())
     : Predicate(type, location, listOf(lhv, rhv)) {
-    val lhv get() = operands[0]
-    val rhv get() = operands[1]
+
+    val lhv: Term
+        get() = operands[0]
+
+    val rhv: Term
+        get() = operands[1]
 
     override fun print() = "$lhv = $rhv"
 
