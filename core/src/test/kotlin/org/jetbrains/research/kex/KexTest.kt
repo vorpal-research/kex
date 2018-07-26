@@ -5,11 +5,14 @@ import org.jetbrains.research.kex.asm.transform.LoopDeroller
 import org.jetbrains.research.kex.config.FileConfig
 import org.jetbrains.research.kex.config.GlobalConfig
 import org.jetbrains.research.kex.config.RuntimeConfig
+import org.jetbrains.research.kex.test.Intrinsics
 import org.jetbrains.research.kfg.CM
 import org.jetbrains.research.kfg.Package
+import org.jetbrains.research.kfg.TF
 import org.jetbrains.research.kfg.analysis.LoopAnalysis
 import org.jetbrains.research.kfg.analysis.LoopSimplifier
 import org.jetbrains.research.kfg.ir.Method
+import org.jetbrains.research.kfg.ir.MethodDesc
 import org.jetbrains.research.kfg.ir.value.instruction.CallInst
 import org.jetbrains.research.kfg.ir.value.instruction.Instruction
 import org.jetbrains.research.kfg.util.Flags
@@ -44,14 +47,22 @@ abstract class KexTest {
     }
 
     fun getReachables(method: Method): List<Instruction> {
-        val intrinsics = CM.getByName("$packageName/Intrinsics")
-        val assertReachable = intrinsics.getMethod("assertReachable", "([Z)V")
+        val `class` = Intrinsics::class.qualifiedName!!.replace(".", "/")
+        val intrinsics = CM.getByName(`class`)
+
+        val methodName = Intrinsics::assertReachable.name
+        val desc = MethodDesc(arrayOf(TF.getArrayType(TF.getBoolType())), TF.getVoidType())
+        val assertReachable = intrinsics.getMethod(methodName, desc)
         return method.flatten().mapNotNull { it as? CallInst }.filter { it.method == assertReachable && it.`class` == intrinsics }
     }
 
     fun getUnreachables(method: Method): List<Instruction> {
-        val intrinsics = CM.getByName("$packageName/Intrinsics")
-        val assertUnreachable = intrinsics.getMethod("assertUnreachable", "()V")
+        val `class` = Intrinsics::class.qualifiedName!!.replace(".", "/")
+        val intrinsics = CM.getByName(`class`)
+
+        val methodName = Intrinsics::assertUnreachable.name
+        val desc = MethodDesc(arrayOf(), TF.getVoidType())
+        val assertUnreachable = intrinsics.getMethod(methodName, desc)
         return method.flatten().mapNotNull { it as? CallInst }.filter { it.method == assertUnreachable && it.`class` == intrinsics }
     }
 }
