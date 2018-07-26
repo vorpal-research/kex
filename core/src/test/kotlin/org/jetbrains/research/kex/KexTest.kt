@@ -28,7 +28,7 @@ abstract class KexTest {
         val jarPath = "$rootDir/kex-test/target/kex-test-0.1-jar-with-dependencies.jar"
         val jarFile = JarFile(jarPath)
         val `package` = Package("$packageName/*")
-        CM.parseJar(jarFile, `package`, Flags.getNoFrames())
+        CM.parseJar(jarFile, `package`, Flags.readAll)
     }
 
     fun getPSA(method: Method): PredicateStateAnalysis {
