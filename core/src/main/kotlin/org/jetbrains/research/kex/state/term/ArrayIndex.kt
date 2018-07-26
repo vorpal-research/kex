@@ -5,8 +5,12 @@ import org.jetbrains.research.kfg.type.Type
 
 class ArrayIndexTerm(type: Type, arrayRef: Term, index: Term)
     : Term("$arrayRef[$index]", type, listOf(arrayRef, index)) {
-    val arrayRef get() = subterms[0]
-    val index get() = subterms[1]
+
+    val arrayRef: Term
+        get() = subterms[0]
+
+    val index: Term
+        get() = subterms[1]
 
     override fun print() = name
 

@@ -8,8 +8,11 @@ import org.jetbrains.research.kfg.type.Type
 class CallTerm(type: Type, owner: Term, val method: Method, operands: List<Term>)
     : Term("", type, listOf(owner).plus(operands)) {
 
-    val owner get() = subterms[0]
-    val arguments get() = subterms.drop(1)
+    val owner: Term
+        get() = subterms[0]
+
+    val arguments: List<Term>
+        get() = subterms.drop(1)
 
     override fun print(): String {
         val sb = StringBuilder()

@@ -6,7 +6,9 @@ import org.jetbrains.research.kfg.type.ArrayType
 import org.jetbrains.research.kfg.type.Type
 
 class ArrayLoadTerm(type: Type, arrayRef: Term) : Term("", type, listOf(arrayRef)) {
-    val arrayRef get() = subterms[0]
+
+    val arrayRef: Term
+        get() = subterms[0]
 
     override fun print() = "*($arrayRef)"
 

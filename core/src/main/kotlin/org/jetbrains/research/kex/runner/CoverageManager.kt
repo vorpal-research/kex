@@ -9,8 +9,11 @@ data class BlockInfo internal constructor(val bb: BasicBlock, val predecessor: B
     var outputAction: BlockExitAction? = null
         internal set
 
-    val hasPredecessor get() = predecessor != null
-    val hasOutput get() = outputAction != null
+    val hasPredecessor: Boolean
+        get() = predecessor != null
+
+    val hasOutput: Boolean
+        get() = outputAction != null
 }
 
 class MethodInfo internal constructor(val method: Method, val instance: ActionValue?,

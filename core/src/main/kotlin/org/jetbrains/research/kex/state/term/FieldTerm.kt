@@ -7,9 +7,15 @@ import org.jetbrains.research.kfg.type.ClassType
 import org.jetbrains.research.kfg.type.Type
 
 class FieldTerm(type: Type, owner: Term, name: Term) : Term("${owner.print()}.${name.name}", type, listOf(owner, name)) {
-    val owner get() = subterms[0]
-    val fieldName get() = subterms[1]
-    val isStatic get() = owner is ConstClassTerm
+
+    val owner: Term
+        get() = subterms[0]
+
+    val fieldName: Term
+        get() = subterms[1]
+
+    val isStatic: Boolean
+        get() = owner is ConstClassTerm
 
     fun getClass() = (owner.type as? ClassType)?.`class` ?: unreachable { log.error("Non-class owner in field term") }
 

@@ -7,8 +7,11 @@ import org.jetbrains.research.kex.util.log
 import org.jetbrains.research.kex.util.unreachable
 
 interface Transformer<T : Transformer<T>> {
-    val pf: PredicateFactory get() = PredicateFactory
-    val tf: TermFactory get() = TermFactory
+    val pf: PredicateFactory
+        get() = PredicateFactory
+
+    val tf: TermFactory
+        get() = TermFactory
 
     private inline fun < reified T : Sealed> delegate(argument: T, type: String): T {
         val subtypeName = argument.getReverseMapping().getValue(argument.javaClass)

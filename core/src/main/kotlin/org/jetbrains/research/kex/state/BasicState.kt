@@ -4,9 +4,13 @@ import org.jetbrains.research.kex.state.predicate.Predicate
 import org.jetbrains.research.kex.util.defaultHashCode
 
 class BasicState() : PredicateState(), Iterable<Predicate> {
-    protected val preds = arrayListOf<Predicate>()
+    private val preds = arrayListOf<Predicate>()
+
     val predicates: List<Predicate>
         get() = preds
+
+    override val size: Int
+        get() = predicates.size
 
     constructor(predicates: List<Predicate>) : this() {
         this.preds.addAll(predicates)
@@ -25,7 +29,6 @@ class BasicState() : PredicateState(), Iterable<Predicate> {
     override fun mapNotNull(transform: (Predicate) -> Predicate?) = BasicState(predicates.mapNotNull(transform))
     override fun filter(predicate: (Predicate) -> Boolean) = BasicState(predicates.filter(predicate))
     override fun reverse(): PredicateState = BasicState(predicates.reversed())
-    override val size get() = predicates.size
 
     override fun hashCode() = defaultHashCode(*preds.toTypedArray())
     override fun equals(other: Any?): Boolean {

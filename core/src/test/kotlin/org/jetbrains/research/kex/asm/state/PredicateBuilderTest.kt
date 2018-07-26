@@ -329,7 +329,7 @@ class PredicateBuilderTest : KexTest() {
     fun testPredicateBuilder() {
         for (`class` in CM.getConcreteClasses()) {
             for ((_, method) in `class`.methods) {
-                if (method.isAbstract()) continue
+                if (method.isAbstract) continue
                 val la = LoopAnalysis(method)
                 la.visit()
                 if (la.loops.isNotEmpty()) {

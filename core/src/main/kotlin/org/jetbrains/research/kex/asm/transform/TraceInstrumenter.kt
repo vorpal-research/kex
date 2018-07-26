@@ -21,7 +21,7 @@ class TraceInstrumenter(method: Method) : MethodVisitor(method) {
 
         val builder = SystemOutWrapper("sout")
         builder.println("$tracePrefix exit ${bb.name};")
-        builder.print("$tracePrefix return ${method.getPrototype().replace('/', '.')}; ")
+        builder.print("$tracePrefix return ${method.prototype.replace('/', '.')}; ")
 
         val printer = ValuePrinter()
         when {
@@ -44,7 +44,7 @@ class TraceInstrumenter(method: Method) : MethodVisitor(method) {
         val bb = inst.parent!!
 
         val builder = SystemOutWrapper("sout")
-        builder.print("$tracePrefix throw ${method.getPrototype().replace('/', '.')}; ")
+        builder.print("$tracePrefix throw ${method.prototype.replace('/', '.')}; ")
 
         val printer = ValuePrinter()
         builder.print("${inst.throwable.name} == ")
@@ -132,15 +132,15 @@ class TraceInstrumenter(method: Method) : MethodVisitor(method) {
 
     override fun visit() {
         super.visit()
-        val bb = method.getEntry()
-        val methodName = method.getPrototype().replace('/', '.')
+        val bb = method.entry
+        val methodName = method.prototype.replace('/', '.')
 
         val builder = SystemOutWrapper("sout")
         builder.println("$tracePrefix enter $methodName;")
 
         val args = method.desc.args
         val printer = ValuePrinter()
-        if (!method.isStatic()) {
+        if (!method.isStatic) {
             val thisType = TF.getRefType(method.`class`)
             val `this` = VF.getThis(thisType)
             builder.print("$tracePrefix instance $methodName; this == ")

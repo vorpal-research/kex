@@ -4,6 +4,9 @@ import org.jetbrains.research.kex.state.predicate.Predicate
 import org.jetbrains.research.kex.util.defaultHashCode
 
 class ChainState(val base: PredicateState, val curr: PredicateState) : PredicateState() {
+    override val size: Int
+        get() = base.size + curr.size
+
     override fun print(): String {
         val sb = StringBuilder()
         sb.append(base.print())
@@ -14,8 +17,6 @@ class ChainState(val base: PredicateState, val curr: PredicateState) : Predicate
 
     override fun fmap(transform: (PredicateState) -> PredicateState) = ChainState(transform(base), transform(curr))
     override fun reverse() = ChainState(curr.reverse(), base.reverse())
-
-    override val size get() = base.size + curr.size
 
     override fun hashCode() = defaultHashCode(base, curr)
     override fun equals(other: Any?): Boolean {
