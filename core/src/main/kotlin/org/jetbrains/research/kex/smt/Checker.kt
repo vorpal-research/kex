@@ -16,7 +16,9 @@ class Checker(val method: Method, val psa: PredicateStateAnalysis) {
     fun checkReachable(inst: Instruction): Result {
         log.debug("Checking reachability of ${inst.print()}")
 
-        var state = psa.getInstructionState(inst)
+        var state = psa.getInstructionState(inst) ?:
+            return Result.UnknownResult("Can't get state for instruction ${inst.print()}, maybe it's unreachable")
+
         log.debug("State: $state")
 
         state = Optimizer.transform(state).simplify()

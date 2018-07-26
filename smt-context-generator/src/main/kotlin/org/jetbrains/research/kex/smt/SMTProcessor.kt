@@ -9,11 +9,8 @@ import javax.lang.model.element.Element
 import javax.lang.model.element.TypeElement
 import javax.tools.Diagnostic
 import kotlin.reflect.KClass
-import kotlin.reflect.KFunction
 import kotlin.reflect.full.declaredMemberProperties
-import kotlin.reflect.full.declaredMembers
 import kotlin.reflect.full.memberFunctions
-import kotlin.reflect.full.memberProperties
 
 class SMTProcessor : AbstractProcessor() {
     private companion object {

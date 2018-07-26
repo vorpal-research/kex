@@ -25,7 +25,7 @@ class PredicateStateAnalysis(method: Method) : MethodVisitor(method) {
     private val domTree = DominatorTree<BasicBlock>()
     private val predicateBuilder = PredicateBuilder(method)
 
-    fun getInstructionState(inst: Instruction): PredicateState = instructionStates.getOrElse(inst) {
+    fun getInstructionState(inst: Instruction) = instructionStates.getOrElse(inst) {
         val active = hashSetOf<BasicBlock>()
 
         val queue = ArrayDeque<BasicBlock>()
@@ -42,7 +42,7 @@ class PredicateStateAnalysis(method: Method) : MethodVisitor(method) {
             queue.pop()
         }
         order.filter { it in active }.forEach { processBasicBlock(it) }
-        instructionStates.getValue(inst)
+        instructionStates[inst]
     }
 
     override fun visit() {

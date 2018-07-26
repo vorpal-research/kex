@@ -18,9 +18,7 @@ import org.jetbrains.research.kfg.Package
 import org.jetbrains.research.kfg.analysis.IRVerifier
 import org.jetbrains.research.kfg.analysis.LoopAnalysis
 import org.jetbrains.research.kfg.analysis.LoopSimplifier
-import org.jetbrains.research.kfg.util.Flags
-import org.jetbrains.research.kfg.util.writeClass
-import org.jetbrains.research.kfg.util.writeClassesToTarget
+import org.jetbrains.research.kfg.util.*
 import java.io.File
 import java.net.URLClassLoader
 import java.util.jar.JarFile
@@ -36,12 +34,13 @@ fun main(args: Array<String>) {
     require(jarName != null, cmd::printHelp)
 
     val jar = JarFile(jarName)
+    val jarLoader = jar.getClassLoader()
     val `package` = Package(packageName.replace('.', '/'))
-    CM.parseJar(jar, `package`, Flags.getNoFrames())
+    CM.parseJar(jar, `package`, Flags.readAll)
 
     log.debug("Running with jar ${jar.name} and package $`package`")
     val target = File("instrumented/")
-    writeClassesToTarget(jar, target, `package`, true) // write all classes to target, so they will be seen by ClassLoader
+    JarUtils.writeClassesToTarget(jar, target, `package`, true) // write all classes to target, so they will be seen by ClassLoader
 
     val runner = config.getBooleanValue("runner", "use-runner", false)
     if (runner) {
@@ -51,19 +50,19 @@ fun main(args: Array<String>) {
                 if (!method.isAbstract && method.name != "<init>" && method.name != "<clinit>") {
                     val instrumenter = TraceInstrumenter(method)
                     instrumenter.visit()
-                    writeClass(`class`, classFileName)
+                    JarUtils.writeClass(jarLoader, `class`, classFileName)
                     val loader = URLClassLoader(arrayOf(target.toURI().toURL()))
                     CoverageRunner(method, loader).run()
                     instrumenter.insertedInsts.forEach { it.parent?.remove(it) }
                 }
-                writeClass(`class`, classFileName)
+                JarUtils.writeClass(jarLoader, `class`, classFileName)
             }
         }
         log.info("Results:")
         val cm = CoverageManager
         for (`class` in CM.getConcreteClasses()) {
             for ((_, method) in `class`.methods) {
-                if (!method.isAbstract && method.name != "<init>" && method.name != "<clinit>") {
+                if (!method.isAbstract && !method.isConstructor) {
                     when {
                         cm.isFullCovered(method) -> log.info("\"$method\" full covered")
                         cm.isBodyCovered(method) -> log.info("\"$method\" body covered")
