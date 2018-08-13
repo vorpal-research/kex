@@ -1,5 +1,6 @@
 package org.jetbrains.research.kex
 
+import org.jetbrains.research.kex.asm.state.NoTopologicalSortingError
 import org.jetbrains.research.kex.asm.state.PredicateStateAnalysis
 import org.jetbrains.research.kex.asm.transform.LoopDeroller
 import org.jetbrains.research.kex.asm.transform.TraceInstrumenter
@@ -12,7 +13,9 @@ import org.jetbrains.research.kex.runner.CoverageRunner
 import org.jetbrains.research.kex.smt.Checker
 import org.jetbrains.research.kex.smt.Result
 import org.jetbrains.research.kex.util.debug
+import org.jetbrains.research.kex.util.error
 import org.jetbrains.research.kex.util.log
+import org.jetbrains.research.kex.util.unreachable
 import org.jetbrains.research.kfg.CM
 import org.jetbrains.research.kfg.Package
 import org.jetbrains.research.kfg.analysis.IRVerifier
@@ -28,7 +31,7 @@ import java.util.jar.JarFile
 fun main(args: Array<String>) {
     val config = GlobalConfig
     val cmd = CmdConfig(args)
-    val properties = cmd.getCmdValue( "config", "kex.ini")
+    val properties = cmd.getCmdValue("config", "kex.ini")
     config.initialize(cmd, RuntimeConfig, FileConfig(properties))
 
     val jarName = cmd.getCmdValue("jar")
@@ -86,12 +89,18 @@ fun main(args: Array<String>) {
                 val deroller = LoopDeroller(method)
                 deroller.visit()
             }
-            IRVerifier(method).visit()
-
             log.debug(method)
             log.debug(method.print())
-            val psa = PredicateStateAnalysis(method)
-            psa.visit()
+            IRVerifier(method).visit()
+
+            val psa = try {
+                val psa_ = PredicateStateAnalysis(method)
+                psa_.visit()
+                psa_
+            } catch (e: NoTopologicalSortingError) {
+                unreachable<PredicateStateAnalysis> { log.error(e) }
+            }
+
             val checker = Checker(method, psa)
             val result = checker.checkReachable(method.last().last())
             log.debug(result)
