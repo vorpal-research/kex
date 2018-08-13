@@ -16,6 +16,8 @@ import org.jetbrains.research.kfg.util.TopologicalSorter
 import org.jetbrains.research.kfg.visitor.MethodVisitor
 import java.util.*
 
+class NoTopologicalSortingError(msg: String) : Exception(msg)
+
 class PredicateStateAnalysis(method: Method) : MethodVisitor(method) {
     private val blockStates = hashMapOf<BasicBlock, PredicateState>()
     private val instructionStates = hashMapOf<Instruction, PredicateState>()
@@ -51,7 +53,8 @@ class PredicateStateAnalysis(method: Method) : MethodVisitor(method) {
 
         val (order, cycled) = TopologicalSorter(method.basicBlocks.toSet()).sort(method.entry)
         domTree.putAll(DominatorTreeBuilder(method.basicBlocks.toSet()).build())
-        require(cycled.isEmpty()) { log.error("No topological sorting for $method") }
+
+        if (cycled.isNotEmpty()) throw NoTopologicalSortingError("$method")
 
         this.order.addAll(order.reversed())
     }
