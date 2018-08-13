@@ -80,7 +80,7 @@ class LoopDeroller(method: Method) : LoopVisitor(method) {
                     val updated = inst.update(currentInsts)
                     updated.location = inst.location
                     currentInsts[inst] = updated
-                    newBlock.addInstruction(updated)
+                    newBlock += updated
 
                     if (updated is BlockUser) {
                         currentBlocks.forEach { (original, derolled) -> updated.replaceUsesOf(original, derolled) }
@@ -123,7 +123,7 @@ class LoopDeroller(method: Method) : LoopVisitor(method) {
                     val incomings = new.incomings.filter { it.key in bb.predecessors }
                     val phiValue = when {
                         incomings.size == 1 -> {
-                            bb.remove(new)
+                            bb -= new
                             incomings.values.first()
                         }
                         else -> {
