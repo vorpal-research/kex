@@ -228,6 +228,7 @@ $modifiers class $fullname : $parent {
     operator fun div(other: $self) = divide(other)
     operator fun div(other: Int) = divide(other)
     operator fun rem(other: $self) = mod(other)
+    operator fun not(): $self = $self(ctx, engine.negate(ctx, expr), axiom)
 }
 
 #set($widths = [32, 64])

@@ -18,7 +18,9 @@ import org.jetbrains.research.kfg.Package
 import org.jetbrains.research.kfg.analysis.IRVerifier
 import org.jetbrains.research.kfg.analysis.LoopAnalysis
 import org.jetbrains.research.kfg.analysis.LoopSimplifier
-import org.jetbrains.research.kfg.util.*
+import org.jetbrains.research.kfg.util.Flags
+import org.jetbrains.research.kfg.util.JarUtils
+import org.jetbrains.research.kfg.util.getClassLoader
 import java.io.File
 import java.net.URLClassLoader
 import java.util.jar.JarFile
@@ -87,6 +89,7 @@ fun main(args: Array<String>) {
             IRVerifier(method).visit()
 
             log.debug(method)
+            log.debug(method.print())
             val psa = PredicateStateAnalysis(method)
             psa.visit()
             val checker = Checker(method, psa)

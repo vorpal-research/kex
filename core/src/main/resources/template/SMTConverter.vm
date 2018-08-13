@@ -156,6 +156,7 @@ object ${solver}Converter : ${solver}SMTConverter() {
         val ret = ctx.readMemory(arrayref, ${factory}.getTypeSize(arrayload.type), memspace)
         return when (arrayload.type) {
             is LongType -> Long_.forceCast(ret)
+            is BoolType -> Bool_.forceCast(ret)
             is Integral -> Int_.forceCast(ret)
             is FloatType -> Float_.forceCast(ret)
             is DoubleType -> Double_.forceCast(ret)
@@ -190,6 +191,7 @@ object ${solver}Converter : ${solver}SMTConverter() {
         val op = convert(cast.operand, ef, ctx)
         return when (cast.type) {
             is LongType -> Long_.forceCast(op)
+            is BoolType -> Bool_.forceCast(op)
             is Integral -> Int_.forceCast(op)
             is FloatType -> Float_.forceCast(op)
             is DoubleType -> Double_.forceCast(op)
@@ -257,6 +259,7 @@ object ${solver}Converter : ${solver}SMTConverter() {
         val res = ctx.readMemory(field, Z3ExprFactory.getTypeSize(fieldload.type), memspace)
         return when (fieldload.type) {
             is LongType -> Long_.forceCast(res)
+            is BoolType -> Bool_.forceCast(res)
             is Integral -> Int_.forceCast(res)
             is FloatType -> Float_.forceCast(res)
             is DoubleType -> Double_.forceCast(res)
@@ -280,11 +283,16 @@ object ${solver}Converter : ${solver}SMTConverter() {
     }
 
     fun convert(instanceof: InstanceOfTerm, ef: $factory, ctx: ${solver}Context): Dynamic_ =
-        ef.getVarByType(instanceof.type, instanceof.name)
+        ef.getVarByType(instanceof.type, instanceof.print())
 
     fun convert(neg: NegTerm, ef: $factory, ctx: ${solver}Context): Dynamic_ {
-        val operand = convert(neg.operand, ef, ctx) as? Bool_ ?: unreachable { log.error("Non-bool term in `neg`") }
-        return !operand
+        val operand = convert(neg.operand, ef, ctx)
+        return when (operand) {
+            is Bool_ -> Bool_.forceCast(!operand)
+            is Int_ -> Int_.forceCast(!operand)
+            is Long_ -> Long_.forceCast(!operand)
+            else -> unreachable { log.error("Invalid operand of `neg`: ${neg.operand.print()}") }
+        }
     }
 
     fun convert(`null`: NullTerm, ef: $factory, ctx: ${solver}Context): Dynamic_ = ef.makeNull()
