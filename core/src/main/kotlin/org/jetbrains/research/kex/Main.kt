@@ -15,7 +15,6 @@ import org.jetbrains.research.kex.smt.Result
 import org.jetbrains.research.kex.util.debug
 import org.jetbrains.research.kex.util.error
 import org.jetbrains.research.kex.util.log
-import org.jetbrains.research.kex.util.unreachable
 import org.jetbrains.research.kfg.CM
 import org.jetbrains.research.kfg.Package
 import org.jetbrains.research.kfg.analysis.IRVerifier
@@ -89,16 +88,16 @@ fun main(args: Array<String>) {
                 val deroller = LoopDeroller(method)
                 deroller.visit()
             }
-            log.debug(method)
-            log.debug(method.print())
             IRVerifier(method).visit()
 
-            val psa = try {
-                val psa_ = PredicateStateAnalysis(method)
-                psa_.visit()
-                psa_
+            log.debug(method)
+            log.debug(method.print())
+
+            val psa = PredicateStateAnalysis(method)
+            try {
+                psa.visit()
             } catch (e: NoTopologicalSortingError) {
-                unreachable<PredicateStateAnalysis> { log.error(e) }
+                log.error(e)
             }
 
             val checker = Checker(method, psa)

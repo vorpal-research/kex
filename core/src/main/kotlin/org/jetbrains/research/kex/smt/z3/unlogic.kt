@@ -1,9 +1,6 @@
 package org.jetbrains.research.kex.smt.z3
 
-import com.microsoft.z3.BitVecNum
-import com.microsoft.z3.BoolExpr
-import com.microsoft.z3.Expr
-import com.microsoft.z3.FPNum
+import com.microsoft.z3.*
 import com.microsoft.z3.enumerations.Z3_lbool
 import org.jetbrains.research.kex.smt.SMTEngine
 import org.jetbrains.research.kex.state.term.Term
@@ -30,7 +27,14 @@ object Z3Unlogic {
 
     fun undoBV(expr: BitVecNum) = when (expr.sortSize) {
         SMTEngine.WORD -> tf.getInt(expr.long.toInt())
-        SMTEngine.DWORD -> tf.getLong(expr.long)
+        SMTEngine.DWORD -> {
+            val value = try {
+                expr.long
+            } catch (e: Z3Exception) {
+                expr.bigInteger.toLong()
+            }
+            tf.getLong(value)
+        }
         else -> unreachable { log.error("Trying to undo bv with unexpected size: ${expr.sortSize}") }
     }
 
