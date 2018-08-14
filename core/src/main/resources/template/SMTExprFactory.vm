@@ -14,17 +14,20 @@ typealias Dynamic_ = $valexpr
 
 class $factory : ${solver}SMTExprFactory() {
     companion object {
-        private val classOffsets = hashMapOf< Class, MutableMap< Class.FieldKey, Int >>()
+        class OffsetMap {
+            private val inner = mutableMapOf< Class.FieldKey, Int >()
+            private var current = 0
 
-        fun getFieldOffset(`class`: Class, field: Class.FieldKey) = classOffsets.getOrPut(`class`) {
-            val offsets = hashMapOf< Class.FieldKey, Int >()
-            var offset = 0
-            for (key in `class`.fields.keys) {
-                offsets[key] = 0
-                offset += getTypeSize(key.type)
+            operator fun get(key: Class.FieldKey): Int = inner.getOrPut(key) {
+                val value = current
+                current += getTypeSize(key.type)
+                value
             }
-            offsets
-        }.getValue(field)
+        }
+
+        private val classOffsets = hashMapOf< Class, OffsetMap >()
+
+        fun getFieldOffset(`class`: Class, field: Class.FieldKey) = classOffsets.getOrPut(`class`, ::OffsetMap)[field]
 
         fun getTypeSize(type: Type) = when (type) {
             is LongType -> SMTEngine.DWORD
