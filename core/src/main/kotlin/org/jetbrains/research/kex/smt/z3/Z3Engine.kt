@@ -36,7 +36,7 @@ object Z3Engine : SMTEngine<Context, Expr, Sort, FuncDecl>() {
         return when {
             curSize == castSize -> expr
             curSize < castSize -> sext(ctx, castSize, expr)
-            else -> unreachable { log.error("Unable to shrunk BV from $curSize to $castSize bits") }
+            else -> extract(ctx, expr, high = castSize - 1, low = 0)
         }
     }
 
