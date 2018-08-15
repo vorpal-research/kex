@@ -2,6 +2,7 @@ package org.jetbrains.research.kex.asm.transform
 
 import org.jetbrains.research.kex.config.GlobalConfig
 import org.jetbrains.research.kex.util.log
+import org.jetbrains.research.kex.util.toInt
 import org.jetbrains.research.kfg.IF
 import org.jetbrains.research.kfg.analysis.Loop
 import org.jetbrains.research.kfg.ir.BasicBlock
@@ -23,7 +24,17 @@ class LoopDeroller(method: Method) : LoopVisitor(method) {
         val header = loop.header
         val preheader = loop.preheader
         val latch = loop.latch
-        val exit = loop.loopExits.first()
+
+        val terminator = run {
+            var current = latch.successors.first()
+            while (current.terminator is JumpInst) current = current.successors.first()
+            current.terminator
+        }
+        val continueOnTrue = loop.contains(terminator.successors.first())
+        val loopExit = when {
+            terminator.successors.size == 1 -> null
+            else -> terminator.successors[continueOnTrue.toInt()]
+        }
 
         val (order, _) = TopologicalSorter(loop.body).sort(header)
         val blockOrder = order.filter { it in loop.body }.reversed()
@@ -31,8 +42,9 @@ class LoopDeroller(method: Method) : LoopVisitor(method) {
         val currentInsts = hashMapOf<Value, Value>()
         loop.body.flatten().forEach { currentInsts[it] = it }
 
-        var predecessor = preheader
-        var prevHeader = header
+        var lastLatch = preheader
+        var lastHeader = header
+
         val tripCount = getConstantTripCount(loop)
 
         val body = loop.body.toTypedArray()
@@ -48,6 +60,14 @@ class LoopDeroller(method: Method) : LoopVisitor(method) {
         }
         log.debug("Method $method, unrolling loop $loop to $actualDerollCount iterations")
 
+        val methodPhiMappings = hashMapOf<PhiInst, MutableMap<BasicBlock, Value>>()
+        val methodPhis = method.filter { it !in body }.flatten().mapNotNull { it as? PhiInst }
+        for (phi in methodPhis) {
+            val incomings = phi.incomings.toMutableMap()
+            body.forEach { incomings.remove(it) }
+            methodPhiMappings[phi] = incomings
+        }
+
         for (iteration in 0 until actualDerollCount) {
             val currentBlocks = hashMapOf<BasicBlock, BasicBlock>()
             for (block in body) currentBlocks[block] = BodyBlock("${block.name.name}.deroll")
@@ -55,10 +75,8 @@ class LoopDeroller(method: Method) : LoopVisitor(method) {
             for ((original, derolled) in currentBlocks) {
                 when (original) {
                     header -> {
-                        predecessor.terminator.replaceUsesOf(prevHeader, derolled)
-                        predecessor.removeSuccessor(prevHeader)
-                        predecessor.addSuccessors(derolled)
-                        derolled.addPredecessor(predecessor)
+                        lastLatch.replaceUsesOf(lastHeader, derolled)
+                        derolled.addPredecessor(lastLatch)
                     }
                     else -> {
                         val predecessors = original.predecessors.map { currentBlocks.getValue(it) }
@@ -69,7 +87,7 @@ class LoopDeroller(method: Method) : LoopVisitor(method) {
 
                 val successors = original.successors.map {
                     currentBlocks[it] ?: it
-                }.filterNot { it == currentBlocks[header] }
+                }//.filterNot { it == currentBlocks[header] }
                 derolled.addSuccessors(*successors.toTypedArray())
                 successors.forEach { it.addPredecessor(derolled) }
             }
@@ -87,21 +105,28 @@ class LoopDeroller(method: Method) : LoopVisitor(method) {
                     }
 
                     if (updated is PhiInst && block == header) {
-                        val map = mapOf(currentBlocks.getValue(latch) to predecessor)
+                        val map = mapOf(currentBlocks.getValue(latch) to lastLatch)
                         val previousMap = updated.incomings
                         map.forEach { o, t -> updated.replaceUsesOf(o, t) }
 
                         if (updated.predecessors.toSet().size == 1) {
-                            val actual = previousMap.getValue(predecessor)
+                            val actual = previousMap.getValue(lastLatch)
                             updated.replaceAllUsesWith(actual)
                             currentInsts[inst] = actual
                         }
                     }
                 }
+
+                for (phi in methodPhis) {
+                    if (phi.incomings.contains(block)) {
+                        val value = phi.incomings[block]!!
+                        methodPhiMappings[phi]?.put(currentBlocks.getValue(block), currentInsts.getOrDefault(value, value))
+                    }
+                }
             }
 
-            predecessor = currentBlocks.getValue(latch)
-            prevHeader = currentBlocks.getValue(header)
+            lastLatch = currentBlocks.getValue(latch)
+            lastHeader = currentBlocks.getValue(header)
 
             currentBlocks.forEach { loop.addBlock(it.value) }
             for ((catch, throwers) in loopThrowers) {
@@ -141,9 +166,19 @@ class LoopDeroller(method: Method) : LoopVisitor(method) {
             for ((_, derolled) in currentBlocks) loop.parent?.addBlock(derolled)
         }
 
-        predecessor.replaceSuccessorUsesOf(prevHeader, exit)
-        predecessor.terminator.replaceUsesOf(prevHeader, exit)
-        predecessor.addSuccessors(exit)
+        if (loopExit != null) {
+            lastLatch.replaceUsesOf(lastHeader, loopExit)
+            loopExit.addPredecessor(lastLatch)
+        }
+        val unreachableBlock = BodyBlock("unreachable")
+        unreachableBlock.add(IF.getUnreachable())
+        if (lastLatch.terminator.successors.size == 1) {
+            lastLatch.replaceUsesOf(loopExit!!, unreachableBlock)
+        } else {
+            val block = lastLatch.terminator.successors[(!continueOnTrue).toInt()]
+            lastLatch.replaceUsesOf(block, unreachableBlock)
+        }
+        method.add(unreachableBlock)
 
         for (block in body) {
             block.predecessors.toTypedArray().forEach { block.removePredecessor(it) }
@@ -156,6 +191,15 @@ class LoopDeroller(method: Method) : LoopVisitor(method) {
                 catch.removeThrower(it)
                 it.removeHandler(catch)
             }
+        }
+        for (phi in methodPhis) {
+            val newPhi = IF.getPhi(phi.type, methodPhiMappings.getValue(phi))
+            newPhi.location = phi.location
+
+            val bb = phi.parent!!
+            bb.insertBefore(phi, newPhi)
+            phi.replaceAllUsesWith(newPhi)
+            bb -= phi
         }
     }
 
