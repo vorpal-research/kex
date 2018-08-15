@@ -92,4 +92,16 @@ class LoopTests {
             ++i
         }
     }
+
+    fun loopTryCatch() {
+        val names = mutableListOf("a", "b", "c")
+        for (name in names) {
+            try {
+                val concater = StringBuilder()
+//                for (i in 0..name.length) concater.append(name[i] + 1)
+            } catch (e: IndexOutOfBoundsException) {
+                println("Oops")
+            }
+        }
+    }
 }

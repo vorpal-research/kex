@@ -7,7 +7,7 @@ import org.jetbrains.research.kfg.analysis.LoopAnalysis
 import org.jetbrains.research.kfg.analysis.LoopSimplifier
 import org.jetbrains.research.kfg.ir.Method
 import org.jetbrains.research.kfg.ir.value.instruction.UnreachableInst
-import org.junit.Assert.*
+import org.junit.Assert.assertNotNull
 import kotlin.test.Test
 
 class PredicateStateAnalysisTest : KexTest() {
@@ -35,7 +35,11 @@ class PredicateStateAnalysisTest : KexTest() {
 
                 val psa = performPSA(method)
 
-                method.flatten().filter { it !is UnreachableInst }.forEach {
+                val catchBlocks = method.getCatchBlocks()
+                method.filter { it !in catchBlocks }
+                        .flatten()
+                        .filter { it !is UnreachableInst }
+                        .forEach {
                     assertNotNull(psa.getInstructionState(it))
                 }
             }

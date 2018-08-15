@@ -3,10 +3,12 @@ package org.jetbrains.research.kex.asm.transform
 import org.jetbrains.research.kex.config.GlobalConfig
 import org.jetbrains.research.kex.util.log
 import org.jetbrains.research.kex.util.toInt
+import org.jetbrains.research.kex.util.unreachable
 import org.jetbrains.research.kfg.IF
 import org.jetbrains.research.kfg.analysis.Loop
 import org.jetbrains.research.kfg.ir.BasicBlock
 import org.jetbrains.research.kfg.ir.BodyBlock
+import org.jetbrains.research.kfg.ir.CatchBlock
 import org.jetbrains.research.kfg.ir.Method
 import org.jetbrains.research.kfg.ir.value.BlockUser
 import org.jetbrains.research.kfg.ir.value.IntConstant
@@ -30,13 +32,18 @@ class LoopDeroller(method: Method) : LoopVisitor(method) {
             while (current.terminator is JumpInst) current = current.successors.first()
             current.terminator
         }
-        val continueOnTrue = loop.contains(terminator.successors.first())
-        val loopExit = when {
-            terminator.successors.size == 1 -> null
-            else -> terminator.successors[continueOnTrue.toInt()]
+        val (continueOnTrue, loopExit ) = when {
+            terminator.successors.isEmpty() -> false to null
+            terminator.successors.size == 1 -> false to null
+            else -> {
+                val con = loop.contains(terminator.successors.first())
+                con to terminator.successors[con.toInt()]
+            }
         }
 
+        loop.body.mapNotNull { it as? CatchBlock }.forEach { cb -> cb.getAllPredecessors().forEach { it.addSuccessor(cb) } }
         val (order, _) = TopologicalSorter(loop.body).sort(header)
+        loop.body.mapNotNull { it as? CatchBlock }.forEach { cb -> cb.getAllPredecessors().forEach { it.removeSuccessor(cb) } }
         val blockOrder = order.filter { it in loop.body }.reversed()
 
         val currentInsts = hashMapOf<Value, Value>()
@@ -70,7 +77,14 @@ class LoopDeroller(method: Method) : LoopVisitor(method) {
 
         for (iteration in 0 until actualDerollCount) {
             val currentBlocks = hashMapOf<BasicBlock, BasicBlock>()
-            for (block in body) currentBlocks[block] = BodyBlock("${block.name.name}.deroll")
+            for (block in body) {
+                val newBlock = when (block) {
+                    is BodyBlock -> BodyBlock("${block.name.name}.deroll")
+                    is CatchBlock -> CatchBlock("${block.name.name}.deroll", block.exception)
+                    else -> unreachable { log.error("Unknown block type: ${block.name}") }
+                }
+                currentBlocks[block] = newBlock
+            }
 
             for ((original, derolled) in currentBlocks) {
                 when (original) {
@@ -84,10 +98,21 @@ class LoopDeroller(method: Method) : LoopVisitor(method) {
                         predecessors.forEach { it.addSuccessor(derolled) }
                     }
                 }
+                if (original is CatchBlock) {
+                    val throwers = original.throwers.map { currentBlocks.getValue(it) }
+                    derolled as CatchBlock
+                    derolled.addThrowers(throwers)
+                    throwers.forEach { it.addHandler(derolled) }
+                }
+                for (handle in original.handlers) {
+                    val derolledHandle = (currentBlocks[handle] ?: handle) as CatchBlock
+                    derolled.addHandler(derolledHandle)
+                    derolledHandle.addThrowers(listOf(derolled))
+                }
 
                 val successors = original.successors.map {
                     currentBlocks[it] ?: it
-                }//.filterNot { it == currentBlocks[header] }
+                }
                 derolled.addSuccessors(*successors.toTypedArray())
                 successors.forEach { it.addPredecessor(derolled) }
             }
@@ -129,13 +154,6 @@ class LoopDeroller(method: Method) : LoopVisitor(method) {
             lastHeader = currentBlocks.getValue(header)
 
             currentBlocks.forEach { loop.addBlock(it.value) }
-            for ((catch, throwers) in loopThrowers) {
-                val derolledThrowers = throwers.map { currentBlocks.getValue(it) }
-                derolledThrowers.forEach {
-                    it.addHandler(catch)
-                    catch.addThrowers(listOf(it))
-                }
-            }
 
             val phiMappings = blockOrder
                     .flatten()
@@ -162,7 +180,11 @@ class LoopDeroller(method: Method) : LoopVisitor(method) {
                 }
             }
 
-            blockOrder.forEach { method.addBefore(header, currentBlocks.getValue(it)) }
+            blockOrder.forEach {
+                val mapping = currentBlocks.getValue(it)
+                method.addBefore(header, mapping)
+                if (mapping is CatchBlock) method.addCatchBlock(mapping)
+            }
             for ((_, derolled) in currentBlocks) loop.parent?.addBlock(derolled)
         }
 
