@@ -80,6 +80,9 @@ fun main(args: Array<String>) {
     for (`class` in CM.getConcreteClasses()) {
         for ((_, method) in `class`.methods) {
             if (method.isAbstract) continue
+            if (method.toString() == "icfpc2018/MainKt.submitChecked(java/util/List): void") {
+                method.viewCfg("/usr/bin/dot", "/usr/bin/chromium")
+            }
             val la = LoopAnalysis(method)
             la.visit()
             if (la.loops.isNotEmpty()) {
@@ -87,6 +90,9 @@ fun main(args: Array<String>) {
                 simplifier.visit()
                 val deroller = LoopDeroller(method)
                 deroller.visit()
+            }
+            if (method.toString() == "icfpc2018/MainKt.submitChecked(java/util/List): void") {
+                method.viewCfg("/usr/bin/dot", "/usr/bin/chromium")
             }
             IRVerifier(method).visit()
 
