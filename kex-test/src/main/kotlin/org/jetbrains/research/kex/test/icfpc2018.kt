@@ -1,3 +1,5 @@
+@file:Suppress("ASSIGNED_BUT_NEVER_ACCESSED_VARIABLE", "UNUSED_PARAMETER", "UNUSED_VARIABLE")
+
 package org.jetbrains.research.kex.test
 
 import java.io.File
@@ -22,7 +24,9 @@ class Icfpc2018Test {
         fun getSortedSolutions(): List<Pair<String, Solution>> = TODO()
     }
 
-    data class Solution(val energy: Long, val trace: String)
+    data class Solution(val energy: Long, val trace: String) {
+        fun solve() {}
+    }
 
 
     enum class RunMode {
@@ -40,17 +44,19 @@ class Icfpc2018Test {
             fun readMDL(inp: InputStream): Model = TODO()
         }
     }
+
     class State {
         val matrix = Model(0, 0)
     }
 
-    class System(var currentState: State)
+    class System(var currentState: State, val score: Int = 0)
 
     class Trace(val trace: List<Command>, val system: System) {
         fun solve(): Unit = TODO()
     }
 
     private fun getModeByModelName(name: String): RunMode = TODO()
+    private fun getSolutionByName(name: String, target: Model, system: System): Solution = TODO()
 
     fun submitChecked(resultDirs: List<String>) {
         val results = resultDirs.map { Results.readFromDirectory(it) }
@@ -99,4 +105,41 @@ class Icfpc2018Test {
 
         ZipWriter().createZip("submit/")
     }
+
+    fun portfolioSolve() {
+        val task = "taskname"
+        val target = Model.readMDL(File("models/${task}_tgt.mdl").inputStream())
+        val initialState = State()
+        val system = System(initialState)
+        val solutionNames = listOf("grounded_slices", "grounded_bounded_slices", "regions")
+
+        var initialized = false
+        var bestSolutionName = "none"
+        for (solutionName in solutionNames) {
+            var solutionSystem = System(initialState)
+            val solution = getSolutionByName(solutionName, target, solutionSystem)
+            try {
+                solution.solve()
+            } catch (e: Exception) {
+
+                if (solutionName == "regions") {
+                    try {
+                        solutionSystem = System(initialState)
+                        val newSolution = getSolutionByName("regions_deadlocks", target, solutionSystem)
+                        newSolution.solve()
+                    } catch (e: Exception) {
+                        continue
+                    }
+                } else continue
+            }
+
+            if (solutionSystem.currentState.matrix == target) {
+                if (!initialized || system.score > solutionSystem.score) {
+                    system.currentState = solutionSystem.currentState
+                    initialized = true
+                }
+            }
+        }
+    }
+
 }
