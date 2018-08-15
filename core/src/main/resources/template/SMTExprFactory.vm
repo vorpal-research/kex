@@ -82,6 +82,7 @@ class $factory : ${solver}SMTExprFactory() {
 #end
         is ClassType -> makePtr(name, fresh)
         is ArrayType -> makePtr(name, fresh)
+        is NullType -> makePtr(name, fresh)
         else -> unreachable { log.error("Unknown type in ExprFactory: ${ type }") }
     }
 

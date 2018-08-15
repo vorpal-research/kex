@@ -160,6 +160,13 @@ class LoopDeroller(method: Method) : LoopVisitor(method) {
                     .zip(blockOrder.map { currentBlocks.getValue(it) }.flatten())
                     .filter { it.first is PhiInst }
 
+            blockOrder.forEach {
+                val mapping = currentBlocks.getValue(it)
+                method.addBefore(header, mapping)
+                if (mapping is CatchBlock) method.addCatchBlock(mapping)
+            }
+            for ((_, derolled) in currentBlocks) loop.parent?.addBlock(derolled)
+
             for ((orig, new) in phiMappings) {
                 if (new is PhiInst) {
                     val bb = new.parent!!
@@ -179,13 +186,6 @@ class LoopDeroller(method: Method) : LoopVisitor(method) {
                     new.replaceAllUsesWith(phiValue)
                 }
             }
-
-            blockOrder.forEach {
-                val mapping = currentBlocks.getValue(it)
-                method.addBefore(header, mapping)
-                if (mapping is CatchBlock) method.addCatchBlock(mapping)
-            }
-            for ((_, derolled) in currentBlocks) loop.parent?.addBlock(derolled)
         }
 
         if (loopExit != null) {
