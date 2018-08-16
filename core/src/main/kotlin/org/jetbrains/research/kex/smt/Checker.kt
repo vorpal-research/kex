@@ -65,7 +65,7 @@ class Checker(val method: Method, val psa: PredicateStateAnalysis) {
         }
 
         val result = SMTProxySolver().isPathPossible(state, query)
-        log.debug("Acquired result:")
+        log.debug("Acquired $result")
         when (result) {
             is Result.SatResult -> log.debug("Reachable")
             is Result.UnsatResult -> log.debug("Unreachable")

@@ -107,7 +107,7 @@ fun main(args: Array<String>) {
             log.debug(result)
             if (result is Result.SatResult) {
                 log.debug(result.model)
-                val recoverer = ModelRecoverer(method, result.model)
+                val recoverer = ModelRecoverer(method, result.model, jarLoader)
                 recoverer.apply()
                 log.debug("Recovered: ")
                 for ((term, value) in recoverer.terms) {
