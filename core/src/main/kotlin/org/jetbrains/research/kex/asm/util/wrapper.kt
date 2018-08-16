@@ -150,7 +150,7 @@ class ValuePrinter {
 
     private fun printClass(value: Value, type: ClassType): Instruction {
         val sb = StringBuilderWrapper("sb")
-        sb.append(type.`class`.getFullname().replace('/', '.'))
+        sb.append(type.`class`.fullname.replace('/', '.'))
         sb.append("@")
         val hash = getIdentityHashCode(value)
         sb.append(print(hash))

@@ -35,7 +35,7 @@ class PredicateStateAnalysisTest : KexTest() {
 
                 val psa = performPSA(method)
 
-                val catchBlocks = method.getCatchBlocks()
+                val catchBlocks = method.catchBlocks
                 method.filter { it !in catchBlocks }
                         .flatten()
                         .filter { it !is UnreachableInst }

@@ -52,7 +52,7 @@ fun main(args: Array<String>) {
     if (runner) {
         for (`class` in CM.getConcreteClasses()) {
             for ((_, method) in `class`.methods) {
-                val classFileName = "${target.canonicalPath}/${`class`.getFullname()}.class"
+                val classFileName = "${target.canonicalPath}/${`class`.fullname}.class"
                 if (!method.isAbstract && method.name != "<init>" && method.name != "<clinit>") {
                     val instrumenter = TraceInstrumenter(method)
                     instrumenter.visit()
