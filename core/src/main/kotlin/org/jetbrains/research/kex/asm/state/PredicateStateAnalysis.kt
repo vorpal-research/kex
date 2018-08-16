@@ -60,7 +60,7 @@ class PredicateStateAnalysis(method: Method) : MethodVisitor(method) {
     }
 
     private fun processBasicBlock(bb: BasicBlock) {
-        if (bb in method.getCatchBlocks()) return
+        if (bb in method.catchBlocks) return
         var inState = getBlockEntryState(bb) ?: return
 
         for (inst in bb) {
@@ -78,7 +78,7 @@ class PredicateStateAnalysis(method: Method) : MethodVisitor(method) {
     }
 
     private fun getBlockEntryState(bb: BasicBlock): PredicateState? {
-        if (bb in method.getCatchBlocks()) return unreachable { log.error("Catch blocks are not supported yet") }
+        if (bb in method.catchBlocks) return unreachable { log.error("Catch blocks are not supported yet") }
 
         val idom = domTree.getIdom(bb) ?: return initialState
 
