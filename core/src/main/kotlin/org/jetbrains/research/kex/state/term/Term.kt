@@ -42,6 +42,20 @@ abstract class Term(val name: String, val type: Type, val subterms: List<Term>) 
             is ArgumentTerm, is ReturnValueTerm, is ValueTerm, is ArrayIndexTerm, is FieldTerm -> true
             else -> false
         }
+
+        fun isConst(term: Term) = when (term) {
+            is ConstBoolTerm -> true
+            is ConstByteTerm -> true
+            is ConstCharTerm -> true
+            is ConstClassTerm -> true
+            is ConstDoubleTerm -> true
+            is ConstFloatTerm -> true
+            is ConstIntTerm -> true
+            is ConstLongTerm -> true
+            is ConstShortTerm -> true
+            is ConstStringTerm -> true
+            else -> false
+        }
     }
 
     abstract fun print(): String

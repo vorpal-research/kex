@@ -9,6 +9,7 @@ import org.jetbrains.research.kex.smt.Checker
 import org.jetbrains.research.kex.smt.Result
 import org.jetbrains.research.kex.state.term.ConstBoolTerm
 import org.jetbrains.research.kex.state.term.ConstIntTerm
+import org.jetbrains.research.kex.state.term.Term
 import org.jetbrains.research.kex.state.term.TermFactory
 import org.jetbrains.research.kex.test.Intrinsics
 import org.jetbrains.research.kex.util.log
@@ -98,8 +99,11 @@ abstract class KexTest {
                 val model = (result as Result.SatResult).model
                 log.debug("Acquired model: $model")
                 log.debug("Checked assertions: $assertions")
-                assertions.forEach {
+                for (it in assertions) {
                     val argTerm = TermFactory.getValue(it)
+
+                    if (Term.isConst(argTerm)) continue
+
                     val modelValue = model.assignments[argTerm]
                     assertNotNull(modelValue)
                     assertTrue(
