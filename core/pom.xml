@@ -37,8 +37,12 @@
             <url>https://jitpack.io</url>
         </repository>
         <repository>
-            <id>spring libs</id>
-            <url>http://repo.spring.io/libs-milestone/</url>
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
+            <id>bintray-cbeust-maven</id>
+            <name>bintray</name>
+            <url>https://dl.bintray.com/cbeust/maven</url>
         </repository>
     </repositories>
 
