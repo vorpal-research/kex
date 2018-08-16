@@ -1,5 +1,6 @@
 package org.jetbrains.research.kex
 
+import org.jetbrains.research.kex.config.RuntimeConfig
 import org.jetbrains.research.kfg.CM
 import kotlin.test.Test
 
@@ -12,12 +13,12 @@ class BasicTest : KexTest() {
     }
 
 // Don't run this because it's too long
-//    @Test
-//    fun testIcfpc2018() {
-//        // Don't check any assertions during in this tests, so can use slicing
-//        RuntimeConfig.setValue("smt", "slicing", true)
-//
-//        val `class` = CM.getByName("$packageName/Icfpc2018Test")
-//        testClassReachability(`class`)
-//    }
+    @Test
+    fun testIcfpc2018() {
+        // Don't check any assertions during in this tests, so can use slicing
+        RuntimeConfig.setValue("smt", "slicing", true)
+
+        val `class` = CM.getByName("$packageName/Icfpc2018Test")
+        testClassReachability(`class`)
+    }
 }

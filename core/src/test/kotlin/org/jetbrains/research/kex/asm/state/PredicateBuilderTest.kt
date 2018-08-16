@@ -98,7 +98,7 @@ class PredicateBuilderTest : KexTest() {
                 assertTrue(predicate is CallPredicate)
                 predicate as CallPredicate
 
-                val lhv = if (inst.type.isVoid()) null else tf.getValue(inst)
+                val lhv = if (inst.type.isVoid) null else tf.getValue(inst)
                 assertEquals(lhv, predicate.getLhvUnsafe())
 
                 val args = inst.args.map { tf.getValue(it) }

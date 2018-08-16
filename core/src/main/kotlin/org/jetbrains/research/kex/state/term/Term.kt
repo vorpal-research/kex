@@ -60,8 +60,8 @@ abstract class Term(val name: String, val type: Type, val subterms: List<Term>) 
         fun isReference(term: Term) = when (term) {
             is ArrayIndexTerm -> true
             is FieldTerm -> true
-            is ValueTerm -> term.type.isReference()
-            is ArgumentTerm -> term.type.isReference()
+            is ValueTerm -> term.type.isReference
+            is ArgumentTerm -> term.type.isReference
             else -> false
         }
 

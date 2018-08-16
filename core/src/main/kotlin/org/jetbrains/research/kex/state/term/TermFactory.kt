@@ -61,7 +61,7 @@ object TermFactory {
     fun getDouble(value: Double) = ConstDoubleTerm(value)
     fun getDouble(const: DoubleConstant) = getDouble(const.value)
     fun getString(type: Type, value: String) = ConstStringTerm(type, value)
-    fun getString(value: String) = ConstStringTerm(TF.getString(), value)
+    fun getString(value: String) = ConstStringTerm(TF.stringType, value)
     fun getString(const: StringConstant) = getString(const.value)
     fun getNull() = NullTerm()
     fun getClass(`class`: Class) = getClass(TF.getRefType(`class`), `class`)
@@ -77,7 +77,7 @@ object TermFactory {
         UnaryOpcode.LENGTH -> getArrayLength(operand)
     }
 
-    fun getArrayLength(arrayRef: Term) = getArrayLength(TF.getIntType(), arrayRef)
+    fun getArrayLength(arrayRef: Term) = getArrayLength(TF.intType, arrayRef)
     fun getArrayLength(type: Type, arrayRef: Term) = ArrayLengthTerm(type, arrayRef)
 
     fun getArrayIndex(arrayRef: Term, index: Term): Term {
@@ -121,9 +121,9 @@ object TermFactory {
     fun getCast(type: Type, operand: Term) = CastTerm(type, operand)
     fun getCmp(opcode: CmpOpcode, lhv: Term, rhv: Term): Term {
         val resType = when (opcode) {
-            is CmpOpcode.Cmpg -> TF.getIntType()
-            is CmpOpcode.Cmpl -> TF.getIntType()
-            else -> TF.getBoolType()
+            is CmpOpcode.Cmpg -> TF.intType
+            is CmpOpcode.Cmpl -> TF.intType
+            else -> TF.boolType
         }
         return getCmp(resType, opcode, lhv, rhv)
     }
