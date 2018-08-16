@@ -12,6 +12,7 @@ import org.jetbrains.research.kex.runner.CoverageManager
 import org.jetbrains.research.kex.runner.CoverageRunner
 import org.jetbrains.research.kex.smt.Checker
 import org.jetbrains.research.kex.smt.Result
+import org.jetbrains.research.kex.smt.model.ModelRecoverer
 import org.jetbrains.research.kex.util.debug
 import org.jetbrains.research.kex.util.error
 import org.jetbrains.research.kex.util.log
@@ -104,7 +105,15 @@ fun main(args: Array<String>) {
             val checker = Checker(method, psa)
             val result = checker.checkReachable(method.flatten().last { it !is UnreachableInst })
             log.debug(result)
-            if (result is Result.SatResult) log.debug(result.model)
+            if (result is Result.SatResult) {
+                log.debug(result.model)
+                val recoverer = ModelRecoverer(method, result.model)
+                recoverer.apply()
+                log.debug("Recovered: ")
+                for ((term, value) in recoverer.terms) {
+                    log.debug("$term = $value")
+                }
+            }
             log.debug()
         }
     }

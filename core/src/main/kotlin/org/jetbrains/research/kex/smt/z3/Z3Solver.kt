@@ -1,20 +1,28 @@
 package org.jetbrains.research.kex.smt.z3
 
-import com.microsoft.z3.*
+import com.microsoft.z3.Model
+import com.microsoft.z3.Status
+import com.microsoft.z3.Tactic
 import org.jetbrains.research.kex.config.GlobalConfig
 import org.jetbrains.research.kex.smt.AbstractSMTSolver
-import org.jetbrains.research.kex.smt.MemoryShape
-import org.jetbrains.research.kex.smt.SMTModel
 import org.jetbrains.research.kex.smt.Result
+import org.jetbrains.research.kex.smt.model.MemoryShape
+import org.jetbrains.research.kex.smt.model.SMTModel
 import org.jetbrains.research.kex.state.PredicateState
 import org.jetbrains.research.kex.state.predicate.PredicateType
 import org.jetbrains.research.kex.state.term.Term
 import org.jetbrains.research.kex.state.transformer.Memspaced
 import org.jetbrains.research.kex.state.transformer.PointerCollector
 import org.jetbrains.research.kex.state.transformer.VariableCollector
-import org.jetbrains.research.kex.util.*
+import org.jetbrains.research.kex.util.castTo
+import org.jetbrains.research.kex.util.debug
+import org.jetbrains.research.kex.util.log
+import org.jetbrains.research.kex.util.unreachable
 
 private val timeout = GlobalConfig.getIntValue("smt", "timeout", 3) * 1000
+
+private val logQuery = GlobalConfig.getBooleanValue("smt", "logQuery", false)
+private val logFormulae = GlobalConfig.getBooleanValue("smt", "logFormulae", false)
 
 class Z3Solver(val ef: Z3ExprFactory) : AbstractSMTSolver {
 
@@ -24,10 +32,12 @@ class Z3Solver(val ef: Z3ExprFactory) : AbstractSMTSolver {
     override fun isPathPossible(state: PredicateState, path: PredicateState) = isViolated(state, path)
 
     override fun isViolated(state: PredicateState, query: PredicateState): Result {
-        log.run {
-            debug("Z3 solver check")
-            debug("State: $state")
-            debug("Query: $query")
+        if (logQuery) {
+            log.run {
+                debug("Z3 solver check")
+                debug("State: $state")
+                debug("Query: $query")
+            }
         }
 
         val ctx = Z3Context(ef, (1 shl 8) + 1, (1 shl 24) + 1)
@@ -51,9 +61,11 @@ class Z3Solver(val ef: Z3ExprFactory) : AbstractSMTSolver {
         val state_ = state.simplify()
         val query_ = query.simplify()
 
-        log.run {
-            debug("State: $state_")
-            debug("Query: $query_")
+        if (logFormulae) {
+            log.run {
+                debug("State: $state_")
+                debug("Query: $query_")
+            }
         }
 
         solver.add(state_.asAxiom().castTo())
@@ -64,11 +76,7 @@ class Z3Solver(val ef: Z3ExprFactory) : AbstractSMTSolver {
 
         log.debug("Running z3 solver")
         val result = solver.check(pred.expr) ?: unreachable { log.error("Solver error") }
-        log.run {
-            debug("Solver finished")
-            debug("Acquired result: $result")
-            debug("With:")
-        }
+        log.debug("Solver finished")
 
         return when (result) {
             Status.SATISFIABLE -> {
@@ -128,7 +136,7 @@ class Z3Solver(val ef: Z3ExprFactory) : AbstractSMTSolver {
         }.toMap()
 
         val memories = mutableMapOf<Int, Pair<MutableMap<Term, Term>, MutableMap<Term, Term>>>()
-        val bounds =  mutableMapOf<Int, Pair<MutableMap<Term, Term>, MutableMap<Term, Term>>>()
+        val bounds = mutableMapOf<Int, Pair<MutableMap<Term, Term>, MutableMap<Term, Term>>>()
 
         for (ptr in ptrs) {
             val memspace = (ptr.type as? Memspaced<*>)?.memspace ?: 0
@@ -139,7 +147,8 @@ class Z3Solver(val ef: Z3ExprFactory) : AbstractSMTSolver {
             val startBounds = ctx.getBounds(memspace)
             val endBounds = ctx.getBounds(memspace)
 
-            val eptr = Z3Converter.convert(ptr, ef, ctx) as? Ptr_ ?: unreachable { log.error("Non-ptr expr for pointer $ptr") }
+            val eptr = Z3Converter.convert(ptr, ef, ctx) as? Ptr_
+                    ?: unreachable { log.error("Non-ptr expr for pointer $ptr") }
 
             val startV = startMem.load(eptr, Z3ExprFactory.getTypeSize(ptr.type))
             val endV = endMem.load(eptr, Z3ExprFactory.getTypeSize(ptr.type))
