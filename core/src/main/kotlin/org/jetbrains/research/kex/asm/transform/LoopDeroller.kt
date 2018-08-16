@@ -36,7 +36,7 @@ class LoopDeroller(method: Method) : LoopVisitor(method) {
             terminator.successors.isEmpty() -> false to null
             terminator.successors.size == 1 -> false to null
             else -> {
-                val con = loop.contains(terminator.successors.first())
+                val con = terminator.successors.first() in loop
                 con to terminator.successors[con.toInt()]
             }
         }

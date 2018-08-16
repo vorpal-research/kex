@@ -24,7 +24,7 @@ import org.jetbrains.research.kfg.analysis.LoopSimplifier
 import org.jetbrains.research.kfg.ir.value.instruction.UnreachableInst
 import org.jetbrains.research.kfg.util.Flags
 import org.jetbrains.research.kfg.util.JarUtils
-import org.jetbrains.research.kfg.util.getClassLoader
+import org.jetbrains.research.kfg.util.classLoader
 import java.io.File
 import java.net.URLClassLoader
 import java.util.jar.JarFile
@@ -40,7 +40,7 @@ fun main(args: Array<String>) {
     require(jarName != null, cmd::printHelp)
 
     val jar = JarFile(jarName)
-    val jarLoader = jar.getClassLoader()
+    val jarLoader = jar.classLoader
     val `package` = Package(packageName.replace('.', '/'))
     CM.parseJar(jar, `package`, Flags.readAll)
 

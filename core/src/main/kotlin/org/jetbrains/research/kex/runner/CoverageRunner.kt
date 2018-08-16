@@ -28,11 +28,11 @@ internal fun getClass(type: Type, loader: ClassLoader): Class<*> = when (type) {
     is CharType -> Char::class.java
     is FloatType -> Float::class.java
     is DoubleType -> Double::class.java
-    is ArrayType -> Class.forName(type.getCanonicalDesc())
+    is ArrayType -> Class.forName(type.canonicalDesc)
     is ClassType -> try {
-        loader.loadClass(type.`class`.fullname.replace('/', '.'))
+        loader.loadClass(type.`class`.canonicalDesc)
     } catch (e: ClassNotFoundException) {
-        ClassLoader.getSystemClassLoader().loadClass(type.`class`.fullname.replace('/', '.'))
+        ClassLoader.getSystemClassLoader().loadClass(type.`class`.canonicalDesc)
     }
     else -> throw UnknownTypeError(type.toString())
 }
@@ -86,7 +86,7 @@ internal fun invoke(method: Method, instance: Any?, args: Array<Any?>): Invocati
 
 class CoverageRunner(val method: KfgMethod, val loader: ClassLoader) {
     private val random = RandomDriver()
-    private val javaClass: Class<*> = loader.loadClass(method.`class`.fullname.replace('/', '.'))
+    private val javaClass: Class<*> = loader.loadClass(method.`class`.canonicalDesc)
     private val javaMethod: java.lang.reflect.Method
 
     init {

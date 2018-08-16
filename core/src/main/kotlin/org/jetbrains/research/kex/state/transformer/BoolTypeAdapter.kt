@@ -18,8 +18,8 @@ object BoolTypeAdapter : Transformer<BoolTypeAdapter> {
         val type = predicate.type
         val loc = predicate.location
         val res = when {
-            lhv.type === BoolType && rhv.type === IntType -> pf.getEquality(lhv, tf.getCast(TF.getBoolType(), rhv), type, loc)
-            lhv.type === IntType && rhv.type === BoolType -> pf.getEquality(lhv, tf.getCast(TF.getIntType(), rhv), type, loc)
+            lhv.type === BoolType && rhv.type === IntType -> pf.getEquality(lhv, tf.getCast(TF.boolType, rhv), type, loc)
+            lhv.type === IntType && rhv.type === BoolType -> pf.getEquality(lhv, tf.getCast(TF.intType, rhv), type, loc)
             else -> predicate
         }
         return res
@@ -35,12 +35,12 @@ object BoolTypeAdapter : Transformer<BoolTypeAdapter> {
         val result =  when {
             isBooleanOpcode -> {
                 val lhv = when {
-                    term.lhv.type === BoolType -> tf.getCast(TF.getIntType(), term.lhv)
+                    term.lhv.type === BoolType -> tf.getCast(TF.intType, term.lhv)
                     term.lhv.type === IntType -> term.lhv
                     else -> unreachable { log.error("Non-boolean term in boolean binary: ${term.print()}") }
                 }
                 val rhv = when {
-                    term.rhv.type === BoolType -> tf.getCast(TF.getIntType(), term.rhv)
+                    term.rhv.type === BoolType -> tf.getCast(TF.intType, term.rhv)
                     term.rhv.type === IntType -> term.rhv
                     else -> unreachable { log.error("Non-boolean term in boolean binary: ${term.print()}") }
                 }

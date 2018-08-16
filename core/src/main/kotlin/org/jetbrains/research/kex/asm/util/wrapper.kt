@@ -21,7 +21,7 @@ class StringBuilderWrapper(val name: String) {
     val insns = arrayListOf(builder)
 
     init {
-        val desc = MethodDesc(arrayOf(), TF.getVoidType())
+        val desc = MethodDesc(arrayOf(), TF.voidType)
         val initMethod = `class`.getMethod("<init>", desc)
         val init = IF.getCall(CallOpcode.Special(), initMethod, `class`, builder, arrayOf(), false)
         insns.add(init)
@@ -36,9 +36,9 @@ class StringBuilderWrapper(val name: String) {
         value.type === NullType -> append("null")
         else -> {
             val appendArg = when {
-                value.type.isPrimary() -> value.type
-                value.type == TF.getString() -> value.type
-                else -> TF.getObject()
+                value.type.isPrimary -> value.type
+                value.type == TF.stringType -> value.type
+                else -> TF.objectType
             }
             val desc = MethodDesc(arrayOf(appendArg), stringBuilderType)
             val appendMethod = `class`.getMethod("append", desc)
@@ -48,7 +48,7 @@ class StringBuilderWrapper(val name: String) {
     }
 
     fun toStringWrapper(): Instruction {
-        val desc = MethodDesc(arrayOf(), TF.getString())
+        val desc = MethodDesc(arrayOf(), TF.stringType)
         val toStringMethod = `class`.getMethod("toString", desc)
         val string = IF.getCall(CallOpcode.Virtual(), "${name}Str", toStringMethod, `class`, builder, arrayOf())
         insns.add(string)
@@ -66,12 +66,12 @@ class SystemOutWrapper(name: String) {
     fun print(string: String) = print(VF.getStringConstant(string))
     fun print(value: Value) {
         val printArg = when {
-            value.type.isPrimary() -> value.type
-            value.type == TF.getString() -> value.type
-            else -> TF.getObject()
+            value.type.isPrimary -> value.type
+            value.type == TF.stringType -> value.type
+            else -> TF.objectType
         }
 
-        val desc = MethodDesc(arrayOf(printArg), TF.getVoidType())
+        val desc = MethodDesc(arrayOf(printArg), TF.voidType)
         val printMethod = `class`.getMethod("print", desc)
         val append = IF.getCall(CallOpcode.Virtual(), printMethod, printStream, sout, arrayOf(value), false)
         insns.add(append)
@@ -80,11 +80,11 @@ class SystemOutWrapper(name: String) {
     fun println(string: String) = println(VF.getStringConstant(string))
     fun println(value: Value) {
         val printArg = when {
-            value.type.isPrimary() -> value.type
-            value.type == TF.getString() -> value.type
-            else -> TF.getObject()
+            value.type.isPrimary -> value.type
+            value.type == TF.stringType -> value.type
+            else -> TF.objectType
         }
-        val desc = MethodDesc(arrayOf(printArg), TF.getVoidType())
+        val desc = MethodDesc(arrayOf(printArg), TF.voidType)
         val printMethod = `class`.getMethod("println", desc)
         val append = IF.getCall(CallOpcode.Virtual(), printMethod, printStream, sout, arrayOf(value), false)
         insns.add(append)
@@ -96,24 +96,24 @@ class ReflectionWrapper {
     val fieldClass = CM.getByName("java/lang/reflect/Field")
 
     fun getClass(value: Value): Instruction {
-        val type = TF.getObject() as ClassType
+        val type = TF.objectType as ClassType
         val desc = MethodDesc(arrayOf(), TF.getRefType(classClass))
         val getClassMethod = type.`class`.getMethod("getClass", desc)
         return IF.getCall(CallOpcode.Virtual(), "klass", getClassMethod, type.`class`, value, arrayOf())
     }
 
     fun getDeclaredField(`class`: Value, name: String): Instruction {
-        val getFieldMethod = classClass.getMethod("getDeclaredField", MethodDesc(arrayOf(TF.getString()), TF.getRefType(fieldClass)))
+        val getFieldMethod = classClass.getMethod("getDeclaredField", MethodDesc(arrayOf(TF.stringType), TF.getRefType(fieldClass)))
         return IF.getCall(CallOpcode.Virtual(), name, getFieldMethod, classClass, `class`, arrayOf(VF.getStringConstant(name)))
     }
 
     fun setAccessible(field: Value): Instruction {
-        val setAccessibleMethod = fieldClass.getMethod("setAccessible", MethodDesc(arrayOf(TF.getBoolType()), TF.getVoidType()))
+        val setAccessibleMethod = fieldClass.getMethod("setAccessible", MethodDesc(arrayOf(TF.boolType), TF.voidType))
         return IF.getCall(CallOpcode.Virtual(), "set", setAccessibleMethod, fieldClass, field, arrayOf(VF.getBoolConstant(true)))
     }
 
     fun getField(field: Value, owner: Value): Instruction {
-        val getMethod = fieldClass.getMethod("get", MethodDesc(arrayOf(TF.getObject()), TF.getObject()))
+        val getMethod = fieldClass.getMethod("get", MethodDesc(arrayOf(TF.objectType), TF.objectType))
         return IF.getCall(CallOpcode.Virtual(), "get", getMethod, fieldClass, field, arrayOf(owner))
     }
 }
@@ -124,7 +124,7 @@ class ValuePrinter {
     val system = CM.getByName("java/lang/System")
 
     private fun getIdentityHashCode(value: Value): Instruction {
-        val hashCodeMethod = system.getMethod("identityHashCode", MethodDesc(arrayOf(TF.getObject()), TF.getIntType()))
+        val hashCodeMethod = system.getMethod("identityHashCode", MethodDesc(arrayOf(TF.objectType), TF.intType))
         val result = IF.getCall(CallOpcode.Static(), "hash", hashCodeMethod, system, arrayOf(value))
         insns.add(result)
         return result
@@ -150,7 +150,7 @@ class ValuePrinter {
 
     private fun printClass(value: Value, type: ClassType): Instruction {
         val sb = StringBuilderWrapper("sb")
-        sb.append(type.`class`.fullname.replace('/', '.'))
+        sb.append(type.`class`.canonicalDesc)
         sb.append("@")
         val hash = getIdentityHashCode(value)
         sb.append(print(hash))
@@ -193,8 +193,8 @@ class ValuePrinter {
         val type = value.type
         val sb = StringBuilderWrapper("sb")
         when {
-            type.isPrimary() -> sb.append(value)
-            type == TF.getString() -> {
+            type.isPrimary -> sb.append(value)
+            type == TF.stringType -> {
                 sb.append("\"")
                 sb.append(value)
                 sb.append("\"")

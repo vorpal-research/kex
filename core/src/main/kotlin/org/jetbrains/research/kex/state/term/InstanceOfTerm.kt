@@ -5,7 +5,7 @@ import org.jetbrains.research.kex.util.defaultHashCode
 import org.jetbrains.research.kfg.TF
 import org.jetbrains.research.kfg.type.Type
 
-class InstanceOfTerm(val checkedType: Type, operand: Term) : Term("", TF.getBoolType(), listOf(operand)) {
+class InstanceOfTerm(val checkedType: Type, operand: Term) : Term("", TF.boolType, listOf(operand)) {
 
     val operand: Term
         get() = subterms[0]

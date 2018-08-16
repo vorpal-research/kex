@@ -62,7 +62,7 @@ abstract class KexTest {
         val intrinsics = CM.getByName(`class`)
 
         val methodName = Intrinsics::assertReachable.name
-        val desc = MethodDesc(arrayOf(TF.getArrayType(TF.getBoolType())), TF.getVoidType())
+        val desc = MethodDesc(arrayOf(TF.getArrayType(TF.boolType)), TF.voidType)
         val assertReachable = intrinsics.getMethod(methodName, desc)
         return method.flatten().mapNotNull { it as? CallInst }.filter { it.method == assertReachable && it.`class` == intrinsics }
     }
@@ -72,7 +72,7 @@ abstract class KexTest {
         val intrinsics = CM.getByName(`class`)
 
         val methodName = Intrinsics::assertUnreachable.name
-        val desc = MethodDesc(arrayOf(), TF.getVoidType())
+        val desc = MethodDesc(arrayOf(), TF.voidType)
         val assertUnreachable = intrinsics.getMethod(methodName, desc)
         return method.flatten().mapNotNull { it as? CallInst }.filter { it.method == assertUnreachable && it.`class` == intrinsics }
     }

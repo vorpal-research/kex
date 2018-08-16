@@ -21,8 +21,8 @@ class LoopDerollerTest : KexTest() {
         LoopSimplifier(method).visit()
         la.visit()
         la.loops.forEach {
-            assertTrue { it.hasSinglePreheader() }
-            assertTrue { it.hasSingleLatch() }
+            assertTrue { it.hasSinglePreheader }
+            assertTrue { it.hasSingleLatch }
         }
 
         val deroller = LoopDeroller(method)
