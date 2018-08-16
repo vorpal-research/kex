@@ -64,10 +64,14 @@ class Icfpc2018Test {
         for ((task, result) in merged) {
             val mode = getModeByModelName(task)
             if (mode == RunMode.REASSEMBLE) {
+                Intrinsics.assertReachable()
+
                 val bestSolution = result.getSortedSolutions().first().second
                 Files.copy(File(bestSolution.trace).toPath(), File("submit/$task.nbt").toPath(),
                         StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.COPY_ATTRIBUTES)
             } else {
+                Intrinsics.assertReachable()
+
                 val targetModel = when (mode) {
                     RunMode.ASSEMBLE -> Model.readMDL(File("models/${task}_tgt.mdl").inputStream())
                     else -> Model.readMDL(File("models/${task}_src.mdl").inputStream())
@@ -76,9 +80,11 @@ class Icfpc2018Test {
 
                 var haveSolution = false
                 for ((solutionName, solution) in result.getSortedSolutions()) {
+                    Intrinsics.assertReachable()
                     val traceFile = File(solution.trace).inputStream()
                     val commands: MutableList<Command> = mutableListOf()
                     while (traceFile.available() != 0) {
+                        Intrinsics.assertReachable()
                         commands += Command.read(traceFile)
                     }
                     val system = System(state)
@@ -89,20 +95,25 @@ class Icfpc2018Test {
                     }
 
                     if (system.currentState.matrix != targetModel) {
+                        Intrinsics.assertReachable()
                         continue
                     }
 
                     Files.copy(File(solution.trace).toPath(), File("submit/$task.nbt").toPath(),
                             StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.COPY_ATTRIBUTES)
                     haveSolution = true
+                    Intrinsics.assertReachable()
                     break
                 }
                 if (!haveSolution) {
+                    Intrinsics.assertReachable()
                     return
                 }
+                Intrinsics.assertReachable()
             }
         }
 
+        Intrinsics.assertReachable()
         ZipWriter().createZip("submit/")
     }
 

@@ -20,6 +20,7 @@ import org.jetbrains.research.kfg.Package
 import org.jetbrains.research.kfg.analysis.IRVerifier
 import org.jetbrains.research.kfg.analysis.LoopAnalysis
 import org.jetbrains.research.kfg.analysis.LoopSimplifier
+import org.jetbrains.research.kfg.ir.value.instruction.UnreachableInst
 import org.jetbrains.research.kfg.util.Flags
 import org.jetbrains.research.kfg.util.JarUtils
 import org.jetbrains.research.kfg.util.getClassLoader
@@ -101,7 +102,7 @@ fun main(args: Array<String>) {
             }
 
             val checker = Checker(method, psa)
-            val result = checker.checkReachable(method.last().last())
+            val result = checker.checkReachable(method.flatten().last { it !is UnreachableInst })
             log.debug(result)
             if (result is Result.SatResult) log.debug(result.model)
             log.debug()
