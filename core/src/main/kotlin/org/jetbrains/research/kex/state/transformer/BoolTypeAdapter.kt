@@ -12,23 +12,20 @@ import org.jetbrains.research.kfg.type.BoolType
 import org.jetbrains.research.kfg.type.IntType
 
 object BoolTypeAdapter : Transformer<BoolTypeAdapter> {
-    override fun transformEquality(predicate: EqualityPredicate): Predicate {
+    override fun transformEqualityPredicate(predicate: EqualityPredicate): Predicate {
         val lhv = predicate.lhv
         val rhv = predicate.rhv
         val type = predicate.type
         val loc = predicate.location
-        if (rhv.type != lhv.type) {
-            println("${predicate.print()}: ${lhv.type} and ${rhv.type}")
-        }
         val res = when {
             lhv.type === BoolType && rhv.type === IntType -> pf.getEquality(lhv, tf.getCast(TF.getBoolType(), rhv), type, loc)
             lhv.type === IntType && rhv.type === BoolType -> pf.getEquality(lhv, tf.getCast(TF.getIntType(), rhv), type, loc)
             else -> predicate
         }
-        return super.transformEquality(res)
+        return res
     }
 
-    override fun transformBinary(term: BinaryTerm): Term {
+    override fun transformBinaryTerm(term: BinaryTerm): Term {
         val isBooleanOpcode = when (term.opcode) {
             BinaryOpcode.And() -> true
             BinaryOpcode.Or() -> true
@@ -38,13 +35,13 @@ object BoolTypeAdapter : Transformer<BoolTypeAdapter> {
         val result =  when {
             isBooleanOpcode -> {
                 val lhv = when {
-                    term.lhv.type === BoolType -> term.lhv
-                    term.lhv.type === IntType -> tf.getCast(TF.getBoolType(), term.lhv)
+                    term.lhv.type === BoolType -> tf.getCast(TF.getIntType(), term.lhv)
+                    term.lhv.type === IntType -> term.lhv
                     else -> unreachable { log.error("Non-boolean term in boolean binary: ${term.print()}") }
                 }
                 val rhv = when {
-                    term.rhv.type === BoolType -> term.rhv
-                    term.rhv.type === IntType -> tf.getCast(TF.getBoolType(), term.rhv)
+                    term.rhv.type === BoolType -> tf.getCast(TF.getIntType(), term.rhv)
+                    term.rhv.type === IntType -> term.rhv
                     else -> unreachable { log.error("Non-boolean term in boolean binary: ${term.print()}") }
                 }
                 tf.getBinary(term.opcode, lhv, rhv) as BinaryTerm

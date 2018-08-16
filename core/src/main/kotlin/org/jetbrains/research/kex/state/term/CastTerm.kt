@@ -8,7 +8,7 @@ class CastTerm(type: Type, operand: Term) : Term("", type, listOf(operand)) {
     val operand: Term
         get() = subterms[0]
 
-    override fun print() = "($type) $operand"
+    override fun print() = "($operand as $type)"
 
     override fun <T : Transformer<T>> accept(t: Transformer<T>): Term {
         val toperand = t.transform(operand)

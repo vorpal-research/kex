@@ -1,4 +1,4 @@
-package org.jetbrains.research.kex.smt
+package org.jetbrains.research.kex.smt.model
 
 import org.jetbrains.research.kex.state.term.Term
 

@@ -51,7 +51,7 @@ private fun Predicate.inverse(): Predicate = when {
     else -> this
 }
 
-class Slicer(val state: PredicateState, query: PredicateState, val aa: AliasAnalysis) : DeletingTransformer<Slicer> {
+class Slicer(val state: PredicateState, sliceTerms: Set<Term>, val aa: AliasAnalysis) : DeletingTransformer<Slicer> {
     override val removablePredicates = hashSetOf<Predicate>()
 
     val sliceVars = hashSetOf<Term>()
@@ -62,11 +62,16 @@ class Slicer(val state: PredicateState, query: PredicateState, val aa: AliasAnal
     val isInterestingTerm = { term: Term -> Term.isNamed(term) }
 
     init {
-        TermCollector
-                .getFullTermSet(query)
+        sliceTerms
                 .filter(isInterestingTerm)
                 .forEach { addSliceTerm(it) }
     }
+
+    constructor(state: PredicateState, query: PredicateState, aa: AliasAnalysis)
+            : this(state, TermCollector.getFullTermSet(query), aa)
+
+    constructor(state: PredicateState, query: PredicateState, sliceTerms: Set<Term>, aa: AliasAnalysis)
+            : this(state, TermCollector.getFullTermSet(query) + sliceTerms, aa)
 
 
     private fun addSliceTerm(term: Term) = when {
