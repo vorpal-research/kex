@@ -85,7 +85,7 @@ internal fun invoke(method: Method, instance: Any?, args: Array<Any?>): Invocati
 }
 
 class CoverageRunner(val method: KfgMethod, val loader: ClassLoader) {
-    private val random = RandomDriver()
+    private val random = RandomDriver
     private val javaClass: Class<*> = loader.loadClass(method.`class`.canonicalDesc)
     private val javaMethod: java.lang.reflect.Method
 
