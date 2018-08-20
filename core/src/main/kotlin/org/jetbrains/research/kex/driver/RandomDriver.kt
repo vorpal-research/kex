@@ -24,7 +24,7 @@ class GenerationException(msg: String) : RandomEngineError(msg)
 class UnknownTypeException(msg: String) : RandomEngineError(msg)
 
 
-class RandomDriver {
+object RandomDriver {
     private val randomizer: EnhancedRandom = EnhancedRandomBuilder.aNewEnhancedRandomBuilder()
             .scanClasspathForConcreteTypes(true)
             .collectionSizeRange(minCollectionSize, maxCollectionSize)
@@ -74,4 +74,6 @@ class RandomDriver {
         }
         throw GenerationException("Unable to generate a random instance of type $type")
     }
+
+    fun generateOrNull(type: Type): Any? = try { generate(type) } catch (e: GenerationException) { null }
 }

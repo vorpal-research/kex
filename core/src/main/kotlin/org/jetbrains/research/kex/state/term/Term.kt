@@ -56,16 +56,6 @@ abstract class Term(val name: String, val type: Type, val subterms: List<Term>) 
             is ConstStringTerm -> true
             else -> false
         }
-
-        fun isReference(term: Term) = when (term) {
-            is ArrayIndexTerm -> true
-            is FieldTerm -> true
-            is ValueTerm -> term.type.isReference
-            is ArgumentTerm -> term.type.isReference
-            else -> false
-        }
-
-        fun isPrimary(term: Term) = !isReference(term)
     }
 
     abstract fun print(): String

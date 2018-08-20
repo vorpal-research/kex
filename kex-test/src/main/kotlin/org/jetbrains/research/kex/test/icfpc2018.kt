@@ -33,7 +33,7 @@ class Icfpc2018Test {
         ASSEMBLE, DISASSEMBLE, REASSEMBLE, SUBMIT, ALL
     }
 
-    abstract class Command {
+    class Command {
         companion object {
             fun read(str: InputStream): Command = TODO()
         }

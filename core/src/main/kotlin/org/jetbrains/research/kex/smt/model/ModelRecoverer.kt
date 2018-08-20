@@ -1,12 +1,16 @@
 package org.jetbrains.research.kex.smt.model
 
+import org.jetbrains.research.kex.driver.RandomDriver
 import org.jetbrains.research.kex.state.term.*
+import org.jetbrains.research.kex.state.transformer.Memspaced
 import org.jetbrains.research.kex.util.log
 import org.jetbrains.research.kex.util.unreachable
 import org.jetbrains.research.kfg.ir.Method
 import org.jetbrains.research.kfg.type.*
-import kotlin.reflect.full.createInstance
-import kotlin.reflect.full.primaryConstructor
+
+
+private fun Term.isReference() = this.type.isReference
+private fun Term.isPrimary() = !isReference()
 
 class ModelRecoverer(val method: Method, val model: SMTModel, val loader: ClassLoader) {
     val tf = TermFactory
@@ -24,17 +28,17 @@ class ModelRecoverer(val method: Method, val model: SMTModel, val loader: ClassL
         }
 
         for (term in recoveringTerms) {
-            terms[term] = recover(term)
+            terms[term] = recoverTerm(term)
         }
     }
 
-    private fun recover(term: Term): Any? = when {
-        Term.isPrimary(term) -> recoverPrimary(term)
-        else -> recoverReference(term)
+    private fun recoverTerm(term: Term, value: Term? = model.assignments[term]): Any? = when {
+        term.isPrimary() -> recoverPrimaryTerm(term, value)
+        else -> recoverReferenceTerm(term, value)
     }
 
-    private fun recoverPrimary(term: Term): Any? {
-        val value = model.assignments[term] ?: return null
+    private fun recoverPrimaryTerm(term: Term, value: Term?): Any? {
+        if (value == null) return null
         return when (term.type) {
             is BoolType -> (value as ConstBoolTerm).value
             is ByteType -> (value as ConstByteTerm).value
@@ -48,23 +52,43 @@ class ModelRecoverer(val method: Method, val model: SMTModel, val loader: ClassL
         }
     }
 
-    private fun recoverReference(term: Term): Any? = when (term.type) {
-        is ClassType -> recoverClass(term)
-        is ArrayType -> recoverArray(term)
+    private fun recoverReferenceTerm(term: Term, value: Term?): Any? = when (term.type) {
+        is ClassType -> recoverClassTerm(term, value)
+        is ArrayType -> recoverArrayTerm(term, value)
         else -> unreachable { log.error("Trying to recover non-reference term $term with type ${term.type} as reference value") }
     }
 
-    private fun recoverClass(term: Term): Any? {
+    private fun recoverClassTerm(term: Term, value: Term?): Any? {
         val type = term.type as ClassType
-        val value = (model.assignments[term] as? ConstIntTerm)?.value ?: return null
-        return memoryMappings.getOrPut(value) {
-            null
+        val address = (value as? ConstIntTerm)?.value ?: return null
+        return memoryMappings.getOrPut(address) {
+            val `class` = loader.loadClass(type.`class`.canonicalDesc)
+            val instance = RandomDriver.generateOrNull(`class`) ?: return null
+            for ((_, field) in type.`class`.fields) {
+                val fieldTerm = model.assignments.keys.firstOrNull { it == tf.getField(field.type, term, tf.getString(field.name)) }
+                        ?: continue
+
+                val memspace = (fieldTerm.type as? Memspaced<*>)?.memspace ?: 0
+                val fieldAddress = model.assignments[fieldTerm]
+                val fieldValue = model.memories[memspace]!!.finalMemory[fieldAddress]
+
+                val recoveredValue = recoverTerm(fieldTerm, fieldValue)
+
+                log.debug("Field $field have address $fieldAddress and value $fieldValue and recovered $recoveredValue")
+
+                val fieldReflect = `class`.getDeclaredField(field.name)
+                fieldReflect.isAccessible = true
+                fieldReflect.set(instance, recoveredValue)
+            }
+            log.debug("Generated for type $type: $instance")
+            instance
         }
     }
 
-    private fun recoverArray(term: Term): Any? {
-        val value = (model.assignments[term] as? ConstIntTerm)?.value ?: return null
-        return memoryMappings.getOrPut(value) {
+    private fun recoverArrayTerm(term: Term, value: Term?): Any? {
+        val arrayType = term.type as ArrayType
+        val address = (value as? ConstIntTerm)?.value ?: return null
+        return memoryMappings.getOrPut(address) {
             null
         }
     }
