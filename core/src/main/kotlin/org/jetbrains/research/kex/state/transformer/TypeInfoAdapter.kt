@@ -16,9 +16,8 @@ class TypeInfoAdapter(val method: Method) : Transformer<TypeInfoAdapter> {
             builder += pf.getInequality(`this`, `null`, PredicateType.Assume())
 
             val typeSize = `this`.type.getExpandedBitsize()
-            val bound = tf.getBound(`this`)
             val value = tf.getInt(typeSize)
-            builder += pf.getBoundStore(bound, value, PredicateType.Assume())
+            builder += pf.getBoundStore(`this`, value, PredicateType.Assume())
         }
 
         val newState = (builder + ps).apply()

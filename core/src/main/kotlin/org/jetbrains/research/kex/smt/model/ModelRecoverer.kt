@@ -61,6 +61,8 @@ class ModelRecoverer(val method: Method, val model: SMTModel, val loader: ClassL
     private fun recoverClassTerm(term: Term, value: Term?): Any? {
         val type = term.type as ClassType
         val address = (value as? ConstIntTerm)?.value ?: return null
+        if (address == 0) return null
+
         return memoryMappings.getOrPut(address) {
             val `class` = loader.loadClass(type.`class`.canonicalDesc)
             val instance = RandomDriver.generateOrNull(`class`) ?: return null
