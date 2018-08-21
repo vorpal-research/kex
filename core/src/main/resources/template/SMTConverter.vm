@@ -4,6 +4,7 @@ import org.jetbrains.research.kex.state.*
 import org.jetbrains.research.kex.state.predicate.*
 import org.jetbrains.research.kex.state.term.*
 import org.jetbrains.research.kex.state.transformer.Memspaced
+import org.jetbrains.research.kex.state.transformer.memspace
 import org.jetbrains.research.kfg.ir.Class
 import org.jetbrains.research.kfg.ir.value.instruction.BinaryOpcode
 import org.jetbrains.research.kfg.ir.value.instruction.CmpOpcode
@@ -53,7 +54,7 @@ object ${solver}Converter : ${solver}SMTConverter() {
     }
 
     fun convert(store: ArrayStorePredicate, ef: $factory, ctx: ${solver}Context): Bool_ {
-        val memspace = (store.arrayRef.type as? Memspaced<*>)?.memspace ?: 0
+        val memspace = store.arrayRef.memspace
         val ptr = convert(store.arrayRef, ef, ctx) as? Ptr_ ?: unreachable { log.error("Non-ptr ref term in `store`") }
         val value = convert(store.value, ef, ctx)
         ctx.writeMemory(ptr, value, memspace)
@@ -61,9 +62,9 @@ object ${solver}Converter : ${solver}SMTConverter() {
     }
 
     fun convert(boundStore: BoundStorePredicate, ef: $factory, ctx: ${solver}Context): Bool_ {
-        val memspace = (boundStore.ptr.type as? Memspaced<*>)?.memspace ?: 0
+        val memspace = boundStore.ptr.memspace
         val ptr = convert(boundStore.ptr, ef, ctx) as? Ptr_ ?: unreachable { log.error("Non-ptr ref term in `store`") }
-        val value = convert(boundStore.bound, ef, ctx) as? Int_ ?: unreachable { log.error("Non-int bound term in `boundStore`") }
+        val value = convert(boundStore.bound, ef, ctx) as? Int_ ?: unreachable { log.error("Non-int bound term in `boundstore`") }
         ctx.writeBound(ptr, value, memspace)
         return ef.makeTrue()
     }
@@ -97,7 +98,7 @@ object ${solver}Converter : ${solver}SMTConverter() {
 
     fun convert(store: FieldStorePredicate, ef: $factory, ctx: ${solver}Context): Bool_ {
         val value = convert(store.value, ef, ctx)
-        val memspace = (store.field.type as? Memspaced<*>)?.memspace ?: 0
+        val memspace = store.field.memspace
         val fieldptr = convert(store.field, ef, ctx) as? Ptr_
                 ?: unreachable { log.error("Non-ptr ref in field load") }
         ctx.writeMemory(fieldptr, value, memspace)
@@ -105,7 +106,7 @@ object ${solver}Converter : ${solver}SMTConverter() {
     }
 
     fun convert(newarray: NewArrayPredicate, ef: $factory, ctx: ${solver}Context): Bool_ {
-        val memspace = (newarray.lhv.type as? Memspaced<*>)?.memspace ?: 0
+        val memspace = newarray.lhv.memspace
         val lhv = convert(newarray.lhv, ef, ctx) as? Ptr_ ?: unreachable { log.error("Non-ptr term in `new`") }
             val elementSize = ${factory}.getTypeSize(newarray.elementType)
             val totalSize = newarray.dimentions.fold(elementSize) { acc: Int, term: Term ->
@@ -117,7 +118,7 @@ object ${solver}Converter : ${solver}SMTConverter() {
     }
 
     fun convert(new: NewPredicate, ef: $factory, ctx: ${solver}Context): Bool_ {
-        val memspace = (new.lhv.type as? Memspaced<*>)?.memspace ?: 0
+        val memspace = new.lhv.memspace
         val lhv = convert(new.lhv, ef, ctx) as? Ptr_ ?: unreachable { log.error("Non-ptr term in `new`") }
         val elementSize = ${factory}.getTypeSizeExpanded(new.lhv.type)
         ctx.writeBound(lhv, ef.makeIntConst(elementSize), memspace)
@@ -137,7 +138,7 @@ object ${solver}Converter : ${solver}SMTConverter() {
     fun convert(argument: ArgumentTerm, ef: $factory, ctx: ${solver}Context): Dynamic_ = ef.getVarByType(argument.type, argument.name)
 
     fun convert(arrayindex: ArrayIndexTerm, ef: $factory, ctx: ${solver}Context): Dynamic_ {
-        val memspace = (arrayindex.arrayRef.type as? Memspaced<*>)?.memspace ?: 0
+        val memspace = arrayindex.arrayRef.memspace
         val arrayref = convert(arrayindex.arrayRef, ef, ctx) as? Ptr_
                 ?: unreachable { log.error("Non-ptr operand of array load") }
         val index = (convert(arrayindex.index, ef, ctx) as? Int_
@@ -150,7 +151,7 @@ object ${solver}Converter : ${solver}SMTConverter() {
     }
 
     fun convert(arraylength: ArrayLengthTerm, ef: $factory, ctx: ${solver}Context): Dynamic_ {
-        val memspace = (arraylength.arrayRef.type as? Memspaced<*>)?.memspace ?: 0
+        val memspace = arraylength.arrayRef.memspace
         val ptr = convert(arraylength.arrayRef, ef, ctx) as? Ptr_
                 ?: unreachable { log.error("Non-ptr term in `arraylength`") }
 
@@ -163,7 +164,7 @@ object ${solver}Converter : ${solver}SMTConverter() {
     }
 
     fun convert(arrayload: ArrayLoadTerm, ef: $factory, ctx: ${solver}Context): Dynamic_ {
-        val memspace = (arrayload.arrayRef.type as? Memspaced<*>)?.memspace ?: 0
+        val memspace = arrayload.arrayRef.memspace
         val arrayref = convert(arrayload.arrayRef, ef, ctx) as? Ptr_
                             ?: unreachable { log.error("Non-ptr operand of array load") }
 
@@ -199,7 +200,7 @@ object ${solver}Converter : ${solver}SMTConverter() {
     }
 
     fun convert(bound: BoundTerm, ef: $factory, ctx: ${solver}Context): Dynamic_ {
-        val memspace = (bound.ptr.type as? Memspaced<*>)?.memspace ?: 0
+        val memspace = bound.ptr.memspace
         val ptr = convert(bound.ptr, ef, ctx) as? Ptr_
             ?: unreachable { log.error("Non-ptr term in `bound`") }
         return ctx.readBound(ptr, memspace)
@@ -264,7 +265,7 @@ object ${solver}Converter : ${solver}SMTConverter() {
     fun convert(const: ConstShortTerm, ef: $factory, ctx: ${solver}Context): Dynamic_ = ef.makeIntConst(const.value.toInt())
 
     fun convert(const: ConstStringTerm, ef: $factory, ctx: ${solver}Context): Dynamic_ {
-        val memspace = (const.type as? Memspaced<*>)?.memspace ?: 0
+        val memspace = const.memspace
 
         val size = const.name.length
         val res = ctx.getLocalPtr(memspace, size)
@@ -273,7 +274,7 @@ object ${solver}Converter : ${solver}SMTConverter() {
     }
 
     fun convert(fieldload: FieldLoadTerm, ef: $factory, ctx: ${solver}Context): Dynamic_ {
-        val memspace = (fieldload.field.type as? Memspaced<*>)?.memspace ?: 0
+        val memspace = fieldload.field.memspace
         val field = convert(fieldload.field, ef, ctx) as? Ptr_
             ?: unreachable { log.error("Non-ptr ref in field load") }
 
@@ -291,7 +292,7 @@ object ${solver}Converter : ${solver}SMTConverter() {
     }
 
     fun convert(field: FieldTerm, ef: $factory, ctx: ${solver}Context): Dynamic_ {
-        val memspace = (field.owner.type as? Memspaced<*>)?.memspace ?: 0
+        val memspace = field.owner.memspace
         val obj = convert(field.owner, ef, ctx) as? Ptr_
         ?: unreachable { log.error("Non-ptr ref in field load") }
         val name = field.fieldName.name
