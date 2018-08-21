@@ -2,7 +2,7 @@ package org.jetbrains.research.kex.smt.model
 
 import org.jetbrains.research.kex.driver.RandomDriver
 import org.jetbrains.research.kex.state.term.*
-import org.jetbrains.research.kex.state.transformer.Memspaced
+import org.jetbrains.research.kex.state.transformer.memspace
 import org.jetbrains.research.kex.util.log
 import org.jetbrains.research.kex.util.unreachable
 import org.jetbrains.research.kfg.ir.Method
@@ -68,7 +68,7 @@ class ModelRecoverer(val method: Method, val model: SMTModel, val loader: ClassL
                 val fieldTerm = model.assignments.keys.firstOrNull { it == tf.getField(field.type, term, tf.getString(field.name)) }
                         ?: continue
 
-                val memspace = (fieldTerm.type as? Memspaced<*>)?.memspace ?: 0
+                val memspace = fieldTerm.memspace
                 val fieldAddress = model.assignments[fieldTerm]
                 val fieldValue = model.memories[memspace]!!.finalMemory[fieldAddress]
 
