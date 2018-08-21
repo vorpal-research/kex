@@ -1,6 +1,6 @@
 package org.jetbrains.research.kex.state.predicate
 
-import org.jetbrains.research.kex.state.Sealed
+import org.jetbrains.research.kex.state.TypeInfo
 import org.jetbrains.research.kex.state.term.Term
 import org.jetbrains.research.kex.state.transformer.Transformer
 import org.jetbrains.research.kex.util.contentEquals
@@ -31,15 +31,27 @@ sealed class PredicateType(val name: String) {
             else -> false
         }
     }
+
+    class Assume : PredicateType("A") {
+        override fun hashCode() = defaultHashCode(name)
+        override fun equals(other: Any?) = when {
+            this === other -> true
+            other == null -> false
+            other is State -> true
+            else -> false
+        }
+    }
 }
 
-abstract class Predicate(val type: PredicateType, val location: Location, val operands: List<Term>) : Sealed {
+abstract class Predicate(val type: PredicateType, val location: Location, val operands: List<Term>) : TypeInfo {
     companion object {
         val predicates = mapOf<String, Class<*>>(
                 "ArrayStore" to ArrayStorePredicate::class.java,
+                "BoundStore" to BoundStorePredicate::class.java,
                 "Call" to CallPredicate::class.java,
                 "Catch" to CatchPredicate::class.java,
                 "DefaultSwitch" to DefaultSwitchPredicate::class.java,
+                "Inequality" to InequalityPredicate::class.java,
                 "Equality" to EqualityPredicate::class.java,
                 "FieldStore" to FieldStorePredicate::class.java,
                 "NewArray" to NewArrayPredicate::class.java,
@@ -69,7 +81,7 @@ abstract class Predicate(val type: PredicateType, val location: Location, val op
         return this.type == other.type && this.operands.contentEquals(other.operands)
     }
 
-    override fun getSubtypes() = predicates
-    override fun getReverseMapping() = reverse
+    override val subtypes get() = predicates
+    override val reverseMapping get() = reverse
     override fun toString() = "$type ${print()}"
 }

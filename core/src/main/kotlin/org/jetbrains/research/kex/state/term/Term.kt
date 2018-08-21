@@ -1,12 +1,12 @@
 package org.jetbrains.research.kex.state.term
 
-import org.jetbrains.research.kex.state.Sealed
+import org.jetbrains.research.kex.state.TypeInfo
 import org.jetbrains.research.kex.state.transformer.Transformer
 import org.jetbrains.research.kex.util.contentEquals
 import org.jetbrains.research.kex.util.defaultHashCode
 import org.jetbrains.research.kfg.type.Type
 
-abstract class Term(val name: String, val type: Type, val subterms: List<Term>) : Sealed {
+abstract class Term(val name: String, val type: Type, val subterms: List<Term>) : TypeInfo {
     companion object {
         val terms = mapOf<String, Class<*>>(
                 "Argument" to ArgumentTerm::class.java,
@@ -14,6 +14,7 @@ abstract class Term(val name: String, val type: Type, val subterms: List<Term>) 
                 "ArrayLength" to ArrayLengthTerm::class.java,
                 "ArrayLoad" to ArrayLoadTerm::class.java,
                 "Binary" to BinaryTerm::class.java,
+                "Bound" to BoundTerm::class.java,
                 "Call" to CallTerm::class.java,
                 "Cast" to CastTerm::class.java,
                 "Cmp" to CmpTerm::class.java,
@@ -70,6 +71,6 @@ abstract class Term(val name: String, val type: Type, val subterms: List<Term>) 
         return this.name == other.name && this.type == other.type && this.subterms.contentEquals(other.subterms)
     }
 
-    override fun getSubtypes() = terms
-    override fun getReverseMapping() = reverse
+    override val subtypes get() = terms
+    override val reverseMapping get() = reverse
 }

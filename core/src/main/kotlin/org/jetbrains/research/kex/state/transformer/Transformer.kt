@@ -13,9 +13,9 @@ interface Transformer<T : Transformer<T>> {
     val tf: TermFactory
         get() = TermFactory
 
-    private inline fun < reified T : Sealed> delegate(argument: T, type: String): T {
-        val subtypeName = argument.getReverseMapping().getValue(argument.javaClass)
-        val subtype = argument.getSubtypes().getValue(subtypeName)
+    private inline fun < reified T : TypeInfo> delegate(argument: T, type: String): T {
+        val subtypeName = argument.reverseMapping.getValue(argument.javaClass)
+        val subtype = argument.subtypes.getValue(subtypeName)
         val transformName = this.javaClass.getDeclaredMethod("transform$subtypeName", subtype)
         val res = transformName.invoke(this, argument) as? T
                 ?: unreachable { log.debug("Unexpected null in transformer invocation") }
@@ -57,23 +57,27 @@ interface Transformer<T : Transformer<T>> {
     fun transformPredicate(predicate: Predicate) = predicate
 
     fun transformArrayStore(predicate: ArrayStorePredicate) = predicate.accept(this)
+    fun transformBoundStore(predicate: BoundStorePredicate) = predicate.accept(this)
     fun transformCall(predicate: CallPredicate) = predicate.accept(this)
     fun transformCatch(predicate: CatchPredicate) = predicate.accept(this)
     fun transformDefaultSwitch(predicate: DefaultSwitchPredicate) = predicate.accept(this)
+    fun transformInequality(predicate: InequalityPredicate) = predicate.accept(this)
     fun transformEquality(predicate: EqualityPredicate) = predicate.accept(this)
     fun transformFieldStore(predicate: FieldStorePredicate) = predicate.accept(this)
     fun transformNewArray(predicate: NewArrayPredicate) = predicate.accept(this)
     fun transformNew(predicate: NewPredicate) = predicate.accept(this)
     fun transformThrow(predicate: ThrowPredicate) = predicate.accept(this)
 
+    fun transformArrayStorePredicate(predicate: ArrayStorePredicate): Predicate = predicate
+    fun transformBoundStorePredicate(predicate: BoundStorePredicate) = predicate
     fun transformCallPredicate(predicate: CallPredicate): Predicate = predicate
     fun transformCatchPredicate(predicate: CatchPredicate): Predicate = predicate
     fun transformDefaultSwitchPredicate(predicate: DefaultSwitchPredicate): Predicate = predicate
+    fun transformInequalityPredicate(predicate: InequalityPredicate) = predicate
     fun transformEqualityPredicate(predicate: EqualityPredicate): Predicate = predicate
     fun transformFieldStorePredicate(predicate: FieldStorePredicate): Predicate = predicate
     fun transformNewArrayPredicate(predicate: NewArrayPredicate): Predicate = predicate
     fun transformNewPredicate(predicate: NewPredicate): Predicate = predicate
-    fun transformArrayStorePredicate(predicate: ArrayStorePredicate): Predicate = predicate
     fun transformThrowPredicate(predicate: ThrowPredicate): Predicate = predicate
 
     ////////////////////////////////////////////////////////////////////
@@ -93,6 +97,7 @@ interface Transformer<T : Transformer<T>> {
     fun transformArrayLength(term: ArrayLengthTerm): Term = term.accept(this)
     fun transformArrayLoad(term: ArrayLoadTerm): Term = term.accept(this)
     fun transformBinary(term: BinaryTerm): Term = term.accept(this)
+    fun transformBound(term: BoundTerm): Term = term.accept(this)
     fun transformCall(term: CallTerm): Term = term.accept(this)
     fun transformCast(term: CastTerm): Term = term.accept(this)
     fun transformCmp(term: CmpTerm): Term = term.accept(this)
@@ -119,6 +124,7 @@ interface Transformer<T : Transformer<T>> {
     fun transformArrayLengthTerm(term: ArrayLengthTerm): Term = term
     fun transformArrayLoadTerm(term: ArrayLoadTerm): Term = term
     fun transformBinaryTerm(term: BinaryTerm): Term = term
+    fun transformBoundTerm(term: BoundTerm): Term = term
     fun transformCallTerm(term: CallTerm): Term = term
     fun transformCastTerm(term: CastTerm): Term = term
     fun transformCmpTerm(term: CmpTerm): Term = term

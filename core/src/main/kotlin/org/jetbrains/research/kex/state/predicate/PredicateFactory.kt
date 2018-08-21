@@ -8,6 +8,9 @@ import org.jetbrains.research.kfg.type.ArrayType
 import org.jetbrains.research.kfg.type.Type
 
 object PredicateFactory {
+    fun getBoundStore(ptr: Term, bound: Term, type: PredicateType = PredicateType.State(), location: Location = Location()) =
+            BoundStorePredicate(ptr, bound, type, location)
+
     fun getCall(callTerm: Term, type: PredicateType = PredicateType.State(), location: Location = Location()) =
             CallPredicate(callTerm, type, location)
 
@@ -35,6 +38,9 @@ object PredicateFactory {
 
     fun getEquality(lhv: Term, rhv: Term, type: PredicateType = PredicateType.State(), location: Location = Location()) =
             EqualityPredicate(lhv, rhv, type, location)
+
+    fun getInequality(lhv: Term, rhv: Term, type: PredicateType = PredicateType.State(), location: Location = Location()) =
+            InequalityPredicate(lhv, rhv, type, location)
 
     fun getBoolean(lhv: Term, rhv: Term, location: Location = Location()) =
             getEquality(lhv, rhv, PredicateType.Path(), location)

@@ -3,9 +3,9 @@ package org.jetbrains.research.kex.state
 import org.jetbrains.research.kex.state.predicate.Predicate
 import org.jetbrains.research.kex.state.predicate.PredicateType
 
-interface Sealed {
-    fun getSubtypes(): Map<String, Class<*>>
-    fun getReverseMapping(): Map<Class<*>, String>
+interface TypeInfo {
+    val subtypes: Map<String, Class<*>>
+    val reverseMapping: Map<Class<*>, String>
 }
 
 class StateBuilder() {
@@ -35,7 +35,7 @@ class StateBuilder() {
     fun apply() = current
 }
 
-abstract class PredicateState : Sealed {
+abstract class PredicateState : TypeInfo {
     companion object {
         val states = mapOf<String, Class<*>>(
                 "Basic" to BasicState::class.java,
@@ -54,8 +54,8 @@ abstract class PredicateState : Sealed {
     val isNotEmpty: Boolean
         get() = !isEmpty
 
-    override fun getSubtypes() = states
-    override fun getReverseMapping() = reverse
+    override val subtypes get() = states
+    override val reverseMapping get() = reverse
 
     abstract fun print(): String
 

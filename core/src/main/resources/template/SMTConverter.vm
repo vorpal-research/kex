@@ -44,7 +44,7 @@ object ${solver}Converter : ${solver}SMTConverter() {
         return res
     }
 
-#set($predicates = ["ArrayStore", "Call", "Catch", "DefaultSwitch", "Equality", "FieldStore", "NewArray", "New", "Throw"])
+#set($predicates = ["ArrayStore", "BoundStore", "Call", "Catch", "DefaultSwitch", "Inequality", "Equality", "FieldStore", "NewArray", "New", "Throw"])
     fun convert(predicate: Predicate, ef: $factory, ctx: ${solver}Context): Bool_ = when (predicate) {
 #foreach($predicate in $predicates)
         is ${predicate}Predicate -> convert(predicate, ef, ctx)
@@ -57,6 +57,14 @@ object ${solver}Converter : ${solver}SMTConverter() {
         val ptr = convert(store.arrayRef, ef, ctx) as? Ptr_ ?: unreachable { log.error("Non-ptr ref term in `store`") }
         val value = convert(store.value, ef, ctx)
         ctx.writeMemory(ptr, value, memspace)
+        return ef.makeTrue()
+    }
+
+    fun convert(boundStore: BoundStorePredicate, ef: $factory, ctx: ${solver}Context): Bool_ {
+        val memspace = (boundStore.ptr.type as? Memspaced<*>)?.memspace ?: 0
+        val ptr = convert(boundStore.ptr, ef, ctx) as? Ptr_ ?: unreachable { log.error("Non-ptr ref term in `store`") }
+        val value = convert(boundStore.bound, ef, ctx) as? Int_ ?: unreachable { log.error("Non-int bound term in `boundStore`") }
+        ctx.writeBound(ptr, value, memspace)
         return ef.makeTrue()
     }
 
@@ -73,6 +81,12 @@ object ${solver}Converter : ${solver}SMTConverter() {
             res = res and (cond neq case_).toBool()
         }
         return res
+    }
+
+    fun convert(equality: InequalityPredicate, ef: $factory, ctx: ${solver}Context): Bool_ {
+        val lhv = convert(equality.lhv, ef, ctx)
+        val rhv = convert(equality.rhv, ef, ctx)
+        return lhv neq rhv
     }
 
     fun convert(equality: EqualityPredicate, ef: $factory, ctx: ${solver}Context): Bool_ {
@@ -110,7 +124,7 @@ object ${solver}Converter : ${solver}SMTConverter() {
         return lhv eq ctx.getLocalPtr(memspace, elementSize)
     }
 
-#set($terms = ["Argument", "ArrayIndex", "ArrayLength", "ArrayLoad", "Binary", "Call", "Cast", "Cmp",
+#set($terms = ["Argument", "ArrayIndex", "ArrayLength", "ArrayLoad", "Binary", "Bound", "Call", "Cast", "Cmp",
     "ConstBool", "ConstByte", "ConstChar", "ConstClass", "ConstDouble", "ConstFloat", "ConstInt", "ConstLong",
     "ConstShort", "ConstString", "FieldLoad", "Field", "InstanceOf", "Neg", "Null", "ReturnValue", "Value"])
     fun convert(term: Term, ef: $factory, ctx: ${solver}Context): Dynamic_ = when (term) {
@@ -182,6 +196,13 @@ object ${solver}Converter : ${solver}SMTConverter() {
             is BinaryOpcode.Or -> lhv or rhv
             is BinaryOpcode.Xor -> lhv xor rhv
         }
+    }
+
+    fun convert(bound: BoundTerm, ef: $factory, ctx: ${solver}Context): Dynamic_ {
+        val memspace = (bound.ptr.type as? Memspaced<*>)?.memspace ?: 0
+        val ptr = convert(bound.ptr, ef, ctx) as? Ptr_
+            ?: unreachable { log.error("Non-ptr term in `bound`") }
+        return ctx.readBound(ptr, memspace)
     }
 
     fun convert(call: CallTerm, ef: $factory, ctx: ${solver}Context): Dynamic_ =
@@ -297,9 +318,19 @@ object ${solver}Converter : ${solver}SMTConverter() {
 
     fun convert(`null`: NullTerm, ef: $factory, ctx: ${solver}Context): Dynamic_ = ef.makeNull()
 
-    fun convert(`return`: ReturnValueTerm, ef: $factory, ctx: ${solver}Context): Dynamic_ =
-        ef.getVarByType(`return`.type, `return`.name)
+    fun convert(`return`: ReturnValueTerm, ef: $factory, ctx: ${solver}Context): Dynamic_ {
+        val expr = ef.getVarByType(`return`.type, `return`.name)
+        return when {
+            `return`.type is Reference -> expr.withAxiom(expr ge ef.makeIntConst(0))
+            else -> expr
+        }
+    }
 
-    fun convert(value: ValueTerm, ef: $factory, ctx: ${solver}Context): Dynamic_ =
-        ef.getVarByType(value.type, value.name)
+    fun convert(value: ValueTerm, ef: $factory, ctx: ${solver}Context): Dynamic_ {
+        val expr = ef.getVarByType(value.type, value.name)
+        return when {
+            value.type is Reference -> expr.withAxiom(expr ge ef.makeIntConst(0))
+            else -> expr
+        }
+    }
 }

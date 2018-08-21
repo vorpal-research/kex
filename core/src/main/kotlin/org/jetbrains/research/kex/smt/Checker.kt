@@ -25,6 +25,7 @@ class Checker(val method: Method, val psa: PredicateStateAnalysis) {
 
         if (logQuery) log.debug("State: $state")
 
+        state = TypeInfoAdapter(method).doit(state)
         state = Optimizer.transform(state).simplify()
         state = ConstantPropagator.transform(state).simplify()
         state = BoolTypeAdapter.transform(state).simplify()
