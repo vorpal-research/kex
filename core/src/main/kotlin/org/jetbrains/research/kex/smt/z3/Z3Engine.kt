@@ -6,7 +6,10 @@ import org.jetbrains.research.kex.util.castTo
 import org.jetbrains.research.kex.util.log
 import org.jetbrains.research.kex.util.unreachable
 
-object Z3Engine : SMTEngine<Context, Expr, Sort, FuncDecl>() {
+object Z3Engine : SMTEngine<Context, Expr, Sort, FuncDecl, Pattern>() {
+    override fun makeBound(ctx: Context, size: Int, sort: Sort): Expr = ctx.mkBound(size, sort)
+    override fun makePattern(ctx: Context, expr: Expr): Pattern = ctx.mkPattern(expr)
+
     override fun getSort(ctx: Context, expr: Expr) = expr.sort
     override fun getBoolSort(ctx: Context): Sort = ctx.boolSort
     override fun getBVSort(ctx: Context, size: Int): Sort = ctx.mkBitVecSort(size)
@@ -197,6 +200,11 @@ object Z3Engine : SMTEngine<Context, Expr, Sort, FuncDecl>() {
         return ctx.mkAnd(*boolExprs)
     }
 
+    override fun conjunction(ctx: Context, exprs: Collection<Expr>): Expr {
+        val boolExprs = exprs.map { it.castTo<BoolExpr>() }.toTypedArray()
+        return ctx.mkAnd(*boolExprs)
+    }
+
     override fun sext(ctx: Context, n: Int, expr: Expr): Expr {
         val exprBitsize = bvBitsize(ctx, getSort(ctx, expr))
         return if (exprBitsize < n) ctx.mkSignExt(n - exprBitsize, expr.castTo()) else expr
@@ -213,4 +221,26 @@ object Z3Engine : SMTEngine<Context, Expr, Sort, FuncDecl>() {
     override fun ite(ctx: Context, cond: Expr, lhv: Expr, rhv: Expr): Expr = ctx.mkITE(cond.castTo(), lhv, rhv)
 
     override fun extract(ctx: Context, bv: Expr, high: Int, low: Int): Expr = ctx.mkExtract(high, low, bv.castTo())
+
+    override fun forAll(ctx: Context, sorts: List<Sort>, body: (List<Expr>) -> Expr): Expr {
+        val numArgs = sorts.lastIndex
+
+        val bounds = sorts.withIndex().map { (index, sort) -> makeBound(ctx, index, sort) }
+        val realBody = body(bounds)
+        val names = (0..numArgs).map { "forall_bound_${numArgs - it - 1}" }.map { ctx.mkSymbol(it) }.toTypedArray()
+        val sortsRaw = sorts.toTypedArray()
+        return ctx.mkForall(sortsRaw, names, realBody, 0, arrayOf(), arrayOf(), null, null)
+    }
+
+    override fun forAll(ctx: Context, sorts: List<Sort>, body: (List<Expr>) -> Expr, patternGenerator: (List<Expr>) -> List<Pattern>): Expr {
+        val numArgs = sorts.lastIndex
+
+        val bounds = sorts.withIndex().map { (index, sort) -> makeBound(ctx, index, sort) }
+        val realBody = body(bounds)
+        val names = (0..numArgs).map { "forall_bound_${numArgs - it - 1}" }.map { ctx.mkSymbol(it) }.toTypedArray()
+        val sortsRaw = sorts.toTypedArray()
+
+        val patterns = patternGenerator(bounds).toTypedArray()
+        return ctx.mkForall(sortsRaw, names, realBody, 0, patterns, arrayOf(), null, null)
+    }
 }

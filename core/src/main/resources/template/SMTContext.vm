@@ -95,7 +95,7 @@ class $self : ${solver}SMTContext {
 
     fun getInitialMemory(memspace: Int) = initialMemories.getOrElse(memoryName(memspace)) { getMemory(memspace) }
 
-fun readMemory(ptr: Ptr_, bitsize: Int, memspace: Int) = getMemory(memspace).load(ptr, bitsize)
+    fun readMemory(ptr: Ptr_, bitsize: Int, memspace: Int) = getMemory(memspace).load(ptr, bitsize)
     inline fun < reified T : $valexpr > readMemory(ptr: Ptr_, memspace: Int) = getMemory(memspace).load< T >(ptr)
     fun < T : $valexpr > writeMemory(ptr: Ptr_, value: T, memspace: Int) {
         val mem = getMemory(memspace).store(ptr, value)
