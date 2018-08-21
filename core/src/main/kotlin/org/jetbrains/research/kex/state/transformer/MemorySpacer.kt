@@ -9,6 +9,8 @@ import org.jetbrains.research.kfg.type.ClassType
 import org.jetbrains.research.kfg.type.Reference
 import org.jetbrains.research.kfg.type.Type
 
+private const val defaultMemspace = 0
+
 interface Memspaced<out T : Reference> {
     val memspace: Int
 }
@@ -62,6 +64,9 @@ fun Term.withMemspace(memspace: Int): Term {
         }
     }
 }
+
+val Term.memspace: Int
+    get() = (this.type as? Memspaced<*>)?.memspace ?: defaultMemspace
 
 class MemorySpacer(ps: PredicateState) : Transformer<MemorySpacer> {
     val aa = StensgaardAA()

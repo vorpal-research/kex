@@ -11,9 +11,9 @@ import org.jetbrains.research.kex.smt.model.SMTModel
 import org.jetbrains.research.kex.state.PredicateState
 import org.jetbrains.research.kex.state.predicate.PredicateType
 import org.jetbrains.research.kex.state.term.Term
-import org.jetbrains.research.kex.state.transformer.Memspaced
 import org.jetbrains.research.kex.state.transformer.PointerCollector
 import org.jetbrains.research.kex.state.transformer.VariableCollector
+import org.jetbrains.research.kex.state.transformer.memspace
 import org.jetbrains.research.kex.util.castTo
 import org.jetbrains.research.kex.util.debug
 import org.jetbrains.research.kex.util.log
@@ -142,7 +142,7 @@ class Z3Solver(val ef: Z3ExprFactory) : AbstractSMTSolver {
         val bounds = mutableMapOf<Int, Pair<MutableMap<Term, Term>, MutableMap<Term, Term>>>()
 
         for (ptr in ptrs) {
-            val memspace = (ptr.type as? Memspaced<*>)?.memspace ?: 0
+            val memspace = ptr.memspace
 
             val startMem = ctx.getInitialMemory(memspace)
             val endMem = ctx.getMemory(memspace)
