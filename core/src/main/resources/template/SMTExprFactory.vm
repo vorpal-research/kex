@@ -29,19 +29,9 @@ class $factory : ${solver}SMTExprFactory() {
 
         fun getFieldOffset(`class`: Class, field: Class.FieldKey) = classOffsets.getOrPut(`class`, ::OffsetMap)[field]
 
-        fun getTypeSize(type: Type) = when (type) {
-            is LongType -> SMTEngine.DWORD
-            is Integral -> SMTEngine.WORD
-            is FloatType -> SMTEngine.WORD
-            is DoubleType -> SMTEngine.DWORD
-            is Reference -> SMTEngine.WORD
-            else -> unreachable { log.error("Unexpected type: ${ type }") }
-        }
+        fun getTypeSize(type: Type) = type.bitsize
 
-        fun getTypeSizeExpanded(type: Type) = when (type) {
-            is ClassType -> type.`class`.fields.keys.fold(0) { acc, fieldKey -> acc + getTypeSize(fieldKey.type) }
-            else -> getTypeSize(type)
-        }
+        fun getTypeSizeExpanded(type: Type) = type.getExpandedBitsize()
     }
 
     val ctx = $context()

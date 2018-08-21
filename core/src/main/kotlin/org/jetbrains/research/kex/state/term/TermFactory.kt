@@ -108,6 +108,9 @@ object TermFactory {
 
     fun getBinary(type: Type, opcode: BinaryOpcode, lhv: Term, rhv: Term) = BinaryTerm(type, opcode, lhv, rhv)
 
+    fun getBound(ptr: Term) = getBound(TF.intType, ptr)
+    fun getBound(type: Type, ptr: Term) = BoundTerm(type, ptr)
+
     fun getCall(method: Method, arguments: List<Term>) = getCall(method.desc.retval, method, arguments)
     fun getCall(method: Method, objectRef: Term, arguments: List<Term>) =
             getCall(method.desc.retval, objectRef, method, arguments)
