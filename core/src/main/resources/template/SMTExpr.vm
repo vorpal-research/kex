@@ -19,6 +19,8 @@ fun spliceAxioms(ctx: $context, e0: $expr, e1: $expr, e2: $expr) = when {
     else -> engine.conjunction(ctx, e0, e1, e2)
 }
 
+fun spliceAxioms(ctx: Context, exprs: List< $expr >) = engine.conjunction(ctx, exprs)
+
 open class $valexpr : ${solver}SMTExpr {
     companion object {
         inline fun < reified Type : $valexpr> getStaticSort(ctx: $context) = when (Type::class) {
@@ -424,3 +426,35 @@ class Ifer {
 }
 
 fun `if`(cond: $Bool) = Ifer()(cond)
+
+fun forall(ctx: $context, sortGen: () -> List< $valexpr >, func: (args: List< $valexpr >) -> $Bool): $Bool {
+    val sorts = sortGen().map{ it.getSort() }
+    val axioms = arrayListOf< $expr >()
+
+    val eret = engine.forAll(ctx, sorts, { exprs: List< $expr > ->
+        val ret = func.invoke(exprs.map{ $valexpr(ctx, it) })
+        axioms.add(ret.axiom)
+        ret.expr
+    })
+    return $Bool(ctx, eret, spliceAxioms(ctx, axioms))
+}
+
+fun < Res : $valexpr > forall(ctx: Context, sortGen: () -> List< $valexpr >,
+                        func: (args: List< $valexpr >) -> Res, patternGen: (args: List< $valexpr >) -> List< $valexpr >): $Bool {
+    val sorts = sortGen().map{ it.getSort() }
+    val axioms = arrayListOf< $expr >()
+
+    val eret = engine.forAll(ctx,
+            sorts,
+            { exprs: List< $expr > ->
+                val ret = func.invoke(exprs.map{ $valexpr(ctx, it) })
+                axioms.add(ret.axiom)
+                ret.expr
+            },
+            { exprs: List< $expr > ->
+                val ret = patternGen.invoke(exprs.map{ $valexpr(ctx, it) })
+                ret.map { engine.makePattern(ctx, it.expr) }
+            }
+    )
+    return $Bool(ctx, eret, spliceAxioms(ctx, axioms))
+}

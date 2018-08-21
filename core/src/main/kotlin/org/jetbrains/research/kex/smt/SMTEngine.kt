@@ -3,7 +3,7 @@ package org.jetbrains.research.kex.smt
 import org.jetbrains.research.kex.util.log
 import org.jetbrains.research.kex.util.unreachable
 
-abstract class SMTEngine<in Context_t : Any, Expr_t : Any, Sort_t : Any, Function_t : Any> {
+abstract class SMTEngine<in Context_t : Any, Expr_t : Any, Sort_t : Any, Function_t : Any, Pattern_t : Any> {
     companion object {
         const val WORD = 32
         const val DWORD = 64
@@ -31,6 +31,9 @@ abstract class SMTEngine<in Context_t : Any, Expr_t : Any, Sort_t : Any, Functio
         IFF,
         CONCAT
     }
+
+    abstract fun makeBound(ctx: Context_t, size: Int, sort: Sort_t): Expr_t
+    abstract fun makePattern(ctx: Context_t, expr: Expr_t): Pattern_t
 
     abstract fun getSort(ctx: Context_t, expr: Expr_t): Sort_t
     abstract fun getBoolSort(ctx: Context_t): Sort_t
@@ -60,6 +63,7 @@ abstract class SMTEngine<in Context_t : Any, Expr_t : Any, Sort_t : Any, Functio
         isDoubleSort(ctx, sort) -> DWORD
         else -> unreachable { log.error("Trying to get bitsize of unknown sort $sort") }
     }
+
     fun getExprBitsize(ctx: Context_t, expr: Expr_t) = getSortBitsize(ctx, getSort(ctx, expr))
 
     abstract fun bool2bv(ctx: Context_t, expr: Expr_t, sort: Sort_t): Expr_t
@@ -94,6 +98,7 @@ abstract class SMTEngine<in Context_t : Any, Expr_t : Any, Sort_t : Any, Functio
     abstract fun binary(ctx: Context_t, opcode: Opcode, lhv: Expr_t, rhv: Expr_t): Expr_t
 
     abstract fun conjunction(ctx: Context_t, vararg exprs: Expr_t): Expr_t
+    abstract fun conjunction(ctx: Context_t, exprs: Collection<Expr_t>): Expr_t
 
     abstract fun zext(ctx: Context_t, n: Int, expr: Expr_t): Expr_t
     abstract fun sext(ctx: Context_t, n: Int, expr: Expr_t): Expr_t
@@ -104,4 +109,8 @@ abstract class SMTEngine<in Context_t : Any, Expr_t : Any, Sort_t : Any, Functio
     abstract fun ite(ctx: Context_t, cond: Expr_t, lhv: Expr_t, rhv: Expr_t): Expr_t
 
     abstract fun extract(ctx: Context_t, bv: Expr_t, high: Int, low: Int): Expr_t
+
+    abstract fun forAll(ctx: Context_t, sorts: List<Sort_t>, body: (List<Expr_t>) -> Expr_t): Expr_t
+    abstract fun forAll(ctx: Context_t, sorts: List<Sort_t>,
+                        body: (List<Expr_t>) -> Expr_t, patternGenerator: (List<Expr_t>) -> List<Pattern_t>): Expr_t
 }
