@@ -1,11 +1,14 @@
 package org.jetbrains.research.kex.test
 
-class Point(val x: Int = 0, val y: Int = 0)
-
 class ObjectTests {
+
+    data class Point(val x: Int, val y: Int, val z: Int)
+    data class Line(val start: Point, val end: Point)
+    data class DoublePoint(val x: Double, val y: Double, val z: Double)
+
     fun simplePointCheck() {
-        val zero = Point()
-        val ten = Point(x = 10, y = 10)
+        val zero = Point(x = 0, y = 0, z = 1)
+        val ten = Point(x = 10, y = 10, z = 10)
 
         if (ten.x > zero.x) {
             Intrinsics.assertReachable()
@@ -13,5 +16,17 @@ class ObjectTests {
             // can't handle getters and setters yet
             Intrinsics.assertReachable()
         }
+    }
+
+    fun testObjects(a: Point, b: DoublePoint): Line {
+        val xs = b.x - a.x
+        val ys = b.y - a.y
+        val zs = b.z - a.z
+
+        val xe = a.x + b.x
+        val ye = a.y + b.y
+        val ze = a.z + b.z
+
+        return Line(Point(xs.toInt(), ys.toInt(), zs.toInt()), Point(xe.toInt(), ye.toInt(), ze.toInt()))
     }
 }
