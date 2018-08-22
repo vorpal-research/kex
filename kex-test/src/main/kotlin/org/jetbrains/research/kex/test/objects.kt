@@ -27,6 +27,9 @@ class ObjectTests {
         val ye = a.y + b.y
         val ze = a.z + b.z
 
-        return Line(Point(xs.toInt(), ys.toInt(), zs.toInt()), Point(xe.toInt(), ye.toInt(), ze.toInt()))
+        val result = Line(Point(xs.toInt(), ys.toInt(), zs.toInt()), Point(xe.toInt(), ye.toInt(), ze.toInt()))
+        println(result.start)
+        Intrinsics.assertReachable()
+        return result
     }
 }
