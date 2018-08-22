@@ -135,7 +135,13 @@ object ${solver}Converter : ${solver}SMTConverter() {
         else -> unreachable { log.error("Unknown term type: ${ term }") }
     }
 
-    fun convert(argument: ArgumentTerm, ef: $factory, ctx: ${solver}Context): Dynamic_ = ef.getVarByType(argument.type, argument.name)
+    fun convert(argument: ArgumentTerm, ef: $factory, ctx: ${solver}Context): Dynamic_ {
+        val expr = ef.getVarByType(argument.type, argument.name)
+        return when {
+            argument.type is Reference -> expr.withAxiom(expr ge ef.makeIntConst(0))
+            else -> expr
+        }
+    }
 
     fun convert(arrayindex: ArrayIndexTerm, ef: $factory, ctx: ${solver}Context): Dynamic_ {
         val memspace = arrayindex.arrayRef.memspace
@@ -217,7 +223,12 @@ object ${solver}Converter : ${solver}SMTConverter() {
             is Integral -> Int_.forceCast(op)
             is FloatType -> Float_.forceCast(op)
             is DoubleType -> Double_.forceCast(op)
-            is ClassType -> Ptr_.forceCast(op)
+            is ClassType ->  {
+                val newPtr = Ptr_.forceCast(op)
+                val newBound = ef.makeIntConst(cast.type.getExpandedBitsize())
+                ctx.writeBound(newPtr, newBound, cast.operand.memspace)
+                newPtr
+            }
             is ArrayType -> Ptr_.forceCast(op)
             else -> unreachable { log.error("Invalid cast ${ cast }") }
         }

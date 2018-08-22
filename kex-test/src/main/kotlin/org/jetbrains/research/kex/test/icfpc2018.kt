@@ -20,11 +20,11 @@ class Icfpc2018Test {
         fun merge(other: Results): Results = TODO()
     }
 
-    data class Result(val solutions: MutableMap<String, Solution>) {
+    class Result(val solutions: MutableMap<String, Solution>) {
         fun getSortedSolutions(): List<Pair<String, Solution>> = TODO()
     }
 
-    data class Solution(val energy: Long, val trace: String) {
+    class Solution(val energy: Long, val trace: String) {
         fun solve() {}
     }
 
@@ -39,7 +39,7 @@ class Icfpc2018Test {
         }
     }
 
-    data class Model(val size: Int, val numGrounded: Int = 0) {
+    class Model(val size: Int, val numGrounded: Int = 0) {
         companion object {
             fun readMDL(inp: InputStream): Model = TODO()
         }
