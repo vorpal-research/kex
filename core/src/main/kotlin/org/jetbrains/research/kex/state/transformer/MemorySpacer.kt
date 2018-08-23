@@ -70,8 +70,8 @@ val Term.memspace: Int
 
 class MemorySpacer(ps: PredicateState) : Transformer<MemorySpacer> {
     val aa = StensgaardAA()
-    val indices = hashMapOf<Token, Int>()
-    var index = 0
+    val indices = hashMapOf<Token, Int>(null to 0)
+    var index = 1
 
     init {
         aa.transform(ps)

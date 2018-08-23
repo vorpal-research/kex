@@ -14,7 +14,7 @@ class Subset<T : Any?>(val data: T) {
         ancestor
     } else this
 
-    override fun hashCode() = 0
+    override fun hashCode() = System.identityHashCode(this)
     override fun equals(other: Any?) = this === other
     override fun toString() = "Subset $data"
 }
