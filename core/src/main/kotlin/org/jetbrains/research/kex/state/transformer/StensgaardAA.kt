@@ -57,18 +57,20 @@ class StensgaardAA : Transformer<StensgaardAA>, AliasAnalysis {
     }
 
     fun get(term: Term): Token = when {
-        mapping.contains(term) -> mapping[term]?.getRoot()
+        mapping.contains(term) -> mapping[term]!!.getRoot()
         else -> {
-            val token = relations.emplace(term)
-            mapping[term] = token
+            var token: Token = relations.emplace(term)
 
-            if (term is ValueTerm && term.name == "this") {
-                nonFreeTerms.add(term)
-                nonaliased.add(term)
+            if (!nonFreeTerms.contains(term) && Term.isNamed(term)) {
+                val result = join(spaces(term.type), token)
+                spaces[term.type] = result
+                token = result
+
+
+                val pt = join(pointsTo(token), null)
+                pointsTo[token] = pt
             }
-            if (!nonFreeTerms.contains(term)) {
-                join(spaces(term.type), token)
-            }
+            mapping[term] = token
             token
         }
     }
