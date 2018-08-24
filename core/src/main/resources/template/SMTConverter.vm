@@ -3,7 +3,6 @@ import org.jetbrains.research.kex.smt.${solver}SMTConverter
 import org.jetbrains.research.kex.state.*
 import org.jetbrains.research.kex.state.predicate.*
 import org.jetbrains.research.kex.state.term.*
-import org.jetbrains.research.kex.state.transformer.Memspaced
 import org.jetbrains.research.kex.state.transformer.memspace
 import org.jetbrains.research.kfg.ir.Class
 import org.jetbrains.research.kfg.ir.value.instruction.BinaryOpcode
@@ -136,7 +135,7 @@ object ${solver}Converter : ${solver}SMTConverter() {
     }
 
     fun convert(argument: ArgumentTerm, ef: $factory, ctx: ${solver}Context): Dynamic_ {
-        val expr = ef.getVarByType(argument.type, argument.name)
+        val expr = ef.getVarByTypeAndName(argument.type, argument.name)
         return when {
             argument.type is Reference -> expr.withAxiom(expr ge ef.makeIntConst(0))
             else -> expr
@@ -162,7 +161,7 @@ object ${solver}Converter : ${solver}SMTConverter() {
                 ?: unreachable { log.error("Non-ptr term in `arraylength`") }
 
         val bound = ctx.readBound(ptr, memspace)
-        val elementType = (arraylength.arrayRef.type as? ArrayType)?.component
+        val elementType = (arraylength.arrayRef.type as? KexArray)?.element
                 ?: unreachable { log.error("Non-array type of array ref term") }
         val elementSize = Z3ExprFactory.getTypeSize(elementType)
         val size = bound / elementSize
@@ -176,13 +175,13 @@ object ${solver}Converter : ${solver}SMTConverter() {
 
         val ret = ctx.readMemory(arrayref, ${factory}.getTypeSize(arrayload.type), memspace)
         return when (arrayload.type) {
-            is LongType -> Long_.forceCast(ret)
-            is BoolType -> Bool_.forceCast(ret)
-            is Integral -> Int_.forceCast(ret)
-            is FloatType -> Float_.forceCast(ret)
-            is DoubleType -> Double_.forceCast(ret)
-            is ClassType -> Ptr_.forceCast(ret)
-            is ArrayType -> Ptr_.forceCast(ret)
+            is KexLong -> Long_.forceCast(ret)
+            is KexBool -> Bool_.forceCast(ret)
+            is KexIntegral -> Int_.forceCast(ret)
+            is KexFloat -> Float_.forceCast(ret)
+            is KexDouble -> Double_.forceCast(ret)
+            is KexClass -> Ptr_.forceCast(ret)
+            is KexArray -> Ptr_.forceCast(ret)
             else -> unreachable { log.error("Unable to cast load result ${ ret } to ${ arrayload.type }") }
         }
     }
@@ -213,23 +212,23 @@ object ${solver}Converter : ${solver}SMTConverter() {
     }
 
     fun convert(call: CallTerm, ef: $factory, ctx: ${solver}Context): Dynamic_ =
-        ef.getVarByType(call.type, call.name)
+        ef.getVarByTypeAndName(call.type, call.name)
 
     fun convert(cast: CastTerm, ef: $factory, ctx: ${solver}Context): Dynamic_ {
         val op = convert(cast.operand, ef, ctx)
         return when (cast.type) {
-            is LongType -> Long_.forceCast(op)
-            is BoolType -> Bool_.forceCast(op)
-            is Integral -> Int_.forceCast(op)
-            is FloatType -> Float_.forceCast(op)
-            is DoubleType -> Double_.forceCast(op)
-            is ClassType ->  {
+            is KexLong -> Long_.forceCast(op)
+            is KexBool -> Bool_.forceCast(op)
+            is KexIntegral -> Int_.forceCast(op)
+            is KexFloat -> Float_.forceCast(op)
+            is KexDouble -> Double_.forceCast(op)
+            is KexClass ->  {
                 val newPtr = Ptr_.forceCast(op)
-                val newBound = ef.makeIntConst(cast.type.getExpandedBitsize())
+                val newBound = ef.makeIntConst(${factory}.getTypeSizeExpanded(cast.type))
                 ctx.writeBound(newPtr, newBound, cast.operand.memspace)
                 newPtr
             }
-            is ArrayType -> Ptr_.forceCast(op)
+            is KexArray -> Ptr_.forceCast(op)
             else -> unreachable { log.error("Invalid cast ${ cast }") }
         }
     }
@@ -267,7 +266,7 @@ object ${solver}Converter : ${solver}SMTConverter() {
     fun convert(const: ConstCharTerm, ef: $factory, ctx: ${solver}Context): Dynamic_ = ef.makeIntConst(const.value.toInt())
 
     fun convert(const: ConstClassTerm, ef: $factory, ctx: ${solver}Context): Dynamic_ =
-        ef.getVarByType(const.type, const.name)
+        ef.getVarByTypeAndName(const.type, const.name)
 
     fun convert(const: ConstDoubleTerm, ef: $factory, ctx: ${solver}Context): Dynamic_ = ef.makeDoubleConst(const.value)
     fun convert(const: ConstFloatTerm, ef: $factory, ctx: ${solver}Context): Dynamic_ = ef.makeFloatConst(const.value)
@@ -291,13 +290,13 @@ object ${solver}Converter : ${solver}SMTConverter() {
 
         val res = ctx.readMemory(field, Z3ExprFactory.getTypeSize(fieldload.type), memspace)
         return when (fieldload.type) {
-            is LongType -> Long_.forceCast(res)
-            is BoolType -> Bool_.forceCast(res)
-            is Integral -> Int_.forceCast(res)
-            is FloatType -> Float_.forceCast(res)
-            is DoubleType -> Double_.forceCast(res)
-            is ClassType -> Ptr_.forceCast(res)
-            is ArrayType -> Ptr_.forceCast(res)
+            is KexLong -> Long_.forceCast(res)
+            is KexBool -> Bool_.forceCast(res)
+            is KexIntegral -> Int_.forceCast(res)
+            is KexFloat -> Float_.forceCast(res)
+            is KexDouble -> Double_.forceCast(res)
+            is KexClass -> Ptr_.forceCast(res)
+            is KexArray -> Ptr_.forceCast(res)
             else -> unreachable { log.error("Unable to cast load result ${ res } to ${ fieldload.type }") }
         }
     }
@@ -307,7 +306,7 @@ object ${solver}Converter : ${solver}SMTConverter() {
         val obj = convert(field.owner, ef, ctx) as? Ptr_
         ?: unreachable { log.error("Non-ptr ref in field load") }
         val name = field.fieldName.name
-        val offset = Z3ExprFactory.getFieldOffset(field.getClass(), Class.FieldKey(name, field.type))
+        val offset = Z3ExprFactory.getFieldOffset(field.getClass(), Class.FieldKey(name, field.type.kfgType))
         val baseBound = ctx.readBound(obj, memspace)
 
         val fieldptr = Ptr_.forceCast(obj + offset)
@@ -316,7 +315,7 @@ object ${solver}Converter : ${solver}SMTConverter() {
     }
 
     fun convert(instanceof: InstanceOfTerm, ef: $factory, ctx: ${solver}Context): Dynamic_ =
-        ef.getVarByType(instanceof.type, instanceof.print())
+        ef.getVarByTypeAndName(instanceof.type, instanceof.print())
 
     fun convert(neg: NegTerm, ef: $factory, ctx: ${solver}Context): Dynamic_ {
         val operand = convert(neg.operand, ef, ctx)
@@ -324,14 +323,14 @@ object ${solver}Converter : ${solver}SMTConverter() {
             is Bool_ -> Bool_.forceCast(!operand)
             is Int_ -> Int_.forceCast(!operand)
             is Long_ -> Long_.forceCast(!operand)
-            else -> unreachable { log.error("Invalid operand of `neg`: ${neg.operand.print()}") }
+            else -> unreachable { log.error("Invalid operand of `neg`: ${ neg.operand.print() }") }
         }
     }
 
     fun convert(`null`: NullTerm, ef: $factory, ctx: ${solver}Context): Dynamic_ = ef.makeNull()
 
     fun convert(`return`: ReturnValueTerm, ef: $factory, ctx: ${solver}Context): Dynamic_ {
-        val expr = ef.getVarByType(`return`.type, `return`.name)
+        val expr = ef.getVarByTypeAndName(`return`.type, `return`.name)
         return when {
             `return`.type is Reference -> expr.withAxiom(expr ge ef.makeIntConst(0))
             else -> expr
@@ -339,7 +338,7 @@ object ${solver}Converter : ${solver}SMTConverter() {
     }
 
     fun convert(value: ValueTerm, ef: $factory, ctx: ${solver}Context): Dynamic_ {
-        val expr = ef.getVarByType(value.type, value.name)
+        val expr = ef.getVarByTypeAndName(value.type, value.name)
         return when {
             value.type is Reference -> expr.withAxiom(expr ge ef.makeIntConst(0))
             else -> expr

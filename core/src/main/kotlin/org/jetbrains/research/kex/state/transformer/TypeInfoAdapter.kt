@@ -1,5 +1,6 @@
 package org.jetbrains.research.kex.state.transformer
 
+import org.jetbrains.research.kex.smt.z3.expandedBitsize
 import org.jetbrains.research.kex.state.PredicateState
 import org.jetbrains.research.kex.state.StateBuilder
 import org.jetbrains.research.kex.state.predicate.CallPredicate
@@ -11,7 +12,6 @@ import org.jetbrains.research.kfg.CM
 import org.jetbrains.research.kfg.TF
 import org.jetbrains.research.kfg.ir.Method
 import org.jetbrains.research.kfg.ir.MethodDesc
-import org.jetbrains.research.kfg.type.getExpandedBitsize
 
 class TypeInfoAdapter(val method: Method) : Transformer<TypeInfoAdapter> {
     val validTerms = hashSetOf<Term>()
@@ -39,7 +39,7 @@ class TypeInfoAdapter(val method: Method) : Transformer<TypeInfoAdapter> {
         for (valid in validTerms) {
             builder += pf.getInequality(valid, `null`, PredicateType.Assume())
 
-            val typeSize = valid.type.getExpandedBitsize()
+            val typeSize = valid.type.expandedBitsize
             val value = tf.getInt(typeSize)
             builder += pf.getBoundStore(valid, value, PredicateType.Assume())
         }

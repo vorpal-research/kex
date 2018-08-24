@@ -1,5 +1,6 @@
 package org.jetbrains.research.kex.asm.state
 
+import org.jetbrains.research.kex.ktype.kexType
 import org.jetbrains.research.kex.state.predicate.Predicate
 import org.jetbrains.research.kex.state.predicate.PredicateFactory
 import org.jetbrains.research.kex.state.predicate.PredicateType
@@ -85,7 +86,7 @@ class PredicateBuilder(method: Method) : MethodVisitor(method) {
     override fun visitCastInst(inst: CastInst) {
         val lhv = tf.getValue(inst)
         val rhv = tf.getCast(
-                inst.type,
+                inst.type.kexType,
                 tf.getValue(inst.operand)
         )
 
@@ -107,17 +108,17 @@ class PredicateBuilder(method: Method) : MethodVisitor(method) {
         val lhv = tf.getValue(inst)
         val field = when {
             inst.hasOwner -> tf.getField(
-                    inst.type,
+                    inst.type.kexType,
                     tf.getValue(inst.owner),
                     tf.getString(inst.field.name)
             )
             else -> tf.getField(
-                    inst.type,
+                    inst.type.kexType,
                     inst.field.`class`,
                     tf.getString(inst.field.name)
             )
         }
-        val rhv = tf.getFieldLoad(inst.type, field)
+        val rhv = tf.getFieldLoad(inst.type.kexType, field)
 
         predicateMap[inst] = pf.getEquality(lhv, rhv, location = inst.location)
     }
@@ -128,8 +129,8 @@ class PredicateBuilder(method: Method) : MethodVisitor(method) {
         val value = tf.getValue(inst.value)
 
         val field = when {
-            objectRef != null -> tf.getField(inst.field.type, objectRef, name)
-            else -> tf.getField(inst.field.type, inst.field.`class`, name)
+            objectRef != null -> tf.getField(inst.field.type.kexType, objectRef, name)
+            else -> tf.getField(inst.field.type.kexType, inst.field.`class`, name)
         }
         predicateMap[inst] = pf.getFieldStore(field, inst.field.type, value, location = inst.location)
     }
@@ -137,7 +138,7 @@ class PredicateBuilder(method: Method) : MethodVisitor(method) {
     override fun visitInstanceOfInst(inst: InstanceOfInst) {
         val lhv = tf.getValue(inst)
         val rhv = tf.getInstanceOf(
-                inst.targetType,
+                inst.targetType.kexType,
                 tf.getValue(inst.operand)
         )
 

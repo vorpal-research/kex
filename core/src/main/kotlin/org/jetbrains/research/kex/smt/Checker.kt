@@ -2,6 +2,7 @@ package org.jetbrains.research.kex.smt
 
 import org.jetbrains.research.kex.asm.state.PredicateStateAnalysis
 import org.jetbrains.research.kex.config.GlobalConfig
+import org.jetbrains.research.kex.ktype.kexType
 import org.jetbrains.research.kex.state.predicate.PredicateType
 import org.jetbrains.research.kex.state.term.Term
 import org.jetbrains.research.kex.state.term.TermFactory
@@ -46,13 +47,13 @@ class Checker(val method: Method, val psa: PredicateStateAnalysis) {
 
             val tf = TermFactory
             val slicingTerms = hashSetOf<Term>()
-            slicingTerms.addAll(method.desc.args.withIndex().map { (index, type) -> tf.getArgument(type, index) })
+            slicingTerms.addAll(method.desc.args.withIndex().map { (index, type) -> tf.getArgument(type.kexType, index) })
 
             if (!method.isAbstract) {
                 val `this` = tf.getThis(method.`class`)
                 slicingTerms.add(`this`)
                 for ((_, field) in method.`class`.fields) {
-                    slicingTerms.add(tf.getField(field.type, `this`, tf.getString(field.name)))
+                    slicingTerms.add(tf.getField(field.type.kexType, `this`, tf.getString(field.name)))
                 }
             }
 

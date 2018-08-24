@@ -1,11 +1,11 @@
 package org.jetbrains.research.kex.state.term
 
+import org.jetbrains.research.kex.ktype.KexBool
+import org.jetbrains.research.kex.ktype.KexType
 import org.jetbrains.research.kex.state.transformer.Transformer
 import org.jetbrains.research.kex.util.defaultHashCode
-import org.jetbrains.research.kfg.TF
-import org.jetbrains.research.kfg.type.Type
 
-class InstanceOfTerm(val checkedType: Type, operand: Term) : Term("", TF.boolType, listOf(operand)) {
+class InstanceOfTerm(val checkedType: KexType, operand: Term) : Term("", KexBool, listOf(operand)) {
 
     val operand: Term
         get() = subterms[0]

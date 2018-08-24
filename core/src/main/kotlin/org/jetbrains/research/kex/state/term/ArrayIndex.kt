@@ -1,9 +1,9 @@
 package org.jetbrains.research.kex.state.term
 
+import org.jetbrains.research.kex.ktype.KexType
 import org.jetbrains.research.kex.state.transformer.Transformer
-import org.jetbrains.research.kfg.type.Type
 
-class ArrayIndexTerm(type: Type, arrayRef: Term, index: Term)
+class ArrayIndexTerm(type: KexType, arrayRef: Term, index: Term)
     : Term("$arrayRef[$index]", type, listOf(arrayRef, index)) {
 
     val arrayRef: Term

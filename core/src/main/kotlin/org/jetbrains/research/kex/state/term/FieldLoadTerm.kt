@@ -1,11 +1,11 @@
 package org.jetbrains.research.kex.state.term
 
+import org.jetbrains.research.kex.ktype.KexType
 import org.jetbrains.research.kex.state.transformer.Transformer
 import org.jetbrains.research.kex.util.log
 import org.jetbrains.research.kex.util.unreachable
-import org.jetbrains.research.kfg.type.Type
 
-class FieldLoadTerm(type: Type, fieldRef: Term) : Term("", type, listOf(fieldRef)) {
+class FieldLoadTerm(type: KexType, fieldRef: Term) : Term("", type, listOf(fieldRef)) {
 
     val field: Term
         get() = subterms[0]

@@ -12,6 +12,11 @@ typealias Double_ = $Double
 typealias Memory_ = $Memory< Ptr_ >
 typealias Dynamic_ = $valexpr
 
+val KexType.expandedBitsize get() = when (this) {
+    is KexClass -> `class`.fields.values.fold(0) { acc, field -> acc + field.type.kexType.bitsize }
+    else -> bitsize
+}
+
 class $factory : ${solver}SMTExprFactory() {
     companion object {
         class OffsetMap {
@@ -20,7 +25,7 @@ class $factory : ${solver}SMTExprFactory() {
 
             operator fun get(key: Class.FieldKey): Int = inner.getOrPut(key) {
                 val value = current
-                current += getTypeSize(key.type)
+                current += getTypeSize(key.type.kexType)
                 value
             }
         }
@@ -29,9 +34,8 @@ class $factory : ${solver}SMTExprFactory() {
 
         fun getFieldOffset(`class`: Class, field: Class.FieldKey) = classOffsets.getOrPut(`class`, ::OffsetMap)[field]
 
-        fun getTypeSize(type: Type) = type.bitsize
-
-        fun getTypeSizeExpanded(type: Type) = type.getExpandedBitsize()
+        fun getTypeSize(type: KexType) = type.bitsize
+        fun getTypeSizeExpanded(type: KexType) = type.expandedBitsize
     }
 
     val ctx = $context()
@@ -66,13 +70,13 @@ class $factory : ${solver}SMTExprFactory() {
         Memory_.makeDefault< Ptr_ >(ctx, id, Byte_.makeConst(ctx, default))
 
 #set($types = ["Bool", "Short", "Int", "Long", "Float", "Double"])
-    fun getVarByType(type: Type, name: String, fresh: Boolean = false) = when(type) {
+    fun getVarByTypeAndName(type: KexType, name: String, fresh: Boolean = false) = when(type) {
 #foreach($type in $types)
-        is ${type}Type -> make${type}(name, fresh)
+        is Kex${type} -> make${type}(name, fresh)
 #end
-        is ClassType -> makePtr(name, fresh)
-        is ArrayType -> makePtr(name, fresh)
-        is NullType -> makePtr(name, fresh)
+        is KexClass -> makePtr(name, fresh)
+        is KexArray -> makePtr(name, fresh)
+        is KexNull -> makePtr(name, fresh)
         else -> unreachable { log.error("Unknown type in ExprFactory: ${ type }") }
     }
 

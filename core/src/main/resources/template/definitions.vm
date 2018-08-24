@@ -1,6 +1,7 @@
 package ${packageName}
 
 import ${importPackage}.*
+import org.jetbrains.research.kex.ktype.*
 import org.jetbrains.research.kex.smt.${solver.toLowerCase()}.${solver}Engine
 import org.jetbrains.research.kex.smt.SMTEngine
 import org.jetbrains.research.kfg.type.*

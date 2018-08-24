@@ -1,9 +1,9 @@
 package org.jetbrains.research.kex.state.term
 
+import org.jetbrains.research.kex.ktype.KexType
 import org.jetbrains.research.kex.state.transformer.Transformer
-import org.jetbrains.research.kfg.type.Type
 
-class BoundTerm(type: Type, ptr: Term) : Term("bound($ptr)", type, arrayListOf(ptr)) {
+class BoundTerm(type: KexType, ptr: Term) : Term("bound($ptr)", type, arrayListOf(ptr)) {
     val ptr: Term
         get() = subterms[0]
 

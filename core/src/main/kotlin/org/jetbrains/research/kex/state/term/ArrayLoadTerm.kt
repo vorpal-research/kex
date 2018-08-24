@@ -1,11 +1,9 @@
 package org.jetbrains.research.kex.state.term
 
+import org.jetbrains.research.kex.ktype.KexType
 import org.jetbrains.research.kex.state.transformer.Transformer
-import org.jetbrains.research.kex.util.unreachable
-import org.jetbrains.research.kfg.type.ArrayType
-import org.jetbrains.research.kfg.type.Type
 
-class ArrayLoadTerm(type: Type, arrayRef: Term) : Term("", type, listOf(arrayRef)) {
+class ArrayLoadTerm(type: KexType, arrayRef: Term) : Term("", type, listOf(arrayRef)) {
 
     val arrayRef: Term
         get() = subterms[0]

@@ -1,11 +1,11 @@
 package org.jetbrains.research.kex.state.term
 
+import org.jetbrains.research.kex.ktype.KexType
 import org.jetbrains.research.kex.state.transformer.Transformer
-import org.jetbrains.research.kfg.ir.value.instruction.BinaryOpcode
-import org.jetbrains.research.kfg.type.Type
 import org.jetbrains.research.kex.util.defaultHashCode
+import org.jetbrains.research.kfg.ir.value.instruction.BinaryOpcode
 
-class BinaryTerm(type: Type, val opcode: BinaryOpcode, lhv: Term, rhv: Term) : Term("", type, listOf(lhv, rhv)) {
+class BinaryTerm(type: KexType, val opcode: BinaryOpcode, lhv: Term, rhv: Term) : Term("", type, listOf(lhv, rhv)) {
 
     val lhv: Term
         get() = subterms[0]
