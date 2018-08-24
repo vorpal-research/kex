@@ -18,6 +18,11 @@ class PointerCollector : Transformer<PointerCollector> {
         return predicate
     }
 
+    override fun transformArrayIndex(term: ArrayIndexTerm): Term {
+        ptrs.add(term.arrayRef)
+        return term
+    }
+
     override fun transformArrayLoadTerm(term: ArrayLoadTerm): Term {
         ptrs.add(term.arrayRef)
         return term
@@ -25,6 +30,11 @@ class PointerCollector : Transformer<PointerCollector> {
 
     override fun transformArrayLengthTerm(term: ArrayLengthTerm): Term {
         ptrs.add(term.arrayRef)
+        return term
+    }
+
+    override fun transformField(term: FieldTerm): Term {
+        ptrs.add(term.owner)
         return term
     }
 

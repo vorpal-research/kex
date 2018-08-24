@@ -1,45 +1,14 @@
 package org.jetbrains.research.kex.state.transformer
 
+import org.jetbrains.research.kex.ktype.KexPointer
 import org.jetbrains.research.kex.state.PredicateState
 import org.jetbrains.research.kex.state.term.*
 import org.jetbrains.research.kex.util.log
-import org.jetbrains.research.kfg.ir.Class
-import org.jetbrains.research.kfg.type.ArrayType
-import org.jetbrains.research.kfg.type.ClassType
 import org.jetbrains.research.kfg.type.Reference
-import org.jetbrains.research.kfg.type.Type
-
-private const val defaultMemspace = 0
-
-interface Memspaced<out T : Reference> {
-    val memspace: Int
-}
-
-class MemspacedClassType(override val memspace: Int, `class`: Class) : ClassType(`class`), Memspaced<ClassType> {
-    override fun hashCode() = super.hashCode()
-    override fun equals(other: Any?) = when {
-        this === other -> true
-        other is ClassType -> this.`class` == other.`class`
-        else -> false
-    }
-}
-class MemspacedArrayType(override val memspace: Int, component: Type) : ArrayType(component), Memspaced<ArrayType> {
-    override fun hashCode() = super.hashCode()
-    override fun equals(other: Any?) = when {
-        this === other -> true
-        other is ArrayType -> this.component == other.component
-        else -> false
-    }
-}
-
-fun Type.memspaced(memspace: Int) = when (this) {
-    is ClassType -> MemspacedClassType(memspace, `class`)
-    is ArrayType -> MemspacedArrayType(memspace, component)
-    else -> this
-}
 
 fun Term.withMemspace(memspace: Int): Term {
-    val memspaced = type.memspaced(memspace)
+    if (this.type !is KexPointer) return this
+    val memspaced = type.withMemspace(memspace)
     val tf = TermFactory
     return when (this) {
         is ArgumentTerm -> tf.getArgument(memspaced, index)
@@ -66,7 +35,7 @@ fun Term.withMemspace(memspace: Int): Term {
 }
 
 val Term.memspace: Int
-    get() = (this.type as? Memspaced<*>)?.memspace ?: defaultMemspace
+    get() = (this.type as? KexPointer)?.memspace ?: KexPointer.defaultMemspace
 
 class MemorySpacer(ps: PredicateState) : Transformer<MemorySpacer> {
     val aa = StensgaardAA()
@@ -82,6 +51,6 @@ class MemorySpacer(ps: PredicateState) : Transformer<MemorySpacer> {
 
     override fun transformTerm(term: Term) = when {
         term.type is Reference -> term.withMemspace(getMemspace(term))
-        else -> super.transformTerm(term)
+        else -> term
     }
 }

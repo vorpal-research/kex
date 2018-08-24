@@ -1,9 +1,9 @@
 package org.jetbrains.research.kex.state.term
 
+import org.jetbrains.research.kex.ktype.KexType
 import org.jetbrains.research.kex.state.transformer.Transformer
-import org.jetbrains.research.kfg.type.Type
 
-class ValueTerm(type: Type, valueName: Term) : Term(valueName.name, type, listOf(valueName)) {
+class ValueTerm(type: KexType, valueName: Term) : Term(valueName.name, type, listOf(valueName)) {
 
     val valueName: Term
         get() = subterms[0]

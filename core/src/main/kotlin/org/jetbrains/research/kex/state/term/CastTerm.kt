@@ -1,9 +1,9 @@
 package org.jetbrains.research.kex.state.term
 
+import org.jetbrains.research.kex.ktype.KexType
 import org.jetbrains.research.kex.state.transformer.Transformer
-import org.jetbrains.research.kfg.type.Type
 
-class CastTerm(type: Type, operand: Term) : Term("", type, listOf(operand)) {
+class CastTerm(type: KexType, operand: Term) : Term("", type, listOf(operand)) {
 
     val operand: Term
         get() = subterms[0]

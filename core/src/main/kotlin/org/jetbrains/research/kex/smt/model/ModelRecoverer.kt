@@ -1,16 +1,18 @@
 package org.jetbrains.research.kex.smt.model
 
 import org.jetbrains.research.kex.driver.RandomDriver
+import org.jetbrains.research.kex.ktype.*
 import org.jetbrains.research.kex.state.term.*
 import org.jetbrains.research.kex.state.transformer.memspace
 import org.jetbrains.research.kex.util.log
 import org.jetbrains.research.kex.util.unreachable
 import org.jetbrains.research.kfg.ir.Method
-import org.jetbrains.research.kfg.type.*
+import org.jetbrains.research.kfg.type.ArrayType
+import org.jetbrains.research.kfg.type.ClassType
 
 
-private fun Term.isReference() = this.type.isReference
-private fun Term.isPrimary() = !isReference()
+private fun Term.isPointer() = this.type is KexPointer
+private fun Term.isPrimary() = !isPointer()
 
 class ModelRecoverer(val method: Method, val model: SMTModel, val loader: ClassLoader) {
     val tf = TermFactory
@@ -20,7 +22,7 @@ class ModelRecoverer(val method: Method, val model: SMTModel, val loader: ClassL
 
     fun apply() {
         val recoveringTerms = hashSetOf<Term>()
-        recoveringTerms += method.desc.args.withIndex().map { (index, type) -> tf.getArgument(type, index) }
+        recoveringTerms += method.desc.args.withIndex().map { (index, type) -> tf.getArgument(type.kexType, index) }
 
         if (!method.isAbstract) {
             val `this` = tf.getThis(method.`class`)
@@ -40,14 +42,14 @@ class ModelRecoverer(val method: Method, val model: SMTModel, val loader: ClassL
     private fun recoverPrimaryTerm(term: Term, value: Term?): Any? {
         if (value == null) return null
         return when (term.type) {
-            is BoolType -> (value as ConstBoolTerm).value
-            is ByteType -> (value as ConstByteTerm).value
-            is CharType -> (value as ConstCharTerm).value
-            is ShortType -> (value as ConstShortTerm).value
-            is IntType -> (value as ConstIntTerm).value
-            is LongType -> (value as ConstLongTerm).value
-            is FloatType -> (value as ConstFloatTerm).value
-            is DoubleType -> (value as ConstDoubleTerm).value
+            is KexBool -> (value as ConstBoolTerm).value
+            is KexByte -> (value as ConstByteTerm).value
+            is KexChar -> (value as ConstCharTerm).value
+            is KexShort -> (value as ConstShortTerm).value
+            is KexInt -> (value as ConstIntTerm).value
+            is KexLong -> (value as ConstLongTerm).value
+            is KexFloat -> (value as ConstFloatTerm).value
+            is KexDouble -> (value as ConstDoubleTerm).value
             else -> unreachable { log.error("Trying to recover non-primary term as primary value: $term with type ${term.type}") }
         }
     }
@@ -59,7 +61,7 @@ class ModelRecoverer(val method: Method, val model: SMTModel, val loader: ClassL
     }
 
     private fun recoverClassTerm(term: Term, value: Term?): Any? {
-        val type = term.type as ClassType
+        val type = term.type as KexClass
         val address = (value as? ConstIntTerm)?.value ?: return null
         if (address == 0) return null
 
@@ -67,7 +69,7 @@ class ModelRecoverer(val method: Method, val model: SMTModel, val loader: ClassL
             val `class` = loader.loadClass(type.`class`.canonicalDesc)
             val instance = RandomDriver.generateOrNull(`class`) ?: return null
             for ((_, field) in type.`class`.fields) {
-                val fieldTerm = model.assignments.keys.firstOrNull { it == tf.getField(field.type, term, tf.getString(field.name)) }
+                val fieldTerm = model.assignments.keys.firstOrNull { it == tf.getField(field.type.kexType, term, tf.getString(field.name)) }
                         ?: continue
 
                 val memspace = fieldTerm.memspace
@@ -88,7 +90,7 @@ class ModelRecoverer(val method: Method, val model: SMTModel, val loader: ClassL
     }
 
     private fun recoverArrayTerm(term: Term, value: Term?): Any? {
-        val arrayType = term.type as ArrayType
+        val arrayType = term.type as KexArray
         val address = (value as? ConstIntTerm)?.value ?: return null
         return memoryMappings.getOrPut(address) {
             null

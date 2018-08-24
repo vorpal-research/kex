@@ -2,9 +2,9 @@ package org.jetbrains.research.kex.state.transformer
 
 import org.jetbrains.research.kex.collections.DisjointSet
 import org.jetbrains.research.kex.collections.Subset
+import org.jetbrains.research.kex.ktype.KexType
 import org.jetbrains.research.kex.state.predicate.*
 import org.jetbrains.research.kex.state.term.*
-import org.jetbrains.research.kfg.type.Type
 import org.jetbrains.research.kfg.util.GraphView
 import org.jetbrains.research.kfg.util.viewCfg
 
@@ -19,11 +19,11 @@ class StensgaardAA : Transformer<StensgaardAA>, AliasAnalysis {
     val pointsTo = hashMapOf<Token, Token>()
     val mapping = hashMapOf<Term, Token>()
     val nonaliased = hashSetOf<Term>()
-    val spaces = hashMapOf<Type, Token>()
+    val spaces = hashMapOf<KexType, Token>()
     val nonFreeTerms = hashSetOf<Term>()
 
     fun pointsTo(token: Token) = pointsTo.getOrPut(token) { null }
-    fun spaces(type: Type) = spaces.getOrPut(type) { null }
+    fun spaces(type: KexType) = spaces.getOrPut(type) { null }
 
     private fun quasi(): Token = relations.emplace(null)
     private fun join(lhv: Token, rhv: Token): Token = when {

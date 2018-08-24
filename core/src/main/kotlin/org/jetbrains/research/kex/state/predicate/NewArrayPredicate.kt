@@ -1,14 +1,14 @@
 package org.jetbrains.research.kex.state.predicate
 
+import org.jetbrains.research.kex.ktype.KexType
 import org.jetbrains.research.kex.state.term.Term
 import org.jetbrains.research.kex.state.transformer.Transformer
 import org.jetbrains.research.kex.util.contentEquals
 import org.jetbrains.research.kfg.ir.Location
-import org.jetbrains.research.kfg.type.Type
 
 class NewArrayPredicate(lhv: Term,
                         dimentions: List<Term>,
-                        val elementType: Type,
+                        val elementType: KexType,
                         type: PredicateType = PredicateType.State(),
                         location: Location = Location()) :
         Predicate(type, location, listOf(lhv).plus(dimentions)) {

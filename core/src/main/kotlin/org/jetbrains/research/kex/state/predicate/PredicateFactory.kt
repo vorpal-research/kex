@@ -1,10 +1,10 @@
 package org.jetbrains.research.kex.state.predicate
 
+import org.jetbrains.research.kex.ktype.KexArray
 import org.jetbrains.research.kex.state.term.Term
 import org.jetbrains.research.kex.util.log
 import org.jetbrains.research.kex.util.unreachable
 import org.jetbrains.research.kfg.ir.Location
-import org.jetbrains.research.kfg.type.ArrayType
 import org.jetbrains.research.kfg.type.Type
 
 object PredicateFactory {
@@ -31,7 +31,7 @@ object PredicateFactory {
     fun getNewArray(lhv: Term, dimensions: List<Term>, type: PredicateType = PredicateType.State(), location: Location = Location()): Predicate {
         var current = lhv.type
         dimensions.forEach {
-            current = (current as? ArrayType)?.component ?: unreachable { log.error("Trying to create new array predicate with non-array type") }
+            current = (current as? KexArray)?.element ?: unreachable { log.error("Trying to create new array predicate with non-array type") }
         }
         return NewArrayPredicate(lhv, dimensions, current, type, location)
     }

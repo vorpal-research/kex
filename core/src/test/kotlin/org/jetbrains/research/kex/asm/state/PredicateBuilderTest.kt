@@ -2,6 +2,7 @@ package org.jetbrains.research.kex.asm.state
 
 import org.jetbrains.research.kex.KexTest
 import org.jetbrains.research.kex.asm.transform.LoopDeroller
+import org.jetbrains.research.kex.ktype.kexType
 import org.jetbrains.research.kex.state.predicate.*
 import org.jetbrains.research.kex.state.term.*
 import org.jetbrains.research.kfg.CM
@@ -72,7 +73,7 @@ class PredicateBuilderTest : KexTest() {
                 rhv as BinaryTerm
 
                 assertEquals(rhv.opcode, inst.opcode)
-                assertEquals(mergeTypes(setOf(inst.lhv.type, inst.rhv.type)), rhv.type)
+                assertEquals(mergeTypes(setOf(inst.lhv.type, inst.rhv.type))?.kexType, rhv.type)
                 assertEquals(rhv.lhv, tf.getValue(inst.lhv))
                 assertEquals(rhv.rhv, tf.getValue(inst.rhv))
             }
@@ -119,7 +120,7 @@ class PredicateBuilderTest : KexTest() {
                 predicate as EqualityPredicate
 
                 assertEquals(predicate.lhv, tf.getValue(inst))
-                assertEquals(predicate.rhv, tf.getCast(inst.type, tf.getValue(inst.operand)))
+                assertEquals(predicate.rhv, tf.getCast(inst.type.kexType, tf.getValue(inst.operand)))
             }
 
             override fun visitCmpInst(inst: CmpInst) {
@@ -187,7 +188,7 @@ class PredicateBuilderTest : KexTest() {
                 predicate as EqualityPredicate
 
                 assertEquals(predicate.lhv, tf.getValue(inst))
-                assertEquals(predicate.rhv, tf.getInstanceOf(inst.targetType, tf.getValue(inst.operand)))
+                assertEquals(predicate.rhv, tf.getInstanceOf(inst.targetType.kexType, tf.getValue(inst.operand)))
             }
 
             override fun visitNewArrayInst(inst: NewArrayInst) {
