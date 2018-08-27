@@ -13,6 +13,16 @@ val defaultAllocSize = GlobalConfig.getIntValue("smt", "defaultAllocationSize", 
 
 @Suppress("UNUSED_PARAMETER")
 object ${solver}Converter : ${solver}SMTConverter() {
+
+    private fun addTypeAxioms(term: Term, expr: Dynamic_, ef: $factory) = when (term.type) {
+        is KexPointer -> expr.withAxiom(expr ge ef.makeIntConst(0))
+        is KexByte -> expr.withAxiom(expr ge ef.makeIntConst(Byte.MIN_VALUE.toInt())).withAxiom(expr le ef.makeIntConst(Byte.MAX_VALUE.toInt()))
+        is KexChar -> expr.withAxiom(expr ge ef.makeIntConst(Short.MIN_VALUE.toInt())).withAxiom(expr le ef.makeIntConst(Short.MAX_VALUE.toInt()))
+        is KexShort -> expr.withAxiom(expr ge ef.makeIntConst(Short.MIN_VALUE.toInt())).withAxiom(expr le ef.makeIntConst(Short.MAX_VALUE.toInt()))
+        else -> expr
+    }
+
+
     fun convert(ps: PredicateState, ef: $factory, ctx: ${solver}Context, extractPath: Boolean = false): Bool_ = when (ps) {
 #set($states = ["Basic", "Chain", "Choice"])
 #foreach($state in $states)
@@ -136,10 +146,7 @@ object ${solver}Converter : ${solver}SMTConverter() {
 
     fun convert(argument: ArgumentTerm, ef: $factory, ctx: ${solver}Context): Dynamic_ {
         val expr = ef.getVarByTypeAndName(argument.type, argument.name)
-        return when {
-            argument.type is Reference -> expr.withAxiom(expr ge ef.makeIntConst(0))
-            else -> expr
-        }
+        return addTypeAxioms(argument, expr, ef)
     }
 
     fun convert(arrayindex: ArrayIndexTerm, ef: $factory, ctx: ${solver}Context): Dynamic_ {
@@ -331,17 +338,11 @@ object ${solver}Converter : ${solver}SMTConverter() {
 
     fun convert(`return`: ReturnValueTerm, ef: $factory, ctx: ${solver}Context): Dynamic_ {
         val expr = ef.getVarByTypeAndName(`return`.type, `return`.name)
-        return when {
-            `return`.type is Reference -> expr.withAxiom(expr ge ef.makeIntConst(0))
-            else -> expr
-        }
+        return addTypeAxioms(`return`, expr, ef)
     }
 
     fun convert(value: ValueTerm, ef: $factory, ctx: ${solver}Context): Dynamic_ {
         val expr = ef.getVarByTypeAndName(value.type, value.name)
-        return when {
-            value.type is Reference -> expr.withAxiom(expr ge ef.makeIntConst(0))
-            else -> expr
-        }
+        return addTypeAxioms(value, expr, ef)
     }
 }
