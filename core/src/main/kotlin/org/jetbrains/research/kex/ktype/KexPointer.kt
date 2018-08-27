@@ -62,16 +62,16 @@ class KexArray(val element: KexType, memspace: Int = defaultMemspace) : KexPoint
     }
 }
 
-class KexReference(val referencable: KexType, memspace: Int = defaultMemspace) : KexPointer(memspace) {
+class KexReference(val reference: KexType, memspace: Int = defaultMemspace) : KexPointer(memspace) {
     override val name: String
-        get() = "&($referencable)"
+        get() = "&($reference)"
 
     override val kfgType: Type
-        get() = referencable.kfgType
+        get() = reference.kfgType
 
-    override fun withMemspace(memspace: Int) = KexReference(referencable, memspace)
+    override fun withMemspace(memspace: Int) = KexReference(reference, memspace)
 
-    override fun hashCode() = defaultHashCode(referencable)
+    override fun hashCode() = defaultHashCode(reference)
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
@@ -79,7 +79,7 @@ class KexReference(val referencable: KexType, memspace: Int = defaultMemspace) :
 
         other as KexReference
 
-        if (referencable != other.referencable) return false
+        if (reference != other.reference) return false
 
         return true
     }

@@ -4,6 +4,7 @@ import org.jetbrains.research.kex.ktype.KexPointer
 import org.jetbrains.research.kex.state.PredicateState
 import org.jetbrains.research.kex.state.term.*
 import org.jetbrains.research.kex.util.log
+import org.jetbrains.research.kex.util.unreachable
 import org.jetbrains.research.kfg.type.Reference
 
 fun Term.withMemspace(memspace: Int): Term {
@@ -35,7 +36,8 @@ fun Term.withMemspace(memspace: Int): Term {
 }
 
 val Term.memspace: Int
-    get() = (this.type as? KexPointer)?.memspace ?: KexPointer.defaultMemspace
+    get() = (this.type as? KexPointer)?.memspace
+            ?: unreachable { log.error("Trying to get memspace of primary type: $type") }
 
 class MemorySpacer(ps: PredicateState) : Transformer<MemorySpacer> {
     val aa = StensgaardAA()

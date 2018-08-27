@@ -81,7 +81,7 @@ object TermFactory {
     fun getArrayIndex(arrayRef: Term, index: Term): Term {
         val arrayType = arrayRef.type as? KexArray
                 ?: unreachable { log.debug("Non-array type of array load term operand") }
-        return getArrayIndex(arrayType, arrayRef, index)
+        return getArrayIndex(KexReference(arrayType.element), arrayRef, index)
     }
 
     fun getArrayIndex(type: KexType, arrayRef: Term, index: Term) = ArrayIndexTerm(type, arrayRef, index)
@@ -90,9 +90,9 @@ object TermFactory {
     fun getNegTerm(type: KexType, operand: Term) = NegTerm(type, operand)
 
     fun getArrayLoad(arrayRef: Term): Term {
-        val arrayType = arrayRef.type as? KexArray
+        val arrayType = arrayRef.type as? KexReference
                 ?: unreachable { log.debug("Non-array type of array load term operand") }
-        return getArrayLoad(arrayType.element, arrayRef)
+        return getArrayLoad(arrayType.reference, arrayRef)
     }
 
     fun getArrayLoad(type: KexType, arrayRef: Term) = ArrayLoadTerm(type, arrayRef)

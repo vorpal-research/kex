@@ -1,5 +1,6 @@
 package org.jetbrains.research.kex.asm.state
 
+import org.jetbrains.research.kex.ktype.KexReference
 import org.jetbrains.research.kex.ktype.kexType
 import org.jetbrains.research.kex.state.predicate.Predicate
 import org.jetbrains.research.kex.state.predicate.PredicateFactory
@@ -108,12 +109,12 @@ class PredicateBuilder(method: Method) : MethodVisitor(method) {
         val lhv = tf.getValue(inst)
         val field = when {
             inst.hasOwner -> tf.getField(
-                    inst.type.kexType,
+                    KexReference(inst.type.kexType),
                     tf.getValue(inst.owner),
                     tf.getString(inst.field.name)
             )
             else -> tf.getField(
-                    inst.type.kexType,
+                    KexReference(inst.type.kexType),
                     inst.field.`class`,
                     tf.getString(inst.field.name)
             )
@@ -129,8 +130,8 @@ class PredicateBuilder(method: Method) : MethodVisitor(method) {
         val value = tf.getValue(inst.value)
 
         val field = when {
-            objectRef != null -> tf.getField(inst.field.type.kexType, objectRef, name)
-            else -> tf.getField(inst.field.type.kexType, inst.field.`class`, name)
+            objectRef != null -> tf.getField(KexReference(inst.field.type.kexType), objectRef, name)
+            else -> tf.getField(KexReference(inst.field.type.kexType), inst.field.`class`, name)
         }
         predicateMap[inst] = pf.getFieldStore(field, inst.field.type, value, location = inst.location)
     }
