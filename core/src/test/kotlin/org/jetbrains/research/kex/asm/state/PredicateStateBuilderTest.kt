@@ -10,9 +10,9 @@ import org.jetbrains.research.kfg.ir.value.instruction.UnreachableInst
 import org.junit.Assert.assertNotNull
 import kotlin.test.Test
 
-class PredicateStateAnalysisTest : KexTest() {
+class PredicateStateBuilderTest : KexTest() {
 
-    private fun performPSA(method: Method): PredicateStateAnalysis {
+    private fun performPSA(method: Method): PredicateStateBuilder {
         val la = LoopAnalysis(method)
         la.visit()
         if (la.loops.isNotEmpty()) {
@@ -22,7 +22,7 @@ class PredicateStateAnalysisTest : KexTest() {
             deroller.visit()
         }
 
-        val psa = PredicateStateAnalysis(method)
+        val psa = PredicateStateBuilder(method)
         psa.visit()
         return psa
     }

@@ -27,7 +27,7 @@ class TypeInfoAdapter(val method: Method) : Transformer<TypeInfoAdapter> {
         )
     }
 
-    fun doit(ps: PredicateState): PredicateState {
+    override fun apply(ps: PredicateState): PredicateState {
         val builder = StateBuilder()
         if (!method.isAbstract) {
             validTerms.add(tf.getThis(method.`class`))

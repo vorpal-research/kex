@@ -25,6 +25,8 @@ interface Transformer<T : Transformer<T>> {
                 ?: unreachable { log.debug("Unexpected null in transformer invocation") }
     }
 
+    fun apply(ps: PredicateState) = transform(ps)
+
     ////////////////////////////////////////////////////////////////////
     // PredicateState
     ////////////////////////////////////////////////////////////////////
@@ -151,7 +153,7 @@ interface Transformer<T : Transformer<T>> {
 interface DeletingTransformer<T> : Transformer<DeletingTransformer<T>> {
     val removablePredicates: MutableSet<Predicate>
 
-    override fun transform(ps: PredicateState): PredicateState {
+    override fun apply(ps: PredicateState): PredicateState {
         val result = super.transform(ps)
         return result.filter { it in removablePredicates }.simplify()
     }

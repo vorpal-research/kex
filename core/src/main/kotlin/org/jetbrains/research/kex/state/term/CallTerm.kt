@@ -14,6 +14,9 @@ class CallTerm(type: KexType, owner: Term, val method: Method, operands: List<Te
     val arguments: List<Term>
         get() = subterms.drop(1)
 
+    val isStatic: Boolean
+        get() = owner is ConstClassTerm
+
     override fun print(): String {
         val sb = StringBuilder()
         sb.append("${owner}.${method.name}(")
