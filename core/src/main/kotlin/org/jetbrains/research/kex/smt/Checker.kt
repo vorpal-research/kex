@@ -11,6 +11,7 @@ import org.jetbrains.research.kex.util.log
 import org.jetbrains.research.kfg.ir.Method
 import org.jetbrains.research.kfg.ir.value.instruction.Instruction
 
+private val isInliningEnabled = GlobalConfig.getBooleanValue("smt", "ps-inlining", true)
 private val isMemspacingEnabled = GlobalConfig.getBooleanValue("smt", "memspacing", true)
 private val isSlicingEnabled = GlobalConfig.getBooleanValue("smt", "slicing", false)
 
@@ -25,6 +26,12 @@ class Checker(val method: Method, val psa: PredicateStateBuilder) {
                 ?: return Result.UnknownResult("Can't get state for instruction ${inst.print()}, maybe it's unreachable")
 
         if (logQuery) log.debug("State: $state")
+
+        if (isInliningEnabled) {
+            log.debug("Inlining started...")
+            state = MethodInliner(method).apply(state)
+            log.debug("Inlining finished")
+        }
 
         state = TypeInfoAdapter(method).apply(state)
         state = Optimizer.transform(state).simplify()
