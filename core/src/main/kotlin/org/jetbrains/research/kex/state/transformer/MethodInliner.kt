@@ -1,7 +1,7 @@
 package org.jetbrains.research.kex.state.transformer
 
+import org.jetbrains.research.kex.asm.manager.MethodManager
 import org.jetbrains.research.kex.asm.state.PredicateStateAnalysis
-import org.jetbrains.research.kex.asm.transform.InlineManager
 import org.jetbrains.research.kex.ktype.kexType
 import org.jetbrains.research.kex.state.ChoiceState
 import org.jetbrains.research.kex.state.PredicateState
@@ -13,43 +13,49 @@ import org.jetbrains.research.kex.util.log
 import org.jetbrains.research.kex.util.unreachable
 import org.jetbrains.research.kfg.ir.Method
 import org.jetbrains.research.kfg.ir.value.instruction.UnreachableInst
+import java.util.*
 
 class MethodInliner(val method: Method) : DeletingTransformer<MethodInliner> {
     override val removablePredicates = hashSetOf<Predicate>()
-    val stateBuilder = StateBuilder()
-    var currentBuilder = StateBuilder()
+
+    val stateBuilder: StateBuilder
+        get() = builders.peek()
+
+    private val builders = Stack<StateBuilder>()
     private var inlineIndex = 0
+
+    init {
+        builders.push(StateBuilder())
+    }
 
     override fun apply(ps: PredicateState): PredicateState {
         super.transform(ps)
-        stateBuilder += currentBuilder.apply()
         val resultingState = stateBuilder.apply().simplify()
         return resultingState.filter { it !in removablePredicates }
     }
 
     override fun transformChoice(ps: ChoiceState): PredicateState {
-        stateBuilder += currentBuilder.apply()
         val newChoices = arrayListOf<PredicateState>()
         for (choice in ps.choices) {
-            currentBuilder = StateBuilder()
+            builders.add(StateBuilder())
             super.transformBase(choice)
 
-            newChoices.add(currentBuilder.apply())
+            newChoices.add(stateBuilder.apply())
+            builders.pop()
         }
-        currentBuilder = StateBuilder()
         stateBuilder += ChoiceState(newChoices)
         return ps
     }
 
     override fun transformPredicate(predicate: Predicate): Predicate {
-        currentBuilder = currentBuilder + predicate
+        stateBuilder += predicate
         return predicate
     }
 
     override fun transformCallPredicate(predicate: CallPredicate): Predicate {
         val call = predicate.call as CallTerm
         val calledMethod = call.method
-        if (InlineManager.isInlinable(method)) return predicate
+        if (!MethodManager.isInlinable(method)) return predicate
 
         val mappings = hashMapOf<Term, Term>()
         if (!call.isStatic) {
@@ -67,7 +73,7 @@ class MethodInliner(val method: Method) : DeletingTransformer<MethodInliner> {
             mappings[argTerm] = calledArg
         }
 
-        currentBuilder = currentBuilder + prepareInlinedState(calledMethod, mappings)
+        stateBuilder += prepareInlinedState(calledMethod, mappings)
 
         removablePredicates.add(predicate)
         return predicate

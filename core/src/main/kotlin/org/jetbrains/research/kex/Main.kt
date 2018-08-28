@@ -41,7 +41,7 @@ fun main(args: Array<String>) {
     val target = File("instrumented/")
     JarUtils.writeClassesToTarget(jar, target, `package`, true) // write all classes to target, so they will be seen by ClassLoader
 
-    val runner = config.getBooleanValue("runner", "use-runner", false)
+    val runner = config.getBooleanValue("runner", "enabled", false)
     if (runner) {
         for (`class` in CM.getConcreteClasses()) {
             for ((_, method) in `class`.methods) {
