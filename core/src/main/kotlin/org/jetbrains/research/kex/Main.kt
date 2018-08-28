@@ -1,8 +1,6 @@
 package org.jetbrains.research.kex
 
-import org.jetbrains.research.kex.asm.state.NoTopologicalSortingError
 import org.jetbrains.research.kex.asm.state.PredicateStateAnalysis
-import org.jetbrains.research.kex.asm.transform.LoopDeroller
 import org.jetbrains.research.kex.asm.transform.TraceInstrumenter
 import org.jetbrains.research.kex.config.CmdConfig
 import org.jetbrains.research.kex.config.FileConfig
@@ -13,13 +11,9 @@ import org.jetbrains.research.kex.runner.CoverageRunner
 import org.jetbrains.research.kex.smt.Checker
 import org.jetbrains.research.kex.smt.Result
 import org.jetbrains.research.kex.util.debug
-import org.jetbrains.research.kex.util.error
 import org.jetbrains.research.kex.util.log
 import org.jetbrains.research.kfg.CM
 import org.jetbrains.research.kfg.Package
-import org.jetbrains.research.kfg.analysis.IRVerifier
-import org.jetbrains.research.kfg.analysis.LoopAnalysis
-import org.jetbrains.research.kfg.analysis.LoopSimplifier
 import org.jetbrains.research.kfg.ir.value.instruction.UnreachableInst
 import org.jetbrains.research.kfg.util.Flags
 import org.jetbrains.research.kfg.util.JarUtils
@@ -78,30 +72,19 @@ fun main(args: Array<String>) {
         }
     }
 
+    val psa = PredicateStateAnalysis
     for (`class` in CM.getConcreteClasses()) {
         for ((_, method) in `class`.methods) {
             if (method.isAbstract) continue
-            val la = LoopAnalysis(method)
-            la.visit()
-            if (la.loops.isNotEmpty()) {
-                val simplifier = LoopSimplifier(method)
-                simplifier.visit()
-                val deroller = LoopDeroller(method)
-                deroller.visit()
-            }
-            IRVerifier(method).visit()
 
-            log.debug(method)
-            log.debug(method.print())
-
-            val psa = PredicateStateAnalysis(method)
-            try {
-                psa.visit()
-            } catch (e: NoTopologicalSortingError) {
-                log.error(e)
+            log.run {
+                debug(method)
+                debug(method.print())
+                debug()
             }
 
-            val checker = Checker(method, psa)
+            val psb = psa.builder(method)
+            val checker = Checker(method, psb)
             val result = checker.checkReachable(method.flatten().last { it !is UnreachableInst })
             log.debug(result)
             if (result is Result.SatResult) {

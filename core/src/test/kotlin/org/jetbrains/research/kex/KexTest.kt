@@ -1,6 +1,6 @@
 package org.jetbrains.research.kex
 
-import org.jetbrains.research.kex.asm.state.PredicateStateAnalysis
+import org.jetbrains.research.kex.asm.state.PredicateStateBuilder
 import org.jetbrains.research.kex.asm.transform.LoopDeroller
 import org.jetbrains.research.kex.config.FileConfig
 import org.jetbrains.research.kex.config.GlobalConfig
@@ -42,7 +42,7 @@ abstract class KexTest {
         CM.parseJar(jarFile, `package`, Flags.readAll)
     }
 
-    fun getPSA(method: Method): PredicateStateAnalysis {
+    fun getPSA(method: Method): PredicateStateBuilder {
         val la = LoopAnalysis(method)
         la.visit()
         if (la.loops.isNotEmpty()) {
@@ -52,7 +52,7 @@ abstract class KexTest {
             deroller.visit()
         }
 
-        val psa = PredicateStateAnalysis(method)
+        val psa = PredicateStateBuilder(method)
         psa.visit()
         return psa
     }

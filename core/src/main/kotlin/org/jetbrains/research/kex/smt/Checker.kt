@@ -1,6 +1,6 @@
 package org.jetbrains.research.kex.smt
 
-import org.jetbrains.research.kex.asm.state.PredicateStateAnalysis
+import org.jetbrains.research.kex.asm.state.PredicateStateBuilder
 import org.jetbrains.research.kex.config.GlobalConfig
 import org.jetbrains.research.kex.ktype.kexType
 import org.jetbrains.research.kex.state.predicate.PredicateType
@@ -16,7 +16,7 @@ private val isSlicingEnabled = GlobalConfig.getBooleanValue("smt", "slicing", fa
 
 private val logQuery = GlobalConfig.getBooleanValue("smt", "logQuery", false)
 
-class Checker(val method: Method, val psa: PredicateStateAnalysis) {
+class Checker(val method: Method, val psa: PredicateStateBuilder) {
 
     fun checkReachable(inst: Instruction): Result {
         log.debug("Checking reachability of ${inst.print()}")
@@ -26,19 +26,19 @@ class Checker(val method: Method, val psa: PredicateStateAnalysis) {
 
         if (logQuery) log.debug("State: $state")
 
-        state = TypeInfoAdapter(method).doit(state)
+        state = TypeInfoAdapter(method).apply(state)
         state = Optimizer.transform(state).simplify()
-        state = ConstantPropagator.transform(state).simplify()
-        state = BoolTypeAdapter.transform(state).simplify()
+        state = ConstantPropagator.apply(state).simplify()
+        state = BoolTypeAdapter.apply(state).simplify()
 
         if (isMemspacingEnabled) {
             log.debug("Memspacing started...")
-            state = MemorySpacer(state).transform(state).simplify()
+            state = MemorySpacer(state).apply(state).simplify()
             log.debug("Memspacing finished")
         }
 
         val aa = StensgaardAA()
-        aa.transform(state)
+        aa.apply(state)
 
         val query = state.filterByType(PredicateType.Path()).simplify()
 
@@ -57,7 +57,7 @@ class Checker(val method: Method, val psa: PredicateStateAnalysis) {
                 }
             }
 
-            state = Slicer(state, query, slicingTerms, aa).transform(state)
+            state = Slicer(state, query, slicingTerms, aa).apply(state)
             log.debug("Slicing finished")
         }
 
