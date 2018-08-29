@@ -8,7 +8,7 @@ import org.jetbrains.research.kfg.ir.Method
 
 private val inliningEnabled = GlobalConfig.getBooleanValue("inliner", "enabled", true)
 
-private val ignores = GlobalConfig.getMultipleStringValue("inliner", "ignore")
+private val ignores = GlobalConfig.getMultipleStringValue("inliner", "ignore", ",")
         .map { it.replace(".", "/") }
 
 object MethodManager {
@@ -31,7 +31,8 @@ object MethodManager {
             !method.isFinal -> false
             ignorePackages.any { it.isParent(method.`class`.`package`) } -> false
             ignoreClasses.any { it == method.`class` } -> false
-            else -> method in ignoreMethods
+            ignoreMethods.contains(method) -> false
+            else -> true
         }
     }
 }

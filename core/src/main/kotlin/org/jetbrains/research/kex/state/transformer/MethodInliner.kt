@@ -55,7 +55,7 @@ class MethodInliner(val method: Method) : DeletingTransformer<MethodInliner> {
     override fun transformCallPredicate(predicate: CallPredicate): Predicate {
         val call = predicate.call as CallTerm
         val calledMethod = call.method
-        if (!MethodManager.isInlinable(method)) return predicate
+        if (!MethodManager.isInlinable(calledMethod)) return predicate
 
         val mappings = hashMapOf<Term, Term>()
         if (!call.isStatic) {
@@ -63,7 +63,7 @@ class MethodInliner(val method: Method) : DeletingTransformer<MethodInliner> {
             mappings[`this`] = call.owner
         }
         if (predicate.hasLhv) {
-            val retval = tf.getReturn(call.method)
+            val retval = tf.getReturn(calledMethod)
             mappings[retval] = predicate.lhv
         }
 
