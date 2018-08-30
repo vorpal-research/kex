@@ -6,10 +6,10 @@ import org.jetbrains.research.kex.config.CmdConfig
 import org.jetbrains.research.kex.config.FileConfig
 import org.jetbrains.research.kex.config.GlobalConfig
 import org.jetbrains.research.kex.config.RuntimeConfig
-import org.jetbrains.research.kex.runner.CoverageManager
-import org.jetbrains.research.kex.runner.CoverageRunner
 import org.jetbrains.research.kex.smt.Checker
 import org.jetbrains.research.kex.smt.Result
+import org.jetbrains.research.kex.trace.TraceManager
+import org.jetbrains.research.kex.trace.TraceRunner
 import org.jetbrains.research.kex.util.debug
 import org.jetbrains.research.kex.util.log
 import org.jetbrains.research.kfg.CM
@@ -51,14 +51,14 @@ fun main(args: Array<String>) {
                     instrumenter.visit()
                     JarUtils.writeClass(jarLoader, `class`, classFileName)
                     val loader = URLClassLoader(arrayOf(target.toURI().toURL()))
-                    CoverageRunner(method, loader).run()
+                    TraceRunner(method, loader).run()
                     instrumenter.insertedInsts.forEach { it.parent?.remove(it) }
                 }
                 JarUtils.writeClass(jarLoader, `class`, classFileName)
             }
         }
         log.info("Results:")
-        val cm = CoverageManager
+        val cm = TraceManager
         for (`class` in CM.getConcreteClasses()) {
             for ((_, method) in `class`.methods) {
                 if (!method.isAbstract && !method.isConstructor) {
