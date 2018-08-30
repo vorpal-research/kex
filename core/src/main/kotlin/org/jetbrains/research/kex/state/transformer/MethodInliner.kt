@@ -73,18 +73,17 @@ class MethodInliner(val method: Method) : DeletingTransformer<MethodInliner> {
             mappings[argTerm] = calledArg
         }
 
-        stateBuilder += prepareInlinedState(calledMethod, mappings)
+        stateBuilder += prepareInlinedState(calledMethod, mappings) ?: return predicate
 
         removablePredicates.add(predicate)
         return predicate
     }
 
-    private fun prepareInlinedState(method: Method, mappings: Map<Term, Term>): PredicateState {
+    private fun prepareInlinedState(method: Method, mappings: Map<Term, Term>): PredicateState? {
         val builder = PredicateStateAnalysis.builder(method)
         val returnInst = method.flatten().firstOrNull { it is ReturnInst }
                 ?: unreachable { log.error("Cannot inline method with no return") }
-        val endState = builder.getInstructionState(returnInst)
-                ?: unreachable { log.error("Can't get state for inlined method $method\n${method.print()}") }
+        val endState = builder.getInstructionState(returnInst) ?: return null
 
         val remapped = TermRemapper("inlined${inlineIndex++}", mappings).apply(endState)
         return remapped
