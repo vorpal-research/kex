@@ -2,6 +2,7 @@ package org.jetbrains.research.kex.asm.state
 
 import org.jetbrains.research.kex.asm.transform.LoopDeroller
 import org.jetbrains.research.kex.asm.transform.MethodInliner
+import org.jetbrains.research.kex.config.GlobalConfig
 import org.jetbrains.research.kex.util.error
 import org.jetbrains.research.kex.util.log
 import org.jetbrains.research.kfg.analysis.IRVerifier
@@ -9,11 +10,16 @@ import org.jetbrains.research.kfg.analysis.LoopAnalysis
 import org.jetbrains.research.kfg.analysis.LoopSimplifier
 import org.jetbrains.research.kfg.ir.Method
 
+private val inliningEnabled = GlobalConfig.getBooleanValue("inliner", "enabled", true)
+private val irInliningEnabled = GlobalConfig.getBooleanValue("inliner", "ir-inlining", false)
+
 object PredicateStateAnalysis {
-//    val builders = hashMapOf<Method, PredicateStateBuilder>()
+    val builders = hashMapOf<Method, PredicateStateBuilder>()
 
     private fun prepareMethod(method: Method) {
-        MethodInliner(method).visit()
+        if (inliningEnabled && irInliningEnabled) {
+            MethodInliner(method).visit()
+        }
 
         val la = LoopAnalysis(method)
         la.visit()
@@ -39,10 +45,7 @@ object PredicateStateAnalysis {
         return psb
     }
 
-    // no cashing for now
-    fun builder(method: Method) = createMethodBuilder(method)
-//    fun builder(method: Method) = builders.getOrPut(method) {
-//        log.error("Creating new builder for $method")
-//        createMethodBuilder(method)
-//    }
+    fun builder(method: Method) = builders.getOrPut(method) {
+        createMethodBuilder(method)
+    }
 }
