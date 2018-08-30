@@ -306,6 +306,8 @@ class ActionParser : Grammar<Action>() {
     private val blockSwitchParser by (-switch and -space and blockName and -semicolonAndSpace and equationParser and -spacedSemicolon) use { BlockSwitch(t1, t2) }
     private val blockTableSwitchParser by (-tableswitch and -space and blockName and -semicolonAndSpace and equationParser and -spacedSemicolon) use { BlockTableSwitch(t1, t2) }
 
-    override val rootParser by (methodEntryParser or methodInstanceParser or methodArgsParser or methodReturnParser or methodThrowParser or
+    private val actionParser by (methodEntryParser or methodInstanceParser or methodArgsParser or methodReturnParser or methodThrowParser or
             blockEntryParser or blockJumpParser or blockBranchParser or blockSwitchParser or blockTableSwitchParser)
+
+    override val rootParser by actionParser
 }

@@ -5,6 +5,7 @@ import org.jetbrains.research.kfg.CM
 import org.jetbrains.research.kfg.Package
 import org.jetbrains.research.kfg.ir.Class
 import org.jetbrains.research.kfg.ir.Method
+import org.jetbrains.research.kfg.ir.value.instruction.ReturnInst
 
 private val inliningEnabled = GlobalConfig.getBooleanValue("inliner", "enabled", true)
 
@@ -32,6 +33,7 @@ object MethodManager {
             ignorePackages.any { it.isParent(method.`class`.`package`) } -> false
             ignoreClasses.any { it == method.`class` } -> false
             ignoreMethods.contains(method) -> false
+            method.flatten().all { it !is ReturnInst } -> false
             else -> true
         }
     }

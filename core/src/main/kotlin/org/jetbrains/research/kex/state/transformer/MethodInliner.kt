@@ -12,7 +12,7 @@ import org.jetbrains.research.kex.state.term.*
 import org.jetbrains.research.kex.util.log
 import org.jetbrains.research.kex.util.unreachable
 import org.jetbrains.research.kfg.ir.Method
-import org.jetbrains.research.kfg.ir.value.instruction.UnreachableInst
+import org.jetbrains.research.kfg.ir.value.instruction.ReturnInst
 import java.util.*
 
 class MethodInliner(val method: Method) : DeletingTransformer<MethodInliner> {
@@ -81,8 +81,9 @@ class MethodInliner(val method: Method) : DeletingTransformer<MethodInliner> {
 
     private fun prepareInlinedState(method: Method, mappings: Map<Term, Term>): PredicateState {
         val builder = PredicateStateAnalysis.builder(method)
-        val lastInst = method.flatten().last { it !is UnreachableInst }
-        val endState = builder.getInstructionState(lastInst)
+        val returnInst = method.flatten().firstOrNull { it is ReturnInst }
+                ?: unreachable { log.error("Cannot inline method with no return") }
+        val endState = builder.getInstructionState(returnInst)
                 ?: unreachable { log.error("Can't get state for inlined method $method\n${method.print()}") }
 
         val remapped = TermRemapper("inlined${inlineIndex++}", mappings).apply(endState)
