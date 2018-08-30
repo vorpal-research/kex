@@ -10,14 +10,12 @@ import org.jetbrains.research.kfg.analysis.LoopAnalysis
 import org.jetbrains.research.kfg.analysis.LoopSimplifier
 import org.jetbrains.research.kfg.ir.Method
 
-private val inliningEnabled = GlobalConfig.getBooleanValue("inliner", "enabled", true)
-private val irInliningEnabled = GlobalConfig.getBooleanValue("inliner", "ir-inlining", false)
-
 object PredicateStateAnalysis {
     val builders = hashMapOf<Method, PredicateStateBuilder>()
+    private val irInliningEnabled = GlobalConfig.getBooleanValue("inliner", "ir-inlining", false)
 
     private fun prepareMethod(method: Method) {
-        if (inliningEnabled && irInliningEnabled) {
+        if (irInliningEnabled) {
             MethodInliner(method).visit()
         }
 
