@@ -1,6 +1,7 @@
 package org.jetbrains.research.kex.asm.state
 
 import org.jetbrains.research.kex.asm.transform.LoopDeroller
+import org.jetbrains.research.kex.asm.transform.MethodInliner
 import org.jetbrains.research.kex.util.error
 import org.jetbrains.research.kex.util.log
 import org.jetbrains.research.kfg.analysis.IRVerifier
@@ -12,6 +13,8 @@ object PredicateStateAnalysis {
 //    val builders = hashMapOf<Method, PredicateStateBuilder>()
 
     private fun prepareMethod(method: Method) {
+        MethodInliner(method).visit()
+
         val la = LoopAnalysis(method)
         la.visit()
 
