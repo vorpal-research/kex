@@ -1,4 +1,4 @@
-package org.jetbrains.research.kex.runner
+package org.jetbrains.research.kex.trace
 
 import com.github.h0tk3y.betterParse.grammar.parseToEnd
 import com.github.h0tk3y.betterParse.parser.ParseException
@@ -84,7 +84,7 @@ internal fun invoke(method: Method, instance: Any?, args: Array<Any?>): Invocati
     return result
 }
 
-class CoverageRunner(val method: KfgMethod, val loader: ClassLoader) {
+class TraceRunner(val method: KfgMethod, val loader: ClassLoader) {
     private val random = RandomDriver
     private val javaClass: Class<*> = loader.loadClass(method.`class`.canonicalDesc)
     private val javaMethod: java.lang.reflect.Method
@@ -95,7 +95,7 @@ class CoverageRunner(val method: KfgMethod, val loader: ClassLoader) {
     }
 
     fun run() = repeat(runs) {
-        if (CoverageManager.isBodyCovered(method)) return
+        if (TraceManager.isBodyCovered(method)) return
         val (instance, args) = try {
             val i = when {
                 method.isStatic -> null
@@ -139,6 +139,6 @@ class CoverageRunner(val method: KfgMethod, val loader: ClassLoader) {
                 }
             }
         }
-        MethodInfo.parse(actions, exception).forEach { CoverageManager.addInfo(it.method, it) }
+        Trace.parse(actions, exception).forEach { TraceManager.addTrace(it.method, it) }
     }
 }

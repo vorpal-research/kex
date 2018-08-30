@@ -1,4 +1,4 @@
-package org.jetbrains.research.kex.runner
+package org.jetbrains.research.kex.trace
 
 import com.github.h0tk3y.betterParse.combinators.*
 import com.github.h0tk3y.betterParse.grammar.Grammar

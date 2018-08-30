@@ -1,4 +1,4 @@
-package org.jetbrains.research.kex.runner
+package org.jetbrains.research.kex.trace
 
 import org.jetbrains.research.kex.util.log
 import org.jetbrains.research.kfg.ir.BasicBlock
@@ -16,14 +16,14 @@ data class BlockInfo internal constructor(val bb: BasicBlock, val predecessor: B
         get() = outputAction != null
 }
 
-class MethodInfo internal constructor(val method: Method, val instance: ActionValue?,
-                                      val args: Array<ActionValue>, val blocks: Map<BasicBlock, List<BlockInfo>>,
-                                      val retval: ActionValue?, val throwval: ActionValue?,
-                                      val exception: Throwable?) {
+class Trace internal constructor(val method: Method, val instance: ActionValue?,
+                                 val args: Array<ActionValue>, val blocks: Map<BasicBlock, List<BlockInfo>>,
+                                 val retval: ActionValue?, val throwval: ActionValue?,
+                                 val exception: Throwable?) {
     fun getBlockInfo(bb: BasicBlock) = blocks.getValue(bb)
 
     companion object {
-        fun parse(actions: List<Action>, exception: Throwable?): List<MethodInfo> {
+        fun parse(actions: List<Action>, exception: Throwable?): List<Trace> {
             class Info(var instance: ActionValue?,
                        var args: Array<ActionValue>, var blocks: MutableMap<BasicBlock, MutableList<BlockInfo>>,
                        var retval: ActionValue?, var throwval: ActionValue?,
@@ -31,7 +31,7 @@ class MethodInfo internal constructor(val method: Method, val instance: ActionVa
 
             val infos = Stack<Info>()
             val methodStack = Stack<Method>()
-            val result = arrayListOf<MethodInfo>()
+            val result = arrayListOf<Trace>()
             var previousBlock: BlockInfo? = null
 
             for (action in actions) {
@@ -55,7 +55,7 @@ class MethodInfo internal constructor(val method: Method, val instance: ActionVa
                         val info = infos.peek()
                         info.retval = action.`return`?.rhv
 
-                        result.add(MethodInfo(methodStack.pop(), info.instance, info.args, info.blocks, info.retval, info.throwval, info.exception))
+                        result.add(Trace(methodStack.pop(), info.instance, info.args, info.blocks, info.retval, info.throwval, info.exception))
                         infos.pop()
                     }
                     is MethodThrow -> {
@@ -63,7 +63,7 @@ class MethodInfo internal constructor(val method: Method, val instance: ActionVa
                         val info = infos.peek()
                         info.throwval = action.throwable.rhv
 
-                        result.add(MethodInfo(methodStack.pop(), info.instance, info.args, info.blocks, info.retval, info.throwval, info.exception))
+                        result.add(Trace(methodStack.pop(), info.instance, info.args, info.blocks, info.retval, info.throwval, info.exception))
                         infos.pop()
                     }
                     is BlockEntryAction -> {
@@ -85,7 +85,7 @@ class MethodInfo internal constructor(val method: Method, val instance: ActionVa
             }
             while (methodStack.isNotEmpty()) {
                 val info = infos.peek()
-                result.add(MethodInfo(methodStack.pop(), info.instance, info.args, info.blocks, info.retval, info.throwval, info.exception))
+                result.add(Trace(methodStack.pop(), info.instance, info.args, info.blocks, info.retval, info.throwval, info.exception))
                 infos.pop()
             }
             return result
@@ -93,16 +93,16 @@ class MethodInfo internal constructor(val method: Method, val instance: ActionVa
     }
 }
 
-object CoverageManager {
-    private val methods = hashMapOf<Method, MutableList<MethodInfo>>()
+object TraceManager {
+    private val methods = hashMapOf<Method, MutableList<Trace>>()
 
-    fun getMethodInfos(method: Method): List<MethodInfo> = methods.getOrPut(method, ::arrayListOf)
+    fun getTraces(method: Method): List<Trace> = methods.getOrPut(method, ::arrayListOf)
     fun getBlockInfos(bb: BasicBlock): List<BlockInfo> = when {
-        bb.parent != null -> getMethodInfos(bb.parent!!).map { it.blocks[bb] ?: listOf() }.flatten()
+        bb.parent != null -> getTraces(bb.parent!!).map { it.blocks[bb] ?: listOf() }.flatten()
         else -> listOf()
     }
 
-    fun addInfo(method: Method, info: MethodInfo) = methods.getOrPut(method, ::arrayListOf).add(info)
+    fun addTrace(method: Method, info: Trace) = methods.getOrPut(method, ::arrayListOf).add(info)
 
     fun isCovered(bb: BasicBlock) = getBlockInfos(bb).fold(false) { acc, it -> acc or it.hasOutput }
     fun isPartlyCovered(method: Method): Boolean = method.basicBlocks.fold(false) { acc, bb -> acc or isCovered(bb) }
