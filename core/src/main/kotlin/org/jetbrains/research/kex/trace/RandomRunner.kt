@@ -84,7 +84,7 @@ internal fun invoke(method: Method, instance: Any?, args: Array<Any?>): Invocati
     return result
 }
 
-class TraceRunner(val method: KfgMethod, val loader: ClassLoader) {
+class RandomRunner(val method: KfgMethod, val loader: ClassLoader) {
     private val random = RandomDriver
     private val javaClass: Class<*> = loader.loadClass(method.`class`.canonicalDesc)
     private val javaMethod: java.lang.reflect.Method
@@ -94,7 +94,7 @@ class TraceRunner(val method: KfgMethod, val loader: ClassLoader) {
         javaMethod = javaClass.getDeclaredMethod(method.name, *argumentTypes)
     }
 
-    fun run() = repeat(runs) {
+    fun run() = repeat(runs) { _ ->
         if (TraceManager.isBodyCovered(method)) return
         val (instance, args) = try {
             val i = when {
