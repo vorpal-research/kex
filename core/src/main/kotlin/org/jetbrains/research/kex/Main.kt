@@ -8,8 +8,8 @@ import org.jetbrains.research.kex.config.GlobalConfig
 import org.jetbrains.research.kex.config.RuntimeConfig
 import org.jetbrains.research.kex.smt.Checker
 import org.jetbrains.research.kex.smt.Result
+import org.jetbrains.research.kex.trace.RandomRunner
 import org.jetbrains.research.kex.trace.TraceManager
-import org.jetbrains.research.kex.trace.TraceRunner
 import org.jetbrains.research.kex.util.debug
 import org.jetbrains.research.kex.util.log
 import org.jetbrains.research.kfg.CM
@@ -46,12 +46,12 @@ fun main(args: Array<String>) {
         for (`class` in CM.getConcreteClasses()) {
             for ((_, method) in `class`.methods) {
                 val classFileName = "${target.canonicalPath}/${`class`.fullname}.class"
-                if (!method.isAbstract && method.name != "<init>" && method.name != "<clinit>") {
+                if (!method.isAbstract && !method.isConstructor) {
                     val instrumenter = TraceInstrumenter(method)
                     instrumenter.visit()
                     JarUtils.writeClass(jarLoader, `class`, classFileName)
                     val loader = URLClassLoader(arrayOf(target.toURI().toURL()))
-                    TraceRunner(method, loader).run()
+                    RandomRunner(method, loader).run()
                     instrumenter.insertedInsts.forEach { it.parent?.remove(it) }
                 }
                 JarUtils.writeClass(jarLoader, `class`, classFileName)
