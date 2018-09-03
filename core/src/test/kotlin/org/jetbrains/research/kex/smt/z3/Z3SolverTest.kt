@@ -4,7 +4,8 @@ import com.microsoft.z3.BoolExpr
 import com.microsoft.z3.Context
 import com.microsoft.z3.Status
 import org.jetbrains.research.kex.KexTest
-import org.junit.Assert.*
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import kotlin.test.Test
 import kotlin.test.assertTrue
 
@@ -34,7 +35,7 @@ class Z3SolverTest : KexTest() {
     }
 
     @Test
-    fun testMemory() {
+    fun testDefaultMemory() {
         val ef = Z3ExprFactory()
         val checkExpr = { e: Dynamic_ ->
             val solver = ef.ctx.mkSolver()
@@ -43,7 +44,7 @@ class Z3SolverTest : KexTest() {
             (solver.check() == Status.UNSATISFIABLE)
         }
 
-        val memory = ef.makeEmptyMemory("mem")
+        val memory = ef.makeDefaultMemory("mem", 0xFF)
         for (i in 0..128) {
             assertTrue(checkExpr(memory[ef.makePtrConst(i)] eq Byte_.makeConst(ef.ctx, 0xFF)))
         }
