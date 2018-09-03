@@ -65,7 +65,8 @@ class $factory : ${solver}SMTExprFactory() {
 
 #generateMakes("Double", "Double")
 
-    fun makeEmptyMemory(id: String) = makeDefaultMemory(id, 0xFF)
+    fun makeEmptyMemory(id: String) = Memory_.makeFree< Ptr_ >(ctx, id)
+//            makeDefaultMemory(id, 0xFF)
     fun makeDefaultMemory(id: String, default: Int) =
         Memory_.makeDefault< Ptr_ >(ctx, id, Byte_.makeConst(ctx, default))
 
