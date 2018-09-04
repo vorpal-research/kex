@@ -1,49 +1,29 @@
 package org.jetbrains.research.kex.asm.state
 
-import org.jetbrains.research.kex.asm.transform.LoopDeroller
-import org.jetbrains.research.kex.asm.transform.MethodInliner
-import org.jetbrains.research.kex.config.GlobalConfig
-import org.jetbrains.research.kex.util.error
 import org.jetbrains.research.kex.util.log
-import org.jetbrains.research.kfg.analysis.IRVerifier
-import org.jetbrains.research.kfg.analysis.LoopAnalysis
-import org.jetbrains.research.kfg.analysis.LoopSimplifier
 import org.jetbrains.research.kfg.ir.Method
+import org.jetbrains.research.kfg.visitor.MethodVisitor
 
-object PredicateStateAnalysis {
-    val builders = hashMapOf<Method, PredicateStateBuilder>()
-    private val irInliningEnabled = GlobalConfig.getBooleanValue("inliner", "ir-inlining", false)
+object PredicateStateAnalysis : MethodVisitor {
+    private val builders = hashMapOf<Method, PredicateStateBuilder>()
 
-    private fun prepareMethod(method: Method) {
-        if (irInliningEnabled) {
-            MethodInliner(method).visit()
-        }
+    override fun cleanup() {}
 
-        val la = LoopAnalysis(method)
-        la.visit()
-
-        if (la.loops.isNotEmpty()) {
-            val simplifier = LoopSimplifier(method)
-            simplifier.visit()
-            val deroller = LoopDeroller(method)
-            deroller.visit()
-        }
-        IRVerifier(method).visit()
-    }
-
-    private fun createMethodBuilder(method: Method): PredicateStateBuilder {
-        prepareMethod(method)
-
-        val psb = PredicateStateBuilder(method)
+    private fun createBuilder(method: Method): PredicateStateBuilder {
+        val builder = PredicateStateBuilder(method)
         try {
-            psb.visit()
+            builder.init()
         } catch (e: NoTopologicalSortingError) {
-            log.error(e)
+            log.error("Can't perform topological sorting of $method")
         }
-        return psb
+        return builder
     }
 
-    fun builder(method: Method) = builders.getOrPut(method) {
-        createMethodBuilder(method)
+    fun builder(method: Method) = builders.getOrPut(method) { createBuilder(method) }
+
+    override fun visit(method: Method) {
+        if (method !in builders) {
+            builders[method] = createBuilder(method)
+        }
     }
 }

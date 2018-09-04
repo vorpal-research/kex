@@ -6,23 +6,26 @@ import org.jetbrains.research.kex.util.toInt
 import org.jetbrains.research.kex.util.unreachable
 import org.jetbrains.research.kfg.IF
 import org.jetbrains.research.kfg.analysis.Loop
+import org.jetbrains.research.kfg.analysis.LoopVisitor
 import org.jetbrains.research.kfg.ir.BasicBlock
 import org.jetbrains.research.kfg.ir.BodyBlock
 import org.jetbrains.research.kfg.ir.CatchBlock
-import org.jetbrains.research.kfg.ir.Method
 import org.jetbrains.research.kfg.ir.value.BlockUser
 import org.jetbrains.research.kfg.ir.value.IntConstant
 import org.jetbrains.research.kfg.ir.value.Value
 import org.jetbrains.research.kfg.ir.value.instruction.*
 import org.jetbrains.research.kfg.util.TopologicalSorter
-import org.jetbrains.research.kfg.visitor.LoopVisitor
 import kotlin.math.abs
 
-val derollCount = GlobalConfig.getIntValue("loop", "deroll-count", 3)
+private val derollCount = GlobalConfig.getIntValue("loop", "deroll-count", 3)
 
-class LoopDeroller(method: Method) : LoopVisitor(method) {
-    override fun visitLoop(loop: Loop) {
-        super.visitLoop(loop)
+object LoopDeroller : LoopVisitor {
+    override fun cleanup() {}
+
+    override fun visit(loop: Loop) {
+        super.visit(loop)
+
+        val method = loop.method ?: unreachable { log.error("Can't get method of loop") }
         val header = loop.header
         val preheader = loop.preheader
         val latch = loop.latch
@@ -32,7 +35,7 @@ class LoopDeroller(method: Method) : LoopVisitor(method) {
             while (current.terminator is JumpInst) current = current.successors.first()
             current.terminator
         }
-        val (continueOnTrue, loopExit ) = when {
+        val (continueOnTrue, loopExit) = when {
             terminator.successors.isEmpty() -> false to null
             terminator.successors.size == 1 -> false to null
             else -> {

@@ -11,8 +11,8 @@ class MethodInlinerTest : KexTest() {
     fun testIRMethodInliner() {
         for (`class` in CM.getConcreteClasses()) {
             for (method in `class`.methods.values) {
-                MethodInliner(method).visit()
-                IRVerifier(method).visit()
+                MethodInliner.visit(method)
+                IRVerifier.visit(method)
             }
         }
     }

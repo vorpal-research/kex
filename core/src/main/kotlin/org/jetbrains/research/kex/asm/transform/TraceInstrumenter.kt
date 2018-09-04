@@ -9,15 +9,18 @@ import org.jetbrains.research.kfg.ir.Method
 import org.jetbrains.research.kfg.ir.value.instruction.*
 import org.jetbrains.research.kfg.visitor.MethodVisitor
 
-class TraceInstrumenter(method: Method) : MethodVisitor(method) {
-    companion object {
-        const val tracePrefix = "trace"
-    }
+object TraceInstrumenter : MethodVisitor {
+    const val tracePrefix = "trace"
 
     val insertedInsts = mutableListOf<Instruction>()
 
+    override fun cleanup() {
+        insertedInsts.clear()
+    }
+
     override fun visitReturnInst(inst: ReturnInst) {
         val bb = inst.parent!!
+        val method = bb.parent!!
 
         val builder = SystemOutWrapper("sout")
         builder.println("$tracePrefix exit ${bb.name};")
@@ -42,6 +45,7 @@ class TraceInstrumenter(method: Method) : MethodVisitor(method) {
 
     override fun visitThrowInst(inst: ThrowInst) {
         val bb = inst.parent!!
+        val method = bb.parent!!
 
         val builder = SystemOutWrapper("sout")
         builder.print("$tracePrefix throw ${method.prototype.replace('/', '.')}; ")
@@ -130,8 +134,8 @@ class TraceInstrumenter(method: Method) : MethodVisitor(method) {
         bb.insertBefore(bb.first(), *builder.insns.toTypedArray())
     }
 
-    override fun visit() {
-        super.visit()
+    override fun visit(method: Method) {
+        super.visit(method)
         val bb = method.entry
         val methodName = method.prototype.replace('/', '.')
 
@@ -163,5 +167,10 @@ class TraceInstrumenter(method: Method) : MethodVisitor(method) {
         insertedInsts.addAll(builder.insns)
         bb.insertBefore(bb.first(), *builder.insns.toTypedArray())
         bb.insertBefore(bb.first(), *printer.insns.toTypedArray())
+    }
+
+    operator fun invoke(method: Method): List<Instruction> {
+        visit(method)
+        return insertedInsts.toList()
     }
 }
