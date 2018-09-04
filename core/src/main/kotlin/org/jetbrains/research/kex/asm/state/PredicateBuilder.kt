@@ -9,17 +9,22 @@ import org.jetbrains.research.kex.state.term.TermFactory
 import org.jetbrains.research.kex.util.log
 import org.jetbrains.research.kex.util.unreachable
 import org.jetbrains.research.kfg.ir.BasicBlock
-import org.jetbrains.research.kfg.ir.Method
 import org.jetbrains.research.kfg.ir.value.IntConstant
 import org.jetbrains.research.kfg.ir.value.instruction.*
 import org.jetbrains.research.kfg.visitor.MethodVisitor
 
-class PredicateBuilder(method: Method) : MethodVisitor(method) {
+class PredicateBuilder : MethodVisitor {
     val tf = TermFactory
     val pf = PredicateFactory
     val predicateMap = hashMapOf<Instruction, Predicate>()
     val phiPredicateMap = hashMapOf<Pair<BasicBlock, Instruction>, Predicate>()
     val terminatorPredicateMap = hashMapOf<Pair<BasicBlock, TerminateInst>, Predicate>()
+
+    override fun cleanup() {
+        predicateMap.clear()
+        phiPredicateMap.clear()
+        terminatorPredicateMap.clear()
+    }
 
     override fun visitArrayLoadInst(inst: ArrayLoadInst) {
         val lhv = tf.getValue(inst)
@@ -216,6 +221,7 @@ class PredicateBuilder(method: Method) : MethodVisitor(method) {
 
     override fun visitReturnInst(inst: ReturnInst) {
         if (inst.hasReturnValue) {
+            val method = inst.parent?.parent ?: unreachable { log.error("Instruction doesn't have parents") }
             val lhv = tf.getReturn(method)
             val rhv = tf.getValue(inst.returnValue)
 

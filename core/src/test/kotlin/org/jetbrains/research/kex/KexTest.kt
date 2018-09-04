@@ -1,5 +1,6 @@
 package org.jetbrains.research.kex
 
+import org.jetbrains.research.kex.asm.state.PredicateStateAnalysis
 import org.jetbrains.research.kex.asm.state.PredicateStateBuilder
 import org.jetbrains.research.kex.asm.transform.LoopDeroller
 import org.jetbrains.research.kex.config.FileConfig
@@ -43,18 +44,15 @@ abstract class KexTest {
     }
 
     fun getPSA(method: Method): PredicateStateBuilder {
-        val la = LoopAnalysis(method)
-        la.visit()
-        if (la.loops.isNotEmpty()) {
-            val simplifier = LoopSimplifier(method)
-            simplifier.visit()
-            val deroller = LoopDeroller(method)
-            deroller.visit()
+        val loops = LoopAnalysis.invoke(method)
+        if (loops.isNotEmpty()) {
+            LoopSimplifier.visit(method)
+            LoopDeroller.visit(method)
         }
 
-        val psa = PredicateStateBuilder(method)
-        psa.visit()
-        return psa
+        val psa = PredicateStateAnalysis
+        psa.visit(method)
+        return psa.builder(method)
     }
 
     fun getReachables(method: Method): List<Instruction> {

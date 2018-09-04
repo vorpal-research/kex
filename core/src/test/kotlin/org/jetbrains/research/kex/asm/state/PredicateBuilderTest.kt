@@ -20,7 +20,9 @@ class PredicateBuilderTest : KexTest() {
     val pf = PredicateFactory
 
     private val predicateChecker = { builder: PredicateBuilder ->
-        object : MethodVisitor(builder.method) {
+        object : MethodVisitor {
+            override fun cleanup() {}
+
             override fun visitArrayLoadInst(inst: ArrayLoadInst) {
                 assertTrue(builder.predicateMap.contains(inst))
 
@@ -331,19 +333,15 @@ class PredicateBuilderTest : KexTest() {
         for (`class` in CM.getConcreteClasses()) {
             for ((_, method) in `class`.methods) {
                 if (method.isAbstract) continue
-                val la = LoopAnalysis(method)
-                la.visit()
-                if (la.loops.isNotEmpty()) {
-                    val simplifier = LoopSimplifier(method)
-                    simplifier.visit()
-                    val deroller = LoopDeroller(method)
-                    deroller.visit()
+                val loops = LoopAnalysis(method)
+                if (loops.isNotEmpty()) {
+                    LoopSimplifier.visit(method)
+                    LoopDeroller.visit(method)
                 }
-                val predicateBuilder = PredicateBuilder(method)
-                predicateBuilder.visit()
+                val predicateBuilder = PredicateBuilder()
+                predicateBuilder.visit(method)
 
-                val checker = predicateChecker(predicateBuilder)
-                checker.visit()
+                predicateChecker(predicateBuilder).visit(method)
             }
         }
     }

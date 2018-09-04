@@ -9,7 +9,6 @@ import org.jetbrains.research.kfg.VF
 import org.jetbrains.research.kfg.ir.BasicBlock
 import org.jetbrains.research.kfg.ir.BodyBlock
 import org.jetbrains.research.kfg.ir.CatchBlock
-import org.jetbrains.research.kfg.ir.Method
 import org.jetbrains.research.kfg.ir.value.BlockUser
 import org.jetbrains.research.kfg.ir.value.Value
 import org.jetbrains.research.kfg.ir.value.instruction.CallInst
@@ -17,7 +16,8 @@ import org.jetbrains.research.kfg.ir.value.instruction.Instruction
 import org.jetbrains.research.kfg.ir.value.instruction.ReturnInst
 import org.jetbrains.research.kfg.visitor.MethodVisitor
 
-class MethodInliner(method: Method) : MethodVisitor(method) {
+object MethodInliner : MethodVisitor {
+    override fun cleanup() {}
 
     private fun createBlockCopy(block: BasicBlock) = when (block) {
         is BodyBlock -> BodyBlock("${block.name.name}.inlined")
@@ -110,6 +110,7 @@ class MethodInliner(method: Method) : MethodVisitor(method) {
     }
 
     override fun visitCallInst(inst: CallInst) {
+        val method = inst.parent?.parent ?: unreachable { log.error("Instruction without parent method") }
         val inlinedMethod = inst.method
         if (!MethodManager.isInlinable(inlinedMethod)) return
 

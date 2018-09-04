@@ -13,19 +13,30 @@ import org.jetbrains.research.kfg.ir.value.instruction.PhiInst
 import org.jetbrains.research.kfg.util.DominatorTree
 import org.jetbrains.research.kfg.util.DominatorTreeBuilder
 import org.jetbrains.research.kfg.util.TopologicalSorter
-import org.jetbrains.research.kfg.visitor.MethodVisitor
 import java.util.*
 
 class NoTopologicalSortingError(msg: String) : Exception(msg)
 
-class PredicateStateBuilder(method: Method) : MethodVisitor(method) {
+class PredicateStateBuilder(val method: Method) {
     private val blockStates = hashMapOf<BasicBlock, PredicateState>()
     private val instructionStates = hashMapOf<Instruction, PredicateState>()
     private val initialState = BasicState()
 
     private val order = arrayListOf<BasicBlock>()
     private val domTree = DominatorTree<BasicBlock>()
-    private val predicateBuilder = PredicateBuilder(method)
+    private val predicateBuilder = PredicateBuilder()
+
+    fun init() {
+        predicateBuilder.visit(method)
+        if (!method.isAbstract) {
+            val (order, cycled) = TopologicalSorter(method.basicBlocks.toSet()).sort(method.entry)
+            domTree.putAll(DominatorTreeBuilder(method.basicBlocks.toSet()).build())
+
+            if (cycled.isNotEmpty()) throw NoTopologicalSortingError("$method")
+
+            this.order.addAll(order.reversed())
+        }
+    }
 
     fun getInstructionState(inst: Instruction): PredicateState? {
         val state = instructionStates[inst]
@@ -53,20 +64,7 @@ class PredicateStateBuilder(method: Method) : MethodVisitor(method) {
         return result
     }
 
-    override fun visit() {
-        predicateBuilder.visit()
-        if (method.isAbstract) return
-
-        val (order, cycled) = TopologicalSorter(method.basicBlocks.toSet()).sort(method.entry)
-        domTree.putAll(DominatorTreeBuilder(method.basicBlocks.toSet()).build())
-
-        if (cycled.isNotEmpty()) throw NoTopologicalSortingError("$method")
-
-        this.order.addAll(order.reversed())
-    }
-
     private fun processBasicBlock(bb: BasicBlock) {
-        if (bb in method.catchBlocks) return
         var inState = getBlockEntryState(bb) ?: return
 
         for (inst in bb) {

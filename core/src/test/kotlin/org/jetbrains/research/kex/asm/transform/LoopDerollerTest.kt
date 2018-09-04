@@ -14,24 +14,21 @@ class LoopDerollerTest : KexTest() {
     private fun checkLoops(method: Method) {
         if (method.isAbstract) return
 
-        val la = LoopAnalysis(method)
-        la.visit()
-        if (la.loops.isEmpty()) return
+        var loops = LoopAnalysis(method)
+        if (loops.isEmpty()) return
 
-        LoopSimplifier(method).visit()
-        la.visit()
-        la.loops.forEach {
+        LoopSimplifier.visit(method)
+        loops = LoopAnalysis(method)
+        loops.forEach {
             assertTrue { it.hasSinglePreheader }
             assertTrue { it.hasSingleLatch }
         }
 
-        val deroller = LoopDeroller(method)
-        deroller.visit()
+        LoopDeroller.visit(method)
+        loops = LoopAnalysis(method)
+        assertTrue(loops.isEmpty())
 
-        la.visit()
-        assertTrue(la.loops.isEmpty())
-
-        IRVerifier(method).visit()
+        IRVerifier.visit(method)
     }
 
     @Test

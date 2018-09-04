@@ -13,17 +13,14 @@ import kotlin.test.Test
 class PredicateStateBuilderTest : KexTest() {
 
     private fun performPSA(method: Method): PredicateStateBuilder {
-        val la = LoopAnalysis(method)
-        la.visit()
-        if (la.loops.isNotEmpty()) {
-            val simplifier = LoopSimplifier(method)
-            simplifier.visit()
-            val deroller = LoopDeroller(method)
-            deroller.visit()
+        val loops = LoopAnalysis(method)
+        if (loops.isNotEmpty()) {
+            LoopSimplifier.visit(method)
+            LoopDeroller.visit(method)
         }
 
         val psa = PredicateStateBuilder(method)
-        psa.visit()
+        psa.init()
         return psa
     }
 
