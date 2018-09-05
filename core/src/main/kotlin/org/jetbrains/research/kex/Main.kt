@@ -43,7 +43,7 @@ fun main(args: Array<String>) {
     pipeline += LoopSimplifier
     pipeline += LoopDeroller
     pipeline += PredicateStateAnalysis
-    pipeline += MethodChecker
+    pipeline += MethodChecker(jarLoader)
 
     pipeline.run()
 }
