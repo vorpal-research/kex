@@ -1,6 +1,7 @@
 package org.jetbrains.research.kex.util
 
 fun Boolean.toInt(): Int = if (this) 1 else 0
+fun Int.toBoolean(): Boolean = this > 0
 
 operator fun Number.plus(other: Number): Number = when (this) {
     is Long -> this.toLong() + other.toLong()
