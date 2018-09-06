@@ -44,9 +44,6 @@ class Checker(val method: Method, val psa: PredicateStateBuilder) {
             log.debug("Memspacing finished")
         }
 
-        val aa = StensgaardAA()
-        aa.apply(state)
-
         val query = state.filterByType(PredicateType.Path()).simplify()
 
         if (isSlicingEnabled) {
@@ -64,6 +61,8 @@ class Checker(val method: Method, val psa: PredicateStateBuilder) {
                 }
             }
 
+            val aa = StensgaardAA()
+            aa.apply(state)
             state = Slicer(state, query, slicingTerms, aa).apply(state)
             log.debug("Slicing finished")
         }

@@ -33,9 +33,7 @@ class KexClass(val `class`: Class, memspace: Int = defaultMemspace) : KexPointer
 
         other as KexClass
 
-        if (`class` != other.`class`) return false
-
-        return true
+        return `class` == other.`class` && memspace == other.memspace
     }
 }
 
@@ -56,9 +54,7 @@ class KexArray(val element: KexType, memspace: Int = defaultMemspace) : KexPoint
 
         other as KexArray
 
-        if (element != other.element) return false
-
-        return true
+        return element == other.element && memspace == other.memspace
     }
 }
 
@@ -79,9 +75,7 @@ class KexReference(val reference: KexType, memspace: Int = defaultMemspace) : Ke
 
         other as KexReference
 
-        if (reference != other.reference) return false
-
-        return true
+        return reference == other.reference && memspace == other.memspace
     }
 }
 

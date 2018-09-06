@@ -6,8 +6,8 @@ import org.jetbrains.research.kex.asm.transform.TraceInstrumenter
 import org.jetbrains.research.kex.config.GlobalConfig
 import org.jetbrains.research.kex.driver.GenerationException
 import org.jetbrains.research.kex.driver.RandomDriver
+import org.jetbrains.research.kex.util.getClass
 import org.jetbrains.research.kex.util.log
-import org.jetbrains.research.kfg.type.*
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import java.io.PrintStream
@@ -18,24 +18,6 @@ import org.jetbrains.research.kfg.ir.Method as KfgMethod
 
 internal val runs = GlobalConfig.getIntValue("runner", "runs", 10)
 internal val timeout = GlobalConfig.getLongValue("runner", "timeout", 1000L)
-
-internal fun getClass(type: Type, loader: ClassLoader): Class<*> = when (type) {
-    is BoolType -> Boolean::class.java
-    is ByteType -> Byte::class.java
-    is ShortType -> Short::class.java
-    is IntType -> Int::class.java
-    is LongType -> Long::class.java
-    is CharType -> Char::class.java
-    is FloatType -> Float::class.java
-    is DoubleType -> Double::class.java
-    is ArrayType -> Class.forName(type.canonicalDesc)
-    is ClassType -> try {
-        loader.loadClass(type.`class`.canonicalDesc)
-    } catch (e: ClassNotFoundException) {
-        ClassLoader.getSystemClassLoader().loadClass(type.`class`.canonicalDesc)
-    }
-    else -> throw UnknownTypeError(type.toString())
-}
 
 internal class InvocationResult {
     val output = ByteArrayOutputStream()
