@@ -2,7 +2,6 @@ package org.jetbrains.research.kex.driver
 
 import io.github.benas.randombeans.EnhancedRandomBuilder
 import io.github.benas.randombeans.api.EnhancedRandom
-import io.github.benas.randombeans.api.ObjectGenerationException
 import org.jetbrains.research.kex.config.GlobalConfig
 import org.jetbrains.research.kex.util.log
 import java.lang.reflect.ParameterizedType
@@ -70,7 +69,7 @@ object RandomDriver {
                     is TypeVariable<*> -> generateTypeVariable(type)
                     else -> throw UnknownTypeException(type.toString())
                 }
-            } catch (exc: ObjectGenerationException) {}
+            } catch (exc: Throwable) {}
         }
         throw GenerationException("Unable to generate a random instance of type $type")
     }

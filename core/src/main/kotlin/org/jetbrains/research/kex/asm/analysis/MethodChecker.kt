@@ -39,10 +39,11 @@ class MethodChecker(val loader: ClassLoader) : MethodVisitor {
             log.debug(result.model)
             val recoverer = ModelRecoverer(method, result.model, loader)
             recoverer.apply()
-            log.debug("Recovered: ")
-            for ((term, value) in recoverer.terms) {
-                log.debug("$term = $value")
-            }
+//            log.debug("Recovered: ")
+//            for ((term, value) in recoverer.terms) {
+//                val memspace = if (term.type is KexPointer) "<${term.memspace}>"  else ""
+//                log.debug("$term$memspace = $value")
+//            }
         }
         log.debug()
     }

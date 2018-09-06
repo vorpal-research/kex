@@ -4,10 +4,12 @@ import org.jetbrains.research.kex.driver.RandomDriver
 import org.jetbrains.research.kex.ktype.*
 import org.jetbrains.research.kex.state.term.*
 import org.jetbrains.research.kex.state.transformer.memspace
+import org.jetbrains.research.kex.util.getClass
 import org.jetbrains.research.kex.util.log
 import org.jetbrains.research.kex.util.toBoolean
 import org.jetbrains.research.kex.util.unreachable
 import org.jetbrains.research.kfg.ir.Method
+import java.lang.reflect.Array
 
 
 private fun Term.isPointer() = this.type is KexPointer
@@ -17,16 +19,21 @@ class ModelRecoverer(val method: Method, val model: SMTModel, val loader: ClassL
     val tf = TermFactory
     val terms = hashMapOf<Term, Any?>()
 
-    val memoryMappings = hashMapOf<Int, Any?>(0 to null)
+    private val memoryMappings = hashMapOf<Int, MutableMap<Int, Any?>>()
+
+    private fun memory(memspace: Int, address: Int) =
+            memoryMappings.getOrPut(memspace, ::hashMapOf)[address]
+
+    private fun memory(memspace: Int, address: Int, getter: () -> Any?) =
+            memoryMappings.getOrPut(memspace, ::hashMapOf).getOrPut(address, getter)
+
+    private fun memory(memspace: Int, address: Int, value: Any?) =
+            memoryMappings.getOrPut(memspace, ::hashMapOf).getOrPut(address) { value }
 
     fun apply() {
         val recoveringTerms = hashSetOf<Term>()
-        recoveringTerms += method.desc.args.withIndex().map { (index, type) -> tf.getArgument(type.kexType, index) }
-
-        if (!method.isAbstract) {
-            val `this` = tf.getThis(method.`class`)
-            recoveringTerms += `this`
-        }
+        recoveringTerms += model.assignments.keys.filterNot { it.print().startsWith("arg\$") }
+        recoveringTerms += model.assignments.keys.filterNot { it.print().startsWith("this") }
 
         for (term in recoveringTerms) {
             terms[term] = recoverTerm(term)
@@ -65,9 +72,9 @@ class ModelRecoverer(val method: Method, val model: SMTModel, val loader: ClassL
         val address = (value as? ConstIntTerm)?.value ?: return null
         if (address == 0) return null
 
-        return memoryMappings.getOrPut(address) {
+        return memory(type.memspace, address) {
             val `class` = loader.loadClass(type.`class`.canonicalDesc)
-            val instance = RandomDriver.generateOrNull(`class`) ?: return null
+            val instance = RandomDriver.generateOrNull(`class`)
             for ((_, field) in type.`class`.fields) {
                 val fieldCopy = tf.getField(KexReference(field.type.kexType), term, tf.getString(field.name))
                 val fieldTerm = model.assignments.keys.firstOrNull { it == fieldCopy } ?: continue
@@ -78,13 +85,10 @@ class ModelRecoverer(val method: Method, val model: SMTModel, val loader: ClassL
 
                 val recoveredValue = recoverTerm(fieldTerm, fieldValue)
 
-                log.debug("Field ${field.name} have address $fieldAddress and value $fieldValue and recovered $recoveredValue")
-
                 val fieldReflect = `class`.getDeclaredField(field.name)
                 fieldReflect.isAccessible = true
                 fieldReflect.set(instance, recoveredValue)
             }
-            log.debug("Generated for type $type: $instance")
             instance
         }
     }
@@ -111,8 +115,22 @@ class ModelRecoverer(val method: Method, val model: SMTModel, val loader: ClassL
     private fun recoverArray(term: Term, value: Term?): Any? {
         val arrayType = term.type as KexArray
         val address = (value as? ConstIntTerm)?.value ?: return null
-        return memoryMappings.getOrPut(address) {
-            null
+
+        val memspace = arrayType.memspace
+        val instance = run {
+            val bounds = model.bounds[memspace] ?: return@run null
+            val bound = (bounds.finalMemory[value] as? ConstIntTerm)?.value ?: return@run null
+
+            val elementSize = arrayType.element.bitsize
+            val elements = bound / elementSize
+
+            val elementClass = getClass(arrayType.element.kfgType, loader)
+            val instance = Array.newInstance(elementClass, elements)
+            for (i in 0 until elements) {
+                // TODO
+            }
+            instance
         }
+        return memory(arrayType.memspace, address, instance)
     }
 }

@@ -5,7 +5,6 @@ import org.jetbrains.research.kex.state.PredicateState
 import org.jetbrains.research.kex.state.term.*
 import org.jetbrains.research.kex.util.log
 import org.jetbrains.research.kex.util.unreachable
-import org.jetbrains.research.kfg.type.Reference
 
 fun Term.withMemspace(memspace: Int): Term {
     if (this.type !is KexPointer) return this
@@ -52,7 +51,7 @@ class MemorySpacer(ps: PredicateState) : Transformer<MemorySpacer> {
     private fun getMemspace(term: Term) = getIndex(aa.getDereferenced(term))
 
     override fun transformTerm(term: Term) = when {
-        term.type is Reference -> term.withMemspace(getMemspace(term))
+        term.type is KexPointer -> term.withMemspace(getMemspace(term))
         else -> term
     }
 }
