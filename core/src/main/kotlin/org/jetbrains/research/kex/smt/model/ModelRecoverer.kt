@@ -126,7 +126,22 @@ class ModelRecoverer(val method: Method, val model: SMTModel, val loader: ClassL
 
             val elementClass = getClass(arrayType.element.kfgType, loader)
             val instance = Array.newInstance(elementClass, elements)
-            // TODO: create array elements
+
+            val assignedElements = model.assignments.keys
+                    .mapNotNull { it as? ArrayIndexTerm }
+                    .filterNot { it.arrayRef == term }
+
+            for (index in assignedElements) {
+                val indexMemspace = index.memspace
+                val indexAddress = model.assignments[index] as? ConstIntTerm
+                        ?: unreachable { log.error("Non-int address") }
+
+                val element = model.memories[indexMemspace]?.finalMemory!![indexAddress]!!
+
+                val `object` = recoverTerm(term, element)
+                val actualIndex = (indexAddress.value - address) / elementSize
+                Array.set(instance, actualIndex, `object`)
+            }
             instance
         }
         return memory(arrayType.memspace, address, instance)
