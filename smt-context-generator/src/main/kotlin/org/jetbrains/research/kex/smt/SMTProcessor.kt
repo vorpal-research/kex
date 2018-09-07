@@ -2,8 +2,7 @@ package org.jetbrains.research.kex.smt
 
 import org.jetbrains.research.kex.util.unreachable
 import java.io.File
-import javax.annotation.processing.AbstractProcessor
-import javax.annotation.processing.RoundEnvironment
+import javax.annotation.processing.*
 import javax.lang.model.SourceVersion
 import javax.lang.model.element.Element
 import javax.lang.model.element.TypeElement
@@ -12,16 +11,24 @@ import kotlin.reflect.KClass
 import kotlin.reflect.full.declaredMemberProperties
 import kotlin.reflect.full.memberFunctions
 
+@SupportedSourceVersion(SourceVersion.RELEASE_8)
+@SupportedAnnotationTypes(
+        "org.jetbrains.research.kex.smt.SMTExpr",
+        "org.jetbrains.research.kex.smt.SMTMemory",
+        "org.jetbrains.research.kex.smt.SMTExprFactory",
+        "org.jetbrains.research.kex.smt.SMTContext",
+        "org.jetbrains.research.kex.smt.SMTConverter")
+@SupportedOptions("codegen.dir", "template.dir")
 class SMTProcessor : AbstractProcessor() {
     private companion object {
         const val CODEGEN_DIR = "codegen.dir"
         const val TEMPLATE_DIR = "template.dir"
     }
 
-    val targetDirectory: String
+    private val targetDirectory: String
         get() = processingEnv.options[CODEGEN_DIR] ?: unreachable { error("No codegen directory") }
 
-    val templates: String
+    private val templates: String
         get() = processingEnv.options[TEMPLATE_DIR] ?: unreachable { error("No template directory") }
 
     override fun process(annotations: MutableSet<out TypeElement>?, roundEnv: RoundEnvironment?): Boolean {
@@ -41,21 +48,9 @@ class SMTProcessor : AbstractProcessor() {
             getElementsAnnotatedWith(SMTConverter::class.java)?.forEach {
                 processAnnotation(it, SMTConverter::class, "Converter")
             }
-            Unit
         }
         return true
     }
-
-    override fun getSupportedSourceVersion() = SourceVersion.RELEASE_8
-    override fun getSupportedAnnotationTypes() = setOf(
-            "org.jetbrains.research.kex.smt.SMTExpr",
-            "org.jetbrains.research.kex.smt.SMTMemory",
-            "org.jetbrains.research.kex.smt.SMTExprFactory",
-            "org.jetbrains.research.kex.smt.SMTContext",
-            "org.jetbrains.research.kex.smt.SMTConverter"
-    )
-
-    override fun getSupportedOptions() = setOf(CODEGEN_DIR)
 
     private fun <T : Annotation> processAnnotation(element: Element, annotation: KClass<T>, nameTemplate: String) {
         val `class` = element.simpleName.toString()

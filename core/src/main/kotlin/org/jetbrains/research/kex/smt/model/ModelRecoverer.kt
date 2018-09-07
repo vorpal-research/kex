@@ -126,9 +126,7 @@ class ModelRecoverer(val method: Method, val model: SMTModel, val loader: ClassL
 
             val elementClass = getClass(arrayType.element.kfgType, loader)
             val instance = Array.newInstance(elementClass, elements)
-            for (i in 0 until elements) {
-                // TODO
-            }
+            // TODO: create array elements
             instance
         }
         return memory(arrayType.memspace, address, instance)

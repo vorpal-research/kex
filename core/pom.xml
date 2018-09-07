@@ -22,6 +22,7 @@
         <random-beans.version>random-beans-parent-3.7.0</random-beans.version>
         <better-parse.version>0.3.2</better-parse.version>
         <klaxon.version>3.0.6</klaxon.version>
+        <kotlinx.metadata.interface.version>1.0</kotlinx.metadata.interface.version>
 
         <z3.version>1.0</z3.version>
     </properties>
@@ -110,6 +111,13 @@
             <groupId>com.microsoft</groupId>
             <artifactId>z3</artifactId>
             <version>${z3.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.jetbrains.research</groupId>
+            <artifactId>kotlinx.metadata.interface</artifactId>
+            <version>${kotlinx.metadata.interface.version}</version>
+            <type>jar</type>
         </dependency>
     </dependencies>
 
