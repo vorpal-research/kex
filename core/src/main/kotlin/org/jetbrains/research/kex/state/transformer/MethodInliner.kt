@@ -15,8 +15,6 @@ import org.jetbrains.research.kfg.ir.value.instruction.ReturnInst
 import java.util.*
 
 class MethodInliner(val method: Method) : RecollectingTransformer<MethodInliner> {
-    override val removablePredicates = hashSetOf<Predicate>()
-
     override val builders = ArrayDeque<StateBuilder>()
     private var inlineIndex = 0
 
@@ -47,8 +45,7 @@ class MethodInliner(val method: Method) : RecollectingTransformer<MethodInliner>
 
         currentBuilder += prepareInlinedState(calledMethod, mappings) ?: return predicate
 
-        removablePredicates.add(predicate)
-        return predicate
+        return Transformer.Stub
     }
 
     private fun prepareInlinedState(method: Method, mappings: Map<Term, Term>): PredicateState? {

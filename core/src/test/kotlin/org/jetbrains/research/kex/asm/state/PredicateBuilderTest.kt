@@ -295,7 +295,7 @@ class PredicateBuilderTest : KexTest() {
                     assertTrue(predicate is EqualityPredicate)
                     predicate as EqualityPredicate
 
-                    val returnValue = predicate.lhv
+//                    val returnValue = predicate.lhv
                     val returnableValue = predicate.rhv
 
 //                    assertEquals(returnValue, tf.getReturn(inst.returnType, builder.method))

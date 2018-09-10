@@ -51,15 +51,13 @@ private fun Predicate.inverse(): Predicate = when {
     else -> this
 }
 
-class Slicer(val state: PredicateState, sliceTerms: Set<Term>, val aa: AliasAnalysis) : DeletingTransformer<Slicer> {
-    override val removablePredicates = hashSetOf<Predicate>()
-
-    val sliceVars = hashSetOf<Term>()
-    val slicePtrs = hashSetOf<Term>()
-    val cfg = CFGTracker()
+class Slicer(val state: PredicateState, sliceTerms: Set<Term>, val aa: AliasAnalysis) : Transformer<Slicer> {
+    private val sliceVars = hashSetOf<Term>()
+    private val slicePtrs = hashSetOf<Term>()
+    private val cfg = CFGTracker()
     var currentPath = setOf<Predicate>()
 
-    val isInterestingTerm = { term: Term -> Term.isNamed(term) }
+    private val isInterestingTerm = { term: Term -> Term.isNamed(term) }
 
     init {
         sliceTerms
@@ -144,18 +142,19 @@ class Slicer(val state: PredicateState, sliceTerms: Set<Term>, val aa: AliasAnal
     override fun transformBase(predicate: Predicate): Predicate {
         if (predicate.type != PredicateType.State()) {
             val inversed = predicate.inverse()
-            if ((predicate in currentPath) and (inversed !in currentPath)) {
-                for (op in predicate.operands) {
-                    TermCollector
-                            .getFullTermSet(op)
-                            .filter(isInterestingTerm)
-                            .forEach { addSliceTerm(it) }
+            return when {
+                (predicate in currentPath) and (inversed !in currentPath) -> {
+                    for (op in predicate.operands) {
+                        TermCollector
+                                .getFullTermSet(op)
+                                .filter(isInterestingTerm)
+                                .forEach { addSliceTerm(it) }
+                    }
+                    addCFGDeps(predicate)
+                    predicate
                 }
-                addCFGDeps(predicate)
-            } else {
-                removablePredicates.add(predicate)
+                else -> Transformer.Stub
             }
-            return predicate
         }
 
         val reciever = Predicate.getReciever(predicate)
@@ -171,7 +170,9 @@ class Slicer(val state: PredicateState, sliceTerms: Set<Term>, val aa: AliasAnal
 
         val asVar = checkVars(lhvTerms, rhvTerms)
         val asPtr = checkPtrs(predicate, lhvTerms, rhvTerms)
-        if (!(asVar || asPtr)) removablePredicates.add(predicate)
-        return predicate
+        return when {
+            asVar || asPtr -> predicate
+            else -> Transformer.Stub
+        }
     }
 }
