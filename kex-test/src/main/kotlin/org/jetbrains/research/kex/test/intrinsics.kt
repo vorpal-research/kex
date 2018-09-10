@@ -1,3 +1,4 @@
+@file:Suppress("UNUSED_PARAMETER")
 package org.jetbrains.research.kex.test
 
 object Intrinsics {

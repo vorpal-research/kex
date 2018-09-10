@@ -5,6 +5,7 @@ import org.jetbrains.research.kex.state.predicate.*
 import org.jetbrains.research.kex.state.term.*
 import org.jetbrains.research.kex.util.log
 import org.jetbrains.research.kex.util.unreachable
+import org.jetbrains.research.kfg.ir.Location
 import java.util.*
 
 interface Transformer<T : Transformer<T>> {
@@ -14,12 +15,27 @@ interface Transformer<T : Transformer<T>> {
     val tf: TermFactory
         get() = TermFactory
 
+    /**
+     * Stub to return when you want to delete some predicate in predicate state
+     * Needed to avoid using nullable types in transformer
+     */
+    object Stub : Predicate(PredicateType.State(), Location(), arrayListOf()) {
+        override fun print() = "stub"
+        override fun <T : Transformer<T>> accept(t: Transformer<T>) = Stub
+    }
+
     private inline fun <reified T : TypeInfo> delegate(argument: T, type: String): T {
+        // this is fucked up, but at least it's not nullable
+        if (argument is Stub) return argument
+
         val subtypeName = argument.reverseMapping.getValue(argument.javaClass)
         val subtype = argument.subtypes.getValue(subtypeName)
+
         val transformName = this.javaClass.getDeclaredMethod("transform$subtypeName", subtype)
+
         val res = transformName.invoke(this, argument) as? T
                 ?: unreachable { log.debug("Unexpected null in transformer invocation") }
+        if (res is Stub) return res
 
         val transformClass = this.javaClass.getDeclaredMethod("transform$subtypeName$type", subtype)
         return transformClass.invoke(this, res) as? T
@@ -40,7 +56,7 @@ interface Transformer<T : Transformer<T>> {
 
     fun transformPredicateState(ps: PredicateState) = ps
 
-    fun transformBasic(ps: BasicState): PredicateState = ps.map { p -> transformBase(p) }
+    fun transformBasic(ps: BasicState): PredicateState = ps.map { p -> transformBase(p) }.filterNot { it is Stub }
     fun transformChain(ps: ChainState): PredicateState = ps.fmap { e -> transformBase(e) }
     fun transformChoice(ps: ChoiceState): PredicateState = ps.fmap { e -> transformBase(e) }
 
@@ -59,24 +75,24 @@ interface Transformer<T : Transformer<T>> {
     ////////////////////////////////////////////////////////////////////
     fun transformPredicate(predicate: Predicate) = predicate
 
-    fun transformArrayStore(predicate: ArrayStorePredicate) = predicate.accept(this)
-    fun transformBoundStore(predicate: BoundStorePredicate) = predicate.accept(this)
-    fun transformCall(predicate: CallPredicate) = predicate.accept(this)
-    fun transformCatch(predicate: CatchPredicate) = predicate.accept(this)
-    fun transformDefaultSwitch(predicate: DefaultSwitchPredicate) = predicate.accept(this)
-    fun transformInequality(predicate: InequalityPredicate) = predicate.accept(this)
-    fun transformEquality(predicate: EqualityPredicate) = predicate.accept(this)
-    fun transformFieldStore(predicate: FieldStorePredicate) = predicate.accept(this)
-    fun transformNewArray(predicate: NewArrayPredicate) = predicate.accept(this)
-    fun transformNew(predicate: NewPredicate) = predicate.accept(this)
-    fun transformThrow(predicate: ThrowPredicate) = predicate.accept(this)
+    fun transformArrayStore(predicate: ArrayStorePredicate): Predicate = predicate.accept(this)
+    fun transformBoundStore(predicate: BoundStorePredicate): Predicate = predicate.accept(this)
+    fun transformCall(predicate: CallPredicate): Predicate = predicate.accept(this)
+    fun transformCatch(predicate: CatchPredicate): Predicate = predicate.accept(this)
+    fun transformDefaultSwitch(predicate: DefaultSwitchPredicate): Predicate = predicate.accept(this)
+    fun transformInequality(predicate: InequalityPredicate): Predicate = predicate.accept(this)
+    fun transformEquality(predicate: EqualityPredicate): Predicate = predicate.accept(this)
+    fun transformFieldStore(predicate: FieldStorePredicate): Predicate = predicate.accept(this)
+    fun transformNewArray(predicate: NewArrayPredicate): Predicate = predicate.accept(this)
+    fun transformNew(predicate: NewPredicate): Predicate = predicate.accept(this)
+    fun transformThrow(predicate: ThrowPredicate): Predicate = predicate.accept(this)
 
     fun transformArrayStorePredicate(predicate: ArrayStorePredicate): Predicate = predicate
-    fun transformBoundStorePredicate(predicate: BoundStorePredicate) = predicate
+    fun transformBoundStorePredicate(predicate: BoundStorePredicate): Predicate = predicate
     fun transformCallPredicate(predicate: CallPredicate): Predicate = predicate
     fun transformCatchPredicate(predicate: CatchPredicate): Predicate = predicate
     fun transformDefaultSwitchPredicate(predicate: DefaultSwitchPredicate): Predicate = predicate
-    fun transformInequalityPredicate(predicate: InequalityPredicate) = predicate
+    fun transformInequalityPredicate(predicate: InequalityPredicate): Predicate = predicate
     fun transformEqualityPredicate(predicate: EqualityPredicate): Predicate = predicate
     fun transformFieldStorePredicate(predicate: FieldStorePredicate): Predicate = predicate
     fun transformNewArrayPredicate(predicate: NewArrayPredicate): Predicate = predicate
@@ -150,17 +166,7 @@ interface Transformer<T : Transformer<T>> {
     fun transformValueTerm(term: ValueTerm): Term = term
 }
 
-
-interface DeletingTransformer<T> : Transformer<DeletingTransformer<T>> {
-    val removablePredicates: MutableSet<Predicate>
-
-    override fun apply(ps: PredicateState): PredicateState {
-        val result = super.transform(ps)
-        return result.filter { it in removablePredicates }.simplify()
-    }
-}
-
-interface RecollectingTransformer<T> : DeletingTransformer<RecollectingTransformer<T>> {
+interface RecollectingTransformer<T> : Transformer<RecollectingTransformer<T>> {
     val builders: Deque<StateBuilder>
 
     val currentBuilder: StateBuilder
@@ -171,7 +177,7 @@ interface RecollectingTransformer<T> : DeletingTransformer<RecollectingTransform
 
     override fun apply(ps: PredicateState): PredicateState {
         super.transform(ps)
-        return state.simplify().filter { it !in removablePredicates }
+        return state.simplify()
     }
 
     override fun transformChoice(ps: ChoiceState): PredicateState {

@@ -1,3 +1,4 @@
+@file:Suppress("UNUSED_PARAMETER", "UNUSED_VARIABLE")
 package org.jetbrains.research.kex.test
 
 class BasicTests {
