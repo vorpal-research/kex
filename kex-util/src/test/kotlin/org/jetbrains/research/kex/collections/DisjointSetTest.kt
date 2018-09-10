@@ -1,8 +1,8 @@
 package org.jetbrains.research.kex.collections
 
 import org.junit.Test
-
-import org.junit.Assert.*
+import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 class DisjointSetTest {

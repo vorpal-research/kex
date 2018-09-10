@@ -11,7 +11,7 @@ import org.jetbrains.research.kfg.visitor.MethodVisitor
 
 fun Method.returnInst() = this.flatten().lastOrNull { it is ReturnInst } as? ReturnInst
 
-class MethodChecker(val loader: ClassLoader) : MethodVisitor {
+class MethodChecker(private val loader: ClassLoader) : MethodVisitor {
     val psa = PredicateStateAnalysis
 
     override fun cleanup() {}
@@ -28,7 +28,7 @@ class MethodChecker(val loader: ClassLoader) : MethodVisitor {
         }
 
         val psb = psa.builder(method)
-        val checker = Checker(method, psb)
+        val checker = Checker(method, loader, psb)
 
         val returnInst = method.returnInst() ?: return
 

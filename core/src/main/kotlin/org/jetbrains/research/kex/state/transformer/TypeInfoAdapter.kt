@@ -13,11 +13,11 @@ import org.jetbrains.research.kfg.TF
 import org.jetbrains.research.kfg.ir.Method
 import org.jetbrains.research.kfg.ir.MethodDesc
 
-class TypeInfoAdapter(val method: Method) : Transformer<TypeInfoAdapter> {
-    val validTerms = hashSetOf<Term>()
+class TypeInfoAdapter(val method: Method, val loader: ClassLoader) : Transformer<TypeInfoAdapter> {
+    private val validTerms = hashSetOf<Term>()
 
     companion object {
-        val intrinsics = CM.getByName("kotlin/jvm/internal/Intrinsics")
+        private val intrinsics = CM.getByName("kotlin/jvm/internal/Intrinsics")
         val checkNotNull = intrinsics.getMethod(
                 "checkParameterIsNotNull",
                 MethodDesc(
