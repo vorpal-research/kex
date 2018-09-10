@@ -17,7 +17,7 @@ private val isSlicingEnabled = GlobalConfig.getBooleanValue("smt", "slicing", fa
 
 private val logQuery = GlobalConfig.getBooleanValue("smt", "logQuery", false)
 
-class Checker(val method: Method, val psa: PredicateStateBuilder) {
+class Checker(val method: Method, val loader: ClassLoader, private val psa: PredicateStateBuilder) {
 
     fun checkReachable(inst: Instruction): Result {
         log.debug("Checking reachability of ${inst.print()}")
@@ -33,7 +33,7 @@ class Checker(val method: Method, val psa: PredicateStateBuilder) {
             log.debug("Inlining finished")
         }
 
-        state = TypeInfoAdapter(method).apply(state)
+        state = TypeInfoAdapter(method, loader).apply(state)
         state = Optimizer.transform(state).simplify()
         state = ConstantPropagator.apply(state).simplify()
         state = BoolTypeAdapter.apply(state).simplify()

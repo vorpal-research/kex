@@ -5,6 +5,7 @@ import org.jetbrains.research.kex.state.predicate.*
 import org.jetbrains.research.kex.state.term.*
 import org.jetbrains.research.kex.util.log
 import org.jetbrains.research.kex.util.unreachable
+import java.util.*
 
 interface Transformer<T : Transformer<T>> {
     val pf: PredicateFactory
@@ -13,7 +14,7 @@ interface Transformer<T : Transformer<T>> {
     val tf: TermFactory
         get() = TermFactory
 
-    private inline fun < reified T : TypeInfo> delegate(argument: T, type: String): T {
+    private inline fun <reified T : TypeInfo> delegate(argument: T, type: String): T {
         val subtypeName = argument.reverseMapping.getValue(argument.javaClass)
         val subtype = argument.subtypes.getValue(subtypeName)
         val transformName = this.javaClass.getDeclaredMethod("transform$subtypeName", subtype)
@@ -156,5 +157,39 @@ interface DeletingTransformer<T> : Transformer<DeletingTransformer<T>> {
     override fun apply(ps: PredicateState): PredicateState {
         val result = super.transform(ps)
         return result.filter { it in removablePredicates }.simplify()
+    }
+}
+
+interface RecollectingTransformer<T> : DeletingTransformer<RecollectingTransformer<T>> {
+    val builders: Deque<StateBuilder>
+
+    val currentBuilder: StateBuilder
+        get() = builders.last
+
+    val state: PredicateState
+        get() = currentBuilder.apply()
+
+    override fun apply(ps: PredicateState): PredicateState {
+        super.transform(ps)
+        return state.simplify().filter { it !in removablePredicates }
+    }
+
+    override fun transformChoice(ps: ChoiceState): PredicateState {
+        val newChoices = arrayListOf<PredicateState>()
+        for (choice in ps.choices) {
+            builders.add(StateBuilder())
+            super.transformBase(choice)
+
+            newChoices.add(currentBuilder.apply())
+            builders.pollLast()
+        }
+        currentBuilder += ChoiceState(newChoices)
+        return ps
+    }
+
+    override fun transformPredicate(predicate: Predicate): Predicate {
+        val result = super.transformPredicate(predicate)
+        currentBuilder += result
+        return result
     }
 }

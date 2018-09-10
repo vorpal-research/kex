@@ -11,7 +11,6 @@ class BasicTest : KexTest() {
         testClassReachability(`class`)
     }
 
-// Don't run this because it's too long
     @Test
     fun testIcfpc2018() {
         val `class` = CM.getByName("$packageName/Icfpc2018Test")

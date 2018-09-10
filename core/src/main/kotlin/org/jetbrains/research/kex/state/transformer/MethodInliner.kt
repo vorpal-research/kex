@@ -3,7 +3,6 @@ package org.jetbrains.research.kex.state.transformer
 import org.jetbrains.research.kex.asm.manager.MethodManager
 import org.jetbrains.research.kex.asm.state.PredicateStateAnalysis
 import org.jetbrains.research.kex.ktype.kexType
-import org.jetbrains.research.kex.state.ChoiceState
 import org.jetbrains.research.kex.state.PredicateState
 import org.jetbrains.research.kex.state.StateBuilder
 import org.jetbrains.research.kex.state.predicate.CallPredicate
@@ -15,41 +14,14 @@ import org.jetbrains.research.kfg.ir.Method
 import org.jetbrains.research.kfg.ir.value.instruction.ReturnInst
 import java.util.*
 
-class MethodInliner(val method: Method) : DeletingTransformer<MethodInliner> {
+class MethodInliner(val method: Method) : RecollectingTransformer<MethodInliner> {
     override val removablePredicates = hashSetOf<Predicate>()
 
-    val stateBuilder: StateBuilder
-        get() = builders.peek()
-
-    private val builders = Stack<StateBuilder>()
+    override val builders = ArrayDeque<StateBuilder>()
     private var inlineIndex = 0
 
     init {
         builders.push(StateBuilder())
-    }
-
-    override fun apply(ps: PredicateState): PredicateState {
-        super.transform(ps)
-        val resultingState = stateBuilder.apply().simplify()
-        return resultingState.filter { it !in removablePredicates }
-    }
-
-    override fun transformChoice(ps: ChoiceState): PredicateState {
-        val newChoices = arrayListOf<PredicateState>()
-        for (choice in ps.choices) {
-            builders.add(StateBuilder())
-            super.transformBase(choice)
-
-            newChoices.add(stateBuilder.apply())
-            builders.pop()
-        }
-        stateBuilder += ChoiceState(newChoices)
-        return ps
-    }
-
-    override fun transformPredicate(predicate: Predicate): Predicate {
-        stateBuilder += predicate
-        return predicate
     }
 
     override fun transformCallPredicate(predicate: CallPredicate): Predicate {
@@ -73,7 +45,7 @@ class MethodInliner(val method: Method) : DeletingTransformer<MethodInliner> {
             mappings[argTerm] = calledArg
         }
 
-        stateBuilder += prepareInlinedState(calledMethod, mappings) ?: return predicate
+        currentBuilder += prepareInlinedState(calledMethod, mappings) ?: return predicate
 
         removablePredicates.add(predicate)
         return predicate
@@ -85,8 +57,7 @@ class MethodInliner(val method: Method) : DeletingTransformer<MethodInliner> {
                 ?: unreachable { log.error("Cannot inline method with no return") }
         val endState = builder.getInstructionState(returnInst) ?: return null
 
-        val remapped = TermRemapper("inlined${inlineIndex++}", mappings).apply(endState)
-        return remapped
+        return TermRemapper("inlined${inlineIndex++}", mappings).apply(endState)
     }
 }
 

@@ -26,12 +26,14 @@ import org.jetbrains.research.kfg.ir.value.instruction.ArrayStoreInst
 import org.jetbrains.research.kfg.ir.value.instruction.CallInst
 import org.jetbrains.research.kfg.ir.value.instruction.Instruction
 import org.jetbrains.research.kfg.util.Flags
+import org.jetbrains.research.kfg.util.classLoader
 import java.util.jar.JarFile
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
 abstract class KexTest {
     val packageName = "org/jetbrains/research/kex/test"
+    private val loader: ClassLoader
 
     init {
         val rootDir = System.getProperty("root.dir")
@@ -39,6 +41,7 @@ abstract class KexTest {
 
         val jarPath = "$rootDir/kex-test/target/kex-test-0.1-jar-with-dependencies.jar"
         val jarFile = JarFile(jarPath)
+        loader = jarFile.classLoader
         val `package` = Package("$packageName/*")
         CM.parseJar(jarFile, `package`, Flags.readAll)
     }
@@ -81,7 +84,7 @@ abstract class KexTest {
             log.debug(method.print())
 
             val psa = getPSA(method)
-            val checker = Checker(method, psa)
+            val checker = Checker(method, loader, psa)
 
             getReachables(method).forEach { inst ->
                 val result = checker.checkReachable(inst)
