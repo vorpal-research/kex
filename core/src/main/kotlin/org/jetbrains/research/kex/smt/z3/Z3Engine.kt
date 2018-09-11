@@ -58,8 +58,10 @@ object Z3Engine : SMTEngine<Context, Expr, Sort, FuncDecl, Pattern>() {
     override fun simplify(ctx: Context, expr: Expr): Expr = expr.simplify()
     override fun equality(ctx: Context, lhv: Expr, rhv: Expr) = lhv == rhv
 
-    override fun makeVar(ctx: Context, sort: Sort, name: String, fresh: Boolean) =
-            if (fresh) ctx.mkFreshConst(name, sort) else ctx.mkConst(name, sort)
+    override fun makeVar(ctx: Context, sort: Sort, name: String, fresh: Boolean) = when {
+        fresh -> ctx.mkFreshConst(name, sort)
+        else -> ctx.mkConst(name, sort)
+    }
 
     override fun makeBooleanConst(ctx: Context, value: Boolean) = ctx.mkBool(value)
 
@@ -87,62 +89,62 @@ object Z3Engine : SMTEngine<Context, Expr, Sort, FuncDecl, Pattern>() {
         Opcode.EQ -> eq(ctx, lhv, rhv)
         Opcode.NEQ -> neq(ctx, lhv, rhv)
         Opcode.ADD -> when {
-            (lhv is BitVecExpr) and (rhv is BitVecExpr) -> add(ctx, lhv.castTo<BitVecExpr>(), rhv.castTo())
-            (lhv is FPExpr) and (rhv is FPExpr) -> add(ctx, lhv.castTo<FPExpr>(), rhv.castTo())
+            lhv is BitVecExpr && rhv is BitVecExpr -> add(ctx, lhv.castTo<BitVecExpr>(), rhv.castTo())
+            lhv is FPExpr && rhv is FPExpr -> add(ctx, lhv.castTo<FPExpr>(), rhv.castTo())
             else -> unreachable { log.error("Unexpected and arguments: $lhv and $rhv") }
         }
         Opcode.SUB -> when {
-            (lhv is BitVecExpr) and (rhv is BitVecExpr) -> sub(ctx, lhv.castTo<BitVecExpr>(), rhv.castTo())
-            (lhv is FPExpr) and (rhv is FPExpr) -> sub(ctx, lhv.castTo<FPExpr>(), rhv.castTo())
+            lhv is BitVecExpr && rhv is BitVecExpr -> sub(ctx, lhv.castTo<BitVecExpr>(), rhv.castTo())
+            lhv is FPExpr && rhv is FPExpr -> sub(ctx, lhv.castTo<FPExpr>(), rhv.castTo())
             else -> unreachable { log.error("Unexpected and arguments: $lhv and $rhv") }
         }
         Opcode.MUL -> when {
-            (lhv is BitVecExpr) and (rhv is BitVecExpr) -> mul(ctx, lhv.castTo<BitVecExpr>(), rhv.castTo())
-            (lhv is FPExpr) and (rhv is FPExpr) -> mul(ctx, lhv.castTo<FPExpr>(), rhv.castTo())
+            lhv is BitVecExpr && rhv is BitVecExpr -> mul(ctx, lhv.castTo<BitVecExpr>(), rhv.castTo())
+            lhv is FPExpr && rhv is FPExpr -> mul(ctx, lhv.castTo<FPExpr>(), rhv.castTo())
             else -> unreachable { log.error("Unexpected and arguments: $lhv and $rhv") }
         }
         Opcode.DIVIDE -> when {
-            (lhv is BitVecExpr) and (rhv is BitVecExpr) -> sdiv(ctx, lhv.castTo<BitVecExpr>(), rhv.castTo())
-            (lhv is FPExpr) and (rhv is FPExpr) -> sdiv(ctx, lhv.castTo<FPExpr>(), rhv.castTo())
+            lhv is BitVecExpr && rhv is BitVecExpr -> sdiv(ctx, lhv.castTo<BitVecExpr>(), rhv.castTo())
+            lhv is FPExpr && rhv is FPExpr -> sdiv(ctx, lhv.castTo<FPExpr>(), rhv.castTo())
             else -> unreachable { log.error("Unexpected and arguments: $lhv and $rhv") }
         }
         Opcode.MOD -> smod(ctx, lhv.castTo(), rhv.castTo())
         Opcode.GT -> when {
-            (lhv is BitVecExpr) and (rhv is BitVecExpr) -> gt(ctx, lhv.castTo<BitVecExpr>(), rhv.castTo())
-            (lhv is FPExpr) and (rhv is FPExpr) -> gt(ctx, lhv.castTo<FPExpr>(), rhv.castTo())
+            lhv is BitVecExpr && rhv is BitVecExpr -> gt(ctx, lhv.castTo<BitVecExpr>(), rhv.castTo())
+            lhv is FPExpr && rhv is FPExpr -> gt(ctx, lhv.castTo<FPExpr>(), rhv.castTo())
             else -> unreachable { log.error("Unexpected and arguments: $lhv and $rhv") }
         }
         Opcode.GE -> when {
-            (lhv is BitVecExpr) and (rhv is BitVecExpr) -> ge(ctx, lhv.castTo<BitVecExpr>(), rhv.castTo())
-            (lhv is FPExpr) and (rhv is FPExpr) -> ge(ctx, lhv.castTo<FPExpr>(), rhv.castTo())
+            lhv is BitVecExpr && rhv is BitVecExpr -> ge(ctx, lhv.castTo<BitVecExpr>(), rhv.castTo())
+            lhv is FPExpr && rhv is FPExpr -> ge(ctx, lhv.castTo<FPExpr>(), rhv.castTo())
             else -> unreachable { log.error("Unexpected and arguments: $lhv and $rhv") }
         }
         Opcode.LT -> when {
-            (lhv is BitVecExpr) and (rhv is BitVecExpr) -> lt(ctx, lhv.castTo<BitVecExpr>(), rhv.castTo())
-            (lhv is FPExpr) and (rhv is FPExpr) -> lt(ctx, lhv.castTo<FPExpr>(), rhv.castTo())
+            lhv is BitVecExpr && rhv is BitVecExpr -> lt(ctx, lhv.castTo<BitVecExpr>(), rhv.castTo())
+            lhv is FPExpr && rhv is FPExpr -> lt(ctx, lhv.castTo<FPExpr>(), rhv.castTo())
             else -> unreachable { log.error("Unexpected and arguments: $lhv and $rhv") }
         }
         Opcode.LE -> when {
-            (lhv is BitVecExpr) and (rhv is BitVecExpr) -> le(ctx, lhv.castTo<BitVecExpr>(), rhv.castTo())
-            (lhv is FPExpr) and (rhv is FPExpr) -> le(ctx, lhv.castTo<FPExpr>(), rhv.castTo())
+            lhv is BitVecExpr && rhv is BitVecExpr -> le(ctx, lhv.castTo<BitVecExpr>(), rhv.castTo())
+            lhv is FPExpr && rhv is FPExpr -> le(ctx, lhv.castTo<FPExpr>(), rhv.castTo())
             else -> unreachable { log.error("Unexpected and arguments: $lhv and $rhv") }
         }
         Opcode.SHL -> shl(ctx, lhv.castTo(), rhv.castTo())
         Opcode.SHR -> lshr(ctx, lhv.castTo(), rhv.castTo())
         Opcode.ASHR -> ashr(ctx, lhv.castTo(), rhv.castTo())
         Opcode.AND -> when {
-            (lhv is BoolExpr) and (rhv is BoolExpr) -> and(ctx, lhv.castTo<BoolExpr>(), rhv.castTo())
-            (lhv is BitVecExpr) and (rhv is BitVecExpr) -> and(ctx, lhv.castTo<BitVecExpr>(), rhv.castTo())
+            lhv is BoolExpr && rhv is BoolExpr -> and(ctx, lhv.castTo<BoolExpr>(), rhv.castTo())
+            lhv is BitVecExpr && rhv is BitVecExpr -> and(ctx, lhv.castTo<BitVecExpr>(), rhv.castTo())
             else -> unreachable { log.error("Unexpected and arguments: $lhv and $rhv") }
         }
         Opcode.OR -> when {
-            (lhv is BoolExpr) and (rhv is BoolExpr) -> or(ctx, lhv.castTo<BoolExpr>(), rhv.castTo())
-            (lhv is BitVecExpr) and (rhv is BitVecExpr) -> or(ctx, lhv.castTo<BitVecExpr>(), rhv.castTo())
+            lhv is BoolExpr && rhv is BoolExpr -> or(ctx, lhv.castTo<BoolExpr>(), rhv.castTo())
+            lhv is BitVecExpr && rhv is BitVecExpr -> or(ctx, lhv.castTo<BitVecExpr>(), rhv.castTo())
             else -> unreachable { log.error("Unexpected or arguments: $lhv or $rhv") }
         }
         Opcode.XOR -> when {
-            (lhv is BoolExpr) and (rhv is BoolExpr) -> xor(ctx, lhv.castTo<BoolExpr>(), rhv.castTo())
-            (lhv is BitVecExpr) and (rhv is BitVecExpr) -> xor(ctx, lhv.castTo<BitVecExpr>(), rhv.castTo())
+            lhv is BoolExpr && rhv is BoolExpr -> xor(ctx, lhv.castTo<BoolExpr>(), rhv.castTo())
+            lhv is BitVecExpr && rhv is BitVecExpr -> xor(ctx, lhv.castTo<BitVecExpr>(), rhv.castTo())
             else -> unreachable { log.error("Unexpected xor arguments: $lhv xor $rhv") }
         }
         Opcode.IMPLIES -> implies(ctx, lhv.castTo(), rhv.castTo())

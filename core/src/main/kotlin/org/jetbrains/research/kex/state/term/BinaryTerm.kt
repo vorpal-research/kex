@@ -28,6 +28,6 @@ class BinaryTerm(type: KexType, val opcode: BinaryOpcode, lhv: Term, rhv: Term) 
     override fun equals(other: Any?): Boolean {
         if (other?.javaClass != this.javaClass) return false
         other as BinaryTerm
-        return super.equals(other) and (this.opcode == other.opcode)
+        return super.equals(other) && this.opcode == other.opcode
     }
 }

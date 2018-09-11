@@ -88,7 +88,7 @@ abstract class KexTest {
 
             getReachables(method).forEach { inst ->
                 val result = checker.checkReachable(inst)
-                assertTrue(result is Result.SatResult)
+                assertTrue(result is Result.SatResult, "Class $`class`; method $method; ${inst.print()} should be reachable")
 
                 inst as CallInst
                 val assertionsArray = inst.args.first()
@@ -116,7 +116,7 @@ abstract class KexTest {
 
             getUnreachables(method).forEach { inst ->
                 val result = checker.checkReachable(inst)
-                assertTrue(result is Result.UnsatResult)
+                assertTrue(result is Result.UnsatResult, "Class $`class`; method $method; ${inst.print()} should be unreachable")
             }
         }
     }

@@ -143,7 +143,7 @@ class Slicer(val state: PredicateState, sliceTerms: Set<Term>, val aa: AliasAnal
         if (predicate.type != PredicateType.State()) {
             val inversed = predicate.inverse()
             return when {
-                (predicate in currentPath) and (inversed !in currentPath) -> {
+                predicate in currentPath && inversed !in currentPath -> {
                     for (op in predicate.operands) {
                         TermCollector
                                 .getFullTermSet(op)

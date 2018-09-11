@@ -57,8 +57,8 @@ class DisjointSetTest {
         assertEquals(ds.join(first, first), first)
 
         val root = ds.join(first, second)
-        assertTrue(first.isRoot() or second.isRoot())
-        assertTrue((first == root) or (second == root))
+        assertTrue(first.isRoot() || second.isRoot())
+        assertTrue(first == root || second == root)
         val nonroot = if (first == root) second else first
         assertEquals(root.rank, 1)
         assertEquals(nonroot.rank, 0)
