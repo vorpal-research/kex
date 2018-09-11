@@ -28,6 +28,6 @@ class CmpTerm(type: KexType, val opcode: CmpOpcode, lhv: Term, rhv: Term) : Term
     override fun equals(other: Any?): Boolean {
         if (other?.javaClass != this.javaClass) return false
         other as CmpTerm
-        return super.equals(other) and (this.opcode == other.opcode)
+        return super.equals(other) && this.opcode == other.opcode
     }
 }

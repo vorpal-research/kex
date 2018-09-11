@@ -7,7 +7,7 @@
         </encoder>
     </appender>
 
-    <logger name="org.jetbrains.research" level="error" additivity="false">
+    <logger name="org.jetbrains.research" level="debug" additivity="false">
         <appender-ref ref="stdout"/>
     </logger>
 

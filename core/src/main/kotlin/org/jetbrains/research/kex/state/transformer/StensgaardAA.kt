@@ -27,7 +27,7 @@ class StensgaardAA : Transformer<StensgaardAA>, AliasAnalysis {
 
     private fun quasi(): Token = relations.emplace(null)
     private fun join(lhv: Token, rhv: Token): Token = when {
-        (lhv != null) and (rhv != null) ->
+        lhv != null && rhv != null ->
             if (lhv == rhv) lhv
             else {
                 val lpts = relations.findUnsafe(pointsTo(lhv))

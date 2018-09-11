@@ -21,6 +21,6 @@ class InstanceOfTerm(val checkedType: KexType, operand: Term) : Term("", KexBool
     override fun equals(other: Any?): Boolean {
         if (other?.javaClass != this.javaClass) return false
         other as InstanceOfTerm
-        return super.equals(other) and (this.checkedType == other.checkedType)
+        return super.equals(other) && this.checkedType == other.checkedType
     }
 }
