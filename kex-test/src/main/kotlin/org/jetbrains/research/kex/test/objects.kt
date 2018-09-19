@@ -1,4 +1,4 @@
-@file:Suppress("UNUSED_PARAMETER", "UNUSED_VARIABLE")
+@file:Suppress("UNUSED_PARAMETER", "UNUSED_VARIABLE", "SENSELESS_COMPARISON")
 package org.jetbrains.research.kex.test
 
 class ObjectTests {
@@ -32,5 +32,13 @@ class ObjectTests {
         println(result.start)
         Intrinsics.assertReachable()
         return result
+    }
+
+    fun testNullability(line: Line) {
+        val start = line.start
+        if (null == start)
+            Intrinsics.assertUnreachable()
+        else
+            Intrinsics.assertReachable()
     }
 }
