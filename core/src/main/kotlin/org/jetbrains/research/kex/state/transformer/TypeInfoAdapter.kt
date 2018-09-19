@@ -69,7 +69,7 @@ class TypeInfoAdapter(val method: Method, val loader: ClassLoader) : Recollectin
             tryOrNull { getKClass(KexClass(method.`class`)).declaredMemberFunctions }?.find { it.eq(method) }
 
     private fun getKProperty(field: Field) =
-            tryOrNull { getKClass(KexClass(field.`class`)).declaredMemberProperties }?.find { it.name == method.name }
+            tryOrNull { getKClass(KexClass(field.`class`)).declaredMemberProperties }?.find { it.name == field.name }
 
     override fun apply(ps: PredicateState): PredicateState {
         if (!method.isAbstract) {
@@ -96,19 +96,31 @@ class TypeInfoAdapter(val method: Method, val loader: ClassLoader) : Recollectin
     }
 
     override fun transformEqualityPredicate(predicate: EqualityPredicate): Predicate {
-        if (predicate.rhv is FieldLoadTerm) {
-            val field = (predicate.rhv as FieldLoadTerm).field as FieldTerm
-            val fieldType = (field.type as KexReference).reference
-            val `class` = field.getClass()
-            val actualField = `class`.getField((field.fieldName as ConstStringTerm).name, fieldType.kfgType)
-
-            val prop = getKProperty(actualField)
-            val returnType = tryOrNull { prop?.getter?.returnType }
-
-            if (returnType != null && fieldType.isNonNullable(returnType)) {
-                currentBuilder += pf.getInequality(predicate.lhv, tf.getNull(), PredicateType.Assume())
-            }
+        val adaptedPredicates = when {
+            predicate.rhv is FieldLoadTerm -> adaptFieldLoad(predicate)
+            else -> listOf(predicate)
         }
-        return predicate
+
+        adaptedPredicates.dropLast(1).forEach { currentBuilder += it }
+        return adaptedPredicates.last()
+    }
+
+    private fun adaptFieldLoad(predicate: EqualityPredicate): List<Predicate> {
+        val result = arrayListOf<Predicate>()
+        result += predicate
+
+        val field = (predicate.rhv as FieldLoadTerm).field as FieldTerm
+        val fieldType = (field.type as KexReference).reference
+        val `class` = field.getClass()
+        val actualField = `class`.getField((field.fieldName as ConstStringTerm).name, fieldType.kfgType)
+
+        val prop = getKProperty(actualField)
+        val returnType = tryOrNull { prop?.getter?.returnType }
+
+        if (returnType != null && fieldType.isNonNullable(returnType)) {
+            result += pf.getInequality(predicate.lhv, tf.getNull(), PredicateType.Assume())
+        }
+
+        return result
     }
 }
