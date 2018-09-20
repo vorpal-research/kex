@@ -14,11 +14,19 @@ object TraceInstrumenter : MethodVisitor {
 
     val insertedInsts = mutableListOf<Instruction>()
 
+    private fun instrumentInst(inst: Instruction, instrumenter: (inst: Instruction) -> List<Instruction>) {
+        val bb = inst.parent!!
+
+        val insts = instrumenter(inst)
+        insertedInsts.addAll(insts)
+        bb.insertBefore(inst, *insts.toTypedArray())
+    }
+
     override fun cleanup() {
         insertedInsts.clear()
     }
 
-    override fun visitReturnInst(inst: ReturnInst) {
+    override fun visitReturnInst(inst: ReturnInst) = instrumentInst(inst) {
         val bb = inst.parent!!
         val method = bb.parent!!
 
@@ -37,13 +45,10 @@ object TraceInstrumenter : MethodVisitor {
         }
         builder.println(";")
 
-        insertedInsts.addAll(printer.insns)
-        insertedInsts.addAll(builder.insns)
-        bb.insertBefore(inst, *printer.insns.toTypedArray())
-        bb.insertBefore(inst, *builder.insns.toTypedArray())
+        printer.insns + builder.insns
     }
 
-    override fun visitThrowInst(inst: ThrowInst) {
+    override fun visitThrowInst(inst: ThrowInst) = instrumentInst(inst) {
         val bb = inst.parent!!
         val method = bb.parent!!
 
@@ -56,23 +61,18 @@ object TraceInstrumenter : MethodVisitor {
         builder.print(str)
         builder.println(";")
 
-        insertedInsts.addAll(printer.insns)
-        insertedInsts.addAll(builder.insns)
-        bb.insertBefore(inst, *printer.insns.toTypedArray())
-        bb.insertBefore(inst, *builder.insns.toTypedArray())
+        printer.insns + builder.insns
     }
 
-    override fun visitJumpInst(inst: JumpInst) {
+    override fun visitJumpInst(inst: JumpInst) = instrumentInst(inst) {
         val bb = inst.parent!!
 
         val builder = SystemOutWrapper("sout")
         builder.println("$tracePrefix exit ${bb.name};")
-
-        insertedInsts.addAll(builder.insns)
-        bb.insertBefore(inst, *builder.insns.toTypedArray())
+        builder.insns
     }
 
-    override fun visitBranchInst(inst: BranchInst) {
+    override fun visitBranchInst(inst: BranchInst) = instrumentInst(inst) {
         val condition = inst.cond as CmpInst
         val bb = inst.parent!!
 
@@ -86,13 +86,10 @@ object TraceInstrumenter : MethodVisitor {
         sout.print(rhv)
         sout.println(";")
 
-        insertedInsts.addAll(printer.insns)
-        insertedInsts.addAll(sout.insns)
-        bb.insertBefore(condition, *printer.insns.toTypedArray())
-        bb.insertBefore(condition, *sout.insns.toTypedArray())
+        printer.insns + sout.insns
     }
 
-    override fun visitSwitchInst(inst: SwitchInst) {
+    override fun visitSwitchInst(inst: SwitchInst) = instrumentInst(inst) {
         val bb = inst.parent!!
 
         val builder = SystemOutWrapper("sout")
@@ -102,13 +99,10 @@ object TraceInstrumenter : MethodVisitor {
         builder.print(str)
         builder.println(";")
 
-        insertedInsts.addAll(printer.insns)
-        insertedInsts.addAll(builder.insns)
-        bb.insertBefore(inst, *printer.insns.toTypedArray())
-        bb.insertBefore(inst, *builder.insns.toTypedArray())
+        printer.insns + builder.insns
     }
 
-    override fun visitTableSwitchInst(inst: TableSwitchInst) {
+    override fun visitTableSwitchInst(inst: TableSwitchInst) = instrumentInst(inst) {
         val bb = inst.parent!!
 
         val builder = SystemOutWrapper("sout")
@@ -118,10 +112,7 @@ object TraceInstrumenter : MethodVisitor {
         builder.print(str)
         builder.println(";")
 
-        insertedInsts.addAll(printer.insns)
-        insertedInsts.addAll(builder.insns)
-        bb.insertBefore(inst, *printer.insns.toTypedArray())
-        bb.insertBefore(inst, *builder.insns.toTypedArray())
+        printer.insns + builder.insns
     }
 
     override fun visitBasicBlock(bb: BasicBlock) {

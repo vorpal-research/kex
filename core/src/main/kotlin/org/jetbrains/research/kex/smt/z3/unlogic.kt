@@ -19,13 +19,13 @@ object Z3Unlogic {
         else -> unreachable { log.error("Unexpected expr in unlogic: $expr") }
     }
 
-    fun undoBool(expr: BoolExpr) = when (expr.boolValue) {
+    private fun undoBool(expr: BoolExpr) = when (expr.boolValue) {
         Z3_lbool.Z3_L_TRUE -> tf.getTrue()
         Z3_lbool.Z3_L_FALSE -> tf.getFalse()
         else -> unreachable { log.error("Trying to undo unknown") }
     }
 
-    fun undoBV(expr: BitVecNum) = when (expr.sortSize) {
+    private fun undoBV(expr: BitVecNum) = when (expr.sortSize) {
         SMTEngine.WORD -> tf.getInt(expr.long.toInt())
         SMTEngine.DWORD -> {
             val value = try {
@@ -38,7 +38,7 @@ object Z3Unlogic {
         else -> unreachable { log.error("Trying to undo bv with unexpected size: ${expr.sortSize}") }
     }
 
-    fun undoFloat(expr: FPNum): Term {
+    private fun undoFloat(expr: FPNum): Term {
         val isDouble = (expr.eBits + expr.sBits) == SMTEngine.DWORD
         val termifier = { a: Double -> when {
             isDouble -> tf.getDouble(a)

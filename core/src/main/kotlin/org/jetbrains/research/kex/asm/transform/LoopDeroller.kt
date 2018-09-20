@@ -77,6 +77,7 @@ object LoopDeroller : LoopVisitor {
     override fun visit(loop: Loop) {
         super.visit(loop)
 
+        // init state
         val method = loop.method ?: unreachable { log.error("Can't get method of loop") }
         val blockOrder = getBlockOrder(loop)
         val state = State.createState(loop)
@@ -87,11 +88,13 @@ object LoopDeroller : LoopVisitor {
 
         log.debug("Method $method, unrolling loop $loop to $derollCount iterations")
 
+        // save current phi instructions of method
         val methodPhis = method.filter { it !in body }.flatten().mapNotNull { it as? PhiInst }
         val methodPhiMappings = methodPhis.map { phi ->
             phi to phi.incomings.filterNot { it.key in body }.toMutableMap()
         }.toMap().toMutableMap()
 
+        // deroll loop for given number of iterations
         for (iteration in 0..derollCount) {
             state.blockMappings.clear()
             for (block in blockOrder) {
@@ -135,6 +138,7 @@ object LoopDeroller : LoopVisitor {
         unreachableBlock.add(IF.getUnreachable())
         method.add(unreachableBlock)
 
+        // remap blocks of last iteration to actual method blocks
         val lastTerminator = state[state.terminatingBlock]
         val continueBlock = lastTerminator.terminator.successors[(!state.continueOnTrue).toInt()]
         lastTerminator.replaceUsesOf(continueBlock, unreachableBlock)
@@ -146,6 +150,7 @@ object LoopDeroller : LoopVisitor {
             method.remove(copy)
         }
 
+        // cleanup loop
         cleanupBody(method, body)
         remapMethodPhis(methodPhis, methodPhiMappings)
     }
