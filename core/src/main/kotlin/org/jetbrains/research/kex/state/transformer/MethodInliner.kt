@@ -37,7 +37,7 @@ class MethodInliner(val method: Method) : RecollectingTransformer<MethodInliner>
             mappings[retval] = predicate.lhv
         }
 
-        for ((index, argType) in calledMethod.desc.args.withIndex()) {
+        for ((index, argType) in calledMethod.argTypes.withIndex()) {
             val argTerm = tf.getArgument(argType.kexType, index)
             val calledArg = call.arguments[index]
             mappings[argTerm] = calledArg

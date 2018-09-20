@@ -133,7 +133,7 @@ object TraceInstrumenter : MethodVisitor {
         val builder = SystemOutWrapper("sout")
         builder.println("$tracePrefix enter $methodName;")
 
-        val args = method.desc.args
+        val args = method.argTypes
         val printer = ValuePrinter()
         if (!method.isStatic) {
             val thisType = TF.getRefType(method.`class`)

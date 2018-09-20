@@ -72,7 +72,7 @@ class RandomRunner(val method: KfgMethod, val loader: ClassLoader) {
     private val javaMethod: java.lang.reflect.Method
 
     init {
-        val argumentTypes = method.desc.args.map { getClass(it, loader) }.toTypedArray()
+        val argumentTypes = method.argTypes.map { getClass(it, loader) }.toTypedArray()
         javaMethod = javaClass.getDeclaredMethod(method.name, *argumentTypes)
     }
 

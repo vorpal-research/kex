@@ -5,6 +5,7 @@ import org.jetbrains.research.kex.util.log
 import org.jetbrains.research.kex.util.toInt
 import org.jetbrains.research.kex.util.unreachable
 import org.jetbrains.research.kfg.IF
+import org.jetbrains.research.kfg.VF
 import org.jetbrains.research.kfg.analysis.Loop
 import org.jetbrains.research.kfg.analysis.LoopVisitor
 import org.jetbrains.research.kfg.ir.BasicBlock
@@ -163,6 +164,11 @@ object LoopDeroller : LoopVisitor {
         }
     }
 
+    private fun getOpcodeConstant(opcode: CmpOpcode, constant: IntConstant) = when (opcode) {
+        is CmpOpcode.Le, is CmpOpcode.Ge -> constant
+        else -> VF.getIntConstant(constant.value + 1) as IntConstant
+    }
+
     private fun getConstantTripCount(loop: Loop): Int {
         val header = loop.header
         val preheader = loop.preheader
@@ -171,8 +177,8 @@ object LoopDeroller : LoopVisitor {
         val branch = header.terminator as? BranchInst ?: return -1
         val cmp = branch.cond as? CmpInst ?: return -1
         val (value, max) = when {
-            cmp.lhv is IntConstant -> cmp.rhv to (cmp.lhv as IntConstant)
-            cmp.rhv is IntConstant -> cmp.lhv to (cmp.rhv as IntConstant)
+            cmp.lhv is IntConstant -> cmp.rhv to getOpcodeConstant(cmp.opcode, cmp.lhv as IntConstant)
+            cmp.rhv is IntConstant -> cmp.lhv to getOpcodeConstant(cmp.opcode, cmp.rhv as IntConstant)
             else -> return -1
         }
 

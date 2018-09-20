@@ -51,7 +51,7 @@ class Checker(val method: Method, val loader: ClassLoader, private val psa: Pred
 
             val tf = TermFactory
             val slicingTerms = hashSetOf<Term>()
-            slicingTerms.addAll(method.desc.args.withIndex().map { (index, type) -> tf.getArgument(type.kexType, index) })
+            slicingTerms.addAll(method.argTypes.withIndex().map { (index, type) -> tf.getArgument(type.kexType, index) })
 
             if (!method.isAbstract) {
                 val `this` = tf.getThis(method.`class`)
