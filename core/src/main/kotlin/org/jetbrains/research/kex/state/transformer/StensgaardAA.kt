@@ -15,15 +15,15 @@ interface AliasAnalysis {
 }
 
 class StensgaardAA : Transformer<StensgaardAA>, AliasAnalysis {
-    val relations = DisjointSet<Term?>()
-    val pointsTo = hashMapOf<Token, Token>()
-    val mapping = hashMapOf<Term, Token>()
-    val nonaliased = hashSetOf<Term>()
-    val spaces = hashMapOf<KexType, Token>()
-    val nonFreeTerms = hashSetOf<Term>()
+    private val relations = DisjointSet<Term?>()
+    private val pointsTo = hashMapOf<Token, Token>()
+    private val mapping = hashMapOf<Term, Token>()
+    private val nonAliased = hashSetOf<Term>()
+    private val spaces = hashMapOf<KexType, Token>()
+    private val nonFreeTerms = hashSetOf<Term>()
 
-    fun pointsTo(token: Token) = pointsTo.getOrPut(token) { null }
-    fun spaces(type: KexType) = spaces.getOrPut(type) { null }
+    private fun pointsTo(token: Token) = pointsTo.getOrPut(token) { null }
+    private fun spaces(type: KexType) = spaces.getOrPut(type) { null }
 
     private fun quasi(): Token = relations.emplace(null)
     private fun join(lhv: Token, rhv: Token): Token = when {
@@ -133,7 +133,7 @@ class StensgaardAA : Transformer<StensgaardAA>, AliasAnalysis {
     }
 
     override fun transformNewArrayPredicate(predicate: NewArrayPredicate): Predicate {
-        nonaliased.add(predicate.lhv)
+        nonAliased.add(predicate.lhv)
         nonFreeTerms.add(predicate.lhv)
 
         val ls = get(predicate.lhv)
@@ -142,7 +142,7 @@ class StensgaardAA : Transformer<StensgaardAA>, AliasAnalysis {
     }
 
     override fun transformNewPredicate(predicate: NewPredicate): Predicate {
-        nonaliased.add(predicate.lhv)
+        nonAliased.add(predicate.lhv)
         nonFreeTerms.add(predicate.lhv)
 
         val ls = get(predicate.lhv)
@@ -170,7 +170,7 @@ class StensgaardAA : Transformer<StensgaardAA>, AliasAnalysis {
     override fun mayAlias(lhv: Term, rhv: Term): Boolean {
         if (lhv === rhv) return true
 
-        if (nonaliased.contains(lhv) && nonaliased.contains(rhv)) return false
+        if (nonAliased.contains(lhv) && nonAliased.contains(rhv)) return false
 
         val ls = pointsTo(get(lhv))
         val rs = pointsTo(get(rhv))

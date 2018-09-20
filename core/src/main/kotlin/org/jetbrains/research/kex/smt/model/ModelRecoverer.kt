@@ -11,7 +11,6 @@ import org.jetbrains.research.kex.util.unreachable
 import org.jetbrains.research.kfg.ir.Method
 import java.lang.reflect.Array
 
-
 private fun Term.isPointer() = this.type is KexPointer
 private fun Term.isPrimary() = !isPointer()
 

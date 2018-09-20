@@ -60,8 +60,7 @@ class PredicateStateBuilder(val method: Method) {
         order.filter { it in active }.forEach {
             processBasicBlock(it)
         }
-        val result = instructionStates[inst]
-        return result
+        return instructionStates[inst]
     }
 
     private fun processBasicBlock(bb: BasicBlock) {

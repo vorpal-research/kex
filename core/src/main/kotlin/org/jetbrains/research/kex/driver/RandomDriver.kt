@@ -4,6 +4,7 @@ import io.github.benas.randombeans.EnhancedRandomBuilder
 import io.github.benas.randombeans.api.EnhancedRandom
 import org.jetbrains.research.kex.config.GlobalConfig
 import org.jetbrains.research.kex.util.log
+import org.jetbrains.research.kex.util.tryOrNull
 import java.lang.reflect.ParameterizedType
 import java.lang.reflect.Type
 import java.lang.reflect.TypeVariable
@@ -62,14 +63,14 @@ object RandomDriver {
 
     fun generate(type: Type): Any? {
         repeat(attempts) {
-            try {
+            tryOrNull {
                 return when (type) {
                     is Class<*> -> generateClass(type)
                     is ParameterizedType -> generateParameterized(type)
                     is TypeVariable<*> -> generateTypeVariable(type)
                     else -> throw UnknownTypeException(type.toString())
                 }
-            } catch (exc: Throwable) {}
+            }
         }
         throw GenerationException("Unable to generate a random instance of type $type")
     }
