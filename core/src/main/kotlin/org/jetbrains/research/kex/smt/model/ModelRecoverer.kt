@@ -14,6 +14,8 @@ import java.lang.reflect.Array
 private fun Term.isPointer() = this.type is KexPointer
 private fun Term.isPrimary() = !isPointer()
 
+data class RecoveredModel(val method: Method, val instance: Any?, val arguments: List<Any?>)
+
 class ModelRecoverer(val method: Method, val model: SMTModel, val loader: ClassLoader) {
     val tf = TermFactory
     val terms = hashMapOf<Term, Any?>()
@@ -29,14 +31,24 @@ class ModelRecoverer(val method: Method, val model: SMTModel, val loader: ClassL
     private fun memory(memspace: Int, address: Int, value: Any?) =
             memoryMappings.getOrPut(memspace, ::hashMapOf).getOrPut(address) { value }
 
-    fun apply() {
-        val recoveringTerms = hashSetOf<Term>()
-        recoveringTerms += model.assignments.keys.filterNot { it.print().startsWith("arg\$") }
-        recoveringTerms += model.assignments.keys.filterNot { it.print().startsWith("this") }
-
-        for (term in recoveringTerms) {
-            terms[term] = recoverTerm(term)
+    fun apply(): RecoveredModel {
+        val `this` = model.assignments.keys.firstOrNull { it.print().startsWith("this") }
+        val instance = when (`this`){
+            null -> null
+            else -> recoverTerm(`this`)
         }
+
+        val modelArgs  = model.assignments.keys.asSequence()
+                .mapNotNull { it as? ArgumentTerm }.map { it.index to it }.toMap()
+
+        val recoveredArgs = arrayListOf<Any?>()
+        for (index in 0..method.argTypes.lastIndex) {
+            val modelArg = modelArgs[index]
+            val recoveredArg = if (modelArg != null) recoverTerm(modelArg) else modelArg
+            recoveredArgs.add(recoveredArg)
+        }
+
+        return RecoveredModel(method, instance, recoveredArgs)
     }
 
     private fun recoverTerm(term: Term, value: Term? = model.assignments[term]): Any? = when {

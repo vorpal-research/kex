@@ -56,7 +56,7 @@ class TypeInfoAdapter(val method: Method, val loader: ClassLoader) : Recollectin
     private fun KFunction<*>.eq(method: Method): Boolean {
         val parameters = this.parameters.drop(method.isAbstract.not().toInt())
 
-        return this.name == method.name && parameters.zip(method.desc.args).fold(true) { acc, pair ->
+        return this.name == method.name && parameters.zip(method.argTypes).fold(true) { acc, pair ->
             val type = pair.first.type
             val paramType = type.classifier?.toString() ?: type.toString()
             acc && paramType == pair.second.canonicalDesc

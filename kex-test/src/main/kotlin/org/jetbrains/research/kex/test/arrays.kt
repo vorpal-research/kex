@@ -15,6 +15,7 @@ class ArrayTests {
         for (i in 0..4) {
             Intrinsics.assertReachable(simpleArray[i] == i)
         }
+        Intrinsics.assertReachable()
     }
 
     fun testArrayWrite() {
@@ -27,5 +28,23 @@ class ArrayTests {
         for (i in 0 until 5) {
             Intrinsics.assertReachable(emptyArray[i] == i * i)
         }
+        Intrinsics.assertReachable()
+    }
+
+    fun testUnknownArrayWrite(array: IntArray) {
+        if (array.size < 5) {
+            Intrinsics.assertReachable(array.size < 5)
+            return
+        }
+        Intrinsics.assertReachable(array.size >= 5)
+
+        for (i in 0 until 5) {
+            array[i] = i * i
+        }
+
+        for (i in 0 until 5) {
+            Intrinsics.assertReachable(array[i] == i * i)
+        }
+        Intrinsics.assertReachable()
     }
 }

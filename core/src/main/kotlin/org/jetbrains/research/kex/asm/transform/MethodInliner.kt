@@ -66,7 +66,7 @@ object MethodInliner : MethodVisitor {
             val `this` = VF.getThis(TF.getRefType(calledMethod.`class`))
             valueMapping[`this`] = inst.callee
         }
-        for ((index, type) in calledMethod.desc.args.withIndex()) {
+        for ((index, type) in calledMethod.argTypes.withIndex()) {
             val arg = VF.getArgument(index, calledMethod, type)
             val actualArg = inst.args[index]
             valueMapping[arg] = actualArg

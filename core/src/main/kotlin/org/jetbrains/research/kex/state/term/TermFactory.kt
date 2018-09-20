@@ -109,9 +109,9 @@ object TermFactory {
     fun getBound(ptr: Term) = getBound(KexInt, ptr)
     fun getBound(type: KexType, ptr: Term) = BoundTerm(type, ptr)
 
-    fun getCall(method: Method, arguments: List<Term>) = getCall(method.desc.retval.kexType, method, arguments)
+    fun getCall(method: Method, arguments: List<Term>) = getCall(method.returnType.kexType, method, arguments)
     fun getCall(method: Method, objectRef: Term, arguments: List<Term>) =
-            getCall(method.desc.retval.kexType, objectRef, method, arguments)
+            getCall(method.returnType.kexType, objectRef, method, arguments)
 
     fun getCall(type: KexType, method: Method, arguments: List<Term>) =
             CallTerm(type, getClass(method.`class`), method, arguments)
@@ -136,7 +136,7 @@ object TermFactory {
 
     fun getInstanceOf(checkedType: KexType, operand: Term) = InstanceOfTerm(checkedType, operand)
 
-    fun getReturn(method: Method) = getReturn(method.desc.retval.kexType, method)
+    fun getReturn(method: Method) = getReturn(method.returnType.kexType, method)
     fun getReturn(type: KexType, method: Method) = ReturnValueTerm(type, method)
 
     fun getValue(value: Value) = when (value) {
