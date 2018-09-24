@@ -1,9 +1,6 @@
 package org.jetbrains.research.kex.state.transformer
 
-import org.jetbrains.research.kex.ktype.KexClass
-import org.jetbrains.research.kex.ktype.KexPointer
-import org.jetbrains.research.kex.ktype.KexReference
-import org.jetbrains.research.kex.ktype.KexType
+import org.jetbrains.research.kex.ktype.*
 import org.jetbrains.research.kex.state.PredicateState
 import org.jetbrains.research.kex.state.StateBuilder
 import org.jetbrains.research.kex.state.predicate.CallPredicate
@@ -15,6 +12,7 @@ import org.jetbrains.research.kex.state.term.ConstStringTerm
 import org.jetbrains.research.kex.state.term.FieldLoadTerm
 import org.jetbrains.research.kex.state.term.FieldTerm
 import org.jetbrains.research.kex.util.getClass
+import org.jetbrains.research.kex.util.log
 import org.jetbrains.research.kex.util.toInt
 import org.jetbrains.research.kex.util.tryOrNull
 import org.jetbrains.research.kfg.CM
@@ -22,11 +20,14 @@ import org.jetbrains.research.kfg.TF
 import org.jetbrains.research.kfg.ir.Field
 import org.jetbrains.research.kfg.ir.Method
 import org.jetbrains.research.kfg.ir.MethodDesc
+import org.jetbrains.research.kfg.type.Reference
+import org.jetbrains.research.kfg.type.Type
 import java.util.*
 import kotlin.reflect.KFunction
 import kotlin.reflect.KType
 import kotlin.reflect.full.declaredMemberFunctions
 import kotlin.reflect.full.declaredMemberProperties
+import kotlin.reflect.jvm.jvmErasure
 
 class TypeInfoAdapter(val method: Method, val loader: ClassLoader) : RecollectingTransformer<TypeInfoAdapter> {
     override val builders = ArrayDeque<StateBuilder>()
@@ -53,13 +54,28 @@ class TypeInfoAdapter(val method: Method, val loader: ClassLoader) : Recollectin
         else -> false
     }
 
+    private fun trimClassName(name: String): String {
+        val actualName = name.split(" ").last()
+        val filtered = actualName.dropWhile { it == '[' }.removeSuffix(";")
+        val result = StringBuilder()
+        result.append(actualName.takeWhile { it == '[' })
+        result.append(filtered.dropWhile { it == 'L' })
+        return "$result"
+    }
+
+    private val Type.trimmedName get() = when (this) {
+        is Reference -> trimClassName(this.canonicalDesc)
+        else -> this.name
+    }
+    private val Class<*>.trimmedName get() = trimClassName(this.toString())
+
     private fun KFunction<*>.eq(method: Method): Boolean {
         val parameters = this.parameters.drop(method.isAbstract.not().toInt())
 
-        return this.name == method.name && parameters.zip(method.argTypes).fold(true) { acc, pair ->
-            val type = pair.first.type
-            val paramType = type.classifier?.toString() ?: type.toString()
-            acc && paramType == pair.second.canonicalDesc
+        return this.name == method.name
+                && parameters.zip(method.argTypes).fold(true) { acc, pair ->
+            val type = pair.first.type.jvmErasure.java
+            acc && type.trimmedName == pair.second.trimmedName
         }
     }
 
@@ -72,18 +88,33 @@ class TypeInfoAdapter(val method: Method, val loader: ClassLoader) : Recollectin
             tryOrNull { getKClass(KexClass(field.`class`)).declaredMemberProperties }?.find { it.name == field.name }
 
     override fun apply(ps: PredicateState): PredicateState {
+        val `null` = tf.getNull()
+
         if (!method.isAbstract) {
-            val `null` = tf.getNull()
             val `this` = tf.getThis(method.`class`)
             currentBuilder += pf.getInequality(`this`, `null`, PredicateType.Assume())
         }
+
+        val kFunction = getKFunction(method)
+        if (kFunction != null) {
+            val parameters = kFunction.parameters.drop(method.isAbstract.not().toInt())
+
+            for ((param, type) in parameters.zip(method.argTypes)) {
+                val arg = tf.getArgument(type.kexType, param.index)
+
+                if (arg.type.isNonNullable(param.type)) {
+                    currentBuilder += pf.getInequality(arg, `null`, PredicateType.Assume())
+                }
+            }
+        } else {
+            log.error("Could not load kfunction for method $method")
+        }
+
         return super.apply(ps)
     }
 
     override fun transformCallPredicate(predicate: CallPredicate): Predicate {
         val call = predicate.call as CallTerm
-
-        if (call.method == checkNotNull) return pf.getInequality(call.arguments[0], tf.getNull(), PredicateType.Assume())
 
         val kFunction = getKFunction(call.method)
         if (!predicate.hasLhv || kFunction == null) return predicate
@@ -96,8 +127,9 @@ class TypeInfoAdapter(val method: Method, val loader: ClassLoader) : Recollectin
     }
 
     override fun transformEqualityPredicate(predicate: EqualityPredicate): Predicate {
-        val adaptedPredicates = when {
-            predicate.rhv is FieldLoadTerm -> adaptFieldLoad(predicate)
+        val adaptedPredicates = when (predicate.rhv) {
+            is FieldLoadTerm -> adaptFieldLoad(predicate)
+//            is ArrayLoadTerm -> adaptArrayLoad(predicate)
             else -> listOf(predicate)
         }
 
@@ -123,4 +155,29 @@ class TypeInfoAdapter(val method: Method, val loader: ClassLoader) : Recollectin
 
         return result
     }
+
+//    private fun adaptArrayLength(predicate: EqualityPredicate): List<Predicate> {
+//        val result = arrayListOf<Predicate>()
+//        result += predicate
+//
+//        val lhv = predicate.lhv
+//        val arrayLength = predicate.rhv as ArrayLengthTerm
+//        result += pf.getEquality(tf.getCmp(CmpOpcode.Ge(), lhv, tf.getInt(0)), tf.getTrue())
+//
+//        return result
+//    }
+//
+//    private fun adaptArrayLoad(predicate: EqualityPredicate): List<Predicate> {
+//        val result = arrayListOf<Predicate>()
+//        result += predicate
+//
+//        val lhv = predicate.lhv
+//        val arrayLoad = predicate.rhv as ArrayLoadTerm
+//        val arrayIndex = arrayLoad.arrayRef as ArrayIndexTerm
+//
+//        val klass = getKClass(arrayIndex.arrayRef.type)
+//        log.debug("Loaded class $klass for array ${arrayIndex.arrayRef}")
+//
+//        return result
+//    }
 }

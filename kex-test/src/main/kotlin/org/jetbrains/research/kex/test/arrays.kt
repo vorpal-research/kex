@@ -1,4 +1,4 @@
-@file:Suppress("UNUSED_PARAMETER", "UNUSED_VARIABLE")
+@file:Suppress("UNUSED_PARAMETER", "UNUSED_VARIABLE", "SENSELESS_COMPARISON")
 
 package org.jetbrains.research.kex.test
 
@@ -46,5 +46,20 @@ class ArrayTests {
             Intrinsics.assertReachable(array[i] == i * i)
         }
         Intrinsics.assertReachable()
+    }
+
+    fun testObjectArray(nullable: Array<Any?>, nonnulable: Array<Any>) {
+//        if (nullable.isNotEmpty()) {
+//            for (i in nullable) {
+//                Intrinsics.assertReachable(i != null)
+//                Intrinsics.assertReachable(i == null)
+//            }
+//        }
+//        if (nonnulable.isNotEmpty()) {
+//            for (i in nonnulable) {
+//                Intrinsics.assertReachable(i != null)
+//            }
+//        }
+        Intrinsics.assertReachable(nullable != null)
     }
 }

@@ -11,8 +11,9 @@ class ChoiceState(val choices: List<PredicateState>) : PredicateState(), Iterabl
     override fun print(): String {
         val sb = StringBuilder()
         sb.appendln("(BEGIN")
-        choices.take(1).forEach { sb.append(" <OR> $it") }
-        choices.drop(1).forEach { sb.append(", <OR> $it") }
+        sb.append(choices.joinToString { " <OR> $it" })
+//        choices.take(1).forEach { sb.append(" <OR> $it") }
+//        choices.drop(1).forEach { sb.append(", <OR> $it") }
         sb.append(" END)")
         return sb.toString()
     }
@@ -40,7 +41,7 @@ class ChoiceState(val choices: List<PredicateState>) : PredicateState(), Iterabl
 
     override fun simplify(): PredicateState {
         val choices = choices.map { it.filterByType(PredicateType.Path()) }.toSet()
-        val choiceBodies = choices.map { it.filterNot { it.type == PredicateType.Path() } }.toSet()
+        val choiceBodies = choices.asSequence().map { choice -> choice.filterNot { it.type == PredicateType.Path() } }.toSet()
         return when {
             choices.size == 1 -> choices.first()
             choiceBodies.size == 1 -> choiceBodies.first()

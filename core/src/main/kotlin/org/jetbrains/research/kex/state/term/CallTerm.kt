@@ -19,10 +19,8 @@ class CallTerm(type: KexType, owner: Term, val method: Method, operands: List<Te
 
     override fun print(): String {
         val sb = StringBuilder()
-        sb.append("${owner}.${method.name}(")
-        val arguments = arguments
-        arguments.take(1).forEach { sb.append(it) }
-        arguments.drop(1).forEach { sb.append(", $it") }
+        sb.append("$owner.${method.name}(")
+        sb.append(arguments.joinToString())
         sb.append(")")
         return sb.toString()
     }
