@@ -136,11 +136,14 @@ class ModelRecoverer(val method: Method, val model: SMTModel, val loader: ClassL
             val elements = bound / elementSize
 
             val elementClass = getClass(arrayType.element.kfgType, loader)
+            log.debug("Creating array of type $elementClass with size $elements")
             val instance = Array.newInstance(elementClass, elements)
 
             val assignedElements = model.assignments.keys
+                    .asSequence()
                     .mapNotNull { it as? ArrayIndexTerm }
                     .filterNot { it.arrayRef == term }
+                    .toList()
 
             for (index in assignedElements) {
                 val indexMemspace = index.memspace
