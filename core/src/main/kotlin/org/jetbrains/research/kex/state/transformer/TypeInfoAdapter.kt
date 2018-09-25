@@ -1,25 +1,23 @@
 package org.jetbrains.research.kex.state.transformer
 
-import org.jetbrains.research.kex.ktype.*
+import org.jetbrains.research.kex.ktype.KexClass
+import org.jetbrains.research.kex.ktype.KexPointer
+import org.jetbrains.research.kex.ktype.KexReference
+import org.jetbrains.research.kex.ktype.KexType
 import org.jetbrains.research.kex.state.PredicateState
 import org.jetbrains.research.kex.state.StateBuilder
 import org.jetbrains.research.kex.state.predicate.CallPredicate
 import org.jetbrains.research.kex.state.predicate.EqualityPredicate
 import org.jetbrains.research.kex.state.predicate.Predicate
 import org.jetbrains.research.kex.state.predicate.PredicateType
-import org.jetbrains.research.kex.state.term.CallTerm
-import org.jetbrains.research.kex.state.term.ConstStringTerm
-import org.jetbrains.research.kex.state.term.FieldLoadTerm
-import org.jetbrains.research.kex.state.term.FieldTerm
-import org.jetbrains.research.kex.util.getClass
-import org.jetbrains.research.kex.util.log
-import org.jetbrains.research.kex.util.toInt
-import org.jetbrains.research.kex.util.tryOrNull
+import org.jetbrains.research.kex.state.term.*
+import org.jetbrains.research.kex.util.*
 import org.jetbrains.research.kfg.CM
 import org.jetbrains.research.kfg.TF
 import org.jetbrains.research.kfg.ir.Field
 import org.jetbrains.research.kfg.ir.Method
 import org.jetbrains.research.kfg.ir.MethodDesc
+import org.jetbrains.research.kfg.type.ArrayType
 import org.jetbrains.research.kfg.type.Reference
 import org.jetbrains.research.kfg.type.Type
 import java.util.*
@@ -31,6 +29,10 @@ import kotlin.reflect.jvm.jvmErasure
 
 class TypeInfoAdapter(val method: Method, val loader: ClassLoader) : RecollectingTransformer<TypeInfoAdapter> {
     override val builders = ArrayDeque<StateBuilder>()
+
+    private data class ArrayElementInfo(val nullable: Boolean)
+
+    private val arrayElementInfo = hashMapOf<Term, ArrayElementInfo>()
 
     init {
         builders.add(StateBuilder())
@@ -63,10 +65,11 @@ class TypeInfoAdapter(val method: Method, val loader: ClassLoader) : Recollectin
         return "$result"
     }
 
-    private val Type.trimmedName get() = when (this) {
-        is Reference -> trimClassName(this.canonicalDesc)
-        else -> this.name
-    }
+    private val Type.trimmedName
+        get() = when (this) {
+            is Reference -> trimClassName(this.canonicalDesc)
+            else -> this.name
+        }
     private val Class<*>.trimmedName get() = trimClassName(this.toString())
 
     private fun KFunction<*>.eq(method: Method): Boolean {
@@ -88,10 +91,10 @@ class TypeInfoAdapter(val method: Method, val loader: ClassLoader) : Recollectin
             tryOrNull { getKClass(KexClass(field.`class`)).declaredMemberProperties }?.find { it.name == field.name }
 
     override fun apply(ps: PredicateState): PredicateState {
+        val (`this`, arguments) = ArgumentCollector(ps)
         val `null` = tf.getNull()
 
-        if (!method.isAbstract) {
-            val `this` = tf.getThis(method.`class`)
+        if (`this` != null) {
             currentBuilder += pf.getInequality(`this`, `null`, PredicateType.Assume())
         }
 
@@ -100,10 +103,21 @@ class TypeInfoAdapter(val method: Method, val loader: ClassLoader) : Recollectin
             val parameters = kFunction.parameters.drop(method.isAbstract.not().toInt())
 
             for ((param, type) in parameters.zip(method.argTypes)) {
-                val arg = tf.getArgument(type.kexType, param.index)
+                val arg = arguments[param.index - 1] ?: continue
 
                 if (arg.type.isNonNullable(param.type)) {
                     currentBuilder += pf.getInequality(arg, `null`, PredicateType.Assume())
+                }
+
+                if (type is ArrayType) {
+                    arrayElementInfo[arg] = when {
+                        param.type.arguments.isEmpty() -> ArrayElementInfo(false)
+                        else -> {
+                            val karg = param.type.arguments.first().type
+                                    ?: unreachable { log.error("No type for array argument") }
+                            ArrayElementInfo(karg.isMarkedNullable)
+                        }
+                    }
                 }
             }
         } else {
@@ -129,7 +143,7 @@ class TypeInfoAdapter(val method: Method, val loader: ClassLoader) : Recollectin
     override fun transformEqualityPredicate(predicate: EqualityPredicate): Predicate {
         val adaptedPredicates = when (predicate.rhv) {
             is FieldLoadTerm -> adaptFieldLoad(predicate)
-//            is ArrayLoadTerm -> adaptArrayLoad(predicate)
+            is ArrayLoadTerm -> adaptArrayLoad(predicate)
             else -> listOf(predicate)
         }
 
@@ -167,17 +181,18 @@ class TypeInfoAdapter(val method: Method, val loader: ClassLoader) : Recollectin
 //        return result
 //    }
 //
-//    private fun adaptArrayLoad(predicate: EqualityPredicate): List<Predicate> {
-//        val result = arrayListOf<Predicate>()
-//        result += predicate
-//
-//        val lhv = predicate.lhv
-//        val arrayLoad = predicate.rhv as ArrayLoadTerm
-//        val arrayIndex = arrayLoad.arrayRef as ArrayIndexTerm
-//
-//        val klass = getKClass(arrayIndex.arrayRef.type)
-//        log.debug("Loaded class $klass for array ${arrayIndex.arrayRef}")
-//
-//        return result
-//    }
+    private fun adaptArrayLoad(predicate: EqualityPredicate): List<Predicate> {
+        val result = arrayListOf<Predicate>()
+        result += predicate
+
+        val lhv = predicate.lhv
+        val arrayLoad = predicate.rhv as ArrayLoadTerm
+        val arrayIndex = arrayLoad.arrayRef as ArrayIndexTerm
+
+        val isNonNullable = arrayElementInfo[arrayIndex.arrayRef]?.nullable?.not() ?: false
+        if (lhv.type is KexPointer && isNonNullable) {
+            currentBuilder += pf.getInequality(lhv, tf.getNull(), PredicateType.Assume())
+        }
+        return result
+    }
 }

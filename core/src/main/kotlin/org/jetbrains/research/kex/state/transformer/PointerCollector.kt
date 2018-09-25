@@ -1,12 +1,13 @@
 package org.jetbrains.research.kex.state.transformer
 
+import org.jetbrains.research.kex.state.PredicateState
 import org.jetbrains.research.kex.state.predicate.ArrayStorePredicate
 import org.jetbrains.research.kex.state.predicate.FieldStorePredicate
 import org.jetbrains.research.kex.state.predicate.Predicate
 import org.jetbrains.research.kex.state.term.*
 
-class PointerCollector : Transformer<PointerCollector> {
-    val ptrs = hashSetOf<Term>()
+object PointerCollector : Transformer<PointerCollector> {
+    private val ptrs = hashSetOf<Term>()
 
     override fun transformArrayStorePredicate(predicate: ArrayStorePredicate): Predicate {
         ptrs.add(predicate.arrayRef)
@@ -46,5 +47,15 @@ class PointerCollector : Transformer<PointerCollector> {
     override fun transformConstClassTerm(term: ConstClassTerm): Term {
         ptrs.add(term)
         return term
+    }
+
+    override fun apply(ps: PredicateState): PredicateState {
+        ptrs.clear()
+        return super.apply(ps)
+    }
+
+    operator fun invoke(ps: PredicateState): Set<Term> {
+        apply(ps)
+        return ptrs.toSet()
     }
 }
