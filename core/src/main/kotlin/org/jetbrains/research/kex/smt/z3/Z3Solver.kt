@@ -50,7 +50,7 @@ class Z3Solver(val ef: Z3ExprFactory) : AbstractSMTSolver {
         val result = check(z3State, z3query)
         log.debug("Check finished")
         return when (result.first) {
-            Status.UNSATISFIABLE -> Result.UnsatResult()
+            Status.UNSATISFIABLE -> Result.UnsatResult
             Status.UNKNOWN -> Result.UnknownResult(result.second as String)
             Status.SATISFIABLE -> Result.SatResult(collectModel(ctx, result.second as Model, state))
         }

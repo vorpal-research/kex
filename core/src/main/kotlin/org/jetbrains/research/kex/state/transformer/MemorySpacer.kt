@@ -26,6 +26,7 @@ fun Term.withMemspace(memspace: Int): Term {
         is NegTerm -> tf.getNegTerm(memspaced, operand)
         is ReturnValueTerm -> tf.getReturn(memspaced, method)
         is ValueTerm -> tf.getValue(memspaced, valueName)
+        is UndefTerm -> tf.getUndef(memspaced)
         is NullTerm -> this
         else -> {
             log.warn("Memspacing unexpected term type: $this")

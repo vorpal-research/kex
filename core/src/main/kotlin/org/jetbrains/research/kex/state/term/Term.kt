@@ -34,7 +34,8 @@ abstract class Term(val name: String, val type: KexType, val subterms: List<Term
                 "Neg" to NegTerm::class.java,
                 "Null" to NullTerm::class.java,
                 "ReturnValue" to ReturnValueTerm::class.java,
-                "Value" to ValueTerm::class.java
+                "Value" to ValueTerm::class.java,
+                "Undef" to UndefTerm::class.java
         )
 
         val reverse = terms.map { it.value to it.key }.toMap()

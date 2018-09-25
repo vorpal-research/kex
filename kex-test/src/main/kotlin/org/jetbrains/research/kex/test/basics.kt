@@ -1,6 +1,8 @@
 @file:Suppress("UNUSED_PARAMETER", "UNUSED_VARIABLE")
 package org.jetbrains.research.kex.test
 
+import kotlin.math.abs
+
 class BasicTests {
     fun testPlain(a: Int, b: Int): Int {
         val i = 10
@@ -83,5 +85,15 @@ class BasicTests {
             Intrinsics.assertReachable()
         }
         return array.flatten().reduce { a, b -> a + b}
+    }
+
+    fun testSimpleOuterCall(): Int {
+        val a = 10
+        val b = 42
+        val c = abs(a - b)
+        // we don't know anything about function `abs`, so result is unknown
+        if (c < 0) Intrinsics.assertReachable()
+        else Intrinsics.assertReachable()
+        return c
     }
 }

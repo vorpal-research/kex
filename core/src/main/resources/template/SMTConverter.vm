@@ -136,7 +136,7 @@ object ${solver}Converter : ${solver}SMTConverter() {
 
 #set($terms = ["Argument", "ArrayIndex", "ArrayLength", "ArrayLoad", "Binary", "Bound", "Call", "Cast", "Cmp",
     "ConstBool", "ConstByte", "ConstChar", "ConstClass", "ConstDouble", "ConstFloat", "ConstInt", "ConstLong",
-    "ConstShort", "ConstString", "FieldLoad", "Field", "InstanceOf", "Neg", "Null", "ReturnValue", "Value"])
+    "ConstShort", "ConstString", "FieldLoad", "Field", "InstanceOf", "Neg", "Null", "ReturnValue", "Value", "Undef"])
     fun convert(term: Term, ef: $factory, ctx: ${solver}Context): Dynamic_ = when (term) {
 #foreach($term in $terms)
         is ${term}Term -> convert(term, ef, ctx)
@@ -344,5 +344,10 @@ object ${solver}Converter : ${solver}SMTConverter() {
     fun convert(value: ValueTerm, ef: $factory, ctx: ${solver}Context): Dynamic_ {
         val expr = ef.getVarByTypeAndName(value.type, value.name)
         return addTypeAxioms(value, expr, ef, ctx)
+    }
+
+    fun convert(undef: UndefTerm, ef: $factory, ctx: ${solver}Context): Dynamic_ {
+        val expr = ef.getVarByTypeAndName(undef.type, undef.name, true)
+        return addTypeAxioms(undef, expr, ef, ctx)
     }
 }

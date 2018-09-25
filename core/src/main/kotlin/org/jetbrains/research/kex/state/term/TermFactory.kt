@@ -148,4 +148,6 @@ object TermFactory {
 
     fun getValue(type: KexType, name: String) = getValue(type, getString(name))
     fun getValue(type: KexType, name: Term) = ValueTerm(type, name)
+
+    fun getUndef(type: KexType) = UndefTerm(type)
 }
