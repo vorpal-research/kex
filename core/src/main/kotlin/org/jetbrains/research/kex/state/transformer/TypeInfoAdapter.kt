@@ -17,6 +17,7 @@ import org.jetbrains.research.kfg.TF
 import org.jetbrains.research.kfg.ir.Field
 import org.jetbrains.research.kfg.ir.Method
 import org.jetbrains.research.kfg.ir.MethodDesc
+import org.jetbrains.research.kfg.ir.value.instruction.CmpOpcode
 import org.jetbrains.research.kfg.type.ArrayType
 import org.jetbrains.research.kfg.type.Reference
 import org.jetbrains.research.kfg.type.Type
@@ -121,7 +122,7 @@ class TypeInfoAdapter(val method: Method, val loader: ClassLoader) : Recollectin
                 }
             }
         } else {
-            log.error("Could not load kfunction for method $method")
+            log.error("Could not load kFunction for method $method")
         }
 
         return super.apply(ps)
@@ -144,6 +145,7 @@ class TypeInfoAdapter(val method: Method, val loader: ClassLoader) : Recollectin
         val adaptedPredicates = when (predicate.rhv) {
             is FieldLoadTerm -> adaptFieldLoad(predicate)
             is ArrayLoadTerm -> adaptArrayLoad(predicate)
+            is ArrayLengthTerm -> adaptArrayLength(predicate)
             else -> listOf(predicate)
         }
 
@@ -170,17 +172,16 @@ class TypeInfoAdapter(val method: Method, val loader: ClassLoader) : Recollectin
         return result
     }
 
-//    private fun adaptArrayLength(predicate: EqualityPredicate): List<Predicate> {
-//        val result = arrayListOf<Predicate>()
-//        result += predicate
-//
-//        val lhv = predicate.lhv
-//        val arrayLength = predicate.rhv as ArrayLengthTerm
-//        result += pf.getEquality(tf.getCmp(CmpOpcode.Ge(), lhv, tf.getInt(0)), tf.getTrue())
-//
-//        return result
-//    }
-//
+    private fun adaptArrayLength(predicate: EqualityPredicate): List<Predicate> {
+        val result = arrayListOf<Predicate>()
+        result += predicate
+
+        val lhv = predicate.lhv
+        result += pf.getEquality(tf.getCmp(CmpOpcode.Ge(), lhv, tf.getInt(0)), tf.getTrue())
+
+        return result
+    }
+
     private fun adaptArrayLoad(predicate: EqualityPredicate): List<Predicate> {
         val result = arrayListOf<Predicate>()
         result += predicate
