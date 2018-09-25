@@ -1,9 +1,6 @@
 package org.jetbrains.research.kex.state.transformer
 
-import org.jetbrains.research.kex.ktype.KexClass
-import org.jetbrains.research.kex.ktype.KexPointer
-import org.jetbrains.research.kex.ktype.KexReference
-import org.jetbrains.research.kex.ktype.KexType
+import org.jetbrains.research.kex.ktype.*
 import org.jetbrains.research.kex.state.PredicateState
 import org.jetbrains.research.kex.state.StateBuilder
 import org.jetbrains.research.kex.state.predicate.CallPredicate
@@ -54,6 +51,15 @@ class TypeInfoAdapter(val method: Method, val loader: ClassLoader) : Recollectin
 
     private fun KexType.isNonNullable(kType: KType) = when (this) {
         is KexPointer -> kType.isNonNullable
+        else -> false
+    }
+
+    private fun KexType.isElementNullable(kType: KType) = when (this) {
+        is KexArray -> when {
+            kType.arguments.isEmpty() -> false
+            else -> (kType.arguments[0].type
+                    ?: unreachable { log.error("No type for array argument") }).isMarkedNullable
+        }
         else -> false
     }
 
@@ -111,14 +117,7 @@ class TypeInfoAdapter(val method: Method, val loader: ClassLoader) : Recollectin
                 }
 
                 if (type is ArrayType) {
-                    arrayElementInfo[arg] = when {
-                        param.type.arguments.isEmpty() -> ArrayElementInfo(false)
-                        else -> {
-                            val karg = param.type.arguments.first().type
-                                    ?: unreachable { log.error("No type for array argument") }
-                            ArrayElementInfo(karg.isMarkedNullable)
-                        }
-                    }
+                    arrayElementInfo[arg] = ArrayElementInfo(nullable = type.kexType.isElementNullable(param.type))
                 }
             }
         } else {
@@ -135,10 +134,13 @@ class TypeInfoAdapter(val method: Method, val loader: ClassLoader) : Recollectin
         if (!predicate.hasLhv || kFunction == null) return predicate
 
         val lhv = predicate.lhv
-        return when {
-            lhv.type.isNonNullable(kFunction.returnType) -> pf.getInequality(lhv, tf.getNull(), PredicateType.Assume())
-            else -> predicate
-        }
+        if (lhv.type.isNonNullable(kFunction.returnType))
+            currentBuilder += pf.getInequality(lhv, tf.getNull(), PredicateType.Assume())
+
+        if (lhv.type is KexArray)
+            arrayElementInfo[lhv] = ArrayElementInfo(nullable = lhv.type.isElementNullable(kFunction.returnType))
+
+        return predicate
     }
 
     override fun transformEqualityPredicate(predicate: EqualityPredicate): Predicate {

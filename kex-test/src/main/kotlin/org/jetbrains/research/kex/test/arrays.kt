@@ -2,7 +2,7 @@
 
 package org.jetbrains.research.kex.test
 
-class ArrayTests {
+open class ArrayTests {
     fun testArrayRead() {
         val simpleArray = intArrayOf(0, 1, 2, 3, 4)
         val length = simpleArray.size
@@ -64,5 +64,18 @@ class ArrayTests {
             }
         }
         Intrinsics.assertReachable(nullable != null)
+    }
+
+    // open fun so it will not be inlined
+    open fun getNonNullableArray(): Array<Any> = arrayOf(1, 2, 3, 4)
+
+    fun testArrayReturn() {
+        val array = getNonNullableArray()
+        for (i in array) {
+            Intrinsics.assertReachable(i != null)
+        }
+        for (i in array) {
+            if (i == null) Intrinsics.assertUnreachable()
+        }
     }
 }
