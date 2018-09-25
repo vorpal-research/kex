@@ -137,6 +137,7 @@ interface Transformer<T : Transformer<T>> {
     fun transformNull(term: NullTerm): Term = term.accept(this)
     fun transformReturnValue(term: ReturnValueTerm): Term = term.accept(this)
     fun transformValue(term: ValueTerm): Term = term.accept(this)
+    fun transformUndef(term: UndefTerm): Term = term.accept(this)
 
     fun transformArgumentTerm(term: ArgumentTerm): Term = term
     fun transformArrayIndexTerm(term: ArrayIndexTerm): Term = term
@@ -164,6 +165,7 @@ interface Transformer<T : Transformer<T>> {
     fun transformNullTerm(term: NullTerm): Term = term
     fun transformReturnValueTerm(term: ReturnValueTerm): Term = term
     fun transformValueTerm(term: ValueTerm): Term = term
+    fun transformUndefTerm(term: UndefTerm): Term = term
 }
 
 interface RecollectingTransformer<T> : Transformer<RecollectingTransformer<T>> {

@@ -13,7 +13,7 @@ sealed class Result {
         override fun toString() = "sat"
     }
 
-    class UnsatResult : Result() {
+    object UnsatResult : Result() {
         override fun toString() = "unsat"
     }
 

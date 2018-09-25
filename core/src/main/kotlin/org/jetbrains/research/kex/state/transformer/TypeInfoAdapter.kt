@@ -105,23 +105,23 @@ class TypeInfoAdapter(val method: Method, val loader: ClassLoader) : Recollectin
             currentBuilder += pf.getInequality(`this`, `null`, PredicateType.Assume())
         }
 
-        val kFunction = getKFunction(method)
-        if (kFunction != null) {
-            val parameters = kFunction.parameters.drop(method.isAbstract.not().toInt())
+        val kFunction = getKFunction(method) ?: run {
+            log.warn("Could not load kFunction for $method")
+            return super.apply(ps)
+        }
 
-            for ((param, type) in parameters.zip(method.argTypes)) {
-                val arg = arguments[param.index - 1] ?: continue
+        val parameters = kFunction.parameters.drop(method.isAbstract.not().toInt())
 
-                if (arg.type.isNonNullable(param.type)) {
-                    currentBuilder += pf.getInequality(arg, `null`, PredicateType.Assume())
-                }
+        for ((param, type) in parameters.zip(method.argTypes)) {
+            val arg = arguments[param.index - 1] ?: continue
 
-                if (type is ArrayType) {
-                    arrayElementInfo[arg] = ArrayElementInfo(nullable = type.kexType.isElementNullable(param.type))
-                }
+            if (arg.type.isNonNullable(param.type)) {
+                currentBuilder += pf.getInequality(arg, `null`, PredicateType.Assume())
             }
-        } else {
-            log.error("Could not load kFunction for method $method")
+
+            if (type is ArrayType) {
+                arrayElementInfo[arg] = ArrayElementInfo(nullable = type.kexType.isElementNullable(param.type))
+            }
         }
 
         return super.apply(ps)
@@ -133,6 +133,7 @@ class TypeInfoAdapter(val method: Method, val loader: ClassLoader) : Recollectin
         val kFunction = getKFunction(call.method)
         if (!predicate.hasLhv || kFunction == null) return predicate
 
+        currentBuilder += predicate
         val lhv = predicate.lhv
         if (lhv.type.isNonNullable(kFunction.returnType))
             currentBuilder += pf.getInequality(lhv, tf.getNull(), PredicateType.Assume())
@@ -140,7 +141,11 @@ class TypeInfoAdapter(val method: Method, val loader: ClassLoader) : Recollectin
         if (lhv.type is KexArray)
             arrayElementInfo[lhv] = ArrayElementInfo(nullable = lhv.type.isElementNullable(kFunction.returnType))
 
-        return predicate
+        call.arguments.filter { it.type is KexPointer }.forEach {
+            currentBuilder += pf.getEquality(it, tf.getUndef(it.type), PredicateType.Assume())
+        }
+
+        return Transformer.Stub
     }
 
     override fun transformEqualityPredicate(predicate: EqualityPredicate): Predicate {
