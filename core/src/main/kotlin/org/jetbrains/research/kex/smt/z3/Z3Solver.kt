@@ -119,15 +119,9 @@ class Z3Solver(val ef: Z3ExprFactory) : AbstractSMTSolver {
     }
 
     private fun collectModel(ctx: Z3Context, model: Model, vararg states: PredicateState): SMTModel {
-        val ptrCollector = PointerCollector()
-        val varCollector = VariableCollector()
-        states.forEach {
-            ptrCollector.transform(it)
-            varCollector.transform(it)
+        val (ptrs, vars) = states.fold(setOf<Term>() to setOf<Term>()) { acc, ps ->
+            acc.first + PointerCollector(ps) to acc.second + VariableCollector(ps)
         }
-
-        val ptrs = ptrCollector.ptrs
-        val vars = varCollector.variables
 
         val assignments = vars.map {
             val expr = Z3Converter.convert(it, ef, ctx)
@@ -138,8 +132,8 @@ class Z3Solver(val ef: Z3ExprFactory) : AbstractSMTSolver {
             it to Z3Unlogic.undo(evaluatedExpr)
         }.toMap()
 
-        val memories = mutableMapOf<Int, Pair<MutableMap<Term, Term>, MutableMap<Term, Term>>>()
-        val bounds = mutableMapOf<Int, Pair<MutableMap<Term, Term>, MutableMap<Term, Term>>>()
+        val memories = hashMapOf<Int, Pair<MutableMap<Term, Term>, MutableMap<Term, Term>>>()
+        val bounds = hashMapOf<Int, Pair<MutableMap<Term, Term>, MutableMap<Term, Term>>>()
 
         for (ptr in ptrs) {
             val memspace = ptr.memspace
@@ -166,11 +160,11 @@ class Z3Solver(val ef: Z3ExprFactory) : AbstractSMTSolver {
             val modelStartB = Z3Unlogic.undo(model.evaluate(startB.expr, true))
             val modelEndB = Z3Unlogic.undo(model.evaluate(endB.expr, true))
 
-            memories.getOrPut(memspace) { mutableMapOf<Term, Term>() to mutableMapOf<Term, Term>() }
+            memories.getOrPut(memspace) { hashMapOf<Term, Term>() to hashMapOf() }
             memories.getValue(memspace).first[modelPtr] = modelStartV
             memories.getValue(memspace).second[modelPtr] = modelEndV
 
-            bounds.getOrPut(memspace) { mutableMapOf<Term, Term>() to mutableMapOf<Term, Term>() }
+            bounds.getOrPut(memspace) { hashMapOf<Term, Term>() to hashMapOf() }
             bounds.getValue(memspace).first[modelPtr] = modelStartB
             bounds.getValue(memspace).second[modelPtr] = modelEndB
         }

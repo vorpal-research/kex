@@ -49,17 +49,20 @@ class ArrayTests {
     }
 
     fun testObjectArray(nullable: Array<Any?>, nonnulable: Array<Any>) {
-//        if (nullable.isNotEmpty()) {
-//            for (i in nullable) {
-//                Intrinsics.assertReachable(i != null)
-//                Intrinsics.assertReachable(i == null)
-//            }
-//        }
-//        if (nonnulable.isNotEmpty()) {
-//            for (i in nonnulable) {
-//                Intrinsics.assertReachable(i != null)
-//            }
-//        }
+        if (nullable.isNotEmpty()) {
+            for (i in nullable) {
+                if (i != null) Intrinsics.assertReachable(i != null)
+                else Intrinsics.assertReachable(i == null)
+            }
+        }
+        if (nonnulable.isNotEmpty()) {
+            for (i in nonnulable) {
+                Intrinsics.assertReachable(i != null)
+            }
+            for (i in nonnulable) {
+                if (i == null) Intrinsics.assertUnreachable()
+            }
+        }
         Intrinsics.assertReachable(nullable != null)
     }
 }

@@ -2,10 +2,11 @@ package org.jetbrains.research.kex.smt
 
 import org.jetbrains.research.kex.asm.state.PredicateStateBuilder
 import org.jetbrains.research.kex.config.GlobalConfig
-import org.jetbrains.research.kex.ktype.kexType
 import org.jetbrains.research.kex.state.predicate.PredicateType
+import org.jetbrains.research.kex.state.term.ArgumentTerm
+import org.jetbrains.research.kex.state.term.FieldTerm
 import org.jetbrains.research.kex.state.term.Term
-import org.jetbrains.research.kex.state.term.TermFactory
+import org.jetbrains.research.kex.state.term.ValueTerm
 import org.jetbrains.research.kex.state.transformer.*
 import org.jetbrains.research.kex.util.log
 import org.jetbrains.research.kfg.ir.Method
@@ -49,16 +50,16 @@ class Checker(val method: Method, val loader: ClassLoader, private val psa: Pred
         if (isSlicingEnabled) {
             log.debug("Slicing started...")
 
-            val tf = TermFactory
-            val slicingTerms = hashSetOf<Term>()
-            slicingTerms.addAll(method.argTypes.withIndex().map { (index, type) -> tf.getArgument(type.kexType, index) })
+            val variables = VariableCollector(state)
+            val slicingTerms = run {
+                val `this` = variables.find { it is ValueTerm && it.valueName.toString() == "this" }
 
-            if (!method.isAbstract) {
-                val `this` = tf.getThis(method.`class`)
-                slicingTerms.add(`this`)
-                for ((_, field) in method.`class`.fields) {
-                    slicingTerms.add(tf.getField(field.type.kexType, `this`, tf.getString(field.name)))
-                }
+                val results = hashSetOf<Term>()
+                if (`this` != null) results += `this`
+
+                results += variables.asSequence().filter { it is ArgumentTerm }
+                results += variables.asSequence().filter { it is FieldTerm && it.owner == `this` }
+                results
             }
 
             val aa = StensgaardAA()
