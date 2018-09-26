@@ -84,8 +84,8 @@ class TypeInfoAdapter(val method: Method, val loader: ClassLoader) : Recollectin
 
         return this.name == method.name
                 && parameters.zip(method.argTypes).fold(true) { acc, pair ->
-            val type = pair.first.type.jvmErasure.java
-            acc && type.trimmedName == pair.second.trimmedName
+            val type = tryOrNull { pair.first.type.jvmErasure.java }
+            acc && type?.trimmedName == pair.second.trimmedName
         }
     }
 

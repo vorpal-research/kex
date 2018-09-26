@@ -31,7 +31,8 @@ object BoolTypeAdapter : Transformer<BoolTypeAdapter> {
             BinaryOpcode.Xor() -> true
             else -> false
         }
-        val result =  when {
+        return when {
+            term.lhv.type === term.rhv.type -> term
             isBooleanOpcode -> {
                 val lhv = when {
                     term.lhv.type === KexBool -> tf.getCast(KexInt, term.lhv)
@@ -47,6 +48,5 @@ object BoolTypeAdapter : Transformer<BoolTypeAdapter> {
             }
             else -> term
         }
-        return result
     }
 }

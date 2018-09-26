@@ -4,10 +4,7 @@ import org.jetbrains.research.kex.driver.RandomDriver
 import org.jetbrains.research.kex.ktype.*
 import org.jetbrains.research.kex.state.term.*
 import org.jetbrains.research.kex.state.transformer.memspace
-import org.jetbrains.research.kex.util.getClass
-import org.jetbrains.research.kex.util.log
-import org.jetbrains.research.kex.util.toBoolean
-import org.jetbrains.research.kex.util.unreachable
+import org.jetbrains.research.kex.util.*
 import org.jetbrains.research.kfg.ir.Method
 import java.lang.reflect.Array
 
@@ -84,7 +81,7 @@ class ModelRecoverer(val method: Method, val model: SMTModel, val loader: ClassL
         if (address == 0) return null
 
         return memory(type.memspace, address) {
-            val `class` = loader.loadClass(type.`class`.canonicalDesc)
+            val `class` = tryOrNull { loader.loadClass(type.`class`.canonicalDesc) } ?: return@memory null
             val instance = RandomDriver.generateOrNull(`class`)
             for ((_, field) in type.`class`.fields) {
                 val fieldCopy = tf.getField(KexReference(field.type.kexType), term, tf.getString(field.name))

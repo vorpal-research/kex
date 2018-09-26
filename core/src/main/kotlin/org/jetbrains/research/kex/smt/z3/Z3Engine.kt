@@ -82,6 +82,7 @@ object Z3Engine : SMTEngine<Context, Expr, Sort, FuncDecl, Pattern>() {
     override fun negate(ctx: Context, expr: Expr): Expr = when (expr) {
         is BoolExpr -> ctx.mkNot(expr)
         is BitVecExpr -> ctx.mkBVNeg(expr)
+        is FPExpr -> ctx.mkFPNeg(expr)
         else -> unreachable { log.error("Unimplemented operation negate") }
     }
 
@@ -108,7 +109,11 @@ object Z3Engine : SMTEngine<Context, Expr, Sort, FuncDecl, Pattern>() {
             lhv is FPExpr && rhv is FPExpr -> sdiv(ctx, lhv.castTo<FPExpr>(), rhv.castTo())
             else -> unreachable { log.error("Unexpected and arguments: $lhv and $rhv") }
         }
-        Opcode.MOD -> smod(ctx, lhv.castTo(), rhv.castTo())
+        Opcode.MOD -> when {
+            lhv is BitVecExpr && rhv is BitVecExpr -> smod(ctx, lhv, rhv)
+            lhv is FPExpr && rhv is FPExpr -> fmod(ctx, lhv, rhv)
+            else -> unreachable { log.error("Unexpected mod arguments: $lhv and $rhv") }
+        }
         Opcode.GT -> when {
             lhv is BitVecExpr && rhv is BitVecExpr -> gt(ctx, lhv.castTo<BitVecExpr>(), rhv.castTo())
             lhv is FPExpr && rhv is FPExpr -> gt(ctx, lhv.castTo<FPExpr>(), rhv.castTo())
@@ -170,6 +175,7 @@ object Z3Engine : SMTEngine<Context, Expr, Sort, FuncDecl, Pattern>() {
     private fun udiv(ctx: Context, lhv: BitVecExpr, rhv: BitVecExpr) = ctx.mkBVUDiv(lhv, rhv)
     private fun smod(ctx: Context, lhv: BitVecExpr, rhv: BitVecExpr) = ctx.mkBVSMod(lhv, rhv)
     private fun umod(ctx: Context, lhv: BitVecExpr, rhv: BitVecExpr) = ctx.mkBVURem(lhv, rhv)
+    private fun fmod(ctx: Context, lhv: FPExpr, rhv: FPExpr) = ctx.mkFPRem(lhv, rhv)
 
     private fun gt(ctx: Context, lhv: BitVecExpr, rhv: BitVecExpr) = ctx.mkBVSGT(lhv, rhv)
     private fun gt(ctx: Context, lhv: FPExpr, rhv: FPExpr) = ctx.mkFPGt(lhv, rhv)

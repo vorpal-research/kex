@@ -36,7 +36,7 @@ object LoopDeroller : LoopVisitor {
         companion object {
             fun createState(loop: Loop): State {
                 val terminatingBlock = run {
-                    var current = loop.latch.successors.first()
+                    var current = loop.latch//.successors.first()
                     while (current.terminator is JumpInst) current = current.successors.first()
                     current
                 }
@@ -184,10 +184,9 @@ object LoopDeroller : LoopVisitor {
 
         val (init, updated) = when (value) {
             is PhiInst -> {
+                if (value.parent != header) return -1
+
                 val incomings = value.incomings
-                if (incomings.size != 2) {
-                    println("wait")
-                }
                 require(incomings.size == 2) { log.error("Unexpected number of header incomings") }
                 incomings.getValue(preheader) to incomings.getValue(latch)
             }
