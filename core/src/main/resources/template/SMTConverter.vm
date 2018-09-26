@@ -244,12 +244,10 @@ object ${solver}Converter : ${solver}SMTConverter() {
     #* @vtlvariable name="type" type="java.lang.String" *#
     #* @vtlvariable name="opcode" type="java.lang.String" *#
             is CmpOpcode.$opcode -> {
-                val lhvf = lhv as? $type ?: unreachable { log.error("Non-${type.toLowerCase()} operands of `${opcode.toLowerCase()}`") }
-                val rhvf = rhv as? $type ?: unreachable { log.error("Non-${type.toLowerCase()} operands of `${opcode.toLowerCase()}`") }
                 val cases = mapOf(
-                    (lhvf gt rhvf) to ef.makeIntConst(1),
-                    (lhvf eq rhvf) to ef.makeIntConst(0),
-                    (lhvf lt rhvf) to ef.makeIntConst(-1)
+                    (lhv gt rhv) to ef.makeIntConst(1),
+                    (lhv eq rhv) to ef.makeIntConst(0),
+                    (lhv lt rhv) to ef.makeIntConst(-1)
                 )
                 ef.switch(cases, ef.makeIntConst($default))
             }
@@ -330,6 +328,8 @@ object ${solver}Converter : ${solver}SMTConverter() {
             is Bool_ -> Bool_.forceCast(!operand)
             is Int_ -> Int_.forceCast(!operand)
             is Long_ -> Long_.forceCast(!operand)
+            is Float_ -> Float_.forceCast(!operand)
+            is Double_ -> Double_.forceCast(!operand)
             else -> unreachable { log.error("Invalid operand of `neg`: ${ neg.operand.print() }") }
         }
     }

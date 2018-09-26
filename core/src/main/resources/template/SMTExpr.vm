@@ -80,7 +80,7 @@ open class $valexpr : ${solver}SMTExpr {
 
     open fun simplify() = $valexpr(ctx, engine.simplify(ctx, expr), engine.simplify(ctx, expr))
 
-#set($opcodes = ["ADD", "SUB", "MUL", "DIVIDE"])
+#set($opcodes = ["ADD", "SUB", "MUL", "DIVIDE", "MOD"])
 #foreach($opcode in $opcodes)
 #* @vtlvariable name="opcode" type="java.lang.String" *#
     infix fun ${opcode.toLowerCase()}(other: $valexpr): $valexpr = when {
@@ -90,7 +90,7 @@ open class $valexpr : ${solver}SMTExpr {
         else -> unreachable { log.error("Invalid operands of `${opcode.toLowerCase()}`: ${ this } and ${ other }") }
     }
 #end
-#set($opcodes = ["MOD", "SHL", "SHR", "ASHR"])
+#set($opcodes = ["SHL", "SHR", "ASHR"])
 #foreach($opcode in $opcodes)
     infix fun ${opcode.toLowerCase()}(other: $valexpr): $valexpr = when {
         this is $Bitvector && other is $Bitvector -> ${opcode.toLowerCase()}(other)
@@ -281,7 +281,7 @@ class $self$width : $self {
 #foreach($opcode in $opcodes)
     infix fun ${opcode.toLowerCase()}(other: $self) = binary(SMTEngine.Opcode.$opcode, other).toBool()
 #end
-#set($opcodes = ["ADD", "SUB", "MUL", "DIVIDE"])
+#set($opcodes = ["ADD", "SUB", "MUL", "DIVIDE", "MOD"])
 #foreach($opcode in $opcodes)
     infix fun ${opcode.toLowerCase()}(other: $self) = binary(SMTEngine.Opcode.$opcode, other).to$float()
 #end
@@ -290,6 +290,8 @@ class $self$width : $self {
     operator fun minus(other: $self) = sub(other)
     operator fun times(other: $self) = mul(other)
     operator fun div(other: $self) = divide(other)
+    operator fun rem(other: $self) = mod(other)
+    operator fun not(): $self = $self(ctx, engine.negate(ctx, expr), axiom)
 }
 
 #end
