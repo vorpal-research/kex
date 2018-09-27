@@ -13,8 +13,8 @@ class CatchPredicate(throwable: Term, type: PredicateType = PredicateType.State(
 
     override fun <T: Transformer<T>> accept(t: Transformer<T>): Predicate {
         val tthrowable = t.transform(throwable)
-        return when {
-            tthrowable == throwable -> this
+        return when (tthrowable) {
+            throwable -> this
             else -> t.pf.getCatch(tthrowable, type)
         }
     }

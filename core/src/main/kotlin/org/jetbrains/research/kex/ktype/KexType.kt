@@ -19,9 +19,9 @@ fun mergeTypes(types: Collection<KexType>): KexType {
             var result = TF.objectType.kexType
             val classes = uniqueTypes.map { it as KexClass }
             for (i in 0..classes.lastIndex) {
-                val isAncestor = classes.fold(true, { acc, `class` ->
+                val isAncestor = classes.fold(true) { acc, `class` ->
                     acc && classes[i].`class`.isAncestor(`class`.`class`)
-                })
+                }
 
                 if (isAncestor) {
                     result = classes[i]

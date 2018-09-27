@@ -11,9 +11,8 @@
 
     <artifactId>kex-test</artifactId>
 
-
     <build>
-        <sourceDirectory>${project.basedir}/src/main/kotlin</sourceDirectory>
+        <sourceDirectory>src/main/kotlin</sourceDirectory>
 
         <plugins>
             <plugin>
@@ -22,7 +21,6 @@
                     <jvmTarget>1.8</jvmTarget>
                 </configuration>
                 <groupId>org.jetbrains.kotlin</groupId>
-                <version>${kotlin.version}</version>
 
                 <executions>
                     <execution>

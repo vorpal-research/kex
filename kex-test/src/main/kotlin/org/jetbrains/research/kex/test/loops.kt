@@ -5,7 +5,7 @@ class LoopTests {
     fun simpleLoop() {
         var i = 0
         val loop = arrayOf(1, 2, 123, 123, 123, 324)
-        if (loop.size > 0) println("has elements")
+        if (loop.isNotEmpty()) println("has elements")
         else println("empty")
         while (i < 5) {
             println(loop[i])
@@ -16,7 +16,7 @@ class LoopTests {
     fun simpleLoop(size: Int) {
         var i = 0
         val loop = arrayOf(1, 2, 123, 123, 123, 324)
-        if (loop.size > 0) println("has elements")
+        if (loop.isNotEmpty()) println("has elements")
         else println("empty")
         if (loop.size >= size) {
             println("Index out of bounds")

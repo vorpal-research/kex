@@ -23,10 +23,11 @@ class StateBuilder() {
         current += predicate
     }
 
-    operator fun plus(state: PredicateState) =
-            if (state.isEmpty) this
-            else if (current.isEmpty) StateBuilder(state)
-            else StateBuilder(ChainState(current, state))
+    operator fun plus(state: PredicateState) = when {
+        state.isEmpty -> this
+        current.isEmpty -> StateBuilder(state)
+        else -> StateBuilder(ChainState(current, state))
+    }
 
     operator fun plusAssign(state: PredicateState) {
         current = ChainState(current, state)

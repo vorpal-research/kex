@@ -65,10 +65,10 @@ object TermFactory {
     fun getClass(`class`: Class) = getClass(KexClass(`class`), `class`)
     fun getClass(type: KexType, `class`: Class) = ConstClassTerm(type, `class`)
     fun getClass(type: KexType) = ConstClassTerm(type,
-            (type as? KexClass)?.`class` ?: unreachable({ log.debug("Non-ref type of class constant") }))
+            (type as? KexClass)?.`class` ?: unreachable { log.debug("Non-ref type of class constant") })
 
     fun getClass(const: ClassConstant) = ConstClassTerm(const.type.kexType,
-            (const.type as? ClassType)?.`class` ?: unreachable({ log.debug("Non-ref type of class constant") }))
+            (const.type as? ClassType)?.`class` ?: unreachable { log.debug("Non-ref type of class constant") })
 
     fun getUnaryTerm(operand: Term, opcode: UnaryOpcode) = when (opcode) {
         UnaryOpcode.NEG -> getNegTerm(operand)

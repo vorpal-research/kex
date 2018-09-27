@@ -144,7 +144,7 @@ object TraceInstrumenter : MethodVisitor {
             builder.println(";")
         }
         if (args.isNotEmpty()) {
-            builder.print("${tracePrefix} arguments $methodName")
+            builder.print("$tracePrefix arguments $methodName")
             for ((index, type) in args.withIndex()) {
                 val argValue = VF.getArgument(index, method, type)
                 builder.print("; ${argValue.name} == ")

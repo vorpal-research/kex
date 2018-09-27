@@ -14,8 +14,8 @@ class NewPredicate(lhv: Term, type: PredicateType = PredicateType.State(), locat
 
     override fun <T : Transformer<T>> accept(t: Transformer<T>): Predicate {
         val tlhv = t.transform(lhv)
-        return when {
-            tlhv == lhv -> this
+        return when (tlhv) {
+            lhv -> this
             else -> t.pf.getNew(lhv, type)
         }
     }

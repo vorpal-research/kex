@@ -61,7 +61,7 @@ class StensgaardAA : Transformer<StensgaardAA>, AliasAnalysis {
         else -> {
             var token: Token = relations.emplace(term)
 
-            if (!nonFreeTerms.contains(term) && Term.isNamed(term)) {
+            if (!nonFreeTerms.contains(term) && term.isNamed) {
                 val result = join(spaces(term.type), token)
                 spaces[term.type] = result
                 token = result
@@ -201,7 +201,7 @@ class StensgaardAA : Transformer<StensgaardAA>, AliasAnalysis {
             val toNode = reverse.getOrPut(to) { GraphView(to.toString(), to.toString()) }
             fromNode.successors.add(toNode)
         }
-        val values = reverse.values.map { GraphView(it.name, it.label, it.successors.toSet().toMutableList()) }.toMutableSet()
+        val values = reverse.values.map { GraphView(it.name, it.label, it.successors.asSequence().toSet().toMutableList()) }.toMutableSet()
         values.filter { it.successors.isEmpty() }.forEach { it.successors.add(rootNode) }
         values.add(rootNode)
         return values.toList()

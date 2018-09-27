@@ -1,7 +1,5 @@
 package org.jetbrains.research.kex.util
 
-import org.jetbrains.research.kfg.ir.Class
-
 inline fun <reified T : Any> Any.castTo() = this as? T ?: unreachable { "Cast failure" }
 
 @Suppress("UNCHECKED_CAST")

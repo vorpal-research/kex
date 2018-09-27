@@ -33,7 +33,7 @@ class LoopDerollerTest : KexTest() {
 
     @Test
     fun simpleLoopTest() {
-        val `class` = CM.getByName("${packageName}/LoopTests")
+        val `class` = CM.getByName("$packageName/LoopTests")
         for ((_, method) in `class`.methods) {
             checkLoops(method)
         }
@@ -41,7 +41,7 @@ class LoopDerollerTest : KexTest() {
 
     @Test
     fun icfpcLoopTest() {
-        val `class` = CM.getByName("${packageName}/Icfpc2018Test")
+        val `class` = CM.getByName("$packageName/Icfpc2018Test")
         for ((_, method) in `class`.methods) {
             checkLoops(method)
         }

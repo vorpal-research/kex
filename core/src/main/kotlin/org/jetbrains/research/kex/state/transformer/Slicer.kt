@@ -1,11 +1,12 @@
 package org.jetbrains.research.kex.state.transformer
 
+import org.jetbrains.research.kex.ktype.KexPointer
 import org.jetbrains.research.kex.state.ChoiceState
 import org.jetbrains.research.kex.state.PredicateState
 import org.jetbrains.research.kex.state.predicate.*
 import org.jetbrains.research.kex.state.term.Term
 import org.jetbrains.research.kex.state.term.TermFactory
-import org.jetbrains.research.kfg.type.Reference
+import org.jetbrains.research.kex.state.term.isNamed
 
 class CFGTracker : Transformer<CFGTracker> {
     var currentDominators = setOf<Predicate>()
@@ -57,7 +58,7 @@ class Slicer(val state: PredicateState, sliceTerms: Set<Term>, val aa: AliasAnal
     private val cfg = CFGTracker()
     var currentPath = setOf<Predicate>()
 
-    private val isInterestingTerm = { term: Term -> Term.isNamed(term) }
+    private val isInterestingTerm = { term: Term -> term.isNamed }
 
     init {
         sliceTerms
@@ -73,7 +74,7 @@ class Slicer(val state: PredicateState, sliceTerms: Set<Term>, val aa: AliasAnal
 
 
     private fun addSliceTerm(term: Term) = when {
-        term.type is Reference -> slicePtrs.add(term)
+        term.type is KexPointer -> slicePtrs.add(term)
         else -> sliceVars.add(term)
     }
 
@@ -82,7 +83,7 @@ class Slicer(val state: PredicateState, sliceTerms: Set<Term>, val aa: AliasAnal
     }
 
     private fun checkVars(lhv: Set<Term>, rhv: Set<Term>) = when {
-        lhv.filterNot { it.type is Reference }.any { sliceVars.contains(it) } -> {
+        lhv.asSequence().filterNot { it.type is KexPointer }.any { sliceVars.contains(it) } -> {
             rhv.forEach { addSliceTerm(it) }
             true
         }
@@ -92,18 +93,14 @@ class Slicer(val state: PredicateState, sliceTerms: Set<Term>, val aa: AliasAnal
     private fun checkPtrs(predicate: Predicate, lhv: Set<Term>, rhv: Set<Term>): Boolean {
         if (lhv.isEmpty()) return false
 
-        if (lhv.filter { it.type is Reference }.any { slicePtrs.contains(it) }) {
+        if (lhv.asSequence().filter { it.type is KexPointer }.any { slicePtrs.contains(it) }) {
             rhv.forEach { addSliceTerm(it) }
             return true
         }
 
-        if (predicate is ArrayStorePredicate
-                || predicate is FieldStorePredicate
-                || predicate is NewPredicate
-                || predicate is NewArrayPredicate) {
-            if (lhv.filter { it.type is Reference }.any { ref ->
-                        slicePtrs.any { slice -> aa.mayAlias(ref, slice) }
-                    }) {
+        if (predicate.hasReceiver) {
+            val lhvPtrs = lhv.asSequence().filter { it.type is KexPointer }
+            if (lhvPtrs.any { ref -> slicePtrs.any { slice -> aa.mayAlias(ref, slice) } }) {
                 lhv.forEach { addSliceTerm(it) }
                 rhv.forEach { addSliceTerm(it) }
                 return true
@@ -157,16 +154,9 @@ class Slicer(val state: PredicateState, sliceTerms: Set<Term>, val aa: AliasAnal
             }
         }
 
-        val reciever = Predicate.getReciever(predicate)
-        val lhvTerms = hashSetOf<Term>()
-        if (reciever != null) {
-            lhvTerms.addAll(TermCollector.getFullTermSet(reciever).filter(isInterestingTerm))
-        }
-
-        val rhvTerms = hashSetOf<Term>()
-        for (rhv in predicate.operands.drop(1)) {
-            rhvTerms.addAll(TermCollector.getFullTermSet(rhv).filter(isInterestingTerm))
-        }
+        val reciever = predicate.receiver
+        val lhvTerms = if (reciever != null) TermCollector.getFullTermSet(reciever).asSequence().filter(isInterestingTerm).toSet() else setOf()
+        val rhvTerms = predicate.operands.drop(1).flatMap { TermCollector.getFullTermSet(it) }.toSet()
 
         val asVar = checkVars(lhvTerms, rhvTerms)
         val asPtr = checkPtrs(predicate, lhvTerms, rhvTerms)

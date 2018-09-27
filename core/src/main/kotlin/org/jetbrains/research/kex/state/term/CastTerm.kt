@@ -12,8 +12,8 @@ class CastTerm(type: KexType, operand: Term) : Term("", type, listOf(operand)) {
 
     override fun <T : Transformer<T>> accept(t: Transformer<T>): Term {
         val toperand = t.transform(operand)
-        return when {
-            toperand == operand -> this
+        return when (toperand) {
+            operand -> this
             else -> t.tf.getCast(type, toperand)
         }
     }

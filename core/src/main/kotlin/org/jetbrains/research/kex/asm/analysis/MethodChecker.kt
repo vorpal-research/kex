@@ -12,7 +12,7 @@ import org.jetbrains.research.kfg.ir.Method
 import org.jetbrains.research.kfg.ir.value.instruction.ReturnInst
 import org.jetbrains.research.kfg.visitor.MethodVisitor
 
-fun Method.returnInst() = this.flatten().lastOrNull { it is ReturnInst } as? ReturnInst
+val Method.returnInst get() = this.flatten().lastOrNull { it is ReturnInst } as? ReturnInst
 
 class MethodChecker(private val loader: ClassLoader) : MethodVisitor {
     val psa = PredicateStateAnalysis
@@ -33,7 +33,7 @@ class MethodChecker(private val loader: ClassLoader) : MethodVisitor {
         val psb = psa.builder(method)
         val checker = Checker(method, loader, psb)
 
-        val returnInst = method.returnInst() ?: return
+        val returnInst = method.returnInst ?: return
 
         val result = checker.checkReachable(returnInst)
         log.debug(result)

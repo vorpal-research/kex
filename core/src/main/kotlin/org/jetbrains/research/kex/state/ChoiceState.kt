@@ -40,7 +40,7 @@ class ChoiceState(val choices: List<PredicateState>) : PredicateState(), Iterabl
     override fun iterator() = choices.iterator()
 
     override fun simplify(): PredicateState {
-        val choices = choices.map { it.filterByType(PredicateType.Path()) }.toSet()
+        val choices = choices.asSequence().map { it.filterByType(PredicateType.Path()) }.toSet()
         val choiceBodies = choices.asSequence().map { choice -> choice.filterNot { it.type == PredicateType.Path() } }.toSet()
         return when {
             choices.size == 1 -> choices.first()

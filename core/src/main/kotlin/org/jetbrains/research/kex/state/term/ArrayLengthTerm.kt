@@ -12,8 +12,8 @@ class ArrayLengthTerm(type: KexType, arrayRef: Term) : Term("", type, listOf(arr
 
     override fun <T: Transformer<T>> accept(t: Transformer<T>): Term {
         val tarrayRef = t.transform(arrayRef)
-        return when {
-            tarrayRef == arrayRef -> this
+        return when (tarrayRef) {
+            arrayRef -> this
             else -> t.tf.getArrayLength(tarrayRef)
         }
     }

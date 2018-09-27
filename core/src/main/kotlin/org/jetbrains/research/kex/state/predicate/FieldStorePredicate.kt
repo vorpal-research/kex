@@ -2,13 +2,9 @@ package org.jetbrains.research.kex.state.predicate
 
 import org.jetbrains.research.kex.state.term.Term
 import org.jetbrains.research.kex.state.transformer.Transformer
-import org.jetbrains.research.kex.util.unreachable
 import org.jetbrains.research.kfg.ir.Location
-import org.jetbrains.research.kfg.type.ClassType
-import org.jetbrains.research.kfg.type.Type
 
 class FieldStorePredicate(field: Term,
-                          val fieldType: Type,
                           value: Term,
                           type: PredicateType = PredicateType.State(),
                           location: Location = Location()) : Predicate(type, location, listOf(field, value)) {
@@ -25,7 +21,7 @@ class FieldStorePredicate(field: Term,
         val tvalue = t.transform(value)
         return when {
             tfield == field && tvalue == value -> this
-            else -> t.pf.getFieldStore(tfield, fieldType, tvalue, type)
+            else -> t.pf.getFieldStore(tfield, tvalue, type)
         }
     }
 

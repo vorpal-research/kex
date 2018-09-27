@@ -233,7 +233,7 @@ object Z3Engine : SMTEngine<Context, Expr, Sort, FuncDecl, Pattern>() {
     override fun forAll(ctx: Context, sorts: List<Sort>, body: (List<Expr>) -> Expr): Expr {
         val numArgs = sorts.lastIndex
 
-        val bounds = sorts.withIndex().map { (index, sort) -> makeBound(ctx, index, sort) }
+        val bounds = sorts.asSequence().withIndex().map { (index, sort) -> makeBound(ctx, index, sort) }.toList()
         val realBody = body(bounds)
         val names = (0..numArgs).map { "forall_bound_${numArgs - it - 1}" }.map { ctx.mkSymbol(it) }.toTypedArray()
         val sortsRaw = sorts.toTypedArray()
@@ -243,7 +243,7 @@ object Z3Engine : SMTEngine<Context, Expr, Sort, FuncDecl, Pattern>() {
     override fun forAll(ctx: Context, sorts: List<Sort>, body: (List<Expr>) -> Expr, patternGenerator: (List<Expr>) -> List<Pattern>): Expr {
         val numArgs = sorts.lastIndex
 
-        val bounds = sorts.withIndex().map { (index, sort) -> makeBound(ctx, index, sort) }
+        val bounds = sorts.asSequence().withIndex().map { (index, sort) -> makeBound(ctx, index, sort) }.toList()
         val realBody = body(bounds)
         val names = (0..numArgs).map { "forall_bound_${numArgs - it - 1}" }.map { ctx.mkSymbol(it) }.toTypedArray()
         val sortsRaw = sorts.toTypedArray()

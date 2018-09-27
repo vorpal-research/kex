@@ -138,7 +138,7 @@ class PredicateBuilder : MethodVisitor {
             objectRef != null -> tf.getField(KexReference(inst.field.type.kexType), objectRef, name)
             else -> tf.getField(KexReference(inst.field.type.kexType), inst.field.`class`, name)
         }
-        predicateMap[inst] = pf.getFieldStore(field, inst.field.type, value, location = inst.location)
+        predicateMap[inst] = pf.getFieldStore(field, value, location = inst.location)
     }
 
     override fun visitInstanceOfInst(inst: InstanceOfInst) {

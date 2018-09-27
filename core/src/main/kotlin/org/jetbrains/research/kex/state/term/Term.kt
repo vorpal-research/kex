@@ -39,25 +39,6 @@ abstract class Term(val name: String, val type: KexType, val subterms: List<Term
         )
 
         val reverse = terms.map { it.value to it.key }.toMap()
-
-        fun isNamed(term: Term) = when (term) {
-            is ArgumentTerm, is ReturnValueTerm, is ValueTerm, is ArrayIndexTerm, is FieldTerm -> true
-            else -> false
-        }
-
-        fun isConst(term: Term) = when (term) {
-            is ConstBoolTerm -> true
-            is ConstByteTerm -> true
-            is ConstCharTerm -> true
-            is ConstClassTerm -> true
-            is ConstDoubleTerm -> true
-            is ConstFloatTerm -> true
-            is ConstIntTerm -> true
-            is ConstLongTerm -> true
-            is ConstShortTerm -> true
-            is ConstStringTerm -> true
-            else -> false
-        }
     }
 
     abstract fun print(): String
@@ -74,4 +55,27 @@ abstract class Term(val name: String, val type: KexType, val subterms: List<Term
 
     override val subtypes get() = terms
     override val reverseMapping get() = reverse
+}
+
+val Term.isNamed get() = when (this) {
+    is ArgumentTerm -> true
+    is ReturnValueTerm -> true
+    is ValueTerm -> true
+    is ArrayIndexTerm -> true
+    is FieldTerm -> true
+    else -> false
+}
+
+val Term.isConst get() = when (this) {
+    is ConstBoolTerm -> true
+    is ConstByteTerm -> true
+    is ConstCharTerm -> true
+    is ConstClassTerm -> true
+    is ConstDoubleTerm -> true
+    is ConstFloatTerm -> true
+    is ConstIntTerm -> true
+    is ConstLongTerm -> true
+    is ConstShortTerm -> true
+    is ConstStringTerm -> true
+    else -> false
 }

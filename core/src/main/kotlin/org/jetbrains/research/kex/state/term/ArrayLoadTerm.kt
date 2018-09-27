@@ -12,8 +12,8 @@ class ArrayLoadTerm(type: KexType, arrayRef: Term) : Term("", type, listOf(array
 
     override fun <T: Transformer<T>> accept(t: Transformer<T>): Term {
         val tarrayRef = t.transform(arrayRef)
-        return when {
-            tarrayRef == arrayRef -> this
+        return when (tarrayRef) {
+            arrayRef -> this
             else -> t.tf.getArrayLoad(type, tarrayRef)
         }
     }

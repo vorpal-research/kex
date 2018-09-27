@@ -6,7 +6,7 @@ import org.jetbrains.research.kfg.ir.value.instruction.BinaryOpcode
 import org.jetbrains.research.kfg.ir.value.instruction.CmpOpcode
 
 object ConstantPropagator : Transformer<ConstantPropagator> {
-    private val epsilon = 0.00001
+    private const val epsilon = 1e-5
 
     override fun transformBinaryTerm(term: BinaryTerm): Term {
         val lhv = getConstantValue(term.lhv) ?: return term
