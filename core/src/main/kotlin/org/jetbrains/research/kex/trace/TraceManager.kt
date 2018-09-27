@@ -106,8 +106,8 @@ object TraceManager {
 
     fun isCovered(bb: BasicBlock) = getBlockInfos(bb).fold(false) { acc, it -> acc or it.hasOutput }
     fun isPartlyCovered(method: Method): Boolean = method.basicBlocks.fold(false) { acc, bb -> acc or isCovered(bb) }
-    fun isBodyCovered(method: Method) = method.bodyBlocks.map { isCovered(it) }.fold(true) { acc, it -> acc && it }
+    fun isBodyCovered(method: Method) = method.bodyBlocks.asSequence().map { isCovered(it) }.fold(true) { acc, it -> acc && it }
 
-    fun isCatchCovered(method: Method) = method.catchBlocks.map { isCovered(it) }.fold(true) { acc, it -> acc && it }
+    fun isCatchCovered(method: Method) = method.catchBlocks.asSequence().map { isCovered(it) }.fold(true) { acc, it -> acc && it }
     fun isFullCovered(method: Method) = isBodyCovered(method) && isCatchCovered(method)
 }

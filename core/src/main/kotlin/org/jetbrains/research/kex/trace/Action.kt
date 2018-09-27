@@ -60,11 +60,11 @@ data class ObjectValue(val type: Class, val identifier: Int, val fields: Map<Str
         sb.append("$type@$identifier {")
         val fieldNames = fields.keys
         val fieldValues = fields.values.toList()
-        fieldNames.withIndex().take(1).forEach { (indx, name) ->
+        fieldNames.asSequence().withIndex().take(1).toList().forEach { (indx, name) ->
             sb.append("$name = ")
             sb.append(fieldValues[indx].toString())
         }
-        fieldNames.withIndex().drop(1).forEach { (indx, name) ->
+        fieldNames.asSequence().withIndex().drop(1).toList().forEach { (indx, name) ->
             sb.append(", $name = ")
             sb.append(fieldValues[indx].toString())
         }
@@ -211,7 +211,7 @@ class ActionParser : Grammar<Action>() {
             (`this` use { text }) or
                     ((arg and num) use { t1.text + t2.text }) or
                     ((percent and anyWord and optional(-dot and separatedTerms(anyWord, dot))) use {
-                        t1.text + t2 + (t3?.fold("", { acc, curr -> "$acc.$curr" }) ?: "")
+                        t1.text + t2 + (t3?.fold("") { acc, curr -> "$acc.$curr" } ?: "")
                     }) or
                     ((percent and num) use { t1.text + t2.text })
             ) use {
@@ -219,13 +219,13 @@ class ActionParser : Grammar<Action>() {
     }
 
     private val blockName by (percent and anyWord and optional(-dot and separatedTerms(anyWord, dot))) use {
-        val name = t1.text + t2 + (t3?.fold("", { acc, curr -> "$acc.$curr" }) ?: "")
+        val name = t1.text + t2 + (t3?.fold("") { acc, curr -> "$acc.$curr" } ?: "")
         tracker.getBlock(name) ?: throw UnknownNameError(name)
     }
 
     private val typeName by (separatedTerms(word, dot) use { map { it.text } } and zeroOrMore(openSquareBrace and closeSquareBrace)) use {
-        val braces = t2.fold("", { acc, it -> "$acc${it.t1.text}${it.t2.text}" })
-        val typeName = t1.fold("", { acc, curr -> "$acc/$curr" }).drop(1)
+        val braces = t2.fold("") { acc, it -> "$acc${it.t1.text}${it.t2.text}" }
+        val typeName = t1.fold("") { acc, curr -> "$acc/$curr" }.drop(1)
         parseStringToType("$typeName$braces")
     }
     private val args by separatedTerms(typeName, commaAndSpace, true)
@@ -233,7 +233,7 @@ class ActionParser : Grammar<Action>() {
             -openBracket and args and -closeBracket and
             -colonAndSpace and
             typeName) use {
-        val `class` = CM.getByName(t1.dropLast(1).fold("", { acc, curr -> "$acc/$curr" }).drop(1))
+        val `class` = CM.getByName(t1.dropLast(1).fold("") { acc, curr -> "$acc/$curr" }.drop(1))
         val methodName = t1.takeLast(1).firstOrNull() ?: throw UnknownNameError(t1.toString())
         val args = t2.toTypedArray()
         val rettype = t3

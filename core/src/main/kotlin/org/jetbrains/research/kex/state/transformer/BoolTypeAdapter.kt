@@ -16,12 +16,11 @@ object BoolTypeAdapter : Transformer<BoolTypeAdapter> {
         val rhv = predicate.rhv
         val type = predicate.type
         val loc = predicate.location
-        val res = when {
+        return when {
             lhv.type === KexBool && rhv.type === KexInt -> pf.getEquality(lhv, tf.getCast(KexBool, rhv), type, loc)
             lhv.type === KexInt && rhv.type === KexBool -> pf.getEquality(lhv, tf.getCast(KexInt, rhv), type, loc)
             else -> predicate
         }
-        return res
     }
 
     override fun transformBinaryTerm(term: BinaryTerm): Term {

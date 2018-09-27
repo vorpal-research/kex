@@ -24,7 +24,11 @@ interface Config {
             getStringValue(section, name)?.toDouble() ?: default
 
     fun getMultipleStringValue(section: String, name: String, delimeter: String = ",") =
-            getStringValue(section, name)?.split(delimeter)?.map { it.replace("\\s".toRegex(), "") }?.toList()
+            getStringValue(section, name)
+                    ?.split(delimeter)
+                    ?.asSequence()
+                    ?.map { it.replace("\\s".toRegex(), "") }
+                    ?.toList()
                     ?: listOf()
 
     fun getMultipleIntValue(section: String, name: String, delimeter: String = ",") =

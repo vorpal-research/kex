@@ -1,13 +1,13 @@
 package org.jetbrains.research.kex.smt
 
+import org.jetbrains.research.kex.ktype.KexType
 import org.jetbrains.research.kex.util.log
 import org.jetbrains.research.kex.util.unreachable
-import org.jetbrains.research.kfg.type.Type
 
 abstract class SMTEngine<in Context_t : Any, Expr_t : Any, Sort_t : Any, Function_t : Any, Pattern_t : Any> {
     companion object {
-        const val WORD = Type.WORD
-        const val DWORD = Type.DWORD
+        const val WORD = KexType.WORD
+        const val DWORD = KexType.DWORD
     }
 
     enum class Opcode {

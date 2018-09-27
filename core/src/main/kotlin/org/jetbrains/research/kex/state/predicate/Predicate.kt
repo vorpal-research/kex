@@ -59,12 +59,6 @@ abstract class Predicate(val type: PredicateType, val location: Location, val op
                 "Throw" to ThrowPredicate::class.java
         )
         val reverse = predicates.map { it.value to it.key }.toMap()
-
-        fun getReciever(predicate: Predicate): Term? = when (predicate) {
-            is DefaultSwitchPredicate, is EqualityPredicate, is NewArrayPredicate,
-            is NewPredicate, is ArrayStorePredicate, is FieldStorePredicate -> predicate.operands[0]
-            else -> null
-        }
     }
 
     val size: Int
@@ -85,3 +79,17 @@ abstract class Predicate(val type: PredicateType, val location: Location, val op
     override val reverseMapping get() = reverse
     override fun toString() = "$type ${print()}"
 }
+
+val Predicate.hasReceiver
+    get() = when (this) {
+        is DefaultSwitchPredicate -> true
+        is EqualityPredicate -> true
+        is NewArrayPredicate -> true
+        is InequalityPredicate -> true
+        is NewPredicate -> true
+        is ArrayStorePredicate -> true
+        is FieldStorePredicate -> true
+        else -> false
+    }
+
+val Predicate.receiver get() = if (hasReceiver) operands[0] else null

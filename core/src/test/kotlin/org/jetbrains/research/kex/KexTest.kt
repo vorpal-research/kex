@@ -10,8 +10,8 @@ import org.jetbrains.research.kex.smt.Checker
 import org.jetbrains.research.kex.smt.Result
 import org.jetbrains.research.kex.state.term.ConstBoolTerm
 import org.jetbrains.research.kex.state.term.ConstIntTerm
-import org.jetbrains.research.kex.state.term.Term
 import org.jetbrains.research.kex.state.term.TermFactory
+import org.jetbrains.research.kex.state.term.isConst
 import org.jetbrains.research.kex.test.Intrinsics
 import org.jetbrains.research.kex.util.log
 import org.jetbrains.research.kfg.CM
@@ -65,7 +65,10 @@ abstract class KexTest {
         val methodName = Intrinsics::assertReachable.name
         val desc = MethodDesc(arrayOf(TF.getArrayType(TF.boolType)), TF.voidType)
         val assertReachable = intrinsics.getMethod(methodName, desc)
-        return method.flatten().mapNotNull { it as? CallInst }.filter { it.method == assertReachable && it.`class` == intrinsics }
+        return method.flatten().asSequence()
+                .mapNotNull { it as? CallInst }
+                .filter { it.method == assertReachable && it.`class` == intrinsics }
+                .toList()
     }
 
     fun getUnreachables(method: Method): List<Instruction> {
@@ -75,7 +78,10 @@ abstract class KexTest {
         val methodName = Intrinsics::assertUnreachable.name
         val desc = MethodDesc(arrayOf(), TF.voidType)
         val assertUnreachable = intrinsics.getMethod(methodName, desc)
-        return method.flatten().mapNotNull { it as? CallInst }.filter { it.method == assertUnreachable && it.`class` == intrinsics }
+        return method.flatten().asSequence()
+                .mapNotNull { it as? CallInst }
+                .filter { it.method == assertUnreachable && it.`class` == intrinsics }
+                .toList()
     }
 
     fun testClassReachability(`class`: Class) {
@@ -93,9 +99,11 @@ abstract class KexTest {
                 inst as CallInst
                 val assertionsArray = inst.args.first()
                 val assertions = method.flatten()
+                        .asSequence()
                         .mapNotNull { it as? ArrayStoreInst }
                         .filter { it.arrayRef == assertionsArray }
                         .map { it.value }
+                        .toList()
 
                 val model = (result as Result.SatResult).model
                 log.debug("Acquired model: $model")
@@ -103,7 +111,7 @@ abstract class KexTest {
                 for (it in assertions) {
                     val argTerm = TermFactory.getValue(it)
 
-                    if (Term.isConst(argTerm)) continue
+                    if (argTerm.isConst) continue
 
                     val modelValue = model.assignments[argTerm]
                     assertNotNull(modelValue)

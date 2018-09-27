@@ -5,7 +5,6 @@ import org.jetbrains.research.kex.state.term.Term
 import org.jetbrains.research.kex.util.log
 import org.jetbrains.research.kex.util.unreachable
 import org.jetbrains.research.kfg.ir.Location
-import org.jetbrains.research.kfg.type.Type
 
 object PredicateFactory {
     fun getBoundStore(ptr: Term, bound: Term, type: PredicateType = PredicateType.State(), location: Location = Location()) =
@@ -20,8 +19,8 @@ object PredicateFactory {
     fun getArrayStore(arrayRef: Term, value: Term, type: PredicateType = PredicateType.State(), location: Location = Location()) =
             ArrayStorePredicate(arrayRef, value, type, location)
 
-    fun getFieldStore(field: Term, fieldType: Type, value: Term, type: PredicateType = PredicateType.State(), location: Location = Location()) =
-            FieldStorePredicate(field, fieldType, value, type, location)
+    fun getFieldStore(field: Term, value: Term, type: PredicateType = PredicateType.State(), location: Location = Location()) =
+            FieldStorePredicate(field, value, type, location)
 
     fun getLoad(lhv: Term, loadTerm: Term, location: Location = Location()) = getEquality(lhv, loadTerm, location = location)
 
@@ -30,7 +29,7 @@ object PredicateFactory {
 
     fun getNewArray(lhv: Term, dimensions: List<Term>, type: PredicateType = PredicateType.State(), location: Location = Location()): Predicate {
         var current = lhv.type
-        dimensions.forEach {
+        dimensions.forEach { _ ->
             current = (current as? KexArray)?.element ?: unreachable { log.error("Trying to create new array predicate with non-array type") }
         }
         return NewArrayPredicate(lhv, dimensions, current, type, location)

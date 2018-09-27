@@ -35,8 +35,8 @@ class CallPredicate : Predicate {
                 tlhv == lhv && tcall == call -> this
                 else -> t.pf.getCall(tlhv!!, tcall, type)
             }
-            else -> when {
-                tcall == call -> this
+            else -> when (tcall) {
+                call -> this
                 else -> t.pf.getCall(tcall, type)
             }
         }
