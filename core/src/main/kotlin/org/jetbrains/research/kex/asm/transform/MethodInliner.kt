@@ -17,6 +17,8 @@ import org.jetbrains.research.kfg.ir.value.instruction.ReturnInst
 import org.jetbrains.research.kfg.visitor.MethodVisitor
 
 object MethodInliner : MethodVisitor {
+    private val im = MethodManager.InlineManager
+
     override fun cleanup() {}
 
     private fun createBlockCopy(block: BasicBlock) = when (block) {
@@ -112,7 +114,7 @@ object MethodInliner : MethodVisitor {
     override fun visitCallInst(inst: CallInst) {
         val method = inst.parent?.parent ?: unreachable { log.error("Instruction without parent method") }
         val inlinedMethod = inst.method
-        if (!MethodManager.isInlinable(inlinedMethod)) return
+        if (!im.isInlinable(inlinedMethod)) return
 
         val entryBlock = inlinedMethod.entry
         val returnBlock = inlinedMethod.basicBlocks.firstOrNull { bb -> bb.any { it is ReturnInst } } ?: return

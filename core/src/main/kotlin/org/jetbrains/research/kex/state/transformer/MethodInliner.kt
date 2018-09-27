@@ -15,6 +15,7 @@ import org.jetbrains.research.kfg.ir.value.instruction.ReturnInst
 import java.util.*
 
 class MethodInliner(val method: Method) : RecollectingTransformer<MethodInliner> {
+    private val im = MethodManager.InlineManager
     override val builders = ArrayDeque<StateBuilder>()
     private var inlineIndex = 0
 
@@ -25,7 +26,7 @@ class MethodInliner(val method: Method) : RecollectingTransformer<MethodInliner>
     override fun transformCallPredicate(predicate: CallPredicate): Predicate {
         val call = predicate.call as CallTerm
         val calledMethod = call.method
-        if (!MethodManager.isInlinable(calledMethod)) return predicate
+        if (!im.isInlinable(calledMethod)) return predicate
 
         val mappings = hashMapOf<Term, Term>()
         if (!call.isStatic) {
