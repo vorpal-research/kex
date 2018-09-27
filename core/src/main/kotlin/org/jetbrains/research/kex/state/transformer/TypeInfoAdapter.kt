@@ -9,11 +9,8 @@ import org.jetbrains.research.kex.state.predicate.Predicate
 import org.jetbrains.research.kex.state.predicate.PredicateType
 import org.jetbrains.research.kex.state.term.*
 import org.jetbrains.research.kex.util.*
-import org.jetbrains.research.kfg.CM
-import org.jetbrains.research.kfg.TF
 import org.jetbrains.research.kfg.ir.Field
 import org.jetbrains.research.kfg.ir.Method
-import org.jetbrains.research.kfg.ir.MethodDesc
 import org.jetbrains.research.kfg.ir.value.instruction.CmpOpcode
 import org.jetbrains.research.kfg.type.ArrayType
 import org.jetbrains.research.kfg.type.Reference
@@ -34,17 +31,6 @@ class TypeInfoAdapter(val method: Method, val loader: ClassLoader) : Recollectin
 
     init {
         builders.add(StateBuilder())
-    }
-
-    companion object {
-        private val intrinsics = CM.getByName("kotlin/jvm/internal/Intrinsics")
-        val checkNotNull = intrinsics.getMethod(
-                "checkParameterIsNotNull",
-                MethodDesc(
-                        arrayOf(TF.objectType, TF.stringType),
-                        TF.voidType
-                )
-        )
     }
 
     private val KType.isNonNullable get() = this.isMarkedNullable.not()

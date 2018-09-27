@@ -34,6 +34,7 @@ class Checker(val method: Method, val loader: ClassLoader, private val psa: Pred
             log.debug("Inlining finished")
         }
 
+        state = IntrinsicAdapter.apply(state)
         state = TypeInfoAdapter(method, loader).apply(state)
         state = Optimizer.transform(state).simplify()
         state = ConstantPropagator.apply(state).simplify()
