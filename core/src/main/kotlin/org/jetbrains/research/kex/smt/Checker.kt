@@ -53,19 +53,22 @@ class Checker(val method: Method, val loader: ClassLoader, private val psa: Pred
 
             val variables = VariableCollector(state)
             val slicingTerms = run {
-                val `this` = variables.find { it is ValueTerm && it.valueName.toString() == "this" }
+                val `this` = variables.find { it is ValueTerm && it.name == "this" }
 
                 val results = hashSetOf<Term>()
                 if (`this` != null) results += `this`
 
                 results += variables.asSequence().filter { it is ArgumentTerm }
                 results += variables.asSequence().filter { it is FieldTerm && it.owner == `this` }
+                results += TermCollector.getFullTermSet(query)
                 results
             }
 
             val aa = StensgaardAA()
             aa.apply(state)
+            log.debug("State size before slicing: ${state.size}")
             state = Slicer(state, query, slicingTerms, aa).apply(state)
+            log.debug("State size after slicing: ${state.size}")
             log.debug("Slicing finished")
         }
 

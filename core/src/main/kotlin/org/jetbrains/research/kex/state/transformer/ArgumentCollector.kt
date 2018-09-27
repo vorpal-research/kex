@@ -10,7 +10,7 @@ object ArgumentCollector : Transformer<ArgumentCollector> {
     private var thisTerm: ValueTerm? = null
 
     override fun transformValueTerm(term: ValueTerm): Term {
-        if (term.valueName.toString() == "this") {
+        if (term.name == "this") {
             thisTerm = term
         }
         return term
