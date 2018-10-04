@@ -54,7 +54,7 @@ class ModelRecoverer(val method: Method, val model: SMTModel, val loader: ClassL
     }
 
     private fun recoverPrimary(type: KexType, value: Term?): Any? {
-        if (value == null) return null
+        if (value == null) return RandomDriver.generate(getClass(type.kfgType, loader))
         return when (type) {
             is KexBool -> (value as ConstBoolTerm).value
             is KexByte -> (value as ConstByteTerm).value
