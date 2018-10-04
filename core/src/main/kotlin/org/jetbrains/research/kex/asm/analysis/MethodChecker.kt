@@ -8,6 +8,7 @@ import org.jetbrains.research.kex.smt.model.ModelRecoverer
 import org.jetbrains.research.kex.state.transformer.memspace
 import org.jetbrains.research.kex.util.debug
 import org.jetbrains.research.kex.util.log
+import org.jetbrains.research.kex.util.tryOrNull
 import org.jetbrains.research.kfg.ir.Method
 import org.jetbrains.research.kfg.ir.value.instruction.ReturnInst
 import org.jetbrains.research.kfg.visitor.MethodVisitor
@@ -41,7 +42,7 @@ class MethodChecker(private val loader: ClassLoader) : MethodVisitor {
             log.debug(result.model)
             val recoverer = ModelRecoverer(method, result.model, loader)
             val model = recoverer.apply()
-            log.debug("Recovered: $model")
+            log.debug("Recovered: ${tryOrNull { model.toString() }}")
             for ((term, value) in recoverer.terms) {
                 val memspace = if (term.type is KexPointer) "<${term.memspace}>"  else ""
                 log.debug("$term$memspace = $value")
