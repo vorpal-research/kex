@@ -38,6 +38,7 @@ abstract class KexTest {
     init {
         val rootDir = System.getProperty("root.dir")
         GlobalConfig.initialize(RuntimeConfig, FileConfig("$rootDir/kex-test.ini"))
+        RuntimeConfig.setValue("z3", "tacticsFile", "$rootDir/z3.tactics")
 
         val jarPath = "$rootDir/kex-test/target/kex-test-0.1-jar-with-dependencies.jar"
         val jarFile = JarFile(jarPath)
@@ -46,7 +47,7 @@ abstract class KexTest {
         CM.parseJar(jarFile, `package`, Flags.readAll)
     }
 
-    fun getPSA(method: Method): PredicateStateBuilder {
+    private fun getPSA(method: Method): PredicateStateBuilder {
         val loops = LoopAnalysis.invoke(method)
         if (loops.isNotEmpty()) {
             LoopSimplifier.visit(method)
@@ -58,7 +59,7 @@ abstract class KexTest {
         return psa.builder(method)
     }
 
-    fun getReachables(method: Method): List<Instruction> {
+    private fun getReachables(method: Method): List<Instruction> {
         val `class` = Intrinsics::class.qualifiedName!!.replace(".", "/")
         val intrinsics = CM.getByName(`class`)
 
@@ -71,7 +72,7 @@ abstract class KexTest {
                 .toList()
     }
 
-    fun getUnreachables(method: Method): List<Instruction> {
+    private fun getUnreachables(method: Method): List<Instruction> {
         val `class` = Intrinsics::class.qualifiedName!!.replace(".", "/")
         val intrinsics = CM.getByName(`class`)
 
