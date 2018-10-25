@@ -5,7 +5,7 @@ import org.apache.velocity.app.VelocityEngine
 import org.apache.velocity.runtime.RuntimeConstants
 import java.io.Writer
 
-class ClassGenerator(val parameters: Map<String, Any>, val path: String, val template: String) {
+class ClassGenerator(private val parameters: Map<String, Any>, val path: String, private val template: String) {
     fun doit(writer: Writer) {
         val engine = VelocityEngine()
         engine.setProperty(RuntimeConstants.FILE_RESOURCE_LOADER_PATH, path)
