@@ -2,8 +2,8 @@ package org.jetbrains.research.kex.asm.analysis
 
 import org.jetbrains.research.kex.asm.transform.TraceInstrumenter
 import org.jetbrains.research.kex.config.GlobalConfig
-import org.jetbrains.research.kex.trace.RandomRunner
 import org.jetbrains.research.kex.trace.TraceManager
+import org.jetbrains.research.kex.trace.runner.RandomRunner
 import org.jetbrains.research.kex.util.log
 import org.jetbrains.research.kfg.ir.Method
 import org.jetbrains.research.kfg.util.JarUtils
