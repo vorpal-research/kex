@@ -11,7 +11,7 @@ import org.jetbrains.research.kfg.visitor.MethodVisitor
 import java.io.File
 import java.net.URLClassLoader
 
-class RandomChecker(val loader: ClassLoader, val target: File) : MethodVisitor {
+class RandomChecker(private val loader: ClassLoader, private val target: File) : MethodVisitor {
     private val runner = GlobalConfig.getBooleanValue("runner", "enabled", false)
 
     override fun cleanup() {}
