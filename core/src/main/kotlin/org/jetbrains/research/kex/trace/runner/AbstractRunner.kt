@@ -15,6 +15,8 @@ import java.io.PrintStream
 import java.lang.reflect.InvocationTargetException
 import java.util.*
 
+class TraceParseError : Exception()
+
 abstract class AbstractRunner(val method: Method, protected val loader: ClassLoader) {
     protected val javaClass: Class<*> = loader.loadClass(method.`class`.canonicalDesc)
     protected val javaMethod: java.lang.reflect.Method
@@ -35,7 +37,7 @@ abstract class AbstractRunner(val method: Method, protected val loader: ClassLoa
         operator fun component3() = exception
     }
 
-    protected fun parse(result: InvocationResult): List<Trace> {
+    protected fun parse(result: InvocationResult): Trace {
         val output = Scanner(ByteArrayInputStream(result.output.toByteArray()))
 
         val parser = ActionParser()
@@ -50,14 +52,14 @@ abstract class AbstractRunner(val method: Method, protected val loader: ClassLoa
                 } catch (e: ParseException) {
                     log.error("Failed to parse $method output: $e")
                     log.error("Failed line: $trimmed")
-                    return listOf()
+                    throw TraceParseError()
                 }
             }
         }
         return Trace.parse(actions, result.exception)
     }
 
-    protected fun invoke(method: java.lang.reflect.Method, instance: Any?, args: Array<Any?>): List<Trace> {
+    protected fun invoke(method: java.lang.reflect.Method, instance: Any?, args: Array<Any?>): Trace {
         log.debug("Running $method")
         log.debug("Instance: $instance")
         log.debug("Args: ${args.map { it.toString() }}")

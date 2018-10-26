@@ -1,6 +1,7 @@
 package org.jetbrains.research.kex.trace
 
 import org.jetbrains.research.kex.util.log
+import org.jetbrains.research.kex.util.unreachable
 import org.jetbrains.research.kfg.ir.BasicBlock
 import org.jetbrains.research.kfg.ir.Method
 import java.util.*
@@ -16,29 +17,38 @@ data class BlockInfo internal constructor(val bb: BasicBlock, val predecessor: B
         get() = outputAction != null
 }
 
-class Trace internal constructor(val method: Method, val instance: ActionValue?,
-                                 val args: Array<ActionValue>, val blocks: Map<BasicBlock, List<BlockInfo>>,
-                                 val retval: ActionValue?, val throwval: ActionValue?,
-                                 val exception: Throwable?) {
+class Trace private constructor(val method: Method,
+            val instance: ActionValue?,
+            val args: Array<ActionValue>,
+            val blocks: Map<BasicBlock, List<BlockInfo>>,
+            val retval: ActionValue?,
+            val throwable: ActionValue?,
+            val exception: Throwable?,
+            val subtraces: List<Trace>) {
     fun getBlockInfo(bb: BasicBlock) = blocks.getValue(bb)
 
     companion object {
-        fun parse(actions: List<Action>, exception: Throwable?): List<Trace> {
+        fun parse(actions: List<Action>, exception: Throwable?): Trace {
             class Info(var instance: ActionValue?,
                        var args: Array<ActionValue>, var blocks: MutableMap<BasicBlock, MutableList<BlockInfo>>,
                        var retval: ActionValue?, var throwval: ActionValue?,
-                       val exception: Throwable?)
+                       val exception: Throwable?, val subinfos: MutableList<Pair<Method, Info>>) {
+                fun toTrace(method: Method): Trace =
+                        Trace(method, instance, args, blocks, retval, throwval, exception, subinfos.map { it.second.toTrace(it.first) })
+            }
 
-            val infos = Stack<Info>()
+            val infos = ArrayDeque<Info>()
             val methodStack = Stack<Method>()
-            val result = arrayListOf<Trace>()
+            val result = arrayListOf<Pair<Method, Info>>()
             var previousBlock: BlockInfo? = null
 
             for (action in actions) {
                 when (action) {
                     is MethodEntry -> {
                         methodStack.push(action.method)
-                        infos.push(Info(null, arrayOf(), hashMapOf(), null, null, exception))
+                        val newInfo = Info(null, arrayOf(), hashMapOf(), null, null, exception, arrayListOf())
+                        infos.peek()?.subinfos?.add(action.method to newInfo)
+                        infos.push(newInfo)
                     }
                     is MethodInstance -> {
                         require(methodStack.peek() == action.method) { log.error("Incorrect action format: Instance action for wrong method") }
@@ -55,7 +65,7 @@ class Trace internal constructor(val method: Method, val instance: ActionValue?,
                         val info = infos.peek()
                         info.retval = action.`return`?.rhv
 
-                        result.add(Trace(methodStack.pop(), info.instance, info.args, info.blocks, info.retval, info.throwval, info.exception))
+                        result.add(methodStack.pop() to info)
                         infos.pop()
                     }
                     is MethodThrow -> {
@@ -63,7 +73,7 @@ class Trace internal constructor(val method: Method, val instance: ActionValue?,
                         val info = infos.peek()
                         info.throwval = action.throwable.rhv
 
-                        result.add(Trace(methodStack.pop(), info.instance, info.args, info.blocks, info.retval, info.throwval, info.exception))
+                        result.add(methodStack.pop() to info)
                         infos.pop()
                     }
                     is BlockEntryAction -> {
@@ -83,12 +93,8 @@ class Trace internal constructor(val method: Method, val instance: ActionValue?,
                     }
                 }
             }
-            while (methodStack.isNotEmpty()) {
-                val info = infos.peek()
-                result.add(Trace(methodStack.pop(), info.instance, info.args, info.blocks, info.retval, info.throwval, info.exception))
-                infos.pop()
-            }
-            return result
+            require(methodStack.isEmpty() && infos.isEmpty())
+            return result.map { it.second.toTrace(it.first) }.firstOrNull() ?: unreachable { log.error("Could not parse trace") }
         }
     }
 }

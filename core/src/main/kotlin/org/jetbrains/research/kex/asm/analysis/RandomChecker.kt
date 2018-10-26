@@ -26,7 +26,13 @@ class RandomChecker(val loader: ClassLoader, val target: File) : MethodVisitor {
             val traceInstructions = TraceInstrumenter(method)
             JarUtils.writeClass(loader, `class`, classFileName)
             val directory = URLClassLoader(arrayOf(target.toURI().toURL()))
-            RandomRunner(method, directory).run()
+
+            try {
+                RandomRunner(method, directory).run()
+            } catch (e: ClassNotFoundException) {
+                log.warn("Could not load classes for random tester: ${e.message}")
+            }
+
             traceInstructions.forEach { it.parent?.remove(it) }
         }
         JarUtils.writeClass(loader, `class`, classFileName)

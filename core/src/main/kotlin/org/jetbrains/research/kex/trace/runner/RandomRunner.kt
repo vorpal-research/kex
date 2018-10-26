@@ -6,6 +6,7 @@ import org.jetbrains.research.kex.driver.RandomDriver
 import org.jetbrains.research.kex.trace.Trace
 import org.jetbrains.research.kex.trace.TraceManager
 import org.jetbrains.research.kex.util.log
+import java.util.*
 import org.jetbrains.research.kfg.ir.Method as KfgMethod
 
 internal val runs = GlobalConfig.getIntValue("runner", "runs", 10)
@@ -35,8 +36,15 @@ class RandomRunner(method: KfgMethod, loader: ClassLoader) : AbstractRunner(meth
         } catch (e: Exception) {
             log.error("Failed when running method $method")
             log.error("Exception: $e")
-            Trace.parse(listOf(), e)
+            null
+        } ?: return@repeat
+
+        val queue = ArrayDeque<Trace>()
+        queue.add(trace)
+        while (queue.isNotEmpty()) {
+            val current = queue.pollFirst()
+            TraceManager.addTrace(current.method, current)
+            queue.addAll(current.subtraces)
         }
-        trace.forEach { TraceManager.addTrace(it.method, it) }
     }
 }
