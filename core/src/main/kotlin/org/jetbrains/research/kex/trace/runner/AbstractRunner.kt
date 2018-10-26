@@ -38,7 +38,7 @@ abstract class AbstractRunner(val method: Method, protected val loader: ClassLoa
     }
 
     protected fun parse(result: InvocationResult): Trace {
-        val output = Scanner(ByteArrayInputStream(result.output.toByteArray()))
+        val output = Scanner(ByteArrayInputStream(result.error.toByteArray()))
 
         val parser = ActionParser()
         val actions = arrayListOf<Action>()
@@ -76,23 +76,18 @@ abstract class AbstractRunner(val method: Method, protected val loader: ClassLoa
             try {
                 result.returnValue = method.invoke(instance, *args)
             } catch (e: InvocationTargetException) {
-                System.setOut(oldOut)
-                System.setErr(oldErr)
                 log.debug("Invocation exception ${e.targetException}")
                 result.exception = e.targetException
+            } finally {
+                System.setOut(oldOut)
+                System.setErr(oldErr)
             }
         }
         thread.start()
         thread.join(timeout)
         @Suppress("DEPRECATION") thread.stop()
 
-        if (result.exception == null) {
-            System.setOut(oldOut)
-            System.setErr(oldErr)
-        }
-
         log.debug("Invocation output:\n${result.output}")
-        if (result.error.toString().isNotEmpty()) log.debug("Invocation err: ${result.error}")
         return parse(result)
     }
 

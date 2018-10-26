@@ -56,12 +56,19 @@ class StringBuilderWrapper(val name: String) {
     }
 }
 
-class SystemOutWrapper(name: String) {
-    val printStream = CM.getByName("java/io/PrintStream")
+abstract class SystemOutputWrapper(name: String, stream: SystemStream) {
+    sealed class SystemStream(val name: String) {
+        class Output : SystemStream("out")
+        class Error : SystemStream("err")
+
+        override fun toString() = name
+    }
+
+    private val printStream = CM.getByName("java/io/PrintStream")
     val `class` = CM.getByName("java/lang/System")
-    val field = `class`.getField("out", TF.getRefType(printStream))
-    val sout = IF.getFieldLoad(name, field)
-    val insns = arrayListOf(sout)
+    val field = `class`.getField(stream.name, TF.getRefType(printStream))
+    private val stream = IF.getFieldLoad(name, field)
+    val insns = arrayListOf(this.stream)
 
     fun print(string: String) = print(VF.getStringConstant(string))
     fun print(value: Value) {
@@ -73,10 +80,11 @@ class SystemOutWrapper(name: String) {
 
         val desc = MethodDesc(arrayOf(printArg), TF.voidType)
         val printMethod = `class`.getMethod("print", desc)
-        val append = IF.getCall(CallOpcode.Virtual(), printMethod, printStream, sout, arrayOf(value), false)
+        val append = IF.getCall(CallOpcode.Virtual(), printMethod, printStream, stream, arrayOf(value), false)
         insns.add(append)
     }
 
+    fun println() = println("")
     fun println(string: String) = println(VF.getStringConstant(string))
     fun println(value: Value) {
         val printArg = when {
@@ -86,10 +94,13 @@ class SystemOutWrapper(name: String) {
         }
         val desc = MethodDesc(arrayOf(printArg), TF.voidType)
         val printMethod = `class`.getMethod("println", desc)
-        val append = IF.getCall(CallOpcode.Virtual(), printMethod, printStream, sout, arrayOf(value), false)
+        val append = IF.getCall(CallOpcode.Virtual(), printMethod, printStream, stream, arrayOf(value), false)
         insns.add(append)
     }
 }
+
+class SystemErrWrapper(name: String) : SystemOutputWrapper(name, SystemStream.Error())
+class SystemOutWrapper(name: String) : SystemOutputWrapper(name, SystemStream.Output())
 
 class ReflectionWrapper {
     val classClass = CM.getByName("java/lang/Class")

@@ -7,3 +7,4 @@ target/*
 instrumented/*
 repo/*
 core/src/main/generated/*
+testJars/*
