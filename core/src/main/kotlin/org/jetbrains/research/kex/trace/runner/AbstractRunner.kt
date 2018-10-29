@@ -3,6 +3,7 @@ package org.jetbrains.research.kex.trace.runner
 import com.github.h0tk3y.betterParse.grammar.parseToEnd
 import com.github.h0tk3y.betterParse.parser.ParseException
 import org.jetbrains.research.kex.asm.transform.TraceInstrumenter
+import org.jetbrains.research.kex.config.GlobalConfig
 import org.jetbrains.research.kex.trace.Action
 import org.jetbrains.research.kex.trace.ActionParser
 import org.jetbrains.research.kex.trace.Trace
@@ -14,6 +15,8 @@ import java.io.ByteArrayOutputStream
 import java.io.PrintStream
 import java.lang.reflect.InvocationTargetException
 import java.util.*
+
+private val timeout = GlobalConfig.getLongValue("runner", "timeout", 1000L)
 
 class TraceParseError : Exception()
 

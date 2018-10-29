@@ -12,10 +12,7 @@ import org.jetbrains.research.kex.util.log
 import org.jetbrains.research.kex.util.tryOrNull
 import org.jetbrains.research.kfg.ir.BasicBlock
 import org.jetbrains.research.kfg.ir.Method
-import org.jetbrains.research.kfg.ir.value.instruction.ReturnInst
 import org.jetbrains.research.kfg.visitor.MethodVisitor
-
-val Method.returnInst get() = this.flatten().lastOrNull { it is ReturnInst } as? ReturnInst
 
 class MethodChecker(private val loader: ClassLoader) : MethodVisitor {
     private val tm = TraceManager
