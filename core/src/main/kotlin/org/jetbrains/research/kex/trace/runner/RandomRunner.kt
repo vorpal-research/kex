@@ -10,7 +10,6 @@ import java.util.*
 import org.jetbrains.research.kfg.ir.Method as KfgMethod
 
 internal val runs = GlobalConfig.getIntValue("runner", "runs", 10)
-internal val timeout = GlobalConfig.getLongValue("runner", "timeout", 1000L)
 
 class RandomRunner(method: KfgMethod, loader: ClassLoader) : AbstractRunner(method, loader) {
     private val random = RandomDriver
