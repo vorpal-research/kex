@@ -3,7 +3,6 @@ package org.jetbrains.research.kex.state.predicate
 import org.jetbrains.research.kex.state.InheritorOf
 import org.jetbrains.research.kex.state.term.Term
 import org.jetbrains.research.kex.state.transformer.Transformer
-import org.jetbrains.research.kex.util.contentEquals
 import org.jetbrains.research.kfg.ir.Location
 
 @InheritorOf("Predicate")
@@ -29,7 +28,7 @@ class DefaultSwitchPredicate(cond: Term, cases: List<Term>, type: PredicateType 
         val tcond = t.transform(cond)
         val tcases = cases.map { t.transform(it) }
         return when {
-            tcond == cond && tcases.contentEquals(cases) -> this
+            tcond == cond && tcases == cases -> this
             else -> t.pf.getDefaultSwitchPredicate(tcond, tcases, type)
         }
     }

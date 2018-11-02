@@ -5,7 +5,6 @@ import org.jetbrains.research.kex.state.BaseType
 import org.jetbrains.research.kex.state.InheritanceInfo
 import org.jetbrains.research.kex.state.TypeInfo
 import org.jetbrains.research.kex.state.transformer.Transformer
-import org.jetbrains.research.kex.util.contentEquals
 import org.jetbrains.research.kex.util.defaultHashCode
 
 @BaseType("Term")
@@ -35,7 +34,7 @@ abstract class Term(val name: String, val type: KexType, val subterms: List<Term
         if (this === other) return true
         if (other?.javaClass != this.javaClass) return false
         other as Term
-        return this.name == other.name && this.type == other.type && this.subterms.contentEquals(other.subterms)
+        return this.name == other.name && this.type == other.type && this.subterms == other.subterms
     }
 
     override val inheritors get() = terms
