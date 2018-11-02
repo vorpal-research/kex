@@ -3,7 +3,6 @@ package org.jetbrains.research.kex.state.term
 import org.jetbrains.research.kex.ktype.KexType
 import org.jetbrains.research.kex.state.InheritorOf
 import org.jetbrains.research.kex.state.transformer.Transformer
-import org.jetbrains.research.kex.util.contentEquals
 import org.jetbrains.research.kfg.ir.Method
 
 @InheritorOf("Term")
@@ -31,7 +30,7 @@ class CallTerm(type: KexType, owner: Term, val method: Method, operands: List<Te
         val towner = t.transform(owner)
         val targuments = arguments.map { t.transform(it) }
         return when {
-            towner == owner && targuments.contentEquals(arguments) -> this
+            towner == owner && targuments == arguments -> this
             else -> t.tf.getCall(method, towner, targuments)
         }
     }

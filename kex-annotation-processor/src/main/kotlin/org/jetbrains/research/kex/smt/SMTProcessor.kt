@@ -2,6 +2,7 @@ package org.jetbrains.research.kex.smt
 
 import org.jetbrains.research.kex.KexProcessor
 import org.jetbrains.research.kex.util.unreachable
+import java.io.ByteArrayOutputStream
 import java.io.File
 import javax.annotation.processing.*
 import javax.lang.model.SourceVersion
@@ -60,18 +61,26 @@ class SMTProcessor : KexProcessor() {
         val solver = parameters.getValue("solver") as String
         val newPackage = "$`package`.${solver.toLowerCase()}"
         val newClass = "$solver$nameTemplate"
-
         parameters["packageName"] = newPackage
 
-        info("Generating $nameTemplate for $`class` in package $`package` with parameters $parameters")
         writeClass(newPackage, newClass, parameters, "SMT$nameTemplate")
     }
 
     private fun writeClass(`package`: String, `class`: String, parameters: Map<String, Any>, template: String) {
         val file = File("$targetDirectory/${`package`.replace('.', '/')}/$`class`.kt")
         if (!file.parentFile.exists()) file.parentFile.mkdirs()
-        val fileWriter = file.writer()
-        ClassGenerator(parameters, templates, "$template.vm").doit(fileWriter)
-        fileWriter.close()
+
+        val stream = ByteArrayOutputStream()
+        val writer = stream.bufferedWriter()
+        ClassGenerator(parameters, templates, "$template.vm").doit(writer)
+        writer.flush()
+        val resultingFile = stream.toString()
+
+        if (file.readText() != resultingFile) {
+            info("Generating $template for $`class` in package $`package` with parameters $parameters")
+            val fileWriter = file.writer()
+            fileWriter.write(resultingFile)
+            fileWriter.close()
+        }
     }
 }

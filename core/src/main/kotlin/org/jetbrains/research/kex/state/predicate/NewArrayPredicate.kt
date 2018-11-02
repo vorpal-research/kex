@@ -4,7 +4,6 @@ import org.jetbrains.research.kex.ktype.KexType
 import org.jetbrains.research.kex.state.InheritorOf
 import org.jetbrains.research.kex.state.term.Term
 import org.jetbrains.research.kex.state.transformer.Transformer
-import org.jetbrains.research.kex.util.contentEquals
 import org.jetbrains.research.kfg.ir.Location
 
 @InheritorOf("Predicate")
@@ -34,7 +33,7 @@ class NewArrayPredicate(lhv: Term,
         val tlhv = t.transform(lhv)
         val tdimentions = dimentions.map { t.transform(it) }
         return when {
-            tlhv == lhv && tdimentions.contentEquals(dimentions) -> this
+            tlhv == lhv && tdimentions == dimentions -> this
             else -> t.pf.getNewArray(tlhv, tdimentions, type)
         }
     }

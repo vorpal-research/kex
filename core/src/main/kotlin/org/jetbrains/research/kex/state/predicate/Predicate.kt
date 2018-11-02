@@ -5,7 +5,6 @@ import org.jetbrains.research.kex.state.InheritanceInfo
 import org.jetbrains.research.kex.state.TypeInfo
 import org.jetbrains.research.kex.state.term.Term
 import org.jetbrains.research.kex.state.transformer.Transformer
-import org.jetbrains.research.kex.util.contentEquals
 import org.jetbrains.research.kex.util.defaultHashCode
 import org.jetbrains.research.kfg.ir.Location
 
@@ -73,7 +72,7 @@ abstract class Predicate(val type: PredicateType, val location: Location, val op
         if (this === other) return true
         if (other?.javaClass != this.javaClass) return false
         other as Predicate
-        return this.type == other.type && this.operands.contentEquals(other.operands)
+        return this.type == other.type && this.operands == other.operands
     }
 
     override val inheritors get() = predicates
