@@ -7,10 +7,7 @@ import javax.annotation.processing.*
 import javax.lang.model.SourceVersion
 import javax.lang.model.element.Element
 import javax.lang.model.element.TypeElement
-import javax.tools.Diagnostic
 import kotlin.reflect.KClass
-import kotlin.reflect.full.declaredMemberProperties
-import kotlin.reflect.full.memberFunctions
 
 @SupportedSourceVersion(SourceVersion.RELEASE_8)
 @SupportedAnnotationTypes(
@@ -33,7 +30,7 @@ class SMTProcessor : KexProcessor() {
         get() = processingEnv.options[TEMPLATE_DIR] ?: unreachable { error("No template directory") }
 
     override fun process(annotations: MutableSet<out TypeElement>?, roundEnv: RoundEnvironment?): Boolean {
-        roundEnv?.run {
+        roundEnv?.apply {
             getElementsAnnotatedWith(SMTExpr::class.java)?.forEach {
                 processAnnotation(it, SMTExpr::class, "Expr")
             }
@@ -53,18 +50,13 @@ class SMTProcessor : KexProcessor() {
         return true
     }
 
-    private fun <T : Annotation> processAnnotation(element: Element, annotation: KClass<T>, nameTemplate: String) {
+    private fun <T : Annotation> processAnnotation(element: Element, annotationClass: KClass<T>, nameTemplate: String) {
         val `class` = element.simpleName.toString()
         val `package` = processingEnv.elementUtils.getPackageOf(element).toString()
-        val anno = element.getAnnotation(annotation.java)
-                ?: unreachable { error("Element $element have no annotation $annotation") }
+        val annotation = element.getAnnotation(annotationClass.java)
+                ?: unreachable { error("Element $element have no annotation $annotationClass") }
 
-        val parameters = mutableMapOf<String, Any>()
-        for (property in annotation.declaredMemberProperties) {
-            val prop = anno::class.memberFunctions.first { it.name == property.name }
-            parameters[property.name] = prop.call(anno)
-                    ?: unreachable { error("Annotation $anno have no property named ${property.name}") }
-        }
+        val parameters = getAnnotationProperties(annotation, annotationClass).toMutableMap()
         val solver = parameters.getValue("solver") as String
         val newPackage = "$`package`.${solver.toLowerCase()}"
         val newClass = "$solver$nameTemplate"
