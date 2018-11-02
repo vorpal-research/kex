@@ -9,9 +9,9 @@
     <packaging>pom</packaging>
     <version>0.1</version>
     <modules>
-        <module>smt-context-generator</module>
         <module>core</module>
         <module>kfg</module>
+        <module>kex-annotation-processor</module>
         <module>kex-util</module>
         <module>kex-test</module>
     </modules>
