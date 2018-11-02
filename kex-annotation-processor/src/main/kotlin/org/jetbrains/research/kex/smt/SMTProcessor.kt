@@ -76,7 +76,7 @@ class SMTProcessor : KexProcessor() {
         writer.flush()
         val resultingFile = stream.toString()
 
-        if (file.readText() != resultingFile) {
+        if (!file.exists() || file.readText() != resultingFile) {
             info("Generating $template for $`class` in package $`package` with parameters $parameters")
             val fileWriter = file.writer()
             fileWriter.write(resultingFile)
