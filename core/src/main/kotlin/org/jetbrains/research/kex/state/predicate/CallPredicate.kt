@@ -1,11 +1,13 @@
 package org.jetbrains.research.kex.state.predicate
 
+import org.jetbrains.research.kex.state.InheritorOf
 import org.jetbrains.research.kex.state.term.Term
 import org.jetbrains.research.kex.state.transformer.Transformer
 import org.jetbrains.research.kex.util.log
 import org.jetbrains.research.kex.util.unreachable
 import org.jetbrains.research.kfg.ir.Location
 
+@InheritorOf("Predicate")
 class CallPredicate : Predicate {
     constructor(callTerm: Term, type: PredicateType = PredicateType.State(), location: Location = Location())
             : super(type, location, listOf(callTerm)) {

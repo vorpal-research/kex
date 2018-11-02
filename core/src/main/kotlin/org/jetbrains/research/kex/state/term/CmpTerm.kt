@@ -1,10 +1,12 @@
 package org.jetbrains.research.kex.state.term
 
 import org.jetbrains.research.kex.ktype.KexType
+import org.jetbrains.research.kex.state.InheritorOf
 import org.jetbrains.research.kex.state.transformer.Transformer
 import org.jetbrains.research.kex.util.defaultHashCode
 import org.jetbrains.research.kfg.ir.value.instruction.CmpOpcode
 
+@InheritorOf("Term")
 class CmpTerm(type: KexType, val opcode: CmpOpcode, lhv: Term, rhv: Term) : Term("", type, listOf(lhv, rhv)) {
 
     val lhv: Term

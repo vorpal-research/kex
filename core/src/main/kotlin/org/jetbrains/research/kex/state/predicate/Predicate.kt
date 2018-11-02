@@ -1,5 +1,7 @@
 package org.jetbrains.research.kex.state.predicate
 
+import org.jetbrains.research.kex.state.BaseType
+import org.jetbrains.research.kex.state.InheritanceInfo
 import org.jetbrains.research.kex.state.TypeInfo
 import org.jetbrains.research.kex.state.term.Term
 import org.jetbrains.research.kex.state.transformer.Transformer
@@ -43,21 +45,20 @@ sealed class PredicateType(val name: String) {
     }
 }
 
+@BaseType("Predicate")
 abstract class Predicate(val type: PredicateType, val location: Location, val operands: List<Term>) : TypeInfo {
     companion object {
-        val predicates = mapOf<String, Class<*>>(
-                "ArrayStore" to ArrayStorePredicate::class.java,
-                "BoundStore" to BoundStorePredicate::class.java,
-                "Call" to CallPredicate::class.java,
-                "Catch" to CatchPredicate::class.java,
-                "DefaultSwitch" to DefaultSwitchPredicate::class.java,
-                "Inequality" to InequalityPredicate::class.java,
-                "Equality" to EqualityPredicate::class.java,
-                "FieldStore" to FieldStorePredicate::class.java,
-                "NewArray" to NewArrayPredicate::class.java,
-                "New" to NewPredicate::class.java,
-                "Throw" to ThrowPredicate::class.java
-        )
+        val predicates = run {
+            val loader = Thread.currentThread().contextClassLoader
+            val resource = loader.getResourceAsStream("Predicate.json")
+            val inheritanceInfo = InheritanceInfo.fromJson(resource.bufferedReader().readText())
+            resource.close()
+
+            inheritanceInfo?.inheritors?.map {
+                it.name to loader.loadClass(it.inheritorClass)
+            }?.toMap() ?: mapOf()
+        }
+
         val reverse = predicates.map { it.value to it.key }.toMap()
     }
 
@@ -75,7 +76,7 @@ abstract class Predicate(val type: PredicateType, val location: Location, val op
         return this.type == other.type && this.operands.contentEquals(other.operands)
     }
 
-    override val subtypes get() = predicates
+    override val inheritors get() = predicates
     override val reverseMapping get() = reverse
     override fun toString() = "$type ${print()}"
 }

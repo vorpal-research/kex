@@ -4,7 +4,7 @@ import org.jetbrains.research.kex.state.predicate.Predicate
 import org.jetbrains.research.kex.state.predicate.PredicateType
 
 interface TypeInfo {
-    val subtypes: Map<String, Class<*>>
+    val inheritors: Map<String, Class<*>>
     val reverseMapping: Map<Class<*>, String>
 }
 
@@ -36,13 +36,19 @@ class StateBuilder() {
     fun apply() = current
 }
 
+@BaseType("State")
 abstract class PredicateState : TypeInfo {
     companion object {
-        val states = mapOf<String, Class<*>>(
-                "Basic" to BasicState::class.java,
-                "Chain" to ChainState::class.java,
-                "Choice" to ChoiceState::class.java
-        )
+        val states = run {
+            val loader = Thread.currentThread().contextClassLoader
+            val resource = loader.getResourceAsStream("PredicateState.json")
+            val inheritanceInfo = InheritanceInfo.fromJson(resource.bufferedReader().readText())
+            resource.close()
+
+            inheritanceInfo?.inheritors?.map {
+                it.name to loader.loadClass(it.inheritorClass)
+            }?.toMap() ?: mapOf()
+        }
 
         val reverse = states.map { it.value to it.key }.toMap()
     }
@@ -55,7 +61,7 @@ abstract class PredicateState : TypeInfo {
     val isNotEmpty: Boolean
         get() = !isEmpty
 
-    override val subtypes get() = states
+    override val inheritors get() = states
     override val reverseMapping get() = reverse
 
     abstract fun print(): String

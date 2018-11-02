@@ -1,5 +1,6 @@
 package org.jetbrains.research.kex.smt
 
+import org.jetbrains.research.kex.KexProcessor
 import org.jetbrains.research.kex.util.unreachable
 import java.io.File
 import javax.annotation.processing.*
@@ -19,7 +20,7 @@ import kotlin.reflect.full.memberFunctions
         "org.jetbrains.research.kex.smt.SMTContext",
         "org.jetbrains.research.kex.smt.SMTConverter")
 @SupportedOptions("codegen.dir", "template.dir")
-class SMTProcessor : AbstractProcessor() {
+class SMTProcessor : KexProcessor() {
     private companion object {
         const val CODEGEN_DIR = "codegen.dir"
         const val TEMPLATE_DIR = "template.dir"
@@ -81,7 +82,4 @@ class SMTProcessor : AbstractProcessor() {
         ClassGenerator(parameters, templates, "$template.vm").doit(fileWriter)
         fileWriter.close()
     }
-
-    private fun error(msg: String) = processingEnv.messager.printMessage(Diagnostic.Kind.ERROR, msg)
-    private fun info(msg: String) = processingEnv.messager.printMessage(Diagnostic.Kind.NOTE, msg)
 }

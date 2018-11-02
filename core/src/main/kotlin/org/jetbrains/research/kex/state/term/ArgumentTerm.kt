@@ -1,9 +1,11 @@
 package org.jetbrains.research.kex.state.term
 
 import org.jetbrains.research.kex.ktype.KexType
+import org.jetbrains.research.kex.state.InheritorOf
 import org.jetbrains.research.kex.state.transformer.Transformer
 import org.jetbrains.research.kex.util.defaultHashCode
 
+@InheritorOf("Term")
 class ArgumentTerm(type: KexType, val index: Int) : Term("arg$$index", type, listOf()) {
     override fun print() = name
 

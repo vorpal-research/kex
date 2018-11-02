@@ -1,8 +1,10 @@
 package org.jetbrains.research.kex.state.term
 
 import org.jetbrains.research.kex.ktype.KexType
+import org.jetbrains.research.kex.state.InheritorOf
 import org.jetbrains.research.kex.state.transformer.Transformer
 
+@InheritorOf("Term")
 class ArrayLoadTerm(type: KexType, arrayRef: Term) : Term("", type, listOf(arrayRef)) {
 
     val arrayRef: Term

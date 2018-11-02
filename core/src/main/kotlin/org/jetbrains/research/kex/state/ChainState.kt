@@ -3,6 +3,7 @@ package org.jetbrains.research.kex.state
 import org.jetbrains.research.kex.state.predicate.Predicate
 import org.jetbrains.research.kex.util.defaultHashCode
 
+@InheritorOf("State")
 class ChainState(val base: PredicateState, val curr: PredicateState) : PredicateState() {
     override val size: Int
         get() = base.size + curr.size

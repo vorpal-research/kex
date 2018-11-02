@@ -1,11 +1,13 @@
 package org.jetbrains.research.kex.state.predicate
 
 import org.jetbrains.research.kex.ktype.KexType
+import org.jetbrains.research.kex.state.InheritorOf
 import org.jetbrains.research.kex.state.term.Term
 import org.jetbrains.research.kex.state.transformer.Transformer
 import org.jetbrains.research.kex.util.contentEquals
 import org.jetbrains.research.kfg.ir.Location
 
+@InheritorOf("Predicate")
 class NewArrayPredicate(lhv: Term,
                         dimentions: List<Term>,
                         val elementType: KexType,

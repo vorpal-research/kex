@@ -1,8 +1,10 @@
 package org.jetbrains.research.kex.state.term
 
 import org.jetbrains.research.kex.ktype.KexType
+import org.jetbrains.research.kex.state.InheritorOf
 import org.jetbrains.research.kex.state.transformer.Transformer
 
+@InheritorOf("Term")
 class ArrayIndexTerm(type: KexType, arrayRef: Term, index: Term)
     : Term("$arrayRef[$index]", type, listOf(arrayRef, index)) {
 

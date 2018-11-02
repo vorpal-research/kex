@@ -1,1 +1,2 @@
 org.jetbrains.research.kex.smt.SMTProcessor
+org.jetbrains.research.kex.state.InheritanceInfoProcessor

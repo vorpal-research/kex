@@ -4,6 +4,7 @@ import org.jetbrains.research.kex.state.predicate.Predicate
 import org.jetbrains.research.kex.state.predicate.PredicateType
 import org.jetbrains.research.kex.util.defaultHashCode
 
+@InheritorOf("State")
 class ChoiceState(val choices: List<PredicateState>) : PredicateState(), Iterable<PredicateState> {
     override val size: Int
         get() = choices.fold(0) { acc, it -> acc + it.size }
@@ -12,8 +13,6 @@ class ChoiceState(val choices: List<PredicateState>) : PredicateState(), Iterabl
         val sb = StringBuilder()
         sb.appendln("(BEGIN")
         sb.append(choices.joinToString { " <OR> $it" })
-//        choices.take(1).forEach { sb.append(" <OR> $it") }
-//        choices.drop(1).forEach { sb.append(", <OR> $it") }
         sb.append(" END)")
         return sb.toString()
     }

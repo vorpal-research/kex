@@ -29,7 +29,7 @@ interface Transformer<T : Transformer<T>> {
         if (argument is Stub) return argument
 
         val subtypeName = argument.reverseMapping.getValue(argument.javaClass)
-        val subtype = argument.subtypes.getValue(subtypeName)
+        val subtype = argument.inheritors.getValue(subtypeName)
 
         val transformName = this.javaClass.getDeclaredMethod("transform$subtypeName", subtype)
 

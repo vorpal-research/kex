@@ -2,12 +2,14 @@ package org.jetbrains.research.kex.state.predicate
 
 import org.jetbrains.research.kex.ktype.KexArray
 import org.jetbrains.research.kex.ktype.KexType
+import org.jetbrains.research.kex.state.InheritorOf
 import org.jetbrains.research.kex.state.term.Term
 import org.jetbrains.research.kex.state.transformer.Transformer
 import org.jetbrains.research.kex.util.log
 import org.jetbrains.research.kex.util.unreachable
 import org.jetbrains.research.kfg.ir.Location
 
+@InheritorOf("Predicate")
 class ArrayStorePredicate(arrayRef: Term, value: Term, type: PredicateType = PredicateType.State(), location: Location = Location())
     : Predicate(type, location, listOf(arrayRef, value)) {
 
