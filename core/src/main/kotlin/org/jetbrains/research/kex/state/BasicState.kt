@@ -3,6 +3,7 @@ package org.jetbrains.research.kex.state
 import org.jetbrains.research.kex.state.predicate.Predicate
 import org.jetbrains.research.kex.util.defaultHashCode
 
+@InheritorOf("State")
 class BasicState() : PredicateState(), Iterable<Predicate> {
     private val preds = arrayListOf<Predicate>()
 

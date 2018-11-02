@@ -2,10 +2,12 @@ package org.jetbrains.research.kex.state.term
 
 import org.jetbrains.research.kex.ktype.KexClass
 import org.jetbrains.research.kex.ktype.KexType
+import org.jetbrains.research.kex.state.InheritorOf
 import org.jetbrains.research.kex.state.transformer.Transformer
 import org.jetbrains.research.kex.util.log
 import org.jetbrains.research.kex.util.unreachable
 
+@InheritorOf("Term")
 class FieldTerm(type: KexType, owner: Term, name: Term) : Term("${owner.print()}.${name.name}", type, listOf(owner, name)) {
 
     val owner: Term

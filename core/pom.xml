@@ -23,7 +23,7 @@
         <better-parse.version>0.3.2</better-parse.version>
         <klaxon.version>3.0.6</klaxon.version>
 
-        <z3.version>1.0</z3.version>
+        <z3.version>4.7.1</z3.version>
         <kotlin.version>1.2.71</kotlin.version>
     </properties>
 
@@ -117,12 +117,6 @@
             <artifactId>kotlin-stdlib-jdk8</artifactId>
             <version>${kotlin.version}</version>
         </dependency>
-        <dependency>
-            <groupId>org.jetbrains.kotlin</groupId>
-            <artifactId>kotlin-test</artifactId>
-            <version>${kotlin.version}</version>
-            <scope>test</scope>
-        </dependency>
     </dependencies>
 
     <build>
@@ -159,6 +153,9 @@
                                 <annotationProcessor>
                                     org.jetbrains.research.kex.smt.SMTProcessor
                                 </annotationProcessor>
+                                <annotationProcessor>
+                                    org.jetbrains.research.kex.state.InheritanceInfoProcessor
+                                </annotationProcessor>
                             </annotationProcessors>
                             <annotationProcessorArgs>
                                 <processorArg>
@@ -166,6 +163,9 @@
                                 </processorArg>
                                 <processorArg>
                                     template.dir=${project.basedir}/src/main/resources/template/
+                                </processorArg>
+                                <processorArg>
+                                    source.dir=${project.basedir}/src/main/resources/
                                 </processorArg>
                             </annotationProcessorArgs>
                         </configuration>

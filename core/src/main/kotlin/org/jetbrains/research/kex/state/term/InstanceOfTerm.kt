@@ -2,9 +2,11 @@ package org.jetbrains.research.kex.state.term
 
 import org.jetbrains.research.kex.ktype.KexBool
 import org.jetbrains.research.kex.ktype.KexType
+import org.jetbrains.research.kex.state.InheritorOf
 import org.jetbrains.research.kex.state.transformer.Transformer
 import org.jetbrains.research.kex.util.defaultHashCode
 
+@InheritorOf("Term")
 class InstanceOfTerm(val checkedType: KexType, operand: Term) : Term("", KexBool, listOf(operand)) {
 
     val operand: Term

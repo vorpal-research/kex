@@ -8,6 +8,10 @@ import org.jetbrains.research.kex.config.CmdConfig
 import org.jetbrains.research.kex.config.FileConfig
 import org.jetbrains.research.kex.config.GlobalConfig
 import org.jetbrains.research.kex.config.RuntimeConfig
+import org.jetbrains.research.kex.state.InheritanceInfo
+import org.jetbrains.research.kex.state.term.Term
+import org.jetbrains.research.kex.util.error
+import org.jetbrains.research.kex.util.getClass
 import org.jetbrains.research.kex.util.log
 import org.jetbrains.research.kfg.CM
 import org.jetbrains.research.kfg.Package
@@ -16,6 +20,7 @@ import org.jetbrains.research.kfg.util.Flags
 import org.jetbrains.research.kfg.util.JarUtils
 import org.jetbrains.research.kfg.util.classLoader
 import org.jetbrains.research.kfg.visitor.Pipeline
+import java.io.BufferedInputStream
 import java.io.File
 import java.util.jar.JarFile
 
@@ -36,7 +41,8 @@ fun main(args: Array<String>) {
 
     log.debug("Running with jar ${jar.name} and package $`package`")
     val target = File("instrumented/")
-    JarUtils.writeClassesToTarget(jar, target, `package`, true) // write all classes to target, so they will be seen by ClassLoader
+    // write all classes to target, so they will be seen by ClassLoader
+    JarUtils.writeClassesToTarget(jar, target, `package`, true)
 
     val pipeline = Pipeline(`package`)
     pipeline += RandomChecker(jarLoader, target)

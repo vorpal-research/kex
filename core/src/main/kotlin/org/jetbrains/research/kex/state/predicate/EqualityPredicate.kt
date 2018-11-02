@@ -1,9 +1,11 @@
 package org.jetbrains.research.kex.state.predicate
 
+import org.jetbrains.research.kex.state.InheritorOf
 import org.jetbrains.research.kex.state.term.Term
 import org.jetbrains.research.kex.state.transformer.Transformer
 import org.jetbrains.research.kfg.ir.Location
 
+@InheritorOf("Predicate")
 class EqualityPredicate(lhv: Term, rhv: Term, type: PredicateType = PredicateType.State(), location: Location = Location())
     : Predicate(type, location, listOf(lhv, rhv)) {
 
