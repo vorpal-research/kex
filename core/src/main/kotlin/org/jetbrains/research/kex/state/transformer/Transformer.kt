@@ -18,6 +18,7 @@ interface Transformer<T : Transformer<T>> {
     /**
      * Stub to return when you want to delete some predicate in predicate state
      * Needed to avoid using nullable types in transformer
+     * Should *never* appear outside of transformers
      */
     object Stub : Predicate(PredicateType.State(), Location(), arrayListOf()) {
         override fun print() = "stub"
