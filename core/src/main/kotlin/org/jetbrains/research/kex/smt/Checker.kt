@@ -1,5 +1,6 @@
 package org.jetbrains.research.kex.smt
 
+import org.jetbrains.research.kex.asm.state.PredicateStateAnalysis
 import org.jetbrains.research.kex.asm.state.PredicateStateBuilder
 import org.jetbrains.research.kex.config.GlobalConfig
 import org.jetbrains.research.kex.state.predicate.PredicateType
@@ -18,19 +19,20 @@ private val isSlicingEnabled = GlobalConfig.getBooleanValue("smt", "slicing", fa
 
 private val logQuery = GlobalConfig.getBooleanValue("smt", "logQuery", false)
 
-class Checker(val method: Method, val loader: ClassLoader, private val psa: PredicateStateBuilder) {
+class Checker(val method: Method, val loader: ClassLoader, private val psa: PredicateStateAnalysis) {
+    val builder = psa.builder(method)
 
     fun checkReachable(inst: Instruction): Result {
         log.debug("Checking reachability of ${inst.print()}")
 
-        var state = psa.getInstructionState(inst)
+        var state = builder.getInstructionState(inst)
                 ?: return Result.UnknownResult("Can't get state for instruction ${inst.print()}, maybe it's unreachable")
 
         if (logQuery) log.debug("State: $state")
 
         if (isInliningEnabled) {
             log.debug("Inlining started...")
-            state = MethodInliner(method).apply(state)
+            state = MethodInliner(method, psa).apply(state)
             log.debug("Inlining finished")
         }
 
@@ -38,7 +40,7 @@ class Checker(val method: Method, val loader: ClassLoader, private val psa: Pred
         state = TypeInfoAdapter(method, loader).apply(state)
         state = Optimizer.transform(state).simplify()
         state = ConstantPropagator.apply(state).simplify()
-        state = BoolTypeAdapter.apply(state).simplify()
+        state = BoolTypeAdapter(method.cm.type).apply(state).simplify()
 
         if (isMemspacingEnabled) {
             log.debug("Memspacing started...")
@@ -77,7 +79,7 @@ class Checker(val method: Method, val loader: ClassLoader, private val psa: Pred
             log.debug("Path: $query")
         }
 
-        val result = SMTProxySolver().isPathPossible(state, query)
+        val result = SMTProxySolver(method.cm.type).isPathPossible(state, query)
         log.debug("Acquired $result")
         when (result) {
             is Result.SatResult -> log.debug("Reachable")

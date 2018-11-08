@@ -54,7 +54,7 @@ class ModelRecoverer(val method: Method, val model: SMTModel, val loader: ClassL
     }
 
     private fun recoverPrimary(type: KexType, value: Term?): Any? {
-        if (value == null) return RandomDriver.generate(getClass(type.kfgType, loader))
+        if (value == null) return RandomDriver.generate(getClass(type.getKfgType(method.cm.type), loader))
         return when (type) {
             is KexBool -> (value as ConstBoolTerm).value
             is KexByte -> (value as ConstByteTerm).value
@@ -81,9 +81,10 @@ class ModelRecoverer(val method: Method, val model: SMTModel, val loader: ClassL
         if (address == 0) return null
 
         return memory(type.memspace, address) {
-            val `class` = tryOrNull { loader.loadClass(type.`class`.canonicalDesc) } ?: return@memory null
+            val kfgClass = method.cm.getByName(type.`class`)
+            val `class` = tryOrNull { loader.loadClass(kfgClass.canonicalDesc) } ?: return@memory null
             val instance = RandomDriver.generateOrNull(`class`)
-            for ((_, field) in type.`class`.fields) {
+            for ((_, field) in kfgClass.fields) {
                 val fieldCopy = tf.getField(KexReference(field.type.kexType), term, tf.getString(field.name))
                 val fieldTerm = model.assignments.keys.firstOrNull { it == fieldCopy } ?: continue
 
@@ -132,7 +133,7 @@ class ModelRecoverer(val method: Method, val model: SMTModel, val loader: ClassL
             val elementSize = arrayType.element.bitsize
             val elements = bound / elementSize
 
-            val elementClass = getClass(arrayType.element.kfgType, loader)
+            val elementClass = getClass(arrayType.element.getKfgType(method.cm.type), loader)
             log.debug("Creating array of type $elementClass with size $elements")
             val instance = Array.newInstance(elementClass, elements)
 

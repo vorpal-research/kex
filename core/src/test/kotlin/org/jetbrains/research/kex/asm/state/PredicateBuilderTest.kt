@@ -5,7 +5,7 @@ import org.jetbrains.research.kex.asm.transform.LoopDeroller
 import org.jetbrains.research.kex.ktype.kexType
 import org.jetbrains.research.kex.state.predicate.*
 import org.jetbrains.research.kex.state.term.*
-import org.jetbrains.research.kfg.CM
+import org.jetbrains.research.kfg.ClassManager
 import org.jetbrains.research.kfg.analysis.LoopAnalysis
 import org.jetbrains.research.kfg.analysis.LoopSimplifier
 import org.jetbrains.research.kfg.ir.value.instruction.*
@@ -21,6 +21,9 @@ class PredicateBuilderTest : KexTest() {
 
     private val predicateChecker = { builder: PredicateBuilder ->
         object : MethodVisitor {
+            override val cm: ClassManager
+                get() = this@PredicateBuilderTest.cm
+
             override fun cleanup() {}
 
             override fun visitArrayLoadInst(inst: ArrayLoadInst) {
@@ -75,7 +78,7 @@ class PredicateBuilderTest : KexTest() {
                 rhv as BinaryTerm
 
                 assertEquals(rhv.opcode, inst.opcode)
-                assertEquals(mergeTypes(setOf(inst.lhv.type, inst.rhv.type))?.kexType, rhv.type)
+                assertEquals(mergeTypes(cm.type, setOf(inst.lhv.type, inst.rhv.type))?.kexType, rhv.type)
                 assertEquals(rhv.lhv, tf.getValue(inst.lhv))
                 assertEquals(rhv.rhv, tf.getValue(inst.rhv))
             }
@@ -330,15 +333,15 @@ class PredicateBuilderTest : KexTest() {
 
     @Test
     fun testPredicateBuilder() {
-        for (`class` in CM.getConcreteClasses()) {
+        for (`class` in cm.concreteClasses) {
             for ((_, method) in `class`.methods) {
                 if (method.isAbstract) continue
-                val loops = LoopAnalysis(method)
+                val loops = LoopAnalysis(cm).invoke(method)
                 if (loops.isNotEmpty()) {
-                    LoopSimplifier.visit(method)
-                    LoopDeroller.visit(method)
+                    LoopSimplifier(cm).visit(method)
+                    LoopDeroller(cm).visit(method)
                 }
-                val predicateBuilder = PredicateBuilder()
+                val predicateBuilder = PredicateBuilder(cm)
                 predicateBuilder.visit(method)
 
                 predicateChecker(predicateBuilder).visit(method)

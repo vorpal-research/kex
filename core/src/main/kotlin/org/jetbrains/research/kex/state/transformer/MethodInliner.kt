@@ -14,7 +14,7 @@ import org.jetbrains.research.kfg.ir.Method
 import org.jetbrains.research.kfg.ir.value.instruction.ReturnInst
 import java.util.*
 
-class MethodInliner(val method: Method) : RecollectingTransformer<MethodInliner> {
+class MethodInliner(val method: Method, val psa: PredicateStateAnalysis) : RecollectingTransformer<MethodInliner> {
     private val im = MethodManager.InlineManager
     override val builders = ArrayDeque<StateBuilder>()
     private var inlineIndex = 0
@@ -50,7 +50,7 @@ class MethodInliner(val method: Method) : RecollectingTransformer<MethodInliner>
     }
 
     private fun prepareInlinedState(method: Method, mappings: Map<Term, Term>): PredicateState? {
-        val builder = PredicateStateAnalysis.builder(method)
+        val builder = psa.builder(method)
         val returnInst = method.flatten().firstOrNull { it is ReturnInst }
                 ?: unreachable { log.error("Cannot inline method with no return") }
         val endState = builder.getInstructionState(returnInst) ?: return null

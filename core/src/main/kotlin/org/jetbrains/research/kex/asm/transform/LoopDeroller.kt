@@ -4,8 +4,7 @@ import org.jetbrains.research.kex.config.GlobalConfig
 import org.jetbrains.research.kex.util.log
 import org.jetbrains.research.kex.util.toInt
 import org.jetbrains.research.kex.util.unreachable
-import org.jetbrains.research.kfg.IF
-import org.jetbrains.research.kfg.VF
+import org.jetbrains.research.kfg.ClassManager
 import org.jetbrains.research.kfg.analysis.Loop
 import org.jetbrains.research.kfg.analysis.LoopVisitor
 import org.jetbrains.research.kfg.ir.BasicBlock
@@ -21,7 +20,7 @@ import kotlin.math.abs
 
 private val derollCount = GlobalConfig.getIntValue("loop", "deroll-count", 3)
 
-object LoopDeroller : LoopVisitor {
+class LoopDeroller(override val cm: ClassManager) : LoopVisitor {
 
     private data class State(
             val header: BasicBlock,
@@ -136,7 +135,7 @@ object LoopDeroller : LoopVisitor {
         }
 
         val unreachableBlock = BodyBlock("unreachable")
-        unreachableBlock.add(IF.getUnreachable())
+        unreachableBlock.add(instructions.getUnreachable())
         method.add(unreachableBlock)
 
         // remap blocks of last iteration to actual method blocks
@@ -166,7 +165,7 @@ object LoopDeroller : LoopVisitor {
 
     private fun getOpcodeConstant(opcode: CmpOpcode, constant: IntConstant) = when (opcode) {
         is CmpOpcode.Le, is CmpOpcode.Ge -> constant
-        else -> VF.getIntConstant(constant.value + 1) as IntConstant
+        else -> values.getIntConstant(constant.value + 1) as IntConstant
     }
 
     private fun getConstantTripCount(loop: Loop): Int {
@@ -298,7 +297,7 @@ object LoopDeroller : LoopVisitor {
                         incomings.values.first()
                     }
                     else -> {
-                        val newPhi = IF.getPhi(new.type, incomings)
+                        val newPhi = instructions.getPhi(new.type, incomings)
                         bb.replace(new, newPhi)
                         newPhi
                     }
@@ -311,7 +310,7 @@ object LoopDeroller : LoopVisitor {
 
     private fun remapMethodPhis(phis: List<PhiInst>, newMappings: Map<PhiInst, Map<BasicBlock, Value>>) {
         for (phi in phis) {
-            val newPhi = IF.getPhi(phi.type, newMappings.getValue(phi))
+            val newPhi = instructions.getPhi(phi.type, newMappings.getValue(phi))
             newPhi.location = phi.location
 
             val bb = phi.parent!!

@@ -18,6 +18,7 @@ import org.jetbrains.research.kex.util.castTo
 import org.jetbrains.research.kex.util.debug
 import org.jetbrains.research.kex.util.log
 import org.jetbrains.research.kex.util.unreachable
+import org.jetbrains.research.kfg.type.TypeFactory
 
 private val timeout = GlobalConfig.getIntValue("smt", "timeout", 3) * 1000
 
@@ -25,7 +26,7 @@ private val logQuery = GlobalConfig.getBooleanValue("smt", "logQuery", false)
 private val logFormulae = GlobalConfig.getBooleanValue("smt", "logFormulae", false)
 private val simplifyFormulae = GlobalConfig.getBooleanValue("smt", "simplifyFormulae", true)
 
-class Z3Solver(val ef: Z3ExprFactory) : AbstractSMTSolver {
+class Z3Solver(val tf: TypeFactory, val ef: Z3ExprFactory) : AbstractSMTSolver {
 
     override fun isReachable(state: PredicateState) =
             isPathPossible(state, state.filterByType(PredicateType.Path()))
@@ -43,8 +44,9 @@ class Z3Solver(val ef: Z3ExprFactory) : AbstractSMTSolver {
 
         val ctx = Z3Context(ef, (1 shl 8) + 1, (1 shl 24) + 1)
 
-        val z3State = Z3Converter.convert(state, ef, ctx)
-        val z3query = Z3Converter.convert(query, ef, ctx)
+        val converter = Z3Converter(tf)
+        val z3State = converter.convert(state, ef, ctx)
+        val z3query = converter.convert(query, ef, ctx)
 
         log.debug("Check started")
         val result = check(z3State, z3query)
@@ -124,7 +126,7 @@ class Z3Solver(val ef: Z3ExprFactory) : AbstractSMTSolver {
         }
 
         val assignments = vars.map {
-            val expr = Z3Converter.convert(it, ef, ctx)
+            val expr = Z3Converter(tf).convert(it, ef, ctx)
             val z3expr = expr.expr
 
             log.debug("Evaluating $z3expr")
@@ -144,7 +146,7 @@ class Z3Solver(val ef: Z3ExprFactory) : AbstractSMTSolver {
             val startBounds = ctx.getBounds(memspace)
             val endBounds = ctx.getBounds(memspace)
 
-            val eptr = Z3Converter.convert(ptr, ef, ctx) as? Ptr_
+            val eptr = Z3Converter(tf).convert(ptr, ef, ctx) as? Ptr_
                     ?: unreachable { log.error("Non-ptr expr for pointer $ptr") }
 
             val startV = startMem.load(eptr, Z3ExprFactory.getTypeSize(ptr.type))

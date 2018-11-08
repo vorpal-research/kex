@@ -2,15 +2,16 @@ package org.jetbrains.research.kex.asm.transform
 
 import org.jetbrains.research.kex.asm.util.SystemErrWrapper
 import org.jetbrains.research.kex.asm.util.ValuePrinter
-import org.jetbrains.research.kfg.TF
-import org.jetbrains.research.kfg.VF
+import org.jetbrains.research.kfg.ClassManager
 import org.jetbrains.research.kfg.ir.BasicBlock
 import org.jetbrains.research.kfg.ir.Method
 import org.jetbrains.research.kfg.ir.value.instruction.*
 import org.jetbrains.research.kfg.visitor.MethodVisitor
 
-object TraceInstrumenter : MethodVisitor {
-    const val tracePrefix = "trace"
+class TraceInstrumenter(override val cm: ClassManager) : MethodVisitor {
+    companion object {
+        const val tracePrefix = "trace"
+    }
 
     val insertedInsts = mutableListOf<Instruction>()
 
@@ -30,12 +31,12 @@ object TraceInstrumenter : MethodVisitor {
         val bb = inst.parent!!
         val method = bb.parent!!
 
-        val builder = SystemErrWrapper("serr")
+        val builder = SystemErrWrapper(cm, "serr")
         builder.println()
         builder.println("$tracePrefix exit ${bb.name};")
         builder.print("$tracePrefix return ${method.prototype.replace('/', '.')}; ")
 
-        val printer = ValuePrinter()
+        val printer = ValuePrinter(cm)
         when {
             inst.hasReturnValue -> {
                 builder.print("${inst.returnValue.name} == ")
@@ -53,11 +54,11 @@ object TraceInstrumenter : MethodVisitor {
         val bb = inst.parent!!
         val method = bb.parent!!
 
-        val builder = SystemErrWrapper("serr")
+        val builder = SystemErrWrapper(cm, "serr")
         builder.println()
         builder.print("$tracePrefix throw ${method.prototype.replace('/', '.')}; ")
 
-        val printer = ValuePrinter()
+        val printer = ValuePrinter(cm)
         builder.print("${inst.throwable.name} == ")
         val str = printer.print(inst.throwable)
         builder.print(str)
@@ -69,7 +70,7 @@ object TraceInstrumenter : MethodVisitor {
     override fun visitJumpInst(inst: JumpInst) = instrumentInst(inst) {
         val bb = inst.parent!!
 
-        val builder = SystemErrWrapper("serr")
+        val builder = SystemErrWrapper(cm, "serr")
         builder.println()
         builder.println("$tracePrefix exit ${bb.name};")
         builder.insns
@@ -79,8 +80,8 @@ object TraceInstrumenter : MethodVisitor {
         val condition = inst.cond as CmpInst
         val bb = inst.parent!!
 
-        val serr = SystemErrWrapper("serr")
-        val printer = ValuePrinter()
+        val serr = SystemErrWrapper(cm, "serr")
+        val printer = ValuePrinter(cm)
         serr.println()
         serr.print("$tracePrefix branch ${bb.name}; ${condition.lhv.name} == ")
         val lhv = printer.print(condition.lhv)
@@ -96,10 +97,10 @@ object TraceInstrumenter : MethodVisitor {
     override fun visitSwitchInst(inst: SwitchInst) = instrumentInst(inst) {
         val bb = inst.parent!!
 
-        val builder = SystemErrWrapper("serr")
+        val builder = SystemErrWrapper(cm, "serr")
         builder.println()
         builder.print("$tracePrefix switch ${bb.name}; ${inst.key.name} == ")
-        val printer = ValuePrinter()
+        val printer = ValuePrinter(cm)
         val str = printer.print(inst.key)
         builder.print(str)
         builder.println(";")
@@ -110,10 +111,10 @@ object TraceInstrumenter : MethodVisitor {
     override fun visitTableSwitchInst(inst: TableSwitchInst) = instrumentInst(inst) {
         val bb = inst.parent!!
 
-        val builder = SystemErrWrapper("serr")
+        val builder = SystemErrWrapper(cm, "serr")
         builder.println()
         builder.print("$tracePrefix tableswitch ${bb.name}; ${inst.index.name} == ")
-        val printer = ValuePrinter()
+        val printer = ValuePrinter(cm)
         val str = printer.print(inst.index)
         builder.print(str)
         builder.println(";")
@@ -124,7 +125,7 @@ object TraceInstrumenter : MethodVisitor {
     override fun visitBasicBlock(bb: BasicBlock) {
         super.visitBasicBlock(bb)
 
-        val builder = SystemErrWrapper("serr")
+        val builder = SystemErrWrapper(cm, "serr")
         builder.println()
         builder.println("$tracePrefix enter ${bb.name};")
 
@@ -137,15 +138,15 @@ object TraceInstrumenter : MethodVisitor {
         val bb = method.entry
         val methodName = method.prototype.replace('/', '.')
 
-        val builder = SystemErrWrapper("serr")
+        val builder = SystemErrWrapper(cm, "serr")
         builder.println()
         builder.println("$tracePrefix enter $methodName;")
 
         val args = method.argTypes
-        val printer = ValuePrinter()
+        val printer = ValuePrinter(cm)
         if (!method.isStatic) {
-            val thisType = TF.getRefType(method.`class`)
-            val `this` = VF.getThis(thisType)
+            val thisType = types.getRefType(method.`class`)
+            val `this` = values.getThis(thisType)
             builder.print("$tracePrefix instance $methodName; this == ")
             val str = printer.print(`this`)
             builder.print(str)
@@ -154,7 +155,7 @@ object TraceInstrumenter : MethodVisitor {
         if (args.isNotEmpty()) {
             builder.print("$tracePrefix arguments $methodName")
             for ((index, type) in args.withIndex()) {
-                val argValue = VF.getArgument(index, method, type)
+                val argValue = values.getArgument(index, method, type)
                 builder.print("; ${argValue.name} == ")
                 val str = printer.print(argValue)
                 builder.print(str)

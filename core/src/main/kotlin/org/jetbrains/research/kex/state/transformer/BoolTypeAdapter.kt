@@ -2,6 +2,7 @@ package org.jetbrains.research.kex.state.transformer
 
 import org.jetbrains.research.kex.ktype.KexBool
 import org.jetbrains.research.kex.ktype.KexInt
+import org.jetbrains.research.kex.ktype.mergeTypes
 import org.jetbrains.research.kex.state.predicate.EqualityPredicate
 import org.jetbrains.research.kex.state.predicate.Predicate
 import org.jetbrains.research.kex.state.term.BinaryTerm
@@ -9,8 +10,9 @@ import org.jetbrains.research.kex.state.term.Term
 import org.jetbrains.research.kex.util.log
 import org.jetbrains.research.kex.util.unreachable
 import org.jetbrains.research.kfg.ir.value.instruction.BinaryOpcode
+import org.jetbrains.research.kfg.type.TypeFactory
 
-object BoolTypeAdapter : Transformer<BoolTypeAdapter> {
+class BoolTypeAdapter(val types: TypeFactory) : Transformer<BoolTypeAdapter> {
     override fun transformEqualityPredicate(predicate: EqualityPredicate): Predicate {
         val lhv = predicate.lhv
         val rhv = predicate.rhv
@@ -43,7 +45,8 @@ object BoolTypeAdapter : Transformer<BoolTypeAdapter> {
                     term.rhv.type === KexInt -> term.rhv
                     else -> unreachable { log.error("Non-boolean term in boolean binary: ${term.print()}") }
                 }
-                tf.getBinary(term.opcode, lhv, rhv) as BinaryTerm
+                val newType = mergeTypes(types, lhv.type, rhv.type)
+                tf.getBinary(newType, term.opcode, lhv, rhv)
             }
             else -> term
         }

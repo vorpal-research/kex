@@ -14,9 +14,8 @@ import org.jetbrains.research.kex.state.term.TermFactory
 import org.jetbrains.research.kex.state.term.isConst
 import org.jetbrains.research.kex.test.Intrinsics
 import org.jetbrains.research.kex.util.log
-import org.jetbrains.research.kfg.CM
+import org.jetbrains.research.kfg.ClassManager
 import org.jetbrains.research.kfg.Package
-import org.jetbrains.research.kfg.TF
 import org.jetbrains.research.kfg.analysis.LoopAnalysis
 import org.jetbrains.research.kfg.analysis.LoopSimplifier
 import org.jetbrains.research.kfg.ir.Class
@@ -33,6 +32,7 @@ import kotlin.test.assertTrue
 
 abstract class KexTest {
     val packageName = "org/jetbrains/research/kex/test"
+    val cm: ClassManager
     private val loader: ClassLoader
 
     init {
@@ -44,27 +44,28 @@ abstract class KexTest {
         val jarFile = JarFile(jarPath)
         loader = jarFile.classLoader
         val `package` = Package("$packageName/*")
-        CM.parseJar(jarFile, `package`, Flags.readAll)
+        cm = ClassManager(jarFile, `package`, Flags.readAll)
     }
 
-    private fun getPSA(method: Method): PredicateStateBuilder {
-        val loops = LoopAnalysis.invoke(method)
+    private fun getPSA(method: Method): PredicateStateAnalysis {
+        val loops = LoopAnalysis(cm).invoke(method)
         if (loops.isNotEmpty()) {
-            LoopSimplifier.visit(method)
-            LoopDeroller.visit(method)
+            LoopSimplifier(cm).visit(method)
+            LoopDeroller(cm).visit(method)
         }
 
-        val psa = PredicateStateAnalysis
+        val psa = PredicateStateAnalysis(cm)
         psa.visit(method)
-        return psa.builder(method)
+        return psa
     }
 
     private fun getReachables(method: Method): List<Instruction> {
         val `class` = Intrinsics::class.qualifiedName!!.replace(".", "/")
-        val intrinsics = CM.getByName(`class`)
+        val intrinsics = cm.getByName(`class`)
 
+        val types = cm.type
         val methodName = Intrinsics::assertReachable.name
-        val desc = MethodDesc(arrayOf(TF.getArrayType(TF.boolType)), TF.voidType)
+        val desc = MethodDesc(arrayOf(types.getArrayType(types.boolType)), types.voidType)
         val assertReachable = intrinsics.getMethod(methodName, desc)
         return method.flatten().asSequence()
                 .mapNotNull { it as? CallInst }
@@ -74,10 +75,10 @@ abstract class KexTest {
 
     private fun getUnreachables(method: Method): List<Instruction> {
         val `class` = Intrinsics::class.qualifiedName!!.replace(".", "/")
-        val intrinsics = CM.getByName(`class`)
+        val intrinsics = cm.getByName(`class`)
 
         val methodName = Intrinsics::assertUnreachable.name
-        val desc = MethodDesc(arrayOf(), TF.voidType)
+        val desc = MethodDesc(arrayOf(), cm.type.voidType)
         val assertUnreachable = intrinsics.getMethod(methodName, desc)
         return method.flatten().asSequence()
                 .mapNotNull { it as? CallInst }

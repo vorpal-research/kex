@@ -43,7 +43,7 @@ abstract class AbstractRunner(val method: Method, protected val loader: ClassLoa
     protected fun parse(result: InvocationResult): Trace {
         val output = Scanner(ByteArrayInputStream(result.error.toByteArray()))
 
-        val parser = ActionParser()
+        val parser = ActionParser(method.cm)
         val actions = arrayListOf<Action>()
         val tracePrefix = TraceInstrumenter.tracePrefix
         while (output.hasNextLine()) {

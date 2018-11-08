@@ -11,8 +11,9 @@ object IntrinsicAdapter : Transformer<IntrinsicAdapter> {
 
     override fun transformCallPredicate(predicate: CallPredicate): Predicate {
         val call = predicate.call as CallTerm
-        return when (call.method) {
-            im.checkNotNull -> pf.getInequality(call.arguments[0], tf.getNull(), PredicateType.Assume())
+        val method = call.method
+        return when (method) {
+            im.getCheckNotNull(method.cm) -> pf.getInequality(call.arguments[0], tf.getNull(), PredicateType.Assume())
             else -> predicate
         }
     }

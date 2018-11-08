@@ -22,7 +22,7 @@ class BinaryTerm(type: KexType, val opcode: BinaryOpcode, lhv: Term, rhv: Term) 
         val trhv = t.transform(rhv)
         return when {
             tlhv == lhv && trhv == rhv -> this
-            else -> t.tf.getBinary(opcode, tlhv, trhv)
+            else -> t.tf.getBinary(type, opcode, tlhv, trhv)
         }
     }
 
