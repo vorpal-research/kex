@@ -201,6 +201,7 @@
                 <version>2.22.0</version>
                 <configuration>
                     <systemPropertyVariables>
+                        <!--suppress UnresolvedMavenProperty -->
                         <root.dir>${project.parent.basedir.canonicalPath}</root.dir>
                     </systemPropertyVariables>
                     <includes>

@@ -24,7 +24,7 @@ class PredicateStateBuilder(val method: Method) {
 
     private val order = arrayListOf<BasicBlock>()
     private val domTree = DominatorTree<BasicBlock>()
-    private val predicateBuilder = PredicateBuilder()
+    private val predicateBuilder = PredicateBuilder(method.cm)
 
     fun init() {
         predicateBuilder.visit(method)

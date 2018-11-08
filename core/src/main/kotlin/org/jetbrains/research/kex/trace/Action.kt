@@ -6,7 +6,7 @@ import com.github.h0tk3y.betterParse.grammar.parser
 import com.github.h0tk3y.betterParse.parser.Parser
 import org.jetbrains.research.kex.util.log
 import org.jetbrains.research.kex.util.unreachable
-import org.jetbrains.research.kfg.CM
+import org.jetbrains.research.kfg.ClassManager
 import org.jetbrains.research.kfg.ir.BasicBlock
 import org.jetbrains.research.kfg.ir.Class
 import org.jetbrains.research.kfg.ir.Method
@@ -136,7 +136,7 @@ class BlockTableSwitch(bb: BasicBlock, val key: Equation) : BlockExitAction(bb) 
     override fun toString() = "exit ${bb.name}; $key;"
 }
 
-class ActionParser : Grammar<Action>() {
+class ActionParser(val cm: ClassManager) : Grammar<Action>() {
     private var trackers = Stack<SlotTracker>()
 
     private val tracker: SlotTracker
@@ -180,12 +180,12 @@ class ActionParser : Grammar<Action>() {
     private val dot by token("\\.")
     private val equality by token("==")
     private val openCurlyBrace by token("\\{")
-    private val closeCurlyBrace by token("\\}")
+    private val closeCurlyBrace by token("}")
     private val openSquareBrace by token("\\[")
-    private val closeSquareBrace by token("\\]")
+    private val closeSquareBrace by token("]")
     private val openBracket by token("\\(")
     private val closeBracket by token("\\)")
-    private val percent by token("\\%")
+    private val percent by token("%")
     private val colon by token(":")
     private val semicolon by token(";")
     private val comma by token(",")
@@ -194,7 +194,7 @@ class ActionParser : Grammar<Action>() {
     private val num by token("\\d+")
     private val word by token("[a-zA-Z$][\\w$]*")
     private val at by token("@")
-    private val string by token("\"[\\w\\s\\.@>=<]*\"")
+    private val string by token("\"[\\w\\s.@>=<]*\"")
 
     private val colonAndSpace by colon and space
     private val semicolonAndSpace by semicolon and space
@@ -226,14 +226,14 @@ class ActionParser : Grammar<Action>() {
     private val typeName by (separatedTerms(word, dot) use { map { it.text } } and zeroOrMore(openSquareBrace and closeSquareBrace)) use {
         val braces = t2.fold("") { acc, it -> "$acc${it.t1.text}${it.t2.text}" }
         val typeName = t1.fold("") { acc, curr -> "$acc/$curr" }.drop(1)
-        parseStringToType("$typeName$braces")
+        parseStringToType(cm.type, "$typeName$braces")
     }
     private val args by separatedTerms(typeName, commaAndSpace, true)
     private val methodName by ((separatedTerms(word, dot) use { map { it.text } }) and
             -openBracket and args and -closeBracket and
             -colonAndSpace and
             typeName) use {
-        val `class` = CM.getByName(t1.dropLast(1).fold("") { acc, curr -> "$acc/$curr" }.drop(1))
+        val `class` = cm.getByName(t1.dropLast(1).fold("") { acc, curr -> "$acc/$curr" }.drop(1))
         val methodName = t1.takeLast(1).firstOrNull() ?: throw UnknownNameError(t1.toString())
         val args = t2.toTypedArray()
         val rettype = t3

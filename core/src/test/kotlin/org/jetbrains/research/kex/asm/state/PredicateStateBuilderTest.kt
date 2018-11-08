@@ -2,7 +2,6 @@ package org.jetbrains.research.kex.asm.state
 
 import org.jetbrains.research.kex.KexTest
 import org.jetbrains.research.kex.asm.transform.LoopDeroller
-import org.jetbrains.research.kfg.CM
 import org.jetbrains.research.kfg.analysis.LoopAnalysis
 import org.jetbrains.research.kfg.analysis.LoopSimplifier
 import org.jetbrains.research.kfg.ir.Method
@@ -13,10 +12,10 @@ import kotlin.test.Test
 class PredicateStateBuilderTest : KexTest() {
 
     private fun performPSA(method: Method): PredicateStateBuilder {
-        val loops = LoopAnalysis(method)
+        val loops = LoopAnalysis(cm).invoke(method)
         if (loops.isNotEmpty()) {
-            LoopSimplifier.visit(method)
-            LoopDeroller.visit(method)
+            LoopSimplifier(cm).visit(method)
+            LoopDeroller(cm).visit(method)
         }
 
         val psa = PredicateStateBuilder(method)
@@ -26,7 +25,7 @@ class PredicateStateBuilderTest : KexTest() {
 
     @Test
     fun testSimplePSA() {
-        for (`class` in CM.getConcreteClasses()) {
+        for (`class` in cm.concreteClasses) {
             for ((_, method) in `class`.methods) {
                 if (method.isAbstract) continue
 

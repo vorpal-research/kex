@@ -5,13 +5,15 @@ import org.jetbrains.research.kex.config.GlobalConfig
 import org.jetbrains.research.kex.trace.TraceManager
 import org.jetbrains.research.kex.trace.runner.RandomRunner
 import org.jetbrains.research.kex.util.log
+import org.jetbrains.research.kfg.ClassManager
 import org.jetbrains.research.kfg.ir.Method
 import org.jetbrains.research.kfg.util.JarUtils
 import org.jetbrains.research.kfg.visitor.MethodVisitor
 import java.io.File
 import java.net.URLClassLoader
 
-class RandomChecker(private val loader: ClassLoader, private val target: File) : MethodVisitor {
+class RandomChecker(override val cm: ClassManager, private val loader: ClassLoader, private val target: File) :
+        MethodVisitor {
     private val runner = GlobalConfig.getBooleanValue("runner", "enabled", false)
 
     override fun cleanup() {}
@@ -23,8 +25,8 @@ class RandomChecker(private val loader: ClassLoader, private val target: File) :
         val `class` = method.`class`
         val classFileName = "${target.canonicalPath}/${`class`.fullname}.class"
         if (!method.isAbstract && !method.isConstructor) {
-            val traceInstructions = TraceInstrumenter(method)
-            JarUtils.writeClass(loader, `class`, classFileName)
+            val traceInstructions = TraceInstrumenter(cm).invoke(method)
+            JarUtils.writeClass(cm, loader, `class`, classFileName)
             val directory = URLClassLoader(arrayOf(target.toURI().toURL()))
 
             try {
@@ -35,7 +37,7 @@ class RandomChecker(private val loader: ClassLoader, private val target: File) :
 
             traceInstructions.forEach { it.parent?.remove(it) }
         }
-        JarUtils.writeClass(loader, `class`, classFileName)
+        JarUtils.writeClass(cm, loader, `class`, classFileName)
 
 
         log.info("Results:")

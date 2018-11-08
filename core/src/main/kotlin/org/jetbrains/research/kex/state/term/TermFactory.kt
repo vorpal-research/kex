@@ -3,7 +3,6 @@ package org.jetbrains.research.kex.state.term
 import org.jetbrains.research.kex.ktype.*
 import org.jetbrains.research.kex.util.log
 import org.jetbrains.research.kex.util.unreachable
-import org.jetbrains.research.kfg.TF
 import org.jetbrains.research.kfg.ir.Class
 import org.jetbrains.research.kfg.ir.Method
 import org.jetbrains.research.kfg.ir.value.*
@@ -11,10 +10,10 @@ import org.jetbrains.research.kfg.ir.value.instruction.BinaryOpcode
 import org.jetbrains.research.kfg.ir.value.instruction.CmpOpcode
 import org.jetbrains.research.kfg.ir.value.instruction.UnaryOpcode
 import org.jetbrains.research.kfg.type.ClassType
+import org.jetbrains.research.kfg.type.TypeFactory
 
 object TermFactory {
     fun getThis(type: KexType) = getValue(type, "this")
-    fun getThis(`class`: Class) = getThis(KexClass(`class`))
     fun getArgument(argument: Argument) = getArgument(argument.type.kexType, argument.index)
     fun getArgument(type: KexType, index: Int) = ArgumentTerm(type, index)
 
@@ -59,13 +58,13 @@ object TermFactory {
     fun getDouble(value: Double) = ConstDoubleTerm(value)
     fun getDouble(const: DoubleConstant) = getDouble(const.value)
     fun getString(type: KexType, value: String) = ConstStringTerm(type, value)
-    fun getString(value: String) = ConstStringTerm(TF.stringType.kexType, value)
+    fun getString(value: String) = ConstStringTerm(KexClass(TypeFactory.stringClass), value)
     fun getString(const: StringConstant) = getString(const.value)
     fun getNull() = NullTerm()
-    fun getClass(`class`: Class) = getClass(KexClass(`class`), `class`)
+    fun getClass(`class`: Class) = getClass(KexClass(`class`.fullname), `class`)
     fun getClass(type: KexType, `class`: Class) = ConstClassTerm(type, `class`)
-    fun getClass(type: KexType) = ConstClassTerm(type,
-            (type as? KexClass)?.`class` ?: unreachable { log.debug("Non-ref type of class constant") })
+//    fun getClass(type: KexType) = ConstClassTerm(type,
+//            (type as? KexClass)?.`class` ?: unreachable { log.debug("Non-ref type of class constant") })
 
     fun getClass(const: ClassConstant) = ConstClassTerm(const.type.kexType,
             (const.type as? ClassType)?.`class` ?: unreachable { log.debug("Non-ref type of class constant") })
@@ -99,8 +98,8 @@ object TermFactory {
 
     fun getFieldLoad(type: KexType, field: Term) = FieldLoadTerm(type, field)
 
-    fun getBinary(opcode: BinaryOpcode, lhv: Term, rhv: Term): Term {
-        val merged = mergeTypes(setOf(lhv.type, rhv.type))
+    fun getBinary(tf: TypeFactory, opcode: BinaryOpcode, lhv: Term, rhv: Term): Term {
+        val merged = mergeTypes(tf, setOf(lhv.type, rhv.type))
         return getBinary(merged, opcode, lhv, rhv)
     }
 

@@ -1,9 +1,9 @@
 package org.jetbrains.research.kex.ktype
 
 import org.jetbrains.research.kex.util.defaultHashCode
-import org.jetbrains.research.kfg.TF
 import org.jetbrains.research.kfg.ir.Class
 import org.jetbrains.research.kfg.type.Type
+import org.jetbrains.research.kfg.type.TypeFactory
 
 sealed class KexPointer(open val memspace: Int = defaultMemspace) : KexType() {
     companion object {
@@ -16,12 +16,11 @@ sealed class KexPointer(open val memspace: Int = defaultMemspace) : KexType() {
     abstract fun withMemspace(memspace: Int): KexPointer
 }
 
-class KexClass(val `class`: Class, memspace: Int = defaultMemspace) : KexPointer(memspace) {
+class KexClass(val `class`: String, memspace: Int = defaultMemspace) : KexPointer(memspace) {
     override val name: String
-        get() = `class`.fullname
+        get() = `class`
 
-    override val kfgType: Type
-        get() = TF.getRefType(`class`)
+    override fun getKfgType(types: TypeFactory): Type = types.getRefType(`class`)
 
     override fun withMemspace(memspace: Int) = KexClass(`class`, memspace)
 
@@ -41,8 +40,7 @@ class KexArray(val element: KexType, memspace: Int = defaultMemspace) : KexPoint
     override val name: String
         get() = "$element[]"
 
-    override val kfgType: Type
-        get() = TF.getArrayType(element.kfgType)
+    override fun getKfgType(types: TypeFactory): Type = types.getArrayType(element.getKfgType(types))
 
     override fun withMemspace(memspace: Int) = KexArray(element, memspace)
 
@@ -62,8 +60,7 @@ class KexReference(val reference: KexType, memspace: Int = defaultMemspace) : Ke
     override val name: String
         get() = "&($reference)"
 
-    override val kfgType: Type
-        get() = reference.kfgType
+    override fun getKfgType(types: TypeFactory): Type = reference.getKfgType(types)
 
     override fun withMemspace(memspace: Int) = KexReference(reference, memspace)
 
@@ -83,8 +80,7 @@ object KexNull : KexPointer() {
     override val name: String
         get() = "null"
 
-    override val kfgType: Type
-        get() = TF.nullType
+    override fun getKfgType(types: TypeFactory): Type = types.nullType
 
     override fun withMemspace(memspace: Int) = this
 

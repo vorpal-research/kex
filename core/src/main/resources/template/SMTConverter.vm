@@ -8,11 +8,13 @@ import org.jetbrains.research.kfg.ir.Class
 import org.jetbrains.research.kfg.ir.value.instruction.BinaryOpcode
 import org.jetbrains.research.kfg.ir.value.instruction.CmpOpcode
 import org.jetbrains.research.kex.config.GlobalConfig
+import org.jetbrains.research.kfg.type.ClassType
+import org.jetbrains.research.kfg.type.TypeFactory
 
 val defaultAllocSize = GlobalConfig.getIntValue("smt", "defaultAllocationSize", 1024)
 
 @Suppress("UNUSED_PARAMETER")
-object ${solver}Converter : ${solver}SMTConverter() {
+class ${solver}Converter(val tf: TypeFactory) : ${solver}SMTConverter() {
 
     private fun addTypeAxioms(term: Term, expr: Dynamic_, ef: $factory, ctx: ${solver}Context) = when (term.type) {
         is KexPointer -> expr.withAxiom(expr ge ef.makeIntConst(0)).withAxiom(ctx.readBound(expr.toBV32(), term.memspace) ge ef.makeIntConst(0))
@@ -129,7 +131,7 @@ object ${solver}Converter : ${solver}SMTConverter() {
     fun convert(new: NewPredicate, ef: $factory, ctx: ${solver}Context): Bool_ {
         val memspace = new.lhv.memspace
         val lhv = convert(new.lhv, ef, ctx) as? Ptr_ ?: unreachable { log.error("Non-ptr term in `new`") }
-        val elementSize = ${factory}.getTypeSizeExpanded(new.lhv.type)
+        val elementSize = ${factory}.getTypeSizeExpanded(tf, new.lhv.type)
         ctx.writeBound(lhv, ef.makeIntConst(elementSize), memspace)
         return lhv eq ctx.getLocalPtr(memspace, elementSize)
     }
@@ -231,7 +233,7 @@ object ${solver}Converter : ${solver}SMTConverter() {
             is KexDouble -> Double_.forceCast(op)
             is KexClass ->  {
                 val newPtr = Ptr_.forceCast(op)
-                val newBound = ef.makeIntConst(${factory}.getTypeSizeExpanded(cast.type))
+                val newBound = ef.makeIntConst(${factory}.getTypeSizeExpanded(tf, cast.type))
                 ctx.writeBound(newPtr, newBound, cast.operand.memspace)
                 newPtr
             }
@@ -311,7 +313,8 @@ object ${solver}Converter : ${solver}SMTConverter() {
         val obj = convert(field.owner, ef, ctx) as? Ptr_
         ?: unreachable { log.error("Non-ptr ref in field load") }
         val name = field.fieldName.name
-        val offset = Z3ExprFactory.getFieldOffset(field.getClass(), Class.FieldKey(name, field.type.kfgType))
+        val kfgClass = (tf.getRefType(field.getClass()) as ClassType).`class`
+        val offset = Z3ExprFactory.getFieldOffset(kfgClass, Class.FieldKey(name, field.type.getKfgType(tf)))
         val baseBound = ctx.readBound(obj, memspace)
 
         val fieldptr = Ptr_.forceCast(obj + offset)

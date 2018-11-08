@@ -1,10 +1,11 @@
 package org.jetbrains.research.kex.asm.state
 
 import org.jetbrains.research.kex.util.log
+import org.jetbrains.research.kfg.ClassManager
 import org.jetbrains.research.kfg.ir.Method
 import org.jetbrains.research.kfg.visitor.MethodVisitor
 
-object PredicateStateAnalysis : MethodVisitor {
+class PredicateStateAnalysis(override val cm: ClassManager) : MethodVisitor {
     private val builders = hashMapOf<Method, PredicateStateBuilder>()
 
     override fun cleanup() {}

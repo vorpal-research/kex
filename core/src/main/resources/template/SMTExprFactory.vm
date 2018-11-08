@@ -1,6 +1,8 @@
 #parse("definitions.vm")
 import org.jetbrains.research.kex.smt.${solver}SMTExprFactory
 import org.jetbrains.research.kfg.ir.Class
+import org.jetbrains.research.kfg.type.ClassType
+import org.jetbrains.research.kfg.type.TypeFactory
 
 typealias Bool_ = $Bool
 typealias Ptr_ = $Bitvector32
@@ -11,11 +13,6 @@ typealias Float_ = $Float
 typealias Double_ = $Double
 typealias Memory_ = $Memory< Ptr_ >
 typealias Dynamic_ = $valexpr
-
-val KexType.expandedBitsize get() = when (this) {
-    is KexClass -> `class`.fields.values.fold(0) { acc, field -> acc + field.type.kexType.bitsize }
-    else -> bitsize
-}
 
 class $factory : ${solver}SMTExprFactory() {
     companion object {
@@ -35,7 +32,13 @@ class $factory : ${solver}SMTExprFactory() {
         fun getFieldOffset(`class`: Class, field: Class.FieldKey) = classOffsets.getOrPut(`class`, ::OffsetMap)[field]
 
         fun getTypeSize(type: KexType) = type.bitsize
-        fun getTypeSizeExpanded(type: KexType) = type.expandedBitsize
+        fun getTypeSizeExpanded(tf: TypeFactory, type: KexType) = when (type) {
+            is KexClass -> {
+                val kfgClass = (tf.getRefType(type.`class`) as ClassType).`class`
+                kfgClass.fields.values.fold(0) { acc, field -> acc + field.type.kexType.bitsize }
+            }
+            else -> type.bitsize
+        }
     }
 
     val ctx = $context()

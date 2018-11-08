@@ -3,9 +3,7 @@ package org.jetbrains.research.kex.asm.transform
 import org.jetbrains.research.kex.asm.manager.MethodManager
 import org.jetbrains.research.kex.util.log
 import org.jetbrains.research.kex.util.unreachable
-import org.jetbrains.research.kfg.IF
-import org.jetbrains.research.kfg.TF
-import org.jetbrains.research.kfg.VF
+import org.jetbrains.research.kfg.ClassManager
 import org.jetbrains.research.kfg.ir.BasicBlock
 import org.jetbrains.research.kfg.ir.BodyBlock
 import org.jetbrains.research.kfg.ir.CatchBlock
@@ -16,7 +14,7 @@ import org.jetbrains.research.kfg.ir.value.instruction.Instruction
 import org.jetbrains.research.kfg.ir.value.instruction.ReturnInst
 import org.jetbrains.research.kfg.visitor.MethodVisitor
 
-object MethodInliner : MethodVisitor {
+class MethodInliner(override val cm: ClassManager) : MethodVisitor {
     private val im = MethodManager.InlineManager
 
     override fun cleanup() {}
@@ -65,11 +63,11 @@ object MethodInliner : MethodVisitor {
 
         val calledMethod = inst.method
         if (!calledMethod.isStatic) {
-            val `this` = VF.getThis(TF.getRefType(calledMethod.`class`))
+            val `this` = values.getThis(types.getRefType(calledMethod.`class`))
             valueMapping[`this`] = inst.callee
         }
         for ((index, type) in calledMethod.argTypes.withIndex()) {
-            val arg = VF.getArgument(index, calledMethod, type)
+            val arg = values.getArgument(index, calledMethod, type)
             val actualArg = inst.args[index]
             valueMapping[arg] = actualArg
         }
@@ -133,14 +131,14 @@ object MethodInliner : MethodVisitor {
         val `return` = blockMapping[returnBlock]!!
 
         // connect `before` block with method entry
-        before.add(IF.getJump(entry))
+        before.add(instructions.getJump(entry))
         before.addSuccessor(entry)
         entry.addPredecessor(before)
 
         // replace return instruction with jump to original function
         val returnInst = `return`.first { it is ReturnInst } as ReturnInst
         if (returnInst.hasReturnValue) inst.replaceAllUsesWith(returnInst.returnValue)
-        val jump = IF.getJump(after)
+        val jump = instructions.getJump(after)
         returnInst.replaceAllUsesWith(jump)
         `return`.replace(returnInst, jump)
 

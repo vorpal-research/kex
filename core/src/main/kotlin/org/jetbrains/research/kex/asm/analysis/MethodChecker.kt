@@ -10,13 +10,16 @@ import org.jetbrains.research.kex.trace.runner.SimpleRunner
 import org.jetbrains.research.kex.util.debug
 import org.jetbrains.research.kex.util.log
 import org.jetbrains.research.kex.util.tryOrNull
+import org.jetbrains.research.kfg.ClassManager
 import org.jetbrains.research.kfg.ir.BasicBlock
 import org.jetbrains.research.kfg.ir.Method
 import org.jetbrains.research.kfg.visitor.MethodVisitor
 
-class MethodChecker(private val loader: ClassLoader) : MethodVisitor {
+class MethodChecker(
+        override val cm: ClassManager,
+        private val loader: ClassLoader,
+        private val psa: PredicateStateAnalysis) : MethodVisitor {
     private val tm = TraceManager
-    private val psa = PredicateStateAnalysis
 
     override fun cleanup() {}
 
@@ -31,21 +34,19 @@ class MethodChecker(private val loader: ClassLoader) : MethodVisitor {
             debug()
         }
 
-        val psb = psa.builder(method)
-
         // check body blocks backwards, to reduce number of runs
         for (block in method.bodyBlocks.reversed()) {
             if (tm.isCovered(block)) continue
 
-            coverBlock(method, block, psb)
+            coverBlock(method, block)
 
             log.debug("Block ${block.name} is covered = ${tm.isCovered(block)}")
             log.debug()
         }
     }
 
-    private fun coverBlock(method: Method, block: BasicBlock, psb: PredicateStateBuilder) {
-        val checker = Checker(method, loader, psb)
+    private fun coverBlock(method: Method, block: BasicBlock) {
+        val checker = Checker(method, loader, psa)
 
         log.debug("Checking reachability of ${block.terminator.print()}")
         val result = checker.checkReachable(block.terminator)
@@ -54,8 +55,7 @@ class MethodChecker(private val loader: ClassLoader) : MethodVisitor {
         when (result) {
             is Result.SatResult -> {
                 log.debug(result.model)
-                val recoverer = ModelRecoverer(method, result.model, loader)
-                val model = recoverer.apply()
+                val model = ModelRecoverer(method, result.model, loader).apply()
                 log.debug("Recovered: ${tryOrNull { model.toString() }}")
 
                 tryOrNull {

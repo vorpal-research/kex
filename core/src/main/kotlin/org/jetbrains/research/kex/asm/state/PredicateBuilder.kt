@@ -8,12 +8,13 @@ import org.jetbrains.research.kex.state.predicate.PredicateType
 import org.jetbrains.research.kex.state.term.TermFactory
 import org.jetbrains.research.kex.util.log
 import org.jetbrains.research.kex.util.unreachable
+import org.jetbrains.research.kfg.ClassManager
 import org.jetbrains.research.kfg.ir.BasicBlock
 import org.jetbrains.research.kfg.ir.value.IntConstant
 import org.jetbrains.research.kfg.ir.value.instruction.*
 import org.jetbrains.research.kfg.visitor.MethodVisitor
 
-class PredicateBuilder : MethodVisitor {
+class PredicateBuilder(override val cm: ClassManager) : MethodVisitor {
     val tf = TermFactory
     val pf = PredicateFactory
     val predicateMap = hashMapOf<Instruction, Predicate>()
@@ -48,6 +49,7 @@ class PredicateBuilder : MethodVisitor {
     override fun visitBinaryInst(inst: BinaryInst) {
         val lhv = tf.getValue(inst)
         val rhv = tf.getBinary(
+                types,
                 inst.opcode,
                 tf.getValue(inst.lhv),
                 tf.getValue(inst.rhv)

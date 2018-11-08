@@ -15,6 +15,7 @@ import org.jetbrains.research.kfg.ir.value.instruction.CmpOpcode
 import org.jetbrains.research.kfg.type.ArrayType
 import org.jetbrains.research.kfg.type.Reference
 import org.jetbrains.research.kfg.type.Type
+import org.jetbrains.research.kfg.type.TypeFactory
 import java.util.*
 import kotlin.reflect.KFunction
 import kotlin.reflect.KType
@@ -23,6 +24,9 @@ import kotlin.reflect.full.declaredMemberProperties
 import kotlin.reflect.jvm.jvmErasure
 
 class TypeInfoAdapter(val method: Method, val loader: ClassLoader) : RecollectingTransformer<TypeInfoAdapter> {
+    val cm get() = method.cm
+    val types get() = method.cm.type
+
     override val builders = ArrayDeque<StateBuilder>()
 
     private data class ArrayElementInfo(val nullable: Boolean)
@@ -75,13 +79,13 @@ class TypeInfoAdapter(val method: Method, val loader: ClassLoader) : Recollectin
         }
     }
 
-    private fun getKClass(type: KexType) = getClass(type.kfgType, loader).kotlin
+    private fun getKClass(type: KexType) = getClass(type.getKfgType(types), loader).kotlin
 
     private fun getKFunction(method: Method) =
-            tryOrNull { getKClass(KexClass(method.`class`)).declaredMemberFunctions }?.find { it.eq(method) }
+            tryOrNull { getKClass(KexClass(method.`class`.fullname)).declaredMemberFunctions }?.find { it.eq(method) }
 
     private fun getKProperty(field: Field) =
-            tryOrNull { getKClass(KexClass(field.`class`)).declaredMemberProperties }?.find { it.name == field.name }
+            tryOrNull { getKClass(KexClass(field.`class`.fullname)).declaredMemberProperties }?.find { it.name == field.name }
 
     override fun apply(ps: PredicateState): PredicateState {
         val (`this`, arguments) = ArgumentCollector(ps)
@@ -152,8 +156,8 @@ class TypeInfoAdapter(val method: Method, val loader: ClassLoader) : Recollectin
 
         val field = (predicate.rhv as FieldLoadTerm).field as FieldTerm
         val fieldType = (field.type as KexReference).reference
-        val `class` = field.getClass()
-        val actualField = `class`.getField((field.fieldName as ConstStringTerm).name, fieldType.kfgType)
+        val kfgClass = cm.getByName(field.getClass())
+        val actualField = kfgClass.getField((field.fieldName as ConstStringTerm).name, fieldType.getKfgType(types))
 
         val prop = getKProperty(actualField)
         val returnType = tryOrNull { prop?.getter?.returnType }

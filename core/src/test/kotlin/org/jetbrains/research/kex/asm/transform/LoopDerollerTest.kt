@@ -1,7 +1,6 @@
 package org.jetbrains.research.kex.asm.transform
 
 import org.jetbrains.research.kex.KexTest
-import org.jetbrains.research.kfg.CM
 import org.jetbrains.research.kfg.analysis.IRVerifier
 import org.jetbrains.research.kfg.analysis.LoopAnalysis
 import org.jetbrains.research.kfg.analysis.LoopSimplifier
@@ -14,26 +13,26 @@ class LoopDerollerTest : KexTest() {
     private fun checkLoops(method: Method) {
         if (method.isAbstract) return
 
-        var loops = LoopAnalysis(method)
+        var loops = LoopAnalysis(cm).invoke(method)
         if (loops.isEmpty()) return
 
-        LoopSimplifier.visit(method)
-        loops = LoopAnalysis(method)
+        LoopSimplifier(cm).visit(method)
+        loops = LoopAnalysis(cm).invoke(method)
         loops.forEach {
             assertTrue { it.hasSinglePreheader }
             assertTrue { it.hasSingleLatch }
         }
 
-        LoopDeroller.visit(method)
-        loops = LoopAnalysis(method)
+        LoopDeroller(cm).visit(method)
+        loops = LoopAnalysis(cm).invoke(method)
         assertTrue(loops.isEmpty())
 
-        IRVerifier.visit(method)
+        IRVerifier(cm).visit(method)
     }
 
     @Test
     fun simpleLoopTest() {
-        val `class` = CM.getByName("$packageName/LoopTests")
+        val `class` = cm.getByName("$packageName/LoopTests")
         for ((_, method) in `class`.methods) {
             checkLoops(method)
         }
@@ -41,7 +40,7 @@ class LoopDerollerTest : KexTest() {
 
     @Test
     fun icfpcLoopTest() {
-        val `class` = CM.getByName("$packageName/Icfpc2018Test")
+        val `class` = cm.getByName("$packageName/Icfpc2018Test")
         for ((_, method) in `class`.methods) {
             checkLoops(method)
         }

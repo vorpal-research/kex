@@ -8,19 +8,14 @@ import org.jetbrains.research.kex.config.CmdConfig
 import org.jetbrains.research.kex.config.FileConfig
 import org.jetbrains.research.kex.config.GlobalConfig
 import org.jetbrains.research.kex.config.RuntimeConfig
-import org.jetbrains.research.kex.state.InheritanceInfo
-import org.jetbrains.research.kex.state.term.Term
-import org.jetbrains.research.kex.util.error
-import org.jetbrains.research.kex.util.getClass
 import org.jetbrains.research.kex.util.log
-import org.jetbrains.research.kfg.CM
+import org.jetbrains.research.kfg.ClassManager
 import org.jetbrains.research.kfg.Package
 import org.jetbrains.research.kfg.analysis.LoopSimplifier
 import org.jetbrains.research.kfg.util.Flags
 import org.jetbrains.research.kfg.util.JarUtils
 import org.jetbrains.research.kfg.util.classLoader
 import org.jetbrains.research.kfg.visitor.Pipeline
-import java.io.BufferedInputStream
 import java.io.File
 import java.util.jar.JarFile
 
@@ -37,19 +32,20 @@ fun main(args: Array<String>) {
     val jar = JarFile(jarName)
     val jarLoader = jar.classLoader
     val `package` = Package(packageName.replace('.', '/'))
-    CM.parseJar(jar, `package`, Flags.readAll)
+    val classManager = ClassManager(jar, `package`, Flags.readAll)
 
     log.debug("Running with jar ${jar.name} and package $`package`")
     val target = File("instrumented/")
     // write all classes to target, so they will be seen by ClassLoader
-    JarUtils.writeClassesToTarget(jar, target, `package`, true)
+    JarUtils.writeClassesToTarget(classManager, jar, target, `package`, true)
 
-    val pipeline = Pipeline(`package`)
-    pipeline += RandomChecker(jarLoader, target)
-    pipeline += LoopSimplifier
-    pipeline += LoopDeroller
-    pipeline += PredicateStateAnalysis
-    pipeline += MethodChecker(jarLoader)
+    val pipeline = Pipeline(classManager, `package`)
+    pipeline += RandomChecker(classManager, jarLoader, target)
+    pipeline += LoopSimplifier(classManager)
+    pipeline += LoopDeroller(classManager)
+    val psa = PredicateStateAnalysis(classManager)
+    pipeline += psa
+    pipeline += MethodChecker(classManager, jarLoader, psa)
 
     pipeline.run()
 }
