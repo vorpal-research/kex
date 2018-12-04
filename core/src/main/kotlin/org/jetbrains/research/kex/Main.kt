@@ -33,6 +33,7 @@ fun main(args: Array<String>) {
     val jarLoader = jar.classLoader
     val `package` = Package(packageName.replace('.', '/'))
     val classManager = ClassManager(jar, `package`, Flags.readAll)
+    val origManager = ClassManager(jar, `package`, Flags.readAll)
 
     log.debug("Running with jar ${jar.name} and package $`package`")
     val target = File("instrumented/")
@@ -45,7 +46,7 @@ fun main(args: Array<String>) {
     pipeline += LoopDeroller(classManager)
     val psa = PredicateStateAnalysis(classManager)
     pipeline += psa
-    pipeline += MethodChecker(classManager, jarLoader, psa)
+    pipeline += MethodChecker(classManager, jarLoader, origManager, target, psa)
 
     pipeline.run()
 }

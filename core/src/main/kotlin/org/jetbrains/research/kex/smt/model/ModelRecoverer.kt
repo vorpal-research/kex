@@ -6,6 +6,9 @@ import org.jetbrains.research.kex.state.term.*
 import org.jetbrains.research.kex.state.transformer.memspace
 import org.jetbrains.research.kex.util.*
 import org.jetbrains.research.kfg.ir.Method
+import org.jetbrains.research.kfg.type.DoubleType
+import org.jetbrains.research.kfg.type.FloatType
+import org.jetbrains.research.kfg.type.Integral
 import java.lang.reflect.Array
 
 private fun Term.isPointer() = this.type is KexPointer
@@ -42,7 +45,14 @@ class ModelRecoverer(val method: Method, val model: SMTModel, val loader: ClassL
         for (index in 0..method.argTypes.lastIndex) {
             val modelArg = modelArgs[index]
             val recoveredArg = if (modelArg != null) recoverTerm(modelArg) else modelArg
-            recoveredArgs.add(recoveredArg)
+            recoveredArgs += if (recoveredArg == null && method.argTypes[index].isPrimary) {
+                when (method.argTypes[index]) {
+                    is Integral -> 0
+                    is FloatType -> 0.0F
+                    is DoubleType -> 0.0
+                    else -> unreachable { log.error("Unknown primary type ${method.argTypes[index]}") }
+                }
+            } else recoveredArg
         }
 
         return RecoveredModel(method, instance, recoveredArgs)

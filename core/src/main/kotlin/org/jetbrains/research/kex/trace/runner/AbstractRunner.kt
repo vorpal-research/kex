@@ -10,15 +10,24 @@ import org.jetbrains.research.kex.trace.Trace
 import org.jetbrains.research.kex.util.getClass
 import org.jetbrains.research.kex.util.log
 import org.jetbrains.research.kfg.ir.Method
-import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import java.io.PrintStream
 import java.lang.reflect.InvocationTargetException
-import java.util.*
 
 private val timeout = GlobalConfig.getLongValue("runner", "timeout", 1000L)
 
 class TraceParseError : Exception()
+
+private fun runWithTimeout(timeout: Long, body: () -> Unit) {
+    val thread = Thread(body)
+
+    thread.start()
+    thread.join(timeout)
+    if (thread.isAlive) {
+        @Suppress("DEPRECATION")
+        thread.stop()
+    }
+}
 
 abstract class AbstractRunner(val method: Method, protected val loader: ClassLoader) {
     protected val javaClass: Class<*> = loader.loadClass(method.`class`.canonicalDesc)
@@ -41,24 +50,24 @@ abstract class AbstractRunner(val method: Method, protected val loader: ClassLoa
     }
 
     protected fun parse(result: InvocationResult): Trace {
-        val output = Scanner(ByteArrayInputStream(result.error.toByteArray()))
+        val lines = String(result.error.toByteArray()).split("\n")
 
         val parser = ActionParser(method.cm)
-        val actions = arrayListOf<Action>()
         val tracePrefix = TraceInstrumenter.tracePrefix
-        while (output.hasNextLine()) {
-            val line = output.nextLine()
-            if (line.startsWith(tracePrefix)) {
-                val trimmed = line.removePrefix(tracePrefix).drop(1)
-                try {
-                    actions.add(parser.parseToEnd(trimmed))
-                } catch (e: ParseException) {
-                    log.error("Failed to parse $method output: $e")
-                    log.error("Failed line: $trimmed")
-                    throw TraceParseError()
+
+        val actions = lines
+                .filter { it.startsWith(tracePrefix) }
+                .map { it.removePrefix(tracePrefix).drop(1) }
+                .map {
+                    try {
+                        parser.parseToEnd(it)
+                    } catch (e: ParseException) {
+                        log.error("Failed to parse $method output: $e")
+                        log.error("Failed line: $it")
+                        throw TraceParseError()
+                    }
                 }
-            }
-        }
+
         return Trace.parse(actions, result.exception)
     }
 
@@ -75,28 +84,27 @@ abstract class AbstractRunner(val method: Method, protected val loader: ClassLoa
         System.setOut(PrintStream(result.output))
         System.setErr(PrintStream(result.error))
 
-        val thread = Thread {
+        runWithTimeout(timeout) {
             try {
                 result.returnValue = method.invoke(instance, *args)
             } catch (e: InvocationTargetException) {
-                log.debug("Invocation exception ${e.targetException}")
                 result.exception = e.targetException
-            } finally {
-                System.setOut(oldOut)
-                System.setErr(oldErr)
             }
         }
-        thread.start()
-        thread.join(timeout)
-        @Suppress("DEPRECATION") thread.stop()
+
+        System.setOut(oldOut)
+        System.setErr(oldErr)
 
         log.debug("Invocation output:\n${result.output}")
+        if (result.exception != null)
+            log.debug("Invocation exception ${result.exception}")
+
         return parse(result)
     }
 
     open fun run(instance: Any?, args: Array<Any?>) = invoke(javaMethod, instance, args)
     operator fun invoke(instance: Any?, args: Array<Any?>) = run(instance, args)
-    open fun invokeStatic(args: Array<Any?>) = run(null, args)
+    open fun invokeStatic(args: Array<Any?>) = invoke(null, args)
 }
 
 class SimpleRunner(method: Method, loader: ClassLoader) : AbstractRunner(method, loader)

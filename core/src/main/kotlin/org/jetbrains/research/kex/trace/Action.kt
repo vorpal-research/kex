@@ -158,6 +158,7 @@ class ActionParser(val cm: ClassManager) : Grammar<Action>() {
     private val arguments by token("arguments")
     private val instance by token("instance")
     private val arg by token("arg\\$")
+    private val nan by token("NaN")
 
     private val keyword by `this` or
             `throw` or
@@ -246,9 +247,10 @@ class ActionParser(val cm: ClassManager) : Grammar<Action>() {
     private val longValueParser by (optional(minus) and num) use {
         LongValue(((t1?.text ?: "") + t2.text).toLong())
     }
-    private val doubleValueParser by (optional(minus) and doubleNum) use {
+    private val doubleValueParser by ((optional(minus) and doubleNum) use {
         DoubleValue(((t1?.text ?: "") + t2.text).toDouble())
-    }
+    } or nan use { DoubleValue(Double.NaN) })
+
     private val stringValueParser by string use { StringValue(text.drop(1).dropLast(1)) }
     private val arrayValueParser by (-array and -at and num and -openCurlyBrace and typeName and -commaAndSpace and num and -closeCurlyBrace) use {
         ArrayValue(t1.text.toInt(), t2, t3.text.toInt())
