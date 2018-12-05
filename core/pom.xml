@@ -162,7 +162,7 @@
                                     kex.templates=${project.basedir}/src/main/resources/template/
                                 </processorArg>
                                 <processorArg>
-                                    kex.sources=${project.basedir}/src/main/resources/
+                                    kex.resources=${project.basedir}/src/main/resources/
                                 </processorArg>
                             </annotationProcessorArgs>
                         </configuration>

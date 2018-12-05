@@ -13,18 +13,18 @@ import javax.lang.model.element.TypeElement
 
 @SupportedSourceVersion(SourceVersion.RELEASE_8)
 @SupportedAnnotationTypes("org.jetbrains.research.kex.state.InheritorOf")
-@SupportedOptions(InheritanceInfoProcessor.KEX_SOURCES)
+@SupportedOptions(InheritanceInfoProcessor.KEX_RESOURCES)
 class InheritanceInfoProcessor : KexProcessor() {
 
     companion object {
-        const val KEX_SOURCES = "kex.sources"
+        const val KEX_RESOURCES = "kex.resources"
     }
 
     private val types = mutableMapOf<String, MutableMap<String, String>>()
     private val bases = mutableMapOf<String, String>()
 
     private val targetDirectory: String
-        get() = processingEnv.options[KEX_SOURCES] ?: unreachable { error("No source directory") }
+        get() = processingEnv.options[KEX_RESOURCES] ?: unreachable { error("No source directory") }
 
     override fun process(annotations: MutableSet<out TypeElement>?, roundEnv: RoundEnvironment?): Boolean {
         roundEnv?.run {
