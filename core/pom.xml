@@ -159,13 +159,10 @@
                             </annotationProcessors>
                             <annotationProcessorArgs>
                                 <processorArg>
-                                    codegen.dir=${project.basedir}/src/main/generated
+                                    kex.templates=${project.basedir}/src/main/resources/template/
                                 </processorArg>
                                 <processorArg>
-                                    template.dir=${project.basedir}/src/main/resources/template/
-                                </processorArg>
-                                <processorArg>
-                                    source.dir=${project.basedir}/src/main/resources/
+                                    kex.sources=${project.basedir}/src/main/resources/
                                 </processorArg>
                             </annotationProcessorArgs>
                         </configuration>
