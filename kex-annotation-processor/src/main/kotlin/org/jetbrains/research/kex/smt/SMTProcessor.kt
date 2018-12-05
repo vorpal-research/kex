@@ -17,18 +17,20 @@ import kotlin.reflect.KClass
         "org.jetbrains.research.kex.smt.SMTExprFactory",
         "org.jetbrains.research.kex.smt.SMTContext",
         "org.jetbrains.research.kex.smt.SMTConverter")
-@SupportedOptions("codegen.dir", "template.dir")
+@SupportedOptions(SMTProcessor.KAPT_GENERATED_SOURCES, SMTProcessor.KEX_TEMPLATES)
 class SMTProcessor : KexProcessor() {
-    private companion object {
-        const val CODEGEN_DIR = "codegen.dir"
-        const val TEMPLATE_DIR = "template.dir"
+    companion object {
+        const val KAPT_GENERATED_SOURCES = "kapt.kotlin.generated"
+        const val KEX_TEMPLATES = "kex.templates"
     }
 
+    private var printedGeneratedSourcesDir = false
+
     private val targetDirectory: String
-        get() = processingEnv.options[CODEGEN_DIR] ?: unreachable { error("No codegen directory") }
+        get() = processingEnv.options[KAPT_GENERATED_SOURCES] ?: unreachable { error("No codegen directory") }
 
     private val templates: String
-        get() = processingEnv.options[TEMPLATE_DIR] ?: unreachable { error("No template directory") }
+        get() = processingEnv.options[KEX_TEMPLATES] ?: unreachable { error("No template directory") }
 
     override fun process(annotations: MutableSet<out TypeElement>?, roundEnv: RoundEnvironment?): Boolean {
         roundEnv?.apply {
@@ -52,7 +54,6 @@ class SMTProcessor : KexProcessor() {
     }
 
     private fun <T : Annotation> processAnnotation(element: Element, annotationClass: KClass<T>, nameTemplate: String) {
-        val `class` = element.simpleName.toString()
         val `package` = processingEnv.elementUtils.getPackageOf(element).toString()
         val annotation = element.getAnnotation(annotationClass.java)
                 ?: unreachable { error("Element $element have no annotation $annotationClass") }
@@ -77,6 +78,12 @@ class SMTProcessor : KexProcessor() {
         val resultingFile = stream.toString()
 
         if (!file.exists() || file.readText() != resultingFile) {
+
+            if (!printedGeneratedSourcesDir) {
+                info("Generating sources to $targetDirectory")
+                printedGeneratedSourcesDir = true
+            }
+
             info("Generating $template for $`class` in package $`package` with parameters $parameters")
             val fileWriter = file.writer()
             fileWriter.write(resultingFile)

@@ -6,5 +6,4 @@ target/*
 *.log
 instrumented/*
 repo/*
-core/src/main/generated/*
 testJars/*
