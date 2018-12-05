@@ -191,11 +191,11 @@ class ActionParser(val cm: ClassManager) : Grammar<Action>() {
     private val semicolon by token(";")
     private val comma by token(",")
     private val minus by token("-")
-    private val doubleNum by token("\\d+\\.\\d+")
+    private val doubleNum by token("\\d+\\.\\d+(E(-)?\\d+)?")
     private val num by token("\\d+")
     private val word by token("[a-zA-Z$][\\w$]*")
     private val at by token("@")
-    private val string by token("\"[\\w\\s.@>=<]*\"")
+    private val string by token("\"[\\w\\sа-яА-ЯёЁ\\-.@>=<]*\"")
 
     private val colonAndSpace by colon and space
     private val semicolonAndSpace by semicolon and space
