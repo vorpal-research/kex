@@ -73,13 +73,9 @@ class MethodChecker(
         log.debug(method.print())
         log.debug()
 
-//        val returnBlock = method.firstOrNull { it.any { inst -> inst is ReturnInst } } ?: return
-//        coverBlock(method, returnBlock)
-        // check body blocks backwards, to reduce number of runs
-
         val blockMappings = LoopDeroller.blockMapping.getOrPut(method, ::mutableMapOf)
         for (block in method.bodyBlocks.reversed()) {
-            val originalBlock = blockMappings[block] ?: continue
+            val originalBlock = blockMappings[block] ?: block
             if (tm.isCovered(method, originalBlock)) continue
 
             coverBlock(method, block)

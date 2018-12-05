@@ -93,7 +93,10 @@ class Trace private constructor(val method: Method,
             }
             require(methodStack.isEmpty() && infos.isEmpty())
             return result.map { it.second.toTrace(it.first) }.firstOrNull()
-                    ?: unreachable { log.error("Could not parse trace") }
+                    ?: unreachable {
+                        log.error("Could not parse trace:")
+                        log.error(actions.joinToString("\n"))
+                    }
         }
     }
 }
