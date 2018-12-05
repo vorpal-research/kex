@@ -1,6 +1,7 @@
 package org.jetbrains.research.kex.asm.analysis
 
 import org.jetbrains.research.kex.asm.state.PredicateStateAnalysis
+import org.jetbrains.research.kex.asm.transform.LoopDeroller
 import org.jetbrains.research.kex.asm.transform.TraceInstrumenter
 import org.jetbrains.research.kex.driver.RandomDriver
 import org.jetbrains.research.kex.smt.Checker
@@ -75,12 +76,15 @@ class MethodChecker(
 //        val returnBlock = method.firstOrNull { it.any { inst -> inst is ReturnInst } } ?: return
 //        coverBlock(method, returnBlock)
         // check body blocks backwards, to reduce number of runs
+
+        val blockMappings = LoopDeroller.blockMapping.getOrPut(method, ::mutableMapOf)
         for (block in method.bodyBlocks.reversed()) {
-            if (tm.isCovered(block)) continue
+            val originalBlock = blockMappings[block] ?: continue
+            if (tm.isCovered(method, originalBlock)) continue
 
             coverBlock(method, block)
 
-            log.debug("Block ${block.name} is covered = ${tm.isCovered(block)}")
+            log.debug("Block ${block.name} is covered = ${tm.isCovered(method, originalBlock)}")
             log.debug()
         }
         cleanup()

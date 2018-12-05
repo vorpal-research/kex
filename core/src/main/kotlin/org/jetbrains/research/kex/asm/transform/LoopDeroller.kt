@@ -22,6 +22,12 @@ private val derollCount = GlobalConfig.getIntValue("loop", "deroll-count", 3)
 
 class LoopDeroller(override val cm: ClassManager) : LoopVisitor {
 
+    companion object {
+        const val DEROLLED_POSTFIX = ".deroll"
+
+        val blockMapping = mutableMapOf<Method, MutableMap<BasicBlock, BasicBlock>>()
+    }
+
     private data class State(
             val header: BasicBlock,
             val latch: BasicBlock,
@@ -94,6 +100,8 @@ class LoopDeroller(override val cm: ClassManager) : LoopVisitor {
             phi to phi.incomings.filterNot { it.key in body }.toMutableMap()
         }.toMap().toMutableMap()
 
+        val methodBlockMapping = blockMapping.getOrPut(method, ::mutableMapOf)
+
         // deroll loop for given number of iterations
         for (iteration in 0..derollCount) {
             state.blockMappings.clear()
@@ -101,6 +109,7 @@ class LoopDeroller(override val cm: ClassManager) : LoopVisitor {
                 val copy = copyBlock(block)
                 state[block] = copy
                 loop.parent?.addBlock(copy)
+                methodBlockMapping[copy] = block
             }
 
             for (block in blockOrder) {
@@ -223,8 +232,8 @@ class LoopDeroller(override val cm: ClassManager) : LoopVisitor {
     }
 
     private fun copyBlock(block: BasicBlock) = when (block) {
-        is BodyBlock -> BodyBlock("${block.name.name}.deroll")
-        is CatchBlock -> CatchBlock("${block.name.name}.deroll", block.exception)
+        is BodyBlock -> BodyBlock("${block.name.name}$DEROLLED_POSTFIX")
+        is CatchBlock -> CatchBlock("${block.name.name}$DEROLLED_POSTFIX", block.exception)
         else -> unreachable { log.error("Unknown block type: ${block.name}") }
     }
 
