@@ -15,6 +15,7 @@ import java.io.PrintStream
 import java.lang.reflect.InvocationTargetException
 
 private val timeout = GlobalConfig.getLongValue("runner", "timeout", 1000L)
+private val traceLimit = GlobalConfig.getIntValue("runner", "trace-limit", 0)
 
 class TraceParseError : Exception()
 
@@ -55,7 +56,13 @@ abstract class AbstractRunner(val method: Method, protected val loader: ClassLoa
         val parser = ActionParser(method.cm)
         val tracePrefix = TraceInstrumenter.tracePrefix
 
+        if (traceLimit > 0 && lines.size > traceLimit) {
+            log.warn("Trace size exceeds the limit of $traceLimit lines, skipping it")
+            throw TraceParseError()
+        }
+
         val actions = lines
+                .asSequence()
                 .filter { it.startsWith(tracePrefix) }
                 .map { it.removePrefix(tracePrefix).drop(1) }
                 .map {
@@ -67,6 +74,7 @@ abstract class AbstractRunner(val method: Method, protected val loader: ClassLoa
                         throw TraceParseError()
                     }
                 }
+                .toList()
 
         return Trace.parse(actions, result.exception)
     }
