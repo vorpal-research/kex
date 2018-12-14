@@ -12,7 +12,7 @@ public class ObjectJavaTests {
             this.z = z;
         }
     }
-    class LineJava{
+    class LineJava {
         PointJava start;
         PointJava end;
 

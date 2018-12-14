@@ -62,19 +62,17 @@ abstract class AbstractRunner(val method: Method, protected val loader: ClassLoa
         }
 
         val actions = lines
-                .asSequence()
                 .filter { it.startsWith(tracePrefix) }
                 .map { it.removePrefix(tracePrefix).drop(1) }
-                .map {
+                .mapNotNull {
                     try {
                         parser.parseToEnd(it)
                     } catch (e: ParseException) {
                         log.error("Failed to parse $method output: $e")
                         log.error("Failed line: $it")
-                        throw TraceParseError()
+                        null
                     }
                 }
-                .toList()
 
         return Trace.parse(actions, result.exception)
     }

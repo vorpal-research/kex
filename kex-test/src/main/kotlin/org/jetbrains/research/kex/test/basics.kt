@@ -96,4 +96,12 @@ class BasicTests {
         else Intrinsics.assertReachable()
         return c
     }
+
+    fun triangleKind(a: Double, b: Double, c: Double): Double {
+        val max = maxOf(a, b, c)
+        if (2 * max > a + b + c)
+            return -1.0
+        val res = 2 * max * max - a * a - b * b - c * c
+        return res
+    }
 }
