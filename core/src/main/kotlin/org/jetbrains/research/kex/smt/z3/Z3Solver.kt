@@ -86,7 +86,7 @@ class Z3Solver(val tf: TypeFactory, val ef: Z3ExprFactory) : AbstractSMTSolver {
         return when (result) {
             Status.SATISFIABLE -> {
                 val model = solver.model ?: unreachable { log.error("Solver result does not contain model") }
-                log.debug(model)
+//                log.debug(model)
                 result to model
             }
             Status.UNSATISFIABLE -> {

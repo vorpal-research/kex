@@ -113,6 +113,7 @@ class MethodInliner(override val cm: ClassManager) : MethodVisitor {
         val method = inst.parent?.parent ?: unreachable { log.error("Instruction without parent method") }
         val inlinedMethod = inst.method
         if (!im.isInlinable(inlinedMethod)) return
+        if (inlinedMethod.isEmpty()) return
 
         val entryBlock = inlinedMethod.entry
         val returnBlock = inlinedMethod.basicBlocks.firstOrNull { bb -> bb.any { it is ReturnInst } } ?: return

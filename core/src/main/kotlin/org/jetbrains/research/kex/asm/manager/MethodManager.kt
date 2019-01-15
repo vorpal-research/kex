@@ -27,10 +27,10 @@ object MethodManager {
 
         fun isInlinable(method: Method): Boolean = when {
             !inliningEnabled -> false
-            !method.isFinal -> false
             ignorePackages.any { it.isParent(method.`class`.`package`) } -> false
             ignoreClasses.any { method.cm.getByName(it) == method.`class` } -> false
             ignoreMethods.contains(method) -> false
+            !method.isFinal -> false
             method.flatten().all { it !is ReturnInst } -> false
             else -> true
         }

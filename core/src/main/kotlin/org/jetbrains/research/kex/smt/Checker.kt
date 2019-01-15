@@ -13,14 +13,14 @@ import org.jetbrains.research.kex.util.log
 import org.jetbrains.research.kfg.ir.Method
 import org.jetbrains.research.kfg.ir.value.instruction.Instruction
 
-private val isInliningEnabled = GlobalConfig.getBooleanValue("smt", "ps-inlining", true)
-private val isMemspacingEnabled = GlobalConfig.getBooleanValue("smt", "memspacing", true)
-private val isSlicingEnabled = GlobalConfig.getBooleanValue("smt", "slicing", false)
-
-private val logQuery = GlobalConfig.getBooleanValue("smt", "logQuery", false)
 
 class Checker(val method: Method, val loader: ClassLoader, private val psa: PredicateStateAnalysis) {
-    val builder = psa.builder(method)
+    private val isInliningEnabled = GlobalConfig.getBooleanValue("smt", "ps-inlining", true)
+    private val isMemspacingEnabled = GlobalConfig.getBooleanValue("smt", "memspacing", true)
+    private val isSlicingEnabled = GlobalConfig.getBooleanValue("smt", "slicing", false)
+    private val logQuery = GlobalConfig.getBooleanValue("smt", "logQuery", false)
+
+    private val builder = psa.builder(method)
 
     fun checkReachable(inst: Instruction): Result {
         log.debug("Checking reachability of ${inst.print()}")
