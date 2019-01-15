@@ -18,7 +18,7 @@ class NewPredicate(lhv: Term, type: PredicateType = PredicateType.State(), locat
         val tlhv = t.transform(lhv)
         return when (tlhv) {
             lhv -> this
-            else -> t.pf.getNew(lhv, type)
+            else -> t.pf.getNew(tlhv, type)
         }
     }
 }

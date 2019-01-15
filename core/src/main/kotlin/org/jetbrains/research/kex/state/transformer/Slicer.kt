@@ -12,7 +12,13 @@ class CFGTracker : Transformer<CFGTracker> {
     var currentDominators = setOf<Predicate>()
     val dominatorMap = hashMapOf<Predicate, Set<Predicate>>()
 
-    override fun transform(predicate: Predicate): Predicate {
+    override fun apply(ps: PredicateState): PredicateState {
+        currentDominators = setOf()
+        dominatorMap.clear()
+        return super.apply(ps)
+    }
+
+    override fun transformBase(predicate: Predicate): Predicate {
         if (predicate.type != PredicateType.State()) {
             currentDominators += predicate
         }
@@ -22,12 +28,12 @@ class CFGTracker : Transformer<CFGTracker> {
 
     override fun transformChoice(ps: ChoiceState): PredicateState {
         val entryDominators = currentDominators
-        var totalDomsinators = currentDominators
+        var totalDominators = currentDominators
 
         for (branch in ps.choices) {
             currentDominators = entryDominators
             super.transform(branch)
-            totalDomsinators += currentDominators
+            totalDominators += currentDominators
         }
 
         currentDominators = entryDominators
@@ -35,12 +41,7 @@ class CFGTracker : Transformer<CFGTracker> {
     }
 
     fun getDominatingPaths(predicate: Predicate) = dominatorMap.getOrElse(predicate, ::setOf)
-    fun getFinalPath() = currentDominators
-
-    fun reset() {
-        currentDominators = setOf()
-        dominatorMap.clear()
-    }
+    val finalPath get() = currentDominators
 }
 
 private fun Predicate.inverse(): Predicate = when {
@@ -93,13 +94,13 @@ class Slicer(val state: PredicateState, sliceTerms: Set<Term>, val aa: AliasAnal
     private fun checkPtrs(predicate: Predicate, lhv: Set<Term>, rhv: Set<Term>): Boolean {
         if (lhv.isEmpty()) return false
 
-        if (lhv.asSequence().filter { it.type is KexPointer }.any { slicePtrs.contains(it) }) {
+        if (lhv.filter { it.type is KexPointer }.any { slicePtrs.contains(it) }) {
             rhv.forEach { addSliceTerm(it) }
             return true
         }
 
         if (predicate.hasReceiver) {
-            val lhvPtrs = lhv.asSequence().filter { it.type is KexPointer }
+            val lhvPtrs = lhv.filter { it.type is KexPointer }
             if (lhvPtrs.any { ref -> slicePtrs.any { slice -> aa.mayAlias(ref, slice) } }) {
                 lhv.forEach { addSliceTerm(it) }
                 rhv.forEach { addSliceTerm(it) }
@@ -110,10 +111,8 @@ class Slicer(val state: PredicateState, sliceTerms: Set<Term>, val aa: AliasAnal
     }
 
     override fun transform(ps: PredicateState): PredicateState {
-        cfg.reset()
-
-        cfg.transform(ps)
-        currentPath = cfg.getFinalPath()
+        cfg.apply(ps)
+        currentPath = cfg.finalPath
 
         val reversed = ps.reverse()
         return super.transform(reversed).reverse().simplify()
@@ -154,14 +153,20 @@ class Slicer(val state: PredicateState, sliceTerms: Set<Term>, val aa: AliasAnal
             }
         }
 
-        val reciever = predicate.receiver
-        val lhvTerms = if (reciever != null) TermCollector.getFullTermSet(reciever).asSequence().filter(isInterestingTerm).toSet() else setOf()
+        val receiver = predicate.receiver
+        val lhvTerms = when {
+            receiver != null -> TermCollector.getFullTermSet(receiver).filter(isInterestingTerm).toSet()
+            else -> setOf()
+        }
         val rhvTerms = predicate.operands.drop(1).flatMap { TermCollector.getFullTermSet(it) }.toSet()
 
         val asVar = checkVars(lhvTerms, rhvTerms)
         val asPtr = checkPtrs(predicate, lhvTerms, rhvTerms)
         return when {
-            asVar || asPtr -> predicate
+            asVar || asPtr -> {
+                addCFGDeps(predicate)
+                predicate
+            }
             else -> Transformer.Stub
         }
     }
