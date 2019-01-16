@@ -1,6 +1,6 @@
 package org.jetbrains.research.kex.smt.model
 
-import org.jetbrains.research.kex.driver.RandomDriver
+import org.jetbrains.research.kex.random.defaultRandomizer
 import org.jetbrains.research.kex.ktype.*
 import org.jetbrains.research.kex.state.term.*
 import org.jetbrains.research.kex.state.transformer.memspace
@@ -19,6 +19,8 @@ data class RecoveredModel(val method: Method, val instance: Any?, val arguments:
 class ModelRecoverer(val method: Method, val model: SMTModel, val loader: ClassLoader) {
     val tf = TermFactory
     val terms = hashMapOf<Term, Any?>()
+
+    private val randomizer = defaultRandomizer
 
     private val memoryMappings = hashMapOf<Int, MutableMap<Int, Any?>>()
 
@@ -61,7 +63,7 @@ class ModelRecoverer(val method: Method, val model: SMTModel, val loader: ClassL
     }
 
     private fun recoverPrimary(type: KexType, value: Term?): Any? {
-        if (value == null) return RandomDriver.generate(getClass(type.getKfgType(method.cm.type), loader))
+        if (value == null) return randomizer.next(getClass(type.getKfgType(method.cm.type), loader))
         return when (type) {
             is KexBool -> (value as ConstBoolTerm).value
             is KexByte -> (value as ConstByteTerm).value
@@ -90,7 +92,7 @@ class ModelRecoverer(val method: Method, val model: SMTModel, val loader: ClassL
         return memory(type.memspace, address) {
             val kfgClass = method.cm.getByName(type.`class`)
             val `class` = tryOrNull { loader.loadClass(kfgClass.canonicalDesc) } ?: return@memory null
-            val instance = RandomDriver.generateOrNull(`class`)
+            val instance = randomizer.nextOrNull(`class`)
             for ((_, field) in kfgClass.fields) {
                 val fieldCopy = tf.getField(KexReference(field.type.kexType), term, tf.getString(field.name))
                 val fieldTerm = model.assignments.keys.firstOrNull { it == fieldCopy } ?: continue
