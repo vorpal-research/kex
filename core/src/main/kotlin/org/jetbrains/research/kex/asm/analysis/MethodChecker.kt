@@ -68,6 +68,8 @@ class MethodChecker(
         prepareMethodInfo(method)
 
         if (method.isAbstract || method.isConstructor) return
+        // don't consider static parameters
+        if (method.isStatic && method.argTypes.isEmpty()) return
 
         log.debug(method)
         log.debug(method.print())
@@ -100,11 +102,9 @@ class MethodChecker(
                 log.debug("Recovered: ${tryOrNull { model.toString() }}")
 
                 tryOrNull {
-                    val instance = when (model.instance) {
-                        null ->
-                            if (method.isStatic) null
-                            else RandomDriver.generate(getClass(types.getRefType(method.`class`), state!!.loader))
-                        else -> model.instance
+                    val instance = model.instance ?: when {
+                        method.isStatic -> null
+                        else -> RandomDriver.generate(getClass(types.getRefType(method.`class`), state!!.loader))
                     }
 
                     val trace = SimpleRunner(method, state!!.loader).invoke(instance, model.arguments.toTypedArray())

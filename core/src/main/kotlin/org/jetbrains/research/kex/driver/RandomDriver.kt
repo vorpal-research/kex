@@ -35,7 +35,7 @@ object RandomDriver {
             .stringLengthRange(minStringLength, maxStringLength)
             .build()
 
-    private fun <T> generateClass(`class`: Class<T>) = randomizer.nextObject(`class`)
+    private fun <T> generateClass(klass: Class<T>) = randomizer.nextObject(klass)
 
     private fun generateParameterized(type: ParameterizedType): Any? {
         val rawType = type.rawType
@@ -75,5 +75,5 @@ object RandomDriver {
         throw GenerationException("Unable to generate a random instance of type $type")
     }
 
-    fun generateOrNull(type: Type): Any? = try { generate(type) } catch (e: GenerationException) { null }
+    fun generateOrNull(type: Type): Any? = tryOrNull { generate(type) }
 }

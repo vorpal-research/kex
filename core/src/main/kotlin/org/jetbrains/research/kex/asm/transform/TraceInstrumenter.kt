@@ -56,6 +56,7 @@ class TraceInstrumenter(override val cm: ClassManager) : MethodVisitor {
 
         val builder = SystemErrWrapper(cm, "serr")
         builder.println()
+        builder.println("$tracePrefix exit ${bb.name};")
         builder.print("$tracePrefix throw ${method.prototype.replace('/', '.')}; ")
 
         val printer = ValuePrinter(cm)
