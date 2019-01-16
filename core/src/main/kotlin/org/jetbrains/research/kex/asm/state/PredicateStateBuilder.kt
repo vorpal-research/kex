@@ -16,6 +16,7 @@ import org.jetbrains.research.kfg.util.TopologicalSorter
 import java.util.*
 
 class NoTopologicalSortingError(msg: String) : Exception(msg)
+class InvalidPredicateStateError(msg: String) : Exception(msg)
 
 class PredicateStateBuilder(val method: Method) {
     private val blockStates = hashMapOf<BasicBlock, PredicateState>()
@@ -81,7 +82,7 @@ class PredicateStateBuilder(val method: Method) {
     }
 
     private fun getBlockEntryState(bb: BasicBlock): PredicateState? {
-        if (bb in method.catchBlocks) return unreachable { log.error("Catch blocks are not supported yet") }
+        if (bb in method.catchBlocks) throw InvalidPredicateStateError("Cannot build predicate state for catch block")
 
         val idom = domTree.getIdom(bb) ?: return initialState
 
@@ -99,7 +100,7 @@ class PredicateStateBuilder(val method: Method) {
             }
 
             val sliced = predState.apply().sliceOn(base)
-                    ?: unreachable { log.error("Cannot slice state on it's predecessor") }
+                    ?: throw InvalidPredicateStateError("Cannot slice predicate state on it's predecessor")
             choices.add(sliced)
         }
 

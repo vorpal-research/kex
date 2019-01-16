@@ -13,6 +13,9 @@ import org.jetbrains.research.kfg.ir.BasicBlock
 import org.jetbrains.research.kfg.ir.value.IntConstant
 import org.jetbrains.research.kfg.ir.value.instruction.*
 import org.jetbrains.research.kfg.visitor.MethodVisitor
+import java.lang.Exception
+
+class InvalidInstructionError(message: String) : Exception(message)
 
 class PredicateBuilder(override val cm: ClassManager) : MethodVisitor {
     val tf = TermFactory
@@ -203,8 +206,8 @@ class PredicateBuilder(override val cm: ClassManager) : MethodVisitor {
 
     override fun visitTableSwitchInst(inst: TableSwitchInst) {
         val key = tf.getValue(inst.index)
-        val min = inst.min as? IntConstant ?: unreachable { log.error("Unexpected min type in tableSwitchInst") }
-        val max = inst.max as? IntConstant ?: unreachable { log.error("Unexpected max type in tableSwitchInst") }
+        val min = inst.min as? IntConstant ?: throw InvalidInstructionError("Unexpected min type in tableSwitchInst")
+        val max = inst.max as? IntConstant ?: throw InvalidInstructionError("Unexpected max type in tableSwitchInst")
         for ((index, successor) in inst.getBranches().withIndex()) {
             terminatorPredicateMap[successor to inst] = pf.getEquality(
                     key,
@@ -223,7 +226,7 @@ class PredicateBuilder(override val cm: ClassManager) : MethodVisitor {
 
     override fun visitReturnInst(inst: ReturnInst) {
         if (inst.hasReturnValue) {
-            val method = inst.parent?.parent ?: unreachable { log.error("Instruction doesn't have parents") }
+            val method = inst.parent?.parent ?: throw InvalidInstructionError("Return instruction don't have parent method")
             val lhv = tf.getReturn(method)
             val rhv = tf.getValue(inst.returnValue)
 

@@ -234,7 +234,6 @@ class LoopDeroller(override val cm: ClassManager) : LoopVisitor {
     private fun copyBlock(block: BasicBlock) = when (block) {
         is BodyBlock -> BodyBlock("${block.name.name}$DEROLLED_POSTFIX")
         is CatchBlock -> CatchBlock("${block.name.name}$DEROLLED_POSTFIX", block.exception)
-        else -> unreachable { log.error("Unknown block type: ${block.name}") }
     }
 
     private fun copyBlockConnections(state: State, original: BasicBlock) {

@@ -81,11 +81,6 @@ class Checker(val method: Method, val loader: ClassLoader, private val psa: Pred
 
         val result = SMTProxySolver(method.cm.type).isPathPossible(state, query)
         log.debug("Acquired $result")
-        when (result) {
-            is Result.SatResult -> log.debug("Reachable")
-            is Result.UnsatResult -> log.debug("Unreachable")
-            is Result.UnknownResult -> log.debug("Unknown")
-        }
         return result
     }
 }

@@ -4,6 +4,7 @@ import org.jetbrains.research.kex.asm.manager.MethodManager
 import org.jetbrains.research.kex.util.log
 import org.jetbrains.research.kex.util.unreachable
 import org.jetbrains.research.kfg.ClassManager
+import org.jetbrains.research.kfg.InvalidStateError
 import org.jetbrains.research.kfg.ir.BasicBlock
 import org.jetbrains.research.kfg.ir.BodyBlock
 import org.jetbrains.research.kfg.ir.CatchBlock
@@ -22,7 +23,6 @@ class MethodInliner(override val cm: ClassManager) : MethodVisitor {
     private fun createBlockCopy(block: BasicBlock) = when (block) {
         is BodyBlock -> BodyBlock("${block.name.name}.inlined")
         is CatchBlock -> CatchBlock("${block.name.name}.inlined", block.exception)
-        else -> unreachable { log.error("Unknown block type: $block") }
     }
 
     private fun copyBlock(original: BasicBlock, blocks: MutableMap<BasicBlock, BasicBlock>, values: MutableMap<Value, Value>) {
@@ -79,7 +79,6 @@ class MethodInliner(override val cm: ClassManager) : MethodVisitor {
         val before = when (block) {
             is BodyBlock -> BodyBlock("${block.name.name}.splitted")
             is CatchBlock -> CatchBlock("${block.name.name}.splitted", block.exception)
-            else -> unreachable { log.error("Unknown block type: $block") }
         }
 
         val after = BodyBlock("${block.name.name}.splitted")
@@ -110,7 +109,7 @@ class MethodInliner(override val cm: ClassManager) : MethodVisitor {
     }
 
     override fun visitCallInst(inst: CallInst) {
-        val method = inst.parent?.parent ?: unreachable { log.error("Instruction without parent method") }
+        val method = inst.parent?.parent ?: throw InvalidStateError("Instruction without parent method")
         val inlinedMethod = inst.method
         if (!im.isInlinable(inlinedMethod)) return
         if (inlinedMethod.isEmpty()) return
