@@ -3,7 +3,7 @@ package org.jetbrains.research.kex.asm.analysis
 import org.jetbrains.research.kex.asm.state.PredicateStateAnalysis
 import org.jetbrains.research.kex.asm.transform.LoopDeroller
 import org.jetbrains.research.kex.asm.transform.TraceInstrumenter
-import org.jetbrains.research.kex.driver.RandomDriver
+import org.jetbrains.research.kex.random.defaultRandomizer
 import org.jetbrains.research.kex.smt.Checker
 import org.jetbrains.research.kex.smt.Result
 import org.jetbrains.research.kex.smt.model.ModelRecoverer
@@ -31,6 +31,7 @@ class MethodChecker(
         private val psa: PredicateStateAnalysis) : MethodVisitor {
     private val tm = TraceManager
     private var state: State? = null
+    private val randomizer = defaultRandomizer
 
     private data class State(
             val `class`: Class,
@@ -104,7 +105,7 @@ class MethodChecker(
                 tryOrNull {
                     val instance = model.instance ?: when {
                         method.isStatic -> null
-                        else -> RandomDriver.generate(getClass(types.getRefType(method.`class`), state!!.loader))
+                        else -> randomizer.next(getClass(types.getRefType(method.`class`), state!!.loader))
                     }
 
                     val trace = SimpleRunner(method, state!!.loader).invoke(instance, model.arguments.toTypedArray())
