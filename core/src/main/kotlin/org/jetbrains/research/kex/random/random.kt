@@ -41,13 +41,13 @@ class RandomBeansDriver(val config: BeansConfig = defaultConfig) : Randomizer {
         )
 
         val defaultConfig: BeansConfig by lazy {
-            val depth = GlobalConfig.getIntValue("random", "depth", 10)
-            val minCollectionSize = GlobalConfig.getIntValue("random", "minCollectionSize", 0)
-            val maxCollectionSize = GlobalConfig.getIntValue("random", "maxCollectionSize", 1000)
-            val minStringLength = GlobalConfig.getIntValue("random", "minStringLength", 0)
-            val maxStringLength = GlobalConfig.getIntValue("random", "maxStringLength", 1000)
-            val attempts = GlobalConfig.getIntValue("random", "generationAttempts", 1)
-            val excludes = GlobalConfig.getMultipleStringValue("random", "excludes")
+            val depth = GlobalConfig.getIntValue("random-beans", "depth", 10)
+            val minCollectionSize = GlobalConfig.getIntValue("random-beans", "minCollectionSize", 0)
+            val maxCollectionSize = GlobalConfig.getIntValue("random-beans", "maxCollectionSize", 1000)
+            val minStringLength = GlobalConfig.getIntValue("random-beans", "minStringLength", 0)
+            val maxStringLength = GlobalConfig.getIntValue("random-beans", "maxStringLength", 1000)
+            val attempts = GlobalConfig.getIntValue("random-beans", "generationAttempts", 1)
+            val excludes = GlobalConfig.getMultipleStringValue("random-beans", "exclude")
             BeansConfig(
                     depth = depth,
                     collectionSize = minCollectionSize..maxCollectionSize,

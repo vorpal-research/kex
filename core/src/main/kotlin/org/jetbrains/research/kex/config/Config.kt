@@ -23,9 +23,9 @@ interface Config {
     fun getDoubleValue(section: String, name: String, default: Double = 0.0) =
             getStringValue(section, name)?.toDouble() ?: default
 
-    fun getMultipleStringValue(section: String, name: String, delimeter: String = ",") =
+    fun getMultipleStringValue(section: String, name: String, delimiter: String = ",") =
             getStringValue(section, name)
-                    ?.split(delimeter)
+                    ?.split(delimiter)
                     ?.asSequence()
                     ?.map { it.replace("\\s".toRegex(), "") }
                     ?.toList()

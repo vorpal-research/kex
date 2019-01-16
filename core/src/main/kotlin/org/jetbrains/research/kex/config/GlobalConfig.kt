@@ -12,9 +12,13 @@ object GlobalConfig : Config {
         return ret
     }
 
+    override fun getMultipleStringValue(section: String, name: String, delimiter: String): List<String> {
+        return sources.flatMap { it.getMultipleStringValue(section, name, delimiter) }
+    }
+
     fun initialize(sources: List<Config>) {
-        GlobalConfig.sources.clear()
-        GlobalConfig.sources.addAll(sources)
+        this.sources.clear()
+        this.sources.addAll(sources)
     }
 
     fun initialize(vararg sources: Config) = initialize(sources.toList())
