@@ -132,7 +132,7 @@ class Z3Solver(val tf: TypeFactory, val ef: Z3ExprFactory) : AbstractSMTSolver {
             log.debug("Evaluating $z3expr")
             val evaluatedExpr = model.evaluate(z3expr, true)
             it to Z3Unlogic.undo(evaluatedExpr)
-        }.toMap()
+        }.toMap().toMutableMap()
 
         val memories = hashMapOf<Int, Pair<MutableMap<Term, Term>, MutableMap<Term, Term>>>()
         val bounds = hashMapOf<Int, Pair<MutableMap<Term, Term>, MutableMap<Term, Term>>>()
@@ -169,6 +169,8 @@ class Z3Solver(val tf: TypeFactory, val ef: Z3ExprFactory) : AbstractSMTSolver {
             bounds.getOrPut(memspace) { hashMapOf<Term, Term>() to hashMapOf() }
             bounds.getValue(memspace).first[modelPtr] = modelStartB
             bounds.getValue(memspace).second[modelPtr] = modelEndB
+
+            require(assignments.getOrPut(ptr) { modelPtr } == modelPtr)
         }
 
         return SMTModel(assignments,

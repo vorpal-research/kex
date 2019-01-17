@@ -1,7 +1,7 @@
 package org.jetbrains.research.kex.smt.model
 
-import org.jetbrains.research.kex.random.defaultRandomizer
 import org.jetbrains.research.kex.ktype.*
+import org.jetbrains.research.kex.random.defaultRandomizer
 import org.jetbrains.research.kex.state.term.*
 import org.jetbrains.research.kex.state.transformer.memspace
 import org.jetbrains.research.kex.util.*
@@ -147,10 +147,8 @@ class ModelRecoverer(val method: Method, val model: SMTModel, val loader: ClassL
             val instance = Array.newInstance(elementClass, elements)
 
             val assignedElements = model.assignments.keys
-                    .asSequence()
                     .mapNotNull { it as? ArrayIndexTerm }
-                    .filterNot { it.arrayRef == term }
-                    .toList()
+                    .filter { it.arrayRef == term }
 
             for (index in assignedElements) {
                 val indexMemspace = index.memspace
@@ -159,7 +157,7 @@ class ModelRecoverer(val method: Method, val model: SMTModel, val loader: ClassL
 
                 val element = model.memories[indexMemspace]?.finalMemory!![indexAddress]!!
 
-                val `object` = recoverTerm(term, element)
+                val `object` = recoverTerm(index, element)
                 val actualIndex = (indexAddress.value - address) / elementSize
                 Array.set(instance, actualIndex, `object`)
             }

@@ -4,7 +4,7 @@ import com.github.h0tk3y.betterParse.grammar.parseToEnd
 import com.github.h0tk3y.betterParse.parser.ParseException
 import org.jetbrains.research.kex.asm.transform.TraceInstrumenter
 import org.jetbrains.research.kex.config.GlobalConfig
-import org.jetbrains.research.kex.trace.Action
+import org.jetbrains.research.kex.trace.ActionParseError
 import org.jetbrains.research.kex.trace.ActionParser
 import org.jetbrains.research.kex.trace.Trace
 import org.jetbrains.research.kex.util.getClass
@@ -51,7 +51,7 @@ abstract class AbstractRunner(val method: Method, protected val loader: ClassLoa
     }
 
     protected fun parse(result: InvocationResult): Trace {
-        val lines = String(result.error.toByteArray()).split("\n")
+        val lines = String(result.error.toByteArray()).split("\n").filter { it.isNotBlank() }
 
         val parser = ActionParser(method.cm)
         val tracePrefix = TraceInstrumenter.tracePrefix
@@ -68,6 +68,10 @@ abstract class AbstractRunner(val method: Method, protected val loader: ClassLoa
                     try {
                         parser.parseToEnd(it)
                     } catch (e: ParseException) {
+                        log.error("Failed to parse $method output: $e")
+                        log.error("Failed line: $it")
+                        null
+                    } catch (e: ActionParseError) {
                         log.error("Failed to parse $method output: $e")
                         log.error("Failed line: $it")
                         null
