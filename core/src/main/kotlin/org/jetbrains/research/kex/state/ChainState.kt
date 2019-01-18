@@ -42,10 +42,10 @@ class ChainState(val base: PredicateState, val curr: PredicateState) : Predicate
         val sbase = base.simplify()
         val scurr = curr.simplify()
         return when {
-            sbase.isNotEmpty && scurr.isNotEmpty -> ChainState(base, curr)
+            sbase.isNotEmpty && scurr.isNotEmpty -> (StateBuilder(sbase) + scurr).apply()
             sbase.isNotEmpty -> sbase
             scurr.isNotEmpty -> scurr
-            else -> BasicState()
+            else -> StateBuilder().apply()
         }
     }
 }

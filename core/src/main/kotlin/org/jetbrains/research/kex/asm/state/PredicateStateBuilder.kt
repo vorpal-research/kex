@@ -1,11 +1,8 @@
 package org.jetbrains.research.kex.asm.state
 
 import org.jetbrains.research.kex.state.BasicState
-import org.jetbrains.research.kex.state.ChoiceState
 import org.jetbrains.research.kex.state.PredicateState
 import org.jetbrains.research.kex.state.StateBuilder
-import org.jetbrains.research.kex.util.log
-import org.jetbrains.research.kex.util.unreachable
 import org.jetbrains.research.kfg.ir.BasicBlock
 import org.jetbrains.research.kfg.ir.Method
 import org.jetbrains.research.kfg.ir.value.instruction.Instruction
@@ -107,7 +104,7 @@ class PredicateStateBuilder(val method: Method) {
         return when {
             choices.isEmpty() -> null
             choices.size == 1 -> (StateBuilder(base) + choices.first()).apply()
-            else -> (StateBuilder(base) + ChoiceState(choices)).apply()
+            else -> (StateBuilder(base) + choices).apply()
         }
     }
 }

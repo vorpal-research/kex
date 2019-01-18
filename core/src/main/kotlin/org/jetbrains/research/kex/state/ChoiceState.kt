@@ -1,7 +1,6 @@
 package org.jetbrains.research.kex.state
 
 import org.jetbrains.research.kex.state.predicate.Predicate
-import org.jetbrains.research.kex.state.predicate.PredicateType
 import org.jetbrains.research.kex.util.defaultHashCode
 
 @InheritorOf("State")
@@ -39,12 +38,12 @@ class ChoiceState(val choices: List<PredicateState>) : PredicateState(), Iterabl
     override fun iterator() = choices.iterator()
 
     override fun simplify(): PredicateState {
-        val choices = choices.asSequence().map { it.filterByType(PredicateType.Path()) }.toSet()
-        val choiceBodies = choices.asSequence().map { choice -> choice.filterNot { it.type == PredicateType.Path() } }.toSet()
+        val simplifiedChoices = choices.map { it.simplify() }.filter { it.isNotEmpty }
         return when {
-            choices.size == 1 -> choices.first()
-            choiceBodies.size == 1 -> choiceBodies.first()
-            else -> this
+            simplifiedChoices.isEmpty() -> StateBuilder().apply()
+            simplifiedChoices.size == 1 -> simplifiedChoices.first()
+            simplifiedChoices == choices -> this
+            else -> (StateBuilder() + simplifiedChoices).apply()
         }
     }
 }
