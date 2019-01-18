@@ -1,7 +1,6 @@
 package org.jetbrains.research.kex.smt
 
 import org.jetbrains.research.kex.asm.state.PredicateStateAnalysis
-import org.jetbrains.research.kex.asm.state.PredicateStateBuilder
 import org.jetbrains.research.kex.config.GlobalConfig
 import org.jetbrains.research.kex.state.predicate.PredicateType
 import org.jetbrains.research.kex.state.term.ArgumentTerm
@@ -48,7 +47,7 @@ class Checker(val method: Method, val loader: ClassLoader, private val psa: Pred
             log.debug("Memspacing finished")
         }
 
-        val query = state.filterByType(PredicateType.Path()).simplify()
+        var query = state.filterByType(PredicateType.Path()).simplify()
 
         if (isSlicingEnabled) {
             log.debug("Slicing started...")
@@ -74,6 +73,8 @@ class Checker(val method: Method, val loader: ClassLoader, private val psa: Pred
             log.debug("Slicing finished")
         }
 
+        state = Optimizer.apply(state)
+        query = Optimizer.apply(query).simplify()
         if (logQuery) {
             log.debug("Simplified state: $state")
             log.debug("Path: $query")

@@ -192,7 +192,7 @@ interface RecollectingTransformer<T> : Transformer<RecollectingTransformer<T>> {
             newChoices.add(currentBuilder.apply())
             builders.pollLast()
         }
-        currentBuilder += ChoiceState(newChoices)
+        currentBuilder += newChoices
         return ps
     }
 

@@ -35,6 +35,28 @@ object Optimizer : Transformer<Optimizer> {
                 cache[key] = merged
                 merged
             }
+            first is ChainState && first.curr is BasicState && second is BasicState -> {
+                val merged = merge(first.curr, second)
+                when {
+                    merged != null -> {
+                        val new = ChainState(first.base, merged)
+                        cache[key] = new
+                        new
+                    }
+                    else -> merged
+                }
+            }
+            first is BasicState && second is ChainState && second.base is BasicState -> {
+                val merged = merge(first, second.base)
+                when {
+                    merged != null -> {
+                        val new = ChainState(merged, second.curr)
+                        cache[key] = new
+                        new
+                    }
+                    else -> merged
+                }
+            }
             else -> cache.getOrPut(key) { null }
         }
     }

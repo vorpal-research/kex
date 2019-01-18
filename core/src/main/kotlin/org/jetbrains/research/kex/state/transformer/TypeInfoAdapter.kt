@@ -15,7 +15,6 @@ import org.jetbrains.research.kfg.ir.value.instruction.CmpOpcode
 import org.jetbrains.research.kfg.type.ArrayType
 import org.jetbrains.research.kfg.type.Reference
 import org.jetbrains.research.kfg.type.Type
-import org.jetbrains.research.kfg.type.TypeFactory
 import java.util.*
 import kotlin.reflect.KFunction
 import kotlin.reflect.KType
@@ -174,7 +173,7 @@ class TypeInfoAdapter(val method: Method, val loader: ClassLoader) : Recollectin
         result += predicate
 
         val lhv = predicate.lhv
-        result += pf.getEquality(tf.getCmp(CmpOpcode.Ge(), lhv, tf.getInt(0)), tf.getTrue())
+        result += pf.getEquality(tf.getCmp(CmpOpcode.Ge(), lhv, tf.getInt(0)), tf.getTrue(), PredicateType.Assume())
 
         return result
     }

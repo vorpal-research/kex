@@ -33,6 +33,17 @@ class StateBuilder() {
         current = ChainState(current, state)
     }
 
+    operator fun plus(choices: List<PredicateState>) = when {
+        choices.isEmpty() -> this
+        current.isEmpty -> StateBuilder(ChoiceState(choices))
+        else -> StateBuilder(ChainState(current, ChoiceState(choices)))
+    }
+
+    operator fun plusAssign(choices: List<PredicateState>) {
+        val choice = ChoiceState(choices)
+        current = ChainState(current, choice)
+    }
+
     fun apply() = current
 }
 
