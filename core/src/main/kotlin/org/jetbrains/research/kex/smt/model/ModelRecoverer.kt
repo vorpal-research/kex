@@ -159,7 +159,8 @@ class ModelRecoverer(val method: Method, val model: SMTModel, val loader: ClassL
 
                 val `object` = recoverTerm(index, element)
                 val actualIndex = (indexAddress.value - address) / elementSize
-                Array.set(instance, actualIndex, `object`)
+                if (actualIndex < elements)
+                    Array.set(instance, actualIndex, `object`)
             }
             instance
         }
