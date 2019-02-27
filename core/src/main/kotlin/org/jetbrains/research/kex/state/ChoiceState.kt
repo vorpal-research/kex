@@ -11,7 +11,7 @@ class ChoiceState(val choices: List<PredicateState>) : PredicateState(), Iterabl
     override fun print(): String {
         val sb = StringBuilder()
         sb.appendln("(BEGIN")
-        sb.append(choices.joinToString { " <OR> $it" })
+        sb.append(choices.joinToString { " <OR> {$it}" })
         sb.append(" END)")
         return sb.toString()
     }

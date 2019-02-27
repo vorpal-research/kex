@@ -16,11 +16,20 @@ val defaultAllocSize = GlobalConfig.getIntValue("smt", "defaultAllocationSize", 
 @Suppress("UNUSED_PARAMETER")
 class ${solver}Converter(val tf: TypeFactory) : ${solver}SMTConverter() {
 
-    private fun addTypeAxioms(term: Term, expr: Dynamic_, ef: $factory, ctx: ${solver}Context) = when (term.type) {
-        is KexPointer -> expr.withAxiom(expr ge ef.makeIntConst(0)).withAxiom(ctx.readBound(expr.toBV32(), term.memspace) ge ef.makeIntConst(0))
-        is KexByte -> expr.withAxiom(expr ge ef.makeIntConst(Byte.MIN_VALUE.toInt())).withAxiom(expr le ef.makeIntConst(Byte.MAX_VALUE.toInt()))
-        is KexChar -> expr.withAxiom(expr ge ef.makeIntConst(Short.MIN_VALUE.toInt())).withAxiom(expr le ef.makeIntConst(Short.MAX_VALUE.toInt()))
-        is KexShort -> expr.withAxiom(expr ge ef.makeIntConst(Short.MIN_VALUE.toInt())).withAxiom(expr le ef.makeIntConst(Short.MAX_VALUE.toInt()))
+    private fun addTypeAxioms(term: Term, expr: Dynamic_, ef: Z3ExprFactory, ctx: Z3Context) = when (term.type) {
+        is KexPointer -> expr
+                .withAxiom(expr ge ef.makeIntConst(0))
+                .withAxiom(ctx.readBound(expr.toBV32(), term.memspace) ge ef.makeIntConst(0))
+                .withAxiom(ctx.readBound(expr.toBV32(), term.memspace).rem(ef.makeIntConst(Byte_.BITSIZE)) eq ef.makeIntConst(0))
+        is KexByte -> expr
+                .withAxiom(expr ge ef.makeIntConst(Byte.MIN_VALUE.toInt()))
+                .withAxiom(expr le ef.makeIntConst(Byte.MAX_VALUE.toInt()))
+        is KexChar -> expr
+                .withAxiom(expr ge ef.makeIntConst(Short.MIN_VALUE.toInt()))
+                .withAxiom(expr le ef.makeIntConst(Short.MAX_VALUE.toInt()))
+        is KexShort -> expr
+                .withAxiom(expr ge ef.makeIntConst(Short.MIN_VALUE.toInt()))
+                .withAxiom(expr le ef.makeIntConst(Short.MAX_VALUE.toInt()))
         else -> expr
     }
 
