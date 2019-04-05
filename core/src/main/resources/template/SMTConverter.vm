@@ -16,7 +16,7 @@ val defaultAllocSize = GlobalConfig.getIntValue("smt", "defaultAllocationSize", 
 @Suppress("UNUSED_PARAMETER")
 class ${solver}Converter(val tf: TypeFactory) : ${solver}SMTConverter() {
 
-    private fun addTypeAxioms(term: Term, expr: Dynamic_, ef: Z3ExprFactory, ctx: Z3Context) = when (term.type) {
+    private fun addTypeAxioms(term: Term, expr: Dynamic_, ef: $factory, ctx: ${solver}Context) = when (term.type) {
         is KexPointer -> expr
                 .withAxiom(expr ge ef.makeIntConst(0))
                 .withAxiom(ctx.readBound(expr.toBV32(), term.memspace) ge ef.makeIntConst(0))
@@ -181,7 +181,7 @@ class ${solver}Converter(val tf: TypeFactory) : ${solver}SMTConverter() {
         val bound = ctx.readBound(ptr, memspace)
         val elementType = (arraylength.arrayRef.type as? KexArray)?.element
                 ?: unreachable { log.error("Non-array type of array ref term") }
-        val elementSize = Z3ExprFactory.getTypeSize(elementType)
+        val elementSize = ${factory}.getTypeSize(elementType)
         val size = bound / elementSize
         return size
     }
@@ -293,9 +293,10 @@ class ${solver}Converter(val tf: TypeFactory) : ${solver}SMTConverter() {
     fun convert(const: ConstStringTerm, ef: $factory, ctx: ${solver}Context): Dynamic_ {
         val memspace = const.memspace
 
-        val size = const.name.length
-        val res = ctx.getLocalPtr(memspace, size)
-        ctx.writeBound(res, ef.makeIntConst(size), memspace)
+        val length = const.name.length
+        val actualSize = length * ${factory}.getTypeSize(KexInt)
+        val res = ctx.getLocalPtr(memspace, actualSize)
+        ctx.writeBound(res, ef.makeIntConst(actualSize), memspace)
         return res
     }
 
@@ -304,7 +305,7 @@ class ${solver}Converter(val tf: TypeFactory) : ${solver}SMTConverter() {
         val field = convert(fieldload.field, ef, ctx) as? Ptr_
             ?: unreachable { log.error("Non-ptr ref in field load") }
 
-        val res = ctx.readMemory(field, Z3ExprFactory.getTypeSize(fieldload.type), memspace)
+        val res = ctx.readMemory(field, ${factory}.getTypeSize(fieldload.type), memspace)
         return when (fieldload.type) {
             is KexLong -> Long_.forceCast(res)
             is KexBool -> Bool_.forceCast(res)
@@ -323,7 +324,7 @@ class ${solver}Converter(val tf: TypeFactory) : ${solver}SMTConverter() {
         ?: unreachable { log.error("Non-ptr ref in field load") }
         val name = field.fieldName.name
         val kfgClass = (tf.getRefType(field.getClass()) as ClassType).`class`
-        val offset = Z3ExprFactory.getFieldOffset(kfgClass, Class.FieldKey(name, field.type.getKfgType(tf)))
+        val offset = ${factory}.getFieldOffset(kfgClass, Class.FieldKey(name, field.type.getKfgType(tf)))
         val baseBound = ctx.readBound(obj, memspace)
 
         val fieldptr = Ptr_.forceCast(obj + offset)
