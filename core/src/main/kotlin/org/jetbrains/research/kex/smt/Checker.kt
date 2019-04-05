@@ -80,7 +80,9 @@ class Checker(val method: Method, val loader: ClassLoader, private val psa: Pred
             log.debug("Path: $query")
         }
 
-        val result = SMTProxySolver(method.cm.type).isPathPossible(state, query)
+        val solver = SMTProxySolver(method.cm.type)
+        val result = solver.isPathPossible(state, query)
+        solver.cleanup()
         log.debug("Acquired $result")
         return result
     }
