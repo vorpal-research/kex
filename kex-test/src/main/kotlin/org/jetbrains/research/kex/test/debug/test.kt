@@ -2,7 +2,11 @@
 
 package org.jetbrains.research.kex.test.debug
 
+import org.jetbrains.research.kex.test.Icfpc2018Test
 import org.jetbrains.research.kex.test.Intrinsics
+import java.io.File
+import java.nio.file.Files
+import java.nio.file.StandardCopyOption
 
 // add functions here to debug them
 
@@ -36,14 +40,75 @@ import org.jetbrains.research.kex.test.Intrinsics
 //    return y
 //}
 
-fun testObjectArray(nullable: Array<Any?>, nonnulable: Array<Any>) {
-    if (nonnulable.isNotEmpty()) {
-        for (i in nonnulable) {
-            Intrinsics.assertReachable(i != null)
-        }
-        for (i in nonnulable) {
-            if (i == null) Intrinsics.assertUnreachable()
+//fun testObjectArray(nullable: Array<Any?>, nonnulable: Array<Any>) {
+//    if (nonnulable.isNotEmpty()) {
+//        for (i in nonnulable) {
+//            Intrinsics.assertReachable(i != null)
+//        }
+//        for (i in nonnulable) {
+//            if (i == null) Intrinsics.assertUnreachable()
+//        }
+//    }
+//    Intrinsics.assertReachable(nullable != null)
+//}
+
+fun getModeByModelName(name: String): Icfpc2018Test.RunMode = TODO()
+
+fun submitChecked(resultDirs: List<String>) {
+    val results = resultDirs.map { Icfpc2018Test.Results.readFromDirectory(it) }
+    val merged = results.reduce { acc, res -> acc.merge(res) }
+    for ((task, result) in merged) {
+        val mode = getModeByModelName(task)
+        if (mode == Icfpc2018Test.RunMode.REASSEMBLE) {
+            Intrinsics.assertReachable()
+
+            val bestSolution = result.getSortedSolutions().first().second
+            Files.copy(File(bestSolution.trace).toPath(), File("submit/$task.nbt").toPath(),
+                    StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.COPY_ATTRIBUTES)
+        } else {
+            Intrinsics.assertReachable()
+
+            val targetModel = when (mode) {
+                Icfpc2018Test.RunMode.ASSEMBLE -> Icfpc2018Test.Model.readMDL(File("models/${task}_tgt.mdl").inputStream())
+                else -> Icfpc2018Test.Model.readMDL(File("models/${task}_src.mdl").inputStream())
+            }
+            val state = Icfpc2018Test.State()
+
+            var haveSolution = false
+            for ((solutionName, solution) in result.getSortedSolutions()) {
+                Intrinsics.assertReachable()
+                val traceFile = File(solution.trace).inputStream()
+                val commands: MutableList<Icfpc2018Test.Command> = mutableListOf()
+                while (traceFile.available() != 0) {
+                    Intrinsics.assertReachable()
+                    commands += Icfpc2018Test.Command.read(traceFile)
+                }
+                val system = Icfpc2018Test.System(state)
+                try {
+                    Icfpc2018Test.Trace(commands, system).solve()
+                } catch (e: Exception) {
+                    continue
+                }
+
+                if (system.currentState.matrix != targetModel) {
+                    Intrinsics.assertReachable()
+                    continue
+                }
+
+                Files.copy(File(solution.trace).toPath(), File("submit/$task.nbt").toPath(),
+                        StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.COPY_ATTRIBUTES)
+                haveSolution = true
+                Intrinsics.assertReachable()
+                break
+            }
+            if (!haveSolution) {
+                Intrinsics.assertReachable()
+                return
+            }
+            Intrinsics.assertReachable()
         }
     }
-    Intrinsics.assertReachable(nullable != null)
+
+    Intrinsics.assertReachable()
+    Icfpc2018Test.ZipWriter().createZip("submit/")
 }

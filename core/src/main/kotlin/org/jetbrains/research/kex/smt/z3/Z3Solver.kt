@@ -24,9 +24,10 @@ private val timeout = GlobalConfig.getIntValue("smt", "timeout", 3) * 1000
 
 private val logQuery = GlobalConfig.getBooleanValue("smt", "logQuery", false)
 private val logFormulae = GlobalConfig.getBooleanValue("smt", "logFormulae", false)
-private val simplifyFormulae = GlobalConfig.getBooleanValue("smt", "simplifyFormulae", true)
+private val simplifyFormulae = GlobalConfig.getBooleanValue("smt", "simplifyFormulae", false)
 
-class Z3Solver(val tf: TypeFactory, val ef: Z3ExprFactory) : AbstractSMTSolver {
+class Z3Solver(val tf: TypeFactory) : AbstractSMTSolver {
+    val ef = Z3ExprFactory()
 
     override fun isReachable(state: PredicateState) =
             isPathPossible(state, state.filterByType(PredicateType.Path()))
@@ -176,5 +177,9 @@ class Z3Solver(val tf: TypeFactory, val ef: Z3ExprFactory) : AbstractSMTSolver {
         return SMTModel(assignments,
                 memories.map { it.key to MemoryShape(it.value.first, it.value.second) }.toMap(),
                 bounds.map { it.key to MemoryShape(it.value.first, it.value.second) }.toMap())
+    }
+
+    override fun cleanup() {
+        ef.ctx.close()
     }
 }
