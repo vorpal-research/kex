@@ -1,7 +1,6 @@
 package org.jetbrains.research.kex
 
 import org.jetbrains.research.kex.asm.state.PredicateStateAnalysis
-import org.jetbrains.research.kex.asm.state.PredicateStateBuilder
 import org.jetbrains.research.kex.asm.transform.LoopDeroller
 import org.jetbrains.research.kex.config.FileConfig
 import org.jetbrains.research.kex.config.GlobalConfig
@@ -39,6 +38,7 @@ abstract class KexTest {
         val rootDir = System.getProperty("root.dir")
         GlobalConfig.initialize(RuntimeConfig, FileConfig("$rootDir/kex-test.ini"))
         RuntimeConfig.setValue("z3", "tacticsFile", "$rootDir/z3.tactics")
+        RuntimeConfig.setValue("z3", "paramFile", "$rootDir/z3.params")
 
         val jarPath = "$rootDir/kex-test/target/kex-test-0.1-jar-with-dependencies.jar"
         val jarFile = JarFile(jarPath)
