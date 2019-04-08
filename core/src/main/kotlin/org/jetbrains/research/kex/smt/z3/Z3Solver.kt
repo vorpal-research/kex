@@ -15,7 +15,6 @@ import org.jetbrains.research.kex.state.transformer.PointerCollector
 import org.jetbrains.research.kex.state.transformer.VariableCollector
 import org.jetbrains.research.kex.state.transformer.memspace
 import org.jetbrains.research.kex.util.castTo
-import org.jetbrains.research.kex.util.debug
 import org.jetbrains.research.kex.util.log
 import org.jetbrains.research.kex.util.unreachable
 import org.jetbrains.research.kfg.type.TypeFactory
@@ -92,7 +91,7 @@ class Z3Solver(val tf: TypeFactory) : AbstractSMTSolver {
             }
             Status.UNSATISFIABLE -> {
                 val core = solver.unsatCore.toList()
-                log.debug(core)
+                log.debug("Unsat core: $core")
                 result to core
             }
             Status.UNKNOWN -> {
@@ -105,6 +104,15 @@ class Z3Solver(val tf: TypeFactory) : AbstractSMTSolver {
 
     private fun buildTactics(): Tactic {
         val ctx = ef.ctx
+        val globalParams = ctx.mkParams()
+        Z3Params.load().forEach { (name, value) ->
+            when (value) {
+                is Value.BoolValue -> globalParams.add(name, value.value)
+                is Value.IntValue -> globalParams.add(name, value.value)
+                is Value.DoubleValue -> globalParams.add(name, value.value)
+                is Value.StringValue -> globalParams.add(name, value.value)
+            }
+        }
         val tactic = Z3Tactics.load().map {
             val tactic = ctx.mkTactic(it.type)
             val params = ctx.mkParams()

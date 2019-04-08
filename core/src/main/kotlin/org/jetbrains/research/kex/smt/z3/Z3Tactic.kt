@@ -22,7 +22,7 @@ private fun <T> Klaxon.convert(k: kotlin.reflect.KClass<*>,
         })
 
 private val klaxon = Klaxon()
-        .convert(Value::class, { Value.fromJson(it) }, { it.toJson() }, true)
+        .convert(Z3Params::class, { Z3Params.fromJson(it) }, { it.toJson() }, true)
 
 class Z3Tactics(elements: Collection<Z3Tactic>) : ArrayList<Z3Tactic>(elements) {
     fun toJson() = klaxon.toJsonString(this)
@@ -38,34 +38,6 @@ class Z3Tactics(elements: Collection<Z3Tactic>) : ArrayList<Z3Tactic>(elements) 
 data class Z3Tactic(
         val name: String,
         val type: String,
-        val params: List<Param>
+        val params: Z3Params
 )
 
-data class Param(
-        val key: String,
-        val value: Value
-)
-
-sealed class Value {
-    class BoolValue(val value: Boolean) : Value()
-    class IntValue(val value: Int) : Value()
-    class DoubleValue(val value: Double) : Value()
-    class StringValue(val value: String) : Value()
-
-    fun toJson(): String = klaxon.toJsonString(when (this) {
-        is BoolValue -> this.value
-        is IntValue -> this.value
-        is DoubleValue -> this.value
-        is StringValue -> this.value
-    })
-
-    companion object {
-        fun fromJson(jv: JsonValue): Value = when (jv.inside) {
-            is Boolean -> BoolValue(jv.boolean!!)
-            is Int -> IntValue(jv.int!!)
-            is Double -> DoubleValue(jv.double!!)
-            is String -> StringValue(jv.string!!)
-            else -> throw IllegalArgumentException()
-        }
-    }
-}
