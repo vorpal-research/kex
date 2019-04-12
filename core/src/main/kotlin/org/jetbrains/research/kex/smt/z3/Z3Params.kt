@@ -27,14 +27,10 @@ class Z3Params(elements: Collection<Z3Param>) : ArrayList<Z3Param>(elements) {
 
         fun fromJson(jv: JsonValue): Z3Params = when (jv.inside) {
             is JsonArray<*> -> {
-                val params = arrayListOf<Z3Param>()
-                val array = jv.array!!
-                for (any in array) {
-                    val `object` = any as? JsonObject ?: throw java.lang.IllegalArgumentException()
-                    val key = `object`.string("key") ?: throw java.lang.IllegalArgumentException()
-                    val value = Value.fromJson(`object`)
-                    params.add(Z3Param(key, value))
-                }
+                val params = jv.array
+                        ?.mapNotNull { it as? JsonObject }
+                        ?.map { Z3Param.fromJson(it) }
+                        ?.toList() ?: throw IllegalArgumentException()
                 Z3Params(params)
             }
             else -> throw IllegalArgumentException()
@@ -45,7 +41,24 @@ class Z3Params(elements: Collection<Z3Param>) : ArrayList<Z3Param>(elements) {
 data class Z3Param (
         val key: String,
         val value: Value
-)
+) {
+    fun toJson() = klaxon.toJsonString(this)
+
+    companion object {
+        fun fromJson(jo: JsonObject): Z3Param {
+            val key = jo.string("key") ?: throw java.lang.IllegalArgumentException()
+            val anyValue = jo["value"]
+            val actualValue = when (anyValue) {
+                is Boolean -> Value.BoolValue(anyValue)
+                is Int -> Value.IntValue(anyValue)
+                is Double -> Value.DoubleValue(anyValue)
+                is String -> Value.StringValue(anyValue)
+                else -> throw IllegalArgumentException()
+            }
+            return Z3Param(key, actualValue)
+        }
+    }
+}
 
 sealed class Value {
     class BoolValue(val value: Boolean) : Value()
@@ -67,17 +80,6 @@ sealed class Value {
             is Double -> DoubleValue(jv.double!!)
             is String -> StringValue(jv.string!!)
             else -> throw IllegalArgumentException()
-        }
-
-        fun fromJson(jo: JsonObject): Value {
-            val inner = jo["value"]
-            return when (inner) {
-                is Boolean -> BoolValue(inner)
-                is Int -> IntValue(inner)
-                is Double -> DoubleValue(inner)
-                is String -> StringValue(inner)
-                else -> throw IllegalArgumentException()
-            }
         }
     }
 }

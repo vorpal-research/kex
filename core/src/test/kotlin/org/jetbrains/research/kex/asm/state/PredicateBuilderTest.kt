@@ -31,18 +31,15 @@ class PredicateBuilderTest : KexTest() {
 
                 val predicate = builder.predicateMap.getValue(inst)
                 assertTrue(predicate is EqualityPredicate)
-                predicate as EqualityPredicate
 
                 val lhv = predicate.lhv
                 assertEquals(lhv, tf.getValue(inst))
 
                 val rhv = predicate.rhv
                 assertTrue(rhv is ArrayLoadTerm)
-                rhv as ArrayLoadTerm
 
                 val ref = rhv.arrayRef
                 assertTrue(ref is ArrayIndexTerm)
-                ref as ArrayIndexTerm
                 assertEquals(ref.arrayRef, tf.getValue(inst.arrayRef))
                 assertEquals(ref.index, tf.getValue(inst.index))
             }
@@ -52,14 +49,12 @@ class PredicateBuilderTest : KexTest() {
 
                 val predicate = builder.predicateMap.getValue(inst)
                 assertTrue(predicate is ArrayStorePredicate)
-                predicate as ArrayStorePredicate
 
                 val value = predicate.value
                 assertEquals(value, tf.getValue(inst.value))
 
                 val ref = predicate.arrayRef
                 assertTrue(ref is ArrayIndexTerm)
-                ref as ArrayIndexTerm
                 assertEquals(ref.arrayRef, tf.getValue(inst.arrayRef))
                 assertEquals(ref.index, tf.getValue(inst.index))
             }
@@ -69,13 +64,11 @@ class PredicateBuilderTest : KexTest() {
 
                 val predicate = builder.predicateMap.getValue(inst)
                 assertTrue(predicate is EqualityPredicate)
-                predicate as EqualityPredicate
 
                 assertEquals(predicate.lhv, tf.getValue(inst))
 
                 val rhv = predicate.rhv
                 assertTrue(rhv is BinaryTerm)
-                rhv as BinaryTerm
 
                 assertEquals(rhv.opcode, inst.opcode)
                 assertEquals(mergeTypes(cm.type, setOf(inst.lhv.type, inst.rhv.type))?.kexType, rhv.type)
@@ -102,7 +95,6 @@ class PredicateBuilderTest : KexTest() {
 
                 val predicate = builder.predicateMap.getValue(inst)
                 assertTrue(predicate is CallPredicate)
-                predicate as CallPredicate
 
                 val lhv = if (inst.type.isVoid) null else tf.getValue(inst)
                 assertEquals(lhv, predicate.getLhvUnsafe())
@@ -122,7 +114,6 @@ class PredicateBuilderTest : KexTest() {
 
                 val predicate = builder.predicateMap.getValue(inst)
                 assertTrue(predicate is EqualityPredicate)
-                predicate as EqualityPredicate
 
                 assertEquals(predicate.lhv, tf.getValue(inst))
                 assertEquals(predicate.rhv, tf.getCast(inst.type.kexType, tf.getValue(inst.operand)))
@@ -133,7 +124,6 @@ class PredicateBuilderTest : KexTest() {
 
                 val predicate = builder.predicateMap.getValue(inst)
                 assertTrue(predicate is EqualityPredicate)
-                predicate as EqualityPredicate
 
                 assertEquals(predicate.lhv, tf.getValue(inst))
                 assertEquals(predicate.rhv, tf.getCmp(inst.opcode, tf.getValue(inst.lhv), tf.getValue(inst.rhv)))
@@ -144,17 +134,14 @@ class PredicateBuilderTest : KexTest() {
 
                 val predicate = builder.predicateMap.getValue(inst)
                 assertTrue(predicate is EqualityPredicate)
-                predicate as EqualityPredicate
 
                 assertEquals(predicate.lhv, tf.getValue(inst))
 
                 val rhv = predicate.rhv
                 assertTrue(rhv is FieldLoadTerm)
-                rhv as FieldLoadTerm
 
                 val field = rhv.field
                 assertTrue(field is FieldTerm)
-                field as FieldTerm
 
                 assertEquals(rhv.isStatic, inst.isStatic)
                 assertEquals(field.owner, when {
@@ -169,13 +156,11 @@ class PredicateBuilderTest : KexTest() {
 
                 val predicate = builder.predicateMap.getValue(inst)
                 assertTrue(predicate is FieldStorePredicate)
-                predicate as FieldStorePredicate
 
                 assertEquals(predicate.value, tf.getValue(inst.value))
 
                 val rhv = predicate.field
                 assertTrue(rhv is FieldTerm)
-                rhv as FieldTerm
 
                 assertEquals(rhv.isStatic, inst.isStatic)
                 assertEquals(rhv.owner, when {
@@ -190,7 +175,6 @@ class PredicateBuilderTest : KexTest() {
 
                 val predicate = builder.predicateMap.getValue(inst)
                 assertTrue(predicate is EqualityPredicate)
-                predicate as EqualityPredicate
 
                 assertEquals(predicate.lhv, tf.getValue(inst))
                 assertEquals(predicate.rhv, tf.getInstanceOf(inst.targetType.kexType, tf.getValue(inst.operand)))
@@ -201,7 +185,6 @@ class PredicateBuilderTest : KexTest() {
 
                 val predicate = builder.predicateMap.getValue(inst)
                 assertTrue(predicate is NewArrayPredicate)
-                predicate as NewArrayPredicate
 
                 assertEquals(predicate.lhv, tf.getValue(inst))
 
@@ -214,7 +197,6 @@ class PredicateBuilderTest : KexTest() {
 
                 val predicate = builder.predicateMap.getValue(inst)
                 assertTrue(predicate is NewPredicate)
-                predicate as NewPredicate
 
                 assertEquals(predicate.lhv, tf.getValue(inst))
             }
@@ -235,19 +217,16 @@ class PredicateBuilderTest : KexTest() {
 
                 val predicate = builder.predicateMap.getValue(inst)
                 assertTrue(predicate is EqualityPredicate)
-                predicate as EqualityPredicate
 
                 assertEquals(predicate.lhv, tf.getValue(inst))
                 val rhv = predicate.rhv
                 when (inst.opcode) {
                     UnaryOpcode.NEG -> {
                         assertTrue(rhv is NegTerm)
-                        rhv as NegTerm
                         assertEquals(rhv.operand, tf.getValue(inst.operand))
                     }
                     UnaryOpcode.LENGTH -> {
                         assertTrue(rhv is ArrayLengthTerm)
-                        rhv as ArrayLengthTerm
                         assertEquals(rhv.arrayRef, tf.getValue(inst.operand))
                     }
                 }
@@ -275,8 +254,6 @@ class PredicateBuilderTest : KexTest() {
                 val max = tf.getValue(inst.max)
                 assertTrue(min is ConstIntTerm)
                 assertTrue(max is ConstIntTerm)
-                min as ConstIntTerm
-                max as ConstIntTerm
 
                 inst.getBranches().withIndex().forEach { (index, bb) ->
                     assertEquals(
@@ -296,12 +273,9 @@ class PredicateBuilderTest : KexTest() {
                     val predicate = builder.predicateMap.getValue(inst)
 
                     assertTrue(predicate is EqualityPredicate)
-                    predicate as EqualityPredicate
 
-//                    val returnValue = predicate.lhv
                     val returnableValue = predicate.rhv
 
-//                    assertEquals(returnValue, tf.getReturn(inst.returnType, builder.method))
                     assertEquals(returnableValue, tf.getValue(inst.returnValue))
                 } else {
                     assertFalse(builder.predicateMap.contains(inst))
