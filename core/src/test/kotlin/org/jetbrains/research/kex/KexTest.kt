@@ -87,7 +87,7 @@ abstract class KexTest {
     }
 
     fun testClassReachability(`class`: Class) {
-        `class`.methods.forEach { _, method ->
+        `class`.methods.forEach { (_, method) ->
             log.debug("Checking method $method")
             log.debug(method.print())
 
@@ -107,7 +107,7 @@ abstract class KexTest {
                         .map { it.value }
                         .toList()
 
-                val model = (result as Result.SatResult).model
+                val model = result.model
                 log.debug("Acquired model: $model")
                 log.debug("Checked assertions: $assertions")
                 for (it in assertions) {

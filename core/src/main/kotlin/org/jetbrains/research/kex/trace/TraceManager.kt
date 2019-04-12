@@ -87,7 +87,7 @@ class Trace private constructor(val method: Method,
                             log.error(methodStack.peek())
                             log.error(actions.joinToString(separator = "\n"))
                         }
-                        previousBlock?.outputAction = action
+                        previousBlock.outputAction = action
                     }
                 }
             }
