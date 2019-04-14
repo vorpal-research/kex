@@ -1,5 +1,6 @@
 package org.jetbrains.research.kex.smt
 
+import org.jetbrains.research.kex.annotations.AnnotationManager
 import org.jetbrains.research.kex.asm.state.PredicateStateAnalysis
 import org.jetbrains.research.kex.config.GlobalConfig
 import org.jetbrains.research.kex.state.predicate.PredicateType
@@ -18,6 +19,7 @@ class Checker(val method: Method, val loader: ClassLoader, private val psa: Pred
     private val isMemspacingEnabled = GlobalConfig.getBooleanValue("smt", "memspacing", true)
     private val isSlicingEnabled = GlobalConfig.getBooleanValue("smt", "slicing", false)
     private val logQuery = GlobalConfig.getBooleanValue("smt", "logQuery", false)
+    private val annotationsEnabled = GlobalConfig.getBooleanValue("annotations", "enabled", false)
 
     private val builder = psa.builder(method)
 
@@ -28,6 +30,13 @@ class Checker(val method: Method, val loader: ClassLoader, private val psa: Pred
                 ?: return Result.UnknownResult("Can't get state for instruction ${inst.print()}, maybe it's unreachable")
 
         if (logQuery) log.debug("State: $state")
+
+        if (annotationsEnabled) {
+            log.debug("Precise with annotations started...")
+            state = AnnotationIncluder(AnnotationManager.defaultLoader).apply(state)
+            log.debug("Precise with annotations finished")
+            if (logQuery) log.debug("Annotated State: $state")
+        }
 
         if (isInliningEnabled) {
             log.debug("Inlining started...")
