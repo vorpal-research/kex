@@ -1,22 +1,17 @@
 package org.jetbrains.research.kex.annotations
 
-import org.jetbrains.research.kex.ktype.KexBool
 import org.jetbrains.research.kex.state.predicate.CallPredicate
-import org.jetbrains.research.kex.state.predicate.Predicate
-import org.jetbrains.research.kex.state.predicate.PredicateType
 import org.jetbrains.research.kex.state.term.CallTerm
 import org.jetbrains.research.kex.state.term.Term
-import org.jetbrains.research.kfg.ir.value.instruction.BinaryOpcode
-import org.jetbrains.research.kfg.ir.value.instruction.CmpOpcode
 
 @AnnotationFunctionality("org.jetbrains.annotations.Range")
 class Range(val from: Long, val to: Long) : AnnotationInfo() {
-    override fun valuePrecise(value: Term) = assume { from..to has value }
+    override fun valuePrecise(value: Term) = assume { (from..to has value) equality true }
 }
 
 @AnnotationFunctionality("org.jetbrains.annotations.NotNull")
 class NotNull : AnnotationInfo() {
-    override fun valuePrecise(value: Term) = assume { value neq null }
+    override fun valuePrecise(value: Term) = assume { value inequality null }
 }
 
 @AnnotationFunctionality("org.jetbrains.annotations.Nullable")
@@ -64,10 +59,9 @@ class Contract(val value: String = ""/*, pure: Boolean = false*/) : AnnotationIn
         }
     }
 
-    override fun callPreciseAfter(predicate: CallPredicate): List<Predicate> {
+    override fun callPreciseAfter(predicate: CallPredicate) = build {
         if (value.isBlank())
-            return emptyList()
-        val result = mutableListOf<Predicate>()
+            return@build
         val args = (predicate.call as CallTerm).arguments
         val returnTerm = predicate.lhv
         val id = id.toString()
@@ -79,50 +73,47 @@ class Contract(val value: String = ""/*, pure: Boolean = false*/) : AnnotationIn
             for (i in 0 until params.size) {
                 if (record.params[i] == Constraints.Any)
                     continue
-                val leftTerm = tf.getValue(KexBool, "%contract#$id.$recordN.$i")
-                termsAnd += leftTerm
+                var leftTerm by value<Boolean>("%contract#$id.$recordN.$i")
                 val rightTerm = when (record.params[i]) {
-                    Constraints.Null -> tf.getCmp(CmpOpcode.Eq(), args[i], tf.getNull())
-                    Constraints.NotNull -> tf.getCmp(CmpOpcode.Neq(), args[i], tf.getNull())
-                    Constraints.True -> tf.getCmp(CmpOpcode.Eq(), args[i], tf.getTrue())
-                    Constraints.False -> tf.getCmp(CmpOpcode.Eq(), args[i], tf.getFalse())
+                    Constraints.Null -> args[i] eq const(null)
+                    Constraints.NotNull -> args[i] neq const(null)
+                    Constraints.True -> args[i] eq const(true)
+                    Constraints.False -> args[i] eq const(false)
                     Constraints.Fail, Constraints.New -> throw IllegalStateException("The " +
                             "${record.params[i].literal} constraint value may be interpreted as effect only")
                     Constraints.Any -> throw RuntimeException("Can not be there")
                 }
-                result += pf.getLoad(leftTerm, rightTerm)
+                leftTerm = rightTerm
+                termsAnd += leftTerm
             }
             for (i in 1 until termsAnd.size) {
-                result += pf.getLoad(termsAnd[i], tf.getBinary(KexBool, BinaryOpcode.And(), termsAnd[i-1], termsAnd[i]))
+                termsAnd[i] load (termsAnd[i-1] and termsAnd[i])
             }
-            val effectTerm = tf.getValue(KexBool, "%contract#$id.$recordN.effect")
+            var effectTerm by value<Boolean>("%contract#$id.$recordN.effect")
             val rightTerm = when (record.result) {
-                Constraints.Null -> tf.getCmp(CmpOpcode.Eq(), returnTerm, tf.getNull())
-                Constraints.NotNull, Constraints.New -> tf.getCmp(CmpOpcode.Neq(), returnTerm, tf.getNull())
-                Constraints.True -> tf.getCmp(CmpOpcode.Eq(), returnTerm, tf.getTrue())
-                Constraints.False -> tf.getCmp(CmpOpcode.Eq(), returnTerm, tf.getFalse())
-                Constraints.Fail -> tf.getTrue() // TODO: There should be something useful
+                Constraints.Null -> returnTerm eq const(null)
+                Constraints.NotNull, Constraints.New -> returnTerm neq const(null)
+                Constraints.True -> returnTerm eq const(true)
+                Constraints.False -> returnTerm eq const(false)
+                Constraints.Fail -> const(true) // TODO: There should be something useful
                 Constraints.Any -> throw IllegalStateException("Contract effect should be specified")
             }
-            result += pf.getLoad(effectTerm, rightTerm)
+            effectTerm = rightTerm
             val last = termsAnd.last()
-            result += pf.getLoad(effectTerm, tf.getBinary(KexBool, BinaryOpcode.And(), effectTerm, last))
+            effectTerm = effectTerm and last
             termsOrParams += last
-            termsOr += effectTerm
+            termsOr += effectTerm as Term
             termsAnd.clear()
         }
         for (i in 1 until termsOr.size) {
-            result += pf.getLoad(termsOr[i], tf.getBinary(KexBool, BinaryOpcode.Or(), termsOr[i-1], termsOr[i]))
+            termsOr[i] load (termsOr[i-1] or termsOr[i])
         }
-        val contractSituation = tf.getValue(KexBool, "%contract#$id.fit")
-        result += pf.getLoad(contractSituation, termsOrParams.firstOrNull() ?: return emptyList())
+        var contractSituation by value<Boolean>("%contract#$id.fit")
+        contractSituation = termsOrParams.firstOrNull() ?: return@build
         for (i in 1 until termsOrParams.size) {
-            result += pf.getLoad(contractSituation, tf.getBinary(KexBool, BinaryOpcode.Or(),
-                    contractSituation, termsOrParams[i]))
+            contractSituation = contractSituation or termsOrParams[i]
         }
-        result += pf.getLoad(contractSituation, tf.getCmp(KexBool, CmpOpcode.Neq(), contractSituation, tf.getTrue()))
-        result += pf.getLoad(contractSituation, tf.getBinary(KexBool, BinaryOpcode.Or(), contractSituation, termsOr.last()))
-        result += pf.getEquality(contractSituation, tf.getTrue(), PredicateType.Assume())
-        return result
+        contractSituation = not(contractSituation) or termsOr.last()
+        assumeTrue { contractSituation }
     }
 }

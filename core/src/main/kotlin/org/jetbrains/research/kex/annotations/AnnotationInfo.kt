@@ -38,15 +38,16 @@ abstract class AnnotationInfo {
             return single(lambda())
         }
 
-        inline fun assume(lambda: PredicateExpression.() -> List<Predicate>): List<Predicate> {
-            return PredicateExpression.Assume.lambda()
+        inline fun assume(lambda: PredicateExpression.() -> Predicate): List<Predicate> {
+            return single(PredicateExpression.Assume.lambda())
         }
-        inline fun state(lambda: PredicateExpression.() -> List<Predicate>): List<Predicate> {
-            return PredicateExpression.State.lambda()
+        inline fun state(lambda: PredicateExpression.() -> Predicate): List<Predicate> {
+            return single(PredicateExpression.State.lambda())
         }
-        inline fun path(lambda: PredicateExpression.() -> List<Predicate>): List<Predicate> {
-            return PredicateExpression.Path.lambda()
+        inline fun path(lambda: PredicateExpression.() -> Predicate): List<Predicate> {
+            return single(PredicateExpression.Path.lambda())
         }
+        inline fun build(lambda: ExpressionBuilder.() -> Unit) = ExpressionBuilder.build(lambda)
     }
 
     override fun toString() = name

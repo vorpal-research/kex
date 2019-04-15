@@ -1,7 +1,21 @@
 package org.jetbrains.research.kex.util
 
+import kotlin.reflect.KClass
+
 fun Boolean.toInt(): Int = if (this) 1 else 0
 fun Int.toBoolean(): Boolean = this > 0
+
+fun Number.recast(type: KClass<*>): Any = when (type) {
+    Byte::class -> toByte()
+    Short::class -> toShort()
+    Int::class -> toInt()
+    Long::class -> toLong()
+    Float::class -> toFloat()
+    Double::class -> toDouble()
+    else -> throw IllegalStateException("Unsupported number type")
+}
+
+inline fun <reified T> Number.recast() = recast(T::class) as T
 
 operator fun Number.plus(other: Number): Number = when (this) {
     is Long -> this.toLong() + other.toLong()
