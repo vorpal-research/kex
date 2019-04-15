@@ -206,9 +206,6 @@
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>2.22.0</version>
                 <configuration>
-                    <additionalClasspathElements>
-                        <additionalClasspathElement>../repo/com/microsoft/z3/4.7.1/z3-4.7.1.jar</additionalClasspathElement>
-                    </additionalClasspathElements>
                     <systemPropertyVariables>
                         <!--suppress UnresolvedMavenProperty -->
                         <root.dir>${project.parent.basedir.canonicalPath}</root.dir>

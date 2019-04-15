@@ -3,6 +3,7 @@ package org.jetbrains.research.kex.annotations
 import org.apache.commons.lang.StringEscapeUtils.unescapeJava
 import org.jetbrains.research.kex.config.GlobalConfig
 import org.jetbrains.research.kex.util.log
+import org.jetbrains.research.kex.util.recast
 import org.reflections.Reflections
 import java.io.File
 import kotlin.reflect.KClass
@@ -86,20 +87,10 @@ object AnnotationManager {
         return null
     }
 
-    private fun recast(value: Number, type: KClass<*>): Number = when (type) {
-        Int::class -> value.toInt()
-        Byte::class -> value.toByte()
-        Short::class -> value.toShort()
-        Long::class -> value.toLong()
-        Float::class -> value.toFloat()
-        Double::class -> value.toDouble()
-        else -> throw IllegalStateException("Unsupported number type")
-    }
-
     private inline fun <reified T: Number> getSpecialConstantTyped(value: String): T? {
         val result = getSpecialConstant(value)
-        return if (result == null) null else recast(if (result is Number) result else
-                throw IllegalStateException("Constant type is not java.lang.Number"), T::class) as T
+        return if (result == null) null else (if (result is Number) result else
+            throw IllegalStateException("Constant type is not java.lang.Number")).recast<T>()
     }
 
     private fun clearStr(str: String) = str.replace("_", "")
