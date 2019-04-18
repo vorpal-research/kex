@@ -6,14 +6,11 @@ import org.jetbrains.research.kex.state.predicate.Predicate
 import org.jetbrains.research.kex.state.predicate.PredicateFactory
 import org.jetbrains.research.kex.state.predicate.PredicateType
 import org.jetbrains.research.kex.state.term.TermFactory
-import org.jetbrains.research.kex.util.log
-import org.jetbrains.research.kex.util.unreachable
 import org.jetbrains.research.kfg.ClassManager
 import org.jetbrains.research.kfg.ir.BasicBlock
 import org.jetbrains.research.kfg.ir.value.IntConstant
 import org.jetbrains.research.kfg.ir.value.instruction.*
 import org.jetbrains.research.kfg.visitor.MethodVisitor
-import java.lang.Exception
 
 class InvalidInstructionError(message: String) : Exception(message)
 
@@ -80,10 +77,7 @@ class PredicateBuilder(override val cm: ClassManager) : MethodVisitor {
         val lhv = if (inst.type.isVoid) null else tf.getValue(inst)
         val callTerm = when {
             inst.isStatic -> tf.getCall(inst.method, args)
-            else -> {
-                val callee = tf.getValue(inst.callee)
-                tf.getCall(inst.method, callee, args)
-            }
+            else -> tf.getCall(inst.method, tf.getValue(inst.callee), args)
         }
 
         val predicate = when (lhv) {
@@ -96,21 +90,14 @@ class PredicateBuilder(override val cm: ClassManager) : MethodVisitor {
 
     override fun visitCastInst(inst: CastInst) {
         val lhv = tf.getValue(inst)
-        val rhv = tf.getCast(
-                inst.type.kexType,
-                tf.getValue(inst.operand)
-        )
+        val rhv = tf.getCast(inst.type.kexType, tf.getValue(inst.operand))
 
         predicateMap[inst] = pf.getEquality(lhv, rhv, location = inst.location)
     }
 
     override fun visitCmpInst(inst: CmpInst) {
         val lhv = tf.getValue(inst)
-        val rhv = tf.getCmp(
-                inst.opcode,
-                tf.getValue(inst.lhv),
-                tf.getValue(inst.rhv)
-        )
+        val rhv = tf.getCmp(inst.opcode, tf.getValue(inst.lhv), tf.getValue(inst.rhv))
 
         predicateMap[inst] = pf.getEquality(lhv, rhv, location = inst.location)
     }
@@ -148,10 +135,7 @@ class PredicateBuilder(override val cm: ClassManager) : MethodVisitor {
 
     override fun visitInstanceOfInst(inst: InstanceOfInst) {
         val lhv = tf.getValue(inst)
-        val rhv = tf.getInstanceOf(
-                inst.targetType.kexType,
-                tf.getValue(inst.operand)
-        )
+        val rhv = tf.getInstanceOf(inst.targetType.kexType, tf.getValue(inst.operand))
 
         predicateMap[inst] = pf.getEquality(lhv, rhv, location = inst.location)
     }
@@ -178,10 +162,7 @@ class PredicateBuilder(override val cm: ClassManager) : MethodVisitor {
 
     override fun visitUnaryInst(inst: UnaryInst) {
         val lhv = tf.getValue(inst)
-        val rhv = tf.getUnaryTerm(
-                tf.getValue(inst.operand),
-                inst.opcode
-        )
+        val rhv = tf.getUnaryTerm(tf.getValue(inst.operand), inst.opcode)
 
         predicateMap[inst] = pf.getEquality(lhv, rhv, location = inst.location)
     }
