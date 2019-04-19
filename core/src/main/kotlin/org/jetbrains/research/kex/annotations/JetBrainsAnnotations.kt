@@ -118,7 +118,7 @@ class Contract(val value: String = ""/*, pure: Boolean = false*/) : AnnotationIn
         var result: PredicateState = basic {
             if (!records.any { it.result in effects1 })
                 return@basic
-            for ((recordN, record) in records.asSequence().withIndex().filter { it.value.result in effects1 }) {
+            for (record in records.asSequence().filter { it.result in effects1 }) {
                 val params = record.params
                 val effect = when (record.result) {
                     Constraints.Null -> returnTerm eq const(null)
@@ -136,8 +136,7 @@ class Contract(val value: String = ""/*, pure: Boolean = false*/) : AnnotationIn
                     else
                         argsCheck = argsCheck and getTermByConstraint(params[i], args[i])
                 }
-                var check by value(KexBool, "%contract$id.$recordN")
-                check = if (argsCheck != null)
+                val check = if (argsCheck != null)
                     not(argsCheck) or effect
                 else
                     effect
