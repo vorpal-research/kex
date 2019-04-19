@@ -1,9 +1,13 @@
 package org.jetbrains.research.kex.state.transformer
 
+import org.jetbrains.research.kex.state.predicate.EqualityPredicate
+import org.jetbrains.research.kex.state.predicate.InequalityPredicate
+import org.jetbrains.research.kex.state.predicate.Predicate
 import org.jetbrains.research.kex.state.term.*
 import org.jetbrains.research.kex.util.*
 import org.jetbrains.research.kfg.ir.value.instruction.BinaryOpcode
 import org.jetbrains.research.kfg.ir.value.instruction.CmpOpcode
+import kotlin.math.abs
 
 object ConstantPropagator : Transformer<ConstantPropagator> {
     private const val epsilon = 1e-5
@@ -115,5 +119,45 @@ object ConstantPropagator : Transformer<ConstantPropagator> {
         is ConstLongTerm -> term.value
         is ConstShortTerm -> term.value
         else -> null
+    }
+
+    private inline fun reachs(condition: Boolean, action: () -> Any) {
+        if (!condition)
+            unreachable(action)
+    }
+
+    private fun genMessage(word: String, right: Number, left: Number) =
+            log.error("Obvious error detected: $right $word $left")
+    private fun mustEqual(right: Number, left: Number) =
+            genMessage("must be equal to", right, left)
+    private fun mustNotEqual(right: Number, left: Number) =
+            genMessage("should not be equal to", right, left)
+
+    override fun transformEqualityPredicate(predicate: EqualityPredicate): Predicate {
+        val lhv = getConstantValue(predicate.lhv) ?: return predicate
+        val rhv = getConstantValue(predicate.rhv) ?: return predicate
+        val (nlhv, nrhv) = toCompatibleTypes(lhv, rhv)
+        val isNotError = when (nlhv) {
+            is Float -> abs((nlhv - nrhv) as Float) < epsilon
+            is Double -> abs((nlhv - nrhv) as Double) < epsilon
+            else -> nlhv == nrhv
+        }
+        if (isNotError)
+            return predicate
+        unreachable { mustEqual(nlhv, nrhv) }
+    }
+
+    override fun transformInequalityPredicate(predicate: InequalityPredicate): Predicate {
+        val lhv = getConstantValue(predicate.lhv) ?: return predicate
+        val rhv = getConstantValue(predicate.rhv) ?: return predicate
+        val (nlhv, nrhv) = toCompatibleTypes(lhv, rhv)
+        val isNotError = when (nlhv) {
+            is Float -> abs((nlhv - nrhv) as Float) >= epsilon
+            is Double -> abs((nlhv - nrhv) as Double) >= epsilon
+            else -> nlhv != nrhv
+        }
+        if (isNotError)
+            return predicate
+        unreachable { mustNotEqual(nlhv, nrhv) }
     }
 }

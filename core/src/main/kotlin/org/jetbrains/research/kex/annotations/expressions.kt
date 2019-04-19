@@ -52,13 +52,6 @@ class ExpressionBuilder : TermExpression() {
         predicates += predicate
         return predicate
     }
-    fun value(type: KexType, name: String) = tf.getValue(type, name)
-    fun value(type: KClass<*>, name: String): ValueTerm = when (type) {
-        KexBool::class, Boolean::class -> tf.getValue(KexBool, name)
-        KexNull::class, Nothing::class -> tf.getValue(KexNull, name)
-        else -> throw IllegalStateException("Unsupported value term type")
-    }
-    inline fun <reified T> value(name: String) = value(T::class, name)
 
     operator fun Term.setValue(thisRef: Any?, property: KProperty<*>, value: Term) {
         predicates += pf.getLoad(this, value)
@@ -67,7 +60,8 @@ class ExpressionBuilder : TermExpression() {
     operator fun Term.getValue(thisRef: Any?, property: KProperty<*>): Term = this
 
     companion object {
-        inline fun build(lambda: ExpressionBuilder.() -> Unit) = ExpressionBuilder().apply { lambda() }.apply()
+        inline fun build(lambda: ExpressionBuilder.() -> Unit)=
+                ExpressionBuilder().apply { lambda() }.apply()
     }
 
     fun apply(): List<Predicate> = predicates
@@ -76,19 +70,43 @@ class ExpressionBuilder : TermExpression() {
 sealed class TermExpression {
     inline val tf get() = TermFactory
 
+    fun value(type: KexType, name: String) = tf.getValue(type, name)
+    fun value(type: KClass<*>, name: String): ValueTerm = when (type) {
+        KexBool::class, Boolean::class -> tf.getValue(KexBool, name)
+        KexNull::class, Nothing::class -> tf.getValue(KexNull, name)
+        else -> throw IllegalStateException("Unsupported value term type")
+    }
+    inline fun <reified T> value(name: String) = value(T::class, name)
+
     infix fun Term.and(other: Term) = tf.getBinary(type, BinaryOpcode.And(), this, other)
+    infix fun Term.and(other: Boolean) = tf.getBinary(type, BinaryOpcode.And(), this, const(other))
+    infix fun Boolean.and(other: Term) = tf.getBinary(other.type, BinaryOpcode.And(), const(this), other)
+
     infix fun Term.or(other: Term) = tf.getBinary(type, BinaryOpcode.Or(), this, other)
+    infix fun Term.or(other: Boolean) = tf.getBinary(type, BinaryOpcode.Or(), this, const(other))
+    infix fun Boolean.or(other: Term) = tf.getBinary(other.type, BinaryOpcode.Or(), const(this), other)
 
     infix fun Term.ge(other: Term) = tf.getCmp(CmpOpcode.Ge(), this, other)
     infix fun Term.ge(other: Number) = this ge tf.getConstant(other)
     infix fun Number.ge(other: Term) = tf.getConstant(this) ge other
 
     infix fun Term.le(other: Term) = tf.getCmp(CmpOpcode.Le(), this, other)
-    infix fun Term.le(other: Number) = this ge tf.getConstant(other)
-    infix fun Number.le(other: Term) = tf.getConstant(this) ge other
+    infix fun Term.le(other: Number) = this le tf.getConstant(other)
+    infix fun Number.le(other: Term) = tf.getConstant(this) le other
 
     infix fun Term.eq(other: Term) = tf.getCmp(CmpOpcode.Eq(), this, other)
+    infix fun Term.eq(@Suppress("UNUSED_PARAMETER") other: Nothing?) =
+            tf.getCmp(CmpOpcode.Eq(), this, tf.getNull())
+    infix fun Nothing?.eq(other: Term) = tf.getCmp(other.type, CmpOpcode.Eq(), tf.getNull(), other)
+    infix fun Term.eq(other: Boolean) = tf.getCmp(CmpOpcode.Eq(), this, tf.getBool(other))
+    infix fun Boolean.eq(other: Term) = tf.getCmp(CmpOpcode.Eq(), tf.getBool(this), other)
+
     infix fun Term.neq(other: Term) = tf.getCmp(CmpOpcode.Neq(), this, other)
+    infix fun Term.neq(@Suppress("UNUSED_PARAMETER") other: Nothing?) =
+            tf.getCmp(CmpOpcode.Neq(), this, tf.getNull())
+    infix fun Nothing?.neq(other: Term) = tf.getCmp(other.type, CmpOpcode.Neq(), tf.getNull(), other)
+    infix fun Term.neq(other: Boolean) = tf.getCmp(CmpOpcode.Neq(), this, tf.getBool(other))
+    infix fun Boolean.neq(other: Term) = tf.getCmp(CmpOpcode.Neq(), tf.getBool(this), other)
 
     fun not(term: Term) = term neq const(true)
 
