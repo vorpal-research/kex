@@ -2,6 +2,7 @@ package org.jetbrains.research.kex.state.transformer
 
 import org.jetbrains.research.kex.annotations.AnnotationsLoader
 import org.jetbrains.research.kex.state.BasicState
+import org.jetbrains.research.kex.state.PredicateState
 import org.jetbrains.research.kex.state.StateBuilder
 import org.jetbrains.research.kex.state.predicate.CallPredicate
 import org.jetbrains.research.kex.state.predicate.Predicate
@@ -19,31 +20,45 @@ class AnnotationIncluder(val annotations: AnnotationsLoader) : RecollectingTrans
         val method = call.method
         val args = call.arguments
         val argTypes = method.argTypes
-        //log.debug { "try to find ${method.prototype}" }
         val annotatedCall = annotations.getExactCall("${method.`class`}.${method.name}",
                 *Array(argTypes.size) { argTypes[it].name }) ?: return predicate
         log.debug { "found annotations for $annotatedCall ${annotatedCall.annotations} and for params " +
                 "(${annotatedCall.params.joinToString { "${it.type}:${it.annotations}" }})" }
-        val predicates = mutableListOf<Predicate>()
+        val states = mutableListOf<PredicateState>()
         for ((i, param) in annotatedCall.params.withIndex()) {
             for (annotation in param.annotations) {
                 val arg = args[i]
-                predicates += annotation.valuePrecise(arg)
-                predicates += annotation.paramPrecise(args[i], i)
+                annotation.preciseValue(arg)?.run { states += this }
+                states += annotation.preciseParam(args[i], i) ?: continue
             }
         }
         for (annotation in annotatedCall.annotations)
-            predicates += annotation.callPreciseBefore(predicate)
-        predicates += predicate
+            states += annotation.preciseBeforeCall(predicate) ?: continue
+        states += BasicState(Collections.singletonList(predicate))
         val returnValue = predicate.getLhvUnsafe()
         for (annotation in annotatedCall.annotations) {
-            predicates += annotation.callPreciseAfter(predicate)
+            annotation.preciseAfterCall(predicate)?.run { states += this }
             if (returnValue !== null) {
-                predicates += annotation.valuePrecise(returnValue)
-                predicates += annotation.returnPrecise(returnValue)
+                annotation.preciseValue(returnValue)?.run { states += this }
+                states += annotation.preciseReturn(returnValue) ?: continue
             }
         }
-        currentBuilder += BasicState(predicates)
+        // Concatenate some States for better presentation
+        val predicates = mutableListOf<Predicate>()
+        for (state in states) {
+            when (state) {
+                is BasicState -> predicates += state.predicates
+                else -> {
+                    if (state.isNotEmpty) {
+                        currentBuilder += BasicState(predicates)
+                        predicates.clear()
+                        currentBuilder += state
+                    }
+                }
+            }
+        }
+        if (predicates.isNotEmpty())
+            currentBuilder += BasicState(predicates)
         return Transformer.Stub
     }
 

@@ -18,7 +18,14 @@
     <item name="org.jetbrains.research.kex.test.AnnotatedMethodsThere java.lang.Object haveContract(java.lang.Object, boolean)">
         <annotation name='org.jetbrains.annotations.Contract'>
             <val>
-                "!null, _ -> !null; _, true -> !null"
+                "!null, _ -> !null; _, true -> !null; _, false -> param1"
+            </val>
+        </annotation>
+    </item>
+    <item name="org.jetbrains.research.kex.test.AnnotatedMethodsThere org.jetbrains.research.kex.test.AnnotatedMethodsThere assertTrue(boolean)">
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val>
+                "false -> fail; _ -> this"
             </val>
         </annotation>
     </item>
