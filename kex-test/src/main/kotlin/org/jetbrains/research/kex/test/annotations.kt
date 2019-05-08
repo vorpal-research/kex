@@ -93,11 +93,11 @@ class ThatClassContainsHighQualityCodeToProf {
         if (lovelyInteger.toDouble() == unusualNumber) {
             val bestStream = ByteArrayInputStream(exitingArgument.toByteArray())
             val meaningfulResult = importantMethods.makeBeautifulList(lovelyInteger)
-            while (bestStream.available() > 0) {
+            //while (bestStream.available() > 0) {
                 val remarkableLetter = bestStream.read()
                 importantMethods.assertTrue(importantMethods.assertTrue(remarkableLetter > 0) == importantMethods)
                 meaningfulResult += remarkableLetter
-            }
+            //}
             importantMethods.assertNotNull(meaningfulResult)
             return meaningfulResult
         }
