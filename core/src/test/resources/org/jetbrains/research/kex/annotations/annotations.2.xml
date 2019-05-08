@@ -29,7 +29,7 @@
             </val>
         </annotation>
     </item>
-    <item name="org.jetbrains.research.kex.test.AnnotatedMethodsThere org.jetbrains.research.kex.test.AnnotatedMethodsThere assertTrue(boolean)">
+    <item name="org.jetbrains.research.kex.test.AnnotatedMethodsThere org.jetbrains.research.kex.test.AnnotatedMethodsThere assertNotNull(boolean)">
         <annotation name='org.jetbrains.annotations.Contract'>
             <val>
                 "null -> fail"
