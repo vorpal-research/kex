@@ -11,6 +11,7 @@ import org.jetbrains.research.kex.state.term.ValueTerm
 import org.jetbrains.research.kex.state.transformer.*
 import org.jetbrains.research.kex.util.log
 import org.jetbrains.research.kfg.ir.Method
+import org.jetbrains.research.kfg.ir.value.instruction.CallInst
 import org.jetbrains.research.kfg.ir.value.instruction.Instruction
 
 
@@ -93,4 +94,12 @@ class Checker(val method: Method, val loader: ClassLoader, private val psa: Pred
         log.debug("Acquired $result")
         return result
     }
+
+    fun findMistakes(excludeMethods: Collection<Method> = emptySet(),
+                     excludeCalls: Collection<CallInst> = emptySet()): List<MistakeInfo> =
+        method.asSequence()
+              .flatten()
+              .mapNotNull { it as? CallInst }
+              .filter { it.method !in excludeMethods && it !in excludeCalls }
+              .map { MistakeInfo(checkReachable(it), it) }.toList()
 }

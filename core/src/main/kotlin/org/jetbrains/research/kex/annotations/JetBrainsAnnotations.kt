@@ -1,5 +1,7 @@
 package org.jetbrains.research.kex.annotations
 
+import org.jetbrains.research.kex.asm.manager.MethodManager
+import org.jetbrains.research.kex.config.GlobalConfig
 import org.jetbrains.research.kex.ktype.KexBool
 import org.jetbrains.research.kex.state.PredicateState
 import org.jetbrains.research.kex.state.predicate.CallPredicate
@@ -104,8 +106,7 @@ class Contract(val value: String = ""/*, pure: Boolean = false*/) : AnnotationIn
     private companion object {
         private var count = 0
         val id get() = count++
-        val effects1 = arrayOf(Constraints.Null, Constraints.NotNull, Constraints.True,
-                Constraints.False, Constraints.New)
+        val effects1 = arrayOf(Constraints.Null, Constraints.NotNull, Constraints.True, Constraints.False)
         val effects2 = arrayOf(Constraints.This, Constraints.Param)
     }
 
@@ -114,11 +115,34 @@ class Contract(val value: String = ""/*, pure: Boolean = false*/) : AnnotationIn
         val args = call.arguments
         val returnTerm = predicate.getLhvUnsafe() ?: return null
         val id = id.toString()
+        var result: PredicateState = basic {  }
+
+        val inlineEnabled = GlobalConfig.getBooleanValue("smt", "ps-inlining", true)
+                && MethodManager.InlineManager.isInlinable(call.method)
+        // New statement insertion
+        if (!inlineEnabled && records.any { it.result == Constraints.New }) {
+            for ((i, record) in records.asSequence().withIndex().filter { it.value.result == Constraints.New }) {
+                val params = record.params
+                val argUnion = term { value(KexBool, "%contract$id.$i.args") }
+                result += basic {
+                    var accumulator: Term = const(true)
+                    for (j in 0 until params.size) {
+                        if (params[j] != Constraints.Any)
+                            accumulator = accumulator and getTermByConstraint(params[j], args[j])
+                    }
+                    argUnion load accumulator
+                } + choice(basic {
+                    path { argUnion equality true }
+                    state { returnTerm.new() }
+                }, basic { path { argUnion equality false } } )
+            }
+        }
         // Make boolean functions for same cases
-        var result: PredicateState = basic {
+        result += basic {
             if (!records.any { it.result in effects1 })
                 return@basic
-            for (record in records.asSequence().filter { it.result in effects1 }) {
+            for (record in records.asSequence().filter {
+                    it.result in effects1 || inlineEnabled && it.result == Constraints.New }) {
                 val params = record.params
                 val effect = when (record.result) {
                     Constraints.Null -> returnTerm eq const(null)

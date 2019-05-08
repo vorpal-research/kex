@@ -154,6 +154,8 @@ sealed class PredicateExpression : TermExpression() {
     infix fun Boolean.inequality(other: Term) =
             pf.getInequality(tf.getBool(this), other, this@PredicateExpression.type)
 
+    fun Term.new() = pf.getNew(this, this@PredicateExpression.type)
+
     object Assume : PredicateExpression() {
         override val type get() = PredicateType.Assume()
     }

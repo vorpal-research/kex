@@ -18,7 +18,7 @@
     <item name="org.jetbrains.research.kex.test.AnnotatedMethodsThere java.lang.Object haveContract(java.lang.Object, boolean)">
         <annotation name='org.jetbrains.annotations.Contract'>
             <val>
-                "!null, _ -> !null; _, true -> !null; _, false -> param1"
+                "!null, _ -> !null; _, true -> new; _, false -> param1"
             </val>
         </annotation>
     </item>
@@ -27,6 +27,20 @@
             <val>
                 "false -> fail; _ -> this"
             </val>
+        </annotation>
+    </item>
+    <item name="org.jetbrains.research.kex.test.AnnotatedMethodsThere org.jetbrains.research.kex.test.AnnotatedMethodsThere assertTrue(boolean)">
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val>
+                "null -> fail"
+            </val>
+        </annotation>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name="org.jetbrains.research.kex.test.AnnotatedMethodsThere java.util.List&lt;?&gt; makeBeautifulList(int) 0">
+        <annotation name='org.jetbrains.annotations.Range'>
+            <val name="from" val="0"/>
+            <val name="to" val="java.lang.Integer.MAX_VALUE"/>
         </annotation>
     </item>
 </root>

@@ -1,7 +1,6 @@
 package org.jetbrains.research.kex
 
 import org.jetbrains.research.kex.asm.state.PredicateStateAnalysis
-import org.jetbrains.research.kex.asm.state.PredicateStateBuilder
 import org.jetbrains.research.kex.asm.transform.LoopDeroller
 import org.jetbrains.research.kex.config.FileConfig
 import org.jetbrains.research.kex.config.GlobalConfig
@@ -84,6 +83,14 @@ abstract class KexTest {
                 .mapNotNull { it as? CallInst }
                 .filter { it.method == assertUnreachable && it.`class` == intrinsics }
                 .toList()
+    }
+
+    fun testMistakes(method: Method) {
+        val psa = getPSA(method)
+        val checker = Checker(method, loader, psa)
+        for (result in checker.findMistakes()) {
+            assertTrue(result.result is Result.SatResult, "this call is not reachable")
+        }
     }
 
     fun testClassReachability(`class`: Class) {
