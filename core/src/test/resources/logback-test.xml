@@ -1,14 +1,25 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 
 <configuration>
+    <!--
     <appender name="stdout" class="ch.qos.logback.core.ConsoleAppender">
         <encoder>
             <pattern>%-5p [%t] - %m%n</pattern>
         </encoder>
     </appender>
+    -->
+    <appender name="kexFileLogger" class="ch.qos.logback.core.FileAppender">
+        <file>kex.log</file>
+        <param name="Append" value="false"/>
+        <encoder>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} %-5p [%t][%c] - %m%n</pattern>
+        </encoder>
+    </appender>
 
-    <logger name="org.jetbrains.research" level="error" additivity="false">
+
+    <logger name="org.jetbrains.research" level="debug" additivity="false">
         <appender-ref ref="stdout"/>
+        <appender-ref ref="kexFileLogger"/>
     </logger>
 
     <root level="error">

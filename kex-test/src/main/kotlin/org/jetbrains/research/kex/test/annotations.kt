@@ -4,6 +4,7 @@ package org.jetbrains.research.kex.test
 
 import org.jetbrains.research.kex.test.Intrinsics.assertReachable
 import org.jetbrains.research.kex.test.Intrinsics.assertUnreachable
+import java.io.ByteArrayInputStream
 
 object AnnotatedMethodsThere {
     @JvmStatic
@@ -11,12 +12,20 @@ object AnnotatedMethodsThere {
         return param1 + 2
     }
     @JvmStatic
+    // "!null, _ -> !null; _, true -> new; _, false -> param1"
     fun haveContract(param0: Any?, param1: Boolean): Any? = if (param1) param0 ?: Any() else param0
 
+    // "false -> fail; _ -> this"
     fun assertTrue(param0: Boolean): AnnotatedMethodsThere {
         if (!param0) throw IllegalStateException()
         return this
     }
+
+    fun assertNotNull(param0: Any?) {
+        if (param0 == null) throw IllegalArgumentException()
+    }
+
+    fun makeBeautifulList(n: Int) = MutableList(n) { 0 }
 }
 
 class NotAnnotatedMethods {
@@ -30,9 +39,7 @@ class NotAnnotatedMethods {
     }
     fun test2(arg0: Boolean, arg1: Any?): Any? {
         val result = AnnotatedMethodsThere.haveContract(arg1, arg0)
-        if (arg1 == null || result != null)
-            assertReachable()
-        else
+        if (!(arg1 == null || result != null))
             assertUnreachable()
         return result
     }
@@ -63,10 +70,10 @@ class NotAnnotatedMethods {
         val result = o.assertTrue(arg0)
         if (!arg0)
             assertUnreachable()
-        if (result === o)
-            assertReachable()
-        else
+        if (result !== o)
             assertUnreachable()
+        else
+            assertReachable()
         return o
     }
 }
@@ -76,5 +83,36 @@ class ClassWithContractOffense {
         val result = AnnotatedMethodsThere.rangeExample(arg0, -500)
         assertReachable()
         return result
+    }
+}
+
+class ThatClassContainsHighQualityCodeToProf {
+    fun incredibleMethod(exitingArgument: String, unusualNumber: Double): List<Int> {
+        val importantMethods = AnnotatedMethodsThere
+        val lovelyInteger = unusualNumber.toInt()
+        if (lovelyInteger.toDouble() == unusualNumber) {
+            val bestStream = ByteArrayInputStream(exitingArgument.toByteArray())
+            val meaningfulResult = importantMethods.makeBeautifulList(lovelyInteger)
+            while (bestStream.available() > 0) {
+                val remarkableLetter = bestStream.read()
+                importantMethods.assertTrue(importantMethods.assertTrue(remarkableLetter > 0) == importantMethods)
+                meaningfulResult += remarkableLetter
+            }
+            importantMethods.assertNotNull(meaningfulResult)
+            return meaningfulResult
+        }
+        return emptyList()
+    }
+}
+
+class ClassWithMistakes {
+    fun test1(arg0: Int, arg1: Int): Any? {
+        var t = arg0
+        if (arg1 < 0)
+            t = arg1
+        else
+            return t
+        AnnotatedMethodsThere.rangeExample(arg0, t)
+        return Any()
     }
 }
