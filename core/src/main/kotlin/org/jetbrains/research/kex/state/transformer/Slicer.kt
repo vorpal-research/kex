@@ -9,8 +9,8 @@ import org.jetbrains.research.kex.state.term.TermFactory
 import org.jetbrains.research.kex.state.term.isNamed
 
 class CFGTracker : Transformer<CFGTracker> {
-    var currentDominators = setOf<Predicate>()
-    val dominatorMap = hashMapOf<Predicate, Set<Predicate>>()
+    private var currentDominators = setOf<Predicate>()
+    private val dominatorMap = hashMapOf<Predicate, Set<Predicate>>()
 
     override fun apply(ps: PredicateState): PredicateState {
         currentDominators = setOf()
@@ -44,8 +44,8 @@ class CFGTracker : Transformer<CFGTracker> {
     val finalPath get() = currentDominators
 }
 
-private fun Predicate.inverse(): Predicate = when {
-    this is EqualityPredicate -> when (rhv) {
+private fun Predicate.inverse(): Predicate = when (this) {
+    is EqualityPredicate -> when (rhv) {
         TermFactory.getTrue() -> PredicateFactory.getEquality(lhv, TermFactory.getFalse(), type, location)
         TermFactory.getFalse() -> PredicateFactory.getEquality(lhv, TermFactory.getTrue(), type, location)
         else -> this
@@ -62,9 +62,9 @@ class Slicer(val state: PredicateState, sliceTerms: Set<Term>, val aa: AliasAnal
     private val isInterestingTerm = { term: Term -> term.isNamed }
 
     init {
-        sliceTerms
-                .filter(isInterestingTerm)
-                .forEach { addSliceTerm(it) }
+        sliceTerms.filter(isInterestingTerm).forEach {
+            addSliceTerm(it)
+        }
     }
 
     constructor(state: PredicateState, query: PredicateState, aa: AliasAnalysis)
@@ -84,7 +84,7 @@ class Slicer(val state: PredicateState, sliceTerms: Set<Term>, val aa: AliasAnal
     }
 
     private fun checkVars(lhv: Set<Term>, rhv: Set<Term>) = when {
-        lhv.asSequence().filterNot { it.type is KexPointer }.any { sliceVars.contains(it) } -> {
+        lhv.filterNot { it.type is KexPointer }.any { sliceVars.contains(it) } -> {
             rhv.forEach { addSliceTerm(it) }
             true
         }
@@ -118,21 +118,18 @@ class Slicer(val state: PredicateState, sliceTerms: Set<Term>, val aa: AliasAnal
         return super.transform(reversed).reverse().simplify()
     }
 
-    override fun transformChoice(ps: ChoiceState): PredicateState {
-        val psi = ps.simplify()
-        return when (psi) {
-            is ChoiceState -> {
-                val savedDeps = currentPath
+    override fun transformChoice(ps: ChoiceState) = when (val psi = ps.simplify()) {
+        is ChoiceState -> {
+            val savedDeps = currentPath
 
-                val result = psi.fmap {
-                    currentPath = savedDeps
-                    super.transform(it)
-                }
+            val result = psi.fmap {
                 currentPath = savedDeps
-                return result
+                super.transform(it)
             }
-            else -> super.transformChoice(ps)
+            currentPath = savedDeps
+            result
         }
+        else -> super.transformChoice(ps)
     }
 
     override fun transformBase(predicate: Predicate): Predicate {
@@ -163,10 +160,7 @@ class Slicer(val state: PredicateState, sliceTerms: Set<Term>, val aa: AliasAnal
         val asVar = checkVars(lhvTerms, rhvTerms)
         val asPtr = checkPtrs(predicate, lhvTerms, rhvTerms)
         return when {
-            asVar || asPtr -> {
-                addCFGDeps(predicate)
-                predicate
-            }
+            asVar || asPtr -> predicate.also {addCFGDeps(predicate) }
             else -> Transformer.Stub
         }
     }

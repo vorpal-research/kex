@@ -7,9 +7,10 @@ import org.jetbrains.research.kfg.ir.BasicBlock
 import org.jetbrains.research.kfg.ir.Method
 import java.util.*
 
-data class BlockInfo internal constructor(val bb: BasicBlock, val predecessor: BlockInfo?) {
-    var outputAction: BlockExitAction? = null
-        internal set
+data class BlockInfo internal constructor(
+        val bb: BasicBlock,
+        val predecessor: BlockInfo?,
+        internal var outputAction: BlockExitAction? = null) {
 
     val hasPredecessor: Boolean
         get() = predecessor != null
@@ -118,7 +119,7 @@ object TraceManager {
     fun isCovered(method: Method, bb: BasicBlock) = getTraces(method).mapNotNull { it.blocks[bb] }.flatten()
             .fold(false) { acc, it -> acc || it.hasOutput }
 
-    fun isPartlyCovered(method: Method): Boolean = method.basicBlocks.fold(false) { acc, bb -> acc or isCovered(bb) }
+    fun isPartlyCovered(method: Method): Boolean = method.basicBlocks.fold(false) { acc, bb -> acc || isCovered(bb) }
     fun isBodyCovered(method: Method) = method.bodyBlocks.asSequence().map { isCovered(it) }.fold(true) { acc, it -> acc && it }
 
     fun isCatchCovered(method: Method) = method.catchBlocks.asSequence().map { isCovered(it) }.fold(true) { acc, it -> acc && it }

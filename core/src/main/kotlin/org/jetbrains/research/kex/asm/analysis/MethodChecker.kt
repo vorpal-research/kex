@@ -18,7 +18,7 @@ import org.jetbrains.research.kfg.ir.BasicBlock
 import org.jetbrains.research.kfg.ir.Class
 import org.jetbrains.research.kfg.ir.Method
 import org.jetbrains.research.kfg.ir.value.instruction.Instruction
-import org.jetbrains.research.kfg.util.JarUtils
+import org.jetbrains.research.kfg.util.writeClass
 import org.jetbrains.research.kfg.visitor.MethodVisitor
 import java.io.File
 import java.net.URLClassLoader
@@ -46,7 +46,7 @@ class MethodChecker(
 
         if (!method.isAbstract && !method.isConstructor) {
             val traceInstructions = TraceInstrumenter(originalCM).invoke(originalMethod)
-            JarUtils.writeClass(cm, loader, originalClass, classFileName)
+            writeClass(cm, loader, originalClass, classFileName)
             val directory = URLClassLoader(arrayOf(target.toURI().toURL()))
 
             state = State(originalClass, originalMethod, directory, traceInstructions)
@@ -59,7 +59,7 @@ class MethodChecker(
 
         state?.traces?.forEach { it.parent?.remove(it) }
 
-        JarUtils.writeClass(cm, loader, `class`, classFileName)
+        writeClass(cm, loader, `class`, classFileName)
         state = null
     }
 

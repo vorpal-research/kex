@@ -8,6 +8,11 @@ import org.jetbrains.research.kfg.ir.value.instruction.CmpOpcode
 object ConstantPropagator : Transformer<ConstantPropagator> {
     private const val epsilon = 1e-5
 
+    infix fun Double.eq(other: Double) = (this - other) < epsilon
+    infix fun Double.neq(other: Double) = (this - other) >= epsilon
+    infix fun Float.eq(other: Float) = (this - other) < epsilon
+    infix fun Float.neq(other: Float) = (this - other) >= epsilon
+
     override fun transformBinaryTerm(term: BinaryTerm): Term {
         val lhv = getConstantValue(term.lhv) ?: return term
         val rhv = getConstantValue(term.rhv) ?: return term
@@ -32,18 +37,9 @@ object ConstantPropagator : Transformer<ConstantPropagator> {
                 val (nlhv, nrhv) = toCompatibleTypes(lhv, rhv)
                 tf.getConstant(nlhv % nrhv)
             }
-            is BinaryOpcode.Shl -> {
-                val bits = rhv as? Int ?: unreachable { log.error("Non-integer bit count in shift operation") }
-                tf.getConstant(lhv.shl(bits))
-            }
-            is BinaryOpcode.Shr -> {
-                val bits = rhv as? Int ?: unreachable { log.error("Non-integer bit count in shift operation") }
-                tf.getConstant(lhv.shr(bits))
-            }
-            is BinaryOpcode.Ushr -> {
-                val bits = rhv as? Int ?: unreachable { log.error("Non-integer bit count in shift operation") }
-                tf.getConstant(lhv.ushr(bits))
-            }
+            is BinaryOpcode.Shl -> tf.getConstant(lhv.shl(rhv.castTo()))
+            is BinaryOpcode.Shr -> tf.getConstant(lhv.shr(rhv.castTo()))
+            is BinaryOpcode.Ushr -> tf.getConstant(lhv.ushr(rhv.castTo()))
             is BinaryOpcode.And -> {
                 val (nlhv, nrhv) = toCompatibleTypes(lhv, rhv)
                 tf.getConstant(nlhv and nrhv)
@@ -65,13 +61,13 @@ object ConstantPropagator : Transformer<ConstantPropagator> {
         val (nlhv, nrhv) = toCompatibleTypes(lhv, rhv)
         return when (term.opcode) {
             is CmpOpcode.Eq -> when (nlhv) {
-                is Double -> tf.getBool((nlhv - nrhv.toDouble()) < epsilon)
-                is Float -> tf.getBool((nlhv - nrhv.toFloat()) < epsilon)
+                is Double -> tf.getBool(nlhv eq nrhv.toDouble())
+                is Float -> tf.getBool(nlhv eq nrhv.toFloat())
                 else -> tf.getBool(nlhv == nrhv)
             }
             is CmpOpcode.Neq -> when (nlhv) {
-                is Double -> tf.getBool((nlhv - nrhv.toDouble()) >= epsilon)
-                is Float -> tf.getBool((nlhv - nrhv.toFloat()) >= epsilon)
+                is Double -> tf.getBool(nlhv neq nrhv.toDouble())
+                is Float -> tf.getBool(nlhv neq nrhv.toFloat())
                 else -> tf.getBool(nlhv != nrhv)
             }
             is CmpOpcode.Lt -> tf.getBool(nlhv < nrhv)
@@ -90,18 +86,9 @@ object ConstantPropagator : Transformer<ConstantPropagator> {
     }
 
     private fun toCompatibleTypes(lhv: Number, rhv: Number): Pair<Number, Number> = when (lhv) {
-        is Long -> {
-            val rhvl = rhv as? Long ?: unreachable { log.error("Non-compatible types in binary term: $lhv and $rhv") }
-            lhv to rhvl
-        }
-        is Float -> {
-            val rhvf = rhv as? Float ?: unreachable { log.error("Non-compatible types in binary term: $lhv and $rhv") }
-            lhv to rhvf
-        }
-        is Double -> {
-            val rhvd = rhv as? Double ?: unreachable { log.error("Non-compatible types in binary term: $lhv and $rhv") }
-            lhv to rhvd
-        }
+        is Long -> lhv to rhv.castTo<Long>()
+        is Float -> lhv to rhv.castTo<Float>()
+        is Double -> lhv to rhv.castTo<Double>()
         else -> lhv.toInt() to rhv.toInt()
     }
 

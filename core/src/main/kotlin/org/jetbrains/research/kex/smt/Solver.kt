@@ -43,7 +43,7 @@ interface AbstractSMTSolver {
     fun cleanup()
 }
 
-val engine = GlobalConfig.getStringValue("smt", "engine")
+private val engine = GlobalConfig.getStringValue("smt", "engine")
         ?: unreachable { log.error("No SMT engine specified") }
 
 class SMTProxySolver(

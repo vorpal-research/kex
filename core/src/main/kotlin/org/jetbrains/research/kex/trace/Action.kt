@@ -26,6 +26,7 @@ class UnknownNameError(msg: String) : ActionParseError(msg)
 
 
 sealed class ActionValue
+
 object NullValue : ActionValue() {
     override fun toString() = "null"
 }
@@ -55,21 +56,19 @@ data class ArrayValue(val identifier: Int, val component: Type, val length: Int)
 }
 
 data class ObjectValue(val type: Class, val identifier: Int, val fields: Map<String, ActionValue>) : ActionValue() {
-    override fun toString(): String {
-        val sb = StringBuilder()
-        sb.append("$type@$identifier {")
+    override fun toString() = buildString {
+        append("$type@$identifier {")
         val fieldNames = fields.keys
         val fieldValues = fields.values.toList()
-        fieldNames.asSequence().withIndex().take(1).toList().forEach { (indx, name) ->
-            sb.append("$name = ")
-            sb.append(fieldValues[indx].toString())
+        fieldNames.withIndex().take(1).toList().forEach { (indx, name) ->
+            append("$name = ")
+            append(fieldValues[indx].toString())
         }
-        fieldNames.asSequence().withIndex().drop(1).toList().forEach { (indx, name) ->
-            sb.append(", $name = ")
-            sb.append(fieldValues[indx].toString())
+        fieldNames.withIndex().drop(1).toList().forEach { (indx, name) ->
+            append(", $name = ")
+            append(fieldValues[indx].toString())
         }
-        sb.append("}")
-        return sb.toString()
+        append("}")
     }
 }
 
@@ -78,6 +77,7 @@ data class Equation(val lhv: ActionValue, val rhv: ActionValue) {
 }
 
 interface Action
+
 sealed class MethodAction(val method: Method) : Action
 sealed class MethodEntryAction(method: Method) : MethodAction(method)
 sealed class MethodExitAction(method: Method) : MethodAction(method)
@@ -95,11 +95,9 @@ class MethodInstance(method: Method, val instance: Equation) : MethodEntryAction
 }
 
 class MethodArgs(method: Method, val args: List<Equation>) : MethodEntryAction(method) {
-    override fun toString(): String {
-        val sb = StringBuilder()
-        sb.append("arguments $method;")
-        args.forEach { sb.append(" $it;") }
-        return sb.toString()
+    override fun toString() = buildString {
+        append("arguments $method;")
+        args.forEach { append(" $it;") }
     }
 }
 
@@ -120,11 +118,9 @@ class BlockJump(bb: BasicBlock) : BlockExitAction(bb) {
 }
 
 class BlockBranch(bb: BasicBlock, val conditions: List<Equation>) : BlockExitAction(bb) {
-    override fun toString(): String {
-        val sb = StringBuilder()
-        sb.append("branch ${bb.name};")
-        conditions.forEach { sb.append(" $it;") }
-        return sb.toString()
+    override fun toString() = buildString {
+        append("branch ${bb.name};")
+        conditions.forEach { append(" $it;") }
     }
 }
 
@@ -224,7 +220,8 @@ class ActionParser(val cm: ClassManager) : Grammar<Action>() {
         tracker.getBlock(name) ?: throw UnknownNameError(name)
     }
 
-    private val typeName by (separatedTerms(word, dot) use { map { it.text } } and zeroOrMore(openSquareBrace and closeSquareBrace)) use {
+    private val typeName by (separatedTerms(word, dot) use { map { it.text } }
+            and zeroOrMore(openSquareBrace and closeSquareBrace)) use {
         val braces = t2.fold("") { acc, it -> "$acc${it.t1.text}${it.t2.text}" }
         val typeName = t1.fold("") { acc, curr -> "$acc/$curr" }.drop(1)
         parseStringToType(cm.type, "$typeName$braces")
@@ -252,13 +249,16 @@ class ActionParser(val cm: ClassManager) : Grammar<Action>() {
     } or nan use { DoubleValue(Double.NaN) })
 
     private val stringValueParser by string use { StringValue(text.drop(1).dropLast(1)) }
-    private val arrayValueParser by (-array and -at and num and -openCurlyBrace and typeName and -commaAndSpace and num and -closeCurlyBrace) use {
+    private val arrayValueParser by (-array and -at and num and -openCurlyBrace and typeName and -commaAndSpace
+            and num and -closeCurlyBrace) use {
         ArrayValue(t1.text.toInt(), t2, t3.text.toInt())
     }
-    private val objectFields by separatedTerms(anyWord and -space and -equality and -space and parser(this::valueParser), commaAndSpace, true) use {
+    private val objectFields by separatedTerms(anyWord and -space and -equality and -space
+            and parser(this::valueParser), commaAndSpace, true) use {
         map { it.t1 to it.t2 }.toMap()
     }
-    private val objectValueParser: Parser<ActionValue> by (typeName and -at and num and -openCurlyBrace and objectFields and -closeCurlyBrace) use {
+    private val objectValueParser: Parser<ActionValue> by (typeName and -at and num and -openCurlyBrace
+            and objectFields and -closeCurlyBrace) use {
         val type = (t1 as? ClassType)?.`class` ?: throw UnknownTypeError(t1.toString())
         val identifier = t2.text.toInt()
         val fields = t3
@@ -283,15 +283,18 @@ class ActionParser(val cm: ClassManager) : Grammar<Action>() {
         MethodEntry(this)
     }
 
-    private val methodInstanceParser by (-instance and -space and methodName and -semicolonAndSpace and equationParser and -spacedSemicolon) use {
+    private val methodInstanceParser by (-instance and -space and methodName and -semicolonAndSpace and equationParser
+            and -spacedSemicolon) use {
         MethodInstance(t1, t2)
     }
 
-    private val methodArgsParser by (-arguments and -space and methodName and -semicolonAndSpace and equationList and -spacedSemicolon) use {
+    private val methodArgsParser by (-arguments and -space and methodName and -semicolonAndSpace and equationList
+            and -spacedSemicolon) use {
         MethodArgs(t1, t2)
     }
 
-    private val methodReturnParser by (-`return` and -space and methodName and -semicolonAndSpace and ((word use { null }) or equationParser and -spacedSemicolon)) use {
+    private val methodReturnParser by (-`return` and -space and methodName
+            and -semicolonAndSpace and ((word use { null }) or equationParser and -spacedSemicolon)) use {
         val ret = MethodReturn(t1, t2)
         trackers.pop()
         ret
@@ -304,12 +307,18 @@ class ActionParser(val cm: ClassManager) : Grammar<Action>() {
 
     private val blockEntryParser by (-enter and -space and blockName and -spacedSemicolon) use { BlockEntry(this) }
     private val blockJumpParser by (-exit and -space and blockName and -spacedSemicolon) use { BlockJump(this) }
-    private val blockBranchParser by (-branch and -space and blockName and -semicolonAndSpace and equationList and -spacedSemicolon) use { BlockBranch(t1, t2) }
-    private val blockSwitchParser by (-switch and -space and blockName and -semicolonAndSpace and equationParser and -spacedSemicolon) use { BlockSwitch(t1, t2) }
-    private val blockTableSwitchParser by (-tableswitch and -space and blockName and -semicolonAndSpace and equationParser and -spacedSemicolon) use { BlockTableSwitch(t1, t2) }
 
-    private val actionParser by (methodEntryParser or methodInstanceParser or methodArgsParser or methodReturnParser or methodThrowParser or
-            blockEntryParser or blockJumpParser or blockBranchParser or blockSwitchParser or blockTableSwitchParser)
+    private val blockBranchParser by (-branch and -space and blockName and -semicolonAndSpace
+            and equationList and -spacedSemicolon) use { BlockBranch(t1, t2) }
+
+    private val blockSwitchParser by (-switch and -space and blockName and -semicolonAndSpace and equationParser
+            and -spacedSemicolon) use { BlockSwitch(t1, t2) }
+
+    private val blockTableSwitchParser by (-tableswitch and -space and blockName and -semicolonAndSpace
+            and equationParser and -spacedSemicolon) use { BlockTableSwitch(t1, t2) }
+
+    private val actionParser by (methodEntryParser or methodInstanceParser or methodArgsParser or methodReturnParser
+            or methodThrowParser or blockEntryParser or blockJumpParser or blockBranchParser or blockSwitchParser or blockTableSwitchParser)
 
     override val rootParser by actionParser
 }

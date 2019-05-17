@@ -52,13 +52,11 @@ class TypeInfoAdapter(val method: Method, val loader: ClassLoader) : Recollectin
         else -> false
     }
 
-    private fun trimClassName(name: String): String {
+    private fun trimClassName(name: String) = buildString {
         val actualName = name.split(" ").last()
         val filtered = actualName.dropWhile { it == '[' }.removeSuffix(";")
-        val result = StringBuilder()
-        result.append(actualName.takeWhile { it == '[' })
-        result.append(filtered.dropWhile { it == 'L' })
-        return "$result"
+        append(actualName.takeWhile { it == '[' })
+        append(filtered.dropWhile { it == 'L' })
     }
 
     private val Type.trimmedName
@@ -68,11 +66,10 @@ class TypeInfoAdapter(val method: Method, val loader: ClassLoader) : Recollectin
         }
     private val Class<*>.trimmedName get() = trimClassName(this.toString())
 
-    private fun KFunction<*>.eq(method: Method): Boolean {
+    private infix fun KFunction<*>.eq(method: Method): Boolean {
         val parameters = this.parameters.drop(method.isAbstract.not().toInt())
 
-        return this.name == method.name
-                && parameters.zip(method.argTypes).fold(true) { acc, pair ->
+        return this.name == method.name && parameters.zip(method.argTypes).fold(true) { acc, pair ->
             val type = tryOrNull { pair.first.type.jvmErasure.java }
             acc && type?.trimmedName == pair.second.trimmedName
         }
@@ -81,7 +78,7 @@ class TypeInfoAdapter(val method: Method, val loader: ClassLoader) : Recollectin
     private fun getKClass(type: KexType) = getClass(type.getKfgType(types), loader).kotlin
 
     private fun getKFunction(method: Method) =
-            tryOrNull { getKClass(KexClass(method.`class`.fullname)).declaredMemberFunctions }?.find { it.eq(method) }
+            tryOrNull { getKClass(KexClass(method.`class`.fullname)).declaredMemberFunctions }?.find { it eq method }
 
     private fun getKProperty(field: Field) =
             tryOrNull { getKClass(KexClass(field.`class`.fullname)).declaredMemberProperties }?.find { it.name == field.name }

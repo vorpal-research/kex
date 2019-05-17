@@ -13,8 +13,10 @@ object Optimizer : Transformer<Optimizer> {
             merged != null -> merged
             ps.base is ChainState && ps.curr is BasicState -> {
                 merged = merge(ps.base.curr, ps.curr)
-                if (merged != null) transformChainState(ChainState(ps.base.base, merged))
-                else null
+                when {
+                    merged != null -> transformChainState(ChainState(ps.base.base, merged))
+                    else -> null
+                }
             }
             ps.base is BasicState && ps.curr is ChainState -> {
                 merged = merge(ps.base, ps.curr.base)
@@ -25,7 +27,7 @@ object Optimizer : Transformer<Optimizer> {
         } ?: ps
     }
 
-    fun merge(first: PredicateState, second: PredicateState): PredicateState? {
+    private fun merge(first: PredicateState, second: PredicateState): PredicateState? {
         val key = first to second
         val m = cache[key]
         return when {
