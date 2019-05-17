@@ -20,21 +20,21 @@ import org.jetbrains.research.kex.test.Intrinsics
 //}
 
 
-fun testUnreachableIf(x: Int): Int {
-    val set = "asdasdal;djadslas;d".length
-    val z = 10
-    val y = if (x > z && x < 0) {
-        Intrinsics.assertUnreachable()
-        println("lol")
-        142
-    } else {
-        Intrinsics.assertReachable(x <= z || x >= 0)
-        println("lol2")
-        x- 2 * x
-    }
-    Intrinsics.assertReachable()
-    return y
-}
+//fun testUnreachableIf(x: Int): Int {
+//    val set = "asdasdal;djadslas;d".length
+//    val z = 10
+//    val y = if (x > z && x < 0) {
+//        Intrinsics.assertUnreachable()
+//        println("lol")
+//        142
+//    } else {
+//        Intrinsics.assertReachable(x <= z || x >= 0)
+//        println("lol2")
+//        x- 2 * x
+//    }
+//    Intrinsics.assertReachable()
+//    return y
+//}
 
 //fun testObjectArray(nullable: Array<Any?>, nonnulable: Array<Any>) {
 //    if (nonnulable.isNotEmpty()) {
@@ -108,3 +108,28 @@ fun testUnreachableIf(x: Int): Int {
 //    Intrinsics.assertReachable()
 //    Icfpc2018Test.ZipWriter().createZip("submit/")
 //}
+
+fun simpleArray(x: Int, y: Int) {
+    val array = intArrayOf(x, 0, 1, 2)
+
+    if (array[x] == array[y] + 2)
+        Intrinsics.assertReachable()
+}
+
+fun testArray(): Int {
+    val array = arrayOf(
+            arrayOf(0, 1, 2, 3, 4),
+            arrayOf(5, 6, 7, 8, 9),
+            arrayOf(10, 11, 12, 13, 14)
+    )
+    if (array[4][4] > 10) {
+        Intrinsics.assertReachable()
+    }
+    if (array.size > 2) {
+        Intrinsics.assertReachable()
+    }
+    if (array[0].size > 4) {
+        Intrinsics.assertReachable()
+    }
+    return array.flatten().reduce { a, b -> a + b}
+}

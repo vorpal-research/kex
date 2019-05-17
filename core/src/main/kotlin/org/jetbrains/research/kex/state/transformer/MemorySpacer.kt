@@ -40,9 +40,9 @@ val Term.memspace: Int
             ?: unreachable { log.error("Trying to get memspace of primary type: $type") }
 
 class MemorySpacer(ps: PredicateState) : Transformer<MemorySpacer> {
-    val aa = StensgaardAA()
-    val indices = hashMapOf<Token, Int>(null to 0)
-    var index = 1
+    private val aa = StensgaardAA()
+    private val indices = hashMapOf<Token, Int>(null to 0)
+    private var index = 1
 
     init {
         aa.transform(ps)

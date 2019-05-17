@@ -27,10 +27,11 @@ class Z3Params(elements: Collection<Z3Param>) : ArrayList<Z3Param>(elements) {
 
         fun fromJson(jv: JsonValue): Z3Params = when (jv.inside) {
             is JsonArray<*> -> {
-                val params = jv.array
-                        ?.mapNotNull { it as? JsonObject }
-                        ?.map { Z3Param.fromJson(it) }
-                        ?.toList() ?: throw IllegalArgumentException()
+                val params = jv.array?.let {
+                    it.mapNotNull { it as? JsonObject }
+                            .map { Z3Param.fromJson(it) }
+                            .toList()
+                } ?: throw IllegalArgumentException()
                 Z3Params(params)
             }
             else -> throw IllegalArgumentException()
@@ -47,15 +48,14 @@ data class Z3Param (
     companion object {
         fun fromJson(jo: JsonObject): Z3Param {
             val key = jo.string("key") ?: throw java.lang.IllegalArgumentException()
-            val anyValue = jo["value"]
-            val actualValue = when (anyValue) {
+            val value = when (val anyValue = jo["value"]) {
                 is Boolean -> Value.BoolValue(anyValue)
                 is Int -> Value.IntValue(anyValue)
                 is Double -> Value.DoubleValue(anyValue)
                 is String -> Value.StringValue(anyValue)
                 else -> throw IllegalArgumentException()
             }
-            return Z3Param(key, actualValue)
+            return Z3Param(key, value)
         }
     }
 }

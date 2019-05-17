@@ -78,7 +78,7 @@ class PredicateStateBuilder(val method: Method) {
     private fun getBlockEntryState(bb: BasicBlock): PredicateState? {
         if (bb in method.catchBlocks) throw InvalidPredicateStateError("Cannot build predicate state for catch block")
 
-        val idom = domTree.getIdom(bb) ?: return emptyState()
+        val idom = domTree[bb]?.idom ?: return emptyState()
 
         val base = blockStates[idom.value] ?: return null
         val choices = mutableListOf<PredicateState>()

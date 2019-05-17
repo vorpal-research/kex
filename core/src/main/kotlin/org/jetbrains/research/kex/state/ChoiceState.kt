@@ -8,12 +8,10 @@ class ChoiceState(val choices: List<PredicateState>) : PredicateState(), Iterabl
     override val size: Int
         get() = choices.fold(0) { acc, it -> acc + it.size }
 
-    override fun print(): String {
-        val sb = StringBuilder()
-        sb.appendln("(BEGIN")
-        sb.append(choices.joinToString { " <OR> {$it}" })
-        sb.append(" END)")
-        return sb.toString()
+    override fun print() = buildString {
+        appendln("(BEGIN")
+        append(choices.joinToString { " <OR> $it" })
+        append(" END)")
     }
 
     override fun fmap(transform: (PredicateState) -> PredicateState): PredicateState = ChoiceState(choices.map { transform(it) })
@@ -40,10 +38,10 @@ class ChoiceState(val choices: List<PredicateState>) : PredicateState(), Iterabl
     override fun simplify(): PredicateState {
         val simplifiedChoices = choices.map { it.simplify() }.filter { it.isNotEmpty }
         return when {
-            simplifiedChoices.isEmpty() -> StateBuilder().apply()
+            simplifiedChoices.isEmpty() -> emptyState()
             simplifiedChoices.size == 1 -> simplifiedChoices.first()
             simplifiedChoices == choices -> this
-            else -> (StateBuilder() + simplifiedChoices).apply()
+            else -> (emptyState() + simplifiedChoices).apply()
         }
     }
 }

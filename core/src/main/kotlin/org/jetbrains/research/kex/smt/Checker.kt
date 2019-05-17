@@ -25,7 +25,7 @@ class Checker(val method: Method, val loader: ClassLoader, private val psa: Pred
         log.debug("Checking reachability of ${inst.print()}")
 
         var state = builder.getInstructionState(inst)
-                ?: return Result.UnknownResult("Can't get state for instruction ${inst.print()}, maybe it's unreachable")
+                ?: return Result.UnknownResult("Can't get state for instruction ${inst.print()}")
 
         if (logQuery) log.debug("State: $state")
 
@@ -59,8 +59,8 @@ class Checker(val method: Method, val loader: ClassLoader, private val psa: Pred
                 val results = hashSetOf<Term>()
                 if (`this` != null) results += `this`
 
-                results += variables.asSequence().filter { it is ArgumentTerm }
-                results += variables.asSequence().filter { it is FieldTerm && it.owner == `this` }
+                results += variables.filter { it is ArgumentTerm }
+                results += variables.filter { it is FieldTerm && it.owner == `this` }
                 results += TermCollector.getFullTermSet(query)
                 results
             }
@@ -73,7 +73,7 @@ class Checker(val method: Method, val loader: ClassLoader, private val psa: Pred
             log.debug("Slicing finished")
         }
 
-        state = Optimizer.apply(state)
+        state = Optimizer.apply(state).simplify()
         query = Optimizer.apply(query).simplify()
         if (logQuery) {
             log.debug("Simplified state: $state")

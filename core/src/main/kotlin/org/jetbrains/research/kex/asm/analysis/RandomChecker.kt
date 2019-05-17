@@ -7,7 +7,7 @@ import org.jetbrains.research.kex.trace.runner.RandomRunner
 import org.jetbrains.research.kex.util.log
 import org.jetbrains.research.kfg.ClassManager
 import org.jetbrains.research.kfg.ir.Method
-import org.jetbrains.research.kfg.util.JarUtils
+import org.jetbrains.research.kfg.util.writeClass
 import org.jetbrains.research.kfg.visitor.MethodVisitor
 import java.io.File
 import java.net.URLClassLoader
@@ -26,7 +26,7 @@ class RandomChecker(override val cm: ClassManager, private val loader: ClassLoad
         val classFileName = "${target.canonicalPath}/${`class`.fullname}.class"
         if (!method.isAbstract && !method.isConstructor) {
             val traceInstructions = TraceInstrumenter(cm).invoke(method)
-            JarUtils.writeClass(cm, loader, `class`, classFileName)
+            writeClass(cm, loader, `class`, classFileName)
             val directory = URLClassLoader(arrayOf(target.toURI().toURL()))
 
             try {
@@ -37,7 +37,7 @@ class RandomChecker(override val cm: ClassManager, private val loader: ClassLoad
 
             traceInstructions.forEach { it.parent?.remove(it) }
         }
-        JarUtils.writeClass(cm, loader, `class`, classFileName)
+        writeClass(cm, loader, `class`, classFileName)
 
 
         log.info("Results:")

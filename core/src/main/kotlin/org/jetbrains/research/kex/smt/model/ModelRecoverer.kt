@@ -11,14 +11,14 @@ import org.jetbrains.research.kfg.type.FloatType
 import org.jetbrains.research.kfg.type.Integral
 import java.lang.reflect.Array
 
-private fun Term.isPointer() = this.type is KexPointer
-private fun Term.isPrimary() = !isPointer()
+private val Term.isPointer get() = this.type is KexPointer
+private val Term.isPrimary get() = !this.isPointer
 
 data class RecoveredModel(val method: Method, val instance: Any?, val arguments: List<Any?>)
 
 class ModelRecoverer(val method: Method, val model: SMTModel, val loader: ClassLoader) {
     val tf = TermFactory
-    val terms = hashMapOf<Term, Any?>()
+//    val terms = hashMapOf<Term, Any?>()
 
     private val randomizer = defaultRandomizer
 
@@ -35,30 +35,33 @@ class ModelRecoverer(val method: Method, val model: SMTModel, val loader: ClassL
 
     fun apply(): RecoveredModel {
         val thisTerm = model.assignments.keys.firstOrNull { it.print().startsWith("this") }
-        val instance = if (thisTerm != null) recoverTerm(thisTerm) else null
+        val instance = thisTerm?.let { recoverTerm(it) }
 
         val modelArgs = model.assignments.keys.asSequence()
                 .mapNotNull { it as? ArgumentTerm }.map { it.index to it }.toMap()
 
         val recoveredArgs = arrayListOf<Any?>()
+
         for (index in 0..method.argTypes.lastIndex) {
             val modelArg = modelArgs[index]
-            val recoveredArg = if (modelArg != null) recoverTerm(modelArg) else modelArg
-            recoveredArgs += if (recoveredArg == null && method.argTypes[index].isPrimary) {
-                when (method.argTypes[index]) {
+            val recoveredArg = modelArg?.let { recoverTerm(it) }
+
+            recoveredArgs += recoveredArg ?: when {
+                method.argTypes[index].isPrimary -> when (method.argTypes[index]) {
                     is Integral -> 0
                     is FloatType -> 0.0F
                     is DoubleType -> 0.0
                     else -> unreachable { log.error("Unknown primary type ${method.argTypes[index]}") }
                 }
-            } else recoveredArg
+                else -> null
+            }
         }
 
         return RecoveredModel(method, instance, recoveredArgs)
     }
 
     private fun recoverTerm(term: Term, value: Term? = model.assignments[term]): Any? = when {
-        term.isPrimary() -> recoverPrimary(term.type, value)
+        term.isPrimary -> recoverPrimary(term.type, value)
         else -> recoverReferenceTerm(term, value)
     }
 
