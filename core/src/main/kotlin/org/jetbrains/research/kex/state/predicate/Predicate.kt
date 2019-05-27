@@ -38,7 +38,17 @@ sealed class PredicateType(val name: String) {
         override fun equals(other: Any?) = when {
             this === other -> true
             other == null -> false
-            other is State -> true
+            other is Assume -> true
+            else -> false
+        }
+    }
+
+    class Require : PredicateType("R") {
+        override fun hashCode() = defaultHashCode(name)
+        override fun equals(other: Any?) = when {
+            this === other -> true
+            other == null -> false
+            other is Require -> true
             else -> false
         }
     }

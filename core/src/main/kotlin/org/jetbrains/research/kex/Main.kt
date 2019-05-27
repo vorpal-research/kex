@@ -1,7 +1,7 @@
 package org.jetbrains.research.kex
 
-import org.jetbrains.research.kex.asm.analysis.MethodChecker
 import org.jetbrains.research.kex.asm.analysis.RandomChecker
+import org.jetbrains.research.kex.asm.analysis.ViolationChecker
 import org.jetbrains.research.kex.asm.state.PredicateStateAnalysis
 import org.jetbrains.research.kex.asm.transform.LoopDeroller
 import org.jetbrains.research.kex.config.CmdConfig
@@ -33,19 +33,20 @@ fun main(args: Array<String>) {
     val jarLoader = jar.classLoader
     val `package` = Package(packageName.replace('.', '/'))
     val classManager = ClassManager(jar, `package`, Flags.readAll)
-    val origManager = ClassManager(jar, `package`, Flags.readAll)
+//    val origManager = ClassManager(jar, `package`, Flags.readAll)
 
     log.debug("Running with jar ${jar.name} and package $`package`")
     val target = File("instrumented/")
     // write all classes to target, so they will be seen by ClassLoader
     writeClassesToTarget(classManager, jar, target, `package`, true)
 
+    val psa = PredicateStateAnalysis(classManager)
     executePipeline(classManager, `package`) {
         +RandomChecker(classManager, jarLoader, target)
         +LoopSimplifier(classManager)
         +LoopDeroller(classManager)
-        val psa = PredicateStateAnalysis(classManager)
         +psa
-        +MethodChecker(classManager, jarLoader, origManager, target, psa)
+        +ViolationChecker(cm, psa)
+        //+MethodChecker(classManager, jarLoader, origManager, target, psa)
     }
 }

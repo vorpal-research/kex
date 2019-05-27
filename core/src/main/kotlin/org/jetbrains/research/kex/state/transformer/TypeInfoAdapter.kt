@@ -84,7 +84,7 @@ class TypeInfoAdapter(val method: Method, val loader: ClassLoader) : Recollectin
             tryOrNull { getKClass(KexClass(field.`class`.fullname)).declaredMemberProperties }?.find { it.name == field.name }
 
     override fun apply(ps: PredicateState): PredicateState {
-        val (`this`, arguments) = ArgumentCollector(ps)
+        val (`this`, arguments) = collectArguments(ps)
         val `null` = tf.getNull()
 
         if (`this` != null) {

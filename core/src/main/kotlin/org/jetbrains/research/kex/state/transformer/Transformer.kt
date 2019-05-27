@@ -43,7 +43,7 @@ interface Transformer<T : Transformer<T>> {
                 ?: unreachable { log.debug("Unexpected null in transformer invocation") }
     }
 
-    fun apply(ps: PredicateState) = transform(ps)
+    fun apply(ps: PredicateState) = transform(ps).simplify()
 
     ////////////////////////////////////////////////////////////////////
     // PredicateState

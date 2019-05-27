@@ -102,6 +102,6 @@ class PredicateStateBuilder(val method: Method) {
             choices.isEmpty() -> null
             choices.size == 1 -> base + choices.first()
             else -> base + choices
-        }?.apply()
+        }
     }
 }

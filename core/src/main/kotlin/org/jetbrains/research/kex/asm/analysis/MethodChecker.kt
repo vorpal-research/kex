@@ -76,7 +76,7 @@ class MethodChecker(
         log.debug()
 
         val blockMappings = LoopDeroller.blockMapping.getOrPut(method, ::mutableMapOf)
-        for (block in method.bodyBlocks.reversed()) {
+        for (block in method.bodyBlocks) {
             val originalBlock = blockMappings[block] ?: block
             if (tm.isCovered(method, originalBlock)) continue
 

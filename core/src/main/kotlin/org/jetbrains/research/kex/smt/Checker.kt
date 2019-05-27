@@ -37,22 +37,22 @@ class Checker(val method: Method, val loader: ClassLoader, private val psa: Pred
 
         state = IntrinsicAdapter.apply(state)
         state = TypeInfoAdapter(method, loader).apply(state)
-        state = Optimizer.transform(state).simplify()
-        state = ConstantPropagator.apply(state).simplify()
-        state = BoolTypeAdapter(method.cm.type).apply(state).simplify()
+        state = Optimizer().apply(state)
+        state = ConstantPropagator.apply(state)
+        state = BoolTypeAdapter(method.cm.type).apply(state)
 
         if (isMemspacingEnabled) {
             log.debug("Memspacing started...")
-            state = MemorySpacer(state).apply(state).simplify()
+            state = MemorySpacer(state).apply(state)
             log.debug("Memspacing finished")
         }
 
-        var query = state.filterByType(PredicateType.Path()).simplify()
+        var query = state.filterByType(PredicateType.Path())
 
         if (isSlicingEnabled) {
             log.debug("Slicing started...")
 
-            val variables = VariableCollector(state)
+            val variables = collectVariables(state)
             val slicingTerms = run {
                 val `this` = variables.find { it is ValueTerm && it.name == "this" }
 
@@ -73,8 +73,8 @@ class Checker(val method: Method, val loader: ClassLoader, private val psa: Pred
             log.debug("Slicing finished")
         }
 
-        state = Optimizer.apply(state).simplify()
-        query = Optimizer.apply(query).simplify()
+        state = Optimizer().apply(state)
+        query = Optimizer().apply(query)
         if (logQuery) {
             log.debug("Simplified state: $state")
             log.debug("Path: $query")

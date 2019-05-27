@@ -291,13 +291,15 @@ class ${solver}Converter(val tf: TypeFactory) : ${solver}SMTConverter() {
     fun convert(const: ConstShortTerm, ef: $factory, ctx: ${solver}Context): Dynamic_ = ef.makeIntConst(const.value.toInt())
 
     fun convert(const: ConstStringTerm, ef: $factory, ctx: ${solver}Context): Dynamic_ {
-        val memspace = const.memspace
-
-        val length = const.name.length
-        val actualSize = length * ${factory}.getTypeSize(KexInt)
-        val res = ctx.getLocalPtr(memspace, actualSize)
-        ctx.writeBound(res, ef.makeIntConst(actualSize), memspace)
-        return res
+##        val memspace = const.memspace
+##
+##        val length = const.name.length
+##        val actualSize = length * ${factory}.getTypeSize(KexInt)
+##        val res = ctx.getLocalPtr(memspace, actualSize)
+##        ctx.writeBound(res, ef.makeIntConst(actualSize), memspace)
+##        return res
+        val expr = ef.getVarByTypeAndName(const.type, const.name)
+        return addTypeAxioms(const, expr, ef, ctx)
     }
 
     fun convert(fieldload: FieldLoadTerm, ef: $factory, ctx: ${solver}Context): Dynamic_ {

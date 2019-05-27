@@ -6,8 +6,8 @@ import org.jetbrains.research.kex.state.predicate.FieldStorePredicate
 import org.jetbrains.research.kex.state.predicate.Predicate
 import org.jetbrains.research.kex.state.term.*
 
-object PointerCollector : Transformer<PointerCollector> {
-    private val ptrs = hashSetOf<Term>()
+class PointerCollector : Transformer<PointerCollector> {
+    val ptrs = hashSetOf<Term>()
 
     override fun transformArrayStorePredicate(predicate: ArrayStorePredicate): Predicate {
         ptrs.add(predicate.arrayRef)
@@ -53,9 +53,10 @@ object PointerCollector : Transformer<PointerCollector> {
         ptrs.clear()
         return super.apply(ps)
     }
+}
 
-    operator fun invoke(ps: PredicateState): Set<Term> {
-        apply(ps)
-        return ptrs.toSet()
-    }
+fun collectPointers(ps: PredicateState): Set<Term> {
+    val collector = PointerCollector()
+    collector.apply(ps)
+    return collector.ptrs.toSet()
 }
