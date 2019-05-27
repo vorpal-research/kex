@@ -8,7 +8,8 @@ interface TypeInfo {
     val reverseMapping: Map<Class<*>, String>
 }
 
-fun emptyState() = BasicState()
+fun emptyState(): PredicateState = BasicState()
+fun Predicate.wrap() = emptyState() + this
 
 class StateBuilder() {
     var current: PredicateState = emptyState()
@@ -98,6 +99,6 @@ abstract class PredicateState : TypeInfo {
     abstract fun simplify(): PredicateState
 
     fun builder() = StateBuilder(this)
-    operator fun plus(state: PredicateState) = builder() + state
-    operator fun plus(states: List<PredicateState>) = builder() + states
+    operator fun plus(state: PredicateState) = (builder() + state).apply()
+    operator fun plus(states: List<PredicateState>) = (builder() + states).apply()
 }

@@ -20,7 +20,7 @@ class CFGTracker : Transformer<CFGTracker> {
 
     override fun transformBase(predicate: Predicate): Predicate {
         if (predicate.type != PredicateType.State()) {
-            currentDominators += predicate
+            currentDominators = currentDominators + predicate
         }
         dominatorMap[predicate] = dominatorMap.getOrElse(predicate, ::setOf) + currentDominators
         return predicate
@@ -33,7 +33,7 @@ class CFGTracker : Transformer<CFGTracker> {
         for (branch in ps.choices) {
             currentDominators = entryDominators
             super.transform(branch)
-            totalDominators += currentDominators
+            totalDominators = totalDominators + currentDominators
         }
 
         currentDominators = entryDominators
@@ -133,7 +133,7 @@ class Slicer(val state: PredicateState, sliceTerms: Set<Term>, val aa: AliasAnal
     }
 
     override fun transformBase(predicate: Predicate): Predicate {
-        if (predicate.type != PredicateType.State()) {
+        if (predicate.type == PredicateType.Path()) {
             val inversed = predicate.inverse()
             return when {
                 predicate in currentPath && inversed !in currentPath -> {

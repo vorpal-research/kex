@@ -11,8 +11,8 @@ import org.jetbrains.research.kex.smt.model.SMTModel
 import org.jetbrains.research.kex.state.PredicateState
 import org.jetbrains.research.kex.state.predicate.PredicateType
 import org.jetbrains.research.kex.state.term.Term
-import org.jetbrains.research.kex.state.transformer.PointerCollector
-import org.jetbrains.research.kex.state.transformer.VariableCollector
+import org.jetbrains.research.kex.state.transformer.collectPointers
+import org.jetbrains.research.kex.state.transformer.collectVariables
 import org.jetbrains.research.kex.state.transformer.memspace
 import org.jetbrains.research.kex.util.castTo
 import org.jetbrains.research.kex.util.log
@@ -131,7 +131,7 @@ class Z3Solver(val tf: TypeFactory) : AbstractSMTSolver {
 
     private fun collectModel(ctx: Z3Context, model: Model, vararg states: PredicateState): SMTModel {
         val (ptrs, vars) = states.fold(setOf<Term>() to setOf<Term>()) { acc, ps ->
-            acc.first + PointerCollector(ps) to acc.second + VariableCollector(ps)
+            acc.first + collectPointers(ps) to acc.second + collectVariables(ps)
         }
 
         val assignments = vars.map {
@@ -157,6 +157,7 @@ class Z3Solver(val tf: TypeFactory) : AbstractSMTSolver {
 
             val eptr = Z3Converter(tf).convert(ptr, ef, ctx) as? Ptr_
                     ?: unreachable { log.error("Non-ptr expr for pointer $ptr") }
+            log.debug("Evaluating $eptr")
 
             val startV = startMem.load(eptr, Z3ExprFactory.getTypeSize(ptr.type))
             val endV = endMem.load(eptr, Z3ExprFactory.getTypeSize(ptr.type))
