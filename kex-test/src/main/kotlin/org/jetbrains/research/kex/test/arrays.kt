@@ -30,7 +30,9 @@ open class ArrayTests {
         }
         Intrinsics.assertReachable()
     }
+}
 
+open class ArrayLongTests {
     fun testUnknownArrayWrite(array: IntArray) {
         if (array.size < 5) {
             Intrinsics.assertReachable(array.size < 5)
