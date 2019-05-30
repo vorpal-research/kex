@@ -202,12 +202,32 @@
                     <includes>
                         <include>**/*Test.*</include>
                     </includes>
+                    <excludes>
+                        <exclude>**/*LongTest.*</exclude>
+                    </excludes>
                 </configuration>
+
                 <executions>
                     <execution>
                         <goals>
                             <goal>test</goal>
                         </goals>
+                    </execution>
+
+                    <execution>
+                        <id>long-tests</id>
+                        <goals>
+                            <goal>test</goal>
+                        </goals>
+                        <phase>verify</phase>
+                        <configuration>
+                            <excludes>
+                                <exclude>none</exclude>
+                            </excludes>
+                            <includes>
+                                <include>**/*LongTest.java</include>
+                            </includes>
+                        </configuration>
                     </execution>
                 </executions>
             </plugin>
