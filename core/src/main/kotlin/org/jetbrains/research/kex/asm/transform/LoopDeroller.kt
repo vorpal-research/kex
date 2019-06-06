@@ -195,7 +195,7 @@ class LoopDeroller(override val cm: ClassManager) : LoopVisitor {
                 if (value.parent != header) return -1
 
                 val incomings = value.incomings
-                require(incomings.size == 2) { log.error("Unexpected number of header incomings") }
+                if (incomings.size != 2) return -1
                 incomings.getValue(preheader) to incomings.getValue(latch)
             }
             else -> return -1
@@ -250,7 +250,7 @@ class LoopDeroller(override val cm: ClassManager) : LoopVisitor {
             }
         }
         if (original is CatchBlock) {
-            val throwers = original.throwers.map { state[it] }
+            val throwers = original.throwers.map { state.getOrDefault(it, it) }
             derolled as CatchBlock
             derolled.addThrowers(throwers)
             throwers.forEach { it.addHandler(derolled) }

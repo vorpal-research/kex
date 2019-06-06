@@ -18,9 +18,10 @@ import org.jetbrains.research.kex.util.log
 import org.jetbrains.research.kfg.ClassManager
 import org.jetbrains.research.kfg.ir.BasicBlock
 import org.jetbrains.research.kfg.ir.Method
+import org.jetbrains.research.kfg.ir.value.Value
 import org.jetbrains.research.kfg.ir.value.instruction.*
+import org.jetbrains.research.kfg.util.TopologicalSorter
 import org.jetbrains.research.kfg.visitor.MethodVisitor
-import java.util.*
 
 
 private val isInliningEnabled = GlobalConfig.getBooleanValue("smt", "ps-inlining", true)
@@ -36,11 +37,11 @@ class ViolationChecker(override val cm: ClassManager,
     private lateinit var method: Method
     private lateinit var currentBlock: BasicBlock
     private val failingBlocks = mutableSetOf<BasicBlock>()
-    private val visitedBlocks = mutableSetOf<BasicBlock>()
+    private var nonNullityInfo = mutableMapOf<BasicBlock, Set<Value>>()
+    private var nonNulls = mutableSetOf<Value>()
 
     override fun cleanup() {
         failingBlocks.clear()
-        visitedBlocks.clear()
     }
 
     override fun visit(method: Method) {
@@ -48,20 +49,25 @@ class ViolationChecker(override val cm: ClassManager,
 
         this.builder = psa.builder(method)
         this.method = method
+        if (method.isEmpty()) return
 
-        val query = ArrayDeque<BasicBlock>()
-        if (method.isNotEmpty())
-            query.push(method.entry)
+        val (order, cycled) = TopologicalSorter(method.basicBlocks.toSet()).sort(method.entry)
+        require(cycled.isEmpty()) { log.error("No topological sorting for method $method") }
 
-        while (query.isNotEmpty()) {
-            currentBlock = query.pollFirst()
+        for (block in order.reversed()) {
+            currentBlock = block
+
+            val predecessorInfo = currentBlock.predecessors
+                    .map { nonNullityInfo.getOrPut(it, ::setOf) }
+            nonNulls = when {
+                predecessorInfo.isNotEmpty() -> predecessorInfo.reduce { prev, curr -> prev.intersect(curr) }
+                        .toHashSet()
+                else -> mutableSetOf()
+            }
 
             super.visitBasicBlock(currentBlock)
 
-            if (currentBlock !in failingBlocks)
-                query += currentBlock.successors.filter { it !in visitedBlocks }.filter { it !in query }
-
-            visitedBlocks += currentBlock
+            nonNullityInfo[currentBlock] = nonNulls.toSet()
         }
     }
 
@@ -71,7 +77,10 @@ class ViolationChecker(override val cm: ClassManager,
         val index = tf.getValue(inst.index)
         val state = builder.getInstructionState(inst) ?: return
 
-        visitArrayAccess(state, arrayRef, length, index)
+        if (inst.arrayRef !in nonNulls && checkNullity(state, arrayRef))
+            nonNulls.add(inst.arrayRef)
+
+        checkOutOfBounds(state, length, index)
     }
 
     override fun visitArrayStoreInst(inst: ArrayStoreInst) {
@@ -80,21 +89,51 @@ class ViolationChecker(override val cm: ClassManager,
         val index = tf.getValue(inst.index)
         val state = builder.getInstructionState(inst) ?: return
 
-        visitArrayAccess(state, arrayRef, length, index)
+        if (inst.arrayRef !in nonNulls && checkNullity(state, arrayRef))
+            nonNulls.add(inst.arrayRef)
+
+        checkOutOfBounds(state, length, index)
     }
 
-    private fun visitArrayAccess(state: PredicateState, arrayRef: Term, length: Term, index: Term) {
-        val refQuery = pf.getEquality(
-                tf.getCmp(CmpOpcode.Neq(), arrayRef, tf.getNull()),
-                tf.getTrue(),
-                PredicateType.Require()
-        ).wrap()
-        if (check(state, refQuery) == Result.UnsatResult) {
-            failingBlocks += currentBlock
-            return
-        }
-        val nonNullState = state + refQuery
+    override fun visitFieldLoadInst(inst: FieldLoadInst) {
+        if (!inst.hasOwner) return
+        if (inst.owner in nonNulls) return
+        val state = builder.getInstructionState(inst) ?: return
 
+        val `object` = tf.getValue(inst.owner)
+        if (checkNullity(state, `object`)) nonNulls.add(inst.owner)
+    }
+
+    override fun visitFieldStoreInst(inst: FieldStoreInst) {
+        if (!inst.hasOwner) return
+        if (inst.owner in nonNulls) return
+        val state = builder.getInstructionState(inst) ?: return
+
+        val `object` = tf.getValue(inst.owner)
+        if (checkNullity(state, `object`)) nonNulls.add(inst.owner)
+    }
+
+    override fun visitCallInst(inst: CallInst) {
+        if (inst.isStatic) return
+        if (inst.callee in nonNulls) return
+        val state = builder.getInstructionState(inst) ?:  return
+
+        val `object` = tf.getValue(inst.callee)
+        if (checkNullity(state, `object`)) nonNulls.add(inst.callee)
+    }
+
+    private fun checkNullity(state: PredicateState, `object`: Term): Boolean {
+        val refQuery = pf.getInequality(`object`, tf.getNull(), PredicateType.Require()).wrap()
+        return when {
+            check(state, refQuery) == Result.UnsatResult -> {
+                failingBlocks += currentBlock
+                false
+            }
+            else -> true
+        }
+    }
+
+    private fun checkOutOfBounds(state: PredicateState, length: Term, index: Term): Boolean {
         var indexQuery = pf.getEquality(
                 tf.getCmp(CmpOpcode.Ge(), index, tf.getConstant(0)),
                 tf.getTrue(),
@@ -106,40 +145,14 @@ class ViolationChecker(override val cm: ClassManager,
                 PredicateType.Require()
         )
 
-        if (check(nonNullState, indexQuery) == Result.UnsatResult) {
-            failingBlocks += currentBlock
-            return
+        return when {
+            check(state, indexQuery) == Result.UnsatResult -> {
+                failingBlocks += currentBlock
+                false
+            }
+            else -> true
         }
     }
-
-    override fun visitFieldLoadInst(inst: FieldLoadInst) {
-        if (!inst.hasOwner) return
-        val state = builder.getInstructionState(inst) ?: return
-
-        val `object` = tf.getValue(inst.owner)
-        visitObjectAccess(state, `object`)
-    }
-
-    override fun visitFieldStoreInst(inst: FieldStoreInst) {
-        if (!inst.hasOwner) return
-        val state = builder.getInstructionState(inst) ?: return
-
-        val `object` = tf.getValue(inst.owner)
-        visitObjectAccess(state, `object`)
-    }
-
-    private fun visitObjectAccess(state: PredicateState, `object`: Term) {
-        val refQuery = pf.getEquality(
-                tf.getCmp(CmpOpcode.Neq(), `object`, tf.getNull()),
-                tf.getTrue(),
-                PredicateType.Require()
-        ).wrap()
-        if (check(state, refQuery) == Result.UnsatResult) {
-            failingBlocks += currentBlock
-            return
-        }
-    }
-
 
     private fun check(state_: PredicateState, query_: PredicateState): Result {
         var state = state_
@@ -159,6 +172,7 @@ class ViolationChecker(override val cm: ClassManager,
         }
 
         state = IntrinsicAdapter.apply(state)
+        state = NullityAnnotator(nonNulls.map { tf.getValue(it) }.toSet()).apply(state)
         state = DoubleTypeAdapter().apply(state)
         query = DoubleTypeAdapter().apply(query)
         state = Optimizer().apply(state)
@@ -202,7 +216,7 @@ class ViolationChecker(override val cm: ClassManager,
         query = Optimizer().apply(query)
         if (logQuery) {
             log.debug("Simplified state: $state")
-            log.debug("Path: $query")
+            log.debug("Query: $query")
         }
 
         val solver = SMTProxySolver(method.cm.type)

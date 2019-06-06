@@ -9,6 +9,7 @@ import org.jetbrains.research.kfg.ir.value.*
 import org.jetbrains.research.kfg.ir.value.instruction.BinaryOpcode
 import org.jetbrains.research.kfg.ir.value.instruction.CmpOpcode
 import org.jetbrains.research.kfg.ir.value.instruction.UnaryOpcode
+import org.jetbrains.research.kfg.type.ArrayType
 import org.jetbrains.research.kfg.type.ClassType
 import org.jetbrains.research.kfg.type.TypeFactory
 
@@ -21,6 +22,7 @@ object TermFactory {
         is BoolConstant -> getBool(const)
         is ByteConstant -> getByte(const)
         is ShortConstant -> getShort(const)
+        is CharConstant -> getChar(const)
         is IntConstant -> getInt(const)
         is LongConstant -> getLong(const)
         is FloatConstant -> getFloat(const)
@@ -28,7 +30,7 @@ object TermFactory {
         is StringConstant -> getString(const)
         is NullConstant -> getNull()
         is ClassConstant -> getClass(const)
-        else -> unreachable { log.error("Unknown constant type: $const") }
+        else -> unreachable { log.error("Unknown constant type: $const of type ${const::class}") }
     }
 
     fun <T : Number> getConstant(number: T) = when (number) {
@@ -49,6 +51,8 @@ object TermFactory {
     fun getByte(const: ByteConstant) = getByte(const.value)
     fun getShort(value: Short) = ConstShortTerm(value)
     fun getShort(const: ShortConstant) = getShort(const.value)
+    fun getChar(value: Char) = ConstCharTerm(value)
+    fun getChar(const: CharConstant) = getChar(const.value)
     fun getInt(value: Int) = ConstIntTerm(value)
     fun getInt(const: IntConstant) = getInt(const.value)
     fun getLong(value: Long) = ConstLongTerm(value)
@@ -63,11 +67,16 @@ object TermFactory {
     fun getNull() = NullTerm()
     fun getClass(`class`: Class) = getClass(KexClass(`class`.fullname), `class`)
     fun getClass(type: KexType, `class`: Class) = ConstClassTerm(type, `class`)
-//    fun getClass(type: KexType) = ConstClassTerm(type,
-//            (type as? KexClass)?.`class` ?: unreachable { log.debug("Non-ref type of class constant") })
 
-    fun getClass(const: ClassConstant) = ConstClassTerm(const.type.kexType,
-            (const.type as? ClassType)?.`class` ?: unreachable { log.debug("Non-ref type of class constant") })
+    fun getClass(const: ClassConstant): ConstClassTerm {
+        val constType = const.type
+        val `class` = when (constType) {
+            is ClassType -> constType.`class`
+            is ArrayType -> unreachable { log.error("Don't know what to do") }
+            else -> unreachable { log.error("Non-ref type of class constant") }
+        }
+        return ConstClassTerm(constType.kexType, `class`)
+    }
 
     fun getUnaryTerm(operand: Term, opcode: UnaryOpcode) = when (opcode) {
         UnaryOpcode.NEG -> getNegTerm(operand)
