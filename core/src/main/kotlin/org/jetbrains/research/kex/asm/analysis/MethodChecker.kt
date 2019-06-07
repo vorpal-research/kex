@@ -30,6 +30,7 @@ class MethodChecker(
         private val target: File,
         private val psa: PredicateStateAnalysis) : MethodVisitor {
     private val tm = TraceManager
+    private val random = defaultRandomizer
     private var state: State? = null
 
     private data class State(
@@ -104,7 +105,7 @@ class MethodChecker(
                 tryOrNull {
                     val instance = model.instance ?: when {
                         method.isStatic -> null
-                        else -> defaultRandomizer.next(getClass(types.getRefType(method.`class`), state!!.loader))
+                        else -> random.next(getClass(types.getRefType(method.`class`), state!!.loader))
                     }
 
                     val trace = SimpleRunner(method, state!!.loader).invoke(instance, model.arguments.toTypedArray())

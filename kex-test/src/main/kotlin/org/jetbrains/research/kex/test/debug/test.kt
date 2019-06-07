@@ -2,7 +2,10 @@
 
 package org.jetbrains.research.kex.test.debug
 
-class ObjectTests {
+class DoublePoint(val x: Double) {
+    constructor() : this(0.0)
 
-    data class DoublePoint(val x: Double)
+    fun lolol(d: Double): Double {
+        return x + d
+    }
 }
