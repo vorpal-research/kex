@@ -47,6 +47,6 @@ fun main(args: Array<String>) {
         +LoopDeroller(classManager)
         +psa
         +ViolationChecker(cm, psa)
-        //+MethodChecker(classManager, jarLoader, origManager, target, psa)
+//        +MethodChecker(classManager, jarLoader, origManager, target, psa)
     }
 }

@@ -1,25 +1,32 @@
 package org.jetbrains.research.kex.asm.transform
 
-import org.jetbrains.research.kex.asm.util.SystemErrWrapper
-import org.jetbrains.research.kex.asm.util.ValuePrinter
+import org.jetbrains.research.kex.asm.util.FileOutputStreamWrapper
+import org.jetbrains.research.kex.util.buildList
 import org.jetbrains.research.kfg.ClassManager
+import org.jetbrains.research.kfg.analysis.IRVerifier
 import org.jetbrains.research.kfg.ir.BasicBlock
 import org.jetbrains.research.kfg.ir.Method
 import org.jetbrains.research.kfg.ir.value.instruction.*
 import org.jetbrains.research.kfg.visitor.MethodVisitor
 
 class TraceInstrumenter(override val cm: ClassManager) : MethodVisitor {
-    companion object {
-        const val tracePrefix = "trace"
-    }
-
     val insertedInsts = mutableListOf<Instruction>()
+    private lateinit var fos: FileOutputStreamWrapper
+
+    companion object {
+        const val TRACE_POSTFIX = ".trace"
+
+        fun generateTraceFileName(method: Method): String {
+            val name = method.toString().replace('/', '.').replace(" ", "")
+            return "$name$TRACE_POSTFIX"
+        }
+    }
 
     private fun instrumentInst(inst: Instruction, instrumenter: (inst: Instruction) -> List<Instruction>) {
         val bb = inst.parent!!
 
         val insts = instrumenter(inst)
-        insertedInsts.addAll(insts)
+        insertedInsts += insts
         bb.insertBefore(inst, *insts.toTypedArray())
     }
 
@@ -31,147 +38,130 @@ class TraceInstrumenter(override val cm: ClassManager) : MethodVisitor {
         val bb = inst.parent!!
         val method = bb.parent!!
 
-        val builder = SystemErrWrapper(cm, "serr")
-        builder.println()
-        builder.println("$tracePrefix exit ${bb.name};")
-        builder.print("$tracePrefix return ${method.prototype.replace('/', '.')}; ")
+        buildList {
+            +fos.println("exit ${bb.name};")
+            +fos.print("return ${method.prototype.replace('/', '.')}; ")
 
-        val printer = ValuePrinter(cm)
-        when {
-            inst.hasReturnValue -> {
-                builder.print("${inst.returnValue.name} == ")
-                val str = printer.print(inst.returnValue)
-                builder.print(str)
+            when {
+                inst.hasReturnValue -> {
+                    +fos.print("${inst.returnValue.name} == ")
+                    +fos.printValue(inst.returnValue)
+                }
+                else -> +fos.print("void")
             }
-            else -> builder.print("void")
-        }
-        builder.println(";")
+            +fos.println(";")
 
-        printer.insns + builder.insns
+        }
     }
 
     override fun visitThrowInst(inst: ThrowInst) = instrumentInst(inst) {
         val bb = inst.parent!!
         val method = bb.parent!!
 
-        val builder = SystemErrWrapper(cm, "serr")
-        builder.println()
-        builder.println("$tracePrefix exit ${bb.name};")
-        builder.print("$tracePrefix throw ${method.prototype.replace('/', '.')}; ")
-
-        val printer = ValuePrinter(cm)
-        builder.print("${inst.throwable.name} == ")
-        val str = printer.print(inst.throwable)
-        builder.print(str)
-        builder.println(";")
-
-        printer.insns + builder.insns
+        buildList {
+            +fos.println("exit ${bb.name};")
+            +fos.print("throw ${method.prototype.replace('/', '.')}; ")
+            +fos.print("${inst.throwable.name} == ")
+            +fos.printValue(inst.throwable)
+            +fos.println(";")
+        }
     }
 
     override fun visitJumpInst(inst: JumpInst) = instrumentInst(inst) {
         val bb = inst.parent!!
 
-        val builder = SystemErrWrapper(cm, "serr")
-        builder.println()
-        builder.println("$tracePrefix exit ${bb.name};")
-        builder.insns
+        buildList {
+            +fos.println("exit ${bb.name};")
+        }
     }
 
     override fun visitBranchInst(inst: BranchInst) = instrumentInst(inst) {
         val condition = inst.cond as CmpInst
         val bb = inst.parent!!
 
-        val serr = SystemErrWrapper(cm, "serr")
-        val printer = ValuePrinter(cm)
-        serr.println()
-        serr.print("$tracePrefix branch ${bb.name}; ${condition.lhv.name} == ")
-        val lhv = printer.print(condition.lhv)
-        val rhv = printer.print(condition.rhv)
-        serr.print(lhv)
-        serr.print("; ${condition.rhv.name} == ")
-        serr.print(rhv)
-        serr.println(";")
-
-        printer.insns + serr.insns
+        buildList {
+            +fos.print("branch ${bb.name}; ${condition.lhv.name} == ")
+            +fos.printValue(condition.lhv)
+            +fos.print("; ${condition.rhv.name} == ")
+            +fos.printValue(condition.rhv)
+            +fos.println(";")
+        }
     }
 
     override fun visitSwitchInst(inst: SwitchInst) = instrumentInst(inst) {
         val bb = inst.parent!!
 
-        val builder = SystemErrWrapper(cm, "serr")
-        builder.println()
-        builder.print("$tracePrefix switch ${bb.name}; ${inst.key.name} == ")
-        val printer = ValuePrinter(cm)
-        val str = printer.print(inst.key)
-        builder.print(str)
-        builder.println(";")
-
-        printer.insns + builder.insns
+        buildList {
+            +fos.print("switch ${bb.name}; ${inst.key.name} == ")
+            +fos.printValue(inst.key)
+            +fos.println(";")
+        }
     }
 
     override fun visitTableSwitchInst(inst: TableSwitchInst) = instrumentInst(inst) {
         val bb = inst.parent!!
 
-        val builder = SystemErrWrapper(cm, "serr")
-        builder.println()
-        builder.print("$tracePrefix tableswitch ${bb.name}; ${inst.index.name} == ")
-        val printer = ValuePrinter(cm)
-        val str = printer.print(inst.index)
-        builder.print(str)
-        builder.println(";")
-
-        printer.insns + builder.insns
+        buildList {
+            +fos.print("tableswitch ${bb.name}; ${inst.index.name} == ")
+            +fos.printValue(inst.index)
+            +fos.println(";")
+        }
     }
 
     override fun visitBasicBlock(bb: BasicBlock) {
         super.visitBasicBlock(bb)
 
-        val builder = SystemErrWrapper(cm, "serr")
-        builder.println()
-        builder.println("$tracePrefix enter ${bb.name};")
+        val insts = buildList<Instruction> {
+            +fos.println("enter ${bb.name};")
+        }
 
-        insertedInsts.addAll(builder.insns)
-        bb.insertBefore(bb.first(), *builder.insns.toTypedArray())
+        insertedInsts += insts
+        bb.insertBefore(bb.first(), *insts.toTypedArray())
     }
 
     override fun visit(method: Method) {
-        super.visit(method)
         val bb = method.entry
-        val methodName = method.prototype.replace('/', '.')
+        val startInsts = buildList<Instruction> {
+            val methodName = method.prototype.replace('/', '.')
+            val traceFileName = generateTraceFileName(method)
 
-        val builder = SystemErrWrapper(cm, "serr")
-        builder.println()
-        builder.println("$tracePrefix enter $methodName;")
+            fos = FileOutputStreamWrapper(cm, "traceFile", traceFileName)
+            +fos.open()
+            +fos.println("enter $methodName;")
 
-        val args = method.argTypes
-        val printer = ValuePrinter(cm)
-        if (!method.isStatic) {
-            val thisType = types.getRefType(method.`class`)
-            val `this` = values.getThis(thisType)
-            builder.print("$tracePrefix instance $methodName; this == ")
-            val str = printer.print(`this`)
-            builder.print(str)
-            builder.println(";")
-        }
-        if (args.isNotEmpty()) {
-            builder.print("$tracePrefix arguments $methodName")
-            for ((index, type) in args.withIndex()) {
-                val argValue = values.getArgument(index, method, type)
-                builder.print("; ${argValue.name} == ")
-                val str = printer.print(argValue)
-                builder.print(str)
+            val args = method.argTypes
+            if (!method.isStatic) {
+                val thisType = types.getRefType(method.`class`)
+                val `this` = values.getThis(thisType)
+                +fos.print("instance $methodName; this == ")
+                +fos.printValue(`this`)
+                +fos.println(";")
             }
-            builder.println(";")
+            if (args.isNotEmpty()) {
+                +fos.print("arguments $methodName")
+                for ((index, type) in args.withIndex()) {
+                    val argValue = values.getArgument(index, method, type)
+                    +fos.print("; ${argValue.name} == ")
+                    +fos.printValue(argValue)
+                }
+                +fos.println(";")
+            }
         }
+        insertedInsts += startInsts
+        super.visit(method)
 
-        insertedInsts.addAll(printer.insns)
-        insertedInsts.addAll(builder.insns)
-        bb.insertBefore(bb.first(), *builder.insns.toTypedArray())
-        bb.insertBefore(bb.first(), *printer.insns.toTypedArray())
+        val endInsts = fos.close()
+        insertedInsts += endInsts
+
+        bb.insertBefore(bb.first(), *startInsts.toTypedArray())
+        method.filter { it.any { inst -> inst is ReturnInst } }.forEach {
+            it.insertBefore(it.terminator, *endInsts.toTypedArray())
+        }
     }
 
     operator fun invoke(method: Method): List<Instruction> {
         visit(method)
+        IRVerifier(cm).visit(method)
         return insertedInsts.toList()
     }
 }

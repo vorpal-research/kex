@@ -9,7 +9,6 @@ import org.jetbrains.research.kfg.ir.value.*
 import org.jetbrains.research.kfg.ir.value.instruction.BinaryOpcode
 import org.jetbrains.research.kfg.ir.value.instruction.CmpOpcode
 import org.jetbrains.research.kfg.ir.value.instruction.UnaryOpcode
-import org.jetbrains.research.kfg.type.ArrayType
 import org.jetbrains.research.kfg.type.ClassType
 import org.jetbrains.research.kfg.type.TypeFactory
 
@@ -68,15 +67,8 @@ object TermFactory {
     fun getClass(`class`: Class) = getClass(KexClass(`class`.fullname), `class`)
     fun getClass(type: KexType, `class`: Class) = ConstClassTerm(type, `class`)
 
-    fun getClass(const: ClassConstant): ConstClassTerm {
-        val constType = const.type
-        val `class` = when (constType) {
-            is ClassType -> constType.`class`
-            is ArrayType -> unreachable { log.error("Don't know what to do") }
-            else -> unreachable { log.error("Non-ref type of class constant") }
-        }
-        return ConstClassTerm(constType.kexType, `class`)
-    }
+    fun getClass(const: ClassConstant) = ConstClassTerm(const.type.kexType,
+            (const.type as? ClassType)?.`class` ?: unreachable { log.debug("Non-ref type of class constant") })
 
     fun getUnaryTerm(operand: Term, opcode: UnaryOpcode) = when (opcode) {
         UnaryOpcode.NEG -> getNegTerm(operand)

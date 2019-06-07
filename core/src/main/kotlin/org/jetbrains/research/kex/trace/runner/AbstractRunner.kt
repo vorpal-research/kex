@@ -11,6 +11,7 @@ import org.jetbrains.research.kex.util.getClass
 import org.jetbrains.research.kex.util.log
 import org.jetbrains.research.kfg.ir.Method
 import java.io.ByteArrayOutputStream
+import java.io.File
 import java.io.PrintStream
 import java.lang.reflect.InvocationTargetException
 
@@ -44,6 +45,7 @@ abstract class AbstractRunner(val method: Method, protected val loader: ClassLoa
         val error = ByteArrayOutputStream()
         var returnValue: Any? = null
         var exception: Throwable? = null
+        lateinit var trace: List<String>
 
         operator fun component1() = output
         operator fun component2() = error
@@ -51,10 +53,9 @@ abstract class AbstractRunner(val method: Method, protected val loader: ClassLoa
     }
 
     protected fun parse(result: InvocationResult): Trace {
-        val lines = String(result.error.toByteArray()).split("\n").filter { it.isNotBlank() }
+        val lines = result.trace.filter { it.isNotBlank() }
 
         val parser = ActionParser(method.cm)
-        val tracePrefix = TraceInstrumenter.tracePrefix
 
         if (traceLimit > 0 && lines.size > traceLimit) {
             log.warn("Trace size exceeds the limit of $traceLimit lines, skipping it")
@@ -62,8 +63,6 @@ abstract class AbstractRunner(val method: Method, protected val loader: ClassLoa
         }
 
         val actions = lines
-                .filter { it.startsWith(tracePrefix) }
-                .map { it.removePrefix(tracePrefix).drop(1) }
                 .mapNotNull {
                     try {
                         parser.parseToEnd(it)
@@ -109,6 +108,8 @@ abstract class AbstractRunner(val method: Method, protected val loader: ClassLoa
         if (result.exception != null)
             log.debug("Invocation exception ${result.exception}")
 
+        val traceFileName = TraceInstrumenter.generateTraceFileName(this.method)
+        result.trace = File(traceFileName).readLines()
         return parse(result)
     }
 
