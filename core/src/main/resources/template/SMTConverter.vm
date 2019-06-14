@@ -170,7 +170,7 @@ class ${solver}Converter(val tf: TypeFactory) : ${solver}SMTConverter() {
         val baseBound = ctx.readBound(arrayref, memspace)
         val ptrBound = Int_.forceCast(baseBound - index)
         ctx.writeBound(valuePtr, ptrBound, memspace)
-        return valuePtr
+        return addTypeAxioms(arrayindex, valuePtr, ef, ctx)
     }
 
     fun convert(arraylength: ArrayLengthTerm, ef: $factory, ctx: ${solver}Context): Dynamic_ {
@@ -331,7 +331,7 @@ class ${solver}Converter(val tf: TypeFactory) : ${solver}SMTConverter() {
 
         val fieldptr = Ptr_.forceCast(obj + offset)
         ctx.writeBound(fieldptr, Int_.forceCast(baseBound - offset), memspace)
-        return fieldptr
+        return addTypeAxioms(field, fieldptr, ef, ctx)
     }
 
     fun convert(instanceof: InstanceOfTerm, ef: $factory, ctx: ${solver}Context): Dynamic_ =

@@ -2,6 +2,7 @@ package org.jetbrains.research.kex.smt
 
 import org.jetbrains.research.kex.asm.state.PredicateStateAnalysis
 import org.jetbrains.research.kex.config.GlobalConfig
+import org.jetbrains.research.kex.state.PredicateState
 import org.jetbrains.research.kex.state.predicate.PredicateType
 import org.jetbrains.research.kex.state.term.ArgumentTerm
 import org.jetbrains.research.kex.state.term.FieldTerm
@@ -21,12 +22,18 @@ class Checker(val method: Method, val loader: ClassLoader, private val psa: Pred
 
     private val builder = psa.builder(method)
 
+    fun createState(inst: Instruction) = builder.getInstructionState(inst)
+
     fun checkReachable(inst: Instruction): Result {
         log.debug("Checking reachability of ${inst.print()}")
 
-        var state = builder.getInstructionState(inst)
+        val state = createState(inst)
                 ?: return Result.UnknownResult("Can't get state for instruction ${inst.print()}")
+        return check(state)
+    }
 
+    fun check(ps: PredicateState): Result {
+        var state = ps
         if (logQuery) log.debug("State: $state")
 
         if (isInliningEnabled) {

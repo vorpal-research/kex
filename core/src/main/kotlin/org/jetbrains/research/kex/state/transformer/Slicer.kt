@@ -19,7 +19,7 @@ class CFGTracker : Transformer<CFGTracker> {
     }
 
     override fun transformBase(predicate: Predicate): Predicate {
-        if (predicate.type != PredicateType.State()) {
+        if (predicate.type == PredicateType.Path()) {
             currentDominators = currentDominators + predicate
         }
         dominatorMap[predicate] = dominatorMap.getOrElse(predicate, ::setOf) + currentDominators
