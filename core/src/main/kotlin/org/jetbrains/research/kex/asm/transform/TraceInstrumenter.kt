@@ -1,6 +1,7 @@
 package org.jetbrains.research.kex.asm.transform
 
 import org.jetbrains.research.kex.asm.util.FileOutputStreamWrapper
+import org.jetbrains.research.kex.config.GlobalConfig
 import org.jetbrains.research.kex.util.buildList
 import org.jetbrains.research.kfg.ClassManager
 import org.jetbrains.research.kfg.analysis.IRVerifier
@@ -8,6 +9,9 @@ import org.jetbrains.research.kfg.ir.BasicBlock
 import org.jetbrains.research.kfg.ir.Method
 import org.jetbrains.research.kfg.ir.value.instruction.*
 import org.jetbrains.research.kfg.visitor.MethodVisitor
+import java.io.File
+import java.nio.file.Files
+import java.nio.file.Paths
 
 class TraceInstrumenter(override val cm: ClassManager) : MethodVisitor {
     val insertedInsts = mutableListOf<Instruction>()
@@ -15,11 +19,15 @@ class TraceInstrumenter(override val cm: ClassManager) : MethodVisitor {
 
     companion object {
         const val TRACE_POSTFIX = ".trace"
+        val TRACE_DIRECTORY = GlobalConfig.getStringValue("runner", "trace-directory", "./traces")
 
         fun generateTraceFileName(method: Method): String {
             val name = method.toString().replace('/', '.').replace(" ", "")
             return "$name$TRACE_POSTFIX"
         }
+
+        fun getTraceFile(method: Method): File =
+                File("$TRACE_DIRECTORY${File.separator}${generateTraceFileName(method)}")
     }
 
     private fun instrumentInst(inst: Instruction, instrumenter: (inst: Instruction) -> List<Instruction>) {
@@ -123,7 +131,7 @@ class TraceInstrumenter(override val cm: ClassManager) : MethodVisitor {
         val bb = method.entry
         val startInsts = buildList<Instruction> {
             val methodName = method.prototype.replace('/', '.')
-            val traceFileName = generateTraceFileName(method)
+            val traceFileName = getTraceFile(method).absolutePath
 
             fos = FileOutputStreamWrapper(cm, "traceFile", traceFileName)
             +fos.open()
@@ -160,6 +168,9 @@ class TraceInstrumenter(override val cm: ClassManager) : MethodVisitor {
     }
 
     operator fun invoke(method: Method): List<Instruction> {
+        if (!Files.exists(Paths.get(TRACE_DIRECTORY))) {
+            Files.createDirectory(Paths.get(TRACE_DIRECTORY))
+        }
         visit(method)
         IRVerifier(cm).visit(method)
         return insertedInsts.toList()

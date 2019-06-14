@@ -41,7 +41,7 @@ class ChoiceState(val choices: List<PredicateState>) : PredicateState(), Iterabl
             simplifiedChoices.isEmpty() -> emptyState()
             simplifiedChoices.size == 1 -> simplifiedChoices.first()
             simplifiedChoices == choices -> this
-            else -> emptyState() + simplifiedChoices
+            else -> ChoiceState(simplifiedChoices)
         }
     }
 }

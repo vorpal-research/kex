@@ -15,6 +15,7 @@ import org.jetbrains.research.kex.state.transformer.collectPointers
 import org.jetbrains.research.kex.state.transformer.collectVariables
 import org.jetbrains.research.kex.state.transformer.memspace
 import org.jetbrains.research.kex.util.castTo
+import org.jetbrains.research.kex.util.debug
 import org.jetbrains.research.kex.util.log
 import org.jetbrains.research.kex.util.unreachable
 import org.jetbrains.research.kfg.type.TypeFactory
@@ -23,6 +24,7 @@ private val timeout = GlobalConfig.getIntValue("smt", "timeout", 3) * 1000
 
 private val logQuery = GlobalConfig.getBooleanValue("smt", "logQuery", false)
 private val logFormulae = GlobalConfig.getBooleanValue("smt", "logFormulae", false)
+private val printSMTLib = GlobalConfig.getBooleanValue("smt", "logSMTLib", false)
 private val simplifyFormulae = GlobalConfig.getBooleanValue("smt", "simplifyFormulae", false)
 
 class Z3Solver(val tf: TypeFactory) : AbstractSMTSolver {
@@ -80,6 +82,10 @@ class Z3Solver(val tf: TypeFactory) : AbstractSMTSolver {
         solver.add(pred.implies(query_).expr.castTo())
 
         log.debug("Running z3 solver")
+        if (printSMTLib) {
+            log.debug("SMTLib formula:")
+            log.debug(solver)
+        }
         val result = solver.check(pred.expr) ?: unreachable { log.error("Solver error") }
         log.debug("Solver finished")
 
