@@ -75,7 +75,7 @@ object TermFactory {
         UnaryOpcode.LENGTH -> getArrayLength(operand)
     }
 
-    fun getArrayLength(arrayRef: Term) = getArrayLength(KexInt, arrayRef)
+    fun getArrayLength(arrayRef: Term) = getArrayLength(KexInt(), arrayRef)
     fun getArrayLength(type: KexType, arrayRef: Term) = ArrayLengthTerm(type, arrayRef)
 
     fun getArrayIndex(arrayRef: Term, index: Term): Term {
@@ -106,7 +106,7 @@ object TermFactory {
 
     fun getBinary(type: KexType, opcode: BinaryOpcode, lhv: Term, rhv: Term) = BinaryTerm(type, opcode, lhv, rhv)
 
-    fun getBound(ptr: Term) = getBound(KexInt, ptr)
+    fun getBound(ptr: Term) = getBound(KexInt(), ptr)
     fun getBound(type: KexType, ptr: Term) = BoundTerm(type, ptr)
 
     fun getCall(method: Method, arguments: List<Term>) = getCall(method.returnType.kexType, method, arguments)
@@ -122,9 +122,9 @@ object TermFactory {
     fun getCast(type: KexType, operand: Term) = CastTerm(type, operand)
     fun getCmp(opcode: CmpOpcode, lhv: Term, rhv: Term): Term {
         val resType = when (opcode) {
-            is CmpOpcode.Cmpg -> KexInt
-            is CmpOpcode.Cmpl -> KexInt
-            else -> KexBool
+            is CmpOpcode.Cmpg -> KexInt()
+            is CmpOpcode.Cmpl -> KexInt()
+            else -> KexBool()
         }
         return getCmp(resType, opcode, lhv, rhv)
     }
