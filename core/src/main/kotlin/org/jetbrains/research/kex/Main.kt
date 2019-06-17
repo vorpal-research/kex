@@ -1,7 +1,8 @@
 package org.jetbrains.research.kex
 
+import kotlinx.serialization.ImplicitReflectionSerializer
+import org.jetbrains.research.kex.asm.analysis.MethodChecker
 import org.jetbrains.research.kex.asm.analysis.RandomChecker
-import org.jetbrains.research.kex.asm.analysis.ViolationChecker
 import org.jetbrains.research.kex.asm.state.PredicateStateAnalysis
 import org.jetbrains.research.kex.asm.transform.LoopDeroller
 import org.jetbrains.research.kex.config.CmdConfig
@@ -19,6 +20,7 @@ import org.jetbrains.research.kfg.visitor.executePipeline
 import java.io.File
 import java.util.jar.JarFile
 
+@ImplicitReflectionSerializer
 fun main(args: Array<String>) {
     val config = GlobalConfig
     val cmd = CmdConfig(args)
@@ -33,7 +35,7 @@ fun main(args: Array<String>) {
     val jarLoader = jar.classLoader
     val `package` = Package(packageName.replace('.', '/'))
     val classManager = ClassManager(jar, `package`, Flags.readAll)
-//    val origManager = ClassManager(jar, `package`, Flags.readAll)
+    val origManager = ClassManager(jar, `package`, Flags.readAll)
 
     log.debug("Running with jar ${jar.name} and package $`package`")
     val target = File("instrumented/")
@@ -46,7 +48,7 @@ fun main(args: Array<String>) {
         +LoopSimplifier(classManager)
         +LoopDeroller(classManager)
         +psa
-        +ViolationChecker(cm, psa)
-//        +MethodChecker(classManager, jarLoader, origManager, target, psa)
+//        +ViolationChecker(cm, psa)
+        +MethodChecker(classManager, jarLoader, origManager, target, psa)
     }
 }

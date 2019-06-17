@@ -7,7 +7,7 @@ import org.jetbrains.research.kex.state.transformer.Transformer
 import org.jetbrains.research.kex.util.defaultHashCode
 
 @InheritorOf("Term")
-class InstanceOfTerm(val checkedType: KexType, operand: Term) : Term("", KexBool, listOf(operand)) {
+class InstanceOfTerm(val checkedType: KexType, operand: Term) : Term("", KexBool(), listOf(operand)) {
 
     val operand: Term
         get() = subterms[0]

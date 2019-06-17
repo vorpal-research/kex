@@ -1,9 +1,15 @@
 package org.jetbrains.research.kex.ktype
 
+import kotlinx.serialization.Polymorphic
+import kotlinx.serialization.Serializable
+import org.jetbrains.research.kex.state.BaseType
+import org.jetbrains.research.kex.state.InheritanceInfo
+import org.jetbrains.research.kex.state.InheritorOf
 import org.jetbrains.research.kex.util.defaultHashCode
 import org.jetbrains.research.kex.util.log
 import org.jetbrains.research.kex.util.unreachable
 import org.jetbrains.research.kfg.type.*
+import kotlin.reflect.KClass
 
 val Type.kexType get() = KexType.fromType(this)
 
@@ -28,38 +34,54 @@ fun mergeTypes(tf: TypeFactory, types: Collection<KexType>): KexType {
             }
             result
         }
-        uniqueTypes.all { it === KexLong } -> KexLong
+        uniqueTypes.all { it is KexLong } -> KexLong()
         uniqueTypes.all { it is KexIntegral } -> uniqueTypes.maxBy { it.bitsize }!!
-        uniqueTypes.all { it === KexFloat } -> KexFloat
-        uniqueTypes.all { it === KexDouble } -> KexDouble
+        uniqueTypes.all { it is KexFloat } -> KexFloat()
+        uniqueTypes.all { it is KexDouble } -> KexDouble()
         else -> unreachable { log.error("Unexpected set of types: $types") }
     }
 }
 
+@BaseType("KexType")
+@Serializable
+@Polymorphic
 abstract class KexType {
     companion object {
         const val WORD = 32
         const val DWORD = WORD * 2
 
+        val types = run {
+            val loader = Thread.currentThread().contextClassLoader
+            val resource = loader.getResourceAsStream("KexType.json")
+            val inheritanceInfo = InheritanceInfo.fromJson(resource.bufferedReader().readText())
+            resource.close()
+
+            inheritanceInfo?.inheritors?.map {
+                @Suppress("UNCHECKED_CAST")
+                it.name to (loader.loadClass(it.inheritorClass).kotlin as KClass<KexType>)
+            }?.toMap() ?: mapOf()
+        }
+
+        val reverse = types.map { it.value to it.key }.toMap()
 
         fun fromType(type: Type): KexType = when (type) {
             is Integral -> when (type) {
-                is BoolType -> KexBool
-                is LongType -> KexLong
-                else -> KexInt
+                is BoolType -> KexBool()
+                is LongType -> KexLong()
+                else -> KexInt()
             }
             is Real -> when (type) {
-                is FloatType -> KexFloat
-                is DoubleType -> KexDouble
+                is FloatType -> KexFloat()
+                is DoubleType -> KexDouble()
                 else -> unreachable { log.error("Unknown real type: $type") }
             }
             is Reference -> when (type) {
                 is ClassType -> KexClass(type.`class`.fullname)
                 is ArrayType -> KexArray(fromType(type.component))
-                is NullType -> KexNull
+                is NullType -> KexNull()
                 else -> unreachable { log.error("Unknown reference type: $type") }
             }
-            is VoidType -> KexVoid
+            is VoidType -> KexVoid()
             else -> unreachable { log.error("Unknown type: $type") }
         }
     }
@@ -72,7 +94,9 @@ abstract class KexType {
     override fun toString() = name
 }
 
-object KexVoid : KexType() {
+@InheritorOf("KexType")
+@Serializable
+class KexVoid : KexType() {
     override val name: String
         get() = "void"
 
@@ -82,5 +106,9 @@ object KexVoid : KexType() {
     override fun getKfgType(types: TypeFactory): Type = types.voidType
 
     override fun hashCode() = defaultHashCode(name)
-    override fun equals(other: Any?) = this === other
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other !is KexVoid) return false
+        return true
+    }
 }

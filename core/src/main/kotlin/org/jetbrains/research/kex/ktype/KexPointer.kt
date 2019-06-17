@@ -1,22 +1,29 @@
 package org.jetbrains.research.kex.ktype
 
+import kotlinx.serialization.Serializable
+import org.jetbrains.research.kex.state.InheritorOf
 import org.jetbrains.research.kex.util.defaultHashCode
-import org.jetbrains.research.kfg.ir.Class
 import org.jetbrains.research.kfg.type.Type
 import org.jetbrains.research.kfg.type.TypeFactory
 
-sealed class KexPointer(open val memspace: Int = defaultMemspace) : KexType() {
+@InheritorOf("KexType")
+@Serializable
+sealed class KexPointer : KexType() {
+    abstract val memspace: Int
+
     companion object {
         const val defaultMemspace = 0
     }
 
     override val bitsize: Int
-        get() = KexType.WORD
+        get() = WORD
 
     abstract fun withMemspace(memspace: Int): KexPointer
 }
 
-class KexClass(val `class`: String, memspace: Int = defaultMemspace) : KexPointer(memspace) {
+@InheritorOf("KexType")
+@Serializable
+class KexClass(val `class`: String, override val memspace: Int = defaultMemspace) : KexPointer() {
     override val name: String
         get() = `class`
 
@@ -36,7 +43,11 @@ class KexClass(val `class`: String, memspace: Int = defaultMemspace) : KexPointe
     }
 }
 
-class KexArray(val element: KexType, memspace: Int = defaultMemspace) : KexPointer(memspace) {
+@InheritorOf("KexType")
+@Serializable
+class KexArray(
+        val element: KexType,
+        override val memspace: Int = defaultMemspace) : KexPointer() {
     override val name: String
         get() = "$element[]"
 
@@ -56,7 +67,11 @@ class KexArray(val element: KexType, memspace: Int = defaultMemspace) : KexPoint
     }
 }
 
-class KexReference(val reference: KexType, memspace: Int = defaultMemspace) : KexPointer(memspace) {
+@InheritorOf("KexType")
+@Serializable
+class KexReference(
+        val reference: KexType,
+        override val memspace: Int = defaultMemspace) : KexPointer() {
     override val name: String
         get() = "&($reference)"
 
@@ -76,14 +91,22 @@ class KexReference(val reference: KexType, memspace: Int = defaultMemspace) : Ke
     }
 }
 
-object KexNull : KexPointer() {
+@InheritorOf("KexType")
+@Serializable
+class KexNull : KexPointer() {
     override val name: String
         get() = "null"
+
+    override val memspace = defaultMemspace
 
     override fun getKfgType(types: TypeFactory): Type = types.nullType
 
     override fun withMemspace(memspace: Int) = this
 
     override fun hashCode() = defaultHashCode(name)
-    override fun equals(other: Any?) = this === other
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other !is KexNull) return false
+        return true
+    }
 }

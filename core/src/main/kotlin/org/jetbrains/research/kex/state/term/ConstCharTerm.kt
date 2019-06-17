@@ -5,7 +5,7 @@ import org.jetbrains.research.kex.state.InheritorOf
 import org.jetbrains.research.kex.state.transformer.Transformer
 
 @InheritorOf("Term")
-class ConstCharTerm(val value: Char) : Term(value.toString(), KexChar, listOf()) {
+class ConstCharTerm(val value: Char) : Term(value.toString(), KexChar(), listOf()) {
     override fun print() = name
     override fun <T: Transformer<T>> accept(t: Transformer<T>) = this
 }
