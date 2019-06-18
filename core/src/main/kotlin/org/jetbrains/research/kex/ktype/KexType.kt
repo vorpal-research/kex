@@ -1,6 +1,5 @@
 package org.jetbrains.research.kex.ktype
 
-import kotlinx.serialization.Polymorphic
 import kotlinx.serialization.Serializable
 import org.jetbrains.research.kex.state.BaseType
 import org.jetbrains.research.kex.state.InheritanceInfo
@@ -44,7 +43,6 @@ fun mergeTypes(tf: TypeFactory, types: Collection<KexType>): KexType {
 
 @BaseType("KexType")
 @Serializable
-@Polymorphic
 abstract class KexType {
     companion object {
         const val WORD = 32

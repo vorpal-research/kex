@@ -34,7 +34,7 @@ class ModelRecoverer(val method: Method, val model: SMTModel, val loader: ClassL
             memoryMappings.getOrPut(memspace, ::hashMapOf).getOrPut(address) { value }
 
     fun apply(): RecoveredModel {
-        val thisTerm = model.assignments.keys.firstOrNull { it.print().startsWith("this") }
+        val thisTerm = model.assignments.keys.firstOrNull { it.toString().startsWith("this") }
         val instance = thisTerm?.let { recoverTerm(it) }
 
         val modelArgs = model.assignments.keys.asSequence()

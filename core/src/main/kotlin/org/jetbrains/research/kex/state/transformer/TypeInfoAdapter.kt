@@ -153,7 +153,7 @@ class TypeInfoAdapter(val method: Method, val loader: ClassLoader) : Recollectin
         val field = (predicate.rhv as FieldLoadTerm).field as FieldTerm
         val fieldType = (field.type as KexReference).reference
         val kfgClass = cm.getByName(field.getClass())
-        val actualField = kfgClass.getField((field.fieldName as ConstStringTerm).name, fieldType.getKfgType(types))
+        val actualField = kfgClass.getField((field.fieldName as ConstStringTerm).value, fieldType.getKfgType(types))
 
         val prop = getKProperty(actualField)
         val returnType = tryOrNull { prop?.getter?.returnType }

@@ -7,7 +7,7 @@ import org.jetbrains.research.kex.util.log
 import org.jetbrains.research.kex.util.unreachable
 
 fun Term.withMemspace(memspace: Int): Term {
-    if (this.type !is KexPointer) return this
+    val type = this.type as? KexPointer ?: return this
     val memspaced = type.withMemspace(memspace)
     val tf = TermFactory
     return when (this) {

@@ -38,12 +38,12 @@ class BoolTypeAdapter(val types: TypeFactory) : Transformer<BoolTypeAdapter> {
                 val lhv = when {
                     term.lhv.type is KexBool -> tf.getCast(KexInt(), term.lhv)
                     term.lhv.type is KexInt -> term.lhv
-                    else -> unreachable { log.error("Non-boolean term in boolean binary: ${term.print()}") }
+                    else -> unreachable { log.error("Non-boolean term in boolean binary: $term") }
                 }
                 val rhv = when {
                     term.rhv.type is KexBool -> tf.getCast(KexInt(), term.rhv)
                     term.rhv.type is KexInt -> term.rhv
-                    else -> unreachable { log.error("Non-boolean term in boolean binary: ${term.print()}") }
+                    else -> unreachable { log.error("Non-boolean term in boolean binary: $term") }
                 }
                 val newType = mergeTypes(types, lhv.type, rhv.type)
                 tf.getBinary(newType, term.opcode, lhv, rhv)
