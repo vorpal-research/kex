@@ -20,7 +20,11 @@ interface Transformer<T : Transformer<T>> {
      * Needed to avoid using nullable types in transformer
      * Should *never* appear outside of transformers
      */
-    object Stub : Predicate(PredicateType.State(), Location(), arrayListOf()) {
+    object Stub : Predicate() {
+        override val type = PredicateType.State()
+        override val location = Location()
+        override val operands = listOf<Term>()
+
         override fun print() = "stub"
         override fun <T : Transformer<T>> accept(t: Transformer<T>) = Stub
     }

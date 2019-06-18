@@ -1,19 +1,22 @@
 package org.jetbrains.research.kex.state.predicate
 
+import kotlinx.serialization.ContextualSerialization
+import kotlinx.serialization.Required
+import kotlinx.serialization.Serializable
 import org.jetbrains.research.kex.state.InheritorOf
 import org.jetbrains.research.kex.state.term.Term
 import org.jetbrains.research.kex.state.transformer.Transformer
 import org.jetbrains.research.kfg.ir.Location
 
 @InheritorOf("Predicate")
-class InequalityPredicate(lhv: Term, rhv: Term, type: PredicateType = PredicateType.State(), location: Location = Location())
-    : Predicate(type, location, arrayListOf(lhv, rhv)) {
-
-    val lhv: Term
-        get() = operands[0]
-
-    val rhv: Term
-        get() = operands[1]
+@Serializable
+class InequalityPredicate(
+        val lhv: Term,
+        val rhv: Term,
+        @Required override val type: PredicateType = PredicateType.State(),
+        @Required @ContextualSerialization override val location: Location = Location()) : Predicate() {
+    override val operands: List<Term>
+        get() = listOf(lhv, rhv)
 
     override fun print() = "$lhv != $rhv"
 
