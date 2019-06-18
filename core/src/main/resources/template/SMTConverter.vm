@@ -335,7 +335,7 @@ class ${solver}Converter(val tf: TypeFactory) : ${solver}SMTConverter() {
     }
 
     fun convert(instanceof: InstanceOfTerm, ef: $factory, ctx: ${solver}Context): Dynamic_ =
-        ef.getVarByTypeAndName(instanceof.type, instanceof.print())
+        ef.getVarByTypeAndName(instanceof.type, instanceof.toString())
 
     fun convert(neg: NegTerm, ef: $factory, ctx: ${solver}Context): Dynamic_ {
         val operand = convert(neg.operand, ef, ctx)
@@ -345,7 +345,7 @@ class ${solver}Converter(val tf: TypeFactory) : ${solver}SMTConverter() {
             is Long_ -> Long_.forceCast(!operand)
             is Float_ -> Float_.forceCast(!operand)
             is Double_ -> Double_.forceCast(!operand)
-            else -> unreachable { log.error("Invalid operand of `neg`: ${ neg.operand.print() }") }
+            else -> unreachable { log.error("Invalid operand of `neg`: ${ neg.operand }") }
         }
     }
 

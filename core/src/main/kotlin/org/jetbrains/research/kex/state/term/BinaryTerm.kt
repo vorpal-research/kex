@@ -1,5 +1,7 @@
 package org.jetbrains.research.kex.state.term
 
+import kotlinx.serialization.ContextualSerialization
+import kotlinx.serialization.Serializable
 import org.jetbrains.research.kex.ktype.KexType
 import org.jetbrains.research.kex.state.InheritorOf
 import org.jetbrains.research.kex.state.transformer.Transformer
@@ -7,15 +9,15 @@ import org.jetbrains.research.kex.util.defaultHashCode
 import org.jetbrains.research.kfg.ir.value.instruction.BinaryOpcode
 
 @InheritorOf("Term")
-class BinaryTerm(type: KexType, val opcode: BinaryOpcode, lhv: Term, rhv: Term) : Term("", type, listOf(lhv, rhv)) {
-
-    val lhv: Term
-        get() = subterms[0]
-
-    val rhv: Term
-        get() = subterms[1]
-
-    override fun print() = "$lhv $opcode $rhv"
+@Serializable
+class BinaryTerm(
+        override val type: KexType,
+        @ContextualSerialization val opcode: BinaryOpcode,
+        val lhv: Term,
+        val rhv: Term) : Term() {
+    override val name = "$lhv $opcode $rhv"
+    override val subterms: List<Term>
+        get() = listOf(lhv, rhv)
 
     override fun <T: Transformer<T>> accept(t: Transformer<T>): Term {
         val tlhv = t.transform(lhv)

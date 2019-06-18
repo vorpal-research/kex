@@ -1,5 +1,6 @@
 package org.jetbrains.research.kex.state.term
 
+import kotlinx.serialization.Serializable
 import org.jetbrains.research.kex.ktype.KexBool
 import org.jetbrains.research.kex.ktype.KexType
 import org.jetbrains.research.kex.state.InheritorOf
@@ -7,12 +8,12 @@ import org.jetbrains.research.kex.state.transformer.Transformer
 import org.jetbrains.research.kex.util.defaultHashCode
 
 @InheritorOf("Term")
-class InstanceOfTerm(val checkedType: KexType, operand: Term) : Term("", KexBool(), listOf(operand)) {
-
-    val operand: Term
-        get() = subterms[0]
-
-    override fun print() = "$operand instanceof $checkedType"
+@Serializable
+class InstanceOfTerm(val checkedType: KexType, val operand: Term) : Term() {
+    override val name = "$operand instanceof $checkedType"
+    override val type: KexType = KexBool()
+    override val subterms: List<Term>
+        get() = listOf(operand)
 
     override fun <T: Transformer<T>> accept(t: Transformer<T>): Term {
         val toperand = t.transform(operand)
