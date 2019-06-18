@@ -1,5 +1,7 @@
 package org.jetbrains.research.kex.state.predicate
 
+import kotlinx.serialization.Required
+import kotlinx.serialization.Serializable
 import org.jetbrains.research.kex.state.BaseType
 import org.jetbrains.research.kex.state.InheritanceInfo
 import org.jetbrains.research.kex.state.TypeInfo
@@ -8,54 +10,49 @@ import org.jetbrains.research.kex.state.transformer.Transformer
 import org.jetbrains.research.kex.util.defaultHashCode
 import org.jetbrains.research.kfg.ir.Location
 
-sealed class PredicateType(val name: String) {
-    override fun toString(): String {
-        return "@$name"
-    }
+@Serializable
+abstract class PredicateType {
+    abstract val name: String
 
-    class Path : PredicateType("P") {
-        override fun hashCode() = defaultHashCode(name)
-        override fun equals(other: Any?) = when {
-            this === other -> true
-            other == null -> false
-            other is Path -> true
-            else -> false
+    @Serializable
+    data class Path(@Required override val name: String = "P") : PredicateType() {
+        override fun toString(): String {
+            return "@$name"
         }
     }
 
-    class State : PredicateType("S") {
-        override fun hashCode() = defaultHashCode(name)
-        override fun equals(other: Any?) = when {
-            this === other -> true
-            other == null -> false
-            other is State -> true
-            else -> false
+    @Serializable
+    data class State(@Required override val name: String = "S") : PredicateType() {
+        override fun toString(): String {
+            return "@$name"
         }
     }
 
-    class Assume : PredicateType("A") {
-        override fun hashCode() = defaultHashCode(name)
-        override fun equals(other: Any?) = when {
-            this === other -> true
-            other == null -> false
-            other is Assume -> true
-            else -> false
+    @Serializable
+    data class Assume(@Required override val name: String = "A") : PredicateType() {
+        override fun toString(): String {
+            return "@$name"
         }
     }
 
-    class Require : PredicateType("R") {
-        override fun hashCode() = defaultHashCode(name)
-        override fun equals(other: Any?) = when {
-            this === other -> true
-            other == null -> false
-            other is Require -> true
-            else -> false
+    @Serializable
+    data class Require(@Required override val name: String = "R") : PredicateType() {
+        override fun toString(): String {
+            return "@$name"
         }
     }
 }
 
 @BaseType("Predicate")
-abstract class Predicate(val type: PredicateType, val location: Location, val operands: List<Term>) : TypeInfo {
+@Serializable
+abstract class Predicate : TypeInfo {
+    abstract val type: PredicateType
+    abstract val location: Location
+    abstract val operands: List<Term>
+
+    val size: Int
+        get() = operands.size
+
     companion object {
         val predicates = run {
             val loader = Thread.currentThread().contextClassLoader
@@ -70,9 +67,6 @@ abstract class Predicate(val type: PredicateType, val location: Location, val op
 
         val reverse = predicates.map { it.value to it.key }.toMap()
     }
-
-    val size: Int
-        get() = operands.size
 
     abstract fun print(): String
     abstract fun <T : Transformer<T>> accept(t: Transformer<T>): Predicate

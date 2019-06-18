@@ -1,19 +1,22 @@
 package org.jetbrains.research.kex.state.predicate
 
+import kotlinx.serialization.ContextualSerialization
+import kotlinx.serialization.Required
+import kotlinx.serialization.Serializable
 import org.jetbrains.research.kex.state.InheritorOf
 import org.jetbrains.research.kex.state.term.Term
 import org.jetbrains.research.kex.state.transformer.Transformer
 import org.jetbrains.research.kfg.ir.Location
 
 @InheritorOf("Predicate")
-class BoundStorePredicate(ptr: Term, bound: Term, type: PredicateType = PredicateType.State(), location: Location = Location())
-    : Predicate(type, location, arrayListOf(ptr, bound)) {
-
-    val ptr: Term
-        get() = operands[0]
-
-    val bound: Term
-        get() = operands[1]
+@Serializable
+class BoundStorePredicate(
+        val ptr: Term,
+        val bound: Term,
+        @Required override val type: PredicateType = PredicateType.State(),
+        @Required @ContextualSerialization override val location: Location = Location()) : Predicate() {
+    override val operands: List<Term>
+        get() = listOf(ptr, bound)
 
     override fun print() = "bound($ptr, $bound)"
 

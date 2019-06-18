@@ -5,11 +5,18 @@ import kotlinx.serialization.UnstableDefault
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonConfiguration
 import org.jetbrains.research.kex.ktype.*
-import org.jetbrains.research.kex.serialization.kexTypeSerializationContext
-import org.jetbrains.research.kex.serialization.termSerializationContext
+import org.jetbrains.research.kex.serialization.kexTypeSerialModule
+import org.jetbrains.research.kex.serialization.predicateSerialModule
+import org.jetbrains.research.kex.serialization.predicateTypeSerialModule
+//import org.jetbrains.research.kex.serialization.predicateTypeSerialModule
+import org.jetbrains.research.kex.serialization.termSerialModule
+import org.jetbrains.research.kex.state.predicate.Predicate
+import org.jetbrains.research.kex.state.predicate.PredicateFactory
+import org.jetbrains.research.kex.state.predicate.PredicateType
 import org.jetbrains.research.kex.state.term.FieldLoadTerm
 import org.jetbrains.research.kex.state.term.Term
 import org.jetbrains.research.kex.state.term.TermFactory
+import org.jetbrains.research.kfg.ir.value.instruction.CmpOpcode
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
@@ -34,7 +41,7 @@ class KexSerializerTest {
         val klassType = KexClass("org/jetbrains/research/kex/Test")
         val arrayType = KexArray(klassType, memspace = 15)
 
-        val json = Json(configuration, kexTypeSerializationContext)
+        val json = Json(configuration, kexTypeSerialModule)
 
         val serializedVoid = json.stringify(KexType.serializer(), voidType)
         val serializedInt = json.stringify(KexType.serializer(), intType)
@@ -66,7 +73,7 @@ class KexSerializerTest {
         val fieldTerm = tf.getField(KexReference(arrayType), valueTerm, fieldName)
         val fieldLoadTerm = tf.getFieldLoad(arrayType, fieldTerm)
 
-        val json = Json(configuration, termSerializationContext)
+        val json = Json(configuration, termSerialModule)
 
         val serializedBool = json.stringify(Term.serializer(), boolTerm)
         val serializedValue = json.stringify(Term.serializer(), valueTerm)
@@ -86,5 +93,62 @@ class KexSerializerTest {
         assertEquals(fieldTerm, deserializedField)
         assertEquals(fieldLoadTerm, deserializedFieldLoad)
         assertEquals((deserializedFieldLoad as FieldLoadTerm).field, fieldTerm)
+    }
+
+    @Test
+    fun testPredicateTypeSerialization() {
+        val state = PredicateType.State()
+        val path = PredicateType.Path()
+        val assume = PredicateType.Assume()
+        val require = PredicateType.Require()
+
+        val json = Json(configuration, predicateTypeSerialModule)
+
+        val serializedState = json.stringify(PredicateType.serializer(), state)
+        val serializedPath = json.stringify(PredicateType.serializer(), path)
+        val serializedAssume = json.stringify(PredicateType.serializer(), assume)
+        val serializedRequire = json.stringify(PredicateType.serializer(), require)
+
+        val deserializedState = json.parse(PredicateType.serializer(), serializedState)
+        val deserializedPath = json.parse(PredicateType.serializer(), serializedPath)
+        val deserializedAssume = json.parse(PredicateType.serializer(), serializedAssume)
+        val deserializedRequire = json.parse(PredicateType.serializer(), serializedRequire)
+        assertEquals(state, deserializedState)
+        assertEquals(path, deserializedPath)
+        assertEquals(assume, deserializedAssume)
+        assertEquals(require, deserializedRequire)
+    }
+
+    @Test
+    fun testPredicateSerialization() {
+        val tf = TermFactory
+        val pf = PredicateFactory
+
+        val klassType = KexClass("org/jetbrains/research/kex/Test")
+        val argTerm = tf.getArgument(KexInt(), 0)
+        val constantInt = tf.getInt(137)
+        val equalityPredicate = pf.getEquality(argTerm, constantInt)
+        val cmpTerm = tf.getCmp(CmpOpcode.Gt(), argTerm, tf.getInt(0))
+        val pathTerm = tf.getValue(KexBool(), "path")
+        val assignPredicate = pf.getEquality(pathTerm, cmpTerm)
+        val pathPredicate = pf.getEquality(pathTerm, tf.getBool(true), PredicateType.Path())
+        val assumePredicate = pf.getInequality(tf.getThis(klassType), tf.getNull(), PredicateType.Assume())
+
+        val json = Json(configuration, predicateSerialModule)
+
+        val serializedEq = json.stringify(Predicate.serializer(), equalityPredicate)
+        val serializedAssign = json.stringify(Predicate.serializer(), assignPredicate)
+        val serializedPath = json.stringify(Predicate.serializer(), pathPredicate)
+        val serializedAssume = json.stringify(Predicate.serializer(), assumePredicate)
+
+        val deserializedEq = json.parse(Predicate.serializer(), serializedEq)
+        val deserializedAssign = json.parse(Predicate.serializer(), serializedAssign)
+        val deserializedPath = json.parse(Predicate.serializer(), serializedPath)
+        val deserializedAssume = json.parse(Predicate.serializer(), serializedAssume)
+
+        assertEquals(equalityPredicate, deserializedEq)
+        assertEquals(assignPredicate, deserializedAssign)
+        assertEquals(pathPredicate, deserializedPath)
+        assertEquals(assumePredicate, deserializedAssume)
     }
 }
