@@ -1,9 +1,11 @@
 package org.jetbrains.research.kex.state
 
+import kotlinx.serialization.Serializable
 import org.jetbrains.research.kex.state.predicate.Predicate
 import org.jetbrains.research.kex.util.defaultHashCode
 
 @InheritorOf("State")
+@Serializable
 class ChoiceState(val choices: List<PredicateState>) : PredicateState(), Iterable<PredicateState> {
     override val size: Int
         get() = choices.fold(0) { acc, it -> acc + it.size }

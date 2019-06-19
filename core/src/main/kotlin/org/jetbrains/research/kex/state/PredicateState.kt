@@ -1,5 +1,6 @@
 package org.jetbrains.research.kex.state
 
+import kotlinx.serialization.Serializable
 import org.jetbrains.research.kex.state.predicate.Predicate
 import org.jetbrains.research.kex.state.predicate.PredicateType
 
@@ -51,6 +52,7 @@ class StateBuilder() {
 }
 
 @BaseType("State")
+@Serializable
 abstract class PredicateState : TypeInfo {
     companion object {
         val states = run {
