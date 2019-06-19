@@ -1,9 +1,11 @@
 package org.jetbrains.research.kex.state
 
+import kotlinx.serialization.Serializable
 import org.jetbrains.research.kex.state.predicate.Predicate
 import org.jetbrains.research.kex.util.defaultHashCode
 
 @InheritorOf("State")
+@Serializable
 class ChainState(val base: PredicateState, val curr: PredicateState) : PredicateState() {
     override val size: Int
         get() = base.size + curr.size

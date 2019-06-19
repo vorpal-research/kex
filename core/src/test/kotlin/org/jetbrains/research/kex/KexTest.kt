@@ -47,7 +47,7 @@ abstract class KexTest {
         cm = ClassManager(jarFile, `package`, Flags.readAll)
     }
 
-    private fun getPSA(method: Method): PredicateStateAnalysis {
+    protected fun getPSA(method: Method): PredicateStateAnalysis {
         val loops = LoopAnalysis(cm).invoke(method)
         if (loops.isNotEmpty()) {
             LoopSimplifier(cm).visit(method)
@@ -59,7 +59,7 @@ abstract class KexTest {
         return psa
     }
 
-    private fun getReachables(method: Method): List<Instruction> {
+    protected fun getReachables(method: Method): List<Instruction> {
         val `class` = Intrinsics::class.qualifiedName!!.replace(".", "/")
         val intrinsics = cm.getByName(`class`)
 
@@ -73,7 +73,7 @@ abstract class KexTest {
                 .toList()
     }
 
-    private fun getUnreachables(method: Method): List<Instruction> {
+    protected fun getUnreachables(method: Method): List<Instruction> {
         val `class` = Intrinsics::class.qualifiedName!!.replace(".", "/")
         val intrinsics = cm.getByName(`class`)
 

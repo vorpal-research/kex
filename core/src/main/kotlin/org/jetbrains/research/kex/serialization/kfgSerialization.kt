@@ -1,7 +1,6 @@
 package org.jetbrains.research.kex.serialization
 
 import kotlinx.serialization.*
-import kotlinx.serialization.internal.HexConverter
 import kotlinx.serialization.internal.SerialClassDescImpl
 import kotlinx.serialization.internal.StringDescriptor
 import kotlinx.serialization.internal.StringSerializer
@@ -9,18 +8,17 @@ import kotlinx.serialization.modules.SerialModule
 import kotlinx.serialization.modules.serializersModuleOf
 import org.jetbrains.research.kfg.ClassManager
 import org.jetbrains.research.kfg.Package
-import org.jetbrains.research.kfg.ir.Class
-import org.jetbrains.research.kfg.ir.Location
-import org.jetbrains.research.kfg.ir.Method
-import org.jetbrains.research.kfg.ir.MethodDesc
+import org.jetbrains.research.kfg.ir.*
 import org.jetbrains.research.kfg.ir.value.instruction.BinaryOpcode
 import org.jetbrains.research.kfg.ir.value.instruction.CallOpcode
 import org.jetbrains.research.kfg.ir.value.instruction.CmpOpcode
 import org.jetbrains.research.kfg.type.Type
 import org.jetbrains.research.kfg.type.parseDesc
 
-val kfgSerialModule: SerialModule
-    get() = serializersModuleOf(mapOf(
+fun getKfgSerialModule(cm: ClassManager): SerialModule {
+    ClassSerializer.cm = cm
+    MethodSerializer.cm = cm
+    return serializersModuleOf(mapOf(
             //BinaryOpcodes
             BinaryOpcode::class to BinaryOpcodeSerializer,
             BinaryOpcode.Add::class to BinaryOpcodeSerializer,
@@ -51,14 +49,15 @@ val kfgSerialModule: SerialModule
             CallOpcode.Virtual::class to CallOpcodeSerializer,
             CallOpcode.Static::class to CallOpcodeSerializer,
             CallOpcode.Special::class to CallOpcodeSerializer,
+            //Classes
+            Class::class to ClassSerializer,
+            ConcreteClass::class to ClassSerializer,
+            OuterClass::class to ClassSerializer,
             // other classes
             Location::class to LocationSerializer,
-            Class::class to ClassSerializer,
             Method::class to MethodSerializer
     ))
-
-private val String.hexString: String get() = HexConverter.printHexBinary(this.toByteArray())
-private val String.unhexString: String get() = String(HexConverter.parseHexBinary(this))
+}
 
 @Serializer(forClass = BinaryOpcode::class)
 object BinaryOpcodeSerializer : KSerializer<BinaryOpcode> {
@@ -66,11 +65,11 @@ object BinaryOpcodeSerializer : KSerializer<BinaryOpcode> {
         get() = StringDescriptor.withName("opcode")
 
     override fun serialize(encoder: Encoder, obj: BinaryOpcode) {
-        encoder.encodeString(obj.name.hexString)
+        encoder.encodeString(obj.name)
     }
 
     override fun deserialize(decoder: Decoder): BinaryOpcode {
-        val opcode = decoder.decodeString().unhexString
+        val opcode = decoder.decodeString()
         return BinaryOpcode.parse(opcode)
     }
 }
@@ -81,11 +80,11 @@ object CmpOpcodeSerializer : KSerializer<CmpOpcode> {
         get() = StringDescriptor.withName("opcode")
 
     override fun serialize(encoder: Encoder, obj: CmpOpcode) {
-        encoder.encodeString(obj.name.hexString)
+        encoder.encodeString(obj.name)
     }
 
     override fun deserialize(decoder: Decoder): CmpOpcode {
-        val opcode = decoder.decodeString().unhexString
+        val opcode = decoder.decodeString()
         return CmpOpcode.parse(opcode)
     }
 }
@@ -96,11 +95,11 @@ object CallOpcodeSerializer : KSerializer<CallOpcode> {
         get() = StringDescriptor.withName("opcode")
 
     override fun serialize(encoder: Encoder, obj: CallOpcode) {
-        encoder.encodeString(obj.name.hexString)
+        encoder.encodeString(obj.name)
     }
 
     override fun deserialize(decoder: Decoder): CallOpcode {
-        val opcode = decoder.decodeString().unhexString
+        val opcode = decoder.decodeString()
         return CallOpcode.parse(opcode)
     }
 }
@@ -118,8 +117,8 @@ object LocationSerializer : KSerializer<Location> {
 
     override fun serialize(encoder: Encoder, obj: Location) {
         val output = encoder.beginStructure(descriptor)
-        output.encodeStringElement(descriptor, 0, obj.`package`.toString().hexString)
-        output.encodeStringElement(descriptor, 1, obj.file.hexString)
+        output.encodeStringElement(descriptor, 0, obj.`package`.toString())
+        output.encodeStringElement(descriptor, 1, obj.file)
         output.encodeIntElement(descriptor, 2, obj.line)
         output.endStructure(descriptor)
     }
@@ -132,8 +131,8 @@ object LocationSerializer : KSerializer<Location> {
         loop@ while (true) {
             when (val i = input.decodeElementIndex(descriptor)) {
                 CompositeDecoder.READ_DONE -> break@loop
-                0 -> `package` = Package(input.decodeStringElement(descriptor, i).unhexString)
-                1 -> file = input.decodeStringElement(descriptor, i).unhexString
+                0 -> `package` = Package(input.decodeStringElement(descriptor, i))
+                1 -> file = input.decodeStringElement(descriptor, i)
                 2 -> line = input.decodeIntElement(descriptor, i)
                 else -> throw SerializationException("Unknown index $i")
             }
@@ -144,24 +143,24 @@ object LocationSerializer : KSerializer<Location> {
 }
 
 @Serializer(forClass = Class::class)
-object ClassSerializer : KSerializer<Class> {
+internal object ClassSerializer : KSerializer<Class> {
     lateinit var cm: ClassManager
 
     override val descriptor: SerialDescriptor
         get() = StringDescriptor.withName("fullname")
 
     override fun serialize(encoder: Encoder, obj: Class) {
-        encoder.encodeString(obj.fullname.hexString)
+        encoder.encodeString(obj.fullname)
     }
 
     override fun deserialize(decoder: Decoder): Class {
-        val fullname = decoder.decodeString().unhexString
+        val fullname = decoder.decodeString()
         return cm.getByName(fullname)
     }
 }
 
 @Serializer(forClass = Method::class)
-object MethodSerializer : KSerializer<Method> {
+internal object MethodSerializer : KSerializer<Method> {
     lateinit var cm: ClassManager
 
     override val descriptor: SerialDescriptor
@@ -177,9 +176,9 @@ object MethodSerializer : KSerializer<Method> {
     override fun serialize(encoder: Encoder, obj: Method) {
         val output = encoder.beginStructure(descriptor)
         output.encodeSerializableElement(descriptor, 0, ClassSerializer, obj.`class`)
-        output.encodeStringElement(descriptor, 1, obj.name.hexString)
-        output.encodeStringElement(descriptor, 2, obj.returnType.asmDesc.hexString)
-        output.encodeSerializableElement(descriptor, 3, StringSerializer.list, obj.argTypes.map { it.asmDesc.hexString }.toList())
+        output.encodeStringElement(descriptor, 1, obj.name)
+        output.encodeStringElement(descriptor, 2, obj.returnType.asmDesc)
+        output.encodeSerializableElement(descriptor, 3, StringSerializer.list, obj.argTypes.map { it.asmDesc }.toList())
         output.endStructure(descriptor)
     }
 
@@ -193,10 +192,10 @@ object MethodSerializer : KSerializer<Method> {
             when (val i = input.decodeElementIndex(descriptor)) {
                 CompositeDecoder.READ_DONE -> break@loop
                 0 -> klass = input.decodeSerializableElement(descriptor, i, ClassSerializer)
-                1 -> name = input.decodeStringElement(descriptor, i).unhexString
-                2 -> retval = parseDesc(cm.type, input.decodeStringElement(descriptor, i).unhexString)
+                1 -> name = input.decodeStringElement(descriptor, i)
+                2 -> retval = parseDesc(cm.type, input.decodeStringElement(descriptor, i))
                 3 -> argTypes = input.decodeSerializableElement(descriptor, i, StringSerializer.list)
-                        .map { parseDesc(cm.type, it.unhexString) }
+                        .map { parseDesc(cm.type, it) }
                         .toTypedArray()
                 else -> throw SerializationException("Unknown index $i")
             }

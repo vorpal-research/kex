@@ -5,9 +5,11 @@ import kotlinx.serialization.modules.SerialModule
 import kotlinx.serialization.modules.SerializersModule
 import kotlinx.serialization.serializer
 import org.jetbrains.research.kex.ktype.KexType
+import org.jetbrains.research.kex.state.PredicateState
 import org.jetbrains.research.kex.state.predicate.Predicate
 import org.jetbrains.research.kex.state.predicate.PredicateType
 import org.jetbrains.research.kex.state.term.Term
+import org.jetbrains.research.kfg.ClassManager
 import kotlin.reflect.KClass
 
 @ImplicitReflectionSerializer
@@ -22,18 +24,17 @@ val kexTypeSerialModule: SerialModule
     }
 
 @ImplicitReflectionSerializer
-val termSerialModule: SerialModule
-    get() = SerializersModule {
-        include(kfgSerialModule)
-        include(kexTypeSerialModule)
-        polymorphic(Term::class) {
-            Term.terms.forEach { (_, klass) ->
-                @Suppress("UNCHECKED_CAST") val any = klass.kotlin as KClass<Any>
-                addSubclass(any, any.serializer())
-            }
+fun getTermSerialModule(cm: ClassManager): SerialModule = SerializersModule {
+    include(getKfgSerialModule(cm))
+    include(kexTypeSerialModule)
+    polymorphic(Term::class) {
+        Term.terms.forEach { (_, klass) ->
+            @Suppress("UNCHECKED_CAST") val any = klass.kotlin as KClass<Any>
+            addSubclass(any, any.serializer())
         }
-
     }
+
+}
 
 @ImplicitReflectionSerializer
 val predicateTypeSerialModule: SerialModule
@@ -47,14 +48,24 @@ val predicateTypeSerialModule: SerialModule
     }
 
 @ImplicitReflectionSerializer
-val predicateSerialModule: SerialModule
-    get() = SerializersModule {
-        include(termSerialModule)
-        include(predicateTypeSerialModule)
-        polymorphic(Predicate::class) {
-            Predicate.predicates.forEach { (_, klass) ->
-                @Suppress("UNCHECKED_CAST") val any = klass.kotlin as KClass<Any>
-                addSubclass(any, any.serializer())
-            }
+fun getPredicateSerialModule(cm: ClassManager): SerialModule = SerializersModule {
+    include(getTermSerialModule(cm))
+    include(predicateTypeSerialModule)
+    polymorphic(Predicate::class) {
+        Predicate.predicates.forEach { (_, klass) ->
+            @Suppress("UNCHECKED_CAST") val any = klass.kotlin as KClass<Any>
+            addSubclass(any, any.serializer())
         }
     }
+}
+
+@ImplicitReflectionSerializer
+fun getPredicateStateSerialModule(cm: ClassManager): SerialModule = SerializersModule {
+    include(getPredicateSerialModule(cm))
+    polymorphic(PredicateState::class) {
+        PredicateState.states.forEach { (_, klass) ->
+            @Suppress("UNCHECKED_CAST") val any = klass.kotlin as KClass<Any>
+            addSubclass(any, any.serializer())
+        }
+    }
+}

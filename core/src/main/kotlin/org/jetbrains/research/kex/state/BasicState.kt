@@ -1,10 +1,13 @@
 package org.jetbrains.research.kex.state
 
+import kotlinx.serialization.Required
+import kotlinx.serialization.Serializable
 import org.jetbrains.research.kex.state.predicate.Predicate
 import org.jetbrains.research.kex.util.defaultHashCode
 
 @InheritorOf("State")
-class BasicState(val predicates: List<Predicate> = listOf()) : PredicateState(), Iterable<Predicate> {
+@Serializable
+class BasicState(@Required val predicates: List<Predicate> = listOf()) : PredicateState(), Iterable<Predicate> {
 
     override val size: Int
         get() = predicates.size
