@@ -1,12 +1,16 @@
 package org.jetbrains.research.kex.asm.analysis
 
+import kotlinx.serialization.ImplicitReflectionSerializer
+import kotlinx.serialization.UnstableDefault
 import org.jetbrains.research.kex.asm.state.PredicateStateAnalysis
 import org.jetbrains.research.kex.asm.transform.LoopDeroller
 import org.jetbrains.research.kex.asm.transform.TraceInstrumenter
 import org.jetbrains.research.kex.random.defaultRandomizer
+import org.jetbrains.research.kex.serialization.KexSerializer
 import org.jetbrains.research.kex.smt.Checker
 import org.jetbrains.research.kex.smt.Result
 import org.jetbrains.research.kex.smt.model.ModelRecoverer
+import org.jetbrains.research.kex.state.PredicateState
 import org.jetbrains.research.kex.trace.TraceManager
 import org.jetbrains.research.kex.trace.runner.SimpleRunner
 import org.jetbrains.research.kex.util.debug
@@ -22,6 +26,8 @@ import org.jetbrains.research.kfg.util.writeClass
 import org.jetbrains.research.kfg.visitor.MethodVisitor
 import java.io.File
 import java.net.URLClassLoader
+
+class KexCheckerException(val inner: Exception, val reason: PredicateState) : Exception()
 
 class MethodChecker(
         override val cm: ClassManager,
@@ -64,6 +70,8 @@ class MethodChecker(
         state = null
     }
 
+    @UnstableDefault
+    @ImplicitReflectionSerializer
     override fun visit(method: Method) {
         super.visit(method)
         prepareMethodInfo(method)
@@ -81,7 +89,20 @@ class MethodChecker(
             val originalBlock = blockMappings[block] ?: block
             if (tm.isCovered(method, originalBlock)) continue
 
-            coverBlock(method, block)
+            try {
+                log.debug("Checking reachability of ${block.terminator.print()}")
+                coverBlock(method, block)
+            } catch (e: KexCheckerException) {
+                log.error("Fail when covering block ${block.name} of $method")
+                log.error("Error: ${e.inner}")
+
+                val methodFileName = method.prototype.replace(Regex("\\s"), "").replace('/', '.')
+                val resultFile = "$methodFileName.${block.name}-fail.json"
+                log.error("Failing saved to file $resultFile")
+                val errorDump = File(resultFile)
+                errorDump.createNewFile()
+                errorDump.writeText(KexSerializer(cm).toJson(e.reason))
+            }
 
             log.debug("Block ${block.name} is covered = ${tm.isCovered(method, originalBlock)}")
             log.debug()
@@ -91,29 +112,33 @@ class MethodChecker(
 
     private fun coverBlock(method: Method, block: BasicBlock) {
         val checker = Checker(method, state!!.loader, psa)
+        val ps = checker.createState(block.terminator) ?: return
 
-        log.debug("Checking reachability of ${block.terminator.print()}")
-        val result = checker.checkReachable(block.terminator)
-        log.debug(result)
+        try {
+            val result = checker.check(ps)
+            log.debug(result)
 
-        when (result) {
-            is Result.SatResult -> {
-                log.debug(result.model)
-                val model = ModelRecoverer(method, result.model, state!!.loader).apply()
-                log.debug("Recovered: ${tryOrNull { model.toString() }}")
+            when (result) {
+                is Result.SatResult -> {
+                    log.debug(result.model)
+                    val model = ModelRecoverer(method, result.model, state!!.loader).apply()
+                    log.debug("Recovered: ${tryOrNull { model.toString() }}")
 
-                tryOrNull {
-                    val instance = model.instance ?: when {
-                        method.isStatic -> null
-                        else -> random.next(getClass(types.getRefType(method.`class`), state!!.loader))
+                    tryOrNull {
+                        val instance = model.instance ?: when {
+                            method.isStatic -> null
+                            else -> random.next(getClass(types.getRefType(method.`class`), state!!.loader))
+                        }
+
+                        val trace = SimpleRunner(method, state!!.loader).invoke(instance, model.arguments.toTypedArray())
+                        tm.addTrace(method, trace)
                     }
-
-                    val trace = SimpleRunner(method, state!!.loader).invoke(instance, model.arguments.toTypedArray())
-                    tm.addTrace(method, trace)
                 }
+                is Result.UnsatResult -> log.debug("Instruction ${block.terminator.print()} is unreachable")
+                is Result.UnknownResult -> Unit
             }
-            is Result.UnsatResult -> log.debug("Instruction ${block.terminator.print()} is unreachable")
-            is Result.UnknownResult -> Unit
+        } catch(e: Exception) {
+            throw KexCheckerException(e, ps)
         }
     }
 }
