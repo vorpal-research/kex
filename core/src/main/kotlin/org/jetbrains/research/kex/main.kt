@@ -1,6 +1,5 @@
 package org.jetbrains.research.kex
 
-import kotlinx.serialization.ImplicitReflectionSerializer
 import org.jetbrains.research.kex.asm.analysis.MethodChecker
 import org.jetbrains.research.kex.asm.analysis.RandomChecker
 import org.jetbrains.research.kex.asm.state.PredicateStateAnalysis
@@ -20,7 +19,6 @@ import org.jetbrains.research.kfg.visitor.executePipeline
 import java.io.File
 import java.util.jar.JarFile
 
-@ImplicitReflectionSerializer
 fun main(args: Array<String>) {
     val config = GlobalConfig
     val cmd = CmdConfig(args)
