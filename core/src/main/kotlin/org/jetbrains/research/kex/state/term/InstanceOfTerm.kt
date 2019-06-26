@@ -12,8 +12,7 @@ import org.jetbrains.research.kex.util.defaultHashCode
 class InstanceOfTerm(val checkedType: KexType, val operand: Term) : Term() {
     override val name = "$operand instanceof $checkedType"
     override val type: KexType = KexBool()
-    override val subterms: List<Term>
-        get() = listOf(operand)
+    override val subterms by lazy { listOf(operand) }
 
     override fun <T: Transformer<T>> accept(t: Transformer<T>): Term {
         val toperand = t.transform(operand)

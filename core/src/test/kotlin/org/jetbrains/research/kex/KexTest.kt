@@ -3,8 +3,8 @@ package org.jetbrains.research.kex
 import org.jetbrains.research.kex.asm.state.PredicateStateAnalysis
 import org.jetbrains.research.kex.asm.transform.LoopDeroller
 import org.jetbrains.research.kex.config.FileConfig
-import org.jetbrains.research.kex.config.GlobalConfig
 import org.jetbrains.research.kex.config.RuntimeConfig
+import org.jetbrains.research.kex.config.kexConfig
 import org.jetbrains.research.kex.smt.Checker
 import org.jetbrains.research.kex.smt.Result
 import org.jetbrains.research.kex.state.term.ConstBoolTerm
@@ -36,7 +36,7 @@ abstract class KexTest {
 
     init {
         val rootDir = System.getProperty("root.dir")
-        GlobalConfig.initialize(RuntimeConfig, FileConfig("$rootDir/kex-test.ini"))
+        kexConfig.initialize(RuntimeConfig, FileConfig("$rootDir/kex-test.ini"))
         RuntimeConfig.setValue("z3", "tacticsFile", "$rootDir/z3.tactics")
         RuntimeConfig.setValue("z3", "paramFile", "$rootDir/z3.params")
 

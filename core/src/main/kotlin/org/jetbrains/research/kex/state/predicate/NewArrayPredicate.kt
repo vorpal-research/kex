@@ -17,8 +17,7 @@ class NewArrayPredicate(
         val elementType: KexType,
         @Required override val type: PredicateType = PredicateType.State(),
         @Required @ContextualSerialization override val location: Location = Location()) : Predicate() {
-    override val operands: List<Term>
-        get() = listOf(lhv) + dimentions
+    override val operands by lazy { listOf(lhv) + dimentions }
 
     val numDimentions: Int
         get() = dimentions.size

@@ -13,8 +13,7 @@ class ConstClassTerm(
         override val type: KexType,
         @ContextualSerialization val `class`: Class) : Term() {
     override val name = "$`class`.class"
-    override val subterms: List<Term>
-        get() = listOf()
+    override val subterms by lazy { listOf<Term>() }
 
     override fun <T: Transformer<T>> accept(t: Transformer<T>) = this
 }

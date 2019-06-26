@@ -11,8 +11,7 @@ import org.jetbrains.research.kex.state.transformer.Transformer
 class ConstLongTerm(val value: Long) : Term() {
     override val name = value.toString()
     override val type: KexType = KexLong()
-    override val subterms: List<Term>
-        get() = listOf()
+    override val subterms by lazy { listOf<Term>() }
 
     override fun <T: Transformer<T>> accept(t: Transformer<T>) = this
 }

@@ -13,8 +13,7 @@ class ReturnValueTerm(
         override val type: KexType,
         @ContextualSerialization val method: Method) : Term() {
     override val name = "<retval>"
-    override val subterms: List<Term>
-        get() = listOf()
+    override val subterms by lazy { listOf<Term>() }
 
     override fun <T: Transformer<T>> accept(t: Transformer<T>) = this
 }

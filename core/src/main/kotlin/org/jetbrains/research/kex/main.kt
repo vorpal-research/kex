@@ -4,10 +4,7 @@ import org.jetbrains.research.kex.asm.analysis.MethodChecker
 import org.jetbrains.research.kex.asm.analysis.RandomChecker
 import org.jetbrains.research.kex.asm.state.PredicateStateAnalysis
 import org.jetbrains.research.kex.asm.transform.LoopDeroller
-import org.jetbrains.research.kex.config.CmdConfig
-import org.jetbrains.research.kex.config.FileConfig
-import org.jetbrains.research.kex.config.GlobalConfig
-import org.jetbrains.research.kex.config.RuntimeConfig
+import org.jetbrains.research.kex.config.*
 import org.jetbrains.research.kex.util.log
 import org.jetbrains.research.kfg.ClassManager
 import org.jetbrains.research.kfg.Package
@@ -20,10 +17,9 @@ import java.io.File
 import java.util.jar.JarFile
 
 fun main(args: Array<String>) {
-    val config = GlobalConfig
     val cmd = CmdConfig(args)
     val properties = cmd.getCmdValue("config", "kex.ini")
-    config.initialize(cmd, RuntimeConfig, FileConfig(properties))
+    kexConfig.initialize(cmd, RuntimeConfig, FileConfig(properties))
 
     val jarName = cmd.getCmdValue("jar")
     val packageName = cmd.getCmdValue("package", "*")

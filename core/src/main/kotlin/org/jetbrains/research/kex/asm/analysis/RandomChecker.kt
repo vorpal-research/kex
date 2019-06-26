@@ -1,7 +1,7 @@
 package org.jetbrains.research.kex.asm.analysis
 
 import org.jetbrains.research.kex.asm.transform.TraceInstrumenter
-import org.jetbrains.research.kex.config.GlobalConfig
+import org.jetbrains.research.kex.config.kexConfig
 import org.jetbrains.research.kex.trace.TraceManager
 import org.jetbrains.research.kex.trace.runner.RandomRunner
 import org.jetbrains.research.kex.util.log
@@ -14,7 +14,7 @@ import java.net.URLClassLoader
 
 class RandomChecker(override val cm: ClassManager, private val loader: ClassLoader, private val target: File) :
         MethodVisitor {
-    private val runner = GlobalConfig.getBooleanValue("runner", "enabled", false)
+    private val runner = kexConfig.getBooleanValue("runner", "enabled", false)
 
     override fun cleanup() {}
 

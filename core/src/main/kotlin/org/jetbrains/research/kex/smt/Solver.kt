@@ -1,6 +1,7 @@
 package org.jetbrains.research.kex.smt
 
 import org.jetbrains.research.kex.config.GlobalConfig
+import org.jetbrains.research.kex.config.kexConfig
 import org.jetbrains.research.kex.smt.model.SMTModel
 import org.jetbrains.research.kex.smt.z3.Z3Solver
 import org.jetbrains.research.kex.state.PredicateState
@@ -43,7 +44,7 @@ interface AbstractSMTSolver {
     fun cleanup()
 }
 
-private val engine = GlobalConfig.getStringValue("smt", "engine")
+private val engine = kexConfig.getStringValue("smt", "engine")
         ?: unreachable { log.error("No SMT engine specified") }
 
 class SMTProxySolver(

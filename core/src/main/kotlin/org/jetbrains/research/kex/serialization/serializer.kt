@@ -5,10 +5,10 @@ import kotlinx.serialization.UnstableDefault
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonConfiguration
 import kotlinx.serialization.serializer
-import org.jetbrains.research.kex.config.GlobalConfig
+import org.jetbrains.research.kex.config.kexConfig
 import org.jetbrains.research.kfg.ClassManager
 
-private val prettyPrint = GlobalConfig.getBooleanValue("json", "pretty-print", false)
+private val prettyPrint = kexConfig.getBooleanValue("json", "pretty-print", false)
 
 @UnstableDefault
 @ImplicitReflectionSerializer

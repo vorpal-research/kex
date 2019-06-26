@@ -11,8 +11,7 @@ import org.jetbrains.research.kex.util.unreachable
 @Serializable
 class FieldLoadTerm(override val type: KexType, val field: Term) : Term() {
     override val name = "*($field)"
-    override val subterms: List<Term>
-        get() = listOf(this.field)
+    override val subterms by lazy { listOf(this.field) }
 
     val isStatic
         get() = (field as? FieldTerm)?.isStatic ?: unreachable { log.error("Non-field term in field load") }

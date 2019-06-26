@@ -3,6 +3,7 @@ package org.jetbrains.research.kex.state.transformer
 import org.jetbrains.research.kex.collections.DisjointSet
 import org.jetbrains.research.kex.collections.Subset
 import org.jetbrains.research.kex.config.GlobalConfig
+import org.jetbrains.research.kex.config.kexConfig
 import org.jetbrains.research.kex.ktype.KexType
 import org.jetbrains.research.kex.state.predicate.*
 import org.jetbrains.research.kex.state.term.*
@@ -209,8 +210,8 @@ class StensgaardAA : Transformer<StensgaardAA>, AliasAnalysis {
     }
 
     fun viewGraph() {
-        val dot = GlobalConfig.getStringValue("view", "dot", "/usr/bin/dot")
-        val browser = GlobalConfig.getStringValue("view", "dot", "/usr/bin/chromium")
+        val dot = kexConfig.getStringValue("view", "dot", "/usr/bin/dot")
+        val browser = kexConfig.getStringValue("view", "dot", "/usr/bin/chromium")
         viewCfg("SteensgaardAA", asGraph(), dot, browser)
     }
 }

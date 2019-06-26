@@ -15,8 +15,7 @@ class FieldStorePredicate(
         val value: Term,
         @Required override val type: PredicateType = PredicateType.State(),
         @Required @ContextualSerialization override val location: Location = Location()) : Predicate() {
-    override val operands: List<Term>
-        get() = listOf(this.field, this.value)
+    override val operands by lazy { listOf(this.field, this.value) }
 
     override fun print() = "*($field) = $value"
 

@@ -19,8 +19,7 @@ class ArrayStorePredicate(
         val value: Term,
         @Required override val type: PredicateType = PredicateType.State(),
         @Required @ContextualSerialization override val location: Location = Location()) : Predicate() {
-    override val operands: List<Term>
-        get() = listOf(arrayRef, value)
+    override val operands by lazy { listOf(arrayRef, value) }
 
     val componentType: KexType
         get() = (arrayRef.type as? KexArray)?.element ?: unreachable { log.error("Non-array type of array ref") }

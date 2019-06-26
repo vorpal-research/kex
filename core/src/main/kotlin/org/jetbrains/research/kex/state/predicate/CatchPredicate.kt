@@ -14,8 +14,7 @@ class CatchPredicate(
         val throwable: Term,
         @Required override val type: PredicateType = PredicateType.State(),
         @Required @ContextualSerialization override val location: Location = Location()) : Predicate() {
-    override val operands: List<Term>
-        get() = listOf(throwable)
+    override val operands by lazy { listOf(throwable) }
 
     override fun print() = "catch $throwable"
 

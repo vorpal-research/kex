@@ -1,7 +1,7 @@
 package org.jetbrains.research.kex.asm.transform
 
 import org.jetbrains.research.kex.asm.util.FileOutputStreamWrapper
-import org.jetbrains.research.kex.config.GlobalConfig
+import org.jetbrains.research.kex.config.kexConfig
 import org.jetbrains.research.kex.util.buildList
 import org.jetbrains.research.kfg.ClassManager
 import org.jetbrains.research.kfg.analysis.IRVerifier
@@ -19,7 +19,7 @@ class TraceInstrumenter(override val cm: ClassManager) : MethodVisitor {
 
     companion object {
         const val TRACE_POSTFIX = ".trace"
-        val TRACE_DIRECTORY = GlobalConfig.getStringValue("runner", "trace-directory", "./traces")
+        val TRACE_DIRECTORY = kexConfig.getStringValue("runner", "trace-directory", "./traces")
 
         fun generateTraceFileName(method: Method): String {
             val name = method.toString().replace('/', '.').replace(" ", "")
