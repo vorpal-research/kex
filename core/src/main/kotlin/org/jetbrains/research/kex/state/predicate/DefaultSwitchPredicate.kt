@@ -15,8 +15,7 @@ class DefaultSwitchPredicate(
         val cases: List<Term>,
         @Required override val type: PredicateType = PredicateType.State(),
         @Required @ContextualSerialization override val location: Location = Location()) : Predicate() {
-    override val operands: List<Term>
-        get() = listOf(cond) + cases
+    override val operands by lazy { listOf(cond) + cases }
 
     override fun print(): String {
         val sb = StringBuilder()

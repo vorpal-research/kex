@@ -10,8 +10,7 @@ import org.jetbrains.research.kex.util.defaultHashCode
 @Serializable
 class ArgumentTerm(override val type: KexType, val index: Int) : Term() {
     override val name = "arg$$index"
-    override val subterms: List<Term>
-        get() = listOf()
+    override val subterms by lazy { listOf<Term>() }
 
     override fun <T: Transformer<T>> accept(t: Transformer<T>) = this
 

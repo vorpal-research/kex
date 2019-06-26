@@ -4,6 +4,7 @@ import com.microsoft.z3.Model
 import com.microsoft.z3.Status
 import com.microsoft.z3.Tactic
 import org.jetbrains.research.kex.config.GlobalConfig
+import org.jetbrains.research.kex.config.kexConfig
 import org.jetbrains.research.kex.smt.AbstractSMTSolver
 import org.jetbrains.research.kex.smt.Result
 import org.jetbrains.research.kex.smt.model.MemoryShape
@@ -20,12 +21,11 @@ import org.jetbrains.research.kex.util.log
 import org.jetbrains.research.kex.util.unreachable
 import org.jetbrains.research.kfg.type.TypeFactory
 
-private val timeout = GlobalConfig.getIntValue("smt", "timeout", 3) * 1000
-
-private val logQuery = GlobalConfig.getBooleanValue("smt", "logQuery", false)
-private val logFormulae = GlobalConfig.getBooleanValue("smt", "logFormulae", false)
-private val printSMTLib = GlobalConfig.getBooleanValue("smt", "logSMTLib", false)
-private val simplifyFormulae = GlobalConfig.getBooleanValue("smt", "simplifyFormulae", false)
+private val timeout = kexConfig.getIntValue("smt", "timeout", 3) * 1000
+private val logQuery = kexConfig.getBooleanValue("smt", "logQuery", false)
+private val logFormulae = kexConfig.getBooleanValue("smt", "logFormulae", false)
+private val printSMTLib = kexConfig.getBooleanValue("smt", "logSMTLib", false)
+private val simplifyFormulae = kexConfig.getBooleanValue("smt", "simplifyFormulae", false)
 
 class Z3Solver(val tf: TypeFactory) : AbstractSMTSolver {
     val ef = Z3ExprFactory()

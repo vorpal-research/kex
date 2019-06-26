@@ -16,8 +16,7 @@ class CmpTerm(
         val lhv: Term,
         val rhv: Term) : Term() {
     override val name = "$lhv $opcode $rhv"
-    override val subterms: List<Term>
-        get() = listOf(lhv, rhv)
+    override val subterms by lazy { listOf(lhv, rhv) }
 
     override fun <T: Transformer<T>> accept(t: Transformer<T>): Term {
         val tlhv = t.transform(lhv)

@@ -17,9 +17,8 @@ class CallPredicate(
         val callTerm: Term,
         @Required override val type: PredicateType = PredicateType.State(),
         @Required @ContextualSerialization override val location: Location = Location()) : Predicate() {
-    val hasLhv = lhvUnsafe != null
-    override val operands: List<Term>
-        get() = listOfNotNull(lhvUnsafe, callTerm)
+    val hasLhv by lazy { lhvUnsafe != null }
+    override val operands by lazy { listOfNotNull(lhvUnsafe, callTerm) }
 
     constructor(callTerm: Term, type: PredicateType = PredicateType.State(), location: Location = Location())
             : this(null, callTerm, type, location)

@@ -9,8 +9,7 @@ import org.jetbrains.research.kex.state.transformer.Transformer
 @Serializable
 class ArrayIndexTerm(override val type: KexType, val arrayRef: Term, val index: Term) : Term() {
     override val name = "$arrayRef[$index]"
-    override val subterms: List<Term>
-        get() = listOf(arrayRef, index)
+    override val subterms by lazy { listOf(arrayRef, index) }
 
     override fun <T : Transformer<T>> accept(t: Transformer<T>): Term {
         val tarrayRef = t.transform(arrayRef)

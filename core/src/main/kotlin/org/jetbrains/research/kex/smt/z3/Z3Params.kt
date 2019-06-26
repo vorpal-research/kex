@@ -2,15 +2,22 @@ package org.jetbrains.research.kex.smt.z3
 
 import com.beust.klaxon.*
 import org.jetbrains.research.kex.config.GlobalConfig
+import org.jetbrains.research.kex.config.kexConfig
+import org.jetbrains.research.kex.util.log
+import org.jetbrains.research.kex.util.unreachable
 import java.io.File
 
-private val paramFile = GlobalConfig.getStringValue("z3", "paramFile")
+private val paramFile by lazy {
+    kexConfig.getStringValue("z3", "paramFile")
+            ?: unreachable { log.error("You need to specify parameters file to be able to use Z3 SMT") }
+}
 
 private fun <T> Klaxon.convert(k: kotlin.reflect.KClass<*>, fromJson: (JsonValue) -> T, toJson: (T) -> String, isUnion: Boolean = false) =
-        this.converter(object: Converter {
+        this.converter(object : Converter {
             @Suppress("UNCHECKED_CAST")
-            override fun toJson(value: Any)        = toJson(value as T)
-            override fun fromJson(jv: JsonValue)   = fromJson(jv) as Any
+            override fun toJson(value: Any) = toJson(value as T)
+
+            override fun fromJson(jv: JsonValue) = fromJson(jv) as Any
             override fun canConvert(cls: Class<*>) = cls == k.java || (isUnion && cls.superclass == k.java)
         })
 
@@ -39,7 +46,7 @@ class Z3Params(elements: Collection<Z3Param>) : ArrayList<Z3Param>(elements) {
     }
 }
 
-data class Z3Param (
+data class Z3Param(
         val key: String,
         val value: Value
 ) {

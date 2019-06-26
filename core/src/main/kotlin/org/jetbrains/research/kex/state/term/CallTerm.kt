@@ -15,8 +15,7 @@ class CallTerm(
         @ContextualSerialization val method: Method,
         val arguments: List<Term>) : Term() {
     override val name = "$owner.${method.name}(${arguments.joinToString()})"
-    override val subterms: List<Term>
-        get() = listOf(owner) + arguments
+    override val subterms by lazy { listOf(owner) + arguments }
 
     val isStatic: Boolean
         get() = owner is ConstClassTerm

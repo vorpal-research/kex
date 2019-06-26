@@ -11,8 +11,7 @@ import org.jetbrains.research.kex.state.transformer.Transformer
 class ConstDoubleTerm(val value: Double) : Term() {
     override val name = value.toString()
     override val type: KexType = KexDouble()
-    override val subterms: List<Term>
-        get() = listOf()
+    override val subterms by lazy { listOf<Term>() }
 
     override fun <T: Transformer<T>> accept(t: Transformer<T>) = this
 }

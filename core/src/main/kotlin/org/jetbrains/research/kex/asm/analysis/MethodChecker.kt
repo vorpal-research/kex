@@ -1,10 +1,12 @@
 package org.jetbrains.research.kex.asm.analysis
 
 import kotlinx.serialization.ImplicitReflectionSerializer
+import kotlinx.serialization.Serializable
 import kotlinx.serialization.UnstableDefault
 import org.jetbrains.research.kex.asm.state.PredicateStateAnalysis
 import org.jetbrains.research.kex.asm.transform.LoopDeroller
 import org.jetbrains.research.kex.asm.transform.TraceInstrumenter
+import org.jetbrains.research.kex.config.kexConfig
 import org.jetbrains.research.kex.random.defaultRandomizer
 import org.jetbrains.research.kex.serialization.KexSerializer
 import org.jetbrains.research.kex.smt.Checker
@@ -27,7 +29,12 @@ import org.jetbrains.research.kfg.visitor.MethodVisitor
 import java.io.File
 import java.net.URLClassLoader
 
+private val failDir = kexConfig.getStringValue("debug", "dump-directory", "./fail")
+
 class KexCheckerException(val inner: Exception, val reason: PredicateState) : Exception()
+
+@Serializable
+data class PSWithMessage(val message: String, val state: PredicateState)
 
 class MethodChecker(
         override val cm: ClassManager,
@@ -99,9 +106,10 @@ class MethodChecker(
                 val methodFileName = method.prototype.replace(Regex("\\s"), "").replace('/', '.')
                 val resultFile = "$methodFileName.${block.name}-fail.json"
                 log.error("Failing saved to file $resultFile")
-                val errorDump = File(resultFile)
+                val errorDump = File(failDir, resultFile).apply { parentFile?.mkdirs() }
                 errorDump.createNewFile()
-                errorDump.writeText(KexSerializer(cm).toJson(e.reason))
+                errorDump.writeText(KexSerializer(cm).toJson(PSWithMessage(e.inner.toString(), e.reason)))
+                break
             }
 
             log.debug("Block ${block.name} is covered = ${tm.isCovered(method, originalBlock)}")

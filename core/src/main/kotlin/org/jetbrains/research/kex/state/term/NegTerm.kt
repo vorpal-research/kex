@@ -9,8 +9,7 @@ import org.jetbrains.research.kex.state.transformer.Transformer
 @Serializable
 class NegTerm(override val type: KexType, val operand: Term) : Term() {
     override val name = "-$operand"
-    override val subterms: List<Term>
-        get() = listOf(operand)
+    override val subterms by lazy { listOf(operand) }
 
     override fun <T: Transformer<T>> accept(t: Transformer<T>): Term {
         val toperand = t.transform(operand)

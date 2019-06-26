@@ -1,5 +1,7 @@
 package org.jetbrains.research.kex.config
 
+val kexConfig = GlobalConfig
+
 object GlobalConfig : Config {
     private val sources = mutableListOf<Config>()
 

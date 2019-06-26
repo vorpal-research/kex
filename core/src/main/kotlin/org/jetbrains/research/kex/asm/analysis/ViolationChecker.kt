@@ -2,7 +2,7 @@ package org.jetbrains.research.kex.asm.analysis
 
 import org.jetbrains.research.kex.asm.state.PredicateStateAnalysis
 import org.jetbrains.research.kex.asm.state.PredicateStateBuilder
-import org.jetbrains.research.kex.config.GlobalConfig
+import org.jetbrains.research.kex.config.kexConfig
 import org.jetbrains.research.kex.smt.Result
 import org.jetbrains.research.kex.smt.SMTProxySolver
 import org.jetbrains.research.kex.state.PredicateState
@@ -23,11 +23,10 @@ import org.jetbrains.research.kfg.ir.value.instruction.*
 import org.jetbrains.research.kfg.util.TopologicalSorter
 import org.jetbrains.research.kfg.visitor.MethodVisitor
 
-
-private val isInliningEnabled = GlobalConfig.getBooleanValue("smt", "ps-inlining", true)
-private val isMemspacingEnabled = GlobalConfig.getBooleanValue("smt", "memspacing", true)
-private val isSlicingEnabled = GlobalConfig.getBooleanValue("smt", "slicing", false)
-private val logQuery = GlobalConfig.getBooleanValue("smt", "logQuery", false)
+private val isInliningEnabled = kexConfig.getBooleanValue("smt", "ps-inlining", true)
+private val isMemspacingEnabled = kexConfig.getBooleanValue("smt", "memspacing", true)
+private val isSlicingEnabled = kexConfig.getBooleanValue("smt", "slicing", false)
+private val logQuery = kexConfig.getBooleanValue("smt", "logQuery", false)
 
 class ViolationChecker(override val cm: ClassManager,
                        private val psa: PredicateStateAnalysis) : MethodVisitor {

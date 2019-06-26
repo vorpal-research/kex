@@ -1,7 +1,7 @@
 package org.jetbrains.research.kex.random
 
 import io.github.benas.randombeans.EnhancedRandomBuilder
-import org.jetbrains.research.kex.config.GlobalConfig
+import org.jetbrains.research.kex.config.kexConfig
 import org.jetbrains.research.kex.util.log
 import org.jetbrains.research.kex.util.tryOrNull
 import java.lang.reflect.ParameterizedType
@@ -41,13 +41,13 @@ class RandomBeansDriver(val config: BeansConfig = defaultConfig) : Randomizer {
         )
 
         val defaultConfig: BeansConfig by lazy {
-            val depth = GlobalConfig.getIntValue("random-beans", "depth", 10)
-            val minCollectionSize = GlobalConfig.getIntValue("random-beans", "minCollectionSize", 0)
-            val maxCollectionSize = GlobalConfig.getIntValue("random-beans", "maxCollectionSize", 1000)
-            val minStringLength = GlobalConfig.getIntValue("random-beans", "minStringLength", 0)
-            val maxStringLength = GlobalConfig.getIntValue("random-beans", "maxStringLength", 1000)
-            val attempts = GlobalConfig.getIntValue("random-beans", "generationAttempts", 1)
-            val excludes = GlobalConfig.getMultipleStringValue("random-beans", "exclude")
+            val depth = kexConfig.getIntValue("random-beans", "depth", 10)
+            val minCollectionSize = kexConfig.getIntValue("random-beans", "minCollectionSize", 0)
+            val maxCollectionSize = kexConfig.getIntValue("random-beans", "maxCollectionSize", 1000)
+            val minStringLength = kexConfig.getIntValue("random-beans", "minStringLength", 0)
+            val maxStringLength = kexConfig.getIntValue("random-beans", "maxStringLength", 1000)
+            val attempts = kexConfig.getIntValue("random-beans", "generationAttempts", 1)
+            val excludes = kexConfig.getMultipleStringValue("random-beans", "exclude")
             BeansConfig(
                     depth = depth,
                     collectionSize = minCollectionSize..maxCollectionSize,
