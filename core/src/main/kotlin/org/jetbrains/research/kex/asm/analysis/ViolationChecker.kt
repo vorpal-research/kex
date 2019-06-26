@@ -23,10 +23,10 @@ import org.jetbrains.research.kfg.ir.value.instruction.*
 import org.jetbrains.research.kfg.util.TopologicalSorter
 import org.jetbrains.research.kfg.visitor.MethodVisitor
 
-private val isInliningEnabled = kexConfig.getBooleanValue("smt", "ps-inlining", true)
-private val isMemspacingEnabled = kexConfig.getBooleanValue("smt", "memspacing", true)
-private val isSlicingEnabled = kexConfig.getBooleanValue("smt", "slicing", false)
-private val logQuery = kexConfig.getBooleanValue("smt", "logQuery", false)
+private val isInliningEnabled by lazy { kexConfig.getBooleanValue("smt", "ps-inlining", true) }
+private val isMemspacingEnabled by lazy { kexConfig.getBooleanValue("smt", "memspacing", true) }
+private val isSlicingEnabled by lazy { kexConfig.getBooleanValue("smt", "slicing", false) }
+private val logQuery by lazy { kexConfig.getBooleanValue("smt", "logQuery", false) }
 
 class ViolationChecker(override val cm: ClassManager,
                        private val psa: PredicateStateAnalysis) : MethodVisitor {

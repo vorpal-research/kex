@@ -2,7 +2,6 @@ package org.jetbrains.research.kex.asm.analysis
 
 import kotlinx.serialization.ImplicitReflectionSerializer
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.UnstableDefault
 import org.jetbrains.research.kex.asm.state.PredicateStateAnalysis
 import org.jetbrains.research.kex.asm.transform.LoopDeroller
 import org.jetbrains.research.kex.asm.transform.TraceInstrumenter
@@ -29,7 +28,7 @@ import org.jetbrains.research.kfg.visitor.MethodVisitor
 import java.io.File
 import java.net.URLClassLoader
 
-private val failDir = kexConfig.getStringValue("debug", "dump-directory", "./fail")
+private val failDir by lazy { kexConfig.getStringValue("debug", "dump-directory", "./fail") }
 
 class KexCheckerException(val inner: Exception, val reason: PredicateState) : Exception()
 
@@ -77,7 +76,6 @@ class MethodChecker(
         state = null
     }
 
-    @UnstableDefault
     @ImplicitReflectionSerializer
     override fun visit(method: Method) {
         super.visit(method)
@@ -118,6 +116,7 @@ class MethodChecker(
         cleanup()
     }
 
+    @ImplicitReflectionSerializer
     private fun coverBlock(method: Method, block: BasicBlock) {
         val checker = Checker(method, state!!.loader, psa)
         val ps = checker.createState(block.terminator) ?: return
