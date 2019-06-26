@@ -9,7 +9,10 @@ import org.jetbrains.research.kex.util.log
 import org.jetbrains.research.kex.util.unreachable
 import java.io.File
 
-private val tacticsFile = kexConfig.getStringValue("z3", "tacticsFile")
+private val tacticsFile by lazy {
+    kexConfig.getStringValue("z3", "tacticsFile")
+            ?: unreachable { log.error("You need to specify tactics file to be able to use Z3 SMT") }
+}
 
 private fun <T> Klaxon.convert(k: kotlin.reflect.KClass<*>,
                                fromJson: (JsonValue) -> T,
