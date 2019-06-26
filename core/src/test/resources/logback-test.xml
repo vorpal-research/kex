@@ -6,6 +6,13 @@
             <pattern>%-5p [%t] - %m%n</pattern>
         </encoder>
     </appender>
+
+    <appender name="filteredStdout" class="ch.qos.logback.core.ConsoleAppender">
+        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+            <level>ERROR</level>
+        </filter>
+    </appender>
+
     <appender name="kexTestFileLogger" class="ch.qos.logback.core.FileAppender">
         <file>kex-test.log</file>
         <param name="Append" value="false" />
@@ -16,9 +23,7 @@
 
     <logger name="org.jetbrains.research" level="ALL" additivity="false">
         <appender-ref ref="kexTestFileLogger"/>
-    </logger>
-    <logger name="org.jetbrains.research" level="error" additivity="false">
-        <appender-ref ref="stdout"/>
+        <appender-ref ref="filteredStdout"/>
     </logger>
 
     <root level="error">
