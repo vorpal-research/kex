@@ -55,6 +55,10 @@ class CmdConfig(args: Array<String>) : Config {
         propOpt.isRequired = false
         options.addOption(propOpt)
 
+        val ps = Option(null, "ps", true, "file with predicate state to debug; used only in debug mode")
+        ps.isRequired = false
+        options.addOption(ps)
+
         val config = Option.builder()
                 .longOpt("option")
                 .argName("section:name:value")
