@@ -74,7 +74,7 @@ class PredicateBuilder(override val cm: ClassManager) : MethodVisitor {
 
     override fun visitCallInst(inst: CallInst) {
         val args = inst.args.map { tf.getValue(it) }
-        val lhv = if (inst.type.isVoid) null else tf.getValue(inst)
+        val lhv = if (inst.isNameDefined) tf.getValue(inst) else null
         val callTerm = when {
             inst.isStatic -> tf.getCall(inst.method, args)
             else -> tf.getCall(inst.method, tf.getValue(inst.callee), args)
