@@ -8,3 +8,5 @@ instrumented/*
 repo/*
 testJars/*
 trace/*
+fails/*
+
