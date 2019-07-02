@@ -242,6 +242,7 @@ class ValuePrinter(override val cm: ClassManager) : Wrapper {
             }
             type is ArrayType -> sb.append(printArray(value, type))
             type is ClassType -> sb.append(printClass(value, type))
+            type is NullType -> sb.append("null")
         }
         val result = sb.toStringWrapper()
         insns.addAll(sb.insns)
