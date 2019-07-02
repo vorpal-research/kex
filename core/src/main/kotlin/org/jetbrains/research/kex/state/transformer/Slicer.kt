@@ -162,7 +162,7 @@ class Slicer(val state: PredicateState, sliceTerms: Set<Term>, val aa: AliasAnal
         val asPtr = checkPtrs(predicate, lhvTerms, rhvTerms)
         return when {
             asVar || asPtr -> predicate.also {addCFGDeps(predicate) }
-            else -> Transformer.Stub
+            else -> nothing()
         }
     }
 }

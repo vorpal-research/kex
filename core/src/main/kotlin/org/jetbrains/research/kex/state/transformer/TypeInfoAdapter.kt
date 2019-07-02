@@ -131,7 +131,7 @@ class TypeInfoAdapter(val method: Method, val loader: ClassLoader) : Recollectin
             currentBuilder += pf.getEquality(it, tf.getUndef(it.type), PredicateType.Assume())
         }
 
-        return Transformer.Stub
+        return nothing()
     }
 
     override fun transformEqualityPredicate(predicate: EqualityPredicate): Predicate {
