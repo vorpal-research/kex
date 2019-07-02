@@ -46,7 +46,7 @@ class MethodInliner(val method: Method, val psa: PredicateStateAnalysis) : Recol
 
         currentBuilder += prepareInlinedState(calledMethod, mappings) ?: return predicate
 
-        return Transformer.Stub
+        return nothing()
     }
 
     private fun prepareInlinedState(method: Method, mappings: Map<Term, Term>): PredicateState? {

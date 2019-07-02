@@ -14,7 +14,7 @@ object RandomSlicer : Transformer<RandomSlicer> {
     }
 
     override fun transformBase(predicate: Predicate): Predicate = when {
-        random.nextDouble() < (2.0 / size)-> Transformer.Stub
+        random.nextDouble() < (2.0 / size)-> nothing()
         else -> predicate
     }
 }
