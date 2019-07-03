@@ -3,7 +3,6 @@ package org.jetbrains.research.kex.trace.runner
 import com.github.h0tk3y.betterParse.grammar.parseToEnd
 import com.github.h0tk3y.betterParse.parser.ParseException
 import org.jetbrains.research.kex.asm.transform.TraceInstrumenter
-import org.jetbrains.research.kex.config.GlobalConfig
 import org.jetbrains.research.kex.config.kexConfig
 import org.jetbrains.research.kex.trace.ActionParseError
 import org.jetbrains.research.kex.trace.ActionParser
@@ -12,7 +11,6 @@ import org.jetbrains.research.kex.util.getClass
 import org.jetbrains.research.kex.util.log
 import org.jetbrains.research.kfg.ir.Method
 import java.io.ByteArrayOutputStream
-import java.io.File
 import java.io.PrintStream
 import java.lang.reflect.InvocationTargetException
 
@@ -109,8 +107,8 @@ abstract class AbstractRunner(val method: Method, protected val loader: ClassLoa
         if (result.exception != null)
             log.debug("Invocation exception ${result.exception}")
 
-        val traceFileName = TraceInstrumenter.generateTraceFileName(this.method)
-        result.trace = File(traceFileName).readLines()
+        val traceFile = TraceInstrumenter.getTraceFile(this.method)
+        result.trace = traceFile.readLines()
         return parse(result)
     }
 
