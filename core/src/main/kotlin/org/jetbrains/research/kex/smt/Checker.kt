@@ -21,6 +21,8 @@ class Checker(val method: Method, val loader: ClassLoader, private val psa: Pred
     private val logQuery = GlobalConfig.getBooleanValue("smt", "logQuery", false)
 
     private val builder = psa.builder(method)
+    lateinit var state: PredicateState
+    lateinit var query: PredicateState
 
     fun createState(inst: Instruction) = builder.getInstructionState(inst)
 
@@ -33,7 +35,7 @@ class Checker(val method: Method, val loader: ClassLoader, private val psa: Pred
     }
 
     fun check(ps: PredicateState): Result {
-        var state = ps
+        state = ps
         if (logQuery) log.debug("State: $state")
 
         if (isInliningEnabled) {
@@ -54,7 +56,7 @@ class Checker(val method: Method, val loader: ClassLoader, private val psa: Pred
             log.debug("Memspacing finished")
         }
 
-        var query = state.filterByType(PredicateType.Path())
+        query = state.filterByType(PredicateType.Path())
 
         if (isSlicingEnabled) {
             log.debug("Slicing started...")
