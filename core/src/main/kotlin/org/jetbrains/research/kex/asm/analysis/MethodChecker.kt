@@ -10,8 +10,8 @@ import org.jetbrains.research.kex.random.defaultRandomizer
 import org.jetbrains.research.kex.serialization.KexSerializer
 import org.jetbrains.research.kex.smt.Checker
 import org.jetbrains.research.kex.smt.Result
-import org.jetbrains.research.kex.smt.model.ModelRecoverer
 import org.jetbrains.research.kex.state.PredicateState
+import org.jetbrains.research.kex.state.transformer.executeModel
 import org.jetbrains.research.kex.trace.TraceManager
 import org.jetbrains.research.kex.trace.runner.SimpleRunner
 import org.jetbrains.research.kex.util.debug
@@ -128,7 +128,7 @@ class MethodChecker(
             when (result) {
                 is Result.SatResult -> {
                     log.debug(result.model)
-                    val model = ModelRecoverer(method, result.model, state!!.loader).apply()
+                    val model = executeModel(checker.state, method, result.model, state!!.loader)
                     log.debug("Recovered: ${tryOrNull { model.toString() }}")
 
                     tryOrNull {
