@@ -48,7 +48,7 @@ class ModelExecutor(method: Method, model: SMTModel, loader: ClassLoader) : Tran
         val paths = ps.choices.map { it to it.filterByType(PredicateType.Path()) }.map {
             it.first to ChoiceSimplifier.apply(it.second)
         }
-        val ourChoice = paths.first { it.second.all { checkPath(it) } }.first
+        val ourChoice = paths.firstOrNull { it.second.all { checkPath(it) } }?.first ?: return emptyState()
         return super.transformBase(ourChoice)
     }
 

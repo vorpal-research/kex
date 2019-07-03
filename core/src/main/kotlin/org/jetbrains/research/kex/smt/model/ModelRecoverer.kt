@@ -274,7 +274,7 @@ class ObjectRecoverer(val method: Method, val model: SMTModel, val loader: Class
                 val fieldAddress = model.assignments[term]
                 val fieldValue = model.memories[memspace]!!.finalMemory[fieldAddress]
 
-                val recoveredValue = recoverTerm(term, fieldValue)
+                val recoveredValue = recoverReferenceValue(term, fieldValue)
                 val fieldReflect = `class`.getDeclaredField((term.fieldName as ConstStringTerm).value)
                 fieldReflect.isAccessible = true
                 fieldReflect.set(instance, recoveredValue)
