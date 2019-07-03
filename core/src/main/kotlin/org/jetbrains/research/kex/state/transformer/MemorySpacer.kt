@@ -19,7 +19,7 @@ fun Term.withMemspace(memspace: Int): Term {
         is CallTerm -> tf.getCall(memspaced, owner, method, arguments)
         is CastTerm -> tf.getCast(memspaced, operand)
         is CmpTerm -> tf.getCmp(memspaced, opcode, lhv, rhv)
-        is ConstStringTerm -> tf.getString(memspaced, name)
+        is ConstStringTerm -> tf.getString(memspaced, value)
         is ConstClassTerm -> tf.getClass(memspaced, `class`)
         is FieldLoadTerm -> tf.getFieldLoad(memspaced, field)
         is FieldTerm -> tf.getField(memspaced, owner, fieldName)
