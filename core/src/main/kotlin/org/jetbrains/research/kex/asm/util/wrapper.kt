@@ -56,6 +56,12 @@ abstract class PrintStreamWrapper(final override val cm: ClassManager) : Wrapper
         return listOf(append)
     }
 
+    fun flush(): List<Instruction> = buildList {
+        val desc = MethodDesc(arrayOf(), types.voidType)
+        val flushMethod = printStreamClass.getMethod("flush", desc)
+        +instructions.getCall(CallOpcode.Virtual(), flushMethod, printStreamClass, stream, arrayOf(), false)
+    }
+
     fun close(): List<Instruction> = buildList {
         val desc = MethodDesc(arrayOf(), types.voidType)
         val closeMethod = printStreamClass.getMethod("close", desc)
@@ -196,16 +202,16 @@ class ValuePrinter(override val cm: ClassManager) : Wrapper {
         val hash = getIdentityHashCode(value)
         sb.append(print(hash))
         sb.append("{")
-        val `class` = reflection.getClass(value)
-        insns.add(`class`)
-        val fields = type.`class`.fields.values
-        fields.take(1).forEach {
-            sb.append(printField(value, `class`, it))
-        }
-        fields.drop(1).forEach {
-            sb.append(", ")
-            sb.append(printField(value, `class`, it))
-        }
+//        val `class` = reflection.getClass(value)
+//        insns.add(`class`)
+//        val fields = type.`class`.fields.values
+//        fields.take(1).forEach {
+//            sb.append(printField(value, `class`, it))
+//        }
+//        fields.drop(1).forEach {
+//            sb.append(", ")
+//            sb.append(printField(value, `class`, it))
+//        }
         sb.append("}")
         val res = sb.toStringWrapper()
         insns.addAll(sb.insns)
@@ -220,10 +226,10 @@ class ValuePrinter(override val cm: ClassManager) : Wrapper {
         sb.append(print(hash))
         sb.append("{")
         sb.append(type.toString().replace('/', '.'))
-        sb.append(", ")
-        val length = instructions.getUnary(UnaryOpcode.LENGTH, value)
-        insns.add(length)
-        sb.append(print(length))
+        sb.append(", 0")
+//        val length = instructions.getUnary(UnaryOpcode.LENGTH, value)
+//        insns.add(length)
+//        sb.append(print(length))
         sb.append("}")
         val res = sb.toStringWrapper()
         insns.addAll(sb.insns)
