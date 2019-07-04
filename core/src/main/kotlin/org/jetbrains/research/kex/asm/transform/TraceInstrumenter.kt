@@ -58,7 +58,7 @@ class TraceInstrumenter(override val cm: ClassManager) : MethodVisitor {
                 else -> +fos.print("void")
             }
             +fos.println(";")
-
+            +fos.flush()
         }
     }
 
@@ -72,6 +72,7 @@ class TraceInstrumenter(override val cm: ClassManager) : MethodVisitor {
             +fos.print("${inst.throwable.name} == ")
             +fos.printValue(inst.throwable)
             +fos.println(";")
+            +fos.flush()
         }
     }
 
@@ -80,6 +81,7 @@ class TraceInstrumenter(override val cm: ClassManager) : MethodVisitor {
 
         buildList {
             +fos.println("exit ${bb.name};")
+            +fos.flush()
         }
     }
 
@@ -93,6 +95,7 @@ class TraceInstrumenter(override val cm: ClassManager) : MethodVisitor {
             +fos.print("; ${condition.rhv.name} == ")
             +fos.printValue(condition.rhv)
             +fos.println(";")
+            +fos.flush()
         }
     }
 
@@ -103,6 +106,7 @@ class TraceInstrumenter(override val cm: ClassManager) : MethodVisitor {
             +fos.print("switch ${bb.name}; ${inst.key.name} == ")
             +fos.printValue(inst.key)
             +fos.println(";")
+            +fos.flush()
         }
     }
 
@@ -113,6 +117,7 @@ class TraceInstrumenter(override val cm: ClassManager) : MethodVisitor {
             +fos.print("tableswitch ${bb.name}; ${inst.index.name} == ")
             +fos.printValue(inst.index)
             +fos.println(";")
+            +fos.flush()
         }
     }
 
@@ -121,6 +126,7 @@ class TraceInstrumenter(override val cm: ClassManager) : MethodVisitor {
 
         val insts = buildList<Instruction> {
             +fos.println("enter ${bb.name};")
+            +fos.flush()
         }
 
         insertedInsts += insts
@@ -154,6 +160,7 @@ class TraceInstrumenter(override val cm: ClassManager) : MethodVisitor {
                 }
                 +fos.println(";")
             }
+            +fos.flush()
         }
         insertedInsts += startInsts
         super.visit(method)
