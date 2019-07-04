@@ -56,7 +56,7 @@ abstract class PrintStreamWrapper(final override val cm: ClassManager) : Wrapper
         return listOf(append)
     }
 
-    fun close(): List<Instruction>  = buildList {
+    fun close(): List<Instruction> = buildList {
         val desc = MethodDesc(arrayOf(), types.voidType)
         val closeMethod = printStreamClass.getMethod("close", desc)
         +instructions.getCall(CallOpcode.Virtual(), closeMethod, printStreamClass, stream, arrayOf(), false)
