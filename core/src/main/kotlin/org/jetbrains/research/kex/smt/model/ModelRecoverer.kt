@@ -228,12 +228,12 @@ class ObjectRecoverer(val method: Method, val model: SMTModel, val loader: Class
     private fun recoverArray(term: Term, addr: Term?): Any? {
         val arrayType = term.type as KexArray
         val address = (addr as? ConstIntTerm)?.value ?: return null
+        if (address == 0) return null
 
         val memspace = arrayType.memspace
         val instance = run {
-            val bounds = model.bounds[memspace] ?: return@run null
-            val bound = (bounds.finalMemory[addr] as? ConstIntTerm)?.value ?: return@run null
-
+            // if model does not contain any information about bounds of current array, we can create array of any length
+            val bound = (model.bounds[memspace]?.finalMemory?.get(addr) as? ConstIntTerm)?.value ?: 0
             val elementSize = arrayType.element.bitsize
             val elements = bound / elementSize
 
@@ -252,33 +252,45 @@ class ObjectRecoverer(val method: Method, val model: SMTModel, val loader: Class
         return when (term) {
             is ArrayIndexTerm -> {
                 val arrayRef = term.arrayRef
-                val index = (term.index as? ConstIntTerm)?.value ?: (model.assignments[term.index] as ConstIntTerm).value
+                val elementType = (arrayRef.type as KexArray).element
 
                 val arrayAddr = (model.assignments[arrayRef] as ConstIntTerm).value
                 val array = memory(arrayRef.memspace, arrayAddr) ?: return null
 
                 val recoveredValue = recoverReferenceValue(term, refValue)
-                Array.set(array, index, recoveredValue)
-                return array
+                val address = (addr as? ConstIntTerm)?.value ?: unreachable { log.error("Non-int address of array index") }
+                val realIndex = (address - arrayAddr) / elementType.bitsize
+                Array.set(array, realIndex, recoveredValue)
+                array
             }
             is FieldTerm -> {
-                // TODO: support static fields
-                val objectRef = if (!term.isStatic) term.owner else return null
-                val objectAddr = (model.assignments[objectRef] as ConstIntTerm).value
-                val type = objectRef.type as KexClass
+                val (instance, klass) = when {
+                    term.isStatic -> {
+                        val classRef = (term.owner as ConstClassTerm)
+                        val `class` = tryOrNull { loader.loadClass(classRef.`class`.canonicalDesc) } ?: return null
+                        if (`class`.isSynthetic) return null
+                        null to `class`
+                    }
+                    else -> {
+                        val objectRef = term.owner
+                        val objectAddr = (model.assignments[objectRef] as ConstIntTerm).value
+                        val type = objectRef.type as KexClass
 
-                val kfgClass = method.cm.getByName(type.`class`)
-                val `class` = tryOrNull { loader.loadClass(kfgClass.canonicalDesc) } ?: return null
-                val instance = memory(objectRef.memspace, objectAddr) ?: return null
-
+                        val kfgClass = method.cm.getByName(type.`class`)
+                        val `class` = tryOrNull { loader.loadClass(kfgClass.canonicalDesc) } ?: return null
+                        val instance = memory(objectRef.memspace, objectAddr) ?: return null
+                        instance to `class`
+                    }
+                }
                 val fieldAddress = model.assignments[term]
                 val fieldValue = model.memories[memspace]!!.finalMemory[fieldAddress]
 
                 val recoveredValue = recoverReferenceValue(term, fieldValue)
-                val fieldReflect = `class`.getDeclaredField((term.fieldName as ConstStringTerm).value)
+                val fieldReflect = klass.getDeclaredField((term.fieldName as ConstStringTerm).value)
                 fieldReflect.isAccessible = true
+                if (fieldReflect.isEnumConstant || fieldReflect.isSynthetic) return instance
                 fieldReflect.set(instance, recoveredValue)
-                return instance
+                instance
             }
             else -> unreachable { log.error("Unknown reference term: $term with address $addr") }
         }
@@ -290,10 +302,7 @@ class ObjectRecoverer(val method: Method, val model: SMTModel, val loader: Class
         val intVal = (value as ConstIntTerm).value
 
         return when (referencedType) {
-            is KexPointer -> {
-                // TODO: support pointer references
-                null
-            }
+            is KexPointer -> recoverReferencePointer(term, value)
             is KexBool -> intVal.toBoolean()
             is KexByte -> intVal.toByte()
             is KexChar -> intVal.toChar()
@@ -303,6 +312,38 @@ class ObjectRecoverer(val method: Method, val model: SMTModel, val loader: Class
             is KexFloat -> intVal.toFloat()
             is KexDouble -> intVal.toDouble()
             else -> unreachable { log.error("Can't recover type $referencedType from memory value $value") }
+        }
+    }
+
+    private fun recoverReferencePointer(term: Term, addr: Term?): Any? {
+        val referencedType = (term.type as KexReference).reference
+        val address = (addr as? ConstIntTerm)?.value ?: return null
+        if (address == 0) return null
+        return when (referencedType) {
+            is KexClass -> memory(referencedType.memspace, address) {
+                val kfgClass = method.cm.getByName(referencedType.`class`)
+                val `class` = tryOrNull { loader.loadClass(kfgClass.canonicalDesc) } ?: return@memory null
+                val instance = randomizer.nextOrNull(`class`)
+                instance
+            }
+            is KexArray -> {
+                val memspace = referencedType.memspace
+                val instance = run {
+                    val bounds = model.bounds[memspace] ?: return@run null
+                    val bound = (bounds.finalMemory[addr] as? ConstIntTerm)?.value ?: return@run null
+
+                    val elementSize = referencedType.element.bitsize
+                    val elements = bound / elementSize
+
+                    val elementClass = getClass(referencedType.element.getKfgType(method.cm.type), loader)
+                    log.debug("Creating array of type $elementClass with size $elements")
+                    val instance = Array.newInstance(elementClass, elements)
+
+                    instance
+                }
+                memory(referencedType.memspace, address, instance)
+            }
+            else -> unreachable { log.error("Trying to recover reference pointer that is not pointer") }
         }
     }
 }
