@@ -7,10 +7,7 @@ import org.jetbrains.research.kex.state.BasicState
 import org.jetbrains.research.kex.state.ChoiceState
 import org.jetbrains.research.kex.state.PredicateState
 import org.jetbrains.research.kex.state.emptyState
-import org.jetbrains.research.kex.state.predicate.EqualityPredicate
-import org.jetbrains.research.kex.state.predicate.InequalityPredicate
-import org.jetbrains.research.kex.state.predicate.Predicate
-import org.jetbrains.research.kex.state.predicate.PredicateType
+import org.jetbrains.research.kex.state.predicate.*
 import org.jetbrains.research.kex.state.term.ConstBoolTerm
 import org.jetbrains.research.kex.state.term.ConstIntTerm
 import org.jetbrains.research.kex.state.term.ConstLongTerm
@@ -76,6 +73,13 @@ class ModelExecutor(method: Method, model: SMTModel, loader: ClassLoader) : Tran
                 else -> unreachable { log.error("Unexpected constant in path $rhv") }
             }
             lhvValue != rhvValue
+        }
+        is DefaultSwitchPredicate -> {
+            val lhv = path.cond
+            val conditions = path.cases
+            val lhvValue = memory.getOrPut(lhv) { recoverer.recoverTerm(lhv) }
+            val condValues = conditions.map { (it as ConstIntTerm).value }
+            lhvValue !in condValues
         }
         else -> unreachable { log.error("Unexpected predicate in path: $path") }
     }

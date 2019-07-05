@@ -81,6 +81,7 @@ class MethodChecker(
         super.visit(method)
         prepareMethodInfo(method)
 
+        if (method.`class`.isSynthetic) return
         if (method.isAbstract || method.isConstructor) return
         // don't consider static parameters
         if (method.isStatic && method.argTypes.isEmpty()) return
