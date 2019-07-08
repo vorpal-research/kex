@@ -43,9 +43,9 @@ class CoverageCounter(override val cm: ClassManager) : ClassVisitor {
                 acc.bodyCoverage + coverageInfo.bodyCoverage,
                 acc.fullCoverage + coverageInfo.fullCoverage)
         }
-        log.info("Overall summary for $numberOfMethods methods:" +
-                "body coverage: ${body / numberOfMethods}%" +
-                "full coverage: ${full / numberOfMethods}")
+        log.info("Overall summary for $numberOfMethods methods:\n" +
+                "body coverage: ${body / numberOfMethods}%\n" +
+                "full coverage: ${full / numberOfMethods}%")
         return CoverageInfo(body, full)
     }
 }

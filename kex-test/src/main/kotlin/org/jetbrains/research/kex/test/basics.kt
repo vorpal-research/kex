@@ -75,7 +75,7 @@ class BasicTests {
                 arrayOf(5, 6, 7, 8, 9),
                 arrayOf(10, 11, 12, 13, 14)
         )
-        if (array[4][4] > 10) {
+        if (array[2][4] > 10) {
             Intrinsics.assertReachable()
         }
         if (array.size > 2) {
@@ -83,6 +83,18 @@ class BasicTests {
         }
         if (array[0].size > 4) {
             Intrinsics.assertReachable()
+        }
+        return array.flatten().reduce { a, b -> a + b}
+    }
+
+    fun testUnreachableArray(): Int {
+        val array = arrayOf(
+                arrayOf(0, 1, 2, 3, 4),
+                arrayOf(5, 6, 7, 8, 9),
+                arrayOf(10, 11, 12, 13, 14)
+        )
+        if (array[4][4] > 10) {
+            Intrinsics.assertUnreachable()
         }
         return array.flatten().reduce { a, b -> a + b}
     }
