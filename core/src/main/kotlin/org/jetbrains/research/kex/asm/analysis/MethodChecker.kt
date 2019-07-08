@@ -1,5 +1,6 @@
 package org.jetbrains.research.kex.asm.analysis
 
+import kotlinx.serialization.ContextualSerialization
 import kotlinx.serialization.ImplicitReflectionSerializer
 import kotlinx.serialization.Serializable
 import org.jetbrains.research.kex.asm.state.PredicateStateAnalysis
@@ -33,7 +34,12 @@ private val failDir by lazy { kexConfig.getStringValue("debug", "dump-directory"
 class KexCheckerException(val inner: Exception, val reason: PredicateState) : Exception()
 
 @Serializable
-data class PSWithMessage(val message: String, val state: PredicateState)
+data class Failure(
+        @ContextualSerialization val `class`: Class,
+        @ContextualSerialization val method: Method,
+        val message: String,
+        val state: PredicateState
+)
 
 class MethodChecker(
         override val cm: ClassManager,
@@ -107,7 +113,7 @@ class MethodChecker(
                 log.error("Failing saved to file $resultFile")
                 val errorDump = File(failDir, resultFile).apply { parentFile?.mkdirs() }
                 errorDump.createNewFile()
-                errorDump.writeText(KexSerializer(cm).toJson(PSWithMessage(e.inner.toString(), e.reason)))
+                errorDump.writeText(KexSerializer(cm).toJson(Failure(method.`class`, method, e.inner.toString(), e.reason)))
                 break
             }
 

@@ -2,7 +2,7 @@ package org.jetbrains.research.kex
 
 import kotlinx.serialization.ImplicitReflectionSerializer
 import kotlinx.serialization.UnstableDefault
-import org.jetbrains.research.kex.asm.analysis.PSWithMessage
+import org.jetbrains.research.kex.asm.analysis.Failure
 import org.jetbrains.research.kex.asm.state.PredicateStateAnalysis
 import org.jetbrains.research.kex.config.CmdConfig
 import org.jetbrains.research.kex.config.FileConfig
@@ -39,14 +39,13 @@ fun main(args: Array<String>) {
     val psa = PredicateStateAnalysis(classManager)
 
     val psFile = cmd.getCmdValue("ps") ?: throw IllegalArgumentException("Specify PS file to debug")
-    val psWithMessage = KexSerializer(classManager).fromJson<PSWithMessage>(File(psFile).readText())
+    val failure = KexSerializer(classManager).fromJson<Failure>(File(psFile).readText())
 
-    val klass = classManager.getByName("org/jetbrains/research/kex/test/debug/ArrayLongTests")
-    val method = klass.getMethod("testIntArray", "([I)V")
-    log.debug(psWithMessage)
+    val method = failure.method
+    log.debug(failure)
 
     val checker = Checker(method, jarLoader, psa)
-    val result = checker.check(psWithMessage.state) as? Result.SatResult ?: return
+    val result = checker.check(failure.state) as? Result.SatResult ?: return
     log.debug(result.model)
     val recMod = executeModel(checker.state, method, result.model, jarLoader)
     log.debug(recMod)

@@ -2,9 +2,13 @@ package org.jetbrains.research.kex
 
 import org.jetbrains.research.kex.asm.analysis.MethodChecker
 import org.jetbrains.research.kex.asm.analysis.RandomChecker
+import org.jetbrains.research.kex.asm.manager.CoverageCounter
 import org.jetbrains.research.kex.asm.state.PredicateStateAnalysis
 import org.jetbrains.research.kex.asm.transform.LoopDeroller
-import org.jetbrains.research.kex.config.*
+import org.jetbrains.research.kex.config.CmdConfig
+import org.jetbrains.research.kex.config.FileConfig
+import org.jetbrains.research.kex.config.RuntimeConfig
+import org.jetbrains.research.kex.config.kexConfig
 import org.jetbrains.research.kex.util.log
 import org.jetbrains.research.kfg.ClassManager
 import org.jetbrains.research.kfg.Package
@@ -37,6 +41,7 @@ fun main(args: Array<String>) {
     writeClassesToTarget(classManager, jar, target, `package`, true)
 
     val psa = PredicateStateAnalysis(classManager)
+    val cm = CoverageCounter(origManager)
     executePipeline(classManager, `package`) {
         +RandomChecker(classManager, jarLoader, target)
         +LoopSimplifier(classManager)
@@ -44,5 +49,7 @@ fun main(args: Array<String>) {
         +psa
 //        +ViolationChecker(cm, psa)
         +MethodChecker(classManager, jarLoader, origManager, target, psa)
+        +cm
     }
+    cm.getSummarizedCoverage()
 }
