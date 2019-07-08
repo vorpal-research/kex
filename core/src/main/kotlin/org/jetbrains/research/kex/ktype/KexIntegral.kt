@@ -105,6 +105,7 @@ class KexInt : KexIntegral() {
     }
 }
 
+@InheritorOf("KexType")
 @Serializable
 class KexLong : KexIntegral() {
     override val name: String
