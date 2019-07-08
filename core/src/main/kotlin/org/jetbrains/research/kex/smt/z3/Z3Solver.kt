@@ -1,9 +1,9 @@
 package org.jetbrains.research.kex.smt.z3
 
+import com.microsoft.z3.BoolExpr
 import com.microsoft.z3.Model
 import com.microsoft.z3.Status
 import com.microsoft.z3.Tactic
-import org.jetbrains.research.kex.config.GlobalConfig
 import org.jetbrains.research.kex.config.kexConfig
 import org.jetbrains.research.kex.smt.AbstractSMTSolver
 import org.jetbrains.research.kex.smt.Result
@@ -15,7 +15,6 @@ import org.jetbrains.research.kex.state.term.Term
 import org.jetbrains.research.kex.state.transformer.collectPointers
 import org.jetbrains.research.kex.state.transformer.collectVariables
 import org.jetbrains.research.kex.state.transformer.memspace
-import org.jetbrains.research.kex.util.castTo
 import org.jetbrains.research.kex.util.debug
 import org.jetbrains.research.kex.util.log
 import org.jetbrains.research.kex.util.unreachable
@@ -75,11 +74,11 @@ class Z3Solver(val tf: TypeFactory) : AbstractSMTSolver {
             }
         }
 
-        solver.add(state_.asAxiom().castTo())
-        solver.add(query_.axiom.castTo())
+        solver.add(state_.asAxiom() as BoolExpr)
+        solver.add(query_.axiom as BoolExpr)
 
         val pred = ef.makeBool("$\$CHECK$$")
-        solver.add(pred.implies(query_).expr.castTo())
+        solver.add(pred.implies(query_).expr as BoolExpr)
 
         log.debug("Running z3 solver")
         if (printSMTLib) {

@@ -26,8 +26,7 @@ class TraceInstrumenter(override val cm: ClassManager) : MethodVisitor {
             return "$name$TRACE_POSTFIX"
         }
 
-        fun getTraceFile(method: Method): File =
-                File("$TRACE_DIRECTORY${File.separator}${generateTraceFileName(method)}")
+        fun getTraceFile(method: Method): File = File(TRACE_DIRECTORY, generateTraceFileName(method))
     }
 
     private fun instrumentInst(inst: Instruction, instrumenter: (inst: Instruction) -> List<Instruction>) {

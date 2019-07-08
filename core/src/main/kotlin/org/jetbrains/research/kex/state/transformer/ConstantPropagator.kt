@@ -37,9 +37,9 @@ object ConstantPropagator : Transformer<ConstantPropagator> {
                 val (nlhv, nrhv) = toCompatibleTypes(lhv, rhv)
                 tf.getConstant(nlhv % nrhv)
             }
-            is BinaryOpcode.Shl -> tf.getConstant(lhv.shl(rhv.castTo()))
-            is BinaryOpcode.Shr -> tf.getConstant(lhv.shr(rhv.castTo()))
-            is BinaryOpcode.Ushr -> tf.getConstant(lhv.ushr(rhv.castTo()))
+            is BinaryOpcode.Shl -> tf.getConstant(lhv.shl(rhv as Int))
+            is BinaryOpcode.Shr -> tf.getConstant(lhv.shr(rhv as Int))
+            is BinaryOpcode.Ushr -> tf.getConstant(lhv.ushr(rhv as Int))
             is BinaryOpcode.And -> {
                 val (nlhv, nrhv) = toCompatibleTypes(lhv, rhv)
                 tf.getConstant(nlhv and nrhv)
@@ -86,9 +86,9 @@ object ConstantPropagator : Transformer<ConstantPropagator> {
     }
 
     private fun toCompatibleTypes(lhv: Number, rhv: Number): Pair<Number, Number> = when (lhv) {
-        is Long -> lhv to rhv.castTo<Long>()
-        is Float -> lhv to rhv.castTo<Float>()
-        is Double -> lhv to rhv.castTo<Double>()
+        is Long -> lhv to (rhv as Long)
+        is Float -> lhv to (rhv as Float)
+        is Double -> lhv to (rhv as Double)
         else -> lhv.toInt() to rhv.toInt()
     }
 
