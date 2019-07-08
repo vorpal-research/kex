@@ -18,6 +18,7 @@ import org.jetbrains.research.kfg.util.classLoader
 import org.jetbrains.research.kfg.util.writeClassesToTarget
 import org.jetbrains.research.kfg.visitor.executePipeline
 import java.io.File
+import java.nio.file.Paths
 import java.util.jar.JarFile
 
 fun main(args: Array<String>) {
@@ -29,7 +30,7 @@ fun main(args: Array<String>) {
     val packageName = cmd.getCmdValue("package", "*")
     require(jarName != null, cmd::printHelp)
 
-    val jar = JarFile(jarName)
+    val jar = JarFile(Paths.get(jarName).toAbsolutePath().toFile())
     val jarLoader = jar.classLoader
     val `package` = Package(packageName.replace('.', '/'))
     val classManager = ClassManager(jar, `package`, Flags.readAll)
@@ -47,9 +48,12 @@ fun main(args: Array<String>) {
         +LoopSimplifier(classManager)
         +LoopDeroller(classManager)
         +psa
-//        +ViolationChecker(cm, psa)
         +MethodChecker(classManager, jarLoader, origManager, target, psa)
         +cm
     }
-    cm.getSummarizedCoverage()
+
+    val coverage = cm.totalCoverage
+    log.info("Overall summary for ${cm.methodInfos.size} methods:\n" +
+            "body coverage: ${String.format("%.2f", coverage.bodyCoverage)}%\n" +
+            "full coverage: ${String.format("%.2f", coverage.fullCoverage)}%")
 }

@@ -149,7 +149,8 @@ class MethodChecker(
                     }
                 }
                 is Result.UnsatResult -> log.debug("Instruction ${block.terminator.print()} is unreachable")
-                is Result.UnknownResult -> Unit
+                is Result.UnknownResult -> log.debug("Can't decide on reachability of " +
+                        "instruction ${block.terminator.print()}, reason: ${result.reason}")
             }
         } catch(e: Exception) {
             throw KexCheckerException(e, ps)

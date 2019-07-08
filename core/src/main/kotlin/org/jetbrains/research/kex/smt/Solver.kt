@@ -1,6 +1,5 @@
 package org.jetbrains.research.kex.smt
 
-import org.jetbrains.research.kex.config.GlobalConfig
 import org.jetbrains.research.kex.config.kexConfig
 import org.jetbrains.research.kex.smt.model.SMTModel
 import org.jetbrains.research.kex.smt.z3.Z3Solver
