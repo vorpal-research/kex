@@ -11,6 +11,20 @@ class CoverageCounter(override val cm: ClassManager) : ClassVisitor {
     val tm = TraceManager
     val methodInfos = hashMapOf<Method, CoverageInfo>()
 
+    val totalCoverage: CoverageInfo
+        get() {
+            if (methodInfos.isEmpty()) return CoverageInfo(0.0, 0.0)
+
+            val numberOfMethods = methodInfos.size
+            val (body, full) = methodInfos.values.reduce { acc, coverageInfo ->
+                CoverageInfo(
+                        acc.bodyCoverage + coverageInfo.bodyCoverage,
+                        acc.fullCoverage + coverageInfo.fullCoverage)
+            }
+
+            return CoverageInfo(body / numberOfMethods, full / numberOfMethods)
+        }
+
     data class CoverageInfo(val bodyCoverage: Double, val fullCoverage: Double)
 
     override fun cleanup() {}
@@ -28,24 +42,12 @@ class CoverageCounter(override val cm: ClassManager) : ClassVisitor {
             val catchCovered = catchBlocks.count { tm.isCovered(it) }
 
             val info = CoverageInfo(
-                    bodyCovered.toDouble() / bodyBlocks.size,
-                    (bodyCovered + catchCovered).toDouble() / (bodyBlocks.size + catchBlocks.size)
+                    (bodyCovered * 100).toDouble() / bodyBlocks.size,
+                    ((bodyCovered + catchCovered) * 100).toDouble() / (bodyBlocks.size + catchBlocks.size)
             )
             methodInfos[method] = info
 
             log.info("Method $method coverage: body = ${info.bodyCoverage}; full = ${info.fullCoverage}")
         }
-    }
-
-    fun getSummarizedCoverage(): CoverageInfo {
-        val numberOfMethods = methodInfos.size
-        val (body, full) = methodInfos.values.reduce { acc, coverageInfo -> CoverageInfo(
-                acc.bodyCoverage + coverageInfo.bodyCoverage,
-                acc.fullCoverage + coverageInfo.fullCoverage)
-        }
-        log.info("Overall summary for $numberOfMethods methods:\n" +
-                "body coverage: ${body / numberOfMethods}%\n" +
-                "full coverage: ${full / numberOfMethods}%")
-        return CoverageInfo(body, full)
     }
 }
