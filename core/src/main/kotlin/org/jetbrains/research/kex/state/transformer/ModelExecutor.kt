@@ -1,5 +1,7 @@
 package org.jetbrains.research.kex.state.transformer
 
+import org.jetbrains.research.kex.ktype.KexClass
+import org.jetbrains.research.kex.ktype.kexType
 import org.jetbrains.research.kex.smt.model.ObjectRecoverer
 import org.jetbrains.research.kex.smt.model.RecoveredModel
 import org.jetbrains.research.kex.smt.model.SMTModel
@@ -24,14 +26,27 @@ private object ChoiceSimplifier : Transformer<ChoiceSimplifier> {
     }
 }
 
-class ModelExecutor(method: Method, model: SMTModel, loader: ClassLoader) : Transformer<ModelExecutor> {
-    val recoverer = ObjectRecoverer(method, model, loader)
-    val memory = hashMapOf<Term, Any?>()
+class ModelExecutor(val method: Method, model: SMTModel, loader: ClassLoader) : Transformer<ModelExecutor> {
+    private val recoverer = ObjectRecoverer(method, model, loader)
+    private val memory = hashMapOf<Term, Any?>()
+    private var thisTerm: Term? = null
+    private val argTerms = mutableMapOf<Int, Term>()
+
+    val instance get() = thisTerm?.let { memory[it] }
+    val args get() = argTerms.values.map { memory[it] }
 
     override fun apply(ps: PredicateState): PredicateState {
-        val (`this`, args) = collectArguments(ps)
-        `this`?.let { memory[it] = recoverer.recoverTerm(it) }
-        args.values.forEach { memory[it] = recoverer.recoverTerm(it) }
+        val (tempThis, tempArgs) = collectArguments(ps)
+        thisTerm = when {
+            !method.isStatic && tempThis == null -> tf.getThis(KexClass(method.`class`.fullname))
+            else -> tempThis
+        }
+        argTerms.putAll(tempArgs)
+        for ((index, type) in method.argTypes.withIndex()) {
+            argTerms.getOrPut(index) { tf.getArgument(type.kexType, index) }
+        }
+        thisTerm?.let { memory[it] = recoverer.recoverTerm(it) }
+        argTerms.values.forEach { memory[it] = recoverer.recoverTerm(it) }
         return super.apply(ps)
     }
 
@@ -88,10 +103,5 @@ class ModelExecutor(method: Method, model: SMTModel, loader: ClassLoader) : Tran
 fun executeModel(ps: PredicateState, method: Method, model: SMTModel, loader: ClassLoader): RecoveredModel {
     val pathExecutor = ModelExecutor(method, model, loader)
     pathExecutor.apply(ps)
-    val (`this`, args) = collectArguments(ps)
-    val instance = when {
-        `this` != null -> pathExecutor.memory[`this`]
-        else -> null
-    }
-    return RecoveredModel(method, instance, args.map { pathExecutor.memory[it.value] })
+    return RecoveredModel(method, pathExecutor.instance, pathExecutor.args)
 }

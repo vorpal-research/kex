@@ -1,5 +1,4 @@
 #parse("definitions.vm")
-import org.jetbrains.research.kex.util.uncheckedCastTo
 import org.jetbrains.research.kex.smt.${solver}SMTMemory
 import kotlin.math.min
 
@@ -14,6 +13,7 @@ typealias Byte_ = $Bitvector
 #end
 
 #set($self = $Memory)
+@Suppress("UNCHECKED_CAST")
 class $self< in Index : $Bitvector >(val inner: $Array< Byte_, Index >) : ${solver}SMTMemory() {
     companion object {
         const val byteSize = $byteSize
@@ -37,7 +37,7 @@ class $self< in Index : $Bitvector >(val inner: $Array< Byte_, Index >) : ${solv
 
     fun load(index: Index, elementSize: Int): $Bitvector {
         val bytes = (0..((elementSize - 1) / byteSize)).map {
-            inner.load((index + it).uncheckedCastTo())
+            inner.load((index + it) as Index)
         }
         var expr = bytes.first().expr
         var axiom = bytes.first().axiom
@@ -56,7 +56,7 @@ class $self< in Index : $Bitvector >(val inner: $Array< Byte_, Index >) : ${solv
         val cases = arrayListOf< Pair< Index, Byte_ >>()
         while (start < elementSize) {
             val hi = min(start + byteSize - 1, elementSize - 1)
-            cases.add((index + start).uncheckedCastTo< Index >() to element.extract(hi, start).toBV(Byte_.getStaticSort(ctx)).uncheckedCastTo())
+            cases.add(((index + start) as Index) to (element.extract(hi, start).toBV(Byte_.getStaticSort(ctx)) as Byte_))
             start += byteSize
         }
         return $self(inner.store(cases))
