@@ -10,9 +10,20 @@ import org.jetbrains.research.kfg.type.DoubleType
 import org.jetbrains.research.kfg.type.FloatType
 import org.jetbrains.research.kfg.type.Integral
 import java.lang.reflect.Array
+import java.lang.reflect.Field
+import java.lang.reflect.Modifier
 
 private val Term.isPointer get() = this.type is KexPointer
 private val Term.isPrimary get() = !this.isPointer
+
+private var Field.isFinal: Boolean
+    get() = (this.modifiers and Modifier.FINAL) == Modifier.FINAL
+    set(value) {
+        if (value == this.isFinal) return
+        val modifiersField = this.javaClass.getDeclaredField("modifiers")
+        modifiersField.isAccessible = true
+        modifiersField.setInt(this, this.modifiers and if (value) Modifier.FINAL else Modifier.FINAL.inv())
+    }
 
 data class RecoveredModel(val method: Method, val instance: Any?, val arguments: List<Any?>)
 
@@ -283,13 +294,29 @@ class ObjectRecoverer(val method: Method, val model: SMTModel, val loader: Class
                     }
                 }
                 val fieldAddress = model.assignments[term]
-                val fieldValue = model.memories[memspace]!!.finalMemory[fieldAddress]
+                val fieldValue = model.memories.getValue(memspace).finalMemory[fieldAddress]
 
                 val recoveredValue = recoverReferenceValue(term, fieldValue)
                 val fieldReflect = klass.getDeclaredField((term.fieldName as ConstStringTerm).value)
                 fieldReflect.isAccessible = true
+                fieldReflect.isFinal = false
                 if (fieldReflect.isEnumConstant || fieldReflect.isSynthetic) return instance
-                fieldReflect.set(instance, recoveredValue)
+                if (fieldReflect.type.isPrimitive) {
+                    require(recoveredValue != null)
+                    when (recoveredValue.javaClass) {
+                        Boolean::class.javaObjectType -> fieldReflect.setBoolean(instance, recoveredValue as Boolean)
+                        Byte::class.javaObjectType -> fieldReflect.setByte(instance, recoveredValue as Byte)
+                        Char::class.javaObjectType -> fieldReflect.setChar(instance, recoveredValue as Char)
+                        Short::class.javaObjectType -> fieldReflect.setShort(instance, recoveredValue as Short)
+                        Int::class.javaObjectType -> fieldReflect.setInt(instance, recoveredValue as Int)
+                        Long::class.javaObjectType -> fieldReflect.setLong(instance, recoveredValue as Long)
+                        Float::class.javaObjectType -> fieldReflect.setFloat(instance, recoveredValue as Float)
+                        Double::class.javaObjectType -> fieldReflect.setDouble(instance, recoveredValue as Double)
+                        else -> unreachable { log.error("Trying to get primitive type of non-primitive object $this") }
+                    }
+                } else {
+                    fieldReflect.set(instance, recoveredValue)
+                }
                 instance
             }
             else -> unreachable { log.error("Unknown reference term: $term with address $addr") }
