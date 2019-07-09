@@ -1,6 +1,6 @@
 package org.jetbrains.research.kex.util
 
-import org.jetbrains.research.kex.trace.UnknownTypeError
+import org.jetbrains.research.kex.trace.UnknownTypeException
 import org.jetbrains.research.kfg.type.*
 
 fun getClass(type: Type, loader: ClassLoader): Class<*> = when (type) {
@@ -18,5 +18,5 @@ fun getClass(type: Type, loader: ClassLoader): Class<*> = when (type) {
     } catch (e: ClassNotFoundException) {
         ClassLoader.getSystemClassLoader().loadClass(type.`class`.canonicalDesc)
     }
-    else -> throw UnknownTypeError(type.toString())
+    else -> throw UnknownTypeException(type.toString())
 }

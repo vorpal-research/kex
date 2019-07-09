@@ -15,6 +15,7 @@ import org.jetbrains.research.kex.state.PredicateState
 import org.jetbrains.research.kex.state.transformer.executeModel
 import org.jetbrains.research.kex.trace.TraceManager
 import org.jetbrains.research.kex.trace.runner.SimpleRunner
+import org.jetbrains.research.kex.trace.runner.TimeoutException
 import org.jetbrains.research.kex.util.debug
 import org.jetbrains.research.kex.util.getClass
 import org.jetbrains.research.kex.util.log
@@ -92,7 +93,7 @@ class MethodChecker(
         // don't consider static parameters
         if (method.isStatic && method.argTypes.isEmpty()) return
 
-        log.debug(method)
+        log.debug("Checking method $method")
         log.debug(method.print())
         log.debug()
 
@@ -104,6 +105,9 @@ class MethodChecker(
             try {
                 log.debug("Checking reachability of ${block.terminator.print()}")
                 coverBlock(method, block)
+            } catch (e: TimeoutException) {
+                log.error("Timeout exception when running method $method, skipping it")
+                break
             } catch (e: KexCheckerException) {
                 log.error("Fail when covering block ${block.name} of $method")
                 log.error("Error: ${e.inner}")
@@ -138,20 +142,33 @@ class MethodChecker(
                     val model = executeModel(checker.state, method, result.model, state!!.loader)
                     log.debug("Recovered: ${tryOrNull { model.toString() }}")
 
-                    tryOrNull {
-                        val instance = model.instance ?: when {
-                            method.isStatic -> null
-                            else -> random.next(getClass(types.getRefType(method.`class`), state!!.loader))
+                    val instance = model.instance ?: when {
+                        method.isStatic -> null
+                        else -> tryOrNull {
+                            val klass = getClass(types.getRefType(method.`class`), state!!.loader)
+                            // TODO: creating new randomizer each time is resource intensive,
+                            //  but using the same randomizer each time fails, because we generate multiple
+                            //  instances of classes with similar names, but different versions
+                            //  (generate instance of class A_0, then modify it's methods and reload this class as A_1;
+                            //  A_0.equals(A_1) will return true, but essentially they are different classes)
+                            defaultRandomizer.next(klass)
                         }
-
-                        val trace = SimpleRunner(method, state!!.loader).invoke(instance, model.arguments.toTypedArray())
-                        tm.addTrace(method, trace)
                     }
+
+                    if (instance == null && !method.isStatic) {
+                        log.warn("Unable to create or generate instance of class ${method.`class`}")
+                        return
+                    }
+
+                    val trace = SimpleRunner(method, state!!.loader).invoke(instance, model.arguments.toTypedArray())
+                    tm.addTrace(method, trace)
                 }
                 is Result.UnsatResult -> log.debug("Instruction ${block.terminator.print()} is unreachable")
                 is Result.UnknownResult -> log.debug("Can't decide on reachability of " +
                         "instruction ${block.terminator.print()}, reason: ${result.reason}")
             }
+        } catch (e: TimeoutException) {
+            throw e
         } catch(e: Exception) {
             throw KexCheckerException(e, ps)
         }

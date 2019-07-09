@@ -18,11 +18,11 @@ import org.jetbrains.research.kfg.type.Type
 import org.jetbrains.research.kfg.type.parseStringToType
 import java.util.*
 
-abstract class ActionParseError(msg: String) : Exception(msg)
+abstract class ActionParseException(msg: String) : Exception(msg)
 
-class UnknownTypeError(msg: String) : ActionParseError(msg)
+class UnknownTypeException(msg: String) : ActionParseException(msg)
 
-class UnknownNameError(msg: String) : ActionParseError(msg)
+class UnknownNameException(msg: String) : ActionParseException(msg)
 
 
 sealed class ActionValue
@@ -212,12 +212,12 @@ class ActionParser(val cm: ClassManager) : Grammar<Action>() {
                     }) or
                     ((percent and num) use { t1.text + t2.text })
             ) use {
-        tracker.getValue(this) ?: throw UnknownNameError(this)
+        tracker.getValue(this) ?: throw UnknownNameException(this)
     }
 
     private val blockName by (percent and anyWord and optional(-dot and separatedTerms(anyWord, dot))) use {
         val name = t1.text + t2 + (t3?.fold("") { acc, curr -> "$acc.$curr" } ?: "")
-        tracker.getBlock(name) ?: throw UnknownNameError(name)
+        tracker.getBlock(name) ?: throw UnknownNameException(name)
     }
 
     private val typeName by (separatedTerms(word, dot) use { map { it.text } }
@@ -232,7 +232,7 @@ class ActionParser(val cm: ClassManager) : Grammar<Action>() {
             -colonAndSpace and
             typeName) use {
         val `class` = cm.getByName(t1.dropLast(1).fold("") { acc, curr -> "$acc/$curr" }.drop(1))
-        val methodName = t1.takeLast(1).firstOrNull() ?: throw UnknownNameError(t1.toString())
+        val methodName = t1.takeLast(1).firstOrNull() ?: throw UnknownNameException(t1.toString())
         val args = t2.toTypedArray()
         val rettype = t3
         `class`.getMethod(methodName, MethodDesc(args, rettype))
@@ -259,7 +259,7 @@ class ActionParser(val cm: ClassManager) : Grammar<Action>() {
     }
     private val objectValueParser: Parser<ActionValue> by (typeName and -at and num and -openCurlyBrace
             and objectFields and -closeCurlyBrace) use {
-        val type = (t1 as? ClassType)?.`class` ?: throw UnknownTypeError(t1.toString())
+        val type = (t1 as? ClassType)?.`class` ?: throw UnknownTypeException(t1.toString())
         val identifier = t2.text.toInt()
         val fields = t3
         ObjectValue(type, identifier, fields)

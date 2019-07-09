@@ -4,7 +4,7 @@ import com.github.h0tk3y.betterParse.grammar.parseToEnd
 import com.github.h0tk3y.betterParse.parser.ParseException
 import org.jetbrains.research.kex.asm.transform.TraceInstrumenter
 import org.jetbrains.research.kex.config.kexConfig
-import org.jetbrains.research.kex.trace.ActionParseError
+import org.jetbrains.research.kex.trace.ActionParseException
 import org.jetbrains.research.kex.trace.ActionParser
 import org.jetbrains.research.kex.trace.Trace
 import org.jetbrains.research.kex.util.getClass
@@ -18,6 +18,7 @@ private val timeout = kexConfig.getLongValue("runner", "timeout", 1000L)
 private val traceLimit = kexConfig.getIntValue("runner", "trace-limit", 0)
 
 class TraceParseError : Exception()
+class TimeoutException : Exception()
 
 private fun runWithTimeout(timeout: Long, body: () -> Unit) {
     val thread = Thread(body)
@@ -27,6 +28,7 @@ private fun runWithTimeout(timeout: Long, body: () -> Unit) {
     if (thread.isAlive) {
         @Suppress("DEPRECATION")
         thread.stop()
+        throw TimeoutException()
     }
 }
 
@@ -69,7 +71,7 @@ abstract class AbstractRunner(val method: Method, protected val loader: ClassLoa
                         log.error("Failed to parse $method output: $e")
                         log.error("Failed line: $it")
                         null
-                    } catch (e: ActionParseError) {
+                    } catch (e: ActionParseException) {
                         log.error("Failed to parse $method output: $e")
                         log.error("Failed line: $it")
                         null
@@ -104,8 +106,9 @@ abstract class AbstractRunner(val method: Method, protected val loader: ClassLoa
         System.setErr(oldErr)
 
         log.debug("Invocation output:\n${result.output}")
+        log.debug("Invocation error:\n${result.error}")
         if (result.exception != null)
-            log.debug("Invocation exception ${result.exception}")
+            log.debug("Invocation exception: ${result.exception}")
 
         val traceFile = TraceInstrumenter.getTraceFile(this.method)
         result.trace = traceFile.readLines()
