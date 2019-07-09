@@ -23,7 +23,7 @@
         <file>kex-test.log</file>
         <param name="Append" value="false" />
         <encoder>
-            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} %-5p [%t][%c] - %m%n</pattern>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%-5p][%c] - %m%n</pattern>
         </encoder>
     </appender>
 

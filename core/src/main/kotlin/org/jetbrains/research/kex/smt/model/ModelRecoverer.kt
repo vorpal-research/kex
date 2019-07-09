@@ -302,16 +302,16 @@ class ObjectRecoverer(val method: Method, val model: SMTModel, val loader: Class
                 fieldReflect.isFinal = false
                 if (fieldReflect.isEnumConstant || fieldReflect.isSynthetic) return instance
                 if (fieldReflect.type.isPrimitive) {
-                    require(recoveredValue != null)
-                    when (recoveredValue.javaClass) {
-                        Boolean::class.javaObjectType -> fieldReflect.setBoolean(instance, recoveredValue as Boolean)
-                        Byte::class.javaObjectType -> fieldReflect.setByte(instance, recoveredValue as Byte)
-                        Char::class.javaObjectType -> fieldReflect.setChar(instance, recoveredValue as Char)
-                        Short::class.javaObjectType -> fieldReflect.setShort(instance, recoveredValue as Short)
-                        Int::class.javaObjectType -> fieldReflect.setInt(instance, recoveredValue as Int)
-                        Long::class.javaObjectType -> fieldReflect.setLong(instance, recoveredValue as Long)
-                        Float::class.javaObjectType -> fieldReflect.setFloat(instance, recoveredValue as Float)
-                        Double::class.javaObjectType -> fieldReflect.setDouble(instance, recoveredValue as Double)
+                    val definedValue = recoveredValue ?: recoverPrimary((term.type as KexReference).reference, null)!!
+                    when (definedValue.javaClass) {
+                        Boolean::class.javaObjectType -> fieldReflect.setBoolean(instance, definedValue as Boolean)
+                        Byte::class.javaObjectType -> fieldReflect.setByte(instance, definedValue as Byte)
+                        Char::class.javaObjectType -> fieldReflect.setChar(instance, definedValue as Char)
+                        Short::class.javaObjectType -> fieldReflect.setShort(instance, definedValue as Short)
+                        Int::class.javaObjectType -> fieldReflect.setInt(instance, definedValue as Int)
+                        Long::class.javaObjectType -> fieldReflect.setLong(instance, definedValue as Long)
+                        Float::class.javaObjectType -> fieldReflect.setFloat(instance, definedValue as Float)
+                        Double::class.javaObjectType -> fieldReflect.setDouble(instance, definedValue as Double)
                         else -> unreachable { log.error("Trying to get primitive type of non-primitive object $this") }
                     }
                 } else {
