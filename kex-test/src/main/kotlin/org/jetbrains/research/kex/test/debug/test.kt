@@ -3,117 +3,119 @@
 package org.jetbrains.research.kex.test.debug
 
 import org.jetbrains.research.kex.test.Intrinsics
-import java.io.File
-import java.io.InputStream
-import java.nio.file.Files
-import java.nio.file.StandardCopyOption
+import kotlin.math.abs
 
-class Icfpc2018Test {
-    class ZipWriter {
-        fun createZip(name: String): Unit = TODO()
+class BasicTests {
+    fun testPlain(a: Int, b: Int): Int {
+        val i = 10
+        val j = 152
+        val k = j + i - 15
+
+        val max = maxOf(a, b, k)
+        Intrinsics.assertReachable()
+        return max
     }
 
-    class Results(val elements: MutableMap<String, Result>) : MutableMap<String, Result> by elements {
-        companion object {
-            fun readFromDirectory(dir: String): Results = TODO()
-        }
-
-        fun merge(other: Results): Results = TODO()
-    }
-
-    class Result(val solutions: MutableMap<String, Solution>) {
-        fun getSortedSolutions(): List<Pair<String, Solution>> = TODO()
-    }
-
-    class Solution(val energy: Long, val trace: String) {
-        fun solve() {}
-    }
-
-    enum class RunMode {
-        ASSEMBLE, DISASSEMBLE, REASSEMBLE, SUBMIT, ALL
-    }
-
-    class Command {
-        companion object {
-            fun read(str: InputStream): Command = TODO()
-        }
-    }
-
-    class Model(val size: Int, val numGrounded: Int = 0) {
-        companion object {
-            fun readMDL(inp: InputStream): Model = TODO()
-        }
-    }
-
-    class State {
-        val matrix = Model(0, 0)
-    }
-
-    class System(var currentState: State, val score: Int = 0)
-
-    class Trace(val trace: List<Command>, val system: System) {
-        fun solve(): Unit = TODO()
-    }
-
-    private fun getModeByModelName(name: String): RunMode = TODO()
-
-    fun submitChecked(resultDirs: List<String>) {
-        val results = resultDirs.map { Results.readFromDirectory(it) }
-        val merged = results.reduce { acc, res -> acc.merge(res) }
-        for ((task, result) in merged) {
-            val mode = getModeByModelName(task)
-            if (mode == RunMode.REASSEMBLE) {
-                Intrinsics.assertReachable()
-
-                val bestSolution = result.getSortedSolutions().first().second
-                Files.copy(File(bestSolution.trace).toPath(), File("submit/$task.nbt").toPath(),
-                        StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.COPY_ATTRIBUTES)
-            } else {
-                Intrinsics.assertReachable()
-
-                val targetModel = when (mode) {
-                    RunMode.ASSEMBLE -> Model.readMDL(File("models/${task}_tgt.mdl").inputStream())
-                    else -> Model.readMDL(File("models/${task}_src.mdl").inputStream())
-                }
-                val state = State()
-
-                var haveSolution = false
-                for ((solutionName, solution) in result.getSortedSolutions()) {
-                    Intrinsics.assertReachable()
-                    val traceFile = File(solution.trace).inputStream()
-                    val commands: MutableList<Command> = mutableListOf()
-                    while (traceFile.available() != 0) {
-                        Intrinsics.assertReachable()
-                        commands += Command.read(traceFile)
-                    }
-                    val system = System(state)
-                    try {
-                        Trace(commands, system).solve()
-                    } catch (e: Exception) {
-                        continue
-                    }
-
-                    if (system.currentState.matrix != targetModel) {
-                        Intrinsics.assertReachable()
-                        continue
-                    }
-
-                    Files.copy(File(solution.trace).toPath(), File("submit/$task.nbt").toPath(),
-                            StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.COPY_ATTRIBUTES)
-                    haveSolution = true
-                    Intrinsics.assertReachable()
-                    break
-                }
-                if (!haveSolution) {
-                    Intrinsics.assertReachable()
-                    return
-                }
-                Intrinsics.assertReachable()
-            }
+    fun testIf(a: Int, b: Int): Int {
+        val res = if (a > b) {
+            Intrinsics.assertReachable(a > b)
+            a - b
+        } else {
+            Intrinsics.assertReachable(a <= b)
+            a + b
         }
 
         Intrinsics.assertReachable()
-        ZipWriter().createZip("submit/")
+        println(res)
+        return res
     }
 
+    fun testLoop(a: Int, b: Int): Int {
+        var x = a - b
+        while (x < a) {
+            Intrinsics.assertReachable(x < a)
+            if (b > x) {
+                Intrinsics.assertReachable(b > x, x < a)
+                println("b bigger")
+            }
+            ++x
+        }
+        Intrinsics.assertReachable()
+        return x
+    }
+
+    fun testUnreachableIf(x: Int): Int {
+        val set = "asdasdal;djadslas;d".length
+        val z = 10
+        val y = if (x > z && x < 0) {
+            Intrinsics.assertUnreachable()
+            println("lol")
+            142
+        } else {
+            Intrinsics.assertReachable(x <= z || x >= 0)
+            println("lol2")
+            x- 2 * x
+        }
+        Intrinsics.assertReachable()
+        return y
+    }
+
+    fun testUnreachableLoop(): Int {
+        var x = 10
+        while (x > 5) {
+            Intrinsics.assertReachable(x > 5)
+            ++x
+        }
+        Intrinsics.assertUnreachable()
+        println(x)
+        return x
+    }
+
+    fun testArray(): Int {
+        val array = arrayOf(
+                arrayOf(0, 1, 2, 3, 4),
+                arrayOf(5, 6, 7, 8, 9),
+                arrayOf(10, 11, 12, 13, 14)
+        )
+        if (array[2][4] > 10) {
+            Intrinsics.assertReachable()
+        }
+        if (array.size > 2) {
+            Intrinsics.assertReachable()
+        }
+        if (array[0].size > 4) {
+            Intrinsics.assertReachable()
+        }
+        return array.flatten().reduce { a, b -> a + b}
+    }
+
+    fun testUnreachableArray(): Int {
+        val array = arrayOf(
+                arrayOf(0, 1, 2, 3, 4),
+                arrayOf(5, 6, 7, 8, 9),
+                arrayOf(10, 11, 12, 13, 14)
+        )
+        if (array[4][4] > 10) {
+            Intrinsics.assertUnreachable()
+        }
+        return array.flatten().reduce { a, b -> a + b}
+    }
+
+    fun testSimpleOuterCall(): Int {
+        val a = 10
+        val b = 42
+        val c = abs(a - b)
+        // we don't know anything about function `abs`, so result is unknown
+        if (c < 0) Intrinsics.assertReachable()
+        else Intrinsics.assertReachable()
+        return c
+    }
+
+    fun triangleKind(a: Double, b: Double, c: Double): Double {
+        val max = maxOf(a, b, c)
+        if (2 * max > a + b + c)
+            return -1.0
+        val res = 2 * max * max - a * a - b * b - c * c
+        return res
+    }
 }
