@@ -146,12 +146,7 @@ class MethodChecker(
                         method.isStatic -> null
                         else -> tryOrNull {
                             val klass = getClass(types.getRefType(method.`class`), state!!.loader)
-                            // TODO: creating new randomizer each time is resource intensive,
-                            //  but using the same randomizer each time fails, because we generate multiple
-                            //  instances of classes with similar names, but different versions
-                            //  (generate instance of class A_0, then modify it's methods and reload this class as A_1;
-                            //  A_0.equals(A_1) will return true, but essentially they are different classes)
-                            defaultRandomizer.next(klass)
+                            random.next(klass)
                         }
                     }
 

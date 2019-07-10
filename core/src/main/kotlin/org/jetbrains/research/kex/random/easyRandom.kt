@@ -1,35 +1,22 @@
 package org.jetbrains.research.kex.random
 
-import io.github.benas.randombeans.EnhancedRandomBuilder
+import org.jeasy.random.EasyRandom
+import org.jeasy.random.EasyRandomParameters
+import org.jeasy.random.ObjectCreationException
+import org.jeasy.random.api.ObjectFactory
+import org.jeasy.random.api.RandomizerContext
+import org.jeasy.random.util.CollectionUtils.randomElementOf
+import org.jeasy.random.util.ReflectionUtils.getPublicConcreteSubTypesOf
+import org.jeasy.random.util.ReflectionUtils.isAbstract
 import org.jetbrains.research.kex.config.kexConfig
 import org.jetbrains.research.kex.util.log
 import org.jetbrains.research.kex.util.tryOrNull
+import org.objenesis.ObjenesisStd
 import java.lang.reflect.ParameterizedType
 import java.lang.reflect.Type
 import java.lang.reflect.TypeVariable
 
-abstract class RandomizerError(msg: String) : Exception(msg)
-class GenerationException(msg: String) : RandomizerError(msg)
-class UnknownTypeException(msg: String) : RandomizerError(msg)
-
-
-interface Randomizer {
-    /**
-     * @return generated object or throws #RandomizerError
-     */
-    fun next(type: Type): Any?
-
-    /**
-     * @return generated object or #null if any exception has occurred
-     */
-    fun nextOrNull(type: Type) = tryOrNull { next(type) }
-}
-
-val defaultRandomizer: Randomizer
-    get() = RandomBeansDriver()
-
-
-class RandomBeansDriver(val config: BeansConfig = defaultConfig) : Randomizer {
+class EasyRandomDriver(val config: BeansConfig = defaultConfig) : Randomizer {
     companion object {
 
         data class BeansConfig(
@@ -37,7 +24,7 @@ class RandomBeansDriver(val config: BeansConfig = defaultConfig) : Randomizer {
                 val collectionSize: IntRange,
                 val stringLength: IntRange,
                 val attempts: Int,
-                val excludes: List<String>
+                val excludes: Set<String>
         )
 
         val defaultConfig: BeansConfig by lazy {
@@ -47,7 +34,7 @@ class RandomBeansDriver(val config: BeansConfig = defaultConfig) : Randomizer {
             val minStringLength = kexConfig.getIntValue("random-beans", "minStringLength", 0)
             val maxStringLength = kexConfig.getIntValue("random-beans", "maxStringLength", 1000)
             val attempts = kexConfig.getIntValue("random-beans", "generationAttempts", 1)
-            val excludes = kexConfig.getMultipleStringValue("random-beans", "exclude")
+            val excludes = kexConfig.getMultipleStringValue("random-beans", "exclude").toSet()
             BeansConfig(
                     depth = depth,
                     collectionSize = minCollectionSize..maxCollectionSize,
@@ -58,13 +45,47 @@ class RandomBeansDriver(val config: BeansConfig = defaultConfig) : Randomizer {
         }
     }
 
-    private val randomizer = EnhancedRandomBuilder.aNewEnhancedRandomBuilder()
-            .randomizationDepth(config.depth)
-            .collectionSizeRange(config.collectionSize.first, config.collectionSize.last)
-            .stringLengthRange(config.stringLength.last, config.stringLength.last)
-            .scanClasspathForConcreteTypes(true)
-            .exclude(*config.excludes.mapNotNull { tryOrNull { Class.forName(it) } }.toTypedArray())
-            .build()
+    private class KexObjectFactory : ObjectFactory {
+        private val objenesis = ObjenesisStd(false)
+
+        override fun <T> createInstance(type: Class<T>, context: RandomizerContext): T =
+                when {
+                    context.parameters.isScanClasspathForConcreteTypes && isAbstract<T>(type) -> {
+                        val randomConcreteSubType = randomElementOf<Class<*>>(getPublicConcreteSubTypesOf<T>(type))
+                        if (randomConcreteSubType == null) {
+                            throw InstantiationError("Unable to find a matching concrete subtype of type: $type in the classpath")
+                        } else {
+                            @Suppress("UNCHECKED_CAST")
+                            createNewInstance(randomConcreteSubType) as T
+                        }
+                    }
+                    else -> try {
+                        createNewInstance(type)
+                    } catch (e: Error) {
+                        throw ObjectCreationException("Unable to create an instance of type: $type", e)
+                    }
+                }
+
+        private fun <T> createNewInstance(type: Class<T>): T = try {
+            val noArgConstructor = type.getDeclaredConstructor()
+            if (!noArgConstructor.isAccessible) {
+                noArgConstructor.isAccessible = true
+            }
+            noArgConstructor.newInstance()
+        } catch (exception: Exception) {
+            objenesis.newInstance(type)
+        }
+    }
+
+    private val randomizer = EasyRandom(
+            EasyRandomParameters()
+                    .randomizationDepth(config.depth)
+                    .collectionSizeRange(config.collectionSize.first, config.collectionSize.last)
+                    .stringLengthRange(config.stringLength.last, config.stringLength.last)
+                    .scanClasspathForConcreteTypes(true)
+                    .excludeType { it.name in config.excludes }
+                    .objectFactory(KexObjectFactory())
+    )
 
     private fun <T> generateClass(klass: Class<T>) = randomizer.nextObject(klass)
 
