@@ -13,6 +13,7 @@ import org.jetbrains.research.kfg.ir.Method
 import java.io.ByteArrayOutputStream
 import java.io.PrintStream
 import java.lang.reflect.InvocationTargetException
+import java.nio.file.Files
 
 private val timeout = kexConfig.getLongValue("runner", "timeout", 1000L)
 private val traceLimit = kexConfig.getIntValue("runner", "trace-limit", 0)
@@ -85,6 +86,8 @@ abstract class AbstractRunner(val method: Method, protected val loader: ClassLoa
         log.debug("Running $method")
         log.debug("Instance: $instance")
         log.debug("Args: ${args.map { it.toString() }}")
+
+        Files.deleteIfExists(TraceInstrumenter.getTraceFile(this.method).toPath())
 
         val result = InvocationResult()
         if (!method.isAccessible) method.isAccessible = true
