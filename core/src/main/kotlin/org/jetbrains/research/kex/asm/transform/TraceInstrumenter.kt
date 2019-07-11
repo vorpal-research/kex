@@ -22,7 +22,7 @@ class TraceInstrumenter(override val cm: ClassManager) : MethodVisitor {
         val TRACE_DIRECTORY = kexConfig.getStringValue("runner", "trace-directory", "./traces")
 
         fun generateTraceFileName(method: Method): String {
-            val name = method.toString().replace('/', '.').replace(" ", "")
+            val name = "${method.`class`.fullname}.${method.name}".replace('/', '.')
             return "$name$TRACE_POSTFIX"
         }
 

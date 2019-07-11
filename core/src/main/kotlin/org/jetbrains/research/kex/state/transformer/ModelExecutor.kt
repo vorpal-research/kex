@@ -33,7 +33,7 @@ class ModelExecutor(val method: Method, model: SMTModel, loader: ClassLoader) : 
     private val argTerms = mutableMapOf<Int, Term>()
 
     val instance get() = thisTerm?.let { memory[it] }
-    val args get() = argTerms.values.map { memory[it] }
+    val args get() = argTerms.asSequence().sortedBy { it.key }.map { memory[it.value] }.toList()
 
     override fun apply(ps: PredicateState): PredicateState {
         val (tempThis, tempArgs) = collectArguments(ps)

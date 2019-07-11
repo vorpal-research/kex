@@ -29,6 +29,8 @@ import org.jetbrains.research.kfg.util.writeClass
 import org.jetbrains.research.kfg.visitor.MethodVisitor
 import java.io.File
 import java.net.URLClassLoader
+import java.nio.file.Files
+import java.nio.file.Paths
 
 private val failDir by lazy { kexConfig.getStringValue("debug", "dump-directory", "./fail") }
 
@@ -106,17 +108,18 @@ class MethodChecker(
                 log.debug("Checking reachability of ${block.terminator.print()}")
                 coverBlock(method, block)
             } catch (e: TimeoutException) {
-                log.error("Timeout exception when running method $method, skipping it")
+                log.warn("Timeout exception when running method $method, skipping it")
                 break
             } catch (e: KexCheckerException) {
                 log.error("Fail when covering block ${block.name} of $method")
                 log.error("Error: ${e.inner}")
 
-                val methodFileName = method.prototype.replace(Regex("\\s"), "").replace('/', '.')
-                val resultFile = "$methodFileName.${block.name}-fail.json"
-                log.error("Failing saved to file $resultFile")
-                val errorDump = File(failDir, resultFile).apply { parentFile?.mkdirs() }
-                errorDump.createNewFile()
+                val failDirPath = Paths.get(failDir)
+                if (!Files.exists(failDirPath)) {
+                    Files.createDirectory(failDirPath)
+                }
+                val errorDump = Files.createTempFile(failDirPath, "ps-", ".json").toFile()
+                log.error("Failing saved to file ${errorDump.path}")
                 errorDump.writeText(KexSerializer(cm).toJson(Failure(method.`class`, method, e.inner.toString(), e.reason)))
                 break
             }
