@@ -20,6 +20,9 @@ import kotlin.math.abs
 
 private val derollCount = kexConfig.getIntValue("loop", "deroll-count", 3)
 
+val BasicBlock.originalBlock: BasicBlock
+    get() = LoopDeroller.blockMapping[this.parent!!]?.get(this) ?: this
+
 class LoopDeroller(override val cm: ClassManager) : LoopVisitor {
 
     companion object {
