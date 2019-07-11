@@ -91,19 +91,23 @@ abstract class AbstractRunner(val method: Method, protected val loader: ClassLoa
 
         val oldOut = System.out
         val oldErr = System.err
-        System.setOut(PrintStream(result.output))
-        System.setErr(PrintStream(result.error))
 
-        runWithTimeout(timeout) {
-            try {
-                result.returnValue = method.invoke(instance, *args)
-            } catch (e: InvocationTargetException) {
-                result.exception = e.targetException
+        try {
+            System.setOut(PrintStream(result.output))
+            System.setErr(PrintStream(result.error))
+
+            runWithTimeout(timeout) {
+                try {
+                    result.returnValue = method.invoke(instance, *args)
+                } catch (e: InvocationTargetException) {
+                    result.exception = e.targetException
+                }
             }
+        } finally {
+            System.setOut(oldOut)
+            System.setErr(oldErr)
         }
 
-        System.setOut(oldOut)
-        System.setErr(oldErr)
 
         log.debug("Invocation output:\n${result.output}")
         log.debug("Invocation error:\n${result.error}")
