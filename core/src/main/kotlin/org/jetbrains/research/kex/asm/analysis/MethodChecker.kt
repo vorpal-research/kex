@@ -4,8 +4,8 @@ import kotlinx.serialization.ContextualSerialization
 import kotlinx.serialization.ImplicitReflectionSerializer
 import kotlinx.serialization.Serializable
 import org.jetbrains.research.kex.asm.state.PredicateStateAnalysis
-import org.jetbrains.research.kex.asm.transform.LoopDeroller
 import org.jetbrains.research.kex.asm.transform.TraceInstrumenter
+import org.jetbrains.research.kex.asm.transform.originalBlock
 import org.jetbrains.research.kex.config.kexConfig
 import org.jetbrains.research.kex.random.defaultRandomizer
 import org.jetbrains.research.kex.serialization.KexSerializer
@@ -99,9 +99,8 @@ class MethodChecker(
         log.debug(method.print())
         log.debug()
 
-        val blockMappings = LoopDeroller.blockMapping.getOrPut(method, ::mutableMapOf)
         for (block in method.bodyBlocks) {
-            val originalBlock = blockMappings[block] ?: block
+            val originalBlock = block.originalBlock
             if (tm.isCovered(method, originalBlock)) continue
 
             try {

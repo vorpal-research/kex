@@ -1,8 +1,8 @@
 package org.jetbrains.research.kex.trace
 
+import org.jetbrains.research.kex.asm.transform.originalBlock
 import org.jetbrains.research.kex.util.error
 import org.jetbrains.research.kex.util.log
-import org.jetbrains.research.kex.util.unreachable
 import org.jetbrains.research.kfg.ir.BasicBlock
 import org.jetbrains.research.kfg.ir.Method
 import java.util.*
@@ -17,6 +17,11 @@ data class BlockInfo internal constructor(
 
     val hasOutput: Boolean
         get() = outputAction != null
+
+    override fun toString() = buildString {
+        append("enter ${bb.name}")
+        outputAction?.let { append(it.toString()) }
+    }
 }
 
 data class Trace constructor(val method: Method,
@@ -138,9 +143,12 @@ object TraceManager {
     private val methods = hashMapOf<Method, MutableList<Trace>>()
 
     fun getTraces(method: Method): List<Trace> = methods.getOrPut(method, ::arrayListOf)
-    fun getBlockInfos(bb: BasicBlock): List<BlockInfo> = when {
-        bb.parent != null -> getTraces(bb.parent!!).map { it.blocks[bb] ?: listOf() }.flatten()
-        else -> listOf()
+    fun getBlockInfos(bb: BasicBlock): List<BlockInfo> {
+        val block = bb.originalBlock
+        return when {
+            block.parent != null -> getTraces(block.parent!!).mapNotNull { it.blocks[block] }.flatten()
+            else -> listOf()
+        }
     }
 
     fun addTrace(method: Method, info: Trace) {
@@ -152,15 +160,11 @@ object TraceManager {
         }
     }
 
-    fun isCovered(bb: BasicBlock) = getBlockInfos(bb)
-            .fold(false) { acc, it -> acc || it.hasOutput }
+    fun isCovered(method: Method, bb: BasicBlock): Boolean {
+        val traces = getTraces(method)
+        val blockInfos = traces.mapNotNull { it.blocks[bb] }.flatten()
+        return blockInfos.count { it.hasOutput } > 0
+    }
 
-    fun isCovered(method: Method, bb: BasicBlock) = getTraces(method).mapNotNull { it.blocks[bb] }.flatten()
-            .fold(false) { acc, it -> acc || it.hasOutput }
-
-    fun isPartlyCovered(method: Method): Boolean = method.basicBlocks.fold(false) { acc, bb -> acc || isCovered(bb) }
-    fun isBodyCovered(method: Method) = method.bodyBlocks.asSequence().map { isCovered(it) }.fold(true) { acc, it -> acc && it }
-
-    fun isCatchCovered(method: Method) = method.catchBlocks.asSequence().map { isCovered(it) }.fold(true) { acc, it -> acc && it }
-    fun isFullCovered(method: Method) = isBodyCovered(method) && isCatchCovered(method)
+    fun isBodyCovered(method: Method) = method.bodyBlocks.asSequence().map { isCovered(method, it) }.fold(true) { acc, it -> acc && it }
 }
