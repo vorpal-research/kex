@@ -91,7 +91,7 @@ class Z3Solver(val tf: TypeFactory) : AbstractSMTSolver {
         return when (result) {
             Status.SATISFIABLE -> {
                 val model = solver.model ?: unreachable { log.error("Solver result does not contain model") }
-//                log.debug(model)
+                if (logFormulae) log.debug(model)
                 result to model
             }
             Status.UNSATISFIABLE -> {
@@ -143,7 +143,6 @@ class Z3Solver(val tf: TypeFactory) : AbstractSMTSolver {
             val expr = Z3Converter(tf).convert(it, ef, ctx)
             val z3expr = expr.expr
 
-            log.debug("Evaluating $z3expr")
             val evaluatedExpr = model.evaluate(z3expr, true)
             it to Z3Unlogic.undo(evaluatedExpr)
         }.toMap().toMutableMap()
@@ -162,7 +161,6 @@ class Z3Solver(val tf: TypeFactory) : AbstractSMTSolver {
 
             val eptr = Z3Converter(tf).convert(ptr, ef, ctx) as? Ptr_
                     ?: unreachable { log.error("Non-ptr expr for pointer $ptr") }
-            log.debug("Evaluating $eptr")
 
             val startV = startMem.load(eptr, Z3ExprFactory.getTypeSize(ptr.type))
             val endV = endMem.load(eptr, Z3ExprFactory.getTypeSize(ptr.type))

@@ -112,8 +112,8 @@ abstract class AbstractRunner(val method: Method, protected val loader: ClassLoa
         }
 
 
-        log.debug("Invocation output:\n${result.output}")
-        log.debug("Invocation error:\n${result.error}")
+        if (result.output.size() != 0) log.debug("Invocation output:\n${result.output}")
+        if (result.error.size() != 0) log.debug("Invocation error:\n${result.error}")
         if (result.exception != null)
             log.debug("Invocation exception: ${result.exception}")
 

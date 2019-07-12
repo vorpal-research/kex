@@ -24,6 +24,9 @@ import org.jetbrains.research.kfg.ClassManager
 import org.jetbrains.research.kfg.ir.BasicBlock
 import org.jetbrains.research.kfg.ir.Class
 import org.jetbrains.research.kfg.ir.Method
+import org.jetbrains.research.kfg.ir.value.instruction.CallInst
+import org.jetbrains.research.kfg.ir.value.instruction.FieldLoadInst
+import org.jetbrains.research.kfg.ir.value.instruction.FieldStoreInst
 import org.jetbrains.research.kfg.ir.value.instruction.Instruction
 import org.jetbrains.research.kfg.util.writeClass
 import org.jetbrains.research.kfg.visitor.MethodVisitor
@@ -43,6 +46,25 @@ data class Failure(
         val message: String,
         val state: PredicateState
 )
+
+val Method.isImpactable: Boolean
+    get() {
+        when {
+            this.isStatic && this.argTypes.isEmpty() -> return false
+            this.argTypes.isEmpty() -> {
+                val thisVal = this.cm.value.getThis(this.`class`)
+                for (inst in this.flatten()) {
+                    when (inst) {
+                        is FieldLoadInst -> if (inst.hasOwner && inst.owner == thisVal) return true
+                        is FieldStoreInst -> if (inst.hasOwner && inst.owner == thisVal) return true
+                        is CallInst -> if (!inst.isStatic && inst.callee == thisVal) return true
+                    }
+                }
+                return false
+            }
+            else -> return true
+        }
+    }
 
 class MethodChecker(
         override val cm: ClassManager,
@@ -92,8 +114,8 @@ class MethodChecker(
 
         if (method.`class`.isSynthetic) return
         if (method.isAbstract || method.isConstructor) return
-        // don't consider static parameters
-        if (method.isStatic && method.argTypes.isEmpty()) return
+        if (!method.isImpactable) return
+//        if (method.isStatic && method.argTypes.isEmpty()) return
 
         log.debug("Checking method $method")
         log.debug(method.print())
@@ -135,12 +157,8 @@ class MethodChecker(
         val ps = checker.createState(block.terminator) ?: return
 
         try {
-            val result = checker.check(ps)
-            log.debug(result)
-
-            when (result) {
+            when (val result = checker.check(ps)) {
                 is Result.SatResult -> {
-                    log.debug(result.model)
                     val model = executeModel(checker.state, method, result.model, state!!.loader)
                     log.debug("Recovered: ${tryOrNull { model.toString() }}")
 

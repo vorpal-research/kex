@@ -1,5 +1,6 @@
 package org.jetbrains.research.kex.asm.manager
 
+import org.jetbrains.research.kex.asm.analysis.isImpactable
 import org.jetbrains.research.kex.asm.transform.originalBlock
 import org.jetbrains.research.kex.trace.TraceManager
 import org.jetbrains.research.kex.util.log
@@ -35,7 +36,7 @@ class CoverageCounter(override val cm: ClassManager) : ClassVisitor {
 
         for (method in `class`.methods.values) {
             if (method.isAbstract || method.isConstructor) continue
-            if (method.isStatic && method.argTypes.isEmpty()) continue
+            if (!method.isImpactable) continue
 
             val bodyBlocks = method.bodyBlocks.map { it.originalBlock }.toSet()
             val catchBlocks = method.catchBlocks.map { it.originalBlock }.toSet()
