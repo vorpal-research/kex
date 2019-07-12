@@ -11,6 +11,7 @@ import org.jeasy.random.util.ReflectionUtils.isAbstract
 import org.jetbrains.research.kex.config.kexConfig
 import org.jetbrains.research.kex.util.log
 import org.jetbrains.research.kex.util.tryOrNull
+import org.jetbrains.research.kfg.Package
 import org.objenesis.ObjenesisStd
 import java.lang.reflect.ParameterizedType
 import java.lang.reflect.Type
@@ -24,17 +25,17 @@ class EasyRandomDriver(val config: BeansConfig = defaultConfig) : Randomizer {
                 val collectionSize: IntRange,
                 val stringLength: IntRange,
                 val attempts: Int,
-                val excludes: Set<String>
+                val excludes: Set<Package>
         )
 
         val defaultConfig: BeansConfig by lazy {
-            val depth = kexConfig.getIntValue("random-beans", "depth", 10)
-            val minCollectionSize = kexConfig.getIntValue("random-beans", "minCollectionSize", 0)
-            val maxCollectionSize = kexConfig.getIntValue("random-beans", "maxCollectionSize", 1000)
-            val minStringLength = kexConfig.getIntValue("random-beans", "minStringLength", 0)
-            val maxStringLength = kexConfig.getIntValue("random-beans", "maxStringLength", 1000)
-            val attempts = kexConfig.getIntValue("random-beans", "generationAttempts", 1)
-            val excludes = kexConfig.getMultipleStringValue("random-beans", "exclude").toSet()
+            val depth = kexConfig.getIntValue("easy-random", "depth", 10)
+            val minCollectionSize = kexConfig.getIntValue("easy-random", "minCollectionSize", 0)
+            val maxCollectionSize = kexConfig.getIntValue("easy-random", "maxCollectionSize", 1000)
+            val minStringLength = kexConfig.getIntValue("easy-random", "minStringLength", 0)
+            val maxStringLength = kexConfig.getIntValue("easy-random", "maxStringLength", 1000)
+            val attempts = kexConfig.getIntValue("easy-random", "generationAttempts", 1)
+            val excludes = kexConfig.getMultipleStringValue("easy-random", "exclude").map { Package.parse(it) }.toSet()
             BeansConfig(
                     depth = depth,
                     collectionSize = minCollectionSize..maxCollectionSize,
@@ -83,7 +84,7 @@ class EasyRandomDriver(val config: BeansConfig = defaultConfig) : Randomizer {
                     .collectionSizeRange(config.collectionSize.first, config.collectionSize.last)
                     .stringLengthRange(config.stringLength.last, config.stringLength.last)
                     .scanClasspathForConcreteTypes(true)
-                    .excludeType { it.name in config.excludes }
+                    .excludeType { type -> config.excludes.any { it.isParent(Package.parse(type.name)) } }
                     .objectFactory(KexObjectFactory())
     )
 

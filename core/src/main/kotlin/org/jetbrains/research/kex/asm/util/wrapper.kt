@@ -8,7 +8,6 @@ import org.jetbrains.research.kfg.ir.value.Value
 import org.jetbrains.research.kfg.ir.value.instruction.CallOpcode
 import org.jetbrains.research.kfg.ir.value.instruction.Instruction
 import org.jetbrains.research.kfg.ir.value.instruction.InstructionFactory
-import org.jetbrains.research.kfg.ir.value.instruction.UnaryOpcode
 import org.jetbrains.research.kfg.type.ArrayType
 import org.jetbrains.research.kfg.type.ClassType
 import org.jetbrains.research.kfg.type.NullType
@@ -202,16 +201,6 @@ class ValuePrinter(override val cm: ClassManager) : Wrapper {
         val hash = getIdentityHashCode(value)
         sb.append(print(hash))
         sb.append("{")
-//        val `class` = reflection.getClass(value)
-//        insns.add(`class`)
-//        val fields = type.`class`.fields.values
-//        fields.take(1).forEach {
-//            sb.append(printField(value, `class`, it))
-//        }
-//        fields.drop(1).forEach {
-//            sb.append(", ")
-//            sb.append(printField(value, `class`, it))
-//        }
         sb.append("}")
         val res = sb.toStringWrapper()
         insns.addAll(sb.insns)
@@ -227,9 +216,6 @@ class ValuePrinter(override val cm: ClassManager) : Wrapper {
         sb.append("{")
         sb.append(type.toString().replace('/', '.'))
         sb.append(", 0")
-//        val length = instructions.getUnary(UnaryOpcode.LENGTH, value)
-//        insns.add(length)
-//        sb.append(print(length))
         sb.append("}")
         val res = sb.toStringWrapper()
         insns.addAll(sb.insns)

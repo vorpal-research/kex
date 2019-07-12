@@ -32,7 +32,7 @@ fun main(args: Array<String>) {
 
     val jar = JarFile(Paths.get(jarName).toAbsolutePath().toFile())
     val jarLoader = jar.classLoader
-    val `package` = Package(packageName.replace('.', '/'))
+    val `package` = Package.parse(packageName)
     val classManager = ClassManager(jar, `package`, Flags.readAll)
     val origManager = ClassManager(jar, `package`, Flags.readAll)
 
