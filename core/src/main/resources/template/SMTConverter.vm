@@ -25,8 +25,8 @@ class ${solver}Converter(val tf: TypeFactory) : ${solver}SMTConverter() {
                 .withAxiom(expr ge ef.makeIntConst(Byte.MIN_VALUE.toInt()))
                 .withAxiom(expr le ef.makeIntConst(Byte.MAX_VALUE.toInt()))
         is KexChar -> expr
-                .withAxiom(expr ge ef.makeIntConst(Short.MIN_VALUE.toInt()))
-                .withAxiom(expr le ef.makeIntConst(Short.MAX_VALUE.toInt()))
+                .withAxiom(expr ge ef.makeIntConst(Char.MIN_VALUE.toInt()))
+                .withAxiom(expr le ef.makeIntConst(Char.MAX_VALUE.toInt()))
         is KexShort -> expr
                 .withAxiom(expr ge ef.makeIntConst(Short.MIN_VALUE.toInt()))
                 .withAxiom(expr le ef.makeIntConst(Short.MAX_VALUE.toInt()))

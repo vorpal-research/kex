@@ -189,7 +189,7 @@ class PredicateBuilder(override val cm: ClassManager) : MethodVisitor {
         val key = tf.getValue(inst.index)
         val min = inst.min as? IntConstant ?: throw InvalidInstructionError("Unexpected min type in tableSwitchInst")
         val max = inst.max as? IntConstant ?: throw InvalidInstructionError("Unexpected max type in tableSwitchInst")
-        for ((index, successor) in inst.getBranches().withIndex()) {
+        for ((index, successor) in inst.branches.withIndex()) {
             terminatorPredicateMap[successor to inst] = pf.getEquality(
                     key,
                     tf.getInt(min.value + index),
@@ -197,7 +197,7 @@ class PredicateBuilder(override val cm: ClassManager) : MethodVisitor {
                     inst.location
             )
         }
-        terminatorPredicateMap[inst.getDefault() to inst] = pf.getDefaultSwitchPredicate(
+        terminatorPredicateMap[inst.default to inst] = pf.getDefaultSwitchPredicate(
                 key,
                 (min.value..max.value).map { tf.getInt(it) },
                 PredicateType.Path(),
