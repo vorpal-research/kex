@@ -30,6 +30,7 @@ class ChoiceState(val choices: List<PredicateState>) : PredicateState(), Iterabl
     override fun addPredicate(predicate: Predicate) = ChainState(ChoiceState(choices), BasicState(arrayListOf(predicate)))
 
     override fun sliceOn(state: PredicateState): PredicateState? {
+        if (this == state) return emptyState()
         val slices = choices.map { it.sliceOn(state) }
         val filtered = slices.filterNotNull()
         return if (slices.size == filtered.size) ChoiceState(filtered) else null
