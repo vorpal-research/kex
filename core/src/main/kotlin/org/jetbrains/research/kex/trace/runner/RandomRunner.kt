@@ -30,9 +30,11 @@ class RandomRunner(method: KfgMethod, loader: ClassLoader) : AbstractRunner(meth
 
         val trace = try {
             invoke(instance, args)
+        } catch (e: TimeoutException) {
+            log.error("Failed method $method with timeout, skipping it")
+            return
         } catch (e: Exception) {
             log.error("Failed when running method $method")
-            log.error("Exception: $e")
             null
         } ?: return@repeat
 

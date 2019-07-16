@@ -115,7 +115,6 @@ class MethodChecker(
         if (method.`class`.isSynthetic) return
         if (method.isAbstract || method.isConstructor) return
         if (!method.isImpactable) return
-//        if (method.isStatic && method.argTypes.isEmpty()) return
 
         log.debug("Checking method $method")
         log.debug(method.print())
