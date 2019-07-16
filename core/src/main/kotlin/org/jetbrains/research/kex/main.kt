@@ -24,6 +24,8 @@ import java.util.jar.JarFile
 fun main(args: Array<String>) {
     val cmd = CmdConfig(args)
     val properties = cmd.getCmdValue("config", "kex.ini")
+    val logName = cmd.getCmdValue("log", "kex")
+    System.setProperty("kex.log.name", logName)
     kexConfig.initialize(cmd, RuntimeConfig, FileConfig(properties))
 
     val jarName = cmd.getCmdValue("jar")
