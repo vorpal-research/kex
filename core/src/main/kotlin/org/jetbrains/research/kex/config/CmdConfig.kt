@@ -58,6 +58,10 @@ class CmdConfig(args: Array<String>) : Config {
         ps.isRequired = false
         options.addOption(ps)
 
+        val logName = Option(null, "log", true, "log file name (`kex.log` by default)")
+        logName.isRequired = false
+        options.addOption(logName)
+
         val config = Option.builder()
                 .longOpt("option")
                 .argName("section:name:value")
