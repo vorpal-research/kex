@@ -1,6 +1,5 @@
 #!/bin/bash
 
-rm *.log
 time java \
 	-Djava.security.manager \
 	-Djava.security.policy==kex.policy \

@@ -13,7 +13,7 @@ import java.net.URLClassLoader
 
 class RandomChecker(override val cm: ClassManager, private val loader: ClassLoader, private val target: File) :
         MethodVisitor {
-    private val runner = kexConfig.getBooleanValue("runner", "enabled", false)
+    private val runner = kexConfig.getBooleanValue("random-runner", "enabled", false)
 
     override fun cleanup() {}
 
