@@ -80,6 +80,7 @@ class EasyRandomDriver(val config: BeansConfig = defaultConfig) : Randomizer {
 
     private val randomizer = EasyRandom(
             EasyRandomParameters()
+                    .seed(System.currentTimeMillis())
                     .randomizationDepth(config.depth)
                     .collectionSizeRange(config.collectionSize.first, config.collectionSize.last)
                     .stringLengthRange(config.stringLength.last, config.stringLength.last)
