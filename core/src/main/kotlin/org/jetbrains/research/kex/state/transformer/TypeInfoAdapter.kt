@@ -17,9 +17,11 @@ import org.jetbrains.research.kfg.type.Reference
 import org.jetbrains.research.kfg.type.Type
 import java.util.*
 import kotlin.reflect.KFunction
+import kotlin.reflect.KMutableProperty
 import kotlin.reflect.KType
 import kotlin.reflect.full.declaredMemberFunctions
 import kotlin.reflect.full.declaredMemberProperties
+import kotlin.reflect.jvm.javaMethod
 import kotlin.reflect.jvm.jvmErasure
 
 class TypeInfoAdapter(val method: Method, val loader: ClassLoader) : RecollectingTransformer<TypeInfoAdapter> {
@@ -69,7 +71,8 @@ class TypeInfoAdapter(val method: Method, val loader: ClassLoader) : Recollectin
     private infix fun KFunction<*>.eq(method: Method): Boolean {
         val parameters = this.parameters.drop(method.isAbstract.not().toInt())
 
-        return this.name == method.name && parameters.zip(method.argTypes).fold(true) { acc, pair ->
+        val name = tryOrNull { this.javaMethod?.name } ?: this.name
+        return name == method.name && parameters.zip(method.argTypes).fold(true) { acc, pair ->
             val type = tryOrNull { pair.first.type.jvmErasure.java }
             acc && type?.trimmedName == pair.second.trimmedName
         }
@@ -78,7 +81,13 @@ class TypeInfoAdapter(val method: Method, val loader: ClassLoader) : Recollectin
     private fun getKClass(type: KexType) = getClass(type.getKfgType(types), loader).kotlin
 
     private fun getKFunction(method: Method) =
-            tryOrNull { getKClass(KexClass(method.`class`.fullname)).declaredMemberFunctions }?.find { it eq method }
+            tryOrNull {
+                getKClass(KexClass(method.`class`.fullname)).let { klass ->
+                    klass.declaredMemberFunctions +
+                            klass.declaredMemberProperties.map { it.getter } +
+                            klass.declaredMemberProperties.filterIsInstance<KMutableProperty<*>>().map { it.setter }
+                }
+            }?.find { it eq method }
 
     private fun getKProperty(field: Field) =
             tryOrNull { getKClass(KexClass(field.`class`.fullname)).declaredMemberProperties }?.find { it.name == field.name }
