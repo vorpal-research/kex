@@ -2,6 +2,7 @@
 
 package org.jetbrains.research.kex.test.debug
 
+import org.jetbrains.research.kex.test.Icfpc2018Test
 import org.jetbrains.research.kex.test.Intrinsics
 import java.io.File
 import java.nio.file.Files
@@ -9,6 +10,8 @@ import java.nio.file.StandardCopyOption
 
 
 class Icfpc2018Test {
+    data class Point(val x: Int, val y: Int, val z: Int)
+
     class ZipWriter {
         fun createZip(name: String): Unit = TODO()
     }
@@ -20,6 +23,8 @@ class Icfpc2018Test {
 
         fun merge(other: Results): Results = TODO()
     }
+
+    class System(var currentState: Icfpc2018Test.State, val score: Int = 0)
 
     class Result {
         fun getSortedSolutions(): List<Pair<String, Solution>> = TODO()
