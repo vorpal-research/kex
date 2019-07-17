@@ -7,7 +7,7 @@ import org.jetbrains.research.kex.trace.TraceManager
 import org.jetbrains.research.kex.util.log
 import org.jetbrains.research.kfg.ir.Method as KfgMethod
 
-internal val runs = kexConfig.getIntValue("runner", "runs", 10)
+internal val runs = kexConfig.getIntValue("random-runner", "attempts", 10)
 
 class RandomRunner(method: KfgMethod, loader: ClassLoader) : AbstractRunner(method, loader) {
     private val random = defaultRandomizer
