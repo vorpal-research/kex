@@ -110,12 +110,12 @@ class MethodChecker(
     @ImplicitReflectionSerializer
     override fun visit(method: Method) {
         super.visit(method)
-        prepareMethodInfo(method)
 
         if (method.`class`.isSynthetic) return
         if (method.isAbstract || method.isConstructor) return
         if (!method.isImpactable) return
-//        if (method.isStatic && method.argTypes.isEmpty()) return
+
+        prepareMethodInfo(method)
 
         log.debug("Checking method $method")
         log.debug(method.print())
