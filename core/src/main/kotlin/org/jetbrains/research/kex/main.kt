@@ -29,12 +29,12 @@ fun main(args: Array<String>) {
     kexConfig.initialize(cmd, RuntimeConfig, FileConfig(properties))
 
     val jarName = cmd.getCmdValue("jar")
-    val packageName = cmd.getCmdValue("package", "*")
+    val packageName = cmd.getCmdValue("package")
     require(jarName != null, cmd::printHelp)
 
     val jar = JarFile(Paths.get(jarName).toAbsolutePath().toFile())
     val jarLoader = jar.classLoader
-    val `package` = Package.parse(packageName)
+    val `package` = packageName?.let { Package.parse(it) } ?: Package.defaultPackage
     val classManager = ClassManager(jar, `package`, Flags.readAll)
     val origManager = ClassManager(jar, `package`, Flags.readAll)
 
