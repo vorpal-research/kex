@@ -137,4 +137,8 @@ class BasicTests {
         val res = 2 * max * max - a * a - b * b - c * c
         return res
     }
+
+    fun digitNumber(n: Int): Int =
+            if (n in -9..9) 1
+            else digitNumber(n / 10) + digitNumber(n % 10)
 }
