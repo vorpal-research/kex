@@ -2,38 +2,12 @@
 
 package org.jetbrains.research.kex.test.debug
 
-import org.jetbrains.research.kex.test.Icfpc2018Test
 import org.jetbrains.research.kex.test.Intrinsics
 import java.io.File
 import java.nio.file.Files
 import java.nio.file.StandardCopyOption
 
-class Line constructor(val b: Double, val angle: Double) {
-    companion object {
-        fun digitNumber(n: Int): Int =
-                if (n in -9..9) 1
-                else digitNumber(n / 10) + digitNumber(n % 10)
-    }
-
-    override fun equals(other: Any?) = other is Line && angle == other.angle && b == other.b
-
-    override fun hashCode(): Int {
-        var result = b.hashCode()
-        result = 31 * result + angle.hashCode()
-        return result
-    }
-
-    override fun toString() = "Line(${Math.cos(angle)} * y = ${Math.sin(angle)} * x + $b)"
-}
-
-
 class Icfpc2018Test {
-    data class Point(val x: Int, val y: Int, val z: Int)
-
-    class ZipWriter {
-        fun createZip(name: String): Unit = TODO()
-    }
-
     class Results(val elements: MutableMap<String, Result>) : MutableMap<String, Result> by elements {
         companion object {
             fun readFromDirectory(dir: String): Results = TODO()
@@ -41,8 +15,6 @@ class Icfpc2018Test {
 
         fun merge(other: Results): Results = TODO()
     }
-
-    class System(var currentState: Icfpc2018Test.State, val score: Int = 0)
 
     class Result {
         fun getSortedSolutions(): List<Pair<String, Solution>> = TODO()
@@ -71,6 +43,5 @@ class Icfpc2018Test {
         }
 
         Intrinsics.assertReachable()
-        ZipWriter().createZip("submit/")
     }
 }

@@ -97,7 +97,10 @@ class TypeInfoAdapter(val method: Method, val loader: ClassLoader) : Recollectin
         while (queue.isNotEmpty()) {
             val klass = queue.poll()
             when (val kFunction = klass.find(method)) {
-                null -> queue.addAll(klass.supertypes.map { it.classifier }.filterIsInstance<KClass<*>>())
+                null -> {
+                    val supertypes = tryOrNull { klass.supertypes } ?: listOf()
+                    queue.addAll(supertypes.map { it.classifier }.filterIsInstance<KClass<*>>())
+                }
                 else -> return kFunction
             }
         }
