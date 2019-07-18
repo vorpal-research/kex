@@ -8,6 +8,24 @@ import java.io.File
 import java.nio.file.Files
 import java.nio.file.StandardCopyOption
 
+class Line constructor(val b: Double, val angle: Double) {
+    companion object {
+        fun digitNumber(n: Int): Int =
+                if (n in -9..9) 1
+                else digitNumber(n / 10) + digitNumber(n % 10)
+    }
+
+    override fun equals(other: Any?) = other is Line && angle == other.angle && b == other.b
+
+    override fun hashCode(): Int {
+        var result = b.hashCode()
+        result = 31 * result + angle.hashCode()
+        return result
+    }
+
+    override fun toString() = "Line(${Math.cos(angle)} * y = ${Math.sin(angle)} * x + $b)"
+}
+
 
 class Icfpc2018Test {
     data class Point(val x: Int, val y: Int, val z: Int)
