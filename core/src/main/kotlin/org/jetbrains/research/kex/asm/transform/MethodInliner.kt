@@ -2,7 +2,6 @@ package org.jetbrains.research.kex.asm.transform
 
 import org.jetbrains.research.kex.asm.manager.MethodManager
 import org.jetbrains.research.kex.util.log
-import org.jetbrains.research.kex.util.unreachable
 import org.jetbrains.research.kfg.ClassManager
 import org.jetbrains.research.kfg.InvalidStateError
 import org.jetbrains.research.kfg.ir.BasicBlock
@@ -113,6 +112,10 @@ class MethodInliner(override val cm: ClassManager) : MethodVisitor {
         val inlinedMethod = inst.method
         if (!im.isInlinable(inlinedMethod)) return
         if (inlinedMethod.isEmpty()) return
+        if (inlinedMethod == method) {
+            log.warn("Inlining of recursive methods is not supported")
+            return
+        }
 
         val entryBlock = inlinedMethod.entry
         val returnBlock = inlinedMethod.basicBlocks.firstOrNull { bb -> bb.any { it is ReturnInst } } ?: return

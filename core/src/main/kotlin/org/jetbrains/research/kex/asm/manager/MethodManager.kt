@@ -1,6 +1,5 @@
 package org.jetbrains.research.kex.asm.manager
 
-import org.jetbrains.research.kex.config.GlobalConfig
 import org.jetbrains.research.kex.config.kexConfig
 import org.jetbrains.research.kfg.ClassManager
 import org.jetbrains.research.kfg.Package
@@ -31,6 +30,7 @@ object MethodManager {
             ignorePackages.any { it.isParent(method.`class`.`package`) } -> false
             ignoreClasses.any { method.cm.getByName(it) == method.`class` } -> false
             ignoreMethods.contains(method) -> false
+            method.isStatic -> true
             !method.isFinal -> false
             method.flatten().all { it !is ReturnInst } -> false
             else -> true

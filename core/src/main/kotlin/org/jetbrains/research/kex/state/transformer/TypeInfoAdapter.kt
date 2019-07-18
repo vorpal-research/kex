@@ -16,10 +16,13 @@ import org.jetbrains.research.kfg.type.ArrayType
 import org.jetbrains.research.kfg.type.Reference
 import org.jetbrains.research.kfg.type.Type
 import java.util.*
+import kotlin.reflect.KClass
 import kotlin.reflect.KFunction
+import kotlin.reflect.KMutableProperty
 import kotlin.reflect.KType
 import kotlin.reflect.full.declaredMemberFunctions
 import kotlin.reflect.full.declaredMemberProperties
+import kotlin.reflect.jvm.javaMethod
 import kotlin.reflect.jvm.jvmErasure
 
 class TypeInfoAdapter(val method: Method, val loader: ClassLoader) : RecollectingTransformer<TypeInfoAdapter> {
@@ -69,16 +72,40 @@ class TypeInfoAdapter(val method: Method, val loader: ClassLoader) : Recollectin
     private infix fun KFunction<*>.eq(method: Method): Boolean {
         val parameters = this.parameters.drop(method.isAbstract.not().toInt())
 
-        return this.name == method.name && parameters.zip(method.argTypes).fold(true) { acc, pair ->
+        val name = tryOrNull { this.javaMethod?.name } ?: this.name
+        return name == method.name && parameters.zip(method.argTypes).fold(true) { acc, pair ->
             val type = tryOrNull { pair.first.type.jvmErasure.java }
             acc && type?.trimmedName == pair.second.trimmedName
         }
     }
 
+    private val KClass<*>.allFunctions get() = tryOrNull {
+        declaredMemberFunctions +
+                declaredMemberProperties.map { it.getter } +
+                declaredMemberProperties.filterIsInstance<KMutableProperty<*>>().map { it.setter }
+    } ?: listOf()
+
+    private fun KClass<*>.find(method: Method) = allFunctions.find { it eq method }
+
     private fun getKClass(type: KexType) = getClass(type.getKfgType(types), loader).kotlin
 
-    private fun getKFunction(method: Method) =
-            tryOrNull { getKClass(KexClass(method.`class`.fullname)).declaredMemberFunctions }?.find { it eq method }
+    private fun getKFunction(method: Method): KFunction<*>? {
+        val queue = ArrayDeque<KClass<*>>()
+        tryOrNull { getKClass(KexClass(method.`class`.fullname)) }?.apply {
+            queue.add(this)
+        }
+        while (queue.isNotEmpty()) {
+            val klass = queue.poll()
+            when (val kFunction = klass.find(method)) {
+                null -> {
+                    val supertypes = tryOrNull { klass.supertypes } ?: listOf()
+                    queue.addAll(supertypes.map { it.classifier }.filterIsInstance<KClass<*>>())
+                }
+                else -> return kFunction
+            }
+        }
+        return null
+    }
 
     private fun getKProperty(field: Field) =
             tryOrNull { getKClass(KexClass(field.`class`.fullname)).declaredMemberProperties }?.find { it.name == field.name }

@@ -242,9 +242,12 @@ class ValuePrinter(override val cm: ClassManager) : Wrapper {
     }
 }
 
-class FileOutputStreamWrapper(cm: ClassManager, streamName: String, val fileName: String)
-    : PrintStreamWrapper(cm) {
+class FileOutputStreamWrapper(cm: ClassManager, streamName: String,
+                              val fileName: String,
+                              val append: Boolean = false,
+                              val autoFlush: Boolean = false) : PrintStreamWrapper(cm) {
     private val fileClass = cm.getByName("java/io/File")
+    private val fileOutputStreamClass = cm.getByName("java/io/FileOutputStream")
     override val stream = instructions.getNew(streamName, types.getRefType(printStreamClass))
 
     override fun open(): List<Instruction> = buildList {
@@ -260,10 +263,18 @@ class FileOutputStreamWrapper(cm: ClassManager, streamName: String, val fileName
         val createMethod = fileClass.getMethod("createNewFile", createFileDesc)
         +instructions.getCall(CallOpcode.Virtual(), createMethod, fileClass, file, arrayOf(), false)
 
+        val fos = instructions.getNew(types.getRefType(fileOutputStreamClass))
+        +fos
+        val fosConstructorDesc = MethodDesc(arrayOf(types.getRefType(fileClass), types.boolType), types.voidType)
+        val fosInitMethod = fileOutputStreamClass.getMethod("<init>", fosConstructorDesc)
+        val fosParams = arrayOf(file, values.getBoolConstant(append))
+        +instructions.getCall(CallOpcode.Special(), fosInitMethod, fileOutputStreamClass, fos, fosParams, false)
+
         +stream
-        val psConstructorDesc = MethodDesc(arrayOf(types.getRefType(fileClass)), types.voidType)
+        val outputStreamClass = types.getRefType("java/io/OutputStream")
+        val psConstructorDesc = MethodDesc(arrayOf(outputStreamClass, types.boolType), types.voidType)
         val psInitMethod = printStreamClass.getMethod("<init>", psConstructorDesc)
-        val psParams = arrayOf<Value>(file)
+        val psParams = arrayOf(fos, values.getBoolConstant(autoFlush))
         +instructions.getCall(CallOpcode.Special(), psInitMethod, printStreamClass, stream, psParams, false)
     }
 

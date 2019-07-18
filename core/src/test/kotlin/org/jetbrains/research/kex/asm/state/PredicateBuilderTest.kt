@@ -255,14 +255,22 @@ class PredicateBuilderTest : KexTest() {
                 assertTrue(min is ConstIntTerm)
                 assertTrue(max is ConstIntTerm)
 
-                inst.getBranches().withIndex().forEach { (index, bb) ->
-                    assertEquals(
-                            builder.terminatorPredicateMap[bb to inst],
-                            pf.getEquality(key, tf.getInt(min.value + index), PredicateType.Path())
-                    )
+                inst.branches.withIndex().forEach { (index, bb) ->
+                    when (bb) {
+                        inst.default ->
+                            assertEquals(
+                                    builder.terminatorPredicateMap[inst.default to inst],
+                                    pf.getDefaultSwitchPredicate(key, (min.value..max.value).map { tf.getInt(it) }, PredicateType.Path())
+                            )
+                        else -> assertEquals(
+                                builder.terminatorPredicateMap[bb to inst],
+                                pf.getEquality(key, tf.getInt(min.value + index), PredicateType.Path())
+                        )
+                    }
+
                 }
                 assertEquals(
-                        builder.terminatorPredicateMap[inst.getDefault() to inst],
+                        builder.terminatorPredicateMap[inst.default to inst],
                         pf.getDefaultSwitchPredicate(key, (min.value..max.value).map { tf.getInt(it) }, PredicateType.Path())
                 )
             }

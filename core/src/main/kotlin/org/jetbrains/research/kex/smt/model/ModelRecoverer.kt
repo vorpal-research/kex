@@ -206,7 +206,7 @@ class ObjectRecoverer(val method: Method, val model: SMTModel, val loader: Class
         return when (type) {
             is KexBool -> (value as ConstBoolTerm).value
             is KexByte -> (value as ConstByteTerm).value
-            is KexChar -> (value as ConstCharTerm).value
+            is KexChar -> (value as ConstIntTerm).value.toChar()
             is KexShort -> (value as ConstShortTerm).value
             is KexInt -> (value as ConstIntTerm).value
             is KexLong -> (value as ConstLongTerm).value

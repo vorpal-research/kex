@@ -28,6 +28,27 @@ class BasicTests {
         return res
     }
 
+    fun testWhen(a: Char): Int {
+        val y = when (a) {
+            'a' -> 5
+            'b' -> 4
+            'c' -> 3
+            'd' -> 2
+            'f' -> 1
+            else -> {
+                println("You suck")
+                -1
+            }
+        }
+        if (y == 10) {
+            Intrinsics.assertUnreachable()
+        }
+        if (y in 1..5) {
+            Intrinsics.assertReachable()
+        }
+        return y
+    }
+
     fun testLoop(a: Int, b: Int): Int {
         var x = a - b
         while (x < a) {
@@ -116,4 +137,8 @@ class BasicTests {
         val res = 2 * max * max - a * a - b * b - c * c
         return res
     }
+
+    fun digitNumber(n: Int): Int =
+            if (n in -9..9) 1
+            else digitNumber(n / 10) + digitNumber(n % 10)
 }
