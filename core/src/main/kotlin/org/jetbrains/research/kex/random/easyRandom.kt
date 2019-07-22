@@ -5,6 +5,10 @@ import org.jeasy.random.EasyRandomParameters
 import org.jeasy.random.ObjectCreationException
 import org.jeasy.random.api.ObjectFactory
 import org.jeasy.random.api.RandomizerContext
+import org.jeasy.random.randomizers.collection.ListRandomizer
+import org.jeasy.random.randomizers.collection.MapRandomizer
+import org.jeasy.random.randomizers.collection.QueueRandomizer
+import org.jeasy.random.randomizers.collection.SetRandomizer
 import org.jeasy.random.util.CollectionUtils.randomElementOf
 import org.jeasy.random.util.ReflectionUtils.getPublicConcreteSubTypesOf
 import org.jeasy.random.util.ReflectionUtils.isAbstract
@@ -16,6 +20,7 @@ import org.objenesis.ObjenesisStd
 import java.lang.reflect.ParameterizedType
 import java.lang.reflect.Type
 import java.lang.reflect.TypeVariable
+import java.util.*
 
 class EasyRandomDriver(val config: BeansConfig = defaultConfig) : Randomizer {
     companion object {
@@ -91,23 +96,46 @@ class EasyRandomDriver(val config: BeansConfig = defaultConfig) : Randomizer {
 
     private fun <T> generateClass(klass: Class<T>) = randomizer.nextObject(klass)
 
-    private fun generateParameterized(type: ParameterizedType): Any? {
-        val rawType = type.rawType
-        val `object` = next(rawType)
-        when (rawType) {
-            is Class<*> -> {
-                val typeParams = rawType.typeParameters.zip(type.actualTypeArguments).toMap()
-                for (it in rawType.declaredFields) {
-                    val genType = typeParams[it.genericType as? TypeVariable<*>] ?: it.genericType
-                    it.isAccessible = true
-                    val value = next(genType)
-                    it.set(`object`, value)
+    private fun generateParameterized(type: ParameterizedType): Any? =
+            when (val rawType = type.rawType) {
+                List::class.java -> {
+                    require(type.actualTypeArguments.size == 1)
+                    val typeParameter = type.actualTypeArguments.first()
+                    val lr = ListRandomizer.aNewListRandomizer { next(typeParameter) }
+                    lr.randomValue
                 }
+                Queue::class.java -> {
+                    require(type.actualTypeArguments.size == 1)
+                    val typeParameter = type.actualTypeArguments.first()
+                    val qr = QueueRandomizer.aNewQueueRandomizer { next(typeParameter) }
+                    qr.randomValue
+                }
+                Set::class.java -> {
+                    require(type.actualTypeArguments.size == 1)
+                    val typeParameter = type.actualTypeArguments.first()
+                    val sr = SetRandomizer.aNewSetRandomizer { next(typeParameter) }
+                    sr.randomValue
+                }
+                Map::class.java -> {
+                    require(type.actualTypeArguments.size == 2)
+                    val key = type.actualTypeArguments.first()
+                    val value = type.actualTypeArguments.last()
+                    val mr = MapRandomizer.aNewMapRandomizer({ next(key) }, { next(value) })
+                    mr.randomValue
+                }
+                is Class<*> -> {
+                    val obj = next(rawType)
+                    val typeParams = rawType.typeParameters.zip(type.actualTypeArguments).toMap()
+                    for (it in rawType.declaredFields) {
+                        val genType = typeParams[it.genericType as? TypeVariable<*>] ?: it.genericType
+                        it.isAccessible = true
+                        val value = next(genType)
+                        it.set(obj, value)
+                    }
+                    obj
+                }
+                else -> throw UnknownTypeException(type.toString())
             }
-            else -> throw UnknownTypeException(type.toString())
-        }
-        return `object`
-    }
 
     private fun generateTypeVariable(type: TypeVariable<*>): Any? {
         val bounds = type.bounds

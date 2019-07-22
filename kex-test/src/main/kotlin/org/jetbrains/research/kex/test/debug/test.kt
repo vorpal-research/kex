@@ -10,14 +10,21 @@ import java.nio.file.StandardCopyOption
 class Icfpc2018Test {
     class Results(val elements: MutableMap<String, Result>) : MutableMap<String, Result> by elements {
         companion object {
-            fun readFromDirectory(dir: String): Results = TODO()
+            fun readFromDirectory(dir: String): Results = Results(mutableMapOf(dir to Result()))
         }
 
-        fun merge(other: Results): Results = TODO()
+        fun merge(other: Results): Results {
+            val elements = this.elements.toMap().toMutableMap()
+            elements.putAll(other.elements)
+            return Results(elements)
+        }
     }
 
     class Result {
-        fun getSortedSolutions(): List<Pair<String, Solution>> = TODO()
+        fun getSortedSolutions(): List<Pair<String, Solution>> = listOf(
+                "aaaa" to Solution("aaaa"),
+                "bbbb" to Solution("bbbb")
+        )
     }
 
     class Solution(val trace: String)
@@ -26,7 +33,7 @@ class Icfpc2018Test {
         ASSEMBLE, REASSEMBLE
     }
 
-    private fun getModeByModelName(name: String): RunMode = TODO()
+    private fun getModeByModelName(name: String): RunMode = RunMode.REASSEMBLE
 
     fun submitChecked(resultDirs: List<String>) {
         val results = resultDirs.map { Results.readFromDirectory(it) }

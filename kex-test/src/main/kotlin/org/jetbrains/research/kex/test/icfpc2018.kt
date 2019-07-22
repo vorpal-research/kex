@@ -9,19 +9,23 @@ import java.nio.file.StandardCopyOption
 
 class Icfpc2018Test {
     class ZipWriter {
-        fun createZip(name: String): Unit = TODO()
+        fun createZip(name: String): Unit {}
     }
 
     class Results(val elements: MutableMap<String, Result>) : MutableMap<String, Result> by elements {
         companion object {
-            fun readFromDirectory(dir: String): Results = TODO()
+            fun readFromDirectory(dir: String): Results = Results(mutableMapOf(dir to Result(mutableMapOf())))
         }
 
-        fun merge(other: Results): Results = TODO()
+        fun merge(other: Results): Results {
+            val elements = this.elements.toMap().toMutableMap()
+            elements.putAll(other.elements)
+            return Results(elements)
+        }
     }
 
     class Result(val solutions: MutableMap<String, Solution>) {
-        fun getSortedSolutions(): List<Pair<String, Solution>> = TODO()
+        fun getSortedSolutions(): List<Pair<String, Solution>> = solutions.toList().sortedBy { it.first }
     }
 
     class Solution(val energy: Long, val trace: String) {
@@ -35,13 +39,13 @@ class Icfpc2018Test {
 
     class Command {
         companion object {
-            fun read(str: InputStream): Command = TODO()
+            fun read(str: InputStream): Command = Command()
         }
     }
 
     class Model(val size: Int, val numGrounded: Int = 0) {
         companion object {
-            fun readMDL(inp: InputStream): Model = TODO()
+            fun readMDL(inp: InputStream): Model = Model(10, 15)
         }
     }
 
@@ -52,11 +56,11 @@ class Icfpc2018Test {
     class System(var currentState: State, val score: Int = 0)
 
     class Trace(val trace: List<Command>, val system: System) {
-        fun solve(): Unit = TODO()
+        fun solve(): Unit {}
     }
 
-    private fun getModeByModelName(name: String): RunMode = TODO()
-    private fun getSolutionByName(name: String, target: Model, system: System): Solution = TODO()
+    private fun getModeByModelName(name: String): RunMode = RunMode.values()[name.length % 5]
+    private fun getSolutionByName(name: String, target: Model, system: System): Solution = Solution(100, name)
 
     fun submitChecked(resultDirs: List<String>) {
         val results = resultDirs.map { Results.readFromDirectory(it) }
