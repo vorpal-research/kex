@@ -271,6 +271,8 @@
                             <goal>single</goal>
                         </goals>
                         <configuration>
+                            <finalName>${project.name}-${project.version}-fat</finalName>
+                            <appendAssemblyId>false</appendAssemblyId>
                             <archive>
                                 <manifest>
                                     <mainClass>${exec.main}</mainClass>
