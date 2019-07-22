@@ -12,6 +12,7 @@ import org.jetbrains.research.kfg.type.Integral
 import java.lang.reflect.Array
 import java.lang.reflect.Field
 import java.lang.reflect.Modifier
+import java.lang.reflect.Type
 
 private val Term.isPointer get() = this.type is KexPointer
 private val Term.isPrimary get() = !this.isPointer
@@ -77,7 +78,7 @@ class ModelRecoverer(val method: Method, val model: SMTModel, val loader: ClassL
     }
 
     private fun recoverPrimary(type: KexType, value: Term?): Any? {
-        if (value == null) return randomizer.next(getClass(type.getKfgType(method.cm.type), loader))
+        if (value == null) return randomizer.next(loader.loadClass(type.getKfgType(method.cm.type)))
         return when (type) {
             is KexBool -> (value as ConstBoolTerm).value
             is KexByte -> (value as ConstByteTerm).value
@@ -156,7 +157,7 @@ class ModelRecoverer(val method: Method, val model: SMTModel, val loader: ClassL
             val elementSize = arrayType.element.bitsize
             val elements = bound / elementSize
 
-            val elementClass = getClass(arrayType.element.getKfgType(method.cm.type), loader)
+            val elementClass = loader.loadClass(arrayType.element.getKfgType(method.cm.type))
             log.debug("Creating array of type $elementClass with size $elements")
             val instance = Array.newInstance(elementClass, elements)
 
@@ -196,13 +197,15 @@ class ObjectRecoverer(val method: Method, val model: SMTModel, val loader: Class
     private fun memory(memspace: Int, address: Int, value: Any?) =
             memoryMappings.getOrPut(memspace, ::hashMapOf).getOrPut(address) { value }
 
-    fun recoverTerm(term: Term, value: Term? = model.assignments[term]): Any? = when {
-        term.isPrimary -> recoverPrimary(term.type, value)
-        else -> recoverPointer(term, value)
+    fun recoverTerm(term: Term,
+                    jType: Type = loader.loadClass(term.type.getKfgType(method.cm.type)),
+                    value: Term? = model.assignments[term]): Any? = when {
+        term.isPrimary -> recoverPrimary(term.type, jType, value)
+        else -> recoverPointer(term, jType, value)
     }
 
-    private fun recoverPrimary(type: KexType, value: Term?): Any? {
-        if (value == null) return randomizer.next(getClass(type.getKfgType(method.cm.type), loader))
+    private fun recoverPrimary(type: KexType, jType: Type, value: Term?): Any? {
+        if (value == null) return randomizer.next(jType)
         return when (type) {
             is KexBool -> (value as ConstBoolTerm).value
             is KexByte -> (value as ConstByteTerm).value
@@ -216,27 +219,22 @@ class ObjectRecoverer(val method: Method, val model: SMTModel, val loader: Class
         }
     }
 
-    private fun recoverPointer(term: Term, addr: Term?): Any? = when (term.type) {
-        is KexClass -> recoverClass(term, addr)
-        is KexArray -> recoverArray(term, addr)
-        is KexReference -> recoverReference(term, addr)
+    private fun recoverPointer(term: Term, jType: Type, addr: Term?): Any? = when (term.type) {
+        is KexClass -> recoverClass(term, jType, addr)
+        is KexArray -> recoverArray(term, jType, addr)
+        is KexReference -> recoverReference(term, jType, addr)
         else -> unreachable { log.error("Trying to recover non-pointer term $term with type ${term.type} as pointer value") }
     }
 
-    private fun recoverClass(term: Term, addr: Term?): Any? {
+    private fun recoverClass(term: Term, jType: Type, addr: Term?): Any? {
         val type = term.type as KexClass
         val address = (addr as? ConstIntTerm)?.value ?: return null
         if (address == 0) return null
 
-        return memory(type.memspace, address) {
-            val kfgClass = method.cm.getByName(type.`class`)
-            val `class` = tryOrNull { loader.loadClass(kfgClass.canonicalDesc) } ?: return@memory null
-            val instance = randomizer.nextOrNull(`class`)
-            instance
-        }
+        return memory(type.memspace, address) { randomizer.nextOrNull(jType) }
     }
 
-    private fun recoverArray(term: Term, addr: Term?): Any? {
+    private fun recoverArray(term: Term, jType: Type, addr: Term?): Any? {
         val arrayType = term.type as KexArray
         val address = (addr as? ConstIntTerm)?.value ?: return null
         if (address == 0) return null
@@ -248,7 +246,7 @@ class ObjectRecoverer(val method: Method, val model: SMTModel, val loader: Class
             val elementSize = arrayType.element.bitsize
             val elements = bound / elementSize
 
-            val elementClass = getClass(arrayType.element.getKfgType(method.cm.type), loader)
+            val elementClass = (jType as? Class<*>)?.componentType ?: unreachable { log.error("Undefined jType in array recovery: $jType") }
             log.debug("Creating array of type $elementClass with size $elements")
             val instance = Array.newInstance(elementClass, elements)
 
@@ -257,7 +255,7 @@ class ObjectRecoverer(val method: Method, val model: SMTModel, val loader: Class
         return memory(arrayType.memspace, address, instance)
     }
 
-    private fun recoverReference(term: Term, addr: Term?): Any? {
+    private fun recoverReference(term: Term, jType: Type, addr: Term?): Any? {
         val memspace = term.memspace
         val refValue = model.memories[memspace]?.finalMemory!![addr]
         return when (term) {
@@ -268,7 +266,7 @@ class ObjectRecoverer(val method: Method, val model: SMTModel, val loader: Class
                 val arrayAddr = (model.assignments[arrayRef] as ConstIntTerm).value
                 val array = memory(arrayRef.memspace, arrayAddr) ?: return null
 
-                val recoveredValue = recoverReferenceValue(term, refValue)
+                val recoveredValue = recoverReferenceValue(term, jType, refValue)
                 val address = (addr as? ConstIntTerm)?.value ?: unreachable { log.error("Non-int address of array index") }
                 val realIndex = (address - arrayAddr) / elementType.bitsize
                 Array.set(array, realIndex, recoveredValue)
@@ -296,13 +294,13 @@ class ObjectRecoverer(val method: Method, val model: SMTModel, val loader: Class
                 val fieldAddress = model.assignments[term]
                 val fieldValue = model.memories.getValue(memspace).finalMemory[fieldAddress]
 
-                val recoveredValue = recoverReferenceValue(term, fieldValue)
                 val fieldReflect = klass.getDeclaredField((term.fieldName as ConstStringTerm).value)
+                val recoveredValue = recoverReferenceValue(term, fieldReflect.genericType, fieldValue)
                 fieldReflect.isAccessible = true
                 fieldReflect.isFinal = false
                 if (fieldReflect.isEnumConstant || fieldReflect.isSynthetic) return instance
                 if (fieldReflect.type.isPrimitive) {
-                    val definedValue = recoveredValue ?: recoverPrimary((term.type as KexReference).reference, null)!!
+                    val definedValue = recoveredValue ?: recoverPrimary((term.type as KexReference).reference, fieldReflect.type, null)!!
                     when (definedValue.javaClass) {
                         Boolean::class.javaObjectType -> fieldReflect.setBoolean(instance, definedValue as Boolean)
                         Byte::class.javaObjectType -> fieldReflect.setByte(instance, definedValue as Byte)
@@ -323,13 +321,13 @@ class ObjectRecoverer(val method: Method, val model: SMTModel, val loader: Class
         }
     }
 
-    private fun recoverReferenceValue(term: Term, value: Term?): Any? {
+    private fun recoverReferenceValue(term: Term, jType: Type, value: Term?): Any? {
         val referencedType = (term.type as KexReference).reference
         if (value == null) return null
         val intVal = (value as ConstIntTerm).value
 
         return when (referencedType) {
-            is KexPointer -> recoverReferencePointer(term, value)
+            is KexPointer -> recoverReferencePointer(term, jType, value)
             is KexBool -> intVal.toBoolean()
             is KexByte -> intVal.toByte()
             is KexChar -> intVal.toChar()
@@ -342,17 +340,12 @@ class ObjectRecoverer(val method: Method, val model: SMTModel, val loader: Class
         }
     }
 
-    private fun recoverReferencePointer(term: Term, addr: Term?): Any? {
+    private fun recoverReferencePointer(term: Term, jType: Type, addr: Term?): Any? {
         val referencedType = (term.type as KexReference).reference
         val address = (addr as? ConstIntTerm)?.value ?: return null
         if (address == 0) return null
         return when (referencedType) {
-            is KexClass -> memory(referencedType.memspace, address) {
-                val kfgClass = method.cm.getByName(referencedType.`class`)
-                val `class` = tryOrNull { loader.loadClass(kfgClass.canonicalDesc) } ?: return@memory null
-                val instance = randomizer.nextOrNull(`class`)
-                instance
-            }
+            is KexClass -> memory(referencedType.memspace, address) { randomizer.nextOrNull(jType) }
             is KexArray -> {
                 val memspace = referencedType.memspace
                 val instance = run {
@@ -362,7 +355,7 @@ class ObjectRecoverer(val method: Method, val model: SMTModel, val loader: Class
                     val elementSize = referencedType.element.bitsize
                     val elements = bound / elementSize
 
-                    val elementClass = getClass(referencedType.element.getKfgType(method.cm.type), loader)
+                    val elementClass = jType as Class<*>
                     log.debug("Creating array of type $elementClass with size $elements")
                     val instance = Array.newInstance(elementClass, elements)
 

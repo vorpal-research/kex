@@ -47,6 +47,6 @@ fun main(args: Array<String>) {
     val checker = Checker(method, jarLoader, psa)
     val result = checker.check(failure.state) as? Result.SatResult ?: return
     log.debug(result.model)
-    val recMod = executeModel(checker.state, method, result.model, jarLoader)
+    val recMod = executeModel(checker.state, classManager.type, method, result.model, jarLoader)
     log.debug(recMod)
 }

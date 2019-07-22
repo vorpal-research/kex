@@ -14,9 +14,12 @@ import org.jetbrains.research.kex.state.term.ConstBoolTerm
 import org.jetbrains.research.kex.state.term.ConstIntTerm
 import org.jetbrains.research.kex.state.term.ConstLongTerm
 import org.jetbrains.research.kex.state.term.Term
+import org.jetbrains.research.kex.util.getMethod
+import org.jetbrains.research.kex.util.loadClass
 import org.jetbrains.research.kex.util.log
 import org.jetbrains.research.kex.util.unreachable
 import org.jetbrains.research.kfg.ir.Method
+import org.jetbrains.research.kfg.type.TypeFactory
 
 // remove all choices in a given PS
 // needed to get entry condition of a given PS
@@ -26,11 +29,14 @@ private object ChoiceSimplifier : Transformer<ChoiceSimplifier> {
     }
 }
 
-class ModelExecutor(val method: Method, model: SMTModel, loader: ClassLoader) : Transformer<ModelExecutor> {
+class ModelExecutor(val method: Method, type: TypeFactory, model: SMTModel, loader: ClassLoader) : Transformer<ModelExecutor> {
     private val recoverer = ObjectRecoverer(method, model, loader)
     private val memory = hashMapOf<Term, Any?>()
     private var thisTerm: Term? = null
     private val argTerms = mutableMapOf<Int, Term>()
+
+    private val javaClass = loader.loadClass(type.getRefType(method.`class`))
+    private val javaMethod = javaClass.getMethod(method, loader)
 
     val instance get() = thisTerm?.let { memory[it] }
     val args get() = argTerms.asSequence().sortedBy { it.key }.map { memory[it.value] }.toList()
@@ -45,8 +51,10 @@ class ModelExecutor(val method: Method, model: SMTModel, loader: ClassLoader) : 
         for ((index, type) in method.argTypes.withIndex()) {
             argTerms.getOrPut(index) { tf.getArgument(type.kexType, index) }
         }
-        thisTerm?.let { memory[it] = recoverer.recoverTerm(it) }
-        argTerms.values.forEach { memory[it] = recoverer.recoverTerm(it) }
+        thisTerm?.let { memory[it] = recoverer.recoverTerm(it, javaClass) }
+        argTerms.values.zip(javaMethod.genericParameterTypes).forEach { (term, type) ->
+            memory[term] = recoverer.recoverTerm(term, type)
+        }
         return super.apply(ps)
     }
 
@@ -100,8 +108,8 @@ class ModelExecutor(val method: Method, model: SMTModel, loader: ClassLoader) : 
     }
 }
 
-fun executeModel(ps: PredicateState, method: Method, model: SMTModel, loader: ClassLoader): RecoveredModel {
-    val pathExecutor = ModelExecutor(method, model, loader)
+fun executeModel(ps: PredicateState, type: TypeFactory, method: Method, model: SMTModel, loader: ClassLoader): RecoveredModel {
+    val pathExecutor = ModelExecutor(method, type, model, loader)
     pathExecutor.apply(ps)
     return RecoveredModel(method, pathExecutor.instance, pathExecutor.args)
 }
