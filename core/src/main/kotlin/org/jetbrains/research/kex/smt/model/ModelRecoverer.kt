@@ -1,6 +1,7 @@
 package org.jetbrains.research.kex.smt.model
 
 import org.jetbrains.research.kex.ktype.*
+import org.jetbrains.research.kex.random.Randomizer
 import org.jetbrains.research.kex.random.defaultRandomizer
 import org.jetbrains.research.kex.state.term.*
 import org.jetbrains.research.kex.state.transformer.memspace
@@ -183,9 +184,10 @@ class ModelRecoverer(val method: Method, val model: SMTModel, val loader: ClassL
     }
 }
 
-class ObjectRecoverer(val method: Method, val model: SMTModel, val loader: ClassLoader) {
-    private val randomizer by lazy { defaultRandomizer }
-
+class ObjectRecoverer(val method: Method,
+                      val model: SMTModel,
+                      val loader: ClassLoader,
+                      val randomizer: Randomizer) {
     private val memoryMappings = hashMapOf<Int, MutableMap<Int, Any?>>()
 
     private fun memory(memspace: Int, address: Int) =

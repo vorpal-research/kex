@@ -2,6 +2,8 @@ package org.jetbrains.research.kex.state.transformer
 
 import org.jetbrains.research.kex.ktype.KexClass
 import org.jetbrains.research.kex.ktype.kexType
+import org.jetbrains.research.kex.random.Randomizer
+import org.jetbrains.research.kex.random.defaultRandomizer
 import org.jetbrains.research.kex.smt.model.ObjectRecoverer
 import org.jetbrains.research.kex.smt.model.RecoveredModel
 import org.jetbrains.research.kex.smt.model.SMTModel
@@ -29,8 +31,12 @@ private object ChoiceSimplifier : Transformer<ChoiceSimplifier> {
     }
 }
 
-class ModelExecutor(val method: Method, type: TypeFactory, model: SMTModel, loader: ClassLoader) : Transformer<ModelExecutor> {
-    private val recoverer = ObjectRecoverer(method, model, loader)
+class ModelExecutor(val method: Method,
+                    type: TypeFactory,
+                    model: SMTModel,
+                    loader: ClassLoader,
+                    randomizer: Randomizer) : Transformer<ModelExecutor> {
+    private val recoverer = ObjectRecoverer(method, model, loader, randomizer)
     private val memory = hashMapOf<Term, Any?>()
     private var thisTerm: Term? = null
     private val argTerms = mutableMapOf<Int, Term>()
@@ -108,8 +114,13 @@ class ModelExecutor(val method: Method, type: TypeFactory, model: SMTModel, load
     }
 }
 
-fun executeModel(ps: PredicateState, type: TypeFactory, method: Method, model: SMTModel, loader: ClassLoader): RecoveredModel {
-    val pathExecutor = ModelExecutor(method, type, model, loader)
+fun executeModel(ps: PredicateState,
+                 type: TypeFactory,
+                 method: Method,
+                 model: SMTModel,
+                 loader: ClassLoader,
+                 randomizer: Randomizer = defaultRandomizer): RecoveredModel {
+    val pathExecutor = ModelExecutor(method, type, model, loader, randomizer)
     pathExecutor.apply(ps)
     return RecoveredModel(method, pathExecutor.instance, pathExecutor.args)
 }
