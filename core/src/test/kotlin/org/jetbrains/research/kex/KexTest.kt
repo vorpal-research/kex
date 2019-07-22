@@ -36,11 +36,12 @@ abstract class KexTest {
 
     init {
         val rootDir = System.getProperty("root.dir")
+        val version = System.getProperty("project.version")
         kexConfig.initialize(RuntimeConfig, FileConfig("$rootDir/kex-test.ini"))
         RuntimeConfig.setValue("z3", "tacticsFile", "$rootDir/z3.tactics")
         RuntimeConfig.setValue("z3", "paramFile", "$rootDir/z3.params")
 
-        val jarPath = "$rootDir/kex-test/target/kex-test-0.1-jar-with-dependencies.jar"
+        val jarPath = "$rootDir/kex-test/target/kex-test-$version-jar-with-dependencies.jar"
         val jarFile = JarFile(jarPath)
         loader = jarFile.classLoader
         val `package` = Package("$packageName/*")
