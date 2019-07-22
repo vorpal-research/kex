@@ -17,7 +17,7 @@ import org.jetbrains.research.kex.trace.TraceManager
 import org.jetbrains.research.kex.trace.runner.SimpleRunner
 import org.jetbrains.research.kex.trace.runner.TimeoutException
 import org.jetbrains.research.kex.util.debug
-import org.jetbrains.research.kex.util.getClass
+import org.jetbrains.research.kex.util.loadClass
 import org.jetbrains.research.kex.util.log
 import org.jetbrains.research.kex.util.tryOrNull
 import org.jetbrains.research.kfg.ClassManager
@@ -153,19 +153,20 @@ class MethodChecker(
 
     @ImplicitReflectionSerializer
     private fun coverBlock(method: Method, block: BasicBlock) {
-        val checker = Checker(method, state!!.loader, psa)
+        val loader = state!!.loader
+        val checker = Checker(method, loader, psa)
         val ps = checker.createState(block.terminator) ?: return
 
         try {
             when (val result = checker.check(ps)) {
                 is Result.SatResult -> {
-                    val model = executeModel(checker.state, method, result.model, state!!.loader)
+                    val model = executeModel(checker.state, cm.type, method, result.model, loader)
                     log.debug("Recovered: ${tryOrNull { model.toString() }}")
 
                     val instance = model.instance ?: when {
                         method.isStatic -> null
                         else -> tryOrNull {
-                            val klass = getClass(types.getRefType(method.`class`), state!!.loader)
+                            val klass = loader.loadClass(types.getRefType(method.`class`))
                             random.next(klass)
                         }
                     }
@@ -175,7 +176,7 @@ class MethodChecker(
                         return
                     }
 
-                    val trace = SimpleRunner(method, state!!.loader).invoke(instance, model.arguments.toTypedArray())
+                    val trace = SimpleRunner(method, loader).invoke(instance, model.arguments.toTypedArray())
                     tm.addTrace(method, trace)
                 }
                 is Result.UnsatResult -> log.debug("Instruction ${block.terminator.print()} is unreachable")

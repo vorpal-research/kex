@@ -87,7 +87,7 @@ class TypeInfoAdapter(val method: Method, val loader: ClassLoader) : Recollectin
 
     private fun KClass<*>.find(method: Method) = allFunctions.find { it eq method }
 
-    private fun getKClass(type: KexType) = getClass(type.getKfgType(types), loader).kotlin
+    private fun getKClass(type: KexType) = loader.loadClass(type.getKfgType(types)).kotlin
 
     private fun getKFunction(method: Method): KFunction<*>? {
         val queue = ArrayDeque<KClass<*>>()

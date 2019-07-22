@@ -144,7 +144,7 @@ class ReflectionWrapper(override val cm: ClassManager) : Wrapper {
     fun getClass(value: Value): Instruction {
         val type = types.objectType as ClassType
         val desc = MethodDesc(arrayOf(), types.getRefType(classClass))
-        val getClassMethod = type.`class`.getMethod("getClass", desc)
+        val getClassMethod = type.`class`.getMethod("loadClass", desc)
         return instructions.getCall(CallOpcode.Virtual(), "klass", getClassMethod, type.`class`, value, arrayOf())
     }
 

@@ -7,7 +7,7 @@ import org.jetbrains.research.kex.config.kexConfig
 import org.jetbrains.research.kex.trace.ActionParseException
 import org.jetbrains.research.kex.trace.ActionParser
 import org.jetbrains.research.kex.trace.Trace
-import org.jetbrains.research.kex.util.getClass
+import org.jetbrains.research.kex.util.getMethod
 import org.jetbrains.research.kex.util.log
 import org.jetbrains.research.kfg.ir.Method
 import java.io.ByteArrayOutputStream
@@ -34,13 +34,8 @@ private fun runWithTimeout(timeout: Long, body: () -> Unit) {
 }
 
 abstract class AbstractRunner(val method: Method, protected val loader: ClassLoader) {
-    protected val javaClass: Class<*> = loader.loadClass(method.`class`.canonicalDesc)
-    protected val javaMethod: java.lang.reflect.Method
-
-    init {
-        val argumentTypes = method.argTypes.map { getClass(it, loader) }.toTypedArray()
-        javaMethod = javaClass.getDeclaredMethod(method.name, *argumentTypes)
-    }
+    protected val javaClass = loader.loadClass(method.`class`.canonicalDesc)
+    protected val javaMethod = javaClass.getMethod(method, loader)
 
     class InvocationResult {
         val output = ByteArrayOutputStream()
