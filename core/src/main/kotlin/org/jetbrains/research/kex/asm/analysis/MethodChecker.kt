@@ -7,6 +7,7 @@ import org.jetbrains.research.kex.asm.state.PredicateStateAnalysis
 import org.jetbrains.research.kex.asm.transform.TraceInstrumenter
 import org.jetbrains.research.kex.asm.transform.originalBlock
 import org.jetbrains.research.kex.config.kexConfig
+import org.jetbrains.research.kex.random.Randomizer
 import org.jetbrains.research.kex.random.defaultRandomizer
 import org.jetbrains.research.kex.serialization.KexSerializer
 import org.jetbrains.research.kex.smt.Checker
@@ -16,10 +17,7 @@ import org.jetbrains.research.kex.state.transformer.executeModel
 import org.jetbrains.research.kex.trace.TraceManager
 import org.jetbrains.research.kex.trace.runner.SimpleRunner
 import org.jetbrains.research.kex.trace.runner.TimeoutException
-import org.jetbrains.research.kex.util.debug
-import org.jetbrains.research.kex.util.loadClass
-import org.jetbrains.research.kex.util.log
-import org.jetbrains.research.kex.util.tryOrNull
+import org.jetbrains.research.kex.util.*
 import org.jetbrains.research.kfg.ClassManager
 import org.jetbrains.research.kfg.ir.BasicBlock
 import org.jetbrains.research.kfg.ir.Class
@@ -73,7 +71,6 @@ class MethodChecker(
         private val target: File,
         private val psa: PredicateStateAnalysis) : MethodVisitor {
     private val tm = TraceManager
-    private val random = defaultRandomizer
     private var state: State? = null
 
     private data class State(
@@ -81,7 +78,29 @@ class MethodChecker(
             val method: Method,
             val loader: ClassLoader,
             val traces: List<Instruction>
-    )
+    ) {
+        private val oldClassPath = System.getProperty("java.class.path")
+        val random: Randomizer
+
+        init {
+            /**
+             * This is fucked up, but it is needed so that randomizer can scan all the classes from
+             * @loader to be able to generate random instances of target classes
+             */
+            updateClassPath()
+            random = defaultRandomizer
+        }
+
+        private fun updateClassPath() {
+            val urlLoader = loader as? URLClassLoader ?: unreachable { log.error("Unknown ClassLoader type in State") }
+            val urlClassPath = urlLoader.urLs.joinToString(separator = ":") { "${it.path}." }
+            System.setProperty("java.class.path", "$oldClassPath:$urlClassPath")
+        }
+
+        fun clearClassPath() {
+            System.setProperty("java.class.path", oldClassPath)
+        }
+    }
 
     private fun prepareMethodInfo(method: Method) {
         val originalClass = originalCM.getByName(method.`class`.fullname)
@@ -104,6 +123,7 @@ class MethodChecker(
         state?.traces?.forEach { it.parent?.remove(it) }
 
         writeClass(cm, loader, `class`, classFileName)
+        state?.clearClassPath()
         state = null
     }
 
@@ -154,13 +174,14 @@ class MethodChecker(
     @ImplicitReflectionSerializer
     private fun coverBlock(method: Method, block: BasicBlock) {
         val loader = state!!.loader
+        val random = state!!.random
         val checker = Checker(method, loader, psa)
         val ps = checker.createState(block.terminator) ?: return
 
         try {
             when (val result = checker.check(ps)) {
                 is Result.SatResult -> {
-                    val model = executeModel(checker.state, cm.type, method, result.model, loader)
+                    val model = executeModel(checker.state, cm.type, method, result.model, loader, random)
                     log.debug("Recovered: ${tryOrNull { model.toString() }}")
 
                     val instance = model.instance ?: when {
