@@ -8,10 +8,7 @@ import org.jetbrains.research.kfg.ir.value.Value
 import org.jetbrains.research.kfg.ir.value.instruction.CallOpcode
 import org.jetbrains.research.kfg.ir.value.instruction.Instruction
 import org.jetbrains.research.kfg.ir.value.instruction.InstructionFactory
-import org.jetbrains.research.kfg.type.ArrayType
-import org.jetbrains.research.kfg.type.ClassType
-import org.jetbrains.research.kfg.type.NullType
-import org.jetbrains.research.kfg.type.TypeFactory
+import org.jetbrains.research.kfg.type.*
 
 interface Wrapper {
     val cm: ClassManager
@@ -90,6 +87,7 @@ class StringBuilderWrapper(override val cm: ClassManager, val name: String) : Wr
         value.type === NullType -> append("null")
         else -> {
             val appendArg = when {
+                value.type is CharType -> types.intType
                 value.type.isPrimary -> value.type
                 value.type == types.stringType -> value.type
                 else -> types.objectType

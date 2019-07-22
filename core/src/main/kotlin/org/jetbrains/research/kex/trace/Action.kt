@@ -195,7 +195,6 @@ class ActionParser(val cm: ClassManager) : Grammar<Action>() {
     private val doubleNum by token("\\d+\\.\\d+(E(-)?\\d+)?")
     private val num by token("\\d+")
     private val word by token("[a-zA-Z$][\\w$]*")
-    private val character by token("[a-zA-Z]")
     private val at by token("@")
     private val string by token("\"[\\w\\sа-яА-ЯёЁ\\-.@>=<+*,\\(\\):\\[\\]]*\"")
 
@@ -247,7 +246,6 @@ class ActionParser(val cm: ClassManager) : Grammar<Action>() {
     private val kfgValueParser by valueName use { KfgValue(this) }
     private val nullValueParser by `null` use { NullValue }
     private val booleanValueParser by (`true` or `false`) use { BooleanValue(text.toBoolean()) }
-    private val charValueParser by word use { CharValue(text[0]) }
 
     private val longValueParser by (optional(minus) and num) use {
         LongValue(((t1?.text ?: "") + t2.text).toLong())
@@ -280,8 +278,7 @@ class ActionParser(val cm: ClassManager) : Grammar<Action>() {
             doubleValueParser or
             stringValueParser or
             arrayValueParser or
-            objectValueParser or
-            charValueParser
+            objectValueParser
 
     private val equationParser by (valueParser and -space and -equality and -space and valueParser) use { Equation(t1, t2) }
     private val equationList by separatedTerms(equationParser, semicolonAndSpace)
