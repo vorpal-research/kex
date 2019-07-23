@@ -9,6 +9,8 @@ import org.jetbrains.research.kfg.ir.Class
 import org.jetbrains.research.kfg.ir.Method
 import org.jetbrains.research.kfg.visitor.ClassVisitor
 
+data class CoverageInfo(val bodyCoverage: Double, val fullCoverage: Double)
+
 class CoverageCounter(override val cm: ClassManager) : ClassVisitor {
     val tm = TraceManager
     val methodInfos = hashMapOf<Method, CoverageInfo>()
@@ -26,8 +28,6 @@ class CoverageCounter(override val cm: ClassManager) : ClassVisitor {
 
             return CoverageInfo(body / numberOfMethods, full / numberOfMethods)
         }
-
-    data class CoverageInfo(val bodyCoverage: Double, val fullCoverage: Double)
 
     override fun cleanup() {}
 

@@ -1,8 +1,8 @@
 package org.jetbrains.research.kex.config
 
-val kexConfig = GlobalConfig
+val kexConfig: GlobalConfig by lazy { GlobalConfig() }
 
-object GlobalConfig : Config {
+class GlobalConfig : Config {
     private val sources = mutableListOf<Config>()
 
     override fun getStringValue(section: String, name: String): String? {
