@@ -23,19 +23,20 @@ class RandomChecker(override val cm: ClassManager, private val loader: ClassLoad
 
         val `class` = method.`class`
         val classFileName = "${target.canonicalPath}/${`class`.fullname}.class"
-        if (!method.isAbstract && !method.isConstructor) {
-            val traceInstructions = TraceInstrumenter(cm).invoke(method)
-            writeClass(cm, loader, `class`, classFileName)
-            val directory = URLClassLoader(arrayOf(target.toURI().toURL()))
+        if (method.isAbstract || method.isConstructor) return
+        if (!method.isImpactable) return
 
-            try {
-                RandomRunner(method, directory).run()
-            } catch (e: ClassNotFoundException) {
-                log.warn("Could not load classes for random tester: ${e.message}")
-            }
+        val traceInstructions = TraceInstrumenter(cm).invoke(method)
+        writeClass(cm, loader, `class`, classFileName)
+        val directory = URLClassLoader(arrayOf(target.toURI().toURL()))
 
-            traceInstructions.forEach { it.parent?.remove(it) }
+        try {
+            RandomRunner(method, directory).run()
+        } catch (e: ClassNotFoundException) {
+            log.warn("Could not load classes for random tester: ${e.message}")
         }
+
+        traceInstructions.forEach { it.parent?.remove(it) }
         writeClass(cm, loader, `class`, classFileName)
     }
 
