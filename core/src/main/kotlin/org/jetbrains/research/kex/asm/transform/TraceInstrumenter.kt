@@ -47,7 +47,7 @@ class TraceInstrumenter(override val cm: ClassManager) : MethodVisitor {
 
         buildList {
             +fos.println("exit ${bb.name};")
-            +fos.print("return ${method.prototype.replace('/', '.')}; ")
+            +fos.print("return ${method.prototype.replace('/', '.')}, ")
 
             when {
                 inst.hasReturnValue -> {
@@ -66,7 +66,7 @@ class TraceInstrumenter(override val cm: ClassManager) : MethodVisitor {
 
         buildList {
             +fos.println("exit ${bb.name};")
-            +fos.print("throw ${method.prototype.replace('/', '.')}; ")
+            +fos.print("throw ${method.prototype.replace('/', '.')}, ")
             +fos.print("${inst.throwable.name} == ")
             +fos.printValue(inst.throwable)
             +fos.println(";")
@@ -86,9 +86,9 @@ class TraceInstrumenter(override val cm: ClassManager) : MethodVisitor {
         val bb = inst.parent!!
 
         buildList {
-            +fos.print("branch ${bb.name}; ${condition.lhv.name} == ")
+            +fos.print("branch ${bb.name}, ${condition.lhv.name} == ")
             +fos.printValue(condition.lhv)
-            +fos.print("; ${condition.rhv.name} == ")
+            +fos.print(", ${condition.rhv.name} == ")
             +fos.printValue(condition.rhv)
             +fos.println(";")
         }
@@ -98,7 +98,7 @@ class TraceInstrumenter(override val cm: ClassManager) : MethodVisitor {
         val bb = inst.parent!!
 
         buildList {
-            +fos.print("switch ${bb.name}; ${inst.key.name} == ")
+            +fos.print("switch ${bb.name}, ${inst.key.name} == ")
             +fos.printValue(inst.key)
             +fos.println(";")
         }
@@ -108,7 +108,7 @@ class TraceInstrumenter(override val cm: ClassManager) : MethodVisitor {
         val bb = inst.parent!!
 
         buildList {
-            +fos.print("tableswitch ${bb.name}; ${inst.index.name} == ")
+            +fos.print("tableswitch ${bb.name}, ${inst.index.name} == ")
             +fos.printValue(inst.index)
             +fos.println(";")
         }
@@ -139,7 +139,7 @@ class TraceInstrumenter(override val cm: ClassManager) : MethodVisitor {
             if (!method.isStatic) {
                 val thisType = types.getRefType(method.`class`)
                 val `this` = values.getThis(thisType)
-                +fos.print("instance $methodName; this == ")
+                +fos.print("instance $methodName, this == ")
                 +fos.printValue(`this`)
                 +fos.println(";")
             }
@@ -147,7 +147,7 @@ class TraceInstrumenter(override val cm: ClassManager) : MethodVisitor {
                 +fos.print("arguments $methodName")
                 for ((index, type) in args.withIndex()) {
                     val argValue = values.getArgument(index, method, type)
-                    +fos.print("; ${argValue.name} == ")
+                    +fos.print(", ${argValue.name} == ")
                     +fos.printValue(argValue)
                 }
                 +fos.println(";")

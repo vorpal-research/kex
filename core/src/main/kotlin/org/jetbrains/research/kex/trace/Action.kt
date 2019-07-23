@@ -196,7 +196,7 @@ class ActionParser(val cm: ClassManager) : Grammar<Action>() {
     private val num by token("\\d+")
     private val word by token("[a-zA-Z$][\\w$]*")
     private val at by token("@")
-    private val string by token("\"[\\w\\sа-яА-ЯёЁ\\-.@>=<+*,\\(\\):\\[\\]]*\"")
+    private val string by token("\"[\\w\\sа-яА-ЯёЁ\\-.@>=<+*,'\\(\\):\\[\\]\\n]*\"")
 
     private val colonAndSpace by colon and space
     private val semicolonAndSpace by semicolon and space
@@ -281,47 +281,44 @@ class ActionParser(val cm: ClassManager) : Grammar<Action>() {
             objectValueParser
 
     private val equationParser by (valueParser and -space and -equality and -space and valueParser) use { Equation(t1, t2) }
-    private val equationList by separatedTerms(equationParser, semicolonAndSpace)
+    private val equationList by separatedTerms(equationParser, commaAndSpace)
 
     // action
-    private val methodEntryParser by (-enter and -space and methodName and -spacedSemicolon) use {
+    private val methodEntryParser by (-enter and -space and methodName) use {
         trackers.push(this.slottracker)
         MethodEntry(this)
     }
 
-    private val methodInstanceParser by (-instance and -space and methodName and -semicolonAndSpace and equationParser
-            and -spacedSemicolon) use {
+    private val methodInstanceParser by (-instance and -space and methodName and -commaAndSpace and equationParser) use {
         MethodInstance(t1, t2)
     }
 
-    private val methodArgsParser by (-arguments and -space and methodName and -semicolonAndSpace and equationList
-            and -spacedSemicolon) use {
+    private val methodArgsParser by (-arguments and -space and methodName and -commaAndSpace and equationList) use {
         MethodArgs(t1, t2)
     }
 
     private val methodReturnParser by (-`return` and -space and methodName
-            and -semicolonAndSpace and ((word use { null }) or equationParser and -spacedSemicolon)) use {
+            and -commaAndSpace and ((word use { null }) or equationParser)) use {
         val ret = MethodReturn(t1, t2)
         trackers.pop()
         ret
     }
 
     private val methodThrowParser by (
-            -`throw` and -space and methodName and -semicolonAndSpace and equationParser and -spacedSemicolon) use {
+            -`throw` and -space and methodName and -commaAndSpace and equationParser) use {
         MethodThrow(t1, t2)
     }
 
-    private val blockEntryParser by (-enter and -space and blockName and -spacedSemicolon) use { BlockEntry(this) }
-    private val blockJumpParser by (-exit and -space and blockName and -spacedSemicolon) use { BlockJump(this) }
+    private val blockEntryParser by (-enter and -space and blockName) use { BlockEntry(this) }
+    private val blockJumpParser by (-exit and -space and blockName) use { BlockJump(this) }
 
-    private val blockBranchParser by (-branch and -space and blockName and -semicolonAndSpace
-            and equationList and -spacedSemicolon) use { BlockBranch(t1, t2) }
+    private val blockBranchParser by (-branch and -space and blockName and -commaAndSpace
+            and equationList) use { BlockBranch(t1, t2) }
 
-    private val blockSwitchParser by (-switch and -space and blockName and -semicolonAndSpace and equationParser
-            and -spacedSemicolon) use { BlockSwitch(t1, t2) }
+    private val blockSwitchParser by (-switch and -space and blockName and -commaAndSpace and equationParser) use { BlockSwitch(t1, t2) }
 
-    private val blockTableSwitchParser by (-tableswitch and -space and blockName and -semicolonAndSpace
-            and equationParser and -spacedSemicolon) use { BlockTableSwitch(t1, t2) }
+    private val blockTableSwitchParser by (-tableswitch and -space and blockName and -commaAndSpace
+            and equationParser) use { BlockTableSwitch(t1, t2) }
 
     private val actionParser by (methodEntryParser or methodInstanceParser or methodArgsParser or methodReturnParser
             or methodThrowParser or blockEntryParser or blockJumpParser or blockBranchParser or blockSwitchParser or blockTableSwitchParser)

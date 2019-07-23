@@ -113,7 +113,7 @@ abstract class AbstractRunner(val method: Method, protected val loader: ClassLoa
             log.debug("Invocation exception: ${result.exception}")
 
         val traceFile = TraceInstrumenter.getTraceFile(this.method)
-        result.trace = traceFile.readLines()
+        result.trace = traceFile.readText().split(";").map { it.trim() }
         return parse(result)
     }
 
