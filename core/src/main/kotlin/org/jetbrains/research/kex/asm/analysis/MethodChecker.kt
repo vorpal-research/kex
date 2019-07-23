@@ -80,7 +80,7 @@ class MethodChecker(
             val traces: List<Instruction>
     ) {
         private val oldClassPath = System.getProperty("java.class.path")
-        val random: Randomizer
+        val random: Randomizer get() = defaultRandomizer
 
         init {
             /**
@@ -88,7 +88,6 @@ class MethodChecker(
              * @loader to be able to generate random instances of target classes
              */
             updateClassPath()
-            random = defaultRandomizer
         }
 
         private fun updateClassPath() {

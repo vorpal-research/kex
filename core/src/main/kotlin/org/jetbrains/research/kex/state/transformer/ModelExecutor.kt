@@ -39,13 +39,13 @@ class ModelExecutor(val method: Method,
     private val recoverer = ObjectRecoverer(method, model, loader, randomizer)
     private val memory = hashMapOf<Term, Any?>()
     private var thisTerm: Term? = null
-    private val argTerms = mutableMapOf<Int, Term>()
+    private val argTerms = sortedMapOf<Int, Term>()
 
     private val javaClass = loader.loadClass(type.getRefType(method.`class`))
     private val javaMethod = javaClass.getMethod(method, loader)
 
     val instance get() = thisTerm?.let { memory[it] }
-    val args get() = argTerms.asSequence().sortedBy { it.key }.map { memory[it.value] }.toList()
+    val args get() = argTerms.map { memory[it.value] }.toList()
 
     override fun apply(ps: PredicateState): PredicateState {
         val (tempThis, tempArgs) = collectArguments(ps)
