@@ -9,6 +9,7 @@ import org.jetbrains.research.kex.trace.ActionParser
 import org.jetbrains.research.kex.trace.Trace
 import org.jetbrains.research.kex.util.getMethod
 import org.jetbrains.research.kex.util.log
+import org.jetbrains.research.kex.util.tryOrNull
 import org.jetbrains.research.kfg.ir.Method
 import java.io.ByteArrayOutputStream
 import java.io.PrintStream
@@ -78,9 +79,11 @@ abstract class AbstractRunner(val method: Method, protected val loader: ClassLoa
     }
 
     protected fun invoke(method: java.lang.reflect.Method, instance: Any?, args: Array<Any?>): Trace {
-        log.debug("Running $method")
-        log.debug("Instance: $instance")
-        log.debug("Args: ${args.map { it.toString() }}")
+        tryOrNull {
+            log.debug("Running $method")
+            log.debug("Instance: $instance")
+            log.debug("Args: ${args.map { it.toString() }}")
+        }
 
         Files.deleteIfExists(TraceInstrumenter.getTraceFile(this.method).toPath())
 

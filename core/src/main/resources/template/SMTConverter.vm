@@ -7,11 +7,11 @@ import org.jetbrains.research.kex.state.transformer.memspace
 import org.jetbrains.research.kfg.ir.Class
 import org.jetbrains.research.kfg.ir.value.instruction.BinaryOpcode
 import org.jetbrains.research.kfg.ir.value.instruction.CmpOpcode
-import org.jetbrains.research.kex.config.GlobalConfig
+import org.jetbrains.research.kex.config.kexConfig
 import org.jetbrains.research.kfg.type.ClassType
 import org.jetbrains.research.kfg.type.TypeFactory
 
-val defaultAllocSize = GlobalConfig.getIntValue("smt", "defaultAllocationSize", 1024)
+val defaultAllocSize = kexConfig.getIntValue("smt", "defaultAllocationSize", 1024)
 
 @Suppress("UNUSED_PARAMETER")
 class ${solver}Converter(val tf: TypeFactory) : ${solver}SMTConverter() {
