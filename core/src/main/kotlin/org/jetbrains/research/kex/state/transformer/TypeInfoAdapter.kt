@@ -20,6 +20,8 @@ import kotlin.reflect.KClass
 import kotlin.reflect.KFunction
 import kotlin.reflect.KMutableProperty
 import kotlin.reflect.KType
+import kotlin.reflect.full.declaredMemberExtensionFunctions
+import kotlin.reflect.full.declaredMemberExtensionProperties
 import kotlin.reflect.full.declaredMemberFunctions
 import kotlin.reflect.full.declaredMemberProperties
 import kotlin.reflect.jvm.javaMethod
@@ -81,8 +83,11 @@ class TypeInfoAdapter(val method: Method, val loader: ClassLoader) : Recollectin
 
     private val KClass<*>.allFunctions get() = tryOrNull {
         declaredMemberFunctions +
+                declaredMemberExtensionFunctions +
                 declaredMemberProperties.map { it.getter } +
-                declaredMemberProperties.filterIsInstance<KMutableProperty<*>>().map { it.setter }
+                declaredMemberExtensionProperties.map { it.getter } +
+                declaredMemberProperties.filterIsInstance<KMutableProperty<*>>().map { it.setter } +
+                declaredMemberExtensionProperties.filterIsInstance<KMutableProperty<*>>().map { it.setter }
     } ?: listOf()
 
     private fun KClass<*>.find(method: Method) = allFunctions.find { it eq method }

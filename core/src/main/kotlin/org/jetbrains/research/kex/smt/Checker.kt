@@ -1,7 +1,7 @@
 package org.jetbrains.research.kex.smt
 
 import org.jetbrains.research.kex.asm.state.PredicateStateAnalysis
-import org.jetbrains.research.kex.config.GlobalConfig
+import org.jetbrains.research.kex.config.kexConfig
 import org.jetbrains.research.kex.state.PredicateState
 import org.jetbrains.research.kex.state.predicate.PredicateType
 import org.jetbrains.research.kex.state.term.ArgumentTerm
@@ -15,10 +15,10 @@ import org.jetbrains.research.kfg.ir.value.instruction.Instruction
 
 
 class Checker(val method: Method, val loader: ClassLoader, private val psa: PredicateStateAnalysis) {
-    private val isInliningEnabled = GlobalConfig.getBooleanValue("smt", "ps-inlining", true)
-    private val isMemspacingEnabled = GlobalConfig.getBooleanValue("smt", "memspacing", true)
-    private val isSlicingEnabled = GlobalConfig.getBooleanValue("smt", "slicing", false)
-    private val logQuery = GlobalConfig.getBooleanValue("smt", "logQuery", false)
+    private val isInliningEnabled = kexConfig.getBooleanValue("smt", "ps-inlining", true)
+    private val isMemspacingEnabled = kexConfig.getBooleanValue("smt", "memspacing", true)
+    private val isSlicingEnabled = kexConfig.getBooleanValue("smt", "slicing", false)
+    private val logQuery = kexConfig.getBooleanValue("smt", "logQuery", false)
 
     private val builder = psa.builder(method)
     lateinit var state: PredicateState
