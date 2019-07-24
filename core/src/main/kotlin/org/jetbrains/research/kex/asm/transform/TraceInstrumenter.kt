@@ -154,7 +154,9 @@ class TraceInstrumenter(override val cm: ClassManager) : MethodVisitor {
             }
         }
         insertedInsts += startInsts
-        super.visit(method)
+
+        // visit blocks
+        method.basicBlocks.toTypedArray().forEach { visitBasicBlock(it) }
 
         val endInsts = fos.close()
         insertedInsts += endInsts
