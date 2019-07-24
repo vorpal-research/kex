@@ -27,7 +27,7 @@ import kotlin.reflect.full.declaredMemberProperties
 import kotlin.reflect.jvm.javaMethod
 import kotlin.reflect.jvm.jvmErasure
 
-class TypeInfoAdapter(val method: Method, val loader: ClassLoader) : RecollectingTransformer<TypeInfoAdapter> {
+class ReflectionInfoAdapter(val method: Method, val loader: ClassLoader) : RecollectingTransformer<ReflectionInfoAdapter> {
     val cm get() = method.cm
     val types get() = method.cm.type
 

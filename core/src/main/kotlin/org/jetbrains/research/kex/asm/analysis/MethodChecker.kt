@@ -134,18 +134,18 @@ class MethodChecker(
         if (method.isAbstract || method.isConstructor) return
         if (!method.isImpactable) return
 
-        prepareMethodInfo(method)
-
         log.debug("Checking method $method")
         log.debug(method.print())
         log.debug()
+
+        prepareMethodInfo(method)
 
         for (block in method.bodyBlocks) {
             val originalBlock = block.originalBlock
             if (tm.isCovered(method, originalBlock)) continue
 
             try {
-                log.debug("Checking reachability of ${block.terminator.print()}")
+                log.debug("Checking reachability of ${block.name}")
                 coverBlock(method, block)
             } catch (e: TimeoutException) {
                 log.warn("Timeout exception when running method $method, skipping it")

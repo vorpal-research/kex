@@ -12,10 +12,7 @@ import org.jetbrains.research.kex.state.ChoiceState
 import org.jetbrains.research.kex.state.PredicateState
 import org.jetbrains.research.kex.state.emptyState
 import org.jetbrains.research.kex.state.predicate.*
-import org.jetbrains.research.kex.state.term.ConstBoolTerm
-import org.jetbrains.research.kex.state.term.ConstIntTerm
-import org.jetbrains.research.kex.state.term.ConstLongTerm
-import org.jetbrains.research.kex.state.term.Term
+import org.jetbrains.research.kex.state.term.*
 import org.jetbrains.research.kex.util.getMethod
 import org.jetbrains.research.kex.util.loadClass
 import org.jetbrains.research.kex.util.log
@@ -49,6 +46,8 @@ class ModelExecutor(val method: Method,
 
     override fun apply(ps: PredicateState): PredicateState {
         val (tempThis, tempArgs) = collectArguments(ps)
+        val ti = collectTypeInfos(recoverer.model, ps).filterKeys { it is ArgumentTerm }
+        if (ti.isNotEmpty()) log.debug("Collected type info: $ti")
         thisTerm = when {
             !method.isStatic && tempThis == null -> tf.getThis(KexClass(method.`class`.fullname))
             else -> tempThis
@@ -59,7 +58,8 @@ class ModelExecutor(val method: Method,
         }
         thisTerm?.let { memory[it] = recoverer.recoverTerm(it, javaClass) }
         argTerms.values.zip(javaMethod.genericParameterTypes).forEach { (term, type) ->
-            memory[term] = recoverer.recoverTerm(term, type)
+            val t = if (term in ti) recoverer.loader.loadClass(ti[term]!!.getKfgType(method.cm.type)) else type
+            memory[term] = recoverer.recoverTerm(term, t)
         }
         return super.apply(ps)
     }

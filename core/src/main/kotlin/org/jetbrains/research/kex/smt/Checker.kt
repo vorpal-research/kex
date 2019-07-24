@@ -45,7 +45,7 @@ class Checker(val method: Method, val loader: ClassLoader, private val psa: Pred
         }
 
         state = IntrinsicAdapter.apply(state)
-        state = TypeInfoAdapter(method, loader).apply(state)
+        state = ReflectionInfoAdapter(method, loader).apply(state)
         state = Optimizer().apply(state)
         state = ConstantPropagator.apply(state)
         state = BoolTypeAdapter(method.cm.type).apply(state)
