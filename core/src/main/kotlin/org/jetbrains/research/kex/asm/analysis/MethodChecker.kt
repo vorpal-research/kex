@@ -48,6 +48,7 @@ data class Failure(
 val Method.isImpactable: Boolean
     get() {
         when {
+            this.isAbstract -> return false
             this.isStatic && this.argTypes.isEmpty() -> return false
             this.argTypes.isEmpty() -> {
                 val thisVal = this.cm.value.getThis(this.`class`)

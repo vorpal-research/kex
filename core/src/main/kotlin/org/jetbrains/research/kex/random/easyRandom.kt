@@ -23,6 +23,8 @@ import java.lang.reflect.TypeVariable
 import java.lang.reflect.WildcardType
 import java.util.*
 
+private infix fun Int.`in`(range: IntRange) = range.first + (this % (range.last - range.first))
+
 class EasyRandomDriver(val config: BeansConfig = defaultConfig) : Randomizer {
     companion object {
 
@@ -103,26 +105,26 @@ class EasyRandomDriver(val config: BeansConfig = defaultConfig) : Randomizer {
             rawType.isAssignableFrom(List::class.java) -> {
                 require(type.actualTypeArguments.size == 1)
                 val typeParameter = type.actualTypeArguments.first()
-                val lr = ListRandomizer.aNewListRandomizer { next(typeParameter) }
+                val lr = ListRandomizer.aNewListRandomizer({ next(typeParameter) }, randomizer.nextInt() `in` config.collectionSize)
                 lr.randomValue
             }
             rawType.isAssignableFrom(Queue::class.java) -> {
                 require(type.actualTypeArguments.size == 1)
                 val typeParameter = type.actualTypeArguments.first()
-                val qr = QueueRandomizer.aNewQueueRandomizer { next(typeParameter) }
+                val qr = QueueRandomizer.aNewQueueRandomizer({ next(typeParameter) }, randomizer.nextInt() `in` config.collectionSize)
                 qr.randomValue
             }
             rawType.isAssignableFrom(Set::class.java) -> {
                 require(type.actualTypeArguments.size == 1)
                 val typeParameter = type.actualTypeArguments.first()
-                val sr = SetRandomizer.aNewSetRandomizer { next(typeParameter) }
+                val sr = SetRandomizer.aNewSetRandomizer({ next(typeParameter) }, randomizer.nextInt() `in` config.collectionSize)
                 sr.randomValue
             }
             rawType.isAssignableFrom(Map::class.java) -> {
                 require(type.actualTypeArguments.size == 2)
                 val key = type.actualTypeArguments.first()
                 val value = type.actualTypeArguments.last()
-                val mr = MapRandomizer.aNewMapRandomizer({ next(key) }, { next(value) })
+                val mr = MapRandomizer.aNewMapRandomizer({ next(key) }, { next(value) }, randomizer.nextInt() `in` config.collectionSize)
                 mr.randomValue
             }
             else -> {
@@ -149,7 +151,10 @@ class EasyRandomDriver(val config: BeansConfig = defaultConfig) : Randomizer {
         is Class<*> -> generateClass(type)
         is ParameterizedType -> generateParameterized(type)
         is TypeVariable<*> -> generateTypeVariable(type)
-        is WildcardType -> generateType(type.upperBounds.first())
+        is WildcardType -> {
+            require(type.upperBounds.size == 1) { log.debug("Unexpected size of wildcard type upper bounds: $type") }
+            generateType(type.upperBounds.first())
+        }
         else -> throw UnknownTypeException(type.toString())
     }
 
