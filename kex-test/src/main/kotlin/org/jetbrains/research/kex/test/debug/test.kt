@@ -2,6 +2,8 @@
 
 package org.jetbrains.research.kex.test.debug
 
+import java.util.*
+
 class GenTest <T: Any> {
     fun testT(t: T) {
         if (t is String) {
@@ -22,6 +24,16 @@ class GenTest <T: Any> {
     inline fun <reified K : Collection<String>> testKR(k: K) {
         if (k is List<*>) println(k)
         else println("fail")
+    }
+
+    fun testX(list: List<Int>) {
+        val sum = list[0] + list[1]
+        println(sum)
+        if (list is LinkedList<Int>) {
+            println("AAAAAaa")
+        } else {
+            println("BBBB")
+        }
     }
 }
 

@@ -12,19 +12,57 @@ import org.jetbrains.research.kex.state.ChoiceState
 import org.jetbrains.research.kex.state.PredicateState
 import org.jetbrains.research.kex.state.emptyState
 import org.jetbrains.research.kex.state.predicate.*
-import org.jetbrains.research.kex.state.term.*
+import org.jetbrains.research.kex.state.term.ConstBoolTerm
+import org.jetbrains.research.kex.state.term.ConstIntTerm
+import org.jetbrains.research.kex.state.term.ConstLongTerm
+import org.jetbrains.research.kex.state.term.Term
 import org.jetbrains.research.kex.util.getMethod
 import org.jetbrains.research.kex.util.loadClass
 import org.jetbrains.research.kex.util.log
 import org.jetbrains.research.kex.util.unreachable
 import org.jetbrains.research.kfg.ir.Method
 import org.jetbrains.research.kfg.type.TypeFactory
+import java.lang.reflect.ParameterizedType
+import java.lang.reflect.Type
+import java.lang.reflect.TypeVariable
 
 // remove all choices in a given PS
 // needed to get entry condition of a given PS
 private object ChoiceSimplifier : Transformer<ChoiceSimplifier> {
     override fun transformChoice(ps: ChoiceState): PredicateState {
         return emptyState()
+    }
+}
+
+private fun mergeTypes(lhv: Type, rhv: Type): Type {
+    val lhv = lhv as? Class<*> ?: unreachable { log.error("Don't consider merging other types yet") }
+    return when (rhv) {
+        is Class<*> -> when {
+            lhv.isAssignableFrom(rhv) -> rhv
+            rhv.isAssignableFrom(lhv) -> lhv
+            else -> unreachable { log.error("Cannod decide on argument type: $rhv or $lhv") }
+        }
+        is ParameterizedType -> {
+            val rawType = rhv.rawType as Class<*>
+            // todo: find a way to create a new parameterized type with new raw type
+            @Suppress("UNUSED_VARIABLE") val actualType = mergeTypes(lhv, rawType) as Class<*>
+            rhv
+        }
+        is TypeVariable<*> -> {
+            val bounds = rhv.bounds
+            when {
+                bounds == null -> lhv
+                bounds.isEmpty() -> lhv
+                else -> {
+                    require(bounds.size == 1)
+                    mergeTypes(lhv, bounds.first())
+                }
+            }
+        }
+        else -> {
+            log.warn("Merging unexpected types $lhv and $rhv")
+            rhv
+        }
     }
 }
 
@@ -46,8 +84,8 @@ class ModelExecutor(val method: Method,
 
     override fun apply(ps: PredicateState): PredicateState {
         val (tempThis, tempArgs) = collectArguments(ps)
-        val ti = collectTypeInfos(recoverer.model, ps).filterKeys { it is ArgumentTerm }
-        if (ti.isNotEmpty()) log.debug("Collected type info: $ti")
+        val argTypeInfo = collectTypeInfos(recoverer.model, ps)//.filterKeys { it is ArgumentTerm }
+        if (argTypeInfo.isNotEmpty()) log.debug("Collected type info: $argTypeInfo")
         thisTerm = when {
             !method.isStatic && tempThis == null -> tf.getThis(KexClass(method.`class`.fullname))
             else -> tempThis
@@ -58,8 +96,16 @@ class ModelExecutor(val method: Method,
         }
         thisTerm?.let { memory[it] = recoverer.recoverTerm(it, javaClass) }
         argTerms.values.zip(javaMethod.genericParameterTypes).forEach { (term, type) ->
-            val t = if (term in ti) recoverer.loader.loadClass(ti[term]!!.getKfgType(method.cm.type)) else type
-            memory[term] = recoverer.recoverTerm(term, t)
+            // TODO: need to think about more clever type info merging
+            val castedType = when (term) {
+                in argTypeInfo -> recoverer.loader.loadClass(argTypeInfo.getValue(term).getKfgType(method.cm.type))
+                else -> null
+            }
+            val actualType = when (castedType) {
+                null -> type
+                else -> mergeTypes(castedType, type)
+            }
+            memory[term] = recoverer.recoverTerm(term, actualType)
         }
         return super.apply(ps)
     }

@@ -12,7 +12,7 @@ class ClassGenerator(private val parameters: Map<String, Any>, val path: String,
         engine.init()
 
         val context = VelocityContext()
-        parameters.forEach { key, value -> context.put(key, value) }
+        parameters.forEach { (key, value) -> context.put(key, value) }
 
         val template = engine.getTemplate(template)
 
