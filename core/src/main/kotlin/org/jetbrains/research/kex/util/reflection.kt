@@ -3,6 +3,7 @@ package org.jetbrains.research.kex.util
 import org.jetbrains.research.kex.trace.UnknownTypeException
 import org.jetbrains.research.kfg.ir.Method
 import org.jetbrains.research.kfg.type.*
+import java.lang.reflect.Array
 
 fun ClassLoader.loadClass(type: Type): Class<*> = when (type) {
     is BoolType -> Boolean::class.java
@@ -13,7 +14,14 @@ fun ClassLoader.loadClass(type: Type): Class<*> = when (type) {
     is CharType -> Char::class.java
     is FloatType -> Float::class.java
     is DoubleType -> Double::class.java
-    is ArrayType -> Class.forName(type.canonicalDesc)
+    is ArrayType -> try {
+        Class.forName(type.canonicalDesc)
+    } catch (e: ClassNotFoundException) {
+        val element = this.loadClass(type.component)
+        // this is fucked up
+        val arrayInstance = Array.newInstance(element, 0)
+        arrayInstance.javaClass
+    }
     is ClassType -> try {
         this.loadClass(type.`class`.canonicalDesc)
     } catch (e: ClassNotFoundException) {

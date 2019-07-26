@@ -35,6 +35,7 @@ private object ChoiceSimplifier : Transformer<ChoiceSimplifier> {
 }
 
 private fun mergeTypes(lhv: Type, rhv: Type): Type {
+    @Suppress("NAME_SHADOWING")
     val lhv = lhv as? Class<*> ?: unreachable { log.error("Don't consider merging other types yet") }
     return when (rhv) {
         is Class<*> -> when {
