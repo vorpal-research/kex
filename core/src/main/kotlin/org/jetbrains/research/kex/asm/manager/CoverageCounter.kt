@@ -49,7 +49,9 @@ class CoverageCounter(override val cm: ClassManager) : ClassVisitor {
             )
             methodInfos[method] = info
 
-            log.info("Method $method coverage: body = ${info.bodyCoverage}; full = ${info.fullCoverage}")
+            log.info("Method $method coverage: " +
+                    "body = ${String.format("%.2f", info.bodyCoverage)}; " +
+                    "full = ${String.format("%.2f", info.fullCoverage)}")
         }
     }
 }
