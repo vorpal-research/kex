@@ -1,9 +1,10 @@
 package org.jetbrains.research.kex.smt.z3
 
+import com.microsoft.z3.BoolExpr
 import com.microsoft.z3.Model
 import com.microsoft.z3.Status
 import com.microsoft.z3.Tactic
-import org.jetbrains.research.kex.config.GlobalConfig
+import org.jetbrains.research.kex.config.kexConfig
 import org.jetbrains.research.kex.smt.AbstractSMTSolver
 import org.jetbrains.research.kex.smt.Result
 import org.jetbrains.research.kex.smt.model.MemoryShape
@@ -11,22 +12,22 @@ import org.jetbrains.research.kex.smt.model.SMTModel
 import org.jetbrains.research.kex.state.PredicateState
 import org.jetbrains.research.kex.state.predicate.PredicateType
 import org.jetbrains.research.kex.state.term.Term
-import org.jetbrains.research.kex.state.transformer.PointerCollector
-import org.jetbrains.research.kex.state.transformer.VariableCollector
+import org.jetbrains.research.kex.state.transformer.collectPointers
+import org.jetbrains.research.kex.state.transformer.collectVariables
 import org.jetbrains.research.kex.state.transformer.memspace
-import org.jetbrains.research.kex.util.castTo
 import org.jetbrains.research.kex.util.debug
 import org.jetbrains.research.kex.util.log
 import org.jetbrains.research.kex.util.unreachable
 import org.jetbrains.research.kfg.type.TypeFactory
 
-private val timeout = GlobalConfig.getIntValue("smt", "timeout", 3) * 1000
+private val timeout = kexConfig.getIntValue("smt", "timeout", 3) * 1000
+private val logQuery = kexConfig.getBooleanValue("smt", "logQuery", false)
+private val logFormulae = kexConfig.getBooleanValue("smt", "logFormulae", false)
+private val printSMTLib = kexConfig.getBooleanValue("smt", "logSMTLib", false)
+private val simplifyFormulae = kexConfig.getBooleanValue("smt", "simplifyFormulae", false)
 
-private val logQuery = GlobalConfig.getBooleanValue("smt", "logQuery", false)
-private val logFormulae = GlobalConfig.getBooleanValue("smt", "logFormulae", false)
-private val simplifyFormulae = GlobalConfig.getBooleanValue("smt", "simplifyFormulae", true)
-
-class Z3Solver(val tf: TypeFactory, val ef: Z3ExprFactory) : AbstractSMTSolver {
+class Z3Solver(val tf: TypeFactory) : AbstractSMTSolver {
+    val ef = Z3ExprFactory()
 
     override fun isReachable(state: PredicateState) =
             isPathPossible(state, state.filterByType(PredicateType.Path()))
@@ -73,25 +74,29 @@ class Z3Solver(val tf: TypeFactory, val ef: Z3ExprFactory) : AbstractSMTSolver {
             }
         }
 
-        solver.add(state_.asAxiom().castTo())
-        solver.add(query_.axiom.castTo())
+        solver.add(state_.asAxiom() as BoolExpr)
+        solver.add(query_.axiom as BoolExpr)
 
         val pred = ef.makeBool("$\$CHECK$$")
-        solver.add(pred.implies(query_).expr.castTo())
+        solver.add(pred.implies(query_).expr as BoolExpr)
 
         log.debug("Running z3 solver")
+        if (printSMTLib) {
+            log.debug("SMTLib formula:")
+            log.debug(solver)
+        }
         val result = solver.check(pred.expr) ?: unreachable { log.error("Solver error") }
         log.debug("Solver finished")
 
         return when (result) {
             Status.SATISFIABLE -> {
                 val model = solver.model ?: unreachable { log.error("Solver result does not contain model") }
-//                log.debug(model)
+                if (logFormulae) log.debug(model)
                 result to model
             }
             Status.UNSATISFIABLE -> {
                 val core = solver.unsatCore.toList()
-                log.debug(core)
+                log.debug("Unsat core: $core")
                 result to core
             }
             Status.UNKNOWN -> {
@@ -104,6 +109,15 @@ class Z3Solver(val tf: TypeFactory, val ef: Z3ExprFactory) : AbstractSMTSolver {
 
     private fun buildTactics(): Tactic {
         val ctx = ef.ctx
+        val globalParams = ctx.mkParams()
+        Z3Params.load().forEach { (name, value) ->
+            when (value) {
+                is Value.BoolValue -> globalParams.add(name, value.value)
+                is Value.IntValue -> globalParams.add(name, value.value)
+                is Value.DoubleValue -> globalParams.add(name, value.value)
+                is Value.StringValue -> globalParams.add(name, value.value)
+            }
+        }
         val tactic = Z3Tactics.load().map {
             val tactic = ctx.mkTactic(it.type)
             val params = ctx.mkParams()
@@ -122,14 +136,13 @@ class Z3Solver(val tf: TypeFactory, val ef: Z3ExprFactory) : AbstractSMTSolver {
 
     private fun collectModel(ctx: Z3Context, model: Model, vararg states: PredicateState): SMTModel {
         val (ptrs, vars) = states.fold(setOf<Term>() to setOf<Term>()) { acc, ps ->
-            acc.first + PointerCollector(ps) to acc.second + VariableCollector(ps)
+            acc.first + collectPointers(ps) to acc.second + collectVariables(ps)
         }
 
         val assignments = vars.map {
             val expr = Z3Converter(tf).convert(it, ef, ctx)
             val z3expr = expr.expr
 
-            log.debug("Evaluating $z3expr")
             val evaluatedExpr = model.evaluate(z3expr, true)
             it to Z3Unlogic.undo(evaluatedExpr)
         }.toMap().toMutableMap()
@@ -176,5 +189,9 @@ class Z3Solver(val tf: TypeFactory, val ef: Z3ExprFactory) : AbstractSMTSolver {
         return SMTModel(assignments,
                 memories.map { it.key to MemoryShape(it.value.first, it.value.second) }.toMap(),
                 bounds.map { it.key to MemoryShape(it.value.first, it.value.second) }.toMap())
+    }
+
+    override fun cleanup() {
+        ef.ctx.close()
     }
 }

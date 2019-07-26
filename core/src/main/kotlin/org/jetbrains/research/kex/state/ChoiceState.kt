@@ -1,19 +1,19 @@
 package org.jetbrains.research.kex.state
 
+import kotlinx.serialization.Serializable
 import org.jetbrains.research.kex.state.predicate.Predicate
 import org.jetbrains.research.kex.util.defaultHashCode
 
 @InheritorOf("State")
+@Serializable
 class ChoiceState(val choices: List<PredicateState>) : PredicateState(), Iterable<PredicateState> {
     override val size: Int
         get() = choices.fold(0) { acc, it -> acc + it.size }
 
-    override fun print(): String {
-        val sb = StringBuilder()
-        sb.appendln("(BEGIN")
-        sb.append(choices.joinToString { " <OR> {$it}" })
-        sb.append(" END)")
-        return sb.toString()
+    override fun print() = buildString {
+        appendln("(BEGIN")
+        append(choices.joinToString { " <OR> $it" })
+        append(" END)")
     }
 
     override fun fmap(transform: (PredicateState) -> PredicateState): PredicateState = ChoiceState(choices.map { transform(it) })
@@ -30,6 +30,7 @@ class ChoiceState(val choices: List<PredicateState>) : PredicateState(), Iterabl
     override fun addPredicate(predicate: Predicate) = ChainState(ChoiceState(choices), BasicState(arrayListOf(predicate)))
 
     override fun sliceOn(state: PredicateState): PredicateState? {
+        if (this == state) return emptyState()
         val slices = choices.map { it.sliceOn(state) }
         val filtered = slices.filterNotNull()
         return if (slices.size == filtered.size) ChoiceState(filtered) else null
@@ -40,10 +41,10 @@ class ChoiceState(val choices: List<PredicateState>) : PredicateState(), Iterabl
     override fun simplify(): PredicateState {
         val simplifiedChoices = choices.map { it.simplify() }.filter { it.isNotEmpty }
         return when {
-            simplifiedChoices.isEmpty() -> StateBuilder().apply()
+            simplifiedChoices.isEmpty() -> emptyState()
             simplifiedChoices.size == 1 -> simplifiedChoices.first()
             simplifiedChoices == choices -> this
-            else -> (StateBuilder() + simplifiedChoices).apply()
+            else -> ChoiceState(simplifiedChoices)
         }
     }
 }

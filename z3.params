@@ -1,0 +1,22 @@
+[
+    {
+        "key": "dump_models",
+        "value": false
+    },
+    {
+        "key": "module",
+        "value": true
+    },
+    {
+        "key": "unsat_core",
+        "value": true
+    },
+    {
+        "key": "rlimit",
+        "value": 0
+    },
+    {
+        "key": "trace_file_name",
+        "value": "z3.log"
+    }
+]

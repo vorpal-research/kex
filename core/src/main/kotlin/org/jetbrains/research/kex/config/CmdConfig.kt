@@ -3,7 +3,6 @@ package org.jetbrains.research.kex.config
 import org.apache.commons.cli.*
 import org.jetbrains.research.kex.util.exit
 import org.jetbrains.research.kex.util.log
-import org.jetbrains.research.kex.util.unreachable
 import java.io.PrintWriter
 import java.io.StringWriter
 import org.apache.commons.cli.CommandLine as Cmd
@@ -21,7 +20,7 @@ class CmdConfig(args: Array<String>) : Config {
         cmd = try {
             parser.parse(options, args)
         } catch (e: ParseException) {
-            unreachable {
+            exit<Cmd> {
                 log.error("Error parsing command line arguments: ${e.message}")
                 printHelp()
             }
@@ -34,7 +33,7 @@ class CmdConfig(args: Array<String>) : Config {
                 val value = optValues[index + 2]
                 commandLineOptions.getOrPut(section, ::hashMapOf)[name] = value
             } catch (e: IndexOutOfBoundsException) {
-                exit {
+                exit<Cmd> {
                     log.error("Not enough arguments for `option`")
                     printHelp()
                 }
@@ -54,6 +53,14 @@ class CmdConfig(args: Array<String>) : Config {
         val propOpt = Option(null, "config", true, "configuration file")
         propOpt.isRequired = false
         options.addOption(propOpt)
+
+        val ps = Option(null, "ps", true, "file with predicate state to debug; used only in debug mode")
+        ps.isRequired = false
+        options.addOption(ps)
+
+        val logName = Option(null, "log", true, "log file name (`kex.log` by default)")
+        logName.isRequired = false
+        options.addOption(logName)
 
         val config = Option.builder()
                 .longOpt("option")
@@ -76,6 +83,6 @@ class CmdConfig(args: Array<String>) : Config {
         val pw = PrintWriter(sw)
         helpFormatter.printHelp(pw, 80, "kex", null, options, 1, 3, null)
 
-        log.debug("$sw")
+        log.info("$sw")
     }
 }

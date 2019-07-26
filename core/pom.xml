@@ -5,7 +5,7 @@
     <parent>
         <artifactId>kex</artifactId>
         <groupId>org.jetbrains.research</groupId>
-        <version>0.1</version>
+        <version>0.0.1</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
@@ -14,17 +14,18 @@
     <properties>
         <exec.main>org.jetbrains.research.kex.MainKt</exec.main>
 
+        <serialization.version>0.11.0</serialization.version>
+
         <logback.version>1.2.3</logback.version>
         <slf4j.version>1.7.25</slf4j.version>
         <ini4j.version>0.5.4</ini4j.version>
         <commons-cli.version>1.4</commons-cli.version>
 
-        <random-beans.version>random-beans-parent-3.7.0</random-beans.version>
+        <easy-random.version>easy-random-4.0.0</easy-random.version>
         <better-parse.version>0.3.2</better-parse.version>
         <klaxon.version>3.0.6</klaxon.version>
 
         <z3.version>4.7.1</z3.version>
-        <kotlin.version>1.2.71</kotlin.version>
     </properties>
 
     <repositories>
@@ -44,6 +45,11 @@
             <id>bintray-cbeust-maven</id>
             <name>bintray</name>
             <url>https://dl.bintray.com/cbeust/maven</url>
+        </repository>
+        <repository>
+            <id>bintray-kotlin-kotlinx</id>
+            <name>bintray</name>
+            <url>https://kotlin.bintray.com/kotlinx</url>
         </repository>
     </repositories>
 
@@ -92,9 +98,9 @@
         </dependency>
 
         <dependency>
-            <groupId>com.github.benas</groupId>
-            <artifactId>random-beans</artifactId>
-            <version>${random-beans.version}</version>
+            <groupId>com.github.benas.random-beans</groupId>
+            <artifactId>easy-random-core</artifactId>
+            <version>${easy-random.version}</version>
         </dependency>
         <dependency>
             <groupId>com.beust</groupId>
@@ -117,6 +123,12 @@
             <artifactId>kotlin-stdlib-jdk8</artifactId>
             <version>${kotlin.version}</version>
         </dependency>
+
+        <dependency>
+            <groupId>org.jetbrains.kotlinx</groupId>
+            <artifactId>kotlinx-serialization-runtime</artifactId>
+            <version>${serialization.version}</version>
+        </dependency>
         <dependency>
             <groupId>org.reflections</groupId>
             <artifactId>reflections</artifactId>
@@ -136,11 +148,25 @@
         <plugins>
             <plugin>
                 <artifactId>kotlin-maven-plugin</artifactId>
-                <configuration>
-                    <jvmTarget>1.8</jvmTarget>
-                </configuration>
                 <groupId>org.jetbrains.kotlin</groupId>
                 <version>${kotlin.version}</version>
+                <configuration>
+                    <jvmTarget>1.8</jvmTarget>
+                    <compilerPlugins>
+                        <plugin>kotlinx-serialization</plugin>
+                    </compilerPlugins>
+                    <args>
+                        <arg>-Xuse-experimental=kotlin.Experimental</arg>
+                    </args>
+                </configuration>
+
+                <dependencies>
+                    <dependency>
+                        <groupId>org.jetbrains.kotlin</groupId>
+                        <artifactId>kotlin-maven-serialization</artifactId>
+                        <version>${kotlin.version}</version>
+                    </dependency>
+                </dependencies>
 
                 <executions>
                     <execution>
@@ -156,7 +182,7 @@
                                 <annotationProcessorPath>
                                     <groupId>org.jetbrains.research</groupId>
                                     <artifactId>kex-annotation-processor</artifactId>
-                                    <version>0.1</version>
+                                    <version>${project.version}</version>
                                 </annotationProcessorPath>
                             </annotationProcessorPaths>
                             <annotationProcessors>
@@ -209,16 +235,37 @@
                     <systemPropertyVariables>
                         <!--suppress UnresolvedMavenProperty -->
                         <root.dir>${project.parent.basedir.canonicalPath}</root.dir>
+                        <project.version>${project.version}</project.version>
                     </systemPropertyVariables>
                     <includes>
                         <include>**/*Test.*</include>
                     </includes>
+                    <excludes>
+                        <exclude>**/*LongTest.*</exclude>
+                    </excludes>
                 </configuration>
+
                 <executions>
                     <execution>
                         <goals>
                             <goal>test</goal>
                         </goals>
+                    </execution>
+
+                    <execution>
+                        <id>long-tests</id>
+                        <goals>
+                            <goal>test</goal>
+                        </goals>
+                        <phase>verify</phase>
+                        <configuration>
+                            <excludes>
+                                <exclude>none</exclude>
+                            </excludes>
+                            <includes>
+                                <include>**/*LongTest.java</include>
+                            </includes>
+                        </configuration>
                     </execution>
                 </executions>
             </plugin>
@@ -227,6 +274,18 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-assembly-plugin</artifactId>
                 <version>2.6</version>
+                <configuration>
+                    <archive>
+                        <manifest>
+                            <mainClass>${exec.main}</mainClass>
+                            <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
+                            <addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>
+                        </manifest>
+                    </archive>
+                    <descriptorRefs>
+                        <descriptorRef>jar-with-dependencies</descriptorRef>
+                    </descriptorRefs>
+                </configuration>
                 <executions>
                     <execution>
                         <id>make-assembly</id>
@@ -234,16 +293,6 @@
                         <goals>
                             <goal>single</goal>
                         </goals>
-                        <configuration>
-                            <archive>
-                                <manifest>
-                                    <mainClass>${exec.main}</mainClass>
-                                </manifest>
-                            </archive>
-                            <descriptorRefs>
-                                <descriptorRef>jar-with-dependencies</descriptorRef>
-                            </descriptorRefs>
-                        </configuration>
                     </execution>
                 </executions>
             </plugin>

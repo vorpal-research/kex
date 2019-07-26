@@ -34,7 +34,7 @@ abstract class AnnotationInfo {
     protected inline val pf get() = PredicateFactory
     protected inline val tf get() = TermFactory
 
-    fun single(predicate: Predicate): PredicateState = BasicState(Collections.singletonList(predicate))
+    fun single(predicate: Predicate): PredicateState = BasicState(listOf(predicate))
     inline fun single(lambda: () -> Predicate): PredicateState = single(lambda())
 
     inline fun assume(lambda: PredicateExpression.() -> Predicate): PredicateState =
@@ -49,7 +49,6 @@ abstract class AnnotationInfo {
     inline fun basic(lambda: ExpressionBuilder.() -> Unit) =
             BasicState(ExpressionBuilder.build(lambda))
     fun chain(first: PredicateState, second: PredicateState) = ChainState(first, second)
-    operator fun PredicateState.plus(other: PredicateState) = ChainState(this, other)
     fun choice(states: List<PredicateState>) = ChoiceState(states)
     fun choice(vararg states: PredicateState) = ChoiceState(states.toList())
 

@@ -37,18 +37,21 @@ class NotAnnotatedMethods {
             assertReachable()
         return n
     }
+
     fun test2(arg0: Boolean, arg1: Any?): Any? {
         val result = AnnotatedMethodsThere.haveContract(arg1, arg0)
         if (!(arg1 == null || result != null))
             assertUnreachable()
         return result
     }
+
     fun test3(arg0: Boolean, arg1: Any?): Any? {
         val result = AnnotatedMethodsThere.haveContract(arg1, arg0)
         if (arg0 && result === null)
             assertUnreachable()
         return result
     }
+
     fun test4(arg0: Any?): Any? {
         val result = AnnotatedMethodsThere.rangeExample(arg0, 500)
         if (result < 0)
@@ -59,12 +62,14 @@ class NotAnnotatedMethods {
             assertUnreachable()
         return result
     }
+
     fun test5(arg0: Boolean, arg1: Any?): Any? {
         val result = AnnotatedMethodsThere.haveContract(arg1, arg0)
         if (arg0 && result !== arg1)
             assertUnreachable()
         return result
     }
+
     fun test6(arg0: Boolean): Any? {
         val o = AnnotatedMethodsThere
         val result = o.assertTrue(arg0)
@@ -75,14 +80,6 @@ class NotAnnotatedMethods {
         else
             assertReachable()
         return o
-    }
-}
-
-class ClassWithContractOffense {
-    fun test1(arg0: Any?): Any? {
-        val result = AnnotatedMethodsThere.rangeExample(arg0, -500)
-        assertReachable()
-        return result
     }
 }
 
@@ -102,17 +99,5 @@ class ThatClassContainsHighQualityCodeToProf {
             return meaningfulResult
         }
         return emptyList()
-    }
-}
-
-class ClassWithMistakes {
-    fun test1(arg0: Int, arg1: Int): Any? {
-        var t = arg0
-        if (arg1 < 0)
-            t = arg1
-        else
-            return t
-        AnnotatedMethodsThere.rangeExample(arg0, t)
-        return Any()
     }
 }

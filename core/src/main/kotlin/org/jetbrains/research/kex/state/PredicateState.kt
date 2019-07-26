@@ -1,15 +1,21 @@
 package org.jetbrains.research.kex.state
 
+import kotlinx.serialization.Serializable
 import org.jetbrains.research.kex.state.predicate.Predicate
 import org.jetbrains.research.kex.state.predicate.PredicateType
+import org.jetbrains.research.kex.util.log
+import org.jetbrains.research.kex.util.unreachable
 
 interface TypeInfo {
     val inheritors: Map<String, Class<*>>
     val reverseMapping: Map<Class<*>, String>
 }
 
+fun emptyState(): PredicateState = BasicState()
+fun Predicate.wrap() = emptyState() + this
+
 class StateBuilder() {
-    var current: PredicateState = BasicState()
+    var current: PredicateState = emptyState()
 
     constructor(state: PredicateState) : this() {
         this.current = state
@@ -48,11 +54,13 @@ class StateBuilder() {
 }
 
 @BaseType("State")
+@Serializable
 abstract class PredicateState : TypeInfo {
     companion object {
         val states = run {
             val loader = Thread.currentThread().contextClassLoader
             val resource = loader.getResourceAsStream("PredicateState.json")
+                    ?: unreachable { log.error("No info about PS inheritors") }
             val inheritanceInfo = InheritanceInfo.fromJson(resource.bufferedReader().readText())
             resource.close()
 
@@ -82,6 +90,8 @@ abstract class PredicateState : TypeInfo {
     open fun map(transform: (Predicate) -> Predicate): PredicateState = fmap { it.map(transform) }
     open fun mapNotNull(transform: (Predicate) -> Predicate?): PredicateState = fmap { it.mapNotNull(transform) }
     open fun filter(predicate: (Predicate) -> Boolean): PredicateState = fmap { it.filter(predicate) }
+    fun all(predicate: (Predicate) -> Boolean): Boolean = size == filter(predicate).size
+    fun any(predicate: (Predicate) -> Boolean): Boolean = filter(predicate).size > 0
     fun filterNot(predicate: (Predicate) -> Boolean) = filter { !predicate(it) }
     fun filterByType(type: PredicateType) = filter { it.type == type }
 
@@ -94,4 +104,8 @@ abstract class PredicateState : TypeInfo {
     abstract fun sliceOn(state: PredicateState): PredicateState?
 
     abstract fun simplify(): PredicateState
+
+    fun builder() = StateBuilder(this)
+    operator fun plus(state: PredicateState) = (builder() + state).apply()
+    operator fun plus(states: List<PredicateState>) = (builder() + states).apply()
 }

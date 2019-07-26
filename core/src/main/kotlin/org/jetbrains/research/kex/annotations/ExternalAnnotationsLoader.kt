@@ -18,7 +18,7 @@ class ExternalAnnotationsLoader : AnnotationsLoader {
             loadAnnotations(path.inputStream(), path.absolutePath)
         }
         if (path.isDirectory) {
-            for (file in path.listFiles()) {
+            for (file in path.listFiles()!!) {
                 scanSubTree(file)
             }
         }
@@ -28,15 +28,17 @@ class ExternalAnnotationsLoader : AnnotationsLoader {
         var current = root
         val names = name.split('/')
         for (word in names) {
-            val p = current.nodes.find { it.name == word }
-            if (p == null) {
-                if (!emplace)
-                    return null
-                val newPackage = PackageTreeNode(word, current)
-                current.nodes += newPackage
-                current= newPackage
-            } else
-                current = p
+            when (val p = current.nodes.find { it.name == word }) {
+                null -> when {
+                    !emplace -> return null
+                    else -> {
+                        val newPackage = PackageTreeNode(word, current)
+                        current.nodes += newPackage
+                        current = newPackage
+                    }
+                }
+                else -> current = p
+            }
         }
         return current
     }
@@ -59,45 +61,42 @@ class ExternalAnnotationsLoader : AnnotationsLoader {
                             params: List<String>): MutableAnnotatedCall {
         val node = emplacePackage(packageName)
         val call = node.entities.find {
-            if (it.name == callName && params.size == it.params.size) {
-                for (i in 0 until params.size)
-                    if (params[i] != it.params[i].type)
-                        return@find false
-                true
-            } else
-                false
-        }
-        return if (call == null) {
-            val type = if (node.name == callName) CallType.Constructor else CallType.Method
-            val callParams = MutableList(params.size) {
-                MutableAnnotatedParam(params[it])
+            when {
+                it.name == callName && params.size == it.params.size ->
+                    params.withIndex().all { (index, param) -> param == it.params[index].type }
+                else -> false
             }
-            val newCall = MutableAnnotatedCall(node, callName, type, returnType, callParams)
-            node.entities += newCall
-            newCall
-        } else
-            call
+        }
+        return when (call) {
+            null -> {
+                val type = if (node.name == callName) CallType.Constructor else CallType.Method
+                val callParams = MutableList(params.size) {
+                    MutableAnnotatedParam(params[it])
+                }
+                val newCall = MutableAnnotatedCall(node, callName, type, returnType, callParams)
+                node.entities += newCall
+                newCall
+            }
+            else -> call
+        }
     }
 
     private fun getExactCallPrivate(name: String, vararg params: String): MutableAnnotatedCall? {
         return getCallOverloadsPrivate(name).find {
-            if (params.size == it.params.size) {
-                for (i in 0 until params.size)
-                    if (params[i] != it.params[i].type)
-                        return@find false
-                true
-            } else
-            false
+            when {
+                params.size == it.params.size -> params.withIndex().all { (index, param) -> param == it.params[index].type }
+                else -> false
+            }
         }
     }
 
     override fun getExactCall(name: String, vararg params: String): AnnotatedCall? = getExactCallPrivate(name, *params)
 
     private fun parseParamTypes(paramsStr: String) =
-            if (paramsStr.isBlank())
-                emptyList()
-            else
-                paramsStr.split(',').map { transformTypeName(it.trim()) }
+            when {
+                paramsStr.isBlank() -> emptyList()
+                else -> paramsStr.split(',').map { transformTypeName(it.trim()) }
+            }
 
     private fun transformTypeName(name: String) = when (name) {
         "boolean" -> "bool"

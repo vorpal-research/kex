@@ -1,27 +1,69 @@
 package org.jetbrains.research.kex.asm.analysis
 
+import kotlinx.serialization.ContextualSerialization
+import kotlinx.serialization.ImplicitReflectionSerializer
+import kotlinx.serialization.Serializable
 import org.jetbrains.research.kex.asm.state.PredicateStateAnalysis
-import org.jetbrains.research.kex.asm.transform.LoopDeroller
 import org.jetbrains.research.kex.asm.transform.TraceInstrumenter
+import org.jetbrains.research.kex.asm.transform.originalBlock
+import org.jetbrains.research.kex.config.kexConfig
+import org.jetbrains.research.kex.random.Randomizer
 import org.jetbrains.research.kex.random.defaultRandomizer
+import org.jetbrains.research.kex.serialization.KexSerializer
 import org.jetbrains.research.kex.smt.Checker
 import org.jetbrains.research.kex.smt.Result
-import org.jetbrains.research.kex.smt.model.ModelRecoverer
+import org.jetbrains.research.kex.state.PredicateState
+import org.jetbrains.research.kex.state.transformer.executeModel
 import org.jetbrains.research.kex.trace.TraceManager
 import org.jetbrains.research.kex.trace.runner.SimpleRunner
-import org.jetbrains.research.kex.util.debug
-import org.jetbrains.research.kex.util.getClass
-import org.jetbrains.research.kex.util.log
-import org.jetbrains.research.kex.util.tryOrNull
+import org.jetbrains.research.kex.trace.runner.TimeoutException
+import org.jetbrains.research.kex.util.*
 import org.jetbrains.research.kfg.ClassManager
 import org.jetbrains.research.kfg.ir.BasicBlock
 import org.jetbrains.research.kfg.ir.Class
 import org.jetbrains.research.kfg.ir.Method
+import org.jetbrains.research.kfg.ir.value.instruction.CallInst
+import org.jetbrains.research.kfg.ir.value.instruction.FieldLoadInst
+import org.jetbrains.research.kfg.ir.value.instruction.FieldStoreInst
 import org.jetbrains.research.kfg.ir.value.instruction.Instruction
-import org.jetbrains.research.kfg.util.JarUtils
+import org.jetbrains.research.kfg.util.writeClass
 import org.jetbrains.research.kfg.visitor.MethodVisitor
 import java.io.File
 import java.net.URLClassLoader
+import java.nio.file.Files
+import java.nio.file.Paths
+
+private val failDir by lazy { kexConfig.getStringValue("debug", "dump-directory", "./fail") }
+
+class KexCheckerException(val inner: Exception, val reason: PredicateState) : Exception()
+
+@Serializable
+data class Failure(
+        @ContextualSerialization val `class`: Class,
+        @ContextualSerialization val method: Method,
+        val message: String,
+        val state: PredicateState
+)
+
+val Method.isImpactable: Boolean
+    get() {
+        when {
+            this.isAbstract -> return false
+            this.isStatic && this.argTypes.isEmpty() -> return false
+            this.argTypes.isEmpty() -> {
+                val thisVal = this.cm.value.getThis(this.`class`)
+                for (inst in this.flatten()) {
+                    when (inst) {
+                        is FieldLoadInst -> if (inst.hasOwner && inst.owner == thisVal) return true
+                        is FieldStoreInst -> if (inst.hasOwner && inst.owner == thisVal) return true
+                        is CallInst -> if (!inst.isStatic && inst.callee == thisVal) return true
+                    }
+                }
+                return false
+            }
+            else -> return true
+        }
+    }
 
 class MethodChecker(
         override val cm: ClassManager,
@@ -37,7 +79,28 @@ class MethodChecker(
             val method: Method,
             val loader: ClassLoader,
             val traces: List<Instruction>
-    )
+    ) {
+        private val oldClassPath = System.getProperty("java.class.path")
+        val random: Randomizer get() = defaultRandomizer
+
+        init {
+            /**
+             * This is fucked up, but it is needed so that randomizer can scan all the classes from
+             * @loader to be able to generate random instances of target classes
+             */
+            updateClassPath()
+        }
+
+        private fun updateClassPath() {
+            val urlLoader = loader as? URLClassLoader ?: unreachable { log.error("Unknown ClassLoader type in State") }
+            val urlClassPath = urlLoader.urLs.joinToString(separator = ":") { "${it.path}." }
+            System.setProperty("java.class.path", "$oldClassPath:$urlClassPath")
+        }
+
+        fun clearClassPath() {
+            System.setProperty("java.class.path", oldClassPath)
+        }
+    }
 
     private fun prepareMethodInfo(method: Method) {
         val originalClass = originalCM.getByName(method.`class`.fullname)
@@ -46,7 +109,7 @@ class MethodChecker(
 
         if (!method.isAbstract && !method.isConstructor) {
             val traceInstructions = TraceInstrumenter(originalCM).invoke(originalMethod)
-            JarUtils.writeClass(cm, loader, originalClass, classFileName)
+            writeClass(cm, loader, originalClass, classFileName)
             val directory = URLClassLoader(arrayOf(target.toURI().toURL()))
 
             state = State(originalClass, originalMethod, directory, traceInstructions)
@@ -59,28 +122,48 @@ class MethodChecker(
 
         state?.traces?.forEach { it.parent?.remove(it) }
 
-        JarUtils.writeClass(cm, loader, `class`, classFileName)
+        writeClass(cm, loader, `class`, classFileName)
+        state?.clearClassPath()
         state = null
     }
 
+    @ImplicitReflectionSerializer
     override fun visit(method: Method) {
         super.visit(method)
-        prepareMethodInfo(method)
 
+        if (method.`class`.isSynthetic) return
         if (method.isAbstract || method.isConstructor) return
-        // don't consider static parameters
-        if (method.isStatic && method.argTypes.isEmpty()) return
+        if (!method.isImpactable) return
 
-        log.debug(method)
+        log.debug("Checking method $method")
         log.debug(method.print())
         log.debug()
 
-        val blockMappings = LoopDeroller.blockMapping.getOrPut(method, ::mutableMapOf)
-        for (block in method.bodyBlocks.reversed()) {
-            val originalBlock = blockMappings[block] ?: block
+        prepareMethodInfo(method)
+
+        for (block in method.bodyBlocks) {
+            val originalBlock = block.originalBlock
             if (tm.isCovered(method, originalBlock)) continue
 
-            coverBlock(method, block)
+            try {
+                log.debug("Checking reachability of ${block.name}")
+                coverBlock(method, block)
+            } catch (e: TimeoutException) {
+                log.warn("Timeout exception when running method $method, skipping it")
+                break
+            } catch (e: KexCheckerException) {
+                log.error("Fail when covering block ${block.name} of $method")
+                log.error("Error: ${e.inner}")
+
+                val failDirPath = Paths.get(failDir)
+                if (!Files.exists(failDirPath)) {
+                    Files.createDirectory(failDirPath)
+                }
+                val errorDump = Files.createTempFile(failDirPath, "ps-", ".json").toFile()
+                log.error("Failing saved to file ${errorDump.path}")
+                errorDump.writeText(KexSerializer(cm).toJson(Failure(method.`class`, method, e.inner.toString(), e.reason)))
+                break
+            }
 
             log.debug("Block ${block.name} is covered = ${tm.isCovered(method, originalBlock)}")
             log.debug()
@@ -88,31 +171,43 @@ class MethodChecker(
         cleanup()
     }
 
+    @ImplicitReflectionSerializer
     private fun coverBlock(method: Method, block: BasicBlock) {
-        val checker = Checker(method, state!!.loader, psa)
+        val loader = state!!.loader
+        val random = state!!.random
+        val checker = Checker(method, loader, psa)
+        val ps = checker.createState(block.terminator) ?: return
 
-        log.debug("Checking reachability of ${block.terminator.print()}")
-        val result = checker.checkReachable(block.terminator)
-        log.debug(result)
+        try {
+            when (val result = checker.check(ps)) {
+                is Result.SatResult -> {
+                    val model = executeModel(checker.state, cm.type, method, result.model, loader, random)
+                    log.debug("Recovered: ${tryOrNull { model.toString() }}")
 
-        when (result) {
-            is Result.SatResult -> {
-                log.debug(result.model)
-                val model = ModelRecoverer(method, result.model, state!!.loader).apply()
-                log.debug("Recovered: ${tryOrNull { model.toString() }}")
-
-                tryOrNull {
                     val instance = model.instance ?: when {
                         method.isStatic -> null
-                        else -> defaultRandomizer.next(getClass(types.getRefType(method.`class`), state!!.loader))
+                        else -> tryOrNull {
+                            val klass = loader.loadClass(types.getRefType(method.`class`))
+                            random.next(klass)
+                        }
                     }
 
-                    val trace = SimpleRunner(method, state!!.loader).invoke(instance, model.arguments.toTypedArray())
+                    if (instance == null && !method.isStatic) {
+                        log.warn("Unable to create or generate instance of class ${method.`class`}")
+                        return
+                    }
+
+                    val trace = SimpleRunner(method, loader).invoke(instance, model.arguments.toTypedArray())
                     tm.addTrace(method, trace)
                 }
+                is Result.UnsatResult -> log.debug("Instruction ${block.terminator.print()} is unreachable")
+                is Result.UnknownResult -> log.debug("Can't decide on reachability of " +
+                        "instruction ${block.terminator.print()}, reason: ${result.reason}")
             }
-            is Result.UnsatResult -> log.debug("Instruction ${block.terminator.print()} is unreachable")
-            is Result.UnknownResult -> Unit
+        } catch (e: TimeoutException) {
+            throw e
+        } catch(e: Exception) {
+            throw KexCheckerException(e, ps)
         }
     }
 }

@@ -2,6 +2,7 @@ package org.jetbrains.research.kex.annotations
 
 import org.jetbrains.research.kex.asm.manager.MethodManager
 import org.jetbrains.research.kex.config.GlobalConfig
+import org.jetbrains.research.kex.config.kexConfig
 import org.jetbrains.research.kex.ktype.KexBool
 import org.jetbrains.research.kex.state.PredicateState
 import org.jetbrains.research.kex.state.predicate.CallPredicate
@@ -45,19 +46,20 @@ class Contract(val value: String = ""/*, pure: Boolean = false*/) : AnnotationIn
         if (value.isNotBlank()) {
             for (clause in value.split(';')) {
                 val (argsStr, result) = clause.split("->")
-                val args =
-                    if (argsStr.isBlank())
-                        emptyList()
-                    else
-                        argsStr.split(',').map { Constraints[it.trim()] }
+                val args = when {
+                    argsStr.isBlank() -> emptyList()
+                    else -> argsStr.split(',').map { Constraints[it.trim()] }
+                }
                 check(args.size == paramN) { "Parameters count ${args.size} in contract requires to be the " +
                         "same as in the call $paramN" }
                 val resultLiteral = result.trim()
-                records += if (resultLiteral.startsWith("param")) {
-                    val i = resultLiteral.substring(5).toInt()
-                    Record(args, Constraints.Param, i - 1)
-                } else
-                    Record(args, Constraints[resultLiteral])
+                records += when {
+                    resultLiteral.startsWith("param") -> {
+                        val i = resultLiteral.substring(5).toInt()
+                        Record(args, Constraints.Param, i - 1)
+                    }
+                    else -> Record(args, Constraints[resultLiteral])
+                }
             }
         }
         // Find errors
@@ -113,17 +115,17 @@ class Contract(val value: String = ""/*, pure: Boolean = false*/) : AnnotationIn
     override fun preciseAfterCall(predicate: CallPredicate): PredicateState? {
         val call = predicate.call as CallTerm
         val args = call.arguments
-        val returnTerm = predicate.getLhvUnsafe() ?: return null
+        val returnTerm = predicate.lhvUnsafe ?: return null
         val id = id.toString()
         var result: PredicateState = basic {  }
 
-        val inlineEnabled = GlobalConfig.getBooleanValue("smt", "ps-inlining", true)
+        val inlineEnabled = kexConfig.getBooleanValue("smt", "ps-inlining", true)
                 && MethodManager.InlineManager.isInlinable(call.method)
         // New statement insertion
         if (!inlineEnabled && records.any { it.result == Constraints.New }) {
             for ((i, record) in records.asSequence().withIndex().filter { it.value.result == Constraints.New }) {
                 val params = record.params
-                val argUnion = term { value(KexBool, "%contract$id.$i.args") }
+                val argUnion = term { value(KexBool(), "%contract$id.$i.args") }
                 result += basic {
                     var accumulator: Term = const(true)
                     for (j in 0 until params.size) {
@@ -170,7 +172,7 @@ class Contract(val value: String = ""/*, pure: Boolean = false*/) : AnnotationIn
         if (records.any { it.result in effects2 }) {
             for ((i, record) in records.asSequence().withIndex().filter { it.value.result in effects2 }) {
                 val params = record.params
-                val argUnion = term { value(KexBool, "%contract$id.$i.args") }
+                val argUnion = term { value(KexBool(), "%contract$id.$i.args") }
                 result += basic {
                     var accumulator: Term = const(true)
                     for (j in 0 until params.size) {

@@ -3,8 +3,8 @@ package org.jetbrains.research.kex
 import org.jetbrains.research.kex.asm.state.PredicateStateAnalysis
 import org.jetbrains.research.kex.asm.transform.LoopDeroller
 import org.jetbrains.research.kex.config.FileConfig
-import org.jetbrains.research.kex.config.GlobalConfig
 import org.jetbrains.research.kex.config.RuntimeConfig
+import org.jetbrains.research.kex.config.kexConfig
 import org.jetbrains.research.kex.smt.Checker
 import org.jetbrains.research.kex.smt.Result
 import org.jetbrains.research.kex.state.term.ConstBoolTerm
@@ -36,17 +36,19 @@ abstract class KexTest {
 
     init {
         val rootDir = System.getProperty("root.dir")
-        GlobalConfig.initialize(RuntimeConfig, FileConfig("$rootDir/kex-test.ini"))
+        val version = System.getProperty("project.version")
+        kexConfig.initialize(RuntimeConfig, FileConfig("$rootDir/kex-test.ini"))
         RuntimeConfig.setValue("z3", "tacticsFile", "$rootDir/z3.tactics")
+        RuntimeConfig.setValue("z3", "paramFile", "$rootDir/z3.params")
 
-        val jarPath = "$rootDir/kex-test/target/kex-test-0.1-jar-with-dependencies.jar"
+        val jarPath = "$rootDir/kex-test/target/kex-test-$version-jar-with-dependencies.jar"
         val jarFile = JarFile(jarPath)
         loader = jarFile.classLoader
         val `package` = Package("$packageName/*")
         cm = ClassManager(jarFile, `package`, Flags.readAll)
     }
 
-    private fun getPSA(method: Method): PredicateStateAnalysis {
+    protected fun getPSA(method: Method): PredicateStateAnalysis {
         val loops = LoopAnalysis(cm).invoke(method)
         if (loops.isNotEmpty()) {
             LoopSimplifier(cm).visit(method)
@@ -58,7 +60,7 @@ abstract class KexTest {
         return psa
     }
 
-    private fun getReachables(method: Method): List<Instruction> {
+    protected fun getReachables(method: Method): List<Instruction> {
         val `class` = Intrinsics::class.qualifiedName!!.replace(".", "/")
         val intrinsics = cm.getByName(`class`)
 
@@ -72,7 +74,7 @@ abstract class KexTest {
                 .toList()
     }
 
-    private fun getUnreachables(method: Method): List<Instruction> {
+    protected fun getUnreachables(method: Method): List<Instruction> {
         val `class` = Intrinsics::class.qualifiedName!!.replace(".", "/")
         val intrinsics = cm.getByName(`class`)
 
@@ -85,16 +87,8 @@ abstract class KexTest {
                 .toList()
     }
 
-    fun testMistakes(method: Method) {
-        val psa = getPSA(method)
-        val checker = Checker(method, loader, psa)
-        for (result in checker.findMistakes()) {
-            assertTrue(result.result is Result.SatResult, "this call is not reachable")
-        }
-    }
-
     fun testClassReachability(`class`: Class) {
-        `class`.methods.forEach { _, method ->
+        `class`.methods.forEach { (_, method) ->
             log.debug("Checking method $method")
             log.debug(method.print())
 
@@ -114,7 +108,7 @@ abstract class KexTest {
                         .map { it.value }
                         .toList()
 
-                val model = (result as Result.SatResult).model
+                val model = result.model
                 log.debug("Acquired model: $model")
                 log.debug("Checked assertions: $assertions")
                 for (it in assertions) {

@@ -9,10 +9,9 @@ class TestParser {
     fun test1() {
         val extra = ExternalAnnotationsLoader()
         extra.loadFrom(TestParser::class.java.getResource("annotations.1.xml"))
-        print("Parser Test Tree$extra")
         val call = extra.getExactCall("java/io/Reader.read", "char[]", "int", "int")
         assertNotNull(call, "call \"java/io/Reader.read\" not loaded")
-        assertEquals(1, call!!.annotations.size, "1 annotation for this method expected")
+        assertEquals(1, call.annotations.size, "1 annotation for this method expected")
         val callAnnotation = call.annotations.first()
         assertEquals("org.jetbrains.annotations.Range", callAnnotation.name)
         val rangeAnnotation = callAnnotation as Range
@@ -25,7 +24,7 @@ class TestParser {
         assertEquals(0, call.params[1].annotations.size)
         val callInit = extra.getExactCall("java/io/File.<init>", "java/lang/String")
         assertNotNull(callInit)
-        assertEquals(emptyList(), callInit!!.annotations)
+        assertEquals(emptyList(), callInit.annotations)
         assertEquals("java/io/File", callInit.returnType)
         assertEquals(1, callInit.params.size)
         assertEquals(1, callInit.params[0].annotations.size)

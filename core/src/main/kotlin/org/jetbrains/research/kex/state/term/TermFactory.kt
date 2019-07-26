@@ -21,6 +21,7 @@ object TermFactory {
         is BoolConstant -> getBool(const)
         is ByteConstant -> getByte(const)
         is ShortConstant -> getShort(const)
+        is CharConstant -> getChar(const)
         is IntConstant -> getInt(const)
         is LongConstant -> getLong(const)
         is FloatConstant -> getFloat(const)
@@ -28,7 +29,7 @@ object TermFactory {
         is StringConstant -> getString(const)
         is NullConstant -> getNull()
         is ClassConstant -> getClass(const)
-        else -> unreachable { log.error("Unknown constant type: $const") }
+        else -> unreachable { log.error("Unknown constant type: $const of type ${const::class}") }
     }
 
     fun <T : Number> getConstant(number: T) = when (number) {
@@ -49,6 +50,8 @@ object TermFactory {
     fun getByte(const: ByteConstant) = getByte(const.value)
     fun getShort(value: Short) = ConstShortTerm(value)
     fun getShort(const: ShortConstant) = getShort(const.value)
+    fun getChar(value: Char) = ConstCharTerm(value)
+    fun getChar(const: CharConstant) = getChar(const.value)
     fun getInt(value: Int) = ConstIntTerm(value)
     fun getInt(const: IntConstant) = getInt(const.value)
     fun getLong(value: Long) = ConstLongTerm(value)
@@ -63,8 +66,6 @@ object TermFactory {
     fun getNull() = NullTerm()
     fun getClass(`class`: Class) = getClass(KexClass(`class`.fullname), `class`)
     fun getClass(type: KexType, `class`: Class) = ConstClassTerm(type, `class`)
-//    fun getClass(type: KexType) = ConstClassTerm(type,
-//            (type as? KexClass)?.`class` ?: unreachable { log.debug("Non-ref type of class constant") })
 
     fun getClass(const: ClassConstant) = ConstClassTerm(const.type.kexType,
             (const.type as? ClassType)?.`class` ?: unreachable { log.debug("Non-ref type of class constant") })
@@ -74,7 +75,7 @@ object TermFactory {
         UnaryOpcode.LENGTH -> getArrayLength(operand)
     }
 
-    fun getArrayLength(arrayRef: Term) = getArrayLength(KexInt, arrayRef)
+    fun getArrayLength(arrayRef: Term) = getArrayLength(KexInt(), arrayRef)
     fun getArrayLength(type: KexType, arrayRef: Term) = ArrayLengthTerm(type, arrayRef)
 
     fun getArrayIndex(arrayRef: Term, index: Term): Term {
@@ -105,7 +106,7 @@ object TermFactory {
 
     fun getBinary(type: KexType, opcode: BinaryOpcode, lhv: Term, rhv: Term) = BinaryTerm(type, opcode, lhv, rhv)
 
-    fun getBound(ptr: Term) = getBound(KexInt, ptr)
+    fun getBound(ptr: Term) = getBound(KexInt(), ptr)
     fun getBound(type: KexType, ptr: Term) = BoundTerm(type, ptr)
 
     fun getCall(method: Method, arguments: List<Term>) = getCall(method.returnType.kexType, method, arguments)
@@ -121,9 +122,9 @@ object TermFactory {
     fun getCast(type: KexType, operand: Term) = CastTerm(type, operand)
     fun getCmp(opcode: CmpOpcode, lhv: Term, rhv: Term): Term {
         val resType = when (opcode) {
-            is CmpOpcode.Cmpg -> KexInt
-            is CmpOpcode.Cmpl -> KexInt
-            else -> KexBool
+            is CmpOpcode.Cmpg -> KexInt()
+            is CmpOpcode.Cmpl -> KexInt()
+            else -> KexBool()
         }
         return getCmp(resType, opcode, lhv, rhv)
     }

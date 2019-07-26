@@ -2,7 +2,8 @@ package org.jetbrains.research.kex.smt
 
 import org.jetbrains.research.kex.annotations.AnnotationManager
 import org.jetbrains.research.kex.asm.state.PredicateStateAnalysis
-import org.jetbrains.research.kex.config.GlobalConfig
+import org.jetbrains.research.kex.config.kexConfig
+import org.jetbrains.research.kex.state.PredicateState
 import org.jetbrains.research.kex.state.predicate.PredicateType
 import org.jetbrains.research.kex.state.term.ArgumentTerm
 import org.jetbrains.research.kex.state.term.FieldTerm
@@ -11,32 +12,38 @@ import org.jetbrains.research.kex.state.term.ValueTerm
 import org.jetbrains.research.kex.state.transformer.*
 import org.jetbrains.research.kex.util.log
 import org.jetbrains.research.kfg.ir.Method
-import org.jetbrains.research.kfg.ir.value.instruction.CallInst
 import org.jetbrains.research.kfg.ir.value.instruction.Instruction
 
 
 class Checker(val method: Method, val loader: ClassLoader, private val psa: PredicateStateAnalysis) {
-    private val isInliningEnabled = GlobalConfig.getBooleanValue("smt", "ps-inlining", true)
-    private val isMemspacingEnabled = GlobalConfig.getBooleanValue("smt", "memspacing", true)
-    private val isSlicingEnabled = GlobalConfig.getBooleanValue("smt", "slicing", false)
-    private val logQuery = GlobalConfig.getBooleanValue("smt", "logQuery", false)
-    private val annotationsEnabled = GlobalConfig.getBooleanValue("annotations", "enabled", false)
+    private val isInliningEnabled = kexConfig.getBooleanValue("smt", "ps-inlining", true)
+    private val isMemspacingEnabled = kexConfig.getBooleanValue("smt", "memspacing", true)
+    private val isSlicingEnabled = kexConfig.getBooleanValue("smt", "slicing", false)
+    private val logQuery = kexConfig.getBooleanValue("smt", "logQuery", false)
+    private val annotationsEnabled = kexConfig.getBooleanValue("annotations", "enabled", false)
 
     private val builder = psa.builder(method)
+    lateinit var state: PredicateState
+    lateinit var query: PredicateState
+
+    fun createState(inst: Instruction) = builder.getInstructionState(inst)
 
     fun checkReachable(inst: Instruction): Result {
         log.debug("Checking reachability of ${inst.print()}")
 
-        var state = builder.getInstructionState(inst)
-                ?: return Result.UnknownResult("Can't get state for instruction ${inst.print()}, maybe it's unreachable")
+        val state = createState(inst)
+                ?: return Result.UnknownResult("Can't get state for instruction ${inst.print()}")
+        return check(state)
+    }
 
+    fun check(ps: PredicateState): Result {
+        state = ps
         if (logQuery) log.debug("State: $state")
 
         if (annotationsEnabled) {
-            log.debug("Precise with annotations started...")
+            log.debug("Annotation insertion started...")
             state = AnnotationIncluder(AnnotationManager.defaultLoader).apply(state)
-            log.debug("Precise with annotations finished")
-            if (logQuery) log.debug("Annotated State: $state")
+            log.debug("Annotation insertion finished")
         }
 
         if (isInliningEnabled) {
@@ -46,31 +53,32 @@ class Checker(val method: Method, val loader: ClassLoader, private val psa: Pred
         }
 
         state = IntrinsicAdapter.apply(state)
-        state = TypeInfoAdapter(method, loader).apply(state)
-        state = Optimizer.transform(state).simplify()
-        state = ConstantPropagator.apply(state).simplify()
-        state = BoolTypeAdapter(method.cm.type).apply(state).simplify()
+        state = ReflectionInfoAdapter(method, loader).apply(state)
+        state = Optimizer().apply(state)
+        state = ConstantPropagator.apply(state)
+        state = BoolTypeAdapter(method.cm.type).apply(state)
+        state = ArrayBoundsAdapter().apply(state)
 
         if (isMemspacingEnabled) {
             log.debug("Memspacing started...")
-            state = MemorySpacer(state).apply(state).simplify()
+            state = MemorySpacer(state).apply(state)
             log.debug("Memspacing finished")
         }
 
-        var query = state.filterByType(PredicateType.Path()).simplify()
+        query = state.filterByType(PredicateType.Path())
 
         if (isSlicingEnabled) {
             log.debug("Slicing started...")
 
-            val variables = VariableCollector(state)
+            val variables = collectVariables(state)
             val slicingTerms = run {
                 val `this` = variables.find { it is ValueTerm && it.name == "this" }
 
                 val results = hashSetOf<Term>()
                 if (`this` != null) results += `this`
 
-                results += variables.asSequence().filter { it is ArgumentTerm }
-                results += variables.asSequence().filter { it is FieldTerm && it.owner == `this` }
+                results += variables.filterIsInstance<ArgumentTerm>()
+                results += variables.filter { it is FieldTerm && it.owner == `this` }
                 results += TermCollector.getFullTermSet(query)
                 results
             }
@@ -83,23 +91,17 @@ class Checker(val method: Method, val loader: ClassLoader, private val psa: Pred
             log.debug("Slicing finished")
         }
 
-        state = Optimizer.apply(state)
-        query = Optimizer.apply(query).simplify()
+        state = Optimizer().apply(state)
+        query = Optimizer().apply(query)
         if (logQuery) {
             log.debug("Simplified state: $state")
             log.debug("Path: $query")
         }
 
-        val result = SMTProxySolver(method.cm.type).isPathPossible(state, query)
+        val solver = SMTProxySolver(method.cm.type)
+        val result = solver.isPathPossible(state, query)
+        solver.cleanup()
         log.debug("Acquired $result")
         return result
     }
-
-    fun findMistakes(excludeMethods: Collection<Method> = emptySet(),
-                     excludeCalls: Collection<CallInst> = emptySet()): List<MistakeInfo> =
-        method.asSequence()
-              .flatten()
-              .mapNotNull { it as? CallInst }
-              .filter { it.method !in excludeMethods && it !in excludeCalls }
-              .map { MistakeInfo(checkReachable(it), it) }.toList()
 }

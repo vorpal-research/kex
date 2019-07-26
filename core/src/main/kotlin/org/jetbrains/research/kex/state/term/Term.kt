@@ -1,5 +1,6 @@
 package org.jetbrains.research.kex.state.term
 
+import kotlinx.serialization.Serializable
 import org.jetbrains.research.kex.ktype.KexType
 import org.jetbrains.research.kex.state.BaseType
 import org.jetbrains.research.kex.state.InheritanceInfo
@@ -8,7 +9,12 @@ import org.jetbrains.research.kex.state.transformer.Transformer
 import org.jetbrains.research.kex.util.defaultHashCode
 
 @BaseType("Term")
-abstract class Term(val name: String, val type: KexType, val subterms: List<Term>) : TypeInfo {
+@Serializable
+abstract class Term : TypeInfo {
+    abstract val name: String
+    abstract val subterms: List<Term>
+    abstract val type: KexType
+
     companion object {
 
         val terms = run {
@@ -25,10 +31,9 @@ abstract class Term(val name: String, val type: KexType, val subterms: List<Term
         val reverse = terms.map { it.value to it.key }.toMap()
     }
 
-    abstract fun print(): String
     abstract fun <T : Transformer<T>> accept(t: Transformer<T>): Term
 
-    override fun toString() = print()
+    override fun toString() = name
     override fun hashCode() = defaultHashCode(name, type, subterms)
     override fun equals(other: Any?): Boolean {
         if (this === other) return true

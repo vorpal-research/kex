@@ -1,0 +1,91 @@
+package org.jetbrains.research.kex.state.transformer
+
+import org.jetbrains.research.kex.smt.model.SMTModel
+import org.jetbrains.research.kex.state.BasicState
+import org.jetbrains.research.kex.state.ChoiceState
+import org.jetbrains.research.kex.state.PredicateState
+import org.jetbrains.research.kex.state.predicate.DefaultSwitchPredicate
+import org.jetbrains.research.kex.state.predicate.EqualityPredicate
+import org.jetbrains.research.kex.state.predicate.InequalityPredicate
+import org.jetbrains.research.kex.state.predicate.Predicate
+import org.jetbrains.research.kex.state.term.ConstBoolTerm
+import org.jetbrains.research.kex.state.term.ConstIntTerm
+import org.jetbrains.research.kex.state.term.ConstLongTerm
+import org.jetbrains.research.kex.util.log
+import org.jetbrains.research.kex.util.unreachable
+
+class PathChecker(val model: SMTModel) : Transformer<PathChecker> {
+    var satisfied = true
+        private set
+
+    override fun transformBasic(ps: BasicState): PredicateState {
+        satisfied = ps.fold(satisfied) {acc, predicate -> acc && checkPredicate(predicate) }
+        return super.transformBasic(ps)
+    }
+
+    override fun transformChoice(ps: ChoiceState): PredicateState {
+        val currentSatisfied = satisfied
+        val choiceSatisfactions = mutableListOf<Boolean>()
+        for (choice in ps) {
+            super.transformBase(choice)
+            choiceSatisfactions += satisfied
+            satisfied = currentSatisfied
+        }
+        satisfied = currentSatisfied && choiceSatisfactions.reduce { acc, b -> acc || b }
+        return super.transformChoice(ps)
+    }
+
+    private fun checkPredicate(path: Predicate): Boolean = when (path) {
+        is EqualityPredicate -> {
+            val lhv = path.lhv
+            val rhv = path.rhv
+            val lhvValue = when (val value = model.assignments[lhv]) {
+                is ConstBoolTerm -> value.value
+                is ConstIntTerm -> value.value
+                is ConstLongTerm -> value.value
+                else -> unreachable { log.error("Unexpected constant in path $value") }
+            }
+            val rhvValue = when (rhv) {
+                is ConstBoolTerm -> rhv.value
+                is ConstIntTerm -> rhv.value
+                is ConstLongTerm -> rhv.value
+                else -> unreachable { log.error("Unexpected constant in path $rhv") }
+            }
+            lhvValue == rhvValue
+        }
+        is InequalityPredicate -> {
+            val lhv = path.lhv
+            val rhv = path.rhv
+            val lhvValue = when (val value = model.assignments[lhv]) {
+                is ConstBoolTerm -> value.value
+                is ConstIntTerm -> value.value
+                is ConstLongTerm -> value.value
+                else -> unreachable { log.error("Unexpected constant in path $value") }
+            }
+            val rhvValue = when (rhv) {
+                is ConstBoolTerm -> rhv.value
+                is ConstIntTerm -> rhv.value
+                is ConstLongTerm -> rhv.value
+                else -> unreachable { log.error("Unexpected constant in path $rhv") }
+            }
+            lhvValue != rhvValue
+        }
+        is DefaultSwitchPredicate -> {
+            val lhv = path.cond
+            val conditions = path.cases
+            val lhvValue =  when (val value = model.assignments[lhv]) {
+                is ConstIntTerm -> value.value
+                else -> unreachable { log.error("Unexpected constant in path $value") }
+            }
+            val condValues = conditions.map { (it as ConstIntTerm).value }
+            lhvValue !in condValues
+        }
+        else -> unreachable { log.error("Unexpected predicate in path: $path") }
+    }
+}
+
+fun checkPath(model: SMTModel, path: PredicateState): Boolean {
+    val pc = PathChecker(model)
+    pc.apply(path)
+    return pc.satisfied
+}

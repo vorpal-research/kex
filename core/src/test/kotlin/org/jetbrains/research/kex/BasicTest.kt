@@ -17,9 +17,4 @@ class BasicTest : KexTest() {
         RuntimeConfig.setValue("smt", "slicing", oldSlicingConfig)
     }
 
-    @Test
-    fun testIcfpc2018() {
-        val `class` = cm.getByName("$packageName/Icfpc2018Test")
-        testClassReachability(`class`)
-    }
 }

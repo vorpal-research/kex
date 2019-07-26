@@ -16,13 +16,18 @@ import org.jetbrains.research.kfg.type.ArrayType
 import org.jetbrains.research.kfg.type.Reference
 import org.jetbrains.research.kfg.type.Type
 import java.util.*
+import kotlin.reflect.KClass
 import kotlin.reflect.KFunction
+import kotlin.reflect.KMutableProperty
 import kotlin.reflect.KType
+import kotlin.reflect.full.declaredMemberExtensionFunctions
+import kotlin.reflect.full.declaredMemberExtensionProperties
 import kotlin.reflect.full.declaredMemberFunctions
 import kotlin.reflect.full.declaredMemberProperties
+import kotlin.reflect.jvm.javaMethod
 import kotlin.reflect.jvm.jvmErasure
 
-class TypeInfoAdapter(val method: Method, val loader: ClassLoader) : RecollectingTransformer<TypeInfoAdapter> {
+class ReflectionInfoAdapter(val method: Method, val loader: ClassLoader) : RecollectingTransformer<ReflectionInfoAdapter> {
     val cm get() = method.cm
     val types get() = method.cm.type
 
@@ -52,13 +57,11 @@ class TypeInfoAdapter(val method: Method, val loader: ClassLoader) : Recollectin
         else -> false
     }
 
-    private fun trimClassName(name: String): String {
+    private fun trimClassName(name: String) = buildString {
         val actualName = name.split(" ").last()
         val filtered = actualName.dropWhile { it == '[' }.removeSuffix(";")
-        val result = StringBuilder()
-        result.append(actualName.takeWhile { it == '[' })
-        result.append(filtered.dropWhile { it == 'L' })
-        return "$result"
+        append(actualName.takeWhile { it == '[' })
+        append(filtered.dropWhile { it == 'L' })
     }
 
     private val Type.trimmedName
@@ -68,26 +71,52 @@ class TypeInfoAdapter(val method: Method, val loader: ClassLoader) : Recollectin
         }
     private val Class<*>.trimmedName get() = trimClassName(this.toString())
 
-    private fun KFunction<*>.eq(method: Method): Boolean {
+    private infix fun KFunction<*>.eq(method: Method): Boolean {
         val parameters = this.parameters.drop(method.isAbstract.not().toInt())
 
-        return this.name == method.name
-                && parameters.zip(method.argTypes).fold(true) { acc, pair ->
+        val name = tryOrNull { this.javaMethod?.name } ?: this.name
+        return name == method.name && parameters.zip(method.argTypes).fold(true) { acc, pair ->
             val type = tryOrNull { pair.first.type.jvmErasure.java }
             acc && type?.trimmedName == pair.second.trimmedName
         }
     }
 
-    private fun getKClass(type: KexType) = getClass(type.getKfgType(types), loader).kotlin
+    private val KClass<*>.allFunctions get() = tryOrNull {
+        declaredMemberFunctions +
+                declaredMemberExtensionFunctions +
+                declaredMemberProperties.map { it.getter } +
+                declaredMemberExtensionProperties.map { it.getter } +
+                declaredMemberProperties.filterIsInstance<KMutableProperty<*>>().map { it.setter } +
+                declaredMemberExtensionProperties.filterIsInstance<KMutableProperty<*>>().map { it.setter }
+    } ?: listOf()
 
-    private fun getKFunction(method: Method) =
-            tryOrNull { getKClass(KexClass(method.`class`.fullname)).declaredMemberFunctions }?.find { it.eq(method) }
+    private fun KClass<*>.find(method: Method) = allFunctions.find { it eq method }
+
+    private fun getKClass(type: KexType) = loader.loadClass(type.getKfgType(types)).kotlin
+
+    private fun getKFunction(method: Method): KFunction<*>? {
+        val queue = ArrayDeque<KClass<*>>()
+        tryOrNull { getKClass(KexClass(method.`class`.fullname)) }?.apply {
+            queue.add(this)
+        }
+        while (queue.isNotEmpty()) {
+            val klass = queue.poll()
+            when (val kFunction = klass.find(method)) {
+                null -> {
+                    val supertypes = tryOrNull { klass.supertypes } ?: listOf()
+                    queue.addAll(supertypes.map { it.classifier }.filterIsInstance<KClass<*>>())
+                }
+                else -> return kFunction
+            }
+        }
+        return null
+    }
 
     private fun getKProperty(field: Field) =
             tryOrNull { getKClass(KexClass(field.`class`.fullname)).declaredMemberProperties }?.find { it.name == field.name }
 
     override fun apply(ps: PredicateState): PredicateState {
-        val (`this`, arguments) = ArgumentCollector(ps)
+        val (`this`, arguments) = collectArguments(ps)
         val `null` = tf.getNull()
 
         if (`this` != null) {
@@ -134,7 +163,7 @@ class TypeInfoAdapter(val method: Method, val loader: ClassLoader) : Recollectin
             currentBuilder += pf.getEquality(it, tf.getUndef(it.type), PredicateType.Assume())
         }
 
-        return Transformer.Stub
+        return nothing()
     }
 
     override fun transformEqualityPredicate(predicate: EqualityPredicate): Predicate {
@@ -156,7 +185,7 @@ class TypeInfoAdapter(val method: Method, val loader: ClassLoader) : Recollectin
         val field = (predicate.rhv as FieldLoadTerm).field as FieldTerm
         val fieldType = (field.type as KexReference).reference
         val kfgClass = cm.getByName(field.getClass())
-        val actualField = kfgClass.getField((field.fieldName as ConstStringTerm).name, fieldType.getKfgType(types))
+        val actualField = kfgClass.getField((field.fieldName as ConstStringTerm).value, fieldType.getKfgType(types))
 
         val prop = getKProperty(actualField)
         val returnType = tryOrNull { prop?.getter?.returnType }

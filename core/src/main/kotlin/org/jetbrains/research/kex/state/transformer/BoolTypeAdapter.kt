@@ -19,8 +19,8 @@ class BoolTypeAdapter(val types: TypeFactory) : Transformer<BoolTypeAdapter> {
         val type = predicate.type
         val loc = predicate.location
         return when {
-            lhv.type === KexBool && rhv.type === KexInt -> pf.getEquality(lhv, tf.getCast(KexBool, rhv), type, loc)
-            lhv.type === KexInt && rhv.type === KexBool -> pf.getEquality(lhv, tf.getCast(KexInt, rhv), type, loc)
+            lhv.type is KexBool && rhv.type is KexInt -> pf.getEquality(lhv, tf.getCast(KexBool(), rhv), type, loc)
+            lhv.type is KexInt && rhv.type is KexBool -> pf.getEquality(lhv, tf.getCast(KexInt(), rhv), type, loc)
             else -> predicate
         }
     }
@@ -33,17 +33,17 @@ class BoolTypeAdapter(val types: TypeFactory) : Transformer<BoolTypeAdapter> {
             else -> false
         }
         return when {
-            term.lhv.type === term.rhv.type -> term
+            term.lhv.type == term.rhv.type -> term
             isBooleanOpcode -> {
                 val lhv = when {
-                    term.lhv.type === KexBool -> tf.getCast(KexInt, term.lhv)
-                    term.lhv.type === KexInt -> term.lhv
-                    else -> unreachable { log.error("Non-boolean term in boolean binary: ${term.print()}") }
+                    term.lhv.type is KexBool -> tf.getCast(KexInt(), term.lhv)
+                    term.lhv.type is KexInt -> term.lhv
+                    else -> unreachable { log.error("Non-boolean term in boolean binary: $term") }
                 }
                 val rhv = when {
-                    term.rhv.type === KexBool -> tf.getCast(KexInt, term.rhv)
-                    term.rhv.type === KexInt -> term.rhv
-                    else -> unreachable { log.error("Non-boolean term in boolean binary: ${term.print()}") }
+                    term.rhv.type is KexBool -> tf.getCast(KexInt(), term.rhv)
+                    term.rhv.type is KexInt -> term.rhv
+                    else -> unreachable { log.error("Non-boolean term in boolean binary: $term") }
                 }
                 val newType = mergeTypes(types, lhv.type, rhv.type)
                 tf.getBinary(newType, term.opcode, lhv, rhv)

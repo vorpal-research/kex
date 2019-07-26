@@ -1,8 +1,7 @@
 package org.jetbrains.research.kex.asm.state
 
-import org.jetbrains.research.kex.state.BasicState
 import org.jetbrains.research.kex.state.PredicateState
-import org.jetbrains.research.kex.state.StateBuilder
+import org.jetbrains.research.kex.state.emptyState
 import org.jetbrains.research.kfg.ir.BasicBlock
 import org.jetbrains.research.kfg.ir.Method
 import org.jetbrains.research.kfg.ir.value.instruction.Instruction
@@ -18,7 +17,6 @@ class InvalidPredicateStateError(msg: String) : Exception(msg)
 class PredicateStateBuilder(val method: Method) {
     private val blockStates = hashMapOf<BasicBlock, PredicateState>()
     private val instructionStates = hashMapOf<Instruction, PredicateState>()
-    private val initialState = BasicState()
 
     private val order = arrayListOf<BasicBlock>()
     private val domTree = DominatorTree<BasicBlock>()
@@ -28,10 +26,9 @@ class PredicateStateBuilder(val method: Method) {
         predicateBuilder.visit(method)
         if (!method.isAbstract) {
             val (order, cycled) = TopologicalSorter(method.basicBlocks.toSet()).sort(method.entry)
-            domTree.putAll(DominatorTreeBuilder(method.basicBlocks.toSet()).build())
-
             if (cycled.isNotEmpty()) throw NoTopologicalSortingError("$method")
 
+            domTree.putAll(DominatorTreeBuilder(method.basicBlocks.toSet()).build())
             this.order.addAll(order.reversed())
         }
     }
@@ -67,7 +64,7 @@ class PredicateStateBuilder(val method: Method) {
         for (inst in bb) {
             val predicate = predicateBuilder.predicateMap[inst]
             val instState = when {
-                predicate != null -> (StateBuilder(inState) + predicate).apply()
+                predicate != null -> (inState.builder() + predicate).apply()
                 else -> inState
             }
             instructionStates[inst] = instState
@@ -81,13 +78,13 @@ class PredicateStateBuilder(val method: Method) {
     private fun getBlockEntryState(bb: BasicBlock): PredicateState? {
         if (bb in method.catchBlocks) throw InvalidPredicateStateError("Cannot build predicate state for catch block")
 
-        val idom = domTree.getIdom(bb) ?: return initialState
+        val idom = domTree[bb]?.idom ?: return emptyState()
 
         val base = blockStates[idom.value] ?: return null
         val choices = mutableListOf<PredicateState>()
 
         for (predecessor in bb.predecessors) {
-            val predState = StateBuilder(blockStates[predecessor] ?: continue)
+            val predState = blockStates[predecessor]?.builder() ?: continue
 
             val terminatorPredicate = predicateBuilder.terminatorPredicateMap[bb to predecessor.terminator]
             if (terminatorPredicate != null) predState += terminatorPredicate
@@ -103,8 +100,8 @@ class PredicateStateBuilder(val method: Method) {
 
         return when {
             choices.isEmpty() -> null
-            choices.size == 1 -> (StateBuilder(base) + choices.first()).apply()
-            else -> (StateBuilder(base) + choices).apply()
+            choices.size == 1 -> base + choices.first()
+            else -> base + choices
         }
     }
 }

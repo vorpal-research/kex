@@ -1,19 +1,19 @@
 package org.jetbrains.research.kex.state
 
+import kotlinx.serialization.Serializable
 import org.jetbrains.research.kex.state.predicate.Predicate
 import org.jetbrains.research.kex.util.defaultHashCode
 
 @InheritorOf("State")
+@Serializable
 class ChainState(val base: PredicateState, val curr: PredicateState) : PredicateState() {
     override val size: Int
         get() = base.size + curr.size
 
-    override fun print(): String {
-        val sb = StringBuilder()
-        sb.append(base.print())
-        sb.append(" -> ")
-        sb.append(curr.print())
-        return sb.toString()
+    override fun print() = buildString {
+        append(base.print())
+        append(" -> ")
+        append(curr.print())
     }
 
     override fun fmap(transform: (PredicateState) -> PredicateState) = ChainState(transform(base), transform(curr))
@@ -42,10 +42,10 @@ class ChainState(val base: PredicateState, val curr: PredicateState) : Predicate
         val sbase = base.simplify()
         val scurr = curr.simplify()
         return when {
-            sbase.isNotEmpty && scurr.isNotEmpty -> (StateBuilder(sbase) + scurr).apply()
+            sbase.isNotEmpty && scurr.isNotEmpty -> (sbase.builder() + scurr).apply()
             sbase.isNotEmpty -> sbase
             scurr.isNotEmpty -> scurr
-            else -> StateBuilder().apply()
+            else -> emptyState()
         }
     }
 }
