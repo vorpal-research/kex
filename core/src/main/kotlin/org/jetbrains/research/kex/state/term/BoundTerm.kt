@@ -1,15 +1,15 @@
 package org.jetbrains.research.kex.state.term
 
+import kotlinx.serialization.Serializable
 import org.jetbrains.research.kex.ktype.KexType
 import org.jetbrains.research.kex.state.InheritorOf
 import org.jetbrains.research.kex.state.transformer.Transformer
 
 @InheritorOf("Term")
-class BoundTerm(type: KexType, ptr: Term) : Term("bound($ptr)", type, arrayListOf(ptr)) {
-    val ptr: Term
-        get() = subterms[0]
-
-    override fun print() = name
+@Serializable
+class BoundTerm(override val type: KexType, val ptr: Term) : Term() {
+    override val name = "bound($ptr)"
+    override val subterms by lazy { listOf(ptr) }
 
     override fun <T : Transformer<T>> accept(t: Transformer<T>): Term {
         val nptr = t.transform(ptr)

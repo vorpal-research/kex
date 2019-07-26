@@ -28,6 +28,27 @@ class BasicTests {
         return res
     }
 
+    fun testWhen(a: Char): Int {
+        val y = when (a) {
+            'a' -> 5
+            'b' -> 4
+            'c' -> 3
+            'd' -> 2
+            'f' -> 1
+            else -> {
+                println("You suck")
+                -1
+            }
+        }
+        if (y == 10) {
+            Intrinsics.assertUnreachable()
+        }
+        if (y in 1..5) {
+            Intrinsics.assertReachable()
+        }
+        return y
+    }
+
     fun testLoop(a: Int, b: Int): Int {
         var x = a - b
         while (x < a) {
@@ -75,7 +96,7 @@ class BasicTests {
                 arrayOf(5, 6, 7, 8, 9),
                 arrayOf(10, 11, 12, 13, 14)
         )
-        if (array[4][4] > 10) {
+        if (array[2][4] > 10) {
             Intrinsics.assertReachable()
         }
         if (array.size > 2) {
@@ -83,6 +104,18 @@ class BasicTests {
         }
         if (array[0].size > 4) {
             Intrinsics.assertReachable()
+        }
+        return array.flatten().reduce { a, b -> a + b}
+    }
+
+    fun testUnreachableArray(): Int {
+        val array = arrayOf(
+                arrayOf(0, 1, 2, 3, 4),
+                arrayOf(5, 6, 7, 8, 9),
+                arrayOf(10, 11, 12, 13, 14)
+        )
+        if (array[4][4] > 10) {
+            Intrinsics.assertUnreachable()
         }
         return array.flatten().reduce { a, b -> a + b}
     }
@@ -104,4 +137,8 @@ class BasicTests {
         val res = 2 * max * max - a * a - b * b - c * c
         return res
     }
+
+    fun digitNumber(n: Int): Int =
+            if (n in -9..9) 1
+            else digitNumber(n / 10) + digitNumber(n % 10)
 }

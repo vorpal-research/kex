@@ -7,6 +7,7 @@ import org.jetbrains.research.kfg.type.TypeFactory
 typealias Bool_ = $Bool
 typealias Ptr_ = $Bitvector32
 typealias Short_ = $Bitvector32
+typealias Char_ = $Bitvector32
 typealias Int_ = $Bitvector32
 typealias Long_ = $Bitvector64
 typealias Float_ = $Float
@@ -59,6 +60,8 @@ class $factory : ${solver}SMTExprFactory() {
 
 #generateMakes("Short", "Int")
     fun makeShortConst(value: Short) = makeShortConst(value.toInt())
+#generateMakes("Char", "Int")
+    fun makeCharConst(value: Char) = makeCharConst(value.toInt())
 
 #generateMakes("Int", "Int")
 
@@ -73,7 +76,7 @@ class $factory : ${solver}SMTExprFactory() {
     fun makeDefaultMemory(id: String, default: Int) =
         Memory_.makeDefault< Ptr_ >(ctx, id, Byte_.makeConst(ctx, default))
 
-#set($types = ["Bool", "Short", "Int", "Long", "Float", "Double"])
+#set($types = ["Bool", "Short", "Char", "Int", "Long", "Float", "Double"])
     fun getVarByTypeAndName(type: KexType, name: String, fresh: Boolean = false) = when(type) {
 #foreach($type in $types)
         is Kex${type} -> make${type}(name, fresh)

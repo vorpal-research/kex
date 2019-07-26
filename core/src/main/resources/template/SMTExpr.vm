@@ -78,7 +78,7 @@ open class $valexpr : ${solver}SMTExpr {
     fun asAxiom() = spliceAxioms(ctx, expr, axiom)
     open fun withAxiom(ax: $valexpr) = $valexpr(ctx, expr, ax.asAxiom())
 
-    open fun simplify() = $valexpr(ctx, engine.simplify(ctx, expr), engine.simplify(ctx, expr))
+    open fun simplify() = $valexpr(ctx, engine.simplify(ctx, expr), engine.simplify(ctx, axiom))
 
 #set($opcodes = ["ADD", "SUB", "MUL", "DIVIDE", "MOD"])
 #foreach($opcode in $opcodes)

@@ -6,7 +6,7 @@
     <parent>
         <artifactId>kex</artifactId>
         <groupId>org.jetbrains.research</groupId>
-        <version>0.1</version>
+        <version>0.0.1</version>
     </parent>
     <artifactId>kex-util</artifactId>
 
@@ -22,7 +22,7 @@
         </dependency>
         <dependency>
             <groupId>org.jetbrains.kotlin</groupId>
-            <artifactId>kotlin-test</artifactId>
+            <artifactId>kotlin-test-junit</artifactId>
             <version>${kotlin.version}</version>
             <scope>test</scope>
         </dependency>

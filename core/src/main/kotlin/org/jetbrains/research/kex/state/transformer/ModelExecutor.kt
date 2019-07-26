@@ -1,0 +1,173 @@
+package org.jetbrains.research.kex.state.transformer
+
+import org.jetbrains.research.kex.ktype.KexClass
+import org.jetbrains.research.kex.ktype.kexType
+import org.jetbrains.research.kex.random.Randomizer
+import org.jetbrains.research.kex.random.defaultRandomizer
+import org.jetbrains.research.kex.smt.model.ObjectRecoverer
+import org.jetbrains.research.kex.smt.model.RecoveredModel
+import org.jetbrains.research.kex.smt.model.SMTModel
+import org.jetbrains.research.kex.state.BasicState
+import org.jetbrains.research.kex.state.ChoiceState
+import org.jetbrains.research.kex.state.PredicateState
+import org.jetbrains.research.kex.state.emptyState
+import org.jetbrains.research.kex.state.predicate.*
+import org.jetbrains.research.kex.state.term.ConstBoolTerm
+import org.jetbrains.research.kex.state.term.ConstIntTerm
+import org.jetbrains.research.kex.state.term.ConstLongTerm
+import org.jetbrains.research.kex.state.term.Term
+import org.jetbrains.research.kex.util.getMethod
+import org.jetbrains.research.kex.util.loadClass
+import org.jetbrains.research.kex.util.log
+import org.jetbrains.research.kex.util.unreachable
+import org.jetbrains.research.kfg.ir.Method
+import org.jetbrains.research.kfg.type.TypeFactory
+import java.lang.reflect.ParameterizedType
+import java.lang.reflect.Type
+import java.lang.reflect.TypeVariable
+
+// remove all choices in a given PS
+// needed to get entry condition of a given PS
+private object ChoiceSimplifier : Transformer<ChoiceSimplifier> {
+    override fun transformChoice(ps: ChoiceState): PredicateState {
+        return emptyState()
+    }
+}
+
+private fun mergeTypes(lhv: Type, rhv: Type): Type {
+    @Suppress("NAME_SHADOWING")
+    val lhv = lhv as? Class<*> ?: unreachable { log.error("Don't consider merging other types yet") }
+    return when (rhv) {
+        is Class<*> -> when {
+            lhv.isAssignableFrom(rhv) -> rhv
+            rhv.isAssignableFrom(lhv) -> lhv
+            else -> unreachable { log.error("Cannod decide on argument type: $rhv or $lhv") }
+        }
+        is ParameterizedType -> {
+            val rawType = rhv.rawType as Class<*>
+            // todo: find a way to create a new parameterized type with new raw type
+            @Suppress("UNUSED_VARIABLE") val actualType = mergeTypes(lhv, rawType) as Class<*>
+            rhv
+        }
+        is TypeVariable<*> -> {
+            val bounds = rhv.bounds
+            when {
+                bounds == null -> lhv
+                bounds.isEmpty() -> lhv
+                else -> {
+                    require(bounds.size == 1)
+                    mergeTypes(lhv, bounds.first())
+                }
+            }
+        }
+        else -> {
+            log.warn("Merging unexpected types $lhv and $rhv")
+            rhv
+        }
+    }
+}
+
+class ModelExecutor(val method: Method,
+                    type: TypeFactory,
+                    model: SMTModel,
+                    loader: ClassLoader,
+                    randomizer: Randomizer) : Transformer<ModelExecutor> {
+    private val recoverer = ObjectRecoverer(method, model, loader, randomizer)
+    private val memory = hashMapOf<Term, Any?>()
+    private var thisTerm: Term? = null
+    private val argTerms = sortedMapOf<Int, Term>()
+
+    private val javaClass = loader.loadClass(type.getRefType(method.`class`))
+    private val javaMethod = javaClass.getMethod(method, loader)
+
+    val instance get() = thisTerm?.let { memory[it] }
+    val args get() = argTerms.map { memory[it.value] }.toList()
+
+    override fun apply(ps: PredicateState): PredicateState {
+        val (tempThis, tempArgs) = collectArguments(ps)
+        val argTypeInfo = collectTypeInfos(recoverer.model, ps)//.filterKeys { it is ArgumentTerm }
+        if (argTypeInfo.isNotEmpty()) log.debug("Collected type info: $argTypeInfo")
+        thisTerm = when {
+            !method.isStatic && tempThis == null -> tf.getThis(KexClass(method.`class`.fullname))
+            else -> tempThis
+        }
+        argTerms.putAll(tempArgs)
+        for ((index, type) in method.argTypes.withIndex()) {
+            argTerms.getOrPut(index) { tf.getArgument(type.kexType, index) }
+        }
+        thisTerm?.let { memory[it] = recoverer.recoverTerm(it, javaClass) }
+        argTerms.values.zip(javaMethod.genericParameterTypes).forEach { (term, type) ->
+            // TODO: need to think about more clever type info merging
+            val castedType = when (term) {
+                in argTypeInfo -> recoverer.loader.loadClass(argTypeInfo.getValue(term).getKfgType(method.cm.type))
+                else -> null
+            }
+            val actualType = when (castedType) {
+                null -> type
+                else -> mergeTypes(castedType, type)
+            }
+            memory[term] = recoverer.recoverTerm(term, actualType)
+        }
+        return super.apply(ps)
+    }
+
+    override fun transformBasic(ps: BasicState): PredicateState {
+        val vars = collectPointers(ps)
+        vars.forEach { ptr -> memory.getOrPut(ptr) { recoverer.recoverTerm(ptr) } }
+        return ps
+    }
+
+    override fun transformChoice(ps: ChoiceState): PredicateState {
+        val paths = ps.choices.map { it to it.filterByType(PredicateType.Path()) }.map {
+            it.first to ChoiceSimplifier.apply(it.second)
+        }
+        val ourChoice = paths.firstOrNull { it.second.all { checkPath(it) } }?.first ?: return emptyState()
+        return super.transformBase(ourChoice)
+    }
+
+    private fun checkPath(path: Predicate): Boolean = when (path) {
+        is EqualityPredicate -> {
+            val lhv = path.lhv
+            val rhv = path.rhv
+            val lhvValue = memory.getOrPut(lhv) { recoverer.recoverTerm(lhv) }
+            val rhvValue = when (rhv) {
+                is ConstBoolTerm -> rhv.value
+                is ConstIntTerm -> rhv.value
+                is ConstLongTerm -> rhv.value
+                else -> unreachable { log.error("Unexpected constant in path $rhv") }
+            }
+            lhvValue == rhvValue
+        }
+        is InequalityPredicate -> {
+            val lhv = path.lhv
+            val rhv = path.rhv
+            val lhvValue = memory.getOrPut(lhv) { recoverer.recoverTerm(lhv) }
+            val rhvValue = when (rhv) {
+                is ConstBoolTerm -> rhv.value
+                is ConstIntTerm -> rhv.value
+                is ConstLongTerm -> rhv.value
+                else -> unreachable { log.error("Unexpected constant in path $rhv") }
+            }
+            lhvValue != rhvValue
+        }
+        is DefaultSwitchPredicate -> {
+            val lhv = path.cond
+            val conditions = path.cases
+            val lhvValue = memory.getOrPut(lhv) { recoverer.recoverTerm(lhv) }
+            val condValues = conditions.map { (it as ConstIntTerm).value }
+            lhvValue !in condValues
+        }
+        else -> unreachable { log.error("Unexpected predicate in path: $path") }
+    }
+}
+
+fun executeModel(ps: PredicateState,
+                 type: TypeFactory,
+                 method: Method,
+                 model: SMTModel,
+                 loader: ClassLoader,
+                 randomizer: Randomizer = defaultRandomizer): RecoveredModel {
+    val pathExecutor = ModelExecutor(method, type, model, loader, randomizer)
+    pathExecutor.apply(ps)
+    return RecoveredModel(method, pathExecutor.instance, pathExecutor.args)
+}

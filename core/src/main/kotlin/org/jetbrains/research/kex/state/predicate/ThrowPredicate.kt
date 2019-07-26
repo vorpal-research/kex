@@ -1,16 +1,20 @@
 package org.jetbrains.research.kex.state.predicate
 
+import kotlinx.serialization.ContextualSerialization
+import kotlinx.serialization.Required
+import kotlinx.serialization.Serializable
 import org.jetbrains.research.kex.state.InheritorOf
 import org.jetbrains.research.kex.state.term.Term
 import org.jetbrains.research.kex.state.transformer.Transformer
 import org.jetbrains.research.kfg.ir.Location
 
 @InheritorOf("Predicate")
-class ThrowPredicate(throwable: Term, type: PredicateType = PredicateType.State(), location: Location = Location()) :
-        Predicate(type, location, listOf(throwable)) {
-
-    val throwable: Term
-        get() = operands[0]
+@Serializable
+class ThrowPredicate(
+        val throwable: Term,
+        @Required override val type: PredicateType = PredicateType.State(),
+        @Required @ContextualSerialization override val location: Location = Location()) : Predicate() {
+    override val operands by lazy { listOf(throwable) }
 
     override fun print() = "throw $throwable"
 

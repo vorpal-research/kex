@@ -6,6 +6,7 @@ import org.jetbrains.research.kex.state.predicate.CallPredicate
 import org.jetbrains.research.kex.state.predicate.Predicate
 import org.jetbrains.research.kex.state.term.CallTerm
 import org.jetbrains.research.kex.util.debug
+import org.jetbrains.research.kex.util.fail
 import org.jetbrains.research.kex.util.log
 import org.jetbrains.research.kex.util.unreachable
 import java.util.*
@@ -14,7 +15,7 @@ class AnnotationIncluder(val annotations: AnnotationsLoader) : RecollectingTrans
 
     override val builders = ArrayDeque<StateBuilder>().apply { push(StateBuilder()) }
 
-    override fun transformCallPredicate(predicate: CallPredicate): Predicate {
+    override fun transformCall(predicate: CallPredicate): Predicate {
         val call = predicate.call as CallTerm
         val method = call.method
         val args = call.arguments
@@ -34,7 +35,7 @@ class AnnotationIncluder(val annotations: AnnotationsLoader) : RecollectingTrans
         for (annotation in annotatedCall.annotations)
             states += annotation.preciseBeforeCall(predicate) ?: continue
         states += BasicState(Collections.singletonList(predicate))
-        val returnValue = predicate.getLhvUnsafe()
+        val returnValue = predicate.lhvUnsafe
         for (annotation in annotatedCall.annotations) {
             annotation.preciseAfterCall(predicate)?.run { states += this }
             if (returnValue !== null) {
@@ -50,15 +51,15 @@ class AnnotationIncluder(val annotations: AnnotationsLoader) : RecollectingTrans
             when (ps) {
                 is List<*> -> predicates += ps as List<Predicate>
                 is PredicateState -> {
-                    currentBuilder += BasicState(predicates)
+                    currentBuilder += BasicState(predicates.toList())
                     currentBuilder += ps
                     predicates.clear()
                 }
             }
         }
         if (predicates.isNotEmpty())
-            currentBuilder += BasicState(predicates)
-        return Transformer.Stub
+            currentBuilder += BasicState(predicates.toList())
+        return nothing()
     }
 
     private fun expand(ps: PredicateState): Any = when (ps) {
@@ -68,20 +69,18 @@ class AnnotationIncluder(val annotations: AnnotationsLoader) : RecollectingTrans
         else -> unreachable {  }
     }
 
+    @Suppress("UNCHECKED_CAST")
     private fun expandChain(ps: ChainState): Any {
         val base = expand(ps.base)
         val curr = expand(ps.curr)
         if (base is List<*> && curr is List<*>)
             return base + curr
-        @Suppress("UNCHECKED_CAST")
         if (base is List<*> && curr is PredicateState)
             return ChainState(BasicState(base as List<Predicate>), curr)
-        @Suppress("UNCHECKED_CAST")
         if (base is PredicateState && curr is List<*>)
             return ChainState(base, BasicState(curr as List<Predicate>))
         if (base is PredicateState && curr is PredicateState)
             return ChainState(base, curr)
-        unreachable { }
+        return unreachable { }
     }
-
 }

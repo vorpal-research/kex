@@ -19,7 +19,7 @@ open class ArrayTests {
     }
 
     fun testArrayWrite() {
-        val emptyArray = intArrayOf(0, 0, 0, 0, 0)
+        val emptyArray = intArrayOf(0, 1, 2, 3, 0)
 
         for (i in 0 until 5) {
             emptyArray[i] = i * i
@@ -30,7 +30,9 @@ open class ArrayTests {
         }
         Intrinsics.assertReachable()
     }
+}
 
+open class ArrayLongTests {
     fun testUnknownArrayWrite(array: IntArray) {
         if (array.size < 5) {
             Intrinsics.assertReachable(array.size < 5)

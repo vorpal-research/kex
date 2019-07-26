@@ -7,16 +7,16 @@ import org.jetbrains.research.kex.state.transformer.memspace
 import org.jetbrains.research.kfg.ir.Class
 import org.jetbrains.research.kfg.ir.value.instruction.BinaryOpcode
 import org.jetbrains.research.kfg.ir.value.instruction.CmpOpcode
-import org.jetbrains.research.kex.config.GlobalConfig
+import org.jetbrains.research.kex.config.kexConfig
 import org.jetbrains.research.kfg.type.ClassType
 import org.jetbrains.research.kfg.type.TypeFactory
 
-val defaultAllocSize = GlobalConfig.getIntValue("smt", "defaultAllocationSize", 1024)
+val defaultAllocSize = kexConfig.getIntValue("smt", "defaultAllocationSize", 1024)
 
 @Suppress("UNUSED_PARAMETER")
 class ${solver}Converter(val tf: TypeFactory) : ${solver}SMTConverter() {
 
-    private fun addTypeAxioms(term: Term, expr: Dynamic_, ef: Z3ExprFactory, ctx: Z3Context) = when (term.type) {
+    private fun addTypeAxioms(term: Term, expr: Dynamic_, ef: $factory, ctx: ${solver}Context) = when (term.type) {
         is KexPointer -> expr
                 .withAxiom(expr ge ef.makeIntConst(0))
                 .withAxiom(ctx.readBound(expr.toBV32(), term.memspace) ge ef.makeIntConst(0))
@@ -25,8 +25,8 @@ class ${solver}Converter(val tf: TypeFactory) : ${solver}SMTConverter() {
                 .withAxiom(expr ge ef.makeIntConst(Byte.MIN_VALUE.toInt()))
                 .withAxiom(expr le ef.makeIntConst(Byte.MAX_VALUE.toInt()))
         is KexChar -> expr
-                .withAxiom(expr ge ef.makeIntConst(Short.MIN_VALUE.toInt()))
-                .withAxiom(expr le ef.makeIntConst(Short.MAX_VALUE.toInt()))
+                .withAxiom(expr ge ef.makeIntConst(Char.MIN_VALUE.toInt()))
+                .withAxiom(expr le ef.makeIntConst(Char.MAX_VALUE.toInt()))
         is KexShort -> expr
                 .withAxiom(expr ge ef.makeIntConst(Short.MIN_VALUE.toInt()))
                 .withAxiom(expr le ef.makeIntConst(Short.MAX_VALUE.toInt()))
@@ -170,7 +170,7 @@ class ${solver}Converter(val tf: TypeFactory) : ${solver}SMTConverter() {
         val baseBound = ctx.readBound(arrayref, memspace)
         val ptrBound = Int_.forceCast(baseBound - index)
         ctx.writeBound(valuePtr, ptrBound, memspace)
-        return valuePtr
+        return addTypeAxioms(arrayindex, valuePtr, ef, ctx)
     }
 
     fun convert(arraylength: ArrayLengthTerm, ef: $factory, ctx: ${solver}Context): Dynamic_ {
@@ -181,7 +181,7 @@ class ${solver}Converter(val tf: TypeFactory) : ${solver}SMTConverter() {
         val bound = ctx.readBound(ptr, memspace)
         val elementType = (arraylength.arrayRef.type as? KexArray)?.element
                 ?: unreachable { log.error("Non-array type of array ref term") }
-        val elementSize = Z3ExprFactory.getTypeSize(elementType)
+        val elementSize = ${factory}.getTypeSize(elementType)
         val size = bound / elementSize
         return size
     }
@@ -291,12 +291,15 @@ class ${solver}Converter(val tf: TypeFactory) : ${solver}SMTConverter() {
     fun convert(const: ConstShortTerm, ef: $factory, ctx: ${solver}Context): Dynamic_ = ef.makeIntConst(const.value.toInt())
 
     fun convert(const: ConstStringTerm, ef: $factory, ctx: ${solver}Context): Dynamic_ {
-        val memspace = const.memspace
-
-        val size = const.name.length
-        val res = ctx.getLocalPtr(memspace, size)
-        ctx.writeBound(res, ef.makeIntConst(size), memspace)
-        return res
+##        val memspace = const.memspace
+##
+##        val length = const.name.length
+##        val actualSize = length * ${factory}.getTypeSize(KexInt)
+##        val res = ctx.getLocalPtr(memspace, actualSize)
+##        ctx.writeBound(res, ef.makeIntConst(actualSize), memspace)
+##        return res
+        val expr = ef.getVarByTypeAndName(const.type, const.name)
+        return addTypeAxioms(const, expr, ef, ctx)
     }
 
     fun convert(fieldload: FieldLoadTerm, ef: $factory, ctx: ${solver}Context): Dynamic_ {
@@ -304,7 +307,7 @@ class ${solver}Converter(val tf: TypeFactory) : ${solver}SMTConverter() {
         val field = convert(fieldload.field, ef, ctx) as? Ptr_
             ?: unreachable { log.error("Non-ptr ref in field load") }
 
-        val res = ctx.readMemory(field, Z3ExprFactory.getTypeSize(fieldload.type), memspace)
+        val res = ctx.readMemory(field, ${factory}.getTypeSize(fieldload.type), memspace)
         return when (fieldload.type) {
             is KexLong -> Long_.forceCast(res)
             is KexBool -> Bool_.forceCast(res)
@@ -323,16 +326,16 @@ class ${solver}Converter(val tf: TypeFactory) : ${solver}SMTConverter() {
         ?: unreachable { log.error("Non-ptr ref in field load") }
         val name = field.fieldName.name
         val kfgClass = (tf.getRefType(field.getClass()) as ClassType).`class`
-        val offset = Z3ExprFactory.getFieldOffset(kfgClass, Class.FieldKey(name, field.type.getKfgType(tf)))
+        val offset = ${factory}.getFieldOffset(kfgClass, Class.FieldKey(name, field.type.getKfgType(tf)))
         val baseBound = ctx.readBound(obj, memspace)
 
         val fieldptr = Ptr_.forceCast(obj + offset)
         ctx.writeBound(fieldptr, Int_.forceCast(baseBound - offset), memspace)
-        return fieldptr
+        return addTypeAxioms(field, fieldptr, ef, ctx)
     }
 
     fun convert(instanceof: InstanceOfTerm, ef: $factory, ctx: ${solver}Context): Dynamic_ =
-        ef.getVarByTypeAndName(instanceof.type, instanceof.print())
+        ef.getVarByTypeAndName(instanceof.type, instanceof.toString())
 
     fun convert(neg: NegTerm, ef: $factory, ctx: ${solver}Context): Dynamic_ {
         val operand = convert(neg.operand, ef, ctx)
@@ -342,7 +345,7 @@ class ${solver}Converter(val tf: TypeFactory) : ${solver}SMTConverter() {
             is Long_ -> Long_.forceCast(!operand)
             is Float_ -> Float_.forceCast(!operand)
             is Double_ -> Double_.forceCast(!operand)
-            else -> unreachable { log.error("Invalid operand of `neg`: ${ neg.operand.print() }") }
+            else -> unreachable { log.error("Invalid operand of `neg`: ${ neg.operand }") }
         }
     }
 

@@ -1,5 +1,8 @@
 package org.jetbrains.research.kex.state.predicate
 
+import kotlinx.serialization.ContextualSerialization
+import kotlinx.serialization.Required
+import kotlinx.serialization.Serializable
 import org.jetbrains.research.kex.state.InheritorOf
 import org.jetbrains.research.kex.state.term.Term
 import org.jetbrains.research.kex.state.transformer.Transformer
@@ -8,26 +11,23 @@ import org.jetbrains.research.kex.util.unreachable
 import org.jetbrains.research.kfg.ir.Location
 
 @InheritorOf("Predicate")
-class CallPredicate : Predicate {
+@Serializable
+class CallPredicate(
+        val lhvUnsafe: Term?,
+        val callTerm: Term,
+        @Required override val type: PredicateType = PredicateType.State(),
+        @Required @ContextualSerialization override val location: Location = Location()) : Predicate() {
+    val hasLhv by lazy { lhvUnsafe != null }
+    override val operands by lazy { listOfNotNull(lhvUnsafe, callTerm) }
+
     constructor(callTerm: Term, type: PredicateType = PredicateType.State(), location: Location = Location())
-            : super(type, location, listOf(callTerm)) {
-        hasLhv = false
-    }
-
-    constructor(lhv: Term, callTerm: Term, type: PredicateType = PredicateType.State(), location: Location = Location())
-            : super(type, location, listOf(lhv, callTerm)) {
-        hasLhv = true
-    }
-
-    val hasLhv: Boolean
+            : this(null, callTerm, type, location)
 
     val lhv: Term
         get() = if (hasLhv) operands[0] else unreachable { log.error("Trying to get lhv of void call") }
 
     val call: Term
         get() = if (hasLhv) operands[1] else operands[0]
-
-    fun getLhvUnsafe() = if (hasLhv) operands[0] else null
 
     override fun <T : Transformer<T>> accept(t: Transformer<T>): Predicate {
         val tlhv = if (hasLhv) t.transform(lhv) else null

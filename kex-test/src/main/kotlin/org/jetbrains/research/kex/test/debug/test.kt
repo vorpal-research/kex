@@ -1,49 +1,25 @@
-@file:Suppress("SENSELESS_COMPARISON")
+@file:Suppress("SENSELESS_COMPARISON", "UNUSED_VARIABLE", "UNUSED_PARAMETER")
 
 package org.jetbrains.research.kex.test.debug
 
-import org.jetbrains.research.kex.test.Intrinsics
+import org.jetbrains.research.kex.test.AnnotatedMethodsThere
+import java.io.ByteArrayInputStream
 
-// add functions here to debug them
-
-//fun testSimple(array: IntArray) {
-//    var count = 0
-//    if (array.size < 4) throw IllegalArgumentException()
-//    if (array[0] == 1) ++count
-//    if (array[1] == 2) ++count
-//    if (array[2] == 3) ++count
-//    if (array[3] == 4) ++count
-//    if (count >= 3) {
-//        println("Yes")
-//        Intrinsics.assertReachable()
-//    }
-//}
-
-
-//fun testUnreachableIf(x: Int): Int {
-//    val set = "asdasdal;djadslas;d".length
-//    val z = 10
-//    val y = if (x > z && x < 0) {
-//        Intrinsics.assertUnreachable()
-//        println("lol")
-//        142
-//    } else {
-//        Intrinsics.assertReachable(x <= z || x >= 0)
-//        println("lol2")
-//        x- 2 * x
-//    }
-//    Intrinsics.assertReachable()
-//    return y
-//}
-
-fun testObjectArray(nullable: Array<Any?>, nonnulable: Array<Any>) {
-    if (nonnulable.isNotEmpty()) {
-        for (i in nonnulable) {
-            Intrinsics.assertReachable(i != null)
+class ThatClassContainsHighQualityCodeToProf {
+    fun incredibleMethod(exitingArgument: String, unusualNumber: Double): List<Int> {
+        val importantMethods = AnnotatedMethodsThere
+        val lovelyInteger = unusualNumber.toInt()
+        if (lovelyInteger.toDouble() == unusualNumber) {
+            val bestStream = ByteArrayInputStream(exitingArgument.toByteArray())
+            val meaningfulResult = importantMethods.makeBeautifulList(lovelyInteger)
+            //while (bestStream.available() > 0) {
+            val remarkableLetter = bestStream.read()
+            importantMethods.assertTrue(importantMethods.assertTrue(remarkableLetter > 0) == importantMethods)
+            meaningfulResult += remarkableLetter
+            //}
+            importantMethods.assertNotNull(meaningfulResult)
+            return meaningfulResult
         }
-        for (i in nonnulable) {
-            if (i == null) Intrinsics.assertUnreachable()
-        }
+        return emptyList()
     }
-    Intrinsics.assertReachable(nullable != null)
 }

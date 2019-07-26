@@ -5,7 +5,6 @@ import org.jetbrains.research.kex.config.RuntimeConfig
 import kotlin.test.*
 
 class AnnotationsTest : KexTest() {
-
     companion object {
         init {
             (AnnotationManager.defaultLoader as ExternalAnnotationsLoader).
@@ -13,7 +12,7 @@ class AnnotationsTest : KexTest() {
         }
     }
 
-    var oldInliningConfig = RuntimeConfig.getBooleanValue("smt", "ps-inlining", true)
+    private var oldInliningConfig = RuntimeConfig.getBooleanValue("smt", "ps-inlining", true)
 
     @BeforeTest
     fun before() {
@@ -30,29 +29,4 @@ class AnnotationsTest : KexTest() {
         val `class` = cm.getByName("$packageName/NotAnnotatedMethods")
         testClassReachability(`class`)
     }
-
-    @Test
-    fun `Test obvious error`() {
-        val `class` = cm.getByName("$packageName/ClassWithContractOffense")
-        assertFails {
-            testClassReachability(`class`)
-        }
-    }
-
-    @Test
-    fun `Test complicated error fails`() {
-        val `class` = cm.getByName("$packageName/ClassWithMistakes")
-        assertFailsWith<AssertionError> {
-            `class`.methods.forEach { testMistakes(it.value) }
-        }
-    }
-
-    @Test
-    fun `Proof the ideal`() {
-        val `class` = cm.getByName("$packageName/ThatClassContainsHighQualityCodeToProf")
-        for (method in `class`.methods) {
-            testMistakes(method.value)
-        }
-    }
-
 }

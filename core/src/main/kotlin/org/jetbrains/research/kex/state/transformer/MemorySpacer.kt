@@ -7,7 +7,7 @@ import org.jetbrains.research.kex.util.log
 import org.jetbrains.research.kex.util.unreachable
 
 fun Term.withMemspace(memspace: Int): Term {
-    if (this.type !is KexPointer) return this
+    val type = this.type as? KexPointer ?: return this
     val memspaced = type.withMemspace(memspace)
     val tf = TermFactory
     return when (this) {
@@ -19,7 +19,7 @@ fun Term.withMemspace(memspace: Int): Term {
         is CallTerm -> tf.getCall(memspaced, owner, method, arguments)
         is CastTerm -> tf.getCast(memspaced, operand)
         is CmpTerm -> tf.getCmp(memspaced, opcode, lhv, rhv)
-        is ConstStringTerm -> tf.getString(memspaced, name)
+        is ConstStringTerm -> tf.getString(memspaced, value)
         is ConstClassTerm -> tf.getClass(memspaced, `class`)
         is FieldLoadTerm -> tf.getFieldLoad(memspaced, field)
         is FieldTerm -> tf.getField(memspaced, owner, fieldName)
@@ -40,9 +40,9 @@ val Term.memspace: Int
             ?: unreachable { log.error("Trying to get memspace of primary type: $type") }
 
 class MemorySpacer(ps: PredicateState) : Transformer<MemorySpacer> {
-    val aa = StensgaardAA()
-    val indices = hashMapOf<Token, Int>(null to 0)
-    var index = 1
+    private val aa = StensgaardAA()
+    private val indices = hashMapOf<Token, Int>(null to 0)
+    private var index = 1
 
     init {
         aa.transform(ps)

@@ -1,0 +1,69 @@
+{
+  "base": "org.jetbrains.research.kex.ktype.KexType",
+  "inheritors": [
+    {
+      "class": "org.jetbrains.research.kex.ktype.KexLong",
+      "name": "KexLong"
+    },
+    {
+      "class": "org.jetbrains.research.kex.ktype.KexNull",
+      "name": "KexNull"
+    },
+    {
+      "class": "org.jetbrains.research.kex.ktype.KexShort",
+      "name": "KexShort"
+    },
+    {
+      "class": "org.jetbrains.research.kex.ktype.KexIntegral",
+      "name": "KexIntegral"
+    },
+    {
+      "class": "org.jetbrains.research.kex.ktype.KexVoid",
+      "name": "KexVoid"
+    },
+    {
+      "class": "org.jetbrains.research.kex.ktype.KexBool",
+      "name": "KexBool"
+    },
+    {
+      "class": "org.jetbrains.research.kex.ktype.KexByte",
+      "name": "KexByte"
+    },
+    {
+      "class": "org.jetbrains.research.kex.ktype.KexClass",
+      "name": "KexClass"
+    },
+    {
+      "class": "org.jetbrains.research.kex.ktype.KexArray",
+      "name": "KexArray"
+    },
+    {
+      "class": "org.jetbrains.research.kex.ktype.KexDouble",
+      "name": "KexDouble"
+    },
+    {
+      "class": "org.jetbrains.research.kex.ktype.KexChar",
+      "name": "KexChar"
+    },
+    {
+      "class": "org.jetbrains.research.kex.ktype.KexReference",
+      "name": "KexReference"
+    },
+    {
+      "class": "org.jetbrains.research.kex.ktype.KexReal",
+      "name": "KexReal"
+    },
+    {
+      "class": "org.jetbrains.research.kex.ktype.KexPointer",
+      "name": "KexPointer"
+    },
+    {
+      "class": "org.jetbrains.research.kex.ktype.KexFloat",
+      "name": "KexFloat"
+    },
+    {
+      "class": "org.jetbrains.research.kex.ktype.KexInt",
+      "name": "KexInt"
+    }
+  ]
+}

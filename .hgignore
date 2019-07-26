@@ -7,4 +7,5 @@ target/*
 instrumented/*
 repo/*
 testJars/*
-kex.iml
+trace/*
+fails/*

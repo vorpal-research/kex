@@ -72,8 +72,8 @@ sealed class TermExpression {
 
     fun value(type: KexType, name: String) = tf.getValue(type, name)
     fun value(type: KClass<*>, name: String): ValueTerm = when (type) {
-        KexBool::class, Boolean::class -> tf.getValue(KexBool, name)
-        KexNull::class, Nothing::class -> tf.getValue(KexNull, name)
+        KexBool::class, Boolean::class -> tf.getValue(KexBool(), name)
+        KexNull::class, Nothing::class -> tf.getValue(KexNull(), name)
         else -> throw IllegalStateException("Unsupported value term type")
     }
     inline fun <reified T> value(name: String) = value(T::class, name)

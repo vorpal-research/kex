@@ -1,5 +1,8 @@
 package org.jetbrains.research.kex.state.predicate
 
+import kotlinx.serialization.ContextualSerialization
+import kotlinx.serialization.Required
+import kotlinx.serialization.Serializable
 import org.jetbrains.research.kex.ktype.KexType
 import org.jetbrains.research.kex.state.InheritorOf
 import org.jetbrains.research.kex.state.term.Term
@@ -7,20 +10,17 @@ import org.jetbrains.research.kex.state.transformer.Transformer
 import org.jetbrains.research.kfg.ir.Location
 
 @InheritorOf("Predicate")
-class NewArrayPredicate(lhv: Term,
-                        dimentions: List<Term>,
-                        val elementType: KexType,
-                        type: PredicateType = PredicateType.State(),
-                        location: Location = Location()) :
-        Predicate(type, location, listOf(lhv).plus(dimentions)) {
-    val lhv: Term
-        get() = operands[0]
-
-    val dimentions: List<Term>
-        get() = operands.drop(1)
+@Serializable
+class NewArrayPredicate(
+        val lhv: Term,
+        val dimentions: List<Term>,
+        val elementType: KexType,
+        @Required override val type: PredicateType = PredicateType.State(),
+        @Required @ContextualSerialization override val location: Location = Location()) : Predicate() {
+    override val operands by lazy { listOf(lhv) + dimentions }
 
     val numDimentions: Int
-        get() = operands.size - 1
+        get() = dimentions.size
 
     override fun print(): String {
         val sb = StringBuilder()

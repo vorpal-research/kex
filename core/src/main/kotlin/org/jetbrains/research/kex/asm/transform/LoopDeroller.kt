@@ -1,6 +1,6 @@
 package org.jetbrains.research.kex.asm.transform
 
-import org.jetbrains.research.kex.config.GlobalConfig
+import org.jetbrains.research.kex.config.kexConfig
 import org.jetbrains.research.kex.util.log
 import org.jetbrains.research.kex.util.toInt
 import org.jetbrains.research.kex.util.unreachable
@@ -18,14 +18,17 @@ import org.jetbrains.research.kfg.ir.value.instruction.*
 import org.jetbrains.research.kfg.util.TopologicalSorter
 import kotlin.math.abs
 
-private val derollCount = GlobalConfig.getIntValue("loop", "deroll-count", 3)
+private val derollCount = kexConfig.getIntValue("loop", "deroll-count", 3)
+
+val BasicBlock.originalBlock: BasicBlock
+    get() = LoopDeroller.blockMapping[this.parent!!]?.get(this) ?: this
 
 class LoopDeroller(override val cm: ClassManager) : LoopVisitor {
 
     companion object {
         const val DEROLLED_POSTFIX = ".deroll"
 
-        val blockMapping = mutableMapOf<Method, MutableMap<BasicBlock, BasicBlock>>()
+        val blockMapping = hashMapOf<Method, MutableMap<BasicBlock, BasicBlock>>()
     }
 
     private data class State(
@@ -41,7 +44,7 @@ class LoopDeroller(override val cm: ClassManager) : LoopVisitor {
         companion object {
             fun createState(loop: Loop): State {
                 val terminatingBlock = run {
-                    var current = loop.latch//.successors.first()
+                    var current = loop.latch
                     while (current.terminator is JumpInst) current = current.successors.first()
                     current
                 }
@@ -78,7 +81,7 @@ class LoopDeroller(override val cm: ClassManager) : LoopVisitor {
 
     override fun cleanup() {}
 
-    override fun preservesLoopInfo() = false
+    override val preservesLoopInfo get() = false
 
     override fun visit(loop: Loop) {
         super.visit(loop)
@@ -121,7 +124,7 @@ class LoopDeroller(override val cm: ClassManager) : LoopVisitor {
 
                 for (phi in methodPhis) {
                     if (phi.incomings.contains(block)) {
-                        val value = phi.incomings[block]!!
+                        val value = phi.incomings.getValue(block)
                         methodPhiMappings[phi]?.put(state[block], state.getOrDefault(value, value))
                     }
                 }
@@ -195,7 +198,7 @@ class LoopDeroller(override val cm: ClassManager) : LoopVisitor {
                 if (value.parent != header) return -1
 
                 val incomings = value.incomings
-                require(incomings.size == 2) { log.error("Unexpected number of header incomings") }
+                if (incomings.size != 2) return -1
                 incomings.getValue(preheader) to incomings.getValue(latch)
             }
             else -> return -1
@@ -250,7 +253,7 @@ class LoopDeroller(override val cm: ClassManager) : LoopVisitor {
             }
         }
         if (original is CatchBlock) {
-            val throwers = original.throwers.map { state[it] }
+            val throwers = original.throwers.map { state.getOrDefault(it, it) }
             derolled as CatchBlock
             derolled.addThrowers(throwers)
             throwers.forEach { it.addHandler(derolled) }
@@ -283,7 +286,7 @@ class LoopDeroller(override val cm: ClassManager) : LoopVisitor {
             if (updated is PhiInst && original == state.header) {
                 val map = mapOf(state[state.latch] to state.lastLatch)
                 val previousMap = updated.incomings
-                map.forEach { o, t -> updated.replaceUsesOf(o, t) }
+                map.forEach { (o, t) -> updated.replaceUsesOf(o, t) }
 
                 if (updated.predecessors.toSet().size == 1) {
                     val actual = previousMap.getValue(state.lastLatch)

@@ -1,20 +1,21 @@
 package org.jetbrains.research.kex.state.predicate
 
+import kotlinx.serialization.ContextualSerialization
+import kotlinx.serialization.Required
+import kotlinx.serialization.Serializable
 import org.jetbrains.research.kex.state.InheritorOf
 import org.jetbrains.research.kex.state.term.Term
 import org.jetbrains.research.kex.state.transformer.Transformer
 import org.jetbrains.research.kfg.ir.Location
 
 @InheritorOf("Predicate")
-class FieldStorePredicate(field: Term,
-                          value: Term,
-                          type: PredicateType = PredicateType.State(),
-                          location: Location = Location()) : Predicate(type, location, listOf(field, value)) {
-    val field: Term
-        get() = operands[0]
-
-    val value: Term
-        get() = operands[1]
+@Serializable
+class FieldStorePredicate(
+        val field: Term,
+        val value: Term,
+        @Required override val type: PredicateType = PredicateType.State(),
+        @Required @ContextualSerialization override val location: Location = Location()) : Predicate() {
+    override val operands by lazy { listOf(this.field, this.value) }
 
     override fun print() = "*($field) = $value"
 

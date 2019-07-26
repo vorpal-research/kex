@@ -1,20 +1,19 @@
 package org.jetbrains.research.kex.asm.analysis
 
 import org.jetbrains.research.kex.asm.transform.TraceInstrumenter
-import org.jetbrains.research.kex.config.GlobalConfig
-import org.jetbrains.research.kex.trace.TraceManager
+import org.jetbrains.research.kex.config.kexConfig
 import org.jetbrains.research.kex.trace.runner.RandomRunner
 import org.jetbrains.research.kex.util.log
 import org.jetbrains.research.kfg.ClassManager
 import org.jetbrains.research.kfg.ir.Method
-import org.jetbrains.research.kfg.util.JarUtils
+import org.jetbrains.research.kfg.util.writeClass
 import org.jetbrains.research.kfg.visitor.MethodVisitor
 import java.io.File
 import java.net.URLClassLoader
 
 class RandomChecker(override val cm: ClassManager, private val loader: ClassLoader, private val target: File) :
         MethodVisitor {
-    private val runner = GlobalConfig.getBooleanValue("runner", "enabled", false)
+    private val runner = kexConfig.getBooleanValue("random-runner", "enabled", false)
 
     override fun cleanup() {}
 
@@ -24,31 +23,21 @@ class RandomChecker(override val cm: ClassManager, private val loader: ClassLoad
 
         val `class` = method.`class`
         val classFileName = "${target.canonicalPath}/${`class`.fullname}.class"
-        if (!method.isAbstract && !method.isConstructor) {
-            val traceInstructions = TraceInstrumenter(cm).invoke(method)
-            JarUtils.writeClass(cm, loader, `class`, classFileName)
-            val directory = URLClassLoader(arrayOf(target.toURI().toURL()))
+        if (method.isAbstract || method.isConstructor) return
+        if (!method.isImpactable) return
 
-            try {
-                RandomRunner(method, directory).run()
-            } catch (e: ClassNotFoundException) {
-                log.warn("Could not load classes for random tester: ${e.message}")
-            }
+        val traceInstructions = TraceInstrumenter(cm).invoke(method)
+        writeClass(cm, loader, `class`, classFileName)
+        val directory = URLClassLoader(arrayOf(target.toURI().toURL()))
 
-            traceInstructions.forEach { it.parent?.remove(it) }
+        try {
+            RandomRunner(method, directory).run()
+        } catch (e: ClassNotFoundException) {
+            log.warn("Could not load classes for random tester: ${e.message}")
         }
-        JarUtils.writeClass(cm, loader, `class`, classFileName)
 
-
-        log.info("Results:")
-        val tm = TraceManager
-        if (!method.isAbstract && !method.isConstructor) {
-            when {
-                tm.isFullCovered(method) -> log.info("\"$method\" full covered")
-                tm.isBodyCovered(method) -> log.info("\"$method\" body covered")
-                else -> log.info("\"$method\" is not covered")
-            }
-        }
+        traceInstructions.forEach { it.parent?.remove(it) }
+        writeClass(cm, loader, `class`, classFileName)
     }
 
 }

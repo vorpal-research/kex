@@ -1,0 +1,9 @@
+image: abdullin/kex-standalone:fresh
+
+pipelines:
+  default:
+    - step:
+        caches:
+          - maven
+        script:
+          - mvn -B verify

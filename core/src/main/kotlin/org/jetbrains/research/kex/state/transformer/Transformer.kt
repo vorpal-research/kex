@@ -20,10 +20,16 @@ interface Transformer<T : Transformer<T>> {
      * Needed to avoid using nullable types in transformer
      * Should *never* appear outside of transformers
      */
-    object Stub : Predicate(PredicateType.State(), Location(), arrayListOf()) {
+    private object Stub : Predicate() {
+        override val type = PredicateType.State()
+        override val location = Location()
+        override val operands = listOf<Term>()
+
         override fun print() = "stub"
         override fun <T : Transformer<T>> accept(t: Transformer<T>) = Stub
     }
+
+    fun nothing(): Predicate = Stub
 
     private inline fun <reified T : TypeInfo> delegate(argument: T, type: String): T {
         // this is fucked up, but at least it's not nullable
@@ -38,12 +44,14 @@ interface Transformer<T : Transformer<T>> {
                 ?: unreachable { log.debug("Unexpected null in transformer invocation") }
         if (res is Stub) return res
 
-        val transformClass = this.javaClass.getDeclaredMethod("transform$subtypeName$type", subtype)
+        val newSubtypeName = res.reverseMapping.getValue(res.javaClass)
+        val newSubtype = res.inheritors.getValue(newSubtypeName)
+        val transformClass = this.javaClass.getDeclaredMethod("transform$newSubtypeName$type", newSubtype)
         return transformClass.invoke(this, res) as? T
                 ?: unreachable { log.debug("Unexpected null in transformer invocation") }
     }
 
-    fun apply(ps: PredicateState) = transform(ps)
+    fun apply(ps: PredicateState) = transform(ps).simplify()
 
     ////////////////////////////////////////////////////////////////////
     // PredicateState

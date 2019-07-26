@@ -1,5 +1,8 @@
 package org.jetbrains.research.kex.state.predicate
 
+import kotlinx.serialization.ContextualSerialization
+import kotlinx.serialization.Required
+import kotlinx.serialization.Serializable
 import org.jetbrains.research.kex.ktype.KexArray
 import org.jetbrains.research.kex.ktype.KexType
 import org.jetbrains.research.kex.state.InheritorOf
@@ -10,14 +13,13 @@ import org.jetbrains.research.kex.util.unreachable
 import org.jetbrains.research.kfg.ir.Location
 
 @InheritorOf("Predicate")
-class ArrayStorePredicate(arrayRef: Term, value: Term, type: PredicateType = PredicateType.State(), location: Location = Location())
-    : Predicate(type, location, listOf(arrayRef, value)) {
-
-    val arrayRef: Term
-        get() = operands[0]
-
-    val value: Term
-        get() = operands[1]
+@Serializable
+class ArrayStorePredicate(
+        val arrayRef: Term,
+        val value: Term,
+        @Required override val type: PredicateType = PredicateType.State(),
+        @Required @ContextualSerialization override val location: Location = Location()) : Predicate() {
+    override val operands by lazy { listOf(arrayRef, value) }
 
     val componentType: KexType
         get() = (arrayRef.type as? KexArray)?.element ?: unreachable { log.error("Non-array type of array ref") }

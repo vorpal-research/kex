@@ -1,7 +1,7 @@
 package org.jetbrains.research.kex.annotations
 
 import org.apache.commons.lang.StringEscapeUtils.unescapeJava
-import org.jetbrains.research.kex.config.GlobalConfig
+import org.jetbrains.research.kex.config.kexConfig
 import org.jetbrains.research.kex.util.log
 import org.jetbrains.research.kex.util.recast
 import org.reflections.Reflections
@@ -21,17 +21,17 @@ object AnnotationManager {
 
     val defaultLoader: AnnotationsLoader = ExternalAnnotationsLoader().apply {
         try {
-            for (path in GlobalConfig.getMultipleStringValue("annotations", "path", ";")) {
+            for (path in kexConfig.getMultipleStringValue("annotations", "path", ";")) {
                 loadFrom(File(path))
             }
-            log.debug("Loaded annotated calls$this")
+            log.debug("Loaded annotated calls $this")
         } catch (thr: Throwable) {
             log.error("Annotations not loaded", thr)
             throw thr
         }
     }
 
-    fun scanPackage(name: String) {
+    private fun scanPackage(name: String) {
         val reflections = Reflections(name)
         for (type in reflections.getSubTypesOf(AnnotationInfo::class.java)) {
             val annotation = type.getAnnotation(AnnotationFunctionality::class.java) ?: continue
@@ -42,24 +42,16 @@ object AnnotationManager {
     }
 
     fun build(name: String, parameters: Map<String, String>) : AnnotationInfo? {
-        val call = constructors[name]
-        call ?: return null
+        val call = constructors[name] ?: return null
         val args = hashMapOf<KParameter, Any?>()
         val params = call.parameters
         for (param in params) {
-            val paramName = param.name ?: throw IllegalStateException("Annotation functionality class has parameters" +
-                    " without names")
+            val paramName = param.name
+                    ?: throw IllegalStateException("Annotation functionality class has parameters without names")
             val value = parameters[paramName] ?: continue
             args[param] = cast(value, param.type.jvmErasure)
         }
-        /*
-        val args = Array(params.size) {
-            val param = params[it]
-            val value = parameters[param.name]
-            value ?: return null
-            cast(value, param.type.jvmErasure)
-        }
-        */
+
         return call.callBy(args)
     }
 
@@ -95,6 +87,7 @@ object AnnotationManager {
 
     private fun clearStr(str: String) = str.replace("_", "")
 
+    @Suppress("RemoveExplicitTypeArguments")
     private fun cast(value: String, type: KClass<*>): Any = when (type) {
         Int::class -> getSpecialConstantTyped<Int>(value) ?: clearStr(value).toInt()
         Byte::class -> getSpecialConstantTyped<Byte>(value) ?: clearStr(value).toByte()
@@ -105,34 +98,25 @@ object AnnotationManager {
         Boolean::class -> when (value) {
             "true" -> true
             "false" -> false
-            else -> {
-                val b = getSpecialConstant(value)
-                if (b is Boolean) b else throw IllegalStateException("Invalid boolean constant")
-            }
+            else -> throw IllegalStateException("Invalid boolean constant $value")
         }
-        Char::class -> {
-            val c = getSpecialConstant(value)
-            when (c) {
-                is Char -> c
-                null -> {
-                    check(value.first() == '\'' && value.last() == '\'') { "Invalid character literal" }
-                    val result = unescapeJava(value.substring(1..(value.length - 2)))
-                    check(result.length == 1) { "Character literal contains ${result.length} characters" }
-                    result.first()
-                }
-                else -> throw IllegalStateException("Specified constant is not java.lang.Character")
+        Char::class -> when (val c = getSpecialConstant(value)) {
+            is Char -> c
+            null -> {
+                check(value.first() == '\'' && value.last() == '\'') { "Invalid character literal" }
+                val result = unescapeJava(value.substring(1..(value.length - 2)))
+                check(result.length == 1) { "Character literal contains ${result.length} characters" }
+                result.first()
             }
+            else -> throw IllegalStateException("Specified constant is not java.lang.Character")
         }
-        String::class -> {
-            val special = getSpecialConstant(value)
-            when (special) {
-                is String -> special
-                null -> {
-                    check(value.first() == '"' && value.last() == '"') { "Invalid string literal" }
-                    unescapeJava(value.substring(1..(value.length - 2)))
-                }
-                else -> throw IllegalStateException("Specified constant is not java.lang.String")
+        String::class -> when (val special = getSpecialConstant(value)) {
+            is String -> special
+            null -> {
+                check(value.first() == '"' && value.last() == '"') { "Invalid string literal" }
+                unescapeJava(value.substring(1..(value.length - 2)))
             }
+            else -> throw IllegalStateException("Specified constant is not java.lang.String")
         }
         else -> throw IllegalArgumentException("Only primitive types or String supported in annotations arguments")
     }
