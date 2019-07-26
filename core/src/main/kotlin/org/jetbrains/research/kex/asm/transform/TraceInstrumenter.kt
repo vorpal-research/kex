@@ -14,7 +14,7 @@ import java.nio.file.Files
 import java.nio.file.Paths
 
 class TraceInstrumenter(override val cm: ClassManager) : MethodVisitor {
-    val insertedInsts = mutableListOf<Instruction>()
+    private val insertedInsts = mutableListOf<Instruction>()
     private lateinit var fos: FileOutputStreamWrapper
 
     companion object {
