@@ -24,14 +24,7 @@ private val printSMTLib = kexConfig.getBooleanValue("smt", "logSMTLib", false)
 private val simplifyFormulae = kexConfig.getBooleanValue("smt", "simplifyFormulae", false)
 
 class Z3Solver(val tf: TypeFactory) : AbstractSMTSolver {
-    val ef: Z3ExprFactory
-
-    init {
-        Z3Params.load().forEach { (name, value) ->
-            Global.setParameter(name, value.toString())
-        }
-        ef = Z3ExprFactory()
-    }
+    val ef = Z3ExprFactory()
 
     override fun isReachable(state: PredicateState) =
             isPathPossible(state, state.filterByType(PredicateType.Path()))
@@ -112,6 +105,10 @@ class Z3Solver(val tf: TypeFactory) : AbstractSMTSolver {
     }
 
     private fun buildTactics(): Tactic {
+        Z3Params.load().forEach { (name, value) ->
+            Global.setParameter(name, value.toString())
+        }
+
         val ctx = ef.ctx
         val tactic = Z3Tactics.load().map {
             val tactic = ctx.mkTactic(it.type)
