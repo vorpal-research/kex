@@ -134,21 +134,21 @@ class Slicer(val state: PredicateState, sliceTerms: Set<Term>, val aa: AliasAnal
 
     override fun transformBase(predicate: Predicate): Predicate {
         if (predicate.type == PredicateType.Path()) {
-//            return predicate
-            val inversed = predicate.inverse()
-            return when {
-                predicate in currentPath && inversed !in currentPath -> {
-                    for (op in predicate.operands) {
-                        TermCollector
-                                .getFullTermSet(op)
-                                .filter(isInterestingTerm)
-                                .forEach { addSliceTerm(it) }
-                    }
-                    addCFGDeps(predicate)
-                    predicate
-                }
-                else -> nothing()
-            }
+            return predicate
+//            val inversed = predicate.inverse()
+//            return when {
+//                predicate in currentPath && inversed !in currentPath -> {
+//                    for (op in predicate.operands) {
+//                        TermCollector
+//                                .getFullTermSet(op)
+//                                .filter(isInterestingTerm)
+//                                .forEach { addSliceTerm(it) }
+//                    }
+//                    addCFGDeps(predicate)
+//                    predicate
+//                }
+//                else -> nothing()
+//            }
         }
 
         val receiver = predicate.receiver

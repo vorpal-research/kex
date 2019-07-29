@@ -13,7 +13,7 @@ object AnnotatedMethodsThere {
     }
     @JvmStatic
     // "!null, _ -> !null; _, true -> new; _, false -> param1"
-    fun haveContract(param0: Any?, param1: Boolean): Any? = if (param1) param0 ?: Any() else param0
+    fun haveContract(param0: Any?, param1: Boolean): Any? = if (param1) Any() else param0
 
     // "false -> fail; _ -> this"
     fun assertTrue(param0: Boolean): AnnotatedMethodsThere {
@@ -63,14 +63,7 @@ class NotAnnotatedMethods {
         return result
     }
 
-    fun test5(arg0: Boolean, arg1: Any?): Any? {
-        val result = AnnotatedMethodsThere.haveContract(arg1, arg0)
-        if (arg0 && result !== arg1)
-            assertUnreachable()
-        return result
-    }
-
-    fun test6(arg0: Boolean): Any? {
+    fun test5(arg0: Boolean): Any? {
         val o = AnnotatedMethodsThere
         val result = o.assertTrue(arg0)
         if (!arg0)
@@ -80,6 +73,13 @@ class NotAnnotatedMethods {
         else
             assertReachable()
         return o
+    }
+
+    fun test6(arg0: Boolean, arg1: Any?): Any? {
+        val result = AnnotatedMethodsThere.haveContract(arg1, arg0)
+        if (!arg0 && result !== arg1)
+            assertUnreachable()
+        return result
     }
 }
 

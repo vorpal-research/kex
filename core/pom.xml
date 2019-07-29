@@ -24,6 +24,7 @@
         <easy-random.version>easy-random-4.0.0</easy-random.version>
         <better-parse.version>0.3.2</better-parse.version>
         <klaxon.version>3.0.6</klaxon.version>
+        <reflections.version>0.9.11</reflections.version>
 
         <z3.version>4.7.1</z3.version>
     </properties>
@@ -132,12 +133,7 @@
         <dependency>
             <groupId>org.reflections</groupId>
             <artifactId>reflections</artifactId>
-            <version>0.9.11</version>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.commons</groupId>
-            <artifactId>commons-lang3</artifactId>
-            <version>3.8.1</version>
+            <version>${reflections.version}</version>
         </dependency>
     </dependencies>
 
