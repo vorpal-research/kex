@@ -67,10 +67,21 @@ data class Z3Param(
 }
 
 sealed class Value {
-    class BoolValue(val value: Boolean) : Value()
-    class IntValue(val value: Int) : Value()
-    class DoubleValue(val value: Double) : Value()
-    class StringValue(val value: String) : Value()
+    class BoolValue(val value: Boolean) : Value() {
+        override fun toString() = value.toString()
+    }
+
+    class IntValue(val value: Int) : Value() {
+        override fun toString() = value.toString()
+    }
+
+    class DoubleValue(val value: Double) : Value() {
+        override fun toString() = value.toString()
+    }
+
+    class StringValue(val value: String) : Value() {
+        override fun toString() = value
+    }
 
     fun toJson(): String = klaxon.toJsonString(when (this) {
         is BoolValue -> this.value

@@ -1,9 +1,6 @@
 package org.jetbrains.research.kex.smt.z3
 
-import com.microsoft.z3.BoolExpr
-import com.microsoft.z3.Model
-import com.microsoft.z3.Status
-import com.microsoft.z3.Tactic
+import com.microsoft.z3.*
 import org.jetbrains.research.kex.config.kexConfig
 import org.jetbrains.research.kex.smt.AbstractSMTSolver
 import org.jetbrains.research.kex.smt.Result
@@ -27,7 +24,14 @@ private val printSMTLib = kexConfig.getBooleanValue("smt", "logSMTLib", false)
 private val simplifyFormulae = kexConfig.getBooleanValue("smt", "simplifyFormulae", false)
 
 class Z3Solver(val tf: TypeFactory) : AbstractSMTSolver {
-    val ef = Z3ExprFactory()
+    val ef: Z3ExprFactory
+
+    init {
+        Z3Params.load().forEach { (name, value) ->
+            Global.setParameter(name, value.toString())
+        }
+        ef = Z3ExprFactory()
+    }
 
     override fun isReachable(state: PredicateState) =
             isPathPossible(state, state.filterByType(PredicateType.Path()))
@@ -109,15 +113,6 @@ class Z3Solver(val tf: TypeFactory) : AbstractSMTSolver {
 
     private fun buildTactics(): Tactic {
         val ctx = ef.ctx
-        val globalParams = ctx.mkParams()
-        Z3Params.load().forEach { (name, value) ->
-            when (value) {
-                is Value.BoolValue -> globalParams.add(name, value.value)
-                is Value.IntValue -> globalParams.add(name, value.value)
-                is Value.DoubleValue -> globalParams.add(name, value.value)
-                is Value.StringValue -> globalParams.add(name, value.value)
-            }
-        }
         val tactic = Z3Tactics.load().map {
             val tactic = ctx.mkTactic(it.type)
             val params = ctx.mkParams()
