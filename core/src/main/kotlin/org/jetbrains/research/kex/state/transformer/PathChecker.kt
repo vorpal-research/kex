@@ -11,6 +11,7 @@ import org.jetbrains.research.kex.state.predicate.Predicate
 import org.jetbrains.research.kex.state.term.ConstBoolTerm
 import org.jetbrains.research.kex.state.term.ConstIntTerm
 import org.jetbrains.research.kex.state.term.ConstLongTerm
+import org.jetbrains.research.kex.state.term.Term
 import org.jetbrains.research.kex.util.log
 import org.jetbrains.research.kex.util.unreachable
 
@@ -19,7 +20,7 @@ class PathChecker(val model: SMTModel) : Transformer<PathChecker> {
         private set
 
     override fun transformBasic(ps: BasicState): PredicateState {
-        satisfied = ps.fold(satisfied) {acc, predicate -> acc && checkPredicate(predicate) }
+        satisfied = ps.fold(satisfied) { acc, predicate -> acc && checkPredicate(predicate) }
         return super.transformBasic(ps)
     }
 
@@ -35,45 +36,29 @@ class PathChecker(val model: SMTModel) : Transformer<PathChecker> {
         return super.transformChoice(ps)
     }
 
+    private fun checkTerms(lhv: Term, rhv: Term, cmp: (Any, Any) -> Boolean): Boolean {
+        val lhvValue = when (val value = model.assignments[lhv]) {
+            is ConstBoolTerm -> value.value
+            is ConstIntTerm -> value.value
+            is ConstLongTerm -> value.value
+            else -> unreachable { log.error("Unexpected constant in path $value") }
+        }
+        val rhvValue = when (rhv) {
+            is ConstBoolTerm -> rhv.value
+            is ConstIntTerm -> rhv.value
+            is ConstLongTerm -> rhv.value
+            else -> unreachable { log.error("Unexpected constant in path $rhv") }
+        }
+        return cmp(lhvValue, rhvValue)
+    }
+
     private fun checkPredicate(path: Predicate): Boolean = when (path) {
-        is EqualityPredicate -> {
-            val lhv = path.lhv
-            val rhv = path.rhv
-            val lhvValue = when (val value = model.assignments[lhv]) {
-                is ConstBoolTerm -> value.value
-                is ConstIntTerm -> value.value
-                is ConstLongTerm -> value.value
-                else -> unreachable { log.error("Unexpected constant in path $value") }
-            }
-            val rhvValue = when (rhv) {
-                is ConstBoolTerm -> rhv.value
-                is ConstIntTerm -> rhv.value
-                is ConstLongTerm -> rhv.value
-                else -> unreachable { log.error("Unexpected constant in path $rhv") }
-            }
-            lhvValue == rhvValue
-        }
-        is InequalityPredicate -> {
-            val lhv = path.lhv
-            val rhv = path.rhv
-            val lhvValue = when (val value = model.assignments[lhv]) {
-                is ConstBoolTerm -> value.value
-                is ConstIntTerm -> value.value
-                is ConstLongTerm -> value.value
-                else -> unreachable { log.error("Unexpected constant in path $value") }
-            }
-            val rhvValue = when (rhv) {
-                is ConstBoolTerm -> rhv.value
-                is ConstIntTerm -> rhv.value
-                is ConstLongTerm -> rhv.value
-                else -> unreachable { log.error("Unexpected constant in path $rhv") }
-            }
-            lhvValue != rhvValue
-        }
+        is EqualityPredicate -> checkTerms(path.lhv, path.rhv) { a, b -> a == b }
+        is InequalityPredicate -> checkTerms(path.lhv, path.rhv) { a, b -> a != b }
         is DefaultSwitchPredicate -> {
             val lhv = path.cond
             val conditions = path.cases
-            val lhvValue =  when (val value = model.assignments[lhv]) {
+            val lhvValue = when (val value = model.assignments[lhv]) {
                 is ConstIntTerm -> value.value
                 else -> unreachable { log.error("Unexpected constant in path $value") }
             }

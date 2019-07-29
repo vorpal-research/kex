@@ -18,6 +18,10 @@ class GlobalConfig : Config {
         return sources.flatMap { it.getMultipleStringValue(section, name, delimiter) }
     }
 
+    fun initLog(filename: String) {
+        System.setProperty("kex.log.name", filename)
+    }
+
     fun initialize(sources: List<Config>) {
         this.sources.clear()
         this.sources.addAll(sources)
