@@ -2,24 +2,23 @@
 
 package org.jetbrains.research.kex.test.debug
 
-import org.jetbrains.research.kex.test.AnnotatedMethodsThere
-import java.io.ByteArrayInputStream
+import org.jetbrains.research.kex.test.Intrinsics
 
-class ThatClassContainsHighQualityCodeToProf {
-    fun incredibleMethod(exitingArgument: String, unusualNumber: Double): List<Int> {
-        val importantMethods = AnnotatedMethodsThere
-        val lovelyInteger = unusualNumber.toInt()
-        if (lovelyInteger.toDouble() == unusualNumber) {
-            val bestStream = ByteArrayInputStream(exitingArgument.toByteArray())
-            val meaningfulResult = importantMethods.makeBeautifulList(lovelyInteger)
-            //while (bestStream.available() > 0) {
-            val remarkableLetter = bestStream.read()
-            importantMethods.assertTrue(importantMethods.assertTrue(remarkableLetter > 0) == importantMethods)
-            meaningfulResult += remarkableLetter
-            //}
-            importantMethods.assertNotNull(meaningfulResult)
-            return meaningfulResult
+open class ArrayLongTests {
+    fun testUnknownArrayWrite(array: IntArray) {
+        if (array.size < 5) {
+            Intrinsics.assertReachable(array.size < 5)
+            return
         }
-        return emptyList()
+        Intrinsics.assertReachable(array.size >= 5)
+
+        for (i in 0 until 5) {
+            array[i] = i * i
+        }
+
+        for (i in 0 until 5) {
+            Intrinsics.assertReachable(array[i] == i * i)
+        }
+        Intrinsics.assertReachable()
     }
 }
