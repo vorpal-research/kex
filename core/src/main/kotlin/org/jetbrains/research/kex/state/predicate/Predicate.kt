@@ -8,6 +8,8 @@ import org.jetbrains.research.kex.state.TypeInfo
 import org.jetbrains.research.kex.state.term.Term
 import org.jetbrains.research.kex.state.transformer.Transformer
 import org.jetbrains.research.kex.util.defaultHashCode
+import org.jetbrains.research.kex.util.fail
+import org.jetbrains.research.kex.util.log
 import org.jetbrains.research.kfg.ir.Location
 
 @Serializable
@@ -57,6 +59,7 @@ abstract class Predicate : TypeInfo {
         val predicates = run {
             val loader = Thread.currentThread().contextClassLoader
             val resource = loader.getResourceAsStream("Predicate.json")
+                    ?: fail { log.error("Could not load predicate inheritance info") }
             val inheritanceInfo = InheritanceInfo.fromJson(resource.bufferedReader().readText())
             resource.close()
 

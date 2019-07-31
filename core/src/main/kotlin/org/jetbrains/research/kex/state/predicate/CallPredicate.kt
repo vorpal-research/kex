@@ -35,11 +35,11 @@ class CallPredicate(
         return when {
             hasLhv -> when {
                 tlhv == lhv && tcall == call -> this
-                else -> t.pf.getCall(tlhv!!, tcall, type)
+                else -> predicate(type, location) { tlhv!!.call(tcall) }
             }
             else -> when (tcall) {
                 call -> this
-                else -> t.pf.getCall(tcall, type)
+                else -> predicate(type, location) { call(tcall) }
             }
         }
     }

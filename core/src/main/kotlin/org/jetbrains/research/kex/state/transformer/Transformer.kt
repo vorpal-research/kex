@@ -9,12 +9,6 @@ import org.jetbrains.research.kfg.ir.Location
 import java.util.*
 
 interface Transformer<T : Transformer<T>> {
-    val pf: PredicateFactory
-        get() = PredicateFactory
-
-    val tf: TermFactory
-        get() = TermFactory
-
     /**
      * Stub to return when you want to delete some predicate in predicate state
      * Needed to avoid using nullable types in transformer

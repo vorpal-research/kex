@@ -34,7 +34,7 @@ class NewArrayPredicate(
         val tdimentions = dimentions.map { t.transform(it) }
         return when {
             tlhv == lhv && tdimentions == dimentions -> this
-            else -> t.pf.getNewArray(tlhv, tdimentions, type)
+            else -> predicate(type, location) { tlhv.new(tdimentions) }
         }
     }
 }

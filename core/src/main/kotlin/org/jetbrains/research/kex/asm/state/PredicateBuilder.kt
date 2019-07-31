@@ -1,11 +1,10 @@
 package org.jetbrains.research.kex.asm.state
 
-import org.jetbrains.research.kex.ktype.KexReference
 import org.jetbrains.research.kex.ktype.kexType
 import org.jetbrains.research.kex.state.predicate.Predicate
-import org.jetbrains.research.kex.state.predicate.PredicateFactory
-import org.jetbrains.research.kex.state.predicate.PredicateType
-import org.jetbrains.research.kex.state.term.TermFactory
+import org.jetbrains.research.kex.state.predicate.path
+import org.jetbrains.research.kex.state.predicate.state
+import org.jetbrains.research.kex.state.term.term
 import org.jetbrains.research.kfg.ClassManager
 import org.jetbrains.research.kfg.ir.BasicBlock
 import org.jetbrains.research.kfg.ir.value.IntConstant
@@ -15,8 +14,6 @@ import org.jetbrains.research.kfg.visitor.MethodVisitor
 class InvalidInstructionError(message: String) : Exception(message)
 
 class PredicateBuilder(override val cm: ClassManager) : MethodVisitor {
-    val tf = TermFactory
-    val pf = PredicateFactory
     val predicateMap = hashMapOf<Instruction, Predicate>()
     val phiPredicateMap = hashMapOf<Pair<BasicBlock, Instruction>, Predicate>()
     val terminatorPredicateMap = hashMapOf<Pair<BasicBlock, TerminateInst>, Predicate>()
@@ -28,190 +25,174 @@ class PredicateBuilder(override val cm: ClassManager) : MethodVisitor {
     }
 
     override fun visitArrayLoadInst(inst: ArrayLoadInst) {
-        val lhv = tf.getValue(inst)
-        val ref = tf.getValue(inst.arrayRef)
-        val indx = tf.getValue(inst.index)
-        val arrayRef = tf.getArrayIndex(ref, indx)
-        val load = tf.getArrayLoad(arrayRef)
+        predicateMap[inst] = state(inst.location) {
+            val lhv = value(inst)
+            val ref = value(inst.arrayRef)
+            val indx = value(inst.index)
+            val arrayRef = ref[indx]
+            val load = arrayRef.load()
 
-        predicateMap[inst] = pf.getLoad(lhv, load, location = inst.location)
+            lhv equality load
+        }
     }
 
     override fun visitArrayStoreInst(inst: ArrayStoreInst) {
-        val ref = tf.getValue(inst.arrayRef)
-        val indx = tf.getValue(inst.index)
-        val arrayRef = tf.getArrayIndex(ref, indx)
-        val value = tf.getValue(inst.value)
+        predicateMap[inst] = state(inst.location) {
+            val ref = value(inst.arrayRef)
+            val indx = value(inst.index)
+            val arrayRef = ref[indx]
+            val value = value(inst.value)
 
-        predicateMap[inst] = pf.getArrayStore(arrayRef, value, location = inst.location)
+            arrayRef.store(value)
+        }
     }
 
     override fun visitBinaryInst(inst: BinaryInst) {
-        val lhv = tf.getValue(inst)
-        val rhv = tf.getBinary(
-                types,
-                inst.opcode,
-                tf.getValue(inst.lhv),
-                tf.getValue(inst.rhv)
-        )
+        predicateMap[inst] = state(inst.location) {
+            val lhv = value(inst)
+            val rhv = value(inst.lhv).apply(types, inst.opcode, value(inst.rhv))
 
-        predicateMap[inst] = pf.getEquality(lhv, rhv, location = inst.location)
+            lhv equality rhv
+        }
     }
 
     override fun visitBranchInst(inst: BranchInst) {
-        val cond = tf.getValue(inst.cond)
-        terminatorPredicateMap[inst.trueSuccessor to inst] = pf.getBoolean(
-                cond,
-                tf.getTrue(),
-                location = inst.location
-        )
-        terminatorPredicateMap[inst.falseSuccessor to inst] = pf.getBoolean(
-                cond,
-                tf.getFalse(),
-                location = inst.location
-        )
+        val cond = term { value(inst.cond) }
+        terminatorPredicateMap[inst.trueSuccessor to inst] = path(inst.location) { cond equality true }
+        terminatorPredicateMap[inst.falseSuccessor to inst] = path(inst.location) { cond equality false }
     }
 
     override fun visitCallInst(inst: CallInst) {
-        val args = inst.args.map { tf.getValue(it) }
-        val lhv = if (inst.isNameDefined) tf.getValue(inst) else null
-        val callTerm = when {
-            inst.isStatic -> tf.getCall(inst.method, args)
-            else -> tf.getCall(inst.method, tf.getValue(inst.callee), args)
-        }
+        predicateMap[inst] = state(inst.location) {
+            val args = inst.args.map { value(it) }
+            val callee = when {
+                inst.isStatic -> `class`(inst.method.`class`)
+                else -> value(inst.callee)
+            }
+            val callTerm = callee.call(inst.method, args)
 
-        val predicate = when (lhv) {
-            null -> pf.getCall(callTerm, location = inst.location)
-            else -> pf.getCall(lhv, callTerm, location = inst.location)
+            when {
+                inst.isNameDefined -> value(inst).call(callTerm)
+                else -> call(callTerm)
+            }
         }
-
-        predicateMap[inst] = predicate
     }
 
     override fun visitCastInst(inst: CastInst) {
-        val lhv = tf.getValue(inst)
-        val rhv = tf.getCast(inst.type.kexType, tf.getValue(inst.operand))
+        predicateMap[inst] = state(inst.location) {
+            val lhv = value(inst)
+            val rhv = value(inst.operand) `as` inst.type.kexType
 
-        predicateMap[inst] = pf.getEquality(lhv, rhv, location = inst.location)
+            lhv equality rhv
+        }
     }
 
     override fun visitCmpInst(inst: CmpInst) {
-        val lhv = tf.getValue(inst)
-        val rhv = tf.getCmp(inst.opcode, tf.getValue(inst.lhv), tf.getValue(inst.rhv))
+        predicateMap[inst] = state(inst.location) {
+            val lhv = value(inst)
+            val rhv = value(inst.lhv).apply(inst.opcode, value(inst.rhv))
 
-        predicateMap[inst] = pf.getEquality(lhv, rhv, location = inst.location)
+            lhv equality rhv
+        }
     }
 
     override fun visitFieldLoadInst(inst: FieldLoadInst) {
-        val lhv = tf.getValue(inst)
-        val field = when {
-            inst.hasOwner -> tf.getField(
-                    KexReference(inst.type.kexType),
-                    tf.getValue(inst.owner),
-                    tf.getString(inst.field.name)
-            )
-            else -> tf.getField(
-                    KexReference(inst.type.kexType),
-                    inst.field.`class`,
-                    tf.getString(inst.field.name)
-            )
-        }
-        val rhv = tf.getFieldLoad(inst.type.kexType, field)
+        predicateMap[inst] = state(inst.location) {
+            val lhv = value(inst)
+            val owner = when {
+                inst.isStatic -> `class`(inst.field.`class`)
+                else -> value(inst.owner)
+            }
+            val field = owner.field(inst.type.kexType, inst.field.name)
+            val rhv = field.load()
 
-        predicateMap[inst] = pf.getEquality(lhv, rhv, location = inst.location)
+            lhv equality rhv
+        }
     }
 
     override fun visitFieldStoreInst(inst: FieldStoreInst) {
-        val objectRef = if (inst.isStatic) null else tf.getValue(inst.owner)
-        val name = tf.getString(inst.field.name)
-        val value = tf.getValue(inst.value)
+        predicateMap[inst] = state(inst.location) {
+            val owner = when {
+                inst.isStatic -> `class`(inst.field.`class`)
+                else -> value(inst.owner)
+            }
+            val value = value(inst.value)
+            val field = owner.field(inst.field.type.kexType, inst.field.name)
 
-        val field = when {
-            objectRef != null -> tf.getField(KexReference(inst.field.type.kexType), objectRef, name)
-            else -> tf.getField(KexReference(inst.field.type.kexType), inst.field.`class`, name)
+            field.store(value)
         }
-        predicateMap[inst] = pf.getFieldStore(field, value, location = inst.location)
     }
 
     override fun visitInstanceOfInst(inst: InstanceOfInst) {
-        val lhv = tf.getValue(inst)
-        val rhv = tf.getInstanceOf(inst.targetType.kexType, tf.getValue(inst.operand))
+        predicateMap[inst] = state(inst.location) {
+            val lhv = value(inst)
+            val rhv = value(inst.operand) `is` inst.targetType.kexType
 
-        predicateMap[inst] = pf.getEquality(lhv, rhv, location = inst.location)
+            lhv equality rhv
+        }
     }
 
     override fun visitNewArrayInst(inst: NewArrayInst) {
-        val lhv = tf.getValue(inst)
-        val dimensions = inst.dimensions.map { tf.getValue(it) }
+        predicateMap[inst] = state(inst.location) {
+            val lhv = value(inst)
+            val dimensions = inst.dimensions.map { value(it) }
 
-        predicateMap[inst] = pf.getNewArray(lhv, dimensions, location = inst.location)
+            lhv.new(dimensions)
+        }
     }
 
     override fun visitNewInst(inst: NewInst) {
-        val lhv = tf.getValue(inst)
-        predicateMap[inst] = pf.getNew(lhv, location = inst.location)
+        predicateMap[inst] = state(inst.location) { value(inst).new() }
     }
 
     override fun visitPhiInst(inst: PhiInst) {
         for ((from, value) in inst.incomings) {
-            val lhv = tf.getValue(inst)
-            val rhv = tf.getValue(value)
-            phiPredicateMap[from to inst] = pf.getEquality(lhv, rhv, location = inst.location)
+            phiPredicateMap[from to inst] = state(inst.location) {
+                val lhv = value(inst)
+                val rhv = value(value)
+
+                lhv equality rhv
+            }
         }
     }
 
     override fun visitUnaryInst(inst: UnaryInst) {
-        val lhv = tf.getValue(inst)
-        val rhv = tf.getUnaryTerm(tf.getValue(inst.operand), inst.opcode)
+        predicateMap[inst] = state(inst.location) {
+            val lhv = value(inst)
+            val rhv = value(inst.operand).apply(inst.opcode)
 
-        predicateMap[inst] = pf.getEquality(lhv, rhv, location = inst.location)
+            lhv equality rhv
+        }
     }
 
     override fun visitSwitchInst(inst: SwitchInst) {
-        val key = tf.getValue(inst.key)
+        val key = term { value(inst.key) }
         for ((value, successor) in inst.branches) {
-            terminatorPredicateMap[successor to inst] = pf.getEquality(
-                    key,
-                    tf.getValue(value),
-                    PredicateType.Path(),
-                    inst.location
-            )
+            terminatorPredicateMap[successor to inst] = path(inst.location) { key equality value(value) }
         }
-        terminatorPredicateMap[inst.default to inst] = pf.getDefaultSwitchPredicate(
-                key,
-                inst.branches.keys.map { tf.getValue(it) },
-                PredicateType.Path(),
-                inst.location
-        )
+        terminatorPredicateMap[inst.default to inst] = path(inst.location) { key `!in` inst.branches.keys.map { value(it) } }
     }
 
     override fun visitTableSwitchInst(inst: TableSwitchInst) {
-        val key = tf.getValue(inst.index)
+        val key = term { value(inst.index) }
         val min = inst.min as? IntConstant ?: throw InvalidInstructionError("Unexpected min type in tableSwitchInst")
         val max = inst.max as? IntConstant ?: throw InvalidInstructionError("Unexpected max type in tableSwitchInst")
         for ((index, successor) in inst.branches.withIndex()) {
-            terminatorPredicateMap[successor to inst] = pf.getEquality(
-                    key,
-                    tf.getInt(min.value + index),
-                    PredicateType.Path(),
-                    inst.location
-            )
+            terminatorPredicateMap[successor to inst] = path(inst.location) { key equality (min.value + index) }
         }
-        terminatorPredicateMap[inst.default to inst] = pf.getDefaultSwitchPredicate(
-                key,
-                (min.value..max.value).map { tf.getInt(it) },
-                PredicateType.Path(),
-                inst.location
-        )
+        terminatorPredicateMap[inst.default to inst] = path(inst.location) { key `!in` (min.value..max.value).map { const(it) } }
     }
 
     override fun visitReturnInst(inst: ReturnInst) {
         if (inst.hasReturnValue) {
-            val method = inst.parent?.parent ?: throw InvalidInstructionError("Return instruction don't have parent method")
-            val lhv = tf.getReturn(method)
-            val rhv = tf.getValue(inst.returnValue)
+            predicateMap[inst] = state(inst.location) {
+                val method = inst.parent?.parent
+                        ?: throw InvalidInstructionError("Return instruction don't have parent method")
+                val lhv = `return`(method)
+                val rhv = value(inst.returnValue)
 
-            predicateMap[inst] = pf.getEquality(lhv, rhv, location = inst.location)
+                lhv equality rhv
+            }
         }
     }
 

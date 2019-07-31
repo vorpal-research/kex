@@ -32,7 +32,7 @@ class DefaultSwitchPredicate(
         val tcases = cases.map { t.transform(it) }
         return when {
             tcond == cond && tcases == cases -> this
-            else -> t.pf.getDefaultSwitchPredicate(tcond, tcases, type)
+            else -> predicate(type, location) { tcond `!in` tcases }
         }
     }
 }

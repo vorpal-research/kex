@@ -1,7 +1,11 @@
 package org.jetbrains.research.kex.state.predicate
 
 import org.jetbrains.research.kex.ktype.KexArray
+import org.jetbrains.research.kex.state.term.ArrayIndexTerm
+import org.jetbrains.research.kex.state.term.FieldTerm
 import org.jetbrains.research.kex.state.term.Term
+import org.jetbrains.research.kex.state.term.TermBuilder
+import org.jetbrains.research.kex.util.fail
 import org.jetbrains.research.kex.util.log
 import org.jetbrains.research.kex.util.unreachable
 import org.jetbrains.research.kfg.ir.Location
@@ -52,4 +56,99 @@ object PredicateFactory {
 
     fun getThrow(throwable: Term, type: PredicateType = PredicateType.State(), location: Location = Location()) =
             ThrowPredicate(throwable, type, location)
+}
+
+abstract class PredicateBuilder : TermBuilder() {
+    abstract val type: PredicateType
+    abstract val location: Location
+
+    val pf = PredicateFactory
+
+    fun Term.store(other: Term) = when (this) {
+        is ArrayIndexTerm -> pf.getArrayStore(this, other, this@PredicateBuilder.type, location)
+        is FieldTerm -> pf.getFieldStore(this, other, this@PredicateBuilder.type, location)
+        else -> fail { log.error("Trying to store to unknown term: $this") }
+    }
+
+    fun Term.bound(other: Term) = pf.getBoundStore(this, other, this@PredicateBuilder.type, location)
+
+    fun call(call: Term) = pf.getCall(call, this@PredicateBuilder.type, location)
+    fun Term.call(callTerm: Term) = pf.getCall(this, callTerm, this@PredicateBuilder.type, location)
+
+    fun catch(throwable: Term) = pf.getCatch(throwable, this@PredicateBuilder.type, location)
+    fun `throw`(throwable: Term) = pf.getThrow(throwable, this@PredicateBuilder.type, location)
+
+    infix fun Term.`!in`(cases: List<Term>) = pf.getDefaultSwitchPredicate(this, cases, this@PredicateBuilder.type, location)
+
+    infix fun Term.equality(other: Term) =
+            pf.getEquality(this, other, this@PredicateBuilder.type, location)
+    infix fun Term.equality(@Suppress("UNUSED_PARAMETER") other: Nothing?) =
+            pf.getEquality(this, tf.getNull(), this@PredicateBuilder.type, location)
+    infix fun <T : Number> Term.equality(rhv: T) =
+            pf.getEquality(this, const(rhv), this@PredicateBuilder.type, location)
+    infix fun Nothing?.equality(other: Term) =
+            pf.getEquality(tf.getNull(), other, this@PredicateBuilder.type, location)
+    infix fun Term.equality(other: Boolean) =
+            pf.getEquality(this, tf.getBool(other), this@PredicateBuilder.type, location)
+    infix fun Boolean.equality(other: Term) =
+            pf.getEquality(tf.getBool(this), other, this@PredicateBuilder.type, location)
+
+    infix fun Term.inequality(other: Term) =
+            pf.getInequality(this, other, this@PredicateBuilder.type, location)
+    infix fun <T : Number> Term.inequality(rhv: T) =
+            pf.getInequality(this, const(rhv), this@PredicateBuilder.type, location)
+    infix fun Term.inequality(@Suppress("UNUSED_PARAMETER") other: Nothing?) =
+            pf.getInequality(this, tf.getNull(), this@PredicateBuilder.type, location)
+    infix fun Nothing?.inequality(other: Term) =
+            pf.getInequality(tf.getNull(), other, this@PredicateBuilder.type, location)
+    infix fun Term.inequality(other: Boolean) =
+            pf.getInequality(this, tf.getBool(other), this@PredicateBuilder.type, location)
+    infix fun Boolean.inequality(other: Term) =
+            pf.getInequality(tf.getBool(this), other, this@PredicateBuilder.type, location)
+
+    fun Term.new() = pf.getNew(this, this@PredicateBuilder.type, location)
+    fun Term.new(dimensions: List<Term>) = pf.getNewArray(this, dimensions, this@PredicateBuilder.type, location)
+
+    class Assume(override val location: Location = Location()) : PredicateBuilder() {
+        override val type get() = PredicateType.Assume()
+    }
+    class State(override val location: Location = Location()) : PredicateBuilder() {
+        override val type get() = PredicateType.State()
+    }
+    class Path(override val location: Location = Location()) : PredicateBuilder() {
+        override val type get() = PredicateType.Path()
+    }
+    class Require(override val location: Location = Location()) : PredicateBuilder() {
+        override val type get() = PredicateType.Require()
+    }
+
+    inline fun term(body: TermBuilder.() -> Term) = this.body()
+}
+
+inline fun assume(body: PredicateBuilder.() -> Predicate) = PredicateBuilder.Assume().body()
+inline fun assume(location: Location, body: PredicateBuilder.() -> Predicate) = PredicateBuilder.Assume(location).body()
+
+inline fun state(body: PredicateBuilder.() -> Predicate) = PredicateBuilder.State().body()
+inline fun state(location: Location, body: PredicateBuilder.() -> Predicate) = PredicateBuilder.State(location).body()
+
+inline fun path(body: PredicateBuilder.() -> Predicate) = PredicateBuilder.Path().body()
+inline fun path(location: Location, body: PredicateBuilder.() -> Predicate) = PredicateBuilder.Path(location).body()
+
+inline fun require(body: PredicateBuilder.() -> Predicate) = PredicateBuilder.Require().body()
+inline fun require(location: Location, body: PredicateBuilder.() -> Predicate) = PredicateBuilder.Require(location).body()
+
+inline fun predicate(type: PredicateType, body: PredicateBuilder.() -> Predicate) = when (type) {
+    is PredicateType.Assume -> assume(body)
+    is PredicateType.Require -> require(body)
+    is PredicateType.State -> state(body)
+    is PredicateType.Path -> path(body)
+    else -> fail { log.error("Unknown predicate type $type") }
+}
+
+inline fun predicate(type: PredicateType, location: Location, body: PredicateBuilder.() -> Predicate) = when (type) {
+    is PredicateType.Assume -> assume(location, body)
+    is PredicateType.Require -> require(location, body)
+    is PredicateType.State -> state(location, body)
+    is PredicateType.Path -> path(location, body)
+    else -> fail { log.error("Unknown predicate type $type") }
 }

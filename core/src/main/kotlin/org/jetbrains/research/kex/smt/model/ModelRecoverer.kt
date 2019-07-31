@@ -31,8 +31,6 @@ data class RecoveredModel(val method: Method, val instance: Any?, val arguments:
 
 @Deprecated("Use ObjectRecoverer instead")
 class ModelRecoverer(val method: Method, val model: SMTModel, val loader: ClassLoader) {
-    val tf = TermFactory
-
     private val randomizer by lazy { defaultRandomizer }
 
     private val memoryMappings = hashMapOf<Int, MutableMap<Int, Any?>>()
@@ -110,7 +108,7 @@ class ModelRecoverer(val method: Method, val model: SMTModel, val loader: ClassL
             val `class` = tryOrNull { loader.loadClass(kfgClass.canonicalDesc) } ?: return@memory null
             val instance = randomizer.nextOrNull(`class`)
             for ((_, field) in kfgClass.fields) {
-                val fieldCopy = tf.getField(KexReference(field.type.kexType), term, tf.getString(field.name))
+                val fieldCopy = term { term.field(field.type.kexType, field.name) }
                 val fieldTerm = model.assignments.keys.firstOrNull { it == fieldCopy } ?: continue
 
                 val memspace = fieldTerm.memspace

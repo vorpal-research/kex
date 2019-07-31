@@ -23,8 +23,8 @@ class CmpTerm(
         val trhv = t.transform(rhv)
         return when {
             tlhv == lhv && trhv == rhv -> this
-            else -> t.tf.getCmp(opcode, tlhv, trhv)
-        }
+            else -> term { tf.getCmp(opcode, tlhv, trhv) }
+         }
     }
 
     override fun hashCode() = defaultHashCode(super.hashCode(), opcode)

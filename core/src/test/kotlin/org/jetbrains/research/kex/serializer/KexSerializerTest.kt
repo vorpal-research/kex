@@ -7,13 +7,10 @@ import org.jetbrains.research.kex.KexTest
 import org.jetbrains.research.kex.ktype.*
 import org.jetbrains.research.kex.serialization.KexSerializer
 import org.jetbrains.research.kex.state.PredicateState
-import org.jetbrains.research.kex.state.predicate.Predicate
-import org.jetbrains.research.kex.state.predicate.PredicateFactory
-import org.jetbrains.research.kex.state.predicate.PredicateType
+import org.jetbrains.research.kex.state.predicate.*
 import org.jetbrains.research.kex.state.term.FieldLoadTerm
 import org.jetbrains.research.kex.state.term.Term
-import org.jetbrains.research.kex.state.term.TermFactory
-import org.jetbrains.research.kfg.ir.value.instruction.CmpOpcode
+import org.jetbrains.research.kex.state.term.term
 import org.jetbrains.research.kfg.ir.value.instruction.ReturnInst
 import org.junit.Assert.assertEquals
 import org.junit.Test
@@ -52,14 +49,13 @@ class KexSerializerTest : KexTest() {
 
     @Test
     fun termSerializationTest() {
-        val tf = TermFactory
-        val boolTerm = tf.getBool(true)
+        val boolTerm = term { const(true) }
         val klassType = KexClass("org/jetbrains/research/kex/Test")
-        val valueTerm = tf.getValue(klassType, "testValue")
+        val valueTerm = term { value(klassType, "testValue") }
         val arrayType = KexArray(KexDouble(), memspace = 42)
-        val fieldName = tf.getString("mySuperAwesomeField")
-        val fieldTerm = tf.getField(KexReference(arrayType), valueTerm, fieldName)
-        val fieldLoadTerm = tf.getFieldLoad(arrayType, fieldTerm)
+        val fieldName = term { const("mySuperAwesomeField") }
+        val fieldTerm = term { valueTerm.field(arrayType, fieldName) }
+        val fieldLoadTerm = term { fieldTerm.load() }
 
         val serializedBool = serializer.toJson<Term>(boolTerm)
         val serializedValue = serializer.toJson<Term>(valueTerm)
@@ -105,18 +101,15 @@ class KexSerializerTest : KexTest() {
 
     @Test
     fun testPredicateSerialization() {
-        val tf = TermFactory
-        val pf = PredicateFactory
-
         val klassType = KexClass("org/jetbrains/research/kex/Test")
-        val argTerm = tf.getArgument(KexInt(), 0)
-        val constantInt = tf.getInt(137)
-        val equalityPredicate = pf.getEquality(argTerm, constantInt)
-        val cmpTerm = tf.getCmp(CmpOpcode.Gt(), argTerm, tf.getInt(0))
-        val pathTerm = tf.getValue(KexBool(), "path")
-        val assignPredicate = pf.getEquality(pathTerm, cmpTerm)
-        val pathPredicate = pf.getEquality(pathTerm, tf.getBool(true), PredicateType.Path())
-        val assumePredicate = pf.getInequality(tf.getThis(klassType), tf.getNull(), PredicateType.Assume())
+        val argTerm = term { arg(KexInt(), 0) }
+        val constantInt = term { const(137) }
+        val equalityPredicate = state { argTerm equality constantInt }
+        val cmpTerm = term { argTerm gt 0 }
+        val pathTerm = term { value(KexBool(), "path") }
+        val assignPredicate = state { pathTerm equality cmpTerm }
+        val pathPredicate = path { pathTerm equality true }
+        val assumePredicate = assume { `this`(klassType) inequality null }
 
         val serializedEq = serializer.toJson<Predicate>(equalityPredicate)
         val serializedAssign = serializer.toJson<Predicate>(assignPredicate)

@@ -24,7 +24,7 @@ class BoundStorePredicate(
         val nbound = t.transform(bound)
         return when {
             nptr == ptr && nbound == bound -> this
-            else -> t.pf.getBoundStore(nptr, nbound, type, location)
+            else -> predicate(type, location) { nptr.bound(nbound) }
         }
     }
 }

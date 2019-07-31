@@ -9,8 +9,8 @@ import org.jetbrains.research.kex.smt.Checker
 import org.jetbrains.research.kex.smt.Result
 import org.jetbrains.research.kex.state.term.ConstBoolTerm
 import org.jetbrains.research.kex.state.term.ConstIntTerm
-import org.jetbrains.research.kex.state.term.TermFactory
 import org.jetbrains.research.kex.state.term.isConst
+import org.jetbrains.research.kex.state.term.term
 import org.jetbrains.research.kex.test.Intrinsics
 import org.jetbrains.research.kex.util.log
 import org.jetbrains.research.kfg.ClassManager
@@ -113,7 +113,7 @@ abstract class KexTest {
                 log.debug("Acquired model: $model")
                 log.debug("Checked assertions: $assertions")
                 for (it in assertions) {
-                    val argTerm = TermFactory.getValue(it)
+                    val argTerm = term { value(it) }
 
                     if (argTerm.isConst) continue
 

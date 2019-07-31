@@ -9,28 +9,26 @@ import org.jetbrains.research.kex.util.unreachable
 fun Term.withMemspace(memspace: Int): Term {
     val type = this.type as? KexPointer ?: return this
     val memspaced = type.withMemspace(memspace)
-    val tf = TermFactory
-    return when (this) {
-        is ArgumentTerm -> tf.getArgument(memspaced, index)
-        is ArrayIndexTerm -> tf.getArrayIndex(memspaced, arrayRef, index)
-        is ArrayLengthTerm -> tf.getArrayLength(memspaced, arrayRef)
-        is ArrayLoadTerm -> tf.getArrayLoad(memspaced, arrayRef)
-        is BinaryTerm -> tf.getBinary(memspaced, opcode, lhv, rhv)
-        is CallTerm -> tf.getCall(memspaced, owner, method, arguments)
-        is CastTerm -> tf.getCast(memspaced, operand)
-        is CmpTerm -> tf.getCmp(memspaced, opcode, lhv, rhv)
-        is ConstStringTerm -> tf.getString(memspaced, value)
-        is ConstClassTerm -> tf.getClass(memspaced, `class`)
-        is FieldLoadTerm -> tf.getFieldLoad(memspaced, field)
-        is FieldTerm -> tf.getField(memspaced, owner, fieldName)
-        is NegTerm -> tf.getNegTerm(memspaced, operand)
-        is ReturnValueTerm -> tf.getReturn(memspaced, method)
-        is ValueTerm -> tf.getValue(memspaced, valueName)
-        is UndefTerm -> tf.getUndef(memspaced)
-        is NullTerm -> this
-        else -> {
-            log.warn("Memspacing unexpected term type: $this")
-            this
+    return term {
+        when (this@withMemspace) {
+            is ArgumentTerm -> tf.getArgument(memspaced, index)
+            is ArrayIndexTerm -> tf.getArrayIndex(memspaced, arrayRef, index)
+            is ArrayLengthTerm -> tf.getArrayLength(memspaced, arrayRef)
+            is ArrayLoadTerm -> tf.getArrayLoad(memspaced, arrayRef)
+            is BinaryTerm -> tf.getBinary(memspaced, opcode, lhv, rhv)
+            is CallTerm -> tf.getCall(memspaced, owner, method, arguments)
+            is CastTerm -> tf.getCast(memspaced, operand)
+            is CmpTerm -> tf.getCmp(memspaced, opcode, lhv, rhv)
+            is ConstStringTerm -> tf.getString(memspaced, value)
+            is ConstClassTerm -> tf.getClass(memspaced, `class`)
+            is FieldLoadTerm -> tf.getFieldLoad(memspaced, field)
+            is FieldTerm -> tf.getField(memspaced, owner, fieldName)
+            is NegTerm -> tf.getNegTerm(memspaced, operand)
+            is ReturnValueTerm -> tf.getReturn(memspaced, method)
+            is ValueTerm -> tf.getValue(memspaced, valueName)
+            is UndefTerm -> tf.getUndef(memspaced)
+            is NullTerm -> this@withMemspace
+            else -> this@withMemspace.also { log.warn("Memspacing unexpected term type: $this") }
         }
     }
 }

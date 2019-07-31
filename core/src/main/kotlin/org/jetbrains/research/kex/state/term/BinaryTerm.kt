@@ -23,7 +23,7 @@ class BinaryTerm(
         val trhv = t.transform(rhv)
         return when {
             tlhv == lhv && trhv == rhv -> this
-            else -> t.tf.getBinary(type, opcode, tlhv, trhv)
+            else -> term { tf.getBinary(type, opcode, tlhv, trhv) }
         }
     }
 

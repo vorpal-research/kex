@@ -18,11 +18,9 @@ class CatchPredicate(
 
     override fun print() = "catch $throwable"
 
-    override fun <T: Transformer<T>> accept(t: Transformer<T>): Predicate {
-        val tthrowable = t.transform(throwable)
-        return when (tthrowable) {
-            throwable -> this
-            else -> t.pf.getCatch(tthrowable, type)
-        }
-    }
+    override fun <T: Transformer<T>> accept(t: Transformer<T>): Predicate =
+            when (val tthrowable = t.transform(throwable)) {
+                throwable -> this
+                else -> predicate(type, location) { catch(tthrowable) }
+            }
 }
