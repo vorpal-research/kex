@@ -4,14 +4,12 @@ import com.microsoft.z3.*
 import com.microsoft.z3.enumerations.Z3_lbool
 import org.jetbrains.research.kex.smt.SMTEngine
 import org.jetbrains.research.kex.state.term.Term
-import org.jetbrains.research.kex.state.term.TermFactory
+import org.jetbrains.research.kex.state.term.term
 import org.jetbrains.research.kex.util.log
 import org.jetbrains.research.kex.util.unreachable
 import java.lang.Math.pow
 
 object Z3Unlogic {
-    val tf = TermFactory
-
     fun undo(expr: Expr): Term = when (expr) {
         is BoolExpr -> undoBool(expr)
         is BitVecNum -> undoBV(expr)
@@ -20,20 +18,20 @@ object Z3Unlogic {
     }
 
     private fun undoBool(expr: BoolExpr) = when (expr.boolValue) {
-        Z3_lbool.Z3_L_TRUE -> tf.getTrue()
-        Z3_lbool.Z3_L_FALSE -> tf.getFalse()
+        Z3_lbool.Z3_L_TRUE -> term { const(true) }
+        Z3_lbool.Z3_L_FALSE -> term { const(false) }
         else -> unreachable { log.error("Trying to undo unknown") }
     }
 
     private fun undoBV(expr: BitVecNum) = when (expr.sortSize) {
-        SMTEngine.WORD -> tf.getInt(expr.long.toInt())
+        SMTEngine.WORD -> term { const(expr.long.toInt()) }
         SMTEngine.DWORD -> {
             val value = try {
                 expr.long
             } catch (e: Z3Exception) {
                 expr.bigInteger.toLong()
             }
-            tf.getLong(value)
+            term { const(value) }
         }
         else -> unreachable { log.error("Trying to undo bv with unexpected size: ${expr.sortSize}") }
     }
@@ -41,8 +39,8 @@ object Z3Unlogic {
     private fun undoFloat(expr: FPNum): Term {
         val isDouble = (expr.eBits + expr.sBits) == SMTEngine.DWORD
         val termifier = { a: Double -> when {
-            isDouble -> tf.getDouble(a)
-            else -> tf.getFloat(a.toFloat())
+            isDouble -> term { const(a) }
+            else -> term { const(a.toFloat()) }
         }}
         return when {
             expr.isZero -> termifier(0.0)

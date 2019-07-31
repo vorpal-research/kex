@@ -6,12 +6,11 @@ import org.jetbrains.research.kex.state.StateBuilder
 import org.jetbrains.research.kex.state.predicate.CallPredicate
 import org.jetbrains.research.kex.state.predicate.EqualityPredicate
 import org.jetbrains.research.kex.state.predicate.Predicate
-import org.jetbrains.research.kex.state.predicate.PredicateType
+import org.jetbrains.research.kex.state.predicate.assume
 import org.jetbrains.research.kex.state.term.*
 import org.jetbrains.research.kex.util.*
 import org.jetbrains.research.kfg.ir.Field
 import org.jetbrains.research.kfg.ir.Method
-import org.jetbrains.research.kfg.ir.value.instruction.CmpOpcode
 import org.jetbrains.research.kfg.type.ArrayType
 import org.jetbrains.research.kfg.type.Reference
 import org.jetbrains.research.kfg.type.Type
@@ -117,10 +116,9 @@ class ReflectionInfoAdapter(val method: Method, val loader: ClassLoader) : Recol
 
     override fun apply(ps: PredicateState): PredicateState {
         val (`this`, arguments) = collectArguments(ps)
-        val `null` = tf.getNull()
 
         if (`this` != null) {
-            currentBuilder += pf.getInequality(`this`, `null`, PredicateType.Assume())
+            currentBuilder += assume { `this` inequality null }
         }
 
         val kFunction = getKFunction(method) ?: run {
@@ -134,7 +132,7 @@ class ReflectionInfoAdapter(val method: Method, val loader: ClassLoader) : Recol
             val arg = arguments[param.index - 1] ?: continue
 
             if (arg.type.isNonNullable(param.type)) {
-                currentBuilder += pf.getInequality(arg, `null`, PredicateType.Assume())
+                currentBuilder += assume { arg inequality null }
             }
 
             if (type is ArrayType) {
@@ -154,13 +152,13 @@ class ReflectionInfoAdapter(val method: Method, val loader: ClassLoader) : Recol
         currentBuilder += predicate
         val lhv = predicate.lhv
         if (lhv.type.isNonNullable(kFunction.returnType))
-            currentBuilder += pf.getInequality(lhv, tf.getNull(), PredicateType.Assume())
+            currentBuilder += assume { lhv inequality null }
 
         if (lhv.type is KexArray)
             arrayElementInfo[lhv] = ArrayElementInfo(nullable = lhv.type.isElementNullable(kFunction.returnType))
 
         call.arguments.filter { it.type is KexPointer }.forEach {
-            currentBuilder += pf.getEquality(it, tf.getUndef(it.type), PredicateType.Assume())
+            currentBuilder += assume { it equality undef(it.type) }
         }
 
         return nothing()
@@ -191,7 +189,7 @@ class ReflectionInfoAdapter(val method: Method, val loader: ClassLoader) : Recol
         val returnType = tryOrNull { prop?.getter?.returnType }
 
         if (returnType != null && fieldType.isNonNullable(returnType)) {
-            result += pf.getInequality(predicate.lhv, tf.getNull(), PredicateType.Assume())
+            result += assume { predicate.lhv inequality null }
         }
 
         return result
@@ -200,10 +198,7 @@ class ReflectionInfoAdapter(val method: Method, val loader: ClassLoader) : Recol
     private fun adaptArrayLength(predicate: EqualityPredicate): List<Predicate> {
         val result = arrayListOf<Predicate>()
         result += predicate
-
-        val lhv = predicate.lhv
-        result += pf.getEquality(tf.getCmp(CmpOpcode.Ge(), lhv, tf.getInt(0)), tf.getTrue(), PredicateType.Assume())
-
+        result += assume { (predicate.lhv ge 0) equality true }
         return result
     }
 
@@ -217,7 +212,7 @@ class ReflectionInfoAdapter(val method: Method, val loader: ClassLoader) : Recol
 
         val isNonNullable = arrayElementInfo[arrayIndex.arrayRef]?.nullable?.not() ?: false
         if (lhv.type is KexPointer && isNonNullable) {
-            currentBuilder += pf.getInequality(lhv, tf.getNull(), PredicateType.Assume())
+            currentBuilder += assume { lhv inequality null }
         }
         return result
     }

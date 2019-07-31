@@ -10,7 +10,7 @@ import org.jetbrains.research.kex.state.PredicateState
 import org.jetbrains.research.kex.state.emptyState
 import org.jetbrains.research.kex.state.predicate.EqualityPredicate
 import org.jetbrains.research.kex.state.predicate.Predicate
-import org.jetbrains.research.kex.state.predicate.PredicateType
+import org.jetbrains.research.kex.state.predicate.path
 import org.jetbrains.research.kex.state.term.CastTerm
 import org.jetbrains.research.kex.state.term.InstanceOfTerm
 import org.jetbrains.research.kex.state.term.Term
@@ -46,7 +46,7 @@ class TypeInfoCollector(val model: SMTModel) : Transformer<TypeInfoCollector> {
                 val checkedType = rhv.checkedType
                 val operand = rhv.operand
                 val condition = cfgt.getDominatingPaths(predicate)
-                val fullPath = condition + pf.getEquality(predicate.lhv, tf.getTrue(), PredicateType.Path())
+                val fullPath = condition + path { predicate.lhv equality true }
 
                 val typeInfo = typeInfos.getOrPut(operand, ::mutableMapOf)
                 val existingCond = typeInfo.getOrDefault(checkedType, emptyState())

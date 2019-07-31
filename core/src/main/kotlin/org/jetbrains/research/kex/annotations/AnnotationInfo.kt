@@ -9,7 +9,6 @@ import org.jetbrains.research.kex.state.predicate.Predicate
 import org.jetbrains.research.kex.state.predicate.PredicateFactory
 import org.jetbrains.research.kex.state.term.Term
 import org.jetbrains.research.kex.state.term.TermFactory
-import java.util.*
 import kotlin.reflect.full.findAnnotation
 
 abstract class AnnotationInfo {

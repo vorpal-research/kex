@@ -4,18 +4,13 @@ import org.jetbrains.research.kex.state.ChoiceState
 import org.jetbrains.research.kex.state.PredicateState
 import org.jetbrains.research.kex.state.StateBuilder
 import org.jetbrains.research.kex.state.predicate.Predicate
-import org.jetbrains.research.kex.state.predicate.PredicateType
+import org.jetbrains.research.kex.state.predicate.assume
 import org.jetbrains.research.kex.state.term.Term
 import java.util.*
 
 class NullityAnnotator(private val nonNulls: Set<Term>) : RecollectingTransformer<NullityAnnotator> {
-    override val builders = ArrayDeque<StateBuilder>()
+    override val builders = ArrayDeque<StateBuilder>().apply { push(StateBuilder()) }
     private var annotatedTerms = hashSetOf<Term>()
-
-
-    init {
-        builders += StateBuilder()
-    }
 
     override fun transformChoice(ps: ChoiceState): PredicateState {
         val oldAnnotatedTerms = annotatedTerms.toSet()
@@ -48,7 +43,7 @@ class NullityAnnotator(private val nonNulls: Set<Term>) : RecollectingTransforme
                 .filter { it !in annotatedTerms }
                 .toSet()
         for (term in predicateTerms) {
-            currentBuilder += pf.getInequality(term, tf.getNull(), PredicateType.Assume())
+            currentBuilder += assume { term inequality null }
             annotatedTerms.add(term)
         }
         return predicate

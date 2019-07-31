@@ -24,8 +24,8 @@ class FieldTerm(override val type: KexType, val owner: Term, val fieldName: Term
         val tname = t.transform(fieldName)
         return when {
             towner == owner && tname == fieldName -> this
-            else -> t.tf.getField(type, towner, tname)
-        }
+            else -> term { tf.getField(type, towner, tname) }
+         }
     }
 
 }

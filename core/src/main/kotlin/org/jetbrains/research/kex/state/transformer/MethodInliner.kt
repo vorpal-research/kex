@@ -30,16 +30,16 @@ class MethodInliner(val method: Method, val psa: PredicateStateAnalysis) : Recol
 
         val mappings = hashMapOf<Term, Term>()
         if (!call.isStatic) {
-            val `this` = tf.getThis(call.owner.type)
+            val `this` = term { `this`(call.owner.type) }
             mappings[`this`] = call.owner
         }
         if (predicate.hasLhv) {
-            val retval = tf.getReturn(calledMethod)
+            val retval = term { `return`(calledMethod) }
             mappings[retval] = predicate.lhv
         }
 
         for ((index, argType) in calledMethod.argTypes.withIndex()) {
-            val argTerm = tf.getArgument(argType.kexType, index)
+            val argTerm = term { arg(argType.kexType, index) }
             val calledArg = call.arguments[index]
             mappings[argTerm] = calledArg
         }
@@ -61,7 +61,7 @@ class MethodInliner(val method: Method, val psa: PredicateStateAnalysis) : Recol
 
 private class TermRemapper(val suffix: String, val remapping: Map<Term, Term>) : Transformer<TermRemapper> {
     override fun transformTerm(term: Term): Term = remapping[term] ?: when (term) {
-        is ValueTerm, is ArgumentTerm, is ReturnValueTerm -> tf.getValue(term.type, "${term.name}.$suffix")
+        is ValueTerm, is ArgumentTerm, is ReturnValueTerm -> term { value(term.type, "${term.name}.$suffix") }
         else -> term
     }
 }

@@ -12,10 +12,7 @@ import org.jetbrains.research.kex.state.ChoiceState
 import org.jetbrains.research.kex.state.PredicateState
 import org.jetbrains.research.kex.state.emptyState
 import org.jetbrains.research.kex.state.predicate.*
-import org.jetbrains.research.kex.state.term.ConstBoolTerm
-import org.jetbrains.research.kex.state.term.ConstIntTerm
-import org.jetbrains.research.kex.state.term.ConstLongTerm
-import org.jetbrains.research.kex.state.term.Term
+import org.jetbrains.research.kex.state.term.*
 import org.jetbrains.research.kex.util.getMethod
 import org.jetbrains.research.kex.util.loadClass
 import org.jetbrains.research.kex.util.log
@@ -88,12 +85,12 @@ class ModelExecutor(val method: Method,
         val argTypeInfo = collectTypeInfos(recoverer.model, ps)//.filterKeys { it is ArgumentTerm }
         if (argTypeInfo.isNotEmpty()) log.debug("Collected type info: $argTypeInfo")
         thisTerm = when {
-            !method.isStatic && tempThis == null -> tf.getThis(KexClass(method.`class`.fullname))
+            !method.isStatic && tempThis == null -> term { `this`(KexClass(method.`class`.fullname)) }
             else -> tempThis
         }
         argTerms.putAll(tempArgs)
         for ((index, type) in method.argTypes.withIndex()) {
-            argTerms.getOrPut(index) { tf.getArgument(type.kexType, index) }
+            argTerms.getOrPut(index) { term { arg(type.kexType, index) } }
         }
         thisTerm?.let { memory[it] = recoverer.recoverTerm(it, javaClass) }
         argTerms.values.zip(javaMethod.genericParameterTypes).forEach { (term, type) ->
@@ -125,31 +122,25 @@ class ModelExecutor(val method: Method,
         return super.transformBase(ourChoice)
     }
 
+    private fun checkTerms(lhv: Term, rhv: Term, cmp: (Any, Any) -> Boolean): Boolean {
+        val lhvValue = when (val value = memory.getOrPut(lhv) { recoverer.recoverTerm(lhv) }) {
+            is ConstBoolTerm -> value.value
+            is ConstIntTerm -> value.value
+            is ConstLongTerm -> value.value
+            else -> unreachable { log.error("Unexpected constant in path $value") }
+        }
+        val rhvValue = when (rhv) {
+            is ConstBoolTerm -> rhv.value
+            is ConstIntTerm -> rhv.value
+            is ConstLongTerm -> rhv.value
+            else -> unreachable { log.error("Unexpected constant in path $rhv") }
+        }
+        return cmp(lhvValue, rhvValue)
+    }
+
     private fun checkPath(path: Predicate): Boolean = when (path) {
-        is EqualityPredicate -> {
-            val lhv = path.lhv
-            val rhv = path.rhv
-            val lhvValue = memory.getOrPut(lhv) { recoverer.recoverTerm(lhv) }
-            val rhvValue = when (rhv) {
-                is ConstBoolTerm -> rhv.value
-                is ConstIntTerm -> rhv.value
-                is ConstLongTerm -> rhv.value
-                else -> unreachable { log.error("Unexpected constant in path $rhv") }
-            }
-            lhvValue == rhvValue
-        }
-        is InequalityPredicate -> {
-            val lhv = path.lhv
-            val rhv = path.rhv
-            val lhvValue = memory.getOrPut(lhv) { recoverer.recoverTerm(lhv) }
-            val rhvValue = when (rhv) {
-                is ConstBoolTerm -> rhv.value
-                is ConstIntTerm -> rhv.value
-                is ConstLongTerm -> rhv.value
-                else -> unreachable { log.error("Unexpected constant in path $rhv") }
-            }
-            lhvValue != rhvValue
-        }
+        is EqualityPredicate -> checkTerms(path.lhv, path.rhv) { a, b -> a == b }
+        is InequalityPredicate -> checkTerms(path.lhv, path.rhv) { a, b -> a != b }
         is DefaultSwitchPredicate -> {
             val lhv = path.cond
             val conditions = path.cases

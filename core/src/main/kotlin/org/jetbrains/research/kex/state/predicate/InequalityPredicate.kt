@@ -24,7 +24,7 @@ class InequalityPredicate(
         val nrhv = t.transform(rhv)
         return when {
             nlhv == lhv && nrhv == rhv -> this
-            else -> t.pf.getInequality(nlhv, nrhv, type, location)
+            else -> predicate(type, location) { nlhv inequality nrhv }
         }
     }
 }

@@ -24,33 +24,26 @@ abstract class PrintStreamWrapper(final override val cm: ClassManager) : Wrapper
 
     abstract fun open(): List<Instruction>
 
-    fun print(string: String) = print(values.getStringConstant(string))
-    fun print(value: Value): List<Instruction> {
-        val printArg = when {
-            value.type.isPrimary -> value.type
-            value.type == types.stringType -> value.type
-            else -> types.objectType
-        }
+    private fun getPrintArgType(value: Value) = when {
+        value.type.isPrimary -> value.type
+        value.type == types.stringType -> value.type
+        else -> types.objectType
+    }
 
+    private fun call(methodName: String, value: Value): List<Instruction> {
+        val printArg = getPrintArgType(value)
         val desc = MethodDesc(arrayOf(printArg), types.voidType)
-        val printMethod = printStreamClass.getMethod("print", desc)
+        val printMethod = printStreamClass.getMethod(methodName, desc)
         val append = instructions.getCall(CallOpcode.Virtual(), printMethod, printStreamClass, stream, arrayOf(value), false)
         return listOf(append)
     }
+
+    fun print(string: String) = print(values.getStringConstant(string))
+    fun print(value: Value) = call("print", value)
 
     fun println() = println("")
     fun println(string: String) = println(values.getStringConstant(string))
-    fun println(value: Value): List<Instruction> {
-        val printArg = when {
-            value.type.isPrimary -> value.type
-            value.type == types.stringType -> value.type
-            else -> types.objectType
-        }
-        val desc = MethodDesc(arrayOf(printArg), types.voidType)
-        val printMethod = printStreamClass.getMethod("println", desc)
-        val append = instructions.getCall(CallOpcode.Virtual(), printMethod, printStreamClass, stream, arrayOf(value), false)
-        return listOf(append)
-    }
+    fun println(value: Value) = call("println", value)
 
     fun flush(): List<Instruction> = buildList {
         val desc = MethodDesc(arrayOf(), types.voidType)

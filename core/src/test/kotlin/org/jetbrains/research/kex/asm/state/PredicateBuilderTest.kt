@@ -81,12 +81,12 @@ class PredicateBuilderTest : KexTest() {
 
                 val cond = tf.getValue(inst.cond)
                 assertEquals(
-                        builder.terminatorPredicateMap[inst.trueSuccessor to inst],
-                        pf.getEquality(cond, tf.getTrue(), PredicateType.Path())
+                        pf.getEquality(cond, tf.getTrue(), PredicateType.Path()),
+                        builder.terminatorPredicateMap[inst.trueSuccessor to inst]
                 )
                 assertEquals(
-                        builder.terminatorPredicateMap[inst.falseSuccessor to inst],
-                        pf.getEquality(cond, tf.getFalse(), PredicateType.Path())
+                        pf.getEquality(cond, tf.getFalse(), PredicateType.Path()),
+                        builder.terminatorPredicateMap[inst.falseSuccessor to inst]
                 )
             }
 

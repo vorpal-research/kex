@@ -20,41 +20,43 @@ object ConstantPropagator : Transformer<ConstantPropagator> {
     override fun transformBinaryTerm(term: BinaryTerm): Term {
         val lhv = getConstantValue(term.lhv) ?: return term
         val rhv = getConstantValue(term.rhv) ?: return term
-        return when (term.opcode) {
-            is BinaryOpcode.Add -> {
-                val (nlhv, nrhv) = toCompatibleTypes(lhv, rhv)
-                tf.getConstant(nlhv + nrhv)
-            }
-            is BinaryOpcode.Sub -> {
-                val (nlhv, nrhv) = toCompatibleTypes(lhv, rhv)
-                tf.getConstant(nlhv - nrhv)
-            }
-            is BinaryOpcode.Mul -> {
-                val (nlhv, nrhv) = toCompatibleTypes(lhv, rhv)
-                tf.getConstant(nlhv * nrhv)
-            }
-            is BinaryOpcode.Div -> {
-                val (nlhv, nrhv) = toCompatibleTypes(lhv, rhv)
-                tf.getConstant(nlhv / nrhv)
-            }
-            is BinaryOpcode.Rem -> {
-                val (nlhv, nrhv) = toCompatibleTypes(lhv, rhv)
-                tf.getConstant(nlhv % nrhv)
-            }
-            is BinaryOpcode.Shl -> tf.getConstant(lhv.shl(rhv as Int))
-            is BinaryOpcode.Shr -> tf.getConstant(lhv.shr(rhv as Int))
-            is BinaryOpcode.Ushr -> tf.getConstant(lhv.ushr(rhv as Int))
-            is BinaryOpcode.And -> {
-                val (nlhv, nrhv) = toCompatibleTypes(lhv, rhv)
-                tf.getConstant(nlhv and nrhv)
-            }
-            is BinaryOpcode.Or -> {
-                val (nlhv, nrhv) = toCompatibleTypes(lhv, rhv)
-                tf.getConstant(nlhv or nrhv)
-            }
-            is BinaryOpcode.Xor -> {
-                val (nlhv, nrhv) = toCompatibleTypes(lhv, rhv)
-                tf.getConstant(nlhv xor nrhv)
+        return term {
+            when (term.opcode) {
+                is BinaryOpcode.Add -> {
+                    val (nlhv, nrhv) = toCompatibleTypes(lhv, rhv)
+                    const(nlhv + nrhv)
+                }
+                is BinaryOpcode.Sub -> {
+                    val (nlhv, nrhv) = toCompatibleTypes(lhv, rhv)
+                    const(nlhv - nrhv)
+                }
+                is BinaryOpcode.Mul -> {
+                    val (nlhv, nrhv) = toCompatibleTypes(lhv, rhv)
+                    const(nlhv * nrhv)
+                }
+                is BinaryOpcode.Div -> {
+                    val (nlhv, nrhv) = toCompatibleTypes(lhv, rhv)
+                    const(nlhv / nrhv)
+                }
+                is BinaryOpcode.Rem -> {
+                    val (nlhv, nrhv) = toCompatibleTypes(lhv, rhv)
+                    const(nlhv % nrhv)
+                }
+                is BinaryOpcode.Shl -> const(lhv.shl(rhv as Int))
+                is BinaryOpcode.Shr -> const(lhv.shr(rhv as Int))
+                is BinaryOpcode.Ushr -> const(lhv.ushr(rhv as Int))
+                is BinaryOpcode.And -> {
+                    val (nlhv, nrhv) = toCompatibleTypes(lhv, rhv)
+                    const(nlhv and nrhv)
+                }
+                is BinaryOpcode.Or -> {
+                    val (nlhv, nrhv) = toCompatibleTypes(lhv, rhv)
+                    const(nlhv or nrhv)
+                }
+                is BinaryOpcode.Xor -> {
+                    val (nlhv, nrhv) = toCompatibleTypes(lhv, rhv)
+                    const(nlhv xor nrhv)
+                }
             }
         }
     }
@@ -63,30 +65,32 @@ object ConstantPropagator : Transformer<ConstantPropagator> {
         val lhv = getConstantValue(term.lhv) ?: return term
         val rhv = getConstantValue(term.rhv) ?: return term
         val (nlhv, nrhv) = toCompatibleTypes(lhv, rhv)
-        return when (term.opcode) {
-            is CmpOpcode.Eq -> when (nlhv) {
-                is Double -> tf.getBool(nlhv eq nrhv.toDouble())
-                is Float -> tf.getBool(nlhv eq nrhv.toFloat())
-                else -> tf.getBool(nlhv == nrhv)
+        return term {
+            when (term.opcode) {
+                is CmpOpcode.Eq -> when (nlhv) {
+                    is Double -> const(nlhv eq nrhv.toDouble())
+                    is Float -> const(nlhv eq nrhv.toFloat())
+                    else -> const(nlhv == nrhv)
+                }
+                is CmpOpcode.Neq -> when (nlhv) {
+                    is Double -> const(nlhv neq nrhv.toDouble())
+                    is Float -> const(nlhv neq nrhv.toFloat())
+                    else -> const(nlhv != nrhv)
+                }
+                is CmpOpcode.Lt -> const(nlhv < nrhv)
+                is CmpOpcode.Gt -> const(nlhv > nrhv)
+                is CmpOpcode.Le -> const(nlhv <= nrhv)
+                is CmpOpcode.Ge -> const(nlhv >= nrhv)
+                is CmpOpcode.Cmp -> const(nlhv.compareTo(nrhv))
+                is CmpOpcode.Cmpg -> const(nlhv.compareTo(nrhv))
+                is CmpOpcode.Cmpl -> const(nlhv.compareTo(nrhv))
             }
-            is CmpOpcode.Neq -> when (nlhv) {
-                is Double -> tf.getBool(nlhv neq nrhv.toDouble())
-                is Float -> tf.getBool(nlhv neq nrhv.toFloat())
-                else -> tf.getBool(nlhv != nrhv)
-            }
-            is CmpOpcode.Lt -> tf.getBool(nlhv < nrhv)
-            is CmpOpcode.Gt -> tf.getBool(nlhv > nrhv)
-            is CmpOpcode.Le -> tf.getBool(nlhv <= nrhv)
-            is CmpOpcode.Ge -> tf.getBool(nlhv >= nrhv)
-            is CmpOpcode.Cmp -> tf.getInt(nlhv.compareTo(nrhv))
-            is CmpOpcode.Cmpg -> tf.getInt(nlhv.compareTo(nrhv))
-            is CmpOpcode.Cmpl -> tf.getInt(nlhv.compareTo(nrhv))
         }
     }
 
     override fun transformNegTerm(term: NegTerm): Term {
         val operand = getConstantValue(term.operand) ?: return term
-        return tf.getConstant(operand)
+        return term { const(operand) }
     }
 
     private fun toCompatibleTypes(lhv: Number, rhv: Number): Pair<Number, Number> = when (lhv) {

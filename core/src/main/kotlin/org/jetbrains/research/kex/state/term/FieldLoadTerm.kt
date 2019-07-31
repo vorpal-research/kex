@@ -16,11 +16,9 @@ class FieldLoadTerm(override val type: KexType, val field: Term) : Term() {
     val isStatic
         get() = (field as? FieldTerm)?.isStatic ?: unreachable { log.error("Non-field term in field load") }
 
-    override fun <T : Transformer<T>> accept(t: Transformer<T>): Term {
-        val tfield = t.transform(field)
-        return when (tfield) {
-            field -> this
-            else -> t.tf.getFieldLoad(type, tfield)
-        }
-    }
+    override fun <T : Transformer<T>> accept(t: Transformer<T>): Term =
+            when (val tfield = t.transform(field)) {
+                field -> this
+                else -> term { tf.getFieldLoad(type, tfield) }
+             }
 }

@@ -24,7 +24,7 @@ class FieldStorePredicate(
         val tvalue = t.transform(value)
         return when {
             tfield == field && tvalue == value -> this
-            else -> t.pf.getFieldStore(tfield, tvalue, type)
+            else -> predicate(type, location) { tfield.store(tvalue) }
         }
     }
 

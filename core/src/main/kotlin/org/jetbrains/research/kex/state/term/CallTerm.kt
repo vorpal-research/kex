@@ -25,7 +25,7 @@ class CallTerm(
         val targuments = arguments.map { t.transform(it) }
         return when {
             towner == owner && targuments == arguments -> this
-            else -> t.tf.getCall(method, towner, targuments)
+            else -> term { tf.getCall(method, towner, targuments) }
         }
     }
 }

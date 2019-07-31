@@ -5,8 +5,8 @@ import org.jetbrains.research.kex.state.ChoiceState
 import org.jetbrains.research.kex.state.PredicateState
 import org.jetbrains.research.kex.state.predicate.*
 import org.jetbrains.research.kex.state.term.Term
-import org.jetbrains.research.kex.state.term.TermFactory
 import org.jetbrains.research.kex.state.term.isNamed
+import org.jetbrains.research.kex.state.term.term
 
 class CFGTracker : Transformer<CFGTracker> {
     private var currentDominators = setOf<Predicate>()
@@ -46,8 +46,8 @@ class CFGTracker : Transformer<CFGTracker> {
 
 private fun Predicate.inverse(): Predicate = when (this) {
     is EqualityPredicate -> when (rhv) {
-        TermFactory.getTrue() -> PredicateFactory.getEquality(lhv, TermFactory.getFalse(), type, location)
-        TermFactory.getFalse() -> PredicateFactory.getEquality(lhv, TermFactory.getTrue(), type, location)
+        term { const(true) } -> predicate(type, location) { lhv equality false }
+        term { const(false) } -> predicate(type, location) { lhv equality true }
         else -> this
     }
     else -> this

@@ -7,6 +7,8 @@ import org.jetbrains.research.kex.state.InheritanceInfo
 import org.jetbrains.research.kex.state.TypeInfo
 import org.jetbrains.research.kex.state.transformer.Transformer
 import org.jetbrains.research.kex.util.defaultHashCode
+import org.jetbrains.research.kex.util.fail
+import org.jetbrains.research.kex.util.log
 
 @BaseType("Term")
 @Serializable
@@ -20,6 +22,7 @@ abstract class Term : TypeInfo {
         val terms = run {
             val loader = Thread.currentThread().contextClassLoader
             val resource = loader.getResourceAsStream("Term.json")
+                    ?: fail { log.error("Could not load term inheritance info") }
             val inheritanceInfo = InheritanceInfo.fromJson(resource.bufferedReader().readText())
             resource.close()
 

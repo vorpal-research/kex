@@ -24,7 +24,7 @@ class EqualityPredicate(
         val trhv = t.transform(rhv)
         return when {
             tlhv == lhv && trhv == rhv -> this
-            else -> t.pf.getEquality(tlhv, trhv, type, location)
+            else -> predicate(type, location) { tlhv equality trhv }
         }
     }
 }

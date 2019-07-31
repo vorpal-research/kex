@@ -31,7 +31,7 @@ class ArrayStorePredicate(
         val store = t.transform(value)
         return when {
             ref == arrayRef && store == value -> this
-            else -> t.pf.getArrayStore(ref, store, type)
+            else -> predicate(type, location) { ref.store(store) }
         }
     }
 }

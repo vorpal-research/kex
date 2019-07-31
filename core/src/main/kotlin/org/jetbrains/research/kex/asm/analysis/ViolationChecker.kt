@@ -6,11 +6,10 @@ import org.jetbrains.research.kex.config.kexConfig
 import org.jetbrains.research.kex.smt.Result
 import org.jetbrains.research.kex.smt.SMTProxySolver
 import org.jetbrains.research.kex.state.PredicateState
-import org.jetbrains.research.kex.state.predicate.PredicateFactory
-import org.jetbrains.research.kex.state.predicate.PredicateType
+import org.jetbrains.research.kex.state.predicate.require
 import org.jetbrains.research.kex.state.term.FieldTerm
 import org.jetbrains.research.kex.state.term.Term
-import org.jetbrains.research.kex.state.term.TermFactory
+import org.jetbrains.research.kex.state.term.term
 import org.jetbrains.research.kex.state.transformer.*
 import org.jetbrains.research.kex.state.wrap
 import org.jetbrains.research.kex.util.debug
@@ -30,8 +29,6 @@ private val logQuery by lazy { kexConfig.getBooleanValue("smt", "logQuery", fals
 
 class ViolationChecker(override val cm: ClassManager,
                        private val psa: PredicateStateAnalysis) : MethodVisitor {
-    private val tf = TermFactory
-    private val pf = PredicateFactory
     private lateinit var builder: PredicateStateBuilder
     private lateinit var method: Method
     private lateinit var currentBlock: BasicBlock
@@ -71,9 +68,9 @@ class ViolationChecker(override val cm: ClassManager,
     }
 
     override fun visitArrayLoadInst(inst: ArrayLoadInst) {
-        val arrayRef = tf.getValue(inst.arrayRef)
-        val length = tf.getArrayLength(arrayRef)
-        val index = tf.getValue(inst.index)
+        val arrayRef = term { value(inst.arrayRef) }
+        val length = term { arrayRef.length() }
+        val index = term { value(inst.index) }
         val state = builder.getInstructionState(inst) ?: return
 
         if (inst.arrayRef !in nonNulls && checkNullity(state, arrayRef))
@@ -83,9 +80,9 @@ class ViolationChecker(override val cm: ClassManager,
     }
 
     override fun visitArrayStoreInst(inst: ArrayStoreInst) {
-        val arrayRef = tf.getValue(inst.arrayRef)
-        val length = tf.getArrayLength(arrayRef)
-        val index = tf.getValue(inst.index)
+        val arrayRef = term { value(inst.arrayRef) }
+        val length = term { arrayRef.length() }
+        val index = term { value(inst.index) }
         val state = builder.getInstructionState(inst) ?: return
 
         if (inst.arrayRef !in nonNulls && checkNullity(state, arrayRef))
@@ -99,7 +96,7 @@ class ViolationChecker(override val cm: ClassManager,
         if (inst.owner in nonNulls) return
         val state = builder.getInstructionState(inst) ?: return
 
-        val `object` = tf.getValue(inst.owner)
+        val `object` = term { value(inst.owner) }
         if (checkNullity(state, `object`)) nonNulls.add(inst.owner)
     }
 
@@ -108,21 +105,21 @@ class ViolationChecker(override val cm: ClassManager,
         if (inst.owner in nonNulls) return
         val state = builder.getInstructionState(inst) ?: return
 
-        val `object` = tf.getValue(inst.owner)
+        val `object` = term { value(inst.owner) }
         if (checkNullity(state, `object`)) nonNulls.add(inst.owner)
     }
 
     override fun visitCallInst(inst: CallInst) {
         if (inst.isStatic) return
         if (inst.callee in nonNulls) return
-        val state = builder.getInstructionState(inst) ?:  return
+        val state = builder.getInstructionState(inst) ?: return
 
-        val `object` = tf.getValue(inst.callee)
+        val `object` = term { value(inst.callee) }
         if (checkNullity(state, `object`)) nonNulls.add(inst.callee)
     }
 
     private fun checkNullity(state: PredicateState, `object`: Term): Boolean {
-        val refQuery = pf.getInequality(`object`, tf.getNull(), PredicateType.Require()).wrap()
+        val refQuery = require { `object` inequality null }.wrap()
         return when {
             check(state, refQuery) == Result.UnsatResult -> {
                 failingBlocks += currentBlock
@@ -133,16 +130,8 @@ class ViolationChecker(override val cm: ClassManager,
     }
 
     private fun checkOutOfBounds(state: PredicateState, length: Term, index: Term): Boolean {
-        var indexQuery = pf.getEquality(
-                tf.getCmp(CmpOpcode.Ge(), index, tf.getConstant(0)),
-                tf.getTrue(),
-                PredicateType.Require()
-        ).wrap()
-        indexQuery += pf.getEquality(
-                tf.getCmp(CmpOpcode.Lt(), index, length),
-                tf.getTrue(),
-                PredicateType.Require()
-        )
+        var indexQuery = require { (index ge 0) equality true }.wrap()
+        indexQuery += require { (index lt length) equality true }
 
         return when {
             check(state, indexQuery) == Result.UnsatResult -> {
@@ -171,7 +160,7 @@ class ViolationChecker(override val cm: ClassManager,
         }
 
         state = IntrinsicAdapter.apply(state)
-        state = NullityAnnotator(nonNulls.map { tf.getValue(it) }.toSet()).apply(state)
+        state = NullityAnnotator(nonNulls.map { term { value(it) } }.toSet()).apply(state)
         state = DoubleTypeAdapter().apply(state)
         query = DoubleTypeAdapter().apply(query)
         state = Optimizer().apply(state)
