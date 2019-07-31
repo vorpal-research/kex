@@ -5,12 +5,13 @@ internal class PackageTreeNode(val name: String,
     val isRoot get() = parentPrivate == null
     val parent get() = parentPrivate!!
 
-    val root get() : PackageTreeNode {
-        var current = this
-        while (!current.isRoot)
-            current = current.parent
-        return current
-    }
+    val root: PackageTreeNode
+        get() = run {
+            var current = this
+            while (!current.isRoot)
+                current = current.parent
+            current
+        }
 
     val fullName: String = if (parentPrivate?.parentPrivate != null) "${parentPrivate.fullName}/$name" else name
 
