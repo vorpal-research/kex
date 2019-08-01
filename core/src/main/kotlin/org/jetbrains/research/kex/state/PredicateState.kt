@@ -2,9 +2,12 @@ package org.jetbrains.research.kex.state
 
 import kotlinx.serialization.Serializable
 import org.jetbrains.research.kex.state.predicate.Predicate
+import org.jetbrains.research.kex.state.predicate.PredicateBuilder
 import org.jetbrains.research.kex.state.predicate.PredicateType
+import org.jetbrains.research.kex.util.fail
 import org.jetbrains.research.kex.util.log
 import org.jetbrains.research.kex.util.unreachable
+import org.jetbrains.research.kfg.ir.Location
 
 interface TypeInfo {
     val inheritors: Map<String, Class<*>>
@@ -14,7 +17,9 @@ interface TypeInfo {
 fun emptyState(): PredicateState = BasicState()
 fun Predicate.wrap() = emptyState() + this
 
-class StateBuilder() {
+class StateBuilder() : PredicateBuilder() {
+    override val type = PredicateType.State()
+    override val location = Location()
     var current: PredicateState = emptyState()
 
     constructor(state: PredicateState) : this() {
@@ -51,6 +56,68 @@ class StateBuilder() {
     }
 
     fun apply() = current
+
+    inline fun assume(body: PredicateBuilder.() -> Predicate) {
+        this += PredicateBuilder.Assume().body()
+    }
+    inline fun assume(location: Location, body: PredicateBuilder.() -> Predicate) {
+        this += PredicateBuilder.Assume(location).body()
+    }
+
+    inline fun state(body: PredicateBuilder.() -> Predicate) {
+        this += PredicateBuilder.State().body()
+    }
+    inline fun state(location: Location, body: PredicateBuilder.() -> Predicate) {
+        this += PredicateBuilder.State(location).body()
+    }
+
+    inline fun path(body: PredicateBuilder.() -> Predicate) {
+        this += PredicateBuilder.Path().body()
+    }
+    inline fun path(location: Location, body: PredicateBuilder.() -> Predicate) {
+        this += PredicateBuilder.Path(location).body()
+    }
+
+    inline fun require(body: PredicateBuilder.() -> Predicate) {
+        this += PredicateBuilder.Require().body()
+    }
+    inline fun require(location: Location, body: PredicateBuilder.() -> Predicate) {
+        this += PredicateBuilder.Require(location).body()
+    }
+
+    inline fun predicate(type: PredicateType, body: PredicateBuilder.() -> Predicate) = when (type) {
+        is PredicateType.Assume -> assume(body)
+        is PredicateType.Require -> require(body)
+        is PredicateType.State -> state(body)
+        is PredicateType.Path -> path(body)
+        else -> fail { log.error("Unknown predicate type $type") }
+    }
+
+    inline fun predicate(type: PredicateType, location: Location, body: PredicateBuilder.() -> Predicate) = when (type) {
+        is PredicateType.Assume -> assume(location, body)
+        is PredicateType.Require -> require(location, body)
+        is PredicateType.State -> state(location, body)
+        is PredicateType.Path -> path(location, body)
+        else -> fail { log.error("Unknown predicate type $type") }
+    }
+}
+
+inline fun basic(body: StateBuilder.() -> Unit): PredicateState {
+    val sb = StateBuilder()
+    sb.body()
+    return sb.apply()
+}
+
+inline fun chain(base: StateBuilder.() -> Unit, curr: StateBuilder.() -> Unit): PredicateState {
+    val sb = StateBuilder().apply { base() }
+    sb += StateBuilder().apply { curr() }.apply()
+    return sb.apply()
+}
+
+inline fun choice(left: StateBuilder.() -> Unit, right: StateBuilder.() -> Unit): PredicateState {
+    val lhv = StateBuilder().apply { left() }.apply()
+    val rhv = StateBuilder().apply { right() }.apply()
+    return StateBuilder().apply { this += listOf(lhv, rhv) }.apply()
 }
 
 @BaseType("State")

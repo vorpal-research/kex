@@ -38,7 +38,7 @@ private fun mergeTypes(lhv: Type, rhv: Type): Type {
         is Class<*> -> when {
             lhv.isAssignableFrom(rhv) -> rhv
             rhv.isAssignableFrom(lhv) -> lhv
-            else -> unreachable { log.error("Cannod decide on argument type: $rhv or $lhv") }
+            else -> unreachable { log.error("Cannot decide on argument type: $rhv or $lhv") }
         }
         is ParameterizedType -> {
             val rawType = rhv.rawType as Class<*>
@@ -122,13 +122,8 @@ class ModelExecutor(val method: Method,
         return super.transformBase(ourChoice)
     }
 
-    private fun checkTerms(lhv: Term, rhv: Term, cmp: (Any, Any) -> Boolean): Boolean {
-        val lhvValue = when (val value = memory.getOrPut(lhv) { recoverer.recoverTerm(lhv) }) {
-            is ConstBoolTerm -> value.value
-            is ConstIntTerm -> value.value
-            is ConstLongTerm -> value.value
-            else -> unreachable { log.error("Unexpected constant in path $value") }
-        }
+    private fun checkTerms(lhv: Term, rhv: Term, cmp: (Any?, Any?) -> Boolean): Boolean {
+        val lhvValue = memory.getOrPut(lhv) { recoverer.recoverTerm(lhv) }
         val rhvValue = when (rhv) {
             is ConstBoolTerm -> rhv.value
             is ConstIntTerm -> rhv.value
