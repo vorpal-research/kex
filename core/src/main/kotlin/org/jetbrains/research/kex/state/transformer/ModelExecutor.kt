@@ -82,8 +82,9 @@ class ModelExecutor(val method: Method,
 
     override fun apply(ps: PredicateState): PredicateState {
         val (tempThis, tempArgs) = collectArguments(ps)
-        val argTypeInfo = collectTypeInfos(recoverer.model, ps)//.filterKeys { it is ArgumentTerm }
-        if (argTypeInfo.isNotEmpty()) log.debug("Collected type info: $argTypeInfo")
+        val argTypeInfo = collectTypeInfos(recoverer.model, ps)
+        if (argTypeInfo.isNotEmpty())
+            log.debug("Collected type info:\n${argTypeInfo.toList().joinToString("\n")}")
         thisTerm = when {
             !method.isStatic && tempThis == null -> term { `this`(KexClass(method.`class`.fullname)) }
             else -> tempThis

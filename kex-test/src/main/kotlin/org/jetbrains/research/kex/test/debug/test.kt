@@ -2,23 +2,99 @@
 
 package org.jetbrains.research.kex.test.debug
 
-import org.jetbrains.research.kex.test.Intrinsics
+class InspectionPositionalArguments(
+        val name: String,
+        val description: String,
+        val minCount: Int?,
+        val maxCount: Int?
+)
 
-open class ArrayLongTests {
-    fun testUnknownArrayWrite(array: IntArray) {
-        if (array.size < 5) {
-            Intrinsics.assertReachable(array.size < 5)
-            return
-        }
-        Intrinsics.assertReachable(array.size >= 5)
+enum class InspectionArgumentType {
+    Parameter,
+    MultiParameter,
+    Flag
+}
 
-        for (i in 0 until 5) {
-            array[i] = i * i
+class InspectionArgument(
+        val name: String,
+        val aliasNames: List<String>,
+        val shortNames: List<Char>,
+        val description: String,
+        val type: InspectionArgumentType,
+        val isOptional: Boolean,
+        val defaultValue: String? = null
+)
+
+class InspectionArguments(
+        val arguments: List<InspectionArgument>,
+        val name: String = "",
+        val description: String = "",
+        val positionalArguments: InspectionPositionalArguments?
+) {
+    fun generateHelpText(): String {
+        var helpString = ""
+        val tab = "  "
+
+        if (!this.name.isEmpty()) {
+            helpString += "${this.name}\n"
         }
 
-        for (i in 0 until 5) {
-            Intrinsics.assertReachable(array[i] == i * i)
+        if (!this.description.isEmpty())
+            helpString += "${this.description}\n\n"
+
+        this.arguments.forEach { argument ->
+            helpString += tab
+
+            if (argument.isOptional)
+                helpString += "["
+
+            helpString += "--" + argument.name
+
+            argument.aliasNames.forEach { aliasName ->
+                helpString += " | --" + aliasName
+            }
+
+            argument.shortNames.forEach { shortName ->
+                helpString += " | -" + shortName
+            }
+
+            if (argument.isOptional)
+                helpString += "]"
+
+            if (argument.type == InspectionArgumentType.MultiParameter) {
+                helpString += " <value> (repeat parameter for multiple values)"
+            } else if (argument.type == InspectionArgumentType.Parameter) {
+                helpString += " <value>"
+            }
+
+            helpString += "\n"
+
+            if (!argument.description.isEmpty()) {
+                helpString += "$tab$tab${argument.description}\n"
+            }
         }
-        Intrinsics.assertReachable()
+
+        val positionalArgumentsConfig = this.positionalArguments
+
+        if (positionalArgumentsConfig != null) {
+            helpString += "\n"
+            helpString += "$tab<${positionalArgumentsConfig.name}>..."
+
+            if (positionalArgumentsConfig.minCount != null) {
+                helpString += " (min ${positionalArgumentsConfig.minCount})"
+            }
+
+            if (positionalArgumentsConfig.maxCount != null) {
+                helpString += " (max ${positionalArgumentsConfig.maxCount})"
+            }
+
+            helpString += "\n"
+
+            if (!positionalArgumentsConfig.description.isEmpty()) {
+                helpString += "$tab$tab${positionalArgumentsConfig.description}\n"
+            }
+        }
+
+        return helpString
     }
 }

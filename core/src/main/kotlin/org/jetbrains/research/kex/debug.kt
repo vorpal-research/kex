@@ -14,11 +14,13 @@ import org.jetbrains.research.kex.smt.Result
 import org.jetbrains.research.kex.state.transformer.executeModel
 import org.jetbrains.research.kex.util.debug
 import org.jetbrains.research.kex.util.log
+import org.jetbrains.research.kex.util.unreachable
 import org.jetbrains.research.kfg.ClassManager
 import org.jetbrains.research.kfg.Package
 import org.jetbrains.research.kfg.util.Flags
 import org.jetbrains.research.kfg.util.classLoader
 import java.io.File
+import java.net.URLClassLoader
 import java.util.jar.JarFile
 
 @UnstableDefault
@@ -26,7 +28,9 @@ import java.util.jar.JarFile
 fun main(args: Array<String>) {
     val cmd = CmdConfig(args)
     val properties = cmd.getCmdValue("config", "kex.ini")
+    val logName = cmd.getCmdValue("log", "kex.log")
     kexConfig.initialize(cmd, RuntimeConfig, FileConfig(properties))
+    kexConfig.initLog(logName)
 
     val jarName = cmd.getCmdValue("jar")
     val packageName = cmd.getCmdValue("package", "*")
@@ -43,10 +47,15 @@ fun main(args: Array<String>) {
 
     val method = failure.method
     log.debug(failure)
+    val oldClassPath = System.getProperty("java.class.path")
+    val urlLoader = jarLoader as? URLClassLoader ?: unreachable { log.error("Unknown ClassLoader type in State") }
+    val urlClassPath = urlLoader.urLs.joinToString(separator = ":") { "${it.path}." }
+    System.setProperty("java.class.path", "$oldClassPath:$urlClassPath")
 
     val checker = Checker(method, jarLoader, psa)
     val result = checker.check(failure.state) as? Result.SatResult ?: return
     log.debug(result.model)
     val recMod = executeModel(checker.state, classManager.type, method, result.model, jarLoader)
     log.debug(recMod)
+    System.setProperty("java.class.path", oldClassPath)
 }
