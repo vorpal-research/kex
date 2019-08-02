@@ -2,6 +2,7 @@
 
 package org.jetbrains.research.kex.test
 
+import java.io.ByteArrayInputStream
 import java.io.File
 import java.io.InputStream
 import java.nio.file.Files
@@ -56,7 +57,7 @@ class Icfpc2018Test {
     class System(var currentState: State, val score: Int = 0)
 
     class Trace(val trace: List<Command>, val system: System) {
-        fun solve(): Unit {}
+        fun solve() {}
     }
 
     private fun getModeByModelName(name: String): RunMode = RunMode.values()[name.length % 5]
@@ -77,8 +78,8 @@ class Icfpc2018Test {
                 Intrinsics.assertReachable()
 
                 val targetModel = when (mode) {
-                    RunMode.ASSEMBLE -> Model.readMDL(File("models/${task}_tgt.mdl").inputStream())
-                    else -> Model.readMDL(File("models/${task}_src.mdl").inputStream())
+                    RunMode.ASSEMBLE -> Model.readMDL(ByteArrayInputStream("models/${task}_tgt.mdl".toByteArray()))
+                    else -> Model.readMDL(ByteArrayInputStream("models/${task}_src.mdl".toByteArray()))
                 }
                 val state = State()
 
@@ -123,7 +124,7 @@ class Icfpc2018Test {
 
     fun portfolioSolve() {
         val task = "taskname"
-        val target = Model.readMDL(File("models/${task}_tgt.mdl").inputStream())
+        val target = Model.readMDL(ByteArrayInputStream("models/${task}_tgt.mdl".toByteArray()))
         val initialState = State()
         val system = System(initialState)
         val solutionNames = listOf("grounded_slices", "grounded_bounded_slices", "regions")

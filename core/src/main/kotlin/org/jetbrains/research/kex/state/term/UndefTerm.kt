@@ -12,4 +12,8 @@ class UndefTerm(override val type: KexType) : Term() {
     override val subterms by lazy { listOf<Term>() }
 
     override fun <T : Transformer<T>> accept(t: Transformer<T>) = this
+
+    override fun equals(other: Any?): Boolean {
+        return this === other
+    }
 }
