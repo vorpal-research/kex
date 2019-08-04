@@ -1,1 +1,2 @@
+boolector = [git]https://github.com/maratdin7/JavaBoolector.git
 kfg = https://bitbucket.org/vorpal-research/kfg
