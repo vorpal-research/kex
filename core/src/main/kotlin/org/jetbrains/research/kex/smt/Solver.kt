@@ -1,6 +1,7 @@
 package org.jetbrains.research.kex.smt
 
 import org.jetbrains.research.kex.config.kexConfig
+import org.jetbrains.research.kex.smt.boolector.BoolectorSolver
 import org.jetbrains.research.kex.smt.model.SMTModel
 import org.jetbrains.research.kex.smt.z3.Z3Solver
 import org.jetbrains.research.kex.state.PredicateState
@@ -50,5 +51,6 @@ class SMTProxySolver(
         tf: TypeFactory,
         val solver: AbstractSMTSolver = when (engine) {
             "z3" -> Z3Solver(tf)
+            "boolector" -> BoolectorSolver(tf)
             else -> unreachable { log.error("Unknown smt engine: $engine") }
         }) : AbstractSMTSolver by solver
