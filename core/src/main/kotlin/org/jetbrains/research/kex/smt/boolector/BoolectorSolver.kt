@@ -3,6 +3,7 @@ package org.jetbrains.research.kex.smt.boolector
 import org.jetbrains.research.boolector.BoolectorSat
 import org.jetbrains.research.boolector.BoolectorSat.Status.fromInt
 import org.jetbrains.research.kex.config.GlobalConfig
+import org.jetbrains.research.kex.config.kexConfig
 import org.jetbrains.research.kex.smt.AbstractSMTSolver
 import org.jetbrains.research.kex.smt.Result
 import org.jetbrains.research.kex.smt.model.MemoryShape
@@ -10,18 +11,15 @@ import org.jetbrains.research.kex.smt.model.SMTModel
 import org.jetbrains.research.kex.state.PredicateState
 import org.jetbrains.research.kex.state.predicate.PredicateType
 import org.jetbrains.research.kex.state.term.Term
-import org.jetbrains.research.kex.state.transformer.PointerCollector
-import org.jetbrains.research.kex.state.transformer.VariableCollector
-import org.jetbrains.research.kex.state.transformer.memspace
+import org.jetbrains.research.kex.state.transformer.*
 import org.jetbrains.research.kex.util.log
 import org.jetbrains.research.kex.util.unreachable
 import org.jetbrains.research.kfg.type.TypeFactory
 
-private val timeout = GlobalConfig.getIntValue("smt", "timeout", 3) * 1000
-
-private val logQuery = GlobalConfig.getBooleanValue("smt", "logQuery", false)
-private val logFormulae = GlobalConfig.getBooleanValue("smt", "logFormulae", false)
-private val simplifyFormulae = GlobalConfig.getBooleanValue("smt", "simplifyFormulae", false)
+private val timeout = kexConfig.getIntValue("smt", "timeout", 3) * 1000
+private val logQuery = kexConfig.getBooleanValue("smt", "logQuery", false)
+private val logFormulae = kexConfig.getBooleanValue("smt", "logFormulae", false)
+private val simplifyFormulae = kexConfig.getBooleanValue("smt", "simplifyFormulae", false)
 
 @Suppress("WHEN_ENUM_CAN_BE_NULL_IN_JAVA")
 class BoolectorSolver(val tf: TypeFactory) : AbstractSMTSolver {
@@ -59,7 +57,6 @@ class BoolectorSolver(val tf: TypeFactory) : AbstractSMTSolver {
 
     private fun check(state: Bool_, query: Bool_): Pair<Int, Any> {
         val (state_, query_) = state to query
-
         if (logFormulae) {
             log.run {
                 debug("State: $state_")
@@ -100,7 +97,7 @@ class BoolectorSolver(val tf: TypeFactory) : AbstractSMTSolver {
 
     private fun collectModel(ctx: BoolectorContext, vararg states: PredicateState): SMTModel {
         val (ptrs, vars) = states.fold(setOf<Term>() to setOf<Term>()) { acc, ps ->
-            acc.first + PointerCollector(ps) to acc.second + VariableCollector(ps)
+            acc.first + collectPointers(ps) to acc.second + collectVariables(ps)
         }
 
         val assignments = vars.map {

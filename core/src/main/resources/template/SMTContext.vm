@@ -124,7 +124,7 @@ class $self : ${solver}SMTContext {
         return res
     }
 
-    fun switchOn(name: String, contexts: Map< Bool_, Z3Context >): Z3Context {
+    fun switchOn(name: String, contexts: Map< Bool_, ${solver}Context >): ${solver}Context {
         val merged =  mergeContexts(name, this, contexts)
         this.memories = merged.memories
         this.localPointer = merged.localPointer

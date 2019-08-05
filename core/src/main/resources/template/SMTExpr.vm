@@ -19,7 +19,7 @@ fun spliceAxioms(ctx: $context, e0: $expr, e1: $expr, e2: $expr) = when {
     else -> engine.conjunction(ctx, e0, e1, e2)
 }
 
-fun spliceAxioms(ctx: Context, exprs: List< $expr >) = engine.conjunction(ctx, exprs)
+fun spliceAxioms(ctx: $context, exprs: List< $expr >) = engine.conjunction(ctx, exprs)
 
 open class $valexpr : ${solver}SMTExpr {
     companion object {
@@ -441,7 +441,7 @@ fun forall(ctx: $context, sortGen: () -> List< $valexpr >, func: (args: List< $v
     return $Bool(ctx, eret, spliceAxioms(ctx, axioms))
 }
 
-fun < Res : $valexpr > forall(ctx: Context, sortGen: () -> List< $valexpr >,
+fun < Res : $valexpr > forall(ctx: $context, sortGen: () -> List< $valexpr >,
                         func: (args: List< $valexpr >) -> Res, patternGen: (args: List< $valexpr >) -> List< $valexpr >): $Bool {
     val sorts = sortGen().map{ it.getSort() }
     val axioms = arrayListOf< $expr >()
