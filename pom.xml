@@ -12,6 +12,7 @@
     <modules>
         <module>core</module>
         <module>kfg</module>
+        <module>boolector/java</module>
         <module>kex-annotation-processor</module>
         <module>kex-util</module>
         <module>kex-test</module>

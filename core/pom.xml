@@ -83,6 +83,11 @@
         </dependency>
         <dependency>
             <groupId>org.jetbrains.research</groupId>
+            <artifactId>boolector</artifactId>
+            <version>1.0</version>
+        </dependency>
+        <dependency>
+            <groupId>org.jetbrains.research</groupId>
             <artifactId>kex-annotation-processor</artifactId>
             <version>${project.version}</version>
         </dependency>
