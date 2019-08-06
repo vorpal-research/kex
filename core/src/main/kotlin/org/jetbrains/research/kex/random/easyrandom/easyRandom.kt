@@ -1,18 +1,17 @@
-package org.jetbrains.research.kex.random
+package org.jetbrains.research.kex.random.easyrandom
 
 import org.jeasy.random.EasyRandom
 import org.jeasy.random.EasyRandomParameters
 import org.jeasy.random.ObjectCreationException
 import org.jeasy.random.api.ObjectFactory
 import org.jeasy.random.api.RandomizerContext
-import org.jeasy.random.randomizers.collection.ListRandomizer
-import org.jeasy.random.randomizers.collection.MapRandomizer
-import org.jeasy.random.randomizers.collection.QueueRandomizer
-import org.jeasy.random.randomizers.collection.SetRandomizer
 import org.jeasy.random.util.CollectionUtils.randomElementOf
 import org.jeasy.random.util.ReflectionUtils.getPublicConcreteSubTypesOf
 import org.jeasy.random.util.ReflectionUtils.isAbstract
 import org.jetbrains.research.kex.config.kexConfig
+import org.jetbrains.research.kex.random.GenerationException
+import org.jetbrains.research.kex.random.Randomizer
+import org.jetbrains.research.kex.random.UnknownTypeException
 import org.jetbrains.research.kex.util.log
 import org.jetbrains.research.kex.util.tryOrNull
 import org.jetbrains.research.kfg.Package
@@ -21,9 +20,7 @@ import java.lang.reflect.ParameterizedType
 import java.lang.reflect.Type
 import java.lang.reflect.TypeVariable
 import java.lang.reflect.WildcardType
-import java.util.*
-
-private infix fun Int.`in`(range: IntRange) = range.first + (this % (range.last - range.first))
+import org.jeasy.random.api.Randomizer as JRandomizer
 
 class EasyRandomDriver(val config: BeansConfig = defaultConfig) : Randomizer {
     companion object {
@@ -102,29 +99,17 @@ class EasyRandomDriver(val config: BeansConfig = defaultConfig) : Randomizer {
     private fun generateParameterized(type: ParameterizedType): Any? {
         val rawType = type.rawType as? Class<*> ?: throw UnknownTypeException(type.toString())
         return when {
-            rawType.isAssignableFrom(List::class.java) -> {
+            Collection::class.java.isAssignableFrom(rawType) -> {
                 require(type.actualTypeArguments.size == 1)
                 val typeParameter = type.actualTypeArguments.first()
-                val lr = ListRandomizer.aNewListRandomizer({ next(typeParameter) }, randomizer.nextInt() `in` config.collectionSize)
-                lr.randomValue
+                val cr = CollectionRandomizer.generateCollection<Any?>(rawType, JRandomizer { next(typeParameter) })
+                cr.randomValue
             }
-            rawType.isAssignableFrom(Queue::class.java) -> {
-                require(type.actualTypeArguments.size == 1)
-                val typeParameter = type.actualTypeArguments.first()
-                val qr = QueueRandomizer.aNewQueueRandomizer({ next(typeParameter) }, randomizer.nextInt() `in` config.collectionSize)
-                qr.randomValue
-            }
-            rawType.isAssignableFrom(Set::class.java) -> {
-                require(type.actualTypeArguments.size == 1)
-                val typeParameter = type.actualTypeArguments.first()
-                val sr = SetRandomizer.aNewSetRandomizer({ next(typeParameter) }, randomizer.nextInt() `in` config.collectionSize)
-                sr.randomValue
-            }
-            rawType.isAssignableFrom(Map::class.java) -> {
+            Map::class.java.isAssignableFrom(rawType) -> {
                 require(type.actualTypeArguments.size == 2)
                 val key = type.actualTypeArguments.first()
                 val value = type.actualTypeArguments.last()
-                val mr = MapRandomizer.aNewMapRandomizer({ next(key) }, { next(value) }, randomizer.nextInt() `in` config.collectionSize)
+                val mr = CollectionRandomizer.generateMap<Any?, Any?>(rawType, JRandomizer { next(key) }, JRandomizer { next(value) })
                 mr.randomValue
             }
             else -> {

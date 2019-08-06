@@ -10,10 +10,4 @@ class BasicLongTest : KexTest() {
         testClassReachability(`class`)
     }
 
-    @Test
-    fun testKarg() {
-        val `class` = cm.getByName("$packageName/Karg")
-        testClassReachability(`class`)
-    }
-
 }
