@@ -21,7 +21,7 @@ class PathChecker(val model: SMTModel) : Transformer<PathChecker> {
 
     override fun transformBasic(ps: BasicState): PredicateState {
         satisfied = ps.fold(satisfied) { acc, predicate -> acc && checkPredicate(predicate) }
-        return super.transformBasic(ps)
+        return ps
     }
 
     override fun transformChoice(ps: ChoiceState): PredicateState {
@@ -33,15 +33,20 @@ class PathChecker(val model: SMTModel) : Transformer<PathChecker> {
             satisfied = currentSatisfied
         }
         satisfied = currentSatisfied && choiceSatisfactions.reduce { acc, b -> acc || b }
-        return super.transformChoice(ps)
+        return ps
     }
 
     private fun checkTerms(lhv: Term, rhv: Term, cmp: (Any, Any) -> Boolean): Boolean {
-        val lhvValue = when (val value = model.assignments[lhv]) {
-            is ConstBoolTerm -> value.value
-            is ConstIntTerm -> value.value
-            is ConstLongTerm -> value.value
-            else -> unreachable { log.error("Unexpected constant in path $value") }
+        val lhvValue = when (lhv) {
+            is ConstBoolTerm -> lhv.value
+            is ConstIntTerm -> lhv.value
+            is ConstLongTerm -> lhv.value
+            else -> when (val value = model.assignments[lhv]) {
+                is ConstBoolTerm -> value.value
+                is ConstIntTerm -> value.value
+                is ConstLongTerm -> value.value
+                else -> unreachable { log.error("Unexpected constant in path $value") }
+            }
         }
         val rhvValue = when (rhv) {
             is ConstBoolTerm -> rhv.value

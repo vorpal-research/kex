@@ -345,9 +345,9 @@ class ObjectRecoverer(val method: Method,
         val address = (addr as? ConstIntTerm)?.value ?: return null
         if (address == 0) return null
         return when (referencedType) {
-            is KexClass -> memory(referencedType.memspace, address) { randomizer.nextOrNull(jType) }
+            is KexClass -> memory(term.memspace, address) { randomizer.nextOrNull(jType) }
             is KexArray -> {
-                val memspace = referencedType.memspace
+                val memspace = term.memspace//referencedType.memspace
                 val instance = run {
                     val bounds = model.bounds[memspace] ?: return@run null
                     val bound = (bounds.finalMemory[addr] as? ConstIntTerm)?.value ?: return@run null
@@ -361,7 +361,7 @@ class ObjectRecoverer(val method: Method,
 
                     instance
                 }
-                memory(referencedType.memspace, address, instance)
+                memory(memspace, address, instance)
             }
             else -> unreachable { log.error("Trying to recover reference pointer that is not pointer") }
         }
