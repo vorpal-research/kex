@@ -102,14 +102,16 @@ class EasyRandomDriver(val config: BeansConfig = defaultConfig) : Randomizer {
             Collection::class.java.isAssignableFrom(rawType) -> {
                 require(type.actualTypeArguments.size == 1)
                 val typeParameter = type.actualTypeArguments.first()
-                val cr = CollectionRandomizer.generateCollection<Any?>(rawType, JRandomizer { next(typeParameter) })
+                val cr = CollectionRandomizer.generateCollection<Any?>(rawType, this,
+                        JRandomizer { next(typeParameter) })
                 cr.randomValue
             }
             Map::class.java.isAssignableFrom(rawType) -> {
                 require(type.actualTypeArguments.size == 2)
                 val key = type.actualTypeArguments.first()
                 val value = type.actualTypeArguments.last()
-                val mr = CollectionRandomizer.generateMap<Any?, Any?>(rawType, JRandomizer { next(key) }, JRandomizer { next(value) })
+                val mr = CollectionRandomizer.generateMap<Any?, Any?>(rawType, this,
+                        JRandomizer { next(key) }, JRandomizer { next(value) })
                 mr.randomValue
             }
             else -> {
