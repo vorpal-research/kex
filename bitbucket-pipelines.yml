@@ -6,4 +6,5 @@ pipelines:
         caches:
           - maven
         script:
+          - ./configure.sh
           - mvn -B verify
