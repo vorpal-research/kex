@@ -53,7 +53,7 @@ abstract class CollectionRandomizer<T>(
                 klass.isAssignableFrom(Stack::class.java) -> ListRandomizer.stackRandomizer(elementRandomizer)
                 else -> {
                     log.warn("Unknown list impl: $klass")
-                    ListRandomizer.arrayListRandomizer(elementRandomizer)
+                    ListRandomizer.randomListRandomizer(elementRandomizer)
                 }
             }
             Queue::class.java.isAssignableFrom(klass) -> when {
@@ -62,7 +62,7 @@ abstract class CollectionRandomizer<T>(
                 klass.isAssignableFrom(PriorityQueue::class.java) -> QueueRandomizer.priorityQueueRandomizer(elementRandomizer)
                 else -> {
                     log.warn("Unknown queue impl: $klass")
-                    QueueRandomizer.arrayQueueRandomizer(elementRandomizer)
+                    QueueRandomizer.randomQueueRandomizer(elementRandomizer)
                 }
             }
             Set::class.java.isAssignableFrom(klass) -> when {
@@ -72,7 +72,7 @@ abstract class CollectionRandomizer<T>(
                 klass.isAssignableFrom(ConcurrentSkipListSet::class.java) -> SetRandomizer.skipListSetRandomizer(elementRandomizer)
                 else -> {
                     log.warn("Unknown set impl: $klass")
-                    SetRandomizer.hashSetRandomizer(elementRandomizer)
+                    SetRandomizer.randomSetRandomizer(elementRandomizer)
                 }
             }
             else -> unreachable { log.error("Unknown collection: $klass") }
@@ -85,7 +85,7 @@ abstract class CollectionRandomizer<T>(
             klass.isAssignableFrom(ConcurrentSkipListMap::class.java) -> MapRandomizer.skipListMapRandomizer(keyRandomizer, valueRandomizer)
             else -> {
                 log.warn("Unknown map impl: $klass")
-                MapRandomizer.hashMapRandomizer(keyRandomizer, valueRandomizer)
+                MapRandomizer.randomMapRandomizer(keyRandomizer, valueRandomizer)
             }
         }
     }
@@ -115,6 +115,12 @@ class ListRandomizer<T>(`impl`: () -> MutableList<T>, elementRandomizer: Randomi
 
         fun <T> stackRandomizer(elementRandomizer: Randomizer<T>) =
                 newListRandomizer({ Stack() }, elementRandomizer)
+
+        fun <T> randomListRandomizer(elementRandomizer: Randomizer<T>): ListRandomizer<T> {
+            val impls = arrayOf<() -> MutableList<T>>({ LinkedList() }, { ArrayList() }, { Stack() })
+            val index = abs(aNewByteRandomizer().randomValue!!.toInt()) `in` 0..impls.lastIndex
+            return Companion.newListRandomizer(impls[index], elementRandomizer)
+        }
     }
 }
 
@@ -141,6 +147,12 @@ class QueueRandomizer<T>(`impl`: () -> Queue<T>, elementRandomizer: Randomizer<T
 
         fun <T> priorityQueueRandomizer(elementRandomizer: Randomizer<T>) =
                 newQueueRandomizer({ PriorityQueue() }, elementRandomizer)
+
+        fun <T> randomQueueRandomizer(elementRandomizer: Randomizer<T>): QueueRandomizer<T> {
+            val impls = arrayOf<() -> Queue<T>>({ LinkedList() }, { ArrayDeque() }, { PriorityQueue() })
+            val index = abs(aNewByteRandomizer().randomValue!!.toInt()) `in` 0..impls.lastIndex
+            return newQueueRandomizer(impls[index], elementRandomizer)
+        }
     }
 }
 
@@ -173,6 +185,12 @@ class SetRandomizer<T>(`impl`: () -> MutableSet<T>, elementRandomizer: Randomize
 
         fun <T> skipListSetRandomizer(elementRandomizer: Randomizer<T>) =
                 newSetRandomizer({ ConcurrentSkipListSet() }, elementRandomizer)
+
+        fun <T> randomSetRandomizer(elementRandomizer: Randomizer<T>): SetRandomizer<T> {
+            val impls = arrayOf<() -> MutableSet<T>>({ LinkedHashSet() }, { HashSet() }, { TreeSet() }, { ConcurrentSkipListSet() })
+            val index = abs(aNewByteRandomizer().randomValue!!.toInt()) `in` 0..impls.lastIndex
+            return newSetRandomizer(impls[index], elementRandomizer)
+        }
     }
 }
 
@@ -232,5 +250,11 @@ class MapRandomizer<K, V>(
 
         fun <K, V> skipListMapRandomizer(keyRandomizer: Randomizer<K>, valueRandomizer: Randomizer<V>) =
                 newMapRandomizer({ ConcurrentSkipListMap() }, keyRandomizer, valueRandomizer)
+
+        fun <K, V> randomMapRandomizer(keyRandomizer: Randomizer<K>, valueRandomizer: Randomizer<V>): MapRandomizer<K, V> {
+            val impls = arrayOf<() -> MutableMap<K, V>>({ LinkedHashMap() }, { HashMap() }, { TreeMap() }, { ConcurrentSkipListMap() })
+            val index = abs(aNewByteRandomizer().randomValue!!.toInt()) `in` 0..impls.lastIndex
+            return newMapRandomizer(impls[index], keyRandomizer, valueRandomizer)
+        }
     }
 }
