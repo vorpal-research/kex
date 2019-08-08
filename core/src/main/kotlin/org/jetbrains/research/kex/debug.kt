@@ -27,6 +27,7 @@ fun main(args: Array<String>) {
     val cmd = CmdConfig(args)
     val properties = cmd.getCmdValue("config", "kex.ini")
     kexConfig.initialize(cmd, RuntimeConfig, FileConfig(properties))
+    kexConfig.initLog("kex-debug.log")
 
     val jarName = cmd.getCmdValue("jar")
     val packageName = cmd.getCmdValue("package", "*")
