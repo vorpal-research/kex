@@ -1,8 +1,8 @@
 package org.jetbrains.research.kex.smt.boolector
 
 
-import org.jetbrains.research.boolector.Function
 import org.jetbrains.research.boolector.*
+import org.jetbrains.research.boolector.Function
 import org.jetbrains.research.kex.smt.SMTEngine
 import org.jetbrains.research.kex.util.log
 import org.jetbrains.research.kex.util.unreachable
@@ -43,11 +43,12 @@ object BoolectorEngine : SMTEngine<Btor, BoolectorNode, BoolectorSort, Function,
 
     override fun floatSBitsize(ctx: Btor, sort: BoolectorSort): Int = 10
 
-    override fun bool2bv(ctx: Btor, expr: BoolectorNode, sort: BoolectorSort): BoolectorNode = expr.toBitvecNode()
+    override fun bool2bv(ctx: Btor, expr: BoolectorNode, sort: BoolectorSort): BoolectorNode =
+            bv2bv(ctx, expr, sort)
 
     //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!?
     override fun bv2bool(ctx: Btor, expr: BoolectorNode): BoolectorNode =
-            binary(ctx, SMTEngine.Opcode.NEQ, expr, BitvecNode.constLong(0L, expr.sort.toBitvecSort()))
+            binary(ctx, Opcode.NEQ, expr, BitvecNode.constLong(0L, expr.sort.toBitvecSort()))
 
 
     override fun bv2bv(ctx: Btor, expr: BoolectorNode, sort: BoolectorSort): BoolectorNode =
@@ -264,9 +265,17 @@ object BoolectorEngine : SMTEngine<Btor, BoolectorNode, BoolectorSort, Function,
         return ans
     }
 
-    override fun zext(ctx: Btor, n: Int, expr: BoolectorNode): BoolectorNode = expr.toBitvecNode().uext(n)
+    override fun zext(ctx: Btor, n: Int, expr: BoolectorNode): BoolectorNode = expr.toBitvecNode().uext(n  - expr.width)
 
-    override fun sext(ctx: Btor, n: Int, expr: BoolectorNode): BoolectorNode = expr.toBitvecNode().sext(n - expr.width)//fsdjkfkdjgklfdjgklfdj
+    override fun sext(ctx: Btor, n: Int, expr: BoolectorNode): BoolectorNode {
+        // This is generally fucked up
+        // sext on bitvector 1 should not count the first bit as sign
+        val bv = expr.toBitvecNode()
+        return when (bv.width) {
+            1 -> zext(ctx, n, expr)
+            else -> expr.toBitvecNode().sext(n - expr.width)
+        }
+    }
 
     override fun load(ctx: Btor, array: BoolectorNode, index: BoolectorNode): BoolectorNode =
             array.toArrayNode().read(bv2bv(ctx, index, array.toArrayNode().indexWidth))
