@@ -1,5 +1,3 @@
-syntax: glob
-
 .idea/*
 target/*
 *.iml
@@ -9,3 +7,4 @@ repo/*
 testJars/*
 trace/*
 fails/*
+**/target/*
