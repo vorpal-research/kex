@@ -1,7 +1,6 @@
-.idea/*
-target/*
-*.iml
-*.log
+**/.idea/*
+**/*.iml
+**/*.log
 instrumented/*
 repo/*
 testJars/*
