@@ -4,7 +4,7 @@ Kex is a white-box fuzzer tool for Java bytecode.
 
 # Build
 
-Kex requires Z3 version 4.5.1 to be installed in the system.
+Kex requires Z3 version 4.7.1 to be installed in the system.
 
 Build jar with all the dependencies:
 ```
