@@ -83,6 +83,6 @@ class CmdConfig(args: Array<String>) : Config {
         val pw = PrintWriter(sw)
         helpFormatter.printHelp(pw, 80, "kex", null, options, 1, 3, null)
 
-        log.info("$sw")
+        println("$sw")
     }
 }

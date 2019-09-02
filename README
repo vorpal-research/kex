@@ -1,0 +1,31 @@
+# Kex
+
+Kex is a white-box fuzzer tool for Java bytecode.
+
+# Build
+
+Kex requires Z3 version 4.5.1 to be installed in the system.
+
+Build jar with all the dependencies:
+```
+mvn clean package
+```
+
+Run all the tests:
+```
+mvn clean verify
+```
+
+# Usage
+
+```
+Usage: kex
+    --config <arg>                  configuration file
+ -h,--help                          print help
+ -j,--jar <arg>                     input jar file path
+    --log <arg>                     log file name (`kex.log` by default)
+    --option <section:name:value>   set kex option through command line
+ -p,--package <arg>                 analyzed package
+    --ps <arg>                      file with predicate state to debug; used
+                                    only in debug mode
+```
