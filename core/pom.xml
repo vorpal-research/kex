@@ -31,11 +31,6 @@
 
     <repositories>
         <repository>
-            <id>data-local</id>
-            <name>data</name>
-            <url>file://${project.basedir}/../repo</url>
-        </repository>
-        <repository>
             <id>jitpack.io</id>
             <url>https://jitpack.io</url>
         </repository>
