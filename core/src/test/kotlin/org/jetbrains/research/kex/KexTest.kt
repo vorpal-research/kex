@@ -35,13 +35,10 @@ abstract class KexTest {
     private val loader: ClassLoader
 
     init {
-        //val rootDir = System.getProperty("root.dir")
-        val rootDir = "/media/study_language/temp/kex"
+        val rootDir = System.getProperty("root.dir")
         val version = System.getProperty("project.version")
         kexConfig.initialize(RuntimeConfig, FileConfig("$rootDir/kex-test.ini"))
         kexConfig.initLog("$rootDir/kex-test.log")
-        //RuntimeConfig.setValue("z3", "tacticsFile", "$rootDir/z3.tactics")
-        //RuntimeConfig.setValue("boolector", "", "")
 
         val jarPath = "$rootDir/kex-test/target/kex-test-$version-jar-with-dependencies.jar"
         val jarFile = JarFile(jarPath)
