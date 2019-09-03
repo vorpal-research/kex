@@ -12,6 +12,7 @@ import org.jetbrains.research.kex.random.defaultRandomizer
 import org.jetbrains.research.kex.serialization.KexSerializer
 import org.jetbrains.research.kex.smt.Checker
 import org.jetbrains.research.kex.smt.Result
+import org.jetbrains.research.kex.smt.model.RecoveredModel
 import org.jetbrains.research.kex.state.PredicateState
 import org.jetbrains.research.kex.state.transformer.executeModel
 import org.jetbrains.research.kex.trace.TraceManager
@@ -26,6 +27,8 @@ import org.jetbrains.research.kfg.ir.value.instruction.CallInst
 import org.jetbrains.research.kfg.ir.value.instruction.FieldLoadInst
 import org.jetbrains.research.kfg.ir.value.instruction.FieldStoreInst
 import org.jetbrains.research.kfg.ir.value.instruction.Instruction
+import org.jetbrains.research.kfg.util.DominatorTreeBuilder
+import org.jetbrains.research.kfg.util.TopologicalSorter
 import org.jetbrains.research.kfg.util.writeClass
 import org.jetbrains.research.kfg.visitor.MethodVisitor
 import java.io.File
@@ -36,6 +39,7 @@ import java.nio.file.Paths
 private val failDir by lazy { kexConfig.getStringValue("debug", "dump-directory", "./fail") }
 
 class KexCheckerException(val inner: Exception, val reason: PredicateState) : Exception()
+class KexRunnerException(val inner: Exception, val model: RecoveredModel) : Exception()
 
 @Serializable
 data class Failure(
@@ -116,6 +120,17 @@ class MethodChecker(
         }
     }
 
+    @ImplicitReflectionSerializer
+    private fun dumpPS(method: Method, message: String, state: PredicateState) {
+        val failDirPath = Paths.get(failDir)
+        if (!Files.exists(failDirPath)) {
+            Files.createDirectory(failDirPath)
+        }
+        val errorDump = Files.createTempFile(failDirPath, "ps-", ".json").toFile()
+        log.error("Failing saved to file ${errorDump.path}")
+        errorDump.writeText(KexSerializer(cm).toJson(Failure(method.`class`, method, message, state)))
+    }
+
     override fun cleanup() {
         val `class` = state?.`class` ?: return
         val classFileName = "${target.canonicalPath}/${`class`.fullname}.class"
@@ -141,11 +156,21 @@ class MethodChecker(
 
         prepareMethodInfo(method)
 
-        for (block in method.bodyBlocks) {
+        val unreachableBlocks = mutableSetOf<BasicBlock>()
+        val domTree = DominatorTreeBuilder<BasicBlock>(method.basicBlocks.toSet()).build()
+        val (order, _) = TopologicalSorter<BasicBlock>(method.basicBlocks.toSet()).sort(method.entry)
+
+        for (block in order.reversed()) {
             val originalBlock = block.originalBlock
             if (tm.isCovered(method, originalBlock)) continue
 
-            try {
+            if (block in unreachableBlocks) continue
+            if (domTree[block]?.idom?.value in unreachableBlocks) {
+                unreachableBlocks += block
+                continue
+            }
+
+            val coverageResult = try {
                 log.debug("Checking reachability of ${block.name}")
                 coverBlock(method, block)
             } catch (e: TimeoutException) {
@@ -154,60 +179,66 @@ class MethodChecker(
             } catch (e: KexCheckerException) {
                 log.error("Fail when covering block ${block.name} of $method")
                 log.error("Error: ${e.inner}")
-
-                val failDirPath = Paths.get(failDir)
-                if (!Files.exists(failDirPath)) {
-                    Files.createDirectory(failDirPath)
-                }
-                val errorDump = Files.createTempFile(failDirPath, "ps-", ".json").toFile()
-                log.error("Failing saved to file ${errorDump.path}")
-                errorDump.writeText(KexSerializer(cm).toJson(Failure(method.`class`, method, e.inner.toString(), e.reason)))
+                dumpPS(method, e.inner.toString(), e.reason)
+                break
+            } catch (e: KexRunnerException) {
+                log.error("Fail when running method $method with model ${e.model}")
+                log.error("Error: ${e.inner}")
                 break
             }
 
             log.debug("Block ${block.name} is covered = ${tm.isCovered(method, originalBlock)}")
             log.debug()
+
+            if (coverageResult is Result.UnsatResult) unreachableBlocks += block
         }
         cleanup()
     }
 
     @ImplicitReflectionSerializer
-    private fun coverBlock(method: Method, block: BasicBlock) {
+    private fun coverBlock(method: Method, block: BasicBlock): Result {
         val loader = state!!.loader
         val random = state!!.random
         val checker = Checker(method, loader, psa)
-        val ps = checker.createState(block.terminator) ?: return
+        val ps = checker.createState(block.terminator)
+                ?: return Result.UnknownResult("Could not create a predicate state for instruction")
 
-        try {
-            when (val result = checker.check(ps)) {
-                is Result.SatResult -> {
-                    val model = executeModel(checker.state, cm.type, method, result.model, loader, random)
-                    log.debug("Recovered: ${tryOrNull { model.toString() }}")
-
-                    val instance = model.instance ?: when {
-                        method.isStatic -> null
-                        else -> tryOrNull {
-                            val klass = loader.loadClass(types.getRefType(method.`class`))
-                            random.next(klass)
-                        }
-                    }
-
-                    if (instance == null && !method.isStatic) {
-                        log.warn("Unable to create or generate instance of class ${method.`class`}")
-                        return
-                    }
-
-                    val trace = SimpleRunner(method, loader).invoke(instance, model.arguments.toTypedArray())
-                    tm.addTrace(method, trace)
-                }
-                is Result.UnsatResult -> log.debug("Instruction ${block.terminator.print()} is unreachable")
-                is Result.UnknownResult -> log.debug("Can't decide on reachability of " +
-                        "instruction ${block.terminator.print()}, reason: ${result.reason}")
-            }
-        } catch (e: TimeoutException) {
-            throw e
-        } catch(e: Exception) {
+        val result = try {
+            checker.check(ps)
+        } catch (e: Exception) {
             throw KexCheckerException(e, ps)
         }
+        when (result) {
+            is Result.SatResult -> {
+                val model = executeModel(checker.state, cm.type, method, result.model, loader, random)
+                log.debug("Recovered: ${tryOrNull { model.toString() }}")
+
+                val instance = model.instance ?: when {
+                    method.isStatic -> null
+                    else -> tryOrNull {
+                        val klass = loader.loadClass(types.getRefType(method.`class`))
+                        random.next(klass)
+                    }
+                }
+
+                if (instance == null && !method.isStatic) {
+                    log.warn("Unable to create or generate instance of class ${method.`class`}")
+                    return result
+                }
+
+                try {
+                    val trace = SimpleRunner(method, loader).invoke(instance, model.arguments.toTypedArray())
+                    tm.addTrace(method, trace)
+                } catch (e: TimeoutException) {
+                    throw e
+                } catch (e: Exception) {
+                    throw KexRunnerException(e, RecoveredModel(method, instance, model.arguments))
+                }
+            }
+            is Result.UnsatResult -> log.debug("Instruction ${block.terminator.print()} is unreachable")
+            is Result.UnknownResult -> log.debug("Can't decide on reachability of " +
+                    "instruction ${block.terminator.print()}, reason: ${result.reason}")
+        }
+        return result
     }
 }

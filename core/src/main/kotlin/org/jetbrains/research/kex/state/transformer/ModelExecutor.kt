@@ -13,10 +13,7 @@ import org.jetbrains.research.kex.state.PredicateState
 import org.jetbrains.research.kex.state.emptyState
 import org.jetbrains.research.kex.state.predicate.*
 import org.jetbrains.research.kex.state.term.*
-import org.jetbrains.research.kex.util.getMethod
-import org.jetbrains.research.kex.util.loadClass
-import org.jetbrains.research.kex.util.log
-import org.jetbrains.research.kex.util.unreachable
+import org.jetbrains.research.kex.util.*
 import org.jetbrains.research.kfg.ir.Method
 import org.jetbrains.research.kfg.type.TypeFactory
 import java.lang.reflect.ParameterizedType
@@ -38,7 +35,8 @@ private fun mergeTypes(lhv: Type, rhv: Type): Type {
         is Class<*> -> when {
             lhv.isAssignableFrom(rhv) -> rhv
             rhv.isAssignableFrom(lhv) -> lhv
-            else -> unreachable { log.error("Cannot decide on argument type: $rhv or $lhv") }
+            else -> findSubtypesOf(lhv, rhv).firstOrNull()
+                    ?: unreachable { log.error("Cannot decide on argument type: $rhv or $lhv") }
         }
         is ParameterizedType -> {
             val rawType = rhv.rawType as Class<*>
@@ -82,8 +80,9 @@ class ModelExecutor(val method: Method,
 
     override fun apply(ps: PredicateState): PredicateState {
         val (tempThis, tempArgs) = collectArguments(ps)
-        val argTypeInfo = collectTypeInfos(recoverer.model, ps)//.filterKeys { it is ArgumentTerm }
-        if (argTypeInfo.isNotEmpty()) log.debug("Collected type info: $argTypeInfo")
+        val argTypeInfo = collectTypeInfos(recoverer.model, ps)
+        if (argTypeInfo.isNotEmpty())
+            log.debug("Collected type info:\n${argTypeInfo.toList().joinToString("\n")}")
         thisTerm = when {
             !method.isStatic && tempThis == null -> term { `this`(KexClass(method.`class`.fullname)) }
             else -> tempThis

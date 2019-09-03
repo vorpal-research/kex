@@ -15,6 +15,7 @@
         <exec.main>org.jetbrains.research.kex.MainKt</exec.main>
 
         <serialization.version>0.11.0</serialization.version>
+        <kfg.version>0.0.1</kfg.version>
 
         <logback.version>1.2.3</logback.version>
         <slf4j.version>1.7.25</slf4j.version>
@@ -30,11 +31,6 @@
     </properties>
 
     <repositories>
-        <repository>
-            <id>data-local</id>
-            <name>data</name>
-            <url>file://${project.basedir}/../repo</url>
-        </repository>
         <repository>
             <id>jitpack.io</id>
             <url>https://jitpack.io</url>
@@ -77,14 +73,9 @@
         </dependency>
 
         <dependency>
-            <groupId>org.jetbrains.research</groupId>
+            <groupId>com.github.vorpal-research</groupId>
             <artifactId>kfg</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.jetbrains.research</groupId>
-            <artifactId>boolector</artifactId>
-            <version>1.0</version>
+            <version>${kfg.version}</version>
         </dependency>
         <dependency>
             <groupId>org.jetbrains.research</groupId>

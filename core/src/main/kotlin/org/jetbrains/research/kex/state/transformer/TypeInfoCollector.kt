@@ -56,13 +56,17 @@ class TypeInfoCollector(val model: SMTModel) : Transformer<TypeInfoCollector> {
                 val newType = rhv.type
                 val operand = rhv.operand
                 val condition = cfgt.getDominatingPaths(predicate)
+                val stub = when {
+                    condition.isEmpty() -> setOf(path { const(true) equality true })
+                    else -> condition
+                }
 
                 // we can't do anything with primary type casts
                 if (newType is KexIntegral || newType is KexReal) return predicate
 
                 val typeInfo = typeInfos.getOrPut(operand, ::mutableMapOf)
                 val existingCond = typeInfo.getOrDefault(newType, emptyState())
-                typeInfo[newType] = existingCond or condition
+                typeInfo[newType] = existingCond or stub
             }
         }
         return super.transformEquality(predicate)
