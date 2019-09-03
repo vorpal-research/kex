@@ -28,6 +28,8 @@ class BoolectorSolverTest : KexTest() {
         state.asAxiom().assertForm()
         val res = BoolectorSat.getBoolectorSat()
         assertEquals(BoolectorSat.Status.SAT, res)
+        val dump = ef.ctx.dumpSmt2()
+        val model = ef.ctx.printModel()
         ef.ctx.btorRelease()
     }
 
