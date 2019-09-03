@@ -35,7 +35,8 @@ abstract class KexTest {
     private val loader: ClassLoader
 
     init {
-        val rootDir = System.getProperty("root.dir")
+        //val rootDir = System.getProperty("root.dir")
+        val rootDir = "/media/study_language/temp/kex"
         val version = System.getProperty("project.version")
         kexConfig.initialize(RuntimeConfig, FileConfig("$rootDir/kex-test.ini"))
         kexConfig.initLog("$rootDir/kex-test.log")

@@ -47,7 +47,7 @@ object BoolectorEngine : SMTEngine<Btor, BoolectorNode, BoolectorSort, Function,
 
     //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!?
     override fun bv2bool(ctx: Btor, expr: BoolectorNode): BoolectorNode =
-            binary(ctx, SMTEngine.Opcode.NEQ, expr, BitvecNode.constLong(0L, expr.sort.toBitvecSort()))
+            binary(ctx, Opcode.NEQ, expr, BitvecNode.constLong(0L, expr.sort.toBitvecSort()))
 
 
     override fun bv2bv(ctx: Btor, expr: BoolectorNode, sort: BoolectorSort): BoolectorNode =
@@ -64,7 +64,7 @@ object BoolectorEngine : SMTEngine<Btor, BoolectorNode, BoolectorSort, Function,
 
     override fun name(ctx: Btor, expr: BoolectorNode): String = expr.symbol
 
-    override fun toString(ctx: Btor, expr: BoolectorNode) = expr.symbol
+    override fun toString(ctx: Btor, expr: BoolectorNode) = expr.symbol ?: "null"
 
     //$
     override fun simplify(ctx: Btor, expr: BoolectorNode): BoolectorNode = expr
