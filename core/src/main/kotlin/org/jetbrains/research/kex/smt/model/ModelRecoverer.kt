@@ -10,10 +10,8 @@ import org.jetbrains.research.kfg.ir.Method
 import org.jetbrains.research.kfg.type.DoubleType
 import org.jetbrains.research.kfg.type.FloatType
 import org.jetbrains.research.kfg.type.Integral
+import java.lang.reflect.*
 import java.lang.reflect.Array
-import java.lang.reflect.Field
-import java.lang.reflect.Modifier
-import java.lang.reflect.Type
 
 private val Term.isPointer get() = this.type is KexPointer
 private val Term.isPrimary get() = !this.isPointer
@@ -246,9 +244,13 @@ class ObjectRecoverer(val method: Method,
             val elementSize = arrayType.element.bitsize
             val elements = bound / elementSize
 
-            val elementClass = (jType as? Class<*>)?.componentType ?: unreachable { log.error("Undefined jType in array recovery: $jType") }
-            log.debug("Creating array of type $elementClass with size $elements")
-            val instance = Array.newInstance(elementClass, elements)
+            val elementType = when (jType) {
+                is Class<*> -> jType.componentType
+                is GenericArrayType -> randomizer.nextOrNull(jType.genericComponentType)?.javaClass
+                else -> unreachable { log.error("Unknown jType in array recovery: $jType") }
+            }
+            log.debug("Creating array of type $elementType with size $elements")
+            val instance = Array.newInstance(elementType, elements)
 
             instance
         }
