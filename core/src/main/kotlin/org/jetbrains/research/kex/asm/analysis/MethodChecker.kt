@@ -12,7 +12,7 @@ import org.jetbrains.research.kex.random.defaultRandomizer
 import org.jetbrains.research.kex.serialization.KexSerializer
 import org.jetbrains.research.kex.smt.Checker
 import org.jetbrains.research.kex.smt.Result
-import org.jetbrains.research.kex.smt.model.RecoveredModel
+import org.jetbrains.research.kex.smt.model.ReanimatedModel
 import org.jetbrains.research.kex.state.PredicateState
 import org.jetbrains.research.kex.state.transformer.executeModel
 import org.jetbrains.research.kex.trace.TraceManager
@@ -36,7 +36,7 @@ import java.nio.file.Paths
 private val failDir by lazy { kexConfig.getStringValue("debug", "dump-directory", "./fail") }
 
 class KexCheckerException(val inner: Exception, val reason: PredicateState) : Exception()
-class KexRunnerException(val inner: Exception, val model: RecoveredModel) : Exception()
+class KexRunnerException(val inner: Exception, val model: ReanimatedModel) : Exception()
 
 @Serializable
 data class Failure(
@@ -213,7 +213,7 @@ class MethodChecker(
         when (result) {
             is Result.SatResult -> {
                 val model = executeModel(checker.state, cm.type, method, result.model, loader, random)
-                log.debug("Recovered: ${tryOrNull { model.toString() }}")
+                log.debug("Reanimated: ${tryOrNull { model.toString() }}")
 
                 val instance = model.instance ?: when {
                     method.isStatic -> null
@@ -234,7 +234,7 @@ class MethodChecker(
                 } catch (e: TimeoutException) {
                     throw e
                 } catch (e: Exception) {
-                    throw KexRunnerException(e, RecoveredModel(method, instance, model.arguments))
+                    throw KexRunnerException(e, ReanimatedModel(method, instance, model.arguments))
                 }
             }
             is Result.UnsatResult -> log.debug("Instruction ${block.terminator.print()} is unreachable")
