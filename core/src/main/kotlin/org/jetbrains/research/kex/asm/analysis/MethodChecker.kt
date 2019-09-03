@@ -23,10 +23,7 @@ import org.jetbrains.research.kfg.ClassManager
 import org.jetbrains.research.kfg.ir.BasicBlock
 import org.jetbrains.research.kfg.ir.Class
 import org.jetbrains.research.kfg.ir.Method
-import org.jetbrains.research.kfg.ir.value.instruction.CallInst
-import org.jetbrains.research.kfg.ir.value.instruction.FieldLoadInst
-import org.jetbrains.research.kfg.ir.value.instruction.FieldStoreInst
-import org.jetbrains.research.kfg.ir.value.instruction.Instruction
+import org.jetbrains.research.kfg.ir.value.instruction.*
 import org.jetbrains.research.kfg.util.DominatorTreeBuilder
 import org.jetbrains.research.kfg.util.TopologicalSorter
 import org.jetbrains.research.kfg.util.writeClass
@@ -157,10 +154,15 @@ class MethodChecker(
         prepareMethodInfo(method)
 
         val unreachableBlocks = mutableSetOf<BasicBlock>()
-        val domTree = DominatorTreeBuilder<BasicBlock>(method.basicBlocks.toSet()).build()
-        val (order, _) = TopologicalSorter<BasicBlock>(method.basicBlocks.toSet()).sort(method.entry)
+        val domTree = DominatorTreeBuilder(method.basicBlocks.toSet()).build()
+        val (order, _) = TopologicalSorter(method.basicBlocks.toSet()).sort(method.entry)
 
         for (block in order.reversed()) {
+            if (block.terminator is UnreachableInst) {
+                unreachableBlocks += block
+                continue
+            }
+
             val originalBlock = block.originalBlock
             if (tm.isCovered(method, originalBlock)) continue
 
