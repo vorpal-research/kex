@@ -38,13 +38,9 @@ val Term.memspace: Int
             ?: unreachable { log.error("Trying to get memspace of primary type: $type") }
 
 class MemorySpacer(ps: PredicateState) : Transformer<MemorySpacer> {
-    private val aa = StensgaardAA()
+    private val aa = StensgaardAA().apply { apply(ps) }
     private val indices = hashMapOf<Token, Int>(null to 0)
     private var index = 1
-
-    init {
-        aa.transform(ps)
-    }
 
     private fun getIndex(token: Token) = indices.getOrPut(token) { index++ }
     private fun getMemspace(term: Term) = getIndex(aa.getDereferenced(term))

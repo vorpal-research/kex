@@ -1,5 +1,6 @@
 package org.jetbrains.research.kex.random
 
+import org.jetbrains.research.kex.random.easyrandom.EasyRandomDriver
 import org.jetbrains.research.kex.util.tryOrNull
 import java.lang.reflect.Type
 
