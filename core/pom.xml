@@ -116,6 +116,11 @@
             <version>${z3.version}</version>
         </dependency>
         <dependency>
+            <groupId>org.jetbrains.research</groupId>
+            <artifactId>boolector</artifactId>
+            <version>1.0</version>
+        </dependency>
+        <dependency>
             <groupId>org.jetbrains.kotlin</groupId>
             <artifactId>kotlin-stdlib-jdk8</artifactId>
             <version>${kotlin.version}</version>

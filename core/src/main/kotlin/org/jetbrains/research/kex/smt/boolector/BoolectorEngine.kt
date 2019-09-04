@@ -1,6 +1,5 @@
 package org.jetbrains.research.kex.smt.boolector
 
-
 import org.jetbrains.research.boolector.*
 import org.jetbrains.research.boolector.Function
 import org.jetbrains.research.kex.smt.SMTEngine
@@ -12,7 +11,8 @@ import kotlin.math.roundToLong
 object BoolectorEngine : SMTEngine<Btor, BoolectorNode, BoolectorSort, Function, BoolectorFun.FuncParam>() {
     override fun makeBound(ctx: Btor, size: Int, sort: BoolectorSort): BoolectorNode = BitvecNode.constBitvec("1")
 
-    override fun makePattern(ctx: Btor, expr: BoolectorNode): BoolectorFun.FuncParam = BoolectorFun.FuncParam.param(expr.sort, "d")
+    override fun makePattern(ctx: Btor, expr: BoolectorNode): BoolectorFun.FuncParam =
+            BoolectorFun.FuncParam.param(expr.sort, "d")
 
     override fun getSort(ctx: Btor, expr: BoolectorNode): BoolectorSort = expr.sort
 
@@ -23,7 +23,7 @@ object BoolectorEngine : SMTEngine<Btor, BoolectorNode, BoolectorSort, Function,
     override fun getFloatSort(ctx: Btor): BoolectorSort = BitvecSort.bitvecSort(32)
 
     override fun getDoubleSort(ctx: Btor): BoolectorSort = BitvecSort.bitvecSort(64)
-    //??????????
+
     override fun getArraySort(ctx: Btor, domain: BoolectorSort, range: BoolectorSort): BoolectorSort =
             ArraySort.arraySort(domain, range)
 
@@ -31,9 +31,11 @@ object BoolectorEngine : SMTEngine<Btor, BoolectorNode, BoolectorSort, Function,
 
     override fun isBVSort(ctx: Btor, sort: BoolectorSort): Boolean = sort.isBitvecSort
 
-    override fun isFloatSort(ctx: Btor, sort: BoolectorSort): Boolean = sort.isBitvecSort && sort.toBitvecSort().width == 32
+    override fun isFloatSort(ctx: Btor, sort: BoolectorSort): Boolean =
+            sort.isBitvecSort && sort.toBitvecSort().width == 32
 
-    override fun isDoubleSort(ctx: Btor, sort: BoolectorSort): Boolean = sort.isBitvecSort && sort.toBitvecSort().width == 64
+    override fun isDoubleSort(ctx: Btor, sort: BoolectorSort): Boolean =
+            sort.isBitvecSort && sort.toBitvecSort().width == 64
 
     override fun isArraySort(ctx: Btor, sort: BoolectorSort): Boolean = sort.isArraySort
 
@@ -65,7 +67,7 @@ object BoolectorEngine : SMTEngine<Btor, BoolectorNode, BoolectorSort, Function,
 
     override fun name(ctx: Btor, expr: BoolectorNode): String = expr.symbol
 
-    override fun toString(ctx: Btor, expr: BoolectorNode) = expr.symbol
+    override fun toString(ctx: Btor, expr: BoolectorNode) = expr.symbol ?: "null"
 
     //$
     override fun simplify(ctx: Btor, expr: BoolectorNode): BoolectorNode = expr
@@ -73,7 +75,6 @@ object BoolectorEngine : SMTEngine<Btor, BoolectorNode, BoolectorSort, Function,
     //$$$$
     override fun equality(ctx: Btor, lhv: BoolectorNode, rhv: BoolectorNode): Boolean = lhv == rhv
 
-    //$
     override fun makeVar(ctx: Btor, sort: BoolectorSort, name: String, fresh: Boolean): BoolectorNode = when {
         sort.isArraySort -> ArrayNode.arrayNode(sort.toArraySort(), name)
         else -> BitvecNode.`var`(sort.toBitvecSort(), name, fresh)
@@ -81,14 +82,17 @@ object BoolectorEngine : SMTEngine<Btor, BoolectorNode, BoolectorSort, Function,
 
     override fun makeBooleanConst(ctx: Btor, value: Boolean): BoolectorNode = BoolNode.constBool(value)
 
-    override fun makeIntConst(ctx: Btor, value: Short): BoolectorNode = BitvecNode.constInt(value.toInt(), BitvecSort.bitvecSort(WORD))
+    override fun makeIntConst(ctx: Btor, value: Short): BoolectorNode =
+            BitvecNode.constInt(value.toInt(), BitvecSort.bitvecSort(WORD))
 
-    override fun makeIntConst(ctx: Btor, value: Int): BoolectorNode = BitvecNode.constInt(value, BitvecSort.bitvecSort(WORD))
+    override fun makeIntConst(ctx: Btor, value: Int): BoolectorNode =
+            BitvecNode.constInt(value, BitvecSort.bitvecSort(WORD))
 
-    //$
-    override fun makeLongConst(ctx: Btor, value: Long): BoolectorNode = BitvecNode.constLong(value, BitvecSort.bitvecSort(DWORD))
+    override fun makeLongConst(ctx: Btor, value: Long): BoolectorNode =
+            BitvecNode.constLong(value, BitvecSort.bitvecSort(DWORD))
 
-    override fun makeNumericConst(ctx: Btor, sort: BoolectorSort, value: Long): BoolectorNode = BitvecNode.constLong(value, BitvecSort.bitvecSort(DWORD))
+    override fun makeNumericConst(ctx: Btor, sort: BoolectorSort, value: Long): BoolectorNode =
+            BitvecNode.constLong(value, BitvecSort.bitvecSort(DWORD))
 
     override fun makeFloatConst(ctx: Btor, value: Float): BoolectorNode {
         val intValue = value.roundToInt()
@@ -100,20 +104,16 @@ object BoolectorEngine : SMTEngine<Btor, BoolectorNode, BoolectorSort, Function,
         return makeLongConst(ctx, longValue)
     }
 
-    //$$$
     override fun makeConstArray(ctx: Btor, sort: BoolectorSort, expr: BoolectorNode): BoolectorNode =
             ArrayNode.constArrayNode(sort.toBitvecSort(), expr.toBitvecNode())
 
-    //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     override fun makeFunction(ctx: Btor, name: String, retSort: BoolectorSort, args: List<BoolectorSort>): Function {
         val param = args.map { BoolectorFun.FuncParam.param(it, null) }
         return Function.func(BitvecNode.zero(retSort.toBitvecSort()), param)
     }
 
-    //$$$
     override fun apply(ctx: Btor, f: Function, args: List<BoolectorNode>): BoolectorNode = f.apply(args)
 
-    //$$
     override fun negate(ctx: Btor, expr: BoolectorNode): BoolectorNode {
         return when {
             expr.isBoolNode -> expr.toBoolNode().not()
@@ -123,53 +123,101 @@ object BoolectorEngine : SMTEngine<Btor, BoolectorNode, BoolectorSort, Function,
     }
 
     override fun binary(ctx: Btor, opcode: Opcode, lhv: BoolectorNode, rhv: BoolectorNode): BoolectorNode = when (opcode) {
-        Opcode.EQ -> eq(ctx, lhv, rhv)
-        Opcode.NEQ -> neq(lhv, rhv)
-        Opcode.ADD -> if (lhv.isBitvecNode && rhv.isBitvecNode) add(lhv.toBitvecNode(), rhv.toBitvecNode())
-        else unreachable { log.error("Unexpected and arguments: $lhv and $rhv") }
+        Opcode.EQ -> when {
+            lhv.isArrayNode && rhv.isArrayNode -> eq(lhv, rhv)
+            lhv.width >= rhv.width -> eq(lhv, rhv.toBitvecNode(lhv.width))
+            else -> eq(lhv.toBitvecNode(rhv.width), rhv)
+        }
 
-        Opcode.SUB -> if (lhv.isBitvecNode && rhv.isBitvecNode) sub(lhv.toBitvecNode(), rhv.toBitvecNode())
-        else unreachable { log.error("Unexpected and arguments: $lhv and $rhv") }
+        Opcode.NEQ ->  when {
+            lhv.isArrayNode && rhv.isArrayNode -> neq(lhv, rhv)
+            lhv.width >= rhv.width -> neq(lhv, rhv.toBitvecNode(lhv.width))
+            else -> neq(lhv.toBitvecNode(rhv.width), rhv)
+        }
 
-        Opcode.MUL -> if (lhv.isBitvecNode && rhv.isBitvecNode) mul(lhv.toBitvecNode(), rhv.toBitvecNode())
-        else unreachable { log.error("Unexpected and arguments: $lhv and $rhv") }
+        Opcode.ADD -> if (lhv.isBitvecNode && rhv.isBitvecNode) {
+            if (lhv.width >= rhv.width) add(lhv.toBitvecNode(), rhv.toBitvecNode(lhv.width))
+            else add(lhv.toBitvecNode(rhv.width), rhv.toBitvecNode())
+        } else unreachable { log.error("Unexpected add arguments: $lhv and $rhv") }
 
-        Opcode.DIVIDE -> if (lhv.isBitvecNode && rhv.isBitvecNode) sdiv(lhv.toBitvecNode(), rhv.toBitvecNode())
-        else unreachable { log.error("Unexpected and arguments: $lhv and $rhv") }
+        Opcode.SUB -> if (lhv.isBitvecNode && rhv.isBitvecNode) {
+            if (lhv.width >= rhv.width) sub(lhv.toBitvecNode(), rhv.toBitvecNode(lhv.width))
+            else sub(lhv.toBitvecNode(rhv.width), rhv.toBitvecNode())
+        } else unreachable { log.error("Unexpected sub arguments: $lhv and $rhv") }
 
-        Opcode.MOD -> if (lhv.isBitvecNode && rhv.isBitvecNode) smod(lhv.toBitvecNode(), rhv.toBitvecNode())
-        else unreachable { log.error("Unexpected mod arguments: $lhv and $rhv") }
+        Opcode.MUL -> if (lhv.isBitvecNode && rhv.isBitvecNode) {
+            if (lhv.width >= rhv.width) mul(lhv.toBitvecNode(), rhv.toBitvecNode(lhv.width))
+            else mul(lhv.toBitvecNode(rhv.width), rhv.toBitvecNode())
+        } else unreachable { log.error("Unexpected mul arguments: $lhv and $rhv") }
 
-        Opcode.GT -> if (lhv.isBitvecNode && rhv.isBitvecNode) gt(lhv.toBitvecNode(), rhv.toBitvecNode())
-        else unreachable { log.error("Unexpected and arguments: $lhv and $rhv") }
+        Opcode.DIVIDE -> if (lhv.isBitvecNode && rhv.isBitvecNode) {
+            if (lhv.width >= rhv.width) sdiv(lhv.toBitvecNode(), rhv.toBitvecNode(lhv.width))
+            else sdiv(lhv.toBitvecNode(rhv.width), rhv.toBitvecNode())
+        } else unreachable { log.error("Unexpected divide arguments: $lhv and $rhv") }
 
-        Opcode.GE -> if (lhv.isBitvecNode && rhv.isBitvecNode) ge(lhv.toBitvecNode(), rhv.toBitvecNode())
-        else unreachable { log.error("Unexpected and arguments: $lhv and $rhv") }
+        Opcode.MOD -> if (lhv.isBitvecNode && rhv.isBitvecNode) {
+            if (lhv.width >= rhv.width) smod(lhv.toBitvecNode(), rhv.toBitvecNode(lhv.width))
+            else smod(lhv.toBitvecNode(rhv.width), rhv.toBitvecNode())
+        } else unreachable { log.error("Unexpected mod arguments: $lhv and $rhv") }
 
-        Opcode.LT -> if (lhv.isBitvecNode && rhv.isBitvecNode) lt(lhv.toBitvecNode(), rhv.toBitvecNode())
-        else unreachable { log.error("Unexpected and arguments: $lhv and $rhv") }
+        Opcode.GT -> if (lhv.isBitvecNode && rhv.isBitvecNode) {
+            if (lhv.width >= rhv.width) gt(lhv.toBitvecNode(), rhv.toBitvecNode(lhv.width))
+            else gt(lhv.toBitvecNode(rhv.width), rhv.toBitvecNode())
+        } else unreachable { log.error("Unexpected gt arguments: $lhv and $rhv") }
 
-        Opcode.LE -> if (lhv.isBitvecNode && rhv.isBitvecNode) le(lhv.toBitvecNode(), rhv.toBitvecNode())
-        else unreachable { log.error("Unexpected and arguments: $lhv and $rhv") }
+        Opcode.GE -> if (lhv.isBitvecNode && rhv.isBitvecNode) {
+            if (lhv.width >= rhv.width) ge(lhv.toBitvecNode(), rhv.toBitvecNode(lhv.width))
+            else ge(lhv.toBitvecNode(rhv.width), rhv.toBitvecNode())
+        } else unreachable { log.error("Unexpected ge arguments: $lhv and $rhv") }
 
-        Opcode.SHL -> shl(lhv.toBitvecNode(), rhv.toBitvecNode())
-        Opcode.SHR -> lshr(lhv.toBitvecNode(), rhv.toBitvecNode())
-        Opcode.ASHR -> ashr(lhv.toBitvecNode(), rhv.toBitvecNode())
+        Opcode.LT -> if (lhv.isBitvecNode && rhv.isBitvecNode) {
+            if (lhv.width >= rhv.width) lt(lhv.toBitvecNode(), rhv.toBitvecNode(lhv.width))
+            else lt(lhv.toBitvecNode(rhv.width), rhv.toBitvecNode())
+        } else unreachable { log.error("Unexpected lt arguments: $lhv and $rhv") }
+
+        Opcode.LE -> if (lhv.isBitvecNode && rhv.isBitvecNode) {
+            if (lhv.width >= rhv.width) le(lhv.toBitvecNode(), rhv.toBitvecNode(lhv.width))
+            else le(lhv.toBitvecNode(rhv.width), rhv.toBitvecNode())
+        } else unreachable { log.error("Unexpected le arguments: $lhv and $rhv") }
+
+        Opcode.SHL -> if (lhv.isBitvecNode && rhv.isBitvecNode) {
+            if (lhv.width >= rhv.width) shl(lhv.toBitvecNode(), rhv.toBitvecNode(lhv.width))
+            else shl(lhv.toBitvecNode(rhv.width), rhv.toBitvecNode())
+        } else unreachable { log.error("Unexpected shl arguments: $lhv and $rhv") }
+
+        Opcode.SHR -> if (lhv.isBitvecNode && rhv.isBitvecNode) {
+            if (lhv.width >= rhv.width) lshr(lhv.toBitvecNode(), rhv.toBitvecNode(lhv.width))
+            else lshr(lhv.toBitvecNode(rhv.width), rhv.toBitvecNode())
+        } else unreachable { log.error("Unexpected shr arguments: $lhv and $rhv") }
+
+        Opcode.ASHR -> if (lhv.isBitvecNode && rhv.isBitvecNode) {
+            if (lhv.width >= rhv.width) ashr(lhv.toBitvecNode(), rhv.toBitvecNode(lhv.width))
+            else ashr(lhv.toBitvecNode(rhv.width), rhv.toBitvecNode())
+        } else unreachable { log.error("Unexpected ashr arguments: $lhv and $rhv") }
+
         Opcode.AND -> when {
-            lhv.isBoolNode && rhv.isBoolNode -> and(lhv.toBoolNode(), rhv.toBoolNode())
-            lhv.isBitvecNode && rhv.isBitvecNode -> and(lhv.toBitvecNode(), rhv.toBitvecNode())
+            (lhv.isBoolNode && rhv.isBoolNode) -> and(lhv.toBoolNode(),rhv.toBoolNode())
+            !(lhv.isArrayNode && rhv.isArrayNode) -> {
+                if (lhv.width >= rhv.width) and(lhv.toBitvecNode(), rhv.toBitvecNode(lhv.width))
+                else
+                    and(lhv.toBitvecNode(rhv.width), rhv.toBitvecNode())
+            }
             else -> unreachable { log.error("Unexpected and arguments: $lhv and $rhv") }
         }
         Opcode.OR -> when {
-            lhv.isBoolNode && rhv.isBoolNode -> or(lhv.toBoolNode(), rhv.toBoolNode())
-            lhv.isBitvecNode && rhv.isBitvecNode -> or(lhv.toBitvecNode(), rhv.toBitvecNode())
+            (lhv.isBoolNode && rhv.isBoolNode) -> or(lhv.toBoolNode(),rhv.toBoolNode())
+            !(lhv.isArrayNode && rhv.isArrayNode) -> {
+                if (lhv.width >= rhv.width) or(lhv.toBitvecNode(), rhv.toBitvecNode(lhv.width))
+                else or(lhv.toBitvecNode(rhv.width), rhv.toBitvecNode())
+            }
             else -> unreachable { log.error("Unexpected or arguments: $lhv or $rhv") }
         }
         Opcode.XOR -> when {
-            lhv.isBoolNode && rhv.isBoolNode -> xor(lhv.toBoolNode(), rhv.toBoolNode())
-            lhv.isBitvecNode && rhv.isBitvecNode -> xor(lhv.toBitvecNode(), rhv.toBitvecNode())
-            lhv.isBoolNode && rhv.isBitvecNode -> xor(bool2bv(ctx, lhv, rhv.sort.toBitvecSort()), rhv.toBitvecNode())
-            lhv.isBitvecNode && rhv.isBoolNode -> xor(lhv.toBitvecNode(), bool2bv(ctx, rhv, lhv.sort.toBitvecSort()))
+            (lhv.isBoolNode && rhv.isBoolNode) -> xor(lhv.toBoolNode(),rhv.toBoolNode())
+            !(lhv.isArrayNode && rhv.isArrayNode) -> {
+                if (lhv.width >= rhv.width) xor(lhv.toBitvecNode(), rhv.toBitvecNode(lhv.width))
+                else xor(lhv.toBitvecNode(rhv.width), rhv.toBitvecNode())
+            }
             else -> unreachable { log.error("Unexpected xor arguments: $lhv xor $rhv") }
         }
         Opcode.IMPLIES -> implies(lhv.toBoolNode(), rhv.toBoolNode())
@@ -222,6 +270,8 @@ object BoolectorEngine : SMTEngine<Btor, BoolectorNode, BoolectorSort, Function,
 
     private fun neq(lhv: BoolectorNode, rhv: BoolectorNode): BoolectorNode = lhv.eq(rhv).not()
 
+    private fun eq(lhv: BoolectorNode, rhv: BoolectorNode): BoolectorNode = lhv.eq(rhv)
+
     private fun bv2bv(ctx: Btor, expr: BoolectorNode, castSize: Int): BitvecNode {
         val curSize = expr.sort.toBitvecSort().width
         return when {
@@ -230,28 +280,6 @@ object BoolectorEngine : SMTEngine<Btor, BoolectorNode, BoolectorSort, Function,
             else -> extract(ctx, expr, high = castSize - 1, low = 0).toBitvecNode()
         }
     }
-
-    private fun bool2bv(ctx: Btor, expr: BoolectorNode, sort: BitvecSort): BitvecNode {
-        val castSize = sort.width
-        return bv2bv(ctx, expr, castSize)
-    }
-
-    private fun eq(ctx: Btor, lhv: BoolectorNode, rhv: BoolectorNode): BoolectorNode {
-        val lhvSort = lhv.sort.toBitvecSort()
-        val lhvWidth = lhvSort.width
-        val rhvSort = rhv.sort.toBitvecSort()
-        val rhvWidth = rhvSort.width
-        return when {
-            lhvWidth > rhvWidth -> {
-                lhv.eq(sext(ctx, lhvWidth - rhvWidth, rhv))
-            }
-            lhvWidth < rhvWidth -> {
-                rhv.eq(sext(ctx, rhvWidth - lhvWidth, lhv))
-            }
-            else -> lhv.eq(rhv)
-        }
-    }
-
 
     override fun conjunction(ctx: Btor, vararg exprs: BoolectorNode): BoolectorNode {
         var ans = BoolNode.constBool(true)
@@ -265,7 +293,7 @@ object BoolectorEngine : SMTEngine<Btor, BoolectorNode, BoolectorSort, Function,
         return ans
     }
 
-    override fun zext(ctx: Btor, n: Int, expr: BoolectorNode): BoolectorNode = expr.toBitvecNode().uext(n  - expr.width)
+    override fun zext(ctx: Btor, n: Int, expr: BoolectorNode): BoolectorNode = expr.toBitvecNode().uext(n)
 
     override fun sext(ctx: Btor, n: Int, expr: BoolectorNode): BoolectorNode {
         // This is generally fucked up
@@ -273,7 +301,7 @@ object BoolectorEngine : SMTEngine<Btor, BoolectorNode, BoolectorSort, Function,
         val bv = expr.toBitvecNode()
         return when (bv.width) {
             1 -> zext(ctx, n, expr)
-            else -> expr.toBitvecNode().sext(n - expr.width)
+            else -> expr.toBitvecNode().sext(n)
         }
     }
 
@@ -286,11 +314,15 @@ object BoolectorEngine : SMTEngine<Btor, BoolectorNode, BoolectorSort, Function,
     override fun ite(ctx: Btor, cond: BoolectorNode, lhv: BoolectorNode, rhv: BoolectorNode): BoolectorNode =
             lhv.ite(cond.toBoolNode(), rhv)
 
-    override fun extract(ctx: Btor, bv: BoolectorNode, high: Int, low: Int): BoolectorNode = bv.toBitvecNode().slice(high, low)
+    override fun extract(ctx: Btor, bv: BoolectorNode, high: Int, low: Int): BoolectorNode =
+            bv.toBitvecNode().slice(high, low)
 
     override fun forAll(ctx: Btor, sorts: List<BoolectorSort>, body: (List<BoolectorNode>) -> BoolectorNode): BoolectorNode =
             BitvecNode.constBitvec("1")
 
-    override fun forAll(ctx: Btor, sorts: List<BoolectorSort>, body: (List<BoolectorNode>) -> BoolectorNode, patternGenerator: (List<BoolectorNode>) -> List<BoolectorFun.FuncParam>): BoolectorNode =
+    override fun forAll(ctx: Btor,
+                        sorts: List<BoolectorSort>,
+                        body: (List<BoolectorNode>) -> BoolectorNode,
+                        patternGenerator: (List<BoolectorNode>) -> List<BoolectorFun.FuncParam>): BoolectorNode =
             BitvecNode.constBitvec("1")
 }
