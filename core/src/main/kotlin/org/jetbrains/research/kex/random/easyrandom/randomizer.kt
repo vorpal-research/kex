@@ -7,7 +7,6 @@ import org.jeasy.random.util.ReflectionUtils
 import org.jetbrains.research.kex.config.kexConfig
 import org.jetbrains.research.kex.util.log
 import org.jetbrains.research.kex.util.unreachable
-import org.jetbrains.research.kex.random.Randomizer as KexRandomizer
 import java.util.*
 import java.util.concurrent.ConcurrentSkipListMap
 import java.util.concurrent.ConcurrentSkipListSet
@@ -17,6 +16,7 @@ import kotlin.collections.HashSet
 import kotlin.collections.LinkedHashMap
 import kotlin.collections.LinkedHashSet
 import kotlin.math.abs
+import org.jetbrains.research.kex.random.Randomizer as KexRandomizer
 
 private infix fun Int.`in`(range: IntRange) = range.first + (this % (range.last - range.first))
 
@@ -85,6 +85,8 @@ abstract class CollectionRandomizer<T>(
                     SetRandomizer.randomSetRandomizer(random, elementRandomizer)
                 }
             }
+            Collection::class.java.isAssignableFrom(klass) ->
+                ListRandomizer.randomListRandomizer(random, elementRandomizer)
             else -> unreachable { log.error("Unknown collection: $klass") }
         }
 

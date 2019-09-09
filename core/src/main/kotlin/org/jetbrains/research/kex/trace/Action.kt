@@ -3,7 +3,6 @@ package org.jetbrains.research.kex.trace
 import com.github.h0tk3y.betterParse.combinators.*
 import com.github.h0tk3y.betterParse.grammar.Grammar
 import com.github.h0tk3y.betterParse.grammar.parser
-import com.github.h0tk3y.betterParse.parser.MismatchedToken
 import com.github.h0tk3y.betterParse.parser.Parser
 import org.jetbrains.research.kex.util.log
 import org.jetbrains.research.kex.util.unreachable
@@ -194,8 +193,9 @@ class ActionParser(val cm: ClassManager) : Grammar<Action>() {
     private val minus by token("-")
     private val doubleNum by token("\\d+\\.\\d+(E(-)?\\d+)?")
     private val num by token("\\d+")
-    private val word by token("[a-zA-Z$][\\w$]*")
+    private val word by token("[a-zA-Z$][\\w$-]*")
     private val at by token("@")
+    @Suppress("RegExpRedundantEscape")
     private val string by token("\"[\\w\\sа-яА-ЯёЁ\\-.@>=<+*,'\\(\\):\\[\\]/\\n{}]*\"")
 
     private val colonAndSpace by colon and space
