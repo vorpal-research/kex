@@ -72,8 +72,7 @@ class Contract(val value: String = ""/*, pure: Boolean = false*/) : AnnotationIn
         }
         // Find errors
         for (record in records) {
-            if (record.result == Constraints.Any)
-                throw IllegalStateException("Contract effect should be specified")
+            check(record.result != Constraints.Any) { "Contract effect should be specified" }
             for (param in record.params) {
                 when (param) {
                     in effects2, Constraints.New, Constraints.Fail ->
@@ -103,7 +102,7 @@ class Contract(val value: String = ""/*, pure: Boolean = false*/) : AnnotationIn
         val args = call.arguments
         for (record in records.asSequence().filter { it.result == Constraints.Fail }) {
             val params = record.params
-            for (i in 0 until params.size) {
+            for (i in params.indices) {
                 if (params[i] == Constraints.Any)
                     continue
                 builder += assume { getTermByConstraint(params[i], args[i]) equality false }
@@ -136,7 +135,7 @@ class Contract(val value: String = ""/*, pure: Boolean = false*/) : AnnotationIn
                 val argUnion = term { value(KexBool(), "%contract$id.$i.args") }
                 result += state {
                     var accumulator: Term = const(true)
-                    for (j in 0 until params.size) {
+                    for (j in params.indices) {
                         if (params[j] != Constraints.Any)
                             accumulator = accumulator and getTermByConstraint(params[j], args[j])
                     }
@@ -163,18 +162,18 @@ class Contract(val value: String = ""/*, pure: Boolean = false*/) : AnnotationIn
                         else -> unreachable { record.result }
                     }
                     var argsCheck: Term? = null
-                    for (i in 0 until params.size) {
+                    for (i in params.indices) {
                         if (params[i] == Constraints.Any)
                             continue
-                        if (argsCheck == null)
-                            argsCheck = getTermByConstraint(params[i], args[i])
-                        else
-                            argsCheck = argsCheck and getTermByConstraint(params[i], args[i])
+                        argsCheck = when (argsCheck) {
+                            null -> getTermByConstraint(params[i], args[i])
+                            else -> argsCheck and getTermByConstraint(params[i], args[i])
+                        }
                     }
-                    val check = if (argsCheck != null)
-                        !argsCheck or effect
-                    else
-                        effect
+                    val check = when {
+                        argsCheck != null -> !argsCheck or effect
+                        else -> effect
+                    }
                     check equality true
                 }
             }
@@ -185,7 +184,7 @@ class Contract(val value: String = ""/*, pure: Boolean = false*/) : AnnotationIn
                 val argUnion = term { value(KexBool(), "%contract$id.$i.args") }
                 result += assume {
                     var accumulator: Term = const(true)
-                    for (j in 0 until params.size) {
+                    for (j in params.indices) {
                         if (params[j] != Constraints.Any)
                             accumulator = accumulator and getTermByConstraint(params[j], args[j])
                     }

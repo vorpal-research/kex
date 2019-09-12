@@ -25,7 +25,6 @@ import org.jetbrains.research.kfg.ir.Class
 import org.jetbrains.research.kfg.ir.Method
 import org.jetbrains.research.kfg.ir.value.instruction.*
 import org.jetbrains.research.kfg.util.DominatorTreeBuilder
-import org.jetbrains.research.kfg.util.TopologicalSorter
 import org.jetbrains.research.kfg.util.writeClass
 import org.jetbrains.research.kfg.visitor.MethodVisitor
 import java.io.File
@@ -155,9 +154,9 @@ class MethodChecker(
 
         val unreachableBlocks = mutableSetOf<BasicBlock>()
         val domTree = DominatorTreeBuilder(method.basicBlocks.toSet()).build()
-        val (order, _) = TopologicalSorter(method.basicBlocks.toSet()).sort(method.entry)
+        val order: SearchStrategy = DfsStrategy(method)
 
-        for (block in order.reversed()) {
+        for (block in order) {
             if (block.terminator is UnreachableInst) {
                 unreachableBlocks += block
                 continue
