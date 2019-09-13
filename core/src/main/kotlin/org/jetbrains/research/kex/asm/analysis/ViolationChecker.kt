@@ -19,7 +19,7 @@ import org.jetbrains.research.kfg.ir.BasicBlock
 import org.jetbrains.research.kfg.ir.Method
 import org.jetbrains.research.kfg.ir.value.Value
 import org.jetbrains.research.kfg.ir.value.instruction.*
-import org.jetbrains.research.kfg.util.TopologicalSorter
+import org.jetbrains.research.kfg.util.GraphTraversal
 import org.jetbrains.research.kfg.visitor.MethodVisitor
 
 private val isInliningEnabled by lazy { kexConfig.getBooleanValue("smt", "ps-inlining", true) }
@@ -47,7 +47,7 @@ class ViolationChecker(override val cm: ClassManager,
         this.method = method
         if (method.isEmpty()) return
 
-        val (order, cycled) = TopologicalSorter(method.basicBlocks.toSet()).sort(method.entry)
+        val (order, cycled) = GraphTraversal(method).topologicalSort()
         require(cycled.isEmpty()) { log.error("No topological sorting for method $method") }
 
         for (block in order.reversed()) {

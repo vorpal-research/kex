@@ -153,7 +153,7 @@ class MethodChecker(
         prepareMethodInfo(method)
 
         val unreachableBlocks = mutableSetOf<BasicBlock>()
-        val domTree = DominatorTreeBuilder(method.basicBlocks.toSet()).build()
+        val domTree = DominatorTreeBuilder(method).build()
         val order: SearchStrategy = DfsStrategy(method)
 
         for (block in order) {
