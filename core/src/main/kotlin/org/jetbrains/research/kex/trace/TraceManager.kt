@@ -1,6 +1,7 @@
 package org.jetbrains.research.kex.trace
 
 import org.jetbrains.research.kex.asm.transform.originalBlock
+import org.jetbrains.research.kex.trace.file.*
 import org.jetbrains.research.kex.util.error
 import org.jetbrains.research.kex.util.log
 import org.jetbrains.research.kfg.ir.BasicBlock
@@ -25,13 +26,13 @@ data class BlockInfo internal constructor(
 }
 
 data class Trace constructor(val method: Method,
-                                val instance: ActionValue?,
-                                val args: Array<ActionValue>,
-                                val blocks: Map<BasicBlock, List<BlockInfo>>,
-                                val retval: ActionValue?,
-                                val throwable: ActionValue?,
-                                val exception: Throwable?,
-                                val subtraces: List<Trace>) {
+                             val instance: ActionValue?,
+                             val args: Array<ActionValue>,
+                             val blocks: Map<BasicBlock, List<BlockInfo>>,
+                             val retval: ActionValue?,
+                             val throwable: ActionValue?,
+                             val exception: Throwable?,
+                             val subtraces: List<Trace>) {
     fun getBlockInfo(bb: BasicBlock) = blocks.getValue(bb)
 
     companion object {

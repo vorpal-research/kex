@@ -4,9 +4,9 @@ import com.github.h0tk3y.betterParse.grammar.parseToEnd
 import com.github.h0tk3y.betterParse.parser.ParseException
 import org.jetbrains.research.kex.asm.transform.TraceInstrumenter
 import org.jetbrains.research.kex.config.kexConfig
-import org.jetbrains.research.kex.trace.ActionParseException
-import org.jetbrains.research.kex.trace.ActionParser
 import org.jetbrains.research.kex.trace.Trace
+import org.jetbrains.research.kex.trace.file.ActionParseException
+import org.jetbrains.research.kex.trace.file.ActionParser
 import org.jetbrains.research.kex.util.getMethod
 import org.jetbrains.research.kex.util.log
 import org.jetbrains.research.kex.util.tryOrNull

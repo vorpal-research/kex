@@ -1,6 +1,6 @@
 package org.jetbrains.research.kex.util
 
-import org.jetbrains.research.kex.trace.UnknownTypeException
+import org.jetbrains.research.kex.trace.file.UnknownTypeException
 import org.jetbrains.research.kfg.ir.Method
 import org.jetbrains.research.kfg.type.*
 import org.reflections.Reflections
