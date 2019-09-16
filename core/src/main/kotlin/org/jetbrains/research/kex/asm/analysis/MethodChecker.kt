@@ -5,7 +5,6 @@ import kotlinx.serialization.ImplicitReflectionSerializer
 import kotlinx.serialization.Serializable
 import org.jetbrains.research.kex.asm.state.PredicateStateAnalysis
 import org.jetbrains.research.kex.asm.transform.TraceInstrumenter
-import org.jetbrains.research.kex.asm.transform.originalBlock
 import org.jetbrains.research.kex.config.kexConfig
 import org.jetbrains.research.kex.random.Randomizer
 import org.jetbrains.research.kex.random.defaultRandomizer
@@ -15,8 +14,7 @@ import org.jetbrains.research.kex.smt.Result
 import org.jetbrains.research.kex.smt.model.ReanimatedModel
 import org.jetbrains.research.kex.state.PredicateState
 import org.jetbrains.research.kex.state.transformer.executeModel
-import org.jetbrains.research.kex.trace.TraceManager
-import org.jetbrains.research.kex.trace.runner.SimpleRunner
+import org.jetbrains.research.kex.trace.runner.DefaultRunner
 import org.jetbrains.research.kex.trace.runner.TimeoutException
 import org.jetbrains.research.kex.util.*
 import org.jetbrains.research.kfg.ClassManager
@@ -71,7 +69,6 @@ class MethodChecker(
         private val originalCM: ClassManager,
         private val target: File,
         private val psa: PredicateStateAnalysis) : MethodVisitor {
-    private val tm = TraceManager
     private var state: State? = null
 
     private data class State(
@@ -162,8 +159,8 @@ class MethodChecker(
                 continue
             }
 
-            val originalBlock = block.originalBlock
-            if (tm.isCovered(method, originalBlock)) continue
+//            val originalBlock = block.originalBlock
+//            if (tm.isCovered(method, originalBlock)) continue
 
             if (block in unreachableBlocks) continue
             if (domTree[block]?.idom?.value in unreachableBlocks) {
@@ -188,8 +185,8 @@ class MethodChecker(
                 break
             }
 
-            log.debug("Block ${block.name} is covered = ${tm.isCovered(method, originalBlock)}")
-            log.debug()
+//            log.debug("Block ${block.name} is covered = ${tm.isCovered(method, originalBlock)}")
+//            log.debug()
 
             if (coverageResult is Result.UnsatResult) unreachableBlocks += block
         }
@@ -228,8 +225,7 @@ class MethodChecker(
                 }
 
                 try {
-                    val trace = SimpleRunner(method, loader).invoke(instance, model.arguments.toTypedArray())
-                    tm.addTrace(method, trace)
+                    DefaultRunner(method, loader).invoke(instance, model.arguments.toTypedArray())
                 } catch (e: TimeoutException) {
                     throw e
                 } catch (e: Exception) {

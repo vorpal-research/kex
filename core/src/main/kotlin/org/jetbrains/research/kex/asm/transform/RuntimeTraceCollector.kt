@@ -1,7 +1,7 @@
 package org.jetbrains.research.kex.asm.transform
 
-import org.jetbrains.research.kex.trace.runtime.TraceCollector
-import org.jetbrains.research.kex.trace.runtime.TraceCollectorProxy
+import org.jetbrains.research.kex.trace.`object`.TraceCollector
+import org.jetbrains.research.kex.trace.`object`.TraceCollectorProxy
 import org.jetbrains.research.kex.util.buildList
 import org.jetbrains.research.kfg.ClassManager
 import org.jetbrains.research.kfg.ir.BasicBlock

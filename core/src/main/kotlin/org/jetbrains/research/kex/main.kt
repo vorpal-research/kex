@@ -5,6 +5,8 @@ import org.jetbrains.research.kex.asm.analysis.RandomChecker
 import org.jetbrains.research.kex.asm.manager.CoverageCounter
 import org.jetbrains.research.kex.asm.state.PredicateStateAnalysis
 import org.jetbrains.research.kex.asm.transform.LoopDeroller
+import org.jetbrains.research.kex.asm.transform.RuntimeTraceCollector
+import org.jetbrains.research.kex.asm.util.ClassWriter
 import org.jetbrains.research.kex.config.CmdConfig
 import org.jetbrains.research.kex.config.FileConfig
 import org.jetbrains.research.kex.config.RuntimeConfig
@@ -45,8 +47,12 @@ fun main(args: Array<String>) {
 
     val psa = PredicateStateAnalysis(classManager)
     val cm = CoverageCounter(origManager)
+    executePipeline(origManager, `package`) {
+        +RuntimeTraceCollector(origManager)
+        +ClassWriter(origManager, jarLoader, target)
+    }
     executePipeline(classManager, `package`) {
-        +RandomChecker(classManager, jarLoader, target)
+        +RandomChecker(origManager, jarLoader, target)
         +LoopSimplifier(classManager)
         +LoopDeroller(classManager)
         +psa

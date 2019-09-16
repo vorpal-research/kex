@@ -1,4 +1,4 @@
-package org.jetbrains.research.kex.trace.runtime
+package org.jetbrains.research.kex.trace.`object`
 
 import org.jetbrains.research.kex.collections.stackOf
 import org.jetbrains.research.kex.trace.file.UnknownNameException
@@ -9,7 +9,7 @@ import org.jetbrains.research.kfg.ir.MethodDesc
 import org.jetbrains.research.kfg.type.parseDesc
 
 class TraceCollector(val cm: ClassManager) {
-    val trace = arrayListOf<RuntimeAction>()
+    val trace = arrayListOf<Action>()
     private val stack = stackOf<Method>()
 
     private fun String.toType() = parseDesc(cm.type, this)
@@ -24,7 +24,7 @@ class TraceCollector(val cm: ClassManager) {
         return st.getBlock(blockName) ?: throw UnknownNameException(blockName)
     }
 
-    fun addAction(action: RuntimeAction) = trace.add(action)
+    fun addAction(action: Action) = trace.add(action)
 
     fun methodEnter(className: String, methodName: String, argTypes: Array<String>, retType: String,
                     instance: Any?, args: Array<Any?>) {
@@ -76,8 +76,9 @@ object TraceCollectorProxy {
         private set
 
     @JvmStatic
-    fun initCollector(cm: ClassManager) {
+    fun initCollector(cm: ClassManager): TraceCollector {
         collector = TraceCollector(cm)
+        return collector
     }
 
     @JvmStatic
