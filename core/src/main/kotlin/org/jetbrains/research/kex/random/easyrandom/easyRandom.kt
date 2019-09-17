@@ -94,7 +94,19 @@ class EasyRandomDriver(val config: BeansConfig = defaultConfig) : Randomizer {
                     .objectFactory(KexObjectFactory())
     )
 
-    private fun <T> generateClass(klass: Class<T>) = randomizer.nextObject(klass)
+    private fun <T> generateClass(klass: Class<T>): Any? = when {
+        Collection::class.java.isAssignableFrom(klass) -> {
+            val cr = CollectionRandomizer.generateCollection<Any?>(klass, this,
+                    JRandomizer { next(Any::class.java) })
+            cr.randomValue
+        }
+        Map::class.java.isAssignableFrom(klass) -> {
+            val mr = CollectionRandomizer.generateMap<Any?, Any?>(klass, this,
+                    JRandomizer { next(Any::class.java) }, JRandomizer { next(Any::class.java) })
+            mr.randomValue
+        }
+        else -> randomizer.nextObject(klass)
+    }
 
     private fun generateParameterized(type: ParameterizedType): Any? {
         val rawType = type.rawType as? Class<*> ?: throw UnknownTypeException(type.toString())
