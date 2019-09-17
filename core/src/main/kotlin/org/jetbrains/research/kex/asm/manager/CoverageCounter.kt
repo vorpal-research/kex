@@ -2,7 +2,7 @@ package org.jetbrains.research.kex.asm.manager
 
 import org.jetbrains.research.kex.asm.analysis.isImpactable
 import org.jetbrains.research.kex.asm.transform.originalBlock
-import org.jetbrains.research.kex.trace.file.FileTraceManager
+import org.jetbrains.research.kex.trace.TraceManager
 import org.jetbrains.research.kex.util.log
 import org.jetbrains.research.kfg.ClassManager
 import org.jetbrains.research.kfg.ir.Class
@@ -11,8 +11,7 @@ import org.jetbrains.research.kfg.visitor.ClassVisitor
 
 data class CoverageInfo(val bodyCoverage: Double, val fullCoverage: Double)
 
-class CoverageCounter(override val cm: ClassManager) : ClassVisitor {
-    val tm = FileTraceManager()
+class CoverageCounter<T>(override val cm: ClassManager, val tm: TraceManager<T>) : ClassVisitor {
     val methodInfos = hashMapOf<Method, CoverageInfo>()
 
     val totalCoverage: CoverageInfo

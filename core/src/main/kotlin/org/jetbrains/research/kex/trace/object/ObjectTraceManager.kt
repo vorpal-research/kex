@@ -34,6 +34,12 @@ class ObjectTraceManager : TraceManager<Trace> {
                 }
             }
         }
+        require(methodStack.size == traceStack.size) {
+            log.error("Unexpected trace: number of method does not correspond to number of trace actions")
+        }
+        while (methodStack.isNotEmpty()) {
+            methodInfos.getOrPut(methodStack.pop(), ::mutableSetOf) += Trace(traceStack.pop())
+        }
     }
 
     override fun isCovered(method: Method, bb: BasicBlock): Boolean =

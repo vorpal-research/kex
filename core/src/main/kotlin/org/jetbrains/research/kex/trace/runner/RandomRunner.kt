@@ -1,6 +1,5 @@
 package org.jetbrains.research.kex.trace.runner
 
-import org.jetbrains.research.kex.config.kexConfig
 import org.jetbrains.research.kex.random.GenerationException
 import org.jetbrains.research.kex.random.Randomizer
 import org.jetbrains.research.kex.random.defaultRandomizer
@@ -8,8 +7,6 @@ import org.jetbrains.research.kex.util.log
 import java.lang.reflect.Method
 import java.lang.reflect.Modifier
 import org.jetbrains.research.kfg.ir.Method as KfgMethod
-
-internal val runs = kexConfig.getIntValue("random-runner", "attempts", 10)
 
 val Method.isStatic get() = (this.modifiers and Modifier.STATIC) == Modifier.STATIC
 
