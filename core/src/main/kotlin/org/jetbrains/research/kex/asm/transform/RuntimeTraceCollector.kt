@@ -157,6 +157,7 @@ class RuntimeTraceCollector(override val cm: ClassManager) : MethodVisitor {
 
     override fun visit(method: Method) {
         if (method.isConstructor) return
+        if (method.isEmpty()) return
         val methodEntryInsts = buildList<Instruction> {
             traceCollector = getNewCollector()
             +traceCollector

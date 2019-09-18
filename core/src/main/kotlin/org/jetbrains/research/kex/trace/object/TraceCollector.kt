@@ -8,66 +8,82 @@ import org.jetbrains.research.kfg.ir.Method
 import org.jetbrains.research.kfg.ir.MethodDesc
 import org.jetbrains.research.kfg.type.parseDesc
 
-class TraceCollector(val cm: ClassManager) {
+abstract class TraceCollector(val cm: ClassManager) {
     val trace = arrayListOf<Action>()
-    private val stack = stackOf<Method>()
+    protected val stack = stackOf<Method>()
 
-    private fun String.toType() = parseDesc(cm.type, this)
+    protected fun String.toType() = parseDesc(cm.type, this)
 
-    private fun parseMethod(className: String, methodName: String, args: Array<String>, retType: String): Method {
+    protected fun parseMethod(className: String, methodName: String, args: Array<String>, retType: String): Method {
         val klass = cm.getByName(className)
         return klass.getMethod(methodName, MethodDesc(args.map { it.toType() }.toTypedArray(), retType.toType()))
     }
 
-    private fun parseBlock(blockName: String): BasicBlock {
+    protected fun parseBlock(blockName: String): BasicBlock {
         val st = stack.peek().slottracker
         return st.getBlock(blockName) ?: throw UnknownNameException(blockName)
     }
 
     fun addAction(action: Action) = trace.add(action)
 
-    fun methodEnter(className: String, methodName: String, argTypes: Array<String>, retType: String,
+    open fun methodEnter(className: String, methodName: String, argTypes: Array<String>, retType: String,
                     instance: Any?, args: Array<Any?>) {
         val method = parseMethod(className, methodName, argTypes, retType)
         addAction(MethodEntry(method, instance, args))
         stack.push(method)
     }
 
-    fun methodReturn() {
+    open fun methodReturn() {
         val method = stack.pop()
         addAction(MethodReturn(method, null))
     }
 
-    fun methodReturn(value: Any) {
+    open fun methodReturn(value: Any) {
         val method = stack.pop()
         addAction(MethodReturn(method, value))
     }
 
 
-    fun methodThrow(throwable: Throwable) {
+    open fun methodThrow(throwable: Throwable) {
         val method = stack.pop()
         addAction(MethodThrow(method, throwable))
     }
 
-    fun blockEnter(blockName: String) {
+    open fun blockEnter(blockName: String) {
         val block = parseBlock(blockName)
         addAction(BlockEntry(block))
     }
 
-    fun blockJump(blockName: String) {
+    open fun blockJump(blockName: String) {
         val block = parseBlock(blockName)
         addAction(BlockJump(block))
     }
 
-    fun blockBranch(blockName: String, condition: Any?, expected: Any?) {
+    open fun blockBranch(blockName: String, condition: Any?, expected: Any?) {
         val block = parseBlock(blockName)
         addAction(BlockBranch(block, condition, expected))
     }
 
-    fun blockSwitch(blockName: String, key: Any?) {
+    open fun blockSwitch(blockName: String, key: Any?) {
         val block = parseBlock(blockName)
         addAction(BlockSwitch(block, key))
     }
+}
+
+private class ActualTraceCollector(cm: ClassManager) : TraceCollector(cm)
+
+private class TraceCollectorStub(cm: ClassManager) : TraceCollector(cm) {
+
+    override fun methodEnter(className: String, methodName: String, argTypes: Array<String>, retType: String,
+                         instance: Any?, args: Array<Any?>) {}
+
+    override fun methodReturn() {}
+    override fun methodReturn(value: Any) {}
+    override fun methodThrow(throwable: Throwable) {}
+    override fun blockEnter(blockName: String) {}
+    override fun blockJump(blockName: String) {}
+    override fun blockBranch(blockName: String, condition: Any?, expected: Any?) {}
+    override fun blockSwitch(blockName: String, key: Any?) {}
 }
 
 
@@ -76,11 +92,16 @@ object TraceCollectorProxy {
         private set
 
     @JvmStatic
-    fun initCollector(cm: ClassManager): TraceCollector {
-        collector = TraceCollector(cm)
+    fun enableCollector(cm: ClassManager): TraceCollector {
+        collector = ActualTraceCollector(cm)
         return collector
     }
 
     @JvmStatic
     fun currentCollector() = collector
+
+    @JvmStatic
+    fun disableCollector() {
+        collector = TraceCollectorStub(collector.cm)
+    }
 }
