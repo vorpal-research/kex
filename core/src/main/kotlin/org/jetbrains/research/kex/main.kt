@@ -5,19 +5,22 @@ import org.jetbrains.research.kex.asm.analysis.RandomChecker
 import org.jetbrains.research.kex.asm.manager.CoverageCounter
 import org.jetbrains.research.kex.asm.state.PredicateStateAnalysis
 import org.jetbrains.research.kex.asm.transform.LoopDeroller
+import org.jetbrains.research.kex.asm.transform.RuntimeTraceCollector
+import org.jetbrains.research.kex.asm.util.ClassWriter
 import org.jetbrains.research.kex.config.CmdConfig
 import org.jetbrains.research.kex.config.FileConfig
 import org.jetbrains.research.kex.config.RuntimeConfig
 import org.jetbrains.research.kex.config.kexConfig
+import org.jetbrains.research.kex.trace.`object`.ObjectTraceManager
 import org.jetbrains.research.kex.util.log
 import org.jetbrains.research.kfg.ClassManager
 import org.jetbrains.research.kfg.Package
 import org.jetbrains.research.kfg.analysis.LoopSimplifier
 import org.jetbrains.research.kfg.util.Flags
 import org.jetbrains.research.kfg.util.classLoader
-import org.jetbrains.research.kfg.util.writeClassesToTarget
 import org.jetbrains.research.kfg.visitor.executePipeline
 import java.io.File
+import java.net.URLClassLoader
 import java.nio.file.Paths
 import java.util.jar.JarFile
 
@@ -33,24 +36,28 @@ fun main(args: Array<String>) {
     require(jarName != null, cmd::printHelp)
 
     val jar = JarFile(Paths.get(jarName).toAbsolutePath().toFile())
-    val jarLoader = jar.classLoader
     val `package` = packageName?.let { Package.parse(it) } ?: Package.defaultPackage
     val classManager = ClassManager(jar, `package`, Flags.readAll)
     val origManager = ClassManager(jar, `package`, Flags.readAll)
 
     log.debug("Running with jar ${jar.name} and package $`package`")
     val target = File("instrumented/")
-    // write all classes to target, so they will be seen by ClassLoader
-    writeClassesToTarget(classManager, jar, target, `package`, true)
+    val classLoader = URLClassLoader(arrayOf(target.toURI().toURL()))
 
+    val traceManager = ObjectTraceManager()
     val psa = PredicateStateAnalysis(classManager)
-    val cm = CoverageCounter(origManager)
+    val cm = CoverageCounter(origManager, traceManager)
+    executePipeline(origManager, `package`) {
+        +RuntimeTraceCollector(origManager)
+        +ClassWriter(origManager, jar.classLoader, target)
+    }
+
     executePipeline(classManager, `package`) {
-        +RandomChecker(classManager, jarLoader, target)
+        +RandomChecker(origManager, classLoader, traceManager)
         +LoopSimplifier(classManager)
         +LoopDeroller(classManager)
         +psa
-        +MethodChecker(classManager, jarLoader, origManager, target, psa)
+        +MethodChecker(classManager, classLoader, traceManager, psa)
         +cm
     }
 

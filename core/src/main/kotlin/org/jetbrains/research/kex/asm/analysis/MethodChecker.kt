@@ -4,21 +4,26 @@ import kotlinx.serialization.ContextualSerialization
 import kotlinx.serialization.ImplicitReflectionSerializer
 import kotlinx.serialization.Serializable
 import org.jetbrains.research.kex.asm.state.PredicateStateAnalysis
-import org.jetbrains.research.kex.asm.transform.TraceInstrumenter
 import org.jetbrains.research.kex.asm.transform.originalBlock
 import org.jetbrains.research.kex.config.kexConfig
+import org.jetbrains.research.kex.random.GenerationException
 import org.jetbrains.research.kex.random.Randomizer
 import org.jetbrains.research.kex.random.defaultRandomizer
 import org.jetbrains.research.kex.serialization.KexSerializer
 import org.jetbrains.research.kex.smt.Checker
 import org.jetbrains.research.kex.smt.Result
-import org.jetbrains.research.kex.smt.model.RecoveredModel
+import org.jetbrains.research.kex.smt.model.ReanimatedModel
+import org.jetbrains.research.kex.smt.model.SMTModel
 import org.jetbrains.research.kex.state.PredicateState
 import org.jetbrains.research.kex.state.transformer.executeModel
 import org.jetbrains.research.kex.trace.TraceManager
-import org.jetbrains.research.kex.trace.runner.SimpleRunner
+import org.jetbrains.research.kex.trace.`object`.Trace
+import org.jetbrains.research.kex.trace.runner.ObjectTracingRunner
 import org.jetbrains.research.kex.trace.runner.TimeoutException
-import org.jetbrains.research.kex.util.*
+import org.jetbrains.research.kex.util.debug
+import org.jetbrains.research.kex.util.loadClass
+import org.jetbrains.research.kex.util.log
+import org.jetbrains.research.kex.util.tryOrNull
 import org.jetbrains.research.kfg.ClassManager
 import org.jetbrains.research.kfg.ir.BasicBlock
 import org.jetbrains.research.kfg.ir.Class
@@ -26,20 +31,16 @@ import org.jetbrains.research.kfg.ir.Method
 import org.jetbrains.research.kfg.ir.value.instruction.CallInst
 import org.jetbrains.research.kfg.ir.value.instruction.FieldLoadInst
 import org.jetbrains.research.kfg.ir.value.instruction.FieldStoreInst
-import org.jetbrains.research.kfg.ir.value.instruction.Instruction
+import org.jetbrains.research.kfg.ir.value.instruction.UnreachableInst
 import org.jetbrains.research.kfg.util.DominatorTreeBuilder
-import org.jetbrains.research.kfg.util.TopologicalSorter
-import org.jetbrains.research.kfg.util.writeClass
 import org.jetbrains.research.kfg.visitor.MethodVisitor
-import java.io.File
-import java.net.URLClassLoader
 import java.nio.file.Files
 import java.nio.file.Paths
 
 private val failDir by lazy { kexConfig.getStringValue("debug", "dump-directory", "./fail") }
 
 class KexCheckerException(val inner: Exception, val reason: PredicateState) : Exception()
-class KexRunnerException(val inner: Exception, val model: RecoveredModel) : Exception()
+class KexRunnerException(val inner: Exception, val model: ReanimatedModel) : Exception()
 
 @Serializable
 data class Failure(
@@ -72,53 +73,9 @@ val Method.isImpactable: Boolean
 class MethodChecker(
         override val cm: ClassManager,
         private val loader: ClassLoader,
-        private val originalCM: ClassManager,
-        private val target: File,
+        private val tm: TraceManager<Trace>,
         private val psa: PredicateStateAnalysis) : MethodVisitor {
-    private val tm = TraceManager
-    private var state: State? = null
-
-    private data class State(
-            val `class`: Class,
-            val method: Method,
-            val loader: ClassLoader,
-            val traces: List<Instruction>
-    ) {
-        private val oldClassPath = System.getProperty("java.class.path")
-        val random: Randomizer get() = defaultRandomizer
-
-        init {
-            /**
-             * This is fucked up, but it is needed so that randomizer can scan all the classes from
-             * @loader to be able to generate random instances of target classes
-             */
-            updateClassPath()
-        }
-
-        private fun updateClassPath() {
-            val urlLoader = loader as? URLClassLoader ?: unreachable { log.error("Unknown ClassLoader type in State") }
-            val urlClassPath = urlLoader.urLs.joinToString(separator = ":") { "${it.path}." }
-            System.setProperty("java.class.path", "$oldClassPath:$urlClassPath")
-        }
-
-        fun clearClassPath() {
-            System.setProperty("java.class.path", oldClassPath)
-        }
-    }
-
-    private fun prepareMethodInfo(method: Method) {
-        val originalClass = originalCM.getByName(method.`class`.fullname)
-        val originalMethod = originalClass.getMethod(method.name, method.desc)
-        val classFileName = "${target.canonicalPath}/${originalClass.fullname}.class"
-
-        if (!method.isAbstract && !method.isConstructor) {
-            val traceInstructions = TraceInstrumenter(originalCM).invoke(originalMethod)
-            writeClass(cm, loader, originalClass, classFileName)
-            val directory = URLClassLoader(arrayOf(target.toURI().toURL()))
-
-            state = State(originalClass, originalMethod, directory, traceInstructions)
-        }
-    }
+    val random: Randomizer = defaultRandomizer
 
     @ImplicitReflectionSerializer
     private fun dumpPS(method: Method, message: String, state: PredicateState) {
@@ -131,16 +88,7 @@ class MethodChecker(
         errorDump.writeText(KexSerializer(cm).toJson(Failure(method.`class`, method, message, state)))
     }
 
-    override fun cleanup() {
-        val `class` = state?.`class` ?: return
-        val classFileName = "${target.canonicalPath}/${`class`.fullname}.class"
-
-        state?.traces?.forEach { it.parent?.remove(it) }
-
-        writeClass(cm, loader, `class`, classFileName)
-        state?.clearClassPath()
-        state = null
-    }
+    override fun cleanup() {}
 
     @ImplicitReflectionSerializer
     override fun visit(method: Method) {
@@ -154,13 +102,16 @@ class MethodChecker(
         log.debug(method.print())
         log.debug()
 
-        prepareMethodInfo(method)
-
         val unreachableBlocks = mutableSetOf<BasicBlock>()
-        val domTree = DominatorTreeBuilder<BasicBlock>(method.basicBlocks.toSet()).build()
-        val (order, _) = TopologicalSorter<BasicBlock>(method.basicBlocks.toSet()).sort(method.entry)
+        val domTree = DominatorTreeBuilder(method).build()
+        val order: SearchStrategy = DfsStrategy(method)
 
-        for (block in order.reversed()) {
+        for (block in order) {
+            if (block.terminator is UnreachableInst) {
+                unreachableBlocks += block
+                continue
+            }
+
             val originalBlock = block.originalBlock
             if (tm.isCovered(method, originalBlock)) continue
 
@@ -197,8 +148,6 @@ class MethodChecker(
 
     @ImplicitReflectionSerializer
     private fun coverBlock(method: Method, block: BasicBlock): Result {
-        val loader = state!!.loader
-        val random = state!!.random
         val checker = Checker(method, loader, psa)
         val ps = checker.createState(block.terminator)
                 ?: return Result.UnknownResult("Could not create a predicate state for instruction")
@@ -210,29 +159,19 @@ class MethodChecker(
         }
         when (result) {
             is Result.SatResult -> {
-                val model = executeModel(checker.state, cm.type, method, result.model, loader, random)
-                log.debug("Recovered: ${tryOrNull { model.toString() }}")
-
-                val instance = model.instance ?: when {
-                    method.isStatic -> null
-                    else -> tryOrNull {
-                        val klass = loader.loadClass(types.getRefType(method.`class`))
-                        random.next(klass)
-                    }
-                }
-
-                if (instance == null && !method.isStatic) {
-                    log.warn("Unable to create or generate instance of class ${method.`class`}")
+                val (instance, args) = try {
+                    generateByModel(method, checker.state, result.model)
+                } catch (e: GenerationException) {
+                    log.warn(e.message)
                     return result
                 }
 
                 try {
-                    val trace = SimpleRunner(method, loader).invoke(instance, model.arguments.toTypedArray())
-                    tm.addTrace(method, trace)
+                    collectTrace(method, instance, args)
                 } catch (e: TimeoutException) {
                     throw e
                 } catch (e: Exception) {
-                    throw KexRunnerException(e, RecoveredModel(method, instance, model.arguments))
+                    throw KexRunnerException(e, ReanimatedModel(method, instance, args.toList()))
                 }
             }
             is Result.UnsatResult -> log.debug("Instruction ${block.terminator.print()} is unreachable")
@@ -240,5 +179,29 @@ class MethodChecker(
                     "instruction ${block.terminator.print()}, reason: ${result.reason}")
         }
         return result
+    }
+
+    private fun generateByModel(method: Method, ps: PredicateState, model: SMTModel): Pair<Any?, Array<Any?>> {
+        val reanimated = executeModel(ps, cm.type, method, model, loader, random)
+        log.debug("Reanimated: ${tryOrNull { model.toString() }}")
+
+        val instance = reanimated.instance ?: when {
+            method.isStatic -> null
+            else -> tryOrNull {
+                val klass = loader.loadClass(types.getRefType(method.`class`))
+                random.next(klass)
+            }
+        }
+
+        if (instance == null && !method.isStatic) {
+            throw GenerationException("Unable to create or generate instance of class ${method.`class`}")
+        }
+        return instance to reanimated.arguments.toTypedArray()
+    }
+
+    private fun collectTrace(method: Method, instance: Any?, args: Array<Any?>) {
+        val runner = ObjectTracingRunner(method, loader)
+        val trace = runner.collectTrace(instance, args)
+        tm[method] = trace
     }
 }

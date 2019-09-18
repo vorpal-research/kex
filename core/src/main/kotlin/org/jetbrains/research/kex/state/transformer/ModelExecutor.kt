@@ -4,8 +4,8 @@ import org.jetbrains.research.kex.ktype.KexClass
 import org.jetbrains.research.kex.ktype.kexType
 import org.jetbrains.research.kex.random.Randomizer
 import org.jetbrains.research.kex.random.defaultRandomizer
-import org.jetbrains.research.kex.smt.model.ObjectRecoverer
-import org.jetbrains.research.kex.smt.model.RecoveredModel
+import org.jetbrains.research.kex.smt.model.ObjectReanimator
+import org.jetbrains.research.kex.smt.model.ReanimatedModel
 import org.jetbrains.research.kex.smt.model.SMTModel
 import org.jetbrains.research.kex.state.BasicState
 import org.jetbrains.research.kex.state.ChoiceState
@@ -13,10 +13,7 @@ import org.jetbrains.research.kex.state.PredicateState
 import org.jetbrains.research.kex.state.emptyState
 import org.jetbrains.research.kex.state.predicate.*
 import org.jetbrains.research.kex.state.term.*
-import org.jetbrains.research.kex.util.getMethod
-import org.jetbrains.research.kex.util.loadClass
-import org.jetbrains.research.kex.util.log
-import org.jetbrains.research.kex.util.unreachable
+import org.jetbrains.research.kex.util.*
 import org.jetbrains.research.kfg.ir.Method
 import org.jetbrains.research.kfg.type.TypeFactory
 import java.lang.reflect.ParameterizedType
@@ -38,7 +35,8 @@ private fun mergeTypes(lhv: Type, rhv: Type): Type {
         is Class<*> -> when {
             lhv.isAssignableFrom(rhv) -> rhv
             rhv.isAssignableFrom(lhv) -> lhv
-            else -> unreachable { log.error("Cannot decide on argument type: $rhv or $lhv") }
+            else -> findSubtypesOf(lhv, rhv).firstOrNull()
+                    ?: unreachable { log.error("Cannot decide on argument type: $rhv or $lhv") }
         }
         is ParameterizedType -> {
             val rawType = rhv.rawType as Class<*>
@@ -69,7 +67,7 @@ class ModelExecutor(val method: Method,
                     model: SMTModel,
                     loader: ClassLoader,
                     randomizer: Randomizer) : Transformer<ModelExecutor> {
-    private val recoverer = ObjectRecoverer(method, model, loader, randomizer)
+    private val reanimator = ObjectReanimator(method, model, loader, randomizer)
     private val memory = hashMapOf<Term, Any?>()
     private var thisTerm: Term? = null
     private val argTerms = sortedMapOf<Int, Term>()
@@ -82,7 +80,7 @@ class ModelExecutor(val method: Method,
 
     override fun apply(ps: PredicateState): PredicateState {
         val (tempThis, tempArgs) = collectArguments(ps)
-        val argTypeInfo = collectTypeInfos(recoverer.model, ps)
+        val argTypeInfo = collectTypeInfos(reanimator.model, ps)
         if (argTypeInfo.isNotEmpty())
             log.debug("Collected type info:\n${argTypeInfo.toList().joinToString("\n")}")
         thisTerm = when {
@@ -93,25 +91,25 @@ class ModelExecutor(val method: Method,
         for ((index, type) in method.argTypes.withIndex()) {
             argTerms.getOrPut(index) { term { arg(type.kexType, index) } }
         }
-        thisTerm?.let { memory[it] = recoverer.recoverTerm(it, javaClass) }
+        thisTerm?.let { memory[it] = reanimator.reanimateTerm(it, javaClass) }
         argTerms.values.zip(javaMethod.genericParameterTypes).forEach { (term, type) ->
             // TODO: need to think about more clever type info merging
             val castedType = when (term) {
-                in argTypeInfo -> recoverer.loader.loadClass(argTypeInfo.getValue(term).getKfgType(method.cm.type))
+                in argTypeInfo -> reanimator.loader.loadClass(argTypeInfo.getValue(term).getKfgType(method.cm.type))
                 else -> null
             }
             val actualType = when (castedType) {
                 null -> type
                 else -> mergeTypes(castedType, type)
             }
-            memory[term] = recoverer.recoverTerm(term, actualType)
+            memory[term] = reanimator.reanimateTerm(term, actualType)
         }
         return super.apply(ps)
     }
 
     override fun transformBasic(ps: BasicState): PredicateState {
         val vars = collectPointers(ps)
-        vars.forEach { ptr -> memory.getOrPut(ptr) { recoverer.recoverTerm(ptr) } }
+        vars.forEach { ptr -> memory.getOrPut(ptr) { reanimator.reanimateTerm(ptr) } }
         return ps
     }
 
@@ -124,7 +122,7 @@ class ModelExecutor(val method: Method,
     }
 
     private fun checkTerms(lhv: Term, rhv: Term, cmp: (Any?, Any?) -> Boolean): Boolean {
-        val lhvValue = memory.getOrPut(lhv) { recoverer.recoverTerm(lhv) }
+        val lhvValue = memory.getOrPut(lhv) { reanimator.reanimateTerm(lhv) }
         val rhvValue = when (rhv) {
             is ConstBoolTerm -> rhv.value
             is ConstIntTerm -> rhv.value
@@ -140,7 +138,7 @@ class ModelExecutor(val method: Method,
         is DefaultSwitchPredicate -> {
             val lhv = path.cond
             val conditions = path.cases
-            val lhvValue = memory.getOrPut(lhv) { recoverer.recoverTerm(lhv) }
+            val lhvValue = memory.getOrPut(lhv) { reanimator.reanimateTerm(lhv) }
             val condValues = conditions.map { (it as ConstIntTerm).value }
             lhvValue !in condValues
         }
@@ -153,8 +151,8 @@ fun executeModel(ps: PredicateState,
                  method: Method,
                  model: SMTModel,
                  loader: ClassLoader,
-                 randomizer: Randomizer = defaultRandomizer): RecoveredModel {
+                 randomizer: Randomizer = defaultRandomizer): ReanimatedModel {
     val pathExecutor = ModelExecutor(method, type, model, loader, randomizer)
     pathExecutor.apply(ps)
-    return RecoveredModel(method, pathExecutor.instance, pathExecutor.args)
+    return ReanimatedModel(method, pathExecutor.instance, pathExecutor.args)
 }

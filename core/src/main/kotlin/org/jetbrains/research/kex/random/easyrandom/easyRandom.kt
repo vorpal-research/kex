@@ -94,7 +94,21 @@ class EasyRandomDriver(val config: BeansConfig = defaultConfig) : Randomizer {
                     .objectFactory(KexObjectFactory())
     )
 
-    private fun <T> generateClass(klass: Class<T>) = randomizer.nextObject(klass)
+    private fun <T> generateObject(klass: Class<T>): Any? = randomizer.nextObject(klass)
+
+    private fun <T> generateClass(klass: Class<T>): Any? = when {
+        Collection::class.java.isAssignableFrom(klass) -> {
+            val cr = CollectionRandomizer.generateCollection<Any?>(klass, { generateObject(it) },
+                    JRandomizer { next(Any::class.java) })
+            cr.randomValue
+        }
+        Map::class.java.isAssignableFrom(klass) -> {
+            val mr = CollectionRandomizer.generateMap<Any?, Any?>(klass, { generateObject(it) },
+                    JRandomizer { next(Any::class.java) }, JRandomizer { next(Any::class.java) })
+            mr.randomValue
+        }
+        else -> generateObject(klass)
+    }
 
     private fun generateParameterized(type: ParameterizedType): Any? {
         val rawType = type.rawType as? Class<*> ?: throw UnknownTypeException(type.toString())
@@ -102,7 +116,7 @@ class EasyRandomDriver(val config: BeansConfig = defaultConfig) : Randomizer {
             Collection::class.java.isAssignableFrom(rawType) -> {
                 require(type.actualTypeArguments.size == 1)
                 val typeParameter = type.actualTypeArguments.first()
-                val cr = CollectionRandomizer.generateCollection<Any?>(rawType, this,
+                val cr = CollectionRandomizer.generateCollection<Any?>(rawType, { generateObject(it) },
                         JRandomizer { next(typeParameter) })
                 cr.randomValue
             }
@@ -110,7 +124,7 @@ class EasyRandomDriver(val config: BeansConfig = defaultConfig) : Randomizer {
                 require(type.actualTypeArguments.size == 2)
                 val key = type.actualTypeArguments.first()
                 val value = type.actualTypeArguments.last()
-                val mr = CollectionRandomizer.generateMap<Any?, Any?>(rawType, this,
+                val mr = CollectionRandomizer.generateMap<Any?, Any?>(rawType, { generateObject(it) },
                         JRandomizer { next(key) }, JRandomizer { next(value) })
                 mr.randomValue
             }

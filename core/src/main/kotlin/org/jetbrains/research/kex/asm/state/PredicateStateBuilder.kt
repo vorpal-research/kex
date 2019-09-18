@@ -8,7 +8,7 @@ import org.jetbrains.research.kfg.ir.value.instruction.Instruction
 import org.jetbrains.research.kfg.ir.value.instruction.PhiInst
 import org.jetbrains.research.kfg.util.DominatorTree
 import org.jetbrains.research.kfg.util.DominatorTreeBuilder
-import org.jetbrains.research.kfg.util.TopologicalSorter
+import org.jetbrains.research.kfg.util.GraphTraversal
 import java.util.*
 
 class NoTopologicalSortingError(msg: String) : Exception(msg)
@@ -25,10 +25,10 @@ class PredicateStateBuilder(val method: Method) {
     fun init() {
         predicateBuilder.visit(method)
         if (!method.isAbstract) {
-            val (order, cycled) = TopologicalSorter(method.basicBlocks.toSet()).sort(method.entry)
+            val (order, cycled) = GraphTraversal(method).topologicalSort()
             if (cycled.isNotEmpty()) throw NoTopologicalSortingError("$method")
 
-            domTree.putAll(DominatorTreeBuilder(method.basicBlocks.toSet()).build())
+            domTree.putAll(DominatorTreeBuilder(method).build())
             this.order.addAll(order.reversed())
         }
     }

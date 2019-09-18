@@ -15,7 +15,7 @@ import org.jetbrains.research.kfg.ir.value.BlockUser
 import org.jetbrains.research.kfg.ir.value.IntConstant
 import org.jetbrains.research.kfg.ir.value.Value
 import org.jetbrains.research.kfg.ir.value.instruction.*
-import org.jetbrains.research.kfg.util.TopologicalSorter
+import org.jetbrains.research.kfg.util.GraphTraversal
 import kotlin.math.abs
 
 private val derollCount = kexConfig.getIntValue("loop", "deroll-count", 3)
@@ -227,9 +227,8 @@ class LoopDeroller(override val cm: ClassManager) : LoopVisitor {
     }
 
     private fun getBlockOrder(loop: Loop): List<BasicBlock> {
-        val header = loop.header
         loop.body.mapNotNull { it as? CatchBlock }.forEach { cb -> cb.getAllPredecessors().forEach { it.addSuccessor(cb) } }
-        val (order, _) = TopologicalSorter(loop.body).sort(header)
+        val (order, _) = GraphTraversal(loop).topologicalSort()
         loop.body.mapNotNull { it as? CatchBlock }.forEach { cb -> cb.getAllPredecessors().forEach { it.removeSuccessor(cb) } }
         return order.filter { it in loop.body }.reversed()
     }

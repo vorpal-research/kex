@@ -7,7 +7,6 @@ import org.jeasy.random.util.ReflectionUtils
 import org.jetbrains.research.kex.config.kexConfig
 import org.jetbrains.research.kex.util.log
 import org.jetbrains.research.kex.util.unreachable
-import org.jetbrains.research.kex.random.Randomizer as KexRandomizer
 import java.util.*
 import java.util.concurrent.ConcurrentSkipListMap
 import java.util.concurrent.ConcurrentSkipListSet
@@ -51,7 +50,9 @@ abstract class CollectionRandomizer<T>(
             minCollectionSize..maxCollectionSize
         }
 
-        fun <T> generateCollection(klass: Class<*>, random: KexRandomizer, elementRandomizer: Randomizer<T>) = when {
+        fun <T> generateCollection(klass: Class<*>,
+                                   random: (Class<*>) -> Any?,
+                                   elementRandomizer: Randomizer<T>) = when {
             List::class.java.isAssignableFrom(klass) -> when {
                 klass.isAssignableFrom(LinkedList::class.java) -> ListRandomizer.linkedListRandomizer(elementRandomizer)
                 klass.isAssignableFrom(ArrayList::class.java) -> ListRandomizer.arrayListRandomizer(elementRandomizer)
@@ -85,11 +86,13 @@ abstract class CollectionRandomizer<T>(
                     SetRandomizer.randomSetRandomizer(random, elementRandomizer)
                 }
             }
+            Collection::class.java.isAssignableFrom(klass) ->
+                CustomCollectionRandomizer.randomCollectionRandomizer(klass, random, elementRandomizer)
             else -> unreachable { log.error("Unknown collection: $klass") }
         }
 
         fun <K, V> generateMap(klass: Class<*>,
-                               random: KexRandomizer,
+                               random: (Class<*>) -> Any?,
                                keyRandomizer: Randomizer<K>,
                                valueRandomizer: Randomizer<V>) = when {
             klass.isAssignableFrom(LinkedHashMap::class.java) ->
@@ -133,11 +136,11 @@ class ListRandomizer<T>(`impl`: () -> MutableList<T>, elementRandomizer: Randomi
         fun <T> stackRandomizer(elementRandomizer: Randomizer<T>) =
                 newListRandomizer({ Stack() }, elementRandomizer)
 
-        fun <T> randomListRandomizer(random: KexRandomizer, elementRandomizer: Randomizer<T>): ListRandomizer<T> {
+        fun <T> randomListRandomizer(random: (Class<*>) -> Any?, elementRandomizer: Randomizer<T>): ListRandomizer<T> {
             val impl = randomElementOf<Class<*>>(ReflectionUtils.getPublicConcreteSubTypesOf(MutableList::class.java))
             return newListRandomizer({
                 @Suppress("UNCHECKED_CAST")
-                random.next(impl) as? MutableList<T>
+                random(impl) as? MutableList<T>
                         ?: unreachable { log.error("Could not create an instance of $impl") }
             }, elementRandomizer)
         }
@@ -168,11 +171,11 @@ class QueueRandomizer<T>(`impl`: () -> Queue<T>, elementRandomizer: Randomizer<T
         fun <T> priorityQueueRandomizer(elementRandomizer: Randomizer<T>) =
                 newQueueRandomizer({ PriorityQueue() }, elementRandomizer)
 
-        fun <T> randomQueueRandomizer(random: KexRandomizer, elementRandomizer: Randomizer<T>): QueueRandomizer<T> {
+        fun <T> randomQueueRandomizer(random: (Class<*>) -> Any?, elementRandomizer: Randomizer<T>): QueueRandomizer<T> {
             val impl = randomElementOf<Class<*>>(ReflectionUtils.getPublicConcreteSubTypesOf(Queue::class.java))
             return newQueueRandomizer({
                 @Suppress("UNCHECKED_CAST")
-                random.next(impl) as? Queue<T>
+                random(impl) as? Queue<T>
                         ?: unreachable { log.error("Could not create an instance of $impl") }
             }, elementRandomizer)
         }
@@ -209,11 +212,11 @@ class SetRandomizer<T>(`impl`: () -> MutableSet<T>, elementRandomizer: Randomize
         fun <T> skipListSetRandomizer(elementRandomizer: Randomizer<T>) =
                 newSetRandomizer({ ConcurrentSkipListSet() }, elementRandomizer)
 
-        fun <T> randomSetRandomizer(random: KexRandomizer, elementRandomizer: Randomizer<T>): SetRandomizer<T> {
+        fun <T> randomSetRandomizer(random: (Class<*>) -> Any?, elementRandomizer: Randomizer<T>): SetRandomizer<T> {
             val impl = randomElementOf<Class<*>>(ReflectionUtils.getPublicConcreteSubTypesOf(MutableSet::class.java))
             return newSetRandomizer({
                 @Suppress("UNCHECKED_CAST")
-                random.next(impl) as? MutableSet<T>
+                random(impl) as? MutableSet<T>
                         ?: unreachable { log.error("Could not create an instance of $impl") }
             }, elementRandomizer)
         }
@@ -282,15 +285,29 @@ class MapRandomizer<K, V>(
         fun <K, V> skipListMapRandomizer(keyRandomizer: Randomizer<K>, valueRandomizer: Randomizer<V>) =
                 newMapRandomizer({ ConcurrentSkipListMap() }, keyRandomizer, valueRandomizer)
 
-        fun <K, V> randomMapRandomizer(random: KexRandomizer,
+        fun <K, V> randomMapRandomizer(random: (Class<*>) -> Any?,
                                        keyRandomizer: Randomizer<K>,
                                        valueRandomizer: Randomizer<V>): MapRandomizer<K, V> {
             val impl = randomElementOf<Class<*>>(ReflectionUtils.getPublicConcreteSubTypesOf(MutableMap::class.java))
             return newMapRandomizer({
                 @Suppress("UNCHECKED_CAST")
-                random.next(impl) as? MutableMap<K, V>
+                random(impl) as? MutableMap<K, V>
                         ?: unreachable { log.error("Could not create an instance of $impl") }
             }, keyRandomizer, valueRandomizer)
         }
+    }
+}
+
+class CustomCollectionRandomizer<T>(`impl`: () -> MutableCollection<T>, delegate: Randomizer<T>, nbElements: Int)
+    : CollectionRandomizer<T>(`impl`, delegate, nbElements) {
+    constructor(`impl`: () -> MutableCollection<T>, delegate: Randomizer<T>) : this(impl, delegate, randomInt)
+
+    companion object {
+        fun <T> randomCollectionRandomizer(klass: Class<*>, random: (Class<*>) -> Any?, elementRandomizer: Randomizer<T>) =
+                CustomCollectionRandomizer({
+                    @Suppress("UNCHECKED_CAST")
+                    random(klass) as? MutableCollection<T>
+                            ?: unreachable { log.error("Could not create an instance of $klass") }
+                }, elementRandomizer)
     }
 }
