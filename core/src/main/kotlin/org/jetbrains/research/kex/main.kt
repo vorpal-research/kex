@@ -18,6 +18,7 @@ import org.jetbrains.research.kfg.Package
 import org.jetbrains.research.kfg.analysis.LoopSimplifier
 import org.jetbrains.research.kfg.util.Flags
 import org.jetbrains.research.kfg.util.classLoader
+import org.jetbrains.research.kfg.util.writeClassesToTarget
 import org.jetbrains.research.kfg.visitor.executePipeline
 import java.io.File
 import java.net.URLClassLoader
@@ -47,6 +48,8 @@ fun main(args: Array<String>) {
     val traceManager = ObjectTraceManager()
     val psa = PredicateStateAnalysis(classManager)
     val cm = CoverageCounter(origManager, traceManager)
+    // write all classes to target, so they will be seen by ClassLoader
+    writeClassesToTarget(classManager, jar, target, `package`, true)
     executePipeline(origManager, `package`) {
         +RuntimeTraceCollector(origManager)
         +ClassWriter(origManager, jar.classLoader, target)
