@@ -87,7 +87,7 @@ abstract class CollectionRandomizer<T>(
                 }
             }
             Collection::class.java.isAssignableFrom(klass) ->
-                CustomCollectionRandomizer.randomCollectionRandomizer(klass, random, elementRandomizer)
+                CustomCollectionRandomizer.collectionRandomizer(klass, random, elementRandomizer)
             else -> unreachable { log.error("Unknown collection: $klass") }
         }
 
@@ -103,6 +103,8 @@ abstract class CollectionRandomizer<T>(
                 MapRandomizer.treeMapRandomizer(keyRandomizer, valueRandomizer)
             klass.isAssignableFrom(ConcurrentSkipListMap::class.java) ->
                 MapRandomizer.skipListMapRandomizer(keyRandomizer, valueRandomizer)
+            Map::class.java.isAssignableFrom(klass) ->
+                MapRandomizer.customMapRandomizer(klass, random, keyRandomizer, valueRandomizer)
             else -> {
                 log.warn("Unknown map impl: $klass")
                 MapRandomizer.randomMapRandomizer(random, keyRandomizer, valueRandomizer)
@@ -295,6 +297,14 @@ class MapRandomizer<K, V>(
                         ?: unreachable { log.error("Could not create an instance of $impl") }
             }, keyRandomizer, valueRandomizer)
         }
+
+        fun <K, V> customMapRandomizer(klass: Class<*>, random: (Class<*>) -> Any?,
+                                       keyRandomizer: Randomizer<K>,
+                                       valueRandomizer: Randomizer<V>) =
+                newMapRandomizer({
+                    @Suppress("UNCHECKED_CAST")
+                    random(klass) as? MutableMap<K, V> ?: unreachable { log.error("Could not create an instance of $klass") }
+                }, keyRandomizer, valueRandomizer)
     }
 }
 
@@ -303,7 +313,7 @@ class CustomCollectionRandomizer<T>(`impl`: () -> MutableCollection<T>, delegate
     constructor(`impl`: () -> MutableCollection<T>, delegate: Randomizer<T>) : this(impl, delegate, randomInt)
 
     companion object {
-        fun <T> randomCollectionRandomizer(klass: Class<*>, random: (Class<*>) -> Any?, elementRandomizer: Randomizer<T>) =
+        fun <T> collectionRandomizer(klass: Class<*>, random: (Class<*>) -> Any?, elementRandomizer: Randomizer<T>) =
                 CustomCollectionRandomizer({
                     @Suppress("UNCHECKED_CAST")
                     random(klass) as? MutableCollection<T>

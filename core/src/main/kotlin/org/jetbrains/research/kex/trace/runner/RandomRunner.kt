@@ -47,13 +47,11 @@ abstract class TracingRandomRunner<T>(method: KfgMethod, loader: ClassLoader)
 
     open fun run() : T? {
         val (instance, args) = generate(random, javaClass, javaMethod)
-        check(args != null) { "Cannot generate parameters to invoke method $method" }
-
-        return try {
-            collectTrace(instance, args)
-        } catch (e: TimeoutException) {
-            log.error("Failed method $method with timeout, skipping it")
-            null
+        if (args == null || (!method.isStatic && instance == null)) {
+            log.error("Cannot generate parameters to invoke method $method")
+            return null
         }
+
+        return collectTrace(instance, args)
     }
 }
