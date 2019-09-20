@@ -5,6 +5,7 @@ import org.jeasy.random.randomizers.number.ByteRandomizer.aNewByteRandomizer
 import org.jeasy.random.util.CollectionUtils.randomElementOf
 import org.jeasy.random.util.ReflectionUtils
 import org.jetbrains.research.kex.config.kexConfig
+import org.jetbrains.research.kex.util.isAbstract
 import org.jetbrains.research.kex.util.log
 import org.jetbrains.research.kex.util.unreachable
 import java.util.*
@@ -300,11 +301,18 @@ class MapRandomizer<K, V>(
 
         fun <K, V> customMapRandomizer(klass: Class<*>, random: (Class<*>) -> Any?,
                                        keyRandomizer: Randomizer<K>,
-                                       valueRandomizer: Randomizer<V>) =
-                newMapRandomizer({
-                    @Suppress("UNCHECKED_CAST")
-                    random(klass) as? MutableMap<K, V> ?: unreachable { log.error("Could not create an instance of $klass") }
-                }, keyRandomizer, valueRandomizer)
+                                       valueRandomizer: Randomizer<V>): MapRandomizer<K, V> {
+            val actualKlass = when {
+                klass.isAbstract || klass.isInterface -> randomElementOf<Class<*>>(ReflectionUtils.getPublicConcreteSubTypesOf(klass))
+                else -> klass
+            }
+            return newMapRandomizer({
+                @Suppress("UNCHECKED_CAST")
+                random(actualKlass) as? MutableMap<K, V>
+                        ?: unreachable { log.error("Could not create an instance of $klass") }
+            }, keyRandomizer, valueRandomizer)
+        }
+
     }
 }
 
@@ -313,11 +321,17 @@ class CustomCollectionRandomizer<T>(`impl`: () -> MutableCollection<T>, delegate
     constructor(`impl`: () -> MutableCollection<T>, delegate: Randomizer<T>) : this(impl, delegate, randomInt)
 
     companion object {
-        fun <T> collectionRandomizer(klass: Class<*>, random: (Class<*>) -> Any?, elementRandomizer: Randomizer<T>) =
-                CustomCollectionRandomizer({
-                    @Suppress("UNCHECKED_CAST")
-                    random(klass) as? MutableCollection<T>
-                            ?: unreachable { log.error("Could not create an instance of $klass") }
-                }, elementRandomizer)
+        fun <T> collectionRandomizer(klass: Class<*>, random: (Class<*>) -> Any?, elementRandomizer: Randomizer<T>): CollectionRandomizer<T> {
+            val actualKlass = when {
+                klass.isAbstract || klass.isInterface -> randomElementOf<Class<*>>(ReflectionUtils.getPublicConcreteSubTypesOf(klass))
+                else -> klass
+            }
+            return CustomCollectionRandomizer(
+                    {
+                        @Suppress("UNCHECKED_CAST")
+                        random(actualKlass) as? MutableCollection<T>
+                                ?: unreachable { log.error("Could not create an instance of $klass") }
+                    }, elementRandomizer)
+        }
     }
 }

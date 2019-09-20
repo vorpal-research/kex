@@ -6,7 +6,15 @@ import org.jetbrains.research.kfg.type.*
 import org.reflections.Reflections
 import org.reflections.util.ConfigurationBuilder
 import java.lang.reflect.Array
+import java.lang.reflect.Modifier
 import java.net.URLClassLoader
+import java.lang.reflect.Method as JMethod
+
+val Class<*>.isAbstract get() = (this.modifiers and Modifier.ABSTRACT) == Modifier.ABSTRACT
+
+val JMethod.isStatic get() = (this.modifiers and Modifier.STATIC) == Modifier.STATIC
+val JMethod.isAbstract get() = (this.modifiers and Modifier.ABSTRACT) == Modifier.ABSTRACT
+
 
 fun ClassLoader.loadClass(type: Type): Class<*> = when (type) {
     is BoolType -> Boolean::class.java

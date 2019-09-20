@@ -3,12 +3,10 @@ package org.jetbrains.research.kex.trace.runner
 import org.jetbrains.research.kex.random.GenerationException
 import org.jetbrains.research.kex.random.Randomizer
 import org.jetbrains.research.kex.random.defaultRandomizer
+import org.jetbrains.research.kex.util.isStatic
 import org.jetbrains.research.kex.util.log
 import java.lang.reflect.Method
-import java.lang.reflect.Modifier
 import org.jetbrains.research.kfg.ir.Method as KfgMethod
-
-val Method.isStatic get() = (this.modifiers and Modifier.STATIC) == Modifier.STATIC
 
 private fun generate(random: Randomizer, klass: Class<*>, method: Method): Pair<Any?, Array<Any?>?> = try {
     val i = when {
