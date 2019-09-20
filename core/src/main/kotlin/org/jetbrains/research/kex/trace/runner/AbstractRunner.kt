@@ -77,6 +77,7 @@ abstract class AbstractRunner(val method: Method, protected val loader: ClassLoa
             System.setOut(PrintStream(output))
             System.setErr(PrintStream(error))
 
+            method.isAccessible = true
             runWithTimeout(timeout) {
                 try {
                     returnValue = method.invoke(instance, *args)
