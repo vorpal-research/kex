@@ -28,20 +28,20 @@ private object ChoiceSimplifier : Transformer<ChoiceSimplifier> {
     }
 }
 
-private fun mergeTypes(lhv: Type, rhv: Type): Type {
+private fun mergeTypes(lhv: Type, rhv: Type, loader: ClassLoader): Type {
     @Suppress("NAME_SHADOWING")
     val lhv = lhv as? Class<*> ?: unreachable { log.error("Don't consider merging other types yet") }
     return when (rhv) {
         is Class<*> -> when {
             lhv.isAssignableFrom(rhv) -> rhv
             rhv.isAssignableFrom(lhv) -> lhv
-            else -> findSubtypesOf(lhv, rhv).firstOrNull()
+            else -> findSubtypesOf(loader, lhv, rhv).firstOrNull()
                     ?: unreachable { log.error("Cannot decide on argument type: $rhv or $lhv") }
         }
         is ParameterizedType -> {
             val rawType = rhv.rawType as Class<*>
             // todo: find a way to create a new parameterized type with new raw type
-            @Suppress("UNUSED_VARIABLE") val actualType = mergeTypes(lhv, rawType) as Class<*>
+            @Suppress("UNUSED_VARIABLE") val actualType = mergeTypes(lhv, rawType, loader) as Class<*>
             rhv
         }
         is TypeVariable<*> -> {
@@ -51,7 +51,7 @@ private fun mergeTypes(lhv: Type, rhv: Type): Type {
                 bounds.isEmpty() -> lhv
                 else -> {
                     require(bounds.size == 1)
-                    mergeTypes(lhv, bounds.first())
+                    mergeTypes(lhv, bounds.first(), loader)
                 }
             }
         }
@@ -100,7 +100,7 @@ class ModelExecutor(val method: Method,
             }
             val actualType = when (castedType) {
                 null -> type
-                else -> mergeTypes(castedType, type)
+                else -> mergeTypes(castedType, type, reanimator.loader)
             }
             memory[term] = reanimator.reanimateTerm(term, actualType)
         }

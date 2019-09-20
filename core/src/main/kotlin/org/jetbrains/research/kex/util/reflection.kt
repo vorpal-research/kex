@@ -4,7 +4,9 @@ import org.jetbrains.research.kex.trace.file.UnknownTypeException
 import org.jetbrains.research.kfg.ir.Method
 import org.jetbrains.research.kfg.type.*
 import org.reflections.Reflections
+import org.reflections.util.ConfigurationBuilder
 import java.lang.reflect.Array
+import java.net.URLClassLoader
 
 fun ClassLoader.loadClass(type: Type): Class<*> = when (type) {
     is BoolType -> Boolean::class.java
@@ -36,8 +38,13 @@ fun Class<*>.getMethod(method: Method, loader: ClassLoader): java.lang.reflect.M
     return this.getDeclaredMethod(method.name, *argumentTypes)
 }
 
-fun findSubtypesOf(vararg classes: Class<*>): Set<Class<*>> {
-    val reflections = Reflections()
+fun findSubtypesOf(loader: ClassLoader, vararg classes: Class<*>): Set<Class<*>> {
+    val reflections = Reflections(
+            ConfigurationBuilder()
+                    .addUrls(classes.mapNotNull { (it.classLoader as? URLClassLoader)?.urLs }.flatMap { it.toList() })
+                    .addClassLoaders(classes.map { it.classLoader })
+                    .addClassLoader(loader)
+    )
     val subclasses = classes.map { reflections.getSubTypesOf(it) }
     val allSubclasses = subclasses.flatten().toSet()
     return allSubclasses.filter { klass -> subclasses.all { klass in it } }.toSet()
