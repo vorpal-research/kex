@@ -58,12 +58,6 @@ class BoolectorSolver(val tf: TypeFactory) : AbstractSMTSolver {
 
     private fun check(state: Bool_, query: Bool_): BoolectorSat.Status {
         val (state_, query_) = state to query
-        if (logFormulae) {
-            log.run {
-                debug("State: $state_")
-                debug("Query: $query_")
-            }
-        }
 
         state_.asAxiom().assertForm()
         query_.axiom.assertForm()
@@ -71,6 +65,9 @@ class BoolectorSolver(val tf: TypeFactory) : AbstractSMTSolver {
         val pred = ef.makeBool("$\$CHECK$$")
         pred.implies(query_).expr.assertForm()
         pred.expr.assertForm()
+        if (logFormulae) {
+            log.debug(ef.ctx.dumpSmt2())
+        }
         log.debug("Running Boolector solver")
         val result = BoolectorSat.getBoolectorSat()
                 ?: unreachable { log.error("Solver error") }
