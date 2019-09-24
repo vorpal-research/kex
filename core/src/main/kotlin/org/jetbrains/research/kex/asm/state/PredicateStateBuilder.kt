@@ -11,7 +11,6 @@ import org.jetbrains.research.kfg.util.DominatorTreeBuilder
 import org.jetbrains.research.kfg.util.GraphTraversal
 import java.util.*
 
-class NoTopologicalSortingError(msg: String) : Exception(msg)
 class InvalidPredicateStateError(msg: String) : Exception(msg)
 
 class PredicateStateBuilder(val method: Method) {
@@ -25,8 +24,7 @@ class PredicateStateBuilder(val method: Method) {
     fun init() {
         predicateBuilder.visit(method)
         if (!method.isAbstract) {
-            val (order, cycled) = GraphTraversal(method).topologicalSort()
-            if (cycled.isNotEmpty()) throw NoTopologicalSortingError("$method")
+            val order = GraphTraversal(method).topologicalSort()
 
             domTree.putAll(DominatorTreeBuilder(method).build())
             this.order.addAll(order.reversed())

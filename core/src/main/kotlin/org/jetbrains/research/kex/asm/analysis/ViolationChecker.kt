@@ -47,8 +47,7 @@ class ViolationChecker(override val cm: ClassManager,
         this.method = method
         if (method.isEmpty()) return
 
-        val (order, cycled) = GraphTraversal(method).topologicalSort()
-        require(cycled.isEmpty()) { log.error("No topological sorting for method $method") }
+        val order = GraphTraversal(method).topologicalSort()
 
         for (block in order.reversed()) {
             currentBlock = block

@@ -9,7 +9,7 @@ interface SearchStrategy : Iterable<BasicBlock> {
 }
 
 class TopologicalStrategy(override val method: Method) : SearchStrategy {
-    val order = GraphTraversal(method).topologicalSort().first.reversed()
+    val order = GraphTraversal(method).topologicalSort().reversed()
 
     override fun iterator() = order.iterator()
 }

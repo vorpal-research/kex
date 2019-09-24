@@ -227,10 +227,14 @@ class LoopDeroller(override val cm: ClassManager) : LoopVisitor {
     }
 
     private fun getBlockOrder(loop: Loop): List<BasicBlock> {
+        val latch = loop.latch
+        val header = loop.header
+        latch.removeSuccessor(header)
         loop.body.mapNotNull { it as? CatchBlock }.forEach { cb -> cb.getAllPredecessors().forEach { it.addSuccessor(cb) } }
-        val (order, _) = GraphTraversal(loop).topologicalSort()
+        val order = GraphTraversal(loop).topologicalSort()
         loop.body.mapNotNull { it as? CatchBlock }.forEach { cb -> cb.getAllPredecessors().forEach { it.removeSuccessor(cb) } }
-        return order.filter { it in loop.body }.reversed()
+        latch.addSuccessor(header)
+        return order.map { it.block }.reversed()
     }
 
     private fun copyBlock(block: BasicBlock) = when (block) {
