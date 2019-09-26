@@ -8,6 +8,7 @@ import org.reflections.util.ConfigurationBuilder
 import java.lang.reflect.Array
 import java.lang.reflect.Modifier
 import java.net.URLClassLoader
+import java.util.*
 import java.lang.reflect.Method as JMethod
 
 val Class<*>.isAbstract get() = (this.modifiers and Modifier.ABSTRACT) == Modifier.ABSTRACT
@@ -44,6 +45,20 @@ fun ClassLoader.loadClass(type: Type): Class<*> = when (type) {
 fun Class<*>.getMethod(method: Method, loader: ClassLoader): java.lang.reflect.Method {
     val argumentTypes = method.argTypes.map { loader.loadClass(it) }.toTypedArray()
     return this.getDeclaredMethod(method.name, *argumentTypes)
+}
+
+fun Class<*>.getActualField(name: String): java.lang.reflect.Field {
+    val queue = ArrayDeque<Class<*>>()
+    queue.add(this)
+    while (queue.isNotEmpty()) {
+        val top = queue.pollFirst()
+        try {
+            return top.getDeclaredField(name)
+        } catch (e: NoSuchFieldException) {
+            // nothing
+        }
+    }
+    throw NoSuchFieldException()
 }
 
 fun findSubtypesOf(loader: ClassLoader, vararg classes: Class<*>): Set<Class<*>> {

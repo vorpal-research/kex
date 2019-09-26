@@ -296,7 +296,7 @@ class ObjectReanimator(val method: Method,
                 val fieldAddress = model.assignments[term]
                 val fieldValue = model.memories.getValue(memspace).finalMemory[fieldAddress]
 
-                val fieldReflect = klass.getDeclaredField((term.fieldName as ConstStringTerm).value)
+                val fieldReflect = klass.getActualField((term.fieldName as ConstStringTerm).value)
                 if (!klass.isAssignableFrom(instance?.javaClass ?: Any::class.java)) {
                     log.warn("Could not generate an instance of $klass, so skipping filed initialization")
                     return instance
