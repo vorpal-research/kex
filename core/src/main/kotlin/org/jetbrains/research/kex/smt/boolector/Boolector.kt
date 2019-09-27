@@ -1,4 +1,6 @@
-package org.jetbrains.research.kex.smt
+package org.jetbrains.research.kex.smt.boolector
+
+import org.jetbrains.research.kex.smt.*
 
 @SMTExpr(solver = "Boolector", importPackage = "org.jetbrains.research.boolector", context = "Btor", expr = "BoolectorNode", sort = "BoolectorSort")
 abstract class BoolectorSMTExpr

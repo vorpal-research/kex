@@ -4,7 +4,10 @@ import org.jetbrains.research.kex.KexProcessor
 import org.jetbrains.research.kex.util.unreachable
 import java.io.ByteArrayOutputStream
 import java.io.File
-import javax.annotation.processing.*
+import javax.annotation.processing.RoundEnvironment
+import javax.annotation.processing.SupportedAnnotationTypes
+import javax.annotation.processing.SupportedOptions
+import javax.annotation.processing.SupportedSourceVersion
 import javax.lang.model.SourceVersion
 import javax.lang.model.element.Element
 import javax.lang.model.element.TypeElement
@@ -60,11 +63,10 @@ class SMTProcessor : KexProcessor() {
 
         val parameters = getAnnotationProperties(annotation, annotationClass).toMutableMap()
         val solver = parameters.getValue("solver") as String
-        val newPackage = "$`package`.${solver.toLowerCase()}"
         val newClass = "$solver$nameTemplate"
-        parameters["packageName"] = newPackage
+        parameters["packageName"] = `package`
 
-        writeClass(newPackage, newClass, parameters, "SMT$nameTemplate")
+        writeClass(`package`, newClass, parameters, "SMT$nameTemplate")
     }
 
     private fun writeClass(`package`: String, `class`: String, parameters: Map<String, Any>, template: String) {

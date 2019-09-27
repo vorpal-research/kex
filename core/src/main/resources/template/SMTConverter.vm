@@ -1,5 +1,5 @@
 #parse("definitions.vm")
-import org.jetbrains.research.kex.smt.${solver}SMTConverter
+import org.jetbrains.research.kex.smt.${solver.toLowerCase()}.${solver}SMTConverter
 import org.jetbrains.research.kex.state.*
 import org.jetbrains.research.kex.state.predicate.*
 import org.jetbrains.research.kex.state.term.*

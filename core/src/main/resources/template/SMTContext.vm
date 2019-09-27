@@ -1,5 +1,5 @@
 #parse("definitions.vm")
-import org.jetbrains.research.kex.smt.${solver}SMTContext
+import org.jetbrains.research.kex.smt.${solver.toLowerCase()}.${solver}SMTContext
 import kotlin.math.max
 
 class VersionedMemory(val memory: Memory_, val version: Long = 0) {

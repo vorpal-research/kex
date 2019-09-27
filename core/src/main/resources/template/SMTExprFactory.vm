@@ -1,5 +1,5 @@
 #parse("definitions.vm")
-import org.jetbrains.research.kex.smt.${solver}SMTExprFactory
+import org.jetbrains.research.kex.smt.${solver.toLowerCase()}.${solver}SMTExprFactory
 import org.jetbrains.research.kfg.ir.Class
 import org.jetbrains.research.kfg.type.ClassType
 import org.jetbrains.research.kfg.type.TypeFactory

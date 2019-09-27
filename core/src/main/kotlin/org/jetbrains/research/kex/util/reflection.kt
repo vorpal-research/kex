@@ -52,10 +52,12 @@ fun Class<*>.getActualField(name: String): java.lang.reflect.Field {
     queue.add(this)
     while (queue.isNotEmpty()) {
         val top = queue.pollFirst()
-        try {
-            return top.getDeclaredField(name)
+        return try {
+            top.getDeclaredField(name)
         } catch (e: NoSuchFieldException) {
-            // nothing
+            if (top.superclass != null) queue.add(top.superclass)
+            queue.addAll(top.interfaces)
+            continue
         }
     }
     throw NoSuchFieldException()

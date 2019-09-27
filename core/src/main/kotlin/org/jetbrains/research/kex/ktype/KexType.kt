@@ -65,6 +65,7 @@ abstract class KexType {
         fun fromType(type: Type): KexType = when (type) {
             is Integral -> when (type) {
                 is BoolType -> KexBool()
+                is ByteType -> KexByte()
                 is ShortType -> KexShort()
                 is CharType -> KexChar()
                 is LongType -> KexLong()

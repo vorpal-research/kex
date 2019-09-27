@@ -1,4 +1,6 @@
-package org.jetbrains.research.kex.smt
+package org.jetbrains.research.kex.smt.z3
+
+import org.jetbrains.research.kex.smt.*
 
 @SMTExpr(solver = "Z3", importPackage = "com.microsoft.z3", context = "Context", expr = "Expr", sort = "Sort")
 abstract class Z3SMTExpr

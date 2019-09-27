@@ -1,5 +1,5 @@
 #parse("definitions.vm")
-import org.jetbrains.research.kex.smt.${solver}SMTMemory
+import org.jetbrains.research.kex.smt.${solver.toLowerCase()}.${solver}SMTMemory
 import kotlin.math.min
 
 private val engine = ${solver}Engine
