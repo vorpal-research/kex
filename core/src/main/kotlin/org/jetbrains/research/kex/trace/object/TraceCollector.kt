@@ -33,20 +33,22 @@ abstract class TraceCollector(val cm: ClassManager) {
         stack.push(method)
     }
 
-    open fun methodReturn() {
+    open fun methodReturn(blockName: String) {
+        val block = parseBlock(blockName)
         val method = stack.pop()
-        addAction(MethodReturn(method, null))
+        addAction(MethodReturn(method, block, null))
     }
 
-    open fun methodReturn(value: Any) {
+    open fun methodReturn(blockName: String, value: Any) {
+        val block = parseBlock(blockName)
         val method = stack.pop()
-        addAction(MethodReturn(method, value))
+        addAction(MethodReturn(method, block, value))
     }
 
-
-    open fun methodThrow(throwable: Throwable) {
+    open fun methodThrow(blockName: String, throwable: Throwable) {
+        val block = parseBlock(blockName)
         val method = stack.pop()
-        addAction(MethodThrow(method, throwable))
+        addAction(MethodThrow(method, block, throwable))
     }
 
     open fun blockEnter(blockName: String) {
@@ -77,9 +79,9 @@ private class TraceCollectorStub(cm: ClassManager) : TraceCollector(cm) {
     override fun methodEnter(className: String, methodName: String, argTypes: Array<String>, retType: String,
                          instance: Any?, args: Array<Any?>) {}
 
-    override fun methodReturn() {}
-    override fun methodReturn(value: Any) {}
-    override fun methodThrow(throwable: Throwable) {}
+    override fun methodReturn(blockName: String) {}
+    override fun methodReturn(blockName: String, value: Any) {}
+    override fun methodThrow(blockName: String, throwable: Throwable) {}
     override fun blockEnter(blockName: String) {}
     override fun blockJump(blockName: String) {}
     override fun blockBranch(blockName: String, condition: Any?, expected: Any?) {}

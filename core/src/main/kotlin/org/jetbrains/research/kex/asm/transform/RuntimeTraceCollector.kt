@@ -128,16 +128,18 @@ class RuntimeTraceCollector(override val cm: ClassManager) : MethodVisitor {
     override fun visitThrowInst(inst: ThrowInst) {
         val methodExitInsts = buildList<Instruction> {
             val throwMethod = collectorClass.getMethod("methodThrow",
-                    MethodDesc(arrayOf(type.getRefType("java/lang/Throwable")), type.voidType))
-            +instruction.getCall(CallOpcode.Virtual(), throwMethod, collectorClass, traceCollector, arrayOf(inst.throwable), false)
+                    MethodDesc(arrayOf(type.stringType, type.getRefType("java/lang/Throwable")), type.voidType))
+            +instruction.getCall(CallOpcode.Virtual(), throwMethod, collectorClass, traceCollector,
+                    arrayOf(value.getStringConstant("${inst.parent!!.name}"), inst.throwable), false)
         }
         inst.parent!!.insertBefore(inst, *methodExitInsts.toTypedArray())
     }
 
     override fun visitReturnInst(inst: ReturnInst) {
         val methodExitInsts = buildList<Instruction> {
-            val returnMethod = collectorClass.getMethod("methodReturn", MethodDesc(arrayOf(), type.voidType))
-            +instruction.getCall(CallOpcode.Virtual(), returnMethod, collectorClass, traceCollector, arrayOf(), false)
+            val returnMethod = collectorClass.getMethod("methodReturn", MethodDesc(arrayOf(type.stringType), type.voidType))
+            +instruction.getCall(CallOpcode.Virtual(), returnMethod, collectorClass, traceCollector,
+                    arrayOf(value.getStringConstant("${inst.parent!!.name}")), false)
         }
         inst.parent!!.insertBefore(inst, *methodExitInsts.toTypedArray())
     }
@@ -156,7 +158,7 @@ class RuntimeTraceCollector(override val cm: ClassManager) : MethodVisitor {
     }
 
     override fun visit(method: Method) {
-        if (method.isConstructor) return
+        if (method.isConstructor || method.isStaticInitializer) return
         if (method.isEmpty()) return
         val methodEntryInsts = buildList<Instruction> {
             traceCollector = getNewCollector()
