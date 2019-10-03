@@ -34,7 +34,7 @@ class CoverageCounter<T>(override val cm: ClassManager, val tm: TraceManager<T>)
         if (`class`.isSynthetic) return
 
         for (method in `class`.methods.values) {
-            if (method.isAbstract || method.isConstructor) continue
+            if (method.isAbstract || method.isConstructor || method.isStaticInitializer) continue
             if (!method.isImpactable) continue
 
             val bodyBlocks = method.bodyBlocks.map { it.originalBlock }.toSet()

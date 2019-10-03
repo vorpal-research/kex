@@ -6,6 +6,7 @@ import org.jetbrains.research.kfg.type.*
 import org.reflections.Reflections
 import org.reflections.util.ConfigurationBuilder
 import java.lang.reflect.Array
+import java.lang.reflect.Constructor
 import java.lang.reflect.Modifier
 import java.net.URLClassLoader
 import java.util.*
@@ -45,6 +46,12 @@ fun ClassLoader.loadClass(type: Type): Class<*> = when (type) {
 fun Class<*>.getMethod(method: Method, loader: ClassLoader): java.lang.reflect.Method {
     val argumentTypes = method.argTypes.map { loader.loadClass(it) }.toTypedArray()
     return this.getDeclaredMethod(method.name, *argumentTypes)
+}
+
+fun Class<*>.getConstructor(method: Method, loader: ClassLoader): Constructor<*> {
+    require(method.isConstructor)
+    val argumentTypes = method.argTypes.map { loader.loadClass(it) }.toTypedArray()
+    return this.getDeclaredConstructor(*argumentTypes)
 }
 
 fun Class<*>.getActualField(name: String): java.lang.reflect.Field {

@@ -20,7 +20,7 @@ class RandomChecker(override val cm: ClassManager, val loader: ClassLoader, val 
         super.visit(method)
         if (!runner) return
         if (method.`class`.isSynthetic) return
-        if (method.isAbstract || method.isConstructor) return
+        if (method.isAbstract || method.isConstructor || method.isStaticInitializer) return
 
         val randomRunner = RandomObjectTracingRunner(method, loader)
 
