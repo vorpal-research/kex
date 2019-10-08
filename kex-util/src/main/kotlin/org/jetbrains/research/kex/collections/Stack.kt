@@ -16,6 +16,8 @@ class Stack<T>(elements: Collection<T>) : AbstractCollection<T>() {
     fun pop(): T = inner.pop()
     fun peek(): T = inner.peek()
 
+    fun popOrNull(): T? = if (isEmpty()) null else pop()
+
     override fun contains(element: T) = element in inner
     override fun containsAll(elements: Collection<T>) = inner.containsAll(elements)
     override fun isEmpty() = inner.isEmpty()

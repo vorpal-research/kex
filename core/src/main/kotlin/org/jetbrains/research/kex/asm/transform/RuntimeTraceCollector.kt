@@ -20,6 +20,13 @@ class RuntimeTraceCollector(override val cm: ClassManager) : MethodVisitor {
     inline val instruction get() = cm.instruction
     inline val value get() = cm.value
 
+    private fun Method.isInstrumented(): Boolean {
+        val klass = this.`class`
+        if (klass !in cm.concreteClasses) return false
+        if (this.isStaticInitializer) return false
+        return true
+    }
+
     private fun Value.wrap(): Instruction {
         val wrapperType = this@RuntimeTraceCollector.type.getWrapper(this.type) as ClassType
         val wrapperClass = wrapperType.`class`
@@ -144,7 +151,43 @@ class RuntimeTraceCollector(override val cm: ClassManager) : MethodVisitor {
         inst.parent!!.insertBefore(inst, *methodExitInsts.toTypedArray())
     }
 
+    override fun visitCallInst(inst: CallInst) {
+        if (!inst.method.isInstrumented()) return
+
+        val methodCallInsts = buildList<Instruction> {
+            val callMethod = collectorClass.getMethod("methodCall", MethodDesc(
+                    arrayOf(type.stringType, type.stringType, type.getArrayType(type.stringType),
+                            type.stringType, type.stringType, type.stringType, type.getArrayType(type.stringType)),
+                    type.voidType
+            ))
+            val sizeVal = value.getIntConstant(inst.method.argTypes.size)
+            val stringArray = instruction.getNewArray(type.stringType, sizeVal)
+            val argArray = instruction.getNewArray(type.stringType, sizeVal)
+            +stringArray
+            +argArray
+            for ((index, arg) in inst.method.argTypes.withIndex()) {
+                val indexVal = value.getIntConstant(index)
+                +instruction.getArrayStore(stringArray, indexVal, value.getStringConstant(arg.asmDesc))
+                +instruction.getArrayStore(argArray, indexVal, value.getStringConstant(inst.args[index].toString()))
+            }
+
+            +instruction.getCall(CallOpcode.Virtual(), callMethod, collectorClass, traceCollector,
+                    arrayOf(
+                            value.getStringConstant(inst.method.`class`.fullname),
+                            value.getStringConstant(inst.method.name),
+                            stringArray,
+                            value.getStringConstant(inst.method.returnType.asmDesc),
+                            if (inst.isNameDefined) value.getStringConstant(inst.toString()) else value.getNullConstant(),
+                            if (inst.isStatic) value.getNullConstant() else value.getStringConstant(inst.callee.toString()),
+                            argArray
+                    ),
+                    false)
+        }
+        inst.parent!!.insertBefore(inst, *methodCallInsts.toTypedArray())
+    }
+
     override fun visitBasicBlock(bb: BasicBlock) {
+        super.visitBasicBlock(bb)
         val blockEntryInsts = buildList<Instruction> {
             val entryMethod = collectorClass.getMethod("blockEnter", MethodDesc(
                     arrayOf(type.stringType),
@@ -154,7 +197,6 @@ class RuntimeTraceCollector(override val cm: ClassManager) : MethodVisitor {
                     arrayOf(value.getStringConstant("${bb.name}")), false)
         }
         bb.insertBefore(bb.first(), *blockEntryInsts.toTypedArray())
-        super.visitBasicBlock(bb)
     }
 
     override fun visit(method: Method) {

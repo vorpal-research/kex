@@ -2,18 +2,40 @@
 
 package org.jetbrains.research.kex.test.debug
 
-import kotlin.math.sqrt
+data class Point(val x: Int, val y: Int)
 
-fun sqr(x: Double) = x * x
-
-data class Point(val x: Double, val y: Double) {
-    fun distance(other: Point): Double = sqrt(sqr(x - other.x) + sqr(y - other.y))
+class P(val i: Int) {
+    fun test(x: Int): Boolean {
+        return i != x
+    }
 }
 
-class Results(val elements: MutableMap<String, Point>) : MutableMap<String, Point> by elements {
-    fun merge(other: Results): Results {
-        val elements = this.elements.toMap().toMutableMap()
-        elements.putAll(other.elements)
-        return Results(elements)
+fun lol(a: Int): Int {
+    println(a + a)
+    return a * a
+}
+
+fun cycle(a: Int): Int {
+    var x = 0
+    var term = 0
+    for (i in 1..3) {
+        println(i)
+        x = i
+        term = lol(x)
+        if (i > a) break
     }
+    println(x)
+    val p = P(term)
+    if (p.test(x)) {
+        println(term)
+    }
+    return x + term
+}
+
+fun moreTest() {
+    println(testCallString("asdasdasd aaa"))
+}
+
+fun testCallString(string: String): Int {
+    return string.length
 }

@@ -2,6 +2,7 @@ package org.jetbrains.research.kex.trace.`object`
 
 import org.jetbrains.research.kfg.ir.BasicBlock
 import org.jetbrains.research.kfg.ir.Method
+import org.jetbrains.research.kfg.ir.value.Value
 
 
 sealed class Action
@@ -15,6 +16,10 @@ class MethodReturn(method: Method, val block: BasicBlock, val returnValue: Any?)
 }
 class MethodThrow(method: Method, val block: BasicBlock, val throwable: Throwable) : MethodAction(method) {
     override fun toString() = "Throw from $method"
+}
+
+class MethodCall(method: Method, val returnValue: Value?, val instance: Value?, val args: Array<Value>) : MethodAction(method) {
+    override fun toString() = "Call $method"
 }
 
 sealed class BlockAction(val block: BasicBlock) : Action()

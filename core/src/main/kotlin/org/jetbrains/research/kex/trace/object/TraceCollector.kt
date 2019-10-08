@@ -6,6 +6,7 @@ import org.jetbrains.research.kfg.ClassManager
 import org.jetbrains.research.kfg.ir.BasicBlock
 import org.jetbrains.research.kfg.ir.Method
 import org.jetbrains.research.kfg.ir.MethodDesc
+import org.jetbrains.research.kfg.ir.value.Value
 import org.jetbrains.research.kfg.type.parseDesc
 
 abstract class TraceCollector(val cm: ClassManager) {
@@ -24,10 +25,20 @@ abstract class TraceCollector(val cm: ClassManager) {
         return st.getBlock(blockName) ?: throw UnknownNameException(blockName)
     }
 
+    protected fun parseValue(valueName: String): Value {
+        val st = stack.peek().slottracker
+        return st.getValue(valueName) ?: when {
+            valueName.matches(Regex("\\d+")) -> cm.value.getIntConstant(valueName.toInt())
+            valueName.matches(Regex("\\d+.\\d+")) -> cm.value.getDoubleConstant(valueName.toDouble())
+            valueName.matches(Regex("\".*\"")) -> cm.value.getStringConstant(valueName.substring(1, valueName.lastIndex))
+            else -> throw UnknownNameException(valueName)
+        }
+    }
+
     fun addAction(action: Action) = trace.add(action)
 
     open fun methodEnter(className: String, methodName: String, argTypes: Array<String>, retType: String,
-                    instance: Any?, args: Array<Any?>) {
+                         instance: Any?, args: Array<Any?>) {
         val method = parseMethod(className, methodName, argTypes, retType)
         addAction(MethodEntry(method, instance, args))
         stack.push(method)
@@ -49,6 +60,15 @@ abstract class TraceCollector(val cm: ClassManager) {
         val block = parseBlock(blockName)
         val method = stack.pop()
         addAction(MethodThrow(method, block, throwable))
+    }
+
+    open fun methodCall(className: String, methodName: String, argTypes: Array<String>, retType: String,
+                        returnValueName: String?, instanceName: String?, argNames: Array<String>) {
+        val method = parseMethod(className, methodName, argTypes, retType)
+        val retval = returnValueName?.run { parseValue(this) }
+        val instance = instanceName?.run { parseValue(this) }
+        val args = argNames.map { parseValue(it) }.toTypedArray()
+        addAction(MethodCall(method, retval, instance, args))
     }
 
     open fun blockEnter(blockName: String) {
@@ -77,11 +97,16 @@ private class ActualTraceCollector(cm: ClassManager) : TraceCollector(cm)
 private class TraceCollectorStub(cm: ClassManager) : TraceCollector(cm) {
 
     override fun methodEnter(className: String, methodName: String, argTypes: Array<String>, retType: String,
-                         instance: Any?, args: Array<Any?>) {}
+                             instance: Any?, args: Array<Any?>) {
+    }
 
     override fun methodReturn(blockName: String) {}
     override fun methodReturn(blockName: String, value: Any) {}
     override fun methodThrow(blockName: String, throwable: Throwable) {}
+    override fun methodCall(className: String, methodName: String, argTypes: Array<String>, retType: String,
+                            returnValueName: String?, instanceName: String?, argNames: Array<String>) {
+    }
+
     override fun blockEnter(blockName: String) {}
     override fun blockJump(blockName: String) {}
     override fun blockBranch(blockName: String, condition: Any?, expected: Any?) {}
