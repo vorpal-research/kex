@@ -2,6 +2,7 @@ package org.jetbrains.research.kex.state.transformer
 
 import org.jetbrains.research.kex.ktype.KexBool
 import org.jetbrains.research.kex.ktype.KexInt
+import org.jetbrains.research.kex.ktype.KexIntegral
 import org.jetbrains.research.kex.ktype.mergeTypes
 import org.jetbrains.research.kex.state.predicate.EqualityPredicate
 import org.jetbrains.research.kex.state.predicate.Predicate
@@ -40,11 +41,13 @@ class BoolTypeAdapter(val types: TypeFactory) : Transformer<BoolTypeAdapter> {
                 val lhv = when {
                     term.lhv.type is KexBool -> term { term.lhv `as` KexInt() }
                     term.lhv.type is KexInt -> term.lhv
+                    term.lhv.type is KexIntegral -> term { term.lhv `as` KexInt() }
                     else -> unreachable { log.error("Non-boolean term in boolean binary: $term") }
                 }
                 val rhv = when {
                     term.rhv.type is KexBool -> term { term.rhv `as` KexInt() }
                     term.rhv.type is KexInt -> term.rhv
+                    term.rhv.type is KexIntegral -> term { term.rhv `as` KexInt() }
                     else -> unreachable { log.error("Non-boolean term in boolean binary: $term") }
                 }
                 val newType = mergeTypes(types, lhv.type, rhv.type)

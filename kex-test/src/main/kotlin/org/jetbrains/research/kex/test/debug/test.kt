@@ -2,40 +2,126 @@
 
 package org.jetbrains.research.kex.test.debug
 
-data class Point(val x: Int, val y: Int)
+import org.jetbrains.research.kex.test.Intrinsics
+import java.io.ByteArrayInputStream
+import java.io.File
+import java.io.InputStream
+import java.nio.file.Files
+import java.nio.file.StandardCopyOption
 
-class P(val i: Int) {
-    fun test(x: Int): Boolean {
-        return i != x
+
+class Icfpc2018Test {
+    class ZipWriter {
+        fun createZip(name: String) {}
     }
-}
 
-fun lol(a: Int): Int {
-    println(a + a)
-    return a * a
-}
+    class Results(val elements: MutableMap<String, Result>) : MutableMap<String, Result> by elements {
+        companion object {
+            fun readFromDirectory(dir: String): Results = Results(mutableMapOf(dir to Result(mutableMapOf())))
+        }
 
-fun cycle(a: Int): Int {
-    var x = 0
-    var term = 0
-    for (i in 1..3) {
-        println(i)
-        x = i
-        term = lol(x)
-        if (i > a) break
+        fun merge(other: Results): Results {
+            val elements = this.elements.toMap().toMutableMap()
+            elements.putAll(other.elements)
+            return Results(elements)
+        }
     }
-    println(x)
-    val p = P(term)
-    if (p.test(x)) {
-        println(term)
+
+    class Result(val solutions: MutableMap<String, Solution>) {
+        fun getSortedSolutions(): List<Pair<String, Solution>> = solutions.toList().sortedBy { it.first }
     }
-    return x + term
-}
 
-fun moreTest() {
-    println(testCallString("asdasdasd aaa"))
-}
+    class Solution(val energy: Long, val trace: String) {
+        fun solve() {}
+    }
 
-fun testCallString(string: String): Int {
-    return string.length
+
+    enum class RunMode {
+        ASSEMBLE, DISASSEMBLE, REASSEMBLE, SUBMIT, ALL
+    }
+
+    class Command {
+        companion object {
+            fun read(str: InputStream): Command = Command()
+        }
+    }
+
+    class Model(val size: Int, val numGrounded: Int = 0) {
+        companion object {
+            fun readMDL(inp: InputStream): Model = Model(10, 15)
+        }
+    }
+
+    class State {
+        val matrix = Model(0, 0)
+    }
+
+    class System(var currentState: State, val score: Int = 0)
+
+    class Trace(val trace: List<Command>, val system: System) {
+        fun solve() {}
+    }
+
+
+    private fun getModeByModelName(name: String): RunMode = RunMode.values()[name.length % 5]
+//    private fun getSolutionByName(name: String, target: Model, system: System): Solution = Solution(100, name)
+
+    fun submitChecked(resultDirs: List<String>) {
+        val results = resultDirs.map { Results.readFromDirectory(it) }
+        val merged = results.reduce { acc, res -> acc.merge(res) }
+        for ((task, result) in merged) {
+            val mode = getModeByModelName(task)
+            if (mode == RunMode.REASSEMBLE) {
+                Intrinsics.assertReachable()
+
+                val bestSolution = result.getSortedSolutions().first().second
+                Files.copy(File(bestSolution.trace).toPath(), File("submit/$task.nbt").toPath(),
+                        StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.COPY_ATTRIBUTES)
+            } else {
+                Intrinsics.assertReachable()
+
+                val targetModel = when (mode) {
+                    RunMode.ASSEMBLE -> Model.readMDL(ByteArrayInputStream("models/${task}_tgt.mdl".toByteArray()))
+                    else -> Model.readMDL(ByteArrayInputStream("models/${task}_src.mdl".toByteArray()))
+                }
+                val state = State()
+
+                var haveSolution = false
+                for ((solutionName, solution) in result.getSortedSolutions()) {
+                    Intrinsics.assertReachable()
+                    val traceFile = File(solution.trace).inputStream()
+                    val commands: MutableList<Command> = mutableListOf()
+                    while (traceFile.available() != 0) {
+                        Intrinsics.assertReachable()
+                        commands += Command.read(traceFile)
+                    }
+                    val system = System(state)
+                    try {
+                        Trace(commands, system).solve()
+                    } catch (e: Exception) {
+                        continue
+                    }
+
+                    if (system.currentState.matrix != targetModel) {
+                        Intrinsics.assertReachable()
+                        continue
+                    }
+
+                    Files.copy(File(solution.trace).toPath(), File("submit/$task.nbt").toPath(),
+                            StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.COPY_ATTRIBUTES)
+                    haveSolution = true
+                    Intrinsics.assertReachable()
+                    break
+                }
+                if (!haveSolution) {
+                    Intrinsics.assertReachable()
+                    return
+                }
+                Intrinsics.assertReachable()
+            }
+        }
+
+        Intrinsics.assertReachable()
+        ZipWriter().createZip("submit/")
+    }
 }

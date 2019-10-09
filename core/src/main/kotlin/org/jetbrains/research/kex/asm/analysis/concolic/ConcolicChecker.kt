@@ -1,6 +1,8 @@
 package org.jetbrains.research.kex.asm.analysis.concolic
 
+import org.jetbrains.research.kex.asm.state.PredicateStateAnalysis
 import org.jetbrains.research.kex.collections.stackOf
+import org.jetbrains.research.kex.smt.Checker
 import org.jetbrains.research.kex.state.PredicateState
 import org.jetbrains.research.kex.state.transformer.ConcolicFilter
 import org.jetbrains.research.kex.trace.`object`.*
@@ -26,6 +28,10 @@ class ConcolicChecker(override val cm: ClassManager, val loader: ClassLoader) : 
             val firstTrace = random.run() ?: return
             val state = buildState(method, firstTrace)
             log.debug(state)
+
+            val checker = Checker(method, loader, PredicateStateAnalysis(cm))
+            val result = checker.check(state)
+            log.debug(result)
         } catch (e: TimeoutException) {
             return
         }

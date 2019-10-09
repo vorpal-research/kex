@@ -8,7 +8,10 @@ import org.jetbrains.research.kex.state.predicate.EqualityPredicate
 import org.jetbrains.research.kex.state.predicate.Predicate
 import org.jetbrains.research.kex.state.predicate.assume
 import org.jetbrains.research.kex.state.term.*
-import org.jetbrains.research.kex.util.*
+import org.jetbrains.research.kex.util.loadClass
+import org.jetbrains.research.kex.util.log
+import org.jetbrains.research.kex.util.toInt
+import org.jetbrains.research.kex.util.tryOrNull
 import org.jetbrains.research.kfg.ir.Field
 import org.jetbrains.research.kfg.ir.Method
 import org.jetbrains.research.kfg.type.ArrayType
@@ -50,8 +53,7 @@ class ReflectionInfoAdapter(val method: Method, val loader: ClassLoader) : Recol
     private fun KexType.isElementNullable(kType: KType) = when (this) {
         is KexArray -> when {
             kType.arguments.isEmpty() -> false
-            else -> (kType.arguments[0].type
-                    ?: unreachable { log.error("No type for array argument") }).isMarkedNullable
+            else -> kType.arguments[0].type?.isMarkedNullable ?: true
         }
         else -> false
     }
