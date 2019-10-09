@@ -200,7 +200,7 @@ interface RecollectingTransformer<T> : Transformer<RecollectingTransformer<T>> {
 
     override fun transformPredicate(predicate: Predicate): Predicate {
         val result = super.transformPredicate(predicate)
-        currentBuilder += result
+        if (result != nothing()) currentBuilder += result
         return result
     }
 }

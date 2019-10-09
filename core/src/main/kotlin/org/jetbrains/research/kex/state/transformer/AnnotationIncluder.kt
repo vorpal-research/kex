@@ -6,7 +6,6 @@ import org.jetbrains.research.kex.state.predicate.CallPredicate
 import org.jetbrains.research.kex.state.predicate.Predicate
 import org.jetbrains.research.kex.state.term.CallTerm
 import org.jetbrains.research.kex.util.debug
-import org.jetbrains.research.kex.util.fail
 import org.jetbrains.research.kex.util.log
 import org.jetbrains.research.kex.util.unreachable
 import java.util.*
@@ -15,7 +14,7 @@ class AnnotationIncluder(val annotations: AnnotationsLoader) : RecollectingTrans
 
     override val builders = ArrayDeque<StateBuilder>().apply { push(StateBuilder()) }
 
-    override fun transformCall(predicate: CallPredicate): Predicate {
+    override fun transformCallPredicate(predicate: CallPredicate): Predicate {
         val call = predicate.call as CallTerm
         val method = call.method
         val args = call.arguments
