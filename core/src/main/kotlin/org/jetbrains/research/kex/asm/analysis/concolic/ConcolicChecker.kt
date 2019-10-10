@@ -6,6 +6,7 @@ import kotlinx.coroutines.withTimeout
 import kotlinx.coroutines.yield
 import org.jetbrains.research.kex.asm.state.PredicateStateAnalysis
 import org.jetbrains.research.kex.collections.stackOf
+import org.jetbrains.research.kex.config.kexConfig
 import org.jetbrains.research.kex.random.GenerationException
 import org.jetbrains.research.kex.random.Randomizer
 import org.jetbrains.research.kex.random.defaultRandomizer
@@ -24,6 +25,7 @@ import org.jetbrains.research.kex.trace.TraceManager
 import org.jetbrains.research.kex.trace.`object`.*
 import org.jetbrains.research.kex.trace.runner.ObjectTracingRunner
 import org.jetbrains.research.kex.trace.runner.RandomObjectTracingRunner
+import org.jetbrains.research.kex.trace.runner.TimeoutException
 import org.jetbrains.research.kex.util.loadClass
 import org.jetbrains.research.kex.util.log
 import org.jetbrains.research.kex.util.tryOrNull
@@ -43,11 +45,17 @@ private fun Predicate.inverse(): Predicate = when (this) {
     else -> this
 }
 
-class ConcolicChecker(override val cm: ClassManager, val loader: ClassLoader, val manager: TraceManager<Trace>) : MethodVisitor {
+private val timeLimit by lazy { kexConfig.getLongValue("concolic", "timeLimit", 10000L) }
+
+class ConcolicChecker(override val cm: ClassManager,
+                      val loader: ClassLoader,
+                      val manager: TraceManager<Trace>) : MethodVisitor {
     val random: Randomizer = defaultRandomizer
     val paths = mutableSetOf<PredicateState>()
 
-    override fun cleanup() {}
+    override fun cleanup() {
+        paths.clear()
+    }
 
     override fun visit(method: Method) {
         if (method.isStaticInitializer || method.isAbstract) return
@@ -55,16 +63,18 @@ class ConcolicChecker(override val cm: ClassManager, val loader: ClassLoader, va
 
         try {
             runBlocking {
-                withTimeout(10000L) {
+                withTimeout(timeLimit) {
                     process(method)
                 }
             }
         } catch (e: TimeoutCancellationException) {
             return
+        } catch (e: TimeoutException) {
+            return
         }
     }
 
-    fun buildState(method: Method, trace: Trace): PredicateState {
+    private fun buildState(method: Method, trace: Trace): PredicateState {
         data class BlockWrapper(val block: BasicBlock?)
         data class CallParams(val method: Method, val receiver: Value?, val instance: Value?, val args: Array<Value>)
 
@@ -139,7 +149,7 @@ class ConcolicChecker(override val cm: ClassManager, val loader: ClassLoader, va
         return ConcolicFilter().apply(builder.apply())
     }
 
-    fun mutate(ps: PredicateState): PredicateState {
+    private fun mutate(ps: PredicateState): PredicateState {
         var found = false
         lateinit var last: Predicate
         val filtered = ps.dropLastWhile {
@@ -191,6 +201,7 @@ class ConcolicChecker(override val cm: ClassManager, val loader: ClassLoader, va
                 val randomTrace = getRandomTrace(method) ?: return
                 manager[method] = randomTrace
                 traces.add(randomTrace)
+                yield()
             }
             val candidate = traces.poll()
             val result = run(method, candidate)
@@ -205,13 +216,12 @@ class ConcolicChecker(override val cm: ClassManager, val loader: ClassLoader, va
     private suspend fun run(method: Method, trace: Trace): Trace? {
         val state = buildState(method, trace)
         val mutated = mutate(state)
-        log.debug("Mutated: $mutated")
         val path = mutated.filterByType(PredicateType.Path())
         if (path in paths) return null
         paths += path
 
         val checker = Checker(method, loader, PredicateStateAnalysis(cm))
-        val result = checker.check(state)
+        val result = checker.check(mutated)
         if (result is Result.SatResult) {
             val (instance, args) = try {
                 generateByModel(method, checker.state, result.model)

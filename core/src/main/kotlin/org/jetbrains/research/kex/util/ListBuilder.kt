@@ -17,3 +17,5 @@ fun <T> buildList(init: ListBuilder<T>.() -> Unit): List<T> {
     builder.init()
     return builder.list
 }
+
+fun <T> listOf(action: () -> T) = listOf(action())

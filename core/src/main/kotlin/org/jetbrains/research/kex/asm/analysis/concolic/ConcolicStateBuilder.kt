@@ -9,6 +9,8 @@ import org.jetbrains.research.kex.state.predicate.path
 import org.jetbrains.research.kex.state.predicate.state
 import org.jetbrains.research.kex.state.term.Term
 import org.jetbrains.research.kex.state.term.term
+import org.jetbrains.research.kex.util.buildList
+import org.jetbrains.research.kex.util.listOf
 import org.jetbrains.research.kfg.ClassManager
 import org.jetbrains.research.kfg.ir.BasicBlock
 import org.jetbrains.research.kfg.ir.Method
@@ -53,7 +55,8 @@ class ConcolicStateBuilder(val cm: ClassManager) {
 
     fun build(block: BasicBlock, entry: BasicBlock?, exit: BasicBlock?) {
         for (inst in block) {
-            stateBuilder += build(inst, entry, exit)
+            for (pred in build(inst, entry, exit))
+                stateBuilder += pred
         }
     }
 
@@ -63,7 +66,7 @@ class ConcolicStateBuilder(val cm: ClassManager) {
         else -> buildInst(instruction)
     }
 
-    fun buildInst(instruction: Instruction): Predicate = when (instruction) {
+    fun buildInst(instruction: Instruction): List<Predicate> = when (instruction) {
         is ArrayLoadInst -> buildArrayLoadInst(instruction)
         is ArrayStoreInst -> buildArrayStoreInst(instruction)
         is BinaryInst -> buildBinaryInst(instruction)
@@ -82,7 +85,7 @@ class ConcolicStateBuilder(val cm: ClassManager) {
         else -> throw UnsupportedInstructionException(instruction)
     }
 
-    fun buildTerminateInst(inst: TerminateInst, next: BasicBlock?): Predicate =
+    fun buildTerminateInst(inst: TerminateInst, next: BasicBlock?): List<Predicate> =
             when (inst) {
                 is ReturnInst -> buildReturnInst(inst)
                 is ThrowInst -> buildThrowInst(inst)
@@ -95,7 +98,7 @@ class ConcolicStateBuilder(val cm: ClassManager) {
                         is TableSwitchInst -> buildTableSwitchInst(inst, next)
                         else -> throw UnsupportedInstructionException(inst)
                     }
-                } ?: state(inst.location) { const(true) equality true }
+                } ?: emptyList()
             }
 
     private fun newValue(value: Value) = term {
@@ -115,207 +118,223 @@ class ConcolicStateBuilder(val cm: ClassManager) {
         return v
     }
 
-    fun buildPhiInst(inst: PhiInst, entry: BasicBlock): Predicate = state(inst.location) {
-        val lhv = mkNewValue(inst)
-        val rhv = mkValue(inst.incomings[entry]
-                ?: throw InvalidStateException("Inst ${inst.print()} predecessors does not correspond to actual predecessor ${entry.name}")
-        )
-        lhv equality rhv
+    fun buildPhiInst(inst: PhiInst, entry: BasicBlock): List<Predicate> = listOf {
+        state(inst.location) {
+            val lhv = mkNewValue(inst)
+            val rhv = mkValue(inst.incomings[entry]
+                    ?: throw InvalidStateException("Inst ${inst.print()} predecessors does not correspond to actual predecessor ${entry.name}")
+            )
+            lhv equality rhv
+        }
     }
 
-    fun buildArrayLoadInst(inst: ArrayLoadInst): Predicate = state(inst.location) {
-        val lhv = mkNewValue(inst)
-        val ref = mkValue(inst.arrayRef)
-        val indx = mkValue(inst.index)
-        val arrayRef = ref[indx]
-        val load = arrayRef.load()
+    fun buildArrayLoadInst(inst: ArrayLoadInst): List<Predicate> = listOf {
+        state(inst.location) {
+            val lhv = mkNewValue(inst)
+            val ref = mkValue(inst.arrayRef)
+            val indx = mkValue(inst.index)
+            val arrayRef = ref[indx]
+            val load = arrayRef.load()
 
-        lhv equality load
+            lhv equality load
+        }
     }
 
-    fun buildArrayStoreInst(inst: ArrayStoreInst): Predicate = state(inst.location) {
-        val ref = mkValue(inst.arrayRef)
-        val indx = mkValue(inst.index)
-        val arrayRef = ref[indx]
-        val value = mkValue(inst.value)
+    fun buildArrayStoreInst(inst: ArrayStoreInst): List<Predicate> = listOf {
+        state(inst.location) {
+            val ref = mkValue(inst.arrayRef)
+            val indx = mkValue(inst.index)
+            val arrayRef = ref[indx]
+            val value = mkValue(inst.value)
 
-        arrayRef.store(value)
+            arrayRef.store(value)
+        }
     }
 
-    fun buildBinaryInst(inst: BinaryInst): Predicate = state(inst.location) {
-        val lhv = mkNewValue(inst)
-        val rhv = mkValue(inst.lhv).apply(types, inst.opcode, mkValue(inst.rhv))
+    fun buildBinaryInst(inst: BinaryInst): List<Predicate> = listOf {
+        state(inst.location) {
+            val lhv = mkNewValue(inst)
+            val rhv = mkValue(inst.lhv).apply(types, inst.opcode, mkValue(inst.rhv))
 
-        lhv equality rhv
+            lhv equality rhv
+        }
     }
 
-    fun buildCallInst(inst: CallInst): Predicate = state(inst.location) {
-        if (inst.method == inlinedCalls.peek()) {
+    fun buildCallInst(inst: CallInst): List<Predicate> = when {
+        inst.method == inlinedCalls.peek() -> {
             inlinedCalls.pop()
-            const(true) equality true
-        } else {
-            val args = inst.args.map { mkValue(it) }
-            val callee = when {
-                inst.isStatic -> `class`(inst.method.`class`)
-                else -> mkValue(inst.callee)
-            }
-            val callTerm = callee.call(inst.method, args)
+            emptyList()
+        }
+        else -> listOf {
+            state(inst.location) {
+                val args = inst.args.map { mkValue(it) }
+                val callee = when {
+                    inst.isStatic -> `class`(inst.method.`class`)
+                    else -> mkValue(inst.callee)
+                }
+                val callTerm = callee.call(inst.method, args)
 
+                when {
+                    inst.isNameDefined -> mkNewValue(inst).call(callTerm)
+                    else -> call(callTerm)
+                }
+            }
+        }
+    }
+
+
+    fun buildCastInst(inst: CastInst): List<Predicate> = listOf {
+        state(inst.location) {
+            val lhv = mkNewValue(inst)
+            val rhv = mkValue(inst.operand) `as` inst.type.kexType
+
+            lhv equality rhv
+        }
+    }
+
+    @Suppress("UNUSED_PARAMETER")
+    fun buildCatchInst(inst: CatchInst): List<Predicate> = emptyList()
+
+    fun buildCmpInst(inst: CmpInst): List<Predicate> = listOf {
+        state(inst.location) {
+            val lhv = mkNewValue(inst)
+            val rhv = mkValue(inst.lhv).apply(inst.opcode, mkValue(inst.rhv))
+
+            lhv equality rhv
+        }
+    }
+
+    @Suppress("UNUSED_PARAMETER")
+    fun buildEnterMonitorInst(inst: EnterMonitorInst): List<Predicate> = emptyList()
+
+    @Suppress("UNUSED_PARAMETER")
+    fun buildExitMonitorInst(inst: ExitMonitorInst): List<Predicate> = emptyList()
+
+    fun buildFieldLoadInst(inst: FieldLoadInst): List<Predicate> = listOf {
+        state(inst.location) {
+            val lhv = mkNewValue(inst)
+            val owner = when {
+                inst.isStatic -> `class`(inst.field.`class`)
+                else -> mkValue(inst.owner)
+            }
+            val field = owner.field(inst.type.kexType, inst.field.name)
+            val rhv = field.load()
+
+            lhv equality rhv
+        }
+    }
+
+    fun buildFieldStoreInst(inst: FieldStoreInst): List<Predicate> = listOf {
+        state(inst.location) {
+            val owner = when {
+                inst.isStatic -> `class`(inst.field.`class`)
+                else -> mkValue(inst.owner)
+            }
+            val value = mkValue(inst.value)
+            val field = owner.field(inst.field.type.kexType, inst.field.name)
+
+            field.store(value)
+        }
+    }
+
+    fun buildInstanceOfInst(inst: InstanceOfInst): List<Predicate> = listOf {
+        state(inst.location) {
+            val lhv = mkNewValue(inst)
+            val rhv = mkValue(inst.operand) `is` inst.targetType.kexType
+
+            lhv equality rhv
+        }
+    }
+
+    fun buildNewArrayInst(inst: NewArrayInst): List<Predicate> = listOf {
+        state(inst.location) {
+            val lhv = mkNewValue(inst)
+            val dimensions = inst.dimensions.map { mkValue(it) }
+
+            lhv.new(dimensions)
+        }
+    }
+
+    fun buildNewInst(inst: NewInst): List<Predicate> = listOf {
+        state(inst.location) {
+            val lhv = mkNewValue(inst)
+            lhv.new()
+        }
+    }
+
+    fun buildUnaryInst(inst: UnaryInst): List<Predicate> = listOf {
+        state(inst.location) {
+            val lhv = mkNewValue(inst)
+            val rhv = mkValue(inst.operand).apply(inst.opcode)
+
+            lhv equality rhv
+        }
+    }
+
+    fun buildBranchInst(inst: BranchInst, next: BasicBlock): List<Predicate> = listOf {
+        path(inst.location) {
+            val cond = mkValue(inst.cond)
+            when (next) {
+                inst.trueSuccessor -> cond equality true
+                inst.falseSuccessor -> cond equality false
+                else -> throw InvalidStateException("Inst ${inst.print()} successor does not correspond to actual successor ${next.name}")
+            }
+        }
+    }
+
+    @Suppress("UNUSED_PARAMETER")
+    fun buildJumpInst(inst: JumpInst, next: BasicBlock): List<Predicate> = emptyList()
+
+    fun buildReturnInst(inst: ReturnInst): List<Predicate> = listOf {
+        state(inst.location) {
             when {
-                inst.isNameDefined -> mkNewValue(inst).call(callTerm)
-                else -> call(callTerm)
+                !inst.hasReturnValue -> const(true) equality true
+                returnReceivers.isEmpty() -> const(true) equality true
+                else -> {
+                    val retval = returnReceivers.pop()
+                    val value = mkValue(inst.returnValue)
+                    retval equality value
+                }
             }
         }
     }
 
-    fun buildCastInst(inst: CastInst): Predicate = state(inst.location) {
-        val lhv = mkNewValue(inst)
-        val rhv = mkValue(inst.operand) `as` inst.type.kexType
-
-        lhv equality rhv
-    }
-
-    fun buildCatchInst(inst: CatchInst): Predicate = state(inst.location) {
-        const(true) equality true
-    }
-
-    fun buildCmpInst(inst: CmpInst): Predicate = state(inst.location) {
-        val lhv = mkNewValue(inst)
-        val rhv = mkValue(inst.lhv).apply(inst.opcode, mkValue(inst.rhv))
-
-        lhv equality rhv
-    }
-
-    fun buildEnterMonitorInst(inst: EnterMonitorInst): Predicate = state(inst.location) {
-        const(true) equality true
-    }
-
-    fun buildExitMonitorInst(inst: ExitMonitorInst): Predicate = state(inst.location) {
-        const(true) equality true
-    }
-
-    fun buildFieldLoadInst(inst: FieldLoadInst): Predicate = state(inst.location) {
-        val lhv = mkNewValue(inst)
-        val owner = when {
-            inst.isStatic -> `class`(inst.field.`class`)
-            else -> mkValue(inst.owner)
-        }
-        val field = owner.field(inst.type.kexType, inst.field.name)
-        val rhv = field.load()
-
-        lhv equality rhv
-    }
-
-    fun buildFieldStoreInst(inst: FieldStoreInst): Predicate = state(inst.location) {
-        val owner = when {
-            inst.isStatic -> `class`(inst.field.`class`)
-            else -> mkValue(inst.owner)
-        }
-        val value = mkValue(inst.value)
-        val field = owner.field(inst.field.type.kexType, inst.field.name)
-
-        field.store(value)
-    }
-
-    fun buildInstanceOfInst(inst: InstanceOfInst): Predicate = state(inst.location) {
-        val lhv = mkNewValue(inst)
-        val rhv = mkValue(inst.operand) `is` inst.targetType.kexType
-
-        lhv equality rhv
-    }
-
-    fun buildNewArrayInst(inst: NewArrayInst): Predicate = state(inst.location) {
-        val lhv = mkNewValue(inst)
-        val dimensions = inst.dimensions.map { mkValue(it) }
-
-        lhv.new(dimensions)
-    }
-
-    fun buildNewInst(inst: NewInst): Predicate = state(inst.location) {
-        val lhv = mkNewValue(inst)
-        lhv.new()
-    }
-
-    fun buildUnaryInst(inst: UnaryInst): Predicate = state(inst.location) {
-        val lhv = mkNewValue(inst)
-        val rhv = mkValue(inst.operand).apply(inst.opcode)
-
-        lhv equality rhv
-    }
-
-    fun buildBranchInst(inst: BranchInst, next: BasicBlock): Predicate = path(inst.location) {
-        val cond = mkValue(inst.cond)
-        when (next) {
-            inst.trueSuccessor -> cond equality true
-            inst.falseSuccessor -> cond equality false
-            else -> throw InvalidStateException("Inst ${inst.print()} successor does not correspond to actual successor ${next.name}")
-        }
-    }
-
-    fun buildJumpInst(inst: JumpInst, next: BasicBlock): Predicate = path(inst.location) {
-        require(inst.successor == next) { "Inst ${inst.print()} successor does not correspond to actual successor ${next.name}" }
-        const(true) equality true
-    }
-
-    fun buildReturnInst(inst: ReturnInst): Predicate = state(inst.location) {
-        when {
-            !inst.hasReturnValue -> const(true) equality true
-            returnReceivers.isEmpty() -> const(true) equality true
-            else -> {
-                val retval = returnReceivers.pop()
-                val value = mkValue(inst.returnValue)
-                retval equality value
-            }
-        }
-    }
-
-    fun buildSwitchInst(inst: SwitchInst, next: BasicBlock): Predicate = path(inst.location) {
+    fun buildSwitchInst(inst: SwitchInst, next: BasicBlock): List<Predicate> = buildList {
         val key = mkValue(inst.key)
 
         when (next) {
-            inst.default -> key `!in` inst.branches.keys.map { mkValue(it) }
+            inst.default -> +path(inst.location) { key `!in` inst.branches.keys.map { mkValue(it) } }
             in inst.branches.values -> {
-                var lhv: Term? = null
                 for ((value, branch) in inst.branches) {
                     if (branch == next) {
-                        lhv = when {
-                            lhv != null -> lhv or (key eq mkValue(value))
-                            else -> key eq mkValue(value)
-                        }
+                        +path(inst.location) { key equality mkValue(value) }
                     }
                 }
-                (lhv ?: const(true)) equality true
             }
             else -> throw InvalidStateException("Inst ${inst.print()} successor does not correspond to actual successor ${next.name}")
         }
     }
 
-    fun buildTableSwitchInst(inst: TableSwitchInst, next: BasicBlock): Predicate = path(inst.location) {
+    fun buildTableSwitchInst(inst: TableSwitchInst, next: BasicBlock): List<Predicate> = buildList {
         val key = mkValue(inst.index)
         val min = inst.min as? IntConstant ?: throw InvalidInstructionError("Unexpected min type in tableSwitchInst")
         val max = inst.max as? IntConstant ?: throw InvalidInstructionError("Unexpected max type in tableSwitchInst")
 
         when (next) {
-            inst.default -> key `!in` (min.value..max.value).map { const(it) }
+            inst.default -> +path(inst.location) { key `!in` (min.value..max.value).map { const(it) } }
             in inst.branches -> {
-                var lhv: Term? = null
-                for ((index, _) in inst.branches.withIndex()) {
-                    lhv = when {
-                        lhv != null -> lhv or (key eq (min.value + index))
-                        else -> key eq (min.value + index)
+                for ((index, branch) in inst.branches.withIndex()) {
+                    if (branch == next) {
+                        +path(inst.location) { key equality (min.value + index) }
                     }
                 }
-                (lhv ?: const(true)) equality true
             }
             else -> throw InvalidStateException("Inst ${inst.print()} successor does not correspond to actual successor ${next.name}")
         }
     }
 
-    fun buildThrowInst(inst: ThrowInst): Predicate = path(inst.location) {
-        const(true) equality true
-    }
-
-    fun buildUnreachableInst(inst: UnreachableInst): Predicate = path(inst.location) {
-        const(false) equality true
-    }
+    @Suppress("UNUSED_PARAMETER")
+    fun buildThrowInst(inst: ThrowInst): List<Predicate> = emptyList()
+    @Suppress("UNUSED_PARAMETER")
+    fun buildUnreachableInst(inst: UnreachableInst): List<Predicate> = emptyList()
 }
