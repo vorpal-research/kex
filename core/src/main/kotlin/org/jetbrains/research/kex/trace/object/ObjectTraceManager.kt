@@ -28,6 +28,7 @@ class ObjectTraceManager : TraceManager<Trace> {
                     methodTrace += action
                     methodInfos.getOrPut(methodStack.pop(), ::mutableSetOf) += Trace(methodTrace)
                 }
+                is MethodCall -> { /* do nothing */ }
                 is MethodAction -> unreachable { log.error("Unknown method action: $action") }
                 else -> {
                     traceStack.peek() += action

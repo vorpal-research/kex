@@ -275,11 +275,16 @@ class ConcolicStateBuilder(val cm: ClassManager) {
         when (next) {
             inst.default -> key `!in` inst.branches.keys.map { mkValue(it) }
             in inst.branches.values -> {
-                var lhv: Term = const(true)
+                var lhv: Term? = null
                 for ((value, branch) in inst.branches) {
-                    if (branch == next) lhv = (lhv or (key eq mkValue(value)))
+                    if (branch == next) {
+                        lhv = when {
+                            lhv != null -> lhv or (key eq mkValue(value))
+                            else -> key eq mkValue(value)
+                        }
+                    }
                 }
-                lhv equality true
+                (lhv ?: const(true)) equality true
             }
             else -> throw InvalidStateException("Inst ${inst.print()} successor does not correspond to actual successor ${next.name}")
         }
@@ -293,11 +298,14 @@ class ConcolicStateBuilder(val cm: ClassManager) {
         when (next) {
             inst.default -> key `!in` (min.value..max.value).map { const(it) }
             in inst.branches -> {
-                var lhv: Term = const(true)
-                for ((index, branch) in inst.branches.withIndex()) {
-                    if (branch == next) lhv = (lhv or (key eq (min.value + index)))
+                var lhv: Term? = null
+                for ((index, _) in inst.branches.withIndex()) {
+                    lhv = when {
+                        lhv != null -> lhv or (key eq (min.value + index))
+                        else -> key eq (min.value + index)
+                    }
                 }
-                lhv equality true
+                (lhv ?: const(true)) equality true
             }
             else -> throw InvalidStateException("Inst ${inst.print()} successor does not correspond to actual successor ${next.name}")
         }
