@@ -4,6 +4,7 @@ import kotlinx.serialization.ImplicitReflectionSerializer
 import org.jetbrains.research.kex.asm.analysis.Failure
 import org.jetbrains.research.kex.asm.analysis.MethodChecker
 import org.jetbrains.research.kex.asm.analysis.RandomChecker
+import org.jetbrains.research.kex.asm.analysis.concolic.ConcolicChecker
 import org.jetbrains.research.kex.asm.manager.CoverageCounter
 import org.jetbrains.research.kex.asm.state.PredicateStateAnalysis
 import org.jetbrains.research.kex.asm.transform.LoopDeroller
@@ -38,9 +39,16 @@ class Kex(args: Array<String>) {
     val logName = cmd.getCmdValue("log", "kex.log")
     val config = kexConfig
     val classPath = System.getProperty("java.class.path")
+    val mode = Mode.bmc
 
     val jar: JarFile
     val `package`: Package
+
+    enum class Mode {
+        concolic,
+        bmc,
+        debug
+    }
 
     init {
         kexConfig.initialize(cmd, RuntimeConfig, FileConfig(properties))
@@ -63,6 +71,7 @@ class Kex(args: Array<String>) {
         System.setProperty("java.class.path", classPath)
     }
 
+    @ImplicitReflectionSerializer
     fun main() {
         val classManager = ClassManager(jar, `package`, Flags.readAll)
         val origManager = ClassManager(jar, `package`, Flags.readAll)
@@ -70,24 +79,56 @@ class Kex(args: Array<String>) {
         log.debug("Running with jar ${jar.name} and package $`package`")
         val target = File("instrumented/")
         val classLoader = URLClassLoader(arrayOf(target.toURI().toURL()))
-
-        val traceManager = ObjectTraceManager()
-        val psa = PredicateStateAnalysis(classManager)
-        val cm = CoverageCounter(origManager, traceManager)
         // write all classes to target, so they will be seen by ClassLoader
         writeClassesToTarget(classManager, jar, target, `package`, true)
-        executePipeline(origManager, `package`) {
-            +RuntimeTraceCollector(origManager)
-            +ClassWriter(origManager, jar.classLoader, target)
+
+        val originalContext = ExecutionContext(origManager, jar.classLoader)
+        val analysisContext = ExecutionContext(classManager, classLoader)
+
+        executePipeline(originalContext.cm, `package`) {
+            +RuntimeTraceCollector(originalContext.cm)
+            +ClassWriter(originalContext, target)
         }
 
+        when (cmd.getEnumValue<Mode>("mode") ?: this.mode) {
+            Mode.bmc -> bmc(originalContext, analysisContext)
+            Mode.concolic -> concolic(originalContext, analysisContext)
+            else -> debug(analysisContext)
+        }
+    }
+
+    @ImplicitReflectionSerializer
+    fun debug(analysisContext: ExecutionContext) {
+        val psa = PredicateStateAnalysis(analysisContext.cm)
+
+        val psFile = cmd.getCmdValue("ps") ?: throw IllegalArgumentException("Specify PS file to debug")
+        val failure = KexSerializer(analysisContext.cm).fromJson<Failure>(File(psFile).readText())
+
+        val method = failure.method
+        log.debug(failure)
+        val classLoader = jar.classLoader
         updateClassPath(classLoader)
-        executePipeline(classManager, `package`) {
-            +RandomChecker(origManager, classLoader, traceManager)
-            +LoopSimplifier(classManager)
-            +LoopDeroller(classManager)
+
+        val checker = Checker(method, classLoader, psa)
+        val result = checker.check(failure.state) as? Result.SatResult ?: return
+        log.debug(result.model)
+        val recMod = executeModel(analysisContext, checker.state, method, result.model)
+        log.debug(recMod)
+        clearClassPath()
+    }
+
+    private fun bmc(originalContext: ExecutionContext, analysisContext: ExecutionContext) {
+        val traceManager = ObjectTraceManager()
+        val psa = PredicateStateAnalysis(analysisContext.cm)
+        val cm = CoverageCounter(originalContext.cm, traceManager)
+
+        updateClassPath(analysisContext.loader as URLClassLoader)
+        executePipeline(analysisContext.cm, `package`) {
+            +RandomChecker(analysisContext, traceManager)
+            +LoopSimplifier(analysisContext.cm)
+            +LoopDeroller(analysisContext.cm)
             +psa
-            +MethodChecker(classManager, classLoader, traceManager, psa)
+            +MethodChecker(analysisContext, traceManager, psa)
             +cm
         }
         clearClassPath()
@@ -98,24 +139,19 @@ class Kex(args: Array<String>) {
                 "full coverage: ${String.format("%.2f", coverage.fullCoverage)}%")
     }
 
-    @ImplicitReflectionSerializer
-    fun debug() {
-        val classManager = ClassManager(jar, `package`, Flags.readAll)
-        val psa = PredicateStateAnalysis(classManager)
 
-        val psFile = cmd.getCmdValue("ps") ?: throw IllegalArgumentException("Specify PS file to debug")
-        val failure = KexSerializer(classManager).fromJson<Failure>(File(psFile).readText())
+    private fun concolic(originalContext: ExecutionContext, analysisContext: ExecutionContext) {
+        val traceManager = ObjectTraceManager()
+        val cm = CoverageCounter(originalContext.cm, traceManager)
 
-        val method = failure.method
-        log.debug(failure)
-        val classLoader = jar.classLoader
-        updateClassPath(classLoader)
+        executePipeline(analysisContext.cm, `package`) {
+            +ConcolicChecker(analysisContext, traceManager)
+            +cm
+        }
 
-        val checker = Checker(method, classLoader, psa)
-        val result = checker.check(failure.state) as? Result.SatResult ?: return
-        log.debug(result.model)
-        val recMod = executeModel(checker.state, classManager.type, method, result.model, classLoader)
-        log.debug(recMod)
-        clearClassPath()
+        val coverage = cm.totalCoverage
+        log.info("Overall summary for ${cm.methodInfos.size} methods:\n" +
+                "body coverage: ${String.format("%.2f", coverage.bodyCoverage)}%\n" +
+                "full coverage: ${String.format("%.2f", coverage.fullCoverage)}%")
     }
 }

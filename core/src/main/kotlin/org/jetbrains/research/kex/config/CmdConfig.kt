@@ -1,5 +1,6 @@
 package org.jetbrains.research.kex.config
 
+import kotlinx.serialization.enumMembers
 import org.apache.commons.cli.*
 import org.jetbrains.research.kex.util.exit
 import org.jetbrains.research.kex.util.log
@@ -71,6 +72,10 @@ class CmdConfig(args: Array<String>) : Config {
                 .required(false)
                 .build()
         options.addOption(config)
+
+        val mode = Option("m", "mode", true, "run mode: bmc, concolic or debug")
+        mode.isRequired = false
+        options.addOption(mode)
     }
 
     fun getCmdValue(name: String): String? = cmd.getOptionValue(name)
@@ -85,4 +90,12 @@ class CmdConfig(args: Array<String>) : Config {
 
         println("$sw")
     }
+
+    inline fun <reified T : Enum<T>> getEnumValue(name: String): Enum<T>? {
+        val constName = getCmdValue(name) ?: return null
+        return T::class.enumMembers().firstOrNull { it.name == constName }
+    }
+
+    inline fun <reified T : Enum<T>> getEnumValue(name: String, default: T): Enum<T> =
+            getEnumValue(name) ?: default
 }

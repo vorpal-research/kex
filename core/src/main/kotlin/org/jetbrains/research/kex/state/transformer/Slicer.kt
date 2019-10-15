@@ -3,10 +3,12 @@ package org.jetbrains.research.kex.state.transformer
 import org.jetbrains.research.kex.ktype.KexPointer
 import org.jetbrains.research.kex.state.ChoiceState
 import org.jetbrains.research.kex.state.PredicateState
-import org.jetbrains.research.kex.state.predicate.*
+import org.jetbrains.research.kex.state.predicate.Predicate
+import org.jetbrains.research.kex.state.predicate.PredicateType
+import org.jetbrains.research.kex.state.predicate.hasReceiver
+import org.jetbrains.research.kex.state.predicate.receiver
 import org.jetbrains.research.kex.state.term.Term
 import org.jetbrains.research.kex.state.term.isNamed
-import org.jetbrains.research.kex.state.term.term
 
 class CFGTracker : Transformer<CFGTracker> {
     private var currentDominators = setOf<Predicate>()
@@ -42,15 +44,6 @@ class CFGTracker : Transformer<CFGTracker> {
 
     fun getDominatingPaths(predicate: Predicate) = dominatorMap.getOrElse(predicate, ::setOf)
     val finalPath get() = currentDominators
-}
-
-private fun Predicate.inverse(): Predicate = when (this) {
-    is EqualityPredicate -> when (rhv) {
-        term { const(true) } -> predicate(type, location) { lhv equality false }
-        term { const(false) } -> predicate(type, location) { lhv equality true }
-        else -> this
-    }
-    else -> this
 }
 
 class Slicer(val state: PredicateState, sliceTerms: Set<Term>, val aa: AliasAnalysis) : Transformer<Slicer> {

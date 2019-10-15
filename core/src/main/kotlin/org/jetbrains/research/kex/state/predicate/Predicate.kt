@@ -6,6 +6,7 @@ import org.jetbrains.research.kex.state.BaseType
 import org.jetbrains.research.kex.state.InheritanceInfo
 import org.jetbrains.research.kex.state.TypeInfo
 import org.jetbrains.research.kex.state.term.Term
+import org.jetbrains.research.kex.state.term.term
 import org.jetbrains.research.kex.state.transformer.Transformer
 import org.jetbrains.research.kex.util.defaultHashCode
 import org.jetbrains.research.kex.util.fail
@@ -100,3 +101,12 @@ val Predicate.hasReceiver
     }
 
 val Predicate.receiver get() = if (hasReceiver) operands[0] else null
+
+fun Predicate.inverse(): Predicate = when (this) {
+    is EqualityPredicate -> when (rhv) {
+        term { const(true) } -> predicate(type, location) { lhv equality false }
+        term { const(false) } -> predicate(type, location) { lhv equality true }
+        else -> this
+    }
+    else -> this
+}

@@ -37,14 +37,14 @@ private fun parse(method: Method, result: InvocationResult): Trace {
 
 class FileTracingRunner(method: Method, loader: ClassLoader) : TracingAbstractRunner<Trace>(method, loader) {
     override fun collectTrace(instance: Any?, args: Array<Any?>): Trace {
-        val result = invoke(instance, args)
+        val result = run(instance, args)
         return parse(this.method, result)
     }
 }
 
 class RandomFileTracingRunner(method: Method, loader: ClassLoader) : TracingRandomRunner<Trace>(method, loader) {
     override fun collectTrace(instance: Any?, args: Array<Any?>): Trace {
-        val result = invoke(instance, args)
+        val result = run(instance, args)
         return parse(this.method, result)
     }
 }

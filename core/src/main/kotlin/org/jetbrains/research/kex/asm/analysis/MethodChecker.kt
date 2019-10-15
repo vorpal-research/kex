@@ -3,27 +3,24 @@ package org.jetbrains.research.kex.asm.analysis
 import kotlinx.serialization.ContextualSerialization
 import kotlinx.serialization.ImplicitReflectionSerializer
 import kotlinx.serialization.Serializable
+import org.jetbrains.research.kex.ExecutionContext
 import org.jetbrains.research.kex.asm.state.PredicateStateAnalysis
 import org.jetbrains.research.kex.asm.transform.originalBlock
 import org.jetbrains.research.kex.config.kexConfig
 import org.jetbrains.research.kex.random.GenerationException
 import org.jetbrains.research.kex.random.Randomizer
-import org.jetbrains.research.kex.random.defaultRandomizer
 import org.jetbrains.research.kex.serialization.KexSerializer
 import org.jetbrains.research.kex.smt.Checker
 import org.jetbrains.research.kex.smt.Result
 import org.jetbrains.research.kex.smt.model.ReanimatedModel
-import org.jetbrains.research.kex.smt.model.SMTModel
 import org.jetbrains.research.kex.state.PredicateState
-import org.jetbrains.research.kex.state.transformer.executeModel
+import org.jetbrains.research.kex.state.transformer.generateInputByModel
 import org.jetbrains.research.kex.trace.TraceManager
 import org.jetbrains.research.kex.trace.`object`.Trace
 import org.jetbrains.research.kex.trace.runner.ObjectTracingRunner
 import org.jetbrains.research.kex.trace.runner.TimeoutException
 import org.jetbrains.research.kex.util.debug
-import org.jetbrains.research.kex.util.loadClass
 import org.jetbrains.research.kex.util.log
-import org.jetbrains.research.kex.util.tryOrNull
 import org.jetbrains.research.kfg.ClassManager
 import org.jetbrains.research.kfg.ir.BasicBlock
 import org.jetbrains.research.kfg.ir.Class
@@ -71,11 +68,12 @@ val Method.isImpactable: Boolean
     }
 
 class MethodChecker(
-        override val cm: ClassManager,
-        private val loader: ClassLoader,
+        val ctx: ExecutionContext,
         private val tm: TraceManager<Trace>,
         private val psa: PredicateStateAnalysis) : MethodVisitor {
-    val random: Randomizer = defaultRandomizer
+    override val cm: ClassManager get() = ctx.cm
+    val random: Randomizer get() = ctx.random
+    val loader: ClassLoader get() = ctx.loader
 
     @ImplicitReflectionSerializer
     private fun dumpPS(method: Method, message: String, state: PredicateState) {
@@ -160,7 +158,7 @@ class MethodChecker(
         when (result) {
             is Result.SatResult -> {
                 val (instance, args) = try {
-                    generateByModel(method, checker.state, result.model)
+                    generateInputByModel(ctx, method, checker.state, result.model)
                 } catch (e: GenerationException) {
                     log.warn(e.message)
                     return result
@@ -179,24 +177,6 @@ class MethodChecker(
                     "instruction ${block.terminator.print()}, reason: ${result.reason}")
         }
         return result
-    }
-
-    private fun generateByModel(method: Method, ps: PredicateState, model: SMTModel): Pair<Any?, Array<Any?>> {
-        val reanimated = executeModel(ps, cm.type, method, model, loader, random)
-        log.debug("Reanimated: ${tryOrNull { model.toString() }}")
-
-        val instance = reanimated.instance ?: when {
-            method.isStatic -> null
-            else -> tryOrNull {
-                val klass = loader.loadClass(types.getRefType(method.`class`))
-                random.next(klass)
-            }
-        }
-
-        if (instance == null && !method.isStatic) {
-            throw GenerationException("Unable to create or generate instance of class ${method.`class`}")
-        }
-        return instance to reanimated.arguments.toTypedArray()
     }
 
     private fun collectTrace(method: Method, instance: Any?, args: Array<Any?>) {

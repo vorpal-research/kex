@@ -1,9 +1,10 @@
 package org.jetbrains.research.kex.state.transformer
 
+import org.jetbrains.research.kex.ExecutionContext
 import org.jetbrains.research.kex.ktype.KexClass
 import org.jetbrains.research.kex.ktype.kexType
+import org.jetbrains.research.kex.random.GenerationException
 import org.jetbrains.research.kex.random.Randomizer
-import org.jetbrains.research.kex.random.defaultRandomizer
 import org.jetbrains.research.kex.smt.model.ObjectReanimator
 import org.jetbrains.research.kex.smt.model.ReanimatedModel
 import org.jetbrains.research.kex.smt.model.SMTModel
@@ -146,13 +147,34 @@ class ModelExecutor(val method: Method,
     }
 }
 
-fun executeModel(ps: PredicateState,
-                 type: TypeFactory,
+fun executeModel(ctx: ExecutionContext,
+                 ps: PredicateState,
                  method: Method,
-                 model: SMTModel,
-                 loader: ClassLoader,
-                 randomizer: Randomizer = defaultRandomizer): ReanimatedModel {
-    val pathExecutor = ModelExecutor(method, type, model, loader, randomizer)
+                 model: SMTModel): ReanimatedModel {
+    val pathExecutor = ModelExecutor(method, ctx.types, model, ctx.loader, ctx.random)
     pathExecutor.apply(ps)
     return ReanimatedModel(method, pathExecutor.instance, pathExecutor.args)
+}
+
+fun generateInputByModel(ctx: ExecutionContext,
+                         method: Method,
+                         ps: PredicateState,
+                         model: SMTModel): Pair<Any?, Array<Any?>> {
+    val reanimated = executeModel(ctx, ps, method, model)
+    val loader = ctx.loader
+
+    log.debug("Reanimated: ${tryOrNull { model.toString() }}")
+
+    val instance = reanimated.instance ?: when {
+        method.isStatic -> null
+        else -> tryOrNull {
+            val klass = loader.loadClass(ctx.types.getRefType(method.`class`))
+            ctx.random.next(klass)
+        }
+    }
+
+    if (instance == null && !method.isStatic) {
+        throw GenerationException("Unable to create or generate instance of class ${method.`class`}")
+    }
+    return instance to reanimated.arguments.toTypedArray()
 }

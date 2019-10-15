@@ -4,30 +4,24 @@ import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
 import kotlinx.coroutines.yield
+import org.jetbrains.research.kex.ExecutionContext
 import org.jetbrains.research.kex.asm.state.PredicateStateAnalysis
 import org.jetbrains.research.kex.collections.stackOf
 import org.jetbrains.research.kex.config.kexConfig
-import org.jetbrains.research.kex.random.GenerationException
 import org.jetbrains.research.kex.random.Randomizer
-import org.jetbrains.research.kex.random.defaultRandomizer
 import org.jetbrains.research.kex.smt.Checker
 import org.jetbrains.research.kex.smt.Result
-import org.jetbrains.research.kex.smt.model.SMTModel
 import org.jetbrains.research.kex.state.PredicateState
-import org.jetbrains.research.kex.state.predicate.EqualityPredicate
 import org.jetbrains.research.kex.state.predicate.Predicate
 import org.jetbrains.research.kex.state.predicate.PredicateType
-import org.jetbrains.research.kex.state.predicate.predicate
-import org.jetbrains.research.kex.state.term.term
-import org.jetbrains.research.kex.state.transformer.ConcolicFilter
-import org.jetbrains.research.kex.state.transformer.executeModel
+import org.jetbrains.research.kex.state.predicate.inverse
+import org.jetbrains.research.kex.state.transformer.generateInputByModel
 import org.jetbrains.research.kex.trace.TraceManager
 import org.jetbrains.research.kex.trace.`object`.*
 import org.jetbrains.research.kex.trace.runner.ObjectTracingRunner
 import org.jetbrains.research.kex.trace.runner.RandomObjectTracingRunner
 import org.jetbrains.research.kex.trace.runner.TimeoutException
-import org.jetbrains.research.kex.util.loadClass
-import org.jetbrains.research.kex.util.log
+import org.jetbrains.research.kex.util.firstOrElse
 import org.jetbrains.research.kex.util.tryOrNull
 import org.jetbrains.research.kfg.ClassManager
 import org.jetbrains.research.kfg.ir.BasicBlock
@@ -36,21 +30,12 @@ import org.jetbrains.research.kfg.ir.value.Value
 import org.jetbrains.research.kfg.visitor.MethodVisitor
 import java.util.*
 
-private fun Predicate.inverse(): Predicate = when (this) {
-    is EqualityPredicate -> when (rhv) {
-        term { const(true) } -> predicate(type, location) { lhv equality false }
-        term { const(false) } -> predicate(type, location) { lhv equality true }
-        else -> this
-    }
-    else -> this
-}
-
 private val timeLimit by lazy { kexConfig.getLongValue("concolic", "timeLimit", 10000L) }
 
-class ConcolicChecker(override val cm: ClassManager,
-                      val loader: ClassLoader,
-                      val manager: TraceManager<Trace>) : MethodVisitor {
-    val random: Randomizer = defaultRandomizer
+class ConcolicChecker(val ctx: ExecutionContext, val manager: TraceManager<Trace>) : MethodVisitor {
+    override val cm: ClassManager get() = ctx.cm
+    val loader: ClassLoader get() = ctx.loader
+    val random: Randomizer get() = ctx.random
     val paths = mutableSetOf<PredicateState>()
 
     override fun cleanup() {
@@ -59,7 +44,6 @@ class ConcolicChecker(override val cm: ClassManager,
 
     override fun visit(method: Method) {
         if (method.isStaticInitializer || method.isAbstract) return
-        if (method.isConstructor) return
 
         try {
             runBlocking {
@@ -146,7 +130,7 @@ class ConcolicChecker(override val cm: ClassManager,
                 }
             }
         }
-        return ConcolicFilter().apply(builder.apply())
+        return builder.apply()
     }
 
     private fun mutate(ps: PredicateState): PredicateState {
@@ -169,24 +153,6 @@ class ConcolicChecker(override val cm: ClassManager,
         }
     }
 
-    private fun generateByModel(method: Method, ps: PredicateState, model: SMTModel): Pair<Any?, Array<Any?>> {
-        val reanimated = executeModel(ps, cm.type, method, model, loader, random)
-        log.debug("Reanimated: ${tryOrNull { model.toString() }}")
-
-        val instance = reanimated.instance ?: when {
-            method.isStatic -> null
-            else -> tryOrNull {
-                val klass = loader.loadClass(types.getRefType(method.`class`))
-                random.next(klass)
-            }
-        }
-
-        if (instance == null && !method.isStatic) {
-            throw GenerationException("Unable to create or generate instance of class ${method.`class`}")
-        }
-        return instance to reanimated.arguments.toTypedArray()
-    }
-
     private fun collectTrace(method: Method, instance: Any?, args: Array<Any?>): Trace {
         val runner = ObjectTracingRunner(method, loader)
         return runner.collectTrace(instance, args)
@@ -197,17 +163,12 @@ class ConcolicChecker(override val cm: ClassManager,
     private suspend fun process(method: Method) {
         val traces = ArrayDeque<Trace>()
         while (!manager.isBodyCovered(method)) {
-            if (traces.isEmpty()) {
-                val randomTrace = getRandomTrace(method) ?: return
-                manager[method] = randomTrace
-                traces.add(randomTrace)
-                yield()
-            }
-            val candidate = traces.poll()
-            val result = run(method, candidate)
-            if (result != null) {
-                manager[method] = result
-                traces.add(result)
+            val candidate = traces.firstOrElse { getRandomTrace(method)?.also { manager[method] = it } } ?: return
+            yield()
+
+            run(method, candidate)?.also {
+                manager[method] = it
+                traces.add(it)
             }
             yield()
         }
@@ -222,21 +183,14 @@ class ConcolicChecker(override val cm: ClassManager,
 
         val checker = Checker(method, loader, PredicateStateAnalysis(cm))
         val result = checker.check(mutated)
-        if (result is Result.SatResult) {
-            val (instance, args) = try {
-                generateByModel(method, checker.state, result.model)
-            } catch (e: GenerationException) {
-                log.warn(e.message)
-                return null
-            }
-            yield()
+        if (result !is Result.SatResult) return null
+        yield()
 
-            return try {
-                collectTrace(method, instance, args)
-            } catch (e: Exception) {
-                null
-            }
-        }
-        return null
+        val (instance, args) = tryOrNull {
+            generateInputByModel(ctx, method, checker.state, result.model)
+        } ?: return null
+        yield()
+
+        return tryOrNull { collectTrace(method, instance, args) }
     }
 }
