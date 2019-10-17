@@ -23,7 +23,11 @@ class ObjectTraceManager : TraceManager<Trace> {
                     traceStack.push(mutableListOf(action))
                     methodStack.push(action.method)
                 }
-                is MethodReturn, is MethodThrow -> {
+                is StaticInitEntry -> {
+                    traceStack.push(mutableListOf(action))
+                    methodStack.push(action.method)
+                }
+                is MethodReturn, is MethodThrow, is StaticInitExit -> {
                     val methodTrace = traceStack.pop()
                     methodTrace += action
                     methodInfos.getOrPut(methodStack.pop(), ::mutableSetOf) += Trace(methodTrace)

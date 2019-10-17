@@ -78,9 +78,9 @@ class Kex(args: Array<String>) {
 
         log.debug("Running with jar ${jar.name} and package $`package`")
         val target = File("instrumented/")
-        val classLoader = URLClassLoader(arrayOf(target.toURI().toURL()))
         // write all classes to target, so they will be seen by ClassLoader
         writeClassesToTarget(classManager, jar, target, `package`, true)
+        val classLoader = URLClassLoader(arrayOf(target.toURI().toURL()))
 
         val originalContext = ExecutionContext(origManager, jar.classLoader)
         val analysisContext = ExecutionContext(classManager, classLoader)

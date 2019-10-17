@@ -23,7 +23,7 @@ class InvalidStateException(msg: String) : Exception(msg)
 class ConcolicStateBuilder(val cm: ClassManager) {
     private val types get() = cm.type
     private val stateBuilder = StateBuilder()
-    private val callStack = stackOf<MutableMap<Value, Term>>()
+    private val callStack = stackOf<MutableMap<Value, Term>>(mutableMapOf())
     private val valueMap get() = callStack.peek()
     private val returnReceivers = stackOf<Term>()
     private val inlinedCalls = stackOf<Method>()
@@ -37,14 +37,15 @@ class ConcolicStateBuilder(val cm: ClassManager) {
         if (params != null) {
             // if call params are not null, we should already have value map
             params.receiver?.run { returnReceivers.push(mkNewValue(this)) }
+            callStack.push(valueMap.toMutableMap())
             inlinedCalls.push(method)
-            val tempMap = mutableMapOf<Value, Term>()
             for ((arg, value) in params.mappings) {
-                tempMap[arg] = mkValue(value)
+                valueMap[arg] = mkValue(value)
             }
-            callStack.push(tempMap)
+//            callStack.push(tempMap)
         } else {
-            callStack.push(mutableMapOf())
+            callStack.push(valueMap.toMutableMap())
+//            callStack.push(mutableMapOf())
         }
     }
 

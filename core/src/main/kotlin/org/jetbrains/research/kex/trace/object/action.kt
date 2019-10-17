@@ -22,6 +22,14 @@ class MethodCall(method: Method, val returnValue: Value?, val instance: Value?, 
     override fun toString() = "Call $method"
 }
 
+class StaticInitEntry(method: Method) : MethodAction(method) {
+    override fun toString() = "Enter $method"
+}
+
+class StaticInitExit(method: Method) : MethodAction(method) {
+    override fun toString() = "Exit $method"
+}
+
 sealed class BlockAction(val block: BasicBlock) : Action()
 class BlockEntry(bb: BasicBlock) : BlockAction(bb) {
     override fun toString() = "Enter ${block.name}"

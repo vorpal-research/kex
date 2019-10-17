@@ -72,6 +72,18 @@ abstract class TraceCollector(val cm: ClassManager) {
         addAction(MethodCall(method, retval, instance, args))
     }
 
+    open fun staticEntry(className: String) {
+        val klass = cm.getByName(className)
+        val method = klass.methods.values.first { it.isStaticInitializer }
+        addAction(StaticInitEntry(method))
+        stack.push(method)
+    }
+    open fun staticExit() {
+        val method = stack.pop()
+        require(method.isStaticInitializer)
+        addAction(StaticInitExit(method))
+    }
+
     open fun blockEnter(blockName: String) {
         val block = parseBlock(blockName)
         addAction(BlockEntry(block))
@@ -107,6 +119,9 @@ private class TraceCollectorStub(cm: ClassManager) : TraceCollector(cm) {
     override fun methodCall(className: String, methodName: String, argTypes: Array<String>, retType: String,
                             returnValueName: String?, instanceName: String?, argNames: Array<String>) {
     }
+
+    override fun staticEntry(className: String) {}
+    override fun staticExit() {}
 
     override fun blockEnter(blockName: String) {}
     override fun blockJump(blockName: String) {}

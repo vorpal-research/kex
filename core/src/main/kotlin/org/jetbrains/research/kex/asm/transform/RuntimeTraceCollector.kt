@@ -23,7 +23,6 @@ class RuntimeTraceCollector(override val cm: ClassManager) : MethodVisitor {
     private fun Method.isInstrumented(): Boolean {
         val klass = this.`class`
         if (klass !in cm.concreteClasses) return false
-        if (this.isStaticInitializer) return false
         return true
     }
 
@@ -53,7 +52,7 @@ class RuntimeTraceCollector(override val cm: ClassManager) : MethodVisitor {
                     val lhv = when {
                         cmp.lhv.type.isPrimary -> {
                             val wrap = cmp.lhv.wrap()
-                            + wrap
+                            +wrap
                             wrap
                         }
                         else -> cmp.lhv
@@ -61,7 +60,7 @@ class RuntimeTraceCollector(override val cm: ClassManager) : MethodVisitor {
                     val rhv = when {
                         cmp.rhv.type.isPrimary -> {
                             val wrap = cmp.rhv.wrap()
-                            + wrap
+                            +wrap
                             wrap
                         }
                         else -> cmp.rhv
@@ -133,20 +132,32 @@ class RuntimeTraceCollector(override val cm: ClassManager) : MethodVisitor {
     }
 
     override fun visitThrowInst(inst: ThrowInst) {
-        val methodExitInsts = buildList<Instruction> {
-            val throwMethod = collectorClass.getMethod("methodThrow",
-                    MethodDesc(arrayOf(type.stringType, type.getRefType("java/lang/Throwable")), type.voidType))
-            +instruction.getCall(CallOpcode.Virtual(), throwMethod, collectorClass, traceCollector,
-                    arrayOf(value.getStringConstant("${inst.parent!!.name}"), inst.throwable), false)
+        val methodExitInsts = when {
+            inst.parent!!.parent!!.isStaticInitializer -> buildList<Instruction> {
+                val returnMethod = collectorClass.getMethod("staticExit", MethodDesc(arrayOf(), type.voidType))
+                +instruction.getCall(CallOpcode.Virtual(), returnMethod, collectorClass, traceCollector, arrayOf(), false)
+            }
+            else -> buildList<Instruction> {
+                val throwMethod = collectorClass.getMethod("methodThrow",
+                        MethodDesc(arrayOf(type.stringType, type.getRefType("java/lang/Throwable")), type.voidType))
+                +instruction.getCall(CallOpcode.Virtual(), throwMethod, collectorClass, traceCollector,
+                        arrayOf(value.getStringConstant("${inst.parent!!.name}"), inst.throwable), false)
+            }
         }
         inst.parent!!.insertBefore(inst, *methodExitInsts.toTypedArray())
     }
 
     override fun visitReturnInst(inst: ReturnInst) {
-        val methodExitInsts = buildList<Instruction> {
-            val returnMethod = collectorClass.getMethod("methodReturn", MethodDesc(arrayOf(type.stringType), type.voidType))
-            +instruction.getCall(CallOpcode.Virtual(), returnMethod, collectorClass, traceCollector,
-                    arrayOf(value.getStringConstant("${inst.parent!!.name}")), false)
+        val methodExitInsts = when {
+            inst.parent!!.parent!!.isStaticInitializer -> buildList<Instruction> {
+                val returnMethod = collectorClass.getMethod("staticExit", MethodDesc(arrayOf(), type.voidType))
+                +instruction.getCall(CallOpcode.Virtual(), returnMethod, collectorClass, traceCollector, arrayOf(), false)
+            }
+            else -> buildList<Instruction> {
+                val returnMethod = collectorClass.getMethod("methodReturn", MethodDesc(arrayOf(type.stringType), type.voidType))
+                +instruction.getCall(CallOpcode.Virtual(), returnMethod, collectorClass, traceCollector,
+                        arrayOf(value.getStringConstant("${inst.parent!!.name}")), false)
+            }
         }
         inst.parent!!.insertBefore(inst, *methodExitInsts.toTypedArray())
     }
@@ -200,44 +211,53 @@ class RuntimeTraceCollector(override val cm: ClassManager) : MethodVisitor {
     }
 
     override fun visit(method: Method) {
-        if (method.isConstructor || method.isStaticInitializer) return
+//        if (method.isStaticInitializer) return
         if (method.isEmpty()) return
-        val methodEntryInsts = buildList<Instruction> {
-            traceCollector = getNewCollector()
-            +traceCollector
-            val entryMethod = collectorClass.getMethod("methodEnter", MethodDesc(
-                    arrayOf(type.stringType, type.stringType, type.getArrayType(type.stringType),
-                            type.stringType, type.objectType, type.getArrayType(type.objectType)),
-                    type.voidType
-            ))
-            val sizeVal = value.getIntConstant(method.argTypes.size)
-            val stringArray = instruction.getNewArray(type.stringType, sizeVal)
-            val argArray = instruction.getNewArray(type.objectType, sizeVal)
-            +stringArray
-            +argArray
-            for ((index, arg) in method.argTypes.withIndex()) {
-                val indexVal = value.getIntConstant(index)
-                +instruction.getArrayStore(stringArray, indexVal, value.getStringConstant(arg.asmDesc))
-                +when {
-                    arg.isPrimary -> {
-                        val wrapped = value.getArgument(index, method, arg).wrap()
-                        +wrapped
-                        instruction.getArrayStore(argArray, indexVal, wrapped)
-                    }
-                    else -> instruction.getArrayStore(argArray, indexVal, value.getArgument(index, method, arg))
-                }
+        val methodEntryInsts = when {
+            method.isStaticInitializer -> buildList<Instruction> {
+                traceCollector = getNewCollector()
+                +traceCollector
+                val entryMethod = collectorClass.getMethod("staticEntry", MethodDesc(arrayOf(type.stringType), type.voidType))
+                +instruction.getCall(CallOpcode.Virtual(), entryMethod, collectorClass,
+                        traceCollector, arrayOf(value.getStringConstant(method.`class`.fullname)), false)
             }
+            else -> buildList<Instruction> {
+                traceCollector = getNewCollector()
+                +traceCollector
+                val entryMethod = collectorClass.getMethod("methodEnter", MethodDesc(
+                        arrayOf(type.stringType, type.stringType, type.getArrayType(type.stringType),
+                                type.stringType, type.objectType, type.getArrayType(type.objectType)),
+                        type.voidType
+                ))
+                val sizeVal = value.getIntConstant(method.argTypes.size)
+                val stringArray = instruction.getNewArray(type.stringType, sizeVal)
+                val argArray = instruction.getNewArray(type.objectType, sizeVal)
+                +stringArray
+                +argArray
+                for ((index, arg) in method.argTypes.withIndex()) {
+                    val indexVal = value.getIntConstant(index)
+                    +instruction.getArrayStore(stringArray, indexVal, value.getStringConstant(arg.asmDesc))
+                    +when {
+                        arg.isPrimary -> {
+                            val wrapped = value.getArgument(index, method, arg).wrap()
+                            +wrapped
+                            instruction.getArrayStore(argArray, indexVal, wrapped)
+                        }
+                        else -> instruction.getArrayStore(argArray, indexVal, value.getArgument(index, method, arg))
+                    }
+                }
 
-            +instruction.getCall(CallOpcode.Virtual(), entryMethod, collectorClass, traceCollector,
-                    arrayOf(
-                            value.getStringConstant(method.`class`.fullname),
-                            value.getStringConstant(method.name),
-                            stringArray,
-                            value.getStringConstant(method.returnType.asmDesc),
-                            if (method.isStatic) value.getNullConstant() else value.getThis(method.`class`),
-                            argArray
-                    ),
-                    false)
+                +instruction.getCall(CallOpcode.Virtual(), entryMethod, collectorClass, traceCollector,
+                        arrayOf(
+                                value.getStringConstant(method.`class`.fullname),
+                                value.getStringConstant(method.name),
+                                stringArray,
+                                value.getStringConstant(method.returnType.asmDesc),
+                                if (method.isStatic || method.isConstructor) value.getNullConstant() else value.getThis(method.`class`),
+                                argArray
+                        ),
+                        false)
+            }
         }
         super.visit(method)
         method.entry.insertBefore(method.entry.first(), *methodEntryInsts.toTypedArray())
