@@ -4,7 +4,6 @@ import org.jetbrains.research.kex.annotations.AnnotationManager
 import org.jetbrains.research.kex.asm.state.PredicateStateAnalysis
 import org.jetbrains.research.kex.config.kexConfig
 import org.jetbrains.research.kex.state.PredicateState
-import org.jetbrains.research.kex.state.predicate.PredicateType
 import org.jetbrains.research.kex.state.term.ArgumentTerm
 import org.jetbrains.research.kex.state.term.FieldTerm
 import org.jetbrains.research.kex.state.term.Term
@@ -65,7 +64,7 @@ class Checker(val method: Method, val loader: ClassLoader, private val psa: Pred
             log.debug("Memspacing finished")
         }
 
-        query = state.filterByType(PredicateType.Path())
+        query = state.path
 
         if (isSlicingEnabled) {
             log.debug("Slicing started...")

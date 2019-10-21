@@ -147,6 +147,8 @@ abstract class PredicateState : TypeInfo {
     val isNotEmpty: Boolean
         get() = !isEmpty
 
+    val path by lazy { filterByType(PredicateType.Path()) }
+
     override val inheritors get() = states
     override val reverseMapping get() = reverse
 

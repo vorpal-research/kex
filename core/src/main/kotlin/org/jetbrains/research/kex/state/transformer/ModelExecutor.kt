@@ -12,7 +12,10 @@ import org.jetbrains.research.kex.state.BasicState
 import org.jetbrains.research.kex.state.ChoiceState
 import org.jetbrains.research.kex.state.PredicateState
 import org.jetbrains.research.kex.state.emptyState
-import org.jetbrains.research.kex.state.predicate.*
+import org.jetbrains.research.kex.state.predicate.DefaultSwitchPredicate
+import org.jetbrains.research.kex.state.predicate.EqualityPredicate
+import org.jetbrains.research.kex.state.predicate.InequalityPredicate
+import org.jetbrains.research.kex.state.predicate.Predicate
 import org.jetbrains.research.kex.state.term.*
 import org.jetbrains.research.kex.util.*
 import org.jetbrains.research.kfg.ir.Method
@@ -115,7 +118,7 @@ class ModelExecutor(val method: Method,
     }
 
     override fun transformChoice(ps: ChoiceState): PredicateState {
-        val paths = ps.choices.map { it to it.filterByType(PredicateType.Path()) }.map {
+        val paths = ps.choices.map { it to it.path }.map {
             it.first to ChoiceSimplifier.apply(it.second)
         }
         val ourChoice = paths.firstOrNull { it.second.all { checkPath(it) } }?.first ?: return emptyState()

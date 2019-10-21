@@ -7,7 +7,6 @@ import org.jetbrains.research.kex.smt.Result
 import org.jetbrains.research.kex.smt.model.MemoryShape
 import org.jetbrains.research.kex.smt.model.SMTModel
 import org.jetbrains.research.kex.state.PredicateState
-import org.jetbrains.research.kex.state.predicate.PredicateType
 import org.jetbrains.research.kex.state.term.Term
 import org.jetbrains.research.kex.state.transformer.collectPointers
 import org.jetbrains.research.kex.state.transformer.collectVariables
@@ -27,7 +26,7 @@ class Z3Solver(val tf: TypeFactory) : AbstractSMTSolver {
     val ef = Z3ExprFactory()
 
     override fun isReachable(state: PredicateState) =
-            isPathPossible(state, state.filterByType(PredicateType.Path()))
+            isPathPossible(state, state.path)
 
     override fun isPathPossible(state: PredicateState, path: PredicateState) = isViolated(state, path)
 

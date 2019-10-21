@@ -220,9 +220,13 @@ class ConcolicChecker(val ctx: ExecutionContext, val manager: TraceManager<Trace
     private suspend fun run(method: Method, trace: Trace): Trace? {
         val state = buildState(method, trace)
         val mutated = mutate(state)
-        val path = mutated.filterByType(PredicateType.Path())
-        if (path in paths) return null
-        paths += path
+        val path = mutated.path
+        if (path in paths) {
+            log.debug("Could not generate new trace")
+            return null
+        }
+        log.debug("Collected trace: $state")
+        log.debug("Mutated trace: $mutated")
 
         val checker = Checker(method, loader, PredicateStateAnalysis(cm))
         val result = checker.check(mutated)
@@ -234,6 +238,9 @@ class ConcolicChecker(val ctx: ExecutionContext, val manager: TraceManager<Trace
         } ?: return null
         yield()
 
-        return tryOrNull { collectTrace(method, instance, args) }
+        val resultingTrace = tryOrNull { collectTrace(method, instance, args) } ?: return null
+        if (buildState(method, resultingTrace).path.startsWith(path))
+            paths += path
+        return resultingTrace
     }
 }
