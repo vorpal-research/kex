@@ -40,11 +40,19 @@ object MethodManager {
     object IntrinsicManager {
         private const val intrinsicsClass = "kotlin/jvm/internal/Intrinsics"
 
-        fun getCheckNotNull(cm: ClassManager) = cm.getByName(intrinsicsClass).getMethod(
+        fun checkNotNull(cm: ClassManager) = cm.getByName(intrinsicsClass).getMethod(
                 "checkParameterIsNotNull",
                 MethodDesc(
                         arrayOf(cm.type.objectType, cm.type.stringType),
                         cm.type.voidType
+                )
+        )
+
+        fun areEqual(cm: ClassManager) = cm.getByName(intrinsicsClass).getMethod(
+                "areEqual",
+                MethodDesc(
+                        arrayOf(cm.type.objectType, cm.type.objectType),
+                        cm.type.boolType
                 )
         )
 

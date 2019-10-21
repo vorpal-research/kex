@@ -42,10 +42,8 @@ class ConcolicStateBuilder(val cm: ClassManager) {
             for ((arg, value) in params.mappings) {
                 valueMap[arg] = mkValue(value)
             }
-//            callStack.push(tempMap)
         } else {
             callStack.push(valueMap.toMutableMap())
-//            callStack.push(mutableMapOf())
         }
     }
 

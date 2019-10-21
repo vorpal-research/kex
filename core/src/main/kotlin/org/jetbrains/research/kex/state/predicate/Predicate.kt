@@ -97,6 +97,7 @@ val Predicate.hasReceiver
         is NewPredicate -> true
         is ArrayStorePredicate -> true
         is FieldStorePredicate -> true
+        is CallPredicate -> this.hasLhv
         else -> false
     }
 

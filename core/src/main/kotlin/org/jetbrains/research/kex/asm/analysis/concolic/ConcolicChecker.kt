@@ -12,7 +12,7 @@ import org.jetbrains.research.kex.random.Randomizer
 import org.jetbrains.research.kex.smt.Checker
 import org.jetbrains.research.kex.smt.Result
 import org.jetbrains.research.kex.state.PredicateState
-import org.jetbrains.research.kex.state.predicate.Predicate
+import org.jetbrains.research.kex.state.StateBuilder
 import org.jetbrains.research.kex.state.predicate.PredicateType
 import org.jetbrains.research.kex.state.predicate.inverse
 import org.jetbrains.research.kex.state.transformer.generateInputByModel
@@ -22,6 +22,7 @@ import org.jetbrains.research.kex.trace.runner.ObjectTracingRunner
 import org.jetbrains.research.kex.trace.runner.RandomObjectTracingRunner
 import org.jetbrains.research.kex.trace.runner.TimeoutException
 import org.jetbrains.research.kex.util.firstOrElse
+import org.jetbrains.research.kex.util.log
 import org.jetbrains.research.kex.util.tryOrNull
 import org.jetbrains.research.kfg.ClassManager
 import org.jetbrains.research.kfg.ir.BasicBlock
@@ -42,9 +43,27 @@ class ConcolicChecker(val ctx: ExecutionContext, val manager: TraceManager<Trace
         paths.clear()
     }
 
+    fun visitMain(method: Method) {
+        log.debug(method.print())
+        try {
+            runBlocking {
+                withTimeout(timeLimit) {
+                    while (true) {
+                        try {
+                            process(method)
+                        } catch (e: TimeoutException) {
+                        }
+                    }
+                }
+            }
+        } catch (e: TimeoutCancellationException) {
+            return
+        }
+    }
+
     override fun visit(method: Method) {
         if (method.isStaticInitializer || method.isAbstract) return
-
+//        if (method.name == "main") visitMain(method)
         try {
             runBlocking {
                 withTimeout(timeLimit) {
@@ -149,23 +168,32 @@ class ConcolicChecker(val ctx: ExecutionContext, val manager: TraceManager<Trace
     }
 
     private fun mutate(ps: PredicateState): PredicateState {
-        var found = false
-        lateinit var last: Predicate
-        val filtered = ps.dropLastWhile {
-            when {
-                found -> true
-                it.type == PredicateType.Path() -> {
-                    found = true
-                    last = it
-                    true
+        infix fun PredicateState.covered(set: Set<PredicateState>): Boolean {
+            return set.any { it.startsWith(this) }
+        }
+
+        val currentPath = StateBuilder()
+        val currentState = StateBuilder()
+        ps.takeWhile {
+            if (it.type != PredicateType.Path()) {
+                currentState += it
+                false
+            } else {
+                val current = it.inverse()
+                when {
+                    (currentPath + current).apply() covered paths -> {
+                        currentPath += it
+                        currentState += it
+                        false
+                    }
+                    else -> {
+                        currentState += current
+                        true
+                    }
                 }
-                else -> false
             }
         }
-        return when {
-            found -> filtered + last.inverse()
-            else -> filtered
-        }
+        return currentState.apply()
     }
 
     private fun collectTrace(method: Method, instance: Any?, args: Array<Any?>): Trace {

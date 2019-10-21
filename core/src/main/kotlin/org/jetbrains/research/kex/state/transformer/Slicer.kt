@@ -126,7 +126,8 @@ class Slicer(val state: PredicateState, sliceTerms: Set<Term>, val aa: AliasAnal
     }
 
     override fun transformBase(predicate: Predicate): Predicate {
-        if (predicate.type == PredicateType.Path()) {
+        if (predicate.type != PredicateType.State()) {
+            addCFGDeps(predicate)
             return predicate
 //            val inversed = predicate.inverse()
 //            return when {
@@ -154,7 +155,7 @@ class Slicer(val state: PredicateState, sliceTerms: Set<Term>, val aa: AliasAnal
         val asVar = checkVars(lhvTerms, rhvTerms)
         val asPtr = checkPtrs(predicate, lhvTerms, rhvTerms)
         return when {
-            asVar || asPtr -> predicate.also {addCFGDeps(predicate) }
+            asVar || asPtr -> predicate.also { addCFGDeps(predicate) }
             else -> nothing()
         }
     }

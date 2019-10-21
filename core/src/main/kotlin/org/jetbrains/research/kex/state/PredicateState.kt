@@ -180,12 +180,12 @@ abstract class PredicateState : TypeInfo {
         var found = false
         return filter {
             when {
-                found -> true
+                found -> false
                 predicate(it) -> {
                     found = true
-                    true
+                    false
                 }
-                else -> false
+                else -> true
             }
         }
     }
@@ -199,7 +199,7 @@ abstract class PredicateState : TypeInfo {
                 found -> true
                 predicate(it) -> {
                     found = true
-                    false
+                    true
                 }
                 else -> false
             }
@@ -208,6 +208,7 @@ abstract class PredicateState : TypeInfo {
 
     fun dropLastWhile(predicate: (Predicate) -> Boolean): PredicateState = reverse().dropWhile(predicate).reverse()
 
+    fun startsWith(ps: PredicateState): Boolean = sliceOn(ps) != null
 
     abstract fun fmap(transform: (PredicateState) -> PredicateState): PredicateState
     abstract fun reverse(): PredicateState
