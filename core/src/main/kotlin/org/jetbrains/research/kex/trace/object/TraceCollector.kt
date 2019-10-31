@@ -74,7 +74,7 @@ abstract class TraceCollector(val cm: ClassManager) {
 
     open fun staticEntry(className: String) {
         val klass = cm.getByName(className)
-        val method = klass.methods.values.first { it.isStaticInitializer }
+        val method = klass.methods.first { it.isStaticInitializer }
         addAction(StaticInitEntry(method))
         stack.push(method)
     }

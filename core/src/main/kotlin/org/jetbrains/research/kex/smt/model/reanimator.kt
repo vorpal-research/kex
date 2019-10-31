@@ -105,7 +105,7 @@ class ModelReanimator(val method: Method, val model: SMTModel, val loader: Class
             val kfgClass = method.cm.getByName(type.`class`)
             val `class` = tryOrNull { loader.loadClass(kfgClass.canonicalDesc) } ?: return@memory null
             val instance = randomizer.nextOrNull(`class`)
-            for ((_, field) in kfgClass.fields) {
+            for (field in kfgClass.fields) {
                 val fieldCopy = term { term.field(field.type.kexType, field.name) }
                 val fieldTerm = model.assignments.keys.firstOrNull { it == fieldCopy } ?: continue
 

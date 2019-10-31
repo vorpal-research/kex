@@ -33,7 +33,7 @@ class CoverageCounter<T>(override val cm: ClassManager, val tm: TraceManager<T>)
     override fun visit(`class`: Class) {
         if (`class`.isSynthetic) return
 
-        for (method in `class`.methods.values) {
+        for (method in `class`.methods) {
             if (method.isAbstract || method.isStaticInitializer) continue
             if (!method.isImpactable) continue
 

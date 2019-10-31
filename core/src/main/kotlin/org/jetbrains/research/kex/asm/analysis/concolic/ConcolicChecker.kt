@@ -32,6 +32,7 @@ import org.jetbrains.research.kfg.visitor.MethodVisitor
 import java.util.*
 
 private val timeLimit by lazy { kexConfig.getLongValue("concolic", "timeLimit", 10000L) }
+private val onlyMain by lazy { kexConfig.getBooleanValue("concolic", "main-only", false) }
 
 class ConcolicChecker(val ctx: ExecutionContext, val manager: TraceManager<Trace>) : MethodVisitor {
     override val cm: ClassManager get() = ctx.cm
@@ -43,7 +44,7 @@ class ConcolicChecker(val ctx: ExecutionContext, val manager: TraceManager<Trace
         paths.clear()
     }
 
-    fun visitMain(method: Method) {
+    private fun analyze(method: Method) {
         log.debug(method.print())
         try {
             runBlocking {
@@ -63,17 +64,9 @@ class ConcolicChecker(val ctx: ExecutionContext, val manager: TraceManager<Trace
 
     override fun visit(method: Method) {
         if (method.isStaticInitializer || method.isAbstract) return
-//        if (method.name == "main") visitMain(method)
-        try {
-            runBlocking {
-                withTimeout(timeLimit) {
-                    process(method)
-                }
-            }
-        } catch (e: TimeoutCancellationException) {
-            return
-        } catch (e: TimeoutException) {
-            return
+
+        if ((onlyMain && method.name == "main") || !onlyMain) {
+            analyze(method)
         }
     }
 

@@ -131,7 +131,7 @@ class KexSerializerTest : KexTest() {
     fun testPredicateStateSerialization() {
         val basicClass = cm.getByName("$packageName/BasicTests")
 
-        for ((_, method) in basicClass.methods) {
+        for (method in basicClass.methods) {
             val psa = getPSA(method)
             val state = psa.builder(method).getInstructionState(method.flatten().first { it is ReturnInst }) ?: continue
 

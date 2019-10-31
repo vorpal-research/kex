@@ -213,6 +213,7 @@ class RuntimeTraceCollector(override val cm: ClassManager) : MethodVisitor {
     override fun visit(method: Method) {
 //        if (method.isStaticInitializer) return
         if (method.isEmpty()) return
+
         val methodEntryInsts = when {
             method.isStaticInitializer -> buildList<Instruction> {
                 traceCollector = getNewCollector()

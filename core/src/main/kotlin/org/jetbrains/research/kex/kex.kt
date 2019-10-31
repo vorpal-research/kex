@@ -22,6 +22,7 @@ import org.jetbrains.research.kex.trace.`object`.ObjectTraceManager
 import org.jetbrains.research.kex.util.debug
 import org.jetbrains.research.kex.util.log
 import org.jetbrains.research.kfg.ClassManager
+import org.jetbrains.research.kfg.KfgConfig
 import org.jetbrains.research.kfg.Package
 import org.jetbrains.research.kfg.analysis.LoopSimplifier
 import org.jetbrains.research.kfg.util.Flags
@@ -73,13 +74,13 @@ class Kex(args: Array<String>) {
 
     @ImplicitReflectionSerializer
     fun main() {
-        val classManager = ClassManager(jar, `package`, Flags.readAll)
-        val origManager = ClassManager(jar, `package`, Flags.readAll)
+        val classManager = ClassManager(jar, KfgConfig(`package` = Package.defaultPackage, flags = Flags.readAll, failOnError = false))
+        val origManager = ClassManager(jar, KfgConfig(`package` = Package.defaultPackage, flags = Flags.readAll, failOnError = false))
 
         log.debug("Running with jar ${jar.name} and package $`package`")
         val target = File("instrumented/")
         // write all classes to target, so they will be seen by ClassLoader
-        writeClassesToTarget(classManager, jar, target, `package`, true)
+        writeClassesToTarget(classManager, jar, target, Package.defaultPackage, true)
         val classLoader = URLClassLoader(arrayOf(target.toURI().toURL()))
 
         val originalContext = ExecutionContext(origManager, jar.classLoader)

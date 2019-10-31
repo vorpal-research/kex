@@ -14,6 +14,7 @@ import org.jetbrains.research.kex.state.term.term
 import org.jetbrains.research.kex.test.Intrinsics
 import org.jetbrains.research.kex.util.log
 import org.jetbrains.research.kfg.ClassManager
+import org.jetbrains.research.kfg.KfgConfig
 import org.jetbrains.research.kfg.Package
 import org.jetbrains.research.kfg.analysis.LoopAnalysis
 import org.jetbrains.research.kfg.analysis.LoopSimplifier
@@ -46,7 +47,7 @@ abstract class KexTest {
         val jarFile = JarFile(jarPath)
         loader = jarFile.classLoader
         val `package` = Package("$packageName/*")
-        cm = ClassManager(jarFile, `package`, Flags.readAll)
+        cm = ClassManager(jarFile, KfgConfig(`package` = `package`, flags = Flags.readAll, failOnError = true))
     }
 
     protected fun getPSA(method: Method): PredicateStateAnalysis {
@@ -89,7 +90,7 @@ abstract class KexTest {
     }
 
     fun testClassReachability(`class`: Class) {
-        `class`.methods.forEach { (_, method) ->
+        `class`.methods.forEach { method ->
             log.debug("Checking method $method")
             log.debug(method.print())
 

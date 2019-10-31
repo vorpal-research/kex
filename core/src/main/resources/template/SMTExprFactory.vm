@@ -36,7 +36,7 @@ class $factory : ${solver}SMTExprFactory() {
         fun getTypeSizeExpanded(tf: TypeFactory, type: KexType) = when (type) {
             is KexClass -> {
                 val kfgClass = (tf.getRefType(type.`class`) as ClassType).`class`
-                kfgClass.fields.values.fold(0) { acc, field -> acc + field.type.kexType.bitsize }
+                kfgClass.fields.fold(0) { acc, field -> acc + field.type.kexType.bitsize }
             }
             else -> type.bitsize
         }
