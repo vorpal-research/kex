@@ -1,6 +1,6 @@
 package org.jetbrains.research.kex.smt.boolector
 
-import org.jetbrains.research.boolector.BoolectorSat
+import org.jetbrains.research.boolector.Btor
 import org.jetbrains.research.kex.config.kexConfig
 import org.jetbrains.research.kex.ktype.KexReal
 import org.jetbrains.research.kex.smt.AbstractSMTSolver
@@ -49,13 +49,13 @@ class BoolectorSolver(val tf: TypeFactory) : AbstractSMTSolver {
         val result = check(boolectorState, boolectorQuery)
         log.debug("Check finished")
         return when (result) {
-            BoolectorSat.Status.UNSAT -> Result.UnsatResult
-            BoolectorSat.Status.UNKNOWN -> Result.UnknownResult("should not happen")
-            BoolectorSat.Status.SAT -> Result.SatResult(collectModel(ctx, state))
+            Btor.Status.UNSAT -> Result.UnsatResult
+            Btor.Status.UNKNOWN -> Result.UnknownResult("should not happen")
+            Btor.Status.SAT -> Result.SatResult(collectModel(ctx, state))
         }
     }
 
-    private fun check(state: Bool_, query: Bool_): BoolectorSat.Status {
+    private fun check(state: Bool_, query: Bool_): Btor.Status {
         val (state_, query_) = state to query
 
         state_.asAxiom().assertForm()
@@ -68,7 +68,7 @@ class BoolectorSolver(val tf: TypeFactory) : AbstractSMTSolver {
             log.debug(ef.ctx.dumpSmt2())
         }
         log.debug("Running Boolector solver")
-        val result = BoolectorSat.getBoolectorSat()
+        val result = ef.ctx.check()
                 ?: unreachable { log.error("Solver error") }
 
         log.debug("Solver finished")
@@ -144,5 +144,5 @@ class BoolectorSolver(val tf: TypeFactory) : AbstractSMTSolver {
                 bounds.map { it.key to MemoryShape(it.value.first, it.value.second) }.toMap())
     }
 
-    override fun cleanup() = ef.ctx.btorRelease()
+    override fun cleanup() = ef.ctx.release()
 }

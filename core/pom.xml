@@ -14,7 +14,7 @@
     <properties>
         <exec.main>org.jetbrains.research.kex.MainKt</exec.main>
 
-        <serialization.version>0.11.0</serialization.version>
+        <serialization.version>0.14.0</serialization.version>
         <coroutines.version>1.3.2</coroutines.version>
         <kfg.version>0.0.5</kfg.version>
 
@@ -29,6 +29,7 @@
         <reflections.version>0.9.11</reflections.version>
 
         <z3.version>4.8.6</z3.version>
+        <boolector.version>3.1.4</boolector.version>
     </properties>
 
     <repositories>
@@ -123,9 +124,9 @@
             <version>${z3.version}</version>
         </dependency>
         <dependency>
-            <groupId>org.jetbrains.research</groupId>
-            <artifactId>boolector</artifactId>
-            <version>1.0</version>
+            <groupId>com.github.AbdullinAM</groupId>
+            <artifactId>JavaBoolector</artifactId>
+            <version>${boolector.version}</version>
         </dependency>
         <dependency>
             <groupId>org.jetbrains.kotlin</groupId>

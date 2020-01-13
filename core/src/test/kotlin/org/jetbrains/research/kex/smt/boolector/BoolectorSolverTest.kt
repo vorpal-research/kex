@@ -1,6 +1,5 @@
 package org.jetbrains.research.kex.smt.boolector
 
-import org.jetbrains.research.boolector.BoolectorSat
 import org.jetbrains.research.boolector.Btor
 import org.jetbrains.research.kex.KexTest
 import org.junit.Assert.assertEquals
@@ -26,9 +25,9 @@ class BoolectorSolverTest : KexTest() {
 
         query.asAxiom().assertForm()
         state.asAxiom().assertForm()
-        val res = BoolectorSat.getBoolectorSat()
-        assertEquals(BoolectorSat.Status.SAT, res)
-        ef.ctx.btorRelease()
+        val res = ef.ctx.check()
+        assertEquals(Btor.Status.SAT, res)
+        ef.ctx.release()
     }
 
     @Test
@@ -37,13 +36,13 @@ class BoolectorSolverTest : KexTest() {
         val checkExpr = { e: Dynamic_ ->
             e.axiom.toBoolNode().assume()
             BoolectorEngine.negate(ef.ctx, e.expr).assume()
-            BoolectorSat.getBoolectorSat() == BoolectorSat.Status.UNSAT
+            ef.ctx.check() == Btor.Status.UNSAT
         }
         val memory = ef.makeDefaultMemory("mem", 0xFF)
         for (i in 0..128) {
             assertTrue(checkExpr(memory[ef.makePtrConst(i)] eq Byte_.makeConst(ef.ctx, 0xFF)))
         }
-        ef.ctx.btorRelease()
+        ef.ctx.release()
     }
 
     @Test
@@ -83,14 +82,14 @@ class BoolectorSolverTest : KexTest() {
 
             val prede = pred.expr
             prede.assume()
-            val res = BoolectorSat.getBoolectorSat() //prede Z3_solver_check_assumptions
-            res == BoolectorSat.Status.UNSAT
+            val res = ef.ctx.check()
+            res == Btor.Status.UNSAT
         }
 
         assertTrue(checkExprIn(c eq a, cond eq a))
         assertFalse(checkExprIn(c eq a, cond eq z))
         assertTrue(checkExprIn(c eq b, cond eq b))
-        ef.ctx.btorRelease()
+        ef.ctx.release()
     }
 
     @Test
@@ -100,8 +99,8 @@ class BoolectorSolverTest : KexTest() {
         val checkExpr = { expr: Bool_ ->
             expr.axiom.toBoolNode().assume()
             expr.expr.toBoolNode().not().assume()
-            val res = BoolectorSat.getBoolectorSat()
-            res == BoolectorSat.Status.UNSAT
+            val res = ctx.check()
+            res == Btor.Status.UNSAT
         }
 
         val `true` = Bool_.makeConst(ctx, true)
@@ -119,7 +118,7 @@ class BoolectorSolverTest : KexTest() {
         val d = Long_.makeConst(ctx, 0xFF)
         val e = Byte_.makeConst(ctx, 0xFF)
         assertTrue(checkExpr(d eq e))
-        ctx.btorRelease()
+        ctx.release()
     }
 }
 
