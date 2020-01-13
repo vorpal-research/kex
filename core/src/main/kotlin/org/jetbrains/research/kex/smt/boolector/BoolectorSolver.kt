@@ -7,6 +7,7 @@ import org.jetbrains.research.kex.smt.AbstractSMTSolver
 import org.jetbrains.research.kex.smt.Result
 import org.jetbrains.research.kex.smt.model.MemoryShape
 import org.jetbrains.research.kex.smt.model.SMTModel
+import org.jetbrains.research.kex.state.InheritorOf
 import org.jetbrains.research.kex.state.PredicateState
 import org.jetbrains.research.kex.state.term.ConstIntTerm
 import org.jetbrains.research.kex.state.term.ConstLongTerm
@@ -22,6 +23,7 @@ import org.jetbrains.research.kfg.type.TypeFactory
 private val logQuery = kexConfig.getBooleanValue("smt", "logQuery", false)
 private val logFormulae = kexConfig.getBooleanValue("smt", "logFormulae", false)
 
+@InheritorOf("Solver")
 class BoolectorSolver(val tf: TypeFactory) : AbstractSMTSolver {
     val ef = BoolectorExprFactory()
 

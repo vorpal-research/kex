@@ -155,6 +155,7 @@ class ConcolicChecker(val ctx: ExecutionContext, val manager: TraceManager<Trace
                     builder.build(current, prevBlock.block, next?.block)
                     prevBlockStack.push(current.wrap())
                 }
+                else -> {}
             }
         }
         return builder.apply()

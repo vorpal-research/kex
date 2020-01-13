@@ -45,9 +45,10 @@ class InheritanceInfoProcessor : KexProcessor() {
             val newTypeInfo = InheritanceInfo(base, inheritors.map { Inheritor(it.key, it.value) }.toSet())
             if (typeInfo != newTypeInfo) {
                 info("Updated type information for $base")
-                val writer = targetFile.writer()
-                writer.write(newTypeInfo.toJson())
-                writer.flush()
+                targetFile.writer().use {
+                    it.write(newTypeInfo.toJson())
+                    it.flush()
+                }
             }
         }
         return true

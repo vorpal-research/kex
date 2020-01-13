@@ -1,0 +1,13 @@
+{
+  "base": "org.jetbrains.research.kex.smt.AbstractSMTSolver",
+  "inheritors": [
+    {
+      "class": "org.jetbrains.research.kex.smt.z3.Z3Solver",
+      "name": "Z3"
+    },
+    {
+      "class": "org.jetbrains.research.kex.smt.boolector.BoolectorSolver",
+      "name": "Boolector"
+    }
+  ]
+}

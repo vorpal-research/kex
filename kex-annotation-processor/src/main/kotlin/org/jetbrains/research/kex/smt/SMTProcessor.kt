@@ -87,9 +87,9 @@ class SMTProcessor : KexProcessor() {
             }
 
             info("Generating $template for $`class` in package $`package` with parameters $parameters")
-            val fileWriter = file.writer()
-            fileWriter.write(resultingFile)
-            fileWriter.close()
+            file.writer().use {
+                it.write(resultingFile)
+            }
         }
     }
 }
