@@ -2,9 +2,19 @@
 
 Kex is a white-box fuzzer tool for Java bytecode.
 
-# Build
+# Dependencies
 
-Kex requires Z3 version 4.7.1 to be installed in the system.
+* [z3-java](https://aur.archlinux.org/packages/z3-java/) v4.8.6
+
+  you need to manually install jar package with java bindings to your local maven repository using
+  following command:
+  ```
+  mvn install:install-file -Dfile=/usr/lib/com.microsoft.z3.jar -DgroupId=com.microsoft 
+  -DartifactId=z3 -Dversion=4.8.6 -Dpackaging=jar
+  ```
+* [boolector-java](https://aur.archlinux.org/packages/boolector-java/) v3.1.4
+
+# Build
 
 Build jar with all the dependencies:
 ```
