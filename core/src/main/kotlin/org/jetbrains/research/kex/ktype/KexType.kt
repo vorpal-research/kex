@@ -1,9 +1,9 @@
 package org.jetbrains.research.kex.ktype
 
 import kotlinx.serialization.Serializable
-import org.jetbrains.research.kex.state.BaseType
-import org.jetbrains.research.kex.state.InheritanceInfo
-import org.jetbrains.research.kex.state.InheritorOf
+import org.jetbrains.research.kex.BaseType
+import org.jetbrains.research.kex.InheritanceInfo
+import org.jetbrains.research.kex.InheritorOf
 import org.jetbrains.research.kex.util.defaultHashCode
 import org.jetbrains.research.kex.util.log
 import org.jetbrains.research.kex.util.unreachable
@@ -51,8 +51,9 @@ abstract class KexType {
         val types = run {
             val loader = Thread.currentThread().contextClassLoader
             val resource = loader.getResourceAsStream("KexType.json")
-            val inheritanceInfo = InheritanceInfo.fromJson(resource.bufferedReader().readText())
-            resource.close()
+            val inheritanceInfo = resource?.use {
+                InheritanceInfo.fromJson(it.bufferedReader().readText())
+            }
 
             inheritanceInfo?.inheritors?.map {
                 @Suppress("UNCHECKED_CAST")

@@ -1,6 +1,8 @@
 package org.jetbrains.research.kex.state
 
 import kotlinx.serialization.Serializable
+import org.jetbrains.research.kex.BaseType
+import org.jetbrains.research.kex.InheritanceInfo
 import org.jetbrains.research.kex.state.predicate.Predicate
 import org.jetbrains.research.kex.state.predicate.PredicateBuilder
 import org.jetbrains.research.kex.state.predicate.PredicateType

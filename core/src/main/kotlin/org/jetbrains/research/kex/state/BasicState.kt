@@ -2,6 +2,7 @@ package org.jetbrains.research.kex.state
 
 import kotlinx.serialization.Required
 import kotlinx.serialization.Serializable
+import org.jetbrains.research.kex.InheritorOf
 import org.jetbrains.research.kex.state.predicate.Predicate
 import org.jetbrains.research.kex.util.defaultHashCode
 

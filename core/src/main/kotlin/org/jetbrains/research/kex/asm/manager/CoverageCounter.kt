@@ -1,13 +1,35 @@
 package org.jetbrains.research.kex.asm.manager
 
-import org.jetbrains.research.kex.asm.analysis.isImpactable
 import org.jetbrains.research.kex.asm.transform.originalBlock
 import org.jetbrains.research.kex.trace.TraceManager
 import org.jetbrains.research.kex.util.log
 import org.jetbrains.research.kfg.ClassManager
 import org.jetbrains.research.kfg.ir.Class
 import org.jetbrains.research.kfg.ir.Method
+import org.jetbrains.research.kfg.ir.value.instruction.CallInst
+import org.jetbrains.research.kfg.ir.value.instruction.FieldLoadInst
+import org.jetbrains.research.kfg.ir.value.instruction.FieldStoreInst
 import org.jetbrains.research.kfg.visitor.ClassVisitor
+
+val Method.isImpactable: Boolean
+    get() {
+        when {
+            this.isAbstract -> return false
+            this.isStatic && this.argTypes.isEmpty() -> return false
+            this.argTypes.isEmpty() -> {
+                val thisVal = this.cm.value.getThis(this.`class`)
+                for (inst in this.flatten()) {
+                    when (inst) {
+                        is FieldLoadInst -> if (inst.hasOwner && inst.owner == thisVal) return true
+                        is FieldStoreInst -> if (inst.hasOwner && inst.owner == thisVal) return true
+                        is CallInst -> if (!inst.isStatic && inst.callee == thisVal) return true
+                    }
+                }
+                return false
+            }
+            else -> return true
+        }
+    }
 
 data class CoverageInfo(val bodyCoverage: Double, val fullCoverage: Double)
 

@@ -14,6 +14,9 @@
         <module>kex-annotation-processor</module>
         <module>kex-util</module>
         <module>kex-test</module>
+        <module>kex-boolector</module>
+        <module>kex-z3</module>
+        <module>runner</module>
     </modules>
 
     <properties>

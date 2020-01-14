@@ -74,9 +74,10 @@ class SMTProcessor : KexProcessor() {
         if (!file.parentFile.exists()) file.parentFile.mkdirs()
 
         val stream = ByteArrayOutputStream()
-        val writer = stream.bufferedWriter()
-        ClassGenerator(parameters, templates, "$template.vm").doit(writer)
-        writer.flush()
+        stream.bufferedWriter().use {
+            ClassGenerator(parameters, templates, "$template.vm").doit(it)
+            it.flush()
+        }
         val resultingFile = stream.toString()
 
         if (!file.exists() || file.readText() != resultingFile) {

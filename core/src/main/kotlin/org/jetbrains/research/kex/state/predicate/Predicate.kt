@@ -2,8 +2,8 @@ package org.jetbrains.research.kex.state.predicate
 
 import kotlinx.serialization.Required
 import kotlinx.serialization.Serializable
-import org.jetbrains.research.kex.state.BaseType
-import org.jetbrains.research.kex.state.InheritanceInfo
+import org.jetbrains.research.kex.BaseType
+import org.jetbrains.research.kex.InheritanceInfo
 import org.jetbrains.research.kex.state.TypeInfo
 import org.jetbrains.research.kex.state.term.Term
 import org.jetbrains.research.kex.state.term.term

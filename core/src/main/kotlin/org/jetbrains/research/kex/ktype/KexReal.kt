@@ -1,7 +1,7 @@
 package org.jetbrains.research.kex.ktype
 
 import kotlinx.serialization.Serializable
-import org.jetbrains.research.kex.state.InheritorOf
+import org.jetbrains.research.kex.InheritorOf
 import org.jetbrains.research.kex.util.defaultHashCode
 import org.jetbrains.research.kfg.type.Type
 import org.jetbrains.research.kfg.type.TypeFactory
