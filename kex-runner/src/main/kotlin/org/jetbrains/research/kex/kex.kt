@@ -32,6 +32,7 @@ import org.jetbrains.research.kfg.util.writeClassesToTarget
 import org.jetbrains.research.kfg.visitor.executePipeline
 import java.io.File
 import java.net.URLClassLoader
+import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.jar.JarFile
 
@@ -45,6 +46,7 @@ class Kex(args: Array<String>) {
 
     val jar: JarFile
     val `package`: Package
+    val targetDir: Path
 
     enum class Mode {
         concolic,
@@ -62,6 +64,7 @@ class Kex(args: Array<String>) {
 
         jar = JarFile(Paths.get(jarName).toAbsolutePath().toFile())
         `package` = packageName?.let { Package.parse(it) } ?: Package.defaultPackage
+        targetDir = Paths.get(cmd.getCmdValue("target", "instrumented/"))
     }
 
     private fun updateClassPath(loader: URLClassLoader) {
@@ -79,17 +82,16 @@ class Kex(args: Array<String>) {
         val origManager = ClassManager(jar, KfgConfig(`package` = Package.defaultPackage, flags = Flags.readAll, failOnError = false))
 
         log.debug("Running with jar ${jar.name} and package $`package`")
-        val target = File("instrumented/")
         // write all classes to target, so they will be seen by ClassLoader
-        writeClassesToTarget(classManager, jar, target, Package.defaultPackage, true)
-        val classLoader = URLClassLoader(arrayOf(target.toURI().toURL()))
+        writeClassesToTarget(classManager, jar, targetDir.toFile(), Package.defaultPackage, true)
+        val classLoader = URLClassLoader(arrayOf(targetDir.toUri().toURL()))
 
         val originalContext = ExecutionContext(origManager, jar.classLoader, EasyRandomDriver())
         val analysisContext = ExecutionContext(classManager, classLoader, EasyRandomDriver())
 
         executePipeline(originalContext.cm, `package`) {
             +RuntimeTraceCollector(originalContext.cm)
-            +ClassWriter(originalContext, target)
+            +ClassWriter(originalContext, targetDir.toFile())
         }
 
         when (cmd.getEnumValue<Mode>("mode") ?: this.mode) {

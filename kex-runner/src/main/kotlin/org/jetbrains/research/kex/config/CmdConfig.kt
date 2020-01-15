@@ -26,6 +26,13 @@ class CmdConfig(args: Array<String>) : Config {
                 printHelp()
             }
         }
+
+        getCmdValue("help")?.let {
+            exit {
+                printHelp()
+            }
+        }
+
         val optValues = cmd.getOptionValues("option") ?: arrayOf()
         for (index in 0 until optValues.size step 3) {
             try {
@@ -43,6 +50,10 @@ class CmdConfig(args: Array<String>) : Config {
     }
 
     private fun setupOptions() {
+        val helpOpt = Option("h", "help", false, "print this help and quit")
+        helpOpt.isRequired = false
+        options.addOption(helpOpt)
+
         val jarOpt = Option("j", "jar", true, "input jar file path")
         jarOpt.isRequired = true
         options.addOption(jarOpt)
@@ -62,6 +73,10 @@ class CmdConfig(args: Array<String>) : Config {
         val logName = Option(null, "log", true, "log file name (`kex.log` by default)")
         logName.isRequired = false
         options.addOption(logName)
+
+        val targetDir = Option(null, "target", true, "target directory for instrumented bytecode output")
+        targetDir.isRequired = false
+        options.addOption(targetDir)
 
         val config = Option.builder()
                 .longOpt("option")

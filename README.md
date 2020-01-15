@@ -37,11 +37,14 @@ mvn clean verify
 ```
 Usage: kex
     --config <arg>                  configuration file
- -h,--help                          print help
+ -h,--help                          print this help and quit
  -j,--jar <arg>                     input jar file path
     --log <arg>                     log file name (`kex.log` by default)
+ -m,--mode <arg>                    run mode: bmc, concolic or debug
     --option <section:name:value>   set kex option through command line
  -p,--package <arg>                 analyzed package
     --ps <arg>                      file with predicate state to debug; used
                                     only in debug mode
+    --target <arg>                  target directory for instrumented bytecode
+                                    output
 ```
