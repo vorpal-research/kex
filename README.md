@@ -16,10 +16,16 @@ Kex is a white-box fuzzer tool for Java bytecode.
 
 # Build
 
-Build jar with all the dependencies:
-```
-mvn clean package
-```
+* build jar with all the dependencies:
+    ```
+    mvn clean package
+    ```
+
+* build with only one SMT solver support:
+    ```
+    mvn clean package -Psolver
+    ```
+    where `solver` stand for required solver name (`boolector` or `z3`) 
 
 Run all the tests:
 ```
