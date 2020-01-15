@@ -7,3 +7,4 @@ testJars/*
 trace/*
 fails/*
 **/target/*
+**/*.json
