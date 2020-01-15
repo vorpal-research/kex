@@ -9,18 +9,23 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>core</artifactId>
+    <artifactId>kex-runner</artifactId>
 
     <properties>
+        <exec.main>org.jetbrains.research.kex.MainKt</exec.main>
+
         <serialization.version>0.14.0</serialization.version>
+        <coroutines.version>1.3.2</coroutines.version>
         <kfg.version>0.0.5</kfg.version>
 
         <logback.version>1.2.3</logback.version>
         <slf4j.version>1.7.25</slf4j.version>
         <ini4j.version>0.5.4</ini4j.version>
+        <commons-cli.version>1.4</commons-cli.version>
 
+        <easy-random.version>easy-random-4.0.0</easy-random.version>
         <better-parse.version>0.3.2</better-parse.version>
-        <reflections.version>0.9.11</reflections.version>
+        <klaxon.version>3.0.6</klaxon.version>
     </properties>
 
     <repositories>
@@ -45,6 +50,17 @@
 
     <dependencies>
         <dependency>
+            <groupId>org.jetbrains.kotlinx</groupId>
+            <artifactId>kotlinx-coroutines-core</artifactId>
+            <version>${coroutines.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>commons-cli</groupId>
+            <artifactId>commons-cli</artifactId>
+            <version>${commons-cli.version}</version>
+        </dependency>
+        <dependency>
             <groupId>org.ini4j</groupId>
             <artifactId>ini4j</artifactId>
             <version>${ini4j.version}</version>
@@ -67,8 +83,16 @@
         </dependency>
         <dependency>
             <groupId>org.jetbrains.research</groupId>
-            <artifactId>kex-annotation-processor</artifactId>
+            <artifactId>core</artifactId>
             <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.jetbrains.research</groupId>
+            <artifactId>core</artifactId>
+            <version>${project.version}</version>
+            <classifier>tests</classifier>
+            <type>test-jar</type>
+            <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.jetbrains.research</groupId>
@@ -83,9 +107,14 @@
         </dependency>
 
         <dependency>
-            <groupId>com.github.h0tk3y</groupId>
-            <artifactId>better-parse</artifactId>
-            <version>${better-parse.version}</version>
+            <groupId>com.github.benas.random-beans</groupId>
+            <artifactId>easy-random-core</artifactId>
+            <version>${easy-random.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.beust</groupId>
+            <artifactId>klaxon</artifactId>
+            <version>${klaxon.version}</version>
         </dependency>
 
         <dependency>
@@ -98,11 +127,6 @@
             <groupId>org.jetbrains.kotlinx</groupId>
             <artifactId>kotlinx-serialization-runtime</artifactId>
             <version>${serialization.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.reflections</groupId>
-            <artifactId>reflections</artifactId>
-            <version>${reflections.version}</version>
         </dependency>
     </dependencies>
 
@@ -135,48 +159,8 @@
 
                 <executions>
                     <execution>
-                        <id>kapt</id>
-                        <goals>
-                            <goal>kapt</goal>
-                        </goals>
-                        <configuration>
-                            <sourceDirs>
-                                <sourceDir>${project.basedir}/src/main/kotlin</sourceDir>
-                            </sourceDirs>
-                            <annotationProcessorPaths>
-                                <annotationProcessorPath>
-                                    <groupId>org.jetbrains.research</groupId>
-                                    <artifactId>kex-annotation-processor</artifactId>
-                                    <version>${project.version}</version>
-                                </annotationProcessorPath>
-                            </annotationProcessorPaths>
-                            <annotationProcessors>
-                                <annotationProcessor>
-                                    org.jetbrains.research.kex.smt.SolverInfoProcessor
-                                </annotationProcessor>
-                                <annotationProcessor>
-                                    org.jetbrains.research.kex.InheritanceInfoProcessor
-                                </annotationProcessor>
-                            </annotationProcessors>
-                            <annotationProcessorArgs>
-                                <processorArg>
-                                    kex.resources=${project.basedir}/src/main/resources/
-                                </processorArg>
-                                <processorArg>
-                                    runner.resources=${project.parent.basedir}/kex-runner/src/main/resources/
-                                </processorArg>
-                            </annotationProcessorArgs>
-                        </configuration>
-                    </execution>
-                    <execution>
                         <id>compile</id>
                         <phase>compile</phase>
-                        <configuration>
-                            <sourceDirs>
-                                <source>target/generated-sources/kaptKotlin</source>
-                                <source>src/main/kotlin</source>
-                            </sourceDirs>
-                        </configuration>
                         <goals>
                             <goal>compile</goal>
                         </goals>
@@ -202,21 +186,96 @@
                         <root.dir>${project.parent.basedir.canonicalPath}</root.dir>
                         <project.version>${project.version}</project.version>
                     </systemPropertyVariables>
+                    <includes>
+                        <include>**/*Test.*</include>
+                    </includes>
+                    <excludes>
+                        <exclude>**/*LongTest.*</exclude>
+                    </excludes>
                 </configuration>
-            </plugin>
 
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-jar-plugin</artifactId>
-                <version>3.2.0</version>
                 <executions>
                     <execution>
                         <goals>
-                            <goal>test-jar</goal>
+                            <goal>test</goal>
                         </goals>
+                    </execution>
+
+                    <execution>
+                        <id>long-tests</id>
+                        <goals>
+                            <goal>test</goal>
+                        </goals>
+                        <phase>verify</phase>
+                        <configuration>
+                            <excludes>
+                                <exclude>none</exclude>
+                            </excludes>
+                            <includes>
+                                <include>**/*LongTest.java</include>
+                            </includes>
+                        </configuration>
                     </execution>
                 </executions>
             </plugin>
         </plugins>
     </build>
+
+    <profiles>
+        <profile>
+            <id>default</id>
+            <activation>
+                <activeByDefault>true</activeByDefault>
+            </activation>
+
+            <dependencies>
+                <dependency>
+                    <groupId>org.jetbrains.research</groupId>
+                    <artifactId>kex-boolector</artifactId>
+                    <version>${project.version}</version>
+                </dependency>
+                <dependency>
+                    <groupId>org.jetbrains.research</groupId>
+                    <artifactId>kex-z3</artifactId>
+                    <version>${project.version}</version>
+                </dependency>
+            </dependencies>
+        </profile>
+
+        <profile>
+            <id>boolector</id>
+            <activation>
+                <property>
+                    <name>boolector-only</name>
+                    <value>true</value>
+                </property>
+            </activation>
+
+            <dependencies>
+                <dependency>
+                    <groupId>org.jetbrains.research</groupId>
+                    <artifactId>kex-boolector</artifactId>
+                    <version>${project.version}</version>
+                </dependency>
+            </dependencies>
+        </profile>
+
+        <profile>
+            <id>z3</id>
+            <activation>
+                <property>
+                    <name>z3-only</name>
+                    <value>true</value>
+                </property>
+            </activation>
+
+            <dependencies>
+                <dependency>
+                    <groupId>org.jetbrains.research</groupId>
+                    <artifactId>kex-z3</artifactId>
+                    <version>${project.version}</version>
+                </dependency>
+            </dependencies>
+        </profile>
+    </profiles>
 </project>

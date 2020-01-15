@@ -17,7 +17,6 @@ val Class<*>.isAbstract get() = (this.modifiers and Modifier.ABSTRACT) == Modifi
 val JMethod.isStatic get() = (this.modifiers and Modifier.STATIC) == Modifier.STATIC
 val JMethod.isAbstract get() = (this.modifiers and Modifier.ABSTRACT) == Modifier.ABSTRACT
 
-
 fun ClassLoader.loadClass(type: Type): Class<*> = when (type) {
     is BoolType -> Boolean::class.java
     is ByteType -> Byte::class.java

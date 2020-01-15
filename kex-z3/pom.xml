@@ -129,7 +129,7 @@
                                     kex.templates=${project.parent.basedir}/velocity-templates/
                                 </processorArg>
                                 <processorArg>
-                                    runner.resources=${project.parent.basedir}/runner/src/main/resources/
+                                    runner.resources=${project.parent.basedir}/kex-runner/src/main/resources/
                                 </processorArg>
                             </annotationProcessorArgs>
                         </configuration>

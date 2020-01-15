@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!--suppress DifferentKotlinMavenVersion -->
+<!--suppress ALL -->
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
@@ -14,9 +14,7 @@
         <module>kex-annotation-processor</module>
         <module>kex-util</module>
         <module>kex-test</module>
-        <module>kex-boolector</module>
-        <module>kex-z3</module>
-        <module>runner</module>
+        <module>kex-runner</module>
     </modules>
 
     <properties>
@@ -50,18 +48,46 @@
                 <groupId>org.jetbrains.kotlin</groupId>
                 <artifactId>kotlin-maven-plugin</artifactId>
                 <version>${kotlin.version}</version>
-                <executions>
-                    <execution>
-                        <id>compile</id>
-                        <phase>compile</phase>
-                        <goals>
-                            <goal>compile</goal>
-                        </goals>
-                    </execution>
-                </executions>
             </plugin>
         </plugins>
     </build>
 
+    <profiles>
+        <profile>
+            <id>default</id>
+            <activation>
+                <activeByDefault>true</activeByDefault>
+            </activation>
+
+            <modules>
+                <module>kex-boolector</module>
+                <module>kex-z3</module>
+            </modules>
+        </profile>
+
+        <profile>
+            <id>boolector</id>
+
+            <properties>
+                <boolector-only>true</boolector-only>
+            </properties>
+
+            <modules>
+                <module>kex-boolector</module>
+            </modules>
+        </profile>
+
+        <profile>
+            <id>z3</id>
+
+            <properties>
+                <z3-only>true</z3-only>
+            </properties>
+
+            <modules>
+                <module>kex-z3</module>
+            </modules>
+        </profile>
+    </profiles>
 
 </project>
