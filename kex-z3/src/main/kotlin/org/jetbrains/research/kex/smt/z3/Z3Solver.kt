@@ -1,10 +1,10 @@
 package org.jetbrains.research.kex.smt.z3
 
 import com.microsoft.z3.*
-import org.jetbrains.research.kex.InheritorOf
 import org.jetbrains.research.kex.config.kexConfig
 import org.jetbrains.research.kex.smt.AbstractSMTSolver
 import org.jetbrains.research.kex.smt.Result
+import org.jetbrains.research.kex.smt.Solver
 import org.jetbrains.research.kex.smt.model.MemoryShape
 import org.jetbrains.research.kex.smt.model.SMTModel
 import org.jetbrains.research.kex.state.PredicateState
@@ -23,7 +23,7 @@ private val logFormulae = kexConfig.getBooleanValue("smt", "logFormulae", false)
 private val printSMTLib = kexConfig.getBooleanValue("smt", "logSMTLib", false)
 private val simplifyFormulae = kexConfig.getBooleanValue("smt", "simplifyFormulae", false)
 
-@InheritorOf("Solver")
+@Solver("z3")
 class Z3Solver(val tf: TypeFactory) : AbstractSMTSolver {
     val ef = Z3ExprFactory()
 

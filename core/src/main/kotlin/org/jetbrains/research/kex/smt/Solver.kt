@@ -1,6 +1,5 @@
 package org.jetbrains.research.kex.smt
 
-import org.jetbrains.research.kex.BaseType
 import org.jetbrains.research.kex.smt.model.SMTModel
 import org.jetbrains.research.kex.state.PredicateState
 
@@ -31,7 +30,7 @@ sealed class Result {
     }
 }
 
-@BaseType("Solver")
+@AbstractSolver
 interface AbstractSMTSolver {
     fun isReachable(state: PredicateState): Result
     fun isPathPossible(state: PredicateState, path: PredicateState): Result

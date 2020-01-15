@@ -115,7 +115,7 @@
                                     org.jetbrains.research.kex.smt.SMTProcessor
                                 </annotationProcessor>
                                 <annotationProcessor>
-                                    org.jetbrains.research.kex.InheritanceInfoProcessor
+                                    org.jetbrains.research.kex.smt.SolverInfoProcessor
                                 </annotationProcessor>
                             </annotationProcessors>
                             <annotationProcessorArgs>
@@ -123,7 +123,7 @@
                                     kex.templates=${project.parent.basedir}/velocity-templates/
                                 </processorArg>
                                 <processorArg>
-                                    kex.resources=${project.parent.basedir}/runner/src/main/resources/
+                                    runner.resources=${project.parent.basedir}/runner/src/main/resources/
                                 </processorArg>
                             </annotationProcessorArgs>
                         </configuration>

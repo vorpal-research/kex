@@ -1,0 +1,1 @@
+{"base" : "org.jetbrains.research.kex.state.PredicateState", "inheritors" : [{"class" : "org.jetbrains.research.kex.state.ChoiceState", "name" : "Choice"}, {"class" : "org.jetbrains.research.kex.state.ChainState", "name" : "Chain"}, {"class" : "org.jetbrains.research.kex.state.BasicState", "name" : "Basic"}]}

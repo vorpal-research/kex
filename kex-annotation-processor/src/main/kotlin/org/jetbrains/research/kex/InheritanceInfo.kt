@@ -8,7 +8,7 @@ private val klaxon = Klaxon()
 
 data class InheritanceInfo(
         val base: String,
-        val inheritors: MutableSet<Inheritor>
+        val inheritors: Set<Inheritor>
 ) {
     fun toJson() = klaxon.toJsonString(this)
 
@@ -17,6 +17,8 @@ data class InheritanceInfo(
             InheritanceInfo(it.base, it.inheritors.toMutableSet())
         }
     }
+
+    operator fun plus(inheritor: Inheritor) = InheritanceInfo(base, inheritors + inheritor)
 }
 
 data class Inheritor(

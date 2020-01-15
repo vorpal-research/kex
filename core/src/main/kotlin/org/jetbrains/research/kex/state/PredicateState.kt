@@ -128,7 +128,7 @@ abstract class PredicateState : TypeInfo {
     companion object {
         val states = run {
             val loader = Thread.currentThread().contextClassLoader
-            val resource = loader.getResourceAsStream("PredicateState.json")
+            val resource = loader.getResourceAsStream("State.json")
                     ?: unreachable { log.error("No info about PS inheritors") }
             val inheritanceInfo = InheritanceInfo.fromJson(resource.bufferedReader().readText())
             resource.close()

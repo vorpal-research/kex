@@ -31,3 +31,9 @@ annotation class SMTConverter(
         val solver: String,
         val importPackage: String
 )
+
+annotation class AbstractSolver
+
+annotation class Solver(
+        val name: String
+)

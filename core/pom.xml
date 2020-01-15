@@ -152,7 +152,7 @@
                             </annotationProcessorPaths>
                             <annotationProcessors>
                                 <annotationProcessor>
-                                    org.jetbrains.research.kex.smt.SMTProcessor
+                                    org.jetbrains.research.kex.smt.SolverInfoProcessor
                                 </annotationProcessor>
                                 <annotationProcessor>
                                     org.jetbrains.research.kex.InheritanceInfoProcessor
@@ -163,7 +163,7 @@
                                     kex.resources=${project.basedir}/src/main/resources/
                                 </processorArg>
                                 <processorArg>
-                                    kex.resources=${project.basedir}/src/main/resources/
+                                    runner.resources=${project.parent.basedir}/runner/src/main/resources/
                                 </processorArg>
                             </annotationProcessorArgs>
                         </configuration>

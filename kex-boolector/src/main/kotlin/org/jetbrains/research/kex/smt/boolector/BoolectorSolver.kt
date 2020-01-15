@@ -1,11 +1,11 @@
 package org.jetbrains.research.kex.smt.boolector
 
 import org.jetbrains.research.boolector.Btor
-import org.jetbrains.research.kex.InheritorOf
 import org.jetbrains.research.kex.config.kexConfig
 import org.jetbrains.research.kex.ktype.KexReal
 import org.jetbrains.research.kex.smt.AbstractSMTSolver
 import org.jetbrains.research.kex.smt.Result
+import org.jetbrains.research.kex.smt.Solver
 import org.jetbrains.research.kex.smt.model.MemoryShape
 import org.jetbrains.research.kex.smt.model.SMTModel
 import org.jetbrains.research.kex.state.PredicateState
@@ -23,7 +23,7 @@ import org.jetbrains.research.kfg.type.TypeFactory
 private val logQuery = kexConfig.getBooleanValue("smt", "logQuery", false)
 private val logFormulae = kexConfig.getBooleanValue("smt", "logFormulae", false)
 
-@InheritorOf("Solver")
+@Solver("boolector")
 class BoolectorSolver(val tf: TypeFactory) : AbstractSMTSolver {
     val ef = BoolectorExprFactory()
 
