@@ -55,7 +55,6 @@
 
     <build>
         <sourceDirectory>src/main/kotlin</sourceDirectory>
-        <!--<testSourceDirectory>src/test/kotlin</testSourceDirectory>-->
 
         <plugins>
             <plugin>
@@ -73,34 +72,6 @@
                         <goals>
                             <goal>compile</goal>
                         </goals>
-                    </execution>
-
-                    <!--<execution>-->
-                        <!--<id>test-compile</id>-->
-                        <!--<phase>test-compile</phase>-->
-                        <!--<goals>-->
-                            <!--<goal>test-compile</goal>-->
-                        <!--</goals>-->
-                    <!--</execution>-->
-                </executions>
-            </plugin>
-
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-assembly-plugin</artifactId>
-                <version>2.6</version>
-                <executions>
-                    <execution>
-                        <id>make-assembly</id>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>single</goal>
-                        </goals>
-                        <configuration>
-                            <descriptorRefs>
-                                <descriptorRef>jar-with-dependencies</descriptorRef>
-                            </descriptorRefs>
-                        </configuration>
                     </execution>
                 </executions>
             </plugin>

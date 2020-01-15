@@ -2,14 +2,10 @@ package org.jetbrains.research.kex.smt.model
 
 import org.jetbrains.research.kex.ktype.*
 import org.jetbrains.research.kex.random.Randomizer
-import org.jetbrains.research.kex.random.defaultRandomizer
 import org.jetbrains.research.kex.state.term.*
 import org.jetbrains.research.kex.state.transformer.memspace
 import org.jetbrains.research.kex.util.*
 import org.jetbrains.research.kfg.ir.Method
-import org.jetbrains.research.kfg.type.DoubleType
-import org.jetbrains.research.kfg.type.FloatType
-import org.jetbrains.research.kfg.type.Integral
 import java.lang.reflect.*
 import java.lang.reflect.Array
 
@@ -26,159 +22,6 @@ private var Field.isFinal: Boolean
     }
 
 data class ReanimatedModel(val method: Method, val instance: Any?, val arguments: List<Any?>)
-
-@Deprecated("Use @ObjectReanimator instead")
-class ModelReanimator(val method: Method, val model: SMTModel, val loader: ClassLoader) {
-    private val randomizer by lazy { defaultRandomizer }
-
-    private val memoryMappings = hashMapOf<Int, MutableMap<Int, Any?>>()
-
-    private fun memory(memspace: Int, address: Int) =
-            memoryMappings.getOrPut(memspace, ::hashMapOf)[address]
-
-    private fun memory(memspace: Int, address: Int, getter: () -> Any?) =
-            memoryMappings.getOrPut(memspace, ::hashMapOf).getOrPut(address, getter)
-
-    private fun memory(memspace: Int, address: Int, value: Any?) =
-            memoryMappings.getOrPut(memspace, ::hashMapOf).getOrPut(address) { value }
-
-    fun apply(): ReanimatedModel {
-        val thisTerm = model.assignments.keys.firstOrNull { it.toString().startsWith("this") }
-        val instance = thisTerm?.let { reanimateTerm(it) }
-
-        val modelArgs = model.assignments.keys.asSequence()
-                .mapNotNull { it as? ArgumentTerm }.map { it.index to it }.toMap()
-
-        val reanimatedArgs = arrayListOf<Any?>()
-
-        for (index in 0..method.argTypes.lastIndex) {
-            val modelArg = modelArgs[index]
-            val reanimatedArg = modelArg?.let { reanimateTerm(it) }
-
-            reanimatedArgs += reanimatedArg ?: when {
-                method.argTypes[index].isPrimary -> when (method.argTypes[index]) {
-                    is Integral -> 0
-                    is FloatType -> 0.0F
-                    is DoubleType -> 0.0
-                    else -> unreachable { log.error("Unknown primary type ${method.argTypes[index]}") }
-                }
-                else -> null
-            }
-        }
-
-        return ReanimatedModel(method, instance, reanimatedArgs)
-    }
-
-    private fun reanimateTerm(term: Term, value: Term? = model.assignments[term]): Any? = when {
-        term.isPrimary -> reanimatePrimaryTerm(term.type, value)
-        else -> reanimatePointerTerm(term, value)
-    }
-
-    private fun reanimatePrimaryTerm(type: KexType, value: Term?): Any? {
-        if (value == null) return randomizer.next(loader.loadClass(type.getKfgType(method.cm.type)))
-        return when (type) {
-            is KexBool -> (value as ConstBoolTerm).value
-            is KexByte -> (value as ConstByteTerm).value
-            is KexChar -> (value as ConstCharTerm).value
-            is KexShort -> (value as ConstShortTerm).value
-            is KexInt -> (value as ConstIntTerm).value
-            is KexLong -> (value as ConstLongTerm).value
-            is KexFloat -> (value as ConstFloatTerm).value
-            is KexDouble -> (value as ConstDoubleTerm).value
-            else -> unreachable { log.error("Trying to recover non-primary term as primary value: $value with type $type") }
-        }
-    }
-
-    private fun reanimatePointerTerm(term: Term, value: Term?): Any? = when (term.type) {
-        is KexClass -> reanimateClass(term, value)
-        is KexArray -> reanimateArray(term, value)
-        is KexReference -> reanimateReference(term, value)
-        else -> unreachable { log.error("Trying to recover non-reference term $term with type ${term.type} as reference value") }
-    }
-
-    private fun reanimateClass(term: Term, value: Term?): Any? {
-        val type = term.type as KexClass
-        val address = (value as? ConstIntTerm)?.value ?: return null
-        if (address == 0) return null
-
-        return memory(type.memspace, address) {
-            val kfgClass = method.cm.getByName(type.`class`)
-            val `class` = tryOrNull { loader.loadClass(kfgClass.canonicalDesc) } ?: return@memory null
-            val instance = randomizer.nextOrNull(`class`)
-            for (field in kfgClass.fields) {
-                val fieldCopy = term { term.field(field.type.kexType, field.name) }
-                val fieldTerm = model.assignments.keys.firstOrNull { it == fieldCopy } ?: continue
-
-                val memspace = fieldTerm.memspace
-                val fieldAddress = model.assignments[fieldTerm]
-                val fieldValue = model.memories[memspace]!!.finalMemory[fieldAddress]
-
-                val reanimatedValue = reanimateTerm(fieldTerm, fieldValue)
-
-                val fieldReflect = `class`.getDeclaredField(field.name)
-                fieldReflect.isAccessible = true
-                fieldReflect.set(instance, reanimatedValue)
-            }
-            instance
-        }
-    }
-
-    private fun reanimateReference(term: Term, value: Term?): Any? {
-        val referenced = (term.type as KexReference).reference
-        if (value == null) return null
-        val intVal = (value as ConstIntTerm).value
-
-        return when (referenced) {
-            is KexPointer -> null
-            is KexBool -> intVal.toBoolean()
-            is KexByte -> intVal.toByte()
-            is KexChar -> intVal.toChar()
-            is KexShort -> intVal.toShort()
-            is KexInt -> intVal
-            is KexLong -> intVal.toLong()
-            is KexFloat -> intVal.toFloat()
-            is KexDouble -> intVal.toDouble()
-            else -> unreachable { log.error("Can't recover type $referenced from memory value $value") }
-        }
-    }
-
-    private fun reanimateArray(term: Term, value: Term?): Any? {
-        val arrayType = term.type as KexArray
-        val address = (value as? ConstIntTerm)?.value ?: return null
-
-        val memspace = arrayType.memspace
-        val instance = run {
-            val bounds = model.bounds[memspace] ?: return@run null
-            val bound = (bounds.finalMemory[value] as? ConstIntTerm)?.value ?: return@run null
-
-            val elementSize = arrayType.element.bitsize
-            val elements = bound / elementSize
-
-            val elementClass = loader.loadClass(arrayType.element.getKfgType(method.cm.type))
-            log.debug("Creating array of type $elementClass with size $elements")
-            val instance = Array.newInstance(elementClass, elements)
-
-            val assignedElements = model.assignments.keys
-                    .mapNotNull { it as? ArrayIndexTerm }
-                    .filter { it.arrayRef == term }
-
-            for (index in assignedElements) {
-                val indexMemspace = index.memspace
-                val indexAddress = model.assignments[index] as? ConstIntTerm
-                        ?: unreachable { log.error("Non-int address") }
-
-                val element = model.memories[indexMemspace]?.finalMemory!![indexAddress]
-
-                val `object` = reanimateTerm(index, element)
-                val actualIndex = (indexAddress.value - address) / elementSize
-                if (actualIndex < elements)
-                    Array.set(instance, actualIndex, `object`)
-            }
-            instance
-        }
-        return memory(arrayType.memspace, address, instance)
-    }
-}
 
 class ObjectReanimator(val method: Method,
                       val model: SMTModel,

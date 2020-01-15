@@ -2,7 +2,6 @@ package org.jetbrains.research.kex.trace.runner
 
 import org.jetbrains.research.kex.random.GenerationException
 import org.jetbrains.research.kex.random.Randomizer
-import org.jetbrains.research.kex.random.defaultRandomizer
 import org.jetbrains.research.kex.util.isStatic
 import org.jetbrains.research.kex.util.log
 import java.lang.reflect.Constructor
@@ -31,9 +30,8 @@ private fun generate(random: Randomizer, method: Constructor<*>): Array<Any?>? =
 }
 
 
-open class RandomRunner(method: KfgMethod, loader: ClassLoader)
+open class RandomRunner(method: KfgMethod, loader: ClassLoader, val random: Randomizer)
     : AbstractRunner(method, loader) {
-    private val random = defaultRandomizer
 
     open fun run(): InvocationResult? {
         val (instance, args) = when {
@@ -51,9 +49,8 @@ open class RandomRunner(method: KfgMethod, loader: ClassLoader)
     }
 }
 
-abstract class TracingRandomRunner<T>(method: KfgMethod, loader: ClassLoader)
+abstract class TracingRandomRunner<T>(method: KfgMethod, loader: ClassLoader, val random: Randomizer)
     : TracingAbstractRunner<T>(method, loader) {
-    private val random = defaultRandomizer
 
     open fun run() : T? {
         val (instance, args) = when {

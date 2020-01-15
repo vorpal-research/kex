@@ -64,7 +64,9 @@ class InheritanceInfoProcessor : KexProcessor() {
         if (base in infos) return infos.getValue(base)
         val targetFile = File("$targetDirectory$base.json")
         return when {
-            targetFile.exists() -> InheritanceInfo.fromJson(targetFile.readText())
+            targetFile.exists() -> InheritanceInfo.fromJson(targetFile.readText())?.also {
+                infos[base] = it
+            }
             else -> null
         }
     }

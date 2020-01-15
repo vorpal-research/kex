@@ -1,6 +1,5 @@
 package org.jetbrains.research.kex.random
 
-import org.jetbrains.research.kex.random.easyrandom.EasyRandomDriver
 import org.jetbrains.research.kex.util.tryOrNull
 import java.lang.reflect.Type
 
@@ -20,6 +19,4 @@ interface Randomizer {
     fun nextOrNull(type: Type) = tryOrNull { next(type) }
 }
 
-val defaultRandomizer: Randomizer
-    get() = EasyRandomDriver()
 

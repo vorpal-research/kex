@@ -25,7 +25,7 @@ class RandomChecker(val ctx: ExecutionContext, val tm: TraceManager<Trace>) : Me
         if (method.`class`.isSynthetic) return
         if (method.isAbstract || method.isConstructor || method.isStaticInitializer) return
 
-        val randomRunner = RandomObjectTracingRunner(method, ctx.loader)
+        val randomRunner = RandomObjectTracingRunner(method, ctx.loader, ctx.random)
 
         repeat(runs) { _ ->
             try {

@@ -195,7 +195,7 @@ class ConcolicChecker(val ctx: ExecutionContext, val manager: TraceManager<Trace
         return runner.collectTrace(instance, args)
     }
 
-    private fun getRandomTrace(method: Method) = RandomObjectTracingRunner(method, loader).run()
+    private fun getRandomTrace(method: Method) = RandomObjectTracingRunner(method, loader, ctx.random).run()
 
     private suspend fun process(method: Method) {
         val traces = ArrayDeque<Trace>()

@@ -18,7 +18,7 @@ class SMTProxySolver(
     companion object {
         val solvers = run {
             val loader = Thread.currentThread().contextClassLoader
-            val resource = loader.getResourceAsStream("AbstractSMTSolver.json")
+            val resource = loader.getResourceAsStream("Solver.json")
                     ?: fail { log.error("Could not load smt solver inheritance info") }
             val inheritanceInfo = InheritanceInfo.fromJson(resource.bufferedReader().readText())
             resource.close()

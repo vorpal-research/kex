@@ -117,6 +117,11 @@
         </dependency>
 
         <dependency>
+            <groupId>com.github.benas.random-beans</groupId>
+            <artifactId>easy-random-core</artifactId>
+            <version>${easy-random.version}</version>
+        </dependency>
+        <dependency>
             <groupId>com.beust</groupId>
             <artifactId>klaxon</artifactId>
             <version>${klaxon.version}</version>

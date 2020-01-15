@@ -74,6 +74,7 @@ class EasyRandomDriver(val config: BeansConfig = defaultConfig) : Randomizer {
 
         private fun <T> createNewInstance(type: Class<T>): T = try {
             val noArgConstructor = type.getDeclaredConstructor()
+            @Suppress("DEPRECATION")
             if (!noArgConstructor.isAccessible) {
                 noArgConstructor.isAccessible = true
             }

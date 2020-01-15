@@ -14,6 +14,7 @@ import org.jetbrains.research.kex.config.CmdConfig
 import org.jetbrains.research.kex.config.FileConfig
 import org.jetbrains.research.kex.config.RuntimeConfig
 import org.jetbrains.research.kex.config.kexConfig
+import org.jetbrains.research.kex.random.easyrandom.EasyRandomDriver
 import org.jetbrains.research.kex.serialization.KexSerializer
 import org.jetbrains.research.kex.smt.Checker
 import org.jetbrains.research.kex.smt.Result
@@ -83,8 +84,8 @@ class Kex(args: Array<String>) {
         writeClassesToTarget(classManager, jar, target, Package.defaultPackage, true)
         val classLoader = URLClassLoader(arrayOf(target.toURI().toURL()))
 
-        val originalContext = ExecutionContext(origManager, jar.classLoader)
-        val analysisContext = ExecutionContext(classManager, classLoader)
+        val originalContext = ExecutionContext(origManager, jar.classLoader, EasyRandomDriver())
+        val analysisContext = ExecutionContext(classManager, classLoader, EasyRandomDriver())
 
         executePipeline(originalContext.cm, `package`) {
             +RuntimeTraceCollector(originalContext.cm)
