@@ -82,7 +82,7 @@
                 <groupId>org.jetbrains.kotlin</groupId>
                 <version>${kotlin.version}</version>
                 <configuration>
-                    <jvmTarget>1.8</jvmTarget>
+                    <jvmTarget>${jvm.version}</jvmTarget>
                 </configuration>
 
                 <dependencies>

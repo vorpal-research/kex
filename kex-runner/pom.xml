@@ -20,11 +20,9 @@
 
         <logback.version>1.2.3</logback.version>
         <slf4j.version>1.7.25</slf4j.version>
-        <ini4j.version>0.5.4</ini4j.version>
         <commons-cli.version>1.4</commons-cli.version>
 
         <easy-random.version>easy-random-4.0.0</easy-random.version>
-        <better-parse.version>0.3.2</better-parse.version>
         <klaxon.version>3.0.6</klaxon.version>
     </properties>
 
@@ -61,11 +59,6 @@
             <version>${commons-cli.version}</version>
         </dependency>
         <dependency>
-            <groupId>org.ini4j</groupId>
-            <artifactId>ini4j</artifactId>
-            <version>${ini4j.version}</version>
-        </dependency>
-        <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
             <version>${slf4j.version}</version>
@@ -76,11 +69,6 @@
             <version>${logback.version}</version>
         </dependency>
 
-        <dependency>
-            <groupId>com.github.vorpal-research</groupId>
-            <artifactId>kfg</artifactId>
-            <version>${kfg.version}</version>
-        </dependency>
         <dependency>
             <groupId>org.jetbrains.research</groupId>
             <artifactId>core</artifactId>
@@ -140,7 +128,7 @@
                 <groupId>org.jetbrains.kotlin</groupId>
                 <version>${kotlin.version}</version>
                 <configuration>
-                    <jvmTarget>1.8</jvmTarget>
+                    <jvmTarget>${jvm.version}</jvmTarget>
                     <compilerPlugins>
                         <plugin>kotlinx-serialization</plugin>
                     </compilerPlugins>
@@ -215,6 +203,34 @@
                                 <include>**/*LongTest.java</include>
                             </includes>
                         </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-assembly-plugin</artifactId>
+                <version>2.6</version>
+                <configuration>
+                    <archive>
+                        <manifest>
+                            <mainClass>${exec.main}</mainClass>
+                            <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
+                            <addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>
+                        </manifest>
+                    </archive>
+                    <descriptorRefs>
+                        <descriptorRef>jar-with-dependencies</descriptorRef>
+                    </descriptorRefs>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>make-assembly</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>single</goal>
+                        </goals>
                     </execution>
                 </executions>
             </plugin>
