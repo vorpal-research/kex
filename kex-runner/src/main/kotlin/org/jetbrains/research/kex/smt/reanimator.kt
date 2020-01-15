@@ -1,4 +1,4 @@
-package org.jetbrains.research.kex.smt.model
+package org.jetbrains.research.kex.smt
 
 import org.jetbrains.research.kex.ktype.*
 import org.jetbrains.research.kex.random.Randomizer
@@ -24,9 +24,9 @@ private var Field.isFinal: Boolean
 data class ReanimatedModel(val method: Method, val instance: Any?, val arguments: List<Any?>)
 
 class ObjectReanimator(val method: Method,
-                      val model: SMTModel,
-                      val loader: ClassLoader,
-                      val randomizer: Randomizer) {
+                       val model: SMTModel,
+                       val loader: ClassLoader,
+                       val randomizer: Randomizer) {
     private val memoryMappings = hashMapOf<Int, MutableMap<Int, Any?>>()
 
     private fun memory(memspace: Int, address: Int) =

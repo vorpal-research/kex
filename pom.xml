@@ -20,6 +20,10 @@
     <properties>
         <jvm.version>1.8</jvm.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <!-- necessary for intellij to function -->
+        <maven.compiler.source>${jvm.version}</maven.compiler.source>
+        <maven.compiler.target>${jvm.version}</maven.compiler.target>
+
         <kotlin.version>1.3.41</kotlin.version>
         <compiler-plugin.version>3.5.1</compiler-plugin.version>
     </properties>

@@ -2,7 +2,6 @@ package org.jetbrains.research.kex.state.transformer
 
 import org.jetbrains.research.kex.collections.DisjointSet
 import org.jetbrains.research.kex.collections.Subset
-import org.jetbrains.research.kex.config.kexConfig
 import org.jetbrains.research.kex.ktype.KexType
 import org.jetbrains.research.kex.state.predicate.*
 import org.jetbrains.research.kex.state.term.*
@@ -208,9 +207,5 @@ class StensgaardAA : Transformer<StensgaardAA>, AliasAnalysis {
         return values.toList()
     }
 
-    fun viewGraph() {
-        val dot = kexConfig.getStringValue("view", "dot", "/usr/bin/dot")
-        val browser = kexConfig.getStringValue("view", "browser", "/usr/bin/chromium")
-        viewCfg("SteensgaardAA", asGraph(), dot, browser)
-    }
+    fun viewGraph(dot: String, viewer: String) = viewCfg("SteensgaardAA", asGraph(), dot, viewer)
 }

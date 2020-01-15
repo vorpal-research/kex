@@ -6,6 +6,7 @@ import kotlinx.coroutines.withTimeout
 import kotlinx.coroutines.yield
 import org.jetbrains.research.kex.ExecutionContext
 import org.jetbrains.research.kex.asm.state.PredicateStateAnalysis
+import org.jetbrains.research.kex.collections.firstOrElse
 import org.jetbrains.research.kex.collections.stackOf
 import org.jetbrains.research.kex.config.kexConfig
 import org.jetbrains.research.kex.random.Randomizer
@@ -21,7 +22,6 @@ import org.jetbrains.research.kex.trace.`object`.*
 import org.jetbrains.research.kex.trace.runner.ObjectTracingRunner
 import org.jetbrains.research.kex.trace.runner.RandomObjectTracingRunner
 import org.jetbrains.research.kex.trace.runner.TimeoutException
-import org.jetbrains.research.kex.util.firstOrElse
 import org.jetbrains.research.kex.util.log
 import org.jetbrains.research.kex.util.tryOrNull
 import org.jetbrains.research.kfg.ClassManager

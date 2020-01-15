@@ -1,6 +1,5 @@
 package org.jetbrains.research.kex.util
 
-import org.jetbrains.research.kex.trace.file.UnknownTypeException
 import org.jetbrains.research.kfg.ir.Method
 import org.jetbrains.research.kfg.type.*
 import org.reflections.Reflections
@@ -39,7 +38,7 @@ fun ClassLoader.loadClass(type: Type): Class<*> = when (type) {
     } catch (e: ClassNotFoundException) {
         ClassLoader.getSystemClassLoader().loadClass(type.`class`.canonicalDesc)
     }
-    else -> throw UnknownTypeException(type.toString())
+    else -> throw ClassNotFoundException(type.toString())
 }
 
 fun Class<*>.getMethod(method: Method, loader: ClassLoader): java.lang.reflect.Method {

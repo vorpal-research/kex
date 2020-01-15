@@ -1,6 +1,5 @@
 package org.jetbrains.research.kex.serializer
 
-//import org.jetbrains.research.kex.serialization.predicateTypeSerialModule
 import kotlinx.serialization.ImplicitReflectionSerializer
 import kotlinx.serialization.UnstableDefault
 import org.jetbrains.research.kex.KexTest
@@ -78,7 +77,7 @@ class KexSerializerTest : KexTest() {
     }
 
     @Test
-    fun testPredicateTypeSerialization() {
+    fun predicateTypeSerializationTest() {
         val state = PredicateType.State()
         val path = PredicateType.Path()
         val assume = PredicateType.Assume()
@@ -100,7 +99,7 @@ class KexSerializerTest : KexTest() {
     }
 
     @Test
-    fun testPredicateSerialization() {
+    fun predicateSerializationTest() {
         val klassType = KexClass("org/jetbrains/research/kex/Test")
         val argTerm = term { arg(KexInt(), 0) }
         val constantInt = term { const(137) }
@@ -128,7 +127,7 @@ class KexSerializerTest : KexTest() {
     }
 
     @Test
-    fun testPredicateStateSerialization() {
+    fun predicateStateSerializationTest() {
         val basicClass = cm.getByName("$packageName/BasicTests")
 
         for (method in basicClass.methods) {

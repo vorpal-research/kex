@@ -6,10 +6,7 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonConfiguration
 import kotlinx.serialization.modules.SerialModule
 import kotlinx.serialization.serializer
-import org.jetbrains.research.kex.config.kexConfig
 import org.jetbrains.research.kfg.ClassManager
-
-private val prettyPrint = kexConfig.getBooleanValue("json", "pretty-print", false)
 
 abstract class AbstractSerializer(val context: SerialModule) {
     @UseExperimental(UnstableDefault::class)
@@ -17,7 +14,7 @@ abstract class AbstractSerializer(val context: SerialModule) {
             encodeDefaults = false,
             strictMode = true,
             unquoted = false,
-            prettyPrint = prettyPrint,
+            prettyPrint = true,
             useArrayPolymorphism = false,
             classDiscriminator = "className"
     )

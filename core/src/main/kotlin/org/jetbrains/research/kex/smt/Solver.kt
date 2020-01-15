@@ -1,6 +1,5 @@
 package org.jetbrains.research.kex.smt
 
-import org.jetbrains.research.kex.smt.model.SMTModel
 import org.jetbrains.research.kex.state.PredicateState
 
 sealed class Result {

@@ -3,7 +3,7 @@ package org.jetbrains.research.kex.state.transformer
 import org.jetbrains.research.kex.ktype.KexIntegral
 import org.jetbrains.research.kex.ktype.KexReal
 import org.jetbrains.research.kex.ktype.KexType
-import org.jetbrains.research.kex.smt.model.SMTModel
+import org.jetbrains.research.kex.smt.SMTModel
 import org.jetbrains.research.kex.state.BasicState
 import org.jetbrains.research.kex.state.ChoiceState
 import org.jetbrains.research.kex.state.PredicateState

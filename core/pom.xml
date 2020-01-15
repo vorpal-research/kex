@@ -18,9 +18,6 @@
         <logback.version>1.2.3</logback.version>
         <slf4j.version>1.7.25</slf4j.version>
         <ini4j.version>0.5.4</ini4j.version>
-
-        <better-parse.version>0.3.2</better-parse.version>
-        <reflections.version>0.9.11</reflections.version>
     </properties>
 
     <repositories>
@@ -83,12 +80,6 @@
         </dependency>
 
         <dependency>
-            <groupId>com.github.h0tk3y</groupId>
-            <artifactId>better-parse</artifactId>
-            <version>${better-parse.version}</version>
-        </dependency>
-
-        <dependency>
             <groupId>org.jetbrains.kotlin</groupId>
             <artifactId>kotlin-stdlib-jdk8</artifactId>
             <version>${kotlin.version}</version>
@@ -98,11 +89,6 @@
             <groupId>org.jetbrains.kotlinx</groupId>
             <artifactId>kotlinx-serialization-runtime</artifactId>
             <version>${serialization.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.reflections</groupId>
-            <artifactId>reflections</artifactId>
-            <version>${reflections.version}</version>
         </dependency>
     </dependencies>
 

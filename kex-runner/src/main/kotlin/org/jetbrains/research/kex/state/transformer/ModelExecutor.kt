@@ -5,9 +5,9 @@ import org.jetbrains.research.kex.ktype.KexClass
 import org.jetbrains.research.kex.ktype.kexType
 import org.jetbrains.research.kex.random.GenerationException
 import org.jetbrains.research.kex.random.Randomizer
-import org.jetbrains.research.kex.smt.model.ObjectReanimator
-import org.jetbrains.research.kex.smt.model.ReanimatedModel
-import org.jetbrains.research.kex.smt.model.SMTModel
+import org.jetbrains.research.kex.smt.ObjectReanimator
+import org.jetbrains.research.kex.smt.ReanimatedModel
+import org.jetbrains.research.kex.smt.SMTModel
 import org.jetbrains.research.kex.state.BasicState
 import org.jetbrains.research.kex.state.ChoiceState
 import org.jetbrains.research.kex.state.PredicateState

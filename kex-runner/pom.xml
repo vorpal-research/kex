@@ -23,6 +23,8 @@
         <commons-cli.version>1.4</commons-cli.version>
 
         <easy-random.version>easy-random-4.0.0</easy-random.version>
+        <better-parse.version>0.3.2</better-parse.version>
+        <reflections.version>0.9.11</reflections.version>
         <klaxon.version>3.0.6</klaxon.version>
     </properties>
 
@@ -95,9 +97,24 @@
         </dependency>
 
         <dependency>
+            <groupId>com.github.vorpal-research</groupId>
+            <artifactId>kfg</artifactId>
+            <version>${kfg.version}</version>
+        </dependency>
+        <dependency>
             <groupId>com.github.benas.random-beans</groupId>
             <artifactId>easy-random-core</artifactId>
             <version>${easy-random.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.github.h0tk3y</groupId>
+            <artifactId>better-parse</artifactId>
+            <version>${better-parse.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.reflections</groupId>
+            <artifactId>reflections</artifactId>
+            <version>${reflections.version}</version>
         </dependency>
         <dependency>
             <groupId>com.beust</groupId>

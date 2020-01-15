@@ -1,6 +1,6 @@
 package org.jetbrains.research.kex.state.transformer
 
-import org.jetbrains.research.kex.smt.model.SMTModel
+import org.jetbrains.research.kex.smt.SMTModel
 import org.jetbrains.research.kex.state.BasicState
 import org.jetbrains.research.kex.state.ChoiceState
 import org.jetbrains.research.kex.state.PredicateState

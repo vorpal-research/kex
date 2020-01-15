@@ -3,11 +3,7 @@ package org.jetbrains.research.kex.smt.boolector
 import org.jetbrains.research.boolector.Btor
 import org.jetbrains.research.kex.config.kexConfig
 import org.jetbrains.research.kex.ktype.KexReal
-import org.jetbrains.research.kex.smt.AbstractSMTSolver
-import org.jetbrains.research.kex.smt.Result
-import org.jetbrains.research.kex.smt.Solver
-import org.jetbrains.research.kex.smt.model.MemoryShape
-import org.jetbrains.research.kex.smt.model.SMTModel
+import org.jetbrains.research.kex.smt.*
 import org.jetbrains.research.kex.state.PredicateState
 import org.jetbrains.research.kex.state.term.ConstIntTerm
 import org.jetbrains.research.kex.state.term.ConstLongTerm

@@ -1,4 +1,4 @@
-package org.jetbrains.research.kex.util
+package org.jetbrains.research.kex.collections
 
 fun <T> Collection<T>.firstOrDefault(default: T): T = firstOrNull() ?: default
 fun <T> Collection<T>.firstOrDefault(predicate: (T) -> Boolean, default: T): T = firstOrNull(predicate) ?: default

@@ -16,11 +16,11 @@ class DoubleTypeAdapter : RecollectingTransformer<DoubleTypeAdapter> {
 
     private fun addFPContract(terms: Set<Term>) {
         terms.forEach {
-            when {
-                it.type is KexFloat -> {
+            when (it.type) {
+                is KexFloat -> {
                     currentBuilder += assume { it inequality Float.NaN }
                 }
-                it.type is KexDouble -> {
+                is KexDouble -> {
                     currentBuilder += assume { it inequality Double.NaN }
                 }
             }
