@@ -22,7 +22,7 @@ class CmdConfig(args: Array<String>) : Config {
             parser.parse(options, args)
         } catch (e: ParseException) {
             exit<Cmd> {
-                log.error("Error parsing command line arguments: ${e.message}")
+                System.err.println("Error parsing command line arguments: ${e.message}")
                 printHelp()
             }
         }
@@ -34,7 +34,7 @@ class CmdConfig(args: Array<String>) : Config {
         }
 
         val optValues = cmd.getOptionValues("option") ?: arrayOf()
-        for (index in 0 until optValues.size step 3) {
+        for (index in optValues.indices step 3) {
             try {
                 val section = optValues[index]
                 val name = optValues[index + 1]

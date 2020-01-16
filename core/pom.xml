@@ -13,7 +13,6 @@
 
     <properties>
         <serialization.version>0.14.0</serialization.version>
-        <kfg.version>0.0.5</kfg.version>
 
         <logback.version>1.2.3</logback.version>
         <slf4j.version>1.7.25</slf4j.version>

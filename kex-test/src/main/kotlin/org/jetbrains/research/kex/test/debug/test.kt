@@ -2,123 +2,161 @@
 
 package org.jetbrains.research.kex.test.debug
 
-import kotlin.math.abs
+import org.jetbrains.research.kex.test.Intrinsics
+import java.io.ByteArrayInputStream
+import java.io.File
+import java.io.InputStream
+import java.nio.file.Files
+import java.nio.file.StandardCopyOption
 
-fun lol(n: Int): Int {
-    if (n > 10) println(10)
-    println("aaa")
-    if (n > 100) println(1000)
-    return n * n
-}
-
-
-fun testPlain(a: Int, b: Int): Int {
-    val i = 10
-    val j = 152
-    val k = j + i - 15
-
-    val max = maxOf(a, b, k)
-    return max
-}
-
-fun testIf(a: Int, b: Int): Int {
-    val res = if (a > b) {
-        a - b
-    } else {
-        a + b
+class Icfpc2018Test {
+    class ZipWriter {
+        fun createZip(name: String): Unit {}
     }
 
-    println(res)
-    return res
-}
+    class Results(val elements: MutableMap<String, Result>) : MutableMap<String, Result> by elements {
+        companion object {
+            fun readFromDirectory(dir: String): Results = Results(mutableMapOf(dir to Result(mutableMapOf())))
+        }
 
-fun testWhen(a: Char): Int {
-    val y = when (a) {
-        'a' -> 5
-        'b' -> 4
-        'c' -> 3
-        'd' -> 2
-        'f' -> 1
-        else -> {
-            println("You suck")
-            -1
+        fun merge(other: Results): Results {
+            val elements = this.elements.toMap().toMutableMap()
+            elements.putAll(other.elements)
+            return Results(elements)
         }
     }
-    return y
-}
 
-fun testLoop(a: Int, b: Int): Int {
-    var x = a - b
-    while (x < a) {
-        if (b > x) {
-            println("b bigger")
+    class Result(val solutions: MutableMap<String, Solution>) {
+        fun getSortedSolutions(): List<Pair<String, Solution>> = solutions.toList().sortedBy { it.first }
+    }
+
+    class Solution(val energy: Long, val trace: String) {
+        fun solve() {}
+    }
+
+
+    enum class RunMode {
+        ASSEMBLE, DISASSEMBLE, REASSEMBLE, SUBMIT, ALL
+    }
+
+    class Command {
+        companion object {
+            fun read(str: InputStream): Command = Command()
         }
-        ++x
     }
-    return x
-}
 
-fun testUnreachableIf(x: Int): Int {
-    val set = "asdasdal;djadslas;d".length
-    val z = 10
-    val y = if (x > z && x < 0) {
-        println("lol")
-        142
-    } else {
-        println("lol2")
-        x- 2 * x
+    class Model(val size: Int, val numGrounded: Int = 0) {
+        companion object {
+            fun readMDL(inp: InputStream): Model = Model(10, 15)
+        }
     }
-    return y
-}
 
-fun testUnreachableLoop(): Int {
-    var x = 10
-    while (x > 5) {
-        ++x
+    class State {
+        val matrix = Model(0, 0)
     }
-    println(x)
-    return x
-}
 
-fun testArray(): Int {
-    val array = arrayOf(
-            arrayOf(0, 1, 2, 3, 4),
-            arrayOf(5, 6, 7, 8, 9),
-            arrayOf(10, 11, 12, 13, 14)
-    )
-    return array.flatten().reduce { a, b -> a + b}
-}
+    class System(var currentState: State, val score: Int = 0)
 
-fun testUnreachableArray(): Int {
-    val array = arrayOf(
-            arrayOf(0, 1, 2, 3, 4),
-            arrayOf(5, 6, 7, 8, 9),
-            arrayOf(10, 11, 12, 13, 14)
-    )
-    return array.flatten().reduce { a, b -> a + b}
-}
-
-fun testSimpleOuterCall(): Int {
-    val a = 10
-    val b = 42
-    val c = abs(a - b)
-    return c
-}
-
-fun triangleKind(a: Double, b: Double, c: Double): Double {
-    val max = maxOf(a, b, c)
-    if (2 * max > a + b + c)
-        return -1.0
-    val res = 2 * max * max - a * a - b * b - c * c
-    return res
-}
-
-class A {
-    fun main(args: Array<String>) {
-        if (args[0] == "a") lol(10)
-        if (args[1].length > 2) testPlain(0, 1)
-        if (args[2] < args[3]) testArray()
-        if (args[4] == "b") triangleKind(1.0, 2.0, 4.0)
-        if (args[5].length < 5) testSimpleOuterCall()
+    class Trace(val trace: List<Command>, val system: System) {
+        fun solve() {}
     }
+
+    private fun getModeByModelName(name: String): RunMode = RunMode.values()[name.length % 5]
+    private fun getSolutionByName(name: String, target: Model, system: System): Solution = Solution(100, name)
+
+    fun submitChecked(resultDirs: List<String>) {
+        val results = resultDirs.map { Results.readFromDirectory(it) }
+        val merged = results.reduce { acc, res -> acc.merge(res) }
+        for ((task, result) in merged) {
+            val mode = getModeByModelName(task)
+            if (mode == RunMode.REASSEMBLE) {
+                Intrinsics.assertReachable()
+
+                val bestSolution = result.getSortedSolutions().first().second
+                Files.copy(File(bestSolution.trace).toPath(), File("submit/$task.nbt").toPath(),
+                        StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.COPY_ATTRIBUTES)
+            } else {
+                Intrinsics.assertReachable()
+
+                val targetModel = when (mode) {
+                    RunMode.ASSEMBLE -> Model.readMDL(ByteArrayInputStream("models/${task}_tgt.mdl".toByteArray()))
+                    else -> Model.readMDL(ByteArrayInputStream("models/${task}_src.mdl".toByteArray()))
+                }
+                val state = State()
+
+                var haveSolution = false
+                for ((solutionName, solution) in result.getSortedSolutions()) {
+                    Intrinsics.assertReachable()
+                    val traceFile = File(solution.trace).inputStream()
+                    val commands: MutableList<Command> = mutableListOf()
+                    while (traceFile.available() != 0) {
+                        Intrinsics.assertReachable()
+                        commands += Command.read(traceFile)
+                    }
+                    val system = System(state)
+                    try {
+                        Trace(commands, system).solve()
+                    } catch (e: Exception) {
+                        continue
+                    }
+
+                    if (system.currentState.matrix != targetModel) {
+                        Intrinsics.assertReachable()
+                        continue
+                    }
+
+                    Files.copy(File(solution.trace).toPath(), File("submit/$task.nbt").toPath(),
+                            StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.COPY_ATTRIBUTES)
+                    haveSolution = true
+                    Intrinsics.assertReachable()
+                    break
+                }
+                if (!haveSolution) {
+                    Intrinsics.assertReachable()
+                    return
+                }
+                Intrinsics.assertReachable()
+            }
+        }
+
+        Intrinsics.assertReachable()
+        ZipWriter().createZip("submit/")
+    }
+
+    fun portfolioSolve() {
+        val task = "taskname"
+        val target = Model.readMDL(ByteArrayInputStream("models/${task}_tgt.mdl".toByteArray()))
+        val initialState = State()
+        val system = System(initialState)
+        val solutionNames = listOf("grounded_slices", "grounded_bounded_slices", "regions")
+
+        var initialized = false
+        var bestSolutionName = "none"
+        for (solutionName in solutionNames) {
+            var solutionSystem = System(initialState)
+            val solution = getSolutionByName(solutionName, target, solutionSystem)
+            try {
+                solution.solve()
+            } catch (e: Exception) {
+
+                if (solutionName == "regions") {
+                    try {
+                        solutionSystem = System(initialState)
+                        val newSolution = getSolutionByName("regions_deadlocks", target, solutionSystem)
+                        newSolution.solve()
+                    } catch (e: Exception) {
+                        continue
+                    }
+                } else continue
+            }
+
+            if (solutionSystem.currentState.matrix == target) {
+                if (!initialized || system.score > solutionSystem.score) {
+                    system.currentState = solutionSystem.currentState
+                    initialized = true
+                }
+            }
+        }
+    }
+
 }

@@ -28,7 +28,7 @@ import org.jetbrains.research.kfg.Package
 import org.jetbrains.research.kfg.analysis.LoopSimplifier
 import org.jetbrains.research.kfg.util.Flags
 import org.jetbrains.research.kfg.util.classLoader
-import org.jetbrains.research.kfg.util.writeClassesToTarget
+import org.jetbrains.research.kfg.util.unpack
 import org.jetbrains.research.kfg.visitor.executePipeline
 import java.io.File
 import java.net.URLClassLoader
@@ -64,7 +64,7 @@ class Kex(args: Array<String>) {
 
         jar = JarFile(Paths.get(jarName).toAbsolutePath().toFile())
         `package` = packageName?.let { Package.parse(it) } ?: Package.defaultPackage
-        targetDir = Paths.get(cmd.getCmdValue("target", "instrumented/"))
+        targetDir = Paths.get(cmd.getCmdValue("target", "instrumented/")).toAbsolutePath()
     }
 
     private fun updateClassPath(loader: URLClassLoader) {
@@ -78,12 +78,12 @@ class Kex(args: Array<String>) {
 
     @ImplicitReflectionSerializer
     fun main() {
-        val classManager = ClassManager(jar, KfgConfig(`package` = Package.defaultPackage, flags = Flags.readAll, failOnError = false))
-        val origManager = ClassManager(jar, KfgConfig(`package` = Package.defaultPackage, flags = Flags.readAll, failOnError = false))
+        val classManager = ClassManager(jar, KfgConfig(`package` = `package`, flags = Flags.readAll, failOnError = false))
+        val origManager = ClassManager(jar, KfgConfig(`package` = `package`, flags = Flags.readAll, failOnError = false))
 
         log.debug("Running with jar ${jar.name} and package $`package`")
         // write all classes to target, so they will be seen by ClassLoader
-        writeClassesToTarget(classManager, jar, targetDir.toFile(), Package.defaultPackage, true)
+        jar.unpack(classManager, targetDir, Package.defaultPackage, true)
         val classLoader = URLClassLoader(arrayOf(targetDir.toUri().toURL()))
 
         val originalContext = ExecutionContext(origManager, jar.classLoader, EasyRandomDriver())
@@ -91,7 +91,7 @@ class Kex(args: Array<String>) {
 
         executePipeline(originalContext.cm, `package`) {
             +RuntimeTraceCollector(originalContext.cm)
-            +ClassWriter(originalContext, targetDir.toFile())
+            +ClassWriter(originalContext, targetDir)
         }
 
         when (cmd.getEnumValue<Mode>("mode") ?: this.mode) {
