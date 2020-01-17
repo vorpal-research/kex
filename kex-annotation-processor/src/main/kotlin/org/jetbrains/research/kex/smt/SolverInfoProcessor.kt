@@ -65,6 +65,7 @@ class SolverInfoProcessor : KexProcessor() {
 
     private fun writeInheritanceInfo(name: String, info: InheritanceInfo) {
         val targetFile = File("$targetDirectory$name.json")
+        if (!targetFile.exists()) targetFile.createNewFile()
         targetFile.bufferedWriter().use {
             it.write(info.toJson())
             it.flush()
