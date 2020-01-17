@@ -62,7 +62,7 @@
 
         <dependency>
             <groupId>com.github.AbdullinAM</groupId>
-            <artifactId>JavaBoolector</artifactId>
+            <artifactId>boolector-java</artifactId>
             <version>${boolector.version}</version>
         </dependency>
         <dependency>

@@ -56,16 +56,14 @@ class SolverInfoProcessor : KexProcessor() {
     }
 
     private fun getInheritanceInfo(name: String): InheritanceInfo {
-        val targetFile = File("$targetDirectory$name.json")
-        val info = targetFile.takeIf { it.exists() }?.bufferedReader()?.use {
+        val targetFile = File(targetDirectory, "$name.json")
+        return targetFile.takeIf { it.exists() }?.bufferedReader()?.use {
             InheritanceInfo.fromJson(it.readText())
         } ?: unreachable { error("Could not load $name with solver info") }
-        return info
     }
 
     private fun writeInheritanceInfo(name: String, info: InheritanceInfo) {
-        val targetFile = File("$targetDirectory$name.json")
-        if (!targetFile.exists()) targetFile.createNewFile()
+        val targetFile = File(targetDirectory,"$name.json")
         targetFile.bufferedWriter().use {
             it.write(info.toJson())
             it.flush()
