@@ -8,6 +8,7 @@ import org.jetbrains.research.kex.util.*
 import org.jetbrains.research.kfg.ir.Method
 import java.lang.reflect.*
 import java.lang.reflect.Array
+import kotlin.math.ceil
 
 private val Term.isPointer get() = this.type is KexPointer
 private val Term.isPrimary get() = !this.isPointer
@@ -81,22 +82,7 @@ class ObjectReanimator(val method: Method,
         if (address == 0) return null
 
         val memspace = arrayType.memspace
-        val instance = run {
-            // if model does not contain any information about bounds of current array, we can create array of any length
-            val bound = (model.bounds[memspace]?.finalMemory?.get(addr) as? ConstIntTerm)?.value ?: 0
-            val elementSize = arrayType.element.bitsize
-            val elements = bound / elementSize
-
-            val elementType = when (jType) {
-                is Class<*> -> jType.componentType
-                is GenericArrayType -> randomizer.nextOrNull(jType.genericComponentType)?.javaClass
-                else -> unreachable { log.error("Unknown jType in array recovery: $jType") }
-            }
-            log.debug("Creating array of type $elementType with size $elements")
-            val instance = Array.newInstance(elementType, elements)
-
-            instance
-        }
+        val instance = newArrayInstance(memspace, arrayType, jType, addr)
         return memory(arrayType.memspace, address, instance)
     }
 
@@ -197,26 +183,29 @@ class ObjectReanimator(val method: Method,
             is KexClass -> memory(term.memspace, address) { randomizer.nextOrNull(jType) }
             is KexArray -> {
                 val memspace = term.memspace//referencedType.memspace
-                val instance = run {
-                    val bounds = model.bounds[memspace] ?: return@run null
-                    val bound = (bounds.finalMemory[addr] as? ConstIntTerm)?.value ?: return@run null
-
-                    val elementSize = referencedType.element.bitsize
-                    val elements = bound / elementSize
-
-                    val elementType = when (jType) {
-                        is Class<*> -> jType.componentType
-                        is GenericArrayType -> randomizer.nextOrNull(jType.genericComponentType)?.javaClass
-                        else -> unreachable { log.error("Unknown jType in array recovery: $jType") }
-                    }
-                    log.debug("Creating array of type $elementType with size $elements")
-                    val instance = Array.newInstance(elementType, elements)
-
-                    instance
-                }
+                val instance = newArrayInstance(memspace, referencedType, jType, addr)
                 memory(memspace, address, instance)
             }
             else -> unreachable { log.error("Trying to recover reference pointer that is not pointer") }
         }
+    }
+
+    private fun newArrayInstance(memspace: Int, arrayType: KexArray, jType: Type, addr: Term?): Any? {
+        val bounds = model.bounds[memspace] ?: return null
+        val bound = (bounds.finalMemory[addr] as? ConstIntTerm)?.value ?: return null
+
+        val elementSize = arrayType.element.bitsize
+        // todo: this is needed because Boolector does not always align bounds by bytesize
+        val elements = ceil(bound.toDouble() / elementSize).toInt()
+
+        val elementType = when (jType) {
+            is Class<*> -> jType.componentType
+            is GenericArrayType -> randomizer.nextOrNull(jType.genericComponentType)?.javaClass
+            else -> unreachable { log.error("Unknown jType in array recovery: $jType") }
+        }
+        log.debug("Creating array of type $elementType with size $elements")
+        val instance = Array.newInstance(elementType, elements)
+
+        return instance
     }
 }
