@@ -173,6 +173,7 @@ abstract class TermBuilder {
     fun Term.length() = tf.getUnaryTerm(this, UnaryOpcode.LENGTH)
 
     operator fun Term.get(index: Term) = tf.getArrayIndex(this, index)
+    operator fun Term.get(index: Int) = tf.getArrayIndex(this, const(index))
 
     fun Term.load() = when (this) {
         is ArrayIndexTerm -> tf.getArrayLoad(this)

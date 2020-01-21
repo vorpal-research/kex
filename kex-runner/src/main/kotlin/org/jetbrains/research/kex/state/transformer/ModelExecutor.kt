@@ -1,13 +1,11 @@
 package org.jetbrains.research.kex.state.transformer
 
 import org.jetbrains.research.kex.ExecutionContext
+import org.jetbrains.research.kex.generator.Descriptor
 import org.jetbrains.research.kex.ktype.KexClass
 import org.jetbrains.research.kex.ktype.kexType
 import org.jetbrains.research.kex.random.GenerationException
-import org.jetbrains.research.kex.random.Randomizer
-import org.jetbrains.research.kex.smt.ObjectReanimator
-import org.jetbrains.research.kex.smt.ReanimatedModel
-import org.jetbrains.research.kex.smt.SMTModel
+import org.jetbrains.research.kex.smt.*
 import org.jetbrains.research.kex.state.BasicState
 import org.jetbrains.research.kex.state.ChoiceState
 import org.jetbrains.research.kex.state.PredicateState
@@ -67,11 +65,13 @@ private fun mergeTypes(lhv: Type, rhv: Type, loader: ClassLoader): Type {
 }
 
 class ModelExecutor(val method: Method,
-                    type: TypeFactory,
-                    model: SMTModel,
-                    loader: ClassLoader,
-                    randomizer: Randomizer) : Transformer<ModelExecutor> {
-    private val reanimator = ObjectReanimator(method, model, loader, randomizer)
+                    val ctx: ExecutionContext,
+                    model: SMTModel) : Transformer<ModelExecutor> {
+    private val type: TypeFactory get() = ctx.types
+    private val loader: ClassLoader get() = ctx.loader
+
+    private val reanimator: Reanimator<Any?> = ObjectReanimator(method, model, ctx)
+    private val descriptors: Reanimator<Descriptor> = DescriptorReanimator(method, model, ctx)
     private val memory = hashMapOf<Term, Any?>()
     private var thisTerm: Term? = null
     private val argTerms = sortedMapOf<Int, Term>()
@@ -95,7 +95,10 @@ class ModelExecutor(val method: Method,
         for ((index, type) in method.argTypes.withIndex()) {
             argTerms.getOrPut(index) { term { arg(type.kexType, index) } }
         }
-        thisTerm?.let { memory[it] = reanimator.reanimateTerm(it, javaClass) }
+        thisTerm?.let {
+            memory[it] = reanimator.reanimateNullable(it, javaClass)
+            log.debug("Descriptor fot $it: ${descriptors.reanimate(it, javaClass)}")
+        }
         argTerms.values.zip(javaMethod.genericParameterTypes).forEach { (term, type) ->
             // TODO: need to think about more clever type info merging
             val castedType = when (term) {
@@ -106,14 +109,15 @@ class ModelExecutor(val method: Method,
                 null -> type
                 else -> mergeTypes(castedType, type, reanimator.loader)
             }
-            memory[term] = reanimator.reanimateTerm(term, actualType)
+            memory[term] = reanimator.reanimateNullable(term, actualType)
+            log.debug("Descriptor fot $term: ${descriptors.reanimateNullable(term, javaClass)}")
         }
         return super.apply(ps)
     }
 
     override fun transformBasic(ps: BasicState): PredicateState {
         val vars = collectPointers(ps)
-        vars.forEach { ptr -> memory.getOrPut(ptr) { reanimator.reanimateTerm(ptr) } }
+        vars.forEach { ptr -> memory.getOrPut(ptr) { reanimator.reanimateNullable(ptr) } }
         return ps
     }
 
@@ -126,7 +130,7 @@ class ModelExecutor(val method: Method,
     }
 
     private fun checkTerms(lhv: Term, rhv: Term, cmp: (Any?, Any?) -> Boolean): Boolean {
-        val lhvValue = memory.getOrPut(lhv) { reanimator.reanimateTerm(lhv) }
+        val lhvValue = memory.getOrPut(lhv) { reanimator.reanimateNullable(lhv) }
         val rhvValue = when (rhv) {
             is ConstBoolTerm -> rhv.value
             is ConstIntTerm -> rhv.value
@@ -142,7 +146,7 @@ class ModelExecutor(val method: Method,
         is DefaultSwitchPredicate -> {
             val lhv = path.cond
             val conditions = path.cases
-            val lhvValue = memory.getOrPut(lhv) { reanimator.reanimateTerm(lhv) }
+            val lhvValue = memory.getOrPut(lhv) { reanimator.reanimateNullable(lhv) }
             val condValues = conditions.map { (it as ConstIntTerm).value }
             lhvValue !in condValues
         }
@@ -154,7 +158,7 @@ fun executeModel(ctx: ExecutionContext,
                  ps: PredicateState,
                  method: Method,
                  model: SMTModel): ReanimatedModel {
-    val pathExecutor = ModelExecutor(method, ctx.types, model, ctx.loader, ctx.random)
+    val pathExecutor = ModelExecutor(method, ctx, model)
     pathExecutor.apply(ps)
     return ReanimatedModel(method, pathExecutor.instance, pathExecutor.args)
 }
@@ -165,8 +169,6 @@ fun generateInputByModel(ctx: ExecutionContext,
                          model: SMTModel): Pair<Any?, Array<Any?>> {
     val reanimated = executeModel(ctx, ps, method, model)
     val loader = ctx.loader
-
-    log.debug("Reanimated: ${tryOrNull { model.toString() }}")
 
     val instance = reanimated.instance ?: when {
         method.isStatic -> null

@@ -27,6 +27,8 @@ class KexClass(val `class`: String, override val memspace: Int = defaultMemspace
     override val name: String
         get() = `class`
 
+    fun kfgClass(types: TypeFactory) = types.cm.getByName(`class`)
+
     override fun getKfgType(types: TypeFactory): Type = types.getRefType(`class`)
 
     override fun withMemspace(memspace: Int) = KexClass(`class`, memspace)

@@ -9,8 +9,10 @@ import org.jetbrains.research.kex.util.log
 import org.jetbrains.research.kex.util.unreachable
 import org.jetbrains.research.kfg.type.*
 import kotlin.reflect.KClass
+import org.jetbrains.research.kfg.ir.Class as KfgClass
 
 val Type.kexType get() = KexType.fromType(this)
+val KfgClass.kexType get() = KexType.fromClass(this)
 
 fun mergeTypes(tf: TypeFactory, vararg types: KexType): KexType = mergeTypes(tf, types.toList())
 
@@ -86,6 +88,8 @@ abstract class KexType {
             is VoidType -> KexVoid()
             else -> unreachable { log.error("Unknown type: $type") }
         }
+
+        fun fromClass(klass: KfgClass) = KexClass(klass.fullname)
     }
 
     abstract val name: String
