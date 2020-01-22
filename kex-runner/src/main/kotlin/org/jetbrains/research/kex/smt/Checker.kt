@@ -34,10 +34,8 @@ class Checker(val method: Method, val loader: ClassLoader, private val psa: Pred
         return check(state)
     }
 
-    fun check(ps: PredicateState): Result {
-        state = ps
-        if (logQuery) log.debug("State: $state")
-
+    private fun prepareState(ps: PredicateState): PredicateState {
+        var state = ps
         if (annotationsEnabled) {
             log.debug("Annotation insertion started...")
             state = AnnotationIncluder(AnnotationManager.defaultLoader).apply(state)
@@ -56,14 +54,26 @@ class Checker(val method: Method, val loader: ClassLoader, private val psa: Pred
         state = ConstantPropagator.apply(state)
         state = BoolTypeAdapter(method.cm.type).apply(state)
         state = ArrayBoundsAdapter().apply(state)
+        return state
+    }
+
+    fun check(ps: PredicateState): Result {
+        val state = prepareState(ps)
+        return check(state, state.path)
+    }
+
+    fun check(ps: PredicateState, qry: PredicateState): Result {
+        state = prepareState(ps)
+        query = qry
+        if (logQuery) log.debug("State: $state")
 
         if (isMemspacingEnabled) {
             log.debug("Memspacing started...")
-            state = MemorySpacer(state).apply(state)
+            val spacer = MemorySpacer(state)
+            state = spacer.apply(state)
+            query = spacer.apply(query)
             log.debug("Memspacing finished")
         }
-
-        query = state.path
 
         if (isSlicingEnabled) {
             log.debug("Slicing started...")
@@ -93,7 +103,7 @@ class Checker(val method: Method, val loader: ClassLoader, private val psa: Pred
         query = Optimizer().apply(query)
         if (logQuery) {
             log.debug("Simplified state: $state")
-            log.debug("Path: $query")
+            log.debug("Query: $query")
         }
 
         val solver = SMTProxySolver(method.cm.type)

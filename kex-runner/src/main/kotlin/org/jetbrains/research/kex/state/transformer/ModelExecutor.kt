@@ -1,6 +1,7 @@
 package org.jetbrains.research.kex.state.transformer
 
 import org.jetbrains.research.kex.ExecutionContext
+import org.jetbrains.research.kex.generator.ConstantDescriptor
 import org.jetbrains.research.kex.generator.Descriptor
 import org.jetbrains.research.kex.ktype.KexClass
 import org.jetbrains.research.kex.ktype.kexType
@@ -97,7 +98,10 @@ class ModelExecutor(val method: Method,
         }
         thisTerm?.let {
             memory[it] = reanimator.reanimateNullable(it, javaClass)
-            log.debug("Descriptor fot $it: ${descriptors.reanimate(it, javaClass)}")
+            val descriptor = descriptors.reanimate(it, javaClass)
+            log.debug("Descriptor for $it: $descriptor")
+            if (descriptor !is ConstantDescriptor)
+                log.debug("State for $it: ${descriptor.toState()}")
         }
         argTerms.values.zip(javaMethod.genericParameterTypes).forEach { (term, type) ->
             // TODO: need to think about more clever type info merging
@@ -110,7 +114,10 @@ class ModelExecutor(val method: Method,
                 else -> mergeTypes(castedType, type, reanimator.loader)
             }
             memory[term] = reanimator.reanimateNullable(term, actualType)
-            log.debug("Descriptor fot $term: ${descriptors.reanimateNullable(term, javaClass)}")
+            val descriptor = descriptors.reanimateNullable(term, javaClass)
+            log.debug("Descriptor for $term: $descriptor")
+            if (descriptor !is ConstantDescriptor)
+                log.debug("State for $term: ${descriptor.toState()}")
         }
         return super.apply(ps)
     }

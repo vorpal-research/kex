@@ -219,7 +219,7 @@ class ObjectReanimator(override val method: Method,
         val bound = (bounds.finalMemory[addr] as? ConstIntTerm)?.value ?: return null
 
         val elementSize = arrayType.element.bitsize
-        // todo: this is needed because Boolector does not always align bounds by bytesize
+        // todo: this is needed because Boolector does not always align bounds by byte size
         val elements = ceil(bound.toDouble() / elementSize).toInt()
 
         val elementType = when (jType) {
@@ -228,9 +228,7 @@ class ObjectReanimator(override val method: Method,
             else -> unreachable { log.error("Unknown jType in array recovery: $jType") }
         }
         log.debug("Creating array of type $elementType with size $elements")
-        val instance = Array.newInstance(elementType, elements)
-
-        return instance
+        return Array.newInstance(elementType, elements)
     }
 }
 

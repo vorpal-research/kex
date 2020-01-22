@@ -1,20 +1,26 @@
 package org.jetbrains.research.kex.util
 
+import org.jetbrains.research.kex.ktype.type
 import org.jetbrains.research.kfg.ir.Method
 import org.jetbrains.research.kfg.type.*
 import org.reflections.Reflections
 import org.reflections.util.ConfigurationBuilder
+import java.lang.Class
 import java.lang.reflect.Array
 import java.lang.reflect.Constructor
 import java.lang.reflect.Modifier
 import java.net.URLClassLoader
 import java.util.*
+import org.jetbrains.research.kfg.ir.Class as KfgClass
 import java.lang.reflect.Method as JMethod
 
 val Class<*>.isAbstract get() = (this.modifiers and Modifier.ABSTRACT) == Modifier.ABSTRACT
 
 val JMethod.isStatic get() = (this.modifiers and Modifier.STATIC) == Modifier.STATIC
 val JMethod.isAbstract get() = (this.modifiers and Modifier.ABSTRACT) == Modifier.ABSTRACT
+
+fun ClassLoader.loadClass(klass: KfgClass): Class<*> =
+        this.loadClass(klass.type)
 
 fun ClassLoader.loadClass(type: Type): Class<*> = when (type) {
     is BoolType -> Boolean::class.java

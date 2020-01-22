@@ -50,10 +50,21 @@ class MethodInliner(val method: Method, val psa: PredicateStateAnalysis) : Recol
     }
 
     private fun prepareInlinedState(method: Method, mappings: Map<Term, Term>): PredicateState? {
+        if (method.isEmpty()) return null
+
         val builder = psa.builder(method)
-        val returnInst = method.flatten().firstOrNull { it is ReturnInst }
-                ?: unreachable { log.error("Cannot inline method with no return") }
-        val endState = builder.getInstructionState(returnInst) ?: return null
+        val endState = when {
+            method.isConstructor -> {
+                val last = method.lastOrNull()?.lastOrNull()
+                        ?: unreachable { log.error("Cannot inline method with no return") }
+                builder.getInstructionState(last)
+            }
+            else -> {
+                val `return` = method.flatten().firstOrNull { it is ReturnInst }
+                        ?: unreachable { log.error("Cannot inline method with no return") }
+                builder.getInstructionState(`return`)
+            }
+        } ?: return null
 
         return TermRemapper("inlined${inlineIndex++}", mappings).apply(endState)
     }

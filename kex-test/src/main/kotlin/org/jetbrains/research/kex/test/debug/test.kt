@@ -10,9 +10,9 @@ class ObjectTests {
     data class Line(val start: Point, val end: Point)
     data class DoublePoint(val x: Double, val y: Double, val z: Double)
 
-    fun simplePointCheck() {
-        val zero = Point(x = 0, y = 0, z = 1)
-        val ten = Point(x = 10, y = 10, z = 10)
+    fun simplePointCheck(x1: Int, x2: Int) {
+        val zero = Point(x = x1, y = 0, z = 1)
+        val ten = Point(x = x2, y = 10, z = 10)
 
         if (ten.x > zero.x) {
             Intrinsics.assertReachable()
