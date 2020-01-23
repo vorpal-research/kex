@@ -22,7 +22,9 @@ class Checker(val method: Method, val loader: ClassLoader, private val psa: Pred
 
     private val builder = psa.builder(method)
     lateinit var state: PredicateState
+        private set
     lateinit var query: PredicateState
+        private set
 
     fun createState(inst: Instruction) = builder.getInstructionState(inst)
 

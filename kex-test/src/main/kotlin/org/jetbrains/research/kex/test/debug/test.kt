@@ -6,7 +6,8 @@ import org.jetbrains.research.kex.test.Intrinsics
 
 class ObjectTests {
 
-    data class Point(val x: Int, val y: Int, val z: Int)
+    open class Point(val x: Int, val y: Int, val z: Int)
+    class Point4(x: Int, y: Int, z: Int, val t: Int) : Point(x, y, z)
     data class Line(val start: Point, val end: Point)
     data class DoublePoint(val x: Double, val y: Double, val z: Double)
 
@@ -17,31 +18,27 @@ class ObjectTests {
         if (ten.x > zero.x) {
             Intrinsics.assertReachable()
         } else {
-            // can't handle getters and setters yet
             Intrinsics.assertReachable()
         }
     }
 
-    fun testObjects(a: Point, b: DoublePoint): Line {
-        val xs = b.x - a.x
-        val ys = b.y - a.y
-        val zs = b.z - a.z
-
-        val xe = a.x + b.x
-        val ye = a.y + b.y
-        val ze = a.z + b.z
-
-        val result = Line(Point(xs.toInt(), ys.toInt(), zs.toInt()), Point(xe.toInt(), ye.toInt(), ze.toInt()))
-        println(result.start)
-        Intrinsics.assertReachable()
-        return result
+    fun pointCheck(p1: Point, p2: Point) {
+        if (p1.x > p2.x) {
+            Intrinsics.assertReachable()
+        } else if (p2 is Point4) {
+            println(p2.t)
+        } else {
+            Intrinsics.assertReachable()
+        }
     }
 
-    fun testNullability(line: Line) {
-        val start = line.start
-        if (null == start)
-            Intrinsics.assertUnreachable()
-        else
+    fun testArray(array: Array<Point>) {
+        if (array[0].x > 0) {
             Intrinsics.assertReachable()
+        }
+        if (array[1].y < 0) {
+            Intrinsics.assertReachable()
+        }
+        println(array[2])
     }
 }

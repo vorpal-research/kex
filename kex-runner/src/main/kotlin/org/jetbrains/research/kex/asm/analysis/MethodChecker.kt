@@ -8,12 +8,15 @@ import org.jetbrains.research.kex.asm.manager.isImpactable
 import org.jetbrains.research.kex.asm.state.PredicateStateAnalysis
 import org.jetbrains.research.kex.asm.transform.originalBlock
 import org.jetbrains.research.kex.config.kexConfig
+import org.jetbrains.research.kex.generator.CallStackGenerator
+import org.jetbrains.research.kex.generator.generateDescriptors
 import org.jetbrains.research.kex.random.GenerationException
 import org.jetbrains.research.kex.random.Randomizer
 import org.jetbrains.research.kex.serialization.KexSerializer
 import org.jetbrains.research.kex.smt.Checker
 import org.jetbrains.research.kex.smt.ReanimatedModel
 import org.jetbrains.research.kex.smt.Result
+import org.jetbrains.research.kex.smt.SMTModel
 import org.jetbrains.research.kex.state.PredicateState
 import org.jetbrains.research.kex.state.transformer.generateInputByModel
 import org.jetbrains.research.kex.trace.TraceManager
@@ -33,6 +36,7 @@ import java.nio.file.Files
 import java.nio.file.Paths
 
 private val failDir by lazy { kexConfig.getStringValue("debug", "dump-directory", "./fail") }
+private val apiGeneration by lazy { kexConfig.getBooleanValue("recovering", "apiGeneration", false) }
 
 class KexCheckerException(val inner: Exception, val reason: PredicateState) : Exception()
 class KexRunnerException(val inner: Exception, val model: ReanimatedModel) : Exception()
@@ -136,7 +140,7 @@ class MethodChecker(
         when (result) {
             is Result.SatResult -> {
                 val (instance, args) = try {
-                    generateInputByModel(ctx, method, checker.state, result.model)
+                    generateInput(method, checker.state, result.model)
                 } catch (e: GenerationException) {
                     log.warn(e.message)
                     return result
@@ -161,5 +165,24 @@ class MethodChecker(
         val runner = ObjectTracingRunner(method, loader)
         val trace = runner.collectTrace(instance, args)
         tm[method] = trace
+    }
+
+    private fun generateInput(method: Method, state: PredicateState, model: SMTModel): Pair<Any?, Array<Any?>> = when {
+        apiGeneration -> {
+            val input = generateDescriptors(method, ctx, model, state)
+            log.debug("Generated descriptors:")
+            log.debug(input)
+            input.first?.let {
+                log.debug("Generating $it")
+                CallStackGenerator(ctx, psa).generate(it)
+                log.debug("Call stack: ${CallStackGenerator(ctx, psa).generate(it)}")
+            }
+            input.second.forEach {
+                log.debug("Generating $it")
+                log.debug("Call stack: ${CallStackGenerator(ctx, psa).generate(it)}")
+            }
+            generateInputByModel(ctx, method, state, model)
+        }
+        else -> generateInputByModel(ctx, method, state, model)
     }
 }
