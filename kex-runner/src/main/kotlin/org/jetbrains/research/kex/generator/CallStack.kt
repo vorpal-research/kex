@@ -30,7 +30,7 @@ data class UnknownCall(val target: Descriptor) : ApiCall
 
 data class StaticFieldSetter(val klass: Class, val field: Field, val value: CallStack) : ApiCall
 
-data class FieldSetter(val klass: Class, val owner: ApiCall, val field: Field, val value: CallStack) : ApiCall
+data class FieldSetter(val klass: Class, val owner: CallStack, val field: Field, val value: CallStack) : ApiCall
 
 data class NewArray(val klass: Type, val length: CallStack) : ApiCall
 
@@ -42,5 +42,4 @@ data class CallStack(val stack: List<ApiCall>) {
 
     fun add(call: ApiCall) = CallStack(stack + call)
     operator fun plus(call: ApiCall) = this.add(call)
-
 }

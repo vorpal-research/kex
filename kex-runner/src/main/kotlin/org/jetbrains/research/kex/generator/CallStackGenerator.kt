@@ -54,7 +54,10 @@ class CallStackGenerator(val context: ExecutionContext, val psa: PredicateStateA
                 }
             }
             is FieldDescriptor -> {
-                callStack += UnknownCall(descriptor)
+                val klass = descriptor.klass
+                val field = klass.getField(descriptor.name, descriptor.type)
+
+                callStack += FieldSetter(klass, generate(descriptor.owner), field, generate(descriptor.value))
             }
         }
         return callStack

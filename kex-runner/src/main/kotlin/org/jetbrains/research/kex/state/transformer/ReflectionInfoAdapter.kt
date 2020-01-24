@@ -22,10 +22,7 @@ import kotlin.reflect.KClass
 import kotlin.reflect.KFunction
 import kotlin.reflect.KMutableProperty
 import kotlin.reflect.KType
-import kotlin.reflect.full.declaredMemberExtensionFunctions
-import kotlin.reflect.full.declaredMemberExtensionProperties
-import kotlin.reflect.full.declaredMemberFunctions
-import kotlin.reflect.full.declaredMemberProperties
+import kotlin.reflect.full.*
 import kotlin.reflect.jvm.javaMethod
 import kotlin.reflect.jvm.jvmErasure
 
@@ -82,14 +79,19 @@ class ReflectionInfoAdapter(val method: Method, val loader: ClassLoader) : Recol
         }
     }
 
-    private val KClass<*>.allFunctions get() = tryOrNull {
-        declaredMemberFunctions +
-                declaredMemberExtensionFunctions +
-                declaredMemberProperties.map { it.getter } +
-                declaredMemberExtensionProperties.map { it.getter } +
-                declaredMemberProperties.filterIsInstance<KMutableProperty<*>>().map { it.setter } +
-                declaredMemberExtensionProperties.filterIsInstance<KMutableProperty<*>>().map { it.setter }
-    } ?: listOf()
+    private val KClass<*>.allFunctions
+        get() = tryOrNull {
+            constructors +
+                    staticFunctions +
+                    declaredMemberFunctions +
+                    declaredMemberExtensionFunctions +
+                    declaredMemberProperties.map { it.getter } +
+                    declaredMemberExtensionProperties.map { it.getter } +
+                    declaredMemberProperties.filterIsInstance<KMutableProperty<*>>().map { it.setter } +
+                    declaredMemberExtensionProperties.filterIsInstance<KMutableProperty<*>>().map { it.setter } +
+                    staticProperties.map { it.getter } +
+                    staticProperties.filterIsInstance<KMutableProperty<*>>().map { it.setter }
+        } ?: listOf()
 
     private fun KClass<*>.find(method: Method) = allFunctions.find { it eq method }
 

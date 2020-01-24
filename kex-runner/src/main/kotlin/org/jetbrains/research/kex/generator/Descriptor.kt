@@ -56,10 +56,11 @@ sealed class ConstantDescriptor : Descriptor() {
 data class FieldDescriptor(
         val name: String,
         val type: KfgType,
+        val klass: KfgClass,
         val owner: Descriptor,
         val value: Descriptor
 ) : Descriptor() {
-    override val term get() = term { owner.term.field(type.kexType, name) }
+    override val term get() = term { owner.term.field(klass.kexType, name) }
 
     override fun toState(ps: PredicateState): PredicateState {
         var state = ps

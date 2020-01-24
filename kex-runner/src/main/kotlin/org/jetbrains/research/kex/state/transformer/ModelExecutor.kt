@@ -19,10 +19,7 @@ import org.jetbrains.research.kex.state.term.ConstBoolTerm
 import org.jetbrains.research.kex.state.term.ConstIntTerm
 import org.jetbrains.research.kex.state.term.ConstLongTerm
 import org.jetbrains.research.kex.state.term.Term
-import org.jetbrains.research.kex.util.loadClass
-import org.jetbrains.research.kex.util.log
-import org.jetbrains.research.kex.util.tryOrNull
-import org.jetbrains.research.kex.util.unreachable
+import org.jetbrains.research.kex.util.*
 import org.jetbrains.research.kfg.ir.Method
 
 // remove all choices in a given PS
@@ -40,6 +37,20 @@ class ModelExecutor(method: Method, ctx: ExecutionContext, model: SMTModel) :
     override fun generateThis() = thisTerm?.let {
         memory[it] = reanimator.reanimateNullable(it, javaClass)
     }
+
+
+    override fun generateArgs(types: TypeInfoMap) =
+            argTerms.values.zip(javaMethod.genericParameterTypes).forEach { (term, type) ->
+                val castedType = when (val info = types.getInfo<CastTypeInfo>(term)) {
+                    null -> null
+                    else -> reanimator.loader.loadClass(info.type.getKfgType(method.cm.type))
+                }
+                val actualType = when (castedType) {
+                    null -> type
+                    else -> mergeTypes(castedType, type, reanimator.loader)
+                }
+                memory[term] = reanimator.reanimateNullable(term, actualType)
+            }
 
     override fun apply(ps: PredicateState): PredicateState {
         generate(ps)

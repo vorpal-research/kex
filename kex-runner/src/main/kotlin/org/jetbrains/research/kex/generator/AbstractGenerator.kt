@@ -21,8 +21,8 @@ abstract class AbstractGenerator<T>(val method: Method, val ctx: ExecutionContex
     protected var thisTerm: Term? = null
     protected val argTerms = sortedMapOf<Int, Term>()
 
-    private val javaClass = loader.loadClass(type.getRefType(method.`class`))
-    private val javaMethod = when {
+    protected val javaClass = loader.loadClass(type.getRefType(method.`class`))
+    protected val javaMethod = when {
         method.isConstructor -> javaClass.getConstructor(method, loader)
         else -> javaClass.getMethod(method, loader)
     }
