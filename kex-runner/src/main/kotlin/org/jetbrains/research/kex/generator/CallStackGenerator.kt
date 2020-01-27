@@ -11,15 +11,27 @@ import org.jetbrains.research.kfg.ir.Method
 import org.jetbrains.research.kfg.type.ArrayType
 import java.util.*
 
-// todo: cache for stacks
 // todo: think about generating list of calls instead of call stack tree
 class CallStackGenerator(val context: ExecutionContext, val psa: PredicateStateAnalysis) {
+    private val descriptorMap = mutableMapOf<Descriptor, Node>()
+
+    private class Node(var stack: CallStack) {
+        constructor() : this(CallStack())
+
+        operator fun plusAssign(apiCall: ApiCall) {
+            this.stack += apiCall
+        }
+        operator fun plusAssign(callStack: CallStack) {
+            this.stack += callStack
+        }
+    }
 
     // todo: accessibility check
     fun generate(descriptor: Descriptor): CallStack {
-        var callStack = CallStack()
+        if (descriptorMap.containsKey(descriptor)) return descriptorMap.getValue(descriptor).stack
+
         when (descriptor) {
-            is ConstantDescriptor -> callStack += when (descriptor) {
+            is ConstantDescriptor -> return when (descriptor) {
                 is ConstantDescriptor.Null -> PrimaryValue(null)
                 is ConstantDescriptor.Bool -> PrimaryValue(descriptor.value)
                 is ConstantDescriptor.Int -> PrimaryValue(descriptor.value)
@@ -27,21 +39,26 @@ class CallStackGenerator(val context: ExecutionContext, val psa: PredicateStateA
                 is ConstantDescriptor.Float -> PrimaryValue(descriptor.value)
                 is ConstantDescriptor.Double -> PrimaryValue(descriptor.value)
                 is ConstantDescriptor.Class -> PrimaryValue(descriptor.value)
-            }
+            }.wrap()
             is ObjectDescriptor -> {
-                callStack += generateObject(descriptor) ?: UnknownCall(descriptor).wrap()
+                descriptorMap[descriptor] = Node(generateObject(descriptor) ?: UnknownCall(descriptor).wrap())
             }
             is ArrayDescriptor -> {
+                val callStack = Node()
                 val elementType = (descriptor.type as ArrayType).component
                 val array = NewArray(elementType, PrimaryValue(descriptor.length).wrap()).wrap()
+                callStack += array
+                descriptorMap[descriptor] = Node(array)
 
                 descriptor.elements.forEach { (index, value) ->
                     callStack += ArrayWrite(array, PrimaryValue(index).wrap(), generate(value))
                 }
             }
             is FieldDescriptor -> {
+                val callStack = Node()
                 val klass = descriptor.klass
                 val field = klass.getField(descriptor.name, descriptor.type)
+                descriptorMap[descriptor] = callStack
 
                 callStack += when {
                     field.isStatic -> StaticFieldSetter(klass, field, generate(descriptor.value))
@@ -49,7 +66,7 @@ class CallStackGenerator(val context: ExecutionContext, val psa: PredicateStateA
                 }
             }
         }
-        return callStack
+        return descriptorMap.getValue(descriptor).stack
     }
 
     private fun generateObject(descriptor: ObjectDescriptor): CallStack? {

@@ -25,7 +25,7 @@ public class JavaTest {
         if (p1.x > p2.x) {
             System.out.println("Success");
         }
-        if (p1.z < p2.x) {
+        if (p1.z < p2.z) {
             System.out.println("Double success");
         }
         System.out.println("end");

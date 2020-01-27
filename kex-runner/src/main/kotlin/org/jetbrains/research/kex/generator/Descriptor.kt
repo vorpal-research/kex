@@ -53,7 +53,7 @@ sealed class ConstantDescriptor : Descriptor() {
     }
 }
 
-data class FieldDescriptor(
+class FieldDescriptor(
         val name: String,
         val type: KfgType,
         val klass: KfgClass,
@@ -76,7 +76,7 @@ data class FieldDescriptor(
     override fun toString() = "${klass.fullname}.$name = $value"
 }
 
-data class ObjectDescriptor(
+class ObjectDescriptor(
         val name: String,
         val klass: KfgClass,
         private val fieldsInner: MutableMap<String, Descriptor> = mutableMapOf()
@@ -96,9 +96,18 @@ data class ObjectDescriptor(
         }
         return state
     }
+
+    override fun toString(): String = buildString {
+        append("Object $term {")
+        if (fieldsInner.isNotEmpty()) {
+            append("\n  ")
+            appendln(fieldsInner.values.joinToString("\n").replace("\n", "\n  "))
+        }
+        appendln("}")
+    }
 }
 
-data class ArrayDescriptor(
+class ArrayDescriptor(
         val name: String,
         val length: Int,
         val type: KfgType,
@@ -119,6 +128,15 @@ data class ArrayDescriptor(
             state += require { term[index] equality element.term }
         }
         return state
+    }
+
+    override fun toString(): String = buildString {
+        append("Array $term {")
+        if (elementsInner.isNotEmpty()) {
+            append("\n  ")
+            appendln(elementsInner.toList().joinToString("\n") { "[${it.first}] = ${it.second}" }.replace("\n", "\n  "))
+        }
+        appendln("}")
     }
 }
 
