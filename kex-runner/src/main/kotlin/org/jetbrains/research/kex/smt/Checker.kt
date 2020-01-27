@@ -61,11 +61,13 @@ class Checker(val method: Method, val loader: ClassLoader, private val psa: Pred
 
     fun check(ps: PredicateState): Result {
         val state = prepareState(ps)
-        return check(state, state.path)
+        return checkInternal(state, state.path)
     }
 
-    fun check(ps: PredicateState, qry: PredicateState): Result {
-        state = prepareState(ps)
+    fun check(ps: PredicateState, qry: PredicateState) = checkInternal(prepareState(ps), qry)
+
+    private fun checkInternal(ps: PredicateState, qry: PredicateState): Result {
+        state = ps
         query = qry
         if (logQuery) log.debug("State: $state")
 

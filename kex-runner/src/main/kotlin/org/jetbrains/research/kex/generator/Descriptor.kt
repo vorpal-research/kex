@@ -4,7 +4,7 @@ import org.jetbrains.research.kex.ExecutionContext
 import org.jetbrains.research.kex.ktype.*
 import org.jetbrains.research.kex.state.PredicateState
 import org.jetbrains.research.kex.state.emptyState
-import org.jetbrains.research.kex.state.predicate.assume
+import org.jetbrains.research.kex.state.predicate.require
 import org.jetbrains.research.kex.state.term.Term
 import org.jetbrains.research.kex.state.term.term
 import org.jetbrains.research.kex.util.log
@@ -68,10 +68,12 @@ data class FieldDescriptor(
             state = value.toState(state)
         }
         return state.builder().run {
-            assume { term equality value.term }
+            require { term.store(value.term) }
             apply()
         }
     }
+
+    override fun toString() = "${klass.fullname}.$name = $value"
 }
 
 data class ObjectDescriptor(
@@ -114,7 +116,7 @@ data class ArrayDescriptor(
         var state = ps
         elements.forEach { (index, element) ->
             state = element.toState(state)
-            state += assume { term[index] equality element.term }
+            state += require { term[index] equality element.term }
         }
         return state
     }
@@ -133,6 +135,9 @@ class DescriptorBuilder(val context: ExecutionContext) {
 
     fun `object`(name: String, type: KfgClass): ObjectDescriptor = ObjectDescriptor(name, type)
     fun array(name: String, length: Int, type: KfgType): ArrayDescriptor = ArrayDescriptor(name, length, type)
+
+    fun field(name: String, type: KfgType, klass: KfgClass, value: Descriptor, owner: ObjectDescriptor) =
+            FieldDescriptor(name, type, klass, owner, value)
 
     fun default(type: KexType, name: String, nullable: Boolean): Descriptor = descriptor(context) {
         when (type) {

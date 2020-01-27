@@ -9,7 +9,7 @@ import org.jetbrains.research.kex.asm.state.PredicateStateAnalysis
 import org.jetbrains.research.kex.asm.transform.originalBlock
 import org.jetbrains.research.kex.config.kexConfig
 import org.jetbrains.research.kex.generator.CallStackGenerator
-import org.jetbrains.research.kex.generator.generateDescriptors
+import org.jetbrains.research.kex.generator.ObjectGenerator
 import org.jetbrains.research.kex.random.GenerationException
 import org.jetbrains.research.kex.random.Randomizer
 import org.jetbrains.research.kex.serialization.KexSerializer
@@ -18,6 +18,7 @@ import org.jetbrains.research.kex.smt.ReanimatedModel
 import org.jetbrains.research.kex.smt.Result
 import org.jetbrains.research.kex.smt.SMTModel
 import org.jetbrains.research.kex.state.PredicateState
+import org.jetbrains.research.kex.state.transformer.generateDescriptors
 import org.jetbrains.research.kex.state.transformer.generateInputByModel
 import org.jetbrains.research.kex.trace.TraceManager
 import org.jetbrains.research.kex.trace.`object`.Trace
@@ -75,7 +76,7 @@ class MethodChecker(
         super.visit(method)
 
         if (method.`class`.isSynthetic) return
-        if (method.isAbstract || method.isConstructor || method.isStaticInitializer) return
+        if (method.isAbstract || method.isStaticInitializer) return
         if (!method.isImpactable) return
 
         log.debug("Checking method $method")
@@ -169,19 +170,29 @@ class MethodChecker(
 
     private fun generateInput(method: Method, state: PredicateState, model: SMTModel): Pair<Any?, Array<Any?>> = when {
         apiGeneration -> {
-            val input = generateDescriptors(method, ctx, model, state)
+            log.debug("Model: $model")
+            val descriptors = generateDescriptors(method, ctx, model, state)
             log.debug("Generated descriptors:")
-            log.debug(input)
-            input.first?.let {
-                log.debug("Generating $it")
-                CallStackGenerator(ctx, psa).generate(it)
-                log.debug("Call stack: ${CallStackGenerator(ctx, psa).generate(it)}")
+            log.debug(descriptors)
+            val thisCallStack = descriptors.first?.let { descriptor ->
+                log.debug("Generating $descriptor")
+                CallStackGenerator(ctx, psa).generate(descriptor).also {
+                    log.debug("Call stack: $it")
+                }
             }
-            input.second.forEach {
-                log.debug("Generating $it")
-                log.debug("Call stack: ${CallStackGenerator(ctx, psa).generate(it)}")
+            val argCallStacks = descriptors.second.map { descriptor ->
+                log.debug("Generating $descriptor")
+                CallStackGenerator(ctx, psa).generate(descriptor).also {
+                    log.debug("Call stack: $it")
+                }
             }
-            generateInputByModel(ctx, method, state, model)
+            val generator = ObjectGenerator(ctx)
+            try {
+                thisCallStack?.let { generator.generate(it) } to argCallStacks.map { generator.generate(it) }.toTypedArray()
+            } catch (e: Exception) {
+                log.error("Could not generate input from descriptors: $descriptors")
+                throw GenerationException(e.toString())
+            }
         }
         else -> generateInputByModel(ctx, method, state, model)
     }

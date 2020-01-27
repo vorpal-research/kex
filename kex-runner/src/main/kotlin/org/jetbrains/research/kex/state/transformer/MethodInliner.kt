@@ -8,10 +8,7 @@ import org.jetbrains.research.kex.state.StateBuilder
 import org.jetbrains.research.kex.state.predicate.CallPredicate
 import org.jetbrains.research.kex.state.predicate.Predicate
 import org.jetbrains.research.kex.state.term.*
-import org.jetbrains.research.kex.util.log
-import org.jetbrains.research.kex.util.unreachable
 import org.jetbrains.research.kfg.ir.Method
-import org.jetbrains.research.kfg.ir.value.instruction.ReturnInst
 import java.util.*
 
 class MethodInliner(val method: Method, val psa: PredicateStateAnalysis) : RecollectingTransformer<MethodInliner> {
@@ -53,18 +50,7 @@ class MethodInliner(val method: Method, val psa: PredicateStateAnalysis) : Recol
         if (method.isEmpty()) return null
 
         val builder = psa.builder(method)
-        val endState = when {
-            method.isConstructor -> {
-                val last = method.lastOrNull()?.lastOrNull()
-                        ?: unreachable { log.error("Cannot inline method with no return") }
-                builder.getInstructionState(last)
-            }
-            else -> {
-                val `return` = method.flatten().firstOrNull { it is ReturnInst }
-                        ?: unreachable { log.error("Cannot inline method with no return") }
-                builder.getInstructionState(`return`)
-            }
-        } ?: return null
+        val endState = builder.methodState ?: return null
 
         return TermRemapper("inlined${inlineIndex++}", mappings).apply(endState)
     }

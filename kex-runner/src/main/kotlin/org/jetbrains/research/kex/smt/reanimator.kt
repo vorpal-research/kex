@@ -310,14 +310,15 @@ class DescriptorReanimator(override val method: Method,
                 array
             }
             is FieldTerm -> {
-                val (instance, klass) = when {
+                val fieldName = (term.fieldName as ConstStringTerm).value
+                val (instance, klass, field) = when {
                     term.isStatic -> {
                         val classRef = (term.owner as ConstClassTerm)
                         val `class` = tryOrNull { loader.loadClass(classRef.`class`.canonicalDesc) }
                                 ?: return@descriptor default(term.type, term.name, nullable)
                         if (`class`.isSynthetic) return@descriptor default(term.type, term.name, nullable)
 
-                        `null` to `class`
+                        Triple(`null`, `class`, classRef.`class`.getField(fieldName, term.type.getKfgType(types)))
                     }
                     else -> {
                         val objectRef = term.owner
@@ -331,7 +332,7 @@ class DescriptorReanimator(override val method: Method,
                         val instance = memory(objectRef.memspace, objectAddr)
                                 ?: return@descriptor default(term.type, term.name, nullable)
 
-                        instance to `class`
+                        Triple(instance, `class`, kfgClass.getField(fieldName, term.type.getKfgType(types)))
                     }
                 }
                 val fieldAddress = model.assignments[term]
@@ -343,7 +344,7 @@ class DescriptorReanimator(override val method: Method,
                     return@descriptor default(term.type, term.name, nullable)
 
                 if (instance is ObjectDescriptor) {
-                    instance[fieldReflect.name] = reanimatedValue
+                    instance[fieldReflect.name] = field(field.name, field.type, field.`class`, reanimatedValue, instance)
                 }
 
                 instance
@@ -356,15 +357,20 @@ class DescriptorReanimator(override val method: Method,
         val referencedType = (term.type as KexReference).reference
         if (value == null) return@descriptor default(term.type, term.name, nullable)
 
-        val intVal = (value as ConstIntTerm).value
-
-        when (referencedType) {
-            is KexPointer -> reanimateReferencePointer(term, value, nullable)
-            is KexBool -> const(intVal.toBoolean())
-            is KexLong -> const(intVal.toLong())
-            is KexFloat -> const(intVal.toFloat())
-            is KexDouble -> const(intVal.toDouble())
-            else -> const(intVal)
+        when (value) {
+            is ConstDoubleTerm -> const(value.value)
+            is ConstFloatTerm -> const(value.value)
+            else -> {
+                val intVal = (value as ConstIntTerm).value
+                when (referencedType) {
+                    is KexPointer -> reanimateReferencePointer(term, value, nullable)
+                    is KexBool -> const(intVal.toBoolean())
+                    is KexLong -> const(intVal.toLong())
+                    is KexFloat -> const(intVal.toFloat())
+                    is KexDouble -> const(intVal.toDouble())
+                    else -> const(intVal)
+                }
+            }
         }
     }
 
@@ -383,7 +389,8 @@ class DescriptorReanimator(override val method: Method,
 
     private fun newArrayInstance(name: String, memspace: Int, arrayType: KexArray, addr: Term?, nullable: Boolean) = descriptor(context) {
         val bounds = model.bounds[memspace] ?: return@descriptor default(arrayType, name, nullable)
-        val bound = (bounds.finalMemory[addr] as? ConstIntTerm)?.value ?: return@descriptor default(arrayType, name, nullable)
+        val bound = (bounds.finalMemory[addr] as? ConstIntTerm)?.value
+                ?: return@descriptor default(arrayType, name, nullable)
 
         val elementSize = arrayType.element.bitsize
         val elements = bound / elementSize

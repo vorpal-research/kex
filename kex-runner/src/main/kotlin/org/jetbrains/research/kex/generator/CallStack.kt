@@ -37,9 +37,10 @@ data class NewArray(val klass: Type, val length: CallStack) : ApiCall
 data class ArrayWrite(val array: CallStack, val index: CallStack, val value: CallStack) : ApiCall
 
 
-data class CallStack(val stack: List<ApiCall>) {
+data class CallStack(val stack: List<ApiCall>) : Iterable<ApiCall> by stack {
     constructor() : this(listOf())
 
     fun add(call: ApiCall) = CallStack(stack + call)
     operator fun plus(call: ApiCall) = this.add(call)
+    operator fun plus(other: CallStack) = CallStack(this.stack + other.stack)
 }

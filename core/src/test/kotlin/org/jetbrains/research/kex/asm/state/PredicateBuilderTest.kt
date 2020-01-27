@@ -316,7 +316,7 @@ class PredicateBuilderTest : KexTest() {
     @Test
     fun testPredicateBuilder() {
         for (`class` in cm.concreteClasses) {
-            for (method in `class`.methods) {
+            for (method in `class`.allMethods) {
                 if (method.isAbstract) continue
                 val loops = LoopAnalysis(cm).invoke(method)
                 if (loops.isNotEmpty()) {

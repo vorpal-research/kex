@@ -52,9 +52,19 @@ fun Class<*>.getMethod(method: Method, loader: ClassLoader): java.lang.reflect.M
     return this.getDeclaredMethod(method.name, *argumentTypes)
 }
 
+fun Class<*>.getMethod(loader: ClassLoader, name: String, vararg types: Type): java.lang.reflect.Method {
+    val argumentTypes = types.map { loader.loadClass(it) }.toTypedArray()
+    return this.getDeclaredMethod(name, *argumentTypes)
+}
+
 fun Class<*>.getConstructor(method: Method, loader: ClassLoader): Constructor<*> {
     require(method.isConstructor)
     val argumentTypes = method.argTypes.map { loader.loadClass(it) }.toTypedArray()
+    return this.getDeclaredConstructor(*argumentTypes)
+}
+
+fun Class<*>.getConstructor(loader: ClassLoader, vararg types: Type): Constructor<*> {
+    val argumentTypes = types.map { loader.loadClass(it) }.toTypedArray()
     return this.getDeclaredConstructor(*argumentTypes)
 }
 

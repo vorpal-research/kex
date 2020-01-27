@@ -47,7 +47,7 @@ abstract class KexRunnerTest : KexTest() {
     }
 
     fun testClassReachability(`class`: Class) {
-        `class`.methods.forEach { method ->
+        `class`.allMethods.forEach { method ->
             log.debug("Checking method $method")
             log.debug(method.print())
 
