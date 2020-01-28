@@ -4,6 +4,8 @@ import org.jetbrains.research.kex.ExecutionContext
 import org.jetbrains.research.kex.asm.state.PredicateStateAnalysis
 import org.jetbrains.research.kex.smt.Checker
 import org.jetbrains.research.kex.smt.Result
+import org.jetbrains.research.kex.state.term.term
+import org.jetbrains.research.kex.state.transformer.TermRemapper
 import org.jetbrains.research.kex.state.transformer.generateDescriptors
 import org.jetbrains.research.kex.util.log
 import org.jetbrains.research.kex.util.unreachable
@@ -21,6 +23,7 @@ class CallStackGenerator(val context: ExecutionContext, val psa: PredicateStateA
         operator fun plusAssign(apiCall: ApiCall) {
             this.stack += apiCall
         }
+
         operator fun plusAssign(callStack: CallStack) {
             this.stack += callStack
         }
@@ -95,6 +98,7 @@ class CallStackGenerator(val context: ExecutionContext, val psa: PredicateStateA
         val klass = descriptor.klass
         for (method in klass.constructors) {
             val (thisDesc, args) = executeMethod(descriptor, method)
+            // todo: proper check for successful generation
             if (thisDesc != null) {
                 return when {
                     method.argTypes.isEmpty() -> DefaultConstructorCall(klass)
@@ -107,13 +111,17 @@ class CallStackGenerator(val context: ExecutionContext, val psa: PredicateStateA
 
     private fun executeMethod(descriptor: ObjectDescriptor, method: Method): Pair<ObjectDescriptor?, List<Descriptor>> {
         if (method.isEmpty()) return descriptor to listOf()
+        log.debug("Executing method $method for $descriptor")
         val builder = psa.builder(method)
-        val state = builder.methodState
-                ?: unreachable { log.error("Can't build state for $method") }
+        val termMap = mapOf(descriptor.term to term { `this`(descriptor.term.type) })
+        val state = TermRemapper(termMap).apply(
+                builder.methodState ?: unreachable { log.error("Can't build state for $method") }
+        )
 
         val checker = Checker(method, context.loader, psa)
-        return when (val result = checker.check(state, descriptor.toState())) {
+        return when (val result = checker.check(state, TermRemapper(termMap).apply(descriptor.toState()))) {
             is Result.SatResult -> {
+                log.debug("Model: ${result.model}")
                 val (thisDescriptor, argumentDescriptors) = generateDescriptors(method, context, result.model, checker.state)
                 (thisDescriptor as? ObjectDescriptor) to argumentDescriptors
             }

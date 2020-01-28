@@ -9,8 +9,15 @@ import org.jetbrains.research.kex.state.term.Term
 import org.jetbrains.research.kex.state.term.term
 import org.jetbrains.research.kex.util.log
 import org.jetbrains.research.kex.util.unreachable
+import org.jetbrains.research.kfg.type.ArrayType
 import org.jetbrains.research.kfg.ir.Class as KfgClass
 import org.jetbrains.research.kfg.type.Type as KfgType
+
+private object TermGenerator {
+    private var index = 0
+
+    val nextName: String get() = "generatedTerm$index"
+}
 
 sealed class Descriptor {
     abstract val term: Term
@@ -60,7 +67,7 @@ class FieldDescriptor(
         val owner: Descriptor,
         val value: Descriptor
 ) : Descriptor() {
-    override val term get() = term { owner.term.field(klass.kexType, name) }
+    override val term get() = term { owner.term.field(type.kexType, name) }
 
     override fun toState(ps: PredicateState): PredicateState {
         var state = ps
@@ -68,7 +75,9 @@ class FieldDescriptor(
             state = value.toState(state)
         }
         return state.builder().run {
-            require { term.store(value.term) }
+            val tempTerm = term { value(this@FieldDescriptor.type.kexType, TermGenerator.nextName) }
+            state { tempTerm equality term.load() }
+            require { tempTerm equality value.term }
             apply()
         }
     }
@@ -79,11 +88,11 @@ class FieldDescriptor(
 class ObjectDescriptor(
         val name: String,
         val klass: KfgClass,
-        private val fieldsInner: MutableMap<String, Descriptor> = mutableMapOf()
+        private val fieldsInner: MutableMap<String, FieldDescriptor> = mutableMapOf()
 ) : Descriptor() {
-    val fields: Map<String, Descriptor> get() = fieldsInner.toMap()
+    val fields: Map<String, FieldDescriptor> get() = fieldsInner.toMap()
 
-    operator fun set(field: String, value: Descriptor) {
+    operator fun set(field: String, value: FieldDescriptor) {
         fieldsInner[field] = value
     }
 
@@ -114,6 +123,7 @@ class ArrayDescriptor(
         private val elementsInner: MutableMap<Int, Descriptor> = mutableMapOf()
 ) : Descriptor() {
     val elements: Map<Int, Descriptor> get() = elementsInner.toMap()
+    val elementType = (type as ArrayType).component
 
     operator fun set(index: Int, value: Descriptor) {
         elementsInner[index] = value
