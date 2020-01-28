@@ -16,7 +16,7 @@ import org.jetbrains.research.kfg.type.Type as KfgType
 private object TermGenerator {
     private var index = 0
 
-    val nextName: String get() = "generatedTerm$index"
+    val nextName: String get() = "generatedTerm${index++}"
 }
 
 sealed class Descriptor {
