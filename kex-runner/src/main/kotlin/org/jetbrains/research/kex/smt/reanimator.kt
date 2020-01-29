@@ -54,6 +54,10 @@ interface Reanimator<T> {
     fun reanimateNullable(term: Term,
                           jType: Type = loader.loadClass(term.type.getKfgType(method.cm.type)),
                           value: Term? = model.assignments[term]): T
+
+    fun reanimateFromAssignment(term: Term): Term?
+    fun reanimateFromMemory(memspace: Int, addr: Term?): Term?
+    fun reanimateFromBounds(memspace: Int, addr: Term?): Term?
 }
 
 class ObjectReanimator(override val method: Method,
@@ -67,6 +71,10 @@ class ObjectReanimator(override val method: Method,
         term.isPrimary -> reanimatePrimary(term.type, jType, value)
         else -> reanimatePointer(term, jType, value)
     }
+
+    override fun reanimateFromAssignment(term: Term) = model.assignments[term]
+    override fun reanimateFromMemory(memspace: Int, addr: Term?) = model.memories[memspace]?.finalMemory!![addr]
+    override fun reanimateFromBounds(memspace: Int, addr: Term?) = model.bounds[memspace]?.finalMemory!![addr]
 
     private fun reanimatePrimary(type: KexType, jType: Type, value: Term?): Any? {
         if (value == null) return randomizer.next(jType)
@@ -110,13 +118,13 @@ class ObjectReanimator(override val method: Method,
 
     private fun reanimateReference(term: Term, jType: Type, addr: Term?): Any? {
         val memspace = term.memspace
-        val refValue = model.memories[memspace]?.finalMemory!![addr]
+        val refValue = reanimateFromMemory(memspace, addr)
         return when (term) {
             is ArrayIndexTerm -> {
                 val arrayRef = term.arrayRef
                 val elementType = (arrayRef.type as KexArray).element
 
-                val arrayAddr = (model.assignments[arrayRef] as ConstIntTerm).value
+                val arrayAddr = (reanimateFromAssignment(arrayRef) as ConstIntTerm).value
                 val array = memory(arrayRef.memspace, arrayAddr) ?: return null
 
                 val reanimatedValue = reanimateReferenceValue(term, jType, refValue)
@@ -136,7 +144,7 @@ class ObjectReanimator(override val method: Method,
                     }
                     else -> {
                         val objectRef = term.owner
-                        val objectAddr = (model.assignments[objectRef] as ConstIntTerm).value
+                        val objectAddr = (reanimateFromAssignment(objectRef) as ConstIntTerm).value
                         val type = objectRef.type as KexClass
 
                         val kfgClass = method.cm.getByName(type.`class`)
@@ -145,8 +153,8 @@ class ObjectReanimator(override val method: Method,
                         instance to `class`
                     }
                 }
-                val fieldAddress = model.assignments[term]
-                val fieldValue = model.memories.getValue(memspace).finalMemory[fieldAddress]
+                val fieldAddress = reanimateFromAssignment(term)
+                val fieldValue = reanimateFromMemory(memspace, fieldAddress)
 
                 val fieldReflect = klass.getActualField((term.fieldName as ConstStringTerm).value)
                 if (!klass.isAssignableFrom(instance?.javaClass ?: Any::class.java)) {
@@ -215,8 +223,7 @@ class ObjectReanimator(override val method: Method,
     }
 
     private fun newArrayInstance(memspace: Int, arrayType: KexArray, jType: Type, addr: Term?): Any? {
-        val bounds = model.bounds[memspace] ?: return null
-        val bound = (bounds.finalMemory[addr] as? ConstIntTerm)?.value ?: return null
+        val bound = (reanimateFromBounds(memspace, addr) as? ConstIntTerm)?.value ?: return null
 
         val elementSize = arrayType.element.bitsize
         // todo: this is needed because Boolector does not always align bounds by byte size
@@ -232,7 +239,7 @@ class ObjectReanimator(override val method: Method,
     }
 }
 
-class DescriptorReanimator(override val method: Method,
+abstract class DescriptorReanimator(override val method: Method,
                            override val model: SMTModel,
                            override val context: ExecutionContext) : Reanimator<Descriptor> {
     private val types get() = context.types
@@ -292,13 +299,13 @@ class DescriptorReanimator(override val method: Method,
 
     private fun reanimateReference(term: Term, addr: Term?, nullable: Boolean) = descriptor(context) {
         val memspace = term.memspace
-        val refValue = model.memories[memspace]?.finalMemory!![addr]
+        val refValue = reanimateFromMemory(memspace, addr)
         when (term) {
             is ArrayIndexTerm -> {
                 val arrayRef = term.arrayRef
                 val elementType = (arrayRef.type as KexArray).element
 
-                val arrayAddr = (model.assignments[arrayRef] as ConstIntTerm).value
+                val arrayAddr = (reanimateFromAssignment(arrayRef) as ConstIntTerm).value
                 val array = memory(arrayRef.memspace, arrayAddr) as? ArrayDescriptor
                         ?: return@descriptor default(term.type, term.name, nullable)
 
@@ -322,7 +329,7 @@ class DescriptorReanimator(override val method: Method,
                     }
                     else -> {
                         val objectRef = term.owner
-                        val objectAddr = (model.assignments[objectRef] as ConstIntTerm).value
+                        val objectAddr = (reanimateFromAssignment(objectRef) as ConstIntTerm).value
                         val type = objectRef.type as KexClass
 
                         val kfgClass = method.cm.getByName(type.`class`)
@@ -335,8 +342,8 @@ class DescriptorReanimator(override val method: Method,
                         Triple(instance, `class`, kfgClass.getField(fieldName, term.type.getKfgType(types)))
                     }
                 }
-                val fieldAddress = model.assignments[term]
-                val fieldValue = model.memories.getValue(memspace).finalMemory[fieldAddress]
+                val fieldAddress = reanimateFromAssignment(term)
+                val fieldValue = reanimateFromMemory(memspace, fieldAddress)
 
                 val fieldReflect = klass.getActualField((term.fieldName as ConstStringTerm).value)
                 val reanimatedValue = reanimateReferenceValue(term, fieldValue, nullable)
@@ -388,8 +395,7 @@ class DescriptorReanimator(override val method: Method,
     }
 
     private fun newArrayInstance(name: String, memspace: Int, arrayType: KexArray, addr: Term?, nullable: Boolean) = descriptor(context) {
-        val bounds = model.bounds[memspace] ?: return@descriptor default(arrayType, name, nullable)
-        val bound = (bounds.finalMemory[addr] as? ConstIntTerm)?.value
+        val bound = (reanimateFromBounds(memspace, addr) as? ConstIntTerm)?.value
                 ?: return@descriptor default(arrayType, name, nullable)
 
         val elementSize = arrayType.element.bitsize
@@ -398,4 +404,18 @@ class DescriptorReanimator(override val method: Method,
         log.debug("Creating array of type $arrayType with size $elements")
         array(name, elements, arrayType.getKfgType(types))
     }
+}
+
+class FinalDescriptorReanimator(method: Method, model: SMTModel, context: ExecutionContext) :
+        DescriptorReanimator(method, model, context) {
+    override fun reanimateFromAssignment(term: Term) = model.assignments[term]
+    override fun reanimateFromMemory(memspace: Int, addr: Term?) = model.memories[memspace]?.finalMemory!![addr]
+    override fun reanimateFromBounds(memspace: Int, addr: Term?) = model.bounds[memspace]?.finalMemory!![addr]
+}
+
+class InitialDescriptorReanimator(method: Method, model: SMTModel, context: ExecutionContext) :
+        DescriptorReanimator(method, model, context) {
+    override fun reanimateFromAssignment(term: Term) = model.assignments[term]
+    override fun reanimateFromMemory(memspace: Int, addr: Term?) = model.memories[memspace]?.initialMemory!![addr]
+    override fun reanimateFromBounds(memspace: Int, addr: Term?) = model.bounds[memspace]?.initialMemory!![addr]
 }

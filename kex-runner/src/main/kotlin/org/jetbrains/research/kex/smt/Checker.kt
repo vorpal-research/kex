@@ -36,7 +36,7 @@ class Checker(val method: Method, val loader: ClassLoader, private val psa: Pred
         return check(state)
     }
 
-    private fun prepareState(ps: PredicateState): PredicateState {
+    fun prepareState(ps: PredicateState): PredicateState {
         var state = ps
         if (annotationsEnabled) {
             log.debug("Annotation insertion started...")
@@ -66,7 +66,7 @@ class Checker(val method: Method, val loader: ClassLoader, private val psa: Pred
 
     fun check(ps: PredicateState, qry: PredicateState) = checkInternal(prepareState(ps), qry)
 
-    private fun checkInternal(ps: PredicateState, qry: PredicateState): Result {
+    fun checkInternal(ps: PredicateState, qry: PredicateState): Result {
         state = ps
         query = qry
         if (logQuery) log.debug("State: $state")
@@ -91,6 +91,8 @@ class Checker(val method: Method, val loader: ClassLoader, private val psa: Pred
 
                 results += variables.filterIsInstance<ArgumentTerm>()
                 results += variables.filter { it is FieldTerm && it.owner == `this` }
+                results += collectRequiredTerms(state)
+                results += collectAssumedTerms(state)
                 results += TermCollector.getFullTermSet(query)
                 results
             }

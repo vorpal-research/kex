@@ -3,7 +3,8 @@ package org.jetbrains.research.kex.state.transformer
 import org.jetbrains.research.kex.ExecutionContext
 import org.jetbrains.research.kex.generator.ConstantDescriptor
 import org.jetbrains.research.kex.generator.Descriptor
-import org.jetbrains.research.kex.smt.DescriptorReanimator
+import org.jetbrains.research.kex.smt.FinalDescriptorReanimator
+import org.jetbrains.research.kex.smt.InitialDescriptorReanimator
 import org.jetbrains.research.kex.smt.Reanimator
 import org.jetbrains.research.kex.smt.SMTModel
 import org.jetbrains.research.kex.state.PredicateState
@@ -18,8 +19,8 @@ import org.jetbrains.research.kfg.ir.Method
 
 class DescriptorGenerator(override val method: Method,
                           override val ctx: ExecutionContext,
-                          override val model: SMTModel) : AbstractGenerator<Descriptor> {
-    override val reanimator: Reanimator<Descriptor> = DescriptorReanimator(method, model, ctx)
+                          override val model: SMTModel,
+                          override val reanimator: Reanimator<Descriptor>) : AbstractGenerator<Descriptor> {
 
     override var typeInfos = TypeInfoMap()
     override val memory = hashMapOf<Term, Descriptor>()
@@ -47,8 +48,14 @@ class DescriptorGenerator(override val method: Method,
     }
 }
 
-fun generateDescriptors(method: Method, ctx: ExecutionContext, model: SMTModel, state: PredicateState): Pair<Descriptor?, List<Descriptor>> {
-    val generator = DescriptorGenerator(method, ctx, model)
+fun generateFinalDescriptors(method: Method, ctx: ExecutionContext, model: SMTModel, state: PredicateState): Pair<Descriptor?, List<Descriptor>> {
+    val generator = DescriptorGenerator(method, ctx, model, FinalDescriptorReanimator(method, model, ctx))
+    generator.apply(state)
+    return generator.instance to generator.args.map { it!! }
+}
+
+fun generateInitialDescriptors(method: Method, ctx: ExecutionContext, model: SMTModel, state: PredicateState): Pair<Descriptor?, List<Descriptor>> {
+    val generator = DescriptorGenerator(method, ctx, model, InitialDescriptorReanimator(method, model, ctx))
     generator.apply(state)
     return generator.instance to generator.args.map { it!! }
 }

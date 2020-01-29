@@ -18,7 +18,7 @@ import org.jetbrains.research.kex.smt.ReanimatedModel
 import org.jetbrains.research.kex.smt.Result
 import org.jetbrains.research.kex.smt.SMTModel
 import org.jetbrains.research.kex.state.PredicateState
-import org.jetbrains.research.kex.state.transformer.generateDescriptors
+import org.jetbrains.research.kex.state.transformer.generateFinalDescriptors
 import org.jetbrains.research.kex.state.transformer.generateInputByModel
 import org.jetbrains.research.kex.trace.TraceManager
 import org.jetbrains.research.kex.trace.`object`.Trace
@@ -171,7 +171,7 @@ class MethodChecker(
     private fun generateInput(method: Method, state: PredicateState, model: SMTModel): Pair<Any?, Array<Any?>> = when {
         apiGeneration -> {
             log.debug("Model: $model")
-            val descriptors = generateDescriptors(method, ctx, model, state)
+            val descriptors = generateFinalDescriptors(method, ctx, model, state)
             log.debug("Generated descriptors:")
             log.debug(descriptors)
             val thisCallStack = descriptors.first?.let { descriptor ->

@@ -13,10 +13,12 @@ import org.jetbrains.research.kfg.type.ArrayType
 import org.jetbrains.research.kfg.ir.Class as KfgClass
 import org.jetbrains.research.kfg.type.Type as KfgType
 
-private object TermGenerator {
+object TermGenerator {
     private var index = 0
 
     val nextName: String get() = "generatedTerm${index++}"
+
+    fun nextTerm(type: KexType) = term { value(type, nextName) }
 }
 
 sealed class Descriptor {
@@ -60,7 +62,7 @@ sealed class ConstantDescriptor : Descriptor() {
     }
 }
 
-class FieldDescriptor(
+data class FieldDescriptor(
         val name: String,
         val type: KfgType,
         val klass: KfgClass,
@@ -75,7 +77,7 @@ class FieldDescriptor(
             state = value.toState(state)
         }
         return state.builder().run {
-            val tempTerm = term { value(this@FieldDescriptor.type.kexType, TermGenerator.nextName) }
+            val tempTerm = term { TermGenerator.nextTerm(this@FieldDescriptor.type.kexType) }
             state { tempTerm equality term.load() }
             require { tempTerm equality value.term }
             apply()
@@ -83,9 +85,30 @@ class FieldDescriptor(
     }
 
     override fun toString() = "${klass.fullname}.$name = $value"
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as FieldDescriptor
+
+        if (name != other.name) return false
+        if (type != other.type) return false
+        if (klass != other.klass) return false
+        if (value != other.value) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = name.hashCode()
+        result = 31 * result + type.hashCode()
+        result = 31 * result + klass.hashCode()
+        result = 31 * result + value.hashCode()
+        return result
+    }
 }
 
-class ObjectDescriptor(
+data class ObjectDescriptor(
         val name: String,
         val klass: KfgClass,
         private val fieldsInner: MutableMap<String, FieldDescriptor> = mutableMapOf()
@@ -95,6 +118,8 @@ class ObjectDescriptor(
     operator fun set(field: String, value: FieldDescriptor) {
         fieldsInner[field] = value
     }
+
+    operator fun get(field: String) = fieldsInner[field]
 
     override val term get() = term { value(klass.kexType, name) }
 
@@ -107,7 +132,7 @@ class ObjectDescriptor(
     }
 
     override fun toString(): String = buildString {
-        append("Object $term {")
+        append("$klass $term {")
         if (fieldsInner.isNotEmpty()) {
             append("\n  ")
             appendln(fieldsInner.values.joinToString("\n").replace("\n", "\n  "))
@@ -116,7 +141,7 @@ class ObjectDescriptor(
     }
 }
 
-class ArrayDescriptor(
+data class ArrayDescriptor(
         val name: String,
         val length: Int,
         val type: KfgType,
@@ -141,7 +166,7 @@ class ArrayDescriptor(
     }
 
     override fun toString(): String = buildString {
-        append("Array $term {")
+        append("$type $term {")
         if (elementsInner.isNotEmpty()) {
             append("\n  ")
             appendln(elementsInner.toList().joinToString("\n") { "[${it.first}] = ${it.second}" }.replace("\n", "\n  "))
@@ -180,6 +205,23 @@ class DescriptorBuilder(val context: ExecutionContext) {
             is KexClass -> if (nullable) `null` else `object`(name, type.kfgClass(context.types))
             is KexArray -> if (nullable) `null` else array(name, 0, type.getKfgType(context.types))
             is KexReference -> default(type.reference, name, nullable)
+            else -> unreachable { log.error("Could not generate default descriptor value for unknown type $type") }
+        }
+    }
+
+    fun default(type: KexType): Descriptor = descriptor(context) {
+        when (type) {
+            is KexBool -> const(false)
+            is KexByte -> const(0)
+            is KexChar -> const(0)
+            is KexShort -> const(0)
+            is KexInt -> const(0)
+            is KexLong -> const(0L)
+            is KexFloat -> const(0.0F)
+            is KexDouble -> const(0.0)
+            is KexClass -> `null`
+            is KexArray -> `null`
+            is KexReference -> default(type.reference)
             else -> unreachable { log.error("Could not generate default descriptor value for unknown type $type") }
         }
     }
