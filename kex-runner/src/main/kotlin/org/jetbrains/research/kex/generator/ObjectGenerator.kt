@@ -33,6 +33,7 @@ class ObjectGenerator(val ctx: ExecutionContext) {
                     val javaMethod = reflection.getMethod(call.method, ctx.loader)
                     javaMethod.isAccessible = true
                     javaMethod.invoke(current, *call.args.map { generate(it) }.toTypedArray())
+                    current
                 }
                 is NewArray -> {
                     val length = generate(call.length)!! as Int
@@ -44,6 +45,7 @@ class ObjectGenerator(val ctx: ExecutionContext) {
                     val index = generate(call.index)!! as Int
                     val value = generate(call.value)
                     Array.set(current, index, value)
+                    current
                 }
                 is FieldSetter -> {
                     val field = call.field

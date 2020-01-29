@@ -199,7 +199,7 @@ class CallStackGenerator(val context: ExecutionContext, val psa: PredicateStateA
     }
 
     private fun reduce(descriptor: ObjectDescriptor) = ObjectDescriptor(descriptor.name, descriptor.klass,
-            descriptor.fields.filter { it.value == defaultValueForType(it.value.type.kexType) }.toMutableMap())
+            descriptor.fields.filterNot { it.value.value == defaultValueForType(it.value.type.kexType) }.toMutableMap())
 
     private fun defaultValueForType(type: KexType) = descriptor(context) {
         default(type)
