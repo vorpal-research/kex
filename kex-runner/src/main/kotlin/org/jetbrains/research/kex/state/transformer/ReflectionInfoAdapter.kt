@@ -130,17 +130,21 @@ class ReflectionInfoAdapter(val method: Method, val loader: ClassLoader) : Recol
             return super.apply(ps)
         }
 
-        val parameters = kFunction.parameters.drop(method.isAbstract.not().toInt())
+        val parameters = when {
+            method.isAbstract -> kFunction.parameters.map { it.index to it }
+            method.isConstructor -> kFunction.parameters.map { it.index to it }
+            else -> kFunction.parameters.drop(1).map { it.index - 1 to it }
+        }
 
         for ((param, type) in parameters.zip(method.argTypes)) {
-            val arg = arguments[param.index - 1] ?: continue
+            val arg = arguments[param.first] ?: continue
 
-            if (arg.type.isNonNullable(param.type)) {
+            if (arg.type.isNonNullable(param.second.type)) {
                 currentBuilder += assume { arg inequality null }
             }
 
             if (type is ArrayType) {
-                arrayElementInfo[arg] = ArrayElementInfo(nullable = type.kexType.isElementNullable(param.type))
+                arrayElementInfo[arg] = ArrayElementInfo(nullable = type.kexType.isElementNullable(param.second.type))
             }
         }
 

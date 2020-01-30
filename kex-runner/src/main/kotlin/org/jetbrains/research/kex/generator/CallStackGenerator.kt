@@ -130,7 +130,7 @@ class CallStackGenerator(val context: ExecutionContext, val psa: PredicateStateA
 
     private fun executeConstructor(descriptor: ObjectDescriptor, method: Method, preState: PredicateState): Pair<ObjectDescriptor?, List<Descriptor>>? {
         if (method.isEmpty()) return descriptor to listOf()
-        log.debug("Executing method $method for $descriptor")
+        log.debug("Executing constructor $method for $descriptor")
         val builder = psa.builder(method)
         val termMap = mapOf(descriptor.term to term { `this`(descriptor.term.type) })
         val state = TermRemapper(termMap).apply(

@@ -409,13 +409,13 @@ abstract class DescriptorReanimator(override val method: Method,
 class FinalDescriptorReanimator(method: Method, model: SMTModel, context: ExecutionContext) :
         DescriptorReanimator(method, model, context) {
     override fun reanimateFromAssignment(term: Term) = model.assignments[term]
-    override fun reanimateFromMemory(memspace: Int, addr: Term?) = model.memories[memspace]?.finalMemory!![addr]
-    override fun reanimateFromBounds(memspace: Int, addr: Term?) = model.bounds[memspace]?.finalMemory!![addr]
+    override fun reanimateFromMemory(memspace: Int, addr: Term?) = model.memories[memspace]?.finalMemory?.get(addr)
+    override fun reanimateFromBounds(memspace: Int, addr: Term?) = model.bounds[memspace]?.finalMemory?.get(addr)
 }
 
 class InitialDescriptorReanimator(method: Method, model: SMTModel, context: ExecutionContext) :
         DescriptorReanimator(method, model, context) {
     override fun reanimateFromAssignment(term: Term) = model.assignments[term]
-    override fun reanimateFromMemory(memspace: Int, addr: Term?) = model.memories[memspace]?.initialMemory!![addr]
-    override fun reanimateFromBounds(memspace: Int, addr: Term?) = model.bounds[memspace]?.initialMemory!![addr]
+    override fun reanimateFromMemory(memspace: Int, addr: Term?) = model.memories[memspace]?.initialMemory?.get(addr)
+    override fun reanimateFromBounds(memspace: Int, addr: Term?) = model.bounds[memspace]?.initialMemory?.get(addr)
 }
