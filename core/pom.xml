@@ -37,7 +37,7 @@
         </dependency>
 
         <dependency>
-            <groupId>com.github.vorpal-research</groupId>
+            <groupId>org.jetbrains.research</groupId>
             <artifactId>kfg</artifactId>
             <version>${kfg.version}</version>
         </dependency>

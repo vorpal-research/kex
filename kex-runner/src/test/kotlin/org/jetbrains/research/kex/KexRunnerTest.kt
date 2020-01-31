@@ -1,5 +1,11 @@
 package org.jetbrains.research.kex
 
+import org.jetbrains.research.kex.asm.analysis.MethodChecker
+import org.jetbrains.research.kex.asm.state.PredicateStateAnalysis
+import org.jetbrains.research.kex.asm.transform.LoopDeroller
+import org.jetbrains.research.kex.asm.transform.RuntimeTraceCollector
+import org.jetbrains.research.kex.asm.util.ClassWriter
+import org.jetbrains.research.kex.random.easyrandom.EasyRandomDriver
 import org.jetbrains.research.kex.smt.Checker
 import org.jetbrains.research.kex.smt.Result
 import org.jetbrains.research.kex.state.term.ConstBoolTerm
@@ -7,17 +13,50 @@ import org.jetbrains.research.kex.state.term.ConstIntTerm
 import org.jetbrains.research.kex.state.term.isConst
 import org.jetbrains.research.kex.state.term.term
 import org.jetbrains.research.kex.test.Intrinsics
+import org.jetbrains.research.kex.trace.`object`.ObjectTraceManager
 import org.jetbrains.research.kex.util.log
+import org.jetbrains.research.kfg.ClassManager
+import org.jetbrains.research.kfg.KfgConfig
+import org.jetbrains.research.kfg.Package
+import org.jetbrains.research.kfg.analysis.LoopSimplifier
 import org.jetbrains.research.kfg.ir.Class
 import org.jetbrains.research.kfg.ir.Method
 import org.jetbrains.research.kfg.ir.MethodDesc
 import org.jetbrains.research.kfg.ir.value.instruction.ArrayStoreInst
 import org.jetbrains.research.kfg.ir.value.instruction.CallInst
 import org.jetbrains.research.kfg.ir.value.instruction.Instruction
+import org.jetbrains.research.kfg.util.Flags
+import org.jetbrains.research.kfg.util.classLoader
+import org.jetbrains.research.kfg.util.unpack
+import org.jetbrains.research.kfg.visitor.executePipeline
+import java.net.URLClassLoader
+import java.nio.file.Files
+import java.util.jar.JarFile
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
 abstract class KexRunnerTest : KexTest() {
+    val classPath = System.getProperty("java.class.path")
+    val targetDir = Files.createTempDirectory("kex-test")
+
+    val analysisContext: ExecutionContext
+    val originalContext: ExecutionContext
+
+    init {
+        val jar = JarFile(jarPath)
+        val origManager = ClassManager(jar, KfgConfig(`package` = `package`, flags = Flags.readAll, failOnError = false))
+
+        jar.unpack(cm, targetDir, Package.defaultPackage, true)
+        val classLoader = URLClassLoader(arrayOf(targetDir.toUri().toURL()))
+        originalContext = ExecutionContext(origManager, jar.classLoader, EasyRandomDriver())
+
+        executePipeline(originalContext.cm, `package`) {
+            +RuntimeTraceCollector(originalContext.cm)
+            +ClassWriter(originalContext, targetDir)
+        }
+
+        analysisContext = ExecutionContext(cm, classLoader, EasyRandomDriver())
+    }
 
     protected fun getReachables(method: Method): List<Instruction> {
         val `class` = Intrinsics::class.qualifiedName!!.replace(".", "/")
@@ -89,5 +128,29 @@ abstract class KexRunnerTest : KexTest() {
                 assertTrue(result is Result.UnsatResult, "Class $`class`; method $method; ${inst.print()} should be unreachable")
             }
         }
+    }
+
+    private fun updateClassPath(loader: URLClassLoader) {
+        val urlClassPath = loader.urLs.joinToString(separator = ":") { "${it.path}." }
+        System.setProperty("java.class.path", "${classPath.split(":").filter { "kex-test" !in it }.joinToString(":")}:$urlClassPath")
+    }
+
+    private fun clearClassPath() {
+        System.setProperty("java.class.path", classPath)
+    }
+
+    fun runPipelineOn(`class`: Class) {
+        val traceManager = ObjectTraceManager()
+        val psa = PredicateStateAnalysis(analysisContext.cm)
+
+        updateClassPath(analysisContext.loader as URLClassLoader)
+        executePipeline(analysisContext.cm, `class`) {
+            +LoopSimplifier(analysisContext.cm)
+            +LoopDeroller(analysisContext.cm)
+            +psa
+            +MethodChecker(analysisContext, traceManager, psa)
+            // todo: add check that generation is actually successful
+        }
+        clearClassPath()
     }
 }

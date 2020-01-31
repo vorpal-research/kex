@@ -36,8 +36,8 @@ import org.jetbrains.research.kfg.visitor.MethodVisitor
 import java.nio.file.Files
 import java.nio.file.Paths
 
-private val failDir by lazy { kexConfig.getStringValue("debug", "dump-directory", "./fail") }
-private val apiGeneration by lazy { kexConfig.getBooleanValue("recovering", "apiGeneration", false) }
+private val failDir get() = kexConfig.getStringValue("debug", "dump-directory", "./fail")
+private val apiGeneration get() = kexConfig.getBooleanValue("recovering", "apiGeneration", false)
 
 class KexCheckerException(val inner: Exception, val reason: PredicateState) : Exception()
 class KexRunnerException(val inner: Exception, val model: ReanimatedModel) : Exception()

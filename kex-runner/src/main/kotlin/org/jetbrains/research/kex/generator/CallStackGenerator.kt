@@ -22,6 +22,8 @@ import java.util.*
 private val maxStackSize: Int by lazy { kexConfig.getIntValue("apiGeneration", "maxStackSize", 10)}
 
 // todo: think about generating list of calls instead of call stack tree
+// todo: complex relations between descriptors (not just equals to constant, but also equals to each other)
+// todo: deeper object generation (when fields of an object are also objects)
 class CallStackGenerator(val context: ExecutionContext, val psa: PredicateStateAnalysis) {
     private val descriptorMap = mutableMapOf<Descriptor, Node>()
 
