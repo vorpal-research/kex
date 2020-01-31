@@ -99,7 +99,7 @@ class CallStackGenerator(val context: ExecutionContext, val psa: PredicateStateA
             for (method in klass.methods) {
                 val (newDesc, args) = executeMethod(desc, method) ?: continue
                 if (newDesc != null && newDesc != desc) {
-                    queue += reduce(newDesc) to (stack + MethodCall(stack, method, args.map { generate(it) }))
+                    queue += newDesc.merge(desc) to (stack + MethodCall(stack, method, args.map { generate(it) }))
                 }
             }
         }
@@ -144,7 +144,7 @@ class CallStackGenerator(val context: ExecutionContext, val psa: PredicateStateA
             is Result.SatResult -> {
                 log.debug("Model: ${result.model}")
                 val (thisDescriptor, argumentDescriptors) = generateInitialDescriptors(method, context, result.model, checker.state)
-                (thisDescriptor as? ObjectDescriptor) to argumentDescriptors
+                (thisDescriptor as? ObjectDescriptor)?.let { reduce(it) } to argumentDescriptors
             }
             else -> {
                 log.warn("Could not use $method for generating $descriptor")
@@ -196,7 +196,7 @@ class CallStackGenerator(val context: ExecutionContext, val psa: PredicateStateA
 
     private fun ObjectDescriptor?.isFinal(original: ObjectDescriptor) = when {
         this == null -> true
-        original.fields.all { this[it.key] == defaultValueForType(it.value.type.kexType) } -> true
+        original.fields.all { (this[it.key]?.value ?: return@all true) == defaultValueForType(it.value.type.kexType) } -> true
         else -> false
     }
 

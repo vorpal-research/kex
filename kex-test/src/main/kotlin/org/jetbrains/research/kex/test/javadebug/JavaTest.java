@@ -6,8 +6,11 @@ public class JavaTest {
         int y;
         int z;
 
-        public Point(int x, int y) {
+        public Point(int x) {
             this.x = x;
+        }
+
+        final void setY(int y) {
             this.y = y;
         }
 
@@ -21,13 +24,9 @@ public class JavaTest {
         }
     }
 
-    public void checkPoint(Point p1, Point p2) {
-        if (p1.x > p2.x) {
+    public void checkPoint(Point p1) {
+        if (p1.x == 3 && p1.y == -1 && p1.z == 42) {
             System.out.println("Success");
         }
-        if (p1.z < p2.z) {
-            System.out.println("Double success");
-        }
-        System.out.println("end");
     }
 }

@@ -139,6 +139,22 @@ data class ObjectDescriptor(
         }
         appendln("}")
     }
+
+    fun merge(other: ObjectDescriptor): ObjectDescriptor {
+        val fields = fieldsInner.toMutableMap()
+        for ((name, desc) in other.fields) {
+            when (name) {
+                in fields -> {
+                    val currentValue = fields[name]
+                    if (currentValue != desc) {
+                        fields.remove(name)
+                    }
+                }
+                else -> fields += name to desc
+            }
+        }
+        return ObjectDescriptor(name, klass, fields)
+    }
 }
 
 data class ArrayDescriptor(
