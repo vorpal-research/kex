@@ -35,6 +35,7 @@ import org.jetbrains.research.kfg.visitor.Pipeline
 import org.jetbrains.research.kfg.visitor.executePipeline
 import java.io.File
 import java.net.URLClassLoader
+import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.jar.JarFile
@@ -109,7 +110,8 @@ class Kex(args: Array<String>) {
             }
         }
 
-        outputDir = Paths.get(cmd.getCmdValue("output", "instrumented/")).toAbsolutePath()
+        outputDir = (cmd.getCmdValue("output")?.let { Paths.get(it) }
+                ?: Files.createTempDirectory(Paths.get("."), "kex-instrumented")).toAbsolutePath()
     }
 
     private fun updateClassPath(loader: URLClassLoader) {
