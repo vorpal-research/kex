@@ -42,9 +42,9 @@ Usage: kex
     --log <arg>                     log file name (`kex.log` by default)
  -m,--mode <arg>                    run mode: bmc, concolic or debug
     --option <section:name:value>   set kex option through command line
- -p,--package <arg>                 analyzed package
+    --output <arg>                  target directory for instrumented bytecode
+                                    output
     --ps <arg>                      file with predicate state to debug; used
                                     only in debug mode
-    --target <arg>                  target directory for instrumented bytecode
-                                    output
+ -t,--target <arg>                  target to analyze: package, class or method
 ```
