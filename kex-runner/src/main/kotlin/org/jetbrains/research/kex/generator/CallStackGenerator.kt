@@ -173,7 +173,7 @@ class CallStackGenerator(val context: ExecutionContext, val psa: PredicateStateA
                 (thisDescriptor as? ObjectDescriptor)?.reduce() to argumentDescriptors
             }
             else -> {
-                log.warn("Could not use ${this} for generating $descriptor")
+                log.warn("Could not use $this for generating $descriptor")
                 null
             }
         }
@@ -215,7 +215,7 @@ class CallStackGenerator(val context: ExecutionContext, val psa: PredicateStateA
                 (thisDescriptor as? ObjectDescriptor)?.reduce() to argumentDescriptors
             }
             else -> {
-                log.warn("Could not use ${this} for generating $descriptor")
+                log.warn("Could not use $this for generating $descriptor")
                 null
             }
         }
