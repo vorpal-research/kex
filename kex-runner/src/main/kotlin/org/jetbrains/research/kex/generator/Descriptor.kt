@@ -69,7 +69,7 @@ data class FieldDescriptor(
         val owner: Descriptor,
         val value: Descriptor
 ) : Descriptor() {
-    override val term get() = term { owner.term.field(type.kexType, name) }
+    override val term = term { owner.term.field(type.kexType, name) }
 
     override fun toState(ps: PredicateState): PredicateState {
         var state = ps
@@ -121,7 +121,7 @@ data class ObjectDescriptor(
 
     operator fun get(field: String) = fieldsInner[field]
 
-    override val term get() = term { value(klass.kexType, name) }
+    override val term = term { value(klass.kexType, name) }
 
     override fun toState(ps: PredicateState): PredicateState {
         var state = ps
@@ -170,7 +170,7 @@ data class ArrayDescriptor(
         elementsInner[index] = value
     }
 
-    override val term get() = term { value(type.kexType, name) }
+    override val term = term { value(type.kexType, name) }
 
     override fun toState(ps: PredicateState): PredicateState {
         var state = ps
@@ -205,7 +205,7 @@ class DescriptorBuilder(val context: ExecutionContext) {
     fun `object`(type: KfgClass): ObjectDescriptor = ObjectDescriptor(type)
     fun array(length: Int, type: KfgType): ArrayDescriptor = ArrayDescriptor(length, type)
 
-    fun ObjectDescriptor.field(name: String, type: org.jetbrains.research.kfg.type.Type, klass: KfgClass, value: Descriptor) =
+    fun ObjectDescriptor.field(name: String, type: KfgType, klass: KfgClass, value: Descriptor) =
             FieldDescriptor(name, type, klass, this, value)
 
     fun default(type: KexType, nullable: Boolean): Descriptor = descriptor(context) {

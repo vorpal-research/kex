@@ -1,6 +1,7 @@
 package org.jetbrains.research.kex.generator
 
 import org.jetbrains.research.kex.ExecutionContext
+import org.jetbrains.research.kex.annotations.AnnotationManager
 import org.jetbrains.research.kex.asm.state.PredicateStateAnalysis
 import org.jetbrains.research.kex.config.kexConfig
 import org.jetbrains.research.kex.ktype.KexType
@@ -10,22 +11,39 @@ import org.jetbrains.research.kex.smt.Result
 import org.jetbrains.research.kex.state.PredicateState
 import org.jetbrains.research.kex.state.StateBuilder
 import org.jetbrains.research.kex.state.term.term
-import org.jetbrains.research.kex.state.transformer.TermRemapper
-import org.jetbrains.research.kex.state.transformer.collectFieldAccesses
-import org.jetbrains.research.kex.state.transformer.generateInitialDescriptors
+import org.jetbrains.research.kex.state.transformer.*
 import org.jetbrains.research.kex.util.log
 import org.jetbrains.research.kex.util.unreachable
 import org.jetbrains.research.kfg.ir.Method
 import org.jetbrains.research.kfg.type.ArrayType
 import java.util.*
 
-private val maxStackSize: Int by lazy { kexConfig.getIntValue("apiGeneration", "maxStackSize", 10)}
+private val maxStackSize: Int by lazy { kexConfig.getIntValue("apiGeneration", "maxStackSize", 10) }
+private val isInliningEnabled  by lazy { kexConfig.getBooleanValue("smt", "ps-inlining", true) }
+private val annotationsEnabled  by lazy { kexConfig.getBooleanValue("annotations", "enabled", false) }
 
 // todo: think about generating list of calls instead of call stack tree
 // todo: complex relations between descriptors (not just equals to constant, but also equals to each other)
 // todo: deeper object generation (when fields of an object are also objects)
 class CallStackGenerator(val context: ExecutionContext, val psa: PredicateStateAnalysis) {
     private val descriptorMap = mutableMapOf<Descriptor, Node>()
+
+    private fun prepareState(method: Method, ps: PredicateState) = transform(ps) {
+        if (annotationsEnabled) {
+            +AnnotationIncluder(AnnotationManager.defaultLoader)
+        }
+
+        if (isInliningEnabled) {
+            +MethodInliner(method, psa)
+        }
+
+        +IntrinsicAdapter
+        if (!method.isConstructor) +ReflectionInfoAdapter(method, context.loader)
+        +Optimizer()
+        +ConstantPropagator
+        +BoolTypeAdapter(method.cm.type)
+        +ArrayBoundsAdapter()
+    }
 
     private class Node(var stack: CallStack) {
         constructor() : this(CallStack())
@@ -140,7 +158,7 @@ class CallStackGenerator(val context: ExecutionContext, val psa: PredicateStateA
         )
 
         val checker = Checker(method, context.loader, psa)
-        return when (val result = checker.check(state, TermRemapper(termMap).apply(descriptor.toState()))) {
+        return when (val result = checker.check(prepareState(method, state), TermRemapper(termMap).apply(descriptor.toState()))) {
             is Result.SatResult -> {
                 log.debug("Model: ${result.model}")
                 val (thisDescriptor, argumentDescriptors) = generateInitialDescriptors(method, context, result.model, checker.state)
@@ -181,7 +199,7 @@ class CallStackGenerator(val context: ExecutionContext, val psa: PredicateStateA
         }
         val preState = mapper.apply(preStateBuilder.apply())
 
-        return when (val result = checker.check(preState + state, query)) {
+        return when (val result = checker.check(prepareState(method, preState + state), query)) {
             is Result.SatResult -> {
                 log.debug("Model: ${result.model}")
                 val (thisDescriptor, argumentDescriptors) = generateInitialDescriptors(method, context, result.model, checker.state)
@@ -196,12 +214,20 @@ class CallStackGenerator(val context: ExecutionContext, val psa: PredicateStateA
 
     private fun ObjectDescriptor?.isFinal(original: ObjectDescriptor) = when {
         this == null -> true
-        original.fields.all { (this[it.key]?.value ?: return@all true) == defaultValueForType(it.value.type.kexType) } -> true
+        original.fields.all {
+            (this[it.key]?.value ?: return@all true) == defaultValueForType(it.value.type.kexType)
+        } -> true
         else -> false
     }
 
-    private fun reduce(descriptor: ObjectDescriptor) = ObjectDescriptor(descriptor.klass,
-            descriptor.fields.filterNot { it.value.value == defaultValueForType(it.value.type.kexType) }.toMutableMap())
+    private fun reduce(descriptor: ObjectDescriptor): ObjectDescriptor {
+        val filteredFields = descriptor.fields.filterNot { it.value.value == defaultValueForType(it.value.type.kexType) }
+        val newObject = ObjectDescriptor(descriptor.klass)
+        for ((name, field) in filteredFields) {
+            newObject[name] = field.copy(owner = newObject)
+        }
+        return newObject
+    }
 
     private fun defaultValueForType(type: KexType) = descriptor(context) {
         default(type)

@@ -33,40 +33,34 @@ class Checker(val method: Method, val loader: ClassLoader, private val psa: Pred
 
         val state = createState(inst)
                 ?: return Result.UnknownResult("Can't get state for instruction ${inst.print()}")
-        return check(state)
+        return prepareAndCheck(state)
     }
 
-    fun prepareState(ps: PredicateState): PredicateState {
-        var state = ps
+    fun prepareState(ps: PredicateState) = transform(ps) {
         if (annotationsEnabled) {
-            log.debug("Annotation insertion started...")
-            state = AnnotationIncluder(AnnotationManager.defaultLoader).apply(state)
-            log.debug("Annotation insertion finished")
+            +AnnotationIncluder(AnnotationManager.defaultLoader)
         }
 
         if (isInliningEnabled) {
-            log.debug("Inlining started...")
-            state = MethodInliner(method, psa).apply(state)
-            log.debug("Inlining finished")
+            +MethodInliner(method, psa)
         }
 
-        state = IntrinsicAdapter.apply(state)
-        state = ReflectionInfoAdapter(method, loader).apply(state)
-        state = Optimizer().apply(state)
-        state = ConstantPropagator.apply(state)
-        state = BoolTypeAdapter(method.cm.type).apply(state)
-        state = ArrayBoundsAdapter().apply(state)
-        return state
+        +IntrinsicAdapter
+        +ReflectionInfoAdapter(method, loader)
+        +Optimizer()
+        +ConstantPropagator
+        +BoolTypeAdapter(method.cm.type)
+        +ArrayBoundsAdapter()
     }
 
-    fun check(ps: PredicateState): Result {
+    fun prepareAndCheck(ps: PredicateState): Result {
         val state = prepareState(ps)
-        return checkInternal(state, state.path)
+        return check(state, state.path)
     }
 
-    fun check(ps: PredicateState, qry: PredicateState) = checkInternal(prepareState(ps), qry)
+    fun prepareAndCheck(ps: PredicateState, qry: PredicateState) = check(prepareState(ps), qry)
 
-    fun checkInternal(ps: PredicateState, qry: PredicateState): Result {
+    fun check(ps: PredicateState, qry: PredicateState): Result {
         state = ps
         query = qry
         if (logQuery) log.debug("State: $state")

@@ -134,7 +134,7 @@ class MethodChecker(
                 ?: return Result.UnknownResult("Could not create a predicate state for instruction")
 
         val result = try {
-            checker.check(ps)
+            checker.prepareAndCheck(ps)
         } catch (e: Exception) {
             throw KexCheckerException(e, ps)
         }

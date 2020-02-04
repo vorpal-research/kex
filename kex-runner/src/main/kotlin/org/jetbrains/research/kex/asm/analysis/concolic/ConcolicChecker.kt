@@ -224,7 +224,7 @@ class ConcolicChecker(val ctx: ExecutionContext, val manager: TraceManager<Trace
 
         val psa = PredicateStateAnalysis(cm)
         val checker = Checker(method, loader, psa)
-        val result = checker.check(mutated)
+        val result = checker.prepareAndCheck(mutated)
         if (result !is Result.SatResult) return null
         yield()
 
