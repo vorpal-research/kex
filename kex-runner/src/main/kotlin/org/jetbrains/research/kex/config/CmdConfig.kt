@@ -8,7 +8,7 @@ import java.io.PrintWriter
 import java.io.StringWriter
 import org.apache.commons.cli.CommandLine as Cmd
 
-class CmdConfig(args: Array<String>) : Config {
+class CmdConfig(args: Array<String>) : Config() {
     private val options = Options()
     private val commandLineOptions = hashMapOf<String, MutableMap<String, String>>()
     private val cmd: Cmd

@@ -4,7 +4,7 @@ import org.ini4j.Wini
 import java.io.File
 import org.ini4j.Config as IniConfig
 
-class FileConfig(configFile: String) : Config {
+class FileConfig(configFile: String) : Config() {
     private val ini = Wini()
 
     init {
