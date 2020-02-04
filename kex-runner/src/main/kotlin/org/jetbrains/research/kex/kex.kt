@@ -105,6 +105,7 @@ class Kex(args: Array<String>) {
                 log.debug("Running with jar ${jar.name} and class $klass")
             }
             else -> {
+                log.error("Could not parse target $targetName")
                 cmd.printHelp()
                 exitProcess(1)
             }
