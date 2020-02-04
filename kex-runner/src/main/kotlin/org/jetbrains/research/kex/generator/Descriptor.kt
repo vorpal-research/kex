@@ -109,10 +109,10 @@ data class FieldDescriptor(
 }
 
 data class ObjectDescriptor(
-        val name: String,
         val klass: KfgClass,
         private val fieldsInner: MutableMap<String, FieldDescriptor> = mutableMapOf()
 ) : Descriptor() {
+    val name: String = TermGenerator.nextName
     val fields: Map<String, FieldDescriptor> get() = fieldsInner.toMap()
 
     operator fun set(field: String, value: FieldDescriptor) {
@@ -132,7 +132,7 @@ data class ObjectDescriptor(
     }
 
     override fun toString(): String = buildString {
-        append("$klass $term {")
+        append("$klass {")
         if (fieldsInner.isNotEmpty()) {
             append("\n  ")
             appendln(fieldsInner.values.joinToString("\n").replace("\n", "\n  "))
@@ -153,16 +153,16 @@ data class ObjectDescriptor(
                 else -> fields += name to desc
             }
         }
-        return ObjectDescriptor(name, klass, fields)
+        return ObjectDescriptor(klass, fields)
     }
 }
 
 data class ArrayDescriptor(
-        val name: String,
         val length: Int,
         val type: KfgType,
         private val elementsInner: MutableMap<Int, Descriptor> = mutableMapOf()
 ) : Descriptor() {
+    val name: String = TermGenerator.nextName
     val elements: Map<Int, Descriptor> get() = elementsInner.toMap()
     val elementType = (type as ArrayType).component
 
@@ -182,7 +182,7 @@ data class ArrayDescriptor(
     }
 
     override fun toString(): String = buildString {
-        append("$type $term {")
+        append("$type {")
         if (elementsInner.isNotEmpty()) {
             append("\n  ")
             appendln(elementsInner.toList().joinToString("\n") { "[${it.first}] = ${it.second}" }.replace("\n", "\n  "))
@@ -202,13 +202,13 @@ class DescriptorBuilder(val context: ExecutionContext) {
         else -> ConstantDescriptor.Int(number.toInt())
     }
 
-    fun `object`(name: String, type: KfgClass): ObjectDescriptor = ObjectDescriptor(name, type)
-    fun array(name: String, length: Int, type: KfgType): ArrayDescriptor = ArrayDescriptor(name, length, type)
+    fun `object`(type: KfgClass): ObjectDescriptor = ObjectDescriptor(type)
+    fun array(length: Int, type: KfgType): ArrayDescriptor = ArrayDescriptor(length, type)
 
-    fun field(name: String, type: KfgType, klass: KfgClass, value: Descriptor, owner: ObjectDescriptor) =
-            FieldDescriptor(name, type, klass, owner, value)
+    fun ObjectDescriptor.field(name: String, type: org.jetbrains.research.kfg.type.Type, klass: KfgClass, value: Descriptor) =
+            FieldDescriptor(name, type, klass, this, value)
 
-    fun default(type: KexType, name: String, nullable: Boolean): Descriptor = descriptor(context) {
+    fun default(type: KexType, nullable: Boolean): Descriptor = descriptor(context) {
         when (type) {
             is KexBool -> const(false)
             is KexByte -> const(0)
@@ -218,9 +218,9 @@ class DescriptorBuilder(val context: ExecutionContext) {
             is KexLong -> const(0L)
             is KexFloat -> const(0.0F)
             is KexDouble -> const(0.0)
-            is KexClass -> if (nullable) `null` else `object`(name, type.kfgClass(context.types))
-            is KexArray -> if (nullable) `null` else array(name, 0, type.getKfgType(context.types))
-            is KexReference -> default(type.reference, name, nullable)
+            is KexClass -> if (nullable) `null` else `object`(type.kfgClass(context.types))
+            is KexArray -> if (nullable) `null` else array(0, type.getKfgType(context.types))
+            is KexReference -> default(type.reference, nullable)
             else -> unreachable { log.error("Could not generate default descriptor value for unknown type $type") }
         }
     }

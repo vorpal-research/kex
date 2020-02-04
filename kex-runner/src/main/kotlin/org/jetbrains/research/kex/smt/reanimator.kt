@@ -256,7 +256,7 @@ abstract class DescriptorReanimator(override val method: Method,
     }
 
     private fun reanimatePrimary(term: Term, value: Term?) = descriptor(context) {
-        if (value == null) default(term.type, term.name, false)
+        if (value == null) default(term.type, false)
         else when (term.type) {
             is KexBool -> const((value as ConstBoolTerm).value)
             is KexByte -> const((value as ConstByteTerm).value)
@@ -281,8 +281,8 @@ abstract class DescriptorReanimator(override val method: Method,
         val type = term.type as KexClass
 
         when (val address = (addr as? ConstIntTerm)?.value) {
-            null, 0 -> default(term.type, term.name, nullable)
-            else -> memory(type.memspace, address) { `object`(term.name, type.kfgClass(types)) }
+            null, 0 -> default(term.type, nullable)
+            else -> memory(type.memspace, address) { `object`(type.kfgClass(types)) }
         }
     }
 
@@ -290,9 +290,9 @@ abstract class DescriptorReanimator(override val method: Method,
         val arrayType = term.type as KexArray
 
         when (val address = (addr as? ConstIntTerm)?.value) {
-            null, 0 -> default(term.type, term.name, nullable)
+            null, 0 -> default(term.type, nullable)
             else -> memory(arrayType.memspace, address) {
-                newArrayInstance(term.name, arrayType.memspace, arrayType, addr, nullable)
+                newArrayInstance(arrayType.memspace, arrayType, addr, nullable)
             }
         }
     }
@@ -307,7 +307,7 @@ abstract class DescriptorReanimator(override val method: Method,
 
                 val arrayAddr = (reanimateFromAssignment(arrayRef) as ConstIntTerm).value
                 val array = memory(arrayRef.memspace, arrayAddr) as? ArrayDescriptor
-                        ?: return@descriptor default(term.type, term.name, nullable)
+                        ?: return@descriptor default(term.type, nullable)
 
                 val reanimatedValue = reanimateReferenceValue(term, refValue, nullable)
                 val address = (addr as? ConstIntTerm)?.value
@@ -322,8 +322,8 @@ abstract class DescriptorReanimator(override val method: Method,
                     term.isStatic -> {
                         val classRef = (term.owner as ConstClassTerm)
                         val `class` = tryOrNull { loader.loadClass(classRef.`class`.canonicalDesc) }
-                                ?: return@descriptor default(term.type, term.name, nullable)
-                        if (`class`.isSynthetic) return@descriptor default(term.type, term.name, nullable)
+                                ?: return@descriptor default(term.type, nullable)
+                        if (`class`.isSynthetic) return@descriptor default(term.type, nullable)
 
                         Triple(`null`, `class`, classRef.`class`.getField(fieldName, term.type.getKfgType(types)))
                     }
@@ -334,10 +334,10 @@ abstract class DescriptorReanimator(override val method: Method,
 
                         val kfgClass = method.cm.getByName(type.`class`)
                         val `class` = tryOrNull { loader.loadClass(kfgClass.canonicalDesc) }
-                                ?: return@descriptor default(term.type, term.name, nullable)
+                                ?: return@descriptor default(term.type, nullable)
 
                         val instance = memory(objectRef.memspace, objectAddr)
-                                ?: return@descriptor default(term.type, term.name, nullable)
+                                ?: return@descriptor default(term.type, nullable)
 
                         Triple(instance, `class`, kfgClass.getField(fieldName, term.type.getKfgType(types)))
                     }
@@ -348,10 +348,10 @@ abstract class DescriptorReanimator(override val method: Method,
                 val fieldReflect = klass.getActualField((term.fieldName as ConstStringTerm).value)
                 val reanimatedValue = reanimateReferenceValue(term, fieldValue, nullable)
                 if (fieldReflect.isEnumConstant || fieldReflect.isSynthetic)
-                    return@descriptor default(term.type, term.name, nullable)
+                    return@descriptor default(term.type, nullable)
 
                 if (instance is ObjectDescriptor) {
-                    instance[fieldReflect.name] = field(field.name, field.type, field.`class`, reanimatedValue, instance)
+                    instance[fieldReflect.name] = instance.field(field.name, field.type, field.`class`, reanimatedValue)
                 }
 
                 instance
@@ -362,7 +362,7 @@ abstract class DescriptorReanimator(override val method: Method,
 
     private fun reanimateReferenceValue(term: Term, value: Term?, nullable: Boolean) = descriptor(context) {
         val referencedType = (term.type as KexReference).reference
-        if (value == null) return@descriptor default(term.type, term.name, nullable)
+        if (value == null) return@descriptor default(term.type, nullable)
 
         when (value) {
             is ConstDoubleTerm -> const(value.value)
@@ -383,26 +383,26 @@ abstract class DescriptorReanimator(override val method: Method,
 
     private fun reanimateReferencePointer(term: Term, addr: Term?, nullable: Boolean) = descriptor(context) {
         val referencedType = (term.type as KexReference).reference
-        val address = (addr as? ConstIntTerm)?.value ?: return@descriptor default(term.type, term.name, nullable)
-        if (address == 0) return@descriptor default(term.type, term.name, nullable)
+        val address = (addr as? ConstIntTerm)?.value ?: return@descriptor default(term.type, nullable)
+        if (address == 0) return@descriptor default(term.type, nullable)
         when (referencedType) {
-            is KexClass -> memory(term.memspace, address) { `object`(term.name, referencedType.kfgClass(types)) }
+            is KexClass -> memory(term.memspace, address) { `object`(referencedType.kfgClass(types)) }
             is KexArray -> memory(term.memspace, address) {
-                newArrayInstance(term.name, term.memspace, referencedType, addr, nullable)
+                newArrayInstance(term.memspace, referencedType, addr, nullable)
             }
             else -> unreachable { log.error("Trying to recover reference pointer that is not pointer") }
         }
     }
 
-    private fun newArrayInstance(name: String, memspace: Int, arrayType: KexArray, addr: Term?, nullable: Boolean) = descriptor(context) {
+    private fun newArrayInstance(memspace: Int, arrayType: KexArray, addr: Term?, nullable: Boolean) = descriptor(context) {
         val bound = (reanimateFromBounds(memspace, addr) as? ConstIntTerm)?.value
-                ?: return@descriptor default(arrayType, name, nullable)
+                ?: return@descriptor default(arrayType, nullable)
 
         val elementSize = arrayType.element.bitsize
         val elements = bound / elementSize
 
         log.debug("Creating array of type $arrayType with size $elements")
-        array(name, elements, arrayType.getKfgType(types))
+        array(elements, arrayType.getKfgType(types))
     }
 }
 
