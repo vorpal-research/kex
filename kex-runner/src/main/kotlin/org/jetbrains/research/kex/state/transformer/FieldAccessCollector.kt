@@ -13,7 +13,8 @@ import org.jetbrains.research.kfg.ir.Field
 val Term.isThis: Boolean get() = this.toString() == "this"
 
 class FieldAccessCollector(val context: ExecutionContext) : Transformer<FieldAccessCollector> {
-    val fieldAccesses = mutableListOf<Field>()
+    val fieldAccesses = mutableSetOf<Field>()
+    val fieldTerms = mutableSetOf<FieldTerm>()
 
     override fun transformFieldStore(predicate: FieldStorePredicate): Predicate {
         val fieldTerm = predicate.field as? FieldTerm ?: unreachable { log.error("Unexpected term in field load") }
@@ -21,13 +22,20 @@ class FieldAccessCollector(val context: ExecutionContext) : Transformer<FieldAcc
         val field = klass.getField(fieldTerm.fieldNameString, fieldTerm.type.getKfgType(context.types))
         if (fieldTerm.isStatic || fieldTerm.owner.isThis) {
             fieldAccesses += field
+            fieldTerms += fieldTerm
         }
         return super.transformFieldStore(predicate)
     }
 }
 
-fun collectFieldAccesses(context: ExecutionContext, state: PredicateState): List<Field> {
+fun collectFieldAccesses(context: ExecutionContext, state: PredicateState): Set<Field> {
     val accessCollector = FieldAccessCollector(context)
     accessCollector.apply(state)
     return accessCollector.fieldAccesses
+}
+
+fun collectFieldTerms(context: ExecutionContext, state: PredicateState): Set<Term> {
+    val accessCollector = FieldAccessCollector(context)
+    accessCollector.apply(state)
+    return accessCollector.fieldTerms
 }

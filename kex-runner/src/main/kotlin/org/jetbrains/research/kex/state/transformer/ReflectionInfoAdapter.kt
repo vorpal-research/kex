@@ -26,7 +26,8 @@ import kotlin.reflect.full.*
 import kotlin.reflect.jvm.javaMethod
 import kotlin.reflect.jvm.jvmErasure
 
-class ReflectionInfoAdapter(val method: Method, val loader: ClassLoader) : RecollectingTransformer<ReflectionInfoAdapter> {
+class ReflectionInfoAdapter(val method: Method, val loader: ClassLoader, val ignores: Set<Term> = setOf()) :
+        RecollectingTransformer<ReflectionInfoAdapter> {
     val cm get() = method.cm
     val types get() = method.cm.type
 
@@ -121,7 +122,7 @@ class ReflectionInfoAdapter(val method: Method, val loader: ClassLoader) : Recol
     override fun apply(ps: PredicateState): PredicateState {
         val (`this`, arguments) = collectArguments(ps)
 
-        if (`this` != null) {
+        if (`this` != null && `this` !in ignores) {
             currentBuilder += assume { `this` inequality null }
         }
 
@@ -138,6 +139,7 @@ class ReflectionInfoAdapter(val method: Method, val loader: ClassLoader) : Recol
 
         for ((param, type) in parameters.zip(method.argTypes)) {
             val arg = arguments[param.first] ?: continue
+            if (arg in ignores) continue
 
             if (arg.type.isNonNullable(param.second.type)) {
                 currentBuilder += assume { arg inequality null }
@@ -159,7 +161,7 @@ class ReflectionInfoAdapter(val method: Method, val loader: ClassLoader) : Recol
 
         currentBuilder += predicate
         val lhv = predicate.lhv
-        if (lhv.type.isNonNullable(kFunction.returnType))
+        if (lhv.type.isNonNullable(kFunction.returnType) && lhv !in ignores)
             currentBuilder += assume { lhv inequality null }
 
         if (lhv.type is KexArray)
@@ -196,7 +198,7 @@ class ReflectionInfoAdapter(val method: Method, val loader: ClassLoader) : Recol
         val prop = getKProperty(actualField)
         val returnType = tryOrNull { prop?.getter?.returnType }
 
-        if (returnType != null && fieldType.isNonNullable(returnType)) {
+        if (returnType != null && fieldType.isNonNullable(returnType) && field !in ignores) {
             result += assume { predicate.lhv inequality null }
         }
 
@@ -219,7 +221,7 @@ class ReflectionInfoAdapter(val method: Method, val loader: ClassLoader) : Recol
         val arrayIndex = arrayLoad.arrayRef as ArrayIndexTerm
 
         val isNonNullable = arrayElementInfo[arrayIndex.arrayRef]?.nullable?.not() ?: false
-        if (lhv.type is KexPointer && isNonNullable) {
+        if (lhv.type is KexPointer && isNonNullable && lhv !in ignores) {
             currentBuilder += assume { lhv inequality null }
         }
         return result
