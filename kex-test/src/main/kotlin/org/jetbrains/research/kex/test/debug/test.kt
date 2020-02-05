@@ -3,42 +3,144 @@
 package org.jetbrains.research.kex.test.debug
 
 import org.jetbrains.research.kex.test.Intrinsics
+import kotlin.math.abs
 
-class BasicGenerationTests {
+class BasicTests {
+    fun testPlain(a: Int, b: Int): Int {
+        val i = 10
+        val j = 152
+        val k = j + i - 15
 
-    open class Point(val x: Int, val y: Int, val z: Int)
-    class Point4(x: Int, y: Int, z: Int, val t: Int) : Point(x, y, z)
-
-    fun simplePointCheck(x1: Int, x2: Int) {
-        val zero = Point(x = x1, y = 0, z = 1)
-        val ten = Point(x = x2, y = 10, z = 10)
-
-        if (ten.x > zero.x) {
-            Intrinsics.assertReachable()
-        } else {
-            Intrinsics.assertReachable()
-        }
+        val max = maxOf(a, b, k)
+        Intrinsics.assertReachable()
+        return max
     }
 
-    fun pointCheck(p1: Point, p2: Point) {
-        if (p1.x > p2.x) {
-            Intrinsics.assertReachable()
-        } else if (p2 is Point4) {
-            Intrinsics.assertReachable()
-            println(p2.t)
+    fun testIf(a: Int, b: Int): Int {
+        val res = if (a > b) {
+            Intrinsics.assertReachable(a > b)
+            a - b
         } else {
-            Intrinsics.assertReachable()
+            Intrinsics.assertReachable(a <= b)
+            a + b
         }
+
+        Intrinsics.assertReachable()
+        println(res)
+        return res
     }
 
-    fun testArray(array: Array<Point>) {
-        if (array[0].x > 0) {
+    fun testWhen(a: Char): Int {
+        val y = when (a) {
+            'a' -> 5
+            'b' -> 4
+            'c' -> 3
+            'd' -> 2
+            'f' -> 1
+            else -> {
+                println("You suck")
+                -1
+            }
+        }
+        if (y == 10) {
+            Intrinsics.assertUnreachable()
+        }
+        if (y in 1..5) {
             Intrinsics.assertReachable()
         }
-        if (array[1].y < 0) {
-            Intrinsics.assertReachable()
+        return y
+    }
+
+    fun testLoop(a: Int, b: Int): Int {
+        var x = a - b
+        while (x < a) {
+            Intrinsics.assertReachable(x < a)
+            if (b > x) {
+                Intrinsics.assertReachable(b > x, x < a)
+                println("b bigger")
+            }
+            ++x
         }
         Intrinsics.assertReachable()
-        println(array[2])
+        return x
     }
+
+    fun testUnreachableIf(x: Int): Int {
+        val set = "asdasdal;djadslas;d".length
+        val z = 10
+        val y = if (x > z && x < 0) {
+            Intrinsics.assertUnreachable()
+            println("lol")
+            142
+        } else {
+            Intrinsics.assertReachable(x <= z || x >= 0)
+            println("lol2")
+            x- 2 * x
+        }
+        Intrinsics.assertReachable()
+        return y
+    }
+
+    fun testUnreachableLoop(): Int {
+        var x = 10
+        while (x > 5) {
+            Intrinsics.assertReachable(x > 5)
+            ++x
+        }
+        Intrinsics.assertUnreachable()
+        println(x)
+        return x
+    }
+
+    fun testArray(): Int {
+        val array = arrayOf(
+                arrayOf(0, 1, 2, 3, 4),
+                arrayOf(5, 6, 7, 8, 9),
+                arrayOf(10, 11, 12, 13, 14)
+        )
+        if (array[2][4] > 10) {
+            Intrinsics.assertReachable()
+        }
+        if (array.size > 2) {
+            Intrinsics.assertReachable()
+        }
+        if (array[0].size > 4) {
+            Intrinsics.assertReachable()
+        }
+        return array.flatten().reduce { a, b -> a + b}
+    }
+
+    fun testUnreachableArray(): Int {
+        val array = arrayOf(
+                arrayOf(0, 1, 2, 3, 4),
+                arrayOf(5, 6, 7, 8, 9),
+                arrayOf(10, 11, 12, 13, 14)
+        )
+        if (array[4][4] > 10) {
+            Intrinsics.assertUnreachable()
+        }
+        return array.flatten().reduce { a, b -> a + b}
+    }
+
+    fun testSimpleOuterCall(): Int {
+        val a = 10
+        val b = 42
+        val c = abs(a - b)
+        // we don't know anything about function `abs`, so result is unknown
+        if (c < 0) Intrinsics.assertReachable()
+        else Intrinsics.assertReachable()
+        return c
+    }
+
+    fun triangleKind(a: Double, b: Double, c: Double): Double {
+        val max = maxOf(a, b, c)
+        if (2 * max > a + b + c)
+            return -1.0
+        val res = 2 * max * max - a * a - b * b - c * c
+        return res
+    }
+
+    fun digitNumber(n: Int): Int =
+            if (n in -9..9) 1
+            else digitNumber(n / 10) + digitNumber(n % 10)
 }

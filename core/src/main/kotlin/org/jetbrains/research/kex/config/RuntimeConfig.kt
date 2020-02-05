@@ -1,6 +1,6 @@
 package org.jetbrains.research.kex.config
 
-object RuntimeConfig : Config {
+object RuntimeConfig : Config() {
     private val options = mutableMapOf<String, MutableMap<String, String>>()
 
     fun setValue(section: String, name: String, value: String) =
