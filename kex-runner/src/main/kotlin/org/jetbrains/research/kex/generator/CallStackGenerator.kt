@@ -100,7 +100,6 @@ class CallStackGenerator(val context: ExecutionContext, val psa: PredicateStateA
 
                 descriptor.elements.forEach { (index, value) ->
                     val arrayWrite = ArrayWrite(array, PrimaryValue(index).wrap(), generate(value))
-                    descriptorMap[value] = Node(arrayWrite.wrap())
                     callStack += arrayWrite
                 }
             }
