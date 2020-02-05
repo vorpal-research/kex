@@ -8,10 +8,7 @@ import org.jetbrains.research.kex.state.StateBuilder
 import org.jetbrains.research.kex.state.predicate.CallPredicate
 import org.jetbrains.research.kex.state.predicate.Predicate
 import org.jetbrains.research.kex.state.term.*
-import org.jetbrains.research.kex.util.log
-import org.jetbrains.research.kex.util.unreachable
 import org.jetbrains.research.kfg.ir.Method
-import org.jetbrains.research.kfg.ir.value.instruction.ReturnInst
 import java.util.*
 
 class MethodInliner(val method: Method, val psa: PredicateStateAnalysis) : RecollectingTransformer<MethodInliner> {
@@ -50,16 +47,16 @@ class MethodInliner(val method: Method, val psa: PredicateStateAnalysis) : Recol
     }
 
     private fun prepareInlinedState(method: Method, mappings: Map<Term, Term>): PredicateState? {
-        val builder = psa.builder(method)
-        val returnInst = method.flatten().firstOrNull { it is ReturnInst }
-                ?: unreachable { log.error("Cannot inline method with no return") }
-        val endState = builder.getInstructionState(returnInst) ?: return null
+        if (method.isEmpty()) return null
 
-        return TermRemapper("inlined${inlineIndex++}", mappings).apply(endState)
+        val builder = psa.builder(method)
+        val endState = builder.methodState ?: return null
+
+        return TermRenamer("inlined${inlineIndex++}", mappings).apply(endState)
     }
 }
 
-private class TermRemapper(val suffix: String, val remapping: Map<Term, Term>) : Transformer<TermRemapper> {
+private class TermRenamer(val suffix: String, val remapping: Map<Term, Term>) : Transformer<TermRenamer> {
     override fun transformTerm(term: Term): Term = remapping[term] ?: when (term) {
         is ValueTerm, is ArgumentTerm, is ReturnValueTerm -> term { value(term.type, "${term.name}.$suffix") }
         else -> term

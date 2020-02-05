@@ -1,7 +1,7 @@
 **/.idea/*
 **/*.iml
 **/*.log
-instrumented/*
+**/kex-instrumented*/*
 repo/*
 testJars/*
 trace/*

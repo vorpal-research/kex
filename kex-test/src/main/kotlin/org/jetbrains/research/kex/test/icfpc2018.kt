@@ -63,6 +63,7 @@ class Icfpc2018Test {
     private fun getModeByModelName(name: String): RunMode = RunMode.values()[name.length % 5]
     private fun getSolutionByName(name: String, target: Model, system: System): Solution = Solution(100, name)
 
+    // todo: check some reachability conditions
     fun submitChecked(resultDirs: List<String>) {
         val results = resultDirs.map { Results.readFromDirectory(it) }
         val merged = results.reduce { acc, res -> acc.merge(res) }
@@ -107,14 +108,14 @@ class Icfpc2018Test {
                     Files.copy(File(solution.trace).toPath(), File("submit/$task.nbt").toPath(),
                             StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.COPY_ATTRIBUTES)
                     haveSolution = true
-                    Intrinsics.assertReachable()
+//                    Intrinsics.assertUnreachable()
                     break
                 }
                 if (!haveSolution) {
-                    Intrinsics.assertReachable()
+//                    Intrinsics.assertReachable()
                     return
                 }
-                Intrinsics.assertReachable()
+//                Intrinsics.assertReachable()
             }
         }
 

@@ -17,6 +17,8 @@ import java.util.jar.JarFile
 
 abstract class KexTest {
     val packageName = "org/jetbrains/research/kex/test"
+    val `package` = Package("$packageName/*")
+    val jarPath: String
     val cm: ClassManager
     val loader: ClassLoader
 
@@ -28,10 +30,9 @@ abstract class KexTest {
         RuntimeConfig.setValue("z3", "tacticsFile", "$rootDir/z3.tactics")
         RuntimeConfig.setValue("z3", "paramFile", "$rootDir/z3.params")
 
-        val jarPath = "$rootDir/kex-test/target/kex-test-$version-jar-with-dependencies.jar"
+        jarPath = "$rootDir/kex-test/target/kex-test-$version-jar-with-dependencies.jar"
         val jarFile = JarFile(jarPath)
         loader = jarFile.classLoader
-        val `package` = Package("$packageName/*")
         cm = ClassManager(jarFile, KfgConfig(`package` = `package`, flags = Flags.readAll, failOnError = true))
     }
 

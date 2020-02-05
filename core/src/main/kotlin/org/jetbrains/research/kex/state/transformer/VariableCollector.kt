@@ -3,6 +3,14 @@ package org.jetbrains.research.kex.state.transformer
 import org.jetbrains.research.kex.state.PredicateState
 import org.jetbrains.research.kex.state.term.*
 
+val Term.isVariable: Boolean get() = when (this) {
+    is ArgumentTerm -> true
+    is ValueTerm -> true
+    is ReturnValueTerm -> true
+    is FieldTerm -> true
+    else -> false
+}
+
 class VariableCollector : Transformer<VariableCollector> {
     val variables = hashSetOf<Term>()
 

@@ -9,27 +9,42 @@ import org.jetbrains.research.kex.state.ChoiceState
 import org.jetbrains.research.kex.state.PredicateState
 import org.jetbrains.research.kex.state.emptyState
 import org.jetbrains.research.kex.state.predicate.EqualityPredicate
+import org.jetbrains.research.kex.state.predicate.InequalityPredicate
 import org.jetbrains.research.kex.state.predicate.Predicate
 import org.jetbrains.research.kex.state.predicate.path
 import org.jetbrains.research.kex.state.term.CastTerm
 import org.jetbrains.research.kex.state.term.InstanceOfTerm
+import org.jetbrains.research.kex.state.term.NullTerm
 import org.jetbrains.research.kex.state.term.Term
 import org.jetbrains.research.kex.util.log
 
+enum class Nullability {
+    UNKNOWN, NULLABLE, NON_NULLABLE
+}
+
+sealed class TypeInfo
+
+data class NullabilityInfo(val nullability: Nullability) : TypeInfo()
+data class CastTypeInfo(val type: KexType) : TypeInfo()
+
+class TypeInfoMap(val inner: Map<Term, Set<TypeInfo>> = hashMapOf()) : Map<Term, Set<TypeInfo>> by inner {
+    inline fun <reified T : TypeInfo> getInfo(term: Term): T? = inner[term]?.mapNotNull { it as? T }?.also {
+        require(it.size <= 1) { log.warn("A lot of type information ${T::class.qualifiedName} about $term: $it") }
+    }?.firstOrNull()
+}
+
 class TypeInfoCollector(val model: SMTModel) : Transformer<TypeInfoCollector> {
-    private val typeInfos = mutableMapOf<Term, MutableMap<KexType, PredicateState>>()
+    private val typeInfos = mutableMapOf<Term, MutableMap<TypeInfo, PredicateState>>()
     private val cfgt = CFGTracker()
 
-    val infos: Map<Term, KexType>
-        get() = typeInfos.map { (term, map) ->
-            val types = map.filter { checkPath(model, it.value) }.keys
-            if (types.size > 1) log.warn("A lot of type information about $term: $types")
-            val type = types.firstOrNull()
-            when {
-                type != null -> term to type
-                else -> null
-            }
-        }.filterNotNull().toMap()
+    val infos: TypeInfoMap
+        get() = TypeInfoMap(
+                typeInfos.map { (term, map) ->
+                    val types = map.filter { checkPath(model, it.value) }.keys
+                    if (types.isEmpty()) null
+                    else term to types
+                }.filterNotNull().toMap()
+        )
 
     private infix fun PredicateState.or(preds: Set<Predicate>): PredicateState {
         return ChoiceState(listOf(this, BasicState(preds.toList()))).simplify()
@@ -43,7 +58,7 @@ class TypeInfoCollector(val model: SMTModel) : Transformer<TypeInfoCollector> {
     override fun transformEquality(predicate: EqualityPredicate): Predicate {
         when (val rhv = predicate.rhv) {
             is InstanceOfTerm -> {
-                val checkedType = rhv.checkedType
+                val checkedType = CastTypeInfo(rhv.checkedType)
                 val operand = rhv.operand
                 val condition = cfgt.getDominatingPaths(predicate)
                 val fullPath = condition + path { predicate.lhv equality true }
@@ -53,7 +68,7 @@ class TypeInfoCollector(val model: SMTModel) : Transformer<TypeInfoCollector> {
                 typeInfo[checkedType] = existingCond or fullPath
             }
             is CastTerm -> {
-                val newType = rhv.type
+                val newType = CastTypeInfo(rhv.type)
                 val operand = rhv.operand
                 val condition = cfgt.getDominatingPaths(predicate)
                 val stub = when {
@@ -62,7 +77,7 @@ class TypeInfoCollector(val model: SMTModel) : Transformer<TypeInfoCollector> {
                 }
 
                 // we can't do anything with primary type casts
-                if (newType is KexIntegral || newType is KexReal) return predicate
+                if (newType.type is KexIntegral || newType.type is KexReal) return predicate
 
                 val typeInfo = typeInfos.getOrPut(operand, ::mutableMapOf)
                 val existingCond = typeInfo.getOrDefault(newType, emptyState())
@@ -71,9 +86,24 @@ class TypeInfoCollector(val model: SMTModel) : Transformer<TypeInfoCollector> {
         }
         return super.transformEquality(predicate)
     }
+
+    override fun transformInequality(predicate: InequalityPredicate): Predicate {
+        when (predicate.rhv) {
+            is NullTerm -> {
+                val nullability = NullabilityInfo(Nullability.NON_NULLABLE)
+                val condition = cfgt.getDominatingPaths(predicate)
+                val lhv = predicate.lhv
+
+                val typeInfo = typeInfos.getOrPut(lhv, ::mutableMapOf)
+                val existingCond = typeInfo.getOrDefault(nullability, emptyState())
+                typeInfo[nullability] = existingCond or condition
+            }
+        }
+        return super.transformInequality(predicate)
+    }
 }
 
-fun collectTypeInfos(model: SMTModel, ps: PredicateState): Map<Term, KexType> {
+fun collectTypeInfos(model: SMTModel, ps: PredicateState): TypeInfoMap {
     val tic = TypeInfoCollector(model)
     tic.apply(ps)
     return tic.infos

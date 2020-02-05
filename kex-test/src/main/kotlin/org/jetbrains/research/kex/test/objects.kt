@@ -7,15 +7,25 @@ class ObjectTests {
     data class Line(val start: Point, val end: Point)
     data class DoublePoint(val x: Double, val y: Double, val z: Double)
 
-    fun simplePointCheck() {
-        val zero = Point(x = 0, y = 0, z = 1)
-        val ten = Point(x = 10, y = 10, z = 10)
+    fun simplePointCheck1(x1: Int, x2: Int) {
+        val zero = Point(x = x1, y = 0, z = 0)
+        val ten = Point(x = x2, y = 10, z = 10)
 
         if (ten.x > zero.x) {
             Intrinsics.assertReachable()
         } else {
-            // can't handle getters and setters yet
             Intrinsics.assertReachable()
+        }
+    }
+
+    fun simplePointCheck2(y1: Int, y2: Int) {
+        val zero = Point(x = 0, y = y1, z = 0)
+        val ten = Point(x = 10, y = y2, z = 10)
+
+        if (ten.x > zero.x) {
+            Intrinsics.assertReachable()
+        } else {
+            Intrinsics.assertUnreachable()
         }
     }
 

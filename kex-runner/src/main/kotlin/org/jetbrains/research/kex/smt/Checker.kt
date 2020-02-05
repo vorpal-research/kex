@@ -4,6 +4,7 @@ import org.jetbrains.research.kex.annotations.AnnotationManager
 import org.jetbrains.research.kex.asm.state.PredicateStateAnalysis
 import org.jetbrains.research.kex.config.kexConfig
 import org.jetbrains.research.kex.state.PredicateState
+import org.jetbrains.research.kex.state.emptyState
 import org.jetbrains.research.kex.state.term.ArgumentTerm
 import org.jetbrains.research.kex.state.term.FieldTerm
 import org.jetbrains.research.kex.state.term.Term
@@ -22,7 +23,9 @@ class Checker(val method: Method, val loader: ClassLoader, private val psa: Pred
 
     private val builder = psa.builder(method)
     lateinit var state: PredicateState
+        private set
     lateinit var query: PredicateState
+        private set
 
     fun createState(inst: Instruction) = builder.getInstructionState(inst)
 
@@ -31,39 +34,45 @@ class Checker(val method: Method, val loader: ClassLoader, private val psa: Pred
 
         val state = createState(inst)
                 ?: return Result.UnknownResult("Can't get state for instruction ${inst.print()}")
-        return check(state)
+        return prepareAndCheck(state)
     }
 
-    fun check(ps: PredicateState): Result {
-        state = ps
-        if (logQuery) log.debug("State: $state")
-
+    fun prepareState(ps: PredicateState) = transform(ps) {
         if (annotationsEnabled) {
-            log.debug("Annotation insertion started...")
-            state = AnnotationIncluder(AnnotationManager.defaultLoader).apply(state)
-            log.debug("Annotation insertion finished")
+            +AnnotationIncluder(AnnotationManager.defaultLoader)
         }
 
         if (isInliningEnabled) {
-            log.debug("Inlining started...")
-            state = MethodInliner(method, psa).apply(state)
-            log.debug("Inlining finished")
+            +MethodInliner(method, psa)
         }
 
-        state = IntrinsicAdapter.apply(state)
-        state = ReflectionInfoAdapter(method, loader).apply(state)
-        state = Optimizer().apply(state)
-        state = ConstantPropagator.apply(state)
-        state = BoolTypeAdapter(method.cm.type).apply(state)
-        state = ArrayBoundsAdapter().apply(state)
+        +IntrinsicAdapter
+        +ReflectionInfoAdapter(method, loader)
+        +Optimizer()
+        +ConstantPropagator
+        +BoolTypeAdapter(method.cm.type)
+        +ArrayBoundsAdapter()
+    }
+
+    fun prepareAndCheck(ps: PredicateState): Result {
+        val state = prepareState(ps)
+        return check(state, state.path)
+    }
+
+    fun prepareAndCheck(ps: PredicateState, qry: PredicateState) = check(prepareState(ps), qry)
+
+    fun check(ps: PredicateState, qry: PredicateState = emptyState()): Result {
+        state = ps
+        query = qry
+        if (logQuery) log.debug("State: $state")
 
         if (isMemspacingEnabled) {
             log.debug("Memspacing started...")
-            state = MemorySpacer(state).apply(state)
+            val spacer = MemorySpacer(state)
+            state = spacer.apply(state)
+            query = spacer.apply(query)
             log.debug("Memspacing finished")
         }
-
-        query = state.path
 
         if (isSlicingEnabled) {
             log.debug("Slicing started...")
@@ -77,6 +86,8 @@ class Checker(val method: Method, val loader: ClassLoader, private val psa: Pred
 
                 results += variables.filterIsInstance<ArgumentTerm>()
                 results += variables.filter { it is FieldTerm && it.owner == `this` }
+                results += collectRequiredTerms(state)
+                results += collectAssumedTerms(state)
                 results += TermCollector.getFullTermSet(query)
                 results
             }
@@ -93,7 +104,7 @@ class Checker(val method: Method, val loader: ClassLoader, private val psa: Pred
         query = Optimizer().apply(query)
         if (logQuery) {
             log.debug("Simplified state: $state")
-            log.debug("Path: $query")
+            log.debug("Query: $query")
         }
 
         val solver = SMTProxySolver(method.cm.type)

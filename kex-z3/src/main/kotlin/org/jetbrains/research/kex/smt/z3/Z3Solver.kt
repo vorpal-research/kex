@@ -71,16 +71,14 @@ class Z3Solver(val tf: TypeFactory) : AbstractSMTSolver {
 
         solver.add(state_.asAxiom() as BoolExpr)
         solver.add(query_.axiom as BoolExpr)
-
-        val pred = ef.makeBool("$\$CHECK$$")
-        solver.add(pred.implies(query_).expr as BoolExpr)
+        solver.add(query_.expr as BoolExpr)
 
         log.debug("Running z3 solver")
         if (printSMTLib) {
             log.debug("SMTLib formula:")
             log.debug(solver)
         }
-        val result = solver.check(pred.expr) ?: unreachable { log.error("Solver error") }
+        val result = solver.check(query.expr) ?: unreachable { log.error("Solver error") }
         log.debug("Solver finished")
 
         return when (result) {

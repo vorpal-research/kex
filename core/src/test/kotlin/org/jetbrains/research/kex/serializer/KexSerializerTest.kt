@@ -10,7 +10,6 @@ import org.jetbrains.research.kex.state.predicate.*
 import org.jetbrains.research.kex.state.term.FieldLoadTerm
 import org.jetbrains.research.kex.state.term.Term
 import org.jetbrains.research.kex.state.term.term
-import org.jetbrains.research.kfg.ir.value.instruction.ReturnInst
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
@@ -130,9 +129,9 @@ class KexSerializerTest : KexTest() {
     fun predicateStateSerializationTest() {
         val basicClass = cm.getByName("$packageName/BasicTests")
 
-        for (method in basicClass.methods) {
+        for (method in basicClass.allMethods) {
             val psa = getPSA(method)
-            val state = psa.builder(method).getInstructionState(method.flatten().first { it is ReturnInst }) ?: continue
+            val state = psa.builder(method).methodState ?: continue
 
             val serializedState = serializer.toJson(state)
             val deserializedState = serializer.fromJson<PredicateState>(serializedState)

@@ -11,7 +11,8 @@ import org.jetbrains.research.kex.util.unreachable
 @InheritorOf("Term")
 @Serializable
 class FieldTerm(override val type: KexType, val owner: Term, val fieldName: Term) : Term() {
-    override val name = "$owner.${(fieldName as ConstStringTerm).value}"
+    val fieldNameString = (fieldName as ConstStringTerm).value
+    override val name = "$owner.$fieldNameString"
     override val subterms by lazy { listOf(owner, fieldName) }
 
     val isStatic: Boolean
