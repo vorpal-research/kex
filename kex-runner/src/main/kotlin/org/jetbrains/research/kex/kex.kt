@@ -133,7 +133,8 @@ class Kex(args: Array<String>) {
         val originalContext = ExecutionContext(origManager, jar.classLoader, EasyRandomDriver())
         val analysisContext = ExecutionContext(classManager, classLoader, EasyRandomDriver())
 
-        runPipeline(originalContext) {
+        // instrument all classes in the target package
+        runPipeline(originalContext, `package`) {
             +RuntimeTraceCollector(originalContext.cm)
             +ClassWriter(originalContext, outputDir)
         }
@@ -186,6 +187,9 @@ class Kex(args: Array<String>) {
                 "body coverage: ${String.format("%.2f", coverage.bodyCoverage)}%\n" +
                 "full coverage: ${String.format("%.2f", coverage.fullCoverage)}%")
     }
+
+    protected fun runPipeline(context: ExecutionContext, target: Package, init: Pipeline.() -> Unit) =
+            executePipeline(context.cm, target, init)
 
     protected fun runPipeline(context: ExecutionContext, init: Pipeline.() -> Unit) = when {
         methods != null -> executePipeline(context.cm, methods!!, init)
