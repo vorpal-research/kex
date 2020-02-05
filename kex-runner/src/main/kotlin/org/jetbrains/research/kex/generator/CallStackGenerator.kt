@@ -161,11 +161,11 @@ class CallStackGenerator(val context: ExecutionContext, val psa: PredicateStateA
         )
 
         val checker = Checker(this, context.loader, psa)
-        val preStateFieldTerms = collectFieldTerms(context, preState)
+        val preStateFieldTerms = collectFieldTerms(context, mapper.apply(preState))
         val preparedState = prepareState(this, state, preStateFieldTerms)
         val preparedQuery = mapper.apply(descriptor.toState())
 
-        return when (val result = checker.check(preparedState, preparedQuery)) {
+        return when (val result = checker.check(preparedState + preparedQuery)) {
             is Result.SatResult -> {
                 log.debug("Model: ${result.model}")
                 val (thisDescriptor, argumentDescriptors) =
@@ -207,7 +207,7 @@ class CallStackGenerator(val context: ExecutionContext, val psa: PredicateStateA
         val preState = mapper.apply(preStateBuilder.apply())
         val preStateFieldTerms = collectFieldTerms(context, preState)
 
-        return when (val result = checker.check(prepareState(this, preState + state, preStateFieldTerms), query)) {
+        return when (val result = checker.check(prepareState(this, preState + state, preStateFieldTerms) + query)) {
             is Result.SatResult -> {
                 log.debug("Model: ${result.model}")
                 val (thisDescriptor, argumentDescriptors) =

@@ -4,6 +4,7 @@ import org.jetbrains.research.kex.annotations.AnnotationManager
 import org.jetbrains.research.kex.asm.state.PredicateStateAnalysis
 import org.jetbrains.research.kex.config.kexConfig
 import org.jetbrains.research.kex.state.PredicateState
+import org.jetbrains.research.kex.state.emptyState
 import org.jetbrains.research.kex.state.term.ArgumentTerm
 import org.jetbrains.research.kex.state.term.FieldTerm
 import org.jetbrains.research.kex.state.term.Term
@@ -60,7 +61,7 @@ class Checker(val method: Method, val loader: ClassLoader, private val psa: Pred
 
     fun prepareAndCheck(ps: PredicateState, qry: PredicateState) = check(prepareState(ps), qry)
 
-    fun check(ps: PredicateState, qry: PredicateState): Result {
+    fun check(ps: PredicateState, qry: PredicateState = emptyState()): Result {
         state = ps
         query = qry
         if (logQuery) log.debug("State: $state")

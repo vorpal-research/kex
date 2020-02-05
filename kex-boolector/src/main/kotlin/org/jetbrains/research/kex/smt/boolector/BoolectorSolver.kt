@@ -58,10 +58,8 @@ class BoolectorSolver(val tf: TypeFactory) : AbstractSMTSolver {
 
         state_.asAxiom().assertForm()
         query_.axiom.assertForm()
+        query_.expr.assertForm()
 
-        val pred = ef.makeBool("$\$CHECK$$")
-        pred.implies(query_).expr.assertForm()
-        pred.expr.assertForm()
         if (logFormulae) {
             log.debug(ef.ctx.dumpSmt2())
         }
