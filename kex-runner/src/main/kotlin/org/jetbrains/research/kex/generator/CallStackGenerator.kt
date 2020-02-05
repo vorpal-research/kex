@@ -20,6 +20,22 @@ import org.jetbrains.research.kfg.type.ArrayType
 import org.jetbrains.research.kfg.type.Type
 import java.util.*
 
+enum class Visibility {
+    PRIVATE,
+    PROTECTED,
+    PACKAGE,
+    PUBLIC;
+}
+
+val Method.visibility: Visibility
+    get() = when {
+        this.isPrivate -> Visibility.PRIVATE
+        this.isProtected -> Visibility.PROTECTED
+        this.isPublic -> Visibility.PUBLIC
+        else -> Visibility.PACKAGE
+    }
+
+private val visibilityLevel by lazy { kexConfig.getEnumValue("apiGeneration", "visibility", true, Visibility.PUBLIC) }
 private val maxStackSize: Int by lazy { kexConfig.getIntValue("apiGeneration", "maxStackSize", 10) }
 private val isInliningEnabled by lazy { kexConfig.getBooleanValue("smt", "ps-inlining", true) }
 private val annotationsEnabled by lazy { kexConfig.getBooleanValue("annotations", "enabled", false) }
@@ -116,7 +132,7 @@ class CallStackGenerator(val context: ExecutionContext, val psa: PredicateStateA
                 return stack + this
             }
 
-            for (method in klass.methods) {
+            for (method in klass.methods.filter { visibilityLevel <= it.visibility }) {
                 val (newDesc, args) = method.executeAsMethod(desc) ?: continue
                 if (newDesc != null && newDesc != desc) {
                     queue += newDesc.merge(desc) to (stack + MethodCall(stack, method, args.map { generate(it) }))
@@ -137,7 +153,7 @@ class CallStackGenerator(val context: ExecutionContext, val psa: PredicateStateA
             }
         }
 
-        for (method in klass.constructors) {
+        for (method in klass.constructors.filter { visibilityLevel <= it.visibility }) {
             val (thisDesc, args) = method.executeAsConstructor(descriptor, preState.apply()) ?: continue
 
             if (thisDesc.isFinal(descriptor)) {

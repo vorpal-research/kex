@@ -1,6 +1,7 @@
 package org.jetbrains.research.kex.config
 
 import kotlinx.serialization.enumMembers
+import java.util.regex.Pattern
 
 abstract class Config {
     abstract fun getStringValue(section: String, name: String): String?
@@ -42,11 +43,18 @@ abstract class Config {
     open fun getMultipleDoubleValue(section: String, name: String, delimeter: String = ",") =
             getMultipleStringValue(section, name, delimeter).map { it.toDouble() }
 
-    inline fun <reified T : Enum<T>> getEnumValue(section: String, name: String): Enum<T>? {
+    inline fun <reified T : Enum<T>> getEnumValue(section: String, name: String, ignoreCase: Boolean = false): Enum<T>? {
         val constName = getStringValue(section, name) ?: return null
-        return T::class.enumMembers().firstOrNull { it.name == constName }
+        val comparator = when {
+            ignoreCase -> { a: String, b: String ->
+                val pattern = Pattern.compile(a, Pattern.CASE_INSENSITIVE)
+                pattern.matcher(b).find()
+            }
+            else -> { a: String, b: String -> a == b }
+        }
+        return T::class.enumMembers().firstOrNull { comparator(it.name, constName) }
     }
 
-    inline fun <reified T : Enum<T>> getEnumValue(section: String, name: String, default: T): Enum<T> =
-            getEnumValue(section, name) ?: default
+    inline fun <reified T : Enum<T>> getEnumValue(section: String, name: String, ignoreCase: Boolean = false, default: T): Enum<T> =
+            getEnumValue(section, name, ignoreCase) ?: default
 }
