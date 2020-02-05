@@ -42,7 +42,6 @@ private val annotationsEnabled by lazy { kexConfig.getBooleanValue("annotations"
 
 // todo: think about generating list of calls instead of call stack tree
 // todo: complex relations between descriptors (not just equals to constant, but also equals to each other)
-// todo: deeper object generation (when fields of an object are also objects)
 class CallStackGenerator(val context: ExecutionContext, val psa: PredicateStateAnalysis) {
     private val descriptorMap = mutableMapOf<Descriptor, Node>()
 
@@ -75,7 +74,6 @@ class CallStackGenerator(val context: ExecutionContext, val psa: PredicateStateA
         }
     }
 
-    // todo: accessibility check
     fun generate(descriptor: Descriptor): CallStack {
         if (descriptorMap.containsKey(descriptor)) return descriptorMap.getValue(descriptor).stack
 
