@@ -8,13 +8,15 @@ import org.jetbrains.research.kex.util.loadClass
 import java.lang.reflect.Array
 
 class ObjectGenerator(val ctx: ExecutionContext) {
-    fun generate(callStack: CallStack): Any? {
+    val cache = mutableMapOf<CallStack, Any?>()
+
+    fun generate(callStack: CallStack): Any? = cache.getOrPut(callStack) {
         // this is fucked up
         TraceCollectorProxy.enableCollector(ctx.cm)
         TraceCollectorProxy.disableCollector()
 
         var current: Any? = null
-        for (call in callStack.reversed()) {
+        for (call in callStack) {
             current = when (call) {
                 is PrimaryValue<*> -> call.value
                 is DefaultConstructorCall -> {
@@ -61,6 +63,6 @@ class ObjectGenerator(val ctx: ExecutionContext) {
                 else -> null
             }
         }
-        return current
+        current
     }
 }
