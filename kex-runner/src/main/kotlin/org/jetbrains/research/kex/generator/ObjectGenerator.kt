@@ -51,12 +51,12 @@ class ObjectGenerator(val ctx: ExecutionContext) {
                 }
                 is FieldSetter -> {
                     val field = call.field
-                    if (field.isStatic) {
-                        // todo
-                    } else {
-                        val reflection = ctx.loader.loadClass(field.`class`)
-                        val fieldReflection = reflection.getField(field.name)
-                        fieldReflection.set(current, generate(call.value))
+                    val reflection = ctx.loader.loadClass(field.`class`)
+                    val fieldReflection = reflection.getField(field.name)
+                    val value = generate(call.value)
+                    when {
+                        field.isStatic -> fieldReflection.set(null, value)
+                        else -> fieldReflection.set(current, value)
                     }
                     current
                 }
