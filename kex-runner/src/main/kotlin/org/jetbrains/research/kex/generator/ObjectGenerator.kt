@@ -7,6 +7,7 @@ import org.jetbrains.research.kex.util.getMethod
 import org.jetbrains.research.kex.util.loadClass
 import java.lang.reflect.Array
 
+// todo: proper identification of objects
 class ObjectGenerator(val ctx: ExecutionContext) {
     val cache = mutableMapOf<CallStack, Any?>()
 
@@ -43,7 +44,7 @@ class ObjectGenerator(val ctx: ExecutionContext) {
                     Array.newInstance(elementReflection, length)
                 }
                 is ArrayWrite -> {
-                    current = generate(call.array)
+//                    current = generate(call.array)
                     val index = generate(call.index)!! as Int
                     val value = generate(call.value)
                     Array.set(current, index, value)

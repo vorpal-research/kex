@@ -12,7 +12,7 @@ val Term.isVariable: Boolean get() = when (this) {
 }
 
 class VariableCollector : Transformer<VariableCollector> {
-    val variables = hashSetOf<Term>()
+    val variables = linkedSetOf<Term>()
 
     override fun transformArgumentTerm(term: ArgumentTerm): Term {
         variables.add(term)
