@@ -171,26 +171,26 @@ class MethodChecker(
     private fun generateInput(method: Method, state: PredicateState, model: SMTModel): Pair<Any?, Array<Any?>> = when {
         apiGeneration -> {
             log.debug("Model: $model")
-            val descriptors = generateFinalDescriptors(method, ctx, model, state)
-            log.debug("Generated descriptors:")
-            log.debug(descriptors)
-            val thisCallStack = descriptors.first?.let { descriptor ->
-                log.debug("Generating $descriptor")
-                CallStackGenerator(ctx, psa).generate(descriptor).also {
-                    log.debug("Call stack: $it")
-                }
-            }
-            val argCallStacks = descriptors.second.map { descriptor ->
-                log.debug("Generating $descriptor")
-                CallStackGenerator(ctx, psa).generate(descriptor).also {
-                    log.debug("Call stack: $it")
-                }
-            }
-            val generator = ObjectGenerator(ctx)
             try {
+                val descriptors = generateFinalDescriptors(method, ctx, model, state)
+                log.debug("Generated descriptors:")
+                log.debug(descriptors)
+                val thisCallStack = descriptors.first?.let { descriptor ->
+                    log.debug("Generating $descriptor")
+                    CallStackGenerator(ctx, psa).generate(descriptor).also {
+                        log.debug("Call stack: $it")
+                    }
+                }
+                val argCallStacks = descriptors.second.map { descriptor ->
+                    log.debug("Generating $descriptor")
+                    CallStackGenerator(ctx, psa).generate(descriptor).also {
+                        log.debug("Call stack: $it")
+                    }
+                }
+                val generator = ObjectGenerator(ctx)
                 thisCallStack?.let { generator.generate(it) } to argCallStacks.map { generator.generate(it) }.toTypedArray()
             } catch (e: Exception) {
-                log.error("Could not generate input from descriptors: $descriptors")
+                log.error("Could not generate input from model")
                 throw GenerationException(e.toString())
             }
         }

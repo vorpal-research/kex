@@ -14,7 +14,6 @@ import org.jetbrains.research.kex.state.term.Term
 import org.jetbrains.research.kex.state.term.term
 import org.jetbrains.research.kex.state.transformer.*
 import org.jetbrains.research.kex.util.log
-import org.jetbrains.research.kex.util.unreachable
 import org.jetbrains.research.kfg.ir.Method
 import org.jetbrains.research.kfg.type.ArrayType
 import org.jetbrains.research.kfg.type.Type
@@ -40,6 +39,7 @@ private val maxStackSize: Int by lazy { kexConfig.getIntValue("apiGeneration", "
 private val isInliningEnabled by lazy { kexConfig.getBooleanValue("smt", "ps-inlining", true) }
 private val annotationsEnabled by lazy { kexConfig.getBooleanValue("annotations", "enabled", false) }
 
+// todo: generation of abstract classes and interfaces
 // todo: think about generating list of calls instead of call stack tree
 // todo: complex relations between descriptors (not just equals to constant, but also equals to each other)
 class CallStackGenerator(val context: ExecutionContext, val psa: PredicateStateAnalysis) {
@@ -173,7 +173,7 @@ class CallStackGenerator(val context: ExecutionContext, val psa: PredicateStateA
         val builder = psa.builder(this)
         val mapper = TermRemapper(mapOf(descriptor.term to term { `this`(descriptor.term.type) }))
         val state = mapper.apply(
-                preState + (builder.methodState ?: unreachable { log.error("Can't build state for $this") })
+                preState + (builder.methodState ?: return null)
         )
 
         val checker = Checker(this, context.loader, psa)
@@ -200,7 +200,7 @@ class CallStackGenerator(val context: ExecutionContext, val psa: PredicateStateA
         log.debug("Executing method $this for $descriptor")
         val builder = psa.builder(this)
         val mapper = TermRemapper(mapOf(descriptor.term to term { `this`(descriptor.term.type) }))
-        val state = mapper.apply(builder.methodState ?: unreachable { log.error("Can't build state for $this") })
+        val state = mapper.apply(builder.methodState ?: return null)
         val query = mapper.apply(descriptor.toState())
 
         val checker = Checker(this, context.loader, psa)

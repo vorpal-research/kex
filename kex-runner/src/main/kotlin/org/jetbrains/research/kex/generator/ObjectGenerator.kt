@@ -44,7 +44,6 @@ class ObjectGenerator(val ctx: ExecutionContext) {
                     Array.newInstance(elementReflection, length)
                 }
                 is ArrayWrite -> {
-//                    current = generate(call.array)
                     val index = generate(call.index)!! as Int
                     val value = generate(call.value)
                     Array.set(current, index, value)
