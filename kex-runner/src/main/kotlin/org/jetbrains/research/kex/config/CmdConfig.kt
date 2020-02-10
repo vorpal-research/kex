@@ -58,9 +58,9 @@ class CmdConfig(args: Array<String>) : Config() {
         jarOpt.isRequired = true
         options.addOption(jarOpt)
 
-        val mainOpt = Option("p", "package", true, "analyzed package")
-        mainOpt.isRequired = false
-        options.addOption(mainOpt)
+        val packageOpt = Option("t", "target", true, "target to analyze: package, class or method")
+        packageOpt.isRequired = false
+        options.addOption(packageOpt)
 
         val propOpt = Option(null, "config", true, "configuration file")
         propOpt.isRequired = false
@@ -74,7 +74,7 @@ class CmdConfig(args: Array<String>) : Config() {
         logName.isRequired = false
         options.addOption(logName)
 
-        val targetDir = Option(null, "target", true, "target directory for instrumented bytecode output")
+        val targetDir = Option(null, "output", true, "target directory for instrumented bytecode output")
         targetDir.isRequired = false
         options.addOption(targetDir)
 

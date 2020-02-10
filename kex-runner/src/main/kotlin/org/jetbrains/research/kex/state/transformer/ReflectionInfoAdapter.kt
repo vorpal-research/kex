@@ -22,14 +22,12 @@ import kotlin.reflect.KClass
 import kotlin.reflect.KFunction
 import kotlin.reflect.KMutableProperty
 import kotlin.reflect.KType
-import kotlin.reflect.full.declaredMemberExtensionFunctions
-import kotlin.reflect.full.declaredMemberExtensionProperties
-import kotlin.reflect.full.declaredMemberFunctions
-import kotlin.reflect.full.declaredMemberProperties
+import kotlin.reflect.full.*
 import kotlin.reflect.jvm.javaMethod
 import kotlin.reflect.jvm.jvmErasure
 
-class ReflectionInfoAdapter(val method: Method, val loader: ClassLoader) : RecollectingTransformer<ReflectionInfoAdapter> {
+class ReflectionInfoAdapter(val method: Method, val loader: ClassLoader, val ignores: Set<Term> = setOf()) :
+        RecollectingTransformer<ReflectionInfoAdapter> {
     val cm get() = method.cm
     val types get() = method.cm.type
 
@@ -82,14 +80,19 @@ class ReflectionInfoAdapter(val method: Method, val loader: ClassLoader) : Recol
         }
     }
 
-    private val KClass<*>.allFunctions get() = tryOrNull {
-        declaredMemberFunctions +
-                declaredMemberExtensionFunctions +
-                declaredMemberProperties.map { it.getter } +
-                declaredMemberExtensionProperties.map { it.getter } +
-                declaredMemberProperties.filterIsInstance<KMutableProperty<*>>().map { it.setter } +
-                declaredMemberExtensionProperties.filterIsInstance<KMutableProperty<*>>().map { it.setter }
-    } ?: listOf()
+    private val KClass<*>.allFunctions
+        get() = tryOrNull {
+            constructors +
+                    staticFunctions +
+                    declaredMemberFunctions +
+                    declaredMemberExtensionFunctions +
+                    declaredMemberProperties.map { it.getter } +
+                    declaredMemberExtensionProperties.map { it.getter } +
+                    declaredMemberProperties.filterIsInstance<KMutableProperty<*>>().map { it.setter } +
+                    declaredMemberExtensionProperties.filterIsInstance<KMutableProperty<*>>().map { it.setter } +
+                    staticProperties.map { it.getter } +
+                    staticProperties.filterIsInstance<KMutableProperty<*>>().map { it.setter }
+        } ?: listOf()
 
     private fun KClass<*>.find(method: Method) = allFunctions.find { it eq method }
 
@@ -119,7 +122,7 @@ class ReflectionInfoAdapter(val method: Method, val loader: ClassLoader) : Recol
     override fun apply(ps: PredicateState): PredicateState {
         val (`this`, arguments) = collectArguments(ps)
 
-        if (`this` != null) {
+        if (`this` != null && `this` !in ignores) {
             currentBuilder += assume { `this` inequality null }
         }
 
@@ -128,17 +131,22 @@ class ReflectionInfoAdapter(val method: Method, val loader: ClassLoader) : Recol
             return super.apply(ps)
         }
 
-        val parameters = kFunction.parameters.drop(method.isAbstract.not().toInt())
+        val parameters = when {
+            method.isAbstract -> kFunction.parameters.map { it.index to it }
+            method.isConstructor -> kFunction.parameters.map { it.index to it }
+            else -> kFunction.parameters.drop(1).map { it.index - 1 to it }
+        }
 
         for ((param, type) in parameters.zip(method.argTypes)) {
-            val arg = arguments[param.index - 1] ?: continue
+            val arg = arguments[param.first] ?: continue
+            if (arg in ignores) continue
 
-            if (arg.type.isNonNullable(param.type)) {
+            if (arg.type.isNonNullable(param.second.type)) {
                 currentBuilder += assume { arg inequality null }
             }
 
             if (type is ArrayType) {
-                arrayElementInfo[arg] = ArrayElementInfo(nullable = type.kexType.isElementNullable(param.type))
+                arrayElementInfo[arg] = ArrayElementInfo(nullable = type.kexType.isElementNullable(param.second.type))
             }
         }
 
@@ -153,7 +161,7 @@ class ReflectionInfoAdapter(val method: Method, val loader: ClassLoader) : Recol
 
         currentBuilder += predicate
         val lhv = predicate.lhv
-        if (lhv.type.isNonNullable(kFunction.returnType))
+        if (lhv.type.isNonNullable(kFunction.returnType) && lhv !in ignores)
             currentBuilder += assume { lhv inequality null }
 
         if (lhv.type is KexArray)
@@ -190,7 +198,7 @@ class ReflectionInfoAdapter(val method: Method, val loader: ClassLoader) : Recol
         val prop = getKProperty(actualField)
         val returnType = tryOrNull { prop?.getter?.returnType }
 
-        if (returnType != null && fieldType.isNonNullable(returnType)) {
+        if (returnType != null && fieldType.isNonNullable(returnType) && field !in ignores) {
             result += assume { predicate.lhv inequality null }
         }
 
@@ -213,7 +221,7 @@ class ReflectionInfoAdapter(val method: Method, val loader: ClassLoader) : Recol
         val arrayIndex = arrayLoad.arrayRef as ArrayIndexTerm
 
         val isNonNullable = arrayElementInfo[arrayIndex.arrayRef]?.nullable?.not() ?: false
-        if (lhv.type is KexPointer && isNonNullable) {
+        if (lhv.type is KexPointer && isNonNullable && lhv !in ignores) {
             currentBuilder += assume { lhv inequality null }
         }
         return result

@@ -6,6 +6,7 @@ import org.jetbrains.research.kfg.ir.BasicBlock
 import org.jetbrains.research.kfg.ir.Method
 import org.jetbrains.research.kfg.ir.value.instruction.Instruction
 import org.jetbrains.research.kfg.ir.value.instruction.PhiInst
+import org.jetbrains.research.kfg.ir.value.instruction.ReturnInst
 import org.jetbrains.research.kfg.util.DominatorTree
 import org.jetbrains.research.kfg.util.DominatorTreeBuilder
 import org.jetbrains.research.kfg.util.GraphTraversal
@@ -30,6 +31,12 @@ class PredicateStateBuilder(val method: Method) {
             this.order.addAll(order.reversed())
         }
     }
+
+    val methodState: PredicateState?
+        get() = when {
+            method.isConstructor -> method.flatten().lastOrNull()?.run { getInstructionState(this) }
+            else -> method.flatten().firstOrNull { it is ReturnInst }?.run { getInstructionState(this) }
+        }
 
     fun getInstructionState(inst: Instruction): PredicateState? {
         val state = instructionStates[inst]

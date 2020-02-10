@@ -12,7 +12,7 @@ inline fun <T> unreachable(noinline lazyMessage: () -> Any) = fail<T>(lazyMessag
 inline fun exit(message: String) = exit<Unit>(message)
 inline fun exit(lazyMessage: () -> Any) = exit<Unit>(lazyMessage)
 
-inline fun <T> exit(message: String): T = exit<T> { message }
+inline fun <T> exit(message: String): T = exit<T> { println(message) }
 inline fun <T> exit(lazyMessage: () -> Any): T {
     lazyMessage()
     exitProcess(0)

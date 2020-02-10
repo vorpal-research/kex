@@ -6,7 +6,7 @@ import org.jetbrains.research.kex.test.Intrinsics
 
 class BasicTests {
 
-    abstract class AC
+    open class AC
 
     class Impl1 : AC()
 

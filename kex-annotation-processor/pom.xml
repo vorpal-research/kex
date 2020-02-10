@@ -18,17 +18,6 @@
         <klaxon.version>3.0.6</klaxon.version>
     </properties>
 
-    <repositories>
-        <repository>
-            <snapshots>
-                <enabled>false</enabled>
-            </snapshots>
-            <id>bintray-cbeust-maven</id>
-            <name>bintray</name>
-            <url>https://dl.bintray.com/cbeust/maven</url>
-        </repository>
-    </repositories>
-
     <dependencies>
         <dependency>
             <groupId>org.jetbrains.research</groupId>

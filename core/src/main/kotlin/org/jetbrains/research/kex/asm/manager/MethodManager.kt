@@ -31,6 +31,7 @@ object MethodManager {
             ignoreClasses.any { method.cm.getByName(it) == method.`class` } -> false
             ignoreMethods.contains(method) -> false
             method.isStatic -> true
+            method.isConstructor -> true
             !method.isFinal -> false
             method.flatten().all { it !is ReturnInst } -> false
             else -> true
