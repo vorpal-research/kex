@@ -16,6 +16,7 @@ import org.jetbrains.research.kex.state.transformer.*
 import org.jetbrains.research.kex.util.log
 import org.jetbrains.research.kex.util.tryOrNull
 import org.jetbrains.research.kfg.ir.Method
+import org.jetbrains.research.kfg.ir.Node
 import org.jetbrains.research.kfg.type.ArrayType
 import org.jetbrains.research.kfg.type.Type
 import java.util.*
@@ -27,7 +28,7 @@ enum class Visibility {
     PUBLIC;
 }
 
-val Method.visibility: Visibility
+val Node.visibility: Visibility
     get() = when {
         this.isPrivate -> Visibility.PRIVATE
         this.isProtected -> Visibility.PROTECTED
@@ -122,7 +123,9 @@ class CallStackGenerator(val context: ExecutionContext, val psa: PredicateStateA
     private fun generateObject(descriptor: ObjectDescriptor): CallStack? {
         val klass = when {
             descriptor.klass.isAbstract -> tryOrNull {
-                context.cm.concreteClasses.filter { descriptor.klass.isAncestor(it) && !it.isAbstract }.random()
+                context.cm.concreteClasses.filter {
+                    descriptor.klass.isAncestor(it) && !it.isAbstract && visibilityLevel <= it.visibility
+                }.random()
             } ?: return null
             else -> descriptor.klass
         }
