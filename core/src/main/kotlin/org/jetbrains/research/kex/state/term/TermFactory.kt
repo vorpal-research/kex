@@ -207,6 +207,9 @@ abstract class TermBuilder {
     infix fun Term.xor(rhv: Term) = tf.getBinary(type, BinaryOpcode.Xor(), this, rhv)
     infix fun Term.xor(bool: Boolean) = tf.getBinary(type, BinaryOpcode.Xor(), this, const(bool))
 
+    infix fun Term.implies(rhv: Term) = !this or rhv
+    infix fun Term.implies(rhv: Boolean) = !this or rhv
+
     fun Term.apply(types: TypeFactory, opcode: BinaryOpcode, rhv: Term) = tf.getBinary(types, opcode, this, rhv)
     fun Term.apply(type: KexType, opcode: BinaryOpcode, rhv: Term) = tf.getBinary(type, opcode, this, rhv)
     fun Term.apply(opcode: CmpOpcode, rhv: Term) = tf.getCmp(opcode, this, rhv)

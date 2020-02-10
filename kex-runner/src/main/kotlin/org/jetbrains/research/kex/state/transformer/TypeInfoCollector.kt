@@ -1,8 +1,6 @@
 package org.jetbrains.research.kex.state.transformer
 
-import org.jetbrains.research.kex.ktype.KexIntegral
-import org.jetbrains.research.kex.ktype.KexReal
-import org.jetbrains.research.kex.ktype.KexType
+import org.jetbrains.research.kex.ktype.*
 import org.jetbrains.research.kex.smt.SMTModel
 import org.jetbrains.research.kex.state.BasicState
 import org.jetbrains.research.kex.state.ChoiceState
@@ -17,6 +15,7 @@ import org.jetbrains.research.kex.state.term.InstanceOfTerm
 import org.jetbrains.research.kex.state.term.NullTerm
 import org.jetbrains.research.kex.state.term.Term
 import org.jetbrains.research.kex.util.log
+import org.jetbrains.research.kfg.type.TypeFactory
 
 enum class Nullability {
     UNKNOWN, NULLABLE, NON_NULLABLE
@@ -33,8 +32,7 @@ class TypeInfoMap(val inner: Map<Term, Set<TypeInfo>> = hashMapOf()) : Map<Term,
     }?.firstOrNull()
 }
 
-// todo: do something with contradicting instanceof checks
-class TypeInfoCollector(val model: SMTModel) : Transformer<TypeInfoCollector> {
+class TypeInfoCollector(val model: SMTModel, val tf: TypeFactory) : Transformer<TypeInfoCollector> {
     private val typeInfos = mutableMapOf<Term, MutableMap<TypeInfo, PredicateState>>()
     private val cfgt = CFGTracker()
 
@@ -42,7 +40,18 @@ class TypeInfoCollector(val model: SMTModel) : Transformer<TypeInfoCollector> {
         get() = TypeInfoMap(
                 typeInfos.map { (term, map) ->
                     val types = map.filter { checkPath(model, it.value) }.keys
-                    if (types.isEmpty()) null
+                    val reducedTypes = run {
+                        val nullabilityInfo = types.filterIsInstance<NullabilityInfo>()
+                        val castInfo = types.filterIsInstance<CastTypeInfo>()
+                        val reducedCastInfo = mutableSetOf<CastTypeInfo>()
+                        val klasses = castInfo.map { (it.type as KexClass).getKfgClass(tf) }.toSet()
+                        for (klass in klasses) {
+                            if (klasses.any { it != klass && klass.isAncestor(it) }) continue
+                            else reducedCastInfo += CastTypeInfo(tf.getRefType(klass).kexType)
+                        }
+                        (nullabilityInfo + reducedCastInfo).toSet()
+                    }
+                    if (reducedTypes.isEmpty()) null
                     else term to types
                 }.filterNotNull().toMap()
         )
@@ -104,8 +113,8 @@ class TypeInfoCollector(val model: SMTModel) : Transformer<TypeInfoCollector> {
     }
 }
 
-fun collectTypeInfos(model: SMTModel, ps: PredicateState): TypeInfoMap {
-    val tic = TypeInfoCollector(model)
+fun collectTypeInfos(model: SMTModel, tf: TypeFactory, ps: PredicateState): TypeInfoMap {
+    val tic = TypeInfoCollector(model, tf)
     tic.apply(ps)
     return tic.infos
 }

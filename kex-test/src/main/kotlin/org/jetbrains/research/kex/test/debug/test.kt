@@ -4,19 +4,28 @@ package org.jetbrains.research.kex.test.debug
 
 import org.jetbrains.research.kex.test.Intrinsics
 
-class BasicGenerationTests {
-    abstract class AbstractClass(val x: Int, val y: Int)
+class BasicTests {
 
-    class Impl(x: Int, y: Int, val z: Int) : AbstractClass(x, y)
+    open class AC
 
-    class SecondImpl(x: Int, y: Int) : AbstractClass(x, y)
+    class Impl1 : AC()
 
-    fun testAbstractClass(klass: AbstractClass) {
-        if (klass.x > klass.y) {
+    open class Impl2 : AC()
+
+    class Impl3 : Impl2()
+
+    fun testAC(a: AC) {
+//        if (a is Impl1) {
+//            Intrinsics.assertReachable()
+//        }
+        if (a is Impl2) {
             Intrinsics.assertReachable()
         }
-        if (klass is SecondImpl) {
+        if (a is Impl3) {
             Intrinsics.assertReachable()
         }
+        val b = a as Impl1
+        Intrinsics.assertReachable()
     }
+
 }

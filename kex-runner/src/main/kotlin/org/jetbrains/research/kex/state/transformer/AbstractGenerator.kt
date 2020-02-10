@@ -78,7 +78,7 @@ interface AbstractGenerator<T> : Transformer<AbstractGenerator<T>> {
 
     fun generate(ps: PredicateState): Pair<T?, List<T?>> {
         val (tempThis, tempArgs) = collectArguments(ps)
-        typeInfos = collectTypeInfos(reanimator.model, ps)
+        typeInfos = collectTypeInfos(reanimator.model, type, ps)
         if (typeInfos.isNotEmpty())
             log.debug("Collected type info:\n${typeInfos.toList().joinToString("\n")}")
         thisTerm = when {

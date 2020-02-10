@@ -62,6 +62,7 @@ class CallStackGenerator(val context: ExecutionContext, val psa: PredicateStateA
         +ConstantPropagator
         +BoolTypeAdapter(method.cm.type)
         +ArrayBoundsAdapter()
+        +CastInfoAdapter(method.cm.type)
     }
 
     private class Node(var stack: CallStack) {
