@@ -67,7 +67,7 @@ private fun mergeTypes(lhv: Type, rhv: Type, loader: ClassLoader): Type {
 }
 
 class ModelExecutor(val method: Method,
-                    type: TypeFactory,
+                    val type: TypeFactory,
                     model: SMTModel,
                     loader: ClassLoader,
                     randomizer: Randomizer) : Transformer<ModelExecutor> {
@@ -84,7 +84,7 @@ class ModelExecutor(val method: Method,
 
     override fun apply(ps: PredicateState): PredicateState {
         val (tempThis, tempArgs) = collectArguments(ps)
-        val argTypeInfo = collectTypeInfos(reanimator.model, ps)
+        val argTypeInfo = collectTypeInfos(reanimator.model, type, ps)
         if (argTypeInfo.isNotEmpty())
             log.debug("Collected type info:\n${argTypeInfo.toList().joinToString("\n")}")
         thisTerm = when {

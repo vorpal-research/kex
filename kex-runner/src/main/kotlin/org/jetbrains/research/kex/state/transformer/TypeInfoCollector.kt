@@ -1,8 +1,6 @@
 package org.jetbrains.research.kex.state.transformer
 
-import org.jetbrains.research.kex.ktype.KexIntegral
-import org.jetbrains.research.kex.ktype.KexReal
-import org.jetbrains.research.kex.ktype.KexType
+import org.jetbrains.research.kex.ktype.*
 import org.jetbrains.research.kex.smt.SMTModel
 import org.jetbrains.research.kex.state.BasicState
 import org.jetbrains.research.kex.state.ChoiceState
@@ -15,16 +13,27 @@ import org.jetbrains.research.kex.state.term.CastTerm
 import org.jetbrains.research.kex.state.term.InstanceOfTerm
 import org.jetbrains.research.kex.state.term.Term
 import org.jetbrains.research.kex.util.log
+import org.jetbrains.research.kfg.type.TypeFactory
 
-class TypeInfoCollector(val model: SMTModel) : Transformer<TypeInfoCollector> {
+class TypeInfoCollector(val model: SMTModel, val tf: TypeFactory) : Transformer<TypeInfoCollector> {
     private val typeInfos = mutableMapOf<Term, MutableMap<KexType, PredicateState>>()
     private val cfgt = CFGTracker()
 
     val infos: Map<Term, KexType>
         get() = typeInfos.map { (term, map) ->
             val types = map.filter { checkPath(model, it.value) }.keys
-            if (types.size > 1) log.warn("A lot of type information about $term: $types")
-            val type = types.firstOrNull()
+            val reducedTypes = run {
+                val result = mutableSetOf<KexType>()
+                val klasses = types.map { (it as KexClass).getKfgClass(tf) }.toSet()
+                for (klass in klasses) {
+                    if (klasses.any { it != klass && klass.isAncestor(it) }) continue
+                    else result += tf.getRefType(klass).kexType
+                }
+                result
+            }
+            if (reducedTypes.size > 1)
+                log.warn("A lot of type information about $term: $reducedTypes")
+            val type = reducedTypes.firstOrNull()
             when {
                 type != null -> term to type
                 else -> null
@@ -73,8 +82,8 @@ class TypeInfoCollector(val model: SMTModel) : Transformer<TypeInfoCollector> {
     }
 }
 
-fun collectTypeInfos(model: SMTModel, ps: PredicateState): Map<Term, KexType> {
-    val tic = TypeInfoCollector(model)
+fun collectTypeInfos(model: SMTModel, tf: TypeFactory, ps: PredicateState): Map<Term, KexType> {
+    val tic = TypeInfoCollector(model, tf)
     tic.apply(ps)
     return tic.infos
 }

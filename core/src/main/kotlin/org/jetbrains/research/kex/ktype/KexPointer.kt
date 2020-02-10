@@ -3,6 +3,7 @@ package org.jetbrains.research.kex.ktype
 import kotlinx.serialization.Serializable
 import org.jetbrains.research.kex.InheritorOf
 import org.jetbrains.research.kex.util.defaultHashCode
+import org.jetbrains.research.kfg.ir.Class
 import org.jetbrains.research.kfg.type.Type
 import org.jetbrains.research.kfg.type.TypeFactory
 
@@ -28,6 +29,7 @@ class KexClass(val `class`: String, override val memspace: Int = defaultMemspace
         get() = `class`
 
     override fun getKfgType(types: TypeFactory): Type = types.getRefType(`class`)
+    fun getKfgClass(types: TypeFactory): Class = types.cm.getByName(`class`)
 
     override fun withMemspace(memspace: Int) = KexClass(`class`, memspace)
 

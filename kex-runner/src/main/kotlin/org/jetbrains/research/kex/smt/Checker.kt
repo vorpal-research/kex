@@ -56,6 +56,7 @@ class Checker(val method: Method, val loader: ClassLoader, private val psa: Pred
         state = ConstantPropagator.apply(state)
         state = BoolTypeAdapter(method.cm.type).apply(state)
         state = ArrayBoundsAdapter().apply(state)
+        state = CastInfoAdapter(method.cm.type).apply(state)
 
         if (isMemspacingEnabled) {
             log.debug("Memspacing started...")
