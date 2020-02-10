@@ -15,6 +15,7 @@ import org.jetbrains.research.kex.state.term.term
 import org.jetbrains.research.kex.state.transformer.*
 import org.jetbrains.research.kex.util.log
 import org.jetbrains.research.kex.util.tryOrNull
+import org.jetbrains.research.kfg.ir.Class
 import org.jetbrains.research.kfg.ir.Method
 import org.jetbrains.research.kfg.ir.Node
 import org.jetbrains.research.kfg.type.ArrayType
@@ -35,6 +36,13 @@ val Node.visibility: Visibility
         this.isPublic -> Visibility.PUBLIC
         else -> Visibility.PACKAGE
     }
+
+// todo: check more options of instantiable classes
+val Class.isInstantiable: Boolean get() = when {
+    this.isAbstract -> false
+    this.isInterface -> false
+    else -> true
+}
 
 private val visibilityLevel by lazy { kexConfig.getEnumValue("apiGeneration", "visibility", true, Visibility.PUBLIC) }
 private val maxStackSize: Int by lazy { kexConfig.getIntValue("apiGeneration", "maxStackSize", 10) }
@@ -123,12 +131,12 @@ class CallStackGenerator(val context: ExecutionContext, val psa: PredicateStateA
 
     private fun generateObject(descriptor: ObjectDescriptor): CallStack? {
         val klass = when {
-            descriptor.klass.isAbstract -> tryOrNull {
+            descriptor.klass.isInstantiable -> descriptor.klass
+            else -> tryOrNull {
                 context.cm.concreteClasses.filter {
-                    descriptor.klass.isAncestor(it) && !it.isAbstract && visibilityLevel <= it.visibility
+                    descriptor.klass.isAncestor(it) && it.isInstantiable && visibilityLevel <= it.visibility
                 }.random()
             } ?: return null
-            else -> descriptor.klass
         }
         val actualDescriptor = descriptor.copy(klass = klass)
 

@@ -6,26 +6,24 @@ import org.jetbrains.research.kex.test.Intrinsics
 
 class BasicTests {
 
-    open class AC
+    abstract class AbstractClass(val x: Int, val y: Int)
 
-    class Impl1 : AC()
+    class Impl(x: Int, y: Int, val z: Int) : AbstractClass(x, y)
 
-    open class Impl2 : AC()
+    class SecondImpl(x: Int, y: Int) : AbstractClass(x, y)
 
-    class Impl3 : Impl2()
+    class ThirdImpl(x: Int, y: Int, val inner: AbstractClass) : AbstractClass(x, y)
 
-    fun testAC(a: AC) {
-//        if (a is Impl1) {
-//            Intrinsics.assertReachable()
-//        }
-        if (a is Impl2) {
+    fun testAbstractClass(klass: AbstractClass) {
+        if (klass.x > klass.y) {
             Intrinsics.assertReachable()
         }
-        if (a is Impl3) {
+        if (klass is SecondImpl) {
             Intrinsics.assertReachable()
         }
-        val b = a as Impl1
-        Intrinsics.assertReachable()
+        if (klass is ThirdImpl) {
+            Intrinsics.assertReachable()
+        }
     }
 
 }
