@@ -33,6 +33,7 @@ class TypeInfoMap(val inner: Map<Term, Set<TypeInfo>> = hashMapOf()) : Map<Term,
     }?.firstOrNull()
 }
 
+// todo: do something with contradicting instanceof checks
 class TypeInfoCollector(val model: SMTModel) : Transformer<TypeInfoCollector> {
     private val typeInfos = mutableMapOf<Term, MutableMap<TypeInfo, PredicateState>>()
     private val cfgt = CFGTracker()

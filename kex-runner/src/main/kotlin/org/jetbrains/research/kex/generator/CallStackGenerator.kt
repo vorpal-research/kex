@@ -14,6 +14,7 @@ import org.jetbrains.research.kex.state.term.Term
 import org.jetbrains.research.kex.state.term.term
 import org.jetbrains.research.kex.state.transformer.*
 import org.jetbrains.research.kex.util.log
+import org.jetbrains.research.kex.util.tryOrNull
 import org.jetbrains.research.kfg.ir.Method
 import org.jetbrains.research.kfg.type.ArrayType
 import org.jetbrains.research.kfg.type.Type
@@ -119,10 +120,16 @@ class CallStackGenerator(val context: ExecutionContext, val psa: PredicateStateA
     }
 
     private fun generateObject(descriptor: ObjectDescriptor): CallStack? {
-        val klass = descriptor.klass
+        val klass = when {
+            descriptor.klass.isAbstract -> tryOrNull {
+                context.cm.concreteClasses.filter { descriptor.klass.isAncestor(it) && !it.isAbstract }.random()
+            } ?: return null
+            else -> descriptor.klass
+        }
+        val actualDescriptor = descriptor.copy(klass = klass)
 
         val queue = ArrayDeque<Pair<ObjectDescriptor, CallStack>>()
-        queue += descriptor.reduce() to CallStack()
+        queue += actualDescriptor.reduce() to CallStack()
         while (queue.isNotEmpty()) {
             val (desc, stack) = queue.pollFirst()
 

@@ -38,4 +38,10 @@ class BasicGenerationTest : KexRunnerTest() {
         val `class` = cm.getByName("$packageName/generation/ObjectGenerationTests")
         runPipelineOn(`class`)
     }
+
+    @Test
+    fun testAbstractClassGeneration() {
+        val `class` = cm.getByName("$packageName/generation/AbstractClassTests")
+        runPipelineOn(`class`)
+    }
 }

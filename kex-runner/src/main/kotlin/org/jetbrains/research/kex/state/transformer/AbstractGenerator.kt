@@ -69,7 +69,7 @@ interface AbstractGenerator<T> : Transformer<AbstractGenerator<T>> {
             }
 
     fun reanimateTerm(term: Term,
-                                jType: Type = loader.loadClass(term.type.getKfgType(method.cm.type))): T? = memory.getOrPut(term) {
+                      jType: Type = loader.loadClass(term.type.getKfgType(method.cm.type))): T? = memory.getOrPut(term) {
         when (typeInfos.getInfo<NullabilityInfo>(term)?.nullability) {
             Nullability.NON_NULLABLE -> reanimator.reanimate(term, jType)
             else -> reanimator.reanimateNullable(term, jType)
