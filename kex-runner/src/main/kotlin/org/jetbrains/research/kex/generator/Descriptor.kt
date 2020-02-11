@@ -13,14 +13,6 @@ import org.jetbrains.research.kfg.type.ArrayType
 import org.jetbrains.research.kfg.ir.Class as KfgClass
 import org.jetbrains.research.kfg.type.Type as KfgType
 
-object TermGenerator {
-    private var index = 0
-
-    val nextName: String get() = "generatedTerm${index++}"
-
-    fun nextTerm(type: KexType) = term { value(type, nextName) }
-}
-
 sealed class Descriptor {
     abstract val term: Term
 
@@ -77,7 +69,7 @@ data class FieldDescriptor(
             state = value.toState(state)
         }
         return state.builder().run {
-            val tempTerm = term { TermGenerator.nextTerm(this@FieldDescriptor.type.kexType) }
+            val tempTerm = term { generate(this@FieldDescriptor.type.kexType) }
             state { tempTerm equality term.load() }
             require { tempTerm equality value.term }
             apply()
@@ -112,16 +104,15 @@ data class ObjectDescriptor(
         val klass: KfgClass,
         private val fieldsInner: MutableMap<String, FieldDescriptor> = mutableMapOf()
 ) : Descriptor() {
-    val name: String = TermGenerator.nextName
-    val fields: Map<String, FieldDescriptor> get() = fieldsInner.toMap()
+    override val term = term { generate(klass.kexType) }
+    val name = term.name
+    val fields get() = fieldsInner.toMap()
 
     operator fun set(field: String, value: FieldDescriptor) {
         fieldsInner[field] = value
     }
 
     operator fun get(field: String) = fieldsInner[field]
-
-    override val term = term { value(klass.kexType, name) }
 
     override fun toState(ps: PredicateState): PredicateState {
         var state = ps
@@ -162,15 +153,14 @@ data class ArrayDescriptor(
         val type: KfgType,
         private val elementsInner: MutableMap<Int, Descriptor> = mutableMapOf()
 ) : Descriptor() {
-    val name: String = TermGenerator.nextName
-    val elements: Map<Int, Descriptor> get() = elementsInner.toMap()
+    override val term = term { generate(type.kexType) }
+    val name = term.name
+    val elements get() = elementsInner.toMap()
     val elementType = (type as ArrayType).component
 
     operator fun set(index: Int, value: Descriptor) {
         elementsInner[index] = value
     }
-
-    override val term = term { value(type.kexType, name) }
 
     override fun toState(ps: PredicateState): PredicateState {
         var state = ps

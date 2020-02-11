@@ -127,7 +127,6 @@ class CallStackGenerator(val context: ExecutionContext, val psa: PredicateStateA
         val klass = instantiableDescriptor.klass
 
         val queue = queueOf(instantiableDescriptor.reduced to CallStack())
-
         while (queue.isNotEmpty()) {
             val (desc, stack) = queue.poll()
             if (stack.stack.size > maxStackSize) continue
@@ -225,7 +224,7 @@ class CallStackGenerator(val context: ExecutionContext, val psa: PredicateStateA
         val preStateBuilder = StateBuilder()
         for (field in intersection) {
             preStateBuilder.run {
-                val tempTerm = TermGenerator.nextTerm(field.type.kexType)
+                val tempTerm = term{ generate(field.type.kexType) }
                 state { tempTerm equality field.term.load() }
                 assume { tempTerm equality field.type.defaultDescriptor.term }
             }
@@ -238,7 +237,7 @@ class CallStackGenerator(val context: ExecutionContext, val psa: PredicateStateA
             val preState = StateBuilder()
             for (field in fields.values) {
                 preState.run {
-                    val tempTerm = TermGenerator.nextTerm(field.type.kexType)
+                    val tempTerm = term{ generate(field.type.kexType) }
                     state { tempTerm equality field.term.load() }
                     assume { tempTerm equality field.type.kexType.defaultDescriptor.term }
                 }

@@ -156,6 +156,16 @@ object TermFactory {
 abstract class TermBuilder {
     val tf = TermFactory
 
+    private object TermGenerator {
+        private var index = 0
+
+        val nextName: String get() = "generatedTerm${index++}"
+
+        fun nextTerm(type: KexType) = term { value(type, nextName) }
+    }
+
+    fun generate(type: KexType) = TermGenerator.nextTerm(type)
+
     fun `this`(type: KexType) = tf.getThis(type)
 
     fun arg(argument: Argument) = tf.getArgument(argument)
