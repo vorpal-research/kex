@@ -12,7 +12,9 @@ interface ApiCall {
 
 data class PrimaryValue<T>(val value: T) : ApiCall
 
-data class DefaultConstructorCall(val klass: Class) : ApiCall
+data class DefaultConstructorCall(val klass: Class) : ApiCall {
+    override fun toString() = "${klass.fullname}()"
+}
 
 data class ConstructorCall(val klass: Class, val constructor: Method, val args: List<CallStack>) : ApiCall {
     init {
@@ -34,7 +36,9 @@ data class UnknownCall(val target: Descriptor) : ApiCall {
     override fun toString() = "Unknown($target)"
 }
 
-data class StaticFieldSetter(val klass: Class, val field: Field, val value: CallStack) : ApiCall
+data class StaticFieldSetter(val klass: Class, val field: Field, val value: CallStack) : ApiCall {
+    override fun toString() = "${klass.fullname}.${field.name} = $value"
+}
 
 data class FieldSetter(val klass: Class, val owner: CallStack, val field: Field, val value: CallStack) : ApiCall
 
