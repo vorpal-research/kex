@@ -21,4 +21,28 @@ class AbstractClassTests {
             Intrinsics.assertReachable()
         }
     }
+
+
+    interface Interface {
+        val value: Int
+    }
+
+    class InterfaceImpl(override val value: Int) : Interface
+    class ACAndInterface(x: Int) : AbstractClass(x, -43), Interface {
+        override val value: Int
+            get() = x
+    }
+
+    fun testInterface(interfaceInstance: Interface) {
+        if (interfaceInstance.value > 50) {
+            Intrinsics.assertReachable()
+            if (interfaceInstance is ACAndInterface) {
+                Intrinsics.assertReachable()
+            }
+        } else if (interfaceInstance is InterfaceImpl) {
+            Intrinsics.assertReachable()
+        } else {
+            Intrinsics.assertReachable()
+        }
+    }
 }
