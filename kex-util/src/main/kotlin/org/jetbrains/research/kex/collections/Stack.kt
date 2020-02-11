@@ -5,7 +5,7 @@ import java.util.*
 fun <T> stackOf(vararg elements: T) = Stack(elements.toList())
 
 class Stack<T>(elements: Collection<T>) : AbstractCollection<T>() {
-    private val inner = ArrayDeque(elements)
+    private val inner = dequeOf(elements)
 
     override val size: Int
         get() = inner.size

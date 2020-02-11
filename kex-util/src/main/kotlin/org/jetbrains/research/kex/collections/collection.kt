@@ -3,7 +3,10 @@ package org.jetbrains.research.kex.collections
 import java.util.*
 
 fun <T> queueOf(vararg elements: T): Queue<T> = ArrayDeque(elements.toList())
+fun <T> queueOf(elements: Collection<T>): Queue<T> = ArrayDeque(elements.toList())
+
 fun <T> dequeOf(vararg elements: T): Deque<T> = ArrayDeque(elements.toList())
+fun <T> dequeOf(elements: Collection<T>): Deque<T> = ArrayDeque(elements)
 
 fun <T> Collection<T>.firstOrDefault(default: T): T = firstOrNull() ?: default
 fun <T> Collection<T>.firstOrDefault(predicate: (T) -> Boolean, default: T): T = firstOrNull(predicate) ?: default

@@ -32,7 +32,7 @@ data class MethodCall(val instance: CallStack, val method: Method, val args: Lis
     override fun toString() = "$method(${args.joinToString(", ")})"
 }
 
-data class UnknownCall(val target: Descriptor) : ApiCall {
+data class UnknownCall(val klass: Class, val target: Descriptor) : ApiCall {
     override fun toString() = "Unknown($target)"
 }
 

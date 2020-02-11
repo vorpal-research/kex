@@ -60,6 +60,10 @@ class ObjectGenerator(val ctx: ExecutionContext) {
                     }
                     current
                 }
+                is UnknownCall -> {
+                    val reflection = ctx.loader.loadClass(call.klass)
+                    ctx.random.nextOrNull(reflection)
+                }
                 else -> null
             }
         }
