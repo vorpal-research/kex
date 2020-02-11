@@ -2,7 +2,7 @@ package org.jetbrains.research.kex
 
 import com.beust.klaxon.Json
 import com.beust.klaxon.Klaxon
-import org.jetbrains.research.kex.util.tryOrNull
+import org.jetbrains.research.kex.util.`try`
 
 private val klaxon = Klaxon()
 
@@ -13,9 +13,9 @@ data class InheritanceInfo(
     fun toJson() = klaxon.toJsonString(this)
 
     companion object {
-        fun fromJson(json: String) = tryOrNull { klaxon.parse<InheritanceInfo>(json) }?.let {
+        fun fromJson(json: String) = `try` { klaxon.parse<InheritanceInfo>(json)!! }.map {
             InheritanceInfo(it.base, it.inheritors.toMutableSet())
-        }
+        }.getOrNull()
     }
 
     operator fun plus(inheritor: Inheritor) = InheritanceInfo(base, inheritors + inheritor)

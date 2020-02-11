@@ -8,10 +8,7 @@ import org.jetbrains.research.kex.state.predicate.EqualityPredicate
 import org.jetbrains.research.kex.state.predicate.Predicate
 import org.jetbrains.research.kex.state.predicate.assume
 import org.jetbrains.research.kex.state.term.*
-import org.jetbrains.research.kex.util.loadClass
-import org.jetbrains.research.kex.util.log
-import org.jetbrains.research.kex.util.toInt
-import org.jetbrains.research.kex.util.tryOrNull
+import org.jetbrains.research.kex.util.*
 import org.jetbrains.research.kfg.ir.Field
 import org.jetbrains.research.kfg.ir.Method
 import org.jetbrains.research.kfg.type.ArrayType
@@ -73,7 +70,7 @@ class ReflectionInfoAdapter(val method: Method, val loader: ClassLoader, val ign
     private infix fun KFunction<*>.eq(method: Method): Boolean {
         val parameters = this.parameters.drop(method.isAbstract.not().toInt())
 
-        val name = tryOrNull { this.javaMethod?.name } ?: this.name
+        val name = `try` { this.javaMethod?.name }.getOrDefault(this.name)
         return name == method.name && parameters.zip(method.argTypes).fold(true) { acc, pair ->
             val type = tryOrNull { pair.first.type.jvmErasure.java }
             acc && type?.trimmedName == pair.second.trimmedName
@@ -81,7 +78,7 @@ class ReflectionInfoAdapter(val method: Method, val loader: ClassLoader, val ign
     }
 
     private val KClass<*>.allFunctions
-        get() = tryOrNull {
+        get() = `try` {
             constructors +
                     staticFunctions +
                     declaredMemberFunctions +
@@ -92,7 +89,7 @@ class ReflectionInfoAdapter(val method: Method, val loader: ClassLoader, val ign
                     declaredMemberExtensionProperties.filterIsInstance<KMutableProperty<*>>().map { it.setter } +
                     staticProperties.map { it.getter } +
                     staticProperties.filterIsInstance<KMutableProperty<*>>().map { it.setter }
-        } ?: listOf()
+        }.getOrElse(::listOf)
 
     private fun KClass<*>.find(method: Method) = allFunctions.find { it eq method }
 
@@ -107,7 +104,7 @@ class ReflectionInfoAdapter(val method: Method, val loader: ClassLoader, val ign
             val klass = queue.poll()
             when (val kFunction = klass.find(method)) {
                 null -> {
-                    val supertypes = tryOrNull { klass.supertypes } ?: listOf()
+                    val supertypes = `try` { klass.supertypes }.getOrElse(::listOf)
                     queue.addAll(supertypes.map { it.classifier }.filterIsInstance<KClass<*>>())
                 }
                 else -> return kFunction
@@ -117,7 +114,9 @@ class ReflectionInfoAdapter(val method: Method, val loader: ClassLoader, val ign
     }
 
     private fun getKProperty(field: Field) =
-            tryOrNull { getKClass(KexClass(field.`class`.fullname)).declaredMemberProperties }?.find { it.name == field.name }
+            `try` { getKClass(KexClass(field.`class`.fullname)).declaredMemberProperties }
+                    .map { klass -> klass.find { it.name == field.name } }
+                    .getOrNull()
 
     override fun apply(ps: PredicateState): PredicateState {
         val (`this`, arguments) = collectArguments(ps)
