@@ -30,6 +30,8 @@ abstract class TraceCollector(val cm: ClassManager) {
         return st.getValue(valueName) ?: when {
             valueName.matches(Regex("\\d+")) -> cm.value.getIntConstant(valueName.toInt())
             valueName.matches(Regex("\\d+.\\d+")) -> cm.value.getDoubleConstant(valueName.toDouble())
+            valueName.matches(Regex("-\\d+")) -> cm.value.getIntConstant(valueName.toInt())
+            valueName.matches(Regex("-\\d+.\\d+")) -> cm.value.getDoubleConstant(valueName.toDouble())
             valueName.matches(Regex("\".*\"")) -> cm.value.getStringConstant(valueName.substring(1, valueName.lastIndex))
             valueName == "null" -> cm.value.getNullConstant()
             else -> throw UnknownNameException(valueName)
