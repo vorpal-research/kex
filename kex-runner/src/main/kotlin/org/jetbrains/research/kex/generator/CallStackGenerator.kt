@@ -57,7 +57,12 @@ class CallStackGenerator(val context: ExecutionContext, val psa: PredicateStateA
         +ConstantPropagator
         +BoolTypeAdapter(method.cm.type)
         +ArrayBoundsAdapter()
+        +NullityInfoAdapter()
         +CastInfoAdapter(method.cm.type)
+    }
+
+    private fun prepareQuery(ps: PredicateState) = transform(ps) {
+        +NullityInfoAdapter()
     }
 
     private class Node(var stack: CallStack) {
@@ -173,7 +178,7 @@ class CallStackGenerator(val context: ExecutionContext, val psa: PredicateStateA
 
         val preStateFieldTerms = collectFieldTerms(context, preState)
         val preparedState = prepareState(this, state, preStateFieldTerms)
-        val preparedQuery = mapper.apply(descriptor.toState())
+        val preparedQuery = prepareQuery(mapper.apply(descriptor.toState()))
         return execute(preparedState, preparedQuery)
     }
 
@@ -186,7 +191,7 @@ class CallStackGenerator(val context: ExecutionContext, val psa: PredicateStateA
         val preStateFieldTerms = collectFieldTerms(context, preState)
         val state = mapper.apply(preState + (methodState ?: return null))
         val preparedState = prepareState(this, state, preStateFieldTerms)
-        val preparedQuery = mapper.apply(descriptor.toState())
+        val preparedQuery = prepareQuery(mapper.apply(descriptor.toState()))
         return execute(preparedState, preparedQuery)
     }
 
