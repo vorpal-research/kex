@@ -279,9 +279,7 @@ class LoopDeroller(override val cm: ClassManager) : LoopVisitor {
     private fun copyBlockInstructions(state: State, original: BasicBlock) {
         val newBlock = state[original]
         for (inst in original) {
-            val updated = inst.update(state.instMappings)
-            // todo: return this after KFG update
-//            updated.location = inst.location
+            val updated = inst.update(state.instMappings, inst.location)
             state[inst] = updated
             newBlock += updated
 
@@ -327,9 +325,7 @@ class LoopDeroller(override val cm: ClassManager) : LoopVisitor {
 
     private fun remapMethodPhis(phis: List<PhiInst>, newMappings: Map<PhiInst, Map<BasicBlock, Value>>) {
         for (phi in phis) {
-            val newPhi = instructions.getPhi(phi.type, newMappings.getValue(phi))
-            // todo: return this after KFG update
-//            newPhi.location = phi.location
+            val newPhi = instructions.getPhi(phi.type, newMappings.getValue(phi)).update(loc = phi.location)
 
             val bb = phi.parent
             bb.insertBefore(phi, newPhi)
