@@ -1,10 +1,10 @@
 package org.jetbrains.research.kex.trace.runner
 
+import com.abdullin.kthelper.`try`
+import com.abdullin.kthelper.logging.log
 import org.jetbrains.research.kex.config.kexConfig
 import org.jetbrains.research.kex.util.getConstructor
 import org.jetbrains.research.kex.util.getMethod
-import org.jetbrains.research.kex.util.log
-import org.jetbrains.research.kex.util.tryOrNull
 import org.jetbrains.research.kfg.ir.Method
 import java.io.ByteArrayOutputStream
 import java.io.PrintStream
@@ -62,7 +62,7 @@ abstract class AbstractRunner(val method: Method, protected val loader: ClassLoa
     protected val javaConstructor by lazy { javaClass.getConstructor(method, loader) }
 
     protected open fun invoke(constructor: Constructor<*>, args: Array<Any?>): InvocationResult {
-        tryOrNull {
+        `try` {
             log.debug("Running $method")
             log.debug("Args: ${args.map { it.toString() }}")
         }
@@ -102,7 +102,7 @@ abstract class AbstractRunner(val method: Method, protected val loader: ClassLoa
     }
 
     protected open fun invoke(method: ReflectMethod, instance: Any?, args: Array<Any?>): InvocationResult {
-        tryOrNull {
+        `try` {
             log.debug("Running $method")
             log.debug("Instance: $instance")
             log.debug("Args: ${args.map { it.toString() }}")

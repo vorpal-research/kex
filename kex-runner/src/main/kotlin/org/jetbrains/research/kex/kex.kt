@@ -1,5 +1,7 @@
 package org.jetbrains.research.kex
 
+import com.abdullin.kthelper.logging.debug
+import com.abdullin.kthelper.logging.log
 import kotlinx.serialization.ImplicitReflectionSerializer
 import org.jetbrains.research.kex.asm.analysis.Failure
 import org.jetbrains.research.kex.asm.analysis.MethodChecker
@@ -20,8 +22,6 @@ import org.jetbrains.research.kex.smt.Checker
 import org.jetbrains.research.kex.smt.Result
 import org.jetbrains.research.kex.state.transformer.executeModel
 import org.jetbrains.research.kex.trace.`object`.ObjectTraceManager
-import org.jetbrains.research.kex.util.debug
-import org.jetbrains.research.kex.util.log
 import org.jetbrains.research.kfg.ClassManager
 import org.jetbrains.research.kfg.KfgConfig
 import org.jetbrains.research.kfg.Package

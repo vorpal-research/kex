@@ -1,10 +1,10 @@
 package org.jetbrains.research.kex.smt.boolector
 
+import com.abdullin.kthelper.assert.unreachable
+import com.abdullin.kthelper.logging.log
 import org.jetbrains.research.boolector.*
 import org.jetbrains.research.boolector.Function
 import org.jetbrains.research.kex.smt.SMTEngine
-import org.jetbrains.research.kex.util.log
-import org.jetbrains.research.kex.util.unreachable
 import kotlin.math.roundToInt
 import kotlin.math.roundToLong
 

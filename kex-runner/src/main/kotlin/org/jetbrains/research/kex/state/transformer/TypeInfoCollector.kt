@@ -1,5 +1,6 @@
 package org.jetbrains.research.kex.state.transformer
 
+import com.abdullin.kthelper.logging.log
 import org.jetbrains.research.kex.ktype.*
 import org.jetbrains.research.kex.smt.SMTModel
 import org.jetbrains.research.kex.state.BasicState
@@ -14,7 +15,6 @@ import org.jetbrains.research.kex.state.term.CastTerm
 import org.jetbrains.research.kex.state.term.InstanceOfTerm
 import org.jetbrains.research.kex.state.term.NullTerm
 import org.jetbrains.research.kex.state.term.Term
-import org.jetbrains.research.kex.util.log
 import org.jetbrains.research.kfg.type.TypeFactory
 
 enum class Nullability {
@@ -28,7 +28,7 @@ data class CastTypeInfo(val type: KexType) : TypeInfo()
 
 class TypeInfoMap(val inner: Map<Term, Set<TypeInfo>> = hashMapOf()) : Map<Term, Set<TypeInfo>> by inner {
     inline fun <reified T : TypeInfo> getInfo(term: Term): T? = inner[term]?.mapNotNull { it as? T }?.also {
-        require(it.size <= 1) { log.warn("A lot of type information ${T::class.qualifiedName} about $term: $it") }
+        assert(it.size <= 1) { log.warn("A lot of type information ${T::class.qualifiedName} about $term: $it") }
     }?.firstOrNull()
 }
 
@@ -46,7 +46,7 @@ class TypeInfoCollector(val model: SMTModel, val tf: TypeFactory) : Transformer<
                         val reducedCastInfo = mutableSetOf<CastTypeInfo>()
                         val klasses = castInfo.map { (it.type as KexClass).getKfgClass(tf) }.toSet()
                         for (klass in klasses) {
-                            if (klasses.any { it != klass && klass.isAncestor(it) }) continue
+                            if (klasses.any { it != klass && klass.isAncestorOf(it) }) continue
                             else reducedCastInfo += CastTypeInfo(tf.getRefType(klass).kexType)
                         }
                         (nullabilityInfo + reducedCastInfo).toSet()

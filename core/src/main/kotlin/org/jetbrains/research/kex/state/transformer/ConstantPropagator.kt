@@ -1,10 +1,12 @@
 package org.jetbrains.research.kex.state.transformer
 
+import com.abdullin.kthelper.*
+import com.abdullin.kthelper.assert.unreachable
+import com.abdullin.kthelper.logging.log
 import org.jetbrains.research.kex.state.predicate.EqualityPredicate
 import org.jetbrains.research.kex.state.predicate.InequalityPredicate
 import org.jetbrains.research.kex.state.predicate.Predicate
 import org.jetbrains.research.kex.state.term.*
-import org.jetbrains.research.kex.util.*
 import org.jetbrains.research.kfg.ir.value.instruction.BinaryOpcode
 import org.jetbrains.research.kfg.ir.value.instruction.CmpOpcode
 import kotlin.math.abs
@@ -114,9 +116,9 @@ object ConstantPropagator : Transformer<ConstantPropagator> {
 
     private fun genMessage(word: String, right: Number, left: Number) =
             log.error("Obvious error detected: $right $word $left")
-    private fun mustEqual(right: Number, left: Number) =
+    private fun mustBeEqual(right: Number, left: Number) =
             genMessage("must be equal to", right, left)
-    private fun mustNotEqual(right: Number, left: Number) =
+    private fun mustBeNotEqual(right: Number, left: Number) =
             genMessage("should not be equal to", right, left)
 
     override fun transformEqualityPredicate(predicate: EqualityPredicate): Predicate {
@@ -130,7 +132,7 @@ object ConstantPropagator : Transformer<ConstantPropagator> {
         }
         return when {
             isNotError -> predicate
-            else -> unreachable { mustEqual(nlhv, nrhv) }
+            else -> unreachable { mustBeEqual(nlhv, nrhv) }
         }
     }
 
@@ -145,7 +147,7 @@ object ConstantPropagator : Transformer<ConstantPropagator> {
         }
         return when {
             isNotError -> predicate
-            else -> unreachable { mustNotEqual(nlhv, nrhv) }
+            else -> unreachable { mustBeNotEqual(nlhv, nrhv) }
         }
     }
 }

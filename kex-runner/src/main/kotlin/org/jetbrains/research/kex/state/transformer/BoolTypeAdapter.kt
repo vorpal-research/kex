@@ -1,5 +1,7 @@
 package org.jetbrains.research.kex.state.transformer
 
+import com.abdullin.kthelper.assert.unreachable
+import com.abdullin.kthelper.logging.log
 import org.jetbrains.research.kex.ktype.KexBool
 import org.jetbrains.research.kex.ktype.KexInt
 import org.jetbrains.research.kex.ktype.KexIntegral
@@ -10,8 +12,6 @@ import org.jetbrains.research.kex.state.predicate.predicate
 import org.jetbrains.research.kex.state.term.BinaryTerm
 import org.jetbrains.research.kex.state.term.Term
 import org.jetbrains.research.kex.state.term.term
-import org.jetbrains.research.kex.util.log
-import org.jetbrains.research.kex.util.unreachable
 import org.jetbrains.research.kfg.ir.value.instruction.BinaryOpcode
 import org.jetbrains.research.kfg.type.TypeFactory
 

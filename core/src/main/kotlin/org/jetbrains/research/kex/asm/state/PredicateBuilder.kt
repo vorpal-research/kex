@@ -186,8 +186,7 @@ class PredicateBuilder(override val cm: ClassManager) : MethodVisitor {
     override fun visitReturnInst(inst: ReturnInst) {
         if (inst.hasReturnValue) {
             predicateMap[inst] = state(inst.location) {
-                val method = inst.parent?.parent
-                        ?: throw InvalidInstructionError("Return instruction don't have parent method")
+                val method = inst.parent.parent
                 val lhv = `return`(method)
                 val rhv = value(inst.returnValue)
 

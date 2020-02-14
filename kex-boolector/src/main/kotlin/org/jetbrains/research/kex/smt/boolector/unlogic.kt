@@ -1,13 +1,13 @@
 package org.jetbrains.research.kex.smt.boolector
 
+import com.abdullin.kthelper.assert.unreachable
+import com.abdullin.kthelper.logging.log
 import org.jetbrains.research.boolector.BitvecNode
 import org.jetbrains.research.boolector.BoolNode
 import org.jetbrains.research.boolector.BoolectorNode
 import org.jetbrains.research.kex.smt.SMTEngine
 import org.jetbrains.research.kex.state.term.Term
 import org.jetbrains.research.kex.state.term.TermFactory
-import org.jetbrains.research.kex.util.log
-import org.jetbrains.research.kex.util.unreachable
 
 object BoolectorUnlogic {
     val tf = TermFactory

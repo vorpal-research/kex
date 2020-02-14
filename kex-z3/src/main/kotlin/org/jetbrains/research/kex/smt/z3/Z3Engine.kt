@@ -1,9 +1,9 @@
 package org.jetbrains.research.kex.smt.z3
 
+import com.abdullin.kthelper.assert.unreachable
+import com.abdullin.kthelper.logging.log
 import com.microsoft.z3.*
 import org.jetbrains.research.kex.smt.SMTEngine
-import org.jetbrains.research.kex.util.log
-import org.jetbrains.research.kex.util.unreachable
 
 object Z3Engine : SMTEngine<Context, Expr, Sort, FuncDecl, Pattern>() {
     override fun makeBound(ctx: Context, size: Int, sort: Sort): Expr = ctx.mkBound(size, sort)

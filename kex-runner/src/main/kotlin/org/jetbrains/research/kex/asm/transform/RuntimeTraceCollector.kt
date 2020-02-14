@@ -1,8 +1,8 @@
 package org.jetbrains.research.kex.asm.transform
 
+import com.abdullin.kthelper.collection.buildList
 import org.jetbrains.research.kex.trace.`object`.TraceCollector
 import org.jetbrains.research.kex.trace.`object`.TraceCollectorProxy
-import org.jetbrains.research.kex.util.buildList
 import org.jetbrains.research.kfg.ClassManager
 import org.jetbrains.research.kfg.ir.BasicBlock
 import org.jetbrains.research.kfg.ir.Method
@@ -10,6 +10,7 @@ import org.jetbrains.research.kfg.ir.MethodDesc
 import org.jetbrains.research.kfg.ir.value.Value
 import org.jetbrains.research.kfg.ir.value.instruction.*
 import org.jetbrains.research.kfg.type.ClassType
+import org.jetbrains.research.kfg.type.PrimaryType
 import org.jetbrains.research.kfg.visitor.MethodVisitor
 
 class RuntimeTraceCollector(override val cm: ClassManager) : MethodVisitor {
@@ -27,7 +28,7 @@ class RuntimeTraceCollector(override val cm: ClassManager) : MethodVisitor {
     }
 
     private fun Value.wrap(): Instruction {
-        val wrapperType = this@RuntimeTraceCollector.type.getWrapper(this.type) as ClassType
+        val wrapperType = this@RuntimeTraceCollector.type.getWrapper(this.type as PrimaryType) as ClassType
         val wrapperClass = wrapperType.`class`
         val valueOfMethod = wrapperClass.getMethod("valueOf", MethodDesc(arrayOf(this.type), wrapperType))
         return instruction.getCall(CallOpcode.Static(), valueOfMethod, wrapperClass, arrayOf(this), true)
@@ -38,6 +39,10 @@ class RuntimeTraceCollector(override val cm: ClassManager) : MethodVisitor {
         val getter = proxy.getMethod("currentCollector", MethodDesc(arrayOf(), cm.type.getRefType(collectorClass)))
 
         return cm.instruction.getCall(CallOpcode.Static(), "collector", getter, proxy, arrayOf())
+    }
+
+    private fun List<Instruction>.insertBefore(inst: Instruction) {
+        inst.parent.insertBefore(inst, *this.toTypedArray())
     }
 
     override fun cleanup() {}
@@ -74,9 +79,9 @@ class RuntimeTraceCollector(override val cm: ClassManager) : MethodVisitor {
                 }
             }
             +instruction.getCall(CallOpcode.Virtual(), branchMethod, collectorClass, traceCollector,
-                    arrayOf(value.getStringConstant("${inst.parent!!.name}"), condition, expected), false)
+                    arrayOf(value.getStringConstant("${inst.parent.name}"), condition, expected), false)
         }
-        inst.parent!!.insertBefore(inst, *blockExitInsts.toTypedArray())
+        inst.parent.insertBefore(inst, *blockExitInsts.toTypedArray())
     }
 
     override fun visitJumpInst(inst: JumpInst) {
@@ -84,88 +89,76 @@ class RuntimeTraceCollector(override val cm: ClassManager) : MethodVisitor {
             val jumpMethod = collectorClass.getMethod("blockJump",
                     MethodDesc(arrayOf(type.stringType), type.voidType))
             +instruction.getCall(CallOpcode.Virtual(), jumpMethod, collectorClass, traceCollector,
-                    arrayOf(value.getStringConstant("${inst.parent!!.name}")), false)
+                    arrayOf(value.getStringConstant("${inst.parent.name}")), false)
         }
-        inst.parent!!.insertBefore(inst, *blockExitInsts.toTypedArray())
+        inst.parent.insertBefore(inst, *blockExitInsts.toTypedArray())
     }
 
-    override fun visitSwitchInst(inst: SwitchInst) {
-        val blockExitInsts = buildList<Instruction> {
-            val switchMethod = collectorClass.getMethod("blockSwitch",
-                    MethodDesc(arrayOf(type.stringType, type.objectType), type.voidType))
-            val key = run {
-                val key = inst.key
-                when {
-                    key.type.isPrimary -> {
-                        val wrap = key.wrap()
-                        +wrap
-                        wrap
-                    }
-                    else -> key
+    override fun visitSwitchInst(inst: SwitchInst) = buildList<Instruction> {
+        val switchMethod = collectorClass.getMethod("blockSwitch",
+                MethodDesc(arrayOf(type.stringType, type.objectType), type.voidType))
+        val key = run {
+            val key = inst.key
+            when {
+                key.type.isPrimary -> {
+                    val wrap = key.wrap()
+                    +wrap
+                    wrap
                 }
+                else -> key
             }
-            +instruction.getCall(CallOpcode.Virtual(), switchMethod, collectorClass, traceCollector,
-                    arrayOf(value.getStringConstant("${inst.parent!!.name}"), key), false)
         }
-        inst.parent!!.insertBefore(inst, *blockExitInsts.toTypedArray())
-    }
+        +instruction.getCall(CallOpcode.Virtual(), switchMethod, collectorClass, traceCollector,
+                arrayOf(value.getStringConstant("${inst.parent.name}"), key), false)
+    }.insertBefore(inst)
 
-    override fun visitTableSwitchInst(inst: TableSwitchInst) {
-        val blockExitInsts = buildList<Instruction> {
-            val switchMethod = collectorClass.getMethod("blockSwitch",
-                    MethodDesc(arrayOf(type.stringType, type.objectType), type.voidType))
-            val key = run {
-                val key = inst.index
-                when {
-                    key.type.isPrimary -> {
-                        val wrap = key.wrap()
-                        +wrap
-                        wrap
-                    }
-                    else -> key
+    override fun visitTableSwitchInst(inst: TableSwitchInst) = buildList<Instruction> {
+        val switchMethod = collectorClass.getMethod("blockSwitch",
+                MethodDesc(arrayOf(type.stringType, type.objectType), type.voidType))
+        val key = run {
+            val key = inst.index
+            when {
+                key.type.isPrimary -> {
+                    val wrap = key.wrap()
+                    +wrap
+                    wrap
                 }
+                else -> key
             }
-            +instruction.getCall(CallOpcode.Virtual(), switchMethod, collectorClass, traceCollector,
-                    arrayOf(value.getStringConstant("${inst.parent!!.name}"), key), false)
         }
-        inst.parent!!.insertBefore(inst, *blockExitInsts.toTypedArray())
-    }
+        +instruction.getCall(CallOpcode.Virtual(), switchMethod, collectorClass, traceCollector,
+                arrayOf(value.getStringConstant("${inst.parent.name}"), key), false)
+    }.insertBefore(inst)
 
-    override fun visitThrowInst(inst: ThrowInst) {
-        val methodExitInsts = when {
-            inst.parent!!.parent!!.isStaticInitializer -> buildList<Instruction> {
-                val returnMethod = collectorClass.getMethod("staticExit", MethodDesc(arrayOf(), type.voidType))
-                +instruction.getCall(CallOpcode.Virtual(), returnMethod, collectorClass, traceCollector, arrayOf(), false)
-            }
-            else -> buildList<Instruction> {
-                val throwMethod = collectorClass.getMethod("methodThrow",
-                        MethodDesc(arrayOf(type.stringType, type.getRefType("java/lang/Throwable")), type.voidType))
-                +instruction.getCall(CallOpcode.Virtual(), throwMethod, collectorClass, traceCollector,
-                        arrayOf(value.getStringConstant("${inst.parent!!.name}"), inst.throwable), false)
-            }
+    override fun visitThrowInst(inst: ThrowInst) = when {
+        inst.parent.parent.isStaticInitializer -> buildList<Instruction> {
+            val returnMethod = collectorClass.getMethod("staticExit", MethodDesc(arrayOf(), type.voidType))
+            +instruction.getCall(CallOpcode.Virtual(), returnMethod, collectorClass, traceCollector, arrayOf(), false)
         }
-        inst.parent!!.insertBefore(inst, *methodExitInsts.toTypedArray())
-    }
+        else -> buildList<Instruction> {
+            val throwMethod = collectorClass.getMethod("methodThrow",
+                    MethodDesc(arrayOf(type.stringType, type.getRefType("java/lang/Throwable")), type.voidType))
+            +instruction.getCall(CallOpcode.Virtual(), throwMethod, collectorClass, traceCollector,
+                    arrayOf(value.getStringConstant("${inst.parent.name}"), inst.throwable), false)
+        }
+    }.insertBefore(inst)
 
-    override fun visitReturnInst(inst: ReturnInst) {
-        val methodExitInsts = when {
-            inst.parent!!.parent!!.isStaticInitializer -> buildList<Instruction> {
-                val returnMethod = collectorClass.getMethod("staticExit", MethodDesc(arrayOf(), type.voidType))
-                +instruction.getCall(CallOpcode.Virtual(), returnMethod, collectorClass, traceCollector, arrayOf(), false)
-            }
-            else -> buildList<Instruction> {
-                val returnMethod = collectorClass.getMethod("methodReturn", MethodDesc(arrayOf(type.stringType), type.voidType))
-                +instruction.getCall(CallOpcode.Virtual(), returnMethod, collectorClass, traceCollector,
-                        arrayOf(value.getStringConstant("${inst.parent!!.name}")), false)
-            }
+    override fun visitReturnInst(inst: ReturnInst) = when {
+        inst.parent.parent.isStaticInitializer -> buildList<Instruction> {
+            val returnMethod = collectorClass.getMethod("staticExit", MethodDesc(arrayOf(), type.voidType))
+            +instruction.getCall(CallOpcode.Virtual(), returnMethod, collectorClass, traceCollector, arrayOf(), false)
         }
-        inst.parent!!.insertBefore(inst, *methodExitInsts.toTypedArray())
-    }
+        else -> buildList<Instruction> {
+            val returnMethod = collectorClass.getMethod("methodReturn", MethodDesc(arrayOf(type.stringType), type.voidType))
+            +instruction.getCall(CallOpcode.Virtual(), returnMethod, collectorClass, traceCollector,
+                    arrayOf(value.getStringConstant("${inst.parent.name}")), false)
+        }
+    }.insertBefore(inst)
 
     override fun visitCallInst(inst: CallInst) {
         if (!inst.method.isInstrumented()) return
 
-        val methodCallInsts = buildList<Instruction> {
+        buildList<Instruction> {
             val callMethod = collectorClass.getMethod("methodCall", MethodDesc(
                     arrayOf(type.stringType, type.stringType, type.getArrayType(type.stringType),
                             type.stringType, type.stringType, type.stringType, type.getArrayType(type.stringType)),
@@ -193,21 +186,19 @@ class RuntimeTraceCollector(override val cm: ClassManager) : MethodVisitor {
                             argArray
                     ),
                     false)
-        }
-        inst.parent!!.insertBefore(inst, *methodCallInsts.toTypedArray())
+        }.insertBefore(inst)
     }
 
     override fun visitBasicBlock(bb: BasicBlock) {
         super.visitBasicBlock(bb)
-        val blockEntryInsts = buildList<Instruction> {
+        buildList<Instruction> {
             val entryMethod = collectorClass.getMethod("blockEnter", MethodDesc(
                     arrayOf(type.stringType),
                     type.voidType
             ))
             +instruction.getCall(CallOpcode.Virtual(), entryMethod, collectorClass, traceCollector,
                     arrayOf(value.getStringConstant("${bb.name}")), false)
-        }
-        bb.insertBefore(bb.first(), *blockEntryInsts.toTypedArray())
+        }.insertBefore(bb.first())
     }
 
     override fun visit(method: Method) {
@@ -215,7 +206,7 @@ class RuntimeTraceCollector(override val cm: ClassManager) : MethodVisitor {
         if (method.isEmpty()) return
 
         val methodEntryInsts = when {
-            method.isStaticInitializer -> buildList<Instruction> {
+            method.isStaticInitializer -> buildList {
                 traceCollector = getNewCollector()
                 +traceCollector
                 val entryMethod = collectorClass.getMethod("staticEntry", MethodDesc(arrayOf(type.stringType), type.voidType))
@@ -261,6 +252,6 @@ class RuntimeTraceCollector(override val cm: ClassManager) : MethodVisitor {
             }
         }
         super.visit(method)
-        method.entry.insertBefore(method.entry.first(), *methodEntryInsts.toTypedArray())
+        methodEntryInsts.insertBefore(method.entry.first())
     }
 }

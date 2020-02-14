@@ -1,5 +1,8 @@
 package org.jetbrains.research.kex.state.predicate
 
+import com.abdullin.kthelper.assert.fail
+import com.abdullin.kthelper.defaultHashCode
+import com.abdullin.kthelper.logging.log
 import kotlinx.serialization.Required
 import kotlinx.serialization.Serializable
 import org.jetbrains.research.kex.BaseType
@@ -8,9 +11,6 @@ import org.jetbrains.research.kex.state.TypeInfo
 import org.jetbrains.research.kex.state.term.Term
 import org.jetbrains.research.kex.state.term.term
 import org.jetbrains.research.kex.state.transformer.Transformer
-import org.jetbrains.research.kex.util.defaultHashCode
-import org.jetbrains.research.kex.util.fail
-import org.jetbrains.research.kex.util.log
 import org.jetbrains.research.kfg.ir.Location
 
 @Serializable

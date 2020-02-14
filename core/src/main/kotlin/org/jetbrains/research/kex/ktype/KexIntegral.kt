@@ -1,14 +1,21 @@
 package org.jetbrains.research.kex.ktype
 
+import com.abdullin.kthelper.defaultHashCode
 import kotlinx.serialization.Serializable
 import org.jetbrains.research.kex.InheritorOf
-import org.jetbrains.research.kex.util.defaultHashCode
 import org.jetbrains.research.kfg.type.Type
 import org.jetbrains.research.kfg.type.TypeFactory
 
 @InheritorOf("KexType")
 @Serializable
-sealed class KexIntegral : KexType()
+sealed class KexIntegral : KexType() {
+    override fun hashCode() = defaultHashCode(name)
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other?.javaClass != this.javaClass) return false
+        return true
+    }
+}
 
 @InheritorOf("KexType")
 @Serializable
@@ -20,13 +27,6 @@ class KexBool : KexIntegral() {
         get() = WORD
 
     override fun getKfgType(types: TypeFactory): Type = types.boolType
-
-    override fun hashCode() = defaultHashCode(name)
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (other !is KexBool) return false
-        return true
-    }
 }
 
 @InheritorOf("KexType")
@@ -39,13 +39,6 @@ class KexByte : KexIntegral() {
         get() = WORD
 
     override fun getKfgType(types: TypeFactory): Type = types.byteType
-
-    override fun hashCode() = defaultHashCode(name)
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (other !is KexByte) return false
-        return true
-    }
 }
 
 @InheritorOf("KexType")
@@ -58,13 +51,6 @@ class KexChar : KexIntegral() {
         get() = WORD
 
     override fun getKfgType(types: TypeFactory): Type = types.charType
-
-    override fun hashCode() = defaultHashCode(name)
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (other !is KexChar) return false
-        return true
-    }
 }
 
 @InheritorOf("KexType")
@@ -77,13 +63,6 @@ class KexShort : KexIntegral() {
         get() = WORD
 
     override fun getKfgType(types: TypeFactory): Type = types.shortType
-
-    override fun hashCode() = defaultHashCode(name)
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (other !is KexShort) return false
-        return true
-    }
 }
 
 @InheritorOf("KexType")
@@ -115,11 +94,4 @@ class KexLong : KexIntegral() {
         get() = DWORD
 
     override fun getKfgType(types: TypeFactory): Type = types.longType
-
-    override fun hashCode() = defaultHashCode(name)
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (other !is KexLong) return false
-        return true
-    }
 }

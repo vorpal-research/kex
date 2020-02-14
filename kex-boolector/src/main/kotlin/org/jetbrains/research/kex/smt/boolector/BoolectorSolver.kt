@@ -1,5 +1,7 @@
 package org.jetbrains.research.kex.smt.boolector
 
+import com.abdullin.kthelper.assert.unreachable
+import com.abdullin.kthelper.logging.log
 import org.jetbrains.research.boolector.Btor
 import org.jetbrains.research.kex.config.kexConfig
 import org.jetbrains.research.kex.ktype.KexReal
@@ -12,8 +14,6 @@ import org.jetbrains.research.kex.state.term.term
 import org.jetbrains.research.kex.state.transformer.collectPointers
 import org.jetbrains.research.kex.state.transformer.collectVariables
 import org.jetbrains.research.kex.state.transformer.memspace
-import org.jetbrains.research.kex.util.log
-import org.jetbrains.research.kex.util.unreachable
 import org.jetbrains.research.kfg.type.TypeFactory
 
 private val logQuery = kexConfig.getBooleanValue("smt", "logQuery", false)
@@ -64,8 +64,7 @@ class BoolectorSolver(val tf: TypeFactory) : AbstractSMTSolver {
             log.debug(ef.ctx.dumpSmt2())
         }
         log.debug("Running Boolector solver")
-        val result = ef.ctx.check()
-                ?: unreachable { log.error("Solver error") }
+        val result = ef.ctx.check() ?: unreachable { log.error("Solver error") }
 
         log.debug("Solver finished")
 

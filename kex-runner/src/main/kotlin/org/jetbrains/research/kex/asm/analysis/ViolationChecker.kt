@@ -1,5 +1,8 @@
 package org.jetbrains.research.kex.asm.analysis
 
+import com.abdullin.kthelper.algorithm.GraphTraversal
+import com.abdullin.kthelper.logging.debug
+import com.abdullin.kthelper.logging.log
 import org.jetbrains.research.kex.asm.state.PredicateStateAnalysis
 import org.jetbrains.research.kex.asm.state.PredicateStateBuilder
 import org.jetbrains.research.kex.config.kexConfig
@@ -12,14 +15,11 @@ import org.jetbrains.research.kex.state.term.Term
 import org.jetbrains.research.kex.state.term.term
 import org.jetbrains.research.kex.state.transformer.*
 import org.jetbrains.research.kex.state.wrap
-import org.jetbrains.research.kex.util.debug
-import org.jetbrains.research.kex.util.log
 import org.jetbrains.research.kfg.ClassManager
 import org.jetbrains.research.kfg.ir.BasicBlock
 import org.jetbrains.research.kfg.ir.Method
 import org.jetbrains.research.kfg.ir.value.Value
 import org.jetbrains.research.kfg.ir.value.instruction.*
-import org.jetbrains.research.kfg.util.GraphTraversal
 import org.jetbrains.research.kfg.visitor.MethodVisitor
 
 private val isInliningEnabled by lazy { kexConfig.getBooleanValue("smt", "ps-inlining", true) }
@@ -48,8 +48,7 @@ class ViolationChecker(override val cm: ClassManager,
         if (method.isEmpty()) return
 
         val order = GraphTraversal(method).topologicalSort()
-
-        for (block in order.reversed()) {
+        for (block in order) {
             currentBlock = block
 
             val predecessorInfo = currentBlock.predecessors

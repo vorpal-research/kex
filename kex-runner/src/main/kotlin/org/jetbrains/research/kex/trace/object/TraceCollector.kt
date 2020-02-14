@@ -1,6 +1,6 @@
 package org.jetbrains.research.kex.trace.`object`
 
-import org.jetbrains.research.kex.collections.stackOf
+import com.abdullin.kthelper.collection.stackOf
 import org.jetbrains.research.kex.trace.file.UnknownNameException
 import org.jetbrains.research.kfg.ClassManager
 import org.jetbrains.research.kfg.ir.BasicBlock

@@ -1,9 +1,9 @@
 package org.jetbrains.research.kex.state
 
+import com.abdullin.kthelper.defaultHashCode
 import kotlinx.serialization.Serializable
 import org.jetbrains.research.kex.InheritorOf
 import org.jetbrains.research.kex.state.predicate.Predicate
-import org.jetbrains.research.kex.util.defaultHashCode
 
 @InheritorOf("State")
 @Serializable

@@ -1,11 +1,11 @@
 package org.jetbrains.research.kex.state.term
 
+import com.abdullin.kthelper.assert.unreachable
+import com.abdullin.kthelper.logging.log
 import kotlinx.serialization.Serializable
 import org.jetbrains.research.kex.InheritorOf
 import org.jetbrains.research.kex.ktype.KexType
 import org.jetbrains.research.kex.state.transformer.Transformer
-import org.jetbrains.research.kex.util.log
-import org.jetbrains.research.kex.util.unreachable
 
 @InheritorOf("Term")
 @Serializable

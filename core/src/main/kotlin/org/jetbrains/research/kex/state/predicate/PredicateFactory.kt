@@ -1,13 +1,12 @@
 package org.jetbrains.research.kex.state.predicate
 
+import com.abdullin.kthelper.assert.unreachable
+import com.abdullin.kthelper.logging.log
 import org.jetbrains.research.kex.ktype.KexArray
 import org.jetbrains.research.kex.state.term.ArrayIndexTerm
 import org.jetbrains.research.kex.state.term.FieldTerm
 import org.jetbrains.research.kex.state.term.Term
 import org.jetbrains.research.kex.state.term.TermBuilder
-import org.jetbrains.research.kex.util.fail
-import org.jetbrains.research.kex.util.log
-import org.jetbrains.research.kex.util.unreachable
 import org.jetbrains.research.kfg.ir.Location
 
 object PredicateFactory {
@@ -67,7 +66,7 @@ abstract class PredicateBuilder : TermBuilder() {
     fun Term.store(other: Term) = when (this) {
         is ArrayIndexTerm -> pf.getArrayStore(this, other, this@PredicateBuilder.type, location)
         is FieldTerm -> pf.getFieldStore(this, other, this@PredicateBuilder.type, location)
-        else -> fail { log.error("Trying to store to unknown term: $this") }
+        else -> unreachable { log.error("Trying to store to unknown term: $this") }
     }
 
     fun Term.bound(other: Term) = pf.getBoundStore(this, other, this@PredicateBuilder.type, location)
@@ -142,7 +141,7 @@ inline fun predicate(type: PredicateType, body: PredicateBuilder.() -> Predicate
     is PredicateType.Require -> require(body)
     is PredicateType.State -> state(body)
     is PredicateType.Path -> path(body)
-    else -> fail { log.error("Unknown predicate type $type") }
+    else -> unreachable { log.error("Unknown predicate type $type") }
 }
 
 inline fun predicate(type: PredicateType, location: Location, body: PredicateBuilder.() -> Predicate) = when (type) {
@@ -150,5 +149,5 @@ inline fun predicate(type: PredicateType, location: Location, body: PredicateBui
     is PredicateType.Require -> require(location, body)
     is PredicateType.State -> state(location, body)
     is PredicateType.Path -> path(location, body)
-    else -> fail { log.error("Unknown predicate type $type") }
+    else -> unreachable { log.error("Unknown predicate type $type") }
 }

@@ -1,12 +1,12 @@
 package org.jetbrains.research.kex.smt.z3
 
+import com.abdullin.kthelper.assert.unreachable
+import com.abdullin.kthelper.logging.log
 import com.microsoft.z3.*
 import com.microsoft.z3.enumerations.Z3_lbool
 import org.jetbrains.research.kex.smt.SMTEngine
 import org.jetbrains.research.kex.state.term.Term
 import org.jetbrains.research.kex.state.term.term
-import org.jetbrains.research.kex.util.log
-import org.jetbrains.research.kex.util.unreachable
 import java.lang.Math.pow
 
 object Z3Unlogic {

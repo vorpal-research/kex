@@ -83,8 +83,8 @@ class ExternalAnnotationsLoader : AnnotationsLoader {
 
     private fun getExactCallPrivate(name: String, vararg params: String): MutableAnnotatedCall? {
         return getCallOverloadsPrivate(name).find {
-            when {
-                params.size == it.params.size -> params.withIndex().all { (index, param) -> param == it.params[index].type }
+            when (params.size) {
+                it.params.size -> params.withIndex().all { (index, param) -> param == it.params[index].type }
                 else -> false
             }
         }

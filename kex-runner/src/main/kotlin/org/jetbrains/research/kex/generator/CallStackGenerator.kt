@@ -1,5 +1,7 @@
 package org.jetbrains.research.kex.generator
 
+import com.abdullin.kthelper.assert.unreachable
+import com.abdullin.kthelper.logging.log
 import org.jetbrains.research.kex.ExecutionContext
 import org.jetbrains.research.kex.annotations.AnnotationManager
 import org.jetbrains.research.kex.asm.state.PredicateStateAnalysis
@@ -13,8 +15,6 @@ import org.jetbrains.research.kex.state.StateBuilder
 import org.jetbrains.research.kex.state.term.Term
 import org.jetbrains.research.kex.state.term.term
 import org.jetbrains.research.kex.state.transformer.*
-import org.jetbrains.research.kex.util.log
-import org.jetbrains.research.kex.util.unreachable
 import org.jetbrains.research.kfg.ir.Method
 import org.jetbrains.research.kfg.type.ArrayType
 import org.jetbrains.research.kfg.type.Type

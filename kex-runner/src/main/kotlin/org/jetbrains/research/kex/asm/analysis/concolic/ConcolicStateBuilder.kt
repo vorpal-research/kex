@@ -1,7 +1,9 @@
 package org.jetbrains.research.kex.asm.analysis.concolic
 
+import com.abdullin.kthelper.collection.buildList
+import com.abdullin.kthelper.collection.listOf
+import com.abdullin.kthelper.collection.stackOf
 import org.jetbrains.research.kex.asm.state.InvalidInstructionError
-import org.jetbrains.research.kex.collections.stackOf
 import org.jetbrains.research.kex.ktype.kexType
 import org.jetbrains.research.kex.state.StateBuilder
 import org.jetbrains.research.kex.state.predicate.Predicate
@@ -9,8 +11,6 @@ import org.jetbrains.research.kex.state.predicate.path
 import org.jetbrains.research.kex.state.predicate.state
 import org.jetbrains.research.kex.state.term.Term
 import org.jetbrains.research.kex.state.term.term
-import org.jetbrains.research.kex.util.buildList
-import org.jetbrains.research.kex.util.listOf
 import org.jetbrains.research.kfg.ClassManager
 import org.jetbrains.research.kfg.ir.BasicBlock
 import org.jetbrains.research.kfg.ir.Method

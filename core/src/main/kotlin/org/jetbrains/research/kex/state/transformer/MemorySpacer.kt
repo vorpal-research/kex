@@ -1,10 +1,10 @@
 package org.jetbrains.research.kex.state.transformer
 
+import com.abdullin.kthelper.assert.unreachable
+import com.abdullin.kthelper.logging.log
 import org.jetbrains.research.kex.ktype.KexPointer
 import org.jetbrains.research.kex.state.PredicateState
 import org.jetbrains.research.kex.state.term.*
-import org.jetbrains.research.kex.util.log
-import org.jetbrains.research.kex.util.unreachable
 
 fun Term.withMemspace(memspace: Int): Term {
     val type = this.type as? KexPointer ?: return this

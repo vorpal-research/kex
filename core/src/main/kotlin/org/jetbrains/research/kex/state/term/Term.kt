@@ -1,14 +1,14 @@
 package org.jetbrains.research.kex.state.term
 
+import com.abdullin.kthelper.assert.fail
+import com.abdullin.kthelper.defaultHashCode
+import com.abdullin.kthelper.logging.log
 import kotlinx.serialization.Serializable
 import org.jetbrains.research.kex.BaseType
 import org.jetbrains.research.kex.InheritanceInfo
 import org.jetbrains.research.kex.ktype.KexType
 import org.jetbrains.research.kex.state.TypeInfo
 import org.jetbrains.research.kex.state.transformer.Transformer
-import org.jetbrains.research.kex.util.defaultHashCode
-import org.jetbrains.research.kex.util.fail
-import org.jetbrains.research.kex.util.log
 
 @BaseType("Term")
 @Serializable

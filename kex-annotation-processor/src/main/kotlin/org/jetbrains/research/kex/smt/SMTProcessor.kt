@@ -1,7 +1,7 @@
 package org.jetbrains.research.kex.smt
 
+import com.abdullin.kthelper.assert.unreachable
 import org.jetbrains.research.kex.KexProcessor
-import org.jetbrains.research.kex.util.unreachable
 import java.io.ByteArrayOutputStream
 import java.io.File
 import javax.annotation.processing.RoundEnvironment
@@ -75,7 +75,7 @@ class SMTProcessor : KexProcessor() {
 
         val stream = ByteArrayOutputStream()
         stream.bufferedWriter().use {
-            ClassGenerator(parameters, templates, "$template.vm").doit(it)
+            ClassGenerator(parameters, templates, "$template.vm").write(it)
             it.flush()
         }
         val resultingFile = stream.toString()

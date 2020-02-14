@@ -1,5 +1,7 @@
 package org.jetbrains.research.kex.state.transformer
 
+import com.abdullin.kthelper.assert.unreachable
+import com.abdullin.kthelper.logging.log
 import org.jetbrains.research.kex.smt.SMTModel
 import org.jetbrains.research.kex.state.BasicState
 import org.jetbrains.research.kex.state.ChoiceState
@@ -12,8 +14,6 @@ import org.jetbrains.research.kex.state.term.ConstBoolTerm
 import org.jetbrains.research.kex.state.term.ConstIntTerm
 import org.jetbrains.research.kex.state.term.ConstLongTerm
 import org.jetbrains.research.kex.state.term.Term
-import org.jetbrains.research.kex.util.log
-import org.jetbrains.research.kex.util.unreachable
 
 class PathChecker(val model: SMTModel) : Transformer<PathChecker> {
     var satisfied = true

@@ -1,5 +1,7 @@
 package org.jetbrains.research.kex.state.transformer
 
+import com.abdullin.kthelper.assert.unreachable
+import com.abdullin.kthelper.logging.log
 import org.jetbrains.research.kex.ExecutionContext
 import org.jetbrains.research.kex.state.PredicateState
 import org.jetbrains.research.kex.state.predicate.FieldStorePredicate
@@ -7,8 +9,6 @@ import org.jetbrains.research.kex.state.predicate.Predicate
 import org.jetbrains.research.kex.state.term.FieldLoadTerm
 import org.jetbrains.research.kex.state.term.FieldTerm
 import org.jetbrains.research.kex.state.term.Term
-import org.jetbrains.research.kex.util.log
-import org.jetbrains.research.kex.util.unreachable
 import org.jetbrains.research.kfg.ir.Field
 
 val Term.isThis: Boolean get() = this.toString() == "this"
@@ -19,7 +19,7 @@ class FieldAccessCollector(val context: ExecutionContext) : Transformer<FieldAcc
 
     override fun transformFieldStore(predicate: FieldStorePredicate): Predicate {
         val fieldTerm = predicate.field as? FieldTerm ?: unreachable { log.error("Unexpected term in field store") }
-        val klass = context.cm.getByName(fieldTerm.getClass())
+        val klass = context.cm.getByName(fieldTerm.klass)
         val field = klass.getField(fieldTerm.fieldNameString, fieldTerm.type.getKfgType(context.types))
         if (fieldTerm.isStatic || fieldTerm.owner.isThis) {
             fieldAccesses += field

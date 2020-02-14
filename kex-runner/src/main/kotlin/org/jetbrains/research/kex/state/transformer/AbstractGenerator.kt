@@ -1,5 +1,7 @@
 package org.jetbrains.research.kex.state.transformer
 
+import com.abdullin.kthelper.assert.unreachable
+import com.abdullin.kthelper.logging.log
 import org.jetbrains.research.kex.ExecutionContext
 import org.jetbrains.research.kex.ktype.KexClass
 import org.jetbrains.research.kex.ktype.kexType
@@ -12,9 +14,7 @@ import org.jetbrains.research.kex.state.emptyState
 import org.jetbrains.research.kex.state.predicate.Predicate
 import org.jetbrains.research.kex.state.term.*
 import org.jetbrains.research.kex.util.loadClass
-import org.jetbrains.research.kex.util.log
 import org.jetbrains.research.kex.util.mergeTypes
-import org.jetbrains.research.kex.util.unreachable
 import org.jetbrains.research.kfg.ir.Method
 import org.jetbrains.research.kfg.type.TypeFactory
 import java.lang.reflect.Executable

@@ -1,15 +1,15 @@
 package org.jetbrains.research.kex.asm.analysis
 
+import com.abdullin.kthelper.algorithm.GraphTraversal
 import org.jetbrains.research.kfg.ir.BasicBlock
 import org.jetbrains.research.kfg.ir.Method
-import org.jetbrains.research.kfg.util.GraphTraversal
 
 interface SearchStrategy : Iterable<BasicBlock> {
     val method: Method
 }
 
 class TopologicalStrategy(override val method: Method) : SearchStrategy {
-    val order = GraphTraversal(method).topologicalSort().reversed()
+    val order = GraphTraversal(method).topologicalSort()
 
     override fun iterator() = order.iterator()
 }
