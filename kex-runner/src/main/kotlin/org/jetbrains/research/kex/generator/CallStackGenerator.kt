@@ -1,9 +1,11 @@
 package org.jetbrains.research.kex.generator
 
+import com.abdullin.kthelper.collection.queueOf
+import com.abdullin.kthelper.logging.log
+import com.abdullin.kthelper.tryOrNull
 import org.jetbrains.research.kex.ExecutionContext
 import org.jetbrains.research.kex.annotations.AnnotationManager
 import org.jetbrains.research.kex.asm.state.PredicateStateAnalysis
-import org.jetbrains.research.kex.collections.queueOf
 import org.jetbrains.research.kex.config.kexConfig
 import org.jetbrains.research.kex.ktype.KexType
 import org.jetbrains.research.kex.ktype.kexType
@@ -14,8 +16,6 @@ import org.jetbrains.research.kex.state.StateBuilder
 import org.jetbrains.research.kex.state.term.Term
 import org.jetbrains.research.kex.state.term.term
 import org.jetbrains.research.kex.state.transformer.*
-import org.jetbrains.research.kex.util.log
-import org.jetbrains.research.kex.util.tryOrNull
 import org.jetbrains.research.kfg.ir.Class
 import org.jetbrains.research.kfg.ir.Method
 import org.jetbrains.research.kfg.ir.Node
@@ -251,7 +251,7 @@ class CallStackGenerator(val context: ExecutionContext, val psa: PredicateStateA
         get() = when {
             this.klass.isInstantiable -> this
             else -> copy(klass = context.cm.concreteClasses.filter {
-                klass.isAncestor(it) && it.isInstantiable && visibilityLevel <= it.visibility
+                klass.isAncestorOf(it) && it.isInstantiable && visibilityLevel <= it.visibility
             }.random())
         }
 

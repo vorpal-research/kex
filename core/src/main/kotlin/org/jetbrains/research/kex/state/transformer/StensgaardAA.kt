@@ -1,12 +1,18 @@
 package org.jetbrains.research.kex.state.transformer
 
-import org.jetbrains.research.kex.collections.DisjointSet
-import org.jetbrains.research.kex.collections.Subset
+import com.abdullin.kthelper.algorithm.GraphView
+import com.abdullin.kthelper.algorithm.Viewable
+import com.abdullin.kthelper.assert.unreachable
+import com.abdullin.kthelper.collection.DisjointSet
+import com.abdullin.kthelper.collection.Subset
+import com.abdullin.kthelper.logging.log
+import org.jetbrains.research.kex.config.kexConfig
 import org.jetbrains.research.kex.ktype.KexType
 import org.jetbrains.research.kex.state.predicate.*
 import org.jetbrains.research.kex.state.term.*
-import org.jetbrains.research.kfg.util.GraphView
-import org.jetbrains.research.kfg.util.viewCfg
+
+private val dot by lazy { kexConfig.getStringValue("view", "dot") ?: unreachable { log.error("Could not find dot") } }
+private val viewer by lazy { kexConfig.getStringValue("view", "viewer") ?: unreachable { log.error("Could not find viewer") } }
 
 typealias Token = Subset<Term?>?
 
@@ -14,7 +20,7 @@ interface AliasAnalysis {
     fun mayAlias(lhv: Term, rhv: Term): Boolean
 }
 
-class StensgaardAA : Transformer<StensgaardAA>, AliasAnalysis {
+class StensgaardAA : Transformer<StensgaardAA>, AliasAnalysis, Viewable {
     private val relations = DisjointSet<Term?>()
     private val pointsTo = hashMapOf<Token, Token>()
     private val mapping = hashMapOf<Term, Token>()
@@ -183,29 +189,34 @@ class StensgaardAA : Transformer<StensgaardAA>, AliasAnalysis {
 
     fun getDereferenced(term: Term) = relations.findUnsafe(pointsTo(get(term)))
 
-    fun asGraph(): List<GraphView> {
-        val rootNode = GraphView("root", "root")
-        val reverse = mutableMapOf<Token, GraphView>()
-        val data = mutableMapOf<Token, MutableSet<Term>>()
-        for ((term, token) in mapping) {
-            val root = relations.findUnsafe(token)
-            data.getOrPut(root) { mutableSetOf() }.add(term)
+    override val graphView: List<GraphView>
+        get() {
+            val rootNode = GraphView("root", "root")
+            val reverse = mutableMapOf<Token, GraphView>()
+            val data = mutableMapOf<Token, MutableSet<Term>>()
+            for ((term, token) in mapping) {
+                val root = relations.findUnsafe(token)
+                data.getOrPut(root) { mutableSetOf() }.add(term)
+            }
+            for ((token, dt) in data) {
+                reverse[token] = GraphView(token.toString(), dt.fold(StringBuilder()) { sb, term -> sb.appendln(term) }.toString())
+            }
+            for ((f, t) in pointsTo) {
+                val from = relations.findUnsafe(f)
+                val to = relations.findUnsafe(t)
+                val fromNode = reverse.getOrPut(from) { GraphView(from.toString(), from.toString()) }
+                val toNode = reverse.getOrPut(to) { GraphView(to.toString(), to.toString()) }
+                fromNode.addSuccessor(toNode)
+            }
+            val values = reverse.values.map { graphView ->
+                val view = GraphView(graphView.name, graphView.label)
+                graphView.successors.toSet().forEach { view.addSuccessor(it) }
+                view
+            }.toMutableSet()
+            values.filter { it.successors.isEmpty() }.forEach { it.addSuccessor(rootNode) }
+            values.add(rootNode)
+            return values.toList()
         }
-        for ((token, dt) in data) {
-            reverse[token] = GraphView(token.toString(), dt.fold(StringBuilder()) { sb, term -> sb.appendln(term) }.toString())
-        }
-        for ((f, t) in pointsTo) {
-            val from = relations.findUnsafe(f)
-            val to = relations.findUnsafe(t)
-            val fromNode = reverse.getOrPut(from) { GraphView(from.toString(), from.toString()) }
-            val toNode = reverse.getOrPut(to) { GraphView(to.toString(), to.toString()) }
-            fromNode.successors.add(toNode)
-        }
-        val values = reverse.values.map { GraphView(it.name, it.label, it.successors.asSequence().toSet().toMutableList()) }.toMutableSet()
-        values.filter { it.successors.isEmpty() }.forEach { it.successors.add(rootNode) }
-        values.add(rootNode)
-        return values.toList()
-    }
 
-    fun viewGraph(dot: String, viewer: String) = viewCfg("SteensgaardAA", asGraph(), dot, viewer)
+    fun view() = view("SteensgaardAA", dot, viewer)
 }

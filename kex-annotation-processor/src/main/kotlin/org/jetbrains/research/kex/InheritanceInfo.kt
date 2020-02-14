@@ -1,8 +1,8 @@
 package org.jetbrains.research.kex
 
+import com.abdullin.kthelper.`try`
 import com.beust.klaxon.Json
 import com.beust.klaxon.Klaxon
-import org.jetbrains.research.kex.util.`try`
 
 private val klaxon = Klaxon()
 

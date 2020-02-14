@@ -1,5 +1,9 @@
 package org.jetbrains.research.kex.state.transformer
 
+import com.abdullin.kthelper.`try`
+import com.abdullin.kthelper.logging.log
+import com.abdullin.kthelper.toInt
+import com.abdullin.kthelper.tryOrNull
 import org.jetbrains.research.kex.ktype.*
 import org.jetbrains.research.kex.state.PredicateState
 import org.jetbrains.research.kex.state.StateBuilder
@@ -8,7 +12,7 @@ import org.jetbrains.research.kex.state.predicate.EqualityPredicate
 import org.jetbrains.research.kex.state.predicate.Predicate
 import org.jetbrains.research.kex.state.predicate.assume
 import org.jetbrains.research.kex.state.term.*
-import org.jetbrains.research.kex.util.*
+import org.jetbrains.research.kex.util.loadClass
 import org.jetbrains.research.kfg.ir.Field
 import org.jetbrains.research.kfg.ir.Method
 import org.jetbrains.research.kfg.type.ArrayType
@@ -191,7 +195,7 @@ class ReflectionInfoAdapter(val method: Method, val loader: ClassLoader, val ign
 
         val field = (predicate.rhv as FieldLoadTerm).field as FieldTerm
         val fieldType = (field.type as KexReference).reference
-        val kfgClass = cm.getByName(field.getClass())
+        val kfgClass = cm.getByName(field.klass)
         val actualField = kfgClass.getField((field.fieldName as ConstStringTerm).value, fieldType.getKfgType(types))
 
         val prop = getKProperty(actualField)

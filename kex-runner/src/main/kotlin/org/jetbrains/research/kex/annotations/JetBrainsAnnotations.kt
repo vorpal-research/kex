@@ -1,5 +1,7 @@
 package org.jetbrains.research.kex.annotations
 
+import com.abdullin.kthelper.assert.unreachable
+import com.abdullin.kthelper.logging.log
 import org.jetbrains.research.kex.asm.manager.MethodManager
 import org.jetbrains.research.kex.config.kexConfig
 import org.jetbrains.research.kex.ktype.KexBool
@@ -13,7 +15,6 @@ import org.jetbrains.research.kex.state.term.CallTerm
 import org.jetbrains.research.kex.state.term.Term
 import org.jetbrains.research.kex.state.term.term
 import org.jetbrains.research.kex.state.wrap
-import org.jetbrains.research.kex.util.unreachable
 
 @AnnotationFunctionality("org.jetbrains.annotations.Range")
 class Range(val from: Long, val to: Long) : AnnotationInfo() {
@@ -57,8 +58,8 @@ class Contract(val value: String = ""/*, pure: Boolean = false*/) : AnnotationIn
                     argsStr.isBlank() -> emptyList()
                     else -> argsStr.split(',').map { Constraints[it.trim()] }
                 }
-                check(args.size == paramN) {
-                    "Parameters count ${args.size} in contract requires to be the same as in the call $paramN"
+                assert(args.size == paramN) {
+                    log.error("Parameters count ${args.size} in contract requires to be the same as in the call $paramN")
                 }
                 val resultLiteral = result.trim()
                 records += when {
@@ -72,7 +73,7 @@ class Contract(val value: String = ""/*, pure: Boolean = false*/) : AnnotationIn
         }
         // Find errors
         for (record in records) {
-            check(record.result != Constraints.Any) { "Contract effect should be specified" }
+            assert(record.result != Constraints.Any) { log.error("Contract effect should be specified") }
             for (param in record.params) {
                 when (param) {
                     in effects2, Constraints.New, Constraints.Fail ->

@@ -1,8 +1,8 @@
 package org.jetbrains.research.kex.asm.transform
 
+import com.abdullin.kthelper.collection.buildList
 import org.jetbrains.research.kex.asm.util.FileOutputStreamWrapper
 import org.jetbrains.research.kex.config.kexConfig
-import org.jetbrains.research.kex.util.buildList
 import org.jetbrains.research.kfg.ClassManager
 import org.jetbrains.research.kfg.analysis.IRVerifier
 import org.jetbrains.research.kfg.ir.BasicBlock
@@ -30,7 +30,7 @@ class TraceInstrumenter(override val cm: ClassManager) : MethodVisitor {
     }
 
     private fun instrumentInst(inst: Instruction, instrumenter: (inst: Instruction) -> List<Instruction>) {
-        val bb = inst.parent!!
+        val bb = inst.parent
 
         val insts = instrumenter(inst)
         insertedInsts += insts
@@ -42,8 +42,8 @@ class TraceInstrumenter(override val cm: ClassManager) : MethodVisitor {
     }
 
     override fun visitReturnInst(inst: ReturnInst) = instrumentInst(inst) {
-        val bb = inst.parent!!
-        val method = bb.parent!!
+        val bb = inst.parent
+        val method = bb.parent
 
         buildList {
             +fos.println("exit ${bb.name};")
@@ -61,8 +61,8 @@ class TraceInstrumenter(override val cm: ClassManager) : MethodVisitor {
     }
 
     override fun visitThrowInst(inst: ThrowInst) = instrumentInst(inst) {
-        val bb = inst.parent!!
-        val method = bb.parent!!
+        val bb = inst.parent
+        val method = bb.parent
 
         buildList {
             +fos.println("exit ${bb.name};")
@@ -74,7 +74,7 @@ class TraceInstrumenter(override val cm: ClassManager) : MethodVisitor {
     }
 
     override fun visitJumpInst(inst: JumpInst) = instrumentInst(inst) {
-        val bb = inst.parent!!
+        val bb = inst.parent
 
         buildList {
             +fos.println("exit ${bb.name};")
@@ -83,7 +83,7 @@ class TraceInstrumenter(override val cm: ClassManager) : MethodVisitor {
 
     override fun visitBranchInst(inst: BranchInst) = instrumentInst(inst) {
         val condition = inst.cond as CmpInst
-        val bb = inst.parent!!
+        val bb = inst.parent
 
         buildList {
             +fos.print("branch ${bb.name}, ${condition.lhv.name} == ")
@@ -95,7 +95,7 @@ class TraceInstrumenter(override val cm: ClassManager) : MethodVisitor {
     }
 
     override fun visitSwitchInst(inst: SwitchInst) = instrumentInst(inst) {
-        val bb = inst.parent!!
+        val bb = inst.parent
 
         buildList {
             +fos.print("switch ${bb.name}, ${inst.key.name} == ")
@@ -105,7 +105,7 @@ class TraceInstrumenter(override val cm: ClassManager) : MethodVisitor {
     }
 
     override fun visitTableSwitchInst(inst: TableSwitchInst) = instrumentInst(inst) {
-        val bb = inst.parent!!
+        val bb = inst.parent
 
         buildList {
             +fos.print("tableswitch ${bb.name}, ${inst.index.name} == ")

@@ -1,5 +1,8 @@
 package org.jetbrains.research.kex.smt.z3
 
+import com.abdullin.kthelper.assert.unreachable
+import com.abdullin.kthelper.logging.debug
+import com.abdullin.kthelper.logging.log
 import com.microsoft.z3.*
 import org.jetbrains.research.kex.config.kexConfig
 import org.jetbrains.research.kex.smt.*
@@ -9,9 +12,6 @@ import org.jetbrains.research.kex.state.term.Term
 import org.jetbrains.research.kex.state.transformer.collectPointers
 import org.jetbrains.research.kex.state.transformer.collectVariables
 import org.jetbrains.research.kex.state.transformer.memspace
-import org.jetbrains.research.kex.util.debug
-import org.jetbrains.research.kex.util.log
-import org.jetbrains.research.kex.util.unreachable
 import org.jetbrains.research.kfg.type.TypeFactory
 
 private val timeout = kexConfig.getIntValue("smt", "timeout", 3) * 1000

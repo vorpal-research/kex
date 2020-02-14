@@ -1,9 +1,9 @@
 package org.jetbrains.research.kex.asm.state
 
-import org.jetbrains.research.kex.util.log
+import com.abdullin.kthelper.algorithm.NoTopologicalSortingException
+import com.abdullin.kthelper.logging.log
 import org.jetbrains.research.kfg.ClassManager
 import org.jetbrains.research.kfg.ir.Method
-import org.jetbrains.research.kfg.util.NoTopologicalSortingException
 import org.jetbrains.research.kfg.visitor.MethodVisitor
 
 class PredicateStateAnalysis(override val cm: ClassManager) : MethodVisitor {

@@ -1,9 +1,8 @@
 package org.jetbrains.research.kex.state.term
 
+import com.abdullin.kthelper.assert.unreachable
+import com.abdullin.kthelper.logging.log
 import org.jetbrains.research.kex.ktype.*
-import org.jetbrains.research.kex.util.fail
-import org.jetbrains.research.kex.util.log
-import org.jetbrains.research.kex.util.unreachable
 import org.jetbrains.research.kfg.ir.Class
 import org.jetbrains.research.kfg.ir.Method
 import org.jetbrains.research.kfg.ir.value.*
@@ -191,7 +190,7 @@ abstract class TermBuilder {
             val type = (this.type as KexReference).reference
             tf.getFieldLoad(type, this)
         }
-        else -> fail { log.error("Unknown term type in load: $this") }
+        else -> unreachable { log.error("Unknown term type in load: $this") }
     }
 
     infix fun Term.add(rhv: Term) = tf.getBinary(type, BinaryOpcode.Add(), this, rhv)

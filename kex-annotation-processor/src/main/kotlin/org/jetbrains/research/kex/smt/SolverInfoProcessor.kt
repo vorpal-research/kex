@@ -1,9 +1,9 @@
 package org.jetbrains.research.kex.smt
 
+import com.abdullin.kthelper.assert.unreachable
 import org.jetbrains.research.kex.InheritanceInfo
 import org.jetbrains.research.kex.Inheritor
 import org.jetbrains.research.kex.KexProcessor
-import org.jetbrains.research.kex.util.unreachable
 import java.io.File
 import javax.annotation.processing.RoundEnvironment
 import javax.annotation.processing.SupportedAnnotationTypes

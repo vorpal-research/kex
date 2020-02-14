@@ -1,5 +1,9 @@
 package org.jetbrains.research.kex.asm.state
 
+import com.abdullin.kthelper.algorithm.DominatorTree
+import com.abdullin.kthelper.algorithm.DominatorTreeBuilder
+import com.abdullin.kthelper.algorithm.GraphTraversal
+import com.abdullin.kthelper.collection.queueOf
 import org.jetbrains.research.kex.state.PredicateState
 import org.jetbrains.research.kex.state.emptyState
 import org.jetbrains.research.kfg.ir.BasicBlock
@@ -7,10 +11,6 @@ import org.jetbrains.research.kfg.ir.Method
 import org.jetbrains.research.kfg.ir.value.instruction.Instruction
 import org.jetbrains.research.kfg.ir.value.instruction.PhiInst
 import org.jetbrains.research.kfg.ir.value.instruction.ReturnInst
-import org.jetbrains.research.kfg.util.DominatorTree
-import org.jetbrains.research.kfg.util.DominatorTreeBuilder
-import org.jetbrains.research.kfg.util.GraphTraversal
-import java.util.*
 
 class InvalidPredicateStateError(msg: String) : Exception(msg)
 
@@ -28,7 +28,7 @@ class PredicateStateBuilder(val method: Method) {
             val order = GraphTraversal(method).topologicalSort()
 
             domTree.putAll(DominatorTreeBuilder(method).build())
-            this.order.addAll(order.reversed())
+            this.order.addAll(order)
         }
     }
 
@@ -44,18 +44,17 @@ class PredicateStateBuilder(val method: Method) {
 
         val active = hashSetOf<BasicBlock>()
 
-        val queue = ArrayDeque<BasicBlock>()
-        queue.push(inst.parent!!)
+        val queue = queueOf<BasicBlock>()
+        queue.add(inst.parent)
 
         while (queue.isNotEmpty()) {
-            val current = queue.first
+            val current = queue.poll()
             if (current !in active) {
                 active.add(current)
                 for (predecessor in current.predecessors) {
-                    if (!instructionStates.containsKey(predecessor.terminator)) queue.addLast(predecessor)
+                    if (!instructionStates.containsKey(predecessor.terminator)) queue.add(predecessor)
                 }
             }
-            queue.pop()
         }
         order.filter { it in active }.forEach {
             processBasicBlock(it)

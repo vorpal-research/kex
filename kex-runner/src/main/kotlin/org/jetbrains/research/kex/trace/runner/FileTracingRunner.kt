@@ -1,5 +1,6 @@
 package org.jetbrains.research.kex.trace.runner
 
+import com.abdullin.kthelper.logging.log
 import com.github.h0tk3y.betterParse.grammar.parseToEnd
 import com.github.h0tk3y.betterParse.parser.ParseException
 import org.jetbrains.research.kex.asm.transform.TraceInstrumenter
@@ -7,7 +8,6 @@ import org.jetbrains.research.kex.random.Randomizer
 import org.jetbrains.research.kex.trace.file.ActionParseException
 import org.jetbrains.research.kex.trace.file.ActionParser
 import org.jetbrains.research.kex.trace.file.Trace
-import org.jetbrains.research.kex.util.log
 import org.jetbrains.research.kfg.ir.Method
 
 private fun parse(method: Method, result: InvocationResult): Trace {

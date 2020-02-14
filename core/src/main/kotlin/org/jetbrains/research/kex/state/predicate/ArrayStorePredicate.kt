@@ -1,5 +1,7 @@
 package org.jetbrains.research.kex.state.predicate
 
+import com.abdullin.kthelper.assert.unreachable
+import com.abdullin.kthelper.logging.log
 import kotlinx.serialization.ContextualSerialization
 import kotlinx.serialization.Required
 import kotlinx.serialization.Serializable
@@ -8,8 +10,6 @@ import org.jetbrains.research.kex.ktype.KexArray
 import org.jetbrains.research.kex.ktype.KexType
 import org.jetbrains.research.kex.state.term.Term
 import org.jetbrains.research.kex.state.transformer.Transformer
-import org.jetbrains.research.kex.util.log
-import org.jetbrains.research.kex.util.unreachable
 import org.jetbrains.research.kfg.ir.Location
 
 @InheritorOf("Predicate")

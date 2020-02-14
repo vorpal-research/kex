@@ -1,9 +1,9 @@
 package org.jetbrains.research.kex.trace.runner
 
+import com.abdullin.kthelper.logging.log
 import org.jetbrains.research.kex.random.GenerationException
 import org.jetbrains.research.kex.random.Randomizer
 import org.jetbrains.research.kex.util.isStatic
-import org.jetbrains.research.kex.util.log
 import java.lang.reflect.Constructor
 import java.lang.reflect.Method
 import org.jetbrains.research.kfg.ir.Method as KfgMethod

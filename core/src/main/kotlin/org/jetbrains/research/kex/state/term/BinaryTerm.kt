@@ -1,11 +1,11 @@
 package org.jetbrains.research.kex.state.term
 
+import com.abdullin.kthelper.defaultHashCode
 import kotlinx.serialization.ContextualSerialization
 import kotlinx.serialization.Serializable
 import org.jetbrains.research.kex.InheritorOf
 import org.jetbrains.research.kex.ktype.KexType
 import org.jetbrains.research.kex.state.transformer.Transformer
-import org.jetbrains.research.kex.util.defaultHashCode
 import org.jetbrains.research.kfg.ir.value.instruction.BinaryOpcode
 
 @InheritorOf("Term")

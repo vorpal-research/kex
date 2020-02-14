@@ -1,6 +1,6 @@
 package org.jetbrains.research.kex.generator
 
-import org.jetbrains.research.kex.util.log
+import com.abdullin.kthelper.logging.log
 import org.jetbrains.research.kfg.ir.Class
 import org.jetbrains.research.kfg.ir.Field
 import org.jetbrains.research.kfg.ir.Method
@@ -18,7 +18,7 @@ data class DefaultConstructorCall(val klass: Class) : ApiCall {
 
 data class ConstructorCall(val klass: Class, val constructor: Method, val args: List<CallStack>) : ApiCall {
     init {
-        require(constructor.isConstructor) { log.error("Trying to create constructor call for non-constructor method") }
+        assert(constructor.isConstructor) { log.error("Trying to create constructor call for non-constructor method") }
     }
 
     override fun toString() = "$constructor(${args.joinToString(", ")})"
@@ -26,7 +26,7 @@ data class ConstructorCall(val klass: Class, val constructor: Method, val args: 
 
 data class MethodCall(val instance: CallStack, val method: Method, val args: List<CallStack>) : ApiCall {
     init {
-        require(!method.isConstructor) { log.error("Trying to create method call for constructor method") }
+        assert(!method.isConstructor) { log.error("Trying to create method call for constructor method") }
     }
 
     override fun toString() = "$method(${args.joinToString(", ")})"

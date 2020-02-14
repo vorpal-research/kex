@@ -325,7 +325,7 @@ class ${solver}Converter(val tf: TypeFactory) : ${solver}SMTConverter() {
         val obj = convert(field.owner, ef, ctx) as? Ptr_
         ?: unreachable { log.error("Non-ptr ref in field load") }
         val name = field.fieldName.name
-        val kfgClass = (tf.getRefType(field.getClass()) as ClassType).`class`
+        val kfgClass = (tf.getRefType(field.klass) as ClassType).`class`
         val offset = ${factory}.getFieldOffset(kfgClass, Class.FieldKey(name, field.type.getKfgType(tf)))
         val baseBound = ctx.readBound(obj, memspace)
 

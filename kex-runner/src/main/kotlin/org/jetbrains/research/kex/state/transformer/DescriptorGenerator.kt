@@ -1,5 +1,7 @@
 package org.jetbrains.research.kex.state.transformer
 
+import com.abdullin.kthelper.assert.unreachable
+import com.abdullin.kthelper.logging.log
 import org.jetbrains.research.kex.ExecutionContext
 import org.jetbrains.research.kex.generator.ConstantDescriptor
 import org.jetbrains.research.kex.generator.Descriptor
@@ -16,7 +18,9 @@ import org.jetbrains.research.kex.state.predicate.InequalityPredicate
 import org.jetbrains.research.kex.state.predicate.Predicate
 import org.jetbrains.research.kex.state.term.ConstIntTerm
 import org.jetbrains.research.kex.state.term.Term
-import org.jetbrains.research.kex.util.*
+import org.jetbrains.research.kex.util.getConstructor
+import org.jetbrains.research.kex.util.getMethod
+import org.jetbrains.research.kex.util.loadClass
 import org.jetbrains.research.kfg.ir.Method
 
 class DescriptorGenerator(override val method: Method,

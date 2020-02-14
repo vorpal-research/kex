@@ -1,9 +1,11 @@
 package org.jetbrains.research.kex.annotations
 
+import com.abdullin.kthelper.`try`
+import com.abdullin.kthelper.assert.assert
+import com.abdullin.kthelper.logging.log
+import com.abdullin.kthelper.recast
 import org.apache.commons.lang.StringEscapeUtils.unescapeJava
 import org.jetbrains.research.kex.config.kexConfig
-import org.jetbrains.research.kex.util.log
-import org.jetbrains.research.kex.util.recast
 import org.reflections.Reflections
 import java.io.File
 import kotlin.reflect.KClass
@@ -20,14 +22,13 @@ object AnnotationManager {
     }
 
     val defaultLoader: AnnotationsLoader = ExternalAnnotationsLoader().apply {
-        try {
+        `try` {
             for (path in kexConfig.getMultipleStringValue("annotations", "path", ";")) {
                 loadFrom(File(path))
             }
             log.debug("Loaded annotated calls $this")
-        } catch (thr: Throwable) {
-            log.error("Annotations not loaded", thr)
-            throw thr
+        }.getOrThrow {
+            log.error("Annotations not loaded")
         }
     }
 
@@ -37,7 +38,7 @@ object AnnotationManager {
             val annotation = type.getAnnotation(AnnotationFunctionality::class.java) ?: continue
             val functionality = annotation.name
             val oldValue = constructors.put(functionality, type.kotlin.primaryConstructor ?: continue)
-            check(oldValue == null) { "Annotation functionality already described for \"$functionality\"" }
+            assert(oldValue == null) { log.error("Annotation functionality already described for \"$functionality\"") }
         }
     }
 
@@ -79,11 +80,12 @@ object AnnotationManager {
         return null
     }
 
-    private inline fun <reified T: Number> getSpecialConstantTyped(value: String): T? {
-        val result = getSpecialConstant(value)
-        return if (result == null) null else (if (result is Number) result else
-            throw IllegalStateException("Constant type is not java.lang.Number")).recast<T>()
-    }
+    private inline fun <reified T: Number> getSpecialConstantTyped(value: String): T? =
+            when (val result = getSpecialConstant(value)) {
+                null -> null
+                is Number -> result.recast()
+                else -> throw IllegalStateException("Constant type is not java.lang.Number")
+            }
 
     private fun clearStr(str: String) = str.replace("_", "")
 

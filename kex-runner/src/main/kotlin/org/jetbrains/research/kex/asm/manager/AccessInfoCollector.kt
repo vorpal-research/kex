@@ -1,6 +1,6 @@
 package org.jetbrains.research.kex.asm.manager
 
-import org.jetbrains.research.kex.util.log
+import com.abdullin.kthelper.logging.log
 import org.jetbrains.research.kfg.ClassManager
 import org.jetbrains.research.kfg.ir.Field
 import org.jetbrains.research.kfg.ir.Method

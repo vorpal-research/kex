@@ -1,13 +1,12 @@
 package org.jetbrains.research.kex.state.predicate
 
+import com.abdullin.kthelper.assert.asserted
 import kotlinx.serialization.ContextualSerialization
 import kotlinx.serialization.Required
 import kotlinx.serialization.Serializable
 import org.jetbrains.research.kex.InheritorOf
 import org.jetbrains.research.kex.state.term.Term
 import org.jetbrains.research.kex.state.transformer.Transformer
-import org.jetbrains.research.kex.util.log
-import org.jetbrains.research.kex.util.unreachable
 import org.jetbrains.research.kfg.ir.Location
 
 @InheritorOf("Predicate")
@@ -24,7 +23,7 @@ class CallPredicate(
             : this(null, callTerm, type, location)
 
     val lhv: Term
-        get() = if (hasLhv) operands[0] else unreachable { log.error("Trying to get lhv of void call") }
+        get() = asserted(hasLhv) { operands[0] }
 
     val call: Term
         get() = if (hasLhv) operands[1] else operands[0]

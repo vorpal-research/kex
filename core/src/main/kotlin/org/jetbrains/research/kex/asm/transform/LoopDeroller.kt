@@ -1,9 +1,10 @@
 package org.jetbrains.research.kex.asm.transform
 
+import com.abdullin.kthelper.algorithm.GraphTraversal
+import com.abdullin.kthelper.assert.unreachable
+import com.abdullin.kthelper.logging.log
+import com.abdullin.kthelper.toInt
 import org.jetbrains.research.kex.config.kexConfig
-import org.jetbrains.research.kex.util.log
-import org.jetbrains.research.kex.util.toInt
-import org.jetbrains.research.kex.util.unreachable
 import org.jetbrains.research.kfg.ClassManager
 import org.jetbrains.research.kfg.analysis.Loop
 import org.jetbrains.research.kfg.analysis.LoopVisitor
@@ -15,13 +16,12 @@ import org.jetbrains.research.kfg.ir.value.BlockUser
 import org.jetbrains.research.kfg.ir.value.IntConstant
 import org.jetbrains.research.kfg.ir.value.Value
 import org.jetbrains.research.kfg.ir.value.instruction.*
-import org.jetbrains.research.kfg.util.GraphTraversal
 import kotlin.math.abs
 
 private val derollCount = kexConfig.getIntValue("loop", "deroll-count", 3)
 
 val BasicBlock.originalBlock: BasicBlock
-    get() = LoopDeroller.blockMapping[this.parent!!]?.get(this) ?: this
+    get() = LoopDeroller.blockMapping[this.parent]?.get(this) ?: this
 
 class LoopDeroller(override val cm: ClassManager) : LoopVisitor {
 
@@ -111,7 +111,9 @@ class LoopDeroller(override val cm: ClassManager) : LoopVisitor {
             for (block in blockOrder) {
                 val copy = copyBlock(block)
                 state[block] = copy
-                loop.parent?.addBlock(copy)
+                if (loop.hasParent) {
+                    loop.parent.addBlock(copy)
+                }
                 methodBlockMapping[copy] = block
             }
 
@@ -230,11 +232,11 @@ class LoopDeroller(override val cm: ClassManager) : LoopVisitor {
         val latch = loop.latch
         val header = loop.header
         latch.removeSuccessor(header)
-        loop.body.mapNotNull { it as? CatchBlock }.forEach { cb -> cb.getAllPredecessors().forEach { it.addSuccessor(cb) } }
+        loop.body.mapNotNull { it as? CatchBlock }.forEach { cb -> cb.allPredecessors.forEach { it.addSuccessor(cb) } }
         val order = GraphTraversal(loop).topologicalSort()
-        loop.body.mapNotNull { it as? CatchBlock }.forEach { cb -> cb.getAllPredecessors().forEach { it.removeSuccessor(cb) } }
+        loop.body.mapNotNull { it as? CatchBlock }.forEach { cb -> cb.allPredecessors.forEach { it.removeSuccessor(cb) } }
         latch.addSuccessor(header)
-        return order.map { it.block }.reversed()
+        return order.map { it.block }
     }
 
     private fun copyBlock(block: BasicBlock) = when (block) {
@@ -277,8 +279,7 @@ class LoopDeroller(override val cm: ClassManager) : LoopVisitor {
     private fun copyBlockInstructions(state: State, original: BasicBlock) {
         val newBlock = state[original]
         for (inst in original) {
-            val updated = inst.update(state.instMappings)
-            updated.location = inst.location
+            val updated = inst.update(state.instMappings, inst.location)
             state[inst] = updated
             newBlock += updated
 
@@ -303,10 +304,10 @@ class LoopDeroller(override val cm: ClassManager) : LoopVisitor {
     private fun remapBlockPhis(state: State, phiMappings: List<Pair<Instruction, Instruction>>) {
         for ((orig, new) in phiMappings) {
             if (new is PhiInst) {
-                val bb = new.parent!!
+                val bb = new.parent
                 val incomings = new.incomings.filter { it.key in bb.predecessors }
-                val phiValue = when {
-                    incomings.size == 1 -> {
+                val phiValue = when (incomings.size) {
+                    1 -> {
                         bb -= new
                         incomings.values.first()
                     }
@@ -324,10 +325,9 @@ class LoopDeroller(override val cm: ClassManager) : LoopVisitor {
 
     private fun remapMethodPhis(phis: List<PhiInst>, newMappings: Map<PhiInst, Map<BasicBlock, Value>>) {
         for (phi in phis) {
-            val newPhi = instructions.getPhi(phi.type, newMappings.getValue(phi))
-            newPhi.location = phi.location
+            val newPhi = instructions.getPhi(phi.type, newMappings.getValue(phi)).update(loc = phi.location)
 
-            val bb = phi.parent!!
+            val bb = phi.parent
             bb.insertBefore(phi, newPhi)
             phi.replaceAllUsesWith(newPhi)
             bb -= phi

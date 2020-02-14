@@ -26,7 +26,7 @@ class CastInfoAdapter(val tf: TypeFactory) : RecollectingTransformer<CastInfoAda
 
                 for ((type, condition) in instanceOfMap) {
                     val kfgClass = type.getKfgClass(tf)
-                    if (!(kfgClass.isAncestor(checkedKfgClass) || checkedKfgClass.isAncestor(kfgClass))) {
+                    if (!(kfgClass.isAncestorOf(checkedKfgClass) || checkedKfgClass.isAncestorOf(kfgClass))) {
                         currentBuilder += assume { (predicate.lhv implies !condition) equality true }
                     }
                 }
@@ -41,7 +41,7 @@ class CastInfoAdapter(val tf: TypeFactory) : RecollectingTransformer<CastInfoAda
 
                     for ((type, condition) in instanceOfMap) {
                         val kfgClass = type.getKfgClass(tf)
-                        if (!(kfgClass.isAncestor(newKfgClass) || newKfgClass.isAncestor(kfgClass))) {
+                        if (!(kfgClass.isAncestorOf(newKfgClass) || newKfgClass.isAncestorOf(kfgClass))) {
                             currentBuilder += assume { condition equality false }
                         }
                     }

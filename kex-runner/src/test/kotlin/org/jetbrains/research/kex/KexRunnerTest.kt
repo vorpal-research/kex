@@ -1,5 +1,6 @@
 package org.jetbrains.research.kex
 
+import com.abdullin.kthelper.logging.log
 import org.jetbrains.research.kex.asm.analysis.MethodChecker
 import org.jetbrains.research.kex.asm.state.PredicateStateAnalysis
 import org.jetbrains.research.kex.asm.transform.LoopDeroller
@@ -14,7 +15,6 @@ import org.jetbrains.research.kex.state.term.isConst
 import org.jetbrains.research.kex.state.term.term
 import org.jetbrains.research.kex.test.Intrinsics
 import org.jetbrains.research.kex.trace.`object`.ObjectTraceManager
-import org.jetbrains.research.kex.util.log
 import org.jetbrains.research.kfg.ClassManager
 import org.jetbrains.research.kfg.KfgConfig
 import org.jetbrains.research.kfg.Package

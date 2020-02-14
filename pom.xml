@@ -12,7 +12,6 @@
     <modules>
         <module>core</module>
         <module>kex-annotation-processor</module>
-        <module>kex-util</module>
         <module>kex-test</module>
         <module>kex-runner</module>
     </modules>
@@ -27,7 +26,8 @@
         <kotlin.version>1.3.50</kotlin.version>
         <compiler-plugin.version>3.5.1</compiler-plugin.version>
 
-        <kfg.version>0.0.6-4</kfg.version>
+        <kt-helper.version>0.0.5</kt-helper.version>
+        <kfg.version>0.0.7-2</kfg.version>
     </properties>
 
     <repositories>
@@ -49,6 +49,10 @@
             <url>https://kotlin.bintray.com/kotlinx</url>
         </repository>
 
+        <repository>
+            <id>bintray-abdullin-maven</id>
+            <url>https://dl.bintray.com/abdullin/maven</url>
+        </repository>
         <repository>
             <id>bintray-vorpal-research-kotlin-maven</id>
             <url>https://dl.bintray.com/vorpal-research/kotlin-maven</url>

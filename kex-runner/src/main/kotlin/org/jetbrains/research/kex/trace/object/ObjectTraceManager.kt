@@ -1,9 +1,9 @@
 package org.jetbrains.research.kex.trace.`object`
 
-import org.jetbrains.research.kex.collections.stackOf
+import com.abdullin.kthelper.assert.unreachable
+import com.abdullin.kthelper.collection.stackOf
+import com.abdullin.kthelper.logging.log
 import org.jetbrains.research.kex.trace.TraceManager
-import org.jetbrains.research.kex.util.log
-import org.jetbrains.research.kex.util.unreachable
 import org.jetbrains.research.kfg.ir.BasicBlock
 import org.jetbrains.research.kfg.ir.Method
 
@@ -39,7 +39,7 @@ class ObjectTraceManager : TraceManager<Trace> {
                 }
             }
         }
-        require(methodStack.size == traceStack.size) {
+        assert(methodStack.size == traceStack.size) {
             log.error("Unexpected trace: number of method does not correspond to number of trace actions")
         }
         while (methodStack.isNotEmpty()) {

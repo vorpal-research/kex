@@ -1,14 +1,14 @@
 package org.jetbrains.research.kex.state
 
+import com.abdullin.kthelper.assert.fail
+import com.abdullin.kthelper.assert.unreachable
+import com.abdullin.kthelper.logging.log
 import kotlinx.serialization.Serializable
 import org.jetbrains.research.kex.BaseType
 import org.jetbrains.research.kex.InheritanceInfo
 import org.jetbrains.research.kex.state.predicate.Predicate
 import org.jetbrains.research.kex.state.predicate.PredicateBuilder
 import org.jetbrains.research.kex.state.predicate.PredicateType
-import org.jetbrains.research.kex.util.fail
-import org.jetbrains.research.kex.util.log
-import org.jetbrains.research.kex.util.unreachable
 import org.jetbrains.research.kfg.ir.Location
 
 interface TypeInfo {

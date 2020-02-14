@@ -1,10 +1,10 @@
 package org.jetbrains.research.kex.smt
 
+import com.abdullin.kthelper.assert.fail
+import com.abdullin.kthelper.assert.unreachable
+import com.abdullin.kthelper.logging.log
 import org.jetbrains.research.kex.InheritanceInfo
 import org.jetbrains.research.kex.config.kexConfig
-import org.jetbrains.research.kex.util.fail
-import org.jetbrains.research.kex.util.log
-import org.jetbrains.research.kex.util.unreachable
 import org.jetbrains.research.kfg.type.TypeFactory
 
 private val engine = kexConfig.getStringValue("smt", "engine")

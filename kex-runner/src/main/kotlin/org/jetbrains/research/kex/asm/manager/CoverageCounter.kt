@@ -1,8 +1,8 @@
 package org.jetbrains.research.kex.asm.manager
 
+import com.abdullin.kthelper.logging.log
 import org.jetbrains.research.kex.asm.transform.originalBlock
 import org.jetbrains.research.kex.trace.TraceManager
-import org.jetbrains.research.kex.util.log
 import org.jetbrains.research.kfg.ClassManager
 import org.jetbrains.research.kfg.ir.Class
 import org.jetbrains.research.kfg.ir.Method

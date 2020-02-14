@@ -1,5 +1,7 @@
 package org.jetbrains.research.kex.random.easyrandom
 
+import com.abdullin.kthelper.logging.log
+import com.abdullin.kthelper.tryOrNull
 import org.jeasy.random.EasyRandom
 import org.jeasy.random.EasyRandomParameters
 import org.jeasy.random.ObjectCreationException
@@ -12,8 +14,6 @@ import org.jetbrains.research.kex.config.kexConfig
 import org.jetbrains.research.kex.random.GenerationException
 import org.jetbrains.research.kex.random.Randomizer
 import org.jetbrains.research.kex.random.UnknownTypeException
-import org.jetbrains.research.kex.util.log
-import org.jetbrains.research.kex.util.tryOrNull
 import org.jetbrains.research.kfg.Package
 import org.objenesis.ObjenesisStd
 import java.lang.reflect.ParameterizedType
@@ -145,7 +145,7 @@ class EasyRandomDriver(val config: BeansConfig = defaultConfig) : Randomizer {
 
     private fun generateTypeVariable(type: TypeVariable<*>): Any? {
         val bounds = type.bounds
-        require(bounds.size == 1) { log.debug("Unexpected size of type variable bounds: ${bounds.map { it.typeName }}") }
+        assert(bounds.size == 1) { log.debug("Unexpected size of type variable bounds: ${bounds.map { it.typeName }}") }
         return next(bounds.first())
     }
 
@@ -154,7 +154,7 @@ class EasyRandomDriver(val config: BeansConfig = defaultConfig) : Randomizer {
         is ParameterizedType -> generateParameterized(type)
         is TypeVariable<*> -> generateTypeVariable(type)
         is WildcardType -> {
-            require(type.upperBounds.size == 1) { log.debug("Unexpected size of wildcard type upper bounds: $type") }
+            assert(type.upperBounds.size == 1) { log.debug("Unexpected size of wildcard type upper bounds: $type") }
             generateType(type.upperBounds.first())
         }
         else -> throw UnknownTypeException(type.toString())

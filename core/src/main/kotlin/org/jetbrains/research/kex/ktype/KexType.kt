@@ -1,12 +1,12 @@
 package org.jetbrains.research.kex.ktype
 
+import com.abdullin.kthelper.assert.unreachable
+import com.abdullin.kthelper.defaultHashCode
+import com.abdullin.kthelper.logging.log
 import kotlinx.serialization.Serializable
 import org.jetbrains.research.kex.BaseType
 import org.jetbrains.research.kex.InheritanceInfo
 import org.jetbrains.research.kex.InheritorOf
-import org.jetbrains.research.kex.util.defaultHashCode
-import org.jetbrains.research.kex.util.log
-import org.jetbrains.research.kex.util.unreachable
 import org.jetbrains.research.kfg.type.*
 import kotlin.reflect.KClass
 import org.jetbrains.research.kfg.ir.Class as KfgClass
@@ -27,7 +27,7 @@ fun mergeTypes(tf: TypeFactory, types: Collection<KexType>): KexType {
             val classes = uniqueTypes.map { it as KexClass }.map { tf.getRefType(it.`class`) as ClassType }
             for (i in 0..classes.lastIndex) {
                 val isAncestor = classes.fold(true) { acc, `class` ->
-                    acc && classes[i].`class`.isAncestor(`class`.`class`)
+                    acc && classes[i].`class`.isAncestorOf(`class`.`class`)
                 }
 
                 if (isAncestor) {
