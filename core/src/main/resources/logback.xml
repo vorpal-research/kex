@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 
 <configuration>
+
     <appender name="stdout" class="ch.qos.logback.core.ConsoleAppender">
         <encoder>
             <pattern>[%-5p] - %m%n</pattern>
@@ -25,6 +26,8 @@
         <appender-ref ref="asyncFileLogger"/>
         <appender-ref ref="asyncStdout"/>
     </logger>
+
+    <logger name="ch.qos.logback" level="OFF"/>
 
     <root level="ALL">
         <appender-ref ref="asyncStdout"/>
