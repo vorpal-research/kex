@@ -78,8 +78,8 @@ class ObjectReanimator(override val method: Method,
     }
 
     override fun reanimateFromAssignment(term: Term) = model.assignments[term]
-    override fun reanimateFromMemory(memspace: Int, addr: Term?) = model.memories[memspace]?.finalMemory!![addr]
-    override fun reanimateFromBounds(memspace: Int, addr: Term?) = model.bounds[memspace]?.finalMemory!![addr]
+    override fun reanimateFromMemory(memspace: Int, addr: Term?) = model.memories[memspace]?.finalMemory?.get(addr)
+    override fun reanimateFromBounds(memspace: Int, addr: Term?) = model.bounds[memspace]?.finalMemory?.get(addr)
 
     private fun reanimatePrimary(type: KexType, jType: Type, value: Term?): Any? {
         if (value == null) return randomizer.next(jType)
