@@ -14,6 +14,7 @@ import java.lang.reflect.Array
 import java.net.URLClassLoader
 import java.util.*
 import org.jetbrains.research.kfg.ir.Class as KfgClass
+import org.jetbrains.research.kfg.ir.Field as KfgField
 import java.lang.reflect.Method as JMethod
 
 val Class<*>.isAbstract get() = (this.modifiers and Modifier.ABSTRACT) == Modifier.ABSTRACT
@@ -84,6 +85,11 @@ fun Class<*>.getActualField(name: String): Field {
         }
     }
     throw NoSuchFieldException()
+}
+
+infix fun Field.eq(field: KfgField): Boolean {
+    val cl = this.declaringClass.classLoader
+    return this.name == field.name && this.type == cl.loadClass(field.type)
 }
 
 fun findSubtypesOf(loader: ClassLoader, vararg classes: Class<*>): Set<Class<*>> {

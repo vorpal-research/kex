@@ -12,13 +12,13 @@ public class JavaTest {
             this.z = z;
         }
 
-//        final void setY(int y) {
-//            this.y = y;
-//        }
-//
-//        final void setZ(int z) {
-//            this.z = z;
-//        }
+        final void setY(int y) {
+            this.y = y;
+        }
+
+        final void setZ(int z) {
+            this.z = z;
+        }
 
         @Override
         public String toString() {
@@ -41,11 +41,11 @@ public class JavaTest {
         }
     }
 
-//    public void checkPoint(Point p1) {
-//        if (p1.x == 3 && p1.y == -1 && p1.z == 42) {
-//            System.out.println("Success");
-//        }
-//    }
+    public void checkPoint(Point p1) {
+        if (p1.x == 3 && p1.y == -1 && p1.z == 42) {
+            System.out.println("Success");
+        }
+    }
 
     public void checkLine(Line l1) {
         if (l1.start != null && l1.start.x == 1) {

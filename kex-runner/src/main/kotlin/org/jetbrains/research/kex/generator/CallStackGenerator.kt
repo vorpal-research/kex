@@ -126,7 +126,7 @@ class CallStackGenerator(val context: ExecutionContext, val psa: PredicateStateA
         val instantiableDescriptor = tryOrNull { descriptor.instantiableDescriptor } ?: return null
         val klass = instantiableDescriptor.klass
 
-        val queue = queueOf(instantiableDescriptor.reduced to CallStack())
+        val queue = queueOf(generateSetters(instantiableDescriptor.reduced))
         while (queue.isNotEmpty()) {
             val (desc, stack) = queue.poll()
             if (stack.stack.size > maxStackSize) continue
@@ -155,6 +155,30 @@ class CallStackGenerator(val context: ExecutionContext, val psa: PredicateStateA
             }
         }
         return null
+    }
+
+    private fun generateSetters(descriptor: ObjectDescriptor): Pair<ObjectDescriptor, CallStack> {
+        log.info("Generating setters for $descriptor")
+        var desc = descriptor
+        val targetFields = desc.fields.toList()
+        var callStack = CallStack()
+        for ((name, fd) in targetFields) {
+            val field = desc.klass.getField(name, fd.type)
+            if (field.hasSetter) {
+                log.info("Using setter for $field")
+                val newDesc = ObjectDescriptor(desc.klass)
+                newDesc[name] = fd.copy(owner = newDesc)
+
+                val (result, args) = field.setter.executeAsMethod(newDesc) ?: continue
+                if (result != null && result != desc) {
+                    callStack += MethodCall(callStack, field.setter, args.map { generate(it) })
+                    val newFields = desc.fields.filter { it.key != name }.toMutableMap()
+                    desc = desc.copy(fieldsInner = newFields)
+                    log.info("Used setter for field $field, new desc: $desc")
+                }
+            }
+        }
+        return desc to callStack
     }
 
     private val Class.accessibleConstructors get() = constructors.filter { visibilityLevel <= it.visibility }
@@ -212,9 +236,7 @@ class CallStackGenerator(val context: ExecutionContext, val psa: PredicateStateA
 
     private fun Method.getPreState(descriptor: ObjectDescriptor): PredicateState? {
         val mapper = descriptor.mapper
-        val state = mapper.apply(psa.builder(this).methodState ?: return null)
-        val methodState = prepareState(this, state)
-        val fieldAccessList = collectFieldAccesses(context, methodState)
+        val fieldAccessList = this.fieldAccesses
         val intersection = descriptor.fields.values.filter {
             fieldAccessList.find { field -> it.name == field.name && it.klass == field.`class` } != null
         }
