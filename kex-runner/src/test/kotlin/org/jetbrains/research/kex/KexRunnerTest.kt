@@ -16,8 +16,8 @@ import org.jetbrains.research.kex.state.term.term
 import org.jetbrains.research.kex.test.Intrinsics
 import org.jetbrains.research.kex.trace.`object`.ObjectTraceManager
 import org.jetbrains.research.kfg.ClassManager
+import org.jetbrains.research.kfg.Jar
 import org.jetbrains.research.kfg.KfgConfig
-import org.jetbrains.research.kfg.Package
 import org.jetbrains.research.kfg.analysis.LoopSimplifier
 import org.jetbrains.research.kfg.ir.Class
 import org.jetbrains.research.kfg.ir.Method
@@ -26,12 +26,9 @@ import org.jetbrains.research.kfg.ir.value.instruction.ArrayStoreInst
 import org.jetbrains.research.kfg.ir.value.instruction.CallInst
 import org.jetbrains.research.kfg.ir.value.instruction.Instruction
 import org.jetbrains.research.kfg.util.Flags
-import org.jetbrains.research.kfg.util.classLoader
-import org.jetbrains.research.kfg.util.unpack
 import org.jetbrains.research.kfg.visitor.executePipeline
 import java.net.URLClassLoader
 import java.nio.file.Files
-import java.util.jar.JarFile
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
@@ -43,10 +40,10 @@ abstract class KexRunnerTest : KexTest() {
     val originalContext: ExecutionContext
 
     init {
-        val jar = JarFile(jarPath)
-        val origManager = ClassManager(jar, KfgConfig(`package` = `package`, flags = Flags.readAll, failOnError = false))
+        val jar = Jar(jarPath, `package`)
+        val origManager = ClassManager(KfgConfig(flags = Flags.readAll, failOnError = false))
 
-        jar.unpack(cm, targetDir, Package.defaultPackage, true)
+        jar.unpack(cm, targetDir, true)
         val classLoader = URLClassLoader(arrayOf(targetDir.toUri().toURL()))
         originalContext = ExecutionContext(origManager, jar.classLoader, EasyRandomDriver())
 
@@ -60,7 +57,7 @@ abstract class KexRunnerTest : KexTest() {
 
     protected fun getReachables(method: Method): List<Instruction> {
         val `class` = Intrinsics::class.qualifiedName!!.replace(".", "/")
-        val intrinsics = cm.getByName(`class`)
+        val intrinsics = cm[`class`]
 
         val types = cm.type
         val methodName = Intrinsics::assertReachable.name
@@ -74,7 +71,7 @@ abstract class KexRunnerTest : KexTest() {
 
     protected fun getUnreachables(method: Method): List<Instruction> {
         val `class` = Intrinsics::class.qualifiedName!!.replace(".", "/")
-        val intrinsics = cm.getByName(`class`)
+        val intrinsics = cm[`class`]
 
         val methodName = Intrinsics::assertUnreachable.name
         val desc = MethodDesc(arrayOf(), cm.type.voidType)

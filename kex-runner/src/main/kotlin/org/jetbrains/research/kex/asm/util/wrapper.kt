@@ -19,7 +19,7 @@ interface Wrapper {
 }
 
 abstract class PrintStreamWrapper(final override val cm: ClassManager) : Wrapper {
-    protected val printStreamClass = cm.getByName("java/io/PrintStream")
+    protected val printStreamClass = cm["java/io/PrintStream"]
     abstract val stream: Value
 
     abstract fun open(): List<Instruction>
@@ -59,7 +59,7 @@ abstract class PrintStreamWrapper(final override val cm: ClassManager) : Wrapper
 }
 
 class StringBuilderWrapper(override val cm: ClassManager, val name: String) : Wrapper {
-    val `class` = cm.getByName("java/lang/StringBuilder")
+    val `class` = cm["java/lang/StringBuilder"]
     private val stringBuilderType = types.getRefType(`class`)
     private val builder = instructions.getNew(name, stringBuilderType)
     val insns = arrayListOf(builder)
@@ -115,8 +115,8 @@ abstract class SystemOutputWrapper(cm: ClassManager, name: String, streamType: S
     final override val instructions: InstructionFactory
         get() = super.instructions
 
-    private val printStream = cm.getByName("java/io/PrintStream")
-    val `class` = cm.getByName("java/lang/System")
+    private val printStream = cm["java/io/PrintStream"]
+    val `class` = cm["java/lang/System"]
     val field = `class`.getField(streamType.name, types.getRefType(printStream))
     override val stream = instructions.getFieldLoad(name, field)
 
@@ -129,8 +129,8 @@ class SystemErrWrapper(cm: ClassManager, name: String) : SystemOutputWrapper(cm,
 class SystemOutWrapper(cm: ClassManager, name: String) : SystemOutputWrapper(cm, name, SystemStream.Output())
 
 class ReflectionWrapper(override val cm: ClassManager) : Wrapper {
-    private val classClass = cm.getByName("java/lang/Class")
-    private val fieldClass = cm.getByName("java/lang/reflect/Field")
+    private val classClass = cm["java/lang/Class"]
+    private val fieldClass = cm["java/lang/reflect/Field"]
 
     fun getClass(value: Value): Instruction {
         val type = types.objectType as ClassType
@@ -157,7 +157,7 @@ class ReflectionWrapper(override val cm: ClassManager) : Wrapper {
 
 class ValuePrinter(override val cm: ClassManager) : Wrapper {
     private val reflection = ReflectionWrapper(cm)
-    private val system = cm.getByName("java/lang/System")
+    private val system = cm["java/lang/System"]
     val insns = arrayListOf<Instruction>()
 
     private fun getIdentityHashCode(value: Value): Instruction {
@@ -237,8 +237,8 @@ class FileOutputStreamWrapper(cm: ClassManager, streamName: String,
                               val fileName: String,
                               val append: Boolean = false,
                               val autoFlush: Boolean = false) : PrintStreamWrapper(cm) {
-    private val fileClass = cm.getByName("java/io/File")
-    private val fileOutputStreamClass = cm.getByName("java/io/FileOutputStream")
+    private val fileClass = cm["java/io/File"]
+    private val fileOutputStreamClass = cm["java/io/FileOutputStream"]
     override val stream = instructions.getNew(streamName, types.getRefType(printStreamClass))
 
     override fun open(): List<Instruction> = buildList {

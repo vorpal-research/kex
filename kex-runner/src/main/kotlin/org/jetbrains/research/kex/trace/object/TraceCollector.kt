@@ -16,7 +16,7 @@ abstract class TraceCollector(val cm: ClassManager) {
     protected fun String.toType() = parseDesc(cm.type, this)
 
     protected fun parseMethod(className: String, methodName: String, args: Array<String>, retType: String): Method {
-        val klass = cm.getByName(className)
+        val klass = cm[className]
         return klass.getMethod(methodName, MethodDesc(args.map { it.toType() }.toTypedArray(), retType.toType()))
     }
 
@@ -75,7 +75,7 @@ abstract class TraceCollector(val cm: ClassManager) {
     }
 
     open fun staticEntry(className: String) {
-        val klass = cm.getByName(className)
+        val klass = cm[className]
         val method = klass.methods.first { it.isStaticInitializer }
         addAction(StaticInitEntry(method))
         stack.push(method)

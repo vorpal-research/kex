@@ -6,13 +6,13 @@ class ObjectTest : KexRunnerTest() {
 
     @Test
     fun testBasicReachability() {
-        val `class` = cm.getByName("$packageName/ObjectTests")
+        val `class` = cm["$packageName/ObjectTests"]
         testClassReachability(`class`)
     }
 
     @Test
     fun testJavaBasicReachability() {
-        val `class` = cm.getByName("$packageName/ObjectJavaTests")
+        val `class` = cm["$packageName/ObjectJavaTests"]
         testClassReachability(`class`)
     }
 

@@ -119,7 +119,7 @@ class ActionParser(val cm: ClassManager) : Grammar<Action>() {
             -openBracket and args and -closeBracket and
             -colonAndSpace and
             typeName) use {
-        val `class` = cm.getByName(t1.dropLast(1).fold("") { acc, curr -> "$acc/$curr" }.drop(1))
+        val `class` = cm[t1.dropLast(1).fold("") { acc, curr -> "$acc/$curr" }.drop(1)]
         val methodName = t1.takeLast(1).firstOrNull() ?: throw UnknownNameException(t1.toString())
         val args = t2.toTypedArray()
         val rettype = t3

@@ -152,7 +152,7 @@ class ObjectReanimator(override val method: Method,
                         val objectAddr = (reanimateFromAssignment(objectRef) as ConstIntTerm).value
                         val type = objectRef.type as KexClass
 
-                        val kfgClass = method.cm.getByName(type.`class`)
+                        val kfgClass = method.cm[type.`class`]
                         val `class` = tryOrNull { loader.loadClass(kfgClass.canonicalDesc) } ?: return null
                         val instance = memory(objectRef.memspace, objectAddr) ?: return null
                         instance to `class`
@@ -284,7 +284,7 @@ abstract class DescriptorReanimator(override val method: Method,
 
     private fun reanimateClass(term: Term, addr: Term?, jType: Type, nullable: Boolean) = descriptor(context) {
         val type = term.type as KexClass
-        val actualType = context.cm.getByName(jType.typeName.replace('.', '/'))
+        val actualType = context.cm[jType.typeName.replace('.', '/')]
 
         when (val address = (addr as? ConstIntTerm)?.value) {
             null, 0 -> default(actualType.kexType, nullable)
@@ -346,7 +346,7 @@ abstract class DescriptorReanimator(override val method: Method,
                         val objectAddr = (reanimateFromAssignment(objectRef) as ConstIntTerm).value
                         val type = objectRef.type as KexClass
 
-                        val kfgClass = method.cm.getByName(type.`class`)
+                        val kfgClass = method.cm[type.`class`]
                         val `class` = tryOrNull { loader.loadClass(kfgClass.canonicalDesc) }
                                 ?: return@descriptor default(term.type, nullable)
 
@@ -401,7 +401,7 @@ abstract class DescriptorReanimator(override val method: Method,
         if (address == 0) return@descriptor default(term.type, nullable)
         when (referencedType) {
             is KexClass -> {
-                val actualType = context.cm.getByName(jType.typeName.replace('.', '/'))
+                val actualType = context.cm[jType.typeName.replace('.', '/')]
                 memory(term.memspace, address) { `object`(actualType) }
             }
             is KexArray -> {

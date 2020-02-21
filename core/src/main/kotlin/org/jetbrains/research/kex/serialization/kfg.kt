@@ -153,10 +153,7 @@ internal object ClassSerializer : KSerializer<Class> {
         encoder.encodeString(obj.fullname)
     }
 
-    override fun deserialize(decoder: Decoder): Class {
-        val fullname = decoder.decodeString()
-        return cm.getByName(fullname)
-    }
+    override fun deserialize(decoder: Decoder) = cm[decoder.decodeString()]
 }
 
 @Serializer(forClass = Method::class)

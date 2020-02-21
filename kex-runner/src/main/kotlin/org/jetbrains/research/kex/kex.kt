@@ -25,14 +25,13 @@ import org.jetbrains.research.kex.smt.Result
 import org.jetbrains.research.kex.state.transformer.executeModel
 import org.jetbrains.research.kex.trace.`object`.ObjectTraceManager
 import org.jetbrains.research.kfg.ClassManager
+import org.jetbrains.research.kfg.Jar
 import org.jetbrains.research.kfg.KfgConfig
 import org.jetbrains.research.kfg.Package
 import org.jetbrains.research.kfg.analysis.LoopSimplifier
 import org.jetbrains.research.kfg.ir.Class
 import org.jetbrains.research.kfg.ir.Method
 import org.jetbrains.research.kfg.util.Flags
-import org.jetbrains.research.kfg.util.classLoader
-import org.jetbrains.research.kfg.util.unpack
 import org.jetbrains.research.kfg.visitor.Pipeline
 import org.jetbrains.research.kfg.visitor.executePipeline
 import java.io.File
@@ -40,7 +39,6 @@ import java.net.URLClassLoader
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
-import java.util.jar.JarFile
 import kotlin.system.exitProcess
 
 class Kex(args: Array<String>) {
@@ -51,7 +49,7 @@ class Kex(args: Array<String>) {
     val classPath = System.getProperty("java.class.path")
     val mode = Mode.bmc
 
-    val jar: JarFile
+    val jar: Jar
     val outputDir: Path
 
     val classManager: ClassManager
@@ -75,35 +73,39 @@ class Kex(args: Array<String>) {
         val targetName = cmd.getCmdValue("target")
         require(jarName != null, cmd::printHelp)
 
-        jar = JarFile(Paths.get(jarName).toAbsolutePath().toFile())
+        val jarPath = Paths.get(jarName).toAbsolutePath()
 
         when {
             targetName == null -> {
                 `package` = Package.defaultPackage
-                classManager = ClassManager(jar, KfgConfig(`package` = `package`, flags = Flags.readAll, failOnError = false))
-                origManager = ClassManager(jar, KfgConfig(`package` = `package`, flags = Flags.readAll, failOnError = false))
+                jar = Jar(jarPath, `package`)
+                classManager = ClassManager(KfgConfig(flags = Flags.readAll, failOnError = false))
+                origManager = ClassManager(KfgConfig(flags = Flags.readAll, failOnError = false))
                 log.debug("Running with jar ${jar.name} and default package $`package`")
             }
             targetName.matches(Regex("[a-zA-Z]+(\\.[a-zA-Z]+)*\\.\\*")) -> {
                 `package` = Package.parse(targetName)
-                classManager = ClassManager(jar, KfgConfig(`package` = `package`, flags = Flags.readAll, failOnError = false))
-                origManager = ClassManager(jar, KfgConfig(`package` = `package`, flags = Flags.readAll, failOnError = false))
+                jar = Jar(jarPath, `package`)
+                classManager = ClassManager(KfgConfig(flags = Flags.readAll, failOnError = false))
+                origManager = ClassManager(KfgConfig(flags = Flags.readAll, failOnError = false))
                 log.debug("Running with jar ${jar.name} and package $`package`")
             }
             targetName.matches(Regex("[a-zA-Z]+(\\.[a-zA-Z]+)*\\.[a-zA-Z\$_]+::[a-zA-Z\$_]+")) -> {
                 val (klassName, methodName) = targetName.split("::")
                 `package` = Package.parse("${klassName.dropLastWhile { it != '.' }}*")
-                classManager = ClassManager(jar, KfgConfig(`package` = `package`, flags = Flags.readAll, failOnError = false))
-                origManager = ClassManager(jar, KfgConfig(`package` = `package`, flags = Flags.readAll, failOnError = false))
-                klass = classManager.getByName(klassName.replace('.', '/'))
+                jar = Jar(jarPath, `package`)
+                classManager = ClassManager(KfgConfig(flags = Flags.readAll, failOnError = false))
+                origManager = ClassManager(KfgConfig(flags = Flags.readAll, failOnError = false))
+                klass = classManager[klassName.replace('.', '/')]
                 methods = klass!!.getMethods(methodName)
                 log.debug("Running with jar ${jar.name} and methods $methods")
             }
             targetName.matches(Regex("[a-zA-Z]+(\\.[a-zA-Z]+)*\\.[a-zA-Z\$_]+")) -> {
                 `package` = Package.parse("${targetName.dropLastWhile { it != '.' }}*")
-                classManager = ClassManager(jar, KfgConfig(`package` = `package`, flags = Flags.readAll, failOnError = false))
-                origManager = ClassManager(jar, KfgConfig(`package` = `package`, flags = Flags.readAll, failOnError = false))
-                klass = classManager.getByName(targetName.replace('.', '/'))
+                jar = Jar(jarPath, `package`)
+                classManager = ClassManager(KfgConfig(flags = Flags.readAll, failOnError = false))
+                origManager = ClassManager(KfgConfig(flags = Flags.readAll, failOnError = false))
+                klass = classManager[targetName.replace('.', '/')]
                 log.debug("Running with jar ${jar.name} and class $klass")
             }
             else -> {
@@ -112,6 +114,8 @@ class Kex(args: Array<String>) {
                 exitProcess(1)
             }
         }
+        classManager.initialize(jar)
+        origManager.initialize(jar)
 
         outputDir = (cmd.getCmdValue("output")?.let { Paths.get(it) }
                 ?: Files.createTempDirectory(Paths.get("."), "kex-instrumented")).toAbsolutePath()
@@ -129,7 +133,7 @@ class Kex(args: Array<String>) {
     @ImplicitReflectionSerializer
     fun main() {
         // write all classes to output directory, so they will be seen by ClassLoader
-        jar.unpack(classManager, outputDir, Package.defaultPackage, true)
+        jar.unpack(classManager, outputDir, true)
         val classLoader = URLClassLoader(arrayOf(outputDir.toUri().toURL()))
 
         val originalContext = ExecutionContext(origManager, jar.classLoader, EasyRandomDriver())

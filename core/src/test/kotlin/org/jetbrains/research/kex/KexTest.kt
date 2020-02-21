@@ -6,14 +6,13 @@ import org.jetbrains.research.kex.config.FileConfig
 import org.jetbrains.research.kex.config.RuntimeConfig
 import org.jetbrains.research.kex.config.kexConfig
 import org.jetbrains.research.kfg.ClassManager
+import org.jetbrains.research.kfg.Jar
 import org.jetbrains.research.kfg.KfgConfig
 import org.jetbrains.research.kfg.Package
 import org.jetbrains.research.kfg.analysis.LoopAnalysis
 import org.jetbrains.research.kfg.analysis.LoopSimplifier
 import org.jetbrains.research.kfg.ir.Method
 import org.jetbrains.research.kfg.util.Flags
-import org.jetbrains.research.kfg.util.classLoader
-import java.util.jar.JarFile
 
 abstract class KexTest {
     val packageName = "org/jetbrains/research/kex/test"
@@ -31,9 +30,10 @@ abstract class KexTest {
         RuntimeConfig.setValue("z3", "paramFile", "$rootDir/z3.params")
 
         jarPath = "$rootDir/kex-test/target/kex-test-$version-jar-with-dependencies.jar"
-        val jarFile = JarFile(jarPath)
-        loader = jarFile.classLoader
-        cm = ClassManager(jarFile, KfgConfig(`package` = `package`, flags = Flags.readAll, failOnError = true))
+        val jar = Jar(jarPath, `package`)
+        loader = jar.classLoader
+        cm = ClassManager(KfgConfig(flags = Flags.readAll, failOnError = true))
+        cm.initialize(jar)
     }
 
     protected fun getPSA(method: Method): PredicateStateAnalysis {

@@ -27,7 +27,7 @@
         <compiler-plugin.version>3.5.1</compiler-plugin.version>
 
         <kt-helper.version>0.0.5</kt-helper.version>
-        <kfg.version>0.0.7-2</kfg.version>
+        <kfg.version>0.0.8</kfg.version>
     </properties>
 
     <repositories>

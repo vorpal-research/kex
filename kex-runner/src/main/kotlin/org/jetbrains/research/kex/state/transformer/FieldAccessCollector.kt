@@ -19,7 +19,7 @@ class FieldAccessCollector(val context: ExecutionContext) : Transformer<FieldAcc
 
     override fun transformFieldStore(predicate: FieldStorePredicate): Predicate {
         val fieldTerm = predicate.field as? FieldTerm ?: unreachable { log.error("Unexpected term in field store") }
-        val klass = context.cm.getByName(fieldTerm.klass)
+        val klass = context.cm[fieldTerm.klass]
         val field = klass.getField(fieldTerm.fieldNameString, fieldTerm.type.getKfgType(context.types))
         if (fieldTerm.isStatic || fieldTerm.owner.isThis) {
             fieldAccesses += field
