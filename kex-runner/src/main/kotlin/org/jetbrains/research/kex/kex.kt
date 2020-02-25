@@ -65,6 +65,12 @@ class Kex(args: Array<String>) {
         debug
     }
 
+    private sealed class AnalysisLevel {
+        class PACKAGE : AnalysisLevel()
+        data class CLASS(val klass: String) : AnalysisLevel()
+        data class METHOD(val klass: String, val method: String) : AnalysisLevel()
+    }
+
     init {
         kexConfig.initialize(cmd, RuntimeConfig, FileConfig(properties))
         kexConfig.initLog(logName)
@@ -75,38 +81,23 @@ class Kex(args: Array<String>) {
 
         val jarPath = Paths.get(jarName).toAbsolutePath()
 
-        when {
+        val analysisLevel = when {
             targetName == null -> {
                 `package` = Package.defaultPackage
-                jar = Jar(jarPath, `package`)
-                classManager = ClassManager(KfgConfig(flags = Flags.readAll, failOnError = false))
-                origManager = ClassManager(KfgConfig(flags = Flags.readAll, failOnError = false))
-                log.debug("Running with jar ${jar.name} and default package $`package`")
+                AnalysisLevel.PACKAGE()
             }
             targetName.matches(Regex("[a-zA-Z]+(\\.[a-zA-Z]+)*\\.\\*")) -> {
                 `package` = Package.parse(targetName)
-                jar = Jar(jarPath, `package`)
-                classManager = ClassManager(KfgConfig(flags = Flags.readAll, failOnError = false))
-                origManager = ClassManager(KfgConfig(flags = Flags.readAll, failOnError = false))
-                log.debug("Running with jar ${jar.name} and package $`package`")
+                AnalysisLevel.PACKAGE()
             }
             targetName.matches(Regex("[a-zA-Z]+(\\.[a-zA-Z]+)*\\.[a-zA-Z\$_]+::[a-zA-Z\$_]+")) -> {
                 val (klassName, methodName) = targetName.split("::")
                 `package` = Package.parse("${klassName.dropLastWhile { it != '.' }}*")
-                jar = Jar(jarPath, `package`)
-                classManager = ClassManager(KfgConfig(flags = Flags.readAll, failOnError = false))
-                origManager = ClassManager(KfgConfig(flags = Flags.readAll, failOnError = false))
-                klass = classManager[klassName.replace('.', '/')]
-                methods = klass!!.getMethods(methodName)
-                log.debug("Running with jar ${jar.name} and methods $methods")
+                AnalysisLevel.METHOD(klassName.replace('.', '/'), methodName)
             }
             targetName.matches(Regex("[a-zA-Z]+(\\.[a-zA-Z]+)*\\.[a-zA-Z\$_]+")) -> {
                 `package` = Package.parse("${targetName.dropLastWhile { it != '.' }}*")
-                jar = Jar(jarPath, `package`)
-                classManager = ClassManager(KfgConfig(flags = Flags.readAll, failOnError = false))
-                origManager = ClassManager(KfgConfig(flags = Flags.readAll, failOnError = false))
-                klass = classManager[targetName.replace('.', '/')]
-                log.debug("Running with jar ${jar.name} and class $klass")
+                AnalysisLevel.CLASS(targetName.replace('.', '/'))
             }
             else -> {
                 log.error("Could not parse target $targetName")
@@ -114,8 +105,32 @@ class Kex(args: Array<String>) {
                 exitProcess(1)
             }
         }
-        classManager.initialize(jar)
-        origManager.initialize(jar)
+        jar = Jar(jarPath, `package`)
+        classManager = ClassManager(KfgConfig(flags = Flags.readAll, failOnError = false))
+        origManager = ClassManager(KfgConfig(flags = Flags.readAll, failOnError = false))
+        val analysisJars = listOfNotNull(
+                jar,
+                kexConfig.getStringValue("kex", "rtPath")?.let {
+                    Jar(Paths.get(it), Package.defaultPackage)
+                }
+        )
+        classManager.initialize(*analysisJars.toTypedArray())
+        origManager.initialize(*analysisJars.toTypedArray())
+
+        when (analysisLevel) {
+            is AnalysisLevel.PACKAGE -> {
+                log.debug("Running with jar ${jar.name} and default package $`package`")
+            }
+            is AnalysisLevel.CLASS -> {
+                klass = classManager[analysisLevel.klass]
+                log.debug("Running with jar ${jar.name} and class $klass")
+            }
+            is AnalysisLevel.METHOD -> {
+                klass = classManager[analysisLevel.klass]
+                methods = klass!!.getMethods(analysisLevel.method)
+                log.debug("Running with jar ${jar.name} and methods $methods")
+            }
+        }
 
         outputDir = (cmd.getCmdValue("output")?.let { Paths.get(it) }
                 ?: Files.createTempDirectory(Paths.get("."), "kex-instrumented")).toAbsolutePath()
