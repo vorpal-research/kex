@@ -11,17 +11,14 @@ import org.jetbrains.research.kex.asm.manager.isImpactable
 import org.jetbrains.research.kex.asm.state.PredicateStateAnalysis
 import org.jetbrains.research.kex.asm.transform.originalBlock
 import org.jetbrains.research.kex.config.kexConfig
-import org.jetbrains.research.kex.generator.*
+import org.jetbrains.research.kex.generator.Generator
 import org.jetbrains.research.kex.random.GenerationException
 import org.jetbrains.research.kex.random.Randomizer
 import org.jetbrains.research.kex.serialization.KexSerializer
 import org.jetbrains.research.kex.smt.Checker
 import org.jetbrains.research.kex.smt.ReanimatedModel
 import org.jetbrains.research.kex.smt.Result
-import org.jetbrains.research.kex.smt.SMTModel
 import org.jetbrains.research.kex.state.PredicateState
-import org.jetbrains.research.kex.state.transformer.generateFinalDescriptors
-import org.jetbrains.research.kex.state.transformer.generateInputByModel
 import org.jetbrains.research.kex.trace.TraceManager
 import org.jetbrains.research.kex.trace.`object`.Trace
 import org.jetbrains.research.kex.trace.runner.ObjectTracingRunner
@@ -35,9 +32,7 @@ import org.jetbrains.research.kfg.visitor.MethodVisitor
 import java.nio.file.Files
 import java.nio.file.Paths
 
-private val visibilityLevel by lazy { kexConfig.getEnumValue("apiGeneration", "visibility", true, Visibility.PUBLIC) }
 private val failDir get() = kexConfig.getStringValue("debug", "dump-directory", "./fail")
-private val apiGeneration get() = kexConfig.getBooleanValue("apiGeneration", "enabled", false)
 
 class KexCheckerException(val inner: Exception, val reason: PredicateState) : Exception()
 class KexRunnerException(val inner: Exception, val model: ReanimatedModel) : Exception()
@@ -57,6 +52,7 @@ class MethodChecker(
     override val cm: ClassManager get() = ctx.cm
     val random: Randomizer get() = ctx.random
     val loader: ClassLoader get() = ctx.loader
+    val generator = Generator(ctx, psa)
 
     @ImplicitReflectionSerializer
     private fun dumpPS(method: Method, message: String, state: PredicateState) {
@@ -141,7 +137,7 @@ class MethodChecker(
         when (result) {
             is Result.SatResult -> {
                 val (instance, args) = try {
-                    generateInput(method, checker.state, result.model)
+                    generator.generate(method, checker.state, result.model)
                 } catch (e: GenerationException) {
                     log.warn(e.message)
                     return result
@@ -166,64 +162,5 @@ class MethodChecker(
         val runner = ObjectTracingRunner(method, loader)
         val trace = runner.collectTrace(instance, args)
         tm[method] = trace
-    }
-
-    private val Class.isInstantiable: Boolean
-        get() = when {
-            this.isAbstract -> false
-            this.isInterface -> false
-            else -> true
-        }
-
-    private val Descriptor.concretized
-        get() = when (this) {
-            is ObjectDescriptor -> this.instantiableDescriptor
-            else -> this
-        }
-
-    private val ObjectDescriptor.instantiableDescriptor: ObjectDescriptor
-        get() {
-            val concretizedClass = when {
-                this.klass.isInstantiable -> this.klass
-                else -> cm.concreteClasses.filter {
-                    klass.isAncestorOf(it) && it.isInstantiable && visibilityLevel <= it.visibility
-                }.random()
-            }
-            val result = ObjectDescriptor(klass = concretizedClass)
-            for ((name, desc) in this.fields) {
-                result[name] = desc.copy(owner = result, value = desc.value.concretized)
-            }
-            return result
-        }
-
-
-    private fun generateInput(method: Method, state: PredicateState, model: SMTModel): Pair<Any?, Array<Any?>> = when {
-        apiGeneration -> {
-            log.debug("Model: $model")
-            try {
-                var descriptors = generateFinalDescriptors(method, ctx, model, state)
-                descriptors = descriptors.first?.concretized to descriptors.second.map { it.concretized }
-                log.debug("Generated descriptors:")
-                log.debug(descriptors)
-                val thisCallStack = descriptors.first?.let { descriptor ->
-                    log.debug("Generating $descriptor")
-                    CallStackGenerator(ctx, psa).generate(descriptor).also {
-                        log.debug("Call stack: $it")
-                    }
-                }
-                val argCallStacks = descriptors.second.map { descriptor ->
-                    log.debug("Generating $descriptor")
-                    CallStackGenerator(ctx, psa).generate(descriptor).also {
-                        log.debug("Call stack: $it")
-                    }
-                }
-                val generator = ObjectGenerator(ctx)
-                thisCallStack?.let { generator.generate(it) } to argCallStacks.map { generator.generate(it) }.toTypedArray()
-            } catch (e: Exception) {
-                log.error("Could not generate input from model")
-                throw GenerationException(e.toString())
-            }
-        }
-        else -> generateInputByModel(ctx, method, state, model)
     }
 }

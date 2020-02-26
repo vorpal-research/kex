@@ -185,22 +185,12 @@ class CallStackGenerator(val context: ExecutionContext, val psa: PredicateStateA
     private val Class.accessibleConstructors get() = constructors.filter { visibilityLevel <= it.visibility }
     private val Class.accessibleMethods get() = methods.filter { visibilityLevel <= it.visibility }
 
-    // todo: check more options of instantiable classes
-    private val Class.isInstantiable: Boolean
-        get() = when {
-            this.isAbstract -> false
-            this.isInterface -> false
-            else -> true
-        }
-
     private fun Method.executeAsConstructor(descriptor: ObjectDescriptor): Pair<ObjectDescriptor?, List<Descriptor>>? {
         if (isEmpty()) return null
         log.debug("Executing constructor $this for $descriptor")
 
         val mapper = descriptor.mapper
-        val typeInfos = collectPlainTypeInfos(context.types, mapper.apply(descriptor.generateTypeInfo()))
-        log.debug("Type info: ${mapper.apply(descriptor.generateTypeInfo())}\n${typeInfos.toList()}")
-        val preState = mapper.apply(descriptor.preState)
+        val preState = mapper.apply(descriptor.generateTypeInfo() + descriptor.preState)
         val state = preState + mapper.apply(methodState ?: return null)
 
         val preStateFieldTerms = collectFieldTerms(context, preState)
@@ -214,11 +204,9 @@ class CallStackGenerator(val context: ExecutionContext, val psa: PredicateStateA
         log.debug("Executing method $this for $descriptor")
 
         val mapper = descriptor.mapper
-        val typeInfos = collectPlainTypeInfos(context.types, mapper.apply(descriptor.generateTypeInfo()))
-        log.debug("Type info: ${mapper.apply(descriptor.generateTypeInfo())}\n${typeInfos.toList()}")
         val preState = getPreState(descriptor) ?: return null
         val preStateFieldTerms = collectFieldTerms(context, preState)
-        val state = mapper.apply(preState + (methodState ?: return null))
+        val state = mapper.apply(descriptor.generateTypeInfo() + preState + (methodState ?: return null))
         val preparedState = prepareState(this, state, preStateFieldTerms)
         val preparedQuery = prepareQuery(mapper.apply(descriptor.toState()))
         return execute(preparedState, preparedQuery)
