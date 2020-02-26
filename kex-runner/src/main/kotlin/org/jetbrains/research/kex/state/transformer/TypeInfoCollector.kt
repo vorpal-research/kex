@@ -52,7 +52,7 @@ class TypeInfoCollector(val model: SMTModel, val tf: TypeFactory) : Transformer<
                         (nullabilityInfo + reducedCastInfo).toSet()
                     }
                     if (reducedTypes.isEmpty()) null
-                    else term to types
+                    else term to reducedTypes
                 }.filterNotNull().toMap()
         )
 
@@ -113,8 +113,73 @@ class TypeInfoCollector(val model: SMTModel, val tf: TypeFactory) : Transformer<
     }
 }
 
+class PlainTypeInfoCollector(val tf: TypeFactory) : Transformer<TypeInfoCollector> {
+    private val typeInfos = mutableMapOf<Term, MutableSet<TypeInfo>>()
+
+    val infos: TypeInfoMap
+        get() = TypeInfoMap(
+                typeInfos.map { (term, types) ->
+                    val reducedTypes = run {
+                        val nullabilityInfo = types.filterIsInstance<NullabilityInfo>()
+                        val castInfo = types.filterIsInstance<CastTypeInfo>()
+                        val reducedCastInfo = mutableSetOf<CastTypeInfo>()
+                        val klasses = castInfo.map { (it.type as KexClass).getKfgClass(tf) }.toSet()
+                        for (klass in klasses) {
+                            if (klasses.any { it != klass && klass.isAncestorOf(it) }) continue
+                            else reducedCastInfo += CastTypeInfo(tf.getRefType(klass).kexType)
+                        }
+                        (nullabilityInfo + reducedCastInfo).toSet()
+                    }
+                    if (reducedTypes.isEmpty()) null
+                    else term to reducedTypes
+                }.filterNotNull().toMap()
+        )
+
+    override fun transformEquality(predicate: EqualityPredicate): Predicate {
+        when (val rhv = predicate.rhv) {
+            is InstanceOfTerm -> {
+                val checkedType = CastTypeInfo(rhv.checkedType)
+                val operand = rhv.operand
+
+                val typeInfo = typeInfos.getOrPut(operand, ::mutableSetOf)
+                typeInfo += checkedType
+            }
+            is CastTerm -> {
+                val newType = CastTypeInfo(rhv.type)
+                val operand = rhv.operand
+
+                // we can't do anything with primary type casts
+                if (newType.type is KexIntegral || newType.type is KexReal) return predicate
+
+                val typeInfo = typeInfos.getOrPut(operand, ::mutableSetOf)
+                typeInfo += newType
+            }
+        }
+        return super.transformEquality(predicate)
+    }
+
+    override fun transformInequality(predicate: InequalityPredicate): Predicate {
+        when (predicate.rhv) {
+            is NullTerm -> {
+                val nullability = NullabilityInfo(Nullability.NON_NULLABLE)
+                val lhv = predicate.lhv
+
+                val typeInfo = typeInfos.getOrPut(lhv, ::mutableSetOf)
+                typeInfo += nullability
+            }
+        }
+        return super.transformInequality(predicate)
+    }
+}
+
 fun collectTypeInfos(model: SMTModel, tf: TypeFactory, ps: PredicateState): TypeInfoMap {
     val tic = TypeInfoCollector(model, tf)
+    tic.apply(ps)
+    return tic.infos
+}
+
+fun collectPlainTypeInfos(tf: TypeFactory, ps: PredicateState): TypeInfoMap {
+    val tic = PlainTypeInfoCollector(tf)
     tic.apply(ps)
     return tic.infos
 }

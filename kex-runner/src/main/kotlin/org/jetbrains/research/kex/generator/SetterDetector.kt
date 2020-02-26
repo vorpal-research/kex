@@ -30,8 +30,6 @@ class SetterDetector(val ctx: ExecutionContext) : ClassVisitor {
     override val cm: ClassManager
         get() = ctx.cm
 
-    lateinit var klass: Class<*>
-
     private val KType.kfgType
         get() = when (val jtype = this.javaType) {
             is Class<*> -> ctx.types.get(jtype)
@@ -55,11 +53,11 @@ class SetterDetector(val ctx: ExecutionContext) : ClassVisitor {
         }
 
         log.debug("$`class` is not from kotlin")
-        klass = ctx.loader.loadClass(`class`)
         super.visit(`class`)
     }
 
     override fun visitMethod(method: Method) {
+        val klass = ctx.loader.loadClass(method.`class`)
         val fieldInstances = klass.declaredFields.filter { method.name == "set${it.name.capitalize()}" }
         if (fieldInstances.isEmpty()) return
         require(fieldInstances.size == 1)

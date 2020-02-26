@@ -15,6 +15,7 @@ import org.jetbrains.research.kfg.type.Type as KfgType
 
 sealed class Descriptor {
     abstract val term: Term
+    abstract val type: KexType
 
     abstract fun toState(ps: PredicateState = emptyState()): PredicateState
 }
@@ -25,43 +26,51 @@ sealed class ConstantDescriptor : Descriptor() {
     }
 
     object Null : ConstantDescriptor() {
+        override val type = KexNull()
         override val term = term { const(null) }
         override fun toString() = "null"
     }
 
     data class Bool(val value: Boolean) : ConstantDescriptor() {
+        override val type = KexBool()
         override val term get() = term { const(value) }
     }
 
     data class Int(val value: kotlin.Int) : ConstantDescriptor() {
+        override val type = KexInt()
         override val term get() = term { const(value) }
     }
 
     data class Long(val value: kotlin.Long) : ConstantDescriptor() {
+        override val type = KexLong()
         override val term get() = term { const(value) }
     }
 
     data class Float(val value: kotlin.Float) : ConstantDescriptor() {
+        override val type = KexFloat()
         override val term get() = term { const(value) }
     }
 
     data class Double(val value: kotlin.Double) : ConstantDescriptor() {
+        override val type = KexDouble()
         override val term get() = term { const(value) }
     }
 
     data class Class(val value: KfgClass) : ConstantDescriptor() {
+        override val type = KexClass(value.fullname)
         override val term get() = term { `class`(value) }
     }
 }
 
 data class FieldDescriptor(
         val name: String,
-        val type: KfgType,
+        val kfgType: KfgType,
         val klass: KfgClass,
         val owner: Descriptor,
         val value: Descriptor
 ) : Descriptor() {
-    override val term = term { owner.term.field(type.kexType, name) }
+    override val type = kfgType.kexType
+    override val term = term { owner.term.field(type, name) }
 
     override fun toState(ps: PredicateState): PredicateState {
         var state = ps
@@ -69,7 +78,7 @@ data class FieldDescriptor(
             state = value.toState(state)
         }
         return state.builder().run {
-            val tempTerm = term { generate(this@FieldDescriptor.type.kexType) }
+            val tempTerm = term { generate(this@FieldDescriptor.type) }
             state { tempTerm equality term.load() }
             require { tempTerm equality value.term }
             apply()
@@ -105,6 +114,7 @@ data class ObjectDescriptor(
         private val fieldsInner: MutableMap<String, FieldDescriptor> = mutableMapOf()
 ) : Descriptor() {
     override val term = term { generate(klass.kexType) }
+    override val type = KexClass(klass.fullname)
     val name = term.name
     val fields get() = fieldsInner.toMap()
 
@@ -150,13 +160,14 @@ data class ObjectDescriptor(
 
 data class ArrayDescriptor(
         val length: Int,
-        val type: KfgType,
+        val kfgType: KfgType,
         private val elementsInner: MutableMap<Int, Descriptor> = mutableMapOf()
 ) : Descriptor() {
-    override val term = term { generate(type.kexType) }
+    val elementType = (kfgType as ArrayType).component
+    override val type = KexArray(elementType.kexType)
+    override val term = term { generate(type) }
     val name = term.name
     val elements get() = elementsInner.toMap()
-    val elementType = (type as ArrayType).component
 
     operator fun set(index: Int, value: Descriptor) {
         elementsInner[index] = value

@@ -11,8 +11,7 @@ import org.jetbrains.research.kex.asm.manager.isImpactable
 import org.jetbrains.research.kex.asm.state.PredicateStateAnalysis
 import org.jetbrains.research.kex.asm.transform.originalBlock
 import org.jetbrains.research.kex.config.kexConfig
-import org.jetbrains.research.kex.generator.CallStackGenerator
-import org.jetbrains.research.kex.generator.ObjectGenerator
+import org.jetbrains.research.kex.generator.*
 import org.jetbrains.research.kex.random.GenerationException
 import org.jetbrains.research.kex.random.Randomizer
 import org.jetbrains.research.kex.serialization.KexSerializer
@@ -36,6 +35,7 @@ import org.jetbrains.research.kfg.visitor.MethodVisitor
 import java.nio.file.Files
 import java.nio.file.Paths
 
+private val visibilityLevel by lazy { kexConfig.getEnumValue("apiGeneration", "visibility", true, Visibility.PUBLIC) }
 private val failDir get() = kexConfig.getStringValue("debug", "dump-directory", "./fail")
 private val apiGeneration get() = kexConfig.getBooleanValue("apiGeneration", "enabled", false)
 
@@ -168,11 +168,41 @@ class MethodChecker(
         tm[method] = trace
     }
 
+    private val Class.isInstantiable: Boolean
+        get() = when {
+            this.isAbstract -> false
+            this.isInterface -> false
+            else -> true
+        }
+
+    private val Descriptor.concretized
+        get() = when (this) {
+            is ObjectDescriptor -> this.instantiableDescriptor
+            else -> this
+        }
+
+    private val ObjectDescriptor.instantiableDescriptor: ObjectDescriptor
+        get() {
+            val concretizedClass = when {
+                this.klass.isInstantiable -> this.klass
+                else -> cm.concreteClasses.filter {
+                    klass.isAncestorOf(it) && it.isInstantiable && visibilityLevel <= it.visibility
+                }.random()
+            }
+            val result = ObjectDescriptor(klass = concretizedClass)
+            for ((name, desc) in this.fields) {
+                result[name] = desc.copy(owner = result, value = desc.value.concretized)
+            }
+            return result
+        }
+
+
     private fun generateInput(method: Method, state: PredicateState, model: SMTModel): Pair<Any?, Array<Any?>> = when {
         apiGeneration -> {
             log.debug("Model: $model")
             try {
-                val descriptors = generateFinalDescriptors(method, ctx, model, state)
+                var descriptors = generateFinalDescriptors(method, ctx, model, state)
+                descriptors = descriptors.first?.concretized to descriptors.second.map { it.concretized }
                 log.debug("Generated descriptors:")
                 log.debug(descriptors)
                 val thisCallStack = descriptors.first?.let { descriptor ->
