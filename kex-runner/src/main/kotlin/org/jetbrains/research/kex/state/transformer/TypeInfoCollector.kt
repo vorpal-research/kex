@@ -30,6 +30,28 @@ class TypeInfoMap(val inner: Map<Term, Set<TypeInfo>> = hashMapOf()) : Map<Term,
     inline fun <reified T : TypeInfo> getInfo(term: Term): T? = inner[term]?.mapNotNull { it as? T }?.also {
         assert(it.size <= 1) { log.warn("A lot of type information ${T::class.qualifiedName} about $term: $it") }
     }?.firstOrNull()
+
+    companion object {
+        fun create(tf: TypeFactory, map: Map<Term, Set<TypeInfo>>): TypeInfoMap {
+            return TypeInfoMap(
+                    map.map { (term, types) ->
+                        val reducedTypes = run {
+                            val nullabilityInfo = types.filterIsInstance<NullabilityInfo>()
+                            val castInfo = types.filterIsInstance<CastTypeInfo>()
+                            val reducedCastInfo = mutableSetOf<CastTypeInfo>()
+                            val klasses = castInfo.map { (it.type as KexClass).getKfgClass(tf) }.toSet()
+                            for (klass in klasses) {
+                                if (klasses.any { it != klass && klass.isAncestorOf(it) }) continue
+                                else reducedCastInfo += CastTypeInfo(tf.getRefType(klass).kexType)
+                            }
+                            (nullabilityInfo + reducedCastInfo).toSet()
+                        }
+                        if (reducedTypes.isEmpty()) null
+                        else term to reducedTypes
+                    }.filterNotNull().toMap()
+            )
+        }
+    }
 }
 
 class TypeInfoCollector(val model: SMTModel, val tf: TypeFactory) : Transformer<TypeInfoCollector> {
@@ -37,23 +59,12 @@ class TypeInfoCollector(val model: SMTModel, val tf: TypeFactory) : Transformer<
     private val cfgt = CFGTracker()
 
     val infos: TypeInfoMap
-        get() = TypeInfoMap(
+        get() = TypeInfoMap.create(
+                tf,
                 typeInfos.map { (term, map) ->
                     val types = map.filter { checkPath(model, it.value) }.keys
-                    val reducedTypes = run {
-                        val nullabilityInfo = types.filterIsInstance<NullabilityInfo>()
-                        val castInfo = types.filterIsInstance<CastTypeInfo>()
-                        val reducedCastInfo = mutableSetOf<CastTypeInfo>()
-                        val klasses = castInfo.map { (it.type as KexClass).getKfgClass(tf) }.toSet()
-                        for (klass in klasses) {
-                            if (klasses.any { it != klass && klass.isAncestorOf(it) }) continue
-                            else reducedCastInfo += CastTypeInfo(tf.getRefType(klass).kexType)
-                        }
-                        (nullabilityInfo + reducedCastInfo).toSet()
-                    }
-                    if (reducedTypes.isEmpty()) null
-                    else term to reducedTypes
-                }.filterNotNull().toMap()
+                    term to types
+                }.toMap()
         )
 
     private infix fun PredicateState.or(preds: Set<Predicate>): PredicateState {
@@ -117,23 +128,7 @@ class PlainTypeInfoCollector(val tf: TypeFactory) : Transformer<TypeInfoCollecto
     private val typeInfos = mutableMapOf<Term, MutableSet<TypeInfo>>()
 
     val infos: TypeInfoMap
-        get() = TypeInfoMap(
-                typeInfos.map { (term, types) ->
-                    val reducedTypes = run {
-                        val nullabilityInfo = types.filterIsInstance<NullabilityInfo>()
-                        val castInfo = types.filterIsInstance<CastTypeInfo>()
-                        val reducedCastInfo = mutableSetOf<CastTypeInfo>()
-                        val klasses = castInfo.map { (it.type as KexClass).getKfgClass(tf) }.toSet()
-                        for (klass in klasses) {
-                            if (klasses.any { it != klass && klass.isAncestorOf(it) }) continue
-                            else reducedCastInfo += CastTypeInfo(tf.getRefType(klass).kexType)
-                        }
-                        (nullabilityInfo + reducedCastInfo).toSet()
-                    }
-                    if (reducedTypes.isEmpty()) null
-                    else term to reducedTypes
-                }.filterNotNull().toMap()
-        )
+        get() = TypeInfoMap.create(tf, typeInfos)
 
     override fun transformEquality(predicate: EqualityPredicate): Predicate {
         when (val rhv = predicate.rhv) {
