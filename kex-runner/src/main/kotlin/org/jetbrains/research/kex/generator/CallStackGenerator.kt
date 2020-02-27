@@ -133,10 +133,11 @@ class CallStackGenerator(val context: ExecutionContext, val psa: PredicateStateA
             if (stack.stack.size > maxStackSize) continue
 
             // try to generate constructor call
-            for (method in klass.accessibleConstructors) {
+            for (method in klass.accessibleConstructors.sortedBy { it.argTypes.size }) {
                 val (thisDesc, args) = method.executeAsConstructor(desc) ?: continue
 
                 if (thisDesc.isFinal(desc)) {
+                    log.debug("Found constructor $method for $descriptor, generating arguments $args")
                     val constructorCall = when {
                         method.argTypes.isEmpty() -> DefaultConstructorCall(klass)
                         else -> ConstructorCall(klass, method, args.map { generate(it) })

@@ -17,7 +17,7 @@ class CallStackExecutor(val ctx: ExecutionContext) {
         TraceCollectorProxy.disableCollector()
 
         var current: Any? = null
-        for (call in callStack) {
+        for (call in callStack.reversed()) {
             current = when (call) {
                 is PrimaryValue<*> -> call.value
                 is DefaultConstructorCall -> {
@@ -29,13 +29,15 @@ class CallStackExecutor(val ctx: ExecutionContext) {
                     val reflection = ctx.loader.loadClass(call.klass)
                     val constructor = reflection.getConstructor(call.constructor, ctx.loader)
                     constructor.isAccessible = true
-                    constructor.newInstance(*call.args.map { execute(it) }.toTypedArray())
+                    val args = call.args.map { execute(it) }.toTypedArray()
+                    constructor.newInstance(*args)
                 }
                 is MethodCall -> {
                     val reflection = ctx.loader.loadClass(call.method.`class`)
                     val javaMethod = reflection.getMethod(call.method, ctx.loader)
                     javaMethod.isAccessible = true
-                    javaMethod.invoke(current, *call.args.map { execute(it) }.toTypedArray())
+                    val args = call.args.map { execute(it) }.toTypedArray()
+                    javaMethod.invoke(current, *args)
                     current
                 }
                 is NewArray -> {

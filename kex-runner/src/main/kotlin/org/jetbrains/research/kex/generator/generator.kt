@@ -72,7 +72,7 @@ class Generator(val ctx: ExecutionContext, val psa: PredicateStateAnalysis) {
             thisCallStack?.let { generator.execute(it) } to argCallStacks.map { generator.execute(it) }.toTypedArray()
         } catch (e: Exception) {
             log.error("Could not generate input from model")
-            throw GenerationException(e.toString())
+            throw GenerationException(e)
         }
     }
 

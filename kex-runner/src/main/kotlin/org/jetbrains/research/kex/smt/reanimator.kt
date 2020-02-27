@@ -31,6 +31,11 @@ private var Field.isFinal: Boolean
         modifiersField.setInt(this, this.modifiers and if (value) Modifier.FINAL else Modifier.FINAL.inv())
     }
 
+private val Type.simpleTypeName: String get() = when (this) {
+    is ParameterizedType -> this.rawType.simpleTypeName
+    else -> this.typeName
+}
+
 data class ReanimatedModel(val method: Method, val instance: Any?, val arguments: List<Any?>)
 
 interface Reanimator<T> {
@@ -284,7 +289,7 @@ abstract class DescriptorReanimator(override val method: Method,
 
     private fun reanimateClass(term: Term, addr: Term?, jType: Type, nullable: Boolean) = descriptor(context) {
         val type = term.type as KexClass
-        val actualType = context.cm[jType.typeName.replace('.', '/')]
+        val actualType = context.cm[jType.simpleTypeName.replace('.', '/')]
 
         when (val address = (addr as? ConstIntTerm)?.value) {
             null, 0 -> default(actualType.kexType, nullable)
@@ -401,7 +406,7 @@ abstract class DescriptorReanimator(override val method: Method,
         if (address == 0) return@descriptor default(term.type, nullable)
         when (referencedType) {
             is KexClass -> {
-                val actualType = context.cm[jType.typeName.replace('.', '/')]
+                val actualType = context.cm[jType.simpleTypeName.replace('.', '/')]
                 memory(term.memspace, address) { `object`(actualType) }
             }
             is KexArray -> {
