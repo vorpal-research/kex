@@ -10,6 +10,7 @@ import org.jetbrains.research.kex.state.term.FieldLoadTerm
 import org.jetbrains.research.kex.state.term.Term
 import org.jetbrains.research.kfg.type.TypeFactory
 
+// propagate all type infos backwards to arguments
 class TypeInfoDFA(val tf: TypeFactory, val typeInfo: TypeInfoMap) : Transformer<TypeInfoDFA> {
     private val innerTypeInfo = typeInfo.map { it.key to it.value.toMutableSet() }.toMap().toMutableMap()
 

@@ -125,9 +125,11 @@ class CallStackGenerator(val context: ExecutionContext, val psa: PredicateStateA
     }
 
     private fun generateObject(descriptor: ObjectDescriptor): CallStack? {
+        val reducedDescriptor = descriptor.reduced
+        log.debug("Generating $reducedDescriptor")
         val klass = descriptor.klass
 
-        val queue = queueOf(generateSetters(descriptor.reduced))
+        val queue = queueOf(generateSetters(reducedDescriptor))
         while (queue.isNotEmpty()) {
             val (desc, stack) = queue.poll()
             if (stack.stack.size > maxStackSize) continue
@@ -160,13 +162,12 @@ class CallStackGenerator(val context: ExecutionContext, val psa: PredicateStateA
     }
 
     private fun generateSetters(descriptor: ObjectDescriptor): Pair<ObjectDescriptor, CallStack> {
-        log.info("Generating setters for $descriptor")
         var desc = descriptor
         val targetFields = desc.fields.toList()
         var callStack = CallStack()
         for ((name, fd) in targetFields) {
             val field = desc.klass.getField(name, fd.kfgType)
-            if (field.hasSetter) {
+            if (field.hasSetter && visibilityLevel <= field.setter.visibility) {
                 log.info("Using setter for $field")
                 val newDesc = ObjectDescriptor(desc.klass)
                 newDesc[name] = fd.copy(owner = newDesc)
@@ -208,6 +209,7 @@ class CallStackGenerator(val context: ExecutionContext, val psa: PredicateStateA
         val preState = getPreState(descriptor) ?: return null
         val preStateFieldTerms = collectFieldTerms(context, preState)
         val state = mapper.apply(descriptor.generateTypeInfo() + preState + (methodState ?: return null))
+
         val preparedState = prepareState(this, state, preStateFieldTerms)
         val preparedQuery = prepareQuery(mapper.apply(descriptor.toState()))
         return execute(preparedState, preparedQuery)

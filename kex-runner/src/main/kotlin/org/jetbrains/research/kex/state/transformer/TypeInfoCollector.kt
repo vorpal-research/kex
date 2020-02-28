@@ -3,18 +3,9 @@ package org.jetbrains.research.kex.state.transformer
 import com.abdullin.kthelper.logging.log
 import org.jetbrains.research.kex.ktype.*
 import org.jetbrains.research.kex.smt.SMTModel
-import org.jetbrains.research.kex.state.BasicState
-import org.jetbrains.research.kex.state.ChoiceState
-import org.jetbrains.research.kex.state.PredicateState
-import org.jetbrains.research.kex.state.emptyState
-import org.jetbrains.research.kex.state.predicate.EqualityPredicate
-import org.jetbrains.research.kex.state.predicate.InequalityPredicate
-import org.jetbrains.research.kex.state.predicate.Predicate
-import org.jetbrains.research.kex.state.predicate.path
-import org.jetbrains.research.kex.state.term.CastTerm
-import org.jetbrains.research.kex.state.term.InstanceOfTerm
-import org.jetbrains.research.kex.state.term.NullTerm
-import org.jetbrains.research.kex.state.term.Term
+import org.jetbrains.research.kex.state.*
+import org.jetbrains.research.kex.state.predicate.*
+import org.jetbrains.research.kex.state.term.*
 import org.jetbrains.research.kfg.type.TypeFactory
 
 enum class Nullability {
@@ -71,17 +62,37 @@ class TypeInfoCollector(val model: SMTModel, val tf: TypeFactory) : Transformer<
         return ChoiceState(listOf(this, BasicState(preds.toList()))).simplify()
     }
 
+    private infix fun PredicateState.or(other: PredicateState): PredicateState {
+        return ChoiceState(listOf(this, other)).simplify()
+    }
+
+    private infix fun PredicateState.and(preds: Set<Predicate>): PredicateState {
+        return ChainState(this, BasicState(preds.toList())).simplify()
+    }
+
+    private fun copyInfos(from: Term, to: Term, condition: Set<Predicate>) {
+        val fromInfo = typeInfos.getOrElse(from, ::mutableMapOf)
+        val toInfos = typeInfos.getOrPut(to, ::mutableMapOf)
+        for ((info, conds) in toInfos) {
+            val moreCond = fromInfo.getOrDefault(info, emptyState())
+            toInfos[info] = conds or (moreCond and condition)
+        }
+        for ((info, conds) in fromInfo.filter { it.key !in toInfos }) {
+            toInfos[info] = conds and condition
+        }
+    }
+
     override fun apply(ps: PredicateState): PredicateState {
         cfgt.apply(ps)
         return super.apply(ps)
     }
 
     override fun transformEquality(predicate: EqualityPredicate): Predicate {
+        val condition = cfgt.getDominatingPaths(predicate)
         when (val rhv = predicate.rhv) {
             is InstanceOfTerm -> {
                 val checkedType = CastTypeInfo(rhv.checkedType)
                 val operand = rhv.operand
-                val condition = cfgt.getDominatingPaths(predicate)
                 val fullPath = condition + path { predicate.lhv equality true }
 
                 val typeInfo = typeInfos.getOrPut(operand, ::mutableMapOf)
@@ -91,7 +102,6 @@ class TypeInfoCollector(val model: SMTModel, val tf: TypeFactory) : Transformer<
             is CastTerm -> {
                 val newType = CastTypeInfo(rhv.type)
                 val operand = rhv.operand
-                val condition = cfgt.getDominatingPaths(predicate)
                 val stub = when {
                     condition.isEmpty() -> setOf(path { const(true) equality true })
                     else -> condition
@@ -104,6 +114,9 @@ class TypeInfoCollector(val model: SMTModel, val tf: TypeFactory) : Transformer<
                 val existingCond = typeInfo.getOrDefault(newType, emptyState())
                 typeInfo[newType] = existingCond or stub
             }
+            is FieldLoadTerm -> copyInfos(rhv.field, predicate.lhv, condition)
+            is ArrayLoadTerm -> copyInfos(rhv.arrayRef, predicate.lhv, condition)
+            else -> copyInfos(rhv, predicate.lhv, condition)
         }
         return super.transformEquality(predicate)
     }
@@ -121,6 +134,16 @@ class TypeInfoCollector(val model: SMTModel, val tf: TypeFactory) : Transformer<
             }
         }
         return super.transformInequality(predicate)
+    }
+
+    override fun transformFieldStore(predicate: FieldStorePredicate): Predicate {
+        copyInfos(predicate.value, predicate.field, cfgt.getDominatingPaths(predicate))
+        return super.transformFieldStore(predicate)
+    }
+
+    override fun transformArrayStore(predicate: ArrayStorePredicate): Predicate {
+        copyInfos(predicate.value, predicate.arrayRef, cfgt.getDominatingPaths(predicate))
+        return super.transformArrayStore(predicate)
     }
 }
 

@@ -19,6 +19,8 @@ private val apiGeneration get() = kexConfig.getBooleanValue("apiGeneration", "en
 
 class Generator(val ctx: ExecutionContext, val psa: PredicateStateAnalysis) {
     val cm: ClassManager get() = ctx.cm
+    val csGenerator = CallStackGenerator(ctx, psa)
+    val csExecutor = CallStackExecutor(ctx)
 
     private val Class.isInstantiable: Boolean
         get() = when {
@@ -48,32 +50,24 @@ class Generator(val ctx: ExecutionContext, val psa: PredicateStateAnalysis) {
             return result
         }
 
+    private val Pair<Descriptor?, List<Descriptor>>.concrete
+        get() =
+            first?.concrete to second.map { it.concrete }
 
-    fun generateFromAPI(method: Method, state: PredicateState, model: SMTModel): Pair<Any?, Array<Any?>> {
-        log.debug("Model: $model")
-        return try {
-            var descriptors = generateFinalDescriptors(method, ctx, model, state)
-            descriptors = descriptors.first?.concrete to descriptors.second.map { it.concrete }
-            log.debug("Generated descriptors:")
-            log.debug(descriptors)
-            val thisCallStack = descriptors.first?.let { descriptor ->
-                log.debug("Generating $descriptor")
-                CallStackGenerator(ctx, psa).generate(descriptor).also {
-                    log.debug("Call stack: $it")
-                }
-            }
-            val argCallStacks = descriptors.second.map { descriptor ->
-                log.debug("Generating $descriptor")
-                CallStackGenerator(ctx, psa).generate(descriptor).also {
-                    log.debug("Call stack: $it")
-                }
-            }
-            val generator = CallStackExecutor(ctx)
-            thisCallStack?.let { generator.execute(it) } to argCallStacks.map { generator.execute(it) }.toTypedArray()
-        } catch (e: Exception) {
-            log.error("Could not generate input from model")
-            throw GenerationException(e)
+
+    fun generateFromAPI(method: Method, state: PredicateState, model: SMTModel) = try {
+        val descriptors = generateFinalDescriptors(method, ctx, model, state).concrete
+        log.debug("Generated descriptors:")
+        log.debug(descriptors)
+        val thisCallStack = descriptors.first?.let { descriptor ->
+            csGenerator.generate(descriptor)
         }
+        val argCallStacks = descriptors.second.map { descriptor ->
+            csGenerator.generate(descriptor)
+        }
+        thisCallStack?.let { csExecutor.execute(it) } to argCallStacks.map { csExecutor.execute(it) }.toTypedArray()
+    } catch (e: Exception) {
+        throw GenerationException(e)
     }
 
     fun generateFromModel(method: Method, state: PredicateState, model: SMTModel) =
