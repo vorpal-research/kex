@@ -313,6 +313,7 @@ abstract class DescriptorReanimator(override val method: Method,
     private val Type.actualComponentType: Class<*> get() = when (this) {
         is Class<*> -> this.componentType
         is GenericArrayType -> this.genericComponentType.actualComponentType
+        is TypeVariable<*> -> this.bounds.first().actualComponentType
         else -> unreachable { log.error("Unknown jType in array recovery: $this") }
     }
 

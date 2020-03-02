@@ -5,17 +5,20 @@ package org.jetbrains.research.kex.test.debug
 
 class BasicTests {
 
-    abstract class A {
-        abstract val a: Int
+    enum class InspectionArgumentType {
+        Parameter,
+        MultiParameter,
+        Flag
     }
 
-    class B(override val a: Int) : A()
-
-    fun test(b: A) {
-        if (b.a > 10) {
-            println("aaa")
-        }
-        println("bbb")
-    }
+    class InspectionArgument(
+            val name: String,
+            val aliasNames: List<String>,
+            val shortNames: List<Char>,
+            val description: String,
+            val type: InspectionArgumentType,
+            val isOptional: Boolean,
+            val defaultValue: String? = null
+    )
 
 }
