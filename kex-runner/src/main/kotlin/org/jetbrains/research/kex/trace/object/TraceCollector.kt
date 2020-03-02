@@ -33,6 +33,7 @@ abstract class TraceCollector(val cm: ClassManager) {
             valueName.matches(Regex("-\\d+")) -> cm.value.getIntConstant(valueName.toInt())
             valueName.matches(Regex("-\\d+.\\d+")) -> cm.value.getDoubleConstant(valueName.toDouble())
             valueName.matches(Regex("\".*\"")) -> cm.value.getStringConstant(valueName.substring(1, valueName.lastIndex))
+            valueName.matches(Regex("\"[\n\\s]*\"")) -> cm.value.getStringConstant(valueName.substring(1, valueName.lastIndex))
             valueName == "null" -> cm.value.getNullConstant()
             else -> throw UnknownNameException(valueName)
         }
@@ -80,6 +81,7 @@ abstract class TraceCollector(val cm: ClassManager) {
         addAction(StaticInitEntry(method))
         stack.push(method)
     }
+
     open fun staticExit() {
         val method = stack.pop()
         require(method.isStaticInitializer)

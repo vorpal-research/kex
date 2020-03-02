@@ -6,16 +6,12 @@ import org.jetbrains.research.kex.ExecutionContext
 import org.jetbrains.research.kex.annotations.AnnotationManager
 import org.jetbrains.research.kex.asm.state.PredicateStateAnalysis
 import org.jetbrains.research.kex.config.kexConfig
-import org.jetbrains.research.kex.ktype.KexBool
 import org.jetbrains.research.kex.ktype.KexType
 import org.jetbrains.research.kex.ktype.kexType
 import org.jetbrains.research.kex.smt.Checker
 import org.jetbrains.research.kex.smt.Result
 import org.jetbrains.research.kex.state.PredicateState
 import org.jetbrains.research.kex.state.StateBuilder
-import org.jetbrains.research.kex.state.emptyState
-import org.jetbrains.research.kex.state.predicate.assume
-import org.jetbrains.research.kex.state.predicate.state
 import org.jetbrains.research.kex.state.term.Term
 import org.jetbrains.research.kex.state.term.term
 import org.jetbrains.research.kex.state.transformer.*
@@ -52,7 +48,7 @@ class CallStackGenerator(val context: ExecutionContext, val psa: PredicateStateA
 
     private fun prepareState(method: Method, ps: PredicateState, ignores: Set<Term> = setOf()) = transform(ps) {
         if (annotationsEnabled) +AnnotationIncluder(AnnotationManager.defaultLoader)
-        if (isInliningEnabled) +MethodInliner(method, psa)
+        if (isInliningEnabled) +MethodInliner(psa)
         +IntrinsicAdapter
         +ReflectionInfoAdapter(method, context.loader, ignores)
         +Optimizer()
@@ -247,32 +243,6 @@ class CallStackGenerator(val context: ExecutionContext, val psa: PredicateStateA
             }
         }
         return mapper.apply(preStateBuilder.apply())
-    }
-
-    private fun Descriptor.generateTypeInfo(ps: PredicateState = emptyState()): PredicateState = when (this) {
-        is ObjectDescriptor -> {
-            val descTerm = this.term
-            val descType = this.type
-            val instanceOfTerm = term { generate(KexBool()) }
-            val builder = ps.builder()
-            builder += state { instanceOfTerm equality (descTerm `is` descType) }
-            builder += assume { instanceOfTerm equality true }
-            var inlinedState = builder.apply()
-            for ((_, field) in this.fields) {
-                inlinedState = field.generateTypeInfo(inlinedState)
-            }
-            inlinedState
-        }
-        is FieldDescriptor -> {
-            val descTerm = this.term
-            val descType = this.value.type
-            val builder = ps.builder()
-            val instanceOfTerm = term { generate(KexBool()) }
-            builder += state { instanceOfTerm equality (descTerm `is` descType) }
-            builder += assume { instanceOfTerm equality true }
-            builder.apply()
-        }
-        else -> ps
     }
 
     private val ObjectDescriptor.preState: PredicateState

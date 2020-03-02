@@ -211,16 +211,6 @@ class Kex(args: Array<String>) {
                 "full coverage: ${String.format("%.2f", coverage.fullCoverage)}%")
     }
 
-    protected fun runPipeline(context: ExecutionContext, target: Package, init: Pipeline.() -> Unit) =
-            executePipeline(context.cm, target, init)
-
-    protected fun runPipeline(context: ExecutionContext, init: Pipeline.() -> Unit) = when {
-        methods != null -> executePipeline(context.cm, methods!!, init)
-        klass != null -> executePipeline(context.cm, klass!!, init)
-        else -> executePipeline(context.cm, `package`, init)
-    }
-
-
     private fun concolic(originalContext: ExecutionContext, analysisContext: ExecutionContext) {
         val traceManager = ObjectTraceManager()
         val cm = CoverageCounter(originalContext.cm, traceManager)
@@ -234,5 +224,14 @@ class Kex(args: Array<String>) {
         log.info("Overall summary for ${cm.methodInfos.size} methods:\n" +
                 "body coverage: ${String.format("%.2f", coverage.bodyCoverage)}%\n" +
                 "full coverage: ${String.format("%.2f", coverage.fullCoverage)}%")
+    }
+
+    protected fun runPipeline(context: ExecutionContext, target: Package, init: Pipeline.() -> Unit) =
+            executePipeline(context.cm, target, init)
+
+    protected fun runPipeline(context: ExecutionContext, init: Pipeline.() -> Unit) = when {
+        methods != null -> executePipeline(context.cm, methods!!, init)
+        klass != null -> executePipeline(context.cm, klass!!, init)
+        else -> executePipeline(context.cm, `package`, init)
     }
 }

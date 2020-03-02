@@ -43,7 +43,7 @@ class Checker(val method: Method, val loader: ClassLoader, private val psa: Pred
         }
 
         if (isInliningEnabled) {
-            +MethodInliner(method, psa)
+            +MethodInliner(psa)
         }
 
         +IntrinsicAdapter

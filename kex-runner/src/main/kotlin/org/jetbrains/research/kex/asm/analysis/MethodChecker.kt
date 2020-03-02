@@ -137,7 +137,7 @@ class MethodChecker(
         when (result) {
             is Result.SatResult -> {
                 val (instance, args) = try {
-                    generator.generate(method, checker.state, result.model)
+                    generator.generate(method, block, checker.state, result.model)
                 } catch (e: GenerationException) {
                     log.warn(e.message)
                     return result

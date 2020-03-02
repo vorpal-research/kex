@@ -1,17 +1,22 @@
 package org.jetbrains.research.kex.state.transformer
 
 import com.abdullin.kthelper.collection.dequeOf
+import org.jetbrains.research.kex.ExecutionContext
 import org.jetbrains.research.kex.asm.manager.MethodManager
 import org.jetbrains.research.kex.asm.state.PredicateStateAnalysis
+import org.jetbrains.research.kex.ktype.KexClass
 import org.jetbrains.research.kex.ktype.kexType
 import org.jetbrains.research.kex.state.PredicateState
 import org.jetbrains.research.kex.state.StateBuilder
 import org.jetbrains.research.kex.state.predicate.CallPredicate
 import org.jetbrains.research.kex.state.predicate.Predicate
 import org.jetbrains.research.kex.state.term.*
+import org.jetbrains.research.kfg.ir.ConcreteClass
 import org.jetbrains.research.kfg.ir.Method
 
-class MethodInliner(val psa: PredicateStateAnalysis) : RecollectingTransformer<MethodInliner> {
+class ConcreteImplInliner(val ctx: ExecutionContext,
+                          val typeInfoMap: TypeInfoMap,
+                          val psa: PredicateStateAnalysis) : RecollectingTransformer<ConcreteImplInliner> {
     private val im = MethodManager.InlineManager
     override val builders = dequeOf(StateBuilder())
     private var inlineIndex = 0
@@ -23,10 +28,26 @@ class MethodInliner(val psa: PredicateStateAnalysis) : RecollectingTransformer<M
         }
     }
 
+    private fun getConcreteImpl(call: CallTerm): Method? {
+        val method = call.method
+        return when {
+            method.isFinal -> method
+            method.isStatic -> method
+            else -> {
+                val typeInfo = typeInfoMap.getInfo<CastTypeInfo>(call.owner) ?: return null
+                val kexClass = typeInfo.type as? KexClass ?: return null
+                val concreteClass = kexClass.getKfgClass(ctx.types) as? ConcreteClass ?: return null
+                val result = concreteClass.getMethod(method.name, method.desc)
+                com.abdullin.kthelper.assert.assert(result.isNotEmpty())
+                result
+            }
+        }
+    }
+
     override fun transformCallPredicate(predicate: CallPredicate): Predicate {
         val call = predicate.call as CallTerm
-        val calledMethod = call.method
-        if (!im.isInlinable(calledMethod)) return predicate
+        if (!im.inliningEnabled || im.isIgnored(call.method)) return predicate
+        val calledMethod = getConcreteImpl(call) ?: return predicate
 
         val mappings = hashMapOf<Term, Term>()
         if (!call.isStatic) {

@@ -91,6 +91,8 @@ class TypeInfoCollector(val model: SMTModel, val tf: TypeFactory) : Transformer<
         val condition = cfgt.getDominatingPaths(predicate)
         when (val rhv = predicate.rhv) {
             is InstanceOfTerm -> {
+                if (rhv.checkedType !is KexClass) return super.transformEquality(predicate)
+
                 val checkedType = CastTypeInfo(rhv.checkedType)
                 val operand = rhv.operand
                 val fullPath = condition + path { predicate.lhv equality true }
@@ -100,6 +102,7 @@ class TypeInfoCollector(val model: SMTModel, val tf: TypeFactory) : Transformer<
                 typeInfo[checkedType] = existingCond or fullPath
             }
             is CastTerm -> {
+                if (rhv.type !is KexClass) return super.transformEquality(predicate)
                 val newType = CastTypeInfo(rhv.type)
                 val operand = rhv.operand
                 val stub = when {

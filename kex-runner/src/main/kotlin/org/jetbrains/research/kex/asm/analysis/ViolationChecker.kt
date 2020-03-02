@@ -153,7 +153,7 @@ class ViolationChecker(override val cm: ClassManager,
 
         if (isInliningEnabled) {
             log.debug("Inlining started...")
-            state = MethodInliner(method, psa).apply(state)
+            state = MethodInliner(psa).apply(state)
             log.debug("Inlining finished")
         }
 

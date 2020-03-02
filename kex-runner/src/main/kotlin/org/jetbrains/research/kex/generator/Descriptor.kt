@@ -6,7 +6,9 @@ import org.jetbrains.research.kex.ExecutionContext
 import org.jetbrains.research.kex.ktype.*
 import org.jetbrains.research.kex.state.PredicateState
 import org.jetbrains.research.kex.state.emptyState
+import org.jetbrains.research.kex.state.predicate.assume
 import org.jetbrains.research.kex.state.predicate.require
+import org.jetbrains.research.kex.state.predicate.state
 import org.jetbrains.research.kex.state.term.Term
 import org.jetbrains.research.kex.state.term.term
 import org.jetbrains.research.kfg.type.ArrayType
@@ -246,3 +248,33 @@ class DescriptorBuilder(val context: ExecutionContext) {
 
 fun descriptor(context: ExecutionContext, body: DescriptorBuilder.() -> Descriptor): Descriptor =
         DescriptorBuilder(context).body()
+
+fun Descriptor.generateTypeInfo(ps: PredicateState = emptyState()): PredicateState = when (this) {
+    is ObjectDescriptor -> {
+        val descTerm = this.term
+        val descType = this.type
+        val instanceOfTerm = term { generate(KexBool()) }
+        val builder = ps.builder()
+        builder += state { instanceOfTerm equality (descTerm `is` descType) }
+        builder += assume { instanceOfTerm equality true }
+        var inlinedState = builder.apply()
+        for ((_, field) in this.fields) {
+            inlinedState = field.generateTypeInfo(inlinedState)
+        }
+        inlinedState
+    }
+    is FieldDescriptor -> {
+        val descTerm = this.term
+        when (val descType = this.value.type) {
+            !is KexClass -> ps
+            else -> {
+                val builder = ps.builder()
+                val instanceOfTerm = term { generate(KexBool()) }
+                builder += state { instanceOfTerm equality (descTerm `is` descType) }
+                builder += assume { instanceOfTerm equality true }
+                builder.apply()
+            }
+        }
+    }
+    else -> ps
+}

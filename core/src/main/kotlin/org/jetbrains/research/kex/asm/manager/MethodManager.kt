@@ -9,7 +9,7 @@ import org.jetbrains.research.kfg.ir.value.instruction.ReturnInst
 
 object MethodManager {
     object InlineManager {
-        private val inliningEnabled = kexConfig.getBooleanValue("inliner", "enabled", true)
+        val inliningEnabled = kexConfig.getBooleanValue("inliner", "enabled", true)
         private val ignorePackages = hashSetOf<Package>()
         private val ignoreClasses = hashSetOf<String>()
         private val ignoreMethods = hashSetOf<Method>()
@@ -25,11 +25,16 @@ object MethodManager {
             }
         }
 
+        fun isIgnored(method: Method) = when {
+            ignorePackages.any { it.isParent(method.`class`.`package`) } -> true
+            ignoreClasses.any { method.cm[it] == method.`class` } -> true
+            ignoreMethods.contains(method) -> true
+            else -> false
+        }
+
         fun isInlinable(method: Method): Boolean = when {
             !inliningEnabled -> false
-            ignorePackages.any { it.isParent(method.`class`.`package`) } -> false
-            ignoreClasses.any { method.cm[it] == method.`class` } -> false
-            ignoreMethods.contains(method) -> false
+            isIgnored(method) -> false
             method.isStatic -> true
             method.isConstructor -> true
             !method.isFinal -> false

@@ -32,14 +32,14 @@ class MethodFieldAccessDetector(val ctx: ExecutionContext, val psa: PredicateSta
 
     override fun visit(method: Method) {
         val methodState = psa.builder(method).methodState ?: return
-        val preparedState = prepareState(method, methodState)
+        val preparedState = prepareState(methodState)
         val fieldAccessList = collectFieldAccesses(ctx, preparedState)
         methodAccessMap[method] = fieldAccessList
     }
 
 
-    private fun prepareState(method: Method, ps: PredicateState) = transform(ps) {
+    private fun prepareState(ps: PredicateState) = transform(ps) {
         if (annotationsEnabled) +AnnotationIncluder(AnnotationManager.defaultLoader)
-        if (isInliningEnabled) +MethodInliner(method, psa)
+        if (isInliningEnabled) +MethodInliner(psa)
     }
 }
