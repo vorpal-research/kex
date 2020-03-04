@@ -1,5 +1,6 @@
 package org.jetbrains.research.kex.random.easyrandom
 
+import com.abdullin.kthelper.assert.ktassert
 import com.abdullin.kthelper.logging.log
 import com.abdullin.kthelper.tryOrNull
 import org.jeasy.random.EasyRandom
@@ -115,14 +116,14 @@ class EasyRandomDriver(val config: BeansConfig = defaultConfig) : Randomizer {
         val rawType = type.rawType as? Class<*> ?: throw UnknownTypeException(type.toString())
         return when {
             Collection::class.java.isAssignableFrom(rawType) -> {
-                require(type.actualTypeArguments.size == 1)
+                ktassert(type.actualTypeArguments.size == 1)
                 val typeParameter = type.actualTypeArguments.first()
                 val cr = CollectionRandomizer.generateCollection<Any?>(rawType, { generateObject(it) },
                         JRandomizer { next(typeParameter) })
                 cr.randomValue
             }
             Map::class.java.isAssignableFrom(rawType) -> {
-                require(type.actualTypeArguments.size == 2)
+                ktassert(type.actualTypeArguments.size == 2)
                 val key = type.actualTypeArguments.first()
                 val value = type.actualTypeArguments.last()
                 val mr = CollectionRandomizer.generateMap<Any?, Any?>(rawType, { generateObject(it) },

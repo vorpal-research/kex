@@ -11,7 +11,7 @@ class BasicTest : KexRunnerTest() {
         val oldSlicingConfig = cfg.getBooleanValue("smt", "slicing", true)
         RuntimeConfig.setValue("smt", "slicing", false)
 
-        val `class` = cm.getByName("$packageName/BasicTests")
+        val `class` = cm["$packageName/BasicTests"]
         testClassReachability(`class`)
 
         RuntimeConfig.setValue("smt", "slicing", oldSlicingConfig)

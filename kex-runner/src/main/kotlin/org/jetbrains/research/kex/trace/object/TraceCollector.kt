@@ -1,5 +1,6 @@
 package org.jetbrains.research.kex.trace.`object`
 
+import com.abdullin.kthelper.assert.ktassert
 import com.abdullin.kthelper.collection.stackOf
 import org.jetbrains.research.kex.trace.file.UnknownNameException
 import org.jetbrains.research.kfg.ClassManager
@@ -16,7 +17,7 @@ abstract class TraceCollector(val cm: ClassManager) {
     protected fun String.toType() = parseDesc(cm.type, this)
 
     protected fun parseMethod(className: String, methodName: String, args: Array<String>, retType: String): Method {
-        val klass = cm.getByName(className)
+        val klass = cm[className]
         return klass.getMethod(methodName, MethodDesc(args.map { it.toType() }.toTypedArray(), retType.toType()))
     }
 
@@ -30,7 +31,10 @@ abstract class TraceCollector(val cm: ClassManager) {
         return st.getValue(valueName) ?: when {
             valueName.matches(Regex("\\d+")) -> cm.value.getIntConstant(valueName.toInt())
             valueName.matches(Regex("\\d+.\\d+")) -> cm.value.getDoubleConstant(valueName.toDouble())
+            valueName.matches(Regex("-\\d+")) -> cm.value.getIntConstant(valueName.toInt())
+            valueName.matches(Regex("-\\d+.\\d+")) -> cm.value.getDoubleConstant(valueName.toDouble())
             valueName.matches(Regex("\".*\"")) -> cm.value.getStringConstant(valueName.substring(1, valueName.lastIndex))
+            valueName.matches(Regex("\"[\n\\s]*\"")) -> cm.value.getStringConstant(valueName.substring(1, valueName.lastIndex))
             valueName == "null" -> cm.value.getNullConstant()
             else -> throw UnknownNameException(valueName)
         }
@@ -73,14 +77,15 @@ abstract class TraceCollector(val cm: ClassManager) {
     }
 
     open fun staticEntry(className: String) {
-        val klass = cm.getByName(className)
+        val klass = cm[className]
         val method = klass.methods.first { it.isStaticInitializer }
         addAction(StaticInitEntry(method))
         stack.push(method)
     }
+
     open fun staticExit() {
         val method = stack.pop()
-        require(method.isStaticInitializer)
+        ktassert(method.isStaticInitializer)
         addAction(StaticInitExit(method))
     }
 

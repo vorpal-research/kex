@@ -3,8 +3,16 @@ package org.jetbrains.research.kex.random
 import com.abdullin.kthelper.tryOrNull
 import java.lang.reflect.Type
 
-abstract class RandomizerError(msg: String) : Exception(msg)
-class GenerationException(msg: String) : RandomizerError(msg)
+abstract class RandomizerError : Exception {
+    constructor(msg: String) : super(msg)
+    constructor(e: Throwable) : super(e)
+}
+
+class GenerationException : RandomizerError {
+    constructor(msg: String) : super(msg)
+    constructor(e: Throwable) : super(e)
+}
+
 class UnknownTypeException(msg: String) : RandomizerError(msg)
 
 interface Randomizer {

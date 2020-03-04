@@ -14,7 +14,7 @@ import org.jetbrains.research.kfg.type.PrimaryType
 import org.jetbrains.research.kfg.visitor.MethodVisitor
 
 class RuntimeTraceCollector(override val cm: ClassManager) : MethodVisitor {
-    val collectorClass = cm.getByName(TraceCollector::class.java.canonicalName.replace('.', '/'))
+    val collectorClass = cm[TraceCollector::class.java.canonicalName.replace('.', '/')]
     lateinit var traceCollector: Instruction
 
     inline val type get() = cm.type
@@ -35,7 +35,7 @@ class RuntimeTraceCollector(override val cm: ClassManager) : MethodVisitor {
     }
 
     private fun getNewCollector(): Instruction {
-        val proxy = cm.getByName(TraceCollectorProxy::class.java.canonicalName.replace('.', '/'))
+        val proxy = cm[TraceCollectorProxy::class.java.canonicalName.replace('.', '/')]
         val getter = proxy.getMethod("currentCollector", MethodDesc(arrayOf(), cm.type.getRefType(collectorClass)))
 
         return cm.instruction.getCall(CallOpcode.Static(), "collector", getter, proxy, arrayOf())

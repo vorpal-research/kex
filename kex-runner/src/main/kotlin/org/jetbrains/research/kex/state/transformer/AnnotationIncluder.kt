@@ -1,8 +1,6 @@
 package org.jetbrains.research.kex.state.transformer
 
 import com.abdullin.kthelper.assert.unreachable
-import com.abdullin.kthelper.logging.debug
-import com.abdullin.kthelper.logging.log
 import org.jetbrains.research.kex.annotations.AnnotationsLoader
 import org.jetbrains.research.kex.state.*
 import org.jetbrains.research.kex.state.predicate.CallPredicate
@@ -21,8 +19,6 @@ class AnnotationIncluder(val annotations: AnnotationsLoader) : RecollectingTrans
         val argTypes = method.argTypes
         val annotatedCall = annotations.getExactCall("${method.`class`}.${method.name}",
                 *Array(argTypes.size) { argTypes[it].name }) ?: return predicate
-        log.debug { "found annotations for $annotatedCall ${annotatedCall.annotations} and for params " +
-                "(${annotatedCall.params.joinToString { "${it.type}:${it.annotations}" }})" }
         val states = mutableListOf<PredicateState>()
         for ((i, param) in annotatedCall.params.withIndex()) {
             for (annotation in param.annotations) {

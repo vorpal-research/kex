@@ -2,30 +2,23 @@
 
 package org.jetbrains.research.kex.test.debug
 
-import org.jetbrains.research.kex.test.Intrinsics
 
 class BasicTests {
 
-    open class AC
-
-    class Impl1 : AC()
-
-    open class Impl2 : AC()
-
-    class Impl3 : Impl2()
-
-    fun testAC(a: AC) {
-//        if (a is Impl1) {
-//            Intrinsics.assertReachable()
-//        }
-        if (a is Impl2) {
-            Intrinsics.assertReachable()
-        }
-        if (a is Impl3) {
-            Intrinsics.assertReachable()
-        }
-        val b = a as Impl1
-        Intrinsics.assertReachable()
+    enum class InspectionArgumentType {
+        Parameter,
+        MultiParameter,
+        Flag
     }
+
+    class InspectionArgument(
+            val name: String,
+            val aliasNames: List<String>,
+            val shortNames: List<Char>,
+            val description: String,
+            val type: InspectionArgumentType,
+            val isOptional: Boolean,
+            val defaultValue: String? = null
+    )
 
 }

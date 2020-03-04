@@ -6,23 +6,18 @@ import org.jetbrains.research.kex.ExecutionContext
 import org.jetbrains.research.kex.ktype.*
 import org.jetbrains.research.kex.state.PredicateState
 import org.jetbrains.research.kex.state.emptyState
+import org.jetbrains.research.kex.state.predicate.assume
 import org.jetbrains.research.kex.state.predicate.require
+import org.jetbrains.research.kex.state.predicate.state
 import org.jetbrains.research.kex.state.term.Term
 import org.jetbrains.research.kex.state.term.term
 import org.jetbrains.research.kfg.type.ArrayType
 import org.jetbrains.research.kfg.ir.Class as KfgClass
 import org.jetbrains.research.kfg.type.Type as KfgType
 
-object TermGenerator {
-    private var index = 0
-
-    val nextName: String get() = "generatedTerm${index++}"
-
-    fun nextTerm(type: KexType) = term { value(type, nextName) }
-}
-
 sealed class Descriptor {
     abstract val term: Term
+    abstract val type: KexType
 
     abstract fun toState(ps: PredicateState = emptyState()): PredicateState
 }
@@ -33,43 +28,51 @@ sealed class ConstantDescriptor : Descriptor() {
     }
 
     object Null : ConstantDescriptor() {
+        override val type = KexNull()
         override val term = term { const(null) }
         override fun toString() = "null"
     }
 
     data class Bool(val value: Boolean) : ConstantDescriptor() {
+        override val type = KexBool()
         override val term get() = term { const(value) }
     }
 
     data class Int(val value: kotlin.Int) : ConstantDescriptor() {
+        override val type = KexInt()
         override val term get() = term { const(value) }
     }
 
     data class Long(val value: kotlin.Long) : ConstantDescriptor() {
+        override val type = KexLong()
         override val term get() = term { const(value) }
     }
 
     data class Float(val value: kotlin.Float) : ConstantDescriptor() {
+        override val type = KexFloat()
         override val term get() = term { const(value) }
     }
 
     data class Double(val value: kotlin.Double) : ConstantDescriptor() {
+        override val type = KexDouble()
         override val term get() = term { const(value) }
     }
 
     data class Class(val value: KfgClass) : ConstantDescriptor() {
+        override val type = KexClass(value.fullname)
         override val term get() = term { `class`(value) }
     }
 }
 
 data class FieldDescriptor(
         val name: String,
-        val type: KfgType,
+        val kfgType: KfgType,
         val klass: KfgClass,
         val owner: Descriptor,
         val value: Descriptor
 ) : Descriptor() {
-    override val term = term { owner.term.field(type.kexType, name) }
+    override val type = kfgType.kexType
+    override val term = term { owner.term.field(type, name) }
 
     override fun toState(ps: PredicateState): PredicateState {
         var state = ps
@@ -77,7 +80,7 @@ data class FieldDescriptor(
             state = value.toState(state)
         }
         return state.builder().run {
-            val tempTerm = term { TermGenerator.nextTerm(this@FieldDescriptor.type.kexType) }
+            val tempTerm = term { generate(this@FieldDescriptor.type) }
             state { tempTerm equality term.load() }
             require { tempTerm equality value.term }
             apply()
@@ -112,16 +115,16 @@ data class ObjectDescriptor(
         val klass: KfgClass,
         private val fieldsInner: MutableMap<String, FieldDescriptor> = mutableMapOf()
 ) : Descriptor() {
-    val name: String = TermGenerator.nextName
-    val fields: Map<String, FieldDescriptor> get() = fieldsInner.toMap()
+    override val term = term { generate(klass.kexType) }
+    override val type = KexClass(klass.fullname)
+    val name = term.name
+    val fields get() = fieldsInner.toMap()
 
     operator fun set(field: String, value: FieldDescriptor) {
         fieldsInner[field] = value
     }
 
     operator fun get(field: String) = fieldsInner[field]
-
-    override val term = term { value(klass.kexType, name) }
 
     override fun toState(ps: PredicateState): PredicateState {
         var state = ps
@@ -159,18 +162,18 @@ data class ObjectDescriptor(
 
 data class ArrayDescriptor(
         val length: Int,
-        val type: KfgType,
+        val kfgType: KfgType,
         private val elementsInner: MutableMap<Int, Descriptor> = mutableMapOf()
 ) : Descriptor() {
-    val name: String = TermGenerator.nextName
-    val elements: Map<Int, Descriptor> get() = elementsInner.toMap()
-    val elementType = (type as ArrayType).component
+    val elementType = (kfgType as ArrayType).component
+    override val type = KexArray(elementType.kexType)
+    override val term = term { generate(type) }
+    val name = term.name
+    val elements get() = elementsInner.toMap()
 
     operator fun set(index: Int, value: Descriptor) {
         elementsInner[index] = value
     }
-
-    override val term = term { value(type.kexType, name) }
 
     override fun toState(ps: PredicateState): PredicateState {
         var state = ps
@@ -245,3 +248,33 @@ class DescriptorBuilder(val context: ExecutionContext) {
 
 fun descriptor(context: ExecutionContext, body: DescriptorBuilder.() -> Descriptor): Descriptor =
         DescriptorBuilder(context).body()
+
+fun Descriptor.generateTypeInfo(ps: PredicateState = emptyState()): PredicateState = when (this) {
+    is ObjectDescriptor -> {
+        val descTerm = this.term
+        val descType = this.type
+        val instanceOfTerm = term { generate(KexBool()) }
+        val builder = ps.builder()
+        builder += state { instanceOfTerm equality (descTerm `is` descType) }
+        builder += assume { instanceOfTerm equality true }
+        var inlinedState = builder.apply()
+        for ((_, field) in this.fields) {
+            inlinedState = field.generateTypeInfo(inlinedState)
+        }
+        inlinedState
+    }
+    is FieldDescriptor -> {
+        val descTerm = this.term
+        when (val descType = this.value.type) {
+            !is KexClass -> ps
+            else -> {
+                val builder = ps.builder()
+                val instanceOfTerm = term { generate(KexBool()) }
+                builder += state { instanceOfTerm equality (descTerm `is` descType) }
+                builder += assume { instanceOfTerm equality true }
+                builder.apply()
+            }
+        }
+    }
+    else -> ps
+}

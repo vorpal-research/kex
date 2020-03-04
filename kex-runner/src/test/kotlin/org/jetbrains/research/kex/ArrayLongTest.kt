@@ -10,7 +10,7 @@ class ArrayLongTest : KexRunnerTest() {
         val oldSlicingConfig = cfg.getBooleanValue("smt", "slicing", true)
         RuntimeConfig.setValue("smt", "slicing", false)
 
-        val `class` = cm.getByName("$packageName/ArrayLongTests")
+        val `class` = cm["$packageName/ArrayLongTests"]
         testClassReachability(`class`)
 
         RuntimeConfig.setValue("smt", "slicing", oldSlicingConfig)

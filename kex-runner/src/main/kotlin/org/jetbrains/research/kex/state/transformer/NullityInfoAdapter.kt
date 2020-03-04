@@ -1,16 +1,17 @@
 package org.jetbrains.research.kex.state.transformer
 
+import com.abdullin.kthelper.collection.dequeOf
 import org.jetbrains.research.kex.state.ChoiceState
 import org.jetbrains.research.kex.state.PredicateState
 import org.jetbrains.research.kex.state.StateBuilder
-import org.jetbrains.research.kex.state.predicate.Predicate
 import org.jetbrains.research.kex.state.predicate.assume
+import org.jetbrains.research.kex.state.term.ArrayIndexTerm
+import org.jetbrains.research.kex.state.term.FieldTerm
 import org.jetbrains.research.kex.state.term.Term
-import java.util.*
 
-class NullityAnnotator(private val nonNulls: Set<Term> = setOf()) : RecollectingTransformer<NullityAnnotator> {
-    override val builders = ArrayDeque<StateBuilder>().apply { push(StateBuilder()) }
-    private var annotatedTerms = hashSetOf<Term>()
+class NullityInfoAdapter : RecollectingTransformer<NullityInfoAdapter> {
+    override val builders = dequeOf(StateBuilder())
+    private var annotatedTerms = setOf<Term>()
 
     override fun transformChoice(ps: ChoiceState): PredicateState {
         val oldAnnotatedTerms = annotatedTerms.toSet()
@@ -18,7 +19,7 @@ class NullityAnnotator(private val nonNulls: Set<Term> = setOf()) : Recollecting
         val choiceAnnotatedTerms = arrayListOf<Set<Term>>()
         for (choice in ps) {
             builders.add(StateBuilder())
-            annotatedTerms = oldAnnotatedTerms.toHashSet()
+            annotatedTerms = oldAnnotatedTerms.toSet()
 
             super.transformBase(choice)
 
@@ -31,22 +32,23 @@ class NullityAnnotator(private val nonNulls: Set<Term> = setOf()) : Recollecting
                 .flatten()
                 .toSet()
                 .filter { term -> choiceAnnotatedTerms.all { term in it } }
-                .toHashSet()
+                .toSet()
         return ps
     }
 
-    override fun transformBase(predicate: Predicate): Predicate {
-        currentBuilder += predicate
-        val predicateTerms = TermCollector.getFullTermSet(predicate)
-                .asSequence()
-                .filter { it in nonNulls }
-                .filter { it !in annotatedTerms }
-                .toSet()
-        for (term in predicateTerms) {
-            currentBuilder += assume { term inequality null }
-            annotatedTerms.add(term)
+    override fun transformFieldTerm(term: FieldTerm): Term {
+        if (!term.isStatic && term.owner !in annotatedTerms) {
+            currentBuilder += assume { term.owner inequality null }
+            annotatedTerms = annotatedTerms + term.owner
         }
-        return predicate
+        return super.transformFieldTerm(term)
     }
 
+    override fun transformArrayIndexTerm(term: ArrayIndexTerm): Term {
+        if (term.arrayRef !in annotatedTerms) {
+            currentBuilder += assume { term.arrayRef inequality null }
+            annotatedTerms = annotatedTerms + term.arrayRef
+        }
+        return super.transformArrayIndexTerm(term)
+    }
 }

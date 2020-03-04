@@ -1,5 +1,6 @@
 package org.jetbrains.research.kex.ktype
 
+import com.abdullin.kthelper.assert.ktassert
 import com.abdullin.kthelper.assert.unreachable
 import com.abdullin.kthelper.defaultHashCode
 import com.abdullin.kthelper.logging.log
@@ -20,7 +21,7 @@ fun mergeTypes(tf: TypeFactory, vararg types: KexType): KexType = mergeTypes(tf,
 fun mergeTypes(tf: TypeFactory, types: Collection<KexType>): KexType {
     val nonNullTypes = types.filterNot { it is KexNull }
     val uniqueTypes = nonNullTypes.toSet()
-    require(uniqueTypes.isNotEmpty()) { log.error("Trying to merge null-only types") }
+    ktassert(uniqueTypes.isNotEmpty()) { log.error("Trying to merge null-only types") }
     return when {
         uniqueTypes.all { it is KexPointer } -> {
             var result = tf.objectType.kexType

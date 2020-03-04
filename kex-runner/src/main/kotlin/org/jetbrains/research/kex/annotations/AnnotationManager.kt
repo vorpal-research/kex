@@ -1,7 +1,7 @@
 package org.jetbrains.research.kex.annotations
 
 import com.abdullin.kthelper.`try`
-import com.abdullin.kthelper.assert.assert
+import com.abdullin.kthelper.assert.ktassert
 import com.abdullin.kthelper.logging.log
 import com.abdullin.kthelper.recast
 import org.apache.commons.lang.StringEscapeUtils.unescapeJava
@@ -38,7 +38,7 @@ object AnnotationManager {
             val annotation = type.getAnnotation(AnnotationFunctionality::class.java) ?: continue
             val functionality = annotation.name
             val oldValue = constructors.put(functionality, type.kotlin.primaryConstructor ?: continue)
-            assert(oldValue == null) { log.error("Annotation functionality already described for \"$functionality\"") }
+            ktassert(oldValue == null) { log.error("Annotation functionality already described for \"$functionality\"") }
         }
     }
 

@@ -5,6 +5,8 @@ import com.abdullin.kthelper.logging.log
 import org.jetbrains.research.kex.ExecutionContext
 import org.jetbrains.research.kex.generator.ConstantDescriptor
 import org.jetbrains.research.kex.generator.Descriptor
+import org.jetbrains.research.kex.generator.descriptor
+import org.jetbrains.research.kex.ktype.kexType
 import org.jetbrains.research.kex.smt.FinalDescriptorReanimator
 import org.jetbrains.research.kex.smt.InitialDescriptorReanimator
 import org.jetbrains.research.kex.smt.Reanimator
@@ -55,11 +57,15 @@ class DescriptorGenerator(override val method: Method,
 fun generateFinalDescriptors(method: Method, ctx: ExecutionContext, model: SMTModel, state: PredicateState): Pair<Descriptor?, List<Descriptor>> {
     val generator = DescriptorGenerator(method, ctx, model, FinalDescriptorReanimator(method, model, ctx))
     generator.apply(state)
-    return generator.instance to generator.args.map { it!! }
+    return generator.instance to generator.args.mapIndexed { index, arg ->
+        arg ?: descriptor(ctx) { default(method.argTypes[index].kexType) }
+    }
 }
 
 fun generateInitialDescriptors(method: Method, ctx: ExecutionContext, model: SMTModel, state: PredicateState): Pair<Descriptor?, List<Descriptor>> {
     val generator = DescriptorGenerator(method, ctx, model, InitialDescriptorReanimator(method, model, ctx))
     generator.apply(state)
-    return generator.instance to generator.args.map { it!! }
+    return generator.instance to generator.args.mapIndexed { index, arg ->
+        arg ?: descriptor(ctx) { default(method.argTypes[index].kexType) }
+    }
 }

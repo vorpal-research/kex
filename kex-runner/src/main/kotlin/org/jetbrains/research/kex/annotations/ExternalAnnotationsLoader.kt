@@ -1,5 +1,6 @@
 package org.jetbrains.research.kex.annotations
 
+import com.abdullin.kthelper.assert.ktassert
 import org.w3c.dom.Element
 import java.io.File
 import java.io.InputStream
@@ -155,11 +156,11 @@ class ExternalAnnotationsLoader : AnnotationsLoader {
                     callName = nameAttr.substring(delimiter until j)
                 }
                 returnType = transformTypeName(returnType)
-                assert(nameAttr[j] == '(')
+                ktassert(nameAttr[j] == '(')
                 delimiter = j + 1
                 while (nameAttr[delimiter] == ' ') delimiter++
                 j = nameAttr.indexOf(')', delimiter)
-                assert(j > 0)
+                ktassert(j > 0)
                 val params = parseParamTypes(nameAttr.substring(delimiter until j))
                 val call = emplaceCall(packageName, callName, returnType, params)
                 delimiter = j + 1

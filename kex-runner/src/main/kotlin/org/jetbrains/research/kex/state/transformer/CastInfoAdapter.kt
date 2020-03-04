@@ -1,5 +1,6 @@
 package org.jetbrains.research.kex.state.transformer
 
+import com.abdullin.kthelper.collection.dequeOf
 import org.jetbrains.research.kex.ktype.KexClass
 import org.jetbrains.research.kex.state.StateBuilder
 import org.jetbrains.research.kex.state.predicate.EqualityPredicate
@@ -9,10 +10,9 @@ import org.jetbrains.research.kex.state.term.CastTerm
 import org.jetbrains.research.kex.state.term.InstanceOfTerm
 import org.jetbrains.research.kex.state.term.Term
 import org.jetbrains.research.kfg.type.TypeFactory
-import java.util.*
 
 class CastInfoAdapter(val tf: TypeFactory) : RecollectingTransformer<CastInfoAdapter> {
-    override val builders = ArrayDeque<StateBuilder>().apply { add(StateBuilder()) }
+    override val builders = dequeOf(StateBuilder())
     // term -> mapOf(type -> condition)
     val instanceOfInfo = mutableMapOf<Term, MutableMap<KexClass, Term>>()
 

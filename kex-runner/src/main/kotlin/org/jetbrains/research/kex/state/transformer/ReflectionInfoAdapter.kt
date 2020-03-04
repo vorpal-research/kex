@@ -1,7 +1,6 @@
 package org.jetbrains.research.kex.state.transformer
 
 import com.abdullin.kthelper.logging.log
-import com.abdullin.kthelper.toInt
 import com.abdullin.kthelper.tryOrNull
 import org.jetbrains.research.kex.ktype.*
 import org.jetbrains.research.kex.state.PredicateState
@@ -11,20 +10,10 @@ import org.jetbrains.research.kex.state.predicate.EqualityPredicate
 import org.jetbrains.research.kex.state.predicate.Predicate
 import org.jetbrains.research.kex.state.predicate.assume
 import org.jetbrains.research.kex.state.term.*
-import org.jetbrains.research.kex.util.loadClass
-import org.jetbrains.research.kfg.ir.Field
+import org.jetbrains.research.kex.util.*
 import org.jetbrains.research.kfg.ir.Method
 import org.jetbrains.research.kfg.type.ArrayType
-import org.jetbrains.research.kfg.type.Reference
-import org.jetbrains.research.kfg.type.Type
 import java.util.*
-import kotlin.reflect.KClass
-import kotlin.reflect.KFunction
-import kotlin.reflect.KMutableProperty
-import kotlin.reflect.KType
-import kotlin.reflect.full.*
-import kotlin.reflect.jvm.javaMethod
-import kotlin.reflect.jvm.jvmErasure
 
 class ReflectionInfoAdapter(val method: Method, val loader: ClassLoader, val ignores: Set<Term> = setOf()) :
         RecollectingTransformer<ReflectionInfoAdapter> {
@@ -41,84 +30,6 @@ class ReflectionInfoAdapter(val method: Method, val loader: ClassLoader, val ign
         builders.add(StateBuilder())
     }
 
-    private val KType.isNonNullable get() = this.isMarkedNullable.not()
-
-    private fun KexType.isNonNullable(kType: KType) = when (this) {
-        is KexPointer -> kType.isNonNullable
-        else -> false
-    }
-
-    private fun KexType.isElementNullable(kType: KType) = when (this) {
-        is KexArray -> when {
-            kType.arguments.isEmpty() -> false
-            else -> kType.arguments[0].type?.isMarkedNullable ?: true
-        }
-        else -> false
-    }
-
-    private fun trimClassName(name: String) = buildString {
-        val actualName = name.split(" ").last()
-        val filtered = actualName.dropWhile { it == '[' }.removeSuffix(";")
-        append(actualName.takeWhile { it == '[' })
-        append(filtered.dropWhile { it == 'L' })
-    }
-
-    private val Type.trimmedName
-        get() = when (this) {
-            is Reference -> trimClassName(this.canonicalDesc)
-            else -> this.name
-        }
-    private val Class<*>.trimmedName get() = trimClassName(this.toString())
-
-    private infix fun KFunction<*>.eq(method: Method): Boolean {
-        val parameters = this.parameters.drop(method.isAbstract.not().toInt())
-
-        val name = tryOrNull { this.javaMethod?.name } ?: this.name
-        return name == method.name && parameters.zip(method.argTypes).fold(true) { acc, pair ->
-            val type = tryOrNull { pair.first.type.jvmErasure.java }
-            acc && type?.trimmedName == pair.second.trimmedName
-        }
-    }
-
-    private val KClass<*>.allFunctions
-        get() = tryOrNull {
-            constructors +
-                    staticFunctions +
-                    declaredMemberFunctions +
-                    declaredMemberExtensionFunctions +
-                    declaredMemberProperties.map { it.getter } +
-                    declaredMemberExtensionProperties.map { it.getter } +
-                    declaredMemberProperties.filterIsInstance<KMutableProperty<*>>().map { it.setter } +
-                    declaredMemberExtensionProperties.filterIsInstance<KMutableProperty<*>>().map { it.setter } +
-                    staticProperties.map { it.getter } +
-                    staticProperties.filterIsInstance<KMutableProperty<*>>().map { it.setter }
-        } ?: listOf()
-
-    private fun KClass<*>.find(method: Method) = allFunctions.find { it eq method }
-
-    private fun getKClass(type: KexType) = loader.loadClass(type.getKfgType(types)).kotlin
-
-    private fun getKFunction(method: Method): KFunction<*>? {
-        val queue = ArrayDeque<KClass<*>>()
-        tryOrNull { getKClass(KexClass(method.`class`.fullname)) }?.apply {
-            queue.add(this)
-        }
-        while (queue.isNotEmpty()) {
-            val klass = queue.poll()
-            when (val kFunction = klass.find(method)) {
-                null -> {
-                    val supertypes = tryOrNull { klass.supertypes } ?: listOf()
-                    queue.addAll(supertypes.map { it.classifier }.filterIsInstance<KClass<*>>())
-                }
-                else -> return kFunction
-            }
-        }
-        return null
-    }
-
-    private fun getKProperty(field: Field) =
-            tryOrNull { getKClass(KexClass(field.`class`.fullname)).declaredMemberProperties }?.find { it.name == field.name }
-
     override fun apply(ps: PredicateState): PredicateState {
         val (`this`, arguments) = collectArguments(ps)
 
@@ -126,7 +37,9 @@ class ReflectionInfoAdapter(val method: Method, val loader: ClassLoader, val ign
             currentBuilder += assume { `this` inequality null }
         }
 
-        val kFunction = getKFunction(method) ?: run {
+        val methodClassType = KexClass(method.`class`.fullname).getKfgType(types)
+        val klass = loader.loadKClass(methodClassType)
+        val kFunction = klass.getKFunction(method) ?: run {
             log.warn("Could not load kFunction for $method")
             return super.apply(ps)
         }
@@ -156,7 +69,9 @@ class ReflectionInfoAdapter(val method: Method, val loader: ClassLoader, val ign
     override fun transformCallPredicate(predicate: CallPredicate): Predicate {
         val call = predicate.call as CallTerm
 
-        val kFunction = getKFunction(call.method)
+        val methodClassType = KexClass(call.method.`class`.fullname).getKfgType(types)
+        val klass = loader.loadKClass(methodClassType)
+        val kFunction = klass.getKFunction(call.method)
         if (!predicate.hasLhv || kFunction == null) return predicate
 
         currentBuilder += predicate
@@ -192,10 +107,11 @@ class ReflectionInfoAdapter(val method: Method, val loader: ClassLoader, val ign
 
         val field = (predicate.rhv as FieldLoadTerm).field as FieldTerm
         val fieldType = (field.type as KexReference).reference
-        val kfgClass = cm.getByName(field.klass)
+        val kfgClass = cm[field.klass]
         val actualField = kfgClass.getField((field.fieldName as ConstStringTerm).value, fieldType.getKfgType(types))
 
-        val prop = getKProperty(actualField)
+        val klass = loader.loadKClass(kfgClass)
+        val prop = klass.getKProperty(actualField)
         val returnType = tryOrNull { prop?.getter?.returnType }
 
         if (returnType != null && fieldType.isNonNullable(returnType) && field !in ignores) {

@@ -69,7 +69,7 @@ interface AbstractGenerator<T> : Transformer<AbstractGenerator<T>> {
             }
 
     fun reanimateTerm(term: Term,
-                                jType: Type = loader.loadClass(term.type.getKfgType(method.cm.type))): T? = memory.getOrPut(term) {
+                      jType: Type = loader.loadClass(term.type.getKfgType(method.cm.type))): T? = memory.getOrPut(term) {
         when (typeInfos.getInfo<NullabilityInfo>(term)?.nullability) {
             Nullability.NON_NULLABLE -> reanimator.reanimate(term, jType)
             else -> reanimator.reanimateNullable(term, jType)
@@ -78,7 +78,11 @@ interface AbstractGenerator<T> : Transformer<AbstractGenerator<T>> {
 
     fun generate(ps: PredicateState): Pair<T?, List<T?>> {
         val (tempThis, tempArgs) = collectArguments(ps)
-        typeInfos = collectTypeInfos(reanimator.model, type, ps)
+        typeInfos = collectTypeInfos(reanimator.model, type, ps).let {
+            val tidfa = TypeInfoDFA(type, it)
+            tidfa.apply(ps)
+            tidfa.freshTypeInfo
+        }
         if (typeInfos.isNotEmpty())
             log.debug("Collected type info:\n${typeInfos.toList().joinToString("\n")}")
         thisTerm = when {
