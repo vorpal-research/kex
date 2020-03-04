@@ -1,5 +1,6 @@
 package org.jetbrains.research.kex.trace.file
 
+import com.abdullin.kthelper.assert.ktassert
 import com.abdullin.kthelper.logging.error
 import com.abdullin.kthelper.logging.log
 import org.jetbrains.research.kfg.ir.BasicBlock
@@ -96,13 +97,13 @@ data class Trace constructor(val method: Method,
                     }
                 }
             }
-            require(methodStack.size == infos.size)
+            ktassert(methodStack.size == infos.size)
             run {
                 while (methodStack.isNotEmpty()) {
                     result.add(methodStack.pop() to infos.pop())
                 }
             }
-            require(result.isNotEmpty())
+            ktassert(result.isNotEmpty())
             return result.map { it.second.toTrace(it.first) }.reduceRight { trace, acc ->
                 trace.copy(subtraces = trace.subtraces + acc)
             }

@@ -1,5 +1,6 @@
 package org.jetbrains.research.kex.smt.boolector
 
+import com.abdullin.kthelper.assert.ktassert
 import com.abdullin.kthelper.assert.unreachable
 import com.abdullin.kthelper.logging.log
 import org.jetbrains.research.boolector.Btor
@@ -131,7 +132,7 @@ class BoolectorSolver(val tf: TypeFactory) : AbstractSMTSolver {
             bounds.getValue(memspace).first[modelPtr] = modelStartB
             bounds.getValue(memspace).second[modelPtr] = modelEndB
 
-            require(assignments.getOrPut(ptr) { modelPtr } == modelPtr)
+            ktassert(assignments.getOrPut(ptr) { modelPtr } == modelPtr)
         }
 
         return SMTModel(assignments,

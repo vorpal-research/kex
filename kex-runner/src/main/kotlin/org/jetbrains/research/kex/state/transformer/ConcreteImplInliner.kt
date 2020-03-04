@@ -1,5 +1,6 @@
 package org.jetbrains.research.kex.state.transformer
 
+import com.abdullin.kthelper.assert.ktassert
 import com.abdullin.kthelper.collection.dequeOf
 import org.jetbrains.research.kex.ExecutionContext
 import org.jetbrains.research.kex.asm.manager.MethodManager
@@ -38,7 +39,7 @@ class ConcreteImplInliner(val ctx: ExecutionContext,
                 val kexClass = typeInfo.type as? KexClass ?: return null
                 val concreteClass = kexClass.getKfgClass(ctx.types) as? ConcreteClass ?: return null
                 val result = concreteClass.getMethod(method.name, method.desc)
-                com.abdullin.kthelper.assert.assert(result.isNotEmpty())
+                ktassert(result.isNotEmpty())
                 result
             }
         }

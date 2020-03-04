@@ -1,5 +1,6 @@
 package org.jetbrains.research.kex.smt.z3
 
+import com.abdullin.kthelper.assert.ktassert
 import com.abdullin.kthelper.assert.unreachable
 import com.abdullin.kthelper.logging.debug
 import com.abdullin.kthelper.logging.log
@@ -171,7 +172,7 @@ class Z3Solver(val tf: TypeFactory) : AbstractSMTSolver {
             bounds.getValue(memspace).first[modelPtr] = modelStartB
             bounds.getValue(memspace).second[modelPtr] = modelEndB
 
-            require(assignments.getOrPut(ptr) { modelPtr } == modelPtr)
+            ktassert(assignments.getOrPut(ptr) { modelPtr } == modelPtr)
         }
 
         return SMTModel(assignments,
