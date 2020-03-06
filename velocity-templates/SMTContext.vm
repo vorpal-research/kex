@@ -30,10 +30,10 @@ class VersionedMemory(val memory: Memory_, val version: Long = 0) {
 class $self : ${solver}SMTContext {
     companion object {
         const val MEMORY_NAME = "__memory__"
-        const val BOUNDS_NAME = "__bounds__"
+        const val PROPERTY_NAME = "__property__"
 
         fun memoryName(memspace: Int) = "${ MEMORY_NAME }${ memspace }"
-        fun boundsName(memspace: Int) = "${ BOUNDS_NAME }${ memspace }"
+        fun propertyName(memspace: Int, name: String) = "$PROPERTY_NAME${name}__${memspace}"
 
         fun mergeContexts(name: String, default: $self, choices: Map< Bool_, $self >): $self {
             val maxLocal = max(default.localPointer, choices.map { it.value.localPointer }.max() ?: 0)
@@ -67,8 +67,6 @@ class $self : ${solver}SMTContext {
         this.memories = memories.toMutableMap()
 
         initialMemories[MEMORY_NAME] = VersionedMemory(factory.makeEmptyMemory(MEMORY_NAME))
-
-        initBounds(0)
     }
 
     constructor(factory: $factory, localPointer: Int, staticPointer: Int)
@@ -82,12 +80,13 @@ class $self : ${solver}SMTContext {
     fun getMemory(memspace: Int) = memories.getOrPut(memoryName(memspace)) { getInitialMemory(memoryName(memspace)) }
     private fun setMemory(memspace: Int, mem: VersionedMemory) { memories[memoryName(memspace)] = mem }
 
-    fun getBounds(memspace: Int) = memories.getOrPut(boundsName(memspace)) { VersionedMemory(factory.makeEmptyMemory(boundsName(memspace))) }
-    private fun setBounds(memspace: Int, bnd: VersionedMemory) { memories[boundsName(memspace)] = bnd }
 
-    private fun initBounds(memspace: Int) {
-        val bnds = getBounds(memspace).store(factory.makeNull(), factory.makeIntConst(-1))
-        setBounds(memspace, bnds)
+    private fun setProperties(memspace: Int, name: String, mem: VersionedMemory) {
+        memories[propertyName(memspace, name)] = mem
+    }
+
+    fun getProperties(memspace: Int, name: String) = memories.getOrPut(propertyName(memspace, name)) {
+        VersionedMemory(factory.makeEmptyMemory(propertyName(memspace, name)))
     }
 
     private fun get(id: String) = memories.getOrPut(id) { getInitialMemory(id) }
@@ -95,34 +94,51 @@ class $self : ${solver}SMTContext {
 
     fun getInitialMemory(memspace: Int) = initialMemories.getOrElse(memoryName(memspace)) { getMemory(memspace) }
 
-    fun readMemory(ptr: Ptr_, bitsize: Int, memspace: Int) = getMemory(memspace).load(ptr, bitsize)
+    fun readMemory(ptr: Ptr_, memspace: Int, size: TypeSize) = when (size) {
+        TypeSize.WORD -> readMemory< Word_ >(ptr, memspace)
+        TypeSize.DWORD -> readMemory< DWord_ >(ptr, memspace)
+    }
+
     inline fun < reified T : $valexpr > readMemory(ptr: Ptr_, memspace: Int) = getMemory(memspace).load< T >(ptr)
+
     fun < T : $valexpr > writeMemory(ptr: Ptr_, value: T, memspace: Int) {
         val mem = getMemory(memspace).store(ptr, value)
         setMemory(memspace, mem)
     }
 
-    fun readBound(ptr: Ptr_, memspace: Int): Int_ = getBounds(memspace).load< Int_ >(ptr)
-    fun writeBound(ptr: Ptr_, bound: Int_, memspace: Int) {
-        val bnd = getBounds(memspace).store(ptr, bound)
-        setBounds(memspace, bnd)
+    fun readProperty(ptr: Ptr_, memspace: Int, name: String, size: TypeSize) = when (size) {
+        TypeSize.WORD -> readProperty< Word_ >(ptr, memspace, name)
+        TypeSize.DWORD -> readProperty< DWord_ >(ptr, memspace, name)
     }
 
-    fun getLocalPtr(memspace: Int, offset: Int) = getLocalPtr(memspace, offset, factory.makeIntConst(offset))
-    fun getLocalPtr(memspace: Int, offset: Int, size: Int_): Ptr_ {
-        val res = factory.makePtrConst(localPointer)
-        localPointer += 2 * offset
-        writeBound(res, size, memspace)
-        return res
+    inline fun < reified T : $valexpr > readProperty(ptr: Ptr_, memspace: Int, name: String) =
+            getProperties(memspace, name).load< T >(ptr)
+
+    fun < T : $valexpr > writeProperty(ptr: Ptr_, memspace: Int, name: String, prop: T) {
+        val mem = getProperties(memspace, name).store(ptr, prop)
+        setProperties(memspace, name, mem)
     }
 
-    fun getStaticPtr(memspace: Int, offset: Int) = getStaticPtr(memspace, offset, factory.makeIntConst(offset))
-    fun getStaticPtr(memspace: Int, offset: Int, size: Int_): Ptr_ {
-        val res = factory.makePtrConst(localPointer)
-        localPointer += 2 * offset
-        writeBound(res, size, memspace)
-        return res
-    }
+    fun getLocalPtr(memspace: Int, size: TypeSize): Ptr_ =
+            factory.makePtrConst(localPointer).also { localPointer += size.int }
+
+    fun getLocalArray(memspace: Int, length: Int, elementSize: TypeSize): Ptr_ =
+            factory.makePtrConst(localPointer).also {
+                val totalSize = length * elementSize.int
+                localPointer += totalSize
+                writeProperty(it, memspace, "length", factory.makeIntConst(length))
+            }
+
+
+    fun getStaticPtr(memspace: Int, size: TypeSize): Ptr_ =
+            factory.makePtrConst(localPointer).also { localPointer += size.int }
+
+    fun getStaticArray(memspace: Int, length: Int, elementSize: TypeSize): Ptr_ =
+            factory.makePtrConst(localPointer).also {
+                val totalSize = length * elementSize.int
+                localPointer += totalSize
+                writeProperty(it, memspace, "length", factory.makeIntConst(length))
+            }
 
     fun switchOn(name: String, contexts: Map< Bool_, ${solver}Context >): ${solver}Context {
         val merged =  mergeContexts(name, this, contexts)

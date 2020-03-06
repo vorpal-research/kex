@@ -1,6 +1,5 @@
 package org.jetbrains.research.kex.smt.z3
 
-import com.abdullin.kthelper.assert.ktassert
 import com.abdullin.kthelper.assert.unreachable
 import com.abdullin.kthelper.logging.debug
 import com.abdullin.kthelper.logging.log
@@ -12,7 +11,6 @@ import org.jetbrains.research.kex.state.PredicateState
 import org.jetbrains.research.kex.state.term.Term
 import org.jetbrains.research.kex.state.transformer.collectPointers
 import org.jetbrains.research.kex.state.transformer.collectVariables
-import org.jetbrains.research.kex.state.transformer.memspace
 import org.jetbrains.research.kfg.type.TypeFactory
 
 private val timeout = kexConfig.getIntValue("smt", "timeout", 3) * 1000
@@ -139,41 +137,41 @@ class Z3Solver(val tf: TypeFactory) : AbstractSMTSolver {
         val memories = hashMapOf<Int, Pair<MutableMap<Term, Term>, MutableMap<Term, Term>>>()
         val bounds = hashMapOf<Int, Pair<MutableMap<Term, Term>, MutableMap<Term, Term>>>()
 
-        for (ptr in ptrs) {
-            val memspace = ptr.memspace
-
-            val startMem = ctx.getInitialMemory(memspace)
-            val endMem = ctx.getMemory(memspace)
-
-            val startBounds = ctx.getBounds(memspace)
-            val endBounds = ctx.getBounds(memspace)
-
-            val eptr = Z3Converter(tf).convert(ptr, ef, ctx) as? Ptr_
-                    ?: unreachable { log.error("Non-ptr expr for pointer $ptr") }
-
-            val startV = startMem.load(eptr, Z3ExprFactory.getTypeSize(ptr.type))
-            val endV = endMem.load(eptr, Z3ExprFactory.getTypeSize(ptr.type))
-
-            val startB = startBounds[eptr]
-            val endB = endBounds[eptr]
-
-
-            val modelPtr = Z3Unlogic.undo(model.evaluate(eptr.expr, true))
-            val modelStartV = Z3Unlogic.undo(model.evaluate(startV.expr, true))
-            val modelEndV = Z3Unlogic.undo(model.evaluate(endV.expr, true))
-            val modelStartB = Z3Unlogic.undo(model.evaluate(startB.expr, true))
-            val modelEndB = Z3Unlogic.undo(model.evaluate(endB.expr, true))
-
-            memories.getOrPut(memspace) { hashMapOf<Term, Term>() to hashMapOf() }
-            memories.getValue(memspace).first[modelPtr] = modelStartV
-            memories.getValue(memspace).second[modelPtr] = modelEndV
-
-            bounds.getOrPut(memspace) { hashMapOf<Term, Term>() to hashMapOf() }
-            bounds.getValue(memspace).first[modelPtr] = modelStartB
-            bounds.getValue(memspace).second[modelPtr] = modelEndB
-
-            ktassert(assignments.getOrPut(ptr) { modelPtr } == modelPtr)
-        }
+//        for (ptr in ptrs) {
+//            val memspace = ptr.memspace
+//
+//            val startMem = ctx.getInitialMemory(memspace)
+//            val endMem = ctx.getMemory(memspace)
+//
+//            val startBounds = ctx.getBounds(memspace)
+//            val endBounds = ctx.getBounds(memspace)
+//
+//            val eptr = Z3Converter(tf).convert(ptr, ef, ctx) as? Ptr_
+//                    ?: unreachable { log.error("Non-ptr expr for pointer $ptr") }
+//
+//            val startV = startMem.load(eptr, Z3ExprFactory.getTypeSize(ptr.type))
+//            val endV = endMem.load(eptr, Z3ExprFactory.getTypeSize(ptr.type))
+//
+//            val startB = startBounds[eptr]
+//            val endB = endBounds[eptr]
+//
+//
+//            val modelPtr = Z3Unlogic.undo(model.evaluate(eptr.expr, true))
+//            val modelStartV = Z3Unlogic.undo(model.evaluate(startV.expr, true))
+//            val modelEndV = Z3Unlogic.undo(model.evaluate(endV.expr, true))
+//            val modelStartB = Z3Unlogic.undo(model.evaluate(startB.expr, true))
+//            val modelEndB = Z3Unlogic.undo(model.evaluate(endB.expr, true))
+//
+//            memories.getOrPut(memspace) { hashMapOf<Term, Term>() to hashMapOf() }
+//            memories.getValue(memspace).first[modelPtr] = modelStartV
+//            memories.getValue(memspace).second[modelPtr] = modelEndV
+//
+//            bounds.getOrPut(memspace) { hashMapOf<Term, Term>() to hashMapOf() }
+//            bounds.getValue(memspace).first[modelPtr] = modelStartB
+//            bounds.getValue(memspace).second[modelPtr] = modelEndB
+//
+//            ktassert(assignments.getOrPut(ptr) { modelPtr } == modelPtr)
+//        }
 
         return SMTModel(assignments,
                 memories.map { it.key to MemoryShape(it.value.first, it.value.second) }.toMap(),
