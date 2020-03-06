@@ -9,11 +9,11 @@ import kotlinx.serialization.serializer
 import org.jetbrains.research.kfg.ClassManager
 
 abstract class AbstractSerializer(val context: SerialModule) {
-    @UseExperimental(UnstableDefault::class)
+    @OptIn(UnstableDefault::class)
     protected val configuration = JsonConfiguration(
             encodeDefaults = false,
-            strictMode = true,
-            unquoted = false,
+            ignoreUnknownKeys = false,
+            unquotedPrint = false,
             prettyPrint = true,
             useArrayPolymorphism = false,
             classDiscriminator = "className"
