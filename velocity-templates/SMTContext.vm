@@ -33,7 +33,7 @@ class $self : ${solver}SMTContext {
         const val PROPERTY_NAME = "__property__"
 
         fun memoryName(memspace: Int) = "${ MEMORY_NAME }${ memspace }"
-        fun propertyName(memspace: Int, name: String) = "$PROPERTY_NAME${name}__${memspace}"
+        fun propertyName(memspace: Int, name: String) = "${ PROPERTY_NAME }${ name }__${ memspace }"
 
         fun mergeContexts(name: String, default: $self, choices: Map< Bool_, $self >): $self {
             val maxLocal = max(default.localPointer, choices.map { it.value.localPointer }.max() ?: 0)
@@ -93,6 +93,9 @@ class $self : ${solver}SMTContext {
 
 
     fun getInitialMemory(memspace: Int) = initialMemories.getOrElse(memoryName(memspace)) { getMemory(memspace) }
+
+    fun getInitialProperties(memspace: Int, name: String) =
+        initialMemories.getOrElse(propertyName(memspace, name)) { getProperties(memspace, name) }
 
     fun readMemory(ptr: Ptr_, memspace: Int, size: TypeSize) = when (size) {
         TypeSize.WORD -> readMemory< Word_ >(ptr, memspace)
