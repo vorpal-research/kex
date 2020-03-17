@@ -202,19 +202,21 @@ class ObjectReanimator(override val method: Method,
     private fun reanimateReferenceValue(term: Term, jType: Type, value: Term?): Any? {
         val referencedType = (term.type as KexReference).reference
         if (value == null) return null
-        val intVal = (value as ConstIntTerm).value
 
-        return when (referencedType) {
-            is KexPointer -> reanimateReferencePointer(term, jType, value)
-            is KexBool -> intVal.toBoolean()
-            is KexByte -> intVal.toByte()
-            is KexChar -> intVal.toChar()
-            is KexShort -> intVal.toShort()
-            is KexInt -> intVal
-            is KexLong -> intVal.toLong()
-            is KexFloat -> intVal.toFloat()
-            is KexDouble -> intVal.toDouble()
-            else -> unreachable { log.error("Can't recover type $referencedType from memory value $value") }
+        return when (value) {
+            is ConstDoubleTerm -> value.value
+            is ConstFloatTerm -> value.value
+            else -> {
+                val intVal = (value as ConstIntTerm).value
+                when (referencedType) {
+                    is KexPointer -> reanimateReferencePointer(term, jType, value)
+                    is KexBool -> intVal.toBoolean()
+                    is KexLong -> intVal.toLong()
+                    is KexFloat -> intVal.toFloat()
+                    is KexDouble -> intVal.toDouble()
+                    else -> intVal
+                }
+            }
         }
     }
 
