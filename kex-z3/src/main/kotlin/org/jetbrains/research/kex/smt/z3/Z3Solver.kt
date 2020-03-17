@@ -185,17 +185,13 @@ class Z3Solver(val tf: TypeFactory) : AbstractSMTSolver {
                 }
             }
         }
-        PropertyModel(
+        return SMTModel(
                 assignments,
                 memories.map { (memspace, pair) -> memspace to MemoryShape(pair.first, pair.second) }.toMap(),
                 properties.map { (memspace, names) ->
                     memspace to names.map { (name, pair) -> name to MemoryShape(pair.first, pair.second) }.toMap()
                 }.toMap()
         )
-
-        return SMTModel(assignments,
-                memories.map { it.key to MemoryShape(it.value.first, it.value.second) }.toMap(),
-                mapOf())
     }
 
     override fun cleanup() {

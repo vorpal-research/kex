@@ -135,7 +135,7 @@ class BoolectorSolver(val tf: TypeFactory) : AbstractSMTSolver {
 
         return SMTModel(assignments,
                 memories.map { it.key to MemoryShape(it.value.first, it.value.second) }.toMap(),
-                bounds.map { it.key to MemoryShape(it.value.first, it.value.second) }.toMap())
+                mapOf())
     }
 
     override fun cleanup() = ef.ctx.release()
