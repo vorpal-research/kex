@@ -1,10 +1,13 @@
 package org.jetbrains.research.kex.smt.z3
 
+import com.abdullin.kthelper.assert.ktassert
 import com.abdullin.kthelper.assert.unreachable
 import com.abdullin.kthelper.logging.debug
 import com.abdullin.kthelper.logging.log
 import com.microsoft.z3.*
 import org.jetbrains.research.kex.config.kexConfig
+import org.jetbrains.research.kex.ktype.KexArray
+import org.jetbrains.research.kex.ktype.KexInt
 import org.jetbrains.research.kex.ktype.KexReference
 import org.jetbrains.research.kex.smt.*
 import org.jetbrains.research.kex.smt.Solver
@@ -182,6 +185,25 @@ class Z3Solver(val tf: TypeFactory) : AbstractSMTSolver {
                     memories.getOrPut(memspace) { hashMapOf<Term, Term>() to hashMapOf() }
                     memories.getValue(memspace).first[modelPtr] = modelStartV
                     memories.getValue(memspace).second[modelPtr] = modelEndV
+
+                    if (ptr.type is KexArray) {
+                        val startProp = ctx.getInitialProperties(memspace, "length")
+                        val endProp = ctx.getProperties(memspace, "length")
+
+                        val startLength = startProp.load(ptrExpr, Z3ExprFactory.getTypeSize(KexInt()).int)
+                        val endLength = endProp.load(ptrExpr, Z3ExprFactory.getTypeSize(KexInt()).int)
+
+                        val startLengthV = Z3Unlogic.undo(model.evaluate(startLength.expr, true))
+                        val endLengthV = Z3Unlogic.undo(model.evaluate(endLength.expr, true))
+
+                        val pair = properties.getOrPut(memspace, ::hashMapOf).getOrPut("length") {
+                            hashMapOf<Term, Term>() to hashMapOf()
+                        }
+                        pair.first[modelPtr] = startLengthV
+                        pair.second[modelPtr] = endLengthV
+                    }
+
+                    ktassert(assignments.getOrPut(ptr) { modelPtr } == modelPtr)
                 }
             }
         }

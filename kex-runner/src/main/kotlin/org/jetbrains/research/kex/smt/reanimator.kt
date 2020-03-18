@@ -124,7 +124,7 @@ class ObjectReanimator(override val method: Method,
 
         val memspace = arrayType.memspace
         val instance = newArrayInstance(memspace, jType, addr)
-        return memory(arrayType.memspace, address, instance)
+        return memory(memspace, address, instance)
     }
 
     private fun reanimateReference(term: Term, jType: Type, addr: Term?): Any? {
