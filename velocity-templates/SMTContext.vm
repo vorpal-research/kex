@@ -122,6 +122,7 @@ class $self : ${solver}SMTContext {
         setProperties(memspace, name, mem)
     }
 
+    @Suppress("UNUSED_PARAMETER")
     fun getLocalPtr(memspace: Int, size: TypeSize): Ptr_ =
             factory.makePtrConst(localPointer).also { localPointer += size.int }
 
@@ -133,6 +134,7 @@ class $self : ${solver}SMTContext {
             }
 
 
+    @Suppress("UNUSED_PARAMETER")
     fun getStaticPtr(memspace: Int, size: TypeSize): Ptr_ =
             factory.makePtrConst(localPointer).also { localPointer += size.int }
 

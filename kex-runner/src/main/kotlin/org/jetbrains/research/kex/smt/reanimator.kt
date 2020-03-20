@@ -362,10 +362,10 @@ abstract class DescriptorReanimator(override val method: Method,
                         Triple(instance, `class`, kfgClass.getField(fieldName, term.type.getKfgType(types)))
                     }
                 }
-                val fieldAddress = reanimateFromAssignment(term)
-                val fieldValue = reanimateFromMemory(memspace, fieldAddress)
+                val name = "${term.klass}.${term.fieldNameString}"
+                val fieldValue = reanimateFromProperties(memspace, name, addr)
 
-                val fieldReflect = klass.getActualField((term.fieldName as ConstStringTerm).value)
+                val fieldReflect = klass.getActualField(term.fieldNameString)
                 val reanimatedValue = reanimateReferenceValue(term, fieldValue, jType, nullable)
                 if (fieldReflect.isEnumConstant || fieldReflect.isSynthetic)
                     return@descriptor default(term.type, nullable)

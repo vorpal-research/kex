@@ -2,16 +2,15 @@
 
 package org.jetbrains.research.kex.test.debug
 
-
 class BasicTests {
 
-    fun testUnknownArrayWrite(array: IntArray) {
-        if (array.size < 5) {
-            return
-        }
 
-        for (i in 0 until 5) {
-            array[i] = i * i
+    fun testArrayWrite(array: IntArray) {
+//        if (array.size < 3) return
+
+        val l = 8
+        for (i in 0 until 1) {
+            array[i] = l
         }
     }
 
