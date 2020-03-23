@@ -12,7 +12,7 @@
     <artifactId>kex-boolector</artifactId>
 
     <properties>
-        <boolector.version>3.1.4</boolector.version>
+        <boolector.version>3.2.1</boolector.version>
     </properties>
 
     <dependencies>
