@@ -2,53 +2,48 @@
 
 package org.jetbrains.research.kex.test.debug
 
-import org.jetbrains.research.kex.test.Intrinsics
+import java.io.ByteArrayInputStream
 
 class BasicTests {
-
-    open class Point(val x: Int, val y: Int, val z: Int) {
-        override fun toString() = "($x, $y, $z)"
-    }
-    class Point4(x: Int, y: Int, z: Int, val t: Int) : Point(x, y, z) {
-        override fun toString() = "($x, $y, $z, $t)"
-    }
-    data class Line(val start: Point, val end: Point) {
-        override fun toString() = "{$start, $end}"
-    }
-    data class DoublePoint(val x: Double, val y: Double, val z: Double) {
-        override fun toString() = "($x, $y, $z)"
-    }
-
-    fun simplePointCheck(x1: Int, x2: Int) {
-        val zero = Point(x = x1, y = 0, z = 1)
-        val ten = Point(x = x2, y = 10, z = 10)
-
-        if (ten.x > zero.x) {
-            Intrinsics.assertReachable()
-        } else {
-            Intrinsics.assertReachable()
+    object AnnotatedMethodsThere {
+        @JvmStatic
+        fun rangeExample(param0: Any?, param1: Int): Int {
+            return param1 + 2
         }
-        Intrinsics.assertReachable()
+        @JvmStatic
+        // "!null, _ -> !null; _, true -> new; _, false -> param1"
+        fun haveContract(param0: Any?, param1: Boolean): Any? = if (param1) Any() else param0
+
+        // "false -> fail; _ -> this"
+        fun assertTrue(param0: Boolean): AnnotatedMethodsThere {
+            if (!param0) throw IllegalStateException()
+            return this
+        }
+
+        fun assertNotNull(param0: Any?) {
+            if (param0 == null) throw IllegalArgumentException()
+        }
+
+        fun makeBeautifulList(n: Int) = MutableList(n) { 0 }
     }
 
-    fun pointCheck(p1: Point, p2: Point) {
-        if (p1.x > p2.x) {
-            Intrinsics.assertReachable()
-        } else if (p2 is Point4) {
-            Intrinsics.assertReachable()
-        } else {
-            Intrinsics.assertReachable()
+    class ThatClassContainsHighQualityCodeToProf {
+        fun incredibleMethod(exitingArgument: String, unusualNumber: Double): List<Int> {
+            val importantMethods = AnnotatedMethodsThere
+            val lovelyInteger = unusualNumber.toInt()
+            if (lovelyInteger.toDouble() == unusualNumber) {
+                val bestStream = ByteArrayInputStream(exitingArgument.toByteArray())
+                val meaningfulResult = importantMethods.makeBeautifulList(lovelyInteger)
+                //while (bestStream.available() > 0) {
+                val remarkableLetter = bestStream.read()
+                importantMethods.assertTrue(importantMethods.assertTrue(remarkableLetter > 0) == importantMethods)
+                meaningfulResult += remarkableLetter
+                //}
+                importantMethods.assertNotNull(meaningfulResult)
+                return meaningfulResult
+            }
+            return emptyList()
         }
-    }
-
-    fun testArray(array: Array<Point>) {
-        if (array[0].x > 0) {
-            Intrinsics.assertReachable()
-        }
-        if (array[1].y < 0) {
-            Intrinsics.assertReachable()
-        }
-        Intrinsics.assertReachable()
     }
 
 }
