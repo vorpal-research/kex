@@ -43,7 +43,9 @@ class ModelExecutor(override val method: Method,
         memory[it] = reanimator.reanimateNullable(it, javaClass)
     }
 
-    override fun reanimateTerm(term: Term, jType: Type): Any? = reanimator.reanimateNullable(term, jType)
+    override fun reanimateTerm(term: Term, jType: Type) = memory.getOrPut(term) {
+        reanimator.reanimateNullable(term, jType)
+    }
 
     override fun checkPath(path: Predicate): Boolean = when (path) {
         is EqualityPredicate -> checkTerms(path.lhv, path.rhv) { a, b -> a == b }

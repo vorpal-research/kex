@@ -23,12 +23,16 @@ private val derollCount = kexConfig.getIntValue("loop", "deroll-count", 3)
 val BasicBlock.originalBlock: BasicBlock
     get() = LoopDeroller.blockMapping[this.parent]?.get(this) ?: this
 
+val BasicBlock.isUnreachable: Boolean
+    get() = this in (LoopDeroller.unreachableBlocks[this.parent] ?: hashSetOf())
+
 class LoopDeroller(override val cm: ClassManager) : LoopVisitor {
 
     companion object {
         const val DEROLLED_POSTFIX = ".deroll"
 
         val blockMapping = hashMapOf<Method, MutableMap<BasicBlock, BasicBlock>>()
+        val unreachableBlocks = hashMapOf<Method, MutableSet<BasicBlock>>()
     }
 
     private data class State(
@@ -151,6 +155,7 @@ class LoopDeroller(override val cm: ClassManager) : LoopVisitor {
         val unreachableBlock = BodyBlock("unreachable")
         unreachableBlock.add(instructions.getUnreachable())
         method.add(unreachableBlock)
+        unreachableBlocks.getOrPut(method, ::hashSetOf).add(unreachableBlock)
 
         // remap blocks of last iteration to actual method blocks
         val lastTerminator = state[state.terminatingBlock]
