@@ -12,7 +12,7 @@ Kex is a white-box fuzzer tool for Java bytecode.
   mvn install:install-file -Dfile=/usr/lib/com.microsoft.z3.jar -DgroupId=com.microsoft 
   -DartifactId=z3 -Dversion=4.8.6 -Dpackaging=jar
   ```
-* [boolector-java](https://aur.archlinux.org/packages/boolector-java/) v3.1.4
+* [boolector-java](https://aur.archlinux.org/packages/boolector-java/) v3.2.1
 
 # Build
 
