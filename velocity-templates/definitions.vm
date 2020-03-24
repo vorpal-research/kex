@@ -17,6 +17,7 @@ import com.abdullin.kthelper.assert.*
 #set($Double = "${solver}Double")
 #set($Array = "${solver}Array")
 #set($Memory = "${solver}Memory")
+#set($Function = "${solver}Function")
 
 #set($exprClasses = [$Bool, $Bitvector32, $Bitvector64, $Bitvector, $Float, $Double])
 #set($numClasses = [$Bitvector32, $Bitvector64, $Bitvector, $Float, $Double])

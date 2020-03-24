@@ -15,6 +15,7 @@ typealias Double_ = $Double
 typealias Word_ = $Bitvector32
 typealias DWord_ = $Bitvector64
 typealias Memory_ = $Memory< Ptr_, Word_ >
+typealias Function_ = $Function
 typealias Dynamic_ = $valexpr
 
 enum class TypeSize (val int: Int) {
@@ -32,6 +33,7 @@ class $factory : ${solver}SMTExprFactory() {
     }
 
     val ctx = $context()
+    private val typeMap = mutableMapOf< KexClass, Int_ >()
 
 #macro(generateMakes $type $basetype)
     #set($underlined = "${type}_")
@@ -74,6 +76,25 @@ class $factory : ${solver}SMTExprFactory() {
         is KexArray -> makePtr(name, fresh)
         is KexNull -> makePtr(name, fresh)
         else -> unreachable { log.error("Unknown type in ExprFactory: ${ type }") }
+    }
+
+    fun getClassVariable(klass: KexClass) = typeMap.getOrPut(klass) {
+            makeInt(klass.`class`, true)
+        }
+
+    fun applyTypeAxioms(tf: TypeFactory): Bool_ {
+        val klasses = typeMap.mapKeys { it.key.kfgClass(tf) }
+        val func = Function_(ctx, "isSubtype", listOf(Int_.getStaticSort(ctx), Int_.getStaticSort(ctx)), Int_.getStaticSort(ctx))
+        var result = makeBoolConst(true)
+        for ((klass1, val1) in klasses) {
+            for ((klass2, val2) in klasses) {
+                val isSubtype1 = makeBoolConst(klass1.isInheritorOf(klass2))
+                val isSubtype2 = makeBoolConst(klass2.isInheritorOf(klass1))
+                result = result and (func.applyAs< Bool_ >(val1, val2) eq isSubtype1)
+                result = result and (func.applyAs< Bool_ >(val2, val1) eq isSubtype2)
+            }
+        }
+        return result
     }
 
     inline fun < T : Dynamic_, reified U : Dynamic_ > switch(value: T, cases: Map< T, U >, default: U) =

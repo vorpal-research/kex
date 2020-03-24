@@ -2,7 +2,12 @@ package org.jetbrains.research.kex.smt.boolector
 
 import org.jetbrains.research.kex.smt.*
 
-@SMTExpr(solver = "Boolector", importPackage = "org.jetbrains.research.boolector", context = "Btor", expr = "BoolectorNode", sort = "BoolectorSort")
+@SMTExpr(solver = "Boolector",
+        importPackage = "org.jetbrains.research.boolector",
+        context = "Btor",
+        expr = "BoolectorNode",
+        sort = "BoolectorSort",
+        function = "FunctionDecl")
 abstract class BoolectorSMTExpr
 
 @SMTMemory(solver = "Boolector", importPackage = "org.jetbrains.research.boolector", context = "Btor", byteSize = 32)
