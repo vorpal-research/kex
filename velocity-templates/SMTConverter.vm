@@ -43,6 +43,8 @@ class ${solver}Converter(val tf: TypeFactory) : ${solver}SMTConverter() {
                 else -> unreachable { log.error("Unable to cast expr ${ expr } to ${ type }") }
             }
 
+    fun apply(ps: PredicateState, ef: $factory, ctx: ${solver}Context): Bool_ =
+            convert(ps, ef, ctx) and ef.buildSubtypeAxioms(tf)
 
     fun convert(ps: PredicateState, ef: $factory, ctx: ${solver}Context, extractPath: Boolean = false): Bool_ = when (ps) {
 #set($states = ["Basic", "Chain", "Choice"])
@@ -277,8 +279,15 @@ class ${solver}Converter(val tf: TypeFactory) : ${solver}SMTConverter() {
     fun convert(field: FieldTerm, ef: $factory, ctx: ${solver}Context): Dynamic_ =
         convert(field.owner, ef, ctx)
 
-    fun convert(instanceof: InstanceOfTerm, ef: $factory, ctx: ${solver}Context): Dynamic_ =
-        ef.getVarByTypeAndName(instanceof.type, instanceof.toString())
+    fun convert(instanceof: InstanceOfTerm, ef: $factory, ctx: ${solver}Context): Dynamic_ {
+        val memspace = instanceof.operand.memspace
+        val operand = convert(instanceof.operand, ef, ctx) as? Ptr_ ?: unreachable { log.error("Non-ptr ref in field load") }
+
+        val ptrType = ctx.readProperty< Int_ >(operand, memspace, "type")
+        val checkedType = ef.getTypeVariable(instanceof.checkedType)
+        val instanceOf = ef.subtypeFunction.applyAs< Bool_ >(ptrType, checkedType)
+        return instanceOf
+    }
 
     fun convert(neg: NegTerm, ef: $factory, ctx: ${solver}Context): Dynamic_ {
         val operand = convert(neg.operand, ef, ctx)
