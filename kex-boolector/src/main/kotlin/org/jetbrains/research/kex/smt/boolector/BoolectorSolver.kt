@@ -58,6 +58,7 @@ class BoolectorSolver(val tf: TypeFactory) : AbstractSMTSolver {
         val (state_, query_) = state to query
 
         state_.asAxiom().assertForm()
+        ef.buildSubtypeAxioms(tf).asAxiom().assertForm()
         query_.axiom.assertForm()
         query_.expr.assertForm()
 

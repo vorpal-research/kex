@@ -75,6 +75,7 @@ class Z3Solver(val tf: TypeFactory) : AbstractSMTSolver {
         }
 
         solver.add(state_.asAxiom() as BoolExpr)
+        solver.add(ef.buildSubtypeAxioms(tf).asAxiom() as BoolExpr)
         solver.add(query_.axiom as BoolExpr)
         solver.add(query_.expr as BoolExpr)
 
@@ -143,6 +144,11 @@ class Z3Solver(val tf: TypeFactory) : AbstractSMTSolver {
         val memories = hashMapOf<Int, Pair<MutableMap<Term, Term>, MutableMap<Term, Term>>>()
         val properties = hashMapOf<Int, MutableMap<String, Pair<MutableMap<Term, Term>, MutableMap<Term, Term>>>>()
 
+        for ((type, value) in ef.typeMap) {
+            val actualValue = model.evaluate(value.expr, true)
+            log.debug("Type $type = $actualValue")
+        }
+
         for (ptr in ptrs) {
             val memspace = ptr.memspace
 
@@ -185,6 +191,17 @@ class Z3Solver(val tf: TypeFactory) : AbstractSMTSolver {
                     memories.getOrPut(memspace) { hashMapOf<Term, Term>() to hashMapOf() }
                     memories.getValue(memspace).first[modelPtr] = modelStartV
                     memories.getValue(memspace).second[modelPtr] = modelEndV
+
+                    val startTypes = ctx.getInitialProperties(memspace, "type")
+                    val endTypes = ctx.getProperties(memspace, "type")
+
+                    val startT = startTypes.load(ptrExpr, Z3ExprFactory.getTypeSize(ptr.type).int)
+                    val endT = endTypes.load(ptrExpr, Z3ExprFactory.getTypeSize(ptr.type).int)
+
+                    val modelStartT = Z3Unlogic.undo(model.evaluate(startT.expr, true))
+                    val modelEndT = Z3Unlogic.undo(model.evaluate(endT.expr, true))
+
+                    log.debug("Pointer $ptr type is $modelEndT")
 
                     if (ptr.type is KexArray) {
                         val startProp = ctx.getInitialProperties(memspace, "length")
