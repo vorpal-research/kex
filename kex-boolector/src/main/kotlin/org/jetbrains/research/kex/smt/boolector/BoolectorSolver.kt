@@ -41,7 +41,7 @@ class BoolectorSolver(val tf: TypeFactory) : AbstractSMTSolver {
         val ctx = BoolectorContext(ef, (1 shl 8) + 1, (1 shl 24) + 1)
 
         val converter = BoolectorConverter(tf)
-        val boolectorState = converter.convert(state, ef, ctx)
+        val boolectorState = converter.apply(state, ef, ctx)
         val boolectorQuery = converter.convert(query, ef, ctx)
 
         log.debug("Check started")

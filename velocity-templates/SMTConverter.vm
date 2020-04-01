@@ -4,17 +4,20 @@ import org.jetbrains.research.kex.state.*
 import org.jetbrains.research.kex.state.predicate.*
 import org.jetbrains.research.kex.state.term.*
 import org.jetbrains.research.kex.state.transformer.memspace
+import org.jetbrains.research.kex.state.transformer.*
 import org.jetbrains.research.kfg.ir.Class
 import org.jetbrains.research.kfg.ir.value.instruction.BinaryOpcode
 import org.jetbrains.research.kfg.ir.value.instruction.CmpOpcode
 import org.jetbrains.research.kex.config.kexConfig
 import org.jetbrains.research.kfg.type.ClassType
+import org.jetbrains.research.kfg.type.Type
 import org.jetbrains.research.kfg.type.TypeFactory
 
 val defaultAllocSize = kexConfig.getIntValue("smt", "defaultAllocationSize", 1024)
 
 @Suppress("UNUSED_PARAMETER")
 class ${solver}Converter(val tf: TypeFactory) : ${solver}SMTConverter() {
+    private var types: Set< Type > = setOf()
 
     private fun Term.withAxioms(expr: Dynamic_, ef: $factory, ctx: ${solver}Context): Dynamic_ {
         var resultExpr = expr
@@ -22,6 +25,15 @@ class ${solver}Converter(val tf: TypeFactory) : ${solver}SMTConverter() {
             is KexPointer -> {
                 resultExpr = resultExpr.withAxiom(resultExpr ge ef.makeIntConst(0))
                 val typeVar = ctx.readProperty< Int_ >(expr as Ptr_, this.memspace, "type")
+                val kfgType = this.type.getKfgType(tf)
+                var typeCond: Bool_? = null
+                types.filter { it.isSubtypeOf(kfgType) }.forEach {
+                    val tv = ef.getTypeVariable(it.kexType)
+                    typeCond = typeCond?.apply { this or (typeVar eq tv) } ?: (typeVar eq tv)
+                }
+                typeCond?.apply {
+                    resultExpr = resultExpr.withAxiom(this)
+                }
                 resultExpr = resultExpr.withAxiom(typeVar ge ef.makeIntConst(0))
                 if (this.type is KexArray) {
                     val lengthVar = ctx.readProperty< Int_ >(expr, this.memspace, "length")
@@ -74,6 +86,11 @@ class ${solver}Converter(val tf: TypeFactory) : ${solver}SMTConverter() {
                 is KexArray -> Ptr_.forceCast(expr)
                 else -> unreachable { log.error("Unable to cast expr ${ expr } to ${ type }") }
             }
+
+    fun apply(ps: PredicateState, ef: $factory, ctx: ${solver}Context): Bool_ {
+        this.types = collectTypes(ps).map { it.getKfgType(tf) }.toSet()
+        return convert(ps, ef, ctx)
+    }
 
     fun convert(ps: PredicateState, ef: $factory, ctx: ${solver}Context, extractPath: Boolean = false): Bool_ = when (ps) {
 #set($states = ["Basic", "Chain", "Choice"])
@@ -241,6 +258,12 @@ class ${solver}Converter(val tf: TypeFactory) : ${solver}SMTConverter() {
 
     fun convert(cast: CastTerm, ef: $factory, ctx: ${solver}Context): Dynamic_ {
         val op = convert(cast.operand, ef, ctx)
+        if (cast.type is KexPointer) {
+            val typeVar = ctx.readProperty< Int_ >(op as Ptr_, cast.operand.memspace, "type")
+            val castedTypeVar = ef.getTypeVariable(cast.type)
+            val subtype = ef.subtypeFunction.applyAs< Bool_ >(typeVar, castedTypeVar) or ef.subtypeFunction.applyAs< Bool_ >(castedTypeVar, typeVar)
+            return cast(cast.type, op.withAxiom(subtype))
+        }
         return cast(cast.type, op)
     }
 

@@ -3,36 +3,30 @@
 package org.jetbrains.research.kex.test.debug
 
 import org.jetbrains.research.kex.test.Intrinsics
-import org.jetbrains.research.kex.test.generation.BasicGenerationTests
 
 class BasicTests {
 
-//    abstract class A
-//    interface C
-//
-//    open class A1 : A(), C
-//    class A2 : A()
-//    class A3 : A1()
-//
-//    fun testTypes(a: A, cond: Boolean) {
-//        if (cond) {
-//            if (a is C) return
-//            if (a is A1) {
-//                println("unreachable")
-//            }
-//        }
-//        if (a is A2) {
-//            println("A2")
-//        }
-//    }
+    abstract class A
+    interface C
 
-    fun testArray(array: Array<BasicGenerationTests.Point>) {
-        if (array[0].x > 0) {
+    open class A1 : A(), C
+    class A2 : A()
+    class A3 : A1()
+
+    fun testArray() {
+        val array = arrayOf(
+                arrayOf(0, 1, 2, 3, 4),
+                arrayOf(5, 6, 7, 8, 9),
+                arrayOf(10, 11, 12, 13, 14)
+        )
+        if (array[2][4] > 10) {
             Intrinsics.assertReachable()
         }
-        if (array[1].y < 0) {
+        if (array.size > 2) {
             Intrinsics.assertReachable()
         }
-        Intrinsics.assertReachable()
+        if (array[0].size > 4) {
+            Intrinsics.assertReachable()
+        }
     }
 }

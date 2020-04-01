@@ -46,7 +46,7 @@ class Z3Solver(val tf: TypeFactory) : AbstractSMTSolver {
         val ctx = Z3Context(ef, (1 shl 8) + 1, (1 shl 24) + 1)
 
         val converter = Z3Converter(tf)
-        val z3State = converter.convert(state, ef, ctx)
+        val z3State = converter.apply(state, ef, ctx)
         val z3query = converter.convert(query, ef, ctx)
 
         log.debug("Check started")

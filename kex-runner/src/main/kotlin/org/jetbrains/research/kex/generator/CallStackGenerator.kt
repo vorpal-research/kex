@@ -56,7 +56,6 @@ class CallStackGenerator(val context: ExecutionContext, val psa: PredicateStateA
         +BoolTypeAdapter(method.cm.type)
         +ArrayBoundsAdapter()
         +NullityInfoAdapter()
-        +CastInfoAdapter(method.cm.type)
     }
 
     private fun prepareQuery(ps: PredicateState) = transform(ps) {
