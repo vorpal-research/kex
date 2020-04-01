@@ -29,7 +29,7 @@ class ${solver}Converter(val tf: TypeFactory) : ${solver}SMTConverter() {
                 var typeCond: Bool_? = null
                 types.filter { it.isSubtypeOf(kfgType) }.forEach {
                     val tv = ef.getTypeVariable(it.kexType)
-                    typeCond = typeCond?.apply { this or (typeVar eq tv) } ?: (typeVar eq tv)
+                    typeCond = if (typeCond == null) (typeVar eq tv) else (typeCond!! or (typeVar eq tv))
                 }
                 typeCond?.apply {
                     resultExpr = resultExpr.withAxiom(this)
