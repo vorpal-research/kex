@@ -60,21 +60,6 @@ class ${solver}Converter(val tf: TypeFactory) : ${solver}SMTConverter() {
         return resultExpr
     }
 
-    private fun addTypeAxioms(term: Term, expr: Dynamic_, ef: $factory, ctx: ${solver}Context) = when (term.type) {
-        is KexPointer -> expr
-                .withAxiom(expr ge ef.makeIntConst(0))
-        is KexByte -> expr
-                .withAxiom(expr ge ef.makeIntConst(Byte.MIN_VALUE.toInt()))
-                .withAxiom(expr le ef.makeIntConst(Byte.MAX_VALUE.toInt()))
-        is KexChar -> expr
-                .withAxiom(expr ge ef.makeIntConst(Char.MIN_VALUE.toInt()))
-                .withAxiom(expr le ef.makeIntConst(Char.MAX_VALUE.toInt()))
-        is KexShort -> expr
-                .withAxiom(expr ge ef.makeIntConst(Short.MIN_VALUE.toInt()))
-                .withAxiom(expr le ef.makeIntConst(Short.MAX_VALUE.toInt()))
-        else -> expr
-    }
-
     private fun cast(type: KexType, expr: Dynamic_): Dynamic_ =
             when (type) {
                 is KexLong -> Long_.forceCast(expr)
@@ -359,7 +344,7 @@ class ${solver}Converter(val tf: TypeFactory) : ${solver}SMTConverter() {
 
     fun convert(`return`: ReturnValueTerm, ef: $factory, ctx: ${solver}Context): Dynamic_ {
         val expr = ef.getVarByTypeAndName(`return`.type, `return`.name)
-        return addTypeAxioms(`return`, expr, ef, ctx)
+        return `return`.withAxioms(expr, ef, ctx)
     }
 
     fun convert(value: ValueTerm, ef: $factory, ctx: ${solver}Context): Dynamic_ {
