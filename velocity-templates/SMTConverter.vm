@@ -12,6 +12,7 @@ import org.jetbrains.research.kex.config.kexConfig
 import org.jetbrains.research.kfg.type.ClassType
 import org.jetbrains.research.kfg.type.Type
 import org.jetbrains.research.kfg.type.TypeFactory
+import org.jetbrains.research.kfg.type.NullType
 
 val defaultAllocSize = kexConfig.getIntValue("smt", "defaultAllocationSize", 1024)
 
@@ -27,7 +28,7 @@ class ${solver}Converter(val tf: TypeFactory) : ${solver}SMTConverter() {
                 val typeVar = ctx.readProperty< Int_ >(expr as Ptr_, this.memspace, "type")
                 val kfgType = this.type.getKfgType(tf)
                 var typeCond: Bool_? = null
-                types.filter { it.isSubtypeOf(kfgType) }.forEach {
+                types.filter { it.isSubtypeOf(kfgType) }.filter { it !is NullType }.forEach {
                     val tv = ef.getTypeVariable(it.kexType)
                     typeCond = if (typeCond == null) (typeVar eq tv) else (typeCond!! or (typeVar eq tv))
                 }
@@ -73,7 +74,7 @@ class ${solver}Converter(val tf: TypeFactory) : ${solver}SMTConverter() {
             }
 
     fun apply(ps: PredicateState, ef: $factory, ctx: ${solver}Context): Bool_ {
-        this.types = collectTypes(ps).map { it.getKfgType(tf) }.toSet()
+        this.types = collectTypes(ps).filter { it !is KexNull }.map { it.getKfgType(tf) }.toSet()
         return convert(ps, ef, ctx)
     }
 
