@@ -80,12 +80,6 @@ class $factory : ${solver}SMTExprFactory() {
         else -> unreachable { log.error("Unknown type in ExprFactory: ${ type }") }
     }
 
-    fun addTypeTree(tf: TypeFactory, type: KexType) {
-        type.getAllSubtypes(tf).forEach {
-            getTypeVariable(it)
-        }
-    }
-
     fun getTypeVariable(type: KexType) = innerTypeMap.getOrPut(type) {
         makeInt(type.toString(), true)
     }
