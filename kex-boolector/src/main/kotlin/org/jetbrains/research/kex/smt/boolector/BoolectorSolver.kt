@@ -5,10 +5,7 @@ import com.abdullin.kthelper.assert.unreachable
 import com.abdullin.kthelper.logging.log
 import org.jetbrains.research.boolector.Btor
 import org.jetbrains.research.kex.config.kexConfig
-import org.jetbrains.research.kex.ktype.KexArray
-import org.jetbrains.research.kex.ktype.KexInt
-import org.jetbrains.research.kex.ktype.KexReal
-import org.jetbrains.research.kex.ktype.KexReference
+import org.jetbrains.research.kex.ktype.*
 import org.jetbrains.research.kex.smt.*
 import org.jetbrains.research.kex.state.PredicateState
 import org.jetbrains.research.kex.state.term.*
@@ -73,6 +70,40 @@ class BoolectorSolver(val tf: TypeFactory) : AbstractSMTSolver {
         return result
     }
 
+    private fun BoolectorContext.recoverProperty(ptr: Term, type: KexType, name: String): Pair<Term, Term> {
+        val memspace = ptr.memspace
+        val ptrExpr = BoolectorConverter(tf).convert(ptr, ef, this) as? Ptr_
+                ?: unreachable { log.error("Non-ptr expr for pointer $ptr") }
+        val startProp = getInitialProperties(memspace, name)
+        val endProp = getProperties(memspace, name)
+
+        val startV = startProp.load(ptrExpr, BoolectorExprFactory.getTypeSize(type).int)
+        val endV = endProp.load(ptrExpr, BoolectorExprFactory.getTypeSize(type).int)
+
+        val modelStartV = BoolectorUnlogic.undo(startV.expr)
+        val modelEndV = BoolectorUnlogic.undo(endV.expr)
+        return modelStartV to modelEndV
+    }
+
+    private fun MutableMap<Int, MutableMap<String, Pair<MutableMap<Term, Term>, MutableMap<Term, Term>>>>.recoverProperty(
+            ctx: BoolectorContext,
+            ptr: Term,
+            type: KexType,
+            name: String
+    ) {
+        val memspace = ptr.memspace
+        val ptrExpr = BoolectorConverter(tf).convert(ptr, ef, ctx) as? Ptr_
+                ?: unreachable { log.error("Non-ptr expr for pointer $ptr") }
+        val modelPtr = BoolectorUnlogic.undo(ptrExpr.expr)
+
+        val (modelStartT, modelEndT) = ctx.recoverProperty(ptr, type, name)
+        val typePair = this.getOrPut(memspace, ::hashMapOf).getOrPut(name) {
+            hashMapOf<Term, Term>() to hashMapOf()
+        }
+        typePair.first[modelPtr] = modelStartT
+        typePair.second[modelPtr] = modelEndT
+    }
+
     private fun collectModel(ctx: BoolectorContext, vararg states: PredicateState): SMTModel {
         val (ptrs, vars) = states.fold(setOf<Term>() to setOf<Term>()) { acc, ps ->
             acc.first + collectPointers(ps) to acc.second + collectVariables(ps)
@@ -105,25 +136,9 @@ class BoolectorSolver(val tf: TypeFactory) : AbstractSMTSolver {
 
             when (ptr) {
                 is FieldTerm -> {
-                    val ptrExpr = BoolectorConverter(tf).convert(ptr.owner, ef, ctx) as? Ptr_
-                            ?: unreachable { log.error("Non-ptr expr for pointer $ptr") }
-
                     val name = "${ptr.klass}.${ptr.fieldNameString}"
-                    val startProp = ctx.getInitialProperties(memspace, name)
-                    val endProp = ctx.getProperties(memspace, name)
-
-                    val startV = startProp.load(ptrExpr, BoolectorExprFactory.getTypeSize((ptr.type as KexReference).reference).int)
-                    val endV = endProp.load(ptrExpr, BoolectorExprFactory.getTypeSize((ptr.type as KexReference).reference).int)
-
-                    val modelPtr = BoolectorUnlogic.undo(ptrExpr.expr)
-                    val modelStartV = BoolectorUnlogic.undo(startV.expr)
-                    val modelEndV = BoolectorUnlogic.undo(endV.expr)
-
-                    val pair = properties.getOrPut(memspace, ::hashMapOf).getOrPut(name) {
-                        hashMapOf<Term, Term>() to hashMapOf()
-                    }
-                    pair.first[modelPtr] = modelStartV
-                    pair.second[modelPtr] = modelEndV
+                    properties.recoverProperty(ctx, ptr.owner, (ptr.type as KexReference).reference, name)
+                    properties.recoverProperty(ctx, ptr.owner, ptr.type, "type")
                 }
                 else -> {
                     val startMem = ctx.getInitialMemory(memspace)
@@ -143,21 +158,10 @@ class BoolectorSolver(val tf: TypeFactory) : AbstractSMTSolver {
                     memories.getValue(memspace).first[modelPtr] = modelStartV
                     memories.getValue(memspace).second[modelPtr] = modelEndV
 
+                    properties.recoverProperty(ctx, ptr, ptr.type, "type")
+
                     if (ptr.type is KexArray) {
-                        val startProp = ctx.getInitialProperties(memspace, "length")
-                        val endProp = ctx.getProperties(memspace, "length")
-
-                        val startLength = startProp.load(ptrExpr, BoolectorExprFactory.getTypeSize(KexInt()).int)
-                        val endLength = endProp.load(ptrExpr, BoolectorExprFactory.getTypeSize(KexInt()).int)
-
-                        val startLengthV = BoolectorUnlogic.undo(startLength.expr)
-                        val endLengthV = BoolectorUnlogic.undo(endLength.expr)
-
-                        val pair = properties.getOrPut(memspace, ::hashMapOf).getOrPut("length") {
-                            hashMapOf<Term, Term>() to hashMapOf()
-                        }
-                        pair.first[modelPtr] = startLengthV
-                        pair.second[modelPtr] = endLengthV
+                        properties.recoverProperty(ctx, ptr, KexInt(), "length")
                     }
 
                     ktassert(assignments.getOrPut(ptr) { modelPtr } == modelPtr)
