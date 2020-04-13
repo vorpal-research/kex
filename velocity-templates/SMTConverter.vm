@@ -29,7 +29,7 @@ class ${solver}Converter(val tf: TypeFactory) : ${solver}SMTConverter() {
                 val kfgType = this.type.getKfgType(tf)
                 var typeCond: Bool_? = null
                 types.filter { it.isSubtypeOf(kfgType) }.filter { it !is NullType }.forEach {
-                    val tv = ef.getTypeVariable(it.kexType)
+                    val tv = ef.getTypeVariable(tf, it.kexType)
                     typeCond = if (typeCond == null) (typeVar eq tv) else (typeCond!! or (typeVar eq tv))
                 }
                 typeCond?.apply {
@@ -172,14 +172,19 @@ class ${solver}Converter(val tf: TypeFactory) : ${solver}SMTConverter() {
             acc * ((term as? ConstIntTerm)?.value ?: defaultAllocSize)
         }
         val ptr = ctx.getLocalArray(memspace, totalSize, elementSize)
-        val arrayExpr = newarray.lhv.withAxioms(lhv, ef, ctx)
-        return arrayExpr eq ptr
+
+        val typeVar = ef.getTypeVariable(tf, newarray.lhv.type)
+        ctx.writeProperty(lhv, memspace, "type", typeVar)
+        return lhv eq ptr
     }
 
     fun convert(new: NewPredicate, ef: $factory, ctx: ${solver}Context): Bool_ {
         val memspace = new.lhv.memspace
         val lhv = convert(new.lhv, ef, ctx) as? Ptr_ ?: unreachable { log.error("Non-ptr term in `new`") }
         val elementSize = ${factory}.getTypeSize(new.lhv.type)
+
+        val typeVar = ef.getTypeVariable(tf, new.lhv.type)
+        ctx.writeProperty(lhv, memspace, "type", typeVar)
         return lhv eq ctx.getLocalPtr(memspace, elementSize)
     }
 
@@ -246,7 +251,7 @@ class ${solver}Converter(val tf: TypeFactory) : ${solver}SMTConverter() {
         val op = convert(cast.operand, ef, ctx)
         if (cast.type is KexPointer) {
             val typeVar = ctx.readProperty< Int_ >(op as Ptr_, cast.operand.memspace, "type")
-            val castedTypeVar = ef.getTypeVariable(cast.type)
+            val castedTypeVar = ef.getTypeVariable(tf, cast.type)
             val subtype = ef.subtypeFunction.applyAs< Bool_ >(typeVar, castedTypeVar) or ef.subtypeFunction.applyAs< Bool_ >(castedTypeVar, typeVar)
             return cast(cast.type, op.withAxiom(subtype))
         }
@@ -323,7 +328,7 @@ class ${solver}Converter(val tf: TypeFactory) : ${solver}SMTConverter() {
         val operand = convert(instanceof.operand, ef, ctx) as? Ptr_ ?: unreachable { log.error("Non-ptr ref in field load") }
 
         val ptrType = ctx.readProperty< Int_ >(operand, memspace, "type")
-        val checkedType = ef.getTypeVariable(instanceof.checkedType)
+        val checkedType = ef.getTypeVariable(tf, instanceof.checkedType)
         val isSubtype1 = ef.subtypeFunction.applyAs< Bool_ >(ptrType, checkedType)
         val isSubtype2 = ef.subtypeFunction.applyAs< Bool_ >(checkedType, ptrType)
         return (isSubtype1 or isSubtype2)

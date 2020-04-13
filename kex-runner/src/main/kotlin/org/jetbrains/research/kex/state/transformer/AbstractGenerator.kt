@@ -18,7 +18,6 @@ import org.jetbrains.research.kex.util.mergeTypes
 import org.jetbrains.research.kfg.ir.Method
 import org.jetbrains.research.kfg.type.TypeFactory
 import java.lang.reflect.Executable
-import java.lang.reflect.Type
 
 // remove all choices in a given PS
 // needed to get entry condition of a given PS
@@ -51,7 +50,7 @@ interface AbstractGenerator<T> : Transformer<AbstractGenerator<T>> {
     val args get() = argTerms.map { memory[it.value] }.toList()
 
     fun generateThis() = thisTerm?.let {
-        memory[it] = reanimator.reanimate(it, javaClass)
+        memory[it] = reanimator.reanimate(it)
     }
 
     fun generateArgs() =
@@ -65,14 +64,13 @@ interface AbstractGenerator<T> : Transformer<AbstractGenerator<T>> {
                     null -> type
                     else -> mergeTypes(castedType, type, reanimator.loader)
                 }
-                reanimateTerm(term, actualType)
+                reanimateTerm(term)
             }
 
-    fun reanimateTerm(term: Term,
-                      jType: Type = loader.loadClass(term.type.getKfgType(method.cm.type))): T? = memory.getOrPut(term) {
+    fun reanimateTerm(term: Term): T? = memory.getOrPut(term) {
         when (typeInfos.getInfo<NullabilityInfo>(term)?.nullability) {
-            Nullability.NON_NULLABLE -> reanimator.reanimate(term, jType)
-            else -> reanimator.reanimateNullable(term, jType)
+            Nullability.NON_NULLABLE -> reanimator.reanimate(term)
+            else -> reanimator.reanimateNullable(term)
         }
     }
 

@@ -80,7 +80,8 @@ class $factory : ${solver}SMTExprFactory() {
         else -> unreachable { log.error("Unknown type in ExprFactory: ${ type }") }
     }
 
-    fun getTypeVariable(type: KexType) = innerTypeMap.getOrPut(type) {
+    // fucked up but it's the easiest way to ignore memspace
+    fun getTypeVariable(tf: TypeFactory, type: KexType) = innerTypeMap.getOrPut(type.getKfgType(tf).kexType) {
         makeInt(type.toString(), true)
     }
 

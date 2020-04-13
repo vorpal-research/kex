@@ -52,6 +52,7 @@ class Checker(val method: Method, val loader: ClassLoader, private val psa: Pred
         +ConstantPropagator
         +BoolTypeAdapter(method.cm.type)
         +ArrayBoundsAdapter()
+        +NullityInfoAdapter()
     }
 
     fun prepareAndCheck(ps: PredicateState): Result {

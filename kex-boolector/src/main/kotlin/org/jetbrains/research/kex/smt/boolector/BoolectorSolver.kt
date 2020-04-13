@@ -130,6 +130,12 @@ class BoolectorSolver(val tf: TypeFactory) : AbstractSMTSolver {
 
         val memories = hashMapOf<Int, Pair<MutableMap<Term, Term>, MutableMap<Term, Term>>>()
         val properties = hashMapOf<Int, MutableMap<String, Pair<MutableMap<Term, Term>, MutableMap<Term, Term>>>>()
+        val typeMap = hashMapOf<Term, KexType>()
+
+        for ((type, value) in ef.typeMap) {
+            val actualValue = BoolectorUnlogic.undo(value.expr)
+            typeMap[actualValue] = type
+        }
 
         for (ptr in ptrs) {
             val memspace = ptr.memspace
@@ -173,7 +179,8 @@ class BoolectorSolver(val tf: TypeFactory) : AbstractSMTSolver {
                 memories.map { (memspace, pair) -> memspace to MemoryShape(pair.first, pair.second) }.toMap(),
                 properties.map { (memspace, names) ->
                     memspace to names.map { (name, pair) -> name to MemoryShape(pair.first, pair.second) }.toMap()
-                }.toMap()
+                }.toMap(),
+                typeMap
         )
     }
 

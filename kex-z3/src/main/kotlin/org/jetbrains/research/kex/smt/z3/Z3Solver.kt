@@ -179,10 +179,11 @@ class Z3Solver(val tf: TypeFactory) : AbstractSMTSolver {
 
         val memories = hashMapOf<Int, Pair<MutableMap<Term, Term>, MutableMap<Term, Term>>>()
         val properties = hashMapOf<Int, MutableMap<String, Pair<MutableMap<Term, Term>, MutableMap<Term, Term>>>>()
+        val typeMap = hashMapOf<Term, KexType>()
 
         for ((type, value) in ef.typeMap) {
-            val actualValue = model.evaluate(value.expr, true)
-            log.debug("Type $type = $actualValue")
+            val actualValue = Z3Unlogic.undo(model.evaluate(value.expr, true))
+            typeMap[actualValue] = type
         }
 
         for (ptr in ptrs) {
@@ -216,6 +217,7 @@ class Z3Solver(val tf: TypeFactory) : AbstractSMTSolver {
 
                     if (ptr.type is KexArray) {
                         properties.recoverProperty(ctx, ptr, KexInt(), model, "length")
+                        properties.recoverProperty(ctx, ptr, ptr.type, model, "type")
                     }
 
                     ktassert(assignments.getOrPut(ptr) { modelPtr } == modelPtr)
@@ -227,7 +229,8 @@ class Z3Solver(val tf: TypeFactory) : AbstractSMTSolver {
                 memories.map { (memspace, pair) -> memspace to MemoryShape(pair.first, pair.second) }.toMap(),
                 properties.map { (memspace, names) ->
                     memspace to names.map { (name, pair) -> name to MemoryShape(pair.first, pair.second) }.toMap()
-                }.toMap()
+                }.toMap(),
+                typeMap
         )
     }
 

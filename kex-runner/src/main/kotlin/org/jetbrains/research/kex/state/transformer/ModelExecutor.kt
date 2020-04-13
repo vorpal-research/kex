@@ -20,7 +20,6 @@ import org.jetbrains.research.kex.util.getConstructor
 import org.jetbrains.research.kex.util.getMethod
 import org.jetbrains.research.kex.util.loadClass
 import org.jetbrains.research.kfg.ir.Method
-import java.lang.reflect.Type
 
 class ModelExecutor(override val method: Method,
                     override val ctx: ExecutionContext,
@@ -40,11 +39,11 @@ class ModelExecutor(override val method: Method,
     }
 
     override fun generateThis() = thisTerm?.let {
-        memory[it] = reanimator.reanimateNullable(it, javaClass)
+        memory[it] = reanimator.reanimateNullable(it)
     }
 
-    override fun reanimateTerm(term: Term, jType: Type) = memory.getOrPut(term) {
-        reanimator.reanimateNullable(term, jType)
+    override fun reanimateTerm(term: Term) = memory.getOrPut(term) {
+        reanimator.reanimateNullable(term)
     }
 
     override fun checkPath(path: Predicate): Boolean = when (path) {
