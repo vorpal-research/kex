@@ -3,11 +3,13 @@
 package org.jetbrains.research.kex.test.debug
 
 import org.jetbrains.research.kex.test.Intrinsics
-import org.jetbrains.research.kex.test.generation.BasicGenerationTests
 
 class BasicTests {
+    open class Point(val x: Int, val y: Int, val z: Int) {
+        override fun toString() = "($x, $y, $z)"
+    }
 
-    fun testArray(array: Array<BasicGenerationTests.Point>) {
+    fun testArray(array: Array<Point>) {
         if (array[0].x > 0) {
             Intrinsics.assertReachable()
         }

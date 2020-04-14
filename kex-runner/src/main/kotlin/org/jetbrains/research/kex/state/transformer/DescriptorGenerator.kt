@@ -28,7 +28,6 @@ class DescriptorGenerator(override val method: Method,
                           override val model: SMTModel,
                           override val reanimator: Reanimator<Descriptor>) : AbstractGenerator<Descriptor> {
 
-    override var typeInfos = TypeInfoMap()
     override val memory = hashMapOf<Term, Descriptor>()
 
     override var thisTerm: Term? = null

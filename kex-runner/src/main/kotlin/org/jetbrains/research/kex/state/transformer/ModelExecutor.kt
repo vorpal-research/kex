@@ -26,7 +26,6 @@ class ModelExecutor(override val method: Method,
                     override val model: SMTModel) : AbstractGenerator<Any?> {
     override val reanimator: Reanimator<Any?> = ObjectReanimator(method, model, ctx)
 
-    override var typeInfos = TypeInfoMap()
     override val memory = hashMapOf<Term, Any?>()
 
     override var thisTerm: Term? = null
@@ -36,14 +35,6 @@ class ModelExecutor(override val method: Method,
     override val javaMethod = when {
         method.isConstructor -> javaClass.getConstructor(method, loader)
         else -> javaClass.getMethod(method, loader)
-    }
-
-    override fun generateThis() = thisTerm?.let {
-        memory[it] = reanimator.reanimateNullable(it)
-    }
-
-    override fun reanimateTerm(term: Term) = memory.getOrPut(term) {
-        reanimator.reanimateNullable(term)
     }
 
     override fun checkPath(path: Predicate): Boolean = when (path) {
