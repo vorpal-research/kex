@@ -15,6 +15,7 @@ typealias Double_ = $Double
 typealias Word_ = $Bitvector32
 typealias DWord_ = $Bitvector64
 typealias Memory_ = $Memory< Ptr_, Word_ >
+typealias Function_ = $Function
 typealias Dynamic_ = $valexpr
 
 enum class TypeSize (val int: Int) {
@@ -32,6 +33,9 @@ class $factory : ${solver}SMTExprFactory() {
     }
 
     val ctx = $context()
+    val subtypeFunction = Function_(ctx, "isSubtype", listOf(Int_.getStaticSort(ctx), Int_.getStaticSort(ctx)), Bool_.getStaticSort(ctx))
+    val typeMap: Map< KexType, Int_ > get() = innerTypeMap
+    private val innerTypeMap = mutableMapOf< KexType, Int_ >()
 
 #macro(generateMakes $type $basetype)
     #set($underlined = "${type}_")
@@ -74,6 +78,23 @@ class $factory : ${solver}SMTExprFactory() {
         is KexArray -> makePtr(name, fresh)
         is KexNull -> makePtr(name, fresh)
         else -> unreachable { log.error("Unknown type in ExprFactory: ${ type }") }
+    }
+
+    // fucked up but it's the easiest way to ignore memspace
+    fun getTypeVariable(tf: TypeFactory, type: KexType) = innerTypeMap.getOrPut(type.getKfgType(tf).kexType) {
+        makeInt(type.toString(), true)
+    }
+
+    fun buildSubtypeAxioms(tf: TypeFactory): Bool_ {
+        val types = innerTypeMap.mapKeys { it.key.getKfgType(tf) }
+        var result = makeTrue()
+        for ((type1, val1) in types) {
+            for ((type2, val2) in types) {
+                val isSubtype = makeBoolConst(type1.isSubtypeOf(type2))
+                result = result and (subtypeFunction.applyAs< Bool_ >(val1, val2) eq isSubtype)
+            }
+        }
+        return result
     }
 
     inline fun < T : Dynamic_, reified U : Dynamic_ > switch(value: T, cases: Map< T, U >, default: U) =

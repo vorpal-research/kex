@@ -111,7 +111,6 @@ class Generator(val ctx: ExecutionContext, val psa: PredicateStateAnalysis) {
         +BoolTypeAdapter(method.cm.type)
         +ArrayBoundsAdapter()
         +NullityInfoAdapter()
-        +CastInfoAdapter(method.cm.type)
     }
 
     private fun reExecute(method: Method, block: BasicBlock, typeInfoState: PredicateState): Pair<Any?, Array<Any?>> {

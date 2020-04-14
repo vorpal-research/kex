@@ -98,6 +98,7 @@ abstract class KexType {
     abstract val bitsize: Int
 
     abstract fun getKfgType(types: TypeFactory): Type
+    fun isSubtypeOf(tf: TypeFactory, other: KexType) = getKfgType(tf).isSubtypeOf(other.getKfgType(tf))
 
     override fun toString() = name
 }

@@ -2,48 +2,20 @@
 
 package org.jetbrains.research.kex.test.debug
 
-import java.io.ByteArrayInputStream
+import org.jetbrains.research.kex.test.Intrinsics
 
 class BasicTests {
-    object AnnotatedMethodsThere {
-        @JvmStatic
-        fun rangeExample(param0: Any?, param1: Int): Int {
-            return param1 + 2
-        }
-        @JvmStatic
-        // "!null, _ -> !null; _, true -> new; _, false -> param1"
-        fun haveContract(param0: Any?, param1: Boolean): Any? = if (param1) Any() else param0
-
-        // "false -> fail; _ -> this"
-        fun assertTrue(param0: Boolean): AnnotatedMethodsThere {
-            if (!param0) throw IllegalStateException()
-            return this
-        }
-
-        fun assertNotNull(param0: Any?) {
-            if (param0 == null) throw IllegalArgumentException()
-        }
-
-        fun makeBeautifulList(n: Int) = MutableList(n) { 0 }
+    open class Point(val x: Int, val y: Int, val z: Int) {
+        override fun toString() = "($x, $y, $z)"
     }
 
-    class ThatClassContainsHighQualityCodeToProf {
-        fun incredibleMethod(exitingArgument: String, unusualNumber: Double): List<Int> {
-            val importantMethods = AnnotatedMethodsThere
-            val lovelyInteger = unusualNumber.toInt()
-            if (lovelyInteger.toDouble() == unusualNumber) {
-                val bestStream = ByteArrayInputStream(exitingArgument.toByteArray())
-                val meaningfulResult = importantMethods.makeBeautifulList(lovelyInteger)
-                //while (bestStream.available() > 0) {
-                val remarkableLetter = bestStream.read()
-                importantMethods.assertTrue(importantMethods.assertTrue(remarkableLetter > 0) == importantMethods)
-                meaningfulResult += remarkableLetter
-                //}
-                importantMethods.assertNotNull(meaningfulResult)
-                return meaningfulResult
-            }
-            return emptyList()
+    fun testArray(array: Array<Point>) {
+        if (array[0].x > 0) {
+            Intrinsics.assertReachable()
         }
+        if (array[1].y < 0) {
+            Intrinsics.assertReachable()
+        }
+        Intrinsics.assertReachable()
     }
-
 }

@@ -5,7 +5,8 @@ annotation class SMTExpr(
         val importPackage: String,
         val context: String,
         val expr: String,
-        val sort: String
+        val sort: String,
+        val function: String
 )
 
 annotation class SMTMemory(

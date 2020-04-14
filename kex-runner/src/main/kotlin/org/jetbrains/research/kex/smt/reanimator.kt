@@ -57,17 +57,16 @@ interface Reanimator<T> {
             memoryMappings.getOrPut(memspace, ::hashMapOf).getOrPut(address) { value }
 
     fun reanimate(term: Term,
-                  jType: Type = loader.loadClass(term.type.getKfgType(method.cm.type)),
-                  value: Term? = model.assignments[term]): T =
-            reanimateNullable(term, jType, value) ?: unreachable { log.error("Unable to reanimate non-nullable value") }
-
-    fun reanimateNullable(term: Term,
-                          jType: Type = loader.loadClass(term.type.getKfgType(method.cm.type)),
-                          value: Term? = model.assignments[term]): T
+                  value: Term? = model.assignments[term]): T
 
     fun reanimateFromAssignment(term: Term): Term?
     fun reanimateFromMemory(memspace: Int, addr: Term?): Term?
     fun reanimateFromProperties(memspace: Int, name: String, addr: Term?): Term?
+
+    fun reanimateType(memspace: Int, addr: Term?): KexType? {
+        val typeVar = reanimateFromProperties(memspace, "type", addr) ?: return null
+        return model.typeMap[typeVar]
+    }
 }
 
 class ObjectReanimator(override val method: Method,
@@ -77,9 +76,9 @@ class ObjectReanimator(override val method: Method,
 
     override val memoryMappings = hashMapOf<Int, MutableMap<Int, Any?>>()
 
-    override fun reanimateNullable(term: Term, jType: Type, value: Term?): Any? = when {
-        term.isPrimary -> reanimatePrimary(term.type, jType, value)
-        else -> reanimatePointer(term, jType, value)
+    override fun reanimate(term: Term, value: Term?): Any? = when {
+        term.isPrimary -> reanimatePrimary(term.type, value)
+        else -> reanimatePointer(term, value)
     }
 
     override fun reanimateFromAssignment(term: Term) = model.assignments[term]
@@ -87,8 +86,8 @@ class ObjectReanimator(override val method: Method,
     override fun reanimateFromProperties(memspace: Int, name: String, addr: Term?) =
             model.properties[memspace]?.get(name)?.finalMemory?.get(addr)
 
-    private fun reanimatePrimary(type: KexType, jType: Type, value: Term?): Any? {
-        if (value == null) return randomizer.next(jType)
+    private fun reanimatePrimary(type: KexType, value: Term?): Any? {
+        if (value == null) return randomizer.next(loader.loadClass(context.types, type))
         return when (type) {
             is KexBool -> (value as ConstBoolTerm).value
             is KexByte -> (value as ConstByteTerm).value
@@ -102,32 +101,30 @@ class ObjectReanimator(override val method: Method,
         }
     }
 
-    private fun reanimatePointer(term: Term, jType: Type, addr: Term?): Any? = when (term.type) {
-        is KexClass -> reanimateClass(term, jType, addr)
-        is KexArray -> reanimateArray(term, jType, addr)
-        is KexReference -> reanimateReference(term, jType, addr)
+    private fun reanimatePointer(term: Term, addr: Term?): Any? = when (term.type) {
+        is KexClass -> reanimateClass(term, addr)
+        is KexArray -> reanimateArray(term, addr)
+        is KexReference -> reanimateReference(term, addr)
         else -> unreachable { log.error("Trying to recover non-pointer term $term with type ${term.type} as pointer value") }
     }
 
-    private fun reanimateClass(term: Term, jType: Type, addr: Term?): Any? {
-        val type = term.type as KexClass
+    private fun reanimateClass(term: Term, addr: Term?): Any? {
         val address = (addr as? ConstIntTerm)?.value ?: return null
         if (address == 0) return null
 
-        return memory(type.memspace, address) { randomizer.nextOrNull(jType) }
+        val type = reanimateType(term.memspace, addr) ?: term.type
+        return memory(term.memspace, address) { randomizer.nextOrNull(loader.loadClass(context.types, type)) }
     }
 
-    private fun reanimateArray(term: Term, jType: Type, addr: Term?): Any? {
-        val arrayType = term.type as KexArray
+    private fun reanimateArray(term: Term, addr: Term?): Any? {
         val address = (addr as? ConstIntTerm)?.value ?: return null
         if (address == 0) return null
 
-        val memspace = arrayType.memspace
-        val instance = newArrayInstance(memspace, jType, addr)
-        return memory(memspace, address, instance)
+        val instance = newArrayInstance(term.type as KexArray, addr)
+        return memory(term.memspace, address, instance)
     }
 
-    private fun reanimateReference(term: Term, jType: Type, addr: Term?): Any? {
+    private fun reanimateReference(term: Term, addr: Term?): Any? {
         val memspace = term.memspace
         val refValue = reanimateFromMemory(memspace, addr)
         return when (term) {
@@ -138,7 +135,7 @@ class ObjectReanimator(override val method: Method,
                 val arrayAddr = (reanimateFromAssignment(arrayRef) as ConstIntTerm).value
                 val array = memory(arrayRef.memspace, arrayAddr) ?: return null
 
-                val reanimatedValue = reanimateReferenceValue(term, jType, refValue)
+                val reanimatedValue = reanimateReferenceValue(term, refValue)
                 val address = (addr as? ConstIntTerm)?.value
                         ?: unreachable { log.error("Non-int address of array index") }
                 val realIndex = (address - arrayAddr) / elementType.bitsize
@@ -172,13 +169,13 @@ class ObjectReanimator(override val method: Method,
                     log.warn("Could not generate an instance of $klass, so skipping filed initialization")
                     return instance
                 }
-                val reanimatedValue = reanimateReferenceValue(term, fieldReflect.genericType, fieldValue)
+                val reanimatedValue = reanimateReferenceValue(term, fieldValue)
                 fieldReflect.isAccessible = true
                 fieldReflect.isFinal = false
                 if (fieldReflect.isEnumConstant || fieldReflect.isSynthetic) return instance
                 if (fieldReflect.type.isPrimitive) {
                     val definedValue = reanimatedValue
-                            ?: reanimatePrimary((term.type as KexReference).reference, fieldReflect.type, null)!!
+                            ?: reanimatePrimary((term.type as KexReference).reference, null)!!
                     when (definedValue.javaClass) {
                         Boolean::class.javaObjectType -> fieldReflect.setBoolean(instance, definedValue as Boolean)
                         Byte::class.javaObjectType -> fieldReflect.setByte(instance, definedValue as Byte)
@@ -199,7 +196,7 @@ class ObjectReanimator(override val method: Method,
         }
     }
 
-    private fun reanimateReferenceValue(term: Term, jType: Type, value: Term?): Any? {
+    private fun reanimateReferenceValue(term: Term, value: Term?): Any? {
         val referencedType = (term.type as KexReference).reference
         if (value == null) return null
 
@@ -209,7 +206,7 @@ class ObjectReanimator(override val method: Method,
             else -> {
                 val intVal = (value as ConstIntTerm).value
                 when (referencedType) {
-                    is KexPointer -> reanimateReferencePointer(term, jType, value)
+                    is KexPointer -> reanimateReferencePointer(term, value)
                     is KexBool -> intVal.toBoolean()
                     is KexLong -> intVal.toLong()
                     is KexFloat -> intVal.toFloat()
@@ -220,29 +217,29 @@ class ObjectReanimator(override val method: Method,
         }
     }
 
-    private fun reanimateReferencePointer(term: Term, jType: Type, addr: Term?): Any? {
+    private fun reanimateReferencePointer(term: Term, addr: Term?): Any? {
         val referencedType = (term.type as KexReference).reference
         val address = (addr as? ConstIntTerm)?.value ?: return null
         if (address == 0) return null
+
+        val type = reanimateType(term.memspace, addr) ?: term.type
         return when (referencedType) {
-            is KexClass -> memory(term.memspace, address) { randomizer.nextOrNull(jType) }
+            is KexClass -> memory(term.memspace, address) { randomizer.nextOrNull(loader.loadClass(context.types, type)) }
             is KexArray -> {
                 val memspace = term.memspace//referencedType.memspace
-                val instance = newArrayInstance(memspace, jType, addr)
+                val instance = newArrayInstance(referencedType, addr)
                 memory(memspace, address, instance)
             }
             else -> unreachable { log.error("Trying to recover reference pointer that is not pointer") }
         }
     }
 
-    private fun newArrayInstance(memspace: Int, jType: Type, addr: Term?): Any? {
-        val length = (reanimateFromProperties(memspace, "length", addr) as? ConstIntTerm)?.value ?: return null
+    private fun newArrayInstance(type: KexArray, addr: Term?): Any? {
+        val length = (reanimateFromProperties(type.memspace, "length", addr) as? ConstIntTerm)?.value ?: return null
 
-        val elementType = when (jType) {
-            is Class<*> -> jType.componentType
-            is GenericArrayType -> randomizer.nextOrNull(jType.genericComponentType)?.javaClass
-            else -> unreachable { log.error("Unknown jType in array recovery: $jType") }
-        }
+        val actualType = (reanimateType(type.memspace, addr) ?: type) as? KexArray
+                ?: unreachable { log.error("Non-array type in reanimate array") }
+        val elementType = loader.loadClass(context.types, actualType.element)
         log.debug("Creating array of type $elementType with size $length")
         return Array.newInstance(elementType, length)
     }
@@ -254,14 +251,9 @@ abstract class DescriptorReanimator(override val method: Method,
     private val types get() = context.types
     override val memoryMappings = hashMapOf<Int, MutableMap<Int, Descriptor>>()
 
-    override fun reanimate(term: Term, jType: Type, value: Term?): Descriptor = when {
+    override fun reanimate(term: Term, value: Term?): Descriptor = when {
         term.isPrimary -> reanimatePrimary(term, value)
-        else -> reanimatePointer(term, value, jType, false)
-    }
-
-    override fun reanimateNullable(term: Term, jType: Type, value: Term?): Descriptor = when {
-        term.isPrimary -> reanimatePrimary(term, value)
-        else -> reanimatePointer(term, value, jType, true)
+        else -> reanimatePointer(term, value)
     }
 
     private fun reanimatePrimary(term: Term, value: Term?) = descriptor(context) {
@@ -279,45 +271,34 @@ abstract class DescriptorReanimator(override val method: Method,
         }
     }
 
-    private fun reanimatePointer(term: Term, addr: Term?, jType: Type, nullable: Boolean) = when (term.type) {
-        is KexClass -> reanimateClass(term, addr, jType, nullable)
-        is KexArray -> reanimateArray(term, addr, jType, nullable)
-        is KexReference -> reanimateReference(term, addr, jType, nullable)
+    private fun reanimatePointer(term: Term, addr: Term?) = when (term.type) {
+        is KexClass -> reanimateClass(term, addr)
+        is KexArray -> reanimateArray(term, addr)
+        is KexReference -> reanimateReference(term, addr)
         else -> unreachable { log.error("Trying to recover non-pointer term $term with type ${term.type} as pointer value") }
     }
 
-    private fun reanimateClass(term: Term, addr: Term?, jType: Type, nullable: Boolean) = descriptor(context) {
-        val type = term.type as KexClass
-        val actualType = context.cm[jType.simpleTypeName.replace('.', '/')]
+    private fun reanimateClass(term: Term, addr: Term?) = descriptor(context) {
+        val actualType = (reanimateType(term.memspace, addr) ?: term.type) as KexClass
 
         when (val address = (addr as? ConstIntTerm)?.value) {
-            null, 0 -> default(actualType.kexType, nullable)
-            else -> memory(type.memspace, address) { `object`(actualType) }
+            null, 0 -> default(actualType)
+            else -> memory(term.memspace, address) { `object`(context.cm[actualType.`class`]) }
         }
     }
 
-    private fun reanimateArray(term: Term, addr: Term?, jType: Type, nullable: Boolean) = descriptor(context) {
-        val arrayType = term.type as KexArray
-        val elementType = context.types.get(jType.actualComponentType)
-        val actualArrayType = context.types.getArrayType(elementType)
+    private fun reanimateArray(term: Term, addr: Term?) = descriptor(context) {
+        val arrayType = (reanimateType(term.memspace, addr) ?: term.type) as KexArray
 
         when (val address = (addr as? ConstIntTerm)?.value) {
-            null, 0 -> default(elementType.kexType, nullable)
-            else -> memory(arrayType.memspace, address) {
-                newArrayInstance(arrayType.memspace, actualArrayType.kexType as KexArray, addr, nullable)
+            null, 0 -> default(arrayType)
+            else -> memory(term.memspace, address) {
+                newArrayInstance(term.memspace, arrayType, addr)
             }
         }
     }
 
-    private val Type.actualComponentType: Class<*>
-        get() = when (this) {
-            is Class<*> -> this.componentType
-            is GenericArrayType -> this.genericComponentType.actualComponentType
-            is TypeVariable<*> -> this.bounds.first().actualComponentType
-            else -> unreachable { log.error("Unknown jType in array recovery: $this") }
-        }
-
-    private fun reanimateReference(term: Term, addr: Term?, jType: Type, nullable: Boolean) = descriptor(context) {
+    private fun reanimateReference(term: Term, addr: Term?) = descriptor(context) {
         val memspace = term.memspace
         val refValue = reanimateFromMemory(memspace, addr)
         when (term) {
@@ -327,9 +308,9 @@ abstract class DescriptorReanimator(override val method: Method,
 
                 val arrayAddr = (reanimateFromAssignment(arrayRef) as ConstIntTerm).value
                 val array = memory(arrayRef.memspace, arrayAddr) as? ArrayDescriptor
-                        ?: return@descriptor default(term.type, nullable)
+                        ?: return@descriptor default(term.type)
 
-                val reanimatedValue = reanimateReferenceValue(term, refValue, jType, nullable)
+                val reanimatedValue = reanimateReferenceValue(term, refValue)
                 val address = (addr as? ConstIntTerm)?.value
                         ?: unreachable { log.error("Non-int address of array index") }
                 val realIndex = (address - arrayAddr) / elementType.bitsize
@@ -342,8 +323,8 @@ abstract class DescriptorReanimator(override val method: Method,
                     term.isStatic -> {
                         val classRef = (term.owner as ConstClassTerm)
                         val `class` = tryOrNull { loader.loadClass(classRef.`class`.canonicalDesc) }
-                                ?: return@descriptor default(term.type, nullable)
-                        if (`class`.isSynthetic) return@descriptor default(term.type, nullable)
+                                ?: return@descriptor default(term.type)
+                        if (`class`.isSynthetic) return@descriptor default(term.type)
 
                         Triple(`null`, `class`, classRef.`class`.getField(fieldName, term.type.getKfgType(types)))
                     }
@@ -354,10 +335,10 @@ abstract class DescriptorReanimator(override val method: Method,
 
                         val kfgClass = method.cm[type.`class`]
                         val `class` = tryOrNull { loader.loadClass(kfgClass.canonicalDesc) }
-                                ?: return@descriptor default(term.type, nullable)
+                                ?: return@descriptor default(term.type)
 
                         val instance = memory(objectRef.memspace, objectAddr)
-                                ?: return@descriptor default(term.type, nullable)
+                                ?: return@descriptor default(term.type)
 
                         Triple(instance, `class`, kfgClass.getField(fieldName, term.type.getKfgType(types)))
                     }
@@ -366,9 +347,9 @@ abstract class DescriptorReanimator(override val method: Method,
                 val fieldValue = reanimateFromProperties(memspace, name, addr)
 
                 val fieldReflect = klass.getActualField(term.fieldNameString)
-                val reanimatedValue = reanimateReferenceValue(term, fieldValue, jType, nullable)
+                val reanimatedValue = reanimateReferenceValue(term, fieldValue)
                 if (fieldReflect.isEnumConstant || fieldReflect.isSynthetic)
-                    return@descriptor default(term.type, nullable)
+                    return@descriptor default(term.type)
 
                 if (instance is ObjectDescriptor) {
                     instance[fieldReflect.name] = instance.field(field.name, field.type, field.`class`, reanimatedValue)
@@ -380,9 +361,9 @@ abstract class DescriptorReanimator(override val method: Method,
         }
     }
 
-    private fun reanimateReferenceValue(term: Term, value: Term?, jType: Type, nullable: Boolean) = descriptor(context) {
+    private fun reanimateReferenceValue(term: Term, value: Term?) = descriptor(context) {
         val referencedType = (term.type as KexReference).reference
-        if (value == null) return@descriptor default(term.type, nullable)
+        if (value == null) return@descriptor default(term.type)
 
         when (value) {
             is ConstDoubleTerm -> const(value.value)
@@ -390,7 +371,7 @@ abstract class DescriptorReanimator(override val method: Method,
             else -> {
                 val intVal = (value as ConstIntTerm).value
                 when (referencedType) {
-                    is KexPointer -> reanimateReferencePointer(term, value, jType, nullable)
+                    is KexPointer -> reanimateReferencePointer(term, value)
                     is KexBool -> const(intVal.toBoolean())
                     is KexLong -> const(intVal.toLong())
                     is KexFloat -> const(intVal.toFloat())
@@ -401,30 +382,27 @@ abstract class DescriptorReanimator(override val method: Method,
         }
     }
 
-    private fun reanimateReferencePointer(term: Term, addr: Term?, jType: Type, nullable: Boolean) = descriptor(context) {
+    private fun reanimateReferencePointer(term: Term, addr: Term?) = descriptor(context) {
         val referencedType = (term.type as KexReference).reference
-        val address = (addr as? ConstIntTerm)?.value ?: return@descriptor default(term.type, nullable)
-        if (address == 0) return@descriptor default(term.type, nullable)
-        when (referencedType) {
+        val address = (addr as? ConstIntTerm)?.value ?: return@descriptor default(term.type)
+        if (address == 0) return@descriptor default(term.type)
+
+        when (val actualType = (reanimateType(term.memspace, addr) ?: referencedType)) {
             is KexClass -> {
-                val actualType = context.cm[jType.simpleTypeName.replace('.', '/')]
-                memory(term.memspace, address) { `object`(actualType) }
+                memory(term.memspace, address) { `object`(actualType.kfgClass(context.types)) }
             }
             is KexArray -> {
-                val elementType = context.types.get(jType.actualComponentType)
-                val actualArrayType = context.types.getArrayType(elementType)
-
                 memory(term.memspace, address) {
-                    newArrayInstance(term.memspace, actualArrayType.kexType as KexArray, addr, nullable)
+                    newArrayInstance(term.memspace, actualType, addr)
                 }
             }
             else -> unreachable { log.error("Trying to recover reference pointer that is not pointer") }
         }
     }
 
-    private fun newArrayInstance(memspace: Int, arrayType: KexArray, addr: Term?, nullable: Boolean) = descriptor(context) {
+    private fun newArrayInstance(memspace: Int, arrayType: KexArray, addr: Term?) = descriptor(context) {
         val length = (reanimateFromProperties(memspace, "length", addr) as? ConstIntTerm)?.value
-                ?: return@descriptor default(arrayType, nullable)
+                ?: return@descriptor default(arrayType)
 
         log.debug("Creating array of type $arrayType with size $length")
         array(length, arrayType.getKfgType(types))

@@ -13,12 +13,9 @@ import org.jetbrains.research.kex.state.PredicateState
 import org.jetbrains.research.kex.state.emptyState
 import org.jetbrains.research.kex.state.predicate.Predicate
 import org.jetbrains.research.kex.state.term.*
-import org.jetbrains.research.kex.util.loadClass
-import org.jetbrains.research.kex.util.mergeTypes
 import org.jetbrains.research.kfg.ir.Method
 import org.jetbrains.research.kfg.type.TypeFactory
 import java.lang.reflect.Executable
-import java.lang.reflect.Type
 
 // remove all choices in a given PS
 // needed to get entry condition of a given PS
@@ -36,8 +33,6 @@ interface AbstractGenerator<T> : Transformer<AbstractGenerator<T>> {
     val type: TypeFactory get() = ctx.types
     val loader: ClassLoader get() = ctx.loader
 
-    var typeInfos: TypeInfoMap
-
     val reanimator: Reanimator<T>
 
     val memory: MutableMap<Term, T>
@@ -51,40 +46,20 @@ interface AbstractGenerator<T> : Transformer<AbstractGenerator<T>> {
     val args get() = argTerms.map { memory[it.value] }.toList()
 
     fun generateThis() = thisTerm?.let {
-        memory[it] = reanimator.reanimate(it, javaClass)
+        memory[it] = reanimator.reanimate(it)
     }
 
     fun generateArgs() =
-            argTerms.values.zip(javaMethod.genericParameterTypes).forEach { (term, type) ->
-                // TODO: need to think about more clever type info merging
-                val castedType = when (val info = typeInfos.getInfo<CastTypeInfo>(term)) {
-                    null -> null
-                    else -> reanimator.loader.loadClass(info.type.getKfgType(method.cm.type))
-                }
-                val actualType = when (castedType) {
-                    null -> type
-                    else -> mergeTypes(castedType, type, reanimator.loader)
-                }
-                reanimateTerm(term, actualType)
+            argTerms.values.forEach { term ->
+                reanimateTerm(term)
             }
 
-    fun reanimateTerm(term: Term,
-                      jType: Type = loader.loadClass(term.type.getKfgType(method.cm.type))): T? = memory.getOrPut(term) {
-        when (typeInfos.getInfo<NullabilityInfo>(term)?.nullability) {
-            Nullability.NON_NULLABLE -> reanimator.reanimate(term, jType)
-            else -> reanimator.reanimateNullable(term, jType)
-        }
+    fun reanimateTerm(term: Term): T? = memory.getOrPut(term) {
+        reanimator.reanimate(term)
     }
 
     fun generate(ps: PredicateState): Pair<T?, List<T?>> {
         val (tempThis, tempArgs) = collectArguments(ps)
-        typeInfos = collectTypeInfos(reanimator.model, type, ps).let {
-            val tidfa = TypeInfoDFA(type, it)
-            tidfa.apply(ps)
-            tidfa.freshTypeInfo
-        }
-        if (typeInfos.isNotEmpty())
-            log.debug("Collected type info:\n${typeInfos.toList().joinToString("\n")}")
         thisTerm = when {
             !method.isStatic && tempThis == null -> term { `this`(KexClass(method.`class`.fullname)) }
             else -> tempThis

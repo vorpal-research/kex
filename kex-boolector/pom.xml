@@ -42,7 +42,7 @@
         </dependency>
 
         <dependency>
-            <groupId>com.github.AbdullinAM</groupId>
+            <groupId>org.jetbrains.research</groupId>
             <artifactId>boolector-java</artifactId>
             <version>${boolector.version}</version>
         </dependency>

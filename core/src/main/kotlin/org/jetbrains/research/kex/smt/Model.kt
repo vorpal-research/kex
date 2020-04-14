@@ -1,5 +1,6 @@
 package org.jetbrains.research.kex.smt
 
+import org.jetbrains.research.kex.ktype.KexType
 import org.jetbrains.research.kex.state.term.Term
 
 data class MemoryShape(val initialMemory: Map<Term, Term>, val finalMemory: Map<Term, Term>)
@@ -7,7 +8,8 @@ data class MemoryShape(val initialMemory: Map<Term, Term>, val finalMemory: Map<
 data class SMTModel(
         val assignments: Map<Term, Term>,
         val memories: Map<Int, MemoryShape>,
-        val properties: Map<Int, Map<String, MemoryShape>>
+        val properties: Map<Int, Map<String, MemoryShape>>,
+        val typeMap: Map<Term, KexType>
 ) {
     override fun toString() = buildString {
         appendln("Model {")

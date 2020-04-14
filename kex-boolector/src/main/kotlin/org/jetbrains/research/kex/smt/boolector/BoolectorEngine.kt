@@ -64,7 +64,7 @@ object BoolectorEngine : SMTEngine<Btor, BoolectorNode, BoolectorSort, Boolector
 
     override fun name(ctx: Btor, expr: BoolectorNode): String = expr.symbol
 
-    override fun toString(ctx: Btor, expr: BoolectorNode) = expr.symbol ?: "null"
+    override fun toString(ctx: Btor, expr: BoolectorNode) = expr.dumpSmt2() ?: "null"
 
     override fun simplify(ctx: Btor, expr: BoolectorNode): BoolectorNode = expr
 
@@ -103,8 +103,8 @@ object BoolectorEngine : SMTEngine<Btor, BoolectorNode, BoolectorSort, Boolector
             ArrayNode.constArrayNode(sort.toBitvecSort(), expr.toBitvecNode())
 
     override fun makeFunction(ctx: Btor, name: String, retSort: BoolectorSort, args: List<BoolectorSort>): BoolectorFunction {
-        val param = args.map { FunctionDecl.FunctionParam.param(it, null) }
-        return FunctionDecl.func(BitvecNode.zero(retSort.toBitvecSort()), param)
+        val sort = FunctionSort.functionSort(args.toTypedArray(), retSort)
+        return UninterpretedFunction.func(name, sort)
     }
 
     override fun apply(ctx: Btor, f: BoolectorFunction, args: List<BoolectorNode>): BoolectorNode = f.apply(args)

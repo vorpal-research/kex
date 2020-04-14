@@ -9,6 +9,7 @@ import org.jetbrains.research.kex.config.kexConfig
 import org.jetbrains.research.kex.ktype.KexArray
 import org.jetbrains.research.kex.ktype.KexInt
 import org.jetbrains.research.kex.ktype.KexReference
+import org.jetbrains.research.kex.ktype.KexType
 import org.jetbrains.research.kex.smt.*
 import org.jetbrains.research.kex.smt.Solver
 import org.jetbrains.research.kex.state.PredicateState
@@ -46,7 +47,7 @@ class Z3Solver(val tf: TypeFactory) : AbstractSMTSolver {
         val ctx = Z3Context(ef, (1 shl 8) + 1, (1 shl 24) + 1)
 
         val converter = Z3Converter(tf)
-        val z3State = converter.convert(state, ef, ctx)
+        val z3State = converter.apply(state, ef, ctx)
         val z3query = converter.convert(query, ef, ctx)
 
         log.debug("Check started")
@@ -75,6 +76,7 @@ class Z3Solver(val tf: TypeFactory) : AbstractSMTSolver {
         }
 
         solver.add(state_.asAxiom() as BoolExpr)
+        solver.add(ef.buildSubtypeAxioms(tf).asAxiom() as BoolExpr)
         solver.add(query_.axiom as BoolExpr)
         solver.add(query_.expr as BoolExpr)
 
@@ -127,6 +129,41 @@ class Z3Solver(val tf: TypeFactory) : AbstractSMTSolver {
         return ctx.tryFor(tactic, timeout)
     }
 
+    private fun Z3Context.recoverProperty(ptr: Term, type: KexType, model: Model, name: String): Pair<Term, Term> {
+        val memspace = ptr.memspace
+        val ptrExpr = Z3Converter(tf).convert(ptr, ef, this) as? Ptr_
+                ?: unreachable { log.error("Non-ptr expr for pointer $ptr") }
+        val startProp = getInitialProperties(memspace, name)
+        val endProp = getProperties(memspace, name)
+
+        val startV = startProp.load(ptrExpr, Z3ExprFactory.getTypeSize(type).int)
+        val endV = endProp.load(ptrExpr, Z3ExprFactory.getTypeSize(type).int)
+
+        val modelStartV = Z3Unlogic.undo(model.evaluate(startV.expr, true))
+        val modelEndV = Z3Unlogic.undo(model.evaluate(endV.expr, true))
+        return modelStartV to modelEndV
+    }
+
+    private fun MutableMap<Int, MutableMap<String, Pair<MutableMap<Term, Term>, MutableMap<Term, Term>>>>.recoverProperty(
+            ctx: Z3Context,
+            ptr: Term,
+            type: KexType,
+            model: Model,
+            name: String
+    ) {
+        val memspace = ptr.memspace
+        val ptrExpr = Z3Converter(tf).convert(ptr, ef, ctx) as? Ptr_
+                ?: unreachable { log.error("Non-ptr expr for pointer $ptr") }
+        val modelPtr = Z3Unlogic.undo(model.evaluate(ptrExpr.expr, true))
+
+        val (modelStartT, modelEndT) = ctx.recoverProperty(ptr, type, model, name)
+        val typePair = this.getOrPut(memspace, ::hashMapOf).getOrPut(name) {
+            hashMapOf<Term, Term>() to hashMapOf()
+        }
+        typePair.first[modelPtr] = modelStartT
+        typePair.second[modelPtr] = modelEndT
+    }
+
     private fun collectModel(ctx: Z3Context, model: Model, vararg states: PredicateState): SMTModel {
         val (ptrs, vars) = states.fold(setOf<Term>() to setOf<Term>()) { acc, ps ->
             acc.first + collectPointers(ps) to acc.second + collectVariables(ps)
@@ -142,31 +179,21 @@ class Z3Solver(val tf: TypeFactory) : AbstractSMTSolver {
 
         val memories = hashMapOf<Int, Pair<MutableMap<Term, Term>, MutableMap<Term, Term>>>()
         val properties = hashMapOf<Int, MutableMap<String, Pair<MutableMap<Term, Term>, MutableMap<Term, Term>>>>()
+        val typeMap = hashMapOf<Term, KexType>()
+
+        for ((type, value) in ef.typeMap) {
+            val actualValue = Z3Unlogic.undo(model.evaluate(value.expr, true))
+            typeMap[actualValue] = type
+        }
 
         for (ptr in ptrs) {
             val memspace = ptr.memspace
 
             when (ptr) {
                 is FieldTerm -> {
-                    val ptrExpr = Z3Converter(tf).convert(ptr.owner, ef, ctx) as? Ptr_
-                            ?: unreachable { log.error("Non-ptr expr for pointer $ptr") }
-
                     val name = "${ptr.klass}.${ptr.fieldNameString}"
-                    val startProp = ctx.getInitialProperties(memspace, name)
-                    val endProp = ctx.getProperties(memspace, name)
-
-                    val startV = startProp.load(ptrExpr, Z3ExprFactory.getTypeSize((ptr.type as KexReference).reference).int)
-                    val endV = endProp.load(ptrExpr, Z3ExprFactory.getTypeSize((ptr.type as KexReference).reference).int)
-
-                    val modelPtr = Z3Unlogic.undo(model.evaluate(ptrExpr.expr, true))
-                    val modelStartV = Z3Unlogic.undo(model.evaluate(startV.expr, true))
-                    val modelEndV = Z3Unlogic.undo(model.evaluate(endV.expr, true))
-
-                    val pair = properties.getOrPut(memspace, ::hashMapOf).getOrPut(name) {
-                        hashMapOf<Term, Term>() to hashMapOf()
-                    }
-                    pair.first[modelPtr] = modelStartV
-                    pair.second[modelPtr] = modelEndV
+                    properties.recoverProperty(ctx, ptr.owner, (ptr.type as KexReference).reference, model, name)
+                    properties.recoverProperty(ctx, ptr.owner, ptr.type, model, "type")
                 }
                 else -> {
                     val startMem = ctx.getInitialMemory(memspace)
@@ -186,21 +213,11 @@ class Z3Solver(val tf: TypeFactory) : AbstractSMTSolver {
                     memories.getValue(memspace).first[modelPtr] = modelStartV
                     memories.getValue(memspace).second[modelPtr] = modelEndV
 
+                    properties.recoverProperty(ctx, ptr, ptr.type, model, "type")
+
                     if (ptr.type is KexArray) {
-                        val startProp = ctx.getInitialProperties(memspace, "length")
-                        val endProp = ctx.getProperties(memspace, "length")
-
-                        val startLength = startProp.load(ptrExpr, Z3ExprFactory.getTypeSize(KexInt()).int)
-                        val endLength = endProp.load(ptrExpr, Z3ExprFactory.getTypeSize(KexInt()).int)
-
-                        val startLengthV = Z3Unlogic.undo(model.evaluate(startLength.expr, true))
-                        val endLengthV = Z3Unlogic.undo(model.evaluate(endLength.expr, true))
-
-                        val pair = properties.getOrPut(memspace, ::hashMapOf).getOrPut("length") {
-                            hashMapOf<Term, Term>() to hashMapOf()
-                        }
-                        pair.first[modelPtr] = startLengthV
-                        pair.second[modelPtr] = endLengthV
+                        properties.recoverProperty(ctx, ptr, KexInt(), model, "length")
+                        properties.recoverProperty(ctx, ptr, ptr.type, model, "type")
                     }
 
                     ktassert(assignments.getOrPut(ptr) { modelPtr } == modelPtr)
@@ -212,7 +229,8 @@ class Z3Solver(val tf: TypeFactory) : AbstractSMTSolver {
                 memories.map { (memspace, pair) -> memspace to MemoryShape(pair.first, pair.second) }.toMap(),
                 properties.map { (memspace, names) ->
                     memspace to names.map { (name, pair) -> name to MemoryShape(pair.first, pair.second) }.toMap()
-                }.toMap()
+                }.toMap(),
+                typeMap
         )
     }
 

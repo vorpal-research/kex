@@ -88,9 +88,9 @@ abstract class KexRunnerTest : KexTest() {
             log.debug(method.print())
 
             val psa = getPSA(method)
-            val checker = Checker(method, loader, psa)
 
             getReachables(method).forEach { inst ->
+                val checker = Checker(method, loader, psa)
                 val result = checker.checkReachable(inst)
                 assertTrue(result is Result.SatResult, "Class $`class`; method $method; ${inst.print()} should be reachable")
 
@@ -121,6 +121,7 @@ abstract class KexRunnerTest : KexTest() {
             }
 
             getUnreachables(method).forEach { inst ->
+                val checker = Checker(method, loader, psa)
                 val result = checker.checkReachable(inst)
                 assertTrue(result is Result.UnsatResult, "Class $`class`; method $method; ${inst.print()} should be unreachable")
             }
