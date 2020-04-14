@@ -1,5 +1,6 @@
 package org.jetbrains.research.kex.state.transformer
 
+import org.jetbrains.research.kex.ktype.KexArray
 import org.jetbrains.research.kex.state.ChoiceState
 import org.jetbrains.research.kex.state.PredicateState
 import org.jetbrains.research.kex.state.StateBuilder
@@ -48,6 +49,15 @@ class ArrayBoundsAdapter : RecollectingTransformer<ArrayBoundsAdapter> {
     }
 
     override fun transformBase(predicate: Predicate): Predicate {
+        val arrayTerms = TermCollector.getFullTermSet(predicate)
+                .filter { it.type is KexArray}
+                .filter { it !in arrays }
+                .toSet()
+        for (array in arrayTerms) {
+            currentBuilder += assume { (array.length() lt 1000) equality true }
+            arrays = arrays + array
+        }
+
         val indexTerms = TermCollector.getFullTermSet(predicate)
                 .filterIsInstance<ArrayIndexTerm>()
                 .filter { it !in indices }

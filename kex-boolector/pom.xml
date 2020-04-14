@@ -12,7 +12,7 @@
     <artifactId>kex-boolector</artifactId>
 
     <properties>
-        <boolector.version>3.1.4</boolector.version>
+        <boolector.version>3.2.5</boolector.version>
     </properties>
 
     <dependencies>
@@ -42,7 +42,7 @@
         </dependency>
 
         <dependency>
-            <groupId>com.github.AbdullinAM</groupId>
+            <groupId>org.jetbrains.research</groupId>
             <artifactId>boolector-java</artifactId>
             <version>${boolector.version}</version>
         </dependency>

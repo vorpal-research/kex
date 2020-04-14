@@ -1,5 +1,6 @@
 package org.jetbrains.research.kex.state.transformer
 
+import org.jetbrains.research.kex.ktype.KexPointer
 import org.jetbrains.research.kex.state.PredicateState
 import org.jetbrains.research.kex.state.predicate.ArrayStorePredicate
 import org.jetbrains.research.kex.state.predicate.FieldStorePredicate
@@ -17,6 +18,13 @@ class PointerCollector : Transformer<PointerCollector> {
     override fun transformFieldStorePredicate(predicate: FieldStorePredicate): Predicate {
         ptrs.add(predicate.field)
         return predicate
+    }
+
+    override fun transformArgument(term: ArgumentTerm): Term {
+        if (term.type is KexPointer) {
+            ptrs += term
+        }
+        return super.transformArgument(term)
     }
 
     override fun transformArrayIndex(term: ArrayIndexTerm): Term {

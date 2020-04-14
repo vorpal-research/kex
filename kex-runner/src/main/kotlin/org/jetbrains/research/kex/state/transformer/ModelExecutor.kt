@@ -20,14 +20,12 @@ import org.jetbrains.research.kex.util.getConstructor
 import org.jetbrains.research.kex.util.getMethod
 import org.jetbrains.research.kex.util.loadClass
 import org.jetbrains.research.kfg.ir.Method
-import java.lang.reflect.Type
 
 class ModelExecutor(override val method: Method,
                     override val ctx: ExecutionContext,
                     override val model: SMTModel) : AbstractGenerator<Any?> {
     override val reanimator: Reanimator<Any?> = ObjectReanimator(method, model, ctx)
 
-    override var typeInfos = TypeInfoMap()
     override val memory = hashMapOf<Term, Any?>()
 
     override var thisTerm: Term? = null
@@ -38,12 +36,6 @@ class ModelExecutor(override val method: Method,
         method.isConstructor -> javaClass.getConstructor(method, loader)
         else -> javaClass.getMethod(method, loader)
     }
-
-    override fun generateThis() = thisTerm?.let {
-        memory[it] = reanimator.reanimateNullable(it, javaClass)
-    }
-
-    override fun reanimateTerm(term: Term, jType: Type): Any? = reanimator.reanimateNullable(term, jType)
 
     override fun checkPath(path: Predicate): Boolean = when (path) {
         is EqualityPredicate -> checkTerms(path.lhv, path.rhv) { a, b -> a == b }

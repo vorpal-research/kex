@@ -10,6 +10,7 @@ import org.jetbrains.research.kex.state.predicate.EqualityPredicate
 import org.jetbrains.research.kex.state.predicate.Predicate
 import org.jetbrains.research.kex.state.predicate.predicate
 import org.jetbrains.research.kex.state.term.BinaryTerm
+import org.jetbrains.research.kex.state.term.CmpTerm
 import org.jetbrains.research.kex.state.term.Term
 import org.jetbrains.research.kex.state.term.term
 import org.jetbrains.research.kfg.ir.value.instruction.BinaryOpcode
@@ -55,5 +56,25 @@ class BoolTypeAdapter(val types: TypeFactory) : Transformer<BoolTypeAdapter> {
             }
             else -> term
         }
+    }
+
+    override fun transformCmpTerm(term: CmpTerm): Term = when {
+        term.lhv.type == term.rhv.type -> term
+        term.lhv.type is KexIntegral || term.rhv.type is KexIntegral -> {
+            val lhv = when {
+                term.lhv.type is KexBool -> term { term.lhv `as` KexInt() }
+                term.lhv.type is KexInt -> term.lhv
+                term.lhv.type is KexIntegral -> term { term.lhv `as` KexInt() }
+                else -> unreachable { log.error("Non-boolean term in boolean binary: $term") }
+            }
+            val rhv = when {
+                term.rhv.type is KexBool -> term { term.rhv `as` KexInt() }
+                term.rhv.type is KexInt -> term.rhv
+                term.rhv.type is KexIntegral -> term { term.rhv `as` KexInt() }
+                else -> unreachable { log.error("Non-boolean term in boolean binary: $term") }
+            }
+            term { lhv.apply(term.opcode, rhv) }
+        }
+        else -> term
     }
 }

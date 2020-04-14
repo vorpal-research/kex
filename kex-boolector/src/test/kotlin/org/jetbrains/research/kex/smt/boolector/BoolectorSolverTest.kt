@@ -38,9 +38,9 @@ class BoolectorSolverTest : KexTest() {
             BoolectorEngine.negate(ef.ctx, e.expr).assume()
             ef.ctx.check() == Btor.Status.UNSAT
         }
-        val memory = ef.makeDefaultMemory("mem", 0xFF)
+        val memory = ef.makeDefaultMemory<Word_>("mem", 0xFF)
         for (i in 0..128) {
-            assertTrue(checkExpr(memory[ef.makePtrConst(i)] eq Byte_.makeConst(ef.ctx, 0xFF)))
+            assertTrue(checkExpr(memory[ef.makePtrConst(i)] eq Word_.makeConst(ef.ctx, 0xFF)))
         }
         ef.ctx.release()
     }
@@ -111,12 +111,12 @@ class BoolectorSolverTest : KexTest() {
         assertTrue(checkExpr(!(`true` eq `false`)))
         assertTrue(checkExpr(`true` neq `false`))
 
-        val a = Byte_.makeConst(ctx, 0xFF)
-        val b = Byte_.makeConst(ctx, 0xFF)
+        val a = Word_.makeConst(ctx, 0xFF)
+        val b = Word_.makeConst(ctx, 0xFF)
         assertTrue(checkExpr(a eq b))
 
         val d = Long_.makeConst(ctx, 0xFF)
-        val e = Byte_.makeConst(ctx, 0xFF)
+        val e = Word_.makeConst(ctx, 0xFF)
         assertTrue(checkExpr(d eq e))
         ctx.release()
     }

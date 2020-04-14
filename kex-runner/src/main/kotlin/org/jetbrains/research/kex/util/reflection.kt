@@ -2,6 +2,7 @@ package org.jetbrains.research.kex.util
 
 import com.abdullin.kthelper.assert.unreachable
 import com.abdullin.kthelper.logging.log
+import org.jetbrains.research.kex.ktype.KexType
 import org.jetbrains.research.kex.ktype.type
 import org.jetbrains.research.kfg.ir.Method
 import org.jetbrains.research.kfg.type.*
@@ -21,6 +22,8 @@ val Class<*>.isAbstract get() = (this.modifiers and Modifier.ABSTRACT) == Modifi
 
 val JMethod.isStatic get() = (this.modifiers and Modifier.STATIC) == Modifier.STATIC
 val JMethod.isAbstract get() = (this.modifiers and Modifier.ABSTRACT) == Modifier.ABSTRACT
+
+fun ClassLoader.loadClass(tf: TypeFactory, type: KexType): Class<*> = this.loadClass(type.getKfgType(tf))
 
 fun ClassLoader.loadClass(klass: KfgClass): Class<*> =
         this.loadClass(klass.type)

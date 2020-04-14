@@ -2,23 +2,20 @@
 
 package org.jetbrains.research.kex.test.debug
 
+import org.jetbrains.research.kex.test.Intrinsics
 
 class BasicTests {
-
-    enum class InspectionArgumentType {
-        Parameter,
-        MultiParameter,
-        Flag
+    open class Point(val x: Int, val y: Int, val z: Int) {
+        override fun toString() = "($x, $y, $z)"
     }
 
-    class InspectionArgument(
-            val name: String,
-            val aliasNames: List<String>,
-            val shortNames: List<Char>,
-            val description: String,
-            val type: InspectionArgumentType,
-            val isOptional: Boolean,
-            val defaultValue: String? = null
-    )
-
+    fun testArray(array: Array<Point>) {
+        if (array[0].x > 0) {
+            Intrinsics.assertReachable()
+        }
+        if (array[1].y < 0) {
+            Intrinsics.assertReachable()
+        }
+        Intrinsics.assertReachable()
+    }
 }

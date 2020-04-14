@@ -1,6 +1,7 @@
 package org.jetbrains.research.kex.asm.manager
 
 import com.abdullin.kthelper.logging.log
+import org.jetbrains.research.kex.asm.transform.isUnreachable
 import org.jetbrains.research.kex.asm.transform.originalBlock
 import org.jetbrains.research.kex.trace.TraceManager
 import org.jetbrains.research.kfg.ClassManager
@@ -59,8 +60,8 @@ class CoverageCounter<T>(override val cm: ClassManager, val tm: TraceManager<T>)
             if (method.isAbstract || method.isStaticInitializer) continue
             if (!method.isImpactable) continue
 
-            val bodyBlocks = method.bodyBlocks.map { it.originalBlock }.toSet()
-            val catchBlocks = method.catchBlocks.map { it.originalBlock }.toSet()
+            val bodyBlocks = method.bodyBlocks.filterNot { it.isUnreachable }.map { it.originalBlock }.toSet()
+            val catchBlocks = method.catchBlocks.filterNot { it.isUnreachable }.map { it.originalBlock }.toSet()
             val bodyCovered = bodyBlocks.count { tm.isCovered(method, it) }
             val catchCovered = catchBlocks.count { tm.isCovered(method, it) }
 

@@ -338,6 +338,22 @@ class $self< Element : $valexpr, in Index : $valexpr > : $valexpr {
     operator fun set(index: Index, value: Element) = store(index, value)
 }
 
+#set($self = $Function)
+class $self {
+    val ctx: $context
+    val decl: $function
+
+    constructor(ctx: $context, name: String, args: List<$sort>, returnType: $sort) {
+        this.ctx = ctx
+        decl = engine.makeFunction(ctx, name, returnType, args)
+    }
+
+    fun apply(vararg args: $valexpr): $valexpr = $valexpr(ctx, engine.apply(ctx, decl, args.map { it.expr }))
+
+    inline fun < reified T : $valexpr > applyAs(vararg args: $valexpr): T =
+            ${valexpr}.forceCast< T >(apply(*args))
+}
+
 fun ${valexpr}.convert(sort: $sort) = when {
     engine.isBoolSort(ctx, sort) -> toBool()
     engine.isBVSort(ctx, sort) -> toBV(sort)
@@ -459,4 +475,22 @@ fun < Res : $valexpr > forall(ctx: $context, sortGen: () -> List< $valexpr >,
             }
     )
     return $Bool(ctx, eret, spliceAxioms(ctx, axioms))
+}
+
+inline fun < reified BV : $Bitvector > bvStaticBitsize(ctx: $context) = when (BV::class) {
+    $Bitvector32::class -> ${Bitvector32}.getStaticBitsize(ctx)
+    $Bitvector64::class -> ${Bitvector64}.getStaticBitsize(ctx)
+    else -> ${Bitvector}.getStaticBitsize(ctx)
+}
+
+inline fun < reified BV : $Bitvector > bvStaticSort(ctx: $context) = when (BV::class) {
+    $Bitvector32::class -> ${Bitvector32}.getStaticSort(ctx)
+    $Bitvector64::class -> ${Bitvector64}.getStaticSort(ctx)
+    else -> ${Bitvector}.getStaticSort(ctx)
+}
+
+inline fun < reified BV : $Bitvector > bvMakeConst(ctx: $context, value: Int) = when (BV::class) {
+    $Bitvector32::class -> ${Bitvector32}.makeConst(ctx, value)
+    $Bitvector64::class -> ${Bitvector64}.makeConst(ctx, value.toLong())
+    else -> ${Bitvector}.makeConst(ctx, value.toLong())
 }

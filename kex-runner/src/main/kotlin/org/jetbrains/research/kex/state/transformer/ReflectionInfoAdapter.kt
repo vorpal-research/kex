@@ -33,8 +33,11 @@ class ReflectionInfoAdapter(val method: Method, val loader: ClassLoader, val ign
     override fun apply(ps: PredicateState): PredicateState {
         val (`this`, arguments) = collectArguments(ps)
 
-        if (`this` != null && `this` !in ignores) {
+        if (`this` != null) {
             currentBuilder += assume { `this` inequality null }
+        } else if (!method.isStatic) {
+            val nthis = term { `this`(method.`class`.kexType) }
+            currentBuilder += assume { nthis inequality null }
         }
 
         val methodClassType = KexClass(method.`class`.fullname).getKfgType(types)

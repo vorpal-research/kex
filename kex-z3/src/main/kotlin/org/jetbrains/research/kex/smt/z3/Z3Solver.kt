@@ -6,9 +6,14 @@ import com.abdullin.kthelper.logging.debug
 import com.abdullin.kthelper.logging.log
 import com.microsoft.z3.*
 import org.jetbrains.research.kex.config.kexConfig
+import org.jetbrains.research.kex.ktype.KexArray
+import org.jetbrains.research.kex.ktype.KexInt
+import org.jetbrains.research.kex.ktype.KexReference
+import org.jetbrains.research.kex.ktype.KexType
 import org.jetbrains.research.kex.smt.*
 import org.jetbrains.research.kex.smt.Solver
 import org.jetbrains.research.kex.state.PredicateState
+import org.jetbrains.research.kex.state.term.FieldTerm
 import org.jetbrains.research.kex.state.term.Term
 import org.jetbrains.research.kex.state.transformer.collectPointers
 import org.jetbrains.research.kex.state.transformer.collectVariables
@@ -42,7 +47,7 @@ class Z3Solver(val tf: TypeFactory) : AbstractSMTSolver {
         val ctx = Z3Context(ef, (1 shl 8) + 1, (1 shl 24) + 1)
 
         val converter = Z3Converter(tf)
-        val z3State = converter.convert(state, ef, ctx)
+        val z3State = converter.apply(state, ef, ctx)
         val z3query = converter.convert(query, ef, ctx)
 
         log.debug("Check started")
@@ -71,6 +76,7 @@ class Z3Solver(val tf: TypeFactory) : AbstractSMTSolver {
         }
 
         solver.add(state_.asAxiom() as BoolExpr)
+        solver.add(ef.buildSubtypeAxioms(tf).asAxiom() as BoolExpr)
         solver.add(query_.axiom as BoolExpr)
         solver.add(query_.expr as BoolExpr)
 
@@ -123,6 +129,41 @@ class Z3Solver(val tf: TypeFactory) : AbstractSMTSolver {
         return ctx.tryFor(tactic, timeout)
     }
 
+    private fun Z3Context.recoverProperty(ptr: Term, type: KexType, model: Model, name: String): Pair<Term, Term> {
+        val memspace = ptr.memspace
+        val ptrExpr = Z3Converter(tf).convert(ptr, ef, this) as? Ptr_
+                ?: unreachable { log.error("Non-ptr expr for pointer $ptr") }
+        val startProp = getInitialProperties(memspace, name)
+        val endProp = getProperties(memspace, name)
+
+        val startV = startProp.load(ptrExpr, Z3ExprFactory.getTypeSize(type).int)
+        val endV = endProp.load(ptrExpr, Z3ExprFactory.getTypeSize(type).int)
+
+        val modelStartV = Z3Unlogic.undo(model.evaluate(startV.expr, true))
+        val modelEndV = Z3Unlogic.undo(model.evaluate(endV.expr, true))
+        return modelStartV to modelEndV
+    }
+
+    private fun MutableMap<Int, MutableMap<String, Pair<MutableMap<Term, Term>, MutableMap<Term, Term>>>>.recoverProperty(
+            ctx: Z3Context,
+            ptr: Term,
+            type: KexType,
+            model: Model,
+            name: String
+    ) {
+        val memspace = ptr.memspace
+        val ptrExpr = Z3Converter(tf).convert(ptr, ef, ctx) as? Ptr_
+                ?: unreachable { log.error("Non-ptr expr for pointer $ptr") }
+        val modelPtr = Z3Unlogic.undo(model.evaluate(ptrExpr.expr, true))
+
+        val (modelStartT, modelEndT) = ctx.recoverProperty(ptr, type, model, name)
+        val typePair = this.getOrPut(memspace, ::hashMapOf).getOrPut(name) {
+            hashMapOf<Term, Term>() to hashMapOf()
+        }
+        typePair.first[modelPtr] = modelStartT
+        typePair.second[modelPtr] = modelEndT
+    }
+
     private fun collectModel(ctx: Z3Context, model: Model, vararg states: PredicateState): SMTModel {
         val (ptrs, vars) = states.fold(setOf<Term>() to setOf<Term>()) { acc, ps ->
             acc.first + collectPointers(ps) to acc.second + collectVariables(ps)
@@ -137,47 +178,60 @@ class Z3Solver(val tf: TypeFactory) : AbstractSMTSolver {
         }.toMap().toMutableMap()
 
         val memories = hashMapOf<Int, Pair<MutableMap<Term, Term>, MutableMap<Term, Term>>>()
-        val bounds = hashMapOf<Int, Pair<MutableMap<Term, Term>, MutableMap<Term, Term>>>()
+        val properties = hashMapOf<Int, MutableMap<String, Pair<MutableMap<Term, Term>, MutableMap<Term, Term>>>>()
+        val typeMap = hashMapOf<Term, KexType>()
+
+        for ((type, value) in ef.typeMap) {
+            val actualValue = Z3Unlogic.undo(model.evaluate(value.expr, true))
+            typeMap[actualValue] = type
+        }
 
         for (ptr in ptrs) {
             val memspace = ptr.memspace
 
-            val startMem = ctx.getInitialMemory(memspace)
-            val endMem = ctx.getMemory(memspace)
+            when (ptr) {
+                is FieldTerm -> {
+                    val name = "${ptr.klass}.${ptr.fieldNameString}"
+                    properties.recoverProperty(ctx, ptr.owner, (ptr.type as KexReference).reference, model, name)
+                    properties.recoverProperty(ctx, ptr.owner, ptr.type, model, "type")
+                }
+                else -> {
+                    val startMem = ctx.getInitialMemory(memspace)
+                    val endMem = ctx.getMemory(memspace)
 
-            val startBounds = ctx.getBounds(memspace)
-            val endBounds = ctx.getBounds(memspace)
+                    val ptrExpr = Z3Converter(tf).convert(ptr, ef, ctx) as? Ptr_
+                            ?: unreachable { log.error("Non-ptr expr for pointer $ptr") }
 
-            val eptr = Z3Converter(tf).convert(ptr, ef, ctx) as? Ptr_
-                    ?: unreachable { log.error("Non-ptr expr for pointer $ptr") }
+                    val startV = startMem.load(ptrExpr, Z3ExprFactory.getTypeSize(ptr.type).int)
+                    val endV = endMem.load(ptrExpr, Z3ExprFactory.getTypeSize(ptr.type).int)
 
-            val startV = startMem.load(eptr, Z3ExprFactory.getTypeSize(ptr.type))
-            val endV = endMem.load(eptr, Z3ExprFactory.getTypeSize(ptr.type))
+                    val modelPtr = Z3Unlogic.undo(model.evaluate(ptrExpr.expr, true))
+                    val modelStartV = Z3Unlogic.undo(model.evaluate(startV.expr, true))
+                    val modelEndV = Z3Unlogic.undo(model.evaluate(endV.expr, true))
 
-            val startB = startBounds[eptr]
-            val endB = endBounds[eptr]
+                    memories.getOrPut(memspace) { hashMapOf<Term, Term>() to hashMapOf() }
+                    memories.getValue(memspace).first[modelPtr] = modelStartV
+                    memories.getValue(memspace).second[modelPtr] = modelEndV
 
+                    properties.recoverProperty(ctx, ptr, ptr.type, model, "type")
 
-            val modelPtr = Z3Unlogic.undo(model.evaluate(eptr.expr, true))
-            val modelStartV = Z3Unlogic.undo(model.evaluate(startV.expr, true))
-            val modelEndV = Z3Unlogic.undo(model.evaluate(endV.expr, true))
-            val modelStartB = Z3Unlogic.undo(model.evaluate(startB.expr, true))
-            val modelEndB = Z3Unlogic.undo(model.evaluate(endB.expr, true))
+                    if (ptr.type is KexArray) {
+                        properties.recoverProperty(ctx, ptr, KexInt(), model, "length")
+                        properties.recoverProperty(ctx, ptr, ptr.type, model, "type")
+                    }
 
-            memories.getOrPut(memspace) { hashMapOf<Term, Term>() to hashMapOf() }
-            memories.getValue(memspace).first[modelPtr] = modelStartV
-            memories.getValue(memspace).second[modelPtr] = modelEndV
-
-            bounds.getOrPut(memspace) { hashMapOf<Term, Term>() to hashMapOf() }
-            bounds.getValue(memspace).first[modelPtr] = modelStartB
-            bounds.getValue(memspace).second[modelPtr] = modelEndB
-
-            ktassert(assignments.getOrPut(ptr) { modelPtr } == modelPtr)
+                    ktassert(assignments.getOrPut(ptr) { modelPtr } == modelPtr)
+                }
+            }
         }
-
-        return SMTModel(assignments,
-                memories.map { it.key to MemoryShape(it.value.first, it.value.second) }.toMap(),
-                bounds.map { it.key to MemoryShape(it.value.first, it.value.second) }.toMap())
+        return SMTModel(
+                assignments,
+                memories.map { (memspace, pair) -> memspace to MemoryShape(pair.first, pair.second) }.toMap(),
+                properties.map { (memspace, names) ->
+                    memspace to names.map { (name, pair) -> name to MemoryShape(pair.first, pair.second) }.toMap()
+                }.toMap(),
+                typeMap
+        )
     }
 
     override fun cleanup() {

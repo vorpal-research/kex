@@ -3,16 +3,15 @@ package org.jetbrains.research.kex.smt.boolector
 import com.abdullin.kthelper.assert.unreachable
 import com.abdullin.kthelper.logging.log
 import org.jetbrains.research.boolector.*
-import org.jetbrains.research.boolector.Function
 import org.jetbrains.research.kex.smt.SMTEngine
 import kotlin.math.roundToInt
 import kotlin.math.roundToLong
 
-object BoolectorEngine : SMTEngine<Btor, BoolectorNode, BoolectorSort, Function, BoolectorFun.FuncParam>() {
+object BoolectorEngine : SMTEngine<Btor, BoolectorNode, BoolectorSort, BoolectorFunction, FunctionDecl.FunctionParam>() {
     override fun makeBound(ctx: Btor, size: Int, sort: BoolectorSort): BoolectorNode = BitvecNode.constBitvec(ctx, "1")
 
-    override fun makePattern(ctx: Btor, expr: BoolectorNode): BoolectorFun.FuncParam =
-            BoolectorFun.FuncParam.param(expr.sort, "d")
+    override fun makePattern(ctx: Btor, expr: BoolectorNode): FunctionDecl.FunctionParam =
+            FunctionDecl.FunctionParam.param(expr.sort, "d")
 
     override fun getSort(ctx: Btor, expr: BoolectorNode): BoolectorSort = expr.sort
 
@@ -65,7 +64,7 @@ object BoolectorEngine : SMTEngine<Btor, BoolectorNode, BoolectorSort, Function,
 
     override fun name(ctx: Btor, expr: BoolectorNode): String = expr.symbol
 
-    override fun toString(ctx: Btor, expr: BoolectorNode) = expr.symbol ?: "null"
+    override fun toString(ctx: Btor, expr: BoolectorNode) = expr.dumpSmt2() ?: "null"
 
     override fun simplify(ctx: Btor, expr: BoolectorNode): BoolectorNode = expr
 
@@ -103,12 +102,12 @@ object BoolectorEngine : SMTEngine<Btor, BoolectorNode, BoolectorSort, Function,
     override fun makeConstArray(ctx: Btor, sort: BoolectorSort, expr: BoolectorNode): BoolectorNode =
             ArrayNode.constArrayNode(sort.toBitvecSort(), expr.toBitvecNode())
 
-    override fun makeFunction(ctx: Btor, name: String, retSort: BoolectorSort, args: List<BoolectorSort>): Function {
-        val param = args.map { BoolectorFun.FuncParam.param(it, null) }
-        return Function.func(BitvecNode.zero(retSort.toBitvecSort()), param)
+    override fun makeFunction(ctx: Btor, name: String, retSort: BoolectorSort, args: List<BoolectorSort>): BoolectorFunction {
+        val sort = FunctionSort.functionSort(args.toTypedArray(), retSort)
+        return UninterpretedFunction.func(name, sort)
     }
 
-    override fun apply(ctx: Btor, f: Function, args: List<BoolectorNode>): BoolectorNode = f.apply(args)
+    override fun apply(ctx: Btor, f: BoolectorFunction, args: List<BoolectorNode>): BoolectorNode = f.apply(args)
 
     override fun negate(ctx: Btor, expr: BoolectorNode): BoolectorNode {
         return when {
@@ -318,6 +317,6 @@ object BoolectorEngine : SMTEngine<Btor, BoolectorNode, BoolectorSort, Function,
     override fun forAll(ctx: Btor,
                         sorts: List<BoolectorSort>,
                         body: (List<BoolectorNode>) -> BoolectorNode,
-                        patternGenerator: (List<BoolectorNode>) -> List<BoolectorFun.FuncParam>): BoolectorNode =
+                        patternGenerator: (List<BoolectorNode>) -> List<FunctionDecl.FunctionParam>): BoolectorNode =
             BitvecNode.constBitvec(ctx, "1")
 }
