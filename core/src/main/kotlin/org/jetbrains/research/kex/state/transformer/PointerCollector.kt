@@ -3,6 +3,7 @@ package org.jetbrains.research.kex.state.transformer
 import org.jetbrains.research.kex.ktype.KexPointer
 import org.jetbrains.research.kex.state.PredicateState
 import org.jetbrains.research.kex.state.predicate.ArrayStorePredicate
+import org.jetbrains.research.kex.state.predicate.FieldInitializerPredicate
 import org.jetbrains.research.kex.state.predicate.FieldStorePredicate
 import org.jetbrains.research.kex.state.predicate.Predicate
 import org.jetbrains.research.kex.state.term.*
@@ -13,6 +14,11 @@ class PointerCollector : Transformer<PointerCollector> {
     override fun transformArrayStorePredicate(predicate: ArrayStorePredicate): Predicate {
         ptrs.add(predicate.arrayRef)
         return predicate
+    }
+
+    override fun transformFieldInitializerPredicate(predicate: FieldInitializerPredicate): Predicate {
+        ptrs.add(predicate.field)
+        return super.transformFieldInitializerPredicate(predicate)
     }
 
     override fun transformFieldStorePredicate(predicate: FieldStorePredicate): Predicate {

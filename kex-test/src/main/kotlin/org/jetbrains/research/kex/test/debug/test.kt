@@ -10,7 +10,7 @@ class BasicTests {
     }
 
     fun testArray(array: Array<Point>) {
-        if (array[0].x > 0) {
+        if (array[0].x > 3) {
             Intrinsics.assertReachable()
         }
         if (array[1].y < 0) {

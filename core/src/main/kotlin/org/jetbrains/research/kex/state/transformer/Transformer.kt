@@ -85,6 +85,7 @@ interface Transformer<T : Transformer<T>> {
     fun transformDefaultSwitch(predicate: DefaultSwitchPredicate): Predicate = predicate.accept(this)
     fun transformInequality(predicate: InequalityPredicate): Predicate = predicate.accept(this)
     fun transformEquality(predicate: EqualityPredicate): Predicate = predicate.accept(this)
+    fun transformFieldInitializer(predicate: FieldInitializerPredicate): Predicate = predicate.accept(this)
     fun transformFieldStore(predicate: FieldStorePredicate): Predicate = predicate.accept(this)
     fun transformNewArray(predicate: NewArrayPredicate): Predicate = predicate.accept(this)
     fun transformNew(predicate: NewPredicate): Predicate = predicate.accept(this)
@@ -97,6 +98,7 @@ interface Transformer<T : Transformer<T>> {
     fun transformDefaultSwitchPredicate(predicate: DefaultSwitchPredicate): Predicate = predicate
     fun transformInequalityPredicate(predicate: InequalityPredicate): Predicate = predicate
     fun transformEqualityPredicate(predicate: EqualityPredicate): Predicate = predicate
+    fun transformFieldInitializerPredicate(predicate: FieldInitializerPredicate): Predicate = predicate
     fun transformFieldStorePredicate(predicate: FieldStorePredicate): Predicate = predicate
     fun transformNewArrayPredicate(predicate: NewArrayPredicate): Predicate = predicate
     fun transformNewPredicate(predicate: NewPredicate): Predicate = predicate

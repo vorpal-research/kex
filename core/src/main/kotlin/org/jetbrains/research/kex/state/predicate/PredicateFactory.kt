@@ -22,6 +22,9 @@ object PredicateFactory {
     fun getArrayStore(arrayRef: Term, value: Term, type: PredicateType = PredicateType.State(), location: Location = Location()) =
             ArrayStorePredicate(arrayRef, value, type, location)
 
+    fun getFieldInitializer(field: Term, value: Term, type: PredicateType = PredicateType.State(), location: Location = Location()) =
+            FieldInitializerPredicate(field, value, type, location)
+
     fun getFieldStore(field: Term, value: Term, type: PredicateType = PredicateType.State(), location: Location = Location()) =
             FieldStorePredicate(field, value, type, location)
 
@@ -62,6 +65,11 @@ abstract class PredicateBuilder : TermBuilder() {
     abstract val location: Location
 
     val pf = PredicateFactory
+
+    fun Term.initialize(other: Term) = when (this) {
+        is FieldTerm -> pf.getFieldInitializer(this, other, this@PredicateBuilder.type, location)
+        else -> unreachable { log.error("Trying to initialize unknown term: $this") }
+    }
 
     fun Term.store(other: Term) = when (this) {
         is ArrayIndexTerm -> pf.getArrayStore(this, other, this@PredicateBuilder.type, location)

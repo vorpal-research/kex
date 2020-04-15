@@ -1,10 +1,7 @@
 package org.jetbrains.research.kex.state.transformer
 
 import org.jetbrains.research.kex.state.PredicateState
-import org.jetbrains.research.kex.state.predicate.ArrayStorePredicate
-import org.jetbrains.research.kex.state.predicate.EqualityPredicate
-import org.jetbrains.research.kex.state.predicate.FieldStorePredicate
-import org.jetbrains.research.kex.state.predicate.Predicate
+import org.jetbrains.research.kex.state.predicate.*
 import org.jetbrains.research.kex.state.term.ArrayLoadTerm
 import org.jetbrains.research.kex.state.term.FieldLoadTerm
 import org.jetbrains.research.kex.state.term.Term
@@ -43,6 +40,11 @@ class TypeInfoDFA(val tf: TypeFactory, val typeInfo: TypeInfoMap) : Transformer<
             else -> mapInfos(lhv, rhv)
         }
         return super.transformEquality(predicate)
+    }
+
+    override fun transformFieldInitializer(predicate: FieldInitializerPredicate): Predicate {
+        mapInfos(predicate.field, predicate.value)
+        return super.transformFieldInitializer(predicate)
     }
 
     override fun transformFieldStore(predicate: FieldStorePredicate): Predicate {

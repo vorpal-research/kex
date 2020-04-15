@@ -85,6 +85,10 @@ class $self : ${solver}SMTContext {
         memories[propertyName(memspace, name)] = mem
     }
 
+    private fun setInitialProperties(memspace: Int, name: String, mem: VersionedMemory) {
+        initialMemories[propertyName(memspace, name)] = mem
+    }
+
     fun getProperties(memspace: Int, name: String) = memories.getOrPut(propertyName(memspace, name)) {
         VersionedMemory(factory.makeEmptyMemory(propertyName(memspace, name)))
     }
@@ -120,6 +124,11 @@ class $self : ${solver}SMTContext {
     fun < T : $valexpr > writeProperty(ptr: Ptr_, memspace: Int, name: String, prop: T) {
         val mem = getProperties(memspace, name).store(ptr, prop)
         setProperties(memspace, name, mem)
+    }
+
+    fun < T : $valexpr > initializeProperty(ptr: Ptr_, memspace: Int, name: String, prop: T) {
+        val mem = getInitialProperties(memspace, name).store(ptr, prop)
+        setInitialProperties(memspace, name, mem)
     }
 
     @Suppress("UNUSED_PARAMETER")

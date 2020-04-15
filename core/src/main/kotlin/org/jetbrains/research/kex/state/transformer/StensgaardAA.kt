@@ -164,6 +164,14 @@ class StensgaardAA : Transformer<StensgaardAA>, AliasAnalysis, Viewable {
         return predicate
     }
 
+    override fun transformFieldInitializerPredicate(predicate: FieldInitializerPredicate): Predicate {
+        val ls = get(predicate.field)
+        val rs = get(predicate.value)
+        val res = join(pointsTo(ls), rs)
+        pointsTo[ls] = res
+        return predicate
+    }
+
     override fun transformFieldStorePredicate(predicate: FieldStorePredicate): Predicate {
         val ls = get(predicate.field)
         val rs = get(predicate.value)

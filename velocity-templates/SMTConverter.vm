@@ -109,12 +109,12 @@ class ${solver}Converter(val tf: TypeFactory) : ${solver}SMTConverter() {
         return res
     }
 
-#set($predicates = ["ArrayStore", "Call", "Catch", "DefaultSwitch", "Inequality", "Equality", "FieldStore", "NewArray", "New", "Throw"])
+#set($predicates = ["ArrayStore", "Call", "Catch", "DefaultSwitch", "Inequality", "Equality", "FieldInitializer", "FieldStore", "NewArray", "New", "Throw"])
     fun convert(predicate: Predicate, ef: $factory, ctx: ${solver}Context): Bool_ = when (predicate) {
 #foreach($predicate in $predicates)
         is ${predicate}Predicate -> convert(predicate, ef, ctx)
 #end
-        else -> unreachable { log.error("Unknown predicate type: ${ predicate }") }
+        else -> unreachable { log.error("Unknown predicate: ${ predicate }") }
     }
 
     fun convert(store: ArrayStorePredicate, ef: $factory, ctx: ${solver}Context): Bool_ {
@@ -150,6 +150,18 @@ class ${solver}Converter(val tf: TypeFactory) : ${solver}SMTConverter() {
         val lhv = convert(equality.lhv, ef, ctx)
         val rhv = convert(equality.rhv, ef, ctx)
         return lhv eq rhv
+    }
+
+    fun convert(store: FieldInitializerPredicate, ef: $factory, ctx: ${solver}Context): Bool_ {
+        val value = convert(store.value, ef, ctx)
+        val memspace = store.field.memspace
+        val ptr = convert(store.field, ef, ctx) as? Ptr_ ?: unreachable { log.error("Non-ptr ref in field load") }
+
+        val field = (store.field as FieldTerm)
+        val name = field.fieldNameString
+        val klass = field.klass
+        ctx.initializeProperty(ptr, memspace, "${ klass }.${ name }", value)
+        return ef.makeTrue()
     }
 
     fun convert(store: FieldStorePredicate, ef: $factory, ctx: ${solver}Context): Bool_ {
