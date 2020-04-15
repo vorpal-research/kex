@@ -150,8 +150,8 @@ class Generator(val ctx: ExecutionContext, val psa: PredicateStateAnalysis) {
 
     fun generate(method: Method, block: BasicBlock, state: PredicateState, model: SMTModel) = when {
         apiGeneration -> when {
-            useConcreteImpl -> generateAPI(method, state, model)
-            else -> generateConcreteAPI(method, block, state, model)
+            useConcreteImpl -> generateConcreteAPI(method, block, state, model)
+            else -> generateAPI(method, state, model)
         }
         else -> generateFromModel(method, state, model)
     }

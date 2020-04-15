@@ -139,7 +139,7 @@ class CallStackGenerator(val context: ExecutionContext, val psa: PredicateStateA
                         method.argTypes.isEmpty() -> DefaultConstructorCall(klass)
                         else -> ConstructorCall(klass, method, args.map { generate(it) })
                     }
-                    return stack + constructorCall
+                    return (stack + constructorCall).reversed()
                 }
             }
 

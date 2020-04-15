@@ -138,7 +138,7 @@ class ObjectReanimator(override val method: Method,
                 val reanimatedValue = reanimateReferenceValue(term, refValue)
                 val address = (addr as? ConstIntTerm)?.value
                         ?: unreachable { log.error("Non-int address of array index") }
-                val realIndex = (address - arrayAddr) / elementType.bitsize
+                val realIndex = (address - arrayAddr) / (elementType.bitsize / KexType.WORD)
                 Array.set(array, realIndex, reanimatedValue)
                 array
             }
@@ -313,7 +313,7 @@ abstract class DescriptorReanimator(override val method: Method,
                 val reanimatedValue = reanimateReferenceValue(term, refValue)
                 val address = (addr as? ConstIntTerm)?.value
                         ?: unreachable { log.error("Non-int address of array index") }
-                val realIndex = (address - arrayAddr) / elementType.bitsize
+                val realIndex = (address - arrayAddr) / (elementType.bitsize / KexType.WORD)
                 array[realIndex] = reanimatedValue
                 array
             }

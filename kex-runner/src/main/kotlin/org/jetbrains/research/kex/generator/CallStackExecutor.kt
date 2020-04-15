@@ -17,7 +17,7 @@ class CallStackExecutor(val ctx: ExecutionContext) {
         TraceCollectorProxy.disableCollector()
 
         var current: Any? = null
-        for (call in callStack.reversed()) {
+        for (call in callStack) {
             current = when (call) {
                 is PrimaryValue<*> -> call.value
                 is DefaultConstructorCall -> {
