@@ -19,30 +19,27 @@ abstract class PredicateType {
 
     @Serializable
     data class Path(@Required override val name: String = "P") : PredicateType() {
-        override fun toString(): String {
-            return "@$name"
-        }
+        override fun toString() = "@$name"
     }
 
     @Serializable
     data class State(@Required override val name: String = "S") : PredicateType() {
-        override fun toString(): String {
-            return "@$name"
-        }
+        override fun toString() = "@$name"
     }
 
     @Serializable
     data class Assume(@Required override val name: String = "A") : PredicateType() {
-        override fun toString(): String {
-            return "@$name"
-        }
+        override fun toString() = "@$name"
+    }
+
+    @Serializable
+    data class Axiom(@Required override val name: String = "X") : PredicateType() {
+        override fun toString() = "@$name"
     }
 
     @Serializable
     data class Require(@Required override val name: String = "R") : PredicateType() {
-        override fun toString(): String {
-            return "@$name"
-        }
+        override fun toString() = "@$name"
     }
 }
 

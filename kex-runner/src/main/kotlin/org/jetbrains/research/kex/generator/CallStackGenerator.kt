@@ -236,10 +236,7 @@ class CallStackGenerator(val context: ExecutionContext, val psa: PredicateStateA
         val preStateBuilder = StateBuilder()
         for (field in intersection) {
             preStateBuilder.run {
-//                val tempTerm = term { generate(field.type) }
-                assume { field.term.initialize(field.type.defaultDescriptor.term) }
-//                state { tempTerm equality field.term.load() }
-//                assume { tempTerm equality field.type.defaultDescriptor.term }
+                axiom { field.term.initialize(field.type.defaultDescriptor.term) }
             }
         }
         return mapper.apply(preStateBuilder.apply())
@@ -250,10 +247,7 @@ class CallStackGenerator(val context: ExecutionContext, val psa: PredicateStateA
             val preState = StateBuilder()
             for (field in fields.values) {
                 preState.run {
-                    assume { field.term.initialize(field.type.defaultDescriptor.term) }
-//                    val tempTerm = term { generate(field.type) }
-//                    state { tempTerm equality field.term.load() }
-//                    assume { tempTerm equality field.type.defaultDescriptor.term }
+                    axiom { field.term.initialize(field.type.defaultDescriptor.term) }
                 }
             }
 

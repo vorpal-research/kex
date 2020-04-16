@@ -80,20 +80,24 @@ class KexSerializerTest : KexTest() {
         val state = PredicateType.State()
         val path = PredicateType.Path()
         val assume = PredicateType.Assume()
+        val axiom = PredicateType.Axiom()
         val require = PredicateType.Require()
 
         val serializedState = serializer.toJson<PredicateType>(state)
         val serializedPath = serializer.toJson<PredicateType>(path)
         val serializedAssume = serializer.toJson<PredicateType>(assume)
+        val serializedAxiom = serializer.toJson<PredicateType>(axiom)
         val serializedRequire = serializer.toJson<PredicateType>(require)
 
         val deserializedState = serializer.fromJson<PredicateType>(serializedState)
         val deserializedPath = serializer.fromJson<PredicateType>(serializedPath)
         val deserializedAssume = serializer.fromJson<PredicateType>(serializedAssume)
+        val deserializedAxiom = serializer.fromJson<PredicateType>(serializedAxiom)
         val deserializedRequire = serializer.fromJson<PredicateType>(serializedRequire)
         assertEquals(state, deserializedState)
         assertEquals(path, deserializedPath)
         assertEquals(assume, deserializedAssume)
+        assertEquals(axiom, deserializedAxiom)
         assertEquals(require, deserializedRequire)
     }
 

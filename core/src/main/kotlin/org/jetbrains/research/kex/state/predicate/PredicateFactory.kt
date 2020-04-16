@@ -119,6 +119,9 @@ abstract class PredicateBuilder : TermBuilder() {
     class Assume(override val location: Location = Location()) : PredicateBuilder() {
         override val type get() = PredicateType.Assume()
     }
+    class Axiom(override val location: Location = Location()) : PredicateBuilder() {
+        override val type get() = PredicateType.Axiom()
+    }
     class State(override val location: Location = Location()) : PredicateBuilder() {
         override val type get() = PredicateType.State()
     }
@@ -135,6 +138,9 @@ abstract class PredicateBuilder : TermBuilder() {
 inline fun assume(body: PredicateBuilder.() -> Predicate) = PredicateBuilder.Assume().body()
 inline fun assume(location: Location, body: PredicateBuilder.() -> Predicate) = PredicateBuilder.Assume(location).body()
 
+inline fun axiom(body: PredicateBuilder.() -> Predicate) = PredicateBuilder.Axiom().body()
+inline fun axiom(location: Location, body: PredicateBuilder.() -> Predicate) = PredicateBuilder.Axiom(location).body()
+
 inline fun state(body: PredicateBuilder.() -> Predicate) = PredicateBuilder.State().body()
 inline fun state(location: Location, body: PredicateBuilder.() -> Predicate) = PredicateBuilder.State(location).body()
 
@@ -146,6 +152,7 @@ inline fun require(location: Location, body: PredicateBuilder.() -> Predicate) =
 
 inline fun predicate(type: PredicateType, body: PredicateBuilder.() -> Predicate) = when (type) {
     is PredicateType.Assume -> assume(body)
+    is PredicateType.Axiom -> axiom(body)
     is PredicateType.Require -> require(body)
     is PredicateType.State -> state(body)
     is PredicateType.Path -> path(body)
@@ -154,6 +161,7 @@ inline fun predicate(type: PredicateType, body: PredicateBuilder.() -> Predicate
 
 inline fun predicate(type: PredicateType, location: Location, body: PredicateBuilder.() -> Predicate) = when (type) {
     is PredicateType.Assume -> assume(location, body)
+    is PredicateType.Axiom -> axiom(location, body)
     is PredicateType.Require -> require(location, body)
     is PredicateType.State -> state(location, body)
     is PredicateType.Path -> path(location, body)
