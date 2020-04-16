@@ -13,6 +13,7 @@ import org.jetbrains.research.kex.ktype.KexType
 import org.jetbrains.research.kex.smt.*
 import org.jetbrains.research.kex.smt.Solver
 import org.jetbrains.research.kex.state.PredicateState
+import org.jetbrains.research.kex.state.term.FieldLoadTerm
 import org.jetbrains.research.kex.state.term.FieldTerm
 import org.jetbrains.research.kex.state.term.Term
 import org.jetbrains.research.kex.state.transformer.collectPointers
@@ -189,6 +190,7 @@ class Z3Solver(val tf: TypeFactory) : AbstractSMTSolver {
             val memspace = ptr.memspace
 
             when (ptr) {
+                is FieldLoadTerm -> {}
                 is FieldTerm -> {
                     val name = "${ptr.klass}.${ptr.fieldNameString}"
                     properties.recoverProperty(ctx, ptr.owner, memspace, (ptr.type as KexReference).reference, model, name)
@@ -216,7 +218,6 @@ class Z3Solver(val tf: TypeFactory) : AbstractSMTSolver {
 
                     if (ptr.type is KexArray) {
                         properties.recoverProperty(ctx, ptr, memspace, KexInt(), model, "length")
-                        properties.recoverProperty(ctx, ptr, memspace, ptr.type, model, "type")
                     }
 
                     ktassert(assignments.getOrPut(ptr) { modelPtr } == modelPtr)
