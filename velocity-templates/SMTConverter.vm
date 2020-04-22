@@ -350,8 +350,9 @@ class ${solver}Converter(val tf: TypeFactory) : ${solver}SMTConverter() {
         val ptrType = ctx.readProperty< Int_ >(operand, memspace, "type")
         val checkedType = ef.getTypeVariable(tf, instanceof.checkedType)
         val isSubtype1 = ef.subtypeFunction.applyAs< Bool_ >(ptrType, checkedType)
-        val isSubtype2 = ef.subtypeFunction.applyAs< Bool_ >(checkedType, ptrType)
-        return (isSubtype1 or isSubtype2)
+##        val isSubtype2 = ef.subtypeFunction.applyAs< Bool_ >(checkedType, ptrType)
+##        return (isSubtype1 or isSubtype2)
+        return isSubtype1
     }
 
     fun convert(neg: NegTerm, ef: $factory, ctx: ${solver}Context): Dynamic_ {
