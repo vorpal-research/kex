@@ -2,14 +2,16 @@ package org.jetbrains.research.kex.state.transformer
 
 import org.jetbrains.research.kex.ktype.KexPointer
 import org.jetbrains.research.kex.state.PredicateState
-import org.jetbrains.research.kex.state.predicate.ArrayStorePredicate
-import org.jetbrains.research.kex.state.predicate.FieldInitializerPredicate
-import org.jetbrains.research.kex.state.predicate.FieldStorePredicate
-import org.jetbrains.research.kex.state.predicate.Predicate
+import org.jetbrains.research.kex.state.predicate.*
 import org.jetbrains.research.kex.state.term.*
 
 class PointerCollector : Transformer<PointerCollector> {
     val ptrs = linkedSetOf<Term>()
+
+    override fun transformArrayInitializerPredicate(predicate: ArrayInitializerPredicate): Predicate {
+        ptrs.add(predicate.arrayRef)
+        return predicate
+    }
 
     override fun transformArrayStorePredicate(predicate: ArrayStorePredicate): Predicate {
         ptrs.add(predicate.arrayRef)

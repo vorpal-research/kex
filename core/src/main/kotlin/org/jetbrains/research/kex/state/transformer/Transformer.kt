@@ -78,6 +78,7 @@ interface Transformer<T : Transformer<T>> {
     ////////////////////////////////////////////////////////////////////
     fun transformPredicate(predicate: Predicate) = predicate
 
+    fun transformArrayInitializer(predicate: ArrayInitializerPredicate): Predicate = predicate.accept(this)
     fun transformArrayStore(predicate: ArrayStorePredicate): Predicate = predicate.accept(this)
     fun transformBoundStore(predicate: BoundStorePredicate): Predicate = predicate.accept(this)
     fun transformCall(predicate: CallPredicate): Predicate = predicate.accept(this)
@@ -91,6 +92,7 @@ interface Transformer<T : Transformer<T>> {
     fun transformNew(predicate: NewPredicate): Predicate = predicate.accept(this)
     fun transformThrow(predicate: ThrowPredicate): Predicate = predicate.accept(this)
 
+    fun transformArrayInitializerPredicate(predicate: ArrayInitializerPredicate): Predicate = predicate
     fun transformArrayStorePredicate(predicate: ArrayStorePredicate): Predicate = predicate
     fun transformBoundStorePredicate(predicate: BoundStorePredicate): Predicate = predicate
     fun transformCallPredicate(predicate: CallPredicate): Predicate = predicate

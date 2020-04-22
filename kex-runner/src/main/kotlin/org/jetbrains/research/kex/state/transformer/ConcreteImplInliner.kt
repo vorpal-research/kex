@@ -34,6 +34,7 @@ class ConcreteImplInliner(val ctx: ExecutionContext,
         return when {
             method.isFinal -> method
             method.isStatic -> method
+            method.isConstructor -> method
             else -> {
                 val typeInfo = typeInfoMap.getInfo<CastTypeInfo>(call.owner) ?: return null
                 val kexClass = typeInfo.type as? KexClass ?: return null

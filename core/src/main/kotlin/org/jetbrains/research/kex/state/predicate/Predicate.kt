@@ -92,6 +92,7 @@ val Predicate.hasReceiver
         is NewArrayPredicate -> true
         is InequalityPredicate -> true
         is NewPredicate -> true
+        is ArrayInitializerPredicate -> true
         is ArrayStorePredicate -> true
         is FieldInitializerPredicate -> true
         is FieldStorePredicate -> true

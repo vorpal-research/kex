@@ -109,12 +109,20 @@ class ${solver}Converter(val tf: TypeFactory) : ${solver}SMTConverter() {
         return res
     }
 
-#set($predicates = ["ArrayStore", "Call", "Catch", "DefaultSwitch", "Inequality", "Equality", "FieldInitializer", "FieldStore", "NewArray", "New", "Throw"])
+#set($predicates = ["ArrayInitializer", "ArrayStore", "Call", "Catch", "DefaultSwitch", "Inequality", "Equality", "FieldInitializer", "FieldStore", "NewArray", "New", "Throw"])
     fun convert(predicate: Predicate, ef: $factory, ctx: ${solver}Context): Bool_ = when (predicate) {
 #foreach($predicate in $predicates)
         is ${predicate}Predicate -> convert(predicate, ef, ctx)
 #end
         else -> unreachable { log.error("Unknown predicate: ${ predicate }") }
+    }
+
+    fun convert(store: ArrayInitializerPredicate, ef: $factory, ctx: ${solver}Context): Bool_ {
+        val memspace = store.arrayRef.memspace
+        val ptr = convert(store.arrayRef, ef, ctx) as? Ptr_ ?: unreachable { log.error("Non-ptr ref term in `store`") }
+        val value = convert(store.value, ef, ctx)
+        ctx.initializeMemory(ptr, value, memspace)
+        return ef.makeTrue()
     }
 
     fun convert(store: ArrayStorePredicate, ef: $factory, ctx: ${solver}Context): Bool_ {

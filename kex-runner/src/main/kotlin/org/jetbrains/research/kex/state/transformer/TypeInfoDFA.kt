@@ -52,6 +52,11 @@ class TypeInfoDFA(val tf: TypeFactory, val typeInfo: TypeInfoMap) : Transformer<
         return super.transformFieldStore(predicate)
     }
 
+    override fun transformArrayInitializer(predicate: ArrayInitializerPredicate): Predicate {
+        mapInfos(predicate.arrayRef, predicate.value)
+        return super.transformArrayInitializer(predicate)
+    }
+
     override fun transformArrayStore(predicate: ArrayStorePredicate): Predicate {
         mapInfos(predicate.arrayRef, predicate.value)
         return super.transformArrayStore(predicate)

@@ -1,5 +1,6 @@
 package org.jetbrains.research.kex.generator
 
+import com.abdullin.kthelper.`try`
 import com.abdullin.kthelper.collection.queueOf
 import com.abdullin.kthelper.logging.log
 import org.jetbrains.research.kex.ExecutionContext
@@ -15,6 +16,7 @@ import org.jetbrains.research.kex.state.StateBuilder
 import org.jetbrains.research.kex.state.term.Term
 import org.jetbrains.research.kex.state.term.term
 import org.jetbrains.research.kex.state.transformer.*
+import org.jetbrains.research.kfg.ClassManager
 import org.jetbrains.research.kfg.ir.Class
 import org.jetbrains.research.kfg.ir.Method
 import org.jetbrains.research.kfg.ir.Node
@@ -34,6 +36,38 @@ val Node.visibility: Visibility
         this.isPublic -> Visibility.PUBLIC
         else -> Visibility.PACKAGE
     }
+
+val Class.isInstantiable: Boolean
+    get() = when {
+        this.isAbstract -> false
+        this.isInterface -> false
+        !this.isStatic && this.outerClass != null -> false
+        else -> true
+    }
+
+
+fun Descriptor.concrete(cm: ClassManager) = when (this) {
+    is ObjectDescriptor -> this.instantiableDescriptor(cm)
+    else -> this
+}
+
+fun ObjectDescriptor.instantiableDescriptor(cm: ClassManager): ObjectDescriptor {
+    val concreteClass = when {
+        this.klass.isInstantiable -> this.klass
+        else -> `try` {
+            cm.concreteClasses.filter {
+                klass.isAncestorOf(it) && it.isInstantiable && visibilityLevel <= it.visibility
+            }.random()
+        }.getOrElse {
+            throw NoConcreteInstanceException(this.klass)
+        }
+    }
+    val result = ObjectDescriptor(klass = concreteClass)
+    for ((name, desc) in this.fields) {
+        result[name] = desc.copy(owner = result, value = desc.value.concrete(cm))
+    }
+    return result
+}
 
 private val visibilityLevel by lazy { kexConfig.getEnumValue("apiGeneration", "visibility", true, Visibility.PUBLIC) }
 private val maxStackSize by lazy { kexConfig.getIntValue("apiGeneration", "maxStackSize", 5) }
@@ -60,6 +94,7 @@ class CallStackGenerator(val context: ExecutionContext, val psa: PredicateStateA
 
     private fun prepareQuery(ps: PredicateState) = transform(ps) {
         +NullityInfoAdapter()
+        +ArrayBoundsAdapter()
     }
 
     private class Node(var stack: CallStack) {
@@ -120,9 +155,9 @@ class CallStackGenerator(val context: ExecutionContext, val psa: PredicateStateA
     }
 
     private fun generateObject(descriptor: ObjectDescriptor): CallStack? {
-        val reducedDescriptor = descriptor.reduced
+        val reducedDescriptor = descriptor.instantiableDescriptor(context.cm).reduced
         log.debug("Generating $reducedDescriptor")
-        val klass = descriptor.klass
+        val klass = reducedDescriptor.klass
 
         val queue = queueOf(generateSetters(reducedDescriptor))
         while (queue.isNotEmpty()) {
@@ -187,12 +222,12 @@ class CallStackGenerator(val context: ExecutionContext, val psa: PredicateStateA
         log.debug("Executing constructor $this for $descriptor")
 
         val mapper = descriptor.mapper
-        val preState = mapper.apply(descriptor.generateTypeInfo() + descriptor.preState)
+        val preState = mapper.apply(descriptor.generateTypeInfo() + descriptor.preState + descriptor.initializer)
         val state = preState + mapper.apply(methodState ?: return null)
 
         val preStateFieldTerms = collectFieldTerms(context, preState)
         val preparedState = prepareState(this, state, preStateFieldTerms)
-        val preparedQuery = prepareQuery(mapper.apply(descriptor.toState()))
+        val preparedQuery = prepareQuery(mapper.apply(descriptor.query))
         return execute(preparedState, preparedQuery)
     }
 
@@ -203,10 +238,11 @@ class CallStackGenerator(val context: ExecutionContext, val psa: PredicateStateA
         val mapper = descriptor.mapper
         val preState = getPreState(descriptor) ?: return null
         val preStateFieldTerms = collectFieldTerms(context, preState)
-        val state = mapper.apply(descriptor.generateTypeInfo() + preState + (methodState ?: return null))
+        val state = mapper.apply(descriptor.generateTypeInfo() + preState + descriptor.initializer + (methodState
+                ?: return null))
 
         val preparedState = prepareState(this, state, preStateFieldTerms)
-        val preparedQuery = prepareQuery(mapper.apply(descriptor.toState()))
+        val preparedQuery = prepareQuery(mapper.apply(descriptor.query))
         return execute(preparedState, preparedQuery)
     }
 
