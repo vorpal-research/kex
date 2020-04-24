@@ -157,6 +157,7 @@ data class ObjectDescriptor(
     override val initializer: PredicateState
         get() {
             val state = StateBuilder()
+            state += axiom { term inequality null }
             fields.values.forEach {
                 state += it.initializer
             }
@@ -180,6 +181,7 @@ data class ObjectDescriptor(
 
     override fun initializerState(ps: PredicateState): PredicateState {
         var state = ps
+        state += axiom { term inequality null }
         fields.values.forEach {
             state = it.initializerState(state)
         }

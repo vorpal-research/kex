@@ -159,32 +159,36 @@ class StensgaardAA : Transformer<StensgaardAA>, AliasAnalysis, Viewable {
     override fun transformArrayInitializerPredicate(predicate: ArrayInitializerPredicate): Predicate {
         val ls = get(predicate.arrayRef)
         val rs = get(predicate.value)
-        val res = join(pointsTo(ls), rs)
+        val res = join(pointsTo(ls), pointsTo(rs))
         pointsTo[ls] = res
+        pointsTo[rs] = res
         return predicate
     }
 
     override fun transformArrayStorePredicate(predicate: ArrayStorePredicate): Predicate {
         val ls = get(predicate.arrayRef)
         val rs = get(predicate.value)
-        val res = join(pointsTo(ls), rs)
+        val res = join(pointsTo(ls), pointsTo(rs))
         pointsTo[ls] = res
+        pointsTo[rs] = res
         return predicate
     }
 
     override fun transformFieldInitializerPredicate(predicate: FieldInitializerPredicate): Predicate {
         val ls = get(predicate.field)
         val rs = get(predicate.value)
-        val res = join(pointsTo(ls), rs)
+        val res = join(pointsTo(ls), pointsTo(rs))
         pointsTo[ls] = res
+        pointsTo[rs] = res
         return predicate
     }
 
     override fun transformFieldStorePredicate(predicate: FieldStorePredicate): Predicate {
         val ls = get(predicate.field)
         val rs = get(predicate.value)
-        val res = join(pointsTo(ls), rs)
+        val res = join(pointsTo(ls), pointsTo(rs))
         pointsTo[ls] = res
+        pointsTo[rs] = res
         return predicate
     }
 

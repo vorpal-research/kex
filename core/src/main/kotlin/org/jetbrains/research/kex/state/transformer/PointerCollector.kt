@@ -20,7 +20,7 @@ class PointerCollector : Transformer<PointerCollector> {
 
     override fun transformFieldInitializerPredicate(predicate: FieldInitializerPredicate): Predicate {
         ptrs.add(predicate.field)
-        return super.transformFieldInitializerPredicate(predicate)
+        return predicate
     }
 
     override fun transformFieldStorePredicate(predicate: FieldStorePredicate): Predicate {
@@ -32,7 +32,7 @@ class PointerCollector : Transformer<PointerCollector> {
         if (term.type is KexPointer) {
             ptrs += term
         }
-        return super.transformArgument(term)
+        return term
     }
 
     override fun transformArrayIndex(term: ArrayIndexTerm): Term {
