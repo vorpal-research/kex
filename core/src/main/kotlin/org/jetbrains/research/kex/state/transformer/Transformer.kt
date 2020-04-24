@@ -78,6 +78,7 @@ interface Transformer<T : Transformer<T>> {
     ////////////////////////////////////////////////////////////////////
     fun transformPredicate(predicate: Predicate) = predicate
 
+    fun transformArrayInitializer(predicate: ArrayInitializerPredicate): Predicate = predicate.accept(this)
     fun transformArrayStore(predicate: ArrayStorePredicate): Predicate = predicate.accept(this)
     fun transformBoundStore(predicate: BoundStorePredicate): Predicate = predicate.accept(this)
     fun transformCall(predicate: CallPredicate): Predicate = predicate.accept(this)
@@ -85,11 +86,13 @@ interface Transformer<T : Transformer<T>> {
     fun transformDefaultSwitch(predicate: DefaultSwitchPredicate): Predicate = predicate.accept(this)
     fun transformInequality(predicate: InequalityPredicate): Predicate = predicate.accept(this)
     fun transformEquality(predicate: EqualityPredicate): Predicate = predicate.accept(this)
+    fun transformFieldInitializer(predicate: FieldInitializerPredicate): Predicate = predicate.accept(this)
     fun transformFieldStore(predicate: FieldStorePredicate): Predicate = predicate.accept(this)
     fun transformNewArray(predicate: NewArrayPredicate): Predicate = predicate.accept(this)
     fun transformNew(predicate: NewPredicate): Predicate = predicate.accept(this)
     fun transformThrow(predicate: ThrowPredicate): Predicate = predicate.accept(this)
 
+    fun transformArrayInitializerPredicate(predicate: ArrayInitializerPredicate): Predicate = predicate
     fun transformArrayStorePredicate(predicate: ArrayStorePredicate): Predicate = predicate
     fun transformBoundStorePredicate(predicate: BoundStorePredicate): Predicate = predicate
     fun transformCallPredicate(predicate: CallPredicate): Predicate = predicate
@@ -97,6 +100,7 @@ interface Transformer<T : Transformer<T>> {
     fun transformDefaultSwitchPredicate(predicate: DefaultSwitchPredicate): Predicate = predicate
     fun transformInequalityPredicate(predicate: InequalityPredicate): Predicate = predicate
     fun transformEqualityPredicate(predicate: EqualityPredicate): Predicate = predicate
+    fun transformFieldInitializerPredicate(predicate: FieldInitializerPredicate): Predicate = predicate
     fun transformFieldStorePredicate(predicate: FieldStorePredicate): Predicate = predicate
     fun transformNewArrayPredicate(predicate: NewArrayPredicate): Predicate = predicate
     fun transformNewPredicate(predicate: NewPredicate): Predicate = predicate

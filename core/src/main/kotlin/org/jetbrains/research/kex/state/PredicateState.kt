@@ -66,6 +66,13 @@ class StateBuilder() : PredicateBuilder() {
         this += Assume(location).body()
     }
 
+    inline fun axiom(body: PredicateBuilder.() -> Predicate) {
+        this += Axiom().body()
+    }
+    inline fun axiom(location: Location, body: PredicateBuilder.() -> Predicate) {
+        this += Axiom(location).body()
+    }
+
     inline fun state(body: PredicateBuilder.() -> Predicate) {
         this += State().body()
     }
@@ -89,6 +96,7 @@ class StateBuilder() : PredicateBuilder() {
 
     inline fun predicate(type: PredicateType, body: PredicateBuilder.() -> Predicate) = when (type) {
         is PredicateType.Assume -> assume(body)
+        is PredicateType.Axiom -> axiom(body)
         is PredicateType.Require -> require(body)
         is PredicateType.State -> state(body)
         is PredicateType.Path -> path(body)
@@ -97,6 +105,7 @@ class StateBuilder() : PredicateBuilder() {
 
     inline fun predicate(type: PredicateType, location: Location, body: PredicateBuilder.() -> Predicate) = when (type) {
         is PredicateType.Assume -> assume(location, body)
+        is PredicateType.Axiom -> axiom(location, body)
         is PredicateType.Require -> require(location, body)
         is PredicateType.State -> state(location, body)
         is PredicateType.Path -> path(location, body)

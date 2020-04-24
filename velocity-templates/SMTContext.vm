@@ -79,10 +79,14 @@ class $self : ${solver}SMTContext {
     private fun getInitialMemory(id: String) = initialMemories.getOrPut(id) { VersionedMemory(factory.makeEmptyMemory(id)) }
     fun getMemory(memspace: Int) = memories.getOrPut(memoryName(memspace)) { getInitialMemory(memoryName(memspace)) }
     private fun setMemory(memspace: Int, mem: VersionedMemory) { memories[memoryName(memspace)] = mem }
-
+    private fun setInitialMemory(memspace: Int, mem: VersionedMemory) { initialMemories[memoryName(memspace)] = mem }
 
     private fun setProperties(memspace: Int, name: String, mem: VersionedMemory) {
         memories[propertyName(memspace, name)] = mem
+    }
+
+    private fun setInitialProperties(memspace: Int, name: String, mem: VersionedMemory) {
+        initialMemories[propertyName(memspace, name)] = mem
     }
 
     fun getProperties(memspace: Int, name: String) = memories.getOrPut(propertyName(memspace, name)) {
@@ -109,6 +113,11 @@ class $self : ${solver}SMTContext {
         setMemory(memspace, mem)
     }
 
+    fun < T : $valexpr > initializeMemory(ptr: Ptr_, value: T, memspace: Int) {
+        val mem = getInitialMemory(memspace).store(ptr, value)
+        setInitialMemory(memspace, mem)
+    }
+
     fun readProperty(ptr: Ptr_, memspace: Int, name: String, size: TypeSize) = when (size) {
         TypeSize.WORD -> readProperty< Word_ >(ptr, memspace, name)
         TypeSize.DWORD -> readProperty< DWord_ >(ptr, memspace, name)
@@ -120,6 +129,11 @@ class $self : ${solver}SMTContext {
     fun < T : $valexpr > writeProperty(ptr: Ptr_, memspace: Int, name: String, prop: T) {
         val mem = getProperties(memspace, name).store(ptr, prop)
         setProperties(memspace, name, mem)
+    }
+
+    fun < T : $valexpr > initializeProperty(ptr: Ptr_, memspace: Int, name: String, prop: T) {
+        val mem = getInitialProperties(memspace, name).store(ptr, prop)
+        setInitialProperties(memspace, name, mem)
     }
 
     @Suppress("UNUSED_PARAMETER")

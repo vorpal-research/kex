@@ -5,10 +5,11 @@ import com.abdullin.kthelper.logging.log
 import org.jetbrains.research.kex.ExecutionContext
 import org.jetbrains.research.kex.ktype.*
 import org.jetbrains.research.kex.state.PredicateState
+import org.jetbrains.research.kex.state.StateBuilder
+import org.jetbrains.research.kex.state.basic
 import org.jetbrains.research.kex.state.emptyState
-import org.jetbrains.research.kex.state.predicate.assume
+import org.jetbrains.research.kex.state.predicate.axiom
 import org.jetbrains.research.kex.state.predicate.require
-import org.jetbrains.research.kex.state.predicate.state
 import org.jetbrains.research.kex.state.term.Term
 import org.jetbrains.research.kex.state.term.term
 import org.jetbrains.research.kfg.type.ArrayType
@@ -19,13 +20,31 @@ sealed class Descriptor {
     abstract val term: Term
     abstract val type: KexType
 
-    abstract fun toState(ps: PredicateState = emptyState()): PredicateState
+    abstract val hasState: Boolean
+
+    abstract val initializer: PredicateState
+    abstract val query: PredicateState
+
+    abstract fun initializerState(ps: PredicateState = emptyState()): PredicateState
 }
 
 sealed class ConstantDescriptor : Descriptor() {
-    override fun toState(ps: PredicateState) = unreachable<PredicateState> {
-        log.error("Can't transform constant descriptor $this to predicate state")
+    override val initializer: PredicateState
+        get() = unreachable<PredicateState> {
+            log.error("Can't transform constant descriptor $this to initializer")
+        }
+
+    override val query: PredicateState
+        get() = unreachable<PredicateState> {
+            log.error("Can't transform constant descriptor $this to query")
+        }
+
+    override fun initializerState(ps: PredicateState) = unreachable<PredicateState> {
+        log.error("Can't transform constant descriptor $this to initializer state")
     }
+
+    override val hasState: Boolean
+        get() = false
 
     object Null : ConstantDescriptor() {
         override val type = KexNull()
@@ -74,17 +93,29 @@ data class FieldDescriptor(
     override val type = kfgType.kexType
     override val term = term { owner.term.field(type, name) }
 
-    override fun toState(ps: PredicateState): PredicateState {
-        var state = ps
-        if (value !is ConstantDescriptor) {
-            state = value.toState(state)
-        }
-        return state.builder().run {
+    override val hasState: Boolean
+        get() = true
+
+    override val initializer: PredicateState
+        get() = if (value.hasState) value.initializerState() else emptyState()
+
+    override val query: PredicateState
+        get() = basic {
             val tempTerm = term { generate(this@FieldDescriptor.type) }
             state { tempTerm equality term.load() }
             require { tempTerm equality value.term }
-            apply()
+            if (value !is ConstantDescriptor.Null) {
+                require { tempTerm inequality null }
+            }
         }
+
+    override fun initializerState(ps: PredicateState): PredicateState {
+        var state = ps
+        if (value.hasState) {
+            state = value.initializerState(state)
+        }
+        state += axiom { term.initialize(value.term) }
+        return state
     }
 
     override fun toString() = "${klass.fullname}.$name = $value"
@@ -120,16 +151,39 @@ data class ObjectDescriptor(
     val name = term.name
     val fields get() = fieldsInner.toMap()
 
+    override val hasState: Boolean
+        get() = true
+
+    override val initializer: PredicateState
+        get() {
+            val state = StateBuilder()
+            state += axiom { term inequality null }
+            fields.values.forEach {
+                state += it.initializer
+            }
+            return state.apply()
+        }
+
+    override val query: PredicateState
+        get() {
+            val state = StateBuilder()
+            fields.values.forEach {
+                state += it.query
+            }
+            return state.apply()
+        }
+
     operator fun set(field: String, value: FieldDescriptor) {
         fieldsInner[field] = value
     }
 
     operator fun get(field: String) = fieldsInner[field]
 
-    override fun toState(ps: PredicateState): PredicateState {
+    override fun initializerState(ps: PredicateState): PredicateState {
         var state = ps
+        state += axiom { term inequality null }
         fields.values.forEach {
-            state = it.toState(state)
+            state = it.initializerState(state)
         }
         return state
     }
@@ -171,15 +225,40 @@ data class ArrayDescriptor(
     val name = term.name
     val elements get() = elementsInner.toMap()
 
+    override val hasState: Boolean
+        get() = true
+
+    override val initializer: PredicateState
+        get() {
+            var state = emptyState()
+            elements.forEach { (_, element) ->
+                if (element.hasState) {
+                    state = element.initializerState(state)
+                }
+            }
+            return state
+        }
+
+    override val query: PredicateState
+        get() {
+            val state = StateBuilder()
+            elements.forEach { (index, element) ->
+                state += require { term[index].store(element.term) }
+            }
+            return state.apply()
+        }
+
     operator fun set(index: Int, value: Descriptor) {
         elementsInner[index] = value
     }
 
-    override fun toState(ps: PredicateState): PredicateState {
+    override fun initializerState(ps: PredicateState): PredicateState {
         var state = ps
         elements.forEach { (index, element) ->
-            state = element.toState(state)
-            state += require { term[index] equality element.term }
+            if (element.hasState) {
+                state = element.initializerState(state)
+            }
+            state += axiom { term[index].initialize(element.term) }
         }
         return state
     }
@@ -255,8 +334,8 @@ fun Descriptor.generateTypeInfo(ps: PredicateState = emptyState()): PredicateSta
         val descType = this.type
         val instanceOfTerm = term { generate(KexBool()) }
         val builder = ps.builder()
-        builder += state { instanceOfTerm equality (descTerm `is` descType) }
-        builder += assume { instanceOfTerm equality true }
+        builder += axiom { instanceOfTerm equality (descTerm `is` descType) }
+        builder += axiom { instanceOfTerm equality true }
         var inlinedState = builder.apply()
         for ((_, field) in this.fields) {
             inlinedState = field.generateTypeInfo(inlinedState)
@@ -270,8 +349,8 @@ fun Descriptor.generateTypeInfo(ps: PredicateState = emptyState()): PredicateSta
             else -> {
                 val builder = ps.builder()
                 val instanceOfTerm = term { generate(KexBool()) }
-                builder += state { instanceOfTerm equality (descTerm `is` descType) }
-                builder += assume { instanceOfTerm equality true }
+                builder += axiom { instanceOfTerm equality (descTerm `is` descType) }
+                builder += axiom { instanceOfTerm equality true }
                 builder.apply()
             }
         }

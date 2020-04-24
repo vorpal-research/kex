@@ -43,6 +43,7 @@ val predicateTypeSerialModule: SerialModule
             addSubclass(PredicateType.Path::class, PredicateType.Path.serializer())
             addSubclass(PredicateType.State::class, PredicateType.State.serializer())
             addSubclass(PredicateType.Assume::class, PredicateType.Assume.serializer())
+            addSubclass(PredicateType.Axiom::class, PredicateType.Axiom.serializer())
             addSubclass(PredicateType.Require::class, PredicateType.Require.serializer())
         }
     }

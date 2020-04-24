@@ -136,9 +136,19 @@ class TypeInfoCollector(val model: SMTModel, val tf: TypeFactory) : Transformer<
         return super.transformInequality(predicate)
     }
 
+    override fun transformFieldInitializer(predicate: FieldInitializerPredicate): Predicate {
+        copyInfos(predicate.value, predicate.field, cfgt.getDominatingPaths(predicate))
+        return super.transformFieldInitializer(predicate)
+    }
+
     override fun transformFieldStore(predicate: FieldStorePredicate): Predicate {
         copyInfos(predicate.value, predicate.field, cfgt.getDominatingPaths(predicate))
         return super.transformFieldStore(predicate)
+    }
+
+    override fun transformArrayInitializer(predicate: ArrayInitializerPredicate): Predicate {
+        copyInfos(predicate.value, predicate.arrayRef, cfgt.getDominatingPaths(predicate))
+        return super.transformArrayInitializer(predicate)
     }
 
     override fun transformArrayStore(predicate: ArrayStorePredicate): Predicate {

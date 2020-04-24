@@ -60,4 +60,6 @@ data class CallStack(val stack: List<ApiCall>) : Iterable<ApiCall> by stack {
     operator fun plus(other: CallStack) = CallStack(this.stack + other.stack)
 
     override fun toString() = stack.joinToString("\n")
+
+    fun reversed(): CallStack = CallStack(stack.reversed())
 }
