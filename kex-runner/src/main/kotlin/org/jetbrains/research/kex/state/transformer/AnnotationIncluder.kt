@@ -1,6 +1,7 @@
 package org.jetbrains.research.kex.state.transformer
 
 import com.abdullin.kthelper.assert.unreachable
+import com.abdullin.kthelper.collection.dequeOf
 import org.jetbrains.research.kex.annotations.AnnotationsLoader
 import org.jetbrains.research.kex.state.*
 import org.jetbrains.research.kex.state.predicate.CallPredicate
@@ -10,7 +11,7 @@ import java.util.*
 
 class AnnotationIncluder(val annotations: AnnotationsLoader) : RecollectingTransformer<AnnotationIncluder> {
 
-    override val builders = ArrayDeque<StateBuilder>().apply { push(StateBuilder()) }
+    override val builders = dequeOf(StateBuilder())
 
     override fun transformCallPredicate(predicate: CallPredicate): Predicate {
         val call = predicate.call as CallTerm
