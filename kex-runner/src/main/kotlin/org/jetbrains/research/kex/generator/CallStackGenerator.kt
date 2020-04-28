@@ -155,7 +155,7 @@ class CallStackGenerator(val context: ExecutionContext, val psa: PredicateStateA
     }
 
     private fun generateObject(descriptor: ObjectDescriptor): CallStack? {
-        val reducedDescriptor = descriptor.instantiableDescriptor(context.cm).reduced
+        val reducedDescriptor = descriptor.instantiableDescriptor(context.cm).reduced as ObjectDescriptor
         log.debug("Generating $reducedDescriptor")
         val klass = reducedDescriptor.klass
 
@@ -253,7 +253,7 @@ class CallStackGenerator(val context: ExecutionContext, val psa: PredicateStateA
                 log.debug("Model: ${result.model}")
                 val (thisDescriptor, argumentDescriptors) =
                         generateInitialDescriptors(this, context, result.model, checker.state)
-                (thisDescriptor as? ObjectDescriptor)?.reduced to argumentDescriptors
+                (thisDescriptor?.reduced as? ObjectDescriptor) to argumentDescriptors
             }
             else -> null
         }
@@ -298,14 +298,22 @@ class CallStackGenerator(val context: ExecutionContext, val psa: PredicateStateA
         else -> false
     }
 
-    private val ObjectDescriptor.reduced: ObjectDescriptor
-        get() {
-            val filteredFields = fields.filterNot { (_, field) -> field.isDefault }
-            val newObject = ObjectDescriptor(klass)
-            for ((name, field) in filteredFields) {
-                newObject[name] = field.copy(owner = newObject)
+    private val Descriptor.reduced: Descriptor
+        get() = when (this) {
+            is ObjectDescriptor -> {
+                val filteredFields = fields.filterNot { (_, field) -> field.isDefault }
+                val newObject = ObjectDescriptor(klass)
+                for ((name, field) in filteredFields) {
+                    newObject[name] = field.copy(owner = newObject, value = field.value.reduced)
+                }
+                newObject
             }
-            return newObject
+            is ArrayDescriptor -> {
+                val filteredElements = this.elements.filterValues { it != this.elementType.defaultDescriptor }
+                val newArray = ArrayDescriptor(this.length, this.kfgType, filteredElements.toMutableMap())
+                newArray
+            }
+            else -> this
         }
 
     private val FieldDescriptor.isDefault get() = value == type.defaultDescriptor

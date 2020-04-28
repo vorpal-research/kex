@@ -104,7 +104,7 @@ data class FieldDescriptor(
             val tempTerm = term { generate(this@FieldDescriptor.type) }
             state { tempTerm equality term.load() }
             require { tempTerm equality value.term }
-            if (value !is ConstantDescriptor.Null) {
+            if (value !is ConstantDescriptor.Null && this@FieldDescriptor.type is KexPointer) {
                 require { tempTerm inequality null }
             }
         }

@@ -90,7 +90,7 @@ class $self : ${solver}SMTContext {
     }
 
     fun getProperties(memspace: Int, name: String) = memories.getOrPut(propertyName(memspace, name)) {
-        VersionedMemory(factory.makeEmptyMemory(propertyName(memspace, name)))
+        getInitialMemory(propertyName(memspace, name))
     }
 
     private fun get(id: String) = memories.getOrPut(id) { getInitialMemory(id) }
@@ -114,7 +114,7 @@ class $self : ${solver}SMTContext {
     }
 
     fun < T : $valexpr > initializeMemory(ptr: Ptr_, value: T, memspace: Int) {
-        val mem = getInitialMemory(memspace).store(ptr, value)
+        val mem = getInitialMemory(memoryName(memspace)).store(ptr, value)
         setInitialMemory(memspace, mem)
     }
 
@@ -132,7 +132,7 @@ class $self : ${solver}SMTContext {
     }
 
     fun < T : $valexpr > initializeProperty(ptr: Ptr_, memspace: Int, name: String, prop: T) {
-        val mem = getInitialProperties(memspace, name).store(ptr, prop)
+        val mem = getInitialMemory(propertyName(memspace, name)).store(ptr, prop)
         setInitialProperties(memspace, name, mem)
     }
 
