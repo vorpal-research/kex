@@ -280,22 +280,23 @@ abstract class DescriptorReanimator(override val method: Method,
     }
 
     private fun reanimateClass(term: Term, addr: Term?) = descriptor(context) {
-        val actualType = (reanimateType(term.memspace, addr) ?: term.type) as? KexClass
-                ?: unreachable { log.error("Cannot cast ${(reanimateType(term.memspace, addr) ?: term.type)} to class") }
 
         when (val address = (addr as? ConstIntTerm)?.value) {
-            null, 0 -> default(actualType)
-            else -> memory(term.memspace, address) { `object`(context.cm[actualType.`class`]) }
+            null, 0 -> default(term.type)
+            else -> {
+                val actualType = (reanimateType(term.memspace, addr) ?: term.type) as? KexClass
+                        ?: unreachable { log.error("Cannot cast ${(reanimateType(term.memspace, addr) ?: term.type)} to class") }
+                memory(term.memspace, address) { `object`(context.cm[actualType.`class`]) }
+            }
         }
     }
 
     private fun reanimateArray(term: Term, addr: Term?) = descriptor(context) {
-        val arrayType = (reanimateType(term.memspace, addr) ?: term.type) as KexArray
-
         when (val address = (addr as? ConstIntTerm)?.value) {
-            null, 0 -> default(arrayType)
-            else -> memory(term.memspace, address) {
-                newArrayInstance(term.memspace, arrayType, addr)
+            null, 0 -> default(term.type)
+            else -> {
+                val arrayType = (reanimateType(term.memspace, addr) ?: term.type) as KexArray
+                memory(term.memspace, address) { newArrayInstance(term.memspace, arrayType, addr) }
             }
         }
     }
