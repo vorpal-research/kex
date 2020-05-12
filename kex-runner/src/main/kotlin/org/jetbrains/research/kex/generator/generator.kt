@@ -56,11 +56,10 @@ class Generator(val ctx: ExecutionContext, val psa: PredicateStateAnalysis) {
     private val Pair<Descriptor?, List<Descriptor>>.typeInfoState: PredicateState
         get() {
             val thisState = first?.run {
-                val typeInfo = generateTypeInfo()
                 TermRemapper(mapOf(term to term { `this`(term.type) })).apply(typeInfo)
             }
             val argStates = second.mapIndexed { index, descriptor ->
-                val typeInfo = descriptor.generateTypeInfo()
+                val typeInfo = descriptor.typeInfo
                 TermRemapper(mapOf(descriptor.term to term { arg(descriptor.term.type, index) })).apply(typeInfo)
             }.toTypedArray()
             return listOfNotNull(thisState, *argStates).fold(emptyState()) { acc, predicateState -> acc + predicateState }

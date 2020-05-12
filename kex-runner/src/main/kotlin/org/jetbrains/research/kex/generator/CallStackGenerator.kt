@@ -232,7 +232,7 @@ class CallStackGenerator(val context: ExecutionContext, val psa: PredicateStateA
         log.debug("Executing constructor $this for $descriptor")
 
         val mapper = descriptor.mapper
-        val preState = mapper.apply(descriptor.generateTypeInfo() + descriptor.preState + descriptor.initializer)
+        val preState = mapper.apply(descriptor.typeInfo + descriptor.preState)
         val state = preState + mapper.apply(methodState ?: return null)
 
         val preStateFieldTerms = collectFieldTerms(context, preState)
@@ -248,8 +248,7 @@ class CallStackGenerator(val context: ExecutionContext, val psa: PredicateStateA
         val mapper = descriptor.mapper
         val preState = getSetterPreState(descriptor) ?: return null
         val preStateFieldTerms = collectFieldTerms(context, preState)
-        val state = mapper.apply(descriptor.generateTypeInfo() + preState + descriptor.initializer + (methodState
-                ?: return null))
+        val state = mapper.apply(descriptor.typeInfo + preState + (methodState ?: return null))
 
         val preparedState = prepareState(this, state, preStateFieldTerms)
         val preparedQuery = prepareQuery(mapper.apply(descriptor.query))
@@ -263,8 +262,7 @@ class CallStackGenerator(val context: ExecutionContext, val psa: PredicateStateA
         val mapper = descriptor.mapper
         val preState = getMethodPreState(descriptor) ?: return null
         val preStateFieldTerms = collectFieldTerms(context, preState)
-        val state = mapper.apply(descriptor.generateTypeInfo() + preState + descriptor.initializer + (methodState
-                ?: return null))
+        val state = mapper.apply(descriptor.typeInfo + preState + (methodState ?: return null))
 
         val preparedState = prepareState(this, state, preStateFieldTerms)
         val preparedQuery = prepareQuery(mapper.apply(descriptor.query))
