@@ -66,7 +66,7 @@ class Generator(val ctx: ExecutionContext, val psa: PredicateStateAnalysis) {
         }
 
     private fun prepareState(method: Method, ps: PredicateState, typeInfoMap: TypeInfoMap) = transform(ps) {
-        +AnnotationIncluder(AnnotationManager.defaultLoader)
+        +AnnotationIncluder(method, AnnotationManager.defaultLoader)
         +FullDepthInliner(ctx, typeInfoMap, psa)
         +IntrinsicAdapter
         +ReflectionInfoAdapter(method, ctx.loader)
