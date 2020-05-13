@@ -56,19 +56,18 @@ class Generator(val ctx: ExecutionContext, val psa: PredicateStateAnalysis) {
     private val Pair<Descriptor?, List<Descriptor>>.typeInfoState: PredicateState
         get() {
             val thisState = first?.run {
-                val typeInfo = generateTypeInfo()
                 TermRemapper(mapOf(term to term { `this`(term.type) })).apply(typeInfo)
             }
             val argStates = second.mapIndexed { index, descriptor ->
-                val typeInfo = descriptor.generateTypeInfo()
+                val typeInfo = descriptor.typeInfo
                 TermRemapper(mapOf(descriptor.term to term { arg(descriptor.term.type, index) })).apply(typeInfo)
             }.toTypedArray()
             return listOfNotNull(thisState, *argStates).fold(emptyState()) { acc, predicateState -> acc + predicateState }
         }
 
     private fun prepareState(method: Method, ps: PredicateState, typeInfoMap: TypeInfoMap) = transform(ps) {
-        +AnnotationIncluder(AnnotationManager.defaultLoader)
-        +ConcreteImplInliner(ctx, typeInfoMap, psa)
+        +AnnotationIncluder(method, AnnotationManager.defaultLoader)
+        +FullDepthInliner(ctx, typeInfoMap, psa)
         +IntrinsicAdapter
         +ReflectionInfoAdapter(method, ctx.loader)
         +Optimizer()

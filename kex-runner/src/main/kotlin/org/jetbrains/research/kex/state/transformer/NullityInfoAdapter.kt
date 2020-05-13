@@ -6,6 +6,7 @@ import org.jetbrains.research.kex.state.PredicateState
 import org.jetbrains.research.kex.state.StateBuilder
 import org.jetbrains.research.kex.state.predicate.assume
 import org.jetbrains.research.kex.state.term.ArrayIndexTerm
+import org.jetbrains.research.kex.state.term.ConstClassTerm
 import org.jetbrains.research.kex.state.term.FieldTerm
 import org.jetbrains.research.kex.state.term.Term
 
@@ -50,5 +51,13 @@ class NullityInfoAdapter : RecollectingTransformer<NullityInfoAdapter> {
             annotatedTerms = annotatedTerms + term.arrayRef
         }
         return super.transformArrayIndexTerm(term)
+    }
+
+    override fun transformConstClassTerm(term: ConstClassTerm): Term {
+        if (term !in annotatedTerms) {
+            currentBuilder += assume { term inequality null }
+            annotatedTerms = annotatedTerms + term
+        }
+        return super.transformConstClassTerm(term)
     }
 }

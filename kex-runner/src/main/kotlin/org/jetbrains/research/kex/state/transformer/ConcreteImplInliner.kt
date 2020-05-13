@@ -81,3 +81,17 @@ class ConcreteImplInliner(val ctx: ExecutionContext,
         return TermRenamer("inlined${inlineIndex++}", mappings).apply(endState)
     }
 }
+
+class FullDepthInliner(val ctx: ExecutionContext,
+                       val typeInfoMap: TypeInfoMap,
+                       val psa: PredicateStateAnalysis) : Transformer<FullDepthInliner> {
+    override fun apply(ps: PredicateState): PredicateState {
+        var last: PredicateState
+        var current = ps
+        do {
+            last = current
+            current = ConcreteImplInliner(ctx, typeInfoMap, psa).apply(last)
+        } while (current != last)
+        return current
+    }
+}

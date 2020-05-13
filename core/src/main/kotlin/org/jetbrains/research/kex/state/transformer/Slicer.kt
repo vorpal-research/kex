@@ -67,8 +67,8 @@ class Slicer(val state: PredicateState, sliceTerms: Set<Term>, val aa: AliasAnal
             : this(state, TermCollector.getFullTermSet(query) + sliceTerms, aa)
 
 
-    private fun addSliceTerm(term: Term) = when {
-        term.type is KexPointer -> slicePtrs.add(term)
+    private fun addSliceTerm(term: Term) = when (term.type) {
+        is KexPointer -> slicePtrs.add(term)
         else -> sliceVars.add(term)
     }
 
@@ -87,7 +87,7 @@ class Slicer(val state: PredicateState, sliceTerms: Set<Term>, val aa: AliasAnal
     private fun checkPtrs(predicate: Predicate, lhv: Set<Term>, rhv: Set<Term>): Boolean {
         if (lhv.isEmpty()) return false
 
-        if (lhv.filter { it.type is KexPointer }.any { slicePtrs.contains(it) }) {
+        if (lhv.filter { it.type is KexPointer }.any { it in slicePtrs }) {
             rhv.forEach { addSliceTerm(it) }
             return true
         }
@@ -103,12 +103,12 @@ class Slicer(val state: PredicateState, sliceTerms: Set<Term>, val aa: AliasAnal
         return false
     }
 
-    override fun transform(ps: PredicateState): PredicateState {
+    override fun apply(ps: PredicateState): PredicateState {
         cfg.apply(ps)
         currentPath = cfg.finalPath
 
         val reversed = ps.reverse()
-        return super.transform(reversed).reverse().simplify()
+        return super.apply(reversed).reverse().simplify()
     }
 
     override fun transformChoice(ps: ChoiceState) = when (val psi = ps.simplify()) {

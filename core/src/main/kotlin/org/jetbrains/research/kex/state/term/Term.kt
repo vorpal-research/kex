@@ -57,6 +57,7 @@ val Term.isNamed
         is ArrayIndexTerm -> true
         is FieldTerm -> true
         is ConstStringTerm -> true
+        is ConstClassTerm -> true
         else -> false
     }
 
