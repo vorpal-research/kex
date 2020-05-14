@@ -17,10 +17,13 @@ import org.jetbrains.research.kfg.ir.Method
 
 class ConcreteImplInliner(val ctx: ExecutionContext,
                           val typeInfoMap: TypeInfoMap,
-                          val psa: PredicateStateAnalysis) : RecollectingTransformer<ConcreteImplInliner> {
+                          val psa: PredicateStateAnalysis,
+                          inlineIndex: Int = 0) : RecollectingTransformer<ConcreteImplInliner> {
     private val im = MethodManager.InlineManager
     override val builders = dequeOf(StateBuilder())
-    private var inlineIndex = 0
+    var inlineIndex = inlineIndex
+        private set
+
 
     protected class TermRenamer(val suffix: String, val remapping: Map<Term, Term>) : Transformer<TermRenamer> {
         override fun transformTerm(term: Term): Term = remapping[term] ?: when (term) {
@@ -88,9 +91,12 @@ class FullDepthInliner(val ctx: ExecutionContext,
     override fun apply(ps: PredicateState): PredicateState {
         var last: PredicateState
         var current = ps
+        var inlineIndex = 0
         do {
             last = current
-            current = ConcreteImplInliner(ctx, typeInfoMap, psa).apply(last)
+            val cii = ConcreteImplInliner(ctx, typeInfoMap, psa, inlineIndex)
+            current = cii.apply(last)
+            inlineIndex = cii.inlineIndex
         } while (current != last)
         return current
     }

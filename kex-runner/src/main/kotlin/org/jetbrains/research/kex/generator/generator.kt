@@ -28,8 +28,8 @@ class NoConcreteInstanceException(val klass: Class) : Exception()
 
 class Generator(val ctx: ExecutionContext, val psa: PredicateStateAnalysis) {
     val cm: ClassManager get() = ctx.cm
-    val csGenerator = CallStackGenerator(ctx, psa)
-    val csExecutor = CallStackExecutor(ctx)
+    private val csGenerator = CallStackGenerator(ctx, psa)
+    private val csExecutor = CallStackExecutor(ctx)
 
     private fun generateAPI(method: Method, state: PredicateState, model: SMTModel) = try {
         val descriptors = generateFinalDescriptors(method, ctx, model, state).concrete
@@ -41,12 +41,15 @@ class Generator(val ctx: ExecutionContext, val psa: PredicateStateAnalysis) {
         val argCallStacks = descriptors.second.map { descriptor ->
             csGenerator.generate(descriptor)
         }
+        log.debug("Generated call stacks:")
+        log.debug("Instance: $thisCallStack")
+        log.debug("Args:\n${argCallStacks.joinToString("\n")}")
         thisCallStack?.let { csExecutor.execute(it) } to argCallStacks.map { csExecutor.execute(it) }.toTypedArray()
     } catch (e: Exception) {
         throw GenerationException(e)
     }
 
-    fun generateFromModel(method: Method, state: PredicateState, model: SMTModel) =
+    private fun generateFromModel(method: Method, state: PredicateState, model: SMTModel) =
             generateInputByModel(ctx, method, state, model)
 
     private val Pair<Descriptor?, List<Descriptor>>.concrete
@@ -102,7 +105,7 @@ class Generator(val ctx: ExecutionContext, val psa: PredicateStateAnalysis) {
         }
     }
 
-    fun generateConcreteAPI(method: Method, block: BasicBlock, state: PredicateState, model: SMTModel) = try {
+    private fun generateConcreteAPI(method: Method, block: BasicBlock, state: PredicateState, model: SMTModel) = try {
         val descriptors = generateFinalDescriptors(method, ctx, model, state).concrete
         log.debug("Generated descriptors:")
         log.debug(descriptors)

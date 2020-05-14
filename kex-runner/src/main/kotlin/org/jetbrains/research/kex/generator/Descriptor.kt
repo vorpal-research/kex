@@ -258,10 +258,8 @@ val Descriptor.typeInfo: PredicateState get() = when (this) {
     is ObjectDescriptor -> {
         val descTerm = this.term
         val descType = this.type
-        val instanceOfTerm = term { generate(KexBool()) }
         val builder = StateBuilder()
-        builder += axiom { instanceOfTerm equality (descTerm `is` descType) }
-        builder += axiom { instanceOfTerm equality true }
+        builder += axiom { (descTerm `is` descType) equality true }
         for ((_, field) in this.fields) {
             builder += field.typeInfo
         }
@@ -273,9 +271,7 @@ val Descriptor.typeInfo: PredicateState get() = when (this) {
             !is KexClass -> emptyState()
             else -> {
                 val builder = StateBuilder()
-                val instanceOfTerm = term { generate(KexBool()) }
-                builder += axiom { instanceOfTerm equality (descTerm `is` descType) }
-                builder += axiom { instanceOfTerm equality true }
+                builder += axiom { (descTerm `is` descType) equality true }
                 builder.apply()
             }
         }
