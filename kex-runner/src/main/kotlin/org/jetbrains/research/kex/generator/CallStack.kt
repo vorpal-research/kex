@@ -24,6 +24,14 @@ data class ConstructorCall(val klass: Class, val constructor: Method, val args: 
     override fun toString() = "$constructor(${args.joinToString(", ")})"
 }
 
+data class ExternalConstructorCall(val constructor: Method, val args: List<CallStack>) : ApiCall {
+    init {
+        assert(constructor.isStatic) { log.error("External constructor should be a static method") }
+    }
+
+    override fun toString() = "$constructor(${args.joinToString(", ")})"
+}
+
 data class MethodCall(val instance: CallStack, val method: Method, val args: List<CallStack>) : ApiCall {
     init {
         assert(!method.isConstructor) { log.error("Trying to create method call for constructor method") }

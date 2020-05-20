@@ -32,6 +32,13 @@ class CallStackExecutor(val ctx: ExecutionContext) {
                     val args = call.args.map { execute(it) }.toTypedArray()
                     constructor.newInstance(*args)
                 }
+                is ExternalConstructorCall -> {
+                    val reflection = ctx.loader.loadClass(call.constructor.`class`)
+                    val javaMethod = reflection.getMethod(call.constructor, ctx.loader)
+                    javaMethod.isAccessible = true
+                    val args = call.args.map { execute(it) }.toTypedArray()
+                    javaMethod.invoke(null, *args)
+                }
                 is MethodCall -> {
                     val reflection = ctx.loader.loadClass(call.method.`class`)
                     val javaMethod = reflection.getMethod(call.method, ctx.loader)

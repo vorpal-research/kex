@@ -9,6 +9,7 @@ import org.jetbrains.research.kex.asm.state.PredicateStateAnalysis
 import org.jetbrains.research.kex.config.kexConfig
 import org.jetbrains.research.kex.ktype.KexType
 import org.jetbrains.research.kex.ktype.kexType
+import org.jetbrains.research.kex.ktype.type
 import org.jetbrains.research.kex.smt.Checker
 import org.jetbrains.research.kex.smt.Result
 import org.jetbrains.research.kex.state.PredicateState
@@ -158,6 +159,7 @@ class CallStackGenerator(val context: ExecutionContext, val psa: PredicateStateA
         val reducedDescriptor = descriptor.instantiableDescriptor(context.cm).reduced as ObjectDescriptor
         log.debug("Generating $reducedDescriptor")
         val klass = reducedDescriptor.klass
+        val externalConstructors = klass.externalConstructors
 
         val queue = queueOf(generateSetters(reducedDescriptor))
         while (queue.isNotEmpty()) {
@@ -176,6 +178,14 @@ class CallStackGenerator(val context: ExecutionContext, val psa: PredicateStateA
                     }
                     return (stack + constructorCall).reversed()
                 }
+            }
+
+            // execute external constructors
+            for (method in externalConstructors.sortedBy { it.argTypes.size }) {
+                val (_, args) = method.executeAsExternalConstructor(desc) ?: continue
+
+                val constructorCall = ExternalConstructorCall(method, args.map { generate(it) })
+                return (stack + constructorCall).reversed()
             }
 
             // execute available methods
@@ -225,7 +235,12 @@ class CallStackGenerator(val context: ExecutionContext, val psa: PredicateStateA
     }
 
     private val Class.accessibleConstructors get() = constructors.filter { visibilityLevel <= it.visibility }
-    private val Class.accessibleMethods get() = methods.filter { visibilityLevel <= it.visibility }
+    private val Class.externalConstructors
+        get() = cm.concreteClasses
+                .flatMap { it.allMethods }
+                .filter { it.isStatic && it.returnType.isSubtypeOf(this.type) && it.argTypes.all { arg -> !arg.isSubtypeOf(this.type) } }
+                .toSet()
+    private val Class.accessibleMethods get() = methods.filter { !it.isStatic }.filter { visibilityLevel <= it.visibility }
 
     private fun Method.executeAsConstructor(descriptor: ObjectDescriptor): Pair<ObjectDescriptor?, List<Descriptor>>? {
         if (isEmpty()) return null
@@ -238,6 +253,23 @@ class CallStackGenerator(val context: ExecutionContext, val psa: PredicateStateA
         val preStateFieldTerms = collectFieldTerms(context, preState)
         val preparedState = prepareState(this, state, preStateFieldTerms)
         val preparedQuery = prepareQuery(mapper.apply(descriptor.query))
+        return execute(preparedState, preparedQuery)
+    }
+
+    private fun Method.executeAsExternalConstructor(descriptor: ObjectDescriptor): Pair<ObjectDescriptor?, List<Descriptor>>? {
+        if (isEmpty()) return null
+        log.debug("Executing external constructor $this for $descriptor")
+
+        val externalMapper = TermRemapper(
+                mapOf(
+                        descriptor.term to term { `return`(this@executeAsExternalConstructor) }
+                )
+        )
+        val state = externalMapper.apply(descriptor.typeInfo + (methodState ?: return null))
+
+//        val preStateFieldTerms = collectFieldTerms(context, preState)
+        val preparedState = prepareState(this, state)
+        val preparedQuery = prepareQuery(externalMapper.apply(descriptor.query))
         return execute(preparedState, preparedQuery)
     }
 
