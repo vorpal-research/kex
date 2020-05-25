@@ -1,6 +1,5 @@
 package org.jetbrains.research.kex.generator
 
-import com.abdullin.kthelper.`try`
 import com.abdullin.kthelper.collection.queueOf
 import com.abdullin.kthelper.logging.log
 import org.jetbrains.research.kex.ExecutionContext
@@ -19,6 +18,7 @@ import org.jetbrains.research.kex.state.term.term
 import org.jetbrains.research.kex.state.transformer.*
 import org.jetbrains.research.kfg.ClassManager
 import org.jetbrains.research.kfg.ir.Class
+import org.jetbrains.research.kfg.ir.Field
 import org.jetbrains.research.kfg.ir.Method
 import org.jetbrains.research.kfg.ir.Node
 import org.jetbrains.research.kfg.type.Type
@@ -55,13 +55,7 @@ fun Descriptor.concrete(cm: ClassManager) = when (this) {
 fun ObjectDescriptor.instantiableDescriptor(cm: ClassManager): ObjectDescriptor {
     val concreteClass = when {
         this.klass.isInstantiable -> this.klass
-        else -> `try` {
-            cm.concreteClasses.filter {
-                klass.isAncestorOf(it) && it.isInstantiable && visibilityLevel <= it.visibility
-            }.random()
-        }.getOrElse {
-            throw NoConcreteInstanceException(this.klass)
-        }
+        else -> ConcreteInstanceGenerator[this.klass]
     }
     val result = ObjectDescriptor(klass = concreteClass)
     for ((name, desc) in this.fields) {
@@ -75,11 +69,28 @@ private val maxStackSize by lazy { kexConfig.getIntValue("apiGeneration", "maxSt
 private val isInliningEnabled by lazy { kexConfig.getBooleanValue("smt", "ps-inlining", true) }
 private val annotationsEnabled by lazy { kexConfig.getBooleanValue("annotations", "enabled", false) }
 
-// todo: generation of abstract classes and interfaces
-// todo: think about generating list of calls instead of call stack tree
-// todo: complex relations between descriptors (not just equals to constant, but also equals to each other)
 class CallStackGenerator(val context: ExecutionContext, val psa: PredicateStateAnalysis) {
     private val descriptorMap = mutableMapOf<Descriptor, Node>()
+
+    val Method.stateFieldAccesses: Set<Field> get() {
+        val methodState = psa.builder(this).methodState ?: return setOf()
+        val typeInfoMap = TypeInfoMap(methodState.run {
+            val (t, a) = collectArguments(this)
+            val map = mutableMapOf<Term, Set<TypeInfo>>()
+            val thisType = this@stateFieldAccesses.`class`.kexType
+            map += (t ?: term { `this`(thisType) }) to setOf(CastTypeInfo(thisType))
+            for ((_, arg) in a) {
+                map += arg to setOf(CastTypeInfo(arg.type))
+            }
+            map
+        })
+
+        val transformed = transform(methodState) {
+            +AnnotationIncluder(this@stateFieldAccesses, AnnotationManager.defaultLoader)
+            +FullDepthInliner(context, typeInfoMap, psa)
+        }
+        return collectFieldAccesses(context, transformed)
+    }
 
     private fun prepareState(method: Method, ps: PredicateState, ignores: Set<Term> = setOf()) = transform(ps) {
         if (annotationsEnabled) +AnnotationIncluder(method, AnnotationManager.defaultLoader)
@@ -234,13 +245,21 @@ class CallStackGenerator(val context: ExecutionContext, val psa: PredicateStateA
         return desc to callStack
     }
 
-    private val Class.accessibleConstructors get() = constructors.filter { visibilityLevel <= it.visibility }
+    private val Class.accessibleConstructors get() = constructors
+            .filter { visibilityLevel <= it.visibility }
+            .filterNot { it.isSynthetic }
+
     private val Class.externalConstructors
         get() = cm.concreteClasses
                 .flatMap { it.allMethods }
                 .filter { it.isStatic && it.returnType.isSubtypeOf(this.type) && it.argTypes.all { arg -> !arg.isSubtypeOf(this.type) } }
+                .filterNot { it.isSynthetic }
                 .toSet()
-    private val Class.accessibleMethods get() = methods.filter { !it.isStatic }.filter { visibilityLevel <= it.visibility }
+
+    private val Class.accessibleMethods get() = methods
+            .filterNot { it.isStatic }
+            .filter { visibilityLevel <= it.visibility }
+            .filterNot { it.isSynthetic }
 
     private fun Method.executeAsConstructor(descriptor: ObjectDescriptor): Pair<ObjectDescriptor?, List<Descriptor>>? {
         if (isEmpty()) return null
@@ -267,7 +286,6 @@ class CallStackGenerator(val context: ExecutionContext, val psa: PredicateStateA
         )
         val state = externalMapper.apply(descriptor.typeInfo + (methodState ?: return null))
 
-//        val preStateFieldTerms = collectFieldTerms(context, preState)
         val preparedState = prepareState(this, state)
         val preparedQuery = prepareQuery(externalMapper.apply(descriptor.query))
         return execute(preparedState, preparedQuery)
@@ -318,7 +336,7 @@ class CallStackGenerator(val context: ExecutionContext, val psa: PredicateStateA
 
     private fun Method.getSetterPreState(descriptor: ObjectDescriptor): PredicateState? {
         val mapper = descriptor.mapper
-        val fieldAccessList = this.fieldAccesses
+        val fieldAccessList = this.stateFieldAccesses
         val intersection = descriptor.fields.values.filter {
             fieldAccessList.find { field -> it.name == field.name && it.klass == field.`class` } != null
         }
@@ -335,7 +353,7 @@ class CallStackGenerator(val context: ExecutionContext, val psa: PredicateStateA
 
     private fun Method.getMethodPreState(descriptor: ObjectDescriptor): PredicateState? {
         val mapper = descriptor.mapper
-        val fieldAccessList = this.fieldAccesses
+        val fieldAccessList = this.stateFieldAccesses
         val intersection = descriptor.fields.values.filter {
             fieldAccessList.find { field -> it.name == field.name && it.klass == field.`class` } != null
         }

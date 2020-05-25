@@ -1,13 +1,33 @@
 package org.jetbrains.research.kex.test.javadebug;
 
-import java.util.List;
+class Point {
+    private int x;
+    private int y;
+
+    private Point(int x, int y) {
+        this.x = x;
+        this.y = y;
+    }
+
+    public static Point point(int x, int y) {
+        return new Point(x ,y);
+    }
+
+    public int getX() {
+        return x;
+    }
+
+    public int getY() {
+        return y;
+    }
+}
 
 public class JavaTest {
 
-    public void test(List<Integer> list) {
-        if (list.size() > 3) {
-            System.out.println("aaa");
+    public int test(Point p) {
+        if (p.getX() == 10) {
+            return -1;
         }
-        System.out.println("bbb");
+        return p.getY();
     }
 }
