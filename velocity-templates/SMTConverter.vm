@@ -308,8 +308,10 @@ class ${solver}Converter(val tf: TypeFactory) : ${solver}SMTConverter() {
     fun convert(const: ConstByteTerm, ef: $factory, ctx: ${solver}Context): Dynamic_ = ef.makeIntConst(const.value.toInt())
     fun convert(const: ConstCharTerm, ef: $factory, ctx: ${solver}Context): Dynamic_ = ef.makeIntConst(const.value.toInt())
 
-    fun convert(const: ConstClassTerm, ef: $factory, ctx: ${solver}Context): Dynamic_ =
-        ef.getVarByTypeAndName(const.type, const.name)
+    fun convert(const: ConstClassTerm, ef: $factory, ctx: ${solver}Context): Dynamic_ {
+        val expr = ef.getVarByTypeAndName(const.type, const.name)
+        return const.withAxioms(expr, ef, ctx)
+    }
 
     fun convert(const: ConstDoubleTerm, ef: $factory, ctx: ${solver}Context): Dynamic_ = ef.makeDoubleConst(const.value)
     fun convert(const: ConstFloatTerm, ef: $factory, ctx: ${solver}Context): Dynamic_ = ef.makeFloatConst(const.value)
