@@ -47,19 +47,21 @@ val Class.isInstantiable: Boolean
     }
 
 
-fun Descriptor.concrete(cm: ClassManager) = when (this) {
-    is ObjectDescriptor -> this.instantiableDescriptor(cm)
+fun Descriptor.concrete(cm: ClassManager, map: MutableMap<Descriptor, Descriptor> = mutableMapOf()) = when (this) {
+    in map -> map[this]!!
+    is ObjectDescriptor -> this.instantiableDescriptor(cm, map)
     else -> this
 }
 
-fun ObjectDescriptor.instantiableDescriptor(cm: ClassManager): ObjectDescriptor {
+fun ObjectDescriptor.instantiableDescriptor(cm: ClassManager, map: MutableMap<Descriptor, Descriptor> = mutableMapOf()): ObjectDescriptor {
     val concreteClass = when {
         this.klass.isInstantiable -> this.klass
         else -> ConcreteInstanceGenerator[this.klass]
     }
     val result = ObjectDescriptor(klass = concreteClass)
+    map[this] = result
     for ((name, desc) in this.fields) {
-        result[name] = desc.copy(owner = result, value = desc.value.concrete(cm))
+        result[name] = desc.copy(owner = result, value = desc.value.concrete(cm, map))
     }
     return result
 }
@@ -389,22 +391,27 @@ class CallStackGenerator(val context: ExecutionContext, val psa: PredicateStateA
     }
 
     private val Descriptor.reduced: Descriptor
-        get() = when (this) {
-            is ObjectDescriptor -> {
-                val filteredFields = fields.filterNot { (_, field) -> field.isDefault }
-                val newObject = ObjectDescriptor(klass)
-                for ((name, field) in filteredFields) {
-                    newObject[name] = field.copy(owner = newObject, value = field.value.reduced)
-                }
-                newObject
+        get() = cachedReduced(mutableMapOf())
+
+    private fun Descriptor.cachedReduced(map: MutableMap<Descriptor, Descriptor>): Descriptor = when (this) {
+        in map -> map[this]!!
+        is ObjectDescriptor -> {
+            val filteredFields = fields.filterNot { (_, field) -> field.isDefault }
+            val newObject = ObjectDescriptor(klass)
+            map[this] = newObject
+            for ((name, field) in filteredFields) {
+                newObject[name] = field.copy(owner = newObject, value = field.value.cachedReduced(map))
             }
-            is ArrayDescriptor -> {
-                val filteredElements = this.elements.filterValues { it != this.elementType.defaultDescriptor }
-                val newArray = ArrayDescriptor(this.length, this.kfgType, filteredElements.toMutableMap())
-                newArray
-            }
-            else -> this
+            newObject
         }
+        is ArrayDescriptor -> {
+            val filteredElements = this.elements.filterValues { it != this.elementType.defaultDescriptor }
+            val newArray = ArrayDescriptor(this.length, this.kfgType, filteredElements.toMutableMap())
+            map[this] = newArray
+            newArray
+        }
+        else -> this
+    }
 
     private val FieldDescriptor.isDefault get() = value == type.defaultDescriptor
 

@@ -21,17 +21,21 @@ sealed class Descriptor {
 
     abstract val hasState: Boolean
 
-    abstract val query: PredicateState
+    val query: PredicateState get() = collectQuery()
+
+    abstract fun print(map: MutableMap<Descriptor, String> = mutableMapOf()): String
+    abstract fun collectQuery(visited: MutableSet<Descriptor> = mutableSetOf()): PredicateState
 }
 
 sealed class ConstantDescriptor : Descriptor() {
-    override val query
-        get() = unreachable<PredicateState> {
-            log.error("Can't transform constant descriptor $this to initializer state")
-        }
+    override fun collectQuery(visited: MutableSet<Descriptor>) = unreachable<PredicateState> {
+        log.error("Can't transform constant descriptor $this to initializer state")
+    }
 
     override val hasState: Boolean
         get() = false
+
+    override fun print(map: MutableMap<Descriptor, String>): String = toString()
 
     object Null : ConstantDescriptor() {
         override val type = KexNull()
@@ -83,17 +87,24 @@ data class FieldDescriptor(
     override val hasState: Boolean
         get() = true
 
-    override val query: PredicateState
-        get() {
-            val builder = StateBuilder()
-            if (value.hasState) {
-                builder += value.query
-            }
-            builder += require { term.load() equality value.term }
-            return builder.apply()
+    override fun collectQuery(visited: MutableSet<Descriptor>): PredicateState {
+        if (this in visited) return emptyState()
+        visited += this
+        val builder = StateBuilder()
+        if (value.hasState) {
+            builder += value.collectQuery(visited)
         }
+        builder += require { term.load() equality value.term }
+        return builder.apply()
+    }
 
-    override fun toString() = "${klass.fullname}.$name = $value"
+    override fun print(map: MutableMap<Descriptor, String>): String {
+        if (this in map) return map[this]!!
+        map[this] = term.toString()
+        return "${klass.fullname}.$name = ${value.print(map)}"
+    }
+
+    override fun toString() = print()
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
@@ -112,7 +123,7 @@ data class FieldDescriptor(
         var result = name.hashCode()
         result = 31 * result + type.hashCode()
         result = 31 * result + klass.hashCode()
-        result = 31 * result + value.hashCode()
+//        result = 31 * result + value.hashCode()
         return result
     }
 }
@@ -135,24 +146,31 @@ data class ObjectDescriptor(
 
     operator fun get(field: String) = fieldsInner[field]
 
-    override val query: PredicateState
-        get() {
-            val builder = StateBuilder()
-            builder += axiom { term inequality null }
-            fields.values.forEach {
-                builder += it.query
-            }
-            return builder.apply()
+    override fun collectQuery(visited: MutableSet<Descriptor>): PredicateState {
+        if (this in visited) return emptyState()
+        visited += this
+        val builder = StateBuilder()
+        builder += axiom { term inequality null }
+        fields.values.forEach {
+            builder += it.collectQuery(visited)
         }
-
-    override fun toString(): String = buildString {
-        append("$klass {")
-        if (fieldsInner.isNotEmpty()) {
-            append("\n  ")
-            appendln(fieldsInner.values.joinToString("\n").replace("\n", "\n  "))
-        }
-        appendln("}")
+        return builder.apply()
     }
+
+    override fun print(map: MutableMap<Descriptor, String>): String {
+        if (this in map) return map[this]!!
+        map[this] = term.toString()
+        return buildString {
+            append("$term = $klass {")
+            if (fieldsInner.isNotEmpty()) {
+                append("\n  ")
+                appendln(fieldsInner.values.joinToString("\n") { it.print(map) }.replace("\n", "\n  "))
+            }
+            appendln("}")
+        }
+    }
+
+    override fun toString(): String = print()
 
     fun merge(other: ObjectDescriptor): ObjectDescriptor =
             ObjectDescriptor(klass, (other.fields + this.fields).toMutableMap())
@@ -176,27 +194,34 @@ data class ArrayDescriptor(
         elementsInner[index] = value
     }
 
-    override val query: PredicateState
-        get() {
-            val builder = StateBuilder()
-            builder += axiom { term inequality null }
-            elements.forEach { (index, element) ->
-                if (element.hasState) {
-                    builder += element.query
-                }
-                builder += require { term[index].load() equality element.term }
+    override fun collectQuery(visited: MutableSet<Descriptor>): PredicateState {
+        if (this in visited) return emptyState()
+        visited += this
+        val builder = StateBuilder()
+        builder += axiom { term inequality null }
+        elements.forEach { (index, element) ->
+            if (element.hasState) {
+                builder += element.collectQuery(visited)
             }
-            return builder.apply()
+            builder += require { term[index].load() equality element.term }
         }
-
-    override fun toString(): String = buildString {
-        append("$type {")
-        if (elementsInner.isNotEmpty()) {
-            append("\n  ")
-            appendln(elementsInner.toList().joinToString("\n") { "[${it.first}] = ${it.second}" }.replace("\n", "\n  "))
-        }
-        appendln("}")
+        return builder.apply()
     }
+
+    override fun print(map: MutableMap<Descriptor, String>): String {
+        if (this in map) return map[this]!!
+        map[this] = term.toString()
+        return buildString {
+            append("$term = $type {")
+            if (elementsInner.isNotEmpty()) {
+                append("\n  ")
+                appendln(elementsInner.toList().joinToString("\n") { "[${it.first}] = ${it.second.print(map)}" }.replace("\n", "\n  "))
+            }
+            appendln("}")
+        }
+    }
+
+    override fun toString(): String = print()
 }
 
 class DescriptorBuilder(val context: ExecutionContext) {
@@ -254,31 +279,32 @@ class DescriptorBuilder(val context: ExecutionContext) {
 fun descriptor(context: ExecutionContext, body: DescriptorBuilder.() -> Descriptor): Descriptor =
         DescriptorBuilder(context).body()
 
-val Descriptor.typeInfo: PredicateState get() = when (this) {
-    is ObjectDescriptor -> {
-        val descTerm = this.term
-        val descType = this.type
-        val instanceOfTerm = term { generate(KexBool()) }
-        val builder = StateBuilder()
-        builder += axiom { instanceOfTerm equality (descTerm `is` descType) }
-        builder += axiom { instanceOfTerm equality true }
-        for ((_, field) in this.fields) {
-            builder += field.typeInfo
+val Descriptor.typeInfo: PredicateState
+    get() = when (this) {
+        is ObjectDescriptor -> {
+            val descTerm = this.term
+            val descType = this.type
+            val instanceOfTerm = term { generate(KexBool()) }
+            val builder = StateBuilder()
+            builder += axiom { instanceOfTerm equality (descTerm `is` descType) }
+            builder += axiom { instanceOfTerm equality true }
+            for ((_, field) in this.fields) {
+                builder += field.typeInfo
+            }
+            builder.apply()
         }
-        builder.apply()
-    }
-    is FieldDescriptor -> {
-        val descTerm = this.term
-        when (val descType = this.value.type) {
-            !is KexClass -> emptyState()
-            else -> {
-                val builder = StateBuilder()
-                val instanceOfTerm = term { generate(KexBool()) }
-                builder += axiom { instanceOfTerm equality (descTerm `is` descType) }
-                builder += axiom { instanceOfTerm equality true }
-                builder.apply()
+        is FieldDescriptor -> {
+            val descTerm = this.term
+            when (val descType = this.value.type) {
+                !is KexClass -> emptyState()
+                else -> {
+                    val builder = StateBuilder()
+                    val instanceOfTerm = term { generate(KexBool()) }
+                    builder += axiom { instanceOfTerm equality (descTerm `is` descType) }
+                    builder += axiom { instanceOfTerm equality true }
+                    builder.apply()
+                }
             }
         }
+        else -> emptyState()
     }
-    else -> emptyState()
-}
