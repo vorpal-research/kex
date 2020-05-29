@@ -5,6 +5,7 @@ import com.abdullin.kthelper.collection.dequeOf
 import org.jetbrains.research.kex.ExecutionContext
 import org.jetbrains.research.kex.asm.manager.MethodManager
 import org.jetbrains.research.kex.asm.state.PredicateStateAnalysis
+import org.jetbrains.research.kex.config.kexConfig
 import org.jetbrains.research.kex.ktype.KexClass
 import org.jetbrains.research.kex.ktype.kexType
 import org.jetbrains.research.kex.state.PredicateState
@@ -14,6 +15,8 @@ import org.jetbrains.research.kex.state.predicate.Predicate
 import org.jetbrains.research.kex.state.term.*
 import org.jetbrains.research.kfg.ir.ConcreteClass
 import org.jetbrains.research.kfg.ir.Method
+
+private val defaultDepth = kexConfig.getIntValue("inliner", "depth", 10)
 
 class ConcreteImplInliner(val ctx: ExecutionContext,
                           val typeInfoMap: TypeInfoMap,
@@ -85,19 +88,22 @@ class ConcreteImplInliner(val ctx: ExecutionContext,
     }
 }
 
-class FullDepthInliner(val ctx: ExecutionContext,
-                       val typeInfoMap: TypeInfoMap,
-                       val psa: PredicateStateAnalysis) : Transformer<FullDepthInliner> {
+class DepthInliner(val ctx: ExecutionContext,
+                   val typeInfoMap: TypeInfoMap,
+                   val psa: PredicateStateAnalysis,
+                   val maxDepth: Int = defaultDepth) : Transformer<DepthInliner> {
     override fun apply(ps: PredicateState): PredicateState {
         var last: PredicateState
         var current = ps
         var inlineIndex = 0
+        var depth = 0
         do {
             last = current
             val cii = ConcreteImplInliner(ctx, typeInfoMap, psa, inlineIndex)
             current = cii.apply(last)
             inlineIndex = cii.inlineIndex
-        } while (current != last)
+            ++depth
+        } while (current != last && depth < maxDepth)
         return current
     }
 }

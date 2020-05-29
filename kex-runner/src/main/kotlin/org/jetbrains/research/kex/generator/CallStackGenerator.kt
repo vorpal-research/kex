@@ -89,7 +89,7 @@ class CallStackGenerator(val context: ExecutionContext, val psa: PredicateStateA
 
         val transformed = transform(methodState) {
             +AnnotationIncluder(this@stateFieldAccesses, AnnotationManager.defaultLoader)
-            +FullDepthInliner(context, typeInfoMap, psa)
+            +DepthInliner(context, typeInfoMap, psa)
         }
         return collectFieldAccesses(context, transformed)
     }
