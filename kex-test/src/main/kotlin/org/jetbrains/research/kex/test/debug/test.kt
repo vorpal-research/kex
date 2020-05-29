@@ -4,10 +4,13 @@ package org.jetbrains.research.kex.test.debug
 
 class BasicTests {
 
-    class Point (val x: Int)
+    class Loop(val value: Int) {
+        var prev: Loop? = null
+//        var next: Loop? = null
+    }
 
-    fun test(list: List<Point>) {
-        if (list.size == 1) {
+    fun test(p: Loop) {
+        if (p.prev === p) {
             println("a")
         }
     }

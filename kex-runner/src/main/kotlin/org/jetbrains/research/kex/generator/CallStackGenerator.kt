@@ -71,6 +71,7 @@ private val maxStackSize by lazy { kexConfig.getIntValue("apiGeneration", "maxSt
 private val isInliningEnabled by lazy { kexConfig.getBooleanValue("smt", "ps-inlining", true) }
 private val annotationsEnabled by lazy { kexConfig.getBooleanValue("annotations", "enabled", false) }
 
+// todo: rework call stack generation for recursive data structures
 class CallStackGenerator(val context: ExecutionContext, val psa: PredicateStateAnalysis) {
     private val descriptorMap = mutableMapOf<Descriptor, Node>()
 
@@ -124,7 +125,7 @@ class CallStackGenerator(val context: ExecutionContext, val psa: PredicateStateA
     }
 
     fun generate(descriptor: Descriptor): CallStack {
-        if (descriptorMap.containsKey(descriptor)) return descriptorMap.getValue(descriptor).stack
+        if (descriptor in descriptorMap) return descriptorMap.getValue(descriptor).stack
 
         when (descriptor) {
             is ConstantDescriptor -> return when (descriptor) {
@@ -174,7 +175,8 @@ class CallStackGenerator(val context: ExecutionContext, val psa: PredicateStateA
         val klass = reducedDescriptor.klass
         val externalConstructors = klass.externalConstructors
 
-        val queue = queueOf(generateSetters(reducedDescriptor))
+        val (simplifiedDesc, setters) = generateSetters(reducedDescriptor)
+        val queue = queueOf(simplifiedDesc to setters)
         while (queue.isNotEmpty()) {
             val (desc, stack) = queue.poll()
             if (stack.stack.size > maxStackSize) continue
