@@ -21,7 +21,7 @@ class Checker(val method: Method, val loader: ClassLoader, private val psa: Pred
     private val logQuery = kexConfig.getBooleanValue("smt", "logQuery", false)
     private val annotationsEnabled = kexConfig.getBooleanValue("annotations", "enabled", false)
 
-    private val builder = psa.builder(method)
+    private val builder get() = psa.builder(method)
     lateinit var state: PredicateState
         private set
     lateinit var query: PredicateState

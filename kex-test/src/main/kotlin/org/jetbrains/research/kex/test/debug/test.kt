@@ -3,15 +3,14 @@
 package org.jetbrains.research.kex.test.debug
 
 class BasicTests {
-
-    class Loop(val value: Int) {
-        var prev: Loop? = null
-//        var next: Loop? = null
-    }
-
-    fun test(p: Loop) {
-        if (p.prev === p) {
-            println("a")
+    fun testLoop(a: Int, b: Int): Int {
+        var x = a - b
+        while (x < a) {
+            if (b > x) {
+                println("b bigger")
+            }
+            ++x
         }
+        return x
     }
 }

@@ -11,5 +11,10 @@ interface TraceManager<T> {
     operator fun set(method: Method, trace: T) = addTrace(method, trace)
 
     fun isCovered(method: Method, bb: BasicBlock): Boolean
-    fun isBodyCovered(method: Method) = method.bodyBlocks.map { isCovered(method, it) }.reduce { acc, b -> acc && b }
+    fun isBodyCovered(method: Method) = method.bodyBlocks.map { isCovered(method, it) }.run {
+        when {
+            this.isEmpty() -> false
+            else -> reduce { acc, b -> acc && b }
+        }
+    }
 }

@@ -214,9 +214,10 @@ class Kex(args: Array<String>) {
     private fun concolic(originalContext: ExecutionContext, analysisContext: ExecutionContext) {
         val traceManager = ObjectTraceManager()
         val cm = CoverageCounter(originalContext.cm, traceManager)
+        val psa = PredicateStateAnalysis(analysisContext.cm)
 
         runPipeline(analysisContext) {
-            +ConcolicChecker(analysisContext, traceManager)
+            +ConcolicChecker(analysisContext, psa, traceManager)
             +cm
         }
 
