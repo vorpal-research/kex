@@ -97,6 +97,7 @@
 
             <modules>
                 <module>kex-boolector</module>
+                <module>kex-stp</module>
                 <module>kex-z3</module>
             </modules>
         </profile>
@@ -110,6 +111,18 @@
 
             <modules>
                 <module>kex-boolector</module>
+            </modules>
+        </profile>
+
+        <profile>
+            <id>stp</id>
+
+            <properties>
+                <stp-only>true</stp-only>
+            </properties>
+
+            <modules>
+                <module>kex-stp</module>
             </modules>
         </profile>
 
