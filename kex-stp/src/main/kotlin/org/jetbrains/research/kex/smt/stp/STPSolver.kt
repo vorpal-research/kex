@@ -56,7 +56,7 @@ class BoolectorSolver(val tf: TypeFactory) : AbstractSMTSolver {
         val toBeChecked = combined.expr.asBool().and(combined.axiom.asBool())
 
         if (logFormulae) {
-//            log.debug(ef.ctx.dumpSmt2()) TODO add converver to SMT text
+//            log.debug(ef.ctx.dumpSmt2()) TODO add converter to SMT text
         }
         log.debug("Running Boolector solver")
         val result = toBeChecked.not().query() ?: unreachable { log.error("Solver error") }

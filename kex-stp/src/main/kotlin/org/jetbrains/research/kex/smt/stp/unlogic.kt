@@ -11,15 +11,14 @@ object STPUnlogic {
     val tf = TermFactory
 
     fun undo(expr: Expr): Term = when {
-        expr.sort.isBool -> undoBool(expr.asBool())
-        expr.sort.isBitVector -> undoBV(expr.asBitVector())
+        expr.sort.isBool -> undoBool(expr.asBool().counterExample)
+        expr.sort.isBitVector -> undoBV(expr.asBitVector().counterExample)
         else -> unreachable { log.error("Unexpected expr in unlogic: $expr") }
     }
 
     private fun undoBool(expr: BoolExpr) = when (expr.toBoolean()) {
         true -> tf.getTrue()
         false -> tf.getFalse()
-        //else -> unreachable { log.error("Trying to undo unknown") }
     }
 
     private fun undoBV(expr: BitVectorExpr) = when (expr.width) {
