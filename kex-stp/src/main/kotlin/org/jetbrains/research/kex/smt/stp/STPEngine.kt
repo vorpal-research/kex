@@ -222,7 +222,7 @@ object STPEngine : SMTEngine<ValidityChecker, Expr, Sort, FunctionExpr, Unit>() 
 
     private fun shl(lhv: BitVectorExpr, rhv: BitVectorExpr): Expr = lhv.leftShift(rhv, lhv.width)
 
-    private fun le(lhv: BitVectorExpr, rhv: BitVectorExpr): Expr = lhv.le(rhv)
+    private fun le(lhv: BitVectorExpr, rhv: BitVectorExpr): Expr = lhv.signedLe(rhv)
 
     private fun lt(lhv: BitVectorExpr, rhv: BitVectorExpr): Expr = lhv.signedLt(rhv)
 
