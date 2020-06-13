@@ -18,7 +18,7 @@ private val logQuery = kexConfig.getBooleanValue("smt", "logQuery", false)
 private val logFormulae = kexConfig.getBooleanValue("smt", "logFormulae", false)
 
 @Solver("stp")
-class BoolectorSolver(val tf: TypeFactory) : AbstractSMTSolver {
+class STPSolver(val tf: TypeFactory) : AbstractSMTSolver {
     val ef = STPExprFactory()
 
     override fun isReachable(state: PredicateState) =
@@ -29,7 +29,7 @@ class BoolectorSolver(val tf: TypeFactory) : AbstractSMTSolver {
     override fun isViolated(state: PredicateState, query: PredicateState): Result {
         if (logQuery) {
             log.run {
-                debug("Boolector solver check")
+                debug("STP solver check")
                 debug("State: $state")
                 debug("Query: $query")
             }
@@ -58,7 +58,7 @@ class BoolectorSolver(val tf: TypeFactory) : AbstractSMTSolver {
         if (logFormulae) {
             log.debug(toBeChecked.toSMTLib2())
         }
-        log.debug("Running Boolector solver")
+        log.debug("Running STP solver")
         val result = toBeChecked.not().query() ?: unreachable { log.error("Solver error") }
         log.debug("Solver finished")
 
@@ -105,10 +105,9 @@ class BoolectorSolver(val tf: TypeFactory) : AbstractSMTSolver {
 
         val assignments = vars.map {
             val expr = STPConverter(tf).convert(it, ef, ctx)
-            val boolectorExpr = expr.expr
+            val stpExpr = expr.expr
 
-            // this is needed because boolector represents real numbers as integers
-            val undone = STPUnlogic.undo(boolectorExpr)
+            val undone = STPUnlogic.undo(stpExpr)
             val actualValue = when {
                 it.type is KexReal -> when (undone) {
                     is ConstIntTerm -> term { const(undone.value.toFloat()) }

@@ -5,10 +5,12 @@ import com.abdullin.kthelper.logging.log
 import org.jetbrains.research.kex.smt.SMTEngine
 
 import org.zhekehz.stpjava.*
+import java.text.Normalizer
 import kotlin.math.roundToInt
 import kotlin.math.roundToLong
 
 object STPEngine : SMTEngine<ValidityChecker, Expr, Sort, FunctionExpr, Unit>() {
+    private var freeVarsCounter = 0
 
     override fun makeBound(ctx: ValidityChecker, size: Int, sort: Sort): Expr =
             BitVectorExpr.fromInt(ctx, 1, 1);
@@ -45,7 +47,6 @@ object STPEngine : SMTEngine<ValidityChecker, Expr, Sort, FunctionExpr, Unit>() 
     override fun floatSBitsize(ctx: ValidityChecker, sort: Sort): Int = 10
     
     override fun bv2bool(ctx: ValidityChecker, expr: Expr): Expr = expr.asBool()
-//            binary(ctx, Opcode.NEQ, expr, BitVectorExpr.fromLong(ctx, expr.asBitVector().width, 0))
 
     override fun bv2float(ctx: ValidityChecker, expr: Expr, sort: Sort): Expr = bv2bv(ctx, expr, sort)
 
@@ -65,7 +66,14 @@ object STPEngine : SMTEngine<ValidityChecker, Expr, Sort, FunctionExpr, Unit>() 
 
     override fun makeVar(ctx: ValidityChecker, sort: Sort, name: String, fresh: Boolean): Expr = when {
         sort.isArray     -> ArrayExpr(ctx, name, sort.asArraySort().indexWidth, sort.asArraySort().elementWidth)
-        sort.isBitVector -> BitVectorExpr(ctx, name, sort.asBitVectorSort().width)
+        sort.isBitVector -> when {
+            fresh -> BitVectorExpr.fromInt(ctx, sort.asBitVectorSort().width, freeVarsCounter++)
+            else -> {
+                val normName = Normalizer.normalize(name, Normalizer.Form.NFD)
+                        .filter { it.isLetterOrDigit() || it == '_' }  // STP limitation
+                BitVectorExpr(ctx, normName, sort.asBitVectorSort().width)
+            }
+        }
         sort.isBool      -> BoolExpr(ctx, name)
         else -> unreachable { log.error("Unexpected sort to create a variable") }
     }
