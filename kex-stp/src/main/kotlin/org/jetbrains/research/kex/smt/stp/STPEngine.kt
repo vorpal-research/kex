@@ -261,15 +261,11 @@ object STPEngine : SMTEngine<ValidityChecker, Expr, Sort, FunctionExpr, Unit>() 
     }
 
     override fun conjunction(ctx: ValidityChecker, vararg exprs: Expr): Expr {
-        var ans = BoolExpr.getTrue(ctx)
-        for (i in exprs) ans = ans.and(i.asBool())
-        return ans
+        return BoolExpr.andAll(ctx, exprs.map { it.asBool() }.toTypedArray())
     }
 
     override fun conjunction(ctx: ValidityChecker, exprs: Collection<Expr>): Expr {
-        var ans = BoolExpr.getTrue(ctx)
-        for (i in exprs) ans = ans.and(i.asBool())
-        return ans
+        return BoolExpr.andAll(ctx, exprs.map { it.asBool() }.toTypedArray())
     }
 
     override fun zext(ctx: ValidityChecker, n: Int, expr: Expr): Expr = expr.asBitVector().zeroExtend(n)
