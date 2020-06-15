@@ -10,7 +10,7 @@ import kotlin.math.roundToInt
 import kotlin.math.roundToLong
 
 object STPEngine : SMTEngine<ValidityChecker, Expr, Sort, FunctionExpr, Unit>() {
-    private var freeVarsCounter = 0
+    private var freshVariablesNumber = 0
 
     override fun makeBound(ctx: ValidityChecker, size: Int, sort: Sort): Expr =
             BitVectorExpr.fromInt(ctx, 1, 1);
@@ -45,7 +45,7 @@ object STPEngine : SMTEngine<ValidityChecker, Expr, Sort, FunctionExpr, Unit>() 
     override fun floatEBitsize(ctx: ValidityChecker, sort: Sort): Int = 10
 
     override fun floatSBitsize(ctx: ValidityChecker, sort: Sort): Int = 10
-    
+
     override fun bv2bool(ctx: ValidityChecker, expr: Expr): Expr = expr.asBool()
 
     override fun bv2float(ctx: ValidityChecker, expr: Expr, sort: Sort): Expr = bv2bv(ctx, expr, sort)
@@ -64,18 +64,17 @@ object STPEngine : SMTEngine<ValidityChecker, Expr, Sort, FunctionExpr, Unit>() 
 
     override fun equality(ctx: ValidityChecker, lhv: Expr, rhv: Expr): Boolean = lhv == rhv
 
-    override fun makeVar(ctx: ValidityChecker, sort: Sort, name: String, fresh: Boolean): Expr = when {
-        sort.isArray     -> ArrayExpr(ctx, name, sort.asArraySort().indexWidth, sort.asArraySort().elementWidth)
-        sort.isBitVector -> when {
-            fresh -> BitVectorExpr.fromInt(ctx, sort.asBitVectorSort().width, freeVarsCounter++)
-            else -> {
-                val normName = Normalizer.normalize(name, Normalizer.Form.NFD)
-                        .filter { it.isLetterOrDigit() || it == '_' }  // STP limitation
-                BitVectorExpr(ctx, normName, sort.asBitVectorSort().width)
-            }
+    override fun makeVar(ctx: ValidityChecker, sort: Sort, name: String, fresh: Boolean): Expr {
+        var name_ = name + if (fresh) "_fresh_var_" + freshVariablesNumber++ else ""
+        name_ = Normalizer.normalize(name_, Normalizer.Form.NFD)
+                .filter { it.isLetterOrDigit() || it == '_' }  // STP limitation
+
+        return when {
+            sort.isArray -> ArrayExpr(ctx, name_, sort.asArraySort().indexWidth, sort.asArraySort().elementWidth)
+            sort.isBitVector -> BitVectorExpr(ctx, name_, sort.asBitVectorSort().width)
+            sort.isBool -> BoolExpr(ctx, name_)
+            else -> unreachable { log.error("Unexpected sort to create a variable") }
         }
-        sort.isBool      -> BoolExpr(ctx, name)
-        else -> unreachable { log.error("Unexpected sort to create a variable") }
     }
 
     override fun makeBooleanConst(ctx: ValidityChecker, value: Boolean): Expr =
@@ -107,7 +106,7 @@ object STPEngine : SMTEngine<ValidityChecker, Expr, Sort, FunctionExpr, Unit>() 
         val argsSize = args.map { it.asBitVectorSort().width }
         return FunctionExpr(ctx, name, argsSize.toIntArray(), retSort.asBitVectorSort().width)
     }
-    
+
     override fun negate(ctx: ValidityChecker, expr: Expr): Expr {
         return when {
             expr.sort.isBool -> expr.asBool().not()
@@ -304,7 +303,7 @@ object STPEngine : SMTEngine<ValidityChecker, Expr, Sort, FunctionExpr, Unit>() 
                         patternGenerator: (List<Expr>) -> List<Unit>): Expr =
             makeIntConst(ctx, 1) //BitVectorExpr.constBitvec(ctx, "1")
 
-    override fun makePattern(ctx: ValidityChecker, expr: Expr): Unit { }
+    override fun makePattern(ctx: ValidityChecker, expr: Expr): Unit {}
 
     override fun bool2bv(ctx: ValidityChecker, expr: Expr, sort: Sort): Expr = expr.asBitVector()
 

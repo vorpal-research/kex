@@ -52,7 +52,8 @@ class STPSolver(val tf: TypeFactory) : AbstractSMTSolver {
     }
 
     private fun check(state: Bool_, query: Bool_): QueryResult {
-        val combined = state and query
+        val subTypeAxioms = ef.buildSubtypeAxioms(tf)
+        val combined = state and query and subTypeAxioms
         val toBeChecked = combined.expr.asBool().and(combined.axiom.asBool())
 
         if (logFormulae) {
