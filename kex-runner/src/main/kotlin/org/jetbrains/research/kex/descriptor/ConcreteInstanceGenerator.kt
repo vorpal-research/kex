@@ -1,7 +1,11 @@
-package org.jetbrains.research.kex.generator
+package org.jetbrains.research.kex.descriptor
 
 import com.abdullin.kthelper.`try`
+import org.jetbrains.research.kex.asm.util.Visibility
+import org.jetbrains.research.kex.asm.util.visibility
 import org.jetbrains.research.kex.config.kexConfig
+import org.jetbrains.research.kex.generator.NoConcreteInstanceException
+import org.jetbrains.research.kex.generator.isInstantiable
 import org.jetbrains.research.kfg.ir.Class
 
 private val visibilityLevel by lazy { kexConfig.getEnumValue("apiGeneration", "visibility", true, Visibility.PUBLIC) }

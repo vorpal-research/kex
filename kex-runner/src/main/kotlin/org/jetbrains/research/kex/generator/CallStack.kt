@@ -1,13 +1,39 @@
 package org.jetbrains.research.kex.generator
 
 import com.abdullin.kthelper.logging.log
+import org.jetbrains.research.kex.descriptor.Descriptor
 import org.jetbrains.research.kfg.ir.Class
 import org.jetbrains.research.kfg.ir.Field
 import org.jetbrains.research.kfg.ir.Method
 import org.jetbrains.research.kfg.type.Type
 
 interface ApiCall {
-    fun wrap(): CallStack = CallStack(listOf(this))
+    fun wrap(): CallStack = CallStack(mutableListOf(this))
+}
+
+data class CallStack(val stack: MutableList<ApiCall>) : Iterable<ApiCall> by stack {
+    constructor() : this(mutableListOf())
+
+    fun add(call: ApiCall): CallStack {
+        this.stack += call
+        return this
+    }
+
+    operator fun plusAssign(call: ApiCall) {
+        this.stack += call
+    }
+
+    operator fun plusAssign(call: CallStack) {
+        this.stack += call.stack
+    }
+
+    override fun toString() = stack.joinToString("\n")
+
+    fun reversed(): CallStack = CallStack(stack.reversed().toMutableList())
+    fun reverse(): CallStack {
+        this.stack.reverse()
+        return this
+    }
 }
 
 data class PrimaryValue<T>(val value: T) : ApiCall
@@ -32,7 +58,7 @@ data class ExternalConstructorCall(val constructor: Method, val args: List<CallS
     override fun toString() = "$constructor(${args.joinToString(", ")})"
 }
 
-data class MethodCall(val instance: CallStack, val method: Method, val args: List<CallStack>) : ApiCall {
+data class MethodCall(val method: Method, val args: List<CallStack>) : ApiCall {
     init {
         assert(!method.isConstructor) { log.error("Trying to create method call for constructor method") }
     }
@@ -56,18 +82,4 @@ data class NewArray(val klass: Type, val length: CallStack) : ApiCall {
 
 data class ArrayWrite(val array: CallStack, val index: CallStack, val value: CallStack) : ApiCall {
     override fun toString() = "array[$index] = $value"
-}
-
-
-
-data class CallStack(val stack: List<ApiCall>) : Iterable<ApiCall> by stack {
-    constructor() : this(listOf())
-
-    fun add(call: ApiCall) = CallStack(stack + call)
-    operator fun plus(call: ApiCall) = this.add(call)
-    operator fun plus(other: CallStack) = CallStack(this.stack + other.stack)
-
-    override fun toString() = stack.joinToString("\n")
-
-    fun reversed(): CallStack = CallStack(stack.reversed())
 }

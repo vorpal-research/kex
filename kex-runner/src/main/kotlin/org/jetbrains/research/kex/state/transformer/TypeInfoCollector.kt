@@ -30,7 +30,7 @@ class TypeInfoMap(val inner: Map<Term, Set<TypeInfo>> = hashMapOf()) : Map<Term,
                             val nullabilityInfo = types.filterIsInstance<NullabilityInfo>()
                             val castInfo = types.filterIsInstance<CastTypeInfo>()
                             val reducedCastInfo = mutableSetOf<CastTypeInfo>()
-                            val klasses = castInfo.map { (it.type as KexClass).getKfgClass(tf) }.toSet()
+                            val klasses = castInfo.map { (it.type as KexClass).kfgClass(tf) }.toSet()
                             for (klass in klasses) {
                                 if (klasses.any { it != klass && klass.isAncestorOf(it) }) continue
                                 else reducedCastInfo += CastTypeInfo(tf.getRefType(klass).kexType)

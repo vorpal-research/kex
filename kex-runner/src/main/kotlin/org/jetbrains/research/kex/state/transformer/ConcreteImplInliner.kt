@@ -44,7 +44,7 @@ class ConcreteImplInliner(val ctx: ExecutionContext,
             else -> {
                 val typeInfo = typeInfoMap.getInfo<CastTypeInfo>(call.owner) ?: return null
                 val kexClass = typeInfo.type as? KexClass ?: return null
-                val concreteClass = kexClass.getKfgClass(ctx.types) as? ConcreteClass ?: return null
+                val concreteClass = kexClass.kfgClass(ctx.types) as? ConcreteClass ?: return null
                 val result = concreteClass.getMethod(method.name, method.desc)
                 ktassert(result.isNotEmpty())
                 result

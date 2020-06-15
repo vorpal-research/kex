@@ -7,6 +7,7 @@ import org.jetbrains.research.kex.annotations.AnnotationManager
 import org.jetbrains.research.kex.asm.analysis.KexCheckerException
 import org.jetbrains.research.kex.asm.state.PredicateStateAnalysis
 import org.jetbrains.research.kex.config.kexConfig
+import org.jetbrains.research.kex.descriptor.Descriptor
 import org.jetbrains.research.kex.random.GenerationException
 import org.jetbrains.research.kex.smt.Checker
 import org.jetbrains.research.kex.smt.Result
@@ -54,7 +55,7 @@ class Generator(val ctx: ExecutionContext, val psa: PredicateStateAnalysis) {
 
     private val Pair<Descriptor?, List<Descriptor>>.concrete
         get() =
-            first?.concrete(cm) to second.map { it.concrete(cm) }
+            first?.concretize(cm) to second.map { it.concretize(cm) }
 
     private val Pair<Descriptor?, List<Descriptor>>.typeInfoState: PredicateState
         get() {
