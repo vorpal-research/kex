@@ -128,6 +128,8 @@ class CallStackGenerator(val context: ExecutionContext, val psa: PredicateStateA
     }
 
     private fun CallStack.generateObject(descriptor: ObjectDescriptor) {
+        val original = descriptor.deepCopy()
+
         descriptor.concretize(cm)
         descriptor.reduce()
 
@@ -135,10 +137,11 @@ class CallStackGenerator(val context: ExecutionContext, val psa: PredicateStateA
 
         val klass = descriptor.klass.kfgClass(types)
 
-        val setters = descriptor.generateSetters()
-        val queue = queueOf(descriptor to setters)
+//        val setters = descriptor.generateSetters()
+        val queue = queueOf(descriptor to listOf<ApiCall>())
         while (queue.isNotEmpty()) {
-            val (current, stack) = queue.poll()
+            val (desc, stack) = queue.poll()
+            val current = descriptor.accept(desc)
             if (stack.size > maxStackSize) continue
 
             for (method in klass.accessibleConstructors) {
@@ -165,8 +168,9 @@ class CallStackGenerator(val context: ExecutionContext, val psa: PredicateStateA
 
             for (method in klass.accessibleMethods) {
                 val (result, args) = method.executeAsSetter(current) ?: continue
-                if (result != null && result != current) {
-                    val newStack = stack + MethodCall(method, args.map { generate(it) })
+                if (result != null) {
+                    val remapping = { mutableMapOf<Descriptor, Descriptor>(result to current) }
+                    val newStack = stack + MethodCall(method, args.map { generate(it.deepCopy(remapping())) })
                     val newDesc = result.merge(current)
                     queue += newDesc to newStack
                 }
@@ -174,37 +178,38 @@ class CallStackGenerator(val context: ExecutionContext, val psa: PredicateStateA
 
             for (method in klass.accessibleMethods) {
                 val (result, args) = method.executeAsMethod(current) ?: continue
-                if (result != null && result != current) {
-                    val newStack = stack + MethodCall(method, args.map { generate(it) })
+                if (result != null) {
+                    val remapping = { mutableMapOf<Descriptor, Descriptor>(result to current) }
+                    val newStack = stack + MethodCall(method, args.map { generate(it.deepCopy(remapping())) })
                     val newDesc = result.merge(current)
                     queue += newDesc to newStack
                 }
             }
         }
 
-        this += UnknownCall(klass, descriptor)
+        this += UnknownCall(klass, original)
     }
 
-    private fun ObjectDescriptor.generateSetters(): List<ApiCall> {
-        val callStack = mutableListOf<ApiCall>()
-        val kfgKlass = klass.kfgClass(types)
-
-        for ((name, value) in fields.toMap()) {
-            val field = kfgKlass.getField(name, value.type.getKfgType(types))
-            if (!field.hasSetter || visibilityLevel > field.setter.visibility) continue
-
-            log.info("Using setter for $field")
-//            val newDesc = this.copyWithField(name)
-
-            val (result, args) = field.setter.executeAsSetter(this) ?: continue
-            if (result != null && (result[name] == null || result[name] == value.type.defaultDescriptor)) {
-                callStack += MethodCall(field.setter, args.map { generate(it) })
-                this.remove(name)
-                log.info("Used setter for field $field, new desc: $this")
-            }
-        }
-        return callStack
-    }
+//    private fun ObjectDescriptor.generateSetters(): List<ApiCall> {
+//        val callStack = mutableListOf<ApiCall>()
+//        val kfgKlass = klass.kfgClass(types)
+//
+//        for ((name, value) in fields.toMap()) {
+//            val field = kfgKlass.getField(name, value.type.getKfgType(types))
+//            if (!field.hasSetter || visibilityLevel > field.setter.visibility) continue
+//
+//            log.info("Using setter for $field")
+////            val newDesc = this.copyWithField(name)
+//
+//            val (result, args) = field.setter.executeAsSetter(this) ?: continue
+//            if (result != null && (result[name] == null || result[name] == value.type.defaultDescriptor)) {
+//                callStack += MethodCall(field.setter, args.map { generate(it) })
+//                this.remove(name)
+//                log.info("Used setter for field $field, new desc: $this")
+//            }
+//        }
+//        return callStack
+//    }
 
     private val Class.accessibleConstructors
         get() = constructors

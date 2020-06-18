@@ -108,7 +108,16 @@ class ObjectDescriptor(klass: KexClass) : Descriptor(term { generate(klass) }, k
     fun remove(field: String): Descriptor? = fields.remove(field)
 
     fun merge(other: ObjectDescriptor): ObjectDescriptor {
-        this.fields += other.fields
+        val newFields = other.fields + this.fields
+        this.fields.clear()
+        this.fields.putAll(newFields)
+        return this
+    }
+
+    fun accept(other: ObjectDescriptor): ObjectDescriptor {
+        val newFields = other.fields.mapValues { it.value.deepCopy(mutableMapOf(other to this)) }
+        this.fields.clear()
+        this.fields.putAll(newFields)
         return this
     }
 
@@ -317,7 +326,7 @@ class DescriptorBuilder {
         }
     }
 
-    fun default(type: KexType): Descriptor = default(type, false)
+    fun default(type: KexType): Descriptor = default(type, true)
 }
 
 fun descriptor(body: DescriptorBuilder.() -> Descriptor): Descriptor =
