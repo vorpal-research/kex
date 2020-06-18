@@ -8,7 +8,7 @@ import org.jetbrains.research.kex.asm.state.PredicateStateAnalysis
 import org.jetbrains.research.kex.asm.util.Visibility
 import org.jetbrains.research.kex.asm.util.visibility
 import org.jetbrains.research.kex.config.kexConfig
-import org.jetbrains.research.kex.descriptor.*
+import org.jetbrains.research.kex.generator.descriptor.*
 import org.jetbrains.research.kex.ktype.KexType
 import org.jetbrains.research.kex.ktype.kexType
 import org.jetbrains.research.kex.smt.Checker
@@ -22,19 +22,15 @@ import org.jetbrains.research.kex.state.transformer.*
 import org.jetbrains.research.kfg.ir.Class
 import org.jetbrains.research.kfg.ir.Field
 import org.jetbrains.research.kfg.ir.Method
-
-val Class.isInstantiable: Boolean
-    get() = when {
-        this.isAbstract -> false
-        this.isInterface -> false
-        !this.isStatic && this.outerClass != null -> false
-        else -> true
-    }
+import java.util.*
 
 private val visibilityLevel by lazy { kexConfig.getEnumValue("apiGeneration", "visibility", true, Visibility.PUBLIC) }
 private val maxStackSize by lazy { kexConfig.getIntValue("apiGeneration", "maxStackSize", 5) }
 private val isInliningEnabled by lazy { kexConfig.getBooleanValue("smt", "ps-inlining", true) }
 private val annotationsEnabled by lazy { kexConfig.getBooleanValue("annotations", "enabled", false) }
+
+private typealias ExecResult = Pair<ObjectDescriptor?, List<Descriptor>>
+private typealias ExecStack = Pair<ObjectDescriptor, List<ApiCall>>
 
 private fun Method.collectFieldAccesses(context: ExecutionContext, psa: PredicateStateAnalysis): Set<Field> {
     val methodState = psa.builder(this).methodState ?: return setOf()
@@ -56,7 +52,8 @@ private fun Method.collectFieldAccesses(context: ExecutionContext, psa: Predicat
     return collectFieldAccesses(context, transformed)
 }
 
-// todo: rework call stack generation for recursive data structures
+// todo: setters
+// todo: static fields
 class CallStackGenerator(val context: ExecutionContext, val psa: PredicateStateAnalysis) {
     val cm get() = context.cm
     val types get() = context.types
@@ -112,18 +109,6 @@ class CallStackGenerator(val context: ExecutionContext, val psa: PredicateStateA
                     callStack += arrayWrite
                 }
             }
-            // TODO: static fields
-//            is FieldDescriptor -> {
-//                val callStack = Node()
-//                val klass = descriptor.klass
-//                val field = klass.getField(descriptor.name, descriptor.kfgType)
-//                descriptorMap[descriptor] = callStack
-//
-//                callStack += when {
-//                    field.isStatic -> StaticFieldSetter(klass, field, generate(descriptor.value))
-//                    else -> FieldSetter(klass, generate(descriptor.owner), field, generate(descriptor.value))
-//                }
-//            }
         }
         return descriptorMap.getValue(descriptor)
     }
@@ -137,8 +122,6 @@ class CallStackGenerator(val context: ExecutionContext, val psa: PredicateStateA
         log.debug("Generating $descriptor")
 
         val klass = descriptor.klass.kfgClass(types)
-
-//        val setters = descriptor.generateSetters()
         val queue = queueOf(descriptor to listOf<ApiCall>())
         while (queue.isNotEmpty()) {
             val (desc, stack) = queue.poll()
@@ -168,49 +151,29 @@ class CallStackGenerator(val context: ExecutionContext, val psa: PredicateStateA
             }
 
             for (method in klass.accessibleMethods) {
-                val (result, args) = method.executeAsSetter(current) ?: continue
-                if (result != null) {
-                    val remapping = { mutableMapOf<Descriptor, Descriptor>(result to current) }
-                    val newStack = stack + MethodCall(method, args.map { generate(it.deepCopy(remapping())) })
-                    val newDesc = result.merge(current)
-                    queue += newDesc to newStack
-                }
+                val result = method.executeAsSetter(current) ?: continue
+                acceptExecutionResult(result, current, stack, method, queue)
             }
 
             for (method in klass.accessibleMethods) {
-                val (result, args) = method.executeAsMethod(current) ?: continue
-                if (result != null) {
-                    val remapping = { mutableMapOf<Descriptor, Descriptor>(result to current) }
-                    val newStack = stack + MethodCall(method, args.map { generate(it.deepCopy(remapping())) })
-                    val newDesc = result.merge(current)
-                    queue += newDesc to newStack
-                }
+                val result = method.executeAsMethod(current) ?: continue
+                acceptExecutionResult(result, current, stack, method, queue)
             }
         }
 
         this += UnknownCall(klass, original)
     }
 
-//    private fun ObjectDescriptor.generateSetters(): List<ApiCall> {
-//        val callStack = mutableListOf<ApiCall>()
-//        val kfgKlass = klass.kfgClass(types)
-//
-//        for ((name, value) in fields.toMap()) {
-//            val field = kfgKlass.getField(name, value.type.getKfgType(types))
-//            if (!field.hasSetter || visibilityLevel > field.setter.visibility) continue
-//
-//            log.info("Using setter for $field")
-////            val newDesc = this.copyWithField(name)
-//
-//            val (result, args) = field.setter.executeAsSetter(this) ?: continue
-//            if (result != null && (result[name] == null || result[name] == value.type.defaultDescriptor)) {
-//                callStack += MethodCall(field.setter, args.map { generate(it) })
-//                this.remove(name)
-//                log.info("Used setter for field $field, new desc: $this")
-//            }
-//        }
-//        return callStack
-//    }
+    private fun acceptExecutionResult(res: ExecResult, current: ObjectDescriptor,
+                                      stack: List<ApiCall>, method: Method, queue: Queue<ExecStack>) {
+        val (result, args) = res
+        if (result != null) {
+            val remapping = { mutableMapOf<Descriptor, Descriptor>(result to current) }
+            val newStack = stack + MethodCall(method, args.map { generate(it.deepCopy(remapping())) })
+            val newDesc = result.merge(current)
+            queue += newDesc to newStack
+        }
+    }
 
     private val Class.accessibleConstructors
         get() = constructors
@@ -224,7 +187,7 @@ class CallStackGenerator(val context: ExecutionContext, val psa: PredicateStateA
                 .filter { visibilityLevel <= it.visibility }
                 .filterNot { it.isSynthetic }
 
-    private fun Method.executeAsConstructor(descriptor: ObjectDescriptor): Pair<ObjectDescriptor?, List<Descriptor>>? {
+    private fun Method.executeAsConstructor(descriptor: ObjectDescriptor): ExecResult? {
         if (isEmpty()) return null
         log.debug("Executing constructor $this for $descriptor")
 
@@ -238,7 +201,7 @@ class CallStackGenerator(val context: ExecutionContext, val psa: PredicateStateA
         return execute(preparedState, preparedQuery)
     }
 
-    private fun Method.executeAsExternalConstructor(descriptor: ObjectDescriptor): Pair<ObjectDescriptor?, List<Descriptor>>? {
+    private fun Method.executeAsExternalConstructor(descriptor: ObjectDescriptor): ExecResult? {
         if (isEmpty()) return null
         log.debug("Executing external constructor $this for $descriptor")
 
@@ -254,12 +217,12 @@ class CallStackGenerator(val context: ExecutionContext, val psa: PredicateStateA
         return execute(preparedState, preparedQuery)
     }
 
-    private fun Method.executeAsSetter(descriptor: ObjectDescriptor): Pair<ObjectDescriptor?, List<Descriptor>>? {
+    private fun Method.execute(descriptor: ObjectDescriptor, preStateGetter: (Method, ObjectDescriptor) -> PredicateState?): ExecResult? {
         if (isEmpty()) return null
         log.debug("Executing method $this for $descriptor")
 
         val mapper = descriptor.mapper
-        val preState = getSetterPreState(descriptor) ?: return null
+        val preState = preStateGetter(this, descriptor) ?: return null
         val preStateFieldTerms = collectFieldTerms(context, preState)
         val state = mapper.apply(descriptor.typeInfo + preState + (methodState ?: return null))
 
@@ -268,21 +231,13 @@ class CallStackGenerator(val context: ExecutionContext, val psa: PredicateStateA
         return execute(preparedState, preparedQuery)
     }
 
-    private fun Method.executeAsMethod(descriptor: ObjectDescriptor): Pair<ObjectDescriptor?, List<Descriptor>>? {
-        if (isEmpty()) return null
-        log.debug("Executing method $this for $descriptor")
+    private fun Method.executeAsSetter(descriptor: ObjectDescriptor) =
+            this.execute(descriptor) { method, objectDescriptor -> method.getSetterPreState(objectDescriptor) }
 
-        val mapper = descriptor.mapper
-        val preState = getMethodPreState(descriptor) ?: return null
-        val preStateFieldTerms = collectFieldTerms(context, preState)
-        val state = mapper.apply(descriptor.typeInfo + preState + (methodState ?: return null))
+    private fun Method.executeAsMethod(descriptor: ObjectDescriptor) =
+            this.execute(descriptor) { method, objectDescriptor -> method.getMethodPreState(objectDescriptor) }
 
-        val preparedState = prepareState(this, state, preStateFieldTerms)
-        val preparedQuery = prepareQuery(mapper.apply(descriptor.query))
-        return execute(preparedState, preparedQuery)
-    }
-
-    private fun Method.execute(state: PredicateState, query: PredicateState): Pair<ObjectDescriptor?, List<Descriptor>>? {
+    private fun Method.execute(state: PredicateState, query: PredicateState): ExecResult? {
         val checker = Checker(this, context.loader, psa)
         return when (val result = checker.check(state + query)) {
             is Result.SatResult -> {

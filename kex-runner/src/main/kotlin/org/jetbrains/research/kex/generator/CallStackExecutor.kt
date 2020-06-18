@@ -7,9 +7,8 @@ import org.jetbrains.research.kex.util.getMethod
 import org.jetbrains.research.kex.util.loadClass
 import java.lang.reflect.Array
 
-// todo: proper identification of objects
 class CallStackExecutor(val ctx: ExecutionContext) {
-    val cache = mutableMapOf<CallStack, Any?>()
+    private val cache = mutableMapOf<CallStack, Any?>()
 
     fun execute(callStack: CallStack): Any? {
         if (callStack in cache) return cache[callStack]

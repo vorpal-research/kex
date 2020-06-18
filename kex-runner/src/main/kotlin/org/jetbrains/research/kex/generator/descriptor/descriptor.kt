@@ -1,4 +1,4 @@
-package org.jetbrains.research.kex.descriptor
+package org.jetbrains.research.kex.generator.descriptor
 
 import com.abdullin.kthelper.assert.unreachable
 import com.abdullin.kthelper.logging.log

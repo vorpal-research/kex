@@ -3,9 +3,9 @@ package org.jetbrains.research.kex.state.transformer
 import com.abdullin.kthelper.assert.unreachable
 import com.abdullin.kthelper.logging.log
 import org.jetbrains.research.kex.ExecutionContext
-import org.jetbrains.research.kex.descriptor.ConstantDescriptor
-import org.jetbrains.research.kex.descriptor.Descriptor
-import org.jetbrains.research.kex.descriptor.descriptor
+import org.jetbrains.research.kex.generator.descriptor.ConstantDescriptor
+import org.jetbrains.research.kex.generator.descriptor.Descriptor
+import org.jetbrains.research.kex.generator.descriptor.descriptor
 import org.jetbrains.research.kex.ktype.kexType
 import org.jetbrains.research.kex.smt.FinalDescriptorReanimator
 import org.jetbrains.research.kex.smt.InitialDescriptorReanimator

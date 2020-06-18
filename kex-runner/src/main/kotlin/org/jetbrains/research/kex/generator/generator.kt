@@ -7,7 +7,7 @@ import org.jetbrains.research.kex.annotations.AnnotationManager
 import org.jetbrains.research.kex.asm.analysis.KexCheckerException
 import org.jetbrains.research.kex.asm.state.PredicateStateAnalysis
 import org.jetbrains.research.kex.config.kexConfig
-import org.jetbrains.research.kex.descriptor.Descriptor
+import org.jetbrains.research.kex.generator.descriptor.Descriptor
 import org.jetbrains.research.kex.random.GenerationException
 import org.jetbrains.research.kex.smt.Checker
 import org.jetbrains.research.kex.smt.Result
@@ -46,6 +46,8 @@ class Generator(val ctx: ExecutionContext, val psa: PredicateStateAnalysis) {
         log.debug("Instance: ${thisCallStack?.print()}")
         log.debug("Args:\n${argCallStacks.joinToString("\n") { it.print() } }")
         thisCallStack?.let { csExecutor.execute(it) } to argCallStacks.map { csExecutor.execute(it) }.toTypedArray()
+    } catch (e: GenerationException) {
+        throw e
     } catch (e: Exception) {
         throw GenerationException(e)
     }
@@ -112,6 +114,8 @@ class Generator(val ctx: ExecutionContext, val psa: PredicateStateAnalysis) {
         log.debug(descriptors)
         val typeInfoState = descriptors.typeInfoState
         reExecute(method, block, typeInfoState)
+    } catch (e: GenerationException) {
+        throw e
     } catch (e: Exception) {
         throw GenerationException(e)
     }

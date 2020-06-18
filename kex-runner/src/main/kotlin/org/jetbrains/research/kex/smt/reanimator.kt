@@ -5,10 +5,10 @@ import com.abdullin.kthelper.logging.log
 import com.abdullin.kthelper.toBoolean
 import com.abdullin.kthelper.tryOrNull
 import org.jetbrains.research.kex.ExecutionContext
-import org.jetbrains.research.kex.descriptor.ArrayDescriptor
-import org.jetbrains.research.kex.descriptor.Descriptor
-import org.jetbrains.research.kex.descriptor.ObjectDescriptor
-import org.jetbrains.research.kex.descriptor.descriptor
+import org.jetbrains.research.kex.generator.descriptor.ArrayDescriptor
+import org.jetbrains.research.kex.generator.descriptor.Descriptor
+import org.jetbrains.research.kex.generator.descriptor.ObjectDescriptor
+import org.jetbrains.research.kex.generator.descriptor.descriptor
 import org.jetbrains.research.kex.ktype.*
 import org.jetbrains.research.kex.state.term.*
 import org.jetbrains.research.kex.state.transformer.memspace
