@@ -355,7 +355,7 @@ abstract class DescriptorReanimator(override val method: Method,
                     return@descriptor default(term.type)
 
                 if (instance is ObjectDescriptor) {
-                    instance[fieldReflect.name] = reanimatedValue
+                    instance[fieldReflect.name, (term.type as KexReference).reference] = reanimatedValue
                 }
 
                 instance

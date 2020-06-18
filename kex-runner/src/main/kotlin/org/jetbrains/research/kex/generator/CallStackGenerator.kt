@@ -303,14 +303,14 @@ class CallStackGenerator(val context: ExecutionContext, val psa: PredicateStateA
     private fun Method.getPreState(descriptor: ObjectDescriptor, initializer: (KexType) -> Term): PredicateState? {
         val mapper = descriptor.mapper
         val fieldAccessList = this.collectFieldAccesses(context, psa)
-        val intersection = descriptor.fields.filter {
-            fieldAccessList.find { field -> it.key == field.name } != null
+        val intersection = descriptor.fields.filter { (key, _) ->
+            fieldAccessList.find { field -> key.first == field.name } != null
         }.toMap()
         if (intersection.isEmpty()) return null
 
         val preStateBuilder = StateBuilder()
         for ((field, value) in intersection) {
-            val fieldTerm = term { descriptor.term.field(value.type, field) }
+            val fieldTerm = term { descriptor.term.field(field.second, field.first) }
             preStateBuilder += axiom { fieldTerm.initialize(initializer(value.type)) }
         }
         return mapper.apply(preStateBuilder.apply())
@@ -319,9 +319,9 @@ class CallStackGenerator(val context: ExecutionContext, val psa: PredicateStateA
     private val ObjectDescriptor.preState: PredicateState
         get() {
             val preState = StateBuilder()
-            for ((field, value) in fields) {
-                val fieldTerm = term { term.field(value.type, field) }
-                preState += axiom { fieldTerm.initialize(value.type.defaultValue) }
+            for ((field, _) in fields) {
+                val fieldTerm = term { term.field(field.second, field.first) }
+                preState += axiom { fieldTerm.initialize(field.second.defaultValue) }
             }
 
             return preState.apply()
@@ -331,7 +331,7 @@ class CallStackGenerator(val context: ExecutionContext, val psa: PredicateStateA
 
     private fun ObjectDescriptor?.isFinal(original: ObjectDescriptor) = when {
         this == null -> true
-        original.fields.all { this[it.key]?.isDefault ?: return@all true } -> true
+        original.fields.all { this[it.key] == null || this[it.key] == descriptor { default(it.key.second) } } -> true
         else -> false
     }
 

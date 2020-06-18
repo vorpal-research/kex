@@ -42,8 +42,6 @@ sealed class Descriptor(term: Term, type: KexType, val hasState: Boolean) {
 
     val typeInfo: PredicateState get() = generateTypeInfo(mutableSetOf())
 
-    val isDefault: Boolean get() = this == descriptor { default(type) }
-
     override fun toString() = asString
 
     abstract fun print(map: MutableMap<Descriptor, String>): String
@@ -97,15 +95,17 @@ class ObjectDescriptor(klass: KexClass) : Descriptor(term { generate(klass) }, k
     var klass = klass
         private set
 
-    val fields = mutableMapOf<String, Descriptor>()
+    val fields = mutableMapOf<Pair<String, KexType>, Descriptor>()
 
-    operator fun get(field: String) = fields[field]
+    operator fun get(key: Pair<String, KexType>) = fields[key]
+    operator fun get(field: String, type: KexType) = get(field to type)
 
-    operator fun set(field: String, value: Descriptor) {
-        fields[field] = value
+    operator fun set(key: Pair<String, KexType>, value: Descriptor) {
+        fields[key] = value
     }
+    operator fun set(field: String, type: KexType, value: Descriptor) = set(field to type, value)
 
-    fun remove(field: String): Descriptor? = fields.remove(field)
+    fun remove(field: String, type: KexType): Descriptor? = fields.remove(field to type)
 
     fun merge(other: ObjectDescriptor): ObjectDescriptor {
         val newFields = other.fields + this.fields
@@ -142,7 +142,7 @@ class ObjectDescriptor(klass: KexClass) : Descriptor(term { generate(klass) }, k
         val builder = StateBuilder()
         builder += axiom { term inequality null }
         for ((field, value) in fields) {
-            val fieldTerm = term { term.field(value.type, field) }
+            val fieldTerm = term { term.field(field.second, field.first) }
             if (value.hasState) {
                 builder += value.collectQuery(set)
             }
@@ -180,21 +180,13 @@ class ObjectDescriptor(klass: KexClass) : Descriptor(term { generate(klass) }, k
         visited += this
 
         for ((field, value) in fields.toMap()) {
-            when {
-                value.isDefault -> fields.remove(field)
+            when (value) {
+                descriptor { default(field.second) } -> fields.remove(field)
                 else -> fields[field] = value.reduce(visited)
             }
         }
 
         return this
-    }
-
-    fun copyWithField(name: String): ObjectDescriptor {
-        val copy = this.deepCopy() as ObjectDescriptor
-        copy.fields.keys.filter { it != name }.forEach {
-            copy.fields.remove(it)
-        }
-        return copy
     }
 
     override fun generateTypeInfo(visited: MutableSet<Descriptor>): PredicateState {
@@ -271,8 +263,8 @@ class ArrayDescriptor(val elementType: KexType, val length: Int) :
         visited += this
 
         for ((index, value) in elements.toMap()) {
-            when {
-                value.isDefault -> elements.remove(index)
+            when (value) {
+                descriptor { default(elementType) } -> elements.remove(index)
                 else -> elements[index] = value.reduce(visited)
             }
         }
