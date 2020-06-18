@@ -43,8 +43,8 @@ class Generator(val ctx: ExecutionContext, val psa: PredicateStateAnalysis) {
             csGenerator.generate(descriptor)
         }
         log.debug("Generated call stacks:")
-        log.debug("Instance: $thisCallStack")
-        log.debug("Args:\n${argCallStacks.joinToString("\n")}")
+        log.debug("Instance: ${thisCallStack?.print()}")
+        log.debug("Args:\n${argCallStacks.joinToString("\n") { it.print() } }")
         thisCallStack?.let { csExecutor.execute(it) } to argCallStacks.map { csExecutor.execute(it) }.toTypedArray()
     } catch (e: Exception) {
         throw GenerationException(e)

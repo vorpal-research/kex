@@ -83,6 +83,7 @@ class CallStackGenerator(val context: ExecutionContext, val psa: PredicateStateA
     fun generate(descriptor: Descriptor): CallStack {
         if (descriptor in descriptorMap) return descriptorMap.getValue(descriptor)
 
+        val name = "${descriptor.term}"
         when (descriptor) {
             is ConstantDescriptor -> return when (descriptor) {
                 is ConstantDescriptor.Null -> PrimaryValue(null)
@@ -92,22 +93,22 @@ class CallStackGenerator(val context: ExecutionContext, val psa: PredicateStateA
                 is ConstantDescriptor.Float -> PrimaryValue(descriptor.value)
                 is ConstantDescriptor.Double -> PrimaryValue(descriptor.value)
                 is ConstantDescriptor.Class -> PrimaryValue(descriptor.value)
-            }.wrap()
+            }.wrap(name)
             is ObjectDescriptor -> {
-                val callStack = CallStack()
+                val callStack = CallStack(name)
                 descriptorMap[descriptor] = callStack
                 callStack.generateObject(descriptor)
             }
             is ArrayDescriptor -> {
-                val callStack = CallStack()
+                val callStack = CallStack(name)
                 descriptorMap[descriptor] = callStack
 
                 val elementType = descriptor.elementType
-                val array = NewArray(elementType.getKfgType(context.types), PrimaryValue(descriptor.length).wrap()).wrap()
+                val array = NewArray(elementType.getKfgType(context.types), PrimaryValue(descriptor.length).wrap("${name}Length"))
                 callStack += array
 
                 descriptor.elements.forEach { (index, value) ->
-                    val arrayWrite = ArrayWrite(array, PrimaryValue(index).wrap(), generate(value))
+                    val arrayWrite = ArrayWrite(PrimaryValue(index).wrap("${name}Index"), generate(value))
                     callStack += arrayWrite
                 }
             }

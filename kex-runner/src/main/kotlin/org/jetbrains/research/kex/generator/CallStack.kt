@@ -8,11 +8,12 @@ import org.jetbrains.research.kfg.ir.Method
 import org.jetbrains.research.kfg.type.Type
 
 interface ApiCall {
-    fun wrap(): CallStack = CallStack(mutableListOf(this))
+    fun wrap(name: String): CallStack = CallStack(name, mutableListOf(this))
+    fun print(owner: CallStack, builder: StringBuilder, visited: MutableSet<CallStack>)
 }
 
-data class CallStack(val stack: MutableList<ApiCall>) : Iterable<ApiCall> by stack {
-    constructor() : this(mutableListOf())
+class CallStack(val name: String, val stack: MutableList<ApiCall>) : Iterable<ApiCall> by stack {
+    constructor(name: String) : this(name, mutableListOf())
 
     fun add(call: ApiCall): CallStack {
         this.stack += call
@@ -27,19 +28,38 @@ data class CallStack(val stack: MutableList<ApiCall>) : Iterable<ApiCall> by sta
         this.stack += call.stack
     }
 
-    override fun toString() = stack.joinToString("\n")
+    override fun toString() = name
 
-    fun reversed(): CallStack = CallStack(stack.reversed().toMutableList())
+    fun print(): String {
+        val builder = StringBuilder()
+        this.print(builder, mutableSetOf())
+        return builder.toString()
+    }
+
+    fun print(builder: StringBuilder, visited: MutableSet<CallStack>) {
+        if (this in visited) return
+        visited += this
+        for (call in stack) {
+            call.print(this, builder, visited)
+        }
+    }
+
+    fun reversed(): CallStack = CallStack(name, stack.reversed().toMutableList())
     fun reverse(): CallStack {
         this.stack.reverse()
         return this
     }
 }
 
-data class PrimaryValue<T>(val value: T) : ApiCall
+data class PrimaryValue<T>(val value: T) : ApiCall {
+    override fun print(owner: CallStack, builder: StringBuilder, visited: MutableSet<CallStack>) {}
+}
 
 data class DefaultConstructorCall(val klass: Class) : ApiCall {
     override fun toString() = "${klass.fullname}()"
+    override fun print(owner: CallStack, builder: StringBuilder, visited: MutableSet<CallStack>) {
+        builder.appendln("$owner = $this")
+    }
 }
 
 data class ConstructorCall(val klass: Class, val constructor: Method, val args: List<CallStack>) : ApiCall {
@@ -48,6 +68,13 @@ data class ConstructorCall(val klass: Class, val constructor: Method, val args: 
     }
 
     override fun toString() = "$constructor(${args.joinToString(", ")})"
+
+    override fun print(owner: CallStack, builder: StringBuilder, visited: MutableSet<CallStack>) {
+        for (arg in args) {
+            arg.print(builder, visited)
+        }
+        builder.appendln("$owner = ${constructor.`class`.fullname}(${args.joinToString(", ")})")
+    }
 }
 
 data class ExternalConstructorCall(val constructor: Method, val args: List<CallStack>) : ApiCall {
@@ -56,6 +83,13 @@ data class ExternalConstructorCall(val constructor: Method, val args: List<CallS
     }
 
     override fun toString() = "$constructor(${args.joinToString(", ")})"
+
+    override fun print(owner: CallStack, builder: StringBuilder, visited: MutableSet<CallStack>) {
+        for (arg in args) {
+            arg.print(builder, visited)
+        }
+        builder.appendln("$owner = ${constructor.`class`.fullname}(${args.joinToString(", ")})")
+    }
 }
 
 data class MethodCall(val method: Method, val args: List<CallStack>) : ApiCall {
@@ -64,22 +98,52 @@ data class MethodCall(val method: Method, val args: List<CallStack>) : ApiCall {
     }
 
     override fun toString() = "$method(${args.joinToString(", ")})"
+
+    override fun print(owner: CallStack, builder: StringBuilder, visited: MutableSet<CallStack>) {
+        for (arg in args) {
+            arg.print(builder, visited)
+        }
+        builder.appendln("$owner.${method.name}(${args.joinToString(", ")})")
+    }
 }
 
 data class UnknownCall(val klass: Class, val target: Descriptor) : ApiCall {
     override fun toString() = "Unknown($target)"
+
+    override fun print(owner: CallStack, builder: StringBuilder, visited: MutableSet<CallStack>) {
+        builder.appendln("$owner = $this")
+    }
 }
 
 data class StaticFieldSetter(val klass: Class, val field: Field, val value: CallStack) : ApiCall {
     override fun toString() = "${klass.fullname}.${field.name} = $value"
+
+    override fun print(owner: CallStack, builder: StringBuilder, visited: MutableSet<CallStack>) {
+        TODO("Not yet implemented")
+    }
 }
 
-data class FieldSetter(val klass: Class, val owner: CallStack, val field: Field, val value: CallStack) : ApiCall
+data class FieldSetter(val klass: Class, val owner: CallStack, val field: Field, val value: CallStack) : ApiCall {
+    override fun print(owner: CallStack, builder: StringBuilder, visited: MutableSet<CallStack>) {
+        value.print(builder, visited)
+        builder.appendln("$owner.${field.name} = $value")
+    }
+}
 
 data class NewArray(val klass: Type, val length: CallStack) : ApiCall {
     override fun toString() = "new $klass[$length]"
+    override fun print(owner: CallStack, builder: StringBuilder, visited: MutableSet<CallStack>) {
+        length.print(builder, visited)
+        builder.appendln("$owner = $this")
+    }
 }
 
-data class ArrayWrite(val array: CallStack, val index: CallStack, val value: CallStack) : ApiCall {
+data class ArrayWrite(val index: CallStack, val value: CallStack) : ApiCall {
     override fun toString() = "array[$index] = $value"
+
+    override fun print(owner: CallStack, builder: StringBuilder, visited: MutableSet<CallStack>) {
+        index.print(builder, visited)
+        value.print(builder, visited)
+        builder.appendln("$owner[$index] = $value")
+    }
 }
