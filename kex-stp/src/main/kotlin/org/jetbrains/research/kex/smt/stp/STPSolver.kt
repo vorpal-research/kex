@@ -1,9 +1,8 @@
-package org.jetbrains.research.kex.smt.boolector
+package org.jetbrains.research.kex.smt.stp
 
 import com.abdullin.kthelper.assert.ktassert
 import com.abdullin.kthelper.assert.unreachable
 import com.abdullin.kthelper.logging.log
-import org.jetbrains.research.boolector.Btor
 import org.jetbrains.research.kex.config.kexConfig
 import org.jetbrains.research.kex.ktype.*
 import org.jetbrains.research.kex.smt.*
@@ -13,13 +12,14 @@ import org.jetbrains.research.kex.state.transformer.collectPointers
 import org.jetbrains.research.kex.state.transformer.collectVariables
 import org.jetbrains.research.kex.state.transformer.memspace
 import org.jetbrains.research.kfg.type.TypeFactory
+import org.zhekehz.stpjava.QueryResult
 
 private val logQuery = kexConfig.getBooleanValue("smt", "logQuery", false)
 private val logFormulae = kexConfig.getBooleanValue("smt", "logFormulae", false)
 
-@Solver("boolector")
-class BoolectorSolver(val tf: TypeFactory) : AbstractSMTSolver {
-    val ef = BoolectorExprFactory()
+@Solver("stp")
+class STPSolver(val tf: TypeFactory) : AbstractSMTSolver {
+    val ef = STPExprFactory()
 
     override fun isReachable(state: PredicateState) =
             isPathPossible(state, state.path)
@@ -29,71 +29,67 @@ class BoolectorSolver(val tf: TypeFactory) : AbstractSMTSolver {
     override fun isViolated(state: PredicateState, query: PredicateState): Result {
         if (logQuery) {
             log.run {
-                debug("Boolector solver check")
+                debug("STP solver check")
                 debug("State: $state")
                 debug("Query: $query")
             }
         }
 
-        val ctx = BoolectorContext(ef, (1 shl 8) + 1, (1 shl 24) + 1)
+        val ctx = STPContext(ef, (1 shl 8) + 1, (1 shl 24) + 1)
 
-        val converter = BoolectorConverter(tf)
-        val boolectorState = converter.apply(state, ef, ctx)
-        val boolectorQuery = converter.convert(query, ef, ctx)
+        val converter = STPConverter(tf)
+        val STPState = converter.apply(state, ef, ctx)
+        val STPQuery = converter.convert(query, ef, ctx)
 
         log.debug("Check started")
-        val result = check(boolectorState, boolectorQuery)
+        val result = check(STPState, STPQuery)
         log.debug("Check finished")
         return when (result) {
-            Btor.Status.UNSAT -> Result.UnsatResult
-            Btor.Status.UNKNOWN -> Result.UnknownResult("should not happen")
-            Btor.Status.SAT -> Result.SatResult(collectModel(ctx, state))
+            QueryResult.INVALID -> Result.SatResult(collectModel(ctx, state))
+            QueryResult.TIMEOUT, QueryResult.ERROR -> Result.UnknownResult("should not happen")
+            QueryResult.VALID -> Result.UnsatResult
         }
     }
 
-    private fun check(state: Bool_, query: Bool_): Btor.Status {
-        val (state_, query_) = state to query
-
-        state_.asAxiom().assertForm()
-        ef.buildSubtypeAxioms(tf).asAxiom().assertForm()
-        query_.axiom.assertForm()
-        query_.expr.assertForm()
+    private fun check(state: Bool_, query: Bool_): QueryResult {
+        val subTypeAxioms = ef.buildSubtypeAxioms(tf)
+        val combined = state and query and subTypeAxioms
+        val toBeChecked = combined.expr.asBool().and(combined.axiom.asBool())
 
         if (logFormulae) {
-            log.debug(ef.ctx.dumpSmt2())
+            log.debug(toBeChecked.toSMTLib2())
         }
-        log.debug("Running Boolector solver")
-        val result = ef.ctx.check() ?: unreachable { log.error("Solver error") }
-
+        log.debug("Running STP solver")
+        val result = toBeChecked.not().query() ?: unreachable { log.error("Solver error") }
         log.debug("Solver finished")
 
         return result
     }
 
-    private fun BoolectorContext.recoverProperty(ptr: Term, memspace: Int, type: KexType, name: String): Pair<Term, Term> {
-        val ptrExpr = BoolectorConverter(tf).convert(ptr, ef, this) as? Ptr_
+    private fun STPContext.recoverProperty(ptr: Term, memspace: Int, type: KexType, name: String): Pair<Term, Term> {
+        val ptrExpr = STPConverter(tf).convert(ptr, ef, this) as? Ptr_
                 ?: unreachable { log.error("Non-ptr expr for pointer $ptr") }
         val startProp = getInitialProperties(memspace, name)
         val endProp = getProperties(memspace, name)
 
-        val startV = startProp.load(ptrExpr, BoolectorExprFactory.getTypeSize(type).int)
-        val endV = endProp.load(ptrExpr, BoolectorExprFactory.getTypeSize(type).int)
+        val startV = startProp.load(ptrExpr, STPExprFactory.getTypeSize(type).int)
+        val endV = endProp.load(ptrExpr, STPExprFactory.getTypeSize(type).int)
 
-        val modelStartV = BoolectorUnlogic.undo(startV.expr)
-        val modelEndV = BoolectorUnlogic.undo(endV.expr)
+        val modelStartV = STPUnlogic.undo(startV.expr)
+        val modelEndV = STPUnlogic.undo(endV.expr)
         return modelStartV to modelEndV
     }
 
     private fun MutableMap<Int, MutableMap<String, Pair<MutableMap<Term, Term>, MutableMap<Term, Term>>>>.recoverProperty(
-            ctx: BoolectorContext,
+            ctx: STPContext,
             ptr: Term,
             memspace: Int,
             type: KexType,
             name: String
     ) {
-        val ptrExpr = BoolectorConverter(tf).convert(ptr, ef, ctx) as? Ptr_
+        val ptrExpr = STPConverter(tf).convert(ptr, ef, ctx) as? Ptr_
                 ?: unreachable { log.error("Non-ptr expr for pointer $ptr") }
-        val modelPtr = BoolectorUnlogic.undo(ptrExpr.expr)
+        val modelPtr = STPUnlogic.undo(ptrExpr.expr)
 
         val (modelStartT, modelEndT) = ctx.recoverProperty(ptr, memspace, type, name)
         val typePair = this.getOrPut(memspace, ::hashMapOf).getOrPut(name) {
@@ -103,17 +99,16 @@ class BoolectorSolver(val tf: TypeFactory) : AbstractSMTSolver {
         typePair.second[modelPtr] = modelEndT
     }
 
-    private fun collectModel(ctx: BoolectorContext, vararg states: PredicateState): SMTModel {
+    private fun collectModel(ctx: STPContext, vararg states: PredicateState): SMTModel {
         val (ptrs, vars) = states.fold(setOf<Term>() to setOf<Term>()) { acc, ps ->
             acc.first + collectPointers(ps) to acc.second + collectVariables(ps)
         }
 
         val assignments = vars.map {
-            val expr = BoolectorConverter(tf).convert(it, ef, ctx)
-            val boolectorExpr = expr.expr
+            val expr = STPConverter(tf).convert(it, ef, ctx)
+            val stpExpr = expr.expr
 
-            // this is needed because boolector represents real numbers as integers
-            val undone = BoolectorUnlogic.undo(boolectorExpr)
+            val undone = STPUnlogic.undo(stpExpr)
             val actualValue = when {
                 it.type is KexReal -> when (undone) {
                     is ConstIntTerm -> term { const(undone.value.toFloat()) }
@@ -132,7 +127,7 @@ class BoolectorSolver(val tf: TypeFactory) : AbstractSMTSolver {
         val typeMap = hashMapOf<Term, KexType>()
 
         for ((type, value) in ef.typeMap) {
-            val actualValue = BoolectorUnlogic.undo(value.expr)
+            val actualValue = STPUnlogic.undo(value.expr)
             typeMap[actualValue] = type
         }
 
@@ -150,15 +145,15 @@ class BoolectorSolver(val tf: TypeFactory) : AbstractSMTSolver {
                     val startMem = ctx.getInitialMemory(memspace)
                     val endMem = ctx.getMemory(memspace)
 
-                    val ptrExpr = BoolectorConverter(tf).convert(ptr, ef, ctx) as? Ptr_
+                    val ptrExpr = STPConverter(tf).convert(ptr, ef, ctx) as? Ptr_
                             ?: unreachable { log.error("Non-ptr expr for pointer $ptr") }
 
-                    val startV = startMem.load(ptrExpr, BoolectorExprFactory.getTypeSize(ptr.type).int)
-                    val endV = endMem.load(ptrExpr, BoolectorExprFactory.getTypeSize(ptr.type).int)
+                    val startV = startMem.load(ptrExpr, STPExprFactory.getTypeSize(ptr.type).int)
+                    val endV = endMem.load(ptrExpr, STPExprFactory.getTypeSize(ptr.type).int)
 
-                    val modelPtr = BoolectorUnlogic.undo(ptrExpr.expr)
-                    val modelStartV = BoolectorUnlogic.undo(startV.expr)
-                    val modelEndV = BoolectorUnlogic.undo(endV.expr)
+                    val modelPtr = STPUnlogic.undo(ptrExpr.expr)
+                    val modelStartV = STPUnlogic.undo(startV.expr)
+                    val modelEndV = STPUnlogic.undo(endV.expr)
 
                     memories.getOrPut(memspace) { hashMapOf<Term, Term>() to hashMapOf() }
                     memories.getValue(memspace).first[modelPtr] = modelStartV
@@ -184,5 +179,5 @@ class BoolectorSolver(val tf: TypeFactory) : AbstractSMTSolver {
         )
     }
 
-    override fun cleanup() = ef.ctx.release()
+    override fun cleanup() = ef.ctx.destroy()
 }

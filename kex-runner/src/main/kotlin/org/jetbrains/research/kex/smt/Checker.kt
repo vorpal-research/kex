@@ -39,7 +39,7 @@ class Checker(val method: Method, val loader: ClassLoader, private val psa: Pred
 
     fun prepareState(ps: PredicateState) = transform(ps) {
         if (annotationsEnabled) {
-            +AnnotationIncluder(AnnotationManager.defaultLoader)
+            +AnnotationIncluder(method, AnnotationManager.defaultLoader)
         }
 
         if (isInliningEnabled) {
@@ -88,7 +88,6 @@ class Checker(val method: Method, val loader: ClassLoader, private val psa: Pred
                 results += variables.filterIsInstance<ArgumentTerm>()
                 results += variables.filter { it is FieldTerm && it.owner == `this` }
                 results += collectRequiredTerms(state)
-                results += collectAssumedTerms(state)
                 results += TermCollector.getFullTermSet(query)
                 results
             }

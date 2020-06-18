@@ -34,6 +34,7 @@ class ConcreteImplInliner(val ctx: ExecutionContext,
         return when {
             method.isFinal -> method
             method.isStatic -> method
+            method.isConstructor -> method
             else -> {
                 val typeInfo = typeInfoMap.getInfo<CastTypeInfo>(call.owner) ?: return null
                 val kexClass = typeInfo.type as? KexClass ?: return null
@@ -78,5 +79,19 @@ class ConcreteImplInliner(val ctx: ExecutionContext,
         val endState = builder.methodState ?: return null
 
         return TermRenamer("inlined${inlineIndex++}", mappings).apply(endState)
+    }
+}
+
+class FullDepthInliner(val ctx: ExecutionContext,
+                       val typeInfoMap: TypeInfoMap,
+                       val psa: PredicateStateAnalysis) : Transformer<FullDepthInliner> {
+    override fun apply(ps: PredicateState): PredicateState {
+        var last: PredicateState
+        var current = ps
+        do {
+            last = current
+            current = ConcreteImplInliner(ctx, typeInfoMap, psa).apply(last)
+        } while (current != last)
+        return current
     }
 }

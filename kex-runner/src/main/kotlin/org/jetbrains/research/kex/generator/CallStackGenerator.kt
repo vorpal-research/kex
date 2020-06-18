@@ -1,5 +1,6 @@
 package org.jetbrains.research.kex.generator
 
+import com.abdullin.kthelper.`try`
 import com.abdullin.kthelper.collection.queueOf
 import com.abdullin.kthelper.logging.log
 import org.jetbrains.research.kex.ExecutionContext
@@ -15,6 +16,7 @@ import org.jetbrains.research.kex.state.StateBuilder
 import org.jetbrains.research.kex.state.term.Term
 import org.jetbrains.research.kex.state.term.term
 import org.jetbrains.research.kex.state.transformer.*
+import org.jetbrains.research.kfg.ClassManager
 import org.jetbrains.research.kfg.ir.Class
 import org.jetbrains.research.kfg.ir.Method
 import org.jetbrains.research.kfg.ir.Node
@@ -35,6 +37,38 @@ val Node.visibility: Visibility
         else -> Visibility.PACKAGE
     }
 
+val Class.isInstantiable: Boolean
+    get() = when {
+        this.isAbstract -> false
+        this.isInterface -> false
+        !this.isStatic && this.outerClass != null -> false
+        else -> true
+    }
+
+
+fun Descriptor.concrete(cm: ClassManager) = when (this) {
+    is ObjectDescriptor -> this.instantiableDescriptor(cm)
+    else -> this
+}
+
+fun ObjectDescriptor.instantiableDescriptor(cm: ClassManager): ObjectDescriptor {
+    val concreteClass = when {
+        this.klass.isInstantiable -> this.klass
+        else -> `try` {
+            cm.concreteClasses.filter {
+                klass.isAncestorOf(it) && it.isInstantiable && visibilityLevel <= it.visibility
+            }.random()
+        }.getOrElse {
+            throw NoConcreteInstanceException(this.klass)
+        }
+    }
+    val result = ObjectDescriptor(klass = concreteClass)
+    for ((name, desc) in this.fields) {
+        result[name] = desc.copy(owner = result, value = desc.value.concrete(cm))
+    }
+    return result
+}
+
 private val visibilityLevel by lazy { kexConfig.getEnumValue("apiGeneration", "visibility", true, Visibility.PUBLIC) }
 private val maxStackSize by lazy { kexConfig.getIntValue("apiGeneration", "maxStackSize", 5) }
 private val isInliningEnabled by lazy { kexConfig.getBooleanValue("smt", "ps-inlining", true) }
@@ -47,7 +81,7 @@ class CallStackGenerator(val context: ExecutionContext, val psa: PredicateStateA
     private val descriptorMap = mutableMapOf<Descriptor, Node>()
 
     private fun prepareState(method: Method, ps: PredicateState, ignores: Set<Term> = setOf()) = transform(ps) {
-        if (annotationsEnabled) +AnnotationIncluder(AnnotationManager.defaultLoader)
+        if (annotationsEnabled) +AnnotationIncluder(method, AnnotationManager.defaultLoader)
         if (isInliningEnabled) +MethodInliner(psa)
         +IntrinsicAdapter
         +ReflectionInfoAdapter(method, context.loader, ignores)
@@ -60,6 +94,7 @@ class CallStackGenerator(val context: ExecutionContext, val psa: PredicateStateA
 
     private fun prepareQuery(ps: PredicateState) = transform(ps) {
         +NullityInfoAdapter()
+        +ArrayBoundsAdapter()
     }
 
     private class Node(var stack: CallStack) {
@@ -120,9 +155,9 @@ class CallStackGenerator(val context: ExecutionContext, val psa: PredicateStateA
     }
 
     private fun generateObject(descriptor: ObjectDescriptor): CallStack? {
-        val reducedDescriptor = descriptor.reduced
+        val reducedDescriptor = descriptor.instantiableDescriptor(context.cm).reduced as ObjectDescriptor
         log.debug("Generating $reducedDescriptor")
-        val klass = descriptor.klass
+        val klass = reducedDescriptor.klass
 
         val queue = queueOf(generateSetters(reducedDescriptor))
         while (queue.isNotEmpty()) {
@@ -139,7 +174,17 @@ class CallStackGenerator(val context: ExecutionContext, val psa: PredicateStateA
                         method.argTypes.isEmpty() -> DefaultConstructorCall(klass)
                         else -> ConstructorCall(klass, method, args.map { generate(it) })
                     }
-                    return stack + constructorCall
+                    return (stack + constructorCall).reversed()
+                }
+            }
+
+            // execute available methods
+            for (method in klass.accessibleMethods) {
+                val (result, args) = method.executeAsSetter(desc) ?: continue
+                if (result != null && result != desc) {
+                    val newStack = stack + MethodCall(stack, method, args.map { generate(it) })
+                    val newDesc = result.merge(desc)
+                    queue += newDesc to newStack
                 }
             }
 
@@ -167,7 +212,7 @@ class CallStackGenerator(val context: ExecutionContext, val psa: PredicateStateA
                 val newDesc = ObjectDescriptor(desc.klass)
                 newDesc[name] = fd.copy(owner = newDesc)
 
-                val (result, args) = field.setter.executeAsMethod(newDesc) ?: continue
+                val (result, args) = field.setter.executeAsSetter(newDesc) ?: continue
                 if (result != null && result != desc) {
                     callStack += MethodCall(callStack, field.setter, args.map { generate(it) })
                     val newFields = desc.fields.filter { it.key != name }.toMutableMap()
@@ -187,12 +232,26 @@ class CallStackGenerator(val context: ExecutionContext, val psa: PredicateStateA
         log.debug("Executing constructor $this for $descriptor")
 
         val mapper = descriptor.mapper
-        val preState = mapper.apply(descriptor.generateTypeInfo() + descriptor.preState)
+        val preState = mapper.apply(descriptor.typeInfo + descriptor.preState)
         val state = preState + mapper.apply(methodState ?: return null)
 
         val preStateFieldTerms = collectFieldTerms(context, preState)
         val preparedState = prepareState(this, state, preStateFieldTerms)
-        val preparedQuery = prepareQuery(mapper.apply(descriptor.toState()))
+        val preparedQuery = prepareQuery(mapper.apply(descriptor.query))
+        return execute(preparedState, preparedQuery)
+    }
+
+    private fun Method.executeAsSetter(descriptor: ObjectDescriptor): Pair<ObjectDescriptor?, List<Descriptor>>? {
+        if (isEmpty()) return null
+        log.debug("Executing method $this for $descriptor")
+
+        val mapper = descriptor.mapper
+        val preState = getSetterPreState(descriptor) ?: return null
+        val preStateFieldTerms = collectFieldTerms(context, preState)
+        val state = mapper.apply(descriptor.typeInfo + preState + (methodState ?: return null))
+
+        val preparedState = prepareState(this, state, preStateFieldTerms)
+        val preparedQuery = prepareQuery(mapper.apply(descriptor.query))
         return execute(preparedState, preparedQuery)
     }
 
@@ -201,12 +260,12 @@ class CallStackGenerator(val context: ExecutionContext, val psa: PredicateStateA
         log.debug("Executing method $this for $descriptor")
 
         val mapper = descriptor.mapper
-        val preState = getPreState(descriptor) ?: return null
+        val preState = getMethodPreState(descriptor) ?: return null
         val preStateFieldTerms = collectFieldTerms(context, preState)
-        val state = mapper.apply(descriptor.generateTypeInfo() + preState + (methodState ?: return null))
+        val state = mapper.apply(descriptor.typeInfo + preState + (methodState ?: return null))
 
         val preparedState = prepareState(this, state, preStateFieldTerms)
-        val preparedQuery = prepareQuery(mapper.apply(descriptor.toState()))
+        val preparedQuery = prepareQuery(mapper.apply(descriptor.query))
         return execute(preparedState, preparedQuery)
     }
 
@@ -217,7 +276,7 @@ class CallStackGenerator(val context: ExecutionContext, val psa: PredicateStateA
                 log.debug("Model: ${result.model}")
                 val (thisDescriptor, argumentDescriptors) =
                         generateInitialDescriptors(this, context, result.model, checker.state)
-                (thisDescriptor as? ObjectDescriptor)?.reduced to argumentDescriptors
+                (thisDescriptor as? ObjectDescriptor) to argumentDescriptors
             }
             else -> null
         }
@@ -225,7 +284,7 @@ class CallStackGenerator(val context: ExecutionContext, val psa: PredicateStateA
 
     private val Method.methodState get() = psa.builder(this).methodState
 
-    private fun Method.getPreState(descriptor: ObjectDescriptor): PredicateState? {
+    private fun Method.getSetterPreState(descriptor: ObjectDescriptor): PredicateState? {
         val mapper = descriptor.mapper
         val fieldAccessList = this.fieldAccesses
         val intersection = descriptor.fields.values.filter {
@@ -236,9 +295,24 @@ class CallStackGenerator(val context: ExecutionContext, val psa: PredicateStateA
         val preStateBuilder = StateBuilder()
         for (field in intersection) {
             preStateBuilder.run {
-                val tempTerm = term { generate(field.type) }
-                state { tempTerm equality field.term.load() }
-                assume { tempTerm equality field.type.defaultDescriptor.term }
+                axiom { field.term.initialize(field.type.defaultDescriptor.term) }
+            }
+        }
+        return mapper.apply(preStateBuilder.apply())
+    }
+
+    private fun Method.getMethodPreState(descriptor: ObjectDescriptor): PredicateState? {
+        val mapper = descriptor.mapper
+        val fieldAccessList = this.fieldAccesses
+        val intersection = descriptor.fields.values.filter {
+            fieldAccessList.find { field -> it.name == field.name && it.klass == field.`class` } != null
+        }
+        if (intersection.isEmpty()) return null
+
+        val preStateBuilder = StateBuilder()
+        for (field in intersection) {
+            preStateBuilder.run {
+                axiom { field.term.initialize(generate(field.type)) }
             }
         }
         return mapper.apply(preStateBuilder.apply())
@@ -249,9 +323,7 @@ class CallStackGenerator(val context: ExecutionContext, val psa: PredicateStateA
             val preState = StateBuilder()
             for (field in fields.values) {
                 preState.run {
-                    val tempTerm = term { generate(field.type) }
-                    state { tempTerm equality field.term.load() }
-                    assume { tempTerm equality field.type.defaultDescriptor.term }
+                    axiom { field.term.initialize(field.type.defaultDescriptor.term) }
                 }
             }
 
@@ -266,14 +338,22 @@ class CallStackGenerator(val context: ExecutionContext, val psa: PredicateStateA
         else -> false
     }
 
-    private val ObjectDescriptor.reduced: ObjectDescriptor
-        get() {
-            val filteredFields = fields.filterNot { (_, field) -> field.isDefault }
-            val newObject = ObjectDescriptor(klass)
-            for ((name, field) in filteredFields) {
-                newObject[name] = field.copy(owner = newObject)
+    private val Descriptor.reduced: Descriptor
+        get() = when (this) {
+            is ObjectDescriptor -> {
+                val filteredFields = fields.filterNot { (_, field) -> field.isDefault }
+                val newObject = ObjectDescriptor(klass)
+                for ((name, field) in filteredFields) {
+                    newObject[name] = field.copy(owner = newObject, value = field.value.reduced)
+                }
+                newObject
             }
-            return newObject
+            is ArrayDescriptor -> {
+                val filteredElements = this.elements.filterValues { it != this.elementType.defaultDescriptor }
+                val newArray = ArrayDescriptor(this.length, this.kfgType, filteredElements.toMutableMap())
+                newArray
+            }
+            else -> this
         }
 
     private val FieldDescriptor.isDefault get() = value == type.defaultDescriptor

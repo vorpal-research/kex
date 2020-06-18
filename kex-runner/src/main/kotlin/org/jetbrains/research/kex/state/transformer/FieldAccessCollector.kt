@@ -4,6 +4,7 @@ import com.abdullin.kthelper.assert.unreachable
 import com.abdullin.kthelper.logging.log
 import org.jetbrains.research.kex.ExecutionContext
 import org.jetbrains.research.kex.state.PredicateState
+import org.jetbrains.research.kex.state.predicate.FieldInitializerPredicate
 import org.jetbrains.research.kex.state.predicate.FieldStorePredicate
 import org.jetbrains.research.kex.state.predicate.Predicate
 import org.jetbrains.research.kex.state.term.FieldLoadTerm
@@ -16,6 +17,17 @@ val Term.isThis: Boolean get() = this.toString() == "this"
 class FieldAccessCollector(val context: ExecutionContext) : Transformer<FieldAccessCollector> {
     val fieldAccesses = mutableSetOf<Field>()
     val fieldTerms = mutableSetOf<FieldTerm>()
+
+    override fun transformFieldInitializer(predicate: FieldInitializerPredicate): Predicate {
+        val fieldTerm = predicate.field as? FieldTerm ?: unreachable { log.error("Unexpected term in field store") }
+        val klass = context.cm[fieldTerm.klass]
+        val field = klass.getField(fieldTerm.fieldNameString, fieldTerm.type.getKfgType(context.types))
+        if (fieldTerm.isStatic || fieldTerm.owner.isThis) {
+            fieldAccesses += field
+            fieldTerms += fieldTerm
+        }
+        return super.transformFieldInitializer(predicate)
+    }
 
     override fun transformFieldStore(predicate: FieldStorePredicate): Predicate {
         val fieldTerm = predicate.field as? FieldTerm ?: unreachable { log.error("Unexpected term in field store") }

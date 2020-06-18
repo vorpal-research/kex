@@ -23,7 +23,7 @@
         <maven.compiler.source>${jvm.version}</maven.compiler.source>
         <maven.compiler.target>${jvm.version}</maven.compiler.target>
 
-        <kotlin.version>1.3.70</kotlin.version>
+        <kotlin.version>1.3.72</kotlin.version>
         <compiler-plugin.version>3.5.1</compiler-plugin.version>
 
         <kt-helper.version>0.0.6</kt-helper.version>
@@ -97,6 +97,7 @@
 
             <modules>
                 <module>kex-boolector</module>
+                <module>kex-stp</module>
                 <module>kex-z3</module>
             </modules>
         </profile>
@@ -110,6 +111,18 @@
 
             <modules>
                 <module>kex-boolector</module>
+            </modules>
+        </profile>
+
+        <profile>
+            <id>stp</id>
+
+            <properties>
+                <stp-only>true</stp-only>
+            </properties>
+
+            <modules>
+                <module>kex-stp</module>
             </modules>
         </profile>
 

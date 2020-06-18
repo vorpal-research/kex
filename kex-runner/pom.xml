@@ -269,6 +269,11 @@
                 </dependency>
                 <dependency>
                     <groupId>org.jetbrains.research</groupId>
+                    <artifactId>kex-stp</artifactId>
+                    <version>${project.version}</version>
+                </dependency>
+                <dependency>
+                    <groupId>org.jetbrains.research</groupId>
                     <artifactId>kex-z3</artifactId>
                     <version>${project.version}</version>
                 </dependency>
@@ -288,6 +293,24 @@
                 <dependency>
                     <groupId>org.jetbrains.research</groupId>
                     <artifactId>kex-boolector</artifactId>
+                    <version>${project.version}</version>
+                </dependency>
+            </dependencies>
+        </profile>
+
+        <profile>
+            <id>stp</id>
+            <activation>
+                <property>
+                    <name>stp-only</name>
+                    <value>true</value>
+                </property>
+            </activation>
+
+            <dependencies>
+                <dependency>
+                    <groupId>org.jetbrains.research</groupId>
+                    <artifactId>kex-stp</artifactId>
                     <version>${project.version}</version>
                 </dependency>
             </dependencies>

@@ -104,6 +104,7 @@ class ExternalAnnotationsLoader : AnnotationsLoader {
         else -> name.replace('.', '/')
                 .replace("///", "...")
                 .replace(" ", "")
+                .takeWhile { it != '<' }
     }
 
     private fun parseAnnotations(node: Element): List<AnnotationInfo> {

@@ -1,6 +1,5 @@
 package org.jetbrains.research.kex.generator
 
-import com.abdullin.kthelper.`try`
 import com.abdullin.kthelper.logging.debug
 import com.abdullin.kthelper.logging.log
 import org.jetbrains.research.kex.ExecutionContext
@@ -22,7 +21,6 @@ import org.jetbrains.research.kfg.ir.BasicBlock
 import org.jetbrains.research.kfg.ir.Class
 import org.jetbrains.research.kfg.ir.Method
 
-private val visibilityLevel by lazy { kexConfig.getEnumValue("apiGeneration", "visibility", true, Visibility.PUBLIC) }
 private val apiGeneration get() = kexConfig.getBooleanValue("apiGeneration", "enabled", false)
 private val useConcreteImpl get() = kexConfig.getBooleanValue("apiGeneration", "use-concrete-impl", false)
 
@@ -51,59 +49,25 @@ class Generator(val ctx: ExecutionContext, val psa: PredicateStateAnalysis) {
     fun generateFromModel(method: Method, state: PredicateState, model: SMTModel) =
             generateInputByModel(ctx, method, state, model)
 
-    private val Class.isInstantiable: Boolean
-        get() = when {
-            this.isAbstract -> false
-            this.isInterface -> false
-            !this.isStatic && this.outerClass != null -> false
-            else -> true
-        }
-
-    private val Descriptor.concrete
-        get() = when (this) {
-            is ObjectDescriptor -> this.instantiableDescriptor
-            else -> this
-        }
-
-    private val ObjectDescriptor.instantiableDescriptor: ObjectDescriptor
-        get() {
-            val concreteClass = when {
-                this.klass.isInstantiable -> this.klass
-                else -> `try` {
-                    cm.concreteClasses.filter {
-                        klass.isAncestorOf(it) && it.isInstantiable && visibilityLevel <= it.visibility
-                    }.random()
-                }.getOrElse {
-                    throw NoConcreteInstanceException(this.klass)
-                }
-            }
-            val result = ObjectDescriptor(klass = concreteClass)
-            for ((name, desc) in this.fields) {
-                result[name] = desc.copy(owner = result, value = desc.value.concrete)
-            }
-            return result
-        }
-
     private val Pair<Descriptor?, List<Descriptor>>.concrete
         get() =
-            first?.concrete to second.map { it.concrete }
+            first?.concrete(cm) to second.map { it.concrete(cm) }
 
     private val Pair<Descriptor?, List<Descriptor>>.typeInfoState: PredicateState
         get() {
             val thisState = first?.run {
-                val typeInfo = generateTypeInfo()
                 TermRemapper(mapOf(term to term { `this`(term.type) })).apply(typeInfo)
             }
             val argStates = second.mapIndexed { index, descriptor ->
-                val typeInfo = descriptor.generateTypeInfo()
+                val typeInfo = descriptor.typeInfo
                 TermRemapper(mapOf(descriptor.term to term { arg(descriptor.term.type, index) })).apply(typeInfo)
             }.toTypedArray()
             return listOfNotNull(thisState, *argStates).fold(emptyState()) { acc, predicateState -> acc + predicateState }
         }
 
     private fun prepareState(method: Method, ps: PredicateState, typeInfoMap: TypeInfoMap) = transform(ps) {
-        +AnnotationIncluder(AnnotationManager.defaultLoader)
-        +ConcreteImplInliner(ctx, typeInfoMap, psa)
+        +AnnotationIncluder(method, AnnotationManager.defaultLoader)
+        +FullDepthInliner(ctx, typeInfoMap, psa)
         +IntrinsicAdapter
         +ReflectionInfoAdapter(method, ctx.loader)
         +Optimizer()
@@ -150,8 +114,8 @@ class Generator(val ctx: ExecutionContext, val psa: PredicateStateAnalysis) {
 
     fun generate(method: Method, block: BasicBlock, state: PredicateState, model: SMTModel) = when {
         apiGeneration -> when {
-            useConcreteImpl -> generateAPI(method, state, model)
-            else -> generateConcreteAPI(method, block, state, model)
+            useConcreteImpl -> generateConcreteAPI(method, block, state, model)
+            else -> generateAPI(method, state, model)
         }
         else -> generateFromModel(method, state, model)
     }
