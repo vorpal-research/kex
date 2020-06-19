@@ -5,10 +5,7 @@ import com.abdullin.kthelper.logging.log
 import com.abdullin.kthelper.toBoolean
 import com.abdullin.kthelper.tryOrNull
 import org.jetbrains.research.kex.ExecutionContext
-import org.jetbrains.research.kex.generator.descriptor.ArrayDescriptor
-import org.jetbrains.research.kex.generator.descriptor.Descriptor
-import org.jetbrains.research.kex.generator.descriptor.ObjectDescriptor
-import org.jetbrains.research.kex.generator.descriptor.descriptor
+import org.jetbrains.research.kex.generator.descriptor.*
 import org.jetbrains.research.kex.ktype.*
 import org.jetbrains.research.kex.state.term.*
 import org.jetbrains.research.kex.state.transformer.memspace
@@ -328,7 +325,7 @@ abstract class DescriptorReanimator(override val method: Method,
                                 ?: return@descriptor default(term.type)
                         if (`class`.isSynthetic) return@descriptor default(term.type)
 
-                        `null` to `class`
+                        const(classRef.type) to `class`
                     }
                     else -> {
                         val objectRef = term.owner
@@ -354,11 +351,17 @@ abstract class DescriptorReanimator(override val method: Method,
                 if (fieldReflect.isEnumConstant || fieldReflect.isSynthetic)
                     return@descriptor default(term.type)
 
-                if (instance is ObjectDescriptor) {
-                    instance[fieldReflect.name, (term.type as KexReference).reference] = reanimatedValue
-                }
+                val fieldName = fieldReflect.name
+                val fieldType = (term.type as KexReference).reference
 
-                instance
+                when (instance) {
+                    is ObjectDescriptor -> {
+                        instance[fieldName, fieldType] = reanimatedValue
+                        instance
+                    }
+                    is ConstantDescriptor.Class -> staticField(instance.value, fieldName, fieldType, reanimatedValue)
+                    else -> unreachable { log.error("Unknown type of field owner") }
+                }
             }
             else -> unreachable { log.error("Unknown reference term: $term with address $addr") }
         }

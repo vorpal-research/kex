@@ -287,6 +287,54 @@ class ArrayDescriptor(val elementType: KexType, val length: Int) :
     }
 }
 
+class StaticFieldDescriptor(val klass: KexClass, val field: String, type: KexType, var value: Descriptor) :
+        Descriptor(term { `class`(klass).field(type, field) }, type, true) {
+    override fun print(map: MutableMap<Descriptor, String>): String {
+        if (this in map) return map[this]!!
+        map[this] = term.name
+        return "$term = ${value.print(map)}"
+    }
+
+    override fun collectQuery(set: MutableSet<Descriptor>): PredicateState {
+        if (this in set) return emptyState()
+        set += this
+        val builder = StateBuilder()
+        if (value.hasState) {
+            builder += value.collectQuery(set)
+        }
+        builder += require { term.load() equality value.term }
+        return builder.apply()
+    }
+
+    override fun concretize(cm: ClassManager, visited: MutableSet<Descriptor>): Descriptor {
+        if (this in visited) return this
+        visited += this
+        value.concretize(cm, visited)
+        return this
+    }
+
+    override fun deepCopy(copied: MutableMap<Descriptor, Descriptor>): Descriptor {
+        if (this in copied) return copied[this]!!
+        val copy = StaticFieldDescriptor(klass, field, type, value)
+        copied[this] = copy
+        copy.value = value.deepCopy(copied)
+        return copy
+    }
+
+    override fun reduce(visited: MutableSet<Descriptor>): Descriptor {
+        if (this in visited) return this
+        visited += this
+        value = value.reduce(visited)
+        return this
+    }
+
+    override fun generateTypeInfo(visited: MutableSet<Descriptor>): PredicateState {
+        if (this in visited) return emptyState()
+        visited += this
+        return value.generateTypeInfo(visited)
+    }
+}
+
 class DescriptorBuilder {
     val `null` = ConstantDescriptor.Null
     fun const(@Suppress("UNUSED_PARAMETER") nothing: Nothing?) = `null`
@@ -297,9 +345,13 @@ class DescriptorBuilder {
         is Double -> ConstantDescriptor.Double(number)
         else -> ConstantDescriptor.Int(number.toInt())
     }
+    fun const(klass: KexClass) = ConstantDescriptor.Class(klass)
 
     fun `object`(type: KexClass): ObjectDescriptor = ObjectDescriptor(type)
     fun array(length: Int, elementType: KexType): ArrayDescriptor = ArrayDescriptor(elementType, length)
+
+    fun staticField(klass: KexClass, field: String, fieldType: KexType, value: Descriptor) =
+            StaticFieldDescriptor(klass, field, fieldType, value)
 
     fun default(type: KexType, nullable: Boolean): Descriptor = descriptor {
         when (type) {

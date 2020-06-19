@@ -38,21 +38,22 @@ interface AbstractGenerator<T> : Transformer<AbstractGenerator<T>> {
     val memory: MutableMap<Term, T>
     var thisTerm: Term?
     val argTerms: MutableMap<Int, Term>
+    val staticFieldTerms: MutableSet<FieldTerm>
 
     val javaClass: Class<*>
     val javaMethod: Executable
 
     val instance get() = thisTerm?.let { memory[it] }
     val args get() = argTerms.map { memory[it.value] }.toList()
+    val staticFields get() = staticFieldTerms.map { it to memory[it] }.toMap()
 
     fun generateThis() = thisTerm?.let {
         memory[it] = reanimator.reanimate(it)
     }
 
-    fun generateArgs() =
-            argTerms.values.forEach { term ->
-                reanimateTerm(term)
-            }
+    fun generateArgs() = argTerms.values.forEach { term ->
+        reanimateTerm(term)
+    }
 
     fun reanimateTerm(term: Term): T? = memory.getOrPut(term) {
         reanimator.reanimate(term)
@@ -80,7 +81,12 @@ interface AbstractGenerator<T> : Transformer<AbstractGenerator<T>> {
 
     override fun transformBasic(ps: BasicState): PredicateState {
         val vars = collectPointers(ps)
-        vars.forEach { reanimateTerm(it) }
+        vars.forEach { ptr ->
+            reanimateTerm(ptr)
+            if (ptr is FieldTerm && ptr.isStatic) {
+                staticFieldTerms += ptr
+            }
+        }
         return ps
     }
 

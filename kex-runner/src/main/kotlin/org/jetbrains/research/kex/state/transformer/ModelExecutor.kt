@@ -15,6 +15,7 @@ import org.jetbrains.research.kex.state.predicate.EqualityPredicate
 import org.jetbrains.research.kex.state.predicate.InequalityPredicate
 import org.jetbrains.research.kex.state.predicate.Predicate
 import org.jetbrains.research.kex.state.term.ConstIntTerm
+import org.jetbrains.research.kex.state.term.FieldTerm
 import org.jetbrains.research.kex.state.term.Term
 import org.jetbrains.research.kex.util.getConstructor
 import org.jetbrains.research.kex.util.getMethod
@@ -30,6 +31,7 @@ class ModelExecutor(override val method: Method,
 
     override var thisTerm: Term? = null
     override val argTerms = sortedMapOf<Int, Term>()
+    override val staticFieldTerms = mutableSetOf<FieldTerm>()
 
     override val javaClass = loader.loadClass(type.getRefType(method.`class`))
     override val javaMethod = when {

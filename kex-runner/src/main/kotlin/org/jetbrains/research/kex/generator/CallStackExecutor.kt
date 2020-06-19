@@ -68,10 +68,15 @@ class CallStackExecutor(val ctx: ExecutionContext) {
                     val reflection = ctx.loader.loadClass(field.`class`)
                     val fieldReflection = reflection.getField(field.name)
                     val value = execute(call.value)
-                    when {
-                        field.isStatic -> fieldReflection.set(null, value)
-                        else -> fieldReflection.set(current, value)
-                    }
+                    fieldReflection.set(current, value)
+                    current
+                }
+                is StaticFieldSetter -> {
+                    val field = call.field
+                    val reflection = ctx.loader.loadClass(field.`class`)
+                    val fieldReflection = reflection.getField(field.name)
+                    val value = execute(call.value)
+                    fieldReflection.set(null, value)
                     current
                 }
                 is UnknownCall -> {

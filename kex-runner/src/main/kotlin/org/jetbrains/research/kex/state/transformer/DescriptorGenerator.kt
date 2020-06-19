@@ -6,6 +6,7 @@ import org.jetbrains.research.kex.ExecutionContext
 import org.jetbrains.research.kex.generator.descriptor.ConstantDescriptor
 import org.jetbrains.research.kex.generator.descriptor.Descriptor
 import org.jetbrains.research.kex.generator.descriptor.descriptor
+import org.jetbrains.research.kex.ktype.KexReference
 import org.jetbrains.research.kex.ktype.kexType
 import org.jetbrains.research.kex.smt.FinalDescriptorReanimator
 import org.jetbrains.research.kex.smt.InitialDescriptorReanimator
@@ -17,11 +18,18 @@ import org.jetbrains.research.kex.state.predicate.EqualityPredicate
 import org.jetbrains.research.kex.state.predicate.InequalityPredicate
 import org.jetbrains.research.kex.state.predicate.Predicate
 import org.jetbrains.research.kex.state.term.ConstIntTerm
+import org.jetbrains.research.kex.state.term.FieldTerm
 import org.jetbrains.research.kex.state.term.Term
 import org.jetbrains.research.kex.util.getConstructor
 import org.jetbrains.research.kex.util.getMethod
 import org.jetbrains.research.kex.util.loadClass
 import org.jetbrains.research.kfg.ir.Method
+
+data class Parameters(
+        val instance: Descriptor?,
+        val arguments: List<Descriptor>,
+        val staticFields: Map<FieldTerm, Descriptor>
+)
 
 class DescriptorGenerator(override val method: Method,
                           override val ctx: ExecutionContext,
@@ -32,6 +40,7 @@ class DescriptorGenerator(override val method: Method,
 
     override var thisTerm: Term? = null
     override val argTerms = sortedMapOf<Int, Term>()
+    override val staticFieldTerms = mutableSetOf<FieldTerm>()
 
     override val javaClass = loader.loadClass(type.getRefType(method.`class`))
     override val javaMethod = when {
@@ -53,18 +62,30 @@ class DescriptorGenerator(override val method: Method,
     }
 }
 
-fun generateFinalDescriptors(method: Method, ctx: ExecutionContext, model: SMTModel, state: PredicateState): Pair<Descriptor?, List<Descriptor>> {
+fun generateFinalDescriptors(method: Method, ctx: ExecutionContext, model: SMTModel, state: PredicateState): Parameters {
     val generator = DescriptorGenerator(method, ctx, model, FinalDescriptorReanimator(method, model, ctx))
     generator.apply(state)
-    return generator.instance to generator.args.mapIndexed { index, arg ->
-        arg ?: descriptor { default(method.argTypes[index].kexType) }
-    }
+    return Parameters(
+            generator.instance,
+            generator.args.mapIndexed { index, arg ->
+                arg ?: descriptor { default(method.argTypes[index].kexType) }
+            },
+            generator.staticFields.mapValues {
+                it.value ?: descriptor { default((it.key.type as KexReference).reference) }
+            }
+    )
 }
 
-fun generateInitialDescriptors(method: Method, ctx: ExecutionContext, model: SMTModel, state: PredicateState): Pair<Descriptor?, List<Descriptor>> {
+fun generateInitialDescriptors(method: Method, ctx: ExecutionContext, model: SMTModel, state: PredicateState): Parameters {
     val generator = DescriptorGenerator(method, ctx, model, InitialDescriptorReanimator(method, model, ctx))
     generator.apply(state)
-    return generator.instance to generator.args.mapIndexed { index, arg ->
-        arg ?: descriptor { default(method.argTypes[index].kexType) }
-    }
+    return Parameters(
+            generator.instance,
+            generator.args.mapIndexed { index, arg ->
+                arg ?: descriptor { default(method.argTypes[index].kexType) }
+            },
+            generator.staticFields.mapValues {
+                it.value ?: descriptor { default((it.key.type as KexReference).reference) }
+            }
+    )
 }

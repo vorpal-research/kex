@@ -119,7 +119,8 @@ data class StaticFieldSetter(val klass: Class, val field: Field, val value: Call
     override fun toString() = "${klass.fullname}.${field.name} = $value"
 
     override fun print(owner: CallStack, builder: StringBuilder, visited: MutableSet<CallStack>) {
-        TODO("Not yet implemented")
+        value.print(builder, visited)
+        builder.appendln(toString())
     }
 }
 

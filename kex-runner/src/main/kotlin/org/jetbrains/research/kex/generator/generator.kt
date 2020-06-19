@@ -7,7 +7,6 @@ import org.jetbrains.research.kex.annotations.AnnotationManager
 import org.jetbrains.research.kex.asm.analysis.KexCheckerException
 import org.jetbrains.research.kex.asm.state.PredicateStateAnalysis
 import org.jetbrains.research.kex.config.kexConfig
-import org.jetbrains.research.kex.generator.descriptor.Descriptor
 import org.jetbrains.research.kex.random.GenerationException
 import org.jetbrains.research.kex.smt.Checker
 import org.jetbrains.research.kex.smt.Result
@@ -36,16 +35,24 @@ class Generator(val ctx: ExecutionContext, val psa: PredicateStateAnalysis) {
         val descriptors = generateFinalDescriptors(method, ctx, model, state).concrete
         log.debug("Generated descriptors:")
         log.debug(descriptors)
-        val thisCallStack = descriptors.first?.let { descriptor ->
+        val thisCallStack = descriptors.instance?.let { descriptor ->
             csGenerator.generate(descriptor)
         }
-        val argCallStacks = descriptors.second.map { descriptor ->
+        val argCallStacks = descriptors.arguments.map { descriptor ->
+            csGenerator.generate(descriptor)
+        }
+        val staticFields = descriptors.staticFields.values.map { descriptor ->
             csGenerator.generate(descriptor)
         }
         log.debug("Generated call stacks:")
         log.debug("Instance: ${thisCallStack?.print()}")
-        log.debug("Args:\n${argCallStacks.joinToString("\n") { it.print() } }")
-        thisCallStack?.let { csExecutor.execute(it) } to argCallStacks.map { csExecutor.execute(it) }.toTypedArray()
+        log.debug("Args:\n${argCallStacks.joinToString("\n") { it.print() }}")
+        log.debug("Static fields:\n${staticFields.joinToString("\n") { it.print() }}")
+
+        val instance = thisCallStack?.let { csExecutor.execute(it) }
+        val arguments = argCallStacks.map { csExecutor.execute(it) }.toTypedArray()
+        staticFields.forEach { csExecutor.execute(it) }
+        instance to arguments
     } catch (e: GenerationException) {
         throw e
     } catch (e: Exception) {
@@ -55,16 +62,15 @@ class Generator(val ctx: ExecutionContext, val psa: PredicateStateAnalysis) {
     private fun generateFromModel(method: Method, state: PredicateState, model: SMTModel) =
             generateInputByModel(ctx, method, state, model)
 
-    private val Pair<Descriptor?, List<Descriptor>>.concrete
-        get() =
-            first?.concretize(cm) to second.map { it.concretize(cm) }
+    private val Parameters.concrete
+        get() = Parameters(instance?.concretize(cm), arguments.map { it.concretize(cm) }, staticFields.mapValues { it.value.concretize(cm) })
 
-    private val Pair<Descriptor?, List<Descriptor>>.typeInfoState: PredicateState
+    private val Parameters.typeInfoState: PredicateState
         get() {
-            val thisState = first?.run {
+            val thisState = instance?.run {
                 TermRemapper(mapOf(term to term { `this`(term.type) })).apply(typeInfo)
             }
-            val argStates = second.mapIndexed { index, descriptor ->
+            val argStates = arguments.mapIndexed { index, descriptor ->
                 val typeInfo = descriptor.typeInfo
                 TermRemapper(mapOf(descriptor.term to term { arg(descriptor.term.type, index) })).apply(typeInfo)
             }.toTypedArray()

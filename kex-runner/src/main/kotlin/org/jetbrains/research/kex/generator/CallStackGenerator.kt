@@ -109,6 +109,13 @@ class CallStackGenerator(val context: ExecutionContext, val psa: PredicateStateA
                     callStack += arrayWrite
                 }
             }
+            is StaticFieldDescriptor -> {
+                val callStack = CallStack(name)
+                descriptorMap[descriptor] = callStack
+                val kfgClass = descriptor.klass.kfgClass(types)
+                val kfgField = kfgClass.getField(descriptor.field, descriptor.type.getKfgType(types))
+                callStack += StaticFieldSetter(kfgClass, kfgField, generate(descriptor.value))
+            }
         }
         return descriptorMap.getValue(descriptor)
     }
