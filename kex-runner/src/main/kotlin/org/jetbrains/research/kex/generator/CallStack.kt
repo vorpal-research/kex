@@ -124,7 +124,7 @@ data class StaticFieldSetter(val klass: Class, val field: Field, val value: Call
     }
 }
 
-data class FieldSetter(val klass: Class, val owner: CallStack, val field: Field, val value: CallStack) : ApiCall {
+data class FieldSetter(val field: Field, val value: CallStack) : ApiCall {
     override fun print(owner: CallStack, builder: StringBuilder, visited: MutableSet<CallStack>) {
         value.print(builder, visited)
         builder.appendln("$owner.${field.name} = $value")

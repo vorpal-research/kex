@@ -186,18 +186,24 @@ class CallStackGenerator(val context: ExecutionContext, val psa: PredicateStateA
     private fun ObjectDescriptor.generateSetters(): List<ApiCall> {
         val calls = mutableListOf<ApiCall>()
         val kfgKlass = this.klass.kfgClass(types)
-        for (field in this.fields.keys.toSet()) {
+        for ((field, value) in this.fields.toMap()) {
             val kfgField = kfgKlass.getField(field.first, field.second.getKfgType(types))
-            if (!kfgField.hasSetter || visibilityLevel > kfgField.setter.visibility) continue
 
-            log.info("Using setter for $field")
+            if (visibilityLevel <= kfgField.visibility) {
+                log.debug("Directly setting field $field value")
+                calls += FieldSetter(kfgField, generate(value))
+                this.fields.remove(field)
 
-            val (result, args) = kfgField.setter.executeAsSetter(this) ?: continue
-            if (result != null && (result[field] == null || result[field] == field.second.defaultDescriptor)) {
-                val remapping = { mutableMapOf<Descriptor, Descriptor>(result to this) }
-                calls += MethodCall(kfgField.setter, args.map { generate(it.deepCopy(remapping())) })
-                this.accept(result)
-                log.info("Used setter for field $field, new desc: $this")
+            } else if (kfgField.hasSetter && visibilityLevel <= kfgField.setter.visibility) {
+                log.info("Using setter for $field")
+
+                val (result, args) = kfgField.setter.executeAsSetter(this) ?: continue
+                if (result != null && (result[field] == null || result[field] == field.second.defaultDescriptor)) {
+                    val remapping = { mutableMapOf<Descriptor, Descriptor>(result to this) }
+                    calls += MethodCall(kfgField.setter, args.map { generate(it.deepCopy(remapping())) })
+                    this.accept(result)
+                    log.info("Used setter for field $field, new desc: $this")
+                }
             }
         }
         return calls
