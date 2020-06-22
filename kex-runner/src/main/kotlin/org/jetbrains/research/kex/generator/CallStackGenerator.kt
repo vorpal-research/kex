@@ -19,6 +19,7 @@ import org.jetbrains.research.kex.state.predicate.axiom
 import org.jetbrains.research.kex.state.term.Term
 import org.jetbrains.research.kex.state.term.term
 import org.jetbrains.research.kex.state.transformer.*
+import org.jetbrains.research.kex.util.with
 import org.jetbrains.research.kfg.ir.Class
 import org.jetbrains.research.kfg.ir.Field
 import org.jetbrains.research.kfg.ir.Method
@@ -30,7 +31,7 @@ private val isInliningEnabled by lazy { kexConfig.getBooleanValue("smt", "ps-inl
 private val annotationsEnabled by lazy { kexConfig.getBooleanValue("annotations", "enabled", false) }
 
 private typealias ExecResult = Pair<ObjectDescriptor?, List<Descriptor>>
-private typealias ExecStack = Pair<ObjectDescriptor, List<ApiCall>>
+private typealias ExecStack = Triple<ObjectDescriptor, List<ApiCall>, Int>
 
 private fun Method.collectFieldAccesses(context: ExecutionContext, psa: PredicateStateAnalysis): Set<Field> {
     val methodState = psa.builder(this).methodState ?: return setOf()
@@ -52,8 +53,7 @@ private fun Method.collectFieldAccesses(context: ExecutionContext, psa: Predicat
     return collectFieldAccesses(context, transformed)
 }
 
-// todo: setters
-// todo: static fields
+// todo: setters for static fields
 class CallStackGenerator(val context: ExecutionContext, val psa: PredicateStateAnalysis) {
     val cm get() = context.cm
     val types get() = context.types
@@ -128,12 +128,13 @@ class CallStackGenerator(val context: ExecutionContext, val psa: PredicateStateA
 
         log.debug("Generating $descriptor")
 
+        val setters = descriptor.generateSetters()
         val klass = descriptor.klass.kfgClass(types)
-        val queue = queueOf(descriptor to listOf<ApiCall>())
+        val queue = queueOf(descriptor to setters with 0)
         while (queue.isNotEmpty()) {
-            val (desc, stack) = queue.poll()
+            val (desc, stack, depth) = queue.poll()
             val current = descriptor.accept(desc)
-            if (stack.size > maxStackSize) continue
+            if (depth > maxStackSize) continue
 
             for (method in klass.accessibleConstructors) {
                 val (thisDesc, args) = method.executeAsConstructor(current) ?: continue
@@ -159,27 +160,47 @@ class CallStackGenerator(val context: ExecutionContext, val psa: PredicateStateA
 
             for (method in klass.accessibleMethods) {
                 val result = method.executeAsSetter(current) ?: continue
-                acceptExecutionResult(result, current, stack, method, queue)
+                acceptExecutionResult(result, current, depth, stack, method, queue)
             }
 
             for (method in klass.accessibleMethods) {
                 val result = method.executeAsMethod(current) ?: continue
-                acceptExecutionResult(result, current, stack, method, queue)
+                acceptExecutionResult(result, current, depth, stack, method, queue)
             }
         }
 
         this += UnknownCall(klass, original)
     }
 
-    private fun acceptExecutionResult(res: ExecResult, current: ObjectDescriptor,
+    private fun acceptExecutionResult(res: ExecResult, current: ObjectDescriptor, oldDepth: Int,
                                       stack: List<ApiCall>, method: Method, queue: Queue<ExecStack>) {
         val (result, args) = res
         if (result != null) {
             val remapping = { mutableMapOf<Descriptor, Descriptor>(result to current) }
             val newStack = stack + MethodCall(method, args.map { generate(it.deepCopy(remapping())) })
             val newDesc = result.merge(current)
-            queue += newDesc to newStack
+            queue += newDesc to newStack with (oldDepth + 1)
         }
+    }
+
+    private fun ObjectDescriptor.generateSetters(): List<ApiCall> {
+        val calls = mutableListOf<ApiCall>()
+        val kfgKlass = this.klass.kfgClass(types)
+        for (field in this.fields.keys.toSet()) {
+            val kfgField = kfgKlass.getField(field.first, field.second.getKfgType(types))
+            if (!kfgField.hasSetter || visibilityLevel > kfgField.setter.visibility) continue
+
+            log.info("Using setter for $field")
+
+            val (result, args) = kfgField.setter.executeAsSetter(this) ?: continue
+            if (result != null && (result[field] == null || result[field] == field.second.defaultDescriptor)) {
+                val remapping = { mutableMapOf<Descriptor, Descriptor>(result to this) }
+                calls += MethodCall(kfgField.setter, args.map { generate(it.deepCopy(remapping())) })
+                this.accept(result)
+                log.info("Used setter for field $field, new desc: $this")
+            }
+        }
+        return calls
     }
 
     private val Class.accessibleConstructors

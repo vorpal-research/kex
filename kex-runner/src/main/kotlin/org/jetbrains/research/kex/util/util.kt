@@ -8,4 +8,10 @@ import org.jetbrains.research.kfg.ir.Method
 private val dot by lazy { kexConfig.getStringValue("view", "dot") ?: unreachable { log.error("Could not find dot") } }
 private val viewer by lazy { kexConfig.getStringValue("view", "viewer") ?: unreachable { log.error("Could not find viewer") } }
 
-fun Method.view() = this.view(dot, viewer)
+fun Method.view() {
+    this.view(dot, viewer)
+}
+
+infix fun <A, B> A.with(b: B): Pair<A, B> = this to b
+infix fun <A, B, C> Pair<A, B>.with(c: C): Triple<A, B, C> = Triple(first, second, c)
+infix fun <A, B, C> A.with(pair: Pair<B, C>): Triple<A, B, C> = Triple(this, pair.first, pair.second)
