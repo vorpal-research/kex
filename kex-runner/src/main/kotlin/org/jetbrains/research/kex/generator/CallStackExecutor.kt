@@ -7,14 +7,13 @@ import org.jetbrains.research.kex.util.getMethod
 import org.jetbrains.research.kex.util.loadClass
 import java.lang.reflect.Array
 
-// todo: proper identification of objects
 class CallStackExecutor(val ctx: ExecutionContext) {
-    val cache = mutableMapOf<CallStack, Any?>()
+    private val cache = mutableMapOf<CallStack, Any?>()
 
-    fun execute(callStack: CallStack): Any? = cache.getOrPut(callStack) {
-        // this is fucked up
-        TraceCollectorProxy.enableCollector(ctx.cm)
-        TraceCollectorProxy.disableCollector()
+    fun execute(callStack: CallStack): Any? {
+        if (callStack in cache) return cache[callStack]
+
+        TraceCollectorProxy.initializeEmptyCollector(ctx.cm)
 
         var current: Any? = null
         for (call in callStack) {
@@ -23,14 +22,27 @@ class CallStackExecutor(val ctx: ExecutionContext) {
                 is DefaultConstructorCall -> {
                     val reflection = ctx.loader.loadClass(call.klass)
                     val defaultConstructor = reflection.getDeclaredConstructor()
-                    defaultConstructor.newInstance()
+                    val instance = defaultConstructor.newInstance()
+                    cache[callStack] = instance
+                    instance
                 }
                 is ConstructorCall -> {
                     val reflection = ctx.loader.loadClass(call.klass)
                     val constructor = reflection.getConstructor(call.constructor, ctx.loader)
                     constructor.isAccessible = true
                     val args = call.args.map { execute(it) }.toTypedArray()
-                    constructor.newInstance(*args)
+                    val instance = constructor.newInstance(*args)
+                    cache[callStack] = instance
+                    instance
+                }
+                is ExternalConstructorCall -> {
+                    val reflection = ctx.loader.loadClass(call.constructor.`class`)
+                    val javaMethod = reflection.getMethod(call.constructor, ctx.loader)
+                    javaMethod.isAccessible = true
+                    val args = call.args.map { execute(it) }.toTypedArray()
+                    val instance = javaMethod.invoke(null, *args)
+                    cache[callStack] = instance
+                    instance
                 }
                 is MethodCall -> {
                     val reflection = ctx.loader.loadClass(call.method.`class`)
@@ -56,10 +68,15 @@ class CallStackExecutor(val ctx: ExecutionContext) {
                     val reflection = ctx.loader.loadClass(field.`class`)
                     val fieldReflection = reflection.getField(field.name)
                     val value = execute(call.value)
-                    when {
-                        field.isStatic -> fieldReflection.set(null, value)
-                        else -> fieldReflection.set(current, value)
-                    }
+                    fieldReflection.set(current, value)
+                    current
+                }
+                is StaticFieldSetter -> {
+                    val field = call.field
+                    val reflection = ctx.loader.loadClass(field.`class`)
+                    val fieldReflection = reflection.getField(field.name)
+                    val value = execute(call.value)
+                    fieldReflection.set(null, value)
                     current
                 }
                 is UnknownCall -> {
@@ -69,6 +86,7 @@ class CallStackExecutor(val ctx: ExecutionContext) {
                 else -> null
             }
         }
-        current
+
+        return current
     }
 }

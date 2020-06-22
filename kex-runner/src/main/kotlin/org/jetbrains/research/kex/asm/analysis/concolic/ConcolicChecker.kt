@@ -49,11 +49,10 @@ class ConcolicChecker(val ctx: ExecutionContext, val manager: TraceManager<Trace
         try {
             runBlocking {
                 withTimeout(timeLimit) {
-                    while (true) {
-                        try {
-                            process(method)
-                        } catch (e: TimeoutException) {
-                        }
+                    try {
+                        process(method)
+                    } catch (e: TimeoutException) {
+                        log.debug("Timeout on running $method")
                     }
                 }
             }

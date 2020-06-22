@@ -104,6 +104,16 @@ class StensgaardAA : Transformer<StensgaardAA>, AliasAnalysis, Viewable {
         return term
     }
 
+    override fun transformCmpTerm(term: CmpTerm): Term {
+        val ls = get(term.lhv)
+        val rs = get(term.rhv)
+
+        val res = join(pointsTo(ls), pointsTo(rs))
+        pointsTo[ls] = res
+        pointsTo[rs] = res
+        return term
+    }
+
     override fun transformCastTerm(term: CastTerm): Term {
         val ts = get(term)
         val operand = get(term.operand)

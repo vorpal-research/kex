@@ -19,7 +19,7 @@ class FieldTerm(override val type: KexType, val owner: Term, val fieldName: Term
         get() = owner is ConstClassTerm
 
     val klass: String
-        get() = (owner.type as? KexClass)?.`class` ?: unreachable { log.error("Non-class owner in field term") }
+        get() = (owner.type as? KexClass)?.klass ?: unreachable { log.error("Non-class owner in field term") }
 
     override fun <T : Transformer<T>> accept(t: Transformer<T>): Term {
         val towner = t.transform(owner)

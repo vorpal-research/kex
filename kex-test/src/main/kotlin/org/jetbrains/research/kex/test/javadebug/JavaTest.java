@@ -1,13 +1,11 @@
 package org.jetbrains.research.kex.test.javadebug;
 
-import java.util.List;
-
 public class JavaTest {
+    public static int i = 0;
 
-    public void test(List<Integer> list) {
-        if (list.size() > 3) {
-            System.out.println("aaa");
+    public void test(int a) {
+        if (a + i == 3 && i > 0) {
+            System.out.println("a");
         }
-        System.out.println("bbb");
     }
 }

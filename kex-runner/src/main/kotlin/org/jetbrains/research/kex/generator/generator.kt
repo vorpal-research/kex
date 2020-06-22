@@ -28,37 +28,49 @@ class NoConcreteInstanceException(val klass: Class) : Exception()
 
 class Generator(val ctx: ExecutionContext, val psa: PredicateStateAnalysis) {
     val cm: ClassManager get() = ctx.cm
-    val csGenerator = CallStackGenerator(ctx, psa)
-    val csExecutor = CallStackExecutor(ctx)
+    private val csGenerator = CallStackGenerator(ctx, psa)
+    private val csExecutor = CallStackExecutor(ctx)
 
     private fun generateAPI(method: Method, state: PredicateState, model: SMTModel) = try {
         val descriptors = generateFinalDescriptors(method, ctx, model, state).concrete
         log.debug("Generated descriptors:")
         log.debug(descriptors)
-        val thisCallStack = descriptors.first?.let { descriptor ->
+        val thisCallStack = descriptors.instance?.let { descriptor ->
             csGenerator.generate(descriptor)
         }
-        val argCallStacks = descriptors.second.map { descriptor ->
+        val argCallStacks = descriptors.arguments.map { descriptor ->
             csGenerator.generate(descriptor)
         }
-        thisCallStack?.let { csExecutor.execute(it) } to argCallStacks.map { csExecutor.execute(it) }.toTypedArray()
+        val staticFields = descriptors.staticFields.values.map { descriptor ->
+            csGenerator.generate(descriptor)
+        }
+        log.debug("Generated call stacks:")
+        log.debug("Instance: ${thisCallStack?.print()}")
+        log.debug("Args:\n${argCallStacks.joinToString("\n") { it.print() }}")
+        log.debug("Static fields:\n${staticFields.joinToString("\n") { it.print() }}")
+
+        val instance = thisCallStack?.let { csExecutor.execute(it) }
+        val arguments = argCallStacks.map { csExecutor.execute(it) }.toTypedArray()
+        staticFields.forEach { csExecutor.execute(it) }
+        instance to arguments
+    } catch (e: GenerationException) {
+        throw e
     } catch (e: Exception) {
         throw GenerationException(e)
     }
 
-    fun generateFromModel(method: Method, state: PredicateState, model: SMTModel) =
+    private fun generateFromModel(method: Method, state: PredicateState, model: SMTModel) =
             generateInputByModel(ctx, method, state, model)
 
-    private val Pair<Descriptor?, List<Descriptor>>.concrete
-        get() =
-            first?.concrete(cm) to second.map { it.concrete(cm) }
+    private val Parameters.concrete
+        get() = Parameters(instance?.concretize(cm), arguments.map { it.concretize(cm) }, staticFields.mapValues { it.value.concretize(cm) })
 
-    private val Pair<Descriptor?, List<Descriptor>>.typeInfoState: PredicateState
+    private val Parameters.typeInfoState: PredicateState
         get() {
-            val thisState = first?.run {
+            val thisState = instance?.run {
                 TermRemapper(mapOf(term to term { `this`(term.type) })).apply(typeInfo)
             }
-            val argStates = second.mapIndexed { index, descriptor ->
+            val argStates = arguments.mapIndexed { index, descriptor ->
                 val typeInfo = descriptor.typeInfo
                 TermRemapper(mapOf(descriptor.term to term { arg(descriptor.term.type, index) })).apply(typeInfo)
             }.toTypedArray()
@@ -67,7 +79,7 @@ class Generator(val ctx: ExecutionContext, val psa: PredicateStateAnalysis) {
 
     private fun prepareState(method: Method, ps: PredicateState, typeInfoMap: TypeInfoMap) = transform(ps) {
         +AnnotationIncluder(method, AnnotationManager.defaultLoader)
-        +FullDepthInliner(ctx, typeInfoMap, psa)
+        +DepthInliner(ctx, typeInfoMap, psa)
         +IntrinsicAdapter
         +ReflectionInfoAdapter(method, ctx.loader)
         +Optimizer()
@@ -102,12 +114,14 @@ class Generator(val ctx: ExecutionContext, val psa: PredicateStateAnalysis) {
         }
     }
 
-    fun generateConcreteAPI(method: Method, block: BasicBlock, state: PredicateState, model: SMTModel) = try {
+    private fun generateConcreteAPI(method: Method, block: BasicBlock, state: PredicateState, model: SMTModel) = try {
         val descriptors = generateFinalDescriptors(method, ctx, model, state).concrete
         log.debug("Generated descriptors:")
         log.debug(descriptors)
         val typeInfoState = descriptors.typeInfoState
         reExecute(method, block, typeInfoState)
+    } catch (e: GenerationException) {
+        throw e
     } catch (e: Exception) {
         throw GenerationException(e)
     }

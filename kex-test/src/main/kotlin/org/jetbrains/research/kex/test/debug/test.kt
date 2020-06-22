@@ -3,23 +3,15 @@
 package org.jetbrains.research.kex.test.debug
 
 class BasicTests {
-//    enum class InspectionArgumentType {
-//        Parameter,
-//        MultiParameter,
-//        Flag
-//    }
-//
-//    class InspectionArgument(
-//            val name: String,
-//            val aliasNames: List<String>,
-//            val shortNames: List<Char>,
-//            val description: String,
-//            val type: InspectionArgumentType,
-//            val isOptional: Boolean,
-//            val defaultValue: String? = null
-//    )
 
-    fun testString(str: String) {
-        println(str)
+    class Loop(val value: Int) {
+        var prev: Loop? = null
+//        var next: Loop? = null
+    }
+
+    fun test(p: Loop) {
+        if (p.prev === p) {
+            println("a")
+        }
     }
 }

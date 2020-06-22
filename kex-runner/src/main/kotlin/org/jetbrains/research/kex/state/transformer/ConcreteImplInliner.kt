@@ -5,6 +5,7 @@ import com.abdullin.kthelper.collection.dequeOf
 import org.jetbrains.research.kex.ExecutionContext
 import org.jetbrains.research.kex.asm.manager.MethodManager
 import org.jetbrains.research.kex.asm.state.PredicateStateAnalysis
+import org.jetbrains.research.kex.config.kexConfig
 import org.jetbrains.research.kex.ktype.KexClass
 import org.jetbrains.research.kex.ktype.kexType
 import org.jetbrains.research.kex.state.PredicateState
@@ -15,12 +16,17 @@ import org.jetbrains.research.kex.state.term.*
 import org.jetbrains.research.kfg.ir.ConcreteClass
 import org.jetbrains.research.kfg.ir.Method
 
+private val defaultDepth = kexConfig.getIntValue("inliner", "depth", 10)
+
 class ConcreteImplInliner(val ctx: ExecutionContext,
                           val typeInfoMap: TypeInfoMap,
-                          val psa: PredicateStateAnalysis) : RecollectingTransformer<ConcreteImplInliner> {
+                          val psa: PredicateStateAnalysis,
+                          inlineIndex: Int = 0) : RecollectingTransformer<ConcreteImplInliner> {
     private val im = MethodManager.InlineManager
     override val builders = dequeOf(StateBuilder())
-    private var inlineIndex = 0
+    var inlineIndex = inlineIndex
+        private set
+
 
     protected class TermRenamer(val suffix: String, val remapping: Map<Term, Term>) : Transformer<TermRenamer> {
         override fun transformTerm(term: Term): Term = remapping[term] ?: when (term) {
@@ -38,7 +44,7 @@ class ConcreteImplInliner(val ctx: ExecutionContext,
             else -> {
                 val typeInfo = typeInfoMap.getInfo<CastTypeInfo>(call.owner) ?: return null
                 val kexClass = typeInfo.type as? KexClass ?: return null
-                val concreteClass = kexClass.getKfgClass(ctx.types) as? ConcreteClass ?: return null
+                val concreteClass = kexClass.kfgClass(ctx.types) as? ConcreteClass ?: return null
                 val result = concreteClass.getMethod(method.name, method.desc)
                 ktassert(result.isNotEmpty())
                 result
@@ -82,16 +88,22 @@ class ConcreteImplInliner(val ctx: ExecutionContext,
     }
 }
 
-class FullDepthInliner(val ctx: ExecutionContext,
-                       val typeInfoMap: TypeInfoMap,
-                       val psa: PredicateStateAnalysis) : Transformer<FullDepthInliner> {
+class DepthInliner(val ctx: ExecutionContext,
+                   val typeInfoMap: TypeInfoMap,
+                   val psa: PredicateStateAnalysis,
+                   val maxDepth: Int = defaultDepth) : Transformer<DepthInliner> {
     override fun apply(ps: PredicateState): PredicateState {
         var last: PredicateState
         var current = ps
+        var inlineIndex = 0
+        var depth = 0
         do {
             last = current
-            current = ConcreteImplInliner(ctx, typeInfoMap, psa).apply(last)
-        } while (current != last)
+            val cii = ConcreteImplInliner(ctx, typeInfoMap, psa, inlineIndex)
+            current = cii.apply(last)
+            inlineIndex = cii.inlineIndex
+            ++depth
+        } while (current != last && depth < maxDepth)
         return current
     }
 }

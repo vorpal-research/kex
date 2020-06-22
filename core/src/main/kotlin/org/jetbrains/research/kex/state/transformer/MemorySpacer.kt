@@ -2,6 +2,7 @@ package org.jetbrains.research.kex.state.transformer
 
 import com.abdullin.kthelper.assert.unreachable
 import com.abdullin.kthelper.logging.log
+import org.jetbrains.research.kex.ktype.KexClass
 import org.jetbrains.research.kex.ktype.KexPointer
 import org.jetbrains.research.kex.state.PredicateState
 import org.jetbrains.research.kex.state.term.*
@@ -20,7 +21,7 @@ fun Term.withMemspace(memspace: Int): Term {
             is CastTerm -> tf.getCast(memspaced, operand)
             is CmpTerm -> tf.getCmp(memspaced, opcode, lhv, rhv)
             is ConstStringTerm -> tf.getString(memspaced, value)
-            is ConstClassTerm -> tf.getClass(memspaced, `class`)
+            is ConstClassTerm -> tf.getClass(memspaced as KexClass)
             is FieldLoadTerm -> tf.getFieldLoad(memspaced, field)
             is FieldTerm -> tf.getField(memspaced, owner, fieldName)
             is NegTerm -> tf.getNegTerm(memspaced, operand)

@@ -152,4 +152,10 @@ object TraceCollectorProxy {
     fun disableCollector() {
         collector = TraceCollectorStub(collector.cm)
     }
+
+    @JvmStatic
+    fun initializeEmptyCollector(cm: ClassManager): TraceCollector {
+        collector = TraceCollectorStub(cm)
+        return collector
+    }
 }

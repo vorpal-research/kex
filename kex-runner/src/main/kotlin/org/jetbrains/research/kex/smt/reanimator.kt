@@ -5,10 +5,7 @@ import com.abdullin.kthelper.logging.log
 import com.abdullin.kthelper.toBoolean
 import com.abdullin.kthelper.tryOrNull
 import org.jetbrains.research.kex.ExecutionContext
-import org.jetbrains.research.kex.generator.ArrayDescriptor
-import org.jetbrains.research.kex.generator.Descriptor
-import org.jetbrains.research.kex.generator.ObjectDescriptor
-import org.jetbrains.research.kex.generator.descriptor
+import org.jetbrains.research.kex.generator.descriptor.*
 import org.jetbrains.research.kex.ktype.*
 import org.jetbrains.research.kex.state.term.*
 import org.jetbrains.research.kex.state.transformer.memspace
@@ -146,7 +143,7 @@ class ObjectReanimator(override val method: Method,
                 val (instance, klass) = when {
                     term.isStatic -> {
                         val classRef = (term.owner as ConstClassTerm)
-                        val `class` = tryOrNull { loader.loadClass(classRef.`class`.canonicalDesc) } ?: return null
+                        val `class` = tryOrNull { loader.loadClass(classRef.type.canonicalDesc) } ?: return null
                         if (`class`.isSynthetic) return null
                         null to `class`
                     }
@@ -156,7 +153,7 @@ class ObjectReanimator(override val method: Method,
                         val type = objectRef.type as? KexClass
                                 ?: unreachable { log.error("Cannot cast ${objectRef.type} to class") }
 
-                        val kfgClass = method.cm[type.`class`]
+                        val kfgClass = method.cm[type.klass]
                         val `class` = tryOrNull { loader.loadClass(kfgClass.canonicalDesc) } ?: return null
                         val instance = memory(objectRef.memspace, objectAddr) ?: return null
                         instance to `class`
@@ -246,10 +243,10 @@ class ObjectReanimator(override val method: Method,
     }
 }
 
+
 abstract class DescriptorReanimator(override val method: Method,
                                     override val model: SMTModel,
                                     override val context: ExecutionContext) : Reanimator<Descriptor> {
-    private val types get() = context.types
     override val memoryMappings = hashMapOf<Int, MutableMap<Int, Descriptor>>()
 
     override fun reanimate(term: Term, value: Term?): Descriptor = when {
@@ -257,7 +254,7 @@ abstract class DescriptorReanimator(override val method: Method,
         else -> reanimatePointer(term, value)
     }
 
-    private fun reanimatePrimary(term: Term, value: Term?) = descriptor(context) {
+    private fun reanimatePrimary(term: Term, value: Term?) = descriptor {
         if (value == null) default(term.type, false)
         else when (term.type) {
             is KexBool -> const((value as ConstBoolTerm).value)
@@ -279,19 +276,19 @@ abstract class DescriptorReanimator(override val method: Method,
         else -> unreachable { log.error("Trying to recover non-pointer term $term with type ${term.type} as pointer value") }
     }
 
-    private fun reanimateClass(term: Term, addr: Term?) = descriptor(context) {
-
+    private fun reanimateClass(term: Term, addr: Term?) = descriptor {
         when (val address = (addr as? ConstIntTerm)?.value) {
             null, 0 -> default(term.type)
             else -> {
-                val actualType = (reanimateType(term.memspace, addr) ?: term.type) as? KexClass
-                        ?: unreachable { log.error("Cannot cast ${(reanimateType(term.memspace, addr) ?: term.type)} to class") }
-                memory(term.memspace, address) { `object`(context.cm[actualType.`class`]) }
+                val reanimatedType = reanimateType(term.memspace, addr) ?: term.type
+                val actualType = reanimatedType as? KexClass
+                        ?: unreachable { log.error("Cannot cast $reanimatedType to class") }
+                memory(term.memspace, address) { `object`(actualType) }
             }
         }
     }
 
-    private fun reanimateArray(term: Term, addr: Term?) = descriptor(context) {
+    private fun reanimateArray(term: Term, addr: Term?) = descriptor {
         when (val address = (addr as? ConstIntTerm)?.value) {
             null, 0 -> default(term.type)
             else -> {
@@ -301,7 +298,7 @@ abstract class DescriptorReanimator(override val method: Method,
         }
     }
 
-    private fun reanimateReference(term: Term, addr: Term?) = descriptor(context) {
+    private fun reanimateReference(term: Term, addr: Term?) = descriptor {
         val memspace = term.memspace
         val refValue = reanimateFromMemory(memspace, addr)
         when (term) {
@@ -321,15 +318,14 @@ abstract class DescriptorReanimator(override val method: Method,
                 array
             }
             is FieldTerm -> {
-                val fieldName = (term.fieldName as ConstStringTerm).value
-                val (instance, klass, field) = when {
+                val (instance, klass) = when {
                     term.isStatic -> {
                         val classRef = (term.owner as ConstClassTerm)
-                        val `class` = tryOrNull { loader.loadClass(classRef.`class`.canonicalDesc) }
+                        val `class` = tryOrNull { loader.loadClass(classRef.type.canonicalDesc) }
                                 ?: return@descriptor default(term.type)
                         if (`class`.isSynthetic) return@descriptor default(term.type)
 
-                        Triple(`null`, `class`, classRef.`class`.getField(fieldName, term.type.getKfgType(types)))
+                        const(classRef.type) to `class`
                     }
                     else -> {
                         val objectRef = term.owner
@@ -337,14 +333,14 @@ abstract class DescriptorReanimator(override val method: Method,
                         val type = objectRef.type as? KexClass
                                 ?: unreachable { log.error("Cannot cast ${objectRef.type} to class") }
 
-                        val kfgClass = method.cm[type.`class`]
+                        val kfgClass = method.cm[type.klass]
                         val `class` = tryOrNull { loader.loadClass(kfgClass.canonicalDesc) }
                                 ?: return@descriptor default(term.type)
 
                         val instance = memory(objectRef.memspace, objectAddr)
                                 ?: return@descriptor default(term.type)
 
-                        Triple(instance, `class`, kfgClass.getField(fieldName, term.type.getKfgType(types)))
+                        instance to  `class`
                     }
                 }
                 val name = "${term.klass}.${term.fieldNameString}"
@@ -355,17 +351,23 @@ abstract class DescriptorReanimator(override val method: Method,
                 if (fieldReflect.isEnumConstant || fieldReflect.isSynthetic)
                     return@descriptor default(term.type)
 
-                if (instance is ObjectDescriptor) {
-                    instance[fieldReflect.name] = instance.field(field.name, field.type, field.`class`, reanimatedValue)
-                }
+                val fieldName = fieldReflect.name
+                val fieldType = (term.type as KexReference).reference
 
-                instance
+                when (instance) {
+                    is ObjectDescriptor -> {
+                        instance[fieldName, fieldType] = reanimatedValue
+                        instance
+                    }
+                    is ConstantDescriptor.Class -> staticField(instance.value, fieldName, fieldType, reanimatedValue)
+                    else -> unreachable { log.error("Unknown type of field owner") }
+                }
             }
             else -> unreachable { log.error("Unknown reference term: $term with address $addr") }
         }
     }
 
-    private fun reanimateReferenceValue(term: Term, value: Term?) = descriptor(context) {
+    private fun reanimateReferenceValue(term: Term, value: Term?) = descriptor {
         val referencedType = (term.type as KexReference).reference
         if (value == null) return@descriptor default(term.type)
 
@@ -386,14 +388,14 @@ abstract class DescriptorReanimator(override val method: Method,
         }
     }
 
-    private fun reanimateReferencePointer(term: Term, addr: Term?) = descriptor(context) {
+    private fun reanimateReferencePointer(term: Term, addr: Term?) = descriptor {
         val referencedType = (term.type as KexReference).reference
         val address = (addr as? ConstIntTerm)?.value ?: return@descriptor default(term.type)
         if (address == 0) return@descriptor default(term.type)
 
         when (val actualType = (reanimateType(term.memspace, addr) ?: referencedType)) {
             is KexClass -> {
-                memory(term.memspace, address) { `object`(actualType.kfgClass(context.types)) }
+                memory(term.memspace, address) { `object`(actualType) }
             }
             is KexArray -> {
                 memory(term.memspace, address) {
@@ -404,12 +406,12 @@ abstract class DescriptorReanimator(override val method: Method,
         }
     }
 
-    private fun newArrayInstance(memspace: Int, arrayType: KexArray, addr: Term?) = descriptor(context) {
+    private fun newArrayInstance(memspace: Int, arrayType: KexArray, addr: Term?) = descriptor {
         val length = (reanimateFromProperties(memspace, "length", addr) as? ConstIntTerm)?.value
                 ?: return@descriptor default(arrayType)
 
         log.debug("Creating array of type $arrayType with size $length")
-        array(length, arrayType.getKfgType(types))
+        array(length, arrayType.element)
     }
 }
 
