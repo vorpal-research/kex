@@ -16,6 +16,8 @@ import org.jetbrains.research.kex.config.CmdConfig
 import org.jetbrains.research.kex.config.FileConfig
 import org.jetbrains.research.kex.config.RuntimeConfig
 import org.jetbrains.research.kex.config.kexConfig
+import org.jetbrains.research.kex.generator.DescriptorStatistics
+import org.jetbrains.research.kex.generator.ExternalConstructorCollector
 import org.jetbrains.research.kex.generator.MethodFieldAccessDetector
 import org.jetbrains.research.kex.generator.SetterDetector
 import org.jetbrains.research.kex.random.easyrandom.EasyRandomDriver
@@ -200,6 +202,7 @@ class Kex(args: Array<String>) {
             +psa
             +MethodFieldAccessDetector(analysisContext, psa)
             +SetterDetector(analysisContext)
+            +ExternalConstructorCollector(analysisContext.cm)
             +MethodChecker(analysisContext, traceManager, psa)
             +cm
         }
@@ -209,6 +212,7 @@ class Kex(args: Array<String>) {
         log.info("Overall summary for ${cm.methodInfos.size} methods:\n" +
                 "body coverage: ${String.format("%.2f", coverage.bodyCoverage)}%\n" +
                 "full coverage: ${String.format("%.2f", coverage.fullCoverage)}%")
+        DescriptorStatistics.printStatistics()
     }
 
     private fun concolic(originalContext: ExecutionContext, analysisContext: ExecutionContext) {
@@ -224,6 +228,7 @@ class Kex(args: Array<String>) {
         log.info("Overall summary for ${cm.methodInfos.size} methods:\n" +
                 "body coverage: ${String.format("%.2f", coverage.bodyCoverage)}%\n" +
                 "full coverage: ${String.format("%.2f", coverage.fullCoverage)}%")
+        DescriptorStatistics.printStatistics()
     }
 
     protected fun runPipeline(context: ExecutionContext, target: Package, init: Pipeline.() -> Unit) =

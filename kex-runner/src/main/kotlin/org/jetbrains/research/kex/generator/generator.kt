@@ -36,13 +36,19 @@ class Generator(val ctx: ExecutionContext, val psa: PredicateStateAnalysis) {
         log.debug("Generated descriptors:")
         log.debug(descriptors)
         val thisCallStack = descriptors.instance?.let { descriptor ->
-            csGenerator.generate(descriptor)
+            val cs = csGenerator.generate(descriptor)
+            DescriptorStatistics.addDescriptor(descriptor, cs)
+            cs
         }
         val argCallStacks = descriptors.arguments.map { descriptor ->
-            csGenerator.generate(descriptor)
+            val cs = csGenerator.generate(descriptor)
+            DescriptorStatistics.addDescriptor(descriptor, cs)
+            cs
         }
         val staticFields = descriptors.staticFields.values.map { descriptor ->
-            csGenerator.generate(descriptor)
+            val cs = csGenerator.generate(descriptor)
+            DescriptorStatistics.addDescriptor(descriptor, cs)
+            cs
         }
         log.debug("Generated call stacks:")
         log.debug("Instance: ${thisCallStack?.print()}")

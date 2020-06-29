@@ -2,12 +2,12 @@ package org.jetbrains.research.kex.state.term
 
 import kotlinx.serialization.Serializable
 import org.jetbrains.research.kex.InheritorOf
-import org.jetbrains.research.kex.ktype.KexClass
+import org.jetbrains.research.kex.ktype.KexType
 import org.jetbrains.research.kex.state.transformer.Transformer
 
 @InheritorOf("Term")
 @Serializable
-class ConstClassTerm(override val type: KexClass) : Term() {
+class ConstClassTerm(override val type: KexType) : Term() {
     override val name = "$type.class"
     override val subterms by lazy { listOf<Term>() }
 

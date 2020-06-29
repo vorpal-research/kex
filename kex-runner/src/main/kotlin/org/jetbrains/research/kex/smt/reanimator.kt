@@ -142,8 +142,8 @@ class ObjectReanimator(override val method: Method,
             is FieldTerm -> {
                 val (instance, klass) = when {
                     term.isStatic -> {
-                        val classRef = (term.owner as ConstClassTerm)
-                        val `class` = tryOrNull { loader.loadClass(classRef.type.canonicalDesc) } ?: return null
+                        val canonicalDesc = term.type.getKfgType(context.types).canonicalDesc
+                        val `class` = tryOrNull { loader.loadClass(canonicalDesc) } ?: return null
                         if (`class`.isSynthetic) return null
                         null to `class`
                     }
@@ -321,7 +321,8 @@ abstract class DescriptorReanimator(override val method: Method,
                 val (instance, klass) = when {
                     term.isStatic -> {
                         val classRef = (term.owner as ConstClassTerm)
-                        val `class` = tryOrNull { loader.loadClass(classRef.type.canonicalDesc) }
+                        val canonicalDesc = term.type.getKfgType(context.types).canonicalDesc
+                        val `class` = tryOrNull { loader.loadClass(canonicalDesc) }
                                 ?: return@descriptor default(term.type)
                         if (`class`.isSynthetic) return@descriptor default(term.type)
 
@@ -359,7 +360,7 @@ abstract class DescriptorReanimator(override val method: Method,
                         instance[fieldName, fieldType] = reanimatedValue
                         instance
                     }
-                    is ConstantDescriptor.Class -> staticField(instance.value, fieldName, fieldType, reanimatedValue)
+                    is ConstantDescriptor.Class -> staticField(instance.value as KexClass, fieldName, fieldType, reanimatedValue)
                     else -> unreachable { log.error("Unknown type of field owner") }
                 }
             }

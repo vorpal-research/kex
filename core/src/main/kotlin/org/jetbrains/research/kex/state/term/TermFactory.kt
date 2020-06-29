@@ -64,8 +64,8 @@ object TermFactory {
     fun getString(const: StringConstant) = getString(const.value)
     fun getNull() = NullTerm()
     fun getClass(`class`: Class) = getClass(KexClass(`class`.fullname))
-    fun getClass(klass: KexClass) = ConstClassTerm(klass)
-    fun getClass(const: ClassConstant) = ConstClassTerm(const.type.kexType as KexClass)
+    fun getClass(klass: KexType) = ConstClassTerm(klass)
+    fun getClass(const: ClassConstant) = ConstClassTerm(const.type.kexType)
 
     fun getUnaryTerm(operand: Term, opcode: UnaryOpcode) = when (opcode) {
         UnaryOpcode.NEG -> getNegTerm(operand)
@@ -173,7 +173,7 @@ abstract class TermBuilder {
     fun <T : Number> const(number: T) = tf.getConstant(number)
     fun const(@Suppress("UNUSED_PARAMETER") nothing: Nothing?) = tf.getNull()
     fun `class`(klass: Class) = tf.getClass(klass)
-    fun `class`(klass: KexClass) = tf.getClass(klass)
+    fun `class`(klass: KexType) = tf.getClass(klass)
 
     fun Term.apply(opcode: UnaryOpcode) = tf.getUnaryTerm(this, opcode)
     operator fun Term.not() = tf.getUnaryTerm(this, UnaryOpcode.NEG)

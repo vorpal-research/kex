@@ -8,6 +8,8 @@ import org.jetbrains.research.kfg.ir.Method
 import org.jetbrains.research.kfg.type.Type
 
 interface ApiCall {
+    val parameters: List<CallStack>
+
     fun wrap(name: String): CallStack = CallStack(name, mutableListOf(this))
     fun print(owner: CallStack, builder: StringBuilder, visited: MutableSet<CallStack>)
 }
@@ -52,10 +54,20 @@ class CallStack(val name: String, val stack: MutableList<ApiCall>) : Iterable<Ap
 }
 
 data class PrimaryValue<T>(val value: T) : ApiCall {
-    override fun print(owner: CallStack, builder: StringBuilder, visited: MutableSet<CallStack>) {}
+    override val parameters: List<CallStack>
+        get() = listOf()
+
+    override fun print(owner: CallStack, builder: StringBuilder, visited: MutableSet<CallStack>) {
+        if (owner.name != value.toString()) {
+            builder.appendln("$owner = $value")
+        }
+    }
 }
 
 data class DefaultConstructorCall(val klass: Class) : ApiCall {
+    override val parameters: List<CallStack>
+        get() = listOf()
+
     override fun toString() = "${klass.fullname}()"
     override fun print(owner: CallStack, builder: StringBuilder, visited: MutableSet<CallStack>) {
         builder.appendln("$owner = $this")
@@ -66,6 +78,8 @@ data class ConstructorCall(val klass: Class, val constructor: Method, val args: 
     init {
         assert(constructor.isConstructor) { log.error("Trying to create constructor call for non-constructor method") }
     }
+
+    override val parameters: List<CallStack> get() = args
 
     override fun toString() = "$constructor(${args.joinToString(", ")})"
 
@@ -82,6 +96,8 @@ data class ExternalConstructorCall(val constructor: Method, val args: List<CallS
         assert(constructor.isStatic) { log.error("External constructor should be a static method") }
     }
 
+    override val parameters: List<CallStack> get() = args
+
     override fun toString() = "$constructor(${args.joinToString(", ")})"
 
     override fun print(owner: CallStack, builder: StringBuilder, visited: MutableSet<CallStack>) {
@@ -97,6 +113,8 @@ data class MethodCall(val method: Method, val args: List<CallStack>) : ApiCall {
         assert(!method.isConstructor) { log.error("Trying to create method call for constructor method") }
     }
 
+    override val parameters: List<CallStack> get() = args
+
     override fun toString() = "$method(${args.joinToString(", ")})"
 
     override fun print(owner: CallStack, builder: StringBuilder, visited: MutableSet<CallStack>) {
@@ -108,6 +126,8 @@ data class MethodCall(val method: Method, val args: List<CallStack>) : ApiCall {
 }
 
 data class UnknownCall(val klass: Class, val target: Descriptor) : ApiCall {
+    override val parameters: List<CallStack> get() = listOf()
+
     override fun toString() = "Unknown($target)"
 
     override fun print(owner: CallStack, builder: StringBuilder, visited: MutableSet<CallStack>) {
@@ -116,6 +136,8 @@ data class UnknownCall(val klass: Class, val target: Descriptor) : ApiCall {
 }
 
 data class StaticFieldSetter(val klass: Class, val field: Field, val value: CallStack) : ApiCall {
+    override val parameters: List<CallStack> get() = listOf(value)
+
     override fun toString() = "${klass.fullname}.${field.name} = $value"
 
     override fun print(owner: CallStack, builder: StringBuilder, visited: MutableSet<CallStack>) {
@@ -125,6 +147,8 @@ data class StaticFieldSetter(val klass: Class, val field: Field, val value: Call
 }
 
 data class FieldSetter(val field: Field, val value: CallStack) : ApiCall {
+    override val parameters: List<CallStack> get() = listOf(value)
+
     override fun print(owner: CallStack, builder: StringBuilder, visited: MutableSet<CallStack>) {
         value.print(builder, visited)
         builder.appendln("$owner.${field.name} = $value")
@@ -132,6 +156,8 @@ data class FieldSetter(val field: Field, val value: CallStack) : ApiCall {
 }
 
 data class NewArray(val klass: Type, val length: CallStack) : ApiCall {
+    override val parameters: List<CallStack> get() = listOf(length)
+
     override fun toString() = "new $klass[$length]"
     override fun print(owner: CallStack, builder: StringBuilder, visited: MutableSet<CallStack>) {
         length.print(builder, visited)
@@ -140,6 +166,8 @@ data class NewArray(val klass: Type, val length: CallStack) : ApiCall {
 }
 
 data class ArrayWrite(val index: CallStack, val value: CallStack) : ApiCall {
+    override val parameters: List<CallStack> get() = listOf(value)
+
     override fun toString() = "array[$index] = $value"
 
     override fun print(owner: CallStack, builder: StringBuilder, visited: MutableSet<CallStack>) {

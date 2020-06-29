@@ -61,34 +61,21 @@ sealed class ConstantDescriptor(term: Term, type: KexType) : Descriptor(term, ty
     override fun deepCopy(copied: MutableMap<Descriptor, Descriptor>) = this
     override fun reduce(visited: MutableSet<Descriptor>) = this
     override fun generateTypeInfo(visited: MutableSet<Descriptor>) = emptyState()
+    override fun print(map: MutableMap<Descriptor, String>) = ""
 
-    object Null : ConstantDescriptor(term { const(null) }, KexNull()) {
-        override fun print(map: MutableMap<Descriptor, String>) = "null"
-    }
+    object Null : ConstantDescriptor(term { const(null) }, KexNull())
 
-    data class Bool(val value: Boolean) : ConstantDescriptor(term { const(value) }, KexBool()) {
-        override fun print(map: MutableMap<Descriptor, String>) = "$value"
-    }
+    data class Bool(val value: Boolean) : ConstantDescriptor(term { const(value) }, KexBool())
 
-    data class Int(val value: kotlin.Int) : ConstantDescriptor(term { const(value) }, KexInt()) {
-        override fun print(map: MutableMap<Descriptor, String>) = "$value"
-    }
+    data class Int(val value: kotlin.Int) : ConstantDescriptor(term { const(value) }, KexInt())
 
-    data class Long(val value: kotlin.Long) : ConstantDescriptor(term { const(value) }, KexLong()) {
-        override fun print(map: MutableMap<Descriptor, String>) = "$value"
-    }
+    data class Long(val value: kotlin.Long) : ConstantDescriptor(term { const(value) }, KexLong())
 
-    data class Float(val value: kotlin.Float) : ConstantDescriptor(term { const(value) }, KexFloat()) {
-        override fun print(map: MutableMap<Descriptor, String>) = "$value"
-    }
+    data class Float(val value: kotlin.Float) : ConstantDescriptor(term { const(value) }, KexFloat())
 
-    data class Double(val value: kotlin.Double) : ConstantDescriptor(term { const(value) }, KexDouble()) {
-        override fun print(map: MutableMap<Descriptor, String>) = "$value"
-    }
+    data class Double(val value: kotlin.Double) : ConstantDescriptor(term { const(value) }, KexDouble())
 
-    data class Class(val value: KexClass) : ConstantDescriptor(term { `class`(value) }, value) {
-        override fun print(map: MutableMap<Descriptor, String>) = "$value"
-    }
+    data class Class(val value: KexType) : ConstantDescriptor(term { `class`(value) }, value)
 }
 
 class ObjectDescriptor(klass: KexClass) : Descriptor(term { generate(klass) }, klass, true) {
@@ -345,7 +332,7 @@ class DescriptorBuilder {
         is Double -> ConstantDescriptor.Double(number)
         else -> ConstantDescriptor.Int(number.toInt())
     }
-    fun const(klass: KexClass) = ConstantDescriptor.Class(klass)
+    fun const(klass: KexType) = ConstantDescriptor.Class(klass)
 
     fun `object`(type: KexClass): ObjectDescriptor = ObjectDescriptor(type)
     fun array(length: Int, elementType: KexType): ArrayDescriptor = ArrayDescriptor(elementType, length)
