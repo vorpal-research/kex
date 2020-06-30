@@ -11,6 +11,7 @@ import org.jetbrains.research.kex.config.kexConfig
 import org.jetbrains.research.kex.generator.descriptor.*
 import org.jetbrains.research.kex.ktype.KexType
 import org.jetbrains.research.kex.ktype.kexType
+import org.jetbrains.research.kex.ktype.type
 import org.jetbrains.research.kex.smt.Checker
 import org.jetbrains.research.kex.smt.Result
 import org.jetbrains.research.kex.state.PredicateState
@@ -27,6 +28,7 @@ import java.util.*
 
 private val visibilityLevel by lazy { kexConfig.getEnumValue("apiGeneration", "visibility", true, Visibility.PUBLIC) }
 private val maxStackSize by lazy { kexConfig.getIntValue("apiGeneration", "maxStackSize", 5) }
+private val maxGenerationDepth by lazy { kexConfig.getIntValue("apiGeneration", "maxGenerationDepth", 100) }
 private val isInliningEnabled by lazy { kexConfig.getBooleanValue("smt", "ps-inlining", true) }
 private val annotationsEnabled by lazy { kexConfig.getBooleanValue("annotations", "enabled", false) }
 
@@ -77,10 +79,12 @@ class CallStackGenerator(val context: ExecutionContext, val psa: PredicateStateA
         +ArrayBoundsAdapter()
     }
 
-    fun generate(descriptor: Descriptor): CallStack {
-        if (descriptor in descriptorMap) return descriptorMap.getValue(descriptor)
-
+    fun generate(descriptor: Descriptor, depth: Int = 0): CallStack {
         val name = "${descriptor.term}"
+
+        if (descriptor in descriptorMap) return descriptorMap.getValue(descriptor)
+        if (depth > maxGenerationDepth) return UnknownCall(descriptor.type.getKfgType(types), descriptor).wrap(name)
+
         when (descriptor) {
             is ConstantDescriptor -> return when (descriptor) {
                 is ConstantDescriptor.Null -> PrimaryValue(null)
@@ -94,7 +98,7 @@ class CallStackGenerator(val context: ExecutionContext, val psa: PredicateStateA
             is ObjectDescriptor -> {
                 val callStack = CallStack(name)
                 descriptorMap[descriptor] = callStack
-                callStack.generateObject(descriptor)
+                callStack.generateObject(descriptor, depth)
             }
             is ArrayDescriptor -> {
                 val callStack = CallStack(name)
@@ -105,7 +109,7 @@ class CallStackGenerator(val context: ExecutionContext, val psa: PredicateStateA
                 callStack += array
 
                 descriptor.elements.forEach { (index, value) ->
-                    val arrayWrite = ArrayWrite(PrimaryValue(index).wrap("${name}Index"), generate(value))
+                    val arrayWrite = ArrayWrite(PrimaryValue(index).wrap("${name}Index"), generate(value, depth + 1))
                     callStack += arrayWrite
                 }
             }
@@ -114,13 +118,13 @@ class CallStackGenerator(val context: ExecutionContext, val psa: PredicateStateA
                 descriptorMap[descriptor] = callStack
                 val kfgClass = descriptor.klass.kfgClass(types)
                 val kfgField = kfgClass.getField(descriptor.field, descriptor.type.getKfgType(types))
-                callStack += StaticFieldSetter(kfgClass, kfgField, generate(descriptor.value))
+                callStack += StaticFieldSetter(kfgClass, kfgField, generate(descriptor.value, depth + 1))
             }
         }
         return descriptorMap.getValue(descriptor)
     }
 
-    private fun CallStack.generateObject(descriptor: ObjectDescriptor) {
+    private fun CallStack.generateObject(descriptor: ObjectDescriptor, generationDepth: Int) {
         val original = descriptor.deepCopy()
 
         descriptor.concretize(cm)
@@ -128,7 +132,7 @@ class CallStackGenerator(val context: ExecutionContext, val psa: PredicateStateA
 
         log.debug("Generating $descriptor")
 
-        val setters = descriptor.generateSetters()
+        val setters = descriptor.generateSetters(generationDepth)
         val klass = descriptor.klass.kfgClass(types)
         val queue = queueOf(descriptor to setters with 0)
         while (queue.isNotEmpty()) {
@@ -143,7 +147,7 @@ class CallStackGenerator(val context: ExecutionContext, val psa: PredicateStateA
                     log.debug("Found constructor $method for $descriptor, generating arguments $args")
                     val constructorCall = when {
                         method.argTypes.isEmpty() -> DefaultConstructorCall(klass)
-                        else -> ConstructorCall(klass, method, args.map { generate(it) })
+                        else -> ConstructorCall(klass, method, args.map { generate(it, generationDepth + 1) })
                     }
                     this.stack += (stack + constructorCall).reversed()
                     return
@@ -153,37 +157,37 @@ class CallStackGenerator(val context: ExecutionContext, val psa: PredicateStateA
             for (method in klass.externalConstructors) {
                 val (_, args) = method.executeAsExternalConstructor(current) ?: continue
 
-                val constructorCall = ExternalConstructorCall(method, args.map { generate(it) })
+                val constructorCall = ExternalConstructorCall(method, args.map { generate(it, generationDepth + 1) })
                 this.stack += (stack + constructorCall).reversed()
                 return
             }
 
             for (method in klass.accessibleMethods) {
                 val result = method.executeAsSetter(current) ?: continue
-                acceptExecutionResult(result, current, depth, stack, method, queue)
+                acceptExecutionResult(result, current, depth, generationDepth, stack, method, queue)
             }
 
             for (method in klass.accessibleMethods) {
                 val result = method.executeAsMethod(current) ?: continue
-                acceptExecutionResult(result, current, depth, stack, method, queue)
+                acceptExecutionResult(result, current, depth, generationDepth, stack, method, queue)
             }
         }
 
-        this += UnknownCall(klass, original)
+        this += UnknownCall(klass.type, original)
     }
 
-    private fun acceptExecutionResult(res: ExecResult, current: ObjectDescriptor, oldDepth: Int,
+    private fun acceptExecutionResult(res: ExecResult, current: ObjectDescriptor, oldDepth: Int, generationDepth: Int,
                                       stack: List<ApiCall>, method: Method, queue: Queue<ExecStack>) {
         val (result, args) = res
         if (result != null) {
             val remapping = { mutableMapOf<Descriptor, Descriptor>(result to current) }
-            val newStack = stack + MethodCall(method, args.map { generate(it.deepCopy(remapping())) })
+            val newStack = stack + MethodCall(method, args.map { generate(it.deepCopy(remapping()), generationDepth + 1) })
             val newDesc = result.merge(current)
             queue += newDesc to newStack with (oldDepth + 1)
         }
     }
 
-    private fun ObjectDescriptor.generateSetters(): List<ApiCall> {
+    private fun ObjectDescriptor.generateSetters(generationDepth: Int): List<ApiCall> {
         val calls = mutableListOf<ApiCall>()
         val kfgKlass = this.klass.kfgClass(types)
         for ((field, value) in this.fields.toMap()) {
@@ -191,7 +195,7 @@ class CallStackGenerator(val context: ExecutionContext, val psa: PredicateStateA
 
             if (visibilityLevel <= kfgField.visibility) {
                 log.debug("Directly setting field $field value")
-                calls += FieldSetter(kfgField, generate(value))
+                calls += FieldSetter(kfgField, generate(value, generationDepth + 1))
                 this.fields.remove(field)
 
             } else if (kfgField.hasSetter && visibilityLevel <= kfgField.setter.visibility) {
@@ -200,7 +204,7 @@ class CallStackGenerator(val context: ExecutionContext, val psa: PredicateStateA
                 val (result, args) = kfgField.setter.executeAsSetter(this) ?: continue
                 if (result != null && (result[field] == null || result[field] == field.second.defaultDescriptor)) {
                     val remapping = { mutableMapOf<Descriptor, Descriptor>(result to this) }
-                    calls += MethodCall(kfgField.setter, args.map { generate(it.deepCopy(remapping())) })
+                    calls += MethodCall(kfgField.setter, args.map { generate(it.deepCopy(remapping()), generationDepth + 1) })
                     this.accept(result)
                     log.info("Used setter for field $field, new desc: $this")
                 }

@@ -125,7 +125,7 @@ data class MethodCall(val method: Method, val args: List<CallStack>) : ApiCall {
     }
 }
 
-data class UnknownCall(val klass: Class, val target: Descriptor) : ApiCall {
+data class UnknownCall(val type: Type, val target: Descriptor) : ApiCall {
     override val parameters: List<CallStack> get() = listOf()
 
     override fun toString() = "Unknown($target)"
