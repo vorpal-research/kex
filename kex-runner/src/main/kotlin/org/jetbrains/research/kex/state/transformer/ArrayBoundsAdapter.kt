@@ -6,6 +6,8 @@ import org.jetbrains.research.kex.state.PredicateState
 import org.jetbrains.research.kex.state.StateBuilder
 import org.jetbrains.research.kex.state.predicate.Predicate
 import org.jetbrains.research.kex.state.predicate.assume
+import org.jetbrains.research.kex.state.predicate.hasReceiver
+import org.jetbrains.research.kex.state.predicate.receiver
 import org.jetbrains.research.kex.state.term.ArrayIndexTerm
 import org.jetbrains.research.kex.state.term.Term
 import org.jetbrains.research.kex.state.term.term
@@ -15,6 +17,14 @@ class ArrayBoundsAdapter : RecollectingTransformer<ArrayBoundsAdapter> {
     override val builders = ArrayDeque<StateBuilder>().apply { add(StateBuilder()) }
     private var indices = setOf<ArrayIndexTerm>()
     private var arrays = setOf<Term>()
+
+    override fun apply(ps: PredicateState): PredicateState {
+        val (`this`, args) = collectArguments(ps)
+        listOfNotNull(`this`, *args.values.toTypedArray()).forEach {
+            adaptArray(it)
+        }
+        return super.apply(ps)
+    }
 
     override fun transformChoice(ps: ChoiceState): PredicateState {
         val oldIndices = indices.toSet()
@@ -49,31 +59,33 @@ class ArrayBoundsAdapter : RecollectingTransformer<ArrayBoundsAdapter> {
     }
 
     override fun transformBase(predicate: Predicate): Predicate {
-        val arrayTerms = TermCollector.getFullTermSet(predicate)
-                .filter { it.type is KexArray}
-                .filter { it !in arrays }
-                .toSet()
-        for (array in arrayTerms) {
-            currentBuilder += assume { (array.length() lt 1000) equality true }
-            arrays = arrays + array
-        }
+        if (predicate.hasReceiver) adaptArray(predicate.receiver!!)
 
-        val indexTerms = TermCollector.getFullTermSet(predicate)
+        TermCollector.getFullTermSet(predicate)
                 .filterIsInstance<ArrayIndexTerm>()
                 .filter { it !in indices }
                 .toSet()
-        for (index in indexTerms) {
-            val zero = term { const(0) }
-            val length = term { index.arrayRef.length() }
-            if (index.arrayRef !in arrays) {
-                currentBuilder += assume { (length lt 1000) equality true }
-                arrays = arrays + index.arrayRef
-            }
-            currentBuilder += assume { (zero le index.index) equality true }
-            currentBuilder += assume { (index.index lt length) equality true }
-            indices = indices + index
-        }
+                .forEach { adaptIndexTerm(it) }
         return super.transformBase(predicate)
+    }
+
+    private fun adaptArray(term: Term) {
+        if (term.type is KexArray && term !in arrays) {
+            currentBuilder += assume { (term.length() lt 1000) equality true }
+            arrays = arrays + term
+        }
+    }
+
+    private fun adaptIndexTerm(index: ArrayIndexTerm) {
+        val zero = term { const(0) }
+        val length = term { index.arrayRef.length() }
+        if (index.arrayRef !in arrays) {
+            currentBuilder += assume { (length lt 1000) equality true }
+            arrays = arrays + index.arrayRef
+        }
+        currentBuilder += assume { (zero le index.index) equality true }
+        currentBuilder += assume { (index.index lt length) equality true }
+        indices = indices + index
     }
 
 }

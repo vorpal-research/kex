@@ -303,9 +303,9 @@ class CallStackGenerator(val context: ExecutionContext, val psa: PredicateStateA
         if (intersection.isEmpty()) return null
 
         val preStateBuilder = StateBuilder()
-        for ((field, value) in intersection) {
+        for ((field, _) in intersection) {
             val fieldTerm = term { descriptor.term.field(field.second, field.first) }
-            preStateBuilder += axiom { fieldTerm.initialize(initializer(value.type)) }
+            preStateBuilder += axiom { fieldTerm.initialize(initializer(field.second)) }
         }
         return mapper.apply(preStateBuilder.apply())
     }

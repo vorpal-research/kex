@@ -49,8 +49,6 @@ fun ClassLoader.loadClass(type: Type): Class<*> = when (type) {
         this.loadClass(type.`class`.canonicalDesc)
     } catch (e: ClassNotFoundException) {
         ClassLoader.getSystemClassLoader().loadClass(type.`class`.canonicalDesc)
-    } catch (e: ClassFormatError) {
-        TODO()
     }
     else -> throw ClassNotFoundException(type.toString())
 }

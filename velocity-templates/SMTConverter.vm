@@ -264,8 +264,10 @@ class ${solver}Converter(val tf: TypeFactory) : ${solver}SMTConverter() {
         }
     }
 
-    fun convert(call: CallTerm, ef: $factory, ctx: ${solver}Context): Dynamic_ =
-        ef.getVarByTypeAndName(call.type, call.name)
+    fun convert(call: CallTerm, ef: $factory, ctx: ${solver}Context): Dynamic_ {
+        val expr = ef.getVarByTypeAndName(call.type, call.name)
+        return call.withAxioms(expr, ef, ctx)
+    }
 
     fun convert(cast: CastTerm, ef: $factory, ctx: ${solver}Context): Dynamic_ {
         val op = convert(cast.operand, ef, ctx)
