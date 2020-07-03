@@ -1,5 +1,6 @@
 package org.jetbrains.research.kex.asm.analysis
 
+import com.abdullin.kthelper.`try`
 import com.abdullin.kthelper.algorithm.DominatorTreeBuilder
 import com.abdullin.kthelper.logging.debug
 import com.abdullin.kthelper.logging.log
@@ -55,7 +56,7 @@ class MethodChecker(
     val generator = Generator(ctx, psa)
 
     @ImplicitReflectionSerializer
-    private fun dumpPS(method: Method, message: String, state: PredicateState) {
+    private fun dumpPS(method: Method, message: String, state: PredicateState) = `try` {
         val failDirPath = Paths.get(failDir)
         if (!Files.exists(failDirPath)) {
             Files.createDirectory(failDirPath)
@@ -63,6 +64,8 @@ class MethodChecker(
         val errorDump = Files.createTempFile(failDirPath, "ps-", ".json").toFile()
         log.error("Failing saved to file ${errorDump.path}")
         errorDump.writeText(KexSerializer(cm).toJson(Failure(method.`class`, method, message, state)))
+    }.getOrElse {
+        log.error("Could not save failing PS to file")
     }
 
     override fun cleanup() {}

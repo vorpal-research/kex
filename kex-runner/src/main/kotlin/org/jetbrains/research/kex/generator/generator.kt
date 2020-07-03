@@ -62,6 +62,9 @@ class Generator(val ctx: ExecutionContext, val psa: PredicateStateAnalysis) {
     } catch (e: GenerationException) {
         throw e
     } catch (e: Exception) {
+        if (e !is NoConcreteInstanceException) {
+            val a = 10
+        }
         throw GenerationException(e)
     }
 
@@ -128,6 +131,8 @@ class Generator(val ctx: ExecutionContext, val psa: PredicateStateAnalysis) {
         reExecute(method, block, typeInfoState)
     } catch (e: GenerationException) {
         throw e
+    } catch (e: NoClassDefFoundError) {
+        throw GenerationException(e)
     } catch (e: Exception) {
         throw GenerationException(e)
     }
