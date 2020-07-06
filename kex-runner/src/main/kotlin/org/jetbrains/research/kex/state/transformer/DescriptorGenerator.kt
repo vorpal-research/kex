@@ -29,7 +29,13 @@ data class Parameters(
         val instance: Descriptor?,
         val arguments: List<Descriptor>,
         val staticFields: Map<FieldTerm, Descriptor>
-)
+) {
+    override fun toString(): String = buildString {
+        appendln("instance: $instance")
+        if (arguments.isNotEmpty()) appendln("args: ${arguments.joinToString("\n")}")
+        if (staticFields.isNotEmpty()) appendln("statics: ${staticFields.toList().joinToString("\n") { "${it.first} = {${it.second}}" }}")
+    }
+}
 
 class DescriptorGenerator(override val method: Method,
                           override val ctx: ExecutionContext,

@@ -6,11 +6,10 @@ class BasicTests {
 
     class Loop(val value: Int) {
         var prev: Loop? = null
-//        var next: Loop? = null
     }
 
     fun test(p: Loop) {
-        if (p.prev === p) {
+        if (p.prev === p && p.value == 7) {
             println("a")
         }
     }

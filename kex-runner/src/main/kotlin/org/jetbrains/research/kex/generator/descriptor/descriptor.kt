@@ -63,19 +63,33 @@ sealed class ConstantDescriptor(term: Term, type: KexType) : Descriptor(term, ty
     override fun generateTypeInfo(visited: MutableSet<Descriptor>) = emptyState()
     override fun print(map: MutableMap<Descriptor, String>) = ""
 
-    object Null : ConstantDescriptor(term { const(null) }, KexNull())
+    object Null : ConstantDescriptor(term { const(null) }, KexNull()) {
+        override fun toString() = "null"
+    }
 
-    data class Bool(val value: Boolean) : ConstantDescriptor(term { const(value) }, KexBool())
+    data class Bool(val value: Boolean) : ConstantDescriptor(term { const(value) }, KexBool()) {
+        override fun toString() = "$value"
+    }
 
-    data class Int(val value: kotlin.Int) : ConstantDescriptor(term { const(value) }, KexInt())
+    data class Int(val value: kotlin.Int) : ConstantDescriptor(term { const(value) }, KexInt()) {
+        override fun toString() = "$value"
+    }
 
-    data class Long(val value: kotlin.Long) : ConstantDescriptor(term { const(value) }, KexLong())
+    data class Long(val value: kotlin.Long) : ConstantDescriptor(term { const(value) }, KexLong()) {
+        override fun toString() = "$value"
+    }
 
-    data class Float(val value: kotlin.Float) : ConstantDescriptor(term { const(value) }, KexFloat())
+    data class Float(val value: kotlin.Float) : ConstantDescriptor(term { const(value) }, KexFloat()) {
+        override fun toString() = "$value"
+    }
 
-    data class Double(val value: kotlin.Double) : ConstantDescriptor(term { const(value) }, KexDouble())
+    data class Double(val value: kotlin.Double) : ConstantDescriptor(term { const(value) }, KexDouble()) {
+        override fun toString() = "$value"
+    }
 
-    data class Class(val value: KexType) : ConstantDescriptor(term { `class`(value) }, value)
+    data class Class(val value: KexType) : ConstantDescriptor(term { `class`(value) }, value) {
+        override fun toString() = "$value"
+    }
 }
 
 class ObjectDescriptor(klass: KexClass) : Descriptor(term { generate(klass) }, klass, true) {

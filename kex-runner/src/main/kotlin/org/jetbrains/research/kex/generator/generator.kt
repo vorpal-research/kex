@@ -1,7 +1,6 @@
 package org.jetbrains.research.kex.generator
 
 import com.abdullin.kthelper.logging.debug
-import com.abdullin.kthelper.logging.log
 import org.jetbrains.research.kex.ExecutionContext
 import org.jetbrains.research.kex.annotations.AnnotationManager
 import org.jetbrains.research.kex.asm.analysis.KexCheckerException
@@ -16,6 +15,7 @@ import org.jetbrains.research.kex.state.emptyState
 import org.jetbrains.research.kex.state.term.Term
 import org.jetbrains.research.kex.state.term.term
 import org.jetbrains.research.kex.state.transformer.*
+import org.jetbrains.research.kex.util.log
 import org.jetbrains.research.kfg.ClassManager
 import org.jetbrains.research.kfg.ir.BasicBlock
 import org.jetbrains.research.kfg.ir.Class
@@ -30,11 +30,12 @@ class Generator(val ctx: ExecutionContext, val psa: PredicateStateAnalysis) {
     val cm: ClassManager get() = ctx.cm
     private val csGenerator = CallStackGenerator(ctx, psa)
     private val csExecutor = CallStackExecutor(ctx)
+    private val descriptorLog = log("descriptors")
 
     private fun generateAPI(method: Method, state: PredicateState, model: SMTModel) = try {
         val descriptors = generateFinalDescriptors(method, ctx, model, state).concrete
-        log.debug("Generated descriptors:")
-        log.debug(descriptors)
+        descriptorLog.debug("Generated descriptors:")
+        descriptorLog.debug(descriptors)
         val thisCallStack = descriptors.instance?.let { descriptor ->
             val cs = csGenerator.generate(descriptor)
             DescriptorStatistics.addDescriptor(descriptor, cs)
@@ -50,10 +51,10 @@ class Generator(val ctx: ExecutionContext, val psa: PredicateStateAnalysis) {
             DescriptorStatistics.addDescriptor(descriptor, cs)
             cs
         }
-        log.debug("Generated call stacks:")
-        log.debug("Instance: ${thisCallStack?.print()}")
-        log.debug("Args:\n${argCallStacks.joinToString("\n") { it.print() }}")
-        log.debug("Static fields:\n${staticFields.joinToString("\n") { it.print() }}")
+        descriptorLog.debug("Generated call stacks:")
+        descriptorLog.debug("Instance:\n${thisCallStack?.print()}")
+        descriptorLog.debug("Args:\n${argCallStacks.joinToString("\n") { it.print() }}")
+        descriptorLog.debug("Static fields:\n${staticFields.joinToString("\n") { it.print() }}")
 
         val instance = thisCallStack?.let { csExecutor.execute(it) }
         val arguments = argCallStacks.map { csExecutor.execute(it) }.toTypedArray()
@@ -62,9 +63,6 @@ class Generator(val ctx: ExecutionContext, val psa: PredicateStateAnalysis) {
     } catch (e: GenerationException) {
         throw e
     } catch (e: Exception) {
-        if (e !is NoConcreteInstanceException) {
-            val a = 10
-        }
         throw GenerationException(e)
     }
 
@@ -125,8 +123,6 @@ class Generator(val ctx: ExecutionContext, val psa: PredicateStateAnalysis) {
 
     private fun generateConcreteAPI(method: Method, block: BasicBlock, state: PredicateState, model: SMTModel) = try {
         val descriptors = generateFinalDescriptors(method, ctx, model, state).concrete
-        log.debug("Generated descriptors:")
-        log.debug(descriptors)
         val typeInfoState = descriptors.typeInfoState
         reExecute(method, block, typeInfoState)
     } catch (e: GenerationException) {
