@@ -66,8 +66,13 @@ class Generator(val ctx: ExecutionContext, val psa: PredicateStateAnalysis) {
         throw GenerationException(e)
     }
 
-    private fun generateFromModel(method: Method, state: PredicateState, model: SMTModel) =
-            generateInputByModel(ctx, method, state, model)
+    private fun generateFromModel(method: Method, state: PredicateState, model: SMTModel) = try {
+        generateInputByModel(ctx, method, state, model)
+    } catch (e: GenerationException) {
+        throw e
+    } catch (e: Exception) {
+        throw GenerationException(e)
+    }
 
     private val Parameters.concrete
         get() = Parameters(instance?.concretize(cm), arguments.map { it.concretize(cm) }, staticFields.mapValues { it.value.concretize(cm) })
