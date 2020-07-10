@@ -15,7 +15,7 @@ import org.jetbrains.research.kex.state.term.*
 import org.jetbrains.research.kfg.ir.ConcreteClass
 import org.jetbrains.research.kfg.ir.Method
 
-private val defaultDepth = kexConfig.getIntValue("inliner", "depth", 10)
+private val defaultDepth = kexConfig.getIntValue("inliner", "depth", 5)
 
 class ConcreteImplInliner(val ctx: ExecutionContext,
                           val typeInfoMap: TypeInfoMap,

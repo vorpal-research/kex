@@ -4,13 +4,7 @@ package org.jetbrains.research.kex.test.debug
 
 class BasicTests {
 
-    class Loop(val value: Int) {
-        var prev: Loop? = null
-    }
-
-    fun test(p: Loop) {
-        if (p.prev === p && p.value == 7) {
-            println("a")
-        }
-    }
+    fun digitNumber(n: Int): Int =
+            if (n in -9..9) 1
+            else digitNumber(n / 10) + digitNumber(n % 10)
 }
