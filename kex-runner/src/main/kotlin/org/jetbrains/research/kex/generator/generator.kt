@@ -38,11 +38,13 @@ class Generator(val ctx: ExecutionContext, val psa: PredicateStateAnalysis) {
         descriptorLog.debug("Generated descriptors:\n$descriptors")
         val callStacks = descriptors.callStacks
         descriptorLog.debug("Generated call stacks:\n$callStacks")
-        val (instance, arguments, _) = callStacks.execute
+        val (instance, arguments, _) = callStacks.executed
         instance to arguments.toTypedArray()
     } catch (e: GenerationException) {
         throw e
     } catch (e: Exception) {
+        throw GenerationException(e)
+    } catch (e: Error) {
         throw GenerationException(e)
     }
 
@@ -73,7 +75,7 @@ class Generator(val ctx: ExecutionContext, val psa: PredicateStateAnalysis) {
         return Parameters(thisCallStack, argCallStacks, staticFields)
     }
 
-    private val Parameters<CallStack>.execute: Parameters<Any?> get() {
+    private val Parameters<CallStack>.executed: Parameters<Any?> get() {
         val instance = instance?.let { csExecutor.execute(it) }
         val args = arguments.map { csExecutor.execute(it) }
         val statics = staticFields.mapValues { csExecutor.execute(it.value) }
