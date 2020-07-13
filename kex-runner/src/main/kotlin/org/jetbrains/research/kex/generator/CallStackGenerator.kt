@@ -60,6 +60,7 @@ class CallStackGenerator(val context: ExecutionContext, val psa: PredicateStateA
     val cm get() = context.cm
     val types get() = context.types
 
+    private val fieldSetterCache = mutableMapOf<Field, Set<Method>>()
     private val descriptorMap = mutableMapOf<Descriptor, CallStack>()
 
     private fun prepareState(method: Method, ps: PredicateState, ignores: Set<Term> = setOf()) = transform(ps) {
