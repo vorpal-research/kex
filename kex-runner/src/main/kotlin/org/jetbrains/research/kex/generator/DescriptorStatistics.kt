@@ -32,6 +32,10 @@ object DescriptorStatistics {
         }
     }
 
+    fun addFailure(descriptor: Descriptor) {
+        failures += descriptor
+    }
+
     fun printStatistics() {
         val totalSize = successes + failures.size
         val successRate = successes.toDouble() / totalSize

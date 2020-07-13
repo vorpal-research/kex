@@ -1,11 +1,12 @@
 package org.jetbrains.research.kex.generator
 
-import com.abdullin.kthelper.logging.debug
+import com.abdullin.kthelper.`try`
 import org.jetbrains.research.kex.ExecutionContext
 import org.jetbrains.research.kex.annotations.AnnotationManager
 import org.jetbrains.research.kex.asm.analysis.KexCheckerException
 import org.jetbrains.research.kex.asm.state.PredicateStateAnalysis
 import org.jetbrains.research.kex.config.kexConfig
+import org.jetbrains.research.kex.generator.descriptor.Descriptor
 import org.jetbrains.research.kex.random.GenerationException
 import org.jetbrains.research.kex.smt.Checker
 import org.jetbrains.research.kex.smt.Result
@@ -34,32 +35,11 @@ class Generator(val ctx: ExecutionContext, val psa: PredicateStateAnalysis) {
 
     private fun generateAPI(method: Method, state: PredicateState, model: SMTModel) = try {
         val descriptors = generateFinalDescriptors(method, ctx, model, state).concrete
-        descriptorLog.debug("Generated descriptors:")
-        descriptorLog.debug(descriptors)
-        val thisCallStack = descriptors.instance?.let { descriptor ->
-            val cs = csGenerator.generate(descriptor)
-            DescriptorStatistics.addDescriptor(descriptor, cs)
-            cs
-        }
-        val argCallStacks = descriptors.arguments.map { descriptor ->
-            val cs = csGenerator.generate(descriptor)
-            DescriptorStatistics.addDescriptor(descriptor, cs)
-            cs
-        }
-        val staticFields = descriptors.staticFields.values.map { descriptor ->
-            val cs = csGenerator.generate(descriptor)
-            DescriptorStatistics.addDescriptor(descriptor, cs)
-            cs
-        }
-        descriptorLog.debug("Generated call stacks:")
-        descriptorLog.debug("Instance:\n${thisCallStack?.print()}")
-        descriptorLog.debug("Args:\n${argCallStacks.joinToString("\n") { it.print() }}")
-        descriptorLog.debug("Static fields:\n${staticFields.joinToString("\n") { it.print() }}")
-
-        val instance = thisCallStack?.let { csExecutor.execute(it) }
-        val arguments = argCallStacks.map { csExecutor.execute(it) }.toTypedArray()
-        staticFields.forEach { csExecutor.execute(it) }
-        instance to arguments
+        descriptorLog.debug("Generated descriptors:\n$descriptors")
+        val callStacks = descriptors.callStacks
+        descriptorLog.debug("Generated call stacks:\n$callStacks")
+        val (instance, arguments, _) = callStacks.execute
+        instance to arguments.toTypedArray()
     } catch (e: GenerationException) {
         throw e
     } catch (e: Exception) {
@@ -74,10 +54,33 @@ class Generator(val ctx: ExecutionContext, val psa: PredicateStateAnalysis) {
         throw GenerationException(e)
     }
 
-    private val Parameters.concrete
+    private val Parameters<Descriptor>.concrete
         get() = Parameters(instance?.concretize(cm), arguments.map { it.concretize(cm) }, staticFields.mapValues { it.value.concretize(cm) })
 
-    private val Parameters.typeInfoState: PredicateState
+    private val Descriptor.callStack: CallStack
+        get() = `try` {
+            val cs = csGenerator.generate(this)
+            DescriptorStatistics.addDescriptor(this, cs)
+            cs
+        }.getOrThrow {
+            DescriptorStatistics.addFailure(this)
+        }
+
+    private val Parameters<Descriptor>.callStacks: Parameters<CallStack> get() {
+        val thisCallStack = instance?.callStack
+        val argCallStacks = arguments.map { it.callStack }
+        val staticFields = staticFields.mapValues { it.value.callStack }
+        return Parameters(thisCallStack, argCallStacks, staticFields)
+    }
+
+    private val Parameters<CallStack>.execute: Parameters<Any?> get() {
+        val instance = instance?.let { csExecutor.execute(it) }
+        val args = arguments.map { csExecutor.execute(it) }
+        val statics = staticFields.mapValues { csExecutor.execute(it.value) }
+        return Parameters(instance, args, statics)
+    }
+
+    private val Parameters<Descriptor>.typeInfoState: PredicateState
         get() {
             val thisState = instance?.run {
                 TermRemapper(mapOf(term to term { `this`(term.type) })).apply(typeInfo)
