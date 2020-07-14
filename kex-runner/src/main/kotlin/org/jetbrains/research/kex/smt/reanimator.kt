@@ -35,6 +35,17 @@ private val Type.simpleTypeName: String
 
 data class ReanimatedModel(val method: Method, val instance: Any?, val arguments: List<Any?>)
 
+private val Term.numericValue: Number get() = when (this) {
+    is ConstByteTerm -> value
+    is ConstCharTerm -> value.toByte()
+    is ConstShortTerm -> value
+    is ConstIntTerm -> value
+    is ConstLongTerm -> value
+    is ConstFloatTerm -> value
+    is ConstDoubleTerm -> value
+    else -> unreachable { log.error("Trying to get value of term: $this with type $type") }
+}
+
 interface Reanimator<T> {
     val method: Method
     val model: SMTModel
@@ -87,13 +98,13 @@ class ObjectReanimator(override val method: Method,
         if (value == null) return randomizer.next(loader.loadClass(context.types, type))
         return when (type) {
             is KexBool -> (value as ConstBoolTerm).value
-            is KexByte -> (value as ConstByteTerm).value
-            is KexChar -> (value as ConstIntTerm).value.toChar()
-            is KexShort -> (value as ConstShortTerm).value
-            is KexInt -> (value as ConstIntTerm).value
-            is KexLong -> (value as ConstLongTerm).value
-            is KexFloat -> (value as ConstFloatTerm).value
-            is KexDouble -> (value as ConstDoubleTerm).value
+            is KexByte -> value.numericValue.toByte()
+            is KexChar -> value.numericValue.toChar()
+            is KexShort -> value.numericValue.toShort()
+            is KexInt -> value.numericValue.toInt()
+            is KexLong -> value.numericValue.toLong()
+            is KexFloat -> value.numericValue.toFloat()
+            is KexDouble -> value.numericValue.toDouble()
             else -> unreachable { log.error("Trying to recover non-primary term as primary value: $value with type $type") }
         }
     }
@@ -258,13 +269,13 @@ abstract class DescriptorReanimator(override val method: Method,
         if (value == null) default(term.type, false)
         else when (term.type) {
             is KexBool -> const((value as ConstBoolTerm).value)
-            is KexByte -> const((value as ConstByteTerm).value)
-            is KexChar -> const((value as ConstIntTerm).value)
-            is KexShort -> const((value as ConstShortTerm).value)
-            is KexInt -> const((value as ConstIntTerm).value)
-            is KexLong -> const((value as ConstLongTerm).value)
-            is KexFloat -> const((value as ConstFloatTerm).value)
-            is KexDouble -> const((value as ConstDoubleTerm).value)
+            is KexByte -> const(value.numericValue.toByte())
+            is KexChar -> const(value.numericValue.toInt())
+            is KexShort -> const(value.numericValue.toShort())
+            is KexInt -> const(value.numericValue.toInt())
+            is KexLong -> const(value.numericValue.toLong())
+            is KexFloat -> const(value.numericValue.toFloat())
+            is KexDouble -> const(value.numericValue.toDouble())
             else -> unreachable { log.error("Trying to recover non-primary term as primary value: $value with type ${term.type}") }
         }
     }
