@@ -1,6 +1,7 @@
 package org.jetbrains.research.kex.generator
 
 import com.abdullin.kthelper.`try`
+import com.abdullin.kthelper.logging.log
 import org.jetbrains.research.kex.ExecutionContext
 import org.jetbrains.research.kex.annotations.AnnotationManager
 import org.jetbrains.research.kex.asm.analysis.KexCheckerException
@@ -16,7 +17,6 @@ import org.jetbrains.research.kex.state.emptyState
 import org.jetbrains.research.kex.state.term.Term
 import org.jetbrains.research.kex.state.term.term
 import org.jetbrains.research.kex.state.transformer.*
-import org.jetbrains.research.kex.util.log
 import org.jetbrains.research.kfg.ClassManager
 import org.jetbrains.research.kfg.ir.BasicBlock
 import org.jetbrains.research.kfg.ir.Class
@@ -31,13 +31,12 @@ class Generator(val ctx: ExecutionContext, val psa: PredicateStateAnalysis) {
     val cm: ClassManager get() = ctx.cm
     private val csGenerator = CallStackGenerator(ctx, psa)
     private val csExecutor = CallStackExecutor(ctx)
-    private val descriptorLog = log("descriptors")
 
     private fun generateAPI(method: Method, state: PredicateState, model: SMTModel) = try {
         val descriptors = generateFinalDescriptors(method, ctx, model, state).concrete
-        descriptorLog.debug("Generated descriptors:\n$descriptors")
+        log.debug("Generated descriptors:\n$descriptors")
         val callStacks = descriptors.callStacks
-        descriptorLog.debug("Generated call stacks:\n$callStacks")
+        log.debug("Generated call stacks:\n$callStacks")
         val (instance, arguments, _) = callStacks.executed
         instance to arguments.toTypedArray()
     } catch (e: GenerationException) {

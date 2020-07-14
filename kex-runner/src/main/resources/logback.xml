@@ -14,13 +14,6 @@
             <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%-5p][%c] - %m%n</pattern>
         </encoder>
     </appender>
-    <appender name="descriptorLogger" class="ch.qos.logback.core.FileAppender">
-        <file>descriptor.log</file>
-        <param name="Append" value="false" />
-        <encoder>
-            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%-5p][%c] - %m%n</pattern>
-        </encoder>
-    </appender>
 
     <appender name="asyncFileLogger" class="ch.qos.logback.classic.AsyncAppender">
         <appender-ref ref="kexFileLogger"/>
@@ -29,20 +22,12 @@
         <appender-ref ref="stdout"/>
     </appender>
 
-    <appender name="asyncDescriptorLogger" class="ch.qos.logback.classic.AsyncAppender">
-        <appender-ref ref="descriptorLogger"/>
-    </appender>
-
     <logger name="org.jetbrains.research" level="ALL" additivity="false">
         <appender-ref ref="asyncFileLogger"/>
         <appender-ref ref="asyncStdout"/>
     </logger>
 
     <logger name="ch.qos.logback" level="OFF"/>
-
-    <logger name="descriptors" level="ALL" additivity="false">
-        <appender-ref ref="asyncDescriptorLogger"/>
-    </logger>
 
     <root level="ALL">
         <appender-ref ref="asyncStdout"/>

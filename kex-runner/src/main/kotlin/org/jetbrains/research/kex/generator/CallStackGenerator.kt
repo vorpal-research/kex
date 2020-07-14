@@ -198,6 +198,7 @@ class CallStackGenerator(val context: ExecutionContext, val psa: PredicateStateA
                 log.debug("Directly setting field $field value")
                 calls += FieldSetter(kfgField, generate(value, generationDepth + 1))
                 this.fields.remove(field)
+                this.reduce()
 
             } else if (kfgField.hasSetter && visibilityLevel <= kfgField.setter.visibility) {
                 log.info("Using setter for $field")
@@ -207,6 +208,7 @@ class CallStackGenerator(val context: ExecutionContext, val psa: PredicateStateA
                     val remapping = { mutableMapOf<Descriptor, Descriptor>(result to this) }
                     calls += MethodCall(kfgField.setter, args.map { generate(it.deepCopy(remapping()), generationDepth + 1) })
                     this.accept(result)
+                    this.reduce()
                     log.info("Used setter for field $field, new desc: $this")
                 }
             }
