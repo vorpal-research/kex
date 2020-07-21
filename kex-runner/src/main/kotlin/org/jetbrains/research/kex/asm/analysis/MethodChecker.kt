@@ -46,10 +46,10 @@ data class Failure(
         val state: PredicateState
 )
 
-class MethodChecker(
+open class MethodChecker(
         val ctx: ExecutionContext,
-        private val tm: TraceManager<Trace>,
-        private val psa: PredicateStateAnalysis) : MethodVisitor {
+        protected val tm: TraceManager<Trace>,
+        protected val psa: PredicateStateAnalysis) : MethodVisitor {
     override val cm: ClassManager get() = ctx.cm
     val random: Randomizer get() = ctx.random
     val loader: ClassLoader get() = ctx.loader
@@ -70,6 +70,8 @@ class MethodChecker(
 
     override fun cleanup() {}
 
+    open protected fun getSearchStrategy(method: Method): SearchStrategy = DfsStrategy(method)
+
     @ImplicitReflectionSerializer
     override fun visit(method: Method) {
         super.visit(method)
@@ -84,7 +86,7 @@ class MethodChecker(
 
         val unreachableBlocks = mutableSetOf<BasicBlock>()
         val domTree = DominatorTreeBuilder(method).build()
-        val order: SearchStrategy = DfsStrategy(method)
+        val order: SearchStrategy = getSearchStrategy(method)
 
         for (block in order) {
             if (block.terminator is UnreachableInst) {
@@ -123,11 +125,10 @@ class MethodChecker(
 
             if (coverageResult is Result.UnsatResult) unreachableBlocks += block
         }
-        cleanup()
     }
 
     @ImplicitReflectionSerializer
-    private fun coverBlock(method: Method, block: BasicBlock): Result {
+    protected open fun coverBlock(method: Method, block: BasicBlock): Result {
         val checker = Checker(method, loader, psa)
         val ps = checker.createState(block.terminator)
                 ?: return Result.UnknownResult("Could not create a predicate state for instruction")
@@ -140,7 +141,7 @@ class MethodChecker(
         when (result) {
             is Result.SatResult -> {
                 val (instance, args) = try {
-                    generator.generate(method, block, checker.state, result.model)
+                    generator.generateFromModel(method, checker.state, result.model)
                 } catch (e: GenerationException) {
                     log.warn(e.message)
                     return result
@@ -161,7 +162,7 @@ class MethodChecker(
         return result
     }
 
-    private fun collectTrace(method: Method, instance: Any?, args: Array<Any?>) {
+    protected fun collectTrace(method: Method, instance: Any?, args: Array<Any?>) {
         val runner = ObjectTracingRunner(method, loader)
         val trace = runner.collectTrace(instance, args)
         tm[method] = trace

@@ -1,7 +1,6 @@
 package org.jetbrains.research.kex.state.transformer
 
 import com.abdullin.kthelper.collection.dequeOf
-import org.jetbrains.research.kex.ExecutionContext
 import org.jetbrains.research.kex.asm.manager.MethodManager
 import org.jetbrains.research.kex.asm.state.PredicateStateAnalysis
 import org.jetbrains.research.kex.config.kexConfig
@@ -14,10 +13,11 @@ import org.jetbrains.research.kex.state.predicate.Predicate
 import org.jetbrains.research.kex.state.term.*
 import org.jetbrains.research.kfg.ir.ConcreteClass
 import org.jetbrains.research.kfg.ir.Method
+import org.jetbrains.research.kfg.type.TypeFactory
 
 private val defaultDepth = kexConfig.getIntValue("inliner", "depth", 5)
 
-class ConcreteImplInliner(val ctx: ExecutionContext,
+class ConcreteImplInliner(val types: TypeFactory,
                           val typeInfoMap: TypeInfoMap,
                           val psa: PredicateStateAnalysis,
                           inlineIndex: Int = 0) : RecollectingTransformer<ConcreteImplInliner> {
@@ -43,8 +43,12 @@ class ConcreteImplInliner(val ctx: ExecutionContext,
             else -> {
                 val typeInfo = typeInfoMap.getInfo<CastTypeInfo>(call.owner) ?: return null
                 val kexClass = typeInfo.type as? KexClass ?: return null
-                val concreteClass = kexClass.kfgClass(ctx.types) as? ConcreteClass ?: return null
-                val result = concreteClass.getMethod(method.name, method.desc)
+                val concreteClass = kexClass.kfgClass(types) as? ConcreteClass ?: return null
+                val result = try {
+                    concreteClass.getMethod(method.name, method.desc)
+                } catch (e: Exception) {
+                    return null
+                }
                 when {
                     result.isEmpty() -> null
                     else -> result
@@ -89,7 +93,7 @@ class ConcreteImplInliner(val ctx: ExecutionContext,
     }
 }
 
-class DepthInliner(val ctx: ExecutionContext,
+class DepthInliner(val types: TypeFactory,
                    val typeInfoMap: TypeInfoMap,
                    val psa: PredicateStateAnalysis,
                    val maxDepth: Int = defaultDepth) : Transformer<DepthInliner> {
@@ -100,7 +104,7 @@ class DepthInliner(val ctx: ExecutionContext,
         var depth = 0
         do {
             last = current
-            val cii = ConcreteImplInliner(ctx, typeInfoMap, psa, inlineIndex)
+            val cii = ConcreteImplInliner(types, typeInfoMap, psa, inlineIndex)
             current = cii.apply(last)
             inlineIndex = cii.inlineIndex
             ++depth

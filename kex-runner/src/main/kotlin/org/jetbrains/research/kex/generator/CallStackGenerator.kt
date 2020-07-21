@@ -50,7 +50,7 @@ private fun Method.collectFieldAccesses(context: ExecutionContext, psa: Predicat
 
     val transformed = transform(methodState) {
         +AnnotationIncluder(this@collectFieldAccesses, AnnotationManager.defaultLoader)
-        +DepthInliner(context, typeInfoMap, psa)
+        +DepthInliner(context.types, typeInfoMap, psa)
     }
     return collectFieldAccesses(context, transformed)
 }

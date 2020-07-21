@@ -3,6 +3,7 @@ package org.jetbrains.research.kex
 import com.abdullin.kthelper.logging.debug
 import com.abdullin.kthelper.logging.log
 import kotlinx.serialization.ImplicitReflectionSerializer
+import org.jetbrains.research.kex.asm.analysis.DescriptorChecker
 import org.jetbrains.research.kex.asm.analysis.Failure
 import org.jetbrains.research.kex.asm.analysis.MethodChecker
 import org.jetbrains.research.kex.asm.analysis.RandomChecker
@@ -195,6 +196,8 @@ class Kex(args: Array<String>) {
         val cm = CoverageCounter(originalContext.cm, traceManager)
 
         updateClassPath(analysisContext.loader as URLClassLoader)
+        val useApiGeneration = kexConfig.getBooleanValue("apiGeneration", "enabled", true)
+
         runPipeline(analysisContext) {
             +RandomChecker(analysisContext, traceManager)
             +LoopSimplifier(analysisContext.cm)
@@ -203,7 +206,10 @@ class Kex(args: Array<String>) {
             +MethodFieldAccessDetector(analysisContext, psa)
             +SetterDetector(analysisContext)
             +ExternalConstructorCollector(analysisContext.cm)
-            +MethodChecker(analysisContext, traceManager, psa)
+            +when {
+                useApiGeneration -> DescriptorChecker(analysisContext, traceManager, psa)
+                else -> MethodChecker(analysisContext, traceManager, psa)
+            }
             +cm
         }
         clearClassPath()
