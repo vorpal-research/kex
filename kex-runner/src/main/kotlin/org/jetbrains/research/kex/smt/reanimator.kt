@@ -303,7 +303,8 @@ abstract class DescriptorReanimator(override val method: Method,
         when (val address = (addr as? ConstIntTerm)?.value) {
             null, 0 -> default(term.type)
             else -> {
-                val arrayType = (reanimateType(term.memspace, addr) ?: term.type) as KexArray
+                val arrayType = (reanimateType(term.memspace, addr) ?: term.type) as? KexArray
+                        ?: unreachable { log.error("Could not cast ${reanimateType(term.memspace, addr)} to array type") }
                 memory(term.memspace, address) { newArrayInstance(term.memspace, arrayType, addr) }
             }
         }

@@ -4,7 +4,6 @@ import com.abdullin.kthelper.logging.log
 import kotlinx.serialization.ImplicitReflectionSerializer
 import org.jetbrains.research.kex.ExecutionContext
 import org.jetbrains.research.kex.asm.state.PredicateStateAnalysis
-import org.jetbrains.research.kex.generator.NoConcreteInstanceException
 import org.jetbrains.research.kex.generator.Parameters
 import org.jetbrains.research.kex.generator.concreteParameters
 import org.jetbrains.research.kex.generator.descriptor.Descriptor
@@ -97,7 +96,8 @@ class DescriptorChecker(
                     val parameters = generateFinalDescriptors(method, ctx, result.model, checker.state)
                     val concrete = parameters.concreteParameters(cm)
                     concrete.typeInfoState
-                } catch (e: NoConcreteInstanceException) {
+                } catch (e: Exception) {
+                    log.warn("$e")
                     null
                 }
             }
