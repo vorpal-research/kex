@@ -64,7 +64,7 @@ class ConcreteImplInliner(val types: TypeFactory,
 
         val mappings = hashMapOf<Term, Term>()
         if (!call.isStatic) {
-            val `this` = term { `this`(call.owner.type) }
+            val `this` = term { `this`(calledMethod.`class`.kexType) }
             mappings[`this`] = call.owner
         }
         if (predicate.hasLhv) {
