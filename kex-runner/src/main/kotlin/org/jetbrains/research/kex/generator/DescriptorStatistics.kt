@@ -39,6 +39,7 @@ object DescriptorStatistics {
     fun printStatistics() {
         val totalSize = successes + failures.size
         val successRate = successes.toDouble() / totalSize
+        log.info("Unknown descriptors: ${failures.joinToString("\nDescriptor:\n", prefix = "\n")}")
         log.info("Descriptor generation: ${String.format("%.2f", successRate * 100)}%")
     }
 }

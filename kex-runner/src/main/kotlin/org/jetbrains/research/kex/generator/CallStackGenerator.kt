@@ -134,6 +134,12 @@ class CallStackGenerator(val context: ExecutionContext, val psa: PredicateStateA
 
         val setters = descriptor.generateSetters(generationDepth)
         val klass = descriptor.klass.kfgClass(types)
+
+        if ((klass.accessibleConstructors + klass.externalConstructors).isEmpty()) {
+            this += UnknownCall(klass.type, original)
+            return
+        }
+
         val queue = queueOf(descriptor to setters with 0)
         while (queue.isNotEmpty()) {
             val (desc, stack, depth) = queue.poll()
