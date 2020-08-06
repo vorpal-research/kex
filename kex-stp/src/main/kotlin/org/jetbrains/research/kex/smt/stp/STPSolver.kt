@@ -16,6 +16,7 @@ import org.zhekehz.stpjava.QueryResult
 
 private val logQuery = kexConfig.getBooleanValue("smt", "logQuery", false)
 private val logFormulae = kexConfig.getBooleanValue("smt", "logFormulae", false)
+private val simplifyFormulae = kexConfig.getBooleanValue("smt", "simplifyFormulae", false)
 
 @Solver("stp")
 class STPSolver(val tf: TypeFactory) : AbstractSMTSolver {
@@ -52,8 +53,13 @@ class STPSolver(val tf: TypeFactory) : AbstractSMTSolver {
     }
 
     private fun check(state: Bool_, query: Bool_): QueryResult {
+        val (state_, query_) = when {
+            simplifyFormulae -> state.simplify() to query.simplify()
+            else -> state to query
+        }
+
         val subTypeAxioms = ef.buildSubtypeAxioms(tf)
-        val combined = state and query and subTypeAxioms
+        val combined = state_ and query_ and subTypeAxioms
         val toBeChecked = combined.expr.asBool().and(combined.axiom.asBool())
 
         if (logFormulae) {
