@@ -301,7 +301,10 @@ object STPEngine : SMTEngine<ValidityChecker, Expr, Sort, FunctionExpr, Unit>() 
 
     override fun makePattern(ctx: ValidityChecker, expr: Expr): Unit {}
 
-    override fun bool2bv(ctx: ValidityChecker, expr: Expr, sort: Sort): Expr = expr.asBitVector()
+    override fun bool2bv(ctx: ValidityChecker, expr: Expr, sort: Sort): Expr {
+        val bvExpr = expr.asBitVector()
+        return bv2bv(ctx, bvExpr, sort)
+    }
 
     override fun bv2bv(ctx: ValidityChecker, expr: Expr, sort: Sort): Expr =
             bv2bv(ctx, expr, sort.asBitVectorSort().width)
