@@ -106,7 +106,9 @@ fun Predicate.inverse(): Predicate = when (this) {
     is EqualityPredicate -> when (rhv) {
         term { const(true) } -> predicate(type, location) { lhv equality false }
         term { const(false) } -> predicate(type, location) { lhv equality true }
-        else -> this
+        else -> predicate(type, location) { lhv inequality rhv }
     }
+    is DefaultSwitchPredicate -> predicate(type, location) { cond equality cases.random() }
+    is InequalityPredicate -> predicate(type, location) { lhv equality rhv }
     else -> this
 }

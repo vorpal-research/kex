@@ -14,6 +14,8 @@ import kotlin.reflect.KParameter
 import kotlin.reflect.full.primaryConstructor
 import kotlin.reflect.jvm.jvmErasure
 
+private val printAnnotationInfo by lazy { kexConfig.getBooleanValue("annotations", "printAnnotationInfo", false) }
+
 object AnnotationManager {
     private val constructors = hashMapOf<String, KFunction<AnnotationInfo>>()
 
@@ -26,7 +28,9 @@ object AnnotationManager {
             for (path in kexConfig.getMultipleStringValue("annotations", "path", ";")) {
                 loadFrom(File(path))
             }
-            log.debug("Loaded annotated calls $this")
+            if (printAnnotationInfo) {
+                log.debug("Loaded annotated calls $this")
+            }
         }.getOrThrow {
             log.error("Annotations not loaded")
         }

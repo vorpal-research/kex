@@ -3,7 +3,6 @@ package org.jetbrains.research.kex.generator
 import org.jetbrains.research.kex.ExecutionContext
 import org.jetbrains.research.kex.annotations.AnnotationManager
 import org.jetbrains.research.kex.asm.state.PredicateStateAnalysis
-import org.jetbrains.research.kex.config.kexConfig
 import org.jetbrains.research.kex.state.PredicateState
 import org.jetbrains.research.kex.state.transformer.AnnotationIncluder
 import org.jetbrains.research.kex.state.transformer.MethodInliner
@@ -13,9 +12,6 @@ import org.jetbrains.research.kfg.ClassManager
 import org.jetbrains.research.kfg.ir.Field
 import org.jetbrains.research.kfg.ir.Method
 import org.jetbrains.research.kfg.visitor.MethodVisitor
-
-private val isInliningEnabled by lazy { kexConfig.getBooleanValue("smt", "ps-inlining", true) }
-private val annotationsEnabled by lazy { kexConfig.getBooleanValue("annotations", "enabled", false) }
 
 val Method.fieldAccesses get() = MethodFieldAccessDetector.fieldAccessMap.getOrDefault(this, setOf())
 
@@ -39,7 +35,7 @@ class MethodFieldAccessDetector(val ctx: ExecutionContext, val psa: PredicateSta
 
 
     private fun prepareState(method: Method, ps: PredicateState) = transform(ps) {
-        if (annotationsEnabled) +AnnotationIncluder(method, AnnotationManager.defaultLoader)
-        if (isInliningEnabled) +MethodInliner(psa)
+        +AnnotationIncluder(method, AnnotationManager.defaultLoader)
+        +MethodInliner(psa)
     }
 }

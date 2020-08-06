@@ -1,5 +1,6 @@
 package org.jetbrains.research.kex.state.transformer
 
+import com.abdullin.kthelper.`try`
 import com.abdullin.kthelper.logging.log
 import com.abdullin.kthelper.tryOrNull
 import org.jetbrains.research.kex.ktype.*
@@ -41,7 +42,7 @@ class ReflectionInfoAdapter(val method: Method, val loader: ClassLoader, val ign
         }
 
         val methodClassType = KexClass(method.`class`.fullname).getKfgType(types)
-        val klass = loader.loadKClass(methodClassType)
+        val klass = `try` { loader.loadKClass(methodClassType) }.getOrNull() ?: return super.apply(ps)
         val kFunction = klass.getKFunction(method) ?: run {
             log.warn("Could not load kFunction for $method")
             return super.apply(ps)
@@ -73,7 +74,7 @@ class ReflectionInfoAdapter(val method: Method, val loader: ClassLoader, val ign
         val call = predicate.call as CallTerm
 
         val methodClassType = KexClass(call.method.`class`.fullname).getKfgType(types)
-        val klass = loader.loadKClass(methodClassType)
+        val klass = `try` { loader.loadKClass(methodClassType) }.getOrNull() ?: return predicate
         val kFunction = klass.getKFunction(call.method)
         if (!predicate.hasLhv || kFunction == null) return predicate
 

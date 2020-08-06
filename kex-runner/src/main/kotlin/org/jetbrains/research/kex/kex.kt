@@ -3,6 +3,7 @@ package org.jetbrains.research.kex
 import com.abdullin.kthelper.logging.debug
 import com.abdullin.kthelper.logging.log
 import kotlinx.serialization.ImplicitReflectionSerializer
+import org.jetbrains.research.kex.asm.analysis.DescriptorChecker
 import org.jetbrains.research.kex.asm.analysis.Failure
 import org.jetbrains.research.kex.asm.analysis.MethodChecker
 import org.jetbrains.research.kex.asm.analysis.RandomChecker
@@ -16,6 +17,8 @@ import org.jetbrains.research.kex.config.CmdConfig
 import org.jetbrains.research.kex.config.FileConfig
 import org.jetbrains.research.kex.config.RuntimeConfig
 import org.jetbrains.research.kex.config.kexConfig
+import org.jetbrains.research.kex.generator.DescriptorStatistics
+import org.jetbrains.research.kex.generator.ExternalConstructorCollector
 import org.jetbrains.research.kex.generator.MethodFieldAccessDetector
 import org.jetbrains.research.kex.generator.SetterDetector
 import org.jetbrains.research.kex.random.easyrandom.EasyRandomDriver
@@ -86,16 +89,16 @@ class Kex(args: Array<String>) {
                 `package` = Package.defaultPackage
                 AnalysisLevel.PACKAGE()
             }
-            targetName.matches(Regex("[a-zA-Z]+(\\.[a-zA-Z]+)*\\.\\*")) -> {
+            targetName.matches(Regex("[a-zA-Z0-9]+(\\.[a-zA-Z0-9]+)*\\.\\*")) -> {
                 `package` = Package.parse(targetName)
                 AnalysisLevel.PACKAGE()
             }
-            targetName.matches(Regex("[a-zA-Z]+(\\.[a-zA-Z]+)*\\.[a-zA-Z\$_]+::[a-zA-Z\$_]+")) -> {
+            targetName.matches(Regex("[a-zA-Z0-9]+(\\.[a-zA-Z0-9]+)*\\.[a-zA-Z0-9\$_]+::[a-zA-Z0-9\$_]+")) -> {
                 val (klassName, methodName) = targetName.split("::")
                 `package` = Package.parse("${klassName.dropLastWhile { it != '.' }}*")
                 AnalysisLevel.METHOD(klassName.replace('.', '/'), methodName)
             }
-            targetName.matches(Regex("[a-zA-Z]+(\\.[a-zA-Z]+)*\\.[a-zA-Z\$_]+")) -> {
+            targetName.matches(Regex("[a-zA-Z0-9]+(\\.[a-zA-Z0-9]+)*\\.[a-zA-Z0-9\$_]+")) -> {
                 `package` = Package.parse("${targetName.dropLastWhile { it != '.' }}*")
                 AnalysisLevel.CLASS(targetName.replace('.', '/'))
             }
@@ -193,6 +196,8 @@ class Kex(args: Array<String>) {
         val cm = CoverageCounter(originalContext.cm, traceManager)
 
         updateClassPath(analysisContext.loader as URLClassLoader)
+        val useApiGeneration = kexConfig.getBooleanValue("apiGeneration", "enabled", true)
+
         runPipeline(analysisContext) {
             +RandomChecker(analysisContext, traceManager)
             +LoopSimplifier(analysisContext.cm)
@@ -200,7 +205,11 @@ class Kex(args: Array<String>) {
             +psa
             +MethodFieldAccessDetector(analysisContext, psa)
             +SetterDetector(analysisContext)
-            +MethodChecker(analysisContext, traceManager, psa)
+            +ExternalConstructorCollector(analysisContext.cm)
+            +when {
+                useApiGeneration -> DescriptorChecker(analysisContext, traceManager, psa)
+                else -> MethodChecker(analysisContext, traceManager, psa)
+            }
             +cm
         }
         clearClassPath()
@@ -209,6 +218,7 @@ class Kex(args: Array<String>) {
         log.info("Overall summary for ${cm.methodInfos.size} methods:\n" +
                 "body coverage: ${String.format("%.2f", coverage.bodyCoverage)}%\n" +
                 "full coverage: ${String.format("%.2f", coverage.fullCoverage)}%")
+        DescriptorStatistics.printStatistics()
     }
 
     private fun concolic(originalContext: ExecutionContext, analysisContext: ExecutionContext) {
@@ -224,6 +234,7 @@ class Kex(args: Array<String>) {
         log.info("Overall summary for ${cm.methodInfos.size} methods:\n" +
                 "body coverage: ${String.format("%.2f", coverage.bodyCoverage)}%\n" +
                 "full coverage: ${String.format("%.2f", coverage.fullCoverage)}%")
+        DescriptorStatistics.printStatistics()
     }
 
     protected fun runPipeline(context: ExecutionContext, target: Package, init: Pipeline.() -> Unit) =

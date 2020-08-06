@@ -25,7 +25,7 @@ fun mergeTypes(tf: TypeFactory, types: Collection<KexType>): KexType {
     return when {
         uniqueTypes.all { it is KexPointer } -> {
             var result = tf.objectType.kexType
-            val classes = uniqueTypes.map { it as KexClass }.map { tf.getRefType(it.`class`) as ClassType }
+            val classes = uniqueTypes.map { it as KexClass }.map { tf.getRefType(it.klass) as ClassType }
             for (i in 0..classes.lastIndex) {
                 val isAncestor = classes.fold(true) { acc, `class` ->
                     acc && classes[i].`class`.isAncestorOf(`class`.`class`)
