@@ -237,6 +237,7 @@ class ObjectReanimator(override val method: Method,
 
     private fun newArrayInstance(type: KexArray, addr: Term?): Any? {
         val length = (reanimateFromProperties(type.memspace, "length", addr) as? ConstIntTerm)?.value ?: return null
+        if (length < 0) return null
 
         val actualType = (reanimateType(type.memspace, addr) ?: type) as? KexArray
                 ?: unreachable { log.error("Non-array type in reanimate array") }
