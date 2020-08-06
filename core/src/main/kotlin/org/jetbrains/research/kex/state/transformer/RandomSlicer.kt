@@ -20,7 +20,7 @@ object RandomSlicer : Transformer<RandomSlicer> {
     }
 }
 
-class DeltaDebugger(private val attempmts: Int, private val fails: Int = 10, val predicate: (PredicateState) -> Boolean) {
+class DeltaDebugger(private val attempmts: Int, private val fails: Int = attempmts, val predicate: (PredicateState) -> Boolean) {
     fun reduce(ps: PredicateState): PredicateState {
         var current = ps
 
