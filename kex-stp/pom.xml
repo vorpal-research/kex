@@ -12,7 +12,7 @@
     <artifactId>kex-stp</artifactId>
 
     <properties>
-        <stp.version>2.3</stp.version>
+        <stp.version>2.3.3-3</stp.version>
     </properties>
 
     <dependencies>
@@ -42,7 +42,7 @@
         </dependency>
 
         <dependency>
-            <groupId>org.zhekehz.stpjava</groupId>
+            <groupId>org.zhekehz</groupId>
             <artifactId>stp-java</artifactId>
             <version>${stp.version}</version>
         </dependency>
