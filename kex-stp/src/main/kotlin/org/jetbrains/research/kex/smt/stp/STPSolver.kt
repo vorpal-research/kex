@@ -14,7 +14,7 @@ import org.jetbrains.research.kex.state.transformer.memspace
 import org.jetbrains.research.kfg.type.TypeFactory
 import org.zhekehz.stpjava.QueryResult
 
-private val timeout = kexConfig.getIntValue("smt", "timeout", 3)
+private val timeout = kexConfig.getIntValue("smt", "timeout", 3) * 1000
 private val logQuery = kexConfig.getBooleanValue("smt", "logQuery", false)
 private val logFormulae = kexConfig.getBooleanValue("smt", "logFormulae", false)
 private val simplifyFormulae = kexConfig.getBooleanValue("smt", "simplifyFormulae", false)
@@ -48,7 +48,7 @@ class STPSolver(val tf: TypeFactory) : AbstractSMTSolver {
         log.debug("Check finished")
         return when (result) {
             QueryResult.INVALID -> Result.SatResult(collectModel(ctx, state))
-            QueryResult.TIMEOUT, QueryResult.ERROR -> Result.UnknownResult("should not happen")
+            QueryResult.TIMEOUT, QueryResult.ERROR -> Result.UnknownResult(result.name)
             QueryResult.VALID -> Result.UnsatResult
         }
     }

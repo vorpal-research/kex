@@ -12,7 +12,7 @@
     <artifactId>kex-stp</artifactId>
 
     <properties>
-        <stp.version>2.3.3-3</stp.version>
+        <stp.version>2.3.3-4</stp.version>
     </properties>
 
     <dependencies>
