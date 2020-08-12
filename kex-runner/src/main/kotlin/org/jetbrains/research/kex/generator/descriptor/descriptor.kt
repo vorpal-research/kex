@@ -336,7 +336,7 @@ class StaticFieldDescriptor(val klass: KexClass, val field: String, type: KexTyp
     }
 }
 
-class DescriptorBuilder {
+open class DescriptorBuilder {
     val `null` = ConstantDescriptor.Null
     fun const(@Suppress("UNUSED_PARAMETER") nothing: Nothing?) = `null`
     fun const(value: Boolean) = ConstantDescriptor.Bool(value)

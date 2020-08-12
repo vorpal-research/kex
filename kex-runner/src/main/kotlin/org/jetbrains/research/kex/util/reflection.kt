@@ -3,6 +3,7 @@ package org.jetbrains.research.kex.util
 import com.abdullin.kthelper.`try`
 import com.abdullin.kthelper.assert.unreachable
 import com.abdullin.kthelper.logging.log
+import org.jetbrains.research.kex.ktype.KexClass
 import org.jetbrains.research.kex.ktype.KexType
 import org.jetbrains.research.kex.ktype.type
 import org.jetbrains.research.kfg.ir.Method
@@ -18,11 +19,28 @@ import java.util.*
 import org.jetbrains.research.kfg.ir.Class as KfgClass
 import org.jetbrains.research.kfg.ir.Field as KfgField
 import java.lang.reflect.Method as JMethod
+import java.lang.reflect.Type as JType
 
 val Class<*>.isAbstract get() = (this.modifiers and Modifier.ABSTRACT) == Modifier.ABSTRACT
+val Class<*>.kex get() = KexClass(this.canonicalName)
+
+val Class<*>.allFields get(): List<Field> {
+    val result = mutableListOf<Field>()
+    var current: Class<*>? = this
+    do {
+        result += current!!.declaredFields
+        current = current!!.superclass
+    } while (current != null)
+    return result
+}
 
 val JMethod.isStatic get() = (this.modifiers and Modifier.STATIC) == Modifier.STATIC
 val JMethod.isAbstract get() = (this.modifiers and Modifier.ABSTRACT) == Modifier.ABSTRACT
+
+val JType.kex get() = when (this) {
+    is Class<*> -> KexClass(this.canonicalName)
+    else -> unreachable { log.error("Unknown java type $this") }
+}
 
 fun ClassLoader.loadClass(tf: TypeFactory, type: KexType): Class<*> = this.loadClass(type.getKfgType(tf))
 
