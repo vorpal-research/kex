@@ -10,22 +10,15 @@ import org.jetbrains.research.kex.ktype.*
 import org.jetbrains.research.kex.state.term.*
 import org.jetbrains.research.kex.state.transformer.memspace
 import org.jetbrains.research.kex.util.getActualField
+import org.jetbrains.research.kex.util.isFinal
 import org.jetbrains.research.kex.util.loadClass
 import org.jetbrains.research.kfg.ir.Method
-import java.lang.reflect.*
 import java.lang.reflect.Array
+import java.lang.reflect.ParameterizedType
+import java.lang.reflect.Type
 
 private val Term.isPointer get() = this.type is KexPointer
 private val Term.isPrimary get() = !this.isPointer
-
-private var Field.isFinal: Boolean
-    get() = (this.modifiers and Modifier.FINAL) == Modifier.FINAL
-    set(value) {
-        if (value == this.isFinal) return
-        val modifiersField = this.javaClass.getDeclaredField("modifiers")
-        modifiersField.isAccessible = true
-        modifiersField.setInt(this, this.modifiers and if (value) Modifier.FINAL else Modifier.FINAL.inv())
-    }
 
 private val Type.simpleTypeName: String
     get() = when (this) {

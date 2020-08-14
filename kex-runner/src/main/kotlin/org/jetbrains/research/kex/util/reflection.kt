@@ -3,9 +3,7 @@ package org.jetbrains.research.kex.util
 import com.abdullin.kthelper.`try`
 import com.abdullin.kthelper.assert.unreachable
 import com.abdullin.kthelper.logging.log
-import org.jetbrains.research.kex.ktype.KexClass
-import org.jetbrains.research.kex.ktype.KexType
-import org.jetbrains.research.kex.ktype.type
+import org.jetbrains.research.kex.ktype.*
 import org.jetbrains.research.kfg.ir.Method
 import org.jetbrains.research.kfg.type.*
 import org.jetbrains.research.kfg.type.Type
@@ -22,7 +20,21 @@ import java.lang.reflect.Method as JMethod
 import java.lang.reflect.Type as JType
 
 val Class<*>.isAbstract get() = (this.modifiers and Modifier.ABSTRACT) == Modifier.ABSTRACT
-val Class<*>.kex get() = KexClass(this.canonicalName)
+val Class<*>.kex: KexType get() = when {
+    this.isPrimitive -> when (this) {
+        Boolean::class.java -> KexBool()
+        Byte::class.java -> KexByte()
+        Char::class.java -> KexChar()
+        Short::class.java -> KexShort()
+        Int::class.java -> KexInt()
+        Long::class.java -> KexLong()
+        Float::class.java -> KexFloat()
+        Double::class.java -> KexDouble()
+        else -> unreachable { log.error("Unknown primitive type $this") }
+    }
+    this.isArray -> KexArray(this.componentType.kex)
+    else -> KexClass(this.trimmedName.replace('.', '/'))
+}
 
 val Class<*>.allFields get(): List<Field> {
     val result = mutableListOf<Field>()
@@ -33,6 +45,30 @@ val Class<*>.allFields get(): List<Field> {
     } while (current != null)
     return result
 }
+
+fun Class<*>.getFieldByName(name: String): Field {
+    var result: Field?
+    var current: Class<*> = this
+    do {
+        result = `try` { current.getDeclaredField(name) }.getOrNull()
+        current = current.superclass ?: break
+    } while (result == null)
+    return result
+            ?: throw NoSuchFieldException()
+}
+
+val Field.isStatic: Boolean
+    get() = (this.modifiers and Modifier.STATIC) == Modifier.STATIC
+
+
+var Field.isFinal: Boolean
+    get() = (this.modifiers and Modifier.FINAL) == Modifier.FINAL
+    set(value) {
+        if (value == this.isFinal) return
+        val modifiersField = this.javaClass.getDeclaredField("modifiers")
+        modifiersField.isAccessible = true
+        modifiersField.setInt(this, this.modifiers and if (value) Modifier.FINAL else Modifier.FINAL.inv())
+    }
 
 val JMethod.isStatic get() = (this.modifiers and Modifier.STATIC) == Modifier.STATIC
 val JMethod.isAbstract get() = (this.modifiers and Modifier.ABSTRACT) == Modifier.ABSTRACT

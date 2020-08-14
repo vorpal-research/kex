@@ -2,9 +2,7 @@ package org.jetbrains.research.kex.generator
 
 import org.jetbrains.research.kex.ExecutionContext
 import org.jetbrains.research.kex.trace.`object`.TraceCollectorProxy
-import org.jetbrains.research.kex.util.getConstructor
-import org.jetbrains.research.kex.util.getMethod
-import org.jetbrains.research.kex.util.loadClass
+import org.jetbrains.research.kex.util.*
 import java.lang.reflect.Array
 
 class CallStackExecutor(val ctx: ExecutionContext) {
@@ -66,7 +64,9 @@ class CallStackExecutor(val ctx: ExecutionContext) {
                 is FieldSetter -> {
                     val field = call.field
                     val reflection = ctx.loader.loadClass(field.`class`)
-                    val fieldReflection = reflection.getField(field.name)
+                    val fieldReflection = reflection.getFieldByName(field.name)
+                    fieldReflection.isAccessible = true
+                    fieldReflection.isFinal = false
                     val value = execute(call.value)
                     fieldReflection.set(current, value)
                     current
@@ -74,7 +74,9 @@ class CallStackExecutor(val ctx: ExecutionContext) {
                 is StaticFieldSetter -> {
                     val field = call.field
                     val reflection = ctx.loader.loadClass(field.`class`)
-                    val fieldReflection = reflection.getField(field.name)
+                    val fieldReflection = reflection.getFieldByName(field.name)
+                    fieldReflection.isAccessible = true
+                    fieldReflection.isFinal = false
                     val value = execute(call.value)
                     fieldReflection.set(null, value)
                     current

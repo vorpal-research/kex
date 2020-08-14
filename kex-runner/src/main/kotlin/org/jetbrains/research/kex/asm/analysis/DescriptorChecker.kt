@@ -7,7 +7,6 @@ import org.jetbrains.research.kex.asm.state.PredicateStateAnalysis
 import org.jetbrains.research.kex.generator.Parameters
 import org.jetbrains.research.kex.generator.concreteParameters
 import org.jetbrains.research.kex.generator.descriptor.Descriptor
-import org.jetbrains.research.kex.generator.descriptor.descriptors
 import org.jetbrains.research.kex.random.GenerationException
 import org.jetbrains.research.kex.smt.Checker
 import org.jetbrains.research.kex.smt.ReanimatedModel
@@ -50,11 +49,6 @@ class DescriptorChecker(
                     log.warn(e.message)
                     return result
                 }
-
-                val descriptors = listOf(instance, *args).descriptors
-                log.debug("Instance: $instance")
-                log.debug("Args: $args")
-                log.debug("Descriptors: $descriptors")
 
                 try {
                     collectTrace(method, instance, args)
