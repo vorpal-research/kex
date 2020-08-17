@@ -14,7 +14,7 @@ import javax.lang.model.element.Element
 import javax.lang.model.element.TypeElement
 
 
-@SupportedSourceVersion(SourceVersion.RELEASE_8)
+@SupportedSourceVersion(SourceVersion.RELEASE_11)
 @SupportedAnnotationTypes("org.jetbrains.research.kex.smt.AbstractSolver", "org.jetbrains.research.kex.smt.Solver")
 @SupportedOptions(SolverInfoProcessor.RUNNER_RESOURCES)
 class SolverInfoProcessor : KexProcessor() {

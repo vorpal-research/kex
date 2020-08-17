@@ -10,7 +10,7 @@ import javax.lang.model.SourceVersion
 import javax.lang.model.element.Element
 import javax.lang.model.element.TypeElement
 
-@SupportedSourceVersion(SourceVersion.RELEASE_8)
+@SupportedSourceVersion(SourceVersion.RELEASE_11)
 @SupportedAnnotationTypes("org.jetbrains.research.kex.BaseType", "org.jetbrains.research.kex.InheritorOf")
 @SupportedOptions(InheritanceInfoProcessor.KEX_RESOURCES)
 class InheritanceInfoProcessor : KexProcessor() {
