@@ -13,7 +13,7 @@ import javax.lang.model.element.Element
 import javax.lang.model.element.TypeElement
 import kotlin.reflect.KClass
 
-@SupportedSourceVersion(SourceVersion.RELEASE_11)
+@SupportedSourceVersion(SourceVersion.RELEASE_8)
 @SupportedAnnotationTypes(
         "org.jetbrains.research.kex.smt.SMTExpr",
         "org.jetbrains.research.kex.smt.SMTMemory",

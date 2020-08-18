@@ -21,7 +21,7 @@
         <slf4j.version>1.7.25</slf4j.version>
         <commons-cli.version>1.4</commons-cli.version>
 
-        <easy-random.version>easy-random-4.0.0</easy-random.version>
+        <easy-random.version>easy-random-4.2.0</easy-random.version>
         <better-parse.version>0.3.2</better-parse.version>
         <reflections.version>0.9.11</reflections.version>
         <klaxon.version>3.0.6</klaxon.version>
