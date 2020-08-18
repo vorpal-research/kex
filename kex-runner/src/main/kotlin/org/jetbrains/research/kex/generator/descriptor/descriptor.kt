@@ -43,8 +43,10 @@ sealed class Descriptor(term: Term, type: KexType, val hasState: Boolean) {
     val typeInfo: PredicateState get() = generateTypeInfo(mutableSetOf())
 
     override fun toString() = asString
+    infix fun eq(other: Descriptor) = this.structuralEquality(other, mutableSetOf<Pair<Descriptor, Descriptor>>())
 
     abstract fun print(map: MutableMap<Descriptor, String>): String
+    abstract fun structuralEquality(other: Descriptor, map: MutableSet<Pair<Descriptor, Descriptor>>): Boolean
     abstract fun collectQuery(set: MutableSet<Descriptor>): PredicateState
 
     abstract fun concretize(cm: ClassManager, visited: MutableSet<Descriptor> = mutableSetOf()): Descriptor
@@ -62,6 +64,7 @@ sealed class ConstantDescriptor(term: Term, type: KexType) : Descriptor(term, ty
     override fun reduce(visited: MutableSet<Descriptor>) = this
     override fun generateTypeInfo(visited: MutableSet<Descriptor>) = emptyState()
     override fun print(map: MutableMap<Descriptor, String>) = ""
+    override fun structuralEquality(other: Descriptor, map: MutableSet<Pair<Descriptor, Descriptor>>) = this.term == other.term
 
     object Null : ConstantDescriptor(term { const(null) }, KexNull()) {
         override fun toString() = "null"
@@ -203,6 +206,21 @@ class ObjectDescriptor(klass: KexClass) : Descriptor(term { generate(klass) }, k
         }
         return builder.apply()
     }
+
+    override fun structuralEquality(other: Descriptor, map: MutableSet<Pair<Descriptor, Descriptor>>): Boolean {
+        if (this == other) return true
+        if (other !is ObjectDescriptor) return false
+        if (this to other in map) return true
+        if (this.klass != other.klass) return false
+
+        map += this to other
+        for ((field, type) in this.fields.keys.intersect(other.fields.keys)) {
+            val thisValue = this[field, type] ?: return false
+            val otherValue = other[field, type] ?: return false
+            if (!thisValue.structuralEquality(otherValue, map)) return false
+        }
+        return true
+    }
 }
 
 class ArrayDescriptor(val elementType: KexType, val length: Int) :
@@ -212,6 +230,8 @@ class ArrayDescriptor(val elementType: KexType, val length: Int) :
     operator fun set(index: Int, value: Descriptor) {
         elements[index] = value
     }
+
+    operator fun get(index: Int) = elements[index]
 
     override fun print(map: MutableMap<Descriptor, String>): String {
         if (this in map) return map[this]!!
@@ -286,6 +306,22 @@ class ArrayDescriptor(val elementType: KexType, val length: Int) :
         }
         return builder.apply()
     }
+
+    override fun structuralEquality(other: Descriptor, map: MutableSet<Pair<Descriptor, Descriptor>>): Boolean {
+        if (this == other) return true
+        if (other !is ArrayDescriptor) return false
+        if (this to other in map) return true
+        if (this.elementType != other.elementType) return false
+        if (this.length != other.length) return false
+
+        map += this to other
+        for (index in this.elements.keys.intersect(other.elements.keys)) {
+            val thisValue = this[index] ?: return false
+            val otherValue = other[index] ?: return false
+            if (!thisValue.structuralEquality(otherValue, map)) return false
+        }
+        return true
+    }
 }
 
 class StaticFieldDescriptor(val klass: KexClass, val field: String, type: KexType, var value: Descriptor) :
@@ -333,6 +369,18 @@ class StaticFieldDescriptor(val klass: KexClass, val field: String, type: KexTyp
         if (this in visited) return emptyState()
         visited += this
         return value.generateTypeInfo(visited)
+    }
+
+    override fun structuralEquality(other: Descriptor, map: MutableSet<Pair<Descriptor, Descriptor>>): Boolean {
+        if (this == other) return true
+        if (other !is StaticFieldDescriptor) return false
+        if (this to other in map) return true
+        if (this.klass != other.klass) return false
+        if (this.field != other.field) return false
+        if (this.type != other.type) return false
+
+        map += this to other
+        return this.value.structuralEquality(other.value, map)
     }
 }
 

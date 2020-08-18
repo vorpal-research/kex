@@ -17,7 +17,7 @@
     </modules>
 
     <properties>
-        <jvm.version>1.8</jvm.version>
+        <jvm.version>11</jvm.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <!-- necessary for intellij to function -->
         <maven.compiler.source>${jvm.version}</maven.compiler.source>

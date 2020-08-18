@@ -33,6 +33,7 @@ class RandomDescriptorGenerator(val ctx: ExecutionContext, val target: Package, 
         }
 
     fun run(attempts: Int = 1000) {
+        var successes = 0
         repeat(attempts) { it ->
             log.debug("Attempt: $it")
             val kfgClass = cm.randomClass.type
@@ -40,21 +41,25 @@ class RandomDescriptorGenerator(val ctx: ExecutionContext, val target: Package, 
 
             val any = random.nextOrNull(klass)
             val descriptor = any.descriptor
-            val originalDescriptor = descriptor.deepCopy()
             val callStack = descriptor.callStack ?: return@repeat
             val generatedAny = `try` { CallStackExecutor(ctx).execute(callStack) }.getOrElse {
                 null
-            } ?: return@repeat
+            }
+
+            val structuralEq = descriptor eq generatedAny.descriptor
+            if (structuralEq) {
+                ++successes
+            }
 
             log.run {
-                debug("Original object: $any")
-                debug("Original descriptor: $originalDescriptor")
-                debug("Descriptor: $descriptor")
-                debug("Call stack: ${callStack.print()}")
-                debug("Generated object: $generatedAny")
-                debug("Equality: ${any == generatedAny}")
+//                debug("Original object: $any")
+//                debug("Descriptor: $descriptor")
+//                debug("Call stack: ${callStack.print()}")
+//                debug("Generated object: $generatedAny")
+                debug("Equality: $structuralEq")
                 debug()
             }
         }
+        log.info("Random descriptor generation success rate: ${String.format("%.02f", 100 * successes.toDouble() / attempts)}%")
     }
 }

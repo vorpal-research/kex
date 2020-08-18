@@ -5,6 +5,7 @@ import org.jetbrains.research.kex.generator.descriptor.Descriptor
 import org.jetbrains.research.kfg.ir.Class
 import org.jetbrains.research.kfg.ir.Field
 import org.jetbrains.research.kfg.ir.Method
+import org.jetbrains.research.kfg.type.ArrayType
 import org.jetbrains.research.kfg.type.Type
 
 interface ApiCall {
@@ -156,12 +157,13 @@ data class FieldSetter(val field: Field, val value: CallStack) : ApiCall {
 }
 
 data class NewArray(val klass: Type, val length: CallStack) : ApiCall {
+    val asArray get() = klass as ArrayType
     override val parameters: List<CallStack> get() = listOf(length)
 
-    override fun toString() = "new $klass[$length]"
+    override fun toString() = "new ${asArray.component}[$length]"
     override fun print(owner: CallStack, builder: StringBuilder, visited: MutableSet<CallStack>) {
         length.print(builder, visited)
-        builder.appendln("${owner.name} = $this")
+        builder.appendln("${owner.name} = new ${asArray.component}[${length.name}]")
     }
 }
 
