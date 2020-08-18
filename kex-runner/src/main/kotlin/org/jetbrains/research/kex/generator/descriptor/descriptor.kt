@@ -237,7 +237,7 @@ class ArrayDescriptor(val elementType: KexType, val length: Int) :
         if (this in map) return map[this]!!
         map[this] = term.name
         return buildString {
-            append("$term = $elementType[$length] {\n")
+            append("$term = $elementType[${this@ArrayDescriptor.length}] {\n")
             for ((index, value) in elements) {
                 append("    $index = ${value.term}\n")
             }

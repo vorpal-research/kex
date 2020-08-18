@@ -1,7 +1,6 @@
 package org.jetbrains.research.kex.generator.descriptor
 
 import org.jetbrains.research.kex.config.kexConfig
-import org.jetbrains.research.kex.ktype.KexArray
 import org.jetbrains.research.kex.ktype.KexClass
 import org.jetbrains.research.kex.util.allFields
 import org.jetbrains.research.kex.util.isStatic
@@ -61,8 +60,7 @@ class Object2DescriptorConverter : DescriptorBuilder() {
         if (depth > maxGenerationDepth) return `null`
 
         val elementType = array.javaClass.componentType.kex
-        val arrayType = KexArray(elementType)
-        val result = array(array.size, arrayType)
+        val result = array(array.size, elementType)
         for ((index, element) in array.withIndex()) {
             val elementDescriptor = convert(element, depth + 1)
             result[index] = elementDescriptor
