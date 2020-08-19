@@ -1,4 +1,4 @@
-package org.jetbrains.research.kex.generator
+package org.jetbrains.research.kex.generator.callstack
 
 import org.jetbrains.research.kex.ExecutionContext
 import org.jetbrains.research.kex.trace.`object`.TraceCollectorProxy

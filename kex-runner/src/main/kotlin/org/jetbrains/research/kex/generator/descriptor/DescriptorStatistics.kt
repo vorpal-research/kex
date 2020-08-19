@@ -1,8 +1,9 @@
-package org.jetbrains.research.kex.generator
+package org.jetbrains.research.kex.generator.descriptor
 
 import com.abdullin.kthelper.collection.queueOf
 import com.abdullin.kthelper.logging.log
-import org.jetbrains.research.kex.generator.descriptor.Descriptor
+import org.jetbrains.research.kex.generator.callstack.CallStack
+import org.jetbrains.research.kex.generator.callstack.UnknownCall
 
 object DescriptorStatistics {
     private val failures = mutableSetOf<Descriptor>()

@@ -1,4 +1,4 @@
-package org.jetbrains.research.kex.generator
+package org.jetbrains.research.kex.generator.callstack
 
 import com.abdullin.kthelper.logging.log
 import org.jetbrains.research.kex.generator.descriptor.Descriptor

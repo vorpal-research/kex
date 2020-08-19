@@ -17,10 +17,10 @@ import org.jetbrains.research.kex.config.CmdConfig
 import org.jetbrains.research.kex.config.FileConfig
 import org.jetbrains.research.kex.config.RuntimeConfig
 import org.jetbrains.research.kex.config.kexConfig
-import org.jetbrains.research.kex.generator.DescriptorStatistics
 import org.jetbrains.research.kex.generator.ExternalConstructorCollector
 import org.jetbrains.research.kex.generator.MethodFieldAccessDetector
 import org.jetbrains.research.kex.generator.SetterDetector
+import org.jetbrains.research.kex.generator.descriptor.DescriptorStatistics
 import org.jetbrains.research.kex.random.easyrandom.EasyRandomDriver
 import org.jetbrains.research.kex.serialization.KexSerializer
 import org.jetbrains.research.kex.smt.Checker
