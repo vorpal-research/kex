@@ -60,7 +60,7 @@ data class PrimaryValue<T>(val value: T) : ApiCall {
 
     override fun print(owner: CallStack, builder: StringBuilder, visited: MutableSet<CallStack>) {
         if (owner.name != value.toString()) {
-            builder.appendln("${owner.name} = $value")
+            builder.appendLine("${owner.name} = $value")
         }
     }
 }
@@ -71,7 +71,7 @@ data class DefaultConstructorCall(val klass: Class) : ApiCall {
 
     override fun toString() = "${klass.fullname}()"
     override fun print(owner: CallStack, builder: StringBuilder, visited: MutableSet<CallStack>) {
-        builder.appendln("${owner.name} = $this")
+        builder.appendLine("${owner.name} = $this")
     }
 }
 
@@ -88,7 +88,7 @@ data class ConstructorCall(val klass: Class, val constructor: Method, val args: 
         for (arg in args) {
             arg.print(builder, visited)
         }
-        builder.appendln("${owner.name} = ${constructor.`class`.fullname}(${args.joinToString(", ") { it.name }})")
+        builder.appendLine("${owner.name} = ${constructor.`class`.fullname}(${args.joinToString(", ") { it.name }})")
     }
 }
 
@@ -105,7 +105,7 @@ data class ExternalConstructorCall(val constructor: Method, val args: List<CallS
         for (arg in args) {
             arg.print(builder, visited)
         }
-        builder.appendln("${owner.name} = ${constructor.`class`.fullname}(${args.joinToString(", ") { it.name }})")
+        builder.appendLine("${owner.name} = ${constructor.`class`.fullname}(${args.joinToString(", ") { it.name }})")
     }
 }
 
@@ -122,7 +122,7 @@ data class MethodCall(val method: Method, val args: List<CallStack>) : ApiCall {
         for (arg in args) {
             arg.print(builder, visited)
         }
-        builder.appendln("${owner.name}.${method.name}(${args.joinToString(", ") { it.name }})")
+        builder.appendLine("${owner.name}.${method.name}(${args.joinToString(", ") { it.name }})")
     }
 }
 
@@ -132,7 +132,7 @@ data class UnknownCall(val type: Type, val target: Descriptor) : ApiCall {
     override fun toString() = "Unknown($target)"
 
     override fun print(owner: CallStack, builder: StringBuilder, visited: MutableSet<CallStack>) {
-        builder.appendln("${owner.name} = $this")
+        builder.appendLine("${owner.name} = $this")
     }
 }
 
@@ -143,7 +143,7 @@ data class StaticFieldSetter(val klass: Class, val field: Field, val value: Call
 
     override fun print(owner: CallStack, builder: StringBuilder, visited: MutableSet<CallStack>) {
         value.print(builder, visited)
-        builder.appendln(toString())
+        builder.appendLine(toString())
     }
 }
 
@@ -152,7 +152,7 @@ data class FieldSetter(val field: Field, val value: CallStack) : ApiCall {
 
     override fun print(owner: CallStack, builder: StringBuilder, visited: MutableSet<CallStack>) {
         value.print(builder, visited)
-        builder.appendln("${owner.name}.${field.name} = ${value.name}")
+        builder.appendLine("${owner.name}.${field.name} = ${value.name}")
     }
 }
 
@@ -163,7 +163,7 @@ data class NewArray(val klass: Type, val length: CallStack) : ApiCall {
     override fun toString() = "new ${asArray.component}[$length]"
     override fun print(owner: CallStack, builder: StringBuilder, visited: MutableSet<CallStack>) {
         length.print(builder, visited)
-        builder.appendln("${owner.name} = new ${asArray.component}[${length.name}]")
+        builder.appendLine("${owner.name} = new ${asArray.component}[${length.name}]")
     }
 }
 
@@ -175,6 +175,6 @@ data class ArrayWrite(val index: CallStack, val value: CallStack) : ApiCall {
     override fun print(owner: CallStack, builder: StringBuilder, visited: MutableSet<CallStack>) {
         index.print(builder, visited)
         value.print(builder, visited)
-        builder.appendln("${owner.name}[$index] = $value")
+        builder.appendLine("${owner.name}[$index] = $value")
     }
 }

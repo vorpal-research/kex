@@ -10,11 +10,11 @@ data class Parameters<T>(
         val staticFields: Map<FieldTerm, T>
 ) {
     override fun toString(): String = buildString {
-        appendln("instance: $instance")
+        appendLine("instance: $instance")
         if (arguments.isNotEmpty())
-            appendln("args: ${arguments.joinToString("\n")}")
+            appendLine("args: ${arguments.joinToString("\n")}")
         if (staticFields.isNotEmpty())
-            appendln("statics: ${staticFields.toList().joinToString("\n") { "${it.first} = {${it.second}}" }}")
+            appendLine("statics: ${staticFields.toList().joinToString("\n") { "${it.first} = {${it.second}}" }}")
     }
 }
 
