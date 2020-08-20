@@ -1,8 +1,10 @@
 package org.jetbrains.research.kex
 
-import kotlinx.serialization.ImplicitReflectionSerializer
+import kotlinx.serialization.ExperimentalSerializationApi
+import kotlinx.serialization.InternalSerializationApi
 
-@ImplicitReflectionSerializer
+@ExperimentalSerializationApi
+@InternalSerializationApi
 fun main(args: Array<String>) {
     Kex(args).main()
 }

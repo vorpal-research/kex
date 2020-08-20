@@ -2,7 +2,8 @@ package org.jetbrains.research.kex
 
 import com.abdullin.kthelper.logging.debug
 import com.abdullin.kthelper.logging.log
-import kotlinx.serialization.ImplicitReflectionSerializer
+import kotlinx.serialization.ExperimentalSerializationApi
+import kotlinx.serialization.InternalSerializationApi
 import org.jetbrains.research.kex.asm.analysis.DescriptorChecker
 import org.jetbrains.research.kex.asm.analysis.Failure
 import org.jetbrains.research.kex.asm.analysis.MethodChecker
@@ -144,7 +145,8 @@ class Kex(args: Array<String>) {
         System.setProperty("java.class.path", classPath)
     }
 
-    @ImplicitReflectionSerializer
+    @ExperimentalSerializationApi
+    @InternalSerializationApi
     fun main() {
         // write all classes to output directory, so they will be seen by ClassLoader
         jar.unpack(classManager, outputDir, true)
@@ -166,7 +168,8 @@ class Kex(args: Array<String>) {
         }
     }
 
-    @ImplicitReflectionSerializer
+    @ExperimentalSerializationApi
+    @InternalSerializationApi
     fun debug(analysisContext: ExecutionContext) {
         val psa = PredicateStateAnalysis(analysisContext.cm)
 

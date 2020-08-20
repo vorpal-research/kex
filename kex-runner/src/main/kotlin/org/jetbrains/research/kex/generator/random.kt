@@ -54,8 +54,6 @@ class RandomDescriptorGenerator(val ctx: ExecutionContext, val target: Package, 
             val structuralEq = originalDescriptor eq generatedAny.descriptor
             if (structuralEq) {
                 ++successes
-            } else {
-                val a = 10
             }
 
             log.run {

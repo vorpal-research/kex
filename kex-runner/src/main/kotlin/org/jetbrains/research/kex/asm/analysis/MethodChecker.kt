@@ -4,8 +4,9 @@ import com.abdullin.kthelper.`try`
 import com.abdullin.kthelper.algorithm.DominatorTreeBuilder
 import com.abdullin.kthelper.logging.debug
 import com.abdullin.kthelper.logging.log
-import kotlinx.serialization.ContextualSerialization
-import kotlinx.serialization.ImplicitReflectionSerializer
+import kotlinx.serialization.Contextual
+import kotlinx.serialization.ExperimentalSerializationApi
+import kotlinx.serialization.InternalSerializationApi
 import kotlinx.serialization.Serializable
 import org.jetbrains.research.kex.ExecutionContext
 import org.jetbrains.research.kex.asm.manager.isImpactable
@@ -40,8 +41,8 @@ class KexRunnerException(val inner: Exception, val model: ReanimatedModel) : Exc
 
 @Serializable
 data class Failure(
-        @ContextualSerialization val `class`: Class,
-        @ContextualSerialization val method: Method,
+        @Contextual val `class`: Class,
+        @Contextual val method: Method,
         val message: String,
         val state: PredicateState
 )
@@ -55,7 +56,8 @@ open class MethodChecker(
     val loader: ClassLoader get() = ctx.loader
     val generator = Generator(ctx, psa)
 
-    @ImplicitReflectionSerializer
+    @ExperimentalSerializationApi
+    @InternalSerializationApi
     private fun dumpPS(method: Method, message: String, state: PredicateState) = `try` {
         val failDirPath = Paths.get(failDir)
         if (!Files.exists(failDirPath)) {
@@ -72,7 +74,8 @@ open class MethodChecker(
 
     open protected fun getSearchStrategy(method: Method): SearchStrategy = DfsStrategy(method)
 
-    @ImplicitReflectionSerializer
+    @ExperimentalSerializationApi
+    @InternalSerializationApi
     override fun visit(method: Method) {
         super.visit(method)
 
@@ -127,7 +130,6 @@ open class MethodChecker(
         }
     }
 
-    @ImplicitReflectionSerializer
     protected open fun coverBlock(method: Method, block: BasicBlock): Result {
         val checker = Checker(method, loader, psa)
         val ps = checker.createState(block.terminator)

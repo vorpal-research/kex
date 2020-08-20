@@ -1,7 +1,6 @@
 package org.jetbrains.research.kex.asm.analysis
 
 import com.abdullin.kthelper.logging.log
-import kotlinx.serialization.ImplicitReflectionSerializer
 import org.jetbrains.research.kex.ExecutionContext
 import org.jetbrains.research.kex.asm.state.PredicateStateAnalysis
 import org.jetbrains.research.kex.generator.Parameters
@@ -30,7 +29,6 @@ class DescriptorChecker(
         tm: TraceManager<Trace>,
         psa: PredicateStateAnalysis) : MethodChecker(ctx, tm, psa) {
 
-    @ImplicitReflectionSerializer
     override fun coverBlock(method: Method, block: BasicBlock): Result {
         val checker = Checker(method, ctx.loader, psa)
         val ps = checker.createState(method, block)
