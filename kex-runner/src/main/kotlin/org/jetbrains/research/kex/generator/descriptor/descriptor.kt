@@ -43,8 +43,10 @@ sealed class Descriptor(term: Term, type: KexType, val hasState: Boolean) {
     val typeInfo: PredicateState get() = generateTypeInfo(mutableSetOf())
 
     override fun toString() = asString
+    infix fun eq(other: Descriptor) = this.structuralEquality(other, mutableSetOf<Pair<Descriptor, Descriptor>>())
 
     abstract fun print(map: MutableMap<Descriptor, String>): String
+    abstract fun structuralEquality(other: Descriptor, map: MutableSet<Pair<Descriptor, Descriptor>>): Boolean
     abstract fun collectQuery(set: MutableSet<Descriptor>): PredicateState
 
     abstract fun concretize(cm: ClassManager, visited: MutableSet<Descriptor> = mutableSetOf()): Descriptor
@@ -61,33 +63,35 @@ sealed class ConstantDescriptor(term: Term, type: KexType) : Descriptor(term, ty
     override fun deepCopy(copied: MutableMap<Descriptor, Descriptor>) = this
     override fun reduce(visited: MutableSet<Descriptor>) = this
     override fun generateTypeInfo(visited: MutableSet<Descriptor>) = emptyState()
+    override fun print(map: MutableMap<Descriptor, String>) = ""
+    override fun structuralEquality(other: Descriptor, map: MutableSet<Pair<Descriptor, Descriptor>>) = this.term == other.term
 
     object Null : ConstantDescriptor(term { const(null) }, KexNull()) {
-        override fun print(map: MutableMap<Descriptor, String>) = "null"
+        override fun toString() = "null"
     }
 
     data class Bool(val value: Boolean) : ConstantDescriptor(term { const(value) }, KexBool()) {
-        override fun print(map: MutableMap<Descriptor, String>) = "$value"
+        override fun toString() = "$value"
     }
 
     data class Int(val value: kotlin.Int) : ConstantDescriptor(term { const(value) }, KexInt()) {
-        override fun print(map: MutableMap<Descriptor, String>) = "$value"
+        override fun toString() = "$value"
     }
 
     data class Long(val value: kotlin.Long) : ConstantDescriptor(term { const(value) }, KexLong()) {
-        override fun print(map: MutableMap<Descriptor, String>) = "$value"
+        override fun toString() = "$value"
     }
 
     data class Float(val value: kotlin.Float) : ConstantDescriptor(term { const(value) }, KexFloat()) {
-        override fun print(map: MutableMap<Descriptor, String>) = "$value"
+        override fun toString() = "$value"
     }
 
     data class Double(val value: kotlin.Double) : ConstantDescriptor(term { const(value) }, KexDouble()) {
-        override fun print(map: MutableMap<Descriptor, String>) = "$value"
+        override fun toString() = "$value"
     }
 
-    data class Class(val value: KexClass) : ConstantDescriptor(term { `class`(value) }, value) {
-        override fun print(map: MutableMap<Descriptor, String>) = "$value"
+    data class Class(val value: KexType) : ConstantDescriptor(term { `class`(value) }, value) {
+        override fun toString() = "$value"
     }
 }
 
@@ -202,6 +206,21 @@ class ObjectDescriptor(klass: KexClass) : Descriptor(term { generate(klass) }, k
         }
         return builder.apply()
     }
+
+    override fun structuralEquality(other: Descriptor, map: MutableSet<Pair<Descriptor, Descriptor>>): Boolean {
+        if (this == other) return true
+        if (other !is ObjectDescriptor) return false
+        if (this to other in map) return true
+        if (this.klass != other.klass) return false
+
+        map += this to other
+        for ((field, type) in this.fields.keys.intersect(other.fields.keys)) {
+            val thisValue = this[field, type] ?: return false
+            val otherValue = other[field, type] ?: return false
+            if (!thisValue.structuralEquality(otherValue, map)) return false
+        }
+        return true
+    }
 }
 
 class ArrayDescriptor(val elementType: KexType, val length: Int) :
@@ -212,11 +231,13 @@ class ArrayDescriptor(val elementType: KexType, val length: Int) :
         elements[index] = value
     }
 
+    operator fun get(index: Int) = elements[index]
+
     override fun print(map: MutableMap<Descriptor, String>): String {
         if (this in map) return map[this]!!
         map[this] = term.name
         return buildString {
-            append("$term = $elementType[$length] {\n")
+            append("$term = $elementType[${this@ArrayDescriptor.length}] {\n")
             for ((index, value) in elements) {
                 append("    $index = ${value.term}\n")
             }
@@ -285,6 +306,22 @@ class ArrayDescriptor(val elementType: KexType, val length: Int) :
         }
         return builder.apply()
     }
+
+    override fun structuralEquality(other: Descriptor, map: MutableSet<Pair<Descriptor, Descriptor>>): Boolean {
+        if (this == other) return true
+        if (other !is ArrayDescriptor) return false
+        if (this to other in map) return true
+        if (this.elementType != other.elementType) return false
+        if (this.length != other.length) return false
+
+        map += this to other
+        for (index in this.elements.keys.intersect(other.elements.keys)) {
+            val thisValue = this[index] ?: return false
+            val otherValue = other[index] ?: return false
+            if (!thisValue.structuralEquality(otherValue, map)) return false
+        }
+        return true
+    }
 }
 
 class StaticFieldDescriptor(val klass: KexClass, val field: String, type: KexType, var value: Descriptor) :
@@ -333,9 +370,21 @@ class StaticFieldDescriptor(val klass: KexClass, val field: String, type: KexTyp
         visited += this
         return value.generateTypeInfo(visited)
     }
+
+    override fun structuralEquality(other: Descriptor, map: MutableSet<Pair<Descriptor, Descriptor>>): Boolean {
+        if (this == other) return true
+        if (other !is StaticFieldDescriptor) return false
+        if (this to other in map) return true
+        if (this.klass != other.klass) return false
+        if (this.field != other.field) return false
+        if (this.type != other.type) return false
+
+        map += this to other
+        return this.value.structuralEquality(other.value, map)
+    }
 }
 
-class DescriptorBuilder {
+open class DescriptorBuilder {
     val `null` = ConstantDescriptor.Null
     fun const(@Suppress("UNUSED_PARAMETER") nothing: Nothing?) = `null`
     fun const(value: Boolean) = ConstantDescriptor.Bool(value)
@@ -345,7 +394,7 @@ class DescriptorBuilder {
         is Double -> ConstantDescriptor.Double(number)
         else -> ConstantDescriptor.Int(number.toInt())
     }
-    fun const(klass: KexClass) = ConstantDescriptor.Class(klass)
+    fun const(klass: KexType) = ConstantDescriptor.Class(klass)
 
     fun `object`(type: KexClass): ObjectDescriptor = ObjectDescriptor(type)
     fun array(length: Int, elementType: KexType): ArrayDescriptor = ArrayDescriptor(elementType, length)

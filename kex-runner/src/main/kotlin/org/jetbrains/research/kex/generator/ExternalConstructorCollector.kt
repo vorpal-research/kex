@@ -19,6 +19,7 @@ class ExternalConstructorCollector(override val cm: ClassManager) : MethodVisito
         val returnType = (method.returnType as? ClassType) ?: return
         if (!(method.isStatic && method.argTypes.all { !it.isSubtypeOf(returnType) } && !method.isSynthetic)) return
 
+        externalConstructors.getOrPut(returnType.`class`, ::mutableSetOf) += method
         returnType.`class`.allAncestors.forEach {
             externalConstructors.getOrPut(it, ::mutableSetOf) += method
         }

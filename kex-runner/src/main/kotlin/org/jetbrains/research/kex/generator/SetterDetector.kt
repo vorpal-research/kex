@@ -57,8 +57,10 @@ class SetterDetector(val ctx: ExecutionContext) : ClassVisitor {
     }
 
     override fun visitMethod(method: Method) {
-        val klass = ctx.loader.loadClass(method.`class`)
-        val fieldInstances = klass.declaredFields.filter { method.name == "set${it.name.capitalize()}" }
+        val fieldInstances = `try` {
+            val klass = ctx.loader.loadClass(method.`class`)
+            klass.declaredFields.filter { method.name == "set${it.name.capitalize()}" }
+        }.getOrNull() ?: return
         if (fieldInstances.isEmpty()) return
         require(fieldInstances.size == 1)
         val fieldReflection = fieldInstances.first()

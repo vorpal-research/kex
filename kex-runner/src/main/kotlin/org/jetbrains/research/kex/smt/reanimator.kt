@@ -10,22 +10,15 @@ import org.jetbrains.research.kex.ktype.*
 import org.jetbrains.research.kex.state.term.*
 import org.jetbrains.research.kex.state.transformer.memspace
 import org.jetbrains.research.kex.util.getActualField
+import org.jetbrains.research.kex.util.isFinal
 import org.jetbrains.research.kex.util.loadClass
 import org.jetbrains.research.kfg.ir.Method
-import java.lang.reflect.*
 import java.lang.reflect.Array
+import java.lang.reflect.ParameterizedType
+import java.lang.reflect.Type
 
 private val Term.isPointer get() = this.type is KexPointer
 private val Term.isPrimary get() = !this.isPointer
-
-private var Field.isFinal: Boolean
-    get() = (this.modifiers and Modifier.FINAL) == Modifier.FINAL
-    set(value) {
-        if (value == this.isFinal) return
-        val modifiersField = this.javaClass.getDeclaredField("modifiers")
-        modifiersField.isAccessible = true
-        modifiersField.setInt(this, this.modifiers and if (value) Modifier.FINAL else Modifier.FINAL.inv())
-    }
 
 private val Type.simpleTypeName: String
     get() = when (this) {
@@ -34,6 +27,17 @@ private val Type.simpleTypeName: String
     }
 
 data class ReanimatedModel(val method: Method, val instance: Any?, val arguments: List<Any?>)
+
+private val Term.numericValue: Number get() = when (this) {
+    is ConstByteTerm -> value
+    is ConstCharTerm -> value.toByte()
+    is ConstShortTerm -> value
+    is ConstIntTerm -> value
+    is ConstLongTerm -> value
+    is ConstFloatTerm -> value
+    is ConstDoubleTerm -> value
+    else -> unreachable { log.error("Trying to get value of term: $this with type $type") }
+}
 
 interface Reanimator<T> {
     val method: Method
@@ -87,13 +91,13 @@ class ObjectReanimator(override val method: Method,
         if (value == null) return randomizer.next(loader.loadClass(context.types, type))
         return when (type) {
             is KexBool -> (value as ConstBoolTerm).value
-            is KexByte -> (value as ConstByteTerm).value
-            is KexChar -> (value as ConstIntTerm).value.toChar()
-            is KexShort -> (value as ConstShortTerm).value
-            is KexInt -> (value as ConstIntTerm).value
-            is KexLong -> (value as ConstLongTerm).value
-            is KexFloat -> (value as ConstFloatTerm).value
-            is KexDouble -> (value as ConstDoubleTerm).value
+            is KexByte -> value.numericValue.toByte()
+            is KexChar -> value.numericValue.toChar()
+            is KexShort -> value.numericValue.toShort()
+            is KexInt -> value.numericValue.toInt()
+            is KexLong -> value.numericValue.toLong()
+            is KexFloat -> value.numericValue.toFloat()
+            is KexDouble -> value.numericValue.toDouble()
             else -> unreachable { log.error("Trying to recover non-primary term as primary value: $value with type $type") }
         }
     }
@@ -142,8 +146,8 @@ class ObjectReanimator(override val method: Method,
             is FieldTerm -> {
                 val (instance, klass) = when {
                     term.isStatic -> {
-                        val classRef = (term.owner as ConstClassTerm)
-                        val `class` = tryOrNull { loader.loadClass(classRef.type.canonicalDesc) } ?: return null
+                        val canonicalDesc = term.type.getKfgType(context.types).canonicalDesc
+                        val `class` = tryOrNull { loader.loadClass(canonicalDesc) } ?: return null
                         if (`class`.isSynthetic) return null
                         null to `class`
                     }
@@ -258,13 +262,13 @@ abstract class DescriptorReanimator(override val method: Method,
         if (value == null) default(term.type, false)
         else when (term.type) {
             is KexBool -> const((value as ConstBoolTerm).value)
-            is KexByte -> const((value as ConstByteTerm).value)
-            is KexChar -> const((value as ConstIntTerm).value)
-            is KexShort -> const((value as ConstShortTerm).value)
-            is KexInt -> const((value as ConstIntTerm).value)
-            is KexLong -> const((value as ConstLongTerm).value)
-            is KexFloat -> const((value as ConstFloatTerm).value)
-            is KexDouble -> const((value as ConstDoubleTerm).value)
+            is KexByte -> const(value.numericValue.toByte())
+            is KexChar -> const(value.numericValue.toInt())
+            is KexShort -> const(value.numericValue.toShort())
+            is KexInt -> const(value.numericValue.toInt())
+            is KexLong -> const(value.numericValue.toLong())
+            is KexFloat -> const(value.numericValue.toFloat())
+            is KexDouble -> const(value.numericValue.toDouble())
             else -> unreachable { log.error("Trying to recover non-primary term as primary value: $value with type ${term.type}") }
         }
     }
@@ -292,7 +296,8 @@ abstract class DescriptorReanimator(override val method: Method,
         when (val address = (addr as? ConstIntTerm)?.value) {
             null, 0 -> default(term.type)
             else -> {
-                val arrayType = (reanimateType(term.memspace, addr) ?: term.type) as KexArray
+                val arrayType = (reanimateType(term.memspace, addr) ?: term.type) as? KexArray
+                        ?: unreachable { log.error("Could not cast ${reanimateType(term.memspace, addr)} to array type") }
                 memory(term.memspace, address) { newArrayInstance(term.memspace, arrayType, addr) }
             }
         }
@@ -321,7 +326,8 @@ abstract class DescriptorReanimator(override val method: Method,
                 val (instance, klass) = when {
                     term.isStatic -> {
                         val classRef = (term.owner as ConstClassTerm)
-                        val `class` = tryOrNull { loader.loadClass(classRef.type.canonicalDesc) }
+                        val canonicalDesc = term.type.getKfgType(context.types).canonicalDesc
+                        val `class` = tryOrNull { loader.loadClass(canonicalDesc) }
                                 ?: return@descriptor default(term.type)
                         if (`class`.isSynthetic) return@descriptor default(term.type)
 
@@ -359,7 +365,7 @@ abstract class DescriptorReanimator(override val method: Method,
                         instance[fieldName, fieldType] = reanimatedValue
                         instance
                     }
-                    is ConstantDescriptor.Class -> staticField(instance.value, fieldName, fieldType, reanimatedValue)
+                    is ConstantDescriptor.Class -> staticField(instance.value as KexClass, fieldName, fieldType, reanimatedValue)
                     else -> unreachable { log.error("Unknown type of field owner") }
                 }
             }

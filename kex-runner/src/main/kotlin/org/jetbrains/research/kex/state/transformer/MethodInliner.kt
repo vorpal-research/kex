@@ -3,6 +3,7 @@ package org.jetbrains.research.kex.state.transformer
 import com.abdullin.kthelper.collection.dequeOf
 import org.jetbrains.research.kex.asm.manager.MethodManager
 import org.jetbrains.research.kex.asm.state.PredicateStateAnalysis
+import org.jetbrains.research.kex.config.kexConfig
 import org.jetbrains.research.kex.ktype.kexType
 import org.jetbrains.research.kex.state.PredicateState
 import org.jetbrains.research.kex.state.StateBuilder
@@ -11,10 +12,14 @@ import org.jetbrains.research.kex.state.predicate.Predicate
 import org.jetbrains.research.kex.state.term.*
 import org.jetbrains.research.kfg.ir.Method
 
-class MethodInliner(val psa: PredicateStateAnalysis) : RecollectingTransformer<MethodInliner> {
+private val defaultDepth = kexConfig.getIntValue("inliner", "depth", 5)
+
+class MethodInliner(val psa: PredicateStateAnalysis,
+                    inlineIndex: Int = 0) : RecollectingTransformer<MethodInliner> {
     private val im = MethodManager.InlineManager
     override val builders = dequeOf(StateBuilder())
-    private var inlineIndex = 0
+    var inlineIndex = inlineIndex
+        private set
 
     protected class TermRenamer(val suffix: String, val remapping: Map<Term, Term>) : Transformer<TermRenamer> {
         override fun transformTerm(term: Term): Term = remapping[term] ?: when (term) {
@@ -30,7 +35,7 @@ class MethodInliner(val psa: PredicateStateAnalysis) : RecollectingTransformer<M
 
         val mappings = hashMapOf<Term, Term>()
         if (!call.isStatic) {
-            val `this` = term { `this`(call.owner.type) }
+            val `this` = term { `this`(calledMethod.`class`.kexType) }
             mappings[`this`] = call.owner
         }
         if (predicate.hasLhv) {
@@ -56,5 +61,22 @@ class MethodInliner(val psa: PredicateStateAnalysis) : RecollectingTransformer<M
         val endState = builder.methodState ?: return null
 
         return TermRenamer("inlined${inlineIndex++}", mappings).apply(endState)
+    }
+}
+
+class SimpleDepthInliner(val psa: PredicateStateAnalysis, val maxDepth: Int = defaultDepth) : Transformer<DepthInliner> {
+    override fun apply(ps: PredicateState): PredicateState {
+        var last: PredicateState
+        var current = ps
+        var inlineIndex = 0
+        var depth = 0
+        do {
+            last = current
+            val cii = MethodInliner(psa, inlineIndex)
+            current = cii.apply(last)
+            inlineIndex = cii.inlineIndex
+            ++depth
+        } while (current != last && depth < maxDepth)
+        return current
     }
 }

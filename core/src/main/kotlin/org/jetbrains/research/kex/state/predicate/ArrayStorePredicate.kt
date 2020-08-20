@@ -2,7 +2,7 @@ package org.jetbrains.research.kex.state.predicate
 
 import com.abdullin.kthelper.assert.unreachable
 import com.abdullin.kthelper.logging.log
-import kotlinx.serialization.ContextualSerialization
+import kotlinx.serialization.Contextual
 import kotlinx.serialization.Required
 import kotlinx.serialization.Serializable
 import org.jetbrains.research.kex.InheritorOf
@@ -18,7 +18,7 @@ class ArrayStorePredicate(
         val arrayRef: Term,
         val value: Term,
         @Required override val type: PredicateType = PredicateType.State(),
-        @Required @ContextualSerialization override val location: Location = Location()) : Predicate() {
+        @Required @Contextual override val location: Location = Location()) : Predicate() {
     override val operands by lazy { listOf(arrayRef, value) }
 
     val componentType: KexType

@@ -1,6 +1,6 @@
 package org.jetbrains.research.kex.state.term
 
-import kotlinx.serialization.ContextualSerialization
+import kotlinx.serialization.Contextual
 import kotlinx.serialization.Serializable
 import org.jetbrains.research.kex.InheritorOf
 import org.jetbrains.research.kex.ktype.KexType
@@ -12,7 +12,7 @@ import org.jetbrains.research.kfg.ir.Method
 class CallTerm(
         override val type: KexType,
         val owner: Term,
-        @ContextualSerialization val method: Method,
+        @Contextual val method: Method,
         val arguments: List<Term>) : Term() {
     override val name = "$owner.${method.name}(${arguments.joinToString()})"
     override val subterms by lazy { listOf(owner) + arguments }

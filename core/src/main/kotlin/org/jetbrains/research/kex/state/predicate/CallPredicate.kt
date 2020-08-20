@@ -1,7 +1,7 @@
 package org.jetbrains.research.kex.state.predicate
 
 import com.abdullin.kthelper.assert.asserted
-import kotlinx.serialization.ContextualSerialization
+import kotlinx.serialization.Contextual
 import kotlinx.serialization.Required
 import kotlinx.serialization.Serializable
 import org.jetbrains.research.kex.InheritorOf
@@ -15,7 +15,7 @@ class CallPredicate(
         val lhvUnsafe: Term?,
         val callTerm: Term,
         @Required override val type: PredicateType = PredicateType.State(),
-        @Required @ContextualSerialization override val location: Location = Location()) : Predicate() {
+        @Required @Contextual override val location: Location = Location()) : Predicate() {
     val hasLhv by lazy { lhvUnsafe != null }
     override val operands by lazy { listOfNotNull(lhvUnsafe, callTerm) }
 

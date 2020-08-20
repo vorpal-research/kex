@@ -1,7 +1,7 @@
 package org.jetbrains.research.kex.state.term
 
 import com.abdullin.kthelper.defaultHashCode
-import kotlinx.serialization.ContextualSerialization
+import kotlinx.serialization.Contextual
 import kotlinx.serialization.Serializable
 import org.jetbrains.research.kex.InheritorOf
 import org.jetbrains.research.kex.ktype.KexType
@@ -12,7 +12,7 @@ import org.jetbrains.research.kfg.ir.value.instruction.BinaryOpcode
 @Serializable
 class BinaryTerm(
         override val type: KexType,
-        @ContextualSerialization val opcode: BinaryOpcode,
+        @Contextual val opcode: BinaryOpcode,
         val lhv: Term,
         val rhv: Term) : Term() {
     override val name = "$lhv $opcode $rhv"

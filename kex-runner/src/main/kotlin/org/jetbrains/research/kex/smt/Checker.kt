@@ -11,6 +11,7 @@ import org.jetbrains.research.kex.state.term.FieldTerm
 import org.jetbrains.research.kex.state.term.Term
 import org.jetbrains.research.kex.state.term.ValueTerm
 import org.jetbrains.research.kex.state.transformer.*
+import org.jetbrains.research.kfg.ir.BasicBlock
 import org.jetbrains.research.kfg.ir.Method
 import org.jetbrains.research.kfg.ir.value.instruction.Instruction
 
@@ -27,6 +28,7 @@ class Checker(val method: Method, val loader: ClassLoader, private val psa: Pred
     lateinit var query: PredicateState
         private set
 
+    fun createState(block: BasicBlock) = createState(block.terminator)
     fun createState(inst: Instruction) = builder.getInstructionState(inst)
 
     fun checkReachable(inst: Instruction): Result {
@@ -46,6 +48,18 @@ class Checker(val method: Method, val loader: ClassLoader, private val psa: Pred
             +MethodInliner(psa)
         }
 
+        +IntrinsicAdapter
+        +ReflectionInfoAdapter(method, loader)
+        +Optimizer()
+        +ConstantPropagator
+        +BoolTypeAdapter(method.cm.type)
+        +ArrayBoundsAdapter()
+        +NullityInfoAdapter()
+    }
+
+    fun prepareState(method: Method, ps: PredicateState, typeInfoMap: TypeInfoMap) = transform(ps) {
+        +AnnotationIncluder(method, AnnotationManager.defaultLoader)
+        +DepthInliner(method.cm.type, typeInfoMap, psa)
         +IntrinsicAdapter
         +ReflectionInfoAdapter(method, loader)
         +Optimizer()
