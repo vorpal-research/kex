@@ -11,10 +11,9 @@ import org.jetbrains.research.kex.generator.descriptor.ObjectDescriptor
 import org.jetbrains.research.kex.generator.externalConstructors
 import org.jetbrains.research.kex.generator.hasSetter
 import org.jetbrains.research.kex.generator.setter
-import org.jetbrains.research.kex.ktype.KexArray
-import org.jetbrains.research.kex.ktype.KexType
-import org.jetbrains.research.kex.ktype.type
+import org.jetbrains.research.kex.ktype.*
 import org.jetbrains.research.kfg.ir.Method
+import org.jetbrains.research.kfg.ir.MethodDesc
 import java.util.*
 
 private val visibilityLevel by lazy { kexConfig.getEnumValue("apiGeneration", "visibility", true, Visibility.PUBLIC) }
@@ -163,7 +162,7 @@ class ArrayGenerator(private val fallback: CSGenerator) : CSGenerator {
 
         val elementType = descriptor.elementType.getKfgType(types)
         val lengthCall = PrimaryValue(descriptor.length).wrap("${name}Length")
-        val array = NewArray(elementType, lengthCall)
+        val array = NewArray(types.getArrayType(elementType), lengthCall)
         callStack += array
 
         descriptor.elements.forEach { (index, value) ->
@@ -173,5 +172,34 @@ class ArrayGenerator(private val fallback: CSGenerator) : CSGenerator {
         }
 
         callStack
+    }
+}
+
+class StringGenerator(private val fallback: CSGenerator) : CSGenerator {
+    override val context: GeneratorContext
+        get() = fallback.context
+
+    override fun supports(type: KexType) = type == KexClass("java/lang/String")
+
+    override fun generate(descriptor: Descriptor, depth: Int): CallStack = with(context) {
+        descriptor as? ObjectDescriptor ?: throw IllegalArgumentException()
+        descriptor.reduce()
+
+        val name = "${descriptor.term}"
+        val callStack = CallStack(name)
+        descriptor.cache(callStack)
+
+        val stringClass = context.cm["java/lang/String"]
+
+        val valueDescriptor = descriptor["value", KexArray(KexChar())]
+        if (valueDescriptor == null) {
+            callStack += DefaultConstructorCall(stringClass).wrap(name)
+            return callStack
+        }
+        val value = fallback.generate(valueDescriptor, depth + 1)
+
+        val constructor = stringClass.getMethod("<init>", MethodDesc(arrayOf(types.getArrayType(types.charType)), types.voidType))
+        callStack += ConstructorCall(stringClass, constructor, listOf(value)).wrap(name)
+        return callStack
     }
 }

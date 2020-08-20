@@ -7,6 +7,7 @@ import org.jetbrains.research.kex.generator.descriptor.ConstantDescriptor
 import org.jetbrains.research.kex.generator.descriptor.Descriptor
 import org.jetbrains.research.kex.generator.descriptor.StaticFieldDescriptor
 import org.jetbrains.research.kex.ktype.KexArray
+import org.jetbrains.research.kex.ktype.KexClass
 import org.jetbrains.research.kex.ktype.KexType
 
 private val maxGenerationDepth by lazy { kexConfig.getIntValue("apiGeneration", "maxGenerationDepth", 100) }
@@ -18,6 +19,10 @@ class CallStackGenerator(executionCtx: ExecutionContext, psa: PredicateStateAnal
     private val typeGenerators = mutableMapOf<KexType, CSGenerator>()
 
     override fun supports(type: KexType) = true
+
+    init {
+        typeGenerators += KexClass("java/lang/String") to StringGenerator(this)
+    }
 
     val KexType.generator: CSGenerator
         get() = when (this) {
