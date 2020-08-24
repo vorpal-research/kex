@@ -1,7 +1,7 @@
 package org.jetbrains.research.kex.generator.descriptor
 
 import org.jetbrains.research.kex.config.kexConfig
-import org.jetbrains.research.kex.ktype.KexClass
+import org.jetbrains.research.kex.ktype.*
 import org.jetbrains.research.kex.util.allFields
 import org.jetbrains.research.kex.util.isStatic
 import org.jetbrains.research.kex.util.kex
@@ -23,14 +23,14 @@ class Object2DescriptorConverter : DescriptorBuilder() {
         is Long -> const(any)
         is Float -> const(any)
         is Double -> const(any)
-        is BooleanArray -> array(any.toTypedArray(), depth)
-        is ByteArray -> array(any.toTypedArray(), depth)
-        is CharArray -> array(any.toTypedArray(), depth)
-        is ShortArray -> array(any.toTypedArray(), depth)
-        is IntArray -> array(any.toTypedArray(), depth)
-        is LongArray -> array(any.toTypedArray(), depth)
-        is FloatArray -> array(any.toTypedArray(), depth)
-        is DoubleArray -> array(any.toTypedArray(), depth)
+        is BooleanArray -> booleanArray(any, depth)
+        is ByteArray -> byteArray(any, depth)
+        is CharArray -> charArray(any, depth)
+        is ShortArray -> shortArray(any, depth)
+        is IntArray -> intArray(any, depth)
+        is LongArray -> longArray(any, depth)
+        is FloatArray -> floatArray(any, depth)
+        is DoubleArray -> doubleArray(any, depth)
         is Array<*> -> array(any, depth)
         else -> `object`(any, depth)
     }
@@ -60,6 +60,102 @@ class Object2DescriptorConverter : DescriptorBuilder() {
         if (depth > maxGenerationDepth) return `null`
 
         val elementType = array.javaClass.componentType.kex
+        val result = array(array.size, elementType)
+        for ((index, element) in array.withIndex()) {
+            val elementDescriptor = convert(element, depth + 1)
+            result[index] = elementDescriptor
+        }
+        return result
+    }
+
+    fun booleanArray(array: BooleanArray, depth: Int): Descriptor {
+        if (depth > maxGenerationDepth) return `null`
+
+        val elementType = KexBool()
+        val result = array(array.size, elementType)
+        for ((index, element) in array.withIndex()) {
+            val elementDescriptor = convert(element, depth + 1)
+            result[index] = elementDescriptor
+        }
+        return result
+    }
+
+    fun byteArray(array: ByteArray, depth: Int): Descriptor {
+        if (depth > maxGenerationDepth) return `null`
+
+        val elementType = KexByte()
+        val result = array(array.size, elementType)
+        for ((index, element) in array.withIndex()) {
+            val elementDescriptor = convert(element, depth + 1)
+            result[index] = elementDescriptor
+        }
+        return result
+    }
+
+    fun charArray(array: CharArray, depth: Int): Descriptor {
+        if (depth > maxGenerationDepth) return `null`
+
+        val elementType = KexChar()
+        val result = array(array.size, elementType)
+        for ((index, element) in array.withIndex()) {
+            val elementDescriptor = convert(element, depth + 1)
+            result[index] = elementDescriptor
+        }
+        return result
+    }
+
+    fun shortArray(array: ShortArray, depth: Int): Descriptor {
+        if (depth > maxGenerationDepth) return `null`
+
+        val elementType = KexShort()
+        val result = array(array.size, elementType)
+        for ((index, element) in array.withIndex()) {
+            val elementDescriptor = convert(element, depth + 1)
+            result[index] = elementDescriptor
+        }
+        return result
+    }
+
+    fun intArray(array: IntArray, depth: Int): Descriptor {
+        if (depth > maxGenerationDepth) return `null`
+
+        val elementType = KexInt()
+        val result = array(array.size, elementType)
+        for ((index, element) in array.withIndex()) {
+            val elementDescriptor = convert(element, depth + 1)
+            result[index] = elementDescriptor
+        }
+        return result
+    }
+
+    fun longArray(array: LongArray, depth: Int): Descriptor {
+        if (depth > maxGenerationDepth) return `null`
+
+        val elementType = KexLong()
+        val result = array(array.size, elementType)
+        for ((index, element) in array.withIndex()) {
+            val elementDescriptor = convert(element, depth + 1)
+            result[index] = elementDescriptor
+        }
+        return result
+    }
+
+    fun floatArray(array: FloatArray, depth: Int): Descriptor {
+        if (depth > maxGenerationDepth) return `null`
+
+        val elementType = KexFloat()
+        val result = array(array.size, elementType)
+        for ((index, element) in array.withIndex()) {
+            val elementDescriptor = convert(element, depth + 1)
+            result[index] = elementDescriptor
+        }
+        return result
+    }
+
+    fun doubleArray(array: DoubleArray, depth: Int): Descriptor {
+        if (depth > maxGenerationDepth) return `null`
+
+        val elementType = KexDouble()
         val result = array(array.size, elementType)
         for ((index, element) in array.withIndex()) {
             val elementDescriptor = convert(element, depth + 1)

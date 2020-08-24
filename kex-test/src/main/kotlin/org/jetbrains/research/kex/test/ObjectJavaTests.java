@@ -1,28 +1,28 @@
 package org.jetbrains.research.kex.test;
 
 public class ObjectJavaTests {
-    class PointJava {
+    public static class PointJava {
         int x;
         int y;
         int z;
 
-        PointJava(int x, int y, int z) {
+        public PointJava(int x, int y, int z) {
             this.x = x;
             this.y = y;
             this.z = z;
         }
     }
-    class LineJava {
+    public static class LineJava {
         PointJava start;
         PointJava end;
 
-        LineJava(PointJava start, PointJava end) {
+        public LineJava(PointJava start, PointJava end) {
             this.start = start;
             this.end = end;
         }
     }
 
-    class DoublePointJava {
+    public static class DoublePointJava {
         double x;
         double y;
         double z;
