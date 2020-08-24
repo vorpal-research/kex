@@ -263,7 +263,7 @@ abstract class DescriptorReanimator(override val method: Method,
         else when (term.type) {
             is KexBool -> const((value as ConstBoolTerm).value)
             is KexByte -> const(value.numericValue.toByte())
-            is KexChar -> const(value.numericValue.toInt())
+            is KexChar -> const(value.numericValue.toChar())
             is KexShort -> const(value.numericValue.toShort())
             is KexInt -> const(value.numericValue.toInt())
             is KexLong -> const(value.numericValue.toLong())
@@ -385,10 +385,14 @@ abstract class DescriptorReanimator(override val method: Method,
                 when (referencedType) {
                     is KexPointer -> reanimateReferencePointer(term, value)
                     is KexBool -> const(intVal.toBoolean())
+                    is KexByte -> const(intVal.toByte())
+                    is KexChar -> const(intVal.toChar())
+                    is KexShort -> const(intVal.toShort())
+                    is KexInt -> const(intVal)
                     is KexLong -> const(intVal.toLong())
                     is KexFloat -> const(intVal.toFloat())
                     is KexDouble -> const(intVal.toDouble())
-                    else -> const(intVal)
+                    else -> unreachable { log.error("Unknown type $referencedType") }
                 }
             }
         }

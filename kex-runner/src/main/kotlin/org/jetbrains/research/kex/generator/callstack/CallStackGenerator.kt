@@ -41,6 +41,9 @@ class CallStackGenerator(executionCtx: ExecutionContext, psa: PredicateStateAnal
             is ConstantDescriptor -> return when (descriptor) {
                 is ConstantDescriptor.Null -> PrimaryValue(null)
                 is ConstantDescriptor.Bool -> PrimaryValue(descriptor.value)
+                is ConstantDescriptor.Byte -> PrimaryValue(descriptor.value)
+                is ConstantDescriptor.Char -> PrimaryValue(descriptor.value)
+                is ConstantDescriptor.Short -> PrimaryValue(descriptor.value)
                 is ConstantDescriptor.Int -> PrimaryValue(descriptor.value)
                 is ConstantDescriptor.Long -> PrimaryValue(descriptor.value)
                 is ConstantDescriptor.Float -> PrimaryValue(descriptor.value)

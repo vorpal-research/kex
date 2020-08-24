@@ -1,12 +1,50 @@
 package org.jetbrains.research.kex.generator.callstack
 
+import com.abdullin.kthelper.assert.unreachable
+import com.abdullin.kthelper.logging.log
 import org.jetbrains.research.kex.ExecutionContext
 import org.jetbrains.research.kex.trace.`object`.TraceCollectorProxy
 import org.jetbrains.research.kex.util.*
 import java.lang.reflect.Array
+import java.lang.reflect.Field
 
 class CallStackExecutor(val ctx: ExecutionContext) {
     private val cache = mutableMapOf<CallStack, Any?>()
+
+    private fun Field.setValue(instance: Any?, value: Any?) = if (this.type.isPrimitive) {
+        when (value!!.javaClass) {
+            Boolean::class.javaObjectType -> this.setBoolean(instance, value as Boolean)
+            Byte::class.javaObjectType -> this.setByte(instance, value as Byte)
+            Char::class.javaObjectType -> this.setChar(instance, value as Char)
+            Short::class.javaObjectType -> this.setShort(instance, value as Short)
+            Int::class.javaObjectType -> this.setInt(instance, value as Int)
+            Long::class.javaObjectType -> this.setLong(instance, value as Long)
+            Float::class.javaObjectType -> this.setFloat(instance, value as Float)
+            Double::class.javaObjectType -> this.setDouble(instance, value as Double)
+            else -> unreachable { log.error("Trying to get primitive type of non-primitive object $this") }
+        }
+    } else {
+        this.set(instance, value)
+    }
+
+    private fun setValue(instance: Any, index: Int, value: Any?) {
+        val elementType = instance::class.java.componentType
+        if (elementType.isPrimitive) {
+            when (value!!.javaClass) {
+                Boolean::class.javaObjectType -> Array.setBoolean(instance, index, value as Boolean)
+                Byte::class.javaObjectType -> Array.setByte(instance, index, value as Byte)
+                Char::class.javaObjectType -> Array.setChar(instance, index, value as Char)
+                Short::class.javaObjectType -> Array.setShort(instance, index, value as Short)
+                Int::class.javaObjectType -> Array.setInt(instance, index, value as Int)
+                Long::class.javaObjectType -> Array.setLong(instance, index, value as Long)
+                Float::class.javaObjectType -> Array.setFloat(instance, index, value as Float)
+                Double::class.javaObjectType -> Array.setDouble(instance, index, value as Double)
+                else -> unreachable { log.error("Trying to get primitive type of non-primitive object $this") }
+            }
+        } else {
+            Array.set(instance, index, value)
+        }
+    }
 
     fun execute(callStack: CallStack): Any? {
         if (callStack in cache) return cache[callStack]
@@ -52,13 +90,13 @@ class CallStackExecutor(val ctx: ExecutionContext) {
                 }
                 is NewArray -> {
                     val length = execute(call.length)!! as Int
-                    val elementReflection = ctx.loader.loadClass(call.klass)
+                    val elementReflection = ctx.loader.loadClass(call.asArray.component)
                     Array.newInstance(elementReflection, length)
                 }
                 is ArrayWrite -> {
                     val index = execute(call.index)!! as Int
                     val value = execute(call.value)
-                    Array.set(current, index, value)
+                    setValue(current!!, index, value)
                     current
                 }
                 is FieldSetter -> {
@@ -68,7 +106,7 @@ class CallStackExecutor(val ctx: ExecutionContext) {
                     fieldReflection.isAccessible = true
                     fieldReflection.isFinal = false
                     val value = execute(call.value)
-                    fieldReflection.set(current, value)
+                    fieldReflection.setValue(current, value)
                     current
                 }
                 is StaticFieldSetter -> {
@@ -78,7 +116,7 @@ class CallStackExecutor(val ctx: ExecutionContext) {
                     fieldReflection.isAccessible = true
                     fieldReflection.isFinal = false
                     val value = execute(call.value)
-                    fieldReflection.set(null, value)
+                    fieldReflection.setValue(null, value)
                     current
                 }
                 is UnknownCall -> {

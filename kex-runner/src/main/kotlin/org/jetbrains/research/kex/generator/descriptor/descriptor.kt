@@ -74,6 +74,18 @@ sealed class ConstantDescriptor(term: Term, type: KexType) : Descriptor(term, ty
         override fun toString() = "$value"
     }
 
+    data class Byte(val value: kotlin.Byte) : ConstantDescriptor(term { const(value) }, KexByte()) {
+        override fun toString() = "$value"
+    }
+
+    data class Char(val value: kotlin.Char) : ConstantDescriptor(term { const(value) }, KexChar()) {
+        override fun toString() = "$value"
+    }
+
+    data class Short(val value: kotlin.Short) : ConstantDescriptor(term { const(value) }, KexShort()) {
+        override fun toString() = "$value"
+    }
+
     data class Int(val value: kotlin.Int) : ConstantDescriptor(term { const(value) }, KexInt()) {
         override fun toString() = "$value"
     }
@@ -389,11 +401,15 @@ open class DescriptorBuilder {
     fun const(@Suppress("UNUSED_PARAMETER") nothing: Nothing?) = `null`
     fun const(value: Boolean) = ConstantDescriptor.Bool(value)
     fun const(number: Number) = when (number) {
+        is Byte -> ConstantDescriptor.Byte(number)
+        is Short -> ConstantDescriptor.Short(number)
+        is Int -> ConstantDescriptor.Int(number)
         is Long -> ConstantDescriptor.Long(number)
         is Float -> ConstantDescriptor.Float(number)
         is Double -> ConstantDescriptor.Double(number)
-        else -> ConstantDescriptor.Int(number.toInt())
+        else -> unreachable { log.error("Unknown number $number") }
     }
+    fun const(char: Char) = ConstantDescriptor.Char(char)
     fun const(klass: KexType) = ConstantDescriptor.Class(klass)
 
     fun `object`(type: KexClass): ObjectDescriptor = ObjectDescriptor(type)
@@ -405,9 +421,9 @@ open class DescriptorBuilder {
     fun default(type: KexType, nullable: Boolean): Descriptor = descriptor {
         when (type) {
             is KexBool -> const(false)
-            is KexByte -> const(0)
-            is KexChar -> const(0)
-            is KexShort -> const(0)
+            is KexByte -> const(0.toByte())
+            is KexChar -> const(0.toChar())
+            is KexShort -> const(0.toShort())
             is KexInt -> const(0)
             is KexLong -> const(0L)
             is KexFloat -> const(0.0F)

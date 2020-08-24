@@ -170,6 +170,7 @@ abstract class TermBuilder {
     fun const(constant: Constant) = tf.getConstant(constant)
     fun const(bool: Boolean) = tf.getBool(bool)
     fun const(str: String) = tf.getString(str)
+    fun const(char: Char) = tf.getChar(char)
     fun <T : Number> const(number: T) = tf.getConstant(number)
     fun const(@Suppress("UNUSED_PARAMETER") nothing: Nothing?) = tf.getNull()
     fun `class`(klass: Class) = tf.getClass(klass)

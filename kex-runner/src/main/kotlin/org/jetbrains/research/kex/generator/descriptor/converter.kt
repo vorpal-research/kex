@@ -17,7 +17,7 @@ class Object2DescriptorConverter : DescriptorBuilder() {
         in objectToDescriptor -> objectToDescriptor[any]!!
         is Boolean -> const(any)
         is Byte -> const(any)
-        is Char -> const(any.toByte())
+        is Char -> const(any)
         is Short -> const(any)
         is Int -> const(any)
         is Long -> const(any)
