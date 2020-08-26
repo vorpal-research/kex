@@ -8,7 +8,9 @@ import org.jetbrains.research.kex.asm.state.PredicateStateAnalysis
 import org.jetbrains.research.kex.generator.callstack.CallStack
 import org.jetbrains.research.kex.generator.callstack.CallStackExecutor
 import org.jetbrains.research.kex.generator.callstack.CallStackGenerator
-import org.jetbrains.research.kex.generator.descriptor.*
+import org.jetbrains.research.kex.generator.descriptor.Descriptor
+import org.jetbrains.research.kex.generator.descriptor.DescriptorStatistics
+import org.jetbrains.research.kex.generator.descriptor.descriptor
 import org.jetbrains.research.kex.ktype.type
 import org.jetbrains.research.kex.random.Randomizer
 import org.jetbrains.research.kex.util.loadClass
@@ -34,23 +36,6 @@ class RandomDescriptorGenerator(val ctx: ExecutionContext, val target: Package, 
             null
         }
 
-    fun Descriptor.countDepth(visited: Set<Descriptor> = setOf()): Int = when (this) {
-        in visited -> 0
-        is ConstantDescriptor -> 0
-        is ObjectDescriptor -> {
-            val newVisited = visited + this
-            fields.values.map { it.countDepth(newVisited) }.maxOrNull() ?: 0
-        }
-        is ArrayDescriptor -> {
-            val newVisited = visited + this
-            elements.values.map { it.countDepth(newVisited) }.maxOrNull() ?: 0
-        }
-        is StaticFieldDescriptor -> {
-            val newVisited = visited + this
-            value.countDepth(newVisited)
-        }
-    } + 1
-
     fun run(attempts: Int = 1000) {
         var successes = 0
         var depth = 0
@@ -62,16 +47,22 @@ class RandomDescriptorGenerator(val ctx: ExecutionContext, val target: Package, 
 
             val any = random.nextOrNull(klass)
             val descriptor = any.descriptor
-            depth += descriptor.countDepth()
+            val descriptorDepth = descriptor.depth
+            depth += descriptorDepth
+            log.debug("Depth: $descriptorDepth")
             val originalDescriptor = descriptor.deepCopy()
-            val callStack = descriptor.callStack ?: return@repeat
-            val generatedAny = `try` { CallStackExecutor(ctx).execute(callStack) }.getOrElse {
-                null
+            val callStack = descriptor.callStack
+            val generatedAny = callStack?.let { stack ->
+                `try` {
+                    CallStackExecutor(ctx).execute(stack)
+                }.getOrElse {
+                    null
+                }
             }
 
             val structuralEq = originalDescriptor eq generatedAny.descriptor
             if (structuralEq) {
-                successDepths += originalDescriptor.countDepth()
+                successDepths += descriptorDepth
                 ++successes
             }
 
