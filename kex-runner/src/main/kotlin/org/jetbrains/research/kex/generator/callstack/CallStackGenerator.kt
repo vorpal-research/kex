@@ -60,7 +60,7 @@ class CallStackGenerator(executionCtx: ExecutionContext, psa: PredicateStateAnal
             }
             else -> {
                 val typeGenerator = descriptor.type.generator
-                typeGenerator.generate(descriptor, depth)
+                typeGenerator.generate(descriptor, depth + 1)
             }
         }
         return descriptor.cached()!!

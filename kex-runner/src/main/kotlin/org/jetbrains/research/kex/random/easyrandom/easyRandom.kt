@@ -21,7 +21,6 @@ import java.lang.reflect.ParameterizedType
 import java.lang.reflect.Type
 import java.lang.reflect.TypeVariable
 import java.lang.reflect.WildcardType
-import org.jeasy.random.api.Randomizer as JRandomizer
 
 class EasyRandomDriver(val config: BeansConfig = defaultConfig) : Randomizer {
     companion object {
@@ -100,13 +99,11 @@ class EasyRandomDriver(val config: BeansConfig = defaultConfig) : Randomizer {
 
     private fun <T> generateClass(klass: Class<T>): Any? = when {
         Collection::class.java.isAssignableFrom(klass) -> {
-            val cr = CollectionRandomizer.generateCollection<Any?>(klass, { generateObject(it) },
-                    JRandomizer { next(Any::class.java) })
+            val cr = CollectionRandomizer.generateCollection(klass, { generateObject(it) }, { next(Any::class.java) })
             cr.randomValue
         }
         Map::class.java.isAssignableFrom(klass) -> {
-            val mr = CollectionRandomizer.generateMap<Any?, Any?>(klass, { generateObject(it) },
-                    JRandomizer { next(Any::class.java) }, JRandomizer { next(Any::class.java) })
+            val mr = CollectionRandomizer.generateMap(klass, { generateObject(it) }, { next(Any::class.java) }, { next(Any::class.java) })
             mr.randomValue
         }
         else -> generateObject(klass)
@@ -118,16 +115,14 @@ class EasyRandomDriver(val config: BeansConfig = defaultConfig) : Randomizer {
             Collection::class.java.isAssignableFrom(rawType) -> {
                 ktassert(type.actualTypeArguments.size == 1)
                 val typeParameter = type.actualTypeArguments.first()
-                val cr = CollectionRandomizer.generateCollection<Any?>(rawType, { generateObject(it) },
-                        JRandomizer { next(typeParameter) })
+                val cr = CollectionRandomizer.generateCollection(rawType, { generateObject(it) }, { next(typeParameter) })
                 cr.randomValue
             }
             Map::class.java.isAssignableFrom(rawType) -> {
                 ktassert(type.actualTypeArguments.size == 2)
                 val key = type.actualTypeArguments.first()
                 val value = type.actualTypeArguments.last()
-                val mr = CollectionRandomizer.generateMap<Any?, Any?>(rawType, { generateObject(it) },
-                        JRandomizer { next(key) }, JRandomizer { next(value) })
+                val mr = CollectionRandomizer.generateMap(rawType, { generateObject(it) }, { next(key) }, { next(value) })
                 mr.randomValue
             }
             else -> {

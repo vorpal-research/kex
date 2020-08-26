@@ -39,7 +39,7 @@ sealed class Descriptor(term: Term, type: KexType, val hasState: Boolean) {
 
     val query: PredicateState get() = collectQuery(mutableSetOf())
     val asString: String get() = print(mutableMapOf())
-    val depth: Int get() = countDepth(mutableMapOf())
+    val depth: Int get() = countDepth(setOf(), mutableMapOf())
 
     val typeInfo: PredicateState get() = generateTypeInfo(mutableSetOf())
 
@@ -50,7 +50,7 @@ sealed class Descriptor(term: Term, type: KexType, val hasState: Boolean) {
     abstract fun structuralEquality(other: Descriptor, map: MutableSet<Pair<Descriptor, Descriptor>>): Boolean
     abstract fun collectQuery(set: MutableSet<Descriptor>): PredicateState
 
-    abstract fun countDepth(visited: MutableMap<Descriptor, Int>): Int
+    abstract fun countDepth(visited: Set<Descriptor>, cache: MutableMap<Descriptor, Int>): Int
     abstract fun concretize(cm: ClassManager, visited: MutableSet<Descriptor> = mutableSetOf()): Descriptor
     abstract fun deepCopy(copied: MutableMap<Descriptor, Descriptor> = mutableMapOf()): Descriptor
     abstract fun reduce(visited: MutableSet<Descriptor> = mutableSetOf()): Descriptor
@@ -67,7 +67,7 @@ sealed class ConstantDescriptor(term: Term, type: KexType) : Descriptor(term, ty
     override fun generateTypeInfo(visited: MutableSet<Descriptor>) = emptyState()
     override fun print(map: MutableMap<Descriptor, String>) = ""
     override fun structuralEquality(other: Descriptor, map: MutableSet<Pair<Descriptor, Descriptor>>) = this.term == other.term
-    override fun countDepth(visited: MutableMap<Descriptor, kotlin.Int>) = 1
+    override fun countDepth(visited: Set<Descriptor>, cache: MutableMap<Descriptor, kotlin.Int>) = 1
 
     object Null : ConstantDescriptor(term { const(null) }, KexNull()) {
         override fun toString() = "null"
@@ -237,14 +237,15 @@ class ObjectDescriptor(klass: KexClass) : Descriptor(term { generate(klass) }, k
         return true
     }
 
-    override fun countDepth(visited: MutableMap<Descriptor, Int>): Int {
-        if (this in visited) return visited[this]!!
-        visited += this to 0
+    override fun countDepth(visited: Set<Descriptor>, cache: MutableMap<Descriptor, Int>): Int {
+        if (this in cache) return cache[this]!!
+        if (this in visited) return 0
+        val newVisited = visited + this
         var maxDepth = 0
         for (value in fields.values) {
-            maxDepth = maxOf(maxDepth, value.countDepth(visited))
+            maxDepth = maxOf(maxDepth, value.countDepth(newVisited, cache))
         }
-        visited[this] = maxDepth + 1
+        cache[this] = maxDepth + 1
         return maxDepth + 1
     }
 }
@@ -285,6 +286,7 @@ class ArrayDescriptor(val elementType: KexType, val length: Int) :
             }
             builder += require { term[index].load() equality element.term }
         }
+        builder += require { term.length() equality const(length) }
         return builder.apply()
     }
 
@@ -349,14 +351,15 @@ class ArrayDescriptor(val elementType: KexType, val length: Int) :
         return true
     }
 
-    override fun countDepth(visited: MutableMap<Descriptor, Int>): Int {
-        if (this in visited) return visited[this]!!
-        visited += this to 0
+    override fun countDepth(visited: Set<Descriptor>, cache: MutableMap<Descriptor, Int>): Int {
+        if (this in cache) return cache[this]!!
+        if (this in visited) return 0
+        val newVisited = visited + this
         var maxDepth = 0
         for (value in elements.values) {
-            maxDepth = maxOf(maxDepth, value.countDepth(visited))
+            maxDepth = maxOf(maxDepth, value.countDepth(newVisited, cache))
         }
-        visited[this] = maxDepth + 1
+        cache[this] = maxDepth + 1
         return maxDepth + 1
     }
 }
@@ -420,11 +423,11 @@ class StaticFieldDescriptor(val klass: KexClass, val field: String, type: KexTyp
         return this.value.structuralEquality(other.value, map)
     }
 
-    override fun countDepth(visited: MutableMap<Descriptor, Int>): Int {
-        if (this in visited) return visited[this]!!
-        visited += this to 0
-        val depth = value.countDepth(visited) + 1
-        visited[this] = depth
+    override fun countDepth(visited: Set<Descriptor>, cache: MutableMap<Descriptor, Int>): Int {
+        if (this in cache) return cache[this]!!
+        if (this in visited) return 0
+        val depth = value.countDepth(visited + this, cache) + 1
+        cache[this] = depth
         return depth
     }
 }

@@ -58,6 +58,8 @@ data class PrimaryValue<T>(val value: T) : ApiCall {
     override val parameters: List<CallStack>
         get() = listOf()
 
+    override fun toString() = value.toString()
+
     override fun print(owner: CallStack, builder: StringBuilder, visited: MutableSet<CallStack>) {
         if (owner.name != value.toString()) {
             builder.appendLine("${owner.name} = $value")
@@ -175,6 +177,6 @@ data class ArrayWrite(val index: CallStack, val value: CallStack) : ApiCall {
     override fun print(owner: CallStack, builder: StringBuilder, visited: MutableSet<CallStack>) {
         index.print(builder, visited)
         value.print(builder, visited)
-        builder.appendLine("${owner.name}[$index] = $value")
+        builder.appendLine("${owner.name}[${index.name}] = ${value.name}")
     }
 }
