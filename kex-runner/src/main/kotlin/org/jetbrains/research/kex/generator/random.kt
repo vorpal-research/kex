@@ -49,6 +49,7 @@ class RandomDescriptorGenerator(val ctx: ExecutionContext, val target: Package, 
             val descriptor = any.descriptor
             val descriptorDepth = descriptor.depth
             depth += descriptorDepth
+
             log.debug("Depth: $descriptorDepth")
             val originalDescriptor = descriptor.deepCopy()
             val callStack = descriptor.callStack

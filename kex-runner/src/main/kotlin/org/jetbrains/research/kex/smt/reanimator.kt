@@ -26,6 +26,8 @@ private val Type.simpleTypeName: String
         else -> this.typeName
     }
 
+private fun Number.toBoolean() = this != 0
+
 data class ReanimatedModel(val method: Method, val instance: Any?, val arguments: List<Any?>)
 
 private val Term.numericValue: Number get() = when (this) {
@@ -381,7 +383,7 @@ abstract class DescriptorReanimator(override val method: Method,
             is ConstDoubleTerm -> const(value.value)
             is ConstFloatTerm -> const(value.value)
             else -> {
-                val intVal = (value as ConstIntTerm).value
+                val intVal = value.numericValue
                 when (referencedType) {
                     is KexPointer -> reanimateReferencePointer(term, value)
                     is KexBool -> const(intVal.toBoolean())
