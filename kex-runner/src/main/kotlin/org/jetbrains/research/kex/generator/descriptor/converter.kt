@@ -7,32 +7,104 @@ import org.jetbrains.research.kex.util.isStatic
 import org.jetbrains.research.kex.util.kex
 import java.util.*
 
-private val maxGenerationDepth by lazy { kexConfig.getIntValue("apiGeneration", "maxGenerationDepth", 100) }
+private val maxGenerationDepth by lazy {
+//    kexConfig.getIntValue("apiGeneration", "maxGenerationDepth", 100)
+    kexConfig.getIntValue("easy-random", "depth", 10)
+}
 
 class Object2DescriptorConverter : DescriptorBuilder() {
     private val objectToDescriptor = IdentityHashMap<Any, Descriptor>()
 
-    fun convert(any: Any?, depth: Int = 0): Descriptor = when (any) {
-        null -> `null`
-        in objectToDescriptor -> objectToDescriptor[any]!!
-        is Boolean -> const(any)
-        is Byte -> const(any)
-        is Char -> const(any)
-        is Short -> const(any)
-        is Int -> const(any)
-        is Long -> const(any)
-        is Float -> const(any)
-        is Double -> const(any)
-        is BooleanArray -> booleanArray(any, depth + 1)
-        is ByteArray -> byteArray(any, depth + 1)
-        is CharArray -> charArray(any, depth + 1)
-        is ShortArray -> shortArray(any, depth + 1)
-        is IntArray -> intArray(any, depth + 1)
-        is LongArray -> longArray(any, depth + 1)
-        is FloatArray -> floatArray(any, depth + 1)
-        is DoubleArray -> doubleArray(any, depth + 1)
-        is Array<*> -> array(any, depth + 1)
-        else -> `object`(any, depth + 1)
+    fun convert(any: Any?, depth: Int = 0): Descriptor {
+        if (any == null) return `null`
+        if (any in objectToDescriptor) return objectToDescriptor[any]!!
+
+        return when (any.javaClass) {
+            Boolean::class.javaObjectType -> booleanWrapper(any as Boolean)
+            Byte::class.javaObjectType -> byteWrapper(any as Byte)
+            Char::class.javaObjectType -> charWrapper(any as Char)
+            Short::class.javaObjectType -> shortWrapper(any as Short)
+            Int::class.javaObjectType -> intWrapper(any as Int)
+            Long::class.javaObjectType -> longWrapper(any as Long)
+            Float::class.javaObjectType -> floatWrapper(any as Float)
+            Double::class.javaObjectType -> doubleWrapper(any as Double)
+            else -> when (any) {
+                is Boolean -> const(any)
+                is Byte -> const(any)
+                is Char -> const(any)
+                is Short -> const(any)
+                is Int -> const(any)
+                is Long -> const(any)
+                is Float -> const(any)
+                is Double -> const(any)
+                is BooleanArray -> booleanArray(any, depth + 1)
+                is ByteArray -> byteArray(any, depth + 1)
+                is CharArray -> charArray(any, depth + 1)
+                is ShortArray -> shortArray(any, depth + 1)
+                is IntArray -> intArray(any, depth + 1)
+                is LongArray -> longArray(any, depth + 1)
+                is FloatArray -> floatArray(any, depth + 1)
+                is DoubleArray -> doubleArray(any, depth + 1)
+                is Array<*> -> array(any, depth + 1)
+                else -> `object`(any, depth + 1)
+            }
+        }
+    }
+
+    fun booleanWrapper(any: Boolean): Descriptor {
+        val wrapperClass = KexClass("java/lang/Boolean")
+        val result = `object`(wrapperClass)
+        result["value" to KexBool()] = const(any)
+        return result
+    }
+
+    fun byteWrapper(any: Byte): Descriptor {
+        val wrapperClass = KexClass("java/lang/Byte")
+        val result = `object`(wrapperClass)
+        result["value" to KexByte()] = const(any)
+        return result
+    }
+
+    fun charWrapper(any: Char): Descriptor {
+        val wrapperClass = KexClass("java/lang/Character")
+        val result = `object`(wrapperClass)
+        result["value" to KexChar()] = const(any)
+        return result
+    }
+
+    fun shortWrapper(any: Short): Descriptor {
+        val wrapperClass = KexClass("java/lang/Short")
+        val result = `object`(wrapperClass)
+        result["value" to KexShort()] = const(any)
+        return result
+    }
+
+    fun intWrapper(any: Int): Descriptor {
+        val wrapperClass = KexClass("java/lang/Integer")
+        val result = `object`(wrapperClass)
+        result["value" to KexInt()] = const(any)
+        return result
+    }
+
+    fun longWrapper(any: Long): Descriptor {
+        val wrapperClass = KexClass("java/lang/Long")
+        val result = `object`(wrapperClass)
+        result["value" to KexLong()] = const(any)
+        return result
+    }
+
+    fun floatWrapper(any: Float): Descriptor {
+        val wrapperClass = KexClass("java/lang/Float")
+        val result = `object`(wrapperClass)
+        result["value" to KexFloat()] = const(any)
+        return result
+    }
+
+    fun doubleWrapper(any: Double): Descriptor {
+        val wrapperClass = KexClass("java/lang/Double")
+        val result = `object`(wrapperClass)
+        result["value" to KexDouble()] = const(any)
+        return result
     }
 
     fun `object`(any: Any, depth: Int): Descriptor {
