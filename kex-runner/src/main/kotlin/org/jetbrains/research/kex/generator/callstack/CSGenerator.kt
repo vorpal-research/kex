@@ -88,6 +88,8 @@ class AnyGenerator(private val fallback: CSGenerator) : CSGenerator {
                 return
             }
 
+            if (depth > maxStackSize - 1) continue
+
             for (method in klass.accessibleMethods) {
                 val result = method.executeAsSetter(current) ?: continue
                 acceptExecutionResult(result, current, depth, generationDepth, stack, method, queue)

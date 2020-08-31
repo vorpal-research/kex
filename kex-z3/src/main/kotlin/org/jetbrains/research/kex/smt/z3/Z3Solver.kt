@@ -234,7 +234,7 @@ class Z3Solver(val tf: TypeFactory) : AbstractSMTSolver {
         )
     }
 
-    override fun cleanup() {
+    override fun close() {
         ef.ctx.close()
     }
 }

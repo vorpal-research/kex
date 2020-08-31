@@ -1,6 +1,7 @@
 package org.jetbrains.research.kex.smt
 
 import org.jetbrains.research.kex.state.PredicateState
+import java.io.Closeable
 
 sealed class Result {
     open val known: Boolean = true
@@ -30,11 +31,9 @@ sealed class Result {
 }
 
 @AbstractSolver
-interface AbstractSMTSolver {
+interface AbstractSMTSolver : Closeable {
     fun isReachable(state: PredicateState): Result
     fun isPathPossible(state: PredicateState, path: PredicateState): Result
     fun isViolated(state: PredicateState, query: PredicateState): Result
-
-    fun cleanup()
 }
 

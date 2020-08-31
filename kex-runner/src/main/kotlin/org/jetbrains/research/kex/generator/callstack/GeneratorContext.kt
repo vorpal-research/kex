@@ -123,7 +123,8 @@ class GeneratorContext(val context: ExecutionContext, val psa: PredicateStateAna
 
     fun Method.execute(state: PredicateState, query: PredicateState): ExecutionResult? {
         val checker = Checker(this, context.loader, psa)
-        return when (val result = checker.check(state + query)) {
+        val checkedState = state + query
+        return when (val result = checker.check(checkedState)) {
             is Result.SatResult -> {
                 log.debug("Model: ${result.model}")
                 val (thisDescriptor, argumentDescriptors) =
