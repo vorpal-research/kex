@@ -1,5 +1,7 @@
 package org.jetbrains.research.kex.generator.descriptor
 
+import com.abdullin.kthelper.assert.unreachable
+import com.abdullin.kthelper.logging.log
 import org.jetbrains.research.kex.config.kexConfig
 import org.jetbrains.research.kex.ktype.*
 import org.jetbrains.research.kex.util.allFields
@@ -8,8 +10,7 @@ import org.jetbrains.research.kex.util.kex
 import java.util.*
 
 private val maxGenerationDepth by lazy {
-//    kexConfig.getIntValue("apiGeneration", "maxGenerationDepth", 100)
-    kexConfig.getIntValue("easy-random", "depth", 10)
+    kexConfig.getIntValue("apiGeneration", "maxConvertionDepth", 10)
 }
 
 class Object2DescriptorConverter : DescriptorBuilder() {
@@ -49,6 +50,22 @@ class Object2DescriptorConverter : DescriptorBuilder() {
                 else -> `object`(any, depth + 1)
             }
         }
+    }
+
+    fun convertElement(type: Class<*>, any: Any?, depth: Int): Descriptor = if (type.isPrimitive) {
+        when (any) {
+            is Boolean -> const(any)
+            is Byte -> const(any)
+            is Char -> const(any)
+            is Short -> const(any)
+            is Int -> const(any)
+            is Long -> const(any)
+            is Float -> const(any)
+            is Double -> const(any)
+            else -> unreachable { log.error("Unknown primitive type $any") }
+        }
+    } else {
+        convert(any, depth)
     }
 
     fun booleanWrapper(any: Boolean): Descriptor {
@@ -122,7 +139,7 @@ class Object2DescriptorConverter : DescriptorBuilder() {
             val type = field.type.kex
 
             val actualValue = field.get(any)
-            val descriptorValue = convert(actualValue, depth + 1)
+            val descriptorValue = convertElement(field.type, actualValue, depth + 1)
             result[name to type] = descriptorValue
         }
         return result
@@ -134,7 +151,7 @@ class Object2DescriptorConverter : DescriptorBuilder() {
         val elementType = array.javaClass.componentType.kex
         val result = array(array.size, elementType)
         for ((index, element) in array.withIndex()) {
-            val elementDescriptor = convert(element, depth + 1)
+            val elementDescriptor = convertElement(array.javaClass.componentType, element, depth + 1)
             result[index] = elementDescriptor
         }
         return result
@@ -146,8 +163,7 @@ class Object2DescriptorConverter : DescriptorBuilder() {
         val elementType = KexBool()
         val result = array(array.size, elementType)
         for ((index, element) in array.withIndex()) {
-            val elementDescriptor = convert(element, depth + 1)
-            result[index] = elementDescriptor
+            result[index] = const(element)
         }
         return result
     }
@@ -158,8 +174,7 @@ class Object2DescriptorConverter : DescriptorBuilder() {
         val elementType = KexByte()
         val result = array(array.size, elementType)
         for ((index, element) in array.withIndex()) {
-            val elementDescriptor = convert(element, depth + 1)
-            result[index] = elementDescriptor
+            result[index] = const(element)
         }
         return result
     }
@@ -170,8 +185,7 @@ class Object2DescriptorConverter : DescriptorBuilder() {
         val elementType = KexChar()
         val result = array(array.size, elementType)
         for ((index, element) in array.withIndex()) {
-            val elementDescriptor = convert(element, depth + 1)
-            result[index] = elementDescriptor
+            result[index] = const(element)
         }
         return result
     }
@@ -182,8 +196,7 @@ class Object2DescriptorConverter : DescriptorBuilder() {
         val elementType = KexShort()
         val result = array(array.size, elementType)
         for ((index, element) in array.withIndex()) {
-            val elementDescriptor = convert(element, depth + 1)
-            result[index] = elementDescriptor
+            result[index] = const(element)
         }
         return result
     }
@@ -194,8 +207,7 @@ class Object2DescriptorConverter : DescriptorBuilder() {
         val elementType = KexInt()
         val result = array(array.size, elementType)
         for ((index, element) in array.withIndex()) {
-            val elementDescriptor = convert(element, depth + 1)
-            result[index] = elementDescriptor
+            result[index] = const(element)
         }
         return result
     }
@@ -206,8 +218,7 @@ class Object2DescriptorConverter : DescriptorBuilder() {
         val elementType = KexLong()
         val result = array(array.size, elementType)
         for ((index, element) in array.withIndex()) {
-            val elementDescriptor = convert(element, depth + 1)
-            result[index] = elementDescriptor
+            result[index] = const(element)
         }
         return result
     }
@@ -218,8 +229,7 @@ class Object2DescriptorConverter : DescriptorBuilder() {
         val elementType = KexFloat()
         val result = array(array.size, elementType)
         for ((index, element) in array.withIndex()) {
-            val elementDescriptor = convert(element, depth + 1)
-            result[index] = elementDescriptor
+            result[index] = const(element)
         }
         return result
     }
@@ -230,8 +240,7 @@ class Object2DescriptorConverter : DescriptorBuilder() {
         val elementType = KexDouble()
         val result = array(array.size, elementType)
         for ((index, element) in array.withIndex()) {
-            val elementDescriptor = convert(element, depth + 1)
-            result[index] = elementDescriptor
+            result[index] = const(element)
         }
         return result
     }

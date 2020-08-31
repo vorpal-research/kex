@@ -4,16 +4,14 @@ package org.jetbrains.research.kex.test.debug
 
 class BasicTests {
 
-    class Value<T>(val name: T)
+    class Value(val name: String)
 
 //    class LocalArray() {
 //        val set = hashMapOf<Int, Int>()
 //    }
 
-    fun testAbstractClass(array: Value<Boolean>) {
-        if (array.name == true) {
-            println("a")
-        }
+    fun testAbstractClass(array: Value) {
+        println("a")
     }
 
 }
