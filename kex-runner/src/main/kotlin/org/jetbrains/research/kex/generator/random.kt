@@ -1,21 +1,23 @@
 package org.jetbrains.research.kex.generator
 
 import com.abdullin.kthelper.`try`
-import com.abdullin.kthelper.logging.debug
 import com.abdullin.kthelper.logging.log
+import com.abdullin.kthelper.time.timed
 import org.jetbrains.research.kex.ExecutionContext
 import org.jetbrains.research.kex.asm.state.PredicateStateAnalysis
 import org.jetbrains.research.kex.asm.util.Visibility
 import org.jetbrains.research.kex.asm.util.visibility
 import org.jetbrains.research.kex.config.kexConfig
+import org.jetbrains.research.kex.generator.callstack.CallStack
 import org.jetbrains.research.kex.generator.callstack.CallStackExecutor
 import org.jetbrains.research.kex.generator.callstack.CallStackGenerator
-import org.jetbrains.research.kex.generator.descriptor.descriptor
-import org.jetbrains.research.kex.generator.descriptor.isInstantiable
+import org.jetbrains.research.kex.generator.descriptor.*
 import org.jetbrains.research.kex.random.Randomizer
+import org.jetbrains.research.kex.util.kex
 import org.jetbrains.research.kex.util.loadClass
 import org.jetbrains.research.kfg.ClassManager
 import org.jetbrains.research.kfg.Package
+import org.jetbrains.research.kfg.type.ClassType
 
 private val visibilityLevel by lazy { kexConfig.getEnumValue("apiGeneration", "visibility", true, Visibility.PUBLIC) }
 
@@ -29,14 +31,32 @@ class RandomDescriptorGenerator(val ctx: ExecutionContext, val target: Package, 
                 .filterNot { it.isEnum }
                 .random()
 
+    fun Descriptor.isValid(visited: Set<Descriptor> = setOf()): Boolean = when (this) {
+        in visited -> true
+        is ConstantDescriptor.Double -> false
+        is ConstantDescriptor -> true
+        is ObjectDescriptor -> {
+            val set = visited + this
+            this.fields.all { it.value.isValid(set) }
+        }
+        is ArrayDescriptor -> {
+            val set = visited + this
+            this.elements.all { it.value.isValid(set) }
+        }
+        is StaticFieldDescriptor -> value.isValid(visited + this)
+    }
 
+    val Any.isValid: Boolean get() {
+        val kfgClass = (this.javaClass.kex.getKfgType(cm.type) as ClassType).`class`
+        if (!kfgClass.isInstantiable || visibilityLevel > kfgClass.visibility) return false
+        if (!this.descriptor.isValid()) return false
+        return true
+    }
 
     private fun randomObject(): Any {
         var res: Any? = null
         while (res == null) {
             val kfgClass = cm.randomClass
-            if (!kfgClass.isInstantiable || visibilityLevel > kfgClass.visibility) continue
-
             val klass = ctx.loader.loadClass(kfgClass)
             res = random.nextOrNull(klass)
         }
@@ -45,20 +65,33 @@ class RandomDescriptorGenerator(val ctx: ExecutionContext, val target: Package, 
     }
 
     fun run(attempts: Int = 1000) {
+        var totalAttempts = 0
+        var validAttempts = 0
         var successes = 0
         var depth = 0
         var successDepths = 0
-        repeat(attempts) {
-            log.debug("Attempt: $it")
+        var time = 0L
+        while (validAttempts < attempts) {
+            log.debug("Attempt: $totalAttempts")
+            log.debug("Valid attempt: $validAttempts")
+            ++totalAttempts
 
             val any = randomObject()
+            if (any.isValid) ++validAttempts
+            else continue
+
             val descriptor = any.descriptor
             val descriptorDepth = descriptor.depth
             depth += descriptorDepth
 
             log.debug("Depth: $descriptorDepth")
             val originalDescriptor = descriptor.deepCopy()
-            val callStack = `try` { CallStackGenerator(ctx, psa).generate(descriptor) }.getOrNull()
+
+            var callStack: CallStack? = null
+            time += timed {
+                callStack = `try` { CallStackGenerator(ctx, psa).generate(descriptor) }.getOrNull()
+            }
+
             val generatedAny = callStack?.let { stack ->
                 `try` {
                     CallStackExecutor(ctx).execute(stack)
@@ -73,17 +106,14 @@ class RandomDescriptorGenerator(val ctx: ExecutionContext, val target: Package, 
                 ++successes
             }
 
-            log.run {
-//                debug("Original object: $any")
-//                debug("Descriptor: $descriptor")
-//                debug("Call stack: ${callStack.print()}")
-//                debug("Generated object: $generatedAny")
-                debug("Equality: $structuralEq")
-                debug()
-            }
+            log.debug("Equality: $structuralEq")
         }
-        log.info("Random descriptor generation success rate: ${String.format("%.02f", 100 * successes.toDouble() / attempts)}%")
-        log.info("Average random descriptor depth: ${String.format("%.02f", depth.toDouble() / attempts)}")
-        log.info("Average success descriptor depth: ${String.format("%.02f", successDepths.toDouble() / successes)}")
+        log.info("Total attempts: $totalAttempts")
+        log.info("Valid attempts: $validAttempts")
+        log.info("Total attempts success rate: ${String.format("%.02f", 100 * successes.toDouble() / totalAttempts)}%")
+        log.info("Valid attempts success rate: ${String.format("%.02f", 100 * successes.toDouble() / validAttempts)}%")
+        log.info("Average random descriptor depth: ${String.format("%.02f", depth.toDouble() / validAttempts)}")
+        log.info("Average success descriptor depth: ${String.format("%.02f", successDepths.toDouble() / validAttempts)}")
+        log.info("Average time per descriptor generation: ${String.format("%.02f", time.toDouble() / validAttempts)}")
     }
 }
