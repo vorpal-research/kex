@@ -47,6 +47,7 @@ class Object2DescriptorConverter : DescriptorBuilder() {
                 is FloatArray -> floatArray(any, depth + 1)
                 is DoubleArray -> doubleArray(any, depth + 1)
                 is Array<*> -> array(any, depth + 1)
+                is String -> string(any, depth + 1)
                 else -> `object`(any, depth + 1)
             }
         }
@@ -142,6 +143,25 @@ class Object2DescriptorConverter : DescriptorBuilder() {
             val descriptorValue = convertElement(field.type, actualValue, depth + 1)
             result[name to type] = descriptorValue
         }
+        return result
+    }
+
+    fun string(any: String, depth: Int): Descriptor {
+        if (depth > maxGenerationDepth) return `null`
+
+        val stringType = KexClass("java/lang/String")
+        val klass = any.javaClass
+        val result = `object`(stringType)
+        val field = klass.getDeclaredField("value")
+        field.isAccessible = true
+
+        val name = field.name
+        val type = field.type.kex
+
+        val actualValue = field.get(any)
+        val descriptorValue = convertElement(field.type, actualValue, depth + 1)
+        result[name to type] = descriptorValue
+
         return result
     }
 

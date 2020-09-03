@@ -33,6 +33,7 @@ class RandomDescriptorGenerator(val ctx: ExecutionContext, val target: Package, 
 
     fun Descriptor.isValid(visited: Set<Descriptor> = setOf()): Boolean = when (this) {
         in visited -> true
+        is ConstantDescriptor.Float -> false
         is ConstantDescriptor.Double -> false
         is ConstantDescriptor -> true
         is ObjectDescriptor -> {
