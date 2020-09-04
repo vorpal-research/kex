@@ -49,7 +49,7 @@ object Z3Engine : SMTEngine<Context, Expr, Sort, FuncDecl, Pattern>() {
             ctx.mkFPToBV(ctx.mkFPRTZ(), expr as FPExpr, (sort as BitVecSort).size, true)
 
     override fun float2float(ctx: Context, expr: Expr, sort: Sort): Expr =
-            ctx.mkFPToFP(sort as FPSort, ctx.mkFPRTZ(), expr as FPExpr)
+            ctx.mkFPToFP(ctx.mkFPRTZ(), expr as FPExpr, sort as FPSort)
 
     override fun hash(ctx: Context, expr: Expr) = expr.hashCode()
     override fun name(ctx: Context, expr: Expr) = expr.toString()
