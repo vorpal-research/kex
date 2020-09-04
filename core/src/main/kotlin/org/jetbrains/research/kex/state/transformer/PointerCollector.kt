@@ -65,6 +65,13 @@ class PointerCollector : Transformer<PointerCollector> {
         return term
     }
 
+    override fun transformValueTerm(term: ValueTerm): Term {
+        if (term.type is KexPointer) {
+            ptrs.add(term)
+        }
+        return term
+    }
+
     override fun apply(ps: PredicateState): PredicateState {
         ptrs.clear()
         return super.apply(ps)

@@ -20,6 +20,7 @@ import java.lang.reflect.Method as JMethod
 import java.lang.reflect.Type as JType
 
 val Class<*>.isAbstract get() = (this.modifiers and Modifier.ABSTRACT) == Modifier.ABSTRACT
+val Class<*>.isPublic get() = (this.modifiers and Modifier.PUBLIC) == Modifier.PUBLIC
 val Class<*>.kex: KexType get() = when {
     this.isPrimitive -> when (this) {
         Boolean::class.java -> KexBool()
