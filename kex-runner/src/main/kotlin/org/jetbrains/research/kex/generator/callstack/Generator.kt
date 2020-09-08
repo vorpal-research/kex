@@ -14,19 +14,18 @@ import org.jetbrains.research.kex.generator.setter
 import org.jetbrains.research.kex.ktype.*
 import org.jetbrains.research.kfg.ir.Method
 import org.jetbrains.research.kfg.ir.MethodDesc
-import java.util.*
 
 private val visibilityLevel by lazy { kexConfig.getEnumValue("apiGeneration", "visibility", true, Visibility.PUBLIC) }
 private val maxStackSize by lazy { kexConfig.getIntValue("apiGeneration", "maxStackSize", 5) }
 
-interface CSGenerator {
+interface Generator {
     val context: GeneratorContext
 
     fun supports(type: KexType): Boolean
     fun generate(descriptor: Descriptor, depth: Int = 0): CallStack
 }
 
-class AnyGenerator(private val fallback: CSGenerator) : CSGenerator {
+class AnyGenerator(private val fallback: Generator) : Generator {
     override val context get() = fallback.context
 
     override fun supports(type: KexType) = true
@@ -90,14 +89,25 @@ class AnyGenerator(private val fallback: CSGenerator) : CSGenerator {
 
             if (depth > maxStackSize - 1) continue
 
+            val acceptExecResult = { method: Method, res: GeneratorContext.ExecutionResult, oldDepth: Int ->
+                val (result, args) = res
+                if (result != null && result neq current) {
+                    val remapping = { mutableMapOf<Descriptor, Descriptor>(result to current) }
+                    val generatedArgs = args.map { fallback.generate(it.deepCopy(remapping()), generationDepth + 1) }
+                    val newStack = stack + MethodCall(method, generatedArgs)
+                    val newDesc = result.merge(current)
+                    queue += GeneratorContext.ExecutionStack(newDesc, newStack, oldDepth + 1)
+                }
+            }
+
             for (method in klass.accessibleMethods) {
                 val result = method.executeAsSetter(current) ?: continue
-                acceptExecutionResult(result, current, depth, generationDepth, stack, method, queue)
+                acceptExecResult(method, result, depth)
             }
 
             for (method in klass.accessibleMethods) {
                 val result = method.executeAsMethod(current) ?: continue
-                acceptExecutionResult(result, current, depth, generationDepth, stack, method, queue)
+                acceptExecResult(method, result, depth)
             }
         }
 
@@ -132,25 +142,9 @@ class AnyGenerator(private val fallback: CSGenerator) : CSGenerator {
         }
         return calls
     }
-
-    private fun acceptExecutionResult(res: GeneratorContext.ExecutionResult,
-                                      current: ObjectDescriptor,
-                                      oldDepth: Int,
-                                      generationDepth: Int,
-                                      stack: List<ApiCall>, method: Method,
-                                      queue: Queue<GeneratorContext.ExecutionStack>) {
-        val (result, args) = res
-        if (result != null) {
-            val remapping = { mutableMapOf<Descriptor, Descriptor>(result to current) }
-            val generatedArgs = args.map { fallback.generate(it.deepCopy(remapping()), generationDepth + 1) }
-            val newStack = stack + MethodCall(method, generatedArgs)
-            val newDesc = result.merge(current)
-            queue += GeneratorContext.ExecutionStack(newDesc, newStack, oldDepth + 1)
-        }
-    }
 }
 
-class ArrayGenerator(private val fallback: CSGenerator) : CSGenerator {
+class ArrayGenerator(private val fallback: Generator) : Generator {
     override val context get() = fallback.context
 
     override fun supports(type: KexType) = type is KexArray
@@ -177,7 +171,7 @@ class ArrayGenerator(private val fallback: CSGenerator) : CSGenerator {
     }
 }
 
-class StringGenerator(private val fallback: CSGenerator) : CSGenerator {
+class StringGenerator(private val fallback: Generator) : Generator {
     override val context: GeneratorContext
         get() = fallback.context
 

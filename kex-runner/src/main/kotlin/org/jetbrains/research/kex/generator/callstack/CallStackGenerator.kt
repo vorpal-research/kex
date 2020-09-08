@@ -12,11 +12,11 @@ import org.jetbrains.research.kex.ktype.KexType
 
 private val maxGenerationDepth by lazy { kexConfig.getIntValue("apiGeneration", "maxGenerationDepth", 100) }
 
-class CallStackGenerator(executionCtx: ExecutionContext, psa: PredicateStateAnalysis) : CSGenerator {
+class CallStackGenerator(executionCtx: ExecutionContext, psa: PredicateStateAnalysis) : Generator {
     override val context = GeneratorContext(executionCtx, psa)
     private val anyGenerator = AnyGenerator(this)
     private val arrayGenerator = ArrayGenerator(this)
-    private val typeGenerators = mutableMapOf<KexType, CSGenerator>()
+    private val typeGenerators = mutableMapOf<KexType, Generator>()
 
     override fun supports(type: KexType) = true
 
@@ -24,7 +24,7 @@ class CallStackGenerator(executionCtx: ExecutionContext, psa: PredicateStateAnal
         typeGenerators += KexClass("java/lang/String") to StringGenerator(this)
     }
 
-    val KexType.generator: CSGenerator
+    val KexType.generator: Generator
         get() = when (this) {
             in typeGenerators -> typeGenerators.getValue(this)
             is KexArray -> arrayGenerator
