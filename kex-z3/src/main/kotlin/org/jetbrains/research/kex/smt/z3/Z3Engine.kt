@@ -4,17 +4,29 @@ import com.abdullin.kthelper.assert.unreachable
 import com.abdullin.kthelper.logging.log
 import com.microsoft.z3.*
 import org.jetbrains.research.kex.smt.SMTEngine
+import java.util.*
 
 object Z3Engine : SMTEngine<Context, Expr, Sort, FuncDecl, Pattern>() {
+    private var trueExpr: Expr? = null
+    private var falseExpr: Expr? = null
+    private val sortCache = IdentityHashMap<Any, Sort>()
+
+    override fun initialize() {
+        trueExpr = null
+        falseExpr = null
+        sortCache.clear()
+    }
+
     override fun makeBound(ctx: Context, size: Int, sort: Sort): Expr = ctx.mkBound(size, sort)
     override fun makePattern(ctx: Context, expr: Expr): Pattern = ctx.mkPattern(expr)
 
     override fun getSort(ctx: Context, expr: Expr): Sort = expr.sort
     override fun getBoolSort(ctx: Context): Sort = ctx.boolSort
-    override fun getBVSort(ctx: Context, size: Int): Sort = ctx.mkBitVecSort(size)
+    override fun getBVSort(ctx: Context, size: Int): Sort = sortCache.getOrPut(size) { ctx.mkBitVecSort(size) }
     override fun getFloatSort(ctx: Context): Sort = ctx.mkFPSortSingle()
     override fun getDoubleSort(ctx: Context): Sort = ctx.mkFPSortDouble()
-    override fun getArraySort(ctx: Context, domain: Sort, range: Sort): Sort = ctx.mkArraySort(domain, range)
+    override fun getArraySort(ctx: Context, domain: Sort, range: Sort): Sort =
+            sortCache.getOrPut(domain to range) { ctx.mkArraySort(domain, range) }
 
     override fun isBoolSort(ctx: Context, sort: Sort): Boolean = sort is BoolSort
     override fun isBVSort(ctx: Context, sort: Sort): Boolean = sort is BitVecSort
@@ -62,7 +74,20 @@ object Z3Engine : SMTEngine<Context, Expr, Sort, FuncDecl, Pattern>() {
         else -> ctx.mkConst(name, sort)
     }
 
-    override fun makeBooleanConst(ctx: Context, value: Boolean): Expr = ctx.mkBool(value)
+    fun makeTrue(ctx: Context) = trueExpr ?: run {
+        trueExpr = ctx.mkTrue()
+        trueExpr!!
+    }
+
+    fun makeFalse(ctx: Context) = falseExpr ?: run {
+        falseExpr = ctx.mkFalse()
+        falseExpr!!
+    }
+
+    override fun makeBooleanConst(ctx: Context, value: Boolean): Expr = when {
+        value -> makeTrue(ctx)
+        else -> makeFalse(ctx)
+    }
 
     override fun makeIntConst(ctx: Context, value: Short): Expr = ctx.mkNumeral(value.toInt(), getBVSort(ctx, WORD))
     override fun makeIntConst(ctx: Context, value: Int): Expr = ctx.mkNumeral(value, getBVSort(ctx, WORD))
