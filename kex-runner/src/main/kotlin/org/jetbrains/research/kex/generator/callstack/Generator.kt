@@ -40,6 +40,22 @@ class AnyGenerator(private val fallback: Generator) : Generator {
         return callStack
     }
 
+    class StackWrapper(val value: GeneratorContext.ExecutionStack) {
+        override fun hashCode(): Int = 0
+
+        override fun equals(other: Any?): Boolean {
+            if (this === other) return true
+            if (javaClass != other?.javaClass) return false
+
+            other as StackWrapper
+
+            if (value.instance eq other.value.instance && value.depth <= other.value.depth) return true
+            return false
+        }
+    }
+
+    fun GeneratorContext.ExecutionStack.wrap() = StackWrapper(this)
+
     private fun CallStack.generateObject(descriptor: ObjectDescriptor, generationDepth: Int) = with(context) {
         val original = descriptor.deepCopy()
 
@@ -56,8 +72,13 @@ class AnyGenerator(private val fallback: Generator) : Generator {
 
         val setters = descriptor.generateSetters(generationDepth)
         val queue = queueOf(GeneratorContext.ExecutionStack(descriptor, setters, 0))
+        val cache = mutableSetOf<StackWrapper>()
         while (queue.isNotEmpty()) {
-            val (desc, stack, depth) = queue.poll()
+            val es = queue.poll()
+            if (es.wrap() in cache) continue
+
+            cache += es.wrap()
+            val (desc, stack, depth) = es
             val current = descriptor.accept(desc)
             if (depth > maxStackSize) continue
 
@@ -157,12 +178,12 @@ class ArrayGenerator(private val fallback: Generator) : Generator {
         descriptor.cache(callStack)
 
         val elementType = descriptor.elementType.getKfgType(types)
-        val lengthCall = PrimaryValue(descriptor.length).wrap("${name}Length")
+        val lengthCall = PrimaryValue(descriptor.length)
         val array = NewArray(types.getArrayType(elementType), lengthCall)
         callStack += array
 
         descriptor.elements.forEach { (index, value) ->
-            val indexCall = PrimaryValue(index).wrap("${name}Index")
+            val indexCall = PrimaryValue(index)
             val arrayWrite = ArrayWrite(indexCall, fallback.generate(value, depth + 1))
             callStack += arrayWrite
         }

@@ -70,6 +70,16 @@ interface Reanimator<T> {
         val typeVar = reanimateFromProperties(memspace, "type", addr) ?: return null
         return model.typeMap[typeVar]
     }
+
+    fun resolveType(memspace: Int, addr: Term?, default: KexType): KexType {
+        val resolvedType = reanimateType(memspace, addr) ?: return default
+        val resolvedKfg = resolvedType.getKfgType(context.types)
+        val thisKfg = default.getKfgType(context.types)
+        return when {
+            resolvedKfg.isSubtypeOf(thisKfg) -> resolvedType
+            else -> default
+        }
+    }
 }
 
 class ObjectReanimator(override val method: Method,
@@ -115,7 +125,7 @@ class ObjectReanimator(override val method: Method,
         val address = (addr as? ConstIntTerm)?.value ?: return null
         if (address == 0) return null
 
-        val type = reanimateType(term.memspace, addr) ?: term.type
+        val type = resolveType(term.memspace, addr, term.type)//reanimateType(term.memspace, addr) ?: term.type
         return memory(term.memspace, address) { randomizer.nextOrNull(loader.loadClass(context.types, type)) }
     }
 
@@ -226,7 +236,7 @@ class ObjectReanimator(override val method: Method,
         val address = (addr as? ConstIntTerm)?.value ?: return null
         if (address == 0) return null
 
-        val type = reanimateType(term.memspace, addr) ?: term.type
+        val type = resolveType(term.memspace, addr, term.type)//reanimateType(term.memspace, addr) ?: term.type
         return when (referencedType) {
             is KexClass -> memory(term.memspace, address) { randomizer.nextOrNull(loader.loadClass(context.types, type)) }
             is KexArray -> {
@@ -241,7 +251,7 @@ class ObjectReanimator(override val method: Method,
     private fun newArrayInstance(type: KexArray, addr: Term?): Any? {
         val length = (reanimateFromProperties(type.memspace, "length", addr) as? ConstIntTerm)?.value ?: return null
 
-        val actualType = (reanimateType(type.memspace, addr) ?: type) as? KexArray
+        val actualType = resolveType(type.memspace, addr, type) as? KexArray//(reanimateType(type.memspace, addr) ?: type) as? KexArray
                 ?: unreachable { log.error("Non-array type in reanimate array") }
         val elementType = loader.loadClass(context.types, actualType.element)
         log.debug("Creating array of type $elementType with size $length")
@@ -286,7 +296,7 @@ abstract class DescriptorReanimator(override val method: Method,
         when (val address = (addr as? ConstIntTerm)?.value) {
             null, 0 -> default(term.type)
             else -> {
-                val reanimatedType = reanimateType(term.memspace, addr) ?: term.type
+                val reanimatedType = resolveType(term.memspace, addr, term.type)//reanimateType(term.memspace, addr) ?: term.type
                 val actualType = reanimatedType as? KexClass
                         ?: unreachable { log.error("Cannot cast $reanimatedType to class") }
                 memory(term.memspace, address) { `object`(actualType) }
@@ -298,7 +308,7 @@ abstract class DescriptorReanimator(override val method: Method,
         when (val address = (addr as? ConstIntTerm)?.value) {
             null, 0 -> default(term.type)
             else -> {
-                val arrayType = (reanimateType(term.memspace, addr) ?: term.type) as? KexArray
+                val arrayType = resolveType(term.memspace, addr, term.type) as? KexArray//(reanimateType(term.memspace, addr) ?: term.type) as? KexArray
                         ?: unreachable { log.error("Could not cast ${reanimateType(term.memspace, addr)} to array type") }
                 memory(term.memspace, address) { newArrayInstance(term.memspace, arrayType, addr) }
             }
@@ -405,7 +415,7 @@ abstract class DescriptorReanimator(override val method: Method,
         val address = (addr as? ConstIntTerm)?.value ?: return@descriptor default(term.type)
         if (address == 0) return@descriptor default(term.type)
 
-        when (val actualType = (reanimateType(term.memspace, addr) ?: referencedType)) {
+        when (val actualType = resolveType(term.memspace, addr, referencedType)) {//(reanimateType(term.memspace, addr) ?: referencedType)) {
             is KexClass -> {
                 memory(term.memspace, address) { `object`(actualType) }
             }

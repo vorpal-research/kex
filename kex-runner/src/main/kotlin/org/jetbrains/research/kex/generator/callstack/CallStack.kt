@@ -15,7 +15,7 @@ interface ApiCall {
     fun print(owner: CallStack, builder: StringBuilder, visited: MutableSet<CallStack>)
 }
 
-class CallStack(val name: String, val stack: MutableList<ApiCall>) : Iterable<ApiCall> by stack {
+open class CallStack(val name: String, val stack: MutableList<ApiCall>) : Iterable<ApiCall> by stack {
     constructor(name: String) : this(name, mutableListOf())
 
     fun add(call: ApiCall): CallStack {
@@ -54,7 +54,7 @@ class CallStack(val name: String, val stack: MutableList<ApiCall>) : Iterable<Ap
     }
 }
 
-data class PrimaryValue<T>(val value: T) : ApiCall {
+data class PrimaryValue<T>(val value: T) : ApiCall, CallStack(value.toString(), mutableListOf()) {
     override val parameters: List<CallStack>
         get() = listOf()
 
