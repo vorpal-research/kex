@@ -47,13 +47,14 @@ class RandomDescriptorGenerator(val ctx: ExecutionContext, val target: Package, 
         is StaticFieldDescriptor -> value.isValid(visited + this)
     }
 
-    val Any.isValid: Boolean get() {
-        val kfgClass = (this.javaClass.kex.getKfgType(cm.type) as ClassType).`class`
-        if (this is Throwable) return false
-        if (!kfgClass.isInstantiable || visibilityLevel > kfgClass.visibility) return false
-        if (!this.descriptor.isValid()) return false
-        return true
-    }
+    val Any.isValid: Boolean
+        get() {
+            val kfgClass = (this.javaClass.kex.getKfgType(cm.type) as ClassType).`class`
+            if (this is Throwable) return false
+            if (!kfgClass.isInstantiable || visibilityLevel > kfgClass.visibility) return false
+            if (!this.descriptor.isValid()) return false
+            return true
+        }
 
     private fun randomObject(): Any {
         var res: Any? = null

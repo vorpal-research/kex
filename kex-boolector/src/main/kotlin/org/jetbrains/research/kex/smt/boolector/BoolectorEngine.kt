@@ -10,12 +10,14 @@ import kotlin.math.roundToLong
 object BoolectorEngine : SMTEngine<Btor, BoolectorNode, BoolectorSort, BoolectorFunction, FunctionDecl.FunctionParam>() {
     private var trueExpr: BoolectorNode? = null
     private var falseExpr: BoolectorNode? = null
-    private val sortCache = mutableMapOf<Any, BoolectorSort>()
+    private val bvSortCache = mutableMapOf<Int, BoolectorSort>()
+    private val arraySortCache = mutableMapOf<Pair<BoolectorSort, BoolectorSort>, BoolectorSort>()
 
     override fun initialize() {
         trueExpr = null
         falseExpr = null
-        sortCache.clear()
+        arraySortCache.clear()
+        bvSortCache.clear()
     }
 
     override fun makeBound(ctx: Btor, size: Int, sort: BoolectorSort): BoolectorNode = BitvecNode.constBitvec(ctx, "1")
@@ -27,14 +29,14 @@ object BoolectorEngine : SMTEngine<Btor, BoolectorNode, BoolectorSort, Boolector
 
     override fun getBoolSort(ctx: Btor): BoolectorSort = BoolSort.boolSort(ctx)
 
-    override fun getBVSort(ctx: Btor, size: Int): BoolectorSort = sortCache.getOrPut(size) { BitvecSort.bitvecSort(ctx, size) }
+    override fun getBVSort(ctx: Btor, size: Int): BoolectorSort = bvSortCache.getOrPut(size) { BitvecSort.bitvecSort(ctx, size) }
 
     override fun getFloatSort(ctx: Btor): BoolectorSort = getBVSort(ctx, 32)
 
     override fun getDoubleSort(ctx: Btor): BoolectorSort = getBVSort(ctx, 64)
 
     override fun getArraySort(ctx: Btor, domain: BoolectorSort, range: BoolectorSort): BoolectorSort =
-            sortCache.getOrPut(domain to range) { ArraySort.arraySort(domain, range) }
+            arraySortCache.getOrPut(domain to range) { ArraySort.arraySort(domain, range) }
 
     override fun isBoolSort(ctx: Btor, sort: BoolectorSort): Boolean = sort.isBoolSort
 

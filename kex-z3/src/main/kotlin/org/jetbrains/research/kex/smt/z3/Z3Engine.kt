@@ -4,17 +4,18 @@ import com.abdullin.kthelper.assert.unreachable
 import com.abdullin.kthelper.logging.log
 import com.microsoft.z3.*
 import org.jetbrains.research.kex.smt.SMTEngine
-import java.util.*
 
 object Z3Engine : SMTEngine<Context, Expr, Sort, FuncDecl, Pattern>() {
     private var trueExpr: Expr? = null
     private var falseExpr: Expr? = null
-    private val sortCache = IdentityHashMap<Any, Sort>()
+    private val bvSortCache = mutableMapOf<Int, Sort>()
+    private val arraySortCache = mutableMapOf<Pair<Sort, Sort>, Sort>()
 
     override fun initialize() {
         trueExpr = null
         falseExpr = null
-        sortCache.clear()
+        arraySortCache.clear()
+        bvSortCache.clear()
     }
 
     override fun makeBound(ctx: Context, size: Int, sort: Sort): Expr = ctx.mkBound(size, sort)
@@ -22,11 +23,11 @@ object Z3Engine : SMTEngine<Context, Expr, Sort, FuncDecl, Pattern>() {
 
     override fun getSort(ctx: Context, expr: Expr): Sort = expr.sort
     override fun getBoolSort(ctx: Context): Sort = ctx.boolSort
-    override fun getBVSort(ctx: Context, size: Int): Sort = sortCache.getOrPut(size) { ctx.mkBitVecSort(size) }
+    override fun getBVSort(ctx: Context, size: Int): Sort = bvSortCache.getOrPut(size) { ctx.mkBitVecSort(size) }
     override fun getFloatSort(ctx: Context): Sort = ctx.mkFPSortSingle()
     override fun getDoubleSort(ctx: Context): Sort = ctx.mkFPSortDouble()
     override fun getArraySort(ctx: Context, domain: Sort, range: Sort): Sort =
-            sortCache.getOrPut(domain to range) { ctx.mkArraySort(domain, range) }
+            arraySortCache.getOrPut(domain to range) { ctx.mkArraySort(domain, range) }
 
     override fun isBoolSort(ctx: Context, sort: Sort): Boolean = sort is BoolSort
     override fun isBVSort(ctx: Context, sort: Sort): Boolean = sort is BitVecSort
