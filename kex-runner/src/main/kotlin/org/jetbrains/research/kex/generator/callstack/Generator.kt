@@ -92,8 +92,12 @@ class AnyGenerator(private val fallback: Generator) : Generator {
             val constructors = klass.accessibleConstructors
             val externalConstructors = klass.externalConstructors
 
-            val nonRecursiveConstructors = constructors.filter { it.argTypes.all { arg -> !klass.type.isSupertypeOf(arg) } }
-            val nonRecursiveExternalConstructors = externalConstructors.filter { it.argTypes.all { arg -> !klass.type.isSupertypeOf(arg) } }
+            val nonRecursiveConstructors = constructors.filter {
+                it.argTypes.all { arg -> !(klass.type.isSupertypeOf(arg) || arg.isSupertypeOf(klass.type)) }
+            }
+            val nonRecursiveExternalConstructors = externalConstructors.filter {
+                it.argTypes.all { arg -> !(klass.type.isSupertypeOf(arg) || arg.isSupertypeOf(klass.type)) }
+            }
 
             val recursiveConstructors = constructors.filter { it !in nonRecursiveConstructors }
             val recursiveExternalConstructors = externalConstructors.filter { it !in nonRecursiveExternalConstructors }
