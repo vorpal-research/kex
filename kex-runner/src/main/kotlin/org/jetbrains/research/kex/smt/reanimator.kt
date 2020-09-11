@@ -76,6 +76,7 @@ interface Reanimator<T> {
         val resolvedKfg = resolvedType.getKfgType(context.types)
         val thisKfg = default.getKfgType(context.types)
         return when {
+            !thisKfg.isConcrete -> default
             resolvedKfg.isSubtypeOf(thisKfg) -> resolvedType
             else -> default
         }

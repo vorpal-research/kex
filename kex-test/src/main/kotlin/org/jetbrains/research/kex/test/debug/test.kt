@@ -4,14 +4,9 @@ package org.jetbrains.research.kex.test.debug
 
 class BasicTests {
 
-    class Value(val name: String)
-
-//    class LocalArray() {
-//        val set = hashMapOf<Int, Int>()
-//    }
-
-    fun testAbstractClass(array: Value) {
-        println("a")
+    class RecursiveTest {
+        constructor(rt: RecursiveTest)
+        constructor(a: Int, b: Int)
     }
 
 }

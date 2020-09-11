@@ -142,7 +142,7 @@ class ObjectDescriptor(klass: KexClass) : Descriptor(term { generate(klass) }, k
     }
 
     override fun print(map: MutableMap<Descriptor, String>): String {
-        if (this in map) return map[this]!!
+        if (this in map) return ""//map[this]!!
         map[this] = term.name
         return buildString {
             append("$term = $klass {\n")
@@ -262,7 +262,7 @@ class ArrayDescriptor(val elementType: KexType, val length: Int) :
     operator fun get(index: Int) = elements[index]
 
     override fun print(map: MutableMap<Descriptor, String>): String {
-        if (this in map) return map[this]!!
+        if (this in map) return ""//map[this]!!
         map[this] = term.name
         return buildString {
             append("$term = $elementType[${this@ArrayDescriptor.length}] {\n")

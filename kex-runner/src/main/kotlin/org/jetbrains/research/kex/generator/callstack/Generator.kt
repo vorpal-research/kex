@@ -12,11 +12,13 @@ import org.jetbrains.research.kex.generator.externalConstructors
 import org.jetbrains.research.kex.generator.hasSetter
 import org.jetbrains.research.kex.generator.setter
 import org.jetbrains.research.kex.ktype.*
+import org.jetbrains.research.kfg.ir.Class
 import org.jetbrains.research.kfg.ir.Method
 import org.jetbrains.research.kfg.ir.MethodDesc
 
 private val visibilityLevel by lazy { kexConfig.getEnumValue("apiGeneration", "visibility", true, Visibility.PUBLIC) }
 private val maxStackSize by lazy { kexConfig.getIntValue("apiGeneration", "maxStackSize", 5) }
+private val maxQuerySize by lazy { kexConfig.getIntValue("apiGeneration", "maxQuerySize", 1000) }
 
 interface Generator {
     val context: GeneratorContext
@@ -77,34 +79,46 @@ class AnyGenerator(private val fallback: Generator) : Generator {
             val es = queue.poll()
             if (es.wrap() in cache) continue
 
+            if (queue.size > maxQuerySize) {
+                break
+            }
+
             cache += es.wrap()
             val (desc, stack, depth) = es
             val current = descriptor.accept(desc)
             if (depth > maxStackSize) continue
+            log.debug("Depth $generationDepth, stack depth $depth, query size ${queue.size}")
 
-            for (method in klass.accessibleConstructors) {
-                val (thisDesc, args) = method.executeAsConstructor(current) ?: continue
+            val constructors = klass.accessibleConstructors
+            val externalConstructors = klass.externalConstructors
 
-                if (thisDesc.isFinal(current)) {
-                    log.debug("Found constructor $method for $descriptor, generating arguments $args")
-                    val constructorCall = when {
-                        method.argTypes.isEmpty() -> DefaultConstructorCall(klass)
-                        else -> {
-                            val generatedArgs = args.map { fallback.generate(it, generationDepth + 1) }
-                            ConstructorCall(klass, method, generatedArgs)
-                        }
-                    }
-                    this@generateObject.stack += (stack + constructorCall).reversed()
-                    return
-                }
+            val nonRecursiveConstructors = constructors.filter { it.argTypes.all { arg -> !klass.type.isSupertypeOf(arg) } }
+            val nonRecursiveExternalConstructors = externalConstructors.filter { it.argTypes.all { arg -> !klass.type.isSupertypeOf(arg) } }
+
+            val recursiveConstructors = constructors.filter { it !in nonRecursiveConstructors }
+            val recursiveExternalConstructors = externalConstructors.filter { it !in nonRecursiveExternalConstructors }
+
+            for (method in nonRecursiveConstructors) {
+                val apiCall = current.checkConstructor(klass, method, generationDepth) ?: continue
+                this@generateObject.stack += (stack + apiCall).reversed()
+                return
             }
 
-            for (method in klass.externalConstructors) {
-                val (_, args) = method.executeAsExternalConstructor(current) ?: continue
+            for (method in nonRecursiveExternalConstructors) {
+                val apiCall = current.checkExternalConstructor(method, generationDepth) ?: continue
+                this@generateObject.stack += (stack + apiCall).reversed()
+                return
+            }
 
-                val generatedArgs = args.map { fallback.generate(it, generationDepth + 1) }
-                val constructorCall = ExternalConstructorCall(method, generatedArgs)
-                this@generateObject.stack += (stack + constructorCall).reversed()
+            for (method in recursiveConstructors) {
+                val apiCall = current.checkConstructor(klass, method, generationDepth) ?: continue
+                this@generateObject.stack += (stack + apiCall).reversed()
+                return
+            }
+
+            for (method in recursiveExternalConstructors) {
+                val apiCall = current.checkExternalConstructor(method, generationDepth) ?: continue
+                this@generateObject.stack += (stack + apiCall).reversed()
                 return
             }
 
@@ -134,6 +148,29 @@ class AnyGenerator(private val fallback: Generator) : Generator {
 
         this@generateObject += UnknownCall(klass.type, original)
     }
+
+    private fun ObjectDescriptor.checkConstructor(klass: Class, method: Method, generationDepth: Int): ApiCall? = with(context) {
+        val (thisDesc, args) = method.executeAsConstructor(this@checkConstructor) ?: return null
+
+        if (thisDesc.isFinal(this@checkConstructor)) {
+            log.debug("Found constructor $method for $this, generating arguments $args")
+            when {
+                method.argTypes.isEmpty() -> DefaultConstructorCall(klass)
+                else -> {
+                    val generatedArgs = args.map { fallback.generate(it, generationDepth + 1) }
+                    ConstructorCall(klass, method, generatedArgs)
+                }
+            }
+        } else null
+    }
+
+    private fun ObjectDescriptor.checkExternalConstructor(method: Method, generationDepth: Int): ApiCall? =
+            with(context) {
+                val (_, args) = method.executeAsExternalConstructor(this@checkExternalConstructor) ?: return null
+
+                val generatedArgs = args.map { fallback.generate(it, generationDepth + 1) }
+                ExternalConstructorCall(method, generatedArgs)
+            }
 
     private fun ObjectDescriptor.generateSetters(generationDepth: Int): List<ApiCall> = with(context) {
         val calls = mutableListOf<ApiCall>()
