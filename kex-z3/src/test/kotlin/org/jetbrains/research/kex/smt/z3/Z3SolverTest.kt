@@ -99,6 +99,7 @@ class Z3SolverTest : KexTest() {
     @Test
     fun testLogic() {
         val ctx = Context()
+        Z3Engine.initialize()
 
         val checkExpr = { expr: Bool_ ->
             val solver = ctx.mkSolver()

@@ -50,7 +50,7 @@ class Generator(val ctx: ExecutionContext, val psa: PredicateStateAnalysis) {
 
     private val Descriptor.callStack: CallStack
         get() = `try` {
-            val cs = csGenerator.generate(this)
+            val cs = csGenerator.generateDescriptor(this)
             DescriptorStatistics.addDescriptor(this, cs)
             cs
         }.getOrThrow {

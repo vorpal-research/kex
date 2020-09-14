@@ -15,7 +15,7 @@ interface ApiCall {
     fun print(owner: CallStack, builder: StringBuilder, visited: MutableSet<CallStack>)
 }
 
-class CallStack(val name: String, val stack: MutableList<ApiCall>) : Iterable<ApiCall> by stack {
+open class CallStack(val name: String, val stack: MutableList<ApiCall>) : Iterable<ApiCall> by stack {
     constructor(name: String) : this(name, mutableListOf())
 
     fun add(call: ApiCall): CallStack {
@@ -54,9 +54,11 @@ class CallStack(val name: String, val stack: MutableList<ApiCall>) : Iterable<Ap
     }
 }
 
-data class PrimaryValue<T>(val value: T) : ApiCall {
+data class PrimaryValue<T>(val value: T) : ApiCall, CallStack(value.toString(), mutableListOf()) {
     override val parameters: List<CallStack>
         get() = listOf()
+
+    override fun toString() = value.toString()
 
     override fun print(owner: CallStack, builder: StringBuilder, visited: MutableSet<CallStack>) {
         if (owner.name != value.toString()) {
@@ -175,6 +177,6 @@ data class ArrayWrite(val index: CallStack, val value: CallStack) : ApiCall {
     override fun print(owner: CallStack, builder: StringBuilder, visited: MutableSet<CallStack>) {
         index.print(builder, visited)
         value.print(builder, visited)
-        builder.appendLine("${owner.name}[$index] = $value")
+        builder.appendLine("${owner.name}[${index.name}] = ${value.name}")
     }
 }

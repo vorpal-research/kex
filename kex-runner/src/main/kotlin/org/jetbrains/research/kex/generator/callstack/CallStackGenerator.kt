@@ -7,35 +7,52 @@ import org.jetbrains.research.kex.generator.descriptor.ConstantDescriptor
 import org.jetbrains.research.kex.generator.descriptor.Descriptor
 import org.jetbrains.research.kex.generator.descriptor.StaticFieldDescriptor
 import org.jetbrains.research.kex.ktype.KexArray
+import org.jetbrains.research.kex.ktype.KexClass
 import org.jetbrains.research.kex.ktype.KexType
 
 private val maxGenerationDepth by lazy { kexConfig.getIntValue("apiGeneration", "maxGenerationDepth", 100) }
+private val maxSearchDepth by lazy { kexConfig.getIntValue("apiGeneration", "maxSearchDepth", 10000) }
 
-class CallStackGenerator(executionCtx: ExecutionContext, psa: PredicateStateAnalysis) : CSGenerator {
+class CallStackGenerator(executionCtx: ExecutionContext, psa: PredicateStateAnalysis) : Generator {
     override val context = GeneratorContext(executionCtx, psa)
     private val anyGenerator = AnyGenerator(this)
     private val arrayGenerator = ArrayGenerator(this)
-    private val typeGenerators = mutableMapOf<KexType, CSGenerator>()
+    private val typeGenerators = mutableMapOf<KexType, Generator>()
+    private var searchDepth = 0
 
     override fun supports(type: KexType) = true
 
-    val KexType.generator: CSGenerator
+    init {
+        typeGenerators += KexClass("java/lang/String") to StringGenerator(this)
+    }
+
+    val KexType.generator: Generator
         get() = when (this) {
             in typeGenerators -> typeGenerators.getValue(this)
             is KexArray -> arrayGenerator
             else -> anyGenerator
         }
 
-    override fun generate(descriptor: Descriptor, depth: Int): CallStack = with(context) {
+    fun generateDescriptor(descriptor: Descriptor): CallStack {
+        searchDepth = 0
+        return generate(descriptor)
+    }
+
+    override fun generate(descriptor: Descriptor, generationDepth: Int): CallStack = with(context) {
         descriptor.cached()?.let { return it }
+        searchDepth++
 
         val name = "${descriptor.term}"
-        if (depth > maxGenerationDepth) return UnknownCall(descriptor.type.getKfgType(types), descriptor).wrap(name)
+        if (generationDepth > maxGenerationDepth) return UnknownCall(descriptor.type.getKfgType(types), descriptor).wrap(name)
+        if (searchDepth > maxSearchDepth) return UnknownCall(descriptor.type.getKfgType(types), descriptor).wrap(name)
 
         when (descriptor) {
             is ConstantDescriptor -> return when (descriptor) {
                 is ConstantDescriptor.Null -> PrimaryValue(null)
                 is ConstantDescriptor.Bool -> PrimaryValue(descriptor.value)
+                is ConstantDescriptor.Byte -> PrimaryValue(descriptor.value)
+                is ConstantDescriptor.Char -> PrimaryValue(descriptor.value)
+                is ConstantDescriptor.Short -> PrimaryValue(descriptor.value)
                 is ConstantDescriptor.Int -> PrimaryValue(descriptor.value)
                 is ConstantDescriptor.Long -> PrimaryValue(descriptor.value)
                 is ConstantDescriptor.Float -> PrimaryValue(descriptor.value)
@@ -48,11 +65,11 @@ class CallStackGenerator(executionCtx: ExecutionContext, psa: PredicateStateAnal
                 val kfgClass = descriptor.klass.kfgClass(types)
                 val kfgField = kfgClass.getField(descriptor.field, descriptor.type.getKfgType(types))
                 val typeGenerator = descriptor.value.type.generator
-                callStack += StaticFieldSetter(kfgClass, kfgField, typeGenerator.generate(descriptor.value, depth + 1))
+                callStack += StaticFieldSetter(kfgClass, kfgField, typeGenerator.generate(descriptor.value, generationDepth + 1))
             }
             else -> {
                 val typeGenerator = descriptor.type.generator
-                typeGenerator.generate(descriptor, depth)
+                typeGenerator.generate(descriptor, generationDepth + 1)
             }
         }
         return descriptor.cached()!!

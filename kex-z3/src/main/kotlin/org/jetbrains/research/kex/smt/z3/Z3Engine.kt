@@ -6,15 +6,28 @@ import com.microsoft.z3.*
 import org.jetbrains.research.kex.smt.SMTEngine
 
 object Z3Engine : SMTEngine<Context, Expr, Sort, FuncDecl, Pattern>() {
+    private var trueExpr: Expr? = null
+    private var falseExpr: Expr? = null
+    private val bvSortCache = mutableMapOf<Int, Sort>()
+    private val arraySortCache = mutableMapOf<Pair<Sort, Sort>, Sort>()
+
+    override fun initialize() {
+        trueExpr = null
+        falseExpr = null
+        arraySortCache.clear()
+        bvSortCache.clear()
+    }
+
     override fun makeBound(ctx: Context, size: Int, sort: Sort): Expr = ctx.mkBound(size, sort)
     override fun makePattern(ctx: Context, expr: Expr): Pattern = ctx.mkPattern(expr)
 
     override fun getSort(ctx: Context, expr: Expr): Sort = expr.sort
     override fun getBoolSort(ctx: Context): Sort = ctx.boolSort
-    override fun getBVSort(ctx: Context, size: Int): Sort = ctx.mkBitVecSort(size)
+    override fun getBVSort(ctx: Context, size: Int): Sort = bvSortCache.getOrPut(size) { ctx.mkBitVecSort(size) }
     override fun getFloatSort(ctx: Context): Sort = ctx.mkFPSortSingle()
     override fun getDoubleSort(ctx: Context): Sort = ctx.mkFPSortDouble()
-    override fun getArraySort(ctx: Context, domain: Sort, range: Sort): Sort = ctx.mkArraySort(domain, range)
+    override fun getArraySort(ctx: Context, domain: Sort, range: Sort): Sort =
+            arraySortCache.getOrPut(domain to range) { ctx.mkArraySort(domain, range) }
 
     override fun isBoolSort(ctx: Context, sort: Sort): Boolean = sort is BoolSort
     override fun isBVSort(ctx: Context, sort: Sort): Boolean = sort is BitVecSort
@@ -49,7 +62,7 @@ object Z3Engine : SMTEngine<Context, Expr, Sort, FuncDecl, Pattern>() {
             ctx.mkFPToBV(ctx.mkFPRTZ(), expr as FPExpr, (sort as BitVecSort).size, true)
 
     override fun float2float(ctx: Context, expr: Expr, sort: Sort): Expr =
-            ctx.mkFPToFP(sort as FPSort, ctx.mkFPRTZ(), expr as FPExpr)
+            ctx.mkFPToFP(ctx.mkFPRTZ(), expr as FPExpr, sort as FPSort)
 
     override fun hash(ctx: Context, expr: Expr) = expr.hashCode()
     override fun name(ctx: Context, expr: Expr) = expr.toString()
@@ -62,7 +75,20 @@ object Z3Engine : SMTEngine<Context, Expr, Sort, FuncDecl, Pattern>() {
         else -> ctx.mkConst(name, sort)
     }
 
-    override fun makeBooleanConst(ctx: Context, value: Boolean): Expr = ctx.mkBool(value)
+    fun makeTrue(ctx: Context) = trueExpr ?: run {
+        trueExpr = ctx.mkTrue()
+        trueExpr!!
+    }
+
+    fun makeFalse(ctx: Context) = falseExpr ?: run {
+        falseExpr = ctx.mkFalse()
+        falseExpr!!
+    }
+
+    override fun makeBooleanConst(ctx: Context, value: Boolean): Expr = when {
+        value -> makeTrue(ctx)
+        else -> makeFalse(ctx)
+    }
 
     override fun makeIntConst(ctx: Context, value: Short): Expr = ctx.mkNumeral(value.toInt(), getBVSort(ctx, WORD))
     override fun makeIntConst(ctx: Context, value: Int): Expr = ctx.mkNumeral(value, getBVSort(ctx, WORD))

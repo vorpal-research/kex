@@ -20,6 +20,7 @@ import org.jetbrains.research.kex.config.RuntimeConfig
 import org.jetbrains.research.kex.config.kexConfig
 import org.jetbrains.research.kex.generator.ExternalConstructorCollector
 import org.jetbrains.research.kex.generator.MethodFieldAccessDetector
+import org.jetbrains.research.kex.generator.RandomDescriptorGenerator
 import org.jetbrains.research.kex.generator.SetterDetector
 import org.jetbrains.research.kex.generator.descriptor.DescriptorStatistics
 import org.jetbrains.research.kex.random.easyrandom.EasyRandomDriver
@@ -67,6 +68,7 @@ class Kex(args: Array<String>) {
     enum class Mode {
         concolic,
         bmc,
+        reanimator,
         debug
     }
 
@@ -163,8 +165,9 @@ class Kex(args: Array<String>) {
 
         when (cmd.getEnumValue<Mode>("mode") ?: this.mode) {
             Mode.bmc -> bmc(originalContext, analysisContext)
+            Mode.reanimator -> reanimator(analysisContext)
             Mode.concolic -> concolic(originalContext, analysisContext)
-            else -> debug(analysisContext)
+            Mode.debug -> debug(analysisContext)
         }
     }
 
@@ -182,7 +185,7 @@ class Kex(args: Array<String>) {
         updateClassPath(classLoader)
 
         val checker = Checker(method, classLoader, psa)
-        val result = checker.prepareAndCheck(failure.state) as? Result.SatResult ?: return
+        val result = checker.check(failure.state) as? Result.SatResult ?: return
         log.debug(result.model)
         val recMod = executeModel(analysisContext, checker.state, method, result.model)
         log.debug(recMod)
@@ -211,7 +214,6 @@ class Kex(args: Array<String>) {
             }
             +cm
         }
-//        RandomDescriptorGenerator(analysisContext, `package`, psa).run()
         clearClassPath()
 
         val coverage = cm.totalCoverage
@@ -219,6 +221,23 @@ class Kex(args: Array<String>) {
                 "body coverage: ${String.format("%.2f", coverage.bodyCoverage)}%\n" +
                 "full coverage: ${String.format("%.2f", coverage.fullCoverage)}%")
         DescriptorStatistics.printStatistics()
+    }
+
+    private fun reanimator(analysisContext: ExecutionContext) {
+        val psa = PredicateStateAnalysis(analysisContext.cm)
+
+        updateClassPath(analysisContext.loader as URLClassLoader)
+
+        runPipeline(analysisContext) {
+            +LoopSimplifier(analysisContext.cm)
+            +LoopDeroller(analysisContext.cm)
+            +psa
+            +MethodFieldAccessDetector(analysisContext, psa)
+            +SetterDetector(analysisContext)
+            +ExternalConstructorCollector(analysisContext.cm)
+        }
+        RandomDescriptorGenerator(analysisContext, `package`, psa).run()
+        clearClassPath()
     }
 
     private fun concolic(originalContext: ExecutionContext, analysisContext: ExecutionContext) {

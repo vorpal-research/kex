@@ -312,12 +312,12 @@ class $self< Element : $valexpr, in Index : $valexpr > : $valexpr {
             $self< Element, Index >(ctx, ${solver}Engine.makeConstArray(ctx, ${valexpr}.getStaticSort< Index >(ctx), default.expr))
 
         inline fun < reified Element : $valexpr, reified Index : $valexpr > makeFree(ctx: $context, name: String): $self< Element, Index > {
-            val sort = ${solver}Engine.getArraySort(ctx, ${valexpr}.getStaticSort< Element >(ctx), ${valexpr}.getStaticSort< Index >(ctx))
+            val sort = ${solver}Engine.getArraySort(ctx, ${valexpr}.getStaticSort< Index >(ctx), ${valexpr}.getStaticSort< Element >(ctx))
             return $self< Element, Index >(ctx, ${solver}Engine.makeVar(ctx, sort, name, true))
         }
 
         inline fun < reified Element : $valexpr, reified Index : $valexpr > makeVar(ctx: $context, name: String): $self< Element, Index > {
-            val sort = ${solver}Engine.getArraySort(ctx, ${valexpr}.getStaticSort< Element >(ctx), ${valexpr}.getStaticSort< Index >(ctx))
+            val sort = ${solver}Engine.getArraySort(ctx, ${valexpr}.getStaticSort< Index >(ctx), ${valexpr}.getStaticSort< Element >(ctx))
             return $self< Element, Index >(ctx, ${solver}Engine.makeVar(ctx, sort, name, false))
         }
     }

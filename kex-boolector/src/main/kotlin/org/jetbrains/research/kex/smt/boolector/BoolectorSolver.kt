@@ -184,5 +184,5 @@ class BoolectorSolver(val tf: TypeFactory) : AbstractSMTSolver {
         )
     }
 
-    override fun cleanup() = ef.ctx.release()
+    override fun close() = ef.ctx.release()
 }

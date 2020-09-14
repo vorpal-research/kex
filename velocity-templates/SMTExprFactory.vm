@@ -23,6 +23,8 @@ enum class TypeSize (val int: Int) {
     WORD(1), DWORD(2);
 }
 
+private val engine = ${solver}Engine
+
 class $factory : ${solver}SMTExprFactory() {
     companion object {
 
@@ -34,9 +36,15 @@ class $factory : ${solver}SMTExprFactory() {
     }
 
     val ctx = $context()
-    val subtypeFunction = Function_(ctx, "isSubtype", listOf(Int_.getStaticSort(ctx), Int_.getStaticSort(ctx)), Bool_.getStaticSort(ctx))
+    val subtypeFunction: Function_
+    private val innerTypeMap: MutableMap< KexType, Int_ >
     val typeMap: Map< KexType, Int_ > get() = innerTypeMap
-    private val innerTypeMap = mutableMapOf< KexType, Int_ >()
+
+    init {
+        engine.initialize()
+        subtypeFunction = Function_(ctx, "isSubtype", listOf(Int_.getStaticSort(ctx), Int_.getStaticSort(ctx)), Bool_.getStaticSort(ctx))
+        innerTypeMap = mutableMapOf< KexType, Int_ >()
+    }
 
 #macro(generateMakes $type $basetype)
     #set($underlined = "${type}_")

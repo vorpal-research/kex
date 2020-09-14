@@ -39,16 +39,19 @@ sealed class Descriptor(term: Term, type: KexType, val hasState: Boolean) {
 
     val query: PredicateState get() = collectQuery(mutableSetOf())
     val asString: String get() = print(mutableMapOf())
+    val depth: Int get() = countDepth(setOf(), mutableMapOf())
 
     val typeInfo: PredicateState get() = generateTypeInfo(mutableSetOf())
 
     override fun toString() = asString
     infix fun eq(other: Descriptor) = this.structuralEquality(other, mutableSetOf<Pair<Descriptor, Descriptor>>())
+    infix fun neq(other: Descriptor) = !(this eq other)
 
     abstract fun print(map: MutableMap<Descriptor, String>): String
     abstract fun structuralEquality(other: Descriptor, map: MutableSet<Pair<Descriptor, Descriptor>>): Boolean
     abstract fun collectQuery(set: MutableSet<Descriptor>): PredicateState
 
+    abstract fun countDepth(visited: Set<Descriptor>, cache: MutableMap<Descriptor, Int>): Int
     abstract fun concretize(cm: ClassManager, visited: MutableSet<Descriptor> = mutableSetOf()): Descriptor
     abstract fun deepCopy(copied: MutableMap<Descriptor, Descriptor> = mutableMapOf()): Descriptor
     abstract fun reduce(visited: MutableSet<Descriptor> = mutableSetOf()): Descriptor
@@ -65,12 +68,25 @@ sealed class ConstantDescriptor(term: Term, type: KexType) : Descriptor(term, ty
     override fun generateTypeInfo(visited: MutableSet<Descriptor>) = emptyState()
     override fun print(map: MutableMap<Descriptor, String>) = ""
     override fun structuralEquality(other: Descriptor, map: MutableSet<Pair<Descriptor, Descriptor>>) = this.term == other.term
+    override fun countDepth(visited: Set<Descriptor>, cache: MutableMap<Descriptor, kotlin.Int>) = 1
 
     object Null : ConstantDescriptor(term { const(null) }, KexNull()) {
         override fun toString() = "null"
     }
 
     data class Bool(val value: Boolean) : ConstantDescriptor(term { const(value) }, KexBool()) {
+        override fun toString() = "$value"
+    }
+
+    data class Byte(val value: kotlin.Byte) : ConstantDescriptor(term { const(value) }, KexByte()) {
+        override fun toString() = "$value"
+    }
+
+    data class Char(val value: kotlin.Char) : ConstantDescriptor(term { const(value) }, KexChar()) {
+        override fun toString() = "$value"
+    }
+
+    data class Short(val value: kotlin.Short) : ConstantDescriptor(term { const(value) }, KexShort()) {
         override fun toString() = "$value"
     }
 
@@ -126,7 +142,7 @@ class ObjectDescriptor(klass: KexClass) : Descriptor(term { generate(klass) }, k
     }
 
     override fun print(map: MutableMap<Descriptor, String>): String {
-        if (this in map) return map[this]!!
+        if (this in map) return ""//map[this]!!
         map[this] = term.name
         return buildString {
             append("$term = $klass {\n")
@@ -221,6 +237,18 @@ class ObjectDescriptor(klass: KexClass) : Descriptor(term { generate(klass) }, k
         }
         return true
     }
+
+    override fun countDepth(visited: Set<Descriptor>, cache: MutableMap<Descriptor, Int>): Int {
+        if (this in cache) return cache[this]!!
+        if (this in visited) return 0
+        val newVisited = visited + this
+        var maxDepth = 0
+        for (value in fields.values) {
+            maxDepth = maxOf(maxDepth, value.countDepth(newVisited, cache))
+        }
+        cache[this] = maxDepth + 1
+        return maxDepth + 1
+    }
 }
 
 class ArrayDescriptor(val elementType: KexType, val length: Int) :
@@ -234,7 +262,7 @@ class ArrayDescriptor(val elementType: KexType, val length: Int) :
     operator fun get(index: Int) = elements[index]
 
     override fun print(map: MutableMap<Descriptor, String>): String {
-        if (this in map) return map[this]!!
+        if (this in map) return ""//map[this]!!
         map[this] = term.name
         return buildString {
             append("$term = $elementType[${this@ArrayDescriptor.length}] {\n")
@@ -259,6 +287,7 @@ class ArrayDescriptor(val elementType: KexType, val length: Int) :
             }
             builder += require { term[index].load() equality element.term }
         }
+        builder += require { term.length() equality const(length) }
         return builder.apply()
     }
 
@@ -322,6 +351,18 @@ class ArrayDescriptor(val elementType: KexType, val length: Int) :
         }
         return true
     }
+
+    override fun countDepth(visited: Set<Descriptor>, cache: MutableMap<Descriptor, Int>): Int {
+        if (this in cache) return cache[this]!!
+        if (this in visited) return 0
+        val newVisited = visited + this
+        var maxDepth = 0
+        for (value in elements.values) {
+            maxDepth = maxOf(maxDepth, value.countDepth(newVisited, cache))
+        }
+        cache[this] = maxDepth + 1
+        return maxDepth + 1
+    }
 }
 
 class StaticFieldDescriptor(val klass: KexClass, val field: String, type: KexType, var value: Descriptor) :
@@ -382,6 +423,14 @@ class StaticFieldDescriptor(val klass: KexClass, val field: String, type: KexTyp
         map += this to other
         return this.value.structuralEquality(other.value, map)
     }
+
+    override fun countDepth(visited: Set<Descriptor>, cache: MutableMap<Descriptor, Int>): Int {
+        if (this in cache) return cache[this]!!
+        if (this in visited) return 0
+        val depth = value.countDepth(visited + this, cache) + 1
+        cache[this] = depth
+        return depth
+    }
 }
 
 open class DescriptorBuilder {
@@ -389,11 +438,15 @@ open class DescriptorBuilder {
     fun const(@Suppress("UNUSED_PARAMETER") nothing: Nothing?) = `null`
     fun const(value: Boolean) = ConstantDescriptor.Bool(value)
     fun const(number: Number) = when (number) {
+        is Byte -> ConstantDescriptor.Byte(number)
+        is Short -> ConstantDescriptor.Short(number)
+        is Int -> ConstantDescriptor.Int(number)
         is Long -> ConstantDescriptor.Long(number)
         is Float -> ConstantDescriptor.Float(number)
         is Double -> ConstantDescriptor.Double(number)
-        else -> ConstantDescriptor.Int(number.toInt())
+        else -> unreachable { log.error("Unknown number $number") }
     }
+    fun const(char: Char) = ConstantDescriptor.Char(char)
     fun const(klass: KexType) = ConstantDescriptor.Class(klass)
 
     fun `object`(type: KexClass): ObjectDescriptor = ObjectDescriptor(type)
@@ -405,9 +458,9 @@ open class DescriptorBuilder {
     fun default(type: KexType, nullable: Boolean): Descriptor = descriptor {
         when (type) {
             is KexBool -> const(false)
-            is KexByte -> const(0)
-            is KexChar -> const(0)
-            is KexShort -> const(0)
+            is KexByte -> const(0.toByte())
+            is KexChar -> const(0.toChar())
+            is KexShort -> const(0.toShort())
             is KexInt -> const(0)
             is KexLong -> const(0L)
             is KexFloat -> const(0.0F)

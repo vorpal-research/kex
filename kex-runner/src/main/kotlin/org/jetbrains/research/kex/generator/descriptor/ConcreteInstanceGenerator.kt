@@ -15,12 +15,12 @@ object ConcreteInstanceGenerator {
             "java/util/List" to setOf("java/util/ArrayList", "java/util/LinkedList"),
             "java/util/Queue" to setOf("java/util/ArrayList", "java/util/LinkedList"),
             "java/util/Deque" to setOf("java/util/ArrayDeque", "java/util/LinkedList"),
-            "java/util/Set" to setOf("java/util/TreeSet", "java/util/HashSet"),
-            "java/util/SortedSet" to setOf("java/util/TreeSet"),
-            "java/util/NavigableSet" to setOf("java/util/TreeSet"),
-            "java/util/Map" to setOf("java/util/TreeMap", "java/util/HashMap"),
-            "java/util/SortedMap" to setOf("java/util/TreeMap"),
-            "java/util/NavigableMap" to setOf("java/util/TreeMap")
+            "java/util/Set" to setOf(),//""java/util/TreeSet", "java/util/HashSet"),
+            "java/util/SortedSet" to setOf(),//""java/util/TreeSet"),
+            "java/util/NavigableSet" to setOf(),//""java/util/TreeSet"),
+            "java/util/Map" to setOf(),//"java/util/TreeMap", "java/util/HashMap"),
+            "java/util/SortedMap" to setOf(),//""java/util/TreeMap"),
+            "java/util/NavigableMap" to setOf(),//""java/util/TreeMap")
     )
 
     operator fun get(klass: Class) = `try` {
