@@ -24,16 +24,16 @@ object Z3Engine : SMTEngine<Context, Expr, Sort, FuncDecl, Pattern>() {
     override fun getSort(ctx: Context, expr: Expr): Sort = expr.sort
     override fun getBoolSort(ctx: Context): Sort = ctx.boolSort
     override fun getBVSort(ctx: Context, size: Int): Sort = bvSortCache.getOrPut(size) { ctx.mkBitVecSort(size) }
-    override fun getFloatSort(ctx: Context): Sort = ctx.mkFPSortSingle()
-    override fun getDoubleSort(ctx: Context): Sort = ctx.mkFPSortDouble()
+    override fun getFloatSort(ctx: Context): Sort = ctx.mkFPSort32()
+    override fun getDoubleSort(ctx: Context): Sort = ctx.mkFPSort64()
     override fun getArraySort(ctx: Context, domain: Sort, range: Sort): Sort =
             arraySortCache.getOrPut(domain to range) { ctx.mkArraySort(domain, range) }
 
     override fun isBoolSort(ctx: Context, sort: Sort): Boolean = sort is BoolSort
     override fun isBVSort(ctx: Context, sort: Sort): Boolean = sort is BitVecSort
     override fun isArraySort(ctx: Context, sort: Sort): Boolean = sort is ArraySort
-    override fun isFloatSort(ctx: Context, sort: Sort): Boolean = sort is FPSort && sort == ctx.mkFPSortSingle()
-    override fun isDoubleSort(ctx: Context, sort: Sort): Boolean = sort is FPSort && sort == ctx.mkFPSortDouble()
+    override fun isFloatSort(ctx: Context, sort: Sort): Boolean = sort is FPSort && sort == ctx.mkFPSort32()
+    override fun isDoubleSort(ctx: Context, sort: Sort): Boolean = sort is FPSort && sort == ctx.mkFPSort64()
 
     override fun bvBitsize(ctx: Context, sort: Sort): Int = (sort as BitVecSort).size
     override fun floatEBitsize(ctx: Context, sort: Sort): Int = (sort as FPSort).eBits
@@ -56,10 +56,10 @@ object Z3Engine : SMTEngine<Context, Expr, Sort, FuncDecl, Pattern>() {
     }
 
     override fun bv2float(ctx: Context, expr: Expr, sort: Sort): Expr =
-            ctx.mkFPToFP(ctx.mkFPRTZ(), expr as BitVecExpr, sort as FPSort, true)
+            ctx.mkFPToFP(expr as BitVecExpr, sort as FPSort)
 
     override fun float2bv(ctx: Context, expr: Expr, sort: Sort): Expr =
-            ctx.mkFPToBV(ctx.mkFPRTZ(), expr as FPExpr, (sort as BitVecSort).size, true)
+            ctx.mkFPToIEEEBV(expr as FPExpr)
 
     override fun float2float(ctx: Context, expr: Expr, sort: Sort): Expr =
             ctx.mkFPToFP(ctx.mkFPRTZ(), expr as FPExpr, sort as FPSort)
