@@ -11,12 +11,14 @@ import org.jetbrains.research.kex.ktype.KexClass
 import org.jetbrains.research.kex.ktype.KexType
 
 private val maxGenerationDepth by lazy { kexConfig.getIntValue("apiGeneration", "maxGenerationDepth", 100) }
+private val maxSearchDepth by lazy { kexConfig.getIntValue("apiGeneration", "maxSearchDepth", 10000) }
 
 class CallStackGenerator(executionCtx: ExecutionContext, psa: PredicateStateAnalysis) : Generator {
     override val context = GeneratorContext(executionCtx, psa)
     private val anyGenerator = AnyGenerator(this)
     private val arrayGenerator = ArrayGenerator(this)
     private val typeGenerators = mutableMapOf<KexType, Generator>()
+    private var searchDepth = 0
 
     override fun supports(type: KexType) = true
 
@@ -31,11 +33,18 @@ class CallStackGenerator(executionCtx: ExecutionContext, psa: PredicateStateAnal
             else -> anyGenerator
         }
 
-    override fun generate(descriptor: Descriptor, depth: Int): CallStack = with(context) {
+    fun generateDescriptor(descriptor: Descriptor): CallStack {
+        searchDepth = 0
+        return generate(descriptor)
+    }
+
+    override fun generate(descriptor: Descriptor, generationDepth: Int): CallStack = with(context) {
         descriptor.cached()?.let { return it }
+        searchDepth++
 
         val name = "${descriptor.term}"
-        if (depth > maxGenerationDepth) return UnknownCall(descriptor.type.getKfgType(types), descriptor).wrap(name)
+        if (generationDepth > maxGenerationDepth) return UnknownCall(descriptor.type.getKfgType(types), descriptor).wrap(name)
+        if (searchDepth > maxSearchDepth) return UnknownCall(descriptor.type.getKfgType(types), descriptor).wrap(name)
 
         when (descriptor) {
             is ConstantDescriptor -> return when (descriptor) {
@@ -56,11 +65,11 @@ class CallStackGenerator(executionCtx: ExecutionContext, psa: PredicateStateAnal
                 val kfgClass = descriptor.klass.kfgClass(types)
                 val kfgField = kfgClass.getField(descriptor.field, descriptor.type.getKfgType(types))
                 val typeGenerator = descriptor.value.type.generator
-                callStack += StaticFieldSetter(kfgClass, kfgField, typeGenerator.generate(descriptor.value, depth + 1))
+                callStack += StaticFieldSetter(kfgClass, kfgField, typeGenerator.generate(descriptor.value, generationDepth + 1))
             }
             else -> {
                 val typeGenerator = descriptor.type.generator
-                typeGenerator.generate(descriptor, depth + 1)
+                typeGenerator.generate(descriptor, generationDepth + 1)
             }
         }
         return descriptor.cached()!!

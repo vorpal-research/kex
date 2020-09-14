@@ -4,9 +4,7 @@ package org.jetbrains.research.kex.test.debug
 
 class BasicTests {
 
-    class RecursiveTest {
-        constructor(rt: RecursiveTest)
-        constructor(a: Int, b: Int)
+    class RecursiveTest(val float: Double) {
     }
 
 }

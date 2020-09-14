@@ -92,7 +92,7 @@ class RandomDescriptorGenerator(val ctx: ExecutionContext, val target: Package, 
 
             var callStack: CallStack? = null
             time += timed {
-                callStack = `try` { CallStackGenerator(ctx, psa).generate(descriptor) }.getOrNull()
+                callStack = `try` { CallStackGenerator(ctx, psa).generateDescriptor(descriptor) }.getOrNull()
             }
 
             val generatedAny = callStack?.let { stack ->

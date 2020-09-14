@@ -24,7 +24,7 @@ interface Generator {
     val context: GeneratorContext
 
     fun supports(type: KexType): Boolean
-    fun generate(descriptor: Descriptor, depth: Int = 0): CallStack
+    fun generate(descriptor: Descriptor, generationDepth: Int = 0): CallStack
 }
 
 class AnyGenerator(private val fallback: Generator) : Generator {
@@ -32,13 +32,13 @@ class AnyGenerator(private val fallback: Generator) : Generator {
 
     override fun supports(type: KexType) = true
 
-    override fun generate(descriptor: Descriptor, depth: Int): CallStack = with(context) {
+    override fun generate(descriptor: Descriptor, generationDepth: Int): CallStack = with(context) {
         descriptor as? ObjectDescriptor ?: throw IllegalArgumentException()
 
         val name = "${descriptor.term}"
         val callStack = CallStack(name)
         descriptor.cache(callStack)
-        callStack.generateObject(descriptor, depth)
+        callStack.generateObject(descriptor, generationDepth)
         return callStack
     }
 
@@ -211,7 +211,7 @@ class ArrayGenerator(private val fallback: Generator) : Generator {
 
     override fun supports(type: KexType) = type is KexArray
 
-    override fun generate(descriptor: Descriptor, depth: Int): CallStack = with(context) {
+    override fun generate(descriptor: Descriptor, generationDepth: Int): CallStack = with(context) {
         descriptor as? ArrayDescriptor ?: throw IllegalArgumentException()
 
         val name = "${descriptor.term}"
@@ -225,7 +225,7 @@ class ArrayGenerator(private val fallback: Generator) : Generator {
 
         descriptor.elements.forEach { (index, value) ->
             val indexCall = PrimaryValue(index)
-            val arrayWrite = ArrayWrite(indexCall, fallback.generate(value, depth + 1))
+            val arrayWrite = ArrayWrite(indexCall, fallback.generate(value, generationDepth + 1))
             callStack += arrayWrite
         }
 
@@ -239,7 +239,7 @@ class StringGenerator(private val fallback: Generator) : Generator {
 
     override fun supports(type: KexType) = type == KexClass("java/lang/String")
 
-    override fun generate(descriptor: Descriptor, depth: Int): CallStack = with(context) {
+    override fun generate(descriptor: Descriptor, generationDepth: Int): CallStack = with(context) {
         descriptor as? ObjectDescriptor ?: throw IllegalArgumentException()
         descriptor.reduce()
 
@@ -254,7 +254,7 @@ class StringGenerator(private val fallback: Generator) : Generator {
             callStack += DefaultConstructorCall(stringClass).wrap(name)
             return callStack
         }
-        val value = fallback.generate(valueDescriptor, depth + 1)
+        val value = fallback.generate(valueDescriptor, generationDepth + 1)
 
         val constructor = stringClass.getMethod("<init>", MethodDesc(arrayOf(types.getArrayType(types.charType)), types.voidType))
         callStack += ConstructorCall(stringClass, constructor, listOf(value)).wrap(name)
