@@ -17,30 +17,38 @@ object Z3Unlogic {
         else -> unreachable { log.error("Unexpected expr in unlogic: $expr") }
     }
 
-    private fun undoBVExpr(expr: BitVecExpr): Term {
-        return when {
-            expr.numArgs == 2 && expr.args[0] is FPRMNum -> {
-                val arg = undo(expr.args[1])
-                when (expr.args[0] as FPRMNum) {
-                    // todo: support all modes
-                    else -> when (arg) {
-                        is ConstFloatTerm -> term { const(arg.value.toInt()) }
-                        is ConstDoubleTerm -> term { const(arg.value.toInt()) }
-                        else -> arg
-                    }
+    private fun undoBVExpr(expr: BitVecExpr): Term = when {
+        expr.numArgs == 2 && expr.args[0] is FPRMNum -> {
+            val arg = undo(expr.args[1])
+            when (expr.args[0] as FPRMNum) {
+                // todo: support all modes
+                else -> when (arg) {
+                    is ConstFloatTerm -> term { const(arg.value.toInt()) }
+                    is ConstDoubleTerm -> term { const(arg.value.toInt()) }
+                    else -> arg
                 }
             }
-            expr.isBVExtract -> undo(expr.args[0])
-            // todo: support more bv expressions
-            expr.isBVNOT -> {
-                when (val value = undo(expr.args[0])) {
-                    is ConstIntTerm -> term { const((value.value).inv()) }
-                    is ConstLongTerm -> term { const((value.value).inv()) }
+        }
+        expr.isBVExtract -> undo(expr.args[0])
+        expr.isBVNOT -> {
+            when (val value = undo(expr.args[0])) {
+                is ConstIntTerm -> term { const((value.value).inv()) }
+                is ConstLongTerm -> term { const((value.value).inv()) }
+                else -> TODO()
+            }
+        }
+        expr.isApp -> when {
+            expr.funcDecl.name.toString() == "fp.to_ieee_bv" -> {
+                when (val fp = undo(expr.args[0])) {
+                    is ConstFloatTerm -> term { const((fp.value).toInt()) }
+                    is ConstDoubleTerm -> term { const((fp.value).toLong()) }
                     else -> TODO()
                 }
             }
             else -> TODO()
         }
+        // todo: support more bv expressions
+        else -> TODO()
     }
 
     private fun undoBool(expr: BoolExpr) = when (expr.boolValue) {
