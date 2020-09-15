@@ -1,4 +1,4 @@
-package org.jetbrains.research.kex.generator.callstack
+package org.jetbrains.research.kex.reanimator.callstack
 
 import com.abdullin.kthelper.logging.log
 import org.jetbrains.research.kex.ExecutionContext
@@ -7,11 +7,11 @@ import org.jetbrains.research.kex.asm.state.PredicateStateAnalysis
 import org.jetbrains.research.kex.asm.util.Visibility
 import org.jetbrains.research.kex.asm.util.visibility
 import org.jetbrains.research.kex.config.kexConfig
-import org.jetbrains.research.kex.generator.descriptor.Descriptor
-import org.jetbrains.research.kex.generator.descriptor.ObjectDescriptor
-import org.jetbrains.research.kex.generator.descriptor.descriptor
 import org.jetbrains.research.kex.ktype.KexType
 import org.jetbrains.research.kex.ktype.kexType
+import org.jetbrains.research.kex.reanimator.descriptor.Descriptor
+import org.jetbrains.research.kex.reanimator.descriptor.ObjectDescriptor
+import org.jetbrains.research.kex.reanimator.descriptor.descriptor
 import org.jetbrains.research.kex.smt.Checker
 import org.jetbrains.research.kex.smt.Result
 import org.jetbrains.research.kex.state.PredicateState

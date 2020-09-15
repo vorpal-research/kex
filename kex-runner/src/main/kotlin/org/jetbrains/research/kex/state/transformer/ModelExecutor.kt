@@ -5,9 +5,9 @@ import com.abdullin.kthelper.logging.log
 import com.abdullin.kthelper.tryOrNull
 import org.jetbrains.research.kex.ExecutionContext
 import org.jetbrains.research.kex.random.GenerationException
+import org.jetbrains.research.kex.smt.ModelReanimator
 import org.jetbrains.research.kex.smt.ObjectReanimator
 import org.jetbrains.research.kex.smt.ReanimatedModel
-import org.jetbrains.research.kex.smt.Reanimator
 import org.jetbrains.research.kex.smt.SMTModel
 import org.jetbrains.research.kex.state.PredicateState
 import org.jetbrains.research.kex.state.predicate.DefaultSwitchPredicate
@@ -25,7 +25,7 @@ import org.jetbrains.research.kfg.ir.Method
 class ModelExecutor(override val method: Method,
                     override val ctx: ExecutionContext,
                     override val model: SMTModel) : AbstractGenerator<Any?> {
-    override val reanimator: Reanimator<Any?> = ObjectReanimator(method, model, ctx)
+    override val modelReanimator: ModelReanimator<Any?> = ObjectReanimator(method, model, ctx)
 
     override val memory = hashMapOf<Term, Any?>()
 

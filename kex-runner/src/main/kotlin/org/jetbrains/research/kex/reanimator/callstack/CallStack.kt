@@ -1,7 +1,7 @@
-package org.jetbrains.research.kex.generator.callstack
+package org.jetbrains.research.kex.reanimator.callstack
 
 import com.abdullin.kthelper.logging.log
-import org.jetbrains.research.kex.generator.descriptor.Descriptor
+import org.jetbrains.research.kex.reanimator.descriptor.Descriptor
 import org.jetbrains.research.kfg.ir.Class
 import org.jetbrains.research.kfg.ir.Field
 import org.jetbrains.research.kfg.ir.Method

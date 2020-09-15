@@ -1,4 +1,4 @@
-package org.jetbrains.research.kex.generator.callstack
+package org.jetbrains.research.kex.reanimator.callstack
 
 import com.abdullin.kthelper.assert.unreachable
 import com.abdullin.kthelper.logging.log

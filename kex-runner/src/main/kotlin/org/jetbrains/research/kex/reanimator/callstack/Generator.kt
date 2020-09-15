@@ -1,17 +1,17 @@
-package org.jetbrains.research.kex.generator.callstack
+package org.jetbrains.research.kex.reanimator.callstack
 
 import com.abdullin.kthelper.collection.queueOf
 import com.abdullin.kthelper.logging.log
 import org.jetbrains.research.kex.asm.util.Visibility
 import org.jetbrains.research.kex.asm.util.visibility
 import org.jetbrains.research.kex.config.kexConfig
-import org.jetbrains.research.kex.generator.descriptor.ArrayDescriptor
-import org.jetbrains.research.kex.generator.descriptor.Descriptor
-import org.jetbrains.research.kex.generator.descriptor.ObjectDescriptor
-import org.jetbrains.research.kex.generator.externalConstructors
-import org.jetbrains.research.kex.generator.hasSetter
-import org.jetbrains.research.kex.generator.setter
 import org.jetbrains.research.kex.ktype.*
+import org.jetbrains.research.kex.reanimator.collector.externalConstructors
+import org.jetbrains.research.kex.reanimator.collector.hasSetter
+import org.jetbrains.research.kex.reanimator.collector.setter
+import org.jetbrains.research.kex.reanimator.descriptor.ArrayDescriptor
+import org.jetbrains.research.kex.reanimator.descriptor.Descriptor
+import org.jetbrains.research.kex.reanimator.descriptor.ObjectDescriptor
 import org.jetbrains.research.kfg.ir.Class
 import org.jetbrains.research.kfg.ir.Method
 import org.jetbrains.research.kfg.ir.MethodDesc

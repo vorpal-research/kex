@@ -1,4 +1,4 @@
-package org.jetbrains.research.kex.generator
+package org.jetbrains.research.kex.reanimator.collector
 
 import org.jetbrains.research.kex.ExecutionContext
 import org.jetbrains.research.kex.annotations.AnnotationManager
@@ -13,9 +13,9 @@ import org.jetbrains.research.kfg.ir.Field
 import org.jetbrains.research.kfg.ir.Method
 import org.jetbrains.research.kfg.visitor.MethodVisitor
 
-val Method.fieldAccesses get() = MethodFieldAccessDetector.fieldAccessMap.getOrDefault(this, setOf())
+val Method.fieldAccesses get() = MethodFieldAccessCollector.fieldAccessMap.getOrDefault(this, setOf())
 
-class MethodFieldAccessDetector(val ctx: ExecutionContext, val psa: PredicateStateAnalysis) : MethodVisitor {
+class MethodFieldAccessCollector(val ctx: ExecutionContext, val psa: PredicateStateAnalysis) : MethodVisitor {
     override val cm: ClassManager get() = ctx.cm
     companion object {
         val fieldAccessMap: Map<Method, Set<Field>> get() = methodAccessMap

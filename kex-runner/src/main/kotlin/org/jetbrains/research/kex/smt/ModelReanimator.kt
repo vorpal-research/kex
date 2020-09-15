@@ -5,8 +5,8 @@ import com.abdullin.kthelper.logging.log
 import com.abdullin.kthelper.toBoolean
 import com.abdullin.kthelper.tryOrNull
 import org.jetbrains.research.kex.ExecutionContext
-import org.jetbrains.research.kex.generator.descriptor.*
 import org.jetbrains.research.kex.ktype.*
+import org.jetbrains.research.kex.reanimator.descriptor.*
 import org.jetbrains.research.kex.state.term.*
 import org.jetbrains.research.kex.state.transformer.memspace
 import org.jetbrains.research.kex.util.getActualField
@@ -41,7 +41,7 @@ private val Term.numericValue: Number get() = when (this) {
     else -> unreachable { log.error("Trying to get value of term: $this with type $type") }
 }
 
-interface Reanimator<T> {
+interface ModelReanimator<T> {
     val method: Method
     val model: SMTModel
     val context: ExecutionContext
@@ -85,7 +85,7 @@ interface Reanimator<T> {
 
 class ObjectReanimator(override val method: Method,
                        override val model: SMTModel,
-                       override val context: ExecutionContext) : Reanimator<Any?> {
+                       override val context: ExecutionContext) : ModelReanimator<Any?> {
     private val randomizer get() = context.random
 
     override val memoryMappings = hashMapOf<Int, MutableMap<Int, Any?>>()
@@ -263,7 +263,7 @@ class ObjectReanimator(override val method: Method,
 
 abstract class DescriptorReanimator(override val method: Method,
                                     override val model: SMTModel,
-                                    override val context: ExecutionContext) : Reanimator<Descriptor> {
+                                    override val context: ExecutionContext) : ModelReanimator<Descriptor> {
     override val memoryMappings = hashMapOf<Int, MutableMap<Int, Descriptor>>()
 
     override fun reanimate(term: Term, value: Term?): Descriptor = when {

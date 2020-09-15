@@ -1,4 +1,4 @@
-package org.jetbrains.research.kex.generator
+package org.jetbrains.research.kex.reanimator
 
 import org.jetbrains.research.kex.KexRunnerTest
 import org.jetbrains.research.kex.config.RuntimeConfig
