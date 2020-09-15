@@ -120,8 +120,9 @@ class CallStackExecutor(val ctx: ExecutionContext) {
                     current
                 }
                 is UnknownCall -> {
-                    val reflection = ctx.loader.loadClass(call.type)
-                    ctx.random.nextOrNull(reflection)
+//                    val reflection = ctx.loader.loadClass(call.type)
+//                    ctx.random.nextOrNull(reflection)
+                    null
                 }
                 else -> null
             }
