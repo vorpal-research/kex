@@ -52,7 +52,7 @@ class RandomDescriptorGenerator(val ctx: ExecutionContext, val target: Package, 
             val kfgClass = (this.javaClass.kex.getKfgType(cm.type) as ClassType).`class`
             if (this is Throwable) return false
             if (!kfgClass.isInstantiable || visibilityLevel > kfgClass.visibility) return false
-            if (!this.descriptor.isValid()) return false
+//            if (!this.descriptor.isValid()) return false
             return true
         }
 

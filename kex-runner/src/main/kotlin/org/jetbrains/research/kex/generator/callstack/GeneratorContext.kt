@@ -42,7 +42,7 @@ class GeneratorContext(val context: ExecutionContext, val psa: PredicateStateAna
     fun Descriptor.cached() = descriptorCache[this]
 
     fun prepareState(method: Method, ps: PredicateState, ignores: Set<Term> = setOf()) = transform(ps) {
-        +AnnotationIncluder(method, AnnotationManager.defaultLoader)
+        +AnnotationAdapter(method, AnnotationManager.defaultLoader)
         +MethodInliner(psa)
         +IntrinsicAdapter
         +ReflectionInfoAdapter(method, context.loader, ignores)
@@ -155,7 +155,7 @@ class GeneratorContext(val context: ExecutionContext, val psa: PredicateStateAna
         })
 
         val transformed = transform(methodState) {
-            +AnnotationIncluder(this@collectFieldAccesses, AnnotationManager.defaultLoader)
+            +AnnotationAdapter(this@collectFieldAccesses, AnnotationManager.defaultLoader)
             +DepthInliner(context.types, typeInfoMap, psa)
         }
         return collectFieldAccesses(context, transformed)

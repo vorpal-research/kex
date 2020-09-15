@@ -26,9 +26,7 @@ class NullityInfoAdapter : RecollectingTransformer<NullityInfoAdapter> {
             builders.pollLast()
         }
         currentBuilder += newChoices
-        annotatedTerms = choiceAnnotatedTerms.asSequence()
-                .flatten()
-                .toSet()
+        annotatedTerms = choiceAnnotatedTerms.flatten().toSet()
                 .filter { term -> choiceAnnotatedTerms.all { term in it } }
                 .toSet()
         return ps

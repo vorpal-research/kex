@@ -41,7 +41,7 @@ class Checker(val method: Method, val loader: ClassLoader, private val psa: Pred
 
     fun prepareState(ps: PredicateState) = transform(ps) {
         if (annotationsEnabled) {
-            +AnnotationIncluder(method, AnnotationManager.defaultLoader)
+            +AnnotationAdapter(method, AnnotationManager.defaultLoader)
         }
 
         if (isInliningEnabled) {
@@ -58,7 +58,7 @@ class Checker(val method: Method, val loader: ClassLoader, private val psa: Pred
     }
 
     fun prepareState(method: Method, ps: PredicateState, typeInfoMap: TypeInfoMap) = transform(ps) {
-        +AnnotationIncluder(method, AnnotationManager.defaultLoader)
+        +AnnotationAdapter(method, AnnotationManager.defaultLoader)
         +DepthInliner(method.cm.type, typeInfoMap, psa)
         +IntrinsicAdapter
         +ReflectionInfoAdapter(method, loader)

@@ -33,7 +33,7 @@ class ModelExecutor(override val method: Method,
     override val argTerms = sortedMapOf<Int, Term>()
     override val staticFieldTerms = mutableSetOf<FieldTerm>()
 
-    override val javaClass = loader.loadClass(type.getRefType(method.`class`))
+    override val javaClass = loader.loadClass(method.`class`)
     override val javaMethod = when {
         method.isConstructor -> javaClass.getConstructor(method, loader)
         else -> javaClass.getMethod(method, loader)
@@ -72,7 +72,7 @@ fun generateInputByModel(ctx: ExecutionContext,
     val instance = reanimated.instance ?: when {
         method.isStatic -> null
         else -> tryOrNull {
-            val klass = loader.loadClass(ctx.types.getRefType(method.`class`))
+            val klass = loader.loadClass(method.`class`)
             ctx.random.next(klass)
         }
     }

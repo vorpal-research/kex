@@ -12,11 +12,12 @@ import org.jetbrains.research.kex.state.term.CallTerm
 import org.jetbrains.research.kfg.ir.Method
 import java.util.*
 
-class AnnotationIncluder(val method: Method, val annotations: AnnotationsLoader) : RecollectingTransformer<AnnotationIncluder> {
+class AnnotationAdapter(val method: Method, val annotations: AnnotationsLoader) :
+        RecollectingTransformer<AnnotationAdapter> {
     override val builders = dequeOf(StateBuilder())
 
-    private val Method.exactCall: AnnotatedCall? get() =
-        annotations.getExactCall("$`class`.$name", *argTypes.map { it.name }.toTypedArray())
+    private val Method.exactCall: AnnotatedCall?
+        get() = annotations.getExactCall("$`class`.$name", *argTypes.map { it.name }.toTypedArray())
 
     override fun apply(ps: PredicateState): PredicateState {
         method.exactCall?.run {

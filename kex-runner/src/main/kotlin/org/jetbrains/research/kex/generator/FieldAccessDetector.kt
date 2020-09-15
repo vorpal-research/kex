@@ -4,7 +4,7 @@ import org.jetbrains.research.kex.ExecutionContext
 import org.jetbrains.research.kex.annotations.AnnotationManager
 import org.jetbrains.research.kex.asm.state.PredicateStateAnalysis
 import org.jetbrains.research.kex.state.PredicateState
-import org.jetbrains.research.kex.state.transformer.AnnotationIncluder
+import org.jetbrains.research.kex.state.transformer.AnnotationAdapter
 import org.jetbrains.research.kex.state.transformer.MethodInliner
 import org.jetbrains.research.kex.state.transformer.collectFieldAccesses
 import org.jetbrains.research.kex.state.transformer.transform
@@ -35,7 +35,7 @@ class MethodFieldAccessDetector(val ctx: ExecutionContext, val psa: PredicateSta
 
 
     private fun prepareState(method: Method, ps: PredicateState) = transform(ps) {
-        +AnnotationIncluder(method, AnnotationManager.defaultLoader)
+        +AnnotationAdapter(method, AnnotationManager.defaultLoader)
         +MethodInliner(psa)
     }
 }
