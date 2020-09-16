@@ -59,7 +59,7 @@ class Checker(val method: Method, val loader: ClassLoader, private val psa: Pred
 
     fun prepareState(method: Method, ps: PredicateState, typeInfoMap: TypeInfoMap) = transform(ps) {
         +AnnotationAdapter(method, AnnotationManager.defaultLoader)
-        +DepthInliner(method.cm.type, typeInfoMap, psa)
+        +RecursiveInliner(psa) { ConcreteImplInliner(method.cm.type, typeInfoMap, psa, it) }
         +IntrinsicAdapter
         +ReflectionInfoAdapter(method, loader)
         +Optimizer()

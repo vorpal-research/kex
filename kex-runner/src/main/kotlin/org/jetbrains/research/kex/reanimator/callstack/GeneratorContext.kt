@@ -156,7 +156,7 @@ class GeneratorContext(val context: ExecutionContext, val psa: PredicateStateAna
 
         val transformed = transform(methodState) {
             +AnnotationAdapter(this@collectFieldAccesses, AnnotationManager.defaultLoader)
-            +DepthInliner(context.types, typeInfoMap, psa)
+            +RecursiveInliner(psa) { ConcreteImplInliner(types, typeInfoMap, psa, it) }
         }
         return collectFieldAccesses(context, transformed)
     }

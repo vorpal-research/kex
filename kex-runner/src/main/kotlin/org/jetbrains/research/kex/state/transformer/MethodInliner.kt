@@ -12,49 +12,45 @@ import org.jetbrains.research.kex.state.predicate.Predicate
 import org.jetbrains.research.kex.state.term.*
 import org.jetbrains.research.kfg.ir.Method
 
+class TermRenamer(val suffix: String, val remapping: Map<Term, Term>) : Transformer<TermRenamer> {
+    override fun transformTerm(term: Term): Term = remapping[term] ?: when (term) {
+        is ValueTerm, is ArgumentTerm, is ReturnValueTerm -> term { value(term.type, "${term.name}.$suffix") }
+        else -> term
+    }
+}
+
 private val defaultDepth = kexConfig.getIntValue("inliner", "depth", 5)
 
-class MethodInliner(val psa: PredicateStateAnalysis,
-                    inlineIndex: Int = 0) : RecollectingTransformer<MethodInliner> {
-    private val im = MethodManager.InlineManager
-    override val builders = dequeOf(StateBuilder())
-    var inlineIndex = inlineIndex
-        private set
+interface Inliner<T> : RecollectingTransformer<Inliner<T>> {
+    val im: MethodManager.InlineManager
+    val psa: PredicateStateAnalysis
+    var inlineIndex: Int
 
-    protected class TermRenamer(val suffix: String, val remapping: Map<Term, Term>) : Transformer<TermRenamer> {
-        override fun transformTerm(term: Term): Term = remapping[term] ?: when (term) {
-            is ValueTerm, is ArgumentTerm, is ReturnValueTerm -> term { value(term.type, "${term.name}.$suffix") }
-            else -> term
-        }
-    }
+    fun getInlinedMethod(callTerm: CallTerm): Method? = callTerm.method
 
-    override fun transformCallPredicate(predicate: CallPredicate): Predicate {
-        val call = predicate.call as CallTerm
-        val calledMethod = call.method
-        if (!im.isInlinable(calledMethod)) return predicate
+    fun isInlinable(method: Method): Boolean = im.inliningEnabled && !im.isIgnored(method)
 
+    fun buildMappings(callTerm: CallTerm, method: Method, returnTerm: Term?): Map<Term, Term> {
         val mappings = hashMapOf<Term, Term>()
-        if (!call.isStatic) {
-            val `this` = term { `this`(calledMethod.`class`.kexType) }
-            mappings[`this`] = call.owner
+        if (!callTerm.isStatic) {
+            val `this` = term { `this`(method.`class`.kexType) }
+            mappings[`this`] = callTerm.owner
         }
-        if (predicate.hasLhv) {
-            val retval = term { `return`(calledMethod) }
-            mappings[retval] = predicate.lhv
+        if (returnTerm != null) {
+            val retval = term { `return`(method) }
+            mappings[retval] = returnTerm
         }
 
-        for ((index, argType) in calledMethod.argTypes.withIndex()) {
+        for ((index, argType) in method.argTypes.withIndex()) {
             val argTerm = term { arg(argType.kexType, index) }
-            val calledArg = call.arguments[index]
+            val calledArg = callTerm.arguments[index]
             mappings[argTerm] = calledArg
         }
 
-        currentBuilder += prepareInlinedState(calledMethod, mappings) ?: return predicate
-
-        return nothing()
+        return mappings
     }
 
-    private fun prepareInlinedState(method: Method, mappings: Map<Term, Term>): PredicateState? {
+    fun prepareInlinedState(method: Method, mappings: Map<Term, Term>): PredicateState? {
         if (method.isEmpty()) return null
 
         val builder = psa.builder(method)
@@ -62,17 +58,40 @@ class MethodInliner(val psa: PredicateStateAnalysis,
 
         return TermRenamer("inlined${inlineIndex++}", mappings).apply(endState)
     }
+
+    override fun transformCallPredicate(predicate: CallPredicate): Predicate {
+        val call = predicate.call as CallTerm
+        val calledMethod = call.method
+        if (!isInlinable(calledMethod)) return predicate
+
+        val inlinedMethod = getInlinedMethod(call) ?: return predicate
+        val mappings = buildMappings(call, inlinedMethod, predicate.lhvUnsafe)
+
+        currentBuilder += prepareInlinedState(calledMethod, mappings) ?: return predicate
+        return nothing()
+    }
 }
 
-class SimpleDepthInliner(val psa: PredicateStateAnalysis, val maxDepth: Int = defaultDepth) : Transformer<DepthInliner> {
+class MethodInliner(override val psa: PredicateStateAnalysis,
+                    override var inlineIndex: Int = 0) : Inliner<MethodInliner> {
+    override val im = MethodManager.InlineManager
+    override val builders = dequeOf(StateBuilder())
+}
+
+class RecursiveInliner<T>(override val psa: PredicateStateAnalysis,
+                          val maxDepth: Int = defaultDepth,
+                          val inlinerBuilder: (Int) -> Inliner<T>) : Inliner<RecursiveInliner<T>> {
+    override val im = MethodManager.InlineManager
+    override var inlineIndex = 0
+    override val builders = dequeOf(StateBuilder())
+
     override fun apply(ps: PredicateState): PredicateState {
         var last: PredicateState
         var current = ps
-        var inlineIndex = 0
         var depth = 0
         do {
             last = current
-            val cii = MethodInliner(psa, inlineIndex)
+            val cii = inlinerBuilder(inlineIndex)
             current = cii.apply(last)
             inlineIndex = cii.inlineIndex
             ++depth
