@@ -72,6 +72,19 @@ class AnyGenerator(private val fallback: Generator) : Generator {
             return
         }
 
+        val constructors = klass.accessibleConstructors
+        val externalConstructors = klass.externalConstructors
+
+        val nonRecursiveConstructors = constructors.filter {
+            it.argTypes.all { arg -> !(klass.type.isSupertypeOf(arg) || arg.isSupertypeOf(klass.type)) }
+        }
+        val nonRecursiveExternalConstructors = externalConstructors.filter {
+            it.argTypes.all { arg -> !(klass.type.isSupertypeOf(arg) || arg.isSupertypeOf(klass.type)) }
+        }
+
+        val recursiveConstructors = constructors.filter { it !in nonRecursiveConstructors }
+        val recursiveExternalConstructors = externalConstructors.filter { it !in nonRecursiveExternalConstructors }
+
         val setters = descriptor.generateSetters(generationDepth)
         val queue = queueOf(GeneratorContext.ExecutionStack(descriptor, setters, 0))
         val cache = mutableSetOf<StackWrapper>()
@@ -88,19 +101,6 @@ class AnyGenerator(private val fallback: Generator) : Generator {
             val current = descriptor.accept(desc)
             if (depth > maxStackSize) continue
             log.debug("Depth $generationDepth, stack depth $depth, query size ${queue.size}")
-
-            val constructors = klass.accessibleConstructors
-            val externalConstructors = klass.externalConstructors
-
-            val nonRecursiveConstructors = constructors.filter {
-                it.argTypes.all { arg -> !(klass.type.isSupertypeOf(arg) || arg.isSupertypeOf(klass.type)) }
-            }
-            val nonRecursiveExternalConstructors = externalConstructors.filter {
-                it.argTypes.all { arg -> !(klass.type.isSupertypeOf(arg) || arg.isSupertypeOf(klass.type)) }
-            }
-
-            val recursiveConstructors = constructors.filter { it !in nonRecursiveConstructors }
-            val recursiveExternalConstructors = externalConstructors.filter { it !in nonRecursiveExternalConstructors }
 
             for (method in nonRecursiveConstructors) {
                 val apiCall = current.checkConstructor(klass, method, generationDepth) ?: continue
@@ -131,6 +131,7 @@ class AnyGenerator(private val fallback: Generator) : Generator {
             val acceptExecResult = { method: Method, res: GeneratorContext.ExecutionResult, oldDepth: Int ->
                 val (result, args) = res
                 if (result != null && result neq current) {
+                    result.reduce()
                     val remapping = { mutableMapOf<Descriptor, Descriptor>(result to current) }
                     val generatedArgs = args.map { fallback.generate(it.deepCopy(remapping()), generationDepth + 1) }
                     val newStack = stack + MethodCall(method, generatedArgs)

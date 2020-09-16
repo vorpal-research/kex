@@ -13,6 +13,7 @@ import org.jetbrains.research.kfg.type.ClassType
 import org.jetbrains.research.kfg.type.Type
 import org.jetbrains.research.kfg.type.TypeFactory
 import org.jetbrains.research.kfg.type.NullType
+import java.util.*
 
 val defaultAllocSize = kexConfig.getIntValue("smt", "defaultAllocationSize", 1024)
 
@@ -95,7 +96,7 @@ class ${solver}Converter(val tf: TypeFactory) : ${solver}SMTConverter() {
 
     fun convert(choice: ChoiceState, ef: $factory, ctx: ${solver}Context, extractPath: Boolean = false): Bool_ {
         var res = ef.makeFalse()
-        val contexts = hashMapOf< Bool_, ${solver}Context >()
+        val contexts = IdentityHashMap< Bool_, ${solver}Context >()
         for (branch in choice) {
             val newCtx = ${solver}Context(ctx)
             val state = convert(branch, ef, newCtx, extractPath)
