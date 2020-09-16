@@ -75,9 +75,8 @@ class ${solver}Converter(val tf: TypeFactory) : ${solver}SMTConverter() {
                 else -> unreachable { log.error("Unable to cast expr ${ expr } to ${ type }") }
             }
 
-    fun apply(ps: PredicateState, ef: $factory, ctx: ${solver}Context): Bool_ {
-        this.types = collectTypes(ps).filter { it !is KexNull }.map { it.getKfgType(tf) }.toSet()
-        return convert(ps, ef, ctx)
+    fun init(types: Set< KexType >) {
+        this.types = types.filter { it !is KexNull }.map { it.getKfgType(tf) }.toSet()
     }
 
     fun convert(ps: PredicateState, ef: $factory, ctx: ${solver}Context, extractPath: Boolean = false): Bool_ = when (ps) {
