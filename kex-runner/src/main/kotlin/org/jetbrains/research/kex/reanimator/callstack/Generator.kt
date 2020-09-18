@@ -131,7 +131,6 @@ class AnyGenerator(private val fallback: Generator) : Generator {
             val acceptExecResult = { method: Method, res: GeneratorContext.ExecutionResult, oldDepth: Int ->
                 val (result, args) = res
                 if (result != null && result neq current) {
-                    result.reduce()
                     val remapping = { mutableMapOf<Descriptor, Descriptor>(result to current) }
                     val generatedArgs = args.map { fallback.generate(it.deepCopy(remapping()), generationDepth + 1) }
                     val newStack = stack + MethodCall(method, generatedArgs)

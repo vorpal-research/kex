@@ -62,14 +62,14 @@ class GeneratorContext(val context: ExecutionContext, val psa: PredicateStateAna
     val Class.accessibleConstructors
         get() = constructors
                 .filter { visibilityLevel <= it.visibility }
-                .filterNot { it.isSynthetic }
+//                .filterNot { it.isSynthetic }
                 .sortedBy { it.argTypes.size }
 
     val Class.accessibleMethods
         get() = methods
                 .filterNot { it.isStatic }
                 .filter { visibilityLevel <= it.visibility }
-                .filterNot { it.isSynthetic }
+//                .filterNot { it.isSynthetic }
 
     fun Method.executeAsConstructor(descriptor: ObjectDescriptor): ExecutionResult? {
         if (isEmpty()) return null

@@ -12,6 +12,8 @@ import org.jetbrains.research.kex.random.Randomizer
 import org.jetbrains.research.kex.reanimator.callstack.CallStack
 import org.jetbrains.research.kex.reanimator.callstack.CallStackExecutor
 import org.jetbrains.research.kex.reanimator.callstack.CallStackGenerator
+import org.jetbrains.research.kex.reanimator.callstack.GeneratorContext
+import org.jetbrains.research.kex.reanimator.collector.externalConstructors
 import org.jetbrains.research.kex.reanimator.descriptor.*
 import org.jetbrains.research.kex.util.kex
 import org.jetbrains.research.kex.util.loadClass
@@ -24,6 +26,7 @@ private val visibilityLevel by lazy { kexConfig.getEnumValue("apiGeneration", "v
 class RandomObjectReanimator(val ctx: ExecutionContext, val target: Package, val psa: PredicateStateAnalysis) {
     val random: Randomizer get() = ctx.random
     val cm: ClassManager get() = ctx.cm
+    val generatorContext = GeneratorContext(ctx, psa)
 
     val ClassManager.randomClass
         get() = this.concreteClasses
@@ -52,7 +55,8 @@ class RandomObjectReanimator(val ctx: ExecutionContext, val target: Package, val
             val kfgClass = (this.javaClass.kex.getKfgType(cm.type) as ClassType).`class`
             if (this is Throwable) return false
             if (!kfgClass.isInstantiable || visibilityLevel > kfgClass.visibility) return false
-//            if (!this.descriptor.isValid()) return false
+            if (with(generatorContext) { kfgClass.accessibleConstructors + kfgClass.externalConstructors }.isEmpty()) return false
+            if (!this.descriptor.isValid()) return false
             return true
         }
 
@@ -92,7 +96,7 @@ class RandomObjectReanimator(val ctx: ExecutionContext, val target: Package, val
 
             var callStack: CallStack? = null
             time += timed {
-                callStack = `try` { CallStackGenerator(ctx, psa).generateDescriptor(descriptor) }.getOrNull()
+                callStack = `try` { CallStackGenerator(generatorContext).generateDescriptor(descriptor) }.getOrNull()
             }
 
             val generatedAny = callStack?.let { stack ->
