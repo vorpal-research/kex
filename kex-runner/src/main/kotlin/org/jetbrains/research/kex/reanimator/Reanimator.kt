@@ -2,6 +2,7 @@ package org.jetbrains.research.kex.reanimator
 
 import com.abdullin.kthelper.`try`
 import com.abdullin.kthelper.logging.log
+import com.abdullin.kthelper.time.timed
 import org.jetbrains.research.kex.ExecutionContext
 import org.jetbrains.research.kex.asm.state.PredicateStateAnalysis
 import org.jetbrains.research.kex.random.GenerationException
@@ -50,8 +51,9 @@ class Reanimator(val ctx: ExecutionContext, val psa: PredicateStateAnalysis) {
 
     private val Descriptor.callStack: CallStack
         get() = `try` {
-            val cs = csGenerator.generateDescriptor(this)
-            DescriptorStatistics.addDescriptor(this, cs)
+            lateinit var cs: CallStack
+            val time = timed { cs = csGenerator.generateDescriptor(this) }
+            DescriptorStatistics.addDescriptor(this, cs, time)
             cs
         }.getOrThrow {
             DescriptorStatistics.addFailure(this)

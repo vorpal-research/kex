@@ -11,12 +11,10 @@ object BoolectorEngine : SMTEngine<Btor, BoolectorNode, BoolectorSort, Boolector
     private var trueExpr: BoolectorNode? = null
     private var falseExpr: BoolectorNode? = null
     private val bvSortCache = mutableMapOf<Int, BoolectorSort>()
-    private val arraySortCache = mutableMapOf<Pair<BoolectorSort, BoolectorSort>, BoolectorSort>()
 
     override fun initialize() {
         trueExpr = null
         falseExpr = null
-        arraySortCache.clear()
         bvSortCache.clear()
     }
 
@@ -36,7 +34,7 @@ object BoolectorEngine : SMTEngine<Btor, BoolectorNode, BoolectorSort, Boolector
     override fun getDoubleSort(ctx: Btor): BoolectorSort = getBVSort(ctx, 64)
 
     override fun getArraySort(ctx: Btor, domain: BoolectorSort, range: BoolectorSort): BoolectorSort =
-            arraySortCache.getOrPut(domain to range) { ArraySort.arraySort(domain, range) }
+            ArraySort.arraySort(domain, range)
 
     override fun isBoolSort(ctx: Btor, sort: BoolectorSort): Boolean = sort.isBoolSort
 

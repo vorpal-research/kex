@@ -9,12 +9,10 @@ object Z3Engine : SMTEngine<Context, Expr, Sort, FuncDecl, Pattern>() {
     private var trueExpr: Expr? = null
     private var falseExpr: Expr? = null
     private val bvSortCache = mutableMapOf<Int, Sort>()
-    private val arraySortCache = mutableMapOf<Pair<Sort, Sort>, Sort>()
 
     override fun initialize() {
         trueExpr = null
         falseExpr = null
-        arraySortCache.clear()
         bvSortCache.clear()
     }
 
@@ -26,8 +24,7 @@ object Z3Engine : SMTEngine<Context, Expr, Sort, FuncDecl, Pattern>() {
     override fun getBVSort(ctx: Context, size: Int): Sort = bvSortCache.getOrPut(size) { ctx.mkBitVecSort(size) }
     override fun getFloatSort(ctx: Context): Sort = ctx.mkFPSort32()
     override fun getDoubleSort(ctx: Context): Sort = ctx.mkFPSort64()
-    override fun getArraySort(ctx: Context, domain: Sort, range: Sort): Sort =
-            arraySortCache.getOrPut(domain to range) { ctx.mkArraySort(domain, range) }
+    override fun getArraySort(ctx: Context, domain: Sort, range: Sort): Sort = ctx.mkArraySort(domain, range)
 
     override fun isBoolSort(ctx: Context, sort: Sort): Boolean = sort is BoolSort
     override fun isBVSort(ctx: Context, sort: Sort): Boolean = sort is BitVecSort
