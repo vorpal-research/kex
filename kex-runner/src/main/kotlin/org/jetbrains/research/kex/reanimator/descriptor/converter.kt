@@ -140,6 +140,10 @@ class Object2DescriptorConverter : DescriptorBuilder() {
             val type = field.type.kex
 
             val actualValue = field.get(any)
+            if (field.name == "hashCode" && any.hashCode() == actualValue) {
+                continue
+            }
+
             val descriptorValue = convertElement(field.type, actualValue, depth + 1)
             result[name to type] = descriptorValue
         }
