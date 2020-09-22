@@ -1,7 +1,11 @@
 package org.jetbrains.research.kex.smt.z3
 
 import com.abdullin.kthelper.assert.unreachable
+import com.abdullin.kthelper.div
 import com.abdullin.kthelper.logging.log
+import com.abdullin.kthelper.minus
+import com.abdullin.kthelper.plus
+import com.abdullin.kthelper.times
 import com.microsoft.z3.*
 import com.microsoft.z3.enumerations.Z3_lbool
 import org.jetbrains.research.kex.smt.SMTEngine
@@ -44,6 +48,26 @@ object Z3Unlogic {
                     is ConstDoubleTerm -> term { const((fp.value).toLong()) }
                     else -> TODO()
                 }
+            }
+            expr.isBVAdd -> {
+                val arg1 = undo(expr.args[0])
+                val arg2 = undo(expr.args[1])
+                term { const(arg1.numericValue + arg2.numericValue) }
+            }
+            expr.isBVSub -> {
+                val arg1 = undo(expr.args[0])
+                val arg2 = undo(expr.args[1])
+                term { const(arg1.numericValue - arg2.numericValue) }
+            }
+            expr.isBVMul -> {
+                val arg1 = undo(expr.args[0])
+                val arg2 = undo(expr.args[1])
+                term { const(arg1.numericValue * arg2.numericValue) }
+            }
+            expr.isBVSDiv -> {
+                val arg1 = undo(expr.args[0])
+                val arg2 = undo(expr.args[1])
+                term { const(arg1.numericValue / arg2.numericValue) }
             }
             else -> TODO()
         }

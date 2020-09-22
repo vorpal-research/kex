@@ -30,17 +30,6 @@ private fun Number.toBoolean() = this != 0
 
 data class ReanimatedModel(val method: Method, val instance: Any?, val arguments: List<Any?>)
 
-private val Term.numericValue: Number get() = when (this) {
-    is ConstByteTerm -> value
-    is ConstCharTerm -> value.toByte()
-    is ConstShortTerm -> value
-    is ConstIntTerm -> value
-    is ConstLongTerm -> value
-    is ConstFloatTerm -> value
-    is ConstDoubleTerm -> value
-    else -> unreachable { log.error("Trying to get value of term: $this with type $type") }
-}
-
 interface ModelReanimator<T> {
     val method: Method
     val model: SMTModel
