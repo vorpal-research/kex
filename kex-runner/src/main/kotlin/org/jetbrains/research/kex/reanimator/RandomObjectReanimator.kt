@@ -36,8 +36,8 @@ class RandomObjectReanimator(val ctx: ExecutionContext, val target: Package, val
 
     fun Descriptor.isValid(visited: Set<Descriptor> = setOf()): Boolean = when (this) {
         in visited -> true
-        is ConstantDescriptor.Float -> false
-        is ConstantDescriptor.Double -> false
+//        is ConstantDescriptor.Float -> false
+//        is ConstantDescriptor.Double -> false
         is ConstantDescriptor -> true
         is ObjectDescriptor -> when {
             this.klass.kfgClass(cm.type).isInheritorOf(cm["java/util/Map"]) -> false
