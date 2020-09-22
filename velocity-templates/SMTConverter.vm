@@ -76,6 +76,18 @@ class ${solver}Converter(val tf: TypeFactory) : ${solver}SMTConverter() {
                 else -> unreachable { log.error("Unable to cast expr ${ expr } to ${ type }") }
             }
 
+    private fun convertAndCast(type: KexType, expr: Dynamic_): Dynamic_ =
+            when (type) {
+                is KexLong -> expr.convertToLong()
+                is KexBool -> Bool_.forceCast(expr)
+                is KexIntegral -> expr.convertToInt()
+                is KexFloat -> expr.convertToFloat()
+                is KexDouble -> expr.convertToDouble()
+                is KexClass -> Ptr_.forceCast(expr)
+                is KexArray -> Ptr_.forceCast(expr)
+                else -> unreachable { log.error("Unable to cast expr ${ expr } to ${ type }") }
+            }
+
     fun init(types: Set< KexType >) {
         this.types = types.filter { it !is KexNull }.map { it.getKfgType(tf) }.toSet()
     }
@@ -279,7 +291,7 @@ class ${solver}Converter(val tf: TypeFactory) : ${solver}SMTConverter() {
             val subtype = ef.subtypeFunction.applyAs< Bool_ >(typeVar, castedTypeVar) or ef.subtypeFunction.applyAs< Bool_ >(castedTypeVar, typeVar)
             return cast(cast.type, op.withAxiom(subtype))
         }
-        return cast(cast.type, op)
+        return convertAndCast(cast.type, op)
     }
 
 #macro(cmp $opcode $default $type)

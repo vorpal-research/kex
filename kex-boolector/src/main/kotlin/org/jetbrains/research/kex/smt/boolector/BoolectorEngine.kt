@@ -68,6 +68,10 @@ object BoolectorEngine : SMTEngine<Btor, BoolectorNode, BoolectorSort, Boolector
 
     override fun float2bv(ctx: Btor, expr: BoolectorNode, sort: BoolectorSort): BoolectorNode = bv2bv(ctx, expr, sort)
 
+    override fun IEEEbv2float(ctx: Btor, expr: BoolectorNode, sort: BoolectorSort): BoolectorNode = bv2bv(ctx, expr, sort)
+
+    override fun float2IEEEbv(ctx: Btor, expr: BoolectorNode, sort: BoolectorSort): BoolectorNode = bv2bv(ctx, expr, sort)
+
     override fun float2float(ctx: Btor, expr: BoolectorNode, sort: BoolectorSort): BoolectorNode = bv2bv(ctx, expr, sort)
 
     override fun hash(ctx: Btor, expr: BoolectorNode): Int = expr.id
