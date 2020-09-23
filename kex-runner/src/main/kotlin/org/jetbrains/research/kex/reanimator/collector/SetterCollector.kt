@@ -1,4 +1,4 @@
-package org.jetbrains.research.kex.generator
+package org.jetbrains.research.kex.reanimator.collector
 
 import com.abdullin.kthelper.`try`
 import com.abdullin.kthelper.assert.asserted
@@ -17,10 +17,10 @@ import kotlin.reflect.full.memberProperties
 import kotlin.reflect.jvm.javaType
 import org.jetbrains.research.kfg.ir.Class as KfgClass
 
-val Field.hasSetter get() = this in SetterDetector.setters
-val Field.setter get() = asserted(this.hasSetter) { SetterDetector.setters.getValue(this) }
+val Field.hasSetter get() = this in SetterCollector.setters
+val Field.setter get() = asserted(this.hasSetter) { SetterCollector.setters.getValue(this) }
 
-class SetterDetector(val ctx: ExecutionContext) : ClassVisitor {
+class SetterCollector(val ctx: ExecutionContext) : ClassVisitor {
     companion object {
         val setters: Map<Field, Method> get() = settersInner
 

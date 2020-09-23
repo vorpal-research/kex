@@ -9,12 +9,18 @@ object Z3Engine : SMTEngine<Context, Expr, Sort, FuncDecl, Pattern>() {
     private var trueExpr: Expr? = null
     private var falseExpr: Expr? = null
     private val bvSortCache = mutableMapOf<Int, Sort>()
-    private val arraySortCache = mutableMapOf<Pair<Sort, Sort>, Sort>()
+    private val bv32Sort get() = bvSortCache[32]
+    private val bv64Sort get() = bvSortCache[64]
+    private var array32to32Sort: Sort? = null
+    private var array32to64Sort: Sort? = null
+    private var array64to64Sort: Sort? = null
 
     override fun initialize() {
         trueExpr = null
         falseExpr = null
-        arraySortCache.clear()
+        array32to32Sort = null
+        array32to64Sort = null
+        array64to64Sort = null
         bvSortCache.clear()
     }
 
@@ -26,8 +32,27 @@ object Z3Engine : SMTEngine<Context, Expr, Sort, FuncDecl, Pattern>() {
     override fun getBVSort(ctx: Context, size: Int): Sort = bvSortCache.getOrPut(size) { ctx.mkBitVecSort(size) }
     override fun getFloatSort(ctx: Context): Sort = ctx.mkFPSort32()
     override fun getDoubleSort(ctx: Context): Sort = ctx.mkFPSort64()
-    override fun getArraySort(ctx: Context, domain: Sort, range: Sort): Sort =
-            arraySortCache.getOrPut(domain to range) { ctx.mkArraySort(domain, range) }
+    override fun getArraySort(ctx: Context, domain: Sort, range: Sort): Sort = when {
+        domain === bv32Sort && range === bv32Sort -> {
+            if (array32to32Sort == null) {
+                array32to32Sort = ctx.mkArraySort(bv32Sort, bv32Sort)
+            }
+            array32to32Sort!!
+        }
+        domain === bv32Sort && range === bv64Sort -> {
+            if (array32to64Sort == null) {
+                array32to64Sort = ctx.mkArraySort(bv32Sort, bv64Sort)
+            }
+            array32to64Sort!!
+        }
+        domain === bv64Sort && range === bv64Sort -> {
+            if (array64to64Sort == null) {
+                array64to64Sort = ctx.mkArraySort(bv64Sort, bv64Sort)
+            }
+            array64to64Sort!!
+        }
+        else -> ctx.mkArraySort(domain, range)
+    }
 
     override fun isBoolSort(ctx: Context, sort: Sort): Boolean = sort is BoolSort
     override fun isBVSort(ctx: Context, sort: Sort): Boolean = sort is BitVecSort
@@ -56,9 +81,15 @@ object Z3Engine : SMTEngine<Context, Expr, Sort, FuncDecl, Pattern>() {
     }
 
     override fun bv2float(ctx: Context, expr: Expr, sort: Sort): Expr =
-            ctx.mkFPToFP(expr as BitVecExpr, sort as FPSort)
+            ctx.mkFPToFP(ctx.mkFPRTZ(), expr as BitVecExpr, sort as FPSort, true)
 
     override fun float2bv(ctx: Context, expr: Expr, sort: Sort): Expr =
+            ctx.mkFPToBV(ctx.mkFPRTZ(), expr as FPExpr, (sort as BitVecSort).size, true)
+
+    override fun IEEEbv2float(ctx: Context, expr: Expr, sort: Sort): Expr =
+            ctx.mkFPToFP(expr as BitVecExpr, sort as FPSort)
+
+    override fun float2IEEEbv(ctx: Context, expr: Expr, sort: Sort): Expr =
             ctx.mkFPToIEEEBV(expr as FPExpr)
 
     override fun float2float(ctx: Context, expr: Expr, sort: Sort): Expr =

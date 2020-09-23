@@ -380,7 +380,10 @@ fun ${valexpr}.toBV(sort: $sort): $Bitvector {
     val newExpr = when {
         engine.isBool(ctx, expr) -> engine.bool2bv(ctx, expr, sort)
         engine.isBV(ctx, expr) -> engine.bv2bv(ctx, expr, sort)
-        engine.isFP(ctx, expr) -> engine.float2bv(ctx, expr, sort)
+        engine.isFP(ctx, expr) -> {
+            val bv = engine.float2IEEEbv(ctx, expr, sort)
+            engine.bv2bv(ctx, bv, sort)
+        }
         else -> unreachable { log.debug("Unexpected SMT expr type in cast") }
     }
     return when (engine.bvBitsize(ctx, sort)) {
@@ -403,7 +406,10 @@ fun ${valexpr}.toBV(): $Bitvector {
 
 fun ${valexpr}.toFloat(): $Float {
     val newExpr = when {
-        engine.isBV(ctx, expr) -> engine.bv2float(ctx, expr, engine.getFloatSort(ctx))
+        engine.isBV(ctx, expr) -> {
+            val bv32expr = this.toBV32()
+            engine.IEEEbv2float(ctx, bv32expr.expr, engine.getFloatSort(ctx))
+        }
         engine.isFloat(ctx, expr) -> this.expr
         engine.isDouble(ctx, expr) -> engine.float2float(ctx, expr, engine.getFloatSort(ctx))
         else -> unreachable { log.debug("Unexpected SMT expr type in cast") }
@@ -412,6 +418,50 @@ fun ${valexpr}.toFloat(): $Float {
 }
 
 fun ${valexpr}.toDouble(): $Double {
+    val newExpr = when {
+        engine.isBV(ctx, expr) -> {
+            val bv64expr = this.toBV64()
+            engine.IEEEbv2float(ctx, bv64expr.expr, engine.getDoubleSort(ctx))
+        }
+        engine.isFloat(ctx, expr) -> engine.float2float(ctx, expr, engine.getDoubleSort(ctx))
+        engine.isDouble(ctx, expr) -> this.expr
+        else -> unreachable { log.debug("Unexpected SMT expr type in cast") }
+    }
+    return $Double(ctx, newExpr, axiom)
+}
+
+fun ${valexpr}.convertToLong() = convertToBV64()
+fun ${valexpr}.convertToInt() = convertToBV32()
+
+fun ${valexpr}.convertToBV32() = convertToBV(32) as? $Bitvector32 ?: unreachable { log.error("Cast failure") }
+fun ${valexpr}.convertToBV64() = convertToBV(64) as? $Bitvector64 ?: unreachable { log.error("Cast failure") }
+fun ${valexpr}.convertToBV(width: Int) = convertToBV(engine.getBVSort(ctx, width))
+
+fun ${valexpr}.convertToBV(sort: $sort): $Bitvector {
+    val newExpr = when {
+        engine.isBool(ctx, expr) -> engine.bool2bv(ctx, expr, sort)
+        engine.isBV(ctx, expr) -> engine.bv2bv(ctx, expr, sort)
+        engine.isFP(ctx, expr) -> engine.float2bv(ctx, expr, sort)
+        else -> unreachable { log.debug("Unexpected SMT expr type in cast") }
+    }
+    return when (engine.bvBitsize(ctx, sort)) {
+        32 -> $Bitvector32(ctx, newExpr, axiom)
+        64 -> $Bitvector64(ctx, newExpr, axiom)
+        else -> $Bitvector(ctx, newExpr, axiom)
+    }
+}
+
+fun ${valexpr}.convertToFloat(): $Float {
+    val newExpr = when {
+        engine.isBV(ctx, expr) -> engine.bv2float(ctx, expr, engine.getFloatSort(ctx))
+        engine.isFloat(ctx, expr) -> this.expr
+        engine.isDouble(ctx, expr) -> engine.float2float(ctx, expr, engine.getFloatSort(ctx))
+        else -> unreachable { log.debug("Unexpected SMT expr type in cast") }
+    }
+    return $Float(ctx, newExpr, axiom)
+}
+
+fun ${valexpr}.convertToDouble(): $Double {
     val newExpr = when {
         engine.isBV(ctx, expr) -> engine.bv2float(ctx, expr, engine.getDoubleSort(ctx))
         engine.isFloat(ctx, expr) -> engine.float2float(ctx, expr, engine.getDoubleSort(ctx))

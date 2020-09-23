@@ -5,8 +5,8 @@ import com.abdullin.kthelper.logging.log
 import com.abdullin.kthelper.toBoolean
 import com.abdullin.kthelper.tryOrNull
 import org.jetbrains.research.kex.ExecutionContext
-import org.jetbrains.research.kex.generator.descriptor.*
 import org.jetbrains.research.kex.ktype.*
+import org.jetbrains.research.kex.reanimator.descriptor.*
 import org.jetbrains.research.kex.state.term.*
 import org.jetbrains.research.kex.state.transformer.memspace
 import org.jetbrains.research.kex.util.getActualField
@@ -30,18 +30,7 @@ private fun Number.toBoolean() = this != 0
 
 data class ReanimatedModel(val method: Method, val instance: Any?, val arguments: List<Any?>)
 
-private val Term.numericValue: Number get() = when (this) {
-    is ConstByteTerm -> value
-    is ConstCharTerm -> value.toByte()
-    is ConstShortTerm -> value
-    is ConstIntTerm -> value
-    is ConstLongTerm -> value
-    is ConstFloatTerm -> value
-    is ConstDoubleTerm -> value
-    else -> unreachable { log.error("Trying to get value of term: $this with type $type") }
-}
-
-interface Reanimator<T> {
+interface ModelReanimator<T> {
     val method: Method
     val model: SMTModel
     val context: ExecutionContext
@@ -85,7 +74,7 @@ interface Reanimator<T> {
 
 class ObjectReanimator(override val method: Method,
                        override val model: SMTModel,
-                       override val context: ExecutionContext) : Reanimator<Any?> {
+                       override val context: ExecutionContext) : ModelReanimator<Any?> {
     private val randomizer get() = context.random
 
     override val memoryMappings = hashMapOf<Int, MutableMap<Int, Any?>>()
@@ -263,7 +252,7 @@ class ObjectReanimator(override val method: Method,
 
 abstract class DescriptorReanimator(override val method: Method,
                                     override val model: SMTModel,
-                                    override val context: ExecutionContext) : Reanimator<Descriptor> {
+                                    override val context: ExecutionContext) : ModelReanimator<Descriptor> {
     override val memoryMappings = hashMapOf<Int, MutableMap<Int, Descriptor>>()
 
     override fun reanimate(term: Term, value: Term?): Descriptor = when {

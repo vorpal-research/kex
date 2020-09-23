@@ -13,17 +13,18 @@ import org.jetbrains.research.kex.asm.manager.CoverageCounter
 import org.jetbrains.research.kex.asm.state.PredicateStateAnalysis
 import org.jetbrains.research.kex.asm.transform.LoopDeroller
 import org.jetbrains.research.kex.asm.transform.RuntimeTraceCollector
+import org.jetbrains.research.kex.asm.transform.SystemExitTransformer
 import org.jetbrains.research.kex.asm.util.ClassWriter
 import org.jetbrains.research.kex.config.CmdConfig
 import org.jetbrains.research.kex.config.FileConfig
 import org.jetbrains.research.kex.config.RuntimeConfig
 import org.jetbrains.research.kex.config.kexConfig
-import org.jetbrains.research.kex.generator.ExternalConstructorCollector
-import org.jetbrains.research.kex.generator.MethodFieldAccessDetector
-import org.jetbrains.research.kex.generator.RandomDescriptorGenerator
-import org.jetbrains.research.kex.generator.SetterDetector
-import org.jetbrains.research.kex.generator.descriptor.DescriptorStatistics
 import org.jetbrains.research.kex.random.easyrandom.EasyRandomDriver
+import org.jetbrains.research.kex.reanimator.RandomObjectReanimator
+import org.jetbrains.research.kex.reanimator.collector.ExternalConstructorCollector
+import org.jetbrains.research.kex.reanimator.collector.MethodFieldAccessCollector
+import org.jetbrains.research.kex.reanimator.collector.SetterCollector
+import org.jetbrains.research.kex.reanimator.descriptor.DescriptorStatistics
 import org.jetbrains.research.kex.serialization.KexSerializer
 import org.jetbrains.research.kex.smt.Checker
 import org.jetbrains.research.kex.smt.Result
@@ -159,6 +160,7 @@ class Kex(args: Array<String>) {
 
         // instrument all classes in the target package
         runPipeline(originalContext, `package`) {
+            +SystemExitTransformer(originalContext.cm)
             +RuntimeTraceCollector(originalContext.cm)
             +ClassWriter(originalContext, outputDir)
         }
@@ -205,8 +207,8 @@ class Kex(args: Array<String>) {
             +LoopSimplifier(analysisContext.cm)
             +LoopDeroller(analysisContext.cm)
             +psa
-            +MethodFieldAccessDetector(analysisContext, psa)
-            +SetterDetector(analysisContext)
+            +MethodFieldAccessCollector(analysisContext, psa)
+            +SetterCollector(analysisContext)
             +ExternalConstructorCollector(analysisContext.cm)
             +when {
                 useApiGeneration -> DescriptorChecker(analysisContext, traceManager, psa)
@@ -232,11 +234,11 @@ class Kex(args: Array<String>) {
             +LoopSimplifier(analysisContext.cm)
             +LoopDeroller(analysisContext.cm)
             +psa
-            +MethodFieldAccessDetector(analysisContext, psa)
-            +SetterDetector(analysisContext)
+            +MethodFieldAccessCollector(analysisContext, psa)
+            +SetterCollector(analysisContext)
             +ExternalConstructorCollector(analysisContext.cm)
         }
-        RandomDescriptorGenerator(analysisContext, `package`, psa).run()
+        RandomObjectReanimator(analysisContext, `package`, psa).run()
         clearClassPath()
     }
 

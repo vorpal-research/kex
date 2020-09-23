@@ -2,7 +2,6 @@ package org.jetbrains.research.kex.state.transformer
 
 import com.abdullin.kthelper.assert.unreachable
 import com.abdullin.kthelper.logging.log
-import org.jetbrains.research.kex.ktype.KexClass
 import org.jetbrains.research.kex.ktype.KexPointer
 import org.jetbrains.research.kex.state.PredicateState
 import org.jetbrains.research.kex.state.term.*
@@ -21,7 +20,7 @@ fun Term.withMemspace(memspace: Int): Term {
             is CastTerm -> tf.getCast(memspaced, operand)
             is CmpTerm -> tf.getCmp(memspaced, opcode, lhv, rhv)
             is ConstStringTerm -> tf.getString(memspaced, value)
-            is ConstClassTerm -> tf.getClass(memspaced as KexClass)
+            is ConstClassTerm -> tf.getClass(memspaced)
             is FieldLoadTerm -> tf.getFieldLoad(memspaced, field)
             is FieldTerm -> tf.getField(memspaced, owner, fieldName)
             is NegTerm -> tf.getNegTerm(memspaced, operand)
@@ -46,8 +45,8 @@ class MemorySpacer(ps: PredicateState) : Transformer<MemorySpacer> {
     private fun getIndex(token: Token) = indices.getOrPut(token) { index++ }
     private fun getMemspace(term: Term) = getIndex(aa.getDereferenced(term))
 
-    override fun transformTerm(term: Term) = when {
-        term.type is KexPointer -> term.withMemspace(getMemspace(term))
+    override fun transformTerm(term: Term) = when (term.type) {
+        is KexPointer -> term.withMemspace(getMemspace(term))
         else -> term
     }
 }

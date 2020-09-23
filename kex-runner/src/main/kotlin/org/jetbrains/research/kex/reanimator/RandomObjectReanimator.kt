@@ -1,4 +1,4 @@
-package org.jetbrains.research.kex.generator
+package org.jetbrains.research.kex.reanimator
 
 import com.abdullin.kthelper.`try`
 import com.abdullin.kthelper.logging.log
@@ -8,11 +8,13 @@ import org.jetbrains.research.kex.asm.state.PredicateStateAnalysis
 import org.jetbrains.research.kex.asm.util.Visibility
 import org.jetbrains.research.kex.asm.util.visibility
 import org.jetbrains.research.kex.config.kexConfig
-import org.jetbrains.research.kex.generator.callstack.CallStack
-import org.jetbrains.research.kex.generator.callstack.CallStackExecutor
-import org.jetbrains.research.kex.generator.callstack.CallStackGenerator
-import org.jetbrains.research.kex.generator.descriptor.*
 import org.jetbrains.research.kex.random.Randomizer
+import org.jetbrains.research.kex.reanimator.callstack.CallStack
+import org.jetbrains.research.kex.reanimator.callstack.CallStackExecutor
+import org.jetbrains.research.kex.reanimator.callstack.CallStackGenerator
+import org.jetbrains.research.kex.reanimator.callstack.GeneratorContext
+import org.jetbrains.research.kex.reanimator.collector.externalConstructors
+import org.jetbrains.research.kex.reanimator.descriptor.*
 import org.jetbrains.research.kex.util.kex
 import org.jetbrains.research.kex.util.loadClass
 import org.jetbrains.research.kfg.ClassManager
@@ -21,9 +23,10 @@ import org.jetbrains.research.kfg.type.ClassType
 
 private val visibilityLevel by lazy { kexConfig.getEnumValue("apiGeneration", "visibility", true, Visibility.PUBLIC) }
 
-class RandomDescriptorGenerator(val ctx: ExecutionContext, val target: Package, val psa: PredicateStateAnalysis) {
+class RandomObjectReanimator(val ctx: ExecutionContext, val target: Package, val psa: PredicateStateAnalysis) {
     val random: Randomizer get() = ctx.random
     val cm: ClassManager get() = ctx.cm
+    val generatorContext = GeneratorContext(ctx, psa)
 
     val ClassManager.randomClass
         get() = this.concreteClasses
@@ -33,12 +36,15 @@ class RandomDescriptorGenerator(val ctx: ExecutionContext, val target: Package, 
 
     fun Descriptor.isValid(visited: Set<Descriptor> = setOf()): Boolean = when (this) {
         in visited -> true
-        is ConstantDescriptor.Float -> false
-        is ConstantDescriptor.Double -> false
+//        is ConstantDescriptor.Float -> false
+//        is ConstantDescriptor.Double -> false
         is ConstantDescriptor -> true
-        is ObjectDescriptor -> {
-            val set = visited + this
-            this.fields.all { it.value.isValid(set) }
+        is ObjectDescriptor -> when {
+            this.klass.kfgClass(cm.type).isInheritorOf(cm["java/util/Map"]) -> false
+            else -> {
+                val set = visited + this
+                this.fields.all { it.value.isValid(set) }
+            }
         }
         is ArrayDescriptor -> {
             val set = visited + this
@@ -52,6 +58,7 @@ class RandomDescriptorGenerator(val ctx: ExecutionContext, val target: Package, 
             val kfgClass = (this.javaClass.kex.getKfgType(cm.type) as ClassType).`class`
             if (this is Throwable) return false
             if (!kfgClass.isInstantiable || visibilityLevel > kfgClass.visibility) return false
+            if (with(generatorContext) { kfgClass.accessibleConstructors + kfgClass.externalConstructors }.isEmpty()) return false
             if (!this.descriptor.isValid()) return false
             return true
         }
@@ -92,7 +99,7 @@ class RandomDescriptorGenerator(val ctx: ExecutionContext, val target: Package, 
 
             var callStack: CallStack? = null
             time += timed {
-                callStack = `try` { CallStackGenerator(ctx, psa).generateDescriptor(descriptor) }.getOrNull()
+                callStack = `try` { CallStackGenerator(generatorContext).generateDescriptor(descriptor) }.getOrNull()
             }
 
             val generatedAny = callStack?.let { stack ->

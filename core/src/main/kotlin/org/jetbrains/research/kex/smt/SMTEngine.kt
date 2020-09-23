@@ -74,6 +74,8 @@ abstract class SMTEngine<in Context_t : Any, Expr_t : Any, Sort_t : Any, Functio
     abstract fun bv2bv(ctx: Context_t, expr: Expr_t, sort: Sort_t): Expr_t
     abstract fun bv2float(ctx: Context_t, expr: Expr_t, sort: Sort_t): Expr_t
     abstract fun float2bv(ctx: Context_t, expr: Expr_t, sort: Sort_t): Expr_t
+    abstract fun IEEEbv2float(ctx: Context_t, expr: Expr_t, sort: Sort_t): Expr_t
+    abstract fun float2IEEEbv(ctx: Context_t, expr: Expr_t, sort: Sort_t): Expr_t
     abstract fun float2float(ctx: Context_t, expr: Expr_t, sort: Sort_t): Expr_t
 
     abstract fun hash(ctx: Context_t, expr: Expr_t): Int

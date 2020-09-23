@@ -1,4 +1,4 @@
-package org.jetbrains.research.kex.generator.callstack
+package org.jetbrains.research.kex.reanimator.callstack
 
 import com.abdullin.kthelper.logging.log
 import org.jetbrains.research.kex.ExecutionContext
@@ -7,11 +7,11 @@ import org.jetbrains.research.kex.asm.state.PredicateStateAnalysis
 import org.jetbrains.research.kex.asm.util.Visibility
 import org.jetbrains.research.kex.asm.util.visibility
 import org.jetbrains.research.kex.config.kexConfig
-import org.jetbrains.research.kex.generator.descriptor.Descriptor
-import org.jetbrains.research.kex.generator.descriptor.ObjectDescriptor
-import org.jetbrains.research.kex.generator.descriptor.descriptor
 import org.jetbrains.research.kex.ktype.KexType
 import org.jetbrains.research.kex.ktype.kexType
+import org.jetbrains.research.kex.reanimator.descriptor.Descriptor
+import org.jetbrains.research.kex.reanimator.descriptor.ObjectDescriptor
+import org.jetbrains.research.kex.reanimator.descriptor.descriptor
 import org.jetbrains.research.kex.smt.Checker
 import org.jetbrains.research.kex.smt.Result
 import org.jetbrains.research.kex.state.PredicateState
@@ -42,7 +42,7 @@ class GeneratorContext(val context: ExecutionContext, val psa: PredicateStateAna
     fun Descriptor.cached() = descriptorCache[this]
 
     fun prepareState(method: Method, ps: PredicateState, ignores: Set<Term> = setOf()) = transform(ps) {
-        +AnnotationIncluder(method, AnnotationManager.defaultLoader)
+        +AnnotationAdapter(method, AnnotationManager.defaultLoader)
         +MethodInliner(psa)
         +IntrinsicAdapter
         +ReflectionInfoAdapter(method, context.loader, ignores)
@@ -62,14 +62,14 @@ class GeneratorContext(val context: ExecutionContext, val psa: PredicateStateAna
     val Class.accessibleConstructors
         get() = constructors
                 .filter { visibilityLevel <= it.visibility }
-                .filterNot { it.isSynthetic }
+//                .filterNot { it.isSynthetic }
                 .sortedBy { it.argTypes.size }
 
     val Class.accessibleMethods
         get() = methods
                 .filterNot { it.isStatic }
                 .filter { visibilityLevel <= it.visibility }
-                .filterNot { it.isSynthetic }
+//                .filterNot { it.isSynthetic }
 
     fun Method.executeAsConstructor(descriptor: ObjectDescriptor): ExecutionResult? {
         if (isEmpty()) return null
@@ -155,8 +155,8 @@ class GeneratorContext(val context: ExecutionContext, val psa: PredicateStateAna
         })
 
         val transformed = transform(methodState) {
-            +AnnotationIncluder(this@collectFieldAccesses, AnnotationManager.defaultLoader)
-            +DepthInliner(context.types, typeInfoMap, psa)
+            +AnnotationAdapter(this@collectFieldAccesses, AnnotationManager.defaultLoader)
+            +RecursiveInliner(psa) { ConcreteImplInliner(types, typeInfoMap, psa, it) }
         }
         return collectFieldAccesses(context, transformed)
     }

@@ -2,9 +2,14 @@
 
 package org.jetbrains.research.kex.test.debug
 
+import kotlin.system.exitProcess
+
 class BasicTests {
 
-    class RecursiveTest(val float: Double) {
+    fun test(a: Int, b: Int) {
+        if (a > b) {
+            exitProcess(1)
+        }
     }
 
 }

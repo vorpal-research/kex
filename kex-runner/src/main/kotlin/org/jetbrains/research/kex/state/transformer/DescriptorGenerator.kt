@@ -3,15 +3,15 @@ package org.jetbrains.research.kex.state.transformer
 import com.abdullin.kthelper.assert.unreachable
 import com.abdullin.kthelper.logging.log
 import org.jetbrains.research.kex.ExecutionContext
-import org.jetbrains.research.kex.generator.Parameters
-import org.jetbrains.research.kex.generator.descriptor.ConstantDescriptor
-import org.jetbrains.research.kex.generator.descriptor.Descriptor
-import org.jetbrains.research.kex.generator.descriptor.descriptor
 import org.jetbrains.research.kex.ktype.KexReference
 import org.jetbrains.research.kex.ktype.kexType
+import org.jetbrains.research.kex.reanimator.Parameters
+import org.jetbrains.research.kex.reanimator.descriptor.ConstantDescriptor
+import org.jetbrains.research.kex.reanimator.descriptor.Descriptor
+import org.jetbrains.research.kex.reanimator.descriptor.descriptor
 import org.jetbrains.research.kex.smt.FinalDescriptorReanimator
 import org.jetbrains.research.kex.smt.InitialDescriptorReanimator
-import org.jetbrains.research.kex.smt.Reanimator
+import org.jetbrains.research.kex.smt.ModelReanimator
 import org.jetbrains.research.kex.smt.SMTModel
 import org.jetbrains.research.kex.state.PredicateState
 import org.jetbrains.research.kex.state.predicate.DefaultSwitchPredicate
@@ -29,7 +29,7 @@ import org.jetbrains.research.kfg.ir.Method
 class DescriptorGenerator(override val method: Method,
                           override val ctx: ExecutionContext,
                           override val model: SMTModel,
-                          override val reanimator: Reanimator<Descriptor>) : AbstractGenerator<Descriptor> {
+                          override val modelReanimator: ModelReanimator<Descriptor>) : AbstractGenerator<Descriptor> {
 
     override val memory = hashMapOf<Term, Descriptor>()
 

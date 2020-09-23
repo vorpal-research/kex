@@ -13,9 +13,9 @@ import org.jetbrains.research.kex.asm.manager.isImpactable
 import org.jetbrains.research.kex.asm.state.PredicateStateAnalysis
 import org.jetbrains.research.kex.asm.transform.originalBlock
 import org.jetbrains.research.kex.config.kexConfig
-import org.jetbrains.research.kex.generator.Generator
 import org.jetbrains.research.kex.random.GenerationException
 import org.jetbrains.research.kex.random.Randomizer
+import org.jetbrains.research.kex.reanimator.Reanimator
 import org.jetbrains.research.kex.serialization.KexSerializer
 import org.jetbrains.research.kex.smt.Checker
 import org.jetbrains.research.kex.smt.ReanimatedModel
@@ -54,7 +54,7 @@ open class MethodChecker(
     override val cm: ClassManager get() = ctx.cm
     val random: Randomizer get() = ctx.random
     val loader: ClassLoader get() = ctx.loader
-    val generator = Generator(ctx, psa)
+    val generator = Reanimator(ctx, psa)
 
     @ExperimentalSerializationApi
     @InternalSerializationApi

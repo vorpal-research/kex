@@ -1,6 +1,6 @@
-package org.jetbrains.research.kex.generator
+package org.jetbrains.research.kex.reanimator
 
-import org.jetbrains.research.kex.generator.descriptor.Descriptor
+import org.jetbrains.research.kex.reanimator.descriptor.Descriptor
 import org.jetbrains.research.kex.state.term.FieldTerm
 import org.jetbrains.research.kfg.ClassManager
 

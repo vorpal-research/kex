@@ -3,10 +3,10 @@ package org.jetbrains.research.kex.asm.analysis
 import com.abdullin.kthelper.logging.log
 import org.jetbrains.research.kex.ExecutionContext
 import org.jetbrains.research.kex.asm.state.PredicateStateAnalysis
-import org.jetbrains.research.kex.generator.Parameters
-import org.jetbrains.research.kex.generator.concreteParameters
-import org.jetbrains.research.kex.generator.descriptor.Descriptor
 import org.jetbrains.research.kex.random.GenerationException
+import org.jetbrains.research.kex.reanimator.Parameters
+import org.jetbrains.research.kex.reanimator.concreteParameters
+import org.jetbrains.research.kex.reanimator.descriptor.Descriptor
 import org.jetbrains.research.kex.smt.Checker
 import org.jetbrains.research.kex.smt.ReanimatedModel
 import org.jetbrains.research.kex.smt.Result
