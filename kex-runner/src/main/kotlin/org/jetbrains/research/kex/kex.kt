@@ -13,6 +13,7 @@ import org.jetbrains.research.kex.asm.manager.CoverageCounter
 import org.jetbrains.research.kex.asm.state.PredicateStateAnalysis
 import org.jetbrains.research.kex.asm.transform.LoopDeroller
 import org.jetbrains.research.kex.asm.transform.RuntimeTraceCollector
+import org.jetbrains.research.kex.asm.transform.SystemExitTransformer
 import org.jetbrains.research.kex.asm.util.ClassWriter
 import org.jetbrains.research.kex.config.CmdConfig
 import org.jetbrains.research.kex.config.FileConfig
@@ -159,6 +160,7 @@ class Kex(args: Array<String>) {
 
         // instrument all classes in the target package
         runPipeline(originalContext, `package`) {
+            +SystemExitTransformer(originalContext.cm)
             +RuntimeTraceCollector(originalContext.cm)
             +ClassWriter(originalContext, outputDir)
         }
