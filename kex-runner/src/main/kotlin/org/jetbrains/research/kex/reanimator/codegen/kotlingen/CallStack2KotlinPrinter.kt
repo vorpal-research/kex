@@ -43,6 +43,7 @@ class CallStack2KotlinPrinter : CallStackPrinter {
         is ConstructorCall -> printConstructorCall(name, apiCall)
         is ExternalConstructorCall -> printExternalConstructorCall(name, apiCall)
         is MethodCall -> printMethodCall(name, apiCall)
+        is StaticMethodCall -> printStaticMethodCall(apiCall)
         is NewArray -> printNewArray(name, apiCall)
         is ArrayWrite -> printArrayWrite(name, apiCall)
         is FieldSetter -> printFieldSetter(name, apiCall)
@@ -52,6 +53,7 @@ class CallStack2KotlinPrinter : CallStackPrinter {
     }
 
     private fun <T> printConstant(constant: PrimaryValue<T>): String = when (val value = constant.value) {
+        null -> "null"
         is Boolean -> "$value"
         is Byte -> "${value}.toByte()"
         is Char -> when (value) {
@@ -90,6 +92,13 @@ class CallStack2KotlinPrinter : CallStackPrinter {
     private fun printMethodCall(owner: String, call: MethodCall): String {
         call.args.forEach { printCallStack(it) }
         return "${owner}.${call.method.name}(${call.args.joinToString(", ") { printStackName(it) }})"
+    }
+
+    private fun printStaticMethodCall(call: StaticMethodCall): String {
+        call.args.forEach { printCallStack(it) }
+        return "${call.method.`class`.name}.${call.method.name}(${call.args.joinToString(", ") { printStackName(it) }})".also {
+            builder.import(call.method.`class`.fullname)
+        }
     }
 
     private fun printNewArray(name: String, call: NewArray): String {
