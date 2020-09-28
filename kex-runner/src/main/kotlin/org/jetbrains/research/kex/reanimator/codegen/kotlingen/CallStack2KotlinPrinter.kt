@@ -2,8 +2,10 @@ package org.jetbrains.research.kex.reanimator.codegen.kotlingen
 
 import com.abdullin.kthelper.assert.unreachable
 import com.abdullin.kthelper.logging.log
+import org.jetbrains.research.kex.ktype.type
 import org.jetbrains.research.kex.reanimator.callstack.*
 import org.jetbrains.research.kex.reanimator.codegen.CallStackPrinter
+import org.jetbrains.research.kfg.ir.Class
 import org.jetbrains.research.kfg.type.*
 
 class CallStack2KotlinPrinter : CallStackPrinter {
@@ -30,6 +32,38 @@ class CallStack2KotlinPrinter : CallStackPrinter {
             with(current) {
                 +printApiCall(callStack.name, call)
             }
+        }
+    }
+
+    private val Class.kotlinString: String get() = this.type.kotlinString
+
+    private val Type.kotlinString: String get() = when (this) {
+        is NullType -> "null"
+        is VoidType -> "Unit"
+        is BoolType -> "Boolean"
+        ByteType -> "Byte"
+        ShortType -> "Short"
+        CharType -> "Char"
+        IntType -> "Int"
+        LongType -> "Long"
+        FloatType -> "Float"
+        DoubleType -> "Double"
+        is ArrayType -> when (val type = this.component) {
+            BoolType -> "BooleanArray"
+            ByteType -> "ByteArray"
+            ShortType -> "ShortArray"
+            CharType -> "CharArray"
+            IntType -> "IntArray"
+            LongType -> "LongArray"
+            FloatType -> "FloatArray"
+            DoubleType -> "DoubleArray"
+            else -> "Array<${type.kotlinString}>"
+        }
+        else -> {
+            val klass = (this as ClassType).`class`
+            val name = klass.canonicalDesc.replace("$", ".")
+            builder.import(name)
+            klass.name.replace("$", ".")
         }
     }
 
@@ -70,72 +104,51 @@ class CallStack2KotlinPrinter : CallStackPrinter {
     }
 
     private fun printDefaultConstructor(name: String, call: DefaultConstructorCall): String =
-            "val $name = ${call.klass.name}()".also {
-                builder.import(call.klass.canonicalDesc)
-            }
+            "val $name = ${call.klass.kotlinString}()"
 
     private fun printConstructorCall(name: String, call: ConstructorCall): String {
         call.args.forEach { printCallStack(it) }
-        return "val $name = ${call.klass.name}(${call.args.joinToString(", ") { printStackName(it) }})".also {
-            builder.import(call.klass.canonicalDesc)
+        val method = call.constructor
+        val args = call.args.withIndex().joinToString(", ") { (index, it) ->
+            "${printStackName(it)} as ${method.argTypes[index].kotlinString}"
         }
+        return "val $name = ${call.klass.kotlinString}($args)"
     }
 
     private fun printExternalConstructorCall(name: String, call: ExternalConstructorCall): String {
         call.args.forEach { printCallStack(it) }
         val constructor = call.constructor
-        return "val $name = ${constructor.`class`.name}.${constructor.name}(${call.args.joinToString(", ") { printStackName(it) }})".also {
-            builder.import(constructor.`class`.canonicalDesc)
+        val args = call.args.withIndex().joinToString(", ") { (index, it) ->
+            "${printStackName(it)} as ${constructor.argTypes[index].kotlinString}"
         }
+        return "val $name = ${constructor.`class`.kotlinString}.${constructor.name}($args)"
     }
 
     private fun printMethodCall(owner: String, call: MethodCall): String {
         call.args.forEach { printCallStack(it) }
-        return "${owner}.${call.method.name}(${call.args.joinToString(", ") { printStackName(it) }})"
+        val method = call.method
+        val args = call.args.withIndex().joinToString(", ") { (index, it) ->
+            "${printStackName(it)} as ${method.argTypes[index].kotlinString}"
+        }
+        return "${owner}.${method.name}($args)"
     }
 
     private fun printStaticMethodCall(call: StaticMethodCall): String {
         call.args.forEach { printCallStack(it) }
-        return "${call.method.`class`.name}.${call.method.name}(${call.args.joinToString(", ") { printStackName(it) }})".also {
-            builder.import(call.method.`class`.fullname)
+        val klass = call.method.`class`
+        val method = call.method
+        val args = call.args.withIndex().joinToString(", ") { (index, it) ->
+            "${printStackName(it)} as ${method.argTypes[index].kotlinString}"
         }
+        return "${klass.kotlinString}.${method.name}($args)"
     }
 
     private fun printNewArray(name: String, call: NewArray): String {
         val newArray = when (val type = call.asArray.component) {
-            BoolType -> "BooleanArray"
-            ByteType -> "ByteArray"
-            ShortType -> "ShortArray"
-            CharType -> "CharArray"
-            IntType -> "IntArray"
-            LongType -> "LongArray"
-            FloatType -> "FloatArray"
-            DoubleType -> "DoubleArray"
-            is ArrayType -> "arrayOfNulls<${printArrayType(type.component)}>"
-            else -> {
-                val klass = (type as ClassType).`class`
-                builder.import(klass.canonicalDesc)
-                "arrayOfNulls<${klass.name}>"
-            }
+            is ClassType, is ArrayType -> "arrayOfNulls<${type.kotlinString}>"
+            else -> call.asArray.kotlinString
         }
         return "val $name = $newArray(${printStackName(call.length)})"
-    }
-
-    private fun printArrayType(type: Type): String = when (type) {
-        BoolType -> "BooleanArray"
-        ByteType -> "ByteArray"
-        ShortType -> "ShortArray"
-        CharType -> "CharArray"
-        IntType -> "IntArray"
-        LongType -> "LongArray"
-        FloatType -> "FloatArray"
-        DoubleType -> "DoubleArray"
-        is ArrayType -> "Array<${printArrayType(type.component)}>"
-        else -> {
-            val klass = (type as ClassType).`class`
-            builder.import(klass.canonicalDesc)
-            "Array<${klass.name}>"
-        }
     }
 
     private fun printArrayWrite(owner: String, call: ArrayWrite): String {
@@ -150,8 +163,6 @@ class CallStack2KotlinPrinter : CallStackPrinter {
 
     private fun printStaticFieldSetter(call: StaticFieldSetter): String {
         printCallStack(call.value)
-        return "${call.klass.name}.${call.field.name} = ${printStackName(call.value)}".also {
-            builder.import(call.klass.canonicalDesc)
-        }
+        return "${call.klass.kotlinString}.${call.field.name} = ${printStackName(call.value)}"
     }
 }
