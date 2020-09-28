@@ -56,7 +56,6 @@ class CallStackExecutor(val ctx: ExecutionContext) {
             is PrimaryValue<*> -> current = callStack.value
             else -> for (call in callStack) {
                 current = when (call) {
-                    is PrimaryValue<*> -> call.value
                     is DefaultConstructorCall -> {
                         val reflection = ctx.loader.loadClass(call.klass)
                         val defaultConstructor = reflection.getDeclaredConstructor()

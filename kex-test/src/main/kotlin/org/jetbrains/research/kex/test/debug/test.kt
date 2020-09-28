@@ -2,13 +2,13 @@
 
 package org.jetbrains.research.kex.test.debug
 
-import kotlin.system.exitProcess
-
 class BasicTests {
+    
+    class Intt(val a: Int)
 
-    fun test(a: Int, b: Int) {
-        if (a > b) {
-            exitProcess(1)
+    fun test(a: Array<Array<Intt>>) {
+        if (a[0][0].a > 10) {
+            println("a")
         }
     }
 
