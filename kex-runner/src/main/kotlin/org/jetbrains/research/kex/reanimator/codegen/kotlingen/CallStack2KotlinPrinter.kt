@@ -16,6 +16,11 @@ class CallStack2KotlinPrinter : CallStackPrinter {
 
     override fun print(vararg callStacks: CallStack): String {
         with(builder) {
+            function("<T> unknown") {
+                returnType = type("T")
+                +"TODO()"
+            }
+
             function("test") {
                 current = this
                 returnType = unit
@@ -82,7 +87,7 @@ class CallStack2KotlinPrinter : CallStackPrinter {
         is ArrayWrite -> printArrayWrite(name, apiCall)
         is FieldSetter -> printFieldSetter(name, apiCall)
         is StaticFieldSetter -> printStaticFieldSetter(apiCall)
-        is UnknownCall -> "unknown"
+        is UnknownCall -> "val $name = unknown()"
         else -> unreachable { log.error("Unknown call") }
     }
 
