@@ -22,6 +22,7 @@ import kotlin.reflect.KTypeParameter
 import kotlin.reflect.jvm.kotlinFunction
 import java.lang.reflect.Type as JType
 
+// TODO: this is satan's work, refactor this damn thing
 class CallStack2KotlinPrinter(val ctx: ExecutionContext) : CallStackPrinter {
     private val printedStacks = mutableSetOf<String>()
     val builder = KtBuilder()
@@ -142,11 +143,7 @@ class CallStack2KotlinPrinter(val ctx: ExecutionContext) : CallStackPrinter {
                 }
                 else -> CSClass(this.kex.getKfgType(ctx.types))
             }
-            is ParameterizedType -> {
-                val type = this.ownerType.csType
-                val args = this.actualTypeArguments.map { it.csType }
-                type
-            }
+            is ParameterizedType -> this.ownerType.csType
             is TypeVariable<*> -> this.bounds.first().csType
             is WildcardType -> this.upperBounds.first().csType
             else -> TODO()
