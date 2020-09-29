@@ -3,6 +3,7 @@ package org.jetbrains.research.kex.reanimator
 import com.abdullin.kthelper.`try`
 import com.abdullin.kthelper.logging.log
 import com.abdullin.kthelper.time.timed
+import com.abdullin.kthelper.tryOrNull
 import org.jetbrains.research.kex.ExecutionContext
 import org.jetbrains.research.kex.asm.state.PredicateStateAnalysis
 import org.jetbrains.research.kex.random.GenerationException
@@ -36,7 +37,7 @@ class Reanimator(val ctx: ExecutionContext, val psa: PredicateStateAnalysis) {
             }
         }
         log.debug("Kotlin call stacks:\n${
-            CallStack2KotlinPrinter(ctx).print(stack)
+            tryOrNull { CallStack2KotlinPrinter(ctx).print(stack) }
         }")
     }
 
