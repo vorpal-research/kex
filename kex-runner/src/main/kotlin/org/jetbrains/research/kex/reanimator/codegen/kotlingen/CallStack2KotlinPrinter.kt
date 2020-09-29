@@ -3,6 +3,7 @@ package org.jetbrains.research.kex.reanimator.codegen.kotlingen
 import com.abdullin.kthelper.assert.unreachable
 import com.abdullin.kthelper.logging.log
 import org.jetbrains.research.kex.ExecutionContext
+import org.jetbrains.research.kex.ktype.KexType
 import org.jetbrains.research.kex.ktype.type
 import org.jetbrains.research.kex.reanimator.callstack.*
 import org.jetbrains.research.kex.reanimator.codegen.CallStackPrinter
@@ -105,7 +106,7 @@ class CallStack2KotlinPrinter(val ctx: ExecutionContext) : CallStackPrinter {
 
     val KClassifier.csType: CSType
         get() = when (this) {
-            is KClass<*> -> java.kex.getKfgType(ctx.types).getCsType(false)
+            is KClass<*> -> java.kex.getCsType(false)
             is KTypeParameter -> upperBounds.first().csType
             else -> unreachable { }
         }
@@ -163,6 +164,8 @@ class CallStack2KotlinPrinter(val ctx: ExecutionContext) : CallStackPrinter {
     }
 
     fun CSType?.isAssignable(other: CSType) = this?.let { other.isSubtype(it) } ?: true
+
+    private fun KexType.getCsType(nullable: Boolean = true) = this.getKfgType(ctx.types).getCsType(nullable)
 
     private fun Type.getCsType(nullable: Boolean = true): CSType = when (this) {
         is ArrayType -> when {
@@ -436,7 +439,7 @@ class CallStack2KotlinPrinter(val ctx: ExecutionContext) : CallStackPrinter {
     }
 
     private fun printUnknown(owner: CallStack, call: UnknownCall): String {
-        val type = call.target.type.getKfgType(ctx.types).getCsType()
+        val type = call.target.type.getCsType()
         actualTypes[owner] = type
         return "val ${owner.name} = unknown<$type>()"
     }
