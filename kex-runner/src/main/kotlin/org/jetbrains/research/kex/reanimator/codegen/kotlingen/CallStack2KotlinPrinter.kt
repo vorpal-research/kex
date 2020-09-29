@@ -123,7 +123,18 @@ class CallStack2KotlinPrinter(val ctx: ExecutionContext) : CallStackPrinter {
         else -> TODO()
     }
 
-    fun CSType?.isAssignable(other: CSType) = this?.isSubtype(other) ?: true
+    fun merge(actualType: CSType, requiredType: CSType): CSType = when {
+        actualType is CSClass && requiredType is CSClass -> {
+            val actualKlass = ctx.loader.loadClass(actualType.type)
+            val requiredKlass = ctx.loader.loadClass(requiredType.type)
+            if (requiredKlass.isAssignableFrom(actualKlass) && actualKlass.typeParameters.size == requiredKlass.typeParameters.size) {
+                CSClass(actualType.type, requiredType.typeParams, false)
+            } else  TODO()
+        }
+        else -> TODO()
+    }
+
+    fun CSType?.isAssignable(other: CSType) = this?.let { other.isSubtype(it) } ?: true
 
     fun Type.getCsType(nullable: Boolean = true): CSType = when (this) {
         is ArrayType -> when {
@@ -310,8 +321,15 @@ class CallStack2KotlinPrinter(val ctx: ExecutionContext) : CallStackPrinter {
 
     private fun printDefaultConstructor(owner: CallStack, call: DefaultConstructorCall): String {
         val actualType = CSClass(call.klass.type, nullable = false)
-        actualTypes[owner] = actualType
-        return "val ${owner.name} = " + if (resolvedTypes[owner] != null) "${resolvedTypes[owner]}()" else "$actualType()"
+        return if (resolvedTypes[owner] != null) {
+            val rest = resolvedTypes[owner]!!
+            val type = merge(actualType, rest)
+            actualTypes[owner] = type
+            "val ${owner.name} = $type()"
+        } else {
+            actualTypes[owner] = actualType
+            "val ${owner.name} = $actualType()"
+        }
     }
 
     private fun printConstructorCall(owner: CallStack, call: ConstructorCall): String {
@@ -374,7 +392,7 @@ class CallStack2KotlinPrinter(val ctx: ExecutionContext) : CallStackPrinter {
             val resT = resolvedTypes[owner] ?: actualTypes[owner]
             if (resT is CSArray) resT.element
             else if (resT is CSPrimaryArray) resT.element
-            else unreachable {  }
+            else unreachable { }
         }
         return "${owner.name}[${call.index.stackName}] = ${call.value.cast(requiredType)}"
     }
