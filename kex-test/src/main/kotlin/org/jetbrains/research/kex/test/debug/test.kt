@@ -11,17 +11,17 @@ class BasicTests {
 //            println("a")
 //        }
 //    }
-
-    fun test2(a: Array<IntArray>) {
-        if (a[0][1] > 10) {
-            println("b")
-        }
-    }
 //
-//    fun test3(a: ArrayList<Int>) {
-//        if (a.size > 1) {
-//            println("a")
+//    fun test2(a: Array<IntArray>) {
+//        if (a[0][1] > 10) {
+//            println("b")
 //        }
 //    }
+
+    fun test3(a: ArrayList<Int>) {
+        if (a.size > 1) {
+            println("a")
+        }
+    }
 
 }

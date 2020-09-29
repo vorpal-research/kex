@@ -61,7 +61,13 @@ class CallStack2KotlinPrinter(val ctx: ExecutionContext) : CallStackPrinter {
             else -> false
         }
 
-        override fun toString() = type.kotlinString + typeParams.joinToString(", ") + if (nullable) "?" else ""
+        override fun toString(): String {
+            val typeParams = when (typeParams.isNotEmpty()) {
+                true -> typeParams.joinToString(", ", prefix = "<", postfix = ">")
+                else -> ""
+            }
+            return type.kotlinString + typeParams + if (nullable) "?" else ""
+        }
     }
 
     inner class CSPrimaryArray(val element: CSType, override val nullable: Boolean = true) : CSType {
@@ -305,7 +311,7 @@ class CallStack2KotlinPrinter(val ctx: ExecutionContext) : CallStackPrinter {
     private fun printDefaultConstructor(owner: CallStack, call: DefaultConstructorCall): String {
         val actualType = CSClass(call.klass.type, nullable = false)
         actualTypes[owner] = actualType
-        return "val ${owner.name} = $actualType()"
+        return "val ${owner.name} = " + if (resolvedTypes[owner] != null) "${resolvedTypes[owner]}()" else "$actualType()"
     }
 
     private fun printConstructorCall(owner: CallStack, call: ConstructorCall): String {
