@@ -52,17 +52,25 @@ class CallStack2KotlinPrinter(val ctx: ExecutionContext) : CallStackPrinter {
 
     inner class CSClass(val type: Type, val typeParams: List<CSType> = emptyList(), override val nullable: Boolean = true) : CSType {
         override fun isSubtype(other: CSType): Boolean = when (other) {
-            is CSArray -> false
             is CSClass -> when {
                 !type.isSubtypeOf(other.type) -> false
                 typeParams.size != other.typeParams.size -> false
                 typeParams.zip(other.typeParams).any { (a, b) -> !a.isSubtype(b) } -> false
                 else -> !(!nullable && other.nullable)
             }
-            else -> TODO()
+            else -> false
         }
 
         override fun toString() = type.kotlinString + typeParams.joinToString(", ") + if (nullable) "?" else ""
+    }
+
+    inner class CSPrimaryArray(val element: CSType, override val nullable: Boolean = true) : CSType {
+        override fun isSubtype(other: CSType): Boolean = when (other) {
+            is CSPrimaryArray -> element.isSubtype(other.element) && !(!nullable && other.nullable)
+            else -> false
+        }
+
+        override fun toString() = "${element}Array" + if (nullable) "?" else ""
     }
 
     inner class CSArray(val element: CSType, override val nullable: Boolean = true) : CSType {
@@ -72,8 +80,7 @@ class CallStack2KotlinPrinter(val ctx: ExecutionContext) : CallStackPrinter {
                 !nullable && other.nullable -> false
                 else -> true
             }
-            is CSClass -> false
-            else -> TODO()
+            else -> false
         }
 
         override fun toString() = "Array<${element}>" + if (nullable) "?" else ""
@@ -85,7 +92,7 @@ class CallStack2KotlinPrinter(val ctx: ExecutionContext) : CallStackPrinter {
         val nullability = this.isMarkedNullable
         return when (type) {
             is ArrayType -> when {
-                type.component.isPrimary -> CSArray(type.component.getCsType(), false)
+                type.component.isPrimary -> CSPrimaryArray(type.component.getCsType(false), nullability)
                 else -> CSArray(args.first(), nullability)
             }
             else -> CSClass(type, args, nullability)
@@ -113,7 +120,10 @@ class CallStack2KotlinPrinter(val ctx: ExecutionContext) : CallStackPrinter {
     fun CSType?.isAssignable(other: CSType) = this?.isSubtype(other) ?: true
 
     fun Type.getCsType(nullable: Boolean = true): CSType = when (this) {
-        is ArrayType -> CSArray(this.component.getCsType(nullable), nullable)
+        is ArrayType -> when {
+            this.component.isPrimary -> CSPrimaryArray(component.getCsType(false), nullable)
+            else -> CSArray(this.component.getCsType(nullable), nullable)
+        }
         else -> CSClass(this, nullable = nullable)
     }
 
@@ -356,7 +366,9 @@ class CallStack2KotlinPrinter(val ctx: ExecutionContext) : CallStackPrinter {
         printCallStack(call.value)
         val requiredType = run {
             val resT = resolvedTypes[owner] ?: actualTypes[owner]
-            (resT as CSArray).element
+            if (resT is CSArray) resT.element
+            else if (resT is CSPrimaryArray) resT.element
+            else unreachable {  }
         }
         return "${owner.name}[${call.index.stackName}] = ${call.value.cast(requiredType)}"
     }
