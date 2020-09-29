@@ -36,7 +36,7 @@ class Reanimator(val ctx: ExecutionContext, val psa: PredicateStateAnalysis) {
             }
         }
         log.debug("Kotlin call stacks:\n${
-            CallStack2KotlinPrinter().print(stack)
+            CallStack2KotlinPrinter(ctx).print(stack)
         }")
     }
 
