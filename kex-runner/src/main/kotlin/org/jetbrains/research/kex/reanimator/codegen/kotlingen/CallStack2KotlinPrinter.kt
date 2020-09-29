@@ -15,7 +15,9 @@ import org.jetbrains.research.kfg.type.*
 import org.jetbrains.research.kfg.type.Type
 import java.lang.reflect.*
 import kotlin.reflect.KClass
+import kotlin.reflect.KClassifier
 import kotlin.reflect.KType
+import kotlin.reflect.KTypeParameter
 import kotlin.reflect.jvm.kotlinFunction
 import java.lang.reflect.Type as JType
 
@@ -39,7 +41,7 @@ class CallStack2KotlinPrinter(val ctx: ExecutionContext) : CallStackPrinter {
             }
         }
         resolveTypes(callStack)
-        printCallStack(callStack)
+        callStack.printAsKt()
         return builder.toString()
     }
 
@@ -50,6 +52,12 @@ class CallStack2KotlinPrinter(val ctx: ExecutionContext) : CallStackPrinter {
         fun isSubtype(other: CSType): Boolean
     }
 
+    inner class CSStarProjection : CSType {
+        override val nullable = true
+        override fun isSubtype(other: CSType) = other is CSStarProjection
+        override fun toString() = "*"
+    }
+
     inner class CSClass(val type: Type, val typeParams: List<CSType> = emptyList(), override val nullable: Boolean = true) : CSType {
         override fun isSubtype(other: CSType): Boolean = when (other) {
             is CSClass -> when {
@@ -58,6 +66,7 @@ class CallStack2KotlinPrinter(val ctx: ExecutionContext) : CallStackPrinter {
                 typeParams.zip(other.typeParams).any { (a, b) -> !a.isSubtype(b) } -> false
                 else -> !(!nullable && other.nullable)
             }
+            is CSStarProjection -> true
             else -> false
         }
 
@@ -73,6 +82,7 @@ class CallStack2KotlinPrinter(val ctx: ExecutionContext) : CallStackPrinter {
     inner class CSPrimaryArray(val element: CSType, override val nullable: Boolean = true) : CSType {
         override fun isSubtype(other: CSType): Boolean = when (other) {
             is CSPrimaryArray -> element.isSubtype(other.element) && !(!nullable && other.nullable)
+            is CSStarProjection -> true
             else -> false
         }
 
@@ -86,57 +96,75 @@ class CallStack2KotlinPrinter(val ctx: ExecutionContext) : CallStackPrinter {
                 !nullable && other.nullable -> false
                 else -> true
             }
+            is CSStarProjection -> true
             else -> false
         }
 
         override fun toString() = "Array<${element}>" + if (nullable) "?" else ""
     }
 
-    fun KType.csType(ctx: ExecutionContext): CSType {
-        val type = (this.classifier!! as KClass<*>).java.kex.getKfgType(ctx.types)
-        val args = this.arguments.map { it.type!!.csType(ctx) }
-        val nullability = this.isMarkedNullable
-        return when (type) {
-            is ArrayType -> when {
-                type.component.isPrimary -> CSPrimaryArray(type.component.getCsType(false), nullability)
-                else -> CSArray(args.first(), nullability)
-            }
-            else -> CSClass(type, args, nullability)
+    val KClassifier.csType: CSType
+        get() = when (this) {
+            is KClass<*> -> java.kex.getKfgType(ctx.types).getCsType(false)
+            is KTypeParameter -> upperBounds.first().csType
+            else -> unreachable { }
         }
-    }
 
-    fun JType.csType(ctx: ExecutionContext): CSType = when (this) {
-        is java.lang.Class<*> -> when {
-            this.isArray -> {
-                val element = this.componentType.csType(ctx)
-                CSArray(element)
-            }
-            else -> CSClass(this.kex.getKfgType(ctx.types))
+    val CSType.kfg: Type
+        get() = when (this) {
+            is CSClass -> type
+            is CSArray -> ctx.types.getArrayType(element.kfg)
+            is CSPrimaryArray -> ctx.types.getArrayType(element.kfg)
+            else -> unreachable { }
         }
-        is ParameterizedType -> {
-            val type = this.ownerType.csType(ctx)
-            val args = this.actualTypeArguments.map { it.csType(ctx) }
-            type
-        }
-        is TypeVariable<*> -> this.bounds.first().csType(ctx)
-        is WildcardType -> this.upperBounds.first().csType(ctx)
-        else -> TODO()
-    }
 
-    fun merge(actualType: CSType, requiredType: CSType): CSType = when {
-        actualType is CSClass && requiredType is CSClass -> {
-            val actualKlass = ctx.loader.loadClass(actualType.type)
+    val KType.csType: CSType
+        get() {
+            val type = this.classifier!!.csType.kfg
+            val args = this.arguments.map { it.type?.csType ?: CSStarProjection() }
+            val nullability = this.isMarkedNullable
+            return when (type) {
+                is ArrayType -> when {
+                    type.component.isPrimary -> CSPrimaryArray(type.component.getCsType(false), nullability)
+                    else -> CSArray(args.first(), nullability)
+                }
+                else -> CSClass(type, args, nullability)
+            }
+        }
+
+    val JType.csType: CSType
+        get() = when (this) {
+            is java.lang.Class<*> -> when {
+                this.isArray -> {
+                    val element = this.componentType.csType
+                    CSArray(element)
+                }
+                else -> CSClass(this.kex.getKfgType(ctx.types))
+            }
+            is ParameterizedType -> {
+                val type = this.ownerType.csType
+                val args = this.actualTypeArguments.map { it.csType }
+                type
+            }
+            is TypeVariable<*> -> this.bounds.first().csType
+            is WildcardType -> this.upperBounds.first().csType
+            else -> TODO()
+        }
+
+    private fun CSType.merge(requiredType: CSType): CSType = when {
+        this is CSClass && requiredType is CSClass -> {
+            val actualKlass = ctx.loader.loadClass(type)
             val requiredKlass = ctx.loader.loadClass(requiredType.type)
             if (requiredKlass.isAssignableFrom(actualKlass) && actualKlass.typeParameters.size == requiredKlass.typeParameters.size) {
-                CSClass(actualType.type, requiredType.typeParams, false)
-            } else  TODO()
+                CSClass(type, requiredType.typeParams, false)
+            } else TODO()
         }
         else -> TODO()
     }
 
     fun CSType?.isAssignable(other: CSType) = this?.let { other.isSubtype(it) } ?: true
 
-    fun Type.getCsType(nullable: Boolean = true): CSType = when (this) {
+    private fun Type.getCsType(nullable: Boolean = true): CSType = when (this) {
         is ArrayType -> when {
             this.component.isPrimary -> CSPrimaryArray(component.getCsType(false), nullable)
             else -> CSArray(this.component.getCsType(nullable), nullable)
@@ -144,44 +172,44 @@ class CallStack2KotlinPrinter(val ctx: ExecutionContext) : CallStackPrinter {
         else -> CSClass(this, nullable = nullable)
     }
 
-    fun resolveTypes(callStack: CallStack) {
+    private fun resolveTypes(callStack: CallStack) {
         callStack.reversed().map { resolveTypes(it) }
     }
 
-    fun resolveTypes(constructor: Constructor<*>, args: List<CallStack>) =
+    private fun resolveTypes(constructor: Constructor<*>, args: List<CallStack>) =
             when {
                 constructor.kotlinFunction != null -> {
                     val params = constructor.kotlinFunction!!.parameters
                     args.zip(params).forEach { (arg, param) ->
-                        resolvedTypes[arg] = param.type.csType(ctx)
+                        resolvedTypes[arg] = param.type.csType
                     }
                 }
                 else -> {
                     val params = constructor.genericParameterTypes
                     args.zip(params).forEach { (arg, param) ->
-                        resolvedTypes[arg] = param.csType(ctx)
+                        resolvedTypes[arg] = param.csType
                     }
                 }
             }
 
-    fun resolveTypes(method: Method, args: List<CallStack>) =
+    private fun resolveTypes(method: Method, args: List<CallStack>) =
             when {
                 method.kotlinFunction != null -> {
                     val params = method.kotlinFunction!!.parameters.drop(1)
                     args.zip(params).forEach { (arg, param) ->
-                        param.type.csType(ctx)
-                        resolvedTypes[arg] = param.type.csType(ctx)
+                        param.type.csType
+                        resolvedTypes[arg] = param.type.csType
                     }
                 }
                 else -> {
                     val params = method.genericParameterTypes.toList()
                     args.zip(params).forEach { (arg, param) ->
-                        resolvedTypes[arg] = param.csType(ctx)
+                        resolvedTypes[arg] = param.csType
                     }
                 }
             }
 
-    fun resolveTypes(call: ApiCall) = when (call) {
+    private fun resolveTypes(call: ApiCall) = when (call) {
         is DefaultConstructorCall -> {
         }
         is ConstructorCall -> {
@@ -208,16 +236,16 @@ class CallStack2KotlinPrinter(val ctx: ExecutionContext) : CallStackPrinter {
         }
     }
 
-    private fun printCallStack(callStack: CallStack) {
-        if (callStack.name in printedStacks) return
-        if (callStack is PrimaryValue<*>) {
-            callStack.asConstant
+    private fun CallStack.printAsKt() {
+        if (name in printedStacks) return
+        if (this is PrimaryValue<*>) {
+            asConstant
             return
         }
-        printedStacks += callStack.name
-        for (call in callStack) {
+        printedStacks += name
+        for (call in this) {
             with(current) {
-                +printApiCall(callStack, call)
+                +printApiCall(this@printAsKt, call)
             }
         }
     }
@@ -271,7 +299,7 @@ class CallStack2KotlinPrinter(val ctx: ExecutionContext) : CallStackPrinter {
         is ArrayWrite -> printArrayWrite(owner, apiCall)
         is FieldSetter -> printFieldSetter(owner, apiCall)
         is StaticFieldSetter -> printStaticFieldSetter(apiCall)
-        is UnknownCall -> "val ${owner.name} = unknown()"
+        is UnknownCall -> printUnknown(owner, apiCall)
         else -> unreachable { log.error("Unknown call") }
     }
 
@@ -312,7 +340,7 @@ class CallStack2KotlinPrinter(val ctx: ExecutionContext) : CallStackPrinter {
         }
 
     private fun CallStack.cast(reqType: CSType?): String {
-        val actualType = actualTypes[this]!!
+        val actualType = actualTypes[this] ?: return this.stackName
         return when {
             reqType.isAssignable(actualType) -> this.stackName
             else -> "${this.stackName} as $reqType"
@@ -323,7 +351,7 @@ class CallStack2KotlinPrinter(val ctx: ExecutionContext) : CallStackPrinter {
         val actualType = CSClass(call.klass.type, nullable = false)
         return if (resolvedTypes[owner] != null) {
             val rest = resolvedTypes[owner]!!
-            val type = merge(actualType, rest)
+            val type = actualType.merge(rest)
             actualTypes[owner] = type
             "val ${owner.name} = $type()"
         } else {
@@ -333,7 +361,7 @@ class CallStack2KotlinPrinter(val ctx: ExecutionContext) : CallStackPrinter {
     }
 
     private fun printConstructorCall(owner: CallStack, call: ConstructorCall): String {
-        call.args.forEach { printCallStack(it) }
+        call.args.forEach { it.printAsKt() }
         val args = call.args.joinToString(", ") {
             it.cast(resolvedTypes[it])
         }
@@ -343,7 +371,7 @@ class CallStack2KotlinPrinter(val ctx: ExecutionContext) : CallStackPrinter {
     }
 
     private fun printExternalConstructorCall(owner: CallStack, call: ExternalConstructorCall): String {
-        call.args.forEach { printCallStack(it) }
+        call.args.forEach { it.printAsKt() }
         val constructor = call.constructor
         val args = call.args.joinToString(", ") {
             it.cast(resolvedTypes[it])
@@ -354,7 +382,7 @@ class CallStack2KotlinPrinter(val ctx: ExecutionContext) : CallStackPrinter {
     }
 
     private fun printMethodCall(owner: CallStack, call: MethodCall): String {
-        call.args.forEach { printCallStack(it) }
+        call.args.forEach { it.printAsKt() }
         val method = call.method
         val args = call.args.joinToString(", ") {
             it.cast(resolvedTypes[it])
@@ -363,7 +391,7 @@ class CallStack2KotlinPrinter(val ctx: ExecutionContext) : CallStackPrinter {
     }
 
     private fun printStaticMethodCall(call: StaticMethodCall): String {
-        call.args.forEach { printCallStack(it) }
+        call.args.forEach { it.printAsKt() }
         val klass = call.method.`class`
         val method = call.method
         val args = call.args.joinToString(", ") {
@@ -387,7 +415,7 @@ class CallStack2KotlinPrinter(val ctx: ExecutionContext) : CallStackPrinter {
     }
 
     private fun printArrayWrite(owner: CallStack, call: ArrayWrite): String {
-        printCallStack(call.value)
+        call.value.printAsKt()
         val requiredType = run {
             val resT = resolvedTypes[owner] ?: actualTypes[owner]
             if (resT is CSArray) resT.element
@@ -398,12 +426,18 @@ class CallStack2KotlinPrinter(val ctx: ExecutionContext) : CallStackPrinter {
     }
 
     private fun printFieldSetter(owner: CallStack, call: FieldSetter): String {
-        printCallStack(call.value)
+        call.value.printAsKt()
         return "${owner.name}.${call.field.name} = ${call.value.stackName}"
     }
 
     private fun printStaticFieldSetter(call: StaticFieldSetter): String {
-        printCallStack(call.value)
+        call.value.printAsKt()
         return "${call.klass.kotlinString}.${call.field.name} = ${call.value.stackName}"
+    }
+
+    private fun printUnknown(owner: CallStack, call: UnknownCall): String {
+        val type = call.target.type.getKfgType(ctx.types).getCsType()
+        actualTypes[owner] = type
+        return "val ${owner.name} = unknown<$type>()"
     }
 }
