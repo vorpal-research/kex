@@ -22,7 +22,7 @@ import kotlin.reflect.KTypeParameter
 import kotlin.reflect.jvm.kotlinFunction
 import java.lang.reflect.Type as JType
 
-// TODO: this is satan's work, refactor this damn thing
+// TODO: this is work of satan, refactor this damn thing
 class CallStack2KotlinPrinter(val ctx: ExecutionContext) : CallStackPrinter {
     private val printedStacks = mutableSetOf<String>()
     val builder = KtBuilder()
