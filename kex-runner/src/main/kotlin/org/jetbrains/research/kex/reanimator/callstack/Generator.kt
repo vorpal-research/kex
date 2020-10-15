@@ -19,6 +19,7 @@ import org.jetbrains.research.kfg.ir.MethodDesc
 private val visibilityLevel by lazy { kexConfig.getEnumValue("apiGeneration", "visibility", true, Visibility.PUBLIC) }
 private val maxStackSize by lazy { kexConfig.getIntValue("apiGeneration", "maxStackSize", 5) }
 private val maxQuerySize by lazy { kexConfig.getIntValue("apiGeneration", "maxQuerySize", 1000) }
+private val useRecConstructors by lazy { kexConfig.getBooleanValue("apiGeneration", "use-recursive-constructors", false) }
 
 interface Generator {
     val context: GeneratorContext
@@ -82,7 +83,10 @@ class AnyGenerator(private val fallback: Generator) : Generator {
             it.argTypes.all { arg -> !(klass.type.isSupertypeOf(arg) || arg.isSupertypeOf(klass.type)) }
         }
 
-        val recursiveConstructors = constructors.filter { it !in nonRecursiveConstructors }
+        val recursiveConstructors = when {
+            useRecConstructors -> constructors.filter { it !in nonRecursiveConstructors }
+            else -> listOf()
+        }
         val recursiveExternalConstructors = externalConstructors.filter { it !in nonRecursiveExternalConstructors }
 
         val setters = descriptor.generateSetters(generationDepth)
