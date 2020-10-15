@@ -8,6 +8,7 @@ import org.jetbrains.research.kex.ExecutionContext
 import org.jetbrains.research.kex.asm.state.PredicateStateAnalysis
 import org.jetbrains.research.kex.random.GenerationException
 import org.jetbrains.research.kex.reanimator.callstack.*
+import org.jetbrains.research.kex.reanimator.codegen.javagen.CallStack2JavaPrinter
 import org.jetbrains.research.kex.reanimator.codegen.kotlingen.CallStack2KotlinPrinter
 import org.jetbrains.research.kex.reanimator.descriptor.Descriptor
 import org.jetbrains.research.kex.reanimator.descriptor.DescriptorStatistics
@@ -38,6 +39,9 @@ class Reanimator(val ctx: ExecutionContext, val psa: PredicateStateAnalysis) {
         }
         log.debug("Kotlin call stacks:\n${
             tryOrNull { CallStack2KotlinPrinter(ctx).print(stack) }
+        }")
+        log.debug("Java call stacks:\n${
+            tryOrNull { CallStack2JavaPrinter(ctx).print(stack) }
         }")
     }
 
