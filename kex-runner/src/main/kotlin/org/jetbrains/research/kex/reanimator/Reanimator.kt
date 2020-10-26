@@ -23,6 +23,9 @@ import org.jetbrains.research.kfg.ir.Method
 class NoConcreteInstanceException(val klass: Class) : Exception()
 
 class Reanimator(val ctx: ExecutionContext, val psa: PredicateStateAnalysis) {
+    companion object {
+        val interestingStacks = mutableListOf<String>()
+    }
     val cm: ClassManager get() = ctx.cm
     private val csGenerator = CallStackGenerator(ctx, psa)
     private val csExecutor = CallStackExecutor(ctx)
@@ -41,6 +44,15 @@ class Reanimator(val ctx: ExecutionContext, val psa: PredicateStateAnalysis) {
         log.debug("Kotlin call stacks:\n$kotlinCS")
         val javaCS = tryOrNull { CallStack2JavaPrinter(ctx).print(stack) } ?: ""
         log.debug("Java call stacks:\n$javaCS")
+
+        with(DescriptorStatistics) {
+            if (callStacks.asList.all { it.isComplete }) {
+                if (javaCS.split("\n").filter { it.isNotBlank() }.size > 15) {
+                    interestingStacks += javaCS
+                }
+            }
+        }
+
     }
 
     fun generateAPI(method: Method, state: PredicateState, model: SMTModel) = try {

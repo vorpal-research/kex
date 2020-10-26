@@ -21,6 +21,7 @@ import org.jetbrains.research.kex.config.RuntimeConfig
 import org.jetbrains.research.kex.config.kexConfig
 import org.jetbrains.research.kex.random.easyrandom.EasyRandomDriver
 import org.jetbrains.research.kex.reanimator.RandomObjectReanimator
+import org.jetbrains.research.kex.reanimator.Reanimator
 import org.jetbrains.research.kex.reanimator.collector.ExternalConstructorCollector
 import org.jetbrains.research.kex.reanimator.collector.MethodFieldAccessCollector
 import org.jetbrains.research.kex.reanimator.collector.SetterCollector
@@ -217,6 +218,12 @@ class Kex(args: Array<String>) {
             +cm
         }
         clearClassPath()
+
+        if (Reanimator.interestingStacks.isNotEmpty()) {
+            log.debug("Found interesting stacks:")
+            log.debug(Reanimator.interestingStacks.joinToString("\n", prefix = "-".repeat(80), postfix = "-".repeat(80)))
+            log.debug()
+        }
 
         val coverage = cm.totalCoverage
         log.info("Overall summary for ${cm.methodInfos.size} methods:\n" +
