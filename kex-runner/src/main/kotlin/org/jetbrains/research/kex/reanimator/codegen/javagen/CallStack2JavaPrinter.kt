@@ -58,7 +58,7 @@ class CallStack2JavaPrinter(val ctx: ExecutionContext) : CallStackPrinter {
             is CSClass -> when {
                 !type.isSubtypeOf(other.type) -> false
                 typeParams.size != other.typeParams.size -> false
-                else -> typeParams.zip(other.typeParams).any { (a, b) -> !a.isSubtype(b) }
+                else -> typeParams.zip(other.typeParams).all { (a, b) -> a.isSubtype(b) }
             }
             is CSStarProjection -> true
             else -> false
