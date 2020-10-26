@@ -37,12 +37,10 @@ class Reanimator(val ctx: ExecutionContext, val psa: PredicateStateAnalysis) {
                 instance
             }
         }
-        log.debug("Kotlin call stacks:\n${
-            tryOrNull { CallStack2KotlinPrinter(ctx).print(stack) }
-        }")
-        log.debug("Java call stacks:\n${
-            tryOrNull { CallStack2JavaPrinter(ctx).print(stack) }
-        }")
+        val kotlinCS = tryOrNull { CallStack2KotlinPrinter(ctx).print(stack) } ?: ""
+        log.debug("Kotlin call stacks:\n$kotlinCS")
+        val javaCS = tryOrNull { CallStack2JavaPrinter(ctx).print(stack) } ?: ""
+        log.debug("Java call stacks:\n$javaCS")
     }
 
     fun generateAPI(method: Method, state: PredicateState, model: SMTModel) = try {
