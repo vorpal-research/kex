@@ -53,6 +53,7 @@ class Checker(val method: Method, val loader: ClassLoader, private val psa: Pred
         +Optimizer()
         +ConstantPropagator
         +BoolTypeAdapter(method.cm.type)
+        +ConstStringAdapter()
         +ArrayBoundsAdapter()
         +NullityInfoAdapter()
     }
@@ -65,6 +66,7 @@ class Checker(val method: Method, val loader: ClassLoader, private val psa: Pred
         +Optimizer()
         +ConstantPropagator
         +BoolTypeAdapter(method.cm.type)
+        +ConstStringAdapter()
         +ArrayBoundsAdapter()
         +NullityInfoAdapter()
     }

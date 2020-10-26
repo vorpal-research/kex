@@ -49,6 +49,7 @@ class GeneratorContext(val context: ExecutionContext, val psa: PredicateStateAna
         +Optimizer()
         +ConstantPropagator
         +BoolTypeAdapter(types)
+        +ConstStringAdapter()
         +ArrayBoundsAdapter()
         +NullityInfoAdapter()
     }

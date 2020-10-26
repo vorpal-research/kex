@@ -348,8 +348,13 @@ class CallStack2JavaPrinter(val ctx: ExecutionContext) : CallStackPrinter {
 
     private fun printNewArray(owner: CallStack, call: NewArray): String {
         val actualType = call.asArray.csType
+        val elementType = when (actualType) {
+            is CSArray -> actualType.element
+            is CSPrimaryArray -> actualType.element
+            else -> TODO()
+        }
         actualTypes[owner] = actualType
-        return "$actualType ${owner.name} = new $actualType[${call.length.stackName}]"
+        return "$actualType ${owner.name} = new $elementType[${call.length.stackName}]"
     }
 
     private fun printArrayWrite(owner: CallStack, call: ArrayWrite): String {
