@@ -7,7 +7,6 @@ import org.jetbrains.research.kex.ExecutionContext
 import org.jetbrains.research.kex.asm.state.PredicateStateAnalysis
 import org.jetbrains.research.kex.asm.util.Visibility
 import org.jetbrains.research.kex.asm.util.visibility
-import org.jetbrains.research.kex.config.RuntimeConfig
 import org.jetbrains.research.kex.config.kexConfig
 import org.jetbrains.research.kex.random.Randomizer
 import org.jetbrains.research.kex.reanimator.callstack.CallStack
@@ -23,19 +22,6 @@ import org.jetbrains.research.kfg.Package
 import org.jetbrains.research.kfg.type.ClassType
 
 private val visibilityLevel by lazy { kexConfig.getEnumValue("apiGeneration", "visibility", true, Visibility.PUBLIC) }
-
-data class ReanimatorConsts(
-        val inlinerDepth: Int,
-        val derollerDepth: Int,
-        val stackSize: Int
-) {
-    companion object {
-        fun set(consts: ReanimatorConsts) {
-            RuntimeConfig.setValue("inliner", "depth", consts.inlinerDepth)
-            RuntimeConfig.setValue("apiGeneration", "maxStackSize", consts.stackSize)
-        }
-    }
-}
 
 class RandomObjectReanimator(val ctx: ExecutionContext, val target: Package, val psa: PredicateStateAnalysis) {
     val random: Randomizer get() = ctx.random
@@ -86,63 +72,6 @@ class RandomObjectReanimator(val ctx: ExecutionContext, val target: Package, val
         }
 
         return res
-    }
-
-    fun checkConfigOptions(attempts: Int = 1000) {
-        val objects = generateSequence {
-            var any: Any
-            do {
-                any = randomObject()
-            } while (!any.isValid)
-            any
-        }.take(attempts).toList()
-
-        val results = mutableMapOf<ReanimatorConsts, Pair<Double, Double>>()
-        var config = ReanimatorConsts(1, 1, 5)
-        for (i in 1..5) {
-            config = config.copy(inlinerDepth = i)
-            ReanimatorConsts.set(config)
-            val res = generateObjects(objects)
-            results[config] = res
-        }
-
-        config = config.copy(inlinerDepth = 5)
-        for (i in 1..5) {
-            config = config.copy(stackSize = i)
-            ReanimatorConsts.set(config)
-            val res = generateObjects(objects)
-            results[config] = res
-        }
-
-        log.debug("Constant results: $results")
-    }
-
-    private fun generateObjects(objects: List<Any>): Pair<Double, Double> {
-        var successes = 0
-        var time = 0L
-        for (any in objects) {
-            val descriptor = any.descriptor
-            val originalDescriptor = descriptor.deepCopy()
-
-            var callStack: CallStack? = null
-            time += timed {
-                callStack = `try` { CallStackGenerator(generatorContext).generateDescriptor(descriptor) }.getOrNull()
-            }
-
-            val generatedAny = callStack?.let { stack ->
-                `try` {
-                    CallStackExecutor(ctx).execute(stack)
-                }.getOrElse {
-                    null
-                }
-            }
-
-            val structuralEq = originalDescriptor eq generatedAny.descriptor
-            if (structuralEq) {
-                ++successes
-            }
-        }
-        return (successes.toDouble() / objects.size) to (time.toDouble() / objects.size)
     }
 
     fun run(attempts: Int = 1000) {
