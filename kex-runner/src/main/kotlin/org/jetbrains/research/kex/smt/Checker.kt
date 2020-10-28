@@ -11,6 +11,7 @@ import org.jetbrains.research.kex.state.term.FieldTerm
 import org.jetbrains.research.kex.state.term.Term
 import org.jetbrains.research.kex.state.term.ValueTerm
 import org.jetbrains.research.kex.state.transformer.*
+import org.jetbrains.research.kfg.ir.BasicBlock
 import org.jetbrains.research.kfg.ir.Method
 import org.jetbrains.research.kfg.ir.value.instruction.Instruction
 
@@ -27,6 +28,7 @@ class Checker(val method: Method, val loader: ClassLoader, private val psa: Pred
     lateinit var query: PredicateState
         private set
 
+    fun createState(block: BasicBlock) = createState(block.terminator)
     fun createState(inst: Instruction) = builder.getInstructionState(inst)
 
     fun checkReachable(inst: Instruction): Result {
@@ -39,7 +41,7 @@ class Checker(val method: Method, val loader: ClassLoader, private val psa: Pred
 
     fun prepareState(ps: PredicateState) = transform(ps) {
         if (annotationsEnabled) {
-            +AnnotationIncluder(method, AnnotationManager.defaultLoader)
+            +AnnotationAdapter(method, AnnotationManager.defaultLoader)
         }
 
         if (isInliningEnabled) {
@@ -51,6 +53,20 @@ class Checker(val method: Method, val loader: ClassLoader, private val psa: Pred
         +Optimizer()
         +ConstantPropagator
         +BoolTypeAdapter(method.cm.type)
+        +ConstStringAdapter()
+        +ArrayBoundsAdapter()
+        +NullityInfoAdapter()
+    }
+
+    fun prepareState(method: Method, ps: PredicateState, typeInfoMap: TypeInfoMap) = transform(ps) {
+        +AnnotationAdapter(method, AnnotationManager.defaultLoader)
+        +RecursiveInliner(psa) { ConcreteImplInliner(method.cm.type, typeInfoMap, psa, it) }
+        +IntrinsicAdapter
+        +ReflectionInfoAdapter(method, loader)
+        +Optimizer()
+        +ConstantPropagator
+        +BoolTypeAdapter(method.cm.type)
+        +ConstStringAdapter()
         +ArrayBoundsAdapter()
         +NullityInfoAdapter()
     }
@@ -107,9 +123,9 @@ class Checker(val method: Method, val loader: ClassLoader, private val psa: Pred
             log.debug("Query: $query")
         }
 
-        val solver = SMTProxySolver(method.cm.type)
-        val result = solver.isPathPossible(state, query)
-        solver.cleanup()
+        val result = SMTProxySolver(method.cm.type).use {
+            it.isPathPossible(state, query)
+        }
         log.debug("Acquired $result")
         return result
     }

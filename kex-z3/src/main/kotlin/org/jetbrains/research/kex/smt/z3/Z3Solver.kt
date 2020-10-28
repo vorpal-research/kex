@@ -17,6 +17,7 @@ import org.jetbrains.research.kex.state.term.FieldLoadTerm
 import org.jetbrains.research.kex.state.term.FieldTerm
 import org.jetbrains.research.kex.state.term.Term
 import org.jetbrains.research.kex.state.transformer.collectPointers
+import org.jetbrains.research.kex.state.transformer.collectTypes
 import org.jetbrains.research.kex.state.transformer.collectVariables
 import org.jetbrains.research.kex.state.transformer.memspace
 import org.jetbrains.research.kfg.type.TypeFactory
@@ -48,7 +49,8 @@ class Z3Solver(val tf: TypeFactory) : AbstractSMTSolver {
         val ctx = Z3Context(ef, (1 shl 8) + 1, (1 shl 24) + 1)
 
         val converter = Z3Converter(tf)
-        val z3State = converter.apply(state, ef, ctx)
+        converter.init(collectTypes(state))
+        val z3State = converter.convert(state, ef, ctx)
         val z3query = converter.convert(query, ef, ctx)
 
         log.debug("Check started")
@@ -234,7 +236,7 @@ class Z3Solver(val tf: TypeFactory) : AbstractSMTSolver {
         )
     }
 
-    override fun cleanup() {
+    override fun close() {
         ef.ctx.close()
     }
 }

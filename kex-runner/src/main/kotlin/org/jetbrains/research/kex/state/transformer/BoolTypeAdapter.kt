@@ -29,6 +29,13 @@ class BoolTypeAdapter(val types: TypeFactory) : Transformer<BoolTypeAdapter> {
         }
     }
 
+    fun adaptTerm(term: Term) = when (term.type) {
+        is KexBool -> term { term `as` KexInt() }
+        is KexInt -> term
+        is KexIntegral -> term { term `as` KexInt() }
+        else -> unreachable { log.error("Non-boolean term in boolean binary: $term") }
+    }
+
     override fun transformBinaryTerm(term: BinaryTerm): Term {
         val isBooleanOpcode = when (term.opcode) {
             BinaryOpcode.And() -> true
@@ -39,18 +46,8 @@ class BoolTypeAdapter(val types: TypeFactory) : Transformer<BoolTypeAdapter> {
         return when {
             term.lhv.type == term.rhv.type -> term
             isBooleanOpcode -> {
-                val lhv = when {
-                    term.lhv.type is KexBool -> term { term.lhv `as` KexInt() }
-                    term.lhv.type is KexInt -> term.lhv
-                    term.lhv.type is KexIntegral -> term { term.lhv `as` KexInt() }
-                    else -> unreachable { log.error("Non-boolean term in boolean binary: $term") }
-                }
-                val rhv = when {
-                    term.rhv.type is KexBool -> term { term.rhv `as` KexInt() }
-                    term.rhv.type is KexInt -> term.rhv
-                    term.rhv.type is KexIntegral -> term { term.rhv `as` KexInt() }
-                    else -> unreachable { log.error("Non-boolean term in boolean binary: $term") }
-                }
+                val lhv = adaptTerm(term.lhv)
+                val rhv = adaptTerm(term.rhv)
                 val newType = mergeTypes(types, lhv.type, rhv.type)
                 term { lhv.apply(newType, term.opcode, rhv) }
             }
@@ -61,18 +58,8 @@ class BoolTypeAdapter(val types: TypeFactory) : Transformer<BoolTypeAdapter> {
     override fun transformCmpTerm(term: CmpTerm): Term = when {
         term.lhv.type == term.rhv.type -> term
         term.lhv.type is KexIntegral || term.rhv.type is KexIntegral -> {
-            val lhv = when {
-                term.lhv.type is KexBool -> term { term.lhv `as` KexInt() }
-                term.lhv.type is KexInt -> term.lhv
-                term.lhv.type is KexIntegral -> term { term.lhv `as` KexInt() }
-                else -> unreachable { log.error("Non-boolean term in boolean binary: $term") }
-            }
-            val rhv = when {
-                term.rhv.type is KexBool -> term { term.rhv `as` KexInt() }
-                term.rhv.type is KexInt -> term.rhv
-                term.rhv.type is KexIntegral -> term { term.rhv `as` KexInt() }
-                else -> unreachable { log.error("Non-boolean term in boolean binary: $term") }
-            }
+            val lhv = adaptTerm(term.lhv)
+            val rhv = adaptTerm(term.rhv)
             term { lhv.apply(term.opcode, rhv) }
         }
         else -> term

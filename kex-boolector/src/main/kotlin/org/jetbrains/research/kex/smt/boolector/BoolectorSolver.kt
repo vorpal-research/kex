@@ -10,6 +10,7 @@ import org.jetbrains.research.kex.smt.*
 import org.jetbrains.research.kex.state.PredicateState
 import org.jetbrains.research.kex.state.term.*
 import org.jetbrains.research.kex.state.transformer.collectPointers
+import org.jetbrains.research.kex.state.transformer.collectTypes
 import org.jetbrains.research.kex.state.transformer.collectVariables
 import org.jetbrains.research.kex.state.transformer.memspace
 import org.jetbrains.research.kfg.type.TypeFactory
@@ -38,7 +39,8 @@ class BoolectorSolver(val tf: TypeFactory) : AbstractSMTSolver {
         val ctx = BoolectorContext(ef, (1 shl 8) + 1, (1 shl 24) + 1)
 
         val converter = BoolectorConverter(tf)
-        val boolectorState = converter.apply(state, ef, ctx)
+        converter.init(collectTypes(state))
+        val boolectorState = converter.convert(state, ef, ctx)
         val boolectorQuery = converter.convert(query, ef, ctx)
 
         log.debug("Check started")
@@ -184,5 +186,5 @@ class BoolectorSolver(val tf: TypeFactory) : AbstractSMTSolver {
         )
     }
 
-    override fun cleanup() = ef.ctx.release()
+    override fun close() = ef.ctx.release()
 }

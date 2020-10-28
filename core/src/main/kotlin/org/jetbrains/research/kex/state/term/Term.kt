@@ -1,6 +1,7 @@
 package org.jetbrains.research.kex.state.term
 
 import com.abdullin.kthelper.assert.fail
+import com.abdullin.kthelper.assert.unreachable
 import com.abdullin.kthelper.defaultHashCode
 import com.abdullin.kthelper.logging.log
 import kotlinx.serialization.Serializable
@@ -75,3 +76,14 @@ val Term.isConst
         is ConstStringTerm -> true
         else -> false
     }
+
+val Term.numericValue: Number get() = when (this) {
+    is ConstByteTerm -> value
+    is ConstCharTerm -> value.toByte()
+    is ConstShortTerm -> value
+    is ConstIntTerm -> value
+    is ConstLongTerm -> value
+    is ConstFloatTerm -> value
+    is ConstDoubleTerm -> value
+    else -> unreachable { log.error("Trying to get value of term: $this with type $type") }
+}

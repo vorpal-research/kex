@@ -5,9 +5,9 @@ import com.abdullin.kthelper.logging.log
 import com.abdullin.kthelper.tryOrNull
 import org.jetbrains.research.kex.ExecutionContext
 import org.jetbrains.research.kex.random.GenerationException
+import org.jetbrains.research.kex.smt.ModelReanimator
 import org.jetbrains.research.kex.smt.ObjectReanimator
 import org.jetbrains.research.kex.smt.ReanimatedModel
-import org.jetbrains.research.kex.smt.Reanimator
 import org.jetbrains.research.kex.smt.SMTModel
 import org.jetbrains.research.kex.state.PredicateState
 import org.jetbrains.research.kex.state.predicate.DefaultSwitchPredicate
@@ -15,6 +15,7 @@ import org.jetbrains.research.kex.state.predicate.EqualityPredicate
 import org.jetbrains.research.kex.state.predicate.InequalityPredicate
 import org.jetbrains.research.kex.state.predicate.Predicate
 import org.jetbrains.research.kex.state.term.ConstIntTerm
+import org.jetbrains.research.kex.state.term.FieldTerm
 import org.jetbrains.research.kex.state.term.Term
 import org.jetbrains.research.kex.util.getConstructor
 import org.jetbrains.research.kex.util.getMethod
@@ -24,14 +25,15 @@ import org.jetbrains.research.kfg.ir.Method
 class ModelExecutor(override val method: Method,
                     override val ctx: ExecutionContext,
                     override val model: SMTModel) : AbstractGenerator<Any?> {
-    override val reanimator: Reanimator<Any?> = ObjectReanimator(method, model, ctx)
+    override val modelReanimator: ModelReanimator<Any?> = ObjectReanimator(method, model, ctx)
 
     override val memory = hashMapOf<Term, Any?>()
 
     override var thisTerm: Term? = null
     override val argTerms = sortedMapOf<Int, Term>()
+    override val staticFieldTerms = mutableSetOf<FieldTerm>()
 
-    override val javaClass = loader.loadClass(type.getRefType(method.`class`))
+    override val javaClass = loader.loadClass(method.`class`)
     override val javaMethod = when {
         method.isConstructor -> javaClass.getConstructor(method, loader)
         else -> javaClass.getMethod(method, loader)
@@ -70,7 +72,7 @@ fun generateInputByModel(ctx: ExecutionContext,
     val instance = reanimated.instance ?: when {
         method.isStatic -> null
         else -> tryOrNull {
-            val klass = loader.loadClass(ctx.types.getRefType(method.`class`))
+            val klass = loader.loadClass(method.`class`)
             ctx.random.next(klass)
         }
     }

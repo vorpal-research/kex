@@ -3,14 +3,23 @@
 package org.jetbrains.research.kex.test.debug
 
 class BasicTests {
-    fun testLoop(a: Int, b: Int): Int {
-        var x = a - b
-        while (x < a) {
-            if (b > x) {
-                println("b bigger")
-            }
-            ++x
+//
+//    class Point(val x: Int, val y: Int)
+//
+//    fun test(a: ArrayList<Point>) {
+//        if (a.size == 2) {
+//            if (a[0].x == 10) {
+//                if (a[1].y == 11) {
+//                    error("a")
+//                }
+//            }
+//        }
+//    }
+
+    fun testStr(str: String) {
+        if (str == "a") {
+            println("a")
         }
-        return x
     }
+
 }

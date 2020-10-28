@@ -12,8 +12,6 @@
     <artifactId>core</artifactId>
 
     <properties>
-        <serialization.version>0.20.0</serialization.version>
-
         <logback.version>1.2.3</logback.version>
         <slf4j.version>1.7.25</slf4j.version>
         <ini4j.version>0.5.4</ini4j.version>
@@ -66,7 +64,7 @@
 
         <dependency>
             <groupId>org.jetbrains.kotlinx</groupId>
-            <artifactId>kotlinx-serialization-runtime</artifactId>
+            <artifactId>kotlinx-serialization-json-jvm</artifactId>
             <version>${serialization.version}</version>
         </dependency>
     </dependencies>
@@ -85,9 +83,6 @@
                     <compilerPlugins>
                         <plugin>kotlinx-serialization</plugin>
                     </compilerPlugins>
-                    <args>
-                        <arg>-Xopt-in=kotlin.RequiresOptIn</arg>
-                    </args>
                 </configuration>
 
                 <dependencies>

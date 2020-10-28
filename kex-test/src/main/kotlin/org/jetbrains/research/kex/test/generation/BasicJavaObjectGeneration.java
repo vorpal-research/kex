@@ -5,7 +5,7 @@ import org.jetbrains.research.kex.test.Intrinsics;
 import java.util.Objects;
 
 public class BasicJavaObjectGeneration {
-    static class Point {
+    public static class Point {
         int x;
         int y;
         int z;
@@ -15,7 +15,7 @@ public class BasicJavaObjectGeneration {
             this.y = y;
         }
 
-        final void setZ(int z) {
+        final public void setZ(int z) {
             this.z = z;
         }
 
@@ -25,7 +25,7 @@ public class BasicJavaObjectGeneration {
         }
     }
 
-    static class Line {
+    public static class Line {
         Point start;
         Point end;
 

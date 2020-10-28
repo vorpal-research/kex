@@ -119,6 +119,8 @@ abstract class PredicateBuilder : TermBuilder() {
 
     fun Term.new() = pf.getNew(this, this@PredicateBuilder.type, location)
     fun Term.new(dimensions: List<Term>) = pf.getNewArray(this, dimensions, this@PredicateBuilder.type, location)
+    fun Term.new(vararg dimensions: Term) = this.new(dimensions.toList())
+    fun Term.new(vararg dimensions: Int) = this.new(dimensions.map { const(it) })
 
     class Assume(override val location: Location = Location()) : PredicateBuilder() {
         override val type get() = PredicateType.Assume()

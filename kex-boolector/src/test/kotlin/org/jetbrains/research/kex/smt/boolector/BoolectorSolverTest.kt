@@ -95,6 +95,7 @@ class BoolectorSolverTest : KexTest() {
     @Test
     fun testLogic() {
         val ctx = Btor()
+        BoolectorEngine.initialize()
 
         val checkExpr = { expr: Bool_ ->
             expr.axiom.toBoolNode().assume()

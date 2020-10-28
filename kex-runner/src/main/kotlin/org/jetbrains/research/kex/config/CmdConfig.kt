@@ -2,7 +2,6 @@ package org.jetbrains.research.kex.config
 
 import com.abdullin.kthelper.assert.exit
 import com.abdullin.kthelper.logging.log
-import kotlinx.serialization.enumMembers
 import org.apache.commons.cli.*
 import java.io.PrintWriter
 import java.io.StringWriter
@@ -112,7 +111,7 @@ class CmdConfig(args: Array<String>) : Config() {
 
     inline fun <reified T : Enum<T>> getEnumValue(name: String): Enum<T>? {
         val constName = getCmdValue(name) ?: return null
-        return T::class.enumMembers().firstOrNull { it.name == constName }
+        return T::class.java.enumConstants.firstOrNull { it.name == constName }
     }
 
     inline fun <reified T : Enum<T>> getEnumValue(name: String, default: T): Enum<T> =

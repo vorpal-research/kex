@@ -25,7 +25,7 @@ fun mergeTypes(tf: TypeFactory, types: Collection<KexType>): KexType {
     return when {
         uniqueTypes.all { it is KexPointer } -> {
             var result = tf.objectType.kexType
-            val classes = uniqueTypes.map { it as KexClass }.map { tf.getRefType(it.`class`) as ClassType }
+            val classes = uniqueTypes.map { it as KexClass }.map { tf.getRefType(it.klass) as ClassType }
             for (i in 0..classes.lastIndex) {
                 val isAncestor = classes.fold(true) { acc, `class` ->
                     acc && classes[i].`class`.isAncestorOf(`class`.`class`)
@@ -38,7 +38,7 @@ fun mergeTypes(tf: TypeFactory, types: Collection<KexType>): KexType {
             result
         }
         uniqueTypes.all { it is KexLong } -> KexLong()
-        uniqueTypes.all { it is KexIntegral } -> uniqueTypes.maxBy { it.bitsize }!!
+        uniqueTypes.all { it is KexIntegral } -> uniqueTypes.maxByOrNull { it.bitsize }!!
         uniqueTypes.all { it is KexFloat } -> KexFloat()
         uniqueTypes.all { it is KexDouble } -> KexDouble()
         else -> unreachable { log.error("Unexpected set of types: $types") }
