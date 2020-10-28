@@ -3,12 +3,13 @@ package org.jetbrains.research.kex.reanimator
 import com.abdullin.kthelper.`try`
 import com.abdullin.kthelper.logging.log
 import com.abdullin.kthelper.time.timed
+import com.abdullin.kthelper.tryOrNull
 import org.jetbrains.research.kex.ExecutionContext
 import org.jetbrains.research.kex.asm.state.PredicateStateAnalysis
 import org.jetbrains.research.kex.random.GenerationException
-import org.jetbrains.research.kex.reanimator.callstack.CallStack
-import org.jetbrains.research.kex.reanimator.callstack.CallStackExecutor
-import org.jetbrains.research.kex.reanimator.callstack.CallStackGenerator
+import org.jetbrains.research.kex.reanimator.callstack.*
+import org.jetbrains.research.kex.reanimator.codegen.javagen.CallStack2JavaPrinter
+import org.jetbrains.research.kex.reanimator.codegen.kotlingen.CallStack2KotlinPrinter
 import org.jetbrains.research.kex.reanimator.descriptor.Descriptor
 import org.jetbrains.research.kex.reanimator.descriptor.DescriptorStatistics
 import org.jetbrains.research.kex.smt.SMTModel
@@ -26,10 +27,27 @@ class Reanimator(val ctx: ExecutionContext, val psa: PredicateStateAnalysis) {
     private val csGenerator = CallStackGenerator(ctx, psa)
     private val csExecutor = CallStackExecutor(ctx)
 
+    private fun printTest(method: Method, callStacks: Parameters<CallStack>) {
+        val stack = when {
+            method.isStatic -> StaticMethodCall(method, callStacks.arguments).wrap("static")
+            method.isConstructor -> callStacks.instance!!
+            else -> {
+                val instance = callStacks.instance!!.clone()
+                instance.stack += MethodCall(method, callStacks.arguments)
+                instance
+            }
+        }
+        val kotlinCS = tryOrNull { CallStack2KotlinPrinter(ctx).print(stack) } ?: ""
+        log.debug("Kotlin call stacks:\n$kotlinCS")
+        val javaCS = tryOrNull { CallStack2JavaPrinter(ctx).print(stack) } ?: ""
+        log.debug("Java call stacks:\n$javaCS")
+    }
+
     fun generateAPI(method: Method, state: PredicateState, model: SMTModel) = try {
         val descriptors = generateFinalDescriptors(method, ctx, model, state).concreteParameters(cm)
         log.debug("Generated descriptors:\n$descriptors")
         val callStacks = descriptors.callStacks
+        printTest(method, callStacks)
         log.debug("Generated call stacks:\n$callStacks")
         val (instance, arguments, _) = callStacks.executed
         instance to arguments.toTypedArray()

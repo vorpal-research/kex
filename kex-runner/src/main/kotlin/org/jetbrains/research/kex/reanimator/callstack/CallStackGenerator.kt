@@ -59,7 +59,7 @@ class CallStackGenerator(override val context: GeneratorContext) : Generator {
                 is ConstantDescriptor.Float -> PrimaryValue(descriptor.value)
                 is ConstantDescriptor.Double -> PrimaryValue(descriptor.value)
                 is ConstantDescriptor.Class -> PrimaryValue(descriptor.value)
-            }.wrap(name)
+            }
             is StaticFieldDescriptor -> {
                 val callStack = CallStack(name)
                 descriptor.cache(callStack)

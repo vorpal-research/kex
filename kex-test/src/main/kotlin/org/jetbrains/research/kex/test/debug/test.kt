@@ -2,13 +2,23 @@
 
 package org.jetbrains.research.kex.test.debug
 
-import kotlin.system.exitProcess
-
 class BasicTests {
+//
+//    class Point(val x: Int, val y: Int)
+//
+//    fun test(a: ArrayList<Point>) {
+//        if (a.size == 2) {
+//            if (a[0].x == 10) {
+//                if (a[1].y == 11) {
+//                    error("a")
+//                }
+//            }
+//        }
+//    }
 
-    fun test(a: Int, b: Int) {
-        if (a > b) {
-            exitProcess(1)
+    fun testStr(str: String) {
+        if (str == "a") {
+            println("a")
         }
     }
 

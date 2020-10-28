@@ -64,7 +64,7 @@
 
         <dependency>
             <groupId>org.jetbrains.kotlinx</groupId>
-            <artifactId>kotlinx-serialization-core</artifactId>
+            <artifactId>kotlinx-serialization-json-jvm</artifactId>
             <version>${serialization.version}</version>
         </dependency>
     </dependencies>
@@ -83,9 +83,6 @@
                     <compilerPlugins>
                         <plugin>kotlinx-serialization</plugin>
                     </compilerPlugins>
-                    <args>
-                        <arg>-Xopt-in=kotlin.RequiresOptIn</arg>
-                    </args>
                 </configuration>
 
                 <dependencies>

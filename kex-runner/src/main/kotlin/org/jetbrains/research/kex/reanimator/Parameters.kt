@@ -9,6 +9,8 @@ data class Parameters<T>(
         val arguments: List<T>,
         val staticFields: Map<FieldTerm, T>
 ) {
+    val asList get() = listOfNotNull(instance) + arguments + staticFields.values
+
     override fun toString(): String = buildString {
         appendLine("instance: $instance")
         if (arguments.isNotEmpty())

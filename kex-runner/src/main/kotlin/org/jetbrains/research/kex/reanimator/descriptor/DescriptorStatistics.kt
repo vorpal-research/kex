@@ -23,6 +23,10 @@ object DescriptorStatistics {
             if (top.any { it is UnknownCall }) {
                 return false
             }
+
+            top.flatMap { it.parameters }.forEach {
+                queue += it
+            }
         }
 
         return true

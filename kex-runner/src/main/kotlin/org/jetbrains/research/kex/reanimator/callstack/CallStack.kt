@@ -52,19 +52,12 @@ open class CallStack(val name: String, val stack: MutableList<ApiCall>) : Iterab
         this.stack.reverse()
         return this
     }
+
+    fun clone() = CallStack(name, stack.toMutableList())
 }
 
-data class PrimaryValue<T>(val value: T) : ApiCall, CallStack(value.toString(), mutableListOf()) {
-    override val parameters: List<CallStack>
-        get() = listOf()
-
+data class PrimaryValue<T>(val value: T) : CallStack(value.toString(), mutableListOf()) {
     override fun toString() = value.toString()
-
-    override fun print(owner: CallStack, builder: StringBuilder, visited: MutableSet<CallStack>) {
-        if (owner.name != value.toString()) {
-            builder.appendLine("${owner.name} = $value")
-        }
-    }
 }
 
 data class DefaultConstructorCall(val klass: Class) : ApiCall {
@@ -125,6 +118,24 @@ data class MethodCall(val method: Method, val args: List<CallStack>) : ApiCall {
             arg.print(builder, visited)
         }
         builder.appendLine("${owner.name}.${method.name}(${args.joinToString(", ") { it.name }})")
+    }
+}
+
+data class StaticMethodCall(val method: Method, val args: List<CallStack>) : ApiCall {
+    init {
+        assert(!method.isConstructor) { log.error("Trying to create method call for constructor method") }
+        assert(method.isStatic) { log.error("Trying to create static method call for non-static method") }
+    }
+
+    override val parameters: List<CallStack> get() = args
+
+    override fun toString() = "$method(${args.joinToString(", ")})"
+
+    override fun print(owner: CallStack, builder: StringBuilder, visited: MutableSet<CallStack>) {
+        for (arg in args) {
+            arg.print(builder, visited)
+        }
+        builder.appendLine("${method.`class`.fullname}.${method.name}(${args.joinToString(", ") { it.name }})")
     }
 }
 
