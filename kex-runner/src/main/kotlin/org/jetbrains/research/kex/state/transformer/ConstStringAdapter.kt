@@ -28,7 +28,7 @@ class ConstStringAdapter : RecollectingTransformer<ConstStringAdapter> {
 
         val charArray = KexArray(KexChar())
         val valueArray = generate(charArray)
-        state { valueArray.new(listOf(const(string.length))) }
+        state { valueArray.new(string.length) }
         for ((index, char) in string.withIndex()) {
             state { valueArray[index].store(const(char)) }
         }
