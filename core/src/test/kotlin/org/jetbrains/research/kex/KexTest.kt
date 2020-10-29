@@ -13,6 +13,8 @@ import org.jetbrains.research.kfg.analysis.LoopAnalysis
 import org.jetbrains.research.kfg.analysis.LoopSimplifier
 import org.jetbrains.research.kfg.ir.Method
 import org.jetbrains.research.kfg.util.Flags
+import java.nio.file.Path
+import java.nio.file.Paths
 
 abstract class KexTest {
     val packageName = "org/jetbrains/research/kex/test"
@@ -22,7 +24,8 @@ abstract class KexTest {
     val loader: ClassLoader
 
     init {
-        val rootDir = System.getProperty("root.dir")
+//        val rootDir = System.getProperty("root.dir")
+        val rootDir = Paths.get("C:\\Users\\а\\IdeaProjects\\kex")
         val version = System.getProperty("project.version")
         kexConfig.initialize(RuntimeConfig, FileConfig("$rootDir/kex-test.ini"))
         kexConfig.initLog("$rootDir/kex-test.log")

@@ -2,10 +2,16 @@ package org.jetbrains.research.kex
 
 import com.abdullin.kthelper.logging.log
 import org.jetbrains.research.kex.asm.analysis.MethodChecker
+import org.jetbrains.research.kex.asm.analysis.RandomChecker
+import org.jetbrains.research.kex.asm.analysis.concolic.ConcolicChecker
+import org.jetbrains.research.kex.asm.manager.CoverageCounter
 import org.jetbrains.research.kex.asm.state.PredicateStateAnalysis
 import org.jetbrains.research.kex.asm.transform.LoopDeroller
 import org.jetbrains.research.kex.asm.transform.RuntimeTraceCollector
+import org.jetbrains.research.kex.asm.transform.TraceInstrumenter
 import org.jetbrains.research.kex.asm.util.ClassWriter
+import org.jetbrains.research.kex.generator.MethodFieldAccessDetector
+import org.jetbrains.research.kex.generator.SetterDetector
 import org.jetbrains.research.kex.random.easyrandom.EasyRandomDriver
 import org.jetbrains.research.kex.smt.Checker
 import org.jetbrains.research.kex.smt.Result
@@ -26,15 +32,17 @@ import org.jetbrains.research.kfg.ir.value.instruction.ArrayStoreInst
 import org.jetbrains.research.kfg.ir.value.instruction.CallInst
 import org.jetbrains.research.kfg.ir.value.instruction.Instruction
 import org.jetbrains.research.kfg.util.Flags
+import org.jetbrains.research.kfg.visitor.Pipeline
 import org.jetbrains.research.kfg.visitor.executePipeline
 import java.net.URLClassLoader
 import java.nio.file.Files
+import java.nio.file.Paths
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
 abstract class KexRunnerTest : KexTest() {
     val classPath = System.getProperty("java.class.path")
-    val targetDir = Files.createTempDirectory("kex-test")
+    val targetDir = Paths.get("D:\\kex\\out")
 
     val analysisContext: ExecutionContext
     val originalContext: ExecutionContext
@@ -44,7 +52,7 @@ abstract class KexRunnerTest : KexTest() {
         val origManager = ClassManager(KfgConfig(flags = Flags.readAll, failOnError = false))
 
         jar.unpack(cm, targetDir, true)
-        val classLoader = URLClassLoader(arrayOf(targetDir.toUri().toURL()))
+        val classLoader = URLClassLoader(arrayOf(targetDir.toUri().toURL())) // TODO()
         originalContext = ExecutionContext(origManager, jar.classLoader, EasyRandomDriver())
 
         executePipeline(originalContext.cm, `package`) {
@@ -126,6 +134,50 @@ abstract class KexRunnerTest : KexTest() {
                 assertTrue(result is Result.UnsatResult, "Class $`class`; method $method; ${inst.print()} should be unreachable")
             }
         }
+    }
+
+    fun concolic(`class`: Class) {
+        val traceManager = ObjectTraceManager()
+        val cm = CoverageCounter(originalContext.cm, traceManager)
+
+        executePipeline(analysisContext.cm, `class`) {
+            +ConcolicChecker(analysisContext, traceManager)
+            +cm
+        }
+
+        val coverage = cm.totalCoverage
+        val output  = "Overall summary for ${cm.methodInfos.size} methods:\n" +
+                "body coverage: ${String.format("%.2f", coverage.bodyCoverage)}%\n" +
+                "full coverage: ${String.format("%.2f", coverage.fullCoverage)}%"
+        log.info(output)
+        println(output)
+//        ConcolicChecker(originalContext, traceManager)
+    }
+
+     fun bmc(`class`: Class) {
+        val traceManager = ObjectTraceManager()
+        val psa = PredicateStateAnalysis(analysisContext.cm)
+        val cm = CoverageCounter(originalContext.cm, traceManager)
+
+        updateClassPath(analysisContext.loader as URLClassLoader)
+        executePipeline(analysisContext.cm, `class`) {
+            +RandomChecker(analysisContext, traceManager)
+            +LoopSimplifier(analysisContext.cm)
+            +LoopDeroller(analysisContext.cm)
+            +psa
+            +MethodFieldAccessDetector(analysisContext, psa)
+            +SetterDetector(analysisContext)
+            +MethodChecker(analysisContext, traceManager, psa)
+            +cm
+        }
+        clearClassPath()
+
+        val coverage = cm.totalCoverage
+        val output = "Overall summary for ${cm.methodInfos.size} methods:\n" +
+                "body coverage: ${String.format("%.2f", coverage.bodyCoverage)}%\n" +
+                "full coverage: ${String.format("%.2f", coverage.fullCoverage)}%"
+        log.info(output)
+        println(output)
     }
 
     private fun updateClassPath(loader: URLClassLoader) {

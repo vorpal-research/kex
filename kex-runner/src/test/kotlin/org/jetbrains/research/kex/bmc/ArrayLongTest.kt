@@ -1,5 +1,6 @@
-package org.jetbrains.research.kex
+package org.jetbrains.research.kex.bmc
 
+import org.jetbrains.research.kex.KexRunnerTest
 import org.jetbrains.research.kex.config.RuntimeConfig
 import kotlin.math.round
 import kotlin.system.measureTimeMillis
@@ -13,7 +14,7 @@ class ArrayLongTest : KexRunnerTest() {
         RuntimeConfig.setValue("smt", "slicing", false)
 
         val `class` = cm["$packageName/ArrayLongTests"]
-        val time = measureTimeMillis {  testClassReachability(`class`) }
+        val time = measureTimeMillis {  bmc(`class`) }
         println("${round(time.toFloat() / (1000 * 60))} minutes")
 
         RuntimeConfig.setValue("smt", "slicing", oldSlicingConfig)

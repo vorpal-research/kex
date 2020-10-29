@@ -29,6 +29,8 @@ import org.jetbrains.research.kfg.ir.BasicBlock
 import org.jetbrains.research.kfg.ir.Method
 import org.jetbrains.research.kfg.ir.value.Value
 import org.jetbrains.research.kfg.visitor.MethodVisitor
+import java.time.Duration
+import java.time.temporal.ChronoUnit
 import java.util.*
 
 private val timeLimit by lazy { kexConfig.getLongValue("concolic", "timeLimit", 10000L) }
@@ -39,6 +41,12 @@ class ConcolicChecker(val ctx: ExecutionContext, val manager: TraceManager<Trace
     val loader: ClassLoader get() = ctx.loader
     val random: Randomizer get() = ctx.random
     val paths = mutableSetOf<PredicateState>()
+
+    data class Statistics(var iterations: Int, var elapsedTime: Duration, var satNum: Int) {
+        fun updateTime(startTime: Long) {
+            elapsedTime = Duration.of(System.currentTimeMillis() - startTime, ChronoUnit.MILLIS)
+        }
+    }
 
     override fun cleanup() {
         paths.clear()
@@ -66,6 +74,7 @@ class ConcolicChecker(val ctx: ExecutionContext, val manager: TraceManager<Trace
 
         if ((onlyMain && method.name == "main") || !onlyMain) {
             analyze(method)
+            print("")
         }
     }
 
@@ -199,6 +208,8 @@ class ConcolicChecker(val ctx: ExecutionContext, val manager: TraceManager<Trace
 
     private suspend fun process(method: Method) {
         val traces = ArrayDeque<Trace>()
+        val statistics = Statistics(0, Duration.ZERO, 0)
+        val startTime = System.currentTimeMillis()
         while (!manager.isBodyCovered(method)) {
             val candidate = traces.firstOrElse { getRandomTrace(method)?.also { manager[method] = it } } ?: return
             yield()
@@ -206,7 +217,50 @@ class ConcolicChecker(val ctx: ExecutionContext, val manager: TraceManager<Trace
             run(method, candidate)?.also {
                 manager[method] = it
                 traces.add(it)
+                statistics.satNum += 1
             }
+            statistics.iterations += 1
+            statistics.updateTime(startTime)
+            log.info(statistics.toString())
+            yield()
+        }
+    }
+
+    private suspend fun processTree(method: Method) {
+        val statistics = Statistics(0, Duration.ZERO, 0)
+        val startTime = System.currentTimeMillis()
+        var contextLevel = 1
+        val contextCache = mutableSetOf<TraceGraph.Context>()
+        val visitedBranches = mutableSetOf<TraceGraph.Branch>()
+
+        val startTrace = getRandomTrace(method)!!
+        val traces = DominatorTraceGraph(startTrace)
+        while (!manager.isBodyCovered(method)) {
+            statistics.iterations += 1
+            var tb = traces.getTracesAndBranches().filter { it.second !in visitedBranches }
+            while (tb.isEmpty()) {
+                val randomTrace = getRandomTrace(method) ?: return
+                val randomBranch = TraceGraph.Branch(randomTrace.actions)
+                tb = listOfNotNull(randomTrace to randomBranch).filter { it.second !in visitedBranches }
+                yield()
+            }
+            yield()
+
+            tb.asSequence()
+                    .filter { (_, branch) -> branch.context(contextLevel) !in contextCache }
+                    .forEach { (candidate, branch) ->
+                        run(method, candidate)?.also {
+                            manager[method] = it
+                            traces.addTrace(it)
+                            statistics.satNum += 1
+                        }
+                        manager[method] = candidate
+                        contextCache.add(branch.context(contextLevel))
+                        visitedBranches.add(traces.toBranch(candidate))
+                    }
+            contextLevel += 1
+            statistics.elapsedTime = Duration.of(System.currentTimeMillis() - startTime, ChronoUnit.MILLIS)
+            log.debug(statistics.toString())
             yield()
         }
     }

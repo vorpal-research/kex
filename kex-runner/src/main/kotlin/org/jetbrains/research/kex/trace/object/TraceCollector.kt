@@ -2,6 +2,7 @@ package org.jetbrains.research.kex.trace.`object`
 
 import com.abdullin.kthelper.assert.ktassert
 import com.abdullin.kthelper.collection.stackOf
+import org.jetbrains.research.kex.asm.transform.RuntimeTraceCollector
 import org.jetbrains.research.kex.trace.file.UnknownNameException
 import org.jetbrains.research.kfg.ClassManager
 import org.jetbrains.research.kfg.ir.BasicBlock
@@ -9,6 +10,7 @@ import org.jetbrains.research.kfg.ir.Method
 import org.jetbrains.research.kfg.ir.MethodDesc
 import org.jetbrains.research.kfg.ir.value.Value
 import org.jetbrains.research.kfg.type.parseDesc
+import org.jetbrains.research.kfg.type.parseStringToType
 
 abstract class TraceCollector(val cm: ClassManager) {
     val trace = arrayListOf<Action>()
@@ -16,9 +18,9 @@ abstract class TraceCollector(val cm: ClassManager) {
 
     protected fun String.toType() = parseDesc(cm.type, this)
 
-    protected fun parseMethod(className: String, methodName: String, args: Array<String>, retType: String): Method {
+    protected fun parseMethod(className: String, methodName: String, argTypes: Array<String>, retType: String): Method {
         val klass = cm[className]
-        return klass.getMethod(methodName, MethodDesc(args.map { it.toType() }.toTypedArray(), retType.toType()))
+        return klass.getMethod(methodName, MethodDesc(argTypes.map { it.toType() }.toTypedArray(), retType.toType()))
     }
 
     protected fun parseBlock(blockName: String): BasicBlock {
@@ -158,4 +160,8 @@ object TraceCollectorProxy {
         collector = TraceCollectorStub(cm)
         return collector
     }
+}
+
+object RuntimeTraceCollectorProxy {
+
 }

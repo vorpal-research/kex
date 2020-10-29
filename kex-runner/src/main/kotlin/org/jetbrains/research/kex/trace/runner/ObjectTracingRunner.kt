@@ -9,7 +9,7 @@ class ObjectTracingRunner(method: Method, loader: ClassLoader)
     : TracingAbstractRunner<Trace>(method, loader) {
     override fun collectTrace(instance: Any?, args: Array<Any?>): Trace {
         val collector = TraceCollectorProxy.enableCollector(method.cm)
-        run(instance, args)
+        val result = run(instance, args)
         TraceCollectorProxy.disableCollector()
         return Trace(collector.trace)
     }
@@ -19,7 +19,7 @@ class RandomObjectTracingRunner(method: Method, loader: ClassLoader, random: Ran
     : TracingRandomRunner<Trace>(method, loader, random) {
     override fun collectTrace(instance: Any?, args: Array<Any?>): Trace {
         val collector = TraceCollectorProxy.enableCollector(method.cm)
-        run(instance, args)
+        val result =  run(instance, args)
         TraceCollectorProxy.disableCollector()
         return Trace(collector.trace)
     }
