@@ -252,8 +252,6 @@ class RuntimeTraceCollector(override val cm: ClassManager) : MethodVisitor {
             }
         }
         super.visit(method)
-//        println(method.print())
         methodEntryInsts.insertBefore(method.entry.first())
-//        println(method.print())
     }
 }
