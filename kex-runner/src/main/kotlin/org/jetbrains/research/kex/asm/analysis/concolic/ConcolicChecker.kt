@@ -58,7 +58,7 @@ class ConcolicChecker(val ctx: ExecutionContext, val manager: TraceManager<Trace
             runBlocking {
                 withTimeout(timeLimit) {
                     try {
-                        process(method)
+                        processTree(method)
                     } catch (e: TimeoutException) {
                         log.debug("Timeout on running $method")
                     }
@@ -257,6 +257,7 @@ class ConcolicChecker(val ctx: ExecutionContext, val manager: TraceManager<Trace
                         manager[method] = candidate
                         contextCache.add(branch.context(contextLevel))
                         visitedBranches.add(traces.toBranch(candidate))
+                        println()
                     }
             contextLevel += 1
             statistics.elapsedTime = Duration.of(System.currentTimeMillis() - startTime, ChronoUnit.MILLIS)

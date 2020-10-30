@@ -1,6 +1,7 @@
 package org.jetbrains.research.kex.asm.analysis.concolic
 
 import com.abdullin.kthelper.collection.queueOf
+import com.abdullin.kthelper.collection.stackOf
 import javassist.NotFoundException
 import org.jetbrains.research.kex.trace.`object`.*
 import java.lang.NullPointerException
@@ -83,13 +84,25 @@ open class TraceGraph(startTrace: Trace) {
     }
 
     open fun addTrace(trace: Trace) {
-
+        val methodStack = stackOf<MethodEntry>()
+        val foundVerticesStack = stackOf<MutableSet<Vertex>>()
         var previousVertex: Vertex? = null
         trace.actions.forEach { action ->
-            val found = action.find() ?: wrapAndAddAction(action, previousVertex)
+            if (action is MethodEntry) {
+                methodStack.push(action)
+                foundVerticesStack.push(mutableSetOf())
+            }
+            // TODO:? Check if predecessor in same method
+            val found = action.findExcept(foundVerticesStack.peek()) ?: wrapAndAddAction(action, previousVertex)
             previousVertex?.successors?.add(found)
             found.predecessors.addAll(vertices.filter { found in it.successors })
+            foundVerticesStack.peek().add(found)
             previousVertex = found
+
+            if (action is MethodReturn && action.method == methodStack.peek().method) {
+                methodStack.pop()
+                foundVerticesStack.pop()
+            }
         }
         rootToLeaf[trace.actions.first().find()!!] = trace.actions.last().find()!!
         depth = maxOf(depth, trace.actions.size)
@@ -166,6 +179,8 @@ open class TraceGraph(startTrace: Trace) {
 
     fun Action.find() = vertices.find { it.action formalEquals this }
 
+    fun Action.findExcept(foundVertices: Set<Vertex>) = vertices.minus(foundVertices).find { it.action formalEquals this }
+
     private fun wrapBranch(branch: Trace) = vertices.filter { it.action in branch.actions }
 
 }
@@ -212,9 +227,14 @@ class DominatorTraceGraph(startTrace: Trace) : TraceGraph(startTrace) {
 
     private fun updateDomMapGeneral(vertex: Vertex) {
         dominatorMap[vertex] = vertex.predecessors
-                .map { dominatorMap[it]!! }
+                .map { dominatorMap[it] ?: recoveryUpdateVertex(it) }
                 .reduce { acc, set -> acc.intersect(set) }
                 .union(setOf(vertex))
+    }
+
+    private fun recoveryUpdateVertex(vertex: Vertex): Set<Vertex> {
+        updateDomMapGeneral(vertex)
+        return dominatorMap[vertex]!!
     }
 
     private fun updateNonDominatingVertices() {
