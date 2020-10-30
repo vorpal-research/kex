@@ -34,7 +34,7 @@ class $self< in Index : $Bitvector, Element : $Bitvector >(val inner: $Array< El
         var expr = bytes.first().expr
         var axiom = bytes.first().axiom
         bytes.drop(1).forEach {
-            expr = engine.binary(ctx, SMTEngine.Opcode.CONCAT, expr, it.expr)
+            expr = engine.binary(ctx, SMTEngine.Opcode.CONCAT, it.expr, expr)
             axiom = spliceAxioms(ctx, axiom, it.axiom)
         }
         return $Bitvector(ctx, expr, axiom)
@@ -45,10 +45,11 @@ class $self< in Index : $Bitvector, Element : $Bitvector >(val inner: $Array< El
     fun store(index: Index, element: $Bitvector): $self< Index, Element > {
         val elementSize = element.getBitsize()
         var start = 0
+        var shift = 0
         val cases = arrayListOf< Pair< Index, Element >>()
         while (start < elementSize) {
             val hi = min(start + byteSize - 1, elementSize - 1)
-            cases.add(((index + start) as Index) to (element.extract(hi, start).toBV(byteSize) as Element))
+            cases.add(((index + (shift++)) as Index) to (element.extract(hi, start).toBV(byteSize) as Element))
             start += byteSize
         }
         return $self(inner.store(cases), byteSize)

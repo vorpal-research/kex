@@ -12,17 +12,17 @@ data class SMTModel(
         val typeMap: Map<Term, KexType>
 ) {
     override fun toString() = buildString {
-        appendln("Model {")
-        assignments.forEach { (key, value) -> appendln("\t$key = $value") }
+        appendLine("Model {")
+        assignments.forEach { (key, value) -> appendLine("\t$key = $value") }
         memories.forEach { (memspace, memory) ->
             memory.finalMemory.forEach { (key, value) ->
-                appendln("\t($key)<$memspace> = $value")
+                appendLine("\t($key)<$memspace> = $value")
             }
         }
         properties.forEach { (memspace, map) ->
             map.forEach { (name, memory) ->
                 memory.finalMemory.forEach { (key, value) ->
-                    appendln("\t$name($key)<$memspace> = $value")
+                    appendLine("\t$name($key)<$memspace> = $value")
                 }
             }
         }

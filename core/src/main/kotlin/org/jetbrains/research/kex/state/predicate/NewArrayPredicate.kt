@@ -1,6 +1,6 @@
 package org.jetbrains.research.kex.state.predicate
 
-import kotlinx.serialization.ContextualSerialization
+import kotlinx.serialization.Contextual
 import kotlinx.serialization.Required
 import kotlinx.serialization.Serializable
 import org.jetbrains.research.kex.InheritorOf
@@ -16,7 +16,7 @@ class NewArrayPredicate(
         val dimentions: List<Term>,
         val elementType: KexType,
         @Required override val type: PredicateType = PredicateType.State(),
-        @Required @ContextualSerialization override val location: Location = Location()) : Predicate() {
+        @Required @Contextual override val location: Location = Location()) : Predicate() {
     override val operands by lazy { listOf(lhv) + dimentions }
 
     val numDimentions: Int

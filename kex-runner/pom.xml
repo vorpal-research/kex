@@ -14,14 +14,11 @@
     <properties>
         <exec.main>org.jetbrains.research.kex.MainKt</exec.main>
 
-        <serialization.version>0.14.0</serialization.version>
-        <coroutines.version>1.3.2</coroutines.version>
-
         <logback.version>1.2.3</logback.version>
         <slf4j.version>1.7.25</slf4j.version>
         <commons-cli.version>1.4</commons-cli.version>
 
-        <easy-random.version>easy-random-4.0.0</easy-random.version>
+        <easy-random.version>easy-random-4.2.0</easy-random.version>
         <better-parse.version>0.3.2</better-parse.version>
         <reflections.version>0.9.11</reflections.version>
         <klaxon.version>3.0.6</klaxon.version>
@@ -130,7 +127,7 @@
 
         <dependency>
             <groupId>org.jetbrains.kotlinx</groupId>
-            <artifactId>kotlinx-serialization-runtime</artifactId>
+            <artifactId>kotlinx-serialization-json-jvm</artifactId>
             <version>${serialization.version}</version>
         </dependency>
     </dependencies>
@@ -149,9 +146,6 @@
                     <compilerPlugins>
                         <plugin>kotlinx-serialization</plugin>
                     </compilerPlugins>
-                    <args>
-                        <arg>-Xuse-experimental=kotlin.Experimental</arg>
-                    </args>
                 </configuration>
 
                 <dependencies>

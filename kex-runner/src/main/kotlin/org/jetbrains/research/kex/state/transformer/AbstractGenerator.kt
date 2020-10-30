@@ -5,7 +5,7 @@ import com.abdullin.kthelper.logging.log
 import org.jetbrains.research.kex.ExecutionContext
 import org.jetbrains.research.kex.ktype.KexClass
 import org.jetbrains.research.kex.ktype.kexType
-import org.jetbrains.research.kex.smt.Reanimator
+import org.jetbrains.research.kex.smt.ModelReanimator
 import org.jetbrains.research.kex.smt.SMTModel
 import org.jetbrains.research.kex.state.BasicState
 import org.jetbrains.research.kex.state.ChoiceState
@@ -33,7 +33,7 @@ interface AbstractGenerator<T> : Transformer<AbstractGenerator<T>> {
     val type: TypeFactory get() = ctx.types
     val loader: ClassLoader get() = ctx.loader
 
-    val reanimator: Reanimator<T>
+    val modelReanimator: ModelReanimator<T>
 
     val memory: MutableMap<Term, T>
     var thisTerm: Term?
@@ -48,7 +48,7 @@ interface AbstractGenerator<T> : Transformer<AbstractGenerator<T>> {
     val staticFields get() = staticFieldTerms.map { it to memory[it] }.toMap()
 
     fun generateThis() = thisTerm?.let {
-        memory[it] = reanimator.reanimate(it)
+        memory[it] = modelReanimator.reanimate(it)
     }
 
     fun generateArgs() = argTerms.values.forEach { term ->
@@ -56,7 +56,7 @@ interface AbstractGenerator<T> : Transformer<AbstractGenerator<T>> {
     }
 
     fun reanimateTerm(term: Term): T? = memory.getOrPut(term) {
-        reanimator.reanimate(term)
+        modelReanimator.reanimate(term)
     }
 
     fun generate(ps: PredicateState): Pair<T?, List<T?>> {

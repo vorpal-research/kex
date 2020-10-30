@@ -168,7 +168,7 @@ class ActionParser(val cm: ClassManager) : Grammar<Action>() {
 
     // action
     private val methodEntryParser by (-enter and -space and methodName) use {
-        trackers.push(this.slottracker)
+        trackers.push(this.slotTracker)
         MethodEntry(this)
     }
 

@@ -1,3 +1,0 @@
-[submodule "boolector"]
-	path = boolector
-	url = https://github.com/maratdin7/JavaBoolector

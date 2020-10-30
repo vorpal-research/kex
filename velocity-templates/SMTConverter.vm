@@ -13,6 +13,7 @@ import org.jetbrains.research.kfg.type.ClassType
 import org.jetbrains.research.kfg.type.Type
 import org.jetbrains.research.kfg.type.TypeFactory
 import org.jetbrains.research.kfg.type.NullType
+import java.util.*
 
 val defaultAllocSize = kexConfig.getIntValue("smt", "defaultAllocationSize", 1024)
 
@@ -28,9 +29,11 @@ class ${solver}Converter(val tf: TypeFactory) : ${solver}SMTConverter() {
                 val typeVar = ctx.readProperty< Int_ >(expr as Ptr_, this.memspace, "type")
                 val kfgType = this.type.getKfgType(tf)
                 var typeCond: Bool_? = null
-                types.filter { it.isSubtypeOf(kfgType) }.filter { it !is NullType }.forEach {
-                    val tv = ef.getTypeVariable(tf, it.kexType)
-                    typeCond = if (typeCond == null) (typeVar eq tv) else (typeCond!! or (typeVar eq tv))
+                if (kfgType.isConcrete) {
+                    types.filter { it.isSubtypeOf(kfgType) }.filter { it !is NullType }.forEach {
+                        val tv = ef.getTypeVariable(tf, it.kexType)
+                        typeCond = if (typeCond == null) (typeVar eq tv) else (typeCond!! or (typeVar eq tv))
+                    }
                 }
                 typeCond?.apply {
                     resultExpr = resultExpr.withAxiom(this)
@@ -73,9 +76,20 @@ class ${solver}Converter(val tf: TypeFactory) : ${solver}SMTConverter() {
                 else -> unreachable { log.error("Unable to cast expr ${ expr } to ${ type }") }
             }
 
-    fun apply(ps: PredicateState, ef: $factory, ctx: ${solver}Context): Bool_ {
-        this.types = collectTypes(ps).filter { it !is KexNull }.map { it.getKfgType(tf) }.toSet()
-        return convert(ps, ef, ctx)
+    private fun convertAndCast(type: KexType, expr: Dynamic_): Dynamic_ =
+            when (type) {
+                is KexLong -> expr.convertToLong()
+                is KexBool -> Bool_.forceCast(expr)
+                is KexIntegral -> expr.convertToInt()
+                is KexFloat -> expr.convertToFloat()
+                is KexDouble -> expr.convertToDouble()
+                is KexClass -> Ptr_.forceCast(expr)
+                is KexArray -> Ptr_.forceCast(expr)
+                else -> unreachable { log.error("Unable to cast expr ${ expr } to ${ type }") }
+            }
+
+    fun init(types: Set< KexType >) {
+        this.types = types.filter { it !is KexNull }.map { it.getKfgType(tf) }.toSet()
     }
 
     fun convert(ps: PredicateState, ef: $factory, ctx: ${solver}Context, extractPath: Boolean = false): Bool_ = when (ps) {
@@ -94,7 +108,7 @@ class ${solver}Converter(val tf: TypeFactory) : ${solver}SMTConverter() {
 
     fun convert(choice: ChoiceState, ef: $factory, ctx: ${solver}Context, extractPath: Boolean = false): Bool_ {
         var res = ef.makeFalse()
-        val contexts = hashMapOf< Bool_, ${solver}Context >()
+        val contexts = IdentityHashMap< Bool_, ${solver}Context >()
         for (branch in choice) {
             val newCtx = ${solver}Context(ctx)
             val state = convert(branch, ef, newCtx, extractPath)
@@ -264,8 +278,10 @@ class ${solver}Converter(val tf: TypeFactory) : ${solver}SMTConverter() {
         }
     }
 
-    fun convert(call: CallTerm, ef: $factory, ctx: ${solver}Context): Dynamic_ =
-        ef.getVarByTypeAndName(call.type, call.name)
+    fun convert(call: CallTerm, ef: $factory, ctx: ${solver}Context): Dynamic_ {
+        val expr = ef.getVarByTypeAndName(call.type, call.name)
+        return call.withAxioms(expr, ef, ctx)
+    }
 
     fun convert(cast: CastTerm, ef: $factory, ctx: ${solver}Context): Dynamic_ {
         val op = convert(cast.operand, ef, ctx)
@@ -275,7 +291,7 @@ class ${solver}Converter(val tf: TypeFactory) : ${solver}SMTConverter() {
             val subtype = ef.subtypeFunction.applyAs< Bool_ >(typeVar, castedTypeVar) or ef.subtypeFunction.applyAs< Bool_ >(castedTypeVar, typeVar)
             return cast(cast.type, op.withAxiom(subtype))
         }
-        return cast(cast.type, op)
+        return convertAndCast(cast.type, op)
     }
 
 #macro(cmp $opcode $default $type)

@@ -2,7 +2,9 @@ package org.jetbrains.research.kex
 
 import com.abdullin.kthelper.logging.debug
 import com.abdullin.kthelper.logging.log
-import kotlinx.serialization.ImplicitReflectionSerializer
+import kotlinx.serialization.ExperimentalSerializationApi
+import kotlinx.serialization.InternalSerializationApi
+import org.jetbrains.research.kex.asm.analysis.DescriptorChecker
 import org.jetbrains.research.kex.asm.analysis.Failure
 import org.jetbrains.research.kex.asm.analysis.MethodChecker
 import org.jetbrains.research.kex.asm.analysis.RandomChecker
@@ -11,19 +13,24 @@ import org.jetbrains.research.kex.asm.manager.CoverageCounter
 import org.jetbrains.research.kex.asm.state.PredicateStateAnalysis
 import org.jetbrains.research.kex.asm.transform.LoopDeroller
 import org.jetbrains.research.kex.asm.transform.RuntimeTraceCollector
+import org.jetbrains.research.kex.asm.transform.SystemExitTransformer
 import org.jetbrains.research.kex.asm.util.ClassWriter
 import org.jetbrains.research.kex.config.CmdConfig
 import org.jetbrains.research.kex.config.FileConfig
 import org.jetbrains.research.kex.config.RuntimeConfig
 import org.jetbrains.research.kex.config.kexConfig
-import org.jetbrains.research.kex.generator.MethodFieldAccessDetector
-import org.jetbrains.research.kex.generator.SetterDetector
 import org.jetbrains.research.kex.random.easyrandom.EasyRandomDriver
+import org.jetbrains.research.kex.reanimator.RandomObjectReanimator
+import org.jetbrains.research.kex.reanimator.collector.ExternalConstructorCollector
+import org.jetbrains.research.kex.reanimator.collector.MethodFieldAccessCollector
+import org.jetbrains.research.kex.reanimator.collector.SetterCollector
+import org.jetbrains.research.kex.reanimator.descriptor.DescriptorStatistics
 import org.jetbrains.research.kex.serialization.KexSerializer
 import org.jetbrains.research.kex.smt.Checker
 import org.jetbrains.research.kex.smt.Result
 import org.jetbrains.research.kex.state.transformer.executeModel
 import org.jetbrains.research.kex.trace.`object`.ObjectTraceManager
+import org.jetbrains.research.kex.util.getRuntime
 import org.jetbrains.research.kfg.ClassManager
 import org.jetbrains.research.kfg.Jar
 import org.jetbrains.research.kfg.KfgConfig
@@ -62,11 +69,12 @@ class Kex(args: Array<String>) {
     enum class Mode {
         concolic,
         bmc,
+        reanimator,
         debug
     }
 
     private sealed class AnalysisLevel {
-        class PACKAGE : AnalysisLevel()
+        object PACKAGE : AnalysisLevel()
         data class CLASS(val klass: String) : AnalysisLevel()
         data class METHOD(val klass: String, val method: String) : AnalysisLevel()
     }
@@ -84,11 +92,11 @@ class Kex(args: Array<String>) {
         val analysisLevel = when {
             targetName == null -> {
                 `package` = Package.defaultPackage
-                AnalysisLevel.PACKAGE()
+                AnalysisLevel.PACKAGE
             }
             targetName.matches(Regex("[a-zA-Z0-9]+(\\.[a-zA-Z0-9]+)*\\.\\*")) -> {
                 `package` = Package.parse(targetName)
-                AnalysisLevel.PACKAGE()
+                AnalysisLevel.PACKAGE
             }
             targetName.matches(Regex("[a-zA-Z0-9]+(\\.[a-zA-Z0-9]+)*\\.[a-zA-Z0-9\$_]+::[a-zA-Z0-9\$_]+")) -> {
                 val (klassName, methodName) = targetName.split("::")
@@ -108,12 +116,7 @@ class Kex(args: Array<String>) {
         jar = Jar(jarPath, `package`)
         classManager = ClassManager(KfgConfig(flags = Flags.readAll, failOnError = false))
         origManager = ClassManager(KfgConfig(flags = Flags.readAll, failOnError = false))
-        val analysisJars = listOfNotNull(
-                jar,
-                kexConfig.getStringValue("kex", "rtPath")?.let {
-                    Jar(Paths.get(it), Package.defaultPackage)
-                }
-        )
+        val analysisJars = listOfNotNull(jar, getRuntime())
         classManager.initialize(*analysisJars.toTypedArray())
         origManager.initialize(*analysisJars.toTypedArray())
 
@@ -145,7 +148,8 @@ class Kex(args: Array<String>) {
         System.setProperty("java.class.path", classPath)
     }
 
-    @ImplicitReflectionSerializer
+    @ExperimentalSerializationApi
+    @InternalSerializationApi
     fun main() {
         // write all classes to output directory, so they will be seen by ClassLoader
         jar.unpack(classManager, outputDir, true)
@@ -156,18 +160,21 @@ class Kex(args: Array<String>) {
 
         // instrument all classes in the target package
         runPipeline(originalContext, `package`) {
+            +SystemExitTransformer(originalContext.cm)
             +RuntimeTraceCollector(originalContext.cm)
             +ClassWriter(originalContext, outputDir)
         }
 
         when (cmd.getEnumValue<Mode>("mode") ?: this.mode) {
             Mode.bmc -> bmc(originalContext, analysisContext)
+            Mode.reanimator -> reanimator(analysisContext)
             Mode.concolic -> concolic(originalContext, analysisContext)
-            else -> debug(analysisContext)
+            Mode.debug -> debug(analysisContext)
         }
     }
 
-    @ImplicitReflectionSerializer
+    @ExperimentalSerializationApi
+    @InternalSerializationApi
     fun debug(analysisContext: ExecutionContext) {
         val psa = PredicateStateAnalysis(analysisContext.cm)
 
@@ -180,7 +187,7 @@ class Kex(args: Array<String>) {
         updateClassPath(classLoader)
 
         val checker = Checker(method, classLoader, psa)
-        val result = checker.prepareAndCheck(failure.state) as? Result.SatResult ?: return
+        val result = checker.check(failure.state) as? Result.SatResult ?: return
         log.debug(result.model)
         val recMod = executeModel(analysisContext, checker.state, method, result.model)
         log.debug(recMod)
@@ -193,14 +200,20 @@ class Kex(args: Array<String>) {
         val cm = CoverageCounter(originalContext.cm, traceManager)
 
         updateClassPath(analysisContext.loader as URLClassLoader)
+        val useApiGeneration = kexConfig.getBooleanValue("apiGeneration", "enabled", true)
+
         runPipeline(analysisContext) {
             +RandomChecker(analysisContext, traceManager)
             +LoopSimplifier(analysisContext.cm)
             +LoopDeroller(analysisContext.cm)
             +psa
-            +MethodFieldAccessDetector(analysisContext, psa)
-            +SetterDetector(analysisContext)
-            +MethodChecker(analysisContext, traceManager, psa)
+            +MethodFieldAccessCollector(analysisContext, psa)
+            +SetterCollector(analysisContext)
+            +ExternalConstructorCollector(analysisContext.cm)
+            +when {
+                useApiGeneration -> DescriptorChecker(analysisContext, traceManager, psa)
+                else -> MethodChecker(analysisContext, traceManager, psa)
+            }
             +cm
         }
         clearClassPath()
@@ -209,6 +222,24 @@ class Kex(args: Array<String>) {
         log.info("Overall summary for ${cm.methodInfos.size} methods:\n" +
                 "body coverage: ${String.format("%.2f", coverage.bodyCoverage)}%\n" +
                 "full coverage: ${String.format("%.2f", coverage.fullCoverage)}%")
+        DescriptorStatistics.printStatistics()
+    }
+
+    private fun reanimator(analysisContext: ExecutionContext) {
+        val psa = PredicateStateAnalysis(analysisContext.cm)
+
+        updateClassPath(analysisContext.loader as URLClassLoader)
+
+        runPipeline(analysisContext) {
+            +LoopSimplifier(analysisContext.cm)
+            +LoopDeroller(analysisContext.cm)
+            +psa
+            +MethodFieldAccessCollector(analysisContext, psa)
+            +SetterCollector(analysisContext)
+            +ExternalConstructorCollector(analysisContext.cm)
+        }
+        RandomObjectReanimator(analysisContext, `package`, psa).run()
+        clearClassPath()
     }
 
     private fun concolic(originalContext: ExecutionContext, analysisContext: ExecutionContext) {
@@ -224,12 +255,13 @@ class Kex(args: Array<String>) {
         log.info("Overall summary for ${cm.methodInfos.size} methods:\n" +
                 "body coverage: ${String.format("%.2f", coverage.bodyCoverage)}%\n" +
                 "full coverage: ${String.format("%.2f", coverage.fullCoverage)}%")
+        DescriptorStatistics.printStatistics()
     }
 
-    protected fun runPipeline(context: ExecutionContext, target: Package, init: Pipeline.() -> Unit) =
+    private fun runPipeline(context: ExecutionContext, target: Package, init: Pipeline.() -> Unit) =
             executePipeline(context.cm, target, init)
 
-    protected fun runPipeline(context: ExecutionContext, init: Pipeline.() -> Unit) = when {
+    private fun runPipeline(context: ExecutionContext, init: Pipeline.() -> Unit) = when {
         methods != null -> executePipeline(context.cm, methods!!, init)
         klass != null -> executePipeline(context.cm, klass!!, init)
         else -> executePipeline(context.cm, `package`, init)
