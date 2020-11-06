@@ -47,6 +47,7 @@ open class TraceGraph(startTrace: Trace) {
     }
 
     val vertices: MutableCollection<Vertex> = mutableSetOf()
+    val traces: MutableCollection<Trace> = mutableListOf()
     val rootToLeaf = mutableMapOf<Vertex, Vertex>()
     val leafToRoot
         get() = rootToLeaf.entries.associate { (k, v) -> v to k }
@@ -54,6 +55,7 @@ open class TraceGraph(startTrace: Trace) {
         private set
 
     init {
+        traces.add(startTrace)
         val actionTail = startTrace.actions
         val root = Vertex(actionTail[0], mutableSetOf(), mutableSetOf())
         vertices.add(root)
@@ -68,9 +70,7 @@ open class TraceGraph(startTrace: Trace) {
     }
 
     fun getTraces(): List<Trace> {
-        return rootToLeaf.entries.map {
-            Trace(bfsPath(it.value) { v -> v == it.key }.map { v -> v.action })
-        }
+        return traces.toList()
     }
 
     fun getTraces(depth: Int): List<Trace> {
@@ -84,6 +84,7 @@ open class TraceGraph(startTrace: Trace) {
     }
 
     open fun addTrace(trace: Trace) {
+        traces.add(trace)
         val methodStack = stackOf<MethodEntry>()
         val foundVerticesStack = stackOf<MutableSet<Vertex>>()
         var previousVertex: Vertex? = null
