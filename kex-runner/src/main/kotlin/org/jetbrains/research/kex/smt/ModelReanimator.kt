@@ -413,14 +413,10 @@ abstract class DescriptorReanimator(override val method: Method,
         val address = (addr as? ConstIntTerm)?.value ?: return@descriptor default(term.type)
         if (address == 0) return@descriptor default(term.type)
 
-        when (val actualType = resolveType(term.memspace, addr, referencedType)) {//(reanimateType(term.memspace, addr) ?: referencedType)) {
-            is KexClass -> {
-                memory(term.memspace, address) { `object`(actualType) }
-            }
-            is KexArray -> {
-                memory(term.memspace, address) {
-                    newArrayInstance(term.memspace, actualType, addr)
-                }
+        when (val actualType = resolveType(term.memspace, addr, referencedType)) {
+            is KexClass -> memory(term.memspace, address) { `object`(actualType) }
+            is KexArray -> memory(term.memspace, address) {
+                newArrayInstance(term.memspace, actualType, addr)
             }
             else -> unreachable { log.error("Trying to recover reference pointer that is not pointer") }
         }
