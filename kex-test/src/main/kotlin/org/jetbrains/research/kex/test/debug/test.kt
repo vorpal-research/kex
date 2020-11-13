@@ -3,7 +3,29 @@
 package org.jetbrains.research.kex.test.debug
 
 class BasicTests {
-//
+
+    interface A {
+        fun a(): Int
+    }
+
+    class B : A {
+        override fun a(): Int = 2
+    }
+
+    class C : A {
+        override fun a(): Int = -2
+    }
+
+    class Cont(val a: A) {
+        val d = a.a()
+    }
+
+    fun test(c: Cont) {
+        if (c.a is C) {
+            println("a")
+        }
+    }
+
 //    class Point(val x: Int, val y: Int)
 //
 //    fun test(a: ArrayList<Point>) {
@@ -15,11 +37,4 @@ class BasicTests {
 //            }
 //        }
 //    }
-
-    fun testStr(str: String) {
-        if (str == "a") {
-            println("a")
-        }
-    }
-
 }

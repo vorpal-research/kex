@@ -25,6 +25,7 @@ import org.jetbrains.research.kfg.ir.Field
 import org.jetbrains.research.kfg.ir.Method
 
 private val visibilityLevel by lazy { kexConfig.getEnumValue("apiGeneration", "visibility", true, Visibility.PUBLIC) }
+private val recursiveInlining by lazy { kexConfig.getBooleanValue("apiGeneration", "recursiveInlining", false) }
 
 class GeneratorContext(val context: ExecutionContext, val psa: PredicateStateAnalysis) {
     val cm get() = context.cm
@@ -40,6 +41,11 @@ class GeneratorContext(val context: ExecutionContext, val psa: PredicateStateAna
     }
 
     fun Descriptor.cached() = descriptorCache[this]
+
+    fun PredicateState.prepare(method: Method, typeInfoMap: TypeInfoMap, ignores: Set<Term> = setOf()) = when {
+        recursiveInlining -> prepareState(method, this, typeInfoMap, ignores)
+        else -> prepareState(method, this, ignores)
+    }
 
     fun prepareState(method: Method, ps: PredicateState, typeInfoMap: TypeInfoMap, ignores: Set<Term> = setOf()) = transform(ps) {
         +AnnotationAdapter(method, AnnotationManager.defaultLoader)
@@ -90,12 +96,12 @@ class GeneratorContext(val context: ExecutionContext, val psa: PredicateStateAna
         log.debug("Executing constructor $this for $descriptor")
 
         val mapper = descriptor.mapper
-        val preState = mapper.apply(descriptor.typeInfo + descriptor.preState)
+        val preState = mapper.apply(descriptor.newTypeInfo + descriptor.preState)
         val typeInfos = collectPlainTypeInfos(types, preState)
         val state = preState + mapper.apply(methodState ?: return null)
 
         val preStateFieldTerms = collectFieldTerms(context, preState)
-        val preparedState = prepareState(this, state, typeInfos, preStateFieldTerms)
+        val preparedState = state.prepare(this, typeInfos, preStateFieldTerms)
         val preparedQuery = prepareQuery(mapper.apply(descriptor.query))
         return execute(preparedState, preparedQuery)
     }
@@ -109,11 +115,11 @@ class GeneratorContext(val context: ExecutionContext, val psa: PredicateStateAna
                         descriptor.term to term { `return`(this@executeAsExternalConstructor) }
                 )
         )
-        val preState = externalMapper.apply(descriptor.typeInfo)
+        val preState = externalMapper.apply(descriptor.newTypeInfo)
         val typeInfos = collectPlainTypeInfos(types, preState)
         val state = preState + externalMapper.apply(methodState ?: return null)
 
-        val preparedState = prepareState(this, state, typeInfos)
+        val preparedState = state.prepare(this, typeInfos)
         val preparedQuery = prepareQuery(externalMapper.apply(descriptor.query))
         return execute(preparedState, preparedQuery)
     }
@@ -125,11 +131,11 @@ class GeneratorContext(val context: ExecutionContext, val psa: PredicateStateAna
         val mapper = descriptor.mapper
         val preState = preStateGetter(this, descriptor) ?: return null
         val preStateFieldTerms = collectFieldTerms(context, preState)
-        val typeInfoState = mapper.apply(descriptor.typeInfo)
+        val typeInfoState = mapper.apply(descriptor.newTypeInfo)
         val typeInfos = collectPlainTypeInfos(types, typeInfoState)
         val state = typeInfoState + mapper.apply(preState + (methodState ?: return null))
 
-        val preparedState = prepareState(this, state, typeInfos, preStateFieldTerms)
+        val preparedState = state.prepare(this, typeInfos, preStateFieldTerms)
         val preparedQuery = prepareQuery(mapper.apply(descriptor.query))
         return execute(preparedState, preparedQuery)
     }
