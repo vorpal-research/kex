@@ -96,7 +96,7 @@ class GeneratorContext(val context: ExecutionContext, val psa: PredicateStateAna
         log.debug("Executing constructor $this for $descriptor")
 
         val mapper = descriptor.mapper
-        val preState = mapper.apply(descriptor.newTypeInfo + descriptor.preState)
+        val preState = mapper.apply(descriptor.typeInfo + descriptor.preState)
         val typeInfos = collectPlainTypeInfos(types, preState)
         val state = preState + mapper.apply(methodState ?: return null)
 
@@ -115,7 +115,7 @@ class GeneratorContext(val context: ExecutionContext, val psa: PredicateStateAna
                         descriptor.term to term { `return`(this@executeAsExternalConstructor) }
                 )
         )
-        val preState = externalMapper.apply(descriptor.newTypeInfo)
+        val preState = externalMapper.apply(descriptor.typeInfo)
         val typeInfos = collectPlainTypeInfos(types, preState)
         val state = preState + externalMapper.apply(methodState ?: return null)
 
@@ -131,7 +131,7 @@ class GeneratorContext(val context: ExecutionContext, val psa: PredicateStateAna
         val mapper = descriptor.mapper
         val preState = preStateGetter(this, descriptor) ?: return null
         val preStateFieldTerms = collectFieldTerms(context, preState)
-        val typeInfoState = mapper.apply(descriptor.newTypeInfo)
+        val typeInfoState = mapper.apply(descriptor.typeInfo)
         val typeInfos = collectPlainTypeInfos(types, typeInfoState)
         val state = typeInfoState + mapper.apply(preState + (methodState ?: return null))
 
