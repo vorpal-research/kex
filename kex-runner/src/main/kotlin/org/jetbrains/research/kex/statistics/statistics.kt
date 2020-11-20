@@ -13,11 +13,13 @@ data class Statistics(val algorithm: String,
                       var elapsedTime: Duration,
                       var satNum: Int) {
 
+    private val startTime = System.currentTimeMillis()
+
     init {
         methodHolder[methodName] = this
     }
 
-    fun updateTime(startTime: Long) {
+    fun stopTimeMeasurement() {
         elapsedTime = Duration.of(System.currentTimeMillis() - startTime, ChronoUnit.MILLIS)
     }
 
@@ -42,19 +44,25 @@ data class Statistics(val algorithm: String,
     }
 
     companion object {
-        fun makeLogFile(file: File) {
-            if (file.exists()) { file.delete() }
-            file.createNewFile()
+
+        fun setLoggingFile(file: File, createNew: Boolean) {
             logFile = file
-            val writer = Files.newBufferedWriter(file.toPath(), StandardOpenOption.WRITE)
-            writer.write("algorithm,methodName,iterations,satNum,elapsedTimeMillis")
-            writer.newLine()
-            writer.flush()
-            writer.close()
+            if (createNew) {
+                if (file.exists()) {
+                    file.delete()
+                }
+                file.createNewFile()
+                val writer = Files.newBufferedWriter(file.toPath(), StandardOpenOption.WRITE)
+                writer.write("algorithm,methodName,iterations,satNum,elapsedTimeMillis")
+                writer.newLine()
+                writer.flush()
+                writer.close()
+            }
         }
 
         val methodHolder = mutableMapOf<String, Statistics>()
 
         var logFile: File? = null
+            private set
     }
 }

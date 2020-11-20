@@ -206,6 +206,5 @@ class DominatorTraceGraph(startTrace: Trace) : TraceGraph(startTrace) {
     override fun addTrace(trace: Trace) {
         super.addTrace(trace)
         update()
-        println()
     }
 }

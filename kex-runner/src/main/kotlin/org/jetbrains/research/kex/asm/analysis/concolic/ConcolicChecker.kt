@@ -56,6 +56,7 @@ class ConcolicChecker(val ctx: ExecutionContext, val manager: TraceManager<Trace
                     try {
                         val statistics = Statistics("CGS", method.toString(), 0, Duration.ZERO, 0)
                         processTree(method, statistics)
+                        statistics.stopTimeMeasurement()
                         log.info(statistics.print())
                     } catch (e: TimeoutException) {
                         log.debug("Timeout on running $method")
@@ -206,24 +207,24 @@ class ConcolicChecker(val ctx: ExecutionContext, val manager: TraceManager<Trace
 
     private suspend fun process(method: Method, statistics: Statistics) {
         val traces = ArrayDeque<Trace>()
-        val startTime = System.currentTimeMillis()
         while (!manager.isBodyCovered(method)) {
-            val candidate = traces.firstOrElse { getRandomTrace(method)?.also { manager[method] = it } } ?: return
+            val candidate = traces.firstOrElse {
+                statistics.iterations += 1
+                getRandomTrace(method)?.also { manager[method] = it }
+            } ?: return
             yield()
 
+            statistics.iterations += 1
             run(method, candidate)?.also {
                 manager[method] = it
                 traces.add(it)
                 statistics.satNum += 1
             }
-            statistics.iterations += 1
-            statistics.updateTime(startTime)
             yield()
         }
     }
 
     private suspend fun processTree(method: Method, statistics: Statistics) {
-        val startTime = System.currentTimeMillis()
         var contextLevel = 1
         val contextCache = mutableSetOf<TraceGraph.Context>()
         val visitedBranches = mutableSetOf<TraceGraph.Branch>()
@@ -231,10 +232,13 @@ class ConcolicChecker(val ctx: ExecutionContext, val manager: TraceManager<Trace
         val startTrace: Trace = getRandomTrace(method)?.also { manager[method] = it } ?: return
         if (startTrace.actions.isEmpty()) return
         val traces = DominatorTraceGraph(startTrace)
+
         while (!manager.isBodyCovered(method)) {
+            statistics.iterations += 1
             var tb = traces.getTracesAndBranches().filter { it.second !in visitedBranches }
             while (tb.isEmpty()) {
-                val randomTrace = getRandomTrace(method)?.also { manager[method] = it } ?: return
+                statistics.iterations += 1
+                val randomTrace = getRandomTrace(method)?.also { manager[method] = it; } ?: return
                 val randomBranch = TraceGraph.Branch(randomTrace.actions)
                 tb = listOfNotNull(randomTrace to randomBranch).filter { it.second !in visitedBranches }
                 yield()
@@ -243,6 +247,7 @@ class ConcolicChecker(val ctx: ExecutionContext, val manager: TraceManager<Trace
             tb.asSequence()
                     .filter { (_, branch) -> branch.context(contextLevel) !in contextCache }
                     .forEach { (candidate, branch) ->
+                        statistics.iterations += 1
                         run(method, candidate)?.also {
                             manager[method] = it
                             traces.addTrace(it)
@@ -251,12 +256,9 @@ class ConcolicChecker(val ctx: ExecutionContext, val manager: TraceManager<Trace
                         manager[method] = candidate
                         contextCache.add(branch.context(contextLevel))
                         visitedBranches.add(traces.toBranch(candidate))
-                        statistics.iterations += 1
-                        statistics.updateTime(startTime)
                         yield()
                     }
             contextLevel += 1
-            statistics.updateTime(startTime)
             yield()
         }
     }
