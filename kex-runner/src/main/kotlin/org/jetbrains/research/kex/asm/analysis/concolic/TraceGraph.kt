@@ -2,9 +2,7 @@ package org.jetbrains.research.kex.asm.analysis.concolic
 
 import com.abdullin.kthelper.collection.queueOf
 import com.abdullin.kthelper.collection.stackOf
-import javassist.NotFoundException
 import org.jetbrains.research.kex.trace.`object`.*
-import java.lang.NullPointerException
 
 open class TraceGraph(startTrace: Trace) {
 
@@ -116,45 +114,6 @@ open class TraceGraph(startTrace: Trace) {
         return vert
     }
 
-    protected fun bfsPath(start: Vertex, condition: (Vertex) -> Boolean): List<Vertex> {
-        val (found, weights) = leeAlgorithmForward(start, condition)
-        var path: List<Vertex>
-        try {
-            path = leeAlgorithmBackward(found, weights)
-        } catch (e: NullPointerException) {
-            path = leeAlgorithmBackward(found, weights)
-        }
-        return path
-    }
-
-    private fun leeAlgorithmForward(start: Vertex, condition: (Vertex) -> Boolean): Pair<Vertex, Map<Vertex, Int>> {
-        val weights = mutableMapOf<Vertex, Int>()
-        val queue = queueOf(start)
-        weights[start] = 0
-        while (queue.isNotEmpty()) {
-            val curr = queue.poll()
-            if (condition(curr)) {
-                return curr to weights
-            } else {
-                curr.predecessors.forEach {
-                    weights[it] = weights[curr]!! + 1
-                    queue.add(it)
-                }
-            }
-        }
-        throw NotFoundException("There is no vertices satisfying the condition")
-    }
-
-    private fun leeAlgorithmBackward(start: Vertex, weights: Map<Vertex, Int>): List<Vertex> {
-        val path = mutableListOf(start)
-        var curr = start
-        while (curr.successors.isNotEmpty()) {
-            val smallestSucc = curr.successors.filter { it in weights.keys }.minBy { weights[it]!! }!!
-            path.add(smallestSucc)
-            curr = smallestSucc
-        }
-        return path
-    }
 
     protected fun bfsApply(start: Vertex, func: (Vertex) -> Unit) {
         val queue = queueOf(start)
@@ -181,8 +140,6 @@ open class TraceGraph(startTrace: Trace) {
     fun Action.find() = vertices.find { it.action formalEquals this }
 
     fun Action.findExcept(foundVertices: Set<Vertex>) = vertices.minus(foundVertices).find { it.action formalEquals this }
-
-    private fun wrapBranch(branch: Trace) = vertices.filter { it.action in branch.actions }
 
 }
 
