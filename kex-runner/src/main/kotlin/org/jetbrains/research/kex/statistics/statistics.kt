@@ -13,6 +13,10 @@ data class Statistics(val algorithm: String,
                       var elapsedTime: Duration,
                       var satNum: Int) {
 
+    init {
+        methodHolder[methodName] = this
+    }
+
     fun updateTime(startTime: Long) {
         elapsedTime = Duration.of(System.currentTimeMillis() - startTime, ChronoUnit.MILLIS)
     }
@@ -21,8 +25,9 @@ data class Statistics(val algorithm: String,
         if (logFile != null) {
             try {
                 val writer = Files.newBufferedWriter(logFile!!.toPath(), StandardOpenOption.APPEND)
-                writer.write("\"$algorithm\",\"$methodName\",$iterations,${elapsedTime.toMillis()}")
+                writer.write("\"$algorithm\",\"$methodName\",$iterations,$satNum,${elapsedTime.toMillis()}")
                 writer.newLine()
+                writer.flush()
                 writer.close()
             } catch (e: IOException) {
                 com.abdullin.kthelper.logging.log.warn("IOException $e occurred while writing statistics to log file.")
@@ -32,16 +37,23 @@ data class Statistics(val algorithm: String,
         }
     }
 
+    fun print(): String {
+        return "\"$algorithm\",\"$methodName\",$iterations,$satNum,${elapsedTime.toMillis()}"
+    }
+
     companion object {
         fun makeLogFile(file: File) {
             if (file.exists()) { file.delete() }
             file.createNewFile()
             logFile = file
             val writer = Files.newBufferedWriter(file.toPath(), StandardOpenOption.WRITE)
-            writer.write("\"algorithm\",\"methodName\",iterations,elapsedTimeMillis")
+            writer.write("algorithm,methodName,iterations,satNum,elapsedTimeMillis")
             writer.newLine()
+            writer.flush()
             writer.close()
         }
+
+        val methodHolder = mutableMapOf<String, Statistics>()
 
         var logFile: File? = null
     }
