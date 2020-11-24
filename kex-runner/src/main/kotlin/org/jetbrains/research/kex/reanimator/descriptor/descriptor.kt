@@ -234,8 +234,10 @@ class ObjectDescriptor(klass: KexClass) : Descriptor(term { generate(klass) }, k
         builder += axiom { instanceOfTerm equality (term `is` this@ObjectDescriptor.type) }
         builder += axiom { instanceOfTerm equality true }
         for ((fld, field) in this.fields) {
-            builder += axiom { field.term equality term.field(fld.second, fld.first).load() }
-            builder += field.generateTypeInfo(visited)
+            if (fld.second is KexPointer) {
+                builder += axiom { field.term equality term.field(fld.second, fld.first).load() }
+                builder += field.generateTypeInfo(visited)
+            }
         }
         return builder.apply()
     }

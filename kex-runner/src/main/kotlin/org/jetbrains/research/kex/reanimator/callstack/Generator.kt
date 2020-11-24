@@ -292,10 +292,13 @@ class EnumGenerator(private val fallback: Generator) : Generator {
 
     override fun generate(descriptor: Descriptor, generationDepth: Int): CallStack = with(context) {
         val name = descriptor.term.toString()
+        val cs = CallStack(name)
+        descriptor.cache(cs)
+
         val kfgType = descriptor.type.getKfgType(context.types) as ClassType
         val staticInit = kfgType.`class`.getMethod("<clinit>", "()V")
 
-        val state = staticInit.methodState ?: return UnknownCall(kfgType, descriptor).wrap(name)
+        val state = staticInit.methodState ?: return cs.also { it += UnknownCall(kfgType, descriptor).wrap(name) }
         val preparedState = state.prepare(staticInit, TypeInfoMap())
         val queryBuilder = StateBuilder()
         with(queryBuilder) {
@@ -314,17 +317,15 @@ class EnumGenerator(private val fallback: Generator) : Generator {
                 generateFinalDescriptors(staticInit, context, result.model, checker.state)
             }
             else -> null
-        } ?: return UnknownCall(kfgType, descriptor).wrap(name)
+        } ?: return cs.also { it += UnknownCall(kfgType, descriptor).wrap(name) }
 
         val result = params.staticFields
                 .asSequence()
                 .mapNotNull { if (it.value is StaticFieldDescriptor) (it.key to it.value as StaticFieldDescriptor) else null }
                 .map { it.first to it.second.value }
                 .firstOrNull { it.second.matches(descriptor) }
-                ?: return UnknownCall(kfgType, descriptor).wrap(name)
-        val cs = CallStack(name)
+                ?: return cs.also { it += UnknownCall(kfgType, descriptor).wrap(name) }
         cs += EnumValueCreation(cm[result.first.klass], result.first.fieldNameString)
-        descriptor.cache(cs)
         return cs
     }
 }

@@ -3,19 +3,7 @@
 package org.jetbrains.research.kex.test.debug
 
 class BasicTests {
-
-    enum class Planet(val order: Int) {
-        MERCURY(1),
-        VENICE(2),
-        EARTH(3)
-    }
-
-    fun test(planet: Planet) {
-        if (planet.order == 2) {
-            println("it's venice")
-        }
-    }
-
+//
 //    interface A {
 //        fun a(): Int
 //    }
@@ -38,15 +26,15 @@ class BasicTests {
 //        }
 //    }
 
-//    class Point(val x: Int, val y: Int)
-//
-//    fun test(a: ArrayList<Point>) {
-//        if (a.size == 2) {
-//            if (a[0].x == 10) {
-//                if (a[1].y == 11) {
-//                    error("a")
-//                }
-//            }
-//        }
-//    }
+    class Point(val x: Int, val y: Int)
+
+    fun test(a: ArrayList<Point>) {
+        if (a.size == 2) {
+            if (a[0].x == 10) {
+                if (a[1].y == 11) {
+                    error("a")
+                }
+            }
+        }
+    }
 }
