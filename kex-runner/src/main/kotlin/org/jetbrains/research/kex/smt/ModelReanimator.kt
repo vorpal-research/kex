@@ -336,8 +336,7 @@ abstract class DescriptorReanimator(override val method: Method,
                 val (instance, klass) = when {
                     term.isStatic -> {
                         val classRef = (term.owner as ConstClassTerm)
-                        val canonicalDesc = term.type.getKfgType(context.types).canonicalDesc
-                        val `class` = tryOrNull { loader.loadClass(canonicalDesc) }
+                        val `class` = tryOrNull { loader.loadClass(classRef.type.getKfgType(context.types)) }
                                 ?: return@descriptor default(term.type)
                         if (`class`.isSynthetic) return@descriptor default(term.type)
 
@@ -364,7 +363,7 @@ abstract class DescriptorReanimator(override val method: Method,
 
                 val fieldReflect = klass.getActualField(term.fieldNameString)
                 val reanimatedValue = reanimateReferenceValue(term, fieldValue)
-                if (fieldReflect.isEnumConstant || fieldReflect.isSynthetic)
+                if (fieldReflect.isSynthetic)
                     return@descriptor default(term.type)
 
                 val fieldName = fieldReflect.name

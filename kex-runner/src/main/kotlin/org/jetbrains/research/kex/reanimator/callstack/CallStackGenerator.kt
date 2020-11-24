@@ -4,7 +4,6 @@ import org.jetbrains.research.kex.ExecutionContext
 import org.jetbrains.research.kex.asm.state.PredicateStateAnalysis
 import org.jetbrains.research.kex.config.kexConfig
 import org.jetbrains.research.kex.ktype.KexArray
-import org.jetbrains.research.kex.ktype.KexClass
 import org.jetbrains.research.kex.ktype.KexType
 import org.jetbrains.research.kex.reanimator.descriptor.ConstantDescriptor
 import org.jetbrains.research.kex.reanimator.descriptor.Descriptor
@@ -16,22 +15,22 @@ private val maxSearchDepth by lazy { kexConfig.getIntValue("apiGeneration", "max
 class CallStackGenerator(override val context: GeneratorContext) : Generator {
     private val anyGenerator = AnyGenerator(this)
     private val arrayGenerator = ArrayGenerator(this)
-    private val typeGenerators = mutableMapOf<KexType, Generator>()
+    private val typeGenerators = mutableSetOf<Generator>()
     private var searchDepth = 0
 
     override fun supports(type: KexType) = true
 
     init {
-        typeGenerators += KexClass("java/lang/String") to StringGenerator(this)
+        typeGenerators += StringGenerator(this)
+        typeGenerators += EnumGenerator(this)
     }
 
     constructor(executionCtx: ExecutionContext, psa: PredicateStateAnalysis) : this(GeneratorContext(executionCtx, psa))
 
     val KexType.generator: Generator
         get() = when (this) {
-            in typeGenerators -> typeGenerators.getValue(this)
             is KexArray -> arrayGenerator
-            else -> anyGenerator
+            else -> typeGenerators.firstOrNull { it.supports(this) } ?: anyGenerator
         }
 
     fun generateDescriptor(descriptor: Descriptor): CallStack {

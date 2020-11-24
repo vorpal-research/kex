@@ -30,6 +30,7 @@ private val recursiveInlining by lazy { kexConfig.getBooleanValue("apiGeneration
 class GeneratorContext(val context: ExecutionContext, val psa: PredicateStateAnalysis) {
     val cm get() = context.cm
     val types get() = context.types
+    val loader get() = context.loader
 
     val descriptorCache = mutableMapOf<Descriptor, CallStack>()
 

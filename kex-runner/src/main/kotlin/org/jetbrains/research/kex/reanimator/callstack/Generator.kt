@@ -12,9 +12,16 @@ import org.jetbrains.research.kex.reanimator.collector.setter
 import org.jetbrains.research.kex.reanimator.descriptor.ArrayDescriptor
 import org.jetbrains.research.kex.reanimator.descriptor.Descriptor
 import org.jetbrains.research.kex.reanimator.descriptor.ObjectDescriptor
+import org.jetbrains.research.kex.reanimator.descriptor.StaticFieldDescriptor
+import org.jetbrains.research.kex.smt.Checker
+import org.jetbrains.research.kex.smt.Result
+import org.jetbrains.research.kex.state.StateBuilder
+import org.jetbrains.research.kex.state.transformer.TypeInfoMap
+import org.jetbrains.research.kex.state.transformer.generateFinalDescriptors
 import org.jetbrains.research.kfg.ir.Class
 import org.jetbrains.research.kfg.ir.Method
 import org.jetbrains.research.kfg.ir.MethodDesc
+import org.jetbrains.research.kfg.type.ClassType
 
 private val visibilityLevel by lazy { kexConfig.getEnumValue("apiGeneration", "visibility", true, Visibility.PUBLIC) }
 private val maxStackSize by lazy { kexConfig.getIntValue("apiGeneration", "maxStackSize", 5) }
@@ -263,5 +270,61 @@ class StringGenerator(private val fallback: Generator) : Generator {
         val constructor = stringClass.getMethod("<init>", MethodDesc(arrayOf(types.getArrayType(types.charType)), types.voidType))
         callStack += ConstructorCall(stringClass, constructor, listOf(value)).wrap(name)
         return callStack
+    }
+}
+
+class EnumGenerator(private val fallback: Generator) : Generator {
+    override val context: GeneratorContext
+        get() = fallback.context
+
+    override fun supports(type: KexType): Boolean {
+        val kfgType = type.getKfgType(context.types)
+        return when (kfgType) {
+            is ClassType -> kfgType.`class`.isEnum
+            else -> false
+        }
+    }
+
+    fun Descriptor.matches(other: Descriptor): Boolean = when {
+        this is ObjectDescriptor && other is ObjectDescriptor -> other.fields.all { (field, value) -> this[field] == value }
+        else -> false
+    }
+
+    override fun generate(descriptor: Descriptor, generationDepth: Int): CallStack = with(context) {
+        val name = descriptor.term.toString()
+        val kfgType = descriptor.type.getKfgType(context.types) as ClassType
+        val staticInit = kfgType.`class`.getMethod("<clinit>", "()V")
+
+        val state = staticInit.methodState ?: return UnknownCall(kfgType, descriptor).wrap(name)
+        val preparedState = state.prepare(staticInit, TypeInfoMap())
+        val queryBuilder = StateBuilder()
+        with(queryBuilder) {
+            val enumArray = KexArray(descriptor.type)
+            val valuesField = term { `class`(descriptor.type).field(enumArray, "\$VALUES") }
+            val generatedTerm = term { generate(enumArray) }
+            state { generatedTerm equality valuesField.load() }
+            require { generatedTerm inequality null }
+        }
+        val preparedQuery = prepareQuery(queryBuilder.apply())
+
+        val checker = Checker(staticInit, context.loader, psa)
+        val params = when (val result = checker.check(preparedState + preparedQuery)) {
+            is Result.SatResult -> {
+                log.debug("Model: ${result.model}")
+                generateFinalDescriptors(staticInit, context, result.model, checker.state)
+            }
+            else -> null
+        } ?: return UnknownCall(kfgType, descriptor).wrap(name)
+
+        val result = params.staticFields
+                .asSequence()
+                .mapNotNull { if (it.value is StaticFieldDescriptor) (it.key to it.value as StaticFieldDescriptor) else null }
+                .map { it.first to it.second.value }
+                .firstOrNull { it.second.matches(descriptor) }
+                ?: return UnknownCall(kfgType, descriptor).wrap(name)
+        val cs = CallStack(name)
+        cs += EnumValueCreation(cm[result.first.klass], result.first.fieldNameString)
+        descriptor.cache(cs)
+        return cs
     }
 }

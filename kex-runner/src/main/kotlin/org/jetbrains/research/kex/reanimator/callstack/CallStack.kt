@@ -191,3 +191,13 @@ data class ArrayWrite(val index: CallStack, val value: CallStack) : ApiCall {
         builder.appendLine("${owner.name}[${index.name}] = ${value.name}")
     }
 }
+
+data class EnumValueCreation(val klass: Class, val name: String) : ApiCall {
+    override val parameters = listOf<CallStack>()
+
+    override fun toString() = "${klass.fullname}.$name"
+
+    override fun print(owner: CallStack, builder: StringBuilder, visited: MutableSet<CallStack>) {
+        builder.appendLine("${owner.name} = ${klass.fullname}.$name")
+    }
+}
