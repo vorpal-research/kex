@@ -113,8 +113,15 @@ sealed class ConstantDescriptor(term: Term, type: KexType) : Descriptor(term, ty
     }
 }
 
-class ObjectDescriptor(klass: KexClass) : Descriptor(term { generate(klass) }, klass, true) {
-    var klass = klass
+class ObjectDescriptor : Descriptor {
+    constructor(klass: KexClass) : super(term { generate(klass) }, klass, true) {
+        this.klass = klass
+    }
+    constructor(klass: KexClass, name: String) : super(term { value(klass, name) }, klass, true) {
+        this.klass = klass
+    }
+
+    var klass: KexClass
         private set
 
     val fields = mutableMapOf<Pair<String, KexType>, Descriptor>()
@@ -270,8 +277,19 @@ class ObjectDescriptor(klass: KexClass) : Descriptor(term { generate(klass) }, k
     }
 }
 
-class ArrayDescriptor(val elementType: KexType, val length: Int) :
-        Descriptor(term { generate(KexArray(elementType)) }, KexArray(elementType), true) {
+class ArrayDescriptor : Descriptor {
+    val elementType: KexType
+    val length: Int
+
+    constructor(elementType: KexType, length: Int) : super(term { generate(KexArray(elementType)) }, KexArray(elementType), true) {
+        this.elementType = elementType
+        this.length = length
+    }
+    constructor(elementType: KexType, length: Int, name: String) : super(term { value(KexArray(elementType), name) }, KexArray(elementType), true) {
+        this.elementType = elementType
+        this.length = length
+    }
+
     val elements = mutableMapOf<Int, Descriptor>()
 
     operator fun set(index: Int, value: Descriptor) {
@@ -469,7 +487,9 @@ open class DescriptorBuilder {
     fun const(klass: KexType) = ConstantDescriptor.Class(klass)
 
     fun `object`(type: KexClass): ObjectDescriptor = ObjectDescriptor(type)
+    fun `object`(type: KexClass, name: String): ObjectDescriptor = ObjectDescriptor(type, name)
     fun array(length: Int, elementType: KexType): ArrayDescriptor = ArrayDescriptor(elementType, length)
+    fun array(length: Int, elementType: KexType, name: String): ArrayDescriptor = ArrayDescriptor(elementType, length, name)
 
     fun staticField(klass: KexClass, field: String, fieldType: KexType, value: Descriptor) =
             StaticFieldDescriptor(klass, field, fieldType, value)

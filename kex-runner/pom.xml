@@ -46,6 +46,11 @@
 
     <dependencies>
         <dependency>
+            <groupId>org.jetbrains.research</groupId>
+            <artifactId>descriptor</artifactId>
+            <version>1.0</version>
+        </dependency>
+        <dependency>
             <groupId>com.abdullin</groupId>
             <artifactId>kt-helper</artifactId>
             <version>${kt-helper.version}</version>
