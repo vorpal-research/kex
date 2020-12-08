@@ -48,7 +48,7 @@
         <dependency>
             <groupId>org.jetbrains.research</groupId>
             <artifactId>descriptor</artifactId>
-            <version>1.0</version>
+            <version>1.1</version>
         </dependency>
         <dependency>
             <groupId>com.abdullin</groupId>

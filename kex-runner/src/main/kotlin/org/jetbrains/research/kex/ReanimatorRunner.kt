@@ -2,6 +2,9 @@ package org.jetbrains.research.kex
 
 import org.jetbrains.research.kex.asm.state.PredicateStateAnalysis
 import org.jetbrains.research.kex.asm.transform.LoopDeroller
+import org.jetbrains.research.kex.config.FileConfig
+import org.jetbrains.research.kex.config.RuntimeConfig
+import org.jetbrains.research.kex.config.kexConfig
 import org.jetbrains.research.kex.descriptor.*
 import org.jetbrains.research.kex.ktype.*
 import org.jetbrains.research.kex.random.easyrandom.EasyRandomDriver
@@ -20,23 +23,28 @@ import org.jetbrains.research.kfg.Package
 import org.jetbrains.research.kfg.analysis.LoopSimplifier
 import org.jetbrains.research.kfg.util.Flags
 import org.jetbrains.research.kfg.visitor.executePipeline
+import java.net.URLClassLoader
 import java.nio.file.Path
 
-class ReanimatorRunner(val config: Path, val target: Path) {
+class ReanimatorRunner(val config: Path, val target: Path, val pkg: Package) {
     val cm: ClassManager
     val context: ExecutionContext
     val generatorContext: GeneratorContext
 
     init {
-        val jar = Jar(target, Package.defaultPackage)
+        kexConfig.initialize(RuntimeConfig, FileConfig(config.toString()))
+        kexConfig.initLog("kex.log")
+
+        val jar = Jar(target, pkg)
         cm = ClassManager(KfgConfig(flags = Flags.readAll, failOnError = false))
         val analysisJars = listOfNotNull(jar, getRuntime())
         cm.initialize(*analysisJars.toTypedArray())
 
         context = ExecutionContext(cm, jar.classLoader, EasyRandomDriver())
+        updateClassPath(jar.classLoader)
         val psa = PredicateStateAnalysis(context.cm)
 
-        executePipeline(cm, Package.defaultPackage) {
+        executePipeline(cm, pkg) {
             +LoopSimplifier(cm)
             +LoopDeroller(cm)
             +psa
@@ -48,6 +56,12 @@ class ReanimatorRunner(val config: Path, val target: Path) {
         generatorContext = GeneratorContext(context, psa)
     }
 
+    private fun updateClassPath(loader: URLClassLoader) {
+        val urlClassPath = loader.urLs.joinToString(separator = ":") { "${it.path}." }
+        val classPath = System.getProperty("java.class.path")
+        System.setProperty("java.class.path", "$classPath:$urlClassPath")
+    }
+
     fun printCallStack(stack: CallStack): String = CallStack2JavaPrinter(context).print(stack)
 
     fun getMethodInvocation(thisStack: CallStack, args: List<CallStack>, klass: String, methodName: String, desc: String): CallStack {
@@ -55,6 +69,7 @@ class ReanimatorRunner(val config: Path, val target: Path) {
         val method = kfgKlass.getMethod(methodName, desc)
         return when {
             method.isStatic -> StaticMethodCall(method, args).wrap("static")
+            method.isConstructor -> thisStack
             else -> {
                 val instance = thisStack.clone()
                 instance.stack += MethodCall(method, args)
