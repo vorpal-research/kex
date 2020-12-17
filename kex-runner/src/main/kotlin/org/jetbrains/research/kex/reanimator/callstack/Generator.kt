@@ -66,8 +66,11 @@ class AnyGenerator(private val fallback: Generator) : Generator {
 
     fun GeneratorContext.ExecutionStack.wrap() = StackWrapper(this)
 
+    val List<ApiCall>.isComplete get() = CallStack("", this.toMutableList()).isComplete
+
     private fun CallStack.generateObject(descriptor: ObjectDescriptor, generationDepth: Int) = with(context) {
         val original = descriptor.deepCopy()
+        val fallbacks = mutableSetOf<List<ApiCall>>()
 
         descriptor.concretize(cm)
         descriptor.reduce()
@@ -115,26 +118,46 @@ class AnyGenerator(private val fallback: Generator) : Generator {
 
             for (method in nonRecursiveConstructors) {
                 val apiCall = current.checkConstructor(klass, method, generationDepth) ?: continue
-                this@generateObject.stack += (stack + apiCall).reversed()
-                return
+                val result = (stack + apiCall).reversed()
+                if (result.isComplete) {
+                    this@generateObject.stack += (stack + apiCall).reversed()
+                    return
+                } else {
+                    fallbacks += result
+                }
             }
 
             for (method in nonRecursiveExternalConstructors) {
                 val apiCall = current.checkExternalConstructor(method, generationDepth) ?: continue
-                this@generateObject.stack += (stack + apiCall).reversed()
-                return
+                val result = (stack + apiCall).reversed()
+                if (result.isComplete) {
+                    this@generateObject.stack += (stack + apiCall).reversed()
+                    return
+                } else {
+                    fallbacks += result
+                }
             }
 
             for (method in recursiveConstructors) {
                 val apiCall = current.checkConstructor(klass, method, generationDepth) ?: continue
-                this@generateObject.stack += (stack + apiCall).reversed()
-                return
+                val result = (stack + apiCall).reversed()
+                if (result.isComplete) {
+                    this@generateObject.stack += (stack + apiCall).reversed()
+                    return
+                } else {
+                    fallbacks += result
+                }
             }
 
             for (method in recursiveExternalConstructors) {
                 val apiCall = current.checkExternalConstructor(method, generationDepth) ?: continue
-                this@generateObject.stack += (stack + apiCall).reversed()
-                return
+                val result = (stack + apiCall).reversed()
+                if (result.isComplete) {
+                    this@generateObject.stack += (stack + apiCall).reversed()
+                    return
+                } else {
+                    fallbacks += result
+                }
             }
 
             if (depth > maxStackSize - 1) continue
@@ -161,7 +184,11 @@ class AnyGenerator(private val fallback: Generator) : Generator {
             }
         }
 
-        this@generateObject += UnknownCall(klass.type, original)
+        if (fallbacks.isNotEmpty()) {
+            this@generateObject.stack += fallbacks.random()
+        } else {
+            this@generateObject += UnknownCall(klass.type, original)
+        }
     }
 
     private fun ObjectDescriptor.checkConstructor(klass: Class, method: Method, generationDepth: Int): ApiCall? = with(context) {

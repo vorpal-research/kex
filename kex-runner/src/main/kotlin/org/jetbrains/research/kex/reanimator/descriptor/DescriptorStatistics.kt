@@ -1,9 +1,7 @@
 package org.jetbrains.research.kex.reanimator.descriptor
 
-import com.abdullin.kthelper.collection.queueOf
 import com.abdullin.kthelper.logging.log
 import org.jetbrains.research.kex.reanimator.callstack.CallStack
-import org.jetbrains.research.kex.reanimator.callstack.UnknownCall
 
 object DescriptorStatistics {
     private val failures = mutableSetOf<Descriptor>()
@@ -14,29 +12,9 @@ object DescriptorStatistics {
     private var nonTrivialDepth = 0L
     private var nonTrivialCount = 0L
 
-    val CallStack.isComplete: Boolean get() {
-        val visited = mutableSetOf<CallStack>()
-        val queue = queueOf(this)
-
-        while (queue.isNotEmpty()) {
-            val top = queue.poll()
-            if (top in visited) continue
-            visited += top
-
-            if (top.any { it is UnknownCall }) {
-                return false
-            }
-
-            top.flatMap { it.parameters }.forEach {
-                queue += it
-            }
-        }
-
-        return true
-    }
-
     fun addDescriptor(descriptor: Descriptor, callStack: CallStack, time: Long) {
         val descDepth = descriptor.depth
+        if (descDepth <= 1) return
         depth += descDepth
         if (descDepth > 1) {
             nonTrivialCount++
