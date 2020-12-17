@@ -1,5 +1,6 @@
 package org.jetbrains.research.kex.reanimator.callstack
 
+import com.abdullin.kthelper.collection.queueOf
 import com.abdullin.kthelper.logging.log
 import org.jetbrains.research.kex.reanimator.descriptor.Descriptor
 import org.jetbrains.research.kfg.ir.Class
@@ -17,6 +18,27 @@ interface ApiCall {
 
 open class CallStack(val name: String, val stack: MutableList<ApiCall>) : Iterable<ApiCall> by stack {
     constructor(name: String) : this(name, mutableListOf())
+
+    val isComplete: Boolean get() {
+        val visited = mutableSetOf<CallStack>()
+        val queue = queueOf(this)
+
+        while (queue.isNotEmpty()) {
+            val top = queue.poll()
+            if (top in visited) continue
+            visited += top
+
+            if (top.any { it is UnknownCall }) {
+                return false
+            }
+
+            top.flatMap { it.parameters }.forEach {
+                queue += it
+            }
+        }
+
+        return true
+    }
 
     fun add(call: ApiCall): CallStack {
         this.stack += call
