@@ -67,7 +67,7 @@ interface Inliner<T> : RecollectingTransformer<Inliner<T>> {
         val inlinedMethod = getInlinedMethod(call) ?: return predicate
         val mappings = buildMappings(call, inlinedMethod, predicate.lhvUnsafe)
 
-        currentBuilder += prepareInlinedState(calledMethod, mappings) ?: return predicate
+        currentBuilder += prepareInlinedState(inlinedMethod, mappings) ?: return predicate
         return nothing()
     }
 }

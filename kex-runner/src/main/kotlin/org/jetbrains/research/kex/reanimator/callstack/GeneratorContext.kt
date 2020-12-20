@@ -25,10 +25,12 @@ import org.jetbrains.research.kfg.ir.Field
 import org.jetbrains.research.kfg.ir.Method
 
 private val visibilityLevel by lazy { kexConfig.getEnumValue("apiGeneration", "visibility", true, Visibility.PUBLIC) }
+private val recursiveInlining by lazy { kexConfig.getBooleanValue("apiGeneration", "recursiveInlining", false) }
 
 class GeneratorContext(val context: ExecutionContext, val psa: PredicateStateAnalysis) {
     val cm get() = context.cm
     val types get() = context.types
+    val loader get() = context.loader
 
     val descriptorCache = mutableMapOf<Descriptor, CallStack>()
 
@@ -40,6 +42,25 @@ class GeneratorContext(val context: ExecutionContext, val psa: PredicateStateAna
     }
 
     fun Descriptor.cached() = descriptorCache[this]
+
+    fun PredicateState.prepare(method: Method, typeInfoMap: TypeInfoMap, ignores: Set<Term> = setOf()) = when {
+        recursiveInlining -> prepareState(method, this, typeInfoMap, ignores)
+        else -> prepareState(method, this, ignores)
+    }
+
+    fun prepareState(method: Method, ps: PredicateState, typeInfoMap: TypeInfoMap, ignores: Set<Term> = setOf()) = transform(ps) {
+        +AnnotationAdapter(method, AnnotationManager.defaultLoader)
+        val aa = StensgaardAA().also { it.apply(ps) }
+        +RecursiveInliner(psa) { AliasingConcreteImplInliner(types, typeInfoMap, aa, psa, it) }
+        +IntrinsicAdapter
+        +ReflectionInfoAdapter(method, context.loader, ignores)
+        +Optimizer()
+        +ConstantPropagator
+        +BoolTypeAdapter(types)
+        +ConstStringAdapter()
+        +ArrayBoundsAdapter()
+        +NullityInfoAdapter()
+    }
 
     fun prepareState(method: Method, ps: PredicateState, ignores: Set<Term> = setOf()) = transform(ps) {
         +AnnotationAdapter(method, AnnotationManager.defaultLoader)
@@ -78,10 +99,11 @@ class GeneratorContext(val context: ExecutionContext, val psa: PredicateStateAna
 
         val mapper = descriptor.mapper
         val preState = mapper.apply(descriptor.typeInfo + descriptor.preState)
+        val typeInfos = collectPlainTypeInfos(types, preState)
         val state = preState + mapper.apply(methodState ?: return null)
 
         val preStateFieldTerms = collectFieldTerms(context, preState)
-        val preparedState = prepareState(this, state, preStateFieldTerms)
+        val preparedState = state.prepare(this, typeInfos, preStateFieldTerms)
         val preparedQuery = prepareQuery(mapper.apply(descriptor.query))
         return execute(preparedState, preparedQuery)
     }
@@ -95,9 +117,11 @@ class GeneratorContext(val context: ExecutionContext, val psa: PredicateStateAna
                         descriptor.term to term { `return`(this@executeAsExternalConstructor) }
                 )
         )
-        val state = externalMapper.apply(descriptor.typeInfo + (methodState ?: return null))
+        val preState = externalMapper.apply(descriptor.typeInfo)
+        val typeInfos = collectPlainTypeInfos(types, preState)
+        val state = preState + externalMapper.apply(methodState ?: return null)
 
-        val preparedState = prepareState(this, state)
+        val preparedState = state.prepare(this, typeInfos)
         val preparedQuery = prepareQuery(externalMapper.apply(descriptor.query))
         return execute(preparedState, preparedQuery)
     }
@@ -109,9 +133,11 @@ class GeneratorContext(val context: ExecutionContext, val psa: PredicateStateAna
         val mapper = descriptor.mapper
         val preState = preStateGetter(this, descriptor) ?: return null
         val preStateFieldTerms = collectFieldTerms(context, preState)
-        val state = mapper.apply(descriptor.typeInfo + preState + (methodState ?: return null))
+        val typeInfoState = mapper.apply(descriptor.typeInfo)
+        val typeInfos = collectPlainTypeInfos(types, typeInfoState)
+        val state = typeInfoState + mapper.apply(preState + (methodState ?: return null))
 
-        val preparedState = prepareState(this, state, preStateFieldTerms)
+        val preparedState = state.prepare(this, typeInfos, preStateFieldTerms)
         val preparedQuery = prepareQuery(mapper.apply(descriptor.query))
         return execute(preparedState, preparedQuery)
     }

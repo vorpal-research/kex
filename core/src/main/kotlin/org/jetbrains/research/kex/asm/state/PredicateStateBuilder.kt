@@ -38,6 +38,7 @@ class PredicateStateBuilder(val method: Method) {
             return when {
                 insts.any { it is ReturnInst } -> insts.firstOrNull { it is ReturnInst }?.run { getInstructionState(this) }
                 method.isConstructor -> insts.lastOrNull()?.run { getInstructionState(this) }
+                method.isStaticInitializer -> insts.lastOrNull()?.run { getInstructionState(this) }
                 else -> null
             }
         }

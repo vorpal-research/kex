@@ -13,7 +13,6 @@ import org.jetbrains.research.kex.util.kex
 import org.jetbrains.research.kex.util.loadClass
 import org.jetbrains.research.kfg.ir.Class
 import org.jetbrains.research.kfg.type.*
-import org.jetbrains.research.kfg.type.Type
 import java.lang.reflect.*
 import kotlin.reflect.KClass
 import kotlin.reflect.KClassifier
@@ -299,6 +298,7 @@ class CallStack2KotlinPrinter(val ctx: ExecutionContext) : CallStackPrinter {
         is ArrayWrite -> printArrayWrite(owner, apiCall)
         is FieldSetter -> printFieldSetter(owner, apiCall)
         is StaticFieldSetter -> printStaticFieldSetter(apiCall)
+        is EnumValueCreation -> printEnumValueCreation(owner, apiCall)
         is UnknownCall -> printUnknown(owner, apiCall)
         else -> unreachable { log.error("Unknown call") }
     }
@@ -433,6 +433,10 @@ class CallStack2KotlinPrinter(val ctx: ExecutionContext) : CallStackPrinter {
     private fun printStaticFieldSetter(call: StaticFieldSetter): String {
         call.value.printAsKt()
         return "${call.klass.kotlinString}.${call.field.name} = ${call.value.stackName}"
+    }
+
+    private fun printEnumValueCreation(owner: CallStack, call: EnumValueCreation): String {
+        return "${owner.name} = ${call.klass.kotlinString}.${call.name}"
     }
 
     private fun printUnknown(owner: CallStack, call: UnknownCall): String {

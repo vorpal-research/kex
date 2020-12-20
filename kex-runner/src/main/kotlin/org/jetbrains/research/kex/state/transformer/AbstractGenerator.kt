@@ -15,7 +15,6 @@ import org.jetbrains.research.kex.state.predicate.Predicate
 import org.jetbrains.research.kex.state.term.*
 import org.jetbrains.research.kfg.ir.Method
 import org.jetbrains.research.kfg.type.TypeFactory
-import java.lang.reflect.Executable
 
 // remove all choices in a given PS
 // needed to get entry condition of a given PS
@@ -39,9 +38,6 @@ interface AbstractGenerator<T> : Transformer<AbstractGenerator<T>> {
     var thisTerm: Term?
     val argTerms: MutableMap<Int, Term>
     val staticFieldTerms: MutableSet<FieldTerm>
-
-    val javaClass: Class<*>
-    val javaMethod: Executable
 
     val instance get() = thisTerm?.let { memory[it] }
     val args get() = argTerms.map { memory[it.value] }.toList()
@@ -82,10 +78,10 @@ interface AbstractGenerator<T> : Transformer<AbstractGenerator<T>> {
     override fun transformBasic(ps: BasicState): PredicateState {
         val vars = collectPointers(ps)
         vars.forEach { ptr ->
-            reanimateTerm(ptr)
             if (ptr is FieldTerm && ptr.isStatic) {
                 staticFieldTerms += ptr
             }
+            reanimateTerm(ptr)
         }
         return ps
     }

@@ -40,3 +40,44 @@ class ConcreteImplInliner(val types: TypeFactory,
         }
     }
 }
+
+class AliasingConcreteImplInliner(val types: TypeFactory,
+                                  val typeInfoMap: TypeInfoMap,
+                                  val aa: AliasAnalysis,
+                                  override val psa: PredicateStateAnalysis,
+                                  override var inlineIndex: Int = 0) : Inliner<ConcreteImplInliner> {
+    override val im = MethodManager.InlineManager
+    override val builders = dequeOf(StateBuilder())
+
+    override fun getInlinedMethod(callTerm: CallTerm): Method? {
+        val method = callTerm.method
+        return when {
+            method.isFinal -> method
+            method.isStatic -> method
+            method.isConstructor -> method
+            else -> {
+                val typeInfo = run {
+                    when (val owner = callTerm.owner) {
+                        in typeInfoMap -> typeInfoMap.getInfo<CastTypeInfo>(owner)
+                        else -> {
+                            val aliases = typeInfoMap.keys.filter { aa.mayAlias(it, owner) }
+                            if (aliases.isNotEmpty()) typeInfoMap.getInfo<CastTypeInfo>(aliases.first())
+                            else null
+                        }
+                    }
+                } ?: return null
+                val kexClass = typeInfo.type as? KexClass ?: return null
+                val concreteClass = kexClass.kfgClass(types) as? ConcreteClass ?: return null
+                val result = try {
+                    concreteClass.getMethod(method.name, method.desc)
+                } catch (e: Exception) {
+                    return null
+                }
+                when {
+                    result.isEmpty() -> null
+                    else -> result
+                }
+            }
+        }
+    }
+}

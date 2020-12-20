@@ -120,6 +120,11 @@ class CallStackExecutor(val ctx: ExecutionContext) {
                         fieldReflection.setValue(null, value)
                         current
                     }
+                    is EnumValueCreation -> {
+                        val reflection = ctx.loader.loadClass(call.klass)
+                        val fieldReflect = reflection.getDeclaredField(call.name)
+                        fieldReflect.get(null)
+                    }
                     is UnknownCall -> {
 //                    val reflection = ctx.loader.loadClass(call.type)
 //                    ctx.random.nextOrNull(reflection)
