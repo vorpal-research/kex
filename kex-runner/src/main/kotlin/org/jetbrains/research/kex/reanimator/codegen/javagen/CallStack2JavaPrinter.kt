@@ -13,7 +13,6 @@ import org.jetbrains.research.kex.util.kex
 import org.jetbrains.research.kex.util.loadClass
 import org.jetbrains.research.kfg.ir.Class
 import org.jetbrains.research.kfg.type.*
-import org.jetbrains.research.kfg.type.Type
 import java.lang.reflect.*
 
 // TODO: this is work of satan, refactor this damn thing
@@ -258,17 +257,17 @@ class CallStack2JavaPrinter(val ctx: ExecutionContext) : CallStackPrinter {
             is Boolean -> "$value".also {
                 actualTypes[this] = CSClass(ctx.types.boolType)
             }
-            is Byte -> "${value}.toByte()".also {
+            is Byte -> "(byte) ${value}".also {
                 actualTypes[this] = CSClass(ctx.types.byteType)
             }
             is Char -> when (value) {
-                in 'a'..'z' -> "'${'a' + (value - 'a')}'"
-                in 'A'..'Z' -> "'${'A' + (value - 'Z')}'"
-                else -> "${value}.toChar()"
+                in 'a'..'z' -> "'$value'"
+                in 'A'..'Z' -> "'$value'"
+                else -> "(char) ${value.toInt()}"
             }.also {
                 actualTypes[this] = CSClass(ctx.types.charType)
             }
-            is Short -> "${value}.toShort()".also {
+            is Short -> "(short) ${value}".also {
                 actualTypes[this] = CSClass(ctx.types.shortType)
             }
             is Int -> "$value".also {

@@ -315,9 +315,9 @@ class CallStack2KotlinPrinter(val ctx: ExecutionContext) : CallStackPrinter {
                 actualTypes[this] = CSClass(ctx.types.byteType, nullable = false)
             }
             is Char -> when (value) {
-                in 'a'..'z' -> "'${'a' + (value - 'a')}'"
-                in 'A'..'Z' -> "'${'A' + (value - 'Z')}'"
-                else -> "${value}.toChar()"
+                in 'a'..'z' -> "'$value'"
+                in 'A'..'Z' -> "'$value'"
+                else -> "${value.toInt()}.toChar()"
             }.also {
                 actualTypes[this] = CSClass(ctx.types.charType, nullable = false)
             }
