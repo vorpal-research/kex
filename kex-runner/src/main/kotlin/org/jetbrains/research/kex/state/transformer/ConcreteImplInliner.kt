@@ -1,10 +1,15 @@
 package org.jetbrains.research.kex.state.transformer
 
+import com.abdullin.kthelper.assert.unreachable
 import com.abdullin.kthelper.collection.dequeOf
+import com.abdullin.kthelper.logging.log
 import org.jetbrains.research.kex.asm.manager.MethodManager
 import org.jetbrains.research.kex.asm.state.PredicateStateAnalysis
 import org.jetbrains.research.kex.ktype.KexClass
+import org.jetbrains.research.kex.ktype.kexType
 import org.jetbrains.research.kex.state.StateBuilder
+import org.jetbrains.research.kex.state.predicate.CallPredicate
+import org.jetbrains.research.kex.state.predicate.Predicate
 import org.jetbrains.research.kex.state.term.CallTerm
 import org.jetbrains.research.kfg.ir.ConcreteClass
 import org.jetbrains.research.kfg.ir.Method
@@ -16,6 +21,8 @@ class ConcreteImplInliner(val types: TypeFactory,
                           override var inlineIndex: Int = 0) : Inliner<ConcreteImplInliner> {
     override val im = MethodManager.InlineManager
     override val builders = dequeOf(StateBuilder())
+
+    override fun isInlinable(method: Method): Boolean = im.inliningEnabled && !im.isIgnored(method)
 
     override fun getInlinedMethod(callTerm: CallTerm): Method? {
         val method = callTerm.method
@@ -38,6 +45,30 @@ class ConcreteImplInliner(val types: TypeFactory,
                 }
             }
         }
+    }
+
+    override fun transformCallPredicate(predicate: CallPredicate): Predicate {
+        val call = predicate.call as CallTerm
+        val calledMethod = call.method
+        if (!isInlinable(calledMethod)) return predicate
+
+        val inlinedMethod = getInlinedMethod(call) ?: return predicate
+        var mappings = buildMappings(call, inlinedMethod, predicate.lhvUnsafe)
+
+        val callerClass = when (val kexType = call.owner.type) {
+            is KexClass ->  kexType.kfgClass(types)
+            else -> unreachable { log.error("Unknown call owner $kexType") }
+        }
+        if (inlinedMethod.`class` != callerClass) {
+            currentBuilder.state {
+                val castType = inlinedMethod.`class`.kexType
+                val casted = value(castType, "${call.owner}.casted${inlineIndex++}")
+                mappings = mappings.mapValues { if (it.value == call.owner) casted else it.value }
+                casted equality (call.owner `as` castType)
+            }
+        }
+        currentBuilder += prepareInlinedState(inlinedMethod, mappings) ?: return predicate
+        return nothing()
     }
 }
 

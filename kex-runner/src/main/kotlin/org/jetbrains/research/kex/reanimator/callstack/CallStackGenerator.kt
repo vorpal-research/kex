@@ -64,8 +64,7 @@ class CallStackGenerator(override val context: GeneratorContext) : Generator {
                 descriptor.cache(callStack)
                 val kfgClass = descriptor.klass.kfgClass(types)
                 val kfgField = kfgClass.getField(descriptor.field, descriptor.type.getKfgType(types))
-                val typeGenerator = descriptor.value.type.generator
-                callStack += StaticFieldSetter(kfgClass, kfgField, typeGenerator.generate(descriptor.value, generationDepth + 1))
+                callStack += StaticFieldSetter(kfgClass, kfgField, generate(descriptor.value, generationDepth + 1))
             }
             else -> {
                 val typeGenerator = descriptor.type.generator
