@@ -28,7 +28,7 @@ interface Inliner<T> : RecollectingTransformer<Inliner<T>> {
 
     fun getInlinedMethod(callTerm: CallTerm): Method? = callTerm.method
 
-    fun isInlinable(method: Method): Boolean = im.inliningEnabled && !im.isIgnored(method)
+    fun isInlinable(method: Method): Boolean = im.isInlinable(method)
 
     fun buildMappings(callTerm: CallTerm, method: Method, returnTerm: Term?): Map<Term, Term> {
         val mappings = hashMapOf<Term, Term>()

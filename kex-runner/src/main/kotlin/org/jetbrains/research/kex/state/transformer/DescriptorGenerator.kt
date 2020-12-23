@@ -3,6 +3,7 @@ package org.jetbrains.research.kex.state.transformer
 import com.abdullin.kthelper.assert.unreachable
 import com.abdullin.kthelper.logging.log
 import org.jetbrains.research.kex.ExecutionContext
+import org.jetbrains.research.kex.ktype.KexPointer
 import org.jetbrains.research.kex.ktype.KexReference
 import org.jetbrains.research.kex.ktype.kexType
 import org.jetbrains.research.kex.reanimator.Parameters
@@ -59,6 +60,21 @@ fun generateFinalDescriptors(method: Method, ctx: ExecutionContext, model: SMTMo
             generator.staticFields.mapValues {
                 it.value ?: descriptor { default((it.key.type as KexReference).reference) }
             }
+    )
+}
+
+fun generateFinalTypeInfoMap(method: Method, ctx: ExecutionContext, model: SMTModel, state: PredicateState): TypeInfoMap {
+    val generator = DescriptorGenerator(method, ctx, model, FinalDescriptorReanimator(method, model, ctx))
+    generator.apply(state)
+    return TypeInfoMap(
+            generator.memory
+                    .filterKeys { it.type is KexPointer }
+                    .mapValues {
+                        when (it.key.type) {
+                            is KexReference -> setOf(CastTypeInfo(KexReference(it.value.type)))
+                            else -> setOf(CastTypeInfo(it.value.type))
+                        }
+                    }
     )
 }
 

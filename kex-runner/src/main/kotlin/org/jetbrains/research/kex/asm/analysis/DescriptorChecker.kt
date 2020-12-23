@@ -5,19 +5,17 @@ import org.jetbrains.research.kex.ExecutionContext
 import org.jetbrains.research.kex.asm.state.PredicateStateAnalysis
 import org.jetbrains.research.kex.random.GenerationException
 import org.jetbrains.research.kex.reanimator.Parameters
-import org.jetbrains.research.kex.reanimator.concreteParameters
 import org.jetbrains.research.kex.reanimator.descriptor.Descriptor
 import org.jetbrains.research.kex.smt.Checker
 import org.jetbrains.research.kex.smt.ReanimatedModel
 import org.jetbrains.research.kex.smt.Result
 import org.jetbrains.research.kex.state.PredicateState
 import org.jetbrains.research.kex.state.emptyState
-import org.jetbrains.research.kex.state.term.Term
 import org.jetbrains.research.kex.state.term.term
 import org.jetbrains.research.kex.state.transformer.TermRemapper
-import org.jetbrains.research.kex.state.transformer.collectArguments
-import org.jetbrains.research.kex.state.transformer.collectPlainTypeInfos
-import org.jetbrains.research.kex.state.transformer.generateFinalDescriptors
+import org.jetbrains.research.kex.state.transformer.TypeInfoMap
+import org.jetbrains.research.kex.state.transformer.dropMemspace
+import org.jetbrains.research.kex.state.transformer.generateFinalTypeInfoMap
 import org.jetbrains.research.kex.trace.TraceManager
 import org.jetbrains.research.kex.trace.`object`.Trace
 import org.jetbrains.research.kex.trace.runner.TimeoutException
@@ -42,7 +40,7 @@ class DescriptorChecker(
         when (result) {
             is Result.SatResult -> {
                 val (instance, args) = try {
-                    generator.generateAPI(method, checker.state, result.model)
+                    generator.generateAPI(block, checker.state, result.model)
                 } catch (e: GenerationException) {
                     log.warn(e.message)
                     return result
@@ -64,22 +62,12 @@ class DescriptorChecker(
     }
 
     private fun Checker.createState(method: Method, block: BasicBlock): PredicateState? {
-        val typeInfoState = resolveTypes(method, block) ?: return null
-
-        val ps = typeInfoState.let {
-            val ps = this.createState(block.terminator)!!
-            val (abstractThis, abstractArgs) = collectArguments(it)
-            val (concreteThis, concreteArgs) = collectArguments(ps)
-            val map = mutableMapOf<Term, Term>()
-            concreteThis?.run { map[concreteThis] == abstractThis }
-            concreteArgs.forEach { (key, value) -> abstractArgs[key]?.let { map[value] = it } }
-            TermRemapper(map).apply(ps)
-        }
-        val typeInfoMap = collectPlainTypeInfos(ctx.types, typeInfoState)
-        return prepareState(method, ps, typeInfoMap)
+        val typeInfoMap = resolveTypes(method, block) ?: return null
+        val state = this.createState(block.terminator)!!
+        return prepareState(method, state, typeInfoMap)
     }
 
-    protected fun resolveTypes(method: Method, block: BasicBlock): PredicateState? {
+    protected fun resolveTypes(method: Method, block: BasicBlock): TypeInfoMap? {
         val checker = Checker(method, loader, psa)
         val ps = checker.createState(block.terminator) ?: return null
 
@@ -91,9 +79,8 @@ class DescriptorChecker(
         return when (result) {
             is Result.SatResult -> {
                 try {
-                    val parameters = generateFinalDescriptors(method, ctx, result.model, checker.state)
-                    val concrete = parameters.concreteParameters(cm)
-                    concrete.typeInfoState
+                    val typeInfoMap = generateFinalTypeInfoMap(method, ctx, result.model, checker.state)
+                    typeInfoMap.mapKeys { it.key.dropMemspace() }
                 } catch (e: Exception) {
                     log.warn("$e")
                     null

@@ -11,6 +11,7 @@ import org.jetbrains.research.kfg.ir.value.instruction.CallInst
 import org.jetbrains.research.kfg.ir.value.instruction.FieldLoadInst
 import org.jetbrains.research.kfg.ir.value.instruction.FieldStoreInst
 import org.jetbrains.research.kfg.visitor.ClassVisitor
+import java.util.*
 
 val Method.isImpactable: Boolean
     get() {
@@ -72,8 +73,8 @@ class CoverageCounter<T>(override val cm: ClassManager, val tm: TraceManager<T>)
             methodInfos[method] = info
 
             log.info("Method $method coverage: " +
-                    "body = ${String.format("%.2f", info.bodyCoverage)}; " +
-                    "full = ${String.format("%.2f", info.fullCoverage)}")
+                    "body = ${String.format(Locale.ENGLISH, "%.2f", info.bodyCoverage)}; " +
+                    "full = ${String.format(Locale.ENGLISH, "%.2f", info.fullCoverage)}")
         }
     }
 }

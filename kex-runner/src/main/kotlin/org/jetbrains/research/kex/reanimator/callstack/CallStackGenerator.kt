@@ -2,6 +2,8 @@ package org.jetbrains.research.kex.reanimator.callstack
 
 import org.jetbrains.research.kex.ExecutionContext
 import org.jetbrains.research.kex.asm.state.PredicateStateAnalysis
+import org.jetbrains.research.kex.asm.util.Visibility
+import org.jetbrains.research.kex.asm.util.visibility
 import org.jetbrains.research.kex.config.kexConfig
 import org.jetbrains.research.kex.ktype.KexArray
 import org.jetbrains.research.kex.ktype.KexType
@@ -9,6 +11,7 @@ import org.jetbrains.research.kex.reanimator.descriptor.ConstantDescriptor
 import org.jetbrains.research.kex.reanimator.descriptor.Descriptor
 import org.jetbrains.research.kex.reanimator.descriptor.StaticFieldDescriptor
 
+private val visibilityLevel by lazy { kexConfig.getEnumValue("apiGeneration", "visibility", true, Visibility.PUBLIC) }
 private val maxGenerationDepth by lazy { kexConfig.getIntValue("apiGeneration", "maxGenerationDepth", 100) }
 private val maxSearchDepth by lazy { kexConfig.getIntValue("apiGeneration", "maxSearchDepth", 10000) }
 
@@ -64,8 +67,9 @@ class CallStackGenerator(override val context: GeneratorContext) : Generator {
                 descriptor.cache(callStack)
                 val kfgClass = descriptor.klass.kfgClass(types)
                 val kfgField = kfgClass.getField(descriptor.field, descriptor.type.getKfgType(types))
-                val typeGenerator = descriptor.value.type.generator
-                callStack += StaticFieldSetter(kfgClass, kfgField, typeGenerator.generate(descriptor.value, generationDepth + 1))
+                if (visibilityLevel <= kfgField.visibility) {
+                    callStack += StaticFieldSetter(kfgClass, kfgField, generate(descriptor.value, generationDepth + 1))
+                }
             }
             else -> {
                 val typeGenerator = descriptor.type.generator
