@@ -58,7 +58,10 @@ object DescriptorStatistics {
         val avgFailedTime = failTime.toDouble() safeDiv failures.size.toLong()
         val avgTotalTime = (successTime + failTime).toDouble() safeDiv totalSize
 
-        log.warn("There are ${exceptionFailures.size} exception failures when generating descriptors")
+        if (exceptionFailures.isNotEmpty()) {
+            log.warn("There are ${exceptionFailures.size} exception failures when generating descriptors")
+        }
+
         log.info("Descriptor generation: ${String.format("%.2f", successRate)}%")
         log.info("Non-trivial descriptor generation: ${String.format("%.2f", nonTrivialSuccessRate)}%")
         log.info("Average descriptor depth: ${String.format("%.2f", avgDepth)}")
