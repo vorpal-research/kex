@@ -10,7 +10,7 @@ import org.jetbrains.research.kex.util.kex
 import java.util.*
 
 private val maxGenerationDepth by lazy {
-    kexConfig.getIntValue("apiGeneration", "maxConvertionDepth", 10)
+    kexConfig.getIntValue("apiGeneration", "maxConversionDepth", 10)
 }
 
 class Object2DescriptorConverter : DescriptorBuilder() {

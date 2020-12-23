@@ -17,31 +17,41 @@ import org.jetbrains.research.kfg.type.Type
 import java.lang.reflect.*
 
 // TODO: this is work of satan, refactor this damn thing
-class CallStack2JavaPrinter(val ctx: ExecutionContext) : CallStackPrinter {
+class CallStack2JavaPrinter(
+        val ctx: ExecutionContext,
+        override val packageName: String,
+        override val klassName: String) : CallStackPrinter {
     private val printedStacks = mutableSetOf<String>()
-    val builder = JavaBuilder()
+    private val builder = JavaBuilder(packageName)
+    private val klass = builder.run { klass(packageName, klassName) }
     private val resolvedTypes = mutableMapOf<CallStack, CSType>()
     private val actualTypes = mutableMapOf<CallStack, CSType>()
     lateinit var current: JavaBuilder.JavaFunction
 
-    override fun print(callStack: CallStack): String {
+    init {
         with(builder) {
-            klass("", "ReanimatorTest") {
+            with(klass) {
                 method("unknown", listOf(type("T"))) {
                     returnType = type("T")
                     +"throw new NotImplementedException()"
                 }
+            }
+        }
+    }
 
-                method("test") {
-                    current = this
+    override fun printCallStack(callStack: CallStack, method: String) {
+        with(builder) {
+            with(klass) {
+                current = method(method) {
                     returnType = void
                 }
             }
         }
         resolveTypes(callStack)
         callStack.printAsJava()
-        return builder.toString()
     }
+
+    override fun emit() = builder.toString()
 
 
     interface CSType {

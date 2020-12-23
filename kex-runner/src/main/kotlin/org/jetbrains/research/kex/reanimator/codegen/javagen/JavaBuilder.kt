@@ -1,7 +1,7 @@
 package org.jetbrains.research.kex.reanimator.codegen.javagen
 
 
-class JavaBuilder {
+class JavaBuilder(val pkg: String = "") {
     companion object {
         private fun offset(level: Int) = "    ".repeat(level)
 
@@ -12,6 +12,10 @@ class JavaBuilder {
     private val instances = mutableListOf<JavaCode>()
 
     override fun toString(): String = buildString {
+        if (pkg.isNotBlank()) {
+            appendLine("package $pkg")
+            appendLine()
+        }
         imports.forEach {
             appendLine("import $it;")
         }
@@ -108,10 +112,11 @@ class JavaBuilder {
             constructors += funBuilder
         }
 
-        fun method(name: String, body: JavaFunction.() -> Unit) {
+        fun method(name: String, body: JavaFunction.() -> Unit): JavaFunction {
             val funBuilder = JavaMethod(this, name)
             funBuilder.body()
             methods += funBuilder
+            return funBuilder
         }
 
         fun method(name: String, typeArgs: List<Type>, body: JavaFunction.() -> Unit) {
@@ -136,6 +141,12 @@ class JavaBuilder {
     }
 
     fun type(name: String): Type = StringType(name)
+
+    fun klass(pkg: String, name: String): JavaClass {
+        val newKlass = JavaClass(pkg, name)
+        instances += newKlass
+        return newKlass
+    }
 
     fun klass(pkg: String, name: String, body: JavaClass.() -> Unit) {
         val newKlass = JavaClass(pkg, name)
