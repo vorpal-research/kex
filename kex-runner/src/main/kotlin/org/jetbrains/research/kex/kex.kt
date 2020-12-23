@@ -46,6 +46,7 @@ import java.net.URLClassLoader
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
+import java.util.*
 import kotlin.system.exitProcess
 
 class Kex(args: Array<String>) {
@@ -220,8 +221,8 @@ class Kex(args: Array<String>) {
 
         val coverage = cm.totalCoverage
         log.info("Overall summary for ${cm.methodInfos.size} methods:\n" +
-                "body coverage: ${String.format("%.2f", coverage.bodyCoverage)}%\n" +
-                "full coverage: ${String.format("%.2f", coverage.fullCoverage)}%")
+                "body coverage: ${String.format(Locale.ENGLISH, "%.2f", coverage.bodyCoverage)}%\n" +
+                "full coverage: ${String.format(Locale.ENGLISH, "%.2f", coverage.fullCoverage)}%")
         DescriptorStatistics.printStatistics()
     }
 

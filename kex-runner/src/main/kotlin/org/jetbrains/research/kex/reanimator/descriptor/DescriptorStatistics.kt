@@ -2,6 +2,7 @@ package org.jetbrains.research.kex.reanimator.descriptor
 
 import com.abdullin.kthelper.logging.log
 import org.jetbrains.research.kex.reanimator.callstack.CallStack
+import java.util.*
 
 object DescriptorStatistics {
     private val failures = mutableSetOf<Descriptor>()
@@ -62,13 +63,13 @@ object DescriptorStatistics {
             log.warn("There are ${exceptionFailures.size} exception failures when generating descriptors")
         }
 
-        log.info("Descriptor generation: ${String.format("%.2f", successRate)}%")
-        log.info("Non-trivial descriptor generation: ${String.format("%.2f", nonTrivialSuccessRate)}%")
-        log.info("Average descriptor depth: ${String.format("%.2f", avgDepth)}")
-        log.info("Average non-trivial descriptor depth: ${String.format("%.2f", avgNonTrivialDepth)}")
-        log.info("Average time per successful descriptor generation: ${String.format("%.02f", avgSuccessTime)}")
-        log.info("Average time per failed descriptor generation: ${String.format("%.02f", avgFailedTime)}")
-        log.info("Average time per descriptor generation: ${String.format("%.02f", avgTotalTime)}")
-        log.info("Average time per non-trivial descriptor generation: ${String.format("%.02f", avgNonTrivialTime)}")
+        log.info("Descriptor generation: ${String.format(Locale.ENGLISH, "%.2f", successRate)}%")
+        log.info("Non-trivial descriptor generation: ${String.format(Locale.ENGLISH, "%.2f", nonTrivialSuccessRate)}%")
+        log.info("Average descriptor depth: ${String.format(Locale.ENGLISH, "%.2f", avgDepth)}")
+        log.info("Average non-trivial descriptor depth: ${String.format(Locale.ENGLISH, "%.2f", avgNonTrivialDepth)}")
+        log.info("Average time per successful descriptor generation: ${String.format(Locale.ENGLISH, "%.02f", avgSuccessTime)}")
+        log.info("Average time per failed descriptor generation: ${String.format(Locale.ENGLISH, "%.02f", avgFailedTime)}")
+        log.info("Average time per descriptor generation: ${String.format(Locale.ENGLISH, "%.02f", avgTotalTime)}")
+        log.info("Average time per non-trivial descriptor generation: ${String.format(Locale.ENGLISH, "%.02f", avgNonTrivialTime)}")
     }
 }
