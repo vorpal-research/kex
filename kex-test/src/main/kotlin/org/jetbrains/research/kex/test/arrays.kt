@@ -45,7 +45,9 @@ open class ArrayLongTests {
         }
 
         for (i in 0 until 5) {
-            Intrinsics.assertReachable(array[i] == i * i)
+            if (array[i] == i * i) {
+                Intrinsics.assertReachable()
+            }
         }
         Intrinsics.assertReachable()
     }
