@@ -66,8 +66,18 @@ fun generateFinalDescriptors(method: Method, ctx: ExecutionContext, model: SMTMo
 fun generateFinalTypeInfoMap(method: Method, ctx: ExecutionContext, model: SMTModel, state: PredicateState): TypeInfoMap {
     val generator = DescriptorGenerator(method, ctx, model, FinalDescriptorReanimator(method, model, ctx))
     generator.apply(state)
+    val params = setOfNotNull(
+            generator.instance,
+            *generator.args.mapIndexed { index, arg ->
+                arg ?: descriptor { default(method.argTypes[index].kexType) }
+            }.toTypedArray(),
+            *generator.staticFields.mapValues {
+                it.value ?: descriptor { default((it.key.type as KexReference).reference) }
+            }.values.toTypedArray()
+    )
     return TypeInfoMap(
             generator.memory
+                    .filterValues { candidate -> params.any { candidate in it } }
                     .filterKeys { it.type is KexPointer }
                     .mapValues {
                         when (it.key.type) {
