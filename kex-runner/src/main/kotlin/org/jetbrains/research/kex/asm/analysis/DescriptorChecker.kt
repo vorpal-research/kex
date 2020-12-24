@@ -5,6 +5,7 @@ import com.abdullin.kthelper.logging.log
 import org.jetbrains.research.kex.ExecutionContext
 import org.jetbrains.research.kex.asm.state.PredicateStateAnalysis
 import org.jetbrains.research.kex.ktype.KexClass
+import org.jetbrains.research.kex.ktype.KexReference
 import org.jetbrains.research.kex.ktype.KexType
 import org.jetbrains.research.kex.random.GenerationException
 import org.jetbrains.research.kex.reanimator.descriptor.concreteClass
@@ -96,6 +97,7 @@ class DescriptorChecker(
     }
     fun KexType.concretize(): KexType = when (this) {
         is KexClass -> `try` { this.concreteClass(cm) }.getOrDefault(this)
+        is KexReference -> KexReference(this.reference.concretize())
         else -> this
     }
 }
