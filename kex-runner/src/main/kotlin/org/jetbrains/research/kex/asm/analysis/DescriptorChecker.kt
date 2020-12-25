@@ -1,21 +1,19 @@
 package org.jetbrains.research.kex.asm.analysis
 
+import com.abdullin.kthelper.`try`
 import com.abdullin.kthelper.logging.log
 import org.jetbrains.research.kex.ExecutionContext
 import org.jetbrains.research.kex.asm.state.PredicateStateAnalysis
+import org.jetbrains.research.kex.ktype.KexClass
+import org.jetbrains.research.kex.ktype.KexReference
+import org.jetbrains.research.kex.ktype.KexType
 import org.jetbrains.research.kex.random.GenerationException
-import org.jetbrains.research.kex.reanimator.Parameters
-import org.jetbrains.research.kex.reanimator.descriptor.Descriptor
+import org.jetbrains.research.kex.reanimator.descriptor.concreteClass
 import org.jetbrains.research.kex.smt.Checker
 import org.jetbrains.research.kex.smt.ReanimatedModel
 import org.jetbrains.research.kex.smt.Result
 import org.jetbrains.research.kex.state.PredicateState
-import org.jetbrains.research.kex.state.emptyState
-import org.jetbrains.research.kex.state.term.term
-import org.jetbrains.research.kex.state.transformer.TermRemapper
-import org.jetbrains.research.kex.state.transformer.TypeInfoMap
-import org.jetbrains.research.kex.state.transformer.dropMemspace
-import org.jetbrains.research.kex.state.transformer.generateFinalTypeInfoMap
+import org.jetbrains.research.kex.state.transformer.*
 import org.jetbrains.research.kex.trace.TraceManager
 import org.jetbrains.research.kex.trace.`object`.Trace
 import org.jetbrains.research.kex.trace.runner.TimeoutException
@@ -80,7 +78,7 @@ class DescriptorChecker(
             is Result.SatResult -> {
                 try {
                     val typeInfoMap = generateFinalTypeInfoMap(method, ctx, result.model, checker.state)
-                    typeInfoMap.mapKeys { it.key.dropMemspace() }
+                    typeInfoMap.mapKeys { it.key.dropMemspace() }.mapValues { it.value.concretize() }
                 } catch (e: Exception) {
                     log.warn("$e")
                     null
@@ -91,17 +89,15 @@ class DescriptorChecker(
         }
     }
 
-    private val Parameters<Descriptor>.typeInfoState: PredicateState
-        get() {
-            val thisState = instance?.run {
-                TermRemapper(mapOf(term to term { `this`(term.type) })).apply(typeInfo)
-            }
-            val argStates = arguments.mapIndexed { index, descriptor ->
-                val typeInfo = descriptor.typeInfo
-                TermRemapper(mapOf(descriptor.term to term { arg(descriptor.term.type, index) })).apply(typeInfo)
-            }.toTypedArray()
-            return listOfNotNull(thisState, *argStates).fold(emptyState()) { acc, predicateState -> acc + predicateState }
-        }
 
-
+    fun Set<TypeInfo>.concretize(): Set<TypeInfo> = this.map { it.concretize() }.toSet()
+    fun TypeInfo.concretize(): TypeInfo = when (this) {
+        is CastTypeInfo -> CastTypeInfo(this.type.concretize())
+        else -> this
+    }
+    fun KexType.concretize(): KexType = when (this) {
+        is KexClass -> `try` { this.concreteClass(cm) }.getOrDefault(this)
+        is KexReference -> KexReference(this.reference.concretize())
+        else -> this
+    }
 }

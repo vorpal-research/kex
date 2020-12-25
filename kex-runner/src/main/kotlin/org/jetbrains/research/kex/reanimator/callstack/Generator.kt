@@ -116,48 +116,34 @@ class AnyGenerator(private val fallback: Generator) : Generator {
             if (depth > maxStackSize) continue
             log.debug("Depth $generationDepth, stack depth $depth, query size ${queue.size}")
 
-            for (method in nonRecursiveConstructors) {
-                val apiCall = current.checkConstructor(klass, method, generationDepth) ?: continue
-                val result = (stack + apiCall).reversed()
-                if (result.isComplete) {
-                    this@generateObject.stack += (stack + apiCall).reversed()
-                    return
-                } else {
-                    fallbacks += result
+            val checkCtor = fun (ctors: List<Method>, handler: (ctor: Method) -> ApiCall?): Boolean {
+                for (method in ctors) {
+                    val apiCall = handler(method) ?: continue
+                    val result = (stack + apiCall).reversed()
+                    if (result.isComplete) {
+                        this@generateObject.stack += (stack + apiCall).reversed()
+                        return true
+                    } else {
+                        fallbacks += result
+                    }
                 }
+                return false
             }
 
-            for (method in nonRecursiveExternalConstructors) {
-                val apiCall = current.checkExternalConstructor(method, generationDepth) ?: continue
-                val result = (stack + apiCall).reversed()
-                if (result.isComplete) {
-                    this@generateObject.stack += (stack + apiCall).reversed()
-                    return
-                } else {
-                    fallbacks += result
-                }
+            if (checkCtor(nonRecursiveConstructors) { current.checkConstructor(klass, it, generationDepth) }) {
+                return
             }
 
-            for (method in recursiveConstructors) {
-                val apiCall = current.checkConstructor(klass, method, generationDepth) ?: continue
-                val result = (stack + apiCall).reversed()
-                if (result.isComplete) {
-                    this@generateObject.stack += (stack + apiCall).reversed()
-                    return
-                } else {
-                    fallbacks += result
-                }
+            if (checkCtor(nonRecursiveExternalConstructors) { current.checkExternalConstructor(it, generationDepth) }) {
+                return
             }
 
-            for (method in recursiveExternalConstructors) {
-                val apiCall = current.checkExternalConstructor(method, generationDepth) ?: continue
-                val result = (stack + apiCall).reversed()
-                if (result.isComplete) {
-                    this@generateObject.stack += (stack + apiCall).reversed()
-                    return
-                } else {
-                    fallbacks += result
-                }
+            if (checkCtor(recursiveConstructors) { current.checkConstructor(klass, it, generationDepth) }) {
+                return
+            }
+
+            if (checkCtor(recursiveExternalConstructors) { current.checkExternalConstructor(it, generationDepth) }) {
+                return
             }
 
             if (depth > maxStackSize - 1) continue

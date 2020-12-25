@@ -42,7 +42,8 @@ sealed class Descriptor(term: Term, type: KexType, val hasState: Boolean) {
     val depth: Int get() = countDepth(setOf(), mutableMapOf())
 
     val typeInfo: PredicateState get() = generateTypeInfo(mutableSetOf())
-    val newTypeInfo: PredicateState get() = generateNewTypeInfo(mutableSetOf())
+
+    operator fun contains(other: Descriptor): Boolean = this.contains(other, mutableSetOf())
 
     override fun toString() = asString
     infix fun eq(other: Descriptor) = this.structuralEquality(other, mutableSetOf<Pair<Descriptor, Descriptor>>())
@@ -57,7 +58,7 @@ sealed class Descriptor(term: Term, type: KexType, val hasState: Boolean) {
     abstract fun deepCopy(copied: MutableMap<Descriptor, Descriptor> = mutableMapOf()): Descriptor
     abstract fun reduce(visited: MutableSet<Descriptor> = mutableSetOf()): Descriptor
     abstract fun generateTypeInfo(visited: MutableSet<Descriptor> = mutableSetOf()): PredicateState
-    open fun generateNewTypeInfo(visited: MutableSet<Descriptor> = mutableSetOf()): PredicateState = generateTypeInfo(visited)
+    abstract fun contains(other: Descriptor, visited: MutableSet<Descriptor>): Boolean
 }
 
 sealed class ConstantDescriptor(term: Term, type: KexType) : Descriptor(term, type, false) {
@@ -71,6 +72,7 @@ sealed class ConstantDescriptor(term: Term, type: KexType) : Descriptor(term, ty
     override fun print(map: MutableMap<Descriptor, String>) = ""
     override fun structuralEquality(other: Descriptor, map: MutableSet<Pair<Descriptor, Descriptor>>) = this.term == other.term
     override fun countDepth(visited: Set<Descriptor>, cache: MutableMap<Descriptor, kotlin.Int>) = 1
+    override fun contains(other: Descriptor, visited: MutableSet<Descriptor>): Boolean = this.term == other.term
 
     object Null : ConstantDescriptor(term { const(null) }, KexNull()) {
         override fun toString() = "null"
@@ -197,6 +199,14 @@ class ObjectDescriptor(klass: KexClass) : Descriptor(term { generate(klass) }, k
         return copy
     }
 
+    override fun contains(other: Descriptor, visited: MutableSet<Descriptor>): Boolean {
+        if (this in visited) return false
+        if (this == other) return true
+        visited += this
+        if (fields.values.any { it.contains(other, visited) }) return true
+        return false
+    }
+
     override fun reduce(visited: MutableSet<Descriptor>): ObjectDescriptor {
         if (this in visited) return this
         visited += this
@@ -221,23 +231,6 @@ class ObjectDescriptor(klass: KexClass) : Descriptor(term { generate(klass) }, k
         builder += axiom { instanceOfTerm equality true }
         for ((_, field) in this.fields) {
             builder += field.generateTypeInfo(visited)
-        }
-        return builder.apply()
-    }
-
-    override fun generateNewTypeInfo(visited: MutableSet<Descriptor>): PredicateState {
-        if (this in visited) return emptyState()
-        visited += this
-
-        val instanceOfTerm = term { generate(KexBool()) }
-        val builder = StateBuilder()
-        builder += axiom { instanceOfTerm equality (term `is` this@ObjectDescriptor.type) }
-        builder += axiom { instanceOfTerm equality true }
-        for ((fld, field) in this.fields) {
-            if (fld.second is KexPointer) {
-                builder += axiom { field.term equality term.field(fld.second, fld.first).load() }
-                builder += field.generateTypeInfo(visited)
-            }
         }
         return builder.apply()
     }
@@ -325,6 +318,14 @@ class ArrayDescriptor(val elementType: KexType, val length: Int) :
             copy[index] = value.deepCopy(copied)
         }
         return copy
+    }
+
+    override fun contains(other: Descriptor, visited: MutableSet<Descriptor>): Boolean {
+        if (this in visited) return false
+        if (this == other) return true
+        visited += this
+        if (elements.values.any { it.contains(other, visited) }) return true
+        return false
     }
 
     override fun reduce(visited: MutableSet<Descriptor>): Descriptor {
@@ -416,6 +417,13 @@ class StaticFieldDescriptor(val klass: KexClass, val field: String, type: KexTyp
         copied[this] = copy
         copy.value = value.deepCopy(copied)
         return copy
+    }
+
+    override fun contains(other: Descriptor, visited: MutableSet<Descriptor>): Boolean {
+        if (this in visited) return false
+        if (this == other) return true
+        visited += this
+        return value.contains(other, visited)
     }
 
     override fun reduce(visited: MutableSet<Descriptor>): Descriptor {
