@@ -20,6 +20,7 @@ class ConcreteImplInliner(val types: TypeFactory,
                           override var inlineIndex: Int = 0) : Inliner<ConcreteImplInliner> {
     override val im = MethodManager.InlineManager
     override val builders = dequeOf(StateBuilder())
+    override var hasInlined: Boolean = false
 
     override fun isInlinable(method: Method): Boolean = im.inliningEnabled && !im.isIgnored(method)
 
@@ -72,6 +73,7 @@ class ConcreteImplInliner(val types: TypeFactory,
             currentBuilder += this
         }
         currentBuilder += inlinedState
+        hasInlined = true
         return nothing()
     }
 }
@@ -83,6 +85,9 @@ class AliasingConcreteImplInliner(val types: TypeFactory,
                                   override var inlineIndex: Int = 0) : Inliner<ConcreteImplInliner> {
     override val im = MethodManager.InlineManager
     override val builders = dequeOf(StateBuilder())
+    override var hasInlined: Boolean = false
+
+    override fun isInlinable(method: Method): Boolean = im.inliningEnabled && !im.isIgnored(method)
 
     override fun getInlinedMethod(callTerm: CallTerm): Method? {
         val method = callTerm.method

@@ -25,10 +25,16 @@ interface Inliner<T> : RecollectingTransformer<Inliner<T>> {
     val im: MethodManager.InlineManager
     val psa: PredicateStateAnalysis
     var inlineIndex: Int
+    var hasInlined: Boolean
 
     fun getInlinedMethod(callTerm: CallTerm): Method? = callTerm.method
 
     fun isInlinable(method: Method): Boolean = im.isInlinable(method)
+
+    override fun apply(ps: PredicateState): PredicateState {
+        hasInlined = false
+        return super.apply(ps)
+    }
 
     fun buildMappings(callTerm: CallTerm, method: Method, returnTerm: Term?): Map<Term, Term> {
         val mappings = hashMapOf<Term, Term>()
@@ -67,7 +73,9 @@ interface Inliner<T> : RecollectingTransformer<Inliner<T>> {
         val inlinedMethod = getInlinedMethod(call) ?: return predicate
         val mappings = buildMappings(call, inlinedMethod, predicate.lhvUnsafe)
 
-        currentBuilder += prepareInlinedState(inlinedMethod, mappings) ?: return predicate
+        val inlinedState = prepareInlinedState(inlinedMethod, mappings) ?: return predicate
+        currentBuilder += inlinedState
+        hasInlined = true
         return nothing()
     }
 }
@@ -76,6 +84,7 @@ class MethodInliner(override val psa: PredicateStateAnalysis,
                     override var inlineIndex: Int = 0) : Inliner<MethodInliner> {
     override val im = MethodManager.InlineManager
     override val builders = dequeOf(StateBuilder())
+    override var hasInlined: Boolean = false
 }
 
 class RecursiveInliner<T>(override val psa: PredicateStateAnalysis,
@@ -84,18 +93,20 @@ class RecursiveInliner<T>(override val psa: PredicateStateAnalysis,
     override val im = MethodManager.InlineManager
     override var inlineIndex = 0
     override val builders = dequeOf(StateBuilder())
+    override var hasInlined: Boolean = false
 
     override fun apply(ps: PredicateState): PredicateState {
-        var last: PredicateState
+        hasInlined = false
         var current = ps
         var depth = 0
         do {
-            last = current
             val cii = inlinerBuilder(inlineIndex)
-            current = cii.apply(last)
+            current = cii.apply(current)
+            hasInlined = cii.hasInlined
             inlineIndex = cii.inlineIndex
             ++depth
-        } while (current != last && depth < maxDepth)
+        } while (hasInlined && depth < maxDepth)
+        hasInlined = depth > 1
         return current
     }
 }
