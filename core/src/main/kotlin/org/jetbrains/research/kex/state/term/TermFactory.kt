@@ -9,7 +9,6 @@ import org.jetbrains.research.kfg.ir.value.*
 import org.jetbrains.research.kfg.ir.value.instruction.BinaryOpcode
 import org.jetbrains.research.kfg.ir.value.instruction.CmpOpcode
 import org.jetbrains.research.kfg.ir.value.instruction.UnaryOpcode
-import org.jetbrains.research.kfg.type.ClassType
 import org.jetbrains.research.kfg.type.TypeFactory
 
 object TermFactory {
@@ -64,11 +63,9 @@ object TermFactory {
     fun getString(value: String) = ConstStringTerm(KexClass(TypeFactory.stringClass), value)
     fun getString(const: StringConstant) = getString(const.value)
     fun getNull() = NullTerm()
-    fun getClass(`class`: Class) = getClass(KexClass(`class`.fullname), `class`)
-    fun getClass(type: KexType, `class`: Class) = ConstClassTerm(type, `class`)
-
-    fun getClass(const: ClassConstant) = ConstClassTerm(const.type.kexType,
-            (const.type as? ClassType)?.`class` ?: unreachable { log.debug("Non-ref type of class constant") })
+    fun getClass(`class`: Class) = getClass(KexClass(`class`.fullname))
+    fun getClass(klass: KexType) = ConstClassTerm(klass)
+    fun getClass(const: ClassConstant) = ConstClassTerm(const.type.kexType)
 
     fun getUnaryTerm(operand: Term, opcode: UnaryOpcode) = when (opcode) {
         UnaryOpcode.NEG -> getNegTerm(operand)
@@ -173,9 +170,11 @@ abstract class TermBuilder {
     fun const(constant: Constant) = tf.getConstant(constant)
     fun const(bool: Boolean) = tf.getBool(bool)
     fun const(str: String) = tf.getString(str)
+    fun const(char: Char) = tf.getChar(char)
     fun <T : Number> const(number: T) = tf.getConstant(number)
     fun const(@Suppress("UNUSED_PARAMETER") nothing: Nothing?) = tf.getNull()
     fun `class`(klass: Class) = tf.getClass(klass)
+    fun `class`(klass: KexType) = tf.getClass(klass)
 
     fun Term.apply(opcode: UnaryOpcode) = tf.getUnaryTerm(this, opcode)
     operator fun Term.not() = tf.getUnaryTerm(this, UnaryOpcode.NEG)

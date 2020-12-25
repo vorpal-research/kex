@@ -33,9 +33,14 @@ class PredicateStateBuilder(val method: Method) {
     }
 
     val methodState: PredicateState?
-        get() = when {
-            method.isConstructor -> method.flatten().lastOrNull()?.run { getInstructionState(this) }
-            else -> method.flatten().firstOrNull { it is ReturnInst }?.run { getInstructionState(this) }
+        get() {
+            val insts = method.flatten()
+            return when {
+                insts.any { it is ReturnInst } -> insts.firstOrNull { it is ReturnInst }?.run { getInstructionState(this) }
+                method.isConstructor -> insts.lastOrNull()?.run { getInstructionState(this) }
+                method.isStaticInitializer -> insts.lastOrNull()?.run { getInstructionState(this) }
+                else -> null
+            }
         }
 
     fun getInstructionState(inst: Instruction): PredicateState? {

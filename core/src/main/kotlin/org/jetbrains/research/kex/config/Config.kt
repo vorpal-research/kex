@@ -1,6 +1,5 @@
 package org.jetbrains.research.kex.config
 
-import kotlinx.serialization.enumMembers
 import java.util.regex.Pattern
 
 abstract class Config {
@@ -52,7 +51,7 @@ abstract class Config {
             }
             else -> { a: String, b: String -> a == b }
         }
-        return T::class.enumMembers().firstOrNull { comparator(it.name, constName) }
+        return T::class.java.enumConstants.firstOrNull { comparator(it.name, constName) }
     }
 
     inline fun <reified T : Enum<T>> getEnumValue(section: String, name: String, ignoreCase: Boolean = false, default: T): Enum<T> =

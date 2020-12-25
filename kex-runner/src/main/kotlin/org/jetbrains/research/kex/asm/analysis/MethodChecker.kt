@@ -1,19 +1,21 @@
 package org.jetbrains.research.kex.asm.analysis
 
+import com.abdullin.kthelper.`try`
 import com.abdullin.kthelper.algorithm.DominatorTreeBuilder
 import com.abdullin.kthelper.logging.debug
 import com.abdullin.kthelper.logging.log
-import kotlinx.serialization.ContextualSerialization
-import kotlinx.serialization.ImplicitReflectionSerializer
+import kotlinx.serialization.Contextual
+import kotlinx.serialization.ExperimentalSerializationApi
+import kotlinx.serialization.InternalSerializationApi
 import kotlinx.serialization.Serializable
 import org.jetbrains.research.kex.ExecutionContext
 import org.jetbrains.research.kex.asm.manager.isImpactable
 import org.jetbrains.research.kex.asm.state.PredicateStateAnalysis
 import org.jetbrains.research.kex.asm.transform.originalBlock
 import org.jetbrains.research.kex.config.kexConfig
-import org.jetbrains.research.kex.generator.Generator
 import org.jetbrains.research.kex.random.GenerationException
 import org.jetbrains.research.kex.random.Randomizer
+import org.jetbrains.research.kex.reanimator.Reanimator
 import org.jetbrains.research.kex.serialization.KexSerializer
 import org.jetbrains.research.kex.smt.Checker
 import org.jetbrains.research.kex.smt.ReanimatedModel
@@ -39,23 +41,25 @@ class KexRunnerException(val inner: Exception, val model: ReanimatedModel) : Exc
 
 @Serializable
 data class Failure(
-        @ContextualSerialization val `class`: Class,
-        @ContextualSerialization val method: Method,
+        @Contextual val `class`: Class,
+        @Contextual val method: Method,
         val message: String,
         val state: PredicateState
 )
 
-class MethodChecker(
+open class MethodChecker(
         val ctx: ExecutionContext,
-        private val tm: TraceManager<Trace>,
-        private val psa: PredicateStateAnalysis) : MethodVisitor {
+        protected val tm: TraceManager<Trace>,
+        protected val psa: PredicateStateAnalysis) : MethodVisitor {
     override val cm: ClassManager get() = ctx.cm
     val random: Randomizer get() = ctx.random
     val loader: ClassLoader get() = ctx.loader
-    val generator = Generator(ctx, psa)
+    lateinit var generator: Reanimator //= Reanimator(ctx, psa)
+        protected set
 
-    @ImplicitReflectionSerializer
-    private fun dumpPS(method: Method, message: String, state: PredicateState) {
+    @ExperimentalSerializationApi
+    @InternalSerializationApi
+    private fun dumpPS(method: Method, message: String, state: PredicateState) = `try` {
         val failDirPath = Paths.get(failDir)
         if (!Files.exists(failDirPath)) {
             Files.createDirectory(failDirPath)
@@ -63,11 +67,16 @@ class MethodChecker(
         val errorDump = Files.createTempFile(failDirPath, "ps-", ".json").toFile()
         log.error("Failing saved to file ${errorDump.path}")
         errorDump.writeText(KexSerializer(cm).toJson(Failure(method.`class`, method, message, state)))
+    }.getOrElse {
+        log.error("Could not save failing PS to file")
     }
 
     override fun cleanup() {}
 
-    @ImplicitReflectionSerializer
+    open protected fun getSearchStrategy(method: Method): SearchStrategy = DfsStrategy(method)
+
+    @ExperimentalSerializationApi
+    @InternalSerializationApi
     override fun visit(method: Method) {
         super.visit(method)
 
@@ -81,7 +90,9 @@ class MethodChecker(
 
         val unreachableBlocks = mutableSetOf<BasicBlock>()
         val domTree = DominatorTreeBuilder(method).build()
-        val order: SearchStrategy = DfsStrategy(method)
+        val order: SearchStrategy = getSearchStrategy(method)
+
+        generator = Reanimator(ctx, psa, method)
 
         for (block in order) {
             if (block.terminator is UnreachableInst) {
@@ -120,11 +131,11 @@ class MethodChecker(
 
             if (coverageResult is Result.UnsatResult) unreachableBlocks += block
         }
-        cleanup()
+
+        generator.emit()
     }
 
-    @ImplicitReflectionSerializer
-    private fun coverBlock(method: Method, block: BasicBlock): Result {
+    protected open fun coverBlock(method: Method, block: BasicBlock): Result {
         val checker = Checker(method, loader, psa)
         val ps = checker.createState(block.terminator)
                 ?: return Result.UnknownResult("Could not create a predicate state for instruction")
@@ -137,7 +148,7 @@ class MethodChecker(
         when (result) {
             is Result.SatResult -> {
                 val (instance, args) = try {
-                    generator.generate(method, block, checker.state, result.model)
+                    generator.generateFromModel(checker.state, result.model)
                 } catch (e: GenerationException) {
                     log.warn(e.message)
                     return result
@@ -158,7 +169,7 @@ class MethodChecker(
         return result
     }
 
-    private fun collectTrace(method: Method, instance: Any?, args: Array<Any?>) {
+    protected fun collectTrace(method: Method, instance: Any?, args: Array<Any?>) {
         val runner = ObjectTracingRunner(method, loader)
         val trace = runner.collectTrace(instance, args)
         tm[method] = trace

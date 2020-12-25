@@ -3,14 +3,22 @@
 package org.jetbrains.research.kex.test.debug
 
 class BasicTests {
-    fun testLoop(a: Int, b: Int): Int {
-        var x = a - b
-        while (x < a) {
-            if (b > x) {
-                println("b bigger")
+
+    open class A {
+        open fun value() = 10
+    }
+
+    class B(val a: Int) : A() {
+        override fun value(): Int = a
+    }
+
+    class W(val a: A)
+
+    fun test(w: W) {
+        if (w.a is B) {
+            if (w.a.value() > 10) {
+                println("a")
             }
-            ++x
         }
-        return x
     }
 }

@@ -22,12 +22,12 @@ abstract class TraceCollector(val cm: ClassManager) {
     }
 
     protected fun parseBlock(blockName: String): BasicBlock {
-        val st = stack.peek().slottracker
+        val st = stack.peek().slotTracker
         return st.getBlock(blockName) ?: throw UnknownNameException(blockName)
     }
 
     protected fun parseValue(valueName: String): Value {
-        val st = stack.peek().slottracker
+        val st = stack.peek().slotTracker
         return st.getValue(valueName) ?: when {
             valueName.matches(Regex("\\d+")) -> cm.value.getIntConstant(valueName.toInt())
             valueName.matches(Regex("\\d+.\\d+")) -> cm.value.getDoubleConstant(valueName.toDouble())
@@ -35,6 +35,7 @@ abstract class TraceCollector(val cm: ClassManager) {
             valueName.matches(Regex("-\\d+.\\d+")) -> cm.value.getDoubleConstant(valueName.toDouble())
             valueName.matches(Regex("\".*\"")) -> cm.value.getStringConstant(valueName.substring(1, valueName.lastIndex))
             valueName.matches(Regex("\"[\n\\s]*\"")) -> cm.value.getStringConstant(valueName.substring(1, valueName.lastIndex))
+            valueName.matches(Regex(".*(/.*)+.class")) -> cm.value.getClassConstant("L${valueName.removeSuffix(".class")};")
             valueName == "null" -> cm.value.getNullConstant()
             else -> throw UnknownNameException(valueName)
         }
@@ -151,5 +152,11 @@ object TraceCollectorProxy {
     @JvmStatic
     fun disableCollector() {
         collector = TraceCollectorStub(collector.cm)
+    }
+
+    @JvmStatic
+    fun initializeEmptyCollector(cm: ClassManager): TraceCollector {
+        collector = TraceCollectorStub(cm)
+        return collector
     }
 }

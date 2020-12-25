@@ -20,7 +20,7 @@ fun Term.withMemspace(memspace: Int): Term {
             is CastTerm -> tf.getCast(memspaced, operand)
             is CmpTerm -> tf.getCmp(memspaced, opcode, lhv, rhv)
             is ConstStringTerm -> tf.getString(memspaced, value)
-            is ConstClassTerm -> tf.getClass(memspaced, `class`)
+            is ConstClassTerm -> tf.getClass(memspaced)
             is FieldLoadTerm -> tf.getFieldLoad(memspaced, field)
             is FieldTerm -> tf.getField(memspaced, owner, fieldName)
             is NegTerm -> tf.getNegTerm(memspaced, operand)
@@ -32,6 +32,8 @@ fun Term.withMemspace(memspace: Int): Term {
         }
     }
 }
+
+fun Term.dropMemspace(): Term = this.withMemspace(KexPointer.defaultMemspace)
 
 val Term.memspace: Int
     get() = (this.type as? KexPointer)?.memspace
@@ -45,8 +47,8 @@ class MemorySpacer(ps: PredicateState) : Transformer<MemorySpacer> {
     private fun getIndex(token: Token) = indices.getOrPut(token) { index++ }
     private fun getMemspace(term: Term) = getIndex(aa.getDereferenced(term))
 
-    override fun transformTerm(term: Term) = when {
-        term.type is KexPointer -> term.withMemspace(getMemspace(term))
+    override fun transformTerm(term: Term) = when (term.type) {
+        is KexPointer -> term.withMemspace(getMemspace(term))
         else -> term
     }
 }

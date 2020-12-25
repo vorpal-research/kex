@@ -5,10 +5,7 @@ import org.jetbrains.research.kex.state.ChoiceState
 import org.jetbrains.research.kex.state.PredicateState
 import org.jetbrains.research.kex.state.StateBuilder
 import org.jetbrains.research.kex.state.predicate.assume
-import org.jetbrains.research.kex.state.term.ArrayIndexTerm
-import org.jetbrains.research.kex.state.term.ConstClassTerm
-import org.jetbrains.research.kex.state.term.FieldTerm
-import org.jetbrains.research.kex.state.term.Term
+import org.jetbrains.research.kex.state.term.*
 
 class NullityInfoAdapter : RecollectingTransformer<NullityInfoAdapter> {
     override val builders = dequeOf(StateBuilder())
@@ -29,9 +26,7 @@ class NullityInfoAdapter : RecollectingTransformer<NullityInfoAdapter> {
             builders.pollLast()
         }
         currentBuilder += newChoices
-        annotatedTerms = choiceAnnotatedTerms.asSequence()
-                .flatten()
-                .toSet()
+        annotatedTerms = choiceAnnotatedTerms.flatten().toSet()
                 .filter { term -> choiceAnnotatedTerms.all { term in it } }
                 .toSet()
         return ps
@@ -59,5 +54,13 @@ class NullityInfoAdapter : RecollectingTransformer<NullityInfoAdapter> {
             annotatedTerms = annotatedTerms + term
         }
         return super.transformConstClassTerm(term)
+    }
+
+    override fun transformCallTerm(term: CallTerm): Term {
+        if (!term.isStatic && term.owner !in annotatedTerms) {
+            currentBuilder += assume { term.owner inequality null }
+            annotatedTerms = annotatedTerms + term.owner
+        }
+        return super.transformCallTerm(term)
     }
 }

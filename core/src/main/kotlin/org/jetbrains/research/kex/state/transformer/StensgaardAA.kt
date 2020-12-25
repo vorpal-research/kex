@@ -229,7 +229,7 @@ class StensgaardAA : Transformer<StensgaardAA>, AliasAnalysis, Viewable {
                 data.getOrPut(root) { mutableSetOf() }.add(term)
             }
             for ((token, dt) in data) {
-                reverse[token] = GraphView(token.toString(), dt.fold(StringBuilder()) { sb, term -> sb.appendln(term) }.toString())
+                reverse[token] = GraphView(token.toString(), dt.fold(StringBuilder()) { sb, term -> sb.appendLine(term) }.toString())
             }
             for ((f, t) in pointsTo) {
                 val from = relations.findUnsafe(f)

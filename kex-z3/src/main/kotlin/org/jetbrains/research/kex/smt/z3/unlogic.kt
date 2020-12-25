@@ -1,12 +1,15 @@
 package org.jetbrains.research.kex.smt.z3
 
 import com.abdullin.kthelper.assert.unreachable
+import com.abdullin.kthelper.div
 import com.abdullin.kthelper.logging.log
+import com.abdullin.kthelper.minus
+import com.abdullin.kthelper.plus
+import com.abdullin.kthelper.times
 import com.microsoft.z3.*
 import com.microsoft.z3.enumerations.Z3_lbool
 import org.jetbrains.research.kex.smt.SMTEngine
-import org.jetbrains.research.kex.state.term.Term
-import org.jetbrains.research.kex.state.term.term
+import org.jetbrains.research.kex.state.term.*
 import java.lang.Math.pow
 
 object Z3Unlogic {
@@ -18,19 +21,58 @@ object Z3Unlogic {
         else -> unreachable { log.error("Unexpected expr in unlogic: $expr") }
     }
 
-    private fun undoBVExpr(expr: BitVecExpr): Term {
-        return when {
-            expr.numArgs == 2 && expr.args[0] is FPRMNum -> {
-                val arg = undo(expr.args[1])
-                when (expr.args[0] as FPRMNum) {
-                    // todo: support all modes
+    private fun undoBVExpr(expr: BitVecExpr): Term = when {
+        expr.numArgs == 2 && expr.args[0] is FPRMNum -> {
+            val arg = undo(expr.args[1])
+            when (expr.args[0] as FPRMNum) {
+                // todo: support all modes
+                else -> when (arg) {
+                    is ConstFloatTerm -> term { const(arg.value.toInt()) }
+                    is ConstDoubleTerm -> term { const(arg.value.toInt()) }
                     else -> arg
                 }
             }
-            expr.isBVExtract -> undo(expr.args[0])
-            // todo: support more bv expressions
+        }
+        expr.isBVExtract -> undo(expr.args[0])
+        expr.isBVNOT -> {
+            when (val value = undo(expr.args[0])) {
+                is ConstIntTerm -> term { const((value.value).inv()) }
+                is ConstLongTerm -> term { const((value.value).inv()) }
+                else -> TODO()
+            }
+        }
+        expr.isApp -> when {
+            expr.funcDecl.name.toString() == "fp.to_ieee_bv" -> {
+                when (val fp = undo(expr.args[0])) {
+                    is ConstFloatTerm -> term { const((fp.value).toInt()) }
+                    is ConstDoubleTerm -> term { const((fp.value).toLong()) }
+                    else -> TODO()
+                }
+            }
+            expr.isBVAdd -> {
+                val arg1 = undo(expr.args[0])
+                val arg2 = undo(expr.args[1])
+                term { const(arg1.numericValue + arg2.numericValue) }
+            }
+            expr.isBVSub -> {
+                val arg1 = undo(expr.args[0])
+                val arg2 = undo(expr.args[1])
+                term { const(arg1.numericValue - arg2.numericValue) }
+            }
+            expr.isBVMul -> {
+                val arg1 = undo(expr.args[0])
+                val arg2 = undo(expr.args[1])
+                term { const(arg1.numericValue * arg2.numericValue) }
+            }
+            expr.isBVSDiv -> {
+                val arg1 = undo(expr.args[0])
+                val arg2 = undo(expr.args[1])
+                term { const(arg1.numericValue / arg2.numericValue) }
+            }
             else -> TODO()
         }
+        // todo: support more bv expressions
+        else -> TODO()
     }
 
     private fun undoBool(expr: BoolExpr) = when (expr.boolValue) {
@@ -54,14 +96,16 @@ object Z3Unlogic {
 
     private fun undoFloat(expr: FPNum): Term {
         val isDouble = (expr.eBits + expr.sBits) == SMTEngine.DWORD
-        val termifier = { a: Double -> when {
-            isDouble -> term { const(a) }
-            else -> term { const(a.toFloat()) }
-        }}
+        val termifier = { a: Double ->
+            when {
+                isDouble -> term { const(a) }
+                else -> term { const(a.toFloat()) }
+            }
+        }
         return when {
             expr.isZero -> termifier(0.0)
             expr.isNaN -> termifier(Double.NaN)
-            expr.isInf -> termifier(if(expr.isPositive) Double.POSITIVE_INFINITY else Double.NEGATIVE_INFINITY)
+            expr.isInf -> termifier(if (expr.isPositive) Double.POSITIVE_INFINITY else Double.NEGATIVE_INFINITY)
             else -> {
                 val sign = if (expr.sign) -1.0 else 1.0
                 val significand = expr.significand.toDouble()

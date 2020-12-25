@@ -1,6 +1,6 @@
 package org.jetbrains.research.kex.state.term
 
-import kotlinx.serialization.ContextualSerialization
+import kotlinx.serialization.Contextual
 import kotlinx.serialization.Serializable
 import org.jetbrains.research.kex.InheritorOf
 import org.jetbrains.research.kex.ktype.KexType
@@ -11,7 +11,7 @@ import org.jetbrains.research.kfg.ir.Method
 @Serializable
 class ReturnValueTerm(
         override val type: KexType,
-        @ContextualSerialization val method: Method) : Term() {
+        @Contextual val method: Method) : Term() {
     override val name = "<retval>"
     override val subterms by lazy { listOf<Term>() }
 

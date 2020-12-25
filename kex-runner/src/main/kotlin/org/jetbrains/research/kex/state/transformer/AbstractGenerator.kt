@@ -5,7 +5,7 @@ import com.abdullin.kthelper.logging.log
 import org.jetbrains.research.kex.ExecutionContext
 import org.jetbrains.research.kex.ktype.KexClass
 import org.jetbrains.research.kex.ktype.kexType
-import org.jetbrains.research.kex.smt.Reanimator
+import org.jetbrains.research.kex.smt.ModelReanimator
 import org.jetbrains.research.kex.smt.SMTModel
 import org.jetbrains.research.kex.state.BasicState
 import org.jetbrains.research.kex.state.ChoiceState
@@ -15,7 +15,6 @@ import org.jetbrains.research.kex.state.predicate.Predicate
 import org.jetbrains.research.kex.state.term.*
 import org.jetbrains.research.kfg.ir.Method
 import org.jetbrains.research.kfg.type.TypeFactory
-import java.lang.reflect.Executable
 
 // remove all choices in a given PS
 // needed to get entry condition of a given PS
@@ -33,29 +32,27 @@ interface AbstractGenerator<T> : Transformer<AbstractGenerator<T>> {
     val type: TypeFactory get() = ctx.types
     val loader: ClassLoader get() = ctx.loader
 
-    val reanimator: Reanimator<T>
+    val modelReanimator: ModelReanimator<T>
 
     val memory: MutableMap<Term, T>
     var thisTerm: Term?
     val argTerms: MutableMap<Int, Term>
-
-    val javaClass: Class<*>
-    val javaMethod: Executable
+    val staticFieldTerms: MutableSet<FieldTerm>
 
     val instance get() = thisTerm?.let { memory[it] }
     val args get() = argTerms.map { memory[it.value] }.toList()
+    val staticFields get() = staticFieldTerms.map { it to memory[it] }.toMap()
 
     fun generateThis() = thisTerm?.let {
-        memory[it] = reanimator.reanimate(it)
+        memory[it] = modelReanimator.reanimate(it)
     }
 
-    fun generateArgs() =
-            argTerms.values.forEach { term ->
-                reanimateTerm(term)
-            }
+    fun generateArgs() = argTerms.values.forEach { term ->
+        reanimateTerm(term)
+    }
 
     fun reanimateTerm(term: Term): T? = memory.getOrPut(term) {
-        reanimator.reanimate(term)
+        modelReanimator.reanimate(term)
     }
 
     fun generate(ps: PredicateState): Pair<T?, List<T?>> {
@@ -80,7 +77,12 @@ interface AbstractGenerator<T> : Transformer<AbstractGenerator<T>> {
 
     override fun transformBasic(ps: BasicState): PredicateState {
         val vars = collectPointers(ps)
-        vars.forEach { reanimateTerm(it) }
+        vars.forEach { ptr ->
+            if (ptr is FieldTerm && ptr.isStatic) {
+                staticFieldTerms += ptr
+            }
+            reanimateTerm(ptr)
+        }
         return ps
     }
 

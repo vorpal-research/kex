@@ -12,7 +12,7 @@ class ChoiceState(val choices: List<PredicateState>) : PredicateState(), Iterabl
         get() = choices.fold(0) { acc, it -> acc + it.size }
 
     override fun print() = buildString {
-        appendln("(BEGIN")
+        appendLine("(BEGIN")
         append(choices.joinToString { " <OR> $it" })
         append(" END)")
     }

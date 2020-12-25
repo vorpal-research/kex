@@ -1,7 +1,10 @@
 package org.jetbrains.research.kex.state.transformer
 
 import com.abdullin.kthelper.logging.log
-import org.jetbrains.research.kex.ktype.*
+import org.jetbrains.research.kex.ktype.KexIntegral
+import org.jetbrains.research.kex.ktype.KexReal
+import org.jetbrains.research.kex.ktype.KexType
+import org.jetbrains.research.kex.ktype.kexType
 import org.jetbrains.research.kex.smt.SMTModel
 import org.jetbrains.research.kex.state.*
 import org.jetbrains.research.kex.state.predicate.*
@@ -30,10 +33,10 @@ class TypeInfoMap(val inner: Map<Term, Set<TypeInfo>> = hashMapOf()) : Map<Term,
                             val nullabilityInfo = types.filterIsInstance<NullabilityInfo>()
                             val castInfo = types.filterIsInstance<CastTypeInfo>()
                             val reducedCastInfo = mutableSetOf<CastTypeInfo>()
-                            val klasses = castInfo.map { (it.type as KexClass).getKfgClass(tf) }.toSet()
-                            for (klass in klasses) {
-                                if (klasses.any { it != klass && klass.isAncestorOf(it) }) continue
-                                else reducedCastInfo += CastTypeInfo(tf.getRefType(klass).kexType)
+                            val castTypes = castInfo.map { it.type.getKfgType(tf) }
+                            for (type in castTypes) {
+                                if (castTypes.any { it != type && type.isSupertypeOf(it) }) continue
+                                else reducedCastInfo += CastTypeInfo(type.kexType)
                             }
                             (nullabilityInfo + reducedCastInfo).toSet()
                         }
@@ -43,6 +46,9 @@ class TypeInfoMap(val inner: Map<Term, Set<TypeInfo>> = hashMapOf()) : Map<Term,
             )
         }
     }
+
+    fun mapKeys(mapper: (Map.Entry<Term, Set<TypeInfo>>) -> Term) = TypeInfoMap(inner.mapKeys(mapper))
+    fun mapValues(mapper: (Map.Entry<Term, Set<TypeInfo>>) -> Set<TypeInfo>) = TypeInfoMap(inner.mapValues(mapper))
 }
 
 class TypeInfoCollector(val model: SMTModel, val tf: TypeFactory) : Transformer<TypeInfoCollector> {

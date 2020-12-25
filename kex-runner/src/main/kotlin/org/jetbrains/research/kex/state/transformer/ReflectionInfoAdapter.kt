@@ -1,5 +1,7 @@
 package org.jetbrains.research.kex.state.transformer
 
+import com.abdullin.kthelper.`try`
+import com.abdullin.kthelper.collection.dequeOf
 import com.abdullin.kthelper.logging.log
 import com.abdullin.kthelper.tryOrNull
 import org.jetbrains.research.kex.ktype.*
@@ -13,22 +15,17 @@ import org.jetbrains.research.kex.state.term.*
 import org.jetbrains.research.kex.util.*
 import org.jetbrains.research.kfg.ir.Method
 import org.jetbrains.research.kfg.type.ArrayType
-import java.util.*
 
 class ReflectionInfoAdapter(val method: Method, val loader: ClassLoader, val ignores: Set<Term> = setOf()) :
         RecollectingTransformer<ReflectionInfoAdapter> {
     val cm get() = method.cm
     val types get() = method.cm.type
 
-    override val builders = ArrayDeque<StateBuilder>()
+    override val builders = dequeOf(StateBuilder())
 
     private data class ArrayElementInfo(val nullable: Boolean)
 
     private val arrayElementInfo = hashMapOf<Term, ArrayElementInfo>()
-
-    init {
-        builders.add(StateBuilder())
-    }
 
     override fun apply(ps: PredicateState): PredicateState {
         val (`this`, arguments) = collectArguments(ps)
@@ -41,7 +38,7 @@ class ReflectionInfoAdapter(val method: Method, val loader: ClassLoader, val ign
         }
 
         val methodClassType = KexClass(method.`class`.fullname).getKfgType(types)
-        val klass = loader.loadKClass(methodClassType)
+        val klass = `try` { loader.loadKClass(methodClassType) }.getOrNull() ?: return super.apply(ps)
         val kFunction = klass.getKFunction(method) ?: run {
             log.warn("Could not load kFunction for $method")
             return super.apply(ps)
@@ -73,7 +70,7 @@ class ReflectionInfoAdapter(val method: Method, val loader: ClassLoader, val ign
         val call = predicate.call as CallTerm
 
         val methodClassType = KexClass(call.method.`class`.fullname).getKfgType(types)
-        val klass = loader.loadKClass(methodClassType)
+        val klass = `try` { loader.loadKClass(methodClassType) }.getOrNull() ?: return predicate
         val kFunction = klass.getKFunction(call.method)
         if (!predicate.hasLhv || kFunction == null) return predicate
 

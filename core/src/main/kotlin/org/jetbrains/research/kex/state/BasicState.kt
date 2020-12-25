@@ -14,8 +14,8 @@ class BasicState(@Required val predicates: List<Predicate> = listOf()) : Predica
         get() = predicates.size
 
     override fun print() = buildString {
-        appendln("(")
-        predicates.forEach { appendln("  $it") }
+        appendLine("(")
+        predicates.forEach { appendLine("  $it") }
         append(")")
     }
 

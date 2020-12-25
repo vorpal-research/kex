@@ -3,6 +3,7 @@ package org.jetbrains.research.kex.state.transformer
 import com.abdullin.kthelper.*
 import com.abdullin.kthelper.assert.unreachable
 import com.abdullin.kthelper.logging.log
+import org.jetbrains.research.kex.state.PredicateState
 import org.jetbrains.research.kex.state.predicate.EqualityPredicate
 import org.jetbrains.research.kex.state.predicate.InequalityPredicate
 import org.jetbrains.research.kex.state.predicate.Predicate
@@ -18,6 +19,10 @@ object ConstantPropagator : Transformer<ConstantPropagator> {
     infix fun Double.neq(other: Double) = (this - other) >= epsilon
     infix fun Float.eq(other: Float) = (this - other) < epsilon
     infix fun Float.neq(other: Float) = (this - other) >= epsilon
+
+    override fun apply(ps: PredicateState): PredicateState {
+        return ps
+    }
 
     override fun transformBinaryTerm(term: BinaryTerm): Term {
         val lhv = getConstantValue(term.lhv) ?: return term

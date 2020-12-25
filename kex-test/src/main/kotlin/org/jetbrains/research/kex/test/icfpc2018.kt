@@ -1,4 +1,4 @@
-@file:Suppress("ASSIGNED_BUT_NEVER_ACCESSED_VARIABLE", "UNUSED_PARAMETER", "UNUSED_VARIABLE")
+@file:Suppress("ASSIGNED_BUT_NEVER_ACCESSED_VARIABLE", "UNUSED_PARAMETER", "UNUSED_VARIABLE", "UNREACHABLE_CODE")
 
 package org.jetbrains.research.kex.test
 
@@ -108,14 +108,15 @@ class Icfpc2018Test {
                     Files.copy(File(solution.trace).toPath(), File("submit/$task.nbt").toPath(),
                             StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.COPY_ATTRIBUTES)
                     haveSolution = true
-//                    Intrinsics.assertUnreachable()
+                    Intrinsics.assertReachable()
                     break
+                    Intrinsics.assertUnreachable()
                 }
                 if (!haveSolution) {
-//                    Intrinsics.assertReachable()
+                    Intrinsics.assertReachable()
                     return
                 }
-//                Intrinsics.assertReachable()
+                Intrinsics.assertReachable()
             }
         }
 

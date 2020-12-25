@@ -1,15 +1,15 @@
 package org.jetbrains.research.kex.state.transformer
 
+import com.abdullin.kthelper.collection.dequeOf
 import org.jetbrains.research.kex.state.ChoiceState
 import org.jetbrains.research.kex.state.PredicateState
 import org.jetbrains.research.kex.state.StateBuilder
 import org.jetbrains.research.kex.state.predicate.Predicate
 import org.jetbrains.research.kex.state.predicate.assume
 import org.jetbrains.research.kex.state.term.Term
-import java.util.*
 
 class NullityAnnotator(private val nonNulls: Set<Term> = setOf()) : RecollectingTransformer<NullityAnnotator> {
-    override val builders = ArrayDeque<StateBuilder>().apply { push(StateBuilder()) }
+    override val builders = dequeOf(StateBuilder())
     private var annotatedTerms = hashSetOf<Term>()
 
     override fun transformChoice(ps: ChoiceState): PredicateState {

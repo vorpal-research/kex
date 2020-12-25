@@ -6,6 +6,7 @@ import org.jetbrains.research.kfg.type.TypeFactory
 
 typealias Bool_ = $Bool
 typealias Ptr_ = $Bitvector32
+typealias Byte_ = $Bitvector32
 typealias Short_ = $Bitvector32
 typealias Char_ = $Bitvector32
 typealias Int_ = $Bitvector32
@@ -22,6 +23,8 @@ enum class TypeSize (val int: Int) {
     WORD(1), DWORD(2);
 }
 
+private val engine = ${solver}Engine
+
 class $factory : ${solver}SMTExprFactory() {
     companion object {
 
@@ -33,9 +36,15 @@ class $factory : ${solver}SMTExprFactory() {
     }
 
     val ctx = $context()
-    val subtypeFunction = Function_(ctx, "isSubtype", listOf(Int_.getStaticSort(ctx), Int_.getStaticSort(ctx)), Bool_.getStaticSort(ctx))
+    val subtypeFunction: Function_
+    private val innerTypeMap: MutableMap< KexType, Int_ >
     val typeMap: Map< KexType, Int_ > get() = innerTypeMap
-    private val innerTypeMap = mutableMapOf< KexType, Int_ >()
+
+    init {
+        engine.initialize()
+        subtypeFunction = Function_(ctx, "isSubtype", listOf(Int_.getStaticSort(ctx), Int_.getStaticSort(ctx)), Bool_.getStaticSort(ctx))
+        innerTypeMap = mutableMapOf< KexType, Int_ >()
+    }
 
 #macro(generateMakes $type $basetype)
     #set($underlined = "${type}_")
@@ -51,6 +60,8 @@ class $factory : ${solver}SMTExprFactory() {
     fun makeTrue() = makeBoolConst(true)
     fun makeFalse() = makeBoolConst(false)
 
+#generateMakes("Byte", "Int")
+    fun makeByteConst(value: Byte) = makeByteConst(value.toInt())
 #generateMakes("Short", "Int")
     fun makeShortConst(value: Short) = makeShortConst(value.toInt())
 #generateMakes("Char", "Int")
@@ -69,7 +80,7 @@ class $factory : ${solver}SMTExprFactory() {
     inline fun < reified  Element: $Bitvector > makeDefaultMemory(id: String, default: Int) =
         Memory_.makeDefault< Ptr_, Element >(ctx, id, bvMakeConst< Element >(ctx, default) as Element)
 
-#set($types = ["Bool", "Short", "Char", "Int", "Long", "Float", "Double"])
+#set($types = ["Bool", "Byte", "Short", "Char", "Int", "Long", "Float", "Double"])
     fun getVarByTypeAndName(type: KexType, name: String, fresh: Boolean = false) = when(type) {
 #foreach($type in $types)
         is Kex${type} -> make${type}(name, fresh)
