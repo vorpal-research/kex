@@ -1,14 +1,10 @@
 package org.jetbrains.research.kex.asm.analysis
 
-import com.abdullin.kthelper.`try`
 import com.abdullin.kthelper.logging.log
 import org.jetbrains.research.kex.ExecutionContext
 import org.jetbrains.research.kex.asm.state.PredicateStateAnalysis
-import org.jetbrains.research.kex.ktype.KexClass
-import org.jetbrains.research.kex.ktype.KexReference
-import org.jetbrains.research.kex.ktype.KexType
 import org.jetbrains.research.kex.random.GenerationException
-import org.jetbrains.research.kex.reanimator.descriptor.concreteClass
+import org.jetbrains.research.kex.reanimator.descriptor.concretize
 import org.jetbrains.research.kex.smt.Checker
 import org.jetbrains.research.kex.smt.ReanimatedModel
 import org.jetbrains.research.kex.smt.Result
@@ -92,12 +88,7 @@ class DescriptorChecker(
 
     fun Set<TypeInfo>.concretize(): Set<TypeInfo> = this.map { it.concretize() }.toSet()
     fun TypeInfo.concretize(): TypeInfo = when (this) {
-        is CastTypeInfo -> CastTypeInfo(this.type.concretize())
-        else -> this
-    }
-    fun KexType.concretize(): KexType = when (this) {
-        is KexClass -> `try` { this.concreteClass(cm) }.getOrDefault(this)
-        is KexReference -> KexReference(this.reference.concretize())
+        is CastTypeInfo -> CastTypeInfo(this.type.concretize(cm))
         else -> this
     }
 }

@@ -1,5 +1,6 @@
 package org.jetbrains.research.kex.reanimator.descriptor
 
+import com.abdullin.kthelper.`try`
 import com.abdullin.kthelper.assert.unreachable
 import com.abdullin.kthelper.logging.log
 import org.jetbrains.research.kex.ktype.*
@@ -8,6 +9,7 @@ import org.jetbrains.research.kex.state.StateBuilder
 import org.jetbrains.research.kex.state.emptyState
 import org.jetbrains.research.kex.state.predicate.axiom
 import org.jetbrains.research.kex.state.predicate.require
+import org.jetbrains.research.kex.state.predicate.state
 import org.jetbrains.research.kex.state.term.Term
 import org.jetbrains.research.kex.state.term.term
 import org.jetbrains.research.kfg.ClassManager
@@ -28,6 +30,12 @@ fun KexClass.concreteClass(cm: ClassManager): KexClass {
         else -> ConcreteInstanceGenerator[kfgKlass]
     }
     return concrete.kexType
+}
+
+fun KexType.concretize(cm: ClassManager): KexType = when (this) {
+    is KexClass -> `try` { this.concreteClass(cm) }.getOrDefault(this)
+    is KexReference -> KexReference(this.reference.concretize(cm))
+    else -> this
 }
 
 sealed class Descriptor(term: Term, type: KexType, val hasState: Boolean) {
@@ -229,8 +237,12 @@ class ObjectDescriptor(klass: KexClass) : Descriptor(term { generate(klass) }, k
         val builder = StateBuilder()
         builder += axiom { instanceOfTerm equality (term `is` this@ObjectDescriptor.type) }
         builder += axiom { instanceOfTerm equality true }
-        for ((_, field) in this.fields) {
-            builder += field.generateTypeInfo(visited)
+        for ((key, field) in this.fields) {
+            val typeInfo = field.generateTypeInfo(visited)
+            if (typeInfo.isNotEmpty) {
+                builder += state { field.term equality this@ObjectDescriptor.term.field(key.second, key.first).load() }
+                builder += typeInfo
+            }
         }
         return builder.apply()
     }
@@ -350,8 +362,12 @@ class ArrayDescriptor(val elementType: KexType, val length: Int) :
         val builder = StateBuilder()
         builder += axiom { instanceOfTerm equality (term `is` this@ArrayDescriptor.type) }
         builder += axiom { instanceOfTerm equality true }
-        for ((_, element) in this.elements) {
-            builder += element.generateTypeInfo(visited)
+        for ((index, element) in this.elements) {
+            val typeInfo = element.generateTypeInfo(visited)
+            if (typeInfo.isNotEmpty) {
+                builder += state { element.term equality this@ArrayDescriptor.term[index].load() }
+                builder += typeInfo
+            }
         }
         return builder.apply()
     }
