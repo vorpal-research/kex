@@ -98,8 +98,9 @@ class GeneratorContext(val context: ExecutionContext, val psa: PredicateStateAna
 
         val mapper = descriptor.mapper
         val preState = mapper.apply(descriptor.preState)
-        val typeInfos = collectPlainTypeInfos(types, mapper.apply(descriptor.typeInfo)) + this.argTypeInfo
-        val state = preState + mapper.apply(methodState ?: return null) + mapper.apply(descriptor.typeInfo)
+        val typeInfoState = mapper.apply(descriptor.typeInfo)
+        val typeInfos = collectPlainTypeInfos(types, typeInfoState) + this.argTypeInfo
+        val state = preState + mapper.apply(methodState ?: return null) + typeInfoState
 
         val preStateFieldTerms = collectFieldTerms(context, preState)
         val preparedState = state.prepare(this, typeInfos, preStateFieldTerms)
@@ -116,9 +117,9 @@ class GeneratorContext(val context: ExecutionContext, val psa: PredicateStateAna
                         descriptor.term to term { `return`(this@executeAsExternalConstructor) }
                 )
         )
-        val preState = externalMapper.apply(descriptor.typeInfo)
-        val typeInfos = collectPlainTypeInfos(types, preState) + this.argTypeInfo
-        val state = externalMapper.apply(methodState ?: return null) + preState
+        val typeInfoState = externalMapper.apply(descriptor.typeInfo)
+        val typeInfos = collectPlainTypeInfos(types, typeInfoState) + this.argTypeInfo
+        val state = externalMapper.apply(methodState ?: return null) + typeInfoState
 
         val preparedState = state.prepare(this, typeInfos)
         val preparedQuery = prepareQuery(externalMapper.apply(descriptor.query))
@@ -134,7 +135,7 @@ class GeneratorContext(val context: ExecutionContext, val psa: PredicateStateAna
         val preStateFieldTerms = collectFieldTerms(context, preState)
         val typeInfoState = mapper.apply(descriptor.typeInfo)
         val typeInfos = collectPlainTypeInfos(types, typeInfoState) + this.argTypeInfo
-        val state = mapper.apply(preState + (methodState ?: return null) + mapper.apply(descriptor.typeInfo))
+        val state = mapper.apply(preState + (methodState ?: return null)) + typeInfoState
 
         val preparedState = state.prepare(this, typeInfos, preStateFieldTerms)
         val preparedQuery = prepareQuery(mapper.apply(descriptor.query))
