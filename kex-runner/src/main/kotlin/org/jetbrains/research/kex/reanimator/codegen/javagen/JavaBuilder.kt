@@ -50,6 +50,8 @@ class JavaBuilder(val pkg: String = "") {
         lateinit var returnType: Type
         val arguments = mutableListOf<JavaArgument>()
         val statements = mutableListOf<JavaStatement>()
+        val annotations = mutableListOf<String>()
+
         open val signature
             get() = "public ${if (typeArgs.isNotEmpty()) typeArgs.joinToString(", ", prefix = "<", postfix = ">") else ""} " +
                     "$returnType $name(${arguments.joinToString(", ")})"
@@ -73,6 +75,9 @@ class JavaBuilder(val pkg: String = "") {
         override fun toString() = print(0)
 
         override fun print(level: Int): String = buildString {
+            for (anno in annotations) {
+                appendLine("${level.asOffset}@$anno")
+            }
             appendLine("${level.asOffset}$signature {")
             val innerLevel = level + 1
             for (statement in statements) {
@@ -120,6 +125,12 @@ class JavaBuilder(val pkg: String = "") {
         }
 
         fun method(name: String, typeArgs: List<Type>, body: JavaFunction.() -> Unit) {
+            val funBuilder = JavaMethod(this, name, typeArgs)
+            funBuilder.body()
+            methods += funBuilder
+        }
+
+        fun constructor(typeArgs: List<Type>, body: JavaFunction.() -> Unit) {
             val funBuilder = JavaMethod(this, name, typeArgs)
             funBuilder.body()
             methods += funBuilder

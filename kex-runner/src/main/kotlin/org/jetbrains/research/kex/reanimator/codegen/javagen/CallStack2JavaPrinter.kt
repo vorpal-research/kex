@@ -13,7 +13,6 @@ import org.jetbrains.research.kex.util.kex
 import org.jetbrains.research.kex.util.loadClass
 import org.jetbrains.research.kfg.ir.Class
 import org.jetbrains.research.kfg.type.*
-import org.jetbrains.research.kfg.type.Type
 import java.lang.reflect.*
 
 // TODO: this is work of satan, refactor this damn thing
@@ -30,10 +29,16 @@ class CallStack2JavaPrinter(
 
     init {
         with(builder) {
+            import("java.lang.IllegalStateException")
+            import("org.junit.Test")
+
             with(klass) {
+                constructor() {}
+
                 method("unknown", listOf(type("T"))) {
                     returnType = type("T")
-                    +"throw new NotImplementedException()"
+                    annotations += "Test"
+                    +"throw new IllegalStateException()"
                 }
             }
         }
