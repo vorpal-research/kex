@@ -30,7 +30,6 @@ import org.jetbrains.research.kfg.util.Flags
 import org.jetbrains.research.kfg.visitor.executePipeline
 import java.io.File
 import java.net.URLClassLoader
-import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.*
@@ -66,7 +65,7 @@ class KexTool : Tool {
         kexConfig.initialize(RuntimeConfig, FileConfig(configFile))
         classManager = ClassManager(KfgConfig(flags = Flags.readAll, failOnError = false))
         origManager = ClassManager(KfgConfig(flags = Flags.readAll, failOnError = false))
-        outputDir = Files.createTempDirectory(Paths.get("."), "kex-instrumented").toAbsolutePath()
+        outputDir = Paths.get("./temp/data/", "kex-instrumented").toAbsolutePath()
     }
 
     override fun getExtraClassPath(): List<File> = emptyList()

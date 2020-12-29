@@ -82,7 +82,6 @@ class Kex(args: Array<String>) {
 
     init {
         kexConfig.initialize(cmd, RuntimeConfig, FileConfig(properties))
-        kexConfig.initLog(logName)
 
         val jarName = cmd.getCmdValue("jar")
         val targetName = cmd.getCmdValue("target")
