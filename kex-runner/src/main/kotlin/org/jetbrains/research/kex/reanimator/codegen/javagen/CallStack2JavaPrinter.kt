@@ -13,6 +13,7 @@ import org.jetbrains.research.kex.util.kex
 import org.jetbrains.research.kex.util.loadClass
 import org.jetbrains.research.kfg.ir.Class
 import org.jetbrains.research.kfg.type.*
+import org.jetbrains.research.kfg.type.Type
 import java.lang.reflect.*
 
 // TODO: this is work of satan, refactor this damn thing
