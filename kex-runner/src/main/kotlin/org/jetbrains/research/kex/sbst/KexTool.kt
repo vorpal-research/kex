@@ -72,7 +72,7 @@ class KexTool : Tool {
     override fun getExtraClassPath(): List<File> = emptyList()
 
     override fun initialize(src: File, bin: File, classPath: List<File>) {
-        for (jar in classPath.mapNotNull { it.asContainer(Package.defaultPackage) }) {
+        for (jar in classPath.mapNotNull { it.asContainer() }) {
             jarFiles += jar
         }
         log.debug("Initialized containers: ${jarFiles.joinToString { it.name }}")

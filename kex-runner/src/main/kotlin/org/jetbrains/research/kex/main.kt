@@ -11,10 +11,11 @@ import java.io.PrintWriter
 
 @ExperimentalSerializationApi
 @InternalSerializationApi
-fun main() {
+fun main(args: Array<String>) {
     val writer = PrintWriter(System.out)
     val reader = InputStreamReader(System.`in`)
     val tool = KexTool()
     val runTool = SBSTRunTool(tool, reader, writer)
     runTool.run()
+//    Kex(args).main()
 }
