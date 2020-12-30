@@ -32,10 +32,11 @@ import org.jetbrains.research.kex.state.transformer.executeModel
 import org.jetbrains.research.kex.trace.`object`.ObjectTraceManager
 import org.jetbrains.research.kex.util.getRuntime
 import org.jetbrains.research.kfg.ClassManager
-import org.jetbrains.research.kfg.Jar
 import org.jetbrains.research.kfg.KfgConfig
 import org.jetbrains.research.kfg.Package
 import org.jetbrains.research.kfg.analysis.LoopSimplifier
+import org.jetbrains.research.kfg.container.Container
+import org.jetbrains.research.kfg.container.asContainer
 import org.jetbrains.research.kfg.ir.Class
 import org.jetbrains.research.kfg.ir.Method
 import org.jetbrains.research.kfg.util.Flags
@@ -57,7 +58,7 @@ class Kex(args: Array<String>) {
     val classPath = System.getProperty("java.class.path")
     val mode = Mode.bmc
 
-    val jar: Jar
+    val classContainer: Container
     val outputDir: Path
 
     val classManager: ClassManager
@@ -83,11 +84,11 @@ class Kex(args: Array<String>) {
     init {
         kexConfig.initialize(cmd, RuntimeConfig, FileConfig(properties))
 
-        val jarName = cmd.getCmdValue("jar")
+        val targetClassPath = cmd.getCmdValue("classpath")
         val targetName = cmd.getCmdValue("target")
-        require(jarName != null, cmd::printHelp)
+        require(targetClassPath != null, cmd::printHelp)
 
-        val jarPath = Paths.get(jarName).toAbsolutePath()
+        val targetPath = Paths.get(targetClassPath).toAbsolutePath()
 
         val analysisLevel = when {
             targetName == null -> {
@@ -113,25 +114,28 @@ class Kex(args: Array<String>) {
                 exitProcess(1)
             }
         }
-        jar = Jar(jarPath, `package`)
+        classContainer = targetPath.asContainer(`package`) ?: run {
+            log.error("Can't represent $targetPath as class container")
+            exitProcess(1)
+        }
         classManager = ClassManager(KfgConfig(flags = Flags.readAll, failOnError = false))
         origManager = ClassManager(KfgConfig(flags = Flags.readAll, failOnError = false))
-        val analysisJars = listOfNotNull(jar, getRuntime())
+        val analysisJars = listOfNotNull(classContainer, getRuntime())
         classManager.initialize(*analysisJars.toTypedArray())
         origManager.initialize(*analysisJars.toTypedArray())
 
         when (analysisLevel) {
             is AnalysisLevel.PACKAGE -> {
-                log.debug("Running with jar ${jar.name} and default package $`package`")
+                log.debug("Running with jar ${classContainer.name} and default package $`package`")
             }
             is AnalysisLevel.CLASS -> {
                 klass = classManager[analysisLevel.klass]
-                log.debug("Running with jar ${jar.name} and class $klass")
+                log.debug("Running with jar ${classContainer.name} and class $klass")
             }
             is AnalysisLevel.METHOD -> {
                 klass = classManager[analysisLevel.klass]
                 methods = klass!!.getMethods(analysisLevel.method)
-                log.debug("Running with jar ${jar.name} and methods $methods")
+                log.debug("Running with jar ${classContainer.name} and methods $methods")
             }
         }
 
@@ -152,10 +156,10 @@ class Kex(args: Array<String>) {
     @InternalSerializationApi
     fun main() {
         // write all classes to output directory, so they will be seen by ClassLoader
-        jar.unpack(classManager, outputDir, true)
+        classContainer.unpack(classManager, outputDir, true)
         val classLoader = URLClassLoader(arrayOf(outputDir.toUri().toURL()))
 
-        val originalContext = ExecutionContext(origManager, jar.classLoader, EasyRandomDriver())
+        val originalContext = ExecutionContext(origManager, classContainer.classLoader, EasyRandomDriver())
         val analysisContext = ExecutionContext(classManager, classLoader, EasyRandomDriver())
 
         // instrument all classes in the target package
@@ -183,7 +187,7 @@ class Kex(args: Array<String>) {
 
         val method = failure.method
         log.debug(failure)
-        val classLoader = jar.classLoader
+        val classLoader = classContainer.classLoader as? URLClassLoader ?: return
         updateClassPath(classLoader)
 
         val checker = Checker(method, classLoader, psa)

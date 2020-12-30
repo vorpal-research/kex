@@ -22,10 +22,11 @@ import org.jetbrains.research.kex.trace.`object`.ObjectTraceManager
 import org.jetbrains.research.kex.trace.`object`.Trace
 import org.jetbrains.research.kex.util.getRuntime
 import org.jetbrains.research.kfg.ClassManager
-import org.jetbrains.research.kfg.Jar
 import org.jetbrains.research.kfg.KfgConfig
 import org.jetbrains.research.kfg.Package
 import org.jetbrains.research.kfg.analysis.LoopSimplifier
+import org.jetbrains.research.kfg.container.Container
+import org.jetbrains.research.kfg.container.asContainer
 import org.jetbrains.research.kfg.util.Flags
 import org.jetbrains.research.kfg.visitor.executePipeline
 import java.io.File
@@ -34,11 +35,11 @@ import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.*
 
-val Jar.urls get() = (this.classLoader as? URLClassLoader)?.urLs ?: arrayOf()
+val Container.urls get() = (this.classLoader as? URLClassLoader)?.urLs ?: arrayOf()
 
 class KexTool : Tool {
     val configFile = "kex.ini"
-    val jarFiles = listOfNotNull(getRuntime()).toMutableList()
+    val jarFiles = listOfNotNull<Container>(getRuntime()).toMutableList()
 
     val classManager: ClassManager
     val origManager: ClassManager
@@ -71,7 +72,7 @@ class KexTool : Tool {
     override fun getExtraClassPath(): List<File> = emptyList()
 
     override fun initialize(src: File, bin: File, classPath: List<File>) {
-        for (jar in classPath.map { Jar(it.toPath(), Package.defaultPackage) }) {
+        for (jar in classPath.mapNotNull { it.asContainer(Package.defaultPackage) }) {
             jarFiles += jar
         }
 
