@@ -39,12 +39,12 @@ val Container.urls get() = (this.classLoader as? URLClassLoader)?.urLs ?: arrayO
 
 class KexTool : Tool {
     val configFile = "kex.ini"
-    val jarFiles = listOfNotNull<Container>(getRuntime()).toMutableList()
+    val containers = listOfNotNull<Container>(getRuntime()).toMutableList()
 
     val classManager: ClassManager
     val origManager: ClassManager
     val outputDir: Path
-    val pkg = Package.defaultPackage
+    val packages = mutableListOf<Package>()
     val classPath = System.getProperty("java.class.path")
     val traceManager = ObjectTraceManager()
     lateinit var analysisContext: ExecutionContext
@@ -72,20 +72,21 @@ class KexTool : Tool {
     override fun getExtraClassPath(): List<File> = emptyList()
 
     override fun initialize(src: File, bin: File, classPath: List<File>) {
-        for (jar in classPath.mapNotNull { it.asContainer() }) {
-            jarFiles += jar
+        for (container in classPath.mapNotNull { it.asContainer() }) {
+            packages += container.pkg
+            containers += container
         }
-        log.debug("Initialized containers: ${jarFiles.joinToString { it.name }}")
-        classManager.initialize(*jarFiles.toTypedArray())
-        origManager.initialize(*jarFiles.toTypedArray())
+        log.debug("Initialized containers: ${containers.joinToString { it.name }}")
+        classManager.initialize(*containers.toTypedArray())
+        origManager.initialize(*containers.toTypedArray())
         log.debug("Initialized class managers")
 
         // write all classes to output directory, so they will be seen by ClassLoader
-        jarFiles.forEach { it.unpack(classManager, outputDir, true) }
+        containers.forEach { it.unpack(classManager, outputDir, true) }
         log.debug("Unpacked jar files")
 
         val classLoader = URLClassLoader(arrayOf(outputDir.toUri().toURL()))
-        val jarClassLoader = URLClassLoader(jarFiles.flatMap { it.urls.toList() }.toTypedArray())
+        val jarClassLoader = URLClassLoader(containers.flatMap { it.urls.toList() }.toTypedArray())
 
         originalContext = ExecutionContext(origManager, jarClassLoader, EasyRandomDriver())
         analysisContext = ExecutionContext(classManager, classLoader, EasyRandomDriver())
@@ -94,7 +95,7 @@ class KexTool : Tool {
         cm = CoverageCounter(originalContext.cm, traceManager)
 
         // instrument all classes in the target package
-        executePipeline(originalContext.cm, pkg) {
+        executePipeline(originalContext.cm, packages) {
             +SystemExitTransformer(originalContext.cm)
             +RuntimeTraceCollector(originalContext.cm)
             +ClassWriter(originalContext, outputDir)
@@ -103,7 +104,7 @@ class KexTool : Tool {
 
         updateClassPath(analysisContext.loader as URLClassLoader)
 
-        executePipeline(analysisContext.cm, pkg) {
+        executePipeline(analysisContext.cm, packages) {
             +RandomChecker(analysisContext, traceManager)
             +LoopSimplifier(analysisContext.cm)
             +LoopDeroller(analysisContext.cm)
