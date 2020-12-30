@@ -75,9 +75,15 @@ class KexTool : Tool {
         for (jar in classPath.mapNotNull { it.asContainer(Package.defaultPackage) }) {
             jarFiles += jar
         }
+        log.debug("Initialized containers: ${jarFiles.joinToString { it.name }}")
+        classManager.initialize(*jarFiles.toTypedArray())
+        origManager.initialize(*jarFiles.toTypedArray())
+        log.debug("Initialized class managers")
 
         // write all classes to output directory, so they will be seen by ClassLoader
         jarFiles.forEach { it.unpack(classManager, outputDir, true) }
+        log.debug("Unpacked jar files")
+
         val classLoader = URLClassLoader(arrayOf(outputDir.toUri().toURL()))
         val jarClassLoader = URLClassLoader(jarFiles.flatMap { it.urls.toList() }.toTypedArray())
 
@@ -93,6 +99,7 @@ class KexTool : Tool {
             +RuntimeTraceCollector(originalContext.cm)
             +ClassWriter(originalContext, outputDir)
         }
+        log.debug("Executed instrumentation pipeline")
 
         updateClassPath(analysisContext.loader as URLClassLoader)
 
@@ -105,13 +112,16 @@ class KexTool : Tool {
             +SetterCollector(analysisContext)
             +ExternalConstructorCollector(analysisContext.cm)
         }
+        log.debug("Executed analysis pipeline")
     }
 
     override fun run(className: String) {
         val klass = analysisContext.cm[className]
+        log.debug("Running on klass $klass")
         executePipeline(analysisContext.cm, klass) {
             +DescriptorChecker(analysisContext, traceManager, psa)
         }
+        log.debug("Analyzed klass $klass")
     }
 
     override fun finalize() {
