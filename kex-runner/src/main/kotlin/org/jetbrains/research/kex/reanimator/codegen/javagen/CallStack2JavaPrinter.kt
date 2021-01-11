@@ -402,6 +402,6 @@ class CallStack2JavaPrinter(
     private fun printUnknown(owner: CallStack, call: UnknownCall): String {
         val type = call.target.type.csType
         actualTypes[owner] = type
-        return "$type ${owner.name} = unknown<$type>()"
+        return "$type ${owner.name} = unknown()"
     }
 }
