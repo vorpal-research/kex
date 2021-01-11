@@ -38,7 +38,6 @@ class CallStack2JavaPrinter(
 
                 method("unknown", listOf(type("T"))) {
                     returnType = type("T")
-                    annotations += "Test"
                     +"throw new IllegalStateException()"
                 }
             }
@@ -50,6 +49,7 @@ class CallStack2JavaPrinter(
             with(klass) {
                 current = method(method) {
                     returnType = void
+                    annotations += "Test"
                 }
             }
         }
