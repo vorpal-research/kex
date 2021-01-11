@@ -117,7 +117,8 @@ class KexTool : Tool {
     }
 
     override fun run(className: String) {
-        val klass = analysisContext.cm[className]
+        val canonicalName = className.replace('.', '/')
+        val klass = analysisContext.cm[canonicalName]
         log.debug("Running on klass $klass")
         executePipeline(analysisContext.cm, klass) {
             +DescriptorChecker(analysisContext, traceManager, psa)
