@@ -44,6 +44,17 @@ class SBSTProtocol(input: Reader, output: Writer) {
         }
     }
 
+    fun longNumber(): Long {
+        log.debug("expecting number")
+        val line = input.readLine()
+        log.debug("<< $line")
+        return try {
+            line.toLong()
+        } catch (e: NumberFormatException) {
+            throw IOException("Not a valid number: $line")
+        }
+    }
+
     fun directoryJarFile(): File {
         log.debug("expecting directory or jar file")
         val line = input.readLine()

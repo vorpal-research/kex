@@ -37,6 +37,7 @@ class SBSTRunTool(private val tool: Tool, input: Reader, output: Writer) {
         }
         channel.emit("READY")
         for (i in 0 until m) {
+            val timeBudget = channel.longNumber()
             val cName: String = channel.className()
             tool.run(cName)
             channel.emit("READY")
