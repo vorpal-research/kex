@@ -128,6 +128,7 @@ open class MethodChecker(
 
             log.debug("Block ${block.name} is covered = ${tm.isCovered(method, originalBlock)}")
             log.debug()
+            generator.emit()
 
             if (coverageResult is Result.UnsatResult) unreachableBlocks += block
         }

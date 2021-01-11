@@ -13,7 +13,7 @@ class JavaBuilder(val pkg: String = "") {
 
     override fun toString(): String = buildString {
         if (pkg.isNotBlank()) {
-            appendLine("package $pkg")
+            appendLine("package $pkg;")
             appendLine()
         }
         imports.forEach {

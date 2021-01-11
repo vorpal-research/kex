@@ -116,7 +116,7 @@ class KexTool : Tool {
         log.debug("Executed analysis pipeline")
     }
 
-    override fun run(className: String) {
+    override fun run(className: String, timeBudget: Long) {
         val canonicalName = className.replace('.', '/')
         val klass = analysisContext.cm[canonicalName]
         log.debug("Running on klass $klass")
