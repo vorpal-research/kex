@@ -137,7 +137,7 @@ class JavaBuilder(val pkg: String = "") {
         }
 
         override fun print(level: Int): String = buildString {
-            appendLine("${level.asOffset}class $name {")
+            appendLine("${level.asOffset}public class $name {")
             fields.forEach { appendLine("${(level + 1).asOffset}$it") }
             appendLine()
             methods.forEach {
