@@ -50,12 +50,14 @@ data class Failure(
 open class MethodChecker(
         val ctx: ExecutionContext,
         protected val tm: TraceManager<Trace>,
-        protected val psa: PredicateStateAnalysis) : MethodVisitor {
+        protected val psa: PredicateStateAnalysis,
+        protected val timeBudget: Long = 0L) : MethodVisitor {
     override val cm: ClassManager get() = ctx.cm
     val random: Randomizer get() = ctx.random
     val loader: ClassLoader get() = ctx.loader
     lateinit var generator: Reanimator //= Reanimator(ctx, psa)
         protected set
+    val startTime = System.currentTimeMillis()
 
     @ExperimentalSerializationApi
     @InternalSerializationApi
@@ -73,12 +75,18 @@ open class MethodChecker(
 
     override fun cleanup() {}
 
+    fun hasTimeBudget() = when (timeBudget) {
+        0L -> true
+        else -> (System.currentTimeMillis() - startTime) > timeBudget
+    }
+
     open protected fun getSearchStrategy(method: Method): SearchStrategy = DfsStrategy(method)
 
     @ExperimentalSerializationApi
     @InternalSerializationApi
     override fun visit(method: Method) {
         super.visit(method)
+        if (!hasTimeBudget()) return
 
         if (method.`class`.isSynthetic) return
         if (method.isAbstract || method.isStaticInitializer) return
@@ -129,6 +137,8 @@ open class MethodChecker(
             log.debug("Block ${block.name} is covered = ${tm.isCovered(method, originalBlock)}")
             log.debug()
             generator.emit()
+
+            if (!hasTimeBudget()) return
 
             if (coverageResult is Result.UnsatResult) unreachableBlocks += block
         }

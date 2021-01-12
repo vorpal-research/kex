@@ -121,7 +121,7 @@ class KexTool : Tool {
         val klass = analysisContext.cm[canonicalName]
         log.debug("Running on klass $klass")
         executePipeline(analysisContext.cm, klass) {
-            +DescriptorChecker(analysisContext, traceManager, psa)
+            +DescriptorChecker(analysisContext, traceManager, psa, timeBudget * 1000)
         }
         log.debug("Analyzed klass $klass")
     }

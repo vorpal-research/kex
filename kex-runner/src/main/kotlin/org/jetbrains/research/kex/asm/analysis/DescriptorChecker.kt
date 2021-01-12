@@ -19,7 +19,8 @@ import org.jetbrains.research.kfg.ir.Method
 class DescriptorChecker(
         ctx: ExecutionContext,
         tm: TraceManager<Trace>,
-        psa: PredicateStateAnalysis) : MethodChecker(ctx, tm, psa) {
+        psa: PredicateStateAnalysis,
+        timeBudget: Long = 0L) : MethodChecker(ctx, tm, psa, timeBudget) {
 
     override fun coverBlock(method: Method, block: BasicBlock): Result {
         val checker = Checker(method, ctx.loader, psa)
