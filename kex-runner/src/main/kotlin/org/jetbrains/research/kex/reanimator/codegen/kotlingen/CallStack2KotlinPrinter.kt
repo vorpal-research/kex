@@ -44,6 +44,7 @@ class CallStack2KotlinPrinter(
     }
 
     override fun printCallStack(callStack: CallStack, method: String) {
+        printedStacks.clear()
         with(builder) {
             with(klass) {
                 current = method(method) {
