@@ -51,6 +51,7 @@ class JavaBuilder(val pkg: String = "") {
         val arguments = mutableListOf<JavaArgument>()
         val statements = mutableListOf<JavaStatement>()
         val annotations = mutableListOf<String>()
+        val exceptions = mutableListOf<String>()
 
         open val signature
             get() = "public ${if (typeArgs.isNotEmpty()) typeArgs.joinToString(", ", prefix = "<", postfix = ">") else ""} " +
@@ -78,7 +79,11 @@ class JavaBuilder(val pkg: String = "") {
             for (anno in annotations) {
                 appendLine("${level.asOffset}@$anno")
             }
-            appendLine("${level.asOffset}$signature {")
+            append("${level.asOffset}$signature")
+            if (exceptions.isNotEmpty()) {
+                append(exceptions.joinToString(separator = ", ", prefix = " throws "))
+            }
+            appendLine(" {")
             val innerLevel = level + 1
             for (statement in statements) {
                 appendLine(statement.print(innerLevel))

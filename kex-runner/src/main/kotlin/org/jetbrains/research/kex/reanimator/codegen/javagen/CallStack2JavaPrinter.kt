@@ -30,6 +30,7 @@ class CallStack2JavaPrinter(
 
     init {
         with(builder) {
+            import("java.lang.Exception")
             import("java.lang.IllegalStateException")
             import("org.junit.Test")
 
@@ -50,6 +51,7 @@ class CallStack2JavaPrinter(
                 current = method(method) {
                     returnType = void
                     annotations += "Test"
+                    exceptions += "Exception"
                 }
             }
         }
