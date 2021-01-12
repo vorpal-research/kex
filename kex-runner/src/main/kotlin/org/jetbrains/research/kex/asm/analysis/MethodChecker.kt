@@ -77,7 +77,7 @@ open class MethodChecker(
 
     fun hasTimeBudget() = when (timeBudget) {
         0L -> true
-        else -> (System.currentTimeMillis() - startTime) > timeBudget
+        else -> (System.currentTimeMillis() - startTime) < timeBudget
     }
 
     open protected fun getSearchStrategy(method: Method): SearchStrategy = DfsStrategy(method)
