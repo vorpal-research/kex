@@ -47,6 +47,7 @@ class CallStack2JavaPrinter(
 
     override fun printCallStack(callStack: CallStack, method: String) {
         printedStacks.clear()
+        resolvedTypes.clear()
         with(builder) {
             with(klass) {
                 current = method(method) {
@@ -173,14 +174,20 @@ class CallStack2JavaPrinter(
     private fun resolveTypes(constructor: Constructor<*>, args: List<CallStack>) {
         val params = constructor.genericParameterTypes
         args.zip(params).forEach { (arg, param) ->
-            resolvedTypes[arg] = param.csType
+            if (arg !in resolvedTypes) {
+                resolvedTypes[arg] = param.csType
+                resolveTypes(arg)
+            }
         }
     }
 
     private fun resolveTypes(method: Method, args: List<CallStack>) {
         val params = method.genericParameterTypes.toList()
         args.zip(params).forEach { (arg, param) ->
-            resolvedTypes[arg] = param.csType
+            if (arg !in resolvedTypes) {
+                resolvedTypes[arg] = param.csType
+                resolveTypes(arg)
+            }
         }
     }
 
