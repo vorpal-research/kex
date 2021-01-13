@@ -76,17 +76,17 @@ class KexTool : Tool {
             packages += container.pkg
             containers += container
         }
+        val jarClassLoader = URLClassLoader(containers.flatMap { it.urls.toList() }.toTypedArray())
         log.debug("Initialized containers: ${containers.joinToString { it.name }}")
-        classManager.initialize(*containers.toTypedArray())
-        origManager.initialize(*containers.toTypedArray())
+
+        classManager.initialize(jarClassLoader, *containers.toTypedArray())
+        origManager.initialize(jarClassLoader, *containers.toTypedArray())
         log.debug("Initialized class managers")
 
         // write all classes to output directory, so they will be seen by ClassLoader
-        containers.forEach { it.unpack(classManager, outputDir, true) }
-        log.debug("Unpacked jar files")
-
+        containers.forEach { it.unpack(classManager, outputDir, true, jarClassLoader) }
         val classLoader = URLClassLoader(arrayOf(outputDir.toUri().toURL()))
-        val jarClassLoader = URLClassLoader(containers.flatMap { it.urls.toList() }.toTypedArray())
+        log.debug("Unpacked jar files")
 
         originalContext = ExecutionContext(origManager, jarClassLoader, EasyRandomDriver())
         analysisContext = ExecutionContext(classManager, classLoader, EasyRandomDriver())
