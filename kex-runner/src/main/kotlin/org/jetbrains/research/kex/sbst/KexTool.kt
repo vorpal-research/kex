@@ -44,7 +44,7 @@ class KexTool : Tool {
     val classManager: ClassManager
     val origManager: ClassManager
     val outputDir: Path
-    val packages = mutableListOf<Package>()
+    lateinit var pkg: Package
     val classPath = System.getProperty("java.class.path")
     val traceManager = ObjectTraceManager()
     lateinit var analysisContext: ExecutionContext
@@ -72,8 +72,10 @@ class KexTool : Tool {
     override fun getExtraClassPath(): List<File> = emptyList()
 
     override fun initialize(src: File, bin: File, classPath: List<File>) {
-        for (container in classPath.mapNotNull { it.asContainer() }) {
-            packages += container.pkg
+        val targetContainer = bin.asContainer()!!
+        pkg = targetContainer.pkg
+        containers += targetContainer
+        for (container in classPath.mapNotNull { it.asContainer(pkg) }) {
             containers += container
         }
         val jarClassLoader = URLClassLoader(containers.flatMap { it.urls.toList() }.toTypedArray())
@@ -95,7 +97,7 @@ class KexTool : Tool {
         cm = CoverageCounter(originalContext.cm, traceManager)
 
         // instrument all classes in the target package
-        executePipeline(originalContext.cm, packages) {
+        executePipeline(originalContext.cm, pkg) {
             +SystemExitTransformer(originalContext.cm)
             +RuntimeTraceCollector(originalContext.cm)
             +ClassWriter(originalContext, outputDir)
@@ -104,7 +106,7 @@ class KexTool : Tool {
 
         updateClassPath(analysisContext.loader as URLClassLoader)
 
-        executePipeline(analysisContext.cm, packages) {
+        executePipeline(analysisContext.cm, pkg) {
             +RandomChecker(analysisContext, traceManager)
             +LoopSimplifier(analysisContext.cm)
             +LoopDeroller(analysisContext.cm)
