@@ -1,6 +1,7 @@
 package org.jetbrains.research.kex.asm.transform
 
 import com.abdullin.kthelper.algorithm.GraphTraversal
+import com.abdullin.kthelper.algorithm.NoTopologicalSortingException
 import com.abdullin.kthelper.assert.unreachable
 import com.abdullin.kthelper.logging.log
 import com.abdullin.kthelper.toInt
@@ -34,6 +35,8 @@ class LoopDeroller(override val cm: ClassManager) : LoopVisitor {
         val blockMapping = hashMapOf<Method, MutableMap<BasicBlock, BasicBlock>>()
         val unreachableBlocks = hashMapOf<Method, MutableSet<BasicBlock>>()
     }
+
+    class InvalidLoopException : Exception()
 
     private data class State(
             val header: BasicBlock,
@@ -87,17 +90,26 @@ class LoopDeroller(override val cm: ClassManager) : LoopVisitor {
 
     override val preservesLoopInfo get() = false
 
+    override fun visit(method: Method) {
+        try {
+            super.visit(method)
+        } catch (e: InvalidLoopException) {
+            log.error("Can't deroll loops of method $method")
+        } catch (e: NoTopologicalSortingException) {
+            log.error("Can't perform topological sorting of loops of method $method")
+        }
+    }
+
     override fun visit(loop: Loop) {
         super.visit(loop)
+        if (loop.allEntries.size != 1) throw InvalidLoopException()
 
         // init state
         val method = loop.method ?: unreachable { log.error("Can't get method of loop") }
         val blockOrder = getBlockOrder(loop)
         val state = State.createState(loop)
         val derollCount = getDerollCount(loop)
-        val body = loop.body.toMutableList().apply {
-            forEach { loop.removeBlock(it) }
-        }
+        val body = loop.body.toMutableList().onEach { loop.removeBlock(it) }
 
         log.debug("Method $method, unrolling loop $loop to $derollCount iterations")
 
