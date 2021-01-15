@@ -18,8 +18,10 @@ import org.jetbrains.research.kfg.ir.value.IntConstant
 import org.jetbrains.research.kfg.ir.value.Value
 import org.jetbrains.research.kfg.ir.value.instruction.*
 import kotlin.math.abs
+import kotlin.math.min
 
 private val derollCount = kexConfig.getIntValue("loop", "deroll-count", 3)
+private val maxDerollCount = kexConfig.getIntValue("loop", "max-deroll-count", 0)
 
 val BasicBlock.originalBlock: BasicBlock
     get() = LoopDeroller.blockMapping[this.parent]?.get(this) ?: this
@@ -186,11 +188,16 @@ class LoopDeroller(override val cm: ClassManager) : LoopVisitor {
         remapMethodPhis(methodPhis, methodPhiMappings)
     }
 
+    private fun getMinDerollCount(count: Int): Int = when {
+        maxDerollCount > 0 -> min(maxDerollCount, count)
+        else -> count
+    }
+
     private fun getDerollCount(loop: Loop): Int {
         val tripCount = getConstantTripCount(loop)
         return when {
-            tripCount > 0 -> tripCount
-            else -> derollCount
+            tripCount > 0 -> getMinDerollCount(tripCount)
+            else -> getMinDerollCount(derollCount)
         }
     }
 
