@@ -3,6 +3,7 @@ package org.jetbrains.research.kex.asm.state
 import com.abdullin.kthelper.algorithm.DominatorTree
 import com.abdullin.kthelper.algorithm.DominatorTreeBuilder
 import com.abdullin.kthelper.algorithm.GraphTraversal
+import com.abdullin.kthelper.assert.AssertionException
 import com.abdullin.kthelper.collection.queueOf
 import org.jetbrains.research.kex.state.PredicateState
 import org.jetbrains.research.kex.state.emptyState
@@ -23,7 +24,11 @@ class PredicateStateBuilder(val method: Method) {
     private val predicateBuilder = PredicateBuilder(method.cm)
 
     fun init() {
-        predicateBuilder.visit(method)
+        try {
+            predicateBuilder.visit(method)
+        } catch (e: AssertionException) {
+            return
+        }
         if (!method.isAbstract) {
             val order = GraphTraversal(method).topologicalSort()
 
