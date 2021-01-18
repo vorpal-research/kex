@@ -15,6 +15,7 @@ import org.jetbrains.research.kfg.ir.CatchBlock
 import org.jetbrains.research.kfg.ir.Method
 import org.jetbrains.research.kfg.ir.value.BlockUser
 import org.jetbrains.research.kfg.ir.value.IntConstant
+import org.jetbrains.research.kfg.ir.value.NullConstant
 import org.jetbrains.research.kfg.ir.value.Value
 import org.jetbrains.research.kfg.ir.value.instruction.*
 import kotlin.math.abs
@@ -318,8 +319,13 @@ class LoopDeroller(override val cm: ClassManager) : LoopVisitor {
 
                 if (updated.predecessors.toSet().size == 1) {
                     val actual = previousMap.getValue(state.lastLatch)
-                    updated.replaceAllUsesWith(actual)
-                    state[inst] = actual
+                    val mappedActual = if (actual is NullConstant) {
+                        val newInst = instructions.getCast(updated.type, actual)
+                        newBlock.insertBefore(updated, newInst)
+                        newInst
+                    } else actual
+                    updated.replaceAllUsesWith(mappedActual)
+                    state[inst] = mappedActual
                 }
             }
         }
