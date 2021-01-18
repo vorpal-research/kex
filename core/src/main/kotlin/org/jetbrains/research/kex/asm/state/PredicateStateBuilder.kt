@@ -26,7 +26,7 @@ class PredicateStateBuilder(val method: Method) {
     fun init() {
         try {
             predicateBuilder.visit(method)
-        } catch (e: AssertionException) {
+        } catch (e: Throwable) {
             return
         }
         if (!method.isAbstract) {
