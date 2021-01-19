@@ -411,7 +411,9 @@ class CallStack2JavaPrinter(
     }
 
     private fun printEnumValueCreation(owner: CallStack, call: EnumValueCreation): String {
-        return "${owner.name} = ${call.klass.javaString}.${call.name}"
+        val actualType = call.klass.type.csType
+        actualTypes[owner] = actualType
+        return "$actualType ${owner.name} = ${call.klass.javaString}.${call.name}"
     }
 
     private fun printUnknown(owner: CallStack, call: UnknownCall): String {
