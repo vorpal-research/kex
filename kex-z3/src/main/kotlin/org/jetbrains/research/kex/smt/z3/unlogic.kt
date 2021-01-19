@@ -69,6 +69,10 @@ object Z3Unlogic {
                 val arg2 = undo(expr.args[1])
                 term { const(arg1.numericValue / arg2.numericValue) }
             }
+            expr.isITE -> {
+                val cond = undo(expr.args[0]) as ConstBoolTerm
+                if (cond.value) undo(expr.args[1]) else undo(expr.args[2])
+            }
             else -> TODO()
         }
         // todo: support more bv expressions
