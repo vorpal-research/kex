@@ -369,7 +369,7 @@ class CallStack2JavaPrinter(
             "$type ${owner.name} = ${constructor.`class`.javaString}.${constructor.name}($args)"
         } else {
             actualTypes[owner] = actualType
-            "$actualType ${owner.name} = new $actualType()"
+            "$actualType ${owner.name} = ${constructor.`class`.javaString}.${constructor.name}($args)"
         }
     }
 
