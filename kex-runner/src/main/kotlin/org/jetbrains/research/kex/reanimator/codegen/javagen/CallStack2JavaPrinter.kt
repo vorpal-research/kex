@@ -48,6 +48,7 @@ class CallStack2JavaPrinter(
     override fun printCallStack(callStack: CallStack, method: String) {
         printedStacks.clear()
         resolvedTypes.clear()
+        actualTypes.clear()
         with(builder) {
             with(klass) {
                 current = method(method) {
