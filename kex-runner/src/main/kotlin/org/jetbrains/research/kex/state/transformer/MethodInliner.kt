@@ -9,6 +9,8 @@ import org.jetbrains.research.kex.state.PredicateState
 import org.jetbrains.research.kex.state.StateBuilder
 import org.jetbrains.research.kex.state.predicate.CallPredicate
 import org.jetbrains.research.kex.state.predicate.Predicate
+import org.jetbrains.research.kex.state.predicate.predicate
+import org.jetbrains.research.kex.state.predicate.state
 import org.jetbrains.research.kex.state.term.*
 import org.jetbrains.research.kfg.ir.Method
 
@@ -36,7 +38,8 @@ interface Inliner<T> : RecollectingTransformer<Inliner<T>> {
         return super.apply(ps)
     }
 
-    fun buildMappings(callTerm: CallTerm, method: Method, returnTerm: Term?): Map<Term, Term> {
+    fun buildMappings(callTerm: CallTerm, method: Method, returnTerm: Term?): Pair<List<Predicate>, Map<Term, Term>> {
+        val casts = mutableListOf<Predicate>()
         val mappings = hashMapOf<Term, Term>()
         if (!callTerm.isStatic) {
             val `this` = term { `this`(method.`class`.kexType) }
@@ -49,11 +52,22 @@ interface Inliner<T> : RecollectingTransformer<Inliner<T>> {
 
         for ((index, argType) in method.argTypes.withIndex()) {
             val argTerm = term { arg(argType.kexType, index) }
-            val calledArg = callTerm.arguments[index]
-            mappings[argTerm] = calledArg
+            when (val calledArg = callTerm.arguments[index]) {
+                is NullTerm -> {
+                    val casted = state {
+                        val newArg = generate(argTerm.type)
+                        mappings[argTerm] = newArg
+                        newArg equality calledArg
+                    }
+                    casts += casted
+                }
+                else -> {
+                    mappings[argTerm] = calledArg
+                }
+            }
         }
 
-        return mappings
+        return casts to mappings
     }
 
     fun prepareInlinedState(method: Method, mappings: Map<Term, Term>): PredicateState? {
@@ -71,9 +85,10 @@ interface Inliner<T> : RecollectingTransformer<Inliner<T>> {
         if (!isInlinable(calledMethod)) return predicate
 
         val inlinedMethod = getInlinedMethod(call) ?: return predicate
-        val mappings = buildMappings(call, inlinedMethod, predicate.lhvUnsafe)
+        val (casts, mappings) = buildMappings(call, inlinedMethod, predicate.lhvUnsafe)
 
         val inlinedState = prepareInlinedState(inlinedMethod, mappings) ?: return predicate
+        casts.onEach { currentBuilder += it }
         currentBuilder += inlinedState
         hasInlined = true
         return nothing()
