@@ -344,8 +344,15 @@ class CallStack2JavaPrinter(
             it.forceCastIfNull(resolvedTypes[it])
         }
         val actualType = CSClass(call.klass.type)
-        actualTypes[owner] = actualType
-        return "$actualType ${owner.name} = new $actualType($args)"
+        return if (resolvedTypes[owner] != null) {
+            val rest = resolvedTypes[owner]!!
+            val type = actualType.merge(rest)
+            actualTypes[owner] = type
+            "$type ${owner.name} = new $type($args)"
+        } else {
+            actualTypes[owner] = actualType
+            "$actualType ${owner.name} = new $actualType($args)"
+        }
     }
 
     private fun printExternalConstructorCall(owner: CallStack, call: ExternalConstructorCall): String {
@@ -355,8 +362,15 @@ class CallStack2JavaPrinter(
             it.forceCastIfNull(resolvedTypes[it])
         }
         val actualType = CSClass(constructor.returnType)
-        actualTypes[owner] = actualType
-        return "$actualType ${owner.name} = ${constructor.`class`.javaString}.${constructor.name}($args)"
+        return if (resolvedTypes[owner] != null) {
+            val rest = resolvedTypes[owner]!!
+            val type = actualType.merge(rest)
+            actualTypes[owner] = type
+            "$type ${owner.name} = ${constructor.`class`.javaString}.${constructor.name}($args)"
+        } else {
+            actualTypes[owner] = actualType
+            "$actualType ${owner.name} = new $actualType()"
+        }
     }
 
     private fun printMethodCall(owner: CallStack, call: MethodCall): String {
