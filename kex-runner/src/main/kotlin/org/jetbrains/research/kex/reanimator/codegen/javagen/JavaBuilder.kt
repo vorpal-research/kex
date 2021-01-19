@@ -13,7 +13,7 @@ class JavaBuilder(val pkg: String = "") {
 
     override fun toString(): String = buildString {
         if (pkg.isNotBlank()) {
-            appendLine("package $pkg")
+            appendLine("package $pkg;")
             appendLine()
         }
         imports.forEach {
@@ -50,6 +50,9 @@ class JavaBuilder(val pkg: String = "") {
         lateinit var returnType: Type
         val arguments = mutableListOf<JavaArgument>()
         val statements = mutableListOf<JavaStatement>()
+        val annotations = mutableListOf<String>()
+        val exceptions = mutableListOf<String>()
+
         open val signature
             get() = "public ${if (typeArgs.isNotEmpty()) typeArgs.joinToString(", ", prefix = "<", postfix = ">") else ""} " +
                     "$returnType $name(${arguments.joinToString(", ")})"
@@ -73,7 +76,14 @@ class JavaBuilder(val pkg: String = "") {
         override fun toString() = print(0)
 
         override fun print(level: Int): String = buildString {
-            appendLine("${level.asOffset}$signature {")
+            for (anno in annotations) {
+                appendLine("${level.asOffset}@$anno")
+            }
+            append("${level.asOffset}$signature")
+            if (exceptions.isNotEmpty()) {
+                append(exceptions.joinToString(separator = ", ", prefix = " throws "))
+            }
+            appendLine(" {")
             val innerLevel = level + 1
             for (statement in statements) {
                 appendLine(statement.print(innerLevel))
@@ -125,8 +135,14 @@ class JavaBuilder(val pkg: String = "") {
             methods += funBuilder
         }
 
+        fun constructor(typeArgs: List<Type>, body: JavaFunction.() -> Unit) {
+            val funBuilder = JavaMethod(this, name, typeArgs)
+            funBuilder.body()
+            methods += funBuilder
+        }
+
         override fun print(level: Int): String = buildString {
-            appendLine("${level.asOffset}class $name {")
+            appendLine("${level.asOffset}public class $name {")
             fields.forEach { appendLine("${(level + 1).asOffset}$it") }
             appendLine()
             methods.forEach {

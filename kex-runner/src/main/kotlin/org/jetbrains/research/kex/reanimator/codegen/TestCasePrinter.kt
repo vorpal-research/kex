@@ -11,6 +11,7 @@ import org.jetbrains.research.kfg.ir.BasicBlock
 import org.jetbrains.research.kfg.ir.Class
 import org.jetbrains.research.kfg.ir.Method
 import java.io.File
+import kotlin.math.abs
 import java.nio.file.Paths
 
 private val useApiGeneration by lazy { kexConfig.getBooleanValue("apiGeneration", "enabled", true) }
@@ -22,7 +23,7 @@ class TestCasePrinter(val ctx: ExecutionContext, val method: Method) {
     private val printer: CallStackPrinter
     private var isEmpty = true
     val packageName = method.`class`.`package`.name
-    val klassName = "${method.`class`.validName}_${method.validName}"
+    val klassName = "${method.`class`.validName}_${method.validName}_${abs(method.hashCode())}"
 
     private val Class.validName get() = name.replace("$", "_")
     private val Method.validName get() = name.replace(Regex("[^a-zA-Z0-9]"), "")

@@ -30,20 +30,30 @@ class CallStack2JavaPrinter(
 
     init {
         with(builder) {
+            import("java.lang.Exception")
+            import("java.lang.IllegalStateException")
+            import("org.junit.Test")
+
             with(klass) {
+                constructor() {}
+
                 method("unknown", listOf(type("T"))) {
                     returnType = type("T")
-                    +"throw new NotImplementedException()"
+                    +"throw new IllegalStateException()"
                 }
             }
         }
     }
 
     override fun printCallStack(callStack: CallStack, method: String) {
+        printedStacks.clear()
+        resolvedTypes.clear()
         with(builder) {
             with(klass) {
                 current = method(method) {
                     returnType = void
+                    annotations += "Test"
+                    exceptions += "Exception"
                 }
             }
         }
@@ -164,14 +174,20 @@ class CallStack2JavaPrinter(
     private fun resolveTypes(constructor: Constructor<*>, args: List<CallStack>) {
         val params = constructor.genericParameterTypes
         args.zip(params).forEach { (arg, param) ->
-            resolvedTypes[arg] = param.csType
+            if (arg !in resolvedTypes) {
+                resolvedTypes[arg] = param.csType
+                resolveTypes(arg)
+            }
         }
     }
 
     private fun resolveTypes(method: Method, args: List<CallStack>) {
         val params = method.genericParameterTypes.toList()
         args.zip(params).forEach { (arg, param) ->
-            resolvedTypes[arg] = param.csType
+            if (arg !in resolvedTypes) {
+                resolvedTypes[arg] = param.csType
+                resolveTypes(arg)
+            }
         }
     }
 
@@ -304,6 +320,11 @@ class CallStack2JavaPrinter(
         }
     }
 
+    private fun CallStack.forceCastIfNull(reqType: CSType?): String = when (this.stackName) {
+        "null" -> "($reqType)${this.stackName}"
+        else -> this.cast(reqType)
+    }
+
     private fun printDefaultConstructor(owner: CallStack, call: DefaultConstructorCall): String {
         val actualType = CSClass(call.klass.type)
         return if (resolvedTypes[owner] != null) {
@@ -320,29 +341,43 @@ class CallStack2JavaPrinter(
     private fun printConstructorCall(owner: CallStack, call: ConstructorCall): String {
         call.args.forEach { it.printAsJava() }
         val args = call.args.joinToString(", ") {
-            it.cast(resolvedTypes[it])
+            it.forceCastIfNull(resolvedTypes[it])
         }
         val actualType = CSClass(call.klass.type)
-        actualTypes[owner] = actualType
-        return "$actualType ${owner.name} = new $actualType($args)"
+        return if (resolvedTypes[owner] != null) {
+            val rest = resolvedTypes[owner]!!
+            val type = actualType.merge(rest)
+            actualTypes[owner] = type
+            "$type ${owner.name} = new $type($args)"
+        } else {
+            actualTypes[owner] = actualType
+            "$actualType ${owner.name} = new $actualType($args)"
+        }
     }
 
     private fun printExternalConstructorCall(owner: CallStack, call: ExternalConstructorCall): String {
         call.args.forEach { it.printAsJava() }
         val constructor = call.constructor
         val args = call.args.joinToString(", ") {
-            it.cast(resolvedTypes[it])
+            it.forceCastIfNull(resolvedTypes[it])
         }
         val actualType = CSClass(constructor.returnType)
-        actualTypes[owner] = actualType
-        return "$actualType ${owner.name} = ${constructor.`class`.javaString}.${constructor.name}($args)"
+        return if (resolvedTypes[owner] != null) {
+            val rest = resolvedTypes[owner]!!
+            val type = actualType.merge(rest)
+            actualTypes[owner] = type
+            "$type ${owner.name} = ${constructor.`class`.javaString}.${constructor.name}($args)"
+        } else {
+            actualTypes[owner] = actualType
+            "$actualType ${owner.name} = ${constructor.`class`.javaString}.${constructor.name}($args)"
+        }
     }
 
     private fun printMethodCall(owner: CallStack, call: MethodCall): String {
         call.args.forEach { it.printAsJava() }
         val method = call.method
         val args = call.args.joinToString(", ") {
-            it.cast(resolvedTypes[it])
+            it.forceCastIfNull(resolvedTypes[it])
         }
         return "${owner.name}.${method.name}($args)"
     }
@@ -352,7 +387,7 @@ class CallStack2JavaPrinter(
         val klass = call.method.`class`
         val method = call.method
         val args = call.args.joinToString(", ") {
-            it.cast(resolvedTypes[it])
+            it.forceCastIfNull(resolvedTypes[it])
         }
         return "${klass.javaString}.${method.name}($args)"
     }
@@ -390,12 +425,14 @@ class CallStack2JavaPrinter(
     }
 
     private fun printEnumValueCreation(owner: CallStack, call: EnumValueCreation): String {
-        return "${owner.name} = ${call.klass.javaString}.${call.name}"
+        val actualType = call.klass.type.csType
+        actualTypes[owner] = actualType
+        return "$actualType ${owner.name} = ${call.klass.javaString}.${call.name}"
     }
 
     private fun printUnknown(owner: CallStack, call: UnknownCall): String {
         val type = call.target.type.csType
         actualTypes[owner] = type
-        return "$type ${owner.name} = unknown<$type>()"
+        return "$type ${owner.name} = unknown()"
     }
 }
