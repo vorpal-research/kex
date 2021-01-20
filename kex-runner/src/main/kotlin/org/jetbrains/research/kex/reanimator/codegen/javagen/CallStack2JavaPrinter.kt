@@ -1,5 +1,6 @@
 package org.jetbrains.research.kex.reanimator.codegen.javagen
 
+import com.abdullin.kthelper.assert.ktassert
 import com.abdullin.kthelper.assert.unreachable
 import com.abdullin.kthelper.logging.log
 import org.jetbrains.research.kex.ExecutionContext
@@ -249,8 +250,17 @@ class CallStack2JavaPrinter(
             is ArrayType -> "${this.component.javaString}[]"
             else -> {
                 val klass = (this as ClassType).`class`
-                val name = klass.canonicalDesc.replace("$", ".")
-                builder.import(name)
+                val canonicalDesc = klass.canonicalDesc
+                val splitted = canonicalDesc.split("$")
+                ktassert(splitted.isNotEmpty())
+                buildString {
+                    append(splitted[0])
+                    builder.import(this.toString())
+                    for (substring in splitted.drop(1)) {
+                        append(".$substring")
+                        builder.import(this.toString())
+                    }
+                }
                 klass.name.replace("$", ".")
             }
         }
