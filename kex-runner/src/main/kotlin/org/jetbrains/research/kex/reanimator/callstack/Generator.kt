@@ -261,7 +261,7 @@ class StringGenerator(private val fallback: Generator) : Generator {
     override val context: GeneratorContext
         get() = fallback.context
 
-    override fun supports(type: KexType) = type == KexClass("java/lang/String")
+    override fun supports(type: KexType) = type.toString() == "java/lang/String"
 
     override fun generate(descriptor: Descriptor, generationDepth: Int): CallStack = with(context) {
         descriptor as? ObjectDescriptor ?: throw IllegalArgumentException()
