@@ -316,7 +316,18 @@ class CallStack2JavaPrinter(
             is Float -> "${value}F".also {
                 actualTypes[this] = CSClass(ctx.types.floatType)
             }
-            is Double -> "$value".also {
+            is Double -> when {
+                value.isNaN() -> "Double.NaN".also {
+                    builder.import("java.lang.Double")
+                }
+                value.isInfinite() && value < 0.0 -> "Double.NEGATIVE_INFINITY".also {
+                    builder.import("java.lang.Double")
+                }
+                value.isInfinite() -> "Double.POSITIVE_INFINITY".also {
+                    builder.import("java.lang.Double")
+                }
+                else -> "$value"
+            }.also {
                 actualTypes[this] = CSClass(ctx.types.doubleType)
             }
             else -> unreachable { log.error("Unknown primary value ${this}") }
