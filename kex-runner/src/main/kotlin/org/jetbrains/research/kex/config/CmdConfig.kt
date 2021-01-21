@@ -53,7 +53,7 @@ class CmdConfig(args: Array<String>) : Config() {
         helpOpt.isRequired = false
         options.addOption(helpOpt)
 
-        val jarOpt = Option("j", "jar", true, "input jar file path")
+        val jarOpt = Option("cp", "classpath", true, "classpath for analysis")
         jarOpt.isRequired = true
         options.addOption(jarOpt)
 

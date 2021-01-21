@@ -16,9 +16,9 @@ import org.jetbrains.research.kex.state.term.term
 import org.jetbrains.research.kex.test.Intrinsics
 import org.jetbrains.research.kex.trace.`object`.ObjectTraceManager
 import org.jetbrains.research.kfg.ClassManager
-import org.jetbrains.research.kfg.Jar
 import org.jetbrains.research.kfg.KfgConfig
 import org.jetbrains.research.kfg.analysis.LoopSimplifier
+import org.jetbrains.research.kfg.container.asContainer
 import org.jetbrains.research.kfg.ir.Class
 import org.jetbrains.research.kfg.ir.Method
 import org.jetbrains.research.kfg.ir.MethodDesc
@@ -29,6 +29,7 @@ import org.jetbrains.research.kfg.util.Flags
 import org.jetbrains.research.kfg.visitor.executePipeline
 import java.net.URLClassLoader
 import java.nio.file.Files
+import java.nio.file.Paths
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
@@ -40,7 +41,7 @@ abstract class KexRunnerTest : KexTest() {
     val originalContext: ExecutionContext
 
     init {
-        val jar = Jar(jarPath, `package`)
+        val jar = Paths.get(jarPath).asContainer(`package`)!!
         val origManager = ClassManager(KfgConfig(flags = Flags.readAll, failOnError = false))
 
         jar.unpack(cm, targetDir, true)

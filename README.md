@@ -37,8 +37,8 @@ mvn clean verify
 ```
 Usage: kex
     --config <arg>                  configuration file
+ -cp,--classpath <arg>              classpath for analysis
  -h,--help                          print this help and quit
- -j,--jar <arg>                     input jar file path
     --log <arg>                     log file name (`kex.log` by default)
  -m,--mode <arg>                    run mode: bmc, concolic or debug
     --option <section:name:value>   set kex option through command line

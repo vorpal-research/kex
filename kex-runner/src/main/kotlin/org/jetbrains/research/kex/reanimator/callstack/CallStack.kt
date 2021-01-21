@@ -78,7 +78,7 @@ open class CallStack(val name: String, val stack: MutableList<ApiCall>) : Iterab
     fun clone() = CallStack(name, stack.toMutableList())
 }
 
-data class PrimaryValue<T>(val value: T) : CallStack(value.toString(), mutableListOf()) {
+class PrimaryValue<T>(val value: T) : CallStack(value.toString(), mutableListOf()) {
     override fun toString() = value.toString()
 }
 
