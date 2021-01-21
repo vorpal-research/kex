@@ -1,11 +1,8 @@
 package org.jetbrains.research.kex.smt.z3
 
+import com.abdullin.kthelper.*
 import com.abdullin.kthelper.assert.unreachable
-import com.abdullin.kthelper.div
 import com.abdullin.kthelper.logging.log
-import com.abdullin.kthelper.minus
-import com.abdullin.kthelper.plus
-import com.abdullin.kthelper.times
 import com.microsoft.z3.*
 import com.microsoft.z3.enumerations.Z3_lbool
 import org.jetbrains.research.kex.smt.SMTEngine
@@ -69,6 +66,10 @@ object Z3Unlogic {
                 val arg2 = undo(expr.args[1])
                 term { const(arg1.numericValue / arg2.numericValue) }
             }
+            expr.isITE -> {
+                val cond = undo(expr.args[0]) as ConstBoolTerm
+                if (cond.value) undo(expr.args[1]) else undo(expr.args[2])
+            }
             else -> TODO()
         }
         // todo: support more bv expressions
@@ -78,7 +79,14 @@ object Z3Unlogic {
     private fun undoBool(expr: BoolExpr) = when (expr.boolValue) {
         Z3_lbool.Z3_L_TRUE -> term { const(true) }
         Z3_lbool.Z3_L_FALSE -> term { const(false) }
-        else -> unreachable { log.error("Trying to undo unknown") }
+        else -> when {
+            expr.isBVSLE -> term { const(undo(expr.args[0]).numericValue <= undo(expr.args[1]).numericValue) }
+            expr.isBVSLT -> term { const(undo(expr.args[0]).numericValue < undo(expr.args[1]).numericValue) }
+            expr.isBVSGE -> term { const(undo(expr.args[0]).numericValue >= undo(expr.args[1]).numericValue) }
+            expr.isBVSGT -> term { const(undo(expr.args[0]).numericValue > undo(expr.args[1]).numericValue) }
+            expr.isEq -> term { const(undo(expr.args[0]).numericValue == undo(expr.args[1]).numericValue) }
+            else -> unreachable { log.error("Trying to undo unknown") }
+        }
     }
 
     private fun undoBV(expr: BitVecNum) = when (expr.sortSize) {
