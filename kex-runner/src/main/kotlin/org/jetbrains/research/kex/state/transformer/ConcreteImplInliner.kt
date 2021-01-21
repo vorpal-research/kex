@@ -53,7 +53,7 @@ class ConcreteImplInliner(val types: TypeFactory,
         if (!isInlinable(calledMethod)) return predicate
 
         val inlinedMethod = getInlinedMethod(call) ?: return predicate
-        var mappings = buildMappings(call, inlinedMethod, predicate.lhvUnsafe)
+        var (casts, mappings) = buildMappings(call, inlinedMethod, predicate.lhvUnsafe)
 
         val callerClass = when (val kexType = call.owner.type) {
             is KexClass ->  kexType.kfgClass(types)
@@ -72,6 +72,7 @@ class ConcreteImplInliner(val types: TypeFactory,
         castPredicate?.run {
             currentBuilder += this
         }
+        casts.onEach { currentBuilder += it }
         currentBuilder += inlinedState
         hasInlined = true
         return nothing()

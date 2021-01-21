@@ -1,5 +1,6 @@
 package org.jetbrains.research.kex.reanimator.codegen.javagen
 
+import com.abdullin.kthelper.assert.ktassert
 import com.abdullin.kthelper.assert.unreachable
 import com.abdullin.kthelper.logging.log
 import org.jetbrains.research.kex.ExecutionContext
@@ -30,7 +31,7 @@ class CallStack2JavaPrinter(
 
     init {
         with(builder) {
-            import("java.lang.Exception")
+            import("java.lang.Throwable")
             import("java.lang.IllegalStateException")
             import("org.junit.Test")
 
@@ -54,7 +55,7 @@ class CallStack2JavaPrinter(
                 current = method(method) {
                     returnType = void
                     annotations += "Test"
-                    exceptions += "Exception"
+                    exceptions += "Throwable"
                 }
             }
         }
@@ -250,8 +251,17 @@ class CallStack2JavaPrinter(
             is ArrayType -> "${this.component.javaString}[]"
             else -> {
                 val klass = (this as ClassType).`class`
-                val name = klass.canonicalDesc.replace("$", ".")
-                builder.import(name)
+                val canonicalDesc = klass.canonicalDesc
+                val splitted = canonicalDesc.split("$")
+                ktassert(splitted.isNotEmpty())
+                buildString {
+                    append(splitted[0])
+                    builder.import(this.toString())
+                    for (substring in splitted.drop(1)) {
+                        append(".$substring")
+                        builder.import(this.toString())
+                    }
+                }
                 klass.name.replace("$", ".")
             }
         }
@@ -307,7 +317,18 @@ class CallStack2JavaPrinter(
             is Float -> "${value}F".also {
                 actualTypes[this] = CSClass(ctx.types.floatType)
             }
-            is Double -> "$value".also {
+            is Double -> when {
+                value.isNaN() -> "Double.NaN".also {
+                    builder.import("java.lang.Double")
+                }
+                value.isInfinite() && value < 0.0 -> "Double.NEGATIVE_INFINITY".also {
+                    builder.import("java.lang.Double")
+                }
+                value.isInfinite() -> "Double.POSITIVE_INFINITY".also {
+                    builder.import("java.lang.Double")
+                }
+                else -> "$value"
+            }.also {
                 actualTypes[this] = CSClass(ctx.types.doubleType)
             }
             else -> unreachable { log.error("Unknown primary value ${this}") }
@@ -393,15 +414,22 @@ class CallStack2JavaPrinter(
         return "${klass.javaString}.${method.name}($args)"
     }
 
+    private fun CSType.elementTypeDepth(depth: Int = -1): Pair<Int, CSType> = when (this) {
+        is CSArray -> this.element.elementTypeDepth(depth + 1)
+        is CSPrimaryArray -> this.element.elementTypeDepth(depth + 1)
+        else -> depth to this
+    }
+
     private fun printNewArray(owner: CallStack, call: NewArray): String {
         val actualType = call.asArray.csType
-        val elementType = when (actualType) {
-            is CSArray -> actualType.element
-            is CSPrimaryArray -> actualType.element
-            else -> TODO()
-        }
+        val (depth, elementType) = actualType.elementTypeDepth()
+//        val elementType = when (actualType) {
+//            is CSArray -> actualType.element
+//            is CSPrimaryArray -> actualType.element
+//            else -> TODO()
+//        }
         actualTypes[owner] = actualType
-        return "$actualType ${owner.name} = new $elementType[${call.length.stackName}]"
+        return "$actualType ${owner.name} = new $elementType[${call.length.stackName}]${"[]".repeat(depth)}"
     }
 
     private fun printArrayWrite(owner: CallStack, call: ArrayWrite): String {
