@@ -413,15 +413,22 @@ class CallStack2JavaPrinter(
         return "${klass.javaString}.${method.name}($args)"
     }
 
+    private fun CSType.elementTypeDepth(depth: Int = -1): Pair<Int, CSType> = when (this) {
+        is CSArray -> this.element.elementTypeDepth(depth + 1)
+        is CSPrimaryArray -> this.element.elementTypeDepth(depth + 1)
+        else -> depth to this
+    }
+
     private fun printNewArray(owner: CallStack, call: NewArray): String {
         val actualType = call.asArray.csType
-        val elementType = when (actualType) {
-            is CSArray -> actualType.element
-            is CSPrimaryArray -> actualType.element
-            else -> TODO()
-        }
+        val (depth, elementType) = actualType.elementTypeDepth()
+//        val elementType = when (actualType) {
+//            is CSArray -> actualType.element
+//            is CSPrimaryArray -> actualType.element
+//            else -> TODO()
+//        }
         actualTypes[owner] = actualType
-        return "$actualType ${owner.name} = new $elementType[${call.length.stackName}]"
+        return "$actualType ${owner.name} = new $elementType[${call.length.stackName}]${"[]".repeat(depth)}"
     }
 
     private fun printArrayWrite(owner: CallStack, call: ArrayWrite): String {
