@@ -3,6 +3,9 @@ package org.jetbrains.research.kex.reanimator.descriptor
 import com.abdullin.kthelper.`try`
 import com.abdullin.kthelper.assert.unreachable
 import com.abdullin.kthelper.logging.log
+import org.jetbrains.research.kex.asm.util.Visibility
+import org.jetbrains.research.kex.asm.util.visibility
+import org.jetbrains.research.kex.config.kexConfig
 import org.jetbrains.research.kex.ktype.*
 import org.jetbrains.research.kex.state.PredicateState
 import org.jetbrains.research.kex.state.StateBuilder
@@ -15,8 +18,11 @@ import org.jetbrains.research.kex.state.term.term
 import org.jetbrains.research.kfg.ClassManager
 import org.jetbrains.research.kfg.ir.Class
 
+private val visibilityLevel by lazy { kexConfig.getEnumValue("apiGeneration", "visibility", true, Visibility.PUBLIC) }
+
 val Class.isInstantiable: Boolean
     get() = when {
+        visibilityLevel > this.visibility -> false
         this.isAbstract -> false
         this.isInterface -> false
         !this.isStatic && this.outerClass != null -> false
