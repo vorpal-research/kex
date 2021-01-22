@@ -7,6 +7,7 @@ import org.jetbrains.research.kex.asm.util.Visibility
 import org.jetbrains.research.kex.asm.util.visibility
 import org.jetbrains.research.kex.config.kexConfig
 import org.jetbrains.research.kex.ktype.*
+import org.jetbrains.research.kex.reanimator.NoConcreteInstanceException
 import org.jetbrains.research.kex.state.PredicateState
 import org.jetbrains.research.kex.state.StateBuilder
 import org.jetbrains.research.kex.state.emptyState
@@ -17,6 +18,7 @@ import org.jetbrains.research.kex.state.term.Term
 import org.jetbrains.research.kex.state.term.term
 import org.jetbrains.research.kfg.ClassManager
 import org.jetbrains.research.kfg.ir.Class
+import org.jetbrains.research.kfg.ir.ConcreteClass
 
 private val visibilityLevel by lazy { kexConfig.getEnumValue("apiGeneration", "visibility", true, Visibility.PUBLIC) }
 
@@ -32,6 +34,7 @@ val Class.isInstantiable: Boolean
 fun KexClass.concreteClass(cm: ClassManager): KexClass {
     val kfgKlass = this.kfgClass(cm.type)
     val concrete = when {
+        kfgKlass !is ConcreteClass -> throw NoConcreteInstanceException(kfgKlass)
         kfgKlass.isInstantiable -> kfgKlass
         else -> ConcreteInstanceGenerator[kfgKlass]
     }
