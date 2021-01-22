@@ -4,6 +4,9 @@ import com.abdullin.kthelper.assert.ktassert
 import com.abdullin.kthelper.assert.unreachable
 import com.abdullin.kthelper.logging.log
 import org.jetbrains.research.kex.ExecutionContext
+import org.jetbrains.research.kex.asm.util.Visibility
+import org.jetbrains.research.kex.asm.util.visibility
+import org.jetbrains.research.kex.config.kexConfig
 import org.jetbrains.research.kex.ktype.KexType
 import org.jetbrains.research.kex.ktype.type
 import org.jetbrains.research.kex.reanimator.callstack.*
@@ -17,6 +20,8 @@ import org.jetbrains.research.kfg.type.*
 import org.jetbrains.research.kfg.type.Type
 import java.lang.reflect.*
 
+private val visibilityLevel by lazy { kexConfig.getEnumValue("apiGeneration", "visibility", true, Visibility.PUBLIC) }
+
 // TODO: this is work of satan, refactor this damn thing
 class CallStack2JavaPrinter(
         val ctx: ExecutionContext,
@@ -28,6 +33,8 @@ class CallStack2JavaPrinter(
     private val resolvedTypes = mutableMapOf<CallStack, CSType>()
     private val actualTypes = mutableMapOf<CallStack, CSType>()
     lateinit var current: JavaBuilder.JavaFunction
+
+    private class InvalidCallStackException : Exception()
 
     init {
         with(builder) {
@@ -58,8 +65,12 @@ class CallStack2JavaPrinter(
                 }
             }
         }
-        resolveTypes(callStack)
-        callStack.printAsJava()
+        try {
+            resolveTypes(callStack)
+            callStack.printAsJava()
+        } catch (e: InvalidCallStackException) {
+            current.statements.clear()
+        }
     }
 
     override fun emit() = builder.toString()
@@ -250,6 +261,7 @@ class CallStack2JavaPrinter(
             is ArrayType -> "${this.component.javaString}[]"
             else -> {
                 val klass = (this as ClassType).`class`
+                if (visibilityLevel > klass.visibility) throw InvalidCallStackException()
                 val canonicalDesc = klass.canonicalDesc
                 val splitted = canonicalDesc.split("$")
                 ktassert(splitted.isNotEmpty())
@@ -434,10 +446,11 @@ class CallStack2JavaPrinter(
     private fun printArrayWrite(owner: CallStack, call: ArrayWrite): String {
         call.value.printAsJava()
         val requiredType = run {
-            val resT = resolvedTypes[owner] ?: actualTypes[owner]
-            if (resT is CSArray) resT.element
-            else if (resT is CSPrimaryArray) resT.element
-            else unreachable { }
+            when (val resT = resolvedTypes[owner] ?: actualTypes[owner]) {
+                is CSArray -> resT.element
+                is CSPrimaryArray -> resT.element
+                else -> unreachable { }
+            }
         }
         return "${owner.name}[${call.index.stackName}] = ${call.value.cast(requiredType)}"
     }
