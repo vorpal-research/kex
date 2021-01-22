@@ -39,7 +39,7 @@ val Container.urls get() = (this.classLoader as? URLClassLoader)?.urLs ?: arrayO
 
 class KexTool : Tool {
     val configFile = "kex.ini"
-    val containers = listOfNotNull<Container>(getRuntime()).toMutableList()
+    val containers: MutableList<Container>
 
     val classManager: ClassManager
     val origManager: ClassManager
@@ -67,6 +67,7 @@ class KexTool : Tool {
         classManager = ClassManager(KfgConfig(flags = Flags.readAll, failOnError = false))
         origManager = ClassManager(KfgConfig(flags = Flags.readAll, failOnError = false))
         outputDir = Paths.get("./temp/data/", "kex-instrumented").toAbsolutePath()
+        containers = listOfNotNull<Container>(getRuntime()).toMutableList()
     }
 
     override fun getExtraClassPath(): List<File> = emptyList()
