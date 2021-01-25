@@ -88,7 +88,7 @@ open class MethodChecker(
         super.visit(method)
         if (!hasTimeBudget()) return
 
-        if (method.`class`.isSynthetic) return
+        if (method.`class`.isSynthetic || method.isSynthetic) return
         if (method.isAbstract || method.isStaticInitializer) return
         if (!method.isImpactable) return
 
