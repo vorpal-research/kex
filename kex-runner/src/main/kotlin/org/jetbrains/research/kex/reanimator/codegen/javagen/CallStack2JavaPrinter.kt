@@ -316,7 +316,18 @@ class CallStack2JavaPrinter(
             is Long -> "${value}L".also {
                 actualTypes[this] = CSClass(ctx.types.longType)
             }
-            is Float -> "${value}F".also {
+            is Float -> when {
+                value.isNaN() -> "Float.NaN".also {
+                    builder.import("java.lang.Float")
+                }
+                value.isInfinite() && value < 0.0 -> "Float.NEGATIVE_INFINITY".also {
+                    builder.import("java.lang.Float")
+                }
+                value.isInfinite() -> "Float.POSITIVE_INFINITY".also {
+                    builder.import("java.lang.Float")
+                }
+                else -> "${value}F"
+            }.also {
                 actualTypes[this] = CSClass(ctx.types.floatType)
             }
             is Double -> when {
