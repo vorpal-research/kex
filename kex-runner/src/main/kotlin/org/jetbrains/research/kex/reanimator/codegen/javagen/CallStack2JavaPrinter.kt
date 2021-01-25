@@ -20,8 +20,6 @@ import org.jetbrains.research.kfg.type.*
 import org.jetbrains.research.kfg.type.Type
 import java.lang.reflect.*
 
-private val visibilityLevel by lazy { kexConfig.getEnumValue("apiGeneration", "visibility", true, Visibility.PUBLIC) }
-
 // TODO: this is work of satan, refactor this damn thing
 class CallStack2JavaPrinter(
         val ctx: ExecutionContext,
@@ -33,8 +31,6 @@ class CallStack2JavaPrinter(
     private val resolvedTypes = mutableMapOf<CallStack, CSType>()
     private val actualTypes = mutableMapOf<CallStack, CSType>()
     lateinit var current: JavaBuilder.JavaFunction
-
-    private class InvalidCallStackException : Exception()
 
     init {
         with(builder) {
@@ -65,12 +61,8 @@ class CallStack2JavaPrinter(
                 }
             }
         }
-        try {
-            resolveTypes(callStack)
-            callStack.printAsJava()
-        } catch (e: InvalidCallStackException) {
-            current.statements.clear()
-        }
+        resolveTypes(callStack)
+        callStack.printAsJava()
     }
 
     override fun emit() = builder.toString()
@@ -261,7 +253,6 @@ class CallStack2JavaPrinter(
             is ArrayType -> "${this.component.javaString}[]"
             else -> {
                 val klass = (this as ClassType).`class`
-                if (visibilityLevel > klass.visibility) throw InvalidCallStackException()
                 val canonicalDesc = klass.canonicalDesc
                 val splitted = canonicalDesc.split("$")
                 ktassert(splitted.isNotEmpty())
