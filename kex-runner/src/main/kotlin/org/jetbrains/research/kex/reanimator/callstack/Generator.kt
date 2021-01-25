@@ -78,6 +78,11 @@ class AnyGenerator(private val fallback: Generator) : Generator {
         log.debug("Generating $descriptor")
 
         val klass = descriptor.klass.kfgClass(types)
+        if (visibilityLevel > klass.visibility) {
+            this@generateObject += UnknownCall(klass.type, original)
+            return
+        }
+
         if ((klass.accessibleConstructors + klass.externalConstructors).isEmpty()) {
             this@generateObject += UnknownCall(klass.type, original)
             return

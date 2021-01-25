@@ -314,7 +314,18 @@ class CallStack2JavaPrinter(
             is Long -> "${value}L".also {
                 actualTypes[this] = CSClass(ctx.types.longType)
             }
-            is Float -> "${value}F".also {
+            is Float -> when {
+                value.isNaN() -> "Float.NaN".also {
+                    builder.import("java.lang.Float")
+                }
+                value.isInfinite() && value < 0.0 -> "Float.NEGATIVE_INFINITY".also {
+                    builder.import("java.lang.Float")
+                }
+                value.isInfinite() -> "Float.POSITIVE_INFINITY".also {
+                    builder.import("java.lang.Float")
+                }
+                else -> "${value}F"
+            }.also {
                 actualTypes[this] = CSClass(ctx.types.floatType)
             }
             is Double -> when {
@@ -435,10 +446,11 @@ class CallStack2JavaPrinter(
     private fun printArrayWrite(owner: CallStack, call: ArrayWrite): String {
         call.value.printAsJava()
         val requiredType = run {
-            val resT = resolvedTypes[owner] ?: actualTypes[owner]
-            if (resT is CSArray) resT.element
-            else if (resT is CSPrimaryArray) resT.element
-            else unreachable { }
+            when (val resT = resolvedTypes[owner] ?: actualTypes[owner]) {
+                is CSArray -> resT.element
+                is CSPrimaryArray -> resT.element
+                else -> unreachable { }
+            }
         }
         return "${owner.name}[${call.index.stackName}] = ${call.value.cast(requiredType)}"
     }

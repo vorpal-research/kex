@@ -46,8 +46,11 @@ class CallStackGenerator(override val context: GeneratorContext) : Generator {
         searchDepth++
 
         val name = "${descriptor.term}"
-        if (generationDepth > maxGenerationDepth) return UnknownCall(descriptor.type.getKfgType(types), descriptor).wrap(name)
-        if (searchDepth > maxSearchDepth) return UnknownCall(descriptor.type.getKfgType(types), descriptor).wrap(name)
+
+        if (descriptor !is ConstantDescriptor) {
+            if (generationDepth > maxGenerationDepth) return UnknownCall(descriptor.type.getKfgType(types), descriptor).wrap(name)
+            if (searchDepth > maxSearchDepth) return UnknownCall(descriptor.type.getKfgType(types), descriptor).wrap(name)
+        }
 
         when (descriptor) {
             is ConstantDescriptor -> return when (descriptor) {
