@@ -80,8 +80,6 @@ open class MethodChecker(
     override fun visit(method: Method) {
         super.visit(method)
 
-        if (method.`class`.isSynthetic || method.isSynthetic) return
-        if (method.isAbstract || method.isStaticInitializer) return
         if (!method.isImpactable) return
 
         log.debug("Checking method $method")

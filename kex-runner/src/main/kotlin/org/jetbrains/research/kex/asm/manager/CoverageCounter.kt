@@ -22,6 +22,9 @@ val Method.isImpactable: Boolean
     get() {
         when {
             this.isAbstract -> return false
+            this.isStaticInitializer -> return false
+            this.`class`.isSynthetic -> return false
+            this.isSynthetic -> return false
             visibilityLevel > this.`class`.visibility -> return false
             visibilityLevel > this.visibility -> return false
             this.isStatic && this.argTypes.isEmpty() -> return false
@@ -65,7 +68,6 @@ class CoverageCounter<T>(override val cm: ClassManager, val tm: TraceManager<T>)
         if (`class`.isSynthetic) return
 
         for (method in `class`.allMethods) {
-            if (method.isAbstract || method.isStaticInitializer) continue
             if (!method.isImpactable) continue
 
             val bodyBlocks = method.bodyBlocks.filterNot { it.isUnreachable }.map { it.originalBlock }.toSet()
