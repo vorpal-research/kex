@@ -15,6 +15,7 @@ import org.jetbrains.research.kex.asm.transform.LoopDeroller
 import org.jetbrains.research.kex.asm.transform.RuntimeTraceCollector
 import org.jetbrains.research.kex.asm.transform.SystemExitTransformer
 import org.jetbrains.research.kex.asm.util.ClassWriter
+import org.jetbrains.research.kex.asm.util.Visibility
 import org.jetbrains.research.kex.config.CmdConfig
 import org.jetbrains.research.kex.config.FileConfig
 import org.jetbrains.research.kex.config.RuntimeConfig
@@ -67,6 +68,8 @@ class Kex(args: Array<String>) {
     val `package`: Package
     var klass: Class? = null
     var methods: Set<Method>? = null
+
+    val visibilityLevel: Visibility
 
     enum class Mode {
         concolic,
@@ -142,6 +145,8 @@ class Kex(args: Array<String>) {
 
         outputDir = (cmd.getCmdValue("output")?.let { Paths.get(it) }
                 ?: Files.createTempDirectory(Paths.get("."), "kex-instrumented")).toAbsolutePath()
+
+        visibilityLevel = kexConfig.getEnumValue("apiGeneration", "visibility", true, Visibility.PUBLIC)
     }
 
     private fun updateClassPath(loader: URLClassLoader) {
@@ -214,7 +219,7 @@ class Kex(args: Array<String>) {
             +psa
             +MethodFieldAccessCollector(analysisContext, psa)
             +SetterCollector(analysisContext)
-            +ExternalConstructorCollector(analysisContext.cm)
+            +ExternalConstructorCollector(analysisContext.cm, visibilityLevel)
             +when {
                 useApiGeneration -> DescriptorChecker(analysisContext, traceManager, psa)
                 else -> MethodChecker(analysisContext, traceManager, psa)
@@ -241,9 +246,9 @@ class Kex(args: Array<String>) {
             +psa
             +MethodFieldAccessCollector(analysisContext, psa)
             +SetterCollector(analysisContext)
-            +ExternalConstructorCollector(analysisContext.cm)
+            +ExternalConstructorCollector(analysisContext.cm, visibilityLevel)
         }
-        RandomObjectReanimator(analysisContext, `package`, psa).run()
+        RandomObjectReanimator(analysisContext, `package`, psa, visibilityLevel).run()
         clearClassPath()
     }
 

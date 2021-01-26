@@ -10,9 +10,8 @@ import org.jetbrains.research.kfg.type.ClassType
 import org.jetbrains.research.kfg.visitor.MethodVisitor
 
 val Class.externalConstructors: Set<Method> get() = ExternalConstructorCollector.externalConstructors.getOrDefault(this, setOf())
-private val visibilityLevel by lazy { kexConfig.getEnumValue("apiGeneration", "visibility", true, Visibility.PUBLIC) }
 
-class ExternalConstructorCollector(override val cm: ClassManager) : MethodVisitor {
+class ExternalConstructorCollector(override val cm: ClassManager, val visibilityLevel: Visibility) : MethodVisitor {
     companion object {
         val externalConstructors = mutableMapOf<Class, MutableSet<Method>>()
     }

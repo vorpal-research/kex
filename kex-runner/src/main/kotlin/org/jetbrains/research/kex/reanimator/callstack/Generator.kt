@@ -23,7 +23,6 @@ import org.jetbrains.research.kfg.ir.Method
 import org.jetbrains.research.kfg.ir.MethodDesc
 import org.jetbrains.research.kfg.type.ClassType
 
-private val visibilityLevel by lazy { kexConfig.getEnumValue("apiGeneration", "visibility", true, Visibility.PUBLIC) }
 private val maxStackSize by lazy { kexConfig.getIntValue("apiGeneration", "maxStackSize", 5) }
 private val maxQuerySize by lazy { kexConfig.getIntValue("apiGeneration", "maxQuerySize", 1000) }
 private val useRecConstructors by lazy { kexConfig.getBooleanValue("apiGeneration", "use-recursive-constructors", false) }

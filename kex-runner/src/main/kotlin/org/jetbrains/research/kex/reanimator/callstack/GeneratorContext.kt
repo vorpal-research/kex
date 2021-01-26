@@ -25,9 +25,7 @@ import org.jetbrains.research.kfg.ir.Class
 import org.jetbrains.research.kfg.ir.Field
 import org.jetbrains.research.kfg.ir.Method
 
-private val visibilityLevel by lazy { kexConfig.getEnumValue("apiGeneration", "visibility", true, Visibility.PUBLIC) }
-
-class GeneratorContext(val context: ExecutionContext, val psa: PredicateStateAnalysis) {
+class GeneratorContext(val context: ExecutionContext, val psa: PredicateStateAnalysis, val visibilityLevel: Visibility) {
     val cm get() = context.cm
     val types get() = context.types
     val loader get() = context.loader

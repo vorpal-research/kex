@@ -11,7 +11,6 @@ import org.jetbrains.research.kex.reanimator.descriptor.ConstantDescriptor
 import org.jetbrains.research.kex.reanimator.descriptor.Descriptor
 import org.jetbrains.research.kex.reanimator.descriptor.StaticFieldDescriptor
 
-private val visibilityLevel by lazy { kexConfig.getEnumValue("apiGeneration", "visibility", true, Visibility.PUBLIC) }
 private val maxGenerationDepth by lazy { kexConfig.getIntValue("apiGeneration", "maxGenerationDepth", 100) }
 private val maxSearchDepth by lazy { kexConfig.getIntValue("apiGeneration", "maxSearchDepth", 10000) }
 
@@ -28,7 +27,8 @@ class CallStackGenerator(override val context: GeneratorContext) : Generator {
         typeGenerators += EnumGenerator(this)
     }
 
-    constructor(executionCtx: ExecutionContext, psa: PredicateStateAnalysis) : this(GeneratorContext(executionCtx, psa))
+    constructor(executionCtx: ExecutionContext, psa: PredicateStateAnalysis, visibilityLevel: Visibility)
+            : this(GeneratorContext(executionCtx, psa, visibilityLevel))
 
     val KexType.generator: Generator
         get() = when (this) {

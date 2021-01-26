@@ -5,6 +5,8 @@ import com.abdullin.kthelper.logging.log
 import com.abdullin.kthelper.time.timed
 import org.jetbrains.research.kex.ExecutionContext
 import org.jetbrains.research.kex.asm.state.PredicateStateAnalysis
+import org.jetbrains.research.kex.asm.util.Visibility
+import org.jetbrains.research.kex.config.kexConfig
 import org.jetbrains.research.kex.random.GenerationException
 import org.jetbrains.research.kex.reanimator.callstack.*
 import org.jetbrains.research.kex.reanimator.codegen.TestCasePrinter
@@ -21,9 +23,11 @@ import org.jetbrains.research.kfg.ir.Method
 
 class NoConcreteInstanceException(val klass: Class) : Exception()
 
+private val visibilityLevel: Visibility by lazy { kexConfig.getEnumValue("apiGeneration", "visibility", true, Visibility.PUBLIC) }
+
 class Reanimator(val ctx: ExecutionContext, val psa: PredicateStateAnalysis, val method: Method) {
     val cm: ClassManager get() = ctx.cm
-    private val csGenerator = CallStackGenerator(ctx, psa)
+    private val csGenerator = CallStackGenerator(ctx, psa, visibilityLevel)
     private val csExecutor = CallStackExecutor(ctx)
     private val printer = TestCasePrinter(ctx, method)
     private var staticCounter = 0

@@ -21,12 +21,10 @@ import org.jetbrains.research.kfg.ClassManager
 import org.jetbrains.research.kfg.Package
 import org.jetbrains.research.kfg.type.ClassType
 
-private val visibilityLevel by lazy { kexConfig.getEnumValue("apiGeneration", "visibility", true, Visibility.PUBLIC) }
-
-class RandomObjectReanimator(val ctx: ExecutionContext, val target: Package, val psa: PredicateStateAnalysis) {
+class RandomObjectReanimator(val ctx: ExecutionContext, val target: Package, val psa: PredicateStateAnalysis, val visibilityLevel: Visibility) {
     val random: Randomizer get() = ctx.random
     val cm: ClassManager get() = ctx.cm
-    val generatorContext = GeneratorContext(ctx, psa)
+    val generatorContext = GeneratorContext(ctx, psa, visibilityLevel)
 
     val ClassManager.randomClass
         get() = this.concreteClasses
@@ -34,31 +32,12 @@ class RandomObjectReanimator(val ctx: ExecutionContext, val target: Package, val
                 .filterNot { it.isEnum }
                 .random()
 
-    fun Descriptor.isValid(visited: Set<Descriptor> = setOf()): Boolean = when (this) {
-        in visited -> true
-        is ConstantDescriptor -> true
-        is ObjectDescriptor -> when {
-//            this.klass.kfgClass(cm.type).isInheritorOf(cm["java/util/Map"]) -> false
-//            else -> {
-//                val set = visited + this
-//                this.fields.all { it.value.isValid(set) }
-//            }
-            else -> true
-        }
-        is ArrayDescriptor -> {
-            val set = visited + this
-            this.elements.all { it.value.isValid(set) }
-        }
-        is StaticFieldDescriptor -> value.isValid(visited + this)
-    }
-
     val Any.isValid: Boolean
         get() {
             val kfgClass = (this.javaClass.kex.getKfgType(cm.type) as ClassType).`class`
             if (this is Throwable) return false
             if (!kfgClass.isInstantiable || visibilityLevel > kfgClass.visibility) return false
             if (with(generatorContext) { kfgClass.accessibleConstructors + kfgClass.externalConstructors }.isEmpty()) return false
-            if (!this.descriptor.isValid()) return false
             return true
         }
 
