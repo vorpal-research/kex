@@ -7,7 +7,6 @@ import org.jetbrains.research.kex.ExecutionContext
 import org.jetbrains.research.kex.asm.state.PredicateStateAnalysis
 import org.jetbrains.research.kex.asm.util.Visibility
 import org.jetbrains.research.kex.asm.util.visibility
-import org.jetbrains.research.kex.config.kexConfig
 import org.jetbrains.research.kex.random.Randomizer
 import org.jetbrains.research.kex.reanimator.callstack.CallStack
 import org.jetbrains.research.kex.reanimator.callstack.CallStackExecutor
@@ -41,6 +40,23 @@ class RandomObjectReanimator(val ctx: ExecutionContext, val target: Package, val
             return true
         }
 
+    fun Descriptor.isValid(visited: Set<Descriptor> = setOf()): Boolean = when (this) {
+        in visited -> true
+        is ConstantDescriptor -> true
+        is ObjectDescriptor -> when {
+            this.klass.kfgClass(cm.type).isInheritorOf(cm["java/util/Map"]) -> false
+            else -> {
+                val set = visited + this
+                this.fields.all { it.value.isValid(set) }
+            }
+        }
+        is ArrayDescriptor -> {
+            val set = visited + this
+            this.elements.all { it.value.isValid(set) }
+        }
+        is StaticFieldDescriptor -> value.isValid(visited + this)
+    }
+
     private fun randomObject(): Any {
         var res: Any? = null
         while (res == null) {
@@ -55,11 +71,14 @@ class RandomObjectReanimator(val ctx: ExecutionContext, val target: Package, val
     fun run(attempts: Int = 1000) {
         var totalAttempts = 0
         var validAttempts = 0
+        var validDescriptorAttempts = 0
         var successes = 0
+        var validDescriptorSuccesses = 0
         var depth = 0
         var successDepths = 0
+        var validDescriptorDepths = 0
         var time = 0L
-        while (validAttempts < attempts) {
+        while (validDescriptorAttempts < attempts) {
             log.debug("Attempt: $totalAttempts")
             log.debug("Valid attempt: $validAttempts")
             ++totalAttempts
@@ -74,6 +93,8 @@ class RandomObjectReanimator(val ctx: ExecutionContext, val target: Package, val
 
             log.debug("Depth: $descriptorDepth")
             val originalDescriptor = descriptor.deepCopy()
+
+            if (originalDescriptor.isValid()) ++validDescriptorAttempts
 
             var callStack: CallStack? = null
             time += timed {
@@ -92,16 +113,23 @@ class RandomObjectReanimator(val ctx: ExecutionContext, val target: Package, val
             if (structuralEq) {
                 successDepths += descriptorDepth
                 ++successes
+                if (originalDescriptor.isValid()) {
+                    validDescriptorDepths += descriptorDepth
+                    ++validDescriptorSuccesses
+                }
             }
 
             log.debug("Equality: $structuralEq")
         }
         log.info("Total attempts: $totalAttempts")
         log.info("Valid attempts: $validAttempts")
+        log.info("Valid descripptor attempts: $validDescriptorAttempts")
         log.info("Total attempts success rate: ${String.format("%.02f", 100 * successes.toDouble() / totalAttempts)}%")
         log.info("Valid attempts success rate: ${String.format("%.02f", 100 * successes.toDouble() / validAttempts)}%")
+        log.info("Valid descriptor attempts success rate: ${String.format("%.02f", 100 * validDescriptorSuccesses.toDouble() / validDescriptorAttempts)}%")
         log.info("Average random descriptor depth: ${String.format("%.02f", depth.toDouble() / validAttempts)}")
         log.info("Average success descriptor depth: ${String.format("%.02f", successDepths.toDouble() / validAttempts)}")
+        log.info("Average success valid descriptor depth: ${String.format("%.02f", validDescriptorDepths.toDouble() / validDescriptorAttempts)}")
         log.info("Average time per descriptor generation: ${String.format("%.02f", time.toDouble() / validAttempts)}")
     }
 }
