@@ -228,7 +228,6 @@ class AnyGenerator(private val fallback: Generator) : Generator {
                 val (result, args) = kfgField.setter.executeAsSetter(this@generateSetters) ?: continue
                 if (result != null && (result[field] == null || result[field] == field.second.defaultDescriptor)) {
                     val remapping = { mutableMapOf<Descriptor, Descriptor>(result to this@generateSetters) }
-//                    val generatedArgs = args.map { fallback.generate(it.deepCopy(remapping()), generationDepth + 1) }
                     val generatedArgs = generateArgs(args.map { it.deepCopy(remapping()) }, generationDepth + 1) ?: continue
                     calls += MethodCall(kfgField.setter, generatedArgs)
                     accept(result)
