@@ -2,7 +2,7 @@ package org.jetbrains.research.kex.reanimator.callstack
 
 import com.abdullin.kthelper.collection.queueOf
 import com.abdullin.kthelper.logging.log
-import org.jetbrains.research.kex.asm.util.Visibility
+import com.abdullin.kthelper.tryOrNull
 import org.jetbrains.research.kex.asm.util.visibility
 import org.jetbrains.research.kex.config.kexConfig
 import org.jetbrains.research.kex.ktype.*
@@ -156,10 +156,12 @@ class AnyGenerator(private val fallback: Generator) : Generator {
                 val (result, args) = res
                 if (result != null && result neq current) {
                     val remapping = { mutableMapOf<Descriptor, Descriptor>(result to current) }
-                    val generatedArgs = args.map { fallback.generate(it.deepCopy(remapping()), generationDepth + 1) }
-                    val newStack = stack + MethodCall(method, generatedArgs)
-                    val newDesc = result.merge(current)
-                    queue += GeneratorContext.ExecutionStack(newDesc, newStack, oldDepth + 1)
+                    val generatedArgs = generateArgs(args.map { it.deepCopy(remapping()) }, generationDepth + 1)
+                    if (generatedArgs != null) {
+                        val newStack = stack + MethodCall(method, generatedArgs)
+                        val newDesc = result.merge(current)
+                        queue += GeneratorContext.ExecutionStack(newDesc, newStack, oldDepth + 1)
+                    }
                 }
             }
 
@@ -181,6 +183,10 @@ class AnyGenerator(private val fallback: Generator) : Generator {
         }
     }
 
+    private fun generateArgs(args: List<Descriptor>, depth: Int): List<CallStack>? = tryOrNull {
+        args.map { fallback.generate(it, depth) }
+    }
+
     private fun ObjectDescriptor.checkConstructor(klass: Class, method: Method, generationDepth: Int): ApiCall? = with(context) {
         val (thisDesc, args) = method.executeAsConstructor(this@checkConstructor) ?: return null
 
@@ -189,7 +195,7 @@ class AnyGenerator(private val fallback: Generator) : Generator {
             when {
                 method.argTypes.isEmpty() -> DefaultConstructorCall(klass)
                 else -> {
-                    val generatedArgs = args.map { fallback.generate(it, generationDepth + 1) }
+                    val generatedArgs = generateArgs(args, generationDepth + 1) ?: return null
                     ConstructorCall(klass, method, generatedArgs)
                 }
             }
@@ -200,7 +206,7 @@ class AnyGenerator(private val fallback: Generator) : Generator {
             with(context) {
                 val (_, args) = method.executeAsExternalConstructor(this@checkExternalConstructor) ?: return null
 
-                val generatedArgs = args.map { fallback.generate(it, generationDepth + 1) }
+                val generatedArgs = generateArgs(args, generationDepth + 1) ?: return null
                 ExternalConstructorCall(method, generatedArgs)
             }
 
@@ -222,7 +228,8 @@ class AnyGenerator(private val fallback: Generator) : Generator {
                 val (result, args) = kfgField.setter.executeAsSetter(this@generateSetters) ?: continue
                 if (result != null && (result[field] == null || result[field] == field.second.defaultDescriptor)) {
                     val remapping = { mutableMapOf<Descriptor, Descriptor>(result to this@generateSetters) }
-                    val generatedArgs = args.map { fallback.generate(it.deepCopy(remapping()), generationDepth + 1) }
+//                    val generatedArgs = args.map { fallback.generate(it.deepCopy(remapping()), generationDepth + 1) }
+                    val generatedArgs = generateArgs(args.map { it.deepCopy(remapping()) }, generationDepth + 1) ?: continue
                     calls += MethodCall(kfgField.setter, generatedArgs)
                     accept(result)
                     reduce()
