@@ -4,20 +4,14 @@ package org.jetbrains.research.kex.test.debug
 
 class BasicTests {
 
-    open class A {
-        open fun value() = 10
-    }
+    class Point(val x: Int, val y: Int)
 
-    class B(val a: Int) : A() {
-        override fun value(): Int = a
-    }
-
-    class W(val a: A)
-
-    fun test(w: W) {
-        if (w.a is B) {
-            if (w.a.value() > 10) {
-                println("a")
+    fun test(a: ArrayList<Point>) {
+        if (a.size == 2) {
+            if (a[0].x == 10) {
+                if (a[1].y == 11) {
+                    error("a")
+                }
             }
         }
     }
