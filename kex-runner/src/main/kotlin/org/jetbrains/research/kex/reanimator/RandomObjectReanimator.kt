@@ -77,6 +77,7 @@ class RandomObjectReanimator(val ctx: ExecutionContext, val target: Package, val
         var validDescriptorSuccesses = 0
         var depth = 0
         var successDepths = 0
+        var totalValidDescriptorDepth = 0
         var validDescriptorDepths = 0
         var time = 0L
         while (validDescriptorAttempts < attempts) {
@@ -96,7 +97,10 @@ class RandomObjectReanimator(val ctx: ExecutionContext, val target: Package, val
             log.debug("Depth: $descriptorDepth")
             val originalDescriptor = descriptor.deepCopy()
 
-            if (originalDescriptor.isValid()) ++validDescriptorAttempts
+            if (originalDescriptor.isValid()) {
+                ++validDescriptorAttempts
+                totalValidDescriptorDepth += descriptorDepth
+            }
 
             var callStack: CallStack? = null
             time += timed {
@@ -131,6 +135,7 @@ class RandomObjectReanimator(val ctx: ExecutionContext, val target: Package, val
         log.info("Valid descriptor attempts success rate: ${String.format("%.02f", 100 * validDescriptorSuccesses.toDouble() / validDescriptorAttempts)}%")
         log.info("Average random descriptor depth: ${String.format("%.02f", depth.toDouble() / validAttempts)}")
         log.info("Average success descriptor depth: ${String.format("%.02f", successDepths.toDouble() / successes)}")
+        log.info("Average valid descriptor depth: ${String.format("%.02f", totalValidDescriptorDepth.toDouble() / validDescriptorAttempts)}")
         log.info("Average success valid descriptor depth: ${String.format("%.02f", validDescriptorDepths.toDouble() / validDescriptorSuccesses)}")
         log.info("Average time per descriptor generation: ${String.format("%.02f", time.toDouble() / validAttempts)}")
     }
