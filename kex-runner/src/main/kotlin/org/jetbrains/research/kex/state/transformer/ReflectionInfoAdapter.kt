@@ -110,7 +110,7 @@ class ReflectionInfoAdapter(val method: Method, val loader: ClassLoader, val ign
         val kfgClass = cm[field.klass]
         val actualField = kfgClass.getField((field.fieldName as ConstStringTerm).value, fieldType.getKfgType(types))
 
-        val klass = loader.loadKClass(kfgClass)
+        val klass = tryOrNull { loader.loadKClass(kfgClass) } ?: return result
         val prop = klass.getKProperty(actualField)
         val returnType = tryOrNull { prop?.getter?.returnType }
 
