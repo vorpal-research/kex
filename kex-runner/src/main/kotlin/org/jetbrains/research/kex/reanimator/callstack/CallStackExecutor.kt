@@ -2,6 +2,7 @@ package org.jetbrains.research.kex.reanimator.callstack
 
 import com.abdullin.kthelper.assert.unreachable
 import com.abdullin.kthelper.logging.log
+import com.abdullin.kthelper.tryOrNull
 import org.jetbrains.research.kex.ExecutionContext
 import org.jetbrains.research.kex.trace.`object`.TraceCollectorProxy
 import org.jetbrains.research.kex.util.*
@@ -46,7 +47,7 @@ class CallStackExecutor(val ctx: ExecutionContext) {
         }
     }
 
-    fun execute(callStack: CallStack): Any? {
+    fun execute(callStack: CallStack): Any? = tryOrNull {
         if (callStack in cache) return cache[callStack]
 
         TraceCollectorProxy.initializeEmptyCollector(ctx.cm)
