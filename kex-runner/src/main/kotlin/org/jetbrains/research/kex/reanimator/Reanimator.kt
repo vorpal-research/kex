@@ -51,7 +51,7 @@ class Reanimator(val ctx: ExecutionContext, val psa: PredicateStateAnalysis, val
         instance to arguments.toTypedArray()
     } catch (e: GenerationException) {
         throw e
-    } catch (e: Exception) {
+    } catch (e: Throwable) {
         throw GenerationException(e)
     } catch (e: Error) {
         throw GenerationException(e)
