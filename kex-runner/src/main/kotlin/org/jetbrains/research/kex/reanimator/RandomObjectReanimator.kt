@@ -3,6 +3,7 @@ package org.jetbrains.research.kex.reanimator
 import com.abdullin.kthelper.`try`
 import com.abdullin.kthelper.logging.log
 import com.abdullin.kthelper.time.timed
+import com.abdullin.kthelper.tryOrNull
 import org.jetbrains.research.kex.ExecutionContext
 import org.jetbrains.research.kex.asm.state.PredicateStateAnalysis
 import org.jetbrains.research.kex.asm.util.Visibility
@@ -62,7 +63,7 @@ class RandomObjectReanimator(val ctx: ExecutionContext, val target: Package, val
         var res: Any? = null
         while (res == null) {
             val kfgClass = cm.randomClass
-            val klass = ctx.loader.loadClass(kfgClass)
+            val klass = tryOrNull { ctx.loader.loadClass(kfgClass) } ?: continue
             res = random.nextOrNull(klass)
         }
 
@@ -80,6 +81,7 @@ class RandomObjectReanimator(val ctx: ExecutionContext, val target: Package, val
         var totalValidDescriptorDepth = 0
         var validDescriptorDepths = 0
         var time = 0L
+        var validTime = 0L
         while (validDescriptorAttempts < attempts) {
             log.debug("Attempt: $totalAttempts")
             log.debug("Valid attempt: $validAttempts")
@@ -99,6 +101,7 @@ class RandomObjectReanimator(val ctx: ExecutionContext, val target: Package, val
 
             if (originalDescriptor.isValid()) {
                 ++validDescriptorAttempts
+                ++validTime
                 totalValidDescriptorDepth += descriptorDepth
             }
 
@@ -138,5 +141,6 @@ class RandomObjectReanimator(val ctx: ExecutionContext, val target: Package, val
         log.info("Average valid descriptor depth: ${String.format("%.02f", totalValidDescriptorDepth.toDouble() / validDescriptorAttempts)}")
         log.info("Average success valid descriptor depth: ${String.format("%.02f", validDescriptorDepths.toDouble() / validDescriptorSuccesses)}")
         log.info("Average time per descriptor generation: ${String.format("%.02f", time.toDouble() / validAttempts)}")
+        log.info("Average time per valid descriptor generation: ${String.format("%.02f", validTime.toDouble() / validDescriptorAttempts)}")
     }
 }

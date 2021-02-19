@@ -8,6 +8,7 @@ import com.microsoft.z3.enumerations.Z3_lbool
 import org.jetbrains.research.kex.smt.SMTEngine
 import org.jetbrains.research.kex.state.term.*
 import java.lang.Math.pow
+import kotlin.math.pow
 
 object Z3Unlogic {
     fun undo(expr: Expr): Term = when (expr) {
@@ -70,10 +71,30 @@ object Z3Unlogic {
                 val cond = undo(expr.args[0]) as ConstBoolTerm
                 if (cond.value) undo(expr.args[1]) else undo(expr.args[2])
             }
-            else -> TODO()
+            expr.isBVConcat -> {
+                val first = undo(expr.args[0]).numericValue
+                val second = undo(expr.args[1]).numericValue
+                term { const(first * (10.0.pow(second.toString().length)) + second) }
+            }
+            expr.isBVOR -> {
+                val first = undo(expr.args[0]).numericValue
+                val second = undo(expr.args[1]).numericValue
+                term { const(first or second) }
+            }
+            expr.isBVAND -> {
+                val first = undo(expr.args[0]).numericValue
+                val second = undo(expr.args[1]).numericValue
+                term { const(first and second) }
+            }
+            expr.isBVXOR -> {
+                val first = undo(expr.args[0]).numericValue
+                val second = undo(expr.args[1]).numericValue
+                term { const(first xor second) }
+            }
+            else -> unreachable { log.error("Not implemented unlogic SMT operation: $expr") }
         }
         // todo: support more bv expressions
-        else -> TODO()
+        else -> unreachable { log.error("Not implemented unlogic SMT operation: $expr") }
     }
 
     private fun undoBool(expr: BoolExpr) = when (expr.boolValue) {
@@ -99,7 +120,7 @@ object Z3Unlogic {
             }
             term { const(value) }
         }
-        else -> unreachable { log.error("Trying to undo bv with unexpected size: ${expr.sortSize}") }
+        else -> term { const(expr.long.toInt()) }
     }
 
     private fun undoFloat(expr: FPNum): Term {
