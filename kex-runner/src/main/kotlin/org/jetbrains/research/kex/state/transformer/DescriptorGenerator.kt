@@ -34,6 +34,22 @@ class DescriptorGenerator(override val method: Method,
     override var thisTerm: Term? = null
     override val argTerms = sortedMapOf<Int, Term>()
     override val staticFieldTerms = mutableSetOf<FieldTerm>()
+    
+    private val Any?.numericValue: Any? get() = when (this) {
+        is ConstantDescriptor -> when (this) {
+            is ConstantDescriptor.Bool -> this.value
+            ConstantDescriptor.Null -> null
+            is ConstantDescriptor.Byte -> this.value
+            is ConstantDescriptor.Char -> this.value
+            is ConstantDescriptor.Short -> this.value
+            is ConstantDescriptor.Int -> this.value
+            is ConstantDescriptor.Long -> this.value
+            is ConstantDescriptor.Float -> this.value
+            is ConstantDescriptor.Double -> this.value
+            is ConstantDescriptor.Class -> this.value
+        }
+        else -> this
+    }
 
     override fun checkPath(path: Predicate): Boolean = when (path) {
         is EqualityPredicate -> checkTerms(path.lhv, path.rhv) { a, b -> a == b }
