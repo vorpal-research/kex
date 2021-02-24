@@ -117,6 +117,7 @@ class AnyGenerator(private val fallback: Generator) : Generator {
             cache += es.wrap()
             val (desc, stack, depth) = es
             val current = descriptor.accept(desc)
+            current.reduce()
             if (depth > maxStackSize) continue
             log.debug("Depth $generationDepth, stack depth $depth, query size ${queue.size}")
 

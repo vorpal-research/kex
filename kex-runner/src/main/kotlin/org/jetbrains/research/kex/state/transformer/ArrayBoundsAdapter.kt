@@ -4,10 +4,7 @@ import org.jetbrains.research.kex.ktype.KexArray
 import org.jetbrains.research.kex.state.ChoiceState
 import org.jetbrains.research.kex.state.PredicateState
 import org.jetbrains.research.kex.state.StateBuilder
-import org.jetbrains.research.kex.state.predicate.Predicate
-import org.jetbrains.research.kex.state.predicate.assume
-import org.jetbrains.research.kex.state.predicate.hasReceiver
-import org.jetbrains.research.kex.state.predicate.receiver
+import org.jetbrains.research.kex.state.predicate.*
 import org.jetbrains.research.kex.state.term.ArrayIndexTerm
 import org.jetbrains.research.kex.state.term.Term
 import org.jetbrains.research.kex.state.term.term
@@ -55,7 +52,7 @@ class ArrayBoundsAdapter : RecollectingTransformer<ArrayBoundsAdapter> {
     }
 
     override fun transformBase(predicate: Predicate): Predicate {
-        if (predicate.hasReceiver) adaptArray(predicate.receiver!!)
+        if (predicate.hasReceiver && predicate !is NewArrayPredicate) adaptArray(predicate.receiver!!)
 
         TermCollector.getFullTermSet(predicate)
                 .filterIsInstance<ArrayIndexTerm>()

@@ -9,15 +9,13 @@ import org.jetbrains.research.kex.asm.util.visibility
 import org.jetbrains.research.kex.config.kexConfig
 import org.jetbrains.research.kex.ktype.KexType
 import org.jetbrains.research.kex.ktype.kexType
-import org.jetbrains.research.kex.reanimator.descriptor.Descriptor
-import org.jetbrains.research.kex.reanimator.descriptor.ObjectDescriptor
-import org.jetbrains.research.kex.reanimator.descriptor.concretize
-import org.jetbrains.research.kex.reanimator.descriptor.descriptor
+import org.jetbrains.research.kex.reanimator.descriptor.*
 import org.jetbrains.research.kex.smt.Checker
 import org.jetbrains.research.kex.smt.Result
 import org.jetbrains.research.kex.state.PredicateState
 import org.jetbrains.research.kex.state.StateBuilder
 import org.jetbrains.research.kex.state.predicate.axiom
+import org.jetbrains.research.kex.state.predicate.state
 import org.jetbrains.research.kex.state.term.Term
 import org.jetbrains.research.kex.state.term.term
 import org.jetbrains.research.kex.state.transformer.*
@@ -46,6 +44,7 @@ class GeneratorContext(val context: ExecutionContext, val psa: PredicateStateAna
     fun prepareState(method: Method, ps: PredicateState, typeInfoMap: TypeInfoMap, ignores: Set<Term> = setOf()) = transform(ps) {
         +AnnotationAdapter(method, AnnotationManager.defaultLoader)
         +ConcreteImplInliner(types, typeInfoMap, psa)
+        +StaticFieldInliner(cm, psa)
         +IntrinsicAdapter
         +ReflectionInfoAdapter(method, context.loader, ignores)
         +Optimizer()
@@ -59,6 +58,7 @@ class GeneratorContext(val context: ExecutionContext, val psa: PredicateStateAna
     fun prepareState(method: Method, ps: PredicateState, ignores: Set<Term> = setOf()) = transform(ps) {
         +AnnotationAdapter(method, AnnotationManager.defaultLoader)
         +MethodInliner(psa)
+        +StaticFieldInliner(cm, psa)
         +IntrinsicAdapter
         +ReflectionInfoAdapter(method, context.loader, ignores)
         +Optimizer()
@@ -198,7 +198,39 @@ class GeneratorContext(val context: ExecutionContext, val psa: PredicateStateAna
         for ((field, _) in intersection) {
             val fieldTerm = term { descriptor.term.field(field.second, field.first) }
             preStateBuilder += axiom { fieldTerm.initialize(initializer(field.second)) }
+            preStateBuilder += axiom { fieldTerm.load() equality initializer(field.second) }
         }
+//        for ((field, value) in descriptor.fields) {
+//            if (value is ArrayDescriptor) {
+//                val fieldTerm = term { descriptor.term.field(field.second, field.first) }
+//                val genLoad = term { generate(field.second) }
+//                preStateBuilder += state { genLoad equality fieldTerm.load() }
+//                if (value.elements.size > 1) {
+//                    for ((index1, elem1) in value.elements) {
+//                        for ((index2, elem2) in value.elements) {
+//                            if (index1 != index2 && elem1 != elem2) {
+//                                val elemIndex1 = term { genLoad[index1] }
+//                                val elemIndex2 = term { genLoad[index2] }
+//                                val load1 = term { elemIndex1.load() }
+//                                val load2 = term { elemIndex2.load() }
+//                                val genLoad1 = term { generate(load1.type) }
+//                                val genLoad2 = term { generate(load2.type) }
+//                                preStateBuilder += state { genLoad1 equality load1 }
+//                                preStateBuilder += state { genLoad2 equality load2 }
+//                                preStateBuilder += axiom { genLoad1 inequality genLoad2 }
+//                            }
+//                        }
+//                    }
+//                } else if (value.elements.size == 1) {
+//                    for ((index1, elem1) in value.elements) {
+//                        val elemIndex1 = term { genLoad[index1] }
+//                        val load1 = term { elemIndex1.load() }
+//                        val genLoad1 = term { generate(load1.type) }
+//                        preStateBuilder += state { genLoad1 equality null }
+//                    }
+//                }
+//            }
+//        }
         return mapper.apply(preStateBuilder.apply())
     }
 
@@ -208,6 +240,7 @@ class GeneratorContext(val context: ExecutionContext, val psa: PredicateStateAna
             for ((field, _) in fields) {
                 val fieldTerm = term { term.field(field.second, field.first) }
                 preState += axiom { fieldTerm.initialize(field.second.defaultValue) }
+                preState += axiom { fieldTerm.load() equality field.second.defaultValue }
             }
 
             return preState.apply()
