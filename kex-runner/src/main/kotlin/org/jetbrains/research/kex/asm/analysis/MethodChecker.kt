@@ -67,9 +67,7 @@ open class MethodChecker(
         val errorDump = Files.createTempFile(failDirPath, "ps-", ".json").toFile()
         log.error("Failing saved to file ${errorDump.path}")
         errorDump.writeText(KexSerializer(cm).toJson(Failure(method.`class`, method, message, state)))
-    }.getOrElse {
-        log.error("Could not save failing PS to file")
-    }
+    }.getOrNull()
 
     override fun cleanup() {}
 
