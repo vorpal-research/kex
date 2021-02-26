@@ -5,7 +5,10 @@ import com.abdullin.kthelper.logging.log
 import com.abdullin.kthelper.tryOrNull
 import org.jetbrains.research.kex.asm.util.visibility
 import org.jetbrains.research.kex.config.kexConfig
-import org.jetbrains.research.kex.ktype.*
+import org.jetbrains.research.kex.ktype.KexArray
+import org.jetbrains.research.kex.ktype.KexChar
+import org.jetbrains.research.kex.ktype.KexType
+import org.jetbrains.research.kex.ktype.type
 import org.jetbrains.research.kex.reanimator.collector.externalConstructors
 import org.jetbrains.research.kex.reanimator.collector.hasSetter
 import org.jetbrains.research.kex.reanimator.collector.setter
@@ -343,11 +346,12 @@ class EnumGenerator(private val fallback: Generator) : Generator {
             else -> null
         } ?: return cs.also { it += UnknownCall(kfgType, descriptor).wrap(name) }
 
-        val result = params.staticFields
-                .asSequence()
+        val enumConstants = params.staticFields
                 .mapNotNull { if (it.value is StaticFieldDescriptor) (it.key to it.value as StaticFieldDescriptor) else null }
                 .map { it.first to it.second.value }
-                .firstOrNull { it.second.matches(descriptor) }
+
+        val result = enumConstants.firstOrNull { it.second.matches(descriptor) }
+                ?: enumConstants.randomOrNull()
                 ?: return cs.also { it += UnknownCall(kfgType, descriptor).wrap(name) }
         cs += EnumValueCreation(cm[result.first.klass], result.first.fieldNameString)
         return cs

@@ -6,16 +6,17 @@ import org.jetbrains.research.kex.annotations.AnnotationManager
 import org.jetbrains.research.kex.asm.state.PredicateStateAnalysis
 import org.jetbrains.research.kex.asm.util.Visibility
 import org.jetbrains.research.kex.asm.util.visibility
-import org.jetbrains.research.kex.config.kexConfig
 import org.jetbrains.research.kex.ktype.KexType
 import org.jetbrains.research.kex.ktype.kexType
-import org.jetbrains.research.kex.reanimator.descriptor.*
+import org.jetbrains.research.kex.reanimator.descriptor.Descriptor
+import org.jetbrains.research.kex.reanimator.descriptor.ObjectDescriptor
+import org.jetbrains.research.kex.reanimator.descriptor.concretize
+import org.jetbrains.research.kex.reanimator.descriptor.descriptor
 import org.jetbrains.research.kex.smt.Checker
 import org.jetbrains.research.kex.smt.Result
 import org.jetbrains.research.kex.state.PredicateState
 import org.jetbrains.research.kex.state.StateBuilder
 import org.jetbrains.research.kex.state.predicate.axiom
-import org.jetbrains.research.kex.state.predicate.state
 import org.jetbrains.research.kex.state.term.Term
 import org.jetbrains.research.kex.state.term.term
 import org.jetbrains.research.kex.state.transformer.*
@@ -45,6 +46,7 @@ class GeneratorContext(val context: ExecutionContext, val psa: PredicateStateAna
         +AnnotationAdapter(method, AnnotationManager.defaultLoader)
         +ConcreteImplInliner(types, typeInfoMap, psa)
         +StaticFieldInliner(cm, psa)
+        +RecursiveInliner(psa) { MethodInliner(psa, it) }
         +IntrinsicAdapter
         +ReflectionInfoAdapter(method, context.loader, ignores)
         +Optimizer()
@@ -53,6 +55,7 @@ class GeneratorContext(val context: ExecutionContext, val psa: PredicateStateAna
         +ConstStringAdapter()
         +ArrayBoundsAdapter()
         +NullityInfoAdapter()
+        +FieldNormalizer(context)
     }
 
     fun prepareState(method: Method, ps: PredicateState, ignores: Set<Term> = setOf()) = transform(ps) {
