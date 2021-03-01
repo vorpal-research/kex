@@ -3,6 +3,7 @@ package org.jetbrains.research.kex.reanimator.callstack
 import com.abdullin.kthelper.collection.queueOf
 import com.abdullin.kthelper.logging.log
 import com.abdullin.kthelper.tryOrNull
+import org.jetbrains.research.kex.ExecutionContext
 import org.jetbrains.research.kex.asm.util.visibility
 import org.jetbrains.research.kex.config.kexConfig
 import org.jetbrains.research.kex.ktype.KexArray
@@ -12,13 +13,11 @@ import org.jetbrains.research.kex.ktype.type
 import org.jetbrains.research.kex.reanimator.collector.externalConstructors
 import org.jetbrains.research.kex.reanimator.collector.hasSetter
 import org.jetbrains.research.kex.reanimator.collector.setter
-import org.jetbrains.research.kex.reanimator.descriptor.ArrayDescriptor
-import org.jetbrains.research.kex.reanimator.descriptor.Descriptor
-import org.jetbrains.research.kex.reanimator.descriptor.ObjectDescriptor
-import org.jetbrains.research.kex.reanimator.descriptor.StaticFieldDescriptor
+import org.jetbrains.research.kex.reanimator.descriptor.*
 import org.jetbrains.research.kex.smt.Checker
 import org.jetbrains.research.kex.smt.Result
 import org.jetbrains.research.kex.state.StateBuilder
+import org.jetbrains.research.kex.state.term.FieldTerm
 import org.jetbrains.research.kex.state.transformer.TypeInfoMap
 import org.jetbrains.research.kex.state.transformer.generateFinalDescriptors
 import org.jetbrains.research.kfg.ir.Class
@@ -28,7 +27,7 @@ import org.jetbrains.research.kfg.type.ClassType
 
 private val maxStackSize by lazy { kexConfig.getIntValue("apiGeneration", "maxStackSize", 5) }
 private val maxQuerySize by lazy { kexConfig.getIntValue("apiGeneration", "maxQuerySize", 1000) }
-private val useRecConstructors by lazy { kexConfig.getBooleanValue("apiGeneration", "use-recursive-constructors", false) }
+private val useRecConstructors by lazy { kexConfig.getBooleanValue("apiGeneration", "use-recursive-constructors", true) }
 
 interface Generator {
     val context: GeneratorContext
@@ -124,7 +123,7 @@ class AnyGenerator(private val fallback: Generator) : Generator {
             if (depth > maxStackSize) continue
             log.debug("Depth $generationDepth, stack depth $depth, query size ${queue.size}")
 
-            val checkCtor = fun (ctors: List<Method>, handler: (ctor: Method) -> ApiCall?): Boolean {
+            val checkCtor = fun(ctors: List<Method>, handler: (ctor: Method) -> ApiCall?): Boolean {
                 for (method in ctors) {
                     val apiCall = handler(method) ?: continue
                     val result = (stack + apiCall).reversed()
@@ -232,7 +231,8 @@ class AnyGenerator(private val fallback: Generator) : Generator {
                 val (result, args) = kfgField.setter.executeAsSetter(this@generateSetters) ?: continue
                 if (result != null && (result[field] == null || result[field] == field.second.defaultDescriptor)) {
                     val remapping = { mutableMapOf<Descriptor, Descriptor>(result to this@generateSetters) }
-                    val generatedArgs = generateArgs(args.map { it.deepCopy(remapping()) }, generationDepth + 1) ?: continue
+                    val generatedArgs = generateArgs(args.map { it.deepCopy(remapping()) }, generationDepth + 1)
+                            ?: continue
                     calls += MethodCall(kfgField.setter, generatedArgs)
                     accept(result)
                     reduce()
@@ -301,6 +301,45 @@ class StringGenerator(private val fallback: Generator) : Generator {
 }
 
 class EnumGenerator(private val fallback: Generator) : Generator {
+    companion object {
+        private val enumConstants = mutableMapOf<KexType, Map<FieldTerm, Descriptor>>()
+
+        private fun getEnumConstants(ctx: GeneratorContext, enumType: KexType): Map<FieldTerm, Descriptor> = enumConstants.getOrPut(enumType) {
+            computeEnumConstants(ctx, enumType)
+        }
+
+        private fun computeEnumConstants(ctx: GeneratorContext, enumType: KexType): Map<FieldTerm, Descriptor> = with(ctx) {
+            val kfgType = enumType.getKfgType(context.types) as ClassType
+            val staticInit = kfgType.`class`.getMethod("<clinit>", "()V")
+
+            val state = staticInit.methodState ?: return mapOf()
+            val preparedState = state.prepare(staticInit, TypeInfoMap())
+            val queryBuilder = StateBuilder()
+            with(queryBuilder) {
+                val enumArray = KexArray(descriptor.type)
+                val valuesField = term { `class`(descriptor.type).field(enumArray, "\$VALUES") }
+                val generatedTerm = term { generate(enumArray) }
+                state { generatedTerm equality valuesField.load() }
+                require { generatedTerm inequality null }
+            }
+            val preparedQuery = prepareQuery(queryBuilder.apply())
+
+            val checker = Checker(staticInit, context.loader, psa)
+            val params = when (val result = checker.check(preparedState + preparedQuery)) {
+                is Result.SatResult -> {
+                    log.debug("Model: ${result.model}")
+                    generateFinalDescriptors(staticInit, context, result.model, checker.state)
+                }
+                else -> null
+            } ?: return mapOf()
+
+            return params.staticFields
+                    .mapNotNull { if (it.value is StaticFieldDescriptor) (it.key to it.value as StaticFieldDescriptor) else null }
+                    .map { it.first to it.second.value }
+                    .toMap()
+        }
+    }
+
     override val context: GeneratorContext
         get() = fallback.context
 
@@ -312,8 +351,44 @@ class EnumGenerator(private val fallback: Generator) : Generator {
         }
     }
 
-    fun Descriptor.matches(other: Descriptor): Boolean = when {
-        this is ObjectDescriptor && other is ObjectDescriptor -> other.fields.all { (field, value) -> this[field] == value }
+    private fun Descriptor.matches(other: Descriptor, visited: MutableMap<Pair<Descriptor, Descriptor>, Boolean>): Boolean = when {
+        this.javaClass != other.javaClass -> {
+            visited[this to other] = false
+            false
+        }
+        this is ConstantDescriptor.Null -> other is ConstantDescriptor.Null
+        this is ConstantDescriptor.Bool -> this.value == (other as? ConstantDescriptor.Bool)?.value
+        this is ConstantDescriptor.Byte -> this.value == (other as? ConstantDescriptor.Byte)?.value
+        this is ConstantDescriptor.Char -> this.value == (other as? ConstantDescriptor.Char)?.value
+        this is ConstantDescriptor.Short -> this.value == (other as? ConstantDescriptor.Short)?.value
+        this is ConstantDescriptor.Int -> this.value == (other as? ConstantDescriptor.Int)?.value
+        this is ConstantDescriptor.Long -> this.value == (other as? ConstantDescriptor.Long)?.value
+        this is ConstantDescriptor.Float -> this.value == (other as? ConstantDescriptor.Float)?.value
+        this is ConstantDescriptor.Double -> this.value == (other as? ConstantDescriptor.Double)?.value
+        this is ObjectDescriptor -> {
+            other as ObjectDescriptor
+            visited[this to other] = false
+            val res = other.fields.all { (field, value) ->
+                val thisField = this[field] ?: return@all false
+                value.matches(thisField, visited)
+            }
+            visited[this to other] = res
+            res
+        }
+        this is ArrayDescriptor -> {
+            other as ArrayDescriptor
+            visited[this to other] = false
+            if (this.length == other.length) {
+                val res = other.elements.all { (index, value) ->
+                    val thisField = this[index] ?: return@all false
+                    value.matches(thisField, visited)
+                }
+                visited[this to other] = res
+                res
+            } else {
+                false
+            }
+        }
         else -> false
     }
 
@@ -323,34 +398,9 @@ class EnumGenerator(private val fallback: Generator) : Generator {
         descriptor.cache(cs)
 
         val kfgType = descriptor.type.getKfgType(context.types) as ClassType
-        val staticInit = kfgType.`class`.getMethod("<clinit>", "()V")
+        val enumConstants = getEnumConstants(this, descriptor.type).toList()
 
-        val state = staticInit.methodState ?: return cs.also { it += UnknownCall(kfgType, descriptor).wrap(name) }
-        val preparedState = state.prepare(staticInit, TypeInfoMap())
-        val queryBuilder = StateBuilder()
-        with(queryBuilder) {
-            val enumArray = KexArray(descriptor.type)
-            val valuesField = term { `class`(descriptor.type).field(enumArray, "\$VALUES") }
-            val generatedTerm = term { generate(enumArray) }
-            state { generatedTerm equality valuesField.load() }
-            require { generatedTerm inequality null }
-        }
-        val preparedQuery = prepareQuery(queryBuilder.apply())
-
-        val checker = Checker(staticInit, context.loader, psa)
-        val params = when (val result = checker.check(preparedState + preparedQuery)) {
-            is Result.SatResult -> {
-                log.debug("Model: ${result.model}")
-                generateFinalDescriptors(staticInit, context, result.model, checker.state)
-            }
-            else -> null
-        } ?: return cs.also { it += UnknownCall(kfgType, descriptor).wrap(name) }
-
-        val enumConstants = params.staticFields
-                .mapNotNull { if (it.value is StaticFieldDescriptor) (it.key to it.value as StaticFieldDescriptor) else null }
-                .map { it.first to it.second.value }
-
-        val result = enumConstants.firstOrNull { it.second.matches(descriptor) }
+        val result = enumConstants.firstOrNull { it.second.matches(descriptor, mutableMapOf()) }
                 ?: enumConstants.randomOrNull()
                 ?: return cs.also { it += UnknownCall(kfgType, descriptor).wrap(name) }
         cs += EnumValueCreation(cm[result.first.klass], result.first.fieldNameString)

@@ -107,7 +107,7 @@ class RandomObjectReanimator(val ctx: ExecutionContext, val target: Package, val
 
             var callStack: CallStack? = null
             time += timed {
-                callStack = `try` { CallStackGenerator(generatorContext).generateDescriptor(descriptor) }.getOrNull()
+                callStack = tryOrNull { CallStackGenerator(generatorContext).generateDescriptor(descriptor) }
             }
 
             val generatedAny = callStack?.let { stack ->
