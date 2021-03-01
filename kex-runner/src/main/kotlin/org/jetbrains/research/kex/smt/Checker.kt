@@ -56,6 +56,7 @@ class Checker(val method: Method, val loader: ClassLoader, private val psa: Pred
         +ConstStringAdapter()
         +ArrayBoundsAdapter()
         +NullityInfoAdapter()
+        +FieldNormalizer(method.cm)
     }
 
     fun prepareState(method: Method, ps: PredicateState, typeInfoMap: TypeInfoMap) = transform(ps) {
@@ -69,6 +70,7 @@ class Checker(val method: Method, val loader: ClassLoader, private val psa: Pred
         +ConstStringAdapter()
         +ArrayBoundsAdapter()
         +NullityInfoAdapter()
+        +FieldNormalizer(method.cm)
     }
 
     fun prepareAndCheck(ps: PredicateState): Result {

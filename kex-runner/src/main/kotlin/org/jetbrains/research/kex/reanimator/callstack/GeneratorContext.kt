@@ -55,13 +55,14 @@ class GeneratorContext(val context: ExecutionContext, val psa: PredicateStateAna
         +ConstStringAdapter()
         +ArrayBoundsAdapter()
         +NullityInfoAdapter()
-        +FieldNormalizer(context)
+        +FieldNormalizer(context.cm, "state.normalized")
     }
 
     fun prepareState(method: Method, ps: PredicateState, ignores: Set<Term> = setOf()) = transform(ps) {
         +AnnotationAdapter(method, AnnotationManager.defaultLoader)
         +MethodInliner(psa)
         +StaticFieldInliner(cm, psa)
+        +RecursiveInliner(psa) { MethodInliner(psa, it) }
         +IntrinsicAdapter
         +ReflectionInfoAdapter(method, context.loader, ignores)
         +Optimizer()
@@ -70,11 +71,13 @@ class GeneratorContext(val context: ExecutionContext, val psa: PredicateStateAna
         +ConstStringAdapter()
         +ArrayBoundsAdapter()
         +NullityInfoAdapter()
+        +FieldNormalizer(context.cm, "state.normalized")
     }
 
     fun prepareQuery(ps: PredicateState) = transform(ps) {
         +NullityInfoAdapter()
         +ArrayBoundsAdapter()
+        +FieldNormalizer(context.cm, "query.normalized")
     }
 
 

@@ -155,7 +155,7 @@ abstract class TermBuilder {
     private object TermGenerator {
         private var index = 0
 
-        val nextName: String get() = "generatedTerm${index++}"
+        val nextName: String get() = "term${index++}"
 
         fun nextTerm(type: KexType) = term { value(type, nextName) }
     }
