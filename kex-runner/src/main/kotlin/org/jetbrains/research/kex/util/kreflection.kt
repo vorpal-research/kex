@@ -12,6 +12,7 @@ import org.jetbrains.research.kfg.ir.Field
 import org.jetbrains.research.kfg.ir.Method
 import org.jetbrains.research.kfg.type.Reference
 import org.jetbrains.research.kfg.type.Type
+import org.jetbrains.research.kfg.type.TypeFactory
 import kotlin.reflect.KClass
 import kotlin.reflect.KFunction
 import kotlin.reflect.KMutableProperty
@@ -76,6 +77,7 @@ val KClass<*>.allFunctions
 fun KClass<*>.find(method: Method) = allFunctions.find { it eq method }
 
 fun ClassLoader.loadKClass(type: Type) = this.loadClass(type).kotlin
+fun ClassLoader.loadKClass(tf: TypeFactory, type: KexType) = this.loadClass(tf, type).kotlin
 fun ClassLoader.loadKClass(klass: org.jetbrains.research.kfg.ir.Class) = this.loadKClass(klass.type)
 
 fun KClass<*>.getKFunction(method: Method): KFunction<*>? {

@@ -283,6 +283,7 @@ class CallStack2JavaPrinter(
         is FieldSetter -> printFieldSetter(owner, apiCall)
         is StaticFieldSetter -> printStaticFieldSetter(apiCall)
         is EnumValueCreation -> printEnumValueCreation(owner, apiCall)
+        is StaticFieldGetter -> printStaticFieldGetter(owner, apiCall)
         is UnknownCall -> printUnknown(owner, apiCall)
         else -> unreachable { log.error("Unknown call") }
     }
@@ -466,6 +467,12 @@ class CallStack2JavaPrinter(
     }
 
     private fun printEnumValueCreation(owner: CallStack, call: EnumValueCreation): String {
+        val actualType = call.klass.type.csType
+        actualTypes[owner] = actualType
+        return "$actualType ${owner.name} = ${call.klass.javaString}.${call.name}"
+    }
+
+    private fun printStaticFieldGetter(owner: CallStack, call: StaticFieldGetter): String {
         val actualType = call.klass.type.csType
         actualTypes[owner] = actualType
         return "$actualType ${owner.name} = ${call.klass.javaString}.${call.name}"

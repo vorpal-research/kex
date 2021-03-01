@@ -20,6 +20,7 @@ import org.jetbrains.research.kex.state.StateBuilder
 import org.jetbrains.research.kex.state.term.FieldTerm
 import org.jetbrains.research.kex.state.transformer.TypeInfoMap
 import org.jetbrains.research.kex.state.transformer.generateFinalDescriptors
+import org.jetbrains.research.kex.util.loadKClass
 import org.jetbrains.research.kfg.ir.Class
 import org.jetbrains.research.kfg.ir.Method
 import org.jetbrains.research.kfg.ir.MethodDesc
@@ -404,6 +405,39 @@ class EnumGenerator(private val fallback: Generator) : Generator {
                 ?: enumConstants.randomOrNull()
                 ?: return cs.also { it += UnknownCall(kfgType, descriptor).wrap(name) }
         cs += EnumValueCreation(cm[result.first.klass], result.first.fieldNameString)
+        return cs
+    }
+}
+
+class KtObjectGenerator(private val fallback: Generator) : Generator {
+    override val context: GeneratorContext
+        get() = fallback.context
+
+    val types get() = context.types
+    val loader get() = context.loader
+
+    override fun supports(type: KexType): Boolean {
+        val kClass = tryOrNull { loader.loadKClass(types, type) } ?: return false
+        return kClass.isCompanion || kClass.objectInstance != null
+    }
+
+    override fun generate(descriptor: Descriptor, generationDepth: Int): CallStack = with(context) {
+        val name = descriptor.term.toString()
+        val cs = CallStack(name)
+        descriptor.cache(cs)
+
+        val kfgType = descriptor.type.getKfgType(types) as? ClassType
+                ?: return cs.also { it += UnknownCall(descriptor.type.getKfgType(types), descriptor).wrap(name) }
+        val kClass = tryOrNull { loader.loadKClass(kfgType) }
+                ?: return cs.also { it += UnknownCall(kfgType, descriptor).wrap(name) }
+
+        if (kClass.isCompanion) {
+            val (parentClass, companionName) = kfgType.`class`.fullname.split("\$")
+            val kfgParent = cm[parentClass]
+            cs += StaticFieldGetter(kfgParent, companionName)
+        } else if (kClass.objectInstance != null) {
+            cs += StaticFieldGetter(kfgType.`class`, "INSTANCE")
+        }
         return cs
     }
 }

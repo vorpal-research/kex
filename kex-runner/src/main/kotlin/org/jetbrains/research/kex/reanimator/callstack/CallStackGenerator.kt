@@ -25,6 +25,7 @@ class CallStackGenerator(override val context: GeneratorContext) : Generator {
     init {
         typeGenerators += StringGenerator(this)
         typeGenerators += EnumGenerator(this)
+        typeGenerators += KtObjectGenerator(this)
     }
 
     constructor(executionCtx: ExecutionContext, psa: PredicateStateAnalysis, visibilityLevel: Visibility)

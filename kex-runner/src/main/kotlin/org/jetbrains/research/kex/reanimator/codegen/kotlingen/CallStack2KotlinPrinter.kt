@@ -329,6 +329,7 @@ class CallStack2KotlinPrinter(
         is FieldSetter -> printFieldSetter(owner, apiCall)
         is StaticFieldSetter -> printStaticFieldSetter(apiCall)
         is EnumValueCreation -> printEnumValueCreation(owner, apiCall)
+        is StaticFieldGetter -> printStaticFieldGetter(owner, apiCall)
         is UnknownCall -> printUnknown(owner, apiCall)
         else -> unreachable { log.error("Unknown call") }
     }
@@ -478,6 +479,12 @@ class CallStack2KotlinPrinter(
     }
 
     private fun printEnumValueCreation(owner: CallStack, call: EnumValueCreation): String {
+        val actualType = call.klass.type.getCsType(false)
+        actualTypes[owner] = actualType
+        return "val ${owner.name} = ${call.klass.kotlinString}.${call.name}"
+    }
+
+    private fun printStaticFieldGetter(owner: CallStack, call: StaticFieldGetter): String {
         val actualType = call.klass.type.getCsType(false)
         actualTypes[owner] = actualType
         return "val ${owner.name} = ${call.klass.kotlinString}.${call.name}"
