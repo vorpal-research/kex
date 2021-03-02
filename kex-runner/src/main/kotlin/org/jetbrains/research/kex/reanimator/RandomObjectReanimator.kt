@@ -132,7 +132,7 @@ class RandomObjectReanimator(val ctx: ExecutionContext, val target: Package, val
         }
         log.info("Total attempts: $totalAttempts")
         log.info("Valid attempts: $validAttempts")
-        log.info("Valid descripptor attempts: $validDescriptorAttempts")
+        log.info("Valid descriptor attempts: $validDescriptorAttempts")
         log.info("Total attempts success rate: ${String.format("%.02f", 100 * successes.toDouble() / totalAttempts)}%")
         log.info("Valid attempts success rate: ${String.format("%.02f", 100 * successes.toDouble() / validAttempts)}%")
         log.info("Valid descriptor attempts success rate: ${String.format("%.02f", 100 * validDescriptorSuccesses.toDouble() / validDescriptorAttempts)}%")

@@ -422,8 +422,7 @@ abstract class DescriptorReanimator(override val method: Method,
     }
 
     private fun newArrayInstance(memspace: Int, arrayType: KexArray, addr: Term?) = descriptor {
-        val length = (reanimateFromProperties(memspace, "length", addr) as? ConstIntTerm)?.value
-                ?: return@descriptor default(arrayType)
+        val length = (reanimateFromProperties(memspace, "length", addr) as? ConstIntTerm)?.value ?: 0
 
         log.debug("Creating array of type $arrayType with size $length")
         array(length, arrayType.element)
