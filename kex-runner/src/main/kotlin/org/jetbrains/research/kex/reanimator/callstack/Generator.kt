@@ -3,7 +3,6 @@ package org.jetbrains.research.kex.reanimator.callstack
 import com.abdullin.kthelper.collection.queueOf
 import com.abdullin.kthelper.logging.log
 import com.abdullin.kthelper.tryOrNull
-import org.jetbrains.research.kex.ExecutionContext
 import org.jetbrains.research.kex.asm.util.visibility
 import org.jetbrains.research.kex.config.kexConfig
 import org.jetbrains.research.kex.ktype.KexArray
@@ -317,8 +316,8 @@ class EnumGenerator(private val fallback: Generator) : Generator {
             val preparedState = state.prepare(staticInit, TypeInfoMap())
             val queryBuilder = StateBuilder()
             with(queryBuilder) {
-                val enumArray = KexArray(descriptor.type)
-                val valuesField = term { `class`(descriptor.type).field(enumArray, "\$VALUES") }
+                val enumArray = KexArray(enumType)
+                val valuesField = term { `class`(enumType).field(enumArray, "\$VALUES") }
                 val generatedTerm = term { generate(enumArray) }
                 state { generatedTerm equality valuesField.load() }
                 require { generatedTerm inequality null }
