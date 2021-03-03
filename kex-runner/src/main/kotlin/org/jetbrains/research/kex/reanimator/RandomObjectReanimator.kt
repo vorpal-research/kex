@@ -19,6 +19,7 @@ import org.jetbrains.research.kex.util.kex
 import org.jetbrains.research.kex.util.loadClass
 import org.jetbrains.research.kfg.ClassManager
 import org.jetbrains.research.kfg.Package
+import org.jetbrains.research.kfg.ir.ConcreteClass
 import org.jetbrains.research.kfg.type.ClassType
 
 class RandomObjectReanimator(
@@ -50,6 +51,7 @@ class RandomObjectReanimator(
         in visited -> true
         is ConstantDescriptor -> true
         is ObjectDescriptor -> when {
+            this.klass.kfgClass(cm.type) !is ConcreteClass -> false
             this.klass.kfgClass(cm.type).isInheritorOf(cm["java/util/Map"]) -> false
             this.klass.kfgClass(cm.type).isInheritorOf(cm["java/util/Set"]) -> false
             else -> {
