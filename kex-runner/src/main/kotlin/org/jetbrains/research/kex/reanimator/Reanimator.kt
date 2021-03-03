@@ -9,6 +9,7 @@ import org.jetbrains.research.kex.asm.util.Visibility
 import org.jetbrains.research.kex.config.kexConfig
 import org.jetbrains.research.kex.random.GenerationException
 import org.jetbrains.research.kex.reanimator.callstack.*
+import org.jetbrains.research.kex.reanimator.callstack.generator.CallStackGenerator
 import org.jetbrains.research.kex.reanimator.codegen.TestCasePrinter
 import org.jetbrains.research.kex.reanimator.descriptor.Descriptor
 import org.jetbrains.research.kex.reanimator.descriptor.DescriptorStatistics
@@ -23,7 +24,9 @@ import org.jetbrains.research.kfg.ir.Method
 
 class NoConcreteInstanceException(val klass: Class) : Exception()
 
-private val visibilityLevel: Visibility by lazy { kexConfig.getEnumValue("apiGeneration", "visibility", true, Visibility.PUBLIC) }
+private val visibilityLevel by lazy {
+    kexConfig.getEnumValue("apiGeneration", "visibility", true, Visibility.PUBLIC)
+}
 
 class Reanimator(val ctx: ExecutionContext, val psa: PredicateStateAnalysis, val method: Method) {
     val cm: ClassManager get() = ctx.cm

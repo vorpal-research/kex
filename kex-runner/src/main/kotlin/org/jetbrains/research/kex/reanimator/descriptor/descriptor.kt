@@ -80,14 +80,16 @@ sealed class Descriptor(term: Term, type: KexType, val hasState: Boolean) {
 
 sealed class ConstantDescriptor(term: Term, type: KexType) : Descriptor(term, type, false) {
     override fun collectQuery(set: MutableSet<Descriptor>): PredicateState =
-            unreachable { log.error("Can't collect query for constant descriptor") }
+        unreachable { log.error("Can't collect query for constant descriptor") }
 
     override fun concretize(cm: ClassManager, visited: MutableSet<Descriptor>) = this
     override fun deepCopy(copied: MutableMap<Descriptor, Descriptor>) = this
     override fun reduce(visited: MutableSet<Descriptor>) = this
     override fun generateTypeInfo(visited: MutableSet<Descriptor>) = emptyState()
     override fun print(map: MutableMap<Descriptor, String>) = ""
-    override fun structuralEquality(other: Descriptor, map: MutableSet<Pair<Descriptor, Descriptor>>) = this.term == other.term
+    override fun structuralEquality(other: Descriptor, map: MutableSet<Pair<Descriptor, Descriptor>>) =
+        this.term == other.term
+
     override fun countDepth(visited: Set<Descriptor>, cache: MutableMap<Descriptor, kotlin.Int>) = 1
     override fun contains(other: Descriptor, visited: MutableSet<Descriptor>): Boolean = this.term == other.term
 
@@ -144,6 +146,7 @@ class ObjectDescriptor(klass: KexClass) : Descriptor(term { generate(klass) }, k
     operator fun set(key: Pair<String, KexType>, value: Descriptor) {
         fields[key] = value
     }
+
     operator fun set(field: String, type: KexType, value: Descriptor) = set(field to type, value)
 
     fun remove(field: String, type: KexType): Descriptor? = fields.remove(field to type)
@@ -285,7 +288,7 @@ class ObjectDescriptor(klass: KexClass) : Descriptor(term { generate(klass) }, k
 }
 
 class ArrayDescriptor(val elementType: KexType, val length: Int) :
-        Descriptor(term { generate(KexArray(elementType)) }, KexArray(elementType), true) {
+    Descriptor(term { generate(KexArray(elementType)) }, KexArray(elementType), true) {
     val elements = mutableMapOf<Int, Descriptor>()
 
     operator fun set(index: Int, value: Descriptor) {
@@ -411,7 +414,7 @@ class ArrayDescriptor(val elementType: KexType, val length: Int) :
 }
 
 class StaticFieldDescriptor(val klass: KexClass, val field: String, type: KexType, var value: Descriptor) :
-        Descriptor(term { `class`(klass).field(type, field) }, type, true) {
+    Descriptor(term { `class`(klass).field(type, field) }, type, true) {
     override fun print(map: MutableMap<Descriptor, String>): String {
         if (this in map) return map[this]!!
         map[this] = term.name
@@ -498,6 +501,7 @@ open class DescriptorBuilder {
         is Double -> ConstantDescriptor.Double(number)
         else -> unreachable { log.error("Unknown number $number") }
     }
+
     fun const(char: Char) = ConstantDescriptor.Char(char)
     fun const(klass: KexType) = ConstantDescriptor.Class(klass)
 
@@ -505,7 +509,7 @@ open class DescriptorBuilder {
     fun array(length: Int, elementType: KexType): ArrayDescriptor = ArrayDescriptor(elementType, length)
 
     fun staticField(klass: KexClass, field: String, fieldType: KexType, value: Descriptor) =
-            StaticFieldDescriptor(klass, field, fieldType, value)
+        StaticFieldDescriptor(klass, field, fieldType, value)
 
     fun default(type: KexType, nullable: Boolean): Descriptor = descriptor {
         when (type) {
@@ -528,4 +532,4 @@ open class DescriptorBuilder {
 }
 
 fun descriptor(body: DescriptorBuilder.() -> Descriptor): Descriptor =
-        DescriptorBuilder().body()
+    DescriptorBuilder().body()

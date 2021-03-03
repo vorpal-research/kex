@@ -11,8 +11,8 @@ import org.jetbrains.research.kex.asm.util.visibility
 import org.jetbrains.research.kex.random.Randomizer
 import org.jetbrains.research.kex.reanimator.callstack.CallStack
 import org.jetbrains.research.kex.reanimator.callstack.CallStackExecutor
-import org.jetbrains.research.kex.reanimator.callstack.CallStackGenerator
-import org.jetbrains.research.kex.reanimator.callstack.GeneratorContext
+import org.jetbrains.research.kex.reanimator.callstack.generator.CallStackGenerator
+import org.jetbrains.research.kex.reanimator.callstack.generator.GeneratorContext
 import org.jetbrains.research.kex.reanimator.collector.externalConstructors
 import org.jetbrains.research.kex.reanimator.descriptor.*
 import org.jetbrains.research.kex.util.kex
@@ -21,16 +21,21 @@ import org.jetbrains.research.kfg.ClassManager
 import org.jetbrains.research.kfg.Package
 import org.jetbrains.research.kfg.type.ClassType
 
-class RandomObjectReanimator(val ctx: ExecutionContext, val target: Package, val psa: PredicateStateAnalysis, val visibilityLevel: Visibility) {
+class RandomObjectReanimator(
+    val ctx: ExecutionContext,
+    val target: Package,
+    val psa: PredicateStateAnalysis,
+    val visibilityLevel: Visibility
+) {
     val random: Randomizer get() = ctx.random
     val cm: ClassManager get() = ctx.cm
     val generatorContext = GeneratorContext(ctx, psa, visibilityLevel)
 
     val ClassManager.randomClass
         get() = this.concreteClasses
-                .filter { it.`package`.isChild(target) }
-                .filterNot { it.isEnum }
-                .random()
+            .filter { it.`package`.isChild(target) }
+            .filterNot { it.isEnum }
+            .random()
 
     val Any.isValid: Boolean
         get() {
@@ -135,12 +140,40 @@ class RandomObjectReanimator(val ctx: ExecutionContext, val target: Package, val
         log.info("Valid descriptor attempts: $validDescriptorAttempts")
         log.info("Total attempts success rate: ${String.format("%.02f", 100 * successes.toDouble() / totalAttempts)}%")
         log.info("Valid attempts success rate: ${String.format("%.02f", 100 * successes.toDouble() / validAttempts)}%")
-        log.info("Valid descriptor attempts success rate: ${String.format("%.02f", 100 * validDescriptorSuccesses.toDouble() / validDescriptorAttempts)}%")
+        log.info(
+            "Valid descriptor attempts success rate: ${
+                String.format(
+                    "%.02f",
+                    100 * validDescriptorSuccesses.toDouble() / validDescriptorAttempts
+                )
+            }%"
+        )
         log.info("Average random descriptor depth: ${String.format("%.02f", depth.toDouble() / validAttempts)}")
         log.info("Average success descriptor depth: ${String.format("%.02f", successDepths.toDouble() / successes)}")
-        log.info("Average valid descriptor depth: ${String.format("%.02f", totalValidDescriptorDepth.toDouble() / validDescriptorAttempts)}")
-        log.info("Average success valid descriptor depth: ${String.format("%.02f", validDescriptorDepths.toDouble() / validDescriptorSuccesses)}")
+        log.info(
+            "Average valid descriptor depth: ${
+                String.format(
+                    "%.02f",
+                    totalValidDescriptorDepth.toDouble() / validDescriptorAttempts
+                )
+            }"
+        )
+        log.info(
+            "Average success valid descriptor depth: ${
+                String.format(
+                    "%.02f",
+                    validDescriptorDepths.toDouble() / validDescriptorSuccesses
+                )
+            }"
+        )
         log.info("Average time per descriptor generation: ${String.format("%.02f", time.toDouble() / validAttempts)}")
-        log.info("Average time per valid descriptor generation: ${String.format("%.02f", validTime.toDouble() / validDescriptorAttempts)}")
+        log.info(
+            "Average time per valid descriptor generation: ${
+                String.format(
+                    "%.02f",
+                    validTime.toDouble() / validDescriptorAttempts
+                )
+            }"
+        )
     }
 }

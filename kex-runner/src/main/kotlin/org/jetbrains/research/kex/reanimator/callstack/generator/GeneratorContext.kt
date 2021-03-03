@@ -1,4 +1,4 @@
-package org.jetbrains.research.kex.reanimator.callstack
+package org.jetbrains.research.kex.reanimator.callstack.generator
 
 import com.abdullin.kthelper.logging.log
 import org.jetbrains.research.kex.ExecutionContext
@@ -8,6 +8,8 @@ import org.jetbrains.research.kex.asm.util.Visibility
 import org.jetbrains.research.kex.asm.util.visibility
 import org.jetbrains.research.kex.ktype.KexType
 import org.jetbrains.research.kex.ktype.kexType
+import org.jetbrains.research.kex.reanimator.callstack.ApiCall
+import org.jetbrains.research.kex.reanimator.callstack.CallStack
 import org.jetbrains.research.kex.reanimator.descriptor.Descriptor
 import org.jetbrains.research.kex.reanimator.descriptor.ObjectDescriptor
 import org.jetbrains.research.kex.reanimator.descriptor.concretize
@@ -24,7 +26,11 @@ import org.jetbrains.research.kfg.ir.Class
 import org.jetbrains.research.kfg.ir.Field
 import org.jetbrains.research.kfg.ir.Method
 
-class GeneratorContext(val context: ExecutionContext, val psa: PredicateStateAnalysis, val visibilityLevel: Visibility) {
+class GeneratorContext(
+    val context: ExecutionContext,
+    val psa: PredicateStateAnalysis,
+    val visibilityLevel: Visibility
+) {
     val cm get() = context.cm
     val types get() = context.types
     val loader get() = context.loader
@@ -40,23 +46,25 @@ class GeneratorContext(val context: ExecutionContext, val psa: PredicateStateAna
 
     fun Descriptor.cached() = descriptorCache[this]
 
-    fun PredicateState.prepare(method: Method, typeInfoMap: TypeInfoMap, ignores: Set<Term> = setOf()) = prepareState(method, this, typeInfoMap, ignores)
+    fun PredicateState.prepare(method: Method, typeInfoMap: TypeInfoMap, ignores: Set<Term> = setOf()) =
+        prepareState(method, this, typeInfoMap, ignores)
 
-    fun prepareState(method: Method, ps: PredicateState, typeInfoMap: TypeInfoMap, ignores: Set<Term> = setOf()) = transform(ps) {
-        +AnnotationAdapter(method, AnnotationManager.defaultLoader)
-        +ConcreteImplInliner(types, typeInfoMap, psa)
-        +StaticFieldInliner(cm, psa)
-        +RecursiveInliner(psa) { MethodInliner(psa, it) }
-        +IntrinsicAdapter
-        +ReflectionInfoAdapter(method, context.loader, ignores)
-        +Optimizer()
-        +ConstantPropagator
-        +BoolTypeAdapter(types)
-        +ConstStringAdapter()
-        +ArrayBoundsAdapter()
-        +NullityInfoAdapter()
-        +FieldNormalizer(context.cm, "state.normalized")
-    }
+    fun prepareState(method: Method, ps: PredicateState, typeInfoMap: TypeInfoMap, ignores: Set<Term> = setOf()) =
+        transform(ps) {
+            +AnnotationAdapter(method, AnnotationManager.defaultLoader)
+            +ConcreteImplInliner(types, typeInfoMap, psa)
+            +StaticFieldInliner(cm, psa)
+            +RecursiveInliner(psa) { MethodInliner(psa, it) }
+            +IntrinsicAdapter
+            +ReflectionInfoAdapter(method, context.loader, ignores)
+            +Optimizer()
+            +ConstantPropagator
+            +BoolTypeAdapter(types)
+            +ConstStringAdapter()
+            +ArrayBoundsAdapter()
+            +NullityInfoAdapter()
+            +FieldNormalizer(context.cm, "state.normalized")
+        }
 
     fun prepareState(method: Method, ps: PredicateState, ignores: Set<Term> = setOf()) = transform(ps) {
         +AnnotationAdapter(method, AnnotationManager.defaultLoader)
@@ -83,18 +91,19 @@ class GeneratorContext(val context: ExecutionContext, val psa: PredicateStateAna
 
     val Class.accessibleConstructors
         get() = constructors
-                .filter { visibilityLevel <= it.visibility }
-                .sortedBy { it.argTypes.size }
+            .filter { visibilityLevel <= it.visibility }
+            .sortedBy { it.argTypes.size }
 
     val Class.accessibleMethods
         get() = methods
-                .filterNot { it.isStatic }
-                .filter { visibilityLevel <= it.visibility }
+            .filterNot { it.isStatic }
+            .filter { visibilityLevel <= it.visibility }
 
-    val Method.argTypeInfo get() = this.parameters.map {
-        val type = it.type.kexType
-        term { arg(type, it.index) } to type.concretize(cm)
-    }.toMap()
+    val Method.argTypeInfo
+        get() = this.parameters.map {
+            val type = it.type.kexType
+            term { arg(type, it.index) } to type.concretize(cm)
+        }.toMap()
 
     fun Method.executeAsConstructor(descriptor: ObjectDescriptor): ExecutionResult? {
         if (isEmpty()) return null
@@ -117,9 +126,9 @@ class GeneratorContext(val context: ExecutionContext, val psa: PredicateStateAna
         log.debug("Executing external constructor $this for $descriptor")
 
         val externalMapper = TermRemapper(
-                mapOf(
-                        descriptor.term to term { `return`(this@executeAsExternalConstructor) }
-                )
+            mapOf(
+                descriptor.term to term { `return`(this@executeAsExternalConstructor) }
+            )
         )
         val typeInfoState = externalMapper.apply(descriptor.typeInfo)
         val typeInfos = collectPlainTypeInfos(types, typeInfoState) + this.argTypeInfo
@@ -130,7 +139,10 @@ class GeneratorContext(val context: ExecutionContext, val psa: PredicateStateAna
         return execute(preparedState, preparedQuery)
     }
 
-    fun Method.execute(descriptor: ObjectDescriptor, preStateGetter: (Method, ObjectDescriptor) -> PredicateState?): ExecutionResult? {
+    fun Method.execute(
+        descriptor: ObjectDescriptor,
+        preStateGetter: (Method, ObjectDescriptor) -> PredicateState?
+    ): ExecutionResult? {
         if (isEmpty()) return null
         log.debug("Executing method $this for $descriptor")
 
@@ -147,10 +159,10 @@ class GeneratorContext(val context: ExecutionContext, val psa: PredicateStateAna
     }
 
     fun Method.executeAsSetter(descriptor: ObjectDescriptor) =
-            this.execute(descriptor) { method, objectDescriptor -> method.getSetterPreState(objectDescriptor) }
+        this.execute(descriptor) { method, objectDescriptor -> method.getSetterPreState(objectDescriptor) }
 
     fun Method.executeAsMethod(descriptor: ObjectDescriptor) =
-            this.execute(descriptor) { method, objectDescriptor -> method.getMethodPreState(objectDescriptor) }
+        this.execute(descriptor) { method, objectDescriptor -> method.getMethodPreState(objectDescriptor) }
 
     fun Method.execute(state: PredicateState, query: PredicateState): ExecutionResult? {
         val checker = Checker(this, context.loader, psa)
@@ -159,7 +171,7 @@ class GeneratorContext(val context: ExecutionContext, val psa: PredicateStateAna
             is Result.SatResult -> {
                 log.debug("Model: ${result.model}")
                 val (thisDescriptor, argumentDescriptors) =
-                        generateInitialDescriptors(this, context, result.model, checker.state)
+                    generateInitialDescriptors(this, context, result.model, checker.state)
                 ExecutionResult(thisDescriptor as? ObjectDescriptor, argumentDescriptors)
             }
             else -> null

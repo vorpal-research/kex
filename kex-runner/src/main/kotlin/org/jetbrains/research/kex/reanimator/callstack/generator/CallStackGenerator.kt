@@ -1,4 +1,4 @@
-package org.jetbrains.research.kex.reanimator.callstack
+package org.jetbrains.research.kex.reanimator.callstack.generator
 
 import org.jetbrains.research.kex.ExecutionContext
 import org.jetbrains.research.kex.asm.state.PredicateStateAnalysis
@@ -7,6 +7,7 @@ import org.jetbrains.research.kex.asm.util.visibility
 import org.jetbrains.research.kex.config.kexConfig
 import org.jetbrains.research.kex.ktype.KexArray
 import org.jetbrains.research.kex.ktype.KexType
+import org.jetbrains.research.kex.reanimator.callstack.*
 import org.jetbrains.research.kex.reanimator.descriptor.ConstantDescriptor
 import org.jetbrains.research.kex.reanimator.descriptor.Descriptor
 import org.jetbrains.research.kex.reanimator.descriptor.StaticFieldDescriptor
