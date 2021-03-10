@@ -4,6 +4,7 @@ import com.abdullin.kthelper.collection.dequeOf
 import org.jetbrains.research.kex.asm.state.PredicateStateAnalysis
 import org.jetbrains.research.kex.state.PredicateState
 import org.jetbrains.research.kex.state.StateBuilder
+import org.jetbrains.research.kex.state.predicate.FieldStorePredicate
 import org.jetbrains.research.kex.state.term.FieldLoadTerm
 import org.jetbrains.research.kex.state.term.FieldTerm
 import org.jetbrains.research.kex.state.term.Term
@@ -15,12 +16,27 @@ class StaticFieldInliner(val cm: ClassManager, val psa: PredicateStateAnalysis) 
     override val builders = dequeOf(StateBuilder())
     private var inlineIndex = 0
 
+    private val FieldTerm.isFinal get(): Boolean {
+        val kfgField = cm[this.klass].getField(this.fieldNameString, this.type.getKfgType(cm.type))
+        return kfgField.isFinal
+    }
 
     fun prepareInlinedState(method: Method): PredicateState? {
         if (method.isEmpty()) return null
 
+        val klass = method.`class`.fullname
         val builder = psa.builder(method)
         val endState = builder.methodState ?: return null
+
+        endState.filter {
+            when (it) {
+                is FieldStorePredicate -> {
+                    val field = it.field as? FieldTerm ?: return@filter false
+                    field.isStatic && field.klass == klass && !field.isFinal
+                }
+                else -> true
+            }
+        }
 
         return TermRenamer("static.inlined${inlineIndex++}", mapOf()).apply(endState)
     }
@@ -37,9 +53,9 @@ class StaticFieldInliner(val cm: ClassManager, val psa: PredicateStateAnalysis) 
                         null
                     }
                 }.toSet()
-        staticInitializers.forEach {
-            prepareInlinedState(it.getMethods("<clinit>").first())?.let {
-                currentBuilder += it
+        staticInitializers.forEach { klass ->
+            prepareInlinedState(klass.getMethods("<clinit>").first())?.let { state ->
+                currentBuilder += state
             }
         }
         return super.apply(ps)

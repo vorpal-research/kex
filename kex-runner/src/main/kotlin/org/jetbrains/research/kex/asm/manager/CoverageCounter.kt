@@ -27,18 +27,6 @@ val Method.isImpactable: Boolean
             this.isSynthetic -> return false
             visibilityLevel > this.`class`.visibility -> return false
             visibilityLevel > this.visibility -> return false
-            this.isStatic && this.argTypes.isEmpty() -> return false
-            this.argTypes.isEmpty() -> {
-                val thisVal = this.cm.value.getThis(this.`class`)
-                for (inst in this.flatten()) {
-                    when (inst) {
-                        is FieldLoadInst -> if (inst.hasOwner && inst.owner == thisVal) return true
-                        is FieldStoreInst -> if (inst.hasOwner && inst.owner == thisVal) return true
-                        is CallInst -> if (!inst.isStatic && inst.callee == thisVal) return true
-                    }
-                }
-                return false
-            }
             else -> return true
         }
     }
