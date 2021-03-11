@@ -2,16 +2,15 @@ package org.jetbrains.research.kex.reanimator.collector
 
 import org.jetbrains.research.kex.asm.util.Visibility
 import org.jetbrains.research.kex.asm.util.visibility
-import org.jetbrains.research.kex.config.kexConfig
 import org.jetbrains.research.kfg.ClassManager
 import org.jetbrains.research.kfg.ir.Class
 import org.jetbrains.research.kfg.ir.Method
 import org.jetbrains.research.kfg.type.ClassType
 import org.jetbrains.research.kfg.visitor.MethodVisitor
 
-val Class.externalConstructors: Set<Method> get() = ExternalConstructorCollector.externalConstructors.getOrDefault(this, setOf())
+val Class.externalCtors: Set<Method> get() = ExternalCtorCollector.externalConstructors.getOrDefault(this, setOf())
 
-class ExternalConstructorCollector(override val cm: ClassManager, val visibilityLevel: Visibility) : MethodVisitor {
+class ExternalCtorCollector(override val cm: ClassManager, val visibilityLevel: Visibility) : MethodVisitor {
     companion object {
         val externalConstructors = mutableMapOf<Class, MutableSet<Method>>()
     }

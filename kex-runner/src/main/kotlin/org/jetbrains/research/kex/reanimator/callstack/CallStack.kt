@@ -19,26 +19,27 @@ interface ApiCall {
 open class CallStack(val name: String, val stack: MutableList<ApiCall>) : Iterable<ApiCall> by stack {
     constructor(name: String) : this(name, mutableListOf())
 
-    val isComplete: Boolean get() {
-        val visited = mutableSetOf<CallStack>()
-        val queue = queueOf(this)
+    val isComplete: Boolean
+        get() {
+            val visited = mutableSetOf<CallStack>()
+            val queue = queueOf(this)
 
-        while (queue.isNotEmpty()) {
-            val top = queue.poll()
-            if (top in visited) continue
-            visited += top
+            while (queue.isNotEmpty()) {
+                val top = queue.poll()
+                if (top in visited) continue
+                visited += top
 
-            if (top.any { it is UnknownCall }) {
-                return false
+                if (top.any { it is UnknownCall }) {
+                    return false
+                }
+
+                top.flatMap { it.parameters }.forEach {
+                    queue += it
+                }
             }
 
-            top.flatMap { it.parameters }.forEach {
-                queue += it
-            }
+            return true
         }
-
-        return true
-    }
 
     fun add(call: ApiCall): CallStack {
         this.stack += call
@@ -123,6 +124,21 @@ data class ExternalConstructorCall(val constructor: Method, val args: List<CallS
             arg.print(builder, visited)
         }
         builder.appendLine("${owner.name} = ${constructor.`class`.fullname}(${args.joinToString(", ") { it.name }})")
+    }
+}
+
+data class InnerClassConstructorCall(val constructor: Method, val outerObject: CallStack, val args: List<CallStack>) :
+    ApiCall {
+    override val parameters: List<CallStack> get() = listOf(outerObject) + args
+
+    override fun toString() = "${outerObject}.$constructor(${args.joinToString(", ")})"
+
+    override fun print(owner: CallStack, builder: StringBuilder, visited: MutableSet<CallStack>) {
+        outerObject.print(builder, visited)
+        for (arg in args) {
+            arg.print(builder, visited)
+        }
+        builder.appendLine("${owner.name} = ${outerObject.name}.${constructor.`class`.fullname}(${args.joinToString(", ") { it.name }})")
     }
 }
 

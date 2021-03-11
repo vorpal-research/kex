@@ -13,7 +13,7 @@ import org.jetbrains.research.kex.reanimator.callstack.CallStack
 import org.jetbrains.research.kex.reanimator.callstack.CallStackExecutor
 import org.jetbrains.research.kex.reanimator.callstack.generator.CallStackGenerator
 import org.jetbrains.research.kex.reanimator.callstack.generator.GeneratorContext
-import org.jetbrains.research.kex.reanimator.collector.externalConstructors
+import org.jetbrains.research.kex.reanimator.collector.externalCtors
 import org.jetbrains.research.kex.reanimator.descriptor.*
 import org.jetbrains.research.kex.util.kex
 import org.jetbrains.research.kex.util.loadClass
@@ -43,7 +43,7 @@ class RandomObjectReanimator(
             val kfgClass = (this.javaClass.kex.getKfgType(cm.type) as ClassType).`class`
             if (this is Throwable) return false
             if (!kfgClass.isInstantiable || visibilityLevel > kfgClass.visibility) return false
-            if (with(generatorContext) { kfgClass.accessibleConstructors + kfgClass.externalConstructors }.isEmpty()) return false
+            if (with(generatorContext) { kfgClass.accessibleCtors + kfgClass.externalCtors }.isEmpty()) return false
             return true
         }
 

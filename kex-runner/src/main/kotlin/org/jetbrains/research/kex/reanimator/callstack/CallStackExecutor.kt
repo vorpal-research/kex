@@ -82,6 +82,16 @@ class CallStackExecutor(val ctx: ExecutionContext) {
                         cache[callStack] = instance
                         instance
                     }
+                    is InnerClassConstructorCall -> {
+                        val reflection = ctx.loader.loadClass(call.constructor.`class`)
+                        val constructor = reflection.getConstructor(call.constructor, ctx.loader)
+                        constructor.isAccessible = true
+                        val outerObject = execute(call.outerObject)
+                        val args = call.args.map { execute(it) }.toTypedArray()
+                        val instance = constructor.newInstance(outerObject, *args)
+                        cache[callStack] = instance
+                        instance
+                    }
                     is MethodCall -> {
                         val reflection = ctx.loader.loadClass(call.method.`class`)
                         val javaMethod = reflection.getMethod(call.method, ctx.loader)

@@ -206,6 +206,12 @@ class CallStack2JavaPrinter(
             val constructor = reflection.getMethod(call.constructor, ctx.loader)
             resolveTypes(constructor, call.args)
         }
+        is InnerClassConstructorCall -> {
+            val reflection = ctx.loader.loadClass(call.constructor.`class`)
+            val constructor = reflection.getConstructor(call.constructor, ctx.loader)
+            resolveTypes(call.outerObject)
+            resolveTypes(constructor, call.args)
+        }
         is MethodCall -> {
             val reflection = ctx.loader.loadClass(call.method.`class`)
             val method = reflection.getMethod(call.method, ctx.loader)
@@ -276,6 +282,7 @@ class CallStack2JavaPrinter(
         is DefaultConstructorCall -> printDefaultConstructor(owner, apiCall)
         is ConstructorCall -> printConstructorCall(owner, apiCall)
         is ExternalConstructorCall -> printExternalConstructorCall(owner, apiCall)
+        is InnerClassConstructorCall -> printInnerClassConstructor(owner, apiCall)
         is MethodCall -> printMethodCall(owner, apiCall)
         is StaticMethodCall -> printStaticMethodCall(apiCall)
         is NewArray -> printNewArray(owner, apiCall)
@@ -386,6 +393,41 @@ class CallStack2JavaPrinter(
         } else {
             actualTypes[owner] = actualType
             "$actualType ${owner.name} = new $actualType($args)"
+        }
+    }
+
+    private fun innerClassName(innerType: CSType, outerType: CSType, reqOuterType: CSType?): String {
+        if (innerType !is CSClass) return innerType.toString()
+        if (outerType !is CSClass) return innerType.toString()
+
+        val innerString = (innerType.type as? ClassType)?.`class`?.fullname ?: return innerType.toString()
+        val outerString = (outerType.type as? ClassType)?.`class`?.fullname ?: return innerType.toString()
+        if (reqOuterType != null && reqOuterType is CSClass) {
+            val reqTypeString = (reqOuterType.type as ClassType).`class`.fullname
+            if (innerString.startsWith(reqTypeString)) return innerString.removePrefix("$reqTypeString\$").replace('/', '.')
+        }
+        if (innerString.startsWith(outerString)) return innerString.removePrefix("$outerString\$").replace('/', '.')
+        TODO()
+    }
+
+    private fun printInnerClassConstructor(owner: CallStack, call: InnerClassConstructorCall): String {
+        call.outerObject.printAsJava()
+        call.args.forEach { it.printAsJava() }
+        val args = call.args.joinToString(", ") {
+            it.forceCastIfNull(resolvedTypes[it])
+        }
+        val actualType = CSClass(call.constructor.`class`.type)
+        val outerObject = call.outerObject.forceCastIfNull(resolvedTypes[call.outerObject])
+        return if (resolvedTypes[owner] != null) {
+            val rest = resolvedTypes[owner]!!
+            val type = actualType.merge(rest)
+            actualTypes[owner] = type
+            val innerClassName = innerClassName(type, actualTypes[call.outerObject]!!, resolvedTypes[call.outerObject])
+            "$type ${owner.name} = $outerObject.new $innerClassName($args)"
+        } else {
+            actualTypes[owner] = actualType
+            val innerClassName = innerClassName(actualType, actualTypes[call.outerObject]!!, resolvedTypes[call.outerObject])
+            "$actualType ${owner.name} = $outerObject.new $innerClassName($args)"
         }
     }
 

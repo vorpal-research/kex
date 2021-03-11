@@ -22,7 +22,7 @@ import org.jetbrains.research.kex.config.RuntimeConfig
 import org.jetbrains.research.kex.config.kexConfig
 import org.jetbrains.research.kex.random.easyrandom.EasyRandomDriver
 import org.jetbrains.research.kex.reanimator.RandomObjectReanimator
-import org.jetbrains.research.kex.reanimator.collector.ExternalConstructorCollector
+import org.jetbrains.research.kex.reanimator.collector.ExternalCtorCollector
 import org.jetbrains.research.kex.reanimator.collector.MethodFieldAccessCollector
 import org.jetbrains.research.kex.reanimator.collector.SetterCollector
 import org.jetbrains.research.kex.reanimator.descriptor.DescriptorStatistics
@@ -219,7 +219,7 @@ class Kex(args: Array<String>) {
             +psa
             +MethodFieldAccessCollector(analysisContext, psa)
             +SetterCollector(analysisContext)
-            +ExternalConstructorCollector(analysisContext.cm, visibilityLevel)
+            +ExternalCtorCollector(analysisContext.cm, visibilityLevel)
             +when {
                 useApiGeneration -> DescriptorChecker(analysisContext, traceManager, psa)
                 else -> MethodChecker(analysisContext, traceManager, psa)
@@ -246,7 +246,7 @@ class Kex(args: Array<String>) {
             +psa
             +MethodFieldAccessCollector(analysisContext, psa)
             +SetterCollector(analysisContext)
-            +ExternalConstructorCollector(analysisContext.cm, visibilityLevel)
+            +ExternalCtorCollector(analysisContext.cm, visibilityLevel)
         }
         RandomObjectReanimator(analysisContext, `package`, psa, visibilityLevel).run()
         clearClassPath()

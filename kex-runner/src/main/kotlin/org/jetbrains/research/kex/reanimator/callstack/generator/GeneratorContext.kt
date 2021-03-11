@@ -6,10 +6,13 @@ import org.jetbrains.research.kex.annotations.AnnotationManager
 import org.jetbrains.research.kex.asm.state.PredicateStateAnalysis
 import org.jetbrains.research.kex.asm.util.Visibility
 import org.jetbrains.research.kex.asm.util.visibility
+import org.jetbrains.research.kex.config.kexConfig
 import org.jetbrains.research.kex.ktype.KexType
 import org.jetbrains.research.kex.ktype.kexType
+import org.jetbrains.research.kex.ktype.type
 import org.jetbrains.research.kex.reanimator.callstack.ApiCall
 import org.jetbrains.research.kex.reanimator.callstack.CallStack
+import org.jetbrains.research.kex.reanimator.collector.externalCtors
 import org.jetbrains.research.kex.reanimator.descriptor.Descriptor
 import org.jetbrains.research.kex.reanimator.descriptor.ObjectDescriptor
 import org.jetbrains.research.kex.reanimator.descriptor.concretize
@@ -26,6 +29,14 @@ import org.jetbrains.research.kfg.ir.Class
 import org.jetbrains.research.kfg.ir.Field
 import org.jetbrains.research.kfg.ir.Method
 
+private val useRecCtors by lazy {
+    kexConfig.getBooleanValue(
+        "apiGeneration",
+        "use-recursive-constructors",
+        false
+    )
+}
+
 class GeneratorContext(
     val context: ExecutionContext,
     val psa: PredicateStateAnalysis,
@@ -35,7 +46,7 @@ class GeneratorContext(
     val types get() = context.types
     val loader get() = context.loader
 
-    val descriptorCache = mutableMapOf<Descriptor, CallStack>()
+    private val descriptorCache = mutableMapOf<Descriptor, CallStack>()
 
     data class ExecutionResult(val instance: ObjectDescriptor?, val arguments: List<Descriptor>)
     data class ExecutionStack(val instance: ObjectDescriptor, val calls: List<ApiCall>, val depth: Int)
@@ -88,8 +99,29 @@ class GeneratorContext(
         +FieldNormalizer(context.cm, "query.normalized")
     }
 
+    val Class.allCtors get() = accessibleCtors + externalCtors
 
-    val Class.accessibleConstructors
+    private val klass2Constructors = mutableMapOf<Class, List<Method>>()
+
+    val Class.orderedCtors
+        get() = klass2Constructors.getOrPut(this) {
+            val nonRecursiveCtors = constructors.filter {
+                it.argTypes.all { arg -> !(type.isSupertypeOf(arg) || arg.isSupertypeOf(type)) }
+            }
+
+            val nonRecursiveExtCtors = externalCtors.filter {
+                it.argTypes.all { arg -> !(type.isSupertypeOf(arg) || arg.isSupertypeOf(type)) }
+            }
+
+            val recursiveCtors = when {
+                useRecCtors -> constructors.filter { it !in nonRecursiveCtors }
+                else -> listOf()
+            }
+            val recursiveExtCtors = externalCtors.filter { it !in nonRecursiveExtCtors }
+            nonRecursiveCtors + nonRecursiveExtCtors + recursiveCtors + recursiveExtCtors
+        }
+
+    val Class.accessibleCtors
         get() = constructors
             .filter { visibilityLevel <= it.visibility }
             .sortedBy { it.argTypes.size }

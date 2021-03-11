@@ -363,8 +363,8 @@ abstract class DescriptorReanimator(override val method: Method,
 
                 val fieldReflect = klass.getActualField(term.fieldNameString)
                 val reanimatedValue = reanimateReferenceValue(term, fieldValue)
-                if (fieldReflect.isSynthetic)
-                    return@descriptor default(term.type)
+//                if (fieldReflect.isSynthetic)
+//                    return@descriptor default(term.type)
 
                 val fieldName = fieldReflect.name
                 val fieldType = (term.type as KexReference).reference

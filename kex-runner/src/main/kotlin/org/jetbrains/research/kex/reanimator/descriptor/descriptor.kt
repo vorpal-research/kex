@@ -27,7 +27,6 @@ val Class.isInstantiable: Boolean
         visibilityLevel > this.visibility -> false
         this.isAbstract -> false
         this.isInterface -> false
-        !this.isStatic && this.outerClass != null -> false
         else -> true
     }
 
@@ -150,6 +149,7 @@ class ObjectDescriptor(klass: KexClass) : Descriptor(term { generate(klass) }, k
     operator fun set(field: String, type: KexType, value: Descriptor) = set(field to type, value)
 
     fun remove(field: String, type: KexType): Descriptor? = fields.remove(field to type)
+    fun remove(field: Pair<String, KexType>): Descriptor? = fields.remove(field)
 
     fun merge(other: ObjectDescriptor): ObjectDescriptor {
         val newFields = other.fields + this.fields
