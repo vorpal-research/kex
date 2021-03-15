@@ -31,6 +31,7 @@ import org.jetbrains.research.kfg.ir.Class
 import org.jetbrains.research.kfg.ir.Method
 import org.jetbrains.research.kfg.ir.value.instruction.UnreachableInst
 import org.jetbrains.research.kfg.visitor.MethodVisitor
+import org.jetbrains.research.kthelper.tryOrNull
 import java.nio.file.Files
 import java.nio.file.Paths
 
@@ -165,7 +166,7 @@ open class MethodChecker(
         return result
     }
 
-    protected fun collectTrace(method: Method, instance: Any?, args: Array<Any?>) {
+    protected fun collectTrace(method: Method, instance: Any?, args: Array<Any?>) = tryOrNull {
         val runner = ObjectTracingRunner(method, loader)
         val trace = runner.collectTrace(instance, args)
         tm[method] = trace
