@@ -1,8 +1,8 @@
 package org.jetbrains.research.kex.reanimator
 
-import com.abdullin.kthelper.`try`
-import com.abdullin.kthelper.logging.log
-import com.abdullin.kthelper.time.timed
+import org.jetbrains.research.kthelper.`try`
+import org.jetbrains.research.kthelper.logging.log
+import org.jetbrains.research.kthelper.time.timed
 import org.jetbrains.research.kex.ExecutionContext
 import org.jetbrains.research.kex.asm.state.PredicateStateAnalysis
 import org.jetbrains.research.kex.asm.util.Visibility

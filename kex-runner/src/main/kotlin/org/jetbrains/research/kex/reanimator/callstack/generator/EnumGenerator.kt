@@ -1,6 +1,6 @@
 package org.jetbrains.research.kex.reanimator.callstack.generator
 
-import com.abdullin.kthelper.logging.log
+import org.jetbrains.research.kthelper.logging.log
 import org.jetbrains.research.kex.ktype.KexArray
 import org.jetbrains.research.kex.ktype.KexType
 import org.jetbrains.research.kex.reanimator.callstack.CallStack

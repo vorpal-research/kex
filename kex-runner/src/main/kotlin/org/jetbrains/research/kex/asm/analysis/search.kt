@@ -1,6 +1,6 @@
 package org.jetbrains.research.kex.asm.analysis
 
-import com.abdullin.kthelper.algorithm.GraphTraversal
+import org.jetbrains.research.kthelper.algorithm.GraphTraversal
 import org.jetbrains.research.kfg.ir.BasicBlock
 import org.jetbrains.research.kfg.ir.Method
 

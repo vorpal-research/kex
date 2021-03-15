@@ -1,8 +1,8 @@
 package org.jetbrains.research.kex.trace.file
 
-import com.abdullin.kthelper.assert.ktassert
-import com.abdullin.kthelper.logging.error
-import com.abdullin.kthelper.logging.log
+import org.jetbrains.research.kthelper.assert.ktassert
+import org.jetbrains.research.kthelper.logging.error
+import org.jetbrains.research.kthelper.logging.log
 import org.jetbrains.research.kfg.ir.BasicBlock
 import org.jetbrains.research.kfg.ir.Method
 import java.util.*

@@ -1,9 +1,9 @@
 package org.jetbrains.research.kex.asm.analysis.concolic
 
-import com.abdullin.kthelper.collection.firstOrElse
-import com.abdullin.kthelper.collection.stackOf
-import com.abdullin.kthelper.logging.log
-import com.abdullin.kthelper.tryOrNull
+import org.jetbrains.research.kthelper.collection.firstOrElse
+import org.jetbrains.research.kthelper.collection.stackOf
+import org.jetbrains.research.kthelper.logging.log
+import org.jetbrains.research.kthelper.tryOrNull
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout

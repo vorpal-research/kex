@@ -1,6 +1,6 @@
 package org.jetbrains.research.kex.random
 
-import com.abdullin.kthelper.tryOrNull
+import org.jetbrains.research.kthelper.tryOrNull
 import java.lang.reflect.Type
 
 abstract class RandomizerError : Exception {

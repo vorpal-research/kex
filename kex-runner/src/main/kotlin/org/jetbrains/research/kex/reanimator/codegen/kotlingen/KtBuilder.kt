@@ -1,6 +1,6 @@
 package org.jetbrains.research.kex.reanimator.codegen.kotlingen
 
-import com.abdullin.kthelper.assert.ktassert
+import org.jetbrains.research.kthelper.assert.ktassert
 
 class KtBuilder(val pkg: String = "") {
     companion object {

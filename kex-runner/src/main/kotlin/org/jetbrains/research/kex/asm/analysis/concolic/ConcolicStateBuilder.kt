@@ -1,8 +1,8 @@
 package org.jetbrains.research.kex.asm.analysis.concolic
 
-import com.abdullin.kthelper.collection.buildList
-import com.abdullin.kthelper.collection.listOf
-import com.abdullin.kthelper.collection.stackOf
+import org.jetbrains.research.kthelper.collection.buildList
+import org.jetbrains.research.kthelper.collection.listOf
+import org.jetbrains.research.kthelper.collection.stackOf
 import org.jetbrains.research.kex.asm.state.InvalidInstructionError
 import org.jetbrains.research.kex.ktype.kexType
 import org.jetbrains.research.kex.state.StateBuilder

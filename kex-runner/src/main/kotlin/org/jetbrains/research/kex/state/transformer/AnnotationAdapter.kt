@@ -1,6 +1,6 @@
 package org.jetbrains.research.kex.state.transformer
 
-import com.abdullin.kthelper.collection.dequeOf
+import org.jetbrains.research.kthelper.collection.dequeOf
 import org.jetbrains.research.kex.annotations.AnnotatedCall
 import org.jetbrains.research.kex.annotations.AnnotationsLoader
 import org.jetbrains.research.kex.state.BasicState

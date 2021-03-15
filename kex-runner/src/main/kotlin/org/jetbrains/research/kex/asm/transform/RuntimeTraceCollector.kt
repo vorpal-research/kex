@@ -1,6 +1,6 @@
 package org.jetbrains.research.kex.asm.transform
 
-import com.abdullin.kthelper.collection.buildList
+import org.jetbrains.research.kthelper.collection.buildList
 import org.jetbrains.research.kex.trace.`object`.TraceCollector
 import org.jetbrains.research.kex.trace.`object`.TraceCollectorProxy
 import org.jetbrains.research.kfg.ClassManager

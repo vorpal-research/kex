@@ -1,7 +1,7 @@
 package org.jetbrains.research.kex.reanimator.callstack
 
-import com.abdullin.kthelper.collection.queueOf
-import com.abdullin.kthelper.logging.log
+import org.jetbrains.research.kthelper.collection.queueOf
+import org.jetbrains.research.kthelper.logging.log
 import org.jetbrains.research.kex.reanimator.descriptor.Descriptor
 import org.jetbrains.research.kfg.ir.Class
 import org.jetbrains.research.kfg.ir.Field

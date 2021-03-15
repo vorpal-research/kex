@@ -1,6 +1,6 @@
 package org.jetbrains.research.kex.reanimator.callstack.generator
 
-import com.abdullin.kthelper.tryOrNull
+import org.jetbrains.research.kthelper.tryOrNull
 import org.jetbrains.research.kex.ktype.KexType
 import org.jetbrains.research.kex.reanimator.callstack.CallStack
 import org.jetbrains.research.kex.reanimator.callstack.StaticFieldGetter

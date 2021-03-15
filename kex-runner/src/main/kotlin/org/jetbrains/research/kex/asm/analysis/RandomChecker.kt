@@ -1,6 +1,6 @@
 package org.jetbrains.research.kex.asm.analysis
 
-import com.abdullin.kthelper.logging.log
+import org.jetbrains.research.kthelper.logging.log
 import org.jetbrains.research.kex.ExecutionContext
 import org.jetbrains.research.kex.config.kexConfig
 import org.jetbrains.research.kex.trace.TraceManager

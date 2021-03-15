@@ -1,7 +1,7 @@
 package org.jetbrains.research.kex.config
 
-import com.abdullin.kthelper.assert.exit
-import com.abdullin.kthelper.logging.log
+import org.jetbrains.research.kthelper.assert.exit
+import org.jetbrains.research.kthelper.logging.log
 import org.apache.commons.cli.*
 import java.io.PrintWriter
 import java.io.StringWriter

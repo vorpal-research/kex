@@ -1,6 +1,6 @@
 package org.jetbrains.research.kex.reanimator.descriptor
 
-import com.abdullin.kthelper.logging.log
+import org.jetbrains.research.kthelper.logging.log
 import org.jetbrains.research.kex.reanimator.callstack.CallStack
 import java.util.*
 

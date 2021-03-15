@@ -1,8 +1,8 @@
 package org.jetbrains.research.kex.reanimator.collector
 
-import com.abdullin.kthelper.`try`
-import com.abdullin.kthelper.assert.asserted
-import com.abdullin.kthelper.logging.log
+import org.jetbrains.research.kthelper.`try`
+import org.jetbrains.research.kthelper.assert.asserted
+import org.jetbrains.research.kthelper.logging.log
 import org.jetbrains.research.kex.ExecutionContext
 import org.jetbrains.research.kex.util.eq
 import org.jetbrains.research.kex.util.loadClass

@@ -1,6 +1,6 @@
 package org.jetbrains.research.kex.asm.manager
 
-import com.abdullin.kthelper.logging.log
+import org.jetbrains.research.kthelper.logging.log
 import org.jetbrains.research.kex.asm.transform.isUnreachable
 import org.jetbrains.research.kex.asm.transform.originalBlock
 import org.jetbrains.research.kex.asm.util.Visibility

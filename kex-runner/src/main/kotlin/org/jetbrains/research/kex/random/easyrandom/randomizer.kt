@@ -1,7 +1,7 @@
 package org.jetbrains.research.kex.random.easyrandom
 
-import com.abdullin.kthelper.assert.unreachable
-import com.abdullin.kthelper.logging.log
+import org.jetbrains.research.kthelper.assert.unreachable
+import org.jetbrains.research.kthelper.logging.log
 import org.jeasy.random.api.Randomizer
 import org.jeasy.random.randomizers.number.ByteRandomizer.aNewByteRandomizer
 import org.jeasy.random.util.CollectionUtils.randomElementOf

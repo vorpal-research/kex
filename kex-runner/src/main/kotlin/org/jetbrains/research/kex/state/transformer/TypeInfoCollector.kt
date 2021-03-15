@@ -1,6 +1,6 @@
 package org.jetbrains.research.kex.state.transformer
 
-import com.abdullin.kthelper.logging.log
+import org.jetbrains.research.kthelper.logging.log
 import org.jetbrains.research.kex.ktype.KexIntegral
 import org.jetbrains.research.kex.ktype.KexReal
 import org.jetbrains.research.kex.ktype.KexType

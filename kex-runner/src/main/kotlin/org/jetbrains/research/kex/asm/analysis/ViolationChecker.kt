@@ -1,8 +1,8 @@
 package org.jetbrains.research.kex.asm.analysis
 
-import com.abdullin.kthelper.algorithm.GraphTraversal
-import com.abdullin.kthelper.logging.debug
-import com.abdullin.kthelper.logging.log
+import org.jetbrains.research.kthelper.algorithm.GraphTraversal
+import org.jetbrains.research.kthelper.logging.debug
+import org.jetbrains.research.kthelper.logging.log
 import org.jetbrains.research.kex.asm.state.PredicateStateAnalysis
 import org.jetbrains.research.kex.asm.state.PredicateStateBuilder
 import org.jetbrains.research.kex.config.kexConfig
