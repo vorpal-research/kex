@@ -16,10 +16,15 @@ import org.jetbrains.research.kfg.ir.Method
 
 class InnerClassGenerator(fallback: Generator) : AnyGenerator(fallback) {
 
+    val KexClass.isInnerClass: Boolean
+        get() {
+            val kfgClass = context.cm[klass] as? ConcreteClass ?: return false
+            return kfgClass.outerClass != null && kfgClass.fields.any { it.name == "this\$0" && it.type == kfgClass.outerClass!!.type }
+        }
+
     override fun supports(type: KexType): Boolean {
-        val klass = (type as? KexClass)?.klass ?: return false
-        val kfgClass = context.cm[klass] as? ConcreteClass ?: return false
-        return kfgClass.outerClass != null && !kfgClass.isStatic
+        val klass = type as? KexClass ?: return false
+        return klass.isInnerClass
     }
 
     override fun generate(descriptor: Descriptor, generationDepth: Int): CallStack {
@@ -35,41 +40,41 @@ class InnerClassGenerator(fallback: Generator) : AnyGenerator(fallback) {
     }
 
     override fun checkCtors(
-        callStack: CallStack,
-        klass: Class,
-        current: ObjectDescriptor,
-        currentStack: List<ApiCall>,
-        fallbacks: MutableSet<List<ApiCall>>,
-        generationDepth: Int
+            callStack: CallStack,
+            klass: Class,
+            current: ObjectDescriptor,
+            currentStack: List<ApiCall>,
+            fallbacks: MutableSet<List<ApiCall>>,
+            generationDepth: Int
     ): Boolean =
-        with(context) {
-            for (method in klass.orderedCtors) {
-                val handler = when {
-                    method.isConstructor -> { it: Method -> current.checkInnerCtor(it, generationDepth) }
-                    else -> { it: Method -> current.checkExternalCtor(it, generationDepth) }
+            with(context) {
+                for (method in klass.orderedCtors) {
+                    val handler = when {
+                        method.isConstructor -> { it: Method -> current.checkInnerCtor(it, generationDepth) }
+                        else -> { it: Method -> current.checkExternalCtor(it, generationDepth) }
+                    }
+                    val apiCall = handler(method) ?: continue
+                    val result = (currentStack + apiCall).reversed()
+                    if (result.isComplete) {
+                        callStack.stack += (currentStack + apiCall).reversed()
+                        return true
+                    } else {
+                        fallbacks += result
+                    }
                 }
-                val apiCall = handler(method) ?: continue
-                val result = (currentStack + apiCall).reversed()
-                if (result.isComplete) {
-                    callStack.stack += (currentStack + apiCall).reversed()
-                    return true
-                } else {
-                    fallbacks += result
-                }
+                return false
             }
-            return false
-        }
 
     fun ObjectDescriptor.checkInnerCtor(method: Method, generationDepth: Int): ApiCall? =
-        with(context) {
-            val (thisDesc, args) = method.executeAsConstructor(this@checkInnerCtor) ?: return null
+            with(context) {
+                val (thisDesc, args) = method.executeAsConstructor(this@checkInnerCtor) ?: return null
 
-            if (thisDesc.isFinal(this@checkInnerCtor)) {
-                log.debug("Found constructor $method for $this, generating arguments $args")
-                val generatedArgs = generateArgs(args, generationDepth + 1) ?: return null
-                ktassert(generatedArgs.size > 1) { log.error("Unknown number of arguments of inner class") }
-                InnerClassConstructorCall(method, generatedArgs.first(), generatedArgs.drop(1))
-            } else null
-        }
+                if (thisDesc.isFinal(this@checkInnerCtor)) {
+                    log.debug("Found constructor $method for $this, generating arguments $args")
+                    val generatedArgs = generateArgs(args, generationDepth + 1) ?: return null
+                    ktassert(generatedArgs.size > 1) { log.error("Unknown number of arguments of inner class") }
+                    InnerClassConstructorCall(method, generatedArgs.first(), generatedArgs.drop(1))
+                } else null
+            }
 
 }
