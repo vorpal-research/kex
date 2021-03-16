@@ -59,7 +59,8 @@ class Kex(args: Array<String>) {
     val classPath = System.getProperty("java.class.path")
     val mode = Mode.bmc
 
-    val classContainer: Container
+    val containers: List<Container>
+    val containerClassLoader: URLClassLoader
     val outputDir: Path
 
     val classManager: ClassManager
@@ -88,11 +89,12 @@ class Kex(args: Array<String>) {
         kexConfig.initialize(cmd, RuntimeConfig, FileConfig(properties))
         kexConfig.initLog(logName)
 
-        val targetClassPath = cmd.getCmdValue("classpath")
+        val classPaths = cmd.getCmdValue("classpath")?.split(":")
         val targetName = cmd.getCmdValue("target")
-        require(targetClassPath != null, cmd::printHelp)
+        require(classPaths != null, cmd::printHelp)
 
-        val targetPath = Paths.get(targetClassPath).toAbsolutePath()
+        val containerPaths = classPaths.map { Paths.get(it).toAbsolutePath() }
+        containerClassLoader = URLClassLoader(*containerPaths.map { it.toUri().toURL() }.toTypedArray())
 
         val analysisLevel = when {
             targetName == null -> {
@@ -118,28 +120,31 @@ class Kex(args: Array<String>) {
                 exitProcess(1)
             }
         }
-        classContainer = targetPath.asContainer(`package`) ?: run {
-            log.error("Can't represent $targetPath as class container")
-            exitProcess(1)
+        containers = containerPaths.map {
+            it.asContainer() ?: run {
+                log.error("Can't represent ${it.toAbsolutePath()} as class container")
+                exitProcess(1)
+            }
         }
         classManager = ClassManager(KfgConfig(flags = Flags.readAll, failOnError = false))
         origManager = ClassManager(KfgConfig(flags = Flags.readAll, failOnError = false))
-        val analysisJars = listOfNotNull(classContainer, getRuntime())
+        val analysisJars = listOfNotNull(*containers.toTypedArray(), getRuntime())
         classManager.initialize(*analysisJars.toTypedArray())
         origManager.initialize(*analysisJars.toTypedArray())
 
+        log.debug("Running with class path:\n${containers.joinToString("\n") { it.name } }")
         when (analysisLevel) {
             is AnalysisLevel.PACKAGE -> {
-                log.debug("Running with jar ${classContainer.name} and default package $`package`")
+                log.debug("Target: package $`package`")
             }
             is AnalysisLevel.CLASS -> {
                 klass = classManager[analysisLevel.klass]
-                log.debug("Running with jar ${classContainer.name} and class $klass")
+                log.debug("Target: class $klass")
             }
             is AnalysisLevel.METHOD -> {
                 klass = classManager[analysisLevel.klass]
                 methods = klass!!.getMethods(analysisLevel.method)
-                log.debug("Running with jar ${classContainer.name} and methods $methods")
+                log.debug("Target: methods $methods")
             }
         }
 
@@ -162,10 +167,10 @@ class Kex(args: Array<String>) {
     @InternalSerializationApi
     fun main() {
         // write all classes to output directory, so they will be seen by ClassLoader
-        classContainer.unpack(classManager, outputDir, true)
+        containers.forEach { it.unpack(classManager, outputDir, true) }
         val classLoader = URLClassLoader(arrayOf(outputDir.toUri().toURL()))
 
-        val originalContext = ExecutionContext(origManager, classContainer.classLoader, EasyRandomDriver())
+        val originalContext = ExecutionContext(origManager, containerClassLoader, EasyRandomDriver())
         val analysisContext = ExecutionContext(classManager, classLoader, EasyRandomDriver())
 
         // instrument all classes in the target package
@@ -193,10 +198,9 @@ class Kex(args: Array<String>) {
 
         val method = failure.method
         log.debug(failure)
-        val classLoader = classContainer.classLoader as? URLClassLoader ?: return
-        updateClassPath(classLoader)
+        updateClassPath(containerClassLoader)
 
-        val checker = Checker(method, classLoader, psa)
+        val checker = Checker(method, containerClassLoader, psa)
         val result = checker.check(failure.state) as? Result.SatResult ?: return
         log.debug(result.model)
         val recMod = executeModel(analysisContext, checker.state, method, result.model)

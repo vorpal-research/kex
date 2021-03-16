@@ -53,8 +53,13 @@ class CmdConfig(args: Array<String>) : Config() {
         helpOpt.isRequired = false
         options.addOption(helpOpt)
 
-        val jarOpt = Option("cp", "classpath", true, "classpath for analysis")
-        jarOpt.isRequired = true
+        val jarOpt = Option.builder("cp")
+                .longOpt("classpath")
+                .hasArg(true)
+                .argName("arg[:arg]")
+                .desc("classpath for analysis, jar files and directories separated by `:`")
+                .required(true)
+                .build()
         options.addOption(jarOpt)
 
         val packageOpt = Option("t", "target", true, "target to analyze: package, class or method")

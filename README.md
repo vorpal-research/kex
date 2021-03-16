@@ -4,6 +4,16 @@ Kex is a white-box fuzzer tool for Java bytecode.
 
 # Dependencies
 
+* [Authenticate to GitHub Packages](https://docs.github.com/en/packages/guides/configuring-apache-maven-for-use-with-github-packages#authenticating-to-github-packages)
+  with following configuration:
+  ```xml
+  <server>
+    <id>github-vorpal-research-kotlin-maven</id>
+    <username>USERNAME</username>
+    <password>TOKEN</password>
+  </server>
+  ``` 
+
 * [z3-java](https://aur.archlinux.org/packages/z3-java/) v4.8.6
 
   you need to manually install jar package with java bindings to your local maven repository using
@@ -37,7 +47,8 @@ mvn clean verify
 ```
 Usage: kex
     --config <arg>                  configuration file
- -cp,--classpath <arg>              classpath for analysis
+ -cp,--classpath <arg[:arg]>        classpath for analysis, jar files and
+                                    directories separated by `:`
  -h,--help                          print this help and quit
     --log <arg>                     log file name (`kex.log` by default)
  -m,--mode <arg>                    run mode: bmc, concolic or debug
@@ -83,7 +94,7 @@ fun <T> unknown(): T {
 
 fun test(): Unit {
     val generatedTerm1197 = TestClass()
-    val generatedTerm1198 = ArrayList<TestClass.Point>()
+    val generatedTerm1198 = ArrayList<TestClass.Point>(2)
     val generatedTerm1503 = Test.Point(10, 0)
     generatedTerm1198.add(generatedTerm1503)
     val generatedTerm1279 = Test.Point(0, 11)
