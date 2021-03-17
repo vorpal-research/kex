@@ -7,6 +7,6 @@ import org.jetbrains.research.kex.reanimator.descriptor.Descriptor
 interface Generator {
     val context: GeneratorContext
 
-    fun supports(type: KexType): Boolean
+    fun supports(descriptor: Descriptor): Boolean
     fun generate(descriptor: Descriptor, generationDepth: Int = 0): CallStack
 }

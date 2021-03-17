@@ -16,7 +16,8 @@ class KtObjectGenerator(private val fallback: Generator) : Generator {
     val types get() = context.types
     val loader get() = context.loader
 
-    override fun supports(type: KexType): Boolean {
+    override fun supports(descriptor: Descriptor): Boolean {
+        val type = descriptor.type
         val kClass = tryOrNull { loader.loadKClass(types, type) } ?: return false
         return kClass.isCompanion || kClass.objectInstance != null
     }

@@ -22,7 +22,8 @@ class InnerClassGenerator(fallback: Generator) : AnyGenerator(fallback) {
             return kfgClass.outerClass != null && kfgClass.fields.any { it.name == "this\$0" && it.type == kfgClass.outerClass!!.type }
         }
 
-    override fun supports(type: KexType): Boolean {
+    override fun supports(descriptor: Descriptor): Boolean {
+        val type = descriptor.type
         val klass = type as? KexClass ?: return false
         return klass.isInnerClass
     }

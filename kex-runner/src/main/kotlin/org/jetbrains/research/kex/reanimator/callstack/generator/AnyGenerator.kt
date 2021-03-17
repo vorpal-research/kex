@@ -21,7 +21,7 @@ private val maxQuerySize by lazy { kexConfig.getIntValue("apiGeneration", "maxQu
 open class AnyGenerator(private val fallback: Generator) : Generator {
     override val context get() = fallback.context
 
-    override fun supports(type: KexType) = true
+    override fun supports(descriptor: Descriptor) = descriptor is ObjectDescriptor
 
     override fun generate(descriptor: Descriptor, generationDepth: Int): CallStack = with(context) {
         descriptor as? ObjectDescriptor ?: throw IllegalArgumentException()

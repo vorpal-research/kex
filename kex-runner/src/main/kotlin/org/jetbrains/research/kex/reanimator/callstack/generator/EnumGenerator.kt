@@ -60,9 +60,9 @@ class EnumGenerator(private val fallback: Generator) : Generator {
     override val context: GeneratorContext
         get() = fallback.context
 
-    override fun supports(type: KexType): Boolean {
-        val kfgType = type.getKfgType(context.types)
-        return when (kfgType) {
+    override fun supports(descriptor: Descriptor): Boolean {
+        val type = descriptor.type
+        return when (val kfgType = type.getKfgType(context.types)) {
             is ClassType -> kfgType.`class`.isEnum
             else -> false
         }

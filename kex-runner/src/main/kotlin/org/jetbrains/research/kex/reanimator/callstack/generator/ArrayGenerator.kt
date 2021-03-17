@@ -12,7 +12,7 @@ import org.jetbrains.research.kex.reanimator.descriptor.Descriptor
 class ArrayGenerator(private val fallback: Generator) : Generator {
     override val context get() = fallback.context
 
-    override fun supports(type: KexType) = type is KexArray
+    override fun supports(descriptor: Descriptor) = descriptor is ArrayDescriptor
 
     override fun generate(descriptor: Descriptor, generationDepth: Int): CallStack = with(context) {
         descriptor as? ArrayDescriptor ?: throw IllegalArgumentException()
