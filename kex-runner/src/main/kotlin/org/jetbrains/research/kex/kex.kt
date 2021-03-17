@@ -52,12 +52,10 @@ import java.util.*
 import kotlin.system.exitProcess
 
 class Kex(args: Array<String>) {
-    val cmd = CmdConfig(args)
-    val properties = cmd.getCmdValue("config", "kex.ini")
-    val logName = cmd.getCmdValue("log", "kex.log")
-    val config = kexConfig
-    val classPath = System.getProperty("java.class.path")
-    val mode = Mode.bmc
+    private val cmd = CmdConfig(args)
+    private val properties = cmd.getCmdValue("config", "kex.ini")
+    private val logName = cmd.getCmdValue("log", "kex.log")
+    private val classPath = System.getProperty("java.class.path")
 
     val containers: List<Container>
     val containerClassLoader: URLClassLoader
@@ -68,15 +66,17 @@ class Kex(args: Array<String>) {
 
     val `package`: Package
     var klass: Class? = null
+        private set
     var methods: Set<Method>? = null
+        private set
 
     val visibilityLevel: Visibility
 
     enum class Mode {
-        concolic,
-        bmc,
-        reanimator,
-        debug
+        Concolic,
+        BMC,
+        Reanimator,
+        Debug
     }
 
     private sealed class AnalysisLevel {
@@ -180,11 +180,11 @@ class Kex(args: Array<String>) {
             +ClassWriter(originalContext, outputDir)
         }
 
-        when (cmd.getEnumValue<Mode>("mode") ?: this.mode) {
-            Mode.bmc -> bmc(originalContext, analysisContext)
-            Mode.reanimator -> reanimator(analysisContext)
-            Mode.concolic -> concolic(originalContext, analysisContext)
-            Mode.debug -> debug(analysisContext)
+        when (cmd.getEnumValue("mode", Mode.BMC, ignoreCase = true)) {
+            Mode.BMC -> bmc(originalContext, analysisContext)
+            Mode.Reanimator -> reanimator(analysisContext)
+            Mode.Concolic -> concolic(originalContext, analysisContext)
+            Mode.Debug -> debug(analysisContext)
         }
     }
 

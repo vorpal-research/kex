@@ -5,6 +5,7 @@ import org.jetbrains.research.kthelper.logging.log
 import org.apache.commons.cli.*
 import java.io.PrintWriter
 import java.io.StringWriter
+import java.util.regex.Pattern
 import org.apache.commons.cli.CommandLine as Cmd
 
 class CmdConfig(args: Array<String>) : Config() {
@@ -114,11 +115,18 @@ class CmdConfig(args: Array<String>) : Config() {
             return sw.toString()
         }
 
-    inline fun <reified T : Enum<T>> getEnumValue(name: String): Enum<T>? {
+    inline fun <reified T : Enum<T>> getEnumValue(name: String, ignoreCase: Boolean = false): Enum<T>? {
         val constName = getCmdValue(name) ?: return null
-        return T::class.java.enumConstants.firstOrNull { it.name == constName }
+        val comparator = when {
+            ignoreCase -> { a: String, b: String ->
+                val pattern = Pattern.compile(a, Pattern.CASE_INSENSITIVE)
+                pattern.matcher(b).find()
+            }
+            else -> { a: String, b: String -> a == b }
+        }
+        return T::class.java.enumConstants.firstOrNull { comparator(it.name, constName) }
     }
 
-    inline fun <reified T : Enum<T>> getEnumValue(name: String, default: T): Enum<T> =
-            getEnumValue(name) ?: default
+    inline fun <reified T : Enum<T>> getEnumValue(name: String, default: T, ignoreCase: Boolean = false): Enum<T> =
+            getEnumValue(name, ignoreCase) ?: default
 }
