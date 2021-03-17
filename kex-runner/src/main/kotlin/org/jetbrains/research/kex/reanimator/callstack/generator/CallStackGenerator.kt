@@ -11,9 +11,14 @@ import org.jetbrains.research.kex.reanimator.callstack.*
 import org.jetbrains.research.kex.reanimator.descriptor.ConstantDescriptor
 import org.jetbrains.research.kex.reanimator.descriptor.Descriptor
 import org.jetbrains.research.kex.reanimator.descriptor.StaticFieldDescriptor
+import org.jetbrains.research.kthelper.KtException
+import org.jetbrains.research.kthelper.logging.debug
+import org.jetbrains.research.kthelper.logging.log
 
 private val maxGenerationDepth by lazy { kexConfig.getIntValue("apiGeneration", "maxGenerationDepth", 100) }
 private val maxSearchDepth by lazy { kexConfig.getIntValue("apiGeneration", "maxSearchDepth", 10000) }
+
+class SearchLimitExceededException(val descriptor: Descriptor, msg: String) : KtException(msg)
 
 class CallStackGenerator(override val context: GeneratorContext) : Generator {
     private val anyGenerator = AnyGenerator(this)
@@ -41,7 +46,15 @@ class CallStackGenerator(override val context: GeneratorContext) : Generator {
 
     fun generateDescriptor(descriptor: Descriptor): CallStack {
         searchDepth = 0
-        return generate(descriptor)
+        val originalDescriptor = descriptor.deepCopy()
+        return try {
+            generate(descriptor)
+        } catch (e: SearchLimitExceededException) {
+            val name = "${originalDescriptor.term}"
+            log.debug("Search limit exceeded: ${e.message}")
+            log.debug(originalDescriptor)
+            return UnknownCall(originalDescriptor.type.getKfgType(context.types), originalDescriptor).wrap(name)
+        }
     }
 
     override fun generate(descriptor: Descriptor, generationDepth: Int): CallStack = with(context) {
@@ -51,8 +64,12 @@ class CallStackGenerator(override val context: GeneratorContext) : Generator {
         val name = "${descriptor.term}"
 
         if (descriptor !is ConstantDescriptor) {
-            if (generationDepth > maxGenerationDepth) return UnknownCall(descriptor.type.getKfgType(types), descriptor).wrap(name)
-            if (searchDepth > maxSearchDepth) return UnknownCall(descriptor.type.getKfgType(types), descriptor).wrap(name)
+            if (generationDepth > maxGenerationDepth)
+                throw SearchLimitExceededException(descriptor, "Generation depth exceeded maximal limit $maxGenerationDepth")
+            //return UnknownCall(descriptor.type.getKfgType(types), descriptor).wrap(name)
+            if (searchDepth > maxSearchDepth)
+                throw SearchLimitExceededException(descriptor, "Search depth exceeded maximal limit $maxSearchDepth")
+        //return UnknownCall(descriptor.type.getKfgType(types), descriptor).wrap(name)
         }
 
         when (descriptor) {

@@ -106,6 +106,7 @@ class LoopDeroller(override val cm: ClassManager) : LoopVisitor {
     override fun visit(loop: Loop) {
         super.visit(loop)
         if (loop.allEntries.size != 1) throw InvalidLoopException()
+        if (loop.loopExits.isEmpty()) throw InvalidLoopException()
 
         // init state
         val method = loop.method ?: unreachable { log.error("Can't get method of loop") }

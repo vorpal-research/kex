@@ -168,8 +168,12 @@ open class AnyGenerator(private val fallback: Generator) : Generator {
         }
     }
 
-    fun generateArgs(args: List<Descriptor>, depth: Int): List<CallStack>? = tryOrNull {
+    fun generateArgs(args: List<Descriptor>, depth: Int): List<CallStack>? = try {
         args.map { fallback.generate(it, depth) }
+    } catch (e: SearchLimitExceededException) {
+        throw e
+    } catch (e: Throwable) {
+        null
     }
 
     fun ObjectDescriptor.checkCtor(klass: Class, method: Method, generationDepth: Int): ApiCall? =
