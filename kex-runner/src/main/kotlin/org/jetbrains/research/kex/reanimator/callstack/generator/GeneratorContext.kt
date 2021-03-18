@@ -65,7 +65,7 @@ class GeneratorContext(
             +AnnotationAdapter(method, AnnotationManager.defaultLoader)
             +ConcreteImplInliner(types, typeInfoMap, psa)
             +StaticFieldInliner(cm, psa)
-            +RecursiveInliner(psa) { MethodInliner(psa, it) }
+            +RecursiveInliner(psa) { MethodInliner(psa, inlineIndex = it) }
             +IntrinsicAdapter
             +ReflectionInfoAdapter(method, context.loader, ignores)
             +Optimizer()
@@ -81,7 +81,7 @@ class GeneratorContext(
         +AnnotationAdapter(method, AnnotationManager.defaultLoader)
         +MethodInliner(psa)
         +StaticFieldInliner(cm, psa)
-        +RecursiveInliner(psa) { MethodInliner(psa, it) }
+        +RecursiveInliner(psa) { MethodInliner(psa, inlineIndex = it) }
         +IntrinsicAdapter
         +ReflectionInfoAdapter(method, context.loader, ignores)
         +Optimizer()
@@ -231,7 +231,7 @@ class GeneratorContext(
 
         val transformed = transform(methodState) {
             +AnnotationAdapter(this@collectFieldAccesses, AnnotationManager.defaultLoader)
-            +RecursiveInliner(psa) { ConcreteImplInliner(types, typeInfoMap, psa, it) }
+            +RecursiveInliner(psa) { ConcreteImplInliner(types, typeInfoMap, psa, inlineIndex = it) }
         }
         return collectFieldAccesses(context, transformed)
     }

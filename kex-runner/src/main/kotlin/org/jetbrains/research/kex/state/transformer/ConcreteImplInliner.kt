@@ -17,6 +17,7 @@ import org.jetbrains.research.kfg.type.TypeFactory
 class ConcreteImplInliner(val types: TypeFactory,
                           val typeInfoMap: TypeInfoMap,
                           override val psa: PredicateStateAnalysis,
+                          override val inlineSuffix: String = "concrete.inlined",
                           override var inlineIndex: Int = 0) : Inliner<ConcreteImplInliner> {
     override val im = MethodManager.InlineManager
     override val builders = dequeOf(StateBuilder())
@@ -83,6 +84,7 @@ class AliasingConcreteImplInliner(val types: TypeFactory,
                                   val typeInfoMap: TypeInfoMap,
                                   val aa: AliasAnalysis,
                                   override val psa: PredicateStateAnalysis,
+                                  override val inlineSuffix: String = "aliasing.inlined",
                                   override var inlineIndex: Int = 0) : Inliner<ConcreteImplInliner> {
     override val im = MethodManager.InlineManager
     override val builders = dequeOf(StateBuilder())

@@ -7,7 +7,7 @@ import org.jetbrains.research.kex.state.StateBuilder
 import org.jetbrains.research.kex.state.predicate.FieldStorePredicate
 import org.jetbrains.research.kex.state.term.FieldLoadTerm
 import org.jetbrains.research.kex.state.term.FieldTerm
-import org.jetbrains.research.kex.state.term.Term
+import org.jetbrains.research.kex.util.isFinal
 import org.jetbrains.research.kfg.ClassManager
 import org.jetbrains.research.kfg.ir.Method
 import java.util.*
@@ -16,11 +16,6 @@ class StaticFieldInliner(val cm: ClassManager, val psa: PredicateStateAnalysis) 
     override val builders = dequeOf(StateBuilder())
     private var inlineIndex = 0
 
-    private val FieldTerm.isFinal get(): Boolean {
-        val kfgField = cm[this.klass].getField(this.fieldNameString, this.type.getKfgType(cm.type))
-        return kfgField.isFinal
-    }
-
     fun prepareInlinedState(method: Method): PredicateState? {
         if (method.isEmpty()) return null
 
@@ -28,17 +23,17 @@ class StaticFieldInliner(val cm: ClassManager, val psa: PredicateStateAnalysis) 
         val builder = psa.builder(method)
         val endState = builder.methodState ?: return null
 
-        endState.filter {
+        val finalState = endState.filter {
             when (it) {
                 is FieldStorePredicate -> {
                     val field = it.field as? FieldTerm ?: return@filter false
-                    field.isStatic && field.klass == klass && !field.isFinal
+                    field.isStatic && field.klass == klass && !field.isFinal(cm)
                 }
                 else -> true
             }
         }
 
-        return TermRenamer("static.inlined${inlineIndex++}", mapOf()).apply(endState)
+        return TermRenamer("static.inlined${inlineIndex++}", mapOf()).apply(finalState)
     }
 
     override fun apply(ps: PredicateState): PredicateState {

@@ -22,6 +22,7 @@ import org.jetbrains.research.kex.state.predicate.Predicate
 import org.jetbrains.research.kex.state.term.ConstIntTerm
 import org.jetbrains.research.kex.state.term.FieldTerm
 import org.jetbrains.research.kex.state.term.Term
+import org.jetbrains.research.kex.util.isFinal
 import org.jetbrains.research.kfg.ir.Method
 
 class DescriptorGenerator(override val method: Method,
@@ -73,7 +74,7 @@ fun generateFinalDescriptors(method: Method, ctx: ExecutionContext, model: SMTMo
             generator.args.mapIndexed { index, arg ->
                 arg ?: descriptor { default(method.argTypes[index].kexType) }
             },
-            generator.staticFields.mapValues {
+            generator.staticFields.filterNot { it.key.isFinal(ctx.cm) }.mapValues {
                 it.value ?: descriptor { default((it.key.type as KexReference).reference) }
             }
     )
@@ -87,7 +88,7 @@ fun generateFinalTypeInfoMap(method: Method, ctx: ExecutionContext, model: SMTMo
             *generator.args.mapIndexed { index, arg ->
                 arg ?: descriptor { default(method.argTypes[index].kexType) }
             }.toTypedArray(),
-            *generator.staticFields.mapValues {
+            *generator.staticFields.filterNot { it.key.isFinal(ctx.cm) }.mapValues {
                 it.value ?: descriptor { default((it.key.type as KexReference).reference) }
             }.values.toTypedArray()
     )
@@ -112,7 +113,7 @@ fun generateInitialDescriptors(method: Method, ctx: ExecutionContext, model: SMT
             generator.args.mapIndexed { index, arg ->
                 arg ?: descriptor { default(method.argTypes[index].kexType) }
             },
-            generator.staticFields.mapValues {
+            generator.staticFields.filterNot { it.key.isFinal(ctx.cm) }.mapValues {
                 it.value ?: descriptor { default((it.key.type as KexReference).reference) }
             }
     )

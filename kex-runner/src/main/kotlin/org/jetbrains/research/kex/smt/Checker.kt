@@ -48,6 +48,8 @@ class Checker(val method: Method, val loader: ClassLoader, private val psa: Pred
             +MethodInliner(psa)
         }
 
+        +StaticFieldInliner(method.cm, psa)
+        +RecursiveInliner(psa) { MethodInliner(psa, inlineIndex = it) }
         +IntrinsicAdapter
         +ReflectionInfoAdapter(method, loader)
         +Optimizer()
@@ -61,7 +63,9 @@ class Checker(val method: Method, val loader: ClassLoader, private val psa: Pred
 
     fun prepareState(method: Method, ps: PredicateState, typeInfoMap: TypeInfoMap) = transform(ps) {
         +AnnotationAdapter(method, AnnotationManager.defaultLoader)
-        +RecursiveInliner(psa) { ConcreteImplInliner(method.cm.type, typeInfoMap, psa, it) }
+        +RecursiveInliner(psa) { ConcreteImplInliner(method.cm.type, typeInfoMap, psa, inlineIndex = it) }
+        +StaticFieldInliner(method.cm, psa)
+        +RecursiveInliner(psa) { MethodInliner(psa, inlineIndex = it) }
         +IntrinsicAdapter
         +ReflectionInfoAdapter(method, loader)
         +Optimizer()
