@@ -174,37 +174,39 @@ class ConcolicStateBuilder(val cm: ClassManager, val psa: PredicateStateAnalysis
         }
     }
 
-    fun buildCallInst(inst: CallInst) = when (inst.method) {
-        inlinedCalls.peek() -> inlinedCalls.pop()
-        else -> {
-            var fallback: PredicateState = BasicState(listOf {
-                state(inst.location) {
-                    val args = inst.args.map { mkValue(it) }
-                    val callee = when {
-                        inst.isStatic -> `class`(inst.method.`class`)
-                        else -> mkValue(inst.callee)
-                    }
-                    val callTerm = callee.call(inst.method, args)
+    fun buildCallInst(inst: CallInst) {
+        when (inst.method) {
+            inlinedCalls.peek() -> inlinedCalls.pop()
+            else -> {
+                var fallback: PredicateState = BasicState(listOf {
+                    state(inst.location) {
+                        val args = inst.args.map { mkValue(it) }
+                        val callee = when {
+                            inst.isStatic -> `class`(inst.method.`class`)
+                            else -> mkValue(inst.callee)
+                        }
+                        val callTerm = callee.call(inst.method, args)
 
-                    when {
-                        inst.isNameDefined -> mkNewValue(inst).call(callTerm)
-                        else -> call(callTerm)
+                        when {
+                            inst.isNameDefined -> mkNewValue(inst).call(callTerm)
+                            else -> call(callTerm)
+                        }
+                    }
+                })
+                if (lastCall != null) {
+                    val method = inst.method
+
+                    fallback = resolveMethodCall(method) ?: fallback
+                    lastCall = null
+                    val retTerm = collectTerms(fallback) { it.name.startsWith("<retval>") }.firstOrNull()
+                    if (retTerm != null) {
+                        fallback += state(inst.location) {
+                            mkNewValue(inst) equality retTerm
+                        }
                     }
                 }
-            })
-            if (lastCall != null) {
-                val method = inst.method
-
-                fallback = resolveMethodCall(method) ?: fallback
-                lastCall = null
-                val retTerm = collectTerms(fallback) { it.name.startsWith("<retval>") }.firstOrNull()
-                if (retTerm != null) {
-                    fallback += state(inst.location) {
-                        mkNewValue(inst) equality retTerm
-                    }
-                }
+                stateBuilder += fallback
             }
-            stateBuilder += fallback
         }
     }
 
