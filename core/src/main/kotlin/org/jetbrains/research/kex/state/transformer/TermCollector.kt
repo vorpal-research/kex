@@ -76,3 +76,9 @@ fun collectStringTerms(state: PredicateState): Set<ConstStringTerm> {
     stringCollector.apply(state)
     return stringCollector.strings
 }
+
+fun collectTerms(state: PredicateState, predicate: (Term) -> Boolean): Set<Term> {
+    val tc = TermCollector(predicate)
+    tc.apply(state)
+    return tc.terms
+}

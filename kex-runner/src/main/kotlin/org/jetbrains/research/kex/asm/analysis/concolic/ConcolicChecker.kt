@@ -95,24 +95,13 @@ class ConcolicChecker(val ctx: ExecutionContext, val manager: TraceManager<Trace
         }
 
         val builder = ConcolicStateBuilder(cm)
-        var methodParams: CallParams? = null
         for ((index, action) in filteredTrace.withIndex()) {
             when (action) {
                 is MethodEntry -> {
                     methodStack.push(action.method)
                     prevBlockStack.push(BlockWrapper(null))
-                    if (methodParams != null && methodParams.method == action.method) {
-                        val mappings = mutableMapOf<Value, Value>()
-                        methodParams.instance?.run { mappings[values.getThis(action.method.`class`)] = this }
-                        methodParams.args.withIndex().forEach { (index, arg) ->
-                            mappings[values.getArgument(index, action.method, action.method.argTypes[index])] = arg
-                        }
-                        builder.enterMethod(action.method, ConcolicStateBuilder.CallParameters(methodParams.receiver, mappings))
-                    } else {
-                        builder.enterMethod(action.method)
-                    }
-                    methodParams = null
-                }
+                    builder.enterMethod(action.method)
+               }
                 is MethodReturn -> {
                     val prevBlock = prevBlockStack.pop()
                     val current = action.block
@@ -130,7 +119,12 @@ class ConcolicChecker(val ctx: ExecutionContext, val manager: TraceManager<Trace
                     builder.exitMethod(action.method)
                 }
                 is MethodCall -> {
-                    methodParams = CallParams(action.method, action.returnValue, action.instance, action.args)
+                    val mappings = mutableMapOf<Value, Value>()
+                    action.instance?.run { mappings[values.getThis(action.method.`class`)] = this }
+                    action.args.withIndex().forEach { (index, arg) ->
+                        mappings[values.getArgument(index, action.method, action.method.argTypes[index])] = arg
+                    }
+                    builder.callMethod(action.method, ConcolicStateBuilder.CallParameters(action.returnValue, mappings))
                 }
 
                 is BlockJump -> {

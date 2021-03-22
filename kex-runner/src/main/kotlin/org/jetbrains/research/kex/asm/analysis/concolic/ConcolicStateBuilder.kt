@@ -4,18 +4,25 @@ import org.jetbrains.research.kthelper.collection.buildList
 import org.jetbrains.research.kthelper.collection.listOf
 import org.jetbrains.research.kthelper.collection.stackOf
 import org.jetbrains.research.kex.asm.state.InvalidInstructionError
+import org.jetbrains.research.kex.asm.state.PredicateStateAnalysis
 import org.jetbrains.research.kex.ktype.kexType
+import org.jetbrains.research.kex.state.BasicState
+import org.jetbrains.research.kex.state.PredicateState
 import org.jetbrains.research.kex.state.StateBuilder
-import org.jetbrains.research.kex.state.predicate.Predicate
+import org.jetbrains.research.kex.state.emptyState
 import org.jetbrains.research.kex.state.predicate.path
 import org.jetbrains.research.kex.state.predicate.state
 import org.jetbrains.research.kex.state.term.Term
 import org.jetbrains.research.kex.state.term.term
+import org.jetbrains.research.kex.state.transformer.TermRenamer
+import org.jetbrains.research.kex.state.transformer.collectArguments
+import org.jetbrains.research.kex.state.transformer.collectTerms
 import org.jetbrains.research.kfg.ClassManager
 import org.jetbrains.research.kfg.ir.BasicBlock
 import org.jetbrains.research.kfg.ir.Method
 import org.jetbrains.research.kfg.ir.value.*
 import org.jetbrains.research.kfg.ir.value.instruction.*
+import org.jetbrains.research.kfg.type.ClassType
 
 class UnsupportedInstructionException(val inst: Instruction) : Exception(inst.print())
 class InvalidStateException(msg: String) : Exception(msg)
@@ -28,13 +35,15 @@ class ConcolicStateBuilder(val cm: ClassManager) {
     private val returnReceivers = stackOf<Term>()
     private val inlinedCalls = stackOf<Method>()
     private var counter = 0
+    private var lastCall: Pair<Method, CallParameters>? = null
 
-    fun apply() = stateBuilder.apply()
+    fun apply() = stateBuilder.apply().simplify()
 
     data class CallParameters(val receiver: Value?, val mappings: Map<Value, Value>)
 
-    fun enterMethod(method: Method, params: CallParameters? = null) {
-        if (params != null) {
+    fun enterMethod(method: Method/*, params: CallParameters? = null*/) {
+        if (lastCall != null) {
+            val params = lastCall!!.second
             // if call params are not null, we should already have value map
             params.receiver?.run { returnReceivers.push(mkNewValue(this)) }
             callStack.push(valueMap.toMutableMap())
@@ -42,9 +51,14 @@ class ConcolicStateBuilder(val cm: ClassManager) {
             for ((arg, value) in params.mappings) {
                 valueMap[arg] = mkValue(value)
             }
+            lastCall = null
         } else {
             callStack.push(valueMap.toMutableMap())
         }
+    }
+
+    fun callMethod(method: Method, parameters: CallParameters) {
+        lastCall = method to parameters
     }
 
     @Suppress("UNUSED_PARAMETER")
@@ -54,8 +68,7 @@ class ConcolicStateBuilder(val cm: ClassManager) {
 
     fun build(block: BasicBlock, entry: BasicBlock?, exit: BasicBlock?) {
         for (inst in block) {
-            for (pred in build(inst, entry, exit))
-                stateBuilder += pred
+            stateBuilder += build(inst, entry, exit)
         }
     }
 
@@ -65,7 +78,7 @@ class ConcolicStateBuilder(val cm: ClassManager) {
         else -> buildInst(instruction)
     }
 
-    fun buildInst(instruction: Instruction): List<Predicate> = when (instruction) {
+    fun buildInst(instruction: Instruction): PredicateState = when (instruction) {
         is ArrayLoadInst -> buildArrayLoadInst(instruction)
         is ArrayStoreInst -> buildArrayStoreInst(instruction)
         is BinaryInst -> buildBinaryInst(instruction)
@@ -84,21 +97,21 @@ class ConcolicStateBuilder(val cm: ClassManager) {
         else -> throw UnsupportedInstructionException(instruction)
     }
 
-    fun buildTerminateInst(inst: TerminateInst, next: BasicBlock?): List<Predicate> =
-            when (inst) {
-                is ReturnInst -> buildReturnInst(inst)
-                is ThrowInst -> buildThrowInst(inst)
-                is UnreachableInst -> buildUnreachableInst(inst)
-                else -> next?.run {
-                    when (inst) {
-                        is BranchInst -> buildBranchInst(inst, next)
-                        is JumpInst -> buildJumpInst(inst, next)
-                        is SwitchInst -> buildSwitchInst(inst, next)
-                        is TableSwitchInst -> buildTableSwitchInst(inst, next)
-                        else -> throw UnsupportedInstructionException(inst)
-                    }
-                } ?: emptyList()
-            }
+    fun buildTerminateInst(inst: TerminateInst, next: BasicBlock?): PredicateState =
+        when (inst) {
+            is ReturnInst -> buildReturnInst(inst)
+            is ThrowInst -> buildThrowInst(inst)
+            is UnreachableInst -> buildUnreachableInst(inst)
+            else -> next?.run {
+                when (inst) {
+                    is BranchInst -> buildBranchInst(inst, next)
+                    is JumpInst -> buildJumpInst(inst, next)
+                    is SwitchInst -> buildSwitchInst(inst, next)
+                    is TableSwitchInst -> buildTableSwitchInst(inst, next)
+                    else -> throw UnsupportedInstructionException(inst)
+                }
+            } ?: emptyState()
+        }
 
     private fun newValue(value: Value) = term {
         when (value) {
@@ -117,17 +130,18 @@ class ConcolicStateBuilder(val cm: ClassManager) {
         return v
     }
 
-    fun buildPhiInst(inst: PhiInst, entry: BasicBlock): List<Predicate> = listOf {
+    fun buildPhiInst(inst: PhiInst, entry: BasicBlock): PredicateState = BasicState(listOf {
         state(inst.location) {
             val lhv = mkNewValue(inst)
-            val rhv = mkValue(inst.incomings[entry]
+            val rhv = mkValue(
+                inst.incomings[entry]
                     ?: throw InvalidStateException("Inst ${inst.print()} predecessors does not correspond to actual predecessor ${entry.name}")
             )
             lhv equality rhv
         }
-    }
+    })
 
-    fun buildArrayLoadInst(inst: ArrayLoadInst): List<Predicate> = listOf {
+    fun buildArrayLoadInst(inst: ArrayLoadInst): PredicateState = BasicState(listOf {
         state(inst.location) {
             val lhv = mkNewValue(inst)
             val ref = mkValue(inst.arrayRef)
@@ -137,9 +151,9 @@ class ConcolicStateBuilder(val cm: ClassManager) {
 
             lhv equality load
         }
-    }
+    })
 
-    fun buildArrayStoreInst(inst: ArrayStoreInst): List<Predicate> = listOf {
+    fun buildArrayStoreInst(inst: ArrayStoreInst): PredicateState = BasicState(listOf {
         state(inst.location) {
             val ref = mkValue(inst.arrayRef)
             val indx = mkValue(inst.index)
@@ -148,68 +162,134 @@ class ConcolicStateBuilder(val cm: ClassManager) {
 
             arrayRef.store(value)
         }
-    }
+    })
 
-    fun buildBinaryInst(inst: BinaryInst): List<Predicate> = listOf {
+    fun buildBinaryInst(inst: BinaryInst): PredicateState = BasicState(listOf {
         state(inst.location) {
             val lhv = mkNewValue(inst)
             val rhv = mkValue(inst.lhv).apply(types, inst.opcode, mkValue(inst.rhv))
 
             lhv equality rhv
         }
+    })
+
+    fun buildCallInst(inst: CallInst): PredicateState = when (inst.method) {
+        inlinedCalls.peek() -> {
+            inlinedCalls.pop()
+            emptyState()
+        }
+        else -> {
+            var fallback: PredicateState = BasicState(listOf {
+                state(inst.location) {
+                    val args = inst.args.map { mkValue(it) }
+                    val callee = when {
+                        inst.isStatic -> `class`(inst.method.`class`)
+                        else -> mkValue(inst.callee)
+                    }
+                    val callTerm = callee.call(inst.method, args)
+
+                    when {
+                        inst.isNameDefined -> mkNewValue(inst).call(callTerm)
+                        else -> call(callTerm)
+                    }
+                }
+            })
+            if (lastCall != null) {
+                val method = inst.method
+
+                fallback = resolveMethodCall(method) ?: fallback
+                lastCall = null
+                val retTerm = collectTerms(fallback) { it.name.startsWith("<retval>") }.firstOrNull()
+                if (retTerm != null) {
+                    fallback += state(inst.location) {
+                        mkNewValue(inst) equality retTerm
+                    }
+                }
+            }
+            fallback
+        }
     }
 
-    fun buildCallInst(inst: CallInst): List<Predicate> = when {
-        inst.method == inlinedCalls.peek() -> {
-            inlinedCalls.pop()
-            emptyList()
+    private fun buildMappings(method: Method, state: PredicateState, callMappings: CallParameters): Map<Term, Term> {
+        val (`this`, args) = collectArguments(state)
+        val mappings = mutableMapOf<Term, Term>()
+        if (!method.isStatic) {
+            val actualThis = `this` ?: term { `this`(method.`class`.kexType) }
+            val mappedThis = mkValue(callMappings.mappings[cm.value.getThis(method.`class`)]!!)
+            mappings += actualThis to mappedThis
         }
-        else -> listOf {
-            state(inst.location) {
-                val args = inst.args.map { mkValue(it) }
-                val callee = when {
-                    inst.isStatic -> `class`(inst.method.`class`)
-                    else -> mkValue(inst.callee)
-                }
-                val callTerm = callee.call(inst.method, args)
+        for ((_, argTerm) in args) {
+            val valueArg = cm.value.getArgument(argTerm.index, method, argTerm.type.getKfgType(types))
+            val mappedArg = mkValue(callMappings.mappings[valueArg]!!)
+            mappings += argTerm to mappedArg
+        }
+        return mappings
+    }
 
-                when {
-                    inst.isNameDefined -> mkNewValue(inst).call(callTerm)
-                    else -> call(callTerm)
-                }
+    private fun getOverloadedMethod(callee: Value, baseMethod: Method): Method {
+        val klass = (callee.type as ClassType).`class`
+        return klass.getMethod(baseMethod.name, baseMethod.desc)
+    }
+
+    private fun resolveMethodCall(method: Method): PredicateState? {
+        if (lastCall == null) return null
+        if (method.isEmpty()) return null
+        val (callMethod, callMappings) = lastCall!!
+        return when {
+            method.isStatic -> {
+                val psa = PredicateStateAnalysis(cm)
+                val builder = psa.builder(method)
+                builder.methodState
+            }
+            method.isConstructor -> {
+                val psa = PredicateStateAnalysis(cm)
+                val builder = psa.builder(method)
+                val state = builder.methodState ?: return null
+                val mappings = buildMappings(method, state, callMappings)
+                TermRenamer("${++counter}", mappings).apply(state)
+            }
+            else -> {
+                val mappedThis = callMappings.mappings[cm.value.getThis(method.`class`)]!!
+                val actualMethod = getOverloadedMethod(mappedThis, callMethod)
+
+                val psa = PredicateStateAnalysis(cm)
+                val builder = psa.builder(actualMethod)
+                val state = builder.methodState ?: return null
+                val mappings = buildMappings(method, state, callMappings)
+                TermRenamer("${++counter}", mappings).apply(state)
             }
         }
     }
 
 
-    fun buildCastInst(inst: CastInst): List<Predicate> = listOf {
+    fun buildCastInst(inst: CastInst): PredicateState = BasicState(listOf {
         state(inst.location) {
             val lhv = mkNewValue(inst)
             val rhv = mkValue(inst.operand) `as` inst.type.kexType
 
             lhv equality rhv
         }
-    }
+    })
 
     @Suppress("UNUSED_PARAMETER")
-    fun buildCatchInst(inst: CatchInst): List<Predicate> = emptyList()
+    fun buildCatchInst(inst: CatchInst): PredicateState = emptyState()
 
-    fun buildCmpInst(inst: CmpInst): List<Predicate> = listOf {
+    fun buildCmpInst(inst: CmpInst): PredicateState = BasicState(listOf {
         state(inst.location) {
             val lhv = mkNewValue(inst)
             val rhv = mkValue(inst.lhv).apply(inst.opcode, mkValue(inst.rhv))
 
             lhv equality rhv
         }
-    }
+    })
 
     @Suppress("UNUSED_PARAMETER")
-    fun buildEnterMonitorInst(inst: EnterMonitorInst): List<Predicate> = emptyList()
+    fun buildEnterMonitorInst(inst: EnterMonitorInst): PredicateState = emptyState()
 
     @Suppress("UNUSED_PARAMETER")
-    fun buildExitMonitorInst(inst: ExitMonitorInst): List<Predicate> = emptyList()
+    fun buildExitMonitorInst(inst: ExitMonitorInst): PredicateState = emptyState()
 
-    fun buildFieldLoadInst(inst: FieldLoadInst): List<Predicate> = listOf {
+    fun buildFieldLoadInst(inst: FieldLoadInst): PredicateState = BasicState(listOf {
         state(inst.location) {
             val lhv = mkNewValue(inst)
             val owner = when {
@@ -221,9 +301,9 @@ class ConcolicStateBuilder(val cm: ClassManager) {
 
             lhv equality rhv
         }
-    }
+    })
 
-    fun buildFieldStoreInst(inst: FieldStoreInst): List<Predicate> = listOf {
+    fun buildFieldStoreInst(inst: FieldStoreInst): PredicateState = BasicState(listOf {
         state(inst.location) {
             val owner = when {
                 inst.isStatic -> `class`(inst.field.`class`)
@@ -234,43 +314,43 @@ class ConcolicStateBuilder(val cm: ClassManager) {
 
             field.store(value)
         }
-    }
+    })
 
-    fun buildInstanceOfInst(inst: InstanceOfInst): List<Predicate> = listOf {
+    fun buildInstanceOfInst(inst: InstanceOfInst): PredicateState = BasicState(listOf {
         state(inst.location) {
             val lhv = mkNewValue(inst)
             val rhv = mkValue(inst.operand) `is` inst.targetType.kexType
 
             lhv equality rhv
         }
-    }
+    })
 
-    fun buildNewArrayInst(inst: NewArrayInst): List<Predicate> = listOf {
+    fun buildNewArrayInst(inst: NewArrayInst): PredicateState = BasicState(listOf {
         state(inst.location) {
             val lhv = mkNewValue(inst)
             val dimensions = inst.dimensions.map { mkValue(it) }
 
             lhv.new(dimensions)
         }
-    }
+    })
 
-    fun buildNewInst(inst: NewInst): List<Predicate> = listOf {
+    fun buildNewInst(inst: NewInst): PredicateState = BasicState(listOf {
         state(inst.location) {
             val lhv = mkNewValue(inst)
             lhv.new()
         }
-    }
+    })
 
-    fun buildUnaryInst(inst: UnaryInst): List<Predicate> = listOf {
+    fun buildUnaryInst(inst: UnaryInst): PredicateState = BasicState(listOf {
         state(inst.location) {
             val lhv = mkNewValue(inst)
             val rhv = mkValue(inst.operand).apply(inst.opcode)
 
             lhv equality rhv
         }
-    }
+    })
 
-    fun buildBranchInst(inst: BranchInst, next: BasicBlock): List<Predicate> = listOf {
+    fun buildBranchInst(inst: BranchInst, next: BasicBlock): PredicateState = BasicState(listOf {
         path(inst.location) {
             val cond = mkValue(inst.cond)
             when (next) {
@@ -279,12 +359,12 @@ class ConcolicStateBuilder(val cm: ClassManager) {
                 else -> throw InvalidStateException("Inst ${inst.print()} successor does not correspond to actual successor ${next.name}")
             }
         }
-    }
+    })
 
     @Suppress("UNUSED_PARAMETER")
-    fun buildJumpInst(inst: JumpInst, next: BasicBlock): List<Predicate> = emptyList()
+    fun buildJumpInst(inst: JumpInst, next: BasicBlock): PredicateState = emptyState()
 
-    fun buildReturnInst(inst: ReturnInst): List<Predicate> = listOf {
+    fun buildReturnInst(inst: ReturnInst): PredicateState = BasicState(listOf {
         state(inst.location) {
             when {
                 !inst.hasReturnValue -> const(true) equality true
@@ -296,9 +376,9 @@ class ConcolicStateBuilder(val cm: ClassManager) {
                 }
             }
         }
-    }
+    })
 
-    fun buildSwitchInst(inst: SwitchInst, next: BasicBlock): List<Predicate> = buildList {
+    fun buildSwitchInst(inst: SwitchInst, next: BasicBlock): PredicateState = BasicState(buildList {
         val key = mkValue(inst.key)
 
         when (next) {
@@ -312,9 +392,9 @@ class ConcolicStateBuilder(val cm: ClassManager) {
             }
             else -> throw InvalidStateException("Inst ${inst.print()} successor does not correspond to actual successor ${next.name}")
         }
-    }
+    })
 
-    fun buildTableSwitchInst(inst: TableSwitchInst, next: BasicBlock): List<Predicate> = buildList {
+    fun buildTableSwitchInst(inst: TableSwitchInst, next: BasicBlock): PredicateState = BasicState(buildList {
         val key = mkValue(inst.index)
         val min = inst.min as? IntConstant ?: throw InvalidInstructionError("Unexpected min type in tableSwitchInst")
         val max = inst.max as? IntConstant ?: throw InvalidInstructionError("Unexpected max type in tableSwitchInst")
@@ -330,10 +410,11 @@ class ConcolicStateBuilder(val cm: ClassManager) {
             }
             else -> throw InvalidStateException("Inst ${inst.print()} successor does not correspond to actual successor ${next.name}")
         }
-    }
+    })
 
     @Suppress("UNUSED_PARAMETER")
-    fun buildThrowInst(inst: ThrowInst): List<Predicate> = emptyList()
+    fun buildThrowInst(inst: ThrowInst): PredicateState = emptyState()
+
     @Suppress("UNUSED_PARAMETER")
-    fun buildUnreachableInst(inst: UnreachableInst): List<Predicate> = emptyList()
+    fun buildUnreachableInst(inst: UnreachableInst): PredicateState = emptyState()
 }

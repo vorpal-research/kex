@@ -156,8 +156,6 @@ class RuntimeTraceCollector(override val cm: ClassManager) : MethodVisitor {
     }.insertBefore(inst)
 
     override fun visitCallInst(inst: CallInst) {
-        if (!inst.method.isInstrumented()) return
-
         buildList<Instruction> {
             val callMethod = collectorClass.getMethod("methodCall", MethodDesc(
                     arrayOf(type.stringType, type.stringType, type.getArrayType(type.stringType),
