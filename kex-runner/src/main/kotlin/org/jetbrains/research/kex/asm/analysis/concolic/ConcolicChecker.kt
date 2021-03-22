@@ -86,18 +86,18 @@ class ConcolicChecker(
         val methodStack = stackOf<Method>()
         val prevBlockStack = stackOf<BlockWrapper>()
         val filteredTrace = trace.actions.run {
-            var inStatic = false
+            var staticLevel = 0
             filter {
                 when (it) {
                     is StaticInitEntry -> {
-                        inStatic = true
+                        ++staticLevel
                         false
                     }
                     is StaticInitExit -> {
-                        inStatic = false
+                        --staticLevel
                         false
                     }
-                    else -> !inStatic
+                    else -> staticLevel == 0
                 }
             }
         }.dropWhile { !(it is MethodEntry && it.method == method) }
