@@ -28,6 +28,7 @@ class TestCasePrinter(val ctx: ExecutionContext, val method: Method) {
     private val Class.validName get() = name.replace("$", "_")
     private val Method.validName get() = name.replace(Regex("[^a-zA-Z0-9]"), "")
     private val BasicBlock.validName get() = name.toString().replace(Regex("[^a-zA-Z0-9]"), "")
+    private val String.validName get() = this.replace(Regex("[^a-zA-Z0-9]"), "")
 
     init {
         printer = when (testCaseLanguage) {
@@ -40,6 +41,11 @@ class TestCasePrinter(val ctx: ExecutionContext, val method: Method) {
     fun print(cs: CallStack, block: BasicBlock) {
         isEmpty = false
         printer.printCallStack(cs, "test_${block.validName}")
+    }
+
+    fun print(cs: CallStack, testName: String) {
+        isEmpty = false
+        printer.printCallStack(cs, testName.validName)
     }
 
     fun emit() {

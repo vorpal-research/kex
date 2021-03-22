@@ -35,7 +35,7 @@ class Reanimator(val ctx: ExecutionContext, val psa: PredicateStateAnalysis, val
     private val printer = TestCasePrinter(ctx, method)
     private var staticCounter = 0
 
-    private fun printTest(block: BasicBlock, callStacks: Parameters<CallStack>) {
+    private fun printTest(testName: String, callStacks: Parameters<CallStack>) {
         val stack = when {
             method.isStatic -> StaticMethodCall(method, callStacks.arguments).wrap("static${staticCounter++}")
             method.isConstructor -> callStacks.instance!!
@@ -45,14 +45,14 @@ class Reanimator(val ctx: ExecutionContext, val psa: PredicateStateAnalysis, val
                 instance
             }
         }
-        printer.print(stack, block)
+        printer.print(stack, testName)
     }
 
-    fun generateAPI(block: BasicBlock, state: PredicateState, model: SMTModel) = try {
+    fun generateAPI(testName: String, state: PredicateState, model: SMTModel) = try {
         val descriptors = generateFinalDescriptors(method, ctx, model, state).concreteParameters(cm)
         log.debug("Generated descriptors:\n$descriptors")
         val callStacks = descriptors.callStacks
-        printTest(block, callStacks)
+        printTest(testName, callStacks)
         log.debug("Generated call stacks:\n$callStacks")
         val (instance, arguments, _) = callStacks.executed
         instance to arguments.toTypedArray()

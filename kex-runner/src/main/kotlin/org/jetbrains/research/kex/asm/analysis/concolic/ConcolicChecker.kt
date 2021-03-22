@@ -12,13 +12,13 @@ import org.jetbrains.research.kex.ExecutionContext
 import org.jetbrains.research.kex.asm.state.PredicateStateAnalysis
 import org.jetbrains.research.kex.config.kexConfig
 import org.jetbrains.research.kex.random.Randomizer
+import org.jetbrains.research.kex.reanimator.Reanimator
 import org.jetbrains.research.kex.smt.Checker
 import org.jetbrains.research.kex.smt.Result
 import org.jetbrains.research.kex.state.PredicateState
 import org.jetbrains.research.kex.state.StateBuilder
 import org.jetbrains.research.kex.state.predicate.PredicateType
 import org.jetbrains.research.kex.state.predicate.inverse
-import org.jetbrains.research.kex.state.transformer.generateInputByModel
 import org.jetbrains.research.kex.trace.TraceManager
 import org.jetbrains.research.kex.trace.`object`.*
 import org.jetbrains.research.kex.trace.runner.ObjectTracingRunner
@@ -34,11 +34,18 @@ import java.util.*
 private val timeLimit by lazy { kexConfig.getLongValue("concolic", "timeLimit", 10000L) }
 private val onlyMain by lazy { kexConfig.getBooleanValue("concolic", "main-only", false) }
 
-class ConcolicChecker(val ctx: ExecutionContext, val manager: TraceManager<Trace>) : MethodVisitor {
+class ConcolicChecker(
+    val ctx: ExecutionContext,
+    val psa: PredicateStateAnalysis,
+    private val manager: TraceManager<Trace>
+) : MethodVisitor {
     override val cm: ClassManager get() = ctx.cm
     val loader: ClassLoader get() = ctx.loader
     val random: Randomizer get() = ctx.random
-    val paths = mutableSetOf<PredicateState>()
+    private val paths = mutableSetOf<PredicateState>()
+    private var counter = 0
+    lateinit var generator: Reanimator
+        protected set
 
     override fun cleanup() {
         paths.clear()
@@ -46,6 +53,7 @@ class ConcolicChecker(val ctx: ExecutionContext, val manager: TraceManager<Trace
 
     private fun analyze(method: Method) {
         log.debug(method.print())
+        generator = Reanimator(ctx, psa, method)
         try {
             runBlocking {
                 withTimeout(timeLimit) {
@@ -57,8 +65,9 @@ class ConcolicChecker(val ctx: ExecutionContext, val manager: TraceManager<Trace
                 }
             }
         } catch (e: TimeoutCancellationException) {
-            return
+            log.debug("Processing of method $method is stopped due timeout")
         }
+        generator.emit()
     }
 
     override fun visit(method: Method) {
@@ -71,13 +80,12 @@ class ConcolicChecker(val ctx: ExecutionContext, val manager: TraceManager<Trace
 
     private fun buildState(method: Method, trace: Trace): PredicateState {
         data class BlockWrapper(val block: BasicBlock?)
-        data class CallParams(val method: Method, val receiver: Value?, val instance: Value?, val args: Array<Value>)
 
         fun BasicBlock.wrap() = BlockWrapper(this)
 
         val methodStack = stackOf<Method>()
         val prevBlockStack = stackOf<BlockWrapper>()
-        val filteredTrace = trace.actions.dropWhile { !(it is MethodEntry && it.method == method) }.run {
+        val filteredTrace = trace.actions.run {
             var inStatic = false
             filter {
                 when (it) {
@@ -92,16 +100,16 @@ class ConcolicChecker(val ctx: ExecutionContext, val manager: TraceManager<Trace
                     else -> !inStatic
                 }
             }
-        }
+        }.dropWhile { !(it is MethodEntry && it.method == method) }
 
-        val builder = ConcolicStateBuilder(cm)
+        val builder = ConcolicStateBuilder(cm, psa)
         for ((index, action) in filteredTrace.withIndex()) {
             when (action) {
                 is MethodEntry -> {
                     methodStack.push(action.method)
                     prevBlockStack.push(BlockWrapper(null))
                     builder.enterMethod(action.method)
-               }
+                }
                 is MethodReturn -> {
                     val prevBlock = prevBlockStack.pop()
                     val current = action.block
@@ -189,7 +197,7 @@ class ConcolicChecker(val ctx: ExecutionContext, val manager: TraceManager<Trace
         return runner.collectTrace(instance, args)
     }
 
-    private fun getRandomTrace(method: Method) = RandomObjectTracingRunner(method, loader, ctx.random).run()
+    private fun getRandomTrace(method: Method) = tryOrNull { RandomObjectTracingRunner(method, loader, ctx.random).run() }
 
     private suspend fun process(method: Method) {
         val traces = ArrayDeque<Trace>()
@@ -216,14 +224,13 @@ class ConcolicChecker(val ctx: ExecutionContext, val manager: TraceManager<Trace
         log.debug("Collected trace: $state")
         log.debug("Mutated trace: $mutated")
 
-        val psa = PredicateStateAnalysis(cm)
         val checker = Checker(method, loader, psa)
         val result = checker.prepareAndCheck(mutated)
         if (result !is Result.SatResult) return null
         yield()
 
         val (instance, args) = tryOrNull {
-            generateInputByModel(ctx, method, checker.state, result.model)
+            generator.generateAPI("test${++counter}", checker.state, result.model)
         } ?: return null
         yield()
 

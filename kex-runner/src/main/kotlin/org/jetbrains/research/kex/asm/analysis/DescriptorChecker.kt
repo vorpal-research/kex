@@ -34,7 +34,7 @@ class DescriptorChecker(
         when (result) {
             is Result.SatResult -> {
                 val (instance, args) = try {
-                    generator.generateAPI(block, checker.state, result.model)
+                    generator.generateAPI("test_${block.name}", checker.state, result.model)
                 } catch (e: GenerationException) {
                     log.warn(e.message)
                     return result
