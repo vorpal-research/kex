@@ -93,7 +93,7 @@ class CmdConfig(args: Array<String>) : Config() {
                 .build()
         options.addOption(config)
 
-        val mode = Option("m", "mode", true, "run mode: bmc, concolic or debug")
+        val mode = Option("m", "mode", true, "run mode: symbolic, concolic or debug")
         mode.isRequired = false
         options.addOption(mode)
     }

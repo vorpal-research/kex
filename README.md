@@ -51,7 +51,7 @@ Usage: kex
                                     directories separated by `:`
  -h,--help                          print this help and quit
     --log <arg>                     log file name (`kex.log` by default)
- -m,--mode <arg>                    run mode: bmc, concolic or debug
+ -m,--mode <arg>                    run mode: symbolic, concolic or debug
     --option <section:name:value>   set kex option through command line
     --output <arg>                  target directory for instrumented bytecode
                                     output

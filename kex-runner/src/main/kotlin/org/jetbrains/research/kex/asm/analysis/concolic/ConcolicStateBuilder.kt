@@ -1,6 +1,5 @@
 package org.jetbrains.research.kex.asm.analysis.concolic
 
-import org.jetbrains.research.kthelper.collection.buildList
 import org.jetbrains.research.kthelper.collection.listOf
 import org.jetbrains.research.kthelper.collection.stackOf
 import org.jetbrains.research.kex.asm.state.InvalidInstructionError
@@ -9,7 +8,6 @@ import org.jetbrains.research.kex.ktype.kexType
 import org.jetbrains.research.kex.state.BasicState
 import org.jetbrains.research.kex.state.PredicateState
 import org.jetbrains.research.kex.state.StateBuilder
-import org.jetbrains.research.kex.state.emptyState
 import org.jetbrains.research.kex.state.predicate.path
 import org.jetbrains.research.kex.state.predicate.state
 import org.jetbrains.research.kex.state.term.Term
@@ -42,7 +40,7 @@ class ConcolicStateBuilder(val cm: ClassManager, val psa: PredicateStateAnalysis
 
     data class CallParameters(val receiver: Value?, val mappings: Map<Value, Value>)
 
-    fun enterMethod(method: Method/*, params: CallParameters? = null*/) {
+    fun enterMethod(method: Method) {
         if (lastCall != null) {
             val params = lastCall!!.second
             // if call params are not null, we should already have value map

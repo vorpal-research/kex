@@ -73,8 +73,8 @@ class Kex(args: Array<String>) {
     val visibilityLevel: Visibility
 
     enum class Mode {
+        Symbolic,
         Concolic,
-        BMC,
         Reanimator,
         Debug
     }
@@ -180,8 +180,8 @@ class Kex(args: Array<String>) {
             +ClassWriter(originalContext, outputDir)
         }
 
-        when (cmd.getEnumValue("mode", Mode.BMC, ignoreCase = true)) {
-            Mode.BMC -> bmc(originalContext, analysisContext)
+        when (cmd.getEnumValue("mode", Mode.Symbolic, ignoreCase = true)) {
+            Mode.Symbolic -> symbolic(originalContext, analysisContext)
             Mode.Reanimator -> reanimator(analysisContext)
             Mode.Concolic -> concolic(originalContext, analysisContext)
             Mode.Debug -> debug(analysisContext)
@@ -208,7 +208,7 @@ class Kex(args: Array<String>) {
         clearClassPath()
     }
 
-    private fun bmc(originalContext: ExecutionContext, analysisContext: ExecutionContext) {
+    private fun symbolic(originalContext: ExecutionContext, analysisContext: ExecutionContext) {
         val traceManager = ObjectTraceManager()
         val psa = PredicateStateAnalysis(analysisContext.cm)
         val cm = CoverageCounter(originalContext.cm, traceManager)
