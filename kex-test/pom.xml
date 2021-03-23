@@ -17,6 +17,7 @@
 
         <kotlin.version>1.4.0</kotlin.version>
         <compiler-plugin.version>3.5.1</compiler-plugin.version>
+        <kex-intrinsics.version>0.0.1</kex-intrinsics.version>
     </properties>
 
     <dependencies>
@@ -31,7 +32,19 @@
             <version>${kotlin.version}</version>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>org.jetbrains.research</groupId>
+            <artifactId>kex-intrinsics</artifactId>
+            <version>${kex-intrinsics.version}</version>
+        </dependency>
     </dependencies>
+
+    <repositories>
+        <repository>
+            <id>github-vorpal-research-kotlin-maven</id>
+            <url>https://maven.pkg.github.com/vorpal-research/kotlin-maven</url>
+        </repository>
+    </repositories>
 
     <build>
         <sourceDirectory>src/main/kotlin</sourceDirectory>

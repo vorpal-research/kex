@@ -75,6 +75,7 @@ class Kex(args: Array<String>) {
     enum class Mode {
         Symbolic,
         Concolic,
+        Checker,
         Reanimator,
         Debug
     }
@@ -183,6 +184,7 @@ class Kex(args: Array<String>) {
         when (cmd.getEnumValue("mode", Mode.Symbolic, ignoreCase = true)) {
             Mode.Symbolic -> symbolic(originalContext, analysisContext)
             Mode.Reanimator -> reanimator(analysisContext)
+            Mode.Checker -> checker(originalContext, analysisContext)
             Mode.Concolic -> concolic(originalContext, analysisContext)
             Mode.Debug -> debug(analysisContext)
         }
@@ -237,6 +239,11 @@ class Kex(args: Array<String>) {
                 "body coverage: ${String.format(Locale.ENGLISH, "%.2f", coverage.bodyCoverage)}%\n" +
                 "full coverage: ${String.format(Locale.ENGLISH, "%.2f", coverage.fullCoverage)}%")
         DescriptorStatistics.printStatistics()
+    }
+
+    @Suppress("UNUSED_PARAMETER")
+    private fun checker(originalContext: ExecutionContext, analysisContext: ExecutionContext) {
+        TODO("Not implemented yet")
     }
 
     private fun reanimator(analysisContext: ExecutionContext) {

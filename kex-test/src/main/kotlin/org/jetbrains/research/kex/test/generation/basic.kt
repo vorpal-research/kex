@@ -1,6 +1,6 @@
 package org.jetbrains.research.kex.test.generation
 
-import org.jetbrains.research.kex.test.Intrinsics
+import org.jetbrains.research.kex.Intrinsics.kexAssert
 
 class BasicGenerationTests {
     open class Point(val x: Int, val y: Int, val z: Int) {
@@ -21,30 +21,30 @@ class BasicGenerationTests {
         val ten = Point(x = x2, y = 10, z = 10)
 
         if (ten.x > zero.x) {
-            Intrinsics.assertReachable()
+            kexAssert()
         } else {
-            Intrinsics.assertReachable()
+            kexAssert()
         }
-        Intrinsics.assertReachable()
+        kexAssert()
     }
 
     fun pointCheck(p1: Point, p2: Point) {
         if (p1.x > p2.x) {
-            Intrinsics.assertReachable()
+            kexAssert()
         } else if (p2 is Point4) {
-            Intrinsics.assertReachable()
+            kexAssert()
         } else {
-            Intrinsics.assertReachable()
+            kexAssert()
         }
     }
 
     fun testArray(array: Array<Point>) {
         if (array[0].x > 0) {
-            Intrinsics.assertReachable()
+            kexAssert()
         }
         if (array[1].y < 0) {
-            Intrinsics.assertReachable()
+            kexAssert()
         }
-        Intrinsics.assertReachable()
+        kexAssert()
     }
 }

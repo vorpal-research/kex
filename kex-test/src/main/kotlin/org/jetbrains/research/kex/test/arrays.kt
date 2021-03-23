@@ -2,20 +2,23 @@
 
 package org.jetbrains.research.kex.test
 
+import org.jetbrains.research.kex.Intrinsics.kexAssert
+import org.jetbrains.research.kex.Intrinsics.kexUnreachable
+
 open class ArrayTests {
     fun testArrayRead() {
         val simpleArray = intArrayOf(0, 1, 2, 3, 4)
         val length = simpleArray.size
 
         if (length != 5) {
-            Intrinsics.assertUnreachable()
+            kexUnreachable()
         }
-        Intrinsics.assertReachable(length == 5)
+        kexAssert(length == 5)
 
         for (i in 0..4) {
-            Intrinsics.assertReachable(simpleArray[i] == i)
+            kexAssert(simpleArray[i] == i)
         }
-        Intrinsics.assertReachable()
+        kexAssert()
     }
 
     fun testArrayWrite() {
@@ -26,19 +29,19 @@ open class ArrayTests {
         }
 
         for (i in 0 until 5) {
-            Intrinsics.assertReachable(emptyArray[i] == i * i)
+            kexAssert(emptyArray[i] == i * i)
         }
-        Intrinsics.assertReachable()
+        kexAssert()
     }
 }
 
 open class ArrayLongTests {
     fun testUnknownArrayWrite(array: IntArray) {
         if (array.size < 5) {
-            Intrinsics.assertReachable(array.size < 5)
+            kexAssert(array.size < 5)
             return
         }
-        Intrinsics.assertReachable(array.size >= 5)
+        kexAssert(array.size >= 5)
 
         for (i in 0 until 5) {
             array[i] = i * i
@@ -46,28 +49,28 @@ open class ArrayLongTests {
 
         for (i in 0 until 5) {
             if (array[i] == i * i) {
-                Intrinsics.assertReachable()
+                kexAssert()
             }
         }
-        Intrinsics.assertReachable()
+        kexAssert()
     }
 
     fun testObjectArray(nullable: Array<Any?>, nonnulable: Array<Any>) {
         if (nullable.isNotEmpty()) {
             for (i in nullable) {
-                if (i != null) Intrinsics.assertReachable(i != null)
-                else Intrinsics.assertReachable(i == null)
+                if (i != null) kexAssert(i != null)
+                else kexAssert(i == null)
             }
         }
         if (nonnulable.isNotEmpty()) {
             for (i in nonnulable) {
-                Intrinsics.assertReachable(i != null)
+                kexAssert(i != null)
             }
             for (i in nonnulable) {
-                if (i == null) Intrinsics.assertUnreachable()
+                if (i == null) kexUnreachable()
             }
         }
-        Intrinsics.assertReachable(nullable != null)
+        kexAssert(nullable != null)
     }
 
     // open fun so it will not be inlined
@@ -76,10 +79,10 @@ open class ArrayLongTests {
     fun testArrayReturn() {
         val array = getNonNullableArray()
         for (i in array) {
-            Intrinsics.assertReachable(i != null)
+            kexAssert(i != null)
         }
         for (i in array) {
-            if (i == null) Intrinsics.assertUnreachable()
+            if (i == null) kexUnreachable()
         }
     }
 }

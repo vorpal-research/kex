@@ -13,7 +13,6 @@ import org.jetbrains.research.kex.state.term.ConstBoolTerm
 import org.jetbrains.research.kex.state.term.ConstIntTerm
 import org.jetbrains.research.kex.state.term.isConst
 import org.jetbrains.research.kex.state.term.term
-import org.jetbrains.research.kex.test.Intrinsics
 import org.jetbrains.research.kex.trace.`object`.ObjectTraceManager
 import org.jetbrains.research.kfg.ClassManager
 import org.jetbrains.research.kfg.KfgConfig
@@ -61,7 +60,7 @@ abstract class KexRunnerTest : KexTest() {
         val intrinsics = cm[`class`]
 
         val types = cm.type
-        val methodName = Intrinsics::assertReachable.name
+        val methodName = "kexAssert"
         val desc = MethodDesc(arrayOf(types.getArrayType(types.boolType)), types.voidType)
         val assertReachable = intrinsics.getMethod(methodName, desc)
         return method.flatten().asSequence()
@@ -74,7 +73,7 @@ abstract class KexRunnerTest : KexTest() {
         val `class` = Intrinsics::class.qualifiedName!!.replace(".", "/")
         val intrinsics = cm[`class`]
 
-        val methodName = Intrinsics::assertUnreachable.name
+        val methodName = "kexUnreachable"
         val desc = MethodDesc(arrayOf(), cm.type.voidType)
         val assertUnreachable = intrinsics.getMethod(methodName, desc)
         return method.flatten().asSequence()
@@ -93,6 +92,9 @@ abstract class KexRunnerTest : KexTest() {
             getReachables(method).forEach { inst ->
                 val checker = Checker(method, loader, psa)
                 val result = checker.checkReachable(inst)
+                if (result !is Result.SatResult) {
+                    val a = 10
+                }
                 assertTrue(result is Result.SatResult, "Class $`class`; method $method; ${inst.print()} should be reachable")
 
                 inst as CallInst

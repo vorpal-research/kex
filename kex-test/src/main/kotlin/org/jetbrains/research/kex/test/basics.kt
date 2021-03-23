@@ -1,6 +1,8 @@
 @file:Suppress("UNUSED_PARAMETER", "UNUSED_VARIABLE")
 package org.jetbrains.research.kex.test
 
+import org.jetbrains.research.kex.Intrinsics.kexAssert
+import org.jetbrains.research.kex.Intrinsics.kexUnreachable
 import kotlin.math.abs
 
 class BasicTests {
@@ -10,20 +12,20 @@ class BasicTests {
         val k = j + i - 15
 
         val max = maxOf(a, b, k)
-        Intrinsics.assertReachable()
+        kexAssert()
         return max
     }
 
     fun testIf(a: Int, b: Int): Int {
         val res = if (a > b) {
-            Intrinsics.assertReachable(a > b)
+            kexAssert(a > b)
             a - b
         } else {
-            Intrinsics.assertReachable(a <= b)
+            kexAssert(a <= b)
             a + b
         }
 
-        Intrinsics.assertReachable()
+        kexAssert()
         println(res)
         return res
     }
@@ -41,10 +43,10 @@ class BasicTests {
             }
         }
         if (y == 10) {
-            Intrinsics.assertUnreachable()
+            kexUnreachable()
         }
         if (y in 1..5) {
-            Intrinsics.assertReachable()
+            kexAssert()
         }
         return y
     }
@@ -52,14 +54,14 @@ class BasicTests {
     fun testLoop(a: Int, b: Int): Int {
         var x = a - b
         while (x < a) {
-            Intrinsics.assertReachable(x < a)
+            kexAssert(x < a)
             if (b > x) {
-                Intrinsics.assertReachable(b > x, x < a)
+                kexAssert(b > x, x < a)
                 println("b bigger")
             }
             ++x
         }
-        Intrinsics.assertReachable()
+        kexAssert()
         return x
     }
 
@@ -67,25 +69,25 @@ class BasicTests {
         val set = "asdasdal;djadslas;d".length
         val z = 10
         val y = if (x > z && x < 0) {
-            Intrinsics.assertUnreachable()
+            kexUnreachable()
             println("lol")
             142
         } else {
-            Intrinsics.assertReachable(x <= z || x >= 0)
+            kexAssert(x <= z || x >= 0)
             println("lol2")
             x- 2 * x
         }
-        Intrinsics.assertReachable()
+        kexAssert()
         return y
     }
 
     fun testUnreachableLoop(): Int {
         var x = 10
         while (x > 5) {
-            Intrinsics.assertReachable(x > 5)
+            kexAssert(x > 5)
             ++x
         }
-        Intrinsics.assertUnreachable()
+        kexUnreachable()
         println(x)
         return x
     }
@@ -97,13 +99,13 @@ class BasicTests {
                 arrayOf(10, 11, 12, 13, 14)
         )
         if (array[2][4] > 10) {
-            Intrinsics.assertReachable()
+            kexAssert()
         }
         if (array.size > 2) {
-            Intrinsics.assertReachable()
+            kexAssert()
         }
         if (array[0].size > 4) {
-            Intrinsics.assertReachable()
+            kexAssert()
         }
         return array.flatten().reduce { a, b -> a + b}
     }
@@ -115,7 +117,7 @@ class BasicTests {
                 arrayOf(10, 11, 12, 13, 14)
         )
         if (array[4][4] > 10) {
-            Intrinsics.assertUnreachable()
+            kexUnreachable()
         }
         return array.flatten().reduce { a, b -> a + b}
     }
@@ -125,8 +127,8 @@ class BasicTests {
         val b = 42
         val c = abs(a - b)
         // we don't know anything about function `abs`, so result is unknown
-        if (c < 0) Intrinsics.assertReachable()
-        else Intrinsics.assertReachable()
+        if (c < 0) kexAssert()
+        else kexAssert()
         return c
     }
 
