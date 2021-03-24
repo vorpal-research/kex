@@ -92,9 +92,6 @@ abstract class KexRunnerTest : KexTest() {
             getReachables(method).forEach { inst ->
                 val checker = Checker(method, loader, psa)
                 val result = checker.checkReachable(inst)
-                if (result !is Result.SatResult) {
-                    val a = 10
-                }
                 assertTrue(result is Result.SatResult, "Class $`class`; method $method; ${inst.print()} should be reachable")
 
                 inst as CallInst

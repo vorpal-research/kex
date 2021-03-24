@@ -110,7 +110,6 @@ class Icfpc2018Test {
                     Files.copy(File(solution.trace).toPath(), File("submit/$task.nbt").toPath(),
                             StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.COPY_ATTRIBUTES)
                     haveSolution = true
-                    kexAssert()
                     break
                     kexUnreachable()
                 }
@@ -118,7 +117,6 @@ class Icfpc2018Test {
                     kexAssert()
                     return
                 }
-                kexAssert()
             }
         }
 
