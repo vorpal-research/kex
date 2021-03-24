@@ -15,42 +15,42 @@ import org.jetbrains.research.kex.smt.InitialDescriptorReanimator
 import org.jetbrains.research.kex.smt.ModelReanimator
 import org.jetbrains.research.kex.smt.SMTModel
 import org.jetbrains.research.kex.state.PredicateState
-import org.jetbrains.research.kex.state.predicate.DefaultSwitchPredicate
-import org.jetbrains.research.kex.state.predicate.EqualityPredicate
-import org.jetbrains.research.kex.state.predicate.InequalityPredicate
-import org.jetbrains.research.kex.state.predicate.Predicate
+import org.jetbrains.research.kex.state.predicate.*
 import org.jetbrains.research.kex.state.term.ConstIntTerm
 import org.jetbrains.research.kex.state.term.FieldTerm
 import org.jetbrains.research.kex.state.term.Term
 import org.jetbrains.research.kex.util.isFinal
 import org.jetbrains.research.kfg.ir.Method
 
-class DescriptorGenerator(override val method: Method,
-                          override val ctx: ExecutionContext,
-                          override val model: SMTModel,
-                          override val modelReanimator: ModelReanimator<Descriptor>) : AbstractGenerator<Descriptor> {
+class DescriptorGenerator(
+    override val method: Method,
+    override val ctx: ExecutionContext,
+    override val model: SMTModel,
+    override val modelReanimator: ModelReanimator<Descriptor>
+) : AbstractGenerator<Descriptor> {
 
     override val memory = hashMapOf<Term, Descriptor>()
 
     override var thisTerm: Term? = null
     override val argTerms = sortedMapOf<Int, Term>()
     override val staticFieldTerms = mutableSetOf<FieldTerm>()
-    
-    private val Any?.numericValue: Any? get() = when (this) {
-        is ConstantDescriptor -> when (this) {
-            is ConstantDescriptor.Bool -> this.value
-            ConstantDescriptor.Null -> null
-            is ConstantDescriptor.Byte -> this.value
-            is ConstantDescriptor.Char -> this.value
-            is ConstantDescriptor.Short -> this.value
-            is ConstantDescriptor.Int -> this.value
-            is ConstantDescriptor.Long -> this.value
-            is ConstantDescriptor.Float -> this.value
-            is ConstantDescriptor.Double -> this.value
-            is ConstantDescriptor.Class -> this.value
+
+    private val Any?.numericValue: Any?
+        get() = when (this) {
+            is ConstantDescriptor -> when (this) {
+                is ConstantDescriptor.Bool -> this.value
+                ConstantDescriptor.Null -> null
+                is ConstantDescriptor.Byte -> this.value
+                is ConstantDescriptor.Char -> this.value
+                is ConstantDescriptor.Short -> this.value
+                is ConstantDescriptor.Int -> this.value
+                is ConstantDescriptor.Long -> this.value
+                is ConstantDescriptor.Float -> this.value
+                is ConstantDescriptor.Double -> this.value
+                is ConstantDescriptor.Class -> this.value
+            }
+            else -> this
         }
-        else -> this
-    }
 
     override fun checkPath(path: Predicate): Boolean = when (path) {
         is EqualityPredicate -> checkTerms(path.lhv, path.rhv) { a, b -> a == b }
@@ -66,55 +66,70 @@ class DescriptorGenerator(override val method: Method,
     }
 }
 
-fun generateFinalDescriptors(method: Method, ctx: ExecutionContext, model: SMTModel, state: PredicateState): Parameters<Descriptor> {
+fun generateFinalDescriptors(
+    method: Method,
+    ctx: ExecutionContext,
+    model: SMTModel,
+    state: PredicateState
+): Parameters<Descriptor> {
     val generator = DescriptorGenerator(method, ctx, model, FinalDescriptorReanimator(method, model, ctx))
     generator.apply(state)
     return Parameters(
-            generator.instance,
-            generator.args.mapIndexed { index, arg ->
-                arg ?: descriptor { default(method.argTypes[index].kexType) }
-            },
-            generator.staticFields.filterNot { it.key.isFinal(ctx.cm) }.mapValues {
-                it.value ?: descriptor { default((it.key.type as KexReference).reference) }
-            }
+        generator.instance,
+        generator.args.mapIndexed { index, arg ->
+            arg ?: descriptor { default(method.argTypes[index].kexType) }
+        },
+        generator.staticFields.filterNot { it.key.isFinal(ctx.cm) }.mapValues {
+            it.value ?: descriptor { default((it.key.type as KexReference).reference) }
+        }
     )
 }
 
-fun generateFinalTypeInfoMap(method: Method, ctx: ExecutionContext, model: SMTModel, state: PredicateState): TypeInfoMap {
+fun generateFinalTypeInfoMap(
+    method: Method,
+    ctx: ExecutionContext,
+    model: SMTModel,
+    state: PredicateState
+): TypeInfoMap {
     val generator = DescriptorGenerator(method, ctx, model, FinalDescriptorReanimator(method, model, ctx))
     generator.apply(state)
     val params = setOfNotNull(
-            generator.instance,
-            *generator.args.mapIndexed { index, arg ->
-                arg ?: descriptor { default(method.argTypes[index].kexType) }
-            }.toTypedArray(),
-            *generator.staticFields.filterNot { it.key.isFinal(ctx.cm) }.mapValues {
-                it.value ?: descriptor { default((it.key.type as KexReference).reference) }
-            }.values.toTypedArray()
+        generator.instance,
+        *generator.args.mapIndexed { index, arg ->
+            arg ?: descriptor { default(method.argTypes[index].kexType) }
+        }.toTypedArray(),
+        *generator.staticFields.filterNot { it.key.isFinal(ctx.cm) }.mapValues {
+            it.value ?: descriptor { default((it.key.type as KexReference).reference) }
+        }.values.toTypedArray()
     )
     return TypeInfoMap(
-            generator.memory
-                    .filterValues { candidate -> params.any { candidate in it } }
-                    .filterKeys { it.type is KexPointer }
-                    .mapValues {
-                        when (it.key.type) {
-                            is KexReference -> setOf(CastTypeInfo(KexReference(it.value.type)))
-                            else -> setOf(CastTypeInfo(it.value.type))
-                        }
-                    }
+        generator.memory
+            .filterValues { candidate -> params.any { candidate in it } }
+            .filterKeys { it.type is KexPointer }
+            .mapValues {
+                when (it.key.type) {
+                    is KexReference -> setOf(CastTypeInfo(KexReference(it.value.type)))
+                    else -> setOf(CastTypeInfo(it.value.type))
+                }
+            }
     )
 }
 
-fun generateInitialDescriptors(method: Method, ctx: ExecutionContext, model: SMTModel, state: PredicateState): Parameters<Descriptor> {
+fun generateInitialDescriptors(
+    method: Method,
+    ctx: ExecutionContext,
+    model: SMTModel,
+    state: PredicateState
+): Parameters<Descriptor> {
     val generator = DescriptorGenerator(method, ctx, model, InitialDescriptorReanimator(method, model, ctx))
     generator.apply(state)
     return Parameters(
-            generator.instance,
-            generator.args.mapIndexed { index, arg ->
-                arg ?: descriptor { default(method.argTypes[index].kexType) }
-            },
-            generator.staticFields.filterNot { it.key.isFinal(ctx.cm) }.mapValues {
-                it.value ?: descriptor { default((it.key.type as KexReference).reference) }
-            }
+        generator.instance,
+        generator.args.mapIndexed { index, arg ->
+            arg ?: descriptor { default(method.argTypes[index].kexType) }
+        },
+        generator.staticFields.filterNot { it.key.isFinal(ctx.cm) }.mapValues {
+            it.value ?: descriptor { default((it.key.type as KexReference).reference) }
+        }
     )
 }

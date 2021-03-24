@@ -6,6 +6,7 @@ import org.jetbrains.research.kex.state.PredicateState
 import org.jetbrains.research.kex.state.StateBuilder
 import org.jetbrains.research.kex.state.predicate.*
 import org.jetbrains.research.kex.state.term.ArrayIndexTerm
+import org.jetbrains.research.kex.state.term.ConstIntTerm
 import org.jetbrains.research.kex.state.term.Term
 import org.jetbrains.research.kex.state.term.term
 import java.util.*
@@ -76,8 +77,10 @@ class ArrayBoundsAdapter : RecollectingTransformer<ArrayBoundsAdapter> {
             currentBuilder += assume { (length lt 1000) equality true }
             arrays = arrays + index.arrayRef
         }
-        currentBuilder += assume { (zero le index.index) equality true }
-        currentBuilder += assume { (index.index lt length) equality true }
+        if (index.index !is ConstIntTerm) {
+            currentBuilder += assume { (zero le index.index) equality true }
+            currentBuilder += assume { (index.index lt length) equality true }
+        }
         indices = indices + index
     }
 

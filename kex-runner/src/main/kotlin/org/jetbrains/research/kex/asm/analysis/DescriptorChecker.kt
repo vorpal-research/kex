@@ -58,7 +58,8 @@ class DescriptorChecker(
     private fun Checker.createState(method: Method, block: BasicBlock): PredicateState? {
         val typeInfoMap = resolveTypes(method, block) ?: return null
         val state = this.createState(block.terminator)!!
-        return prepareState(method, state, typeInfoMap)
+        val staticTypeInfoMap = collectStaticTypeInfo(types, state, typeInfoMap)
+        return prepareState(method, state, staticTypeInfoMap)
     }
 
     protected fun resolveTypes(method: Method, block: BasicBlock): TypeInfoMap? {

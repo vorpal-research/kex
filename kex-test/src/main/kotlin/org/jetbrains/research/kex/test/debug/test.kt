@@ -15,4 +15,10 @@ class BasicTests {
             }
         }
     }
+
+    fun testStr(c: Char) {
+        if (c == "abcdef"[3]) {
+            error("a")
+        }
+    }
 }
