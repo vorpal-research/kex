@@ -66,7 +66,7 @@ class SetterCollector(val ctx: ExecutionContext) : ClassVisitor {
         val fieldReflection = fieldInstances.first()
         val methodFA = method.fieldAccesses
         if (methodFA.size == 1
-                && fieldReflection eq methodFA.first()
+                && fieldReflection.eq(ctx.loader, methodFA.first())
                 && method.argTypes.size == 1
                 && fieldReflection.type.isAssignableFrom(ctx.loader.loadClass(method.argTypes.first()))) {
             log.info("Method $method is java setter for $fieldReflection")

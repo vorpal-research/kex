@@ -172,6 +172,10 @@ fun Class<*>.getActualField(name: String): Field {
 
 infix fun Field.eq(field: KfgField): Boolean {
     val cl = this.declaringClass.classLoader
+    return this.eq(cl, field)
+}
+
+fun Field.eq(cl: ClassLoader, field: KfgField): Boolean {
     return this.name == field.name && this.type == cl.loadClass(field.type)
 }
 

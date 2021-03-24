@@ -24,7 +24,7 @@ class PredicateStateBuilder(val method: Method) {
 
     fun init() {
         predicateBuilder.visit(method)
-        if (!method.isAbstract) {
+        if (!method.isAbstract && !method.isNative) {
             val order = GraphTraversal(method).topologicalSort()
 
             domTree.putAll(DominatorTreeBuilder(method).build())

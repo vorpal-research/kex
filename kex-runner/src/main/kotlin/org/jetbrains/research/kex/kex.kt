@@ -220,12 +220,16 @@ class Kex(args: Array<String>) {
 
         runPipeline(analysisContext) {
             +RandomChecker(analysisContext, traceManager)
+        }
+        runPipeline(analysisContext, Package.defaultPackage) {
             +LoopSimplifier(analysisContext.cm)
             +LoopDeroller(analysisContext.cm)
             +psa
             +MethodFieldAccessCollector(analysisContext, psa)
             +SetterCollector(analysisContext)
             +ExternalCtorCollector(analysisContext.cm, visibilityLevel)
+        }
+        runPipeline(analysisContext) {
             +when {
                 useApiGeneration -> DescriptorChecker(analysisContext, traceManager, psa)
                 else -> MethodChecker(analysisContext, traceManager, psa)
