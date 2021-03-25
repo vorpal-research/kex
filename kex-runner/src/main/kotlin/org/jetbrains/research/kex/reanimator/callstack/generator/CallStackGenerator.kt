@@ -32,6 +32,7 @@ class CallStackGenerator(override val context: GeneratorContext) : Generator {
         typeGenerators += KtObjectGenerator(this)
         typeGenerators += InnerClassGenerator(this)
         typeGenerators += CollectionGenerator(this)
+        typeGenerators += MapGenerator(this)
         typeGenerators += AnyGenerator(this)
     }
 

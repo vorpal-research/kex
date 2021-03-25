@@ -15,6 +15,7 @@ import org.jetbrains.research.kex.trace.`object`.Trace
 import org.jetbrains.research.kex.trace.runner.TimeoutException
 import org.jetbrains.research.kfg.ir.BasicBlock
 import org.jetbrains.research.kfg.ir.Method
+import org.jetbrains.research.kthelper.tryOrNull
 
 class DescriptorChecker(
         ctx: ExecutionContext,
@@ -87,7 +88,7 @@ class DescriptorChecker(
     }
 
 
-    fun Set<TypeInfo>.concretize(): Set<TypeInfo> = this.map { it.concretize() }.toSet()
+    fun Set<TypeInfo>.concretize(): Set<TypeInfo> = this.map { tryOrNull { it.concretize() } ?: it }.toSet()
     fun TypeInfo.concretize(): TypeInfo = when (this) {
         is CastTypeInfo -> CastTypeInfo(this.type.concretize(cm))
         else -> this
