@@ -103,12 +103,11 @@ class GeneratorContext(
 
     private val klass2Constructors = mutableMapOf<Class, List<Method>>()
 
+    val Class.nonRecursiveCtors get() = constructors.filterNot { it.isRecursive }
+
     val Class.orderedCtors
         get() = klass2Constructors.getOrPut(this) {
-            val nonRecursiveCtors = constructors.filter {
-                it.argTypes.all { arg -> !(type.isSupertypeOf(arg) || arg.isSupertypeOf(type)) }
-            }
-
+            val nonRecursiveCtors = nonRecursiveCtors
             val nonRecursiveExtCtors = externalCtors.filter {
                 it.argTypes.all { arg -> !(type.isSupertypeOf(arg) || arg.isSupertypeOf(type)) }
             }
@@ -130,6 +129,8 @@ class GeneratorContext(
         get() = methods
             .filterNot { it.isStatic }
             .filter { visibilityLevel <= it.visibility }
+
+    val Method.isRecursive get() = argTypes.any { arg -> `class`.type.isSupertypeOf(arg) || arg.isSupertypeOf(`class`.type) }
 
     val Method.argTypeInfo
         get() = this.parameters.map {

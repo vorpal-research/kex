@@ -140,6 +140,7 @@ class CallStack2JavaPrinter(
                 val typeArgs = this.actualTypeArguments.map { it.csType }
                 CSClass(rawType, typeArgs)
             }
+            is GenericArrayType -> CSArray(this.genericComponentType.csType)
             is TypeVariable<*> -> this.bounds.first().csType
             is WildcardType -> this.upperBounds.first().csType
             else -> TODO()
@@ -149,9 +150,14 @@ class CallStack2JavaPrinter(
         this is CSClass && requiredType is CSClass -> {
             val actualKlass = ctx.loader.loadClass(type)
             val requiredKlass = ctx.loader.loadClass(requiredType.type)
-            if (requiredKlass.isAssignableFrom(actualKlass) && actualKlass.typeParameters.size == requiredKlass.typeParameters.size) {
+            val isAssignable = requiredKlass.isAssignableFrom(actualKlass)
+            if (isAssignable && actualKlass.typeParameters.size == requiredKlass.typeParameters.size) {
                 CSClass(type, requiredType.typeParams)
-            } else TODO()
+            } else if (isAssignable) {
+                CSClass(type)
+            } else {
+                TODO()
+            }
         }
         else -> TODO()
     }
