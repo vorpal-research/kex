@@ -4,9 +4,10 @@ import org.jetbrains.research.kthelper.logging.log
 import org.jetbrains.research.kex.ExecutionContext
 import org.jetbrains.research.kex.asm.state.PredicateStateAnalysis
 import org.jetbrains.research.kex.random.GenerationException
+import org.jetbrains.research.kex.reanimator.Parameters
+import org.jetbrains.research.kex.reanimator.Reanimator
 import org.jetbrains.research.kex.reanimator.descriptor.concretize
 import org.jetbrains.research.kex.smt.Checker
-import org.jetbrains.research.kex.smt.ReanimatedModel
 import org.jetbrains.research.kex.smt.Result
 import org.jetbrains.research.kex.state.PredicateState
 import org.jetbrains.research.kex.state.transformer.*
@@ -22,6 +23,10 @@ class DescriptorChecker(
         tm: TraceManager<Trace>,
         psa: PredicateStateAnalysis) : MethodChecker(ctx, tm, psa) {
 
+    override fun initializeGenerator(method: Method) {
+        generator = Reanimator(ctx, psa, method)
+    }
+
     override fun coverBlock(method: Method, block: BasicBlock): Result {
         val checker = Checker(method, ctx.loader, psa)
         val ps = checker.createState(method, block)
@@ -35,7 +40,7 @@ class DescriptorChecker(
         when (result) {
             is Result.SatResult -> {
                 val (instance, args) = try {
-                    generator.generateAPI("test_${block.name}", checker.state, result.model)
+                    generator.generate("test_${block.name}", method, checker.state, result.model)
                 } catch (e: GenerationException) {
                     log.warn(e.message)
                     return result
@@ -46,7 +51,7 @@ class DescriptorChecker(
                 } catch (e: TimeoutException) {
                     throw e
                 } catch (e: Exception) {
-                    throw KexRunnerException(e, ReanimatedModel(method, instance, args.toList()))
+                    throw KexRunnerException(e, Parameters(instance, args, mapOf()))
                 }
             }
             is Result.UnsatResult -> log.debug("Instruction ${block.terminator.print()} is unreachable")

@@ -5,9 +5,9 @@ import org.jetbrains.research.kthelper.logging.log
 import org.jetbrains.research.kthelper.tryOrNull
 import org.jetbrains.research.kex.ExecutionContext
 import org.jetbrains.research.kex.random.GenerationException
+import org.jetbrains.research.kex.reanimator.Parameters
 import org.jetbrains.research.kex.smt.ModelReanimator
 import org.jetbrains.research.kex.smt.ObjectReanimator
-import org.jetbrains.research.kex.smt.ReanimatedModel
 import org.jetbrains.research.kex.smt.SMTModel
 import org.jetbrains.research.kex.state.PredicateState
 import org.jetbrains.research.kex.state.predicate.DefaultSwitchPredicate
@@ -20,9 +20,11 @@ import org.jetbrains.research.kex.state.term.Term
 import org.jetbrains.research.kex.util.loadClass
 import org.jetbrains.research.kfg.ir.Method
 
-class ModelExecutor(override val method: Method,
-                    override val ctx: ExecutionContext,
-                    override val model: SMTModel) : AbstractGenerator<Any?> {
+class ModelExecutor(
+    override val method: Method,
+    override val ctx: ExecutionContext,
+    override val model: SMTModel
+) : AbstractGenerator<Any?> {
     override val modelReanimator: ModelReanimator<Any?> = ObjectReanimator(method, model, ctx)
 
     override val memory = hashMapOf<Term, Any?>()
@@ -45,32 +47,34 @@ class ModelExecutor(override val method: Method,
     }
 }
 
-fun executeModel(ctx: ExecutionContext,
-                 ps: PredicateState,
-                 method: Method,
-                 model: SMTModel): ReanimatedModel {
+fun executeModel(
+    ctx: ExecutionContext,
+    ps: PredicateState,
+    method: Method,
+    model: SMTModel
+): Parameters<Any?> {
     val pathExecutor = ModelExecutor(method, ctx, model)
     pathExecutor.apply(ps)
-    return ReanimatedModel(method, pathExecutor.instance, pathExecutor.args)
+    return Parameters(pathExecutor.instance, pathExecutor.args, pathExecutor.staticFields)
 }
 
-fun generateInputByModel(ctx: ExecutionContext,
-                         method: Method,
-                         ps: PredicateState,
-                         model: SMTModel): Pair<Any?, Array<Any?>> {
+fun generateInputByModel(
+    ctx: ExecutionContext,
+    method: Method,
+    ps: PredicateState,
+    model: SMTModel
+): Parameters<Any?> {
     val reanimated = executeModel(ctx, ps, method, model)
     val loader = ctx.loader
 
-    val instance = reanimated.instance ?: when {
-        method.isStatic -> null
-        else -> tryOrNull {
-            val klass = loader.loadClass(method.`class`)
-            ctx.random.next(klass)
-        }
+    return when (reanimated.instance) {
+        null -> reanimated.copy(instance = when {
+            method.isStatic -> null
+            else -> tryOrNull {
+                val klass = loader.loadClass(method.`class`)
+                ctx.random.next(klass)
+            }
+        })
+        else -> reanimated
     }
-
-    if (instance == null && !method.isStatic) {
-        throw GenerationException("Unable to create or generate instance of class ${method.`class`}")
-    }
-    return instance to reanimated.arguments.toTypedArray()
 }

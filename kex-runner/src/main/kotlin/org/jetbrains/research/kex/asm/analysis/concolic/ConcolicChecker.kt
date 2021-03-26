@@ -12,6 +12,7 @@ import org.jetbrains.research.kex.ExecutionContext
 import org.jetbrains.research.kex.asm.state.PredicateStateAnalysis
 import org.jetbrains.research.kex.config.kexConfig
 import org.jetbrains.research.kex.random.Randomizer
+import org.jetbrains.research.kex.reanimator.ParameterGenerator
 import org.jetbrains.research.kex.reanimator.Reanimator
 import org.jetbrains.research.kex.smt.Checker
 import org.jetbrains.research.kex.smt.Result
@@ -44,7 +45,7 @@ class ConcolicChecker(
     val random: Randomizer get() = ctx.random
     private val paths = mutableSetOf<PredicateState>()
     private var counter = 0
-    lateinit var generator: Reanimator
+    lateinit var generator: ParameterGenerator
         protected set
 
     override fun cleanup() {
@@ -192,9 +193,9 @@ class ConcolicChecker(
         return currentState.apply()
     }
 
-    private fun collectTrace(method: Method, instance: Any?, args: Array<Any?>): Trace {
+    private fun collectTrace(method: Method, instance: Any?, args: List<Any?>): Trace {
         val runner = ObjectTracingRunner(method, loader)
-        return runner.collectTrace(instance, args)
+        return runner.collectTrace(instance, args.toTypedArray())
     }
 
     private fun getRandomTrace(method: Method) = tryOrNull { RandomObjectTracingRunner(method, loader, ctx.random).run() }
@@ -230,7 +231,7 @@ class ConcolicChecker(
         yield()
 
         val (instance, args) = tryOrNull {
-            generator.generateAPI("test${++counter}", checker.state, result.model)
+            generator.generate("test${++counter}", method, checker.state, result.model)
         } ?: return null
         yield()
 

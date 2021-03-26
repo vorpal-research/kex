@@ -15,21 +15,9 @@ import org.jetbrains.research.kex.util.isFinal
 import org.jetbrains.research.kex.util.loadClass
 import org.jetbrains.research.kfg.ir.Method
 import java.lang.reflect.Array
-import java.lang.reflect.ParameterizedType
-import java.lang.reflect.Type
 
 private val Term.isPointer get() = this.type is KexPointer
 private val Term.isPrimary get() = !this.isPointer
-
-private val Type.simpleTypeName: String
-    get() = when (this) {
-        is ParameterizedType -> this.rawType.simpleTypeName
-        else -> this.typeName
-    }
-
-private fun Number.toBoolean() = this != 0
-
-data class ReanimatedModel(val method: Method, val instance: Any?, val arguments: List<Any?>)
 
 interface ModelReanimator<T> {
     val method: Method

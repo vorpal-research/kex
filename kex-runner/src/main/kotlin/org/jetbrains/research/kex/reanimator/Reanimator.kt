@@ -28,12 +28,31 @@ private val visibilityLevel by lazy {
     kexConfig.getEnumValue("apiGeneration", "visibility", true, Visibility.PUBLIC)
 }
 
-class Reanimator(val ctx: ExecutionContext, val psa: PredicateStateAnalysis, val method: Method) {
+class Reanimator(override val ctx: ExecutionContext, override val psa: PredicateStateAnalysis, val method: Method) : ParameterGenerator {
     val cm: ClassManager get() = ctx.cm
     private val csGenerator = CallStackGenerator(ctx, psa, visibilityLevel)
     private val csExecutor = CallStackExecutor(ctx)
-    private val printer = TestCasePrinter(ctx, method)
+    private lateinit var printer: TestCasePrinter
     private var staticCounter = 0
+
+    override fun generate(testName: String, method: Method, state: PredicateState, model: SMTModel) = try {
+        val descriptors = generateFinalDescriptors(method, ctx, model, state).concreteParameters(cm)
+        log.debug("Generated descriptors:\n$descriptors")
+        val callStacks = descriptors.callStacks
+        printTest(testName, callStacks)
+        log.debug("Generated call stacks:\n$callStacks")
+        callStacks.executed
+    } catch (e: GenerationException) {
+        throw e
+    } catch (e: Exception) {
+        throw GenerationException(e)
+    } catch (e: Error) {
+        throw GenerationException(e)
+    }
+
+    override fun emit() {
+        printer.emit()
+    }
 
     private fun printTest(testName: String, callStacks: Parameters<CallStack>) {
         val stack = when {
@@ -46,34 +65,6 @@ class Reanimator(val ctx: ExecutionContext, val psa: PredicateStateAnalysis, val
             }
         }
         printer.print(stack, testName)
-    }
-
-    fun generateAPI(testName: String, state: PredicateState, model: SMTModel) = try {
-        val descriptors = generateFinalDescriptors(method, ctx, model, state).concreteParameters(cm)
-        log.debug("Generated descriptors:\n$descriptors")
-        val callStacks = descriptors.callStacks
-        printTest(testName, callStacks)
-        log.debug("Generated call stacks:\n$callStacks")
-        val (instance, arguments, _) = callStacks.executed
-        instance to arguments.toTypedArray()
-    } catch (e: GenerationException) {
-        throw e
-    } catch (e: Exception) {
-        throw GenerationException(e)
-    } catch (e: Error) {
-        throw GenerationException(e)
-    }
-
-    fun generateFromModel(state: PredicateState, model: SMTModel) = try {
-        generateInputByModel(ctx, method, state, model)
-    } catch (e: GenerationException) {
-        throw e
-    } catch (e: Exception) {
-        throw GenerationException(e)
-    }
-
-    fun emit() {
-        printer.emit()
     }
 
     private val Descriptor.callStack: CallStack

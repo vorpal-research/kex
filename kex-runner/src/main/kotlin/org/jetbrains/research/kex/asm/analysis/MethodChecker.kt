@@ -15,10 +15,12 @@ import org.jetbrains.research.kex.asm.transform.originalBlock
 import org.jetbrains.research.kex.config.kexConfig
 import org.jetbrains.research.kex.random.GenerationException
 import org.jetbrains.research.kex.random.Randomizer
+import org.jetbrains.research.kex.reanimator.ParameterGenerator
+import org.jetbrains.research.kex.reanimator.Parameters
 import org.jetbrains.research.kex.reanimator.Reanimator
+import org.jetbrains.research.kex.reanimator.ReflectionReanimator
 import org.jetbrains.research.kex.serialization.KexSerializer
 import org.jetbrains.research.kex.smt.Checker
-import org.jetbrains.research.kex.smt.ReanimatedModel
 import org.jetbrains.research.kex.smt.Result
 import org.jetbrains.research.kex.state.PredicateState
 import org.jetbrains.research.kex.trace.TraceManager
@@ -38,7 +40,7 @@ import java.nio.file.Paths
 private val failDir get() = kexConfig.getStringValue("debug", "dump-directory", "./fail")
 
 class KexCheckerException(val inner: Exception, val reason: PredicateState) : Exception()
-class KexRunnerException(val inner: Exception, val model: ReanimatedModel) : Exception()
+class KexRunnerException(val inner: Exception, val model: Parameters<Any?>) : Exception()
 
 @Serializable
 data class Failure(
@@ -55,7 +57,7 @@ open class MethodChecker(
     override val cm: ClassManager get() = ctx.cm
     val random: Randomizer get() = ctx.random
     val loader: ClassLoader get() = ctx.loader
-    lateinit var generator: Reanimator //= Reanimator(ctx, psa)
+    lateinit var generator: ParameterGenerator
         protected set
 
     @ExperimentalSerializationApi
@@ -71,6 +73,10 @@ open class MethodChecker(
     }.getOrNull()
 
     override fun cleanup() {}
+
+    open protected fun initializeGenerator(method: Method) {
+        generator = ReflectionReanimator(ctx, psa)
+    }
 
     open protected fun getSearchStrategy(method: Method): SearchStrategy = DfsStrategy(method)
 
@@ -89,7 +95,7 @@ open class MethodChecker(
         val domTree = DominatorTreeBuilder(method).build()
         val order: SearchStrategy = getSearchStrategy(method)
 
-        generator = Reanimator(ctx, psa, method)
+        initializeGenerator(method)
 
         for (block in order) {
             if (block.terminator is UnreachableInst) {
@@ -145,7 +151,7 @@ open class MethodChecker(
         when (result) {
             is Result.SatResult -> {
                 val (instance, args) = try {
-                    generator.generateFromModel(checker.state, result.model)
+                    generator.generate("", method, checker.state, result.model)
                 } catch (e: GenerationException) {
                     log.warn(e.message)
                     return result
@@ -156,7 +162,7 @@ open class MethodChecker(
                 } catch (e: TimeoutException) {
                     throw e
                 } catch (e: Exception) {
-                    throw KexRunnerException(e, ReanimatedModel(method, instance, args.toList()))
+                    throw KexRunnerException(e, Parameters(instance, args, mapOf()))
                 }
             }
             is Result.UnsatResult -> log.debug("Instruction ${block.terminator.print()} is unreachable")
@@ -166,9 +172,9 @@ open class MethodChecker(
         return result
     }
 
-    protected fun collectTrace(method: Method, instance: Any?, args: Array<Any?>) = tryOrNull {
+    protected fun collectTrace(method: Method, instance: Any?, args: List<Any?>) = tryOrNull {
         val runner = ObjectTracingRunner(method, loader)
-        val trace = runner.collectTrace(instance, args)
+        val trace = runner.collectTrace(instance, args.toTypedArray())
         tm[method] = trace
     }
 }

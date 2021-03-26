@@ -218,9 +218,6 @@ class Kex(args: Array<String>) {
         updateClassPath(analysisContext.loader as URLClassLoader)
         val useApiGeneration = kexConfig.getBooleanValue("apiGeneration", "enabled", true)
 
-        runPipeline(analysisContext) {
-            +RandomChecker(analysisContext, traceManager)
-        }
         runPipeline(analysisContext, Package.defaultPackage) {
             +LoopSimplifier(analysisContext.cm)
             +LoopDeroller(analysisContext.cm)
@@ -230,6 +227,7 @@ class Kex(args: Array<String>) {
             +ExternalCtorCollector(analysisContext.cm, visibilityLevel)
         }
         runPipeline(analysisContext) {
+            +RandomChecker(analysisContext, traceManager)
             +when {
                 useApiGeneration -> DescriptorChecker(analysisContext, traceManager, psa)
                 else -> MethodChecker(analysisContext, traceManager, psa)
