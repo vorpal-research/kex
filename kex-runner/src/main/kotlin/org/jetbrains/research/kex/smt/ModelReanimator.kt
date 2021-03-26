@@ -333,39 +333,24 @@ abstract class DescriptorReanimator(override val method: Method,
                 array
             }
             is FieldTerm -> {
-                val (instance, klass) = when {
+                val instance = when {
                     term.isStatic -> {
                         val classRef = (term.owner as ConstClassTerm)
-                        val `class` = tryOrNull { loader.loadClass(classRef.type.getKfgType(context.types)) }
-                                ?: return@descriptor default(term.type)
-                        if (`class`.isSynthetic) return@descriptor default(term.type)
-
-                        const(classRef.type) to `class`
+                        const(classRef.type)
                     }
                     else -> {
                         val objectRef = term.owner
                         val objectAddr = (reanimateFromAssignment(objectRef) as ConstIntTerm).value
-                        val type = objectRef.type as? KexClass
-                                ?: unreachable { log.error("Cannot cast ${objectRef.type} to class") }
-
-                        val kfgClass = method.cm[type.klass]
-                        val `class` = tryOrNull { loader.loadClass(kfgClass.canonicalDesc) }
-                                ?: return@descriptor default(term.type)
-
                         val instance = memory(objectRef.memspace, objectAddr)
                                 ?: return@descriptor default(term.type)
 
-                        instance to `class`
+                        instance
                     }
                 }
                 val name = "${term.klass}.${term.fieldNameString}"
                 val fieldValue = reanimateFromProperties(memspace, name, addr)
 
-//                val fieldReflect = klass.getActualField(term.fieldNameString)
                 val reanimatedValue = reanimateReferenceValue(term, fieldValue)
-//                if (fieldReflect.isSynthetic)
-//                    return@descriptor default(term.type)
-
                 val fieldName = term.fieldNameString
                 val fieldType = (term.type as KexReference).reference
 

@@ -16,7 +16,7 @@ private val timeout = kexConfig.getLongValue("runner", "timeout", 1000L)
 class TimeoutException : Exception()
 
 @Suppress("SameParameterValue")
-private fun runWithTimeout(timeout: Long, body: () -> Unit) {
+fun runWithTimeout(timeout: Long, body: () -> Unit) {
     val thread = Thread(body)
 
     thread.start()
