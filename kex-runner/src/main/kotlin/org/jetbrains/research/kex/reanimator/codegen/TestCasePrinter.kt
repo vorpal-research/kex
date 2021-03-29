@@ -19,15 +19,18 @@ private val generateTestCases by lazy { kexConfig.getBooleanValue("apiGeneration
 private val testCaseDirectory by lazy { kexConfig.getStringValue("apiGeneration", "testCaseDirectory", "./tests") }
 private val testCaseLanguage by lazy { kexConfig.getStringValue("apiGeneration", "testCaseLanguage", "java") }
 
-class TestCasePrinter(val ctx: ExecutionContext, val method: Method) {
+val Class.validName get() = name.replace("$", "_")
+val Method.validName get() = name.replace(Regex("[^a-zA-Z0-9]"), "")
+val BasicBlock.validName get() = name.toString().replace(Regex("[^a-zA-Z0-9]"), "")
+
+
+val Method.packageName get() = `class`.`package`.name
+val Method.klassName get() = "${`class`.validName}_${validName}_${abs(hashCode())}"
+
+class TestCasePrinter(val ctx: ExecutionContext, val packageName: String, val klassName: String) {
     private val printer: CallStackPrinter
     private var isEmpty = true
-    val packageName = method.`class`.`package`.name
-    val klassName = "${method.`class`.validName}_${method.validName}_${abs(method.hashCode())}"
 
-    private val Class.validName get() = name.replace("$", "_")
-    private val Method.validName get() = name.replace(Regex("[^a-zA-Z0-9]"), "")
-    private val BasicBlock.validName get() = name.toString().replace(Regex("[^a-zA-Z0-9]"), "")
     private val String.validName get() = this.replace(Regex("[^a-zA-Z0-9]"), "")
 
     init {

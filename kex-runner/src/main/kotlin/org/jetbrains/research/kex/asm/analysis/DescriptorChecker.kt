@@ -6,6 +6,7 @@ import org.jetbrains.research.kex.asm.state.PredicateStateAnalysis
 import org.jetbrains.research.kex.random.GenerationException
 import org.jetbrains.research.kex.reanimator.Parameters
 import org.jetbrains.research.kex.reanimator.Reanimator
+import org.jetbrains.research.kex.reanimator.codegen.validName
 import org.jetbrains.research.kex.reanimator.descriptor.concretize
 import org.jetbrains.research.kex.smt.Checker
 import org.jetbrains.research.kex.smt.Result
@@ -40,7 +41,7 @@ class DescriptorChecker(
         when (result) {
             is Result.SatResult -> {
                 val (instance, args) = try {
-                    generator.generate("test_${block.name}", method, checker.state, result.model)
+                    generator.generate("test_${block.validName}", method, checker.state, result.model)
                 } catch (e: GenerationException) {
                     log.warn(e.message)
                     return result

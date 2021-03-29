@@ -52,9 +52,13 @@ class ConcolicChecker(
         paths.clear()
     }
 
+    private fun initializeGenerator(method: Method) {
+        generator = Reanimator(ctx, psa, method)
+    }
+
     private fun analyze(method: Method) {
         log.debug(method.print())
-        generator = Reanimator(ctx, psa, method)
+        initializeGenerator(method)
         try {
             runBlocking {
                 withTimeout(timeLimit) {

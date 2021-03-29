@@ -43,7 +43,7 @@ class RandomObjectReanimator(
             val kfgClass = (this.javaClass.kex.getKfgType(cm.type) as ClassType).`class`
             if (this is Throwable) return false
             if (!kfgClass.isInstantiable || visibilityLevel > kfgClass.visibility) return false
-            if (with(generatorContext) { kfgClass.accessibleCtors + kfgClass.externalCtors }.isEmpty()) return false
+            if (with(generatorContext) { kfgClass.orderedCtors }.isEmpty()) return false
             return true
         }
 

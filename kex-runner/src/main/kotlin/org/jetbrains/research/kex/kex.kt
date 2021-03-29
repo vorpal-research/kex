@@ -227,7 +227,7 @@ class Kex(args: Array<String>) {
             +ExternalCtorCollector(analysisContext.cm, visibilityLevel)
         }
         runPipeline(analysisContext) {
-            +RandomChecker(analysisContext, traceManager)
+            +RandomChecker(analysisContext, psa, visibilityLevel, traceManager)
             +when {
                 useApiGeneration -> DescriptorChecker(analysisContext, traceManager, psa)
                 else -> MethodChecker(analysisContext, traceManager, psa)
