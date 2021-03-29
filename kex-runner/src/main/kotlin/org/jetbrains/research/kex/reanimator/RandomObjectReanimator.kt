@@ -13,7 +13,7 @@ import org.jetbrains.research.kex.reanimator.callstack.CallStack
 import org.jetbrains.research.kex.reanimator.callstack.CallStackExecutor
 import org.jetbrains.research.kex.reanimator.callstack.generator.CallStackGenerator
 import org.jetbrains.research.kex.reanimator.callstack.generator.GeneratorContext
-import org.jetbrains.research.kex.reanimator.collector.externalCtors
+import org.jetbrains.research.kex.reanimator.codegen.TestCasePrinter
 import org.jetbrains.research.kex.reanimator.descriptor.*
 import org.jetbrains.research.kex.util.kex
 import org.jetbrains.research.kex.util.loadClass
@@ -31,6 +31,7 @@ class RandomObjectReanimator(
     val random: Randomizer get() = ctx.random
     val cm: ClassManager get() = ctx.cm
     val generatorContext = GeneratorContext(ctx, psa, visibilityLevel)
+    val printer = TestCasePrinter(ctx, target.name, "RandomObjectTests")
 
     val ClassManager.randomClass
         get() = this.concreteClasses
@@ -125,6 +126,8 @@ class RandomObjectReanimator(
                 }
             }
 
+            printer.print(callStack ?: CallStack(""), "test_${totalAttempts}")
+
             val structuralEq = originalDescriptor eq generatedAny.descriptor
             if (structuralEq) {
                 successDepths += descriptorDepth
@@ -137,6 +140,8 @@ class RandomObjectReanimator(
 
             log.debug("Equality: $structuralEq")
         }
+        printer.emit()
+
         log.info("Total attempts: $totalAttempts")
         log.info("Valid attempts: $validAttempts")
         log.info("Valid descriptor attempts: $validDescriptorAttempts")

@@ -13,6 +13,7 @@ import org.jetbrains.research.kex.reanimator.descriptor.descriptor
 import org.jetbrains.research.kex.trace.`object`.Trace
 import org.jetbrains.research.kex.trace.`object`.TraceCollectorProxy
 import org.jetbrains.research.kfg.ir.Method
+import org.jetbrains.research.kthelper.logging.log
 import org.jetbrains.research.kthelper.tryOrNull
 
 class ObjectTracingRunner(method: Method, loader: ClassLoader) : TracingAbstractRunner<Trace>(method, loader) {
@@ -47,13 +48,15 @@ class ReanimatingRandomObjectTracingRunner(
     val Parameters<Any?>.descriptors get() = Parameters(instance.descriptor, arguments.map { it.descriptor }, mapOf())
 
     override fun run(): Trace? = tryOrNull {
-        val parameters = when {
-            method.isConstructor -> Parameters(null, random.generate(javaConstructor)!!.toList(), mapOf())
-            else -> {
-                val (instance, args) = random.generate(javaClass, javaMethod)
-                Parameters(instance, args!!.toList(), mapOf())
-            }
+        val (randomInstance, randomArgs) = when {
+            method.isConstructor -> null to random.generate(javaConstructor)
+            else -> random.generate(javaClass, javaMethod)
         }
+        if (randomArgs == null || (!method.isStatic && !method.isConstructor && randomInstance == null)) {
+            log.error("Cannot generate parameters to invoke method $method")
+            return null
+        }
+        val parameters = Parameters(randomInstance, randomArgs.toList(), mapOf())
         val (instance, args) = with (reanimator) {
             val descriptors = parameters.descriptors
             val callStacks = descriptors.callStacks
