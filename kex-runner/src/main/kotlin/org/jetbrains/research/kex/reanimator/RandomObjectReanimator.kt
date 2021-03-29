@@ -60,11 +60,14 @@ class RandomObjectReanimator(
                 this.fields.all { it.value.isValid(set) }
             }
         }
+        is ClassDescriptor -> {
+            val set = visited + this
+            this.fields.all { it.value.isValid(set) }
+        }
         is ArrayDescriptor -> {
             val set = visited + this
             this.elements.all { it.value.isValid(set) }
         }
-        is StaticFieldDescriptor -> value.isValid(visited + this)
     }
 
     private fun randomObject(): Any {

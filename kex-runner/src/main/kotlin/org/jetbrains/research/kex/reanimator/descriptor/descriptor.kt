@@ -127,15 +127,13 @@ sealed class ConstantDescriptor(term: Term, type: KexType) : Descriptor(term, ty
     data class Double(val value: kotlin.Double) : ConstantDescriptor(term { const(value) }, KexDouble()) {
         override fun toString() = "$value"
     }
-
-    data class Class(val value: KexType) : ConstantDescriptor(term { `class`(value) }, value) {
-        override fun toString() = "$value"
-    }
 }
 
-class ObjectDescriptor(klass: KexClass) : Descriptor(term { generate(klass) }, klass, true) {
+@Suppress("UNCHECKED_CAST")
+sealed class FieldContainingDescriptor<T : FieldContainingDescriptor<T>>(term: Term, klass: KexClass, hasState: Boolean) :
+    Descriptor(term, klass, hasState) {
     var klass = klass
-        private set
+        protected set
 
     val fields = mutableMapOf<Pair<String, KexType>, Descriptor>()
 
@@ -151,18 +149,18 @@ class ObjectDescriptor(klass: KexClass) : Descriptor(term { generate(klass) }, k
     fun remove(field: String, type: KexType): Descriptor? = fields.remove(field to type)
     fun remove(field: Pair<String, KexType>): Descriptor? = fields.remove(field)
 
-    fun merge(other: ObjectDescriptor): ObjectDescriptor {
+    fun merge(other: T): T {
         val newFields = other.fields + this.fields
         this.fields.clear()
         this.fields.putAll(newFields)
-        return this
+        return this as T
     }
 
-    fun accept(other: ObjectDescriptor): ObjectDescriptor {
+    fun accept(other: T): T {
         val newFields = other.fields.mapValues { it.value.deepCopy(mutableMapOf(other to this)) }
         this.fields.clear()
         this.fields.putAll(newFields)
-        return this
+        return this as T
     }
 
     override fun print(map: MutableMap<Descriptor, String>): String {
@@ -195,8 +193,8 @@ class ObjectDescriptor(klass: KexClass) : Descriptor(term { generate(klass) }, k
         return builder.apply()
     }
 
-    override fun concretize(cm: ClassManager, visited: MutableSet<Descriptor>): ObjectDescriptor {
-        if (this in visited) return this
+    override fun concretize(cm: ClassManager, visited: MutableSet<Descriptor>): T {
+        if (this in visited) return this as T
         visited += this
 
         this.klass = klass.concreteClass(cm)
@@ -206,17 +204,7 @@ class ObjectDescriptor(klass: KexClass) : Descriptor(term { generate(klass) }, k
             fields[field] = value.concretize(cm, visited)
         }
 
-        return this
-    }
-
-    override fun deepCopy(copied: MutableMap<Descriptor, Descriptor>): Descriptor {
-        if (this in copied) return copied[this]!!
-        val copy = ObjectDescriptor(klass)
-        copied[this] = copy
-        for ((field, value) in fields) {
-            copy[field] = value.deepCopy(copied)
-        }
-        return copy
+        return this as T
     }
 
     override fun contains(other: Descriptor, visited: MutableSet<Descriptor>): Boolean {
@@ -227,8 +215,8 @@ class ObjectDescriptor(klass: KexClass) : Descriptor(term { generate(klass) }, k
         return false
     }
 
-    override fun reduce(visited: MutableSet<Descriptor>): ObjectDescriptor {
-        if (this in visited) return this
+    override fun reduce(visited: MutableSet<Descriptor>): T {
+        if (this in visited) return this as T
         visited += this
 
         for ((field, value) in fields.toMap()) {
@@ -238,7 +226,7 @@ class ObjectDescriptor(klass: KexClass) : Descriptor(term { generate(klass) }, k
             }
         }
 
-        return this
+        return this as T
     }
 
     override fun generateTypeInfo(visited: MutableSet<Descriptor>): PredicateState {
@@ -247,12 +235,12 @@ class ObjectDescriptor(klass: KexClass) : Descriptor(term { generate(klass) }, k
 
         val instanceOfTerm = term { generate(KexBool()) }
         val builder = StateBuilder()
-        builder += axiom { instanceOfTerm equality (term `is` this@ObjectDescriptor.type) }
+        builder += axiom { instanceOfTerm equality (term `is` this@FieldContainingDescriptor.type) }
         builder += axiom { instanceOfTerm equality true }
         for ((key, field) in this.fields) {
             val typeInfo = field.generateTypeInfo(visited)
             if (typeInfo.isNotEmpty) {
-                builder += state { field.term equality this@ObjectDescriptor.term.field(key.second, key.first).load() }
+                builder += state { field.term equality this@FieldContainingDescriptor.term.field(key.second, key.first).load() }
                 builder += typeInfo
             }
         }
@@ -284,6 +272,54 @@ class ObjectDescriptor(klass: KexClass) : Descriptor(term { generate(klass) }, k
         }
         cache[this] = maxDepth + 1
         return maxDepth + 1
+    }
+}
+
+class ObjectDescriptor(klass: KexClass) : FieldContainingDescriptor<ObjectDescriptor>(term { generate(klass) }, klass, true) {
+    override fun deepCopy(copied: MutableMap<Descriptor, Descriptor>): Descriptor {
+        if (this in copied) return copied[this]!!
+        val copy = ObjectDescriptor(klass)
+        copied[this] = copy
+        for ((field, value) in fields) {
+            copy[field] = value.deepCopy(copied)
+        }
+        return copy
+    }
+}
+
+class ClassDescriptor(type: KexClass) : FieldContainingDescriptor<ClassDescriptor>(term { `class`(type) }, type, true) {
+    override fun deepCopy(copied: MutableMap<Descriptor, Descriptor>): Descriptor {
+        if (this in copied) return copied[this]!!
+        val copy = ClassDescriptor(type as KexClass)
+        copied[this] = copy
+        for ((field, value) in fields) {
+            copy[field] = value.deepCopy(copied)
+        }
+        return copy
+    }
+
+    override fun generateTypeInfo(visited: MutableSet<Descriptor>): PredicateState {
+        if (this in visited) return emptyState()
+        visited += this
+
+        val builder = StateBuilder()
+        for ((key, field) in this.fields) {
+            val typeInfo = field.generateTypeInfo(visited)
+            if (typeInfo.isNotEmpty) {
+                builder += state { field.term equality this@ClassDescriptor.term.field(key.second, key.first).load() }
+                builder += typeInfo
+            }
+        }
+        return builder.apply()
+    }
+
+    fun filterFinalFields(cm: ClassManager): ClassDescriptor {
+        val kfgClass = klass.kfgClass(cm.type)
+        for ((name, type) in fields.keys) {
+            val kfgField = kfgClass.getField(name, type.getKfgType(cm.type))
+            if (kfgField.isFinal) remove(name, type)
+        }
+        return this
     }
 }
 
@@ -413,81 +449,6 @@ class ArrayDescriptor(val elementType: KexType, val length: Int) :
     }
 }
 
-class StaticFieldDescriptor(val klass: KexClass, val field: String, type: KexType, var value: Descriptor) :
-    Descriptor(term { `class`(klass).field(type, field) }, type, true) {
-    override fun print(map: MutableMap<Descriptor, String>): String {
-        if (this in map) return map[this]!!
-        map[this] = term.name
-        return "$term = ${value.print(map)}"
-    }
-
-    override fun collectQuery(set: MutableSet<Descriptor>): PredicateState {
-        if (this in set) return emptyState()
-        set += this
-        val builder = StateBuilder()
-        if (value.hasState) {
-            builder += value.collectQuery(set)
-        }
-        builder += require { term.load() equality value.term }
-        return builder.apply()
-    }
-
-    override fun concretize(cm: ClassManager, visited: MutableSet<Descriptor>): Descriptor {
-        if (this in visited) return this
-        visited += this
-        value.concretize(cm, visited)
-        return this
-    }
-
-    override fun deepCopy(copied: MutableMap<Descriptor, Descriptor>): Descriptor {
-        if (this in copied) return copied[this]!!
-        val copy = StaticFieldDescriptor(klass, field, type, value)
-        copied[this] = copy
-        copy.value = value.deepCopy(copied)
-        return copy
-    }
-
-    override fun contains(other: Descriptor, visited: MutableSet<Descriptor>): Boolean {
-        if (this in visited) return false
-        if (this == other) return true
-        visited += this
-        return value.contains(other, visited)
-    }
-
-    override fun reduce(visited: MutableSet<Descriptor>): Descriptor {
-        if (this in visited) return this
-        visited += this
-        value = value.reduce(visited)
-        return this
-    }
-
-    override fun generateTypeInfo(visited: MutableSet<Descriptor>): PredicateState {
-        if (this in visited) return emptyState()
-        visited += this
-        return value.generateTypeInfo(visited)
-    }
-
-    override fun structuralEquality(other: Descriptor, map: MutableSet<Pair<Descriptor, Descriptor>>): Boolean {
-        if (this == other) return true
-        if (other !is StaticFieldDescriptor) return false
-        if (this to other in map) return true
-        if (this.klass != other.klass) return false
-        if (this.field != other.field) return false
-        if (this.type != other.type) return false
-
-        map += this to other
-        return this.value.structuralEquality(other.value, map)
-    }
-
-    override fun countDepth(visited: Set<Descriptor>, cache: MutableMap<Descriptor, Int>): Int {
-        if (this in cache) return cache[this]!!
-        if (this in visited) return 0
-        val depth = value.countDepth(visited + this, cache) + 1
-        cache[this] = depth
-        return depth
-    }
-}
-
 open class DescriptorBuilder {
     val `null` = ConstantDescriptor.Null
     fun const(@Suppress("UNUSED_PARAMETER") nothing: Nothing?) = `null`
@@ -503,13 +464,10 @@ open class DescriptorBuilder {
     }
 
     fun const(char: Char) = ConstantDescriptor.Char(char)
-    fun const(klass: KexType) = ConstantDescriptor.Class(klass)
+    fun const(klass: KexClass) = ClassDescriptor(klass)
 
     fun `object`(type: KexClass): ObjectDescriptor = ObjectDescriptor(type)
     fun array(length: Int, elementType: KexType): ArrayDescriptor = ArrayDescriptor(elementType, length)
-
-    fun staticField(klass: KexClass, field: String, fieldType: KexType, value: Descriptor) =
-        StaticFieldDescriptor(klass, field, fieldType, value)
 
     fun default(type: KexType, nullable: Boolean): Descriptor = descriptor {
         when (type) {

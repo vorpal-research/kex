@@ -52,5 +52,5 @@ class MapGenerator(fallback: Generator) : AnyGenerator(fallback) {
         currentStack: List<ApiCall>,
         searchDepth: Int,
         generationDepth: Int
-    ): List<GeneratorContext.ExecutionStack> = emptyList()
+    ): List<GeneratorContext.ExecutionStack<ObjectDescriptor>> = emptyList()
 }

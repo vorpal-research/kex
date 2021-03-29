@@ -53,9 +53,9 @@ class CollectionGenerator(fallback: Generator) : AnyGenerator(fallback) {
         currentStack: List<ApiCall>,
         searchDepth: Int,
         generationDepth: Int
-    ): List<GeneratorContext.ExecutionStack> = with(context) {
-        val stackList = mutableListOf<GeneratorContext.ExecutionStack>()
-        val acceptExecResult = { method: Method, res: GeneratorContext.ExecutionResult, oldDepth: Int ->
+    ): List<GeneratorContext.ExecutionStack<ObjectDescriptor>> = with(context) {
+        val stackList = mutableListOf<GeneratorContext.ExecutionStack<ObjectDescriptor>>()
+        val acceptExecResult = { method: Method, res: GeneratorContext.ExecutionResult<ObjectDescriptor>, oldDepth: Int ->
             val (result, args) = res
             if (result != null && result neq current) {
                 val remapping = { mutableMapOf<Descriptor, Descriptor>(result to current) }

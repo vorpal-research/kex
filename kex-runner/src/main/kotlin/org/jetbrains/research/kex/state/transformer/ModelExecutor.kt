@@ -31,7 +31,7 @@ class ModelExecutor(
 
     override var thisTerm: Term? = null
     override val argTerms = sortedMapOf<Int, Term>()
-    override val staticFieldTerms = mutableSetOf<FieldTerm>()
+    override val staticFieldOwners = mutableSetOf<Term>()
 
     override fun checkPath(path: Predicate): Boolean = when (path) {
         is EqualityPredicate -> checkTerms(path.lhv, path.rhv) { a, b -> a == b }

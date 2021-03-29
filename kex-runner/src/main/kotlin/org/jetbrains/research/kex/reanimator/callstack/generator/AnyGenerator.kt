@@ -39,7 +39,7 @@ open class AnyGenerator(private val fallback: Generator) : Generator {
         return callStack
     }
 
-    class StackWrapper(val value: GeneratorContext.ExecutionStack) {
+    class StackWrapper(val value: GeneratorContext.ExecutionStack<ObjectDescriptor>) {
         override fun hashCode(): Int = 0
 
         override fun equals(other: Any?): Boolean {
@@ -53,9 +53,7 @@ open class AnyGenerator(private val fallback: Generator) : Generator {
         }
     }
 
-    fun GeneratorContext.ExecutionStack.wrap() = StackWrapper(this)
-
-    val List<ApiCall>.isComplete get() = CallStack("", this.toMutableList()).isComplete
+    fun GeneratorContext.ExecutionStack<ObjectDescriptor>.wrap() = StackWrapper(this)
 
     open fun checkCtors(
         callStack: CallStack,
@@ -89,9 +87,9 @@ open class AnyGenerator(private val fallback: Generator) : Generator {
         currentStack: List<ApiCall>,
         searchDepth: Int,
         generationDepth: Int
-    ): List<GeneratorContext.ExecutionStack> = with(context) {
-        val stackList = mutableListOf<GeneratorContext.ExecutionStack>()
-        val acceptExecResult = { method: Method, res: GeneratorContext.ExecutionResult, oldDepth: Int ->
+    ): List<GeneratorContext.ExecutionStack<ObjectDescriptor>> = with(context) {
+        val stackList = mutableListOf<GeneratorContext.ExecutionStack<ObjectDescriptor>>()
+        val acceptExecResult = { method: Method, res: GeneratorContext.ExecutionResult<ObjectDescriptor>, oldDepth: Int ->
             val (result, args) = res
             if (result != null && result neq current) {
                 val remapping = { mutableMapOf<Descriptor, Descriptor>(result to current) }
@@ -143,7 +141,7 @@ open class AnyGenerator(private val fallback: Generator) : Generator {
 
             cache += es.wrap()
             val (desc, stack, depth) = es
-            val current = descriptor.accept(desc)
+            val current = descriptor.accept(desc as ObjectDescriptor)
             current.reduce()
             if (depth > maxStackSize) continue
             log.debug("Depth $generationDepth, stack depth $depth, query size ${queue.size}")
@@ -221,7 +219,7 @@ open class AnyGenerator(private val fallback: Generator) : Generator {
                     val generatedArgs = generateArgs(args.map { it.deepCopy(remapping()) }, generationDepth + 1)
                         ?: continue
                     calls += MethodCall(kfgField.setter, generatedArgs)
-                    accept(result)
+                    accept(result as ObjectDescriptor)
                     reduce()
                     log.info("Used setter for field $field, new desc: $this")
                 }

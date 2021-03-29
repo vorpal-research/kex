@@ -10,13 +10,11 @@ import org.jetbrains.research.kex.config.kexConfig
 import org.jetbrains.research.kex.ktype.KexType
 import org.jetbrains.research.kex.ktype.kexType
 import org.jetbrains.research.kex.ktype.type
+import org.jetbrains.research.kex.reanimator.Parameters
 import org.jetbrains.research.kex.reanimator.callstack.ApiCall
 import org.jetbrains.research.kex.reanimator.callstack.CallStack
 import org.jetbrains.research.kex.reanimator.collector.externalCtors
-import org.jetbrains.research.kex.reanimator.descriptor.Descriptor
-import org.jetbrains.research.kex.reanimator.descriptor.ObjectDescriptor
-import org.jetbrains.research.kex.reanimator.descriptor.concretize
-import org.jetbrains.research.kex.reanimator.descriptor.descriptor
+import org.jetbrains.research.kex.reanimator.descriptor.*
 import org.jetbrains.research.kex.smt.Checker
 import org.jetbrains.research.kex.smt.Result
 import org.jetbrains.research.kex.state.PredicateState
@@ -48,8 +46,16 @@ class GeneratorContext(
 
     private val descriptorCache = mutableMapOf<Descriptor, CallStack>()
 
-    data class ExecutionResult(val instance: ObjectDescriptor?, val arguments: List<Descriptor>)
-    data class ExecutionStack(val instance: ObjectDescriptor, val calls: List<ApiCall>, val depth: Int)
+    data class ExecutionResult<T : FieldContainingDescriptor<T>>(
+        val instance: FieldContainingDescriptor<T>?,
+        val arguments: List<Descriptor>
+    )
+
+    data class ExecutionStack<T : FieldContainingDescriptor<T>>(
+        val instance: FieldContainingDescriptor<T>,
+        val calls: List<ApiCall>,
+        val depth: Int
+    )
 
     fun Descriptor.cache(stack: CallStack) {
         descriptorCache[this] = stack
@@ -120,6 +126,11 @@ class GeneratorContext(
             nonRecursiveCtors + nonRecursiveExtCtors + recursiveCtors + recursiveExtCtors
         }
 
+    val Class.staticMethods
+        get() = methods
+            .filter { it.isStatic }
+            .filter { visibilityLevel <= it.visibility }
+
     val Class.accessibleCtors
         get() = constructors
             .filter { visibilityLevel <= it.visibility }
@@ -138,7 +149,7 @@ class GeneratorContext(
             term { arg(type, it.index) } to type.concretize(cm)
         }.toMap()
 
-    fun Method.executeAsConstructor(descriptor: ObjectDescriptor): ExecutionResult? {
+    fun Method.executeAsConstructor(descriptor: ObjectDescriptor): ExecutionResult<ObjectDescriptor>? {
         if (isEmpty()) return null
         log.debug("Executing constructor $this for $descriptor")
 
@@ -154,7 +165,7 @@ class GeneratorContext(
         return execute(preparedState, preparedQuery)
     }
 
-    fun Method.executeAsExternalConstructor(descriptor: ObjectDescriptor): ExecutionResult? {
+    fun Method.executeAsExternalConstructor(descriptor: ObjectDescriptor): ExecutionResult<ObjectDescriptor>? {
         if (isEmpty()) return null
         log.debug("Executing external constructor $this for $descriptor")
 
@@ -175,7 +186,7 @@ class GeneratorContext(
     fun Method.execute(
         descriptor: ObjectDescriptor,
         preStateGetter: (Method, ObjectDescriptor) -> PredicateState?
-    ): ExecutionResult? {
+    ): ExecutionResult<ObjectDescriptor>? {
         if (isEmpty()) return null
         log.debug("Executing method $this for $descriptor")
 
@@ -191,13 +202,53 @@ class GeneratorContext(
         return execute(preparedState, preparedQuery)
     }
 
+    fun Method.getStaticPreState(descriptor: ClassDescriptor, initializer: (KexType) -> Term): PredicateState? {
+        val fieldAccessList = this.collectFieldAccesses(context, psa)
+        val intersection = descriptor.fields.filter { (key, _) ->
+            fieldAccessList.find { field -> key.first == field.name } != null
+        }.toMap()
+        if (intersection.isEmpty()) return null
+
+        val preStateBuilder = StateBuilder()
+        for ((field, _) in intersection) {
+            val fieldTerm = term { descriptor.term.field(field.second, field.first) }
+            preStateBuilder += axiom { fieldTerm.initialize(initializer(field.second)) }
+            preStateBuilder += axiom { fieldTerm.load() equality initializer(field.second) }
+        }
+        return preStateBuilder.apply()
+    }
+
+    fun Method.executeAsStatic(
+        descriptor: ClassDescriptor,
+        preStateGetter: (Method, ClassDescriptor) -> PredicateState?
+    ): Parameters<Descriptor>? {
+        if (isEmpty()) return null
+        log.debug("Executing method $this for $descriptor")
+
+        val preState = preStateGetter(this, descriptor) ?: return null
+        val preStateFieldTerms = collectFieldTerms(context, preState)
+        val typeInfoState = descriptor.typeInfo
+        val typeInfos = collectPlainTypeInfos(types, typeInfoState) + this.argTypeInfo
+        val state = (preState + (methodState ?: return null)) + typeInfoState
+
+        val preparedState = state.prepare(this, typeInfos, preStateFieldTerms)
+        val preparedQuery = prepareQuery(descriptor.query)
+        return executeAsStatic(preparedState, preparedQuery)
+    }
+
     fun Method.executeAsSetter(descriptor: ObjectDescriptor) =
         this.execute(descriptor) { method, objectDescriptor -> method.getSetterPreState(objectDescriptor) }
 
     fun Method.executeAsMethod(descriptor: ObjectDescriptor) =
         this.execute(descriptor) { method, objectDescriptor -> method.getMethodPreState(objectDescriptor) }
 
-    fun Method.execute(state: PredicateState, query: PredicateState): ExecutionResult? {
+    fun Method.executeAsStaticSetter(descriptor: ClassDescriptor) =
+        this.executeAsStatic(descriptor) { method, classDescriptor -> method.getStaticSetterPreState(classDescriptor) }
+
+    fun Method.executeAsStaticMethod(descriptor: ClassDescriptor) =
+        this.executeAsStatic(descriptor) { method, classDescriptor -> method.getStaticMethodPreState(classDescriptor) }
+
+    fun Method.execute(state: PredicateState, query: PredicateState): ExecutionResult<ObjectDescriptor>? {
         val checker = Checker(this, context.loader, psa)
         val checkedState = state + query
         return when (val result = checker.check(checkedState)) {
@@ -211,11 +262,27 @@ class GeneratorContext(
         }
     }
 
+    fun Method.executeAsStatic(state: PredicateState, query: PredicateState): Parameters<Descriptor>? {
+        val checker = Checker(this, context.loader, psa)
+        val checkedState = state + query
+        return when (val result = checker.check(checkedState)) {
+            is Result.SatResult -> {
+                log.debug("Model: ${result.model}")
+                generateInitialDescriptors(this, context, result.model, checker.state)
+            }
+            else -> null
+        }
+    }
+
     val Method.methodState get() = psa.builder(this).methodState
 
     fun Method.getSetterPreState(descriptor: ObjectDescriptor) = getPreState(descriptor) { it.defaultValue }
 
     fun Method.getMethodPreState(descriptor: ObjectDescriptor) = getPreState(descriptor) { term { generate(it) } }
+
+    fun Method.getStaticSetterPreState(descriptor: ClassDescriptor) = getStaticPreState(descriptor) { it.defaultValue }
+
+    fun Method.getStaticMethodPreState(descriptor: ClassDescriptor) = getStaticPreState(descriptor) { term { generate(it) } }
 
     fun Method.collectFieldAccesses(context: ExecutionContext, psa: PredicateStateAnalysis): Set<Field> {
         val methodState = psa.builder(this).methodState ?: return setOf()
@@ -285,6 +352,8 @@ class GeneratorContext(
         return mapper.apply(preStateBuilder.apply())
     }
 
+    val List<ApiCall>.isComplete get() = CallStack("", this.toMutableList()).isComplete
+
     val ObjectDescriptor.preState: PredicateState
         get() {
             val preState = StateBuilder()
@@ -299,11 +368,12 @@ class GeneratorContext(
 
     val ObjectDescriptor.mapper get() = TermRemapper(mapOf(term to term { `this`(term.type) }))
 
-    fun ObjectDescriptor?.isFinal(original: ObjectDescriptor) = when {
-        this == null -> true
-        original.fields.all { this[it.key] == null || this[it.key] == descriptor { default(it.key.second) } } -> true
-        else -> false
-    }
+    fun <T : FieldContainingDescriptor<T>> FieldContainingDescriptor<T>?.isFinal(original: FieldContainingDescriptor<T>) =
+        when {
+            this == null -> true
+            original.fields.all { this[it.key] == null || this[it.key] == descriptor { default(it.key.second) } } -> true
+            else -> false
+        }
 
     val KexType.defaultDescriptor: Descriptor
         get() = descriptor { default(this@defaultDescriptor) }

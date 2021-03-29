@@ -21,7 +21,6 @@ class ConstantGenerator(override val context: GeneratorContext) : Generator {
             is ConstantDescriptor.Long -> PrimaryValue(descriptor.value)
             is ConstantDescriptor.Float -> PrimaryValue(descriptor.value)
             is ConstantDescriptor.Double -> PrimaryValue(descriptor.value)
-            is ConstantDescriptor.Class -> PrimaryValue(descriptor.value)
             else -> unreachable { log.error("Unknown descriptor in constant generator: $descriptor") }
         }
         descriptor.cache(stack)

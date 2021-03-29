@@ -45,7 +45,7 @@ class ReanimatingRandomObjectTracingRunner(
     val reanimator = Reanimator(ctx, psa, method.packageName, "Random${method.klassName}")
     private var testCounter = 0
 
-    val Parameters<Any?>.descriptors get() = Parameters(instance.descriptor, arguments.map { it.descriptor }, mapOf())
+    val Parameters<Any?>.descriptors get() = Parameters(instance.descriptor, arguments.map { it.descriptor }, setOf())
 
     override fun run(): Trace? = tryOrNull {
         val (randomInstance, randomArgs) = when {
@@ -56,7 +56,7 @@ class ReanimatingRandomObjectTracingRunner(
             log.error("Cannot generate parameters to invoke method $method")
             return null
         }
-        val parameters = Parameters(randomInstance, randomArgs.toList(), mapOf())
+        val parameters = Parameters(randomInstance, randomArgs.toList(), setOf())
         val (instance, args) = with (reanimator) {
             val descriptors = parameters.descriptors
             val callStacks = descriptors.callStacks

@@ -33,7 +33,7 @@ class DescriptorGenerator(
 
     override var thisTerm: Term? = null
     override val argTerms = sortedMapOf<Int, Term>()
-    override val staticFieldTerms = mutableSetOf<FieldTerm>()
+    override val staticFieldOwners = mutableSetOf<Term>()
 
     private val Any?.numericValue: Any?
         get() = when (this) {
@@ -47,7 +47,6 @@ class DescriptorGenerator(
                 is ConstantDescriptor.Long -> this.value
                 is ConstantDescriptor.Float -> this.value
                 is ConstantDescriptor.Double -> this.value
-                is ConstantDescriptor.Class -> this.value
             }
             else -> this
         }
@@ -79,9 +78,7 @@ fun generateFinalDescriptors(
         generator.args.mapIndexed { index, arg ->
             arg ?: descriptor { default(method.argTypes[index].kexType) }
         },
-        generator.staticFields.filterNot { it.key.isFinal(ctx.cm) }.mapValues {
-            it.value ?: descriptor { default((it.key.type as KexReference).reference) }
-        }
+        generator.staticFields
     )
 }
 
@@ -98,9 +95,7 @@ fun generateFinalTypeInfoMap(
         *generator.args.mapIndexed { index, arg ->
             arg ?: descriptor { default(method.argTypes[index].kexType) }
         }.toTypedArray(),
-        *generator.staticFields.filterNot { it.key.isFinal(ctx.cm) }.mapValues {
-            it.value ?: descriptor { default((it.key.type as KexReference).reference) }
-        }.values.toTypedArray()
+        *generator.staticFields.toTypedArray()
     )
     return TypeInfoMap(
         generator.memory
@@ -128,8 +123,6 @@ fun generateInitialDescriptors(
         generator.args.mapIndexed { index, arg ->
             arg ?: descriptor { default(method.argTypes[index].kexType) }
         },
-        generator.staticFields.filterNot { it.key.isFinal(ctx.cm) }.mapValues {
-            it.value ?: descriptor { default((it.key.type as KexReference).reference) }
-        }
+        generator.staticFields
     )
 }

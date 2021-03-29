@@ -11,6 +11,7 @@ import org.jetbrains.research.kex.smt.Checker
 import org.jetbrains.research.kex.smt.Result
 import org.jetbrains.research.kex.state.StateBuilder
 import org.jetbrains.research.kex.state.term.FieldTerm
+import org.jetbrains.research.kex.state.term.term
 import org.jetbrains.research.kex.state.transformer.TypeInfoMap
 import org.jetbrains.research.kex.state.transformer.generateFinalDescriptors
 import org.jetbrains.research.kfg.type.ClassType
@@ -50,10 +51,14 @@ class EnumGenerator(private val fallback: Generator) : Generator {
                     else -> null
                 } ?: return mapOf()
 
-                return params.staticFields
-                    .mapNotNull { if (it.value is StaticFieldDescriptor) (it.key to it.value as StaticFieldDescriptor) else null }
-                    .map { it.first to it.second.value }
-                    .toMap()
+                val staticFields = params.statics
+                    .mapNotNull { it as? ClassDescriptor }
+                    .first { it.klass == enumType }
+                    .fields
+
+                return staticFields.map { (field, value) ->
+                    term { `class`(enumType).field(field.second, field.first) } as FieldTerm to value
+                }.toMap()
             }
     }
 

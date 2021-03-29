@@ -52,7 +52,7 @@ class DescriptorChecker(
                 } catch (e: TimeoutException) {
                     throw e
                 } catch (e: Exception) {
-                    throw KexRunnerException(e, Parameters(instance, args, mapOf()))
+                    throw KexRunnerException(e, Parameters(instance, args, setOf()))
                 }
             }
             is Result.UnsatResult -> log.debug("Instruction ${block.terminator.print()} is unreachable")

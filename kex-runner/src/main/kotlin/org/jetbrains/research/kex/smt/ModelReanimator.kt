@@ -324,7 +324,7 @@ abstract class DescriptorReanimator(override val method: Method,
                 val instance = when {
                     term.isStatic -> {
                         val classRef = (term.owner as ConstClassTerm)
-                        const(classRef.type)
+                        const(classRef.type as KexClass)
                     }
                     else -> {
                         val objectRef = term.owner
@@ -343,11 +343,10 @@ abstract class DescriptorReanimator(override val method: Method,
                 val fieldType = (term.type as KexReference).reference
 
                 when (instance) {
-                    is ObjectDescriptor -> {
+                    is FieldContainingDescriptor<*> -> {
                         instance[fieldName, fieldType] = reanimatedValue
                         instance
                     }
-                    is ConstantDescriptor.Class -> staticField(instance.value as KexClass, fieldName, fieldType, reanimatedValue)
                     else -> unreachable { log.error("Unknown type of field owner") }
                 }
             }

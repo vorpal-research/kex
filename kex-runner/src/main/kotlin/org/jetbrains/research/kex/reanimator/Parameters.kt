@@ -7,20 +7,20 @@ import org.jetbrains.research.kfg.ClassManager
 data class Parameters<T>(
         val instance: T?,
         val arguments: List<T>,
-        val staticFields: Map<FieldTerm, T>
+        val statics: Set<T>
 ) {
-    val asList get() = listOfNotNull(instance) + arguments + staticFields.values
+    val asList get() = listOfNotNull(instance) + arguments + statics
 
     override fun toString(): String = buildString {
         appendLine("instance: $instance")
         if (arguments.isNotEmpty())
             appendLine("args: ${arguments.joinToString("\n")}")
-        if (staticFields.isNotEmpty())
-            appendLine("statics: ${staticFields.toList().joinToString("\n") { "${it.first} = {${it.second}}" }}")
+        if (statics.isNotEmpty())
+            appendLine("statics: ${statics.joinToString("\n")}")
     }
 }
 
 fun Parameters<Descriptor>.concreteParameters(cm: ClassManager) =
-        Parameters(instance?.concretize(cm), arguments.map { it.concretize(cm) }, staticFields.mapValues { it.value.concretize(cm) })
+        Parameters(instance?.concretize(cm), arguments.map { it.concretize(cm) }, statics.map { it.concretize(cm) }.toSet())
 
 

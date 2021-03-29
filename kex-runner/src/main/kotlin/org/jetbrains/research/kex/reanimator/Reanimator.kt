@@ -18,9 +18,7 @@ import org.jetbrains.research.kex.reanimator.descriptor.DescriptorStatistics
 import org.jetbrains.research.kex.smt.SMTModel
 import org.jetbrains.research.kex.state.PredicateState
 import org.jetbrains.research.kex.state.transformer.generateFinalDescriptors
-import org.jetbrains.research.kex.state.transformer.generateInputByModel
 import org.jetbrains.research.kfg.ClassManager
-import org.jetbrains.research.kfg.ir.BasicBlock
 import org.jetbrains.research.kfg.ir.Class
 import org.jetbrains.research.kfg.ir.Method
 
@@ -95,7 +93,7 @@ class Reanimator(
         get() {
             val thisCallStack = instance?.callStack
             val argCallStacks = arguments.map { it.callStack }
-            val staticFields = staticFields.mapValues { it.value.callStack }
+            val staticFields = statics.map { it.callStack }.toSet()
             return Parameters(thisCallStack, argCallStacks, staticFields)
         }
 
@@ -103,7 +101,7 @@ class Reanimator(
         get() {
             val instance = instance?.let { csExecutor.execute(it) }
             val args = arguments.map { csExecutor.execute(it) }
-            val statics = staticFields.mapValues { csExecutor.execute(it.value) }
+            val statics = statics.map { csExecutor.execute(it) }.toSet()
             return Parameters(instance, args, statics)
         }
 }
