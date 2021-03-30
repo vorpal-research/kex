@@ -2,7 +2,6 @@ package org.jetbrains.research.kex.reanimator.callstack.generator
 
 import org.jetbrains.research.kex.ktype.KexArray
 import org.jetbrains.research.kex.ktype.KexChar
-import org.jetbrains.research.kex.ktype.KexType
 import org.jetbrains.research.kex.reanimator.callstack.CallStack
 import org.jetbrains.research.kex.reanimator.callstack.ConstructorCall
 import org.jetbrains.research.kex.reanimator.callstack.DefaultConstructorCall
@@ -22,7 +21,7 @@ class StringGenerator(private val fallback: Generator) : Generator {
 
         val name = "${descriptor.term}"
         val callStack = CallStack(name)
-        descriptor.cache(callStack)
+        saveToCache(descriptor, callStack)
 
         val stringClass = context.cm["java/lang/String"]
 

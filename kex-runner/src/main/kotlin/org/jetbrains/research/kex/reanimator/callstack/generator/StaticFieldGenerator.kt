@@ -25,9 +25,9 @@ class StaticFieldGenerator(private val fallback: Generator) : Generator {
         descriptor as? ClassDescriptor ?: throw IllegalArgumentException()
         val name = "${descriptor.term}"
         val callStack = CallStack(name)
-        descriptor.cache(callStack)
+        saveToCache(descriptor, callStack)
         generateStatics(callStack, descriptor, generationDepth)
-        return descriptor.cached()!!
+        return callStack
     }
 
     data class ExecutionStack(val instance: ClassDescriptor, val calls: List<ApiCall>, val depth: Int)
@@ -125,10 +125,7 @@ class StaticFieldGenerator(private val fallback: Generator) : Generator {
 
                 val resultingDescriptor = statics.firstOrNull { it.type == klass } as? ClassDescriptor
 
-                if (resultingDescriptor == null
-                    || (resultingDescriptor[field] == null
-                            || resultingDescriptor[field] == field.second.defaultDescriptor)
-                ) {
+                if (resultingDescriptor == null || field notIn resultingDescriptor) {
                     val generatedArgs = generateArgs(args, generationDepth + 1) ?: continue
                     calls += StaticMethodCall(kfgField.setter, generatedArgs)
                     accept(resultingDescriptor ?: ClassDescriptor(klass))

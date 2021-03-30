@@ -1,7 +1,5 @@
 package org.jetbrains.research.kex.reanimator.callstack.generator
 
-import org.jetbrains.research.kex.ktype.KexArray
-import org.jetbrains.research.kex.ktype.KexType
 import org.jetbrains.research.kex.reanimator.callstack.ArrayWrite
 import org.jetbrains.research.kex.reanimator.callstack.CallStack
 import org.jetbrains.research.kex.reanimator.callstack.NewArray
@@ -19,7 +17,7 @@ class ArrayGenerator(private val fallback: Generator) : Generator {
 
         val name = "${descriptor.term}"
         val callStack = CallStack(name)
-        descriptor.cache(callStack)
+        saveToCache(descriptor, callStack)
 
         val elementType = descriptor.elementType.getKfgType(types)
         val lengthCall = PrimaryValue(descriptor.length)

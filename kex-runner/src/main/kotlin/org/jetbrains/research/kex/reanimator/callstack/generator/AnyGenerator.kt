@@ -1,12 +1,9 @@
 package org.jetbrains.research.kex.reanimator.callstack.generator
 
-import org.jetbrains.research.kthelper.collection.queueOf
-import org.jetbrains.research.kthelper.logging.log
-import org.jetbrains.research.kthelper.tryOrNull
 import org.jetbrains.research.kex.asm.util.visibility
 import org.jetbrains.research.kex.config.kexConfig
-import org.jetbrains.research.kex.ktype.KexType
 import org.jetbrains.research.kex.ktype.type
+import org.jetbrains.research.kex.reanimator.Parameters
 import org.jetbrains.research.kex.reanimator.callstack.*
 import org.jetbrains.research.kex.reanimator.collector.hasSetter
 import org.jetbrains.research.kex.reanimator.collector.setter
@@ -14,6 +11,8 @@ import org.jetbrains.research.kex.reanimator.descriptor.Descriptor
 import org.jetbrains.research.kex.reanimator.descriptor.ObjectDescriptor
 import org.jetbrains.research.kfg.ir.Class
 import org.jetbrains.research.kfg.ir.Method
+import org.jetbrains.research.kthelper.collection.queueOf
+import org.jetbrains.research.kthelper.logging.log
 
 private val maxStackSize by lazy { kexConfig.getIntValue("apiGeneration", "maxStackSize", 5) }
 private val maxQuerySize by lazy { kexConfig.getIntValue("apiGeneration", "maxQuerySize", 1000) }
@@ -28,7 +27,7 @@ open class AnyGenerator(private val fallback: Generator) : Generator {
 
         val name = "${descriptor.term}"
         val callStack = CallStack(name)
-        descriptor.cache(callStack)
+        saveToCache(descriptor, callStack)
 
         val klass = descriptor.klass.kfgClass(types)
         if (visibilityLevel > klass.visibility) {
@@ -89,14 +88,14 @@ open class AnyGenerator(private val fallback: Generator) : Generator {
         generationDepth: Int
     ): List<GeneratorContext.ExecutionStack<ObjectDescriptor>> = with(context) {
         val stackList = mutableListOf<GeneratorContext.ExecutionStack<ObjectDescriptor>>()
-        val acceptExecResult = { method: Method, res: GeneratorContext.ExecutionResult<ObjectDescriptor>, oldDepth: Int ->
+        val acceptExecResult = { method: Method, res: Parameters<Descriptor>, oldDepth: Int ->
             val (result, args) = res
             if (result != null && result neq current) {
                 val remapping = { mutableMapOf<Descriptor, Descriptor>(result to current) }
                 val generatedArgs = generateArgs(args.map { it.deepCopy(remapping()) }, generationDepth + 1)
                 if (generatedArgs != null) {
                     val newStack = currentStack + MethodCall(method, generatedArgs)
-                    val newDesc = result.merge(current)
+                    val newDesc = (result as ObjectDescriptor).merge(current)
                     stackList += GeneratorContext.ExecutionStack(newDesc, newStack, oldDepth + 1)
                 }
             }
@@ -141,7 +140,7 @@ open class AnyGenerator(private val fallback: Generator) : Generator {
 
             cache += es.wrap()
             val (desc, stack, depth) = es
-            val current = descriptor.accept(desc as ObjectDescriptor)
+            val current = descriptor.accept(desc)
             current.reduce()
             if (depth > maxStackSize) continue
             log.debug("Depth $generationDepth, stack depth $depth, query size ${queue.size}")
@@ -178,7 +177,7 @@ open class AnyGenerator(private val fallback: Generator) : Generator {
         with(context) {
             val (thisDesc, args) = method.executeAsConstructor(this@checkCtor) ?: return null
 
-            if (thisDesc.isFinal(this@checkCtor)) {
+            if ((thisDesc as ObjectDescriptor).isFinal(this@checkCtor)) {
                 log.debug("Found constructor $method for $this, generating arguments $args")
                 when {
                     method.argTypes.isEmpty() -> DefaultConstructorCall(klass)
@@ -214,12 +213,13 @@ open class AnyGenerator(private val fallback: Generator) : Generator {
                 log.info("Using setter for $field")
 
                 val (result, args) = kfgField.setter.executeAsSetter(this@generateSetters) ?: continue
-                if (result != null && (result[field] == null || result[field] == field.second.defaultDescriptor)) {
+                val objectDescriptor = result as? ObjectDescriptor
+                if (objectDescriptor != null && field notIn objectDescriptor) {
                     val remapping = { mutableMapOf<Descriptor, Descriptor>(result to this@generateSetters) }
                     val generatedArgs = generateArgs(args.map { it.deepCopy(remapping()) }, generationDepth + 1)
                         ?: continue
                     calls += MethodCall(kfgField.setter, generatedArgs)
-                    accept(result as ObjectDescriptor)
+                    accept(result)
                     reduce()
                     log.info("Used setter for field $field, new desc: $this")
                 }

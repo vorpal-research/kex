@@ -1,6 +1,5 @@
 package org.jetbrains.research.kex.reanimator.callstack.generator
 
-import org.jetbrains.research.kthelper.logging.log
 import org.jetbrains.research.kex.ktype.KexArray
 import org.jetbrains.research.kex.ktype.KexType
 import org.jetbrains.research.kex.reanimator.callstack.CallStack
@@ -15,6 +14,7 @@ import org.jetbrains.research.kex.state.term.term
 import org.jetbrains.research.kex.state.transformer.TypeInfoMap
 import org.jetbrains.research.kex.state.transformer.generateFinalDescriptors
 import org.jetbrains.research.kfg.type.ClassType
+import org.jetbrains.research.kthelper.logging.log
 
 class EnumGenerator(private val fallback: Generator) : Generator {
     companion object {
@@ -120,7 +120,7 @@ class EnumGenerator(private val fallback: Generator) : Generator {
     override fun generate(descriptor: Descriptor, generationDepth: Int): CallStack = with(context) {
         val name = descriptor.term.toString()
         val cs = CallStack(name)
-        descriptor.cache(cs)
+        saveToCache(descriptor, cs)
 
         val kfgType = descriptor.type.getKfgType(context.types) as ClassType
         val enumConstants = getEnumConstants(this, descriptor.type).toList()

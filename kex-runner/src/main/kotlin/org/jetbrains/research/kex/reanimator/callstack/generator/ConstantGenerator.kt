@@ -23,8 +23,8 @@ class ConstantGenerator(override val context: GeneratorContext) : Generator {
             is ConstantDescriptor.Double -> PrimaryValue(descriptor.value)
             else -> unreachable { log.error("Unknown descriptor in constant generator: $descriptor") }
         }
-        descriptor.cache(stack)
-        return descriptor.cached()!!
+        saveToCache(descriptor, stack)
+        return stack
     }
 
 }

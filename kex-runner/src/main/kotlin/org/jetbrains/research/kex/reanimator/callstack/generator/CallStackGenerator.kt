@@ -4,7 +4,8 @@ import org.jetbrains.research.kex.ExecutionContext
 import org.jetbrains.research.kex.asm.state.PredicateStateAnalysis
 import org.jetbrains.research.kex.asm.util.Visibility
 import org.jetbrains.research.kex.config.kexConfig
-import org.jetbrains.research.kex.reanimator.callstack.*
+import org.jetbrains.research.kex.reanimator.callstack.CallStack
+import org.jetbrains.research.kex.reanimator.callstack.UnknownCall
 import org.jetbrains.research.kex.reanimator.descriptor.Descriptor
 import org.jetbrains.research.kex.reanimator.descriptor.descriptor
 import org.jetbrains.research.kthelper.KtException
@@ -58,7 +59,7 @@ class CallStackGenerator(override val context: GeneratorContext) : Generator {
     }
 
     override fun generate(descriptor: Descriptor, generationDepth: Int): CallStack = with(context) {
-        descriptor.cached()?.let { return it }
+        getFromCache(descriptor)?.let { return it }
         searchDepth++
 
         if (generationDepth > maxGenerationDepth)
@@ -73,6 +74,6 @@ class CallStackGenerator(override val context: GeneratorContext) : Generator {
         val typeGenerator = descriptor.generator
         typeGenerator.generate(descriptor, generationDepth + 1)
 
-        return descriptor.cached()!!
+        return getFromCache(descriptor)!!
     }
 }

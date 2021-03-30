@@ -1,8 +1,5 @@
 package org.jetbrains.research.kex.reanimator.descriptor
 
-import org.jetbrains.research.kthelper.`try`
-import org.jetbrains.research.kthelper.assert.unreachable
-import org.jetbrains.research.kthelper.logging.log
 import org.jetbrains.research.kex.asm.util.Visibility
 import org.jetbrains.research.kex.asm.util.visibility
 import org.jetbrains.research.kex.config.kexConfig
@@ -19,6 +16,9 @@ import org.jetbrains.research.kex.state.term.term
 import org.jetbrains.research.kfg.ClassManager
 import org.jetbrains.research.kfg.ir.Class
 import org.jetbrains.research.kfg.ir.ConcreteClass
+import org.jetbrains.research.kthelper.`try`
+import org.jetbrains.research.kthelper.assert.unreachable
+import org.jetbrains.research.kthelper.logging.log
 
 private val visibilityLevel by lazy { kexConfig.getEnumValue("apiGeneration", "visibility", true, Visibility.PUBLIC) }
 
@@ -130,7 +130,11 @@ sealed class ConstantDescriptor(term: Term, type: KexType) : Descriptor(term, ty
 }
 
 @Suppress("UNCHECKED_CAST")
-sealed class FieldContainingDescriptor<T : FieldContainingDescriptor<T>>(term: Term, klass: KexClass, hasState: Boolean) :
+sealed class FieldContainingDescriptor<T : FieldContainingDescriptor<T>>(
+    term: Term,
+    klass: KexClass,
+    hasState: Boolean
+) :
     Descriptor(term, klass, hasState) {
     var klass = klass
         protected set
@@ -240,7 +244,9 @@ sealed class FieldContainingDescriptor<T : FieldContainingDescriptor<T>>(term: T
         for ((key, field) in this.fields) {
             val typeInfo = field.generateTypeInfo(visited)
             if (typeInfo.isNotEmpty) {
-                builder += state { field.term equality this@FieldContainingDescriptor.term.field(key.second, key.first).load() }
+                builder += state {
+                    field.term equality this@FieldContainingDescriptor.term.field(key.second, key.first).load()
+                }
                 builder += typeInfo
             }
         }
@@ -275,7 +281,8 @@ sealed class FieldContainingDescriptor<T : FieldContainingDescriptor<T>>(term: T
     }
 }
 
-class ObjectDescriptor(klass: KexClass) : FieldContainingDescriptor<ObjectDescriptor>(term { generate(klass) }, klass, true) {
+class ObjectDescriptor(klass: KexClass) :
+    FieldContainingDescriptor<ObjectDescriptor>(term { generate(klass) }, klass, true) {
     override fun deepCopy(copied: MutableMap<Descriptor, Descriptor>): Descriptor {
         if (this in copied) return copied[this]!!
         val copy = ObjectDescriptor(klass)
@@ -311,6 +318,17 @@ class ClassDescriptor(type: KexClass) : FieldContainingDescriptor<ClassDescripto
             }
         }
         return builder.apply()
+    }
+
+    override fun concretize(cm: ClassManager, visited: MutableSet<Descriptor>): ClassDescriptor {
+        if (this in visited) return this
+        visited += this
+
+        for ((field, value) in fields.toMap()) {
+            fields[field] = value.concretize(cm, visited)
+        }
+
+        return this
     }
 
     fun filterFinalFields(cm: ClassManager): ClassDescriptor {

@@ -1,9 +1,6 @@
 package org.jetbrains.research.kex.reanimator.callstack.generator
 
-import org.jetbrains.research.kthelper.assert.ktassert
-import org.jetbrains.research.kthelper.logging.log
 import org.jetbrains.research.kex.ktype.KexClass
-import org.jetbrains.research.kex.ktype.KexType
 import org.jetbrains.research.kex.ktype.kexType
 import org.jetbrains.research.kex.ktype.type
 import org.jetbrains.research.kex.reanimator.callstack.*
@@ -13,6 +10,8 @@ import org.jetbrains.research.kex.reanimator.descriptor.descriptor
 import org.jetbrains.research.kfg.ir.Class
 import org.jetbrains.research.kfg.ir.ConcreteClass
 import org.jetbrains.research.kfg.ir.Method
+import org.jetbrains.research.kthelper.assert.ktassert
+import org.jetbrains.research.kthelper.logging.log
 
 class InnerClassGenerator(fallback: Generator) : AnyGenerator(fallback) {
 
@@ -70,7 +69,7 @@ class InnerClassGenerator(fallback: Generator) : AnyGenerator(fallback) {
             with(context) {
                 val (thisDesc, args) = method.executeAsConstructor(this@checkInnerCtor) ?: return null
 
-                if (thisDesc.isFinal(this@checkInnerCtor)) {
+                if ((thisDesc as ObjectDescriptor).isFinal(this@checkInnerCtor)) {
                     log.debug("Found constructor $method for $this, generating arguments $args")
                     val generatedArgs = generateArgs(args, generationDepth + 1) ?: return null
                     ktassert(generatedArgs.size > 1) { log.error("Unknown number of arguments of inner class") }
