@@ -120,6 +120,16 @@ class CallStackExecutor(val ctx: ExecutionContext) {
                         }
                         current
                     }
+                    is StaticMethodCall -> {
+                        val reflection = ctx.loader.loadClass(call.method.`class`)
+                        val javaMethod = reflection.getMethod(call.method, ctx.loader)
+                        javaMethod.isAccessible = true
+                        val args = call.args.map { execute(it) }.toTypedArray()
+                        runWithTimeout(timeout) {
+                            javaMethod.invoke(null, *args)
+                        }
+                        current
+                    }
                     is NewArray -> {
                         val length = execute(call.length)!! as Int
                         val elementReflection = ctx.loader.loadClass(call.asArray.component)

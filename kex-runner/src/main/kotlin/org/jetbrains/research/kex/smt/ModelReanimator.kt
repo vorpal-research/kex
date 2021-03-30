@@ -276,6 +276,7 @@ abstract class DescriptorReanimator(override val method: Method,
             null, 0 -> default(term.type)
             else -> {
                 val reanimatedType = resolveType(term.memspace, addr, term.type)
+                if (term is ConstClassTerm) memory(term.memspace, address) { const(reanimatedType as KexClass) }
                 ktassert(reanimatedType.isSubtypeOf(context.types, term.type)) {
                     log.error("Type resolving failed: actual type: ${term.type}, resolved type: $reanimatedType")
                 }
@@ -321,20 +322,11 @@ abstract class DescriptorReanimator(override val method: Method,
                 array
             }
             is FieldTerm -> {
-                val instance = when {
-                    term.isStatic -> {
-                        val classRef = (term.owner as ConstClassTerm)
-                        const(classRef.type as KexClass)
-                    }
-                    else -> {
-                        val objectRef = term.owner
-                        val objectAddr = (reanimateFromAssignment(objectRef) as ConstIntTerm).value
-                        val instance = memory(objectRef.memspace, objectAddr)
-                                ?: return@descriptor default(term.type)
+                val ownerRef = term.owner
+                val ownerAddr = (reanimateFromAssignment(ownerRef) as ConstIntTerm).value
+                val instance = memory(ownerRef.memspace, ownerAddr)
+                    ?: return@descriptor default(term.type)
 
-                        instance
-                    }
-                }
                 val name = "${term.klass}.${term.fieldNameString}"
                 val fieldValue = reanimateFromProperties(memspace, name, addr)
 
