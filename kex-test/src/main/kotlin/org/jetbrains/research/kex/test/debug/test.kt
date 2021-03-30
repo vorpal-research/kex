@@ -3,6 +3,15 @@
 package org.jetbrains.research.kex.test.debug
 
 class BasicTests {
+    companion object {
+        @JvmStatic
+        private var point = Point(0, 0)
+
+        @JvmStatic
+        fun setMyPoint(p: Point) {
+            point = p
+        }
+    }
 
     class Point(val x: Int, val y: Int)
 
@@ -18,6 +27,12 @@ class BasicTests {
 
     fun testStr(c: Char) {
         if (c == "abcdef"[3]) {
+            error("a")
+        }
+    }
+
+    fun test() {
+        if (point.x == 0 && point.y == 1) {
             error("a")
         }
     }

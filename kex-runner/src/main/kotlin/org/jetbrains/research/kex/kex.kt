@@ -30,6 +30,7 @@ import org.jetbrains.research.kex.serialization.KexSerializer
 import org.jetbrains.research.kex.smt.Checker
 import org.jetbrains.research.kex.smt.Result
 import org.jetbrains.research.kex.state.transformer.executeModel
+import org.jetbrains.research.kex.trace.TraceManager
 import org.jetbrains.research.kex.trace.`object`.ObjectTraceManager
 import org.jetbrains.research.kex.util.getRuntime
 import org.jetbrains.research.kfg.ClassManager
@@ -213,7 +214,7 @@ class Kex(args: Array<String>) {
     private fun symbolic(originalContext: ExecutionContext, analysisContext: ExecutionContext) {
         val traceManager = ObjectTraceManager()
         val psa = PredicateStateAnalysis(analysisContext.cm)
-        val cm = CoverageCounter(originalContext.cm, traceManager)
+        val cm = createCoverageCounter(originalContext.cm, traceManager)
 
         updateClassPath(analysisContext.loader as URLClassLoader)
         val useApiGeneration = kexConfig.getBooleanValue("apiGeneration", "enabled", true)
@@ -280,6 +281,12 @@ class Kex(args: Array<String>) {
                 "body coverage: ${String.format("%.2f", coverage.bodyCoverage)}%\n" +
                 "full coverage: ${String.format("%.2f", coverage.fullCoverage)}%")
         DescriptorStatistics.printStatistics()
+    }
+
+    private fun <T> createCoverageCounter(cm: ClassManager, tm: TraceManager<T>) = when {
+        methods != null -> CoverageCounter(cm, tm, methods!!)
+        klass != null -> CoverageCounter(cm, tm, klass!!)
+        else -> CoverageCounter(cm, tm, `package`)
     }
 
     private fun runPipeline(context: ExecutionContext, target: Package, init: Pipeline.() -> Unit) =
