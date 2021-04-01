@@ -1,7 +1,5 @@
 package org.jetbrains.research.kex.state.transformer
 
-import org.jetbrains.research.kthelper.assert.unreachable
-import org.jetbrains.research.kthelper.logging.log
 import org.jetbrains.research.kex.ExecutionContext
 import org.jetbrains.research.kex.ktype.KexPointer
 import org.jetbrains.research.kex.ktype.KexReference
@@ -15,12 +13,15 @@ import org.jetbrains.research.kex.smt.InitialDescriptorReanimator
 import org.jetbrains.research.kex.smt.ModelReanimator
 import org.jetbrains.research.kex.smt.SMTModel
 import org.jetbrains.research.kex.state.PredicateState
-import org.jetbrains.research.kex.state.predicate.*
+import org.jetbrains.research.kex.state.predicate.DefaultSwitchPredicate
+import org.jetbrains.research.kex.state.predicate.EqualityPredicate
+import org.jetbrains.research.kex.state.predicate.InequalityPredicate
+import org.jetbrains.research.kex.state.predicate.Predicate
 import org.jetbrains.research.kex.state.term.ConstIntTerm
-import org.jetbrains.research.kex.state.term.FieldTerm
 import org.jetbrains.research.kex.state.term.Term
-import org.jetbrains.research.kex.util.isFinal
 import org.jetbrains.research.kfg.ir.Method
+import org.jetbrains.research.kthelper.assert.unreachable
+import org.jetbrains.research.kthelper.logging.log
 
 class DescriptorGenerator(
     override val method: Method,
@@ -52,8 +53,8 @@ class DescriptorGenerator(
         }
 
     override fun checkPath(path: Predicate): Boolean = when (path) {
-        is EqualityPredicate -> checkTerms(path.lhv, path.rhv) { a, b -> a == b }
-        is InequalityPredicate -> checkTerms(path.lhv, path.rhv) { a, b -> a != b }
+        is EqualityPredicate -> checkTerms(path.lhv, path.rhv) { a, b -> a.numericValue == b.numericValue }
+        is InequalityPredicate -> checkTerms(path.lhv, path.rhv) { a, b -> a.numericValue != b.numericValue }
         is DefaultSwitchPredicate -> {
             val lhv = path.cond
             val conditions = path.cases

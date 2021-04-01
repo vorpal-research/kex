@@ -1,7 +1,7 @@
 package org.jetbrains.research.kex.state.transformer
 
-import org.jetbrains.research.kthelper.collection.dequeOf
 import org.jetbrains.research.kex.asm.state.PredicateStateAnalysis
+import org.jetbrains.research.kex.config.kexConfig
 import org.jetbrains.research.kex.state.PredicateState
 import org.jetbrains.research.kex.state.StateBuilder
 import org.jetbrains.research.kex.state.predicate.FieldStorePredicate
@@ -10,9 +10,17 @@ import org.jetbrains.research.kex.state.term.FieldTerm
 import org.jetbrains.research.kex.util.isFinal
 import org.jetbrains.research.kfg.ClassManager
 import org.jetbrains.research.kfg.ir.Method
+import org.jetbrains.research.kthelper.collection.dequeOf
 import java.util.*
 
-class StaticFieldInliner(val cm: ClassManager, val psa: PredicateStateAnalysis) : RecollectingTransformer<StaticFieldInliner> {
+val ignores by lazy {
+    kexConfig.getMultipleStringValue("inliner", "static-ignore")
+        .map { it.replace(".", "/") }
+        .toSet()
+}
+
+class StaticFieldInliner(val cm: ClassManager, val psa: PredicateStateAnalysis) :
+    RecollectingTransformer<StaticFieldInliner> {
     override val builders = dequeOf(StateBuilder())
     private var inlineIndex = 0
 
@@ -38,16 +46,18 @@ class StaticFieldInliner(val cm: ClassManager, val psa: PredicateStateAnalysis) 
 
     override fun apply(ps: PredicateState): PredicateState {
         val staticInitializers = TermCollector.getFullTermSet(ps)
-                .filterIsInstance<FieldLoadTerm>()
-                .mapNotNull {
-                    val field = it.field as FieldTerm
-                    val kfgField = cm[field.klass].getField(field.fieldNameString, field.type.getKfgType(cm.type))
-                    if (kfgField.isStatic && kfgField.isFinal) {
-                        kfgField.`class`
-                    } else {
-                        null
-                    }
-                }.toSet()
+            .filterIsInstance<FieldLoadTerm>()
+            .mapNotNull {
+                val field = it.field as FieldTerm
+                val kfgField = cm[field.klass].getField(field.fieldNameString, field.type.getKfgType(cm.type))
+                if (kfgField.isStatic && kfgField.isFinal) {
+                    kfgField.`class`
+                } else {
+                    null
+                }
+            }.toSet()
+            .filterNot { it.fullname in ignores }
+            .toSet()
         staticInitializers.forEach { klass ->
             prepareInlinedState(klass.getMethods("<clinit>").first())?.let { state ->
                 currentBuilder += state
