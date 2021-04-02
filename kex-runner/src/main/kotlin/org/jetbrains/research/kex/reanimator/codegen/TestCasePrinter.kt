@@ -53,13 +53,12 @@ class TestCasePrinter(val ctx: ExecutionContext, val packageName: String, val kl
 
     fun emit() {
         if (useApiGeneration && generateTestCases && !isEmpty) {
-            val packageDir = Paths.get(testCaseDirectory, packageName)
             val targetFileName = when (testCaseLanguage) {
                 "kotlin" -> "$klassName.kt"
                 "java" -> "$klassName.java"
                 else -> klassName
             }
-            val targetFile = File(packageDir.toFile(), targetFileName).apply {
+            val targetFile = Paths.get(testCaseDirectory, packageName, targetFileName).toAbsolutePath().toFile().apply {
                 parentFile?.mkdirs()
             }
             targetFile.writeText(printer.emit())

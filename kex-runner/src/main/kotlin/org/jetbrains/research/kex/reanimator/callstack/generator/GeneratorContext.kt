@@ -104,7 +104,7 @@ class GeneratorContext(
 
     private val klass2Constructors = mutableMapOf<Class, List<Method>>()
 
-    val Class.nonRecursiveCtors get() = constructors.filterNot { it.isRecursive }
+    val Class.nonRecursiveCtors get() = accessibleCtors.filterNot { it.isRecursive }
 
     val Class.orderedCtors
         get() = klass2Constructors.getOrPut(this) {
@@ -114,7 +114,7 @@ class GeneratorContext(
             }
 
             val recursiveCtors = when {
-                useRecCtors -> constructors.filter { it !in nonRecursiveCtors }
+                useRecCtors -> accessibleCtors.filter { it !in nonRecursiveCtors }
                 else -> listOf()
             }
             val recursiveExtCtors = externalCtors.filter { it !in nonRecursiveExtCtors }

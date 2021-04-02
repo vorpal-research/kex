@@ -66,6 +66,7 @@ class CallStackExecutor(val ctx: ExecutionContext) {
                     is DefaultConstructorCall -> {
                         val reflection = ctx.loader.loadClass(call.klass)
                         val defaultConstructor = reflection.getDeclaredConstructor()
+                        defaultConstructor.isAccessible = true
                         var instance: Any? = null
                         runWithTimeout(timeout) {
                             instance = defaultConstructor.newInstance()
