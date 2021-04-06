@@ -11,13 +11,12 @@ import kotlinx.serialization.Serializable
 import org.jetbrains.research.kex.ExecutionContext
 import org.jetbrains.research.kex.asm.manager.isImpactable
 import org.jetbrains.research.kex.asm.state.PredicateStateAnalysis
-import org.jetbrains.research.kex.asm.transform.originalBlock
+import org.jetbrains.research.kex.asm.manager.originalBlock
 import org.jetbrains.research.kex.config.kexConfig
 import org.jetbrains.research.kex.random.GenerationException
 import org.jetbrains.research.kex.random.Randomizer
 import org.jetbrains.research.kex.reanimator.ParameterGenerator
 import org.jetbrains.research.kex.reanimator.Parameters
-import org.jetbrains.research.kex.reanimator.Reanimator
 import org.jetbrains.research.kex.reanimator.ReflectionReanimator
 import org.jetbrains.research.kex.serialization.KexSerializer
 import org.jetbrains.research.kex.smt.Checker

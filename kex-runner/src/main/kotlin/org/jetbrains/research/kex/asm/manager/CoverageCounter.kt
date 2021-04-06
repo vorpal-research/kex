@@ -1,8 +1,8 @@
 package org.jetbrains.research.kex.asm.manager
 
 import org.jetbrains.research.kthelper.logging.log
-import org.jetbrains.research.kex.asm.transform.isUnreachable
-import org.jetbrains.research.kex.asm.transform.originalBlock
+import org.jetbrains.research.kex.asm.manager.isUnreachable
+import org.jetbrains.research.kex.asm.manager.originalBlock
 import org.jetbrains.research.kex.asm.util.Visibility
 import org.jetbrains.research.kex.asm.util.visibility
 import org.jetbrains.research.kex.config.kexConfig
@@ -67,7 +67,7 @@ class CoverageCounter<T> private constructor(
             return CoverageInfo(body / numberOfMethods, full / numberOfMethods)
         }
 
-    val Method.isInteresting: Boolean
+    private val Method.isInteresting: Boolean
         get() = when {
             this.isAbstract -> false
             this.isStaticInitializer -> false

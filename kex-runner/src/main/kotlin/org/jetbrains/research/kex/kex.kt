@@ -4,13 +4,11 @@ import org.jetbrains.research.kthelper.logging.debug
 import org.jetbrains.research.kthelper.logging.log
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.InternalSerializationApi
-import org.jetbrains.research.kex.asm.analysis.DescriptorChecker
-import org.jetbrains.research.kex.asm.analysis.Failure
-import org.jetbrains.research.kex.asm.analysis.MethodChecker
-import org.jetbrains.research.kex.asm.analysis.RandomChecker
+import org.jetbrains.research.kex.asm.analysis.*
 import org.jetbrains.research.kex.asm.analysis.concolic.ConcolicChecker
 import org.jetbrains.research.kex.asm.manager.CoverageCounter
 import org.jetbrains.research.kex.asm.state.PredicateStateAnalysis
+import org.jetbrains.research.kex.asm.transform.BranchAdapter
 import org.jetbrains.research.kex.asm.transform.LoopDeroller
 import org.jetbrains.research.kex.asm.transform.RuntimeTraceCollector
 import org.jetbrains.research.kex.asm.transform.SystemExitTransformer
@@ -222,6 +220,7 @@ class Kex(args: Array<String>) {
         runPipeline(analysisContext, Package.defaultPackage) {
             +LoopSimplifier(analysisContext.cm)
             +LoopDeroller(analysisContext.cm)
+            +BranchAdapter(analysisContext.cm)
             +psa
             +MethodFieldAccessCollector(analysisContext, psa)
             +SetterCollector(analysisContext)
@@ -246,7 +245,22 @@ class Kex(args: Array<String>) {
 
     @Suppress("UNUSED_PARAMETER")
     private fun checker(originalContext: ExecutionContext, analysisContext: ExecutionContext) {
-        TODO("Not implemented yet")
+        val psa = PredicateStateAnalysis(analysisContext.cm)
+
+        updateClassPath(analysisContext.loader as URLClassLoader)
+
+        runPipeline(analysisContext, Package.defaultPackage) {
+            +LoopSimplifier(analysisContext.cm)
+            +LoopDeroller(analysisContext.cm)
+            +psa
+            +MethodFieldAccessCollector(analysisContext, psa)
+            +SetterCollector(analysisContext)
+            +ExternalCtorCollector(analysisContext.cm, visibilityLevel)
+        }
+        runPipeline(analysisContext) {
+            +ViolationChecker(analysisContext.cm, psa)
+        }
+        clearClassPath()
     }
 
     private fun reanimator(analysisContext: ExecutionContext) {

@@ -24,12 +24,6 @@ import kotlin.math.min
 private val derollCount = kexConfig.getIntValue("loop", "deroll-count", 3)
 private val maxDerollCount = kexConfig.getIntValue("loop", "max-deroll-count", 0)
 
-val BasicBlock.originalBlock: BasicBlock
-    get() = LoopDeroller.blockMapping[this.parent]?.get(this) ?: this
-
-val BasicBlock.isUnreachable: Boolean
-    get() = this in (LoopDeroller.unreachableBlocks[this.parent] ?: hashSetOf())
-
 class LoopDeroller(override val cm: ClassManager) : LoopVisitor {
 
     companion object {
@@ -81,7 +75,7 @@ class LoopDeroller(override val cm: ClassManager) : LoopVisitor {
             instMappings[value] = newValue
         }
 
-        operator fun get(block: BasicBlock) = blockMappings.getValue(block)
+        operator fun get(block: BasicBlock) = blockMappings[block] ?: block
         operator fun get(value: Value) = instMappings.getValue(value)
 
         fun getOrDefault(block: BasicBlock, default: BasicBlock) = blockMappings.getOrDefault(block, default)
@@ -176,7 +170,7 @@ class LoopDeroller(override val cm: ClassManager) : LoopVisitor {
         // remap blocks of last iteration to actual method blocks
         val lastTerminator = state[state.terminatingBlock]
         val continueBlock = lastTerminator.terminator.successors[(!state.continueOnTrue).toInt()]
-        lastTerminator.replaceUsesOf(continueBlock, unreachableBlock)
+        lastTerminator.replaceSuccessorUsesOf(continueBlock, unreachableBlock)
         for (block in blockOrder.reversed()) {
             if (block == state.terminatingBlock) break
             val copy = state[block]

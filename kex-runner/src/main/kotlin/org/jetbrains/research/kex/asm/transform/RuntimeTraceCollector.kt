@@ -24,7 +24,7 @@ class RuntimeTraceCollector(override val cm: ClassManager) : MethodVisitor {
     private fun Method.isInstrumented(): Boolean {
         val klass = this.`class`
         if (klass !in cm.concreteClasses) return false
-        return true
+        return hasBody
     }
 
     private fun Value.wrap(): Instruction {
@@ -201,7 +201,7 @@ class RuntimeTraceCollector(override val cm: ClassManager) : MethodVisitor {
 
     override fun visit(method: Method) {
 //        if (method.isStaticInitializer) return
-        if (method.isEmpty()) return
+        if (!method.hasBody) return
 
         val methodEntryInsts = when {
             method.isStaticInitializer -> buildList {
