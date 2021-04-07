@@ -63,8 +63,9 @@ class GeneratorContext(
 
     fun prepareState(method: Method, ps: PredicateState, typeInfoMap: TypeInfoMap, ignores: Set<Term> = setOf()) =
         transform(ps) {
+            val staticTypeInfo = collectStaticTypeInfo(types, ps, typeInfoMap)
             +AnnotationAdapter(method, AnnotationManager.defaultLoader)
-            +ConcreteImplInliner(types, typeInfoMap, psa)
+            +ConcreteImplInliner(types, staticTypeInfo, psa)
             +StaticFieldInliner(cm, psa)
             +RecursiveInliner(psa) { MethodInliner(psa, inlineIndex = it) }
             +IntrinsicAdapter
@@ -77,22 +78,6 @@ class GeneratorContext(
             +NullityInfoAdapter()
             +FieldNormalizer(context.cm, "state.normalized")
         }
-
-    fun prepareState(method: Method, ps: PredicateState, ignores: Set<Term> = setOf()) = transform(ps) {
-        +AnnotationAdapter(method, AnnotationManager.defaultLoader)
-        +MethodInliner(psa)
-        +StaticFieldInliner(cm, psa)
-        +RecursiveInliner(psa) { MethodInliner(psa, inlineIndex = it) }
-        +IntrinsicAdapter
-        +ReflectionInfoAdapter(method, context.loader, ignores)
-        +Optimizer()
-        +ConstantPropagator
-        +BoolTypeAdapter(types)
-        +ConstStringAdapter()
-        +ArrayBoundsAdapter()
-        +NullityInfoAdapter()
-        +FieldNormalizer(context.cm, "state.normalized")
-    }
 
     fun prepareQuery(ps: PredicateState) = transform(ps) {
         +NullityInfoAdapter()
