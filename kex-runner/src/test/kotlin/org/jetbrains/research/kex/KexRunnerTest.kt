@@ -1,7 +1,6 @@
 package org.jetbrains.research.kex
 
-import org.jetbrains.research.kthelper.logging.log
-import org.jetbrains.research.kex.asm.analysis.MethodChecker
+import org.jetbrains.research.kex.asm.analysis.testgen.MethodChecker
 import org.jetbrains.research.kex.asm.state.PredicateStateAnalysis
 import org.jetbrains.research.kex.asm.transform.LoopDeroller
 import org.jetbrains.research.kex.asm.transform.RuntimeTraceCollector
@@ -26,6 +25,7 @@ import org.jetbrains.research.kfg.ir.value.instruction.CallInst
 import org.jetbrains.research.kfg.ir.value.instruction.Instruction
 import org.jetbrains.research.kfg.util.Flags
 import org.jetbrains.research.kfg.visitor.executePipeline
+import org.jetbrains.research.kthelper.logging.log
 import java.net.URLClassLoader
 import java.nio.file.Files
 import java.nio.file.Paths

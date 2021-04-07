@@ -1,11 +1,14 @@
 package org.jetbrains.research.kex
 
-import org.jetbrains.research.kthelper.logging.debug
-import org.jetbrains.research.kthelper.logging.log
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.InternalSerializationApi
-import org.jetbrains.research.kex.asm.analysis.*
 import org.jetbrains.research.kex.asm.analysis.concolic.ConcolicChecker
+import org.jetbrains.research.kex.asm.analysis.defect.DefectChecker
+import org.jetbrains.research.kex.asm.analysis.defect.DefectManager
+import org.jetbrains.research.kex.asm.analysis.testgen.DescriptorChecker
+import org.jetbrains.research.kex.asm.analysis.testgen.Failure
+import org.jetbrains.research.kex.asm.analysis.testgen.MethodChecker
+import org.jetbrains.research.kex.asm.analysis.testgen.RandomChecker
 import org.jetbrains.research.kex.asm.manager.CoverageCounter
 import org.jetbrains.research.kex.asm.state.PredicateStateAnalysis
 import org.jetbrains.research.kex.asm.transform.BranchAdapter
@@ -42,6 +45,8 @@ import org.jetbrains.research.kfg.ir.Method
 import org.jetbrains.research.kfg.util.Flags
 import org.jetbrains.research.kfg.visitor.Pipeline
 import org.jetbrains.research.kfg.visitor.executePipeline
+import org.jetbrains.research.kthelper.logging.debug
+import org.jetbrains.research.kthelper.logging.log
 import java.io.File
 import java.net.URLClassLoader
 import java.nio.file.Files
@@ -258,9 +263,11 @@ class Kex(args: Array<String>) {
             +ExternalCtorCollector(analysisContext.cm, visibilityLevel)
         }
         runPipeline(analysisContext) {
-            +ViolationChecker(analysisContext.cm, psa)
+            +DefectChecker(analysisContext, psa)
         }
         clearClassPath()
+        log.debug("Analysis finished, emitting results info ${DefectManager.defectFile}")
+        DefectManager.emit()
     }
 
     private fun reanimator(analysisContext: ExecutionContext) {

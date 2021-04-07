@@ -1,7 +1,5 @@
 package org.jetbrains.research.kex.asm.analysis.concolic
 
-import org.jetbrains.research.kthelper.collection.listOf
-import org.jetbrains.research.kthelper.collection.stackOf
 import org.jetbrains.research.kex.asm.state.InvalidInstructionError
 import org.jetbrains.research.kex.asm.state.PredicateStateAnalysis
 import org.jetbrains.research.kex.ktype.kexType
@@ -12,6 +10,7 @@ import org.jetbrains.research.kex.state.predicate.path
 import org.jetbrains.research.kex.state.predicate.state
 import org.jetbrains.research.kex.state.term.Term
 import org.jetbrains.research.kex.state.term.term
+import org.jetbrains.research.kex.state.transformer.Optimizer
 import org.jetbrains.research.kex.state.transformer.TermRenamer
 import org.jetbrains.research.kex.state.transformer.collectArguments
 import org.jetbrains.research.kex.state.transformer.collectTerms
@@ -22,6 +21,8 @@ import org.jetbrains.research.kfg.ir.Method
 import org.jetbrains.research.kfg.ir.value.*
 import org.jetbrains.research.kfg.ir.value.instruction.*
 import org.jetbrains.research.kfg.type.ClassType
+import org.jetbrains.research.kthelper.collection.listOf
+import org.jetbrains.research.kthelper.collection.stackOf
 
 class UnsupportedInstructionException(val inst: Instruction) : Exception(inst.print())
 class InvalidStateException(msg: String) : Exception(msg)
@@ -36,7 +37,7 @@ class ConcolicStateBuilder(val cm: ClassManager, val psa: PredicateStateAnalysis
     private var counter = 0
     private var lastCall: Pair<Method, CallParameters>? = null
 
-    fun apply() = stateBuilder.apply()
+    fun apply() = Optimizer().apply(stateBuilder.apply())
 
     data class CallParameters(val receiver: Value?, val mappings: Map<Value, Value>)
 

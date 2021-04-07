@@ -2,6 +2,8 @@
 
 package org.jetbrains.research.kex.test.debug
 
+import org.jetbrains.research.kex.Intrinsics.kexAssert
+
 class BasicTests {
     companion object {
         @JvmStatic
@@ -31,9 +33,9 @@ class BasicTests {
 //        }
 //    }
 
-    fun test() {
+    fun test(test: Point?) {
         if (point.x == 0 && point.y == 1) {
-            error("a")
+            kexAssert(test != null)
         }
     }
 }

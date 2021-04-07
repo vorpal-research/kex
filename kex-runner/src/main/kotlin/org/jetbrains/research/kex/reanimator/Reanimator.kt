@@ -1,14 +1,14 @@
 package org.jetbrains.research.kex.reanimator
 
-import org.jetbrains.research.kthelper.`try`
-import org.jetbrains.research.kthelper.logging.log
-import org.jetbrains.research.kthelper.time.timed
 import org.jetbrains.research.kex.ExecutionContext
 import org.jetbrains.research.kex.asm.state.PredicateStateAnalysis
 import org.jetbrains.research.kex.asm.util.Visibility
 import org.jetbrains.research.kex.config.kexConfig
 import org.jetbrains.research.kex.random.GenerationException
-import org.jetbrains.research.kex.reanimator.callstack.*
+import org.jetbrains.research.kex.reanimator.callstack.CallStack
+import org.jetbrains.research.kex.reanimator.callstack.CallStackExecutor
+import org.jetbrains.research.kex.reanimator.callstack.MethodCall
+import org.jetbrains.research.kex.reanimator.callstack.StaticMethodCall
 import org.jetbrains.research.kex.reanimator.callstack.generator.CallStackGenerator
 import org.jetbrains.research.kex.reanimator.codegen.TestCasePrinter
 import org.jetbrains.research.kex.reanimator.codegen.klassName
@@ -21,6 +21,9 @@ import org.jetbrains.research.kex.state.transformer.generateFinalDescriptors
 import org.jetbrains.research.kfg.ClassManager
 import org.jetbrains.research.kfg.ir.Class
 import org.jetbrains.research.kfg.ir.Method
+import org.jetbrains.research.kthelper.`try`
+import org.jetbrains.research.kthelper.logging.log
+import org.jetbrains.research.kthelper.time.timed
 
 class NoConcreteInstanceException(val klass: Class) : Exception()
 
@@ -35,9 +38,9 @@ class Reanimator(
     klassName: String
 ) : ParameterGenerator {
     val cm: ClassManager get() = ctx.cm
+    val printer = TestCasePrinter(ctx, packageName, klassName)
     private val csGenerator = CallStackGenerator(ctx, psa, visibilityLevel)
     private val csExecutor = CallStackExecutor(ctx)
-    private val printer = TestCasePrinter(ctx, packageName, klassName)
     private var staticCounter = 0
 
     constructor(ctx: ExecutionContext, psa: PredicateStateAnalysis, method: Method) : this(

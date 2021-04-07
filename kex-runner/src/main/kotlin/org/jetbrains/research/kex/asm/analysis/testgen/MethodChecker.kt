@@ -1,17 +1,15 @@
-package org.jetbrains.research.kex.asm.analysis
+package org.jetbrains.research.kex.asm.analysis.testgen
 
-import org.jetbrains.research.kthelper.`try`
-import org.jetbrains.research.kthelper.algorithm.DominatorTreeBuilder
-import org.jetbrains.research.kthelper.logging.debug
-import org.jetbrains.research.kthelper.logging.log
 import kotlinx.serialization.Contextual
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.InternalSerializationApi
 import kotlinx.serialization.Serializable
 import org.jetbrains.research.kex.ExecutionContext
+import org.jetbrains.research.kex.asm.analysis.DfsStrategy
+import org.jetbrains.research.kex.asm.analysis.SearchStrategy
 import org.jetbrains.research.kex.asm.manager.isImpactable
-import org.jetbrains.research.kex.asm.state.PredicateStateAnalysis
 import org.jetbrains.research.kex.asm.manager.originalBlock
+import org.jetbrains.research.kex.asm.state.PredicateStateAnalysis
 import org.jetbrains.research.kex.config.kexConfig
 import org.jetbrains.research.kex.random.GenerationException
 import org.jetbrains.research.kex.random.Randomizer
@@ -32,6 +30,10 @@ import org.jetbrains.research.kfg.ir.Class
 import org.jetbrains.research.kfg.ir.Method
 import org.jetbrains.research.kfg.ir.value.instruction.UnreachableInst
 import org.jetbrains.research.kfg.visitor.MethodVisitor
+import org.jetbrains.research.kthelper.`try`
+import org.jetbrains.research.kthelper.algorithm.DominatorTreeBuilder
+import org.jetbrains.research.kthelper.logging.debug
+import org.jetbrains.research.kthelper.logging.log
 import org.jetbrains.research.kthelper.tryOrNull
 import java.nio.file.Files
 import java.nio.file.Paths

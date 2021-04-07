@@ -1,7 +1,5 @@
 package org.jetbrains.research.kex.reanimator.codegen
 
-import org.jetbrains.research.kthelper.assert.unreachable
-import org.jetbrains.research.kthelper.logging.log
 import org.jetbrains.research.kex.ExecutionContext
 import org.jetbrains.research.kex.config.kexConfig
 import org.jetbrains.research.kex.reanimator.callstack.CallStack
@@ -10,9 +8,11 @@ import org.jetbrains.research.kex.reanimator.codegen.kotlingen.CallStack2KotlinP
 import org.jetbrains.research.kfg.ir.BasicBlock
 import org.jetbrains.research.kfg.ir.Class
 import org.jetbrains.research.kfg.ir.Method
+import org.jetbrains.research.kthelper.assert.unreachable
+import org.jetbrains.research.kthelper.logging.log
 import java.io.File
-import kotlin.math.abs
 import java.nio.file.Paths
+import kotlin.math.abs
 
 private val useApiGeneration by lazy { kexConfig.getBooleanValue("apiGeneration", "enabled", true) }
 private val generateTestCases by lazy { kexConfig.getBooleanValue("apiGeneration", "generateTestCases", false) }
@@ -32,6 +32,17 @@ class TestCasePrinter(val ctx: ExecutionContext, val packageName: String, val kl
     private var isEmpty = true
 
     private val String.validName get() = this.replace(Regex("[^a-zA-Z0-9]"), "")
+
+    val targetFile: File = run {
+        val targetFileName = when (testCaseLanguage) {
+            "kotlin" -> "$klassName.kt"
+            "java" -> "$klassName.java"
+            else -> klassName
+        }
+        Paths.get(testCaseDirectory, packageName, targetFileName).toAbsolutePath().toFile().apply {
+            parentFile?.mkdirs()
+        }
+    }
 
     init {
         printer = when (testCaseLanguage) {
