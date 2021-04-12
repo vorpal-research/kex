@@ -1,17 +1,15 @@
 package org.jetbrains.research.kex.asm.manager
 
-import org.jetbrains.research.kthelper.logging.log
-import org.jetbrains.research.kex.asm.manager.isUnreachable
-import org.jetbrains.research.kex.asm.manager.originalBlock
 import org.jetbrains.research.kex.asm.util.Visibility
 import org.jetbrains.research.kex.asm.util.visibility
 import org.jetbrains.research.kex.config.kexConfig
 import org.jetbrains.research.kex.trace.TraceManager
-import org.jetbrains.research.kfg.Package
 import org.jetbrains.research.kfg.ClassManager
+import org.jetbrains.research.kfg.Package
 import org.jetbrains.research.kfg.ir.Class
 import org.jetbrains.research.kfg.ir.Method
 import org.jetbrains.research.kfg.visitor.MethodVisitor
+import org.jetbrains.research.kthelper.logging.log
 import java.util.*
 
 private val visibilityLevel by lazy { kexConfig.getEnumValue("apiGeneration", "visibility", true, Visibility.PUBLIC) }
@@ -73,6 +71,7 @@ class CoverageCounter<T> private constructor(
             this.isStaticInitializer -> false
             this.`class`.isSynthetic -> false
             this.isSynthetic -> false
+            !this.hasBody -> false
             else -> true
         }
 

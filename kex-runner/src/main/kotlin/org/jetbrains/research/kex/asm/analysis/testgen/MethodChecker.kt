@@ -86,7 +86,7 @@ open class MethodChecker(
     override fun visit(method: Method) {
         super.visit(method)
 
-        if (!method.isImpactable) return
+        if (!method.isImpactable || !method.hasBody) return
 
         log.debug("Checking method $method")
         log.debug(method.print())

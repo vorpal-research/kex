@@ -1,7 +1,6 @@
 package org.jetbrains.research.kex.asm.transform
 
 import org.jetbrains.research.kex.KexTest
-import org.jetbrains.research.kfg.analysis.IRVerifier
 import org.jetbrains.research.kfg.analysis.LoopAnalysis
 import org.jetbrains.research.kfg.analysis.LoopSimplifier
 import org.jetbrains.research.kfg.ir.Method
@@ -27,7 +26,7 @@ class LoopDerollerTest : KexTest() {
         loops = LoopAnalysis(cm).invoke(method)
         assertTrue(loops.isEmpty())
 
-        IRVerifier(cm).visit(method)
+//        IRVerifier(cm).visit(method)
     }
 
     @Test
