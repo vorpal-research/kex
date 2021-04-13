@@ -2,8 +2,8 @@ package org.jetbrains.research.kex.asm.analysis.defect
 
 import org.jetbrains.research.kex.ExecutionContext
 import org.jetbrains.research.kex.annotations.AnnotationManager
-import org.jetbrains.research.kex.asm.analysis.DfsStrategy
 import org.jetbrains.research.kex.asm.analysis.SearchStrategy
+import org.jetbrains.research.kex.asm.analysis.UnfilteredDfsStrategy
 import org.jetbrains.research.kex.asm.manager.MethodManager
 import org.jetbrains.research.kex.asm.state.PredicateStateAnalysis
 import org.jetbrains.research.kex.asm.state.PredicateStateBuilder
@@ -68,6 +68,9 @@ class DefectChecker(
         this.builder = psa.builder(method)
         this.method = method
         if (!method.hasBody) return
+
+        log.debug("Checking method $method")
+        log.debug(method.print())
 
         initializeGenerator()
 
@@ -162,6 +165,7 @@ class DefectChecker(
 
     private fun checkNullity(inst: Instruction, state: PredicateState, `object`: Term): Boolean {
         log.debug("Checking for null pointer exception: ${inst.print()}")
+        log.debug("State: $state")
         val refQuery = require { `object` inequality null }.wrap()
 
         val (checkerState, result) = check(state, refQuery)
@@ -178,6 +182,7 @@ class DefectChecker(
 
     private fun checkOutOfBounds(inst: Instruction, state: PredicateState, length: Term, index: Term): Boolean {
         log.debug("Checking for out of bounds exception: ${inst.print()}")
+        log.debug("State: $state")
         var indexQuery = require { (index ge 0) equality true }.wrap()
         indexQuery += require { (index lt length) equality true }
 
@@ -200,6 +205,7 @@ class DefectChecker(
         id: String? = null
     ): Boolean {
         log.debug("Checking for assertion failure: ${inst.print()}")
+        log.debug("State: $state")
         val assertionQuery = assertions.map {
             when (it.type) {
                 is KexBool -> require { it equality true }
@@ -245,7 +251,7 @@ class DefectChecker(
         +FieldNormalizer(method.cm)
     }
 
-    fun getSearchStrategy(method: Method): SearchStrategy = DfsStrategy(method)
+    private fun getSearchStrategy(method: Method): SearchStrategy = UnfilteredDfsStrategy(method)
 
     private fun check(state_: PredicateState, query_: PredicateState): Pair<PredicateState, Result> {
         var state = prepareState(state_)

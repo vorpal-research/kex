@@ -41,6 +41,7 @@ import org.jetbrains.research.kfg.analysis.LoopSimplifier
 import org.jetbrains.research.kfg.container.Container
 import org.jetbrains.research.kfg.container.asContainer
 import org.jetbrains.research.kfg.ir.Class
+import org.jetbrains.research.kfg.ir.ConcreteClass
 import org.jetbrains.research.kfg.ir.Method
 import org.jetbrains.research.kfg.util.Flags
 import org.jetbrains.research.kfg.visitor.Pipeline
@@ -144,7 +145,12 @@ class Kex(args: Array<String>) {
             }
             is AnalysisLevel.CLASS -> {
                 klass = classManager[analysisLevel.klass]
-                log.debug("Target: class $klass")
+                if (klass !is ConcreteClass) {
+                    log.error("Class $klass not found is classpath, exiting")
+                    exitProcess(1)
+                } else {
+                    log.debug("Target: class $klass")
+                }
             }
             is AnalysisLevel.METHOD -> {
                 klass = classManager[analysisLevel.klass]
