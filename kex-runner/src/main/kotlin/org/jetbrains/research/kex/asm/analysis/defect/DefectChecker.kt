@@ -170,7 +170,7 @@ class DefectChecker(
         }.also {
             // in case of any result this object can be considered non null
             // because further instructions can't fail with NPE if this one did not fail
-            nonNulls += `object`
+            nonNulls.add(`object`)
         }
     }
 
@@ -229,9 +229,10 @@ class DefectChecker(
         generator.printer.targetFile.toPath() to testName
     }
 
-    fun prepareState(ps: PredicateState) = transform(ps) {
+    fun prepareState(ps: PredicateState, typeInfoMap: TypeInfoMap) = transform(ps) {
         +AnnotationAdapter(method, AnnotationManager.defaultLoader)
-        +MethodInliner(psa)
+        +RecursiveInliner(psa) { ConcreteImplInliner(method.cm.type, typeInfoMap, psa, inlineIndex = it) }
+//        +MethodInliner(psa)
         +StaticFieldInliner(method.cm, psa)
         +RecursiveInliner(psa) { MethodInliner(psa, inlineIndex = it) }
         +IntrinsicAdapter
@@ -248,7 +249,8 @@ class DefectChecker(
     private fun getSearchStrategy(method: Method): SearchStrategy = UnfilteredDfsStrategy(method)
 
     private fun check(state_: PredicateState, query_: PredicateState): Pair<PredicateState, Result> {
-        var state = prepareState(state_)
+        val staticTypeInfoMap = collectStaticTypeInfo(types, state_, TypeInfoMap())
+        var state = prepareState(state_, staticTypeInfoMap)
         var query = query_
 
         if (isMemspacingEnabled) {
