@@ -101,9 +101,7 @@ class DefectChecker(
         val index = term { value(inst.index) }
         val state = builder.getInstructionState(inst) ?: return
 
-        if (inst.arrayRef !in nonNulls && checkNullity(inst, state, arrayRef))
-            nonNulls.add(inst.arrayRef)
-
+        checkNullity(inst, state, inst.arrayRef)
         checkOutOfBounds(inst, state, length, index)
     }
 
@@ -113,28 +111,22 @@ class DefectChecker(
         val index = term { value(inst.index) }
         val state = builder.getInstructionState(inst) ?: return
 
-        if (inst.arrayRef !in nonNulls && checkNullity(inst, state, arrayRef))
-            nonNulls.add(inst.arrayRef)
-
+        checkNullity(inst, state, inst.arrayRef)
         checkOutOfBounds(inst, state, length, index)
     }
 
     override fun visitFieldLoadInst(inst: FieldLoadInst) {
         if (!inst.hasOwner) return
-        if (inst.owner in nonNulls) return
         val state = builder.getInstructionState(inst) ?: return
 
-        val `object` = term { value(inst.owner) }
-        if (checkNullity(inst, state, `object`)) nonNulls.add(inst.owner)
+        checkNullity(inst, state, inst.owner)
     }
 
     override fun visitFieldStoreInst(inst: FieldStoreInst) {
         if (!inst.hasOwner) return
-        if (inst.owner in nonNulls) return
         val state = builder.getInstructionState(inst) ?: return
 
-        val `object` = term { value(inst.owner) }
-        if (checkNullity(inst, state, `object`)) nonNulls.add(inst.owner)
+        checkNullity(inst, state, inst.owner)
     }
 
     private fun getAllAssertions(assertionsArray: Value): Set<Term> = method.flatten()
@@ -148,12 +140,8 @@ class DefectChecker(
     override fun visitCallInst(inst: CallInst) {
         val state = builder.getInstructionState(inst) ?: return
 
-        if (!inst.isStatic) {
-            if (inst.callee in nonNulls) return
+        if (!inst.isStatic) checkNullity(inst, state, inst.callee)
 
-            val `object` = term { value(inst.callee) }
-            if (checkNullity(inst, state, `object`)) nonNulls.add(inst.callee)
-        }
         when (inst.method) {
             im.kexAssert(cm) -> checkAssertion(inst, state, getAllAssertions(inst.args[0]))
             im.kexAssertWithId(cm) -> {
@@ -163,10 +151,12 @@ class DefectChecker(
         }
     }
 
-    private fun checkNullity(inst: Instruction, state: PredicateState, `object`: Term): Boolean {
+    private fun checkNullity(inst: Instruction, state: PredicateState, `object`: Value): Boolean {
+        if (`object` in nonNulls) return true
         log.debug("Checking for null pointer exception: ${inst.print()}")
         log.debug("State: $state")
-        val refQuery = require { `object` inequality null }.wrap()
+        val objectTerm = term { value(`object`) }
+        val refQuery = require { objectTerm inequality null }.wrap()
 
         val (checkerState, result) = check(state, refQuery)
         return when (result) {
@@ -177,6 +167,10 @@ class DefectChecker(
                 false
             }
             else -> true
+        }.also {
+            // in case of any result this object can be considered non null
+            // because further instructions can't fail with NPE if this one did not fail
+            nonNulls += `object`
         }
     }
 
