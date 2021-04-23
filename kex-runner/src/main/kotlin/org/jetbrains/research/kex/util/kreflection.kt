@@ -1,9 +1,9 @@
 package org.jetbrains.research.kex.util
 
-import com.abdullin.kthelper.`try`
-import com.abdullin.kthelper.collection.queueOf
-import com.abdullin.kthelper.toInt
-import com.abdullin.kthelper.tryOrNull
+import org.jetbrains.research.kthelper.`try`
+import org.jetbrains.research.kthelper.collection.queueOf
+import org.jetbrains.research.kthelper.toInt
+import org.jetbrains.research.kthelper.tryOrNull
 import org.jetbrains.research.kex.ktype.KexArray
 import org.jetbrains.research.kex.ktype.KexPointer
 import org.jetbrains.research.kex.ktype.KexType
@@ -12,6 +12,7 @@ import org.jetbrains.research.kfg.ir.Field
 import org.jetbrains.research.kfg.ir.Method
 import org.jetbrains.research.kfg.type.Reference
 import org.jetbrains.research.kfg.type.Type
+import org.jetbrains.research.kfg.type.TypeFactory
 import kotlin.reflect.KClass
 import kotlin.reflect.KFunction
 import kotlin.reflect.KMutableProperty
@@ -76,6 +77,7 @@ val KClass<*>.allFunctions
 fun KClass<*>.find(method: Method) = allFunctions.find { it eq method }
 
 fun ClassLoader.loadKClass(type: Type) = this.loadClass(type).kotlin
+fun ClassLoader.loadKClass(tf: TypeFactory, type: KexType) = this.loadClass(tf, type).kotlin
 fun ClassLoader.loadKClass(klass: org.jetbrains.research.kfg.ir.Class) = this.loadKClass(klass.type)
 
 fun KClass<*>.getKFunction(method: Method): KFunction<*>? {

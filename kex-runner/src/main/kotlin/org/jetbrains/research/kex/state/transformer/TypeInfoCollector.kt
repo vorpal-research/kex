@@ -1,6 +1,6 @@
 package org.jetbrains.research.kex.state.transformer
 
-import com.abdullin.kthelper.logging.log
+import org.jetbrains.research.kthelper.logging.log
 import org.jetbrains.research.kex.ktype.KexIntegral
 import org.jetbrains.research.kex.ktype.KexReal
 import org.jetbrains.research.kex.ktype.KexType
@@ -45,10 +45,30 @@ class TypeInfoMap(val inner: Map<Term, Set<TypeInfo>> = hashMapOf()) : Map<Term,
                     }.filterNotNull().toMap()
             )
         }
+
+        fun create(map: Map<Term, KexType>): TypeInfoMap {
+            return TypeInfoMap(
+                map.mapValues { (_, type) ->
+                    setOf(CastTypeInfo(type))
+                }
+            )
+        }
     }
 
     fun mapKeys(mapper: (Map.Entry<Term, Set<TypeInfo>>) -> Term) = TypeInfoMap(inner.mapKeys(mapper))
     fun mapValues(mapper: (Map.Entry<Term, Set<TypeInfo>>) -> Set<TypeInfo>) = TypeInfoMap(inner.mapValues(mapper))
+
+    operator fun plus(other: TypeInfoMap) = TypeInfoMap(inner + other.inner)
+    operator fun plus(other: Map<Term, KexType>) = TypeInfoMap(inner + other.mapValues { setOf(CastTypeInfo(it.value)) })
+
+    fun toMap(): Map<Term, KexType> {
+        val result = mutableMapOf<Term, KexType>()
+        for (key in keys) {
+            val typeInfo = getInfo<CastTypeInfo>(key) ?: continue
+            result[key] = typeInfo.type
+        }
+        return result
+    }
 }
 
 class TypeInfoCollector(val model: SMTModel, val tf: TypeFactory) : Transformer<TypeInfoCollector> {
@@ -204,6 +224,37 @@ class PlainTypeInfoCollector(val tf: TypeFactory) : Transformer<TypeInfoCollecto
         }
         return super.transformInequality(predicate)
     }
+}
+
+class StaticTypeInfoCollector(val tf: TypeFactory, tip: TypeInfoMap = TypeInfoMap()) : Transformer<StaticTypeInfoCollector> {
+    val typeInfoMap = tip.toMap().toMutableMap()
+
+    override fun transformTerm(term: Term): Term {
+        if (term.type.getKfgType(tf) == tf.stringType && term !in typeInfoMap) {
+            typeInfoMap[term] = term.type
+        }
+        return super.transformTerm(term)
+    }
+
+    override fun transformNewPredicate(predicate: NewPredicate): Predicate {
+        if (predicate.lhv !in typeInfoMap) {
+            typeInfoMap[predicate.lhv] = predicate.lhv.type
+        }
+        return super.transformNewPredicate(predicate)
+    }
+
+    override fun transformNewArrayPredicate(predicate: NewArrayPredicate): Predicate {
+        if (predicate.lhv !in typeInfoMap) {
+            typeInfoMap[predicate.lhv] = predicate.lhv.type
+        }
+        return super.transformNewArrayPredicate(predicate)
+    }
+}
+
+fun collectStaticTypeInfo(tf: TypeFactory, state: PredicateState, tip: TypeInfoMap = TypeInfoMap()): TypeInfoMap {
+    val stic = StaticTypeInfoCollector(tf, tip)
+    stic.apply(state)
+    return TypeInfoMap.create(stic.typeInfoMap)
 }
 
 fun collectTypeInfos(model: SMTModel, tf: TypeFactory, ps: PredicateState): TypeInfoMap {

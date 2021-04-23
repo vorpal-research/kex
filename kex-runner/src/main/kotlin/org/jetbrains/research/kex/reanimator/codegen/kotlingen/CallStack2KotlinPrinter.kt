@@ -1,12 +1,13 @@
 package org.jetbrains.research.kex.reanimator.codegen.kotlingen
 
-import com.abdullin.kthelper.assert.unreachable
-import com.abdullin.kthelper.logging.log
+import org.jetbrains.research.kthelper.assert.unreachable
+import org.jetbrains.research.kthelper.logging.log
 import org.jetbrains.research.kex.ExecutionContext
 import org.jetbrains.research.kex.ktype.KexType
 import org.jetbrains.research.kex.ktype.type
 import org.jetbrains.research.kex.reanimator.callstack.*
 import org.jetbrains.research.kex.reanimator.codegen.CallStackPrinter
+import org.jetbrains.research.kex.reanimator.codegen.javagen.CallStack2JavaPrinter
 import org.jetbrains.research.kex.util.getConstructor
 import org.jetbrains.research.kex.util.getMethod
 import org.jetbrains.research.kex.util.kex
@@ -35,6 +36,9 @@ class CallStack2KotlinPrinter(
 
     init {
         with(builder) {
+            import("kotlin.Exception")
+            import("kotlin.IllegalStateException")
+            import("org.junit.Test")
             function("<T> unknown") {
                 returnType = type("T")
                 +"TODO()"
@@ -44,10 +48,14 @@ class CallStack2KotlinPrinter(
     }
 
     override fun printCallStack(callStack: CallStack, method: String) {
+        printedStacks.clear()
+        resolvedTypes.clear()
+        actualTypes.clear()
         with(builder) {
             with(klass) {
                 current = method(method) {
                     returnType = unit
+                    annotations += "Test"
                 }
             }
         }
@@ -191,13 +199,19 @@ class CallStack2KotlinPrinter(
                 constructor.kotlinFunction != null -> {
                     val params = constructor.kotlinFunction!!.parameters
                     args.zip(params).forEach { (arg, param) ->
-                        resolvedTypes[arg] = param.type.csType
+                        if (arg !in resolvedTypes) {
+                            resolvedTypes[arg] = param.type.csType
+                            resolveTypes(arg)
+                        }
                     }
                 }
                 else -> {
                     val params = constructor.genericParameterTypes
                     args.zip(params).forEach { (arg, param) ->
-                        resolvedTypes[arg] = param.csType
+                        if (arg !in resolvedTypes) {
+                            resolvedTypes[arg] = param.csType
+                            resolveTypes(arg)
+                        }
                     }
                 }
             }
@@ -207,14 +221,19 @@ class CallStack2KotlinPrinter(
                 method.kotlinFunction != null -> {
                     val params = method.kotlinFunction!!.parameters.drop(1)
                     args.zip(params).forEach { (arg, param) ->
-                        param.type.csType
-                        resolvedTypes[arg] = param.type.csType
+                        if (arg !in resolvedTypes) {
+                            resolvedTypes[arg] = param.type.csType
+                            resolveTypes(arg)
+                        }
                     }
                 }
                 else -> {
                     val params = method.genericParameterTypes.toList()
                     args.zip(params).forEach { (arg, param) ->
-                        resolvedTypes[arg] = param.csType
+                        if (arg !in resolvedTypes) {
+                            resolvedTypes[arg] = param.csType
+                            resolveTypes(arg)
+                        }
                     }
                 }
             }
@@ -310,6 +329,7 @@ class CallStack2KotlinPrinter(
         is FieldSetter -> printFieldSetter(owner, apiCall)
         is StaticFieldSetter -> printStaticFieldSetter(apiCall)
         is EnumValueCreation -> printEnumValueCreation(owner, apiCall)
+        is StaticFieldGetter -> printStaticFieldGetter(owner, apiCall)
         is UnknownCall -> printUnknown(owner, apiCall)
         else -> unreachable { log.error("Unknown call") }
     }
@@ -358,6 +378,11 @@ class CallStack2KotlinPrinter(
         }
     }
 
+    private fun CallStack.forceCastIfNull(reqType: CSType?): String = when (this.stackName) {
+        "null" -> "${this.stackName} as $reqType"
+        else -> this.cast(reqType)
+    }
+
     private fun printDefaultConstructor(owner: CallStack, call: DefaultConstructorCall): String {
         val actualType = CSClass(call.klass.type, nullable = false)
         return if (resolvedTypes[owner] != null) {
@@ -374,18 +399,25 @@ class CallStack2KotlinPrinter(
     private fun printConstructorCall(owner: CallStack, call: ConstructorCall): String {
         call.args.forEach { it.printAsKt() }
         val args = call.args.joinToString(", ") {
-            it.cast(resolvedTypes[it])
+            it.forceCastIfNull(resolvedTypes[it])
         }
         val actualType = CSClass(call.klass.type, nullable = false)
-        actualTypes[owner] = actualType
-        return "val ${owner.name} = $actualType($args)"
+        return if (resolvedTypes[owner] != null) {
+            val rest = resolvedTypes[owner]!!
+            val type = actualType.merge(rest)
+            actualTypes[owner] = type
+            "val ${owner.name} = $type($args)"
+        } else {
+            actualTypes[owner] = actualType
+            "val ${owner.name} = $actualType($args)"
+        }
     }
 
     private fun printExternalConstructorCall(owner: CallStack, call: ExternalConstructorCall): String {
         call.args.forEach { it.printAsKt() }
         val constructor = call.constructor
         val args = call.args.joinToString(", ") {
-            it.cast(resolvedTypes[it])
+            it.forceCastIfNull(resolvedTypes[it])
         }
         val actualType = CSClass(constructor.returnType)
         actualTypes[owner] = actualType
@@ -396,7 +428,7 @@ class CallStack2KotlinPrinter(
         call.args.forEach { it.printAsKt() }
         val method = call.method
         val args = call.args.joinToString(", ") {
-            it.cast(resolvedTypes[it])
+            it.forceCastIfNull(resolvedTypes[it])
         }
         return "${owner.name}.${method.name}($args)"
     }
@@ -406,7 +438,7 @@ class CallStack2KotlinPrinter(
         val klass = call.method.`class`
         val method = call.method
         val args = call.args.joinToString(", ") {
-            it.cast(resolvedTypes[it])
+            it.forceCastIfNull(resolvedTypes[it])
         }
         return "${klass.kotlinString}.${method.name}($args)"
     }
@@ -447,7 +479,15 @@ class CallStack2KotlinPrinter(
     }
 
     private fun printEnumValueCreation(owner: CallStack, call: EnumValueCreation): String {
-        return "${owner.name} = ${call.klass.kotlinString}.${call.name}"
+        val actualType = call.klass.type.getCsType(false)
+        actualTypes[owner] = actualType
+        return "val ${owner.name} = ${call.klass.kotlinString}.${call.name}"
+    }
+
+    private fun printStaticFieldGetter(owner: CallStack, call: StaticFieldGetter): String {
+        val actualType = call.klass.type.getCsType(false)
+        actualTypes[owner] = actualType
+        return "val ${owner.name} = ${call.klass.kotlinString}.${call.name}"
     }
 
     private fun printUnknown(owner: CallStack, call: UnknownCall): String {

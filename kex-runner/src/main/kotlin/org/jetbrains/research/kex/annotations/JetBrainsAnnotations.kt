@@ -1,16 +1,15 @@
 package org.jetbrains.research.kex.annotations
 
-import com.abdullin.kthelper.assert.unreachable
-import com.abdullin.kthelper.logging.log
+import org.jetbrains.research.kthelper.assert.unreachable
+import org.jetbrains.research.kthelper.logging.log
 import org.jetbrains.research.kex.asm.manager.MethodManager
 import org.jetbrains.research.kex.config.kexConfig
+import org.jetbrains.research.kex.ktype.KexArray
 import org.jetbrains.research.kex.ktype.KexBool
+import org.jetbrains.research.kex.ktype.KexInt
 import org.jetbrains.research.kex.state.PredicateState
 import org.jetbrains.research.kex.state.StateBuilder
-import org.jetbrains.research.kex.state.predicate.CallPredicate
-import org.jetbrains.research.kex.state.predicate.assume
-import org.jetbrains.research.kex.state.predicate.path
-import org.jetbrains.research.kex.state.predicate.state
+import org.jetbrains.research.kex.state.predicate.*
 import org.jetbrains.research.kex.state.term.CallTerm
 import org.jetbrains.research.kex.state.term.Term
 import org.jetbrains.research.kex.state.term.term
@@ -36,7 +35,7 @@ class Contract(val value: String = ""/*, pure: Boolean = false*/) : AnnotationIn
     private enum class Constraints(val literal: String) {
         Any("_"), Null("null"), NotNull("!null"),
         True("true"), False("false"), Fail("fail"),
-        New("new"), This("this"), Param("param");
+        New("new"), This("this"), Param("param"), Empty("empty");
 
         companion object {
             private val byLiteral = values().associateBy { it.literal }
@@ -91,7 +90,7 @@ class Contract(val value: String = ""/*, pure: Boolean = false*/) : AnnotationIn
             Constraints.NotNull -> arg neq null
             Constraints.True -> arg eq true
             Constraints.False -> arg eq false
-            Constraints.Fail, Constraints.New, Constraints.This, Constraints.Param ->
+            Constraints.Fail, Constraints.New, Constraints.This, Constraints.Param, Constraints.Empty ->
                 throw IllegalStateException("The ${constraint.literal} constraint value may be" +
                         " interpreted as effect only")
         }
@@ -134,7 +133,7 @@ class Contract(val value: String = ""/*, pure: Boolean = false*/) : AnnotationIn
             for ((i, record) in records.asSequence().withIndex().filter { it.value.result == Constraints.New }) {
                 val params = record.params
                 val argUnion = term { value(KexBool(), "%contract$id.$i.args") }
-                result += state {
+                result += axiom {
                     var accumulator: Term = const(true)
                     for (j in params.indices) {
                         if (params[j] != Constraints.Any)
@@ -143,7 +142,32 @@ class Contract(val value: String = ""/*, pure: Boolean = false*/) : AnnotationIn
                     argUnion equality accumulator
                 }
                 result += listOf(
-                        path { argUnion equality true }.wrap() + state { returnTerm.new() },
+                        path { argUnion equality true }.wrap() + state {
+                            if (returnTerm.type is KexArray) returnTerm.new(generate(KexInt()))
+                            else returnTerm.new()
+                        },
+                        path { argUnion equality false }.wrap()
+                )
+            }
+        }
+        // New statement insertion
+        if (!inlineEnabled && records.any { it.result == Constraints.Empty }) {
+            for ((i, record) in records.asSequence().withIndex().filter { it.value.result == Constraints.Empty }) {
+                val params = record.params
+                val argUnion = term { value(KexBool(), "%contract$id.$i.args") }
+                result += axiom {
+                    var accumulator: Term = const(true)
+                    for (j in params.indices) {
+                        if (params[j] != Constraints.Any)
+                            accumulator = accumulator and getTermByConstraint(params[j], args[j])
+                    }
+                    argUnion equality accumulator
+                }
+                result += listOf(
+                        path { argUnion equality true }.wrap() + state {
+                            if (returnTerm.type is KexArray) returnTerm.new(0)
+                            else returnTerm.new()
+                        },
                         path { argUnion equality false }.wrap()
                 )
             }

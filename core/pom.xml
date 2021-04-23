@@ -34,7 +34,7 @@
             <version>${logback.version}</version>
         </dependency>
         <dependency>
-            <groupId>com.abdullin</groupId>
+            <groupId>org.jetbrains.research</groupId>
             <artifactId>kt-helper</artifactId>
             <version>${kt-helper.version}</version>
         </dependency>

@@ -1,8 +1,8 @@
 package org.jetbrains.research.kex.asm.analysis
 
-import com.abdullin.kthelper.algorithm.GraphTraversal
 import org.jetbrains.research.kfg.ir.BasicBlock
 import org.jetbrains.research.kfg.ir.Method
+import org.jetbrains.research.kthelper.algorithm.GraphTraversal
 
 private fun buildBlockMapping(method: Method): Map<BasicBlock, BasicBlock> {
     val result = mutableMapOf<BasicBlock, BasicBlock>()
@@ -76,4 +76,14 @@ class DfsStrategy(override val method: Method) : SearchStrategy {
     }
 
     override fun iterator() = dfsSearch.iterator()
+}
+
+class UnfilteredDfsStrategy(override val method: Method) : SearchStrategy {
+    val dfsOrder: List<BasicBlock>
+
+    init {
+        dfsOrder = GraphTraversal(method).dfs()
+    }
+
+    override fun iterator() = dfsOrder.iterator()
 }

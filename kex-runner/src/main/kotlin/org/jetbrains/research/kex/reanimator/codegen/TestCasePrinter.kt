@@ -1,7 +1,5 @@
 package org.jetbrains.research.kex.reanimator.codegen
 
-import com.abdullin.kthelper.assert.unreachable
-import com.abdullin.kthelper.logging.log
 import org.jetbrains.research.kex.ExecutionContext
 import org.jetbrains.research.kex.config.kexConfig
 import org.jetbrains.research.kex.reanimator.callstack.CallStack
@@ -10,23 +8,41 @@ import org.jetbrains.research.kex.reanimator.codegen.kotlingen.CallStack2KotlinP
 import org.jetbrains.research.kfg.ir.BasicBlock
 import org.jetbrains.research.kfg.ir.Class
 import org.jetbrains.research.kfg.ir.Method
+import org.jetbrains.research.kthelper.assert.unreachable
+import org.jetbrains.research.kthelper.logging.log
 import java.io.File
 import java.nio.file.Paths
+import kotlin.math.abs
 
 private val useApiGeneration by lazy { kexConfig.getBooleanValue("apiGeneration", "enabled", true) }
 private val generateTestCases by lazy { kexConfig.getBooleanValue("apiGeneration", "generateTestCases", false) }
 private val testCaseDirectory by lazy { kexConfig.getStringValue("apiGeneration", "testCaseDirectory", "./tests") }
 private val testCaseLanguage by lazy { kexConfig.getStringValue("apiGeneration", "testCaseLanguage", "java") }
 
-class TestCasePrinter(val ctx: ExecutionContext, val method: Method) {
+val Class.validName get() = name.replace("$", "_")
+val Method.validName get() = name.replace(Regex("[^a-zA-Z0-9]"), "")
+val BasicBlock.validName get() = name.toString().replace(Regex("[^a-zA-Z0-9]"), "")
+
+
+val Method.packageName get() = `class`.`package`.name
+val Method.klassName get() = "${`class`.validName}_${validName}_${abs(hashCode())}"
+
+class TestCasePrinter(val ctx: ExecutionContext, val packageName: String, val klassName: String) {
     private val printer: CallStackPrinter
     private var isEmpty = true
-    val packageName = method.`class`.`package`.name
-    val klassName = "${method.`class`.validName}_${method.validName}"
 
-    private val Class.validName get() = name.replace("$", "_")
-    private val Method.validName get() = name.replace(Regex("[^a-zA-Z0-9]"), "")
-    private val BasicBlock.validName get() = name.toString().replace(Regex("[^a-zA-Z0-9]"), "")
+    private val String.validName get() = this.replace(Regex("[^a-zA-Z0-9]"), "")
+
+    val targetFile: File = run {
+        val targetFileName = when (testCaseLanguage) {
+            "kotlin" -> "$klassName.kt"
+            "java" -> "$klassName.java"
+            else -> klassName
+        }
+        Paths.get(testCaseDirectory, packageName, targetFileName).toAbsolutePath().toFile().apply {
+            parentFile?.mkdirs()
+        }
+    }
 
     init {
         printer = when (testCaseLanguage) {
@@ -41,15 +57,19 @@ class TestCasePrinter(val ctx: ExecutionContext, val method: Method) {
         printer.printCallStack(cs, "test_${block.validName}")
     }
 
+    fun print(cs: CallStack, testName: String) {
+        isEmpty = false
+        printer.printCallStack(cs, testName.validName)
+    }
+
     fun emit() {
         if (useApiGeneration && generateTestCases && !isEmpty) {
-            val packageDir = Paths.get(testCaseDirectory, packageName)
             val targetFileName = when (testCaseLanguage) {
                 "kotlin" -> "$klassName.kt"
                 "java" -> "$klassName.java"
                 else -> klassName
             }
-            val targetFile = File(packageDir.toFile(), targetFileName).apply {
+            val targetFile = Paths.get(testCaseDirectory, packageName, targetFileName).toAbsolutePath().toFile().apply {
                 parentFile?.mkdirs()
             }
             targetFile.writeText(printer.emit())

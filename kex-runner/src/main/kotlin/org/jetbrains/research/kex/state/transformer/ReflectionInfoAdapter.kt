@@ -1,9 +1,9 @@
 package org.jetbrains.research.kex.state.transformer
 
-import com.abdullin.kthelper.`try`
-import com.abdullin.kthelper.collection.dequeOf
-import com.abdullin.kthelper.logging.log
-import com.abdullin.kthelper.tryOrNull
+import org.jetbrains.research.kthelper.`try`
+import org.jetbrains.research.kthelper.collection.dequeOf
+import org.jetbrains.research.kthelper.logging.log
+import org.jetbrains.research.kthelper.tryOrNull
 import org.jetbrains.research.kex.ktype.*
 import org.jetbrains.research.kex.state.PredicateState
 import org.jetbrains.research.kex.state.StateBuilder
@@ -110,7 +110,7 @@ class ReflectionInfoAdapter(val method: Method, val loader: ClassLoader, val ign
         val kfgClass = cm[field.klass]
         val actualField = kfgClass.getField((field.fieldName as ConstStringTerm).value, fieldType.getKfgType(types))
 
-        val klass = loader.loadKClass(kfgClass)
+        val klass = tryOrNull { loader.loadKClass(kfgClass) } ?: return result
         val prop = klass.getKProperty(actualField)
         val returnType = tryOrNull { prop?.getter?.returnType }
 

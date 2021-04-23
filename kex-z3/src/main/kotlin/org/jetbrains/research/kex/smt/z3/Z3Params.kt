@@ -1,7 +1,7 @@
 package org.jetbrains.research.kex.smt.z3
 
-import com.abdullin.kthelper.assert.unreachable
-import com.abdullin.kthelper.logging.log
+import org.jetbrains.research.kthelper.assert.unreachable
+import org.jetbrains.research.kthelper.logging.log
 import com.beust.klaxon.*
 import org.jetbrains.research.kex.config.kexConfig
 import java.io.File

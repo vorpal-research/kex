@@ -1,7 +1,7 @@
 package org.jetbrains.research.kex.state.predicate
 
-import com.abdullin.kthelper.assert.unreachable
-import com.abdullin.kthelper.logging.log
+import org.jetbrains.research.kthelper.assert.unreachable
+import org.jetbrains.research.kthelper.logging.log
 import kotlinx.serialization.Contextual
 import kotlinx.serialization.Required
 import kotlinx.serialization.Serializable

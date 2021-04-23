@@ -1,9 +1,11 @@
 package org.jetbrains.research.kex.util
 
-import com.abdullin.kthelper.`try`
-import com.abdullin.kthelper.assert.unreachable
-import com.abdullin.kthelper.logging.log
+import org.jetbrains.research.kthelper.`try`
+import org.jetbrains.research.kthelper.assert.unreachable
+import org.jetbrains.research.kthelper.logging.log
 import org.jetbrains.research.kex.ktype.*
+import org.jetbrains.research.kex.state.term.FieldTerm
+import org.jetbrains.research.kfg.ClassManager
 import org.jetbrains.research.kfg.ir.Method
 import org.jetbrains.research.kfg.type.*
 import org.jetbrains.research.kfg.type.Type
@@ -32,6 +34,12 @@ val JMethod.isProtected get() = (this.modifiers and Modifier.PROTECTED) == Modif
 val Field.isPublic get() = (this.modifiers and Modifier.PUBLIC) == Modifier.PUBLIC
 val Field.isPrivate get() = (this.modifiers and Modifier.PRIVATE) == Modifier.PRIVATE
 val Field.isProtected get() = (this.modifiers and Modifier.PROTECTED) == Modifier.PROTECTED
+
+
+fun FieldTerm.isFinal(cm: ClassManager): Boolean {
+    val kfgField = cm[this.klass].getField(this.fieldNameString, this.type.getKfgType(cm.type))
+    return kfgField.isFinal
+}
 
 val Class<*>.kex: KexType get() = when {
     this.isPrimitive -> when (this) {
@@ -164,6 +172,10 @@ fun Class<*>.getActualField(name: String): Field {
 
 infix fun Field.eq(field: KfgField): Boolean {
     val cl = this.declaringClass.classLoader
+    return this.eq(cl, field)
+}
+
+fun Field.eq(cl: ClassLoader, field: KfgField): Boolean {
     return this.name == field.name && this.type == cl.loadClass(field.type)
 }
 

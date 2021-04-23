@@ -6,13 +6,14 @@ import org.jetbrains.research.kex.config.FileConfig
 import org.jetbrains.research.kex.config.RuntimeConfig
 import org.jetbrains.research.kex.config.kexConfig
 import org.jetbrains.research.kfg.ClassManager
-import org.jetbrains.research.kfg.Jar
 import org.jetbrains.research.kfg.KfgConfig
 import org.jetbrains.research.kfg.Package
 import org.jetbrains.research.kfg.analysis.LoopAnalysis
 import org.jetbrains.research.kfg.analysis.LoopSimplifier
+import org.jetbrains.research.kfg.container.asContainer
 import org.jetbrains.research.kfg.ir.Method
 import org.jetbrains.research.kfg.util.Flags
+import java.nio.file.Paths
 
 abstract class KexTest {
     val packageName = "org/jetbrains/research/kex/test"
@@ -30,7 +31,7 @@ abstract class KexTest {
         RuntimeConfig.setValue("z3", "paramFile", "$rootDir/z3.params")
 
         jarPath = "$rootDir/kex-test/target/kex-test-$version-jar-with-dependencies.jar"
-        val jar = Jar(jarPath, `package`)
+        val jar = Paths.get(jarPath).asContainer(`package`)!!
         loader = jar.classLoader
         cm = ClassManager(KfgConfig(flags = Flags.readAll, failOnError = true))
         cm.initialize(jar)

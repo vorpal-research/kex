@@ -4,9 +4,9 @@ import ${importPackage}.*
 import org.jetbrains.research.kex.ktype.*
 import org.jetbrains.research.kex.smt.${solver.toLowerCase()}.${solver}Engine
 import org.jetbrains.research.kex.smt.SMTEngine
-import com.abdullin.kthelper.defaultHashCode
-import com.abdullin.kthelper.logging.*
-import com.abdullin.kthelper.assert.*
+import org.jetbrains.research.kthelper.defaultHashCode
+import org.jetbrains.research.kthelper.logging.*
+import org.jetbrains.research.kthelper.assert.*
 
 #set($valexpr = "${solver}ValueExpr")
 #set($Bool = "${solver}Bool")

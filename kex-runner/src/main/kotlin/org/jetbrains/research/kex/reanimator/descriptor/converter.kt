@@ -1,7 +1,7 @@
 package org.jetbrains.research.kex.reanimator.descriptor
 
-import com.abdullin.kthelper.assert.unreachable
-import com.abdullin.kthelper.logging.log
+import org.jetbrains.research.kthelper.assert.unreachable
+import org.jetbrains.research.kthelper.logging.log
 import org.jetbrains.research.kex.config.kexConfig
 import org.jetbrains.research.kex.ktype.*
 import org.jetbrains.research.kex.util.allFields

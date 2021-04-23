@@ -1,6 +1,6 @@
 package org.jetbrains.research.kex.test.generation
 
-import org.jetbrains.research.kex.test.Intrinsics
+import org.jetbrains.research.kex.Intrinsics.kexAssert
 
 
 class ObjectGenerationTests {
@@ -21,14 +21,14 @@ class ObjectGenerationTests {
     fun testLine(line: Line?) {
         if (line == null) return
         if (line.start != null) {
-            Intrinsics.assertReachable()
+            kexAssert()
         }
         if (line.end != null) {
-            Intrinsics.assertReachable()
+            kexAssert()
         }
         if (line.start == line.end) {
-            Intrinsics.assertReachable()
+            kexAssert()
         }
-        Intrinsics.assertReachable()
+        kexAssert()
     }
 }

@@ -1,6 +1,6 @@
 package org.jetbrains.research.kex
 
-import com.abdullin.kthelper.`try`
+import org.jetbrains.research.kthelper.`try`
 import com.beust.klaxon.Json
 import com.beust.klaxon.Klaxon
 

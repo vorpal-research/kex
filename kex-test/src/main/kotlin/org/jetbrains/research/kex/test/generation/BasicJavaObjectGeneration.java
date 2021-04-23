@@ -1,6 +1,6 @@
 package org.jetbrains.research.kex.test.generation;
 
-import org.jetbrains.research.kex.test.Intrinsics;
+import static org.jetbrains.research.kex.Intrinsics.*;
 
 import java.util.Objects;
 
@@ -42,25 +42,25 @@ public class BasicJavaObjectGeneration {
 
     public void checkPoint(Point p1, Point p2) {
         if (p1.x > p2.x) {
-            Intrinsics.assertReachable();
+            kexAssert();
         }
         if (p1.z < p2.z) {
-            Intrinsics.assertReachable();
+            kexAssert();
         }
-        Intrinsics.assertReachable();
+        kexAssert();
     }
 
     public void testLine(Line line) {
         if (line == null) return;
         if (line.start != null) {
-            Intrinsics.assertReachable();
+            kexAssert();
         }
         if (line.end != null) {
-            Intrinsics.assertReachable();
+            kexAssert();
         }
         if (Objects.equals(line.start, line.end)) {
-            Intrinsics.assertReachable();
+            kexAssert();
         }
-        Intrinsics.assertReachable();
+        kexAssert();
     }
 }

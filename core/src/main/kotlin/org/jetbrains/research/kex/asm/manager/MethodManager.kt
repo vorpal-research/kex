@@ -71,4 +71,41 @@ object MethodManager {
         )
 
     }
+
+    object KexIntrinsicManager {
+        private const val intrinsicsClass = "org/jetbrains/research/kex/Intrinsics"
+
+        fun kexAssert(cm: ClassManager) = cm[intrinsicsClass].getMethod(
+            "kexAssert",
+            MethodDesc(
+                arrayOf(cm.type.getArrayType(cm.type.boolType)),
+                cm.type.voidType
+            )
+        )
+
+        fun kexAssertWithId(cm: ClassManager) = cm[intrinsicsClass].getMethod(
+            "kexAssert",
+            MethodDesc(
+                arrayOf(cm.type.stringType, cm.type.getArrayType(cm.type.boolType)),
+                cm.type.voidType
+            )
+        )
+
+        fun kexUnreachable(cm: ClassManager) = cm[intrinsicsClass].getMethod(
+            "kexUnreachable",
+            MethodDesc(
+                arrayOf(cm.type.getArrayType(cm.type.boolType)),
+                cm.type.voidType
+            )
+        )
+
+        fun kexUnreachableWithId(cm: ClassManager) = cm[intrinsicsClass].getMethod(
+            "kexUnreachable",
+            MethodDesc(
+                arrayOf(cm.type.stringType, cm.type.getArrayType(cm.type.boolType)),
+                cm.type.voidType
+            )
+        )
+
+    }
 }

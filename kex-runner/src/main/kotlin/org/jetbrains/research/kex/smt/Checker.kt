@@ -1,6 +1,5 @@
 package org.jetbrains.research.kex.smt
 
-import com.abdullin.kthelper.logging.log
 import org.jetbrains.research.kex.annotations.AnnotationManager
 import org.jetbrains.research.kex.asm.state.PredicateStateAnalysis
 import org.jetbrains.research.kex.config.kexConfig
@@ -14,6 +13,7 @@ import org.jetbrains.research.kex.state.transformer.*
 import org.jetbrains.research.kfg.ir.BasicBlock
 import org.jetbrains.research.kfg.ir.Method
 import org.jetbrains.research.kfg.ir.value.instruction.Instruction
+import org.jetbrains.research.kthelper.logging.log
 
 class Checker(val method: Method, val loader: ClassLoader, private val psa: PredicateStateAnalysis) {
     private val isInliningEnabled = kexConfig.getBooleanValue("smt", "ps-inlining", true)
@@ -48,6 +48,8 @@ class Checker(val method: Method, val loader: ClassLoader, private val psa: Pred
             +MethodInliner(psa)
         }
 
+        +StaticFieldInliner(method.cm, psa)
+        +RecursiveInliner(psa) { MethodInliner(psa, inlineIndex = it) }
         +IntrinsicAdapter
         +ReflectionInfoAdapter(method, loader)
         +Optimizer()
@@ -56,11 +58,14 @@ class Checker(val method: Method, val loader: ClassLoader, private val psa: Pred
         +ConstStringAdapter()
         +ArrayBoundsAdapter()
         +NullityInfoAdapter()
+        +FieldNormalizer(method.cm)
     }
 
     fun prepareState(method: Method, ps: PredicateState, typeInfoMap: TypeInfoMap) = transform(ps) {
         +AnnotationAdapter(method, AnnotationManager.defaultLoader)
-        +RecursiveInliner(psa) { ConcreteImplInliner(method.cm.type, typeInfoMap, psa, it) }
+        +RecursiveInliner(psa) { ConcreteImplInliner(method.cm.type, typeInfoMap, psa, inlineIndex = it) }
+        +StaticFieldInliner(method.cm, psa)
+        +RecursiveInliner(psa) { MethodInliner(psa, inlineIndex = it) }
         +IntrinsicAdapter
         +ReflectionInfoAdapter(method, loader)
         +Optimizer()
@@ -69,6 +74,7 @@ class Checker(val method: Method, val loader: ClassLoader, private val psa: Pred
         +ConstStringAdapter()
         +ArrayBoundsAdapter()
         +NullityInfoAdapter()
+        +FieldNormalizer(method.cm)
     }
 
     fun prepareAndCheck(ps: PredicateState): Result {

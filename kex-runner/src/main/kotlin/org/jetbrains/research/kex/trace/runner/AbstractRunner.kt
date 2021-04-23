@@ -1,7 +1,6 @@
 package org.jetbrains.research.kex.trace.runner
 
-import com.abdullin.kthelper.`try`
-import com.abdullin.kthelper.logging.log
+import org.jetbrains.research.kthelper.logging.log
 import org.jetbrains.research.kex.config.kexConfig
 import org.jetbrains.research.kex.util.getConstructor
 import org.jetbrains.research.kex.util.getMethod
@@ -17,7 +16,7 @@ private val timeout = kexConfig.getLongValue("runner", "timeout", 1000L)
 class TimeoutException : Exception()
 
 @Suppress("SameParameterValue")
-private fun runWithTimeout(timeout: Long, body: () -> Unit) {
+fun runWithTimeout(timeout: Long, body: () -> Unit) {
     val thread = Thread(body)
 
     thread.start()
@@ -62,10 +61,10 @@ abstract class AbstractRunner(val method: Method, protected val loader: ClassLoa
     protected val javaConstructor by lazy { javaClass.getConstructor(method, loader) }
 
     protected open fun invoke(constructor: Constructor<*>, args: Array<Any?>): InvocationResult {
-        `try` {
-            log.debug("Running $method")
-            log.debug("Args: ${args.map { it.toString() }}")
-        }
+//        `try` {
+//            log.debug("Running $method")
+//            log.debug("Args: ${args.map { it.toString() }}")
+//        }
 
         val oldOut = System.out
         val oldErr = System.err
@@ -102,11 +101,11 @@ abstract class AbstractRunner(val method: Method, protected val loader: ClassLoa
     }
 
     protected open fun invoke(method: ReflectMethod, instance: Any?, args: Array<Any?>): InvocationResult {
-        `try` {
-            log.debug("Running $method")
-            log.debug("Instance: $instance")
-            log.debug("Args: ${args.map { it.toString() }}")
-        }
+//        `try` {
+//            log.debug("Running $method")
+//            log.debug("Instance: $instance")
+//            log.debug("Args: ${args.map { it.toString() }}")
+//        }
 
         val oldOut = System.out
         val oldErr = System.err

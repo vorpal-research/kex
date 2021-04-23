@@ -1,7 +1,6 @@
 package org.jetbrains.research.kex
 
-import com.abdullin.kthelper.logging.log
-import org.jetbrains.research.kex.asm.analysis.MethodChecker
+import org.jetbrains.research.kex.asm.analysis.testgen.MethodChecker
 import org.jetbrains.research.kex.asm.state.PredicateStateAnalysis
 import org.jetbrains.research.kex.asm.transform.LoopDeroller
 import org.jetbrains.research.kex.asm.transform.RuntimeTraceCollector
@@ -13,12 +12,11 @@ import org.jetbrains.research.kex.state.term.ConstBoolTerm
 import org.jetbrains.research.kex.state.term.ConstIntTerm
 import org.jetbrains.research.kex.state.term.isConst
 import org.jetbrains.research.kex.state.term.term
-import org.jetbrains.research.kex.test.Intrinsics
 import org.jetbrains.research.kex.trace.`object`.ObjectTraceManager
 import org.jetbrains.research.kfg.ClassManager
-import org.jetbrains.research.kfg.Jar
 import org.jetbrains.research.kfg.KfgConfig
 import org.jetbrains.research.kfg.analysis.LoopSimplifier
+import org.jetbrains.research.kfg.container.asContainer
 import org.jetbrains.research.kfg.ir.Class
 import org.jetbrains.research.kfg.ir.Method
 import org.jetbrains.research.kfg.ir.MethodDesc
@@ -27,8 +25,10 @@ import org.jetbrains.research.kfg.ir.value.instruction.CallInst
 import org.jetbrains.research.kfg.ir.value.instruction.Instruction
 import org.jetbrains.research.kfg.util.Flags
 import org.jetbrains.research.kfg.visitor.executePipeline
+import org.jetbrains.research.kthelper.logging.log
 import java.net.URLClassLoader
 import java.nio.file.Files
+import java.nio.file.Paths
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
@@ -40,7 +40,7 @@ abstract class KexRunnerTest : KexTest() {
     val originalContext: ExecutionContext
 
     init {
-        val jar = Jar(jarPath, `package`)
+        val jar = Paths.get(jarPath).asContainer(`package`)!!
         val origManager = ClassManager(KfgConfig(flags = Flags.readAll, failOnError = false))
 
         jar.unpack(cm, targetDir, true)
@@ -60,7 +60,7 @@ abstract class KexRunnerTest : KexTest() {
         val intrinsics = cm[`class`]
 
         val types = cm.type
-        val methodName = Intrinsics::assertReachable.name
+        val methodName = "kexAssert"
         val desc = MethodDesc(arrayOf(types.getArrayType(types.boolType)), types.voidType)
         val assertReachable = intrinsics.getMethod(methodName, desc)
         return method.flatten().asSequence()
@@ -73,7 +73,7 @@ abstract class KexRunnerTest : KexTest() {
         val `class` = Intrinsics::class.qualifiedName!!.replace(".", "/")
         val intrinsics = cm[`class`]
 
-        val methodName = Intrinsics::assertUnreachable.name
+        val methodName = "kexUnreachable"
         val desc = MethodDesc(arrayOf(), cm.type.voidType)
         val assertUnreachable = intrinsics.getMethod(methodName, desc)
         return method.flatten().asSequence()

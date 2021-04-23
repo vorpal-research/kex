@@ -1,6 +1,9 @@
 @file:Suppress("UNUSED_PARAMETER", "UNUSED_VARIABLE", "SENSELESS_COMPARISON")
 package org.jetbrains.research.kex.test
 
+import org.jetbrains.research.kex.Intrinsics.kexAssert
+import org.jetbrains.research.kex.Intrinsics.kexUnreachable
+
 class ObjectTests {
 
     data class Point(val x: Int, val y: Int, val z: Int)
@@ -12,9 +15,9 @@ class ObjectTests {
         val ten = Point(x = x2, y = 10, z = 10)
 
         if (ten.x > zero.x) {
-            Intrinsics.assertReachable()
+            kexAssert()
         } else {
-            Intrinsics.assertReachable()
+            kexAssert()
         }
     }
 
@@ -23,9 +26,9 @@ class ObjectTests {
         val ten = Point(x = 10, y = y2, z = 10)
 
         if (ten.x > zero.x) {
-            Intrinsics.assertReachable()
+            kexAssert()
         } else {
-            Intrinsics.assertUnreachable()
+            kexUnreachable()
         }
     }
 
@@ -40,15 +43,15 @@ class ObjectTests {
 
         val result = Line(Point(xs.toInt(), ys.toInt(), zs.toInt()), Point(xe.toInt(), ye.toInt(), ze.toInt()))
         println(result.start)
-        Intrinsics.assertReachable()
+        kexAssert()
         return result
     }
 
     fun testNullability(line: Line) {
         val start = line.start
         if (null == start)
-            Intrinsics.assertUnreachable()
+            kexUnreachable()
         else
-            Intrinsics.assertReachable()
+            kexAssert()
     }
 }

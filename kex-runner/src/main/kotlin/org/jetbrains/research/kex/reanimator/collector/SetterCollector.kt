@@ -1,8 +1,5 @@
 package org.jetbrains.research.kex.reanimator.collector
 
-import com.abdullin.kthelper.`try`
-import com.abdullin.kthelper.assert.asserted
-import com.abdullin.kthelper.logging.log
 import org.jetbrains.research.kex.ExecutionContext
 import org.jetbrains.research.kex.util.eq
 import org.jetbrains.research.kex.util.loadClass
@@ -11,6 +8,9 @@ import org.jetbrains.research.kfg.ClassManager
 import org.jetbrains.research.kfg.ir.Field
 import org.jetbrains.research.kfg.ir.Method
 import org.jetbrains.research.kfg.visitor.ClassVisitor
+import org.jetbrains.research.kthelper.`try`
+import org.jetbrains.research.kthelper.assert.asserted
+import org.jetbrains.research.kthelper.logging.log
 import kotlin.reflect.KMutableProperty
 import kotlin.reflect.KType
 import kotlin.reflect.full.memberProperties
@@ -66,7 +66,7 @@ class SetterCollector(val ctx: ExecutionContext) : ClassVisitor {
         val fieldReflection = fieldInstances.first()
         val methodFA = method.fieldAccesses
         if (methodFA.size == 1
-                && fieldReflection eq methodFA.first()
+                && `try` { fieldReflection.eq(ctx.loader, methodFA.first()) }.getOrElse { false }
                 && method.argTypes.size == 1
                 && fieldReflection.type.isAssignableFrom(ctx.loader.loadClass(method.argTypes.first()))) {
             log.info("Method $method is java setter for $fieldReflection")

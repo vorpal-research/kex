@@ -1,6 +1,7 @@
 package org.jetbrains.research.kex.test.generation
 
-import org.jetbrains.research.kex.test.Intrinsics
+import org.jetbrains.research.kex.Intrinsics.kexAssert
+import org.jetbrains.research.kex.Intrinsics.kexUnreachable
 
 class AbstractClassTests {
     abstract class AbstractClass(val x: Int, val y: Int)
@@ -13,12 +14,12 @@ class AbstractClassTests {
 
     fun testAbstractClass(klass: AbstractClass) {
         if (klass.x > klass.y) {
-            Intrinsics.assertReachable()
+            kexAssert()
         }
         if (klass is SecondImpl) {
-            Intrinsics.assertReachable()
+            kexAssert()
         } else if (klass is ThirdImpl) {
-            Intrinsics.assertReachable()
+            kexUnreachable()
         }
     }
 
@@ -35,14 +36,14 @@ class AbstractClassTests {
 
     fun testInterface(interfaceInstance: Interface) {
         if (interfaceInstance.value > 50) {
-            Intrinsics.assertReachable()
+            kexAssert()
             if (interfaceInstance is ACAndInterface) {
-                Intrinsics.assertReachable()
+                kexAssert()
             }
         } else if (interfaceInstance is InterfaceImpl) {
-            Intrinsics.assertReachable()
+            kexAssert()
         } else {
-            Intrinsics.assertReachable()
+            kexAssert()
         }
     }
 }

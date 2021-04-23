@@ -1,24 +1,23 @@
-package org.jetbrains.research.kex.asm.analysis
+package org.jetbrains.research.kex.asm.analysis.testgen
 
-import com.abdullin.kthelper.`try`
-import com.abdullin.kthelper.algorithm.DominatorTreeBuilder
-import com.abdullin.kthelper.logging.debug
-import com.abdullin.kthelper.logging.log
 import kotlinx.serialization.Contextual
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.InternalSerializationApi
 import kotlinx.serialization.Serializable
 import org.jetbrains.research.kex.ExecutionContext
+import org.jetbrains.research.kex.asm.analysis.DfsStrategy
+import org.jetbrains.research.kex.asm.analysis.SearchStrategy
 import org.jetbrains.research.kex.asm.manager.isImpactable
+import org.jetbrains.research.kex.asm.manager.originalBlock
 import org.jetbrains.research.kex.asm.state.PredicateStateAnalysis
-import org.jetbrains.research.kex.asm.transform.originalBlock
 import org.jetbrains.research.kex.config.kexConfig
 import org.jetbrains.research.kex.random.GenerationException
 import org.jetbrains.research.kex.random.Randomizer
-import org.jetbrains.research.kex.reanimator.Reanimator
+import org.jetbrains.research.kex.reanimator.ParameterGenerator
+import org.jetbrains.research.kex.reanimator.Parameters
+import org.jetbrains.research.kex.reanimator.ReflectionReanimator
 import org.jetbrains.research.kex.serialization.KexSerializer
 import org.jetbrains.research.kex.smt.Checker
-import org.jetbrains.research.kex.smt.ReanimatedModel
 import org.jetbrains.research.kex.smt.Result
 import org.jetbrains.research.kex.state.PredicateState
 import org.jetbrains.research.kex.trace.TraceManager
@@ -31,13 +30,18 @@ import org.jetbrains.research.kfg.ir.Class
 import org.jetbrains.research.kfg.ir.Method
 import org.jetbrains.research.kfg.ir.value.instruction.UnreachableInst
 import org.jetbrains.research.kfg.visitor.MethodVisitor
+import org.jetbrains.research.kthelper.`try`
+import org.jetbrains.research.kthelper.algorithm.DominatorTreeBuilder
+import org.jetbrains.research.kthelper.logging.debug
+import org.jetbrains.research.kthelper.logging.log
+import org.jetbrains.research.kthelper.tryOrNull
 import java.nio.file.Files
 import java.nio.file.Paths
 
 private val failDir get() = kexConfig.getStringValue("debug", "dump-directory", "./fail")
 
 class KexCheckerException(val inner: Exception, val reason: PredicateState) : Exception()
-class KexRunnerException(val inner: Exception, val model: ReanimatedModel) : Exception()
+class KexRunnerException(val inner: Exception, val model: Parameters<Any?>) : Exception()
 
 @Serializable
 data class Failure(
@@ -54,7 +58,7 @@ open class MethodChecker(
     override val cm: ClassManager get() = ctx.cm
     val random: Randomizer get() = ctx.random
     val loader: ClassLoader get() = ctx.loader
-    lateinit var generator: Reanimator //= Reanimator(ctx, psa)
+    lateinit var generator: ParameterGenerator
         protected set
 
     @ExperimentalSerializationApi
@@ -67,11 +71,13 @@ open class MethodChecker(
         val errorDump = Files.createTempFile(failDirPath, "ps-", ".json").toFile()
         log.error("Failing saved to file ${errorDump.path}")
         errorDump.writeText(KexSerializer(cm).toJson(Failure(method.`class`, method, message, state)))
-    }.getOrElse {
-        log.error("Could not save failing PS to file")
-    }
+    }.getOrNull()
 
     override fun cleanup() {}
+
+    open protected fun initializeGenerator(method: Method) {
+        generator = ReflectionReanimator(ctx, psa)
+    }
 
     open protected fun getSearchStrategy(method: Method): SearchStrategy = DfsStrategy(method)
 
@@ -80,9 +86,7 @@ open class MethodChecker(
     override fun visit(method: Method) {
         super.visit(method)
 
-        if (method.`class`.isSynthetic) return
-        if (method.isAbstract || method.isStaticInitializer) return
-        if (!method.isImpactable) return
+        if (!method.isImpactable || !method.hasBody) return
 
         log.debug("Checking method $method")
         log.debug(method.print())
@@ -92,7 +96,7 @@ open class MethodChecker(
         val domTree = DominatorTreeBuilder(method).build()
         val order: SearchStrategy = getSearchStrategy(method)
 
-        generator = Reanimator(ctx, psa, method)
+        initializeGenerator(method)
 
         for (block in order) {
             if (block.terminator is UnreachableInst) {
@@ -148,7 +152,7 @@ open class MethodChecker(
         when (result) {
             is Result.SatResult -> {
                 val (instance, args) = try {
-                    generator.generateFromModel(checker.state, result.model)
+                    generator.generate("", method, checker.state, result.model)
                 } catch (e: GenerationException) {
                     log.warn(e.message)
                     return result
@@ -159,7 +163,7 @@ open class MethodChecker(
                 } catch (e: TimeoutException) {
                     throw e
                 } catch (e: Exception) {
-                    throw KexRunnerException(e, ReanimatedModel(method, instance, args.toList()))
+                    throw KexRunnerException(e, Parameters(instance, args, setOf()))
                 }
             }
             is Result.UnsatResult -> log.debug("Instruction ${block.terminator.print()} is unreachable")
@@ -169,9 +173,9 @@ open class MethodChecker(
         return result
     }
 
-    protected fun collectTrace(method: Method, instance: Any?, args: Array<Any?>) {
+    protected fun collectTrace(method: Method, instance: Any?, args: List<Any?>) = tryOrNull {
         val runner = ObjectTracingRunner(method, loader)
-        val trace = runner.collectTrace(instance, args)
+        val trace = runner.collectTrace(instance, args.toTypedArray())
         tm[method] = trace
     }
 }

@@ -1,6 +1,6 @@
 package org.jetbrains.research.kex.state.transformer
 
-import com.abdullin.kthelper.collection.dequeOf
+import org.jetbrains.research.kthelper.collection.dequeOf
 import org.jetbrains.research.kex.asm.manager.MethodManager
 import org.jetbrains.research.kex.asm.state.PredicateStateAnalysis
 import org.jetbrains.research.kex.config.kexConfig
@@ -9,6 +9,7 @@ import org.jetbrains.research.kex.state.PredicateState
 import org.jetbrains.research.kex.state.StateBuilder
 import org.jetbrains.research.kex.state.predicate.CallPredicate
 import org.jetbrains.research.kex.state.predicate.Predicate
+import org.jetbrains.research.kex.state.predicate.state
 import org.jetbrains.research.kex.state.term.*
 import org.jetbrains.research.kfg.ir.Method
 
@@ -24,6 +25,7 @@ private val defaultDepth = kexConfig.getIntValue("inliner", "depth", 5)
 interface Inliner<T> : RecollectingTransformer<Inliner<T>> {
     val im: MethodManager.InlineManager
     val psa: PredicateStateAnalysis
+    val inlineSuffix: String
     var inlineIndex: Int
     var hasInlined: Boolean
 
@@ -36,7 +38,8 @@ interface Inliner<T> : RecollectingTransformer<Inliner<T>> {
         return super.apply(ps)
     }
 
-    fun buildMappings(callTerm: CallTerm, method: Method, returnTerm: Term?): Map<Term, Term> {
+    fun buildMappings(callTerm: CallTerm, method: Method, returnTerm: Term?): Pair<List<Predicate>, Map<Term, Term>> {
+        val casts = mutableListOf<Predicate>()
         val mappings = hashMapOf<Term, Term>()
         if (!callTerm.isStatic) {
             val `this` = term { `this`(method.`class`.kexType) }
@@ -49,11 +52,22 @@ interface Inliner<T> : RecollectingTransformer<Inliner<T>> {
 
         for ((index, argType) in method.argTypes.withIndex()) {
             val argTerm = term { arg(argType.kexType, index) }
-            val calledArg = callTerm.arguments[index]
-            mappings[argTerm] = calledArg
+            when (val calledArg = callTerm.arguments[index]) {
+                is NullTerm -> {
+                    val casted = state {
+                        val newArg = generate(argTerm.type)
+                        mappings[argTerm] = newArg
+                        newArg equality calledArg
+                    }
+                    casts += casted
+                }
+                else -> {
+                    mappings[argTerm] = calledArg
+                }
+            }
         }
 
-        return mappings
+        return casts to mappings
     }
 
     fun prepareInlinedState(method: Method, mappings: Map<Term, Term>): PredicateState? {
@@ -71,9 +85,10 @@ interface Inliner<T> : RecollectingTransformer<Inliner<T>> {
         if (!isInlinable(calledMethod)) return predicate
 
         val inlinedMethod = getInlinedMethod(call) ?: return predicate
-        val mappings = buildMappings(call, inlinedMethod, predicate.lhvUnsafe)
+        val (casts, mappings) = buildMappings(call, inlinedMethod, predicate.lhvUnsafe)
 
         val inlinedState = prepareInlinedState(inlinedMethod, mappings) ?: return predicate
+        casts.onEach { currentBuilder += it }
         currentBuilder += inlinedState
         hasInlined = true
         return nothing()
@@ -81,6 +96,7 @@ interface Inliner<T> : RecollectingTransformer<Inliner<T>> {
 }
 
 class MethodInliner(override val psa: PredicateStateAnalysis,
+                    override val inlineSuffix: String = "inlined",
                     override var inlineIndex: Int = 0) : Inliner<MethodInliner> {
     override val im = MethodManager.InlineManager
     override val builders = dequeOf(StateBuilder())
@@ -88,6 +104,7 @@ class MethodInliner(override val psa: PredicateStateAnalysis,
 }
 
 class RecursiveInliner<T>(override val psa: PredicateStateAnalysis,
+                          override val inlineSuffix: String = "recursive",
                           val maxDepth: Int = defaultDepth,
                           val inlinerBuilder: (Int) -> Inliner<T>) : Inliner<RecursiveInliner<T>> {
     override val im = MethodManager.InlineManager

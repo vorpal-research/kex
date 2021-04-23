@@ -1,6 +1,6 @@
 package org.jetbrains.research.kex.asm.transform
 
-import com.abdullin.kthelper.collection.buildList
+import org.jetbrains.research.kthelper.collection.buildList
 import org.jetbrains.research.kex.trace.`object`.TraceCollector
 import org.jetbrains.research.kex.trace.`object`.TraceCollectorProxy
 import org.jetbrains.research.kfg.ClassManager
@@ -24,7 +24,7 @@ class RuntimeTraceCollector(override val cm: ClassManager) : MethodVisitor {
     private fun Method.isInstrumented(): Boolean {
         val klass = this.`class`
         if (klass !in cm.concreteClasses) return false
-        return true
+        return hasBody
     }
 
     private fun Value.wrap(): Instruction {
@@ -156,8 +156,6 @@ class RuntimeTraceCollector(override val cm: ClassManager) : MethodVisitor {
     }.insertBefore(inst)
 
     override fun visitCallInst(inst: CallInst) {
-        if (!inst.method.isInstrumented()) return
-
         buildList<Instruction> {
             val callMethod = collectorClass.getMethod("methodCall", MethodDesc(
                     arrayOf(type.stringType, type.stringType, type.getArrayType(type.stringType),
@@ -203,7 +201,7 @@ class RuntimeTraceCollector(override val cm: ClassManager) : MethodVisitor {
 
     override fun visit(method: Method) {
 //        if (method.isStaticInitializer) return
-        if (method.isEmpty()) return
+        if (!method.hasBody) return
 
         val methodEntryInsts = when {
             method.isStaticInitializer -> buildList {

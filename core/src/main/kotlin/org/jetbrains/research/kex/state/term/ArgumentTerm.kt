@@ -1,6 +1,6 @@
 package org.jetbrains.research.kex.state.term
 
-import com.abdullin.kthelper.defaultHashCode
+import org.jetbrains.research.kthelper.defaultHashCode
 import kotlinx.serialization.Serializable
 import org.jetbrains.research.kex.InheritorOf
 import org.jetbrains.research.kex.ktype.KexType

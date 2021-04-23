@@ -1,10 +1,11 @@
 package org.jetbrains.research.kex.config
 
-import com.abdullin.kthelper.assert.exit
-import com.abdullin.kthelper.logging.log
+import org.jetbrains.research.kthelper.assert.exit
+import org.jetbrains.research.kthelper.logging.log
 import org.apache.commons.cli.*
 import java.io.PrintWriter
 import java.io.StringWriter
+import java.util.regex.Pattern
 import org.apache.commons.cli.CommandLine as Cmd
 
 class CmdConfig(args: Array<String>) : Config() {
@@ -53,8 +54,13 @@ class CmdConfig(args: Array<String>) : Config() {
         helpOpt.isRequired = false
         options.addOption(helpOpt)
 
-        val jarOpt = Option("j", "jar", true, "input jar file path")
-        jarOpt.isRequired = true
+        val jarOpt = Option.builder("cp")
+                .longOpt("classpath")
+                .hasArg(true)
+                .argName("arg[:arg]")
+                .desc("classpath for analysis, jar files and directories separated by `:`")
+                .required(true)
+                .build()
         options.addOption(jarOpt)
 
         val packageOpt = Option("t", "target", true, "target to analyze: package, class or method")
@@ -87,7 +93,7 @@ class CmdConfig(args: Array<String>) : Config() {
                 .build()
         options.addOption(config)
 
-        val mode = Option("m", "mode", true, "run mode: bmc, concolic or debug")
+        val mode = Option("m", "mode", true, "run mode: symbolic, concolic or debug")
         mode.isRequired = false
         options.addOption(mode)
     }
@@ -109,11 +115,18 @@ class CmdConfig(args: Array<String>) : Config() {
             return sw.toString()
         }
 
-    inline fun <reified T : Enum<T>> getEnumValue(name: String): Enum<T>? {
+    inline fun <reified T : Enum<T>> getEnumValue(name: String, ignoreCase: Boolean = false): Enum<T>? {
         val constName = getCmdValue(name) ?: return null
-        return T::class.java.enumConstants.firstOrNull { it.name == constName }
+        val comparator = when {
+            ignoreCase -> { a: String, b: String ->
+                val pattern = Pattern.compile(a, Pattern.CASE_INSENSITIVE)
+                pattern.matcher(b).find()
+            }
+            else -> { a: String, b: String -> a == b }
+        }
+        return T::class.java.enumConstants.firstOrNull { comparator(it.name, constName) }
     }
 
-    inline fun <reified T : Enum<T>> getEnumValue(name: String, default: T): Enum<T> =
-            getEnumValue(name) ?: default
+    inline fun <reified T : Enum<T>> getEnumValue(name: String, default: T, ignoreCase: Boolean = false): Enum<T> =
+            getEnumValue(name, ignoreCase) ?: default
 }

@@ -1,6 +1,6 @@
 package org.jetbrains.research.kex.trace.runner
 
-import com.abdullin.kthelper.logging.log
+import org.jetbrains.research.kthelper.logging.log
 import org.jetbrains.research.kex.random.GenerationException
 import org.jetbrains.research.kex.random.Randomizer
 import org.jetbrains.research.kex.util.isStatic
@@ -8,12 +8,12 @@ import java.lang.reflect.Constructor
 import java.lang.reflect.Method
 import org.jetbrains.research.kfg.ir.Method as KfgMethod
 
-private fun generate(random: Randomizer, klass: Class<*>, method: Method): Pair<Any?, Array<Any?>?> = try {
+fun Randomizer.generate(klass: Class<*>, method: Method): Pair<Any?, Array<Any?>?> = try {
     val i = when {
         method.isStatic -> null
-        else -> random.next(klass)
+        else -> next(klass)
     }
-    val a = method.genericParameterTypes.map { random.next(it) }.toTypedArray()
+    val a = method.genericParameterTypes.map { next(it) }.toTypedArray()
     i to a
 } catch (e: GenerationException) {
     log.debug("Cannot invoke $method")
@@ -21,8 +21,8 @@ private fun generate(random: Randomizer, klass: Class<*>, method: Method): Pair<
     null to null
 }
 
-private fun generate(random: Randomizer, method: Constructor<*>): Array<Any?>? = try {
-   method.genericParameterTypes.map { random.next(it) }.toTypedArray()
+fun Randomizer.generate(method: Constructor<*>): Array<Any?>? = try {
+   method.genericParameterTypes.map { next(it) }.toTypedArray()
 } catch (e: GenerationException) {
     log.debug("Cannot invoke $method")
     log.debug("Cause: ${e.message}")
@@ -35,8 +35,8 @@ open class RandomRunner(method: KfgMethod, loader: ClassLoader, val random: Rand
 
     open fun run(): InvocationResult? {
         val (instance, args) = when {
-            method.isConstructor -> null to generate(random, javaConstructor)
-            else -> generate(random, javaClass, javaMethod)
+            method.isConstructor -> null to random.generate(javaConstructor)
+            else -> random.generate(javaClass, javaMethod)
         }
         check(args != null) { "Cannot generate parameters to invoke method $method" }
 
@@ -54,8 +54,8 @@ abstract class TracingRandomRunner<T>(method: KfgMethod, loader: ClassLoader, va
 
     open fun run() : T? {
         val (instance, args) = when {
-            method.isConstructor -> null to generate(random, javaConstructor)
-            else -> generate(random, javaClass, javaMethod)
+            method.isConstructor -> null to random.generate(javaConstructor)
+            else -> random.generate(javaClass, javaMethod)
         }
         if (args == null || (!method.isStatic && !method.isConstructor && instance == null)) {
             log.error("Cannot generate parameters to invoke method $method")

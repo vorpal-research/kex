@@ -1,6 +1,6 @@
 package org.jetbrains.research.kex.state.predicate
 
-import com.abdullin.kthelper.assert.asserted
+import org.jetbrains.research.kthelper.assert.asserted
 import kotlinx.serialization.Contextual
 import kotlinx.serialization.Required
 import kotlinx.serialization.Serializable

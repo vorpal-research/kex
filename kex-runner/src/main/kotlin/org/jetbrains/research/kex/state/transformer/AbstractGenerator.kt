@@ -1,7 +1,7 @@
 package org.jetbrains.research.kex.state.transformer
 
-import com.abdullin.kthelper.assert.unreachable
-import com.abdullin.kthelper.logging.log
+import org.jetbrains.research.kthelper.assert.unreachable
+import org.jetbrains.research.kthelper.logging.log
 import org.jetbrains.research.kex.ExecutionContext
 import org.jetbrains.research.kex.ktype.KexClass
 import org.jetbrains.research.kex.ktype.kexType
@@ -37,11 +37,11 @@ interface AbstractGenerator<T> : Transformer<AbstractGenerator<T>> {
     val memory: MutableMap<Term, T>
     var thisTerm: Term?
     val argTerms: MutableMap<Int, Term>
-    val staticFieldTerms: MutableSet<FieldTerm>
+    val staticFieldOwners: MutableSet<Term>
 
     val instance get() = thisTerm?.let { memory[it] }
     val args get() = argTerms.map { memory[it.value] }.toList()
-    val staticFields get() = staticFieldTerms.map { it to memory[it] }.toMap()
+    val staticFields get() = staticFieldOwners.map { memory[it]!! }.toSet()
 
     fun generateThis() = thisTerm?.let {
         memory[it] = modelReanimator.reanimate(it)
@@ -79,7 +79,7 @@ interface AbstractGenerator<T> : Transformer<AbstractGenerator<T>> {
         val vars = collectPointers(ps)
         vars.forEach { ptr ->
             if (ptr is FieldTerm && ptr.isStatic) {
-                staticFieldTerms += ptr
+                staticFieldOwners += ptr.owner
             }
             reanimateTerm(ptr)
         }

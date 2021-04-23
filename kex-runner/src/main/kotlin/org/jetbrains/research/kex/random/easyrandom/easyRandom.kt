@@ -1,8 +1,8 @@
 package org.jetbrains.research.kex.random.easyrandom
 
-import com.abdullin.kthelper.assert.ktassert
-import com.abdullin.kthelper.logging.log
-import com.abdullin.kthelper.tryOrNull
+import org.jetbrains.research.kthelper.assert.ktassert
+import org.jetbrains.research.kthelper.logging.log
+import org.jetbrains.research.kthelper.tryOrNull
 import org.jeasy.random.EasyRandom
 import org.jeasy.random.EasyRandomParameters
 import org.jeasy.random.ObjectCreationException
@@ -15,6 +15,7 @@ import org.jetbrains.research.kex.config.kexConfig
 import org.jetbrains.research.kex.random.GenerationException
 import org.jetbrains.research.kex.random.Randomizer
 import org.jetbrains.research.kex.random.UnknownTypeException
+import org.jetbrains.research.kex.util.isStatic
 import org.jetbrains.research.kfg.Package
 import org.objenesis.ObjenesisStd
 import java.lang.reflect.ParameterizedType
@@ -109,7 +110,7 @@ class EasyRandomDriver(val config: BeansConfig = defaultConfig) : Randomizer {
         else -> generateObject(klass)
     }
 
-    private fun generateParameterized(type: ParameterizedType): Any? {
+    private fun generateParameterized(type: ParameterizedType, depth: Int): Any? {
         val rawType = type.rawType as? Class<*> ?: throw UnknownTypeException(type.toString())
         return when {
             Collection::class.java.isAssignableFrom(rawType) -> {
@@ -126,42 +127,50 @@ class EasyRandomDriver(val config: BeansConfig = defaultConfig) : Randomizer {
                 mr.randomValue
             }
             else -> {
-                val obj = next(rawType)
-                val typeParams = rawType.typeParameters.zip(type.actualTypeArguments).toMap()
-                for (it in rawType.declaredFields) {
-                    val genType = typeParams[it.genericType as? TypeVariable<*>] ?: it.genericType
-                    it.isAccessible = true
-                    val value = next(genType)
-                    it.set(obj, value)
+                val obj = next(rawType, depth)
+                if (obj != null) {
+                    val typeParams = rawType.typeParameters.zip(type.actualTypeArguments).toMap()
+                    for (it in rawType.declaredFields.filterNot { it.isStatic }) {
+                        val genType = typeParams[it.genericType as? TypeVariable<*>] ?: it.genericType
+                        it.isAccessible = true
+                        val value = next(genType, depth + 1)
+                        it.set(obj, value)
+                    }
                 }
                 obj
             }
         }
     }
 
-    private fun generateTypeVariable(type: TypeVariable<*>): Any? {
+    private fun generateTypeVariable(type: TypeVariable<*>, depth: Int): Any? {
         val bounds = type.bounds
         assert(bounds.size == 1) { log.debug("Unexpected size of type variable bounds: ${bounds.map { it.typeName }}") }
-        return next(bounds.first())
+        return next(bounds.first(), depth)
     }
 
-    private fun generateType(type: Type): Any? = when (type) {
+    private fun generateType(type: Type, depth: Int): Any? = when (type) {
         is Class<*> -> generateClass(type)
-        is ParameterizedType -> generateParameterized(type)
-        is TypeVariable<*> -> generateTypeVariable(type)
+        is ParameterizedType -> generateParameterized(type, depth)
+        is TypeVariable<*> -> generateTypeVariable(type, depth)
         is WildcardType -> {
             assert(type.upperBounds.size == 1) { log.debug("Unexpected size of wildcard type upper bounds: $type") }
-            generateType(type.upperBounds.first())
+            generateType(type.upperBounds.first(), depth)
         }
         else -> throw UnknownTypeException(type.toString())
     }
 
-    override fun next(type: Type): Any? {
+    fun next(type: Type, depth: Int): Any? {
+        if (depth > config.depth) {
+            log.warn("Reached maximum depth of generation $depth")
+            return null
+        }
         repeat(config.attempts) {
             tryOrNull {
-                return generateType(type)
+                return generateType(type, depth)
             }
         }
         throw GenerationException("Unable to next a random instance of type $type")
     }
+
+    override fun next(type: Type): Any? = next(type, depth = 0)
 }

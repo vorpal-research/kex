@@ -140,11 +140,11 @@ class $self : ${solver}SMTContext {
     fun getLocalPtr(memspace: Int, size: TypeSize): Ptr_ =
             factory.makePtrConst(localPointer).also { localPointer += size.int }
 
-    fun getLocalArray(memspace: Int, length: Int, elementSize: TypeSize): Ptr_ =
+    fun getLocalArray(memspace: Int, length: Int, actualLength: Int_, elementSize: TypeSize): Ptr_ =
             factory.makePtrConst(localPointer).also {
                 val totalSize = length * elementSize.int
                 localPointer += totalSize
-                writeProperty(it, memspace, "length", factory.makeIntConst(length))
+                writeProperty(it, memspace, "length", actualLength)
             }
 
 
@@ -152,11 +152,11 @@ class $self : ${solver}SMTContext {
     fun getStaticPtr(memspace: Int, size: TypeSize): Ptr_ =
             factory.makePtrConst(localPointer).also { localPointer += size.int }
 
-    fun getStaticArray(memspace: Int, length: Int, elementSize: TypeSize): Ptr_ =
+    fun getStaticArray(memspace: Int, length: Int, actualLength: Int_, elementSize: TypeSize): Ptr_ =
             factory.makePtrConst(localPointer).also {
                 val totalSize = length * elementSize.int
                 localPointer += totalSize
-                writeProperty(it, memspace, "length", factory.makeIntConst(length))
+                writeProperty(it, memspace, "length", actualLength)
             }
 
     fun switchOn(name: String, contexts: Map< Bool_, ${solver}Context >): ${solver}Context {

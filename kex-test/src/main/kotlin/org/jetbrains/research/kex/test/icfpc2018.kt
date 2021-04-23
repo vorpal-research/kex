@@ -2,6 +2,8 @@
 
 package org.jetbrains.research.kex.test
 
+import org.jetbrains.research.kex.Intrinsics.kexAssert
+import org.jetbrains.research.kex.Intrinsics.kexUnreachable
 import java.io.ByteArrayInputStream
 import java.io.File
 import java.io.InputStream
@@ -70,13 +72,13 @@ class Icfpc2018Test {
         for ((task, result) in merged) {
             val mode = getModeByModelName(task)
             if (mode == RunMode.REASSEMBLE) {
-                Intrinsics.assertReachable()
+                kexAssert()
 
                 val bestSolution = result.getSortedSolutions().first().second
                 Files.copy(File(bestSolution.trace).toPath(), File("submit/$task.nbt").toPath(),
                         StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.COPY_ATTRIBUTES)
             } else {
-                Intrinsics.assertReachable()
+                kexAssert()
 
                 val targetModel = when (mode) {
                     RunMode.ASSEMBLE -> Model.readMDL(ByteArrayInputStream("models/${task}_tgt.mdl".toByteArray()))
@@ -86,11 +88,11 @@ class Icfpc2018Test {
 
                 var haveSolution = false
                 for ((solutionName, solution) in result.getSortedSolutions()) {
-                    Intrinsics.assertReachable()
+                    kexAssert()
                     val traceFile = File(solution.trace).inputStream()
                     val commands: MutableList<Command> = mutableListOf()
                     while (traceFile.available() != 0) {
-                        Intrinsics.assertReachable()
+                        kexAssert()
                         commands += Command.read(traceFile)
                     }
                     val system = System(state)
@@ -101,26 +103,24 @@ class Icfpc2018Test {
                     }
 
                     if (system.currentState.matrix != targetModel) {
-                        Intrinsics.assertReachable()
+                        kexAssert()
                         continue
                     }
 
                     Files.copy(File(solution.trace).toPath(), File("submit/$task.nbt").toPath(),
                             StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.COPY_ATTRIBUTES)
                     haveSolution = true
-                    Intrinsics.assertReachable()
                     break
-                    Intrinsics.assertUnreachable()
+                    kexUnreachable()
                 }
                 if (!haveSolution) {
-                    Intrinsics.assertReachable()
+                    kexAssert()
                     return
                 }
-                Intrinsics.assertReachable()
             }
         }
 
-        Intrinsics.assertReachable()
+        kexAssert()
         ZipWriter().createZip("submit/")
     }
 

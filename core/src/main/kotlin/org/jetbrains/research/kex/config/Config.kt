@@ -42,7 +42,7 @@ abstract class Config {
     open fun getMultipleDoubleValue(section: String, name: String, delimeter: String = ",") =
             getMultipleStringValue(section, name, delimeter).map { it.toDouble() }
 
-    inline fun <reified T : Enum<T>> getEnumValue(section: String, name: String, ignoreCase: Boolean = false): Enum<T>? {
+    inline fun <reified T : Enum<T>> getEnumValue(section: String, name: String, ignoreCase: Boolean = false): T? {
         val constName = getStringValue(section, name) ?: return null
         val comparator = when {
             ignoreCase -> { a: String, b: String ->
@@ -54,6 +54,6 @@ abstract class Config {
         return T::class.java.enumConstants.firstOrNull { comparator(it.name, constName) }
     }
 
-    inline fun <reified T : Enum<T>> getEnumValue(section: String, name: String, ignoreCase: Boolean = false, default: T): Enum<T> =
-            getEnumValue(section, name, ignoreCase) ?: default
+    inline fun <reified T : Enum<T>> getEnumValue(section: String, name: String, ignoreCase: Boolean = false, default: T): T =
+            getEnumValue<T>(section, name, ignoreCase) ?: default
 }

@@ -1,9 +1,10 @@
 package org.jetbrains.research.kex.asm.transform
 
-import com.abdullin.kthelper.algorithm.GraphTraversal
-import com.abdullin.kthelper.assert.unreachable
-import com.abdullin.kthelper.logging.log
-import com.abdullin.kthelper.toInt
+import org.jetbrains.research.kthelper.algorithm.GraphTraversal
+import org.jetbrains.research.kthelper.algorithm.NoTopologicalSortingException
+import org.jetbrains.research.kthelper.assert.unreachable
+import org.jetbrains.research.kthelper.logging.log
+import org.jetbrains.research.kthelper.toInt
 import org.jetbrains.research.kex.config.kexConfig
 import org.jetbrains.research.kfg.ClassManager
 import org.jetbrains.research.kfg.analysis.Loop
@@ -14,17 +15,14 @@ import org.jetbrains.research.kfg.ir.CatchBlock
 import org.jetbrains.research.kfg.ir.Method
 import org.jetbrains.research.kfg.ir.value.BlockUser
 import org.jetbrains.research.kfg.ir.value.IntConstant
+import org.jetbrains.research.kfg.ir.value.NullConstant
 import org.jetbrains.research.kfg.ir.value.Value
 import org.jetbrains.research.kfg.ir.value.instruction.*
 import kotlin.math.abs
+import kotlin.math.min
 
 private val derollCount = kexConfig.getIntValue("loop", "deroll-count", 3)
-
-val BasicBlock.originalBlock: BasicBlock
-    get() = LoopDeroller.blockMapping[this.parent]?.get(this) ?: this
-
-val BasicBlock.isUnreachable: Boolean
-    get() = this in (LoopDeroller.unreachableBlocks[this.parent] ?: hashSetOf())
+private val maxDerollCount = kexConfig.getIntValue("loop", "max-deroll-count", 0)
 
 class LoopDeroller(override val cm: ClassManager) : LoopVisitor {
 
@@ -34,6 +32,8 @@ class LoopDeroller(override val cm: ClassManager) : LoopVisitor {
         val blockMapping = hashMapOf<Method, MutableMap<BasicBlock, BasicBlock>>()
         val unreachableBlocks = hashMapOf<Method, MutableSet<BasicBlock>>()
     }
+
+    class InvalidLoopException : Exception()
 
     private data class State(
             val header: BasicBlock,
@@ -75,7 +75,7 @@ class LoopDeroller(override val cm: ClassManager) : LoopVisitor {
             instMappings[value] = newValue
         }
 
-        operator fun get(block: BasicBlock) = blockMappings.getValue(block)
+        operator fun get(block: BasicBlock) = blockMappings[block] ?: block
         operator fun get(value: Value) = instMappings.getValue(value)
 
         fun getOrDefault(block: BasicBlock, default: BasicBlock) = blockMappings.getOrDefault(block, default)
@@ -87,17 +87,27 @@ class LoopDeroller(override val cm: ClassManager) : LoopVisitor {
 
     override val preservesLoopInfo get() = false
 
+    override fun visit(method: Method) {
+        try {
+            super.visit(method)
+        } catch (e: InvalidLoopException) {
+            log.error("Can't deroll loops of method $method")
+        } catch (e: NoTopologicalSortingException) {
+            log.error("Can't perform topological sorting of loops of method $method")
+        }
+    }
+
     override fun visit(loop: Loop) {
         super.visit(loop)
+        if (loop.allEntries.size != 1) throw InvalidLoopException()
+        if (loop.loopExits.isEmpty()) throw InvalidLoopException()
 
         // init state
         val method = loop.method ?: unreachable { log.error("Can't get method of loop") }
         val blockOrder = getBlockOrder(loop)
         val state = State.createState(loop)
         val derollCount = getDerollCount(loop)
-        val body = loop.body.toMutableList().apply {
-            forEach { loop.removeBlock(it) }
-        }
+        val body = loop.body.toMutableList().onEach { loop.removeBlock(it) }
 
         log.debug("Method $method, unrolling loop $loop to $derollCount iterations")
 
@@ -160,7 +170,7 @@ class LoopDeroller(override val cm: ClassManager) : LoopVisitor {
         // remap blocks of last iteration to actual method blocks
         val lastTerminator = state[state.terminatingBlock]
         val continueBlock = lastTerminator.terminator.successors[(!state.continueOnTrue).toInt()]
-        lastTerminator.replaceUsesOf(continueBlock, unreachableBlock)
+        lastTerminator.replaceSuccessorUsesOf(continueBlock, unreachableBlock)
         for (block in blockOrder.reversed()) {
             if (block == state.terminatingBlock) break
             val copy = state[block]
@@ -174,11 +184,16 @@ class LoopDeroller(override val cm: ClassManager) : LoopVisitor {
         remapMethodPhis(methodPhis, methodPhiMappings)
     }
 
+    private fun getMinDerollCount(count: Int): Int = when {
+        maxDerollCount > 0 -> min(maxDerollCount, count)
+        else -> count
+    }
+
     private fun getDerollCount(loop: Loop): Int {
         val tripCount = getConstantTripCount(loop)
         return when {
-            tripCount > 0 -> tripCount
-            else -> derollCount
+            tripCount > 0 -> getMinDerollCount(tripCount)
+            else -> getMinDerollCount(derollCount)
         }
     }
 
@@ -299,8 +314,13 @@ class LoopDeroller(override val cm: ClassManager) : LoopVisitor {
 
                 if (updated.predecessors.toSet().size == 1) {
                     val actual = previousMap.getValue(state.lastLatch)
-                    updated.replaceAllUsesWith(actual)
-                    state[inst] = actual
+                    val mappedActual = if (actual is NullConstant) {
+                        val newInst = instructions.getCast(updated.type, actual)
+                        newBlock.insertBefore(updated, newInst)
+                        newInst
+                    } else actual
+                    updated.replaceAllUsesWith(mappedActual)
+                    state[inst] = mappedActual
                 }
             }
         }

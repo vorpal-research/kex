@@ -22,6 +22,7 @@
         <better-parse.version>0.3.2</better-parse.version>
         <reflections.version>0.9.11</reflections.version>
         <klaxon.version>3.0.6</klaxon.version>
+        <kex-intrinsics.version>0.0.1</kex-intrinsics.version>
     </properties>
 
     <repositories>
@@ -46,7 +47,7 @@
 
     <dependencies>
         <dependency>
-            <groupId>com.abdullin</groupId>
+            <groupId>org.jetbrains.research</groupId>
             <artifactId>kt-helper</artifactId>
             <version>${kt-helper.version}</version>
         </dependency>

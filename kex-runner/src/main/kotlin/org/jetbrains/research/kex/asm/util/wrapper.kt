@@ -1,6 +1,6 @@
 package org.jetbrains.research.kex.asm.util
 
-import com.abdullin.kthelper.collection.buildList
+import org.jetbrains.research.kthelper.collection.buildList
 import org.jetbrains.research.kfg.ClassManager
 import org.jetbrains.research.kfg.ir.Field
 import org.jetbrains.research.kfg.ir.MethodDesc

@@ -1,6 +1,6 @@
 package org.jetbrains.research.kex
 
-import com.abdullin.kthelper.assert.unreachable
+import org.jetbrains.research.kthelper.assert.unreachable
 import java.io.File
 import javax.annotation.processing.RoundEnvironment
 import javax.annotation.processing.SupportedAnnotationTypes

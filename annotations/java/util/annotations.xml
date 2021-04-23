@@ -1009,6 +1009,10 @@
   </item>
   <item name="java.util.Collection java.lang.Object[] toArray()">
     <annotation name="org.jetbrains.annotations.NotNull" />
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="value" val="&quot;-&gt; empty&quot;"/>
+      <val name="pure" val="true"/>
+    </annotation>
     <annotation name='org.intellij.lang.annotations.Flow'>
       <val name="sourceIsContainer" val="true"/>
       <val name="targetIsContainer" val="true"/>

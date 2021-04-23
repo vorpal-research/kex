@@ -1,6 +1,6 @@
 package org.jetbrains.research.kex.smt
 
-import com.abdullin.kthelper.assert.unreachable
+import org.jetbrains.research.kthelper.assert.unreachable
 import org.jetbrains.research.kex.InheritanceInfo
 import org.jetbrains.research.kex.Inheritor
 import org.jetbrains.research.kex.KexProcessor

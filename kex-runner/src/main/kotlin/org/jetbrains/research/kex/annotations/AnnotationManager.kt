@@ -1,9 +1,9 @@
 package org.jetbrains.research.kex.annotations
 
-import com.abdullin.kthelper.`try`
-import com.abdullin.kthelper.assert.ktassert
-import com.abdullin.kthelper.logging.log
-import com.abdullin.kthelper.recast
+import org.jetbrains.research.kthelper.`try`
+import org.jetbrains.research.kthelper.assert.ktassert
+import org.jetbrains.research.kthelper.logging.log
+import org.jetbrains.research.kthelper.recast
 import org.apache.commons.lang.StringEscapeUtils.unescapeJava
 import org.jetbrains.research.kex.config.kexConfig
 import org.reflections.Reflections

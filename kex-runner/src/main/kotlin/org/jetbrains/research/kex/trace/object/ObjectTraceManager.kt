@@ -1,8 +1,8 @@
 package org.jetbrains.research.kex.trace.`object`
 
-import com.abdullin.kthelper.assert.unreachable
-import com.abdullin.kthelper.collection.stackOf
-import com.abdullin.kthelper.logging.log
+import org.jetbrains.research.kthelper.assert.unreachable
+import org.jetbrains.research.kthelper.collection.stackOf
+import org.jetbrains.research.kthelper.logging.log
 import org.jetbrains.research.kex.trace.TraceManager
 import org.jetbrains.research.kfg.ir.BasicBlock
 import org.jetbrains.research.kfg.ir.Method

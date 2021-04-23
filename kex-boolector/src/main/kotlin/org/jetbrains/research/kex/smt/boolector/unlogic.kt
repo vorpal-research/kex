@@ -1,7 +1,7 @@
 package org.jetbrains.research.kex.smt.boolector
 
-import com.abdullin.kthelper.assert.unreachable
-import com.abdullin.kthelper.logging.log
+import org.jetbrains.research.kthelper.assert.unreachable
+import org.jetbrains.research.kthelper.logging.log
 import org.jetbrains.research.boolector.BitvecNode
 import org.jetbrains.research.boolector.BoolNode
 import org.jetbrains.research.boolector.BoolectorNode

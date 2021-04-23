@@ -1,9 +1,10 @@
 package org.jetbrains.research.kex.state.transformer
 
-import com.abdullin.kthelper.collection.dequeOf
+import org.jetbrains.research.kthelper.collection.dequeOf
 import org.jetbrains.research.kex.ktype.KexArray
 import org.jetbrains.research.kex.ktype.KexChar
 import org.jetbrains.research.kex.ktype.KexClass
+import org.jetbrains.research.kex.ktype.KexReference
 import org.jetbrains.research.kex.state.PredicateState
 import org.jetbrains.research.kex.state.StateBuilder
 import org.jetbrains.research.kex.state.predicate.*
@@ -90,4 +91,9 @@ class ConstStringAdapter : RecollectingTransformer<ConstStringAdapter> {
 
     override fun transformCmpTerm(term: CmpTerm): Term =
             term { term.lhv.map.apply(term.opcode, term.rhv.map) }
+
+    override fun transformFieldTerm(term: FieldTerm): Term {
+        val owner = term.owner.map
+        return term { owner.field(term.type as KexReference, term.fieldName) }
+    }
 }

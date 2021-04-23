@@ -1,6 +1,6 @@
 package org.jetbrains.research.kex.reanimator.codegen.kotlingen
 
-import com.abdullin.kthelper.assert.ktassert
+import org.jetbrains.research.kthelper.assert.ktassert
 
 class KtBuilder(val pkg: String = "") {
     companion object {
@@ -49,6 +49,7 @@ class KtBuilder(val pkg: String = "") {
         lateinit var returnType: Type
         val arguments = mutableListOf<KtArgument>()
         val statements = mutableListOf<KtStatement>()
+        val annotations = mutableListOf<String>()
         open val signature get() = "fun $name(${arguments.joinToString(", ")}): $returnType"
 
         data class KtArgument(val name: String, val type: Type)
@@ -68,6 +69,9 @@ class KtBuilder(val pkg: String = "") {
         override fun toString() = print(0)
 
         override fun print(level: Int): String = buildString {
+            for (anno in annotations) {
+                appendLine("${level.asOffset}@$anno")
+            }
             appendLine("${level.asOffset}$signature {")
             val innerLevel = level + 1
             for (statement in statements) {

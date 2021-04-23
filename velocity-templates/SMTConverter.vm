@@ -205,7 +205,8 @@ class ${solver}Converter(val tf: TypeFactory) : ${solver}SMTConverter() {
         val totalSize = newarray.dimentions.fold(1) { acc: Int, term: Term ->
             acc * ((term as? ConstIntTerm)?.value ?: defaultAllocSize)
         }
-        val ptr = ctx.getLocalArray(memspace, totalSize, elementSize)
+        val actualLength = Int_.forceCast(convert(newarray.dimentions.fold(term { const(1) }) { acc: Term, term: Term -> term { acc * term} }, ef, ctx))
+        val ptr = ctx.getLocalArray(memspace, totalSize, actualLength, elementSize)
 
         val typeVar = ef.getTypeVariable(tf, newarray.lhv.type)
         ctx.writeProperty(lhv, memspace, "type", typeVar)

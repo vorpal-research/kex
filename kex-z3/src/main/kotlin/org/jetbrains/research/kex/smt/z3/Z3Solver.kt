@@ -1,9 +1,5 @@
 package org.jetbrains.research.kex.smt.z3
 
-import com.abdullin.kthelper.assert.ktassert
-import com.abdullin.kthelper.assert.unreachable
-import com.abdullin.kthelper.logging.debug
-import com.abdullin.kthelper.logging.log
 import com.microsoft.z3.*
 import org.jetbrains.research.kex.config.kexConfig
 import org.jetbrains.research.kex.ktype.KexArray
@@ -21,6 +17,10 @@ import org.jetbrains.research.kex.state.transformer.collectTypes
 import org.jetbrains.research.kex.state.transformer.collectVariables
 import org.jetbrains.research.kex.state.transformer.memspace
 import org.jetbrains.research.kfg.type.TypeFactory
+import org.jetbrains.research.kthelper.assert.ktassert
+import org.jetbrains.research.kthelper.assert.unreachable
+import org.jetbrains.research.kthelper.logging.debug
+import org.jetbrains.research.kthelper.logging.log
 
 private val timeout = kexConfig.getIntValue("smt", "timeout", 3) * 1000
 private val logQuery = kexConfig.getBooleanValue("smt", "logQuery", false)
@@ -35,9 +35,12 @@ class Z3Solver(val tf: TypeFactory) : AbstractSMTSolver {
     override fun isReachable(state: PredicateState) =
             isPathPossible(state, state.path)
 
-    override fun isPathPossible(state: PredicateState, path: PredicateState) = isViolated(state, path)
+    override fun isPathPossible(state: PredicateState, path: PredicateState): Result = check(state, path) { it }
 
-    override fun isViolated(state: PredicateState, query: PredicateState): Result {
+
+    override fun isViolated(state: PredicateState, query: PredicateState): Result = check(state, query) { !it }
+
+    fun check(state: PredicateState, query: PredicateState, queryBuilder: (Bool_) -> Bool_): Result {
         if (logQuery) {
             log.run {
                 debug("Z3 solver check")
@@ -54,7 +57,7 @@ class Z3Solver(val tf: TypeFactory) : AbstractSMTSolver {
         val z3query = converter.convert(query, ef, ctx)
 
         log.debug("Check started")
-        val result = check(z3State, z3query)
+        val result = check(z3State, queryBuilder(z3query))
         log.debug("Check finished")
         return when (result.first) {
             Status.UNSATISFIABLE -> Result.UnsatResult

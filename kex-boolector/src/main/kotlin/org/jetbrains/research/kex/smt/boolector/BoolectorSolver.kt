@@ -1,8 +1,8 @@
 package org.jetbrains.research.kex.smt.boolector
 
-import com.abdullin.kthelper.assert.ktassert
-import com.abdullin.kthelper.assert.unreachable
-import com.abdullin.kthelper.logging.log
+import org.jetbrains.research.kthelper.assert.ktassert
+import org.jetbrains.research.kthelper.assert.unreachable
+import org.jetbrains.research.kthelper.logging.log
 import org.jetbrains.research.boolector.Btor
 import org.jetbrains.research.kex.config.kexConfig
 import org.jetbrains.research.kex.ktype.*

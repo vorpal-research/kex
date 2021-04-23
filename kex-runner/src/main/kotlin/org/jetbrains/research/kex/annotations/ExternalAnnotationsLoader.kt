@@ -1,6 +1,6 @@
 package org.jetbrains.research.kex.annotations
 
-import com.abdullin.kthelper.assert.ktassert
+import org.jetbrains.research.kthelper.assert.ktassert
 import org.w3c.dom.Element
 import java.io.File
 import java.io.InputStream

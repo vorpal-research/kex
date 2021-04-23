@@ -1,5 +1,8 @@
 package org.jetbrains.research.kex.test;
 
+import static org.jetbrains.research.kex.Intrinsics.kexAssert;
+import static org.jetbrains.research.kex.Intrinsics.kexUnreachable;
+
 public class ObjectJavaTests {
     public static class PointJava {
         int x;
@@ -44,9 +47,9 @@ public class ObjectJavaTests {
         ten.y = 10;
 
         if (ten.x > zero.x) {
-            Intrinsics.assertReachable();
+            kexAssert();
         } else {
-            Intrinsics.assertUnreachable();
+            kexUnreachable();
         }
     }
 
@@ -62,7 +65,7 @@ public class ObjectJavaTests {
         PointJava start = new PointJava((int) xs, (int) ys, (int) zs);
         PointJava end = new PointJava((int) xe, (int) ye, (int) ze);
         LineJava result = new LineJava(start, end);
-        Intrinsics.assertReachable();
+        kexAssert();
         return result;
     }
 

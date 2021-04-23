@@ -1,16 +1,13 @@
-package org.jetbrains.research.kex.asm.analysis
+package org.jetbrains.research.kex.asm.analysis.testgen
 
-import com.abdullin.kthelper.`try`
-import com.abdullin.kthelper.logging.log
 import org.jetbrains.research.kex.ExecutionContext
 import org.jetbrains.research.kex.asm.state.PredicateStateAnalysis
-import org.jetbrains.research.kex.ktype.KexClass
-import org.jetbrains.research.kex.ktype.KexReference
-import org.jetbrains.research.kex.ktype.KexType
 import org.jetbrains.research.kex.random.GenerationException
-import org.jetbrains.research.kex.reanimator.descriptor.concreteClass
+import org.jetbrains.research.kex.reanimator.Parameters
+import org.jetbrains.research.kex.reanimator.Reanimator
+import org.jetbrains.research.kex.reanimator.codegen.validName
+import org.jetbrains.research.kex.reanimator.descriptor.concretize
 import org.jetbrains.research.kex.smt.Checker
-import org.jetbrains.research.kex.smt.ReanimatedModel
 import org.jetbrains.research.kex.smt.Result
 import org.jetbrains.research.kex.state.PredicateState
 import org.jetbrains.research.kex.state.transformer.*
@@ -19,11 +16,17 @@ import org.jetbrains.research.kex.trace.`object`.Trace
 import org.jetbrains.research.kex.trace.runner.TimeoutException
 import org.jetbrains.research.kfg.ir.BasicBlock
 import org.jetbrains.research.kfg.ir.Method
+import org.jetbrains.research.kthelper.logging.log
+import org.jetbrains.research.kthelper.tryOrNull
 
 class DescriptorChecker(
         ctx: ExecutionContext,
         tm: TraceManager<Trace>,
         psa: PredicateStateAnalysis) : MethodChecker(ctx, tm, psa) {
+
+    override fun initializeGenerator(method: Method) {
+        generator = Reanimator(ctx, psa, method)
+    }
 
     override fun coverBlock(method: Method, block: BasicBlock): Result {
         val checker = Checker(method, ctx.loader, psa)
@@ -38,7 +41,7 @@ class DescriptorChecker(
         when (result) {
             is Result.SatResult -> {
                 val (instance, args) = try {
-                    generator.generateAPI(block, checker.state, result.model)
+                    generator.generate("test_${block.validName}", method, checker.state, result.model)
                 } catch (e: GenerationException) {
                     log.warn(e.message)
                     return result
@@ -49,7 +52,7 @@ class DescriptorChecker(
                 } catch (e: TimeoutException) {
                     throw e
                 } catch (e: Exception) {
-                    throw KexRunnerException(e, ReanimatedModel(method, instance, args.toList()))
+                    throw KexRunnerException(e, Parameters(instance, args, setOf()))
                 }
             }
             is Result.UnsatResult -> log.debug("Instruction ${block.terminator.print()} is unreachable")
@@ -62,7 +65,8 @@ class DescriptorChecker(
     private fun Checker.createState(method: Method, block: BasicBlock): PredicateState? {
         val typeInfoMap = resolveTypes(method, block) ?: return null
         val state = this.createState(block.terminator)!!
-        return prepareState(method, state, typeInfoMap)
+        val staticTypeInfoMap = collectStaticTypeInfo(types, state, typeInfoMap)
+        return prepareState(method, state, staticTypeInfoMap)
     }
 
     protected fun resolveTypes(method: Method, block: BasicBlock): TypeInfoMap? {
@@ -90,14 +94,9 @@ class DescriptorChecker(
     }
 
 
-    fun Set<TypeInfo>.concretize(): Set<TypeInfo> = this.map { it.concretize() }.toSet()
+    fun Set<TypeInfo>.concretize(): Set<TypeInfo> = this.map { tryOrNull { it.concretize() } ?: it }.toSet()
     fun TypeInfo.concretize(): TypeInfo = when (this) {
-        is CastTypeInfo -> CastTypeInfo(this.type.concretize())
-        else -> this
-    }
-    fun KexType.concretize(): KexType = when (this) {
-        is KexClass -> `try` { this.concreteClass(cm) }.getOrDefault(this)
-        is KexReference -> KexReference(this.reference.concretize())
+        is CastTypeInfo -> CastTypeInfo(this.type.concretize(cm))
         else -> this
     }
 }

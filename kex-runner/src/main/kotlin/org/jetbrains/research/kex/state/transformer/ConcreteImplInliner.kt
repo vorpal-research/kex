@@ -1,6 +1,6 @@
 package org.jetbrains.research.kex.state.transformer
 
-import com.abdullin.kthelper.collection.dequeOf
+import org.jetbrains.research.kthelper.collection.dequeOf
 import org.jetbrains.research.kex.asm.manager.MethodManager
 import org.jetbrains.research.kex.asm.state.PredicateStateAnalysis
 import org.jetbrains.research.kex.ktype.KexClass
@@ -17,6 +17,7 @@ import org.jetbrains.research.kfg.type.TypeFactory
 class ConcreteImplInliner(val types: TypeFactory,
                           val typeInfoMap: TypeInfoMap,
                           override val psa: PredicateStateAnalysis,
+                          override val inlineSuffix: String = "concrete.inlined",
                           override var inlineIndex: Int = 0) : Inliner<ConcreteImplInliner> {
     override val im = MethodManager.InlineManager
     override val builders = dequeOf(StateBuilder())
@@ -53,7 +54,7 @@ class ConcreteImplInliner(val types: TypeFactory,
         if (!isInlinable(calledMethod)) return predicate
 
         val inlinedMethod = getInlinedMethod(call) ?: return predicate
-        var mappings = buildMappings(call, inlinedMethod, predicate.lhvUnsafe)
+        var (casts, mappings) = buildMappings(call, inlinedMethod, predicate.lhvUnsafe)
 
         val callerClass = when (val kexType = call.owner.type) {
             is KexClass ->  kexType.kfgClass(types)
@@ -72,6 +73,7 @@ class ConcreteImplInliner(val types: TypeFactory,
         castPredicate?.run {
             currentBuilder += this
         }
+        casts.onEach { currentBuilder += it }
         currentBuilder += inlinedState
         hasInlined = true
         return nothing()
@@ -82,6 +84,7 @@ class AliasingConcreteImplInliner(val types: TypeFactory,
                                   val typeInfoMap: TypeInfoMap,
                                   val aa: AliasAnalysis,
                                   override val psa: PredicateStateAnalysis,
+                                  override val inlineSuffix: String = "aliasing.inlined",
                                   override var inlineIndex: Int = 0) : Inliner<ConcreteImplInliner> {
     override val im = MethodManager.InlineManager
     override val builders = dequeOf(StateBuilder())

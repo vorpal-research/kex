@@ -1,10 +1,10 @@
 package org.jetbrains.research.kex.smt
 
-import com.abdullin.kthelper.assert.ktassert
-import com.abdullin.kthelper.assert.unreachable
-import com.abdullin.kthelper.logging.log
-import com.abdullin.kthelper.toBoolean
-import com.abdullin.kthelper.tryOrNull
+import org.jetbrains.research.kthelper.assert.ktassert
+import org.jetbrains.research.kthelper.assert.unreachable
+import org.jetbrains.research.kthelper.logging.log
+import org.jetbrains.research.kthelper.toBoolean
+import org.jetbrains.research.kthelper.tryOrNull
 import org.jetbrains.research.kex.ExecutionContext
 import org.jetbrains.research.kex.ktype.*
 import org.jetbrains.research.kex.reanimator.descriptor.*
@@ -15,21 +15,9 @@ import org.jetbrains.research.kex.util.isFinal
 import org.jetbrains.research.kex.util.loadClass
 import org.jetbrains.research.kfg.ir.Method
 import java.lang.reflect.Array
-import java.lang.reflect.ParameterizedType
-import java.lang.reflect.Type
 
 private val Term.isPointer get() = this.type is KexPointer
 private val Term.isPrimary get() = !this.isPointer
-
-private val Type.simpleTypeName: String
-    get() = when (this) {
-        is ParameterizedType -> this.rawType.simpleTypeName
-        else -> this.typeName
-    }
-
-private fun Number.toBoolean() = this != 0
-
-data class ReanimatedModel(val method: Method, val instance: Any?, val arguments: List<Any?>)
 
 interface ModelReanimator<T> {
     val method: Method
@@ -288,6 +276,7 @@ abstract class DescriptorReanimator(override val method: Method,
             null, 0 -> default(term.type)
             else -> {
                 val reanimatedType = resolveType(term.memspace, addr, term.type)
+                if (term is ConstClassTerm) memory(term.memspace, address) { const(reanimatedType as KexClass) }
                 ktassert(reanimatedType.isSubtypeOf(context.types, term.type)) {
                     log.error("Type resolving failed: actual type: ${term.type}, resolved type: $reanimatedType")
                 }
@@ -333,48 +322,23 @@ abstract class DescriptorReanimator(override val method: Method,
                 array
             }
             is FieldTerm -> {
-                val (instance, klass) = when {
-                    term.isStatic -> {
-                        val classRef = (term.owner as ConstClassTerm)
-                        val `class` = tryOrNull { loader.loadClass(classRef.type.getKfgType(context.types)) }
-                                ?: return@descriptor default(term.type)
-                        if (`class`.isSynthetic) return@descriptor default(term.type)
+                val ownerRef = term.owner
+                val ownerAddr = (reanimateFromAssignment(ownerRef) as ConstIntTerm).value
+                val instance = memory(ownerRef.memspace, ownerAddr)
+                    ?: return@descriptor default(term.type)
 
-                        const(classRef.type) to `class`
-                    }
-                    else -> {
-                        val objectRef = term.owner
-                        val objectAddr = (reanimateFromAssignment(objectRef) as ConstIntTerm).value
-                        val type = objectRef.type as? KexClass
-                                ?: unreachable { log.error("Cannot cast ${objectRef.type} to class") }
-
-                        val kfgClass = method.cm[type.klass]
-                        val `class` = tryOrNull { loader.loadClass(kfgClass.canonicalDesc) }
-                                ?: return@descriptor default(term.type)
-
-                        val instance = memory(objectRef.memspace, objectAddr)
-                                ?: return@descriptor default(term.type)
-
-                        instance to `class`
-                    }
-                }
                 val name = "${term.klass}.${term.fieldNameString}"
                 val fieldValue = reanimateFromProperties(memspace, name, addr)
 
-                val fieldReflect = klass.getActualField(term.fieldNameString)
                 val reanimatedValue = reanimateReferenceValue(term, fieldValue)
-                if (fieldReflect.isSynthetic)
-                    return@descriptor default(term.type)
-
-                val fieldName = fieldReflect.name
+                val fieldName = term.fieldNameString
                 val fieldType = (term.type as KexReference).reference
 
                 when (instance) {
-                    is ObjectDescriptor -> {
+                    is FieldContainingDescriptor<*> -> {
                         instance[fieldName, fieldType] = reanimatedValue
                         instance
                     }
-                    is ConstantDescriptor.Class -> staticField(instance.value as KexClass, fieldName, fieldType, reanimatedValue)
                     else -> unreachable { log.error("Unknown type of field owner") }
                 }
             }
@@ -422,8 +386,7 @@ abstract class DescriptorReanimator(override val method: Method,
     }
 
     private fun newArrayInstance(memspace: Int, arrayType: KexArray, addr: Term?) = descriptor {
-        val length = (reanimateFromProperties(memspace, "length", addr) as? ConstIntTerm)?.value
-                ?: return@descriptor default(arrayType)
+        val length = (reanimateFromProperties(memspace, "length", addr) as? ConstIntTerm)?.value ?: 0
 
         log.debug("Creating array of type $arrayType with size $length")
         array(length, arrayType.element)
