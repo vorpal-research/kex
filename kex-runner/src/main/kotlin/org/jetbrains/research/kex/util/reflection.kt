@@ -20,7 +20,19 @@ import java.lang.reflect.Method as JMethod
 import java.lang.reflect.Type as JType
 
 val Class<*>.isAbstract get() = (this.modifiers and Modifier.ABSTRACT) == Modifier.ABSTRACT
+
 val Class<*>.isPublic get() = (this.modifiers and Modifier.PUBLIC) == Modifier.PUBLIC
+val Class<*>.isPrivate get() = (this.modifiers and Modifier.PRIVATE) == Modifier.PRIVATE
+val Class<*>.isProtected get() = (this.modifiers and Modifier.PROTECTED) == Modifier.PROTECTED
+
+val JMethod.isPublic get() = (this.modifiers and Modifier.PUBLIC) == Modifier.PUBLIC
+val JMethod.isPrivate get() = (this.modifiers and Modifier.PRIVATE) == Modifier.PRIVATE
+val JMethod.isProtected get() = (this.modifiers and Modifier.PROTECTED) == Modifier.PROTECTED
+
+val Field.isPublic get() = (this.modifiers and Modifier.PUBLIC) == Modifier.PUBLIC
+val Field.isPrivate get() = (this.modifiers and Modifier.PRIVATE) == Modifier.PRIVATE
+val Field.isProtected get() = (this.modifiers and Modifier.PROTECTED) == Modifier.PROTECTED
+
 val Class<*>.kex: KexType get() = when {
     this.isPrimitive -> when (this) {
         Boolean::class.java -> KexBool()

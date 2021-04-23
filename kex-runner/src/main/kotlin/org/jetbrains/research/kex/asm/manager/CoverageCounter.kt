@@ -3,6 +3,9 @@ package org.jetbrains.research.kex.asm.manager
 import com.abdullin.kthelper.logging.log
 import org.jetbrains.research.kex.asm.transform.isUnreachable
 import org.jetbrains.research.kex.asm.transform.originalBlock
+import org.jetbrains.research.kex.asm.util.Visibility
+import org.jetbrains.research.kex.asm.util.visibility
+import org.jetbrains.research.kex.config.kexConfig
 import org.jetbrains.research.kex.trace.TraceManager
 import org.jetbrains.research.kfg.ClassManager
 import org.jetbrains.research.kfg.ir.Class
@@ -11,11 +14,16 @@ import org.jetbrains.research.kfg.ir.value.instruction.CallInst
 import org.jetbrains.research.kfg.ir.value.instruction.FieldLoadInst
 import org.jetbrains.research.kfg.ir.value.instruction.FieldStoreInst
 import org.jetbrains.research.kfg.visitor.ClassVisitor
+import java.util.*
+
+private val visibilityLevel by lazy { kexConfig.getEnumValue("apiGeneration", "visibility", true, Visibility.PUBLIC) }
 
 val Method.isImpactable: Boolean
     get() {
         when {
             this.isAbstract -> return false
+            visibilityLevel > this.`class`.visibility -> return false
+            visibilityLevel > this.visibility -> return false
             this.isStatic && this.argTypes.isEmpty() -> return false
             this.argTypes.isEmpty() -> {
                 val thisVal = this.cm.value.getThis(this.`class`)
@@ -72,8 +80,8 @@ class CoverageCounter<T>(override val cm: ClassManager, val tm: TraceManager<T>)
             methodInfos[method] = info
 
             log.info("Method $method coverage: " +
-                    "body = ${String.format("%.2f", info.bodyCoverage)}; " +
-                    "full = ${String.format("%.2f", info.fullCoverage)}")
+                    "body = ${String.format(Locale.ENGLISH, "%.2f", info.bodyCoverage)}; " +
+                    "full = ${String.format(Locale.ENGLISH, "%.2f", info.fullCoverage)}")
         }
     }
 }

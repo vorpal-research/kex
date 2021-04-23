@@ -13,7 +13,6 @@ import org.jetbrains.research.kex.util.kex
 import org.jetbrains.research.kex.util.loadClass
 import org.jetbrains.research.kfg.ir.Class
 import org.jetbrains.research.kfg.type.*
-import org.jetbrains.research.kfg.type.Type
 import java.lang.reflect.*
 import kotlin.reflect.KClass
 import kotlin.reflect.KClassifier
@@ -23,29 +22,40 @@ import kotlin.reflect.jvm.kotlinFunction
 import java.lang.reflect.Type as JType
 
 // TODO: this is work of satan, refactor this damn thing
-class CallStack2KotlinPrinter(val ctx: ExecutionContext) : CallStackPrinter {
+class CallStack2KotlinPrinter(
+        val ctx: ExecutionContext,
+        override val packageName: String,
+        override val klassName: String) : CallStackPrinter {
     private val printedStacks = mutableSetOf<String>()
-    val builder = KtBuilder()
+    private val builder = KtBuilder(packageName)
+    private val klass: KtBuilder.KtClass
     private val resolvedTypes = mutableMapOf<CallStack, CSType>()
     private val actualTypes = mutableMapOf<CallStack, CSType>()
     lateinit var current: KtBuilder.KtFunction
 
-    override fun print(callStack: CallStack): String {
+    init {
         with(builder) {
             function("<T> unknown") {
                 returnType = type("T")
                 +"TODO()"
             }
+        }
+        klass = builder.run { klass(packageName, klassName) }
+    }
 
-            function("test") {
-                current = this
-                returnType = unit
+    override fun printCallStack(callStack: CallStack, method: String) {
+        with(builder) {
+            with(klass) {
+                current = method(method) {
+                    returnType = unit
+                }
             }
         }
         resolveTypes(callStack)
         callStack.printAsKt()
-        return builder.toString()
     }
+
+    override fun emit() = builder.toString()
 
 
     interface CSType {
@@ -299,6 +309,7 @@ class CallStack2KotlinPrinter(val ctx: ExecutionContext) : CallStackPrinter {
         is ArrayWrite -> printArrayWrite(owner, apiCall)
         is FieldSetter -> printFieldSetter(owner, apiCall)
         is StaticFieldSetter -> printStaticFieldSetter(apiCall)
+        is EnumValueCreation -> printEnumValueCreation(owner, apiCall)
         is UnknownCall -> printUnknown(owner, apiCall)
         else -> unreachable { log.error("Unknown call") }
     }
@@ -315,9 +326,9 @@ class CallStack2KotlinPrinter(val ctx: ExecutionContext) : CallStackPrinter {
                 actualTypes[this] = CSClass(ctx.types.byteType, nullable = false)
             }
             is Char -> when (value) {
-                in 'a'..'z' -> "'${'a' + (value - 'a')}'"
-                in 'A'..'Z' -> "'${'A' + (value - 'Z')}'"
-                else -> "${value}.toChar()"
+                in 'a'..'z' -> "'$value'"
+                in 'A'..'Z' -> "'$value'"
+                else -> "${value.toInt()}.toChar()"
             }.also {
                 actualTypes[this] = CSClass(ctx.types.charType, nullable = false)
             }
@@ -433,6 +444,10 @@ class CallStack2KotlinPrinter(val ctx: ExecutionContext) : CallStackPrinter {
     private fun printStaticFieldSetter(call: StaticFieldSetter): String {
         call.value.printAsKt()
         return "${call.klass.kotlinString}.${call.field.name} = ${call.value.stackName}"
+    }
+
+    private fun printEnumValueCreation(owner: CallStack, call: EnumValueCreation): String {
+        return "${owner.name} = ${call.klass.kotlinString}.${call.name}"
     }
 
     private fun printUnknown(owner: CallStack, call: UnknownCall): String {

@@ -33,6 +33,8 @@ fun Term.withMemspace(memspace: Int): Term {
     }
 }
 
+fun Term.dropMemspace(): Term = this.withMemspace(KexPointer.defaultMemspace)
+
 val Term.memspace: Int
     get() = (this.type as? KexPointer)?.memspace
             ?: unreachable { log.error("Trying to get memspace of primary type: $type") }

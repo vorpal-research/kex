@@ -17,31 +17,41 @@ import org.jetbrains.research.kfg.type.Type
 import java.lang.reflect.*
 
 // TODO: this is work of satan, refactor this damn thing
-class CallStack2JavaPrinter(val ctx: ExecutionContext) : CallStackPrinter {
+class CallStack2JavaPrinter(
+        val ctx: ExecutionContext,
+        override val packageName: String,
+        override val klassName: String) : CallStackPrinter {
     private val printedStacks = mutableSetOf<String>()
-    val builder = JavaBuilder()
+    private val builder = JavaBuilder(packageName)
+    private val klass = builder.run { klass(packageName, klassName) }
     private val resolvedTypes = mutableMapOf<CallStack, CSType>()
     private val actualTypes = mutableMapOf<CallStack, CSType>()
     lateinit var current: JavaBuilder.JavaFunction
 
-    override fun print(callStack: CallStack): String {
+    init {
         with(builder) {
-            klass("", "ReanimatorTest") {
+            with(klass) {
                 method("unknown", listOf(type("T"))) {
                     returnType = type("T")
                     +"throw new NotImplementedException()"
                 }
+            }
+        }
+    }
 
-                method("test") {
-                    current = this
+    override fun printCallStack(callStack: CallStack, method: String) {
+        with(builder) {
+            with(klass) {
+                current = method(method) {
                     returnType = void
                 }
             }
         }
         resolveTypes(callStack)
         callStack.printAsJava()
-        return builder.toString()
     }
+
+    override fun emit() = builder.toString()
 
 
     interface CSType {
@@ -245,6 +255,7 @@ class CallStack2JavaPrinter(val ctx: ExecutionContext) : CallStackPrinter {
         is ArrayWrite -> printArrayWrite(owner, apiCall)
         is FieldSetter -> printFieldSetter(owner, apiCall)
         is StaticFieldSetter -> printStaticFieldSetter(apiCall)
+        is EnumValueCreation -> printEnumValueCreation(owner, apiCall)
         is UnknownCall -> printUnknown(owner, apiCall)
         else -> unreachable { log.error("Unknown call") }
     }
@@ -257,17 +268,17 @@ class CallStack2JavaPrinter(val ctx: ExecutionContext) : CallStackPrinter {
             is Boolean -> "$value".also {
                 actualTypes[this] = CSClass(ctx.types.boolType)
             }
-            is Byte -> "${value}.toByte()".also {
+            is Byte -> "(byte) ${value}".also {
                 actualTypes[this] = CSClass(ctx.types.byteType)
             }
             is Char -> when (value) {
-                in 'a'..'z' -> "'${'a' + (value - 'a')}'"
-                in 'A'..'Z' -> "'${'A' + (value - 'Z')}'"
-                else -> "${value}.toChar()"
+                in 'a'..'z' -> "'$value'"
+                in 'A'..'Z' -> "'$value'"
+                else -> "(char) ${value.toInt()}"
             }.also {
                 actualTypes[this] = CSClass(ctx.types.charType)
             }
-            is Short -> "${value}.toShort()".also {
+            is Short -> "(short) ${value}".also {
                 actualTypes[this] = CSClass(ctx.types.shortType)
             }
             is Int -> "$value".also {
@@ -376,6 +387,10 @@ class CallStack2JavaPrinter(val ctx: ExecutionContext) : CallStackPrinter {
     private fun printStaticFieldSetter(call: StaticFieldSetter): String {
         call.value.printAsJava()
         return "${call.klass.javaString}.${call.field.name} = ${call.value.stackName}"
+    }
+
+    private fun printEnumValueCreation(owner: CallStack, call: EnumValueCreation): String {
+        return "${owner.name} = ${call.klass.javaString}.${call.name}"
     }
 
     private fun printUnknown(owner: CallStack, call: UnknownCall): String {

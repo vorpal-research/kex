@@ -2,36 +2,38 @@ package org.jetbrains.research.kex.reanimator.callstack
 
 import org.jetbrains.research.kex.ExecutionContext
 import org.jetbrains.research.kex.asm.state.PredicateStateAnalysis
+import org.jetbrains.research.kex.asm.util.Visibility
+import org.jetbrains.research.kex.asm.util.visibility
 import org.jetbrains.research.kex.config.kexConfig
 import org.jetbrains.research.kex.ktype.KexArray
-import org.jetbrains.research.kex.ktype.KexClass
 import org.jetbrains.research.kex.ktype.KexType
 import org.jetbrains.research.kex.reanimator.descriptor.ConstantDescriptor
 import org.jetbrains.research.kex.reanimator.descriptor.Descriptor
 import org.jetbrains.research.kex.reanimator.descriptor.StaticFieldDescriptor
 
+private val visibilityLevel by lazy { kexConfig.getEnumValue("apiGeneration", "visibility", true, Visibility.PUBLIC) }
 private val maxGenerationDepth by lazy { kexConfig.getIntValue("apiGeneration", "maxGenerationDepth", 100) }
 private val maxSearchDepth by lazy { kexConfig.getIntValue("apiGeneration", "maxSearchDepth", 10000) }
 
 class CallStackGenerator(override val context: GeneratorContext) : Generator {
     private val anyGenerator = AnyGenerator(this)
     private val arrayGenerator = ArrayGenerator(this)
-    private val typeGenerators = mutableMapOf<KexType, Generator>()
+    private val typeGenerators = mutableSetOf<Generator>()
     private var searchDepth = 0
 
     override fun supports(type: KexType) = true
 
     init {
-        typeGenerators += KexClass("java/lang/String") to StringGenerator(this)
+        typeGenerators += StringGenerator(this)
+        typeGenerators += EnumGenerator(this)
     }
 
     constructor(executionCtx: ExecutionContext, psa: PredicateStateAnalysis) : this(GeneratorContext(executionCtx, psa))
 
     val KexType.generator: Generator
         get() = when (this) {
-            in typeGenerators -> typeGenerators.getValue(this)
             is KexArray -> arrayGenerator
-            else -> anyGenerator
+            else -> typeGenerators.firstOrNull { it.supports(this) } ?: anyGenerator
         }
 
     fun generateDescriptor(descriptor: Descriptor): CallStack {
@@ -65,8 +67,9 @@ class CallStackGenerator(override val context: GeneratorContext) : Generator {
                 descriptor.cache(callStack)
                 val kfgClass = descriptor.klass.kfgClass(types)
                 val kfgField = kfgClass.getField(descriptor.field, descriptor.type.getKfgType(types))
-                val typeGenerator = descriptor.value.type.generator
-                callStack += StaticFieldSetter(kfgClass, kfgField, typeGenerator.generate(descriptor.value, generationDepth + 1))
+                if (visibilityLevel <= kfgField.visibility) {
+                    callStack += StaticFieldSetter(kfgClass, kfgField, generate(descriptor.value, generationDepth + 1))
+                }
             }
             else -> {
                 val typeGenerator = descriptor.type.generator

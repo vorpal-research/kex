@@ -3,6 +3,7 @@ package org.jetbrains.research.kex.state.transformer
 import com.abdullin.kthelper.assert.unreachable
 import com.abdullin.kthelper.logging.log
 import org.jetbrains.research.kex.ExecutionContext
+import org.jetbrains.research.kex.ktype.KexPointer
 import org.jetbrains.research.kex.ktype.KexReference
 import org.jetbrains.research.kex.ktype.kexType
 import org.jetbrains.research.kex.reanimator.Parameters
@@ -21,9 +22,6 @@ import org.jetbrains.research.kex.state.predicate.Predicate
 import org.jetbrains.research.kex.state.term.ConstIntTerm
 import org.jetbrains.research.kex.state.term.FieldTerm
 import org.jetbrains.research.kex.state.term.Term
-import org.jetbrains.research.kex.util.getConstructor
-import org.jetbrains.research.kex.util.getMethod
-import org.jetbrains.research.kex.util.loadClass
 import org.jetbrains.research.kfg.ir.Method
 
 class DescriptorGenerator(override val method: Method,
@@ -36,12 +34,6 @@ class DescriptorGenerator(override val method: Method,
     override var thisTerm: Term? = null
     override val argTerms = sortedMapOf<Int, Term>()
     override val staticFieldTerms = mutableSetOf<FieldTerm>()
-
-    override val javaClass = loader.loadClass(type.getRefType(method.`class`))
-    override val javaMethod = when {
-        method.isConstructor -> javaClass.getConstructor(method, loader)
-        else -> javaClass.getMethod(method, loader)
-    }
 
     override fun checkPath(path: Predicate): Boolean = when (path) {
         is EqualityPredicate -> checkTerms(path.lhv, path.rhv) { a, b -> a == b }
@@ -68,6 +60,31 @@ fun generateFinalDescriptors(method: Method, ctx: ExecutionContext, model: SMTMo
             generator.staticFields.mapValues {
                 it.value ?: descriptor { default((it.key.type as KexReference).reference) }
             }
+    )
+}
+
+fun generateFinalTypeInfoMap(method: Method, ctx: ExecutionContext, model: SMTModel, state: PredicateState): TypeInfoMap {
+    val generator = DescriptorGenerator(method, ctx, model, FinalDescriptorReanimator(method, model, ctx))
+    generator.apply(state)
+    val params = setOfNotNull(
+            generator.instance,
+            *generator.args.mapIndexed { index, arg ->
+                arg ?: descriptor { default(method.argTypes[index].kexType) }
+            }.toTypedArray(),
+            *generator.staticFields.mapValues {
+                it.value ?: descriptor { default((it.key.type as KexReference).reference) }
+            }.values.toTypedArray()
+    )
+    return TypeInfoMap(
+            generator.memory
+                    .filterValues { candidate -> params.any { candidate in it } }
+                    .filterKeys { it.type is KexPointer }
+                    .mapValues {
+                        when (it.key.type) {
+                            is KexReference -> setOf(CastTypeInfo(KexReference(it.value.type)))
+                            else -> setOf(CastTypeInfo(it.value.type))
+                        }
+                    }
     )
 }
 

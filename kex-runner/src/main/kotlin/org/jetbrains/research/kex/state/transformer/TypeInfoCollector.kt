@@ -46,6 +46,9 @@ class TypeInfoMap(val inner: Map<Term, Set<TypeInfo>> = hashMapOf()) : Map<Term,
             )
         }
     }
+
+    fun mapKeys(mapper: (Map.Entry<Term, Set<TypeInfo>>) -> Term) = TypeInfoMap(inner.mapKeys(mapper))
+    fun mapValues(mapper: (Map.Entry<Term, Set<TypeInfo>>) -> Set<TypeInfo>) = TypeInfoMap(inner.mapValues(mapper))
 }
 
 class TypeInfoCollector(val model: SMTModel, val tf: TypeFactory) : Transformer<TypeInfoCollector> {

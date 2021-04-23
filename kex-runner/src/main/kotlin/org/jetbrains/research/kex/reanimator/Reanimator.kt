@@ -3,13 +3,11 @@ package org.jetbrains.research.kex.reanimator
 import com.abdullin.kthelper.`try`
 import com.abdullin.kthelper.logging.log
 import com.abdullin.kthelper.time.timed
-import com.abdullin.kthelper.tryOrNull
 import org.jetbrains.research.kex.ExecutionContext
 import org.jetbrains.research.kex.asm.state.PredicateStateAnalysis
 import org.jetbrains.research.kex.random.GenerationException
 import org.jetbrains.research.kex.reanimator.callstack.*
-import org.jetbrains.research.kex.reanimator.codegen.javagen.CallStack2JavaPrinter
-import org.jetbrains.research.kex.reanimator.codegen.kotlingen.CallStack2KotlinPrinter
+import org.jetbrains.research.kex.reanimator.codegen.TestCasePrinter
 import org.jetbrains.research.kex.reanimator.descriptor.Descriptor
 import org.jetbrains.research.kex.reanimator.descriptor.DescriptorStatistics
 import org.jetbrains.research.kex.smt.SMTModel
@@ -17,17 +15,19 @@ import org.jetbrains.research.kex.state.PredicateState
 import org.jetbrains.research.kex.state.transformer.generateFinalDescriptors
 import org.jetbrains.research.kex.state.transformer.generateInputByModel
 import org.jetbrains.research.kfg.ClassManager
+import org.jetbrains.research.kfg.ir.BasicBlock
 import org.jetbrains.research.kfg.ir.Class
 import org.jetbrains.research.kfg.ir.Method
 
 class NoConcreteInstanceException(val klass: Class) : Exception()
 
-class Reanimator(val ctx: ExecutionContext, val psa: PredicateStateAnalysis) {
+class Reanimator(val ctx: ExecutionContext, val psa: PredicateStateAnalysis, val method: Method) {
     val cm: ClassManager get() = ctx.cm
     private val csGenerator = CallStackGenerator(ctx, psa)
     private val csExecutor = CallStackExecutor(ctx)
+    private val printer = TestCasePrinter(ctx, method)
 
-    private fun printTest(method: Method, callStacks: Parameters<CallStack>) {
+    private fun printTest(block: BasicBlock, callStacks: Parameters<CallStack>) {
         val stack = when {
             method.isStatic -> StaticMethodCall(method, callStacks.arguments).wrap("static")
             method.isConstructor -> callStacks.instance!!
@@ -37,17 +37,14 @@ class Reanimator(val ctx: ExecutionContext, val psa: PredicateStateAnalysis) {
                 instance
             }
         }
-        val kotlinCS = tryOrNull { CallStack2KotlinPrinter(ctx).print(stack) } ?: ""
-        log.debug("Kotlin call stacks:\n$kotlinCS")
-        val javaCS = tryOrNull { CallStack2JavaPrinter(ctx).print(stack) } ?: ""
-        log.debug("Java call stacks:\n$javaCS")
+        printer.print(stack, block)
     }
 
-    fun generateAPI(method: Method, state: PredicateState, model: SMTModel) = try {
+    fun generateAPI(block: BasicBlock, state: PredicateState, model: SMTModel) = try {
         val descriptors = generateFinalDescriptors(method, ctx, model, state).concreteParameters(cm)
         log.debug("Generated descriptors:\n$descriptors")
         val callStacks = descriptors.callStacks
-        printTest(method, callStacks)
+        printTest(block, callStacks)
         log.debug("Generated call stacks:\n$callStacks")
         val (instance, arguments, _) = callStacks.executed
         instance to arguments.toTypedArray()
@@ -59,12 +56,16 @@ class Reanimator(val ctx: ExecutionContext, val psa: PredicateStateAnalysis) {
         throw GenerationException(e)
     }
 
-    fun generateFromModel(method: Method, state: PredicateState, model: SMTModel) = try {
+    fun generateFromModel(state: PredicateState, model: SMTModel) = try {
         generateInputByModel(ctx, method, state, model)
     } catch (e: GenerationException) {
         throw e
     } catch (e: Exception) {
         throw GenerationException(e)
+    }
+
+    fun emit() {
+        printer.emit()
     }
 
     private val Descriptor.callStack: CallStack

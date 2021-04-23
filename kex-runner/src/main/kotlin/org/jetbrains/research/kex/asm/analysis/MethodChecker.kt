@@ -54,7 +54,8 @@ open class MethodChecker(
     override val cm: ClassManager get() = ctx.cm
     val random: Randomizer get() = ctx.random
     val loader: ClassLoader get() = ctx.loader
-    val generator = Reanimator(ctx, psa)
+    lateinit var generator: Reanimator //= Reanimator(ctx, psa)
+        protected set
 
     @ExperimentalSerializationApi
     @InternalSerializationApi
@@ -90,6 +91,8 @@ open class MethodChecker(
         val unreachableBlocks = mutableSetOf<BasicBlock>()
         val domTree = DominatorTreeBuilder(method).build()
         val order: SearchStrategy = getSearchStrategy(method)
+
+        generator = Reanimator(ctx, psa, method)
 
         for (block in order) {
             if (block.terminator is UnreachableInst) {
@@ -128,6 +131,8 @@ open class MethodChecker(
 
             if (coverageResult is Result.UnsatResult) unreachableBlocks += block
         }
+
+        generator.emit()
     }
 
     protected open fun coverBlock(method: Method, block: BasicBlock): Result {
@@ -143,7 +148,7 @@ open class MethodChecker(
         when (result) {
             is Result.SatResult -> {
                 val (instance, args) = try {
-                    generator.generateFromModel(method, checker.state, result.model)
+                    generator.generateFromModel(checker.state, result.model)
                 } catch (e: GenerationException) {
                     log.warn(e.message)
                     return result

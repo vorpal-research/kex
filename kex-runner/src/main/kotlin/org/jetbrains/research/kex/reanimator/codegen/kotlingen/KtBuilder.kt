@@ -2,7 +2,7 @@ package org.jetbrains.research.kex.reanimator.codegen.kotlingen
 
 import com.abdullin.kthelper.assert.ktassert
 
-class KtBuilder {
+class KtBuilder(val pkg: String = "") {
     companion object {
         private fun offset(level: Int) = "    ".repeat(level)
 
@@ -13,6 +13,10 @@ class KtBuilder {
     private val instances = mutableListOf<KtCode>()
 
     override fun toString(): String = buildString {
+        if (pkg.isNotBlank()) {
+            appendLine("package $pkg")
+            appendLine()
+        }
         imports.forEach {
             appendLine("import $it")
         }
@@ -113,15 +117,19 @@ class KtBuilder {
             constructors += funBuilder
         }
 
-        fun method(name: String, body: KtFunction.() -> Unit) {
+        fun method(name: String, body: KtFunction.() -> Unit): KtFunction {
             val funBuilder = KtMethod(this, name)
             funBuilder.body()
             functions += funBuilder
+            return funBuilder
         }
 
         override fun print(level: Int): String = buildString {
             appendLine("${level.asOffset}class $name {")
             properties.forEach { appendLine("${(level + 1).asOffset}$it") }
+            appendLine()
+            functions.forEach { appendLine(it.print(level + 1)) }
+            appendLine("${level.asOffset}}")
         }
     }
 
@@ -131,16 +139,24 @@ class KtBuilder {
 
     fun type(name: String): Type = StringType(name)
 
-    fun function(name: String, body: KtFunction.() -> Unit) {
+    fun function(name: String, body: KtFunction.() -> Unit): KtFunction {
         val funBuilder = KtFunction(name)
         funBuilder.body()
         instances += funBuilder
+        return funBuilder
     }
 
-    fun klass(pkg: String, name: String, body: KtClass.() -> Unit) {
+    fun klass(pkg: String, name: String): KtClass {
+        val newKlass = KtClass(pkg, name)
+        instances += newKlass
+        return newKlass
+    }
+
+    fun klass(pkg: String, name: String, body: KtClass.() -> Unit): KtClass {
         val newKlass = KtClass(pkg, name)
         newKlass.body()
         instances += newKlass
+        return newKlass
     }
 
     fun extension(type: String, name: String, body: KtFunction.() -> Unit) {

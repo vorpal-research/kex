@@ -1,5 +1,6 @@
 package org.jetbrains.research.kex.smt
 
+import com.abdullin.kthelper.assert.ktassert
 import com.abdullin.kthelper.assert.unreachable
 import com.abdullin.kthelper.logging.log
 import com.abdullin.kthelper.toBoolean
@@ -286,10 +287,17 @@ abstract class DescriptorReanimator(override val method: Method,
         when (val address = (addr as? ConstIntTerm)?.value) {
             null, 0 -> default(term.type)
             else -> {
-                val reanimatedType = resolveType(term.memspace, addr, term.type)//reanimateType(term.memspace, addr) ?: term.type
-                val actualType = reanimatedType as? KexClass
-                        ?: unreachable { log.error("Cannot cast $reanimatedType to class") }
-                memory(term.memspace, address) { `object`(actualType) }
+                val reanimatedType = resolveType(term.memspace, addr, term.type)
+                ktassert(reanimatedType.isSubtypeOf(context.types, term.type)) {
+                    log.error("Type resolving failed: actual type: ${term.type}, resolved type: $reanimatedType")
+                }
+                when (reanimatedType) {
+                    is KexClass -> memory(term.memspace, address) { `object`(reanimatedType) }
+                    is KexArray -> memory(term.memspace, address) { newArrayInstance(term.memspace, reanimatedType, addr) }
+                    else -> unreachable {
+                        log.error("Type resolving failed: actual type: ${term.type}, resolved type: $reanimatedType")
+                    }
+                }
             }
         }
     }
@@ -328,8 +336,7 @@ abstract class DescriptorReanimator(override val method: Method,
                 val (instance, klass) = when {
                     term.isStatic -> {
                         val classRef = (term.owner as ConstClassTerm)
-                        val canonicalDesc = term.type.getKfgType(context.types).canonicalDesc
-                        val `class` = tryOrNull { loader.loadClass(canonicalDesc) }
+                        val `class` = tryOrNull { loader.loadClass(classRef.type.getKfgType(context.types)) }
                                 ?: return@descriptor default(term.type)
                         if (`class`.isSynthetic) return@descriptor default(term.type)
 
@@ -348,7 +355,7 @@ abstract class DescriptorReanimator(override val method: Method,
                         val instance = memory(objectRef.memspace, objectAddr)
                                 ?: return@descriptor default(term.type)
 
-                        instance to  `class`
+                        instance to `class`
                     }
                 }
                 val name = "${term.klass}.${term.fieldNameString}"
@@ -356,7 +363,7 @@ abstract class DescriptorReanimator(override val method: Method,
 
                 val fieldReflect = klass.getActualField(term.fieldNameString)
                 val reanimatedValue = reanimateReferenceValue(term, fieldValue)
-                if (fieldReflect.isEnumConstant || fieldReflect.isSynthetic)
+                if (fieldReflect.isSynthetic)
                     return@descriptor default(term.type)
 
                 val fieldName = fieldReflect.name
@@ -405,14 +412,10 @@ abstract class DescriptorReanimator(override val method: Method,
         val address = (addr as? ConstIntTerm)?.value ?: return@descriptor default(term.type)
         if (address == 0) return@descriptor default(term.type)
 
-        when (val actualType = resolveType(term.memspace, addr, referencedType)) {//(reanimateType(term.memspace, addr) ?: referencedType)) {
-            is KexClass -> {
-                memory(term.memspace, address) { `object`(actualType) }
-            }
-            is KexArray -> {
-                memory(term.memspace, address) {
-                    newArrayInstance(term.memspace, actualType, addr)
-                }
+        when (val actualType = resolveType(term.memspace, addr, referencedType)) {
+            is KexClass -> memory(term.memspace, address) { `object`(actualType) }
+            is KexArray -> memory(term.memspace, address) {
+                newArrayInstance(term.memspace, actualType, addr)
             }
             else -> unreachable { log.error("Trying to recover reference pointer that is not pointer") }
         }

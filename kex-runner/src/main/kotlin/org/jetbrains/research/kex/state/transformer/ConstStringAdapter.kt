@@ -14,12 +14,11 @@ class ConstStringAdapter : RecollectingTransformer<ConstStringAdapter> {
     val strings = mutableMapOf<String, Term>()
 
     override fun apply(ps: PredicateState): PredicateState {
-        val strings = TermCollector.getFullTermSet(ps).filterIsInstance<ConstStringTerm>().toSet()
+        val strings = collectStringTerms(ps)
         for (str in strings) {
             currentBuilder += buildStr(str.value)
         }
-        val res = super.apply(ps)
-        return res
+        return super.apply(ps)
     }
 
     private fun buildStr(string: String): PredicateState = StateBuilder().apply {
