@@ -1,6 +1,5 @@
 package org.jetbrains.research.kex.smt
 
-import org.jetbrains.research.kthelper.logging.log
 import org.jetbrains.research.kex.annotations.AnnotationManager
 import org.jetbrains.research.kex.asm.state.PredicateStateAnalysis
 import org.jetbrains.research.kex.config.kexConfig
@@ -14,6 +13,7 @@ import org.jetbrains.research.kex.state.transformer.*
 import org.jetbrains.research.kfg.ir.BasicBlock
 import org.jetbrains.research.kfg.ir.Method
 import org.jetbrains.research.kfg.ir.value.instruction.Instruction
+import org.jetbrains.research.kthelper.logging.log
 
 class Checker(val method: Method, val loader: ClassLoader, private val psa: PredicateStateAnalysis) {
     private val isInliningEnabled = kexConfig.getBooleanValue("smt", "ps-inlining", true)
@@ -22,7 +22,7 @@ class Checker(val method: Method, val loader: ClassLoader, private val psa: Pred
     private val logQuery = kexConfig.getBooleanValue("smt", "logQuery", false)
     private val annotationsEnabled = kexConfig.getBooleanValue("annotations", "enabled", false)
 
-    private val builder = psa.builder(method)
+    private val builder get() = psa.builder(method)
     lateinit var state: PredicateState
         private set
     lateinit var query: PredicateState

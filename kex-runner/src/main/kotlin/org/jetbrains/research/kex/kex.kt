@@ -297,6 +297,7 @@ class Kex(args: Array<String>) {
         val traceManager = ObjectTraceManager()
         val psa = PredicateStateAnalysis(analysisContext.cm)
         val cm = CoverageCounter(originalContext.cm, traceManager)
+        val psa = PredicateStateAnalysis(analysisContext.cm)
 
         runPipeline(analysisContext) {
             +ConcolicChecker(analysisContext, psa, traceManager)
