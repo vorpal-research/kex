@@ -49,7 +49,7 @@ class Checker(val method: Method, val loader: ClassLoader, private val psa: Pred
         }
 
         +StaticFieldInliner(method.cm, psa)
-        +RecursiveInliner(psa) { MethodInliner(psa, inlineIndex = it) }
+        +RecursiveConstructorInliner(psa)
         +IntrinsicAdapter
         +ReflectionInfoAdapter(method, loader)
         +Optimizer()
@@ -65,7 +65,7 @@ class Checker(val method: Method, val loader: ClassLoader, private val psa: Pred
         +AnnotationAdapter(method, AnnotationManager.defaultLoader)
         +RecursiveInliner(psa) { ConcreteImplInliner(method.cm.type, typeInfoMap, psa, inlineIndex = it) }
         +StaticFieldInliner(method.cm, psa)
-        +RecursiveInliner(psa) { MethodInliner(psa, inlineIndex = it) }
+        +RecursiveConstructorInliner(psa)
         +IntrinsicAdapter
         +ReflectionInfoAdapter(method, loader)
         +Optimizer()

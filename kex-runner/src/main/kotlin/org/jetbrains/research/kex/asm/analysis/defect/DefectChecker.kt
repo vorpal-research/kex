@@ -234,7 +234,7 @@ class DefectChecker(
         +RecursiveInliner(psa) { ConcreteImplInliner(method.cm.type, typeInfoMap, psa, inlineIndex = it) }
 //        +MethodInliner(psa)
         +StaticFieldInliner(method.cm, psa)
-        +RecursiveInliner(psa) { MethodInliner(psa, inlineIndex = it) }
+        +RecursiveConstructorInliner(psa)
         +IntrinsicAdapter
         +NullityAnnotator(nonNulls.map { term { value(it) } }.toSet())
         +DoubleTypeAdapter()

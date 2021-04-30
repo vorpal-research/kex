@@ -67,7 +67,7 @@ class GeneratorContext(
             +AnnotationAdapter(method, AnnotationManager.defaultLoader)
             +ConcreteImplInliner(types, staticTypeInfo, psa)
             +StaticFieldInliner(cm, psa)
-            +RecursiveInliner(psa) { MethodInliner(psa, inlineIndex = it) }
+            +RecursiveConstructorInliner(psa)
             +IntrinsicAdapter
             +ReflectionInfoAdapter(method, context.loader, ignores)
             +Optimizer()
