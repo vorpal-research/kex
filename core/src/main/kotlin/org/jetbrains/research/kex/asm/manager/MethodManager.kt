@@ -75,6 +75,14 @@ object MethodManager {
     object KexIntrinsicManager {
         private const val intrinsicsClass = "org/jetbrains/research/kex/Intrinsics"
 
+        fun kexAssume(cm: ClassManager) = cm[intrinsicsClass].getMethod(
+            "kexAssume",
+            MethodDesc(
+                arrayOf(cm.type.getArrayType(cm.type.boolType)),
+                cm.type.voidType
+            )
+        )
+
         fun kexAssert(cm: ClassManager) = cm[intrinsicsClass].getMethod(
             "kexAssert",
             MethodDesc(

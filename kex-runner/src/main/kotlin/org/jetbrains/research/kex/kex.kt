@@ -3,6 +3,7 @@ package org.jetbrains.research.kex
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.InternalSerializationApi
 import org.jetbrains.research.kex.asm.analysis.concolic.ConcolicChecker
+import org.jetbrains.research.kex.asm.analysis.defect.CallCiteChecker
 import org.jetbrains.research.kex.asm.analysis.defect.DefectChecker
 import org.jetbrains.research.kex.asm.analysis.defect.DefectManager
 import org.jetbrains.research.kex.asm.analysis.testgen.DescriptorChecker
@@ -33,6 +34,7 @@ import org.jetbrains.research.kex.smt.Result
 import org.jetbrains.research.kex.state.transformer.executeModel
 import org.jetbrains.research.kex.trace.TraceManager
 import org.jetbrains.research.kex.trace.`object`.ObjectTraceManager
+import org.jetbrains.research.kex.util.getPathSeparator
 import org.jetbrains.research.kex.util.getRuntime
 import org.jetbrains.research.kfg.ClassManager
 import org.jetbrains.research.kfg.KfgConfig
@@ -81,6 +83,7 @@ class Kex(args: Array<String>) {
         Symbolic,
         Concolic,
         Checker,
+        LibChecker,
         Reanimator,
         Debug
     }
@@ -95,7 +98,7 @@ class Kex(args: Array<String>) {
         kexConfig.initialize(cmd, RuntimeConfig, FileConfig(properties))
         kexConfig.initLog(logName)
 
-        val classPaths = cmd.getCmdValue("classpath")?.split(":")
+        val classPaths = cmd.getCmdValue("classpath")?.split(getPathSeparator())
         val targetName = cmd.getCmdValue("target")
         require(classPaths != null, cmd::printHelp)
 
@@ -166,7 +169,7 @@ class Kex(args: Array<String>) {
     }
 
     private fun updateClassPath(loader: URLClassLoader) {
-        val urlClassPath = loader.urLs.joinToString(separator = ":") { "${it.path}." }
+        val urlClassPath = loader.urLs.joinToString(separator = getPathSeparator()) { "${it.path}." }
         System.setProperty("java.class.path", "$classPath:$urlClassPath")
     }
 
@@ -195,6 +198,7 @@ class Kex(args: Array<String>) {
             Mode.Symbolic -> symbolic(originalContext, analysisContext)
             Mode.Reanimator -> reanimator(analysisContext)
             Mode.Checker -> checker(originalContext, analysisContext)
+            Mode.LibChecker -> libChecker(originalContext, analysisContext)
             Mode.Concolic -> concolic(originalContext, analysisContext)
             Mode.Debug -> debug(analysisContext)
         }
@@ -270,6 +274,28 @@ class Kex(args: Array<String>) {
         }
         runPipeline(analysisContext) {
             +DefectChecker(analysisContext, psa)
+        }
+        clearClassPath()
+        log.debug("Analysis finished, emitting results info ${DefectManager.defectFile}")
+        DefectManager.emit()
+    }
+
+    @Suppress("UNUSED_PARAMETER")
+    private fun libChecker(originalContext: ExecutionContext, analysisContext: ExecutionContext) {
+        val psa = PredicateStateAnalysis(analysisContext.cm)
+
+        updateClassPath(analysisContext.loader as URLClassLoader)
+
+        runPipeline(analysisContext, Package.defaultPackage) {
+            +LoopSimplifier(analysisContext.cm)
+            +LoopDeroller(analysisContext.cm)
+            +psa
+            +MethodFieldAccessCollector(analysisContext, psa)
+            +SetterCollector(analysisContext)
+            +ExternalCtorCollector(analysisContext.cm, visibilityLevel)
+        }
+        runPipeline(analysisContext) {
+            +CallCiteChecker(analysisContext, `package`, psa)
         }
         clearClassPath()
         log.debug("Analysis finished, emitting results info ${DefectManager.defectFile}")

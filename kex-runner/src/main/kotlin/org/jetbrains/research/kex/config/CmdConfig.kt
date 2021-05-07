@@ -1,8 +1,8 @@
 package org.jetbrains.research.kex.config
 
+import org.apache.commons.cli.*
 import org.jetbrains.research.kthelper.assert.exit
 import org.jetbrains.research.kthelper.logging.log
-import org.apache.commons.cli.*
 import java.io.PrintWriter
 import java.io.StringWriter
 import java.util.regex.Pattern
@@ -120,7 +120,7 @@ class CmdConfig(args: Array<String>) : Config() {
         val comparator = when {
             ignoreCase -> { a: String, b: String ->
                 val pattern = Pattern.compile(a, Pattern.CASE_INSENSITIVE)
-                pattern.matcher(b).find()
+                pattern.matcher(b).matches()
             }
             else -> { a: String, b: String -> a == b }
         }
