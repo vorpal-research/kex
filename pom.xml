@@ -34,14 +34,6 @@
 
     <repositories>
         <repository>
-            <snapshots>
-                <enabled>false</enabled>
-            </snapshots>
-            <id>bintray-cbeust-maven</id>
-            <name>bintray</name>
-            <url>https://dl.bintray.com/cbeust/maven</url>
-        </repository>
-        <repository>
             <id>bintray-kotlin-kotlinx</id>
             <name>bintray</name>
             <url>https://kotlin.bintray.com/kotlinx</url>

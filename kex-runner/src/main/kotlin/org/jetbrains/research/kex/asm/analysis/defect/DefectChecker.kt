@@ -272,6 +272,8 @@ class DefectChecker(
                 if (`this` != null) results += `this`
                 results += arguments.values
                 results += collectVariables(state).filter { it is FieldTerm && it.owner == `this` }
+                results += collectAssumedTerms(state)
+                results += collectRequiredTerms(state)
                 results += TermCollector.getFullTermSet(query)
                 results
             }
