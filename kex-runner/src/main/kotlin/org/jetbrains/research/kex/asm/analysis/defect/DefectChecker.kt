@@ -163,7 +163,7 @@ class DefectChecker(
             is Result.SatResult -> {
                 failingBlocks += currentBlock
                 val (path, testName) = getTest("NullPointerException", checkerState, result) ?: null to null
-                dm += Defect.npe(inst.location, null, path, testName)
+                dm += Defect.npe(inst.location, id = null, testFile = path, testCaseName = testName)
                 false
             }
             else -> true
@@ -185,7 +185,7 @@ class DefectChecker(
             is Result.SatResult -> {
                 failingBlocks += currentBlock
                 val (path, testName) = getTest("OutOfBounds", checkerState, result) ?: null to null
-                dm += Defect.oob(inst.location, null, path, testName)
+                dm += Defect.oob(inst.location,  id = null, testFile = path, testCaseName = testName)
                 false
             }
             else -> true
@@ -216,7 +216,7 @@ class DefectChecker(
             is Result.SatResult -> {
                 failingBlocks += currentBlock
                 val (path, testName) = getTest("Assertion", checkerState, result) ?: null to null
-                dm += Defect.assert(inst.location, id, path, testName)
+                dm += Defect.assert(inst.location,  id = id, testFile = path, testCaseName = testName)
                 false
             }
             else -> true

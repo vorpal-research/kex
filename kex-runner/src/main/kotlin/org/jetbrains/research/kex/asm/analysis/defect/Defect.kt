@@ -12,18 +12,19 @@ enum class DefectType(val description: String) {
 data class Defect(
     val location: Location,
     val type: DefectType,
+    val callStack: List<String>,
     val id: String?,
     val testFile: Path?,
     val testCaseName: String?
 ) {
     companion object {
-        fun oob(location: Location, id: String? = null, testFile: Path? = null, testCaseName: String? = null) =
-            Defect(location, DefectType.OOB, id, testFile, testCaseName)
+        fun oob(location: Location, callStack: List<String> = listOf(),id: String? = null, testFile: Path? = null, testCaseName: String? = null) =
+            Defect(location, DefectType.OOB, callStack, id, testFile, testCaseName)
 
-        fun npe(location: Location, id: String? = null, testFile: Path? = null, testCaseName: String? = null) =
-            Defect(location, DefectType.NPE, id, testFile, testCaseName)
+        fun npe(location: Location, callStack: List<String> = listOf(),id: String? = null, testFile: Path? = null, testCaseName: String? = null) =
+            Defect(location, DefectType.NPE, callStack, id, testFile, testCaseName)
 
-        fun assert(location: Location, id: String? = null, testFile: Path? = null, testCaseName: String? = null) =
-            Defect(location, DefectType.ASSERT, id, testFile, testCaseName)
+        fun assert(location: Location, callStack: List<String> = listOf(),id: String? = null, testFile: Path? = null, testCaseName: String? = null) =
+            Defect(location, DefectType.ASSERT, callStack, id, testFile, testCaseName)
     }
 }

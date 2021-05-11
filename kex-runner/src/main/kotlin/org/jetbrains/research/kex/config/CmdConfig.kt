@@ -83,6 +83,10 @@ class CmdConfig(args: Array<String>) : Config() {
         targetDir.isRequired = false
         options.addOption(targetDir)
 
+        val libPackage = Option(null, "libCheck", true, "package to check use cases of library, used in LibChecker mode")
+        libPackage.isRequired = false
+        options.addOption(libPackage)
+
         val config = Option.builder()
                 .longOpt("option")
                 .argName("section:name:value")

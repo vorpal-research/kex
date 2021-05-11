@@ -48,6 +48,7 @@ import org.jetbrains.research.kfg.ir.Method
 import org.jetbrains.research.kfg.util.Flags
 import org.jetbrains.research.kfg.visitor.Pipeline
 import org.jetbrains.research.kfg.visitor.executePipeline
+import org.jetbrains.research.kthelper.assert.unreachable
 import org.jetbrains.research.kthelper.logging.debug
 import org.jetbrains.research.kthelper.logging.log
 import java.io.File
@@ -282,6 +283,10 @@ class Kex(args: Array<String>) {
 
     @Suppress("UNUSED_PARAMETER")
     private fun libChecker(originalContext: ExecutionContext, analysisContext: ExecutionContext) {
+        val callCitePackage = Package.parse(
+            cmd.getCmdValue("libCheck")
+                ?: unreachable { log.error("You need to specify package in which to look for library usages") }
+        )
         val psa = PredicateStateAnalysis(analysisContext.cm)
 
         updateClassPath(analysisContext.loader as URLClassLoader)
@@ -295,7 +300,7 @@ class Kex(args: Array<String>) {
             +ExternalCtorCollector(analysisContext.cm, visibilityLevel)
         }
         runPipeline(analysisContext) {
-            +CallCiteChecker(analysisContext, `package`, psa)
+            +CallCiteChecker(analysisContext, callCitePackage, psa)
         }
         clearClassPath()
         log.debug("Analysis finished, emitting results info ${DefectManager.defectFile}")

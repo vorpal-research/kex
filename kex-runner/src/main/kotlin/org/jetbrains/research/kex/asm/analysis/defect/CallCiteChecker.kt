@@ -14,6 +14,7 @@ import org.jetbrains.research.kex.smt.SMTProxySolver
 import org.jetbrains.research.kex.state.BasicState
 import org.jetbrains.research.kex.state.PredicateState
 import org.jetbrains.research.kex.state.StateBuilder
+import org.jetbrains.research.kex.state.predicate.require
 import org.jetbrains.research.kex.state.predicate.CallPredicate
 import org.jetbrains.research.kex.state.term.CallTerm
 import org.jetbrains.research.kex.state.term.FieldTerm
@@ -171,8 +172,8 @@ class CallCiteChecker(
         log.debug("State: $state")
         val assertionQuery = assertions.map {
             when (it.type) {
-                is KexBool -> org.jetbrains.research.kex.state.predicate.require { it equality true }
-                is KexInt -> org.jetbrains.research.kex.state.predicate.require { it equality 1 }
+                is KexBool -> require { it equality true }
+                is KexInt -> require { it equality 1 }
                 else -> unreachable { log.error("Unknown assertion variable: $it") }
             }
         }.fold(StateBuilder()) { builder, predicate ->
@@ -184,7 +185,11 @@ class CallCiteChecker(
         return when (result) {
             is Result.SatResult -> {
                 val (path, testName) = getTest("Assertion", checkerState, result, callCite) ?: null to null
-                dm += Defect.assert(inst.location, id, path, testName)
+                val callStack = listOf(
+                    "$method - ${inst.location}",
+                    "${callCite.parent.parent} - ${callCite.location}"
+                )
+                dm += Defect.assert(inst.location, callStack, id, path, testName)
                 false
             }
             else -> true
