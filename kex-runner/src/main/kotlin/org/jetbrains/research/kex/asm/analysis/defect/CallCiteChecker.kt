@@ -189,7 +189,7 @@ class CallCiteChecker(
                     "$method - ${inst.location}",
                     "${callCite.parent.parent} - ${callCite.location}"
                 )
-                dm += Defect.assert(inst.location, callStack, id, path, testName)
+                dm += Defect.assert(callStack, id, path, testName)
                 false
             }
             else -> true
