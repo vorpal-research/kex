@@ -81,6 +81,7 @@ class Kex(args: Array<String>) {
     val visibilityLevel: Visibility
 
     enum class Mode {
+        Fuzzer,
         Symbolic,
         Concolic,
         Checker,
@@ -196,6 +197,7 @@ class Kex(args: Array<String>) {
         }
 
         when (cmd.getEnumValue("mode", Mode.Symbolic, ignoreCase = true)) {
+            Mode.Fuzzer -> fuzzer(originalContext, analysisContext)
             Mode.Symbolic -> symbolic(originalContext, analysisContext)
             Mode.Reanimator -> reanimator(analysisContext)
             Mode.Checker -> checker(analysisContext)
@@ -230,16 +232,38 @@ class Kex(args: Array<String>) {
         val psa = PredicateStateAnalysis(analysisContext.cm)
         val cm = createCoverageCounter(originalContext.cm, traceManager)
 
-        updateClassPath(analysisContext.loader as URLClassLoader)
+//        updateClassPath(analysisContext.loader as URLClassLoader)
         val useApiGeneration = kexConfig.getBooleanValue("apiGeneration", "enabled", true)
 
         preparePackage(analysisContext, psa)
         runPipeline(analysisContext) {
-            +RandomChecker(analysisContext, psa, visibilityLevel, traceManager)
             +when {
                 useApiGeneration -> DescriptorChecker(analysisContext, traceManager, psa)
                 else -> MethodChecker(analysisContext, traceManager, psa)
             }
+            +cm
+        }
+//        clearClassPath()
+
+        val coverage = cm.totalCoverage
+        log.info(
+            "Overall summary for ${cm.methodInfos.size} methods:\n" +
+                    "body coverage: ${String.format(Locale.ENGLISH, "%.2f", coverage.bodyCoverage)}%\n" +
+                    "full coverage: ${String.format(Locale.ENGLISH, "%.2f", coverage.fullCoverage)}%"
+        )
+        DescriptorStatistics.printStatistics()
+    }
+
+    private fun fuzzer(originalContext: ExecutionContext, analysisContext: ExecutionContext) {
+        val traceManager = ObjectTraceManager()
+        val psa = PredicateStateAnalysis(analysisContext.cm)
+        val cm = createCoverageCounter(originalContext.cm, traceManager)
+
+        updateClassPath(analysisContext.loader as URLClassLoader)
+
+        preparePackage(analysisContext, psa)
+        runPipeline(analysisContext) {
+            +RandomChecker(analysisContext, psa, visibilityLevel, traceManager)
             +cm
         }
         clearClassPath()
