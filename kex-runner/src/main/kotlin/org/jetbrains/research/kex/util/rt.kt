@@ -10,3 +10,5 @@ fun getRuntime(): JarContainer? {
     val runtimeVersion = kexConfig.getStringValue("kex", "rtVersion") ?: return null
     return JarContainer(Paths.get(runtimePath, "rt-${runtimeVersion}.jar"), Package.defaultPackage)
 }
+
+fun getPathSeparator(): String = System.getProperty("path.separator")

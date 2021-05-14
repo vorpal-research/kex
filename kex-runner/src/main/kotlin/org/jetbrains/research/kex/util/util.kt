@@ -20,5 +20,3 @@ infix fun <A, B, C> A.with(pair: Pair<B, C>): Triple<A, B, C> = Triple(this, pai
 
 @Suppress("NOTHING_TO_INLINE")
 inline fun log(name: String): Logger = LoggerFactory.getLogger(name)
-
-fun getPathSeparator(): String = System.getProperty("path.separator")
