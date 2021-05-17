@@ -30,6 +30,8 @@
 
         <kt-helper.version>0.0.8</kt-helper.version>
         <kfg.version>0.0.11-7</kfg.version>
+
+        <klaxon.version>5.5</klaxon.version>
     </properties>
 
     <repositories>
