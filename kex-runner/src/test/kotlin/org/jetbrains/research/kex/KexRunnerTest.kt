@@ -12,7 +12,6 @@ import org.jetbrains.research.kex.state.term.ConstBoolTerm
 import org.jetbrains.research.kex.state.term.ConstIntTerm
 import org.jetbrains.research.kex.state.term.isConst
 import org.jetbrains.research.kex.state.term.term
-import org.jetbrains.research.kex.state.transformer.DeltaDebugger
 import org.jetbrains.research.kex.trace.`object`.ObjectTraceManager
 import org.jetbrains.research.kfg.ClassManager
 import org.jetbrains.research.kfg.KfgConfig
@@ -94,16 +93,6 @@ abstract class KexRunnerTest : KexTest() {
                 val checker = Checker(method, loader, psa)
                 val state = checker.createState(inst) ?: return
                 val result = checker.prepareAndCheck(state)
-                if (result !is Result.SatResult) {
-                    val reduced = DeltaDebugger(1000, 1000) {
-                        val checker = Checker(method, loader, psa)
-                        val res = checker.prepareAndCheck(it)
-                        res !is Result.SatResult
-                    }.reduce(state)
-                    val checker2 = Checker(method, loader, psa)
-                    val res = checker2.prepareAndCheck(reduced)
-                    val a = 10
-                }
                 assertTrue(result is Result.SatResult, "Class $klass; method $method; ${inst.print()} should be reachable")
 
                 inst as CallInst
