@@ -12,7 +12,6 @@ object MethodManager {
         val inliningEnabled = kexConfig.getBooleanValue("inliner", "enabled", true)
         private val ignorePackages = hashSetOf<Package>()
         private val ignoreClasses = hashSetOf<String>()
-        private val ignoreMethods = hashSetOf<Method>()
 
         init {
             val ignores = kexConfig.getMultipleStringValue("inliner", "ignore", ",")
@@ -28,7 +27,7 @@ object MethodManager {
         fun isIgnored(method: Method) = when {
             ignorePackages.any { it.isParent(method.klass.pkg) } -> true
             ignoreClasses.any { method.cm[it] == method.klass } -> true
-            ignoreMethods.contains(method) -> true
+            method in KexIntrinsicManager.getNotInlinableMethods(method.cm) -> true
             else -> false
         }
 
@@ -74,12 +73,43 @@ object MethodManager {
 
     object KexIntrinsicManager {
         private const val intrinsicsClass = "org/jetbrains/research/kex/Intrinsics"
+        private const val objectsClass = "org/jetbrains/research/kex/Objects"
+
+        fun getNotInlinableMethods(cm: ClassManager) = setOf(
+            kexUnknownBoolean(cm),
+            kexUnknownByte(cm),
+            kexUnknownChar(cm),
+            kexUnknownShort(cm),
+            kexUnknownInt(cm),
+            kexUnknownLong(cm),
+            kexUnknownFloat(cm),
+            kexUnknownDouble(cm),
+            kexUnknown(cm),
+
+            kexUnknownBooleanArray(cm),
+            kexUnknownByteArray(cm),
+            kexUnknownCharArray(cm),
+            kexUnknownShortArray(cm),
+            kexUnknownIntArray(cm),
+            kexUnknownLongArray(cm),
+            kexUnknownFloatArray(cm),
+            kexUnknownDoubleArray(cm),
+            kexUnknownArray(cm)
+        )
 
         fun kexAssume(cm: ClassManager) = cm[intrinsicsClass].getMethod(
             "kexAssume",
             MethodDesc(
                 arrayOf(cm.type.getArrayType(cm.type.boolType)),
                 cm.type.voidType
+            )
+        )
+
+        fun kexNotNull(cm: ClassManager) = cm[intrinsicsClass].getMethod(
+            "kexNotNull",
+            MethodDesc(
+                arrayOf(cm.type.objectType),
+                cm.type.objectType
             )
         )
 
@@ -112,6 +142,151 @@ object MethodManager {
             MethodDesc(
                 arrayOf(cm.type.stringType, cm.type.getArrayType(cm.type.boolType)),
                 cm.type.voidType
+            )
+        )
+
+        fun kexUnknownBoolean(cm: ClassManager) = cm[objectsClass].getMethod(
+            "kexUnknownBoolean",
+            MethodDesc(
+                arrayOf(),
+                cm.type.boolType
+            )
+        )
+
+        fun kexUnknownByte(cm: ClassManager) = cm[objectsClass].getMethod(
+            "kexUnknownByte",
+            MethodDesc(
+                arrayOf(),
+                cm.type.byteType
+            )
+        )
+
+        fun kexUnknownChar(cm: ClassManager) = cm[objectsClass].getMethod(
+            "kexUnknownChar",
+            MethodDesc(
+                arrayOf(),
+                cm.type.charType
+            )
+        )
+
+        fun kexUnknownShort(cm: ClassManager) = cm[objectsClass].getMethod(
+            "kexUnknownShort",
+            MethodDesc(
+                arrayOf(),
+                cm.type.shortType
+            )
+        )
+
+        fun kexUnknownInt(cm: ClassManager) = cm[objectsClass].getMethod(
+            "kexUnknownInt",
+            MethodDesc(
+                arrayOf(),
+                cm.type.intType
+            )
+        )
+
+        fun kexUnknownLong(cm: ClassManager) = cm[objectsClass].getMethod(
+            "kexUnknownLong",
+            MethodDesc(
+                arrayOf(),
+                cm.type.longType
+            )
+        )
+
+        fun kexUnknownFloat(cm: ClassManager) = cm[objectsClass].getMethod(
+            "kexUnknownFloat",
+            MethodDesc(
+                arrayOf(),
+                cm.type.floatType
+            )
+        )
+
+        fun kexUnknownDouble(cm: ClassManager) = cm[objectsClass].getMethod(
+            "kexUnknownDouble",
+            MethodDesc(
+                arrayOf(),
+                cm.type.doubleType
+            )
+        )
+
+        fun kexUnknown(cm: ClassManager) = cm[objectsClass].getMethod(
+            "kexUnknown",
+            MethodDesc(
+                arrayOf(),
+                cm.type.objectType
+            )
+        )
+
+
+        fun kexUnknownBooleanArray(cm: ClassManager) = cm[objectsClass].getMethod(
+            "kexUnknownBooleanArray",
+            MethodDesc(
+                arrayOf(),
+                cm.type.getArrayType(cm.type.boolType)
+            )
+        )
+
+        fun kexUnknownByteArray(cm: ClassManager) = cm[objectsClass].getMethod(
+            "kexUnknownByteArray",
+            MethodDesc(
+                arrayOf(),
+                cm.type.getArrayType(cm.type.byteType)
+            )
+        )
+
+        fun kexUnknownCharArray(cm: ClassManager) = cm[objectsClass].getMethod(
+            "kexUnknownCharArray",
+            MethodDesc(
+                arrayOf(),
+                cm.type.getArrayType(cm.type.charType)
+            )
+        )
+
+        fun kexUnknownShortArray(cm: ClassManager) = cm[objectsClass].getMethod(
+            "kexUnknownShortArray",
+            MethodDesc(
+                arrayOf(),
+                cm.type.getArrayType(cm.type.shortType)
+            )
+        )
+
+        fun kexUnknownIntArray(cm: ClassManager) = cm[objectsClass].getMethod(
+            "kexUnknownIntArray",
+            MethodDesc(
+                arrayOf(),
+                cm.type.getArrayType(cm.type.intType)
+            )
+        )
+
+        fun kexUnknownLongArray(cm: ClassManager) = cm[objectsClass].getMethod(
+            "kexUnknownLongArray",
+            MethodDesc(
+                arrayOf(),
+                cm.type.getArrayType(cm.type.longType)
+            )
+        )
+
+        fun kexUnknownFloatArray(cm: ClassManager) = cm[objectsClass].getMethod(
+            "kexUnknownFloatArray",
+            MethodDesc(
+                arrayOf(),
+                cm.type.getArrayType(cm.type.floatType)
+            )
+        )
+
+        fun kexUnknownDoubleArray(cm: ClassManager) = cm[objectsClass].getMethod(
+            "kexUnknownDoubleArray",
+            MethodDesc(
+                arrayOf(),
+                cm.type.getArrayType(cm.type.doubleType)
+            )
+        )
+
+        fun kexUnknownArray(cm: ClassManager) = cm[objectsClass].getMethod(
+            "kexUnknownArray",
+            MethodDesc(
+                arrayOf(),
+                cm.type.getArrayType(cm.type.objectType)
             )
         )
 

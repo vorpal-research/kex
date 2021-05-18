@@ -203,6 +203,7 @@ class CallCiteChecker(
         +StaticFieldInliner(method.cm, psa)
         +RecursiveInliner(psa) { MethodInliner(psa, inlineIndex = it) }
         +IntrinsicAdapter
+        +KexIntrinsicsAdapter()
 //        +NullityAnnotator(nonNulls.map { term { value(it) } }.toSet())
         +DoubleTypeAdapter()
         +ReflectionInfoAdapter(method, ctx.loader)

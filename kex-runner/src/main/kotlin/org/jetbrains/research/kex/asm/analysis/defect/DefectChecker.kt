@@ -236,6 +236,7 @@ class DefectChecker(
         +StaticFieldInliner(method.cm, psa)
         +RecursiveConstructorInliner(psa)
         +IntrinsicAdapter
+        +KexIntrinsicsAdapter()
         +NullityAnnotator(nonNulls.map { term { value(it) } }.toSet())
         +DoubleTypeAdapter()
         +ReflectionInfoAdapter(method, loader)

@@ -51,6 +51,7 @@ class Checker(val method: Method, val loader: ClassLoader, private val psa: Pred
         +StaticFieldInliner(method.cm, psa)
         +RecursiveConstructorInliner(psa)
         +IntrinsicAdapter
+        +KexIntrinsicsAdapter()
         +ReflectionInfoAdapter(method, loader)
         +Optimizer()
         +ConstantPropagator
@@ -67,6 +68,7 @@ class Checker(val method: Method, val loader: ClassLoader, private val psa: Pred
         +StaticFieldInliner(method.cm, psa)
         +RecursiveConstructorInliner(psa)
         +IntrinsicAdapter
+        +KexIntrinsicsAdapter()
         +ReflectionInfoAdapter(method, loader)
         +Optimizer()
         +ConstantPropagator
