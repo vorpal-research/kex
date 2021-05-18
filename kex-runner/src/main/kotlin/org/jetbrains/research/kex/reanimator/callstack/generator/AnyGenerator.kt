@@ -142,7 +142,7 @@ open class AnyGenerator(private val fallback: Generator) : Generator {
             val (desc, stack, depth) = es
             val current = descriptor.accept(desc)
             current.reduce()
-            if (depth > maxStackSize) continue
+            if (depth >= maxStackSize) continue
             log.debug("Depth $generationDepth, stack depth $depth, query size ${queue.size}")
 
 
@@ -150,7 +150,7 @@ open class AnyGenerator(private val fallback: Generator) : Generator {
                 return
             }
 
-            if (depth > maxStackSize - 1) continue
+            if (depth >= maxStackSize - 1) continue
 
             for (execStack in applyMethods(klass, current, stack, depth, generationDepth)) {
                 queue += execStack
