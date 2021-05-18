@@ -1,9 +1,5 @@
 package org.jetbrains.research.kex.asm.analysis.concolic
 
-import org.jetbrains.research.kthelper.collection.firstOrElse
-import org.jetbrains.research.kthelper.collection.stackOf
-import org.jetbrains.research.kthelper.logging.log
-import org.jetbrains.research.kthelper.tryOrNull
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
@@ -30,10 +26,18 @@ import org.jetbrains.research.kfg.ir.BasicBlock
 import org.jetbrains.research.kfg.ir.Method
 import org.jetbrains.research.kfg.ir.value.Value
 import org.jetbrains.research.kfg.visitor.MethodVisitor
+import org.jetbrains.research.kthelper.collection.firstOrElse
+import org.jetbrains.research.kthelper.collection.stackOf
+import org.jetbrains.research.kthelper.logging.log
+import org.jetbrains.research.kthelper.tryOrNull
 import java.util.*
 
-private val timeLimit by lazy { kexConfig.getLongValue("concolic", "timeLimit", 10000L) }
-private val onlyMain by lazy { kexConfig.getBooleanValue("concolic", "main-only", false) }
+private val timeLimit by lazy {
+    kexConfig.getLongValue("concolic", "timeLimit", 10000L)
+}
+private val onlyMain by lazy {
+    kexConfig.getBooleanValue("concolic", "main-only", false)
+}
 
 class ConcolicChecker(
     val ctx: ExecutionContext,
@@ -133,7 +137,7 @@ class ConcolicChecker(
                 }
                 is MethodCall -> {
                     val mappings = mutableMapOf<Value, Value>()
-                    action.instance?.run { mappings[values.getThis(action.method.`class`)] = this }
+                    action.instance?.run { mappings[values.getThis(action.method.klass)] = this }
                     action.args.withIndex().forEach { (index, arg) ->
                         mappings[values.getArgument(index, action.method, action.method.argTypes[index])] = arg
                     }
@@ -202,7 +206,8 @@ class ConcolicChecker(
         return runner.collectTrace(instance, args.toTypedArray())
     }
 
-    private fun getRandomTrace(method: Method) = tryOrNull { RandomObjectTracingRunner(method, loader, ctx.random).run() }
+    private fun getRandomTrace(method: Method) =
+        tryOrNull { RandomObjectTracingRunner(method, loader, ctx.random).run() }
 
     private suspend fun process(method: Method) {
         val traces = ArrayDeque<Trace>()

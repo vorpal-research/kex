@@ -37,9 +37,9 @@ open class $valexpr : ${solver}SMTExpr {
             else -> unreachable { log.error("Trying to forceCast to non-simple SMTExpr") }
         } as Type
 
-        inline fun < reified Type : $valexpr > getStaticBitsize(ctx: $context) = when (Type::class) {
+        inline fun < reified Type : $valexpr > getStaticBitSize(ctx: $context) = when (Type::class) {
 #foreach($class in $exprClasses)
-            $class::class -> ${class}.getStaticBitsize(ctx)
+            $class::class -> ${class}.getStaticBitSize(ctx)
 #end
             else -> unreachable { log.error("Trying to get static bitsize of non-simple SMTExpr") }
         }
@@ -167,7 +167,7 @@ else -> unreachable { log.error("Invalid operands of `${opcode.toLowerCase()}`: 
 #set($self = $fullname)
 $modifiers class $fullname : $parent {
     companion object {
-        fun getStaticBitsize(ctx: $context) = engine.getSortBitsize(ctx, getStaticSort(ctx))
+        fun getStaticBitSize(ctx: $context) = engine.getSortBitSize(ctx, getStaticSort(ctx))
         fun getStaticSort(ctx: $context) = $staticSort
 #generateStatics($fullname, $basetype)
 
@@ -193,11 +193,11 @@ $modifiers class $fullname : $parent {
 #generateClass($Bitvector, "BV", "open", $valexpr, "engine.getBVSort(ctx, SMTEngine.WORD * 8)", "Long")
     override fun withAxiom(ax: $valexpr) = $self(ctx, expr, spliceAxioms(ctx, axiom, ax.expr, ax.axiom))
 
-    fun getBitsize() = engine.bvBitsize(ctx, getSort())
+    fun getBitSize() = engine.bvBitSize(ctx, getSort())
     open fun extract(high: Int, low: Int) = $self(ctx, engine.extract(ctx, expr, high, low), axiom)
 
     open fun binary(opcode: SMTEngine.Opcode, other: $self): $valexpr {
-        val maxsize = max(getBitsize(), other.getBitsize())
+        val maxsize = max(getBitSize(), other.getBitSize())
         val lhv = engine.sext(ctx, maxsize, expr)
         val rhv = engine.sext(ctx, maxsize, other.expr)
 
@@ -218,7 +218,7 @@ $modifiers class $fullname : $parent {
 #set($opcodes = ["ADD", "SUB", "MUL", "DIVIDE"])
 #foreach($opcode in $opcodes)
     infix fun ${opcode.toLowerCase()}(other: Int) =
-        binary(SMTEngine.Opcode.$opcode, $self(ctx, engine.makeNumericConst(ctx, engine.getBVSort(ctx, getBitsize()), other.toLong()))).toBV()
+        binary(SMTEngine.Opcode.$opcode, $self(ctx, engine.makeNumericConst(ctx, engine.getBVSort(ctx, getBitSize()), other.toLong()))).toBV()
 #end
 
     operator fun plus(other: $self) = add(other)
@@ -244,7 +244,7 @@ class $self$width : $self {
     companion object {
         const val BITSIZE = $width
         @Suppress("UNUSED_PARAMETER")
-        fun getStaticBitsize(ctx: $context) = BITSIZE
+        fun getStaticBitSize(ctx: $context) = BITSIZE
 
         fun getStaticSort(ctx: $context) = engine.getBVSort(ctx, BITSIZE)
 #generateStatics("$self$width", $base)
@@ -268,8 +268,8 @@ class $self$width : $self {
 #generateClass("$solver$float", $float, "", $valexpr, "engine.get${float}Sort(ctx)", $float)
     override fun withAxiom(ax: $valexpr) = $self(ctx, expr, spliceAxioms(ctx, axiom, ax.expr, ax.axiom))
 
-    fun getEBitsize() = engine.floatEBitsize(ctx, getSort())
-    fun getSBitsize() = engine.floatSBitsize(ctx, getSort())
+    fun getEBitSize() = engine.floatEBitSize(ctx, getSort())
+    fun getSBitSize() = engine.floatSBitSize(ctx, getSort())
 
     fun binary(opcode: SMTEngine.Opcode, other: $self): $valexpr {
         val nexpr = engine.binary(ctx, opcode, expr, other.expr)
@@ -386,7 +386,7 @@ fun ${valexpr}.toBV(sort: $sort): $Bitvector {
         }
         else -> unreachable { log.debug("Unexpected SMT expr type in cast") }
     }
-    return when (engine.bvBitsize(ctx, sort)) {
+    return when (engine.bvBitSize(ctx, sort)) {
         32 -> $Bitvector32(ctx, newExpr, axiom)
         64 -> $Bitvector64(ctx, newExpr, axiom)
         else -> $Bitvector(ctx, newExpr, axiom)
@@ -408,7 +408,7 @@ fun ${valexpr}.toFloat(): $Float {
     val newExpr = when {
         engine.isBV(ctx, expr) -> {
             val bv32expr = this.toBV32()
-            engine.IEEEbv2float(ctx, bv32expr.expr, engine.getFloatSort(ctx))
+            engine.bvIEEE2float(ctx, bv32expr.expr, engine.getFloatSort(ctx))
         }
         engine.isFloat(ctx, expr) -> this.expr
         engine.isDouble(ctx, expr) -> engine.float2float(ctx, expr, engine.getFloatSort(ctx))
@@ -421,7 +421,7 @@ fun ${valexpr}.toDouble(): $Double {
     val newExpr = when {
         engine.isBV(ctx, expr) -> {
             val bv64expr = this.toBV64()
-            engine.IEEEbv2float(ctx, bv64expr.expr, engine.getDoubleSort(ctx))
+            engine.bvIEEE2float(ctx, bv64expr.expr, engine.getDoubleSort(ctx))
         }
         engine.isFloat(ctx, expr) -> engine.float2float(ctx, expr, engine.getDoubleSort(ctx))
         engine.isDouble(ctx, expr) -> this.expr
@@ -444,7 +444,7 @@ fun ${valexpr}.convertToBV(sort: $sort): $Bitvector {
         engine.isFP(ctx, expr) -> engine.float2bv(ctx, expr, sort)
         else -> unreachable { log.debug("Unexpected SMT expr type in cast") }
     }
-    return when (engine.bvBitsize(ctx, sort)) {
+    return when (engine.bvBitSize(ctx, sort)) {
         32 -> $Bitvector32(ctx, newExpr, axiom)
         64 -> $Bitvector64(ctx, newExpr, axiom)
         else -> $Bitvector(ctx, newExpr, axiom)
@@ -527,10 +527,10 @@ fun < Res : $valexpr > forall(ctx: $context, sortGen: () -> List< $valexpr >,
     return $Bool(ctx, eret, spliceAxioms(ctx, axioms))
 }
 
-inline fun < reified BV : $Bitvector > bvStaticBitsize(ctx: $context) = when (BV::class) {
-    $Bitvector32::class -> ${Bitvector32}.getStaticBitsize(ctx)
-    $Bitvector64::class -> ${Bitvector64}.getStaticBitsize(ctx)
-    else -> ${Bitvector}.getStaticBitsize(ctx)
+inline fun < reified BV : $Bitvector > bvStaticBitSize(ctx: $context) = when (BV::class) {
+    $Bitvector32::class -> ${Bitvector32}.getStaticBitSize(ctx)
+    $Bitvector64::class -> ${Bitvector64}.getStaticBitSize(ctx)
+    else -> ${Bitvector}.getStaticBitSize(ctx)
 }
 
 inline fun < reified BV : $Bitvector > bvStaticSort(ctx: $context) = when (BV::class) {

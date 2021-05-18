@@ -45,7 +45,12 @@ class ReanimatingRandomObjectTracingRunner(
     val reanimator = Reanimator(ctx, psa, method.packageName, "Random${method.klassName}")
     private var testCounter = 0
 
-    val Parameters<Any?>.descriptors get() = Parameters(instance.descriptor, arguments.map { it.descriptor }, setOf())
+    private val Parameters<Any?>.descriptors
+        get() = Parameters(
+            instance.descriptor,
+            arguments.map { it.descriptor },
+            setOf()
+        )
 
     override fun run(): Trace? = tryOrNull {
         val (randomInstance, randomArgs) = when {
@@ -57,7 +62,7 @@ class ReanimatingRandomObjectTracingRunner(
             return null
         }
         val parameters = Parameters(randomInstance, randomArgs.toList(), setOf())
-        val (instance, args) = with (reanimator) {
+        val (instance, args) = with(reanimator) {
             val descriptors = parameters.descriptors
             val callStacks = descriptors.callStacks
             printTest("test_$testCounter", method, callStacks)

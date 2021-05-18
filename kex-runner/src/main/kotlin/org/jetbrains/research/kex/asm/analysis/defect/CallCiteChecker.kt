@@ -14,8 +14,8 @@ import org.jetbrains.research.kex.smt.SMTProxySolver
 import org.jetbrains.research.kex.state.BasicState
 import org.jetbrains.research.kex.state.PredicateState
 import org.jetbrains.research.kex.state.StateBuilder
-import org.jetbrains.research.kex.state.predicate.require
 import org.jetbrains.research.kex.state.predicate.CallPredicate
+import org.jetbrains.research.kex.state.predicate.require
 import org.jetbrains.research.kex.state.term.CallTerm
 import org.jetbrains.research.kex.state.term.FieldTerm
 import org.jetbrains.research.kex.state.term.Term
@@ -94,11 +94,11 @@ class CallCiteChecker(
     infix fun Method.overrides(other: Method): Boolean = when {
         this == other -> true
         other.isFinal -> false
-        this.`class` !is ConcreteClass -> false
-        other.`class` !is ConcreteClass -> false
+        this.klass !is ConcreteClass -> false
+        other.klass !is ConcreteClass -> false
         this.name != other.name -> false
         this.desc != other.desc -> false
-        !this.`class`.isInheritorOf(other.`class`) -> false
+        !this.klass.isInheritorOf(other.klass) -> false
         else -> true
     }
 
@@ -122,7 +122,7 @@ class CallCiteChecker(
             if (inlinedThis != null) {
                 result += inlinedThis to callTerm.owner
             } else if (!method.isStatic) {
-                result += term { `this`(method.`class`.kexType) } to callTerm.owner
+                result += term { `this`(method.klass.kexType) } to callTerm.owner
             }
             for ((index, arg) in callTerm.arguments.withIndex()) {
                 result += (inlinedArgs[index] ?: term { arg(arg.type, index) }) to arg

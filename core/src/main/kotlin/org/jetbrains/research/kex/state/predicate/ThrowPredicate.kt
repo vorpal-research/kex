@@ -19,8 +19,8 @@ class ThrowPredicate(
     override fun print() = "throw $throwable"
 
     override fun <T: Transformer<T>> accept(t: Transformer<T>): Predicate =
-            when (val tthrowable = t.transform(throwable)) {
+            when (val tThrowable = t.transform(throwable)) {
                 throwable -> this
-                else -> predicate(type, location) { `throw`(tthrowable) }
+                else -> predicate(type, location) { `throw`(tThrowable) }
             }
 }

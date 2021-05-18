@@ -56,8 +56,8 @@ abstract class KexRunnerTest : KexTest() {
     }
 
     protected fun getReachables(method: Method): List<Instruction> {
-        val `class` = Intrinsics::class.qualifiedName!!.replace(".", "/")
-        val intrinsics = cm[`class`]
+        val klass = Intrinsics::class.qualifiedName!!.replace(".", "/")
+        val intrinsics = cm[klass]
 
         val types = cm.type
         val methodName = "kexAssert"
@@ -65,25 +65,25 @@ abstract class KexRunnerTest : KexTest() {
         val assertReachable = intrinsics.getMethod(methodName, desc)
         return method.flatten().asSequence()
                 .mapNotNull { it as? CallInst }
-                .filter { it.method == assertReachable && it.`class` == intrinsics }
+                .filter { it.method == assertReachable && it.klass == intrinsics }
                 .toList()
     }
 
     protected fun getUnreachables(method: Method): List<Instruction> {
-        val `class` = Intrinsics::class.qualifiedName!!.replace(".", "/")
-        val intrinsics = cm[`class`]
+        val klass = Intrinsics::class.qualifiedName!!.replace(".", "/")
+        val intrinsics = cm[klass]
 
         val methodName = "kexUnreachable"
         val desc = MethodDesc(arrayOf(), cm.type.voidType)
         val assertUnreachable = intrinsics.getMethod(methodName, desc)
         return method.flatten().asSequence()
                 .mapNotNull { it as? CallInst }
-                .filter { it.method == assertUnreachable && it.`class` == intrinsics }
+                .filter { it.method == assertUnreachable && it.klass == intrinsics }
                 .toList()
     }
 
-    fun testClassReachability(`class`: Class) {
-        `class`.allMethods.forEach { method ->
+    fun testClassReachability(klass: Class) {
+        klass.allMethods.forEach { method ->
             log.debug("Checking method $method")
             log.debug(method.print())
 
@@ -91,8 +91,9 @@ abstract class KexRunnerTest : KexTest() {
 
             getReachables(method).forEach { inst ->
                 val checker = Checker(method, loader, psa)
-                val result = checker.checkReachable(inst)
-                assertTrue(result is Result.SatResult, "Class $`class`; method $method; ${inst.print()} should be reachable")
+                val state = checker.createState(inst) ?: return
+                val result = checker.prepareAndCheck(state)
+                assertTrue(result is Result.SatResult, "Class $klass; method $method; ${inst.print()} should be reachable")
 
                 inst as CallInst
                 val assertionsArray = inst.args.first()
@@ -123,7 +124,7 @@ abstract class KexRunnerTest : KexTest() {
             getUnreachables(method).forEach { inst ->
                 val checker = Checker(method, loader, psa)
                 val result = checker.checkReachable(inst)
-                assertTrue(result is Result.UnsatResult, "Class $`class`; method $method; ${inst.print()} should be unreachable")
+                assertTrue(result is Result.UnsatResult, "Class $klass; method $method; ${inst.print()} should be unreachable")
             }
         }
     }
@@ -137,12 +138,12 @@ abstract class KexRunnerTest : KexTest() {
         System.setProperty("java.class.path", classPath)
     }
 
-    fun runPipelineOn(`class`: Class) {
+    fun runPipelineOn(klass: Class) {
         val traceManager = ObjectTraceManager()
         val psa = PredicateStateAnalysis(analysisContext.cm)
 
         updateClassPath(analysisContext.loader as URLClassLoader)
-        executePipeline(analysisContext.cm, `class`) {
+        executePipeline(analysisContext.cm, klass) {
             +LoopSimplifier(analysisContext.cm)
             +LoopDeroller(analysisContext.cm)
             +psa

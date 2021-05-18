@@ -174,13 +174,13 @@ class Z3Solver(val tf: TypeFactory) : AbstractSMTSolver {
             acc.first + collectPointers(ps) to acc.second + collectVariables(ps)
         }
 
-        val assignments = vars.map {
+        val assignments = vars.associateWith {
             val expr = Z3Converter(tf).convert(it, ef, ctx)
             val z3expr = expr.expr
 
             val evaluatedExpr = model.evaluate(z3expr, true)
-            it to Z3Unlogic.undo(evaluatedExpr)
-        }.toMap().toMutableMap()
+            Z3Unlogic.undo(evaluatedExpr)
+        }.toMutableMap()
 
         val memories = hashMapOf<Int, Pair<MutableMap<Term, Term>, MutableMap<Term, Term>>>()
         val properties = hashMapOf<Int, MutableMap<String, Pair<MutableMap<Term, Term>, MutableMap<Term, Term>>>>()

@@ -1,18 +1,23 @@
 package org.jetbrains.research.kex.state.transformer
 
+import org.jetbrains.research.kex.config.kexConfig
+import org.jetbrains.research.kex.ktype.KexType
+import org.jetbrains.research.kex.state.predicate.*
+import org.jetbrains.research.kex.state.term.*
 import org.jetbrains.research.kthelper.algorithm.GraphView
 import org.jetbrains.research.kthelper.algorithm.Viewable
 import org.jetbrains.research.kthelper.assert.unreachable
 import org.jetbrains.research.kthelper.collection.DisjointSet
 import org.jetbrains.research.kthelper.collection.Subset
 import org.jetbrains.research.kthelper.logging.log
-import org.jetbrains.research.kex.config.kexConfig
-import org.jetbrains.research.kex.ktype.KexType
-import org.jetbrains.research.kex.state.predicate.*
-import org.jetbrains.research.kex.state.term.*
 
-private val dot by lazy { kexConfig.getStringValue("view", "dot") ?: unreachable { log.error("Could not find dot") } }
-private val viewer by lazy { kexConfig.getStringValue("view", "viewer") ?: unreachable { log.error("Could not find viewer") } }
+private val dot by lazy {
+    kexConfig.getStringValue("view", "dot") ?: unreachable { log.error("Could not find dot") }
+}
+
+private val viewer by lazy {
+    kexConfig.getStringValue("view", "viewer") ?: unreachable { log.error("Could not find viewer") }
+}
 
 typealias Token = Subset<Term?>?
 
@@ -36,13 +41,13 @@ class StensgaardAA : Transformer<StensgaardAA>, AliasAnalysis, Viewable {
         lhv != null && rhv != null ->
             if (lhv == rhv) lhv
             else {
-                val lpts = relations.findUnsafe(pointsTo(lhv))
-                val rpts = relations.findUnsafe(pointsTo(rhv))
+                val lPts = relations.findUnsafe(pointsTo(lhv))
+                val rPts = relations.findUnsafe(pointsTo(rhv))
                 val res = relations.joinUnsafe(lhv, rhv)
-                val newpts = join(lpts, rpts)
-                pointsTo[lhv] = newpts
-                pointsTo[rhv] = newpts
-                pointsTo[res] = newpts
+                val newPts = join(lPts, rPts)
+                pointsTo[lhv] = newPts
+                pointsTo[rhv] = newPts
+                pointsTo[res] = newPts
                 res
             }
         lhv != null -> {
@@ -62,12 +67,12 @@ class StensgaardAA : Transformer<StensgaardAA>, AliasAnalysis, Viewable {
         else -> quasi()
     }
 
-    fun get(term: Term): Token = when {
-        mapping.contains(term) -> mapping[term]!!.getRoot()
+    fun get(term: Term): Token = when (term) {
+        in mapping -> mapping[term]!!.getRoot()
         else -> {
             var token: Token = relations.emplace(term)
 
-            if (!nonFreeTerms.contains(term) && term.isNamed) {
+            if (term !in nonFreeTerms && term.isNamed) {
                 val result = join(spaces(term.type), token)
                 spaces[term.type] = result
                 token = result
@@ -229,7 +234,10 @@ class StensgaardAA : Transformer<StensgaardAA>, AliasAnalysis, Viewable {
                 data.getOrPut(root) { mutableSetOf() }.add(term)
             }
             for ((token, dt) in data) {
-                reverse[token] = GraphView(token.toString(), dt.fold(StringBuilder()) { sb, term -> sb.appendLine(term) }.toString())
+                reverse[token] = GraphView(
+                    token.toString(),
+                    dt.fold(StringBuilder()) { sb, term -> sb.appendLine(term) }.toString()
+                )
             }
             for ((f, t) in pointsTo) {
                 val from = relations.findUnsafe(f)
@@ -248,5 +256,5 @@ class StensgaardAA : Transformer<StensgaardAA>, AliasAnalysis, Viewable {
             return values.toList()
         }
 
-    fun view() = view("SteensgaardAA", dot, viewer)
+    fun view() = view("StensgaardAA", dot, viewer)
 }

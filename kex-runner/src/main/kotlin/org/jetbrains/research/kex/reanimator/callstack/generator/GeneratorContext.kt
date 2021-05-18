@@ -121,7 +121,7 @@ class GeneratorContext(
             .filterNot { it.isStatic }
             .filter { visibilityLevel <= it.visibility }
 
-    val Method.isRecursive get() = argTypes.any { arg -> `class`.type.isSupertypeOf(arg) || arg.isSupertypeOf(`class`.type) }
+    val Method.isRecursive get() = argTypes.any { arg -> klass.type.isSupertypeOf(arg) || arg.isSupertypeOf(klass.type) }
 
     private val Method.argTypeInfo
         get() = this.parameters.map {
@@ -255,7 +255,7 @@ class GeneratorContext(
         val typeInfoMap = TypeInfoMap(methodState.run {
             val (t, a) = collectArguments(this)
             val map = mutableMapOf<Term, Set<TypeInfo>>()
-            val thisType = `class`.kexType
+            val thisType = klass.kexType
             map += (t ?: term { `this`(thisType) }) to setOf(CastTypeInfo(thisType))
             for ((_, arg) in a) {
                 map += arg to setOf(CastTypeInfo(arg.type))

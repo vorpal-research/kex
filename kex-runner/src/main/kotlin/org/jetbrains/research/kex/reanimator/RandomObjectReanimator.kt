@@ -1,9 +1,5 @@
 package org.jetbrains.research.kex.reanimator
 
-import org.jetbrains.research.kthelper.`try`
-import org.jetbrains.research.kthelper.logging.log
-import org.jetbrains.research.kthelper.time.timed
-import org.jetbrains.research.kthelper.tryOrNull
 import org.jetbrains.research.kex.ExecutionContext
 import org.jetbrains.research.kex.asm.state.PredicateStateAnalysis
 import org.jetbrains.research.kex.asm.util.Visibility
@@ -21,6 +17,10 @@ import org.jetbrains.research.kfg.ClassManager
 import org.jetbrains.research.kfg.Package
 import org.jetbrains.research.kfg.ir.ConcreteClass
 import org.jetbrains.research.kfg.type.ClassType
+import org.jetbrains.research.kthelper.`try`
+import org.jetbrains.research.kthelper.logging.log
+import org.jetbrains.research.kthelper.tryOrNull
+import kotlin.system.measureTimeMillis
 
 class RandomObjectReanimator(
     val ctx: ExecutionContext,
@@ -33,22 +33,22 @@ class RandomObjectReanimator(
     val generatorContext = GeneratorContext(ctx, psa, visibilityLevel)
     val printer = TestCasePrinter(ctx, target.name, "RandomObjectTests")
 
-    val ClassManager.randomClass
+    private val ClassManager.randomClass
         get() = this.concreteClasses
-            .filter { it.`package`.isChild(target) }
+            .filter { it.pkg.isChild(target) }
             .filterNot { it.isEnum }
             .random()
 
-    val Any.isValid: Boolean
+    private val Any.isValid: Boolean
         get() {
-            val kfgClass = (this.javaClass.kex.getKfgType(cm.type) as ClassType).`class`
+            val kfgClass = (this.javaClass.kex.getKfgType(cm.type) as ClassType).klass
             if (this is Throwable) return false
             if (!kfgClass.isInstantiable || visibilityLevel > kfgClass.visibility) return false
             if (with(generatorContext) { kfgClass.orderedCtors }.isEmpty()) return false
             return true
         }
 
-    fun Descriptor.isValid(visited: Set<Descriptor> = setOf()): Boolean = when (this) {
+    private fun Descriptor.isValid(visited: Set<Descriptor> = setOf()): Boolean = when (this) {
         in visited -> true
         is ConstantDescriptor -> true
         is ObjectDescriptor -> when {
@@ -117,7 +117,7 @@ class RandomObjectReanimator(
             }
 
             var callStack: CallStack? = null
-            time += timed {
+            time += measureTimeMillis {
                 callStack = tryOrNull { CallStackGenerator(generatorContext).generateDescriptor(descriptor) }
             }
 

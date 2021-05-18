@@ -1,11 +1,11 @@
 package org.jetbrains.research.kex.smt
 
-import org.jetbrains.research.kthelper.assert.fail
-import org.jetbrains.research.kthelper.assert.unreachable
-import org.jetbrains.research.kthelper.logging.log
 import org.jetbrains.research.kex.InheritanceInfo
 import org.jetbrains.research.kex.config.kexConfig
 import org.jetbrains.research.kfg.type.TypeFactory
+import org.jetbrains.research.kthelper.assert.fail
+import org.jetbrains.research.kthelper.assert.unreachable
+import org.jetbrains.research.kthelper.logging.log
 
 private val engine = kexConfig.getStringValue("smt", "engine")
         ?: unreachable { log.error("No SMT engine specified") }
@@ -23,9 +23,9 @@ class SMTProxySolver(
             val inheritanceInfo = InheritanceInfo.fromJson(resource.bufferedReader().readText())
             resource.close()
 
-            inheritanceInfo?.inheritors?.map {
+            inheritanceInfo?.inheritors?.associate {
                 it.name to loader.loadClass(it.inheritorClass)
-            }?.toMap() ?: mapOf()
+            } ?: mapOf()
         }
 
         fun getSolver(tf: TypeFactory, engine: String): AbstractSMTSolver {

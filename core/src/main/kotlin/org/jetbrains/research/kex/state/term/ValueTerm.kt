@@ -9,7 +9,7 @@ import org.jetbrains.research.kex.state.transformer.Transformer
 @Serializable
 class ValueTerm(override val type: KexType, val valueName: Term) : Term() {
     override val name = (valueName as ConstStringTerm).value
-    override val subterms by lazy { listOf(valueName) }
+    override val subTerms by lazy { listOf(valueName) }
 
     override fun <T: Transformer<T>> accept(t: Transformer<T>) = this
 }

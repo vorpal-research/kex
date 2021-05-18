@@ -42,7 +42,7 @@ interface Inliner<T> : RecollectingTransformer<Inliner<T>> {
         val casts = mutableListOf<Predicate>()
         val mappings = hashMapOf<Term, Term>()
         if (!callTerm.isStatic) {
-            val `this` = term { `this`(method.`class`.kexType) }
+            val `this` = term { `this`(method.klass.kexType) }
             mappings[`this`] = callTerm.owner
         }
         if (returnTerm != null) {
@@ -95,25 +95,32 @@ interface Inliner<T> : RecollectingTransformer<Inliner<T>> {
     }
 }
 
-class MethodInliner(override val psa: PredicateStateAnalysis,
-                    override val inlineSuffix: String = "inlined",
-                    override var inlineIndex: Int = 0) : Inliner<MethodInliner> {
+class MethodInliner(
+    override val psa: PredicateStateAnalysis,
+    override val inlineSuffix: String = "inlined",
+    override var inlineIndex: Int = 0
+) : Inliner<MethodInliner> {
     override val im = MethodManager.InlineManager
     override val builders = dequeOf(StateBuilder())
     override var hasInlined: Boolean = false
 }
 
-class ConstructorInliner(override val psa: PredicateStateAnalysis,
-                         override val inlineSuffix: String = "ctor.inlined",
-                         override var inlineIndex: Int = 0) : Inliner<ConstructorInliner> {
+class ConstructorInliner(
+    override val psa: PredicateStateAnalysis,
+    override val inlineSuffix: String = "ctor.inlined",
+    override var inlineIndex: Int = 0
+) : Inliner<ConstructorInliner> {
     override val im = MethodManager.InlineManager
     override val builders = dequeOf(StateBuilder())
     override var hasInlined: Boolean = false
 
     override fun isInlinable(method: Method): Boolean = super.isInlinable(method) && method.isConstructor
 }
-class RecursiveConstructorInliner(override val psa: PredicateStateAnalysis,
-                          override val inlineSuffix: String = "recursive.ctor.inlined") : Inliner<RecursiveConstructorInliner> {
+
+class RecursiveConstructorInliner(
+    override val psa: PredicateStateAnalysis,
+    override val inlineSuffix: String = "recursive.ctor.inlined"
+) : Inliner<RecursiveConstructorInliner> {
     override val im = MethodManager.InlineManager
     override var inlineIndex = 0
     override val builders = dequeOf(StateBuilder())
@@ -136,10 +143,12 @@ class RecursiveConstructorInliner(override val psa: PredicateStateAnalysis,
 }
 
 
-class RecursiveInliner<T>(override val psa: PredicateStateAnalysis,
-                          override val inlineSuffix: String = "recursive",
-                          val maxDepth: Int = defaultDepth,
-                          val inlinerBuilder: (Int) -> Inliner<T>) : Inliner<RecursiveInliner<T>> {
+class RecursiveInliner<T>(
+    override val psa: PredicateStateAnalysis,
+    override val inlineSuffix: String = "recursive",
+    val maxDepth: Int = defaultDepth,
+    val inlinerBuilder: (Int) -> Inliner<T>
+) : Inliner<RecursiveInliner<T>> {
     override val im = MethodManager.InlineManager
     override var inlineIndex = 0
     override val builders = dequeOf(StateBuilder())

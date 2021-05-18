@@ -28,8 +28,8 @@ class PredicateBuilder(override val cm: ClassManager) : MethodVisitor {
         predicateMap[inst] = state(inst.location) {
             val lhv = value(inst)
             val ref = value(inst.arrayRef)
-            val indx = value(inst.index)
-            val arrayRef = ref[indx]
+            val index = value(inst.index)
+            val arrayRef = ref[index]
             val load = arrayRef.load()
 
             lhv equality load
@@ -39,8 +39,8 @@ class PredicateBuilder(override val cm: ClassManager) : MethodVisitor {
     override fun visitArrayStoreInst(inst: ArrayStoreInst) {
         predicateMap[inst] = state(inst.location) {
             val ref = value(inst.arrayRef)
-            val indx = value(inst.index)
-            val arrayRef = ref[indx]
+            val index = value(inst.index)
+            val arrayRef = ref[index]
             val value = value(inst.value)
 
             arrayRef.store(value)
@@ -66,7 +66,7 @@ class PredicateBuilder(override val cm: ClassManager) : MethodVisitor {
         predicateMap[inst] = state(inst.location) {
             val args = inst.args.map { value(it) }
             val callee = when {
-                inst.isStatic -> `class`(inst.method.`class`)
+                inst.isStatic -> `class`(inst.method.klass)
                 else -> value(inst.callee)
             }
             val callTerm = callee.call(inst.method, args)
@@ -100,7 +100,7 @@ class PredicateBuilder(override val cm: ClassManager) : MethodVisitor {
         predicateMap[inst] = state(inst.location) {
             val lhv = value(inst)
             val owner = when {
-                inst.isStatic -> `class`(inst.field.`class`)
+                inst.isStatic -> `class`(inst.field.klass)
                 else -> value(inst.owner)
             }
             val field = owner.field(inst.type.kexType, inst.field.name)
@@ -113,7 +113,7 @@ class PredicateBuilder(override val cm: ClassManager) : MethodVisitor {
     override fun visitFieldStoreInst(inst: FieldStoreInst) {
         predicateMap[inst] = state(inst.location) {
             val owner = when {
-                inst.isStatic -> `class`(inst.field.`class`)
+                inst.isStatic -> `class`(inst.field.klass)
                 else -> value(inst.owner)
             }
             val value = value(inst.value)

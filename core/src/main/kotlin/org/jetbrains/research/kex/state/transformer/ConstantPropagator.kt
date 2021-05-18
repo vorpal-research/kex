@@ -1,8 +1,5 @@
 package org.jetbrains.research.kex.state.transformer
 
-import org.jetbrains.research.kthelper.*
-import org.jetbrains.research.kthelper.assert.unreachable
-import org.jetbrains.research.kthelper.logging.log
 import org.jetbrains.research.kex.state.PredicateState
 import org.jetbrains.research.kex.state.predicate.EqualityPredicate
 import org.jetbrains.research.kex.state.predicate.InequalityPredicate
@@ -10,6 +7,9 @@ import org.jetbrains.research.kex.state.predicate.Predicate
 import org.jetbrains.research.kex.state.term.*
 import org.jetbrains.research.kfg.ir.value.instruction.BinaryOpcode
 import org.jetbrains.research.kfg.ir.value.instruction.CmpOpcode
+import org.jetbrains.research.kthelper.*
+import org.jetbrains.research.kthelper.assert.unreachable
+import org.jetbrains.research.kthelper.logging.log
 import kotlin.math.abs
 
 object ConstantPropagator : Transformer<ConstantPropagator> {
@@ -30,39 +30,39 @@ object ConstantPropagator : Transformer<ConstantPropagator> {
         return term {
             when (term.opcode) {
                 is BinaryOpcode.Add -> {
-                    val (nlhv, nrhv) = toCompatibleTypes(lhv, rhv)
-                    const(nlhv + nrhv)
+                    val (nLhv, nRhv) = toCompatibleTypes(lhv, rhv)
+                    const(nLhv + nRhv)
                 }
                 is BinaryOpcode.Sub -> {
-                    val (nlhv, nrhv) = toCompatibleTypes(lhv, rhv)
-                    const(nlhv - nrhv)
+                    val (nLhv, nRhv) = toCompatibleTypes(lhv, rhv)
+                    const(nLhv - nRhv)
                 }
                 is BinaryOpcode.Mul -> {
-                    val (nlhv, nrhv) = toCompatibleTypes(lhv, rhv)
-                    const(nlhv * nrhv)
+                    val (nLhv, nRhv) = toCompatibleTypes(lhv, rhv)
+                    const(nLhv * nRhv)
                 }
                 is BinaryOpcode.Div -> {
-                    val (nlhv, nrhv) = toCompatibleTypes(lhv, rhv)
-                    const(nlhv / nrhv)
+                    val (nLhv, nRhv) = toCompatibleTypes(lhv, rhv)
+                    const(nLhv / nRhv)
                 }
                 is BinaryOpcode.Rem -> {
-                    val (nlhv, nrhv) = toCompatibleTypes(lhv, rhv)
-                    const(nlhv % nrhv)
+                    val (nLhv, nRhv) = toCompatibleTypes(lhv, rhv)
+                    const(nLhv % nRhv)
                 }
                 is BinaryOpcode.Shl -> const(lhv.shl(rhv as Int))
                 is BinaryOpcode.Shr -> const(lhv.shr(rhv as Int))
                 is BinaryOpcode.Ushr -> const(lhv.ushr(rhv as Int))
                 is BinaryOpcode.And -> {
-                    val (nlhv, nrhv) = toCompatibleTypes(lhv, rhv)
-                    const(nlhv and nrhv)
+                    val (nLhv, nRhv) = toCompatibleTypes(lhv, rhv)
+                    const(nLhv and nRhv)
                 }
                 is BinaryOpcode.Or -> {
-                    val (nlhv, nrhv) = toCompatibleTypes(lhv, rhv)
-                    const(nlhv or nrhv)
+                    val (nLhv, nRhv) = toCompatibleTypes(lhv, rhv)
+                    const(nLhv or nRhv)
                 }
                 is BinaryOpcode.Xor -> {
-                    val (nlhv, nrhv) = toCompatibleTypes(lhv, rhv)
-                    const(nlhv xor nrhv)
+                    val (nLhv, nRhv) = toCompatibleTypes(lhv, rhv)
+                    const(nLhv xor nRhv)
                 }
             }
         }
@@ -71,26 +71,26 @@ object ConstantPropagator : Transformer<ConstantPropagator> {
     override fun transformCmpTerm(term: CmpTerm): Term {
         val lhv = getConstantValue(term.lhv) ?: return term
         val rhv = getConstantValue(term.rhv) ?: return term
-        val (nlhv, nrhv) = toCompatibleTypes(lhv, rhv)
+        val (nLhv, nRhv) = toCompatibleTypes(lhv, rhv)
         return term {
             when (term.opcode) {
-                is CmpOpcode.Eq -> when (nlhv) {
-                    is Double -> const(nlhv eq nrhv.toDouble())
-                    is Float -> const(nlhv eq nrhv.toFloat())
-                    else -> const(nlhv == nrhv)
+                is CmpOpcode.Eq -> when (nLhv) {
+                    is Double -> const(nLhv eq nRhv.toDouble())
+                    is Float -> const(nLhv eq nRhv.toFloat())
+                    else -> const(nLhv == nRhv)
                 }
-                is CmpOpcode.Neq -> when (nlhv) {
-                    is Double -> const(nlhv neq nrhv.toDouble())
-                    is Float -> const(nlhv neq nrhv.toFloat())
-                    else -> const(nlhv != nrhv)
+                is CmpOpcode.Neq -> when (nLhv) {
+                    is Double -> const(nLhv neq nRhv.toDouble())
+                    is Float -> const(nLhv neq nRhv.toFloat())
+                    else -> const(nLhv != nRhv)
                 }
-                is CmpOpcode.Lt -> const(nlhv < nrhv)
-                is CmpOpcode.Gt -> const(nlhv > nrhv)
-                is CmpOpcode.Le -> const(nlhv <= nrhv)
-                is CmpOpcode.Ge -> const(nlhv >= nrhv)
-                is CmpOpcode.Cmp -> const(nlhv.compareTo(nrhv))
-                is CmpOpcode.Cmpg -> const(nlhv.compareTo(nrhv))
-                is CmpOpcode.Cmpl -> const(nlhv.compareTo(nrhv))
+                is CmpOpcode.Lt -> const(nLhv < nRhv)
+                is CmpOpcode.Gt -> const(nLhv > nRhv)
+                is CmpOpcode.Le -> const(nLhv <= nRhv)
+                is CmpOpcode.Ge -> const(nLhv >= nRhv)
+                is CmpOpcode.Cmp -> const(nLhv.compareTo(nRhv))
+                is CmpOpcode.Cmpg -> const(nLhv.compareTo(nRhv))
+                is CmpOpcode.Cmpl -> const(nLhv.compareTo(nRhv))
             }
         }
     }
@@ -110,7 +110,7 @@ object ConstantPropagator : Transformer<ConstantPropagator> {
     private fun getConstantValue(term: Term): Number? = when (term) {
         is ConstBoolTerm -> term.value.toInt()
         is ConstByteTerm -> term.value
-        is ConstCharTerm -> term.value.toShort()
+        is ConstCharTerm -> term.value.code.toShort()
         is ConstDoubleTerm -> term.value
         is ConstFloatTerm -> term.value
         is ConstIntTerm -> term.value
@@ -129,30 +129,30 @@ object ConstantPropagator : Transformer<ConstantPropagator> {
     override fun transformEqualityPredicate(predicate: EqualityPredicate): Predicate {
         val lhv = getConstantValue(predicate.lhv) ?: return predicate
         val rhv = getConstantValue(predicate.rhv) ?: return predicate
-        val (nlhv, nrhv) = toCompatibleTypes(lhv, rhv)
-        val isNotError = when (nlhv) {
-            is Float -> abs((nlhv - nrhv) as Float) < epsilon
-            is Double -> abs((nlhv - nrhv) as Double) < epsilon
-            else -> nlhv == nrhv
+        val (nLhv, nRhv) = toCompatibleTypes(lhv, rhv)
+        val isNotError = when (nLhv) {
+            is Float -> abs((nLhv - nRhv) as Float) < epsilon
+            is Double -> abs((nLhv - nRhv) as Double) < epsilon
+            else -> nLhv == nRhv
         }
         return when {
             isNotError -> predicate
-            else -> unreachable { mustBeEqual(nlhv, nrhv) }
+            else -> unreachable { mustBeEqual(nLhv, nRhv) }
         }
     }
 
     override fun transformInequalityPredicate(predicate: InequalityPredicate): Predicate {
         val lhv = getConstantValue(predicate.lhv) ?: return predicate
         val rhv = getConstantValue(predicate.rhv) ?: return predicate
-        val (nlhv, nrhv) = toCompatibleTypes(lhv, rhv)
-        val isNotError = when (nlhv) {
-            is Float -> abs((nlhv - nrhv) as Float) >= epsilon
-            is Double -> abs((nlhv - nrhv) as Double) >= epsilon
-            else -> nlhv != nrhv
+        val (nLhv, nRhv) = toCompatibleTypes(lhv, rhv)
+        val isNotError = when (nLhv) {
+            is Float -> abs((nLhv - nRhv) as Float) >= epsilon
+            is Double -> abs((nLhv - nRhv) as Double) >= epsilon
+            else -> nLhv != nRhv
         }
         return when {
             isNotError -> predicate
-            else -> unreachable { mustBeNotEqual(nlhv, nrhv) }
+            else -> unreachable { mustBeNotEqual(nLhv, nRhv) }
         }
     }
 }

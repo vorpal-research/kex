@@ -26,8 +26,8 @@ object MethodManager {
         }
 
         fun isIgnored(method: Method) = when {
-            ignorePackages.any { it.isParent(method.`class`.`package`) } -> true
-            ignoreClasses.any { method.cm[it] == method.`class` } -> true
+            ignorePackages.any { it.isParent(method.klass.pkg) } -> true
+            ignoreClasses.any { method.cm[it] == method.klass } -> true
             ignoreMethods.contains(method) -> true
             else -> false
         }

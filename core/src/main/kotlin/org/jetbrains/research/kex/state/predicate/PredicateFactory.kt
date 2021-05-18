@@ -1,13 +1,13 @@
 package org.jetbrains.research.kex.state.predicate
 
-import org.jetbrains.research.kthelper.assert.unreachable
-import org.jetbrains.research.kthelper.logging.log
 import org.jetbrains.research.kex.ktype.KexArray
 import org.jetbrains.research.kex.state.term.ArrayIndexTerm
 import org.jetbrains.research.kex.state.term.FieldTerm
 import org.jetbrains.research.kex.state.term.Term
 import org.jetbrains.research.kex.state.term.TermBuilder
 import org.jetbrains.research.kfg.ir.Location
+import org.jetbrains.research.kthelper.assert.unreachable
+import org.jetbrains.research.kthelper.logging.log
 
 object PredicateFactory {
     fun getBoundStore(ptr: Term, bound: Term, type: PredicateType = PredicateType.State(), location: Location = Location()) =
@@ -67,7 +67,7 @@ abstract class PredicateBuilder : TermBuilder() {
     abstract val type: PredicateType
     abstract val location: Location
 
-    val pf = PredicateFactory
+    private val pf = PredicateFactory
 
     fun Term.initialize(other: Term) = when (this) {
         is ArrayIndexTerm -> pf.getArrayInitializer(this, other, this@PredicateBuilder.type, location)
@@ -89,6 +89,7 @@ abstract class PredicateBuilder : TermBuilder() {
     fun catch(throwable: Term) = pf.getCatch(throwable, this@PredicateBuilder.type, location)
     fun `throw`(throwable: Term) = pf.getThrow(throwable, this@PredicateBuilder.type, location)
 
+    @Suppress("FunctionName")
     infix fun Term.`!in`(cases: List<Term>) = pf.getDefaultSwitchPredicate(this, cases, this@PredicateBuilder.type, location)
 
     infix fun Term.equality(other: Term) =

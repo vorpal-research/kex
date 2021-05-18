@@ -1,7 +1,5 @@
 package org.jetbrains.research.kex.state.transformer
 
-import org.jetbrains.research.kthelper.assert.unreachable
-import org.jetbrains.research.kthelper.logging.log
 import org.jetbrains.research.kex.ExecutionContext
 import org.jetbrains.research.kex.ktype.KexClass
 import org.jetbrains.research.kex.ktype.kexType
@@ -15,6 +13,8 @@ import org.jetbrains.research.kex.state.predicate.Predicate
 import org.jetbrains.research.kex.state.term.*
 import org.jetbrains.research.kfg.ir.Method
 import org.jetbrains.research.kfg.type.TypeFactory
+import org.jetbrains.research.kthelper.assert.unreachable
+import org.jetbrains.research.kthelper.logging.log
 
 // remove all choices in a given PS
 // needed to get entry condition of a given PS
@@ -58,7 +58,7 @@ interface AbstractGenerator<T> : Transformer<AbstractGenerator<T>> {
     fun generate(ps: PredicateState): Pair<T?, List<T?>> {
         val (tempThis, tempArgs) = collectArguments(ps)
         thisTerm = when {
-            !method.isStatic && tempThis == null -> term { `this`(KexClass(method.`class`.fullname)) }
+            !method.isStatic && tempThis == null -> term { `this`(KexClass(method.klass.fullName)) }
             else -> tempThis
         }
         argTerms.putAll(tempArgs)
@@ -90,7 +90,9 @@ interface AbstractGenerator<T> : Transformer<AbstractGenerator<T>> {
         val paths = ps.choices.map { it to it.path }.map {
             it.first to ChoiceSimplifier.apply(it.second)
         }
-        val ourChoice = paths.firstOrNull { it.second.all { checkPath(it) } }?.first ?: return emptyState()
+        val ourChoice = paths.firstOrNull { path ->
+            path.second.all { checkPath(it) }
+        }?.first ?: return emptyState()
         return super.transformBase(ourChoice)
     }
 

@@ -11,7 +11,6 @@ import org.jetbrains.research.kex.util.isFinal
 import org.jetbrains.research.kfg.ClassManager
 import org.jetbrains.research.kfg.ir.Method
 import org.jetbrains.research.kthelper.collection.dequeOf
-import java.util.*
 
 val ignores by lazy {
     kexConfig.getMultipleStringValue("inliner", "static-ignore")
@@ -24,10 +23,10 @@ class StaticFieldInliner(val cm: ClassManager, val psa: PredicateStateAnalysis) 
     override val builders = dequeOf(StateBuilder())
     private var inlineIndex = 0
 
-    fun prepareInlinedState(method: Method): PredicateState? {
+    private fun prepareInlinedState(method: Method): PredicateState? {
         if (method.isEmpty()) return null
 
-        val klass = method.`class`.fullname
+        val klass = method.klass.fullName
         val builder = psa.builder(method)
         val endState = builder.methodState ?: return null
 
@@ -46,19 +45,20 @@ class StaticFieldInliner(val cm: ClassManager, val psa: PredicateStateAnalysis) 
 
     override fun apply(ps: PredicateState): PredicateState {
         val staticInitializers = TermCollector.getFullTermSet(ps)
+            .asSequence()
             .filterIsInstance<FieldLoadTerm>()
             .mapNotNull {
                 val field = it.field as FieldTerm
                 val kfgField = cm[field.klass].getField(field.fieldNameString, field.type.getKfgType(cm.type))
                 if (kfgField.isStatic && kfgField.isFinal) {
-                    kfgField.`class`
+                    kfgField.klass
                 } else {
                     null
                 }
             }.toSet()
-            .filterNot { it.fullname in ignores }
+            .filterNot { it.fullName in ignores }
             .toSet()
-        staticInitializers.forEach { klass ->
+        for (klass in staticInitializers) {
             prepareInlinedState(klass.getMethods("<clinit>").first())?.let { state ->
                 currentBuilder += state
             }

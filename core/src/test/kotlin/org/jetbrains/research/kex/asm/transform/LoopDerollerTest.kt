@@ -17,9 +17,9 @@ class LoopDerollerTest : KexTest() {
 
         LoopSimplifier(cm).visit(method)
         loops = LoopAnalysis(cm).invoke(method)
-        loops.forEach {
-            assertTrue { it.hasSinglePreheader }
-            assertTrue { it.hasSingleLatch }
+        for (loop in loops) {
+            if (!loop.hasSinglePreheader) return
+            if (!loop.hasSingleLatch) return
         }
 
         LoopDeroller(cm).visit(method)

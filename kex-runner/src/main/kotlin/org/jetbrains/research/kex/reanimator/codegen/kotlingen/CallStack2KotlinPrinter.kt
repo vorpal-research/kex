@@ -1,19 +1,18 @@
 package org.jetbrains.research.kex.reanimator.codegen.kotlingen
 
-import org.jetbrains.research.kthelper.assert.unreachable
-import org.jetbrains.research.kthelper.logging.log
 import org.jetbrains.research.kex.ExecutionContext
 import org.jetbrains.research.kex.ktype.KexType
 import org.jetbrains.research.kex.ktype.type
 import org.jetbrains.research.kex.reanimator.callstack.*
 import org.jetbrains.research.kex.reanimator.codegen.CallStackPrinter
-import org.jetbrains.research.kex.reanimator.codegen.javagen.CallStack2JavaPrinter
 import org.jetbrains.research.kex.util.getConstructor
 import org.jetbrains.research.kex.util.getMethod
 import org.jetbrains.research.kex.util.kex
 import org.jetbrains.research.kex.util.loadClass
 import org.jetbrains.research.kfg.ir.Class
 import org.jetbrains.research.kfg.type.*
+import org.jetbrains.research.kthelper.assert.unreachable
+import org.jetbrains.research.kthelper.logging.log
 import java.lang.reflect.*
 import kotlin.reflect.KClass
 import kotlin.reflect.KClassifier
@@ -24,9 +23,10 @@ import java.lang.reflect.Type as JType
 
 // TODO: this is work of satan, refactor this damn thing
 class CallStack2KotlinPrinter(
-        val ctx: ExecutionContext,
-        override val packageName: String,
-        override val klassName: String) : CallStackPrinter {
+    val ctx: ExecutionContext,
+    override val packageName: String,
+    override val klassName: String
+) : CallStackPrinter {
     private val printedStacks = mutableSetOf<String>()
     private val builder = KtBuilder(packageName)
     private val klass: KtBuilder.KtClass
@@ -78,7 +78,11 @@ class CallStack2KotlinPrinter(
         override fun toString() = "*"
     }
 
-    inner class CSClass(val type: Type, val typeParams: List<CSType> = emptyList(), override val nullable: Boolean = true) : CSType {
+    inner class CSClass(
+        val type: Type,
+        val typeParams: List<CSType> = emptyList(),
+        override val nullable: Boolean = true
+    ) : CSType {
         override fun isSubtype(other: CSType): Boolean = when (other) {
             is CSClass -> when {
                 !type.isSubtypeOf(other.type) -> false
@@ -123,7 +127,7 @@ class CallStack2KotlinPrinter(
         override fun toString() = "Array<${element}>" + if (nullable) "?" else ""
     }
 
-    val KClassifier.csType: CSType
+    private val KClassifier.csType: CSType
         get() = when (this) {
             is KClass<*> -> java.kex.getCsType(false)
             is KTypeParameter -> upperBounds.first().csType
@@ -138,7 +142,7 @@ class CallStack2KotlinPrinter(
             else -> unreachable { }
         }
 
-    val KType.csType: CSType
+    private val KType.csType: CSType
         get() {
             val type = this.classifier!!.csType.kfg
             val args = this.arguments.map { it.type?.csType ?: CSStarProjection() }
@@ -152,7 +156,7 @@ class CallStack2KotlinPrinter(
             }
         }
 
-    val JType.csType: CSType
+    private val JType.csType: CSType
         get() = when (this) {
             is java.lang.Class<*> -> when {
                 this.isArray -> {
@@ -178,7 +182,7 @@ class CallStack2KotlinPrinter(
         else -> TODO()
     }
 
-    fun CSType?.isAssignable(other: CSType) = this?.let { other.isSubtype(it) } ?: true
+    private fun CSType?.isAssignable(other: CSType) = this?.let { other.isSubtype(it) } ?: true
 
     private fun KexType.getCsType(nullable: Boolean = true) = this.getKfgType(ctx.types).getCsType(nullable)
 
@@ -195,48 +199,48 @@ class CallStack2KotlinPrinter(
     }
 
     private fun resolveTypes(constructor: Constructor<*>, args: List<CallStack>) =
-            when {
-                constructor.kotlinFunction != null -> {
-                    val params = constructor.kotlinFunction!!.parameters
-                    args.zip(params).forEach { (arg, param) ->
-                        if (arg !in resolvedTypes) {
-                            resolvedTypes[arg] = param.type.csType
-                            resolveTypes(arg)
-                        }
-                    }
-                }
-                else -> {
-                    val params = constructor.genericParameterTypes
-                    args.zip(params).forEach { (arg, param) ->
-                        if (arg !in resolvedTypes) {
-                            resolvedTypes[arg] = param.csType
-                            resolveTypes(arg)
-                        }
+        when {
+            constructor.kotlinFunction != null -> {
+                val params = constructor.kotlinFunction!!.parameters
+                args.zip(params).forEach { (arg, param) ->
+                    if (arg !in resolvedTypes) {
+                        resolvedTypes[arg] = param.type.csType
+                        resolveTypes(arg)
                     }
                 }
             }
+            else -> {
+                val params = constructor.genericParameterTypes
+                args.zip(params).forEach { (arg, param) ->
+                    if (arg !in resolvedTypes) {
+                        resolvedTypes[arg] = param.csType
+                        resolveTypes(arg)
+                    }
+                }
+            }
+        }
 
     private fun resolveTypes(method: Method, args: List<CallStack>) =
-            when {
-                method.kotlinFunction != null -> {
-                    val params = method.kotlinFunction!!.parameters.drop(1)
-                    args.zip(params).forEach { (arg, param) ->
-                        if (arg !in resolvedTypes) {
-                            resolvedTypes[arg] = param.type.csType
-                            resolveTypes(arg)
-                        }
-                    }
-                }
-                else -> {
-                    val params = method.genericParameterTypes.toList()
-                    args.zip(params).forEach { (arg, param) ->
-                        if (arg !in resolvedTypes) {
-                            resolvedTypes[arg] = param.csType
-                            resolveTypes(arg)
-                        }
+        when {
+            method.kotlinFunction != null -> {
+                val params = method.kotlinFunction!!.parameters.drop(1)
+                args.zip(params).forEach { (arg, param) ->
+                    if (arg !in resolvedTypes) {
+                        resolvedTypes[arg] = param.type.csType
+                        resolveTypes(arg)
                     }
                 }
             }
+            else -> {
+                val params = method.genericParameterTypes.toList()
+                args.zip(params).forEach { (arg, param) ->
+                    if (arg !in resolvedTypes) {
+                        resolvedTypes[arg] = param.csType
+                        resolveTypes(arg)
+                    }
+                }
+            }
+        }
 
     private fun resolveTypes(call: ApiCall) = when (call) {
         is DefaultConstructorCall -> {
@@ -247,17 +251,17 @@ class CallStack2KotlinPrinter(
             resolveTypes(constructor, call.args)
         }
         is ExternalConstructorCall -> {
-            val reflection = ctx.loader.loadClass(call.constructor.`class`)
+            val reflection = ctx.loader.loadClass(call.constructor.klass)
             val constructor = reflection.getMethod(call.constructor, ctx.loader)
             resolveTypes(constructor, call.args)
         }
         is MethodCall -> {
-            val reflection = ctx.loader.loadClass(call.method.`class`)
+            val reflection = ctx.loader.loadClass(call.method.klass)
             val method = reflection.getMethod(call.method, ctx.loader)
             resolveTypes(method, call.args)
         }
         is StaticMethodCall -> {
-            val reflection = ctx.loader.loadClass(call.method.`class`)
+            val reflection = ctx.loader.loadClass(call.method.klass)
             val method = reflection.getMethod(call.method, ctx.loader)
             resolveTypes(method, call.args)
         }
@@ -305,7 +309,7 @@ class CallStack2KotlinPrinter(
                 else -> "Array<${type.kotlinString}>"
             }
             else -> {
-                val klass = (this as ClassType).`class`
+                val klass = (this as ClassType).klass
                 val name = klass.canonicalDesc.replace("$", ".")
                 builder.import(name)
                 klass.name.replace("$", ".")
@@ -348,7 +352,7 @@ class CallStack2KotlinPrinter(
             is Char -> when (value) {
                 in 'a'..'z' -> "'$value'"
                 in 'A'..'Z' -> "'$value'"
-                else -> "${value.toInt()}.toChar()"
+                else -> "${value.code}.toChar()"
             }.also {
                 actualTypes[this] = CSClass(ctx.types.charType, nullable = false)
             }
@@ -367,7 +371,7 @@ class CallStack2KotlinPrinter(
             is Double -> "$value".also {
                 actualTypes[this] = CSClass(ctx.types.doubleType, nullable = false)
             }
-            else -> unreachable { log.error("Unknown primary value ${this}") }
+            else -> unreachable { log.error("Unknown primary value $this") }
         }
 
     private fun CallStack.cast(reqType: CSType?): String {
@@ -421,7 +425,7 @@ class CallStack2KotlinPrinter(
         }
         val actualType = CSClass(constructor.returnType)
         actualTypes[owner] = actualType
-        return "val ${owner.name} = ${constructor.`class`.kotlinString}.${constructor.name}($args)"
+        return "val ${owner.name} = ${constructor.klass.kotlinString}.${constructor.name}($args)"
     }
 
     private fun printMethodCall(owner: CallStack, call: MethodCall): String {
@@ -435,7 +439,7 @@ class CallStack2KotlinPrinter(
 
     private fun printStaticMethodCall(call: StaticMethodCall): String {
         call.args.forEach { it.printAsKt() }
-        val klass = call.method.`class`
+        val klass = call.method.klass
         val method = call.method
         val args = call.args.joinToString(", ") {
             it.forceCastIfNull(resolvedTypes[it])

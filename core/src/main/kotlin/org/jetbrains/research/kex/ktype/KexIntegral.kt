@@ -1,10 +1,10 @@
 package org.jetbrains.research.kex.ktype
 
-import org.jetbrains.research.kthelper.defaultHashCode
 import kotlinx.serialization.Serializable
 import org.jetbrains.research.kex.InheritorOf
 import org.jetbrains.research.kfg.type.Type
 import org.jetbrains.research.kfg.type.TypeFactory
+import org.jetbrains.research.kthelper.defaultHashCode
 
 @InheritorOf("KexType")
 @Serializable
@@ -23,7 +23,7 @@ class KexBool : KexIntegral() {
     override val name: String
         get() = "bool"
 
-    override val bitsize: Int
+    override val bitSize: Int
         get() = WORD
 
     override fun getKfgType(types: TypeFactory): Type = types.boolType
@@ -35,7 +35,7 @@ class KexByte : KexIntegral() {
     override val name: String
         get() = "byte"
 
-    override val bitsize: Int
+    override val bitSize: Int
         get() = WORD
 
     override fun getKfgType(types: TypeFactory): Type = types.byteType
@@ -47,7 +47,7 @@ class KexChar : KexIntegral() {
     override val name: String
         get() = "char"
 
-    override val bitsize: Int
+    override val bitSize: Int
         get() = WORD
 
     override fun getKfgType(types: TypeFactory): Type = types.charType
@@ -59,7 +59,7 @@ class KexShort : KexIntegral() {
     override val name: String
         get() = "short"
 
-    override val bitsize: Int
+    override val bitSize: Int
         get() = WORD
 
     override fun getKfgType(types: TypeFactory): Type = types.shortType
@@ -71,7 +71,7 @@ class KexInt : KexIntegral() {
     override val name: String
         get() = "int"
 
-    override val bitsize: Int
+    override val bitSize: Int
         get() = WORD
 
     override fun getKfgType(types: TypeFactory): Type = types.intType
@@ -90,7 +90,7 @@ class KexLong : KexIntegral() {
     override val name: String
         get() = "long"
 
-    override val bitsize: Int
+    override val bitSize: Int
         get() = DWORD
 
     override fun getKfgType(types: TypeFactory): Type = types.longType

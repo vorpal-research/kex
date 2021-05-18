@@ -18,8 +18,8 @@ class NewPredicate(
 
     override fun print() = "$lhv = new ${lhv.type}"
 
-    override fun <T : Transformer<T>> accept(t: Transformer<T>): Predicate = when (val tlhv = t.transform(lhv)) {
+    override fun <T : Transformer<T>> accept(t: Transformer<T>): Predicate = when (val tLhv = t.transform(lhv)) {
         lhv -> this
-        else -> predicate(type, location) { tlhv.new() }
+        else -> predicate(type, location) { tLhv.new() }
     }
 }

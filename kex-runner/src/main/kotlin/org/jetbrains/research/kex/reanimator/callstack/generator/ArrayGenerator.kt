@@ -24,7 +24,7 @@ class ArrayGenerator(private val fallback: Generator) : Generator {
         val array = NewArray(types.getArrayType(elementType), lengthCall)
         callStack += array
 
-        descriptor.elements.forEach { (index, value) ->
+        for ((index, value) in descriptor.elements) {
             val indexCall = PrimaryValue(index)
             val arrayWrite = ArrayWrite(indexCall, fallback.generate(value, generationDepth + 1))
             callStack += arrayWrite

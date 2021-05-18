@@ -157,7 +157,7 @@ object LocationSerializer : KSerializer<Location> {
 
     override fun serialize(encoder: Encoder, value: Location) {
         val output = encoder.beginStructure(descriptor)
-        output.encodeStringElement(descriptor, 0, value.`package`.toString())
+        output.encodeStringElement(descriptor, 0, value.pkg.toString())
         output.encodeStringElement(descriptor, 1, value.file)
         output.encodeIntElement(descriptor, 2, value.line)
         output.endStructure(descriptor)
@@ -191,7 +191,7 @@ object ClassSerializer : KSerializer<Class> {
         get() = PrimitiveSerialDescriptor("fullname", PrimitiveKind.STRING)
 
     override fun serialize(encoder: Encoder, value: Class) {
-        encoder.encodeString(value.fullname)
+        encoder.encodeString(value.fullName)
     }
 
     override fun deserialize(decoder: Decoder) = cm[decoder.decodeString()]
@@ -223,7 +223,7 @@ internal object MethodSerializer : KSerializer<Method> {
 
     override fun serialize(encoder: Encoder, value: Method) {
         val output = encoder.beginStructure(descriptor)
-        output.encodeSerializableElement(descriptor, 0, ClassSerializer, value.`class`)
+        output.encodeSerializableElement(descriptor, 0, ClassSerializer, value.klass)
         output.encodeStringElement(descriptor, 1, value.name)
         output.encodeStringElement(descriptor, 2, value.returnType.asmDesc)
         output.encodeSerializableElement(descriptor, 3, ListSerializer(String.serializer()), value.argTypes.map { it.asmDesc }.toList())

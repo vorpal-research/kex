@@ -1,14 +1,14 @@
 package org.jetbrains.research.kex.util
 
-import org.jetbrains.research.kthelper.`try`
-import org.jetbrains.research.kthelper.assert.unreachable
-import org.jetbrains.research.kthelper.logging.log
 import org.jetbrains.research.kex.ktype.*
 import org.jetbrains.research.kex.state.term.FieldTerm
 import org.jetbrains.research.kfg.ClassManager
 import org.jetbrains.research.kfg.ir.Method
 import org.jetbrains.research.kfg.type.*
 import org.jetbrains.research.kfg.type.Type
+import org.jetbrains.research.kthelper.`try`
+import org.jetbrains.research.kthelper.assert.unreachable
+import org.jetbrains.research.kthelper.logging.log
 import org.reflections.Reflections
 import org.reflections.util.ConfigurationBuilder
 import java.lang.Class
@@ -16,6 +16,17 @@ import java.lang.reflect.*
 import java.lang.reflect.Array
 import java.net.URLClassLoader
 import java.util.*
+import kotlin.Boolean
+import kotlin.Byte
+import kotlin.Char
+import kotlin.Double
+import kotlin.Float
+import kotlin.Int
+import kotlin.Long
+import kotlin.Short
+import kotlin.String
+import kotlin.Suppress
+import kotlin.require
 import org.jetbrains.research.kfg.ir.Class as KfgClass
 import org.jetbrains.research.kfg.ir.Field as KfgField
 import java.lang.reflect.Method as JMethod
@@ -123,9 +134,9 @@ fun ClassLoader.loadClass(type: Type): Class<*> = try {
             arrayInstance.javaClass
         }
         is ClassType -> try {
-            this.loadClass(type.`class`.canonicalDesc)
+            this.loadClass(type.klass.canonicalDesc)
         } catch (e: ClassNotFoundException) {
-            ClassLoader.getSystemClassLoader().loadClass(type.`class`.canonicalDesc)
+            ClassLoader.getSystemClassLoader().loadClass(type.klass.canonicalDesc)
         }
         else -> throw ClassNotFoundException(type.toString())
     }

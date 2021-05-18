@@ -12,15 +12,17 @@ import org.jetbrains.research.kfg.visitor.MethodVisitor
 import org.jetbrains.research.kthelper.logging.log
 import java.util.*
 
-private val visibilityLevel by lazy { kexConfig.getEnumValue("apiGeneration", "visibility", true, Visibility.PUBLIC) }
+private val visibilityLevel by lazy {
+    kexConfig.getEnumValue("apiGeneration", "visibility", true, Visibility.PUBLIC)
+}
 
 val Method.isImpactable: Boolean
     get() = when {
         this.isAbstract -> false
         this.isStaticInitializer -> false
-        this.`class`.isSynthetic -> false
+        this.klass.isSynthetic -> false
         this.isSynthetic -> false
-        visibilityLevel > this.`class`.visibility -> false
+        visibilityLevel > this.klass.visibility -> false
         visibilityLevel > this.visibility -> false
         else -> true
     }
@@ -35,20 +37,14 @@ class CoverageCounter<T> private constructor(
     val methodInfos = hashMapOf<Method, CoverageInfo>()
 
     constructor(cm: ClassManager, tm: TraceManager<T>) : this(cm, tm, { true })
-    constructor(cm: ClassManager, tm: TraceManager<T>, pkg: Package) : this(
-        cm,
-        tm,
-        { pkg.isParent(it.`class`.`package`) })
+    constructor(cm: ClassManager, tm: TraceManager<T>, pkg: Package) :
+            this(cm, tm, { pkg.isParent(it.klass.pkg) })
 
-    constructor(cm: ClassManager, tm: TraceManager<T>, klass: Class) : this(
-        cm,
-        tm,
-        { it.`class` == klass })
+    constructor(cm: ClassManager, tm: TraceManager<T>, klass: Class) :
+            this(cm, tm, { it.klass == klass })
 
-    constructor(cm: ClassManager, tm: TraceManager<T>, methods: Set<Method>) : this(
-        cm,
-        tm,
-        { it in methods })
+    constructor(cm: ClassManager, tm: TraceManager<T>, methods: Set<Method>) :
+            this(cm, tm, { it in methods })
 
     val totalCoverage: CoverageInfo
         get() {
@@ -69,7 +65,7 @@ class CoverageCounter<T> private constructor(
         get() = when {
             this.isAbstract -> false
             this.isStaticInitializer -> false
-            this.`class`.isSynthetic -> false
+            this.klass.isSynthetic -> false
             this.isSynthetic -> false
             !this.hasBody -> false
             else -> true

@@ -1,6 +1,5 @@
 package org.jetbrains.research.kex.state.transformer
 
-import org.jetbrains.research.kthelper.collection.dequeOf
 import org.jetbrains.research.kex.asm.manager.MethodManager
 import org.jetbrains.research.kex.asm.state.PredicateStateAnalysis
 import org.jetbrains.research.kex.ktype.KexClass
@@ -13,6 +12,7 @@ import org.jetbrains.research.kex.state.term.CallTerm
 import org.jetbrains.research.kfg.ir.ConcreteClass
 import org.jetbrains.research.kfg.ir.Method
 import org.jetbrains.research.kfg.type.TypeFactory
+import org.jetbrains.research.kthelper.collection.dequeOf
 
 class ConcreteImplInliner(val types: TypeFactory,
                           val typeInfoMap: TypeInfoMap,
@@ -61,9 +61,9 @@ class ConcreteImplInliner(val types: TypeFactory,
             else -> return predicate //unreachable { log.error("Unknown call owner $kexType") }
         }
         var castPredicate: Predicate? = null
-        if (inlinedMethod.`class` != callerClass) {
+        if (inlinedMethod.klass != callerClass) {
             castPredicate = state {
-                val castType = inlinedMethod.`class`.kexType
+                val castType = inlinedMethod.klass.kexType
                 val casted = value(castType, "${call.owner}.casted${inlineIndex++}")
                 mappings = mappings.mapValues { if (it.value == call.owner) casted else it.value }
                 casted equality (call.owner `as` castType)

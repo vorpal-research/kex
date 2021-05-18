@@ -1,12 +1,12 @@
 package org.jetbrains.research.kex.state.term
 
-import org.jetbrains.research.kthelper.defaultHashCode
 import kotlinx.serialization.Contextual
 import kotlinx.serialization.Serializable
 import org.jetbrains.research.kex.InheritorOf
 import org.jetbrains.research.kex.ktype.KexType
 import org.jetbrains.research.kex.state.transformer.Transformer
 import org.jetbrains.research.kfg.ir.value.instruction.BinaryOpcode
+import org.jetbrains.research.kthelper.defaultHashCode
 
 @InheritorOf("Term")
 @Serializable
@@ -16,14 +16,14 @@ class BinaryTerm(
         val lhv: Term,
         val rhv: Term) : Term() {
     override val name = "$lhv $opcode $rhv"
-    override val subterms by lazy { listOf(lhv, rhv) }
+    override val subTerms by lazy { listOf(lhv, rhv) }
 
     override fun <T: Transformer<T>> accept(t: Transformer<T>): Term {
-        val tlhv = t.transform(lhv)
-        val trhv = t.transform(rhv)
+        val tLhv = t.transform(lhv)
+        val tRhv = t.transform(rhv)
         return when {
-            tlhv == lhv && trhv == rhv -> this
-            else -> term { tf.getBinary(type, opcode, tlhv, trhv) }
+            tLhv == lhv && tRhv == rhv -> this
+            else -> term { tf.getBinary(type, opcode, tLhv, tRhv) }
         }
     }
 

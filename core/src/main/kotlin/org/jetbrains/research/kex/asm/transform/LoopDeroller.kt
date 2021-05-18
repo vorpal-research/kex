@@ -1,10 +1,5 @@
 package org.jetbrains.research.kex.asm.transform
 
-import org.jetbrains.research.kthelper.algorithm.GraphTraversal
-import org.jetbrains.research.kthelper.algorithm.NoTopologicalSortingException
-import org.jetbrains.research.kthelper.assert.unreachable
-import org.jetbrains.research.kthelper.logging.log
-import org.jetbrains.research.kthelper.toInt
 import org.jetbrains.research.kex.config.kexConfig
 import org.jetbrains.research.kfg.ClassManager
 import org.jetbrains.research.kfg.analysis.Loop
@@ -18,6 +13,11 @@ import org.jetbrains.research.kfg.ir.value.IntConstant
 import org.jetbrains.research.kfg.ir.value.NullConstant
 import org.jetbrains.research.kfg.ir.value.Value
 import org.jetbrains.research.kfg.ir.value.instruction.*
+import org.jetbrains.research.kthelper.algorithm.GraphTraversal
+import org.jetbrains.research.kthelper.algorithm.NoTopologicalSortingException
+import org.jetbrains.research.kthelper.assert.unreachable
+import org.jetbrains.research.kthelper.logging.log
+import org.jetbrains.research.kthelper.toInt
 import kotlin.math.abs
 import kotlin.math.min
 
@@ -113,9 +113,9 @@ class LoopDeroller(override val cm: ClassManager) : LoopVisitor {
 
         // save current phi instructions of method
         val methodPhis = method.filter { it !in body }.flatten().mapNotNull { it as? PhiInst }
-        val methodPhiMappings = methodPhis.map { phi ->
-            phi to phi.incomings.filterNot { it.key in body }.toMutableMap()
-        }.toMap().toMutableMap()
+        val methodPhiMappings = methodPhis.associateWith { phi ->
+            phi.incomings.filterNot { it.key in body }.toMutableMap()
+        }.toMutableMap()
 
         val methodBlockMapping = blockMapping.getOrPut(method, ::mutableMapOf)
 
@@ -366,9 +366,9 @@ class LoopDeroller(override val cm: ClassManager) : LoopVisitor {
             method.remove(block)
         }
 
-        val loopThrowers = method.catchEntries.map { catch ->
-            catch to body.filter { it.handlers.contains(catch) }
-        }.toMap()
+        val loopThrowers = method.catchEntries.associateWith { catch ->
+            body.filter { it.handlers.contains(catch) }
+        }
 
         for ((catch, throwers) in loopThrowers) {
             throwers.forEach {

@@ -1,14 +1,12 @@
 package org.jetbrains.research.kex.asm.manager
 
-import org.jetbrains.research.kthelper.logging.log
 import org.jetbrains.research.kfg.ClassManager
 import org.jetbrains.research.kfg.ir.Field
 import org.jetbrains.research.kfg.ir.Method
 import org.jetbrains.research.kfg.ir.value.ThisRef
 import org.jetbrains.research.kfg.ir.value.instruction.FieldStoreInst
 import org.jetbrains.research.kfg.visitor.MethodVisitor
-
-val Method.fieldAccessSet get() = AccessInfoCollector.methodAccessMap.getOrDefault(this, setOf())
+import org.jetbrains.research.kthelper.logging.log
 
 class AccessInfoCollector(override val cm: ClassManager) : MethodVisitor {
     private val fieldAccessSet = mutableSetOf<Field>()

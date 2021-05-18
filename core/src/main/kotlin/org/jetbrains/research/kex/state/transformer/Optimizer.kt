@@ -8,21 +8,17 @@ class Optimizer : Transformer<Optimizer> {
     private val cache = hashMapOf<Pair<PredicateState, PredicateState>, PredicateState?>()
 
     override fun transformChainState(ps: ChainState): PredicateState {
-        var merged = merge(ps.base, ps.curr)
+        val merged = merge(ps.base, ps.curr)
         return when {
             merged != null -> merged
-            ps.base is ChainState && ps.curr is BasicState -> {
-                merged = merge(ps.base.curr, ps.curr)
-                when {
-                    merged != null -> transformChainState(ChainState(ps.base.base, merged))
-                    else -> null
+            ps.base is ChainState && ps.curr is BasicState ->
+                merge(ps.base.curr, ps.curr)?.let {
+                    transformChainState(ChainState(ps.base.base, it))
                 }
-            }
-            ps.base is BasicState && ps.curr is ChainState -> {
-                merged = merge(ps.base, ps.curr.base)
-                if (merged != null) transformChainState(ChainState(merged, ps.curr.curr))
-                else null
-            }
+            ps.base is BasicState && ps.curr is ChainState ->
+                merge(ps.base, ps.curr.base)?.let {
+                    transformChainState(ChainState(it, ps.curr.curr))
+                }
             else -> null
         } ?: ps
     }
@@ -32,33 +28,22 @@ class Optimizer : Transformer<Optimizer> {
         val m = cache[key]
         return when {
             m != null -> m
-            first is BasicState && second is BasicState -> {
-                val merged = BasicState(first.predicates + second.predicates)
-                cache[key] = merged
-                merged
-            }
-            first is ChainState && first.curr is BasicState && second is BasicState -> {
-                val merged = merge(first.curr, second)
-                when {
-                    merged != null -> {
-                        val new = ChainState(first.base, merged)
-                        cache[key] = new
-                        new
-                    }
-                    else -> merged
+            first is BasicState && second is BasicState ->
+                BasicState(first.predicates + second.predicates).also {
+                    cache[key] = it
                 }
-            }
-            first is BasicState && second is ChainState && second.base is BasicState -> {
-                val merged = merge(first, second.base)
-                when {
-                    merged != null -> {
-                        val new = ChainState(merged, second.curr)
-                        cache[key] = new
-                        new
+            first is ChainState && first.curr is BasicState && second is BasicState ->
+                merge(first.curr, second)?.let { merged ->
+                    ChainState(first.base, merged).also {
+                        cache[key] = it
                     }
-                    else -> merged
                 }
-            }
+            first is BasicState && second is ChainState && second.base is BasicState ->
+                merge(first, second.base)?.let { merged ->
+                    ChainState(merged, second.curr).also {
+                        cache[key] = it
+                    }
+                }
             else -> cache.getOrPut(key) { null }
         }
     }
