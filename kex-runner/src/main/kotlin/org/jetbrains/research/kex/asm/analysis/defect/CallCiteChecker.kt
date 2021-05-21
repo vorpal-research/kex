@@ -107,7 +107,8 @@ class CallCiteChecker(
 
     private fun buildInlinedState(
         callState: PredicateState,
-        inlinedState: PredicateState): PredicateState? {
+        inlinedState: PredicateState
+    ): PredicateState? {
         val callPredicate = (callState.takeLast(1) as? BasicState)?.first()
             ?: return null
         val filteredState = callState.dropLast(1)
@@ -140,7 +141,6 @@ class CallCiteChecker(
         .map { it.value }
         .map { term { value(it) } }
         .toSet()
-
 
     private fun getAllCallCites(method: Method): Set<Instruction> {
         val result = mutableSetOf<Instruction>()

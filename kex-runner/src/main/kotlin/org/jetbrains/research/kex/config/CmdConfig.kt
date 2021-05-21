@@ -87,6 +87,10 @@ class CmdConfig(args: Array<String>) : Config() {
         libPackage.isRequired = false
         options.addOption(libPackage)
 
+        val attempts = Option(null, "attempts", true, "number of attempts for reanimator mode")
+        attempts.isRequired = false
+        options.addOption(attempts)
+
         val config = Option.builder()
                 .longOpt("option")
                 .argName("section:name:value")

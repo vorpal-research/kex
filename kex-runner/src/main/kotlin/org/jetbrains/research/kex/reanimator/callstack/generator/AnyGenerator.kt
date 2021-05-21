@@ -15,6 +15,7 @@ import org.jetbrains.research.kthelper.collection.queueOf
 import org.jetbrains.research.kthelper.logging.log
 
 private val maxStackSize by lazy { kexConfig.getIntValue("apiGeneration", "maxStackSize", 5) }
+private val useSetters by lazy { kexConfig.getBooleanValue("apiGeneration", "useSetters", true) }
 private val maxQuerySize by lazy { kexConfig.getIntValue("apiGeneration", "maxQuerySize", 1000) }
 
 open class AnyGenerator(private val fallback: Generator) : Generator {
@@ -127,7 +128,10 @@ open class AnyGenerator(private val fallback: Generator) : Generator {
             return
         }
 
-        val setters = descriptor.generateSetters(generationDepth)
+        val setters = when {
+            useSetters -> descriptor.generateSetters(generationDepth)
+            else -> listOf()
+        }
         val queue = queueOf(GeneratorContext.ExecutionStack(descriptor, setters, 0))
         val cache = mutableSetOf<StackWrapper>()
         while (queue.isNotEmpty()) {

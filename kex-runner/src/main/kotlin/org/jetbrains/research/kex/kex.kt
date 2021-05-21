@@ -322,7 +322,8 @@ class Kex(args: Array<String>) {
             +SetterCollector(analysisContext)
             +ExternalCtorCollector(analysisContext.cm, visibilityLevel)
         }
-        RandomObjectReanimator(analysisContext, `package`, psa, visibilityLevel).run()
+        val attempts = cmd.getCmdValue("attempts", "1000").toInt()
+        RandomObjectReanimator(analysisContext, `package`, psa, visibilityLevel).run(attempts)
         clearClassPath()
     }
 
