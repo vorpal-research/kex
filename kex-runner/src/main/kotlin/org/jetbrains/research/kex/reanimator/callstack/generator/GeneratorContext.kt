@@ -27,19 +27,19 @@ import org.jetbrains.research.kfg.ir.Field
 import org.jetbrains.research.kfg.ir.Method
 import org.jetbrains.research.kthelper.logging.log
 
-private val useRecCtors by lazy {
-    kexConfig.getBooleanValue(
-        "apiGeneration",
-        "use-recursive-constructors",
-        false
-    )
-}
-
 class GeneratorContext(
     val context: ExecutionContext,
     val psa: PredicateStateAnalysis,
     val visibilityLevel: Visibility
 ) {
+    private val useRecCtors by lazy {
+        kexConfig.getBooleanValue(
+            "apiGeneration",
+            "use-recursive-constructors",
+            false
+        )
+    }
+
     val cm get() = context.cm
     val types get() = context.types
     val loader get() = context.loader

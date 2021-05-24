@@ -4,6 +4,7 @@ import org.jetbrains.research.kex.ExecutionContext
 import org.jetbrains.research.kex.asm.state.PredicateStateAnalysis
 import org.jetbrains.research.kex.asm.util.Visibility
 import org.jetbrains.research.kex.asm.util.visibility
+import org.jetbrains.research.kex.config.RuntimeConfig
 import org.jetbrains.research.kex.random.Randomizer
 import org.jetbrains.research.kex.reanimator.callstack.CallStack
 import org.jetbrains.research.kex.reanimator.callstack.CallStackExecutor
@@ -18,6 +19,7 @@ import org.jetbrains.research.kfg.Package
 import org.jetbrains.research.kfg.ir.ConcreteClass
 import org.jetbrains.research.kfg.type.ClassType
 import org.jetbrains.research.kthelper.`try`
+import org.jetbrains.research.kthelper.logging.info
 import org.jetbrains.research.kthelper.logging.log
 import org.jetbrains.research.kthelper.tryOrNull
 import kotlin.system.measureTimeMillis
@@ -81,7 +83,64 @@ class RandomObjectReanimator(
         return res
     }
 
-    fun run(attempts: Int = 1000) {
+    data class Stats(
+        val totalAttempts: Int,
+        val validAttempts: Int,
+        val validDescriptorAttempts: Int,
+        val successes: Int,
+        val validDescriptorSuccesses: Int,
+        val depth: Int,
+        val successDepths: Int,
+        val totalValidDescriptorDepth: Int,
+        val validDescriptorDepths: Int,
+        val time: Long,
+        val validTime: Long
+    ) {
+        override fun toString() = buildString {
+            appendLine("Total attempts: $totalAttempts")
+            appendLine("Valid attempts: $validAttempts")
+            appendLine("Valid descriptor attempts: $validDescriptorAttempts")
+            appendLine("Total attempts success rate: ${String.format("%.02f", 100 * successes.toDouble() / totalAttempts)}%")
+            appendLine("Valid attempts success rate: ${String.format("%.02f", 100 * successes.toDouble() / validAttempts)}%")
+            appendLine(
+                "Valid descriptor attempts success rate: ${
+                    String.format(
+                        "%.02f",
+                        100 * validDescriptorSuccesses.toDouble() / validDescriptorAttempts
+                    )
+                }%"
+            )
+            appendLine("Average random descriptor depth: ${String.format("%.02f", depth.toDouble() / validAttempts)}")
+            appendLine("Average success descriptor depth: ${String.format("%.02f", successDepths.toDouble() / successes)}")
+            appendLine(
+                "Average valid descriptor depth: ${
+                    String.format(
+                        "%.02f",
+                        totalValidDescriptorDepth.toDouble() / validDescriptorAttempts
+                    )
+                }"
+            )
+            appendLine(
+                "Average success valid descriptor depth: ${
+                    String.format(
+                        "%.02f",
+                        validDescriptorDepths.toDouble() / validDescriptorSuccesses
+                    )
+                }"
+            )
+            appendLine("Average time per descriptor generation: ${String.format("%.02f", time.toDouble() / validAttempts)}")
+            appendLine(
+                "Average time per valid descriptor generation: ${
+                    String.format(
+                        "%.02f",
+                        validTime.toDouble() / validDescriptorAttempts
+                    )
+                }"
+            )
+        }
+    }
+
+    private fun run(objects: List<Any>): Stats {
         var totalAttempts = 0
         var validAttempts = 0
         var validDescriptorAttempts = 0
@@ -93,13 +152,12 @@ class RandomObjectReanimator(
         var validDescriptorDepths = 0
         var time = 0L
         var validTime = 0L
-        while (validDescriptorAttempts < attempts) {
+        for (any in objects) {
             log.debug("Attempt: $totalAttempts")
             log.debug("Valid attempt: $validAttempts")
             log.debug("Valid descriptor attempt: $validDescriptorAttempts")
             ++totalAttempts
 
-            val any = randomObject()
             if (any.isValid) ++validAttempts
             else continue
 
@@ -185,5 +243,51 @@ class RandomObjectReanimator(
                 )
             }"
         )
+        return Stats(
+            totalAttempts, validAttempts, validDescriptorAttempts,
+            successes, validDescriptorSuccesses, depth, successDepths,
+            totalValidDescriptorDepth, validDescriptorDepths, time, validTime
+        )
+    }
+
+    private fun generateObjects(attempts: Int): List<Any> {
+        var totalAttempts = 0
+        var validDescriptorAttempts = 0
+        val objects = mutableListOf<Any>()
+        while (validDescriptorAttempts < attempts) {
+            ++totalAttempts
+
+            val any = randomObject()
+            if (!any.isValid) continue
+
+            val descriptor = any.descriptor
+
+            if (descriptor.isValid()) {
+                ++validDescriptorAttempts
+            }
+
+            objects += any
+        }
+        return objects
+    }
+
+    fun run(attempts: Int = 1000) {
+        val objects = generateObjects(attempts)
+        val stats = run(objects)
+        log.info(stats)
+    }
+
+    fun runTestDepth(range: IntRange, attempts: Int = 1000) {
+        val objects = generateObjects(attempts)
+        val stats = range.map { depth ->
+            RuntimeConfig.setValue("apiGeneration", "maxStackSize", depth)
+            depth to run(objects)
+        }
+        for ((depth, stat) in stats) {
+            log.info("-------")
+            log.info("Running with depth $depth")
+            log.info(stat)
+            log.info("-------")
+        }
     }
 }
