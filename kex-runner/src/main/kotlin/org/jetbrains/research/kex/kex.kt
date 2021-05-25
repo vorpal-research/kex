@@ -34,6 +34,7 @@ import org.jetbrains.research.kex.smt.Result
 import org.jetbrains.research.kex.state.transformer.executeModel
 import org.jetbrains.research.kex.trace.TraceManager
 import org.jetbrains.research.kex.trace.`object`.ObjectTraceManager
+import org.jetbrains.research.kex.util.getIntrinsics
 import org.jetbrains.research.kex.util.getPathSeparator
 import org.jetbrains.research.kex.util.getRuntime
 import org.jetbrains.research.kfg.ClassManager
@@ -139,7 +140,7 @@ class Kex(args: Array<String>) {
         }
         classManager = ClassManager(KfgConfig(flags = Flags.readAll, failOnError = false))
         origManager = ClassManager(KfgConfig(flags = Flags.readAll, failOnError = false))
-        val analysisJars = listOfNotNull(*containers.toTypedArray(), getRuntime())
+        val analysisJars = listOfNotNull(*containers.toTypedArray(), getRuntime(), getIntrinsics())
         classManager.initialize(*analysisJars.toTypedArray())
         origManager.initialize(*analysisJars.toTypedArray())
 
@@ -217,14 +218,12 @@ class Kex(args: Array<String>) {
 
         val method = failure.method
         log.debug(failure)
-        updateClassPath(containerClassLoader)
 
         val checker = Checker(method, containerClassLoader, psa)
         val result = checker.check(failure.state) as? Result.SatResult ?: return
         log.debug(result.model)
         val recMod = executeModel(analysisContext, checker.state, method, result.model)
         log.debug(recMod)
-        clearClassPath()
     }
 
     private fun symbolic(originalContext: ExecutionContext, analysisContext: ExecutionContext) {
@@ -232,7 +231,6 @@ class Kex(args: Array<String>) {
         val psa = PredicateStateAnalysis(analysisContext.cm)
         val cm = createCoverageCounter(originalContext.cm, traceManager)
 
-//        updateClassPath(analysisContext.loader as URLClassLoader)
         val useApiGeneration = kexConfig.getBooleanValue("apiGeneration", "enabled", true)
 
         preparePackage(analysisContext, psa)
@@ -243,7 +241,6 @@ class Kex(args: Array<String>) {
             }
             +cm
         }
-//        clearClassPath()
 
         val coverage = cm.totalCoverage
         log.info(
@@ -323,7 +320,8 @@ class Kex(args: Array<String>) {
             +ExternalCtorCollector(analysisContext.cm, visibilityLevel)
         }
         val attempts = cmd.getCmdValue("attempts", "1000").toInt()
-        RandomObjectReanimator(analysisContext, `package`, psa, visibilityLevel).run(attempts)
+        RandomObjectReanimator(analysisContext, `package`, psa, visibilityLevel)
+            .runTestDepth(0..10, attempts)
         clearClassPath()
     }
 

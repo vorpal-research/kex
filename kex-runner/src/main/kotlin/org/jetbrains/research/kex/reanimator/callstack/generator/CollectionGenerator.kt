@@ -13,6 +13,20 @@ import org.jetbrains.research.kfg.ir.Method
 
 // difference from any generator -- ignore all external and recursive ctors
 class CollectionGenerator(fallback: Generator) : AnyGenerator(fallback) {
+    companion object {
+        private val ignoredMethods = setOf(
+            "trimToSize",
+            "addAll",
+            "size",
+            "ensureCapacity",
+            "isEmpty",
+            "contains",
+            "indexOf",
+            "lastIndexOf",
+            "clone",
+            "toArray"
+        )
+    }
 
     override fun supports(descriptor: Descriptor): Boolean {
         val type = descriptor.type
@@ -69,9 +83,12 @@ class CollectionGenerator(fallback: Generator) : AnyGenerator(fallback) {
         }
 
         val collectionKlass = cm["java/util/Collection"].type
-        for (method in klass.accessibleMethods.filterNot {
-            it.argTypes.any { arg -> arg.isSubtypeOf(collectionKlass) }
-        }) {
+        val accessibleMethods = klass.accessibleMethods
+            .filter { it.name !in ignoredMethods }
+            .filterNot {
+                it.argTypes.any { arg -> arg.isSubtypeOf(collectionKlass) }
+            }
+        for (method in accessibleMethods) {
             method.executeAsSetter(current)?.let {
                 acceptExecResult(method, it, searchDepth)
             }

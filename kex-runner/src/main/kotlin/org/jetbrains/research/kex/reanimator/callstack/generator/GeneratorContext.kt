@@ -19,6 +19,7 @@ import org.jetbrains.research.kex.smt.Result
 import org.jetbrains.research.kex.state.PredicateState
 import org.jetbrains.research.kex.state.StateBuilder
 import org.jetbrains.research.kex.state.predicate.axiom
+import org.jetbrains.research.kex.state.predicate.state
 import org.jetbrains.research.kex.state.term.Term
 import org.jetbrains.research.kex.state.term.term
 import org.jetbrains.research.kex.state.transformer.*
@@ -45,6 +46,7 @@ class GeneratorContext(
     val loader get() = context.loader
 
     private val descriptorCache = mutableMapOf<Descriptor, CallStack>()
+    private val klass2Constructors = mutableMapOf<Class, List<Method>>()
 
     data class ExecutionStack<T : FieldContainingDescriptor<T>>(
         val instance: T,
@@ -61,24 +63,28 @@ class GeneratorContext(
     fun PredicateState.prepare(method: Method, typeInfoMap: TypeInfoMap, ignores: Set<Term> = setOf()) =
         prepareState(method, this, typeInfoMap, ignores)
 
-    fun prepareState(method: Method, ps: PredicateState, typeInfoMap: TypeInfoMap, ignores: Set<Term> = setOf()) =
-        transform(ps) {
-            val staticTypeInfo = collectStaticTypeInfo(types, ps, typeInfoMap)
-            +AnnotationAdapter(method, AnnotationManager.defaultLoader)
-            +ConcreteImplInliner(types, staticTypeInfo, psa)
-            +StaticFieldInliner(cm, psa)
-            +RecursiveConstructorInliner(psa)
-            +IntrinsicAdapter
-            +KexIntrinsicsAdapter()
-            +ReflectionInfoAdapter(method, context.loader, ignores)
-            +Optimizer()
-            +ConstantPropagator
-            +BoolTypeAdapter(types)
-            +ConstStringAdapter()
-            +ArrayBoundsAdapter()
-            +NullityInfoAdapter()
-            +FieldNormalizer(context.cm, "state.normalized")
-        }
+    private fun prepareState(
+        method: Method,
+        ps: PredicateState,
+        typeInfoMap: TypeInfoMap,
+        ignores: Set<Term> = setOf()
+    ) = transform(ps) {
+        val staticTypeInfo = collectStaticTypeInfo(types, ps, typeInfoMap)
+        +AnnotationAdapter(method, AnnotationManager.defaultLoader)
+        +ConcreteImplInliner(types, staticTypeInfo, psa)
+        +StaticFieldInliner(cm, psa)
+        +RecursiveConstructorInliner(psa)
+        +IntrinsicAdapter
+        +KexIntrinsicsAdapter()
+        +ReflectionInfoAdapter(method, context.loader, ignores)
+        +Optimizer()
+        +ConstantPropagator
+        +BoolTypeAdapter(types)
+        +ConstStringAdapter()
+        +ArrayBoundsAdapter()
+        +NullityInfoAdapter()
+        +FieldNormalizer(context.cm, "state.normalized")
+    }
 
     fun prepareQuery(ps: PredicateState) = transform(ps) {
         +NullityInfoAdapter()
@@ -87,8 +93,6 @@ class GeneratorContext(
     }
 
     val Class.allCtors get() = accessibleCtors + externalCtors
-
-    private val klass2Constructors = mutableMapOf<Class, List<Method>>()
 
     val Class.nonRecursiveCtors get() = accessibleCtors.filterNot { it.isRecursive }
 
@@ -122,13 +126,16 @@ class GeneratorContext(
             .filterNot { it.isStatic }
             .filter { visibilityLevel <= it.visibility }
 
-    val Method.isRecursive get() = argTypes.any { arg -> klass.type.isSupertypeOf(arg) || arg.isSupertypeOf(klass.type) }
+    val Method.isRecursive
+        get() = argTypes.any { arg ->
+            klass.type.isSupertypeOf(arg) || arg.isSupertypeOf(klass.type)
+        }
 
     private val Method.argTypeInfo
-        get() = this.parameters.map {
+        get() = this.parameters.associate {
             val type = it.type.kexType
             term { arg(type, it.index) } to type.concretize(cm)
-        }.toMap()
+        }
 
     fun Method.executeAsConstructor(descriptor: ObjectDescriptor): Parameters<Descriptor>? {
         if (isEmpty()) return null
@@ -193,8 +200,9 @@ class GeneratorContext(
         val preStateBuilder = StateBuilder()
         for ((field, _) in intersection) {
             val fieldTerm = term { descriptor.term.field(field.second, field.first) }
-            preStateBuilder += axiom { fieldTerm.initialize(initializer(field.second)) }
-            preStateBuilder += axiom { fieldTerm.load() equality initializer(field.second) }
+            val initializerTerm = initializer(field.second)
+            preStateBuilder += axiom { fieldTerm.initialize(initializerTerm) }
+            preStateBuilder += axiom { initializerTerm equality fieldTerm.load() }
         }
         return preStateBuilder.apply()
     }
@@ -245,11 +253,14 @@ class GeneratorContext(
 
     private fun Method.getSetterPreState(descriptor: ObjectDescriptor) = getPreState(descriptor) { it.defaultValue }
 
-    private fun Method.getMethodPreState(descriptor: ObjectDescriptor) = getPreState(descriptor) { term { generate(it) } }
+    private fun Method.getMethodPreState(descriptor: ObjectDescriptor) =
+        getMethodPreState(descriptor) { term { generate(it) } }
 
-    private fun Method.getStaticSetterPreState(descriptor: ClassDescriptor) = getStaticPreState(descriptor) { it.defaultValue }
+    private fun Method.getStaticSetterPreState(descriptor: ClassDescriptor) =
+        getStaticPreState(descriptor) { it.defaultValue }
 
-    private fun Method.getStaticMethodPreState(descriptor: ClassDescriptor) = getStaticPreState(descriptor) { term { generate(it) } }
+    private fun Method.getStaticMethodPreState(descriptor: ClassDescriptor) =
+        getStaticPreState(descriptor) { term { generate(it) } }
 
     fun Method.collectFieldAccesses(context: ExecutionContext, psa: PredicateStateAnalysis): Set<Field> {
         val methodState = psa.builder(this).methodState ?: return setOf()
@@ -271,6 +282,80 @@ class GeneratorContext(
         return collectFieldAccesses(context, transformed)
     }
 
+    fun Method.getMethodPreState(descriptor: ObjectDescriptor, initializer: (KexType) -> Term): PredicateState? {
+        val mapper = descriptor.mapper
+        val fieldAccessList = this.collectFieldAccesses(context, psa)
+        val intersection = descriptor.fields.filter { (key, _) ->
+            fieldAccessList.find { field -> key.first == field.name } != null
+        }.toMap()
+        if (intersection.isEmpty()) return null
+
+        val preStateBuilder = StateBuilder()
+        for ((field, _) in intersection) {
+            val fieldTerm = term { descriptor.term.field(field.second, field.first) }
+            val initializerTerm = initializer(field.second)
+            preStateBuilder += axiom { fieldTerm.initialize(initializerTerm) }
+            preStateBuilder += axiom { initializerTerm equality fieldTerm.load() }
+        }
+
+        // experimental check
+        val subObjects = linkedSetOf(descriptor.term to descriptor)
+        for ((term, desc) in subObjects) {
+            for ((field, value) in desc.fields) {
+                when (value) {
+                    is ObjectDescriptor -> {
+                        val fieldTerm = term { term.field(field.second, field.first) }
+                        val genLoad = term { generate(field.second) }
+                        preStateBuilder += state { genLoad equality fieldTerm.load() }
+                        subObjects += genLoad to value
+                    }
+                    is ArrayDescriptor -> {
+                        val fieldTerm = term { term.field(field.second, field.first) }
+                        val genLoad = term { generate(field.second) }
+                        preStateBuilder += state { genLoad equality fieldTerm.load() }
+                        if (value.elements.size > 1) {
+                            val term2Element = mutableMapOf<Int, Term>()
+                            for ((index, elem) in value.elements) {
+                                val elemIndex = term { genLoad[index] }
+                                val load = term { elemIndex.load() }
+                                val elemLoad = term { generate(load.type) }
+                                preStateBuilder += state { elemLoad equality load }
+                                term2Element[index] = elemLoad
+                                if (elem is ObjectDescriptor)
+                                    subObjects += elemLoad to elem
+                            }
+
+                            val allPairs = value.elements.keys.flatMap { i1 -> value.elements.keys.map { i2 -> i1 to i2 } }
+                                .filter { it.first != it.second }
+                            allPairs.fold(mutableSetOf<Pair<Int, Int>>()) { acc, pair ->
+                                if (pair.second to pair.first !in acc) acc += pair
+                                acc
+                            }.forEach { (index1, index2) ->
+                                val elem1 = term2Element[index1]!!
+                                val elem2 = term2Element[index2]!!
+                                if (value.elements[index1] != value.elements[index2])
+                                    preStateBuilder += axiom { elem1 inequality elem2 }
+                            }
+
+                        } else if (value.elements.size == 1) {
+
+                            for ((index, elem) in value.elements) {
+                                val elemIndex = term { genLoad[index] }
+                                val load1 = term { elemIndex.load() }
+                                val genLoad1 = term { generate(load1.type) }
+                                preStateBuilder += state { genLoad1 equality null }
+                                if (elem is ObjectDescriptor)
+                                    subObjects += genLoad1 to elem
+                            }
+                        }
+                    }
+                    else -> {}
+                }
+            }
+        }
+        return mapper.apply(preStateBuilder.apply())
+    }
+
     fun Method.getPreState(descriptor: ObjectDescriptor, initializer: (KexType) -> Term): PredicateState? {
         val mapper = descriptor.mapper
         val fieldAccessList = this.collectFieldAccesses(context, psa)
@@ -282,40 +367,10 @@ class GeneratorContext(
         val preStateBuilder = StateBuilder()
         for ((field, _) in intersection) {
             val fieldTerm = term { descriptor.term.field(field.second, field.first) }
-            preStateBuilder += axiom { fieldTerm.initialize(initializer(field.second)) }
-            preStateBuilder += axiom { fieldTerm.load() equality initializer(field.second) }
+            val initializerTerm = initializer(field.second)
+            preStateBuilder += axiom { fieldTerm.initialize(initializerTerm) }
+            preStateBuilder += axiom { initializerTerm equality fieldTerm.load() }
         }
-//        for ((field, value) in descriptor.fields) {
-//            if (value is ArrayDescriptor) {
-//                val fieldTerm = term { descriptor.term.field(field.second, field.first) }
-//                val genLoad = term { generate(field.second) }
-//                preStateBuilder += state { genLoad equality fieldTerm.load() }
-//                if (value.elements.size > 1) {
-//                    for ((index1, elem1) in value.elements) {
-//                        for ((index2, elem2) in value.elements) {
-//                            if (index1 != index2 && elem1 != elem2) {
-//                                val elemIndex1 = term { genLoad[index1] }
-//                                val elemIndex2 = term { genLoad[index2] }
-//                                val load1 = term { elemIndex1.load() }
-//                                val load2 = term { elemIndex2.load() }
-//                                val genLoad1 = term { generate(load1.type) }
-//                                val genLoad2 = term { generate(load2.type) }
-//                                preStateBuilder += state { genLoad1 equality load1 }
-//                                preStateBuilder += state { genLoad2 equality load2 }
-//                                preStateBuilder += axiom { genLoad1 inequality genLoad2 }
-//                            }
-//                        }
-//                    }
-//                } else if (value.elements.size == 1) {
-//                    for ((index1, elem1) in value.elements) {
-//                        val elemIndex1 = term { genLoad[index1] }
-//                        val load1 = term { elemIndex1.load() }
-//                        val genLoad1 = term { generate(load1.type) }
-//                        preStateBuilder += state { genLoad1 equality null }
-//                    }
-//                }
-//            }
-//        }
         return mapper.apply(preStateBuilder.apply())
     }
 
@@ -327,7 +382,7 @@ class GeneratorContext(
             for ((field, _) in fields) {
                 val fieldTerm = term { term.field(field.second, field.first) }
                 preState += axiom { fieldTerm.initialize(field.second.defaultValue) }
-                preState += axiom { fieldTerm.load() equality field.second.defaultValue }
+                preState += axiom { field.second.defaultValue equality fieldTerm.load()  }
             }
 
             return preState.apply()
