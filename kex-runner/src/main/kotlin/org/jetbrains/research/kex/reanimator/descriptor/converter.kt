@@ -1,12 +1,12 @@
 package org.jetbrains.research.kex.reanimator.descriptor
 
-import org.jetbrains.research.kthelper.assert.unreachable
-import org.jetbrains.research.kthelper.logging.log
 import org.jetbrains.research.kex.config.kexConfig
 import org.jetbrains.research.kex.ktype.*
 import org.jetbrains.research.kex.util.allFields
 import org.jetbrains.research.kex.util.isStatic
 import org.jetbrains.research.kex.util.kex
+import org.jetbrains.research.kthelper.assert.unreachable
+import org.jetbrains.research.kthelper.logging.log
 import java.util.*
 
 private val maxGenerationDepth by lazy {
@@ -268,6 +268,8 @@ class Object2DescriptorConverter : DescriptorBuilder() {
         }
         return result
     }
+
+    val Any?.descriptor get() = convert(this)
 }
 
 val Any?.descriptor get() = Object2DescriptorConverter().convert(this)
