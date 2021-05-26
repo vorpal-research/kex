@@ -72,7 +72,7 @@ class GeneratorContext(
         val staticTypeInfo = collectStaticTypeInfo(types, ps, typeInfoMap)
         +AnnotationAdapter(method, AnnotationManager.defaultLoader)
         +ConcreteImplInliner(types, staticTypeInfo, psa)
-        +StaticFieldInliner(cm, psa)
+        +StaticFieldInliner(context, psa)
         +RecursiveConstructorInliner(psa)
         +IntrinsicAdapter
         +KexIntrinsicsAdapter()
@@ -238,7 +238,7 @@ class GeneratorContext(
         this.executeAsStatic(descriptor) { method, classDescriptor -> method.getStaticMethodPreState(classDescriptor) }
 
     private fun Method.execute(state: PredicateState, query: PredicateState): Parameters<Descriptor>? {
-        val checker = Checker(this, context.loader, psa)
+        val checker = Checker(this, context, psa)
         val checkedState = state + query
         return when (val result = checker.check(checkedState)) {
             is Result.SatResult -> {

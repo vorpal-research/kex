@@ -199,12 +199,10 @@ class CallCiteChecker(
     fun prepareState(ps: PredicateState, typeInfoMap: TypeInfoMap) = transform(ps) {
         +AnnotationAdapter(method, AnnotationManager.defaultLoader)
         +RecursiveInliner(psa) { ConcreteImplInliner(method.cm.type, typeInfoMap, psa, inlineIndex = it) }
-//        +MethodInliner(psa)
-        +StaticFieldInliner(method.cm, psa)
+        +StaticFieldInliner(ctx, psa)
         +RecursiveInliner(psa) { MethodInliner(psa, inlineIndex = it) }
         +IntrinsicAdapter
         +KexIntrinsicsAdapter()
-//        +NullityAnnotator(nonNulls.map { term { value(it) } }.toSet())
         +DoubleTypeAdapter()
         +ReflectionInfoAdapter(method, ctx.loader)
         +Optimizer()

@@ -234,7 +234,7 @@ class ConcolicChecker(
         log.debug("Collected trace: $state")
         log.debug("Mutated trace: $mutated")
 
-        val checker = Checker(method, loader, psa)
+        val checker = Checker(method, ctx, psa)
         val result = checker.prepareAndCheck(mutated)
         if (result !is Result.SatResult) return null
         yield()

@@ -42,7 +42,7 @@ class EnumGenerator(private val fallback: Generator) : Generator {
                 }
                 val preparedQuery = prepareQuery(queryBuilder.apply())
 
-                val checker = Checker(staticInit, context.loader, psa)
+                val checker = Checker(staticInit, context, psa)
                 val params = when (val result = checker.check(preparedState + preparedQuery)) {
                     is Result.SatResult -> {
                         log.debug("Model: ${result.model}")

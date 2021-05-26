@@ -140,7 +140,7 @@ open class MethodChecker(
     }
 
     protected open fun coverBlock(method: Method, block: BasicBlock): Result {
-        val checker = Checker(method, loader, psa)
+        val checker = Checker(method, ctx, psa)
         val ps = checker.createState(block.terminator)
                 ?: return Result.UnknownResult("Could not create a predicate state for instruction")
 

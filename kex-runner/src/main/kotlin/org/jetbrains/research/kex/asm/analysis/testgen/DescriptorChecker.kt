@@ -29,7 +29,7 @@ class DescriptorChecker(
     }
 
     override fun coverBlock(method: Method, block: BasicBlock): Result {
-        val checker = Checker(method, ctx.loader, psa)
+        val checker = Checker(method, ctx, psa)
         val ps = checker.createState(method, block)
                 ?: return Result.UnknownResult("Could not resolve types for ${block.name}")
 
@@ -70,7 +70,7 @@ class DescriptorChecker(
     }
 
     private fun resolveTypes(method: Method, block: BasicBlock): TypeInfoMap? {
-        val checker = Checker(method, loader, psa)
+        val checker = Checker(method, ctx, psa)
         val ps = checker.createState(block.terminator) ?: return null
 
         val result = try {

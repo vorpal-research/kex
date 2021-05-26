@@ -219,7 +219,7 @@ class Kex(args: Array<String>) {
         val method = failure.method
         log.debug(failure)
 
-        val checker = Checker(method, containerClassLoader, psa)
+        val checker = Checker(method, analysisContext, psa)
         val result = checker.check(failure.state) as? Result.SatResult ?: return
         log.debug(result.model)
         val recMod = executeModel(analysisContext, checker.state, method, result.model)
