@@ -33,7 +33,7 @@ class Z3Solver(val tf: TypeFactory) : AbstractSMTSolver {
     val ef = Z3ExprFactory()
 
     override fun isReachable(state: PredicateState) =
-            isPathPossible(state, state.path)
+        isPathPossible(state, state.path)
 
     override fun isPathPossible(state: PredicateState, path: PredicateState): Result = check(state, path) { it }
 
@@ -135,14 +135,22 @@ class Z3Solver(val tf: TypeFactory) : AbstractSMTSolver {
         return ctx.tryFor(tactic, timeout)
     }
 
-    private fun Z3Context.recoverProperty(ptr: Term, memspace: Int, type: KexType, model: Model, name: String): Pair<Term, Term> {
+    private fun Z3Context.recoverProperty(
+        ctx: Z3Context,
+        ptr: Term,
+        memspace: Int,
+        type: KexType,
+        model: Model,
+        name: String
+    ): Pair<Term, Term> {
         val ptrExpr = Z3Converter(tf).convert(ptr, ef, this) as? Ptr_
-                ?: unreachable { log.error("Non-ptr expr for pointer $ptr") }
+            ?: unreachable { log.error("Non-ptr expr for pointer $ptr") }
         val startProp = getInitialProperties(memspace, name)
         val endProp = getProperties(memspace, name)
 
-        val startV = startProp.load(ptrExpr, Z3ExprFactory.getTypeSize(type).int)
-        val endV = endProp.load(ptrExpr, Z3ExprFactory.getTypeSize(type).int)
+        val elementSize = Z3ExprFactory.getTypeSize(type).int * Z3ExprFactory.getByteSize(ctx.factory.ctx)
+        val startV = startProp.load(ptrExpr, elementSize)
+        val endV = endProp.load(ptrExpr, elementSize)
 
         val modelStartV = Z3Unlogic.undo(model.evaluate(startV.expr, true))
         val modelEndV = Z3Unlogic.undo(model.evaluate(endV.expr, true))
@@ -150,18 +158,18 @@ class Z3Solver(val tf: TypeFactory) : AbstractSMTSolver {
     }
 
     private fun MutableMap<Int, MutableMap<String, Pair<MutableMap<Term, Term>, MutableMap<Term, Term>>>>.recoverProperty(
-            ctx: Z3Context,
-            ptr: Term,
-            memspace: Int,
-            type: KexType,
-            model: Model,
-            name: String
+        ctx: Z3Context,
+        ptr: Term,
+        memspace: Int,
+        type: KexType,
+        model: Model,
+        name: String
     ) {
         val ptrExpr = Z3Converter(tf).convert(ptr, ef, ctx) as? Ptr_
-                ?: unreachable { log.error("Non-ptr expr for pointer $ptr") }
+            ?: unreachable { log.error("Non-ptr expr for pointer $ptr") }
         val modelPtr = Z3Unlogic.undo(model.evaluate(ptrExpr.expr, true))
 
-        val (modelStartT, modelEndT) = ctx.recoverProperty(ptr, memspace, type, model, name)
+        val (modelStartT, modelEndT) = ctx.recoverProperty(ctx, ptr, memspace, type, model, name)
         val typePair = this.getOrPut(memspace, ::hashMapOf).getOrPut(name) {
             hashMapOf<Term, Term>() to hashMapOf()
         }
@@ -195,10 +203,18 @@ class Z3Solver(val tf: TypeFactory) : AbstractSMTSolver {
             val memspace = ptr.memspace
 
             when (ptr) {
-                is FieldLoadTerm -> {}
+                is FieldLoadTerm -> {
+                }
                 is FieldTerm -> {
                     val name = "${ptr.klass}.${ptr.fieldNameString}"
-                    properties.recoverProperty(ctx, ptr.owner, memspace, (ptr.type as KexReference).reference, model, name)
+                    properties.recoverProperty(
+                        ctx,
+                        ptr.owner,
+                        memspace,
+                        (ptr.type as KexReference).reference,
+                        model,
+                        name
+                    )
                     properties.recoverProperty(ctx, ptr.owner, memspace, ptr.type, model, "type")
                 }
                 else -> {
@@ -206,7 +222,7 @@ class Z3Solver(val tf: TypeFactory) : AbstractSMTSolver {
                     val endMem = ctx.getMemory(memspace)
 
                     val ptrExpr = Z3Converter(tf).convert(ptr, ef, ctx) as? Ptr_
-                            ?: unreachable { log.error("Non-ptr expr for pointer $ptr") }
+                        ?: unreachable { log.error("Non-ptr expr for pointer $ptr") }
 
                     val startV = startMem.load(ptrExpr, Z3ExprFactory.getTypeSize(ptr.type).int)
                     val endV = endMem.load(ptrExpr, Z3ExprFactory.getTypeSize(ptr.type).int)
@@ -230,12 +246,12 @@ class Z3Solver(val tf: TypeFactory) : AbstractSMTSolver {
             }
         }
         return SMTModel(
-                assignments,
-                memories.map { (memspace, pair) -> memspace to MemoryShape(pair.first, pair.second) }.toMap(),
-                properties.map { (memspace, names) ->
-                    memspace to names.map { (name, pair) -> name to MemoryShape(pair.first, pair.second) }.toMap()
-                }.toMap(),
-                typeMap
+            assignments,
+            memories.map { (memspace, pair) -> memspace to MemoryShape(pair.first, pair.second) }.toMap(),
+            properties.map { (memspace, names) ->
+                memspace to names.map { (name, pair) -> name to MemoryShape(pair.first, pair.second) }.toMap()
+            }.toMap(),
+            typeMap
         )
     }
 

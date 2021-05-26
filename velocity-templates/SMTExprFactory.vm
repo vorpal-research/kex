@@ -33,6 +33,8 @@ class $factory : ${solver}SMTExprFactory() {
             KexType.DWORD -> TypeSize.DWORD
             else -> unreachable { log.error("Unknown type bit size ${type.bitSize}") }
         }
+
+        fun getByteSize(ctx: $context) = ${valexpr}.getStaticBitSize< Word_ >(ctx)
     }
 
     val ctx = $context()

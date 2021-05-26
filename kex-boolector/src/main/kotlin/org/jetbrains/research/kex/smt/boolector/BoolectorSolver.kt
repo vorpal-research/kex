@@ -76,6 +76,7 @@ class BoolectorSolver(val tf: TypeFactory) : AbstractSMTSolver {
     }
 
     private fun BoolectorContext.recoverProperty(
+        ctx: BoolectorContext,
         ptr: Term,
         memspace: Int,
         type: KexType,
@@ -86,8 +87,9 @@ class BoolectorSolver(val tf: TypeFactory) : AbstractSMTSolver {
         val startProp = getInitialProperties(memspace, name)
         val endProp = getProperties(memspace, name)
 
-        val startV = startProp.load(ptrExpr, BoolectorExprFactory.getTypeSize(type).int)
-        val endV = endProp.load(ptrExpr, BoolectorExprFactory.getTypeSize(type).int)
+        val elementSize = BoolectorExprFactory.getTypeSize(type).int * BoolectorExprFactory.getByteSize(ctx.factory.ctx)
+        val startV = startProp.load(ptrExpr, elementSize)
+        val endV = endProp.load(ptrExpr, elementSize)
 
         val modelStartV = BoolectorUnlogic.undo(startV.expr)
         val modelEndV = BoolectorUnlogic.undo(endV.expr)
@@ -105,7 +107,7 @@ class BoolectorSolver(val tf: TypeFactory) : AbstractSMTSolver {
             ?: unreachable { log.error("Non-ptr expr for pointer $ptr") }
         val modelPtr = BoolectorUnlogic.undo(ptrExpr.expr)
 
-        val (modelStartT, modelEndT) = ctx.recoverProperty(ptr, memspace, type, name)
+        val (modelStartT, modelEndT) = ctx.recoverProperty(ctx, ptr, memspace, type, name)
         val typePair = this.getOrPut(memspace, ::hashMapOf).getOrPut(name) {
             hashMapOf<Term, Term>() to hashMapOf()
         }
