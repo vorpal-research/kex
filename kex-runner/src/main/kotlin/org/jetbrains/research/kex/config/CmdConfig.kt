@@ -1,8 +1,8 @@
 package org.jetbrains.research.kex.config
 
+import org.apache.commons.cli.*
 import org.jetbrains.research.kthelper.assert.exit
 import org.jetbrains.research.kthelper.logging.log
-import org.apache.commons.cli.*
 import java.io.PrintWriter
 import java.io.StringWriter
 import java.util.regex.Pattern
@@ -83,6 +83,14 @@ class CmdConfig(args: Array<String>) : Config() {
         targetDir.isRequired = false
         options.addOption(targetDir)
 
+        val libPackage = Option(null, "libCheck", true, "package to check use cases of library, used in LibChecker mode")
+        libPackage.isRequired = false
+        options.addOption(libPackage)
+
+        val attempts = Option(null, "attempts", true, "number of attempts for reanimator mode")
+        attempts.isRequired = false
+        options.addOption(attempts)
+
         val config = Option.builder()
                 .longOpt("option")
                 .argName("section:name:value")
@@ -120,7 +128,7 @@ class CmdConfig(args: Array<String>) : Config() {
         val comparator = when {
             ignoreCase -> { a: String, b: String ->
                 val pattern = Pattern.compile(a, Pattern.CASE_INSENSITIVE)
-                pattern.matcher(b).find()
+                pattern.matcher(b).matches()
             }
             else -> { a: String, b: String -> a == b }
         }

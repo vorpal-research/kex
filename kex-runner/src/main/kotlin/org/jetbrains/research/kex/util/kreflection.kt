@@ -21,7 +21,7 @@ import kotlin.reflect.full.*
 import kotlin.reflect.jvm.javaMethod
 import kotlin.reflect.jvm.jvmErasure
 
-val KType.isNonNullable get() = this.isMarkedNullable.not()
+val KType.isNonNullable get() = !this.isMarkedNullable
 
 fun KexType.isNonNullable(kType: KType) = when (this) {
     is KexPointer -> kType.isNonNullable

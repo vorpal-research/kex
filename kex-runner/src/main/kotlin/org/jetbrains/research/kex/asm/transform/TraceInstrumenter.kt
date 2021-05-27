@@ -1,6 +1,5 @@
 package org.jetbrains.research.kex.asm.transform
 
-import org.jetbrains.research.kthelper.collection.buildList
 import org.jetbrains.research.kex.asm.util.FileOutputStreamWrapper
 import org.jetbrains.research.kex.config.kexConfig
 import org.jetbrains.research.kfg.ClassManager
@@ -9,6 +8,7 @@ import org.jetbrains.research.kfg.ir.BasicBlock
 import org.jetbrains.research.kfg.ir.Method
 import org.jetbrains.research.kfg.ir.value.instruction.*
 import org.jetbrains.research.kfg.visitor.MethodVisitor
+import org.jetbrains.research.kthelper.collection.buildList
 import java.io.File
 import java.nio.file.Files
 import java.nio.file.Paths
@@ -22,7 +22,7 @@ class TraceInstrumenter(override val cm: ClassManager) : MethodVisitor {
         val TRACE_DIRECTORY = kexConfig.getStringValue("runner", "trace-directory", "./traces")
 
         fun generateTraceFileName(method: Method): String {
-            val name = "${method.`class`.canonicalDesc}.${method.name}"
+            val name = "${method.klass.canonicalDesc}.${method.name}"
             return "$name$TRACE_POSTFIX"
         }
 
@@ -137,7 +137,7 @@ class TraceInstrumenter(override val cm: ClassManager) : MethodVisitor {
 
             val args = method.argTypes
             if (!method.isStatic) {
-                val thisType = types.getRefType(method.`class`)
+                val thisType = types.getRefType(method.klass)
                 val `this` = values.getThis(thisType)
                 +fos.print("instance $methodName, this == ")
                 +fos.printValue(`this`)

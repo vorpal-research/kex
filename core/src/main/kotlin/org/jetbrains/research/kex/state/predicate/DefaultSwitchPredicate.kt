@@ -17,22 +17,14 @@ class DefaultSwitchPredicate(
         @Required @Contextual override val location: Location = Location()) : Predicate() {
     override val operands by lazy { listOf(cond) + cases }
 
-    override fun print(): String {
-        val sb = StringBuilder()
-        sb.append("$cond !in (")
-        val cases = cases
-        cases.take(1).forEach { sb.append(it) }
-        cases.drop(1).forEach { sb.append(", $it") }
-        sb.append(")")
-        return sb.toString()
-    }
+    override fun print() = "$cond !in (${cases.joinToString(", ")})"
 
     override fun <T : Transformer<T>> accept(t: Transformer<T>): Predicate {
-        val tcond = t.transform(cond)
-        val tcases = cases.map { t.transform(it) }
+        val tCond = t.transform(cond)
+        val tCases = cases.map { t.transform(it) }
         return when {
-            tcond == cond && tcases == cases -> this
-            else -> predicate(type, location) { tcond `!in` tcases }
+            tCond == cond && tCases == cases -> this
+            else -> predicate(type, location) { tCond `!in` tCases }
         }
     }
 }

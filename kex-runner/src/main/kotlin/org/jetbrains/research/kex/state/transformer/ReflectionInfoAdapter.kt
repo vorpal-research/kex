@@ -1,9 +1,5 @@
 package org.jetbrains.research.kex.state.transformer
 
-import org.jetbrains.research.kthelper.`try`
-import org.jetbrains.research.kthelper.collection.dequeOf
-import org.jetbrains.research.kthelper.logging.log
-import org.jetbrains.research.kthelper.tryOrNull
 import org.jetbrains.research.kex.ktype.*
 import org.jetbrains.research.kex.state.PredicateState
 import org.jetbrains.research.kex.state.StateBuilder
@@ -15,9 +11,13 @@ import org.jetbrains.research.kex.state.term.*
 import org.jetbrains.research.kex.util.*
 import org.jetbrains.research.kfg.ir.Method
 import org.jetbrains.research.kfg.type.ArrayType
+import org.jetbrains.research.kthelper.`try`
+import org.jetbrains.research.kthelper.collection.dequeOf
+import org.jetbrains.research.kthelper.logging.log
+import org.jetbrains.research.kthelper.tryOrNull
 
 class ReflectionInfoAdapter(val method: Method, val loader: ClassLoader, val ignores: Set<Term> = setOf()) :
-        RecollectingTransformer<ReflectionInfoAdapter> {
+    RecollectingTransformer<ReflectionInfoAdapter> {
     val cm get() = method.cm
     val types get() = method.cm.type
 
@@ -33,11 +33,11 @@ class ReflectionInfoAdapter(val method: Method, val loader: ClassLoader, val ign
         if (`this` != null) {
             currentBuilder += assume { `this` inequality null }
         } else if (!method.isStatic) {
-            val nthis = term { `this`(method.`class`.kexType) }
+            val nthis = term { `this`(method.klass.kexType) }
             currentBuilder += assume { nthis inequality null }
         }
 
-        val methodClassType = KexClass(method.`class`.fullname).getKfgType(types)
+        val methodClassType = KexClass(method.klass.fullName).getKfgType(types)
         val klass = `try` { loader.loadKClass(methodClassType) }.getOrNull() ?: return super.apply(ps)
         val kFunction = klass.getKFunction(method) ?: run {
             log.warn("Could not load kFunction for $method")
@@ -69,7 +69,7 @@ class ReflectionInfoAdapter(val method: Method, val loader: ClassLoader, val ign
     override fun transformCallPredicate(predicate: CallPredicate): Predicate {
         val call = predicate.call as CallTerm
 
-        val methodClassType = KexClass(call.method.`class`.fullname).getKfgType(types)
+        val methodClassType = KexClass(call.method.klass.fullName).getKfgType(types)
         val klass = `try` { loader.loadKClass(methodClassType) }.getOrNull() ?: return predicate
         val kFunction = klass.getKFunction(call.method)
         if (!predicate.hasLhv || kFunction == null) return predicate

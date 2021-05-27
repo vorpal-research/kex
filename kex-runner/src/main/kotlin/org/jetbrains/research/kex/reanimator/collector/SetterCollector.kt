@@ -11,6 +11,7 @@ import org.jetbrains.research.kfg.visitor.ClassVisitor
 import org.jetbrains.research.kthelper.`try`
 import org.jetbrains.research.kthelper.assert.asserted
 import org.jetbrains.research.kthelper.logging.log
+import java.util.*
 import kotlin.reflect.KMutableProperty
 import kotlin.reflect.KType
 import kotlin.reflect.full.memberProperties
@@ -38,28 +39,35 @@ class SetterCollector(val ctx: ExecutionContext) : ClassVisitor {
 
     override fun cleanup() {}
 
-    override fun visit(`class`: KfgClass) {
+    override fun visit(klass: KfgClass) {
         `try` {
-            val klass = ctx.loader.loadKClass(`class`)
-            for (property in klass.memberProperties.filterIsInstance<KMutableProperty<*>>()) {
-                for (method in `class`.methods) {
+            val kClass = ctx.loader.loadKClass(klass)
+            for (property in kClass.memberProperties.filterIsInstance<KMutableProperty<*>>()) {
+                for (method in klass.methods) {
                     if (property.setter eq method) {
                         log.info("Method $method is kotlin setter for $property")
-                        val field = `class`.getField(property.name, property.returnType.kfgType)
+                        val field = klass.getField(property.name, property.returnType.kfgType)
                         settersInner[field] = method
                     }
                 }
             }
         }
 
-        log.debug("$`class` is not from kotlin")
-        super.visit(`class`)
+        log.debug("$klass is not from kotlin")
+        super.visit(klass)
     }
 
     override fun visitMethod(method: Method) {
         val fieldInstances = `try` {
-            val klass = ctx.loader.loadClass(method.`class`)
-            klass.declaredFields.filter { method.name == "set${it.name.capitalize()}" }
+            val klass = ctx.loader.loadClass(method.klass)
+            klass.declaredFields.filter {
+                method.name == "set${
+                    it.name.replaceFirstChar { character ->
+                        if (character.isLowerCase()) character.titlecase(
+                            Locale.getDefault()
+                        ) else character.toString()
+                    }
+                }" }
         }.getOrNull() ?: return
         if (fieldInstances.isEmpty()) return
         require(fieldInstances.size == 1)

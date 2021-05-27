@@ -1,6 +1,6 @@
 package org.jetbrains.research.kex.asm.analysis.defect
 
-import org.jetbrains.research.kfg.ir.Location
+import org.jetbrains.research.kfg.ir.value.instruction.Instruction
 import java.nio.file.Path
 
 enum class DefectType(val description: String) {
@@ -10,20 +10,30 @@ enum class DefectType(val description: String) {
 }
 
 data class Defect(
-    val location: Location,
     val type: DefectType,
+    val callStack: List<String>,
     val id: String?,
     val testFile: Path?,
     val testCaseName: String?
 ) {
     companion object {
-        fun oob(location: Location, id: String? = null, testFile: Path? = null, testCaseName: String? = null) =
-            Defect(location, DefectType.OOB, id, testFile, testCaseName)
+        fun oob(callStack: List<String>, id: String? = null, testFile: Path? = null, testCaseName: String? = null) =
+            Defect(DefectType.OOB, callStack, id, testFile, testCaseName)
 
-        fun npe(location: Location, id: String? = null, testFile: Path? = null, testCaseName: String? = null) =
-            Defect(location, DefectType.NPE, id, testFile, testCaseName)
+        fun npe(callStack: List<String>, id: String? = null, testFile: Path? = null, testCaseName: String? = null) =
+            Defect(DefectType.NPE, callStack, id, testFile, testCaseName)
 
-        fun assert(location: Location, id: String? = null, testFile: Path? = null, testCaseName: String? = null) =
-            Defect(location, DefectType.ASSERT, id, testFile, testCaseName)
+        fun assert(callStack: List<String>, id: String? = null, testFile: Path? = null, testCaseName: String? = null) =
+            Defect(DefectType.ASSERT, callStack, id, testFile, testCaseName)
+
+
+        fun oob(inst: Instruction, id: String? = null, testFile: Path? = null, testCaseName: String? = null) =
+            oob(listOf("${inst.parent.parent} - ${inst.location}"), id, testFile, testCaseName)
+
+        fun npe(inst: Instruction, id: String? = null, testFile: Path? = null, testCaseName: String? = null) =
+            npe(listOf("${inst.parent.parent} - ${inst.location}"), id, testFile, testCaseName)
+
+        fun assert(inst: Instruction, id: String? = null, testFile: Path? = null, testCaseName: String? = null) =
+            assert(listOf("${inst.parent.parent} - ${inst.location}"), id, testFile, testCaseName)
     }
 }

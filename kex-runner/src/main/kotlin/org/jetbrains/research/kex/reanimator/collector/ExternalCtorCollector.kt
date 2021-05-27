@@ -22,9 +22,9 @@ class ExternalCtorCollector(override val cm: ClassManager, val visibilityLevel: 
         if (!(method.isStatic && method.argTypes.all { !it.isSubtypeOf(returnType) } && !method.isSynthetic)) return
         if (visibilityLevel > method.visibility) return
 
-        externalConstructors.getOrPut(returnType.`class`, ::mutableSetOf) += method
-        returnType.`class`.allAncestors.forEach {
-            externalConstructors.getOrPut(it, ::mutableSetOf) += method
+        externalConstructors.getOrPut(returnType.klass, ::mutableSetOf) += method
+        for (ancestor in returnType.klass.allAncestors) {
+            externalConstructors.getOrPut(ancestor, ::mutableSetOf) += method
         }
     }
 }

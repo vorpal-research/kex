@@ -13,8 +13,12 @@ import org.jetbrains.research.kfg.ir.Method
 import org.jetbrains.research.kfg.visitor.MethodVisitor
 import org.jetbrains.research.kthelper.logging.log
 
-private val runs: Int by lazy { kexConfig.getIntValue("random-runner", "attempts", 10) }
-private val runner: Boolean by lazy { kexConfig.getBooleanValue("random-runner", "enabled", false) }
+private val runs: Int by lazy {
+    kexConfig.getIntValue("random-runner", "attempts", 10)
+}
+private val runner: Boolean by lazy {
+    kexConfig.getBooleanValue("random-runner", "enabled", false)
+}
 
 class RandomChecker(
     val ctx: ExecutionContext,
@@ -28,7 +32,7 @@ class RandomChecker(
     override fun visit(method: Method) {
         super.visit(method)
         if (!runner) return
-        if (method.`class`.isSynthetic) return
+        if (method.klass.isSynthetic) return
         if (method.isAbstract || method.isConstructor || method.isStaticInitializer) return
 
         val randomRunner = ReanimatingRandomObjectTracingRunner(ctx, psa, visibilityLevel, method)

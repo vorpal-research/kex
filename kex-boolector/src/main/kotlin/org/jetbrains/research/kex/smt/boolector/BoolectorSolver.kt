@@ -1,8 +1,5 @@
 package org.jetbrains.research.kex.smt.boolector
 
-import org.jetbrains.research.kthelper.assert.ktassert
-import org.jetbrains.research.kthelper.assert.unreachable
-import org.jetbrains.research.kthelper.logging.log
 import org.jetbrains.research.boolector.Btor
 import org.jetbrains.research.kex.config.kexConfig
 import org.jetbrains.research.kex.ktype.*
@@ -14,16 +11,22 @@ import org.jetbrains.research.kex.state.transformer.collectTypes
 import org.jetbrains.research.kex.state.transformer.collectVariables
 import org.jetbrains.research.kex.state.transformer.memspace
 import org.jetbrains.research.kfg.type.TypeFactory
+import org.jetbrains.research.kthelper.assert.ktassert
+import org.jetbrains.research.kthelper.assert.unreachable
+import org.jetbrains.research.kthelper.logging.log
 
 private val logQuery = kexConfig.getBooleanValue("smt", "logQuery", false)
 private val logFormulae = kexConfig.getBooleanValue("smt", "logFormulae", false)
+
+private typealias MemoryState = MutableMap<Term, Term>
+private typealias MemoryPair = Pair<MemoryState, MemoryState>
 
 @Solver("boolector")
 class BoolectorSolver(val tf: TypeFactory) : AbstractSMTSolver {
     val ef = BoolectorExprFactory()
 
     override fun isReachable(state: PredicateState) =
-            isPathPossible(state, state.path)
+        isPathPossible(state, state.path)
 
     override fun isPathPossible(state: PredicateState, path: PredicateState) = isViolated(state, path)
 
@@ -72,32 +75,39 @@ class BoolectorSolver(val tf: TypeFactory) : AbstractSMTSolver {
         return result
     }
 
-    private fun BoolectorContext.recoverProperty(ptr: Term, memspace: Int, type: KexType, name: String): Pair<Term, Term> {
+    private fun BoolectorContext.recoverProperty(
+        ctx: BoolectorContext,
+        ptr: Term,
+        memspace: Int,
+        type: KexType,
+        name: String
+    ): Pair<Term, Term> {
         val ptrExpr = BoolectorConverter(tf).convert(ptr, ef, this) as? Ptr_
-                ?: unreachable { log.error("Non-ptr expr for pointer $ptr") }
+            ?: unreachable { log.error("Non-ptr expr for pointer $ptr") }
         val startProp = getInitialProperties(memspace, name)
         val endProp = getProperties(memspace, name)
 
-        val startV = startProp.load(ptrExpr, BoolectorExprFactory.getTypeSize(type).int)
-        val endV = endProp.load(ptrExpr, BoolectorExprFactory.getTypeSize(type).int)
+        val elementSize = BoolectorExprFactory.getTypeSize(type).int * BoolectorExprFactory.getByteSize(ctx.factory.ctx)
+        val startV = startProp.load(ptrExpr, elementSize)
+        val endV = endProp.load(ptrExpr, elementSize)
 
         val modelStartV = BoolectorUnlogic.undo(startV.expr)
         val modelEndV = BoolectorUnlogic.undo(endV.expr)
         return modelStartV to modelEndV
     }
 
-    private fun MutableMap<Int, MutableMap<String, Pair<MutableMap<Term, Term>, MutableMap<Term, Term>>>>.recoverProperty(
-            ctx: BoolectorContext,
-            ptr: Term,
-            memspace: Int,
-            type: KexType,
-            name: String
+    private fun MutableMap<Int, MutableMap<String, MemoryPair>>.recoverProperty(
+        ctx: BoolectorContext,
+        ptr: Term,
+        memspace: Int,
+        type: KexType,
+        name: String
     ) {
         val ptrExpr = BoolectorConverter(tf).convert(ptr, ef, ctx) as? Ptr_
-                ?: unreachable { log.error("Non-ptr expr for pointer $ptr") }
+            ?: unreachable { log.error("Non-ptr expr for pointer $ptr") }
         val modelPtr = BoolectorUnlogic.undo(ptrExpr.expr)
 
-        val (modelStartT, modelEndT) = ctx.recoverProperty(ptr, memspace, type, name)
+        val (modelStartT, modelEndT) = ctx.recoverProperty(ctx, ptr, memspace, type, name)
         val typePair = this.getOrPut(memspace, ::hashMapOf).getOrPut(name) {
             hashMapOf<Term, Term>() to hashMapOf()
         }
@@ -110,14 +120,14 @@ class BoolectorSolver(val tf: TypeFactory) : AbstractSMTSolver {
             acc.first + collectPointers(ps) to acc.second + collectVariables(ps)
         }
 
-        val assignments = vars.map {
+        val assignments = vars.associateWith {
             val expr = BoolectorConverter(tf).convert(it, ef, ctx)
             val boolectorExpr = expr.expr
 
             // this is needed because boolector represents real numbers as integers
             val undone = BoolectorUnlogic.undo(boolectorExpr)
-            val actualValue = when {
-                it.type is KexReal -> when (undone) {
+            val actualValue = when (it.type) {
+                is KexReal -> when (undone) {
                     is ConstIntTerm -> term { const(undone.value.toFloat()) }
                     is ConstLongTerm -> term { const(undone.value.toDouble()) }
                     else -> unreachable {
@@ -126,8 +136,8 @@ class BoolectorSolver(val tf: TypeFactory) : AbstractSMTSolver {
                 }
                 else -> undone
             }
-            it to actualValue
-        }.toMap().toMutableMap()
+            actualValue
+        }.toMutableMap()
 
         val memories = hashMapOf<Int, Pair<MutableMap<Term, Term>, MutableMap<Term, Term>>>()
         val properties = hashMapOf<Int, MutableMap<String, Pair<MutableMap<Term, Term>, MutableMap<Term, Term>>>>()
@@ -153,7 +163,7 @@ class BoolectorSolver(val tf: TypeFactory) : AbstractSMTSolver {
                     val endMem = ctx.getMemory(memspace)
 
                     val ptrExpr = BoolectorConverter(tf).convert(ptr, ef, ctx) as? Ptr_
-                            ?: unreachable { log.error("Non-ptr expr for pointer $ptr") }
+                        ?: unreachable { log.error("Non-ptr expr for pointer $ptr") }
 
                     val startV = startMem.load(ptrExpr, BoolectorExprFactory.getTypeSize(ptr.type).int)
                     val endV = endMem.load(ptrExpr, BoolectorExprFactory.getTypeSize(ptr.type).int)
@@ -177,12 +187,12 @@ class BoolectorSolver(val tf: TypeFactory) : AbstractSMTSolver {
             }
         }
         return SMTModel(
-                assignments,
-                memories.map { (memspace, pair) -> memspace to MemoryShape(pair.first, pair.second) }.toMap(),
-                properties.map { (memspace, names) ->
-                    memspace to names.map { (name, pair) -> name to MemoryShape(pair.first, pair.second) }.toMap()
-                }.toMap(),
-                typeMap
+            assignments,
+            memories.map { (memspace, pair) -> memspace to MemoryShape(pair.first, pair.second) }.toMap(),
+            properties.map { (memspace, names) ->
+                memspace to names.map { (name, pair) -> name to MemoryShape(pair.first, pair.second) }.toMap()
+            }.toMap(),
+            typeMap
         )
     }
 

@@ -1,13 +1,13 @@
 package org.jetbrains.research.kex.reanimator.callstack
 
-import org.jetbrains.research.kthelper.collection.queueOf
-import org.jetbrains.research.kthelper.logging.log
 import org.jetbrains.research.kex.reanimator.descriptor.Descriptor
 import org.jetbrains.research.kfg.ir.Class
 import org.jetbrains.research.kfg.ir.Field
 import org.jetbrains.research.kfg.ir.Method
 import org.jetbrains.research.kfg.type.ArrayType
 import org.jetbrains.research.kfg.type.Type
+import org.jetbrains.research.kthelper.collection.queueOf
+import org.jetbrains.research.kthelper.logging.log
 
 interface ApiCall {
     val parameters: List<CallStack>
@@ -87,7 +87,7 @@ data class DefaultConstructorCall(val klass: Class) : ApiCall {
     override val parameters: List<CallStack>
         get() = listOf()
 
-    override fun toString() = "${klass.fullname}()"
+    override fun toString() = "${klass.fullName}()"
     override fun print(owner: CallStack, builder: StringBuilder, visited: MutableSet<CallStack>) {
         builder.appendLine("${owner.name} = $this")
     }
@@ -106,7 +106,7 @@ data class ConstructorCall(val klass: Class, val constructor: Method, val args: 
         for (arg in args) {
             arg.print(builder, visited)
         }
-        builder.appendLine("${owner.name} = ${constructor.`class`.fullname}(${args.joinToString(", ") { it.name }})")
+        builder.appendLine("${owner.name} = ${constructor.klass.fullName}(${args.joinToString(", ") { it.name }})")
     }
 }
 
@@ -123,7 +123,7 @@ data class ExternalConstructorCall(val constructor: Method, val args: List<CallS
         for (arg in args) {
             arg.print(builder, visited)
         }
-        builder.appendLine("${owner.name} = ${constructor.`class`.fullname}(${args.joinToString(", ") { it.name }})")
+        builder.appendLine("${owner.name} = ${constructor.klass.fullName}(${args.joinToString(", ") { it.name }})")
     }
 }
 
@@ -138,7 +138,7 @@ data class InnerClassConstructorCall(val constructor: Method, val outerObject: C
         for (arg in args) {
             arg.print(builder, visited)
         }
-        builder.appendLine("${owner.name} = ${outerObject.name}.${constructor.`class`.fullname}(${args.joinToString(", ") { it.name }})")
+        builder.appendLine("${owner.name} = ${outerObject.name}.${constructor.klass.fullName}(${args.joinToString(", ") { it.name }})")
     }
 }
 
@@ -173,7 +173,7 @@ data class StaticMethodCall(val method: Method, val args: List<CallStack>) : Api
         for (arg in args) {
             arg.print(builder, visited)
         }
-        builder.appendLine("${method.`class`.fullname}.${method.name}(${args.joinToString(", ") { it.name }})")
+        builder.appendLine("${method.klass.fullName}.${method.name}(${args.joinToString(", ") { it.name }})")
     }
 }
 
@@ -190,7 +190,7 @@ data class UnknownCall(val type: Type, val target: Descriptor) : ApiCall {
 data class StaticFieldSetter(val klass: Class, val field: Field, val value: CallStack) : ApiCall {
     override val parameters: List<CallStack> get() = listOf(value)
 
-    override fun toString() = "${klass.fullname}.${field.name} = ${value.name}"
+    override fun toString() = "${klass.fullName}.${field.name} = ${value.name}"
 
     override fun print(owner: CallStack, builder: StringBuilder, visited: MutableSet<CallStack>) {
         value.print(builder, visited)
@@ -233,19 +233,19 @@ data class ArrayWrite(val index: CallStack, val value: CallStack) : ApiCall {
 data class EnumValueCreation(val klass: Class, val name: String) : ApiCall {
     override val parameters = listOf<CallStack>()
 
-    override fun toString() = "${klass.fullname}.$name"
+    override fun toString() = "${klass.fullName}.$name"
 
     override fun print(owner: CallStack, builder: StringBuilder, visited: MutableSet<CallStack>) {
-        builder.appendLine("${owner.name} = ${klass.fullname}.$name")
+        builder.appendLine("${owner.name} = ${klass.fullName}.$name")
     }
 }
 
 data class StaticFieldGetter(val klass: Class, val name: String) : ApiCall {
     override val parameters = emptyList<CallStack>()
 
-    override fun toString() = "${klass.fullname}.$name"
+    override fun toString() = "${klass.fullName}.$name"
 
     override fun print(owner: CallStack, builder: StringBuilder, visited: MutableSet<CallStack>) {
-        builder.appendLine("${owner.name} = ${klass.fullname}.$name")
+        builder.appendLine("${owner.name} = ${klass.fullName}.$name")
     }
 }

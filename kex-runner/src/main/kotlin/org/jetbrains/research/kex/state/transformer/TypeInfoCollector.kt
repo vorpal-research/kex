@@ -1,6 +1,5 @@
 package org.jetbrains.research.kex.state.transformer
 
-import org.jetbrains.research.kthelper.logging.log
 import org.jetbrains.research.kex.ktype.KexIntegral
 import org.jetbrains.research.kex.ktype.KexReal
 import org.jetbrains.research.kex.ktype.KexType
@@ -10,6 +9,7 @@ import org.jetbrains.research.kex.state.*
 import org.jetbrains.research.kex.state.predicate.*
 import org.jetbrains.research.kex.state.term.*
 import org.jetbrains.research.kfg.type.TypeFactory
+import org.jetbrains.research.kthelper.logging.log
 
 enum class Nullability {
     UNKNOWN, NULLABLE, NON_NULLABLE
@@ -28,21 +28,21 @@ class TypeInfoMap(val inner: Map<Term, Set<TypeInfo>> = hashMapOf()) : Map<Term,
     companion object {
         fun create(tf: TypeFactory, map: Map<Term, Set<TypeInfo>>): TypeInfoMap {
             return TypeInfoMap(
-                    map.map { (term, types) ->
-                        val reducedTypes = run {
-                            val nullabilityInfo = types.filterIsInstance<NullabilityInfo>()
-                            val castInfo = types.filterIsInstance<CastTypeInfo>()
-                            val reducedCastInfo = mutableSetOf<CastTypeInfo>()
-                            val castTypes = castInfo.map { it.type.getKfgType(tf) }
-                            for (type in castTypes) {
-                                if (castTypes.any { it != type && type.isSupertypeOf(it) }) continue
-                                else reducedCastInfo += CastTypeInfo(type.kexType)
-                            }
-                            (nullabilityInfo + reducedCastInfo).toSet()
+                map.map { (term, types) ->
+                    val reducedTypes = run {
+                        val nullabilityInfo = types.filterIsInstance<NullabilityInfo>()
+                        val castInfo = types.filterIsInstance<CastTypeInfo>()
+                        val reducedCastInfo = mutableSetOf<CastTypeInfo>()
+                        val castTypes = castInfo.map { it.type.getKfgType(tf) }
+                        for (type in castTypes) {
+                            if (castTypes.any { it != type && type.isSupertypeOf(it) }) continue
+                            else reducedCastInfo += CastTypeInfo(type.kexType)
                         }
-                        if (reducedTypes.isEmpty()) null
-                        else term to reducedTypes
-                    }.filterNotNull().toMap()
+                        (nullabilityInfo + reducedCastInfo).toSet()
+                    }
+                    if (reducedTypes.isEmpty()) null
+                    else term to reducedTypes
+                }.filterNotNull().toMap()
             )
         }
 
@@ -59,7 +59,8 @@ class TypeInfoMap(val inner: Map<Term, Set<TypeInfo>> = hashMapOf()) : Map<Term,
     fun mapValues(mapper: (Map.Entry<Term, Set<TypeInfo>>) -> Set<TypeInfo>) = TypeInfoMap(inner.mapValues(mapper))
 
     operator fun plus(other: TypeInfoMap) = TypeInfoMap(inner + other.inner)
-    operator fun plus(other: Map<Term, KexType>) = TypeInfoMap(inner + other.mapValues { setOf(CastTypeInfo(it.value)) })
+    operator fun plus(other: Map<Term, KexType>) =
+        TypeInfoMap(inner + other.mapValues { setOf(CastTypeInfo(it.value)) })
 
     fun toMap(): Map<Term, KexType> {
         val result = mutableMapOf<Term, KexType>()
@@ -77,34 +78,34 @@ class TypeInfoCollector(val model: SMTModel, val tf: TypeFactory) : Transformer<
 
     val infos: TypeInfoMap
         get() = TypeInfoMap.create(
-                tf,
-                typeInfos.map { (term, map) ->
-                    val types = map.filter { checkPath(model, it.value) }.keys
-                    term to types
-                }.toMap()
+            tf,
+            typeInfos.map { (term, map) ->
+                val types = map.filter { checkPath(model, it.value) }.keys
+                term to types
+            }.toMap()
         )
 
-    private infix fun PredicateState.or(preds: Set<Predicate>): PredicateState {
-        return ChoiceState(listOf(this, BasicState(preds.toList()))).simplify()
+    private infix fun PredicateState.or(predicates: Set<Predicate>): PredicateState {
+        return ChoiceState(listOf(this, BasicState(predicates.toList()))).simplify()
     }
 
     private infix fun PredicateState.or(other: PredicateState): PredicateState {
         return ChoiceState(listOf(this, other)).simplify()
     }
 
-    private infix fun PredicateState.and(preds: Set<Predicate>): PredicateState {
-        return ChainState(this, BasicState(preds.toList())).simplify()
+    private infix fun PredicateState.and(predicates: Set<Predicate>): PredicateState {
+        return ChainState(this, BasicState(predicates.toList())).simplify()
     }
 
     private fun copyInfos(from: Term, to: Term, condition: Set<Predicate>) {
         val fromInfo = typeInfos.getOrElse(from, ::mutableMapOf)
         val toInfos = typeInfos.getOrPut(to, ::mutableMapOf)
-        for ((info, conds) in toInfos) {
+        for ((info, conditions) in toInfos) {
             val moreCond = fromInfo.getOrDefault(info, emptyState())
-            toInfos[info] = conds or (moreCond and condition)
+            toInfos[info] = conditions or (moreCond and condition)
         }
-        for ((info, conds) in fromInfo.filter { it.key !in toInfos }) {
-            toInfos[info] = conds and condition
+        for ((info, conditions) in fromInfo.filter { it.key !in toInfos }) {
+            toInfos[info] = conditions and condition
         }
     }
 
@@ -226,7 +227,8 @@ class PlainTypeInfoCollector(val tf: TypeFactory) : Transformer<TypeInfoCollecto
     }
 }
 
-class StaticTypeInfoCollector(val tf: TypeFactory, tip: TypeInfoMap = TypeInfoMap()) : Transformer<StaticTypeInfoCollector> {
+class StaticTypeInfoCollector(val tf: TypeFactory, tip: TypeInfoMap = TypeInfoMap()) :
+    Transformer<StaticTypeInfoCollector> {
     val typeInfoMap = tip.toMap().toMutableMap()
 
     override fun transformTerm(term: Term): Term {

@@ -13,12 +13,12 @@ import org.jetbrains.research.kthelper.assert.unreachable
 import org.jetbrains.research.kthelper.logging.debug
 import org.jetbrains.research.kthelper.logging.log
 
-private val maxGenerationDepth by lazy { kexConfig.getIntValue("apiGeneration", "maxGenerationDepth", 100) }
-private val maxSearchDepth by lazy { kexConfig.getIntValue("apiGeneration", "maxSearchDepth", 10000) }
-
 class SearchLimitExceededException(val descriptor: Descriptor, msg: String) : KtException(msg)
 
 class CallStackGenerator(override val context: GeneratorContext) : Generator {
+    private val maxGenerationDepth by lazy { kexConfig.getIntValue("apiGeneration", "maxGenerationDepth", 100) }
+    private val maxSearchDepth by lazy { kexConfig.getIntValue("apiGeneration", "maxSearchDepth", 10000) }
+
     private val typeGenerators = mutableSetOf<Generator>()
     private var searchDepth = 0
 

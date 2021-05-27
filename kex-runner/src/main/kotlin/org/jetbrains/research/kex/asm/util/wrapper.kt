@@ -1,6 +1,5 @@
 package org.jetbrains.research.kex.asm.util
 
-import org.jetbrains.research.kthelper.collection.buildList
 import org.jetbrains.research.kfg.ClassManager
 import org.jetbrains.research.kfg.ir.Field
 import org.jetbrains.research.kfg.ir.MethodDesc
@@ -9,6 +8,7 @@ import org.jetbrains.research.kfg.ir.value.instruction.CallOpcode
 import org.jetbrains.research.kfg.ir.value.instruction.Instruction
 import org.jetbrains.research.kfg.ir.value.instruction.InstructionFactory
 import org.jetbrains.research.kfg.type.*
+import org.jetbrains.research.kthelper.collection.buildList
 
 interface Wrapper {
     val cm: ClassManager
@@ -59,15 +59,15 @@ abstract class PrintStreamWrapper(final override val cm: ClassManager) : Wrapper
 }
 
 class StringBuilderWrapper(override val cm: ClassManager, val name: String) : Wrapper {
-    val `class` = cm["java/lang/StringBuilder"]
-    private val stringBuilderType = types.getRefType(`class`)
+    val klass = cm["java/lang/StringBuilder"]
+    private val stringBuilderType = types.getRefType(klass)
     private val builder = instructions.getNew(name, stringBuilderType)
     val insns = arrayListOf(builder)
 
     init {
         val desc = MethodDesc(arrayOf(), types.voidType)
-        val initMethod = `class`.getMethod("<init>", desc)
-        val init = instructions.getCall(CallOpcode.Special(), initMethod, `class`, builder, arrayOf(), false)
+        val initMethod = klass.getMethod("<init>", desc)
+        val init = instructions.getCall(CallOpcode.Special(), initMethod, klass, builder, arrayOf(), false)
         insns.add(init)
     }
 
@@ -86,16 +86,16 @@ class StringBuilderWrapper(override val cm: ClassManager, val name: String) : Wr
                 else -> types.objectType
             }
             val desc = MethodDesc(arrayOf(appendArg), stringBuilderType)
-            val appendMethod = `class`.getMethod("append", desc)
-            val append = instructions.getCall(CallOpcode.Virtual(), appendMethod, `class`, builder, arrayOf(value), false)
+            val appendMethod = klass.getMethod("append", desc)
+            val append = instructions.getCall(CallOpcode.Virtual(), appendMethod, klass, builder, arrayOf(value), false)
             insns.add(append)
         }
     }
 
     fun toStringWrapper(): Instruction {
         val desc = MethodDesc(arrayOf(), types.stringType)
-        val toStringMethod = `class`.getMethod("toString", desc)
-        val string = instructions.getCall(CallOpcode.Virtual(), "${name}Str", toStringMethod, `class`, builder, arrayOf())
+        val toStringMethod = klass.getMethod("toString", desc)
+        val string = instructions.getCall(CallOpcode.Virtual(), "${name}Str", toStringMethod, klass, builder, arrayOf())
         insns.add(string)
         return string
     }
@@ -116,8 +116,8 @@ abstract class SystemOutputWrapper(cm: ClassManager, name: String, streamType: S
         get() = super.instructions
 
     private val printStream = cm["java/io/PrintStream"]
-    val `class` = cm["java/lang/System"]
-    val field = `class`.getField(streamType.name, types.getRefType(printStream))
+    val klass = cm["java/lang/System"]
+    val field = klass.getField(streamType.name, types.getRefType(printStream))
     override val stream = instructions.getFieldLoad(name, field)
 
     override fun open(): List<Instruction> {
@@ -135,13 +135,13 @@ class ReflectionWrapper(override val cm: ClassManager) : Wrapper {
     fun getClass(value: Value): Instruction {
         val type = types.objectType as ClassType
         val desc = MethodDesc(arrayOf(), types.getRefType(classClass))
-        val getClassMethod = type.`class`.getMethod("loadClass", desc)
-        return instructions.getCall(CallOpcode.Virtual(), "klass", getClassMethod, type.`class`, value, arrayOf())
+        val getClassMethod = type.klass.getMethod("loadClass", desc)
+        return instructions.getCall(CallOpcode.Virtual(), "klass", getClassMethod, type.klass, value, arrayOf())
     }
 
-    fun getDeclaredField(`class`: Value, name: String): Instruction {
+    fun getDeclaredField(klass: Value, name: String): Instruction {
         val getFieldMethod = classClass.getMethod("getDeclaredField", MethodDesc(arrayOf(types.stringType), types.getRefType(fieldClass)))
-        return instructions.getCall(CallOpcode.Virtual(), name, getFieldMethod, classClass, `class`, arrayOf(values.getStringConstant(name)))
+        return instructions.getCall(CallOpcode.Virtual(), name, getFieldMethod, classClass, klass, arrayOf(values.getStringConstant(name)))
     }
 
     fun setAccessible(field: Value): Instruction {
@@ -167,9 +167,9 @@ class ValuePrinter(override val cm: ClassManager) : Wrapper {
         return result
     }
 
-    private fun printField(owner: Value, `class`: Value, field: Field): Instruction {
+    private fun printField(owner: Value, klass: Value, field: Field): Instruction {
         val sb = StringBuilderWrapper(cm, "sb")
-        val fld = reflection.getDeclaredField(`class`, field.name)
+        val fld = reflection.getDeclaredField(klass, field.name)
         insns.add(fld)
         val setAccessible = reflection.setAccessible(fld)
         insns.add(setAccessible)
@@ -187,7 +187,7 @@ class ValuePrinter(override val cm: ClassManager) : Wrapper {
 
     private fun printClass(value: Value, type: ClassType): Instruction {
         val sb = StringBuilderWrapper(cm, "sb")
-        sb.append(type.`class`.canonicalDesc)
+        sb.append(type.klass.canonicalDesc)
         sb.append("@")
         val hash = getIdentityHashCode(value)
         sb.append(print(hash))

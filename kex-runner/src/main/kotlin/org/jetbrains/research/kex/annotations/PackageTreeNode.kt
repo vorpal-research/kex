@@ -1,7 +1,9 @@
 package org.jetbrains.research.kex.annotations
 
-internal class PackageTreeNode(val name: String,
-                               private val parentPrivate: PackageTreeNode?) {
+internal class PackageTreeNode(
+    val name: String,
+    private val parentPrivate: PackageTreeNode?
+) {
     val isRoot get() = parentPrivate == null
     val parent get() = parentPrivate!!
 

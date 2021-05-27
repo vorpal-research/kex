@@ -70,16 +70,16 @@ open class MethodChecker(
         }
         val errorDump = Files.createTempFile(failDirPath, "ps-", ".json").toFile()
         log.error("Failing saved to file ${errorDump.path}")
-        errorDump.writeText(KexSerializer(cm).toJson(Failure(method.`class`, method, message, state)))
+        errorDump.writeText(KexSerializer(cm).toJson(Failure(method.klass, method, message, state)))
     }.getOrNull()
 
     override fun cleanup() {}
 
-    open protected fun initializeGenerator(method: Method) {
+    protected open fun initializeGenerator(method: Method) {
         generator = ReflectionReanimator(ctx, psa)
     }
 
-    open protected fun getSearchStrategy(method: Method): SearchStrategy = DfsStrategy(method)
+    protected open fun getSearchStrategy(method: Method): SearchStrategy = DfsStrategy(method)
 
     @ExperimentalSerializationApi
     @InternalSerializationApi
@@ -140,7 +140,7 @@ open class MethodChecker(
     }
 
     protected open fun coverBlock(method: Method, block: BasicBlock): Result {
-        val checker = Checker(method, loader, psa)
+        val checker = Checker(method, ctx, psa)
         val ps = checker.createState(block.terminator)
                 ?: return Result.UnknownResult("Could not create a predicate state for instruction")
 

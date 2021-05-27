@@ -1,10 +1,10 @@
 package org.jetbrains.research.kex.ktype
 
-import org.jetbrains.research.kthelper.defaultHashCode
 import kotlinx.serialization.Serializable
 import org.jetbrains.research.kex.InheritorOf
 import org.jetbrains.research.kfg.type.Type
 import org.jetbrains.research.kfg.type.TypeFactory
+import org.jetbrains.research.kthelper.defaultHashCode
 
 @InheritorOf("KexType")
 @Serializable
@@ -15,7 +15,7 @@ sealed class KexPointer : KexType() {
         const val defaultMemspace = 0
     }
 
-    override val bitsize: Int
+    override val bitSize: Int
         get() = WORD
 
     abstract fun withMemspace(memspace: Int): KexPointer

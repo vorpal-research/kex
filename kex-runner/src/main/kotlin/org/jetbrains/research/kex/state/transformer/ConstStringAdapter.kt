@@ -1,6 +1,5 @@
 package org.jetbrains.research.kex.state.transformer
 
-import org.jetbrains.research.kthelper.collection.dequeOf
 import org.jetbrains.research.kex.ktype.KexArray
 import org.jetbrains.research.kex.ktype.KexChar
 import org.jetbrains.research.kex.ktype.KexClass
@@ -9,10 +8,11 @@ import org.jetbrains.research.kex.state.PredicateState
 import org.jetbrains.research.kex.state.StateBuilder
 import org.jetbrains.research.kex.state.predicate.*
 import org.jetbrains.research.kex.state.term.*
+import org.jetbrains.research.kthelper.collection.dequeOf
 
 class ConstStringAdapter : RecollectingTransformer<ConstStringAdapter> {
     override val builders = dequeOf(StateBuilder())
-    val strings = mutableMapOf<String, Term>()
+    private val strings = mutableMapOf<String, Term>()
 
     override fun apply(ps: PredicateState): PredicateState {
         val strings = collectStringTerms(ps)
@@ -37,7 +37,8 @@ class ConstStringAdapter : RecollectingTransformer<ConstStringAdapter> {
         strings[string] = strTerm
     }.apply()
 
-    private fun replaceString(constStringTerm: ConstStringTerm) = strings.getOrDefault(constStringTerm.value, constStringTerm)
+    private fun replaceString(constStringTerm: ConstStringTerm) =
+        strings.getOrDefault(constStringTerm.value, constStringTerm)
 
     private val Term.map
         get() = when (this) {
@@ -46,15 +47,18 @@ class ConstStringAdapter : RecollectingTransformer<ConstStringAdapter> {
         }
 
     override fun transformArrayInitializerPredicate(predicate: ArrayInitializerPredicate): Predicate =
-            predicate(predicate.type, predicate.location) { predicate.arrayRef.initialize(predicate.value.map) }
+        predicate(predicate.type, predicate.location) { predicate.arrayRef.initialize(predicate.value.map) }
 
 
     override fun transformArrayStorePredicate(predicate: ArrayStorePredicate): Predicate =
-            predicate(predicate.type, predicate.location) { predicate.arrayRef.store(predicate.value.map) }
+        predicate(predicate.type, predicate.location) { predicate.arrayRef.store(predicate.value.map) }
 
     override fun transformCallPredicate(predicate: CallPredicate): Predicate {
         return when {
-            predicate.hasLhv -> predicate(predicate.type, predicate.location) { predicate.lhv.map.call(predicate.callTerm) }
+            predicate.hasLhv -> predicate(
+                predicate.type,
+                predicate.location
+            ) { predicate.lhv.map.call(predicate.callTerm) }
             else -> predicate(predicate.type, predicate.location) { call(predicate.callTerm) }
         }
     }
@@ -66,11 +70,11 @@ class ConstStringAdapter : RecollectingTransformer<ConstStringAdapter> {
     }
 
     override fun transformFieldInitializerPredicate(predicate: FieldInitializerPredicate): Predicate =
-            predicate(predicate.type, predicate.location) { predicate.field.initialize(predicate.value.map) }
+        predicate(predicate.type, predicate.location) { predicate.field.initialize(predicate.value.map) }
 
 
     override fun transformFieldStorePredicate(predicate: FieldStorePredicate): Predicate =
-            predicate(predicate.type, predicate.location) { predicate.field.store(predicate.value.map) }
+        predicate(predicate.type, predicate.location) { predicate.field.store(predicate.value.map) }
 
     override fun transformInequalityPredicate(predicate: InequalityPredicate): Predicate {
         val newLhv = predicate.lhv.map
@@ -79,7 +83,7 @@ class ConstStringAdapter : RecollectingTransformer<ConstStringAdapter> {
     }
 
     override fun transformBinaryTerm(term: BinaryTerm): Term =
-            term { term.lhv.map.apply(term.type, term.opcode, term.rhv.map) }
+        term { term.lhv.map.apply(term.type, term.opcode, term.rhv.map) }
 
     override fun transformCallTerm(term: CallTerm): Term {
         val args = term.arguments.map { it.map }
@@ -90,7 +94,7 @@ class ConstStringAdapter : RecollectingTransformer<ConstStringAdapter> {
     override fun transformCastTerm(term: CastTerm): Term = term { term.operand.map `as` term.type }
 
     override fun transformCmpTerm(term: CmpTerm): Term =
-            term { term.lhv.map.apply(term.opcode, term.rhv.map) }
+        term { term.lhv.map.apply(term.opcode, term.rhv.map) }
 
     override fun transformFieldTerm(term: FieldTerm): Term {
         val owner = term.owner.map

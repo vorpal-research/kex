@@ -1,7 +1,5 @@
 package org.jetbrains.research.kex.trace.file
 
-import org.jetbrains.research.kthelper.assert.unreachable
-import org.jetbrains.research.kthelper.logging.log
 import com.github.h0tk3y.betterParse.combinators.*
 import com.github.h0tk3y.betterParse.grammar.Grammar
 import com.github.h0tk3y.betterParse.grammar.parser
@@ -11,6 +9,8 @@ import org.jetbrains.research.kfg.ir.MethodDesc
 import org.jetbrains.research.kfg.ir.value.SlotTracker
 import org.jetbrains.research.kfg.type.ClassType
 import org.jetbrains.research.kfg.type.parseStringToType
+import org.jetbrains.research.kthelper.assert.unreachable
+import org.jetbrains.research.kthelper.logging.log
 import java.util.*
 
 abstract class ActionParseException(msg: String) : Exception(msg)
@@ -78,6 +78,7 @@ class ActionParser(val cm: ClassManager) : Grammar<Action>() {
     private val num by token("\\d+")
     private val word by token("[a-zA-Z$][\\w$-]*")
     private val at by token("@")
+
     @Suppress("RegExpRedundantEscape")
     private val string by token("\"[\\w\\sа-яА-ЯёЁ\\-.@>=<+*,'\\(\\):\\[\\]/\\n{}]*\"")
 
@@ -119,11 +120,11 @@ class ActionParser(val cm: ClassManager) : Grammar<Action>() {
             -openBracket and args and -closeBracket and
             -colonAndSpace and
             typeName) use {
-        val `class` = cm[t1.dropLast(1).fold("") { acc, curr -> "$acc/$curr" }.drop(1)]
+        val klass = cm[t1.dropLast(1).fold("") { acc, curr -> "$acc/$curr" }.drop(1)]
         val methodName = t1.takeLast(1).firstOrNull() ?: throw UnknownNameException(t1.toString())
         val args = t2.toTypedArray()
         val rettype = t3
-        `class`.getMethod(methodName, MethodDesc(args, rettype))
+        klass.getMethod(methodName, MethodDesc(args, rettype))
     }
 
     private val kfgValueParser by valueName use { KfgValue(this) }
@@ -142,13 +143,15 @@ class ActionParser(val cm: ClassManager) : Grammar<Action>() {
             and num and -closeCurlyBrace) use {
         ArrayValue(t1.text.toInt(), t2, t3.text.toInt())
     }
-    private val objectFields by separatedTerms(anyWord and -space and -equality and -space
-            and parser(this::valueParser), commaAndSpace, true) use {
-        map { it.t1 to it.t2 }.toMap()
+    private val objectFields by separatedTerms(
+        anyWord and -space and -equality and -space
+                and parser(this::valueParser), commaAndSpace, true
+    ) use {
+        associate { it.t1 to it.t2 }
     }
     private val objectValueParser: Parser<ActionValue> by (typeName and -at and num and -openCurlyBrace
             and objectFields and -closeCurlyBrace) use {
-        val type = (t1 as? ClassType)?.`class` ?: throw UnknownTypeException(t1.toString())
+        val type = (t1 as? ClassType)?.klass ?: throw UnknownTypeException(t1.toString())
         val identifier = t2.text.toInt()
         val fields = t3
         ObjectValue(type, identifier, fields)
@@ -163,7 +166,12 @@ class ActionParser(val cm: ClassManager) : Grammar<Action>() {
             arrayValueParser or
             objectValueParser
 
-    private val equationParser by (valueParser and -space and -equality and -space and valueParser) use { Equation(t1, t2) }
+    private val equationParser by (valueParser and -space and -equality and -space and valueParser) use {
+        Equation(
+            t1,
+            t2
+        )
+    }
     private val equationList by separatedTerms(equationParser, commaAndSpace)
 
     // action
@@ -198,7 +206,12 @@ class ActionParser(val cm: ClassManager) : Grammar<Action>() {
     private val blockBranchParser by (-branch and -space and blockName and -commaAndSpace
             and equationList) use { BlockBranch(t1, t2) }
 
-    private val blockSwitchParser by (-switch and -space and blockName and -commaAndSpace and equationParser) use { BlockSwitch(t1, t2) }
+    private val blockSwitchParser by (-switch and -space and blockName and -commaAndSpace and equationParser) use {
+        BlockSwitch(
+            t1,
+            t2
+        )
+    }
 
     private val blockTableSwitchParser by (-tableswitch and -space and blockName and -commaAndSpace
             and equationParser) use { BlockTableSwitch(t1, t2) }

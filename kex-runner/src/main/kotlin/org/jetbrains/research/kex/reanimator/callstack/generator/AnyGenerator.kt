@@ -14,10 +14,11 @@ import org.jetbrains.research.kfg.ir.Method
 import org.jetbrains.research.kthelper.collection.queueOf
 import org.jetbrains.research.kthelper.logging.log
 
-private val maxStackSize by lazy { kexConfig.getIntValue("apiGeneration", "maxStackSize", 5) }
-private val maxQuerySize by lazy { kexConfig.getIntValue("apiGeneration", "maxQuerySize", 1000) }
-
 open class AnyGenerator(private val fallback: Generator) : Generator {
+    private val maxStackSize by lazy { kexConfig.getIntValue("apiGeneration", "maxStackSize", 5) }
+    private val useSetters by lazy { kexConfig.getBooleanValue("apiGeneration", "useSetters", true) }
+    private val maxQuerySize by lazy { kexConfig.getIntValue("apiGeneration", "maxQuerySize", 1000) }
+
     override val context get() = fallback.context
 
     override fun supports(descriptor: Descriptor) = descriptor is ObjectDescriptor
@@ -127,7 +128,10 @@ open class AnyGenerator(private val fallback: Generator) : Generator {
             return
         }
 
-        val setters = descriptor.generateSetters(generationDepth)
+        val setters = when {
+            useSetters -> descriptor.generateSetters(generationDepth)
+            else -> listOf()
+        }
         val queue = queueOf(GeneratorContext.ExecutionStack(descriptor, setters, 0))
         val cache = mutableSetOf<StackWrapper>()
         while (queue.isNotEmpty()) {
@@ -142,7 +146,7 @@ open class AnyGenerator(private val fallback: Generator) : Generator {
             val (desc, stack, depth) = es
             val current = descriptor.accept(desc)
             current.reduce()
-            if (depth > maxStackSize) continue
+            if (depth >= maxStackSize) continue
             log.debug("Depth $generationDepth, stack depth $depth, query size ${queue.size}")
 
 
@@ -150,7 +154,7 @@ open class AnyGenerator(private val fallback: Generator) : Generator {
                 return
             }
 
-            if (depth > maxStackSize - 1) continue
+            if (depth >= maxStackSize - 1) continue
 
             for (execStack in applyMethods(klass, current, stack, depth, generationDepth)) {
                 queue += execStack

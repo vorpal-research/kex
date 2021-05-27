@@ -24,11 +24,15 @@ val Method.validName get() = name.replace(Regex("[^a-zA-Z0-9]"), "")
 val BasicBlock.validName get() = name.toString().replace(Regex("[^a-zA-Z0-9]"), "")
 
 
-val Method.packageName get() = `class`.`package`.name
-val Method.klassName get() = "${`class`.validName}_${validName}_${abs(hashCode())}"
+val Method.packageName get() = klass.pkg.name
+val Method.klassName get() = "${klass.validName}_${validName}_${abs(hashCode())}"
 
 class TestCasePrinter(val ctx: ExecutionContext, val packageName: String, val klassName: String) {
-    private val printer: CallStackPrinter
+    private val printer: CallStackPrinter = when (testCaseLanguage) {
+        "kotlin" -> CallStack2KotlinPrinter(ctx, packageName.replace("/", "."), klassName)
+        "java" -> CallStack2JavaPrinter(ctx, packageName.replace("/", "."), klassName)
+        else -> unreachable { log.error("Unknown target language for test case generation: $testCaseLanguage") }
+    }
     private var isEmpty = true
 
     private val String.validName get() = this.replace(Regex("[^a-zA-Z0-9]"), "")
@@ -41,14 +45,6 @@ class TestCasePrinter(val ctx: ExecutionContext, val packageName: String, val kl
         }
         Paths.get(testCaseDirectory, packageName, targetFileName).toAbsolutePath().toFile().apply {
             parentFile?.mkdirs()
-        }
-    }
-
-    init {
-        printer = when (testCaseLanguage) {
-            "kotlin" -> CallStack2KotlinPrinter(ctx, packageName.replace("/", "."), klassName)
-            "java" -> CallStack2JavaPrinter(ctx, packageName.replace("/", "."), klassName)
-            else -> unreachable { log.error("Unknown target language for test case generation: $testCaseLanguage") }
         }
     }
 

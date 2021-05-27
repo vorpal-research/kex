@@ -1,9 +1,9 @@
 package org.jetbrains.research.kex.smt.z3
 
-import org.jetbrains.research.kthelper.assert.unreachable
-import org.jetbrains.research.kthelper.logging.log
 import com.microsoft.z3.*
 import org.jetbrains.research.kex.smt.SMTEngine
+import org.jetbrains.research.kthelper.assert.unreachable
+import org.jetbrains.research.kthelper.logging.log
 
 object Z3Engine : SMTEngine<Context, Expr, Sort, FuncDecl, Pattern>() {
     private var trueExpr: Expr? = null
@@ -60,9 +60,9 @@ object Z3Engine : SMTEngine<Context, Expr, Sort, FuncDecl, Pattern>() {
     override fun isFloatSort(ctx: Context, sort: Sort): Boolean = sort is FPSort && sort == ctx.mkFPSort32()
     override fun isDoubleSort(ctx: Context, sort: Sort): Boolean = sort is FPSort && sort == ctx.mkFPSort64()
 
-    override fun bvBitsize(ctx: Context, sort: Sort): Int = (sort as BitVecSort).size
-    override fun floatEBitsize(ctx: Context, sort: Sort): Int = (sort as FPSort).eBits
-    override fun floatSBitsize(ctx: Context, sort: Sort): Int = (sort as FPSort).sBits
+    override fun bvBitSize(ctx: Context, sort: Sort): Int = (sort as BitVecSort).size
+    override fun floatEBitSize(ctx: Context, sort: Sort): Int = (sort as FPSort).eBits
+    override fun floatSBitSize(ctx: Context, sort: Sort): Int = (sort as FPSort).sBits
 
     override fun bool2bv(ctx: Context, expr: Expr, sort: Sort): Expr =
             ite(ctx, expr, makeNumericConst(ctx, sort, 1), makeNumericConst(ctx, sort, 0))
@@ -86,7 +86,7 @@ object Z3Engine : SMTEngine<Context, Expr, Sort, FuncDecl, Pattern>() {
     override fun float2bv(ctx: Context, expr: Expr, sort: Sort): Expr =
             ctx.mkFPToBV(ctx.mkFPRTZ(), expr as FPExpr, (sort as BitVecSort).size, true)
 
-    override fun IEEEbv2float(ctx: Context, expr: Expr, sort: Sort): Expr =
+    override fun bvIEEE2float(ctx: Context, expr: Expr, sort: Sort): Expr =
             ctx.mkFPToFP(expr as BitVecExpr, sort as FPSort)
 
     override fun float2IEEEbv(ctx: Context, expr: Expr, sort: Sort): Expr =
@@ -270,13 +270,13 @@ object Z3Engine : SMTEngine<Context, Expr, Sort, FuncDecl, Pattern>() {
     }
 
     override fun sext(ctx: Context, n: Int, expr: Expr): Expr {
-        val exprBitsize = bvBitsize(ctx, getSort(ctx, expr))
-        return if (exprBitsize < n) ctx.mkSignExt(n - exprBitsize, expr as BitVecExpr) else expr
+        val exprBitSize = bvBitSize(ctx, getSort(ctx, expr))
+        return if (exprBitSize < n) ctx.mkSignExt(n - exprBitSize, expr as BitVecExpr) else expr
     }
 
     override fun zext(ctx: Context, n: Int, expr: Expr): Expr {
-        val exprBitsize = bvBitsize(ctx, getSort(ctx, expr))
-        return if (exprBitsize < n) ctx.mkZeroExt(n - exprBitsize, expr as BitVecExpr) else expr
+        val exprBitSize = bvBitSize(ctx, getSort(ctx, expr))
+        return if (exprBitSize < n) ctx.mkZeroExt(n - exprBitSize, expr as BitVecExpr) else expr
     }
 
     override fun load(ctx: Context, array: Expr, index: Expr): Expr = ctx.mkSelect(array as ArrayExpr, index)

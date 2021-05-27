@@ -10,7 +10,7 @@ import org.jetbrains.research.kex.state.transformer.Transformer
 class NullTerm : Term() {
     override val name = "null"
     override val type = KexNull()
-    override val subterms by lazy { listOf<Term>() }
+    override val subTerms by lazy { listOf<Term>() }
 
     override fun <T: Transformer<T>> accept(t: Transformer<T>) = this
 }

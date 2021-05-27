@@ -1,20 +1,20 @@
 package org.jetbrains.research.kex.ktype
 
-import org.jetbrains.research.kthelper.assert.ktassert
-import org.jetbrains.research.kthelper.assert.unreachable
-import org.jetbrains.research.kthelper.defaultHashCode
-import org.jetbrains.research.kthelper.logging.log
 import kotlinx.serialization.Serializable
 import org.jetbrains.research.kex.BaseType
 import org.jetbrains.research.kex.InheritanceInfo
 import org.jetbrains.research.kex.InheritorOf
 import org.jetbrains.research.kfg.type.*
+import org.jetbrains.research.kthelper.assert.ktassert
+import org.jetbrains.research.kthelper.assert.unreachable
+import org.jetbrains.research.kthelper.defaultHashCode
+import org.jetbrains.research.kthelper.logging.log
 import kotlin.reflect.KClass
 import org.jetbrains.research.kfg.ir.Class as KfgClass
 
 val Type.kexType get() = KexType.fromType(this)
 val KfgClass.kexType get() = KexType.fromClass(this)
-val KfgClass.type get() = this.cm.type.getRefType(this.fullname)
+val KfgClass.type get() = this.cm.type.getRefType(this.fullName)
 
 fun mergeTypes(tf: TypeFactory, vararg types: KexType): KexType = mergeTypes(tf, types.toList())
 
@@ -28,7 +28,7 @@ fun mergeTypes(tf: TypeFactory, types: Collection<KexType>): KexType {
             val classes = uniqueTypes.map { it as KexClass }.map { tf.getRefType(it.klass) as ClassType }
             for (i in 0..classes.lastIndex) {
                 val isAncestor = classes.fold(true) { acc, `class` ->
-                    acc && classes[i].`class`.isAncestorOf(`class`.`class`)
+                    acc && classes[i].klass.isAncestorOf(`class`.klass)
                 }
 
                 if (isAncestor) {
@@ -38,7 +38,7 @@ fun mergeTypes(tf: TypeFactory, types: Collection<KexType>): KexType {
             result
         }
         uniqueTypes.all { it is KexLong } -> KexLong()
-        uniqueTypes.all { it is KexIntegral } -> uniqueTypes.maxByOrNull { it.bitsize }!!
+        uniqueTypes.all { it is KexIntegral } -> uniqueTypes.maxByOrNull { it.bitSize }!!
         uniqueTypes.all { it is KexFloat } -> KexFloat()
         uniqueTypes.all { it is KexDouble } -> KexDouble()
         else -> unreachable { log.error("Unexpected set of types: $types") }
@@ -59,10 +59,10 @@ abstract class KexType {
                 InheritanceInfo.fromJson(it.bufferedReader().readText())
             }
 
-            inheritanceInfo?.inheritors?.map {
+            inheritanceInfo?.inheritors?.associate {
                 @Suppress("UNCHECKED_CAST")
                 it.name to (loader.loadClass(it.inheritorClass).kotlin as KClass<KexType>)
-            }?.toMap() ?: mapOf()
+            } ?: mapOf()
         }
 
         val reverse = types.map { it.value to it.key }.toMap()
@@ -82,7 +82,7 @@ abstract class KexType {
                 else -> unreachable { log.error("Unknown real type: $type") }
             }
             is Reference -> when (type) {
-                is ClassType -> KexClass(type.`class`.fullname)
+                is ClassType -> KexClass(type.klass.fullName)
                 is ArrayType -> KexArray(fromType(type.component))
                 is NullType -> KexNull()
                 else -> unreachable { log.error("Unknown reference type: $type") }
@@ -91,11 +91,11 @@ abstract class KexType {
             else -> unreachable { log.error("Unknown type: $type") }
         }
 
-        fun fromClass(klass: KfgClass) = KexClass(klass.fullname)
+        fun fromClass(klass: KfgClass) = KexClass(klass.fullName)
     }
 
     abstract val name: String
-    abstract val bitsize: Int
+    abstract val bitSize: Int
 
     abstract fun getKfgType(types: TypeFactory): Type
     fun isSubtypeOf(tf: TypeFactory, other: KexType) = getKfgType(tf).isSubtypeOf(other.getKfgType(tf))
@@ -109,8 +109,8 @@ class KexVoid : KexType() {
     override val name: String
         get() = "void"
 
-    override val bitsize: Int
-        get() = throw IllegalAccessError("Trying to get bitsize of void")
+    override val bitSize: Int
+        get() = throw IllegalAccessError("Trying to get bit size of void")
 
     override fun getKfgType(types: TypeFactory): Type = types.voidType
 

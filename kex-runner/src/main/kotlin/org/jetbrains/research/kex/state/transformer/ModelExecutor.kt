@@ -1,10 +1,6 @@
 package org.jetbrains.research.kex.state.transformer
 
-import org.jetbrains.research.kthelper.assert.unreachable
-import org.jetbrains.research.kthelper.logging.log
-import org.jetbrains.research.kthelper.tryOrNull
 import org.jetbrains.research.kex.ExecutionContext
-import org.jetbrains.research.kex.random.GenerationException
 import org.jetbrains.research.kex.reanimator.Parameters
 import org.jetbrains.research.kex.smt.ModelReanimator
 import org.jetbrains.research.kex.smt.ObjectReanimator
@@ -15,10 +11,12 @@ import org.jetbrains.research.kex.state.predicate.EqualityPredicate
 import org.jetbrains.research.kex.state.predicate.InequalityPredicate
 import org.jetbrains.research.kex.state.predicate.Predicate
 import org.jetbrains.research.kex.state.term.ConstIntTerm
-import org.jetbrains.research.kex.state.term.FieldTerm
 import org.jetbrains.research.kex.state.term.Term
 import org.jetbrains.research.kex.util.loadClass
 import org.jetbrains.research.kfg.ir.Method
+import org.jetbrains.research.kthelper.assert.unreachable
+import org.jetbrains.research.kthelper.logging.log
+import org.jetbrains.research.kthelper.tryOrNull
 
 class ModelExecutor(
     override val method: Method,
@@ -71,7 +69,7 @@ fun generateInputByModel(
         null -> reanimated.copy(instance = when {
             method.isStatic -> null
             else -> tryOrNull {
-                val klass = loader.loadClass(method.`class`)
+                val klass = loader.loadClass(method.klass)
                 ctx.random.next(klass)
             }
         })

@@ -28,11 +28,13 @@ private val engine = ${solver}Engine
 class $factory : ${solver}SMTExprFactory() {
     companion object {
 
-        fun getTypeSize(type: KexType) = when (type.bitsize) {
+        fun getTypeSize(type: KexType) = when (type.bitSize) {
             KexType.WORD -> TypeSize.WORD
             KexType.DWORD -> TypeSize.DWORD
-            else -> unreachable { log.error("Unknown type bitsize ${type.bitsize}") }
+            else -> unreachable { log.error("Unknown type bit size ${type.bitSize}") }
         }
+
+        fun getByteSize(ctx: $context) = ${valexpr}.getStaticBitSize< Word_ >(ctx)
     }
 
     val ctx = $context()
@@ -65,7 +67,7 @@ class $factory : ${solver}SMTExprFactory() {
 #generateMakes("Short", "Int")
     fun makeShortConst(value: Short) = makeShortConst(value.toInt())
 #generateMakes("Char", "Int")
-    fun makeCharConst(value: Char) = makeCharConst(value.toInt())
+    fun makeCharConst(value: Char) = makeCharConst(value.code)
 
 #generateMakes("Int", "Int")
 

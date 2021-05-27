@@ -16,13 +16,13 @@ class $self< in Index : $Bitvector, Element : $Bitvector >(val inner: $Array< El
         }
 
         inline fun < reified Index : $Bitvector, reified Element : $Bitvector > makeDefault(ctx: $context, name: String, default: Element) =
-            $self< Index, Element >(${Array}.makeDefault< Element, Index >(ctx, name, default), bvStaticBitsize< Element >(ctx))
+            $self< Index, Element >(${Array}.makeDefault< Element, Index >(ctx, name, default), bvStaticBitSize< Element >(ctx))
 
         inline fun < reified Index : $Bitvector, reified Element : $Bitvector > makeFree(ctx: $context, name: String) =
-            $self< Index, Element >(${Array}.makeFree< Element, Index >(ctx, name), bvStaticBitsize< Element >(ctx))
+            $self< Index, Element >(${Array}.makeFree< Element, Index >(ctx, name), bvStaticBitSize< Element >(ctx))
 
         inline fun < reified Index : $Bitvector, reified Element : $Bitvector > makeVar(ctx: $context, name: String) =
-            $self< Index, Element >(${Array}.makeVar< Element, Index >(ctx, name), bvStaticBitsize< Element >(ctx))
+            $self< Index, Element >(${Array}.makeVar< Element, Index >(ctx, name), bvStaticBitSize< Element >(ctx))
     }
 
     val ctx = inner.ctx
@@ -40,10 +40,10 @@ class $self< in Index : $Bitvector, Element : $Bitvector >(val inner: $Array< El
         return $Bitvector(ctx, expr, axiom)
     }
     inline fun < reified T : $valexpr > load(index: Index) =
-        ${valexpr}.forceCast< T >(load(index, ${valexpr}.getStaticBitsize< T >(ctx)))
+        ${valexpr}.forceCast< T >(load(index, ${valexpr}.getStaticBitSize< T >(ctx)))
 
     fun store(index: Index, element: $Bitvector): $self< Index, Element > {
-        val elementSize = element.getBitsize()
+        val elementSize = element.getBitSize()
         var start = 0
         var shift = 0
         val cases = arrayListOf< Pair< Index, Element >>()
