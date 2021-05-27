@@ -2,7 +2,6 @@ package org.jetbrains.research.kex
 
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.InternalSerializationApi
-import org.jetbrains.research.kex.asm.analysis.concolic.ConcolicChecker
 import org.jetbrains.research.kex.asm.analysis.defect.DefectChecker
 import org.jetbrains.research.kex.asm.analysis.defect.DefectManager
 import org.jetbrains.research.kex.asm.analysis.testgen.DescriptorChecker
@@ -11,10 +10,7 @@ import org.jetbrains.research.kex.asm.analysis.testgen.MethodChecker
 import org.jetbrains.research.kex.asm.analysis.testgen.RandomChecker
 import org.jetbrains.research.kex.asm.manager.CoverageCounter
 import org.jetbrains.research.kex.asm.state.PredicateStateAnalysis
-import org.jetbrains.research.kex.asm.transform.BranchAdapter
-import org.jetbrains.research.kex.asm.transform.LoopDeroller
-import org.jetbrains.research.kex.asm.transform.RuntimeTraceCollector
-import org.jetbrains.research.kex.asm.transform.SystemExitTransformer
+import org.jetbrains.research.kex.asm.transform.*
 import org.jetbrains.research.kex.asm.util.ClassWriter
 import org.jetbrains.research.kex.asm.util.Visibility
 import org.jetbrains.research.kex.config.CmdConfig
@@ -184,13 +180,6 @@ class Kex(args: Array<String>) {
         val originalContext = ExecutionContext(origManager, containerClassLoader, EasyRandomDriver())
         val analysisContext = ExecutionContext(classManager, classLoader, EasyRandomDriver())
 
-        // instrument all classes in the target package
-        runPipeline(originalContext, `package`) {
-            +SystemExitTransformer(originalContext.cm)
-            +RuntimeTraceCollector(originalContext.cm)
-            +ClassWriter(originalContext, outputDir)
-        }
-
         when (cmd.getEnumValue("mode", Mode.Symbolic, ignoreCase = true)) {
             Mode.Symbolic -> symbolic(originalContext, analysisContext)
             Mode.Reanimator -> reanimator(analysisContext)
@@ -221,6 +210,13 @@ class Kex(args: Array<String>) {
     }
 
     private fun symbolic(originalContext: ExecutionContext, analysisContext: ExecutionContext) {
+        // instrument all classes in the target package
+        runPipeline(originalContext, `package`) {
+            +SystemExitTransformer(originalContext.cm)
+            +RuntimeTraceCollector(originalContext.cm)
+            +ClassWriter(originalContext, outputDir)
+        }
+
         val traceManager = ObjectTraceManager()
         val psa = PredicateStateAnalysis(analysisContext.cm)
         val cm = createCoverageCounter(originalContext.cm, traceManager)
@@ -294,20 +290,11 @@ class Kex(args: Array<String>) {
     }
 
     private fun concolic(originalContext: ExecutionContext, analysisContext: ExecutionContext) {
-        val traceManager = ObjectTraceManager()
-        val psa = PredicateStateAnalysis(analysisContext.cm)
-        val cm = CoverageCounter(originalContext.cm, traceManager)
-
-        runPipeline(analysisContext) {
-            +ConcolicChecker(analysisContext, psa, traceManager)
-            +cm
+        runPipeline(originalContext, `package`) {
+            +SystemExitTransformer(originalContext.cm)
+            +SymbolicTraceCollector(originalContext)
+            +ClassWriter(originalContext, outputDir)
         }
-
-        val coverage = cm.totalCoverage
-        log.info("Overall summary for ${cm.methodInfos.size} methods:\n" +
-                "body coverage: ${String.format("%.2f", coverage.bodyCoverage)}%\n" +
-                "full coverage: ${String.format("%.2f", coverage.fullCoverage)}%")
-        DescriptorStatistics.printStatistics()
     }
 
     private fun <T> createCoverageCounter(cm: ClassManager, tm: TraceManager<T>) = when {
