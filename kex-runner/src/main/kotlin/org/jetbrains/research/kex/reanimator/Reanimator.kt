@@ -23,7 +23,7 @@ import org.jetbrains.research.kfg.ir.Class
 import org.jetbrains.research.kfg.ir.Method
 import org.jetbrains.research.kthelper.`try`
 import org.jetbrains.research.kthelper.logging.log
-import org.jetbrains.research.kthelper.time.timed
+import kotlin.system.measureTimeMillis
 
 class NoConcreteInstanceException(val klass: Class) : Exception()
 
@@ -85,7 +85,7 @@ class Reanimator(
     val Descriptor.callStack: CallStack
         get() = `try` {
             lateinit var cs: CallStack
-            val time = timed { cs = csGenerator.generateDescriptor(this) }
+            val time = measureTimeMillis { cs = csGenerator.generateDescriptor(this) }
             DescriptorStatistics.addDescriptor(this, cs, time)
             cs
         }.getOrThrow {

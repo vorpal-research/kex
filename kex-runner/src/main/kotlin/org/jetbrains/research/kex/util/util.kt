@@ -1,9 +1,9 @@
 package org.jetbrains.research.kex.util
 
-import org.jetbrains.research.kthelper.assert.unreachable
-import org.jetbrains.research.kthelper.logging.log
 import org.jetbrains.research.kex.config.kexConfig
 import org.jetbrains.research.kfg.ir.Method
+import org.jetbrains.research.kthelper.assert.unreachable
+import org.jetbrains.research.kthelper.logging.log
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 

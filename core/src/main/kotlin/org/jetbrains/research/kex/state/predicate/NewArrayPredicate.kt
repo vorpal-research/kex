@@ -12,29 +12,24 @@ import org.jetbrains.research.kfg.ir.Location
 @InheritorOf("Predicate")
 @Serializable
 class NewArrayPredicate(
-        val lhv: Term,
-        val dimentions: List<Term>,
-        val elementType: KexType,
-        @Required override val type: PredicateType = PredicateType.State(),
-        @Required @Contextual override val location: Location = Location()) : Predicate() {
-    override val operands by lazy { listOf(lhv) + dimentions }
+    val lhv: Term,
+    val dimensions: List<Term>,
+    val elementType: KexType,
+    @Required override val type: PredicateType = PredicateType.State(),
+    @Required @Contextual override val location: Location = Location()) : Predicate() {
+    override val operands by lazy { listOf(lhv) + dimensions }
 
-    val numDimentions: Int
-        get() = dimentions.size
+    val numDimensions: Int
+        get() = dimensions.size
 
-    override fun print(): String {
-        val sb = StringBuilder()
-        sb.append("$lhv = new $elementType")
-        dimentions.forEach { sb.append("[$it]") }
-        return sb.toString()
-    }
+    override fun print() = "$lhv = new $elementType${dimensions.joinToString { "[$it]" }}"
 
     override fun <T : Transformer<T>> accept(t: Transformer<T>): Predicate {
-        val tlhv = t.transform(lhv)
-        val tdimentions = dimentions.map { t.transform(it) }
+        val tLhv = t.transform(lhv)
+        val tDimensions = dimensions.map { t.transform(it) }
         return when {
-            tlhv == lhv && tdimentions == dimentions -> this
-            else -> predicate(type, location) { tlhv.new(tdimentions) }
+            tLhv == lhv && tDimensions == dimensions -> this
+            else -> predicate(type, location) { tLhv.new(tDimensions) }
         }
     }
 }

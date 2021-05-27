@@ -12,7 +12,6 @@
     <artifactId>kex-z3</artifactId>
 
     <properties>
-        <klaxon.version>3.0.6</klaxon.version>
         <z3.version>4.8.6</z3.version>
     </properties>
 

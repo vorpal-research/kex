@@ -52,8 +52,8 @@ class ${solver}Converter(val tf: TypeFactory) : ${solver}SMTConverter() {
             }
             is KexChar -> {
                 resultExpr = resultExpr
-                        .withAxiom(expr ge ef.makeIntConst(Char.MIN_VALUE.toInt()))
-                        .withAxiom(expr le ef.makeIntConst(Char.MAX_VALUE.toInt()))
+                        .withAxiom(expr ge ef.makeIntConst(Char.MIN_VALUE.code))
+                        .withAxiom(expr le ef.makeIntConst(Char.MAX_VALUE.code))
             }
             is KexShort -> {
                 resultExpr = resultExpr
@@ -202,10 +202,10 @@ class ${solver}Converter(val tf: TypeFactory) : ${solver}SMTConverter() {
         val memspace = newarray.lhv.memspace
         val lhv = convert(newarray.lhv, ef, ctx) as? Ptr_ ?: unreachable { log.error("Non-ptr term in `new`") }
         val elementSize = ${factory}.getTypeSize(newarray.elementType)
-        val totalSize = newarray.dimentions.fold(1) { acc: Int, term: Term ->
+        val totalSize = newarray.dimensions.fold(1) { acc: Int, term: Term ->
             acc * ((term as? ConstIntTerm)?.value ?: defaultAllocSize)
         }
-        val actualLength = Int_.forceCast(convert(newarray.dimentions.fold(term { const(1) }) { acc: Term, term: Term -> term { acc * term} }, ef, ctx))
+        val actualLength = Int_.forceCast(convert(newarray.dimensions.fold(term { const(1) }) { acc: Term, term: Term -> term { acc * term} }, ef, ctx))
         val ptr = ctx.getLocalArray(memspace, totalSize, actualLength, elementSize)
 
         val typeVar = ef.getTypeVariable(tf, newarray.lhv.type)
@@ -323,7 +323,7 @@ class ${solver}Converter(val tf: TypeFactory) : ${solver}SMTConverter() {
 
     fun convert(const: ConstBoolTerm, ef: $factory, ctx: ${solver}Context): Dynamic_ = ef.makeBoolConst(const.value)
     fun convert(const: ConstByteTerm, ef: $factory, ctx: ${solver}Context): Dynamic_ = ef.makeIntConst(const.value.toInt())
-    fun convert(const: ConstCharTerm, ef: $factory, ctx: ${solver}Context): Dynamic_ = ef.makeIntConst(const.value.toInt())
+    fun convert(const: ConstCharTerm, ef: $factory, ctx: ${solver}Context): Dynamic_ = ef.makeIntConst(const.value.code)
 
     fun convert(const: ConstClassTerm, ef: $factory, ctx: ${solver}Context): Dynamic_ {
         val expr = ef.getVarByTypeAndName(const.type, const.name)

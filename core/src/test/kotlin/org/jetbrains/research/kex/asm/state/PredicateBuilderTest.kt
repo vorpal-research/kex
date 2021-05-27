@@ -145,7 +145,7 @@ class PredicateBuilderTest : KexTest() {
 
                 assertEquals(rhv.isStatic, inst.isStatic)
                 assertEquals(field.owner, when {
-                    inst.isStatic -> tf.getClass(inst.field.`class`)
+                    inst.isStatic -> tf.getClass(inst.field.klass)
                     else -> tf.getValue(inst.owner)
                 })
                 assertEquals(field.fieldName, tf.getString(inst.field.name))
@@ -164,7 +164,7 @@ class PredicateBuilderTest : KexTest() {
 
                 assertEquals(rhv.isStatic, inst.isStatic)
                 assertEquals(rhv.owner, when {
-                    inst.isStatic -> tf.getClass(inst.field.`class`)
+                    inst.isStatic -> tf.getClass(inst.field.klass)
                     else -> tf.getValue(inst.owner)
                 })
                 assertEquals(rhv.fieldName, tf.getString(inst.field.name))
@@ -189,7 +189,7 @@ class PredicateBuilderTest : KexTest() {
                 assertEquals(predicate.lhv, tf.getValue(inst))
 
                 val dimensions = inst.dimensions.map { tf.getValue(it) }
-                assertArrayEquals(predicate.dimentions.toTypedArray(), dimensions.toTypedArray())
+                assertArrayEquals(predicate.dimensions.toTypedArray(), dimensions.toTypedArray())
             }
 
             override fun visitNewInst(inst: NewInst) {
@@ -315,8 +315,8 @@ class PredicateBuilderTest : KexTest() {
 
     @Test
     fun testPredicateBuilder() {
-        for (`class` in cm.concreteClasses) {
-            for (method in `class`.allMethods) {
+        for (klass in cm.concreteClasses) {
+            for (method in klass.allMethods) {
                 if (method.isAbstract) continue
                 val loops = LoopAnalysis(cm).invoke(method)
                 if (loops.isNotEmpty()) {

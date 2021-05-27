@@ -163,7 +163,7 @@ class DefectChecker(
             is Result.SatResult -> {
                 failingBlocks += currentBlock
                 val (path, testName) = getTest("NullPointerException", checkerState, result) ?: null to null
-                dm += Defect.npe(inst.location, null, path, testName)
+                dm += Defect.npe(inst, id = null, testFile = path, testCaseName = testName)
                 false
             }
             else -> true
@@ -185,7 +185,7 @@ class DefectChecker(
             is Result.SatResult -> {
                 failingBlocks += currentBlock
                 val (path, testName) = getTest("OutOfBounds", checkerState, result) ?: null to null
-                dm += Defect.oob(inst.location, null, path, testName)
+                dm += Defect.oob(inst,  id = null, testFile = path, testCaseName = testName)
                 false
             }
             else -> true
@@ -216,7 +216,7 @@ class DefectChecker(
             is Result.SatResult -> {
                 failingBlocks += currentBlock
                 val (path, testName) = getTest("Assertion", checkerState, result) ?: null to null
-                dm += Defect.assert(inst.location, id, path, testName)
+                dm += Defect.assert(inst,  id = id, testFile = path, testCaseName = testName)
                 false
             }
             else -> true
@@ -232,10 +232,10 @@ class DefectChecker(
     fun prepareState(ps: PredicateState, typeInfoMap: TypeInfoMap) = transform(ps) {
         +AnnotationAdapter(method, AnnotationManager.defaultLoader)
         +RecursiveInliner(psa) { ConcreteImplInliner(method.cm.type, typeInfoMap, psa, inlineIndex = it) }
-//        +MethodInliner(psa)
-        +StaticFieldInliner(method.cm, psa)
-        +RecursiveInliner(psa) { MethodInliner(psa, inlineIndex = it) }
+        +StaticFieldInliner(ctx, psa)
+        +RecursiveConstructorInliner(psa)
         +IntrinsicAdapter
+        +KexIntrinsicsAdapter()
         +NullityAnnotator(nonNulls.map { term { value(it) } }.toSet())
         +DoubleTypeAdapter()
         +ReflectionInfoAdapter(method, loader)
@@ -272,6 +272,8 @@ class DefectChecker(
                 if (`this` != null) results += `this`
                 results += arguments.values
                 results += collectVariables(state).filter { it is FieldTerm && it.owner == `this` }
+                results += collectAssumedTerms(state)
+                results += collectRequiredTerms(state)
                 results += TermCollector.getFullTermSet(query)
                 results
             }

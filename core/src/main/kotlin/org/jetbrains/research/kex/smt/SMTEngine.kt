@@ -1,8 +1,8 @@
 package org.jetbrains.research.kex.smt
 
+import org.jetbrains.research.kex.ktype.KexType
 import org.jetbrains.research.kthelper.assert.unreachable
 import org.jetbrains.research.kthelper.logging.log
-import org.jetbrains.research.kex.ktype.KexType
 
 abstract class SMTEngine<in Context_t : Any, Expr_t : Any, Sort_t : Any, Function_t : Any, Pattern_t : Any> {
     companion object {
@@ -56,25 +56,25 @@ abstract class SMTEngine<in Context_t : Any, Expr_t : Any, Sort_t : Any, Functio
     fun isDouble(ctx: Context_t, expr: Expr_t) = isDoubleSort(ctx, getSort(ctx, expr))
     fun isFP(ctx: Context_t, expr: Expr_t) = isFloat(ctx, expr) || isDouble(ctx, expr)
     fun isArray(ctx: Context_t, expr: Expr_t) = isArraySort(ctx, getSort(ctx, expr))
-    abstract fun bvBitsize(ctx: Context_t, sort: Sort_t): Int
-    abstract fun floatEBitsize(ctx: Context_t, sort: Sort_t): Int
-    abstract fun floatSBitsize(ctx: Context_t, sort: Sort_t): Int
-    fun getSortBitsize(ctx: Context_t, sort: Sort_t): Int = when {
+    abstract fun bvBitSize(ctx: Context_t, sort: Sort_t): Int
+    abstract fun floatEBitSize(ctx: Context_t, sort: Sort_t): Int
+    abstract fun floatSBitSize(ctx: Context_t, sort: Sort_t): Int
+    fun getSortBitSize(ctx: Context_t, sort: Sort_t): Int = when {
         isBoolSort(ctx, sort) -> WORD
-        isBVSort(ctx, sort) -> bvBitsize(ctx, sort)
+        isBVSort(ctx, sort) -> bvBitSize(ctx, sort)
         isFloatSort(ctx, sort) -> WORD
         isDoubleSort(ctx, sort) -> DWORD
-        else -> unreachable { log.error("Trying to get bitsize of unknown sort $sort") }
+        else -> unreachable { log.error("Trying to get bit size of unknown sort $sort") }
     }
 
-    fun getExprBitsize(ctx: Context_t, expr: Expr_t) = getSortBitsize(ctx, getSort(ctx, expr))
+    fun getExprBitSize(ctx: Context_t, expr: Expr_t) = getSortBitSize(ctx, getSort(ctx, expr))
 
     abstract fun bool2bv(ctx: Context_t, expr: Expr_t, sort: Sort_t): Expr_t
     abstract fun bv2bool(ctx: Context_t, expr: Expr_t): Expr_t
     abstract fun bv2bv(ctx: Context_t, expr: Expr_t, sort: Sort_t): Expr_t
     abstract fun bv2float(ctx: Context_t, expr: Expr_t, sort: Sort_t): Expr_t
     abstract fun float2bv(ctx: Context_t, expr: Expr_t, sort: Sort_t): Expr_t
-    abstract fun IEEEbv2float(ctx: Context_t, expr: Expr_t, sort: Sort_t): Expr_t
+    abstract fun bvIEEE2float(ctx: Context_t, expr: Expr_t, sort: Sort_t): Expr_t
     abstract fun float2IEEEbv(ctx: Context_t, expr: Expr_t, sort: Sort_t): Expr_t
     abstract fun float2float(ctx: Context_t, expr: Expr_t, sort: Sort_t): Expr_t
 

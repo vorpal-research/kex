@@ -9,7 +9,7 @@ import org.jetbrains.research.kex.state.transformer.Transformer
 @Serializable
 class ConstClassTerm(override val type: KexType) : Term() {
     override val name = "$type.class"
-    override val subterms by lazy { listOf<Term>() }
+    override val subTerms by lazy { listOf<Term>() }
 
     override fun <T : Transformer<T>> accept(t: Transformer<T>) = this
 }

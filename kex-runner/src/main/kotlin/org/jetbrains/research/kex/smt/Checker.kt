@@ -1,5 +1,6 @@
 package org.jetbrains.research.kex.smt
 
+import org.jetbrains.research.kex.ExecutionContext
 import org.jetbrains.research.kex.annotations.AnnotationManager
 import org.jetbrains.research.kex.asm.state.PredicateStateAnalysis
 import org.jetbrains.research.kex.config.kexConfig
@@ -15,13 +16,18 @@ import org.jetbrains.research.kfg.ir.Method
 import org.jetbrains.research.kfg.ir.value.instruction.Instruction
 import org.jetbrains.research.kthelper.logging.log
 
-class Checker(val method: Method, val loader: ClassLoader, private val psa: PredicateStateAnalysis) {
+class Checker(
+    val method: Method,
+    val ctx: ExecutionContext,
+    private val psa: PredicateStateAnalysis
+) {
     private val isInliningEnabled = kexConfig.getBooleanValue("smt", "ps-inlining", true)
     private val isMemspacingEnabled = kexConfig.getBooleanValue("smt", "memspacing", true)
     private val isSlicingEnabled = kexConfig.getBooleanValue("smt", "slicing", false)
     private val logQuery = kexConfig.getBooleanValue("smt", "logQuery", false)
     private val annotationsEnabled = kexConfig.getBooleanValue("annotations", "enabled", false)
 
+    private val loader get() = ctx.loader
     private val builder get() = psa.builder(method)
     lateinit var state: PredicateState
         private set
@@ -35,7 +41,7 @@ class Checker(val method: Method, val loader: ClassLoader, private val psa: Pred
         log.debug("Checking reachability of ${inst.print()}")
 
         val state = createState(inst)
-                ?: return Result.UnknownResult("Can't get state for instruction ${inst.print()}")
+            ?: return Result.UnknownResult("Can't get state for instruction ${inst.print()}")
         return prepareAndCheck(state)
     }
 
@@ -48,9 +54,10 @@ class Checker(val method: Method, val loader: ClassLoader, private val psa: Pred
             +MethodInliner(psa)
         }
 
-        +StaticFieldInliner(method.cm, psa)
-        +RecursiveInliner(psa) { MethodInliner(psa, inlineIndex = it) }
+        +StaticFieldInliner(ctx, psa)
+        +RecursiveConstructorInliner(psa)
         +IntrinsicAdapter
+        +KexIntrinsicsAdapter()
         +ReflectionInfoAdapter(method, loader)
         +Optimizer()
         +ConstantPropagator
@@ -64,9 +71,10 @@ class Checker(val method: Method, val loader: ClassLoader, private val psa: Pred
     fun prepareState(method: Method, ps: PredicateState, typeInfoMap: TypeInfoMap) = transform(ps) {
         +AnnotationAdapter(method, AnnotationManager.defaultLoader)
         +RecursiveInliner(psa) { ConcreteImplInliner(method.cm.type, typeInfoMap, psa, inlineIndex = it) }
-        +StaticFieldInliner(method.cm, psa)
-        +RecursiveInliner(psa) { MethodInliner(psa, inlineIndex = it) }
+        +StaticFieldInliner(ctx, psa)
+        +RecursiveConstructorInliner(psa)
         +IntrinsicAdapter
+        +KexIntrinsicsAdapter()
         +ReflectionInfoAdapter(method, loader)
         +Optimizer()
         +ConstantPropagator

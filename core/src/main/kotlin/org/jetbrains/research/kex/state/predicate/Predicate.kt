@@ -1,8 +1,5 @@
 package org.jetbrains.research.kex.state.predicate
 
-import org.jetbrains.research.kthelper.assert.fail
-import org.jetbrains.research.kthelper.defaultHashCode
-import org.jetbrains.research.kthelper.logging.log
 import kotlinx.serialization.Required
 import kotlinx.serialization.Serializable
 import org.jetbrains.research.kex.BaseType
@@ -12,6 +9,9 @@ import org.jetbrains.research.kex.state.term.Term
 import org.jetbrains.research.kex.state.term.term
 import org.jetbrains.research.kex.state.transformer.Transformer
 import org.jetbrains.research.kfg.ir.Location
+import org.jetbrains.research.kthelper.assert.fail
+import org.jetbrains.research.kthelper.defaultHashCode
+import org.jetbrains.research.kthelper.logging.log
 
 @Serializable
 abstract class PredicateType {
@@ -61,9 +61,9 @@ abstract class Predicate : TypeInfo {
             val inheritanceInfo = InheritanceInfo.fromJson(resource.bufferedReader().readText())
             resource.close()
 
-            inheritanceInfo?.inheritors?.map {
+            inheritanceInfo?.inheritors?.associate {
                 it.name to loader.loadClass(it.inheritorClass)
-            }?.toMap() ?: mapOf()
+            } ?: mapOf()
         }
 
         val reverse = predicates.map { it.value to it.key }.toMap()

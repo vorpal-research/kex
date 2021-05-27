@@ -1,8 +1,5 @@
 package org.jetbrains.research.kex.state
 
-import org.jetbrains.research.kthelper.assert.fail
-import org.jetbrains.research.kthelper.assert.unreachable
-import org.jetbrains.research.kthelper.logging.log
 import kotlinx.serialization.Serializable
 import org.jetbrains.research.kex.BaseType
 import org.jetbrains.research.kex.InheritanceInfo
@@ -10,6 +7,9 @@ import org.jetbrains.research.kex.state.predicate.Predicate
 import org.jetbrains.research.kex.state.predicate.PredicateBuilder
 import org.jetbrains.research.kex.state.predicate.PredicateType
 import org.jetbrains.research.kfg.ir.Location
+import org.jetbrains.research.kthelper.assert.fail
+import org.jetbrains.research.kthelper.assert.unreachable
+import org.jetbrains.research.kthelper.logging.log
 
 interface TypeInfo {
     val inheritors: Map<String, Class<*>>
@@ -142,9 +142,9 @@ abstract class PredicateState : TypeInfo {
             val inheritanceInfo = InheritanceInfo.fromJson(resource.bufferedReader().readText())
             resource.close()
 
-            inheritanceInfo?.inheritors?.map {
+            inheritanceInfo?.inheritors?.associate {
                 it.name to loader.loadClass(it.inheritorClass)
-            }?.toMap() ?: mapOf()
+            } ?: mapOf()
         }
 
         val reverse = states.map { it.value to it.key }.toMap()

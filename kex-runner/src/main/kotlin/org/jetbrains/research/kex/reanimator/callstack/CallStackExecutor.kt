@@ -1,13 +1,13 @@
 package org.jetbrains.research.kex.reanimator.callstack
 
-import org.jetbrains.research.kthelper.assert.unreachable
-import org.jetbrains.research.kthelper.logging.log
-import org.jetbrains.research.kthelper.tryOrNull
 import org.jetbrains.research.kex.ExecutionContext
 import org.jetbrains.research.kex.config.kexConfig
 import org.jetbrains.research.kex.trace.`object`.TraceCollectorProxy
 import org.jetbrains.research.kex.trace.runner.runWithTimeout
 import org.jetbrains.research.kex.util.*
+import org.jetbrains.research.kthelper.assert.unreachable
+import org.jetbrains.research.kthelper.logging.log
+import org.jetbrains.research.kthelper.tryOrNull
 import java.lang.reflect.Array
 import java.lang.reflect.Field
 
@@ -87,7 +87,7 @@ class CallStackExecutor(val ctx: ExecutionContext) {
                         instance
                     }
                     is ExternalConstructorCall -> {
-                        val reflection = ctx.loader.loadClass(call.constructor.`class`)
+                        val reflection = ctx.loader.loadClass(call.constructor.klass)
                         val javaMethod = reflection.getMethod(call.constructor, ctx.loader)
                         javaMethod.isAccessible = true
                         val args = call.args.map { execute(it) }.toTypedArray()
@@ -99,7 +99,7 @@ class CallStackExecutor(val ctx: ExecutionContext) {
                         instance
                     }
                     is InnerClassConstructorCall -> {
-                        val reflection = ctx.loader.loadClass(call.constructor.`class`)
+                        val reflection = ctx.loader.loadClass(call.constructor.klass)
                         val constructor = reflection.getConstructor(call.constructor, ctx.loader)
                         constructor.isAccessible = true
                         val outerObject = execute(call.outerObject)
@@ -112,7 +112,7 @@ class CallStackExecutor(val ctx: ExecutionContext) {
                         instance
                     }
                     is MethodCall -> {
-                        val reflection = ctx.loader.loadClass(call.method.`class`)
+                        val reflection = ctx.loader.loadClass(call.method.klass)
                         val javaMethod = reflection.getMethod(call.method, ctx.loader)
                         javaMethod.isAccessible = true
                         val args = call.args.map { execute(it) }.toTypedArray()
@@ -122,7 +122,7 @@ class CallStackExecutor(val ctx: ExecutionContext) {
                         current
                     }
                     is StaticMethodCall -> {
-                        val reflection = ctx.loader.loadClass(call.method.`class`)
+                        val reflection = ctx.loader.loadClass(call.method.klass)
                         val javaMethod = reflection.getMethod(call.method, ctx.loader)
                         javaMethod.isAccessible = true
                         val args = call.args.map { execute(it) }.toTypedArray()
@@ -144,7 +144,7 @@ class CallStackExecutor(val ctx: ExecutionContext) {
                     }
                     is FieldSetter -> {
                         val field = call.field
-                        val reflection = ctx.loader.loadClass(field.`class`)
+                        val reflection = ctx.loader.loadClass(field.klass)
                         val fieldReflection = reflection.getFieldByName(field.name)
                         fieldReflection.isAccessible = true
                         fieldReflection.isFinal = false
@@ -154,7 +154,7 @@ class CallStackExecutor(val ctx: ExecutionContext) {
                     }
                     is StaticFieldSetter -> {
                         val field = call.field
-                        val reflection = ctx.loader.loadClass(field.`class`)
+                        val reflection = ctx.loader.loadClass(field.klass)
                         val fieldReflection = reflection.getFieldByName(field.name)
                         fieldReflection.isAccessible = true
                         fieldReflection.isFinal = false

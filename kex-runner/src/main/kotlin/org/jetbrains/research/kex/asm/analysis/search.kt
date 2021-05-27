@@ -46,7 +46,7 @@ interface SearchStrategy : Iterable<BasicBlock> {
 }
 
 class TopologicalStrategy(override val method: Method) : SearchStrategy {
-    val order: List<BasicBlock>
+    private val order: List<BasicBlock>
 
     init {
         val tpOrder = GraphTraversal(method).topologicalSort()
@@ -57,7 +57,7 @@ class TopologicalStrategy(override val method: Method) : SearchStrategy {
 }
 
 class BfsStrategy(override val method: Method) : SearchStrategy {
-    val bfsSearch: List<BasicBlock>
+    private val bfsSearch: List<BasicBlock>
 
     init {
         val bfsOrder = GraphTraversal(method).bfs()
@@ -68,7 +68,7 @@ class BfsStrategy(override val method: Method) : SearchStrategy {
 }
 
 class DfsStrategy(override val method: Method) : SearchStrategy {
-    val dfsSearch: List<BasicBlock>
+    private val dfsSearch: List<BasicBlock>
 
     init {
         val dfsOrder = GraphTraversal(method).dfs()
@@ -79,11 +79,7 @@ class DfsStrategy(override val method: Method) : SearchStrategy {
 }
 
 class UnfilteredDfsStrategy(override val method: Method) : SearchStrategy {
-    val dfsOrder: List<BasicBlock>
-
-    init {
-        dfsOrder = GraphTraversal(method).dfs()
-    }
+    private val dfsOrder: List<BasicBlock> = GraphTraversal(method).dfs()
 
     override fun iterator() = dfsOrder.iterator()
 }

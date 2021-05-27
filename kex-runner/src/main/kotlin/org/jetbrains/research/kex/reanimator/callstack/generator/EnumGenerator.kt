@@ -28,7 +28,7 @@ class EnumGenerator(private val fallback: Generator) : Generator {
         private fun computeEnumConstants(ctx: GeneratorContext, enumType: KexType): Map<FieldTerm, Descriptor> =
             with(ctx) {
                 val kfgType = enumType.getKfgType(context.types) as ClassType
-                val staticInit = kfgType.`class`.getMethod("<clinit>", "()V")
+                val staticInit = kfgType.klass.getMethod("<clinit>", "()V")
 
                 val state = staticInit.methodState ?: return mapOf()
                 val preparedState = state.prepare(staticInit, TypeInfoMap())
@@ -42,7 +42,7 @@ class EnumGenerator(private val fallback: Generator) : Generator {
                 }
                 val preparedQuery = prepareQuery(queryBuilder.apply())
 
-                val checker = Checker(staticInit, context.loader, psa)
+                val checker = Checker(staticInit, context, psa)
                 val params = when (val result = checker.check(preparedState + preparedQuery)) {
                     is Result.SatResult -> {
                         log.debug("Model: ${result.model}")
@@ -68,7 +68,7 @@ class EnumGenerator(private val fallback: Generator) : Generator {
     override fun supports(descriptor: Descriptor): Boolean {
         val type = descriptor.type
         return when (val kfgType = type.getKfgType(context.types)) {
-            is ClassType -> kfgType.`class`.isEnum
+            is ClassType -> kfgType.klass.isEnum
             else -> false
         }
     }

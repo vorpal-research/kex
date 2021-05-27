@@ -32,11 +32,11 @@ class KtObjectGenerator(private val fallback: Generator) : Generator {
             ?: return cs.also { it += UnknownCall(kfgType, descriptor).wrap(name) }
 
         if (kClass.isCompanion) {
-            val (parentClass, companionName) = kfgType.`class`.fullname.split("\$")
+            val (parentClass, companionName) = kfgType.klass.fullName.split("\$")
             val kfgParent = cm[parentClass]
             cs += StaticFieldGetter(kfgParent, companionName)
         } else if (kClass.objectInstance != null) {
-            cs += StaticFieldGetter(kfgType.`class`, "INSTANCE")
+            cs += StaticFieldGetter(kfgType.klass, "INSTANCE")
         }
         return cs
     }

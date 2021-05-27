@@ -1,7 +1,5 @@
 package org.jetbrains.research.kex.state.term
 
-import org.jetbrains.research.kthelper.assert.unreachable
-import org.jetbrains.research.kthelper.logging.log
 import org.jetbrains.research.kex.ktype.*
 import org.jetbrains.research.kfg.ir.Class
 import org.jetbrains.research.kfg.ir.Method
@@ -10,6 +8,8 @@ import org.jetbrains.research.kfg.ir.value.instruction.BinaryOpcode
 import org.jetbrains.research.kfg.ir.value.instruction.CmpOpcode
 import org.jetbrains.research.kfg.ir.value.instruction.UnaryOpcode
 import org.jetbrains.research.kfg.type.TypeFactory
+import org.jetbrains.research.kthelper.assert.unreachable
+import org.jetbrains.research.kthelper.logging.log
 
 object TermFactory {
     fun getThis(type: KexType) = getValue(type, "this")
@@ -63,7 +63,7 @@ object TermFactory {
     fun getString(value: String) = ConstStringTerm(KexClass(TypeFactory.stringClass), value)
     fun getString(const: StringConstant) = getString(const.value)
     fun getNull() = NullTerm()
-    fun getClass(`class`: Class) = getClass(KexClass(`class`.fullname))
+    fun getClass(`class`: Class) = getClass(KexClass(`class`.fullName))
     fun getClass(klass: KexType) = ConstClassTerm(klass)
     fun getClass(const: ClassConstant) = ConstClassTerm(const.type.kexType)
 
@@ -111,7 +111,7 @@ object TermFactory {
             getCall(method.returnType.kexType, objectRef, method, arguments)
 
     fun getCall(type: KexType, method: Method, arguments: List<Term>) =
-            CallTerm(type, getClass(method.`class`), method, arguments)
+            CallTerm(type, getClass(method.klass), method, arguments)
 
     fun getCall(type: KexType, objectRef: Term, method: Method, arguments: List<Term>) =
             CallTerm(type, objectRef, method, arguments)
@@ -256,6 +256,8 @@ abstract class TermBuilder {
     infix fun Term.cmpg(rhv: Term) = tf.getCmp(CmpOpcode.Cmpg(), this, rhv)
     infix fun Term.cmpl(rhv: Term) = tf.getCmp(CmpOpcode.Cmpl(), this, rhv)
 
+    @Suppress("DeprecatedCallableAddReplaceWith")
+    @Deprecated(message = "not used in current SMT model")
     fun Term.bound() = tf.getBound(this)
 
     fun Term.call(method: Method, arguments: List<Term>) = tf.getCall(method, this, arguments)

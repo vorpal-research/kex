@@ -181,7 +181,7 @@ class ConcolicStateBuilder(val cm: ClassManager, val psa: PredicateStateAnalysis
                     state(inst.location) {
                         val args = inst.args.map { mkValue(it) }
                         val callee = when {
-                            inst.isStatic -> `class`(inst.method.`class`)
+                            inst.isStatic -> `class`(inst.method.klass)
                             else -> mkValue(inst.callee)
                         }
                         val callTerm = callee.call(inst.method, args)
@@ -213,8 +213,8 @@ class ConcolicStateBuilder(val cm: ClassManager, val psa: PredicateStateAnalysis
         val (`this`, args) = collectArguments(state)
         val mappings = mutableMapOf<Term, Term>()
         if (!method.isStatic) {
-            val actualThis = `this` ?: term { `this`(method.`class`.kexType) }
-            val mappedThis = mkValue(callMappings.mappings[cm.value.getThis(method.`class`)]!!)
+            val actualThis = `this` ?: term { `this`(method.klass.kexType) }
+            val mappedThis = mkValue(callMappings.mappings[cm.value.getThis(method.klass)]!!)
             mappings += actualThis to mappedThis
         }
         for ((_, argTerm) in args) {
@@ -226,14 +226,14 @@ class ConcolicStateBuilder(val cm: ClassManager, val psa: PredicateStateAnalysis
     }
 
     private fun getOverloadedMethod(callee: Value, baseMethod: Method): Method {
-        val klass = (callee.type as ClassType).`class`
+        val klass = (callee.type as ClassType).klass
         return klass.getMethod(baseMethod.name, baseMethod.desc)
     }
 
     private fun resolveMethodCall(method: Method): PredicateState? {
         if (lastCall == null) return null
         if (method.isEmpty()) return null
-        if (method.`class` !is ConcreteClass) return null
+        if (method.klass !is ConcreteClass) return null
         val (callMethod, callMappings) = lastCall!!
         return when {
             method.isStatic -> {
@@ -247,7 +247,7 @@ class ConcolicStateBuilder(val cm: ClassManager, val psa: PredicateStateAnalysis
                 TermRenamer("${++counter}", mappings).apply(state)
             }
             else -> {
-                val mappedThis = callMappings.mappings[cm.value.getThis(method.`class`)]!!
+                val mappedThis = callMappings.mappings[cm.value.getThis(method.klass)]!!
                 val actualMethod = getOverloadedMethod(mappedThis, callMethod)
 
                 val builder = psa.builder(actualMethod)
@@ -269,7 +269,8 @@ class ConcolicStateBuilder(val cm: ClassManager, val psa: PredicateStateAnalysis
     }
 
     @Suppress("UNUSED_PARAMETER")
-    fun buildCatchInst(inst: CatchInst) {}
+    fun buildCatchInst(inst: CatchInst) {
+    }
 
     fun buildCmpInst(inst: CmpInst) {
         stateBuilder += state(inst.location) {
@@ -281,16 +282,18 @@ class ConcolicStateBuilder(val cm: ClassManager, val psa: PredicateStateAnalysis
     }
 
     @Suppress("UNUSED_PARAMETER")
-    fun buildEnterMonitorInst(inst: EnterMonitorInst) {}
+    fun buildEnterMonitorInst(inst: EnterMonitorInst) {
+    }
 
     @Suppress("UNUSED_PARAMETER")
-    fun buildExitMonitorInst(inst: ExitMonitorInst) {}
+    fun buildExitMonitorInst(inst: ExitMonitorInst) {
+    }
 
     fun buildFieldLoadInst(inst: FieldLoadInst) {
         stateBuilder += state(inst.location) {
             val lhv = mkNewValue(inst)
             val owner = when {
-                inst.isStatic -> `class`(inst.field.`class`)
+                inst.isStatic -> `class`(inst.field.klass)
                 else -> mkValue(inst.owner)
             }
             val field = owner.field(inst.type.kexType, inst.field.name)
@@ -303,7 +306,7 @@ class ConcolicStateBuilder(val cm: ClassManager, val psa: PredicateStateAnalysis
     fun buildFieldStoreInst(inst: FieldStoreInst) {
         stateBuilder += state(inst.location) {
             val owner = when {
-                inst.isStatic -> `class`(inst.field.`class`)
+                inst.isStatic -> `class`(inst.field.klass)
                 else -> mkValue(inst.owner)
             }
             val value = mkValue(inst.value)
@@ -359,7 +362,8 @@ class ConcolicStateBuilder(val cm: ClassManager, val psa: PredicateStateAnalysis
     }
 
     @Suppress("UNUSED_PARAMETER")
-    fun buildJumpInst(inst: JumpInst, next: BasicBlock) {}
+    fun buildJumpInst(inst: JumpInst, next: BasicBlock) {
+    }
 
     fun buildReturnInst(inst: ReturnInst) {
         stateBuilder += state(inst.location) {
@@ -410,8 +414,10 @@ class ConcolicStateBuilder(val cm: ClassManager, val psa: PredicateStateAnalysis
     }
 
     @Suppress("UNUSED_PARAMETER")
-    fun buildThrowInst(inst: ThrowInst) {}
+    fun buildThrowInst(inst: ThrowInst) {
+    }
 
     @Suppress("UNUSED_PARAMETER")
-    fun buildUnreachableInst(inst: UnreachableInst) {}
+    fun buildUnreachableInst(inst: UnreachableInst) {
+    }
 }

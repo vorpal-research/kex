@@ -1,6 +1,5 @@
 package org.jetbrains.research.kex.state.transformer
 
-import org.jetbrains.research.kthelper.collection.dequeOf
 import org.jetbrains.research.kex.annotations.AnnotatedCall
 import org.jetbrains.research.kex.annotations.AnnotationsLoader
 import org.jetbrains.research.kex.state.BasicState
@@ -10,14 +9,15 @@ import org.jetbrains.research.kex.state.predicate.CallPredicate
 import org.jetbrains.research.kex.state.predicate.Predicate
 import org.jetbrains.research.kex.state.term.CallTerm
 import org.jetbrains.research.kfg.ir.Method
+import org.jetbrains.research.kthelper.collection.dequeOf
 import java.util.*
 
 class AnnotationAdapter(val method: Method, val annotations: AnnotationsLoader) :
-        RecollectingTransformer<AnnotationAdapter> {
+    RecollectingTransformer<AnnotationAdapter> {
     override val builders = dequeOf(StateBuilder())
 
     private val Method.exactCall: AnnotatedCall?
-        get() = annotations.getExactCall("$`class`.$name", *argTypes.map { it.name }.toTypedArray())
+        get() = annotations.getExactCall("$klass.$name", *argTypes.map { it.name }.toTypedArray())
 
     override fun apply(ps: PredicateState): PredicateState {
         method.exactCall?.run {

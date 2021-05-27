@@ -1,19 +1,22 @@
 package org.jetbrains.research.kex.smt
 
-import org.jetbrains.research.kthelper.assert.ktassert
-import org.jetbrains.research.kthelper.assert.unreachable
-import org.jetbrains.research.kthelper.logging.log
-import org.jetbrains.research.kthelper.toBoolean
-import org.jetbrains.research.kthelper.tryOrNull
 import org.jetbrains.research.kex.ExecutionContext
 import org.jetbrains.research.kex.ktype.*
-import org.jetbrains.research.kex.reanimator.descriptor.*
+import org.jetbrains.research.kex.reanimator.descriptor.ArrayDescriptor
+import org.jetbrains.research.kex.reanimator.descriptor.Descriptor
+import org.jetbrains.research.kex.reanimator.descriptor.FieldContainingDescriptor
+import org.jetbrains.research.kex.reanimator.descriptor.descriptor
 import org.jetbrains.research.kex.state.term.*
 import org.jetbrains.research.kex.state.transformer.memspace
 import org.jetbrains.research.kex.util.getActualField
 import org.jetbrains.research.kex.util.isFinal
 import org.jetbrains.research.kex.util.loadClass
 import org.jetbrains.research.kfg.ir.Method
+import org.jetbrains.research.kthelper.assert.ktassert
+import org.jetbrains.research.kthelper.assert.unreachable
+import org.jetbrains.research.kthelper.logging.log
+import org.jetbrains.research.kthelper.toBoolean
+import org.jetbrains.research.kthelper.tryOrNull
 import java.lang.reflect.Array
 
 private val Term.isPointer get() = this.type is KexPointer
@@ -130,7 +133,7 @@ class ObjectReanimator(override val method: Method,
                 val reanimatedValue = reanimateReferenceValue(term, refValue)
                 val address = (addr as? ConstIntTerm)?.value
                         ?: unreachable { log.error("Non-int address of array index") }
-                val realIndex = (address - arrayAddr) / (elementType.bitsize / KexType.WORD)
+                val realIndex = (address - arrayAddr) / (elementType.bitSize / KexType.WORD)
                 Array.set(array, realIndex, reanimatedValue)
                 array
             }
@@ -317,7 +320,7 @@ abstract class DescriptorReanimator(override val method: Method,
                 val reanimatedValue = reanimateReferenceValue(term, refValue)
                 val address = (addr as? ConstIntTerm)?.value
                         ?: unreachable { log.error("Non-int address of array index") }
-                val realIndex = (address - arrayAddr) / (elementType.bitsize / KexType.WORD)
+                val realIndex = (address - arrayAddr) / (elementType.bitSize / KexType.WORD)
                 array[realIndex] = reanimatedValue
                 array
             }

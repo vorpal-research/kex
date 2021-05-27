@@ -1,8 +1,5 @@
 package org.jetbrains.research.kex.reanimator.codegen.javagen
 
-import org.jetbrains.research.kthelper.assert.ktassert
-import org.jetbrains.research.kthelper.assert.unreachable
-import org.jetbrains.research.kthelper.logging.log
 import org.jetbrains.research.kex.ExecutionContext
 import org.jetbrains.research.kex.ktype.KexType
 import org.jetbrains.research.kex.ktype.type
@@ -15,6 +12,9 @@ import org.jetbrains.research.kex.util.loadClass
 import org.jetbrains.research.kfg.ir.Class
 import org.jetbrains.research.kfg.type.*
 import org.jetbrains.research.kfg.type.Type
+import org.jetbrains.research.kthelper.assert.ktassert
+import org.jetbrains.research.kthelper.assert.unreachable
+import org.jetbrains.research.kthelper.logging.log
 import java.lang.reflect.*
 
 // TODO: this is work of satan, refactor this damn thing
@@ -126,7 +126,7 @@ class CallStack2JavaPrinter(
             else -> unreachable { }
         }
 
-    val java.lang.reflect.Type.csType: CSType
+    private val java.lang.reflect.Type.csType: CSType
         get() = when (this) {
             is java.lang.Class<*> -> when {
                 this.isArray -> {
@@ -162,7 +162,7 @@ class CallStack2JavaPrinter(
         else -> TODO()
     }
 
-    fun CSType?.isAssignable(other: CSType) = this?.let { other.isSubtype(it) } ?: true
+    private fun CSType?.isAssignable(other: CSType) = this?.let { other.isSubtype(it) } ?: true
 
     private val KexType.csType get() = this.getKfgType(ctx.types).csType
 
@@ -208,23 +208,23 @@ class CallStack2JavaPrinter(
             resolveTypes(constructor, call.args)
         }
         is ExternalConstructorCall -> {
-            val reflection = ctx.loader.loadClass(call.constructor.`class`)
+            val reflection = ctx.loader.loadClass(call.constructor.klass)
             val constructor = reflection.getMethod(call.constructor, ctx.loader)
             resolveTypes(constructor, call.args)
         }
         is InnerClassConstructorCall -> {
-            val reflection = ctx.loader.loadClass(call.constructor.`class`)
+            val reflection = ctx.loader.loadClass(call.constructor.klass)
             val constructor = reflection.getConstructor(call.constructor, ctx.loader)
             resolveTypes(call.outerObject)
             resolveTypes(constructor, call.args)
         }
         is MethodCall -> {
-            val reflection = ctx.loader.loadClass(call.method.`class`)
+            val reflection = ctx.loader.loadClass(call.method.klass)
             val method = reflection.getMethod(call.method, ctx.loader)
             resolveTypes(method, call.args)
         }
         is StaticMethodCall -> {
-            val reflection = ctx.loader.loadClass(call.method.`class`)
+            val reflection = ctx.loader.loadClass(call.method.klass)
             val method = reflection.getMethod(call.method, ctx.loader)
             resolveTypes(method, call.args)
         }
@@ -262,7 +262,7 @@ class CallStack2JavaPrinter(
             DoubleType -> "double"
             is ArrayType -> "${this.component.javaString}[]"
             else -> {
-                val klass = (this as ClassType).`class`
+                val klass = (this as ClassType).klass
                 val canonicalDesc = klass.canonicalDesc
                 val splitted = canonicalDesc.split("$")
                 ktassert(splitted.isNotEmpty())
@@ -309,17 +309,17 @@ class CallStack2JavaPrinter(
             is Boolean -> "$value".also {
                 actualTypes[this] = CSClass(ctx.types.boolType)
             }
-            is Byte -> "(byte) ${value}".also {
+            is Byte -> "(byte) $value".also {
                 actualTypes[this] = CSClass(ctx.types.byteType)
             }
             is Char -> when (value) {
                 in 'a'..'z' -> "'$value'"
                 in 'A'..'Z' -> "'$value'"
-                else -> "(char) ${value.toInt()}"
+                else -> "(char) ${value.code}"
             }.also {
                 actualTypes[this] = CSClass(ctx.types.charType)
             }
-            is Short -> "(short) ${value}".also {
+            is Short -> "(short) $value".also {
                 actualTypes[this] = CSClass(ctx.types.shortType)
             }
             is Int -> "$value".also {
@@ -356,7 +356,7 @@ class CallStack2JavaPrinter(
             }.also {
                 actualTypes[this] = CSClass(ctx.types.doubleType)
             }
-            else -> unreachable { log.error("Unknown primary value ${this}") }
+            else -> unreachable { log.error("Unknown primary value $this") }
         }
 
     private fun CallStack.cast(reqType: CSType?): String {
@@ -406,10 +406,10 @@ class CallStack2JavaPrinter(
         if (innerType !is CSClass) return innerType.toString()
         if (outerType !is CSClass) return innerType.toString()
 
-        val innerString = (innerType.type as? ClassType)?.`class`?.fullname ?: return innerType.toString()
-        val outerString = (outerType.type as? ClassType)?.`class`?.fullname ?: return innerType.toString()
+        val innerString = (innerType.type as? ClassType)?.klass?.fullName ?: return innerType.toString()
+        val outerString = (outerType.type as? ClassType)?.klass?.fullName ?: return innerType.toString()
         if (reqOuterType != null && reqOuterType is CSClass) {
-            val reqTypeString = (reqOuterType.type as ClassType).`class`.fullname
+            val reqTypeString = (reqOuterType.type as ClassType).klass.fullName
             if (innerString.startsWith(reqTypeString)) return innerString.removePrefix("$reqTypeString\$").replace('/', '.')
         }
         if (innerString.startsWith(outerString)) return innerString.removePrefix("$outerString\$").replace('/', '.')
@@ -422,7 +422,7 @@ class CallStack2JavaPrinter(
         val args = call.args.joinToString(", ") {
             it.forceCastIfNull(resolvedTypes[it])
         }
-        val actualType = CSClass(call.constructor.`class`.type)
+        val actualType = CSClass(call.constructor.klass.type)
         val outerObject = call.outerObject.forceCastIfNull(resolvedTypes[call.outerObject])
         return if (resolvedTypes[owner] != null) {
             val rest = resolvedTypes[owner]!!
@@ -448,10 +448,10 @@ class CallStack2JavaPrinter(
             val rest = resolvedTypes[owner]!!
             val type = actualType.merge(rest)
             actualTypes[owner] = type
-            "$type ${owner.name} = ${constructor.`class`.javaString}.${constructor.name}($args)"
+            "$type ${owner.name} = ${constructor.klass.javaString}.${constructor.name}($args)"
         } else {
             actualTypes[owner] = actualType
-            "$actualType ${owner.name} = ${constructor.`class`.javaString}.${constructor.name}($args)"
+            "$actualType ${owner.name} = ${constructor.klass.javaString}.${constructor.name}($args)"
         }
     }
 
@@ -466,7 +466,7 @@ class CallStack2JavaPrinter(
 
     private fun printStaticMethodCall(call: StaticMethodCall): String {
         call.args.forEach { it.printAsJava() }
-        val klass = call.method.`class`
+        val klass = call.method.klass
         val method = call.method
         val args = call.args.joinToString(", ") {
             it.forceCastIfNull(resolvedTypes[it])
@@ -483,11 +483,6 @@ class CallStack2JavaPrinter(
     private fun printNewArray(owner: CallStack, call: NewArray): String {
         val actualType = call.asArray.csType
         val (depth, elementType) = actualType.elementTypeDepth()
-//        val elementType = when (actualType) {
-//            is CSArray -> actualType.element
-//            is CSPrimaryArray -> actualType.element
-//            else -> TODO()
-//        }
         actualTypes[owner] = actualType
         return "$actualType ${owner.name} = new $elementType[${call.length.stackName}]${"[]".repeat(depth)}"
     }

@@ -15,10 +15,10 @@ class ClassWriter(val ctx: ExecutionContext, val target: Path) : ClassVisitor {
 
     override fun cleanup() {}
 
-    override fun visit(`class`: Class) {
-        val classFileName = "${target.toAbsolutePath()}/${`class`.fullname}.class"
+    override fun visit(klass: Class) {
+        val classFileName = "${target.toAbsolutePath()}/${klass.fullName}.class"
         tryOrNull {
-            `class`.write(cm, ctx.loader, classFileName)
-        } ?: log.warn("Could not write class $`class`")
+            klass.write(cm, ctx.loader, classFileName)
+        } ?: log.warn("Could not write class $klass")
     }
 }

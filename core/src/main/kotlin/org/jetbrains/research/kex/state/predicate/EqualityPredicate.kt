@@ -20,11 +20,11 @@ class EqualityPredicate(
     override fun print() = "$lhv = $rhv"
 
     override fun <T : Transformer<T>> accept(t: Transformer<T>): Predicate {
-        val tlhv = t.transform(lhv)
-        val trhv = t.transform(rhv)
+        val tLhv = t.transform(lhv)
+        val tRhv = t.transform(rhv)
         return when {
-            tlhv == lhv && trhv == rhv -> this
-            else -> predicate(type, location) { tlhv equality trhv }
+            tLhv == lhv && tRhv == rhv -> this
+            else -> predicate(type, location) { tLhv equality tRhv }
         }
     }
 }

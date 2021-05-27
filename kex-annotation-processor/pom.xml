@@ -15,7 +15,6 @@
 
     <properties>
         <velocity.version>1.7</velocity.version>
-        <klaxon.version>3.0.6</klaxon.version>
     </properties>
 
     <dependencies>

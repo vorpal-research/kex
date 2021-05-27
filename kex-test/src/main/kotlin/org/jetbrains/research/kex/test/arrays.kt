@@ -15,8 +15,10 @@ open class ArrayTests {
         }
         kexAssert(length == 5)
 
-        for (i in 0..4) {
+        var i = 0
+        while (i < 5) {
             kexAssert(simpleArray[i] == i)
+            ++i
         }
         kexAssert()
     }
@@ -24,12 +26,16 @@ open class ArrayTests {
     fun testArrayWrite() {
         val emptyArray = intArrayOf(0, 1, 2, 3, 0)
 
-        for (i in 0 until 5) {
+        var i = 0
+        while (i < 5) {
             emptyArray[i] = i * i
+            ++i
         }
 
-        for (i in 0 until 5) {
+        i = 0
+        while (i < 5) {
             kexAssert(emptyArray[i] == i * i)
+            ++i
         }
         kexAssert()
     }
@@ -43,14 +49,18 @@ open class ArrayLongTests {
         }
         kexAssert(array.size >= 5)
 
-        for (i in 0 until 5) {
+        var i = 0
+        while (i < 5) {
             array[i] = i * i
+            ++i
         }
 
-        for (i in 0 until 5) {
+        i = 0
+        while (i < 5) {
             if (array[i] == i * i) {
                 kexAssert()
             }
+            ++i
         }
         kexAssert()
     }

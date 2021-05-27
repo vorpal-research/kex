@@ -17,8 +17,9 @@ import kotlin.reflect.KClass
 val kexTypeSerialModule: SerializersModule
     get() = SerializersModule {
         polymorphic(KexType::class) {
-            KexType.types.forEach { (_, klass) ->
-                if (!klass.isAbstract && !klass.isSealed) subclass(klass, klass.serializer())
+            for (klass in KexType.types.values) {
+                if (!klass.isAbstract && !klass.isSealed)
+                    subclass(klass, klass.serializer())
             }
         }
     }
@@ -29,8 +30,9 @@ fun getTermSerialModule(cm: ClassManager): SerializersModule = SerializersModule
     include(getKfgSerialModule(cm))
     include(kexTypeSerialModule)
     polymorphic(Term::class) {
-        Term.terms.forEach { (_, klass) ->
-            @Suppress("UNCHECKED_CAST") val any = klass.kotlin as KClass<Term>
+        for (klass in Term.terms.values) {
+            @Suppress("UNCHECKED_CAST")
+            val any = klass.kotlin as KClass<Term>
             subclass(any, any.serializer())
         }
     }
@@ -53,8 +55,9 @@ fun getPredicateSerialModule(cm: ClassManager): SerializersModule = SerializersM
     include(getTermSerialModule(cm))
     include(predicateTypeSerialModule)
     polymorphic(Predicate::class) {
-        Predicate.predicates.forEach { (_, klass) ->
-            @Suppress("UNCHECKED_CAST") val any = klass.kotlin as KClass<Predicate>
+        for (klass in Predicate.predicates.values) {
+            @Suppress("UNCHECKED_CAST")
+            val any = klass.kotlin as KClass<Predicate>
             subclass(any, any.serializer())
         }
     }
@@ -65,8 +68,9 @@ fun getPredicateSerialModule(cm: ClassManager): SerializersModule = SerializersM
 fun getPredicateStateSerialModule(cm: ClassManager): SerializersModule = SerializersModule {
     include(getPredicateSerialModule(cm))
     polymorphic(PredicateState::class) {
-        PredicateState.states.forEach { (_, klass) ->
-            @Suppress("UNCHECKED_CAST") val any = klass.kotlin as KClass<PredicateState>
+        for (klass in PredicateState.states.values) {
+            @Suppress("UNCHECKED_CAST")
+            val any = klass.kotlin as KClass<PredicateState>
             subclass(any, any.serializer())
         }
     }

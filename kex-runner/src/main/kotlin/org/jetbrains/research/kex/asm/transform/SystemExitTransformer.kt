@@ -1,21 +1,21 @@
 package org.jetbrains.research.kex.asm.transform
 
-import org.jetbrains.research.kthelper.collection.buildList
 import org.jetbrains.research.kex.ktype.type
 import org.jetbrains.research.kfg.ClassManager
 import org.jetbrains.research.kfg.ir.value.instruction.CallInst
 import org.jetbrains.research.kfg.ir.value.instruction.CallOpcode
 import org.jetbrains.research.kfg.ir.value.instruction.Instruction
 import org.jetbrains.research.kfg.visitor.MethodVisitor
+import org.jetbrains.research.kthelper.collection.buildList
 
 class SystemExitCallException(val code: Int) : Throwable()
 
 class SystemExitTransformer(override val cm: ClassManager) : MethodVisitor {
-    val systemClass = cm["java/lang/System"]
-    val exitMethod = systemClass.getMethod("exit", "(I)V")
+    private val systemClass = cm["java/lang/System"]
+    private val exitMethod = systemClass.getMethod("exit", "(I)V")
 
-    val exceptionClass = cm["org/jetbrains/research/kex/asm/transform/SystemExitCallException"]
-    val exceptionConstructor = exceptionClass.getMethod("<init>", "(I)V")
+    private val exceptionClass = cm["org/jetbrains/research/kex/asm/transform/SystemExitCallException"]
+    private val exceptionConstructor = exceptionClass.getMethod("<init>", "(I)V")
 
     override fun cleanup() {}
 

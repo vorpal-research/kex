@@ -20,11 +20,11 @@ class FieldStorePredicate(
     override fun print() = "*($field) = $value"
 
     override fun <T : Transformer<T>> accept(t: Transformer<T>): Predicate {
-        val tfield = t.transform(field)
-        val tvalue = t.transform(value)
+        val tField = t.transform(field)
+        val tValue = t.transform(value)
         return when {
-            tfield == field && tvalue == value -> this
-            else -> predicate(type, location) { tfield.store(tvalue) }
+            tField == field && tValue == value -> this
+            else -> predicate(type, location) { tField.store(tValue) }
         }
     }
 

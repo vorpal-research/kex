@@ -1,9 +1,9 @@
 package org.jetbrains.research.kex.trace.runner
 
-import org.jetbrains.research.kthelper.logging.log
 import org.jetbrains.research.kex.random.GenerationException
 import org.jetbrains.research.kex.random.Randomizer
 import org.jetbrains.research.kex.util.isStatic
+import org.jetbrains.research.kthelper.logging.log
 import java.lang.reflect.Constructor
 import java.lang.reflect.Method
 import org.jetbrains.research.kfg.ir.Method as KfgMethod
@@ -22,7 +22,7 @@ fun Randomizer.generate(klass: Class<*>, method: Method): Pair<Any?, Array<Any?>
 }
 
 fun Randomizer.generate(method: Constructor<*>): Array<Any?>? = try {
-   method.genericParameterTypes.map { next(it) }.toTypedArray()
+    method.genericParameterTypes.map { next(it) }.toTypedArray()
 } catch (e: GenerationException) {
     log.debug("Cannot invoke $method")
     log.debug("Cause: ${e.message}")
@@ -30,8 +30,8 @@ fun Randomizer.generate(method: Constructor<*>): Array<Any?>? = try {
 }
 
 
-open class RandomRunner(method: KfgMethod, loader: ClassLoader, val random: Randomizer)
-    : AbstractRunner(method, loader) {
+open class RandomRunner(method: KfgMethod, loader: ClassLoader, val random: Randomizer) :
+    AbstractRunner(method, loader) {
 
     open fun run(): InvocationResult? {
         val (instance, args) = when {
@@ -49,10 +49,10 @@ open class RandomRunner(method: KfgMethod, loader: ClassLoader, val random: Rand
     }
 }
 
-abstract class TracingRandomRunner<T>(method: KfgMethod, loader: ClassLoader, val random: Randomizer)
-    : TracingAbstractRunner<T>(method, loader) {
+abstract class TracingRandomRunner<T>(method: KfgMethod, loader: ClassLoader, val random: Randomizer) :
+    TracingAbstractRunner<T>(method, loader) {
 
-    open fun run() : T? {
+    open fun run(): T? {
         val (instance, args) = when {
             method.isConstructor -> null to random.generate(javaConstructor)
             else -> random.generate(javaClass, javaMethod)
