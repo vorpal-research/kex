@@ -37,7 +37,7 @@ val TypeFactory.arrayListType get() = cm.arrayListClass.type
 
 fun InstructionFactory.wrapValue(value: Value): Instruction {
     val wrapperType = cm.type.getWrapper(value.type as PrimaryType) as ClassType
-    val wrapperClass = wrapperType.`class`
+    val wrapperClass = wrapperType.klass
     val valueOfMethod = wrapperClass.getMethod("valueOf", MethodDesc(arrayOf(value.type), wrapperType))
     return getCall(CallOpcode.Static(), valueOfMethod, wrapperClass, arrayOf(value), true)
 }

@@ -137,11 +137,11 @@ class SymbolicTraceBuilder(val ctx: ExecutionContext) : SymbolicState, Instructi
     infix fun Method.overrides(other: Method): Boolean = when {
         this == other -> true
         other.isFinal -> false
-        this.`class` !is ConcreteClass -> false
-        other.`class` !is ConcreteClass -> false
+        this.klass !is ConcreteClass -> false
+        other.klass !is ConcreteClass -> false
         this.name != other.name -> false
         this.desc != other.desc -> false
-        !this.`class`.isInheritorOf(other.`class`) -> false
+        !this.klass.isInheritorOf(other.klass) -> false
         else -> true
     }
 
@@ -357,7 +357,7 @@ class SymbolicTraceBuilder(val ctx: ExecutionContext) : SymbolicState, Instructi
         }
 
         val predicate = state(inst.location) {
-            val actualCallee = termCallee ?: `class`(calledMethod.`class`)
+            val actualCallee = termCallee ?: `class`(calledMethod.klass)
             when {
                 termReturn != null -> termReturn equality actualCallee.call(calledMethod, termArguments)
                 else -> call(actualCallee.call(calledMethod, termArguments))
@@ -494,7 +494,7 @@ class SymbolicTraceBuilder(val ctx: ExecutionContext) : SymbolicState, Instructi
         termOwner?.apply { concreteValues[this] = concreteOwner.descriptor }
 
         val predicate = state(kfgValue.location) {
-            val actualOwner = termOwner ?: `class`(kfgField.`class`)
+            val actualOwner = termOwner ?: `class`(kfgField.klass)
             termValue equality actualOwner.field(kfgField.type.kexType, kfgField.name)
         }
         predicates[predicate] = kfgValue
@@ -532,7 +532,7 @@ class SymbolicTraceBuilder(val ctx: ExecutionContext) : SymbolicState, Instructi
         concreteValues[termValue] = concreteValue.descriptor
 
         val predicate = state(inst.location) {
-            val actualOwner = termOwner ?: `class`(kfgField.`class`)
+            val actualOwner = termOwner ?: `class`(kfgField.klass)
             actualOwner.field(kfgField.type.kexType, kfgField.name).store(termValue)
         }
         predicates[predicate] = inst

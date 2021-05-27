@@ -27,7 +27,7 @@ class SymbolicTraceCollector(
 
     override fun visit(method: Method) {
         if (!method.hasBody || method.isStaticInitializer) return
-        if (ignores.any { it.isParent(method.`class`.`package`) }) return
+        if (ignores.any { it.isParent(method.klass.pkg) }) return
 
         val methodEntryInstructions: List<Instruction> = buildList {
             traceCollector = getNewCollector()
@@ -57,13 +57,13 @@ class SymbolicTraceCollector(
             }
             val instance = when {
                 method.isStatic || method.isConstructor -> values.getNullConstant()
-                else -> values.getThis(method.`class`)
+                else -> values.getThis(method.klass)
             }
 
             +collectorClass.virtualCall(
                 entryMethod,
                 traceCollector,
-                method.`class`.fullname.asValue,
+                method.klass.fullName.asValue,
                 method.name.asValue,
                 stringArray,
                 method.returnType.asmDesc.asValue,
@@ -150,7 +150,7 @@ class SymbolicTraceCollector(
         )
 
         val calledMethod = inst.method
-        val klass = calledMethod.`class`
+        val klass = calledMethod.klass
 
         val instrumented = buildList<Instruction> {
             val arrayListKlass = cm.arrayListClass
@@ -191,7 +191,7 @@ class SymbolicTraceCollector(
 
             +collectorClass.virtualCall(
                 callMethod, traceCollector,
-                klass.fullname.asValue, callMethod.name.asValue, argTypesList, calledMethod.returnType.asmDesc.asValue,
+                klass.fullName.asValue, callMethod.name.asValue, argTypesList, calledMethod.returnType.asmDesc.asValue,
                 returnValue, callee, argumentList,
                 concreteReturnValue, concreteCallee, concreteArgumentsList
             )
@@ -284,7 +284,7 @@ class SymbolicTraceCollector(
         )
 
         val instrumented = buildList<Instruction> {
-            val fieldKlass = inst.field.`class`.fullname.asValue
+            val fieldKlass = inst.field.klass.fullName.asValue
             val fieldName = inst.field.name.asValue
             val fieldType = inst.field.type.asmDesc.asValue
             val (owner, concreteOwner) = when {
@@ -310,7 +310,7 @@ class SymbolicTraceCollector(
         )
 
         val instrumented = buildList<Instruction> {
-            val fieldKlass = inst.field.`class`.fullname.asValue
+            val fieldKlass = inst.field.klass.fullName.asValue
             val fieldName = inst.field.name.asValue
             val fieldType = inst.field.type.asmDesc.asValue
             val (owner, concreteOwner) = when {
