@@ -93,24 +93,24 @@ class SymbolicTraceBuilder(val ctx: ExecutionContext) : SymbolicState, Instructi
     private fun parseValue(valueName: String): Value {
         val st = currentMethod.slotTracker
         return st.getValue(valueName) ?: when {
-            valueName.matches(Regex("\\d+")) -> cm.value.getIntConstant(valueName.toInt())
-            valueName.matches(Regex("\\d+.\\d+")) -> cm.value.getDoubleConstant(valueName.toDouble())
-            valueName.matches(Regex("-\\d+")) -> cm.value.getIntConstant(valueName.toInt())
-            valueName.matches(Regex("-\\d+.\\d+")) -> cm.value.getDoubleConstant(valueName.toDouble())
-            valueName.matches(Regex("\".*\"")) -> cm.value.getStringConstant(
+            valueName.matches(Regex("\\d+")) -> cm.value.getInt(valueName.toInt())
+            valueName.matches(Regex("\\d+.\\d+")) -> cm.value.getDouble(valueName.toDouble())
+            valueName.matches(Regex("-\\d+")) -> cm.value.getInt(valueName.toInt())
+            valueName.matches(Regex("-\\d+.\\d+")) -> cm.value.getDouble(valueName.toDouble())
+            valueName.matches(Regex("\".*\"")) -> cm.value.getString(
                 valueName.substring(
                     1,
                     valueName.lastIndex
                 )
             )
-            valueName.matches(Regex("\"[\n\\s]*\"")) -> cm.value.getStringConstant(
+            valueName.matches(Regex("\"[\n\\s]*\"")) -> cm.value.getString(
                 valueName.substring(
                     1,
                     valueName.lastIndex
                 )
             )
-            valueName.matches(Regex(".*(/.*)+.class")) -> cm.value.getClassConstant("L${valueName.removeSuffix(".class")};")
-            valueName == "null" -> cm.value.getNullConstant()
+            valueName.matches(Regex(".*(/.*)+.class")) -> cm.value.getClass("L${valueName.removeSuffix(".class")};")
+            valueName == "null" -> cm.value.nullConstant
             else -> throw UnknownNameException(valueName)
         }
     }

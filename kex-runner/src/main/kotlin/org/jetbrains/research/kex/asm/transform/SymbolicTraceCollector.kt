@@ -3,7 +3,8 @@ package org.jetbrains.research.kex.asm.transform
 import org.jetbrains.research.kex.ExecutionContext
 import org.jetbrains.research.kex.trace.symbolic.InstructionTraceCollector
 import org.jetbrains.research.kex.trace.symbolic.TraceCollectorProxy
-import org.jetbrains.research.kex.util.*
+import org.jetbrains.research.kex.util.insertBefore
+import org.jetbrains.research.kex.util.wrapValue
 import org.jetbrains.research.kfg.Package
 import org.jetbrains.research.kfg.ir.Class
 import org.jetbrains.research.kfg.ir.Method
@@ -56,7 +57,7 @@ class SymbolicTraceCollector(
                 }
             }
             val instance = when {
-                method.isStatic || method.isConstructor -> values.getNullConstant()
+                method.isStatic || method.isConstructor -> values.nullConstant
                 else -> values.getThis(method.klass)
             }
 
@@ -182,10 +183,10 @@ class SymbolicTraceCollector(
 
             val (returnValue, concreteReturnValue) = when {
                 inst.isNameDefined -> "$inst".asValue to inst
-                else -> values.getNullConstant() to values.getNullConstant()
+                else -> values.nullConstant to values.nullConstant
             }
             val (callee, concreteCallee) = when {
-                inst.isStatic -> values.getNullConstant() to values.getNullConstant()
+                inst.isStatic -> values.nullConstant to values.nullConstant
                 else -> "${inst.callee}".asValue to inst.callee
             }
 
@@ -288,7 +289,7 @@ class SymbolicTraceCollector(
             val fieldName = inst.field.name.asValue
             val fieldType = inst.field.type.asmDesc.asValue
             val (owner, concreteOwner) = when {
-                inst.isStatic -> values.getNullConstant() to values.getNullConstant()
+                inst.isStatic -> values.nullConstant to values.nullConstant
                 else -> "${inst.owner}".asValue to inst.owner
             }
 
@@ -314,14 +315,14 @@ class SymbolicTraceCollector(
             val fieldName = inst.field.name.asValue
             val fieldType = inst.field.type.asmDesc.asValue
             val (owner, concreteOwner) = when {
-                inst.isStatic -> values.getNullConstant() to values.getNullConstant()
+                inst.isStatic -> values.nullConstant to values.nullConstant
                 else -> "${inst.owner}".asValue to inst.owner
             }
 
             +collectorClass.virtualCall(
                 fieldStoreMethod, traceCollector,
-                owner, fieldKlass, fieldName, fieldType, "$inst".asValue,
-                inst, concreteOwner
+                owner, fieldKlass, fieldName, fieldType, "${inst.value}".asValue,
+                inst.value, concreteOwner
             )
         }
         inst.insertBefore(instrumented)
@@ -429,7 +430,7 @@ class SymbolicTraceCollector(
         val instrumented = buildList<Instruction> {
             val (returnValue, concreteValue) = when {
                 inst.hasReturnValue -> "${inst.returnValue}".asValue to inst.returnValue
-                else -> values.getNullConstant() to values.getNullConstant()
+                else -> values.nullConstant to values.nullConstant
             }
 
             +collectorClass.virtualCall(
@@ -518,9 +519,9 @@ class SymbolicTraceCollector(
         CallOpcode.Virtual(), method, this, instance, args.toList().toTypedArray(), false
     )
 
-    private val Boolean.asValue get() = values.getBoolConstant(this)
-    private val Number.asValue get() = values.getNumberConstant(this)
-    private val String.asValue get() = values.getStringConstant(this)
+    private val Boolean.asValue get() = values.getBool(this)
+    private val Number.asValue get() = values.getNumber(this)
+    private val String.asValue get() = values.getString(this)
 
     private val Type.asArray get() = types.getArrayType(this)
 }
