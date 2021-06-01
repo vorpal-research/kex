@@ -5,10 +5,7 @@ import kotlinx.serialization.InternalSerializationApi
 import org.jetbrains.research.kex.asm.analysis.defect.CallCiteChecker
 import org.jetbrains.research.kex.asm.analysis.defect.DefectChecker
 import org.jetbrains.research.kex.asm.analysis.defect.DefectManager
-import org.jetbrains.research.kex.asm.analysis.testgen.DescriptorChecker
-import org.jetbrains.research.kex.asm.analysis.testgen.Failure
-import org.jetbrains.research.kex.asm.analysis.testgen.MethodChecker
-import org.jetbrains.research.kex.asm.analysis.testgen.RandomChecker
+import org.jetbrains.research.kex.asm.analysis.testgen.*
 import org.jetbrains.research.kex.asm.manager.CoverageCounter
 import org.jetbrains.research.kex.asm.state.PredicateStateAnalysis
 import org.jetbrains.research.kex.asm.transform.*
@@ -333,6 +330,9 @@ class Kex(args: Array<String>) {
             +SystemExitTransformer(originalContext.cm)
             +SymbolicTraceCollector(originalContext)
             +ClassWriter(originalContext, outputDir)
+        }
+        runPipeline(analysisContext) {
+            +SymbolicRandomChecker(analysisContext)
         }
     }
 

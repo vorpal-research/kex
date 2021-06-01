@@ -3,6 +3,7 @@ package org.jetbrains.research.kex.trace.symbolic
 import org.jetbrains.research.kfg.ir.value.instruction.Instruction
 
 interface InstructionTraceCollector {
+    val symbolicState: SymbolicState
     val trace: List<Instruction>
 
     fun methodEnter(
@@ -43,8 +44,7 @@ interface InstructionTraceCollector {
 
     fun branch(
         condition: String,
-        currentBlock: String,
-        concreteCondition: Any?
+        currentBlock: String
     )
 
     fun call(
@@ -72,11 +72,12 @@ interface InstructionTraceCollector {
         concreteException: Any?
     )
 
+    // can't receive concrete value of cmp result because there is not separate cmp instruction on bytecode level,
+    // it is combined with branch instruction
     fun cmp(
         value: String,
         lhv: String,
         rhv: String,
-        concreteValue: Any?,
         concreteLhv: Any?,
         concreteRhv: Any?
     )

@@ -4,6 +4,7 @@ package org.jetbrains.research.kex.trace.symbolic
 
 import org.jetbrains.research.kex.ExecutionContext
 import org.jetbrains.research.kex.ktype.kexType
+import org.jetbrains.research.kex.reanimator.descriptor.ConstantDescriptor
 import org.jetbrains.research.kex.reanimator.descriptor.Descriptor
 import org.jetbrains.research.kex.reanimator.descriptor.Object2DescriptorConverter
 import org.jetbrains.research.kex.state.PredicateState
@@ -14,6 +15,7 @@ import org.jetbrains.research.kex.state.predicate.state
 import org.jetbrains.research.kex.state.term.Term
 import org.jetbrains.research.kex.state.term.term
 import org.jetbrains.research.kex.trace.file.UnknownNameException
+import org.jetbrains.research.kex.util.apply
 import org.jetbrains.research.kfg.ir.BasicBlock
 import org.jetbrains.research.kfg.ir.ConcreteClass
 import org.jetbrains.research.kfg.ir.Method
@@ -49,6 +51,8 @@ class SymbolicTraceBuilder(val ctx: ExecutionContext) : SymbolicState, Instructi
     override val predicateMap: Map<Predicate, Instruction>
         get() = predicates
 
+    override val symbolicState: SymbolicState
+        get() = this
     override val trace: List<Instruction>
         get() = traceBuilder
 
@@ -132,6 +136,11 @@ class SymbolicTraceBuilder(val ctx: ExecutionContext) : SymbolicState, Instructi
         return v
     }
 
+    private fun Term.updateInfo(value: Value, concreteValue: Descriptor) {
+        ktassert(terms.getOrPut(this) { value } == value)
+        ktassert(concreteValues.getOrPut(this) { concreteValue } == concreteValue)
+    }
+
     private val Any?.descriptor get() = with(converter) { this@with.descriptor }
 
     infix fun Method.overrides(other: Method): Boolean = when {
@@ -194,13 +203,12 @@ class SymbolicTraceBuilder(val ctx: ExecutionContext) : SymbolicState, Instructi
         val termValue = mkNewValue(kfgValue)
         val termRef = mkValue(kfgRef)
         val termIndex = mkValue(kfgIndex)
-        terms[termValue] = kfgValue
-        terms[termRef] = kfgRef
-        terms[termIndex] = kfgIndex
 
+        terms[termValue] = kfgValue
         concreteValues[termValue] = concreteValue.descriptor
-        concreteValues[termRef] = concreteRef.descriptor
-        concreteValues[termIndex] = concreteIndex.descriptor
+
+        termRef.updateInfo(kfgRef, concreteRef.descriptor)
+        termIndex.updateInfo(kfgIndex, concreteIndex.descriptor)
 
         val predicate = state(kfgValue.location) {
             termValue equality termRef[termIndex].load()
@@ -228,13 +236,10 @@ class SymbolicTraceBuilder(val ctx: ExecutionContext) : SymbolicState, Instructi
         val termRef = mkValue(kfgRef)
         val termIndex = mkValue(kfgIndex)
         val termValue = mkValue(kfgValue)
-        terms[termRef] = kfgRef
-        terms[termIndex] = kfgIndex
-        terms[termValue] = kfgValue
 
-        concreteValues[termRef] = concreteRef.descriptor
-        concreteValues[termIndex] = concreteIndex.descriptor
-        concreteValues[termValue] = concreteValue.descriptor
+        termRef.updateInfo(kfgRef, concreteRef.descriptor)
+        termIndex.updateInfo(kfgIndex, concreteIndex.descriptor)
+        termValue.updateInfo(kfgValue, concreteValue.descriptor)
 
         val inst = currentMethod
             .flatten()
@@ -268,13 +273,12 @@ class SymbolicTraceBuilder(val ctx: ExecutionContext) : SymbolicState, Instructi
         val termValue = mkNewValue(kfgValue)
         val termLhv = mkValue(kfgLhv)
         val termRhv = mkValue(kfgRhv)
-        terms[termValue] = kfgValue
-        terms[termLhv] = kfgLhv
-        terms[termRhv] = kfgRhv
 
+        terms[termValue] = kfgValue
         concreteValues[termValue] = concreteValue.descriptor
-        concreteValues[termLhv] = concreteLhv.descriptor
-        concreteValues[termRhv] = concreteRhv.descriptor
+
+        termLhv.updateInfo(kfgLhv, concreteLhv.descriptor)
+        termRhv.updateInfo(kfgRhv, concreteRhv.descriptor)
 
         val predicate = state(kfgValue.location) {
             termValue equality termLhv.apply(cm.type, kfgValue.opcode, termRhv)
@@ -287,8 +291,7 @@ class SymbolicTraceBuilder(val ctx: ExecutionContext) : SymbolicState, Instructi
 
     override fun branch(
         condition: String,
-        currentBlock: String,
-        concreteCondition: Any?
+        currentBlock: String
     ) {
         checkCall()
 
@@ -298,10 +301,12 @@ class SymbolicTraceBuilder(val ctx: ExecutionContext) : SymbolicState, Instructi
         val inst = current.terminator as BranchInst
 
         val termCondition = mkValue(kfgCondition)
-        terms[termCondition] = kfgCondition
-
-        val booleanValue = concreteCondition as Boolean
-        concreteValues[termCondition] = booleanValue.descriptor
+//        terms[termCondition] = kfgCondition
+//
+//        val booleanValue = concreteCondition as Boolean
+//        concreteValues[termCondition] = booleanValue.descriptor
+        val booleanValue = (concreteValues[termCondition] as? ConstantDescriptor.Bool)?.value
+            ?: unreachable { log.error("Unknown boolean value in branch") }
 
         val predicate = path(inst.location) {
             termCondition equality booleanValue
@@ -344,16 +349,13 @@ class SymbolicTraceBuilder(val ctx: ExecutionContext) : SymbolicState, Instructi
         val termReturn = kfgReturn?.let { mkNewValue(it) }
         val termCallee = kfgCallee?.let { mkValue(it) }
         val termArguments = kfgArguments.map { mkValue(it) }
-        termReturn?.apply { terms[this] = kfgReturn }
-        termCallee?.apply { terms[this] = kfgCallee }
-        for ((tArg, kArg) in termArguments.zip(kfgArguments)) {
-            terms[tArg] = kArg
-        }
 
+        termReturn?.apply { terms[this] = kfgReturn }
         termReturn?.apply { concreteValues[this] = concreteReturn.descriptor }
-        termCallee?.apply { concreteValues[this] = concreteCallee.descriptor }
-        for ((arg, concrete) in termArguments.zip(concreteArguments)) {
-            concreteValues[arg] = concrete.descriptor
+
+        termCallee?.apply { this.updateInfo(kfgCallee, concreteCallee.descriptor) }
+        termArguments.withIndex().forEach { (index, term) ->
+            term.updateInfo(kfgArguments[index], concreteArguments[index].descriptor)
         }
 
         val predicate = state(inst.location) {
@@ -393,10 +395,11 @@ class SymbolicTraceBuilder(val ctx: ExecutionContext) : SymbolicState, Instructi
 
         val termValue = mkNewValue(kfgValue)
         val termOperand = mkValue(kfgOperand)
+
         terms[termValue] = kfgValue
-        terms[termOperand] = kfgOperand
         concreteValues[termValue] = concreteValue.descriptor
-        concreteValues[termOperand] = concreteOperand.descriptor
+
+        termOperand.updateInfo(kfgOperand, concreteOperand.descriptor)
 
         val predicate = state(kfgValue.location) {
             termValue equality (termOperand `as` kfgValue.type.kexType)
@@ -420,7 +423,6 @@ class SymbolicTraceBuilder(val ctx: ExecutionContext) : SymbolicState, Instructi
         value: String,
         lhv: String,
         rhv: String,
-        concreteValue: Any?,
         concreteLhv: Any?,
         concreteRhv: Any?
     ) {
@@ -434,13 +436,12 @@ class SymbolicTraceBuilder(val ctx: ExecutionContext) : SymbolicState, Instructi
         val termValue = mkNewValue(kfgValue)
         val termLhv = mkValue(kfgLhv)
         val termRhv = mkValue(kfgRhv)
-        terms[termValue] = kfgValue
-        terms[termLhv] = kfgLhv
-        terms[termRhv] = kfgRhv
 
-        concreteValues[termValue] = concreteValue.descriptor
-        concreteValues[termLhv] = concreteLhv.descriptor
-        concreteValues[termRhv] = concreteRhv.descriptor
+        terms[termValue] = kfgValue
+        concreteValues[termValue] = (concreteLhv as Number).apply(kfgValue.opcode, concreteRhv as Number).descriptor
+
+        termLhv.updateInfo(kfgLhv, concreteLhv.descriptor)
+        termRhv.updateInfo(kfgRhv, concreteRhv.descriptor)
 
         val predicate = state(kfgValue.location) {
             termValue equality termLhv.apply(kfgValue.opcode, termRhv)
@@ -487,11 +488,11 @@ class SymbolicTraceBuilder(val ctx: ExecutionContext) : SymbolicState, Instructi
 
         val termValue = mkNewValue(kfgValue)
         val termOwner = kfgOwner?.let { mkValue(it) }
-        terms[termValue] = kfgValue
-        termOwner?.apply { terms[this] = kfgOwner }
 
+        terms[termValue] = kfgValue
         concreteValues[termValue] = concreteValue.descriptor
-        termOwner?.apply { concreteValues[this] = concreteOwner.descriptor }
+
+        termOwner?.apply { this.updateInfo(kfgOwner, concreteOwner.descriptor) }
 
         val predicate = state(kfgValue.location) {
             val actualOwner = termOwner ?: `class`(kfgField.klass)
@@ -525,11 +526,9 @@ class SymbolicTraceBuilder(val ctx: ExecutionContext) : SymbolicState, Instructi
 
         val termOwner = kfgOwner?.let { mkValue(it) }
         val termValue = mkValue(kfgValue)
-        termOwner?.apply { terms[this] = kfgOwner }
-        terms[termValue] = kfgValue
 
-        termOwner?.apply { concreteValues[this] = concreteOwner.descriptor }
-        concreteValues[termValue] = concreteValue.descriptor
+        termOwner?.apply { this.updateInfo(kfgOwner, concreteOwner.descriptor) }
+        termValue.updateInfo(kfgValue, concreteValue.descriptor)
 
         val predicate = state(inst.location) {
             val actualOwner = termOwner ?: `class`(kfgField.klass)
@@ -555,8 +554,11 @@ class SymbolicTraceBuilder(val ctx: ExecutionContext) : SymbolicState, Instructi
 
         val termValue = mkNewValue(kfgValue)
         val termOperand = mkValue(kfgOperand)
+
+        terms[termValue] = kfgValue
         concreteValues[termValue] = concreteValue.descriptor
-        concreteValues[termOperand] = concreteOperand.descriptor
+
+        termOperand.updateInfo(kfgOperand, concreteOperand.descriptor)
 
         val predicate = state(kfgValue.location) {
             termValue equality (termOperand `is` kfgValue.targetType.kexType)
@@ -595,14 +597,12 @@ class SymbolicTraceBuilder(val ctx: ExecutionContext) : SymbolicState, Instructi
 
         val termValue = mkNewValue(kfgValue)
         val termDimensions = kfgDimensions.map { mkValue(it) }
-        terms[termValue] = kfgValue
-        for ((term, kfg) in termDimensions.zip(kfgDimensions)) {
-            terms[term] = kfg
-        }
 
+        terms[termValue] = kfgValue
         concreteValues[termValue] = concreteValue.descriptor
-        for ((term, any) in termDimensions.zip(concreteDimensions)) {
-            concreteValues[term] = any.descriptor
+
+        termDimensions.withIndex().forEach { (index, term) ->
+            term.updateInfo(kfgDimensions[index], concreteDimensions[index].descriptor)
         }
 
         val predicate = state(kfgValue.location) {
@@ -625,7 +625,6 @@ class SymbolicTraceBuilder(val ctx: ExecutionContext) : SymbolicState, Instructi
 
         val termValue = mkNewValue(kfgValue)
         terms[termValue] = kfgValue
-
         concreteValues[termValue] = concreteValue.descriptor
 
         val predicate = state(kfgValue.location) {
@@ -649,9 +648,9 @@ class SymbolicTraceBuilder(val ctx: ExecutionContext) : SymbolicState, Instructi
 
         val termValue = mkNewValue(kfgValue)
         val termIncoming = mkValue(kfgIncoming)
+
         terms[termValue] = kfgValue
         terms[termIncoming] = kfgIncoming
-
         concreteValues[termValue] = concreteValue.descriptor
 
         val predicate = state(kfgValue.location) {
@@ -701,10 +700,9 @@ class SymbolicTraceBuilder(val ctx: ExecutionContext) : SymbolicState, Instructi
 
         val kfgValue = parseValue(value)
         val termValue = mkValue(kfgValue)
-        terms[termValue] = kfgValue
 
         val intValue = concreteValue as Int
-        concreteValues[termValue] = intValue.descriptor
+        termValue.updateInfo(kfgValue, concreteValue.descriptor)
 
         val predicate = path(inst.location) {
             termValue equality intValue
@@ -729,10 +727,9 @@ class SymbolicTraceBuilder(val ctx: ExecutionContext) : SymbolicState, Instructi
 
         val kfgValue = parseValue(value)
         val termValue = mkValue(kfgValue)
-        terms[termValue] = kfgValue
 
         val intValue = concreteValue as Int
-        concreteValues[termValue] = intValue.descriptor
+        termValue.updateInfo(kfgValue, concreteValue.descriptor)
 
         val predicate = path(inst.location) {
             termValue equality intValue
@@ -757,8 +754,8 @@ class SymbolicTraceBuilder(val ctx: ExecutionContext) : SymbolicState, Instructi
 
         val kfgException = parseValue(exception)
         val termException = mkValue(kfgException)
-        terms[termException] = kfgException
-        concreteValues[termException] = concreteException.descriptor
+
+        termException.updateInfo(kfgException, concreteException.descriptor)
 
         val predicate = path(inst.location) {
             `throw`(termException)
@@ -784,11 +781,11 @@ class SymbolicTraceBuilder(val ctx: ExecutionContext) : SymbolicState, Instructi
 
         val termValue = mkNewValue(kfgValue)
         val termOperand = mkValue(kfgOperand)
-        terms[termValue] = kfgValue
-        terms[termOperand] = kfgOperand
 
+        terms[termValue] = kfgValue
         concreteValues[termValue] = concreteValue.descriptor
-        concreteValues[termOperand] = concreteOperand.descriptor
+
+        termOperand.updateInfo(kfgOperand, concreteOperand.descriptor)
 
         val predicate = state(kfgValue.location) {
             termValue equality termOperand.apply(kfgValue.opcode)

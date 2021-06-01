@@ -1,9 +1,28 @@
 package org.jetbrains.research.kex.trace.symbolic
 
 import org.jetbrains.research.kex.ExecutionContext
+import org.jetbrains.research.kex.reanimator.descriptor.Descriptor
+import org.jetbrains.research.kex.state.emptyState
+import org.jetbrains.research.kex.state.predicate.Predicate
+import org.jetbrains.research.kex.state.term.Term
+import org.jetbrains.research.kfg.ir.value.Value
 import org.jetbrains.research.kfg.ir.value.instruction.Instruction
 
 private class EmptyTraceCollector : InstructionTraceCollector {
+    class EmptyPathCondition: PathCondition {
+        override val path = emptyList<Clause>()
+
+    }
+
+    class EmptyState : SymbolicState {
+        override val state = emptyState()
+        override val path = EmptyPathCondition()
+        override val concreteValueMap = mapOf<Term, Descriptor>()
+        override val termMap = mapOf<Term, Value>()
+        override val predicateMap = mapOf<Predicate, Instruction>()
+    }
+
+    override val symbolicState = EmptyState()
     override val trace = emptyList<Instruction>()
     override fun methodEnter(
         className: String,
@@ -41,7 +60,7 @@ private class EmptyTraceCollector : InstructionTraceCollector {
         concreteRhv: Any?
     ) {}
 
-    override fun branch(condition: String, currentBlock: String, concreteCondition: Any?) {}
+    override fun branch(condition: String, currentBlock: String) {}
 
     override fun call(
         className: String,
@@ -64,7 +83,6 @@ private class EmptyTraceCollector : InstructionTraceCollector {
         value: String,
         lhv: String,
         rhv: String,
-        concreteValue: Any?,
         concreteLhv: Any?,
         concreteRhv: Any?
     ) {}

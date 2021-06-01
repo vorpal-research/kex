@@ -3,6 +3,7 @@ package org.jetbrains.research.kex.asm.transform
 import org.jetbrains.research.kex.ExecutionContext
 import org.jetbrains.research.kex.trace.symbolic.InstructionTraceCollector
 import org.jetbrains.research.kex.trace.symbolic.TraceCollectorProxy
+import org.jetbrains.research.kex.util.insertAfter
 import org.jetbrains.research.kex.util.insertBefore
 import org.jetbrains.research.kex.util.wrapValue
 import org.jetbrains.research.kfg.Package
@@ -13,6 +14,7 @@ import org.jetbrains.research.kfg.ir.value.Value
 import org.jetbrains.research.kfg.ir.value.instruction.*
 import org.jetbrains.research.kfg.type.Type
 import org.jetbrains.research.kfg.visitor.MethodVisitor
+import org.jetbrains.research.kthelper.collection.MutableBuilder
 import org.jetbrains.research.kthelper.collection.buildList
 
 class SymbolicTraceCollector(
@@ -87,10 +89,10 @@ class SymbolicTraceCollector(
             +collectorClass.virtualCall(
                 arrayLoadMethod, traceCollector,
                 "$inst".asValue, "${inst.arrayRef}".asValue, "${inst.index}".asValue,
-                inst, inst.arrayRef, inst.index
+                inst.wrapped(this), inst.arrayRef, inst.index.wrapped(this)
             )
         }
-        inst.insertBefore(instrumented)
+        inst.insertAfter(instrumented)
     }
 
     override fun visitArrayStoreInst(inst: ArrayStoreInst) {
@@ -104,10 +106,10 @@ class SymbolicTraceCollector(
             +collectorClass.virtualCall(
                 arrayStoreMethod, traceCollector,
                 "${inst.arrayRef}".asValue, "${inst.index}".asValue, "${inst.value}".asValue,
-                inst.arrayRef, inst.index, inst.value
+                inst.arrayRef, inst.index.wrapped(this), inst.value.wrapped(this)
             )
         }
-        inst.insertBefore(instrumented)
+        inst.insertAfter(instrumented)
     }
 
     override fun visitBinaryInst(inst: BinaryInst) {
@@ -121,22 +123,22 @@ class SymbolicTraceCollector(
             +collectorClass.virtualCall(
                 binaryMethod, traceCollector,
                 "$inst".asValue, "${inst.lhv}".asValue, "${inst.rhv}".asValue,
-                inst, inst.lhv, inst.rhv
+                inst.wrapped(this), inst.lhv.wrapped(this), inst.rhv.wrapped(this)
             )
         }
-        inst.insertBefore(instrumented)
+        inst.insertAfter(instrumented)
     }
 
     override fun visitBranchInst(inst: BranchInst) {
         val branchMethod = collectorClass.getMethod(
             "branch", types.voidType,
-            types.stringType, types.stringType, types.objectType
+            types.stringType, types.stringType
         )
 
         val instrumented = buildList<Instruction> {
             +collectorClass.virtualCall(
                 branchMethod, traceCollector,
-                "${inst.cond}".asValue, "${inst.parent.name}".asValue, inst.cond
+                "${inst.cond}".asValue, "${inst.parent.name}".asValue
             )
         }
         inst.insertBefore(instrumented)
@@ -155,10 +157,12 @@ class SymbolicTraceCollector(
 
         val instrumented = buildList<Instruction> {
             val arrayListKlass = cm.arrayListClass
+            val initMethod = arrayListKlass.getMethod("<init>", types.voidType)
             val addMethod = arrayListKlass.getMethod("add", types.boolType, types.objectType)
 
             val argTypesList = instructions.getNew(types.arrayListType)
             +argTypesList
+            +arrayListKlass.specialCall(initMethod, argTypesList)
             for (arg in calledMethod.argTypes) {
                 +arrayListKlass.virtualCall(
                     addMethod, argTypesList, arg.asmDesc.asValue
@@ -167,6 +171,7 @@ class SymbolicTraceCollector(
 
             val argumentList = instructions.getNew(types.arrayListType)
             +argumentList
+            +arrayListKlass.specialCall(initMethod, argumentList)
             for (arg in inst.args) {
                 +arrayListKlass.virtualCall(
                     addMethod, argumentList, "$arg".asValue
@@ -175,14 +180,15 @@ class SymbolicTraceCollector(
 
             val concreteArgumentsList = instructions.getNew(types.arrayListType)
             +concreteArgumentsList
+            +arrayListKlass.specialCall(initMethod, concreteArgumentsList)
             for (arg in inst.args) {
                 +arrayListKlass.virtualCall(
-                    addMethod, concreteArgumentsList, arg
+                    addMethod, concreteArgumentsList, arg.wrapped(this)
                 )
             }
 
             val (returnValue, concreteReturnValue) = when {
-                inst.isNameDefined -> "$inst".asValue to inst
+                inst.isNameDefined -> "$inst".asValue to inst.wrapped(this)
                 else -> values.nullConstant to values.nullConstant
             }
             val (callee, concreteCallee) = when {
@@ -197,7 +203,7 @@ class SymbolicTraceCollector(
                 concreteReturnValue, concreteCallee, concreteArgumentsList
             )
         }
-        inst.insertBefore(instrumented)
+        inst.insertAfter(instrumented)
     }
 
     override fun visitCastInst(inst: CastInst) {
@@ -210,10 +216,10 @@ class SymbolicTraceCollector(
             +collectorClass.virtualCall(
                 castMethod, traceCollector,
                 "$inst".asValue, "${inst.operand}".asValue,
-                inst, inst.operand
+                inst.wrapped(this), inst.operand.wrapped(this)
             )
         }
-        inst.insertBefore(instrumented)
+        inst.insertAfter(instrumented)
     }
 
     override fun visitCatchInst(inst: CatchInst) {
@@ -228,24 +234,24 @@ class SymbolicTraceCollector(
                 "$inst".asValue, inst
             )
         }
-        inst.insertBefore(instrumented)
+        inst.insertAfter(instrumented)
     }
 
     override fun visitCmpInst(inst: CmpInst) {
         val cmpMethod = collectorClass.getMethod(
             "cmp", types.voidType,
             types.stringType, types.stringType, types.stringType,
-            types.objectType, types.objectType, types.objectType
+            types.objectType, types.objectType
         )
 
         val instrumented = buildList<Instruction> {
             +collectorClass.virtualCall(
                 cmpMethod, traceCollector,
                 "$inst".asValue, "${inst.lhv}".asValue, "${inst.rhv}".asValue,
-                inst, inst.lhv, inst.rhv
+                inst.lhv.wrapped(this), inst.rhv.wrapped(this)
             )
         }
-        inst.insertBefore(instrumented)
+        inst.insertAfter(instrumented)
     }
 
     override fun visitEnterMonitorInst(inst: EnterMonitorInst) {
@@ -259,7 +265,7 @@ class SymbolicTraceCollector(
                 "${inst.owner}".asValue, inst.owner
             )
         }
-        inst.insertBefore(instrumented)
+        inst.insertAfter(instrumented)
     }
 
     override fun visitExitMonitorInst(inst: ExitMonitorInst) {
@@ -273,7 +279,7 @@ class SymbolicTraceCollector(
                 "${inst.owner}".asValue, inst.owner
             )
         }
-        inst.insertBefore(instrumented)
+        inst.insertAfter(instrumented)
     }
 
     override fun visitFieldLoadInst(inst: FieldLoadInst) {
@@ -296,10 +302,10 @@ class SymbolicTraceCollector(
             +collectorClass.virtualCall(
                 fieldLoadMethod, traceCollector,
                 "$inst".asValue, owner, fieldKlass, fieldName, fieldType,
-                inst, concreteOwner
+                inst.wrapped(this), concreteOwner.wrapped(this)
             )
         }
-        inst.insertBefore(instrumented)
+        inst.insertAfter(instrumented)
     }
 
     override fun visitFieldStoreInst(inst: FieldStoreInst) {
@@ -322,10 +328,10 @@ class SymbolicTraceCollector(
             +collectorClass.virtualCall(
                 fieldStoreMethod, traceCollector,
                 owner, fieldKlass, fieldName, fieldType, "${inst.value}".asValue,
-                inst.value, concreteOwner
+                inst.value.wrapped(this), concreteOwner
             )
         }
-        inst.insertBefore(instrumented)
+        inst.insertAfter(instrumented)
     }
 
     override fun visitInstanceOfInst(inst: InstanceOfInst) {
@@ -342,7 +348,7 @@ class SymbolicTraceCollector(
                 inst, inst.operand
             )
         }
-        inst.insertBefore(instrumented)
+        inst.insertAfter(instrumented)
     }
 
     override fun visitJumpInst(inst: JumpInst) {
@@ -369,9 +375,11 @@ class SymbolicTraceCollector(
 
         val instrumented = buildList<Instruction> {
             val arrayListKlass = cm.arrayListClass
+            val initMethod = arrayListKlass.getMethod("<init>", types.voidType)
             val addMethod = arrayListKlass.getMethod("add", types.boolType, types.objectType)
             val dimensions = instructions.getNew(types.arrayListType)
             +dimensions
+            +arrayListKlass.specialCall(initMethod, dimensions)
             for (dimension in inst.dimensions) {
                 +arrayListKlass.virtualCall(
                     addMethod, dimensions, "$dimension".asValue
@@ -380,9 +388,10 @@ class SymbolicTraceCollector(
 
             val concreteDimensions = instructions.getNew(types.arrayListType)
             +concreteDimensions
+            +arrayListKlass.specialCall(initMethod, concreteDimensions)
             for (dimension in inst.dimensions) {
                 +arrayListKlass.virtualCall(
-                    addMethod, concreteDimensions, dimension
+                    addMethod, concreteDimensions, dimension.wrapped(this)
                 )
             }
 
@@ -392,7 +401,7 @@ class SymbolicTraceCollector(
                 inst, concreteDimensions
             )
         }
-        inst.insertBefore(instrumented)
+        inst.insertAfter(instrumented)
     }
 
     override fun visitNewInst(inst: NewInst) {
@@ -405,7 +414,7 @@ class SymbolicTraceCollector(
                 newMethod, traceCollector, "$inst".asValue, inst
             )
         }
-        inst.insertBefore(instrumented)
+        inst.insertAfter(instrumented)
     }
 
     override fun visitPhiInst(inst: PhiInst) {
@@ -415,10 +424,10 @@ class SymbolicTraceCollector(
 
         val instrumented = buildList<Instruction> {
             +collectorClass.virtualCall(
-                phiMethod, traceCollector, "$inst".asValue, inst
+                phiMethod, traceCollector, "$inst".asValue, inst.wrapped(this)
             )
         }
-        inst.insertBefore(instrumented)
+        inst.insertAfter(instrumented)
     }
 
     override fun visitReturnInst(inst: ReturnInst) {
@@ -435,7 +444,7 @@ class SymbolicTraceCollector(
 
             +collectorClass.virtualCall(
                 returnMethod, traceCollector,
-                returnValue, "${inst.parent.name}".asValue, concreteValue
+                returnValue, "${inst.parent.name}".asValue, concreteValue.wrapped(this)
             )
         }
         inst.insertBefore(instrumented)
@@ -450,7 +459,7 @@ class SymbolicTraceCollector(
         val instrumented = buildList<Instruction> {
             +collectorClass.virtualCall(
                 switchMethod, traceCollector,
-                "${inst.key}".asValue, "${inst.parent.name}".asValue, inst.key
+                "${inst.key}".asValue, "${inst.parent.name}".asValue, inst.key.wrapped(this)
             )
         }
         inst.insertBefore(instrumented)
@@ -465,7 +474,7 @@ class SymbolicTraceCollector(
         val instrumented = buildList<Instruction> {
             +collectorClass.virtualCall(
                 tableSwitchMethod, traceCollector,
-                "${inst.index}".asValue, "${inst.parent.name}".asValue, inst.index
+                "${inst.index}".asValue, "${inst.parent.name}".asValue, inst.index.wrapped(this)
             )
         }
         inst.insertBefore(instrumented)
@@ -497,10 +506,10 @@ class SymbolicTraceCollector(
             +collectorClass.virtualCall(
                 unaryMethod, traceCollector,
                 "$inst".asValue, "${inst.operand}".asValue,
-                inst, inst.operand
+                inst.wrapped(this), inst.operand.wrapped(this)
             )
         }
-        inst.insertBefore(instrumented)
+        inst.insertAfter(instrumented)
     }
 
 
@@ -519,9 +528,24 @@ class SymbolicTraceCollector(
         CallOpcode.Virtual(), method, this, instance, args.toList().toTypedArray(), false
     )
 
+    private fun Class.specialCall(
+        method: Method,
+        instance: Value,
+        vararg args: Value
+    ) = instructions.getCall(
+        CallOpcode.Special(), method, this, instance, args.toList().toTypedArray(), false
+    )
+
     private val Boolean.asValue get() = values.getBool(this)
     private val Number.asValue get() = values.getNumber(this)
     private val String.asValue get() = values.getString(this)
 
     private val Type.asArray get() = types.getArrayType(this)
+
+    private fun Value.wrapped(list: MutableBuilder<Instruction>): Value = when {
+        this.type.isPrimary -> instructions.wrapValue(this).also {
+            list.inner += it
+        }
+        else -> this
+    }
 }
