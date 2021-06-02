@@ -61,6 +61,12 @@ object PredicateFactory {
 
     fun getThrow(throwable: Term, type: PredicateType = PredicateType.State(), location: Location = Location()) =
             ThrowPredicate(throwable, type, location)
+
+    fun getEnterMonitor(monitor: Term, type: PredicateType = PredicateType.State(), location: Location = Location()) =
+        EnterMonitorPredicate(monitor, type, location)
+
+    fun getExitMonitor(monitor: Term, type: PredicateType = PredicateType.State(), location: Location = Location()) =
+        ExitMonitorPredicate(monitor, type, location)
 }
 
 abstract class PredicateBuilder : TermBuilder() {
@@ -88,6 +94,9 @@ abstract class PredicateBuilder : TermBuilder() {
 
     fun catch(throwable: Term) = pf.getCatch(throwable, this@PredicateBuilder.type, location)
     fun `throw`(throwable: Term) = pf.getThrow(throwable, this@PredicateBuilder.type, location)
+
+    fun enterMonitor(monitor: Term): Predicate = pf.getEnterMonitor(monitor, this@PredicateBuilder.type, location)
+    fun exitMonitor(monitor: Term): Predicate = pf.getExitMonitor(monitor, this@PredicateBuilder.type, location)
 
     @Suppress("FunctionName")
     infix fun Term.`!in`(cases: List<Term>) = pf.getDefaultSwitchPredicate(this, cases, this@PredicateBuilder.type, location)

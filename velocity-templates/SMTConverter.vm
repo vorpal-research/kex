@@ -123,7 +123,7 @@ class ${solver}Converter(val tf: TypeFactory) : ${solver}SMTConverter() {
         return res
     }
 
-#set($predicates = ["ArrayInitializer", "ArrayStore", "Call", "Catch", "DefaultSwitch", "Inequality", "Equality", "FieldInitializer", "FieldStore", "NewArray", "New", "Throw"])
+#set($predicates = ["ArrayInitializer", "ArrayStore", "Call", "Catch", "DefaultSwitch", "Inequality", "EnterMonitor", "Equality", "ExitMonitor", "FieldInitializer", "FieldStore", "NewArray", "New", "Throw"])
     fun convert(predicate: Predicate, ef: $factory, ctx: ${solver}Context): Bool_ = when (predicate) {
 #foreach($predicate in $predicates)
         is ${predicate}Predicate -> convert(predicate, ef, ctx)
@@ -150,6 +150,8 @@ class ${solver}Converter(val tf: TypeFactory) : ${solver}SMTConverter() {
     fun convert(call: CallPredicate, ef: $factory, ctx: ${solver}Context): Bool_ = ef.makeTrue()
     fun convert(catch: CatchPredicate, ef: $factory, ctx: ${solver}Context): Bool_ = ef.makeTrue()
     fun convert(`throw`: ThrowPredicate, ef: $factory, ctx: ${solver}Context): Bool_ = ef.makeTrue()
+    fun convert(monitor: EnterMonitorPredicate, ef: $factory, ctx: ${solver}Context): Bool_ = ef.makeTrue()
+    fun convert(monitor: ExitMonitorPredicate, ef: $factory, ctx: ${solver}Context): Bool_ = ef.makeTrue()
 
     fun convert(defaultswitch: DefaultSwitchPredicate, ef: $factory, ctx: ${solver}Context): Bool_ {
         var res = ef.makeTrue()

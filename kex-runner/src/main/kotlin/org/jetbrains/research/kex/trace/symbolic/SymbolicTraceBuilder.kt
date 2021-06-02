@@ -41,6 +41,9 @@ class SymbolicPathCondition : PathCondition {
     }
 }
 
+/**
+ * Class that collects the symbolic state of the program during the execution
+ */
 class SymbolicTraceBuilder(val ctx: ExecutionContext) : SymbolicState, InstructionTraceCollector {
     /**
      * required fields
@@ -283,11 +286,26 @@ class SymbolicTraceBuilder(val ctx: ExecutionContext) : SymbolicState, Instructi
     }
 
     @Suppress("UNUSED_PARAMETER")
+    /**
+     * used to prepare StateBuilder to instruction processing
+     */
     private fun preProcess(instruction: Instruction) {
         checkCall()
     }
 
-    private fun postProcess(instruction: Instruction) {
+    /**
+     * used to save all the necessary information after instruction processing
+     *
+     * used everywhere except: call, jump, return
+     * for more information @see(SymbolicTraceBuilder.call), @see(SymbolicTraceBuilder.jump), @see(SymbolicTraceBuilder.ret)
+     */
+    private fun postProcess(instruction: Instruction, predicate: Predicate) {
+        predicates[predicate] = instruction
+        builder += predicate
+
+        previousBlock = instruction.parent
+
+        traceBuilder += instruction
         updateCatches(instruction)
     }
 
@@ -333,11 +351,8 @@ class SymbolicTraceBuilder(val ctx: ExecutionContext) : SymbolicState, Instructi
         val predicate = state(kfgValue.location) {
             termValue equality termRef[termIndex].load()
         }
-        predicates[predicate] = kfgValue
-        builder += predicate
 
-        traceBuilder += kfgValue
-        postProcess(kfgValue)
+        postProcess(kfgValue, predicate)
     }
 
     override fun arrayStore(
@@ -367,11 +382,8 @@ class SymbolicTraceBuilder(val ctx: ExecutionContext) : SymbolicState, Instructi
         val predicate = state(instruction.location) {
             termRef[termIndex].store(termValue)
         }
-        predicates[predicate] = instruction
-        builder += predicate
 
-        traceBuilder += instruction
-        updateCatches(instruction)
+        postProcess(instruction, predicate)
     }
 
     override fun binary(
@@ -401,11 +413,8 @@ class SymbolicTraceBuilder(val ctx: ExecutionContext) : SymbolicState, Instructi
         val predicate = state(kfgValue.location) {
             termValue equality termLhv.apply(cm.type, kfgValue.opcode, termRhv)
         }
-        predicates[predicate] = kfgValue
-        builder += predicate
 
-        traceBuilder += kfgValue
-        postProcess(kfgValue)
+        postProcess(kfgValue, predicate)
     }
 
     override fun branch(
@@ -423,13 +432,8 @@ class SymbolicTraceBuilder(val ctx: ExecutionContext) : SymbolicState, Instructi
         val predicate = path(instruction.location) {
             termCondition equality booleanValue
         }
-        predicates[predicate] = instruction
-        builder += predicate
 
-        previousBlock = instruction.parent
-
-        traceBuilder += instruction
-        postProcess(instruction)
+        postProcess(instruction, predicate)
     }
 
     override fun call(
@@ -482,8 +486,11 @@ class SymbolicTraceBuilder(val ctx: ExecutionContext) : SymbolicState, Instructi
             predicate
         )
 
+        /**
+         * we do not use 'postProcess' here, because actual call predicate may not end up in the final state
+         */
         traceBuilder += instruction
-        postProcess(instruction)
+        updateCatches(instruction)
     }
 
     override fun cast(
@@ -507,11 +514,8 @@ class SymbolicTraceBuilder(val ctx: ExecutionContext) : SymbolicState, Instructi
         val predicate = state(kfgValue.location) {
             termValue equality (termOperand `as` kfgValue.type.kexType)
         }
-        predicates[predicate] = kfgValue
-        builder += predicate
 
-        traceBuilder += kfgValue
-        postProcess(kfgValue)
+        postProcess(kfgValue, predicate)
     }
 
     override fun catch(
@@ -531,12 +535,9 @@ class SymbolicTraceBuilder(val ctx: ExecutionContext) : SymbolicState, Instructi
         val predicate = path(kfgException.location) {
             catch(termException)
         }
-        predicates[predicate] = kfgException
-        builder += predicate
 
-        traceBuilder += kfgException
         thrownException = null
-        postProcess(kfgException)
+        postProcess(kfgException, predicate)
     }
 
     override fun cmp(
@@ -565,11 +566,8 @@ class SymbolicTraceBuilder(val ctx: ExecutionContext) : SymbolicState, Instructi
         val predicate = state(kfgValue.location) {
             termValue equality termLhv.apply(kfgValue.opcode, termRhv)
         }
-        predicates[predicate] = kfgValue
-        builder += predicate
 
-        traceBuilder += kfgValue
-        postProcess(kfgValue)
+        postProcess(kfgValue, predicate)
     }
 
     override fun enterMonitor(
@@ -580,8 +578,15 @@ class SymbolicTraceBuilder(val ctx: ExecutionContext) : SymbolicState, Instructi
         val instruction = parseValue(inst) as EnterMonitorInst
         preProcess(instruction)
 
-        traceBuilder += instruction
-        postProcess(instruction)
+        val kfgMonitor = parseValue(operand)
+        val termMonitor = mkValue(kfgMonitor)
+        termMonitor.updateInfo(kfgMonitor, concreteOperand.getAsDescriptor(termMonitor.type))
+
+        val predicate = state(instruction.location) {
+            enterMonitor(termMonitor)
+        }
+
+        postProcess(instruction, predicate)
     }
 
     override fun exitMonitor(
@@ -592,8 +597,15 @@ class SymbolicTraceBuilder(val ctx: ExecutionContext) : SymbolicState, Instructi
         val instruction = parseValue(inst) as EnterMonitorInst
         preProcess(instruction)
 
-        traceBuilder += instruction
-        postProcess(instruction)
+        val kfgMonitor = parseValue(operand)
+        val termMonitor = mkValue(kfgMonitor)
+        termMonitor.updateInfo(kfgMonitor, concreteOperand.getAsDescriptor(termMonitor.type))
+
+        val predicate = state(instruction.location) {
+            exitMonitor(termMonitor)
+        }
+
+        postProcess(instruction, predicate)
     }
 
     override fun fieldLoad(
@@ -623,11 +635,8 @@ class SymbolicTraceBuilder(val ctx: ExecutionContext) : SymbolicState, Instructi
             val actualOwner = termOwner ?: `class`(kfgField.klass)
             termValue equality actualOwner.field(kfgField.type.kexType, kfgField.name)
         }
-        predicates[predicate] = kfgValue
-        builder += predicate
 
-        traceBuilder += kfgValue
-        postProcess(kfgValue)
+        postProcess(kfgValue, predicate)
     }
 
     override fun fieldStore(
@@ -658,11 +667,8 @@ class SymbolicTraceBuilder(val ctx: ExecutionContext) : SymbolicState, Instructi
             val actualOwner = termOwner ?: `class`(kfgField.klass)
             actualOwner.field(kfgField.type.kexType, kfgField.name).store(termValue)
         }
-        predicates[predicate] = instruction
-        builder += predicate
 
-        traceBuilder += instruction
-        postProcess(instruction)
+        postProcess(instruction, predicate)
     }
 
     override fun instanceOf(
@@ -687,11 +693,8 @@ class SymbolicTraceBuilder(val ctx: ExecutionContext) : SymbolicState, Instructi
         val predicate = state(kfgValue.location) {
             termValue equality (termOperand `is` kfgValue.targetType.kexType)
         }
-        predicates[predicate] = kfgValue
-        builder += predicate
 
-        traceBuilder += kfgValue
-        postProcess(kfgValue)
+        postProcess(kfgValue, predicate)
     }
 
     override fun jump(
@@ -700,9 +703,12 @@ class SymbolicTraceBuilder(val ctx: ExecutionContext) : SymbolicState, Instructi
         val instruction = parseValue(inst) as JumpInst
         preProcess(instruction)
 
+        /**
+         * we do not use 'postProcess' here because jump instruction is not converted into any predicate
+         */
         previousBlock = instruction.parent
         traceBuilder += instruction
-        postProcess(instruction)
+        updateCatches(instruction)
     }
 
     override fun newArray(
@@ -729,11 +735,8 @@ class SymbolicTraceBuilder(val ctx: ExecutionContext) : SymbolicState, Instructi
         val predicate = state(kfgValue.location) {
             termValue.new(termDimensions)
         }
-        predicates[predicate] = kfgValue
-        builder += predicate
 
-        traceBuilder += kfgValue
-        postProcess(kfgValue)
+        postProcess(kfgValue, predicate)
     }
 
     override fun new(
@@ -748,11 +751,8 @@ class SymbolicTraceBuilder(val ctx: ExecutionContext) : SymbolicState, Instructi
         val predicate = state(kfgValue.location) {
             termValue.new()
         }
-        predicates[predicate] = kfgValue
-        builder += predicate
 
-        traceBuilder += kfgValue
-        postProcess(kfgValue)
+        postProcess(kfgValue, predicate)
     }
 
     override fun phi(
@@ -774,11 +774,8 @@ class SymbolicTraceBuilder(val ctx: ExecutionContext) : SymbolicState, Instructi
         val predicate = state(kfgValue.location) {
             termValue equality termIncoming
         }
-        predicates[predicate] = kfgValue
-        builder += predicate
 
-        traceBuilder += kfgValue
-        updateCatches(kfgValue)
+        postProcess(kfgValue, predicate)
     }
 
     override fun ret(
@@ -806,8 +803,11 @@ class SymbolicTraceBuilder(val ctx: ExecutionContext) : SymbolicState, Instructi
             builder += predicate
         }
 
+        /**
+         * we do not use 'postProcess' here because return inst is not always converted into predicate
+         */
         traceBuilder += instruction
-        postProcess(instruction)
+        updateCatches(instruction)
     }
 
     override fun switch(
@@ -827,12 +827,8 @@ class SymbolicTraceBuilder(val ctx: ExecutionContext) : SymbolicState, Instructi
         val predicate = path(instruction.location) {
             termValue equality intValue
         }
-        predicates[predicate] = instruction
-        builder += predicate
 
-        previousBlock = instruction.parent
-        traceBuilder += instruction
-        postProcess(instruction)
+        postProcess(instruction, predicate)
     }
 
     override fun tableSwitch(
@@ -852,12 +848,8 @@ class SymbolicTraceBuilder(val ctx: ExecutionContext) : SymbolicState, Instructi
         val predicate = path(instruction.location) {
             termValue equality intValue
         }
-        predicates[predicate] = instruction
-        builder += predicate
 
-        previousBlock = instruction.parent
-        traceBuilder += instruction
-        postProcess(instruction)
+        postProcess(instruction, predicate)
     }
 
     override fun throwing(
@@ -876,12 +868,9 @@ class SymbolicTraceBuilder(val ctx: ExecutionContext) : SymbolicState, Instructi
         val predicate = path(instruction.location) {
             `throw`(termException)
         }
-        predicates[predicate] = instruction
-        builder += predicate
-        previousBlock = instruction.parent
-        traceBuilder += instruction
+
         thrownException = termException
-        postProcess(instruction)
+        postProcess(instruction, predicate)
     }
 
     override fun unary(
@@ -906,10 +895,7 @@ class SymbolicTraceBuilder(val ctx: ExecutionContext) : SymbolicState, Instructi
         val predicate = state(kfgValue.location) {
             termValue equality termOperand.apply(kfgValue.opcode)
         }
-        predicates[predicate] = kfgValue
-        builder += predicate
 
-        traceBuilder += kfgValue
-        postProcess(kfgValue)
+        postProcess(kfgValue, predicate)
     }
 }
