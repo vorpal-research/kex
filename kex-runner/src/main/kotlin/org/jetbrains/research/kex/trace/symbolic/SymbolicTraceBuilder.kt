@@ -44,6 +44,9 @@ class SymbolicPathCondition : PathCondition {
 }
 
 class SymbolicTraceBuilder(val ctx: ExecutionContext) : SymbolicState, InstructionTraceCollector {
+    /**
+     * required fields
+     */
     override val state: PredicateState
         get() = builder.current
     override val path: PathCondition
@@ -60,6 +63,9 @@ class SymbolicTraceBuilder(val ctx: ExecutionContext) : SymbolicState, Instructi
     override val trace: List<Instruction>
         get() = traceBuilder
 
+    /**
+     * mutable backing fields for required fields
+     */
     private val cm get() = ctx.cm
     private val converter = Object2DescriptorConverter()
     private val builder = StateBuilder()
@@ -68,20 +74,45 @@ class SymbolicTraceBuilder(val ctx: ExecutionContext) : SymbolicState, Instructi
     private val concreteValues = mutableMapOf<Term, Descriptor>()
     private val terms = mutableMapOf<Term, Value>()
     private val predicates = mutableMapOf<Predicate, Instruction>()
-    private val methodStack = stackOf<Method>()
-    private val currentMethod: Method
-        get() = methodStack.peek()
-    private var counter = 0
-    private val frameMap = stackOf<MutableMap<Value, Term>>(mutableMapOf())
-    private val valueMap get() = frameMap.peek()
-    private val returnReceivers = stackOf<Term?>()
+
+    /**
+     * stack frame info for method
+     */
+    private val frames = stackOf<StackFrame>()
+//    private val methodStack = stackOf<Method>()
+//    private val frameMap = stackOf<MutableMap<Value, Term>>(mutableMapOf())
+//    private val returnReceivers = stackOf<Pair<Value, Term>?>()
+
+    private val nameGenerator = NameGenerator()
+    private val currentMethod get() = frames.peek().method
+    private val valueMap get() = frames.peek().valueMap
+
+    /**
+     * necessary runtime info
+     */
     private var lastCall: Call? = null
+    private var thrownException: Term? = null
     private lateinit var previousBlock: BasicBlock
 
-    data class Call(
+    private class StackFrame(
+        val method: Method,
+        val valueMap: MutableMap<Value, Term>,
+        val returnReceiver: Pair<Value, Term>?
+    )
+
+    private class NameGenerator {
+        private val names = mutableMapOf<String, Int>()
+        fun nextName(name: String): String {
+            val index = names.getOrPut(name) { 0 }
+            names[name] = index + 1
+            return "${name}_$index"
+        }
+    }
+
+    private data class Call(
         val call: CallInst,
         val method: Method,
-        val receiver: Value?,
+        val receiver: Pair<Value, Term>?,
         val params: Map<Value, Term>,
         val predicate: Predicate
     )
@@ -138,7 +169,7 @@ class SymbolicTraceBuilder(val ctx: ExecutionContext) : SymbolicState, Instructi
             is Argument -> arg(value)
             is Constant -> const(value)
             is ThisRef -> `this`(value.type.kexType)
-            else -> tf.getValue(value.type.kexType, "$value.${++counter}")
+            else -> tf.getValue(value.type.kexType, nameGenerator.nextName("${value.name}"))
         }
     }
 
@@ -177,7 +208,7 @@ class SymbolicTraceBuilder(val ctx: ExecutionContext) : SymbolicState, Instructi
 
     private fun Any?.getAsDescriptor(type: KexType) = converter.convert(this).unwrapped(type)
 
-    infix fun Method.overrides(other: Method): Boolean = when {
+    private infix fun Method.overrides(other: Method): Boolean = when {
         this == other -> true
         other.isFinal -> false
         this.klass !is ConcreteClass -> false
@@ -197,18 +228,16 @@ class SymbolicTraceBuilder(val ctx: ExecutionContext) : SymbolicState, Instructi
         args: List<Any?>
     ) = safeCall {
         val method = parseMethod(className, methodName, argTypes, retType)
+        frames.push(StackFrame(method, mutableMapOf(), lastCall?.receiver))
         if (lastCall != null) {
             val call = lastCall!!
             ktassert(call.method overrides method)
 
-            call.receiver?.run { returnReceivers.push(mkNewValue(this)) }
-            frameMap.push(mutableMapOf())
             for ((arg, value) in call.params) {
                 valueMap[arg] = value
             }
             lastCall = null
         }
-        methodStack.push(method)
     }
 
     private fun checkCall() = safeCall {
@@ -393,10 +422,10 @@ class SymbolicTraceBuilder(val ctx: ExecutionContext) : SymbolicState, Instructi
         lastCall = Call(
             instruction,
             calledMethod,
-            kfgReturn,
-            (kfgArguments.zip(termArguments) + listOfNotNull(
-                kfgReturn?.let { it to termReturn!! }
-            )).toMap(),
+            termReturn?.let { kfgReturn to it },
+            termArguments.withIndex().associate { (index, term) ->
+                ctx.values.getArgument(index, calledMethod, calledMethod.argTypes[index]) to term
+            },
             predicate
         )
 
@@ -444,7 +473,18 @@ class SymbolicTraceBuilder(val ctx: ExecutionContext) : SymbolicState, Instructi
         // todo
         val kfgException = parseValue(exception) as? CatchInst
             ?: unreachable { log.error("Value does not correspond to trace") }
+        val termException = thrownException ?: mkNewValue(kfgException)
+        terms[termException] = kfgException
+        concreteValues[termException] = concreteValues.getAsDescriptor(termException.type)
+
+        val predicate = path(kfgException.location) {
+            catch(termException)
+        }
+        predicates[predicate] = kfgException
+        builder += predicate
+
         traceBuilder += kfgException
+        thrownException = null
     }
 
     override fun cmp(
@@ -709,22 +749,21 @@ class SymbolicTraceBuilder(val ctx: ExecutionContext) : SymbolicState, Instructi
 
         val termReturn = kfgReturn?.let { mkValue(it) }
 
-        if (termReturn != null) {
-            val receiver = when {
-                returnReceivers.isNotEmpty() -> returnReceivers.pop()!!
-                else -> term { `return`(currentMethod) }
-            }
+        val stack = frames.pop()
+        val receiver = stack.returnReceiver
+        if (termReturn != null && receiver != null) {
+            val (kfgReceiver, termReceiver) = receiver
             val predicate = state(instruction.location) {
-                receiver equality termReturn
+                termReceiver equality termReturn
             }
-            concreteValues[receiver] = concreteValue.getAsDescriptor(receiver.type)
+            terms[termReceiver] = kfgReceiver
+            concreteValues[termReceiver] = concreteValue.getAsDescriptor(termReceiver.type)
 
             predicates[predicate] = instruction
             builder += predicate
         }
 
         traceBuilder += instruction
-        methodStack.pop()
     }
 
     override fun switch(
@@ -796,6 +835,7 @@ class SymbolicTraceBuilder(val ctx: ExecutionContext) : SymbolicState, Instructi
         builder += predicate
         previousBlock = instruction.parent
         traceBuilder += instruction
+        thrownException = termException
     }
 
     override fun unary(

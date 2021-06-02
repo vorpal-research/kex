@@ -25,8 +25,8 @@ abstract class KexTest {
     init {
         val rootDir = System.getProperty("root.dir")
         val version = System.getProperty("project.version")
-        kexConfig.initialize(RuntimeConfig, FileConfig("$rootDir/kex-test.ini"))
         kexConfig.initLog("$rootDir/kex-test.log")
+        kexConfig.initialize(RuntimeConfig, FileConfig("$rootDir/kex-test.ini"))
         RuntimeConfig.setValue("z3", "tacticsFile", "$rootDir/z3.tactics")
         RuntimeConfig.setValue("z3", "paramFile", "$rootDir/z3.params")
 

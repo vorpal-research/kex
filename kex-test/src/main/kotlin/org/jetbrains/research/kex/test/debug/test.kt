@@ -3,37 +3,23 @@
 package org.jetbrains.research.kex.test.debug
 
 class BasicTests {
-    companion object {
-        @JvmStatic
-        private var point = Point(0, 0)
-
-        @JvmStatic
-        fun setMyPoint(p: Point) {
-            point = p
+    fun entry(a: Int, b: Int, c: Int): Int {
+        val int = a + b + c
+        val res = try {
+            throwNpe(a + 1, b + 1, c + 1)
+        } catch (e: IllegalArgumentException) {
+            int
         }
+        return res
     }
 
-    class Point(val x: Int, val y: Int)
+    fun throwNpe(a: Int, b: Int, c: Int): Int = throwIse(a + 2, b + 2, c + 2)
 
-    fun test(a: ArrayList<Point>) {
-        if (a.size == 2) {
-            if (a[0].x == 10) {
-                if (a[1].y == 11) {
-                    error("a")
-                }
-            }
-        }
+    fun throwIse(a: Int, b: Int, c: Int): Int {
+        return throwIae(a + 3, b + 3, c + 3)
     }
-//
-//    fun testStr(c: Char) {
-//        if (c == "abcdef"[3]) {
-//            error("a")
-//        }
-//    }
 
-//    fun test(test: Point?) {
-//        if (point.x == 0 && point.y == 1) {
-//            kexAssert(test != null)
-//        }
-//    }
+    fun throwIae(a: Int, b: Int, c: Int): Int {
+        throw IllegalArgumentException()
+    }
 }

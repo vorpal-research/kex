@@ -21,3 +21,11 @@ interface SymbolicState {
     val termMap: Map<Term, Value>
     val predicateMap: Map<Predicate, Instruction>
 }
+
+internal class SymbolicStateImpl(
+    override val state: PredicateState,
+    override val path: PathCondition,
+    override val concreteValueMap: Map<Term, Descriptor>,
+    override val termMap: Map<Term, Value>,
+    override val predicateMap: Map<Predicate, Instruction>
+) : SymbolicState
