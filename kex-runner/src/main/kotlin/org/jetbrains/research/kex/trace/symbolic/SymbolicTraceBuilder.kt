@@ -14,15 +14,13 @@ import org.jetbrains.research.kex.state.term.Term
 import org.jetbrains.research.kex.state.term.term
 import org.jetbrains.research.kex.trace.file.UnknownNameException
 import org.jetbrains.research.kex.util.cmp
-import org.jetbrains.research.kfg.ir.BasicBlock
-import org.jetbrains.research.kfg.ir.ConcreteClass
-import org.jetbrains.research.kfg.ir.Method
-import org.jetbrains.research.kfg.ir.MethodDesc
+import org.jetbrains.research.kfg.ir.*
 import org.jetbrains.research.kfg.ir.value.Argument
 import org.jetbrains.research.kfg.ir.value.Constant
 import org.jetbrains.research.kfg.ir.value.ThisRef
 import org.jetbrains.research.kfg.ir.value.Value
 import org.jetbrains.research.kfg.ir.value.instruction.*
+import org.jetbrains.research.kfg.type.Type
 import org.jetbrains.research.kfg.type.parseDesc
 import org.jetbrains.research.kthelper.KtException
 import org.jetbrains.research.kthelper.`try`
@@ -78,27 +76,51 @@ class SymbolicTraceBuilder(val ctx: ExecutionContext) : SymbolicState, Instructi
     /**
      * stack frame info for method
      */
-    private val frames = stackOf<StackFrame>()
-//    private val methodStack = stackOf<Method>()
-//    private val frameMap = stackOf<MutableMap<Value, Term>>(mutableMapOf())
-//    private val returnReceivers = stackOf<Pair<Value, Term>?>()
+    private val frames = FrameStack()
 
     private val nameGenerator = NameGenerator()
-    private val currentMethod get() = frames.peek().method
-    private val valueMap get() = frames.peek().valueMap
+    private val currentFrame get() = frames.peek()
+    private val currentMethod get() = currentFrame.method
+    private val valueMap get() = currentFrame.valueMap
+
+    /**
+     * try-catch info
+     */
+    private val catchHandlers = stackOf<MutableMap<Class, Frame>>()
 
     /**
      * necessary runtime info
      */
     private var lastCall: Call? = null
     private var thrownException: Term? = null
-    private lateinit var previousBlock: BasicBlock
+    private var previousBlock: BasicBlock
+        get() = currentFrame.previousBlock
+        set(block) {
+           currentFrame.previousBlock = block
+        }
 
-    private class StackFrame(
+    private class FrameStack : Iterable<Frame> {
+        private val frames = stackOf<Frame>()
+
+        fun push(element: Frame) = frames.push(element)
+        fun pop(): Frame = frames.pop()
+        fun peek(): Frame = frames.peek()
+
+        override fun iterator() = frames.iterator()
+
+        fun isEmpty() = frames.isEmpty()
+        fun isNotEmpty() = frames.isNotEmpty()
+    }
+
+    private data class Frame(
         val method: Method,
         val valueMap: MutableMap<Value, Term>,
         val returnReceiver: Pair<Value, Term>?
-    )
+    ) {
+        val catchMap = mutableMapOf<Type, Map<Value, Term>>()
+        var previousBlock = method.entry
+
+    }
 
     private class NameGenerator {
         private val names = mutableMapOf<String, Int>()
@@ -206,6 +228,7 @@ class SymbolicTraceBuilder(val ctx: ExecutionContext) : SymbolicState, Instructi
         concreteValues.getOrPut(this) { concreteValue }
     }
 
+    private fun Any?.getAsDescriptor() = converter.convert(this)
     private fun Any?.getAsDescriptor(type: KexType) = converter.convert(this).unwrapped(type)
 
     private infix fun Method.overrides(other: Method): Boolean = when {
@@ -228,7 +251,7 @@ class SymbolicTraceBuilder(val ctx: ExecutionContext) : SymbolicState, Instructi
         args: List<Any?>
     ) = safeCall {
         val method = parseMethod(className, methodName, argTypes, retType)
-        frames.push(StackFrame(method, mutableMapOf(), lastCall?.receiver))
+        frames.push(Frame(method, mutableMapOf(), lastCall?.receiver))
         if (lastCall != null) {
             val call = lastCall!!
             ktassert(call.method overrides method)
@@ -248,6 +271,41 @@ class SymbolicTraceBuilder(val ctx: ExecutionContext) : SymbolicState, Instructi
         }
     }
 
+    private fun updateCatches(instruction: Instruction) {
+        val block = instruction.parent
+        val frame = currentFrame
+        val updatesValues = valueMap.toMap()
+        frame.catchMap.clear()
+        for (handler in block.handlers) {
+            val exception = handler.exception
+            frame.catchMap[exception] = updatesValues
+        }
+    }
+
+    @Suppress("UNUSED_PARAMETER")
+    private fun preProcess(instruction: Instruction) {
+        checkCall()
+    }
+
+    private fun postProcess(instruction: Instruction) {
+        updateCatches(instruction)
+    }
+
+    private fun restoreCatchFrame(exceptionType: Type) {
+        do {
+            val frame = currentFrame
+            val candidates = frame.catchMap.keys.filter { exceptionType.isSubtypeOf(it) }
+            val candidate = candidates.find { candidate -> candidates.all { candidate.isSubtypeOf(it) } }
+            if (candidate != null) {
+                valueMap.clear()
+                valueMap.putAll(frame.catchMap[candidate]!!)
+                return
+            }
+            frames.pop()
+        } while (frames.isNotEmpty())
+        unreachable<Unit> { log.error("Could not find a catch block for exception type $exceptionType") }
+    }
+
     override fun arrayLoad(
         value: String,
         arrayRef: String,
@@ -256,10 +314,9 @@ class SymbolicTraceBuilder(val ctx: ExecutionContext) : SymbolicState, Instructi
         concreteRef: Any?,
         concreteIndex: Any?
     ) = safeCall {
-        checkCall()
+        val kfgValue = parseValue(value) as ArrayLoadInst
+        preProcess(kfgValue)
 
-        val kfgValue = parseValue(value) as? ArrayLoadInst
-            ?: unreachable { log.error("Value does not correspond to trace") }
         val kfgRef = parseValue(arrayRef)
         val kfgIndex = parseValue(index)
 
@@ -280,6 +337,7 @@ class SymbolicTraceBuilder(val ctx: ExecutionContext) : SymbolicState, Instructi
         builder += predicate
 
         traceBuilder += kfgValue
+        postProcess(kfgValue)
     }
 
     override fun arrayStore(
@@ -291,10 +349,8 @@ class SymbolicTraceBuilder(val ctx: ExecutionContext) : SymbolicState, Instructi
         concreteIndex: Any?,
         concreteValue: Any?
     ) = safeCall {
-        checkCall()
-
-        val instruction = parseValue(inst) as? ArrayStoreInst
-            ?: unreachable { log.error("Value does not correspond to trace") }
+        val instruction = parseValue(inst) as ArrayStoreInst
+        preProcess(instruction)
 
         val kfgRef = parseValue(arrayRef)
         val kfgIndex = parseValue(index)
@@ -315,6 +371,7 @@ class SymbolicTraceBuilder(val ctx: ExecutionContext) : SymbolicState, Instructi
         builder += predicate
 
         traceBuilder += instruction
+        updateCatches(instruction)
     }
 
     override fun binary(
@@ -325,10 +382,9 @@ class SymbolicTraceBuilder(val ctx: ExecutionContext) : SymbolicState, Instructi
         concreteLhv: Any?,
         concreteRhv: Any?
     ) = safeCall {
-        checkCall()
+        val kfgValue = parseValue(value) as BinaryInst
+        preProcess(kfgValue)
 
-        val kfgValue = parseValue(value) as? BinaryInst
-            ?: unreachable { log.error("Value does not correspond to trace") }
         val kfgLhv = parseValue(lhv)
         val kfgRhv = parseValue(rhv)
 
@@ -349,15 +405,15 @@ class SymbolicTraceBuilder(val ctx: ExecutionContext) : SymbolicState, Instructi
         builder += predicate
 
         traceBuilder += kfgValue
+        postProcess(kfgValue)
     }
 
     override fun branch(
         inst: String,
         condition: String
     ) = safeCall {
-        checkCall()
-        val instruction = parseValue(inst) as? BranchInst
-            ?: unreachable { log.error("Value does not correspond to trace") }
+        val instruction = parseValue(inst) as BranchInst
+        preProcess(instruction)
 
         val kfgCondition = parseValue(condition)
         val termCondition = mkValue(kfgCondition)
@@ -373,6 +429,7 @@ class SymbolicTraceBuilder(val ctx: ExecutionContext) : SymbolicState, Instructi
         previousBlock = instruction.parent
 
         traceBuilder += instruction
+        postProcess(instruction)
     }
 
     override fun call(
@@ -386,12 +443,8 @@ class SymbolicTraceBuilder(val ctx: ExecutionContext) : SymbolicState, Instructi
         arguments: List<String>,
         concreteArguments: List<Any?>
     ) = safeCall {
-        checkCall()
-        val instruction = parseValue(inst) as? CallInst
-            ?: unreachable {
-                parseValue(inst)
-                log.error("Value does not correspond to trace")
-            }
+        val instruction = parseValue(inst) as CallInst
+        preProcess(instruction)
 
         val calledMethod = parseMethod(className, methodName, argTypes, retType)
         val kfgReturn = returnValue?.let { parseValue(it) }
@@ -430,6 +483,7 @@ class SymbolicTraceBuilder(val ctx: ExecutionContext) : SymbolicState, Instructi
         )
 
         traceBuilder += instruction
+        postProcess(instruction)
     }
 
     override fun cast(
@@ -438,15 +492,10 @@ class SymbolicTraceBuilder(val ctx: ExecutionContext) : SymbolicState, Instructi
         concreteValue: Any?,
         concreteOperand: Any?
     ) = safeCall {
-        checkCall()
+        val kfgValue = parseValue(value) as CastInst
+        preProcess(kfgValue)
 
-        val kfgValue = parseValue(value) as? CastInst
-            ?: unreachable {
-                parseValue(value)
-                log.error("Value does not correspond to trace")
-            }
         val kfgOperand = parseValue(operand)
-
         val termValue = mkNewValue(kfgValue)
         val termOperand = mkValue(kfgOperand)
 
@@ -462,20 +511,22 @@ class SymbolicTraceBuilder(val ctx: ExecutionContext) : SymbolicState, Instructi
         builder += predicate
 
         traceBuilder += kfgValue
+        postProcess(kfgValue)
     }
 
     override fun catch(
         exception: String,
         concreteException: Any?
     ) = safeCall {
-        checkCall()
+        val exceptionDescriptor = converter.convert(concreteException)
+        restoreCatchFrame(exceptionDescriptor.type.getKfgType(ctx.types))
 
-        // todo
-        val kfgException = parseValue(exception) as? CatchInst
-            ?: unreachable { log.error("Value does not correspond to trace") }
+        val kfgException = parseValue(exception) as CatchInst
+        preProcess(kfgException)
+
         val termException = thrownException ?: mkNewValue(kfgException)
         terms[termException] = kfgException
-        concreteValues[termException] = concreteValues.getAsDescriptor(termException.type)
+        concreteValues[termException] = exceptionDescriptor
 
         val predicate = path(kfgException.location) {
             catch(termException)
@@ -485,6 +536,7 @@ class SymbolicTraceBuilder(val ctx: ExecutionContext) : SymbolicState, Instructi
 
         traceBuilder += kfgException
         thrownException = null
+        postProcess(kfgException)
     }
 
     override fun cmp(
@@ -494,13 +546,9 @@ class SymbolicTraceBuilder(val ctx: ExecutionContext) : SymbolicState, Instructi
         concreteLhv: Any?,
         concreteRhv: Any?
     ) = safeCall {
-        checkCall()
+        val kfgValue = parseValue(value) as CmpInst
+        preProcess(kfgValue)
 
-        val kfgValue = parseValue(value) as? CmpInst
-            ?: unreachable {
-                parseValue(value)
-                log.error("Value does not correspond to trace")
-            }
         val kfgLhv = parseValue(lhv)
         val kfgRhv = parseValue(rhv)
 
@@ -521,6 +569,7 @@ class SymbolicTraceBuilder(val ctx: ExecutionContext) : SymbolicState, Instructi
         builder += predicate
 
         traceBuilder += kfgValue
+        postProcess(kfgValue)
     }
 
     override fun enterMonitor(
@@ -528,12 +577,11 @@ class SymbolicTraceBuilder(val ctx: ExecutionContext) : SymbolicState, Instructi
         operand: String,
         concreteOperand: Any?
     ) = safeCall {
-        checkCall()
+        val instruction = parseValue(inst) as EnterMonitorInst
+        preProcess(instruction)
 
-        // todo
-        val instruction = parseValue(inst) as? EnterMonitorInst
-            ?: unreachable { log.error("Value does not correspond to trace") }
         traceBuilder += instruction
+        postProcess(instruction)
     }
 
     override fun exitMonitor(
@@ -541,12 +589,11 @@ class SymbolicTraceBuilder(val ctx: ExecutionContext) : SymbolicState, Instructi
         operand: String,
         concreteOperand: Any?
     ) = safeCall {
-        checkCall()
+        val instruction = parseValue(inst) as EnterMonitorInst
+        preProcess(instruction)
 
-        // todo
-        val instruction = parseValue(inst) as? EnterMonitorInst
-            ?: unreachable { log.error("Value does not correspond to trace") }
         traceBuilder += instruction
+        postProcess(instruction)
     }
 
     override fun fieldLoad(
@@ -558,10 +605,9 @@ class SymbolicTraceBuilder(val ctx: ExecutionContext) : SymbolicState, Instructi
         concreteValue: Any?,
         concreteOwner: Any?
     ) = safeCall {
-        checkCall()
+        val kfgValue = parseValue(value) as FieldLoadInst
+        preProcess(kfgValue)
 
-        val kfgValue = parseValue(value) as? FieldLoadInst
-            ?: unreachable { log.error("Value does not correspond to trace") }
         val kfgOwner = owner?.let { parseValue(it) }
         val kfgField = cm[klass].getField(field, parseDesc(cm.type, type))
 
@@ -581,6 +627,7 @@ class SymbolicTraceBuilder(val ctx: ExecutionContext) : SymbolicState, Instructi
         builder += predicate
 
         traceBuilder += kfgValue
+        postProcess(kfgValue)
     }
 
     override fun fieldStore(
@@ -594,8 +641,8 @@ class SymbolicTraceBuilder(val ctx: ExecutionContext) : SymbolicState, Instructi
         concreteOwner: Any?
     ) = safeCall {
         checkCall()
-        val instruction = parseValue(inst) as? FieldStoreInst
-            ?: unreachable { log.error("Value does not correspond to trace") }
+        val instruction = parseValue(inst) as FieldStoreInst
+        preProcess(instruction)
 
         val kfgOwner = owner?.let { parseValue(it) }
         val kfgField = cm[klass].getField(field, parseDesc(cm.type, type))
@@ -615,6 +662,7 @@ class SymbolicTraceBuilder(val ctx: ExecutionContext) : SymbolicState, Instructi
         builder += predicate
 
         traceBuilder += instruction
+        postProcess(instruction)
     }
 
     override fun instanceOf(
@@ -623,10 +671,9 @@ class SymbolicTraceBuilder(val ctx: ExecutionContext) : SymbolicState, Instructi
         concreteValue: Any?,
         concreteOperand: Any?
     ) = safeCall {
-        checkCall()
+        val kfgValue = parseValue(value) as InstanceOfInst
+        preProcess(kfgValue)
 
-        val kfgValue = parseValue(value) as? InstanceOfInst
-            ?: unreachable { log.error("Value does not correspond to trace") }
         val kfgOperand = parseValue(operand)
 
         val termValue = mkNewValue(kfgValue)
@@ -644,20 +691,18 @@ class SymbolicTraceBuilder(val ctx: ExecutionContext) : SymbolicState, Instructi
         builder += predicate
 
         traceBuilder += kfgValue
+        postProcess(kfgValue)
     }
 
     override fun jump(
         inst: String
     ) = safeCall {
-        checkCall()
-        val instruction = parseValue(inst) as? JumpInst
-            ?: unreachable {
-                parseValue(inst)
-                log.error("Value does not correspond to trace")
-            }
+        val instruction = parseValue(inst) as JumpInst
+        preProcess(instruction)
 
         previousBlock = instruction.parent
         traceBuilder += instruction
+        postProcess(instruction)
     }
 
     override fun newArray(
@@ -666,10 +711,9 @@ class SymbolicTraceBuilder(val ctx: ExecutionContext) : SymbolicState, Instructi
         concreteValue: Any?,
         concreteDimensions: List<Any?>
     ) = safeCall {
-        checkCall()
+        val kfgValue = parseValue(value) as NewArrayInst
+        preProcess(kfgValue)
 
-        val kfgValue = parseValue(value) as? NewArrayInst
-            ?: unreachable { log.error("Value does not correspond to trace") }
         val kfgDimensions = dimensions.map { parseValue(it) }
 
         val termValue = mkNewValue(kfgValue)
@@ -689,15 +733,14 @@ class SymbolicTraceBuilder(val ctx: ExecutionContext) : SymbolicState, Instructi
         builder += predicate
 
         traceBuilder += kfgValue
+        postProcess(kfgValue)
     }
 
     override fun new(
         value: String
     ) = safeCall {
-        checkCall()
-
-        val kfgValue = parseValue(value) as? NewInst
-            ?: unreachable { log.error("Value does not correspond to trace") }
+        val kfgValue = parseValue(value) as NewInst
+        preProcess(kfgValue)
 
         val termValue = mkNewValue(kfgValue)
         terms[termValue] = kfgValue
@@ -709,16 +752,16 @@ class SymbolicTraceBuilder(val ctx: ExecutionContext) : SymbolicState, Instructi
         builder += predicate
 
         traceBuilder += kfgValue
+        postProcess(kfgValue)
     }
 
     override fun phi(
         value: String,
         concreteValue: Any?
     ) = safeCall {
-        checkCall()
+        val kfgValue = parseValue(value) as PhiInst
+        preProcess(kfgValue)
 
-        val kfgValue = parseValue(value) as? PhiInst
-            ?: unreachable { log.error("Value does not correspond to trace") }
         val kfgIncoming = kfgValue.incomings[previousBlock]!!
 
         val termValue = mkNewValue(kfgValue)
@@ -735,6 +778,7 @@ class SymbolicTraceBuilder(val ctx: ExecutionContext) : SymbolicState, Instructi
         builder += predicate
 
         traceBuilder += kfgValue
+        updateCatches(kfgValue)
     }
 
     override fun ret(
@@ -742,11 +786,10 @@ class SymbolicTraceBuilder(val ctx: ExecutionContext) : SymbolicState, Instructi
         returnValue: String?,
         concreteValue: Any?
     ) = safeCall {
-        checkCall()
-        val instruction = parseValue(inst) as? ReturnInst
-            ?: unreachable { log.error("Value does not correspond to trace") }
-        val kfgReturn = returnValue?.let { parseValue(it) }
+        val instruction = parseValue(inst) as ReturnInst
+        preProcess(instruction)
 
+        val kfgReturn = returnValue?.let { parseValue(it) }
         val termReturn = kfgReturn?.let { mkValue(it) }
 
         val stack = frames.pop()
@@ -764,6 +807,7 @@ class SymbolicTraceBuilder(val ctx: ExecutionContext) : SymbolicState, Instructi
         }
 
         traceBuilder += instruction
+        postProcess(instruction)
     }
 
     override fun switch(
@@ -771,9 +815,8 @@ class SymbolicTraceBuilder(val ctx: ExecutionContext) : SymbolicState, Instructi
         value: String,
         concreteValue: Any?
     ) = safeCall {
-        checkCall()
-        val instruction = parseValue(inst) as? SwitchInst
-            ?: unreachable { log.error("Value does not correspond to trace") }
+        val instruction = parseValue(inst) as SwitchInst
+        preProcess(instruction)
 
         val kfgValue = parseValue(value)
         val termValue = mkValue(kfgValue)
@@ -789,6 +832,7 @@ class SymbolicTraceBuilder(val ctx: ExecutionContext) : SymbolicState, Instructi
 
         previousBlock = instruction.parent
         traceBuilder += instruction
+        postProcess(instruction)
     }
 
     override fun tableSwitch(
@@ -796,9 +840,9 @@ class SymbolicTraceBuilder(val ctx: ExecutionContext) : SymbolicState, Instructi
         value: String,
         concreteValue: Any?
     ) = safeCall {
-        checkCall()
-        val instruction = parseValue(inst) as? TableSwitchInst
-            ?: unreachable { log.error("Value does not correspond to trace") }
+        val instruction = parseValue(inst) as TableSwitchInst
+        preProcess(instruction)
+
         val kfgValue = parseValue(value)
         val termValue = mkValue(kfgValue)
 
@@ -813,6 +857,7 @@ class SymbolicTraceBuilder(val ctx: ExecutionContext) : SymbolicState, Instructi
 
         previousBlock = instruction.parent
         traceBuilder += instruction
+        postProcess(instruction)
     }
 
     override fun throwing(
@@ -820,9 +865,9 @@ class SymbolicTraceBuilder(val ctx: ExecutionContext) : SymbolicState, Instructi
         exception: String,
         concreteException: Any?
     ) = safeCall {
-        checkCall()
-        val instruction = parseValue(inst) as? ThrowInst
-            ?: unreachable { log.error("Value does not correspond to trace") }
+        val instruction = parseValue(inst) as ThrowInst
+        preProcess(instruction)
+
         val kfgException = parseValue(exception)
         val termException = mkValue(kfgException)
 
@@ -836,6 +881,7 @@ class SymbolicTraceBuilder(val ctx: ExecutionContext) : SymbolicState, Instructi
         previousBlock = instruction.parent
         traceBuilder += instruction
         thrownException = termException
+        postProcess(instruction)
     }
 
     override fun unary(
@@ -844,10 +890,9 @@ class SymbolicTraceBuilder(val ctx: ExecutionContext) : SymbolicState, Instructi
         concreteValue: Any?,
         concreteOperand: Any?
     ) = safeCall {
-        checkCall()
+        val kfgValue = parseValue(value) as UnaryInst
+        preProcess(kfgValue)
 
-        val kfgValue = parseValue(value) as? UnaryInst
-            ?: unreachable { log.error("Value does not correspond to trace") }
         val kfgOperand = parseValue(operand)
 
         val termValue = mkNewValue(kfgValue)
@@ -865,5 +910,6 @@ class SymbolicTraceBuilder(val ctx: ExecutionContext) : SymbolicState, Instructi
         builder += predicate
 
         traceBuilder += kfgValue
+        postProcess(kfgValue)
     }
 }
