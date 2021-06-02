@@ -27,7 +27,26 @@ val Method.isImpactable: Boolean
         else -> true
     }
 
-data class CoverageInfo(val bodyCoverage: Double, val fullCoverage: Double)
+data class CoverageInfo(
+    val bodyCovered: Int,
+    val bodyTotal: Int,
+    val fullCovered: Int,
+    val fullTotal: Int,
+) {
+    val bodyCoverage: Double get() = (bodyCovered * 100).toDouble() / bodyTotal
+    val fullCoverage: Double get() = (fullCovered * 100).toDouble() / fullTotal
+
+    constructor() : this(0, 0, 0, 0)
+
+    operator fun plus(other: CoverageInfo): CoverageInfo {
+        return CoverageInfo(
+            this.bodyCovered + other.bodyCovered,
+            this.bodyTotal + other.bodyTotal,
+            this.fullCovered + other.fullCovered,
+            this.fullTotal + other.bodyTotal
+        )
+    }
+}
 
 class CoverageCounter<T> private constructor(
     override val cm: ClassManager,
@@ -47,18 +66,8 @@ class CoverageCounter<T> private constructor(
             this(cm, tm, { it in methods })
 
     val totalCoverage: CoverageInfo
-        get() {
-            if (methodInfos.isEmpty()) return CoverageInfo(0.0, 0.0)
-
-            val numberOfMethods = methodInfos.size
-            val (body, full) = methodInfos.values.reduce { acc, coverageInfo ->
-                CoverageInfo(
-                    acc.bodyCoverage + coverageInfo.bodyCoverage,
-                    acc.fullCoverage + coverageInfo.fullCoverage
-                )
-            }
-
-            return CoverageInfo(body / numberOfMethods, full / numberOfMethods)
+        get() = methodInfos.values.fold(CoverageInfo()) { acc, coverageInfo ->
+            acc + coverageInfo
         }
 
     private val Method.isInteresting: Boolean
@@ -83,8 +92,8 @@ class CoverageCounter<T> private constructor(
         val catchCovered = catchBlocks.count { tm.isCovered(method, it) }
 
         val info = CoverageInfo(
-            (bodyCovered * 100).toDouble() / bodyBlocks.size,
-            ((bodyCovered + catchCovered) * 100).toDouble() / (bodyBlocks.size + catchBlocks.size)
+            bodyCovered, bodyBlocks.size,
+            bodyCovered + catchCovered, bodyBlocks.size + catchBlocks.size
         )
         methodInfos[method] = info
 

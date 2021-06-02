@@ -332,6 +332,7 @@ class Kex(args: Array<String>) {
             +ClassWriter(originalContext, outputDir)
         }
         runPipeline(analysisContext) {
+            +SystemExitTransformer(analysisContext.cm)
             +SymbolicRandomChecker(analysisContext)
         }
     }

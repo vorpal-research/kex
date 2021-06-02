@@ -60,7 +60,7 @@ object TermFactory {
     fun getDouble(value: Double) = ConstDoubleTerm(value)
     fun getDouble(const: DoubleConstant) = getDouble(const.value)
     fun getString(type: KexType, value: String) = ConstStringTerm(type, value)
-    fun getString(value: String) = ConstStringTerm(KexClass(TypeFactory.stringClass), value)
+    fun getString(value: String) = ConstStringTerm(KexClass("java/lang/String"), value)
     fun getString(const: StringConstant) = getString(const.value)
     fun getNull() = NullTerm()
     fun getClass(`class`: Class) = getClass(KexClass(`class`.fullName))

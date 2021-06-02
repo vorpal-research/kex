@@ -38,11 +38,11 @@ abstract class PrintStreamWrapper(final override val cm: ClassManager) : Wrapper
         return listOf(append)
     }
 
-    fun print(string: String) = print(values.getStringConstant(string))
+    fun print(string: String) = print(values.getString(string))
     fun print(value: Value) = call("print", value)
 
     fun println() = println("")
-    fun println(string: String) = println(values.getStringConstant(string))
+    fun println(string: String) = println(values.getString(string))
     fun println(value: Value) = call("println", value)
 
     fun flush(): List<Instruction> = buildList {
@@ -75,7 +75,7 @@ class StringBuilderWrapper(override val cm: ClassManager, val name: String) : Wr
         values.forEach { append(it) }
     }
 
-    fun append(str: String) = append(values.getStringConstant(str))
+    fun append(str: String) = append(values.getString(str))
     fun append(value: Value): Boolean = when {
         value.type === NullType -> append("null")
         else -> {
@@ -141,12 +141,12 @@ class ReflectionWrapper(override val cm: ClassManager) : Wrapper {
 
     fun getDeclaredField(klass: Value, name: String): Instruction {
         val getFieldMethod = classClass.getMethod("getDeclaredField", MethodDesc(arrayOf(types.stringType), types.getRefType(fieldClass)))
-        return instructions.getCall(CallOpcode.Virtual(), name, getFieldMethod, classClass, klass, arrayOf(values.getStringConstant(name)))
+        return instructions.getCall(CallOpcode.Virtual(), name, getFieldMethod, classClass, klass, arrayOf(values.getString(name)))
     }
 
     fun setAccessible(field: Value): Instruction {
         val setAccessibleMethod = fieldClass.getMethod("setAccessible", MethodDesc(arrayOf(types.boolType), types.voidType))
-        return instructions.getCall(CallOpcode.Virtual(), "set", setAccessibleMethod, fieldClass, field, arrayOf(values.getBoolConstant(true)))
+        return instructions.getCall(CallOpcode.Virtual(), "set", setAccessibleMethod, fieldClass, field, arrayOf(values.getBool(true)))
     }
 
     fun getField(field: Value, owner: Value): Instruction {
@@ -247,7 +247,7 @@ class FileOutputStreamWrapper(cm: ClassManager, streamName: String,
 
         val constructorDesc = MethodDesc(arrayOf(types.stringType), types.voidType)
         val initMethod = fileClass.getMethod("<init>", constructorDesc)
-        val params = arrayOf(values.getStringConstant(fileName))
+        val params = arrayOf(values.getString(fileName))
         +instructions.getCall(CallOpcode.Special(), initMethod, fileClass, file, params, false)
 
         val createFileDesc = MethodDesc(arrayOf(), types.boolType)
@@ -258,14 +258,14 @@ class FileOutputStreamWrapper(cm: ClassManager, streamName: String,
         +fos
         val fosConstructorDesc = MethodDesc(arrayOf(types.getRefType(fileClass), types.boolType), types.voidType)
         val fosInitMethod = fileOutputStreamClass.getMethod("<init>", fosConstructorDesc)
-        val fosParams = arrayOf(file, values.getBoolConstant(append))
+        val fosParams = arrayOf(file, values.getBool(append))
         +instructions.getCall(CallOpcode.Special(), fosInitMethod, fileOutputStreamClass, fos, fosParams, false)
 
         +stream
         val outputStreamClass = types.getRefType("java/io/OutputStream")
         val psConstructorDesc = MethodDesc(arrayOf(outputStreamClass, types.boolType), types.voidType)
         val psInitMethod = printStreamClass.getMethod("<init>", psConstructorDesc)
-        val psParams = arrayOf(fos, values.getBoolConstant(autoFlush))
+        val psParams = arrayOf(fos, values.getBool(autoFlush))
         +instructions.getCall(CallOpcode.Special(), psInitMethod, printStreamClass, stream, psParams, false)
     }
 

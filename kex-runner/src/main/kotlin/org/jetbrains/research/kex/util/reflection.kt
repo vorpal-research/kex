@@ -52,31 +52,33 @@ fun FieldTerm.isFinal(cm: ClassManager): Boolean {
     return kfgField.isFinal
 }
 
-val Class<*>.kex: KexType get() = when {
-    this.isPrimitive -> when (this) {
-        Boolean::class.java -> KexBool()
-        Byte::class.java -> KexByte()
-        Char::class.java -> KexChar()
-        Short::class.java -> KexShort()
-        Int::class.java -> KexInt()
-        Long::class.java -> KexLong()
-        Float::class.java -> KexFloat()
-        Double::class.java -> KexDouble()
-        else -> unreachable { log.error("Unknown primitive type $this") }
+val Class<*>.kex: KexType
+    get() = when {
+        this.isPrimitive -> when (this) {
+            Boolean::class.java -> KexBool()
+            Byte::class.java -> KexByte()
+            Char::class.java -> KexChar()
+            Short::class.java -> KexShort()
+            Int::class.java -> KexInt()
+            Long::class.java -> KexLong()
+            Float::class.java -> KexFloat()
+            Double::class.java -> KexDouble()
+            else -> unreachable { log.error("Unknown primitive type $this") }
+        }
+        this.isArray -> KexArray(this.componentType.kex)
+        else -> KexClass(this.trimmedName.replace('.', '/'))
     }
-    this.isArray -> KexArray(this.componentType.kex)
-    else -> KexClass(this.trimmedName.replace('.', '/'))
-}
 
-val Class<*>.allFields get(): List<Field> {
-    val result = mutableListOf<Field>()
-    var current: Class<*>? = this
-    do {
-        result += current!!.declaredFields
-        current = current!!.superclass
-    } while (current != null)
-    return result
-}
+val Class<*>.allFields
+    get(): List<Field> {
+        val result = mutableListOf<Field>()
+        var current: Class<*>? = this
+        do {
+            result += current!!.declaredFields
+            current = current!!.superclass
+        } while (current != null)
+        return result
+    }
 
 fun Class<*>.getFieldByName(name: String): Field {
     var result: Field?
@@ -86,7 +88,7 @@ fun Class<*>.getFieldByName(name: String): Field {
         current = current.superclass ?: break
     } while (result == null)
     return result
-            ?: throw NoSuchFieldException()
+        ?: throw NoSuchFieldException()
 }
 
 val Field.isStatic: Boolean
@@ -105,15 +107,16 @@ var Field.isFinal: Boolean
 val JMethod.isStatic get() = (this.modifiers and Modifier.STATIC) == Modifier.STATIC
 val JMethod.isAbstract get() = (this.modifiers and Modifier.ABSTRACT) == Modifier.ABSTRACT
 
-val JType.kex get() = when (this) {
-    is Class<*> -> KexClass(this.canonicalName)
-    else -> unreachable { log.error("Unknown java type $this") }
-}
+val JType.kex
+    get() = when (this) {
+        is Class<*> -> KexClass(this.canonicalName)
+        else -> unreachable { log.error("Unknown java type $this") }
+    }
 
 fun ClassLoader.loadClass(tf: TypeFactory, type: KexType): Class<*> = this.loadClass(type.getKfgType(tf))
 
 fun ClassLoader.loadClass(klass: KfgClass): Class<*> =
-        this.loadClass(klass.type)
+    this.loadClass(klass.type)
 
 fun ClassLoader.loadClass(type: Type): Class<*> = try {
     when (type) {
@@ -146,23 +149,39 @@ fun ClassLoader.loadClass(type: Type): Class<*> = try {
 
 fun Class<*>.getMethod(method: Method, loader: ClassLoader): java.lang.reflect.Method {
     val argumentTypes = method.argTypes.map { loader.loadClass(it) }.toTypedArray()
-    return `try` { this.getDeclaredMethod(method.name, *argumentTypes) }.getOrThrow { throw ClassNotFoundException() }
+    return `try` {
+        this.getDeclaredMethod(method.name, *argumentTypes)
+    }.getOrThrow {
+        ClassNotFoundException("Could not load method $method", this)
+    }
 }
 
 fun Class<*>.getMethod(loader: ClassLoader, name: String, vararg types: Type): java.lang.reflect.Method {
     val argumentTypes = types.map { loader.loadClass(it) }.toTypedArray()
-    return `try` { this.getDeclaredMethod(name, *argumentTypes) }.getOrThrow { throw ClassNotFoundException() }
+    return `try` {
+        this.getDeclaredMethod(name, *argumentTypes)
+    }.getOrThrow {
+        ClassNotFoundException("Could not load method $name", this)
+    }
 }
 
 fun Class<*>.getConstructor(method: Method, loader: ClassLoader): Constructor<*> {
     require(method.isConstructor)
     val argumentTypes = method.argTypes.map { loader.loadClass(it) }.toTypedArray()
-    return `try` { this.getDeclaredConstructor(*argumentTypes) }.getOrThrow { throw ClassNotFoundException() }
+    return `try` {
+        this.getDeclaredConstructor(*argumentTypes)
+    }.getOrThrow {
+        ClassNotFoundException("Could not load constructor $method", this)
+    }
 }
 
 fun Class<*>.getConstructor(loader: ClassLoader, vararg types: Type): Constructor<*> {
     val argumentTypes = types.map { loader.loadClass(it) }.toTypedArray()
-    return `try` { this.getDeclaredConstructor(*argumentTypes) }.getOrThrow { throw ClassNotFoundException() }
+    return `try` {
+        this.getDeclaredConstructor(*argumentTypes)
+    }.getOrThrow {
+        ClassNotFoundException("Could not load constructor", this)
+    }
 }
 
 fun Class<*>.getActualField(name: String): Field {
@@ -192,10 +211,10 @@ fun Field.eq(cl: ClassLoader, field: KfgField): Boolean {
 
 fun findSubtypesOf(loader: ClassLoader, vararg classes: Class<*>): Set<Class<*>> {
     val reflections = Reflections(
-            ConfigurationBuilder()
-                    .addUrls(classes.mapNotNull { (it.classLoader as? URLClassLoader)?.urLs }.flatMap { it.toList() })
-                    .addClassLoaders(classes.map { it.classLoader })
-                    .addClassLoader(loader)
+        ConfigurationBuilder()
+            .addUrls(classes.mapNotNull { (it.classLoader as? URLClassLoader)?.urLs }.flatMap { it.toList() })
+            .addClassLoaders(classes.map { it.classLoader })
+            .addClassLoader(loader)
     )
     val subclasses = classes.map { reflections.getSubTypesOf(it) }
     val allSubclasses = subclasses.flatten().toSet()
@@ -210,7 +229,7 @@ fun mergeTypes(lhv: java.lang.reflect.Type, rhv: java.lang.reflect.Type, loader:
             lhv.isAssignableFrom(rhv) -> rhv
             rhv.isAssignableFrom(lhv) -> lhv
             else -> findSubtypesOf(loader, lhv, rhv).firstOrNull()
-                    ?: unreachable { log.error("Cannot decide on argument type: $rhv or $lhv") }
+                ?: unreachable { log.error("Cannot decide on argument type: $rhv or $lhv") }
         }
         is ParameterizedType -> {
             val rawType = rhv.rawType as Class<*>

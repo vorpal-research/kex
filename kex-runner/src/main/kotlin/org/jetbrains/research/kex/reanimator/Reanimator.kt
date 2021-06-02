@@ -89,7 +89,8 @@ class Reanimator(
             DescriptorStatistics.addDescriptor(this, cs, time)
             cs
         }.getOrThrow {
-            DescriptorStatistics.addFailure(this)
+            DescriptorStatistics.addFailure(this@callStack)
+            this
         }
 
     val Parameters<Descriptor>.callStacks: Parameters<CallStack>

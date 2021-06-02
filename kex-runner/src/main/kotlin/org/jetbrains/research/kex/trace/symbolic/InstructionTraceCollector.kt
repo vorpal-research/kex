@@ -9,10 +9,10 @@ interface InstructionTraceCollector {
     fun methodEnter(
         className: String,
         methodName: String,
-        argTypes: Array<String>,
+        argTypes: List<String>,
         retType: String,
         instance: Any?,
-        args: Array<Any?>
+        args: List<Any?>
     )
 
     fun arrayLoad(
@@ -25,6 +25,7 @@ interface InstructionTraceCollector {
     )
 
     fun arrayStore(
+        inst: String,
         arrayRef: String,
         index: String,
         value: String,
@@ -43,20 +44,19 @@ interface InstructionTraceCollector {
     )
 
     fun branch(
-        condition: String,
-        currentBlock: String
+        inst: String,
+        condition: String
     )
 
     fun call(
+        inst: String,
         className: String,
         methodName: String,
-        argTypes: Array<String>,
+        argTypes: List<String>,
         retType: String,
         returnValue: String?,
         callee: String?,
         arguments: List<String>,
-        concreteReturn: Any?,
-        concreteCallee: Any?,
         concreteArguments: List<Any?>
     )
 
@@ -83,11 +83,13 @@ interface InstructionTraceCollector {
     )
 
     fun enterMonitor(
+        inst: String,
         operand: String,
         concreteOperand: Any?
     )
 
     fun exitMonitor(
+        inst: String,
         operand: String,
         concreteOperand: Any?
     )
@@ -103,6 +105,7 @@ interface InstructionTraceCollector {
     )
 
     fun fieldStore(
+        inst: String,
         owner: String?,
         klass: String,
         field: String,
@@ -120,8 +123,7 @@ interface InstructionTraceCollector {
     )
 
     fun jump(
-        currentBlock: String,
-        targetBlock: String
+        inst: String
     )
 
     fun newArray(
@@ -132,8 +134,7 @@ interface InstructionTraceCollector {
     )
 
     fun new(
-        value: String,
-        concreteValue: Any?
+        value: String
     )
 
     fun phi(
@@ -142,25 +143,25 @@ interface InstructionTraceCollector {
     )
 
     fun ret(
+        inst: String,
         returnValue: String?,
-        currentBlock: String,
         concreteValue: Any?
     )
 
     fun switch(
+        inst: String,
         value: String,
-        currentBlock: String,
         concreteValue: Any?
     )
 
     fun tableSwitch(
+        inst: String,
         value: String,
-        currentBlock: String,
         concreteValue: Any?
     )
 
     fun throwing(
-        currentBlock: String,
+        inst: String,
         exception: String,
         concreteException: Any?
     )

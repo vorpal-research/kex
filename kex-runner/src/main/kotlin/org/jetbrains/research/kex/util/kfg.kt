@@ -8,7 +8,9 @@ import org.jetbrains.research.kfg.ir.value.instruction.Instruction
 import org.jetbrains.research.kfg.ir.value.instruction.InstructionFactory
 import org.jetbrains.research.kfg.type.ClassType
 import org.jetbrains.research.kfg.type.PrimaryType
+import org.jetbrains.research.kthelper.assert.unreachable
 import org.jetbrains.research.kthelper.compareTo
+import org.jetbrains.research.kthelper.logging.log
 
 fun InstructionFactory.wrapValue(value: Value): Instruction {
     val wrapperType = cm.type.getWrapper(value.type as PrimaryType) as ClassType
@@ -22,6 +24,17 @@ fun Instruction.insertBefore(instructions: List<Instruction>) {
 }
 fun Instruction.insertAfter(instructions: List<Instruction>) {
     this.parent.insertAfter(this, *instructions.toTypedArray())
+}
+
+fun Any?.cmp(opcode: CmpOpcode, other: Any?) = when {
+    this is Number && other is Number -> this.apply(opcode, other)
+    else -> this.apply(opcode, other)
+}
+
+fun Any?.apply(opcode: CmpOpcode, other: Any?) = when (opcode) {
+    is CmpOpcode.Eq -> this === other
+    is CmpOpcode.Neq -> this !== other
+    else -> unreachable { log.error("Unknown opcode $opcode for object cmp") }
 }
 
 fun Number.apply(opcode: CmpOpcode, other: Number) = when (opcode) {

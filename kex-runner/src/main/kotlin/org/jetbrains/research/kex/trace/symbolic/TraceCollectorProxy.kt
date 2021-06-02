@@ -27,10 +27,10 @@ private class EmptyTraceCollector : InstructionTraceCollector {
     override fun methodEnter(
         className: String,
         methodName: String,
-        argTypes: Array<String>,
+        argTypes: List<String>,
         retType: String,
         instance: Any?,
-        args: Array<Any?>
+        args: List<Any?>
     ) {}
 
     override fun arrayLoad(
@@ -43,6 +43,7 @@ private class EmptyTraceCollector : InstructionTraceCollector {
     ) {}
 
     override fun arrayStore(
+        inst: String,
         arrayRef: String,
         index: String,
         value: String,
@@ -60,18 +61,17 @@ private class EmptyTraceCollector : InstructionTraceCollector {
         concreteRhv: Any?
     ) {}
 
-    override fun branch(condition: String, currentBlock: String) {}
+    override fun branch(inst: String, condition: String) {}
 
     override fun call(
+        inst: String,
         className: String,
         methodName: String,
-        argTypes: Array<String>,
+        argTypes: List<String>,
         retType: String,
         returnValue: String?,
         callee: String?,
         arguments: List<String>,
-        concreteReturn: Any?,
-        concreteCallee: Any?,
         concreteArguments: List<Any?>
     ) {}
 
@@ -87,9 +87,9 @@ private class EmptyTraceCollector : InstructionTraceCollector {
         concreteRhv: Any?
     ) {}
 
-    override fun enterMonitor(operand: String, concreteOperand: Any?) {}
+    override fun enterMonitor(inst: String, operand: String, concreteOperand: Any?) {}
 
-    override fun exitMonitor(operand: String, concreteOperand: Any?) {}
+    override fun exitMonitor(inst: String, operand: String, concreteOperand: Any?) {}
 
     override fun fieldLoad(
         value: String,
@@ -102,6 +102,7 @@ private class EmptyTraceCollector : InstructionTraceCollector {
     ) {}
 
     override fun fieldStore(
+        inst: String,
         owner: String?,
         klass: String,
         field: String,
@@ -113,7 +114,7 @@ private class EmptyTraceCollector : InstructionTraceCollector {
 
     override fun instanceOf(value: String, operand: String, concreteValue: Any?, concreteOperand: Any?) {}
 
-    override fun jump(currentBlock: String, targetBlock: String) {}
+    override fun jump(inst: String) {}
 
     override fun newArray(
         value: String,
@@ -122,17 +123,17 @@ private class EmptyTraceCollector : InstructionTraceCollector {
         concreteDimensions: List<Any?>
     ) {}
 
-    override fun new(value: String, concreteValue: Any?) {}
+    override fun new(value: String) {}
 
     override fun phi(value: String, concreteValue: Any?) {}
 
-    override fun ret(returnValue: String?, currentBlock: String, concreteValue: Any?) {}
+    override fun ret(inst: String, returnValue: String?, concreteValue: Any?) {}
 
-    override fun switch(value: String, currentBlock: String, concreteValue: Any?) {}
+    override fun switch(inst: String, value: String, concreteValue: Any?) {}
 
-    override fun tableSwitch(value: String, currentBlock: String, concreteValue: Any?) {}
+    override fun tableSwitch(inst: String, value: String, concreteValue: Any?) {}
 
-    override fun throwing(currentBlock: String, exception: String, concreteException: Any?) {}
+    override fun throwing(inst: String, exception: String, concreteException: Any?) {}
 
     override fun unary(value: String, operand: String, concreteValue: Any?, concreteOperand: Any?) {}
 }

@@ -199,7 +199,7 @@ class LoopDeroller(override val cm: ClassManager) : LoopVisitor {
 
     private fun getOpcodeConstant(opcode: CmpOpcode, constant: IntConstant) = when (opcode) {
         is CmpOpcode.Le, is CmpOpcode.Ge -> constant
-        else -> values.getIntConstant(constant.value + 1) as IntConstant
+        else -> values.getInt(constant.value + 1) as IntConstant
     }
 
     private fun getConstantTripCount(loop: Loop): Int {
