@@ -61,8 +61,8 @@ class SymbolicTraceBuilder(val ctx: ExecutionContext) : SymbolicState, Instructi
 
     override val symbolicState: SymbolicState
         get() = this
-    override val trace: List<Instruction>
-        get() = traceBuilder
+    override val trace: InstructionTrace
+        get() = InstructionTrace(traceBuilder)
 
     /**
      * mutable backing fields for required fields
@@ -219,6 +219,10 @@ class SymbolicTraceBuilder(val ctx: ExecutionContext) : SymbolicState, Instructi
                     if (value.value) descriptor { const(1) }
                     else descriptor { const(0) }
                 }
+                type is KexInt && this.type == KexClass("java/lang/Character") -> {
+                    val value = this["value", KexChar()]!! as ConstantDescriptor.Char
+                    descriptor { const(value.value.code) }
+                }
                 else -> this["value", type]!!
             }
             else -> this
@@ -275,13 +279,15 @@ class SymbolicTraceBuilder(val ctx: ExecutionContext) : SymbolicState, Instructi
     }
 
     private fun updateCatches(instruction: Instruction) {
-        val block = instruction.parent
-        val frame = currentFrame
-        val updatesValues = valueMap.toMap()
-        frame.catchMap.clear()
-        for (handler in block.handlers) {
-            val exception = handler.exception
-            frame.catchMap[exception] = updatesValues
+        if (frames.isNotEmpty()) {
+            val block = instruction.parent
+            val frame = currentFrame
+            val updatesValues = valueMap.toMap()
+            frame.catchMap.clear()
+            for (handler in block.handlers) {
+                val exception = handler.exception
+                frame.catchMap[exception] = updatesValues
+            }
         }
     }
 
@@ -594,7 +600,7 @@ class SymbolicTraceBuilder(val ctx: ExecutionContext) : SymbolicState, Instructi
         operand: String,
         concreteOperand: Any?
     ) = safeCall {
-        val instruction = parseValue(inst) as EnterMonitorInst
+        val instruction = parseValue(inst) as ExitMonitorInst
         preProcess(instruction)
 
         val kfgMonitor = parseValue(operand)

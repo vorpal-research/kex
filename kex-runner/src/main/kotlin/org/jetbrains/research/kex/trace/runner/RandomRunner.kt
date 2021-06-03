@@ -2,6 +2,7 @@ package org.jetbrains.research.kex.trace.runner
 
 import org.jetbrains.research.kex.random.GenerationException
 import org.jetbrains.research.kex.random.Randomizer
+import org.jetbrains.research.kex.reanimator.Parameters
 import org.jetbrains.research.kex.util.isStatic
 import org.jetbrains.research.kthelper.logging.log
 import java.lang.reflect.Constructor
@@ -52,16 +53,12 @@ open class RandomRunner(method: KfgMethod, loader: ClassLoader, val random: Rand
 abstract class TracingRandomRunner<T>(method: KfgMethod, loader: ClassLoader, val random: Randomizer) :
     TracingAbstractRunner<T>(method, loader) {
 
-    open fun run(): T? {
+    override fun generateArguments(): Parameters<Any?>? {
         val (instance, args) = when {
             method.isConstructor -> null to random.generate(javaConstructor)
             else -> random.generate(javaClass, javaMethod)
         }
-        if (args == null || (!method.isStatic && !method.isConstructor && instance == null)) {
-            log.error("Cannot generate parameters to invoke method $method")
-            return null
-        }
-
-        return collectTrace(instance, args)
+        if (args == null) return null
+        return Parameters(instance, args.toList(), setOf())
     }
 }

@@ -1,13 +1,12 @@
 package org.jetbrains.research.kex.reanimator
 
 import org.jetbrains.research.kex.reanimator.descriptor.Descriptor
-import org.jetbrains.research.kex.state.term.FieldTerm
 import org.jetbrains.research.kfg.ClassManager
 
 data class Parameters<T>(
         val instance: T?,
         val arguments: List<T>,
-        val statics: Set<T>
+        val statics: Set<T> = setOf()
 ) {
     val asList get() = listOfNotNull(instance) + arguments + statics
 

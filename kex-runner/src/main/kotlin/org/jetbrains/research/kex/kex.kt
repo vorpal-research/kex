@@ -27,6 +27,7 @@ import org.jetbrains.research.kex.smt.Result
 import org.jetbrains.research.kex.state.transformer.executeModel
 import org.jetbrains.research.kex.trace.TraceManager
 import org.jetbrains.research.kex.trace.`object`.ObjectTraceManager
+import org.jetbrains.research.kex.trace.symbolic.InstructionTraceManager
 import org.jetbrains.research.kex.util.getIntrinsics
 import org.jetbrains.research.kex.util.getPathSeparator
 import org.jetbrains.research.kex.util.getRuntime
@@ -326,6 +327,8 @@ class Kex(args: Array<String>) {
     }
 
     private fun concolic(originalContext: ExecutionContext, analysisContext: ExecutionContext) {
+        val traceManager = InstructionTraceManager()
+        val cm = createCoverageCounter(originalContext.cm, traceManager)
         runPipeline(originalContext, `package`) {
             +SystemExitTransformer(originalContext.cm)
             +SymbolicTraceCollector(originalContext)
@@ -333,8 +336,15 @@ class Kex(args: Array<String>) {
         }
         runPipeline(analysisContext) {
             +SystemExitTransformer(analysisContext.cm)
-            +SymbolicRandomChecker(analysisContext)
+            +SymbolicRandomChecker(analysisContext, originalContext.loader, traceManager)
+            +cm
         }
+        val coverage = cm.totalCoverage
+        log.info(
+            "Overall summary for ${cm.methodInfos.size} methods:\n" +
+                    "body coverage: ${String.format(Locale.ENGLISH, "%.2f", coverage.bodyCoverage)}%\n" +
+                    "full coverage: ${String.format(Locale.ENGLISH, "%.2f", coverage.fullCoverage)}%"
+        )
     }
 
     private fun <T> createCoverageCounter(cm: ClassManager, tm: TraceManager<T>) = when {

@@ -20,10 +20,11 @@ private class EmptyTraceCollector : InstructionTraceCollector {
         override val concreteValueMap = mapOf<Term, Descriptor>()
         override val termMap = mapOf<Term, Value>()
         override val predicateMap = mapOf<Predicate, Instruction>()
+        override val trace = InstructionTrace()
     }
 
     override val symbolicState = EmptyState()
-    override val trace = emptyList<Instruction>()
+
     override fun methodEnter(
         className: String,
         methodName: String,

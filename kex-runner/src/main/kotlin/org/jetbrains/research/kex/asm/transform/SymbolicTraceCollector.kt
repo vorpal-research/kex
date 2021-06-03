@@ -10,6 +10,7 @@ import org.jetbrains.research.kfg.Package
 import org.jetbrains.research.kfg.ir.Class
 import org.jetbrains.research.kfg.ir.Method
 import org.jetbrains.research.kfg.ir.MethodDesc
+import org.jetbrains.research.kfg.ir.value.ThisRef
 import org.jetbrains.research.kfg.ir.value.Value
 import org.jetbrains.research.kfg.ir.value.instruction.*
 import org.jetbrains.research.kfg.type.Type
@@ -331,12 +332,16 @@ class SymbolicTraceCollector(
                 inst.isStatic -> values.nullConstant to values.nullConstant
                 else -> "${inst.owner}".asValue to inst.owner
             }
+            val defOwner = when {
+                inst.hasOwner && inst.owner is ThisRef && inst.parent.parent.isConstructor -> values.nullConstant
+                else -> concreteOwner
+            }
 
             +collectorClass.interfaceCall(
                 fieldStoreMethod, traceCollector,
                 "$inst".asValue,
                 owner, fieldKlass, fieldName, fieldType, "${inst.value}".asValue,
-                inst.value.wrapped(this), concreteOwner
+                inst.value.wrapped(this), defOwner
             )
         }
         inst.insertAfter(instrumented)

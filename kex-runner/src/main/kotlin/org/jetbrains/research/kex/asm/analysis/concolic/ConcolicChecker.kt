@@ -9,6 +9,7 @@ import org.jetbrains.research.kex.asm.state.PredicateStateAnalysis
 import org.jetbrains.research.kex.config.kexConfig
 import org.jetbrains.research.kex.random.Randomizer
 import org.jetbrains.research.kex.reanimator.ParameterGenerator
+import org.jetbrains.research.kex.reanimator.Parameters
 import org.jetbrains.research.kex.reanimator.Reanimator
 import org.jetbrains.research.kex.smt.Checker
 import org.jetbrains.research.kex.smt.Result
@@ -201,9 +202,10 @@ class ConcolicChecker(
         return currentState.apply()
     }
 
-    private fun collectTrace(method: Method, instance: Any?, args: List<Any?>): Trace {
-        val runner = ObjectTracingRunner(method, loader)
-        return runner.collectTrace(instance, args.toTypedArray())
+    private fun collectTrace(method: Method, instance: Any?, args: List<Any?>): Trace? {
+        val params = Parameters(instance, args, setOf())
+        val runner = ObjectTracingRunner(method, loader, params)
+        return runner.run()
     }
 
     private fun getRandomTrace(method: Method) =

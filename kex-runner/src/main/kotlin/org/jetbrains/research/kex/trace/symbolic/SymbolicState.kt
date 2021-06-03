@@ -7,6 +7,8 @@ import org.jetbrains.research.kex.state.term.Term
 import org.jetbrains.research.kfg.ir.value.Value
 import org.jetbrains.research.kfg.ir.value.instruction.Instruction
 
+data class InstructionTrace(val trace: List<Instruction> = listOf()) : Iterable<Instruction> by trace
+
 data class Clause(val instruction: Instruction, val predicate: Predicate)
 
 interface PathCondition {
@@ -20,6 +22,7 @@ interface SymbolicState {
     val concreteValueMap: Map<Term, Descriptor>
     val termMap: Map<Term, Value>
     val predicateMap: Map<Predicate, Instruction>
+    val trace: InstructionTrace
 }
 
 internal class SymbolicStateImpl(
@@ -27,5 +30,6 @@ internal class SymbolicStateImpl(
     override val path: PathCondition,
     override val concreteValueMap: Map<Term, Descriptor>,
     override val termMap: Map<Term, Value>,
-    override val predicateMap: Map<Predicate, Instruction>
+    override val predicateMap: Map<Predicate, Instruction>,
+    override val trace: InstructionTrace
 ) : SymbolicState

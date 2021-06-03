@@ -174,8 +174,9 @@ open class MethodChecker(
     }
 
     protected fun collectTrace(method: Method, instance: Any?, args: List<Any?>) = tryOrNull {
-        val runner = ObjectTracingRunner(method, loader)
-        val trace = runner.collectTrace(instance, args.toTypedArray())
+        val params = Parameters(instance, args)
+        val runner = ObjectTracingRunner(method, loader, params)
+        val trace = runner.run() ?: return null
         tm[method] = trace
     }
 }

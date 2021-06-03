@@ -4,6 +4,7 @@ import com.github.h0tk3y.betterParse.grammar.parseToEnd
 import com.github.h0tk3y.betterParse.parser.ParseException
 import org.jetbrains.research.kex.asm.transform.TraceInstrumenter
 import org.jetbrains.research.kex.random.Randomizer
+import org.jetbrains.research.kex.reanimator.Parameters
 import org.jetbrains.research.kex.trace.file.ActionParseException
 import org.jetbrains.research.kex.trace.file.ActionParser
 import org.jetbrains.research.kex.trace.file.Trace
@@ -36,17 +37,22 @@ private fun parse(method: Method, result: InvocationResult): Trace {
     return Trace.parse(actions, result.exception)
 }
 
-class FileTracingRunner(method: Method, loader: ClassLoader) : TracingAbstractRunner<Trace>(method, loader) {
-    override fun collectTrace(instance: Any?, args: Array<Any?>): Trace {
-        val result = run(instance, args)
-        return parse(this.method, result)
-    }
+class FileTracingRunner(
+    method: Method,
+    loader: ClassLoader,
+    val parameters: Parameters<Any?>,
+) : TracingAbstractRunner<Trace>(method, loader) {
+    override fun generateArguments() = parameters
+
+    override fun enableCollector() {}
+    override fun disableCollector() {}
+
+    override fun collectTrace(invocationResult: InvocationResult) = parse(method, invocationResult)
 }
 
 class RandomFileTracingRunner(method: Method, loader: ClassLoader, random: Randomizer) :
     TracingRandomRunner<Trace>(method, loader, random) {
-    override fun collectTrace(instance: Any?, args: Array<Any?>): Trace {
-        val result = run(instance, args)
-        return parse(this.method, result)
-    }
+    override fun enableCollector() {}
+    override fun disableCollector() {}
+    override fun collectTrace(invocationResult: InvocationResult) = parse(method, invocationResult)
 }

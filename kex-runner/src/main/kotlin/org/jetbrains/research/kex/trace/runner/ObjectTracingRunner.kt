@@ -11,28 +11,47 @@ import org.jetbrains.research.kex.reanimator.codegen.klassName
 import org.jetbrains.research.kex.reanimator.codegen.packageName
 import org.jetbrains.research.kex.reanimator.descriptor.descriptor
 import org.jetbrains.research.kex.trace.`object`.Trace
+import org.jetbrains.research.kex.trace.`object`.TraceCollector
 import org.jetbrains.research.kex.trace.`object`.TraceCollectorProxy
 import org.jetbrains.research.kfg.ir.Method
 import org.jetbrains.research.kthelper.logging.log
-import org.jetbrains.research.kthelper.tryOrNull
 
-class ObjectTracingRunner(method: Method, loader: ClassLoader) : TracingAbstractRunner<Trace>(method, loader) {
-    override fun collectTrace(instance: Any?, args: Array<Any?>): Trace {
-        val collector = TraceCollectorProxy.enableCollector(method.cm)
-        run(instance, args)
-        TraceCollectorProxy.disableCollector()
-        return Trace(collector.trace)
+class ObjectTracingRunner(
+    method: Method,
+    loader: ClassLoader,
+    val parameters: Parameters<Any?>
+) : TracingAbstractRunner<Trace>(method, loader) {
+    private lateinit var collector: TraceCollector
+
+    override fun generateArguments() = parameters
+
+    override fun enableCollector() {
+        collector = TraceCollectorProxy.enableCollector(method.cm)
     }
+
+    override fun disableCollector() {
+        TraceCollectorProxy.disableCollector()
+    }
+
+    override fun collectTrace(invocationResult: InvocationResult) = Trace(collector.trace)
 }
 
-class RandomObjectTracingRunner(method: Method, loader: ClassLoader, random: Randomizer) :
-    TracingRandomRunner<Trace>(method, loader, random) {
-    override fun collectTrace(instance: Any?, args: Array<Any?>): Trace {
-        val collector = TraceCollectorProxy.enableCollector(method.cm)
-        run(instance, args)
-        TraceCollectorProxy.disableCollector()
-        return Trace(collector.trace)
+class RandomObjectTracingRunner(
+    method: Method,
+    loader: ClassLoader,
+    random: Randomizer
+) : TracingRandomRunner<Trace>(method, loader, random) {
+    private lateinit var collector: TraceCollector
+
+    override fun enableCollector() {
+        collector = TraceCollectorProxy.enableCollector(method.cm)
     }
+
+    override fun disableCollector() {
+        TraceCollectorProxy.disableCollector()
+    }
+
+    override fun collectTrace(invocationResult: InvocationResult) = Trace(collector.trace)
 }
 
 class ReanimatingRandomObjectTracingRunner(
@@ -45,6 +64,18 @@ class ReanimatingRandomObjectTracingRunner(
     val reanimator = Reanimator(ctx, psa, method.packageName, "Random${method.klassName}")
     private var testCounter = 0
 
+    private lateinit var collector: TraceCollector
+
+    override fun enableCollector() {
+        collector = TraceCollectorProxy.enableCollector(method.cm)
+    }
+
+    override fun disableCollector() {
+        TraceCollectorProxy.disableCollector()
+    }
+
+    override fun collectTrace(invocationResult: InvocationResult) = Trace(collector.trace)
+
     private val Parameters<Any?>.descriptors
         get() = Parameters(
             instance.descriptor,
@@ -52,12 +83,9 @@ class ReanimatingRandomObjectTracingRunner(
             setOf()
         )
 
-    override fun run(): Trace? = tryOrNull {
-        val (randomInstance, randomArgs) = when {
-            method.isConstructor -> null to random.generate(javaConstructor)
-            else -> random.generate(javaClass, javaMethod)
-        }
-        if (randomArgs == null || (!method.isStatic && !method.isConstructor && randomInstance == null)) {
+    override fun generateArguments(): Parameters<Any?>? {
+        val (randomInstance, randomArgs) = super.generateArguments() ?: return null
+        if (!method.isStatic && !method.isConstructor && randomInstance == null) {
             log.error("Cannot generate parameters to invoke method $method")
             return null
         }
@@ -68,14 +96,7 @@ class ReanimatingRandomObjectTracingRunner(
             printTest("test_$testCounter", method, callStacks)
             callStacks.executed
         }
-        return collectTrace(instance, args.toTypedArray())
-    }
-
-    override fun collectTrace(instance: Any?, args: Array<Any?>): Trace {
-        val collector = TraceCollectorProxy.enableCollector(method.cm)
-        run(instance, args)
-        TraceCollectorProxy.disableCollector()
-        return Trace(collector.trace)
+        return Parameters(instance, args, setOf())
     }
 
     fun emit() {

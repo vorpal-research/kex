@@ -1,10 +1,7 @@
 package org.jetbrains.research.kex.trace.symbolic
 
-import org.jetbrains.research.kfg.ir.value.instruction.Instruction
-
 interface InstructionTraceCollector {
     val symbolicState: SymbolicState
-    val trace: List<Instruction>
 
     fun methodEnter(
         className: String,
