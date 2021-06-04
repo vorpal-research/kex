@@ -39,6 +39,21 @@ class SymbolicPathCondition : PathCondition {
     operator fun plusAssign(clause: Clause) {
         path += clause
     }
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as SymbolicPathCondition
+
+        if (path != other.path) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        return path.hashCode()
+    }
 }
 
 /**
@@ -330,6 +345,9 @@ class SymbolicTraceBuilder(val ctx: ExecutionContext) : SymbolicState, Instructi
         unreachable<Unit> { log.error("Could not find a catch block for exception type $exceptionType") }
     }
 
+    /**
+     * instruction handling methods
+     */
     override fun arrayLoad(
         value: String,
         arrayRef: String,
@@ -438,6 +456,7 @@ class SymbolicTraceBuilder(val ctx: ExecutionContext) : SymbolicState, Instructi
         val predicate = path(instruction.location) {
             termCondition equality booleanValue
         }
+        pathBuilder += Clause(instruction, predicate)
 
         postProcess(instruction, predicate)
     }
@@ -541,6 +560,7 @@ class SymbolicTraceBuilder(val ctx: ExecutionContext) : SymbolicState, Instructi
         val predicate = path(kfgException.location) {
             catch(termException)
         }
+        pathBuilder += Clause(kfgException, predicate)
 
         thrownException = null
         postProcess(kfgException, predicate)
@@ -828,11 +848,14 @@ class SymbolicTraceBuilder(val ctx: ExecutionContext) : SymbolicState, Instructi
         val termValue = mkValue(kfgValue)
 
         val intValue = concreteValue as Int
+        val kfgConstant = ctx.values.getInt(intValue)
         termValue.updateInfo(kfgValue, concreteValue.getAsDescriptor(termValue.type))
 
         val predicate = path(instruction.location) {
-            termValue equality intValue
+            if (kfgConstant in instruction.branches) termValue equality intValue
+            else termValue `!in` instruction.branches.keys.map { value(it) }
         }
+        pathBuilder += Clause(instruction, predicate)
 
         postProcess(instruction, predicate)
     }
@@ -854,6 +877,7 @@ class SymbolicTraceBuilder(val ctx: ExecutionContext) : SymbolicState, Instructi
         val predicate = path(instruction.location) {
             termValue equality intValue
         }
+        pathBuilder += Clause(instruction, predicate)
 
         postProcess(instruction, predicate)
     }
@@ -874,6 +898,7 @@ class SymbolicTraceBuilder(val ctx: ExecutionContext) : SymbolicState, Instructi
         val predicate = path(instruction.location) {
             `throw`(termException)
         }
+        pathBuilder += Clause(instruction, predicate)
 
         thrownException = termException
         postProcess(instruction, predicate)

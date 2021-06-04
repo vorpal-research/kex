@@ -43,7 +43,7 @@ data class CoverageInfo(
             this.bodyCovered + other.bodyCovered,
             this.bodyTotal + other.bodyTotal,
             this.fullCovered + other.fullCovered,
-            this.fullTotal + other.bodyTotal
+            this.fullTotal + other.fullTotal
         )
     }
 }
