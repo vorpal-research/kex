@@ -213,13 +213,7 @@ class ConcolicChecker2(val ctx: ExecutionContext, val traceManager: TraceManager
             generator.generate("test", method, checker.state, result.model)
         } ?: return null
 
-        val newState = collectTrace(method, parameters) ?: return null
-        try {
-            paths += newState.path
-        } catch (e: Throwable) {
-
-        }
-        return newState
+        return collectTrace(method, parameters) ?: return null
     }
 
     private fun processMethod(method: Method) {
@@ -241,6 +235,7 @@ class ConcolicChecker2(val ctx: ExecutionContext, val traceManager: TraceManager
                 log.debug("New state: $newState")
 
                 stateDeque += newState
+                paths += newState.path
             }
             traceManager.addTrace(method, newState.trace)
         }
