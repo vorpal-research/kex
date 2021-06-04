@@ -35,6 +35,7 @@ import org.jetbrains.research.kthelper.tryOrNull
 
 class ConcolicChecker2(val ctx: ExecutionContext, val traceManager: TraceManager<InstructionTrace>) : MethodVisitor {
     private val paths = mutableSetOf<PathCondition>()
+    private val candidates = mutableSetOf<PathCondition>()
     lateinit var generator: ParameterGenerator
         protected set
 
@@ -149,7 +150,7 @@ class ConcolicChecker2(val ctx: ExecutionContext, val traceManager: TraceManager
 
     private fun mutateState(state: SymbolicState): SymbolicState? {
         val predicateState = state.state as BasicState
-        val mutatedPathCondition = state.path.path.toMutableList()
+        val mutatedPathCondition = state.path.toMutableList()
         var dropping = false
         var clause: Clause? = null
         val newState = predicateState.dropLastWhile {
@@ -160,7 +161,12 @@ class ConcolicChecker2(val ctx: ExecutionContext, val traceManager: TraceManager
                     clause = reversed
                     mutatedPathCondition.removeLast()
                     mutatedPathCondition += clause!!
-                    dropping = true
+                    if (PathConditionImpl(mutatedPathCondition) !in candidates)
+                        dropping = true
+                    else {
+                        clause = null
+                        mutatedPathCondition.removeLast()
+                    }
                 } else {
                     mutatedPathCondition.removeLast()
                 }
@@ -171,6 +177,7 @@ class ConcolicChecker2(val ctx: ExecutionContext, val traceManager: TraceManager
 
         val mutatedState = newState.dropLast(1) + clause!!.predicate
         val mutatedValueMap = state.concreteValueMap.toMutableMap()
+        candidates += PathConditionImpl(mutatedPathCondition)
         clause!!.predicate.operands.forEach {
             mutatedValueMap.remove(it)
         }
@@ -219,6 +226,7 @@ class ConcolicChecker2(val ctx: ExecutionContext, val traceManager: TraceManager
         val stateDeque = dequeOf<SymbolicState>()
         getRandomTrace(method)?.let {
             stateDeque += it
+            paths += it.path
             traceManager.addTrace(method, it.trace)
         }
         while (stateDeque.isNotEmpty() && !traceManager.isFullCovered(method)) {
@@ -229,9 +237,11 @@ class ConcolicChecker2(val ctx: ExecutionContext, val traceManager: TraceManager
             log.debug("Mutated state: $mutatedState")
 
             val newState = check(method, mutatedState) ?: continue
-            log.debug("New state: $newState")
+            if (newState.path !in paths) {
+                log.debug("New state: $newState")
 
-            stateDeque += newState
+                stateDeque += newState
+            }
             traceManager.addTrace(method, newState.trace)
         }
     }
