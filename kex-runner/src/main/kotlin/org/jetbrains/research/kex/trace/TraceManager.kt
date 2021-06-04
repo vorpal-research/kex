@@ -17,4 +17,5 @@ interface TraceManager<T> {
             else -> reduce { acc, b -> acc && b }
         }
     }
+    fun isFullCovered(method: Method) = method.basicBlocks.all { isCovered(method, it) }
 }

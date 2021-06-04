@@ -77,8 +77,8 @@ class ConcolicChecker2(val ctx: ExecutionContext, val traceManager: TraceManager
             val reversed = Clause(instruction, path(instruction.location) {
                 cond equality !value
             })
-            if (paths.any { reversed in it }) reversed
-            else null
+            if (paths.any { reversed in it }) null
+            else reversed
         }
         is SwitchInst -> when (predicate) {
             is DefaultSwitchPredicate -> {
@@ -89,7 +89,7 @@ class ConcolicChecker2(val ctx: ExecutionContext, val traceManager: TraceManager
                     val mutated = Clause(instruction, path(instruction.location) {
                         cond equality candidate
                     })
-                    result = if (paths.any { mutated in it }) mutated else null
+                    result = if (paths.any { mutated in it }) null else mutated
                 }
                 result
             }
@@ -101,7 +101,7 @@ class ConcolicChecker2(val ctx: ExecutionContext, val traceManager: TraceManager
                     val mutated = Clause(instruction, path(instruction.location) {
                         cond equality candidate
                     })
-                    result = if (paths.any { mutated in it }) mutated else null
+                    result = if (paths.any { mutated in it }) null else mutated
                 }
                 result ?: run {
                     val mutated = Clause(instruction, path(instruction.location) {
@@ -121,7 +121,7 @@ class ConcolicChecker2(val ctx: ExecutionContext, val traceManager: TraceManager
                     val mutated = Clause(instruction, path(instruction.location) {
                         cond equality candidate
                     })
-                    result = if (paths.any { mutated in it }) mutated else null
+                    result = if (paths.any { mutated in it }) null else mutated
                 }
                 result
             }
@@ -133,13 +133,13 @@ class ConcolicChecker2(val ctx: ExecutionContext, val traceManager: TraceManager
                     val mutated = Clause(instruction, path(instruction.location) {
                         cond equality candidate
                     })
-                    result = if (paths.any { mutated in it }) mutated else null
+                    result = if (paths.any { mutated in it }) null else mutated
                 }
                 result ?: run {
                     val mutated = Clause(instruction, path(instruction.location) {
                         cond `!in` (instruction as SwitchInst).branches.keys.map { value(it) }
                     })
-                    if (paths.any { mutated in it }) mutated else null
+                    if (paths.any { mutated in it }) null else mutated
                 }
             }
             else -> unreachable { log.error("Unexpected predicate in switch clause: $predicate") }
@@ -150,7 +150,7 @@ class ConcolicChecker2(val ctx: ExecutionContext, val traceManager: TraceManager
     private fun mutateState(state: SymbolicState): SymbolicState? {
         val predicateState = state.state as BasicState
         val mutatedPathCondition = state.path.path.toMutableList()
-        var dropping = true
+        var dropping = false
         var clause: Clause? = null
         val newState = predicateState.dropLastWhile {
             if (it.type is PredicateType.Path) {
@@ -158,7 +158,9 @@ class ConcolicChecker2(val ctx: ExecutionContext, val traceManager: TraceManager
                 val reversed = Clause(instruction, it).reversed()
                 if (reversed != null) {
                     clause = reversed
-                    dropping = false
+                    mutatedPathCondition.removeLast()
+                    mutatedPathCondition += clause!!
+                    dropping = true
                 } else {
                     mutatedPathCondition.removeLast()
                 }
@@ -167,7 +169,7 @@ class ConcolicChecker2(val ctx: ExecutionContext, val traceManager: TraceManager
         }
         if (clause == null) return null
 
-        val mutatedState = newState + clause!!.predicate
+        val mutatedState = newState.dropLast(1) + clause!!.predicate
         val mutatedValueMap = state.concreteValueMap.toMutableMap()
         clause!!.predicate.operands.forEach {
             mutatedValueMap.remove(it)
@@ -197,7 +199,7 @@ class ConcolicChecker2(val ctx: ExecutionContext, val traceManager: TraceManager
     private fun check(method: Method, state: SymbolicState): SymbolicState? {
         val checker = Checker(method, ctx, PredicateStateAnalysis(cm))
         val preparedState = prepareState(method, state.state)
-        val result = checker.check(preparedState)
+        val result = checker.check(preparedState, state.state.path)
         if (result !is Result.SatResult) return null
 
         val parameters = tryOrNull {
@@ -205,7 +207,11 @@ class ConcolicChecker2(val ctx: ExecutionContext, val traceManager: TraceManager
         } ?: return null
 
         val newState = collectTrace(method, parameters) ?: return null
-        paths += newState.path
+        try {
+            paths += newState.path
+        } catch (e: Throwable) {
+
+        }
         return newState
     }
 
@@ -215,7 +221,7 @@ class ConcolicChecker2(val ctx: ExecutionContext, val traceManager: TraceManager
             stateDeque += it
             traceManager.addTrace(method, it.trace)
         }
-        while (stateDeque.isNotEmpty()) {
+        while (stateDeque.isNotEmpty() && !traceManager.isFullCovered(method)) {
             val state = stateDeque.pollFirst()
             log.debug("Processing state: $state")
 

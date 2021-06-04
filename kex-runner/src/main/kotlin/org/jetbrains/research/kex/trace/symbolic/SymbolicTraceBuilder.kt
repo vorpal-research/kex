@@ -66,7 +66,7 @@ class SymbolicTraceBuilder(val ctx: ExecutionContext) : SymbolicState, Instructi
     override val state: PredicateState
         get() = builder.current
     override val path: PathCondition
-        get() = pathBuilder
+        get() = PathConditionImpl(pathBuilder.toList())
     override val concreteValueMap: Map<Term, Descriptor>
         get() = concreteValues
     override val termMap: Map<Term, Value>
@@ -75,9 +75,16 @@ class SymbolicTraceBuilder(val ctx: ExecutionContext) : SymbolicState, Instructi
         get() = predicates
 
     override val symbolicState: SymbolicState
-        get() = this
+        get() = SymbolicStateImpl(
+                state,
+                path,
+                concreteValueMap.toMap(),
+                termMap.toMap(),
+                predicateMap.toMap(),
+                trace
+            )
     override val trace: InstructionTrace
-        get() = InstructionTrace(traceBuilder)
+        get() = InstructionTrace(traceBuilder.toList())
 
     /**
      * mutable backing fields for required fields
@@ -114,7 +121,7 @@ class SymbolicTraceBuilder(val ctx: ExecutionContext) : SymbolicState, Instructi
     private var previousBlock: BasicBlock
         get() = currentFrame.previousBlock
         set(block) {
-           currentFrame.previousBlock = block
+            currentFrame.previousBlock = block
         }
 
     private class FrameStack : Iterable<Frame> {
@@ -324,10 +331,13 @@ class SymbolicTraceBuilder(val ctx: ExecutionContext) : SymbolicState, Instructi
         predicates[predicate] = instruction
         builder += predicate
 
-        previousBlock = instruction.parent
-
         traceBuilder += instruction
         updateCatches(instruction)
+    }
+
+    private fun processPath(instruction: Instruction, predicate: Predicate) {
+        previousBlock = instruction.parent
+        pathBuilder += Clause(instruction, predicate)
     }
 
     private fun restoreCatchFrame(exceptionType: Type) {
@@ -456,8 +466,8 @@ class SymbolicTraceBuilder(val ctx: ExecutionContext) : SymbolicState, Instructi
         val predicate = path(instruction.location) {
             termCondition equality booleanValue
         }
-        pathBuilder += Clause(instruction, predicate)
 
+        processPath(instruction, predicate)
         postProcess(instruction, predicate)
     }
 
@@ -560,9 +570,10 @@ class SymbolicTraceBuilder(val ctx: ExecutionContext) : SymbolicState, Instructi
         val predicate = path(kfgException.location) {
             catch(termException)
         }
-        pathBuilder += Clause(kfgException, predicate)
 
         thrownException = null
+
+        processPath(kfgException, predicate)
         postProcess(kfgException, predicate)
     }
 
@@ -659,7 +670,7 @@ class SymbolicTraceBuilder(val ctx: ExecutionContext) : SymbolicState, Instructi
 
         val predicate = state(kfgValue.location) {
             val actualOwner = termOwner ?: `class`(kfgField.klass)
-            termValue equality actualOwner.field(kfgField.type.kexType, kfgField.name)
+            termValue equality actualOwner.field(kfgField.type.kexType, kfgField.name).load()
         }
 
         postProcess(kfgValue, predicate)
@@ -855,8 +866,8 @@ class SymbolicTraceBuilder(val ctx: ExecutionContext) : SymbolicState, Instructi
             if (kfgConstant in instruction.branches) termValue equality intValue
             else termValue `!in` instruction.branches.keys.map { value(it) }
         }
-        pathBuilder += Clause(instruction, predicate)
 
+        processPath(instruction, predicate)
         postProcess(instruction, predicate)
     }
 
@@ -877,8 +888,8 @@ class SymbolicTraceBuilder(val ctx: ExecutionContext) : SymbolicState, Instructi
         val predicate = path(instruction.location) {
             termValue equality intValue
         }
-        pathBuilder += Clause(instruction, predicate)
 
+        processPath(instruction, predicate)
         postProcess(instruction, predicate)
     }
 
@@ -898,9 +909,10 @@ class SymbolicTraceBuilder(val ctx: ExecutionContext) : SymbolicState, Instructi
         val predicate = path(instruction.location) {
             `throw`(termException)
         }
-        pathBuilder += Clause(instruction, predicate)
 
         thrownException = termException
+
+        processPath(instruction, predicate)
         postProcess(instruction, predicate)
     }
 
