@@ -16,7 +16,7 @@ fun InstructionFactory.wrapValue(value: Value): Instruction {
     val wrapperType = cm.type.getWrapper(value.type as PrimaryType) as ClassType
     val wrapperClass = wrapperType.klass
     val valueOfMethod = wrapperClass.getMethod("valueOf", MethodDesc(arrayOf(value.type), wrapperType))
-    return getCall(CallOpcode.Static(), valueOfMethod, wrapperClass, arrayOf(value), true)
+    return getCall(CallOpcode.STATIC, valueOfMethod, wrapperClass, arrayOf(value), true)
 }
 
 fun Instruction.insertBefore(instructions: List<Instruction>) {
@@ -32,19 +32,19 @@ fun Any?.cmp(opcode: CmpOpcode, other: Any?) = when {
 }
 
 fun Any?.apply(opcode: CmpOpcode, other: Any?) = when (opcode) {
-    is CmpOpcode.Eq -> this === other
-    is CmpOpcode.Neq -> this !== other
+    CmpOpcode.EQ -> this === other
+    CmpOpcode.NEQ -> this !== other
     else -> unreachable { log.error("Unknown opcode $opcode for object cmp") }
 }
 
 fun Number.apply(opcode: CmpOpcode, other: Number) = when (opcode) {
-    is CmpOpcode.Eq -> this == other
-    is CmpOpcode.Neq -> this != other
-    is CmpOpcode.Lt -> this < other
-    is CmpOpcode.Gt -> this > other
-    is CmpOpcode.Le -> this <= other
-    is CmpOpcode.Ge -> this >= other
-    is CmpOpcode.Cmp -> this.compareTo(other)
-    is CmpOpcode.Cmpg -> this.compareTo(other)
-    is CmpOpcode.Cmpl -> this.compareTo(other)
+    CmpOpcode.EQ -> this == other
+    CmpOpcode.NEQ -> this != other
+    CmpOpcode.LT -> this < other
+    CmpOpcode.GT  -> this > other
+    CmpOpcode.LE -> this <= other
+    CmpOpcode.GE -> this >= other
+    CmpOpcode.CMP -> this.compareTo(other)
+    CmpOpcode.CMPG -> this.compareTo(other)
+    CmpOpcode.CMPL -> this.compareTo(other)
 }

@@ -198,7 +198,7 @@ class LoopDeroller(override val cm: ClassManager) : LoopVisitor {
     }
 
     private fun getOpcodeConstant(opcode: CmpOpcode, constant: IntConstant) = when (opcode) {
-        is CmpOpcode.Le, is CmpOpcode.Ge -> constant
+        CmpOpcode.LE, CmpOpcode.GE -> constant
         else -> values.getInt(constant.value + 1) as IntConstant
     }
 
@@ -237,8 +237,8 @@ class LoopDeroller(override val cm: ClassManager) : LoopVisitor {
                 }
                 when {
                     updateValue != value -> return -1
-                    init.value > max.value && updated.opcode is BinaryOpcode.Sub -> updateSize
-                    init.value < max.value && updated.opcode is BinaryOpcode.Add -> updateSize
+                    init.value > max.value && updated.opcode == BinaryOpcode.SUB -> updateSize
+                    init.value < max.value && updated.opcode == BinaryOpcode.ADD -> updateSize
                     else -> return -1
                 }
             }
@@ -355,6 +355,7 @@ class LoopDeroller(override val cm: ClassManager) : LoopVisitor {
             val bb = phi.parent
             bb.insertBefore(phi, newPhi)
             phi.replaceAllUsesWith(newPhi)
+            phi.clearUses()
             bb -= phi
         }
     }

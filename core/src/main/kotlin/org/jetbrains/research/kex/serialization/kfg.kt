@@ -26,34 +26,34 @@ fun getKfgSerialModule(cm: ClassManager): SerializersModule {
     MethodSerializer.cm = cm
     return SerializersModule {
         contextual(BinaryOpcode::class, BinaryOpcodeSerializer)
-        contextual(BinaryOpcode.Add::class, BinaryOpcodeSerializer.to())
-        contextual(BinaryOpcode.Sub::class, BinaryOpcodeSerializer.to())
-        contextual(BinaryOpcode.Mul::class, BinaryOpcodeSerializer.to())
-        contextual(BinaryOpcode.Div::class, BinaryOpcodeSerializer.to())
-        contextual(BinaryOpcode.Rem::class, BinaryOpcodeSerializer.to())
-        contextual(BinaryOpcode.Shl::class, BinaryOpcodeSerializer.to())
-        contextual(BinaryOpcode.Shr::class, BinaryOpcodeSerializer.to())
-        contextual(BinaryOpcode.Ushr::class, BinaryOpcodeSerializer.to())
-        contextual(BinaryOpcode.And::class, BinaryOpcodeSerializer.to())
-        contextual(BinaryOpcode.Or::class, BinaryOpcodeSerializer.to())
-        contextual(BinaryOpcode.Xor::class, BinaryOpcodeSerializer.to())
+//        contextual(BinaryOpcode.Add::class, BinaryOpcodeSerializer.to())
+//        contextual(BinaryOpcode.Sub::class, BinaryOpcodeSerializer.to())
+//        contextual(BinaryOpcode.Mul::class, BinaryOpcodeSerializer.to())
+//        contextual(BinaryOpcode.Div::class, BinaryOpcodeSerializer.to())
+//        contextual(BinaryOpcode.Rem::class, BinaryOpcodeSerializer.to())
+//        contextual(BinaryOpcode.Shl::class, BinaryOpcodeSerializer.to())
+//        contextual(BinaryOpcode.Shr::class, BinaryOpcodeSerializer.to())
+//        contextual(BinaryOpcode.Ushr::class, BinaryOpcodeSerializer.to())
+//        contextual(BinaryOpcode.And::class, BinaryOpcodeSerializer.to())
+//        contextual(BinaryOpcode.Or::class, BinaryOpcodeSerializer.to())
+//        contextual(BinaryOpcode.Xor::class, BinaryOpcodeSerializer.to())
 
         contextual(CmpOpcode::class, CmpOpcodeSerializer)
-        contextual(CmpOpcode.Eq::class, CmpOpcodeSerializer.to())
-        contextual(CmpOpcode.Neq::class, CmpOpcodeSerializer.to())
-        contextual(CmpOpcode.Lt::class, CmpOpcodeSerializer.to())
-        contextual(CmpOpcode.Gt::class, CmpOpcodeSerializer.to())
-        contextual(CmpOpcode.Le::class, CmpOpcodeSerializer.to())
-        contextual(CmpOpcode.Ge::class, CmpOpcodeSerializer.to())
-        contextual(CmpOpcode.Cmp::class, CmpOpcodeSerializer.to())
-        contextual(CmpOpcode.Cmpg::class, CmpOpcodeSerializer.to())
-        contextual(CmpOpcode.Cmpl::class, CmpOpcodeSerializer.to())
+//        contextual(CmpOpcode.Eq::class, CmpOpcodeSerializer.to())
+//        contextual(CmpOpcode.Neq::class, CmpOpcodeSerializer.to())
+//        contextual(CmpOpcode.Lt::class, CmpOpcodeSerializer.to())
+//        contextual(CmpOpcode.Gt::class, CmpOpcodeSerializer.to())
+//        contextual(CmpOpcode.Le::class, CmpOpcodeSerializer.to())
+//        contextual(CmpOpcode.Ge::class, CmpOpcodeSerializer.to())
+//        contextual(CmpOpcode.Cmp::class, CmpOpcodeSerializer.to())
+//        contextual(CmpOpcode.Cmpg::class, CmpOpcodeSerializer.to())
+//        contextual(CmpOpcode.Cmpl::class, CmpOpcodeSerializer.to())
 
         contextual(CallOpcode::class, CallOpcodeSerializer)
-        contextual(CallOpcode.Interface::class, CallOpcodeSerializer.to())
-        contextual(CallOpcode.Virtual::class, CallOpcodeSerializer.to())
-        contextual(CallOpcode.Static::class, CallOpcodeSerializer.to())
-        contextual(CallOpcode.Special::class, CallOpcodeSerializer.to())
+//        contextual(CallOpcode.Interface::class, CallOpcodeSerializer.to())
+//        contextual(CallOpcode.Virtual::class, CallOpcodeSerializer.to())
+//        contextual(CallOpcode.Static::class, CallOpcodeSerializer.to())
+//        contextual(CallOpcode.Special::class, CallOpcodeSerializer.to())
 
         contextual(Class::class, ClassSerializer)
         contextual(ConcreteClass::class, ClassSerializer.to())
@@ -71,7 +71,7 @@ object BinaryOpcodeSerializer : KSerializer<BinaryOpcode> {
         get() = PrimitiveSerialDescriptor("opcode", PrimitiveKind.STRING)
 
     override fun serialize(encoder: Encoder, value: BinaryOpcode) {
-        encoder.encodeString(value.name)
+        encoder.encodeString(value.opcode)
     }
 
     override fun deserialize(decoder: Decoder): BinaryOpcode {
@@ -98,7 +98,7 @@ object CmpOpcodeSerializer : KSerializer<CmpOpcode> {
         get() = PrimitiveSerialDescriptor("opcode", PrimitiveKind.STRING)
 
     override fun serialize(encoder: Encoder, value: CmpOpcode) {
-        encoder.encodeString(value.name)
+        encoder.encodeString(value.opcode)
     }
 
     override fun deserialize(decoder: Decoder): CmpOpcode {
@@ -125,7 +125,7 @@ object CallOpcodeSerializer : KSerializer<CallOpcode> {
         get() = PrimitiveSerialDescriptor("opcode", PrimitiveKind.STRING)
 
     override fun serialize(encoder: Encoder, value: CallOpcode) {
-        encoder.encodeString(value.name)
+        encoder.encodeString(value.opcode)
     }
 
     override fun deserialize(decoder: Decoder): CallOpcode {

@@ -196,6 +196,7 @@ class ConcolicChecker2(val ctx: ExecutionContext, val traceManager: TraceManager
         +AnnotationAdapter(method, AnnotationManager.defaultLoader)
         +IntrinsicAdapter
         +KexIntrinsicsAdapter()
+        +ReflectionInfoAdapter(method, ctx.loader)
         +Optimizer()
         +ConstantPropagator
         +BoolTypeAdapter(method.cm.type)

@@ -25,14 +25,14 @@ class RuntimeTraceCollector(override val cm: ClassManager) : MethodVisitor {
         val wrapperType = this@RuntimeTraceCollector.type.getWrapper(this.type as PrimaryType) as ClassType
         val wrapperClass = wrapperType.klass
         val valueOfMethod = wrapperClass.getMethod("valueOf", MethodDesc(arrayOf(this.type), wrapperType))
-        return instruction.getCall(CallOpcode.Static(), valueOfMethod, wrapperClass, arrayOf(this), true)
+        return instruction.getCall(CallOpcode.STATIC, valueOfMethod, wrapperClass, arrayOf(this), true)
     }
 
     private fun getNewCollector(): Instruction {
         val proxy = cm[TraceCollectorProxy::class.java.canonicalName.replace('.', '/')]
         val getter = proxy.getMethod("currentCollector", MethodDesc(arrayOf(), cm.type.getRefType(collectorClass)))
 
-        return cm.instruction.getCall(CallOpcode.Static(), "collector", getter, proxy, arrayOf())
+        return cm.instruction.getCall(CallOpcode.STATIC, "collector", getter, proxy, arrayOf())
     }
 
     private fun List<Instruction>.insertBefore(inst: Instruction) {
@@ -75,7 +75,7 @@ class RuntimeTraceCollector(override val cm: ClassManager) : MethodVisitor {
                 }
             }
             +instruction.getCall(
-                CallOpcode.Virtual(), branchMethod, collectorClass, traceCollector,
+                CallOpcode.VIRTUAL, branchMethod, collectorClass, traceCollector,
                 arrayOf(value.getString("${inst.parent.name}"), condition, expected), false
             )
         }
@@ -89,7 +89,7 @@ class RuntimeTraceCollector(override val cm: ClassManager) : MethodVisitor {
                 MethodDesc(arrayOf(type.stringType), type.voidType)
             )
             +instruction.getCall(
-                CallOpcode.Virtual(), jumpMethod, collectorClass, traceCollector,
+                CallOpcode.VIRTUAL, jumpMethod, collectorClass, traceCollector,
                 arrayOf(value.getString("${inst.parent.name}")), false
             )
         }
@@ -113,7 +113,7 @@ class RuntimeTraceCollector(override val cm: ClassManager) : MethodVisitor {
             }
         }
         +instruction.getCall(
-            CallOpcode.Virtual(), switchMethod, collectorClass, traceCollector,
+            CallOpcode.VIRTUAL, switchMethod, collectorClass, traceCollector,
             arrayOf(value.getString("${inst.parent.name}"), key), false
         )
     }.insertBefore(inst)
@@ -135,7 +135,7 @@ class RuntimeTraceCollector(override val cm: ClassManager) : MethodVisitor {
             }
         }
         +instruction.getCall(
-            CallOpcode.Virtual(), switchMethod, collectorClass, traceCollector,
+            CallOpcode.VIRTUAL, switchMethod, collectorClass, traceCollector,
             arrayOf(value.getString("${inst.parent.name}"), key), false
         )
     }.insertBefore(inst)
@@ -143,7 +143,7 @@ class RuntimeTraceCollector(override val cm: ClassManager) : MethodVisitor {
     override fun visitThrowInst(inst: ThrowInst) = when {
         inst.parent.parent.isStaticInitializer -> buildList<Instruction> {
             val returnMethod = collectorClass.getMethod("staticExit", MethodDesc(arrayOf(), type.voidType))
-            +instruction.getCall(CallOpcode.Virtual(), returnMethod, collectorClass, traceCollector, arrayOf(), false)
+            +instruction.getCall(CallOpcode.VIRTUAL, returnMethod, collectorClass, traceCollector, arrayOf(), false)
         }
         else -> buildList<Instruction> {
             val throwMethod = collectorClass.getMethod(
@@ -151,7 +151,7 @@ class RuntimeTraceCollector(override val cm: ClassManager) : MethodVisitor {
                 MethodDesc(arrayOf(type.stringType, type.getRefType("java/lang/Throwable")), type.voidType)
             )
             +instruction.getCall(
-                CallOpcode.Virtual(), throwMethod, collectorClass, traceCollector,
+                CallOpcode.VIRTUAL, throwMethod, collectorClass, traceCollector,
                 arrayOf(value.getString("${inst.parent.name}"), inst.throwable), false
             )
         }
@@ -160,13 +160,13 @@ class RuntimeTraceCollector(override val cm: ClassManager) : MethodVisitor {
     override fun visitReturnInst(inst: ReturnInst) = when {
         inst.parent.parent.isStaticInitializer -> buildList<Instruction> {
             val returnMethod = collectorClass.getMethod("staticExit", MethodDesc(arrayOf(), type.voidType))
-            +instruction.getCall(CallOpcode.Virtual(), returnMethod, collectorClass, traceCollector, arrayOf(), false)
+            +instruction.getCall(CallOpcode.VIRTUAL, returnMethod, collectorClass, traceCollector, arrayOf(), false)
         }
         else -> buildList<Instruction> {
             val returnMethod =
                 collectorClass.getMethod("methodReturn", MethodDesc(arrayOf(type.stringType), type.voidType))
             +instruction.getCall(
-                CallOpcode.Virtual(), returnMethod, collectorClass, traceCollector,
+                CallOpcode.VIRTUAL, returnMethod, collectorClass, traceCollector,
                 arrayOf(value.getString("${inst.parent.name}")), false
             )
         }
@@ -195,7 +195,7 @@ class RuntimeTraceCollector(override val cm: ClassManager) : MethodVisitor {
             }
 
             +instruction.getCall(
-                CallOpcode.Virtual(), callMethod, collectorClass, traceCollector,
+                CallOpcode.VIRTUAL, callMethod, collectorClass, traceCollector,
                 arrayOf(
                     value.getString(inst.method.klass.fullName),
                     value.getString(inst.method.name),
@@ -220,7 +220,7 @@ class RuntimeTraceCollector(override val cm: ClassManager) : MethodVisitor {
                 )
             )
             +instruction.getCall(
-                CallOpcode.Virtual(), entryMethod, collectorClass, traceCollector,
+                CallOpcode.VIRTUAL, entryMethod, collectorClass, traceCollector,
                 arrayOf(value.getString("${bb.name}")), false
             )
         }.insertBefore(bb.first())
@@ -237,7 +237,7 @@ class RuntimeTraceCollector(override val cm: ClassManager) : MethodVisitor {
                 val entryMethod =
                     collectorClass.getMethod("staticEntry", MethodDesc(arrayOf(type.stringType), type.voidType))
                 +instruction.getCall(
-                    CallOpcode.Virtual(), entryMethod, collectorClass,
+                    CallOpcode.VIRTUAL, entryMethod, collectorClass,
                     traceCollector, arrayOf(value.getString(method.klass.fullName)), false
                 )
             }
@@ -272,7 +272,7 @@ class RuntimeTraceCollector(override val cm: ClassManager) : MethodVisitor {
                 }
 
                 +instruction.getCall(
-                    CallOpcode.Virtual(), entryMethod, collectorClass, traceCollector,
+                    CallOpcode.VIRTUAL, entryMethod, collectorClass, traceCollector,
                     arrayOf(
                         value.getString(method.klass.fullName),
                         value.getString(method.name),

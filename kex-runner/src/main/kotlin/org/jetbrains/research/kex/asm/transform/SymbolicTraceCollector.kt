@@ -528,7 +528,7 @@ class SymbolicTraceCollector(
         val proxy = cm[TraceCollectorProxy::class.java.canonicalName.replace('.', '/')]
         val getter = proxy.getMethod("currentCollector", MethodDesc(arrayOf(), cm.type.getRefType(collectorClass)))
 
-        return cm.instruction.getCall(CallOpcode.Static(), "collector", getter, proxy, arrayOf())
+        return cm.instruction.getCall(CallOpcode.STATIC, "collector", getter, proxy, arrayOf())
     }
 
     private fun Class.virtualCall(
@@ -536,7 +536,7 @@ class SymbolicTraceCollector(
         instance: Value,
         vararg args: Value
     ) = instructions.getCall(
-        CallOpcode.Virtual(), method, this, instance, args.toList().toTypedArray(), false
+        CallOpcode.VIRTUAL, method, this, instance, args.toList().toTypedArray(), false
     )
 
     private fun Class.interfaceCall(
@@ -544,7 +544,7 @@ class SymbolicTraceCollector(
         instance: Value,
         vararg args: Value
     ) = instructions.getCall(
-        CallOpcode.Interface(), method, this, instance, args.toList().toTypedArray(), false
+        CallOpcode.INTERFACE, method, this, instance, args.toList().toTypedArray(), false
     )
 
     private fun Class.specialCall(
@@ -552,7 +552,7 @@ class SymbolicTraceCollector(
         instance: Value,
         vararg args: Value
     ) = instructions.getCall(
-        CallOpcode.Special(), method, this, instance, args.toList().toTypedArray(), false
+        CallOpcode.SPECIAL, method, this, instance, args.toList().toTypedArray(), false
     )
 
     private val Boolean.asValue get() = values.getBool(this)

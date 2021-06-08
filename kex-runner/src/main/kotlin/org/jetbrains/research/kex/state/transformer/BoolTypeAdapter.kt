@@ -1,7 +1,5 @@
 package org.jetbrains.research.kex.state.transformer
 
-import org.jetbrains.research.kthelper.assert.unreachable
-import org.jetbrains.research.kthelper.logging.log
 import org.jetbrains.research.kex.ktype.KexBool
 import org.jetbrains.research.kex.ktype.KexInt
 import org.jetbrains.research.kex.ktype.KexIntegral
@@ -15,6 +13,8 @@ import org.jetbrains.research.kex.state.term.Term
 import org.jetbrains.research.kex.state.term.term
 import org.jetbrains.research.kfg.ir.value.instruction.BinaryOpcode
 import org.jetbrains.research.kfg.type.TypeFactory
+import org.jetbrains.research.kthelper.assert.unreachable
+import org.jetbrains.research.kthelper.logging.log
 
 class BoolTypeAdapter(val types: TypeFactory) : Transformer<BoolTypeAdapter> {
     override fun transformEqualityPredicate(predicate: EqualityPredicate): Predicate {
@@ -38,9 +38,9 @@ class BoolTypeAdapter(val types: TypeFactory) : Transformer<BoolTypeAdapter> {
 
     override fun transformBinaryTerm(term: BinaryTerm): Term {
         val isBooleanOpcode = when (term.opcode) {
-            BinaryOpcode.And() -> true
-            BinaryOpcode.Or() -> true
-            BinaryOpcode.Xor() -> true
+            BinaryOpcode.AND -> true
+            BinaryOpcode.OR -> true
+            BinaryOpcode.XOR -> true
             else -> false
         }
         return when {

@@ -267,17 +267,17 @@ class ${solver}Converter(val tf: TypeFactory) : ${solver}SMTConverter() {
         val lhv = convert(binary.lhv, ef, ctx)
         val rhv = convert(binary.rhv, ef, ctx)
         return when (binary.opcode) {
-            is BinaryOpcode.Add -> lhv + rhv
-            is BinaryOpcode.Sub -> lhv - rhv
-            is BinaryOpcode.Mul -> lhv * rhv
-            is BinaryOpcode.Div -> lhv / rhv
-            is BinaryOpcode.Rem -> lhv % rhv
-            is BinaryOpcode.Shl -> lhv shl rhv
-            is BinaryOpcode.Shr -> lhv ashr rhv
-            is BinaryOpcode.Ushr -> lhv shr rhv
-            is BinaryOpcode.And -> lhv and rhv
-            is BinaryOpcode.Or -> lhv or rhv
-            is BinaryOpcode.Xor -> lhv xor rhv
+            BinaryOpcode.ADD -> lhv + rhv
+            BinaryOpcode.SUB -> lhv - rhv
+            BinaryOpcode.MUL -> lhv * rhv
+            BinaryOpcode.DIV -> lhv / rhv
+            BinaryOpcode.REM -> lhv % rhv
+            BinaryOpcode.SHL -> lhv shl rhv
+            BinaryOpcode.SHR -> lhv ashr rhv
+            BinaryOpcode.USHR -> lhv shr rhv
+            BinaryOpcode.AND -> lhv and rhv
+            BinaryOpcode.OR -> lhv or rhv
+            BinaryOpcode.XOR -> lhv xor rhv
         }
     }
 
@@ -300,7 +300,7 @@ class ${solver}Converter(val tf: TypeFactory) : ${solver}SMTConverter() {
 #macro(cmp $opcode $default $type)
     #* @vtlvariable name="type" type="java.lang.String" *#
     #* @vtlvariable name="opcode" type="java.lang.String" *#
-            is CmpOpcode.$opcode -> {
+            CmpOpcode.$opcode -> {
                 val cases = mapOf(
                     (lhv gt rhv) to ef.makeIntConst(1),
                     (lhv eq rhv) to ef.makeIntConst(0),
@@ -312,14 +312,14 @@ class ${solver}Converter(val tf: TypeFactory) : ${solver}SMTConverter() {
     fun convert(cmp: CmpTerm, ef: $factory, ctx: ${solver}Context): Dynamic_ {
         val lhv = convert(cmp.lhv, ef, ctx)
         val rhv = convert(cmp.rhv,ef, ctx)
-#set($opcodes = ["Eq", "Neq", "Lt", "Gt", "Le", "Ge"])
+#set($opcodes = ["EQ", "NEQ", "LT", "GT", "LE", "GE"])
         return when (cmp.opcode) {
 #foreach($opcode in $opcodes)
-            is CmpOpcode.$opcode -> lhv ${opcode.toLowerCase()} rhv
+            CmpOpcode.$opcode -> lhv ${opcode.toLowerCase()} rhv
 #end
-#cmp("Cmp", 1, "Long_")
-#cmp("Cmpg", 1, "Float_")
-#cmp("Cmpl", -1, "Double_")
+#cmp("CMP", 1, "Long_")
+#cmp("CMPG", 1, "Float_")
+#cmp("CMPL", -1, "Double_")
         }
     }
 
