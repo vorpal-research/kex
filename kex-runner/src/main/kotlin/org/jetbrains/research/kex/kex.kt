@@ -67,6 +67,8 @@ class Kex(args: Array<String>) {
     private val logName = cmd.getCmdValue("log", "kex.log")
     private val classPath = System.getProperty("java.class.path")
 
+    private val cmdClassPath = cmd.getCmdValue("classpath")
+
     val containers: List<Container>
     val containerClassLoader: URLClassLoader
     val outputDir: Path
@@ -92,6 +94,8 @@ class Kex(args: Array<String>) {
         Debug
     }
 
+    private val analysisLevel: AnalysisLevel
+
     private sealed class AnalysisLevel {
         object PACKAGE : AnalysisLevel()
         data class CLASS(val klass: String) : AnalysisLevel()
@@ -102,14 +106,14 @@ class Kex(args: Array<String>) {
         kexConfig.initialize(cmd, RuntimeConfig, FileConfig(properties))
         kexConfig.initLog(logName)
 
-        val classPaths = cmd.getCmdValue("classpath")?.split(getPathSeparator())
+        val classPaths = cmdClassPath?.split(getPathSeparator())
         val targetName = cmd.getCmdValue("target")
         require(classPaths != null, cmd::printHelp)
 
         val containerPaths = classPaths.map { Paths.get(it).toAbsolutePath() }
         containerClassLoader = URLClassLoader(*containerPaths.map { it.toUri().toURL() }.toTypedArray())
 
-        val analysisLevel = when {
+        analysisLevel = when {
             targetName == null -> {
                 `package` = Package.defaultPackage
                 AnalysisLevel.PACKAGE
@@ -172,9 +176,9 @@ class Kex(args: Array<String>) {
         visibilityLevel = kexConfig.getEnumValue("apiGeneration", "visibility", true, Visibility.PUBLIC)
     }
 
-    private fun updateClassPath(loader: URLClassLoader) {
-        val urlClassPath = loader.urLs.joinToString(separator = getPathSeparator()) { "${it.path}." }
-        System.setProperty("java.class.path", "$classPath:$urlClassPath")
+    private fun updateClassPath() {
+        //val urlClassPath = loader.urLs.joinToString(separator = getPathSeparator()) { "${it.path}." }
+        System.setProperty("java.class.path", "$classPath:$cmdClassPath")
     }
 
     private fun clearClassPath() {
@@ -209,9 +213,11 @@ class Kex(args: Array<String>) {
         }
 
         println("---------------------------------JaCoCo---------------------------------")
-        updateClassPath(containerClassLoader)
+        println(cmdClassPath)
+        println(analysisLevel)
+        updateClassPath()
         TestsCompiler(containerClassLoader).main()
-        CoverageReporter(containerClassLoader, "tests").execute()
+        CoverageReporter(containerClassLoader).execute()
     }
 
     @ExperimentalSerializationApi
@@ -224,7 +230,7 @@ class Kex(args: Array<String>) {
 
         val method = failure.method
         log.debug(failure)
-        updateClassPath(containerClassLoader)
+        updateClassPath()
 
         val checker = Checker(method, containerClassLoader, psa)
         val result = checker.check(failure.state) as? Result.SatResult ?: return
@@ -266,7 +272,7 @@ class Kex(args: Array<String>) {
         val psa = PredicateStateAnalysis(analysisContext.cm)
         val cm = createCoverageCounter(originalContext.cm, traceManager)
 
-        updateClassPath(analysisContext.loader as URLClassLoader)
+        updateClassPath()
 
         preparePackage(analysisContext, psa)
         runPipeline(analysisContext) {
@@ -287,7 +293,7 @@ class Kex(args: Array<String>) {
     private fun checker(analysisContext: ExecutionContext) {
         val psa = PredicateStateAnalysis(analysisContext.cm)
 
-        updateClassPath(analysisContext.loader as URLClassLoader)
+        updateClassPath()
 
         preparePackage(analysisContext, psa)
         runPipeline(analysisContext) {
@@ -305,7 +311,7 @@ class Kex(args: Array<String>) {
         )
         val psa = PredicateStateAnalysis(analysisContext.cm)
 
-        updateClassPath(analysisContext.loader as URLClassLoader)
+        updateClassPath()
 
         preparePackage(analysisContext, psa)
         runPipeline(analysisContext) {
@@ -319,7 +325,7 @@ class Kex(args: Array<String>) {
     private fun reanimator(analysisContext: ExecutionContext) {
         val psa = PredicateStateAnalysis(analysisContext.cm)
 
-        updateClassPath(analysisContext.loader as URLClassLoader)
+        updateClassPath()
 
         runPipeline(analysisContext) {
             +LoopSimplifier(analysisContext.cm)

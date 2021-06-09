@@ -16,9 +16,7 @@ public class TestsCompiler {
     public TestsCompiler(URLClassLoader urlClassLoader) {
         this.baseClassLoader = urlClassLoader;
         /*System.setProperty("java.class.path",
-                System.getProperty("java.class.path") + System.getProperty("path.separator") +
-                "/home/artyom/IdeaProjects/jcc-test/jcc-test.jar");*/
-
+                System.getProperty("java.class.path") + System.getProperty("path.separator") + classPath);*/
         System.out.println("TestsCompiler runs...\n" + System.getProperty("java.class.path"));
     }
 

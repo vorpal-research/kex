@@ -25,11 +25,11 @@ public class CoverageReporter {
 
     private final List<String> tests;
 
-    public CoverageReporter(URLClassLoader urlClassLoader, String testsPath) throws IOException {
+    public CoverageReporter(URLClassLoader urlClassLoader) throws IOException {
 
         System.out.println("CoverageReporter runs...\n");
         TestsCompiler testsCompiler = new TestsCompiler(urlClassLoader);
-        testsCompiler.generateAll(testsPath);
+        testsCompiler.generateAll("tests");
 
         this.compiledClassLoader = testsCompiler.getCompiledClassLoader();
         this.instrAndTestsClassLoader = new MemoryClassLoader();
