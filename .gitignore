@@ -7,6 +7,5 @@ testJars/*
 test-jars/*
 trace/*
 fails/*
-tests/*
 **/target/*
 **/*.json

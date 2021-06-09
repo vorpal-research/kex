@@ -22,6 +22,8 @@ import org.jetbrains.research.kex.config.CmdConfig
 import org.jetbrains.research.kex.config.FileConfig
 import org.jetbrains.research.kex.config.RuntimeConfig
 import org.jetbrains.research.kex.config.kexConfig
+import org.jetbrains.research.kex.jacoco.CoverageReporter
+import org.jetbrains.research.kex.jacoco.TestsCompiler
 import org.jetbrains.research.kex.random.easyrandom.EasyRandomDriver
 import org.jetbrains.research.kex.reanimator.RandomObjectReanimator
 import org.jetbrains.research.kex.reanimator.collector.ExternalCtorCollector
@@ -205,6 +207,11 @@ class Kex(args: Array<String>) {
             Mode.Concolic -> concolic(originalContext, analysisContext)
             Mode.Debug -> debug(analysisContext)
         }
+
+        println("---------------------------------JaCoCo---------------------------------")
+        updateClassPath(containerClassLoader)
+        TestsCompiler(containerClassLoader).main()
+        CoverageReporter(containerClassLoader, "tests").execute()
     }
 
     @ExperimentalSerializationApi
