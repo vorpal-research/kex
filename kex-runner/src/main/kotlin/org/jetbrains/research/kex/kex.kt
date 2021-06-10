@@ -136,8 +136,8 @@ class Kex(args: Array<String>) {
                 exitProcess(1)
             }
         }
-        classManager = ClassManager(KfgConfig(flags = Flags.readAll, failOnError = false))
-        origManager = ClassManager(KfgConfig(flags = Flags.readAll, failOnError = false))
+        classManager = ClassManager(KfgConfig(flags = Flags.readAll, failOnError = false, verifyIR = false))
+        origManager = ClassManager(KfgConfig(flags = Flags.readAll, failOnError = false, verifyIR = false))
         val analysisJars = listOfNotNull(*containers.toTypedArray(), getRuntime(), getIntrinsics())
         classManager.initialize(*analysisJars.toTypedArray())
         origManager.initialize(*analysisJars.toTypedArray())

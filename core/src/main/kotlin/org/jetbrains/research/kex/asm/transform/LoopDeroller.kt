@@ -339,6 +339,7 @@ class LoopDeroller(override val cm: ClassManager) : LoopVisitor {
                     else -> {
                         val newPhi = instructions.getPhi(new.type, incomings)
                         bb.replace(new, newPhi)
+                        new.clearUses()
                         newPhi
                     }
                 }
