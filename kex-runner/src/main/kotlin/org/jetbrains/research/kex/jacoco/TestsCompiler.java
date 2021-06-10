@@ -1,13 +1,15 @@
 package org.jetbrains.research.kex.jacoco;
 
-import org.junit.runner.JUnitCore;
-
 import javax.tools.*;
 import java.io.*;
 import java.net.URI;
+import java.net.URL;
 import java.net.URLClassLoader;
 import java.nio.file.Files;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
 
 public class TestsCompiler {
 
@@ -15,9 +17,6 @@ public class TestsCompiler {
 
     public TestsCompiler(URLClassLoader urlClassLoader) {
         this.baseClassLoader = urlClassLoader;
-        /*System.setProperty("java.class.path",
-                System.getProperty("java.class.path") + System.getProperty("path.separator") + classPath);*/
-        System.out.println("TestsCompiler runs...\n" + System.getProperty("java.class.path"));
     }
 
     private List<ClassJavaFileObject> getGeneratedClasses(File javaFile) throws IOException {
@@ -72,18 +71,6 @@ public class TestsCompiler {
 
     public CompiledClassLoader getCompiledClassLoader() {
         return new CompiledClassLoader(getGeneratedClassesList());
-    }
-
-    public void main() throws IOException, ClassNotFoundException {
-        generateAll("tests");
-        List<String> list = getTestsNames();
-        System.out.println("TestNames:\n");
-        list.forEach(System.out::println);
-        CompiledClassLoader classLoader = getCompiledClassLoader();
-        for (String name : list) {
-            Class<?> klass = classLoader.loadClass(name);
-            JUnitCore.runClasses(klass);
-        }
     }
 
     public String getProgramText(File program) throws IOException {
@@ -190,6 +177,10 @@ public class TestsCompiler {
         @Override
         public InputStream getResourceAsStream(String name) {
             return baseClassLoader.getResourceAsStream(name);
+        }
+
+        public URL[] getURLs() {
+            return baseClassLoader.getURLs();
         }
     }
 

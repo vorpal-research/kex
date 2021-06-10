@@ -23,7 +23,6 @@ import org.jetbrains.research.kex.config.FileConfig
 import org.jetbrains.research.kex.config.RuntimeConfig
 import org.jetbrains.research.kex.config.kexConfig
 import org.jetbrains.research.kex.jacoco.CoverageReporter
-import org.jetbrains.research.kex.jacoco.TestsCompiler
 import org.jetbrains.research.kex.random.easyrandom.EasyRandomDriver
 import org.jetbrains.research.kex.reanimator.RandomObjectReanimator
 import org.jetbrains.research.kex.reanimator.collector.ExternalCtorCollector
@@ -212,12 +211,10 @@ class Kex(args: Array<String>) {
             Mode.Debug -> debug(analysisContext)
         }
 
-        println("---------------------------------JaCoCo---------------------------------")
-        println(cmdClassPath)
-        println(analysisLevel) // will be used in CoverageReporter.execute(?) later
+        log.info("---------------------------------JaCoCo---------------------------------")
+        log.info("analysisLevel = $analysisLevel")
         updateClassPath()
-        TestsCompiler(containerClassLoader).main()
-        CoverageReporter(containerClassLoader).execute()
+        log.info(CoverageReporter(containerClassLoader).execute(analysisLevel.toString()))
     }
 
     @ExperimentalSerializationApi
