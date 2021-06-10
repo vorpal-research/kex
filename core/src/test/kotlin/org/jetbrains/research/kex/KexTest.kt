@@ -16,8 +16,8 @@ import org.jetbrains.research.kfg.util.Flags
 import java.nio.file.Paths
 
 abstract class KexTest {
-    val packageName = "org/jetbrains/research/kex/test"
-    val `package` = Package("$packageName/*")
+    val packageName = "org.jetbrains.research.kex.test"
+    val `package` = Package.parse("$packageName.*")
     val jarPath: String
     val cm: ClassManager
     val loader: ClassLoader

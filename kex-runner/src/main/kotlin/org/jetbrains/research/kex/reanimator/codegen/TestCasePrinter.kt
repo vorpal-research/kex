@@ -24,7 +24,7 @@ val Method.validName get() = name.replace(Regex("[^a-zA-Z0-9]"), "")
 val BasicBlock.validName get() = name.toString().replace(Regex("[^a-zA-Z0-9]"), "")
 
 
-val Method.packageName get() = klass.pkg.name
+val Method.packageName get() = klass.pkg.concreteName
 val Method.klassName get() = "${klass.validName}_${validName}_${abs(hashCode())}"
 
 class TestCasePrinter(val ctx: ExecutionContext, val packageName: String, val klassName: String) {

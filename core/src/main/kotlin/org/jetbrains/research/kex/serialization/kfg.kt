@@ -171,7 +171,7 @@ object LocationSerializer : KSerializer<Location> {
         loop@ while (true) {
             when (val i = input.decodeElementIndex(descriptor)) {
                 CompositeDecoder.DECODE_DONE -> break@loop
-                0 -> `package` = Package(input.decodeStringElement(descriptor, i))
+                0 -> `package` = Package.parse(input.decodeStringElement(descriptor, i))
                 1 -> file = input.decodeStringElement(descriptor, i)
                 2 -> line = input.decodeIntElement(descriptor, i)
                 else -> throw SerializationException("Unknown index $i")

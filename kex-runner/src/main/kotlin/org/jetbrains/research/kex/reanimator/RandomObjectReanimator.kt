@@ -33,7 +33,7 @@ class RandomObjectReanimator(
     val random: Randomizer get() = ctx.random
     val cm: ClassManager get() = ctx.cm
     val generatorContext = GeneratorContext(ctx, psa, visibilityLevel)
-    val printer = TestCasePrinter(ctx, target.name, "RandomObjectTests")
+    val printer = TestCasePrinter(ctx, target.concreteName, "RandomObjectTests")
 
     private val ClassManager.randomClass
         get() = this.concreteClasses

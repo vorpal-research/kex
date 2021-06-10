@@ -8,6 +8,7 @@ import org.jetbrains.research.kfg.visitor.ClassVisitor
 import org.jetbrains.research.kthelper.logging.log
 import org.jetbrains.research.kthelper.tryOrNull
 import java.nio.file.Path
+import java.nio.file.Paths
 
 class ClassWriter(val ctx: ExecutionContext, val target: Path) : ClassVisitor {
     override val cm: ClassManager
@@ -16,7 +17,7 @@ class ClassWriter(val ctx: ExecutionContext, val target: Path) : ClassVisitor {
     override fun cleanup() {}
 
     override fun visit(klass: Class) {
-        val classFileName = "${target.toAbsolutePath()}/${klass.fullName}.class"
+        val classFileName = target.resolve(Paths.get(klass.pkg.fileSystemPath, "${klass.name}.class")).toAbsolutePath()
         tryOrNull {
             klass.write(cm, ctx.loader, classFileName)
         } ?: log.warn("Could not write class $klass")

@@ -171,7 +171,7 @@ class Kex(args: Array<String>) {
 
     private fun updateClassPath(loader: URLClassLoader) {
         val urlClassPath = loader.urLs.joinToString(separator = getPathSeparator()) { "${it.path}." }
-        System.setProperty("java.class.path", "$classPath:$urlClassPath")
+        System.setProperty("java.class.path", "$classPath${getPathSeparator()}$urlClassPath")
     }
 
     private fun clearClassPath() {
