@@ -124,8 +124,9 @@ public class CoverageReporter {
             String className = cc.getName();
             sb.append(getCommonCounters("class", className, cc));
             sb.append(getCounter("methods", cc.getMethodCounter()));
+            sb.append("\n");
         }
-        return sb.append("\n").toString();
+        return sb.toString();
     }
 
     private String getMethodCoverage(CoverageBuilder coverageBuilder, String method) {
