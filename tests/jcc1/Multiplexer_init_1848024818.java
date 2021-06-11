@@ -13,7 +13,7 @@ public class Multiplexer_init_1848024818 {
 
     @Test
     public  void testbb0() throws Throwable {
-        Multiplexer term520 = new Multiplexer();
+        Multiplexer term528 = new Multiplexer();
     }
 
 };

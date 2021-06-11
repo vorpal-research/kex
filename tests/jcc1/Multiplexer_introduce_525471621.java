@@ -13,8 +13,8 @@ public class Multiplexer_introduce_525471621 {
 
     @Test
     public  void testbb3() throws Throwable {
-        Multiplexer term624 = new Multiplexer();
-        term624.introduce();
+        Multiplexer term632 = new Multiplexer();
+        term632.introduce();
     }
 
 };

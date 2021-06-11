@@ -13,32 +13,32 @@ public class Multiplexer_multiplyConst_1847768836 {
 
     @Test
     public  void testlabelderoll0() throws Throwable {
-        Multiplexer term574 = new Multiplexer();
-        int[] term573 = new int[0];
-        term574.multiplyConst(0, (int[])term573);
+        Multiplexer term582 = new Multiplexer();
+        int[] term581 = new int[0];
+        term582.multiplyConst(0, (int[])term581);
     }
 
     @Test
     public  void testbbderoll0() throws Throwable {
-        Multiplexer term585 = new Multiplexer();
-        int[] term584 = new int[0];
-        term585.multiplyConst(0, (int[])term584);
+        Multiplexer term593 = new Multiplexer();
+        int[] term592 = new int[0];
+        term593.multiplyConst(0, (int[])term592);
     }
 
     @Test
     public  void testlabelderoll1() throws Throwable {
-        Multiplexer term596 = new Multiplexer();
-        int[] term595 = new int[2];
-        term595[0] = 0;
-        term596.multiplyConst(0, (int[])term595);
+        Multiplexer term604 = new Multiplexer();
+        int[] term603 = new int[2];
+        term603[0] = 0;
+        term604.multiplyConst(0, (int[])term603);
     }
 
     @Test
     public  void testbbderoll3() throws Throwable {
-        Multiplexer term607 = new Multiplexer();
-        int[] term606 = new int[2];
-        term606[0] = 0;
-        term607.multiplyConst(0, (int[])term606);
+        Multiplexer term615 = new Multiplexer();
+        int[] term614 = new int[2];
+        term614[0] = 0;
+        term615.multiplyConst(0, (int[])term614);
     }
 
 };

@@ -13,30 +13,30 @@ public class Multiplexer_multiplyElements_1793915719 {
 
     @Test
     public  void testbb0() throws Throwable {
-        Multiplexer term530 = new Multiplexer();
-        int[] term529 = new int[0];
-        term530.multiplyElements((int[])term529);
+        Multiplexer term538 = new Multiplexer();
+        int[] term537 = new int[0];
+        term538.multiplyElements((int[])term537);
     }
 
     @Test
     public  void testlabelderoll0() throws Throwable {
-        Multiplexer term541 = new Multiplexer();
-        int[] term540 = new int[0];
-        term541.multiplyElements((int[])term540);
+        Multiplexer term549 = new Multiplexer();
+        int[] term548 = new int[0];
+        term549.multiplyElements((int[])term548);
     }
 
     @Test
     public  void testlabelderoll2() throws Throwable {
-        Multiplexer term552 = new Multiplexer();
-        int[] term551 = new int[2];
-        term552.multiplyElements((int[])term551);
+        Multiplexer term560 = new Multiplexer();
+        int[] term559 = new int[2];
+        term560.multiplyElements((int[])term559);
     }
 
     @Test
     public  void testlabelderoll3() throws Throwable {
-        Multiplexer term563 = new Multiplexer();
-        int[] term562 = new int[2];
-        term563.multiplyElements((int[])term562);
+        Multiplexer term571 = new Multiplexer();
+        int[] term570 = new int[2];
+        term571.multiplyElements((int[])term570);
     }
 
 };
