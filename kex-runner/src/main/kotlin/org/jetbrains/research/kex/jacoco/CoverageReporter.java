@@ -4,6 +4,7 @@ import org.jacoco.core.analysis.*;
 import org.jacoco.core.data.ExecutionDataStore;
 import org.jacoco.core.data.SessionInfoStore;
 import org.jacoco.core.instr.Instrumenter;
+import org.jacoco.core.internal.analysis.PackageCoverageImpl;
 import org.jacoco.core.runtime.IRuntime;
 import org.jacoco.core.runtime.LoggerRuntime;
 import org.jacoco.core.runtime.RuntimeData;
@@ -28,7 +29,6 @@ public class CoverageReporter {
     private final List<String> tests;
 
     public CoverageReporter(URLClassLoader urlClassLoader) throws IOException {
-
         TestsCompiler testsCompiler = new TestsCompiler(urlClassLoader);
         testsCompiler.generateAll("tests");
 
@@ -66,7 +66,7 @@ public class CoverageReporter {
                 }
             }
             coverageBuilder = getCoverageBuilder(classes);
-            result = String.format("Coverage of package %s:%n%n", pkg) + getClassCoverage(coverageBuilder);
+            result = getPackageCoverage(coverageBuilder, pkg);
         }
         return result;
     }
@@ -122,43 +122,46 @@ public class CoverageReporter {
         StringBuilder sb = new StringBuilder();
         for (final IClassCoverage cc : coverageBuilder.getClasses()) {
             String className = cc.getName();
-            sb.append(String.format("Coverage of class %s:%n", className));
-            sb.append(getCounter("instructions", cc.getInstructionCounter()));
-            sb.append(getCounter("branches", cc.getBranchCounter()));
-            sb.append(getCounter("lines", cc.getLineCounter()));
+            sb.append(getCommonCounters("class", className, cc));
             sb.append(getCounter("methods", cc.getMethodCounter()));
-            sb.append(getCounter("complexity", cc.getComplexityCounter()));
-            sb.append(getCounter("class", cc.getClassCounter()));
-            sb.append("\n");
         }
-        return sb.toString();
+        return sb.append("\n").toString();
     }
 
     private String getMethodCoverage(CoverageBuilder coverageBuilder, String method) {
-        StringBuilder sb = new StringBuilder();
         for (final IClassCoverage cc : coverageBuilder.getClasses()) {
             for (final IMethodCoverage mc : cc.getMethods()) {
                 String methodName = mc.getName();
-                if (methodName.equals(method)) {
-                    sb.append(String.format("Coverage of method %s:%n", method));
-                    sb.append(getCounter("instructions", mc.getInstructionCounter()));
-                    sb.append(getCounter("branches", mc.getBranchCounter()));
-                    sb.append(getCounter("lines", mc.getLineCounter()));
-                    sb.append(getCounter("complexity", mc.getComplexityCounter()));
-                }
+                if (methodName.equals(method))
+                    return getCommonCounters("method", method, mc);
             }
         }
-        return sb.toString();
+        return null;
     }
 
-    private String getFullyQualifiedName(String name) {
-        return name.substring(0, name.length() - 6).replace('/', '.');
+    private String getPackageCoverage(CoverageBuilder coverageBuilder, String pkg) {
+        IPackageCoverage pc = new PackageCoverageImpl(pkg, coverageBuilder.getClasses(), coverageBuilder.getSourceFiles());
+        return getCommonCounters("package", pkg, pc) +
+                getCounter("methods", pc.getMethodCounter()) +
+                getCounter("classes", pc.getClassCounter());
     }
 
     private String getCounter(final String unit, final ICounter counter) {
         final int covered = counter.getCoveredCount();
         final int total = counter.getTotalCount();
         return String.format("%s of %s %s covered%n", covered, total, unit);
+    }
+
+    private String getCommonCounters(final String level, final String name, final ICoverageNode coverage) {
+        return String.format("Coverage of %s %s:%n", level, name) +
+                getCounter("instructions", coverage.getInstructionCounter()) +
+                getCounter("branches", coverage.getBranchCounter()) +
+                getCounter("lines", coverage.getLineCounter()) +
+                getCounter("complexity", coverage.getComplexityCounter());
+    }
+
+    private String getFullyQualifiedName(String name) {
+        return name.substring(0, name.length() - 6).replace('/', '.');
     }
 
     private static class MemoryClassLoader extends ClassLoader {
