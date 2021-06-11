@@ -1,11 +1,11 @@
-package jcc;
+package jcc1;
 
 import java.lang.Throwable;
 import java.lang.IllegalStateException;
 import org.junit.Test;
-import jcc.Adder;
+import jcc1.Adder;
 
-public class Adder_sum_727546995 {
+public class Adder_sum_539242992 {
 
     public <T> T unknown() {
         throw new IllegalStateException();

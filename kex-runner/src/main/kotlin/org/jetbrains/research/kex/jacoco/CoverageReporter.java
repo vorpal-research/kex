@@ -129,8 +129,9 @@ public class CoverageReporter {
             sb.append(getCounter("methods", cc.getMethodCounter()));
             sb.append(getCounter("complexity", cc.getComplexityCounter()));
             sb.append(getCounter("class", cc.getClassCounter()));
+            sb.append("\n");
         }
-        return sb.append("\n").toString();
+        return sb.toString();
     }
 
     private String getMethodCoverage(CoverageBuilder coverageBuilder, String method) {

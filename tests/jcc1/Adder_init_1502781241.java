@@ -1,11 +1,11 @@
-package jcc;
+package jcc1;
 
 import java.lang.Throwable;
 import java.lang.IllegalStateException;
 import org.junit.Test;
-import jcc.Adder;
+import jcc1.Adder;
 
-public class Adder_gone_619006441 {
+public class Adder_init_1502781241 {
 
     public <T> T unknown() {
         throw new IllegalStateException();
@@ -13,8 +13,7 @@ public class Adder_gone_619006441 {
 
     @Test
     public  void testbb0() throws Throwable {
-        Adder term476 = new Adder();
-        term476.gone();
+        Adder term396 = new Adder();
     }
 
 };
