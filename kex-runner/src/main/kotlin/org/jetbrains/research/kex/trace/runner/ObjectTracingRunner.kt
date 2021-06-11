@@ -10,7 +10,7 @@ import org.jetbrains.research.kex.reanimator.callstack.generator.GeneratorContex
 import org.jetbrains.research.kex.reanimator.codegen.klassName
 import org.jetbrains.research.kex.reanimator.codegen.packageName
 import org.jetbrains.research.kex.reanimator.descriptor.descriptor
-import org.jetbrains.research.kex.trace.`object`.Trace
+import org.jetbrains.research.kex.trace.`object`.ActionTrace
 import org.jetbrains.research.kex.trace.`object`.TraceCollector
 import org.jetbrains.research.kex.trace.`object`.TraceCollectorProxy
 import org.jetbrains.research.kfg.ir.Method
@@ -20,7 +20,7 @@ class ObjectTracingRunner(
     method: Method,
     loader: ClassLoader,
     val parameters: Parameters<Any?>
-) : TracingAbstractRunner<Trace>(method, loader) {
+) : TracingAbstractRunner<ActionTrace>(method, loader) {
     private lateinit var collector: TraceCollector
 
     override fun generateArguments() = parameters
@@ -33,14 +33,14 @@ class ObjectTracingRunner(
         TraceCollectorProxy.disableCollector()
     }
 
-    override fun collectTrace(invocationResult: InvocationResult) = Trace(collector.trace)
+    override fun collectTrace(invocationResult: InvocationResult) = ActionTrace(collector.trace)
 }
 
 class RandomObjectTracingRunner(
     method: Method,
     loader: ClassLoader,
     random: Randomizer
-) : TracingRandomRunner<Trace>(method, loader, random) {
+) : TracingRandomRunner<ActionTrace>(method, loader, random) {
     private lateinit var collector: TraceCollector
 
     override fun enableCollector() {
@@ -51,7 +51,7 @@ class RandomObjectTracingRunner(
         TraceCollectorProxy.disableCollector()
     }
 
-    override fun collectTrace(invocationResult: InvocationResult) = Trace(collector.trace)
+    override fun collectTrace(invocationResult: InvocationResult) = ActionTrace(collector.trace)
 }
 
 class ReanimatingRandomObjectTracingRunner(
@@ -59,7 +59,7 @@ class ReanimatingRandomObjectTracingRunner(
     psa: PredicateStateAnalysis,
     visibilityLevel: Visibility,
     method: Method
-) : TracingRandomRunner<Trace>(method, ctx.loader, ctx.random) {
+) : TracingRandomRunner<ActionTrace>(method, ctx.loader, ctx.random) {
     val generatorContext = GeneratorContext(ctx, psa, visibilityLevel)
     val reanimator = Reanimator(ctx, psa, method.packageName, "Random${method.klassName}")
     private var testCounter = 0
@@ -74,7 +74,7 @@ class ReanimatingRandomObjectTracingRunner(
         TraceCollectorProxy.disableCollector()
     }
 
-    override fun collectTrace(invocationResult: InvocationResult) = Trace(collector.trace)
+    override fun collectTrace(invocationResult: InvocationResult) = ActionTrace(collector.trace)
 
     private val Parameters<Any?>.descriptors
         get() = Parameters(

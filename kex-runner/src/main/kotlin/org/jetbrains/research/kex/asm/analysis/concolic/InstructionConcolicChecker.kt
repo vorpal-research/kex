@@ -33,7 +33,7 @@ import org.jetbrains.research.kthelper.collection.dequeOf
 import org.jetbrains.research.kthelper.logging.log
 import org.jetbrains.research.kthelper.tryOrNull
 
-class ConcolicChecker2(val ctx: ExecutionContext, val traceManager: TraceManager<InstructionTrace>) : MethodVisitor {
+class InstructionConcolicChecker(val ctx: ExecutionContext, val traceManager: TraceManager<InstructionTrace>) : MethodVisitor {
     private val paths = mutableSetOf<PathCondition>()
     private val candidates = mutableSetOf<PathCondition>()
     lateinit var generator: ParameterGenerator
@@ -214,7 +214,7 @@ class ConcolicChecker2(val ctx: ExecutionContext, val traceManager: TraceManager
             generator.generate("test", method, checker.state, result.model)
         } ?: return null
 
-        return collectTrace(method, parameters) ?: return null
+        return collectTrace(method, parameters)
     }
 
     private fun processMethod(method: Method) {

@@ -4,7 +4,7 @@ import org.jetbrains.research.kex.trace.TraceManager
 import org.jetbrains.research.kfg.ir.BasicBlock
 import org.jetbrains.research.kfg.ir.Method
 
-class InstructionTraceManager : TraceManager<InstructionTrace> {
+class InstructionTraceManager : TraceManager<InstructionTrace>() {
     private val methodInfos = mutableMapOf<Method, MutableList<InstructionTrace>>()
     override fun getTraces(method: Method): List<InstructionTrace> = methodInfos.getOrDefault(method, listOf())
 
@@ -14,7 +14,7 @@ class InstructionTraceManager : TraceManager<InstructionTrace> {
         }
     }
 
-    override fun isCovered(method: Method, bb: BasicBlock): Boolean = getTraces(method).any {
+    override fun isCovered(bb: BasicBlock): Boolean = getTraces(bb.parent).any {
         bb in it.map { inst -> inst.parent }.toSet()
     }
 }

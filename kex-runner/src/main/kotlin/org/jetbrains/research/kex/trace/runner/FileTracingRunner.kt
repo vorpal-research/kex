@@ -7,11 +7,11 @@ import org.jetbrains.research.kex.random.Randomizer
 import org.jetbrains.research.kex.reanimator.Parameters
 import org.jetbrains.research.kex.trace.file.ActionParseException
 import org.jetbrains.research.kex.trace.file.ActionParser
-import org.jetbrains.research.kex.trace.file.Trace
+import org.jetbrains.research.kex.trace.file.FileTrace
 import org.jetbrains.research.kfg.ir.Method
 import org.jetbrains.research.kthelper.logging.log
 
-private fun parse(method: Method, result: InvocationResult): Trace {
+private fun parse(method: Method, result: InvocationResult): FileTrace {
     val traceFile = TraceInstrumenter.getTraceFile(method)
     val trace = traceFile.readText().split(";").map { it.trim() }
 
@@ -34,14 +34,14 @@ private fun parse(method: Method, result: InvocationResult): Trace {
             }
         }
 
-    return Trace.parse(actions, result.exception)
+    return FileTrace.parse(actions, result.exception)
 }
 
 class FileTracingRunner(
     method: Method,
     loader: ClassLoader,
     val parameters: Parameters<Any?>,
-) : TracingAbstractRunner<Trace>(method, loader) {
+) : TracingAbstractRunner<FileTrace>(method, loader) {
     override fun generateArguments() = parameters
 
     override fun enableCollector() {}
@@ -51,7 +51,7 @@ class FileTracingRunner(
 }
 
 class RandomFileTracingRunner(method: Method, loader: ClassLoader, random: Randomizer) :
-    TracingRandomRunner<Trace>(method, loader, random) {
+    TracingRandomRunner<FileTrace>(method, loader, random) {
     override fun enableCollector() {}
     override fun disableCollector() {}
     override fun collectTrace(invocationResult: InvocationResult) = parse(method, invocationResult)

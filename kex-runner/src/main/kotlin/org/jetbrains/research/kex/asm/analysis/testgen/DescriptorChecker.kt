@@ -12,7 +12,7 @@ import org.jetbrains.research.kex.smt.Result
 import org.jetbrains.research.kex.state.PredicateState
 import org.jetbrains.research.kex.state.transformer.*
 import org.jetbrains.research.kex.trace.TraceManager
-import org.jetbrains.research.kex.trace.`object`.Trace
+import org.jetbrains.research.kex.trace.`object`.ActionTrace
 import org.jetbrains.research.kex.trace.runner.TimeoutException
 import org.jetbrains.research.kfg.ir.BasicBlock
 import org.jetbrains.research.kfg.ir.Method
@@ -20,9 +20,9 @@ import org.jetbrains.research.kthelper.logging.log
 import org.jetbrains.research.kthelper.tryOrNull
 
 class DescriptorChecker(
-        ctx: ExecutionContext,
-        tm: TraceManager<Trace>,
-        psa: PredicateStateAnalysis) : MethodChecker(ctx, tm, psa) {
+    ctx: ExecutionContext,
+    tm: TraceManager<ActionTrace>,
+    psa: PredicateStateAnalysis) : MethodChecker(ctx, tm, psa) {
 
     override fun initializeGenerator(method: Method) {
         generator = Reanimator(ctx, psa, method)

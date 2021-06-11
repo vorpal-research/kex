@@ -3,9 +3,11 @@
 package org.jetbrains.research.kex.test.debug
 
 class BasicTests {
-    fun test(list: ArrayList<Int>) {
-        if (list[0] > 0) {
-            println("a")
+    fun test(a: IntArray) {
+        for (i in 0..a.size) {
+            if (a[i] > 0) {
+                error("a")
+            }
         }
     }
 }

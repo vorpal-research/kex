@@ -43,7 +43,7 @@ private val onlyMain by lazy {
 class ConcolicChecker(
     val ctx: ExecutionContext,
     val psa: PredicateStateAnalysis,
-    private val manager: TraceManager<Trace>
+    private val manager: TraceManager<ActionTrace>
 ) : MethodVisitor {
     override val cm: ClassManager get() = ctx.cm
     val loader: ClassLoader get() = ctx.loader
@@ -88,7 +88,7 @@ class ConcolicChecker(
         }
     }
 
-    private fun buildState(method: Method, trace: Trace): PredicateState {
+    private fun buildState(method: Method, trace: ActionTrace): PredicateState {
         data class BlockWrapper(val block: BasicBlock?)
 
         fun BasicBlock.wrap() = BlockWrapper(this)
@@ -202,7 +202,7 @@ class ConcolicChecker(
         return currentState.apply()
     }
 
-    private fun collectTrace(method: Method, instance: Any?, args: List<Any?>): Trace? {
+    private fun collectTrace(method: Method, instance: Any?, args: List<Any?>): ActionTrace? {
         val params = Parameters(instance, args, setOf())
         val runner = ObjectTracingRunner(method, loader, params)
         return runner.run()
@@ -212,7 +212,7 @@ class ConcolicChecker(
         tryOrNull { RandomObjectTracingRunner(method, loader, ctx.random).run() }
 
     private suspend fun process(method: Method) {
-        val traces = ArrayDeque<Trace>()
+        val traces = ArrayDeque<ActionTrace>()
         while (!manager.isBodyCovered(method)) {
             val candidate = traces.firstOrElse { getRandomTrace(method)?.also { manager[method] = it } } ?: return
             yield()
@@ -225,7 +225,7 @@ class ConcolicChecker(
         }
     }
 
-    private suspend fun run(method: Method, trace: Trace): Trace? {
+    private suspend fun run(method: Method, trace: ActionTrace): ActionTrace? {
         val state = buildState(method, trace)
         val mutated = mutate(state)
         val path = mutated.path

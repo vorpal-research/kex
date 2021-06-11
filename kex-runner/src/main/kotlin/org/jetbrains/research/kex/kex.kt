@@ -2,7 +2,7 @@ package org.jetbrains.research.kex
 
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.InternalSerializationApi
-import org.jetbrains.research.kex.asm.analysis.concolic.ConcolicChecker2
+import org.jetbrains.research.kex.asm.analysis.concolic.InstructionConcolicChecker
 import org.jetbrains.research.kex.asm.analysis.defect.CallCiteChecker
 import org.jetbrains.research.kex.asm.analysis.defect.DefectChecker
 import org.jetbrains.research.kex.asm.analysis.defect.DefectManager
@@ -11,6 +11,7 @@ import org.jetbrains.research.kex.asm.analysis.testgen.Failure
 import org.jetbrains.research.kex.asm.analysis.testgen.MethodChecker
 import org.jetbrains.research.kex.asm.analysis.testgen.RandomChecker
 import org.jetbrains.research.kex.asm.manager.CoverageCounter
+import org.jetbrains.research.kex.asm.manager.OriginalMapper
 import org.jetbrains.research.kex.asm.state.PredicateStateAnalysis
 import org.jetbrains.research.kex.asm.transform.*
 import org.jetbrains.research.kex.asm.util.ClassWriter
@@ -29,6 +30,7 @@ import org.jetbrains.research.kex.serialization.KexSerializer
 import org.jetbrains.research.kex.smt.Checker
 import org.jetbrains.research.kex.smt.Result
 import org.jetbrains.research.kex.state.transformer.executeModel
+import org.jetbrains.research.kex.trace.AbstractTrace
 import org.jetbrains.research.kex.trace.TraceManager
 import org.jetbrains.research.kex.trace.`object`.ObjectTraceManager
 import org.jetbrains.research.kex.trace.symbolic.InstructionTraceManager
@@ -340,7 +342,7 @@ class Kex(args: Array<String>) {
         }
         runPipeline(analysisContext) {
             +SystemExitTransformer(analysisContext.cm)
-            +ConcolicChecker2(analysisContext, traceManager)
+            +InstructionConcolicChecker(analysisContext, traceManager)
             +cm
         }
         val coverage = cm.totalCoverage
@@ -351,7 +353,7 @@ class Kex(args: Array<String>) {
         )
     }
 
-    private fun <T> createCoverageCounter(cm: ClassManager, tm: TraceManager<T>) = when {
+    private fun <T : AbstractTrace> createCoverageCounter(cm: ClassManager, tm: TraceManager<T>) = when {
         methods != null -> CoverageCounter(cm, tm, methods!!)
         klass != null -> CoverageCounter(cm, tm, klass!!)
         else -> CoverageCounter(cm, tm, `package`)
@@ -371,6 +373,7 @@ class Kex(args: Array<String>) {
         psa: PredicateStateAnalysis,
         pkg: Package = Package.defaultPackage
     ) = runPipeline(ctx, pkg) {
+        +OriginalMapper(ctx.cm, origManager)
         +LoopSimplifier(ctx.cm)
         +LoopDeroller(ctx.cm)
         +BranchAdapter(ctx.cm)

@@ -5,7 +5,7 @@ import org.jetbrains.research.kex.asm.state.PredicateStateAnalysis
 import org.jetbrains.research.kex.asm.util.Visibility
 import org.jetbrains.research.kex.config.kexConfig
 import org.jetbrains.research.kex.trace.TraceManager
-import org.jetbrains.research.kex.trace.`object`.Trace
+import org.jetbrains.research.kex.trace.`object`.ActionTrace
 import org.jetbrains.research.kex.trace.runner.RandomSymbolicTracingRunner
 import org.jetbrains.research.kex.trace.runner.ReanimatingRandomObjectTracingRunner
 import org.jetbrains.research.kex.trace.runner.TimeoutException
@@ -27,7 +27,7 @@ class RandomChecker(
     val ctx: ExecutionContext,
     val psa: PredicateStateAnalysis,
     val visibilityLevel: Visibility,
-    val tm: TraceManager<Trace>
+    val tm: TraceManager<ActionTrace>
 ) : MethodVisitor {
     override val cm: ClassManager
         get() = ctx.cm

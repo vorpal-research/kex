@@ -8,7 +8,7 @@ import org.jetbrains.research.kex.ExecutionContext
 import org.jetbrains.research.kex.asm.analysis.DfsStrategy
 import org.jetbrains.research.kex.asm.analysis.SearchStrategy
 import org.jetbrains.research.kex.asm.manager.isImpactable
-import org.jetbrains.research.kex.asm.manager.originalBlock
+import org.jetbrains.research.kex.asm.manager.original
 import org.jetbrains.research.kex.asm.state.PredicateStateAnalysis
 import org.jetbrains.research.kex.config.kexConfig
 import org.jetbrains.research.kex.random.GenerationException
@@ -21,7 +21,7 @@ import org.jetbrains.research.kex.smt.Checker
 import org.jetbrains.research.kex.smt.Result
 import org.jetbrains.research.kex.state.PredicateState
 import org.jetbrains.research.kex.trace.TraceManager
-import org.jetbrains.research.kex.trace.`object`.Trace
+import org.jetbrains.research.kex.trace.`object`.ActionTrace
 import org.jetbrains.research.kex.trace.runner.ObjectTracingRunner
 import org.jetbrains.research.kex.trace.runner.TimeoutException
 import org.jetbrains.research.kfg.ClassManager
@@ -52,9 +52,9 @@ data class Failure(
 )
 
 open class MethodChecker(
-        val ctx: ExecutionContext,
-        protected val tm: TraceManager<Trace>,
-        protected val psa: PredicateStateAnalysis) : MethodVisitor {
+    val ctx: ExecutionContext,
+    protected val tm: TraceManager<ActionTrace>,
+    protected val psa: PredicateStateAnalysis) : MethodVisitor {
     override val cm: ClassManager get() = ctx.cm
     val random: Randomizer get() = ctx.random
     val loader: ClassLoader get() = ctx.loader
@@ -104,8 +104,8 @@ open class MethodChecker(
                 continue
             }
 
-            val originalBlock = block.originalBlock
-            if (tm.isCovered(method, originalBlock)) continue
+            val originalBlock = block.original ?: continue
+            if (tm.isCovered(originalBlock)) continue
 
             if (block in unreachableBlocks) continue
             if (domTree[block]?.idom?.value in unreachableBlocks) {
@@ -130,7 +130,7 @@ open class MethodChecker(
                 break
             }
 
-            log.debug("Block ${block.name} is covered = ${tm.isCovered(method, originalBlock)}")
+            log.debug("Block ${block.name} is covered = ${tm.isCovered(originalBlock)}")
             log.debug()
 
             if (coverageResult is Result.UnsatResult) unreachableBlocks += block
@@ -175,7 +175,7 @@ open class MethodChecker(
 
     protected fun collectTrace(method: Method, instance: Any?, args: List<Any?>) = tryOrNull {
         val params = Parameters(instance, args)
-        val runner = ObjectTracingRunner(method, loader, params)
+        val runner = ObjectTracingRunner(method.original!!, loader, params)
         val trace = runner.run() ?: return null
         tm[method] = trace
     }

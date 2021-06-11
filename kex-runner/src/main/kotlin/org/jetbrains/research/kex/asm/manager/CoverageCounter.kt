@@ -3,6 +3,7 @@ package org.jetbrains.research.kex.asm.manager
 import org.jetbrains.research.kex.asm.util.Visibility
 import org.jetbrains.research.kex.asm.util.visibility
 import org.jetbrains.research.kex.config.kexConfig
+import org.jetbrains.research.kex.trace.AbstractTrace
 import org.jetbrains.research.kex.trace.TraceManager
 import org.jetbrains.research.kfg.ClassManager
 import org.jetbrains.research.kfg.Package
@@ -48,7 +49,7 @@ data class CoverageInfo(
     }
 }
 
-class CoverageCounter<T> private constructor(
+class CoverageCounter<T : AbstractTrace> private constructor(
     override val cm: ClassManager,
     private val tm: TraceManager<T>,
     val methodFilter: (Method) -> Boolean
@@ -86,10 +87,10 @@ class CoverageCounter<T> private constructor(
         if (!method.isInteresting) return
         if (!methodFilter(method)) return
 
-        val bodyBlocks = method.bodyBlocks.filterNot { it.isUnreachable }.map { it.originalBlock }.toSet()
-        val catchBlocks = method.catchBlocks.filterNot { it.isUnreachable }.map { it.originalBlock }.toSet()
-        val bodyCovered = bodyBlocks.count { tm.isCovered(method, it) }
-        val catchCovered = catchBlocks.count { tm.isCovered(method, it) }
+        val bodyBlocks = method.bodyBlocks.mapNotNull { it.original }.toSet()
+        val catchBlocks = method.catchBlocks.mapNotNull { it.original }.toSet()
+        val bodyCovered = bodyBlocks.count { tm.isCovered(it) }
+        val catchCovered = catchBlocks.count { tm.isCovered(it) }
 
         val info = CoverageInfo(
             bodyCovered, bodyBlocks.size,

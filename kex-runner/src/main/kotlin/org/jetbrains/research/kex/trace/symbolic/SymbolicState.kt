@@ -4,10 +4,11 @@ import org.jetbrains.research.kex.reanimator.descriptor.Descriptor
 import org.jetbrains.research.kex.state.PredicateState
 import org.jetbrains.research.kex.state.predicate.Predicate
 import org.jetbrains.research.kex.state.term.Term
+import org.jetbrains.research.kex.trace.AbstractTrace
 import org.jetbrains.research.kfg.ir.value.Value
 import org.jetbrains.research.kfg.ir.value.instruction.Instruction
 
-data class InstructionTrace(val trace: List<Instruction> = listOf()) : Iterable<Instruction> by trace
+data class InstructionTrace(val trace: List<Instruction> = listOf()) : AbstractTrace(), Iterable<Instruction> by trace
 
 data class Clause(val instruction: Instruction, val predicate: Predicate)
 

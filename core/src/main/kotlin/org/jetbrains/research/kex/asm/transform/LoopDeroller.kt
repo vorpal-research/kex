@@ -36,14 +36,14 @@ class LoopDeroller(override val cm: ClassManager) : LoopVisitor {
     class InvalidLoopException : Exception()
 
     private data class State(
-            val header: BasicBlock,
-            val latch: BasicBlock,
-            val terminatingBlock: BasicBlock,
-            val continueOnTrue: Boolean,
-            var lastHeader: BasicBlock,
-            var lastLatch: BasicBlock,
-            val blockMappings: MutableMap<BasicBlock, BasicBlock>,
-            val instMappings: MutableMap<Value, Value>
+        val header: BasicBlock,
+        val latch: BasicBlock,
+        val terminatingBlock: BasicBlock,
+        val continueOnTrue: Boolean,
+        var lastHeader: BasicBlock,
+        var lastLatch: BasicBlock,
+        val blockMappings: MutableMap<BasicBlock, BasicBlock>,
+        val instMappings: MutableMap<Value, Value>
     ) {
         companion object {
             fun createState(loop: Loop): State {
@@ -58,9 +58,11 @@ class LoopDeroller(override val cm: ClassManager) : LoopVisitor {
                     else -> terminatingBlock.terminator.successors.first() in loop
                 }
 
-                val state = State(loop.header, loop.latch, terminatingBlock,
-                        continueOnTrue, loop.header, loop.preheader,
-                        hashMapOf(), hashMapOf())
+                val state = State(
+                    loop.header, loop.latch, terminatingBlock,
+                    continueOnTrue, loop.header, loop.preheader,
+                    hashMapOf(), hashMapOf()
+                )
                 loop.body.flatten().forEach { state[it] = it }
 
                 return state
@@ -156,9 +158,9 @@ class LoopDeroller(override val cm: ClassManager) : LoopVisitor {
             }
 
             val phiMappings = blockOrder
-                    .flatten()
-                    .zip(blockOrder.map { state[it] }.flatten())
-                    .filter { it.first is PhiInst }
+                .flatten()
+                .zip(blockOrder.map { state[it] }.flatten())
+                .filter { it.first is PhiInst }
             remapBlockPhis(state, phiMappings)
         }
 
@@ -254,7 +256,8 @@ class LoopDeroller(override val cm: ClassManager) : LoopVisitor {
         latch.removeSuccessor(header)
         loop.body.mapNotNull { it as? CatchBlock }.forEach { cb -> cb.allPredecessors.forEach { it.addSuccessor(cb) } }
         val order = GraphTraversal(loop).topologicalSort()
-        loop.body.mapNotNull { it as? CatchBlock }.forEach { cb -> cb.allPredecessors.forEach { it.removeSuccessor(cb) } }
+        loop.body.mapNotNull { it as? CatchBlock }
+            .forEach { cb -> cb.allPredecessors.forEach { it.removeSuccessor(cb) } }
         latch.addSuccessor(header)
         return order.map { it.block }
     }

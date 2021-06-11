@@ -1,6 +1,6 @@
 package org.jetbrains.research.kex.asm.transform
 
-import org.jetbrains.research.kex.asm.manager.originalBlock
+import org.jetbrains.research.kex.asm.manager.original
 import org.jetbrains.research.kfg.ClassManager
 import org.jetbrains.research.kfg.ir.BasicBlock
 import org.jetbrains.research.kfg.ir.BodyBlock
@@ -79,6 +79,6 @@ class BranchAdapter(override val cm: ClassManager) : MethodVisitor {
         }
 
         parent.parent.add(replacement)
-        replacement.originalBlock = branch.originalBlock
+        replacement.original = branch.original
     }
 }
