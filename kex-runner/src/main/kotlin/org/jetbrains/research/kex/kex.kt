@@ -16,8 +16,8 @@ import org.jetbrains.research.kex.asm.state.PredicateStateAnalysis
 import org.jetbrains.research.kex.asm.transform.*
 import org.jetbrains.research.kex.asm.util.ClassWriter
 import org.jetbrains.research.kex.asm.util.Visibility
-import org.jetbrains.research.kex.config.CmdConfig
 import org.jetbrains.research.kex.config.FileConfig
+import org.jetbrains.research.kex.config.RunnerCmdConfig
 import org.jetbrains.research.kex.config.RuntimeConfig
 import org.jetbrains.research.kex.config.kexConfig
 import org.jetbrains.research.kex.random.easyrandom.EasyRandomDriver
@@ -61,7 +61,7 @@ import java.util.*
 import kotlin.system.exitProcess
 
 class Kex(args: Array<String>) {
-    private val cmd = CmdConfig(args)
+    private val cmd = RunnerCmdConfig(args)
     private val properties = cmd.getCmdValue("config", "kex.ini")
     private val logName = cmd.getCmdValue("log", "kex.log")
     private val classPath = System.getProperty("java.class.path")

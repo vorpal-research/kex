@@ -10,6 +10,7 @@ fun main(args: Array<String>) {
 
 class KexExecutor {
     fun main(args: Array<String>) {
+        System.setProperty("kex-executor.log.name", "kex-executor.log")
         log.debug(args)
     }
 }

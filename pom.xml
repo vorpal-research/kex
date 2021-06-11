@@ -34,6 +34,10 @@
         <kfg.version>0.0.12-1</kfg.version>
 
         <klaxon.version>5.5</klaxon.version>
+
+        <logback.version>1.2.3</logback.version>
+        <slf4j.version>1.7.25</slf4j.version>
+        <commons-cli.version>1.4</commons-cli.version>
     </properties>
 
     <repositories>
