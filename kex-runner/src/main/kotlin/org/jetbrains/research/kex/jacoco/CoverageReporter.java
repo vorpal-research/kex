@@ -28,31 +28,33 @@ public class CoverageReporter {
 
     private final List<String> tests;
 
-    public CoverageReporter(URLClassLoader urlClassLoader) throws IOException {
+    private final String pkg;
+
+    public CoverageReporter(String testsPackage, URLClassLoader urlClassLoader) throws IOException {
         TestsCompiler testsCompiler = new TestsCompiler(urlClassLoader);
-        testsCompiler.generateAll("tests");
+        testsCompiler.generateAll("tests/" + testsPackage);
 
         this.compiledClassLoader = testsCompiler.getCompiledClassLoader();
         this.instrAndTestsClassLoader = new MemoryClassLoader(compiledClassLoader);
         this.tests = testsCompiler.getTestsNames();
+        this.pkg = testsPackage;
     }
 
     public String execute(String analyzeLevel) throws Exception {
+        String canonicalName = analyzeLevel.replaceAll("[()]|(CLASS|METHOD)", "");
         CoverageBuilder coverageBuilder;
-        String canonicalName = analyzeLevel.replaceAll("[()]|(CLASS|METHOD|PACKAGE)", "");
         String result;
-        if (analyzeLevel.startsWith("CLASS")) {
-            String klass = canonicalName.replace("klass=", "");
-            coverageBuilder = getCoverageBuilder(Collections.singletonList(klass + ".class"));
-            result = getClassCoverage(coverageBuilder);
-        } else if (analyzeLevel.startsWith("METHOD")) {
+        if (!canonicalName.equals(analyzeLevel)) {
             String[] pair = canonicalName.split(", ");
             String klass = pair[0].replace("klass=", "");
-            String method = pair[1].replace("method=", "");
             coverageBuilder = getCoverageBuilder(Collections.singletonList(klass + ".class"));
-            result = getMethodCoverage(coverageBuilder, method);
+            if (analyzeLevel.startsWith("CLASS"))
+                result = getClassCoverage(coverageBuilder);
+            else {
+                String method = pair[1].replace("method=", "");
+                result = getMethodCoverage(coverageBuilder, method);
+            }
         } else {
-            String pkg = canonicalName.replace("pkg=", "");
             URL[] urls = compiledClassLoader.getURLs();
             String jarPath = urls[urls.length - 1].toString().replace("file:", "");
             JarFile jarFile = new JarFile(jarPath);
@@ -61,12 +63,12 @@ public class CoverageReporter {
             while(jarEntries.hasMoreElements()) {
                 JarEntry jarEntry = jarEntries.nextElement();
                 String name = jarEntry.getName();
-                if (name.startsWith(pkg + '/') && name.endsWith(".class")) {
+                if (name.startsWith(this.pkg + '/') && name.endsWith(".class")) {
                     classes.add(name);
                 }
             }
             coverageBuilder = getCoverageBuilder(classes);
-            result = getPackageCoverage(coverageBuilder, pkg);
+            result = getPackageCoverage(coverageBuilder);
         }
         return result;
     }
@@ -119,30 +121,21 @@ public class CoverageReporter {
     }
 
     private String getClassCoverage(CoverageBuilder coverageBuilder) {
-        StringBuilder sb = new StringBuilder();
-        for (final IClassCoverage cc : coverageBuilder.getClasses()) {
-            String className = cc.getName();
-            sb.append(getCommonCounters("class", className, cc));
-            sb.append(getCounter("methods", cc.getMethodCounter()));
-            sb.append("\n");
-        }
-        return sb.toString();
+        IClassCoverage cc = coverageBuilder.getClasses().iterator().next();
+        return getCommonCounters("class", cc.getName(), cc) +
+                getCounter("methods", cc.getMethodCounter());
     }
 
     private String getMethodCoverage(CoverageBuilder coverageBuilder, String method) {
-        for (final IClassCoverage cc : coverageBuilder.getClasses()) {
-            for (final IMethodCoverage mc : cc.getMethods()) {
-                String methodName = mc.getName();
-                if (methodName.equals(method))
-                    return getCommonCounters("method", method, mc);
-            }
-        }
+        for (final IMethodCoverage mc : coverageBuilder.getClasses().iterator().next().getMethods())
+            if (mc.getName().equals(method))
+                return getCommonCounters("method", method, mc);
         return null;
     }
 
-    private String getPackageCoverage(CoverageBuilder coverageBuilder, String pkg) {
-        IPackageCoverage pc = new PackageCoverageImpl(pkg, coverageBuilder.getClasses(), coverageBuilder.getSourceFiles());
-        return getCommonCounters("package", pkg, pc) +
+    private String getPackageCoverage(CoverageBuilder coverageBuilder) {
+        IPackageCoverage pc = new PackageCoverageImpl(this.pkg, coverageBuilder.getClasses(), coverageBuilder.getSourceFiles());
+        return getCommonCounters("package", this.pkg, pc) +
                 getCounter("methods", pc.getMethodCounter()) +
                 getCounter("classes", pc.getClassCounter());
     }

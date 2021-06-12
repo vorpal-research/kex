@@ -96,7 +96,7 @@ class Kex(args: Array<String>) {
     private val analysisLevel: AnalysisLevel
 
     private sealed class AnalysisLevel {
-        data class PACKAGE(val pkg: String) : AnalysisLevel()
+        object PACKAGE : AnalysisLevel()
         data class CLASS(val klass: String) : AnalysisLevel()
         data class METHOD(val klass: String, val method: String) : AnalysisLevel()
     }
@@ -115,11 +115,11 @@ class Kex(args: Array<String>) {
         analysisLevel = when {
             targetName == null -> {
                 `package` = Package.defaultPackage
-                AnalysisLevel.PACKAGE(`package`.name)
+                AnalysisLevel.PACKAGE
             }
             targetName.matches(Regex("[a-zA-Z0-9]+(\\.[a-zA-Z0-9]+)*\\.\\*")) -> {
                 `package` = Package.parse(targetName)
-                AnalysisLevel.PACKAGE(`package`.name)
+                AnalysisLevel.PACKAGE
             }
             targetName.matches(Regex("[a-zA-Z0-9]+(\\.[a-zA-Z0-9]+)*\\.[a-zA-Z0-9\$_]+::[a-zA-Z0-9\$_]+")) -> {
                 val (klassName, methodName) = targetName.split("::")
@@ -214,7 +214,7 @@ class Kex(args: Array<String>) {
         log.info("---------------------------------JaCoCo---------------------------------")
         log.info("analysisLevel = $analysisLevel")
         updateClassPath()
-        log.info(CoverageReporter(containerClassLoader).execute(analysisLevel.toString()))
+        log.info(CoverageReporter(`package`.name, containerClassLoader).execute(analysisLevel.toString()))
     }
 
     @ExperimentalSerializationApi
