@@ -13,11 +13,7 @@ import java.util.Objects;
 
 public class TestsCompiler {
 
-    private final URLClassLoader baseClassLoader;
-
-    public TestsCompiler(URLClassLoader urlClassLoader) {
-        this.baseClassLoader = urlClassLoader;
-    }
+    private final List<ClassJavaFileObject> generatedClasses = new ArrayList<>();
 
     private List<ClassJavaFileObject> getGeneratedClasses(File javaFile) {
 
@@ -36,8 +32,6 @@ public class TestsCompiler {
         return fileManager.getGeneratedOutputFiles();
     }
 
-    private final List<ClassJavaFileObject> generatedClassesList = new ArrayList<>();
-
     public void generateAll(String directoryPath) {
         File directory = new File(directoryPath);
         if (!directory.isDirectory()) throw new IllegalArgumentException();
@@ -45,25 +39,22 @@ public class TestsCompiler {
         Objects.requireNonNull(files);
         for (File file : files) {
             if (!file.isDirectory()) {
-                this.generatedClassesList.addAll(getGeneratedClasses(file));
-            } else {
+                generatedClasses.addAll(getGeneratedClasses(file));
+            }
+            else {
                 generateAll(file.getAbsolutePath());
             }
         }
     }
 
-    public List<ClassJavaFileObject> getGeneratedClassesList() {
-        return this.generatedClassesList;
-    }
-
     public List<String> getTestsNames() {
         List<String> result = new ArrayList<>();
-        getGeneratedClassesList().forEach(s -> result.add(s.getClassName()));
+        generatedClasses.forEach(c -> result.add(c.getClassName()));
         return result;
     }
 
-    public CompiledClassLoader getCompiledClassLoader() {
-        return new CompiledClassLoader(getGeneratedClassesList());
+    public CompiledClassLoader getCompiledClassLoader(URLClassLoader urlClassLoader) {
+        return new CompiledClassLoader(generatedClasses, urlClassLoader);
     }
 
     public static class TestJavaFileObject extends SimpleJavaFileObject {
@@ -77,7 +68,7 @@ public class TestsCompiler {
 
         @Override
         public CharSequence getCharContent(boolean ignoreEncodingErrors) throws IOException {
-            List<String> lines = Files.readAllLines(this.javaFile.toPath());
+            List<String> lines = Files.readAllLines(javaFile.toPath());
             StringBuilder sb = new StringBuilder();
             for (String line : lines) {
                 sb.append(line).append('\n');
@@ -136,12 +127,15 @@ public class TestsCompiler {
         }
     }
 
-    public class CompiledClassLoader extends ClassLoader {
+    public static class CompiledClassLoader extends ClassLoader {
 
         private final List<ClassJavaFileObject> files;
 
-        private CompiledClassLoader(List<ClassJavaFileObject> files) {
+        private final URLClassLoader parent;
+
+        private CompiledClassLoader(List<ClassJavaFileObject> files, URLClassLoader parent) {
             this.files = files;
+            this.parent = parent;
         }
 
         @Override
@@ -150,7 +144,7 @@ public class TestsCompiler {
             if (bytes != null) {
                 return defineClass(name, bytes, 0, bytes.length);
             }
-            return baseClassLoader.loadClass(name);
+            return parent.loadClass(name);
         }
 
         public byte[] getBytes(String name) {
@@ -164,11 +158,11 @@ public class TestsCompiler {
 
         @Override
         public InputStream getResourceAsStream(String name) {
-            return baseClassLoader.getResourceAsStream(name);
+            return parent.getResourceAsStream(name);
         }
 
         public URL[] getURLs() {
-            return baseClassLoader.getURLs();
+            return parent.getURLs();
         }
     }
 
