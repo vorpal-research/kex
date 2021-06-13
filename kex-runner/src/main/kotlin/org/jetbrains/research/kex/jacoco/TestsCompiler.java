@@ -19,21 +19,14 @@ public class TestsCompiler {
         this.baseClassLoader = urlClassLoader;
     }
 
-    private List<ClassJavaFileObject> getGeneratedClasses(File javaFile) throws IOException {
-
-        String name = javaFile.getName();
-        if (!name.endsWith(".java")) throw new IllegalArgumentException();
-        name = name.substring(0, name.length() - 5); // without ".java"
-
-        String program = getProgramText(javaFile);
+    private List<ClassJavaFileObject> getGeneratedClasses(File javaFile) {
 
         JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
 
-        JavaFileObject compilationUnit =
-                new StringJavaFileObject(name, program);
-
         SimpleJavaFileManager fileManager =
                 new SimpleJavaFileManager(compiler.getStandardFileManager(null, null, null));
+
+        JavaFileObject compilationUnit = new TestJavaFileObject(javaFile);
 
         JavaCompiler.CompilationTask compilationTask = compiler.getTask(
                 null, fileManager, null, null, null, Collections.singletonList(compilationUnit));
@@ -45,7 +38,7 @@ public class TestsCompiler {
 
     private final List<ClassJavaFileObject> generatedClassesList = new ArrayList<>();
 
-    public void generateAll(String directoryPath) throws IOException {
+    public void generateAll(String directoryPath) {
         File directory = new File(directoryPath);
         if (!directory.isDirectory()) throw new IllegalArgumentException();
         File[] files = directory.listFiles();
@@ -60,7 +53,7 @@ public class TestsCompiler {
     }
 
     public List<ClassJavaFileObject> getGeneratedClassesList() {
-        return generatedClassesList;
+        return this.generatedClassesList;
     }
 
     public List<String> getTestsNames() {
@@ -73,28 +66,23 @@ public class TestsCompiler {
         return new CompiledClassLoader(getGeneratedClassesList());
     }
 
-    public String getProgramText(File program) throws IOException {
-        List<String> lines = Files.readAllLines(program.toPath());
-        StringBuilder sb = new StringBuilder();
-        for (String line : lines) {
-            sb.append(line).append('\n');
-        }
-        return sb.toString();
-    }
+    public static class TestJavaFileObject extends SimpleJavaFileObject {
 
-    public static class StringJavaFileObject extends SimpleJavaFileObject {
+        private final File javaFile;
 
-        private final String code;
-
-        public StringJavaFileObject(String name, String code) {
-            super(URI.create("string:///" + name.replace('.', '/') + Kind.SOURCE.extension),
-                    Kind.SOURCE);
-            this.code = code;
+        public TestJavaFileObject(File javaFile) {
+            super(URI.create(javaFile.getName()), Kind.SOURCE);
+            this.javaFile = javaFile;
         }
 
         @Override
-        public CharSequence getCharContent(boolean ignoreEncodingErrors) {
-            return code;
+        public CharSequence getCharContent(boolean ignoreEncodingErrors) throws IOException {
+            List<String> lines = Files.readAllLines(this.javaFile.toPath());
+            StringBuilder sb = new StringBuilder();
+            for (String line : lines) {
+                sb.append(line).append('\n');
+            }
+            return sb.toString();
         }
     }
 
@@ -104,8 +92,8 @@ public class TestsCompiler {
 
         private final String className;
 
-        protected ClassJavaFileObject(String className, Kind kind) {
-            super(URI.create("mem:///" + className.replace('.', '/') + kind.extension), kind);
+        protected ClassJavaFileObject(String className) {
+            super(URI.create(className.replace('.', '/') + ".class"), Kind.CLASS);
             this.className = className;
             outputStream = new ByteArrayOutputStream();
         }
@@ -138,7 +126,7 @@ public class TestsCompiler {
         public JavaFileObject getJavaFileForOutput(
                 Location location, String className, JavaFileObject.Kind kind, FileObject sibling
         ) {
-            ClassJavaFileObject file = new ClassJavaFileObject(className, kind);
+            ClassJavaFileObject file = new ClassJavaFileObject(className);
             outputFiles.add(file);
             return file;
         }

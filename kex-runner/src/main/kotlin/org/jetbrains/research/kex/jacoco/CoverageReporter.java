@@ -10,7 +10,6 @@ import org.jacoco.core.runtime.LoggerRuntime;
 import org.jacoco.core.runtime.RuntimeData;
 import org.junit.runner.JUnitCore;
 
-import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 import java.net.URLClassLoader;
@@ -30,7 +29,7 @@ public class CoverageReporter {
 
     private final String pkg;
 
-    public CoverageReporter(String testsPackage, URLClassLoader urlClassLoader) throws IOException {
+    public CoverageReporter(String testsPackage, URLClassLoader urlClassLoader) {
         TestsCompiler testsCompiler = new TestsCompiler(urlClassLoader);
         testsCompiler.generateAll("tests/" + testsPackage);
 
