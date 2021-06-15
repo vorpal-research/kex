@@ -39,15 +39,15 @@ public class CoverageReporter {
         pkg = testsPackage;
     }
 
-    public String execute(String analyzeLevel) throws Exception {
-        String canonicalName = analyzeLevel.replaceAll("[()]|(CLASS|METHOD)", "");
+    public String execute(String analysisLevel) throws Exception {
+        String canonicalName = analysisLevel.replaceAll("[()]|(CLASS|METHOD)", "");
         CoverageBuilder coverageBuilder;
         String result;
-        if (!canonicalName.equals(analyzeLevel)) {
+        if (!canonicalName.equals(analysisLevel)) {
             String[] pair = canonicalName.split(", ");
             String klass = pair[0].replace("klass=", "");
             coverageBuilder = getCoverageBuilder(Collections.singletonList(klass + ".class"));
-            if (analyzeLevel.startsWith("CLASS")) {
+            if (analysisLevel.startsWith("CLASS")) {
                 result = getClassCoverage(coverageBuilder);
             }
             else {

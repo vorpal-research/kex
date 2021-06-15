@@ -42,7 +42,7 @@ public class TestsCompiler {
                 generatedClasses.addAll(getGeneratedClasses(file));
             }
             else {
-                generateAll(file.getAbsolutePath());
+                generateAll(file.getPath());
             }
         }
     }
