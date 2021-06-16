@@ -13,30 +13,30 @@ public class Adder_sum_539242992 {
 
     @Test
     public  void testbb0() throws Throwable {
-        Adder term398 = new Adder();
-        int[] term397 = new int[0];
-        term398.sum((int[])term397);
+        Adder term406 = new Adder();
+        int[] term405 = new int[0];
+        term406.sum((int[])term405);
     }
 
     @Test
     public  void testlabelderoll0() throws Throwable {
-        Adder term409 = new Adder();
-        int[] term408 = new int[0];
-        term409.sum((int[])term408);
+        Adder term417 = new Adder();
+        int[] term416 = new int[0];
+        term417.sum((int[])term416);
     }
 
     @Test
     public  void testlabelderoll2() throws Throwable {
-        Adder term420 = new Adder();
-        int[] term419 = new int[2];
-        term420.sum((int[])term419);
+        Adder term428 = new Adder();
+        int[] term427 = new int[2];
+        term428.sum((int[])term427);
     }
 
     @Test
     public  void testlabelderoll3() throws Throwable {
-        Adder term431 = new Adder();
-        int[] term430 = new int[2];
-        term431.sum((int[])term430);
+        Adder term439 = new Adder();
+        int[] term438 = new int[2];
+        term439.sum((int[])term438);
     }
 
 };
