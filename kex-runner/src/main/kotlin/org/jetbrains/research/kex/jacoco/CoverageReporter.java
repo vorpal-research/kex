@@ -121,15 +121,21 @@ public class CoverageReporter {
     }
 
     private String getClassCoverage(CoverageBuilder coverageBuilder) {
-        IClassCoverage cc = coverageBuilder.getClasses().iterator().next();
-        return getCommonCounters("class", cc.getName(), cc) +
-                getCounter("methods", cc.getMethodCounter());
+        StringBuilder sb = new StringBuilder();
+        for (IClassCoverage cc : coverageBuilder.getClasses()) {
+            sb.append(getCoverage("class", cc.getName(), cc));
+            for (IMethodCoverage mc : cc.getMethods()) {
+                sb.append(getCoverage("method", mc.getName(), mc));
+            }
+            sb.append("\n");
+        }
+        return sb.toString();
     }
 
     private String getMethodCoverage(CoverageBuilder coverageBuilder, String method) {
         for (final IMethodCoverage mc : coverageBuilder.getClasses().iterator().next().getMethods()) {
             if (mc.getName().equals(method)) {
-                return getCommonCounters("method", method, mc);
+                return getCoverage("method", method, mc);
             }
         }
         return null;
@@ -137,23 +143,38 @@ public class CoverageReporter {
 
     private String getPackageCoverage(CoverageBuilder coverageBuilder) {
         IPackageCoverage pc = new PackageCoverageImpl(pkg, coverageBuilder.getClasses(), coverageBuilder.getSourceFiles());
-        return getCommonCounters("package", pkg, pc) +
-                getCounter("methods", pc.getMethodCounter()) +
-                getCounter("classes", pc.getClassCounter());
+        return getCoverage("package", pkg, pc) + "\n" + getClassCoverage(coverageBuilder);
     }
 
-    private String getCounter(final String unit, final ICounter counter) {
-        final int covered = counter.getCoveredCount();
-        final int total = counter.getTotalCount();
-        return String.format("%s of %s %s covered%n", covered, total, unit);
-    }
-
-    private String getCommonCounters(final String level, final String name, final ICoverageNode coverage) {
-        return String.format("Coverage of %s %s:%n", level, name) +
-                getCounter("instructions", coverage.getInstructionCounter()) +
-                getCounter("branches", coverage.getBranchCounter()) +
-                getCounter("lines", coverage.getLineCounter()) +
-                getCounter("complexity", coverage.getComplexityCounter());
+    private String getCoverage(final String level, final String name, final ICoverageNode coverage) {
+        final List<String> names = new ArrayList<>(Arrays.asList("instructions", "branches", "lines", "complexity"));
+        final List<ICounter> counters = new ArrayList<>(Arrays.asList(
+                coverage.getInstructionCounter(), coverage.getBranchCounter(),
+                coverage.getLineCounter(), coverage.getComplexityCounter()
+        ));
+        if (!level.equals("method")) {
+            names.add("methods");
+            counters.add(coverage.getMethodCounter());
+            if (level.equals("package")) {
+                names.add("classes");
+                counters.add(coverage.getClassCounter());
+            }
+        }
+        float ratio = 0;
+        int count = 0;
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < names.size(); i++) {
+            ICounter counter = counters.get(i);
+            int covered = counter.getCoveredCount();
+            int total = counter.getTotalCount();
+            if (total != 0) {
+                ratio += (float) covered / total;
+                count++;
+            }
+            sb.append(String.format("%s of %s %s covered%n", covered, total, names.get(i)));
+        }
+        String percent = String.format("%.02f", ratio / count * 100) + '%';
+        return String.format("Coverage of %s %s = %s :%n", level, name, percent) + sb + "\n";
     }
 
     private String getFullyQualifiedName(String name) {
