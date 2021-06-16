@@ -14,11 +14,16 @@ import kotlinx.serialization.modules.SerializersModule
 import org.jetbrains.research.kfg.ClassManager
 import org.jetbrains.research.kfg.Package
 import org.jetbrains.research.kfg.ir.*
+import org.jetbrains.research.kfg.ir.value.SlotTracker
+import org.jetbrains.research.kfg.ir.value.Value
 import org.jetbrains.research.kfg.ir.value.instruction.BinaryOpcode
 import org.jetbrains.research.kfg.ir.value.instruction.CallOpcode
 import org.jetbrains.research.kfg.ir.value.instruction.CmpOpcode
+import org.jetbrains.research.kfg.ir.value.instruction.Instruction
 import org.jetbrains.research.kfg.type.Type
 import org.jetbrains.research.kfg.type.parseDesc
+import org.jetbrains.research.kthelper.assert.unreachable
+import org.jetbrains.research.kthelper.logging.log
 
 @ExperimentalSerializationApi
 fun getKfgSerialModule(cm: ClassManager): SerializersModule {
@@ -26,34 +31,10 @@ fun getKfgSerialModule(cm: ClassManager): SerializersModule {
     MethodSerializer.cm = cm
     return SerializersModule {
         contextual(BinaryOpcode::class, BinaryOpcodeSerializer)
-//        contextual(BinaryOpcode.Add::class, BinaryOpcodeSerializer.to())
-//        contextual(BinaryOpcode.Sub::class, BinaryOpcodeSerializer.to())
-//        contextual(BinaryOpcode.Mul::class, BinaryOpcodeSerializer.to())
-//        contextual(BinaryOpcode.Div::class, BinaryOpcodeSerializer.to())
-//        contextual(BinaryOpcode.Rem::class, BinaryOpcodeSerializer.to())
-//        contextual(BinaryOpcode.Shl::class, BinaryOpcodeSerializer.to())
-//        contextual(BinaryOpcode.Shr::class, BinaryOpcodeSerializer.to())
-//        contextual(BinaryOpcode.Ushr::class, BinaryOpcodeSerializer.to())
-//        contextual(BinaryOpcode.And::class, BinaryOpcodeSerializer.to())
-//        contextual(BinaryOpcode.Or::class, BinaryOpcodeSerializer.to())
-//        contextual(BinaryOpcode.Xor::class, BinaryOpcodeSerializer.to())
 
         contextual(CmpOpcode::class, CmpOpcodeSerializer)
-//        contextual(CmpOpcode.Eq::class, CmpOpcodeSerializer.to())
-//        contextual(CmpOpcode.Neq::class, CmpOpcodeSerializer.to())
-//        contextual(CmpOpcode.Lt::class, CmpOpcodeSerializer.to())
-//        contextual(CmpOpcode.Gt::class, CmpOpcodeSerializer.to())
-//        contextual(CmpOpcode.Le::class, CmpOpcodeSerializer.to())
-//        contextual(CmpOpcode.Ge::class, CmpOpcodeSerializer.to())
-//        contextual(CmpOpcode.Cmp::class, CmpOpcodeSerializer.to())
-//        contextual(CmpOpcode.Cmpg::class, CmpOpcodeSerializer.to())
-//        contextual(CmpOpcode.Cmpl::class, CmpOpcodeSerializer.to())
 
         contextual(CallOpcode::class, CallOpcodeSerializer)
-//        contextual(CallOpcode.Interface::class, CallOpcodeSerializer.to())
-//        contextual(CallOpcode.Virtual::class, CallOpcodeSerializer.to())
-//        contextual(CallOpcode.Static::class, CallOpcodeSerializer.to())
-//        contextual(CallOpcode.Special::class, CallOpcodeSerializer.to())
 
         contextual(Class::class, ClassSerializer)
         contextual(ConcreteClass::class, ClassSerializer.to())
@@ -61,6 +42,9 @@ fun getKfgSerialModule(cm: ClassManager): SerializersModule {
 
         contextual(Location::class, LocationSerializer)
         contextual(Method::class, MethodSerializer)
+
+        contextual(Value::class, ValueSerializer)
+        contextual(Instruction::class, ValueSerializer.to())
     }
 }
 
@@ -250,5 +234,34 @@ internal object MethodSerializer : KSerializer<Method> {
         }
         input.endStructure(descriptor)
         return klass.getMethod(name, MethodDesc(argTypes, retval))
+    }
+}
+
+@ExperimentalSerializationApi
+@Serializer(forClass = Value::class)
+internal object ValueSerializer : KSerializer<Value> {
+    lateinit var slotTracker: SlotTracker
+
+    override val descriptor: SerialDescriptor
+        get() = PrimitiveSerialDescriptor("name", PrimitiveKind.STRING)
+
+    override fun serialize(encoder: Encoder, value: Value) {
+        encoder.encodeString("${value.name}")
+    }
+
+    override fun deserialize(decoder: Decoder) = slotTracker.getValue(decoder.decodeString()) ?:
+        unreachable {
+            log.error("Unable to deserialize value with name ${decoder.decodeString()}")
+        }
+}
+
+@ExperimentalSerializationApi
+internal inline fun <reified T : Value> ValueSerializer.to() = object : KSerializer<T> {
+    override val descriptor get() = this@to.descriptor
+
+    override fun deserialize(decoder: Decoder): T = this@to.deserialize(decoder) as T
+
+    override fun serialize(encoder: Encoder, value: T) {
+        this@to.serialize(encoder, value)
     }
 }
