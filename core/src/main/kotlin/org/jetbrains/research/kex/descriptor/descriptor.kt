@@ -482,6 +482,21 @@ open class DescriptorBuilder {
         else -> unreachable { log.error("Unknown number $number") }
     }
 
+    fun const(type: KexType, value: String): Descriptor = descriptor {
+        when (type) {
+            is KexNull -> const(null)
+            is KexBool -> const(value.toBoolean())
+            is KexByte -> const(value.toByte())
+            is KexChar -> const(value.toInt().toChar())
+            is KexShort -> const(value.toShort())
+            is KexInt -> const(value.toInt())
+            is KexLong -> const(value.toLong())
+            is KexFloat -> const(value.toFloat())
+            is KexDouble -> const(value.toDouble())
+            else -> unreachable { log.error("Could not generate default descriptor value for unknown type $type") }
+        }
+    }
+
     fun const(char: Char) = ConstantDescriptor.Char(char)
     fun const(klass: KexClass) = ClassDescriptor(klass)
 

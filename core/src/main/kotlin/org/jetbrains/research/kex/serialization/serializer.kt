@@ -17,13 +17,34 @@ abstract class AbstractSerializer(val context: SerializersModule) {
         serializersModule = context
     }
 
+    abstract fun preCondition()
+    abstract fun postCondition()
+
+    @ExperimentalSerializationApi
     @InternalSerializationApi
-    inline fun <reified T: Any> toJson(t: T) = json.encodeToString(T::class.serializer(), t)
+    inline fun <reified T : Any> toJson(t: T): String = try {
+        preCondition()
+        json.encodeToString(context.getContextual(T::class) ?: T::class.serializer(), t)
+    } finally {
+        postCondition()
+    }
+
+    @ExperimentalSerializationApi
     @InternalSerializationApi
-    inline fun <reified T: Any> fromJson(str: String) = json.decodeFromString(T::class.serializer(), str)
+    inline fun <reified T: Any> fromJson(str: String): T = try {
+        preCondition()
+        json.decodeFromString(context.getContextual(T::class) ?: T::class.serializer(), str)
+    } finally {
+        postCondition()
+    }
 }
 
 @ExperimentalSerializationApi
 @InternalSerializationApi
-class KexSerializer(val cm: ClassManager) : AbstractSerializer(getPredicateStateSerialModule(cm))
+class KexSerializer(val cm: ClassManager) : AbstractSerializer(getKexSerialModule(cm)) {
+    override fun preCondition() {}
+    override fun postCondition() {
+        DescriptorSerializer.context.clear()
+    }
+}
 
