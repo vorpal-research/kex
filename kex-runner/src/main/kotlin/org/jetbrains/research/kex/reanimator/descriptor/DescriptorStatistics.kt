@@ -1,7 +1,8 @@
 package org.jetbrains.research.kex.reanimator.descriptor
 
-import org.jetbrains.research.kthelper.logging.log
+import org.jetbrains.research.kex.descriptor.Descriptor
 import org.jetbrains.research.kex.reanimator.callstack.CallStack
+import org.jetbrains.research.kthelper.logging.log
 import java.util.*
 
 object DescriptorStatistics {

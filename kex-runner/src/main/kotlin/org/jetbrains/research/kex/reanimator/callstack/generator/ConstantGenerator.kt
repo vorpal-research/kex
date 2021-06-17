@@ -1,9 +1,9 @@
 package org.jetbrains.research.kex.reanimator.callstack.generator
 
+import org.jetbrains.research.kex.descriptor.ConstantDescriptor
+import org.jetbrains.research.kex.descriptor.Descriptor
 import org.jetbrains.research.kex.reanimator.callstack.CallStack
 import org.jetbrains.research.kex.reanimator.callstack.PrimaryValue
-import org.jetbrains.research.kex.reanimator.descriptor.ConstantDescriptor
-import org.jetbrains.research.kex.reanimator.descriptor.Descriptor
 import org.jetbrains.research.kthelper.assert.unreachable
 import org.jetbrains.research.kthelper.logging.log
 

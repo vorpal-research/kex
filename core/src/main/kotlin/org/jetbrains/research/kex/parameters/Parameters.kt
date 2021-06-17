@@ -1,6 +1,6 @@
-package org.jetbrains.research.kex.reanimator
+package org.jetbrains.research.kex.parameters
 
-import org.jetbrains.research.kex.reanimator.descriptor.Descriptor
+import org.jetbrains.research.kex.descriptor.Descriptor
 import org.jetbrains.research.kfg.ClassManager
 
 data class Parameters<T>(

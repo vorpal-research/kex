@@ -3,8 +3,8 @@ package org.jetbrains.research.kex.asm.analysis.concolic
 import org.jetbrains.research.kex.ExecutionContext
 import org.jetbrains.research.kex.annotations.AnnotationManager
 import org.jetbrains.research.kex.asm.state.PredicateStateAnalysis
+import org.jetbrains.research.kex.parameters.Parameters
 import org.jetbrains.research.kex.reanimator.ParameterGenerator
-import org.jetbrains.research.kex.reanimator.Parameters
 import org.jetbrains.research.kex.reanimator.ReflectionReanimator
 import org.jetbrains.research.kex.smt.Checker
 import org.jetbrains.research.kex.smt.Result

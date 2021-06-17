@@ -1,10 +1,9 @@
-package org.jetbrains.research.kex.reanimator.descriptor
+package org.jetbrains.research.kex.descriptor
 
 import org.jetbrains.research.kex.asm.util.Visibility
 import org.jetbrains.research.kex.asm.util.visibility
 import org.jetbrains.research.kex.config.kexConfig
 import org.jetbrains.research.kex.ktype.*
-import org.jetbrains.research.kex.reanimator.NoConcreteInstanceException
 import org.jetbrains.research.kex.state.PredicateState
 import org.jetbrains.research.kex.state.StateBuilder
 import org.jetbrains.research.kex.state.emptyState
@@ -21,6 +20,8 @@ import org.jetbrains.research.kthelper.assert.unreachable
 import org.jetbrains.research.kthelper.logging.log
 
 private val visibilityLevel by lazy { kexConfig.getEnumValue("apiGeneration", "visibility", true, Visibility.PUBLIC) }
+
+class NoConcreteInstanceException(val klass: Class) : Exception()
 
 val Class.isInstantiable: Boolean
     get() = when {
@@ -40,9 +41,9 @@ fun KexClass.concreteClass(cm: ClassManager): KexClass {
     return concrete.kexType
 }
 
-fun KexType.concretize(cm: ClassManager): KexType = when (this) {
+fun KexType.concrete(cm: ClassManager): KexType = when (this) {
     is KexClass -> `try` { this.concreteClass(cm) }.getOrDefault(this)
-    is KexReference -> KexReference(this.reference.concretize(cm))
+    is KexReference -> KexReference(this.reference.concrete(cm))
     else -> this
 }
 

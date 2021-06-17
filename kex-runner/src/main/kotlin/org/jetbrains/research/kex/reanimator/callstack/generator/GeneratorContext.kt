@@ -6,14 +6,14 @@ import org.jetbrains.research.kex.asm.state.PredicateStateAnalysis
 import org.jetbrains.research.kex.asm.util.Visibility
 import org.jetbrains.research.kex.asm.util.visibility
 import org.jetbrains.research.kex.config.kexConfig
+import org.jetbrains.research.kex.descriptor.*
 import org.jetbrains.research.kex.ktype.KexType
 import org.jetbrains.research.kex.ktype.kexType
 import org.jetbrains.research.kex.ktype.type
-import org.jetbrains.research.kex.reanimator.Parameters
+import org.jetbrains.research.kex.parameters.Parameters
 import org.jetbrains.research.kex.reanimator.callstack.ApiCall
 import org.jetbrains.research.kex.reanimator.callstack.CallStack
 import org.jetbrains.research.kex.reanimator.collector.externalCtors
-import org.jetbrains.research.kex.reanimator.descriptor.*
 import org.jetbrains.research.kex.smt.Checker
 import org.jetbrains.research.kex.smt.Result
 import org.jetbrains.research.kex.state.PredicateState
@@ -134,7 +134,7 @@ class GeneratorContext(
     private val Method.argTypeInfo
         get() = this.parameters.associate {
             val type = it.type.kexType
-            term { arg(type, it.index) } to type.concretize(cm)
+            term { arg(type, it.index) } to type.concrete(cm)
         }
 
     fun Method.executeAsConstructor(descriptor: ObjectDescriptor): Parameters<Descriptor>? {

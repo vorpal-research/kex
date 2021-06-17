@@ -1,13 +1,13 @@
 package org.jetbrains.research.kex.reanimator.callstack.generator
 
+import org.jetbrains.research.kex.descriptor.Descriptor
+import org.jetbrains.research.kex.descriptor.ObjectDescriptor
 import org.jetbrains.research.kex.ktype.KexClass
 import org.jetbrains.research.kex.ktype.type
-import org.jetbrains.research.kex.reanimator.Parameters
+import org.jetbrains.research.kex.parameters.Parameters
 import org.jetbrains.research.kex.reanimator.callstack.ApiCall
 import org.jetbrains.research.kex.reanimator.callstack.CallStack
 import org.jetbrains.research.kex.reanimator.callstack.MethodCall
-import org.jetbrains.research.kex.reanimator.descriptor.Descriptor
-import org.jetbrains.research.kex.reanimator.descriptor.ObjectDescriptor
 import org.jetbrains.research.kfg.ir.Class
 import org.jetbrains.research.kfg.ir.Method
 

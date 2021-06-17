@@ -4,6 +4,9 @@ import org.jetbrains.research.kex.ExecutionContext
 import org.jetbrains.research.kex.asm.state.PredicateStateAnalysis
 import org.jetbrains.research.kex.asm.util.Visibility
 import org.jetbrains.research.kex.config.kexConfig
+import org.jetbrains.research.kex.descriptor.Descriptor
+import org.jetbrains.research.kex.parameters.Parameters
+import org.jetbrains.research.kex.parameters.concreteParameters
 import org.jetbrains.research.kex.random.GenerationException
 import org.jetbrains.research.kex.reanimator.callstack.CallStack
 import org.jetbrains.research.kex.reanimator.callstack.CallStackExecutor
@@ -13,19 +16,15 @@ import org.jetbrains.research.kex.reanimator.callstack.generator.CallStackGenera
 import org.jetbrains.research.kex.reanimator.codegen.TestCasePrinter
 import org.jetbrains.research.kex.reanimator.codegen.klassName
 import org.jetbrains.research.kex.reanimator.codegen.packageName
-import org.jetbrains.research.kex.reanimator.descriptor.Descriptor
 import org.jetbrains.research.kex.reanimator.descriptor.DescriptorStatistics
 import org.jetbrains.research.kex.smt.SMTModel
 import org.jetbrains.research.kex.state.PredicateState
 import org.jetbrains.research.kex.state.transformer.generateFinalDescriptors
 import org.jetbrains.research.kfg.ClassManager
-import org.jetbrains.research.kfg.ir.Class
 import org.jetbrains.research.kfg.ir.Method
 import org.jetbrains.research.kthelper.`try`
 import org.jetbrains.research.kthelper.logging.log
 import kotlin.system.measureTimeMillis
-
-class NoConcreteInstanceException(val klass: Class) : Exception()
 
 private val visibilityLevel by lazy {
     kexConfig.getEnumValue("apiGeneration", "visibility", true, Visibility.PUBLIC)

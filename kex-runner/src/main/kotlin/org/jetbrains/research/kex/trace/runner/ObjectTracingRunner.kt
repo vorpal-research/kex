@@ -3,13 +3,13 @@ package org.jetbrains.research.kex.trace.runner
 import org.jetbrains.research.kex.ExecutionContext
 import org.jetbrains.research.kex.asm.state.PredicateStateAnalysis
 import org.jetbrains.research.kex.asm.util.Visibility
+import org.jetbrains.research.kex.descriptor.descriptor
+import org.jetbrains.research.kex.parameters.Parameters
 import org.jetbrains.research.kex.random.Randomizer
-import org.jetbrains.research.kex.reanimator.Parameters
 import org.jetbrains.research.kex.reanimator.Reanimator
 import org.jetbrains.research.kex.reanimator.callstack.generator.GeneratorContext
 import org.jetbrains.research.kex.reanimator.codegen.klassName
 import org.jetbrains.research.kex.reanimator.codegen.packageName
-import org.jetbrains.research.kex.reanimator.descriptor.descriptor
 import org.jetbrains.research.kex.trace.`object`.ActionTrace
 import org.jetbrains.research.kex.trace.`object`.TraceCollector
 import org.jetbrains.research.kex.trace.`object`.TraceCollectorProxy

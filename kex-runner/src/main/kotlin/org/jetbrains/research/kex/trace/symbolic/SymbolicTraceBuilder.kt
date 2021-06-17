@@ -3,8 +3,8 @@
 package org.jetbrains.research.kex.trace.symbolic
 
 import org.jetbrains.research.kex.ExecutionContext
+import org.jetbrains.research.kex.descriptor.*
 import org.jetbrains.research.kex.ktype.*
-import org.jetbrains.research.kex.reanimator.descriptor.*
 import org.jetbrains.research.kex.state.PredicateState
 import org.jetbrains.research.kex.state.StateBuilder
 import org.jetbrains.research.kex.state.predicate.Predicate
@@ -33,33 +33,10 @@ class SymbolicTraceException(message: String, cause: Throwable) : KtException(me
     override fun toString() = "SymbolicTraceException: $message: ${cause?.message}"
 }
 
-class SymbolicPathCondition : PathCondition {
-    override val path = arrayListOf<Clause>()
-
-    operator fun plusAssign(clause: Clause) {
-        path += clause
-    }
-
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (javaClass != other?.javaClass) return false
-
-        other as SymbolicPathCondition
-
-        if (path != other.path) return false
-
-        return true
-    }
-
-    override fun hashCode(): Int {
-        return path.hashCode()
-    }
-}
-
 /**
  * Class that collects the symbolic state of the program during the execution
  */
-class SymbolicTraceBuilder(val ctx: ExecutionContext) : SymbolicState, InstructionTraceCollector {
+class SymbolicTraceBuilder(val ctx: ExecutionContext) : SymbolicState(), InstructionTraceCollector {
     /**
      * required fields
      */
@@ -93,7 +70,7 @@ class SymbolicTraceBuilder(val ctx: ExecutionContext) : SymbolicState, Instructi
     private val converter = Object2DescriptorConverter()
     private val builder = StateBuilder()
     private val traceBuilder = arrayListOf<Instruction>()
-    private val pathBuilder = SymbolicPathCondition()
+    private val pathBuilder = arrayListOf<Clause>()
     private val concreteValues = mutableMapOf<Term, Descriptor>()
     private val terms = mutableMapOf<Term, Value>()
     private val predicates = mutableMapOf<Predicate, Instruction>()

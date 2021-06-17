@@ -2,6 +2,7 @@ package org.jetbrains.research.kex.reanimator
 
 import org.jetbrains.research.kex.ExecutionContext
 import org.jetbrains.research.kex.asm.state.PredicateStateAnalysis
+import org.jetbrains.research.kex.parameters.Parameters
 import org.jetbrains.research.kex.random.GenerationException
 import org.jetbrains.research.kex.smt.SMTModel
 import org.jetbrains.research.kex.state.PredicateState

@@ -1,7 +1,7 @@
 package org.jetbrains.research.kex.trace.runner
 
 import org.jetbrains.research.kex.ExecutionContext
-import org.jetbrains.research.kex.reanimator.Parameters
+import org.jetbrains.research.kex.parameters.Parameters
 import org.jetbrains.research.kex.trace.symbolic.InstructionTraceCollector
 import org.jetbrains.research.kex.trace.symbolic.SymbolicState
 import org.jetbrains.research.kex.trace.symbolic.TraceCollectorProxy

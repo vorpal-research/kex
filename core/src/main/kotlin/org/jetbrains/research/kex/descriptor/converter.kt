@@ -1,4 +1,4 @@
-package org.jetbrains.research.kex.reanimator.descriptor
+package org.jetbrains.research.kex.descriptor
 
 import org.jetbrains.research.kex.config.kexConfig
 import org.jetbrains.research.kex.ktype.*

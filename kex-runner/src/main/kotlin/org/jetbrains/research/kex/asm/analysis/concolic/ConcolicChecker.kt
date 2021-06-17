@@ -7,9 +7,9 @@ import kotlinx.coroutines.yield
 import org.jetbrains.research.kex.ExecutionContext
 import org.jetbrains.research.kex.asm.state.PredicateStateAnalysis
 import org.jetbrains.research.kex.config.kexConfig
+import org.jetbrains.research.kex.parameters.Parameters
 import org.jetbrains.research.kex.random.Randomizer
 import org.jetbrains.research.kex.reanimator.ParameterGenerator
-import org.jetbrains.research.kex.reanimator.Parameters
 import org.jetbrains.research.kex.reanimator.Reanimator
 import org.jetbrains.research.kex.smt.Checker
 import org.jetbrains.research.kex.smt.Result

@@ -1,9 +1,8 @@
-package org.jetbrains.research.kex.reanimator.descriptor
+package org.jetbrains.research.kex.descriptor
 
 import org.jetbrains.research.kex.asm.util.Visibility
 import org.jetbrains.research.kex.asm.util.visibility
 import org.jetbrains.research.kex.config.kexConfig
-import org.jetbrains.research.kex.reanimator.NoConcreteInstanceException
 import org.jetbrains.research.kfg.ir.Class
 import org.jetbrains.research.kthelper.`try`
 

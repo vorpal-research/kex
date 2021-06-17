@@ -1,9 +1,9 @@
 package org.jetbrains.research.kex.reanimator.callstack.generator
 
+import org.jetbrains.research.kex.descriptor.Descriptor
 import org.jetbrains.research.kex.reanimator.callstack.CallStack
 import org.jetbrains.research.kex.reanimator.callstack.StaticFieldGetter
 import org.jetbrains.research.kex.reanimator.callstack.UnknownCall
-import org.jetbrains.research.kex.reanimator.descriptor.Descriptor
 import org.jetbrains.research.kex.util.loadKClass
 import org.jetbrains.research.kfg.type.ClassType
 import org.jetbrains.research.kthelper.tryOrNull

@@ -1,8 +1,8 @@
 package org.jetbrains.research.kex.trace.runner
 
+import org.jetbrains.research.kex.parameters.Parameters
 import org.jetbrains.research.kex.random.GenerationException
 import org.jetbrains.research.kex.random.Randomizer
-import org.jetbrains.research.kex.reanimator.Parameters
 import org.jetbrains.research.kex.util.isStatic
 import org.jetbrains.research.kthelper.logging.log
 import java.lang.reflect.Constructor

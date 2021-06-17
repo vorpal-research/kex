@@ -1,7 +1,7 @@
 package org.jetbrains.research.kex.trace.symbolic
 
 import org.jetbrains.research.kex.ExecutionContext
-import org.jetbrains.research.kex.reanimator.descriptor.Descriptor
+import org.jetbrains.research.kex.descriptor.Descriptor
 import org.jetbrains.research.kex.state.emptyState
 import org.jetbrains.research.kex.state.predicate.Predicate
 import org.jetbrains.research.kex.state.term.Term
@@ -9,12 +9,12 @@ import org.jetbrains.research.kfg.ir.value.Value
 import org.jetbrains.research.kfg.ir.value.instruction.Instruction
 
 private class EmptyTraceCollector : InstructionTraceCollector {
-    class EmptyPathCondition: PathCondition {
+    class EmptyPathCondition: PathCondition() {
         override val path = emptyList<Clause>()
 
     }
 
-    class EmptyState : SymbolicState {
+    class EmptyState : SymbolicState() {
         override val state = emptyState()
         override val path = EmptyPathCondition()
         override val concreteValueMap = mapOf<Term, Descriptor>()

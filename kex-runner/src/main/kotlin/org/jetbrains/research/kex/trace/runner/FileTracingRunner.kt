@@ -3,8 +3,8 @@ package org.jetbrains.research.kex.trace.runner
 import com.github.h0tk3y.betterParse.grammar.parseToEnd
 import com.github.h0tk3y.betterParse.parser.ParseException
 import org.jetbrains.research.kex.asm.transform.TraceInstrumenter
+import org.jetbrains.research.kex.parameters.Parameters
 import org.jetbrains.research.kex.random.Randomizer
-import org.jetbrains.research.kex.reanimator.Parameters
 import org.jetbrains.research.kex.trace.file.ActionParseException
 import org.jetbrains.research.kex.trace.file.ActionParser
 import org.jetbrains.research.kex.trace.file.FileTrace

@@ -1,12 +1,12 @@
 package org.jetbrains.research.kex.reanimator.callstack.generator
 
+import org.jetbrains.research.kex.descriptor.Descriptor
+import org.jetbrains.research.kex.descriptor.ObjectDescriptor
 import org.jetbrains.research.kex.ktype.KexArray
 import org.jetbrains.research.kex.ktype.KexChar
 import org.jetbrains.research.kex.reanimator.callstack.CallStack
 import org.jetbrains.research.kex.reanimator.callstack.ConstructorCall
 import org.jetbrains.research.kex.reanimator.callstack.DefaultConstructorCall
-import org.jetbrains.research.kex.reanimator.descriptor.Descriptor
-import org.jetbrains.research.kex.reanimator.descriptor.ObjectDescriptor
 import org.jetbrains.research.kfg.ir.MethodDesc
 
 class StringGenerator(private val fallback: Generator) : Generator {

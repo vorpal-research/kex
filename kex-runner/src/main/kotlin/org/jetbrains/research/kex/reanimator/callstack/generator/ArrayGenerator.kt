@@ -1,11 +1,11 @@
 package org.jetbrains.research.kex.reanimator.callstack.generator
 
+import org.jetbrains.research.kex.descriptor.ArrayDescriptor
+import org.jetbrains.research.kex.descriptor.Descriptor
 import org.jetbrains.research.kex.reanimator.callstack.ArrayWrite
 import org.jetbrains.research.kex.reanimator.callstack.CallStack
 import org.jetbrains.research.kex.reanimator.callstack.NewArray
 import org.jetbrains.research.kex.reanimator.callstack.PrimaryValue
-import org.jetbrains.research.kex.reanimator.descriptor.ArrayDescriptor
-import org.jetbrains.research.kex.reanimator.descriptor.Descriptor
 
 class ArrayGenerator(private val fallback: Generator) : Generator {
     override val context get() = fallback.context
