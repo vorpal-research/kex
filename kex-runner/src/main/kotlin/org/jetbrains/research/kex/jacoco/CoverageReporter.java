@@ -120,6 +120,10 @@ public class CoverageReporter {
         return coverageBuilder;
     }
 
+    private String getFullyQualifiedName(String name) {
+        return name.substring(0, name.length() - 6).replace('/', '.');
+    }
+
     private String getClassCoverage(CoverageBuilder coverageBuilder) {
         StringBuilder sb = new StringBuilder();
         for (IClassCoverage cc : coverageBuilder.getClasses()) {
@@ -144,7 +148,8 @@ public class CoverageReporter {
 
     private String getPackageCoverage(CoverageBuilder coverageBuilder) {
         IPackageCoverage pc = new PackageCoverageImpl(pkg, coverageBuilder.getClasses(), coverageBuilder.getSourceFiles());
-        return getCommonCounters("package", pkg, pc) + getCounter("methods", pc.getMethodCounter()) +
+        return getCommonCounters("package", pkg, pc) +
+                getCounter("methods", pc.getMethodCounter()) +
                 getCounter("classes", pc.getClassCounter()) + "\n\n" +
                 getClassCoverage(coverageBuilder);
     }
@@ -152,23 +157,19 @@ public class CoverageReporter {
     private String getCounter(final String unit, final ICounter counter) {
         final int covered = counter.getCoveredCount();
         final int total = counter.getTotalCount();
-        return String.format("%s of %s %s covered%n", covered, total, unit);
+        String coverage = String.format("%s of %s %s covered", covered, total, unit);
+        if (total != 0) {
+            coverage += String.format(" = %.02f", (float) covered / total * 100) + '%';
+        }
+        return coverage + '\n';
     }
 
     private String getCommonCounters(final String level, final String name, final ICoverageNode coverage) {
-        ICounter instructionCounter = coverage.getInstructionCounter();
-        int coveredInstructions = instructionCounter.getCoveredCount();
-        int totalInstructions = instructionCounter.getTotalCount();
-        String percent = String.format("%.02f", (float) coveredInstructions / totalInstructions * 100) + '%';
-        return String.format("Coverage of %s %s = %s :%n", level, name, percent) +
-                String.format("%s of %s instructions covered%n", coveredInstructions, totalInstructions) +
+        return String.format("Coverage of %s %s:%n", level, name) +
+                getCounter("instructions", coverage.getInstructionCounter())  +
                 getCounter("branches", coverage.getBranchCounter()) +
                 getCounter("lines", coverage.getLineCounter()) +
                 getCounter("complexity", coverage.getComplexityCounter());
-    }
-
-    private String getFullyQualifiedName(String name) {
-        return name.substring(0, name.length() - 6).replace('/', '.');
     }
 
     private static class MemoryClassLoader extends ClassLoader {
