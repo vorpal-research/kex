@@ -3,6 +3,9 @@ package org.jetbrains.research.kex.serialization
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.InternalSerializationApi
 import org.jetbrains.research.kex.KexTest
+import org.jetbrains.research.kex.descriptor.Descriptor
+import org.jetbrains.research.kex.descriptor.descriptor
+import org.jetbrains.research.kex.descriptor.descriptorContext
 import org.jetbrains.research.kex.ktype.*
 import org.jetbrains.research.kex.state.PredicateState
 import org.jetbrains.research.kex.state.predicate.*
@@ -11,6 +14,7 @@ import org.jetbrains.research.kex.state.term.Term
 import org.jetbrains.research.kex.state.term.term
 import org.junit.Assert.assertEquals
 import org.junit.Test
+import kotlin.test.assertTrue
 
 @ExperimentalSerializationApi
 @InternalSerializationApi
@@ -143,4 +147,38 @@ class KexSerializerTest : KexTest() {
         }
     }
 
+    @Test
+    fun descriptorSerializationTest() = with(descriptorContext) {
+        val const = const(1242)
+        val constJson = serializer.toJson(const)
+        val constFromJson = serializer.fromJson<Descriptor>(constJson)
+        assertTrue { const eq constFromJson }
+
+        val array = array(100, KexDouble())
+        array[0] = const(43.123)
+        array[42] = const(-12.111111)
+        array[99] = const(0.1e-10)
+        val arrayJson = serializer.toJson(array)
+        val arrayFromJson = serializer.fromJson<Descriptor>(arrayJson)
+        assertTrue { array eq arrayFromJson }
+
+        val instance = `object`(KexClass("org/jetbrains/research/kex/test/SerializerTest"))
+        instance["array" to array.type] = array
+        instance["const" to const.type] = const
+        instance["string" to cm.stringClass.kexType] = "test".descriptor
+        val instanceJson = serializer.toJson(instance)
+        val instanceFromJson = serializer.fromJson<Descriptor>(instanceJson)
+        assertTrue { instance eq instanceFromJson }
+
+        val type = KexClass("org/jetbrains/research/kex/test/RecursiveSerializerTest")
+        val recursiveInstance = `object`(type)
+        val anotherRecursive = `object`(type)
+        anotherRecursive["test" to type] = `null`
+        anotherRecursive["recursion" to type] = recursiveInstance
+        recursiveInstance["test" to type] = anotherRecursive
+        recursiveInstance["recursion" to type] = recursiveInstance
+        val recursiveJson = serializer.toJson(recursiveInstance)
+        val recursiveFromJson = serializer.fromJson<Descriptor>(recursiveJson)
+        assertTrue { recursiveInstance eq recursiveFromJson }
+    }
 }

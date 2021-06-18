@@ -539,7 +539,7 @@ open class DescriptorBuilder {
             is KexNull -> const(null)
             is KexBool -> const(value.toBoolean())
             is KexByte -> const(value.toByte())
-            is KexChar -> const(value.toInt().toChar())
+            is KexChar -> const(value[0])
             is KexShort -> const(value.toShort())
             is KexInt -> const(value.toInt())
             is KexLong -> const(value.toLong())
@@ -577,3 +577,5 @@ open class DescriptorBuilder {
 
 fun descriptor(body: DescriptorBuilder.() -> Descriptor): Descriptor =
     DescriptorBuilder().body()
+
+val descriptorContext get() = DescriptorBuilder()
