@@ -1,0 +1,328 @@
+2021-06-18 13:48:46.735 [INFO ][org.jetbrains.research.kex.Kex] - Overall summary for 44 methods:
+body coverage: 41.22%
+full coverage: 41.22%
+2021-06-18 13:48:46.735 [INFO ][org.jetbrains.research.kex.reanimator.descriptor.DescriptorStatistics] - Descriptor generation: 84.90%
+2021-06-18 13:48:46.735 [INFO ][org.jetbrains.research.kex.reanimator.descriptor.DescriptorStatistics] - Non-trivial descriptor generation: 59.85%
+2021-06-18 13:48:46.735 [INFO ][org.jetbrains.research.kex.reanimator.descriptor.DescriptorStatistics] - Average descriptor depth: 1.48
+2021-06-18 13:48:46.735 [INFO ][org.jetbrains.research.kex.reanimator.descriptor.DescriptorStatistics] - Average non-trivial descriptor depth: 2.29
+2021-06-18 13:48:46.735 [INFO ][org.jetbrains.research.kex.reanimator.descriptor.DescriptorStatistics] - Average time per successful descriptor generation: 195.09
+2021-06-18 13:48:46.736 [INFO ][org.jetbrains.research.kex.reanimator.descriptor.DescriptorStatistics] - Average time per failed descriptor generation: 8669.89
+2021-06-18 13:48:46.736 [INFO ][org.jetbrains.research.kex.reanimator.descriptor.DescriptorStatistics] - Average time per descriptor generation: 1474.76
+2021-06-18 13:48:46.736 [INFO ][org.jetbrains.research.kex.reanimator.descriptor.DescriptorStatistics] - Average time per non-trivial descriptor generation: 3769.42
+2021-06-18 13:48:46.736 [INFO ][org.jetbrains.research.kex.Kex] - ---------------------------------JaCoCo---------------------------------
+2021-06-18 13:48:46.736 [INFO ][org.jetbrains.research.kex.Kex] - analysisLevel = org.jetbrains.research.kex.Kex$AnalysisLevel$PACKAGE@39c0f2a3
+2021-06-18 13:48:49.180 [INFO ][org.jetbrains.research.kex.Kex] - Coverage of package tables:
+644 of 1153 instructions covered = 55.85%
+58 of 158 branches covered = 36.71%
+145 of 238 lines covered = 60.92%
+56 of 125 complexity covered = 44.80%
+39 of 46 methods covered = 84.78%
+4 of 4 classes covered = 100.00%
+
+
+Coverage of class tables/OpenAddressingHashTable$OpenAddressingHashTableIterator:
+75 of 116 instructions covered = 64.66%
+6 of 12 branches covered = 50.00%
+11 of 19 lines covered = 57.89%
+5 of 10 complexity covered = 50.00%
+3 of 4 methods covered = 75.00%
+
+Coverage of method <init>:
+15 of 15 instructions covered = 100.00%
+0 of 0 branches covered
+4 of 4 lines covered = 100.00%
+1 of 1 complexity covered = 100.00%
+
+Coverage of method hasNext:
+10 of 10 instructions covered = 100.00%
+2 of 2 branches covered = 100.00%
+1 of 1 lines covered = 100.00%
+2 of 2 complexity covered = 100.00%
+
+Coverage of method next:
+50 of 54 instructions covered = 92.59%
+4 of 6 branches covered = 66.67%
+6 of 7 lines covered = 85.71%
+2 of 4 complexity covered = 50.00%
+
+Coverage of method remove:
+0 of 37 instructions covered = 0.00%
+0 of 4 branches covered = 0.00%
+0 of 7 lines covered = 0.00%
+0 of 3 complexity covered = 0.00%
+
+
+Coverage of class tables/OpenAddressingHashTable:
+272 of 489 instructions covered = 55.62%
+26 of 72 branches covered = 36.11%
+67 of 106 lines covered = 63.21%
+25 of 55 complexity covered = 45.45%
+17 of 19 methods covered = 89.47%
+
+Coverage of method hash:
+13 of 24 instructions covered = 54.17%
+1 of 2 branches covered = 50.00%
+3 of 4 lines covered = 75.00%
+1 of 2 complexity covered = 50.00%
+
+Coverage of method <init>:
+33 of 33 instructions covered = 100.00%
+3 of 4 branches covered = 75.00%
+8 of 8 lines covered = 100.00%
+2 of 3 complexity covered = 66.67%
+
+Coverage of method <init>:
+5 of 5 instructions covered = 100.00%
+0 of 0 branches covered
+2 of 2 lines covered = 100.00%
+1 of 1 complexity covered = 100.00%
+
+Coverage of method <init>:
+5 of 5 instructions covered = 100.00%
+0 of 0 branches covered
+2 of 2 lines covered = 100.00%
+1 of 1 complexity covered = 100.00%
+
+Coverage of method <init>:
+5 of 5 instructions covered = 100.00%
+0 of 0 branches covered
+2 of 2 lines covered = 100.00%
+1 of 1 complexity covered = 100.00%
+
+Coverage of method size:
+3 of 3 instructions covered = 100.00%
+0 of 0 branches covered
+1 of 1 lines covered = 100.00%
+1 of 1 complexity covered = 100.00%
+
+Coverage of method isEmpty:
+6 of 7 instructions covered = 85.71%
+1 of 2 branches covered = 50.00%
+1 of 1 lines covered = 100.00%
+1 of 2 complexity covered = 50.00%
+
+Coverage of method contains:
+19 of 42 instructions covered = 45.24%
+3 of 8 branches covered = 37.50%
+6 of 10 lines covered = 60.00%
+2 of 5 complexity covered = 40.00%
+
+Coverage of method add:
+36 of 59 instructions covered = 61.02%
+3 of 8 branches covered = 37.50%
+7 of 10 lines covered = 70.00%
+2 of 5 complexity covered = 40.00%
+
+Coverage of method resize:
+51 of 64 instructions covered = 79.69%
+6 of 8 branches covered = 75.00%
+10 of 10 lines covered = 100.00%
+3 of 5 complexity covered = 60.00%
+
+Coverage of method remove:
+19 of 54 instructions covered = 35.19%
+3 of 8 branches covered = 37.50%
+6 of 13 lines covered = 46.15%
+2 of 5 complexity covered = 40.00%
+
+Coverage of method containsAll:
+8 of 26 instructions covered = 30.77%
+1 of 6 branches covered = 16.67%
+2 of 5 lines covered = 40.00%
+1 of 4 complexity covered = 25.00%
+
+Coverage of method addAll:
+0 of 28 instructions covered = 0.00%
+0 of 6 branches covered = 0.00%
+0 of 6 lines covered = 0.00%
+0 of 4 complexity covered = 0.00%
+
+Coverage of method removeAll:
+0 of 45 instructions covered = 0.00%
+0 of 10 branches covered = 0.00%
+0 of 8 lines covered = 0.00%
+0 of 6 complexity covered = 0.00%
+
+Coverage of method retainAll:
+8 of 28 instructions covered = 28.57%
+1 of 6 branches covered = 16.67%
+2 of 9 lines covered = 22.22%
+1 of 4 complexity covered = 25.00%
+
+Coverage of method clear:
+10 of 10 instructions covered = 100.00%
+0 of 0 branches covered
+3 of 3 lines covered = 100.00%
+1 of 1 complexity covered = 100.00%
+
+Coverage of method toArray:
+21 of 21 instructions covered = 100.00%
+2 of 2 branches covered = 100.00%
+7 of 7 lines covered = 100.00%
+2 of 2 complexity covered = 100.00%
+
+Coverage of method toArray:
+24 of 24 instructions covered = 100.00%
+2 of 2 branches covered = 100.00%
+4 of 4 lines covered = 100.00%
+2 of 2 complexity covered = 100.00%
+
+Coverage of method iterator:
+6 of 6 instructions covered = 100.00%
+0 of 0 branches covered
+1 of 1 lines covered = 100.00%
+1 of 1 complexity covered = 100.00%
+
+
+Coverage of class tables/ClosedAddressingHashTable$ClosedAddressingHashTableIterator:
+89 of 118 instructions covered = 75.42%
+9 of 14 branches covered = 64.29%
+15 of 23 lines covered = 65.22%
+6 of 11 complexity covered = 54.55%
+3 of 4 methods covered = 75.00%
+
+Coverage of method <init>:
+18 of 18 instructions covered = 100.00%
+0 of 0 branches covered
+5 of 5 lines covered = 100.00%
+1 of 1 complexity covered = 100.00%
+
+Coverage of method hasNext:
+10 of 10 instructions covered = 100.00%
+2 of 2 branches covered = 100.00%
+1 of 1 lines covered = 100.00%
+2 of 2 complexity covered = 100.00%
+
+Coverage of method next:
+61 of 65 instructions covered = 93.85%
+7 of 10 branches covered = 70.00%
+9 of 10 lines covered = 90.00%
+3 of 6 complexity covered = 50.00%
+
+Coverage of method remove:
+0 of 25 instructions covered = 0.00%
+0 of 2 branches covered = 0.00%
+0 of 7 lines covered = 0.00%
+0 of 2 complexity covered = 0.00%
+
+
+Coverage of class tables/ClosedAddressingHashTable:
+208 of 430 instructions covered = 48.37%
+17 of 60 branches covered = 28.33%
+52 of 90 lines covered = 57.78%
+20 of 49 complexity covered = 40.82%
+16 of 19 methods covered = 84.21%
+
+Coverage of method hash:
+13 of 24 instructions covered = 54.17%
+1 of 2 branches covered = 50.00%
+3 of 4 lines covered = 75.00%
+1 of 2 complexity covered = 50.00%
+
+Coverage of method <init>:
+16 of 16 instructions covered = 100.00%
+0 of 0 branches covered
+6 of 6 lines covered = 100.00%
+1 of 1 complexity covered = 100.00%
+
+Coverage of method <init>:
+5 of 5 instructions covered = 100.00%
+0 of 0 branches covered
+2 of 2 lines covered = 100.00%
+1 of 1 complexity covered = 100.00%
+
+Coverage of method <init>:
+0 of 5 instructions covered = 0.00%
+0 of 0 branches covered
+0 of 2 lines covered = 0.00%
+0 of 1 complexity covered = 0.00%
+
+Coverage of method <init>:
+5 of 5 instructions covered = 100.00%
+0 of 0 branches covered
+2 of 2 lines covered = 100.00%
+1 of 1 complexity covered = 100.00%
+
+Coverage of method size:
+3 of 3 instructions covered = 100.00%
+0 of 0 branches covered
+1 of 1 lines covered = 100.00%
+1 of 1 complexity covered = 100.00%
+
+Coverage of method isEmpty:
+6 of 7 instructions covered = 85.71%
+1 of 2 branches covered = 50.00%
+1 of 1 lines covered = 100.00%
+1 of 2 complexity covered = 50.00%
+
+Coverage of method contains:
+15 of 21 instructions covered = 71.43%
+3 of 6 branches covered = 50.00%
+3 of 3 lines covered = 100.00%
+2 of 4 complexity covered = 50.00%
+
+Coverage of method add:
+44 of 60 instructions covered = 73.33%
+2 of 6 branches covered = 33.33%
+8 of 10 lines covered = 80.00%
+1 of 4 complexity covered = 25.00%
+
+Coverage of method resize:
+0 of 74 instructions covered = 0.00%
+0 of 10 branches covered = 0.00%
+0 of 12 lines covered = 0.00%
+0 of 6 complexity covered = 0.00%
+
+Coverage of method remove:
+15 of 30 instructions covered = 50.00%
+3 of 6 branches covered = 50.00%
+4 of 6 lines covered = 66.67%
+2 of 4 complexity covered = 50.00%
+
+Coverage of method containsAll:
+8 of 26 instructions covered = 30.77%
+1 of 6 branches covered = 16.67%
+2 of 5 lines covered = 40.00%
+1 of 4 complexity covered = 25.00%
+
+Coverage of method addAll:
+10 of 26 instructions covered = 38.46%
+1 of 6 branches covered = 16.67%
+4 of 6 lines covered = 66.67%
+1 of 4 complexity covered = 25.00%
+
+Coverage of method removeAll:
+0 of 40 instructions covered = 0.00%
+0 of 6 branches covered = 0.00%
+0 of 7 lines covered = 0.00%
+0 of 4 complexity covered = 0.00%
+
+Coverage of method retainAll:
+8 of 28 instructions covered = 28.57%
+1 of 6 branches covered = 16.67%
+2 of 9 lines covered = 22.22%
+1 of 4 complexity covered = 25.00%
+
+Coverage of method clear:
+9 of 9 instructions covered = 100.00%
+0 of 0 branches covered
+3 of 3 lines covered = 100.00%
+1 of 1 complexity covered = 100.00%
+
+Coverage of method toArray:
+21 of 21 instructions covered = 100.00%
+2 of 2 branches covered = 100.00%
+7 of 7 lines covered = 100.00%
+2 of 2 complexity covered = 100.00%
+
+Coverage of method toArray:
+24 of 24 instructions covered = 100.00%
+2 of 2 branches covered = 100.00%
+3 of 3 lines covered = 100.00%
+2 of 2 complexity covered = 100.00%
+
+Coverage of method iterator:
+6 of 6 instructions covered = 100.00%
+0 of 0 branches covered
+1 of 1 lines covered = 100.00%
+1 of 1 complexity covered = 100.00%
