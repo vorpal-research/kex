@@ -107,6 +107,8 @@ abstract class PredicateBuilder : TermBuilder() {
             pf.getEquality(this, tf.getNull(), this@PredicateBuilder.type, location)
     infix fun <T : Number> Term.equality(rhv: T) =
             pf.getEquality(this, const(rhv), this@PredicateBuilder.type, location)
+    infix fun Term.equality(rhv: Char) =
+        pf.getEquality(this, const(rhv), this@PredicateBuilder.type, location)
     infix fun Nothing?.equality(other: Term) =
             pf.getEquality(tf.getNull(), other, this@PredicateBuilder.type, location)
     infix fun Term.equality(other: Boolean) =

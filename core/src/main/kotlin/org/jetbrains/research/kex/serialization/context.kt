@@ -5,7 +5,6 @@ import kotlinx.serialization.InternalSerializationApi
 import kotlinx.serialization.modules.SerializersModule
 import kotlinx.serialization.modules.polymorphic
 import kotlinx.serialization.serializer
-import org.jetbrains.research.kex.descriptor.*
 import org.jetbrains.research.kex.ktype.KexType
 import org.jetbrains.research.kex.state.PredicateState
 import org.jetbrains.research.kex.state.predicate.Predicate
@@ -81,17 +80,4 @@ fun getPredicateStateSerialModule(cm: ClassManager): SerializersModule = Seriali
 @InternalSerializationApi
 fun getKexSerialModule(cm: ClassManager): SerializersModule = SerializersModule {
     include(getPredicateStateSerialModule(cm))
-    contextual(Descriptor::class, DescriptorSerializer)
-    contextual(ConstantDescriptor.Null::class, DescriptorSerializer.to())
-    contextual(ConstantDescriptor.Bool::class, DescriptorSerializer.to())
-    contextual(ConstantDescriptor.Byte::class, DescriptorSerializer.to())
-    contextual(ConstantDescriptor.Char::class, DescriptorSerializer.to())
-    contextual(ConstantDescriptor.Short::class, DescriptorSerializer.to())
-    contextual(ConstantDescriptor.Int::class, DescriptorSerializer.to())
-    contextual(ConstantDescriptor.Long::class, DescriptorSerializer.to())
-    contextual(ConstantDescriptor.Float::class, DescriptorSerializer.to())
-    contextual(ConstantDescriptor.Double::class, DescriptorSerializer.to())
-    contextual(ObjectDescriptor::class, DescriptorSerializer.to())
-    contextual(ClassDescriptor::class, DescriptorSerializer.to())
-    contextual(ArrayDescriptor::class, DescriptorSerializer.to())
 }

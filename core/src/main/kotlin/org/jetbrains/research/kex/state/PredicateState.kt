@@ -28,6 +28,11 @@ class StateBuilder() : PredicateBuilder() {
         this.current = state
     }
 
+    fun append(state: PredicateState): StateBuilder {
+        this += state
+        return this
+    }
+
     operator fun plus(predicate: Predicate): StateBuilder {
         return StateBuilder(current + predicate)
     }
@@ -119,16 +124,27 @@ inline fun basic(body: StateBuilder.() -> Unit): PredicateState {
     return sb.apply()
 }
 
-inline fun chain(base: StateBuilder.() -> Unit, curr: StateBuilder.() -> Unit): PredicateState {
-    val sb = StateBuilder().apply { base() }
+inline fun (StateBuilder.() -> Unit).chain(curr: StateBuilder.() -> Unit): PredicateState {
+    val sb = StateBuilder().apply { this@chain() }
     sb += StateBuilder().apply { curr() }.apply()
     return sb.apply()
 }
 
-inline fun choice(left: StateBuilder.() -> Unit, right: StateBuilder.() -> Unit): PredicateState {
-    val lhv = StateBuilder().apply { left() }.apply()
+inline fun PredicateState.chain(curr: StateBuilder.() -> Unit): PredicateState {
+    val sb = StateBuilder(this)
+    sb += StateBuilder().apply { curr() }.apply()
+    return sb.apply()
+}
+
+inline fun (StateBuilder.() -> Unit).choice(right: StateBuilder.() -> Unit): PredicateState {
+    val lhv = StateBuilder().apply { this@choice() }.apply()
     val rhv = StateBuilder().apply { right() }.apply()
     return StateBuilder().apply { this += listOf(lhv, rhv) }.apply()
+}
+
+inline fun PredicateState.choice(right: StateBuilder.() -> Unit): PredicateState {
+    val rhv = StateBuilder().apply { right() }.apply()
+    return StateBuilder().apply { this += listOf(this@choice, rhv) }.apply()
 }
 
 @BaseType("State")

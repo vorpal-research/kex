@@ -3,9 +3,6 @@ package org.jetbrains.research.kex.serialization
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.InternalSerializationApi
 import org.jetbrains.research.kex.KexTest
-import org.jetbrains.research.kex.descriptor.ArrayDescriptor
-import org.jetbrains.research.kex.descriptor.Descriptor
-import org.jetbrains.research.kex.descriptor.descriptor
 import org.jetbrains.research.kex.ktype.*
 import org.jetbrains.research.kex.state.PredicateState
 import org.jetbrains.research.kex.state.predicate.*
@@ -14,7 +11,6 @@ import org.jetbrains.research.kex.state.term.Term
 import org.jetbrains.research.kex.state.term.term
 import org.junit.Assert.assertEquals
 import org.junit.Test
-import kotlin.test.assertTrue
 
 @ExperimentalSerializationApi
 @InternalSerializationApi
@@ -147,21 +143,4 @@ class KexSerializerTest : KexTest() {
         }
     }
 
-    @Test
-    fun descriptorSerializationTest() {
-        // constant
-        val constant = descriptor { const(42) }
-        val constantJson = serializer.toJson(constant)
-        val constantFromJson = serializer.fromJson<Descriptor>(constantJson)
-        assertTrue { constant eq constantFromJson }
-
-        // array
-        val array = descriptor { array(100, KexDouble()) } as ArrayDescriptor
-        array[0] = descriptor { const(1.123) }
-        array[43] = descriptor { const(Double.NaN) }
-        array[99] =descriptor { const(43.3) }
-        val arrayJson = serializer.toJson(array)
-        val arrayFromJson = serializer.fromJson<Descriptor>(arrayJson)
-        assertTrue { array eq arrayFromJson }
-    }
 }

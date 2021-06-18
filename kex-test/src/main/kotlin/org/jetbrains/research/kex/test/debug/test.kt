@@ -3,9 +3,14 @@
 package org.jetbrains.research.kex.test.debug
 
 class BasicTests {
-    fun test(a: IntArray) {
-        for (i in 0..a.size) {
-            if (a[i] > 0) {
+    class Point(
+        val x: Int,
+        val y: Double
+    )
+
+    fun test(a: Point, b: Point) {
+        if (a.x > b.x) {
+            if (a.y < b.y) {
                 error("a")
             }
         }
