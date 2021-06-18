@@ -43,11 +43,11 @@ abstract class SymbolicState {
     fun isNotEmpty() = state.isNotEmpty
 }
 
-//@Serializable
+@Serializable
 data class SymbolicStateImpl(
     override val state: PredicateState,
     override val path: PathCondition,
-    override val concreteValueMap: Map<Term, Descriptor>,
+    override val concreteValueMap: Map<Term, @Contextual Descriptor>,
     override val termMap: Map<Term, @Contextual Value>,
     override val predicateMap: Map<Predicate, @Contextual Instruction>,
     override val trace: InstructionTrace

@@ -2,7 +2,6 @@ package org.jetbrains.research.kex.serialization
 
 import kotlinx.serialization.*
 import kotlinx.serialization.builtins.MapSerializer
-import kotlinx.serialization.builtins.serializer
 import kotlinx.serialization.descriptors.SerialDescriptor
 import kotlinx.serialization.descriptors.buildClassSerialDescriptor
 import kotlinx.serialization.descriptors.element
@@ -14,7 +13,9 @@ import org.jetbrains.research.kex.ktype.KexArray
 import org.jetbrains.research.kex.ktype.KexClass
 import org.jetbrains.research.kex.ktype.KexType
 
-private typealias Id = String
+@JvmInline
+@Serializable
+private value class Id(val name: String)
 
 @Serializable
 private sealed class DescriptorWrapper() {
@@ -102,7 +103,7 @@ private sealed class DescriptorWrapper() {
     }
 }
 
-private val Descriptor.id get() = "$term"
+private val Descriptor.id get() = Id("$term")
 
 private fun Descriptor.toWrapper(): Map<Id, DescriptorWrapper> {
     val map = mutableMapOf<Id, DescriptorWrapper>()
@@ -146,7 +147,7 @@ private fun Descriptor.toWrapper(visited: MutableMap<Id, DescriptorWrapper>) {
             }
         }
         is ObjectDescriptor -> {
-            val instance = DescriptorWrapper.Klass(id, this.type, mutableListOf()).also {
+            val instance = DescriptorWrapper.Object(id, this.type, mutableListOf()).also {
                 visited[id] = it
             }
             for ((field, value) in this.fields) {
@@ -163,7 +164,7 @@ private fun Descriptor.toWrapper(visited: MutableMap<Id, DescriptorWrapper>) {
 @Serializer(forClass = Descriptor::class)
 internal object DescriptorSerializer : KSerializer<Descriptor> {
     private val context = mutableMapOf<Id, Descriptor>()
-    private val idSerializer = String.serializer()
+    private val idSerializer = Id.serializer()
     private val wrapperSerializer = MapSerializer(idSerializer, DescriptorWrapper.serializer())
     override val descriptor: SerialDescriptor
         get() = buildClassSerialDescriptor("descriptor") {
@@ -181,7 +182,7 @@ internal object DescriptorSerializer : KSerializer<Descriptor> {
 
     override fun deserialize(decoder: Decoder): Descriptor {
         val input = decoder.beginStructure(descriptor)
-        lateinit var id: Id
+        var id = Id("")
         lateinit var wrappers: Map<Id, DescriptorWrapper>
         loop@ while (true) {
             when (val i = input.decodeElementIndex(descriptor)) {

@@ -83,8 +83,10 @@ class InstructionConcolicChecker(val ctx: ExecutionContext, val traceManager: Tr
         }
         is SwitchInst -> when (predicate) {
             is DefaultSwitchPredicate -> {
-                val cond = predicate.cond
-                val candidates = instruction.branches.keys.map { (it as IntConstant).value }.toSet()
+                val defaultSwitch = predicate as DefaultSwitchPredicate
+                val switchInst = instruction as SwitchInst
+                val cond = defaultSwitch.cond
+                val candidates = switchInst.branches.keys.map { (it as IntConstant).value }.toSet()
                 var result: Clause? = null
                 for (candidate in candidates) {
                     val mutated = Clause(instruction, path(instruction.location) {
@@ -95,8 +97,10 @@ class InstructionConcolicChecker(val ctx: ExecutionContext, val traceManager: Tr
                 result
             }
             is EqualityPredicate -> {
-                val (cond, value) = predicate.lhv to (predicate.rhv as ConstIntTerm).value
-                val candidates = instruction.branches.keys.map { (it as IntConstant).value }.toSet() - value
+                val equalityPredicate = predicate as EqualityPredicate
+                val switchInst = instruction as SwitchInst
+                val (cond, value) = equalityPredicate.lhv to (equalityPredicate.rhv as ConstIntTerm).value
+                val candidates = switchInst.branches.keys.map { (it as IntConstant).value }.toSet() - value
                 var result: Clause? = null
                 for (candidate in candidates) {
                     val mutated = Clause(instruction, path(instruction.location) {
@@ -115,8 +119,10 @@ class InstructionConcolicChecker(val ctx: ExecutionContext, val traceManager: Tr
         }
         is TableSwitchInst -> when (predicate) {
             is DefaultSwitchPredicate -> {
-                val cond = predicate.cond
-                val candidates = instruction.range.toSet()
+                val defaultSwitch = predicate as DefaultSwitchPredicate
+                val switchInst = instruction as TableSwitchInst
+                val cond = defaultSwitch.cond
+                val candidates = switchInst.range.toSet()
                 var result: Clause? = null
                 for (candidate in candidates) {
                     val mutated = Clause(instruction, path(instruction.location) {
@@ -127,8 +133,10 @@ class InstructionConcolicChecker(val ctx: ExecutionContext, val traceManager: Tr
                 result
             }
             is EqualityPredicate -> {
-                val (cond, value) = predicate.lhv to (predicate.rhv as ConstIntTerm).value
-                val candidates = instruction.range.toSet() - value
+                val equalityPredicate = predicate as EqualityPredicate
+                val switchInst = instruction as TableSwitchInst
+                val (cond, value) = equalityPredicate.lhv to (equalityPredicate.rhv as ConstIntTerm).value
+                val candidates = switchInst.range.toSet() - value
                 var result: Clause? = null
                 for (candidate in candidates) {
                     val mutated = Clause(instruction, path(instruction.location) {

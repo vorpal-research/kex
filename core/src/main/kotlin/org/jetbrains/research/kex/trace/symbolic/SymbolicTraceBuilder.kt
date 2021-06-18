@@ -12,7 +12,6 @@ import org.jetbrains.research.kex.state.predicate.path
 import org.jetbrains.research.kex.state.predicate.state
 import org.jetbrains.research.kex.state.term.Term
 import org.jetbrains.research.kex.state.term.term
-import org.jetbrains.research.kex.trace.file.UnknownNameException
 import org.jetbrains.research.kex.util.cmp
 import org.jetbrains.research.kfg.ir.*
 import org.jetbrains.research.kfg.ir.value.Argument
@@ -158,7 +157,9 @@ class SymbolicTraceBuilder(val ctx: ExecutionContext) : SymbolicState(), Instruc
 
     private fun parseBlock(blockName: String): BasicBlock {
         val st = currentMethod.slotTracker
-        return st.getBlock(blockName) ?: throw UnknownNameException(blockName)
+        return st.getBlock(blockName) ?: unreachable {
+            log.error("Unknown block name $blockName")
+        }
     }
 
     private fun parseValue(valueName: String): Value {
@@ -184,7 +185,9 @@ class SymbolicTraceBuilder(val ctx: ExecutionContext) : SymbolicState(), Instruc
             valueName == "null" -> cm.value.nullConstant
             valueName == "true" -> cm.value.getBool(true)
             valueName == "false" -> cm.value.getBool(false)
-            else -> throw UnknownNameException(valueName)
+            else ->  unreachable {
+                log.error("Unknown value name $valueName")
+            }
         }
     }
 
