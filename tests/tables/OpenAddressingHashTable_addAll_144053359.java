@@ -9,8 +9,6 @@ import java.util.concurrent.DelayQueue;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedList;
-import java.util.Stack;
-import java.lang.Float;
 
 public class OpenAddressingHashTable_addAll_144053359 {
 
@@ -20,104 +18,100 @@ public class OpenAddressingHashTable_addAll_144053359 {
 
     @Test
     public  void testlabel0() throws Throwable {
-        OpenAddressingHashTable term13819 = new OpenAddressingHashTable();
-        DelayQueue<Object> term13820 = new DelayQueue<Object>();
-        term13819.addAll(term13820);
+        OpenAddressingHashTable term30365 = new OpenAddressingHashTable();
+        DelayQueue<Object> term30366 = new DelayQueue<Object>();
+        term30365.addAll(term30366);
     }
 
     @Test
     public  void testbb1() throws Throwable {
-        OpenAddressingHashTable term13842 = new OpenAddressingHashTable();
-        ArrayList<Object> term13843 = new ArrayList<Object>();
-        term13842.addAll(term13843);
+        OpenAddressingHashTable term30388 = new OpenAddressingHashTable();
+        ArrayList<Object> term30389 = new ArrayList<Object>();
+        term30388.addAll(term30389);
     }
 
     @Test
     public  void testlabelderoll0() throws Throwable {
-        OpenAddressingHashTable term13861 = new OpenAddressingHashTable();
-        ArrayList term13862 = unknown();
-        term13861.addAll((Collection<Object>)term13862);
+        OpenAddressingHashTable term30407 = new OpenAddressingHashTable();
+        ArrayList term30408 = unknown();
+        term30407.addAll((Collection<Object>)term30408);
     }
 
     @Test
     public  void testbbderoll0() throws Throwable {
-        OpenAddressingHashTable term14661 = new OpenAddressingHashTable();
-        LinkedList<Object> term14662 = new LinkedList<Object>();
-        term14661.addAll(term14662);
+        OpenAddressingHashTable term31214 = new OpenAddressingHashTable();
+        LinkedList<Object> term31215 = new LinkedList<Object>();
+        term31214.addAll(term31215);
     }
 
     @Test
     public  void testbranch0() throws Throwable {
-        OpenAddressingHashTable term14681 = new OpenAddressingHashTable();
-        LinkedList<Object> term14682 = new LinkedList<Object>();
-        term14681.addAll(term14682);
+        OpenAddressingHashTable term31234 = new OpenAddressingHashTable();
+        ArrayList term31235 = unknown();
+        term31234.addAll((Collection<Object>)term31235);
     }
 
     @Test
     public  void testifthen2() throws Throwable {
-        OpenAddressingHashTable term14702 = new OpenAddressingHashTable();
-        LinkedList<Object> term14703 = new LinkedList<Object>();
-        term14702.addAll(term14703);
+        OpenAddressingHashTable term32036 = new OpenAddressingHashTable();
+        ArrayList term32037 = unknown();
+        term32036.addAll((Collection<Object>)term32037);
     }
 
     @Test
     public  void testbbreturn0() throws Throwable {
-        OpenAddressingHashTable term14722 = new OpenAddressingHashTable();
-        Stack<Object> term14723 = new Stack<Object>();
-        term14722.addAll(term14723);
+        OpenAddressingHashTable term32847 = new OpenAddressingHashTable();
+        LinkedList<Object> term32848 = new LinkedList<Object>();
+        term32847.addAll(term32848);
     }
 
     @Test
     public  void testifelsederoll0() throws Throwable {
-        OpenAddressingHashTable term14743 = new OpenAddressingHashTable();
-        LinkedList<Object> term14744 = new LinkedList<Object>();
-        term14743.addAll(term14744);
+        OpenAddressingHashTable term32867 = new OpenAddressingHashTable();
+        LinkedList<Object> term32868 = new LinkedList<Object>();
+        term32867.addAll(term32868);
     }
 
     @Test
     public  void testlabelderoll1() throws Throwable {
-        OpenAddressingHashTable term14765 = new OpenAddressingHashTable();
-        LinkedList<Object> term14766 = new LinkedList<Object>();
-        term14765.addAll(term14766);
+        OpenAddressingHashTable term32889 = new OpenAddressingHashTable();
+        ArrayList term32890 = unknown();
+        term32889.addAll((Collection<Object>)term32890);
     }
 
     @Test
     public  void testlabelderoll2() throws Throwable {
-        OpenAddressingHashTable term14791 = new OpenAddressingHashTable(22);
-        Object term14846 = new Object();
-        term14791.remove(term14846);
-        LinkedList<Object> term14792 = new LinkedList<Object>();
-        term14791.addAll(term14792);
+        OpenAddressingHashTable term33697 = unknown();
+        LinkedList<Object> term33698 = new LinkedList<Object>();
+        term33697.addAll(term33698);
     }
 
     @Test
     public  void testbbderoll2() throws Throwable {
-        OpenAddressingHashTable term14963 = new OpenAddressingHashTable(512);
-        Object term15017 = new Object();
-        term14963.remove(term15017);
-        LinkedList<Object> term14964 = new LinkedList<Object>();
-        term14963.addAll(term14964);
+        OpenAddressingHashTable term34225 = unknown();
+        LinkedList<Object> term34226 = new LinkedList<Object>();
+        term34225.addAll(term34226);
     }
 
     @Test
     public  void testifelsederoll1() throws Throwable {
-        OpenAddressingHashTable term15125 = new OpenAddressingHashTable(4, 8.5899428E9F);
-        ArrayList term15126 = unknown();
-        term15125.addAll((Collection<Object>)term15126);
+        OpenAddressingHashTable term34331 = unknown();
+        ArrayList term34332 = unknown();
+        term34331.addAll((Collection<Object>)term34332);
     }
 
     @Test
     public  void testbbderoll1() throws Throwable {
-        OpenAddressingHashTable term15934 = new OpenAddressingHashTable(384, Float.POSITIVE_INFINITY);
-        LinkedList<Object> term15935 = new LinkedList<Object>();
-        term15934.addAll(term15935);
+        OpenAddressingHashTable term35770 = unknown();
+        LinkedList<Object> term35771 = new LinkedList<Object>();
+        term35770.addAll(term35771);
     }
 
     @Test
     public  void testifelse0() throws Throwable {
-        OpenAddressingHashTable term15970 = new OpenAddressingHashTable();
-        ArrayList<Object> term15971 = new ArrayList<Object>();
-        term15970.addAll(term15971);
+        OpenAddressingHashTable term36868 = new OpenAddressingHashTable();
+        ArrayList<Object> term36869 = new ArrayList<Object>();
+        term36868.addAll(term36869);
     }
 
 };

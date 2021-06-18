@@ -13,14 +13,14 @@ public class OpenAddressingHashTable_size_1140019819 {
 
     @Test
     public  void testbb0() throws Throwable {
-        OpenAddressingHashTable term536 = new OpenAddressingHashTable();
-        term536.size();
+        OpenAddressingHashTable term16770 = new OpenAddressingHashTable();
+        term16770.size();
     }
 
     @Test
     public  void testbb1() throws Throwable {
-        OpenAddressingHashTable term546 = new OpenAddressingHashTable();
-        term546.size();
+        OpenAddressingHashTable term16780 = new OpenAddressingHashTable();
+        term16780.size();
     }
 
 };

@@ -7,6 +7,7 @@ import tables.OpenAddressingHashTable;
 import java.lang.Object;
 import java.lang.Float;
 import java.lang.String;
+import java.lang.Math;
 
 public class OpenAddressingHashTable_add_419842339 {
 
@@ -16,127 +17,130 @@ public class OpenAddressingHashTable_add_419842339 {
 
     @Test
     public  void testbb2() throws Throwable {
-        OpenAddressingHashTable term398 = new OpenAddressingHashTable();
-        term398.add((Object)null);
+        OpenAddressingHashTable term17442 = new OpenAddressingHashTable();
+        term17442.add((Object)null);
     }
 
     @Test
     public  void testbb3() throws Throwable {
-        OpenAddressingHashTable term408 = new OpenAddressingHashTable();
-        term408.add((Object)null);
+        OpenAddressingHashTable term17452 = new OpenAddressingHashTable();
+        term17452.add((Object)null);
     }
 
     @Test
     public  void testbranch0() throws Throwable {
-        OpenAddressingHashTable term418 = new OpenAddressingHashTable(Float.NaN);
-        Object term443 = new Object();
-        term418.remove(term443);
-        term418.add((Object)null);
+        OpenAddressingHashTable term17462 = new OpenAddressingHashTable(Float.NaN);
+        Object term17486 = new Object();
+        term17462.remove(term17486);
+        term17462.add((Object)null);
     }
 
     @Test
     public  void testbb5() throws Throwable {
-        OpenAddressingHashTable term572 = unknown();
-        String term573 = new String();
-        term572.add(term573);
+        OpenAddressingHashTable term17609 = new OpenAddressingHashTable(257, Float.POSITIVE_INFINITY);
+        Object term17664 = new Object();
+        term17609.remove(term17664);
+        String term17610 = new String();
+        term17609.add(term17610);
     }
 
     @Test
     public  void testlabelderoll0() throws Throwable {
-        OpenAddressingHashTable term1917 = unknown();
-        Object term1918 = new Object();
-        term1917.add(term1918);
+        OpenAddressingHashTable term17772 = new OpenAddressingHashTable(1, Float.POSITIVE_INFINITY);
+        Object term17821 = new Object();
+        term17772.remove(term17821);
+        Object term17773 = new Object();
+        term17772.add(term17773);
     }
 
     @Test
     public  void testbranch1() throws Throwable {
-        OpenAddressingHashTable term2616 = unknown();
-        Object term2617 = new Object();
-        term2616.add(term2617);
+        OpenAddressingHashTable term17926 = unknown();
+        String term17927 = new String();
+        term17926.add(term17927);
     }
 
     @Test
     public  void testbb13() throws Throwable {
-        OpenAddressingHashTable term4043 = unknown();
-        String term4044 = new String();
-        term4043.add(term4044);
+        OpenAddressingHashTable term19123 = unknown();
+        String term19124 = new String();
+        term19123.add(term19124);
     }
 
     @Test
     public  void testbb14() throws Throwable {
-        OpenAddressingHashTable term4146 = new OpenAddressingHashTable(32, Float.POSITIVE_INFINITY);
-        Object[] term4710 = new Object[0];
-        term4146.add((Object)term4710);
-        Object[] term4449 = new Object[0];
-        term4146.add((Object)term4449);
-        Object term4290 = new Object();
-        term4146.remove(term4290);
-        Object[] term4188 = new Object[0];
-        term4146.add((Object)term4188);
-        String term4147 = new String();
-        term4146.add(term4147);
+        OpenAddressingHashTable term19232 = new OpenAddressingHashTable(530, Float.POSITIVE_INFINITY);
+        String term19233 = new String();
+        term19232.add(term19233);
     }
 
     @Test
     public  void testbbreturn0() throws Throwable {
-        OpenAddressingHashTable term5119 = unknown();
-        String term5120 = new String();
-        term5119.add(term5120);
+        OpenAddressingHashTable term19275 = unknown();
+        String term19276 = new String();
+        term19275.add(term19276);
     }
 
     @Test
     public  void testifelsederoll0() throws Throwable {
-        OpenAddressingHashTable term6671 = unknown();
-        String term6672 = new String();
-        term6671.add(term6672);
+        OpenAddressingHashTable term20355 = unknown();
+        String term20356 = new String();
+        term20355.add(term20356);
     }
 
     @Test
     public  void testbbderoll0() throws Throwable {
-        OpenAddressingHashTable term8763 = new OpenAddressingHashTable(4, Float.POSITIVE_INFINITY);
-        Object term8811 = new Object();
-        term8763.remove(term8811);
-        String term8764 = new String();
-        term8763.add(term8764);
+        OpenAddressingHashTable term21088 = unknown();
+        String term21089 = new String();
+        term21088.add(term21089);
     }
 
     @Test
     public  void testifelsederoll1() throws Throwable {
-        OpenAddressingHashTable term8934 = unknown();
-        String term8935 = new String();
-        term8934.add(term8935);
+        OpenAddressingHashTable term22231 = new OpenAddressingHashTable(32, Float.POSITIVE_INFINITY);
+        Object term22281 = new Object();
+        term22231.remove(term22281);
+        String term22232 = new String();
+        term22231.add(term22232);
     }
 
     @Test
     public  void testbbderoll1() throws Throwable {
-        OpenAddressingHashTable term10044 = new OpenAddressingHashTable(32, Float.POSITIVE_INFINITY);
-        Object term10093 = new Object();
-        term10044.remove(term10093);
-        String term10045 = new String();
-        term10044.add(term10045);
+        OpenAddressingHashTable term22414 = new OpenAddressingHashTable(1, Float.POSITIVE_INFINITY);
+        Object term22470 = new Object();
+        term22414.remove(term22470);
+        String term22415 = new String();
+        term22414.add(term22415);
     }
 
     @Test
     public  void testbbderoll4() throws Throwable {
-        OpenAddressingHashTable term10214 = unknown();
-        Object[] term10211 = new Object[0];
-        term10214.add((Object)term10211);
+        OpenAddressingHashTable term22578 = new OpenAddressingHashTable(523, Float.NaN);
+        term22578.clear();
+        Object term23014 = new Object();
+        term22578.add(term23014);
+        Object term22782 = new Object();
+        term22578.add(term22782);
+        Math term22638 = unknown();
+        term22578.remove(term22638);
+        Object term22579 = new Object();
+        term22578.add(term22579);
     }
 
     @Test
     public  void testlabelderoll2() throws Throwable {
-        OpenAddressingHashTable term10958 = new OpenAddressingHashTable(2, Float.POSITIVE_INFINITY);
-        Object term11018 = new Object();
-        term10958.remove(term11018);
-        Object term10959 = new Object();
-        term10958.add(term10959);
+        OpenAddressingHashTable term24275 = unknown();
+        Object term24277 = new Object();
+        term24275.add(term24277);
     }
 
     @Test
     public  void testifelse3() throws Throwable {
-        OpenAddressingHashTable term11126 = unknown();
-        OpenAddressingHashTable term11128 = new OpenAddressingHashTable();
-        term11126.add(term11128);
+        OpenAddressingHashTable term26662 = new OpenAddressingHashTable(64, Float.POSITIVE_INFINITY);
+        Object term26713 = new Object();
+        term26662.remove(term26713);
+        Object term26663 = new Object();
+        term26662.add(term26663);
     }
 
 };

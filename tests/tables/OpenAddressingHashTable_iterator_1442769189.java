@@ -13,14 +13,14 @@ public class OpenAddressingHashTable_iterator_1442769189 {
 
     @Test
     public  void testbb0() throws Throwable {
-        OpenAddressingHashTable term39710 = new OpenAddressingHashTable();
-        term39710.iterator();
+        OpenAddressingHashTable term44266 = new OpenAddressingHashTable();
+        term44266.iterator();
     }
 
     @Test
     public  void testbb1() throws Throwable {
-        OpenAddressingHashTable term39724 = new OpenAddressingHashTable();
-        term39724.iterator();
+        OpenAddressingHashTable term44280 = new OpenAddressingHashTable();
+        term44280.iterator();
     }
 
 };

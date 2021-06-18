@@ -14,20 +14,20 @@ public class ClosedAddressingHashTable_toArray_347878472 {
 
     @Test
     public  void testbb1() throws Throwable {
-        ClosedAddressingHashTable term13361 = new ClosedAddressingHashTable();
-        Object[] term13360 = new Object[0];
-        term13361.toArray(term13360);
+        ClosedAddressingHashTable term16522 = new ClosedAddressingHashTable();
+        Object[] term16521 = new Object[0];
+        term16522.toArray(term16521);
     }
 
     @Test
     public  void testbb6() throws Throwable {
-        ClosedAddressingHashTable term13381 = new ClosedAddressingHashTable(1);
-        Object term13438 = new Object();
-        term13381.add(term13438);
-        Object term13398 = new Object();
-        term13381.add(term13398);
-        Object[] term13375 = new Object[0];
-        term13381.toArray(term13375);
+        ClosedAddressingHashTable term16542 = new ClosedAddressingHashTable();
+        Object term16590 = new Object();
+        term16542.add(term16590);
+        Object term16558 = new Object();
+        term16542.add(term16558);
+        Object[] term16536 = new Object[0];
+        term16542.toArray(term16536);
     }
 
 };

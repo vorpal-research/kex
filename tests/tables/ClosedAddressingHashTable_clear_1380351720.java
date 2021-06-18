@@ -13,8 +13,8 @@ public class ClosedAddressingHashTable_clear_1380351720 {
 
     @Test
     public  void testbb3() throws Throwable {
-        ClosedAddressingHashTable term13298 = new ClosedAddressingHashTable(0);
-        term13298.clear();
+        ClosedAddressingHashTable term16459 = new ClosedAddressingHashTable(0);
+        term16459.clear();
     }
 
 };

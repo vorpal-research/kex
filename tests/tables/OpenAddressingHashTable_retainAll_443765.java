@@ -5,11 +5,8 @@ import java.lang.IllegalStateException;
 import org.junit.Test;
 import tables.OpenAddressingHashTable;
 import java.lang.Object;
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.ConcurrentSkipListSet;
-import java.util.ArrayList;
 import java.util.TreeSet;
-import java.util.concurrent.LinkedTransferQueue;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedList;
 
@@ -21,107 +18,107 @@ public class OpenAddressingHashTable_retainAll_443765 {
 
     @Test
     public  void testlabel0() throws Throwable {
-        OpenAddressingHashTable term15988 = new OpenAddressingHashTable();
-        ArrayBlockingQueue<Object> term15989 = new ArrayBlockingQueue<Object>(0);
-        term15988.retainAll(term15989);
+        OpenAddressingHashTable term36886 = new OpenAddressingHashTable();
+        TreeSet<Object> term36887 = new TreeSet<Object>();
+        term36886.retainAll(term36887);
     }
 
     @Test
     public  void testbb1() throws Throwable {
-        OpenAddressingHashTable term16006 = new OpenAddressingHashTable();
-        ConcurrentSkipListSet<Object> term16007 = new ConcurrentSkipListSet<Object>();
-        term16006.retainAll(term16007);
+        OpenAddressingHashTable term36905 = new OpenAddressingHashTable();
+        ArrayList<Object> term36906 = new ArrayList<Object>();
+        term36905.retainAll(term36906);
     }
 
     @Test
     public  void testlabelderoll0() throws Throwable {
-        OpenAddressingHashTable term16027 = new OpenAddressingHashTable();
-        ArrayList<Object> term16028 = new ArrayList<Object>();
-        term16027.retainAll(term16028);
+        OpenAddressingHashTable term36925 = new OpenAddressingHashTable();
+        ArrayList term36926 = unknown();
+        term36925.retainAll((Collection<Object>)term36926);
     }
 
     @Test
     public  void testbbderoll0() throws Throwable {
-        OpenAddressingHashTable term16047 = new OpenAddressingHashTable();
-        TreeSet<Object> term16048 = new TreeSet<Object>();
-        term16047.retainAll(term16048);
+        OpenAddressingHashTable term37752 = new OpenAddressingHashTable();
+        LinkedList<Object> term37753 = new LinkedList<Object>();
+        term37752.retainAll(term37753);
     }
 
     @Test
     public  void testbranch0() throws Throwable {
-        OpenAddressingHashTable term16069 = new OpenAddressingHashTable();
-        LinkedTransferQueue<Object> term16070 = new LinkedTransferQueue<Object>();
-        term16069.retainAll(term16070);
+        OpenAddressingHashTable term37773 = new OpenAddressingHashTable();
+        ArrayList term37774 = unknown();
+        term37773.retainAll((Collection<Object>)term37774);
     }
 
     @Test
     public  void testifthen1() throws Throwable {
-        OpenAddressingHashTable term16092 = new OpenAddressingHashTable();
-        ArrayList term16093 = unknown();
-        term16092.retainAll((Collection<Object>)term16093);
+        OpenAddressingHashTable term38581 = new OpenAddressingHashTable();
+        ArrayList term38582 = unknown();
+        term38581.retainAll((Collection<Object>)term38582);
     }
 
     @Test
     public  void testbbreturn0() throws Throwable {
-        OpenAddressingHashTable term16907 = new OpenAddressingHashTable();
-        LinkedList<Object> term16908 = new LinkedList<Object>();
-        term16907.retainAll(term16908);
+        OpenAddressingHashTable term39413 = new OpenAddressingHashTable();
+        LinkedList<Object> term39414 = new LinkedList<Object>();
+        term39413.retainAll(term39414);
     }
 
     @Test
     public  void testbbderoll1() throws Throwable {
-        OpenAddressingHashTable term16929 = new OpenAddressingHashTable();
-        LinkedList<Object> term16930 = new LinkedList<Object>();
-        term16929.retainAll(term16930);
+        OpenAddressingHashTable term39435 = new OpenAddressingHashTable();
+        ArrayList term39436 = unknown();
+        term39435.retainAll((Collection<Object>)term39436);
     }
 
     @Test
     public  void testbbderoll2() throws Throwable {
-        OpenAddressingHashTable term16951 = new OpenAddressingHashTable();
-        ArrayList term16952 = unknown();
-        term16951.retainAll((Collection<Object>)term16952);
+        OpenAddressingHashTable term40238 = new OpenAddressingHashTable();
+        ArrayList term40239 = unknown();
+        term40238.retainAll((Collection<Object>)term40239);
     }
 
     @Test
     public  void testbranch1() throws Throwable {
-        OpenAddressingHashTable term17763 = new OpenAddressingHashTable();
-        LinkedList<Object> term17764 = new LinkedList<Object>();
-        term17763.retainAll(term17764);
+        OpenAddressingHashTable term41035 = new OpenAddressingHashTable();
+        ArrayList term41036 = unknown();
+        term41035.retainAll((Collection<Object>)term41036);
     }
 
     @Test
     public  void testlabelderoll1() throws Throwable {
-        OpenAddressingHashTable term17786 = new OpenAddressingHashTable();
-        LinkedList<Object> term17787 = new LinkedList<Object>();
-        term17786.retainAll(term17787);
+        OpenAddressingHashTable term41841 = new OpenAddressingHashTable();
+        LinkedList<Object> term41842 = new LinkedList<Object>();
+        term41841.retainAll(term41842);
     }
 
     @Test
     public  void testbbderoll4() throws Throwable {
-        OpenAddressingHashTable term17809 = new OpenAddressingHashTable();
-        ArrayList term17810 = unknown();
-        term17809.retainAll((Collection<Object>)term17810);
+        OpenAddressingHashTable term41864 = new OpenAddressingHashTable();
+        LinkedList<Object> term41865 = new LinkedList<Object>();
+        term41864.retainAll(term41865);
     }
 
     @Test
     public  void testifelsederoll1() throws Throwable {
-        OpenAddressingHashTable term18625 = new OpenAddressingHashTable();
-        ArrayList term18626 = unknown();
-        term18625.retainAll((Collection<Object>)term18626);
+        OpenAddressingHashTable term41887 = new OpenAddressingHashTable();
+        ArrayList term41888 = unknown();
+        term41887.retainAll((Collection<Object>)term41888);
     }
 
     @Test
     public  void testbbderoll3() throws Throwable {
-        OpenAddressingHashTable term19431 = new OpenAddressingHashTable();
-        ArrayList term19432 = unknown();
-        term19431.retainAll((Collection<Object>)term19432);
+        OpenAddressingHashTable term42685 = new OpenAddressingHashTable();
+        ArrayList term42686 = unknown();
+        term42685.retainAll((Collection<Object>)term42686);
     }
 
     @Test
     public  void testifelse0() throws Throwable {
-        OpenAddressingHashTable term20221 = new OpenAddressingHashTable();
-        ArrayList<Object> term20222 = new ArrayList<Object>();
-        term20221.retainAll(term20222);
+        OpenAddressingHashTable term43498 = new OpenAddressingHashTable();
+        ArrayList<Object> term43499 = new ArrayList<Object>();
+        term43498.retainAll(term43499);
     }
 
 };

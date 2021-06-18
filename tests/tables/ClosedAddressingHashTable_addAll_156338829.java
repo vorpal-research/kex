@@ -5,10 +5,12 @@ import java.lang.IllegalStateException;
 import org.junit.Test;
 import tables.ClosedAddressingHashTable;
 import java.lang.Object;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.ArrayList;
-import java.util.LinkedList;
 import java.util.Collection;
+import java.util.LinkedList;
 import java.lang.Float;
+import java.lang.String;
 
 public class ClosedAddressingHashTable_addAll_156338829 {
 
@@ -18,70 +20,72 @@ public class ClosedAddressingHashTable_addAll_156338829 {
 
     @Test
     public  void testlabel0() throws Throwable {
-        ClosedAddressingHashTable term6400 = new ClosedAddressingHashTable();
-        ArrayList<Object> term6401 = new ArrayList<Object>();
-        term6400.addAll(term6401);
+        ClosedAddressingHashTable term7740 = new ClosedAddressingHashTable();
+        ConcurrentLinkedQueue<Object> term7741 = new ConcurrentLinkedQueue<Object>();
+        term7740.addAll(term7741);
     }
 
     @Test
     public  void testlabelderoll0() throws Throwable {
-        ClosedAddressingHashTable term6417 = new ClosedAddressingHashTable();
-        LinkedList<Object> term6418 = new LinkedList<Object>();
-        term6417.addAll(term6418);
+        ClosedAddressingHashTable term7759 = new ClosedAddressingHashTable();
+        ArrayList term7760 = unknown();
+        term7759.addAll((Collection<Object>)term7760);
     }
 
     @Test
     public  void testbbderoll0() throws Throwable {
-        ClosedAddressingHashTable term6434 = new ClosedAddressingHashTable();
-        LinkedList<Object> term6435 = new LinkedList<Object>();
-        term6434.addAll(term6435);
+        ClosedAddressingHashTable term8571 = new ClosedAddressingHashTable();
+        LinkedList<Object> term8572 = new LinkedList<Object>();
+        term8571.addAll(term8572);
     }
 
     @Test
     public  void testifelsederoll0() throws Throwable {
-        ClosedAddressingHashTable term6453 = new ClosedAddressingHashTable();
-        ArrayList term6454 = unknown();
-        term6453.addAll((Collection<Object>)term6454);
+        ClosedAddressingHashTable term8590 = new ClosedAddressingHashTable();
+        ArrayList term8591 = unknown();
+        term8590.addAll((Collection<Object>)term8591);
     }
 
     @Test
     public  void testlabelderoll1() throws Throwable {
-        ClosedAddressingHashTable term7263 = new ClosedAddressingHashTable();
-        LinkedList<Object> term7264 = new LinkedList<Object>();
-        term7263.addAll(term7264);
+        ClosedAddressingHashTable term9401 = new ClosedAddressingHashTable();
+        ArrayList term9402 = unknown();
+        term9401.addAll((Collection<Object>)term9402);
     }
 
     @Test
     public  void testlabelderoll2() throws Throwable {
-        ClosedAddressingHashTable term7286 = new ClosedAddressingHashTable(2);
-        term7286.capacity = 13369344;
-        LinkedList<Object> term7287 = new LinkedList<Object>();
-        term7286.addAll(term7287);
+        ClosedAddressingHashTable term10211 = new ClosedAddressingHashTable(1);
+        Object term10264 = new Object();
+        term10211.remove(term10264);
+        ArrayList term10212 = unknown();
+        term10211.addAll((Collection<Object>)term10212);
     }
 
     @Test
     public  void testbbderoll2() throws Throwable {
-        ClosedAddressingHashTable term7321 = new ClosedAddressingHashTable(2);
-        LinkedList<Object> term7322 = new LinkedList<Object>();
-        term7321.addAll(term7322);
+        ClosedAddressingHashTable term11166 = new ClosedAddressingHashTable();
+        ClosedAddressingHashTable term11214 = new ClosedAddressingHashTable();
+        term11166.remove(term11214);
+        LinkedList<Object> term11167 = new LinkedList<Object>();
+        term11166.addAll(term11167);
     }
 
     @Test
     public  void testifelsederoll1() throws Throwable {
-        ClosedAddressingHashTable term7356 = new ClosedAddressingHashTable(35, Float.POSITIVE_INFINITY);
-        term7356.capacity = 124781091;
-        LinkedList<Object> term7357 = new LinkedList<Object>();
-        term7356.addAll(term7357);
+        ClosedAddressingHashTable term11270 = new ClosedAddressingHashTable(257, Float.POSITIVE_INFINITY);
+        ArrayList term11271 = unknown();
+        term11270.addAll((Collection<Object>)term11271);
     }
 
     @Test
     public  void testbbderoll1() throws Throwable {
-        ClosedAddressingHashTable term7400 = new ClosedAddressingHashTable(Float.POSITIVE_INFINITY);
-        Object term7432 = new Object();
-        term7400.add(term7432);
-        term7400.capacity = 512;
-        ArrayList term7401 = unknown();
-        term7400.addAll((Collection<Object>)term7401);
+        ClosedAddressingHashTable term12110 = new ClosedAddressingHashTable(832, Float.POSITIVE_INFINITY);
+        String term12165 = new String();
+        term12110.remove(term12165);
+        term12110.capacity = -406978544;
+        LinkedList<Object> term12111 = new LinkedList<Object>();
+        term12110.addAll(term12111);
     }
 
 };

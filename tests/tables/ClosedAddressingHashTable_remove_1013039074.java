@@ -15,56 +15,55 @@ public class ClosedAddressingHashTable_remove_1013039074 {
 
     @Test
     public  void testentry0() throws Throwable {
-        ClosedAddressingHashTable term1865 = new ClosedAddressingHashTable();
-        term1865.remove((Object)null);
+        ClosedAddressingHashTable term4059 = new ClosedAddressingHashTable();
+        term4059.remove((Object)null);
     }
 
     @Test
     public  void testbb1() throws Throwable {
-        ClosedAddressingHashTable term1878 = new ClosedAddressingHashTable(0);
-        Object term1879 = new Object();
-        term1878.remove(term1879);
+        ClosedAddressingHashTable term4072 = new ClosedAddressingHashTable(0);
+        Object term4073 = new Object();
+        term4072.remove(term4073);
     }
 
     @Test
     public  void testbb2() throws Throwable {
-        ClosedAddressingHashTable term1903 = new ClosedAddressingHashTable(1);
-        Object term1904 = new Object();
-        term1903.remove(term1904);
+        ClosedAddressingHashTable term4097 = new ClosedAddressingHashTable(1);
+        Object term4098 = new Object();
+        term4097.remove(term4098);
     }
 
     @Test
     public  void testbb4() throws Throwable {
-        ClosedAddressingHashTable term1931 = new ClosedAddressingHashTable(770);
-        String term1932 = new String();
-        term1931.remove(term1932);
+        ClosedAddressingHashTable term4125 = new ClosedAddressingHashTable(770);
+        String term4126 = new String();
+        term4125.remove(term4126);
     }
 
     @Test
     public  void testbb5() throws Throwable {
-        ClosedAddressingHashTable term1961 = new ClosedAddressingHashTable(770);
-        String term1962 = new String();
-        term1961.remove(term1962);
+        ClosedAddressingHashTable term4155 = new ClosedAddressingHashTable(770);
+        String term4156 = new String();
+        term4155.remove(term4156);
     }
 
     @Test
     public  void testbb6() throws Throwable {
-        ClosedAddressingHashTable term1992 = new ClosedAddressingHashTable(33);
-        String term2045 = new String();
-        term1992.remove(term2045);
-        char[] term1989 = new char[1];
-        String term1993 = new String((char[])term1989);
-        term1992.remove(term1993);
+        ClosedAddressingHashTable term4186 = new ClosedAddressingHashTable(33);
+        String term4240 = new String();
+        term4186.remove(term4240);
+        char[] term4183 = new char[1];
+        String term4187 = new String((char[])term4183);
+        term4186.remove(term4187);
     }
 
     @Test
     public  void testbb7() throws Throwable {
-        ClosedAddressingHashTable term2144 = new ClosedAddressingHashTable(33);
-        Object term2192 = new Object();
-        term2144.remove(term2192);
-        char[] term2141 = new char[1];
-        String term2145 = new String((char[])term2141);
-        term2144.remove(term2145);
+        ClosedAddressingHashTable term4336 = new ClosedAddressingHashTable(2);
+        Object term4383 = new Object();
+        term4336.remove(term4383);
+        String term4337 = new String();
+        term4336.remove(term4337);
     }
 
 };

@@ -5,9 +5,10 @@ import java.lang.IllegalStateException;
 import org.junit.Test;
 import tables.ClosedAddressingHashTable;
 import java.lang.Object;
-import java.lang.Float;
 import java.util.LinkedList;
+import java.lang.Float;
 import java.lang.String;
+import java.util.ArrayList;
 
 public class ClosedAddressingHashTable_add_407556869 {
 
@@ -17,70 +18,72 @@ public class ClosedAddressingHashTable_add_407556869 {
 
     @Test
     public  void testbb2() throws Throwable {
-        ClosedAddressingHashTable term730 = new ClosedAddressingHashTable();
-        term730.add((Object)null);
+        ClosedAddressingHashTable term720 = new ClosedAddressingHashTable();
+        term720.add((Object)null);
     }
 
     @Test
     public  void testbb4() throws Throwable {
-        ClosedAddressingHashTable term744 = new ClosedAddressingHashTable(9, Float.POSITIVE_INFINITY);
-        LinkedList term798 = new LinkedList();
-        term744.remove(term798);
-        Object term745 = new Object();
-        term744.add(term745);
+        ClosedAddressingHashTable term734 = unknown();
+        LinkedList term735 = new LinkedList();
+        term734.add(term735);
+    }
+
+    @Test
+    public  void testlabel1() throws Throwable {
+        ClosedAddressingHashTable term1883 = unknown();
+        LinkedList term1884 = new LinkedList();
+        term1883.add(term1884);
     }
 
     @Test
     public  void testifthen1() throws Throwable {
-        ClosedAddressingHashTable term914 = new ClosedAddressingHashTable(7, Float.POSITIVE_INFINITY);
-        String term967 = new String();
-        term914.remove(term967);
-        String term915 = new String();
-        term914.add(term915);
+        ClosedAddressingHashTable term2334 = new ClosedAddressingHashTable(11, Float.POSITIVE_INFINITY);
+        ClosedAddressingHashTable term2387 = new ClosedAddressingHashTable();
+        term2334.remove(term2387);
+        String term2335 = new String();
+        term2334.add(term2335);
     }
 
     @Test
     public  void testbb11() throws Throwable {
-        ClosedAddressingHashTable term1093 = new ClosedAddressingHashTable(2, Float.POSITIVE_INFINITY);
-        Object term1143 = new Object();
-        term1093.remove(term1143);
-        String term1094 = new String();
-        term1093.add(term1094);
+        ClosedAddressingHashTable term2515 = new ClosedAddressingHashTable(288, Float.POSITIVE_INFINITY);
+        Object term2569 = new Object();
+        term2515.remove(term2569);
+        String term2516 = new String();
+        term2515.add(term2516);
     }
 
     @Test
     public  void testifthen2() throws Throwable {
-        ClosedAddressingHashTable term1285 = new ClosedAddressingHashTable(134, Float.POSITIVE_INFINITY);
-        String term1339 = new String();
-        term1285.remove(term1339);
-        String term1286 = new String();
-        term1285.add(term1286);
+        ClosedAddressingHashTable term2686 = new ClosedAddressingHashTable(258, Float.POSITIVE_INFINITY);
+        Object term2739 = new Object();
+        term2686.remove(term2739);
+        term2686.capacity = 2164740;
+        String term2687 = new String();
+        term2686.add(term2687);
     }
 
     @Test
     public  void testbb13() throws Throwable {
-        ClosedAddressingHashTable term1461 = new ClosedAddressingHashTable(64, Float.POSITIVE_INFINITY);
-        Object term1513 = new Object();
-        term1461.remove(term1513);
-        term1461.capacity = 8197;
-        LinkedList[] term1458 = new LinkedList[0];
-        term1461.add((Object)term1458);
+        ClosedAddressingHashTable term2857 = unknown();
+        ClosedAddressingHashTable term2858 = new ClosedAddressingHashTable();
+        term2857.add(term2858);
     }
 
     @Test
     public  void testbb14() throws Throwable {
-        ClosedAddressingHashTable term1636 = new ClosedAddressingHashTable(33, Float.POSITIVE_INFINITY);
-        String term1686 = new String();
-        term1636.remove(term1686);
-        term1636.capacity = 805634052;
-        LinkedList term1637 = new LinkedList();
-        term1636.add(term1637);
+        ClosedAddressingHashTable term3857 = new ClosedAddressingHashTable(192, Float.POSITIVE_INFINITY);
+        String term3911 = new String();
+        term3857.remove(term3911);
+        ArrayList term3858 = new ArrayList();
+        term3857.add(term3858);
     }
 
     @Test
     public  void testifelse0() throws Throwable {
-        ClosedAddressingHashTable term1828 = unknown();
-        term1828.add((Object)null);
+        ClosedAddressingHashTable term4022 = unknown();
+        term4022.add((Object)null);
     }
 
 };

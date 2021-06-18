@@ -4,7 +4,7 @@ import java.lang.Throwable;
 import java.lang.IllegalStateException;
 import org.junit.Test;
 import tables.OpenAddressingHashTable;
-import java.lang.Object;
+import java.lang.String;
 
 public class OpenAddressingHashTable_isEmpty_161670093 {
 
@@ -14,34 +14,34 @@ public class OpenAddressingHashTable_isEmpty_161670093 {
 
     @Test
     public  void testbb0() throws Throwable {
-        OpenAddressingHashTable term556 = new OpenAddressingHashTable();
-        term556.isEmpty();
+        OpenAddressingHashTable term16790 = new OpenAddressingHashTable();
+        term16790.isEmpty();
     }
 
     @Test
     public  void testbb1() throws Throwable {
-        OpenAddressingHashTable term566 = new OpenAddressingHashTable();
-        term566.isEmpty();
+        OpenAddressingHashTable term16800 = new OpenAddressingHashTable();
+        term16800.isEmpty();
     }
 
     @Test
     public  void testifthen0() throws Throwable {
-        OpenAddressingHashTable term576 = new OpenAddressingHashTable();
-        Object term600 = new Object();
-        term576.remove(term600);
-        term576.isEmpty();
+        OpenAddressingHashTable term16810 = new OpenAddressingHashTable();
+        String term16832 = new String();
+        term16810.remove(term16832);
+        term16810.isEmpty();
     }
 
     @Test
     public  void testgoto0() throws Throwable {
-        OpenAddressingHashTable term628 = new OpenAddressingHashTable();
-        term628.isEmpty();
+        OpenAddressingHashTable term16888 = new OpenAddressingHashTable();
+        term16888.isEmpty();
     }
 
     @Test
     public  void testifelse0() throws Throwable {
-        OpenAddressingHashTable term638 = new OpenAddressingHashTable();
-        term638.isEmpty();
+        OpenAddressingHashTable term16898 = new OpenAddressingHashTable();
+        term16898.isEmpty();
     }
 
 };

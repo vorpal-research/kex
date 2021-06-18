@@ -13,12 +13,12 @@ public class OpenAddressingHashTable_init_83357082 {
 
     @Test
     public  void testbb0() throws Throwable {
-        OpenAddressingHashTable term492 = new OpenAddressingHashTable();
+        OpenAddressingHashTable term16726 = new OpenAddressingHashTable();
     }
 
     @Test
     public  void testbb1() throws Throwable {
-        OpenAddressingHashTable term516 = new OpenAddressingHashTable();
+        OpenAddressingHashTable term16750 = new OpenAddressingHashTable();
     }
 
 };
