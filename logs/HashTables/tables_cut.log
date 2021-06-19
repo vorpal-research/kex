@@ -1,3 +1,47 @@
+2021-06-18 13:48:46.685 [INFO ][org.jetbrains.research.kex.asm.manager.CoverageCounter] - Method tables/OpenAddressingHashTable$OpenAddressingHashTableIterator::<init>(tables/OpenAddressingHashTable): void coverage: body = 0.00; full = 0.00
+2021-06-18 13:48:46.685 [INFO ][org.jetbrains.research.kex.asm.manager.CoverageCounter] - Method tables/OpenAddressingHashTable$OpenAddressingHashTableIterator::hasNext(): bool coverage: body = 0.00; full = 0.00
+2021-06-18 13:48:46.686 [INFO ][org.jetbrains.research.kex.asm.manager.CoverageCounter] - Method tables/OpenAddressingHashTable$OpenAddressingHashTableIterator::next(): java/lang/Object coverage: body = 0.00; full = 0.00
+2021-06-18 13:48:46.688 [INFO ][org.jetbrains.research.kex.asm.manager.CoverageCounter] - Method tables/OpenAddressingHashTable$OpenAddressingHashTableIterator::remove(): void coverage: body = 0.00; full = 0.00
+2021-06-18 13:48:46.689 [INFO ][org.jetbrains.research.kex.asm.manager.CoverageCounter] - Method tables/ClosedAddressingHashTable::hash(java/lang/Object): int coverage: body = 61.54; full = 61.54
+2021-06-18 13:48:46.689 [INFO ][org.jetbrains.research.kex.asm.manager.CoverageCounter] - Method tables/ClosedAddressingHashTable::<init>(int, float): void coverage: body = 100.00; full = 100.00
+2021-06-18 13:48:46.689 [INFO ][org.jetbrains.research.kex.asm.manager.CoverageCounter] - Method tables/ClosedAddressingHashTable::<init>(int): void coverage: body = 100.00; full = 100.00
+2021-06-18 13:48:46.689 [INFO ][org.jetbrains.research.kex.asm.manager.CoverageCounter] - Method tables/ClosedAddressingHashTable::<init>(float): void coverage: body = 100.00; full = 100.00
+2021-06-18 13:48:46.689 [INFO ][org.jetbrains.research.kex.asm.manager.CoverageCounter] - Method tables/ClosedAddressingHashTable::<init>(): void coverage: body = 100.00; full = 100.00
+2021-06-18 13:48:46.689 [INFO ][org.jetbrains.research.kex.asm.manager.CoverageCounter] - Method tables/ClosedAddressingHashTable::size(): int coverage: body = 100.00; full = 100.00
+2021-06-18 13:48:46.689 [INFO ][org.jetbrains.research.kex.asm.manager.CoverageCounter] - Method tables/ClosedAddressingHashTable::isEmpty(): bool coverage: body = 83.33; full = 83.33
+2021-06-18 13:48:46.689 [INFO ][org.jetbrains.research.kex.asm.manager.CoverageCounter] - Method tables/ClosedAddressingHashTable::contains(java/lang/Object): bool coverage: body = 76.92; full = 76.92
+2021-06-18 13:48:46.691 [INFO ][org.jetbrains.research.kex.asm.manager.CoverageCounter] - Method tables/ClosedAddressingHashTable::add(java/lang/Object): bool coverage: body = 71.43; full = 71.43
+2021-06-18 13:48:46.691 [INFO ][org.jetbrains.research.kex.asm.manager.CoverageCounter] - Method tables/ClosedAddressingHashTable::resize(): void coverage: body = 0.00; full = 0.00
+2021-06-18 13:48:46.691 [INFO ][org.jetbrains.research.kex.asm.manager.CoverageCounter] - Method tables/ClosedAddressingHashTable::remove(java/lang/Object): bool coverage: body = 56.25; full = 56.25
+2021-06-18 13:48:46.691 [INFO ][org.jetbrains.research.kex.asm.manager.CoverageCounter] - Method tables/ClosedAddressingHashTable::containsAll(java/util/Collection): bool coverage: body = 31.58; full = 31.58
+2021-06-18 13:48:46.693 [INFO ][org.jetbrains.research.kex.asm.manager.CoverageCounter] - Method tables/ClosedAddressingHashTable::addAll(java/util/Collection): bool coverage: body = 29.41; full = 29.41
+2021-06-18 13:48:46.696 [INFO ][org.jetbrains.research.kex.asm.manager.CoverageCounter] - Method tables/ClosedAddressingHashTable::retainAll(java/util/Collection): bool coverage: body = 28.57; full = 28.57
+2021-06-18 13:48:46.697 [INFO ][org.jetbrains.research.kex.asm.manager.CoverageCounter] - Method tables/ClosedAddressingHashTable::clear(): void coverage: body = 100.00; full = 100.00
+2021-06-18 13:48:46.697 [INFO ][org.jetbrains.research.kex.asm.manager.CoverageCounter] - Method tables/ClosedAddressingHashTable::toArray(): java/lang/Object[] coverage: body = 42.86; full = 42.86
+2021-06-18 13:48:46.697 [INFO ][org.jetbrains.research.kex.asm.manager.CoverageCounter] - Method tables/ClosedAddressingHashTable::toArray(java/lang/Object[]): java/lang/Object[] coverage: body = 100.00; full = 100.00
+2021-06-18 13:48:46.697 [INFO ][org.jetbrains.research.kex.asm.manager.CoverageCounter] - Method tables/ClosedAddressingHashTable::iterator(): java/util/Iterator coverage: body = 100.00; full = 100.00
+2021-06-18 13:48:46.697 [INFO ][org.jetbrains.research.kex.asm.manager.CoverageCounter] - Method tables/OpenAddressingHashTable::hash(java/lang/Object): int coverage: body = 61.54; full = 61.54
+2021-06-18 13:48:46.697 [INFO ][org.jetbrains.research.kex.asm.manager.CoverageCounter] - Method tables/OpenAddressingHashTable::<init>(int, float): void coverage: body = 60.00; full = 60.00
+2021-06-18 13:48:46.698 [INFO ][org.jetbrains.research.kex.asm.manager.CoverageCounter] - Method tables/OpenAddressingHashTable::<init>(int): void coverage: body = 0.00; full = 0.00
+2021-06-18 13:48:46.698 [INFO ][org.jetbrains.research.kex.asm.manager.CoverageCounter] - Method tables/OpenAddressingHashTable::<init>(float): void coverage: body = 66.67; full = 66.67
+2021-06-18 13:48:46.698 [INFO ][org.jetbrains.research.kex.asm.manager.CoverageCounter] - Method tables/OpenAddressingHashTable::<init>(): void coverage: body = 0.00; full = 0.00
+2021-06-18 13:48:46.698 [INFO ][org.jetbrains.research.kex.asm.manager.CoverageCounter] - Method tables/OpenAddressingHashTable::size(): int coverage: body = 0.00; full = 0.00
+2021-06-18 13:48:46.698 [INFO ][org.jetbrains.research.kex.asm.manager.CoverageCounter] - Method tables/OpenAddressingHashTable::isEmpty(): bool coverage: body = 0.00; full = 0.00
+2021-06-18 13:48:46.698 [INFO ][org.jetbrains.research.kex.asm.manager.CoverageCounter] - Method tables/OpenAddressingHashTable::contains(java/lang/Object): bool coverage: body = 0.00; full = 0.00
+2021-06-18 13:48:46.698 [INFO ][org.jetbrains.research.kex.asm.manager.CoverageCounter] - Method tables/OpenAddressingHashTable::add(java/lang/Object): bool coverage: body = 55.17; full = 55.17
+2021-06-18 13:48:46.722 [INFO ][org.jetbrains.research.kex.asm.manager.CoverageCounter] - Method tables/OpenAddressingHashTable::resize(): void coverage: body = 37.14; full = 37.14
+2021-06-18 13:48:46.722 [INFO ][org.jetbrains.research.kex.asm.manager.CoverageCounter] - Method tables/OpenAddressingHashTable::remove(java/lang/Object): bool coverage: body = 0.00; full = 0.00
+2021-06-18 13:48:46.722 [INFO ][org.jetbrains.research.kex.asm.manager.CoverageCounter] - Method tables/OpenAddressingHashTable::containsAll(java/util/Collection): bool coverage: body = 0.00; full = 0.00
+2021-06-18 13:48:46.731 [INFO ][org.jetbrains.research.kex.asm.manager.CoverageCounter] - Method tables/OpenAddressingHashTable::addAll(java/util/Collection): bool coverage: body = 0.00; full = 0.00
+2021-06-18 13:48:46.731 [INFO ][org.jetbrains.research.kex.asm.manager.CoverageCounter] - Method tables/OpenAddressingHashTable::retainAll(java/util/Collection): bool coverage: body = 0.00; full = 0.00
+2021-06-18 13:48:46.731 [INFO ][org.jetbrains.research.kex.asm.manager.CoverageCounter] - Method tables/OpenAddressingHashTable::clear(): void coverage: body = 0.00; full = 0.00
+2021-06-18 13:48:46.732 [INFO ][org.jetbrains.research.kex.asm.manager.CoverageCounter] - Method tables/OpenAddressingHashTable::toArray(): java/lang/Object[] coverage: body = 0.00; full = 0.00
+2021-06-18 13:48:46.732 [INFO ][org.jetbrains.research.kex.asm.manager.CoverageCounter] - Method tables/OpenAddressingHashTable::toArray(java/lang/Object[]): java/lang/Object[] coverage: body = 0.00; full = 0.00
+2021-06-18 13:48:46.732 [INFO ][org.jetbrains.research.kex.asm.manager.CoverageCounter] - Method tables/OpenAddressingHashTable::iterator(): java/util/Iterator coverage: body = 0.00; full = 0.00
+2021-06-18 13:48:46.732 [INFO ][org.jetbrains.research.kex.asm.manager.CoverageCounter] - Method tables/ClosedAddressingHashTable$ClosedAddressingHashTableIterator::<init>(tables/ClosedAddressingHashTable): void coverage: body = 100.00; full = 100.00
+2021-06-18 13:48:46.733 [INFO ][org.jetbrains.research.kex.asm.manager.CoverageCounter] - Method tables/ClosedAddressingHashTable$ClosedAddressingHashTableIterator::hasNext(): bool coverage: body = 100.00; full = 100.00
+2021-06-18 13:48:46.735 [INFO ][org.jetbrains.research.kex.asm.manager.CoverageCounter] - Method tables/ClosedAddressingHashTable$ClosedAddressingHashTableIterator::next(): java/lang/Object coverage: body = 51.11; full = 51.11
+2021-06-18 13:48:46.735 [INFO ][org.jetbrains.research.kex.asm.manager.CoverageCounter] - Method tables/ClosedAddressingHashTable$ClosedAddressingHashTableIterator::remove(): void coverage: body = 0.00; full = 0.00
 2021-06-18 13:48:46.735 [INFO ][org.jetbrains.research.kex.Kex] - Overall summary for 44 methods:
 body coverage: 41.22%
 full coverage: 41.22%
