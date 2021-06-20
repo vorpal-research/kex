@@ -34,10 +34,13 @@ import org.jetbrains.research.kfg.visitor.MethodVisitor
 import org.jetbrains.research.kfg.visitor.executePipeline
 import org.jetbrains.research.kthelper.assert.unreachable
 import org.jetbrains.research.kthelper.logging.log
+import org.jetbrains.research.kthelper.runIf
 import org.jetbrains.research.kthelper.tryOrNull
 import java.nio.file.Path
 
 private val logQuery by lazy { kexConfig.getBooleanValue("smt", "logQuery", false) }
+private val isMemspacingEnabled by lazy { kexConfig.getBooleanValue("smt", "memspacing", true) }
+private val isSlicingEnabled by lazy { kexConfig.getBooleanValue("smt", "slicing", false) }
 
 class CallCiteChecker(
     val ctx: ExecutionContext,
@@ -68,12 +71,12 @@ class CallCiteChecker(
     override fun visitCallInst(inst: CallInst) {
         val state = getState(inst) ?: return
 
-        val handler = { callCite: Instruction, ps: PredicateState ->
+        val handler = { callCite: Instruction, ps: PredicateState, remapper: TermRenamer ->
             when (inst.method) {
-                im.kexAssert(cm) -> checkAssertion(inst, callCite, ps, getAllAssertions(inst.args[0]))
+                im.kexAssert(cm) -> checkAssertion(inst, callCite, ps, getAllAssertions(inst.args[0]).map { remapper.transformTerm(it) }.toSet())
                 im.kexAssertWithId(cm) -> {
                     val id = (inst.args[0] as? StringConstant)?.value
-                    checkAssertion(inst, callCite, ps, getAllAssertions(inst.args[1]), id)
+                    checkAssertion(inst, callCite, ps, getAllAssertions(inst.args[1]).map { remapper.transformTerm(it) }.toSet(), id)
                 }
                 else -> {}
             }
@@ -81,8 +84,8 @@ class CallCiteChecker(
 
         for (callCite in callCites) {
             val csState = getState(callCite) ?: continue
-            val preparedState = buildInlinedState(csState, state) ?: continue
-            handler(callCite, preparedState)
+            val (preparedState, remapper) = buildInlinedState(csState, state) ?: continue
+            handler(callCite, preparedState, remapper)
         }
     }
 
@@ -108,7 +111,7 @@ class CallCiteChecker(
     private fun buildInlinedState(
         callState: PredicateState,
         inlinedState: PredicateState
-    ): PredicateState? {
+    ): Pair<PredicateState, TermRenamer>? {
         val callPredicate = (callState.takeLast(1) as? BasicState)?.first()
             ?: return null
         val filteredState = callState.dropLast(1)
@@ -130,8 +133,9 @@ class CallCiteChecker(
             }
             result
         }
-        val preparedState = TermRenamer("call.cite.inlined", mappings).apply(inlinedState)
-        return filteredState + preparedState
+        val remapper =  TermRenamer("call.cite.inlined", mappings)
+        val preparedState = remapper.apply(inlinedState)
+        return (filteredState + preparedState) to remapper
     }
 
     private fun getAllAssertions(assertionsArray: Value): Set<Term> = method.flatten()
@@ -229,7 +233,7 @@ class CallCiteChecker(
         var query = query_
 
         // memspacing
-        run {
+        runIf(isMemspacingEnabled) {
             log.debug("Memspacing started...")
             val spacer = MemorySpacer((state.builder() + query).apply())
             state = spacer.apply(state)
@@ -238,7 +242,7 @@ class CallCiteChecker(
         }
 
         // slicing
-        run {
+        runIf(isSlicingEnabled) {
             log.debug("Slicing started...")
 
             val slicingTerms = run {
