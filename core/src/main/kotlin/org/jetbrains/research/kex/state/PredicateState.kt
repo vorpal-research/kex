@@ -184,7 +184,7 @@ abstract class PredicateState : TypeInfo {
 
     fun drop(n: Int): PredicateState {
         var counter = 0
-        return this.filter { counter++ > n }
+        return this.filter { ++counter > n }
     }
 
     fun dropLast(n: Int): PredicateState = reverse().drop(n).reverse()
