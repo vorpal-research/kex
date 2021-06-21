@@ -4,6 +4,7 @@ import org.jetbrains.research.kex.config.kexConfig
 import org.jetbrains.research.kfg.Package
 import org.jetbrains.research.kfg.container.Container
 import org.jetbrains.research.kfg.container.JarContainer
+import java.nio.file.Path
 import java.nio.file.Paths
 
 fun getRuntime(): Container? {
@@ -19,3 +20,9 @@ fun getIntrinsics(): Container? {
 }
 
 fun getPathSeparator(): String = System.getProperty("path.separator")
+
+fun getJunit(): Path? {
+    val runtimePath = kexConfig.getStringValue("kex", "libPath") ?: return null
+    val junitVersion = kexConfig.getStringValue("kex", "junitVersion") ?: return null
+    return Paths.get(runtimePath, "junit-$junitVersion.jar").toAbsolutePath()
+}

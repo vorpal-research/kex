@@ -2,18 +2,53 @@ package org.jetbrains.research.kex.config
 
 import org.apache.commons.cli.*
 import org.jetbrains.research.kthelper.assert.exit
+import org.jetbrains.research.kthelper.collection.buildList
 import org.jetbrains.research.kthelper.logging.log
 import java.io.PrintWriter
 import java.io.StringWriter
 import java.util.regex.Pattern
 
-abstract class AbstractCmdConfig(args: Array<String>) : Config() {
+abstract class AbstractCmdConfig(
+    val tool: String,
+    args: Array<String>,
+    optionProvider: () -> List<Option> = ::defaultOptions
+) : Config() {
     protected val options = Options()
     protected val commandLineOptions = hashMapOf<String, MutableMap<String, String>>()
     protected val cmd: CommandLine
+    val argList: List<String> get() = cmd.argList
+
+    companion object {
+        fun defaultOptions(): List<Option> = buildList {
+            +Option("h", "help", false, "print this help and quit").also {
+                it.isRequired = false
+            }
+
+            +Option.builder("cp")
+                .longOpt("classpath")
+                .hasArg(true)
+                .argName("arg[:arg]")
+                .desc("classpath for analysis, jar files and directories separated by `:`")
+                .required(true)
+                .build()
+
+            +Option(null, "config", true, "configuration file").also { it.isRequired = false }
+
+            +Option.builder()
+                .longOpt("option")
+                .argName("section:name:value")
+                .valueSeparator(':')
+                .numberOfArgs(3)
+                .desc("set kex option through command line")
+                .required(false)
+                .build()
+        }
+    }
 
     init {
-        setupOptions()
+        for (option in optionProvider()) {
+            options.addOption(option)
+        }
 
         val parser = DefaultParser()
 
@@ -48,35 +83,6 @@ abstract class AbstractCmdConfig(args: Array<String>) : Config() {
         }
     }
 
-    protected open fun setupOptions() {
-        val helpOpt = Option("h", "help", false, "print this help and quit")
-        helpOpt.isRequired = false
-        options.addOption(helpOpt)
-
-        val jarOpt = Option.builder("cp")
-            .longOpt("classpath")
-            .hasArg(true)
-            .argName("arg[:arg]")
-            .desc("classpath for analysis, jar files and directories separated by `:`")
-            .required(true)
-            .build()
-        options.addOption(jarOpt)
-
-        val propOpt = Option(null, "config", true, "configuration file")
-        propOpt.isRequired = false
-        options.addOption(propOpt)
-
-        val config = Option.builder()
-            .longOpt("option")
-            .argName("section:name:value")
-            .valueSeparator(':')
-            .numberOfArgs(3)
-            .desc("set kex option through command line")
-            .required(false)
-            .build()
-        options.addOption(config)
-    }
-
     fun getCmdValue(name: String): String? = cmd.getOptionValue(name)
     fun getCmdValue(name: String, default: String) = getCmdValue(name) ?: default
     override fun getStringValue(section: String, name: String): String? = commandLineOptions[section]?.get(name)
@@ -90,7 +96,7 @@ abstract class AbstractCmdConfig(args: Array<String>) : Config() {
             val helpFormatter = HelpFormatter()
             val sw = StringWriter()
             val pw = PrintWriter(sw)
-            helpFormatter.printHelp(pw, 80, "kex", null, options, 1, 3, null)
+            helpFormatter.printHelp(pw, 80, tool, null, options, 1, 3, null)
             return sw.toString()
         }
 
