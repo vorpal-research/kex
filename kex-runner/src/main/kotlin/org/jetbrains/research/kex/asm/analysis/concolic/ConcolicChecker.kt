@@ -37,7 +37,7 @@ private val timeLimit by lazy {
     kexConfig.getLongValue("concolic", "timeLimit", 10000L)
 }
 private val onlyMain by lazy {
-    kexConfig.getBooleanValue("concolic", "main-only", false)
+    kexConfig.getBooleanValue("concolic", "mainOnly", false)
 }
 
 class ConcolicChecker(

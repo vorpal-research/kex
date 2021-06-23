@@ -1,7 +1,5 @@
 package org.jetbrains.research.kex.annotations
 
-import org.jetbrains.research.kthelper.assert.unreachable
-import org.jetbrains.research.kthelper.logging.log
 import org.jetbrains.research.kex.asm.manager.MethodManager
 import org.jetbrains.research.kex.config.kexConfig
 import org.jetbrains.research.kex.ktype.KexArray
@@ -14,6 +12,8 @@ import org.jetbrains.research.kex.state.term.CallTerm
 import org.jetbrains.research.kex.state.term.Term
 import org.jetbrains.research.kex.state.term.term
 import org.jetbrains.research.kex.state.wrap
+import org.jetbrains.research.kthelper.assert.unreachable
+import org.jetbrains.research.kthelper.logging.log
 
 @AnnotationFunctionality("org.jetbrains.annotations.Range")
 class Range(val from: Long, val to: Long) : AnnotationInfo() {
@@ -96,7 +96,7 @@ class Contract(val value: String = ""/*, pure: Boolean = false*/) : AnnotationIn
         }
     }
 
-    override fun preciseBeforeCall(predicate: CallPredicate): PredicateState? {
+    override fun preciseBeforeCall(predicate: CallPredicate): PredicateState {
         val builder = StateBuilder()
         val call = predicate.call as CallTerm
         val args = call.arguments
@@ -125,7 +125,7 @@ class Contract(val value: String = ""/*, pure: Boolean = false*/) : AnnotationIn
         val id = id.toString()
         val result = StateBuilder()
 
-        val inlineEnabled = kexConfig.getBooleanValue("smt", "ps-inlining", true)
+        val inlineEnabled = kexConfig.getBooleanValue("smt", "psInlining", true)
                 && MethodManager.InlineManager.isInlinable(call.method)
 
         // New statement insertion

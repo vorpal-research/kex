@@ -99,10 +99,10 @@ class Kex(args: Array<String>) {
 
     init {
         kexConfig.initialize(cmd, RuntimeConfig, FileConfig(properties))
-        outputDir = kexConfig.getPathValue("kex", "output-dir")
+        outputDir = kexConfig.getPathValue("kex", "outputDir")
             ?: Files.createTempDirectory(Paths.get("."), "kex-output")
                 .toAbsolutePath().also {
-                    RuntimeConfig.setValue("kex", "output-dir", it)
+                    RuntimeConfig.setValue("kex", "outputDir", it)
                 }
 
         val logName = kexConfig.getStringValue("kex", "log", "kex.log")

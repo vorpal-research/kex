@@ -21,8 +21,8 @@ import org.jetbrains.research.kthelper.toInt
 import kotlin.math.abs
 import kotlin.math.min
 
-private val derollCount = kexConfig.getIntValue("loop", "deroll-count", 3)
-private val maxDerollCount = kexConfig.getIntValue("loop", "max-deroll-count", 0)
+private val derollCount = kexConfig.getIntValue("loop", "derollCount", 3)
+private val maxDerollCount = kexConfig.getIntValue("loop", "maxDerollCount", 0)
 
 class LoopDeroller(override val cm: ClassManager) : LoopVisitor {
 

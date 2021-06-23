@@ -15,7 +15,7 @@ import kotlin.math.abs
 
 private val useApiGeneration by lazy { kexConfig.getBooleanValue("apiGeneration", "enabled", true) }
 private val generateTestCases by lazy { kexConfig.getBooleanValue("apiGeneration", "generateTestCases", false) }
-private val outputDirectory by lazy { kexConfig.getPathValue("kex", "output-dir")!! }
+private val outputDirectory by lazy { kexConfig.getPathValue("kex", "outputDir")!! }
 private val testCaseDirectory by lazy { kexConfig.getPathValue("apiGeneration", "testCaseDirectory", "tests") }
 private val testCaseLanguage by lazy { kexConfig.getStringValue("apiGeneration", "testCaseLanguage", "java") }
 

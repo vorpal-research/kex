@@ -21,7 +21,7 @@ class Checker(
     val ctx: ExecutionContext,
     private val psa: PredicateStateAnalysis
 ) {
-    private val isInliningEnabled = kexConfig.getBooleanValue("smt", "ps-inlining", true)
+    private val isInliningEnabled = kexConfig.getBooleanValue("smt", "psInlining", true)
     private val isMemspacingEnabled = kexConfig.getBooleanValue("smt", "memspacing", true)
     private val isSlicingEnabled = kexConfig.getBooleanValue("smt", "slicing", false)
     private val logQuery = kexConfig.getBooleanValue("smt", "logQuery", false)

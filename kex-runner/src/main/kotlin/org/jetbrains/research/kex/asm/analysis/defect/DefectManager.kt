@@ -9,7 +9,7 @@ private val klaxon = Klaxon()
 
 object DefectManager {
     private val innerDefects = mutableSetOf<Defect>()
-    private val outputDirectory by lazy { kexConfig.getPathValue("kex", "output-dir")!! }
+    private val outputDirectory by lazy { kexConfig.getPathValue("kex", "outputDir")!! }
     val defectFile by lazy {
         outputDirectory.resolve(kexConfig.getStringValue("defect", "outputFile")
             ?: unreachable { log.error("You need to specify parameters file to be able to use Z3 SMT") })
