@@ -14,11 +14,7 @@ class RunnerCmdConfig(args: Array<String>) : AbstractCmdConfig("kex-runner", arg
     ps.isRequired = false
     options += ps
 
-    val logName = Option(null, "log", true, "log file name (`kex.log` by default)")
-    logName.isRequired = false
-    options += logName
-
-    val targetDir = Option(null, "output", true, "target directory for instrumented bytecode output")
+    val targetDir = Option(null, "output", true, "directory for all temporary output")
     targetDir.isRequired = false
     options += targetDir
 

@@ -1,13 +1,9 @@
 package org.jetbrains.research.kex
 
-import org.jetbrains.research.kex.compile.JavaCompilerDriver
 import org.jetbrains.research.kex.config.ExecutorCmdConfig
 import org.jetbrains.research.kex.config.FileConfig
 import org.jetbrains.research.kex.config.RuntimeConfig
 import org.jetbrains.research.kex.config.kexConfig
-import org.jetbrains.research.kex.util.getJunit
-import org.jetbrains.research.kex.util.getPathSeparator
-import org.jetbrains.research.kthelper.logging.log
 import java.nio.file.Paths
 
 fun main(args: Array<String>) {
@@ -17,20 +13,23 @@ fun main(args: Array<String>) {
 class KexExecutor(args: Array<String>) {
     private val cmd = ExecutorCmdConfig(args)
     private val properties = cmd.getCmdValue("config", "kex.ini")
-    private val logName = cmd.getCmdValue("log", "kex-executor.log")
 
     fun main() {
         kexConfig.initialize(cmd, RuntimeConfig, FileConfig(properties))
+        val logName = kexConfig.getStringValue("kex", "log", "kex-executor.log")
         kexConfig.initLog(logName)
 
-        val classPass = cmd.getCmdValue("classpath")!!.split(getPathSeparator()).map { Paths.get(it) }
-        val testFiles = cmd.argList
         val output = Paths.get(cmd.getCmdValue("output", "kex-compiled"))
 
-        val compiler = JavaCompilerDriver(listOfNotNull(*classPass.toTypedArray(), getJunit()), output)
-        val files = compiler.compile(testFiles.map { Paths.get(it) })
+        val klass = cmd.getCmdValue("class")!!
+        val method = cmd.getCmdValue("method")!!
 
-        log.debug(cmd.getCmdValue("cp"))
-        log.debug(files.joinToString(";"))
+
+        val loader = this.javaClass.classLoader
+        val javaClass = loader.loadClass(klass)
+        val instance = javaClass.newInstance()
+
+        val javaMethod = javaClass.getMethod(method)
+        javaMethod.invoke(instance)
     }
 }

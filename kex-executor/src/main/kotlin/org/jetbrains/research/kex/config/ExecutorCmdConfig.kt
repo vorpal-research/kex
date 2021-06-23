@@ -10,9 +10,13 @@ class ExecutorCmdConfig(args: Array<String>) : AbstractCmdConfig("kex-executor",
     outputFile.isRequired = false
     options += outputFile
 
-    val logName = Option(null, "log", true, "log file name (`kex-executor.log` by default)")
-    logName.isRequired = false
-    options += logName
+    val className = Option(null, "class", true, "klass to run")
+    className.isRequired = true
+    options += className
+
+    val methodName = Option(null, "method", true, "method name")
+    methodName.isRequired = true
+    options += methodName
 
     options
 })

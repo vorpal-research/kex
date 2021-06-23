@@ -3,6 +3,7 @@ package org.jetbrains.research.kex.util
 import org.jetbrains.research.kex.ktype.*
 import org.jetbrains.research.kex.state.term.FieldTerm
 import org.jetbrains.research.kfg.ClassManager
+import org.jetbrains.research.kfg.InvalidTypeException
 import org.jetbrains.research.kfg.ir.Method
 import org.jetbrains.research.kfg.type.*
 import org.jetbrains.research.kfg.type.Type
@@ -26,6 +27,7 @@ import kotlin.Long
 import kotlin.Short
 import kotlin.String
 import kotlin.Suppress
+import kotlin.also
 import kotlin.require
 import org.jetbrains.research.kfg.ir.Class as KfgClass
 import org.jetbrains.research.kfg.ir.Field as KfgField
@@ -156,6 +158,15 @@ fun Class<*>.getMethod(method: Method, loader: ClassLoader): java.lang.reflect.M
     }
 }
 
+fun Class<*>.getMethod(loader: ClassLoader, name: String, desc: String): java.lang.reflect.Method {
+    val argumentTypes = parseTypeDesc(loader, desc)
+    return `try` {
+        this.getDeclaredMethod(name, *argumentTypes.toTypedArray())
+    }.getOrThrow {
+        ClassNotFoundException("Could not load method $name", this)
+    }
+}
+
 fun Class<*>.getMethod(loader: ClassLoader, name: String, vararg types: Type): java.lang.reflect.Method {
     val argumentTypes = types.map { loader.loadClass(it) }.toTypedArray()
     return `try` {
@@ -253,4 +264,58 @@ fun mergeTypes(lhv: java.lang.reflect.Type, rhv: java.lang.reflect.Type, loader:
             rhv
         }
     }
+}
+
+fun parseTypeDesc(classLoader: ClassLoader, desc: String): List<Class<*>> {
+    val result = mutableListOf<Class<*>>()
+    var index = 0
+    while (index < desc.length) {
+        result.add(
+            when (desc[index]) {
+                'V' -> Void::class.javaPrimitiveType
+                'Z' -> Boolean::class.javaPrimitiveType
+                'B' -> Byte::class.javaPrimitiveType
+                'C' -> Char::class.javaPrimitiveType
+                'S' -> Short::class.javaPrimitiveType
+                'I' -> Int::class.javaPrimitiveType
+                'J' -> Long::class.javaPrimitiveType
+                'F' -> Float::class.javaPrimitiveType
+                'D' -> Double::class.javaPrimitiveType
+                'L' -> {
+                    val colonIndex = desc.find(index + 1) { it == ';' }
+                    if (colonIndex < 0) throw InvalidTypeException(desc)
+                    classLoader.loadClass(desc.substring(index + 1, colonIndex)).also {
+                        index = colonIndex + 1
+                    }
+                }
+                '[' -> {
+                    var level = 0
+                    while (desc[index] == '[') {
+                        ++level
+                        ++index
+                    }
+                    val colonIndex = desc.find(index + 1) { it == ';' }
+                    if (colonIndex < 0) throw InvalidTypeException(desc)
+                    val klassType = desc.substring(index, colonIndex)
+                    index = colonIndex + 1
+                    try {
+                        Class.forName(klassType)
+                    } catch (e: ClassNotFoundException) {
+                        val element = classLoader.loadClass(klassType)
+                        // this is fucked up
+                        val arrayInstance = Array.newInstance(element, 0)
+                        arrayInstance.javaClass
+                    }
+                }
+                else -> unreachable { log.error("Unknown type") }
+            }!!
+        )
+    }
+    return result
+}
+
+private fun String.find(startIndex: Int, predicate: (Char) -> Boolean): Int {
+    for (i in startIndex until this.length)
+        if (predicate(this[i])) return i
+    return -1
 }

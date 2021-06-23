@@ -19,7 +19,8 @@ class GlobalConfig : Config() {
     }
 
     fun initLog(filename: String) {
-        System.setProperty("kex.log.name", filename)
+        val outputDir = kexConfig.getPathValue("kex", "output-dir")!!
+        System.setProperty("kex.log.name", outputDir.resolve(filename).toString())
     }
 
     fun initialize(sources: List<Config>) {

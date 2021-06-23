@@ -4,15 +4,15 @@ import com.beust.klaxon.Klaxon
 import org.jetbrains.research.kex.config.kexConfig
 import org.jetbrains.research.kthelper.assert.unreachable
 import org.jetbrains.research.kthelper.logging.log
-import java.io.File
 
 private val klaxon = Klaxon()
 
 object DefectManager {
     private val innerDefects = mutableSetOf<Defect>()
+    private val outputDirectory by lazy { kexConfig.getPathValue("kex", "output-dir")!! }
     val defectFile by lazy {
-        kexConfig.getStringValue("defect", "outputFile")
-            ?: unreachable { log.error("You need to specify parameters file to be able to use Z3 SMT") }
+        outputDirectory.resolve(kexConfig.getStringValue("defect", "outputFile")
+            ?: unreachable { log.error("You need to specify parameters file to be able to use Z3 SMT") })
     }
     val defects: Set<Defect> get() = innerDefects
 
@@ -22,7 +22,7 @@ object DefectManager {
 
     fun emit() {
         val json = klaxon.toJsonString(defects)
-        val file = File(defectFile).also {
+        val file = defectFile.toFile().also {
             it.parentFile?.mkdirs()
         }
         file.writeText(json)

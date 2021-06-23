@@ -36,9 +36,9 @@ import org.jetbrains.research.kthelper.logging.debug
 import org.jetbrains.research.kthelper.logging.log
 import org.jetbrains.research.kthelper.tryOrNull
 import java.nio.file.Files
-import java.nio.file.Paths
 
-private val failDir get() = kexConfig.getStringValue("debug", "dump-directory", "./fail")
+private val outputDirectory by lazy { kexConfig.getPathValue("kex", "output-dir")!! }
+private val failDir by lazy { kexConfig.getPathValue("debug", "dump-directory", "fail") }
 
 class KexCheckerException(val inner: Exception, val reason: PredicateState) : Exception()
 class KexRunnerException(val inner: Exception, val model: Parameters<Any?>) : Exception()
@@ -64,7 +64,7 @@ open class MethodChecker(
     @ExperimentalSerializationApi
     @InternalSerializationApi
     private fun dumpPS(method: Method, message: String, state: PredicateState) = `try` {
-        val failDirPath = Paths.get(failDir)
+        val failDirPath = outputDirectory.resolve(failDir)
         if (!Files.exists(failDirPath)) {
             Files.createDirectory(failDirPath)
         }

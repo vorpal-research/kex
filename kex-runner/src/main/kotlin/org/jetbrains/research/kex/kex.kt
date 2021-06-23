@@ -63,12 +63,12 @@ import kotlin.system.exitProcess
 class Kex(args: Array<String>) {
     private val cmd = RunnerCmdConfig(args)
     private val properties = cmd.getCmdValue("config", "kex.ini")
-    private val logName = cmd.getCmdValue("log", "kex.log")
     private val classPath = System.getProperty("java.class.path")
 
     val containers: List<Container>
     val containerClassLoader: URLClassLoader
     val outputDir: Path
+    lateinit var instrumentedCodeDir: Path
 
     val classManager: ClassManager
     val origManager: ClassManager
@@ -99,6 +99,13 @@ class Kex(args: Array<String>) {
 
     init {
         kexConfig.initialize(cmd, RuntimeConfig, FileConfig(properties))
+        outputDir = kexConfig.getPathValue("kex", "output-dir")
+            ?: Files.createTempDirectory(Paths.get("."), "kex-output")
+                .toAbsolutePath().also {
+                    RuntimeConfig.setValue("kex", "output-dir", it)
+                }
+
+        val logName = kexConfig.getStringValue("kex", "log", "kex.log")
         kexConfig.initLog(logName)
 
         val classPaths = cmd.getCmdValue("classpath")?.split(getPathSeparator())
@@ -165,9 +172,6 @@ class Kex(args: Array<String>) {
             }
         }
 
-        outputDir = (cmd.getCmdValue("output")?.let { Paths.get(it) }
-            ?: Files.createTempDirectory(Paths.get("."), "kex-instrumented")).toAbsolutePath()
-
         visibilityLevel = kexConfig.getEnumValue("apiGeneration", "visibility", true, Visibility.PUBLIC)
     }
 
@@ -184,8 +188,11 @@ class Kex(args: Array<String>) {
     @InternalSerializationApi
     fun main() {
         // write all classes to output directory, so they will be seen by ClassLoader
-        containers.forEach { it.unpack(classManager, outputDir, true) }
-        val classLoader = URLClassLoader(arrayOf(outputDir.toUri().toURL()))
+        val instrumentedDirName = kexConfig.getStringValue("output", "instrumentedDir", "instrumented")
+        instrumentedCodeDir = outputDir.resolve(instrumentedDirName)
+
+        containers.forEach { it.unpack(classManager, instrumentedCodeDir, true) }
+        val classLoader = URLClassLoader(arrayOf(instrumentedCodeDir.toUri().toURL()))
 
         val originalContext = ExecutionContext(origManager, containerClassLoader, EasyRandomDriver())
         val analysisContext = ExecutionContext(classManager, classLoader, EasyRandomDriver())
@@ -224,7 +231,7 @@ class Kex(args: Array<String>) {
         runPipeline(originalContext, `package`) {
             +SystemExitTransformer(originalContext.cm)
             +RuntimeTraceCollector(originalContext.cm)
-            +ClassWriter(originalContext, outputDir)
+            +ClassWriter(originalContext, instrumentedCodeDir)
         }
 
         val traceManager = ObjectTraceManager()
@@ -256,7 +263,7 @@ class Kex(args: Array<String>) {
         runPipeline(originalContext, `package`) {
             +SystemExitTransformer(originalContext.cm)
             +RuntimeTraceCollector(originalContext.cm)
-            +ClassWriter(originalContext, outputDir)
+            +ClassWriter(originalContext, instrumentedCodeDir)
         }
 
         val traceManager = ObjectTraceManager()
@@ -338,9 +345,10 @@ class Kex(args: Array<String>) {
         runPipeline(originalContext, `package`) {
             +SystemExitTransformer(originalContext.cm)
             +SymbolicTraceCollector(originalContext)
-            +ClassWriter(originalContext, outputDir)
+            +ClassWriter(originalContext, instrumentedCodeDir)
         }
         runPipeline(analysisContext) {
+            +OriginalMapper(analysisContext.cm, analysisContext.cm)
             +SystemExitTransformer(analysisContext.cm)
             +InstructionConcolicChecker(analysisContext, traceManager)
             +cm

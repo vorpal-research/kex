@@ -8,12 +8,12 @@ import javax.tools.StandardLocation
 import javax.tools.ToolProvider
 
 
-abstract class CompilerDriver {
+abstract class CompilerDriver(val classPath: List<Path>, val outputDir: Path) {
     abstract fun compile(sources: List<Path>): List<Path>
 }
 
 
-class JavaCompilerDriver(val classPath: List<Path>, val outputDir: Path) : CompilerDriver() {
+class JavaCompilerDriver(classPath: List<Path>, outputDir: Path) : CompilerDriver(classPath, outputDir) {
     private val compiler = ToolProvider.getSystemJavaCompiler()
 
     override fun compile(sources: List<Path>): List<Path> {
@@ -33,5 +33,11 @@ class JavaCompilerDriver(val classPath: List<Path>, val outputDir: Path) : Compi
         }
         return result
     }
+}
 
+class KotlinCompilerDriver(classPath: List<Path>, outputDir: Path) : CompilerDriver(classPath, outputDir) {
+    private val kotlinc = "kotlinc"
+    override fun compile(sources: List<Path>): List<Path> {
+        TODO("Not yet implemented")
+    }
 }
