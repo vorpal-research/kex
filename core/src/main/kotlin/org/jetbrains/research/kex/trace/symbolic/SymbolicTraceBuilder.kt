@@ -43,20 +43,20 @@ class SymbolicTraceBuilder(val ctx: ExecutionContext) : SymbolicState(), Instruc
         get() = builder.current
     override val path: PathCondition
         get() = PathConditionImpl(pathBuilder.toList())
-    override val concreteValueMap: Map<Term, Descriptor>
-        get() = concreteValues
-    override val termMap: Map<Term, Value>
-        get() = terms
-    override val predicateMap: Map<Predicate, Instruction>
-        get() = predicates
+    override val concreteValueMap: ConcreteTermMap
+        get() = ConcreteTermMap(concreteValues.toMap())
+    override val termMap: ValueTermMap
+        get() = ValueTermMap(terms.toMap())
+    override val predicateMap: ValuePredicateMap
+        get() = ValuePredicateMap(predicates.toMap())
 
     override val symbolicState: SymbolicState
         get() = SymbolicStateImpl(
                 state,
                 path,
-                concreteValueMap.toMap(),
-                termMap.toMap(),
-                predicateMap.toMap(),
+                concreteValueMap,
+                termMap,
+                predicateMap,
                 trace
             )
     override val trace: InstructionTrace

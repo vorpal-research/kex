@@ -1,6 +1,7 @@
 package org.jetbrains.research.kex.trace.symbolic
 
 import kotlinx.serialization.Contextual
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import org.jetbrains.research.kex.descriptor.Descriptor
 import org.jetbrains.research.kex.state.PredicateState
@@ -27,13 +28,25 @@ abstract class PathCondition : Iterable<Clause> {
     override fun iterator() = path.iterator()
 }
 
+class ConcreteTermMap(private val map: Map<Term, @Contextual Descriptor>) : Map<Term, Descriptor> by map {
+    constructor() : this(mapOf())
+}
+
+class ValueTermMap(private val map: Map<Term, @Contextual Value>) : Map<Term, Value> by map {
+    constructor() : this(mapOf())
+}
+
+class ValuePredicateMap(private val map: Map<Predicate, @Contextual Instruction>) : Map<Predicate, Instruction> by map {
+    constructor() : this(mapOf())
+}
+
 @Serializable
 abstract class SymbolicState {
     abstract val state: PredicateState
     abstract val path: PathCondition
-    abstract val concreteValueMap: Map<Term, Descriptor>
-    abstract val termMap: Map<Term, Value>
-    abstract val predicateMap: Map<Predicate, Instruction>
+    abstract val concreteValueMap: ConcreteTermMap
+    abstract val termMap: ValueTermMap
+    abstract val predicateMap: ValuePredicateMap
     abstract val trace: InstructionTrace
 
     operator fun get(term: Term) = termMap.getValue(term)
@@ -44,16 +57,18 @@ abstract class SymbolicState {
 }
 
 @Serializable
+@SerialName("SymbolicStateImpl")
 data class SymbolicStateImpl(
     override val state: PredicateState,
     override val path: PathCondition,
-    override val concreteValueMap: Map<Term, @Contextual Descriptor>,
-    override val termMap: Map<Term, @Contextual Value>,
-    override val predicateMap: Map<Predicate, @Contextual Instruction>,
+    override val concreteValueMap: @Contextual ConcreteTermMap,
+    override val termMap: @Contextual ValueTermMap,
+    override val predicateMap: @Contextual ValuePredicateMap,
     override val trace: InstructionTrace
 ) : SymbolicState() {
     override fun toString() = "$state"
 }
 
 @Serializable
+@SerialName("PathConditionImpl")
 class PathConditionImpl(override val path: List<Clause>) : PathCondition()

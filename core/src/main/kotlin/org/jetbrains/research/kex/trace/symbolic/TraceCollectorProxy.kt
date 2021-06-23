@@ -1,12 +1,11 @@
 package org.jetbrains.research.kex.trace.symbolic
 
+import kotlinx.serialization.ExperimentalSerializationApi
+import kotlinx.serialization.InternalSerializationApi
 import org.jetbrains.research.kex.ExecutionContext
-import org.jetbrains.research.kex.descriptor.Descriptor
+import org.jetbrains.research.kex.serialization.KexSerializer
 import org.jetbrains.research.kex.state.emptyState
-import org.jetbrains.research.kex.state.predicate.Predicate
-import org.jetbrains.research.kex.state.term.Term
-import org.jetbrains.research.kfg.ir.value.Value
-import org.jetbrains.research.kfg.ir.value.instruction.Instruction
+import java.nio.file.Path
 
 private class EmptyTraceCollector : InstructionTraceCollector {
     class EmptyPathCondition: PathCondition() {
@@ -17,9 +16,9 @@ private class EmptyTraceCollector : InstructionTraceCollector {
     class EmptyState : SymbolicState() {
         override val state = emptyState()
         override val path = EmptyPathCondition()
-        override val concreteValueMap = mapOf<Term, Descriptor>()
-        override val termMap = mapOf<Term, Value>()
-        override val predicateMap = mapOf<Predicate, Instruction>()
+        override val concreteValueMap = ConcreteTermMap()
+        override val termMap = ValueTermMap()
+        override val predicateMap = ValuePredicateMap()
         override val trace = InstructionTrace()
     }
 
@@ -140,10 +139,12 @@ private class EmptyTraceCollector : InstructionTraceCollector {
 }
 
 object TraceCollectorProxy {
+    private lateinit var ctx: ExecutionContext
     private lateinit var collector: InstructionTraceCollector
 
     @JvmStatic
     fun enableCollector(ctx: ExecutionContext): InstructionTraceCollector {
+        this.ctx = ctx
         collector = SymbolicTraceBuilder(ctx)
         return collector
     }
@@ -154,6 +155,19 @@ object TraceCollectorProxy {
     @JvmStatic
     fun disableCollector() {
         collector = EmptyTraceCollector()
+    }
+
+    @ExperimentalSerializationApi
+    @InternalSerializationApi
+    @JvmStatic
+    fun disableCollectorAndSaveTrace(output: Path) {
+        val finalCollector = collector
+        disableCollector()
+        val serializer = KexSerializer(ctx.cm)
+        val state = serializer.toJson(finalCollector.symbolicState)
+        output.toFile().also {
+            it.parentFile?.mkdirs()
+        }.writeText(state)
     }
 
     @JvmStatic

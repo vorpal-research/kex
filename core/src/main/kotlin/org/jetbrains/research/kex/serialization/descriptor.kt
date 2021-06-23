@@ -162,7 +162,7 @@ private fun Descriptor.toWrapper(visited: MutableMap<Id, DescriptorWrapper>) {
 
 @ExperimentalSerializationApi
 @Serializer(forClass = Descriptor::class)
-internal object DescriptorSerializer : KSerializer<Descriptor> {
+internal class DescriptorSerializer : KSerializer<Descriptor> {
     private val context = mutableMapOf<Id, Descriptor>()
     private val idSerializer = Id.serializer()
     private val wrapperSerializer = MapSerializer(idSerializer, DescriptorWrapper.serializer())

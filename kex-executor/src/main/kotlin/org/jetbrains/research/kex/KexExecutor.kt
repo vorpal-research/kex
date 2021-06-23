@@ -4,7 +4,6 @@ import org.jetbrains.research.kex.config.ExecutorCmdConfig
 import org.jetbrains.research.kex.config.FileConfig
 import org.jetbrains.research.kex.config.RuntimeConfig
 import org.jetbrains.research.kex.config.kexConfig
-import java.nio.file.Paths
 
 fun main(args: Array<String>) {
     KexExecutor(args).main()
@@ -18,8 +17,6 @@ class KexExecutor(args: Array<String>) {
         kexConfig.initialize(cmd, RuntimeConfig, FileConfig(properties))
         val logName = kexConfig.getStringValue("kex", "log", "kex-executor.log")
         kexConfig.initLog(logName)
-
-        val output = Paths.get(cmd.getCmdValue("output", "kex-compiled"))
 
         val klass = cmd.getCmdValue("class")!!
         val method = cmd.getCmdValue("method")!!

@@ -193,7 +193,7 @@ class InstructionConcolicChecker(val ctx: ExecutionContext, val traceManager: Tr
         return SymbolicStateImpl(
             mutatedState,
             PathConditionImpl(mutatedPathCondition),
-            mutatedValueMap,
+            ConcreteTermMap(mutatedValueMap),
             state.termMap,
             state.predicateMap,
             InstructionTrace()
