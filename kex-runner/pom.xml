@@ -14,7 +14,6 @@
     <properties>
         <exec.main>org.jetbrains.research.kex.MainKt</exec.main>
 
-        <easy-random.version>easy-random-4.2.0</easy-random.version>
         <better-parse.version>0.3.2</better-parse.version>
     </properties>
 
@@ -91,11 +90,6 @@
             <groupId>org.jetbrains.research</groupId>
             <artifactId>kfg</artifactId>
             <version>${kfg.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.github.benas.random-beans</groupId>
-            <artifactId>easy-random-core</artifactId>
-            <version>${easy-random.version}</version>
         </dependency>
         <dependency>
             <groupId>com.github.h0tk3y</groupId>

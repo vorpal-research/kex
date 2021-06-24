@@ -3,6 +3,7 @@ package org.jetbrains.research.kex.reanimator.codegen.javagen
 import org.jetbrains.research.kex.ExecutionContext
 import org.jetbrains.research.kex.ktype.KexType
 import org.jetbrains.research.kex.ktype.type
+import org.jetbrains.research.kex.parameters.Parameters
 import org.jetbrains.research.kex.reanimator.callstack.*
 import org.jetbrains.research.kex.reanimator.codegen.CallStackPrinter
 import org.jetbrains.research.kex.util.getConstructor
@@ -28,6 +29,7 @@ class CallStack2JavaPrinter(
     private val resolvedTypes = mutableMapOf<CallStack, CSType>()
     private val actualTypes = mutableMapOf<CallStack, CSType>()
     lateinit var current: JavaBuilder.JavaFunction
+    private var staticCounter = 0
 
     init {
         with(builder) {
@@ -46,13 +48,30 @@ class CallStack2JavaPrinter(
         }
     }
 
-    override fun printCallStack(callStack: CallStack, method: String) {
+    private fun buildCallStack(
+        method: org.jetbrains.research.kfg.ir.Method, callStacks: Parameters<CallStack>
+    ): CallStack = when {
+        method.isStatic -> StaticMethodCall(method, callStacks.arguments).wrap("static${staticCounter++}")
+        method.isConstructor -> callStacks.instance!!
+        else -> {
+            val instance = callStacks.instance!!.clone()
+            instance.stack += MethodCall(method, callStacks.arguments)
+            instance
+        }
+    }
+
+    override fun printCallStack(
+        testName: String,
+        method: org.jetbrains.research.kfg.ir.Method,
+        callStacks: Parameters<CallStack>
+    ) {
         printedStacks.clear()
         resolvedTypes.clear()
         actualTypes.clear()
+        val callStack = buildCallStack(method, callStacks)
         with(builder) {
             with(klass) {
-                current = method(method) {
+                current = method(testName) {
                     returnType = void
                     annotations += "Test"
                     exceptions += "Throwable"

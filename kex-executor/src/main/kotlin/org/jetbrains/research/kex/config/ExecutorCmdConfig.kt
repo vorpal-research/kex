@@ -6,6 +6,14 @@ class ExecutorCmdConfig(args: Array<String>) : AbstractCmdConfig("kex-executor",
     val options = mutableListOf<Option>()
     options.addAll(defaultOptions())
 
+    val classPath = Option("cp", "classpath", true, "classpath")
+    classPath.isRequired = true
+    options += classPath
+
+    val pkg = Option(null, "package", true, "pkg")
+    pkg.isRequired = true
+    options += pkg
+
     val outputFile = Option(null, "output", true, "output file for serialized trace")
     outputFile.isRequired = false
     options += outputFile
@@ -14,9 +22,13 @@ class ExecutorCmdConfig(args: Array<String>) : AbstractCmdConfig("kex-executor",
     className.isRequired = true
     options += className
 
-    val methodName = Option(null, "method", true, "method name")
-    methodName.isRequired = true
-    options += methodName
+    val setupMethodName = Option(null, "setup", true, "setup method name")
+    setupMethodName.isRequired = true
+    options += setupMethodName
+
+    val testMethodName = Option(null, "test", true, "test method name")
+    testMethodName.isRequired = true
+    options += testMethodName
 
     options
 })

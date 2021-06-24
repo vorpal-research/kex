@@ -13,6 +13,7 @@ import org.jetbrains.research.kex.reanimator.callstack.CallStackExecutor
 import org.jetbrains.research.kex.reanimator.callstack.MethodCall
 import org.jetbrains.research.kex.reanimator.callstack.StaticMethodCall
 import org.jetbrains.research.kex.reanimator.callstack.generator.CallStackGenerator
+import org.jetbrains.research.kex.reanimator.codegen.JUnitTestCasePrinter
 import org.jetbrains.research.kex.reanimator.codegen.TestCasePrinter
 import org.jetbrains.research.kex.reanimator.codegen.klassName
 import org.jetbrains.research.kex.reanimator.codegen.packageName
@@ -37,10 +38,9 @@ class Reanimator(
     klassName: String
 ) : ParameterGenerator {
     val cm: ClassManager get() = ctx.cm
-    val printer = TestCasePrinter(ctx, packageName, klassName)
+    val printer: TestCasePrinter = JUnitTestCasePrinter(ctx, packageName, klassName)
     private val csGenerator = CallStackGenerator(ctx, psa, visibilityLevel)
     private val csExecutor = CallStackExecutor(ctx)
-    private var staticCounter = 0
 
     constructor(ctx: ExecutionContext, psa: PredicateStateAnalysis, method: Method) : this(
         ctx,
@@ -53,7 +53,7 @@ class Reanimator(
         val descriptors = generateFinalDescriptors(method, ctx, model, state).concreteParameters(cm)
         log.debug("Generated descriptors:\n$descriptors")
         val callStacks = descriptors.callStacks
-        printTest(testName, method, callStacks)
+        printer.print(testName, method, callStacks)
         log.debug("Generated call stacks:\n$callStacks")
         callStacks.executed
     } catch (e: GenerationException) {
@@ -66,19 +66,6 @@ class Reanimator(
 
     override fun emit() {
         printer.emit()
-    }
-
-    fun printTest(testName: String, method: Method, callStacks: Parameters<CallStack>) {
-        val stack = when {
-            method.isStatic -> StaticMethodCall(method, callStacks.arguments).wrap("static${staticCounter++}")
-            method.isConstructor -> callStacks.instance!!
-            else -> {
-                val instance = callStacks.instance!!.clone()
-                instance.stack += MethodCall(method, callStacks.arguments)
-                instance
-            }
-        }
-        printer.print(stack, testName)
     }
 
     val Descriptor.callStack: CallStack

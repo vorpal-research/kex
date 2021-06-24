@@ -3,7 +3,7 @@ package org.jetbrains.research.kex.random.easyrandom
 import org.jetbrains.research.kthelper.assert.unreachable
 import org.jetbrains.research.kthelper.logging.log
 import org.jeasy.random.api.Randomizer
-import org.jeasy.random.randomizers.number.ByteRandomizer.aNewByteRandomizer
+import org.jeasy.random.randomizers.number.IntegerRandomizer
 import org.jeasy.random.util.CollectionUtils.randomElementOf
 import org.jeasy.random.util.ReflectionUtils
 import org.jetbrains.research.kex.config.kexConfig
@@ -20,7 +20,7 @@ import kotlin.math.abs
 
 private infix fun Int.`in`(range: IntRange) = range.first + (this % (range.last - range.first))
 
-private inline val randomInt get() = abs(aNewByteRandomizer().randomValue!!.toInt())
+private inline val randomInt get() = abs(IntegerRandomizer().randomValue)
 
 abstract class CollectionRandomizer<T>(
         val collection: () -> MutableCollection<T>,

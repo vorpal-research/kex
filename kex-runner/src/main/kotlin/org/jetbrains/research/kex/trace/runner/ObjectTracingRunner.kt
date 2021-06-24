@@ -93,7 +93,7 @@ class ReanimatingRandomObjectTracingRunner(
         val (instance, args) = with(reanimator) {
             val descriptors = parameters.descriptors
             val callStacks = descriptors.callStacks
-            printTest("test_$testCounter", method, callStacks)
+            printer.print("test_$testCounter", method, callStacks)
             callStacks.executed
         }
         return Parameters(instance, args, setOf())

@@ -272,15 +272,15 @@ fun parseTypeDesc(classLoader: ClassLoader, desc: String): List<Class<*>> {
     while (index < desc.length) {
         result.add(
             when (desc[index]) {
-                'V' -> Void::class.javaPrimitiveType
-                'Z' -> Boolean::class.javaPrimitiveType
-                'B' -> Byte::class.javaPrimitiveType
-                'C' -> Char::class.javaPrimitiveType
-                'S' -> Short::class.javaPrimitiveType
-                'I' -> Int::class.javaPrimitiveType
-                'J' -> Long::class.javaPrimitiveType
-                'F' -> Float::class.javaPrimitiveType
-                'D' -> Double::class.javaPrimitiveType
+                'V' -> Void::class.javaPrimitiveType!!
+                'Z' -> Boolean::class.javaPrimitiveType!!
+                'B' -> Byte::class.javaPrimitiveType!!
+                'C' -> Char::class.javaPrimitiveType!!
+                'S' -> Short::class.javaPrimitiveType!!
+                'I' -> Int::class.javaPrimitiveType!!
+                'J' -> Long::class.javaPrimitiveType!!
+                'F' -> Float::class.javaPrimitiveType!!
+                'D' -> Double::class.javaPrimitiveType!!
                 'L' -> {
                     val colonIndex = desc.find(index + 1) { it == ';' }
                     if (colonIndex < 0) throw InvalidTypeException(desc)
@@ -308,7 +308,7 @@ fun parseTypeDesc(classLoader: ClassLoader, desc: String): List<Class<*>> {
                     }
                 }
                 else -> unreachable { log.error("Unknown type") }
-            }!!
+            }
         )
     }
     return result

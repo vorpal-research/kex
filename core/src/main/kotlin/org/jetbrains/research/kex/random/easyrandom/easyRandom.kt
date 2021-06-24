@@ -8,7 +8,6 @@ import org.jeasy.random.EasyRandomParameters
 import org.jeasy.random.ObjectCreationException
 import org.jeasy.random.api.ObjectFactory
 import org.jeasy.random.api.RandomizerContext
-import org.jeasy.random.util.CollectionUtils.randomElementOf
 import org.jeasy.random.util.ReflectionUtils.getPublicConcreteSubTypesOf
 import org.jeasy.random.util.ReflectionUtils.isAbstract
 import org.jetbrains.research.kex.config.kexConfig
@@ -58,7 +57,7 @@ class EasyRandomDriver(val config: BeansConfig = defaultConfig) : Randomizer {
         override fun <T> createInstance(type: Class<T>, context: RandomizerContext): T =
                 when {
                     context.parameters.isScanClasspathForConcreteTypes && isAbstract<T>(type) -> {
-                        val randomConcreteSubType = randomElementOf<Class<*>>(getPublicConcreteSubTypesOf<T>(type))
+                        val randomConcreteSubType = getPublicConcreteSubTypesOf<T>(type).randomOrNull()
                         if (randomConcreteSubType == null) {
                             throw InstantiationError("Unable to find a matching concrete subtype of type: $type in the classpath")
                         } else {

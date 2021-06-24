@@ -2,6 +2,7 @@ package org.jetbrains.research.kex.reanimator.codegen
 
 import org.jetbrains.research.kex.ExecutionContext
 import org.jetbrains.research.kex.config.kexConfig
+import org.jetbrains.research.kex.parameters.Parameters
 import org.jetbrains.research.kex.reanimator.callstack.CallStack
 import org.jetbrains.research.kex.reanimator.codegen.javagen.CallStack2JavaPrinter
 import org.jetbrains.research.kex.reanimator.codegen.kotlingen.CallStack2KotlinPrinter
@@ -27,18 +28,36 @@ val BasicBlock.validName get() = name.toString().replace(Regex("[^a-zA-Z0-9]"), 
 val Method.packageName get() = klass.pkg.concreteName
 val Method.klassName get() = "${klass.validName}_${validName}_${abs(hashCode())}"
 
-class TestCasePrinter(val ctx: ExecutionContext, val packageName: String, val klassName: String) {
+abstract class TestCasePrinter(
+    val ctx: ExecutionContext,
+    val packageName: String,
+) {
+    abstract val targetFile: File
+    abstract val printer: CallStackPrinter
+
+    protected fun validateString(string: String) = string.replace(Regex("[^a-zA-Z0-9]"), "")
+
+    abstract fun print(testName: String, method: Method, callStacks: Parameters<CallStack>)
+
+    open fun emit() {
+        if (useApiGeneration && generateTestCases) {
+            targetFile.writeText(printer.emit())
+        }
+    }
+}
+
+class JUnitTestCasePrinter(
+    ctx: ExecutionContext,
+    packageName: String,
+    klassName: String
+) : TestCasePrinter(ctx, packageName) {
     private val testDirectory = outputDirectory.resolve(testCaseDirectory)
-    private val printer: CallStackPrinter = when (testCaseLanguage) {
+    override val printer: CallStackPrinter = when (testCaseLanguage) {
         "kotlin" -> CallStack2KotlinPrinter(ctx, packageName.replace("/", "."), klassName)
         "java" -> CallStack2JavaPrinter(ctx, packageName.replace("/", "."), klassName)
         else -> unreachable { log.error("Unknown target language for test case generation: $testCaseLanguage") }
     }
-    private var isEmpty = true
-
-    private val String.validName get() = this.replace(Regex("[^a-zA-Z0-9]"), "")
-
-    val targetFile: File = run {
+    override val targetFile: File = run {
         val targetFileName = when (testCaseLanguage) {
             "kotlin" -> "$klassName.kt"
             "java" -> "$klassName.java"
@@ -49,19 +68,10 @@ class TestCasePrinter(val ctx: ExecutionContext, val packageName: String, val kl
         }
     }
 
-    fun print(cs: CallStack, block: BasicBlock) {
-        isEmpty = false
-        printer.printCallStack(cs, "test_${block.validName}")
-    }
+    private var isEmpty = true
 
-    fun print(cs: CallStack, testName: String) {
+    override fun print(testName: String, method: Method, callStacks: Parameters<CallStack>) {
         isEmpty = false
-        printer.printCallStack(cs, testName.validName)
-    }
-
-    fun emit() {
-        if (useApiGeneration && generateTestCases && !isEmpty) {
-            targetFile.writeText(printer.emit())
-        }
+        printer.printCallStack(validateString(testName), method, callStacks)
     }
 }
