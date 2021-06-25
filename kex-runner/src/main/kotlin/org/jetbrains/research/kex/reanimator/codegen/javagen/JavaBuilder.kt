@@ -54,7 +54,13 @@ class JavaBuilder(val pkg: String = "") {
         val exceptions = mutableListOf<String>()
 
         open val signature
-            get() = "public ${if (typeArgs.isNotEmpty()) typeArgs.joinToString(", ", prefix = "<", postfix = ">") else ""} " +
+            get() = "public ${
+                if (typeArgs.isNotEmpty()) typeArgs.joinToString(
+                    ", ",
+                    prefix = "<",
+                    postfix = ">"
+                ) else ""
+            } " +
                     "$returnType $name(${arguments.joinToString(", ")})"
 
         data class JavaArgument(val name: String, val type: Type) {
@@ -105,16 +111,12 @@ class JavaBuilder(val pkg: String = "") {
         val methods = mutableListOf<JavaMethod>()
 
         data class JavaField(val name: String, val type: Type, val initializer: String? = null) {
-            override fun toString() = "$type $name ${initializer ?: ""};"
+            override fun toString() = "$type $name${initializer?.let { " $it" } ?: ""};"
         }
 
-        fun field(name: String, type: Type) {
-            fields += JavaField(name, type)
-        }
+        fun field(name: String, type: Type): JavaField = JavaField(name, type).also { fields += it }
 
-        fun field(name: String, type: Type, initializer: String) {
-            fields += JavaField(name, type, initializer)
-        }
+        fun field(name: String, type: Type, initializer: String): JavaField = JavaField(name, type, initializer).also { fields += it }
 
         fun constructor(body: JavaFunction.() -> Unit) {
             val funBuilder = JavaConstructor(this)

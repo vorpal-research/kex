@@ -10,8 +10,6 @@ import org.jetbrains.research.kex.parameters.concreteParameters
 import org.jetbrains.research.kex.random.GenerationException
 import org.jetbrains.research.kex.reanimator.callstack.CallStack
 import org.jetbrains.research.kex.reanimator.callstack.CallStackExecutor
-import org.jetbrains.research.kex.reanimator.callstack.MethodCall
-import org.jetbrains.research.kex.reanimator.callstack.StaticMethodCall
 import org.jetbrains.research.kex.reanimator.callstack.generator.CallStackGenerator
 import org.jetbrains.research.kex.reanimator.codegen.JUnitTestCasePrinter
 import org.jetbrains.research.kex.reanimator.codegen.TestCasePrinter

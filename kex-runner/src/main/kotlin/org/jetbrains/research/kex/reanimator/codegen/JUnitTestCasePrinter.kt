@@ -5,6 +5,7 @@ import org.jetbrains.research.kex.config.kexConfig
 import org.jetbrains.research.kex.parameters.Parameters
 import org.jetbrains.research.kex.reanimator.callstack.CallStack
 import org.jetbrains.research.kex.reanimator.codegen.javagen.CallStack2JavaPrinter
+import org.jetbrains.research.kex.reanimator.codegen.javagen.ExecutorCS2JavaPrinter
 import org.jetbrains.research.kex.reanimator.codegen.kotlingen.CallStack2KotlinPrinter
 import org.jetbrains.research.kfg.ir.BasicBlock
 import org.jetbrains.research.kfg.ir.Class
@@ -73,5 +74,33 @@ class JUnitTestCasePrinter(
     override fun print(testName: String, method: Method, callStacks: Parameters<CallStack>) {
         isEmpty = false
         printer.printCallStack(validateString(testName), method, callStacks)
+    }
+}
+
+class ExecutorTestCasePrinter(
+    ctx: ExecutionContext,
+    packageName: String,
+    val klassName: String
+) : TestCasePrinter(ctx, packageName) {
+    private val testDirectory = outputDirectory.resolve(testCaseDirectory)
+    override val printer = ExecutorCS2JavaPrinter(ctx, packageName, klassName, SETUP_METHOD)
+    override val targetFile: File = run {
+        val targetFileName = "$klassName.java"
+        testDirectory.resolve(packageName).resolve(targetFileName).toAbsolutePath().toFile().apply {
+            parentFile?.mkdirs()
+        }
+    }
+
+    companion object {
+        const val SETUP_METHOD = "setup"
+        const val TEST_METHOD = "test"
+    }
+
+    override fun print(testName: String, method: Method, callStacks: Parameters<CallStack>) {
+        printer.printCallStack(validateString(testName), method, callStacks)
+    }
+
+    override fun emit() {
+        printer.emit()
     }
 }
