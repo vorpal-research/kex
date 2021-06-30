@@ -1,6 +1,7 @@
 package org.jetbrains.research.kex.trace.`object`
 
 import org.jetbrains.research.kex.trace.file.UnknownNameException
+import org.jetbrains.research.kex.util.parseValue
 import org.jetbrains.research.kfg.ClassManager
 import org.jetbrains.research.kfg.ir.BasicBlock
 import org.jetbrains.research.kfg.ir.Method
@@ -28,17 +29,7 @@ abstract class TraceCollector(val cm: ClassManager) {
 
     protected fun parseValue(valueName: String): Value {
         val st = stack.peek().slotTracker
-        return st.getValue(valueName) ?: when {
-            valueName.matches(Regex("\\d+")) -> cm.value.getInt(valueName.toInt())
-            valueName.matches(Regex("\\d+.\\d+")) -> cm.value.getDouble(valueName.toDouble())
-            valueName.matches(Regex("-\\d+")) -> cm.value.getInt(valueName.toInt())
-            valueName.matches(Regex("-\\d+.\\d+")) -> cm.value.getDouble(valueName.toDouble())
-            valueName.matches(Regex("\".*\"")) -> cm.value.getString(valueName.substring(1, valueName.lastIndex))
-            valueName.matches(Regex("\"[\n\\s]*\"")) -> cm.value.getString(valueName.substring(1, valueName.lastIndex))
-            valueName.matches(Regex(".*(/.*)+.class")) -> cm.value.getClass("L${valueName.removeSuffix(".class")};")
-            valueName == "null" -> cm.value.nullConstant
-            else -> throw UnknownNameException(valueName)
-        }
+        return st.parseValue(valueName)
     }
 
     fun addAction(action: Action) = trace.add(action)

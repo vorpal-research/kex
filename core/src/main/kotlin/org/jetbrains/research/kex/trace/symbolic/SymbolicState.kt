@@ -8,6 +8,7 @@ import org.jetbrains.research.kex.state.PredicateState
 import org.jetbrains.research.kex.state.predicate.Predicate
 import org.jetbrains.research.kex.state.term.Term
 import org.jetbrains.research.kex.trace.AbstractTrace
+import org.jetbrains.research.kfg.ir.Method
 import org.jetbrains.research.kfg.ir.value.Value
 import org.jetbrains.research.kfg.ir.value.instruction.Instruction
 
@@ -32,7 +33,10 @@ class ConcreteTermMap(private val map: Map<Term, @Contextual Descriptor>) : Map<
     constructor() : this(mapOf())
 }
 
-class ValueTermMap(private val map: Map<Term, @Contextual Value>) : Map<Term, Value> by map {
+@Serializable
+data class WrappedValue(val method: @Contextual Method, val value: @Contextual Value)
+
+class ValueTermMap(private val map: Map<Term, @Contextual WrappedValue>) : Map<Term, WrappedValue> by map {
     constructor() : this(mapOf())
 }
 

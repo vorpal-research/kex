@@ -13,20 +13,24 @@ import org.jetbrains.research.kex.ktype.KexArray
 import org.jetbrains.research.kex.ktype.KexClass
 import org.jetbrains.research.kex.ktype.KexType
 
-@JvmInline
+//@JvmInline
 @Serializable
-private value class Id(val name: String)
+internal data class Id(val name: String)
 
 @Serializable
-private sealed class DescriptorWrapper() {
+internal sealed class DescriptorWrapper() {
     abstract val id: Id
     abstract val type: KexType
 
-    fun toDescriptor(map: Map<Id, DescriptorWrapper>, context: MutableMap<Id, Descriptor> = mutableMapOf()): Descriptor {
+    fun toDescriptor(
+        map: Map<Id, DescriptorWrapper>,
+        context: MutableMap<Id, Descriptor> = mutableMapOf()
+    ): Descriptor {
         if (id in context) return context.getValue(id)
         convert(map, context)
         return context.getValue(id)
     }
+
     protected abstract fun convert(map: Map<Id, DescriptorWrapper>, output: MutableMap<Id, Descriptor>)
 
     @Serializable
@@ -187,8 +191,8 @@ internal class DescriptorSerializer : KSerializer<Descriptor> {
         loop@ while (true) {
             when (val i = input.decodeElementIndex(descriptor)) {
                 CompositeDecoder.DECODE_DONE -> break@loop
-                0 -> id = input.decodeSerializableElement(idSerializer.descriptor, i, idSerializer)
-                1 -> wrappers = input.decodeSerializableElement(wrapperSerializer.descriptor, i, wrapperSerializer)
+                0 -> id = input.decodeSerializableElement(descriptor, i, idSerializer)
+                1 -> wrappers = input.decodeSerializableElement(descriptor, i, wrapperSerializer)
                 else -> throw SerializationException("Unknown index $i")
             }
         }

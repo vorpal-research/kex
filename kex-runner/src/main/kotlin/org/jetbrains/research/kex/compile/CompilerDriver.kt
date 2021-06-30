@@ -1,5 +1,7 @@
 package org.jetbrains.research.kex.compile
 
+import org.jetbrains.research.kthelper.KtException
+import org.jetbrains.research.kthelper.`try`
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.*
@@ -12,6 +14,10 @@ abstract class CompilerDriver(val classPath: List<Path>, val outputDir: Path) {
     abstract fun compile(sources: List<Path>): List<Path>
 }
 
+class CompilationException : KtException {
+    constructor(message: String = "") : super(message)
+    constructor(message: String = "", throwable: Throwable) : super(message, throwable)
+}
 
 class JavaCompilerDriver(classPath: List<Path>, outputDir: Path) : CompilerDriver(classPath, outputDir) {
     private val compiler = ToolProvider.getSystemJavaCompiler()
@@ -21,17 +27,15 @@ class JavaCompilerDriver(classPath: List<Path>, outputDir: Path) : CompilerDrive
         fileManager.setLocation(StandardLocation.CLASS_PATH, classPath.map { it.toFile() })
         fileManager.setLocation(StandardLocation.CLASS_OUTPUT, listOf(outputDir.toFile()))
         val objects = fileManager.getJavaFileObjectsFromFiles(sources.map { it.toFile() })
-        val task = compiler.getTask(null, fileManager, null, null, null, objects)
-        val result = mutableListOf<Path>()
-        if (task.call()) {
-            for (jfo in fileManager.list(
-                StandardLocation.CLASS_OUTPUT,
-                "", Collections.singleton(JavaFileObject.Kind.CLASS), true
-            )) {
-                result.add(Paths.get(jfo.name).toAbsolutePath())
-            }
-        }
-        return result
+
+        val task = compiler.getTask(null, fileManager, null, listOf("-Xlint:unchecked"), null, objects)
+        val compileSuccess = `try` { task.call() }.getOrElse { false }
+        if (!compileSuccess) throw CompilationException()
+
+        return fileManager.list(
+            StandardLocation.CLASS_OUTPUT,
+            "", Collections.singleton(JavaFileObject.Kind.CLASS), true
+        ).map { Paths.get(it.name).toAbsolutePath() }
     }
 }
 

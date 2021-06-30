@@ -15,6 +15,7 @@ abstract class AbstractSerializer(val context: SerializersModule) {
         useArrayPolymorphism = false
         classDiscriminator = "className"
         serializersModule = context
+        allowStructuredMapKeys = true
     }
 
     @ExperimentalSerializationApi

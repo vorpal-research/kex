@@ -83,7 +83,8 @@ class ExecutorTestCasePrinter(
     val klassName: String
 ) : TestCasePrinter(ctx, packageName) {
     private val testDirectory = outputDirectory.resolve(testCaseDirectory)
-    override val printer = ExecutorCS2JavaPrinter(ctx, packageName, klassName, SETUP_METHOD)
+    val fullKlassName = "${packageName.replace("/", ".")}.$klassName"
+    override val printer = ExecutorCS2JavaPrinter(ctx, packageName.replace("/", "."), klassName, SETUP_METHOD)
     override val targetFile: File = run {
         val targetFileName = "$klassName.java"
         testDirectory.resolve(packageName).resolve(targetFileName).toAbsolutePath().toFile().apply {
@@ -100,7 +101,11 @@ class ExecutorTestCasePrinter(
         printer.printCallStack(validateString(testName), method, callStacks)
     }
 
+    fun print(method: Method, callStacks: Parameters<CallStack>) {
+        print(TEST_METHOD, method, callStacks)
+    }
+
     override fun emit() {
-        printer.emit()
+        targetFile.writeText(printer.emit())
     }
 }

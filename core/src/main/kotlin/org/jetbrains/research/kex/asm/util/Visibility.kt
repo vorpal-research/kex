@@ -12,6 +12,11 @@ enum class Visibility {
     PROTECTED,
     PACKAGE,
     PUBLIC;
+
+    override fun toString() = when (this) {
+        PACKAGE -> ""
+        else -> this.name.lowercase()
+    }
 }
 
 val Node.visibility: Visibility

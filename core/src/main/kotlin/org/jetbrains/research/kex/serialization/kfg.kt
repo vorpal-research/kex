@@ -14,21 +14,15 @@ import kotlinx.serialization.modules.SerializersModule
 import org.jetbrains.research.kfg.ClassManager
 import org.jetbrains.research.kfg.Package
 import org.jetbrains.research.kfg.ir.*
-import org.jetbrains.research.kfg.ir.value.SlotTracker
-import org.jetbrains.research.kfg.ir.value.Value
 import org.jetbrains.research.kfg.ir.value.instruction.BinaryOpcode
 import org.jetbrains.research.kfg.ir.value.instruction.CallOpcode
 import org.jetbrains.research.kfg.ir.value.instruction.CmpOpcode
 import org.jetbrains.research.kfg.ir.value.instruction.Instruction
 import org.jetbrains.research.kfg.type.Type
 import org.jetbrains.research.kfg.type.parseDesc
-import org.jetbrains.research.kthelper.assert.unreachable
-import org.jetbrains.research.kthelper.logging.log
 
 @ExperimentalSerializationApi
 fun getKfgSerialModule(cm: ClassManager): SerializersModule {
-    ClassSerializer.cm = cm
-    MethodSerializer.cm = cm
     return SerializersModule {
         contextual(BinaryOpcode::class, BinaryOpcodeSerializer)
 
@@ -36,23 +30,23 @@ fun getKfgSerialModule(cm: ClassManager): SerializersModule {
 
         contextual(CallOpcode::class, CallOpcodeSerializer)
 
-        contextual(Class::class, ClassSerializer)
-        contextual(ConcreteClass::class, ClassSerializer.to())
-        contextual(OuterClass::class, ClassSerializer.to())
+        val klassSerializer = ClassSerializer(cm)
+        contextual(Class::class, klassSerializer)
+        contextual(ConcreteClass::class, klassSerializer.to())
+        contextual(OuterClass::class, klassSerializer.to())
 
         contextual(Location::class, LocationSerializer)
-        contextual(Method::class, MethodSerializer)
 
-        contextual(Value::class, ValueSerializer)
-        contextual(Instruction::class, ValueSerializer.to())
+        val methodSerializer = MethodSerializer(cm, klassSerializer)
+        contextual(Method::class, methodSerializer)
+        contextual(Instruction::class, InstructionSerializer(methodSerializer))
     }
 }
 
 @ExperimentalSerializationApi
 @Serializer(forClass = BinaryOpcode::class)
 object BinaryOpcodeSerializer : KSerializer<BinaryOpcode> {
-    override val descriptor: SerialDescriptor
-        get() = PrimitiveSerialDescriptor("opcode", PrimitiveKind.STRING)
+    override val descriptor = PrimitiveSerialDescriptor("opcode", PrimitiveKind.STRING)
 
     override fun serialize(encoder: Encoder, value: BinaryOpcode) {
         encoder.encodeString(value.opcode)
@@ -78,8 +72,7 @@ inline fun <reified T : BinaryOpcode> BinaryOpcodeSerializer.to() = object : KSe
 @ExperimentalSerializationApi
 @Serializer(forClass = CmpOpcode::class)
 object CmpOpcodeSerializer : KSerializer<CmpOpcode> {
-    override val descriptor: SerialDescriptor
-        get() = PrimitiveSerialDescriptor("opcode", PrimitiveKind.STRING)
+    override val descriptor = PrimitiveSerialDescriptor("opcode", PrimitiveKind.STRING)
 
     override fun serialize(encoder: Encoder, value: CmpOpcode) {
         encoder.encodeString(value.opcode)
@@ -105,8 +98,7 @@ inline fun <reified T : CmpOpcode> CmpOpcodeSerializer.to() = object : KSerializ
 @ExperimentalSerializationApi
 @Serializer(forClass = CallOpcode::class)
 object CallOpcodeSerializer : KSerializer<CallOpcode> {
-    override val descriptor: SerialDescriptor
-        get() = PrimitiveSerialDescriptor("opcode", PrimitiveKind.STRING)
+    override val descriptor = PrimitiveSerialDescriptor("opcode", PrimitiveKind.STRING)
 
     override fun serialize(encoder: Encoder, value: CallOpcode) {
         encoder.encodeString(value.opcode)
@@ -132,8 +124,7 @@ inline fun <reified T : CallOpcode> CallOpcodeSerializer.to() = object : KSerial
 @ExperimentalSerializationApi
 @Serializer(forClass = Location::class)
 object LocationSerializer : KSerializer<Location> {
-    override val descriptor: SerialDescriptor
-        get() = buildClassSerialDescriptor("Location") {
+    override val descriptor = buildClassSerialDescriptor("Location") {
             element<String>("package")
             element<String>("file")
             element<Int>("line")
@@ -168,11 +159,9 @@ object LocationSerializer : KSerializer<Location> {
 
 @ExperimentalSerializationApi
 @Serializer(forClass = Class::class)
-object ClassSerializer : KSerializer<Class> {
-    lateinit var cm: ClassManager
+internal class ClassSerializer(val cm: ClassManager) : KSerializer<Class> {
 
-    override val descriptor: SerialDescriptor
-        get() = PrimitiveSerialDescriptor("fullname", PrimitiveKind.STRING)
+    override val descriptor = PrimitiveSerialDescriptor("fullname", PrimitiveKind.STRING)
 
     override fun serialize(encoder: Encoder, value: Class) {
         encoder.encodeString(value.fullName)
@@ -182,7 +171,7 @@ object ClassSerializer : KSerializer<Class> {
 }
 
 @ExperimentalSerializationApi
-inline fun <reified T : Class> ClassSerializer.to() = object : KSerializer<T> {
+internal inline fun <reified T : Class> ClassSerializer.to() = object : KSerializer<T> {
     override val descriptor get() = this@to.descriptor
 
     override fun deserialize(decoder: Decoder): T = this@to.deserialize(decoder) as T
@@ -194,12 +183,9 @@ inline fun <reified T : Class> ClassSerializer.to() = object : KSerializer<T> {
 
 @ExperimentalSerializationApi
 @Serializer(forClass = Method::class)
-internal object MethodSerializer : KSerializer<Method> {
-    lateinit var cm: ClassManager
-
-    override val descriptor: SerialDescriptor
-        get() = buildClassSerialDescriptor("Method") {
-            element("class", ClassSerializer.descriptor)
+internal class MethodSerializer(val cm: ClassManager, val classSerializer: KSerializer<Class>) : KSerializer<Method> {
+    override val descriptor = buildClassSerialDescriptor("Method") {
+            element("class", classSerializer.descriptor)
             element<String>("name")
             element<String>("retval")
             element<List<String>>("arguments")
@@ -207,10 +193,15 @@ internal object MethodSerializer : KSerializer<Method> {
 
     override fun serialize(encoder: Encoder, value: Method) {
         val output = encoder.beginStructure(descriptor)
-        output.encodeSerializableElement(descriptor, 0, ClassSerializer, value.klass)
+        output.encodeSerializableElement(descriptor, 0, classSerializer, value.klass)
         output.encodeStringElement(descriptor, 1, value.name)
         output.encodeStringElement(descriptor, 2, value.returnType.asmDesc)
-        output.encodeSerializableElement(descriptor, 3, ListSerializer(String.serializer()), value.argTypes.map { it.asmDesc }.toList())
+        output.encodeSerializableElement(
+            descriptor,
+            3,
+            ListSerializer(String.serializer()),
+            value.argTypes.map { it.asmDesc }.toList()
+        )
         output.endStructure(descriptor)
     }
 
@@ -223,12 +214,12 @@ internal object MethodSerializer : KSerializer<Method> {
         loop@ while (true) {
             when (val i = input.decodeElementIndex(descriptor)) {
                 CompositeDecoder.DECODE_DONE -> break@loop
-                0 -> klass = input.decodeSerializableElement(descriptor, i, ClassSerializer)
+                0 -> klass = input.decodeSerializableElement(descriptor, i, classSerializer)
                 1 -> name = input.decodeStringElement(descriptor, i)
                 2 -> retval = parseDesc(cm.type, input.decodeStringElement(descriptor, i))
                 3 -> argTypes = input.decodeSerializableElement(descriptor, i, ListSerializer(String.serializer()))
-                        .map { parseDesc(cm.type, it) }
-                        .toTypedArray()
+                    .map { parseDesc(cm.type, it) }
+                    .toTypedArray()
                 else -> throw SerializationException("Unknown index $i")
             }
         }
@@ -238,30 +229,33 @@ internal object MethodSerializer : KSerializer<Method> {
 }
 
 @ExperimentalSerializationApi
-@Serializer(forClass = Value::class)
-internal object ValueSerializer : KSerializer<Value> {
-    lateinit var slotTracker: SlotTracker
+@Serializer(forClass = Instruction::class)
+internal class InstructionSerializer(val methodSerializer: KSerializer<Method>) : KSerializer<Instruction> {
+    override val descriptor: SerialDescriptor = buildClassSerialDescriptor("Instruction") {
+            element("method", methodSerializer.descriptor)
+            element<String>("name")
+        }
 
-    override val descriptor: SerialDescriptor
-        get() = PrimitiveSerialDescriptor("name", PrimitiveKind.STRING)
-
-    override fun serialize(encoder: Encoder, value: Value) {
-        encoder.encodeString("${value.name}")
+    override fun serialize(encoder: Encoder, value: Instruction) {
+        val output = encoder.beginStructure(descriptor)
+        output.encodeSerializableElement(descriptor, 0, methodSerializer, value.parent.parent)
+        output.encodeStringElement(descriptor, 1, "${value.name}")
+        output.endStructure(descriptor)
     }
 
-    override fun deserialize(decoder: Decoder) = slotTracker.getValue(decoder.decodeString()) ?:
-        unreachable {
-            log.error("Unable to deserialize value with name ${decoder.decodeString()}")
+    override fun deserialize(decoder: Decoder): Instruction {
+        val input = decoder.beginStructure(descriptor)
+        lateinit var method: Method
+        lateinit var name: String
+        loop@ while (true) {
+            when (val i = input.decodeElementIndex(descriptor)) {
+                CompositeDecoder.DECODE_DONE -> break@loop
+                0 -> method = input.decodeSerializableElement(descriptor, i, methodSerializer)
+                1 -> name = input.decodeStringElement(descriptor, i)
+                else -> throw SerializationException("Unknown index $i")
+            }
         }
-}
-
-@ExperimentalSerializationApi
-internal inline fun <reified T : Value> ValueSerializer.to() = object : KSerializer<T> {
-    override val descriptor get() = this@to.descriptor
-
-    override fun deserialize(decoder: Decoder): T = this@to.deserialize(decoder) as T
-
-    override fun serialize(encoder: Encoder, value: T) {
-        this@to.serialize(encoder, value)
+        input.endStructure(descriptor)
+        return method.slotTracker.getValue(name) as Instruction
     }
 }

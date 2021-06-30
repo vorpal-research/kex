@@ -1,21 +1,16 @@
 package org.jetbrains.research.kex.random.easyrandom
 
-import org.jetbrains.research.kthelper.assert.unreachable
-import org.jetbrains.research.kthelper.logging.log
 import org.jeasy.random.api.Randomizer
 import org.jeasy.random.randomizers.number.IntegerRandomizer
 import org.jeasy.random.util.CollectionUtils.randomElementOf
 import org.jeasy.random.util.ReflectionUtils
 import org.jetbrains.research.kex.config.kexConfig
 import org.jetbrains.research.kex.util.isAbstract
+import org.jetbrains.research.kthelper.assert.unreachable
+import org.jetbrains.research.kthelper.logging.log
 import java.util.*
 import java.util.concurrent.ConcurrentSkipListMap
 import java.util.concurrent.ConcurrentSkipListSet
-import kotlin.collections.ArrayList
-import kotlin.collections.HashMap
-import kotlin.collections.HashSet
-import kotlin.collections.LinkedHashMap
-import kotlin.collections.LinkedHashSet
 import kotlin.math.abs
 
 private infix fun Int.`in`(range: IntRange) = range.first + (this % (range.last - range.first))
@@ -25,8 +20,9 @@ private inline val randomInt get() = abs(IntegerRandomizer().randomValue)
 abstract class CollectionRandomizer<T>(
         val collection: () -> MutableCollection<T>,
         private val delegate: Randomizer<T>,
-        private val nbElements: Int = randomInt `in` collectionSizeRange
+        numElements: Int = randomInt
 ) : Randomizer<Collection<T>> {
+    private val nbElements: Int = numElements `in` collectionSizeRange
 
     val randomElement: T
         get() = delegate.randomValue

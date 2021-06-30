@@ -1,6 +1,7 @@
 package org.jetbrains.research.kex.util
 
 import org.jetbrains.research.kfg.ir.MethodDesc
+import org.jetbrains.research.kfg.ir.value.SlotTracker
 import org.jetbrains.research.kfg.ir.value.Value
 import org.jetbrains.research.kfg.ir.value.instruction.CallOpcode
 import org.jetbrains.research.kfg.ir.value.instruction.CmpOpcode
@@ -47,4 +48,19 @@ fun Number.apply(opcode: CmpOpcode, other: Number) = when (opcode) {
     CmpOpcode.CMP -> this.compareTo(other)
     CmpOpcode.CMPG -> this.compareTo(other)
     CmpOpcode.CMPL -> this.compareTo(other)
+}
+
+fun SlotTracker.parseValue(valueName: String): Value {
+    val values = method.cm.value
+    return getValue(valueName) ?: when {
+        valueName.matches(Regex("\\d+")) -> values.getInt(valueName.toInt())
+        valueName.matches(Regex("\\d+.\\d+")) -> values.getDouble(valueName.toDouble())
+        valueName.matches(Regex("-\\d+")) -> values.getInt(valueName.toInt())
+        valueName.matches(Regex("-\\d+.\\d+")) -> values.getDouble(valueName.toDouble())
+        valueName.matches(Regex("\".*\"")) -> values.getString(valueName.substring(1, valueName.lastIndex))
+        valueName.matches(Regex("\"[\n\\s]*\"")) -> values.getString(valueName.substring(1, valueName.lastIndex))
+        valueName.matches(Regex(".*(/.*)+.class")) -> values.getClass("L${valueName.removeSuffix(".class")};")
+        valueName == "null" -> values.nullConstant
+        else -> unreachable { log.error("Unknown value name $valueName for object cmp") }
+    }
 }

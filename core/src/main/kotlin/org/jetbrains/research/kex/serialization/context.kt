@@ -13,6 +13,7 @@ import org.jetbrains.research.kex.state.predicate.PredicateType
 import org.jetbrains.research.kex.state.term.Term
 import org.jetbrains.research.kex.trace.symbolic.*
 import org.jetbrains.research.kfg.ClassManager
+import org.jetbrains.research.kfg.ir.Method
 import kotlin.reflect.KClass
 
 @InternalSerializationApi
@@ -116,8 +117,12 @@ fun getSymbolicStateSerialModule(serializersModule: SerializersModule): Serializ
 @ExperimentalSerializationApi
 @InternalSerializationApi
 fun getPreSymbolicSerialModule(cm: ClassManager): SerializersModule = SerializersModule {
-    include(getPredicateStateSerialModule(cm))
+    val base = getPredicateStateSerialModule(cm)
+    include(base)
     include(getDescriptorSerialModule())
+    contextual(WrappedValue::class, WrappedValueSerializer(
+        base.getContextual(Method::class)!!
+    ))
 }
 
 @ExperimentalSerializationApi

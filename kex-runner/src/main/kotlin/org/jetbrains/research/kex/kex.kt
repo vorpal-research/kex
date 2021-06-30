@@ -194,8 +194,10 @@ class Kex(args: Array<String>) {
         containers.forEach { it.unpack(classManager, instrumentedCodeDir, true) }
         val classLoader = URLClassLoader(arrayOf(instrumentedCodeDir.toUri().toURL()))
 
-        val originalContext = ExecutionContext(origManager, containerClassLoader, EasyRandomDriver())
-        val analysisContext = ExecutionContext(classManager, classLoader, EasyRandomDriver())
+        val klassPath = containers.map { it.path }
+        val randomDriver = EasyRandomDriver()
+        val originalContext = ExecutionContext(origManager, `package`, containerClassLoader, randomDriver, klassPath)
+        val analysisContext = ExecutionContext(classManager, `package`, classLoader, randomDriver, klassPath)
 
         when (cmd.getEnumValue("mode", Mode.Symbolic, ignoreCase = true)) {
             Mode.Fuzzer -> fuzzer(originalContext, analysisContext)
@@ -339,6 +341,8 @@ class Kex(args: Array<String>) {
         clearClassPath()
     }
 
+    @ExperimentalSerializationApi
+    @InternalSerializationApi
     private fun concolic(originalContext: ExecutionContext, analysisContext: ExecutionContext) {
         val traceManager = InstructionTraceManager()
         val cm = createCoverageCounter(originalContext.cm, traceManager)

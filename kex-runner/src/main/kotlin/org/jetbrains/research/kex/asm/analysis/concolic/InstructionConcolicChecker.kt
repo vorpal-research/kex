@@ -1,11 +1,16 @@
 package org.jetbrains.research.kex.asm.analysis.concolic
 
+import kotlinx.serialization.ExperimentalSerializationApi
+import kotlinx.serialization.InternalSerializationApi
 import org.jetbrains.research.kex.ExecutionContext
 import org.jetbrains.research.kex.annotations.AnnotationManager
 import org.jetbrains.research.kex.asm.state.PredicateStateAnalysis
+import org.jetbrains.research.kex.compile.JavaCompilerDriver
+import org.jetbrains.research.kex.config.kexConfig
 import org.jetbrains.research.kex.parameters.Parameters
-import org.jetbrains.research.kex.reanimator.ParameterGenerator
-import org.jetbrains.research.kex.reanimator.ReflectionReanimator
+import org.jetbrains.research.kex.parameters.asDescriptors
+import org.jetbrains.research.kex.reanimator.ExecutionGenerator
+import org.jetbrains.research.kex.reanimator.codegen.ExecutorTestCasePrinter
 import org.jetbrains.research.kex.smt.Checker
 import org.jetbrains.research.kex.smt.Result
 import org.jetbrains.research.kex.state.BasicState
@@ -18,9 +23,10 @@ import org.jetbrains.research.kex.state.term.ConstBoolTerm
 import org.jetbrains.research.kex.state.term.ConstIntTerm
 import org.jetbrains.research.kex.state.transformer.*
 import org.jetbrains.research.kex.trace.TraceManager
-import org.jetbrains.research.kex.trace.runner.RandomSymbolicTracingRunner
-import org.jetbrains.research.kex.trace.runner.SymbolicTracingRunner
+import org.jetbrains.research.kex.trace.runner.SymbolicExternalTracingRunner
+import org.jetbrains.research.kex.trace.runner.generateParameters
 import org.jetbrains.research.kex.trace.symbolic.*
+import org.jetbrains.research.kex.util.getJunit
 import org.jetbrains.research.kfg.ClassManager
 import org.jetbrains.research.kfg.ir.Method
 import org.jetbrains.research.kfg.ir.value.IntConstant
@@ -32,12 +38,34 @@ import org.jetbrains.research.kthelper.assert.unreachable
 import org.jetbrains.research.kthelper.collection.dequeOf
 import org.jetbrains.research.kthelper.logging.log
 import org.jetbrains.research.kthelper.tryOrNull
+import java.nio.file.Path
 
-class InstructionConcolicChecker(val ctx: ExecutionContext, val traceManager: TraceManager<InstructionTrace>) : MethodVisitor {
+private class CompilerHelper(val ctx: ExecutionContext) {
+    private val junitJar = getJunit()!!
+    private val outputDir = kexConfig.getPathValue("kex", "outputDir")!!
+    val compileDir = outputDir.resolve(
+        kexConfig.getPathValue("compile", "compileDir", "compiled/")
+    ).also {
+        it.toFile().mkdirs()
+    }
+
+    fun compileFile(file: Path) {
+        val compilerDriver = JavaCompilerDriver(
+            listOf(*ctx.classPath.toTypedArray(), junitJar), compileDir
+        )
+        compilerDriver.compile(listOf(file))
+    }
+}
+
+@ExperimentalSerializationApi
+@InternalSerializationApi
+class InstructionConcolicChecker(
+    val ctx: ExecutionContext,
+    val traceManager: TraceManager<InstructionTrace>
+) : MethodVisitor {
     private val paths = mutableSetOf<PathCondition>()
     private val candidates = mutableSetOf<PathCondition>()
-    lateinit var generator: ParameterGenerator
-        protected set
+    private val compilerHelper = CompilerHelper(ctx)
 
     override val cm: ClassManager
         get() = ctx.cm
@@ -52,22 +80,26 @@ class InstructionConcolicChecker(val ctx: ExecutionContext, val traceManager: Tr
         log.debug("Checking method $method")
         log.debug(method.print())
 
-        initializeGenerator(method)
         processMethod(method)
     }
 
     private fun getRandomTrace(method: Method): SymbolicState? = tryOrNull {
-        RandomSymbolicTracingRunner(ctx, method).run()
+        val params = ctx.random.generateParameters(ctx.loader, method) ?: return null
+        collectTrace(method, params)
     }
 
-    @Suppress("UNUSED_PARAMETER")
-    private fun initializeGenerator(method: Method) {
-        generator = ReflectionReanimator(ctx, PredicateStateAnalysis(cm))
+    private fun collectTrace(method: Method, parameters: Parameters<Any?>): SymbolicState? = tryOrNull {
+        val generator = ExecutionGenerator(ctx, method)
+        generator.generate(parameters.asDescriptors)
+        val testFile = generator.emit()
+
+        compilerHelper.compileFile(testFile)
+        collectTrace(generator.testKlassName)
     }
 
-    private fun collectTrace(method: Method, parameters: Parameters<Any?>): SymbolicState? {
-        val runner = SymbolicTracingRunner(ctx, method, parameters)
-        return runner.run()
+    private fun collectTrace(klassName: String): SymbolicState {
+        val runner = SymbolicExternalTracingRunner(ctx)
+        return runner.run(klassName, ExecutorTestCasePrinter.SETUP_METHOD, ExecutorTestCasePrinter.TEST_METHOD)
     }
 
     private fun Clause.reversed(): Clause? = when (instruction) {
@@ -218,11 +250,14 @@ class InstructionConcolicChecker(val ctx: ExecutionContext, val traceManager: Tr
         val result = checker.check(preparedState, state.state.path)
         if (result !is Result.SatResult) return null
 
-        val parameters = tryOrNull {
-            generator.generate("test", method, checker.state, result.model)
-        } ?: return null
+        return tryOrNull {
+            val generator = ExecutionGenerator(ctx, method)
+            generator.generate(checker.state, result.model)
+            val testFile = generator.emit()
 
-        return collectTrace(method, parameters)
+            compilerHelper.compileFile(testFile)
+            collectTrace(generator.testKlassName)
+        }
     }
 
     private fun processMethod(method: Method) {
@@ -240,6 +275,7 @@ class InstructionConcolicChecker(val ctx: ExecutionContext, val traceManager: Tr
             log.debug("Mutated state: $mutatedState")
 
             val newState = check(method, mutatedState) ?: continue
+            if (newState.isEmpty()) continue
             if (newState.path !in paths) {
                 log.debug("New state: $newState")
 
