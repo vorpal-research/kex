@@ -88,6 +88,7 @@ class KexExecutor(args: Array<String>) {
             test.invoke(instance)
         } finally {
             TraceCollectorProxy.disableCollector()
+            log.debug("Collected state: ${collector.symbolicState}")
             val jsonString = KexSerializer(ctx.cm).toJson(collector.symbolicState)
             output.toFile().writeText(jsonString)
         }

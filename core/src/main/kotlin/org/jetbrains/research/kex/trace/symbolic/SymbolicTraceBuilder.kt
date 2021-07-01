@@ -5,6 +5,7 @@ package org.jetbrains.research.kex.trace.symbolic
 import org.jetbrains.research.kex.ExecutionContext
 import org.jetbrains.research.kex.descriptor.*
 import org.jetbrains.research.kex.ktype.*
+import org.jetbrains.research.kex.parameters.Parameters
 import org.jetbrains.research.kex.state.PredicateState
 import org.jetbrains.research.kex.state.StateBuilder
 import org.jetbrains.research.kex.state.predicate.Predicate
@@ -43,12 +44,12 @@ class SymbolicTraceBuilder(val ctx: ExecutionContext) : SymbolicState(), Instruc
         get() = builder.current
     override val path: PathCondition
         get() = PathConditionImpl(pathBuilder.toList())
-    override val concreteValueMap: ConcreteTermMap
-        get() = ConcreteTermMap(concreteValues.toMap())
-    override val termMap: ValueTermMap
-        get() = ValueTermMap(terms.toMap())
-    override val predicateMap: ValuePredicateMap
-        get() = ValuePredicateMap(predicates.toMap())
+    override val concreteValueMap: Map<Term, Descriptor>
+        get() = concreteValues.toMap()
+    override val termMap: Map<Term, WrappedValue>
+        get() = terms.toMap()
+    override val predicateMap: Map<Predicate, Instruction>
+        get() = predicates.toMap()
 
     override val symbolicState: SymbolicState
         get() = SymbolicStateImpl(
@@ -136,7 +137,7 @@ class SymbolicTraceBuilder(val ctx: ExecutionContext) : SymbolicState(), Instruc
         val call: CallInst,
         val method: Method,
         val receiver: Pair<Value, Term>?,
-        val params: Map<Value, Term>,
+        val params: Parameters<Term>,
         val predicate: Predicate
     )
 
@@ -242,6 +243,12 @@ class SymbolicTraceBuilder(val ctx: ExecutionContext) : SymbolicState(), Instruc
     private fun Any?.getAsDescriptor() = converter.convert(this)
     private fun Any?.getAsDescriptor(type: KexType) = converter.convert(this).unwrapped(type)
 
+    private val Method.parameterValues: Parameters<Value> get() = Parameters(
+        if (!isStatic) ctx.values.getThis(klass) else null,
+        argTypes.withIndex().map { (index, type) -> ctx.values.getArgument(index, this, type) },
+        setOf()
+    )
+
     private infix fun Method.overrides(other: Method): Boolean = when {
         this == other -> true
         other.isFinal -> false
@@ -267,8 +274,8 @@ class SymbolicTraceBuilder(val ctx: ExecutionContext) : SymbolicState(), Instruc
             val call = lastCall!!
             ktassert(call.method overrides method)
 
-            for ((arg, value) in call.params) {
-                valueMap[arg] = value
+            for ((value, term) in method.parameterValues.asList.zip(call.params.asList)) {
+                valueMap[value] = term
             }
             lastCall = null
         }
@@ -497,9 +504,7 @@ class SymbolicTraceBuilder(val ctx: ExecutionContext) : SymbolicState(), Instruc
             instruction,
             calledMethod,
             termReturn?.let { kfgReturn to it },
-            termArguments.withIndex().associate { (index, term) ->
-                ctx.values.getArgument(index, calledMethod, calledMethod.argTypes[index]) to term
-            },
+            Parameters(termCallee, termArguments, setOf()),
             predicate
         )
 

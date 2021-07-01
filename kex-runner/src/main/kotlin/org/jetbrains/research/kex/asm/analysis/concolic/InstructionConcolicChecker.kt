@@ -4,6 +4,7 @@ import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.InternalSerializationApi
 import org.jetbrains.research.kex.ExecutionContext
 import org.jetbrains.research.kex.annotations.AnnotationManager
+import org.jetbrains.research.kex.asm.manager.isImpactable
 import org.jetbrains.research.kex.asm.state.PredicateStateAnalysis
 import org.jetbrains.research.kex.compile.JavaCompilerDriver
 import org.jetbrains.research.kex.config.kexConfig
@@ -76,6 +77,7 @@ class InstructionConcolicChecker(
 
     override fun visit(method: Method) {
         if (method.isStaticInitializer || !method.hasBody) return
+        if (!method.isImpactable) return
 
         log.debug("Checking method $method")
         log.debug(method.print())
@@ -225,7 +227,7 @@ class InstructionConcolicChecker(
         return SymbolicStateImpl(
             mutatedState,
             PathConditionImpl(mutatedPathCondition),
-            ConcreteTermMap(mutatedValueMap),
+            mutatedValueMap,
             state.termMap,
             state.predicateMap,
             InstructionTrace()

@@ -1,8 +1,5 @@
 package org.jetbrains.research.kex.random.easyrandom
 
-import org.jetbrains.research.kthelper.assert.ktassert
-import org.jetbrains.research.kthelper.logging.log
-import org.jetbrains.research.kthelper.tryOrNull
 import org.jeasy.random.EasyRandom
 import org.jeasy.random.EasyRandomParameters
 import org.jeasy.random.ObjectCreationException
@@ -16,6 +13,9 @@ import org.jetbrains.research.kex.random.Randomizer
 import org.jetbrains.research.kex.random.UnknownTypeException
 import org.jetbrains.research.kex.util.isStatic
 import org.jetbrains.research.kfg.Package
+import org.jetbrains.research.kthelper.assert.ktassert
+import org.jetbrains.research.kthelper.logging.log
+import org.jetbrains.research.kthelper.tryOrNull
 import org.objenesis.ObjenesisStd
 import java.lang.reflect.ParameterizedType
 import java.lang.reflect.Type
@@ -26,11 +26,11 @@ class EasyRandomDriver(val config: BeansConfig = defaultConfig) : Randomizer {
     companion object {
 
         data class BeansConfig(
-                val depth: Int,
-                val collectionSize: IntRange,
-                val stringLength: IntRange,
-                val attempts: Int,
-                val excludes: Set<Package>
+            val depth: Int,
+            val collectionSize: IntRange,
+            val stringLength: IntRange,
+            val attempts: Int,
+            val excludes: Set<Package>
         )
 
         val defaultConfig: BeansConfig by lazy {
@@ -42,11 +42,11 @@ class EasyRandomDriver(val config: BeansConfig = defaultConfig) : Randomizer {
             val attempts = kexConfig.getIntValue("easy-random", "generationAttempts", 1)
             val excludes = kexConfig.getMultipleStringValue("easy-random", "exclude").map { Package.parse(it) }.toSet()
             BeansConfig(
-                    depth = depth,
-                    collectionSize = minCollectionSize..maxCollectionSize,
-                    stringLength = minStringLength..maxStringLength,
-                    attempts = attempts,
-                    excludes = excludes
+                depth = depth,
+                collectionSize = minCollectionSize..maxCollectionSize,
+                stringLength = minStringLength..maxStringLength,
+                attempts = attempts,
+                excludes = excludes
             )
         }
     }
@@ -55,22 +55,19 @@ class EasyRandomDriver(val config: BeansConfig = defaultConfig) : Randomizer {
         private val objenesis = ObjenesisStd(false)
 
         override fun <T> createInstance(type: Class<T>, context: RandomizerContext): T =
-                when {
-                    context.parameters.isScanClasspathForConcreteTypes && isAbstract<T>(type) -> {
-                        val randomConcreteSubType = getPublicConcreteSubTypesOf<T>(type).randomOrNull()
-                        if (randomConcreteSubType == null) {
-                            throw InstantiationError("Unable to find a matching concrete subtype of type: $type in the classpath")
-                        } else {
-                            @Suppress("UNCHECKED_CAST")
-                            createNewInstance(randomConcreteSubType) as T
-                        }
-                    }
-                    else -> try {
-                        createNewInstance(type)
-                    } catch (e: Error) {
-                        throw ObjectCreationException("Unable to create an instance of type: $type", e)
-                    }
+            when {
+                context.parameters.isScanClasspathForConcreteTypes && isAbstract<T>(type) -> {
+                    val randomConcreteSubType = getPublicConcreteSubTypesOf<T>(type).randomOrNull()
+                        ?: throw InstantiationError("Unable to find a matching concrete subtype of type: $type in the classpath")
+                    @Suppress("UNCHECKED_CAST")
+                    createNewInstance(randomConcreteSubType) as T
                 }
+                else -> try {
+                    createNewInstance(type)
+                } catch (e: Error) {
+                    throw ObjectCreationException("Unable to create an instance of type: $type", e)
+                }
+            }
 
         private fun <T> createNewInstance(type: Class<T>): T = try {
             val noArgConstructor = type.getDeclaredConstructor()
@@ -85,14 +82,14 @@ class EasyRandomDriver(val config: BeansConfig = defaultConfig) : Randomizer {
     }
 
     private val randomizer = EasyRandom(
-            EasyRandomParameters()
-                    .seed(System.currentTimeMillis())
-                    .randomizationDepth(config.depth)
-                    .collectionSizeRange(config.collectionSize.first, config.collectionSize.last)
-                    .stringLengthRange(config.stringLength.last, config.stringLength.last)
-                    .scanClasspathForConcreteTypes(true)
-                    .excludeType { type -> config.excludes.any { it.isParent(Package.parse(type.name)) } }
-                    .objectFactory(KexObjectFactory())
+        EasyRandomParameters()
+            .seed(System.currentTimeMillis())
+            .randomizationDepth(config.depth)
+            .collectionSizeRange(config.collectionSize.first, config.collectionSize.last)
+            .stringLengthRange(config.stringLength.last, config.stringLength.last)
+            .scanClasspathForConcreteTypes(true)
+            .excludeType { type -> config.excludes.any { it.isParent(Package.parse(type.name)) } }
+            .objectFactory(KexObjectFactory())
     )
 
     private fun <T> generateObject(klass: Class<T>): Any? = randomizer.nextObject(klass)
@@ -103,7 +100,11 @@ class EasyRandomDriver(val config: BeansConfig = defaultConfig) : Randomizer {
             cr.randomValue
         }
         Map::class.java.isAssignableFrom(klass) -> {
-            val mr = CollectionRandomizer.generateMap(klass, { generateObject(it) }, { next(Any::class.java) }, { next(Any::class.java) })
+            val mr = CollectionRandomizer.generateMap(
+                klass,
+                { generateObject(it) },
+                { next(Any::class.java) },
+                { next(Any::class.java) })
             mr.randomValue
         }
         else -> generateObject(klass)
@@ -115,14 +116,16 @@ class EasyRandomDriver(val config: BeansConfig = defaultConfig) : Randomizer {
             Collection::class.java.isAssignableFrom(rawType) -> {
                 ktassert(type.actualTypeArguments.size == 1)
                 val typeParameter = type.actualTypeArguments.first()
-                val cr = CollectionRandomizer.generateCollection(rawType, { generateObject(it) }, { next(typeParameter) })
+                val cr =
+                    CollectionRandomizer.generateCollection(rawType, { generateObject(it) }, { next(typeParameter) })
                 cr.randomValue
             }
             Map::class.java.isAssignableFrom(rawType) -> {
                 ktassert(type.actualTypeArguments.size == 2)
                 val key = type.actualTypeArguments.first()
                 val value = type.actualTypeArguments.last()
-                val mr = CollectionRandomizer.generateMap(rawType, { generateObject(it) }, { next(key) }, { next(value) })
+                val mr =
+                    CollectionRandomizer.generateMap(rawType, { generateObject(it) }, { next(key) }, { next(value) })
                 mr.randomValue
             }
             else -> {

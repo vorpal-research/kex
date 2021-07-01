@@ -22,6 +22,7 @@ val Method.isImpactable: Boolean
         this.isAbstract -> false
         this.isStaticInitializer -> false
         this.klass.isSynthetic -> false
+        this.klass.isAbstract && this.isConstructor -> false
         this.isSynthetic -> false
         visibilityLevel > this.klass.visibility -> false
         visibilityLevel > this.visibility -> false

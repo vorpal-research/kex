@@ -3,7 +3,9 @@ package org.jetbrains.research.kex.reanimator.codegen.javagen
 import org.jetbrains.research.kex.ExecutionContext
 import org.jetbrains.research.kex.asm.util.Visibility
 import org.jetbrains.research.kex.descriptor.*
+import org.jetbrains.research.kex.ktype.KexArray
 import org.jetbrains.research.kex.ktype.KexNull
+import org.jetbrains.research.kex.ktype.KexPointer
 import org.jetbrains.research.kex.ktype.type
 import org.jetbrains.research.kex.parameters.Parameters
 import org.jetbrains.research.kex.reanimator.callstack.CallStack
@@ -120,6 +122,9 @@ class ExecutorCS2JavaPrinter(
         callStacks: Parameters<CallStack>
     ) {
         cleanup()
+        if (method.name == "variables") {
+            val a = 10
+        }
 
         for (cs in callStacks.asList)
             resolveTypes(cs)
@@ -175,7 +180,7 @@ class ExecutorCS2JavaPrinter(
         else -> super.printVarDeclaration(name, type)
     }
 
-    override fun printUnknown(owner: CallStack, call: UnknownCall): List<String> = with(current) {
+    override fun printUnknown(owner: CallStack, call: UnknownCall): List<String> {
         val descriptor = call.target
         printedStacks -= "${descriptor.term}"
         val result = mutableListOf<String>()
@@ -193,29 +198,78 @@ class ExecutorCS2JavaPrinter(
             }
         }
 
+    protected val ConstantDescriptor.asConstant: String
+        get() = when (this) {
+            is ConstantDescriptor.Null -> "null"
+            is ConstantDescriptor.Bool -> "$value"
+            is ConstantDescriptor.Byte -> "(byte) $value"
+            is ConstantDescriptor.Char -> when (value) {
+                in 'a'..'z' -> "'$value'"
+                in 'A'..'Z' -> "'$value'"
+                else -> "(char) ${value.code}"
+            }
+            is ConstantDescriptor.Short -> "(short) $value"
+            is ConstantDescriptor.Int -> "$value"
+            is ConstantDescriptor.Long -> "${value}L"
+            is ConstantDescriptor.Float -> when {
+                value.isNaN() -> "Float.NaN".also {
+                    builder.import("java.lang.Float")
+                }
+                value.isInfinite() && value < 0.0 -> "Float.NEGATIVE_INFINITY".also {
+                    builder.import("java.lang.Float")
+                }
+                value.isInfinite() -> "Float.POSITIVE_INFINITY".also {
+                    builder.import("java.lang.Float")
+                }
+                else -> "${value}F"
+            }
+            is ConstantDescriptor.Double -> when {
+                value.isNaN() -> "Double.NaN".also {
+                    builder.import("java.lang.Double")
+                }
+                value.isInfinite() && value < 0.0 -> "Double.NEGATIVE_INFINITY".also {
+                    builder.import("java.lang.Double")
+                }
+                value.isInfinite() -> "Double.POSITIVE_INFINITY".also {
+                    builder.import("java.lang.Double")
+                }
+                else -> "$value"
+            }
+            else -> unreachable { log.error("Unknown constant descriptor $this") }
+        }
+
     private fun printDescriptor(descriptor: Descriptor, result: MutableList<String>): String = with(current) {
         val name = "${descriptor.term}"
         if (name in printedStacks) return@with name
         printedStacks += name
 
-        val actualType = when {
-            descriptor.type is KexNull -> ctx.types.objectType.csType
+        val actualType = when (descriptor.type) {
+            is KexNull -> ctx.types.objectType.csType
             else -> descriptor.type.getKfgType(ctx.types).csType
         }
-        val decl = printVarDeclaration(name, actualType)
+        val resolveType = when (descriptor.type) {
+            is KexArray -> ctx.types.getArrayType(ctx.types.objectType).csType
+            is KexPointer -> ctx.types.objectType.csType
+            else -> actualType
+        }
+        val decl = printVarDeclaration(name, resolveType)
         when (descriptor) {
             ConstantDescriptor.Null -> result += "$decl = null"
-            is ConstantDescriptor.Bool -> result += "$decl = ${descriptor.value}"
-            is ConstantDescriptor.Byte -> result += "$decl = ${descriptor.value}"
-            is ConstantDescriptor.Char -> result += "$decl = ${descriptor.value}"
-            is ConstantDescriptor.Double -> result += "$decl = ${descriptor.value}"
-            is ConstantDescriptor.Float -> result += "$decl = ${descriptor.value}"
-            is ConstantDescriptor.Int -> result += "$decl = ${descriptor.value}"
-            is ConstantDescriptor.Long -> result += "$decl = ${descriptor.value}"
-            is ConstantDescriptor.Short -> result += "$decl = ${descriptor.value}"
+            is ConstantDescriptor.Bool -> result += "$decl = ${descriptor.asConstant}"
+            is ConstantDescriptor.Byte -> result += "$decl = ${descriptor.asConstant}"
+            is ConstantDescriptor.Char -> result += "$decl = ${descriptor.asConstant}"
+            is ConstantDescriptor.Double -> result += "$decl = ${descriptor.asConstant}"
+            is ConstantDescriptor.Float -> result += "$decl = ${descriptor.asConstant}"
+            is ConstantDescriptor.Int -> result += "$decl = ${descriptor.asConstant}"
+            is ConstantDescriptor.Long -> result += "$decl = ${descriptor.asConstant}"
+            is ConstantDescriptor.Short -> result += "$decl = ${descriptor.asConstant}"
             is ArrayDescriptor -> {
-                val (depth, elementType) = actualType.elementTypeDepth()
-                result += "$decl = new $elementType[${descriptor.length}]${"[]".repeat(depth)}"
+                val (depth, elementType) = resolveType.elementTypeDepth()
+                val cast = when {
+                    testParams.any { it.name == name } -> " ($actualType)"
+                    else -> ""
+                }
+                result += "$decl =$cast new $elementType[${descriptor.length}]${"[]".repeat(depth)}"
                 for ((index, element) in descriptor.elements) {
                     val elementName = printDescriptor(element, result)
                     result += "$name[$index] = $elementName"
@@ -229,7 +283,11 @@ class ExecutorCS2JavaPrinter(
             }
             is ObjectDescriptor -> {
                 val klass = (descriptor.type.getKfgType(ctx.types) as ClassType).klass
-                result += "$decl = ($actualType) ${newInstance.name}(\"${klass.canonicalDesc}\")"
+                val cast = when {
+                    testParams.any { it.name == name } -> " ($actualType)"
+                    else -> ""
+                }
+                result += "$decl =$cast ${newInstance.name}(\"${klass.canonicalDesc}\")"
                 for ((field, element) in descriptor.fields) {
                     val fieldName = printDescriptor(element, result)
                     result += "${setField.name}($name, \"${field.first}\", $fieldName)"

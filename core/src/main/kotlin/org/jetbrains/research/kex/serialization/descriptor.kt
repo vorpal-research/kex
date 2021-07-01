@@ -13,9 +13,9 @@ import org.jetbrains.research.kex.ktype.KexArray
 import org.jetbrains.research.kex.ktype.KexClass
 import org.jetbrains.research.kex.ktype.KexType
 
-//@JvmInline
+@JvmInline
 @Serializable
-internal data class Id(val name: String)
+internal value class Id(val name: String)
 
 @Serializable
 internal sealed class DescriptorWrapper() {

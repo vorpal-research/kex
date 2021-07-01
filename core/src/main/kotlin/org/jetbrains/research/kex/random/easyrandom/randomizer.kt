@@ -2,7 +2,6 @@ package org.jetbrains.research.kex.random.easyrandom
 
 import org.jeasy.random.api.Randomizer
 import org.jeasy.random.randomizers.number.IntegerRandomizer
-import org.jeasy.random.util.CollectionUtils.randomElementOf
 import org.jeasy.random.util.ReflectionUtils
 import org.jetbrains.research.kex.config.kexConfig
 import org.jetbrains.research.kex.util.isAbstract
@@ -136,7 +135,8 @@ class ListRandomizer<T>(`impl`: () -> MutableList<T>, elementRandomizer: Randomi
                 newListRandomizer({ Stack() }, elementRandomizer)
 
         fun <T> randomListRandomizer(random: (Class<*>) -> Any?, elementRandomizer: Randomizer<T>): ListRandomizer<T> {
-            val impl = randomElementOf<Class<*>>(ReflectionUtils.getPublicConcreteSubTypesOf(MutableList::class.java))
+            val impl = ReflectionUtils.getPublicConcreteSubTypesOf(MutableList::class.java).randomOrNull()
+                ?: throw InstantiationError("Unable to find a matching concrete subtype of type: MutableList in the classpath")
             return newListRandomizer({
                 @Suppress("UNCHECKED_CAST")
                 random(impl) as? MutableList<T>
@@ -171,7 +171,8 @@ class QueueRandomizer<T>(`impl`: () -> Queue<T>, elementRandomizer: Randomizer<T
                 newQueueRandomizer({ PriorityQueue() }, elementRandomizer)
 
         fun <T> randomQueueRandomizer(random: (Class<*>) -> Any?, elementRandomizer: Randomizer<T>): QueueRandomizer<T> {
-            val impl = randomElementOf<Class<*>>(ReflectionUtils.getPublicConcreteSubTypesOf(Queue::class.java))
+            val impl = ReflectionUtils.getPublicConcreteSubTypesOf(Queue::class.java).randomOrNull()
+                ?: throw InstantiationError("Unable to find a matching concrete subtype of type: Queue in the classpath")
             return newQueueRandomizer({
                 @Suppress("UNCHECKED_CAST")
                 random(impl) as? Queue<T>
@@ -212,7 +213,8 @@ class SetRandomizer<T>(`impl`: () -> MutableSet<T>, elementRandomizer: Randomize
                 newSetRandomizer({ ConcurrentSkipListSet() }, elementRandomizer)
 
         fun <T> randomSetRandomizer(random: (Class<*>) -> Any?, elementRandomizer: Randomizer<T>): SetRandomizer<T> {
-            val impl = randomElementOf<Class<*>>(ReflectionUtils.getPublicConcreteSubTypesOf(MutableSet::class.java))
+            val impl = ReflectionUtils.getPublicConcreteSubTypesOf(MutableSet::class.java).randomOrNull()
+                ?: throw InstantiationError("Unable to find a matching concrete subtype of type: MutableSet in the classpath")
             return newSetRandomizer({
                 @Suppress("UNCHECKED_CAST")
                 random(impl) as? MutableSet<T>
@@ -287,7 +289,8 @@ class MapRandomizer<K, V>(
         fun <K, V> randomMapRandomizer(random: (Class<*>) -> Any?,
                                        keyRandomizer: Randomizer<K>,
                                        valueRandomizer: Randomizer<V>): MapRandomizer<K, V> {
-            val impl = randomElementOf<Class<*>>(ReflectionUtils.getPublicConcreteSubTypesOf(MutableMap::class.java))
+            val impl = ReflectionUtils.getPublicConcreteSubTypesOf(MutableMap::class.java).randomOrNull()
+                ?: throw InstantiationError("Unable to find a matching concrete subtype of type: MutableMap in the classpath")
             return newMapRandomizer({
                 @Suppress("UNCHECKED_CAST")
                 random(impl) as? MutableMap<K, V>
@@ -299,7 +302,8 @@ class MapRandomizer<K, V>(
                                        keyRandomizer: Randomizer<K>,
                                        valueRandomizer: Randomizer<V>): MapRandomizer<K, V> {
             val actualKlass = when {
-                klass.isAbstract || klass.isInterface -> randomElementOf<Class<*>>(ReflectionUtils.getPublicConcreteSubTypesOf(klass))
+                klass.isAbstract || klass.isInterface -> ReflectionUtils.getPublicConcreteSubTypesOf(klass).randomOrNull()
+                    ?: throw InstantiationError("Unable to find a matching concrete subtype of type: $klass in the classpath")
                 else -> klass
             }
             return newMapRandomizer({
@@ -319,7 +323,8 @@ class CustomCollectionRandomizer<T>(`impl`: () -> MutableCollection<T>, delegate
     companion object {
         fun <T> collectionRandomizer(klass: Class<*>, random: (Class<*>) -> Any?, elementRandomizer: Randomizer<T>): CollectionRandomizer<T> {
             val actualKlass = when {
-                klass.isAbstract || klass.isInterface -> randomElementOf<Class<*>>(ReflectionUtils.getPublicConcreteSubTypesOf(klass))
+                klass.isAbstract || klass.isInterface -> ReflectionUtils.getPublicConcreteSubTypesOf(klass).randomOrNull()
+                    ?: throw InstantiationError("Unable to find a matching concrete subtype of type: $klass in the classpath")
                 else -> klass
             }
             return CustomCollectionRandomizer(

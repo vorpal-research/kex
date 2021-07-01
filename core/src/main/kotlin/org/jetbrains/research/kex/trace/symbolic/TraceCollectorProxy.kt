@@ -3,8 +3,12 @@ package org.jetbrains.research.kex.trace.symbolic
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.InternalSerializationApi
 import org.jetbrains.research.kex.ExecutionContext
+import org.jetbrains.research.kex.descriptor.Descriptor
 import org.jetbrains.research.kex.serialization.KexSerializer
 import org.jetbrains.research.kex.state.emptyState
+import org.jetbrains.research.kex.state.predicate.Predicate
+import org.jetbrains.research.kex.state.term.Term
+import org.jetbrains.research.kfg.ir.value.instruction.Instruction
 import java.nio.file.Path
 
 private class EmptyTraceCollector : InstructionTraceCollector {
@@ -16,9 +20,9 @@ private class EmptyTraceCollector : InstructionTraceCollector {
     class EmptyState : SymbolicState() {
         override val state = emptyState()
         override val path = EmptyPathCondition()
-        override val concreteValueMap = ConcreteTermMap()
-        override val termMap = ValueTermMap()
-        override val predicateMap = ValuePredicateMap()
+        override val concreteValueMap = emptyMap<Term, Descriptor>()
+        override val termMap = emptyMap<Term, WrappedValue>()
+        override val predicateMap = emptyMap<Predicate, Instruction>()
         override val trace = InstructionTrace()
     }
 

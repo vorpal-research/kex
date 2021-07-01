@@ -30,7 +30,8 @@ class JavaCompilerDriver(classPath: List<Path>, outputDir: Path) : CompilerDrive
 
         val task = compiler.getTask(null, fileManager, null, listOf("-Xlint:unchecked"), null, objects)
         val compileSuccess = `try` { task.call() }.getOrElse { false }
-        if (!compileSuccess) throw CompilationException()
+        if (!compileSuccess)
+            throw CompilationException()
 
         return fileManager.list(
             StandardLocation.CLASS_OUTPUT,

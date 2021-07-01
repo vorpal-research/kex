@@ -102,10 +102,7 @@ fun getDescriptorSerialModule(): SerializersModule = SerializersModule {
 
 @ExperimentalSerializationApi
 @InternalSerializationApi
-fun getSymbolicStateSerialModule(serializersModule: SerializersModule): SerializersModule = SerializersModule {
-    contextual(ConcreteTermMap::class, mapSerializer(serializersModule, { it }, { ConcreteTermMap(it) }))
-    contextual(ValueTermMap::class, mapSerializer(serializersModule, { it }, { ValueTermMap(it) }))
-    contextual(ValuePredicateMap::class, mapSerializer(serializersModule, { it }, { ValuePredicateMap(it) }))
+fun getSymbolicStateSerialModule(): SerializersModule = SerializersModule {
     polymorphic(PathCondition::class) {
         subclass(PathConditionImpl::class, PathConditionImpl.serializer())
     }
@@ -128,7 +125,6 @@ fun getPreSymbolicSerialModule(cm: ClassManager): SerializersModule = Serializer
 @ExperimentalSerializationApi
 @InternalSerializationApi
 fun getKexSerialModule(cm: ClassManager): SerializersModule = SerializersModule {
-    val module = getPreSymbolicSerialModule(cm)
-    include(module)
-    include(getSymbolicStateSerialModule(module))
+    include(getPreSymbolicSerialModule(cm))
+    include(getSymbolicStateSerialModule())
 }
