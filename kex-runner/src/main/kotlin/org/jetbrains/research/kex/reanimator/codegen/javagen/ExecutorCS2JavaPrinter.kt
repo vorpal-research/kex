@@ -3,14 +3,15 @@ package org.jetbrains.research.kex.reanimator.codegen.javagen
 import org.jetbrains.research.kex.ExecutionContext
 import org.jetbrains.research.kex.asm.util.Visibility
 import org.jetbrains.research.kex.descriptor.*
-import org.jetbrains.research.kex.ktype.KexArray
-import org.jetbrains.research.kex.ktype.KexNull
-import org.jetbrains.research.kex.ktype.KexPointer
-import org.jetbrains.research.kex.ktype.type
+import org.jetbrains.research.kex.ktype.*
 import org.jetbrains.research.kex.parameters.Parameters
 import org.jetbrains.research.kex.reanimator.callstack.CallStack
 import org.jetbrains.research.kex.reanimator.callstack.UnknownCall
+import org.jetbrains.research.kex.util.kapitalize
+import org.jetbrains.research.kfg.type.ArrayType
 import org.jetbrains.research.kfg.type.ClassType
+import org.jetbrains.research.kfg.type.PrimaryType
+import org.jetbrains.research.kfg.type.Type
 import org.jetbrains.research.kthelper.assert.unreachable
 import org.jetbrains.research.kthelper.logging.log
 import org.jetbrains.research.kthelper.runIf
@@ -23,9 +24,14 @@ class ExecutorCS2JavaPrinter(
 ) : CallStack2JavaPrinter(ctx, packageName, klassName) {
     private val testParams = mutableListOf<JavaBuilder.JavaClass.JavaField>()
     private lateinit var newInstance: JavaBuilder.JavaFunction
+    private lateinit var newArray: JavaBuilder.JavaFunction
+    private val newPrimitiveArrayMap = mutableMapOf<String, JavaBuilder.JavaFunction>()
     private lateinit var getField: JavaBuilder.JavaFunction
     private lateinit var setField: JavaBuilder.JavaFunction
+    private val setPrimitiveFieldMap = mutableMapOf<String, JavaBuilder.JavaFunction>()
     private lateinit var setElement: JavaBuilder.JavaFunction
+    private val setPrimitiveElementMap = mutableMapOf<String, JavaBuilder.JavaFunction>()
+    private lateinit var callConstructor: JavaBuilder.JavaFunction
     private lateinit var callMethod: JavaBuilder.JavaFunction
     private var klassCounter = 0
 
@@ -33,10 +39,24 @@ class ExecutorCS2JavaPrinter(
         initReflection()
     }
 
+    private val KexType.primitiveName: String?
+        get() = when (this) {
+            is KexBool -> "boolean"
+            is KexByte -> "byte"
+            is KexChar -> "char"
+            is KexShort -> "short"
+            is KexInt -> "int"
+            is KexLong -> "long"
+            is KexFloat -> "float"
+            is KexDouble -> "double"
+            else -> null
+        }
+
     private fun initReflection() {
         with(builder) {
             import("java.lang.Class")
             import("java.lang.reflect.Method")
+            import("java.lang.reflect.Constructor")
             import("java.lang.reflect.Field")
             import("java.lang.reflect.Array")
             import("sun.misc.Unsafe")
@@ -69,6 +89,7 @@ class ExecutorCS2JavaPrinter(
                     +"Object instance = klass.cast(UNSAFE.allocateInstance(klass))"
                     +"return instance"
                 }
+                val primitiveTypes = listOf("boolean", "byte", "char", "short", "int", "long", "double", "float")
 
                 newInstance = method("newInstance") {
                     arguments += arg("klass", type("String"))
@@ -79,6 +100,30 @@ class ExecutorCS2JavaPrinter(
 
                     +"Class<?> reflect = Class.forName(klass)"
                     +"return newInstance(reflect)"
+                }
+
+                newArray = method("newArray") {
+                    arguments += arg("elementType", type("String"))
+                    arguments += arg("length", type("int"))
+                    returnType = type("Object")
+                    visibility = Visibility.PRIVATE
+                    modifiers += "static"
+                    exceptions += "Throwable"
+
+                    +"Class<?> reflect = Class.forName(elementType)"
+                    +"return Array.newInstance(reflect, length)"
+                }
+
+                for (type in primitiveTypes) {
+                    newPrimitiveArrayMap[type] = method("new${type.kapitalize()}Array") {
+                        arguments += arg("length", type("int"))
+                        returnType = type("Object")
+                        visibility = Visibility.PRIVATE
+                        modifiers += "static"
+                        exceptions += "Throwable"
+
+                        +"return Array.newInstance(${type}.class, length)"
+                    }
                 }
 
                 getField = method("getField") {
@@ -120,8 +165,25 @@ class ExecutorCS2JavaPrinter(
                     +"field.set(instance, value)"
                 }
 
+                for (type in primitiveTypes) {
+                    setPrimitiveFieldMap[type] = method("set${type.kapitalize()}Field") {
+                        arguments += arg("instance", type("Object"))
+                        arguments += arg("klass", type("Class<?>"))
+                        arguments += arg("name", type("String"))
+                        arguments += arg("value", type(type))
+                        returnType = void
+                        visibility = Visibility.PRIVATE
+                        modifiers += "static"
+                        exceptions += "Throwable"
+
+                        +"Field field = ${getField.name}(klass, name)"
+                        +"field.setAccessible(true)"
+                        +"field.set${type.kapitalize()}(instance, value)"
+                    }
+                }
+
                 setElement = method("setElement") {
-                    arguments += arg("array", type("Object[]"))
+                    arguments += arg("array", type("Object"))
                     arguments += arg("index", type("int"))
                     arguments += arg("element", type("Object"))
                     returnType = void
@@ -131,10 +193,22 @@ class ExecutorCS2JavaPrinter(
 
                     +"Array.set(array, index, element)"
                 }
+                for (type in primitiveTypes) {
+                    setPrimitiveElementMap[type] = method("set${type.kapitalize()}Element") {
+                        arguments += arg("array", type("Object"))
+                        arguments += arg("index", type("int"))
+                        arguments += arg("element", type(type))
+                        returnType = void
+                        visibility = Visibility.PRIVATE
+                        modifiers += "static"
+                        exceptions += "Throwable"
 
-                callMethod = method("callMethod") {
-                    arguments += arg("instance", type("Object"))
-                    arguments += arg("name", type("String"))
+                        +"Array.set${type.kapitalize()}(array, index, element)"
+                    }
+                }
+
+                callConstructor = method("callConstructor") {
+                    arguments += arg("klass", type("Class<?>"))
                     arguments += arg("argTypes", type("Class<?>[]"))
                     arguments += arg("args", type("Object[]"))
                     returnType = type("Object")
@@ -142,7 +216,23 @@ class ExecutorCS2JavaPrinter(
                     modifiers += "static"
                     exceptions += "Throwable"
 
-                    +"Method method = instance.getClass().getDeclaredMethod(name, argTypes)"
+                    +"Constructor<?> method = klass.getDeclaredConstructor(argTypes)"
+                    +"method.setAccessible(true)"
+                    +"return method.newInstance(args)"
+                }
+
+                callMethod = method("callMethod") {
+                    arguments += arg("klass", type("Class<?>"))
+                    arguments += arg("name", type("String"))
+                    arguments += arg("argTypes", type("Class<?>[]"))
+                    arguments += arg("instance", type("Object"))
+                    arguments += arg("args", type("Object[]"))
+                    returnType = type("Object")
+                    visibility = Visibility.PRIVATE
+                    modifiers += "static"
+                    exceptions += "Throwable"
+
+                    +"Method method = klass.getDeclaredMethod(name, argTypes)"
                     +"method.setAccessible(true)"
                     +"return method.invoke(instance, args)"
                 }
@@ -171,7 +261,7 @@ class ExecutorCS2JavaPrinter(
             with(klass) {
                 runIf(!method.isConstructor) {
                     callStacks.instance?.let {
-                        testParams += field(it.name, JavaBuilder.StringType(method.klass.javaString))
+                        testParams += field(it.name, type("Object"))
                     }
                 }
                 callStacks.arguments.forEach { arg ->
@@ -179,8 +269,9 @@ class ExecutorCS2JavaPrinter(
                         is UnknownCall -> call.type
                         else -> unreachable { log.error("Unexpected call in arg") }
                     }
+                    val fieldType = type.kexType.primitiveName?.let { type(it) } ?: type("Object")
                     if (testParams.all { it.name != arg.name })
-                        testParams += field(arg.name, type(type.javaString))
+                        testParams += field(arg.name, fieldType)
                 }
 
                 current = method(setupName) {
@@ -223,14 +314,27 @@ class ExecutorCS2JavaPrinter(
         printDescriptor(descriptor, result)
         return result
     }
+    val Type.klassType: String get() = when (this) {
+        is PrimaryType -> "${kexType.primitiveName}.class"
+        is ClassType -> "Class.forName(\"${klass.canonicalDesc}\")"
+        is ArrayType -> "Array.newInstance(${component.klassType}, 0).getClass()"
+        else -> unreachable {  }
+    }
 
     private fun printTestCall(method: org.jetbrains.research.kfg.ir.Method, callStacks: Parameters<CallStack>) =
         with(current) {
-            val args = callStacks.arguments.joinToString(", ") { it.name }
+            +"Class<?> klass = Class.forName(\"${method.klass.canonicalDesc}\")"
+            +"Class<?>[] argTypes = new Class<?>[${method.argTypes.size}]"
+            for ((index, type) in method.argTypes.withIndex()) {
+                +"argTypes[$index] = ${type.klassType}"
+            }
+            +"Object[] args = new Object[${method.argTypes.size}]"
+            for ((index, arg) in callStacks.arguments.withIndex()) {
+                +"args[$index] = ${arg.name}"
+            }
             +when {
-                method.isStatic -> "${method.klass.javaString}.${method.name}($args)"
-                method.isConstructor -> "new ${CSClass(method.klass.type)}($args)"
-                else -> "${callStacks.instance!!.name}.${method.name}($args)"
+                method.isConstructor -> "${callConstructor.name}(klass, argTypes, args)"
+                else -> "${callMethod.name}(klass, \"${method.name}\", argTypes, ${callStacks.instance?.name}, args)"
             }
         }
 
@@ -279,14 +383,9 @@ class ExecutorCS2JavaPrinter(
         if (name in printedStacks) return@with name
         printedStacks += name
 
-        val actualType = when (descriptor.type) {
-            is KexNull -> ctx.types.objectType.csType
-            else -> descriptor.type.getKfgType(ctx.types).csType
-        }
         val resolveType = when (descriptor.type) {
-            is KexArray -> ctx.types.getArrayType(ctx.types.objectType).csType
             is KexPointer -> ctx.types.objectType.csType
-            else -> actualType
+            else -> descriptor.type.getKfgType(ctx.types).csType
         }
         val decl = printVarDeclaration(name, resolveType)
         when (descriptor) {
@@ -300,15 +399,16 @@ class ExecutorCS2JavaPrinter(
             is ConstantDescriptor.Long -> result += "$decl = ${descriptor.asConstant}"
             is ConstantDescriptor.Short -> result += "$decl = ${descriptor.asConstant}"
             is ArrayDescriptor -> {
-                val (depth, elementType) = resolveType.elementTypeDepth()
-                val cast = when {
-                    testParams.any { it.name == name } -> " ($actualType)"
-                    else -> ""
-                }
-                result += "$decl =$cast new $elementType[${descriptor.length}]${"[]".repeat(depth)}"
+                val elementType = (descriptor.type as KexArray).element
+                result += "$decl = ${
+                    elementType.primitiveName?.let {
+                        "${newPrimitiveArrayMap[it]!!.name}(${descriptor.length})"
+                    } ?: "${newArray.name}(\"${(elementType.getKfgType(ctx.types) as ClassType).klass.canonicalDesc}\", ${descriptor.length})"
+                }"
                 for ((index, element) in descriptor.elements) {
                     val elementName = printDescriptor(element, result)
-                    result += "${setElement.name}($name, $index, $elementName)"
+                    val setElementMethod = element.type.primitiveName?.let { setPrimitiveElementMap[it]!! } ?: setElement
+                    result += "${setElementMethod.name}($name, $index, $elementName)"
                 }
             }
             is ClassDescriptor -> {
@@ -317,19 +417,17 @@ class ExecutorCS2JavaPrinter(
                 result += "Class<?> $klassVarName = Class.forName(\"${klass.canonicalDesc}\")"
                 for ((field, element) in descriptor.fields) {
                     val fieldName = printDescriptor(element, result)
-                    result += "${setField.name}(null, $klassVarName, \"${field.first}\", $fieldName)"
+                    val setFieldMethod = field.second.primitiveName?.let { setPrimitiveFieldMap[it]!! } ?: setField
+                    result += "${setFieldMethod.name}(null, $klassVarName, \"${field.first}\", $fieldName)"
                 }
             }
             is ObjectDescriptor -> {
                 val klass = (descriptor.type.getKfgType(ctx.types) as ClassType).klass
-                val cast = when {
-                    testParams.any { it.name == name } -> " ($actualType)"
-                    else -> ""
-                }
-                result += "$decl =$cast ${newInstance.name}(\"${klass.canonicalDesc}\")"
+                result += "$decl = ${newInstance.name}(\"${klass.canonicalDesc}\")"
                 for ((field, element) in descriptor.fields) {
                     val fieldName = printDescriptor(element, result)
-                    result += "${setField.name}($name, ${name}.getClass(), \"${field.first}\", $fieldName)"
+                    val setFieldMethod = field.second.primitiveName?.let { setPrimitiveFieldMap[it]!! } ?: setField
+                    result += "${setFieldMethod.name}($name, ${name}.getClass(), \"${field.first}\", $fieldName)"
                 }
             }
         }

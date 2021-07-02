@@ -39,6 +39,8 @@ class SymbolicExternalTracingRunner(val ctx: ExecutionContext) {
     fun run(klass: String, setup: String, test: String): ExecutionResult {
         val pb = ProcessBuilder(
             "java",
+            "-Djava.security.manager",
+            "-Djava.security.policy==kex.policy",
             "-classpath", executionClassPath.joinToString(getPathSeparator()),
             executorKlass,
             "--classpath", ctx.classPath.joinToString(getPathSeparator()),
@@ -53,11 +55,10 @@ class SymbolicExternalTracingRunner(val ctx: ExecutionContext) {
         val process = pb.start()
         process.waitFor()
 
-//        if (process.exitValue() != 0)
-//            throw ExecutionException(process.errorStream.bufferedReader().readText())
-
-        return KexSerializer(ctx.cm).fromJson<ExecutionResult>(traceFile.readText()).also {
+        val result = KexSerializer(ctx.cm).fromJson<ExecutionResult>(traceFile.readText()).also {
             traceFile.deleteIfExists()
         }
+        log.debug("Execution result: $result")
+        return result
     }
 }

@@ -61,6 +61,8 @@ fun SlotTracker.parseValue(valueName: String): Value {
         valueName.matches(Regex("\"[\n\\s]*\"")) -> values.getString(valueName.substring(1, valueName.lastIndex))
         valueName.matches(Regex(".*(/.*)+.class")) -> values.getClass("L${valueName.removeSuffix(".class")};")
         valueName == "null" -> values.nullConstant
+        valueName == "true" -> values.trueConstant
+        valueName == "false" -> values.falseConstant
         else -> unreachable { log.error("Unknown value name $valueName for object cmp") }
     }
 }
