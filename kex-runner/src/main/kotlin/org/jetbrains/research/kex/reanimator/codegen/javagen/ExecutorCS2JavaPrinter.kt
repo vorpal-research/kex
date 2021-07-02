@@ -24,6 +24,7 @@ class ExecutorCS2JavaPrinter(
     private val testParams = mutableListOf<JavaBuilder.JavaClass.JavaField>()
     private lateinit var newInstance: JavaBuilder.JavaFunction
     private lateinit var setField: JavaBuilder.JavaFunction
+    private lateinit var setElement: JavaBuilder.JavaFunction
     private lateinit var callMethod: JavaBuilder.JavaFunction
 
     init {
@@ -35,6 +36,7 @@ class ExecutorCS2JavaPrinter(
             import("java.lang.Class")
             import("java.lang.reflect.Method")
             import("java.lang.reflect.Field")
+            import("java.lang.reflect.Array")
             import("sun.misc.Unsafe")
 
             with(klass) {
@@ -93,6 +95,18 @@ class ExecutorCS2JavaPrinter(
                     +"field.set(instance, value)"
                 }
 
+                setElement = method("setElement") {
+                    arguments += arg("array", type("Object[]"))
+                    arguments += arg("index", type("int"))
+                    arguments += arg("element", type("Object"))
+                    returnType = void
+                    visibility = Visibility.PRIVATE
+                    modifiers += "static"
+                    exceptions += "Throwable"
+
+                    +"Array.set(array, index, element)"
+                }
+
                 callMethod = method("callMethod") {
                     arguments += arg("instance", type("Object"))
                     arguments += arg("name", type("String"))
@@ -122,9 +136,6 @@ class ExecutorCS2JavaPrinter(
         callStacks: Parameters<CallStack>
     ) {
         cleanup()
-        if (method.name == "variables") {
-            val a = 10
-        }
 
         for (cs in callStacks.asList)
             resolveTypes(cs)
@@ -272,7 +283,7 @@ class ExecutorCS2JavaPrinter(
                 result += "$decl =$cast new $elementType[${descriptor.length}]${"[]".repeat(depth)}"
                 for ((index, element) in descriptor.elements) {
                     val elementName = printDescriptor(element, result)
-                    result += "$name[$index] = $elementName"
+                    result += "${setElement.name}($name, $index, $elementName)"
                 }
             }
             is ClassDescriptor -> {
