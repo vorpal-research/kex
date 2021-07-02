@@ -23,9 +23,11 @@ class ExecutorCS2JavaPrinter(
 ) : CallStack2JavaPrinter(ctx, packageName, klassName) {
     private val testParams = mutableListOf<JavaBuilder.JavaClass.JavaField>()
     private lateinit var newInstance: JavaBuilder.JavaFunction
+    private lateinit var getField: JavaBuilder.JavaFunction
     private lateinit var setField: JavaBuilder.JavaFunction
     private lateinit var setElement: JavaBuilder.JavaFunction
     private lateinit var callMethod: JavaBuilder.JavaFunction
+    private var klassCounter = 0
 
     init {
         initReflection()
@@ -66,7 +68,6 @@ class ExecutorCS2JavaPrinter(
 
                     +"Object instance = klass.cast(UNSAFE.allocateInstance(klass))"
                     +"return instance"
-//                    +"return klass.cast(UNSAFE.allocateInstance(klass))"
                 }
 
                 newInstance = method("newInstance") {
@@ -80,8 +81,33 @@ class ExecutorCS2JavaPrinter(
                     +"return newInstance(reflect)"
                 }
 
+                getField = method("getField") {
+                    arguments += arg("klass", type("Class<?>"))
+                    arguments += arg("name", type("String"))
+                    returnType = type("Field")
+                    visibility = Visibility.PRIVATE
+                    modifiers += "static"
+                    exceptions += "Throwable"
+
+                    +"Field result = null"
+                    +"Class<?> current = klass"
+                    aDo {
+                        aTry {
+                            +"result = current.getDeclaredField(name)"
+                        }.catch {
+                            exceptions += type("Throwable")
+                        }
+                        +"current = current.getSuperclass()"
+                    }.aWhile("current != null")
+                    anIf("result == null") {
+                        +"throw new NoSuchFieldException()"
+                    }
+                    +"return result"
+                }
+
                 setField = method("setField") {
                     arguments += arg("instance", type("Object"))
+                    arguments += arg("klass", type("Class<?>"))
                     arguments += arg("name", type("String"))
                     arguments += arg("value", type("Object"))
                     returnType = void
@@ -89,7 +115,7 @@ class ExecutorCS2JavaPrinter(
                     modifiers += "static"
                     exceptions += "Throwable"
 
-                    +"Field field = instance.getClass().getDeclaredField(name)"
+                    +"Field field = ${getField.name}(klass, name)"
                     +"field.setAccessible(true)"
                     +"field.set(instance, value)"
                 }
@@ -286,9 +312,12 @@ class ExecutorCS2JavaPrinter(
                 }
             }
             is ClassDescriptor -> {
+                val klass = (descriptor.type.getKfgType(ctx.types) as ClassType).klass
+                val klassVarName = "klassInstance${klassCounter++}"
+                result += "Class<?> $klassVarName = Class.forName(\"${klass.canonicalDesc}\")"
                 for ((field, element) in descriptor.fields) {
                     val fieldName = printDescriptor(element, result)
-                    result += "${setField.name}(null, \"${field.first}\", $fieldName)"
+                    result += "${setField.name}(null, $klassVarName, \"${field.first}\", $fieldName)"
                 }
             }
             is ObjectDescriptor -> {
@@ -300,7 +329,7 @@ class ExecutorCS2JavaPrinter(
                 result += "$decl =$cast ${newInstance.name}(\"${klass.canonicalDesc}\")"
                 for ((field, element) in descriptor.fields) {
                     val fieldName = printDescriptor(element, result)
-                    result += "${setField.name}($name, \"${field.first}\", $fieldName)"
+                    result += "${setField.name}($name, ${name}.getClass(), \"${field.first}\", $fieldName)"
                 }
             }
         }

@@ -41,63 +41,170 @@ class JavaBuilder(val pkg: String = "") {
     }
 
     interface JavaStatement : JavaCode
+    private object EmptyStatement : JavaStatement {
+        override fun print(level: Int) = ""
+    }
+
     data class StringStatement(val statement: String) : JavaStatement {
         override fun toString() = statement
         override fun print(level: Int): String = "${level.asOffset}$statement;"
     }
 
-    interface ControlStatement : JavaStatement
-    data class CatchStatement(
-        val exceptions: MutableList<Type> = mutableListOf(),
-        val catchStatements: MutableList<JavaStatement> = mutableListOf()
-    ) : ControlStatement {
+    interface ConditionalStatement : JavaStatement
+    data class StringConditionStatement(val statement: String) : ConditionalStatement {
+        override fun toString() = statement
+        override fun print(level: Int): String = statement
+    }
+
+    interface ControlStatement : JavaStatement {
+        val subStatements: MutableList<JavaStatement>
+
+        fun isEmpty() = subStatements.isEmpty()
+        fun isNotEmpty() = !isEmpty()
 
         operator fun String.unaryPlus() {
-            catchStatements += StringStatement(this)
+            subStatements += StringStatement(this)
         }
 
+        fun aDo(body: DoWhileStatement.() -> Unit): DoWhileStatement {
+            val doStatement = DoWhileStatement()
+            doStatement.body()
+            subStatements += doStatement
+            return doStatement
+        }
+
+        fun aTry(body: TryCatchStatement.() -> Unit): TryCatchStatement {
+            val tryStatement = TryCatchStatement()
+            tryStatement.body()
+            subStatements += tryStatement
+            return tryStatement
+        }
+
+        fun anIf(condition: String, body: IfElseStatement.() -> Unit) = anIf(StringConditionStatement(condition), body)
+
+        fun anIf(condition: ConditionalStatement, body: IfElseStatement.() -> Unit): IfElseStatement {
+            val ifStatement = IfElseStatement(condition = condition)
+            ifStatement.body()
+            subStatements += ifStatement
+            return ifStatement
+        }
+    }
+
+    interface ElseBlock : ControlStatement
+
+    data class ElseStatement(
+        override val subStatements: MutableList<JavaStatement> = mutableListOf(),
+    ) : ElseBlock {
         override fun print(level: Int) = buildString {
-            appendLine("${level.asOffset}catch (${exceptions.joinToString("|")} e) {")
-            catchStatements.forEach {
+            appendLine("${level.asOffset}else {")
+            subStatements.forEach {
+                appendLine(it.print(level + 1))
+            }
+            append("${level.asOffset}}")
+        }
+    }
+
+    data class ElseIfStatement(
+        override val subStatements: MutableList<JavaStatement> = mutableListOf(),
+        var condition: ConditionalStatement = StringConditionStatement(""),
+    ) : ElseBlock {
+        override fun print(level: Int) = buildString {
+            appendLine("${level.asOffset}else if (${condition.print(0)}) {")
+            subStatements.forEach {
+                appendLine(it.print(level + 1))
+            }
+            append("${level.asOffset}}")
+        }
+    }
+
+    data class IfElseStatement(
+        override val subStatements: MutableList<JavaStatement> = mutableListOf(),
+        var condition: ConditionalStatement = StringConditionStatement(""),
+        val elseBlocks: MutableList<ElseBlock> = mutableListOf()
+    ) : ControlStatement {
+        override fun print(level: Int) = buildString {
+            appendLine("${level.asOffset}if (${condition.print(0)}) {")
+            subStatements.forEach {
                 appendLine(it.print(level + 1))
             }
             appendLine("${level.asOffset}}")
+            elseBlocks.forEach {
+                appendLine(it.print(level))
+            }
+        }
+
+        fun anElse(body: ElseStatement.() -> Unit): IfElseStatement {
+            val elseBlock = ElseStatement()
+            elseBlock.body()
+            elseBlocks += elseBlock
+            return this
+        }
+
+        fun ifElse(condition: ConditionalStatement, body: ElseIfStatement.() -> Unit): IfElseStatement {
+            val elseBlock = ElseIfStatement(condition = condition)
+            elseBlock.body()
+            elseBlocks += elseBlock
+            return this
+        }
+
+        fun ifElse(condition: String, body: ElseIfStatement.() -> Unit) = ifElse(StringConditionStatement(condition), body)
+    }
+
+    data class DoWhileStatement(
+        override val subStatements: MutableList<JavaStatement> = mutableListOf(),
+        var condition: ConditionalStatement = StringConditionStatement("")
+    ) : ControlStatement {
+        override fun print(level: Int) = buildString {
+            appendLine("${level.asOffset}do {")
+            subStatements.forEach {
+                appendLine(it.print(level + 1))
+            }
+            appendLine("${level.asOffset}} while (${condition.print(0)});")
+        }
+
+        fun aWhile(condition: ConditionalStatement) {
+            this.condition = condition
+        }
+
+        fun aWhile(condition: String) {
+            this.condition = StringConditionStatement(condition)
+        }
+    }
+
+    data class CatchStatement(
+        val exceptions: MutableList<Type> = mutableListOf(),
+        override val subStatements: MutableList<JavaStatement> = mutableListOf()
+    ) : ControlStatement {
+        override fun print(level: Int) = buildString {
+            appendLine("${level.asOffset}catch (${exceptions.joinToString("|")} e) {")
+            subStatements.forEach {
+                appendLine(it.print(level + 1))
+            }
+            append("${level.asOffset}}")
         }
     }
 
     data class FinallyStatement(
-        val statements: MutableList<JavaStatement> = mutableListOf()
+        override val subStatements: MutableList<JavaStatement> = mutableListOf()
     ) : ControlStatement {
-
-        operator fun String.unaryPlus() {
-            statements += StringStatement(this)
-        }
-
         override fun print(level: Int) = buildString {
             appendLine("${level.asOffset}finally {")
-            statements.forEach {
+            subStatements.forEach {
                 appendLine(it.print(level + 1))
             }
-            appendLine("${level.asOffset}}")
+            append("${level.asOffset}}")
         }
-
-        fun isEmpty() = statements.isEmpty()
-        fun isNotEmpty() = !isEmpty()
     }
 
     data class TryCatchStatement(
-        val tryStatements: MutableList<JavaStatement> = mutableListOf(),
+        override val subStatements: MutableList<JavaStatement> = mutableListOf(),
         val catchBlocks: MutableList<CatchStatement> = mutableListOf(),
         val finallyBlock: FinallyStatement = FinallyStatement()
     ) : ControlStatement {
 
-        operator fun String.unaryPlus() {
-            tryStatements += StringStatement(this)
-        }
-
         override fun print(level: Int) = buildString {
             appendLine("${level.asOffset} try {")
-            tryStatements.forEach {
+            subStatements.forEach {
                 appendLine(it.print(level + 1))
             }
             appendLine("${level.asOffset}}")
@@ -121,12 +228,12 @@ class JavaBuilder(val pkg: String = "") {
 
     }
 
-    open class JavaFunction(val name: String, val typeArgs: List<Type> = listOf()) : JavaCode {
+    open class JavaFunction(val name: String, val typeArgs: List<Type> = listOf()) : ControlStatement {
         lateinit var returnType: Type
         var visibility = Visibility.PUBLIC
         val modifiers = mutableListOf<String>()
         val arguments = mutableListOf<JavaArgument>()
-        val statements = mutableListOf<JavaStatement>()
+        override val subStatements = mutableListOf<JavaStatement>()
         val annotations = mutableListOf<String>()
         val exceptions = mutableListOf<String>()
 
@@ -142,23 +249,12 @@ class JavaBuilder(val pkg: String = "") {
             override fun toString() = "$type $name"
         }
 
-        operator fun String.unaryPlus() {
-            statements += StringStatement(this)
-        }
-
         fun statement(statement: String) {
-            statements += StringStatement(statement)
+            subStatements += StringStatement(statement)
         }
 
         fun body(body: String) {
-            statements.addAll(body.split("\n").map { StringStatement(it) })
-        }
-
-        fun aTry(body: TryCatchStatement.() -> Unit): TryCatchStatement {
-            val tryStatement = TryCatchStatement()
-            tryStatement.body()
-            statements += tryStatement
-            return tryStatement
+            subStatements.addAll(body.split("\n").map { StringStatement(it) })
         }
 
         override fun toString() = print(0)
@@ -173,7 +269,7 @@ class JavaBuilder(val pkg: String = "") {
             }
             appendLine(" {")
             val innerLevel = level + 1
-            for (statement in statements) {
+            for (statement in subStatements) {
                 appendLine(statement.print(innerLevel))
             }
             appendLine("${level.asOffset}}")
@@ -192,7 +288,7 @@ class JavaBuilder(val pkg: String = "") {
         override fun print(level: Int): String = buildString {
             appendLine("${level.asOffset}static {")
             val innerLevel = level + 1
-            for (statement in statements) {
+            for (statement in subStatements) {
                 appendLine(statement.print(innerLevel))
             }
             appendLine("${level.asOffset}}")

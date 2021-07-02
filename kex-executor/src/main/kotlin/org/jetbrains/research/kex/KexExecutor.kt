@@ -6,8 +6,11 @@ import org.jetbrains.research.kex.config.ExecutorCmdConfig
 import org.jetbrains.research.kex.config.FileConfig
 import org.jetbrains.research.kex.config.RuntimeConfig
 import org.jetbrains.research.kex.config.kexConfig
+import org.jetbrains.research.kex.descriptor.descriptor
 import org.jetbrains.research.kex.random.easyrandom.EasyRandomDriver
 import org.jetbrains.research.kex.serialization.KexSerializer
+import org.jetbrains.research.kex.trace.symbolic.ExceptionResult
+import org.jetbrains.research.kex.trace.symbolic.SuccessResult
 import org.jetbrains.research.kex.trace.symbolic.TraceCollectorProxy
 import org.jetbrains.research.kex.util.getPathSeparator
 import org.jetbrains.research.kfg.ClassManager
@@ -67,6 +70,7 @@ class KexExecutor(args: Array<String>) {
             EasyRandomDriver(),
             containers.map { it.path }
         )
+        val serializer = KexSerializer(ctx.cm)
 
         val klass = cmd.getCmdValue("class")!!
         val setupMethod = cmd.getCmdValue("setup")!!
@@ -79,17 +83,24 @@ class KexExecutor(args: Array<String>) {
             val setup = javaClass.getMethod(setupMethod)
             setup.invoke(instance)
         } catch (e: Throwable) {
-            log.error("Could not initialize test")
+            exitProcess(1)
         }
 
         val collector = TraceCollectorProxy.enableCollector(ctx)
+        var exception: Throwable? = null
         try {
             val test = javaClass.getMethod(testMethod)
             test.invoke(instance)
+        } catch (e: Throwable) {
+            exception = e
         } finally {
             TraceCollectorProxy.disableCollector()
             log.debug("Collected state: ${collector.symbolicState}")
-            val jsonString = KexSerializer(ctx.cm).toJson(collector.symbolicState)
+            val result = when {
+                exception != null -> ExceptionResult(exception.descriptor, collector.symbolicState)
+                else -> SuccessResult(collector.symbolicState)
+            }
+            val jsonString = serializer.toJson(result)
             output.toFile().writeText(jsonString)
         }
     }

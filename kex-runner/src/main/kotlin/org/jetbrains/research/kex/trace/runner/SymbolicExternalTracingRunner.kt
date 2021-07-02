@@ -5,14 +5,15 @@ import kotlinx.serialization.InternalSerializationApi
 import org.jetbrains.research.kex.ExecutionContext
 import org.jetbrains.research.kex.config.kexConfig
 import org.jetbrains.research.kex.serialization.KexSerializer
-import org.jetbrains.research.kex.trace.symbolic.SymbolicState
+import org.jetbrains.research.kex.trace.symbolic.ExecutionResult
 import org.jetbrains.research.kex.util.getPathSeparator
 import org.jetbrains.research.kthelper.KtException
 import org.jetbrains.research.kthelper.logging.log
 import java.nio.file.Paths
+import kotlin.io.path.deleteIfExists
 import kotlin.io.path.readText
 
-class ExecutionException(message: String) : KtException(message)
+class ExecutionException(cause: Throwable) : KtException("", cause)
 
 class SymbolicExternalTracingRunner(val ctx: ExecutionContext) {
     private val outputDir = kexConfig.getPathValue("kex", "outputDir")!!
@@ -35,8 +36,9 @@ class SymbolicExternalTracingRunner(val ctx: ExecutionContext) {
 
     @ExperimentalSerializationApi
     @InternalSerializationApi
-    fun run(klass: String, setup: String, test: String): SymbolicState {
-        val pb = ProcessBuilder("java",
+    fun run(klass: String, setup: String, test: String): ExecutionResult {
+        val pb = ProcessBuilder(
+            "java",
             "-classpath", executionClassPath.joinToString(getPathSeparator()),
             executorKlass,
             "--classpath", ctx.classPath.joinToString(getPathSeparator()),
@@ -51,9 +53,11 @@ class SymbolicExternalTracingRunner(val ctx: ExecutionContext) {
         val process = pb.start()
         process.waitFor()
 
-        if (process.exitValue() != 0)
-            throw ExecutionException(process.errorStream.bufferedReader().readText())
+//        if (process.exitValue() != 0)
+//            throw ExecutionException(process.errorStream.bufferedReader().readText())
 
-        return KexSerializer(ctx.cm).fromJson(traceFile.readText())
+        return KexSerializer(ctx.cm).fromJson<ExecutionResult>(traceFile.readText()).also {
+            traceFile.deleteIfExists()
+        }
     }
 }

@@ -87,15 +87,15 @@ class InstructionConcolicChecker(
         processMethod(method)
     }
 
-    private fun getRandomTrace(method: Method): SymbolicState? = tryOrNull {
+    private fun getRandomTrace(method: Method): ExecutionResult? = tryOrNull {
         val params = ctx.random.generateParameters(ctx.loader, method) ?: return null
         collectTraceFromAny(method, params)
     }
 
-    private fun collectTraceFromAny(method: Method, parameters: Parameters<Any?>): SymbolicState? =
+    private fun collectTraceFromAny(method: Method, parameters: Parameters<Any?>): ExecutionResult? =
         collectTrace(method, parameters.asDescriptors)
 
-    private fun collectTrace(method: Method, parameters: Parameters<Descriptor>): SymbolicState? = tryOrNull {
+    private fun collectTrace(method: Method, parameters: Parameters<Descriptor>): ExecutionResult? = tryOrNull {
         val generator = ExecutionGenerator(ctx, method)
         generator.generate(parameters)
         val testFile = generator.emit()
@@ -104,7 +104,7 @@ class InstructionConcolicChecker(
         collectTrace(generator.testKlassName)
     }
 
-    private fun collectTrace(klassName: String): SymbolicState {
+    private fun collectTrace(klassName: String): ExecutionResult {
         val runner = SymbolicExternalTracingRunner(ctx)
         return runner.run(klassName, ExecutorTestCasePrinter.SETUP_METHOD, ExecutorTestCasePrinter.TEST_METHOD)
     }
@@ -195,14 +195,14 @@ class InstructionConcolicChecker(
         else -> null
     }
 
-    private fun mutateState(state: SymbolicState): SymbolicState? {
-        val predicateState = state.state as BasicState
-        val mutatedPathCondition = state.path.toMutableList()
+    private fun mutateState(state: ExecutionResult): SymbolicState? {
+        val predicateState = state.trace.state as BasicState
+        val mutatedPathCondition = state.trace.path.toMutableList()
         var dropping = false
         var clause: Clause? = null
         val newState = predicateState.dropLastWhile {
             if (it.type is PredicateType.Path) {
-                val instruction = state[it]
+                val instruction = state.trace[it]
                 val reversed = Clause(instruction, it).reversed()
                 if (reversed != null) {
                     clause = reversed
@@ -223,7 +223,7 @@ class InstructionConcolicChecker(
         if (clause == null) return null
 
         val mutatedState = newState.dropLast(1) + clause!!.predicate
-        val mutatedValueMap = state.concreteValueMap.toMutableMap()
+        val mutatedValueMap = state.trace.concreteValueMap.toMutableMap()
         candidates += PathConditionImpl(mutatedPathCondition)
         clause!!.predicate.operands.forEach {
             mutatedValueMap.remove(it)
@@ -233,8 +233,8 @@ class InstructionConcolicChecker(
             mutatedState,
             PathConditionImpl(mutatedPathCondition),
             mutatedValueMap,
-            state.termMap,
-            state.predicateMap,
+            state.trace.termMap,
+            state.trace.predicateMap,
             InstructionTrace()
         )
     }
@@ -251,7 +251,7 @@ class InstructionConcolicChecker(
         +FieldNormalizer(method.cm)
     }
 
-    private fun check(method: Method, state: SymbolicState): SymbolicState? {
+    private fun check(method: Method, state: SymbolicState): ExecutionResult? {
         val checker = Checker(method, ctx, PredicateStateAnalysis(cm))
         val preparedState = prepareState(method, state.state)
         val result = checker.check(preparedState, state.state.path)
@@ -265,11 +265,11 @@ class InstructionConcolicChecker(
     }
 
     private fun processMethod(method: Method) {
-        val stateDeque = dequeOf<SymbolicState>()
+        val stateDeque = dequeOf<ExecutionResult>()
         getRandomTrace(method)?.let {
             stateDeque += it
-            paths += it.path
-            traceManager.addTrace(method, it.trace)
+            paths += it.trace.path
+            traceManager.addTrace(method, it.trace.trace)
         }
         while (stateDeque.isNotEmpty() && !traceManager.isFullCovered(method)) {
             val state = stateDeque.pollFirst()
@@ -279,17 +279,17 @@ class InstructionConcolicChecker(
             log.debug("Mutated state: $mutatedState")
 
             val newState = check(method, mutatedState) ?: continue
-            if (newState.isEmpty()) {
+            if (newState.trace.isEmpty()) {
                 log.warn("Collected empty state from $mutatedState")
                 continue
             }
-            if (newState.path !in paths) {
+            if (newState.trace.path !in paths) {
                 log.debug("New state: $newState")
 
                 stateDeque += newState
-                paths += newState.path
+                paths += newState.trace.path
             }
-            traceManager.addTrace(method, newState.trace)
+            traceManager.addTrace(method, newState.trace.trace)
         }
     }
 
