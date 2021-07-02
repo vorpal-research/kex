@@ -8,8 +8,10 @@ import org.jetbrains.research.kex.asm.manager.isImpactable
 import org.jetbrains.research.kex.asm.state.PredicateStateAnalysis
 import org.jetbrains.research.kex.compile.JavaCompilerDriver
 import org.jetbrains.research.kex.config.kexConfig
+import org.jetbrains.research.kex.descriptor.Descriptor
 import org.jetbrains.research.kex.parameters.Parameters
 import org.jetbrains.research.kex.parameters.asDescriptors
+import org.jetbrains.research.kex.parameters.concreteParameters
 import org.jetbrains.research.kex.reanimator.ExecutionGenerator
 import org.jetbrains.research.kex.reanimator.codegen.ExecutorTestCasePrinter
 import org.jetbrains.research.kex.smt.Checker
@@ -87,12 +89,15 @@ class InstructionConcolicChecker(
 
     private fun getRandomTrace(method: Method): SymbolicState? = tryOrNull {
         val params = ctx.random.generateParameters(ctx.loader, method) ?: return null
-        collectTrace(method, params)
+        collectTraceFromAny(method, params)
     }
 
-    private fun collectTrace(method: Method, parameters: Parameters<Any?>): SymbolicState? = tryOrNull {
+    private fun collectTraceFromAny(method: Method, parameters: Parameters<Any?>): SymbolicState? =
+        collectTrace(method, parameters.asDescriptors)
+
+    private fun collectTrace(method: Method, parameters: Parameters<Descriptor>): SymbolicState? = tryOrNull {
         val generator = ExecutionGenerator(ctx, method)
-        generator.generate(parameters.asDescriptors)
+        generator.generate(parameters)
         val testFile = generator.emit()
 
         compilerHelper.compileFile(testFile)
@@ -253,12 +258,9 @@ class InstructionConcolicChecker(
         if (result !is Result.SatResult) return null
 
         return tryOrNull {
-            val generator = ExecutionGenerator(ctx, method)
-            generator.generate(checker.state, result.model)
-            val testFile = generator.emit()
-
-            compilerHelper.compileFile(testFile)
-            collectTrace(generator.testKlassName)
+            val params = generateFinalDescriptors(method, ctx, result.model, checker.state)
+                .concreteParameters(ctx.cm)
+            collectTrace(method, params)
         }
     }
 
@@ -277,7 +279,10 @@ class InstructionConcolicChecker(
             log.debug("Mutated state: $mutatedState")
 
             val newState = check(method, mutatedState) ?: continue
-            if (newState.isEmpty()) continue
+            if (newState.isEmpty()) {
+                log.warn("Collected empty state from $mutatedState")
+                continue
+            }
             if (newState.path !in paths) {
                 log.debug("New state: $newState")
 

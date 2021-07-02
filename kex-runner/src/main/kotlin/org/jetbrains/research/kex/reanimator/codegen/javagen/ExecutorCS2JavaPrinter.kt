@@ -65,7 +65,6 @@ class ExecutorCS2JavaPrinter(
                     exceptions += "Throwable"
 
                     +"Object instance = klass.cast(UNSAFE.allocateInstance(klass))"
-                    +"System.out.println(instance)"
                     +"return instance"
 //                    +"return klass.cast(UNSAFE.allocateInstance(klass))"
                 }

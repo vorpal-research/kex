@@ -51,7 +51,8 @@ class SymbolicExternalTracingRunner(val ctx: ExecutionContext) {
         val process = pb.start()
         process.waitFor()
 
-        if (process.exitValue() != 0) throw ExecutionException(process.errorStream.toString())
+        if (process.exitValue() != 0)
+            throw ExecutionException(process.errorStream.bufferedReader().readText())
 
         return KexSerializer(ctx.cm).fromJson(traceFile.readText())
     }
