@@ -50,7 +50,7 @@ class SymbolicExternalTracingRunner(val ctx: ExecutionContext) {
             "--test", test,
             "--output", "$traceFile"
         )
-        log.debug("Executing process with command ${pb.command().joinToString(" ")}")
+        log.debug("Executing process with command:\n${pb.command().joinToString(" ")}")
 
         val process = pb.start()
         process.waitFor()
