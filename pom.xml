@@ -31,7 +31,7 @@
         <compiler-plugin.version>3.5.1</compiler-plugin.version>
 
         <kt-helper.version>0.0.10</kt-helper.version>
-        <kfg.version>0.0.12-1</kfg.version>
+        <kfg.version>0.0.13</kfg.version>
 
         <klaxon.version>5.5</klaxon.version>
 
