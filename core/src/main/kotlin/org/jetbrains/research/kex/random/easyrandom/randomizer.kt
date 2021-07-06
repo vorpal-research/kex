@@ -228,8 +228,9 @@ class MapRandomizer<K, V>(
         val collection: () -> MutableMap<K, V>,
         val keyRandomizer: Randomizer<K>,
         val valueRandomizer: Randomizer<V>,
-        val nbElements: Int = randomInt
+        numElements: Int = randomInt
 ) : Randomizer<Map<K, V>> {
+    private val nbElements: Int = numElements `in` CollectionRandomizer.collectionSizeRange
 
     val randomKey: K
         get() = keyRandomizer.randomValue

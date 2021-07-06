@@ -144,7 +144,7 @@ private class EmptyTraceCollector : InstructionTraceCollector {
 
 object TraceCollectorProxy {
     private lateinit var ctx: ExecutionContext
-    private lateinit var collector: InstructionTraceCollector
+    private var collector: InstructionTraceCollector = EmptyTraceCollector()
 
     @JvmStatic
     fun enableCollector(ctx: ExecutionContext): InstructionTraceCollector {

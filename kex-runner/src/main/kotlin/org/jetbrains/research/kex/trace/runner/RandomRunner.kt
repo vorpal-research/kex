@@ -40,7 +40,7 @@ fun Randomizer.generateParameters(method: Constructor<*>): Parameters<Any?>? = t
 fun Randomizer.generateParameters(loader: ClassLoader, method: KfgMethod): Parameters<Any?>? {
     val klass = loader.loadClass(method.klass)
     return when {
-        method.isConstructor -> generateParameters(javaClass.getConstructor(method, loader))
+        method.isConstructor -> generateParameters(klass.getConstructor(method, loader))
         else -> generateParameters(klass, klass.getMethod(method, loader))
     }
 }
