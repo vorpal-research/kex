@@ -5,12 +5,15 @@ import kotlinx.serialization.InternalSerializationApi
 import kotlinx.serialization.modules.SerializersModule
 import kotlinx.serialization.modules.polymorphic
 import kotlinx.serialization.serializer
+import org.jetbrains.research.kex.descriptor.*
 import org.jetbrains.research.kex.ktype.KexType
 import org.jetbrains.research.kex.state.PredicateState
 import org.jetbrains.research.kex.state.predicate.Predicate
 import org.jetbrains.research.kex.state.predicate.PredicateType
 import org.jetbrains.research.kex.state.term.Term
+import org.jetbrains.research.kex.trace.symbolic.*
 import org.jetbrains.research.kfg.ClassManager
+import org.jetbrains.research.kfg.ir.Method
 import kotlin.reflect.KClass
 
 @InternalSerializationApi
@@ -74,4 +77,54 @@ fun getPredicateStateSerialModule(cm: ClassManager): SerializersModule = Seriali
             subclass(any, any.serializer())
         }
     }
+}
+
+@ExperimentalSerializationApi
+@InternalSerializationApi
+fun getDescriptorSerialModule(): SerializersModule = SerializersModule {
+    val descriptorSerializer = DescriptorSerializer()
+    contextual(Descriptor::class, descriptorSerializer)
+    contextual(ConstantDescriptor::class, descriptorSerializer.to())
+    contextual(ConstantDescriptor.Null::class, descriptorSerializer.to())
+    contextual(ConstantDescriptor.Bool::class, descriptorSerializer.to())
+    contextual(ConstantDescriptor.Byte::class, descriptorSerializer.to())
+    contextual(ConstantDescriptor.Char::class, descriptorSerializer.to())
+    contextual(ConstantDescriptor.Short::class, descriptorSerializer.to())
+    contextual(ConstantDescriptor.Int::class, descriptorSerializer.to())
+    contextual(ConstantDescriptor.Long::class, descriptorSerializer.to())
+    contextual(ConstantDescriptor.Float::class, descriptorSerializer.to())
+    contextual(ConstantDescriptor.Double::class, descriptorSerializer.to())
+    contextual(FieldContainingDescriptor::class, descriptorSerializer.to())
+    contextual(ObjectDescriptor::class, descriptorSerializer.to())
+    contextual(ClassDescriptor::class, descriptorSerializer.to())
+    contextual(ArrayDescriptor::class, descriptorSerializer.to())
+}
+
+@ExperimentalSerializationApi
+@InternalSerializationApi
+fun getSymbolicStateSerialModule(): SerializersModule = SerializersModule {
+    polymorphic(PathCondition::class) {
+        subclass(PathConditionImpl::class, PathConditionImpl.serializer())
+    }
+    polymorphic(SymbolicState::class) {
+        subclass(SymbolicStateImpl::class, SymbolicStateImpl.serializer())
+    }
+}
+
+@ExperimentalSerializationApi
+@InternalSerializationApi
+fun getPreSymbolicSerialModule(cm: ClassManager): SerializersModule = SerializersModule {
+    val base = getPredicateStateSerialModule(cm)
+    include(base)
+    include(getDescriptorSerialModule())
+    contextual(WrappedValue::class, WrappedValueSerializer(
+        base.getContextual(Method::class)!!
+    ))
+}
+
+@ExperimentalSerializationApi
+@InternalSerializationApi
+fun getKexSerialModule(cm: ClassManager): SerializersModule = SerializersModule {
+    include(getPreSymbolicSerialModule(cm))
+    include(getSymbolicStateSerialModule())
 }

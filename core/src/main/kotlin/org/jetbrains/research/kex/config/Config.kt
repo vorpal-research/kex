@@ -1,5 +1,7 @@
 package org.jetbrains.research.kex.config
 
+import java.nio.file.Path
+import java.nio.file.Paths
 import java.util.regex.Pattern
 
 abstract class Config {
@@ -56,4 +58,9 @@ abstract class Config {
 
     inline fun <reified T : Enum<T>> getEnumValue(section: String, name: String, ignoreCase: Boolean = false, default: T): T =
             getEnumValue<T>(section, name, ignoreCase) ?: default
+
+    open fun getPathValue(section: String, name: String): Path? = getStringValue(section, name)?.let { Paths.get(it) }
+    open fun getPathValue(section: String, name: String, default: String): Path = getStringValue(section, name, default).let { Paths.get(it) }
+    open fun getPathValue(section: String, name: String, default: Path): Path = getStringValue(section, name)?.let { Paths.get(it) } ?: default
+    open fun getPathValue(section: String, name: String, default: () -> Path): Path = getStringValue(section, name)?.let { Paths.get(it) } ?: default()
 }

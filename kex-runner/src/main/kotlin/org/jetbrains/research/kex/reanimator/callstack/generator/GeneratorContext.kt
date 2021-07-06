@@ -6,18 +6,17 @@ import org.jetbrains.research.kex.asm.state.PredicateStateAnalysis
 import org.jetbrains.research.kex.asm.util.Visibility
 import org.jetbrains.research.kex.asm.util.visibility
 import org.jetbrains.research.kex.config.kexConfig
-import org.jetbrains.research.kex.ktype.KexType
-import org.jetbrains.research.kex.ktype.kexType
-import org.jetbrains.research.kex.ktype.type
-import org.jetbrains.research.kex.reanimator.Parameters
+import org.jetbrains.research.kex.descriptor.*
+import org.jetbrains.research.kex.ktype.*
+import org.jetbrains.research.kex.parameters.Parameters
 import org.jetbrains.research.kex.reanimator.callstack.ApiCall
 import org.jetbrains.research.kex.reanimator.callstack.CallStack
 import org.jetbrains.research.kex.reanimator.collector.externalCtors
-import org.jetbrains.research.kex.reanimator.descriptor.*
 import org.jetbrains.research.kex.smt.Checker
 import org.jetbrains.research.kex.smt.Result
 import org.jetbrains.research.kex.state.PredicateState
 import org.jetbrains.research.kex.state.StateBuilder
+import org.jetbrains.research.kex.state.basic
 import org.jetbrains.research.kex.state.predicate.axiom
 import org.jetbrains.research.kex.state.predicate.state
 import org.jetbrains.research.kex.state.term.Term
@@ -26,6 +25,7 @@ import org.jetbrains.research.kex.state.transformer.*
 import org.jetbrains.research.kfg.ir.Class
 import org.jetbrains.research.kfg.ir.Field
 import org.jetbrains.research.kfg.ir.Method
+import org.jetbrains.research.kthelper.assert.unreachable
 import org.jetbrains.research.kthelper.logging.log
 
 class GeneratorContext(
@@ -134,7 +134,7 @@ class GeneratorContext(
     private val Method.argTypeInfo
         get() = this.parameters.associate {
             val type = it.type.kexType
-            term { arg(type, it.index) } to type.concretize(cm)
+            term { arg(type, it.index) } to type.concrete(cm)
         }
 
     fun Method.executeAsConstructor(descriptor: ObjectDescriptor): Parameters<Descriptor>? {
@@ -377,21 +377,18 @@ class GeneratorContext(
     val List<ApiCall>.isComplete get() = CallStack("", this.toMutableList()).isComplete
 
     private val ObjectDescriptor.preState: PredicateState
-        get() {
-            val preState = StateBuilder()
+        get() = basic {
             for ((field, _) in fields) {
                 val fieldTerm = term { term.field(field.second, field.first) }
-                preState += axiom { fieldTerm.initialize(field.second.defaultValue) }
-                preState += axiom { field.second.defaultValue equality fieldTerm.load()  }
+                axiom { fieldTerm.initialize(field.second.defaultValue) }
+                axiom { field.second.defaultValue equality fieldTerm.load()  }
             }
-
-            return preState.apply()
         }
 
     private val ObjectDescriptor.mapper get() = TermRemapper(mapOf(term to term { `this`(term.type) }))
 
     infix fun <T : FieldContainingDescriptor<T>> Pair<String, KexType>.notIn(descriptor: T) =
-        this !in descriptor.fields || descriptor[this] == second.defaultDescriptor
+        this !in descriptor.fields || (descriptor[this]!! eq second.defaultDescriptor)
 
     fun <T : FieldContainingDescriptor<T>> T?.isFinal(original: T) =
         when {
@@ -403,5 +400,20 @@ class GeneratorContext(
     val KexType.defaultDescriptor: Descriptor
         get() = descriptor { default(this@defaultDescriptor) }
 
-    val KexType.defaultValue: Term get() = defaultDescriptor.term
+    val KexType.defaultValue: Term get() = term {
+        when (this@defaultValue) {
+            is KexBool -> const(false)
+            is KexByte -> const(0.toByte())
+            is KexChar -> const(0.toChar())
+            is KexShort -> const(0.toShort())
+            is KexInt -> const(0)
+            is KexLong -> const(0L)
+            is KexFloat -> const(0.0F)
+            is KexDouble -> const(0.0)
+            is KexClass -> const(null)
+            is KexArray -> const(null)
+            is KexReference -> reference.defaultValue
+            else -> unreachable { log.error("Could not generate default descriptor value for unknown type $this") }
+        }
+    }
 }

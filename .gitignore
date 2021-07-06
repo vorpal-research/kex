@@ -10,3 +10,5 @@ fails/*
 tests/*
 **/target/*
 **/*.json
+**/kex-output*/*
+**/temp*/*

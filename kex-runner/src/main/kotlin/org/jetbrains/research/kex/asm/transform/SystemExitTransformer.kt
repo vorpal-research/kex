@@ -26,13 +26,14 @@ class SystemExitTransformer(override val cm: ClassManager) : MethodVisitor {
                 val exception = cm.instruction.getNew(exceptionClass.type)
                 +exception
 
-                +cm.instruction.getCall(CallOpcode.Special(), exceptionConstructor, exceptionClass,
+                +cm.instruction.getCall(CallOpcode.SPECIAL, exceptionConstructor, exceptionClass,
                         exception, inst.args.toTypedArray(), false)
                 +cm.instruction.getThrow(exception)
             }
 
             inst.parent.insertBefore(inst, *newInsts.toTypedArray())
             inst.parent.remove(inst)
+            inst.clearUses()
         }
     }
 }

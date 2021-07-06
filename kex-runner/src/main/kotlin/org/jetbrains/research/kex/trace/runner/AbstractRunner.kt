@@ -1,6 +1,7 @@
 package org.jetbrains.research.kex.trace.runner
 
 import org.jetbrains.research.kex.config.kexConfig
+import org.jetbrains.research.kex.parameters.Parameters
 import org.jetbrains.research.kex.util.getConstructor
 import org.jetbrains.research.kex.util.getMethod
 import org.jetbrains.research.kfg.ir.Method
@@ -141,7 +142,24 @@ abstract class AbstractRunner(val method: Method, protected val loader: ClassLoa
 
 abstract class TracingAbstractRunner<T>(method: Method, loader: ClassLoader)
     : AbstractRunner(method, loader) {
-    abstract fun collectTrace(instance: Any?, args: Array<Any?>): T
+    abstract fun generateArguments(): Parameters<Any?>?
+    abstract fun enableCollector()
+    abstract fun disableCollector()
+    abstract fun collectTrace(invocationResult: InvocationResult): T
+
+    open fun run(): T? {
+        val (instance, args) = generateArguments() ?: return null
+        if (!method.isStatic && !method.isConstructor && instance == null) {
+            log.error("Cannot generate parameters to invoke method $method")
+            return null
+        }
+
+        enableCollector()
+        val invocationResult = run(instance, args.toTypedArray())
+        disableCollector()
+
+        return collectTrace(invocationResult)
+    }
 }
 
 class DefaultRunner(method: Method, loader: ClassLoader) : AbstractRunner(method, loader)

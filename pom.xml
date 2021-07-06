@@ -14,6 +14,7 @@
         <module>kex-annotation-processor</module>
         <module>kex-test</module>
         <module>kex-runner</module>
+        <module>kex-executor</module>
     </modules>
 
     <properties>
@@ -24,14 +25,19 @@
         <maven.compiler.target>${jvm.version}</maven.compiler.target>
 
         <kotlin.version>1.5.0</kotlin.version>
+        <kotlin.code.style>official</kotlin.code.style>
         <serialization.version>1.2.1</serialization.version>
         <coroutines.version>1.5.0-RC</coroutines.version>
         <compiler-plugin.version>3.5.1</compiler-plugin.version>
 
         <kt-helper.version>0.0.10</kt-helper.version>
-        <kfg.version>0.0.12</kfg.version>
+        <kfg.version>0.0.12-1</kfg.version>
 
         <klaxon.version>5.5</klaxon.version>
+
+        <logback.version>1.2.3</logback.version>
+        <slf4j.version>1.7.25</slf4j.version>
+        <commons-cli.version>1.4</commons-cli.version>
     </properties>
 
     <repositories>
@@ -50,7 +56,7 @@
     <dependencies>
         <dependency>
             <groupId>org.jetbrains.kotlin</groupId>
-            <artifactId>kotlin-stdlib</artifactId>
+            <artifactId>kotlin-stdlib-jdk8</artifactId>
             <version>${kotlin.version}</version>
         </dependency>
         <dependency>

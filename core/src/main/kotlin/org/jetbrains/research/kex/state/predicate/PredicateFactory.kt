@@ -61,6 +61,12 @@ object PredicateFactory {
 
     fun getThrow(throwable: Term, type: PredicateType = PredicateType.State(), location: Location = Location()) =
             ThrowPredicate(throwable, type, location)
+
+    fun getEnterMonitor(monitor: Term, type: PredicateType = PredicateType.State(), location: Location = Location()) =
+        EnterMonitorPredicate(monitor, type, location)
+
+    fun getExitMonitor(monitor: Term, type: PredicateType = PredicateType.State(), location: Location = Location()) =
+        ExitMonitorPredicate(monitor, type, location)
 }
 
 abstract class PredicateBuilder : TermBuilder() {
@@ -89,6 +95,9 @@ abstract class PredicateBuilder : TermBuilder() {
     fun catch(throwable: Term) = pf.getCatch(throwable, this@PredicateBuilder.type, location)
     fun `throw`(throwable: Term) = pf.getThrow(throwable, this@PredicateBuilder.type, location)
 
+    fun enterMonitor(monitor: Term): Predicate = pf.getEnterMonitor(monitor, this@PredicateBuilder.type, location)
+    fun exitMonitor(monitor: Term): Predicate = pf.getExitMonitor(monitor, this@PredicateBuilder.type, location)
+
     @Suppress("FunctionName")
     infix fun Term.`!in`(cases: List<Term>) = pf.getDefaultSwitchPredicate(this, cases, this@PredicateBuilder.type, location)
 
@@ -98,6 +107,8 @@ abstract class PredicateBuilder : TermBuilder() {
             pf.getEquality(this, tf.getNull(), this@PredicateBuilder.type, location)
     infix fun <T : Number> Term.equality(rhv: T) =
             pf.getEquality(this, const(rhv), this@PredicateBuilder.type, location)
+    infix fun Term.equality(rhv: Char) =
+        pf.getEquality(this, const(rhv), this@PredicateBuilder.type, location)
     infix fun Nothing?.equality(other: Term) =
             pf.getEquality(tf.getNull(), other, this@PredicateBuilder.type, location)
     infix fun Term.equality(other: Boolean) =

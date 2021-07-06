@@ -2,7 +2,7 @@ package org.jetbrains.research.kex
 
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.InternalSerializationApi
-import org.jetbrains.research.kex.asm.analysis.concolic.ConcolicChecker
+import org.jetbrains.research.kex.asm.analysis.concolic.InstructionConcolicChecker
 import org.jetbrains.research.kex.asm.analysis.defect.CallCiteChecker
 import org.jetbrains.research.kex.asm.analysis.defect.DefectChecker
 import org.jetbrains.research.kex.asm.analysis.defect.DefectManager
@@ -11,15 +11,13 @@ import org.jetbrains.research.kex.asm.analysis.testgen.Failure
 import org.jetbrains.research.kex.asm.analysis.testgen.MethodChecker
 import org.jetbrains.research.kex.asm.analysis.testgen.RandomChecker
 import org.jetbrains.research.kex.asm.manager.CoverageCounter
+import org.jetbrains.research.kex.asm.manager.OriginalMapper
 import org.jetbrains.research.kex.asm.state.PredicateStateAnalysis
-import org.jetbrains.research.kex.asm.transform.BranchAdapter
-import org.jetbrains.research.kex.asm.transform.LoopDeroller
-import org.jetbrains.research.kex.asm.transform.RuntimeTraceCollector
-import org.jetbrains.research.kex.asm.transform.SystemExitTransformer
+import org.jetbrains.research.kex.asm.transform.*
 import org.jetbrains.research.kex.asm.util.ClassWriter
 import org.jetbrains.research.kex.asm.util.Visibility
-import org.jetbrains.research.kex.config.CmdConfig
 import org.jetbrains.research.kex.config.FileConfig
+import org.jetbrains.research.kex.config.RunnerCmdConfig
 import org.jetbrains.research.kex.config.RuntimeConfig
 import org.jetbrains.research.kex.config.kexConfig
 import org.jetbrains.research.kex.random.easyrandom.EasyRandomDriver
@@ -32,8 +30,10 @@ import org.jetbrains.research.kex.serialization.KexSerializer
 import org.jetbrains.research.kex.smt.Checker
 import org.jetbrains.research.kex.smt.Result
 import org.jetbrains.research.kex.state.transformer.executeModel
+import org.jetbrains.research.kex.trace.AbstractTrace
 import org.jetbrains.research.kex.trace.TraceManager
 import org.jetbrains.research.kex.trace.`object`.ObjectTraceManager
+import org.jetbrains.research.kex.trace.symbolic.InstructionTraceManager
 import org.jetbrains.research.kex.util.getIntrinsics
 import org.jetbrains.research.kex.util.getPathSeparator
 import org.jetbrains.research.kex.util.getRuntime
@@ -61,14 +61,14 @@ import java.util.*
 import kotlin.system.exitProcess
 
 class Kex(args: Array<String>) {
-    private val cmd = CmdConfig(args)
+    private val cmd = RunnerCmdConfig(args)
     private val properties = cmd.getCmdValue("config", "kex.ini")
-    private val logName = cmd.getCmdValue("log", "kex.log")
     private val classPath = System.getProperty("java.class.path")
 
     val containers: List<Container>
     val containerClassLoader: URLClassLoader
     val outputDir: Path
+    lateinit var instrumentedCodeDir: Path
 
     val classManager: ClassManager
     val origManager: ClassManager
@@ -99,6 +99,13 @@ class Kex(args: Array<String>) {
 
     init {
         kexConfig.initialize(cmd, RuntimeConfig, FileConfig(properties))
+        outputDir = kexConfig.getPathValue("kex", "outputDir")
+            ?: Files.createTempDirectory(Paths.get("."), "kex-output")
+                .toAbsolutePath().also {
+                    RuntimeConfig.setValue("kex", "outputDir", it)
+                }
+
+        val logName = kexConfig.getStringValue("kex", "log", "kex.log")
         kexConfig.initLog(logName)
 
         val classPaths = cmd.getCmdValue("classpath")?.split(getPathSeparator())
@@ -138,8 +145,8 @@ class Kex(args: Array<String>) {
                 exitProcess(1)
             }
         }
-        classManager = ClassManager(KfgConfig(flags = Flags.readAll, failOnError = false))
-        origManager = ClassManager(KfgConfig(flags = Flags.readAll, failOnError = false))
+        classManager = ClassManager(KfgConfig(flags = Flags.readAll, failOnError = false, verifyIR = false))
+        origManager = ClassManager(KfgConfig(flags = Flags.readAll, failOnError = false, verifyIR = false))
         val analysisJars = listOfNotNull(*containers.toTypedArray(), getRuntime(), getIntrinsics())
         classManager.initialize(*analysisJars.toTypedArray())
         origManager.initialize(*analysisJars.toTypedArray())
@@ -165,15 +172,12 @@ class Kex(args: Array<String>) {
             }
         }
 
-        outputDir = (cmd.getCmdValue("output")?.let { Paths.get(it) }
-            ?: Files.createTempDirectory(Paths.get("."), "kex-instrumented")).toAbsolutePath()
-
         visibilityLevel = kexConfig.getEnumValue("apiGeneration", "visibility", true, Visibility.PUBLIC)
     }
 
     private fun updateClassPath(loader: URLClassLoader) {
         val urlClassPath = loader.urLs.joinToString(separator = getPathSeparator()) { "${it.path}." }
-        System.setProperty("java.class.path", "$classPath:$urlClassPath")
+        System.setProperty("java.class.path", "$classPath${getPathSeparator()}$urlClassPath")
     }
 
     private fun clearClassPath() {
@@ -184,18 +188,17 @@ class Kex(args: Array<String>) {
     @InternalSerializationApi
     fun main() {
         // write all classes to output directory, so they will be seen by ClassLoader
-        containers.forEach { it.unpack(classManager, outputDir, true) }
-        val classLoader = URLClassLoader(arrayOf(outputDir.toUri().toURL()))
+        val instrumentedDirName = kexConfig.getStringValue("output", "instrumentedDir", "instrumented")
+        instrumentedCodeDir = outputDir.resolve(instrumentedDirName)
 
-        val originalContext = ExecutionContext(origManager, containerClassLoader, EasyRandomDriver())
-        val analysisContext = ExecutionContext(classManager, classLoader, EasyRandomDriver())
+        containers.forEach { it.unpack(classManager, instrumentedCodeDir, true) }
+        val classLoader = URLClassLoader(arrayOf(instrumentedCodeDir.toUri().toURL()))
 
-        // instrument all classes in the target package
-        runPipeline(originalContext, `package`) {
-            +SystemExitTransformer(originalContext.cm)
-            +RuntimeTraceCollector(originalContext.cm)
-            +ClassWriter(originalContext, outputDir)
-        }
+        val klassPath = containers.map { it.path }
+        updateClassPath(classLoader)
+        val randomDriver = EasyRandomDriver()
+        val originalContext = ExecutionContext(origManager, `package`, containerClassLoader, randomDriver, klassPath)
+        val analysisContext = ExecutionContext(classManager, `package`, classLoader, randomDriver, klassPath)
 
         when (cmd.getEnumValue("mode", Mode.Symbolic, ignoreCase = true)) {
             Mode.Fuzzer -> fuzzer(originalContext, analysisContext)
@@ -206,6 +209,7 @@ class Kex(args: Array<String>) {
             Mode.Concolic -> concolic(originalContext, analysisContext)
             Mode.Debug -> debug(analysisContext)
         }
+        clearClassPath()
     }
 
     @ExperimentalSerializationApi
@@ -227,6 +231,13 @@ class Kex(args: Array<String>) {
     }
 
     private fun symbolic(originalContext: ExecutionContext, analysisContext: ExecutionContext) {
+        // instrument all classes in the target package
+        runPipeline(originalContext, `package`) {
+            +SystemExitTransformer(originalContext.cm)
+            +RuntimeTraceCollector(originalContext.cm)
+            +ClassWriter(originalContext, instrumentedCodeDir)
+        }
+
         val traceManager = ObjectTraceManager()
         val psa = PredicateStateAnalysis(analysisContext.cm)
         val cm = createCoverageCounter(originalContext.cm, traceManager)
@@ -252,6 +263,13 @@ class Kex(args: Array<String>) {
     }
 
     private fun fuzzer(originalContext: ExecutionContext, analysisContext: ExecutionContext) {
+        // instrument all classes in the target package
+        runPipeline(originalContext, `package`) {
+            +SystemExitTransformer(originalContext.cm)
+            +RuntimeTraceCollector(originalContext.cm)
+            +ClassWriter(originalContext, instrumentedCodeDir)
+        }
+
         val traceManager = ObjectTraceManager()
         val psa = PredicateStateAnalysis(analysisContext.cm)
         val cm = createCoverageCounter(originalContext.cm, traceManager)
@@ -325,26 +343,31 @@ class Kex(args: Array<String>) {
         clearClassPath()
     }
 
+    @ExperimentalSerializationApi
+    @InternalSerializationApi
     private fun concolic(originalContext: ExecutionContext, analysisContext: ExecutionContext) {
-        val traceManager = ObjectTraceManager()
-        val psa = PredicateStateAnalysis(analysisContext.cm)
-        val cm = CoverageCounter(originalContext.cm, traceManager)
-
+        val traceManager = InstructionTraceManager()
+        val cm = createCoverageCounter(originalContext.cm, traceManager)
+        runPipeline(originalContext, `package`) {
+            +SystemExitTransformer(originalContext.cm)
+            +SymbolicTraceCollector(originalContext)
+            +ClassWriter(originalContext, instrumentedCodeDir)
+        }
         runPipeline(analysisContext) {
-            +ConcolicChecker(analysisContext, psa, traceManager)
+            +OriginalMapper(analysisContext.cm, analysisContext.cm)
+            +SystemExitTransformer(analysisContext.cm)
+            +InstructionConcolicChecker(analysisContext, traceManager)
             +cm
         }
-
         val coverage = cm.totalCoverage
         log.info(
             "Overall summary for ${cm.methodInfos.size} methods:\n" +
-                    "body coverage: ${String.format("%.2f", coverage.bodyCoverage)}%\n" +
-                    "full coverage: ${String.format("%.2f", coverage.fullCoverage)}%"
+                    "body coverage: ${String.format(Locale.ENGLISH, "%.2f", coverage.bodyCoverage)}%\n" +
+                    "full coverage: ${String.format(Locale.ENGLISH, "%.2f", coverage.fullCoverage)}%"
         )
-        DescriptorStatistics.printStatistics()
     }
 
-    private fun <T> createCoverageCounter(cm: ClassManager, tm: TraceManager<T>) = when {
+    private fun <T : AbstractTrace> createCoverageCounter(cm: ClassManager, tm: TraceManager<T>) = when {
         methods != null -> CoverageCounter(cm, tm, methods!!)
         klass != null -> CoverageCounter(cm, tm, klass!!)
         else -> CoverageCounter(cm, tm, `package`)
@@ -364,6 +387,7 @@ class Kex(args: Array<String>) {
         psa: PredicateStateAnalysis,
         pkg: Package = Package.defaultPackage
     ) = runPipeline(ctx, pkg) {
+        +OriginalMapper(ctx.cm, origManager)
         +LoopSimplifier(ctx.cm)
         +LoopDeroller(ctx.cm)
         +BranchAdapter(ctx.cm)

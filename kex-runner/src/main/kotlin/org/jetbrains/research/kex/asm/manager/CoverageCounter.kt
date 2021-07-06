@@ -3,6 +3,7 @@ package org.jetbrains.research.kex.asm.manager
 import org.jetbrains.research.kex.asm.util.Visibility
 import org.jetbrains.research.kex.asm.util.visibility
 import org.jetbrains.research.kex.config.kexConfig
+import org.jetbrains.research.kex.trace.AbstractTrace
 import org.jetbrains.research.kex.trace.TraceManager
 import org.jetbrains.research.kfg.ClassManager
 import org.jetbrains.research.kfg.Package
@@ -21,15 +22,35 @@ val Method.isImpactable: Boolean
         this.isAbstract -> false
         this.isStaticInitializer -> false
         this.klass.isSynthetic -> false
+        this.klass.isAbstract && this.isConstructor -> false
         this.isSynthetic -> false
         visibilityLevel > this.klass.visibility -> false
         visibilityLevel > this.visibility -> false
         else -> true
     }
 
-data class CoverageInfo(val bodyCoverage: Double, val fullCoverage: Double)
+data class CoverageInfo(
+    val bodyCovered: Int,
+    val bodyTotal: Int,
+    val fullCovered: Int,
+    val fullTotal: Int,
+) {
+    val bodyCoverage: Double get() = (bodyCovered * 100).toDouble() / bodyTotal
+    val fullCoverage: Double get() = (fullCovered * 100).toDouble() / fullTotal
 
-class CoverageCounter<T> private constructor(
+    constructor() : this(0, 0, 0, 0)
+
+    operator fun plus(other: CoverageInfo): CoverageInfo {
+        return CoverageInfo(
+            this.bodyCovered + other.bodyCovered,
+            this.bodyTotal + other.bodyTotal,
+            this.fullCovered + other.fullCovered,
+            this.fullTotal + other.fullTotal
+        )
+    }
+}
+
+class CoverageCounter<T : AbstractTrace> private constructor(
     override val cm: ClassManager,
     private val tm: TraceManager<T>,
     val methodFilter: (Method) -> Boolean
@@ -47,18 +68,8 @@ class CoverageCounter<T> private constructor(
             this(cm, tm, { it in methods })
 
     val totalCoverage: CoverageInfo
-        get() {
-            if (methodInfos.isEmpty()) return CoverageInfo(0.0, 0.0)
-
-            val numberOfMethods = methodInfos.size
-            val (body, full) = methodInfos.values.reduce { acc, coverageInfo ->
-                CoverageInfo(
-                    acc.bodyCoverage + coverageInfo.bodyCoverage,
-                    acc.fullCoverage + coverageInfo.fullCoverage
-                )
-            }
-
-            return CoverageInfo(body / numberOfMethods, full / numberOfMethods)
+        get() = methodInfos.values.fold(CoverageInfo()) { acc, coverageInfo ->
+            acc + coverageInfo
         }
 
     private val Method.isInteresting: Boolean
@@ -77,14 +88,14 @@ class CoverageCounter<T> private constructor(
         if (!method.isInteresting) return
         if (!methodFilter(method)) return
 
-        val bodyBlocks = method.bodyBlocks.filterNot { it.isUnreachable }.map { it.originalBlock }.toSet()
-        val catchBlocks = method.catchBlocks.filterNot { it.isUnreachable }.map { it.originalBlock }.toSet()
-        val bodyCovered = bodyBlocks.count { tm.isCovered(method, it) }
-        val catchCovered = catchBlocks.count { tm.isCovered(method, it) }
+        val bodyBlocks = method.bodyBlocks.mapNotNull { it.original }.toSet()
+        val catchBlocks = method.catchBlocks.mapNotNull { it.original }.toSet()
+        val bodyCovered = bodyBlocks.count { tm.isCovered(it) }
+        val catchCovered = catchBlocks.count { tm.isCovered(it) }
 
         val info = CoverageInfo(
-            (bodyCovered * 100).toDouble() / bodyBlocks.size,
-            ((bodyCovered + catchCovered) * 100).toDouble() / (bodyBlocks.size + catchBlocks.size)
+            bodyCovered, bodyBlocks.size,
+            bodyCovered + catchCovered, bodyBlocks.size + catchBlocks.size
         )
         methodInfos[method] = info
 

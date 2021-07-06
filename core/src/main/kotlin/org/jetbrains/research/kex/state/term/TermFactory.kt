@@ -60,7 +60,7 @@ object TermFactory {
     fun getDouble(value: Double) = ConstDoubleTerm(value)
     fun getDouble(const: DoubleConstant) = getDouble(const.value)
     fun getString(type: KexType, value: String) = ConstStringTerm(type, value)
-    fun getString(value: String) = ConstStringTerm(KexClass(TypeFactory.stringClass), value)
+    fun getString(value: String) = ConstStringTerm(KexClass("java/lang/String"), value)
     fun getString(const: StringConstant) = getString(const.value)
     fun getNull() = NullTerm()
     fun getClass(`class`: Class) = getClass(KexClass(`class`.fullName))
@@ -119,8 +119,8 @@ object TermFactory {
     fun getCast(type: KexType, operand: Term) = CastTerm(type, operand)
     fun getCmp(opcode: CmpOpcode, lhv: Term, rhv: Term): Term {
         val resType = when (opcode) {
-            is CmpOpcode.Cmpg -> KexInt()
-            is CmpOpcode.Cmpl -> KexInt()
+            CmpOpcode.CMPG -> KexInt()
+            CmpOpcode.CMPL -> KexInt()
             else -> KexBool()
         }
         return getCmp(resType, opcode, lhv, rhv)
@@ -192,28 +192,28 @@ abstract class TermBuilder {
         else -> unreachable { log.error("Unknown term type in load: $this") }
     }
 
-    infix fun Term.add(rhv: Term) = tf.getBinary(type, BinaryOpcode.Add(), this, rhv)
+    infix fun Term.add(rhv: Term) = tf.getBinary(type, BinaryOpcode.ADD, this, rhv)
     operator fun Term.plus(rhv: Term) = this add rhv
 
-    infix fun Term.sub(rhv: Term) = tf.getBinary(type, BinaryOpcode.Sub(), this, rhv)
+    infix fun Term.sub(rhv: Term) = tf.getBinary(type, BinaryOpcode.SUB, this, rhv)
     operator fun Term.minus(rhv: Term) = this sub rhv
 
-    infix fun Term.mul(rhv: Term) = tf.getBinary(type, BinaryOpcode.Mul(), this, rhv)
+    infix fun Term.mul(rhv: Term) = tf.getBinary(type, BinaryOpcode.MUL, this, rhv)
     operator fun Term.times(rhv: Term) = this mul rhv
 
-    operator fun Term.div(rhv: Term) = tf.getBinary(type, BinaryOpcode.Div(), this, rhv)
-    operator fun Term.rem(rhv: Term) = tf.getBinary(type, BinaryOpcode.Rem(), this, rhv)
+    operator fun Term.div(rhv: Term) = tf.getBinary(type, BinaryOpcode.DIV, this, rhv)
+    operator fun Term.rem(rhv: Term) = tf.getBinary(type, BinaryOpcode.REM, this, rhv)
 
-    infix fun Term.shl(shift: Term) = tf.getBinary(type, BinaryOpcode.Shl(), this, shift)
-    infix fun Term.shr(shift: Term) = tf.getBinary(type, BinaryOpcode.Shr(), this, shift)
-    infix fun Term.ushr(shift: Term) = tf.getBinary(type, BinaryOpcode.Ushr(), this, shift)
+    infix fun Term.shl(shift: Term) = tf.getBinary(type, BinaryOpcode.SHL, this, shift)
+    infix fun Term.shr(shift: Term) = tf.getBinary(type, BinaryOpcode.SHR, this, shift)
+    infix fun Term.ushr(shift: Term) = tf.getBinary(type, BinaryOpcode.USHR, this, shift)
 
-    infix fun Term.and(rhv: Term) = tf.getBinary(type, BinaryOpcode.And(), this, rhv)
-    infix fun Term.and(bool: Boolean) = tf.getBinary(type, BinaryOpcode.And(), this, const(bool))
-    infix fun Term.or(rhv: Term) = tf.getBinary(type, BinaryOpcode.Or(), this, rhv)
-    infix fun Term.or(bool: Boolean) = tf.getBinary(type, BinaryOpcode.Or(), this, const(bool))
-    infix fun Term.xor(rhv: Term) = tf.getBinary(type, BinaryOpcode.Xor(), this, rhv)
-    infix fun Term.xor(bool: Boolean) = tf.getBinary(type, BinaryOpcode.Xor(), this, const(bool))
+    infix fun Term.and(rhv: Term) = tf.getBinary(type, BinaryOpcode.AND, this, rhv)
+    infix fun Term.and(bool: Boolean) = tf.getBinary(type, BinaryOpcode.AND, this, const(bool))
+    infix fun Term.or(rhv: Term) = tf.getBinary(type, BinaryOpcode.OR, this, rhv)
+    infix fun Term.or(bool: Boolean) = tf.getBinary(type, BinaryOpcode.OR, this, const(bool))
+    infix fun Term.xor(rhv: Term) = tf.getBinary(type, BinaryOpcode.XOR, this, rhv)
+    infix fun Term.xor(bool: Boolean) = tf.getBinary(type, BinaryOpcode.XOR, this, const(bool))
 
     infix fun Term.implies(rhv: Term) = !this or rhv
     infix fun Term.implies(rhv: Boolean) = !this or rhv
@@ -222,39 +222,39 @@ abstract class TermBuilder {
     fun Term.apply(type: KexType, opcode: BinaryOpcode, rhv: Term) = tf.getBinary(type, opcode, this, rhv)
     fun Term.apply(opcode: CmpOpcode, rhv: Term) = tf.getCmp(opcode, this, rhv)
 
-    infix fun Term.eq(rhv: Term) = tf.getCmp(CmpOpcode.Eq(), this, rhv)
-    infix fun <T : Number> Term.eq(rhv: T) = tf.getCmp(CmpOpcode.Eq(), this, const(rhv))
-    infix fun Term.eq(rhv: Boolean) = tf.getCmp(CmpOpcode.Eq(), this, const(rhv))
-    infix fun Term.eq(rhv: Nothing?) = tf.getCmp(CmpOpcode.Eq(), this, const(rhv))
+    infix fun Term.eq(rhv: Term) = tf.getCmp(CmpOpcode.EQ, this, rhv)
+    infix fun <T : Number> Term.eq(rhv: T) = tf.getCmp(CmpOpcode.EQ, this, const(rhv))
+    infix fun Term.eq(rhv: Boolean) = tf.getCmp(CmpOpcode.EQ, this, const(rhv))
+    infix fun Term.eq(rhv: Nothing?) = tf.getCmp(CmpOpcode.EQ, this, const(rhv))
 
-    infix fun Term.neq(rhv: Term) = tf.getCmp(CmpOpcode.Neq(), this, rhv)
-    infix fun <T : Number> Term.neq(rhv: T) = tf.getCmp(CmpOpcode.Neq(), this, const(rhv))
-    infix fun Term.neq(rhv: Boolean) = tf.getCmp(CmpOpcode.Neq(), this, const(rhv))
-    infix fun Term.neq(rhv: Nothing?) = tf.getCmp(CmpOpcode.Neq(), this, const(rhv))
+    infix fun Term.neq(rhv: Term) = tf.getCmp(CmpOpcode.NEQ, this, rhv)
+    infix fun <T : Number> Term.neq(rhv: T) = tf.getCmp(CmpOpcode.NEQ, this, const(rhv))
+    infix fun Term.neq(rhv: Boolean) = tf.getCmp(CmpOpcode.NEQ, this, const(rhv))
+    infix fun Term.neq(rhv: Nothing?) = tf.getCmp(CmpOpcode.NEQ, this, const(rhv))
 
-    infix fun Term.lt(rhv: Term) = tf.getCmp(CmpOpcode.Lt(), this, rhv)
-    infix fun <T : Number> Term.lt(rhv: T) = tf.getCmp(CmpOpcode.Lt(), this, const(rhv))
-    infix fun Term.lt(rhv: Boolean) = tf.getCmp(CmpOpcode.Lt(), this, const(rhv))
-    infix fun Term.lt(rhv: Nothing?) = tf.getCmp(CmpOpcode.Lt(), this, const(rhv))
+    infix fun Term.lt(rhv: Term) = tf.getCmp(CmpOpcode.LT, this, rhv)
+    infix fun <T : Number> Term.lt(rhv: T) = tf.getCmp(CmpOpcode.LT, this, const(rhv))
+    infix fun Term.lt(rhv: Boolean) = tf.getCmp(CmpOpcode.LT, this, const(rhv))
+    infix fun Term.lt(rhv: Nothing?) = tf.getCmp(CmpOpcode.LT, this, const(rhv))
 
-    infix fun Term.gt(rhv: Term) = tf.getCmp(CmpOpcode.Gt(), this, rhv)
-    infix fun <T : Number> Term.gt(rhv: T) = tf.getCmp(CmpOpcode.Gt(), this, const(rhv))
-    infix fun Term.gt(rhv: Boolean) = tf.getCmp(CmpOpcode.Gt(), this, const(rhv))
-    infix fun Term.gt(rhv: Nothing?) = tf.getCmp(CmpOpcode.Gt(), this, const(rhv))
+    infix fun Term.gt(rhv: Term) = tf.getCmp(CmpOpcode.GT, this, rhv)
+    infix fun <T : Number> Term.gt(rhv: T) = tf.getCmp(CmpOpcode.GT, this, const(rhv))
+    infix fun Term.gt(rhv: Boolean) = tf.getCmp(CmpOpcode.GT, this, const(rhv))
+    infix fun Term.gt(rhv: Nothing?) = tf.getCmp(CmpOpcode.GT, this, const(rhv))
 
-    infix fun Term.le(rhv: Term) = tf.getCmp(CmpOpcode.Le(), this, rhv)
-    infix fun <T : Number> Term.le(rhv: T) = tf.getCmp(CmpOpcode.Le(), this, const(rhv))
-    infix fun Term.le(rhv: Boolean) = tf.getCmp(CmpOpcode.Le(), this, const(rhv))
-    infix fun Term.le(rhv: Nothing?) = tf.getCmp(CmpOpcode.Le(), this, const(rhv))
+    infix fun Term.le(rhv: Term) = tf.getCmp(CmpOpcode.LE, this, rhv)
+    infix fun <T : Number> Term.le(rhv: T) = tf.getCmp(CmpOpcode.LE, this, const(rhv))
+    infix fun Term.le(rhv: Boolean) = tf.getCmp(CmpOpcode.LE, this, const(rhv))
+    infix fun Term.le(rhv: Nothing?) = tf.getCmp(CmpOpcode.LE, this, const(rhv))
 
-    infix fun Term.ge(rhv: Term) = tf.getCmp(CmpOpcode.Ge(), this, rhv)
-    infix fun <T : Number> Term.ge(rhv: T) = tf.getCmp(CmpOpcode.Ge(), this, const(rhv))
-    infix fun Term.ge(rhv: Boolean) = tf.getCmp(CmpOpcode.Ge(), this, const(rhv))
-    infix fun Term.ge(rhv: Nothing?) = tf.getCmp(CmpOpcode.Ge(), this, const(rhv))
+    infix fun Term.ge(rhv: Term) = tf.getCmp(CmpOpcode.GE, this, rhv)
+    infix fun <T : Number> Term.ge(rhv: T) = tf.getCmp(CmpOpcode.GE, this, const(rhv))
+    infix fun Term.ge(rhv: Boolean) = tf.getCmp(CmpOpcode.GE, this, const(rhv))
+    infix fun Term.ge(rhv: Nothing?) = tf.getCmp(CmpOpcode.GE, this, const(rhv))
 
-    infix fun Term.cmp(rhv: Term) = tf.getCmp(CmpOpcode.Cmp(), this, rhv)
-    infix fun Term.cmpg(rhv: Term) = tf.getCmp(CmpOpcode.Cmpg(), this, rhv)
-    infix fun Term.cmpl(rhv: Term) = tf.getCmp(CmpOpcode.Cmpl(), this, rhv)
+    infix fun Term.cmp(rhv: Term) = tf.getCmp(CmpOpcode.CMP, this, rhv)
+    infix fun Term.cmpg(rhv: Term) = tf.getCmp(CmpOpcode.CMPG, this, rhv)
+    infix fun Term.cmpl(rhv: Term) = tf.getCmp(CmpOpcode.CMPL, this, rhv)
 
     @Suppress("DeprecatedCallableAddReplaceWith")
     @Deprecated(message = "not used in current SMT model")

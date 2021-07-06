@@ -7,6 +7,7 @@ import kotlinx.coroutines.yield
 import org.jetbrains.research.kex.ExecutionContext
 import org.jetbrains.research.kex.asm.state.PredicateStateAnalysis
 import org.jetbrains.research.kex.config.kexConfig
+import org.jetbrains.research.kex.parameters.Parameters
 import org.jetbrains.research.kex.random.Randomizer
 import org.jetbrains.research.kex.reanimator.ParameterGenerator
 import org.jetbrains.research.kex.reanimator.Reanimator
@@ -36,13 +37,13 @@ private val timeLimit by lazy {
     kexConfig.getLongValue("concolic", "timeLimit", 10000L)
 }
 private val onlyMain by lazy {
-    kexConfig.getBooleanValue("concolic", "main-only", false)
+    kexConfig.getBooleanValue("concolic", "mainOnly", false)
 }
 
 class ConcolicChecker(
     val ctx: ExecutionContext,
     val psa: PredicateStateAnalysis,
-    private val manager: TraceManager<Trace>
+    private val manager: TraceManager<ActionTrace>
 ) : MethodVisitor {
     override val cm: ClassManager get() = ctx.cm
     val loader: ClassLoader get() = ctx.loader
@@ -87,7 +88,7 @@ class ConcolicChecker(
         }
     }
 
-    private fun buildState(method: Method, trace: Trace): PredicateState {
+    private fun buildState(method: Method, trace: ActionTrace): PredicateState {
         data class BlockWrapper(val block: BasicBlock?)
 
         fun BasicBlock.wrap() = BlockWrapper(this)
@@ -201,16 +202,17 @@ class ConcolicChecker(
         return currentState.apply()
     }
 
-    private fun collectTrace(method: Method, instance: Any?, args: List<Any?>): Trace {
-        val runner = ObjectTracingRunner(method, loader)
-        return runner.collectTrace(instance, args.toTypedArray())
+    private fun collectTrace(method: Method, instance: Any?, args: List<Any?>): ActionTrace? {
+        val params = Parameters(instance, args, setOf())
+        val runner = ObjectTracingRunner(method, loader, params)
+        return runner.run()
     }
 
     private fun getRandomTrace(method: Method) =
         tryOrNull { RandomObjectTracingRunner(method, loader, ctx.random).run() }
 
     private suspend fun process(method: Method) {
-        val traces = ArrayDeque<Trace>()
+        val traces = ArrayDeque<ActionTrace>()
         while (!manager.isBodyCovered(method)) {
             val candidate = traces.firstOrElse { getRandomTrace(method)?.also { manager[method] = it } } ?: return
             yield()
@@ -223,7 +225,7 @@ class ConcolicChecker(
         }
     }
 
-    private suspend fun run(method: Method, trace: Trace): Trace? {
+    private suspend fun run(method: Method, trace: ActionTrace): ActionTrace? {
         val state = buildState(method, trace)
         val mutated = mutate(state)
         val path = mutated.path

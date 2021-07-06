@@ -45,14 +45,14 @@ abstract class KexRunnerTest : KexTest() {
 
         jar.unpack(cm, targetDir, true)
         val classLoader = URLClassLoader(arrayOf(targetDir.toUri().toURL()))
-        originalContext = ExecutionContext(origManager, jar.classLoader, EasyRandomDriver())
+        originalContext = ExecutionContext(origManager, `package`, jar.classLoader, EasyRandomDriver(), listOf())
 
         executePipeline(originalContext.cm, `package`) {
             +RuntimeTraceCollector(originalContext.cm)
             +ClassWriter(originalContext, targetDir)
         }
 
-        analysisContext = ExecutionContext(cm, classLoader, EasyRandomDriver())
+        analysisContext = ExecutionContext(cm, `package`, classLoader, EasyRandomDriver(), listOf())
     }
 
     protected fun getReachables(method: Method): List<Instruction> {
@@ -88,7 +88,7 @@ abstract class KexRunnerTest : KexTest() {
             log.debug(method.print())
 
             val psa = getPSA(method)
-            val ctx = ExecutionContext(cm, loader, EasyRandomDriver())
+            val ctx = ExecutionContext(cm, `package`, loader, EasyRandomDriver(), listOf())
 
             getReachables(method).forEach { inst ->
                 val checker = Checker(method, ctx, psa)

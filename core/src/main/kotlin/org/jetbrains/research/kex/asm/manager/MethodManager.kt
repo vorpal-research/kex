@@ -14,14 +14,11 @@ object MethodManager {
         private val ignoreClasses = hashSetOf<String>()
 
         init {
-            val ignores = kexConfig.getMultipleStringValue("inliner", "ignore", ",")
-                    .map { it.replace(".", "/") }
-            for (name in ignores) {
-                when {
-                    name.endsWith("*") -> ignorePackages.add(Package(name))
-                    else -> ignoreClasses.add(name)
+            ignorePackages.addAll(
+                kexConfig.getMultipleStringValue("inliner", "ignore", ",").map {
+                    Package.parse(it)
                 }
-            }
+            )
         }
 
         fun isIgnored(method: Method) = when {

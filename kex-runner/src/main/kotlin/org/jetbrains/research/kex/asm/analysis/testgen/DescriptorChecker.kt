@@ -2,17 +2,17 @@ package org.jetbrains.research.kex.asm.analysis.testgen
 
 import org.jetbrains.research.kex.ExecutionContext
 import org.jetbrains.research.kex.asm.state.PredicateStateAnalysis
+import org.jetbrains.research.kex.descriptor.concrete
+import org.jetbrains.research.kex.parameters.Parameters
 import org.jetbrains.research.kex.random.GenerationException
-import org.jetbrains.research.kex.reanimator.Parameters
 import org.jetbrains.research.kex.reanimator.Reanimator
 import org.jetbrains.research.kex.reanimator.codegen.validName
-import org.jetbrains.research.kex.reanimator.descriptor.concretize
 import org.jetbrains.research.kex.smt.Checker
 import org.jetbrains.research.kex.smt.Result
 import org.jetbrains.research.kex.state.PredicateState
 import org.jetbrains.research.kex.state.transformer.*
 import org.jetbrains.research.kex.trace.TraceManager
-import org.jetbrains.research.kex.trace.`object`.Trace
+import org.jetbrains.research.kex.trace.`object`.ActionTrace
 import org.jetbrains.research.kex.trace.runner.TimeoutException
 import org.jetbrains.research.kfg.ir.BasicBlock
 import org.jetbrains.research.kfg.ir.Method
@@ -20,9 +20,9 @@ import org.jetbrains.research.kthelper.logging.log
 import org.jetbrains.research.kthelper.tryOrNull
 
 class DescriptorChecker(
-        ctx: ExecutionContext,
-        tm: TraceManager<Trace>,
-        psa: PredicateStateAnalysis) : MethodChecker(ctx, tm, psa) {
+    ctx: ExecutionContext,
+    tm: TraceManager<ActionTrace>,
+    psa: PredicateStateAnalysis) : MethodChecker(ctx, tm, psa) {
 
     override fun initializeGenerator(method: Method) {
         generator = Reanimator(ctx, psa, method)
@@ -96,7 +96,7 @@ class DescriptorChecker(
 
     private fun Set<TypeInfo>.concretize(): Set<TypeInfo> = this.map { tryOrNull { it.concretize() } ?: it }.toSet()
     private fun TypeInfo.concretize(): TypeInfo = when (this) {
-        is CastTypeInfo -> CastTypeInfo(this.type.concretize(cm))
+        is CastTypeInfo -> CastTypeInfo(this.type.concrete(cm))
         else -> this
     }
 }

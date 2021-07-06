@@ -15,15 +15,21 @@ abstract class AbstractSerializer(val context: SerializersModule) {
         useArrayPolymorphism = false
         classDiscriminator = "className"
         serializersModule = context
+        allowStructuredMapKeys = true
     }
 
+    @ExperimentalSerializationApi
     @InternalSerializationApi
-    inline fun <reified T: Any> toJson(t: T) = json.encodeToString(T::class.serializer(), t)
+    inline fun <reified T : Any> toJson(t: T): String =
+        json.encodeToString(context.getContextual(T::class) ?: T::class.serializer(), t)
+
+    @ExperimentalSerializationApi
     @InternalSerializationApi
-    inline fun <reified T: Any> fromJson(str: String) = json.decodeFromString(T::class.serializer(), str)
+    inline fun <reified T : Any> fromJson(str: String): T =
+        json.decodeFromString(context.getContextual(T::class) ?: T::class.serializer(), str)
 }
 
 @ExperimentalSerializationApi
 @InternalSerializationApi
-class KexSerializer(val cm: ClassManager) : AbstractSerializer(getPredicateStateSerialModule(cm))
+class KexSerializer(val cm: ClassManager) : AbstractSerializer(getKexSerialModule(cm))
 

@@ -2,12 +2,12 @@ package org.jetbrains.research.kex.reanimator.callstack.generator
 
 import org.jetbrains.research.kex.asm.util.visibility
 import org.jetbrains.research.kex.config.kexConfig
+import org.jetbrains.research.kex.descriptor.ClassDescriptor
+import org.jetbrains.research.kex.descriptor.Descriptor
 import org.jetbrains.research.kex.ktype.type
 import org.jetbrains.research.kex.reanimator.callstack.*
 import org.jetbrains.research.kex.reanimator.collector.hasSetter
 import org.jetbrains.research.kex.reanimator.collector.setter
-import org.jetbrains.research.kex.reanimator.descriptor.ClassDescriptor
-import org.jetbrains.research.kex.reanimator.descriptor.Descriptor
 import org.jetbrains.research.kthelper.assert.ktassert
 import org.jetbrains.research.kthelper.collection.queueOf
 import org.jetbrains.research.kthelper.logging.log

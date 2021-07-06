@@ -46,11 +46,6 @@
             <artifactId>boolector-java</artifactId>
             <version>${boolector.version}</version>
         </dependency>
-        <dependency>
-            <groupId>org.jetbrains.kotlin</groupId>
-            <artifactId>kotlin-stdlib-jdk8</artifactId>
-            <version>${kotlin.version}</version>
-        </dependency>
     </dependencies>
 
     <build>
@@ -101,7 +96,7 @@
                             </annotationProcessors>
                             <annotationProcessorArgs>
                                 <processorArg>
-                                    kex.templates=${project.parent.basedir}/velocity-templates/
+                                    kex.templates=${project.parent.basedir}/runtime-deps/velocity-templates/
                                 </processorArg>
                                 <processorArg>
                                     runner.resources=${project.parent.basedir}/kex-runner/src/main/resources/

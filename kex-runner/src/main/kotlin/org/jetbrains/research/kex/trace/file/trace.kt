@@ -1,5 +1,6 @@
 package org.jetbrains.research.kex.trace.file
 
+import org.jetbrains.research.kex.trace.AbstractTrace
 import org.jetbrains.research.kfg.ir.BasicBlock
 import org.jetbrains.research.kfg.ir.Method
 import org.jetbrains.research.kthelper.assert.ktassert
@@ -25,7 +26,7 @@ data class BlockInfo internal constructor(
     }
 }
 
-data class Trace constructor(
+data class FileTrace constructor(
     val method: Method,
     val instance: ActionValue?,
     val args: Array<ActionValue>,
@@ -33,20 +34,20 @@ data class Trace constructor(
     val retval: ActionValue?,
     val throwable: ActionValue?,
     val exception: Throwable?,
-    val subtraces: List<Trace>
-) {
+    val subtraces: List<FileTrace>
+) : AbstractTrace() {
     fun getBlockInfo(bb: BasicBlock) = blocks.getValue(bb)
 
     companion object {
-        fun parse(actions: List<Action>, exception: Throwable?): Trace {
+        fun parse(actions: List<Action>, exception: Throwable?): FileTrace {
             class Info(
                 var instance: ActionValue?,
                 var args: Array<ActionValue>, var blocks: MutableMap<BasicBlock, MutableList<BlockInfo>>,
                 var retval: ActionValue?, var throwval: ActionValue?,
                 val exception: Throwable?, val subinfos: MutableList<Pair<Method, Info>>
             ) {
-                fun toTrace(method: Method): Trace =
-                    Trace(
+                fun toTrace(method: Method): FileTrace =
+                    FileTrace(
                         method,
                         instance,
                         args,
@@ -125,7 +126,7 @@ data class Trace constructor(
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
-        if (other !is Trace) return false
+        if (other !is FileTrace) return false
 
         if (method != other.method) return false
         if (instance != other.instance) return false

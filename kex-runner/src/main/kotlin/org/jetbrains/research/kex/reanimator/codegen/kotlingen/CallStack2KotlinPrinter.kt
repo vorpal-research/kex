@@ -3,6 +3,7 @@ package org.jetbrains.research.kex.reanimator.codegen.kotlingen
 import org.jetbrains.research.kex.ExecutionContext
 import org.jetbrains.research.kex.ktype.KexType
 import org.jetbrains.research.kex.ktype.type
+import org.jetbrains.research.kex.parameters.Parameters
 import org.jetbrains.research.kex.reanimator.callstack.*
 import org.jetbrains.research.kex.reanimator.codegen.CallStackPrinter
 import org.jetbrains.research.kex.util.getConstructor
@@ -32,6 +33,7 @@ class CallStack2KotlinPrinter(
     private val klass: KtBuilder.KtClass
     private val resolvedTypes = mutableMapOf<CallStack, CSType>()
     private val actualTypes = mutableMapOf<CallStack, CSType>()
+    private var staticCounter = 0
     lateinit var current: KtBuilder.KtFunction
 
     init {
@@ -47,13 +49,30 @@ class CallStack2KotlinPrinter(
         klass = builder.run { klass(packageName, klassName) }
     }
 
-    override fun printCallStack(callStack: CallStack, method: String) {
-        printedStacks.clear()
+    private fun buildCallStack(
+        method: org.jetbrains.research.kfg.ir.Method, callStacks: Parameters<CallStack>
+    ): CallStack = when {
+        method.isStatic -> StaticMethodCall(method, callStacks.arguments).wrap("static${staticCounter++}")
+        method.isConstructor -> callStacks.instance!!
+        else -> {
+            val instance = callStacks.instance!!.clone()
+            instance.stack += MethodCall(method, callStacks.arguments)
+            instance
+        }
+    }
+
+    override fun printCallStack(
+        testName: String,
+        method: org.jetbrains.research.kfg.ir.Method,
+        callStacks: Parameters<CallStack>
+    ) {
         resolvedTypes.clear()
         actualTypes.clear()
+        printedStacks.clear()
+        val callStack = buildCallStack(method, callStacks)
         with(builder) {
             with(klass) {
-                current = method(method) {
+                current = method(testName) {
                     returnType = unit
                     annotations += "Test"
                 }

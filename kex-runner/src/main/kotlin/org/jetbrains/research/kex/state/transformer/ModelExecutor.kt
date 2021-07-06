@@ -1,7 +1,7 @@
 package org.jetbrains.research.kex.state.transformer
 
 import org.jetbrains.research.kex.ExecutionContext
-import org.jetbrains.research.kex.reanimator.Parameters
+import org.jetbrains.research.kex.parameters.Parameters
 import org.jetbrains.research.kex.smt.ModelReanimator
 import org.jetbrains.research.kex.smt.ObjectReanimator
 import org.jetbrains.research.kex.smt.SMTModel

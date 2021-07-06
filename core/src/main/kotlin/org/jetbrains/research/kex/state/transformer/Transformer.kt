@@ -1,11 +1,11 @@
 package org.jetbrains.research.kex.state.transformer
 
-import org.jetbrains.research.kthelper.assert.unreachable
-import org.jetbrains.research.kthelper.logging.log
 import org.jetbrains.research.kex.state.*
 import org.jetbrains.research.kex.state.predicate.*
 import org.jetbrains.research.kex.state.term.*
 import org.jetbrains.research.kfg.ir.Location
+import org.jetbrains.research.kthelper.assert.unreachable
+import org.jetbrains.research.kthelper.logging.log
 import java.util.*
 
 interface Transformer<T : Transformer<T>> {
@@ -85,7 +85,9 @@ interface Transformer<T : Transformer<T>> {
     fun transformCatch(predicate: CatchPredicate): Predicate = predicate.accept(this)
     fun transformDefaultSwitch(predicate: DefaultSwitchPredicate): Predicate = predicate.accept(this)
     fun transformInequality(predicate: InequalityPredicate): Predicate = predicate.accept(this)
+    fun transformEnterMonitor(predicate: EnterMonitorPredicate): Predicate = predicate.accept(this)
     fun transformEquality(predicate: EqualityPredicate): Predicate = predicate.accept(this)
+    fun transformExitMonitor(predicate: ExitMonitorPredicate): Predicate = predicate.accept(this)
     fun transformFieldInitializer(predicate: FieldInitializerPredicate): Predicate = predicate.accept(this)
     fun transformFieldStore(predicate: FieldStorePredicate): Predicate = predicate.accept(this)
     fun transformNewArray(predicate: NewArrayPredicate): Predicate = predicate.accept(this)
@@ -99,7 +101,9 @@ interface Transformer<T : Transformer<T>> {
     fun transformCatchPredicate(predicate: CatchPredicate): Predicate = predicate
     fun transformDefaultSwitchPredicate(predicate: DefaultSwitchPredicate): Predicate = predicate
     fun transformInequalityPredicate(predicate: InequalityPredicate): Predicate = predicate
+    fun transformEnterMonitorPredicate(predicate: EnterMonitorPredicate): Predicate = predicate
     fun transformEqualityPredicate(predicate: EqualityPredicate): Predicate = predicate
+    fun transformExitMonitorPredicate(predicate: ExitMonitorPredicate): Predicate = predicate
     fun transformFieldInitializerPredicate(predicate: FieldInitializerPredicate): Predicate = predicate
     fun transformFieldStorePredicate(predicate: FieldStorePredicate): Predicate = predicate
     fun transformNewArrayPredicate(predicate: NewArrayPredicate): Predicate = predicate

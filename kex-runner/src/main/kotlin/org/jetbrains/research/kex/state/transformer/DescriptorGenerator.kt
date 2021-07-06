@@ -1,13 +1,13 @@
 package org.jetbrains.research.kex.state.transformer
 
 import org.jetbrains.research.kex.ExecutionContext
+import org.jetbrains.research.kex.descriptor.ConstantDescriptor
+import org.jetbrains.research.kex.descriptor.Descriptor
+import org.jetbrains.research.kex.descriptor.descriptor
 import org.jetbrains.research.kex.ktype.KexPointer
 import org.jetbrains.research.kex.ktype.KexReference
 import org.jetbrains.research.kex.ktype.kexType
-import org.jetbrains.research.kex.reanimator.Parameters
-import org.jetbrains.research.kex.reanimator.descriptor.ConstantDescriptor
-import org.jetbrains.research.kex.reanimator.descriptor.Descriptor
-import org.jetbrains.research.kex.reanimator.descriptor.descriptor
+import org.jetbrains.research.kex.parameters.Parameters
 import org.jetbrains.research.kex.smt.FinalDescriptorReanimator
 import org.jetbrains.research.kex.smt.InitialDescriptorReanimator
 import org.jetbrains.research.kex.smt.ModelReanimator
