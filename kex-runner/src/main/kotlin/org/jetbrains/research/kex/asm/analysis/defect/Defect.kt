@@ -1,5 +1,6 @@
 package org.jetbrains.research.kex.asm.analysis.defect
 
+import kotlinx.serialization.Serializable
 import org.jetbrains.research.kfg.ir.value.instruction.Instruction
 import java.nio.file.Path
 
@@ -9,6 +10,7 @@ enum class DefectType(val description: String) {
     ASSERT("assertion violation")
 }
 
+@Serializable
 data class Defect(
     val type: DefectType,
     val callStack: List<String>,

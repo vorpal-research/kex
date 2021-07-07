@@ -42,19 +42,9 @@
         </dependency>
 
         <dependency>
-            <groupId>com.beust</groupId>
-            <artifactId>klaxon</artifactId>
-            <version>${klaxon.version}</version>
-        </dependency>
-        <dependency>
             <groupId>com.microsoft</groupId>
             <artifactId>z3</artifactId>
             <version>${z3.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.jetbrains.kotlin</groupId>
-            <artifactId>kotlin-stdlib</artifactId>
-            <version>${kotlin.version}</version>
         </dependency>
     </dependencies>
 
@@ -69,6 +59,9 @@
                 <version>${kotlin.version}</version>
                 <configuration>
                     <jvmTarget>${jvm.version}</jvmTarget>
+                    <compilerPlugins>
+                        <plugin>kotlinx-serialization</plugin>
+                    </compilerPlugins>
                 </configuration>
 
                 <dependencies>
