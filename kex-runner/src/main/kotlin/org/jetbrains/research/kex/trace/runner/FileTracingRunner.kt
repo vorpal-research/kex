@@ -9,15 +9,16 @@ import org.jetbrains.research.kex.trace.file.ActionParseException
 import org.jetbrains.research.kex.trace.file.ActionParser
 import org.jetbrains.research.kex.trace.file.FileTrace
 import org.jetbrains.research.kfg.ir.Method
+import org.jetbrains.research.kfg.ir.value.NameMapperContext
 import org.jetbrains.research.kthelper.logging.log
 
-private fun parse(method: Method, result: InvocationResult): FileTrace {
+private fun parse(nameContext: NameMapperContext, method: Method, result: InvocationResult): FileTrace {
     val traceFile = TraceInstrumenter.getTraceFile(method)
     val trace = traceFile.readText().split(";").map { it.trim() }
 
     val lines = trace.filter { it.isNotBlank() }
 
-    val parser = ActionParser(method.cm)
+    val parser = ActionParser(method.cm, nameContext)
 
     val actions = lines
         .mapNotNull {
@@ -38,6 +39,7 @@ private fun parse(method: Method, result: InvocationResult): FileTrace {
 }
 
 class FileTracingRunner(
+    val nameContext: NameMapperContext,
     method: Method,
     loader: ClassLoader,
     val parameters: Parameters<Any?>,
@@ -47,12 +49,16 @@ class FileTracingRunner(
     override fun enableCollector() {}
     override fun disableCollector() {}
 
-    override fun collectTrace(invocationResult: InvocationResult) = parse(method, invocationResult)
+    override fun collectTrace(invocationResult: InvocationResult) = parse(nameContext, method, invocationResult)
 }
 
-class RandomFileTracingRunner(method: Method, loader: ClassLoader, random: Randomizer) :
-    TracingRandomRunner<FileTrace>(method, loader, random) {
+class RandomFileTracingRunner(
+    val nameContext: NameMapperContext,
+    method: Method,
+    loader: ClassLoader,
+    random: Randomizer
+) : TracingRandomRunner<FileTrace>(method, loader, random) {
     override fun enableCollector() {}
     override fun disableCollector() {}
-    override fun collectTrace(invocationResult: InvocationResult) = parse(method, invocationResult)
+    override fun collectTrace(invocationResult: InvocationResult) = parse(nameContext, method, invocationResult)
 }

@@ -18,6 +18,7 @@ import org.jetbrains.research.kfg.KfgConfig
 import org.jetbrains.research.kfg.Package
 import org.jetbrains.research.kfg.container.Container
 import org.jetbrains.research.kfg.container.asContainer
+import org.jetbrains.research.kfg.ir.value.NameMapperContext
 import org.jetbrains.research.kfg.util.Flags
 import org.jetbrains.research.kthelper.logging.log
 import java.net.URLClassLoader
@@ -86,7 +87,7 @@ class KexExecutor(args: Array<String>) {
             exitProcess(1)
         }
 
-        val collector = TraceCollectorProxy.enableCollector(ctx)
+        val collector = TraceCollectorProxy.enableCollector(ctx, NameMapperContext())
         var exception: Throwable? = null
         try {
             val test = javaClass.getMethod(testMethod)

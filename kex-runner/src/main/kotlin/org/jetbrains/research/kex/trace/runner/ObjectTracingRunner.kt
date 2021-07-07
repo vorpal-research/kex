@@ -14,9 +14,11 @@ import org.jetbrains.research.kex.trace.`object`.ActionTrace
 import org.jetbrains.research.kex.trace.`object`.TraceCollector
 import org.jetbrains.research.kex.trace.`object`.TraceCollectorProxy
 import org.jetbrains.research.kfg.ir.Method
+import org.jetbrains.research.kfg.ir.value.NameMapperContext
 import org.jetbrains.research.kthelper.logging.log
 
 class ObjectTracingRunner(
+    val nameContext: NameMapperContext,
     method: Method,
     loader: ClassLoader,
     val parameters: Parameters<Any?>
@@ -26,7 +28,7 @@ class ObjectTracingRunner(
     override fun generateArguments() = parameters
 
     override fun enableCollector() {
-        collector = TraceCollectorProxy.enableCollector(method.cm)
+        collector = TraceCollectorProxy.enableCollector(method.cm, nameContext)
     }
 
     override fun disableCollector() {
@@ -37,6 +39,7 @@ class ObjectTracingRunner(
 }
 
 class RandomObjectTracingRunner(
+    val nameContext: NameMapperContext,
     method: Method,
     loader: ClassLoader,
     random: Randomizer
@@ -44,7 +47,7 @@ class RandomObjectTracingRunner(
     private lateinit var collector: TraceCollector
 
     override fun enableCollector() {
-        collector = TraceCollectorProxy.enableCollector(method.cm)
+        collector = TraceCollectorProxy.enableCollector(method.cm, nameContext)
     }
 
     override fun disableCollector() {
@@ -56,6 +59,7 @@ class RandomObjectTracingRunner(
 
 class ReanimatingRandomObjectTracingRunner(
     val ctx: ExecutionContext,
+    val nameContext: NameMapperContext,
     psa: PredicateStateAnalysis,
     visibilityLevel: Visibility,
     method: Method
@@ -67,7 +71,7 @@ class ReanimatingRandomObjectTracingRunner(
     private lateinit var collector: TraceCollector
 
     override fun enableCollector() {
-        collector = TraceCollectorProxy.enableCollector(method.cm)
+        collector = TraceCollectorProxy.enableCollector(method.cm, nameContext)
     }
 
     override fun disableCollector() {

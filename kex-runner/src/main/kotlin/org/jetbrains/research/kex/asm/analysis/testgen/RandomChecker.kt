@@ -12,6 +12,7 @@ import org.jetbrains.research.kex.trace.runner.TimeoutException
 import org.jetbrains.research.kex.trace.symbolic.InstructionTrace
 import org.jetbrains.research.kfg.ClassManager
 import org.jetbrains.research.kfg.ir.Method
+import org.jetbrains.research.kfg.ir.value.NameMapperContext
 import org.jetbrains.research.kfg.visitor.MethodVisitor
 import org.jetbrains.research.kthelper.logging.debug
 import org.jetbrains.research.kthelper.logging.log
@@ -31,8 +32,11 @@ class RandomChecker(
 ) : MethodVisitor {
     override val cm: ClassManager
         get() = ctx.cm
+    private val nameContext = NameMapperContext()
 
-    override fun cleanup() {}
+    override fun cleanup() {
+        nameContext.clear()
+    }
 
     override fun visit(method: Method) {
         super.visit(method)
@@ -40,7 +44,7 @@ class RandomChecker(
         if (method.klass.isSynthetic) return
         if (method.isAbstract || method.isConstructor || method.isStaticInitializer) return
 
-        val randomRunner = ReanimatingRandomObjectTracingRunner(ctx, psa, visibilityLevel, method)
+        val randomRunner = ReanimatingRandomObjectTracingRunner(ctx, nameContext, psa, visibilityLevel, method)
 
         repeat(runs) { _ ->
             try {
@@ -63,8 +67,11 @@ class SymbolicRandomChecker(
 ) : MethodVisitor {
     override val cm: ClassManager
         get() = ctx.cm
+    private val nameContext = NameMapperContext()
 
-    override fun cleanup() {}
+    override fun cleanup() {
+        nameContext.clear()
+    }
 
     override fun visit(method: Method) {
         super.visit(method)
@@ -72,7 +79,7 @@ class SymbolicRandomChecker(
         if (method.klass.isSynthetic) return
         if (method.isAbstract || method.isConstructor || method.isStaticInitializer) return
 
-        val randomRunner = RandomSymbolicTracingRunner(ctx, method)
+        val randomRunner = RandomSymbolicTracingRunner(ctx, nameContext, method)
 
         repeat(runs) { _ ->
             try {

@@ -14,6 +14,7 @@ import org.jetbrains.research.kex.state.term.Term
 import org.jetbrains.research.kex.trace.symbolic.*
 import org.jetbrains.research.kfg.ClassManager
 import org.jetbrains.research.kfg.ir.Method
+import org.jetbrains.research.kfg.ir.value.NameMapperContext
 import kotlin.reflect.KClass
 
 @InternalSerializationApi
@@ -29,8 +30,8 @@ val kexTypeSerialModule: SerializersModule
 
 @ExperimentalSerializationApi
 @InternalSerializationApi
-fun getTermSerialModule(cm: ClassManager): SerializersModule = SerializersModule {
-    include(getKfgSerialModule(cm))
+fun getTermSerialModule(cm: ClassManager, ctx: NameMapperContext): SerializersModule = SerializersModule {
+    include(getKfgSerialModule(cm, ctx))
     include(kexTypeSerialModule)
     polymorphic(Term::class) {
         for (klass in Term.terms.values) {
@@ -54,8 +55,8 @@ val predicateTypeSerialModule: SerializersModule
 
 @ExperimentalSerializationApi
 @InternalSerializationApi
-fun getPredicateSerialModule(cm: ClassManager): SerializersModule = SerializersModule {
-    include(getTermSerialModule(cm))
+fun getPredicateSerialModule(cm: ClassManager, ctx: NameMapperContext): SerializersModule = SerializersModule {
+    include(getTermSerialModule(cm, ctx))
     include(predicateTypeSerialModule)
     polymorphic(Predicate::class) {
         for (klass in Predicate.predicates.values) {
@@ -68,8 +69,8 @@ fun getPredicateSerialModule(cm: ClassManager): SerializersModule = SerializersM
 
 @ExperimentalSerializationApi
 @InternalSerializationApi
-fun getPredicateStateSerialModule(cm: ClassManager): SerializersModule = SerializersModule {
-    include(getPredicateSerialModule(cm))
+fun getPredicateStateSerialModule(cm: ClassManager, ctx: NameMapperContext): SerializersModule = SerializersModule {
+    include(getPredicateSerialModule(cm, ctx))
     polymorphic(PredicateState::class) {
         for (klass in PredicateState.states.values) {
             @Suppress("UNCHECKED_CAST")
@@ -113,18 +114,19 @@ fun getSymbolicStateSerialModule(): SerializersModule = SerializersModule {
 
 @ExperimentalSerializationApi
 @InternalSerializationApi
-fun getPreSymbolicSerialModule(cm: ClassManager): SerializersModule = SerializersModule {
-    val base = getPredicateStateSerialModule(cm)
+fun getPreSymbolicSerialModule(cm: ClassManager, ctx: NameMapperContext): SerializersModule = SerializersModule {
+    val base = getPredicateStateSerialModule(cm, ctx)
     include(base)
     include(getDescriptorSerialModule())
     contextual(WrappedValue::class, WrappedValueSerializer(
+        ctx,
         base.getContextual(Method::class)!!
     ))
 }
 
 @ExperimentalSerializationApi
 @InternalSerializationApi
-fun getKexSerialModule(cm: ClassManager): SerializersModule = SerializersModule {
-    include(getPreSymbolicSerialModule(cm))
+fun getKexSerialModule(cm: ClassManager, ctx: NameMapperContext): SerializersModule = SerializersModule {
+    include(getPreSymbolicSerialModule(cm, ctx))
     include(getSymbolicStateSerialModule())
 }

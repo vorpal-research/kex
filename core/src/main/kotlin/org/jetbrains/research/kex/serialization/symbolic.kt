@@ -13,6 +13,7 @@ import kotlinx.serialization.modules.SerializersModule
 import org.jetbrains.research.kex.trace.symbolic.WrappedValue
 import org.jetbrains.research.kex.util.parseValue
 import org.jetbrains.research.kfg.ir.Method
+import org.jetbrains.research.kfg.ir.value.NameMapperContext
 
 @InternalSerializationApi
 @ExperimentalSerializationApi
@@ -65,7 +66,10 @@ inline fun <reified K : Any, reified V : Any, R> mapSerializer(
 
 @ExperimentalSerializationApi
 @Serializer(forClass = WrappedValue::class)
-internal class WrappedValueSerializer(val methodSerializer: KSerializer<Method>) : KSerializer<WrappedValue> {
+internal class WrappedValueSerializer(
+    val ctx: NameMapperContext,
+    val methodSerializer: KSerializer<Method>
+    ) : KSerializer<WrappedValue> {
     override val descriptor: SerialDescriptor
         get() = buildClassSerialDescriptor("WrappedValue") {
             element("method", methodSerializer.descriptor)
@@ -92,6 +96,6 @@ internal class WrappedValueSerializer(val methodSerializer: KSerializer<Method>)
             }
         }
         input.endStructure(descriptor)
-        return WrappedValue(method, method.slotTracker.parseValue(name))
+        return WrappedValue(method, ctx.getMapper(method).parseValue(name))
     }
 }

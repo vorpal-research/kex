@@ -14,11 +14,9 @@ import org.jetbrains.research.kex.state.predicate.state
 import org.jetbrains.research.kex.state.term.Term
 import org.jetbrains.research.kex.state.term.term
 import org.jetbrains.research.kex.util.cmp
+import org.jetbrains.research.kex.util.parseValue
 import org.jetbrains.research.kfg.ir.*
-import org.jetbrains.research.kfg.ir.value.Argument
-import org.jetbrains.research.kfg.ir.value.Constant
-import org.jetbrains.research.kfg.ir.value.ThisRef
-import org.jetbrains.research.kfg.ir.value.Value
+import org.jetbrains.research.kfg.ir.value.*
 import org.jetbrains.research.kfg.ir.value.instruction.*
 import org.jetbrains.research.kfg.type.Type
 import org.jetbrains.research.kfg.type.parseDesc
@@ -36,7 +34,10 @@ class SymbolicTraceException(message: String, cause: Throwable) : KtException(me
 /**
  * Class that collects the symbolic state of the program during the execution
  */
-class SymbolicTraceBuilder(val ctx: ExecutionContext) : SymbolicState(), InstructionTraceCollector {
+class SymbolicTraceBuilder(
+    val ctx: ExecutionContext,
+    val nameMapperContext: NameMapperContext
+) : SymbolicState(), InstructionTraceCollector {
     /**
      * required fields
      */
@@ -53,13 +54,13 @@ class SymbolicTraceBuilder(val ctx: ExecutionContext) : SymbolicState(), Instruc
 
     override val symbolicState: SymbolicState
         get() = SymbolicStateImpl(
-                state,
-                path,
-                concreteValueMap,
-                termMap,
-                predicateMap,
-                trace
-            )
+            state,
+            path,
+            concreteValueMap,
+            termMap,
+            predicateMap,
+            trace
+        )
     override val trace: InstructionTrace
         get() = InstructionTrace(traceBuilder.toList())
 
@@ -157,39 +158,15 @@ class SymbolicTraceBuilder(val ctx: ExecutionContext) : SymbolicState(), Instruc
     }
 
     private fun parseBlock(blockName: String): BasicBlock {
-        val st = currentMethod.slotTracker
-        return st.getBlock(blockName) ?: unreachable {
+        val nm = nameMapperContext.getMapper(currentMethod)
+        return nm.getBlock(blockName) ?: unreachable {
             log.error("Unknown block name $blockName")
         }
     }
 
     private fun parseValue(valueName: String): Value {
-        val st = currentMethod.slotTracker
-        return st.getValue(valueName) ?: when {
-            valueName.matches(Regex("\\d+")) -> cm.value.getInt(valueName.toInt())
-            valueName.matches(Regex("\\d+.\\d+")) -> cm.value.getDouble(valueName.toDouble())
-            valueName.matches(Regex("-\\d+")) -> cm.value.getInt(valueName.toInt())
-            valueName.matches(Regex("-\\d+.\\d+")) -> cm.value.getDouble(valueName.toDouble())
-            valueName.matches(Regex("\".*\"")) -> cm.value.getString(
-                valueName.substring(
-                    1,
-                    valueName.lastIndex
-                )
-            )
-            valueName.matches(Regex("\"[\n\\s]*\"")) -> cm.value.getString(
-                valueName.substring(
-                    1,
-                    valueName.lastIndex
-                )
-            )
-            valueName.matches(Regex(".*(/.*)+.class")) -> cm.value.getClass("L${valueName.removeSuffix(".class")};")
-            valueName == "null" -> cm.value.nullConstant
-            valueName == "true" -> cm.value.getBool(true)
-            valueName == "false" -> cm.value.getBool(false)
-            else ->  unreachable {
-                log.error("Unknown value name $valueName")
-            }
-        }
+        val nm = nameMapperContext.getMapper(currentMethod)
+        return nm.parseValue(valueName)
     }
 
     private fun newValue(value: Value) = term {
@@ -243,11 +220,12 @@ class SymbolicTraceBuilder(val ctx: ExecutionContext) : SymbolicState(), Instruc
     private fun Any?.getAsDescriptor() = converter.convert(this)
     private fun Any?.getAsDescriptor(type: KexType) = converter.convert(this).unwrapped(type)
 
-    private val Method.parameterValues: Parameters<Value> get() = Parameters(
-        if (!isStatic) ctx.values.getThis(klass) else null,
-        argTypes.withIndex().map { (index, type) -> ctx.values.getArgument(index, this, type) },
-        setOf()
-    )
+    private val Method.parameterValues: Parameters<Value>
+        get() = Parameters(
+            if (!isStatic) ctx.values.getThis(klass) else null,
+            argTypes.withIndex().map { (index, type) -> ctx.values.getArgument(index, this, type) },
+            setOf()
+        )
 
     private infix fun Method.overrides(other: Method): Boolean = when {
         this == other -> true

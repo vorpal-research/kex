@@ -25,6 +25,7 @@ import org.jetbrains.research.kex.trace.runner.TimeoutException
 import org.jetbrains.research.kfg.ClassManager
 import org.jetbrains.research.kfg.ir.BasicBlock
 import org.jetbrains.research.kfg.ir.Method
+import org.jetbrains.research.kfg.ir.value.NameMapperContext
 import org.jetbrains.research.kfg.ir.value.Value
 import org.jetbrains.research.kfg.visitor.MethodVisitor
 import org.jetbrains.research.kthelper.collection.firstOrElse
@@ -48,6 +49,7 @@ class ConcolicChecker(
     override val cm: ClassManager get() = ctx.cm
     val loader: ClassLoader get() = ctx.loader
     val random: Randomizer get() = ctx.random
+    private val nameContext = NameMapperContext()
     private val paths = mutableSetOf<PredicateState>()
     private var counter = 0
     lateinit var generator: ParameterGenerator
@@ -55,6 +57,7 @@ class ConcolicChecker(
 
     override fun cleanup() {
         paths.clear()
+        nameContext.clear()
     }
 
     private fun initializeGenerator(method: Method) {
@@ -204,12 +207,12 @@ class ConcolicChecker(
 
     private fun collectTrace(method: Method, instance: Any?, args: List<Any?>): ActionTrace? {
         val params = Parameters(instance, args, setOf())
-        val runner = ObjectTracingRunner(method, loader, params)
+        val runner = ObjectTracingRunner(nameContext, method, loader, params)
         return runner.run()
     }
 
     private fun getRandomTrace(method: Method) =
-        tryOrNull { RandomObjectTracingRunner(method, loader, ctx.random).run() }
+        tryOrNull { RandomObjectTracingRunner(nameContext, method, loader, ctx.random).run() }
 
     private suspend fun process(method: Method) {
         val traces = ArrayDeque<ActionTrace>()
