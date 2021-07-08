@@ -41,6 +41,13 @@ private val onlyMain by lazy {
     kexConfig.getBooleanValue("concolic", "mainOnly", false)
 }
 
+@Deprecated(
+    "outdated version",
+    replaceWith = ReplaceWith(
+        "InstructionConcolicChecker",
+        "org.jetbrains.research.kex.asm.analysis.concolic.InstructionConcolicChecker"
+    )
+)
 class ConcolicChecker(
     val ctx: ExecutionContext,
     val psa: PredicateStateAnalysis,

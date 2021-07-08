@@ -10,8 +10,11 @@ import org.jetbrains.research.kex.util.getPathSeparator
 import org.jetbrains.research.kthelper.KtException
 import org.jetbrains.research.kthelper.logging.log
 import java.nio.file.Paths
+import java.util.concurrent.TimeUnit
 import kotlin.io.path.deleteIfExists
 import kotlin.io.path.readText
+
+private val timeout = kexConfig.getLongValue("runner", "timeout", 10000L)
 
 class ExecutionException(cause: Throwable) : KtException("", cause)
 
@@ -52,13 +55,17 @@ class SymbolicExternalTracingRunner(val ctx: ExecutionContext) {
         )
         log.debug("Executing process with command:\n${pb.command().joinToString(" ")}")
 
-        val process = pb.start()
-        process.waitFor()
+        try {
+            val process = pb.start()
+            process.waitFor(timeout, TimeUnit.MILLISECONDS)
 
-        val result = KexSerializer(ctx.cm).fromJson<ExecutionResult>(traceFile.readText()).also {
-            traceFile.deleteIfExists()
+            val result = KexSerializer(ctx.cm).fromJson<ExecutionResult>(traceFile.readText()).also {
+                traceFile.deleteIfExists()
+            }
+            log.debug("Execution result: $result")
+            return result
+        } catch (e: InterruptedException) {
+            throw ExecutionException(e)
         }
-        log.debug("Execution result: $result")
-        return result
     }
 }
