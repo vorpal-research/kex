@@ -23,7 +23,7 @@ import org.jetbrains.research.kex.state.PredicateState
 import org.jetbrains.research.kex.trace.TraceManager
 import org.jetbrains.research.kex.trace.`object`.ActionTrace
 import org.jetbrains.research.kex.trace.runner.ObjectTracingRunner
-import org.jetbrains.research.kex.trace.runner.TimeoutException
+import org.jetbrains.research.kex.util.TimeoutException
 import org.jetbrains.research.kfg.ClassManager
 import org.jetbrains.research.kfg.ir.BasicBlock
 import org.jetbrains.research.kfg.ir.Class

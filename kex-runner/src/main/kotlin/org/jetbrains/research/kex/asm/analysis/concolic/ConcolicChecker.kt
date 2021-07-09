@@ -21,7 +21,7 @@ import org.jetbrains.research.kex.trace.TraceManager
 import org.jetbrains.research.kex.trace.`object`.*
 import org.jetbrains.research.kex.trace.runner.ObjectTracingRunner
 import org.jetbrains.research.kex.trace.runner.RandomObjectTracingRunner
-import org.jetbrains.research.kex.trace.runner.TimeoutException
+import org.jetbrains.research.kex.util.TimeoutException
 import org.jetbrains.research.kfg.ClassManager
 import org.jetbrains.research.kfg.ir.BasicBlock
 import org.jetbrains.research.kfg.ir.Method

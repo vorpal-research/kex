@@ -167,7 +167,7 @@ class InstructionConcolicChecker(
                 }
                 result ?: run {
                     val mutated = Clause(instruction, path(instruction.location) {
-                        cond `!in` (instruction as SwitchInst).branches.keys.map { value(it) }
+                        cond `!in` switchInst.branches.keys.map { value(it) }
                     })
                     if (paths.any { mutated in it }) mutated else null
                 }
@@ -203,7 +203,7 @@ class InstructionConcolicChecker(
                 }
                 result ?: run {
                     val mutated = Clause(instruction, path(instruction.location) {
-                        cond `!in` (instruction as SwitchInst).branches.keys.map { value(it) }
+                        cond `!in` switchInst.range.map { const(it) }
                     })
                     if (paths.any { mutated in it }) null else mutated
                 }

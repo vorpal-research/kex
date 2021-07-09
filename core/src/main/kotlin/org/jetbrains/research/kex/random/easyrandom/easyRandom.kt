@@ -3,6 +3,7 @@ package org.jetbrains.research.kex.random.easyrandom
 import org.jeasy.random.EasyRandom
 import org.jeasy.random.EasyRandomParameters
 import org.jeasy.random.ObjectCreationException
+import org.jeasy.random.api.ExclusionPolicy
 import org.jeasy.random.api.ObjectFactory
 import org.jeasy.random.api.RandomizerContext
 import org.jeasy.random.util.ReflectionUtils.getPublicConcreteSubTypesOf
@@ -17,10 +18,7 @@ import org.jetbrains.research.kthelper.assert.ktassert
 import org.jetbrains.research.kthelper.logging.log
 import org.jetbrains.research.kthelper.tryOrNull
 import org.objenesis.ObjenesisStd
-import java.lang.reflect.ParameterizedType
-import java.lang.reflect.Type
-import java.lang.reflect.TypeVariable
-import java.lang.reflect.WildcardType
+import java.lang.reflect.*
 
 class EasyRandomDriver(val config: BeansConfig = defaultConfig) : Randomizer {
     companion object {
@@ -51,13 +49,17 @@ class EasyRandomDriver(val config: BeansConfig = defaultConfig) : Randomizer {
         }
     }
 
-    private class KexObjectFactory : ObjectFactory {
+    private val Class<*>.shouldBeExcluded: Boolean get() {
+        return config.excludes.any { it.isParent(Package.parse(name)) }
+    }
+
+    private inner class KexObjectFactory : ObjectFactory {
         private val objenesis = ObjenesisStd(false)
 
         override fun <T> createInstance(type: Class<T>, context: RandomizerContext): T =
             when {
                 context.parameters.isScanClasspathForConcreteTypes && isAbstract<T>(type) -> {
-                    val randomConcreteSubType = getPublicConcreteSubTypesOf<T>(type).randomOrNull()
+                    val randomConcreteSubType = getPublicConcreteSubTypesOf<T>(type).filterNot { it.shouldBeExcluded }.randomOrNull()
                         ?: throw InstantiationError("Unable to find a matching concrete subtype of type: $type in the classpath")
                     @Suppress("UNCHECKED_CAST")
                     createNewInstance(randomConcreteSubType) as T
@@ -88,7 +90,17 @@ class EasyRandomDriver(val config: BeansConfig = defaultConfig) : Randomizer {
             .collectionSizeRange(config.collectionSize.first, config.collectionSize.last)
             .stringLengthRange(config.stringLength.last, config.stringLength.last)
             .scanClasspathForConcreteTypes(true)
-            .excludeType { type -> config.excludes.any { it.isParent(Package.parse(type.name)) } }
+            .exclusionPolicy(object : ExclusionPolicy {
+                override fun shouldBeExcluded(field: Field?, ctx: RandomizerContext?): Boolean {
+                    if (field == null) return true
+                    return field.type.shouldBeExcluded
+                }
+
+                override fun shouldBeExcluded(klass: Class<*>?, ctx: RandomizerContext?): Boolean =
+                    klass?.shouldBeExcluded ?: true
+
+            })
+            .excludeType { type -> type.shouldBeExcluded }
             .objectFactory(KexObjectFactory())
     )
 

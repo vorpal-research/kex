@@ -2,7 +2,6 @@ package org.jetbrains.research.kex.reanimator.callstack
 
 import org.jetbrains.research.kex.ExecutionContext
 import org.jetbrains.research.kex.config.kexConfig
-import org.jetbrains.research.kex.trace.runner.runWithTimeout
 import org.jetbrains.research.kex.util.*
 import org.jetbrains.research.kthelper.assert.unreachable
 import org.jetbrains.research.kthelper.logging.log

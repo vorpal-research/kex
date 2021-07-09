@@ -58,6 +58,9 @@ class SymbolicExternalTracingRunner(val ctx: ExecutionContext) {
         try {
             val process = pb.start()
             process.waitFor(timeout, TimeUnit.MILLISECONDS)
+            if (process.isAlive) {
+                process.destroy()
+            }
 
             val result = KexSerializer(ctx.cm).fromJson<ExecutionResult>(traceFile.readText()).also {
                 traceFile.deleteIfExists()
