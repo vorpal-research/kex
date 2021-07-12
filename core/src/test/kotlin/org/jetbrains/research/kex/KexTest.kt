@@ -5,6 +5,8 @@ import org.jetbrains.research.kex.asm.transform.LoopDeroller
 import org.jetbrains.research.kex.config.FileConfig
 import org.jetbrains.research.kex.config.RuntimeConfig
 import org.jetbrains.research.kex.config.kexConfig
+import org.jetbrains.research.kex.util.getIntrinsics
+import org.jetbrains.research.kex.util.getRuntime
 import org.jetbrains.research.kfg.ClassManager
 import org.jetbrains.research.kfg.KfgConfig
 import org.jetbrains.research.kfg.Package
@@ -23,7 +25,7 @@ abstract class KexTest {
     val loader: ClassLoader
 
     init {
-        val rootDir = System.getProperty("root.dir")
+        val rootDir = System.getProperty("root.dir") ?: System.getProperty("user.dir")
         val version = System.getProperty("project.version")
         kexConfig.initialize(RuntimeConfig, FileConfig("$rootDir/kex-test.ini"))
         kexConfig.initLog("kex-test.log")
@@ -32,7 +34,7 @@ abstract class KexTest {
         val jar = Paths.get(jarPath).asContainer(`package`)!!
         loader = jar.classLoader
         cm = ClassManager(KfgConfig(flags = Flags.readAll, failOnError = false))
-        cm.initialize(jar)
+        cm.initialize(jar, getRuntime()!!, getIntrinsics()!!)
     }
 
     protected fun getPSA(method: Method): PredicateStateAnalysis {

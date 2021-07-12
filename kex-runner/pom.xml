@@ -88,11 +88,10 @@
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
             <version>4.13.2</version>
-        </dependency>
         <dependency>
-            <groupId>org.jacoco</groupId>
-            <artifactId>org.jacoco.core</artifactId>
-            <version>0.8.5</version>
+            <groupId>com.github.vldF</groupId>
+            <artifactId>LibSLParser</artifactId>
+            <version>${LibSLParser.version}</version>
         </dependency>
     </dependencies>
 

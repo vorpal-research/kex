@@ -16,6 +16,8 @@ import org.jetbrains.research.kex.state.term.ConstIntTerm
 import org.jetbrains.research.kex.state.term.isConst
 import org.jetbrains.research.kex.state.term.term
 import org.jetbrains.research.kex.trace.`object`.ObjectTraceManager
+import org.jetbrains.research.kex.util.getIntrinsics
+import org.jetbrains.research.kex.util.getRuntime
 import org.jetbrains.research.kfg.ClassManager
 import org.jetbrains.research.kfg.KfgConfig
 import org.jetbrains.research.kfg.analysis.LoopSimplifier
@@ -49,6 +51,7 @@ abstract class KexRunnerTest : KexTest() {
         val origManager = ClassManager(KfgConfig(flags = Flags.readAll, failOnError = false))
 
         jar.unpack(cm, targetDir, true)
+        origManager.initialize(jar, getRuntime()!!, getIntrinsics()!!)
         val classLoader = URLClassLoader(arrayOf(targetDir.toUri().toURL()))
         originalContext = ExecutionContext(origManager, `package`, jar.classLoader, EasyRandomDriver(), listOf())
 
@@ -135,12 +138,12 @@ abstract class KexRunnerTest : KexTest() {
         }
     }
 
-    private fun updateClassPath(loader: URLClassLoader) {
+    fun updateClassPath(loader: URLClassLoader) {
         val urlClassPath = loader.urLs.joinToString(separator = ":") { "${it.path}." }
         System.setProperty("java.class.path", "${classPath.split(":").filter { "kex-test" !in it }.joinToString(":")}:$urlClassPath")
     }
 
-    private fun clearClassPath() {
+    fun clearClassPath() {
         System.setProperty("java.class.path", classPath)
     }
 
