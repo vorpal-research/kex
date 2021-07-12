@@ -36,6 +36,16 @@ class RunnerCmdConfig(args: Array<String>) : AbstractCmdConfig("kex-runner", arg
     val mode = Option("m", "mode", true, "run mode: ${
         LaunchMode.values().joinToString(", ") { it.toString().lowercase() }
     }")
+    val libPackage =
+        Option(null, "libCheck", true, "package to check use cases of library, used in LibChecker mode")
+    libPackage.isRequired = false
+    options += libPackage
+
+    val lslPath =
+        Option(null, "lslPath", true, "path to .lsl file")
+    lslPath.isRequired = false
+    options += lslPath
+
     mode.isRequired = false
     options += mode
     options
