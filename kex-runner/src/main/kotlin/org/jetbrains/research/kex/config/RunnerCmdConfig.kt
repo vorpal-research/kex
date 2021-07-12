@@ -15,6 +15,24 @@ class RunnerCmdConfig(args: Array<String>) : AbstractCmdConfig("kex-runner", arg
     targetDir.isRequired = false
     options += targetDir
 
+    val libPackage =
+        Option(null, "libCheck", true, "package to check use cases of library, used in LibChecker mode")
+    libPackage.isRequired = false
+    options += libPackage
+
+    val lslPath =
+        Option(null, "lslPath", true, "path to .lsl file")
+    lslPath.isRequired = false
+    options += lslPath
+
+    val attempts = Option(null, "attempts", true, "number of attempts for reanimator mode")
+    attempts.isRequired = false
+    options += attempts
+
+    val attempts = Option(null, "attempts", true, "number of attempts for reanimator mode")
+    attempts.isRequired = false
+    options += attempts
+
     val mode = Option("m", "mode", true, "run mode: ${
         LaunchMode.values().joinToString(", ") { it.toString().lowercase() }
     }")

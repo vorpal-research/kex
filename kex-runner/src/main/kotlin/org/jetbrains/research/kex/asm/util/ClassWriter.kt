@@ -18,8 +18,11 @@ class ClassWriter(val ctx: ExecutionContext, val target: Path) : ClassVisitor {
 
     override fun visit(klass: Class) {
         val classFileName = target.resolve(Paths.get(klass.pkg.fileSystemPath, "${klass.name}.class")).toAbsolutePath()
-        tryOrNull {
+        try {
             klass.write(cm, ctx.loader, classFileName)
-        } ?: log.warn("Could not write class $klass")
+        } catch (e: Exception) {
+            log.warn("Could not write class $klass")
+            // log.error(e.stackTraceToString())
+        }
     }
 }

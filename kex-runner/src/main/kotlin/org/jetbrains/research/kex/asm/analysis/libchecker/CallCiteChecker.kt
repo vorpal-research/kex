@@ -1,7 +1,9 @@
-package org.jetbrains.research.kex.asm.analysis.defect
+package org.jetbrains.research.kex.asm.analysis.libchecker
 
 import org.jetbrains.research.kex.ExecutionContext
 import org.jetbrains.research.kex.annotations.AnnotationManager
+import org.jetbrains.research.kex.asm.analysis.defect.Defect
+import org.jetbrains.research.kex.asm.analysis.defect.DefectManager
 import org.jetbrains.research.kex.asm.manager.MethodManager
 import org.jetbrains.research.kex.asm.state.PredicateStateAnalysis
 import org.jetbrains.research.kex.config.kexConfig

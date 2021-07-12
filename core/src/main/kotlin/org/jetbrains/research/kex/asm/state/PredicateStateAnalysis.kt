@@ -3,6 +3,7 @@ package org.jetbrains.research.kex.asm.state
 import org.jetbrains.research.kthelper.algorithm.NoTopologicalSortingException
 import org.jetbrains.research.kthelper.logging.log
 import org.jetbrains.research.kfg.ClassManager
+import org.jetbrains.research.kfg.ir.BasicBlock
 import org.jetbrains.research.kfg.ir.Method
 import org.jetbrains.research.kfg.visitor.MethodVisitor
 import org.jetbrains.research.kthelper.KtException
