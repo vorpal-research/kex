@@ -8,10 +8,7 @@ import org.jetbrains.research.kfg.ir.BasicBlock
 import org.jetbrains.research.kfg.ir.BodyBlock
 import org.jetbrains.research.kfg.ir.CatchBlock
 import org.jetbrains.research.kfg.ir.Method
-import org.jetbrains.research.kfg.ir.value.BlockUser
-import org.jetbrains.research.kfg.ir.value.IntConstant
-import org.jetbrains.research.kfg.ir.value.NullConstant
-import org.jetbrains.research.kfg.ir.value.Value
+import org.jetbrains.research.kfg.ir.value.*
 import org.jetbrains.research.kfg.ir.value.instruction.*
 import org.jetbrains.research.kthelper.algorithm.GraphTraversal
 import org.jetbrains.research.kthelper.algorithm.NoTopologicalSortingException
@@ -25,6 +22,7 @@ private val derollCount = kexConfig.getIntValue("loop", "derollCount", 3)
 private val maxDerollCount = kexConfig.getIntValue("loop", "maxDerollCount", 0)
 
 class LoopDeroller(override val cm: ClassManager) : LoopVisitor {
+    private lateinit var ctx: MethodUsageContext
 
     companion object {
         const val DEROLLED_POSTFIX = ".deroll"
@@ -89,7 +87,8 @@ class LoopDeroller(override val cm: ClassManager) : LoopVisitor {
 
     override val preservesLoopInfo get() = false
 
-    override fun visit(method: Method) {
+    override fun visit(method: Method) = method.usageContext.use {
+        ctx = it
         try {
             super.visit(method)
         } catch (e: InvalidLoopException) {
@@ -99,7 +98,7 @@ class LoopDeroller(override val cm: ClassManager) : LoopVisitor {
         }
     }
 
-    override fun visit(loop: Loop) {
+    override fun visit(loop: Loop) = with(ctx) {
         super.visit(loop)
         if (loop.allEntries.size != 1) throw InvalidLoopException()
         if (loop.loopExits.isEmpty()) throw InvalidLoopException()
@@ -165,7 +164,7 @@ class LoopDeroller(override val cm: ClassManager) : LoopVisitor {
         }
 
         val unreachableBlock = BodyBlock("unreachable")
-        unreachableBlock.add(instructions.getUnreachable())
+        unreachableBlock.add(inst(cm) { unreachable() })
         method.add(unreachableBlock)
         unreachableBlocks.getOrPut(method, ::hashSetOf).add(unreachableBlock)
 
@@ -250,7 +249,7 @@ class LoopDeroller(override val cm: ClassManager) : LoopVisitor {
         return abs((max.value - init.value) / update.value)
     }
 
-    private fun getBlockOrder(loop: Loop): List<BasicBlock> {
+    private fun getBlockOrder(loop: Loop): List<BasicBlock> = with(ctx) {
         val latch = loop.latch
         val header = loop.header
         latch.removeSuccessor(header)
@@ -267,7 +266,7 @@ class LoopDeroller(override val cm: ClassManager) : LoopVisitor {
         is CatchBlock -> CatchBlock("${block.name.name}$DEROLLED_POSTFIX", block.exception)
     }
 
-    private fun copyBlockConnections(state: State, original: BasicBlock) {
+    private fun copyBlockConnections(state: State, original: BasicBlock) = with(ctx) {
         val derolled = state[original]
         when (original) {
             state.header -> {
@@ -299,10 +298,10 @@ class LoopDeroller(override val cm: ClassManager) : LoopVisitor {
         successors.forEach { it.addPredecessor(derolled) }
     }
 
-    private fun copyBlockInstructions(state: State, original: BasicBlock) {
+    private fun copyBlockInstructions(state: State, original: BasicBlock) = with(ctx) {
         val newBlock = state[original]
         for (inst in original) {
-            val updated = inst.update(state.instMappings, inst.location)
+            val updated = inst.update(this, state.instMappings, inst.location)
             state[inst] = updated
             newBlock += updated
 
@@ -318,7 +317,7 @@ class LoopDeroller(override val cm: ClassManager) : LoopVisitor {
                 if (updated.predecessors.toSet().size == 1) {
                     val actual = previousMap.getValue(state.lastLatch)
                     val mappedActual = if (actual is NullConstant) {
-                        val newInst = instructions.getCast(updated.type, actual)
+                        val newInst = inst(cm) { actual `as` updated.type }
                         newBlock.insertBefore(updated, newInst)
                         newInst
                     } else actual
@@ -329,7 +328,7 @@ class LoopDeroller(override val cm: ClassManager) : LoopVisitor {
         }
     }
 
-    private fun remapBlockPhis(state: State, phiMappings: List<Pair<Instruction, Instruction>>) {
+    private fun remapBlockPhis(state: State, phiMappings: List<Pair<Instruction, Instruction>>) = with(ctx) {
         for ((orig, new) in phiMappings) {
             if (new is PhiInst) {
                 val bb = new.parent
@@ -340,7 +339,7 @@ class LoopDeroller(override val cm: ClassManager) : LoopVisitor {
                         incomings.values.first()
                     }
                     else -> {
-                        val newPhi = instructions.getPhi(new.type, incomings)
+                        val newPhi = inst(cm) { phi(new.type, incomings) }
                         bb.replace(new, newPhi)
                         new.clearUses()
                         newPhi
@@ -352,9 +351,9 @@ class LoopDeroller(override val cm: ClassManager) : LoopVisitor {
         }
     }
 
-    private fun remapMethodPhis(phis: List<PhiInst>, newMappings: Map<PhiInst, Map<BasicBlock, Value>>) {
+    private fun remapMethodPhis(phis: List<PhiInst>, newMappings: Map<PhiInst, Map<BasicBlock, Value>>) = with(ctx) {
         for (phi in phis) {
-            val newPhi = instructions.getPhi(phi.type, newMappings.getValue(phi)).update(loc = phi.location)
+            val newPhi = inst(cm) { phi(phi.type, newMappings.getValue(phi)).update(ctx, loc = phi.location) }
 
             val bb = phi.parent
             bb.insertBefore(phi, newPhi)
@@ -364,7 +363,7 @@ class LoopDeroller(override val cm: ClassManager) : LoopVisitor {
         }
     }
 
-    private fun cleanupBody(method: Method, body: List<BasicBlock>) {
+    private fun cleanupBody(method: Method, body: List<BasicBlock>) = with(ctx) {
         for (block in body) {
             block.predecessors.toTypedArray().forEach { block.removePredecessor(it) }
             block.successors.toTypedArray().forEach { block.removeSuccessor(it) }

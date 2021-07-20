@@ -7,9 +7,12 @@ import org.jetbrains.research.kthelper.logging.log
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.nio.file.Path
+import java.util.*
 
 private val dot by lazy { kexConfig.getStringValue("view", "dot") ?: unreachable { log.error("Could not find dot") } }
-private val viewer by lazy { kexConfig.getStringValue("view", "viewer") ?: unreachable { log.error("Could not find viewer") } }
+private val viewer by lazy {
+    kexConfig.getStringValue("view", "viewer") ?: unreachable { log.error("Could not find viewer") }
+}
 
 fun Method.view() {
     this.view(dot, viewer)
@@ -35,3 +38,6 @@ fun Path.resolve(vararg paths: String): Path {
         result = result.resolve(element)
     return result
 }
+
+fun String.kapitalize() =
+    this.replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString() }

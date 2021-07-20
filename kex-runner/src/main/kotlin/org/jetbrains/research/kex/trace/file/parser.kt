@@ -6,7 +6,8 @@ import com.github.h0tk3y.betterParse.grammar.parser
 import com.github.h0tk3y.betterParse.parser.Parser
 import org.jetbrains.research.kfg.ClassManager
 import org.jetbrains.research.kfg.ir.MethodDesc
-import org.jetbrains.research.kfg.ir.value.SlotTracker
+import org.jetbrains.research.kfg.ir.value.NameMapper
+import org.jetbrains.research.kfg.ir.value.NameMapperContext
 import org.jetbrains.research.kfg.type.ClassType
 import org.jetbrains.research.kfg.type.parseStringToType
 import org.jetbrains.research.kthelper.assert.unreachable
@@ -19,10 +20,10 @@ class UnknownTypeException(msg: String) : ActionParseException(msg)
 
 class UnknownNameException(msg: String) : ActionParseException(msg)
 
-class ActionParser(val cm: ClassManager) : Grammar<Action>() {
-    private var trackers = Stack<SlotTracker>()
+class ActionParser(val cm: ClassManager, val ctx: NameMapperContext) : Grammar<Action>() {
+    private var trackers = Stack<NameMapper>()
 
-    private val tracker: SlotTracker
+    private val tracker: NameMapper
         get() = trackers.peek() ?: unreachable { log.error("No slot trackers defined") }
 
     // keyword tokens
@@ -176,7 +177,7 @@ class ActionParser(val cm: ClassManager) : Grammar<Action>() {
 
     // action
     private val methodEntryParser by (-enter and -space and methodName) use {
-        trackers.push(this.slotTracker)
+        trackers.push(ctx.getMapper(this))
         MethodEntry(this)
     }
 

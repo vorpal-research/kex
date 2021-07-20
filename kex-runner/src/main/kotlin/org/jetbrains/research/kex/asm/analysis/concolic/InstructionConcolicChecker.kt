@@ -1,5 +1,9 @@
 package org.jetbrains.research.kex.asm.analysis.concolic
 
+import kotlinx.coroutines.TimeoutCancellationException
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withTimeout
+import kotlinx.coroutines.yield
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.InternalSerializationApi
 import org.jetbrains.research.kex.ExecutionContext
@@ -39,7 +43,9 @@ import org.jetbrains.research.kfg.ir.value.instruction.TableSwitchInst
 import org.jetbrains.research.kfg.visitor.MethodVisitor
 import org.jetbrains.research.kthelper.assert.unreachable
 import org.jetbrains.research.kthelper.collection.dequeOf
+import org.jetbrains.research.kthelper.logging.debug
 import org.jetbrains.research.kthelper.logging.log
+import org.jetbrains.research.kthelper.logging.warn
 import org.jetbrains.research.kthelper.tryOrNull
 import java.nio.file.Path
 
@@ -66,12 +72,15 @@ class InstructionConcolicChecker(
     val ctx: ExecutionContext,
     val traceManager: TraceManager<InstructionTrace>
 ) : MethodVisitor {
+    override val cm: ClassManager
+        get() = ctx.cm
+
     private val paths = mutableSetOf<PathCondition>()
     private val candidates = mutableSetOf<PathCondition>()
     private val compilerHelper = CompilerHelper(ctx)
 
-    override val cm: ClassManager
-        get() = ctx.cm
+    private val timeLimit = kexConfig.getLongValue("concolic", "timeLimit", 100000L)
+    private val maxFailsInARow = kexConfig.getLongValue("concolic", "maxFailsInARow", 50)
 
     override fun cleanup() {
         paths.clear()
@@ -81,10 +90,19 @@ class InstructionConcolicChecker(
         if (method.isStaticInitializer || !method.hasBody) return
         if (!method.isImpactable) return
 
-        log.debug("Checking method $method")
-        log.debug(method.print())
+        log.debug { "Processing method $method" }
+        log.debug { method.print() }
 
-        processMethod(method)
+        runBlocking {
+            try {
+                withTimeout(timeLimit) {
+                    processMethod(method)
+                }
+                log.debug { "Method $method processing is finished normally" }
+            } catch (e: TimeoutCancellationException) {
+                log.debug { "Method $method processing is finished with timeout exception" }
+            }
+        }
     }
 
     private fun getRandomTrace(method: Method): ExecutionResult? = tryOrNull {
@@ -149,7 +167,7 @@ class InstructionConcolicChecker(
                 }
                 result ?: run {
                     val mutated = Clause(instruction, path(instruction.location) {
-                        cond `!in` (instruction as SwitchInst).branches.keys.map { value(it) }
+                        cond `!in` switchInst.branches.keys.map { value(it) }
                     })
                     if (paths.any { mutated in it }) mutated else null
                 }
@@ -185,7 +203,7 @@ class InstructionConcolicChecker(
                 }
                 result ?: run {
                     val mutated = Clause(instruction, path(instruction.location) {
-                        cond `!in` (instruction as SwitchInst).branches.keys.map { value(it) }
+                        cond `!in` switchInst.range.map { const(it) }
                     })
                     if (paths.any { mutated in it }) null else mutated
                 }
@@ -264,32 +282,44 @@ class InstructionConcolicChecker(
         }
     }
 
-    private fun processMethod(method: Method) {
+    private suspend fun processMethod(method: Method) {
         val stateDeque = dequeOf<ExecutionResult>()
         getRandomTrace(method)?.let {
             stateDeque += it
             paths += it.trace.path
             traceManager.addTrace(method, it.trace.trace)
         }
+        yield()
+
+        var failsInARow = 0
         while (stateDeque.isNotEmpty() && !traceManager.isFullCovered(method)) {
+            ++failsInARow
+            if (failsInARow > maxFailsInARow) {
+                log.debug { "Reached maximum fails in a row for method $method" }
+                return
+            }
+
             val state = stateDeque.pollFirst()
-            log.debug("Processing state: $state")
+            log.debug { "Processing state: $state" }
 
             val mutatedState = mutateState(state) ?: continue
-            log.debug("Mutated state: $mutatedState")
+            log.debug { "Mutated state: $mutatedState" }
+            yield()
 
             val newState = check(method, mutatedState) ?: continue
             if (newState.trace.isEmpty()) {
-                log.warn("Collected empty state from $mutatedState")
+                log.warn { "Collected empty state from $mutatedState" }
                 continue
             }
             if (newState.trace.path !in paths) {
-                log.debug("New state: $newState")
+                log.debug { "New state: $newState" }
 
                 stateDeque += newState
                 paths += newState.trace.path
+                failsInARow = 0
             }
             traceManager.addTrace(method, newState.trace.trace)
+            yield()
         }
     }
 

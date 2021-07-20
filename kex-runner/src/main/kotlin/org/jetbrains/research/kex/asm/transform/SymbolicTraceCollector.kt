@@ -10,19 +10,26 @@ import org.jetbrains.research.kfg.Package
 import org.jetbrains.research.kfg.ir.Class
 import org.jetbrains.research.kfg.ir.Method
 import org.jetbrains.research.kfg.ir.MethodDesc
-import org.jetbrains.research.kfg.ir.value.ThisRef
-import org.jetbrains.research.kfg.ir.value.Value
+import org.jetbrains.research.kfg.ir.value.*
 import org.jetbrains.research.kfg.ir.value.instruction.*
-import org.jetbrains.research.kfg.type.Type
+import org.jetbrains.research.kfg.type.TypeFactory
 import org.jetbrains.research.kfg.visitor.MethodVisitor
 import org.jetbrains.research.kthelper.collection.MutableBuilder
 import org.jetbrains.research.kthelper.collection.buildList
 
 class SymbolicTraceCollector(
-    val ctx: ExecutionContext,
+    val executionContext: ExecutionContext,
     val ignores: Set<Package> = setOf()
-) : MethodVisitor {
-    override val cm get() = ctx.cm
+) : MethodVisitor, InstructionBuilder {
+    override val ctx: UsageContext = EmptyUsageContext
+    override val cm get() = executionContext.cm
+
+    override val instructions: InstructionFactory
+        get() = cm.instruction
+    override val types: TypeFactory
+        get() = cm.type
+    override val values: ValueFactory
+        get() = cm.value
 
     private val collectorClass = cm[InstructionTraceCollector::class.java.canonicalName.replace('.', '/')]
     private lateinit var traceCollector: Instruction
@@ -46,12 +53,10 @@ class SymbolicTraceCollector(
             val initMethod = arrayListKlass.getMethod("<init>", types.voidType)
             val addMethod = arrayListKlass.getMethod("add", types.boolType, types.objectType)
 
-            val argTypesList = instructions.getNew(types.arrayListType)
-            +argTypesList
+            val argTypesList = types.arrayListType.new().also { +it }
             +arrayListKlass.specialCall(initMethod, argTypesList)
 
-            val argumentList = instructions.getNew(types.arrayListType)
-            +argumentList
+            val argumentList = types.arrayListType.new().also { +it }
             +arrayListKlass.specialCall(initMethod, argumentList)
 
             for ((index, arg) in method.argTypes.withIndex()) {
@@ -166,8 +171,7 @@ class SymbolicTraceCollector(
             val initMethod = arrayListKlass.getMethod("<init>", types.voidType)
             val addMethod = arrayListKlass.getMethod("add", types.boolType, types.objectType)
 
-            val argTypesList = instructions.getNew(types.arrayListType)
-            +argTypesList
+            val argTypesList = types.arrayListType.new().also { +it }
             +arrayListKlass.specialCall(initMethod, argTypesList)
             for (arg in calledMethod.argTypes) {
                 +arrayListKlass.virtualCall(
@@ -175,8 +179,7 @@ class SymbolicTraceCollector(
                 )
             }
 
-            val argumentList = instructions.getNew(types.arrayListType)
-            +argumentList
+            val argumentList = types.arrayListType.new().also { +it }
             +arrayListKlass.specialCall(initMethod, argumentList)
             for (arg in inst.args) {
                 +arrayListKlass.virtualCall(
@@ -184,8 +187,7 @@ class SymbolicTraceCollector(
                 )
             }
 
-            val concreteArgumentsList = instructions.getNew(types.arrayListType)
-            +concreteArgumentsList
+            val concreteArgumentsList = types.arrayListType.new().also { +it }
             +arrayListKlass.specialCall(initMethod, concreteArgumentsList)
             for (arg in inst.args) {
                 +arrayListKlass.virtualCall(
@@ -388,8 +390,7 @@ class SymbolicTraceCollector(
             val arrayListKlass = cm.arrayListClass
             val initMethod = arrayListKlass.getMethod("<init>", types.voidType)
             val addMethod = arrayListKlass.getMethod("add", types.boolType, types.objectType)
-            val dimensions = instructions.getNew(types.arrayListType)
-            +dimensions
+            val dimensions = types.arrayListType.new().also { +it }
             +arrayListKlass.specialCall(initMethod, dimensions)
             for (dimension in inst.dimensions) {
                 +arrayListKlass.virtualCall(
@@ -397,8 +398,7 @@ class SymbolicTraceCollector(
                 )
             }
 
-            val concreteDimensions = instructions.getNew(types.arrayListType)
-            +concreteDimensions
+            val concreteDimensions = types.arrayListType.new().also { +it }
             +arrayListKlass.specialCall(initMethod, concreteDimensions)
             for (dimension in inst.dimensions) {
                 +arrayListKlass.virtualCall(
@@ -528,41 +528,29 @@ class SymbolicTraceCollector(
         val proxy = cm[TraceCollectorProxy::class.java.canonicalName.replace('.', '/')]
         val getter = proxy.getMethod("currentCollector", MethodDesc(arrayOf(), cm.type.getRefType(collectorClass)))
 
-        return cm.instruction.getCall(CallOpcode.STATIC, "collector", getter, proxy, arrayOf())
+        return getter.staticCall(proxy, "collector", arrayOf())
     }
 
     private fun Class.virtualCall(
         method: Method,
         instance: Value,
         vararg args: Value
-    ) = instructions.getCall(
-        CallOpcode.VIRTUAL, method, this, instance, args.toList().toTypedArray(), false
-    )
+    ) = method.virtualCall(this, instance, args.toList().toTypedArray())
 
     private fun Class.interfaceCall(
         method: Method,
         instance: Value,
         vararg args: Value
-    ) = instructions.getCall(
-        CallOpcode.INTERFACE, method, this, instance, args.toList().toTypedArray(), false
-    )
+    ) = method.interfaceCall(this, instance, args.toList().toTypedArray())
 
     private fun Class.specialCall(
         method: Method,
         instance: Value,
         vararg args: Value
-    ) = instructions.getCall(
-        CallOpcode.SPECIAL, method, this, instance, args.toList().toTypedArray(), false
-    )
-
-    private val Boolean.asValue get() = values.getBool(this)
-    private val Number.asValue get() = values.getNumber(this)
-    private val String.asValue get() = values.getString(this)
-
-    private val Type.asArray get() = types.getArrayType(this)
+    ) = method.specialCall(this, instance, args.toList().toTypedArray())
 
     private fun Value.wrapped(list: MutableBuilder<Instruction>): Value = when {
-        this.type.isPrimary -> instructions.wrapValue(this).also {
+        this.type.isPrimary -> wrapValue(this).also {
             list.inner += it
         }
         else -> this

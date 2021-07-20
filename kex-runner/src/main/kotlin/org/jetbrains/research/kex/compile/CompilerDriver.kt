@@ -2,6 +2,8 @@ package org.jetbrains.research.kex.compile
 
 import org.jetbrains.research.kthelper.KtException
 import org.jetbrains.research.kthelper.`try`
+import org.jetbrains.research.kthelper.logging.log
+import java.io.ByteArrayOutputStream
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.*
@@ -28,10 +30,15 @@ class JavaCompilerDriver(classPath: List<Path>, outputDir: Path) : CompilerDrive
         fileManager.setLocation(StandardLocation.CLASS_OUTPUT, listOf(outputDir.toFile()))
         val objects = fileManager.getJavaFileObjectsFromFiles(sources.map { it.toFile() })
 
-        val task = compiler.getTask(null, fileManager, null, listOf("-Xlint:unchecked"), null, objects)
+        val compilerOutput = ByteArrayOutputStream()
+        val task = compiler.getTask(compilerOutput.writer(), fileManager, null, listOf("-Xlint:none", "-Xlint:unchecked"), null, objects)
         val compileSuccess = `try` { task.call() }.getOrElse { false }
-        if (!compileSuccess)
+        if (!compileSuccess) {
+            log.error("Task $task failed")
+            log.error("Sources: ${sources.joinToString("\n", prefix = "\n")}")
+            log.error(compilerOutput.toString())
             throw CompilationException()
+        }
 
         return fileManager.list(
             StandardLocation.CLASS_OUTPUT,

@@ -6,6 +6,7 @@ import org.jetbrains.research.kfg.ClassManager
 import org.jetbrains.research.kfg.analysis.IRVerifier
 import org.jetbrains.research.kfg.ir.BasicBlock
 import org.jetbrains.research.kfg.ir.Method
+import org.jetbrains.research.kfg.ir.value.EmptyUsageContext
 import org.jetbrains.research.kfg.ir.value.instruction.*
 import org.jetbrains.research.kfg.visitor.MethodVisitor
 import org.jetbrains.research.kthelper.collection.buildList
@@ -131,7 +132,7 @@ class TraceInstrumenter(override val cm: ClassManager) : MethodVisitor {
             val methodName = method.prototype.replace('/', '.')
             val traceFileName = getTraceFile(method).absolutePath
 
-            fos = FileOutputStreamWrapper(cm, "traceFile", traceFileName, append = true, autoFlush = true)
+            fos = FileOutputStreamWrapper(cm, EmptyUsageContext, "traceFile", traceFileName, append = true, autoFlush = true)
             +fos.open()
             +fos.println("enter $methodName;")
 

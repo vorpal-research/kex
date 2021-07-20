@@ -4,6 +4,7 @@ import org.jetbrains.research.kex.config.kexConfig
 import org.jetbrains.research.kex.parameters.Parameters
 import org.jetbrains.research.kex.util.getConstructor
 import org.jetbrains.research.kex.util.getMethod
+import org.jetbrains.research.kex.util.runWithTimeout
 import org.jetbrains.research.kfg.ir.Method
 import org.jetbrains.research.kthelper.logging.log
 import java.io.ByteArrayOutputStream
@@ -13,21 +14,6 @@ import java.lang.reflect.InvocationTargetException
 import java.lang.reflect.Method as ReflectMethod
 
 private val timeout = kexConfig.getLongValue("runner", "timeout", 1000L)
-
-class TimeoutException : Exception()
-
-@Suppress("SameParameterValue")
-fun runWithTimeout(timeout: Long, body: () -> Unit) {
-    val thread = Thread(body)
-
-    thread.start()
-    thread.join(timeout)
-    if (thread.isAlive) {
-        @Suppress("DEPRECATION")
-        thread.stop()
-        throw TimeoutException()
-    }
-}
 
 data class InvocationResult(
         val output: ByteArray,

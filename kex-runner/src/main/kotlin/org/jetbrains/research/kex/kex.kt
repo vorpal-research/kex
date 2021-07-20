@@ -195,6 +195,7 @@ class Kex(args: Array<String>) {
         val classLoader = URLClassLoader(arrayOf(instrumentedCodeDir.toUri().toURL()))
 
         val klassPath = containers.map { it.path }
+        updateClassPath(classLoader)
         val randomDriver = EasyRandomDriver()
         val originalContext = ExecutionContext(origManager, `package`, containerClassLoader, randomDriver, klassPath)
         val analysisContext = ExecutionContext(classManager, `package`, classLoader, randomDriver, klassPath)
@@ -208,6 +209,7 @@ class Kex(args: Array<String>) {
             Mode.Concolic -> concolic(originalContext, analysisContext)
             Mode.Debug -> debug(analysisContext)
         }
+        clearClassPath()
     }
 
     @ExperimentalSerializationApi

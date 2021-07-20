@@ -6,6 +6,7 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.modules.SerializersModule
 import kotlinx.serialization.serializer
 import org.jetbrains.research.kfg.ClassManager
+import org.jetbrains.research.kfg.ir.value.NameMapperContext
 
 abstract class AbstractSerializer(val context: SerializersModule) {
     val json = Json {
@@ -31,5 +32,8 @@ abstract class AbstractSerializer(val context: SerializersModule) {
 
 @ExperimentalSerializationApi
 @InternalSerializationApi
-class KexSerializer(val cm: ClassManager) : AbstractSerializer(getKexSerialModule(cm))
+class KexSerializer(
+    val cm: ClassManager,
+    val ctx: NameMapperContext = NameMapperContext()
+) : AbstractSerializer(getKexSerialModule(cm, ctx))
 

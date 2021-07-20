@@ -61,9 +61,9 @@ abstract class Predicate : TypeInfo {
             val inheritanceInfo = InheritanceInfo.fromJson(resource.bufferedReader().readText())
             resource.close()
 
-            inheritanceInfo?.inheritors?.associate {
+            inheritanceInfo.inheritors.associate {
                 it.name to loader.loadClass(it.inheritorClass)
-            } ?: mapOf()
+            }
         }
 
         val reverse = predicates.map { it.value to it.key }.toMap()

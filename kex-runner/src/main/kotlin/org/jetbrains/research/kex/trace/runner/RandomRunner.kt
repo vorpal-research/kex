@@ -3,10 +3,7 @@ package org.jetbrains.research.kex.trace.runner
 import org.jetbrains.research.kex.parameters.Parameters
 import org.jetbrains.research.kex.random.GenerationException
 import org.jetbrains.research.kex.random.Randomizer
-import org.jetbrains.research.kex.util.getConstructor
-import org.jetbrains.research.kex.util.getMethod
-import org.jetbrains.research.kex.util.isStatic
-import org.jetbrains.research.kex.util.loadClass
+import org.jetbrains.research.kex.util.*
 import org.jetbrains.research.kthelper.logging.log
 import java.lang.reflect.Constructor
 import java.lang.reflect.Method
@@ -40,7 +37,7 @@ fun Randomizer.generateParameters(method: Constructor<*>): Parameters<Any?>? = t
 fun Randomizer.generateParameters(loader: ClassLoader, method: KfgMethod): Parameters<Any?>? {
     val klass = loader.loadClass(method.klass)
     return when {
-        method.isConstructor -> generateParameters(javaClass.getConstructor(method, loader))
+        method.isConstructor -> generateParameters(klass.getConstructor(method, loader))
         else -> generateParameters(klass, klass.getMethod(method, loader))
     }
 }

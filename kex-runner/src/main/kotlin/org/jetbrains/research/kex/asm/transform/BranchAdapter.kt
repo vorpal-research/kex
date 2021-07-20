@@ -5,20 +5,36 @@ import org.jetbrains.research.kfg.ClassManager
 import org.jetbrains.research.kfg.ir.BasicBlock
 import org.jetbrains.research.kfg.ir.BodyBlock
 import org.jetbrains.research.kfg.ir.Method
+import org.jetbrains.research.kfg.ir.value.UsageContext
+import org.jetbrains.research.kfg.ir.value.ValueFactory
 import org.jetbrains.research.kfg.ir.value.instruction.BranchInst
+import org.jetbrains.research.kfg.ir.value.instruction.InstructionFactory
 import org.jetbrains.research.kfg.ir.value.instruction.PhiInst
+import org.jetbrains.research.kfg.ir.value.usageContext
+import org.jetbrains.research.kfg.type.TypeFactory
 import org.jetbrains.research.kfg.visitor.MethodVisitor
 import org.jetbrains.research.kthelper.KtException
 import org.jetbrains.research.kthelper.algorithm.DominatorTree
 import org.jetbrains.research.kthelper.algorithm.DominatorTreeBuilder
 import org.jetbrains.research.kthelper.logging.log
 
-class BranchAdapter(override val cm: ClassManager) : MethodVisitor {
+class BranchAdapter(
+    override val cm: ClassManager,
+) : MethodVisitor {
+    override val instructions: InstructionFactory
+        get() = cm.instruction
+    override val types: TypeFactory
+        get() = cm.type
+    override val values: ValueFactory
+        get() = cm.value
+
     private lateinit var domTree: DominatorTree<BasicBlock>
+    private lateinit var ctx: UsageContext
 
     override fun cleanup() {}
 
-    override fun visit(method: Method) {
+    override fun visit(method: Method) = method.usageContext.use {
+        ctx = it
         try {
             if (!method.isAbstract && !method.isNative && method.hasBody) {
                 domTree = DominatorTreeBuilder(method).build()
@@ -44,13 +60,13 @@ class BranchAdapter(override val cm: ClassManager) : MethodVisitor {
         }
     }
 
-    private fun replaceBlock(inst: BranchInst, parent: BasicBlock, branch: BasicBlock) {
+    private fun replaceBlock(inst: BranchInst, parent: BasicBlock, branch: BasicBlock) = with(ctx) {
         val replacement = BodyBlock("branch")
 
         branch.removePredecessor(parent)
         parent.removeSuccessor(branch)
 
-        replacement += cm.instruction.getJump(branch)
+        replacement += inst(cm) { goto(branch) }
         replacement.addSuccessor(branch)
         branch.addPredecessor(replacement)
 
@@ -61,7 +77,7 @@ class BranchAdapter(override val cm: ClassManager) : MethodVisitor {
             branch -> replacement to inst.falseSuccessor
             else -> inst.trueSuccessor to replacement
         }
-        val newTerminator = cm.instruction.getBranch(inst.cond, trueBranch, falseBranch).update(loc = inst.location)
+        val newTerminator = inst(cm) { ite(inst.cond, trueBranch, falseBranch).update(ctx, loc = inst.location) }
         inst.replaceAllUsesWith(newTerminator)
         parent.replace(inst, newTerminator)
         inst.clearUses()
@@ -72,7 +88,7 @@ class BranchAdapter(override val cm: ClassManager) : MethodVisitor {
             val newIncomings = phi.incomings.mapKeys {
                 if (it.key == parent) replacement else it.key
             }
-            val newPhi = cm.instruction.getPhi(phi.type, newIncomings).update(loc = phi.location)
+            val newPhi = inst(cm) { phi(phi.type, newIncomings).update(ctx, loc = phi.location) }
             phi.replaceAllUsesWith(newPhi)
             branch.replace(phi, newPhi)
             phi.clearUses()

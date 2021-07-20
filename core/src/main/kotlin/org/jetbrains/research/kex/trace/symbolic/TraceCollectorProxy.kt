@@ -8,6 +8,7 @@ import org.jetbrains.research.kex.serialization.KexSerializer
 import org.jetbrains.research.kex.state.emptyState
 import org.jetbrains.research.kex.state.predicate.Predicate
 import org.jetbrains.research.kex.state.term.Term
+import org.jetbrains.research.kfg.ir.value.NameMapperContext
 import org.jetbrains.research.kfg.ir.value.instruction.Instruction
 import java.nio.file.Path
 
@@ -144,12 +145,12 @@ private class EmptyTraceCollector : InstructionTraceCollector {
 
 object TraceCollectorProxy {
     private lateinit var ctx: ExecutionContext
-    private lateinit var collector: InstructionTraceCollector
+    private var collector: InstructionTraceCollector = EmptyTraceCollector()
 
     @JvmStatic
-    fun enableCollector(ctx: ExecutionContext): InstructionTraceCollector {
+    fun enableCollector(ctx: ExecutionContext, nameMapperContext: NameMapperContext): InstructionTraceCollector {
         this.ctx = ctx
-        collector = SymbolicTraceBuilder(ctx)
+        collector = SymbolicTraceBuilder(ctx, nameMapperContext)
         return collector
     }
 
