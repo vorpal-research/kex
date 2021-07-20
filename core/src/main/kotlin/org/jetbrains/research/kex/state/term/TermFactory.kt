@@ -128,6 +128,8 @@ object TermFactory {
         return getCmp(resType, opcode, lhv, rhv)
     }
 
+    fun getContains(arrayRef: Term, value: Term): Term = ContainsTerm(arrayRef, value)
+
     fun getEquals(lhv: Term, rhv: Term): Term {
         ktassert(lhv.type is KexPointer) { log.error("Non-pointer type in equals") }
         ktassert(rhv.type is KexPointer) { log.error("Non-pointer type in equals") }
@@ -266,7 +268,9 @@ abstract class TermBuilder {
     infix fun Term.cmpg(rhv: Term) = tf.getCmp(CmpOpcode.CMPG, this, rhv)
     infix fun Term.cmpl(rhv: Term) = tf.getCmp(CmpOpcode.CMPL, this, rhv)
 
-    infix fun Term.equals(rhv: Term) = tf.getEquals(this, rhv)
+    infix fun Term.`in`(arrayRef: Term) = tf.getContains(arrayRef, this)
+
+    infix fun Term.equls(rhv: Term) = tf.getEquals(this, rhv)
 
     @Suppress("DeprecatedCallableAddReplaceWith")
     @Deprecated(message = "not used in current SMT model")

@@ -23,7 +23,7 @@ class EqualsTerm(
         val tRhv = t.transform(rhv)
         return when {
             tLhv == lhv && tRhv == rhv -> this
-            else -> term { tLhv equals tRhv }
+            else -> term { tLhv equls tRhv }
         }
     }
 }
