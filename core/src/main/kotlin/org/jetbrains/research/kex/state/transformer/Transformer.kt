@@ -141,6 +141,8 @@ interface Transformer<T : Transformer<T>> {
     fun transformConstLong(term: ConstLongTerm): Term = term.accept(this)
     fun transformConstShort(term: ConstShortTerm): Term = term.accept(this)
     fun transformConstString(term: ConstStringTerm): Term = term.accept(this)
+    fun transformContains(term: ContainsTerm): Term = term.accept(this)
+    fun transformEquals(term: EqualsTerm): Term = term.accept(this)
     fun transformFieldLoad(term: FieldLoadTerm): Term = term.accept(this)
     fun transformField(term: FieldTerm): Term = term.accept(this)
     fun transformInstanceOf(term: InstanceOfTerm): Term = term.accept(this)
@@ -170,6 +172,8 @@ interface Transformer<T : Transformer<T>> {
     fun transformConstLongTerm(term: ConstLongTerm): Term = term
     fun transformConstShortTerm(term: ConstShortTerm): Term = term
     fun transformConstStringTerm(term: ConstStringTerm): Term = term
+    fun transformContainsTerm(term: ContainsTerm): Term = term
+    fun transformEqualsTerm(term: EqualsTerm): Term = term
     fun transformFieldLoadTerm(term: FieldLoadTerm): Term = term
     fun transformFieldTerm(term: FieldTerm): Term = term
     fun transformInstanceOfTerm(term: InstanceOfTerm): Term = term
