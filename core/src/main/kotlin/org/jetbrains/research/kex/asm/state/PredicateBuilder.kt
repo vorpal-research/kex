@@ -1,6 +1,7 @@
 package org.jetbrains.research.kex.asm.state
 
 import org.jetbrains.research.kex.ktype.kexType
+import org.jetbrains.research.kex.state.emptyState
 import org.jetbrains.research.kex.state.predicate.Predicate
 import org.jetbrains.research.kex.state.predicate.path
 import org.jetbrains.research.kex.state.predicate.state
@@ -10,6 +11,8 @@ import org.jetbrains.research.kfg.ir.BasicBlock
 import org.jetbrains.research.kfg.ir.value.IntConstant
 import org.jetbrains.research.kfg.ir.value.instruction.*
 import org.jetbrains.research.kfg.visitor.MethodVisitor
+import org.jetbrains.research.kthelper.assert.ktassert
+import org.jetbrains.research.kthelper.logging.log
 
 class InvalidInstructionError(message: String) : Exception(message)
 
@@ -129,6 +132,22 @@ class PredicateBuilder(override val cm: ClassManager) : MethodVisitor {
             val rhv = value(inst.operand) `is` inst.targetType.kexType
 
             lhv equality rhv
+        }
+    }
+
+    override fun visitInvokeDynamicInst(inst: InvokeDynamicInst) {
+        predicateMap[inst] = state(inst.location) {
+            val lhv = value(inst)
+
+            val lambdaBases = inst.bootstrapMethodArgs.filterIsInstance<Handle>()
+            ktassert(lambdaBases.size == 1) { log.error("Unknown number of bases of ${inst.print()}") }
+            val lambdaBase = lambdaBases.first()
+            val parameters = lambdaBase.method.argTypes.withIndex().map { arg(it.value.kexType, it.index) }
+
+            lhv equality lambda(inst.type.kexType, parameters) {
+                val psa = PredicateStateAnalysis(cm)
+                psa.builder(lambdaBase.method).methodState ?: emptyState()
+            }
         }
     }
 

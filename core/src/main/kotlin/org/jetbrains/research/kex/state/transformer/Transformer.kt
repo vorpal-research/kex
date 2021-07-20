@@ -144,6 +144,7 @@ interface Transformer<T : Transformer<T>> {
     fun transformFieldLoad(term: FieldLoadTerm): Term = term.accept(this)
     fun transformField(term: FieldTerm): Term = term.accept(this)
     fun transformInstanceOf(term: InstanceOfTerm): Term = term.accept(this)
+    fun transformLambda(term: LambdaTerm): Term = term.accept(this)
     fun transformNeg(term: NegTerm): Term = term.accept(this)
     fun transformNull(term: NullTerm): Term = term.accept(this)
     fun transformReturnValue(term: ReturnValueTerm): Term = term.accept(this)
@@ -172,6 +173,7 @@ interface Transformer<T : Transformer<T>> {
     fun transformFieldLoadTerm(term: FieldLoadTerm): Term = term
     fun transformFieldTerm(term: FieldTerm): Term = term
     fun transformInstanceOfTerm(term: InstanceOfTerm): Term = term
+    fun transformLambdaTerm(term: LambdaTerm): Term = term
     fun transformNegTerm(term: NegTerm): Term = term
     fun transformNullTerm(term: NullTerm): Term = term
     fun transformReturnValueTerm(term: ReturnValueTerm): Term = term

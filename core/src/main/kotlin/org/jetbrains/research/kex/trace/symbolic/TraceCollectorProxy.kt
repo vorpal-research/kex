@@ -119,6 +119,13 @@ private class EmptyTraceCollector : InstructionTraceCollector {
 
     override fun instanceOf(value: String, operand: String, concreteValue: Any?, concreteOperand: Any?) {}
 
+    override fun invokeDynamic(
+        value: String,
+        operands: List<String>,
+        concreteValue: Any?,
+        concreteOperands: List<Any?>
+    ) {}
+
     override fun jump(inst: String) {}
 
     override fun newArray(

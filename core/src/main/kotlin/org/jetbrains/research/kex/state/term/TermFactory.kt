@@ -1,6 +1,7 @@
 package org.jetbrains.research.kex.state.term
 
 import org.jetbrains.research.kex.ktype.*
+import org.jetbrains.research.kex.state.PredicateState
 import org.jetbrains.research.kfg.ir.Class
 import org.jetbrains.research.kfg.ir.Method
 import org.jetbrains.research.kfg.ir.value.*
@@ -147,6 +148,8 @@ object TermFactory {
     fun getValue(type: KexType, name: Term) = ValueTerm(type, name)
 
     fun getUndef(type: KexType) = UndefTerm(type)
+
+    fun getLambda(type: KexType,  params: List<Term>, body: PredicateState) = LambdaTerm(type, params, body)
 }
 
 abstract class TermBuilder {
@@ -275,6 +278,19 @@ abstract class TermBuilder {
     fun value(value: Value) = tf.getValue(value)
     fun value(type: KexType, name: String) = tf.getValue(type, name)
     fun undef(type: KexType) = tf.getUndef(type)
+
+    fun lambda(type: KexType, params: List<Term>, bodyBuilder: () -> PredicateState) =
+        lambda(type, params, bodyBuilder())
+
+    fun lambda(type: KexType, params: List<Term>, body: PredicateState) =
+        tf.getLambda(type, params, body)
+
+    fun lambda(type: KexType, vararg params: Term, bodyBuilder: () -> PredicateState) =
+        lambda(type, *params, body = bodyBuilder())
+
+
+    fun lambda(type: KexType, vararg params: Term, body: PredicateState) =
+        tf.getLambda(type, params.toList(), body)
 
     object Terms : TermBuilder()
 }

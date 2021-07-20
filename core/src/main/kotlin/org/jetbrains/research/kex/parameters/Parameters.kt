@@ -1,9 +1,11 @@
 package org.jetbrains.research.kex.parameters
 
+import kotlinx.serialization.Serializable
 import org.jetbrains.research.kex.descriptor.Descriptor
 import org.jetbrains.research.kex.descriptor.Object2DescriptorConverter
 import org.jetbrains.research.kfg.ClassManager
 
+@Serializable
 data class Parameters<T>(
     val instance: T?,
     val arguments: List<T>,

@@ -119,6 +119,13 @@ interface InstructionTraceCollector {
         concreteOperand: Any?
     )
 
+    fun invokeDynamic(
+        value: String,
+        operands: List<String>,
+        concreteValue: Any?,
+        concreteOperands: List<Any?>
+    )
+
     fun jump(
         inst: String
     )

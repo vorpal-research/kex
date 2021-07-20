@@ -3,11 +3,13 @@
 package org.jetbrains.research.kex.trace.symbolic
 
 import org.jetbrains.research.kex.ExecutionContext
+import org.jetbrains.research.kex.asm.state.PredicateStateAnalysis
 import org.jetbrains.research.kex.descriptor.*
 import org.jetbrains.research.kex.ktype.*
 import org.jetbrains.research.kex.parameters.Parameters
 import org.jetbrains.research.kex.state.PredicateState
 import org.jetbrains.research.kex.state.StateBuilder
+import org.jetbrains.research.kex.state.emptyState
 import org.jetbrains.research.kex.state.predicate.Predicate
 import org.jetbrains.research.kex.state.predicate.path
 import org.jetbrains.research.kex.state.predicate.state
@@ -694,6 +696,42 @@ class SymbolicTraceBuilder(
 
         val predicate = state(kfgValue.location) {
             termValue equality (termOperand `is` kfgValue.targetType.kexType)
+        }
+
+        postProcess(kfgValue, predicate)
+    }
+
+    override fun invokeDynamic(
+        value: String,
+        operands: List<String>,
+        concreteValue: Any?,
+        concreteOperands: List<Any?>
+    ) {
+        val kfgValue = parseValue(value) as InvokeDynamicInst
+        preProcess(kfgValue)
+
+        val kfgOperands = operands.map { parseValue(it) }
+
+        val termValue = mkNewValue(kfgValue)
+        val termOperands = kfgOperands.map { mkValue(it) }
+
+        terms[termValue] = kfgValue.wrapped()
+        concreteValues[termValue] = concreteValue.getAsDescriptor(termValue.type)
+
+        termOperands.withIndex().forEach { (index, term) ->
+            term.updateInfo(kfgOperands[index], concreteOperands[index].getAsDescriptor(term.type))
+        }
+
+        val predicate = state(kfgValue.location) {
+            val lambdaBases = kfgValue.bootstrapMethodArgs.filterIsInstance<Handle>()
+            ktassert(lambdaBases.size == 1) { log.error("Unknown number of bases of ${kfgValue.print()}") }
+            val lambdaBase = lambdaBases.first()
+            val parameters = lambdaBase.method.argTypes.withIndex().map { arg(it.value.kexType, it.index) }
+
+            termValue equality lambda(kfgValue.type.kexType, parameters) {
+                val psa = PredicateStateAnalysis(cm)
+                psa.builder(lambdaBase.method).methodState ?: emptyState()
+            }
         }
 
         postProcess(kfgValue, predicate)

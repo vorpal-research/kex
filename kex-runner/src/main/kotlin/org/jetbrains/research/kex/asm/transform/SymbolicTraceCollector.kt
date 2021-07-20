@@ -366,6 +366,42 @@ class SymbolicTraceCollector(
         inst.insertAfter(instrumented)
     }
 
+    override fun visitInvokeDynamicInst(inst: InvokeDynamicInst) {
+        val invokeDynamicMethod = collectorClass.getMethod(
+            "invokeDynamic", types.voidType,
+            types.stringType, types.listType,
+            types.objectType, types.listType
+        )
+
+        val instrumented = buildList<Instruction> {
+            val arrayListKlass = cm.arrayListClass
+            val initMethod = arrayListKlass.getMethod("<init>", types.voidType)
+            val addMethod = arrayListKlass.getMethod("add", types.boolType, types.objectType)
+            val args = types.arrayListType.new().also { +it }
+            +arrayListKlass.specialCall(initMethod, args)
+            for (arg in inst.args) {
+                +arrayListKlass.virtualCall(
+                    addMethod, args, "$arg".asValue
+                )
+            }
+
+            val concreteArgs = types.arrayListType.new().also { +it }
+            +arrayListKlass.specialCall(initMethod, concreteArgs)
+            for (arg in inst.args) {
+                +arrayListKlass.virtualCall(
+                    addMethod, concreteArgs, arg.wrapped(this)
+                )
+            }
+
+            +collectorClass.interfaceCall(
+                invokeDynamicMethod, traceCollector,
+                "$inst".asValue, args,
+                inst.wrapped(this), concreteArgs
+            )
+        }
+        inst.insertAfter(instrumented)
+    }
+
     override fun visitJumpInst(inst: JumpInst) {
         val jumpMethod = collectorClass.getMethod(
             "jump", types.voidType, types.stringType
