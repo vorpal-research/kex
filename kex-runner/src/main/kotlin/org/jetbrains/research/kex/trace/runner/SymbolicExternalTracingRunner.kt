@@ -6,6 +6,7 @@ import org.jetbrains.research.kex.ExecutionContext
 import org.jetbrains.research.kex.config.kexConfig
 import org.jetbrains.research.kex.serialization.KexSerializer
 import org.jetbrains.research.kex.trace.symbolic.ExecutionResult
+import org.jetbrains.research.kex.util.getIntrinsics
 import org.jetbrains.research.kex.util.getPathSeparator
 import org.jetbrains.research.kthelper.KtException
 import org.jetbrains.research.kthelper.logging.log
@@ -31,10 +32,11 @@ class SymbolicExternalTracingRunner(val ctx: ExecutionContext) {
     private val compiledCodeDir = outputDir.resolve(
         kexConfig.getStringValue("compile", "compileDir", "compiled")
     ).toAbsolutePath()
-    private val executionClassPath = listOf(
+    private val executionClassPath = listOfNotNull(
         executorPath,
         instrumentedCodeDir,
-        compiledCodeDir
+        compiledCodeDir,
+        getIntrinsics()?.path
     )
 
     @ExperimentalSerializationApi

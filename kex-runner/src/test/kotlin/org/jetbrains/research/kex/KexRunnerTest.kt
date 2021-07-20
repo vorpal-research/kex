@@ -56,7 +56,7 @@ abstract class KexRunnerTest : KexTest() {
     }
 
     protected fun getReachables(method: Method): List<Instruction> {
-        val klass = Intrinsics::class.qualifiedName!!.replace(".", "/")
+        val klass = AssertIntrinsics::class.qualifiedName!!.replace(".", "/")
         val intrinsics = cm[klass]
 
         val types = cm.type
@@ -70,7 +70,7 @@ abstract class KexRunnerTest : KexTest() {
     }
 
     protected fun getUnreachables(method: Method): List<Instruction> {
-        val klass = Intrinsics::class.qualifiedName!!.replace(".", "/")
+        val klass = AssertIntrinsics::class.qualifiedName!!.replace(".", "/")
         val intrinsics = cm[klass]
 
         val methodName = "kexUnreachable"

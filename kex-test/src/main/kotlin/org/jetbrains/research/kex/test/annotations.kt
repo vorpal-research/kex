@@ -2,8 +2,8 @@
 
 package org.jetbrains.research.kex.test
 
-import org.jetbrains.research.kex.Intrinsics.kexAssert
-import org.jetbrains.research.kex.Intrinsics.kexUnreachable
+import org.jetbrains.research.kex.AssertIntrinsics.kexAssert
+import org.jetbrains.research.kex.AssertIntrinsics.kexUnreachable
 import java.io.ByteArrayInputStream
 
 object AnnotatedMethodsThere {

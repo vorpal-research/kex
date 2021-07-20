@@ -78,7 +78,7 @@ class KexExecutor(args: Array<String>) {
         val testMethod = cmd.getCmdValue("test")!!
 
         val javaClass = Class.forName(klass)
-        val instance = javaClass.newInstance()
+        val instance = javaClass.getConstructor().newInstance()
 
         try {
             val setup = javaClass.getMethod(setupMethod)
