@@ -8,6 +8,7 @@ import org.jetbrains.research.kfg.ir.value.instruction.BinaryOpcode
 import org.jetbrains.research.kfg.ir.value.instruction.CmpOpcode
 import org.jetbrains.research.kfg.ir.value.instruction.UnaryOpcode
 import org.jetbrains.research.kfg.type.TypeFactory
+import org.jetbrains.research.kthelper.assert.ktassert
 import org.jetbrains.research.kthelper.assert.unreachable
 import org.jetbrains.research.kthelper.logging.log
 
@@ -77,7 +78,7 @@ object TermFactory {
 
     fun getArrayIndex(arrayRef: Term, index: Term): Term {
         val arrayType = arrayRef.type as? KexArray
-                ?: unreachable { log.debug("Non-array type of array load term operand") }
+            ?: unreachable { log.debug("Non-array type of array load term operand") }
         return getArrayIndex(KexReference(arrayType.element), arrayRef, index)
     }
 
@@ -88,7 +89,7 @@ object TermFactory {
 
     fun getArrayLoad(arrayRef: Term): Term {
         val arrayType = arrayRef.type as? KexReference
-                ?: unreachable { log.debug("Non-array type of array load term operand") }
+            ?: unreachable { log.debug("Non-array type of array load term operand") }
         return getArrayLoad(arrayType.reference, arrayRef)
     }
 
@@ -108,13 +109,13 @@ object TermFactory {
 
     fun getCall(method: Method, arguments: List<Term>) = getCall(method.returnType.kexType, method, arguments)
     fun getCall(method: Method, objectRef: Term, arguments: List<Term>) =
-            getCall(method.returnType.kexType, objectRef, method, arguments)
+        getCall(method.returnType.kexType, objectRef, method, arguments)
 
     fun getCall(type: KexType, method: Method, arguments: List<Term>) =
-            CallTerm(type, getClass(method.klass), method, arguments)
+        CallTerm(type, getClass(method.klass), method, arguments)
 
     fun getCall(type: KexType, objectRef: Term, method: Method, arguments: List<Term>) =
-            CallTerm(type, objectRef, method, arguments)
+        CallTerm(type, objectRef, method, arguments)
 
     fun getCast(type: KexType, operand: Term) = CastTerm(type, operand)
     fun getCmp(opcode: CmpOpcode, lhv: Term, rhv: Term): Term {
@@ -124,6 +125,12 @@ object TermFactory {
             else -> KexBool()
         }
         return getCmp(resType, opcode, lhv, rhv)
+    }
+
+    fun getEquals(lhv: Term, rhv: Term): Term {
+        ktassert(lhv.type is KexPointer) { log.error("Non-pointer type in equals") }
+        ktassert(rhv.type is KexPointer) { log.error("Non-pointer type in equals") }
+        return EqualsTerm(lhv, rhv)
     }
 
     fun getCmp(type: KexType, opcode: CmpOpcode, lhv: Term, rhv: Term) = CmpTerm(type, opcode, lhv, rhv)
@@ -255,6 +262,8 @@ abstract class TermBuilder {
     infix fun Term.cmp(rhv: Term) = tf.getCmp(CmpOpcode.CMP, this, rhv)
     infix fun Term.cmpg(rhv: Term) = tf.getCmp(CmpOpcode.CMPG, this, rhv)
     infix fun Term.cmpl(rhv: Term) = tf.getCmp(CmpOpcode.CMPL, this, rhv)
+
+    infix fun Term.equals(rhv: Term) = tf.getEquals(this, rhv)
 
     @Suppress("DeprecatedCallableAddReplaceWith")
     @Deprecated(message = "not used in current SMT model")
