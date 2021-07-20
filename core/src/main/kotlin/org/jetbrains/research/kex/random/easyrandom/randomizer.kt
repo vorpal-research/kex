@@ -139,7 +139,7 @@ class ListRandomizer<T>(`impl`: () -> MutableList<T>, elementRandomizer: Randomi
                 ?: throw InstantiationError("Unable to find a matching concrete subtype of type: MutableList in the classpath")
             return newListRandomizer({
                 @Suppress("UNCHECKED_CAST")
-                random(impl) as? MutableList<T>
+                (random(impl) as? MutableList<T>)?.also { it.clear() }
                         ?: unreachable { log.error("Could not create an instance of $impl") }
             }, elementRandomizer)
         }
@@ -175,7 +175,7 @@ class QueueRandomizer<T>(`impl`: () -> Queue<T>, elementRandomizer: Randomizer<T
                 ?: throw InstantiationError("Unable to find a matching concrete subtype of type: Queue in the classpath")
             return newQueueRandomizer({
                 @Suppress("UNCHECKED_CAST")
-                random(impl) as? Queue<T>
+                (random(impl) as? Queue<T>)?.also { it.clear() }
                         ?: unreachable { log.error("Could not create an instance of $impl") }
             }, elementRandomizer)
         }
@@ -217,7 +217,7 @@ class SetRandomizer<T>(`impl`: () -> MutableSet<T>, elementRandomizer: Randomize
                 ?: throw InstantiationError("Unable to find a matching concrete subtype of type: MutableSet in the classpath")
             return newSetRandomizer({
                 @Suppress("UNCHECKED_CAST")
-                random(impl) as? MutableSet<T>
+                (random(impl) as? MutableSet<T>)?.also { it.clear() }
                         ?: unreachable { log.error("Could not create an instance of $impl") }
             }, elementRandomizer)
         }
