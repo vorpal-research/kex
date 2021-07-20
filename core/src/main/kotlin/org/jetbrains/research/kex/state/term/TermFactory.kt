@@ -138,8 +138,8 @@ object TermFactory {
 
     fun getCmp(type: KexType, opcode: CmpOpcode, lhv: Term, rhv: Term) = CmpTerm(type, opcode, lhv, rhv)
 
-    fun getField(type: KexType, owner: Term, name: Term) = FieldTerm(type, owner, name)
-    fun getField(type: KexType, classType: Class, name: Term) = FieldTerm(type, getClass(classType), name)
+    fun getField(type: KexType, owner: Term, name: String) = FieldTerm(type, owner, name)
+    fun getField(type: KexType, classType: Class, name: String) = FieldTerm(type, getClass(classType), name)
 
     fun getInstanceOf(checkedType: KexType, operand: Term) = InstanceOfTerm(checkedType, operand)
 
@@ -153,8 +153,7 @@ object TermFactory {
         else -> getValue(value.type.kexType, value.toString())
     }
 
-    fun getValue(type: KexType, name: String) = getValue(type, getString(name))
-    fun getValue(type: KexType, name: Term) = ValueTerm(type, name)
+    fun getValue(type: KexType, name: String) = ValueTerm(type, name)
 
     fun getUndef(type: KexType) = UndefTerm(type)
 
@@ -278,10 +277,8 @@ abstract class TermBuilder {
 
     fun Term.call(method: Method, arguments: List<Term>) = tf.getCall(method, this, arguments)
 
-    fun Term.field(type: KexReference, name: Term) = tf.getField(type, this, name)
-    fun Term.field(type: KexReference, name: String) = tf.getField(type, this, const(name))
-    fun Term.field(type: KexType, name: Term) = tf.getField(KexReference(type), this, name)
-    fun Term.field(type: KexType, name: String) = tf.getField(KexReference(type), this, const(name))
+    fun Term.field(type: KexReference, name: String) = tf.getField(type, this, name)
+    fun Term.field(type: KexType, name: String) = tf.getField(KexReference(type), this, name)
 
     infix fun Term.`as`(type: KexType) = tf.getCast(type, this)
     infix fun Term.`is`(type: KexType) = tf.getInstanceOf(type, this)

@@ -128,7 +128,7 @@ class EnumGenerator(private val fallback: Generator) : Generator {
         val result = enumConstants.firstOrNull { it.second.matches(descriptor, mutableMapOf()) }
             ?: enumConstants.randomOrNull()
             ?: return cs.also { it += UnknownCall(kfgType, descriptor).wrap(name) }
-        cs += EnumValueCreation(cm[result.first.klass], result.first.fieldNameString)
+        cs += EnumValueCreation(cm[result.first.klass], result.first.fieldName)
         return cs
     }
 }

@@ -206,7 +206,7 @@ class Z3Solver(val tf: TypeFactory) : AbstractSMTSolver {
                 is FieldLoadTerm -> {
                 }
                 is FieldTerm -> {
-                    val name = "${ptr.klass}.${ptr.fieldNameString}"
+                    val name = "${ptr.klass}.${ptr.fieldName}"
                     properties.recoverProperty(
                         ctx,
                         ptr.owner,

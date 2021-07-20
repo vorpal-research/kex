@@ -148,7 +148,7 @@ class PredicateBuilderTest : KexTest() {
                     inst.isStatic -> tf.getClass(inst.field.klass)
                     else -> tf.getValue(inst.owner)
                 })
-                assertEquals(field.fieldName, tf.getString(inst.field.name))
+                assertEquals(field.fieldName, inst.field.name)
             }
 
             override fun visitFieldStoreInst(inst: FieldStoreInst) {
@@ -167,7 +167,7 @@ class PredicateBuilderTest : KexTest() {
                     inst.isStatic -> tf.getClass(inst.field.klass)
                     else -> tf.getValue(inst.owner)
                 })
-                assertEquals(rhv.fieldName, tf.getString(inst.field.name))
+                assertEquals(rhv.fieldName, inst.field.name)
             }
 
             override fun visitInstanceOfInst(inst: InstanceOfInst) {

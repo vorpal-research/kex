@@ -11,29 +11,25 @@ import org.jetbrains.research.kthelper.logging.log
 
 @InheritorOf("Term")
 @Serializable
-class FieldTerm(override val type: KexType, val owner: Term, val fieldName: Term) : Term() {
+class FieldTerm(override val type: KexType, val owner: Term, val fieldName: String) : Term() {
     init {
         ktassert(owner.type is KexClass)
     }
 
-    val fieldNameString = (fieldName as ConstStringTerm).value
-    override val name = "$owner.$fieldNameString"
-    override val subTerms by lazy { listOf(owner, fieldName) }
+    override val name = "$owner.$fieldName"
+    override val subTerms by lazy { listOf(owner) }
 
     val isStatic: Boolean
         get() = owner is ConstClassTerm
 
     val klass: String
         get() = (owner.type as? KexClass)?.klass
-                ?: unreachable { log.error("Non-class owner in field term") }
+            ?: unreachable { log.error("Non-class owner in field term") }
 
-    override fun <T : Transformer<T>> accept(t: Transformer<T>): Term {
-        val tOwner = t.transform(owner)
-        val tName = t.transform(fieldName)
-        return when {
-            tOwner == owner && tName == fieldName -> this
-            else -> term { tf.getField(type, tOwner, tName) }
+    override fun <T : Transformer<T>> accept(t: Transformer<T>): Term =
+        when (val tOwner = t.transform(owner)) {
+            owner -> this
+            else -> term { tf.getField(type, tOwner, fieldName) }
         }
-    }
 
 }

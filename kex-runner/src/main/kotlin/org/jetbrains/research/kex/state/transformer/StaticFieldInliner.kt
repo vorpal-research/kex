@@ -125,7 +125,7 @@ class StaticFieldInliner(
             .filterIsInstance<FieldLoadTerm>()
             .mapNotNull {
                 val field = it.field as FieldTerm
-                val kfgField = cm[field.klass].getField(field.fieldNameString, field.type.getKfgType(cm.type))
+                val kfgField = cm[field.klass].getField(field.fieldName, field.type.getKfgType(cm.type))
                 if (kfgField.isStatic && kfgField.isFinal) {
                     kfgField
                 } else {

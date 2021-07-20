@@ -154,7 +154,7 @@ class BoolectorSolver(val tf: TypeFactory) : AbstractSMTSolver {
             when (ptr) {
                 is FieldLoadTerm -> {}
                 is FieldTerm -> {
-                    val name = "${ptr.klass}.${ptr.fieldNameString}"
+                    val name = "${ptr.klass}.${ptr.fieldName}"
                     properties.recoverProperty(ctx, ptr.owner, memspace, (ptr.type as KexReference).reference, name)
                     properties.recoverProperty(ctx, ptr.owner, memspace, ptr.type, "type")
                 }

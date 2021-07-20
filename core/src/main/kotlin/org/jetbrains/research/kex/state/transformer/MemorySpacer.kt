@@ -1,10 +1,10 @@
 package org.jetbrains.research.kex.state.transformer
 
-import org.jetbrains.research.kthelper.assert.unreachable
-import org.jetbrains.research.kthelper.logging.log
 import org.jetbrains.research.kex.ktype.KexPointer
 import org.jetbrains.research.kex.state.PredicateState
 import org.jetbrains.research.kex.state.term.*
+import org.jetbrains.research.kthelper.assert.unreachable
+import org.jetbrains.research.kthelper.logging.log
 
 fun Term.withMemspace(memspace: Int): Term {
     val type = this.type as? KexPointer ?: return this
@@ -25,7 +25,7 @@ fun Term.withMemspace(memspace: Int): Term {
             is FieldTerm -> tf.getField(memspaced, owner, fieldName)
             is NegTerm -> tf.getNegTerm(memspaced, operand)
             is ReturnValueTerm -> tf.getReturn(memspaced, method)
-            is ValueTerm -> tf.getValue(memspaced, valueName)
+            is ValueTerm -> tf.getValue(memspaced, name)
             is UndefTerm -> tf.getUndef(memspaced)
             is NullTerm -> this@withMemspace
             else -> this@withMemspace.also { log.warn("Memspacing unexpected term type: $this") }

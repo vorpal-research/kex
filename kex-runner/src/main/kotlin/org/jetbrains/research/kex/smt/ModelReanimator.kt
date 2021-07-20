@@ -157,10 +157,10 @@ class ObjectReanimator(override val method: Method,
                         instance to `class`
                     }
                 }
-                val name = "${term.klass}.${term.fieldNameString}"
+                val name = "${term.klass}.${term.fieldName}"
                 val fieldValue = reanimateFromProperties(memspace, name, addr)
 
-                val fieldReflect = klass.getActualField(term.fieldNameString)
+                val fieldReflect = klass.getActualField(term.fieldName)
                 if (!klass.isAssignableFrom(instance?.javaClass ?: Any::class.java)) {
                     log.warn("Could not generate an instance of $klass, so skipping filed initialization")
                     return instance
@@ -330,11 +330,11 @@ abstract class DescriptorReanimator(override val method: Method,
                 val instance = memory(ownerRef.memspace, ownerAddr)
                     ?: return@descriptor default(term.type)
 
-                val name = "${term.klass}.${term.fieldNameString}"
+                val name = "${term.klass}.${term.fieldName}"
                 val fieldValue = reanimateFromProperties(memspace, name, addr)
 
                 val reanimatedValue = reanimateReferenceValue(term, fieldValue)
-                val fieldName = term.fieldNameString
+                val fieldName = term.fieldName
                 val fieldType = (term.type as KexReference).reference
 
                 when (instance) {

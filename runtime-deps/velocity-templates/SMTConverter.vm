@@ -182,7 +182,7 @@ class ${solver}Converter(val tf: TypeFactory) : ${solver}SMTConverter() {
         val ptr = convert(store.field, ef, ctx) as? Ptr_ ?: unreachable { log.error("Non-ptr ref in field load") }
 
         val field = (store.field as FieldTerm)
-        val name = field.fieldNameString
+        val name = field.fieldName
         val klass = field.klass
         ctx.initializeProperty(ptr, memspace, "${ klass }.${ name }", value)
         return ef.makeTrue()
@@ -194,7 +194,7 @@ class ${solver}Converter(val tf: TypeFactory) : ${solver}SMTConverter() {
         val ptr = convert(store.field, ef, ctx) as? Ptr_ ?: unreachable { log.error("Non-ptr ref in field load") }
 
         val field = (store.field as FieldTerm)
-        val name = field.fieldNameString
+        val name = field.fieldName
         val klass = field.klass
         ctx.writeProperty(ptr, memspace, "${ klass }.${ name }", value)
         return ef.makeTrue()
@@ -355,7 +355,7 @@ class ${solver}Converter(val tf: TypeFactory) : ${solver}SMTConverter() {
         val ptr = convert(fieldload.field, ef, ctx) as? Ptr_ ?: unreachable { log.error("Non-ptr ref in field load") }
 
         val field = (fieldload.field as FieldTerm)
-        val name = field.fieldNameString
+        val name = field.fieldName
         val klass = field.klass
         val res = ctx.readProperty(ptr, memspace, "${ klass }.${ name }", ${factory}.getTypeSize(fieldload.type))
         return cast(fieldload.type, res)

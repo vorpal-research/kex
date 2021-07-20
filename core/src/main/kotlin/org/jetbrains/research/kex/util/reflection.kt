@@ -50,7 +50,7 @@ val Field.isProtected get() = (this.modifiers and Modifier.PROTECTED) == Modifie
 
 
 fun FieldTerm.isFinal(cm: ClassManager): Boolean {
-    val kfgField = cm[this.klass].getField(this.fieldNameString, this.type.getKfgType(cm.type))
+    val kfgField = cm[this.klass].getField(this.fieldName, this.type.getKfgType(cm.type))
     return kfgField.isFinal
 }
 

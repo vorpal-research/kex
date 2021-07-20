@@ -18,13 +18,13 @@ class FieldNormalizer(val cm: ClassManager, val prefix: String = ".normalized") 
 
     override fun transformFieldTerm(term: FieldTerm): Term {
         val kfgKlass = cm[term.klass] as? ConcreteClass ?: return term
-        val field = kfgKlass.getField(term.fieldNameString, term.type.getKfgType(types))
+        val field = kfgKlass.getField(term.fieldName, term.type.getKfgType(types))
         return when (field.klass.fullName) {
             term.klass -> term
             else -> {
                 val casted = term { value(field.klass.kexType, "${term.owner.name}$prefix${counter++}") }
                 currentBuilder += state { casted equality (term.owner `as` field.klass.kexType) }
-                term { casted.field(field.type.kexType, term.fieldNameString) }
+                term { casted.field(field.type.kexType, term.fieldName) }
             }
         }
     }
