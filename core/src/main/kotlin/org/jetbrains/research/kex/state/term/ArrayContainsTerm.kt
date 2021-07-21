@@ -7,7 +7,7 @@ import org.jetbrains.research.kex.state.transformer.Transformer
 
 @InheritorOf("Term")
 @Serializable
-class ContainsTerm(
+class ArrayContainsTerm(
     val array: Term,
     val value: Term
 ) : Term() {

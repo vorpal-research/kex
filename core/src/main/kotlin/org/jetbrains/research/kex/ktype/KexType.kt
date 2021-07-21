@@ -16,6 +16,15 @@ val Type.kexType get() = KexType.fromType(this)
 val KfgClass.kexType get() = KexType.fromClass(this)
 val KfgClass.type get() = this.cm.type.getRefType(this.fullName)
 
+private val KexIntegral.actualBitSize get() = when (this) {
+    is KexBool -> 1
+    is KexByte -> 8
+    is KexChar -> 8
+    is KexShort -> 16
+    is KexInt -> 32
+    is KexLong -> 64
+}
+
 fun mergeTypes(tf: TypeFactory, vararg types: KexType): KexType = mergeTypes(tf, types.toList())
 
 fun mergeTypes(tf: TypeFactory, types: Collection<KexType>): KexType {
@@ -23,6 +32,7 @@ fun mergeTypes(tf: TypeFactory, types: Collection<KexType>): KexType {
     val uniqueTypes = nonNullTypes.toSet()
     ktassert(uniqueTypes.isNotEmpty()) { log.error("Trying to merge null-only types") }
     return when {
+        uniqueTypes.size == 1 -> uniqueTypes.first()
         uniqueTypes.all { it is KexPointer } -> {
             var result = tf.objectType.kexType
             val classes = uniqueTypes.map { it as KexClass }.map { tf.getRefType(it.klass) as ClassType }
@@ -38,7 +48,7 @@ fun mergeTypes(tf: TypeFactory, types: Collection<KexType>): KexType {
             result
         }
         uniqueTypes.all { it is KexLong } -> KexLong()
-        uniqueTypes.all { it is KexIntegral } -> uniqueTypes.maxByOrNull { it.bitSize }!!
+        uniqueTypes.all { it is KexIntegral } -> uniqueTypes.maxByOrNull { (it as KexIntegral).actualBitSize }!!
         uniqueTypes.all { it is KexFloat } -> KexFloat()
         uniqueTypes.all { it is KexDouble } -> KexDouble()
         else -> unreachable { log.error("Unexpected set of types: $types") }

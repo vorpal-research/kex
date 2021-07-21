@@ -13,7 +13,6 @@ fun Term.withMemspace(memspace: Int): Term {
         when (this@withMemspace) {
             is ArgumentTerm -> tf.getArgument(memspaced, index)
             is ArrayIndexTerm -> tf.getArrayIndex(memspaced, arrayRef, index)
-            is ArrayLengthTerm -> tf.getArrayLength(memspaced, arrayRef)
             is ArrayLoadTerm -> tf.getArrayLoad(memspaced, arrayRef)
             is BinaryTerm -> tf.getBinary(memspaced, opcode, lhv, rhv)
             is CallTerm -> tf.getCall(memspaced, owner, method, arguments)

@@ -40,12 +40,6 @@
 
     <repositories>
         <repository>
-            <id>bintray-kotlin-kotlinx</id>
-            <name>bintray</name>
-            <url>https://kotlin.bintray.com/kotlinx</url>
-        </repository>
-
-        <repository>
             <id>github-vorpal-research-kotlin-maven</id>
             <url>https://maven.vorpal-research.science</url>
         </repository>

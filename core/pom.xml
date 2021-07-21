@@ -137,6 +137,9 @@
                                 <annotationProcessor>
                                     org.jetbrains.research.kex.InheritanceInfoProcessor
                                 </annotationProcessor>
+                                <annotationProcessor>
+                                    org.jetbrains.research.kex.TransformerGenerator
+                                </annotationProcessor>
                             </annotationProcessors>
                             <annotationProcessorArgs>
                                 <processorArg>

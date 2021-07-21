@@ -74,8 +74,7 @@ object TermFactory {
         UnaryOpcode.LENGTH -> getArrayLength(operand)
     }
 
-    fun getArrayLength(arrayRef: Term) = getArrayLength(KexInt(), arrayRef)
-    fun getArrayLength(type: KexType, arrayRef: Term) = ArrayLengthTerm(type, arrayRef)
+    fun getArrayLength(arrayRef: Term) = ArrayLengthTerm(arrayRef)
 
     fun getArrayIndex(arrayRef: Term, index: Term): Term {
         val arrayType = arrayRef.type as? KexArray
@@ -128,7 +127,9 @@ object TermFactory {
         return getCmp(resType, opcode, lhv, rhv)
     }
 
-    fun getContains(arrayRef: Term, value: Term): Term = ContainsTerm(arrayRef, value)
+    fun getConcat(lhv: Term, rhv: Term): Term = ConcatTerm(lhv, rhv)
+
+    fun getArrayContains(arrayRef: Term, value: Term): Term = ArrayContainsTerm(arrayRef, value)
 
     fun getEquals(lhv: Term, rhv: Term): Term {
         ktassert(lhv.type is KexPointer) { log.error("Non-pointer type in equals") }
@@ -156,6 +157,14 @@ object TermFactory {
     fun getValue(type: KexType, name: String) = ValueTerm(type, name)
 
     fun getUndef(type: KexType) = UndefTerm(type)
+
+    fun getStringLength(string: Term) = StringLengthTerm(string)
+    fun getSubstring(string: Term, offset: Term, length: Term) = SubstringTerm(string, offset, length)
+    fun getIndexOf(string: Term, substring: Term, offset: Term) = IndexOfTerm(string, substring, offset)
+    fun getCharAt(string: Term, index: Term) = CharAtTerm(string, index)
+    fun getStringContains(string: Term, substring: Term): Term = ArrayContainsTerm(string, substring)
+    fun getFromString(string: Term, type: KexType): Term = StringParseTerm(type, string)
+    fun getToString(value: Term): Term = ToStringTerm(value)
 
     fun getLambda(type: KexType,  params: List<Term>, body: PredicateState) = LambdaTerm(type, params, body)
 }
@@ -188,8 +197,11 @@ abstract class TermBuilder {
     fun `class`(klass: KexType) = tf.getClass(klass)
 
     fun Term.apply(opcode: UnaryOpcode) = tf.getUnaryTerm(this, opcode)
-    operator fun Term.not() = tf.getUnaryTerm(this, UnaryOpcode.NEG)
-    fun Term.length() = tf.getUnaryTerm(this, UnaryOpcode.LENGTH)
+    operator fun Term.not() = tf.getNegTerm(this)
+    fun Term.length() = when (this.type) {
+        is KexArray -> tf.getArrayLength(this)
+        else -> tf.getStringLength(this)
+    }
 
     operator fun Term.get(index: Term) = tf.getArrayIndex(this, index)
     operator fun Term.get(index: Int) = tf.getArrayIndex(this, const(index))
@@ -267,7 +279,10 @@ abstract class TermBuilder {
     infix fun Term.cmpg(rhv: Term) = tf.getCmp(CmpOpcode.CMPG, this, rhv)
     infix fun Term.cmpl(rhv: Term) = tf.getCmp(CmpOpcode.CMPL, this, rhv)
 
-    infix fun Term.`in`(arrayRef: Term) = tf.getContains(arrayRef, this)
+    infix fun Term.`in`(container: Term) = when {
+        container.type is KexArray -> tf.getArrayContains(container, this)
+        else -> tf.getStringContains(container, this)
+    }
 
     infix fun Term.equls(rhv: Term) = tf.getEquals(this, rhv)
 
@@ -282,6 +297,39 @@ abstract class TermBuilder {
 
     infix fun Term.`as`(type: KexType) = tf.getCast(type, this)
     infix fun Term.`is`(type: KexType) = tf.getInstanceOf(type, this)
+
+    infix fun Term.`++`(rhv: Term) = tf.getConcat(this, rhv)
+    infix fun Term.`++`(rhv: String) = tf.getConcat(this, const(rhv))
+    infix fun String.`++`(rhv: String) = tf.getConcat(const(this), const(rhv))
+    infix fun String.`++`(rhv: Term) = tf.getConcat(const(this), rhv)
+
+    fun Term.substring(offset: Term, length: Term) = tf.getSubstring(this, offset, length)
+    fun Term.substring(offset: Int, length: Int) = this.substring(const(offset), const(length))
+
+    fun String.substring(offset: Term, length: Term) = tf.getSubstring(const(this), offset, length)
+    fun String.substring(offset: Int, length: Int) = this.substring(const(offset), const(length))
+
+    fun Term.indexOf(substring: Term, offset: Term) = tf.getIndexOf(this, substring, offset)
+    fun Term.indexOf(substring: Term) = this.indexOf(substring, const(0))
+    fun Term.indexOf(substring: String, offset: Term) = tf.getIndexOf(this, const(substring), offset)
+    fun Term.indexOf(substring: String, offset: Int) = tf.getIndexOf(this, const(substring), const(offset))
+    fun Term.indexOf(substring: String) = this.indexOf(const(substring), const(0))
+
+    fun String.indexOf(substring: Term, offset: Term) = tf.getIndexOf(const(this), substring, offset)
+    fun String.indexOf(substring: Term) = this.indexOf(substring, const(0))
+    fun String.indexOf(substring: String, offset: Term) = tf.getIndexOf(const(this), const(substring), offset)
+    fun String.indexOf(substring: String, offset: Int) = tf.getIndexOf(const(this), const(substring), const(offset))
+    fun String.indexOf(substring: String) = this.indexOf(const(substring), const(0))
+
+    fun Term.charAt(index: Term) = tf.getCharAt(this, index)
+    fun Term.charAt(index: Int) = this.charAt(const(index))
+    fun String.charAt(index: Term) = const(this).charAt(index)
+    fun String.charAt(index: Int) = const(this).charAt(index)
+
+    fun KexType.fromString(string: Term) = tf.getFromString(string, this)
+    fun KexType.fromString(string: String) = this.fromString(const(string))
+
+    fun Term.toStr() = tf.getToString(this)
 
     fun `return`(method: Method) = tf.getReturn(method)
 

@@ -2,6 +2,7 @@ package org.jetbrains.research.kex.ktype
 
 import kotlinx.serialization.Serializable
 import org.jetbrains.research.kex.InheritorOf
+import org.jetbrains.research.kfg.type.SystemTypeNames
 import org.jetbrains.research.kfg.type.Type
 import org.jetbrains.research.kfg.type.TypeFactory
 import org.jetbrains.research.kthelper.defaultHashCode
@@ -114,3 +115,5 @@ class KexNull : KexPointer() {
         return true
     }
 }
+
+fun KexString() = KexClass(SystemTypeNames.stringClass)
