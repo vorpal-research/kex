@@ -17,6 +17,7 @@ fun Term.withMemspace(memspace: Int): Term {
             is BinaryTerm -> tf.getBinary(memspaced, opcode, lhv, rhv)
             is CallTerm -> tf.getCall(memspaced, owner, method, arguments)
             is CastTerm -> tf.getCast(memspaced, operand)
+            is ConcatTerm -> tf.getConcat(memspaced, lhv, rhv)
             is CmpTerm -> tf.getCmp(memspaced, opcode, lhv, rhv)
             is ConstStringTerm -> tf.getString(memspaced, value)
             is ConstClassTerm -> tf.getClass(memspaced)
@@ -24,6 +25,7 @@ fun Term.withMemspace(memspace: Int): Term {
             is FieldTerm -> tf.getField(memspaced, owner, fieldName)
             is NegTerm -> tf.getNegTerm(memspaced, operand)
             is ReturnValueTerm -> tf.getReturn(memspaced, method)
+            is ToStringTerm -> tf.getToString(memspaced, value)
             is ValueTerm -> tf.getValue(memspaced, name)
             is UndefTerm -> tf.getUndef(memspaced)
             is NullTerm -> this@withMemspace

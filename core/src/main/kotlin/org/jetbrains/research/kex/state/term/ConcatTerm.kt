@@ -2,16 +2,16 @@ package org.jetbrains.research.kex.state.term
 
 import kotlinx.serialization.Serializable
 import org.jetbrains.research.kex.InheritorOf
-import org.jetbrains.research.kex.ktype.KexString
+import org.jetbrains.research.kex.ktype.KexType
 import org.jetbrains.research.kex.state.transformer.Transformer
 
 @InheritorOf("Term")
 @Serializable
 class ConcatTerm(
+    override val type: KexType,
     val lhv: Term,
     val rhv: Term
 ) : Term() {
-    override val type = KexString()
     override val name = "$lhv ++ $rhv"
     override val subTerms by lazy { listOf(lhv, rhv) }
 

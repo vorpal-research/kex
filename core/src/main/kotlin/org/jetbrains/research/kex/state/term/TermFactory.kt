@@ -127,7 +127,8 @@ object TermFactory {
         return getCmp(resType, opcode, lhv, rhv)
     }
 
-    fun getConcat(lhv: Term, rhv: Term): Term = ConcatTerm(lhv, rhv)
+    fun getConcat(lhv: Term, rhv: Term): Term = getConcat(KexString(), lhv, rhv)
+    fun getConcat(type: KexType, lhv: Term, rhv: Term): Term = ConcatTerm(type, lhv, rhv)
 
     fun getArrayContains(arrayRef: Term, value: Term): Term = ArrayContainsTerm(arrayRef, value)
 
@@ -164,7 +165,8 @@ object TermFactory {
     fun getCharAt(string: Term, index: Term) = CharAtTerm(string, index)
     fun getStringContains(string: Term, substring: Term): Term = ArrayContainsTerm(string, substring)
     fun getFromString(string: Term, type: KexType): Term = StringParseTerm(type, string)
-    fun getToString(value: Term): Term = ToStringTerm(value)
+    fun getToString(value: Term): Term = getToString(KexString(), value)
+    fun getToString(type: KexType, value: Term): Term = ToStringTerm(type, value)
 
     fun getLambda(type: KexType,  params: List<Term>, body: PredicateState) = LambdaTerm(type, params, body)
 }
@@ -306,25 +308,14 @@ abstract class TermBuilder {
     fun Term.substring(offset: Term, length: Term) = tf.getSubstring(this, offset, length)
     fun Term.substring(offset: Int, length: Int) = this.substring(const(offset), const(length))
 
-    fun String.substring(offset: Term, length: Term) = tf.getSubstring(const(this), offset, length)
-    fun String.substring(offset: Int, length: Int) = this.substring(const(offset), const(length))
-
     fun Term.indexOf(substring: Term, offset: Term) = tf.getIndexOf(this, substring, offset)
     fun Term.indexOf(substring: Term) = this.indexOf(substring, const(0))
     fun Term.indexOf(substring: String, offset: Term) = tf.getIndexOf(this, const(substring), offset)
     fun Term.indexOf(substring: String, offset: Int) = tf.getIndexOf(this, const(substring), const(offset))
     fun Term.indexOf(substring: String) = this.indexOf(const(substring), const(0))
 
-    fun String.indexOf(substring: Term, offset: Term) = tf.getIndexOf(const(this), substring, offset)
-    fun String.indexOf(substring: Term) = this.indexOf(substring, const(0))
-    fun String.indexOf(substring: String, offset: Term) = tf.getIndexOf(const(this), const(substring), offset)
-    fun String.indexOf(substring: String, offset: Int) = tf.getIndexOf(const(this), const(substring), const(offset))
-    fun String.indexOf(substring: String) = this.indexOf(const(substring), const(0))
-
     fun Term.charAt(index: Term) = tf.getCharAt(this, index)
     fun Term.charAt(index: Int) = this.charAt(const(index))
-    fun String.charAt(index: Term) = const(this).charAt(index)
-    fun String.charAt(index: Int) = const(this).charAt(index)
 
     fun KexType.fromString(string: Term) = tf.getFromString(string, this)
     fun KexType.fromString(string: String) = this.fromString(const(string))
