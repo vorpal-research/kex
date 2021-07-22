@@ -389,7 +389,7 @@ class ClassDescriptor(type: KexClass) :
 
     fun filterFinalFields(cm: ClassManager): ClassDescriptor {
         val kfgClass = klass.kfgClass(cm.type)
-        for ((name, type) in fields.keys) {
+        for ((name, type) in fields.keys.toSet()) {
             val kfgField = kfgClass.getField(name, type.getKfgType(cm.type))
             if (kfgField.isFinal) remove(name, type)
         }
