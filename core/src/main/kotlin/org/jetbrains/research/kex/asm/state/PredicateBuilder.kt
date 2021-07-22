@@ -1,11 +1,11 @@
 package org.jetbrains.research.kex.asm.state
 
 import org.jetbrains.research.kex.ktype.kexType
-import org.jetbrains.research.kex.state.emptyState
 import org.jetbrains.research.kex.state.predicate.Predicate
 import org.jetbrains.research.kex.state.predicate.path
 import org.jetbrains.research.kex.state.predicate.state
 import org.jetbrains.research.kex.state.term.term
+import org.jetbrains.research.kex.state.transformer.TermRenamer
 import org.jetbrains.research.kfg.ClassManager
 import org.jetbrains.research.kfg.ir.BasicBlock
 import org.jetbrains.research.kfg.ir.value.IntConstant
@@ -142,11 +142,19 @@ class PredicateBuilder(override val cm: ClassManager) : MethodVisitor {
             val lambdaBases = inst.bootstrapMethodArgs.filterIsInstance<Handle>()
             ktassert(lambdaBases.size == 1) { log.error("Unknown number of bases of ${inst.print()}") }
             val lambdaBase = lambdaBases.first()
-            val parameters = lambdaBase.method.argTypes.withIndex().map { arg(it.value.kexType, it.index) }
 
-            lhv equality lambda(inst.type.kexType, parameters) {
-                val psa = PredicateStateAnalysis(cm)
-                psa.builder(lambdaBase.method).methodState ?: emptyState()
+            val argParameters = lambdaBase.method.argTypes.withIndex().map { arg(it.value.kexType, it.index) }
+            val lambdaParameters = lambdaBase.method.argTypes.withIndex().map { (index, type) ->
+                term { value(type.kexType, "labmda_${lambdaBase.method.name}_$index") }
+            }
+
+            val psa = PredicateStateAnalysis(cm)
+            val lambdaBody = psa.builder(lambdaBase.method).methodState
+                ?: return log.error("Could not process ${inst.print()}")
+
+            lhv equality lambda(inst.type.kexType, lambdaParameters) {
+                TermRenamer(".labmda.${lambdaBase.method.name}", argParameters.zip(lambdaParameters).toMap())
+                    .apply(lambdaBody)
             }
         }
     }
@@ -189,7 +197,8 @@ class PredicateBuilder(override val cm: ClassManager) : MethodVisitor {
         for ((value, successor) in inst.branches) {
             terminatorPredicateMap[successor to inst] = path(inst.location) { key equality value(value) }
         }
-        terminatorPredicateMap[inst.default to inst] = path(inst.location) { key `!in` inst.branches.keys.map { value(it) } }
+        terminatorPredicateMap[inst.default to inst] =
+            path(inst.location) { key `!in` inst.branches.keys.map { value(it) } }
     }
 
     override fun visitTableSwitchInst(inst: TableSwitchInst) {
@@ -199,7 +208,8 @@ class PredicateBuilder(override val cm: ClassManager) : MethodVisitor {
         for ((index, successor) in inst.branches.withIndex()) {
             terminatorPredicateMap[successor to inst] = path(inst.location) { key equality (min.value + index) }
         }
-        terminatorPredicateMap[inst.default to inst] = path(inst.location) { key `!in` (min.value..max.value).map { const(it) } }
+        terminatorPredicateMap[inst.default to inst] =
+            path(inst.location) { key `!in` (min.value..max.value).map { const(it) } }
     }
 
     override fun visitReturnInst(inst: ReturnInst) {

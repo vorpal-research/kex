@@ -10,8 +10,10 @@ import org.jetbrains.research.kfg.ClassManager
 import org.jetbrains.research.kfg.ir.ConcreteClass
 import org.jetbrains.research.kthelper.collection.dequeOf
 
-class FieldNormalizer(val cm: ClassManager, val prefix: String = ".normalized") :
-    RecollectingTransformer<FieldNormalizer> {
+class FieldNormalizer(
+    val cm: ClassManager,
+    val prefix: String = ".normalized"
+) : RecollectingTransformer<FieldNormalizer> {
     val types get() = cm.type
     override val builders = dequeOf(StateBuilder())
     private var counter = 0

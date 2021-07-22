@@ -9,16 +9,12 @@ import org.jetbrains.research.kex.state.StateBuilder
 import org.jetbrains.research.kex.state.predicate.CallPredicate
 import org.jetbrains.research.kex.state.predicate.Predicate
 import org.jetbrains.research.kex.state.predicate.state
-import org.jetbrains.research.kex.state.term.*
+import org.jetbrains.research.kex.state.term.CallTerm
+import org.jetbrains.research.kex.state.term.NullTerm
+import org.jetbrains.research.kex.state.term.Term
+import org.jetbrains.research.kex.state.term.term
 import org.jetbrains.research.kfg.ir.Method
 import org.jetbrains.research.kthelper.collection.dequeOf
-
-class TermRenamer(val suffix: String, val remapping: Map<Term, Term>) : Transformer<TermRenamer> {
-    override fun transformTerm(term: Term): Term = remapping[term] ?: when (term) {
-        is ValueTerm, is ArgumentTerm, is ReturnValueTerm -> term { value(term.type, "${term.name}.$suffix") }
-        else -> term
-    }
-}
 
 private val defaultDepth = kexConfig.getIntValue("inliner", "depth", 5)
 

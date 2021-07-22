@@ -9,12 +9,12 @@ import org.jetbrains.research.kex.ktype.*
 import org.jetbrains.research.kex.parameters.Parameters
 import org.jetbrains.research.kex.state.PredicateState
 import org.jetbrains.research.kex.state.StateBuilder
-import org.jetbrains.research.kex.state.emptyState
 import org.jetbrains.research.kex.state.predicate.Predicate
 import org.jetbrains.research.kex.state.predicate.path
 import org.jetbrains.research.kex.state.predicate.state
 import org.jetbrains.research.kex.state.term.Term
 import org.jetbrains.research.kex.state.term.term
+import org.jetbrains.research.kex.state.transformer.TermRenamer
 import org.jetbrains.research.kex.util.cmp
 import org.jetbrains.research.kex.util.parseValue
 import org.jetbrains.research.kfg.ir.*
@@ -726,11 +726,18 @@ class SymbolicTraceBuilder(
             val lambdaBases = kfgValue.bootstrapMethodArgs.filterIsInstance<Handle>()
             ktassert(lambdaBases.size == 1) { log.error("Unknown number of bases of ${kfgValue.print()}") }
             val lambdaBase = lambdaBases.first()
-            val parameters = lambdaBase.method.argTypes.withIndex().map { arg(it.value.kexType, it.index) }
+            val argParameters = lambdaBase.method.argTypes.withIndex().map { arg(it.value.kexType, it.index) }
+            val lambdaParameters = lambdaBase.method.argTypes.withIndex().map { (index, type) ->
+                term { value(type.kexType, "labmda_${lambdaBase.method.name}_$index") }
+            }
 
-            termValue equality lambda(kfgValue.type.kexType, parameters) {
-                val psa = PredicateStateAnalysis(cm)
-                psa.builder(lambdaBase.method).methodState ?: emptyState()
+            val psa = PredicateStateAnalysis(cm)
+            val lambdaBody = psa.builder(lambdaBase.method).methodState
+                ?: return log.error("Could not process ${kfgValue.print()}")
+
+            termValue equality lambda(kfgValue.type.kexType, lambdaParameters) {
+                TermRenamer(".labmda.${lambdaBase.method.name}", argParameters.zip(lambdaParameters).toMap())
+                    .apply(lambdaBody)
             }
         }
 
