@@ -347,7 +347,8 @@ class ObjectDescriptor(klass: KexClass) :
     }
 }
 
-class ClassDescriptor(type: KexClass) : FieldContainingDescriptor<ClassDescriptor>(term { `class`(type) }, type) {
+class ClassDescriptor(type: KexClass) :
+    FieldContainingDescriptor<ClassDescriptor>(term { `class`(KexJavaClass(), type) }, type) {
     override fun deepCopy(copied: MutableMap<Descriptor, Descriptor>): Descriptor {
         if (this in copied) return copied[this]!!
         val copy = ClassDescriptor(type as KexClass)

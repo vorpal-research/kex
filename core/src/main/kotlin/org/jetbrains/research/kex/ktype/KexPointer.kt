@@ -117,3 +117,4 @@ class KexNull : KexPointer() {
 }
 
 fun KexString() = KexClass(SystemTypeNames.stringClass)
+fun KexJavaClass() = KexClass(SystemTypeNames.classClass)

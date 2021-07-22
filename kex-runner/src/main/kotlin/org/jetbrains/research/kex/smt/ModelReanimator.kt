@@ -279,7 +279,9 @@ abstract class DescriptorReanimator(override val method: Method,
             null, 0 -> default(term.type)
             else -> {
                 val reanimatedType = resolveType(term.memspace, addr, term.type)
-                if (term is ConstClassTerm) memory(term.memspace, address) { const(reanimatedType as KexClass) }
+                if (term is ConstClassTerm) {
+                    return@descriptor memory(term.memspace, address) { const(term.constantType as KexClass) }
+                }
                 ktassert(reanimatedType.isSubtypeOf(context.types, term.type)) {
                     log.error("Type resolving failed: actual type: ${term.type}, resolved type: $reanimatedType")
                 }

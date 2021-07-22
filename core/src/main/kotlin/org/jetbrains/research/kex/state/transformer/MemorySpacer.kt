@@ -20,7 +20,7 @@ fun Term.withMemspace(memspace: Int): Term {
             is ConcatTerm -> tf.getConcat(memspaced, lhv, rhv)
             is CmpTerm -> tf.getCmp(memspaced, opcode, lhv, rhv)
             is ConstStringTerm -> tf.getString(memspaced, value)
-            is ConstClassTerm -> tf.getClass(memspaced)
+            is ConstClassTerm -> tf.getClass(memspaced, constantType)
             is FieldLoadTerm -> tf.getFieldLoad(memspaced, field)
             is FieldTerm -> tf.getField(memspaced, owner, fieldName)
             is NegTerm -> tf.getNegTerm(memspaced, operand)
