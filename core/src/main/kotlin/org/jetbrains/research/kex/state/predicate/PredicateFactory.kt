@@ -193,8 +193,15 @@ abstract class PredicateBuilder : TermBuilder() {
         pf.getInequality(tf.getBool(this), other, this@PredicateBuilder.type, location)
 
     fun forEach(start: Term, end: Term, body: Term) = pf.getForEach(start, end, body)
-    fun forEach(start: Term, end: Term, body: () -> Term) = forEach(start, end, body())
-    fun IntRange.forEach(body: () -> Term) = forEach(const(start), const(last), body)
+    fun forEach(start: Term, end: Term, body: TermBuilder.() -> Term) = forEach(start, end, body())
+    fun forEach(start: Int, end: Int, body: Term) = (start..end).forEach(body)
+    fun forEach(start: Int, end: Int, body: TermBuilder.() -> Term) = forEach(start, end, body())
+    fun forEach(start: Int, end: Term, body: TermBuilder.() -> Term) = forEach(const(start), end, body())
+    fun forEach(start: Int, end: Term, body: Term) = forEach(const(start), end, body)
+    fun forEach(start: Term, end: Int, body: Term) = forEach(start, const(end), body)
+    fun forEach(start: Term, end: Int, body: TermBuilder.() -> Term) = forEach(start, const(end), body())
+    fun IntRange.forEach(body: Term) = forEach(const(start), const(last), body)
+    fun IntRange.forEach(body: TermBuilder.() -> Term) = forEach(const(start), const(last), body)
 
     fun Term.new() = pf.getNew(this, this@PredicateBuilder.type, location)
     fun Term.new(dimensions: List<Term>) = pf.getNewArray(this, dimensions, this@PredicateBuilder.type, location)

@@ -2,6 +2,7 @@ package org.jetbrains.research.kex.state.term
 
 import org.jetbrains.research.kex.ktype.*
 import org.jetbrains.research.kex.state.PredicateState
+import org.jetbrains.research.kex.state.StateBuilder
 import org.jetbrains.research.kfg.ir.Class
 import org.jetbrains.research.kfg.ir.Method
 import org.jetbrains.research.kfg.ir.value.*
@@ -167,6 +168,8 @@ object TermFactory {
     fun getFromString(string: Term, type: KexType): Term = StringParseTerm(type, string)
     fun getToString(value: Term): Term = getToString(KexString(), value)
     fun getToString(type: KexType, value: Term): Term = ToStringTerm(type, value)
+    fun getStartsWith(string: Term, prefix: Term): Term = TODO()
+    fun getEndsWith(string: Term, suffix: Term): Term = EndsWithTerm(string, suffix)
 
     fun getLambda(type: KexType,  params: List<Term>, body: PredicateState) = LambdaTerm(type, params, body)
 }
@@ -322,20 +325,26 @@ abstract class TermBuilder {
 
     fun Term.toStr() = tf.getToString(this)
 
+    fun Term.startsWith(prefix: Term) = tf.getStartsWith(this, prefix)
+    fun Term.startsWith(prefix: String) = startsWith(const(prefix))
+
+    fun Term.endsWith(suffix: Term) = tf.getEndsWith(this, suffix)
+    fun Term.endsWith(suffix: String) = endsWith(const(suffix))
+
     fun `return`(method: Method) = tf.getReturn(method)
 
     fun value(value: Value) = tf.getValue(value)
     fun value(type: KexType, name: String) = tf.getValue(type, name)
     fun undef(type: KexType) = tf.getUndef(type)
 
-    fun lambda(type: KexType, params: List<Term>, bodyBuilder: () -> PredicateState) =
-        lambda(type, params, bodyBuilder())
+    fun lambda(type: KexType, params: List<Term>, bodyBuilder: StateBuilder.() -> PredicateState) =
+        lambda(type, params, StateBuilder().bodyBuilder())
 
     fun lambda(type: KexType, params: List<Term>, body: PredicateState) =
         tf.getLambda(type, params, body)
 
-    fun lambda(type: KexType, vararg params: Term, bodyBuilder: () -> PredicateState) =
-        lambda(type, *params, body = bodyBuilder())
+    fun lambda(type: KexType, vararg params: Term, bodyBuilder: StateBuilder.() -> PredicateState) =
+        lambda(type, *params, body = StateBuilder().bodyBuilder())
 
 
     fun lambda(type: KexType, vararg params: Term, body: PredicateState) =
