@@ -87,7 +87,7 @@ class Z3SolverTest : KexTest() {
             solver.add((pred implies !e).asAxiom() as BoolExpr)
 
             val prede = pred.expr
-            val res = solver.check(prede)
+            val res = solver.check(prede as BoolExpr)
             res == Status.UNSATISFIABLE
         }
 

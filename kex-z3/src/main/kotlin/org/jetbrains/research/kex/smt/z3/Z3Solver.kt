@@ -91,7 +91,7 @@ class Z3Solver(val tf: TypeFactory) : AbstractSMTSolver {
             log.debug("SMTLib formula:")
             log.debug(solver)
         }
-        val result = solver.check(query.expr) ?: unreachable { log.error("Solver error") }
+        val result = solver.check(query.expr as BoolExpr) ?: unreachable { log.error("Solver error") }
         log.debug("Solver finished")
 
         return when (result) {

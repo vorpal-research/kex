@@ -11,7 +11,7 @@ import java.lang.Math.pow
 import kotlin.math.pow
 
 object Z3Unlogic {
-    fun undo(expr: Expr): Term = when (expr) {
+    fun undo(expr: Expr<*>): Term = when (expr) {
         is BoolExpr -> undoBool(expr)
         is BitVecNum -> undoBV(expr)
         is BitVecExpr -> undoBVExpr(expr)

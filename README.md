@@ -14,7 +14,7 @@ Kex is a white-box fuzzer tool for Java bytecode.
   </server>
   ``` 
 
-* [z3-java](https://aur.archlinux.org/packages/z3-java/) v4.8.6
+* [z3](https://github.com/Z3Prover/z3/tree/z3-4.8.12) with java bindings v4.8.12
 
   you need to manually install jar package with java bindings to your local maven repository using
   following command:
