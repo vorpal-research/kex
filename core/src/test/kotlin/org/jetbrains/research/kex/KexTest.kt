@@ -17,7 +17,12 @@ import org.jetbrains.research.kfg.ir.Method
 import org.jetbrains.research.kfg.util.Flags
 import java.nio.file.Paths
 
-abstract class KexTest {
+
+@OptIn(ExperimentalStdlibApi::class)
+abstract class KexTest(
+    private val initTR: Boolean = false,
+    private val initIntrinsics: Boolean = false
+) {
     val packageName = "org.jetbrains.research.kex.test"
     val `package` = Package.parse("$packageName.*")
     val jarPath: String
@@ -34,7 +39,12 @@ abstract class KexTest {
         val jar = Paths.get(jarPath).asContainer(`package`)!!
         loader = jar.classLoader
         cm = ClassManager(KfgConfig(flags = Flags.readAll, failOnError = false))
-        cm.initialize(jar, getRuntime()!!, getIntrinsics()!!)
+        val containersToInit = buildList {
+            add(jar)
+            if (initTR) add(getRuntime()!!)
+            if (initIntrinsics) add(getIntrinsics()!!)
+        }.toTypedArray()
+        cm.initialize(*containersToInit)
     }
 
     protected fun getPSA(method: Method): PredicateStateAnalysis {
