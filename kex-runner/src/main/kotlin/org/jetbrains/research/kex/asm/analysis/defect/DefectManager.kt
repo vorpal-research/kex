@@ -1,5 +1,6 @@
 package org.jetbrains.research.kex.asm.analysis.defect
 
+import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import org.jetbrains.research.kex.config.kexConfig
@@ -19,6 +20,7 @@ object DefectManager {
         innerDefects += defect
     }
 
+    @ExperimentalSerializationApi
     fun emit() {
         val json = Json.encodeToString(defects)
         val file = defectFile.toFile().also {

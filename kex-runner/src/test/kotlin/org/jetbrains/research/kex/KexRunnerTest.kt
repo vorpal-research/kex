@@ -1,5 +1,7 @@
 package org.jetbrains.research.kex
 
+import kotlinx.serialization.ExperimentalSerializationApi
+import kotlinx.serialization.InternalSerializationApi
 import org.jetbrains.research.kex.asm.analysis.testgen.MethodChecker
 import org.jetbrains.research.kex.asm.state.PredicateStateAnalysis
 import org.jetbrains.research.kex.asm.transform.LoopDeroller
@@ -32,6 +34,8 @@ import java.nio.file.Paths
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
+@ExperimentalSerializationApi
+@InternalSerializationApi
 abstract class KexRunnerTest : KexTest() {
     val classPath = System.getProperty("java.class.path")
     val targetDir = Files.createTempDirectory("kex-test")

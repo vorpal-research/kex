@@ -1,5 +1,7 @@
 package org.jetbrains.research.kex.annotations
 
+import kotlinx.serialization.ExperimentalSerializationApi
+import kotlinx.serialization.InternalSerializationApi
 import org.jetbrains.research.kex.KexRunnerTest
 import org.jetbrains.research.kex.config.RuntimeConfig
 import org.jetbrains.research.kthelper.assert.unreachable
@@ -8,6 +10,8 @@ import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 
+@ExperimentalSerializationApi
+@InternalSerializationApi
 class AnnotationsTest : KexRunnerTest() {
     companion object {
         init {

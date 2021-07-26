@@ -51,7 +51,7 @@ class CallStackExecutor(val ctx: ExecutionContext) {
         }
     }
 
-    fun execute(callStack: CallStack): Any? = tryOrNull {
+    fun execute(callStack: CallStack): Any? = tryOrNull<Any?> {
         if (callStack in cache) return cache[callStack]
 
         var current: Any? = null

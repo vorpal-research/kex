@@ -52,6 +52,8 @@ data class Failure(
         val state: PredicateState
 )
 
+@ExperimentalSerializationApi
+@InternalSerializationApi
 open class MethodChecker(
     val ctx: ExecutionContext,
     protected val tm: TraceManager<ActionTrace>,
@@ -63,8 +65,6 @@ open class MethodChecker(
     lateinit var generator: ParameterGenerator
         protected set
 
-    @ExperimentalSerializationApi
-    @InternalSerializationApi
     private fun dumpPS(method: Method, message: String, state: PredicateState) = `try` {
         val failDirPath = outputDirectory.resolve(failDir)
         if (!Files.exists(failDirPath)) {
@@ -85,8 +85,6 @@ open class MethodChecker(
 
     protected open fun getSearchStrategy(method: Method): SearchStrategy = DfsStrategy(method)
 
-    @ExperimentalSerializationApi
-    @InternalSerializationApi
     override fun visit(method: Method) {
         super.visit(method)
 

@@ -1,5 +1,7 @@
 package org.jetbrains.research.kex.asm.analysis.testgen
 
+import kotlinx.serialization.ExperimentalSerializationApi
+import kotlinx.serialization.InternalSerializationApi
 import org.jetbrains.research.kex.ExecutionContext
 import org.jetbrains.research.kex.asm.state.PredicateStateAnalysis
 import org.jetbrains.research.kex.descriptor.concrete
@@ -19,6 +21,8 @@ import org.jetbrains.research.kfg.ir.Method
 import org.jetbrains.research.kthelper.logging.log
 import org.jetbrains.research.kthelper.tryOrNull
 
+@ExperimentalSerializationApi
+@InternalSerializationApi
 class DescriptorChecker(
     ctx: ExecutionContext,
     tm: TraceManager<ActionTrace>,
