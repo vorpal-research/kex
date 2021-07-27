@@ -431,4 +431,12 @@ object BoolectorEngine :
     override fun indexOf(ctx: Btor, seq: BoolectorNode, subSeq: BoolectorNode, offset: BoolectorNode): BoolectorNode {
         TODO("Not yet implemented")
     }
+
+    override fun concat(ctx: Btor, lhv: BoolectorNode, rhv: BoolectorNode): BoolectorNode {
+        TODO("Not yet implemented")
+    }
+
+    override fun char2string(ctx: Btor, expr: BoolectorNode): BoolectorNode {
+        TODO("Not yet implemented")
+    }
 }

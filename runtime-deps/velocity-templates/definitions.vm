@@ -16,6 +16,9 @@ import org.jetbrains.research.kthelper.assert.*
 #set($Float = "${solver}Float")
 #set($Double = "${solver}Double")
 #set($Array = "${solver}Array")
+#if($generateString)
+    #set($String = "${solver}String")
+#end
 #set($Memory = "${solver}Memory")
 #set($Function = "${solver}FunctionExpr")
 

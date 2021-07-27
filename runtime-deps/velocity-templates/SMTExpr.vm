@@ -296,6 +296,36 @@ class $self$width : $self {
 
 #end
 
+#if($generateString)
+#set($self = $String)
+class $String : $valexpr {
+    #constructors("String")
+
+    companion object {
+        fun parseInt(ctx: $context, str: $self) = ${Bitvector32}(ctx, engine.string2bv(ctx, str.expr, ${Bitvector32}.getStaticSort(ctx)))
+        fun parseLong(ctx: $context, str: $self) = ${Bitvector64}(ctx, engine.string2bv(ctx, str.expr, ${Bitvector64}.getStaticSort(ctx)))
+        fun parseFloat(ctx: $context, str: $self) = ${Float}(ctx, engine.string2float(ctx, str.expr))
+        fun parseDouble(ctx: $context, str: $self) = ${Double}(ctx, engine.string2double(ctx, str.expr))
+
+        fun fromChar(ctx: $context, value: $Bitvector32) = ${self}(ctx, engine.char2string(ctx, value.expr))
+        fun fromInt(ctx: $context, value: $Bitvector32) = ${self}(ctx, engine.bv2string(ctx, value.expr))
+        fun fromLong(ctx: $context, value: $Bitvector64) = ${self}(ctx, engine.bv2string(ctx, value.expr))
+        fun fromFloat(ctx: $context, value: $Float) = ${self}(ctx, engine.float2string(ctx, value.expr))
+        fun fromDouble(ctx: $context, value: $Double) = ${self}(ctx, engine.double2string(ctx, value.expr))
+    }
+
+    fun length() = ${Bitvector}(ctx, engine.length(ctx, expr))
+    fun concat(rhv: $String) = ${String}(ctx, engine.concat(ctx, expr, rhv.expr), spliceAxioms(ctx, axiom, rhv.axiom))
+    operator fun get(index: $Bitvector32) = ${Bitvector}(ctx, engine.nths(ctx, expr, index.expr))
+    operator fun plus(rhv: $String) = concat(rhv)
+    fun startsWith(prefix: $String) = ${Bool}(ctx, engine.prefixOf(ctx, expr, prefix.expr))
+    fun endsWith(suffix: $String) = ${Bool}(ctx, engine.suffixOf(ctx, expr, suffix.expr))
+    fun indexOf(subString: $String, offset: $Bitvector32) = ${Bitvector}(ctx, engine.indexOf(ctx, expr, subString.expr, offset.expr))
+    fun substring(start: $Bitvector32, offset: $Bitvector32) = ${String}(ctx, engine.extract(ctx, expr, start.expr, offset.expr))
+    fun contains(subString: $String) = ${Bool}(ctx, engine.contains(ctx, expr, subString.expr))
+}
+#end
+
 #set($self = $Array)
 class $self< Element : $valexpr, in Index : $valexpr > : $valexpr {
     companion object {

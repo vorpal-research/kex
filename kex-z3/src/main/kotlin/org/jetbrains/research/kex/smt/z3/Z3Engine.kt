@@ -335,24 +335,20 @@ object Z3Engine : SMTEngine<Context, Expr<*>, Sort, FuncDecl<*>, Pattern>() {
     override fun bv2string(ctx: Context, expr: Expr<*>): Expr<*> =
         ctx.intToString(ctx.mkBV2Int(expr as BitVecExpr, true))
 
-    override fun float2string(ctx: Context, expr: Expr<*>): Expr<*> {
-        TODO("Not yet implemented")
-    }
+    override fun float2string(ctx: Context, expr: Expr<*>): Expr<*> =
+        ctx.intToString(ctx.mkBV2Int(ctx.mkFPToBV(ctx.mkFPRTZ(), expr as Expr<FPSort>, WORD, true), true))
 
-    override fun double2string(ctx: Context, expr: Expr<*>): Expr<*> {
-        TODO("Not yet implemented")
-    }
+    override fun double2string(ctx: Context, expr: Expr<*>): Expr<*> =
+        ctx.intToString(ctx.mkBV2Int(ctx.mkFPToBV(ctx.mkFPRTZ(), expr as Expr<FPSort>, DWORD, true), true))
 
     override fun string2bv(ctx: Context, expr: Expr<*>, sort: Sort): Expr<*> =
         ctx.mkInt2BV(getSortBitSize(ctx, sort), ctx.stringToInt(expr as Expr<SeqSort<BitVecSort>>))
 
-    override fun string2float(ctx: Context, expr: Expr<*>): Expr<*> {
-        TODO("Not yet implemented")
-    }
+    override fun string2float(ctx: Context, expr: Expr<*>): Expr<*> =
+        bv2float(ctx, string2bv(ctx, expr, getBVSort(ctx, WORD)), getFloatSort(ctx))
 
-    override fun string2double(ctx: Context, expr: Expr<*>): Expr<*> {
-        TODO("Not yet implemented")
-    }
+    override fun string2double(ctx: Context, expr: Expr<*>): Expr<*> =
+        bv2float(ctx, string2bv(ctx, expr, getBVSort(ctx, DWORD)), getDoubleSort(ctx))
 
     override fun makeStringConst(ctx: Context, value: String): Expr<*> = ctx.mkString(value)
 
@@ -387,4 +383,10 @@ object Z3Engine : SMTEngine<Context, Expr<*>, Sort, FuncDecl<*>, Pattern>() {
             subSeq as Expr<SeqSort<BitVecSort>>,
             ctx.mkBV2Int(offset as Expr<BitVecSort>, true)
         )
+
+    override fun concat(ctx: Context, lhv: Expr<*>, rhv: Expr<*>): Expr<*> =
+        ctx.mkConcat(lhv as Expr<SeqSort<BitVecSort>>, rhv as Expr<SeqSort<BitVecSort>>)
+
+    override fun char2string(ctx: Context, expr: Expr<*>): Expr<*> =
+        ctx.mkUnit(bv2bv(ctx, expr, getBVSort(ctx, 8)))
 }

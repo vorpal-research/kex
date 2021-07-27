@@ -81,6 +81,7 @@ abstract class SMTEngine<in Context_t : Any, Expr_t : Any, Sort_t : Any, Functio
     abstract fun bvIEEE2float(ctx: Context_t, expr: Expr_t, sort: Sort_t): Expr_t
     abstract fun float2IEEEbv(ctx: Context_t, expr: Expr_t, sort: Sort_t): Expr_t
     abstract fun float2float(ctx: Context_t, expr: Expr_t, sort: Sort_t): Expr_t
+    abstract fun char2string(ctx: Context_t, expr: Expr_t): Expr_t
     abstract fun bv2string(ctx: Context_t, expr: Expr_t): Expr_t
     abstract fun float2string(ctx: Context_t, expr: Expr_t): Expr_t
     abstract fun double2string(ctx: Context_t, expr: Expr_t): Expr_t
@@ -138,4 +139,5 @@ abstract class SMTEngine<in Context_t : Any, Expr_t : Any, Sort_t : Any, Functio
     abstract fun at(ctx: Context_t, seq: Expr_t, index: Expr_t): Expr_t
     abstract fun extract(ctx: Context_t, seq: Expr_t, from: Expr_t, to: Expr_t): Expr_t
     abstract fun indexOf(ctx: Context_t, seq: Expr_t, subSeq: Expr_t, offset: Expr_t): Expr_t
+    abstract fun concat(ctx: Context_t, lhv: Expr_t, rhv: Expr_t): Expr_t
 }

@@ -6,7 +6,8 @@ annotation class SMTExpr(
         val context: String,
         val expr: String,
         val sort: String,
-        val function: String
+        val function: String,
+        val generateString: Boolean = false
 )
 
 annotation class SMTMemory(
