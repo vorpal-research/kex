@@ -363,4 +363,72 @@ object BoolectorEngine :
         patternGenerator: (List<BoolectorNode>) -> List<FunctionDecl.FunctionParam>
     ): BoolectorNode =
         BitvecNode.constBitvec(ctx, "1")
+
+    override fun getStringSort(ctx: Btor): BoolectorSort {
+        TODO("Not yet implemented")
+    }
+
+    override fun isStringSort(ctx: Btor, sort: BoolectorSort): Boolean {
+        TODO("Not yet implemented")
+    }
+
+    override fun bv2string(ctx: Btor, expr: BoolectorNode): BoolectorNode {
+        TODO("Not yet implemented")
+    }
+
+    override fun float2string(ctx: Btor, expr: BoolectorNode): BoolectorNode {
+        TODO("Not yet implemented")
+    }
+
+    override fun double2string(ctx: Btor, expr: BoolectorNode): BoolectorNode {
+        TODO("Not yet implemented")
+    }
+
+    override fun string2bv(ctx: Btor, expr: BoolectorNode, sort: BoolectorSort): BoolectorNode {
+        TODO("Not yet implemented")
+    }
+
+    override fun string2float(ctx: Btor, expr: BoolectorNode): BoolectorNode {
+        TODO("Not yet implemented")
+    }
+
+    override fun string2double(ctx: Btor, expr: BoolectorNode): BoolectorNode {
+        TODO("Not yet implemented")
+    }
+
+    override fun makeStringConst(ctx: Btor, value: String): BoolectorNode {
+        TODO("Not yet implemented")
+    }
+
+    override fun contains(ctx: Btor, seq: BoolectorNode, value: BoolectorNode): BoolectorNode {
+        TODO("Not yet implemented")
+    }
+
+    override fun nths(ctx: Btor, seq: BoolectorNode, index: BoolectorNode): BoolectorNode {
+        TODO("Not yet implemented")
+    }
+
+    override fun length(ctx: Btor, seq: BoolectorNode): BoolectorNode {
+        TODO("Not yet implemented")
+    }
+
+    override fun prefixOf(ctx: Btor, seq: BoolectorNode, prefix: BoolectorNode): BoolectorNode {
+        TODO("Not yet implemented")
+    }
+
+    override fun suffixOf(ctx: Btor, seq: BoolectorNode, suffix: BoolectorNode): BoolectorNode {
+        TODO("Not yet implemented")
+    }
+
+    override fun at(ctx: Btor, seq: BoolectorNode, index: BoolectorNode): BoolectorNode {
+        TODO("Not yet implemented")
+    }
+
+    override fun extract(ctx: Btor, seq: BoolectorNode, from: BoolectorNode, to: BoolectorNode): BoolectorNode {
+        TODO("Not yet implemented")
+    }
+
+    override fun indexOf(ctx: Btor, seq: BoolectorNode, subSeq: BoolectorNode, offset: BoolectorNode): BoolectorNode {
+        TODO("Not yet implemented")
+    }
 }
