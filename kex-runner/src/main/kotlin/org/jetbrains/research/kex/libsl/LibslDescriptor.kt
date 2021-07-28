@@ -32,7 +32,7 @@ class LibslDescriptor(libraryPath: String) {
         for (function in library.functions) {
             val automatonName = function.entity.type.typeName
             val automaton = library.automata.firstOrNull{ it.name.typeName == automatonName }
-                ?: error("unknown automaton")
+                ?: error("unknown automaton: $automatonName")
             functionsByAutomaton.putIfAbsent(automaton, mutableListOf(function))?.add(function)
         }
     }
