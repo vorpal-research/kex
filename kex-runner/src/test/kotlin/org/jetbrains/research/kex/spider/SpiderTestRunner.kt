@@ -1,11 +1,9 @@
 package org.jetbrains.research.kex.spider
 
 import com.beust.klaxon.JsonArray
-import com.beust.klaxon.JsonObject
 import com.beust.klaxon.Klaxon
 import com.beust.klaxon.Parser
 import org.jetbrains.research.kex.KexRunnerTest
-import org.jetbrains.research.kex.asm.analysis.defect.Defect
 import org.jetbrains.research.kex.asm.analysis.defect.DefectManager
 import org.jetbrains.research.kex.asm.analysis.libchecker.CallCiteChecker
 import org.jetbrains.research.kex.asm.analysis.libchecker.LibslInstrumentator
@@ -28,7 +26,11 @@ import java.io.File
 import java.net.URLClassLoader
 
 
-class SpiderTestRunner : KexRunnerTest(initTR = true, initIntrinsics = true) {
+class SpiderTestRunner(private val testName: String) : KexRunnerTest(
+    initTR = true,
+    initIntrinsics = true,
+    testName
+) {
     private val tempDir: File = kexConfig.getPathValue("kex", "outputDir")!!.toFile().resolve("spidertests")
     private val referenceDir = File("kex-runner/src/test/kotlin/org/jetbrains/research/kex/spider/reference/")
 
@@ -36,7 +38,7 @@ class SpiderTestRunner : KexRunnerTest(initTR = true, initIntrinsics = true) {
         RuntimeConfig.setValue("defect", "outputFile", tempDir.absolutePath + "/defects.json")
     }
 
-    fun testRunner(testName: String) {
+    fun runTest() {
         val loader = Thread.currentThread().contextClassLoader
         val lslRes = loader.getResource("org/jetbrains/research/kex/spider/$testName.lsl")?.toURI() ?: error("lsl file not found")
         val lslFile = File(lslRes)
@@ -70,7 +72,7 @@ class SpiderTestRunner : KexRunnerTest(initTR = true, initIntrinsics = true) {
         val psa = PredicateStateAnalysis(analysisContext.cm)
         val librarySpecification = LibslDescriptor(lslPath)
 
-        executePipeline(cm, `package`) {
+        executePipeline(cm, packages) {
             +OriginalMapper(analysisContext.cm, originalContext.cm)
             +LoopSimplifier(analysisContext.cm)
             +LoopDeroller(analysisContext.cm)
@@ -82,7 +84,7 @@ class SpiderTestRunner : KexRunnerTest(initTR = true, initIntrinsics = true) {
             +ExternalCtorCollector(analysisContext.cm, Visibility.PUBLIC)
         }
 
-        executePipeline(cm, `package`) {
+        executePipeline(cm, packages) {
             +CallCiteChecker(analysisContext, `package`, psa)
             +ClassWriter(analysisContext, tempDir.toPath())
         }

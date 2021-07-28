@@ -37,9 +37,9 @@ import kotlin.test.assertTrue
 @OptIn(ExperimentalStdlibApi::class)
 abstract class KexRunnerTest(
     private val initTR: Boolean = false,
-    private val initIntrinsics: Boolean = false
-) : KexTest(initTR, initIntrinsics) {
-    val classPath = System.getProperty("java.class.path")
+    private val initIntrinsics: Boolean = false,
+    additionJarName: String? = null
+) : KexTest(initTR, initIntrinsics, additionJarName) {
     val targetDir = Files.createTempDirectory("kex-test")
 
     val analysisContext: ExecutionContext
@@ -50,10 +50,13 @@ abstract class KexRunnerTest(
         val origManager = ClassManager(KfgConfig(flags = Flags.readAll, failOnError = false))
 
         jar.unpack(cm, targetDir, true)
+        additionContainers.forEach { it.unpack(cm, targetDir, true) }
+
         val containersToInit = buildList {
             add(jar)
             if (initTR) add(getRuntime()!!)
             if (initIntrinsics) add(getIntrinsics()!!)
+            if (additionContainers.isNotEmpty()) addAll(additionContainers)
         }.toTypedArray()
         origManager.initialize(*containersToInit)
         val classLoader = URLClassLoader(arrayOf(targetDir.toUri().toURL()))

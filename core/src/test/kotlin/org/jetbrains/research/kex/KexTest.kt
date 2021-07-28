@@ -6,28 +6,36 @@ import org.jetbrains.research.kex.config.FileConfig
 import org.jetbrains.research.kex.config.RuntimeConfig
 import org.jetbrains.research.kex.config.kexConfig
 import org.jetbrains.research.kex.util.getIntrinsics
+import org.jetbrains.research.kex.util.getPathSeparator
 import org.jetbrains.research.kex.util.getRuntime
 import org.jetbrains.research.kfg.ClassManager
 import org.jetbrains.research.kfg.KfgConfig
 import org.jetbrains.research.kfg.Package
 import org.jetbrains.research.kfg.analysis.LoopAnalysis
 import org.jetbrains.research.kfg.analysis.LoopSimplifier
+import org.jetbrains.research.kfg.container.Container
+import org.jetbrains.research.kfg.container.JarContainer
 import org.jetbrains.research.kfg.container.asContainer
 import org.jetbrains.research.kfg.ir.Method
 import org.jetbrains.research.kfg.util.Flags
+import java.nio.file.Path
 import java.nio.file.Paths
 
 
 @OptIn(ExperimentalStdlibApi::class)
 abstract class KexTest(
     private val initTR: Boolean = false,
-    private val initIntrinsics: Boolean = false
+    private val initIntrinsics: Boolean = false,
+    additionJarName: String? = null
 ) {
+    val classPath: String = System.getProperty("java.class.path")
     val packageName = "org.jetbrains.research.kex.test"
     val `package` = Package.parse("$packageName.*")
     val jarPath: String
     val cm: ClassManager
     val loader: ClassLoader
+    val additionContainers = mutableListOf<Container>()
+    val packages = mutableListOf(`package`)
 
     init {
         val rootDir = System.getProperty("root.dir") ?: System.getProperty("user.dir")
@@ -39,10 +47,16 @@ abstract class KexTest(
         val jar = Paths.get(jarPath).asContainer(`package`)!!
         loader = jar.classLoader
         cm = ClassManager(KfgConfig(flags = Flags.readAll, failOnError = false))
+        val additionJarContainer = jarContainerFromClasspathOrNull(additionJarName)
         val containersToInit = buildList {
             add(jar)
             if (initTR) add(getRuntime()!!)
             if (initIntrinsics) add(getIntrinsics()!!)
+            if (additionJarContainer != null) {
+                additionContainers.add(additionJarContainer)
+                packages.add(additionJarContainer.commonPackage)
+                add(additionJarContainer)
+            }
         }.toTypedArray()
         cm.initialize(*containersToInit)
     }
@@ -57,5 +71,11 @@ abstract class KexTest(
         val psa = PredicateStateAnalysis(cm)
         psa.visit(method)
         return psa
+    }
+
+    private fun jarContainerFromClasspathOrNull(name: String?): JarContainer? {
+        name ?: return null
+        val path = classPath.split(getPathSeparator()).lastOrNull { it.contains(name) } ?: return null
+        return JarContainer(Path.of(path))
     }
 }

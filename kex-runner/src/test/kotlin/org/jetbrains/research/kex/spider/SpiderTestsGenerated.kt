@@ -8,6 +8,11 @@ import org.junit.Test
 class SpiderTestsGenerated {
     @Test
     fun testComputer() {
-        SpiderTestRunner().testRunner("computer")
+        SpiderTestRunner("computer").runTest()
+    }
+
+    @Test
+    fun testOkHttp2() {
+        SpiderTestRunner("okhttp").runTest()
     }
 }
