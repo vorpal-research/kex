@@ -13,14 +13,34 @@ import org.jetbrains.research.kex.smt.*
 )
 abstract class Z3SMTExpr
 
-@SMTMemory(solver = "Z3", importPackage = "com.microsoft.z3", context = "Context", byteSize = 32)
+@SMTMemory(
+    solver = "Z3",
+    importPackage = "com.microsoft.z3",
+    context = "Context",
+    byteSize = 32,
+    generateString = true
+)
 abstract class Z3SMTMemory
 
-@SMTExprFactory(solver = "Z3", importPackage = "com.microsoft.z3", context = "Context")
+@SMTExprFactory(
+    solver = "Z3",
+    importPackage = "com.microsoft.z3",
+    context = "Context",
+    generateString = true
+)
 abstract class Z3SMTExprFactory
 
-@SMTContext(solver = "Z3", importPackage = "com.microsoft.z3", context = "Context")
+@SMTContext(
+    solver = "Z3",
+    importPackage = "com.microsoft.z3",
+    context = "Context",
+    generateString = true
+)
 abstract class Z3SMTContext
 
-@SMTConverter(solver = "Z3", importPackage = "com.microsoft.z3")
+@SMTConverter(
+    solver = "Z3",
+    importPackage = "com.microsoft.z3",
+    generateString = true
+)
 abstract class Z3SMTConverter

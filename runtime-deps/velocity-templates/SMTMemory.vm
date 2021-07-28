@@ -61,3 +61,45 @@ class $self< in Index : $Bitvector, Element : $Bitvector >(val inner: $Array< El
     operator fun set(index: Index, value: $Bitvector) = store(index, value)
     operator fun < T : $valexpr > set(index: Index, value: T) = store(index, value)
 }
+
+#if($generateString)
+#set($self = $StringMemory)
+@Suppress("UNCHECKED_CAST")
+class $self< in Index : $Bitvector >(val inner: $Array< $String, Index >) : ${solver}SMTMemory() {
+    companion object {
+
+    fun < Index : $Bitvector > merge(
+            default: $self< Index >,
+            cases: List< Pair< $Bool, $self< Index >>>
+    ): $self< Index > {
+        val inners = cases.map { it.first to it.second.inner }
+        return $self(${Array}.merge(default.inner, inners))
+    }
+
+    inline fun < reified Index : $Bitvector > makeDefault(ctx: $context, name: String, default: $String) =
+        $self< Index >(${Array}.makeDefault< $String, Index >(ctx, name, default))
+
+    inline fun < reified Index : $Bitvector > makeFree(ctx: $context, name: String) =
+        $self< Index >(${Array}.makeFree< $String, Index >(ctx, name, ${String}.getStaticSort(ctx)))
+
+    inline fun < reified Index : $Bitvector > makeVar(ctx: $context, name: String) =
+        $self< Index >(${Array}.makeVar< $String, Index >(ctx, name, ${String}.getStaticSort(ctx)))
+    }
+
+    val ctx = inner.ctx
+
+    fun load(index: Index): $String {
+        val stored = inner.load(index)
+        return $String(ctx, stored.expr, stored.axiom)
+    }
+
+    fun store(index: Index, element: $String): $self< Index > {
+        val cases = arrayListOf< Pair< Index, $String >>()
+        cases.add(index to element)
+        return $self(inner.store(cases))
+    }
+
+    operator fun get(index: Index) = inner[index]
+    operator fun set(index: Index, value: $String) = store(index, value)
+}
+#end

@@ -302,18 +302,47 @@ class $String : $valexpr {
     #constructors("String")
 
     companion object {
+        fun getStaticSort(ctx: $context) = engine.getStringSort(ctx)
+        fun getStaticBitSize(ctx: $context) = engine.getSortBitSize(ctx, getStaticSort(ctx))
+#generateStatics($self, "String")
+
+        fun parseBool(ctx: $context, str: $self) = str eq makeConst(ctx, "true")
         fun parseInt(ctx: $context, str: $self) = ${Bitvector32}(ctx, engine.string2bv(ctx, str.expr, ${Bitvector32}.getStaticSort(ctx)))
         fun parseLong(ctx: $context, str: $self) = ${Bitvector64}(ctx, engine.string2bv(ctx, str.expr, ${Bitvector64}.getStaticSort(ctx)))
         fun parseFloat(ctx: $context, str: $self) = ${Float}(ctx, engine.string2float(ctx, str.expr))
         fun parseDouble(ctx: $context, str: $self) = ${Double}(ctx, engine.string2double(ctx, str.expr))
 
+        fun fromBool(ctx: $context, value: $Bool) = ${self}(
+                ctx,
+                engine.ite(ctx, value.expr, engine.makeStringConst(ctx, "true"), engine.makeStringConst(ctx, "false"))
+        )
         fun fromChar(ctx: $context, value: $Bitvector32) = ${self}(ctx, engine.char2string(ctx, value.expr))
         fun fromInt(ctx: $context, value: $Bitvector32) = ${self}(ctx, engine.bv2string(ctx, value.expr))
         fun fromLong(ctx: $context, value: $Bitvector64) = ${self}(ctx, engine.bv2string(ctx, value.expr))
         fun fromFloat(ctx: $context, value: $Float) = ${self}(ctx, engine.float2string(ctx, value.expr))
         fun fromDouble(ctx: $context, value: $Double) = ${self}(ctx, engine.double2string(ctx, value.expr))
+
+        fun forceCast(value: $valexpr) = when (value) {
+            is $Bool -> String_.fromBool(value.ctx, value)
+            is $Bitvector -> String_.fromInt(value.ctx, ${Bitvector32}.forceCast(value))
+            is $Bitvector32 -> String_.fromInt(value.ctx, value)
+            is $Bitvector64 -> String_.fromLong(value.ctx, value)
+            is $Float -> String_.fromFloat(value.ctx, value)
+            is $Double -> String_.fromDouble(value.ctx, value)
+            else -> unreachable { log.error("Unknown type in string parse") }
+        }
     }
 
+    override fun withAxiom(ax: $valexpr) = $self(ctx, expr, spliceAxioms(ctx, axiom, ax.expr, ax.axiom))
+
+    fun binary(opcode: SMTEngine.Opcode, other: $self): $valexpr {
+        val nexpr = engine.binary(ctx, opcode, expr, other.expr)
+        val nax = spliceAxioms(ctx, axiom, other.axiom)
+        return $valexpr(ctx, nexpr, nax)
+    }
+
+    infix fun eq(other: $self) = binary(SMTEngine.Opcode.EQ, other).toBool()
+    infix fun neq(other: $self) = binary(SMTEngine.Opcode.NEQ, other).toBool()
     fun length() = ${Bitvector}(ctx, engine.length(ctx, expr))
     fun concat(rhv: $String) = ${String}(ctx, engine.concat(ctx, expr, rhv.expr), spliceAxioms(ctx, axiom, rhv.axiom))
     operator fun get(index: $Bitvector32) = ${Bitvector}(ctx, engine.nths(ctx, expr, index.expr))
@@ -346,8 +375,19 @@ class $self< Element : $valexpr, in Index : $valexpr > : $valexpr {
             return $self< Element, Index >(ctx, ${solver}Engine.makeVar(ctx, sort, name, true))
         }
 
+
+        inline fun < reified Element : $valexpr, reified Index : $valexpr > makeFree(ctx: $context, name: String, elemSort: $sort): $self< Element, Index > {
+            val sort = ${solver}Engine.getArraySort(ctx, ${valexpr}.getStaticSort< Index >(ctx), elemSort)
+            return $self< Element, Index >(ctx, ${solver}Engine.makeVar(ctx, sort, name, true))
+        }
+
         inline fun < reified Element : $valexpr, reified Index : $valexpr > makeVar(ctx: $context, name: String): $self< Element, Index > {
             val sort = ${solver}Engine.getArraySort(ctx, ${valexpr}.getStaticSort< Index >(ctx), ${valexpr}.getStaticSort< Element >(ctx))
+            return $self< Element, Index >(ctx, ${solver}Engine.makeVar(ctx, sort, name, false))
+        }
+
+        inline fun < reified Element : $valexpr, reified Index : $valexpr > makeVar(ctx: $context, name: String, elemSort: $sort): $self< Element, Index > {
+            val sort = ${solver}Engine.getArraySort(ctx, ${valexpr}.getStaticSort< Index >(ctx), elemSort)
             return $self< Element, Index >(ctx, ${solver}Engine.makeVar(ctx, sort, name, false))
         }
     }

@@ -12,9 +12,11 @@ import org.jetbrains.research.kex.reanimator.Reanimator
 import org.jetbrains.research.kex.smt.Result
 import org.jetbrains.research.kex.smt.SMTProxySolver
 import org.jetbrains.research.kex.state.BasicState
+import org.jetbrains.research.kex.state.ChainState
 import org.jetbrains.research.kex.state.PredicateState
 import org.jetbrains.research.kex.state.StateBuilder
 import org.jetbrains.research.kex.state.predicate.CallPredicate
+import org.jetbrains.research.kex.state.predicate.Predicate
 import org.jetbrains.research.kex.state.predicate.require
 import org.jetbrains.research.kex.state.term.CallTerm
 import org.jetbrains.research.kex.state.term.FieldTerm

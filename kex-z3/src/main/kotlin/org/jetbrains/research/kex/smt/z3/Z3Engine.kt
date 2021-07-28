@@ -330,7 +330,7 @@ object Z3Engine : SMTEngine<Context, Expr<*>, Sort, FuncDecl<*>, Pattern>() {
 
     override fun getStringSort(ctx: Context): Sort = ctx.stringSort
 
-    override fun isStringSort(ctx: Context, sort: Sort): Boolean = sort === ctx.stringSort
+    override fun isStringSort(ctx: Context, sort: Sort): Boolean = sort == ctx.stringSort
 
     override fun bv2string(ctx: Context, expr: Expr<*>): Expr<*> =
         ctx.intToString(ctx.mkBV2Int(expr as BitVecExpr, true))
@@ -378,11 +378,11 @@ object Z3Engine : SMTEngine<Context, Expr<*>, Sort, FuncDecl<*>, Pattern>() {
         )
 
     override fun indexOf(ctx: Context, seq: Expr<*>, subSeq: Expr<*>, offset: Expr<*>): Expr<*> =
-        ctx.mkIndexOf<SeqSort<BitVecSort>>(
+        ctx.mkInt2BV(WORD, ctx.mkIndexOf<SeqSort<BitVecSort>>(
             seq as Expr<SeqSort<BitVecSort>>,
             subSeq as Expr<SeqSort<BitVecSort>>,
             ctx.mkBV2Int(offset as Expr<BitVecSort>, true)
-        )
+        ))
 
     override fun concat(ctx: Context, lhv: Expr<*>, rhv: Expr<*>): Expr<*> =
         ctx.mkConcat(lhv as Expr<SeqSort<BitVecSort>>, rhv as Expr<SeqSort<BitVecSort>>)

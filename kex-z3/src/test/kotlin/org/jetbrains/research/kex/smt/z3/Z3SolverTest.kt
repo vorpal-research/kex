@@ -124,4 +124,31 @@ class Z3SolverTest : KexTest() {
         val e = Word_.makeConst(ctx, 0xFF)
         assertTrue(checkExpr(d eq e))
     }
+
+    @Test
+    fun testString() {
+        val ctx = Context()
+        Z3Engine.initialize()
+
+        val checkExpr = { expr: Bool_ ->
+            val solver = ctx.mkSolver()
+            solver.add(expr.axiom as BoolExpr)
+            solver.add(ctx.mkNot(expr.expr as BoolExpr))
+            solver.check() == Status.UNSATISFIABLE
+        }
+
+        val alphabet = "abcdefghijklmn"
+        val abc = "abc"
+        val ghi = "ghi"
+        val digits = "0123456789"
+
+        val alphabetStr = String_.makeConst(ctx, alphabet)
+        val abcStr = String_.makeConst(ctx, abc)
+        val ghiStr = String_.makeConst(ctx, ghi)
+        val digitStr = String_.makeConst(ctx, digits)
+
+        assertFalse(checkExpr(alphabetStr.contains(digitStr)))
+        assertTrue(checkExpr(alphabetStr.substring(Int_.makeConst(ctx, 0), Int_.makeConst(ctx, 3)) eq abcStr))
+        assertTrue(checkExpr(alphabetStr.indexOf(ghiStr, Int_.makeConst(ctx, 0)) eq Int_.makeConst(ctx, 6)))
+    }
 }

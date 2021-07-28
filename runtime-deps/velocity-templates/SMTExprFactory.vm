@@ -18,6 +18,10 @@ typealias DWord_ = $Bitvector64
 typealias Memory_ = $Memory< Ptr_, Word_ >
 typealias Function_ = $Function
 typealias Dynamic_ = $valexpr
+#if($generateString)
+typealias String_ = $String
+typealias StringMemory_ = $StringMemory< Ptr_ >
+#end
 
 enum class TypeSize (val int: Int) {
     WORD(1), DWORD(2);
@@ -76,6 +80,13 @@ class $factory : ${solver}SMTExprFactory() {
 #generateMakes("Float", "Float")
 
 #generateMakes("Double", "Double")
+
+#if($generateString)
+#generateMakes("String", "String")
+
+    fun makeEmptyStringMemory(id: String) = StringMemory_.makeFree< Ptr_ >(ctx, id)
+    fun makeDefaultStringMemory(id: String, default: String) = StringMemory_.makeDefault< Ptr_ >(ctx, id, makeStringConst(default))
+#end
 
     inline fun < reified  Element: $Bitvector > makeEmptyMemory(id: String) = Memory_.makeFree< Ptr_, Element >(ctx, id)
     //            makeDefaultMemory(id, 0xFF)
