@@ -14,9 +14,11 @@ import org.jetbrains.research.kex.reanimator.Reanimator
 import org.jetbrains.research.kex.smt.Result
 import org.jetbrains.research.kex.smt.SMTProxySolver
 import org.jetbrains.research.kex.state.BasicState
+import org.jetbrains.research.kex.state.ChainState
 import org.jetbrains.research.kex.state.PredicateState
 import org.jetbrains.research.kex.state.StateBuilder
 import org.jetbrains.research.kex.state.predicate.CallPredicate
+import org.jetbrains.research.kex.state.predicate.Predicate
 import org.jetbrains.research.kex.state.predicate.require
 import org.jetbrains.research.kex.state.term.CallTerm
 import org.jetbrains.research.kex.state.term.FieldTerm
@@ -71,6 +73,9 @@ class CallCiteChecker(
     }
 
     override fun visitCallInst(inst: CallInst) {
+        if (inst.method == im.kexAssertWithId(cm)) {
+            println()
+        }
         val state = getState(inst) ?: return
 
         val handler = { callCite: Instruction, ps: PredicateState, remapper: TermRenamer ->
@@ -110,11 +115,17 @@ class CallCiteChecker(
     private fun getState(instruction: Instruction) =
         psa.builder(instruction.parent.parent).getInstructionState(instruction)
 
+    private fun PredicateState.lastPredicate(): Predicate? = when (this) {
+        is BasicState -> this.last()
+        is ChainState -> curr.lastPredicate()
+        else -> null
+    }
+
     private fun buildInlinedState(
         callState: PredicateState,
         inlinedState: PredicateState
     ): Pair<PredicateState, TermRenamer>? {
-        val callPredicate = (callState.takeLast(1) as? BasicState)?.first()
+        val callPredicate = callState.lastPredicate() ?: return null
             ?: return null
         val filteredState = callState.dropLast(1)
         if (callPredicate !is CallPredicate) {
@@ -158,6 +169,9 @@ class CallCiteChecker(
                 override fun cleanup() {}
 
                 override fun visitCallInst(inst: CallInst) {
+                    if (inst.parent.parent.klass.name.contains("Main")) {
+                        println()
+                    }
                     val calledMethod = inst.method
                     if (calledMethod overrides method)
                         result += inst
