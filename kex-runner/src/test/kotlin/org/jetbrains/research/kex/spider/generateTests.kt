@@ -3,7 +3,7 @@ package org.jetbrains.research.kex.spider
 import java.io.File
 import java.util.*
 
-fun nmain() {
+fun main() {
     val loader = Thread.currentThread().contextClassLoader
     val resources = loader.getResource("org/jetbrains/research/kex/spider/")?.toURI()
         ?: error("resources dir not found")
@@ -36,6 +36,6 @@ private fun getTestRunnerBoilerplate(testName: String): String = buildString {
     appendLine("@Test")
     val capitalizedTestName = testName.replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString() }
     appendLine("fun test$capitalizedTestName() {")
-    appendLineWithIntent("SpiderTestRunner().testRunner(\"$testName\")", 4)
+    appendLineWithIntent("SpiderTestRunner(\"$testName\").runTest()", 4)
     appendLine("}")
 }
