@@ -9,18 +9,32 @@ import java.io.IOException;
 @SuppressWarnings("DuplicatedCode")
 public class Main {
     public static void main(String[] args) {
+        if (args[0].equals("")) {
+            OkHttpClient client = new OkHttpClient();
+            String url = "";
 
-        OkHttpClient client = new OkHttpClient();
-        String url = "";
+            Request request = new Request.Builder()
+                    .url(url)
+                    .url(url) // error occurs here
+                    .build();
+            try {
+                client.newCall(request).execute().body().string();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        } else {
+            OkHttpClient client = new OkHttpClient();
+            String url = "";
 
-        Request.Builder builder = new Request.Builder();
-        builder.url(url);
-        builder.url(url);
-        Request request = builder.build();
-        try {
-            client.newCall(request).execute().body().string();
-        } catch (IOException e) {
-            e.printStackTrace();
+            Request request = new Request.Builder()
+                    .url(url)
+                    .build();
+
+            try {
+                client.newCall(request).execute().body().string();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
     }
 }
