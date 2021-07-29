@@ -73,9 +73,6 @@ class CallCiteChecker(
     }
 
     override fun visitCallInst(inst: CallInst) {
-        if (inst.method == im.kexAssertWithId(cm)) {
-            println()
-        }
         val state = getState(inst) ?: return
 
         val handler = { callCite: Instruction, ps: PredicateState, remapper: TermRenamer ->
@@ -169,9 +166,6 @@ class CallCiteChecker(
                 override fun cleanup() {}
 
                 override fun visitCallInst(inst: CallInst) {
-                    if (inst.parent.parent.klass.name.contains("Main")) {
-                        println()
-                    }
                     val calledMethod = inst.method
                     if (calledMethod overrides method)
                         result += inst
