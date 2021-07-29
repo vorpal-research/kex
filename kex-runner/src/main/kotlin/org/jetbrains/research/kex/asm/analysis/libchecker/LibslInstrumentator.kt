@@ -4,12 +4,17 @@ import org.jetbrains.research.kex.asm.manager.MethodManager
 import org.jetbrains.research.kex.libsl.LibslDescriptor
 import org.jetbrains.research.kfg.ClassManager
 import org.jetbrains.research.kfg.ir.*
-import org.jetbrains.research.kfg.ir.value.*
-import org.jetbrains.research.kfg.ir.value.instruction.*
+import org.jetbrains.research.kfg.ir.value.BoolConstant
+import org.jetbrains.research.kfg.ir.value.IntConstant
+import org.jetbrains.research.kfg.ir.value.StringConstant
+import org.jetbrains.research.kfg.ir.value.Value
+import org.jetbrains.research.kfg.ir.value.instruction.CallOpcode
+import org.jetbrains.research.kfg.ir.value.instruction.CmpOpcode
+import org.jetbrains.research.kfg.ir.value.instruction.Instruction
+import org.jetbrains.research.kfg.ir.value.instruction.ReturnInst
 import org.jetbrains.research.kfg.type.BoolType
 import org.jetbrains.research.kfg.type.ClassType
 import org.jetbrains.research.kfg.type.IntType
-import org.jetbrains.research.kfg.type.TypeFactory
 import org.jetbrains.research.kfg.visitor.MethodVisitor
 import org.objectweb.asm.Opcodes
 import org.objectweb.asm.tree.FieldNode
@@ -23,6 +28,9 @@ class LibslInstrumentator(
 ) : MethodVisitor{
     private val prefix = "\$KEX\$INSTRUMENTED\$"
     private var assertIdInc = 0
+    private val instFactory = cm.instruction
+    private val valueFactory = cm.value
+    private val typeFactory = cm.type
 
     override fun cleanup() { }
 
@@ -49,11 +57,11 @@ class LibslInstrumentator(
         if (automaton.states.isNotEmpty()) {
             addShifts(automaton, methodDescription, method, stateFields[klass]!!)
         }
+
         // requires contract
         val requires = methodDescription.contracts.requires
         if (requires != null) {
             val newEntry = method.entry
-
             val generator = ContractsGenerator(method, cm)
             val condition = generator.visitConjunctionNode(requires)
             if (generator.oldCallStorage.isNotEmpty()) error("usage of old() now allowed in requires contract")
@@ -61,6 +69,7 @@ class LibslInstrumentator(
 
             insertKexAssert(block, newEntry, null, condition)
         }
+
         // ensures contract
         val ensures = methodDescription.contracts.ensures
         if (ensures != null) {
@@ -85,7 +94,7 @@ class LibslInstrumentator(
             val entryBlock = method.entry
 
             blockSaver.addAll(savedValuesInstructions)
-            blockSaver.add(InstructionFactory(cm).getJump(entryBlock))
+            blockSaver.add(instFactory.getJump(entryBlock))
 
             method.addBefore(entryBlock, blockSaver)
             entryBlock.addPredecessors(blockSaver)
@@ -104,41 +113,48 @@ class LibslInstrumentator(
             val returnValue = returnStatement.returnValue
 
             val returnType = returnValue.type as? ClassType  ?: error("can't get terminate block")
-            val returnRef = returnValue
 
             val foreignAutomaton = librarySpecification.automatonByQualifiedName[returnType.klass.fullName.replace("/", ".")] ?: return
             val stateConst = librarySpecification.statesMap[foreignAutomaton to foreignAutomatonState]!!
 
-            val foreignClass = cm[returnStatement.returnType.name]
-            val foreignStateField = foreignClass.getField(prefix + "STATE", TypeFactory(cm).intType)
-
-            val storeInstr = InstructionFactory(cm).getFieldStore(returnRef, foreignStateField, ValueFactory(cm).getInt(stateConst))
-
-            terminateBlock.insertBefore(returnStatement, storeInstr)
+            insertAutomatonFieldStore(terminateBlock, returnStatement, returnValue, prefix + "STATE", stateConst)
         }
 
         return
     }
 
+    private fun insertAutomatonFieldStore(block: BasicBlock, returnStatement: ReturnInst, returnValue: Value, fieldName: String, value: Int) {
+        val foreignClass = cm[returnStatement.returnType.name]
+        val foreignStateField = foreignClass.getField(fieldName, typeFactory.intType)
+
+        val storeInstr = instFactory.getFieldStore(
+            returnValue,
+            foreignStateField,
+            valueFactory.getInt(value)
+        )
+
+        block.insertBefore(returnStatement, storeInstr)
+    }
+
     private fun insertKexAssert(block: BasicBlock, nextBlock: BasicBlock, prevBlocks: Collection<BasicBlock>?, condition: Instruction) {
         val kexAssertion = MethodManager.KexIntrinsicManager.kexAssertWithId(cm)
-        val conditionsArray = InstructionFactory(cm).getNewArray(BoolType, IntConstant(1, IntType))
+        val conditionsArray = instFactory.getNewArray(BoolType, IntConstant(1, IntType))
         block.add(conditionsArray)
-        val initArray = InstructionFactory(cm).getArrayStore(conditionsArray, IntConstant(0, IntType), condition)
+        val initArray = instFactory.getArrayStore(conditionsArray, IntConstant(0, IntType), condition)
         block.add(initArray)
 
         val kexAssertionArgs = arrayOf(
-            StringConstant("id" + (assertIdInc++), TypeFactory(cm).stringType),
+            StringConstant("id" + (assertIdInc++), typeFactory.stringType),
             conditionsArray
         )
 
-        val kexAssertionCall = InstructionFactory(cm).getCall(CallOpcode.STATIC, kexAssertion, kexAssertion.klass, kexAssertionArgs, true)
+        val kexAssertionCall = instFactory.getCall(CallOpcode.STATIC, kexAssertion, kexAssertion.klass, kexAssertionArgs, true)
         block.add(kexAssertionCall)
 
-        val gotoNext = InstructionFactory(cm).getJump(nextBlock)
+        val gotoNext = instFactory.getJump(nextBlock)
         block.add(gotoNext)
 
-        val gotoCurrentBlock = InstructionFactory(cm).getJump(block)
+        val gotoCurrentBlock = instFactory.getJump(block)
 
         prevBlocks?.forEach { prevBlock ->
             prevBlock.addSuccessor(block)
@@ -160,15 +176,15 @@ class LibslInstrumentator(
         if (shifts.isEmpty()) return
 
         var branchBlock = BodyBlock("shifts")
-        val `this` = ValueFactory(cm).getThis(method.klass)
+        val `this` = valueFactory.getThis(method.klass)
 
         if (shifts.any { it.from.lowercase() == "any" }) {
             val shift = shifts.first()
             val changeToStateConst = librarySpecification.statesMap[automaton to shift.to] ?: error("unknown state: ${shift.from}")
             branchBlock.apply {
 
-                add(InstructionFactory(cm).getFieldStore(`this`, stateField, IntConstant(changeToStateConst, IntType)))
-                add(InstructionFactory(cm).getJump(entryBlock))
+                add(instFactory.getFieldStore(`this`, stateField, IntConstant(changeToStateConst, IntType)))
+                add(instFactory.getJump(entryBlock))
                 method.addBefore(entryBlock, this)
 
                 addSuccessor(entryBlock)
@@ -179,7 +195,7 @@ class LibslInstrumentator(
         }
 
         for (shift in shifts) {
-            val lhv = InstructionFactory(cm).getFieldLoad(`this`, stateField)
+            val lhv = instFactory.getFieldLoad(`this`, stateField)
             branchBlock.add(lhv)
 
             val fromStateCode = librarySpecification.statesMap[automaton to shift.from] ?: error("unknown state $shift")
@@ -192,7 +208,7 @@ class LibslInstrumentator(
 
             val rhv = IntConstant(fromStateCode, IntType)
 
-            val cmpInst = InstructionFactory(cm).getCmp(BoolType, CmpOpcode.EQ, lhv, rhv)
+            val cmpInst = instFactory.getCmp(BoolType, CmpOpcode.EQ, lhv, rhv)
             branchBlock.add(cmpInst)
 
             val failureBlock = BodyBlock("shift-failure").apply {
@@ -203,10 +219,10 @@ class LibslInstrumentator(
 
             val successBlock = BodyBlock("${automaton.name.typeName} success branch").apply {
                 val constValue = IntConstant(toStateConst, IntType)
-                val assignment = InstructionFactory(cm).getFieldStore(`this`, stateField, constValue)
+                val assignment = instFactory.getFieldStore(`this`, stateField, constValue)
                 add(assignment)
 
-                val goto = InstructionFactory(cm).getJump(entryBlock)
+                val goto = instFactory.getJump(entryBlock)
                 add(goto)
 
                 addPredecessors(branchBlock)
@@ -217,7 +233,7 @@ class LibslInstrumentator(
             }
             method.add(successBlock)
 
-            val branch = InstructionFactory(cm).getBranch(cmpInst, successBlock, failureBlock)
+            val branch = instFactory.getBranch(cmpInst, successBlock, failureBlock)
             branchBlock.add(branch)
 
             if (previousBlock != null) {
@@ -234,20 +250,20 @@ class LibslInstrumentator(
 
         branchBlock.apply {
             val kexAssertion = MethodManager.KexIntrinsicManager.kexAssertWithId(cm)
-            val conditionsArray = InstructionFactory(cm).getNewArray(BoolType, IntConstant(1, IntType))
+            val conditionsArray = instFactory.getNewArray(BoolType, IntConstant(1, IntType))
             add(conditionsArray)
-            val initArray = InstructionFactory(cm).getArrayStore(conditionsArray, IntConstant(0, IntType), BoolConstant(false, BoolType))
+            val initArray = instFactory.getArrayStore(conditionsArray, IntConstant(0, IntType), BoolConstant(false, BoolType))
             add(initArray)
 
             val kexAssertionArgs = arrayOf(
-                StringConstant("id" + (assertIdInc++), TypeFactory(cm).stringType),
+                StringConstant("id" + (assertIdInc++), typeFactory.stringType),
                 conditionsArray
             )
 
-            val kexAssertionCall = InstructionFactory(cm).getCall(CallOpcode.STATIC, kexAssertion, kexAssertion.klass, kexAssertionArgs, true)
+            val kexAssertionCall = instFactory.getCall(CallOpcode.STATIC, kexAssertion, kexAssertion.klass, kexAssertionArgs, true)
             add(kexAssertionCall)
 
-            val goto = InstructionFactory(cm).getJump(entryBlock)
+            val goto = instFactory.getJump(entryBlock)
             add(goto)
         }
 
@@ -277,15 +293,15 @@ class LibslInstrumentator(
                 val initStateCode = librarySpecification.statesMap[automaton to initState]
                     ?: error("unknown init state provided in automaton $automatonName")
                 val stateField = stateFields[klass] ?: error("state field wasn't initialized")
-                val `this` = ValueFactory(cm).getThis(method.klass)
-                val store = InstructionFactory(cm).getFieldStore(`this`, stateField, ValueFactory(cm).getInt(initStateCode))
+                val `this` = valueFactory.getThis(method.klass)
+                val store = instFactory.getFieldStore(`this`, stateField, valueFactory.getInt(initStateCode))
                 method.entry.insertBefore(method.entry.first(), store)
                 continue
             }
 
             val field = automataFields.getOrPut(automaton) {
                 val stateFieldName = "${prefix}$automatonName"
-                val fieldType = TypeFactory(cm).getRefType("${automaton.javaPackage?.name?.plus(".") ?: ""}${automaton.name}".replace(".", "/"))
+                val fieldType = typeFactory.getRefType("${automaton.javaPackage?.name?.plus(".") ?: ""}${automaton.name}".replace(".", "/"))
                 val fn = FieldNode(
                     Opcodes.ACC_PUBLIC,
                     stateFieldName,
@@ -298,8 +314,8 @@ class LibslInstrumentator(
                 klass.modifyField(stateField, fieldType)
             }
             val targetClass = cm.concreteClasses.firstOrNull { it.name == automatonName } ?: error("unknown class $automatonName")
-            val assignmentValue = InstructionFactory(cm).getNew(automatonName, targetClass)
-            val assignmentInstr = InstructionFactory(cm).getFieldStore(field, assignmentValue)
+            val assignmentValue = instFactory.getNew(automatonName, targetClass)
+            val assignmentInstr = instFactory.getFieldStore(field, assignmentValue)
             method.entry.insertBefore(method.entry.first(), assignmentValue, assignmentInstr)
         }
     }
