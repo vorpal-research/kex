@@ -7,6 +7,7 @@ import org.jetbrains.research.kfg.ir.*
 import org.jetbrains.research.kfg.ir.value.*
 import org.jetbrains.research.kfg.ir.value.instruction.*
 import org.jetbrains.research.kfg.type.BoolType
+import org.jetbrains.research.kfg.type.ClassType
 import org.jetbrains.research.kfg.type.IntType
 import org.jetbrains.research.kfg.type.TypeFactory
 import org.jetbrains.research.kfg.visitor.MethodVisitor
@@ -17,10 +18,10 @@ import ru.spbstu.insys.libsl.parser.FunctionDecl
 
 class LibslInstrumentator(
     override val cm: ClassManager,
-    private val librarySpecification: LibslDescriptor
+    private val librarySpecification: LibslDescriptor,
+    private val stateFields: Map<Class, Field>
 ) : MethodVisitor{
     private val prefix = "\$KEX\$INSTRUMENTED\$"
-    private val stateFields = mutableMapOf<Class, Field>()
     private var assertIdInc = 0
 
     override fun cleanup() { }
@@ -38,26 +39,16 @@ class LibslInstrumentator(
         } else {
             method.name
         }
-        if (automaton.shifts.isEmpty()) return
 
         val methodDescription = librarySpecification
             .functionsByAutomaton[automaton]
             ?.firstOrNull { mth -> mth.name == methodName } ?: return
 
-        if (klass !in stateFields.keys) {
-            val stateFieldName = prefix + "STATE"
-
-            val fn = FieldNode(Opcodes.ACC_PUBLIC, stateFieldName, "I", null, 0) // I = int
-            val stateField = Field(cm, fn, klass)
-            klass.cn.fields.add(fn)
-            klass.modifyField(stateField, IntType)
-            stateFields[klass] = stateField
-        }
-
         addAutomataAssignments(methodDescription, method)
 
-        addShifts(automaton, methodDescription, method, stateFields[klass]!!)
-
+        if (automaton.states.isNotEmpty()) {
+            addShifts(automaton, methodDescription, method, stateFields[klass]!!)
+        }
         // requires contract
         val requires = methodDescription.contracts.requires
         if (requires != null) {
@@ -101,6 +92,29 @@ class LibslInstrumentator(
             blockSaver.addSuccessor(entryBlock)
 
             insertKexAssert(block, lastBlock, prelastBlocks, condition)
+        }
+
+        // insert block that configures state and variables in synthesized automaton
+        if (!method.returnType.isVoid && methodDescription.returnValue != null) {
+            val descriptorReturnValue = methodDescription.variableAssignments.firstOrNull { it.name == "result" } ?: return
+            val foreignAutomatonState = descriptorReturnValue.calleeArguments.first()
+
+            val terminateBlock = method.terminateBlock ?: return
+            val returnStatement = terminateBlock.first { it is ReturnInst } as ReturnInst
+            val returnValue = returnStatement.returnValue
+
+            val returnType = returnValue.type as? ClassType  ?: error("can't get terminate block")
+            val returnRef = returnValue
+
+            val foreignAutomaton = librarySpecification.automatonByQualifiedName[returnType.klass.fullName.replace("/", ".")] ?: return
+            val stateConst = librarySpecification.statesMap[foreignAutomaton to foreignAutomatonState]!!
+
+            val foreignClass = cm[returnStatement.returnType.name]
+            val foreignStateField = foreignClass.getField(prefix + "STATE", TypeFactory(cm).intType)
+
+            val storeInstr = InstructionFactory(cm).getFieldStore(returnRef, foreignStateField, ValueFactory(cm).getInt(stateConst))
+
+            terminateBlock.insertBefore(returnStatement, storeInstr)
         }
 
         return
@@ -290,5 +304,7 @@ class LibslInstrumentator(
         }
     }
 
+    private val Method.terminateBlock: BasicBlock?
+        get() = this.basicBlocks.lastOrNull { block -> block.any { inst -> inst is ReturnInst } }
 
 }

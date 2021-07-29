@@ -6,6 +6,7 @@ import com.beust.klaxon.Parser
 import org.jetbrains.research.kex.KexRunnerTest
 import org.jetbrains.research.kex.asm.analysis.defect.DefectManager
 import org.jetbrains.research.kex.asm.analysis.libchecker.CallCiteChecker
+import org.jetbrains.research.kex.asm.analysis.libchecker.InstrumentStateFields
 import org.jetbrains.research.kex.asm.analysis.libchecker.LibslInstrumentator
 import org.jetbrains.research.kex.asm.manager.OriginalMapper
 import org.jetbrains.research.kex.asm.state.PredicateStateAnalysis
@@ -71,12 +72,14 @@ class SpiderTestRunner(private val testName: String) : KexRunnerTest(
     private fun runPipeline(lslPath: String) {
         val psa = PredicateStateAnalysis(analysisContext.cm)
         val librarySpecification = LibslDescriptor(lslPath)
+        val isf = InstrumentStateFields(cm, librarySpecification)
 
         executePipeline(cm, packages) {
             +OriginalMapper(analysisContext.cm, originalContext.cm)
             +LoopSimplifier(analysisContext.cm)
             +LoopDeroller(analysisContext.cm)
-            +LibslInstrumentator(cm, librarySpecification)
+            +isf
+            +LibslInstrumentator(cm, librarySpecification, isf.stateFields)
             +BranchAdapter(analysisContext.cm)
             +psa
             +MethodFieldAccessCollector(analysisContext, psa)
