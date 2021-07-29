@@ -116,5 +116,7 @@ class KexNull : KexPointer() {
     }
 }
 
+fun KexType.asArray() = KexArray(this)
 fun KexString() = KexClass(SystemTypeNames.stringClass)
+fun KexType.isString() = this is KexClass && this.klass == SystemTypeNames.stringClass
 fun KexJavaClass() = KexClass(SystemTypeNames.classClass)

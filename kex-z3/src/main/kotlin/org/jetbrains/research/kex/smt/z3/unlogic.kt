@@ -16,6 +16,7 @@ object Z3Unlogic {
         is BitVecNum -> undoBV(expr)
         is BitVecExpr -> undoBVExpr(expr)
         is FPNum -> undoFloat(expr)
+        is SeqExpr<*> -> undoSeq(expr)
         else -> unreachable { log.error("Unexpected expr in unlogic: $expr") }
     }
 
@@ -143,5 +144,10 @@ object Z3Unlogic {
                 return termifier(res)
             }
         }
+    }
+
+    private fun undoSeq(expr: SeqExpr<*>) = when {
+        expr.isConst -> term { const(expr.string) }
+        else -> unreachable<ConstStringTerm> { log.error("Unknown seq") }
     }
 }

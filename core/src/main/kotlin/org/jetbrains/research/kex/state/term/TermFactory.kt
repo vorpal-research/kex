@@ -164,11 +164,11 @@ object TermFactory {
     fun getSubstring(string: Term, offset: Term, length: Term) = SubstringTerm(string, offset, length)
     fun getIndexOf(string: Term, substring: Term, offset: Term) = IndexOfTerm(string, substring, offset)
     fun getCharAt(string: Term, index: Term) = CharAtTerm(string, index)
-    fun getStringContains(string: Term, substring: Term): Term = ArrayContainsTerm(string, substring)
+    fun getStringContains(string: Term, substring: Term): Term = StringContainsTerm(string, substring)
     fun getFromString(string: Term, type: KexType): Term = StringParseTerm(type, string)
     fun getToString(value: Term): Term = getToString(KexString(), value)
     fun getToString(type: KexType, value: Term): Term = ToStringTerm(type, value)
-    fun getStartsWith(string: Term, prefix: Term): Term = TODO()
+    fun getStartsWith(string: Term, prefix: Term): Term = StartsWithTerm(string, prefix)
     fun getEndsWith(string: Term, suffix: Term): Term = EndsWithTerm(string, suffix)
 
     fun getLambda(type: KexType,  params: List<Term>, body: PredicateState) = LambdaTerm(type, params, body)

@@ -86,7 +86,7 @@ class StringAdapter(val ctx: ExecutionContext) : RecollectingTransformer<StringA
             getMethod("concat", types.stringType, types.stringType)
     private val Class.contains
         get() =
-            getMethod("contains", types.charSeqType, types.boolType)
+            getMethod("contains", types.boolType, types.charSeqType)
     private val Class.toString
         get() =
             getMethod("toString", types.stringType)
@@ -121,7 +121,6 @@ class StringAdapter(val ctx: ExecutionContext) : RecollectingTransformer<StringA
     override fun transformCallPredicate(predicate: CallPredicate): Predicate {
         val call = predicate.call as CallTerm
         val args = call.arguments
-        val lhv = predicate.lhv
 
         val kfgString = ctx.cm.stringClass
         if (call.owner.type != kfgString.kexType) return predicate
@@ -132,12 +131,12 @@ class StringAdapter(val ctx: ExecutionContext) : RecollectingTransformer<StringA
         val newPredicates = when (calledMethod) {
             kfgString.emptyInit -> return nothing()
             kfgString.copyInit -> remap(predicate) {
-                lhv equality args[0]
+                `this` equality args[0]
             }.list()
             kfgString.charArrayInit -> generateCharArrayInit(predicate, `this`, args[0])
             kfgString.charArrayWOffsetInit -> generateCharArrayInit(predicate, `this`, args[0], args[1])
             kfgString.length -> remap(predicate) {
-                lhv equality `this`.length()
+                predicate.lhv equality `this`.length()
             }.list()
             kfgString.isEmpty -> buildList {
                 val lengthTerm = term { generate(KexInt()) }
@@ -145,17 +144,17 @@ class StringAdapter(val ctx: ExecutionContext) : RecollectingTransformer<StringA
                     lengthTerm equality `this`.length()
                 }
                 +remap(predicate) {
-                    lhv equality (lengthTerm ge 0)
+                    predicate.lhv equality (lengthTerm ge 0)
                 }
             }
             kfgString.charAt -> remap(predicate) {
-                lhv equality `this`.charAt(args[0])
+                predicate.lhv equality `this`.charAt(args[0])
             }.list()
             kfgString.equals -> remap(predicate) {
-                lhv equality (`this` equls args[0])
+                predicate.lhv equality (`this` equls args[0])
             }.list()
             kfgString.startsWith -> remap(predicate) {
-                lhv equality `this`.startsWith(args[0])
+                predicate.lhv equality `this`.startsWith(args[0])
             }.list()
             kfgString.startsWithOffset -> buildList {
                 val offset = args[1]
@@ -168,11 +167,11 @@ class StringAdapter(val ctx: ExecutionContext) : RecollectingTransformer<StringA
                     wOffset equality `this`.substring(args[1], offsetLength)
                 }
                 +remap(predicate) {
-                    lhv equality wOffset.startsWith(args[0])
+                    predicate.lhv equality wOffset.startsWith(args[0])
                 }
             }
             kfgString.endsWith -> remap(predicate) {
-                lhv equality `this`.endsWith(args[0])
+                predicate.lhv equality `this`.endsWith(args[0])
             }.list()
             kfgString.indexOf -> buildList {
                 val substring = term { generate(KexString()) }
@@ -180,7 +179,7 @@ class StringAdapter(val ctx: ExecutionContext) : RecollectingTransformer<StringA
                     substring equality args[0].toStr()
                 }
                 +remap(predicate) {
-                    lhv equality `this`.indexOf(substring)
+                    predicate.lhv equality `this`.indexOf(substring)
                 }
             }
             kfgString.indexOfWOffset -> buildList {
@@ -189,14 +188,14 @@ class StringAdapter(val ctx: ExecutionContext) : RecollectingTransformer<StringA
                     substring equality args[0].toStr()
                 }
                 +remap(predicate) {
-                    lhv equality `this`.indexOf(substring, args[1])
+                    predicate.lhv equality `this`.indexOf(substring, args[1])
                 }
             }
             kfgString.stringIndexOf -> remap(predicate) {
-                lhv equality `this`.indexOf(args[0])
+                predicate.lhv equality `this`.indexOf(args[0])
             }.list()
             kfgString.stringIndexOfWOffset -> remap(predicate) {
-                lhv equality `this`.indexOf(args[0], args[1])
+                predicate.lhv equality `this`.indexOf(args[0], args[1])
             }.list()
             kfgString.substring -> buildList {
                 val substringLength = term { generate(KexInt()) }
@@ -204,26 +203,26 @@ class StringAdapter(val ctx: ExecutionContext) : RecollectingTransformer<StringA
                     substringLength equality (`this`.length() - args[0])
                 }
                 +remap(predicate) {
-                    lhv equality `this`.substring(args[0], substringLength)
+                    predicate.lhv equality `this`.substring(args[0], substringLength)
                 }
             }
             kfgString.substringWLength -> remap(predicate) {
-                lhv equality `this`.substring(args[0], args[1])
+                predicate.lhv equality `this`.substring(args[0], args[1])
             }.list()
             kfgString.subSequence -> remap(predicate) {
-                lhv equality `this`.substring(args[0], args[1])
+                predicate.lhv equality `this`.substring(args[0], args[1])
             }.list()
             kfgString.concat -> remap(predicate) {
-                lhv equality (`this` `++` args[0])
+                predicate.lhv equality (`this` `++` args[0])
             }.list()
             kfgString.contains -> remap(predicate) {
-                lhv equality (args[0] `in` `this`)
+                predicate.lhv equality (args[0] `in` `this`)
             }.list()
             kfgString.toString -> remap(predicate) {
-                lhv equality `this`
+                predicate.lhv equality `this`
             }.list()
             kfgString.compareTo -> remap(predicate) {
-                lhv equality `this`.cmp(args[0])
+                predicate.lhv equality `this`.cmp(args[0])
             }.list()
             else -> predicate.list()
         }

@@ -2,10 +2,7 @@ package org.jetbrains.research.kex.smt.z3
 
 import com.microsoft.z3.*
 import org.jetbrains.research.kex.config.kexConfig
-import org.jetbrains.research.kex.ktype.KexArray
-import org.jetbrains.research.kex.ktype.KexInt
-import org.jetbrains.research.kex.ktype.KexReference
-import org.jetbrains.research.kex.ktype.KexType
+import org.jetbrains.research.kex.ktype.*
 import org.jetbrains.research.kex.smt.*
 import org.jetbrains.research.kex.smt.Solver
 import org.jetbrains.research.kex.state.PredicateState
@@ -192,6 +189,7 @@ class Z3Solver(val tf: TypeFactory) : AbstractSMTSolver {
 
         val memories = hashMapOf<Int, Pair<MutableMap<Term, Term>, MutableMap<Term, Term>>>()
         val properties = hashMapOf<Int, MutableMap<String, Pair<MutableMap<Term, Term>, MutableMap<Term, Term>>>>()
+        val strings = hashMapOf<Term, Term>()
         val typeMap = hashMapOf<Term, KexType>()
 
         for ((type, value) in ef.typeMap) {
@@ -234,6 +232,11 @@ class Z3Solver(val tf: TypeFactory) : AbstractSMTSolver {
                     memories.getOrPut(memspace) { hashMapOf<Term, Term>() to hashMapOf() }
                     memories.getValue(memspace).first[modelPtr] = modelStartV
                     memories.getValue(memspace).second[modelPtr] = modelEndV
+                    if (ptr.type.isString()) {
+                        val modelStr = ctx.stringMemory.load(ptrExpr)
+                        val stringVal = Z3Unlogic.undo(model.evaluate(modelStr.expr, true))
+                        strings[modelPtr] = stringVal
+                    }
 
                     properties.recoverProperty(ctx, ptr, memspace, ptr.type, model, "type")
 
@@ -251,6 +254,7 @@ class Z3Solver(val tf: TypeFactory) : AbstractSMTSolver {
             properties.map { (memspace, names) ->
                 memspace to names.map { (name, pair) -> name to MemoryShape(pair.first, pair.second) }.toMap()
             }.toMap(),
+            strings,
             typeMap
         )
     }

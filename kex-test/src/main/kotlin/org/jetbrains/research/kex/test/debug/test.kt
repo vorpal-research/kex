@@ -3,14 +3,10 @@
 package org.jetbrains.research.kex.test.debug
 
 class BasicTests {
-    class Point(
-        val x: Int,
-        val y: Double
-    )
 
-    fun test(a: Point, b: Point) {
-        if (a.x > b.x) {
-            if (a.y < b.y) {
+    fun test(a: String, b: String) {
+        if (a.startsWith("32")) {
+            if (b.contains(a)) {
                 error("a")
             }
         }

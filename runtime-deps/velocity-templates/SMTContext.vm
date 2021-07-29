@@ -88,7 +88,8 @@ class $self : ${solver}SMTContext {
     private var staticPointer: Int
     private var initialMemories = hashMapOf< String, VersionedMemory >()
     private var memories: MutableMap< String, VersionedMemory >
-    private var stringMemory: VersionedStringMemory
+    var stringMemory: VersionedStringMemory
+        private set
 
     constructor(
         factory: $factory,
