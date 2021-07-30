@@ -16,6 +16,8 @@ import org.jetbrains.research.kfg.type.BoolType
 import org.jetbrains.research.kfg.type.ClassType
 import org.jetbrains.research.kfg.type.IntType
 import org.jetbrains.research.kfg.visitor.MethodVisitor
+import org.jetbrains.research.kthelper.assert.unreachable
+import org.jetbrains.research.kthelper.logging.log
 import org.objectweb.asm.Opcodes
 import org.objectweb.asm.tree.FieldNode
 import ru.spbstu.insys.libsl.parser.Automaton
@@ -43,7 +45,7 @@ class LibslInstrumentator(
         val automaton = librarySpecification.automatonByQualifiedName[classQualifiedName] ?: return
         val methodName = if (method.isConstructor) {
             librarySpecification.functionsByAutomaton[automaton]?.firstOrNull { it.name == automaton.name.typeName }?.name
-                ?: error("constructor method not found")
+                ?: unreachable { log.error("constructor method not found") }
         } else {
             method.name
         }
@@ -64,7 +66,9 @@ class LibslInstrumentator(
             val newEntry = method.entry
             val generator = ContractsGenerator(method, cm)
             val condition = generator.visitConjunctionNode(requires)
-            if (generator.oldCallStorage.isNotEmpty()) error("usage of old() now allowed in requires contract")
+            if (generator.oldCallStorage.isNotEmpty()) {
+                unreachable<Unit> { log.error("usage of old() now allowed in requires contract") }
+            }
             val block = generator.contractBlock
 
             insertKexAssert(block, newEntry, null, condition)
@@ -112,7 +116,7 @@ class LibslInstrumentator(
             val returnStatement = terminateBlock.first { it is ReturnInst } as ReturnInst
             val returnValue = returnStatement.returnValue
 
-            val returnType = returnValue.type as? ClassType  ?: error("can't get terminate block")
+            val returnType = returnValue.type as? ClassType ?: unreachable { error("can't get terminate block") }
 
             val foreignAutomaton = librarySpecification.automatonByQualifiedName[returnType.klass.fullName.replace("/", ".")] ?: return
             val stateConst = librarySpecification.statesMap[foreignAutomaton to foreignAutomatonState]!!
@@ -180,9 +184,9 @@ class LibslInstrumentator(
 
         if (shifts.any { it.from.lowercase() == "any" }) {
             val shift = shifts.first()
-            val changeToStateConst = librarySpecification.statesMap[automaton to shift.to] ?: error("unknown state: ${shift.from}")
+            val changeToStateConst = librarySpecification.statesMap[automaton to shift.to]
+                ?: unreachable { log.error("unknown state: ${shift.from}") }
             branchBlock.apply {
-
                 add(instFactory.getFieldStore(`this`, stateField, IntConstant(changeToStateConst, IntType)))
                 add(instFactory.getJump(entryBlock))
                 method.addBefore(entryBlock, this)
@@ -198,12 +202,12 @@ class LibslInstrumentator(
             val lhv = instFactory.getFieldLoad(`this`, stateField)
             branchBlock.add(lhv)
 
-            val fromStateCode = librarySpecification.statesMap[automaton to shift.from] ?: error("unknown state $shift")
+            val fromStateCode = librarySpecification.statesMap[automaton to shift.from] ?: unreachable { log.error("unknown state: ${shift.from}") }
 
             val toStateConst = if (shift.to.lowercase() == "self") {
                 fromStateCode
             } else {
-                librarySpecification.statesMap[automaton to shift.to] ?: error("unknown state $shift")
+                librarySpecification.statesMap[automaton to shift.to] ?: unreachable { log.error("unknown state: ${shift.from}") }
             }
 
             val rhv = IntConstant(fromStateCode, IntType)
@@ -289,9 +293,9 @@ class LibslInstrumentator(
             if (assignment.calleeAutomatonName == klass.name) {
                 // this is automaton's constructor
                 val initState = assignment.calleeArguments.firstOrNull()
-                    ?: error("no init state provided in automaton $automatonName")
+                    ?: unreachable { log.error("no init state provided in automaton $automatonName") }
                 val initStateCode = librarySpecification.statesMap[automaton to initState]
-                    ?: error("unknown init state provided in automaton $automatonName")
+                    ?: unreachable { log.error("unknown init state provided in automaton $automatonName") }
                 val stateField = stateFields[klass] ?: error("state field wasn't initialized")
                 val `this` = valueFactory.getThis(method.klass)
                 val store = instFactory.getFieldStore(`this`, stateField, valueFactory.getInt(initStateCode))
@@ -313,7 +317,8 @@ class LibslInstrumentator(
                 klass.cn.fields.add(fn)
                 klass.modifyField(stateField, fieldType)
             }
-            val targetClass = cm.concreteClasses.firstOrNull { it.name == automatonName } ?: error("unknown class $automatonName")
+            val targetClass = cm.concreteClasses.firstOrNull { it.name == automatonName }
+                ?: unreachable { log.error("unknown class $automatonName") }
             val assignmentValue = instFactory.getNew(automatonName, targetClass)
             val assignmentInstr = instFactory.getFieldStore(field, assignmentValue)
             method.entry.insertBefore(method.entry.first(), assignmentValue, assignmentInstr)
