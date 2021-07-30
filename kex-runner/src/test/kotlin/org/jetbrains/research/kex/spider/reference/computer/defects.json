@@ -1,0 +1,31 @@
+[{
+  "callStack": ["org/jetbrains/research/kex/test/spider/computer/lib/Computer::boot(): void - unknown", "org/jetbrains/research/kex/test/spider/computer/client/Main::main(java/lang/String[]): void - org/jetbrains/research/kex/test/spider/computer/client/Main.java:22"],
+  "id": "id7",
+  "testCaseName": "testAssertion0",
+  "testFile": {},
+  "type": "ASSERT"
+}, {
+  "callStack": ["org/jetbrains/research/kex/test/spider/computer/lib/Computer::loadOS(): void - unknown", "org/jetbrains/research/kex/test/spider/computer/client/Main::main(java/lang/String[]): void - org/jetbrains/research/kex/test/spider/computer/client/Main.java:16"],
+  "id": "id10",
+  "testCaseName": "testAssertion0",
+  "testFile": {},
+  "type": "ASSERT"
+}, {
+  "callStack": ["org/jetbrains/research/kex/test/spider/computer/lib/Computer::selectOS(java/lang/String): void - unknown", "org/jetbrains/research/kex/test/spider/computer/client/Main::main(java/lang/String[]): void - org/jetbrains/research/kex/test/spider/computer/client/Main.java:10"],
+  "id": "id9",
+  "testCaseName": "testAssertion0",
+  "testFile": {},
+  "type": "ASSERT"
+}, {
+  "callStack": ["org/jetbrains/research/kex/test/spider/computer/lib/Computer::selectOS(java/lang/String): void - unknown", "org/jetbrains/research/kex/test/spider/computer/client/Main::main(java/lang/String[]): void - org/jetbrains/research/kex/test/spider/computer/client/Main.java:17"],
+  "id": "id9",
+  "testCaseName": "testAssertion1",
+  "testFile": {},
+  "type": "ASSERT"
+}, {
+  "callStack": ["org/jetbrains/research/kex/test/spider/computer/lib/Computer::selectOS(java/lang/String): void - unknown", "org/jetbrains/research/kex/test/spider/computer/client/Main::main(java/lang/String[]): void - org/jetbrains/research/kex/test/spider/computer/client/Main.java:27"],
+  "id": "id9",
+  "testCaseName": "testAssertion2",
+  "testFile": {},
+  "type": "ASSERT"
+}]

@@ -8,6 +8,5 @@ test-jars/*
 trace/*
 fails/*
 **/target/*
-**/*.json
 **/kex-output*/*
 **/temp*/*
