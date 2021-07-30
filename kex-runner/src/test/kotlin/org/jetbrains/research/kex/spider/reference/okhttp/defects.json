@@ -1,0 +1,19 @@
+[{
+  "callStack": ["com/squareup/okhttp/Request$Builder::build(): com/squareup/okhttp/Request - unknown", "org/jetbrains/research/kex/test/spider/okhttp/client/Main::main(java/lang/String[]): void - org/jetbrains/research/kex/test/spider/okhttp/client/Main.java:19"],
+  "id": "id3",
+  "testCaseName": "testAssertion0",
+  "testFile": {},
+  "type": "ASSERT"
+}, {
+  "callStack": ["com/squareup/okhttp/Request$Builder::build(): com/squareup/okhttp/Request - unknown", "org/jetbrains/research/kex/test/spider/okhttp/client/Main::main(java/lang/String[]): void - org/jetbrains/research/kex/test/spider/okhttp/client/Main.java:31"],
+  "id": "id3",
+  "testCaseName": "testAssertion1",
+  "testFile": {},
+  "type": "ASSERT"
+}, {
+  "callStack": ["com/squareup/okhttp/Request$Builder::url(java/lang/String): com/squareup/okhttp/Request$Builder - unknown", "org/jetbrains/research/kex/test/spider/okhttp/client/Main::main(java/lang/String[]): void - org/jetbrains/research/kex/test/spider/okhttp/client/Main.java:18"],
+  "id": "id1",
+  "testCaseName": "testAssertion0",
+  "testFile": {},
+  "type": "ASSERT"
+}]
