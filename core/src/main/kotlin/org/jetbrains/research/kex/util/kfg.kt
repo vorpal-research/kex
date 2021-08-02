@@ -8,9 +8,13 @@ import org.jetbrains.research.kfg.ir.value.instruction.Instruction
 import org.jetbrains.research.kfg.ir.value.instruction.InstructionBuilder
 import org.jetbrains.research.kfg.type.ClassType
 import org.jetbrains.research.kfg.type.PrimaryType
+import org.jetbrains.research.kfg.type.Type
+import org.jetbrains.research.kfg.type.TypeFactory
 import org.jetbrains.research.kthelper.assert.unreachable
 import org.jetbrains.research.kthelper.compareTo
 import org.jetbrains.research.kthelper.logging.log
+
+fun Type.asArray(tf: TypeFactory) = tf.getArrayType(this)
 
 fun InstructionBuilder.wrapValue(value: Value): Instruction {
     val wrapperType = cm.type.getWrapper(value.type as PrimaryType) as ClassType

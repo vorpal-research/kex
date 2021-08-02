@@ -1,7 +1,8 @@
 package org.jetbrains.research.kex.test;
 
-import static org.jetbrains.research.kex.AssertIntrinsics.kexAssert;
-import static org.jetbrains.research.kex.AssertIntrinsics.kexUnreachable;
+
+import static org.jetbrains.research.kex.intrinsics.AssertIntrinsics.kexAssert;
+import static org.jetbrains.research.kex.intrinsics.AssertIntrinsics.kexUnreachable;
 
 public class ObjectJavaTests {
     public static class PointJava {

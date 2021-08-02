@@ -7,6 +7,7 @@ import org.jetbrains.research.kex.asm.state.PredicateStateAnalysis
 import org.jetbrains.research.kex.asm.transform.LoopDeroller
 import org.jetbrains.research.kex.asm.transform.RuntimeTraceCollector
 import org.jetbrains.research.kex.asm.util.ClassWriter
+import org.jetbrains.research.kex.intrinsics.AssertIntrinsics
 import org.jetbrains.research.kex.random.easyrandom.EasyRandomDriver
 import org.jetbrains.research.kex.smt.Checker
 import org.jetbrains.research.kex.smt.Result

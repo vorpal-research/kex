@@ -1,8 +1,8 @@
 @file:Suppress("UNUSED_PARAMETER", "UNUSED_VARIABLE")
 package org.jetbrains.research.kex.test
 
-import org.jetbrains.research.kex.AssertIntrinsics.kexAssert
-import org.jetbrains.research.kex.AssertIntrinsics.kexUnreachable
+import org.jetbrains.research.kex.intrinsics.AssertIntrinsics.kexAssert
+import org.jetbrains.research.kex.intrinsics.AssertIntrinsics.kexUnreachable
 import kotlin.math.abs
 
 class BasicTests {

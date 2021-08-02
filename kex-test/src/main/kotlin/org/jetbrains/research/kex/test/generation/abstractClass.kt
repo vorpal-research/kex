@@ -1,7 +1,7 @@
 package org.jetbrains.research.kex.test.generation
 
-import org.jetbrains.research.kex.AssertIntrinsics.kexAssert
-import org.jetbrains.research.kex.AssertIntrinsics.kexUnreachable
+import org.jetbrains.research.kex.intrinsics.AssertIntrinsics.kexAssert
+import org.jetbrains.research.kex.intrinsics.AssertIntrinsics.kexUnreachable
 
 class AbstractClassTests {
     abstract class AbstractClass(val x: Int, val y: Int)

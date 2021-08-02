@@ -2,7 +2,7 @@ package org.jetbrains.research.kex.test.generation;
 
 import java.util.Objects;
 
-import static org.jetbrains.research.kex.AssertIntrinsics.kexAssert;
+import static org.jetbrains.research.kex.intrinsics.AssertIntrinsics.kexAssert;
 
 public class BasicJavaObjectGeneration {
     public static class Point {
