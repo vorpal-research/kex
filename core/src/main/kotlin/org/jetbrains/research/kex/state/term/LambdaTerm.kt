@@ -20,10 +20,9 @@ class LambdaTerm (
 
     override fun <T: Transformer<T>> accept(t: Transformer<T>): Term {
         val tParams = parameters.map { t.transform(it) }
-        val tBody = t.transform(body)
-        return when {
-            parameters == tParams && body == tBody -> this
-            else -> term { lambda(type, tParams, tBody) }
+        return when (parameters) {
+            tParams -> this
+            else -> term { lambda(type, tParams, body) }
         }
     }
 }

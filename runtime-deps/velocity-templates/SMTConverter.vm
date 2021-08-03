@@ -127,7 +127,7 @@ class ${solver}Converter(val tf: TypeFactory) : ${solver}SMTConverter() {
     }
 
 #set($predicates = ["ArrayInitializer", "ArrayStore", "Call", "Catch", "DefaultSwitch", "Inequality", "EnterMonitor",
-    "Equality", "ExitMonitor", "FieldInitializer", "FieldStore", "NewArray", "New", "Throw"])
+    "Equality", "ExitMonitor", "FieldInitializer", "FieldStore", "ForEach", "NewArray", "New", "Throw"])
     fun convert(predicate: Predicate, ef: Factory_, ctx: Context_): Bool_ = when (predicate) {
 #foreach($predicate in $predicates)
         is ${predicate}Predicate -> convert(predicate, ef, ctx)
@@ -202,6 +202,23 @@ class ${solver}Converter(val tf: TypeFactory) : ${solver}SMTConverter() {
         val klass = field.klass
         ctx.writeProperty(ptr, memspace, "${ klass }.${ name }", value)
         return ef.makeTrue()
+    }
+
+    fun convert(forEach: ForEachPredicate, ef: Factory_, ctx: Context_): Bool_ {
+        val start = convert(forEach.start, ef, ctx) as Int_
+        val end = convert(forEach.end, ef, ctx) as Int_
+
+        return ef.forAll({
+            listOf(ef.makeIntConst(0))
+            }) { params ->
+                val index = params[0] as Int_
+            if_ { start le index and index lt start }
+                .then_ {
+                    convert(forEach.body, ef, ctx) as Bool_
+                }.else_ {
+                    ef.makeTrue()
+                }
+        }
     }
 
     fun convert(newarray: NewArrayPredicate, ef: Factory_, ctx: Context_): Bool_ {

@@ -21,7 +21,7 @@ class BoolectorSolverTest : KexTest() {
 
         val query = c neq zero
 
-        val state = c eq (ef.if_<Int_>(a gt b).then_(zero).else_(one))
+        val state = c eq (ef.if_<Int_>(a gt b).then(zero).`else`(one))
 
         query.asAxiom().assertForm()
         state.asAxiom().assertForm()

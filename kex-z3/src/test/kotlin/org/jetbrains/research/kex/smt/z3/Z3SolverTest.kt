@@ -23,7 +23,7 @@ class Z3SolverTest : KexTest() {
 
         val query = c neq zero
 
-        val state = c eq (ef.if_<Int_>(a gt b).then_(zero).else_(one))
+        val state = c eq (ef.if_<Int_>(a gt b).then(zero).`else`(one))
 
         val ctx = ef.ctx
         val solver = ctx.mkSolver()
@@ -195,6 +195,123 @@ class Z3SolverTest : KexTest() {
                 String_.parseInt(ctx, alphabetStr) eq Int__(-1)
             )
         )
+    }
+
+    @Test
+    fun testForAll() {
+        val ef = Z3ExprFactory()
+        val ctx = ef.ctx
+        Z3Engine.initialize()
+
+        val checkExpr = { expr: Bool_ ->
+            val solver = ctx.mkSolver()
+            solver.add(expr.axiom as BoolExpr)
+            solver.add(ctx.mkNot(expr.expr as BoolExpr))
+            solver.check() == Status.UNSATISFIABLE
+        }
+
+        var array = ef.makeDefaultStringMemory("default", "ttt")
+        assertTrue(checkExpr(
+            ef.forAll(
+                { listOf(ef.makeIntConst(0)) },
+                {
+                    val index = Int_.forceCast(it[0])
+                    if_ { (ef.makeIntConst(0) le index) and (index lt ef.makeIntConst(10)) }
+                        .then_ {
+                            array.load(index).startsWith(ef.makeStringConst("ttt"))
+                        }.else_ {
+                            ef.makeTrue()
+                        }
+                }
+            )
+        ))
+
+        array = array.store(ef.makeIntConst(11), ef.makeStringConst("bbb"))
+        assertTrue(checkExpr(
+            ef.forAll(
+                { listOf(ef.makeIntConst(0)) },
+                {
+                    val index = Int_.forceCast(it[0])
+                    if_ { (ef.makeIntConst(0) le index) and (index lt ef.makeIntConst(10)) }
+                        .then_ {
+                            array.load(index).startsWith(ef.makeStringConst("ttt"))
+                        }.else_ {
+                            ef.makeTrue()
+                        }
+                }
+            )
+        ))
+
+        array = array.store(ef.makeIntConst(3), ef.makeStringConst("vvv"))
+        assertFalse(checkExpr(
+            ef.forAll(
+                { listOf(ef.makeIntConst(0)) },
+                {
+                    val index = Int_.forceCast(it[0])
+                    if_ { (ef.makeIntConst(0) le index) and (index lt ef.makeIntConst(10)) }
+                        .then_ {
+                            array.load(index).startsWith(ef.makeStringConst("ttt"))
+                        }.else_ {
+                            ef.makeTrue()
+                        }
+                }
+            )
+        ))
+
+
+        var intArray = ef.makeDefaultMemory<Int_>("default", 17)
+        assertTrue(checkExpr(
+            ef.forAll(
+                { listOf(ef.makeIntConst(0)) },
+                {
+                    val index = Int_.forceCast(it[0])
+                    if_ { (ef.makeIntConst(0) le index) and (index lt ef.makeIntConst(10)) }
+                        .then_ {
+                            intArray.load< Int_ >(index) eq ef.makeIntConst(17)
+                        }.else_ {
+                            ef.makeTrue()
+                        }
+                }
+            )
+        ))
+
+        intArray = intArray.store(ef.makeIntConst(11), ef.makeIntConst(3))
+        assertTrue(checkExpr(
+            ef.forAll(
+                { listOf(ef.makeIntConst(0)) },
+                {
+                    val index = Int_.forceCast(it[0])
+                    if_ { (ef.makeIntConst(0) le index) and (index lt ef.makeIntConst(10)) }
+                        .then_ {
+                            intArray.load< Int_ >(index) eq ef.makeIntConst(17)
+                        }.else_ {
+                            ef.makeTrue()
+                        }
+                }
+            )
+        ))
+
+        intArray = intArray.store(ef.makeIntConst(3), ef.makeIntConst(42))
+        assertFalse(checkExpr(
+            ef.forAll(
+                { listOf(ef.makeIntConst(0)) },
+                {
+                    val index = Int_.forceCast(it[0])
+                    if_ { (ef.makeIntConst(0) le index) and (index lt ef.makeIntConst(10)) }
+                        .then_ {
+                            intArray.load< Int_ >(index) eq ef.makeIntConst(17)
+                        }.else_ {
+                            ef.makeTrue()
+                        }
+                }
+            )
+        ))
+    }
+
+    @Test
+    fun testZ3Lambda() {
+        val ef = Z3ExprFactory()
+        val ctx = ef.ctx
 
     }
 }

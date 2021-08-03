@@ -552,18 +552,18 @@ class Ifer {
                 val axiom = spliceAxioms(ctx, `true`.axiom, `false`.axiom)
                 return ${valexpr}.forceCast< T >($valexpr(ctx, expr, axiom))
             }
-
-            inline fun < reified T : $valexpr > else_(`false`: T) = `else`(`false`)
+            inline fun < reified T : $valexpr > else_(`false`: () -> T) = `else`(`false`())
         }
 
         inline fun < reified T : $valexpr > then(`true`: T) = Elser(cond, `true`)
-        inline fun < reified T : $valexpr > then_(`true`: T) = then(`true`)
+        inline fun < reified T : $valexpr > then_(`true`: () -> T) = then(`true`())
     }
 
     operator fun invoke(cond: $Bool) = Thener(cond)
 }
 
 fun `if`(cond: $Bool) = Ifer()(cond)
+fun if_(cond: () -> $Bool) = `if`(cond())
 
 fun forall(ctx: $context, sortGen: () -> List< $valexpr >, func: (args: List< $valexpr >) -> $Bool): $Bool {
     val sorts = sortGen().map{ it.getSort() }
