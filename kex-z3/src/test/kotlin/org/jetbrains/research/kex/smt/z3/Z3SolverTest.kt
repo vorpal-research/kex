@@ -44,7 +44,7 @@ class Z3SolverTest : KexTest() {
             solver.check() == Status.UNSATISFIABLE
         }
 
-        val memory = ef.makeDefaultMemory<Word_>("mem", 0xFF)
+        val memory = ef.makeDefaultMemory<Word_>("mem", ef.makeIntConst(0xFF))
         for (i in 0..128) {
             assertTrue(checkExpr(memory[ef.makePtrConst(i)] eq Word_.makeConst(ef.ctx, 0xFF)))
         }
@@ -67,8 +67,8 @@ class Z3SolverTest : KexTest() {
         val condA = cond eq a
         val condB = cond eq b
 
-        memA.writeMemory(ptr, a, 0)
-        memB.writeMemory(ptr, b, 0)
+        memA.writeWordMemory(ptr, 0, a)
+        memB.writeWordMemory(ptr, 0, b)
 
         val merged = Z3Context.mergeContexts(
             "merged", default, mapOf(
@@ -77,7 +77,7 @@ class Z3SolverTest : KexTest() {
             )
         )
 
-        val c = merged.readMemory<Int_>(ptr, 0)
+        val c = merged.readWordMemory(ptr, 0)
 
         val checkExprIn = { e: Bool_, `in`: Dynamic_ ->
             val solver = ef.ctx.mkSolver()
@@ -210,7 +210,7 @@ class Z3SolverTest : KexTest() {
             solver.check() == Status.UNSATISFIABLE
         }
 
-        var array = ef.makeDefaultStringMemory("default", "ttt")
+        var array = ef.makeDefaultMemory("default", ef.makeStringConst("ttt"))
         assertTrue(checkExpr(
             ef.forAll(
                 { listOf(ef.makeIntConst(0)) },
@@ -259,7 +259,7 @@ class Z3SolverTest : KexTest() {
         ))
 
 
-        var intArray = ef.makeDefaultMemory<Int_>("default", 17)
+        var intArray = ef.makeDefaultMemory<Int_>("default", ef.makeIntConst(17))
         assertTrue(checkExpr(
             ef.forAll(
                 { listOf(ef.makeIntConst(0)) },
@@ -267,7 +267,7 @@ class Z3SolverTest : KexTest() {
                     val index = Int_.forceCast(it[0])
                     if_ { (ef.makeIntConst(0) le index) and (index lt ef.makeIntConst(10)) }
                         .then_ {
-                            intArray.load< Int_ >(index) eq ef.makeIntConst(17)
+                            intArray.load(index) eq ef.makeIntConst(17)
                         }.else_ {
                             ef.makeTrue()
                         }
@@ -283,7 +283,7 @@ class Z3SolverTest : KexTest() {
                     val index = Int_.forceCast(it[0])
                     if_ { (ef.makeIntConst(0) le index) and (index lt ef.makeIntConst(10)) }
                         .then_ {
-                            intArray.load< Int_ >(index) eq ef.makeIntConst(17)
+                            intArray.load(index) eq ef.makeIntConst(17)
                         }.else_ {
                             ef.makeTrue()
                         }
@@ -299,7 +299,7 @@ class Z3SolverTest : KexTest() {
                     val index = Int_.forceCast(it[0])
                     if_ { (ef.makeIntConst(0) le index) and (index lt ef.makeIntConst(10)) }
                         .then_ {
-                            intArray.load< Int_ >(index) eq ef.makeIntConst(17)
+                            intArray.load(index) eq ef.makeIntConst(17)
                         }.else_ {
                             ef.makeTrue()
                         }

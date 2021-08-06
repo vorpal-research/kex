@@ -18,7 +18,7 @@ import org.jetbrains.research.kthelper.assert.*
 #set($Array = "${solver}Array")
 #if($generateString)
     #set($String = "${solver}String")
-    #set($StringMemory = "${solver}StringMemory")
+    #set($StringMemory = "${solver}Memory")
 #end
 #set($Memory = "${solver}Memory")
 #set($Function = "${solver}FunctionExpr")

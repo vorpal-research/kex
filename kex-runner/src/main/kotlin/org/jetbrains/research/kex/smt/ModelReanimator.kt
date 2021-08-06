@@ -54,7 +54,7 @@ interface ModelReanimator<T> {
         return model.typeMap[typeVar]
     }
 
-    fun reanimateString(addr: Term?): Term? = model.strings[addr]
+    fun reanimateString(memspace: Int, addr: Term?): Term? = model.strings[memspace]?.finalMemory?.get(addr)
 
     fun resolveType(memspace: Int, addr: Term?, default: KexType): KexType {
         val resolvedType = reanimateType(memspace, addr) ?: return default
@@ -119,7 +119,7 @@ class ObjectReanimator(
                 randomizer.nextOrNull(loader.loadClass(context.types, type))
             }
             when {
-                term.type.isString() && model.hasStrings -> reanimateString(addr)
+                term.type.isString && model.hasStrings -> reanimateString(term.memspace, addr)
                 else -> fallback()
             }
         }
@@ -316,8 +316,8 @@ abstract class DescriptorReanimator(
                     is KexClass -> {
                         memory(term.memspace, address) {
                             when {
-                                term.type.isString() && model.hasStrings -> {
-                                    val strValue = (reanimateString(addr) as? ConstStringTerm)?.value ?: ""
+                                term.type.isString && model.hasStrings -> {
+                                    val strValue = (reanimateString(term.memspace, addr) as? ConstStringTerm)?.value ?: ""
                                     val string = `object`(KexString())
                                     val valueArray = array(strValue.length, KexChar())
                                     for (index in strValue.indices)

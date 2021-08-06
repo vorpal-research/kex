@@ -84,12 +84,18 @@ class BoolectorSolver(val tf: TypeFactory) : AbstractSMTSolver {
     ): Pair<Term, Term> {
         val ptrExpr = BoolectorConverter(tf).convert(ptr, ef, this) as? Ptr_
             ?: unreachable { log.error("Non-ptr expr for pointer $ptr") }
-        val startProp = getInitialProperties(memspace, name)
-        val endProp = getProperties(memspace, name)
+        val typeSize = BoolectorExprFactory.getTypeSize(type)
+        val startProp = when (typeSize) {
+            TypeSize.WORD -> getWordInitialProperty(memspace, name)
+            TypeSize.DWORD -> getDWordInitialProperty(memspace, name)
+        }
+        val endProp = when (typeSize) {
+            TypeSize.WORD -> getWordProperty(memspace, name)
+            TypeSize.DWORD -> getDWordProperty(memspace, name)
+        }
 
-        val elementSize = BoolectorExprFactory.getTypeSize(type).int * BoolectorExprFactory.getByteSize(ctx.factory.ctx)
-        val startV = startProp.load(ptrExpr, elementSize)
-        val endV = endProp.load(ptrExpr, elementSize)
+        val startV = startProp.load(ptrExpr)
+        val endV = endProp.load(ptrExpr)
 
         val modelStartV = BoolectorUnlogic.undo(startV.expr)
         val modelEndV = BoolectorUnlogic.undo(endV.expr)
@@ -159,14 +165,14 @@ class BoolectorSolver(val tf: TypeFactory) : AbstractSMTSolver {
                     properties.recoverProperty(ctx, ptr.owner, memspace, ptr.type, "type")
                 }
                 else -> {
-                    val startMem = ctx.getInitialMemory(memspace)
-                    val endMem = ctx.getMemory(memspace)
+                    val startMem = ctx.getWordInitialMemory(memspace)
+                    val endMem = ctx.getWordMemory(memspace)
 
                     val ptrExpr = BoolectorConverter(tf).convert(ptr, ef, ctx) as? Ptr_
                         ?: unreachable { log.error("Non-ptr expr for pointer $ptr") }
 
-                    val startV = startMem.load(ptrExpr, BoolectorExprFactory.getTypeSize(ptr.type).int)
-                    val endV = endMem.load(ptrExpr, BoolectorExprFactory.getTypeSize(ptr.type).int)
+                    val startV = startMem.load(ptrExpr)
+                    val endV = endMem.load(ptrExpr)
 
                     val modelPtr = BoolectorUnlogic.undo(ptrExpr.expr)
                     val modelStartV = BoolectorUnlogic.undo(startV.expr)

@@ -13,14 +13,14 @@ typealias Int_ = $Bitvector32
 typealias Long_ = $Bitvector64
 typealias Float_ = $Float
 typealias Double_ = $Double
+typealias Array_ = $Array< Int_, Dynamic_ >
 typealias Word_ = $Bitvector32
 typealias DWord_ = $Bitvector64
-typealias Memory_ = $Memory< Ptr_, Word_ >
+typealias Memory_< T > = $Memory< Ptr_, T >
 typealias Function_ = $Function
 typealias Dynamic_ = $valexpr
 #if($generateString)
 typealias String_ = $String
-typealias StringMemory_ = $StringMemory< Ptr_ >
 #end
 
 enum class TypeSize (val int: Int) {
@@ -83,15 +83,15 @@ class $factory : ${solver}SMTExprFactory() {
 
 #if($generateString)
 #generateMakes("String", "String")
-
-    fun makeEmptyStringMemory(id: String) = StringMemory_.makeFree< Ptr_ >(ctx, id)
-    fun makeDefaultStringMemory(id: String, default: String) = StringMemory_.makeDefault< Ptr_ >(ctx, id, makeStringConst(default))
 #end
 
-    inline fun < reified  Element: $Bitvector > makeEmptyMemory(id: String) = Memory_.makeFree< Ptr_, Element >(ctx, id)
+    inline fun < reified Element : $valexpr > makeDefaultArray(id: String, default: Element) = Array_.makeDefault< Element, Int_ >(ctx, id, default) as Array_
+    inline fun < reified Element : $valexpr > makeEmptyArray(id: String) = Array_.makeFree< Element, Int_ >(ctx, id) as Array_
+
+    inline fun < reified  Element: $valexpr > makeEmptyMemory(id: String) = Memory_.makeFree< Ptr_, Element >(ctx, id)
     //            makeDefaultMemory(id, 0xFF)
-    inline fun < reified  Element: $Bitvector > makeDefaultMemory(id: String, default: Int) =
-        Memory_.makeDefault< Ptr_, Element >(ctx, id, bvMakeConst< Element >(ctx, default) as Element)
+    inline fun < reified  Element: $valexpr > makeDefaultMemory(id: String, default: Element) =
+        Memory_.makeDefault< Ptr_, Element >(ctx, id, default)
 
 #set($types = ["Bool", "Byte", "Short", "Char", "Int", "Long", "Float", "Double"])
     fun getVarByTypeAndName(type: KexType, name: String, fresh: Boolean = false) = when(type) {

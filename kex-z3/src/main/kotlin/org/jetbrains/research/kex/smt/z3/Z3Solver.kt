@@ -142,12 +142,18 @@ class Z3Solver(val tf: TypeFactory) : AbstractSMTSolver {
     ): Pair<Term, Term> {
         val ptrExpr = Z3Converter(tf).convert(ptr, ef, this) as? Ptr_
             ?: unreachable { log.error("Non-ptr expr for pointer $ptr") }
-        val startProp = getInitialProperties(memspace, name)
-        val endProp = getProperties(memspace, name)
+        val typeSize = Z3ExprFactory.getTypeSize(type)
+        val startProp = when (typeSize) {
+            TypeSize.WORD -> getWordInitialProperty(memspace, name)
+            TypeSize.DWORD -> getDWordInitialProperty(memspace, name)
+        }
+        val endProp = when (typeSize) {
+            TypeSize.WORD -> getWordProperty(memspace, name)
+            TypeSize.DWORD -> getDWordProperty(memspace, name)
+        }
 
-        val elementSize = Z3ExprFactory.getTypeSize(type).int * Z3ExprFactory.getByteSize(ctx.factory.ctx)
-        val startV = startProp.load(ptrExpr, elementSize)
-        val endV = endProp.load(ptrExpr, elementSize)
+        val startV = startProp.load(ptrExpr)
+        val endV = endProp.load(ptrExpr)
 
         val modelStartV = Z3Unlogic.undo(model.evaluate(startV.expr, true))
         val modelEndV = Z3Unlogic.undo(model.evaluate(endV.expr, true))
@@ -189,7 +195,8 @@ class Z3Solver(val tf: TypeFactory) : AbstractSMTSolver {
 
         val memories = hashMapOf<Int, Pair<MutableMap<Term, Term>, MutableMap<Term, Term>>>()
         val properties = hashMapOf<Int, MutableMap<String, Pair<MutableMap<Term, Term>, MutableMap<Term, Term>>>>()
-        val strings = hashMapOf<Term, Term>()
+        val strings = hashMapOf<Int, Pair<MutableMap<Term, Term>, MutableMap<Term, Term>>>()
+        val arrays = hashMapOf<Int, Pair<MutableMap<Term, Term>, MutableMap<Term, Term>>>()
         val typeMap = hashMapOf<Term, KexType>()
 
         for ((type, value) in ef.typeMap) {
@@ -216,14 +223,14 @@ class Z3Solver(val tf: TypeFactory) : AbstractSMTSolver {
                     properties.recoverProperty(ctx, ptr.owner, memspace, ptr.type, model, "type")
                 }
                 else -> {
-                    val startMem = ctx.getInitialMemory(memspace)
-                    val endMem = ctx.getMemory(memspace)
+                    val startMem = ctx.getWordInitialMemory(memspace)
+                    val endMem = ctx.getWordMemory(memspace)
 
                     val ptrExpr = Z3Converter(tf).convert(ptr, ef, ctx) as? Ptr_
                         ?: unreachable { log.error("Non-ptr expr for pointer $ptr") }
 
-                    val startV = startMem.load(ptrExpr, Z3ExprFactory.getTypeSize(ptr.type).int)
-                    val endV = endMem.load(ptrExpr, Z3ExprFactory.getTypeSize(ptr.type).int)
+                    val startV = startMem.load(ptrExpr)
+                    val endV = endMem.load(ptrExpr)
 
                     val modelPtr = Z3Unlogic.undo(model.evaluate(ptrExpr.expr, true))
                     val modelStartV = Z3Unlogic.undo(model.evaluate(startV.expr, true))
@@ -232,10 +239,22 @@ class Z3Solver(val tf: TypeFactory) : AbstractSMTSolver {
                     memories.getOrPut(memspace) { hashMapOf<Term, Term>() to hashMapOf() }
                     memories.getValue(memspace).first[modelPtr] = modelStartV
                     memories.getValue(memspace).second[modelPtr] = modelEndV
-                    if (ptr.type.isString()) {
-                        val modelStr = ctx.stringMemory.load(ptrExpr)
+                    if (ptr.type.isString) {
+                        val modelStartStr = ctx.readStringInitialMemory(ptrExpr, memspace)
+                        val modelStr = ctx.readStringMemory(ptrExpr, memspace)
+                        val startStringVal = Z3Unlogic.undo(model.evaluate(modelStartStr.expr, true))
                         val stringVal = Z3Unlogic.undo(model.evaluate(modelStr.expr, true))
-                        strings[modelPtr] = stringVal
+                        strings.getOrPut(memspace) { hashMapOf<Term, Term>() to hashMapOf() }
+                        strings.getValue(memspace).first[modelPtr] = startStringVal
+                        strings.getValue(memspace).second[modelPtr] = stringVal
+                    } else if (ptr.type.isArray) {
+                        val modelStartArray = ctx.readArrayInitialMemory(ptrExpr, memspace)
+                        val modelArray = ctx.readArrayMemory(ptrExpr, memspace)
+                        val startArrayVal = Z3Unlogic.undo(model.evaluate(modelStartArray.expr, true))
+                        val arrayVal = Z3Unlogic.undo(model.evaluate(modelArray.expr, true))
+                        strings.getOrPut(memspace) { hashMapOf<Term, Term>() to hashMapOf() }
+                        strings.getValue(memspace).first[modelPtr] = startArrayVal
+                        strings.getValue(memspace).second[modelPtr] = arrayVal
                     }
 
                     properties.recoverProperty(ctx, ptr, memspace, ptr.type, model, "type")
@@ -254,7 +273,8 @@ class Z3Solver(val tf: TypeFactory) : AbstractSMTSolver {
             properties.map { (memspace, names) ->
                 memspace to names.map { (name, pair) -> name to MemoryShape(pair.first, pair.second) }.toMap()
             }.toMap(),
-            strings,
+            arrays.map { (memspace, pair) -> memspace to MemoryShape(pair.first, pair.second) }.toMap(),
+            strings.map { (memspace, pair) -> memspace to MemoryShape(pair.first, pair.second) }.toMap(),
             typeMap
         )
     }
