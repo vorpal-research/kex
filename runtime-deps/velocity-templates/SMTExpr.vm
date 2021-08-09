@@ -367,7 +367,7 @@ class $String : $valexpr {
 #set($self = $Array)
 class $self< Element : $valexpr, in Index : $valexpr > : $valexpr {
     companion object {
-        fun getStaticSort(ctx: $context) = engine.getArraySort(ctx, ${Bitvector64}.getStaticSort(ctx), ${Bitvector32}.getStaticSort(ctx))
+        fun getStaticSort(ctx: $context) = engine.getArraySort(ctx, ${Bitvector32}.getStaticSort(ctx), ${Bitvector64}.getStaticSort(ctx))
 
         fun < Element : $valexpr, Index : $valexpr > merge(default: $self< Element, Index >,
             cases: List< Pair< $Bool, $self< Element, Index >>>): $self< Element, Index > {

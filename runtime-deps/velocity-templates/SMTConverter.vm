@@ -161,7 +161,7 @@ class ${solver}Converter(val tf: TypeFactory) : ${solver}SMTConverter() {
         val value = convert(store.value, ef, ctx)
 
         var array = ctx.readArrayInitialMemory(ptr, memspace)
-        array = array.store(listOf(value to index))
+        array = array.store(listOf(index to DWord_.forceCast(value)))
         ctx.initializeArrayMemory(ptr, memspace, array)
         return ef.makeTrue()
     }
@@ -174,7 +174,7 @@ class ${solver}Converter(val tf: TypeFactory) : ${solver}SMTConverter() {
         val value = convert(store.value, ef, ctx)
 
         var array = ctx.readArrayMemory(ptr, memspace)
-        array = array.store(listOf(value to index))
+        array = array.store(listOf(index to DWord_.forceCast(value)))
         ctx.writeArrayMemory(ptr, memspace, array)
         return ef.makeTrue()
     }
@@ -263,10 +263,7 @@ class ${solver}Converter(val tf: TypeFactory) : ${solver}SMTConverter() {
 
         val length = Int_.forceCast(convert(newarray.dimensions.fold(term { const(1) }) { acc: Term, term: Term -> term { acc * term} }, ef, ctx))
         val ptr = ctx.getLocalArray(memspace, length)
-        val array = when (Factory_.getTypeSize(newarray.elementType)) {
-            TypeSize.WORD -> ef.makeDefaultArray(newarray.lhv.name, ef.makeIntConst(0))
-            TypeSize.DWORD -> ef.makeDefaultArray(newarray.lhv.name, ef.makeLongConst(0))
-        }
+        val array = ef.makeDefaultArray(newarray.lhv.name, ef.makeLongConst(0))
         ctx.writeArrayMemory(lhv, memspace, array)
 
         val typeVar = ef.getTypeVariable(tf, newarray.lhv.type)
