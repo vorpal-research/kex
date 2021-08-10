@@ -110,6 +110,7 @@ class ObjectReanimator(
         is KexClass -> reanimateClass(term, addr)
         is KexArray -> reanimateArray(term, addr)
         is KexReference -> reanimateReference(term, addr)
+        is KexNull -> null
         else -> unreachable { log.error("Trying to recover non-pointer term $term with type ${term.type} as pointer value") }
     }
 
@@ -303,6 +304,7 @@ abstract class DescriptorReanimator(
         is KexClass -> reanimateClass(term, addr)
         is KexArray -> reanimateArray(term, addr)
         is KexReference -> reanimateReference(term, addr)
+        is KexNull -> descriptor { `null` }
         else -> unreachable { log.error("Trying to recover non-pointer term $term with type ${term.type} as pointer value") }
     }
 

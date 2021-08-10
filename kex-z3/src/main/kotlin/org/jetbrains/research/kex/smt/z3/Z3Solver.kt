@@ -139,15 +139,8 @@ class Z3Solver(val tf: TypeFactory) : AbstractSMTSolver {
     ): Pair<Term, Term> {
         val ptrExpr = Z3Converter(tf).convert(ptr, ef, this) as? Ptr_
             ?: unreachable { log.error("Non-ptr expr for pointer $ptr") }
-        val typeSize = Z3ExprFactory.getTypeSize(type)
-        val startProp = when (typeSize) {
-            TypeSize.WORD -> getWordInitialProperty(memspace, name)
-            TypeSize.DWORD -> getDWordInitialProperty(memspace, name)
-        }
-        val endProp = when (typeSize) {
-            TypeSize.WORD -> getWordProperty(memspace, name)
-            TypeSize.DWORD -> getDWordProperty(memspace, name)
-        }
+        val startProp = getInitialProperty(memspace, name, type)
+        val endProp = getProperty(memspace, name, type)
 
         val startV = startProp.load(ptrExpr)
         val endV = endProp.load(ptrExpr)
@@ -216,30 +209,15 @@ class Z3Solver(val tf: TypeFactory) : AbstractSMTSolver {
                     val modelPtr = Z3Unlogic.undo(model.evaluate(arrayPtrExpr.expr, true))
                     val modelIndex = Z3Unlogic.undo(model.evaluate(indexExpr.expr, true))
 
-                    val modelStartArray = ctx.readArrayInitialMemory(arrayPtrExpr, memspace)
-                    val modelArray = ctx.readArrayMemory(arrayPtrExpr, memspace)
+                    val type = (ptr.arrayRef.type as KexArray).element
+                    val modelStartArray = ctx.readInitialArrayMemory(arrayPtrExpr, memspace, type)
+                    val modelArray = ctx.readArrayMemory(arrayPtrExpr, memspace, type)
 
-                    val cast = { arrayVal: DWord_ ->
-                        when (Z3ExprFactory.getTypeSize((ptr.arrayRef.type as KexArray).element)) {
-                            TypeSize.WORD -> Word_.forceCast(arrayVal)
-                            TypeSize.DWORD -> arrayVal
-                        }
-                    }
                     val initialValue = Z3Unlogic.undo(
-                        model.evaluate(
-                            cast(
-                                DWord_.forceCast(modelStartArray.load(indexExpr))
-                            ).expr,
-                            true
-                        )
+                        model.evaluate(modelStartArray.load(indexExpr).expr, true)
                     )
                     val value = Z3Unlogic.undo(
-                        model.evaluate(
-                            cast(
-                                DWord_.forceCast(modelArray.load(indexExpr))
-                            ).expr,
-                            true
-                        )
+                        model.evaluate(modelArray.load(indexExpr).expr, true)
                     )
 
                     val arrayPair = arrays.getOrPut(memspace, ::hashMapOf).getOrPut(modelPtr) {
@@ -262,7 +240,7 @@ class Z3Solver(val tf: TypeFactory) : AbstractSMTSolver {
                     properties.recoverProperty(ctx, ptr.owner, memspace, ptr.type, model, "type")
                 }
                 else -> {
-                    val startMem = ctx.getWordInitialMemory(memspace)
+                    val startMem = ctx.getInitialWordMemory(memspace)
                     val endMem = ctx.getWordMemory(memspace)
 
                     val ptrExpr = Z3Converter(tf).convert(ptr, ef, ctx) as? Ptr_
@@ -279,7 +257,7 @@ class Z3Solver(val tf: TypeFactory) : AbstractSMTSolver {
                     memories.getValue(memspace).first[modelPtr] = modelStartV
                     memories.getValue(memspace).second[modelPtr] = modelEndV
                     if (ptr.type.isString) {
-                        val modelStartStr = ctx.readStringInitialMemory(ptrExpr, memspace)
+                        val modelStartStr = ctx.readInitialStringMemory(ptrExpr, memspace)
                         val modelStr = ctx.readStringMemory(ptrExpr, memspace)
                         val startStringVal = Z3Unlogic.undo(model.evaluate(modelStartStr.expr, true))
                         val stringVal = Z3Unlogic.undo(model.evaluate(modelStr.expr, true))

@@ -307,11 +307,11 @@ class Z3SolverTest : KexTest() {
             )
         ))
     }
-
-    @Test
-    fun testZ3Lambda() {
-        val ef = Z3ExprFactory()
-        val ctx = ef.ctx
-
-    }
+//
+//    @Test
+//    fun testZ3Lambda() {
+//        val ef = Z3ExprFactory()
+//        val ctx = ef.ctx
+//
+//    }
 }

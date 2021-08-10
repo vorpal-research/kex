@@ -83,15 +83,8 @@ class BoolectorSolver(val tf: TypeFactory) : AbstractSMTSolver {
     ): Pair<Term, Term> {
         val ptrExpr = BoolectorConverter(tf).convert(ptr, ef, this) as? Ptr_
             ?: unreachable { log.error("Non-ptr expr for pointer $ptr") }
-        val typeSize = BoolectorExprFactory.getTypeSize(type)
-        val startProp = when (typeSize) {
-            TypeSize.WORD -> getWordInitialProperty(memspace, name)
-            TypeSize.DWORD -> getDWordInitialProperty(memspace, name)
-        }
-        val endProp = when (typeSize) {
-            TypeSize.WORD -> getWordProperty(memspace, name)
-            TypeSize.DWORD -> getDWordProperty(memspace, name)
-        }
+        val startProp = getInitialProperty(memspace, name, type)
+        val endProp = getProperty(memspace, name, type)
 
         val startV = startProp.load(ptrExpr)
         val endV = endProp.load(ptrExpr)
@@ -169,24 +162,15 @@ class BoolectorSolver(val tf: TypeFactory) : AbstractSMTSolver {
                     val modelPtr = BoolectorUnlogic.undo(arrayPtrExpr.expr)
                     val modelIndex = BoolectorUnlogic.undo(indexExpr.expr)
 
-                    val modelStartArray = ctx.readArrayInitialMemory(arrayPtrExpr, memspace)
-                    val modelArray = ctx.readArrayMemory(arrayPtrExpr, memspace)
+                    val type = (ptr.arrayRef.type as KexArray).element
+                    val modelStartArray = ctx.readInitialArrayMemory(arrayPtrExpr, memspace, type)
+                    val modelArray = ctx.readArrayMemory(arrayPtrExpr, memspace, type)
 
-                    val cast = { arrayVal: DWord_ ->
-                        when (BoolectorExprFactory.getTypeSize((ptr.arrayRef.type as KexArray).element)) {
-                            TypeSize.WORD -> Word_.forceCast(arrayVal)
-                            TypeSize.DWORD -> arrayVal
-                        }
-                    }
                     val initialValue = BoolectorUnlogic.undo(
-                        cast(
-                            DWord_.forceCast(modelStartArray.load(indexExpr))
-                        ).expr
+                        modelStartArray.load(indexExpr).expr
                     )
                     val value = BoolectorUnlogic.undo(
-                        cast(
-                            DWord_.forceCast(modelArray.load(indexExpr))
-                        ).expr
+                        modelArray.load(indexExpr).expr
                     )
 
                     val arrayPair = arrays.getOrPut(memspace, ::hashMapOf).getOrPut(modelPtr) {
@@ -203,7 +187,7 @@ class BoolectorSolver(val tf: TypeFactory) : AbstractSMTSolver {
                     properties.recoverProperty(ctx, ptr.owner, memspace, ptr.type, "type")
                 }
                 else -> {
-                    val startMem = ctx.getWordInitialMemory(memspace)
+                    val startMem = ctx.getInitialWordMemory(memspace)
                     val endMem = ctx.getWordMemory(memspace)
 
                     val ptrExpr = BoolectorConverter(tf).convert(ptr, ef, ctx) as? Ptr_

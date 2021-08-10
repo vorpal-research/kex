@@ -13,7 +13,17 @@ typealias Int_ = $Bitvector32
 typealias Long_ = $Bitvector64
 typealias Float_ = $Float
 typealias Double_ = $Double
-typealias Array_ = $Array< DWord_, Int_ >
+typealias Array_ = $Array< Dynamic_, Int_ >
+typealias BoolArray_ = $Array< Bool_, Int_ >
+typealias WordArray_ = $Array< Word_, Int_ >
+typealias DWordArray_ = $Array< DWord_, Int_ >
+typealias FloatArray_ = $Array< Float_, Int_ >
+typealias DoubleArray_ = $Array< Double_, Int_ >
+typealias BoolArrayArray_ = $Array< BoolArray_, Int_ >
+typealias WordArrayArray_ = $Array< WordArray_, Int_ >
+typealias DWordArrayArray_ = $Array< DWordArray_, Int_ >
+typealias FloatArrayArray_ = $Array< FloatArray_, Int_ >
+typealias DoubleArrayArray_ = $Array< DoubleArray_, Int_ >
 typealias Word_ = $Bitvector32
 typealias DWord_ = $Bitvector64
 typealias Memory_< T > = $Memory< Ptr_, T >
@@ -21,6 +31,7 @@ typealias Function_ = $Function
 typealias Dynamic_ = $valexpr
 #if($generateString)
 typealias String_ = $String
+typealias StringArray_ = $Array< String_, Int_ >
 #end
 
 enum class TypeSize (val int: Int) {
@@ -29,6 +40,7 @@ enum class TypeSize (val int: Int) {
 
 private val engine = ${solver}Engine
 
+@Suppress("UNCHECKED_CAST")
 class $factory : ${solver}SMTExprFactory() {
     companion object {
 
@@ -87,8 +99,86 @@ class $factory : ${solver}SMTExprFactory() {
 #generateMakes("String", "String")
 #end
 
+#foreach($baseType in $baseMemoryTypes)
+    fun makeDefault${baseType}Array(id: String, default: ${baseType}_): ${baseType}Array_ =
+            ${baseType}Array_.makeDefault< ${baseType}_, Int_ >(ctx, id, default)
+    fun makeEmpty${baseType}Array(id: String): ${baseType}Array_ =
+            ${baseType}Array_.makeFree< ${baseType}_, Int_ >(ctx, id, ${baseType}_.getStaticSort(ctx))
+
+    fun makeDefault${baseType}ArrayArray(id: String, default: ${baseType}Array_): ${baseType}ArrayArray_ =
+            ${baseType}ArrayArray_.makeDefault< ${baseType}Array_, Int_ >(ctx, id, default)
+    fun makeEmpty${baseType}ArrayArray(id: String): ${baseType}ArrayArray_ =
+            ${baseType}ArrayArray_.makeFree< ${baseType}Array_, Int_ >(ctx, id, ${baseType}Array_.getStaticSort(ctx, Int_.getStaticSort(ctx), ${baseType}_.getStaticSort(ctx)))
+
+#end
+
+#if($generateString)
+    fun makeDefaultStringArray(id: String, default: String_): StringArray_ = StringArray_.makeDefault< String_, Int_ >(ctx, id, default)
+    fun makeEmptyStringArray(id: String): StringArray_ = StringArray_.makeFree< String_, Int_ >(ctx, id, String_.getStaticSort(ctx))
+#end
+    fun makeDefaultArray(id: String, elementType: KexType, const: Number) = when (elementType) {
+        is KexLong -> makeDefaultDWordArray(id, makeLongConst(const.toLong()))
+        is KexBool -> makeDefaultBoolArray(id, makeBoolConst(false))
+        is KexIntegral -> makeDefaultWordArray(id, makeIntConst(const.toInt()))
+        is KexFloat -> makeDefaultFloatArray(id, makeFloatConst(const.toFloat()))
+        is KexDouble -> makeDefaultDoubleArray(id, makeDoubleConst(const.toDouble()))
+        is KexPointer -> makeDefaultWordArray(id, makeIntConst(const.toInt()))
+        else -> unreachable { log.error("Unexpected type ${ elementType } in read memory") }
+    }
+
+    fun makeEmptyArray(id: String, elementType: KexType) = when (elementType) {
+        is KexLong -> makeEmptyDWordArray(id)
+        is KexBool -> makeEmptyBoolArray(id)
+        is KexIntegral -> makeEmptyWordArray(id)
+        is KexFloat -> makeEmptyFloatArray(id)
+        is KexDouble -> makeEmptyDoubleArray(id)
+        is KexPointer -> makeEmptyWordArray(id)
+        else -> unreachable { log.error("Unexpected type ${ elementType } in read memory") }
+    }
+
     inline fun < reified Element : $valexpr > makeDefaultArray(id: String, default: Element) = Array_.makeDefault< Element, Int_ >(ctx, id, default) as Array_
     inline fun < reified Element : $valexpr > makeEmptyArray(id: String) = Array_.makeFree< Element, Int_ >(ctx, id) as Array_
+
+
+#foreach($baseType in $baseMemoryTypes)
+    fun makeDefault${baseType}Memory(id: String, default: ${baseType}_) = Memory_.make< Ptr_, ${baseType}_ >(
+        makeDefault${baseType}Array(id, default)
+    ) {
+        ${baseType}_(it)
+    }
+
+    fun makeEmpty${baseType}Memory(id: String) = Memory_.make< Ptr_, ${baseType}_ >(
+        makeEmpty${baseType}Array(id)
+    ) {
+        ${baseType}_(it)
+    }
+
+    fun makeDefault${baseType}ArrayMemory(id: String, default: ${baseType}Array_) = Memory_.make< Ptr_, ${baseType}Array_ >(
+        makeDefault${baseType}ArrayArray(id, default)
+    ) {
+        ${baseType}Array_(it)
+    }
+
+    fun makeEmpty${baseType}ArrayMemory(id: String) = Memory_.make< Ptr_, ${baseType}Array_ >(
+        makeEmpty${baseType}ArrayArray(id)
+    ) {
+        ${baseType}Array_(it)
+    }
+#end
+
+#if($generateString)
+    fun makeDefaultStringMemory(id: String, default: String_) = Memory_.make< Ptr_, String_ >(
+    makeDefaultStringArray(id, default)
+    ) {
+        String_(it)
+    }
+
+    fun makeEmptyStringMemory(id: String) = Memory_.make< Ptr_, String_ >(
+        makeEmptyStringArray(id)
+    ) {
+        String_(it)
+    }
+#end
 
     inline fun < reified  Element: $valexpr > makeEmptyMemory(id: String) = Memory_.makeFree< Ptr_, Element >(ctx, id)
     //            makeDefaultMemory(id, 0xFF)

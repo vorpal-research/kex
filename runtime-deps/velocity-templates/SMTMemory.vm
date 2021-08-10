@@ -19,6 +19,11 @@ class $self< in Index : $valexpr, Element : $valexpr >(
             return $self(${Array}.merge(default.inner, inners), default.ctor)
         }
 
+        inline fun < reified Index : $valexpr, reified Element : $valexpr > make(
+            array: $Array< Element, Index >,
+            noinline ctor: (${valexpr}) -> Element
+        ) = $self< Index, Element >(array, ctor)
+
         inline fun < reified Index : $valexpr, reified Element : $valexpr > makeDefault(
             ctx: $context,
             name: String,
