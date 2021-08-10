@@ -20,6 +20,7 @@ sealed class KexPointer : KexType() {
         get() = WORD
 
     abstract fun withMemspace(memspace: Int): KexPointer
+    fun withoutMemspace() = withMemspace(defaultMemspace)
 }
 
 @InheritorOf("KexType")

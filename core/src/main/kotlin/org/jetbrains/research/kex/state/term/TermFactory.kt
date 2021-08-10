@@ -161,7 +161,8 @@ object TermFactory {
     fun getUndef(type: KexType) = UndefTerm(type)
 
     fun getStringLength(string: Term) = StringLengthTerm(string)
-    fun getSubstring(string: Term, offset: Term, length: Term) = SubstringTerm(string, offset, length)
+    fun getSubstring(string: Term, offset: Term, length: Term) = getSubstring(KexString(), string, offset, length)
+    fun getSubstring(type: KexType, string: Term, offset: Term, length: Term) = SubstringTerm(type, string, offset, length)
     fun getIndexOf(string: Term, substring: Term, offset: Term) = IndexOfTerm(string, substring, offset)
     fun getCharAt(string: Term, index: Term) = CharAtTerm(string, index)
     fun getStringContains(string: Term, substring: Term): Term = StringContainsTerm(string, substring)

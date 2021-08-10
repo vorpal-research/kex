@@ -1,13 +1,12 @@
 package org.jetbrains.research.kex.smt.z3
 
-import org.jetbrains.research.kthelper.*
-import org.jetbrains.research.kthelper.assert.unreachable
-import org.jetbrains.research.kthelper.logging.log
 import com.microsoft.z3.*
 import com.microsoft.z3.enumerations.Z3_lbool
 import org.jetbrains.research.kex.smt.SMTEngine
 import org.jetbrains.research.kex.state.term.*
-import java.lang.Math.pow
+import org.jetbrains.research.kthelper.*
+import org.jetbrains.research.kthelper.assert.unreachable
+import org.jetbrains.research.kthelper.logging.log
 import kotlin.math.pow
 
 object Z3Unlogic {
@@ -139,7 +138,7 @@ object Z3Unlogic {
             else -> {
                 val sign = if (expr.sign) -1.0 else 1.0
                 val significand = expr.significand.toDouble()
-                val exponent = pow(2.0, expr.getExponentInt64(false).toDouble())
+                val exponent = 2.0.pow(expr.getExponentInt64(false).toDouble())
                 val res = sign * significand * exponent
                 return termifier(res)
             }
@@ -148,6 +147,6 @@ object Z3Unlogic {
 
     private fun undoSeq(expr: SeqExpr<*>) = when {
         expr.isConst -> term { const(expr.string) }
-        else -> unreachable<ConstStringTerm> { log.error("Unknown seq") }
+        else -> unreachable<ConstStringTerm> { log.error("Unknown seq expr") }
     }
 }

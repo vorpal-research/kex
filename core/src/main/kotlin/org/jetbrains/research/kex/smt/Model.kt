@@ -9,7 +9,7 @@ data class SMTModel(
     val assignments: Map<Term, Term>,
     val memories: Map<Int, MemoryShape>,
     val properties: Map<Int, Map<String, MemoryShape>>,
-    val arrays: Map<Int, MemoryShape>,
+    val arrays: Map<Int, Map<Term, MemoryShape>>,
     val strings: Map<Int, MemoryShape>,
     val typeMap: Map<Term, KexType>,
     val hasStrings: Boolean
@@ -18,7 +18,7 @@ data class SMTModel(
         assignments: Map<Term, Term>,
         memories: Map<Int, MemoryShape>,
         properties: Map<Int, Map<String, MemoryShape>>,
-        arrays: Map<Int, MemoryShape>,
+        arrays: Map<Int, Map<Term, MemoryShape>>,
         strings: Map<Int, MemoryShape>,
         typeMap: Map<Term, KexType>
     ) : this(
@@ -29,6 +29,22 @@ data class SMTModel(
         strings,
         typeMap,
         true
+    )
+
+    constructor(
+        assignments: Map<Term, Term>,
+        memories: Map<Int, MemoryShape>,
+        properties: Map<Int, Map<String, MemoryShape>>,
+        arrays: Map<Int, Map<Term, MemoryShape>>,
+        typeMap: Map<Term, KexType>
+    ) : this(
+        assignments,
+        memories,
+        properties,
+        arrays,
+        mapOf(),
+        typeMap,
+        false
     )
 
     constructor(

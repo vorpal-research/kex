@@ -2,12 +2,9 @@
 
 package org.jetbrains.research.kex.test.debug
 
-import org.jetbrains.research.kex.intrinsics.CollectionIntrinsics
-
 class BasicTests {
-
     fun test(a: IntArray) {
-        if (CollectionIntrinsics.containsInt(a, 3)) {
+        if (a[0] == 2) {
             error("a")
         }
     }

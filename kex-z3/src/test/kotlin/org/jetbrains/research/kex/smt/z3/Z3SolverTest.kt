@@ -54,9 +54,9 @@ class Z3SolverTest : KexTest() {
     fun testMergeMemory() {
         val ef = Z3ExprFactory()
 
-        val default = Z3Context(ef, (1 shl 16) + 1, (2 shl 16) + 1)
-        val memA = Z3Context(ef, (1 shl 16) + 1, (2 shl 16) + 1)
-        val memB = Z3Context(ef, (1 shl 16) + 1, (2 shl 16) + 1)
+        val default = Z3Context(ef)
+        val memA = Z3Context(ef)
+        val memB = Z3Context(ef)
 
         val ptr = ef.makePtr("ptr")
         val a = ef.makeIntConst(0xDEAD)

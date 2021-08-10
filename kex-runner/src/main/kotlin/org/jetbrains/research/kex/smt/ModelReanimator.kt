@@ -48,6 +48,7 @@ interface ModelReanimator<T> {
     fun reanimateFromAssignment(term: Term): Term?
     fun reanimateFromMemory(memspace: Int, addr: Term?): Term?
     fun reanimateFromProperties(memspace: Int, name: String, addr: Term?): Term?
+    fun reanimateFromArray(memspace: Int, array: Term, index: Term): Term?
 
     fun reanimateType(memspace: Int, addr: Term?): KexType? {
         val typeVar = reanimateFromProperties(memspace, "type", addr) ?: return null
@@ -86,6 +87,9 @@ class ObjectReanimator(
     override fun reanimateFromMemory(memspace: Int, addr: Term?) = model.memories[memspace]?.finalMemory?.get(addr)
     override fun reanimateFromProperties(memspace: Int, name: String, addr: Term?) =
         model.properties[memspace]?.get(name)?.finalMemory?.get(addr)
+
+    override fun reanimateFromArray(memspace: Int, array: Term, index: Term): Term? =
+        model.arrays[memspace]?.get(array)?.finalMemory?.get(index)
 
     private fun reanimatePrimary(type: KexType, value: Term?): Any? {
         if (value == null) return randomizer.next(loader.loadClass(context.types, type))
@@ -135,20 +139,21 @@ class ObjectReanimator(
 
     private fun reanimateReference(term: Term, addr: Term?): Any? {
         val memspace = term.memspace
-        val refValue = reanimateFromMemory(memspace, addr)
         return when (term) {
             is ArrayIndexTerm -> {
                 val arrayRef = term.arrayRef
-                val elementType = (arrayRef.type as KexArray).element
 
-                val arrayAddr = (reanimateFromAssignment(arrayRef) as ConstIntTerm).value
-                val array = memory(arrayRef.memspace, arrayAddr) ?: return null
+                val arrayAddr = reanimateFromAssignment(arrayRef) ?: return null
+                val array = memory(arrayRef.memspace, arrayAddr.numericValue.toInt()) ?: return null
+
+                val index = when (term.index) {
+                    is ConstIntTerm -> term.index
+                    else -> reanimateFromAssignment(term.index)
+                } ?: return null
+                val refValue = reanimateFromArray(memspace, arrayAddr, index)
 
                 val reanimatedValue = reanimateReferenceValue(term, refValue)
-                val address = (addr as? ConstIntTerm)?.value
-                    ?: unreachable { log.error("Non-int address of array index") }
-                val realIndex = (address - arrayAddr) / (elementType.bitSize / KexType.WORD)
-                Array.set(array, realIndex, reanimatedValue)
+                Array.set(array, index.numericValue.toInt(), reanimatedValue)
                 array
             }
             is FieldTerm -> {
@@ -361,21 +366,21 @@ abstract class DescriptorReanimator(
 
     private fun reanimateReference(term: Term, addr: Term?) = descriptor {
         val memspace = term.memspace
-        val refValue = reanimateFromMemory(memspace, addr)
         when (term) {
             is ArrayIndexTerm -> {
                 val arrayRef = term.arrayRef
-                val elementType = (arrayRef.type as KexArray).element
 
-                val arrayAddr = (reanimateFromAssignment(arrayRef) as ConstIntTerm).value
-                val array = memory(arrayRef.memspace, arrayAddr) as? ArrayDescriptor
-                    ?: return@descriptor default(term.type)
+                val arrayAddr = reanimateFromAssignment(arrayRef) ?: return@descriptor default(term.type)
+                val array = memory(arrayRef.memspace, arrayAddr.numericValue.toInt()) as ArrayDescriptor
+
+                val index = when (term.index) {
+                    is ConstIntTerm -> term.index
+                    else -> reanimateFromAssignment(term.index)
+                } ?: return@descriptor default(term.type)
+                val refValue = reanimateFromArray(memspace, arrayAddr, index)
 
                 val reanimatedValue = reanimateReferenceValue(term, refValue)
-                val address = (addr as? ConstIntTerm)?.value
-                    ?: unreachable { log.error("Non-int address of array index") }
-                val realIndex = (address - arrayAddr) / (elementType.bitSize / KexType.WORD)
-                array[realIndex] = reanimatedValue
+                array[index.numericValue.toInt()] = reanimatedValue
                 array
             }
             is FieldTerm -> {
@@ -456,6 +461,8 @@ class FinalDescriptorReanimator(method: Method, model: SMTModel, context: Execut
     override fun reanimateFromMemory(memspace: Int, addr: Term?) = model.memories[memspace]?.finalMemory?.get(addr)
     override fun reanimateFromProperties(memspace: Int, name: String, addr: Term?) =
         model.properties[memspace]?.get(name)?.finalMemory?.get(addr)
+    override fun reanimateFromArray(memspace: Int, array: Term, index: Term): Term? =
+        model.arrays[memspace]?.get(array)?.finalMemory?.get(index)
 }
 
 class InitialDescriptorReanimator(method: Method, model: SMTModel, context: ExecutionContext) :
@@ -464,4 +471,6 @@ class InitialDescriptorReanimator(method: Method, model: SMTModel, context: Exec
     override fun reanimateFromMemory(memspace: Int, addr: Term?) = model.memories[memspace]?.initialMemory?.get(addr)
     override fun reanimateFromProperties(memspace: Int, name: String, addr: Term?) =
         model.properties[memspace]?.get(name)?.initialMemory?.get(addr)
+    override fun reanimateFromArray(memspace: Int, array: Term, index: Term): Term? =
+        model.arrays[memspace]?.get(array)?.initialMemory?.get(index)
 }

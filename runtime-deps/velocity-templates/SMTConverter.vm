@@ -109,8 +109,9 @@ class ${solver}Converter(val tf: TypeFactory) : ${solver}SMTConverter() {
                 else -> unreachable { log.error("Unable to cast expr ${ expr } to ${ type }") }
             }
 
-    fun init(types: Set< KexType >) {
-        this.types = types.filter { it !is KexNull }.map { it.getKfgType(tf) }.toSet()
+
+    fun init(state: PredicateState) {
+        this.types = collectTypes(state).filter { it !is KexNull }.map { it.getKfgType(tf) }.toSet()
     }
 
     fun convert(ps: PredicateState, ef: Factory_, ctx: Context_, extractPath: Boolean = false): Bool_ = when (ps) {
@@ -418,6 +419,7 @@ class ${solver}Converter(val tf: TypeFactory) : ${solver}SMTConverter() {
 
     fun convert(const: ConstClassTerm, ef: Factory_, ctx: Context_): Dynamic_ {
         val expr = ef.getVarByTypeAndName(const.type, const.name)
+        ef.addKlassPtr(const.constantType as KexClass, expr as Ptr_)
         var res = const.withAxioms(expr, ef, ctx)
         res = res.withPtrAxioms(ef, ctx, TermType.STATIC_PTR)
         return res

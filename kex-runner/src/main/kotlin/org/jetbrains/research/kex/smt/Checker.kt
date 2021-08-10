@@ -49,20 +49,20 @@ class Checker(
         if (annotationsEnabled) {
             +AnnotationAdapter(method, AnnotationManager.defaultLoader)
         }
+        +StringAdapter(ctx)
 
         if (isInliningEnabled) {
             +MethodInliner(psa)
         }
 
         +StaticFieldInliner(ctx, psa)
-        +RecursiveConstructorInliner(psa)
+//        +RecursiveConstructorInliner(psa)
         +IntrinsicAdapter
         +KexIntrinsicsAdapter()
         +ReflectionInfoAdapter(method, loader)
         +Optimizer()
         +ConstantPropagator
         +BoolTypeAdapter(method.cm.type)
-        +ConstStringAdapter()
         +ArrayBoundsAdapter()
         +NullityInfoAdapter()
         +FieldNormalizer(method.cm)
@@ -73,7 +73,7 @@ class Checker(
         +StringAdapter(ctx)
         +RecursiveInliner(psa) { ConcreteImplInliner(method.cm.type, typeInfoMap, psa, inlineIndex = it) }
         +StaticFieldInliner(ctx, psa)
-        +RecursiveConstructorInliner(psa)
+//        +RecursiveConstructorInliner(psa)
         +IntrinsicAdapter
         +KexIntrinsicsAdapter()
         +ReflectionInfoAdapter(method, loader)

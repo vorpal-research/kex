@@ -49,9 +49,9 @@ class BoolectorSolverTest : KexTest() {
     fun testMergeMemory() {
         val ef = BoolectorExprFactory()
 
-        val default = BoolectorContext(ef, (1 shl 16) + 1, (2 shl 16) + 1)
-        val memA = BoolectorContext(ef, (1 shl 16) + 1, (2 shl 16) + 1)
-        val memB = BoolectorContext(ef, (1 shl 16) + 1, (2 shl 16) + 1)
+        val default = BoolectorContext(ef)
+        val memA = BoolectorContext(ef)
+        val memB = BoolectorContext(ef)
 
         val ptr = ef.makePtr("ptr")
         val a = ef.makeIntConst(0xDEAD)

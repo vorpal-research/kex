@@ -131,8 +131,8 @@ class $self : ${solver}SMTContext {
         this.initialMemory = MemoryContext(factory)
     }
 
-    constructor(factory: $factory, localPointer: Int, staticPointer: Int)
-            : this(factory, localPointer, staticPointer, MemoryContext(factory))
+    constructor(factory: $factory)
+            : this(factory, STARTING_LOCAL_PTR, STARTING_STATIC_PTR, MemoryContext(factory))
 
     constructor(ctx: $self) : this(
         ctx.factory,
@@ -141,7 +141,7 @@ class $self : ${solver}SMTContext {
         ctx.memories
     )
 
-    constructor() : this($factory(), STARTING_LOCAL_PTR, STARTING_STATIC_PTR)
+    constructor() : this($factory())
 
 #foreach($type in $memoryTypes)
     fun get${type}InitialProperty(memspace: Int, property: String) = get${type}InitialMemory("${ ${type}_PROPERTY_NAME }${ property }${ memspace }")

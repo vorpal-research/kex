@@ -7,7 +7,6 @@ import org.jetbrains.research.kex.smt.*
 import org.jetbrains.research.kex.state.PredicateState
 import org.jetbrains.research.kex.state.term.*
 import org.jetbrains.research.kex.state.transformer.collectPointers
-import org.jetbrains.research.kex.state.transformer.collectTypes
 import org.jetbrains.research.kex.state.transformer.collectVariables
 import org.jetbrains.research.kex.state.transformer.memspace
 import org.jetbrains.research.kfg.type.TypeFactory
@@ -39,10 +38,10 @@ class BoolectorSolver(val tf: TypeFactory) : AbstractSMTSolver {
             }
         }
 
-        val ctx = BoolectorContext(ef, (1 shl 8) + 1, (1 shl 24) + 1)
+        val ctx = BoolectorContext(ef)
 
         val converter = BoolectorConverter(tf)
-        converter.init(collectTypes(state))
+        converter.init(state)
         val boolectorState = converter.convert(state, ef, ctx)
         val boolectorQuery = converter.convert(query, ef, ctx)
 
@@ -61,6 +60,7 @@ class BoolectorSolver(val tf: TypeFactory) : AbstractSMTSolver {
 
         state_.asAxiom().assertForm()
         ef.buildSubtypeAxioms(tf).asAxiom().assertForm()
+        ef.buildConstClassAxioms().asAxiom().assertForm()
         query_.axiom.assertForm()
         query_.expr.assertForm()
 
@@ -76,7 +76,6 @@ class BoolectorSolver(val tf: TypeFactory) : AbstractSMTSolver {
     }
 
     private fun BoolectorContext.recoverProperty(
-        ctx: BoolectorContext,
         ptr: Term,
         memspace: Int,
         type: KexType,
@@ -113,7 +112,7 @@ class BoolectorSolver(val tf: TypeFactory) : AbstractSMTSolver {
             ?: unreachable { log.error("Non-ptr expr for pointer $ptr") }
         val modelPtr = BoolectorUnlogic.undo(ptrExpr.expr)
 
-        val (modelStartT, modelEndT) = ctx.recoverProperty(ctx, ptr, memspace, type, name)
+        val (modelStartT, modelEndT) = ctx.recoverProperty(ptr, memspace, type, name)
         val typePair = this.getOrPut(memspace, ::hashMapOf).getOrPut(name) {
             hashMapOf<Term, Term>() to hashMapOf()
         }
@@ -147,6 +146,7 @@ class BoolectorSolver(val tf: TypeFactory) : AbstractSMTSolver {
 
         val memories = hashMapOf<Int, Pair<MutableMap<Term, Term>, MutableMap<Term, Term>>>()
         val properties = hashMapOf<Int, MutableMap<String, Pair<MutableMap<Term, Term>, MutableMap<Term, Term>>>>()
+        val arrays = hashMapOf<Int, MutableMap<Term, Pair<MutableMap<Term, Term>, MutableMap<Term, Term>>>>()
         val typeMap = hashMapOf<Term, KexType>()
 
         for ((type, value) in ef.typeMap) {
@@ -158,7 +158,45 @@ class BoolectorSolver(val tf: TypeFactory) : AbstractSMTSolver {
             val memspace = ptr.memspace
 
             when (ptr) {
-                is FieldLoadTerm -> {}
+                is ArrayLoadTerm -> {
+                }
+                is ArrayIndexTerm -> {
+                    val arrayPtrExpr = BoolectorConverter(tf).convert(ptr.arrayRef, ef, ctx) as? Ptr_
+                        ?: unreachable { log.error("Non-ptr expr for pointer $ptr") }
+                    val indexExpr = BoolectorConverter(tf).convert(ptr.index, ef, ctx) as? Int_
+                        ?: unreachable { log.error("Non integer expr for index in $ptr") }
+
+                    val modelPtr = BoolectorUnlogic.undo(arrayPtrExpr.expr)
+                    val modelIndex = BoolectorUnlogic.undo(indexExpr.expr)
+
+                    val modelStartArray = ctx.readArrayInitialMemory(arrayPtrExpr, memspace)
+                    val modelArray = ctx.readArrayMemory(arrayPtrExpr, memspace)
+
+                    val cast = { arrayVal: DWord_ ->
+                        when (BoolectorExprFactory.getTypeSize((ptr.arrayRef.type as KexArray).element)) {
+                            TypeSize.WORD -> Word_.forceCast(arrayVal)
+                            TypeSize.DWORD -> arrayVal
+                        }
+                    }
+                    val initialValue = BoolectorUnlogic.undo(
+                        cast(
+                            DWord_.forceCast(modelStartArray.load(indexExpr))
+                        ).expr
+                    )
+                    val value = BoolectorUnlogic.undo(
+                        cast(
+                            DWord_.forceCast(modelArray.load(indexExpr))
+                        ).expr
+                    )
+
+                    val arrayPair = arrays.getOrPut(memspace, ::hashMapOf).getOrPut(modelPtr) {
+                        hashMapOf<Term, Term>() to hashMapOf()
+                    }
+                    arrayPair.first[modelIndex] = initialValue
+                    arrayPair.second[modelIndex] = value
+                }
+                is FieldLoadTerm -> {
+                }
                 is FieldTerm -> {
                     val name = "${ptr.klass}.${ptr.fieldName}"
                     properties.recoverProperty(ctx, ptr.owner, memspace, (ptr.type as KexReference).reference, name)
@@ -184,7 +222,7 @@ class BoolectorSolver(val tf: TypeFactory) : AbstractSMTSolver {
 
                     properties.recoverProperty(ctx, ptr, memspace, ptr.type, "type")
 
-                    if (ptr.type is KexArray) {
+                    if (ptr.type.isArray) {
                         properties.recoverProperty(ctx, ptr, memspace, KexInt(), "length")
                     }
 

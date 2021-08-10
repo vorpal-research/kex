@@ -17,8 +17,13 @@ object MethodManager {
 
         init {
             ignorePackages.addAll(
-                kexConfig.getMultipleStringValue("inliner", "ignore", ",").map {
+                kexConfig.getMultipleStringValue("inliner", "ignorePackage", ",").map {
                     Package.parse(it)
+                }
+            )
+            ignoreClasses.addAll(
+                kexConfig.getMultipleStringValue("inliner", "ignoreClass", ",").map {
+                    it.replace(Package.CANONICAL_SEPARATOR, Package.SEPARATOR)
                 }
             )
             ignorePackages += Package.parse("org.jetbrains.research.kex.intrinsics.*")

@@ -25,6 +25,7 @@ fun Term.withMemspace(memspace: Int): Term {
             is FieldTerm -> tf.getField(memspaced, owner, fieldName)
             is NegTerm -> tf.getNegTerm(memspaced, operand)
             is ReturnValueTerm -> tf.getReturn(memspaced, method)
+            is SubstringTerm -> tf.getSubstring(memspaced, string, offset, length)
             is ToStringTerm -> tf.getToString(memspaced, value)
             is ValueTerm -> tf.getValue(memspaced, name)
             is UndefTerm -> tf.getUndef(memspaced)
