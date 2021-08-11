@@ -106,9 +106,10 @@ class StaticFieldInliner(
 
             return params.statics.map { descriptor ->
                 descriptor as ClassDescriptor
+                val kfgKlass = descriptor.klass.kfgClass(ctx.types)
                 descriptor.fields.mapKeys {
                     val (name, type) = it.key
-                    klass.getField(name, type.getKfgType(ctx.types))
+                    kfgKlass.getField(name, type.getKfgType(ctx.types))
                 }.filterKeys { it.isStatic && it.isFinal }.toList()
             }.flatten().toMap()
         }
