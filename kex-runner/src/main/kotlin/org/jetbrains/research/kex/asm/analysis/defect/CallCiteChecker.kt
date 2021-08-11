@@ -198,7 +198,7 @@ class CallCiteChecker(
 
     fun prepareState(ps: PredicateState, typeInfoMap: TypeInfoMap) = transform(ps) {
         +AnnotationAdapter(method, AnnotationManager.defaultLoader)
-        +StringAdapter(ctx)
+//        +StringAdapter(ctx)
         +RecursiveInliner(psa) { ConcreteImplInliner(method.cm.type, typeInfoMap, psa, inlineIndex = it) }
         +StaticFieldInliner(ctx, psa)
         +RecursiveInliner(psa) { MethodInliner(psa, inlineIndex = it) }
@@ -209,7 +209,7 @@ class CallCiteChecker(
         +Optimizer()
         +ConstantPropagator
         +BoolTypeAdapter(method.cm.type)
-//        +ConstStringAdapter()
+        +ConstStringAdapter()
         +FieldNormalizer(method.cm)
     }
 

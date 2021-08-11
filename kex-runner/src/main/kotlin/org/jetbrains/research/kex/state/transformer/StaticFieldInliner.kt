@@ -50,7 +50,7 @@ class StaticFieldInliner(
             ignores: Set<Term> = setOf()
         ) = transform(ps) {
             +AnnotationAdapter(method, AnnotationManager.defaultLoader)
-            +StringAdapter(ctx)
+//            +StringAdapter(ctx)
             +RecursiveConstructorInliner(psa)
             +IntrinsicAdapter
             +KexIntrinsicsAdapter()
@@ -60,6 +60,7 @@ class StaticFieldInliner(
             +BoolTypeAdapter(ctx.types)
             +ArrayBoundsAdapter()
             +NullityInfoAdapter()
+            +ConstStringAdapter()
             +FieldNormalizer(ctx.cm, ".state.normalized")
         }
 

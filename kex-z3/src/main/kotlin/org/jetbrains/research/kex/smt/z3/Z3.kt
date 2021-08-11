@@ -2,6 +2,8 @@ package org.jetbrains.research.kex.smt.z3
 
 import org.jetbrains.research.kex.smt.*
 
+const val generateStrings = false
+
 @SMTExpr(
     solver = "Z3",
     importPackage = "com.microsoft.z3",
@@ -9,7 +11,7 @@ import org.jetbrains.research.kex.smt.*
     expr = "Expr<*>",
     sort = "Sort",
     function = "FuncDecl<*>",
-    generateString = true
+    generateString = generateStrings
 )
 abstract class Z3SMTExpr
 
@@ -18,7 +20,7 @@ abstract class Z3SMTExpr
     importPackage = "com.microsoft.z3",
     context = "Context",
     byteSize = 32,
-    generateString = true
+    generateString = generateStrings
 )
 abstract class Z3SMTMemory
 
@@ -26,7 +28,7 @@ abstract class Z3SMTMemory
     solver = "Z3",
     importPackage = "com.microsoft.z3",
     context = "Context",
-    generateString = true
+    generateString = generateStrings
 )
 abstract class Z3SMTExprFactory
 
@@ -34,13 +36,13 @@ abstract class Z3SMTExprFactory
     solver = "Z3",
     importPackage = "com.microsoft.z3",
     context = "Context",
-    generateString = true
+    generateString = generateStrings
 )
 abstract class Z3SMTContext
 
 @SMTConverter(
     solver = "Z3",
     importPackage = "com.microsoft.z3",
-    generateString = true
+    generateString = generateStrings
 )
 abstract class Z3SMTConverter

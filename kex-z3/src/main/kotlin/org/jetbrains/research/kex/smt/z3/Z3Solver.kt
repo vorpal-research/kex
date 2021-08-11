@@ -257,13 +257,13 @@ class Z3Solver(val tf: TypeFactory) : AbstractSMTSolver {
                     memories.getValue(memspace).first[modelPtr] = modelStartV
                     memories.getValue(memspace).second[modelPtr] = modelEndV
                     if (ptr.type.isString) {
-                        val modelStartStr = ctx.readInitialStringMemory(ptrExpr, memspace)
-                        val modelStr = ctx.readStringMemory(ptrExpr, memspace)
-                        val startStringVal = Z3Unlogic.undo(model.evaluate(modelStartStr.expr, true))
-                        val stringVal = Z3Unlogic.undo(model.evaluate(modelStr.expr, true))
-                        strings.getOrPut(memspace) { hashMapOf<Term, Term>() to hashMapOf() }
-                        strings.getValue(memspace).first[modelPtr] = startStringVal
-                        strings.getValue(memspace).second[modelPtr] = stringVal
+//                        val modelStartStr = ctx.readInitialStringMemory(ptrExpr, memspace)
+//                        val modelStr = ctx.readStringMemory(ptrExpr, memspace)
+//                        val startStringVal = Z3Unlogic.undo(model.evaluate(modelStartStr.expr, true))
+//                        val stringVal = Z3Unlogic.undo(model.evaluate(modelStr.expr, true))
+//                        strings.getOrPut(memspace) { hashMapOf<Term, Term>() to hashMapOf() }
+//                        strings.getValue(memspace).first[modelPtr] = startStringVal
+//                        strings.getValue(memspace).second[modelPtr] = stringVal
                     } else if (ptr.type.isArray) {
                         properties.recoverProperty(ctx, ptr, memspace, KexInt(), model, "length")
                     }

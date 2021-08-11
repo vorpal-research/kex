@@ -259,13 +259,14 @@ class InstructionConcolicChecker(
 
     private fun prepareState(method: Method, state: PredicateState): PredicateState = transform(state) {
         +AnnotationAdapter(method, AnnotationManager.defaultLoader)
-        +StringAdapter(ctx)
+//        +StringAdapter(ctx)
         +IntrinsicAdapter
         +KexIntrinsicsAdapter()
         +ReflectionInfoAdapter(method, ctx.loader)
         +Optimizer()
         +ConstantPropagator
         +BoolTypeAdapter(method.cm.type)
+        +ConstStringAdapter()
         +FieldNormalizer(method.cm)
     }
 
