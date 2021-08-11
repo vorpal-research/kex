@@ -161,7 +161,7 @@ class ${solver}Converter(val tf: TypeFactory) : ${solver}SMTConverter() {
         val index = convert(indexTerm.index, ef, ctx) as? Int_ ?: unreachable { log.error("Non-int term in array index") }
         val value = convert(store.value, ef, ctx)
 
-        val type = (indexTerm.arrayRef.type.unreference() as KexArray).element
+        val type = (indexTerm.arrayRef.type.unreferenced() as KexArray).element
         var array = ctx.readInitialArrayMemory(ptr, memspace, type) as Array_
         array = array.store(listOf(index to value))
         ctx.initializeArrayMemory(ptr, memspace, type, array)
@@ -175,7 +175,7 @@ class ${solver}Converter(val tf: TypeFactory) : ${solver}SMTConverter() {
         val index = convert(indexTerm.index, ef, ctx) as? Int_ ?: unreachable { log.error("Non-int term in array index") }
         val value = convert(store.value, ef, ctx)
 
-        val type = (indexTerm.arrayRef.type.unreference() as KexArray).element
+        val type = (indexTerm.arrayRef.type.unreferenced() as KexArray).element
         var array = ctx.readArrayMemory(ptr, memspace, type) as Array_
         array = array.store(listOf(index to value))
         ctx.writeArrayMemory(ptr, memspace, type, array)
@@ -260,7 +260,7 @@ class ${solver}Converter(val tf: TypeFactory) : ${solver}SMTConverter() {
 
         val length = Int_.forceCast(convert(newarray.dimensions.fold(term { const(1) }) { acc: Term, term: Term -> term { acc * term} }, ef, ctx))
         val ptr = ctx.getLocalArray(memspace, length)
-        val elementType = (newarray.lhv.type.unreference() as KexArray).element
+        val elementType = (newarray.lhv.type.unreferenced() as KexArray).element
         val array = ef.makeDefaultArray(newarray.lhv.name, elementType, 0)
         ctx.writeArrayMemory(lhv, memspace, newarray.lhv.type, array as Array_)
 
@@ -320,7 +320,7 @@ class ${solver}Converter(val tf: TypeFactory) : ${solver}SMTConverter() {
         val ptr = convert(indexTerm.arrayRef, ef, ctx) as? Ptr_ ?: unreachable { log.error("Non-ptr ref term in `initializer`") }
         val index = convert(indexTerm.index, ef, ctx) as? Int_ ?: unreachable { log.error("Non-int term in array index") }
 
-        val type = (indexTerm.arrayRef.type.unreference() as KexArray).element
+        val type = (indexTerm.arrayRef.type.unreferenced() as KexArray).element
         val array = ctx.readArrayMemory(ptr, memspace, type) as Array_
         val ret = array.load(index)
         return cast(arrayload.type, ret)
@@ -417,7 +417,7 @@ class ${solver}Converter(val tf: TypeFactory) : ${solver}SMTConverter() {
 
     fun convert(const: ConstClassTerm, ef: Factory_, ctx: Context_): Dynamic_ {
         val expr = ef.getVarByTypeAndName(const.type, const.name)
-        ef.addKlassPtr(const.constantType as KexClass, expr as Ptr_)
+        ef.addKlassPtr(const.constantType, expr as Ptr_)
         var res = const.withAxioms(expr, ef, ctx)
         res = res.withPtrAxioms(ef, ctx, TermType.STATIC_PTR)
         return res

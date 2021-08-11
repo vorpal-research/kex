@@ -57,7 +57,7 @@ class $factory : ${solver}SMTExprFactory() {
     val subtypeFunction: Function_
     private val innerTypeMap: MutableMap< KexType, Int_ >
     val typeMap: Map< KexType, Int_ > get() = innerTypeMap
-    private val innerKlassMap: MutableMap< KexClass, Ptr_ >
+    private val innerKlassMap: MutableMap< KexType, Ptr_ >
 
     init {
         engine.initialize()
@@ -213,8 +213,8 @@ class $factory : ${solver}SMTExprFactory() {
         return result
     }
 
-    fun addKlassPtr(klass: KexClass, ptr: Ptr_) {
-        innerKlassMap.getOrPut(klass.withoutMemspace() as KexClass) { ptr }
+    fun addKlassPtr(klass: KexType, ptr: Ptr_) {
+        innerKlassMap.getOrPut(klass.unmemspaced()) { ptr }
     }
 
     fun buildConstClassAxioms(): Bool_ {

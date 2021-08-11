@@ -132,7 +132,12 @@ class KexVoid : KexType() {
     }
 }
 
-fun KexType.unreference(): KexType = when (this) {
-    is KexReference -> reference.unreference()
+fun KexType.unreferenced(): KexType = when (this) {
+    is KexReference -> reference.unreferenced()
+    else -> this
+}
+
+fun KexType.unmemspaced(): KexType = when (this) {
+    is KexPointer -> this.withoutMemspace()
     else -> this
 }
