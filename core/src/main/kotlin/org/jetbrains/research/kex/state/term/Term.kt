@@ -10,7 +10,6 @@ import org.jetbrains.research.kthelper.assert.fail
 import org.jetbrains.research.kthelper.assert.unreachable
 import org.jetbrains.research.kthelper.defaultHashCode
 import org.jetbrains.research.kthelper.logging.log
-import org.jetbrains.research.kthelper.toInt
 
 @BaseType("Term")
 @Serializable
@@ -79,7 +78,6 @@ val Term.isConst
     }
 
 val Term.numericValue: Number get() = when (this) {
-    is ConstBoolTerm -> value.toInt()
     is ConstByteTerm -> value
     is ConstCharTerm -> value.code
     is ConstShortTerm -> value

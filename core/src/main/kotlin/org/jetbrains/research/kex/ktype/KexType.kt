@@ -131,8 +131,3 @@ class KexVoid : KexType() {
         return true
     }
 }
-
-fun KexType.unreference(): KexType = when (this) {
-    is KexReference -> reference.unreference()
-    else -> this
-}

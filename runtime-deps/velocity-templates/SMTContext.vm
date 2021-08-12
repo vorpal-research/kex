@@ -29,11 +29,7 @@ class VersionedMemory< T : Dynamic_ >(val memory: Memory_< T >, val version: Lon
     operator fun set(index: Ptr_, element: T) = store(index, element)
 }
 
-#set($memoryTypes = [])
-#foreach($baseMemoryType in $baseMemoryTypes)
-    #set($res = $memoryTypes.add($baseMemoryType))
-    #set($res = $memoryTypes.add("${baseMemoryType}Array"))
-#end
+#set($memoryTypes = ["Word", "DWord", "Array"])
 #if($generateString)
     #set($res = $memoryTypes.add("String"))
 #end
@@ -83,7 +79,7 @@ class MemoryContext(
 
 #foreach($type in $memoryTypes)
     fun get${type}Memory(id: String) =
-            ${type.toLowerCase()}Memories.getOrPut(id) { VersionedMemory(factory.makeEmpty${type}Memory(id)) }
+            ${type.toLowerCase()}Memories.getOrPut(id) { VersionedMemory(factory.makeEmptyMemory(id)) }
     fun get${type}Memory(id: String, getter: () -> VersionedMemory< ${type}_ >) =
             ${type.toLowerCase()}Memories.getOrPut(id, getter)
 #end
@@ -95,7 +91,6 @@ class MemoryContext(
 #end
 }
 
-@Suppress("UNCHECKED_CAST")
 #set($self = "${solver}Context")
 class $self : ${solver}SMTContext {
     companion object {
@@ -149,19 +144,19 @@ class $self : ${solver}SMTContext {
     constructor() : this($factory())
 
 #foreach($type in $memoryTypes)
-    fun getInitial${type}Property(memspace: Int, property: String) = getInitial${type}Memory("${ ${type}_PROPERTY_NAME }${ property }${ memspace }")
+    fun get${type}InitialProperty(memspace: Int, property: String) = get${type}InitialMemory("${ ${type}_PROPERTY_NAME }${ property }${ memspace }")
     fun get${type}Property(memspace: Int, property: String) = get${type}Memory("${ ${type}_PROPERTY_NAME }${ property }${ memspace }")
 
-    fun getInitial${type}Memory(memspace: Int) = getInitial${type}Memory("${ ${type}_MEMORY_NAME }${ memspace }")
+    fun get${type}InitialMemory(memspace: Int) = get${type}InitialMemory("${ ${type}_MEMORY_NAME }${ memspace }")
     fun get${type}Memory(memspace: Int) = get${type}Memory("${ ${type}_MEMORY_NAME }${ memspace }")
 
-    fun getInitial${type}Memory(id: String) =
-        initialMemory.get${type}Memory(id) { VersionedMemory(factory.makeEmpty${type}Memory(id)) }
+    fun get${type}InitialMemory(id: String) =
+        initialMemory.get${type}Memory(id) { VersionedMemory(factory.makeEmptyMemory(id)) }
 
     fun get${type}Memory(id: String) =
-        memories.get${type}Memory(id) { getInitial${type}Memory(id) }
+        memories.get${type}Memory(id) { get${type}InitialMemory(id) }
 
-    private fun setInitial${type}Memory(id: String, mem: VersionedMemory< ${type}_ >) =
+    private fun set${type}InitialMemory(id: String, mem: VersionedMemory< ${type}_ >) =
         initialMemory.set${type}Memory(id, mem)
 
     private fun set${type}Memory(id: String, mem: VersionedMemory< ${type}_ >) =
@@ -172,8 +167,8 @@ class $self : ${solver}SMTContext {
     fun read${type}Memory(ptr: Ptr_, memspace: Int) =
         get${type}Memory("${ ${type}_MEMORY_NAME }${ memspace }").load(ptr)
 
-    fun readInitial${type}Memory(ptr: Ptr_, memspace: Int) =
-        getInitial${type}Memory("${ ${type}_MEMORY_NAME }${ memspace }").load(ptr)
+    fun read${type}InitialMemory(ptr: Ptr_, memspace: Int) =
+        get${type}InitialMemory("${ ${type}_MEMORY_NAME }${ memspace }").load(ptr)
 
     fun write${type}Memory(ptr: Ptr_, memspace: Int, value: ${type}_) {
         val name = "${ ${type}_MEMORY_NAME }${ memspace }"
@@ -183,15 +178,15 @@ class $self : ${solver}SMTContext {
 
     fun initialize${type}Memory(ptr: Ptr_, memspace: Int, value: ${type}_) {
         val name = "${ ${type}_PROPERTY_NAME }${ memspace }"
-        val mem = getInitial${type}Memory(name).store(ptr, value)
+        val mem = get${type}InitialMemory(name).store(ptr, value)
         set${type}Memory(name, mem)
     }
 
     fun read${type}Property(ptr: Ptr_, memspace: Int, property: String) =
         get${type}Memory("${ ${type}_PROPERTY_NAME }${ property }${ memspace }").load(ptr)
 
-    fun readInitial${type}Property(ptr: Ptr_, memspace: Int, property: String) =
-        getInitial${type}Memory("${ ${type}_PROPERTY_NAME }${ property }${ memspace }").load(ptr)
+    fun read${type}InitialProperty(ptr: Ptr_, memspace: Int, property: String) =
+        get${type}InitialMemory("${ ${type}_PROPERTY_NAME }${ property }${ memspace }").load(ptr)
 
     fun write${type}Property(ptr: Ptr_, memspace: Int, property: String, value: ${type}_) {
         val name = "${ ${type}_PROPERTY_NAME }${ property }${ memspace }"
@@ -201,190 +196,10 @@ class $self : ${solver}SMTContext {
 
     fun initialize${type}Property(ptr: Ptr_, memspace: Int, property: String, value: ${type}_) {
         val name = "${ ${type}_PROPERTY_NAME }${ property }${ memspace }"
-        val mem = getInitial${type}Memory(name).store(ptr, value)
+        val mem = get${type}InitialMemory(name).store(ptr, value)
         set${type}Memory(name, mem)
     }
 #end
-
-    fun getInitialArrayMemory(memspace: Int, elementType: KexType) = when (elementType) {
-        is KexLong -> getInitialDWordArrayMemory(memspace)
-        is KexBool -> getInitialBoolArrayMemory(memspace)
-        is KexIntegral -> getInitialWordArrayMemory(memspace)
-        is KexFloat -> getInitialFloatArrayMemory(memspace)
-        is KexDouble -> getInitialDoubleArrayMemory(memspace)
-        is KexPointer -> getInitialWordArrayMemory(memspace)
-        else -> unreachable { log.error("Unexpected element type ${ elementType } in get initial array memory") }
-    }
-
-    fun getArrayMemory(memspace: Int, elementType: KexType) = when (elementType) {
-        is KexLong -> getDWordArrayMemory(memspace)
-        is KexBool -> getBoolArrayMemory(memspace)
-        is KexIntegral -> getWordArrayMemory(memspace)
-        is KexFloat -> getFloatArrayMemory(memspace)
-        is KexDouble -> getDoubleArrayMemory(memspace)
-        is KexPointer -> getWordArrayMemory(memspace)
-        else -> unreachable { log.error("Unexpected element type ${ elementType } in get array memory") }
-    }
-
-    fun readInitialArrayMemory(ptr: Ptr_, memspace: Int, elementType: KexType) = when (elementType) {
-        is KexLong -> readInitialDWordArrayMemory(ptr, memspace)
-        is KexBool -> readInitialBoolArrayMemory(ptr, memspace)
-        is KexIntegral -> readInitialWordArrayMemory(ptr, memspace)
-        is KexFloat -> readInitialFloatArrayMemory(ptr, memspace)
-        is KexDouble -> readInitialDoubleArrayMemory(ptr, memspace)
-        is KexPointer -> readInitialWordArrayMemory(ptr, memspace)
-        else -> unreachable { log.error("Unexpected element type ${ elementType } in read initial array memory") }
-    }
-
-    fun readArrayMemory(ptr: Ptr_, memspace: Int, elementType: KexType) = when (elementType) {
-        is KexLong -> readDWordArrayMemory(ptr, memspace)
-        is KexBool -> readBoolArrayMemory(ptr, memspace)
-        is KexIntegral -> readWordArrayMemory(ptr, memspace)
-        is KexFloat -> readFloatArrayMemory(ptr, memspace)
-        is KexDouble -> readDoubleArrayMemory(ptr, memspace)
-        is KexPointer -> readWordArrayMemory(ptr, memspace)
-        else -> unreachable { log.error("Unexpected type ${ elementType } in read array memory") }
-    }
-
-    fun initializeArrayMemory(ptr: Ptr_, memspace: Int, elementType: KexType, value: Array_) = when (elementType) {
-        is KexLong -> initializeDWordArrayMemory(ptr, memspace, value as DWordArray_)
-        is KexBool -> initializeBoolArrayMemory(ptr, memspace, value as BoolArray_)
-        is KexIntegral -> initializeWordArrayMemory(ptr, memspace, value as WordArray_)
-        is KexFloat -> initializeFloatArrayMemory(ptr, memspace, value as FloatArray_)
-        is KexDouble -> initializeDoubleArrayMemory(ptr, memspace, value as DoubleArray_)
-        is KexPointer -> initializeWordArrayMemory(ptr, memspace, value as WordArray_)
-        else -> unreachable { log.error("Unexpected type ${ elementType } in initialize array memory") }
-    }
-
-    fun writeArrayMemory(ptr: Ptr_, memspace: Int, elementType: KexType, value: Array_) = when (elementType) {
-        is KexLong -> writeDWordArrayMemory(ptr, memspace, value as DWordArray_)
-        is KexBool -> writeBoolArrayMemory(ptr, memspace, value as BoolArray_)
-        is KexIntegral -> writeWordArrayMemory(ptr, memspace, value as WordArray_)
-        is KexFloat -> writeFloatArrayMemory(ptr, memspace, value as FloatArray_)
-        is KexDouble -> writeDoubleArrayMemory(ptr, memspace, value as DoubleArray_)
-        is KexPointer -> writeWordArrayMemory(ptr, memspace, value as WordArray_)
-        else -> unreachable { log.error("Unexpected type ${ elementType } in write array memory") }
-    }
-
-    fun getInitialMemory(memspace: Int, type: KexType) = when (type) {
-        is KexLong -> getInitialDWordMemory(memspace)
-        is KexBool -> getInitialBoolMemory(memspace)
-        is KexIntegral -> getInitialWordMemory(memspace)
-        is KexFloat -> getInitialFloatMemory(memspace)
-        is KexDouble -> getInitialDoubleMemory(memspace)
-        is KexPointer -> getInitialWordMemory(memspace)
-        else -> unreachable { log.error("Unexpected type ${ type } in read memory") }
-    }
-
-    fun getMemory(memspace: Int, type: KexType) = when (type) {
-        is KexLong -> getDWordMemory(memspace)
-        is KexBool -> getBoolMemory(memspace)
-        is KexIntegral -> getWordMemory(memspace)
-        is KexFloat -> getFloatMemory(memspace)
-        is KexDouble -> getDoubleMemory(memspace)
-        is KexPointer -> getWordMemory(memspace)
-        else -> unreachable { log.error("Unexpected type ${ type } in read memory") }
-    }
-
-    fun readInitialMemory(ptr: Ptr_, memspace: Int, type: KexType) = when (type) {
-        is KexLong -> readInitialDWordMemory(ptr, memspace)
-        is KexBool -> readInitialBoolMemory(ptr, memspace)
-        is KexIntegral -> readInitialWordMemory(ptr, memspace)
-        is KexFloat -> readInitialFloatMemory(ptr, memspace)
-        is KexDouble -> readInitialDoubleMemory(ptr, memspace)
-        is KexPointer -> readInitialWordMemory(ptr, memspace)
-        else -> unreachable { log.error("Unexpected type ${ type } in read memory") }
-    }
-
-    fun readMemory(ptr: Ptr_, memspace: Int, type: KexType) = when (type) {
-        is KexLong -> readDWordMemory(ptr, memspace)
-        is KexBool -> readBoolMemory(ptr, memspace)
-        is KexIntegral -> readWordMemory(ptr, memspace)
-        is KexFloat -> readFloatMemory(ptr, memspace)
-        is KexDouble -> readDoubleMemory(ptr, memspace)
-        is KexPointer -> readWordMemory(ptr, memspace)
-        else -> unreachable { log.error("Unexpected type ${ type } in read memory") }
-    }
-
-    fun initializeMemory(ptr: Ptr_, memspace: Int, type: KexType, value: Dynamic_) = when (type) {
-        is KexLong -> initializeDWordMemory(ptr, memspace, value as DWord_)
-        is KexBool -> initializeBoolMemory(ptr, memspace, Bool_.forceCast(value))
-        is KexIntegral -> initializeWordMemory(ptr, memspace, value as Word_)
-        is KexFloat -> initializeFloatMemory(ptr, memspace, value as Float_)
-        is KexDouble -> initializeDoubleMemory(ptr, memspace, value as Double_)
-        is KexPointer -> initializeWordMemory(ptr, memspace, value as Word_)
-        else -> unreachable { log.error("Unexpected type ${ type } in read memory") }
-    }
-
-    fun writeMemory(ptr: Ptr_, memspace: Int, type: KexType, value: Dynamic_) = when (type) {
-        is KexLong -> writeDWordMemory(ptr, memspace, value as DWord_)
-        is KexBool -> writeBoolMemory(ptr, memspace, Bool_.forceCast(value))
-        is KexIntegral -> writeWordMemory(ptr, memspace, value as Word_)
-        is KexFloat -> writeFloatMemory(ptr, memspace, value as Float_)
-        is KexDouble -> writeDoubleMemory(ptr, memspace, value as Double_)
-        is KexPointer -> writeWordMemory(ptr, memspace, value as Word_)
-        else -> unreachable { log.error("Unexpected type ${ type } in read memory") }
-    }
-
-    fun getInitialProperty(memspace: Int, property: String, type: KexType) = when (type) {
-        is KexLong -> getInitialDWordProperty(memspace, property)
-        is KexBool -> getInitialBoolProperty(memspace, property)
-        is KexIntegral -> getInitialWordProperty(memspace, property)
-        is KexFloat -> getInitialFloatProperty(memspace, property)
-        is KexDouble -> getInitialDoubleProperty(memspace, property)
-        is KexPointer -> getInitialWordProperty(memspace, property)
-        else -> unreachable { log.error("Unexpected type ${ type } in read memory") }
-    }
-
-    fun getProperty(memspace: Int, property: String, type: KexType) = when (type) {
-        is KexLong -> getDWordProperty(memspace, property)
-        is KexBool -> getBoolProperty(memspace, property)
-        is KexIntegral -> getWordProperty(memspace, property)
-        is KexFloat -> getFloatProperty(memspace, property)
-        is KexDouble -> getDoubleProperty(memspace, property)
-        is KexPointer -> getWordProperty(memspace, property)
-        else -> unreachable { log.error("Unexpected type ${ type } in read memory") }
-    }
-
-    fun readInitialProperty(ptr: Ptr_, memspace: Int, property: String, type: KexType) = when (type) {
-        is KexLong -> readInitialDWordProperty(ptr, memspace, property)
-        is KexBool -> readInitialBoolProperty(ptr, memspace, property)
-        is KexIntegral -> readInitialWordProperty(ptr, memspace, property)
-        is KexFloat -> readInitialFloatProperty(ptr, memspace, property)
-        is KexDouble -> readInitialDoubleProperty(ptr, memspace, property)
-        is KexPointer -> readInitialWordProperty(ptr, memspace, property)
-        else -> unreachable { log.error("Unexpected type ${ type } in read memory") }
-    }
-
-    fun readProperty(ptr: Ptr_, memspace: Int, property: String, type: KexType) = when (type) {
-        is KexLong -> readDWordProperty(ptr, memspace, property)
-        is KexBool -> readBoolProperty(ptr, memspace, property)
-        is KexIntegral -> readWordProperty(ptr, memspace, property)
-        is KexFloat -> readFloatProperty(ptr, memspace, property)
-        is KexDouble -> readDoubleProperty(ptr, memspace, property)
-        is KexPointer -> readWordProperty(ptr, memspace, property)
-        else -> unreachable { log.error("Unexpected type ${ type } in read memory") }
-    }
-
-    fun initializeProperty(ptr: Ptr_, memspace: Int, property: String, type: KexType, value: Dynamic_) = when (type) {
-        is KexLong -> initializeDWordProperty(ptr, memspace, property, value as DWord_)
-        is KexBool -> initializeBoolProperty(ptr, memspace, property, Bool_.forceCast(value))
-        is KexIntegral -> initializeWordProperty(ptr, memspace, property, value as Word_)
-        is KexFloat -> initializeFloatProperty(ptr, memspace, property, value as Float_)
-        is KexDouble -> initializeDoubleProperty(ptr, memspace, property, value as Double_)
-        is KexPointer -> initializeWordProperty(ptr, memspace, property, value as Word_)
-        else -> unreachable { log.error("Unexpected type ${ type } in read memory") }
-    }
-
-    fun writeProperty(ptr: Ptr_, memspace: Int, property: String, type: KexType, value: Dynamic_) = when (type) {
-        is KexLong -> writeDWordProperty(ptr, memspace, property, value as DWord_)
-        is KexBool -> writeBoolProperty(ptr, memspace, property, Bool_.forceCast(value))
-        is KexIntegral -> writeWordProperty(ptr, memspace, property, value as Word_)
-        is KexFloat -> writeFloatProperty(ptr, memspace, property, value as Float_)
-        is KexDouble -> writeDoubleProperty(ptr, memspace, property, value as Double_)
-        is KexPointer -> writeWordProperty(ptr, memspace, property, value as Word_)
-        else -> unreachable { log.error("Unexpected type ${ type } in read memory") }
-    }
 
     @Suppress("UNUSED_PARAMETER")
     fun getLocalPtr(memspace: Int): Ptr_ =

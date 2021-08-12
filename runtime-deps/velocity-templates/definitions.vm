@@ -31,4 +31,3 @@ import org.jetbrains.research.kthelper.assert.*
 #set($numClasses = [$Bitvector32, $Bitvector64, $Bitvector, $Float, $Double])
 
 #set($factory = "${solver}ExprFactory")
-#set($baseMemoryTypes = ["Bool", "Word", "DWord", "Float", "Double"])
