@@ -34,13 +34,6 @@
                "type": "org.jetbrains.research.kex.smt.z3.Value.StringValue",
                "value": "z3.log"
             }
-        },
-        {
-            "key": "smt.string_solver",
-            "value": {
-                "type": "org.jetbrains.research.kex.smt.z3.Value.StringValue",
-                "value": "z3str3"
-            }
         }
     ]
 }

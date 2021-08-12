@@ -367,10 +367,10 @@ object Z3Engine : SMTEngine<Context, Expr<*>, Sort, FuncDecl<*>, Pattern>() {
         ctx.mkInt2BV(WORD, ctx.mkLength<IntSort>(seq as Expr<SeqSort<BitVecSort>>))
 
     override fun prefixOf(ctx: Context, seq: Expr<*>, prefix: Expr<*>): Expr<*> =
-        ctx.mkPrefixOf<SeqSort<BitVecSort>>(prefix as Expr<SeqSort<BitVecSort>>, seq as Expr<SeqSort<BitVecSort>>)
+        ctx.mkPrefixOf<BoolSort>(prefix as Expr<SeqSort<BitVecSort>>, seq as Expr<SeqSort<BitVecSort>>)
 
     override fun suffixOf(ctx: Context, seq: Expr<*>, suffix: Expr<*>): Expr<*> =
-        ctx.mkSuffixOf<SeqSort<BitVecSort>>(suffix as Expr<SeqSort<BitVecSort>>, seq as Expr<SeqSort<BitVecSort>>)
+        ctx.mkSuffixOf<BoolSort>(suffix as Expr<SeqSort<BitVecSort>>, seq as Expr<SeqSort<BitVecSort>>)
 
     override fun at(ctx: Context, seq: Expr<*>, index: Expr<*>): Expr<*> =
         ctx.mkAt<SeqSort<BitVecSort>>(seq as Expr<SeqSort<BitVecSort>>, ctx.mkBV2Int(index as Expr<BitVecSort>, true))
@@ -383,13 +383,11 @@ object Z3Engine : SMTEngine<Context, Expr<*>, Sort, FuncDecl<*>, Pattern>() {
         )
 
     override fun indexOf(ctx: Context, seq: Expr<*>, subSeq: Expr<*>, offset: Expr<*>): Expr<*> =
-        ctx.mkInt2BV(
-            WORD, ctx.mkIndexOf<IntSort>(
-                seq as Expr<SeqSort<BitVecSort>>,
-                subSeq as Expr<SeqSort<BitVecSort>>,
-                ctx.mkBV2Int(offset as Expr<BitVecSort>, true)
-            )
-        )
+        ctx.mkInt2BV(WORD, ctx.mkIndexOf<SeqSort<BitVecSort>>(
+            seq as Expr<SeqSort<BitVecSort>>,
+            subSeq as Expr<SeqSort<BitVecSort>>,
+            ctx.mkBV2Int(offset as Expr<BitVecSort>, true)
+        ))
 
     override fun concat(ctx: Context, lhv: Expr<*>, rhv: Expr<*>): Expr<*> =
         ctx.mkConcat(lhv as Expr<SeqSort<BitVecSort>>, rhv as Expr<SeqSort<BitVecSort>>)
