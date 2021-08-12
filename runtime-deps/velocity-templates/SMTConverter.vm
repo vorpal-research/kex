@@ -281,7 +281,7 @@ class ${solver}Converter(val tf: TypeFactory) : ${solver}SMTConverter() {
 #set($terms = ["Argument", "ArrayIndex", "ArrayLength", "ArrayLoad", "Binary", "Call", "Cast", "CharAt", "Cmp", "Concat",
     "ConstBool", "ConstByte", "ConstChar", "ConstClass", "ConstDouble", "ConstFloat", "ConstInt", "ConstLong",
     "ConstShort", "ConstString", "EndsWith", "Equals", "IndexOf", "StartsWith", "StringContains", "StringLength",
-    "StringParse", "Substring", "ToString", "FieldLoad", "Field", "InstanceOf", "Neg", "Null", "ReturnValue", "Value", "Undef"])
+    "StringParse", "Substring", "ToString", "FieldLoad", "Field", "InstanceOf", "Lambda", "Neg", "Null", "ReturnValue", "Value", "Undef"])
     fun convert(term: Term, ef: Factory_, ctx: Context_): Dynamic_ = when (term) {
 #foreach($term in $terms)
         is ${term}Term -> convert(term, ef, ctx)
@@ -493,6 +493,11 @@ class ${solver}Converter(val tf: TypeFactory) : ${solver}SMTConverter() {
         val checkedType = ef.getTypeVariable(tf, instanceof.checkedType)
         val isSubtype1 = ef.subtypeFunction.applyAs< Bool_ >(ptrType, checkedType)
         return isSubtype1
+    }
+
+    fun convert(lambda: LambdaTerm, ef: Factory_, ctx: Context_): Dynamic_ {
+        log.warn("Trying to convert lambda term which is not yet supported")
+        return ef.getVarByTypeAndName(lambda.type, lambda.name)
     }
 
     fun convert(neg: NegTerm, ef: Factory_, ctx: Context_): Dynamic_ {

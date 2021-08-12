@@ -12,16 +12,12 @@ import org.jetbrains.research.kex.state.predicate.Predicate
 import org.jetbrains.research.kex.state.predicate.assume
 import org.jetbrains.research.kex.state.predicate.state
 import org.jetbrains.research.kex.state.term.CallTerm
-import org.jetbrains.research.kex.state.term.LambdaTerm
 import org.jetbrains.research.kex.state.term.Term
 import org.jetbrains.research.kex.state.term.term
 import org.jetbrains.research.kex.util.asList
 import org.jetbrains.research.kfg.ir.Method
 import org.jetbrains.research.kfg.ir.value.instruction.ArrayStoreInst
-import org.jetbrains.research.kthelper.assert.unreachable
 import org.jetbrains.research.kthelper.collection.dequeOf
-import org.jetbrains.research.kthelper.collection.buildList
-import org.jetbrains.research.kthelper.logging.log
 
 class KexIntrinsicsAdapter : RecollectingTransformer<KexIntrinsicsAdapter> {
     override val builders = dequeOf(StateBuilder())
@@ -135,6 +131,6 @@ class KexIntrinsicsAdapter : RecollectingTransformer<KexIntrinsicsAdapter> {
                 }
             }
         }
-        else -> unreachable { log.error("Unknown intrinsics method $method") }
+        else -> nothing()
     }.asList()
 }
