@@ -5,9 +5,10 @@ package org.jetbrains.research.kex.test.debug
 import org.jetbrains.research.kex.intrinsics.CollectionIntrinsics
 
 class BasicTests {
-    fun test(a: IntArray) {
+    fun test(a: IntArray): Int {
         if (CollectionIntrinsics.containsInt(a, 3)) {
-            error("a")
+            return 1
         }
+        return 0
     }
 }

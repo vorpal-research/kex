@@ -4,17 +4,15 @@ import org.jetbrains.research.kex.asm.manager.MethodManager
 import org.jetbrains.research.kex.ktype.KexArray
 import org.jetbrains.research.kex.ktype.KexBool
 import org.jetbrains.research.kex.ktype.KexInt
-import org.jetbrains.research.kex.ktype.KexVoid
+import org.jetbrains.research.kex.state.PredicateState
 import org.jetbrains.research.kex.state.StateBuilder
 import org.jetbrains.research.kex.state.basic
+import org.jetbrains.research.kex.state.emptyState
 import org.jetbrains.research.kex.state.predicate.CallPredicate
 import org.jetbrains.research.kex.state.predicate.Predicate
-import org.jetbrains.research.kex.state.predicate.assume
-import org.jetbrains.research.kex.state.predicate.state
 import org.jetbrains.research.kex.state.term.CallTerm
 import org.jetbrains.research.kex.state.term.Term
 import org.jetbrains.research.kex.state.term.term
-import org.jetbrains.research.kex.util.asList
 import org.jetbrains.research.kfg.ir.Method
 import org.jetbrains.research.kfg.ir.value.instruction.ArrayStoreInst
 import org.jetbrains.research.kthelper.collection.dequeOf
@@ -37,100 +35,105 @@ class KexIntrinsicsAdapter : RecollectingTransformer<KexIntrinsicsAdapter> {
 
         val method = call.method
         val cm = method.cm
-        val predicates = when (call.method.klass) {
+        val ps = when (call.method.klass) {
             kim.assertionsIntrinsics(cm) -> assertionIntrinsicsAdapter(method, call)
-            kim.collectionIntrinsics(cm) -> collectionIntrinsicsAdapter(method, call)
-            else -> listOf()
+            kim.collectionIntrinsics(cm) -> collectionIntrinsicsAdapter(method, call) { predicate.lhv }
+            else -> emptyState()
         }
-        for (assertion in predicates) {
-            currentBuilder += assertion
-        }
+        currentBuilder += ps
         return when {
-            predicates.isEmpty() -> predicate
+            ps.isEmpty -> predicate
             else -> nothing()
         }
     }
 
-    private fun assertionIntrinsicsAdapter(method: Method, call: CallTerm): List<Predicate> = when (method) {
-        kim.kexAssume(method.cm) -> {
-            val assertions = getAllAssertions(method, call.arguments[0])
-            assertions.map {
-                assume { it equality true }
+    private fun assertionIntrinsicsAdapter(method: Method, call: CallTerm): PredicateState = basic {
+        when (method) {
+            kim.kexAssume(method.cm) -> {
+                val assertions = getAllAssertions(method, call.arguments[0])
+                assertions.map {
+                    assume { it equality true }
+                }
             }
+            kim.kexNotNull(method.cm) -> {
+                val value = call.arguments[0]
+                val term = term { generate(KexBool()) }
+                listOf(
+                    state { term equality (value eq null) },
+                    assume { term equality false }
+                )
+            }
+            else -> nothing()
         }
-        kim.kexNotNull(method.cm) -> {
-            val value = call.arguments[0]
-            val term = term { generate(KexBool()) }
-            listOf(
-                state { term equality (value eq null) },
-                assume { term equality false }
-            )
-        }
-        else -> emptyList()
     }
 
-    private fun collectionIntrinsicsAdapter(method: Method, call: CallTerm): List<Predicate> = when (method) {
-        kim.kexForEach(method.cm) -> state {
-            forEach(call.arguments[0], call.arguments[1], call.arguments[3])
-        }
-        kim.kexArrayCopy(method.cm) -> state {
-            forEach(const(0), call.arguments[4]) {
-                val index = value(KexInt(), "ind")
-                lambda(KexVoid(), listOf(index)) {
-                    val srcIndex = value(KexInt(), "srcInd")
-                    val dstIndex = value(KexInt(), "dstInd")
-                    val copyValue = value(KexInt(), "value")
-                    basic {
-                        state {
-                            srcIndex equality (index + call.arguments[1])
-                        }
-                        state {
-                            dstIndex equality (index + call.arguments[3])
-                        }
-                        state {
-                            copyValue equality call.arguments[0][srcIndex].load()
-                        }
-                        state {
-                            call.arguments[2][dstIndex].store(copyValue)
+    private fun collectionIntrinsicsAdapter(method: Method, call: CallTerm, lhv: () -> Term): PredicateState = basic {
+        when (method) {
+            kim.kexForAll(method.cm) -> state {
+                lhv() equality forAll(call.arguments[0], call.arguments[1], call.arguments[3])
+            }
+            in kim.kexContainsMethods(method.cm) -> {
+                val (array, value) = call.arguments
+                val start = const(0)
+                val length = generate(KexInt())
+                state {
+                    length equality array.length()
+                }
+                state {
+                    lhv() equality forAll(start, length) {
+                        val index = value(KexInt(), "ind")
+                        lambda(KexBool(), listOf(index)) {
+                            val currentElement = value((array.type as KexArray).element, "current")
+                            val result = value(KexBool(), "equality")
+                            basic {
+                                state {
+                                    currentElement equality array[index].load()
+                                }
+                                state {
+                                    result equality (currentElement eq value)
+                                }
+                            }
                         }
                     }
                 }
+                val temp = generate(KexBool())
+                state {
+                    temp equality (length gt 0)
+                }
+                assume {
+                    temp equality true
+                }
             }
-        }
-        in kim.kexContainsMethods(method.cm) -> state {
-            val (array, value) = call.arguments
-            val start = const(0)
-            val end = array.length()
-            forEach(start, end) {
-                val index = value(KexInt(), "ind")
-                lambda(KexBool(), listOf(index)) {
-                    val currentElement = value((array.type as KexArray).element, "current")
-                    val result = value(KexBool(), "equality")
-                    basic {
-                        state {
-                            result equality (currentElement eq value)
+            kim.kexContains(method.cm) -> {
+                val (array, value) = call.arguments
+                val start = const(0)
+                val length = generate(KexInt())
+                state {
+                    length equality array.length()
+                }
+                state {
+                    lhv() equality forAll(start, length) {
+                        val index = value(KexInt(), "ind")
+                        lambda(KexBool(), listOf(index)) {
+                            val currentElement = value((array.type as KexArray).element, "current")
+                            val result = value(KexBool(), "equality")
+                            basic {
+                                state {
+                                    result equality (currentElement equls value)
+                                }
+                            }
                         }
                     }
                 }
-            }
-        }
-        kim.kexContains(method.cm) -> state {
-            val (array, value) = call.arguments
-            val start = const(0)
-            val end = array.length()
-            forEach(start, end) {
-                val index = value(KexInt(), "ind")
-                lambda(KexBool(), listOf(index)) {
-                    val currentElement = value((array.type as KexArray).element, "current")
-                    val result = value(KexBool(), "equality")
-                    basic {
-                        state {
-                            result equality (currentElement equls value)
-                        }
-                    }
+                val temp = generate(KexBool())
+                state {
+                    temp equality (length gt 0)
+                }
+                assume {
+                    temp equality true
                 }
             }
+            else -> nothing()
         }
-        else -> nothing()
-    }.asList()
+    }
 }

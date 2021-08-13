@@ -3,10 +3,7 @@ package org.jetbrains.research.kex.state.transformer
 import org.jetbrains.research.kex.ExecutionContext
 import org.jetbrains.research.kex.ktype.*
 import org.jetbrains.research.kex.state.StateBuilder
-import org.jetbrains.research.kex.state.predicate.CallPredicate
-import org.jetbrains.research.kex.state.predicate.Predicate
-import org.jetbrains.research.kex.state.predicate.PredicateBuilder
-import org.jetbrains.research.kex.state.predicate.predicate
+import org.jetbrains.research.kex.state.predicate.*
 import org.jetbrains.research.kex.state.term.CallTerm
 import org.jetbrains.research.kex.state.term.Term
 import org.jetbrains.research.kex.state.term.term
@@ -105,16 +102,20 @@ class StringAdapter(val ctx: ExecutionContext) : RecollectingTransformer<StringA
         charArray: Term,
         offset: Term = term { const(0) }
     ) = buildList<Predicate> {
+        val res = term { generate(KexBool()) }
         +remap(predicate) {
-            forEach(offset, charArray.length()) {
+            res equality forAll(offset, charArray.length()) {
                 val lambdaParam = generate(KexInt())
-                lambda(KexVoid(), listOf(lambdaParam)) {
+                lambda(KexBool(), listOf(lambdaParam)) {
                     state {
                         `this`.charAt(lambdaParam) equality charArray[lambdaParam].load()
                     }
                     apply()
                 }
             }
+        }
+        +assume {
+            res equality true
         }
     }
 

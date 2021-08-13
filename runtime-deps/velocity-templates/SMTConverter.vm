@@ -146,7 +146,7 @@ class ${solver}Converter(val tf: TypeFactory) : ${solver}SMTConverter() {
     }
 
 #set($predicates = ["ArrayInitializer", "ArrayStore", "Call", "Catch", "DefaultSwitch", "Inequality", "EnterMonitor",
-    "Equality", "ExitMonitor", "FieldInitializer", "FieldStore", "ForEach", "NewArray", "New", "Throw"])
+    "Equality", "ExitMonitor", "FieldInitializer", "FieldStore", "NewArray", "New", "Throw"])
     fun convert(predicate: Predicate, ef: Factory_, ctx: Context_): Bool_ = when (predicate) {
 #foreach($predicate in $predicates)
         is ${predicate}Predicate -> convert(predicate, ef, ctx)
@@ -241,23 +241,6 @@ class ${solver}Converter(val tf: TypeFactory) : ${solver}SMTConverter() {
         return ef.makeTrue()
     }
 
-    fun convert(forEach: ForEachPredicate, ef: Factory_, ctx: Context_): Bool_ {
-        val start = convert(forEach.start, ef, ctx) as Int_
-        val end = convert(forEach.end, ef, ctx) as Int_
-
-        return ef.forAll({
-            listOf(ef.makeIntConst(0))
-            }) { params ->
-                val index = params[0] as Int_
-            if_ { start le index and index lt start }
-                .then_ {
-                    convert(forEach.body, ef, ctx) as Bool_
-                }.else_ {
-                    ef.makeTrue()
-                }
-        }
-    }
-
     fun convert(newarray: NewArrayPredicate, ef: Factory_, ctx: Context_): Bool_ {
         val memspace = newarray.lhv.memspace
         val lhv = convert(newarray.lhv, ef, ctx) as? Ptr_ ?: unreachable { log.error("Non-ptr term in `new`") }
@@ -284,7 +267,7 @@ class ${solver}Converter(val tf: TypeFactory) : ${solver}SMTConverter() {
 #set($terms = ["Argument", "ArrayIndex", "ArrayLength", "ArrayLoad", "Binary", "Call", "Cast", "CharAt", "Cmp", "Concat",
     "ConstBool", "ConstByte", "ConstChar", "ConstClass", "ConstDouble", "ConstFloat", "ConstInt", "ConstLong",
     "ConstShort", "ConstString", "EndsWith", "Equals", "IndexOf", "StartsWith", "StringContains", "StringLength",
-    "StringParse", "Substring", "ToString", "FieldLoad", "Field", "InstanceOf", "Lambda", "Neg", "Null", "ReturnValue", "Value", "Undef"])
+    "StringParse", "Substring", "ToString", "FieldLoad", "ForAll", "Field", "InstanceOf", "Lambda", "Neg", "Null", "ReturnValue", "Value", "Undef"])
     fun convert(term: Term, ef: Factory_, ctx: Context_): Dynamic_ = when (term) {
 #foreach($term in $terms)
         is ${term}Term -> convert(term, ef, ctx)
@@ -477,6 +460,23 @@ class ${solver}Converter(val tf: TypeFactory) : ${solver}SMTConverter() {
     fun convert(field: FieldTerm, ef: Factory_, ctx: Context_): Dynamic_ =
         convert(field.owner, ef, ctx)
 
+    fun convert(forAll: ForAllTerm, ef: Factory_, ctx: Context_): Bool_ {
+        val start = convert(forAll.start, ef, ctx) as Int_
+        val end = convert(forAll.end, ef, ctx) as Int_
+
+        return ef.forAll({
+                listOf(ef.makeIntConst(0))
+            }) { params ->
+                val index = Int_.forceCast(params[0])
+            if_ { (start le index) and (index lt end) }
+                .then_ {
+                    convert(forAll.body, ef, ctx) as Bool_
+                }.else_ {
+                    ef.makeTrue()
+                }
+        }
+    }
+
     fun convert(indexOf: IndexOfTerm, ef: Factory_, ctx: Context_): Dynamic_ {
 #if($generateString)
         val stringPtr = convert(indexOf.string, ef, ctx) as Ptr_
@@ -501,8 +501,9 @@ class ${solver}Converter(val tf: TypeFactory) : ${solver}SMTConverter() {
     }
 
     fun convert(lambda: LambdaTerm, ef: Factory_, ctx: Context_): Dynamic_ {
-        log.warn("Trying to convert lambda term which is not yet supported")
-        return ef.getVarByTypeAndName(lambda.type, lambda.name)
+##        log.warn("Trying to convert lambda term which is not yet supported")
+##        return ef.getVarByTypeAndName(lambda.type, lambda.name)
+        return convert(lambda.body, ef, ctx)
     }
 
     fun convert(neg: NegTerm, ef: Factory_, ctx: Context_): Dynamic_ {

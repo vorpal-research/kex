@@ -29,6 +29,7 @@ enum class TypeSize (val int: Int) {
 
 private val engine = ${solver}Engine
 
+@Suppress("UNCHECKED_CAST")
 class $factory : ${solver}SMTExprFactory() {
     companion object {
 

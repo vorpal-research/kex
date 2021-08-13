@@ -162,7 +162,9 @@ object TermFactory {
 
     fun getStringLength(string: Term) = StringLengthTerm(string)
     fun getSubstring(string: Term, offset: Term, length: Term) = getSubstring(KexString(), string, offset, length)
-    fun getSubstring(type: KexType, string: Term, offset: Term, length: Term) = SubstringTerm(type, string, offset, length)
+    fun getSubstring(type: KexType, string: Term, offset: Term, length: Term) =
+        SubstringTerm(type, string, offset, length)
+
     fun getIndexOf(string: Term, substring: Term, offset: Term) = IndexOfTerm(string, substring, offset)
     fun getCharAt(string: Term, index: Term) = CharAtTerm(string, index)
     fun getStringContains(string: Term, substring: Term): Term = StringContainsTerm(string, substring)
@@ -172,7 +174,13 @@ object TermFactory {
     fun getStartsWith(string: Term, prefix: Term): Term = StartsWithTerm(string, prefix)
     fun getEndsWith(string: Term, suffix: Term): Term = EndsWithTerm(string, suffix)
 
-    fun getLambda(type: KexType,  params: List<Term>, body: PredicateState) = LambdaTerm(type, params, body)
+    fun getLambda(type: KexType, params: List<Term>, body: PredicateState) = LambdaTerm(type, params, body)
+
+    fun getForAll(
+        start: Term,
+        end: Term,
+        body: Term
+    ) = ForAllTerm(start, end, body)
 }
 
 abstract class TermBuilder {
@@ -350,6 +358,17 @@ abstract class TermBuilder {
 
     fun lambda(type: KexType, vararg params: Term, body: PredicateState) =
         tf.getLambda(type, params.toList(), body)
+
+    fun forAll(start: Term, end: Term, body: Term) = tf.getForAll(start, end, body)
+    fun forAll(start: Term, end: Term, body: TermBuilder.() -> Term) = forAll(start, end, body())
+    fun forAll(start: Int, end: Int, body: Term) = (start..end).forAll(body)
+    fun forAll(start: Int, end: Int, body: TermBuilder.() -> Term) = forAll(start, end, body())
+    fun forAll(start: Int, end: Term, body: TermBuilder.() -> Term) = forAll(const(start), end, body())
+    fun forAll(start: Int, end: Term, body: Term) = forAll(const(start), end, body)
+    fun forAll(start: Term, end: Int, body: Term) = forAll(start, const(end), body)
+    fun forAll(start: Term, end: Int, body: TermBuilder.() -> Term) = forAll(start, const(end), body())
+    fun IntRange.forAll(body: Term) = forAll(const(start), const(last), body)
+    fun IntRange.forAll(body: TermBuilder.() -> Term) = forAll(const(start), const(last), body)
 
     object Terms : TermBuilder()
 }

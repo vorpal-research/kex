@@ -85,6 +85,7 @@ object MethodManager {
         fun collectionIntrinsics(cm: ClassManager) = cm[collectionIntrinsics]
         fun unknownIntrinsics(cm: ClassManager) = cm[unknownIntrinsics]
         fun objectIntrinsics(cm: ClassManager) = cm[objectIntrinsics]
+        private fun getGenerator(cm: ClassManager, name: String) = cm["org/jetbrains/research/kex/intrinsics/internal/${name}Generator"]
 
         /**
          * assert intrinsics
@@ -288,22 +289,12 @@ object MethodManager {
         /**
          * collection intrinsics
          */
-        fun kexForEach(cm: ClassManager) = cm[collectionIntrinsics].getMethod(
-            "forEach",
-            cm.type.voidType,
+        fun kexForAll(cm: ClassManager) = cm[collectionIntrinsics].getMethod(
+            "forAll",
+            cm.type.boolType,
             cm.type.intType,
             cm.type.intType,
             cm["org/jetbrains/research/kex/intrinsics/internal/IntConsumer"].type
-        )
-
-        fun kexArrayCopy(cm: ClassManager) = cm[collectionIntrinsics].getMethod(
-            "arrayCopy",
-            cm.type.voidType,
-            cm.type.objectType,
-            cm.type.intType,
-            cm.type.objectType,
-            cm.type.intType,
-            cm.type.intType
         )
 
         fun kexContainsBool(cm: ClassManager) = cm[collectionIntrinsics].getMethod(
@@ -386,6 +377,71 @@ object MethodManager {
             kexContainsFloat(cm),
             kexContainsDouble(cm),
             kexContainsRef(cm)
+        )
+
+
+
+        fun kexGenerateBoolArray(cm: ClassManager) = cm[collectionIntrinsics].getMethod(
+            "generateBoolArray",
+            cm.type.boolType,
+            cm.type.boolType.asArray(cm.type),
+            getGenerator(cm, "Boolean").toType()
+        )
+
+        fun kexGenerateByteArray(cm: ClassManager) = cm[collectionIntrinsics].getMethod(
+            "generateByteArray",
+            cm.type.boolType,
+            cm.type.boolType.asArray(cm.type),
+            getGenerator(cm, "Boolean").toType()
+        )
+
+        fun kexGenerateCharArray(cm: ClassManager) = cm[collectionIntrinsics].getMethod(
+            "generateCharArray",
+            cm.type.boolType,
+            cm.type.boolType.asArray(cm.type),
+            getGenerator(cm, "Boolean").toType()
+        )
+
+        fun kexGenerateShortArray(cm: ClassManager) = cm[collectionIntrinsics].getMethod(
+            "generateShortArray",
+            cm.type.boolType,
+            cm.type.boolType.asArray(cm.type),
+            getGenerator(cm, "Boolean").toType()
+        )
+
+        fun kexGenerateIntArray(cm: ClassManager) = cm[collectionIntrinsics].getMethod(
+            "generateIntArray",
+            cm.type.boolType,
+            cm.type.boolType.asArray(cm.type),
+            getGenerator(cm, "Boolean").toType()
+        )
+
+        fun kexGenerateLongArray(cm: ClassManager) = cm[collectionIntrinsics].getMethod(
+            "generateLongArray",
+            cm.type.boolType,
+            cm.type.longType.asArray(cm.type),
+            cm.type.longType
+        )
+
+        fun kexGenerateFloatArray(cm: ClassManager) = cm[collectionIntrinsics].getMethod(
+            "generateFloatArray",
+            cm.type.boolType,
+            cm.type.floatType.asArray(cm.type),
+            cm.type.floatType
+        )
+
+        fun kexGenerateDoubleArray(cm: ClassManager) = cm[collectionIntrinsics].getMethod(
+            "generateDoubleArray",
+            cm.type.boolType,
+            cm.type.doubleType.asArray(cm.type),
+            cm.type.doubleType
+        )
+
+        fun kexGenerateObjectArray(cm: ClassManager) = cm[collectionIntrinsics].getMethod(
+            "generateObjectArray",
+            cm.type.boolType,
+            cm.type.objectType.asArray(cm.type),
+            cm.type.objectType
         )
     }
 }
