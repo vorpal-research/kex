@@ -13,6 +13,7 @@ import org.jetbrains.research.kfg.type.ClassType
 import org.jetbrains.research.kfg.type.Type
 import org.jetbrains.research.kfg.type.TypeFactory
 import org.jetbrains.research.kfg.type.NullType
+import org.jetbrains.research.kthelper.collection.dequeOf
 import java.util.*
 
 private typealias Factory_ = $factory
@@ -21,6 +22,7 @@ private typealias Context_ = ${solver}Context
 @Suppress("UNUSED_PARAMETER", "UNUSED_VARIABLE")
 class ${solver}Converter(val tf: TypeFactory) : ${solver}SMTConverter() {
     private var types: Set< Type > = setOf()
+    private val bounds = dequeOf< Map< Term, Dynamic_ >>()
 
     enum class TermType {
         LOCAL_PTR,
@@ -463,16 +465,21 @@ class ${solver}Converter(val tf: TypeFactory) : ${solver}SMTConverter() {
     fun convert(forAll: ForAllTerm, ef: Factory_, ctx: Context_): Bool_ {
         val start = convert(forAll.start, ef, ctx) as Int_
         val end = convert(forAll.end, ef, ctx) as Int_
+        val lambda = forAll.body as LambdaTerm
 
         return ef.forAll({
                 listOf(ef.makeIntConst(0))
             }) { params ->
-                val index = Int_.forceCast(params[0])
+            val paramMap = lambda.parameters.zip(params).toMap().mapValues { cast(it.key.type, it.value) }
+            bounds.push(paramMap)
+            val index = paramMap[lambda.parameters.first()]!!
             if_ { (start le index) and (index lt end) }
                 .then_ {
                     convert(forAll.body, ef, ctx) as Bool_
                 }.else_ {
                     ef.makeTrue()
+                }.also {
+                    bounds.pop()
                 }
         }
     }
@@ -619,6 +626,9 @@ class ${solver}Converter(val tf: TypeFactory) : ${solver}SMTConverter() {
     }
 
     fun convert(value: ValueTerm, ef: Factory_, ctx: Context_): Dynamic_ {
+        for (map in bounds) {
+            if (value in map) return map[value]!!;
+        }
         val expr = ef.getVarByTypeAndName(value.type, value.name)
         var res = value.withAxioms(expr, ef, ctx)
         if (value.name == "this") {

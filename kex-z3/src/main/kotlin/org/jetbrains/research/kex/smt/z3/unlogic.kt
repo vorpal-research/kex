@@ -106,6 +106,8 @@ object Z3Unlogic {
             expr.isBVSGE -> term { const(undo(expr.args[0]).numericValue >= undo(expr.args[1]).numericValue) }
             expr.isBVSGT -> term { const(undo(expr.args[0]).numericValue > undo(expr.args[1]).numericValue) }
             expr.isEq -> term { const(undo(expr.args[0]).numericValue == undo(expr.args[1]).numericValue) }
+            expr.isQuantifier -> term { const(true) }
+            expr.isNot -> term { const(!(undo(expr.args[0]) as ConstBoolTerm).value) }
             else -> unreachable { log.error("Trying to undo unknown") }
         }
     }

@@ -130,11 +130,27 @@ class ObjectReanimator(
         }
     }
 
+    private fun arrayLength(any: Any?) = when (any) {
+        is BooleanArray -> any.size
+        is ByteArray -> any.size
+        is CharArray -> any.size
+        is ShortArray -> any.size
+        is IntArray -> any.size
+        is LongArray -> any.size
+        is FloatArray -> any.size
+        is DoubleArray -> any.size
+        is kotlin.Array<*> -> any.size
+        else -> 0
+    }
+
     private fun reanimateArray(term: Term, addr: Term?): Any? {
         val address = (addr as? ConstIntTerm)?.value ?: return null
         if (address == 0) return null
 
         val instance = newArrayInstance(term.type as KexArray, addr)
+        for (i in 0 until arrayLength(instance)) {
+            reanimate(term { term[i] }, null)
+        }
         return memory(term.memspace, address, instance)
     }
 
@@ -251,6 +267,9 @@ class ObjectReanimator(
             is KexArray -> {
                 val memspace = term.memspace//referencedType.memspace
                 val instance = newArrayInstance(referencedType, addr)
+                for (i in 0 until arrayLength(instance)) {
+                    reanimate(term { term[i] }, null)
+                }
                 memory(memspace, address, instance)
             }
             else -> unreachable { log.error("Trying to recover reference pointer that is not pointer") }
@@ -336,12 +355,18 @@ abstract class DescriptorReanimator(
                             }
                         }
                     }
-                    is KexArray -> memory(term.memspace, address) {
-                        newArrayInstance(
-                            term.memspace,
-                            reanimatedType,
-                            addr
-                        )
+                    is KexArray -> {
+                        val res = memory(term.memspace, address) {
+                            newArrayInstance(
+                                term.memspace,
+                                reanimatedType,
+                                addr
+                            )
+                        } as ArrayDescriptor
+                        for (i in 0 until res.length) {
+                            reanimate(term { term[i] }, null)
+                        }
+                        res
                     }
                     else -> unreachable {
                         log.error("Type resolving failed: actual type: ${term.type}, resolved type: $reanimatedType")
@@ -361,7 +386,11 @@ abstract class DescriptorReanimator(
                     term.type
                 ) as? KexArray//(reanimateType(term.memspace, addr) ?: term.type) as? KexArray
                     ?: unreachable { log.error("Could not cast ${reanimateType(term.memspace, addr)} to array type") }
-                memory(term.memspace, address) { newArrayInstance(term.memspace, arrayType, addr) }
+                val res = memory(term.memspace, address) { newArrayInstance(term.memspace, arrayType, addr) } as ArrayDescriptor
+                for (i in 0 until res.length) {
+                    reanimate(term { term[i] }, null)
+                }
+                res
             }
         }
     }
@@ -442,8 +471,14 @@ abstract class DescriptorReanimator(
 
         when (val actualType = resolveType(term.memspace, addr, referencedType)) {
             is KexClass -> memory(term.memspace, address) { `object`(actualType) }
-            is KexArray -> memory(term.memspace, address) {
-                newArrayInstance(term.memspace, actualType, addr)
+            is KexArray -> {
+                val res = memory(term.memspace, address) {
+                    newArrayInstance(term.memspace, actualType, addr)
+                } as ArrayDescriptor
+                for (i in 0 until res.length) {
+                    reanimate(term { term[i] }, null)
+                }
+                res
             }
             else -> unreachable { log.error("Trying to recover reference pointer that is not pointer") }
         }

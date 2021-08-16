@@ -306,7 +306,7 @@ object Z3Engine : SMTEngine<Context, Expr<*>, Sort, FuncDecl<*>, Pattern>() {
 
         val bounds = sorts.asSequence().withIndex().map { (index, sort) -> makeBound(ctx, index, sort) }.toList()
         val realBody = body(bounds)
-        val names = (0..numArgs).map { "forall_bound_${numArgs - it - 1}" }.map { ctx.mkSymbol(it) }.toTypedArray()
+        val names = (0..numArgs).map { "forall_bound_${numArgs - it}" }.map { ctx.mkSymbol(it) }.toTypedArray()
         val sortsRaw = sorts.toTypedArray()
         return ctx.mkForall(sortsRaw, names, realBody as BoolExpr, 0, arrayOf(), arrayOf(), null, null)
     }

@@ -15,6 +15,7 @@ import org.jetbrains.research.kthelper.assert.ktassert
 import org.jetbrains.research.kthelper.assert.unreachable
 import org.jetbrains.research.kthelper.logging.debug
 import org.jetbrains.research.kthelper.logging.log
+import kotlin.math.max
 
 private val timeout = kexConfig.getIntValue("smt", "timeout", 3) * 1000
 private val logQuery = kexConfig.getBooleanValue("smt", "logQuery", false)
@@ -202,6 +203,7 @@ class Z3Solver(val tf: TypeFactory) : AbstractSMTSolver {
             typeMap[actualValue] = type
         }
 
+        val indices = hashSetOf<Term>()
         for (ptr in ptrs) {
             val memspace = ptr.memspace
 
@@ -287,7 +289,13 @@ class Z3Solver(val tf: TypeFactory) : AbstractSMTSolver {
 //                        strings.getValue(memspace).first[modelPtr] = startStringVal
 //                        strings.getValue(memspace).second[modelPtr] = stringVal
                     } else if (ptr.type.isArray) {
-                        properties.recoverProperty(ctx, ptr, memspace, KexInt(), model, "length")
+                        val (startLength, endLength) = properties.recoverProperty(ctx, ptr, memspace, KexInt(), model, "length")
+                        val maxLen = max(startLength.numericValue.toInt(), endLength.numericValue.toInt())
+                        for (i in 0 until maxLen) {
+                            val indexTerm = term { ptr[i] }
+                            if (indexTerm !in ptrs)
+                                indices += indexTerm
+                        }
                     }
 
                     properties.recoverProperty(ctx, ptr, memspace, ptr.type, model, "type")
@@ -295,6 +303,49 @@ class Z3Solver(val tf: TypeFactory) : AbstractSMTSolver {
                     ktassert(assignments.getOrPut(ptr) { modelPtr } == modelPtr)
                 }
             }
+        }
+        for (ptr in indices) {
+            ptr as ArrayIndexTerm
+            val memspace = ptr.memspace
+            val arrayPtrExpr = Z3Converter(tf).convert(ptr.arrayRef, ef, ctx) as? Ptr_
+                ?: unreachable { log.error("Non-ptr expr for pointer $ptr") }
+            val indexExpr = Z3Converter(tf).convert(ptr.index, ef, ctx) as? Int_
+                ?: unreachable { log.error("Non integer expr for index in $ptr") }
+
+            val modelPtr = Z3Unlogic.undo(model.evaluate(arrayPtrExpr.expr, true))
+            val modelIndex = Z3Unlogic.undo(model.evaluate(indexExpr.expr, true))
+
+            val modelStartArray = ctx.readArrayInitialMemory(arrayPtrExpr, memspace)
+            val modelArray = ctx.readArrayMemory(arrayPtrExpr, memspace)
+
+            val cast = { arrayVal: DWord_ ->
+                when (Z3ExprFactory.getTypeSize((ptr.arrayRef.type as KexArray).element)) {
+                    TypeSize.WORD -> Word_.forceCast(arrayVal)
+                    TypeSize.DWORD -> arrayVal
+                }
+            }
+            val initialValue = Z3Unlogic.undo(
+                model.evaluate(
+                    cast(
+                        DWord_.forceCast(modelStartArray.load(indexExpr))
+                    ).expr,
+                    true
+                )
+            )
+            val value = Z3Unlogic.undo(
+                model.evaluate(
+                    cast(
+                        DWord_.forceCast(modelArray.load(indexExpr))
+                    ).expr,
+                    true
+                )
+            )
+
+            val arrayPair = arrays.getOrPut(memspace, ::hashMapOf).getOrPut(modelPtr) {
+                hashMapOf<Term, Term>() to hashMapOf()
+            }
+            arrayPair.first[modelIndex] = initialValue
+            arrayPair.second[modelIndex] = value
         }
         return SMTModel(
             assignments,

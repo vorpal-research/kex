@@ -92,6 +92,9 @@ class KexIntrinsicsAdapter : RecollectingTransformer<KexIntrinsicsAdapter> {
                                 state {
                                     result equality (currentElement eq value)
                                 }
+                                require {
+                                    result equality true
+                                }
                             }
                         }
                     }
@@ -120,6 +123,9 @@ class KexIntrinsicsAdapter : RecollectingTransformer<KexIntrinsicsAdapter> {
                             basic {
                                 state {
                                     result equality (currentElement equls value)
+                                }
+                                require {
+                                    result equality true
                                 }
                             }
                         }
