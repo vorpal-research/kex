@@ -3,7 +3,6 @@ package org.jetbrains.research.kex.state.term
 import kotlinx.serialization.Serializable
 import org.jetbrains.research.kex.InheritorOf
 import org.jetbrains.research.kex.ktype.KexType
-import org.jetbrains.research.kex.state.PredicateState
 import org.jetbrains.research.kex.state.transformer.Transformer
 
 @InheritorOf("Term")
@@ -11,10 +10,10 @@ import org.jetbrains.research.kex.state.transformer.Transformer
 class LambdaTerm (
     override val type: KexType,
     val parameters: List<Term>,
-    val body: PredicateState
+    val body: Term
 ) : Term() {
     override val name: String
-        get() = "\\(${parameters.joinToString(", ")}) -> { ... }"
+        get() = "\\(${parameters.joinToString(", ")}) -> { $body }"
     override val subTerms: List<Term>
         get() = parameters
 

@@ -476,7 +476,7 @@ abstract class DescriptorReanimator(
                     newArrayInstance(term.memspace, actualType, addr)
                 } as ArrayDescriptor
                 for (i in 0 until res.length) {
-                    reanimate(term { term[i] }, null)
+                    reanimate(term { (term.load())[i] }, null)
                 }
                 res
             }

@@ -107,10 +107,7 @@ class StringAdapter(val ctx: ExecutionContext) : RecollectingTransformer<StringA
             res equality forAll(offset, charArray.length()) {
                 val lambdaParam = generate(KexInt())
                 lambda(KexBool(), listOf(lambdaParam)) {
-                    state {
-                        `this`.charAt(lambdaParam) equality charArray[lambdaParam].load()
-                    }
-                    apply()
+                    `this`.charAt(lambdaParam) eq charArray[lambdaParam].load()
                 }
             }
         }

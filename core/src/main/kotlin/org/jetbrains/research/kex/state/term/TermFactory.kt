@@ -1,8 +1,6 @@
 package org.jetbrains.research.kex.state.term
 
 import org.jetbrains.research.kex.ktype.*
-import org.jetbrains.research.kex.state.PredicateState
-import org.jetbrains.research.kex.state.StateBuilder
 import org.jetbrains.research.kfg.ir.Class
 import org.jetbrains.research.kfg.ir.Method
 import org.jetbrains.research.kfg.ir.value.*
@@ -174,13 +172,20 @@ object TermFactory {
     fun getStartsWith(string: Term, prefix: Term): Term = StartsWithTerm(string, prefix)
     fun getEndsWith(string: Term, suffix: Term): Term = EndsWithTerm(string, suffix)
 
-    fun getLambda(type: KexType, params: List<Term>, body: PredicateState) = LambdaTerm(type, params, body)
+    fun getLambda(type: KexType, params: List<Term>, body: Term) = LambdaTerm(type, params, body)
 
     fun getForAll(
         start: Term,
         end: Term,
         body: Term
     ) = ForAllTerm(start, end, body)
+
+    fun getIte(
+        type: KexType,
+        cond: Term,
+        trueValue: Term,
+        falseValue: Term
+    ) = IteTerm(type, cond, trueValue, falseValue)
 }
 
 abstract class TermBuilder {
@@ -197,6 +202,19 @@ abstract class TermBuilder {
     fun generate(type: KexType) = TermGenerator.nextTerm(type)
 
     fun `this`(type: KexType) = tf.getThis(type)
+
+    fun default(type: KexType) = when (type) {
+        is KexBool -> const(false)
+        is KexByte -> const(0.toByte())
+        is KexChar -> const(0.toChar())
+        is KexShort -> const(0.toShort())
+        is KexInt -> const(0)
+        is KexLong -> const(0L)
+        is KexFloat -> const(0.0f)
+        is KexDouble -> const(0.0)
+        is KexPointer -> const(null)
+        else -> unreachable { log.error("Unknown type $type") }
+    }
 
     fun arg(argument: Argument) = tf.getArgument(argument)
     fun arg(type: KexType, index: Int) = tf.getArgument(type, index)
@@ -346,17 +364,17 @@ abstract class TermBuilder {
     fun value(type: KexType, name: String) = tf.getValue(type, name)
     fun undef(type: KexType) = tf.getUndef(type)
 
-    fun lambda(type: KexType, params: List<Term>, bodyBuilder: StateBuilder.() -> PredicateState) =
-        lambda(type, params, StateBuilder().bodyBuilder())
+    fun lambda(type: KexType, params: List<Term>, bodyBuilder: TermBuilder.() -> Term) =
+        lambda(type, params, bodyBuilder())
 
-    fun lambda(type: KexType, params: List<Term>, body: PredicateState) =
+    fun lambda(type: KexType, params: List<Term>, body: Term) =
         tf.getLambda(type, params, body)
 
-    fun lambda(type: KexType, vararg params: Term, bodyBuilder: StateBuilder.() -> PredicateState) =
-        lambda(type, *params, body = StateBuilder().bodyBuilder())
+    fun lambda(type: KexType, vararg params: Term, bodyBuilder: TermBuilder.() -> Term) =
+        lambda(type, *params, body = bodyBuilder())
 
 
-    fun lambda(type: KexType, vararg params: Term, body: PredicateState) =
+    fun lambda(type: KexType, vararg params: Term, body: Term) =
         tf.getLambda(type, params.toList(), body)
 
     fun forAll(start: Term, end: Term, body: Term) = tf.getForAll(start, end, body)
@@ -369,6 +387,8 @@ abstract class TermBuilder {
     fun forAll(start: Term, end: Int, body: TermBuilder.() -> Term) = forAll(start, const(end), body())
     fun IntRange.forAll(body: Term) = forAll(const(start), const(last), body)
     fun IntRange.forAll(body: TermBuilder.() -> Term) = forAll(const(start), const(last), body)
+
+    fun ite(type: KexType, cond: Term, trueValue: Term, falseValue: Term) = tf.getIte(type, cond, trueValue, falseValue)
 
     object Terms : TermBuilder()
 }

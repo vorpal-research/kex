@@ -610,6 +610,25 @@ fun < Res : $valexpr > forall(ctx: $context, sortGen: () -> List< $valexpr >,
     return $Bool(ctx, eret, spliceAxioms(ctx, axioms))
 }
 
+fun lambda(
+    ctx: $context,
+    elementSortGen: () -> $valexpr,
+    sortGen: () -> List< $valexpr >,
+    func: (args: List< $valexpr >) -> $valexpr
+): $valexpr {
+    val elementSort = elementSortGen().getSort()
+    val sorts = sortGen().map{ it.getSort() }
+    val axioms = arrayListOf< $expr >()
+
+    val eret = engine.lambda(ctx, elementSort, sorts, { exprs: List< $expr > ->
+        val ret = func.invoke(exprs.map{ $valexpr(ctx, it) })
+        axioms.add(ret.axiom)
+        ret.expr
+    })
+    return $valexpr(ctx, eret, spliceAxioms(ctx, axioms))
+}
+
+
 inline fun < reified BV : $Bitvector > bvStaticBitSize(ctx: $context) = when (BV::class) {
     $Bitvector32::class -> ${Bitvector32}.getStaticBitSize(ctx)
     $Bitvector64::class -> ${Bitvector64}.getStaticBitSize(ctx)

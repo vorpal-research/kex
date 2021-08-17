@@ -55,6 +55,14 @@ object PredicateFactory {
         location: Location = Location()
     ) = FieldStorePredicate(field, value, type, location)
 
+    fun getGenerateArray(
+        lhv: Term,
+        length: Term,
+        generator: Term,
+        type: PredicateType = PredicateType.State(),
+        location: Location = Location()
+    ) = GenerateArrayPredicate(lhv, length, generator, type, location)
+
     fun getLoad(lhv: Term, loadTerm: Term, location: Location = Location()) =
         getEquality(lhv, loadTerm, location = location)
 
@@ -140,6 +148,9 @@ abstract class PredicateBuilder : TermBuilder() {
 
     fun enterMonitor(monitor: Term): Predicate = pf.getEnterMonitor(monitor, this@PredicateBuilder.type, location)
     fun exitMonitor(monitor: Term): Predicate = pf.getExitMonitor(monitor, this@PredicateBuilder.type, location)
+
+    fun generateArray(lhv: Term, length: Term, generator: Term) =
+        pf.getGenerateArray(lhv, length, generator, type, location)
 
     @Suppress("FunctionName")
     infix fun Term.`!in`(cases: List<Term>) =

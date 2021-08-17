@@ -364,6 +364,14 @@ object BoolectorEngine :
     ): BoolectorNode =
         BitvecNode.constBitvec(ctx, "1")
 
+    override fun lambda(
+        ctx: Btor,
+        elementSort: BoolectorSort,
+        sorts: List<BoolectorSort>,
+        body: (List<BoolectorNode>) -> BoolectorNode
+    ): BoolectorNode =
+        BitvecNode.`var`(elementSort.toBitvecSort(), "lambda", true)
+
     override fun getStringSort(ctx: Btor): BoolectorSort {
         TODO("Not yet implemented")
     }

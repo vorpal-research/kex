@@ -151,4 +151,10 @@ class $factory : ${solver}SMTExprFactory() {
 
     fun forAll(sortGen: () -> List< Dynamic_ >, func: (List< Dynamic_ >) -> Bool_, patternGenerator: (List< Dynamic_ >) -> List< Dynamic_ >): Bool_ =
         forall(ctx, sortGen, func, patternGenerator)
+
+    fun lambda(
+        elementSortGen: () -> Dynamic_,
+        sortGen: () -> List< Dynamic_ >,
+        func: (List< Dynamic_ >) -> Dynamic_
+    ): Dynamic_ = lambda(ctx, elementSortGen, sortGen, func)
 }

@@ -3,7 +3,7 @@
 package org.jetbrains.research.kex.trace.symbolic
 
 import org.jetbrains.research.kex.ExecutionContext
-import org.jetbrains.research.kex.asm.state.PredicateStateAnalysis
+import org.jetbrains.research.kex.asm.state.asTermExpr
 import org.jetbrains.research.kex.descriptor.*
 import org.jetbrains.research.kex.ktype.*
 import org.jetbrains.research.kex.parameters.Parameters
@@ -731,13 +731,12 @@ class SymbolicTraceBuilder(
                 term { value(type.kexType, "labmda_${lambdaBase.method.name}_$index") }
             }
 
-            val psa = PredicateStateAnalysis(cm)
-            val lambdaBody = psa.builder(lambdaBase.method).methodState
+            val expr = lambdaBase.method.asTermExpr()
                 ?: return log.error("Could not process ${kfgValue.print()}")
 
             termValue equality lambda(kfgValue.type.kexType, lambdaParameters) {
                 TermRenamer(".labmda.${lambdaBase.method.name}", argParameters.zip(lambdaParameters).toMap())
-                    .apply(lambdaBody)
+                    .transformTerm(expr)
             }
         }
 

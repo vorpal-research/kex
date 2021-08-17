@@ -328,6 +328,20 @@ object Z3Engine : SMTEngine<Context, Expr<*>, Sort, FuncDecl<*>, Pattern>() {
         return ctx.mkForall(sortsRaw, names, realBody as BoolExpr, 0, patterns, arrayOf(), null, null)
     }
 
+    override fun lambda(
+        ctx: Context,
+        elementSort: Sort,
+        sorts: List<Sort>, body: (List<Expr<*>>) -> Expr<*>
+    ): Expr<*> {
+        val numArgs = sorts.lastIndex
+
+        val bounds = sorts.asSequence().withIndex().map { (index, sort) -> makeBound(ctx, index, sort) }.toList()
+        val realBody = body(bounds)
+        val names = (0..numArgs).map { "lambda_bound_${numArgs - it}" }.map { ctx.mkSymbol(it) }.toTypedArray()
+        val sortsRaw = sorts.toTypedArray()
+        return ctx.mkLambda(sortsRaw, names, realBody)
+    }
+
     override fun getStringSort(ctx: Context): Sort = ctx.stringSort
 
     override fun isStringSort(ctx: Context, sort: Sort): Boolean = sort == ctx.stringSort

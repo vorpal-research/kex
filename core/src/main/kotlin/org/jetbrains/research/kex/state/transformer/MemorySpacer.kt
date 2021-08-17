@@ -23,6 +23,7 @@ fun Term.withMemspace(memspace: Int): Term {
             is ConstClassTerm -> tf.getClass(memspaced, constantType)
             is FieldLoadTerm -> tf.getFieldLoad(memspaced, field)
             is FieldTerm -> tf.getField(memspaced, owner, fieldName)
+            is LambdaTerm -> this@withMemspace
             is NegTerm -> tf.getNegTerm(memspaced, operand)
             is ReturnValueTerm -> tf.getReturn(memspaced, method)
             is SubstringTerm -> tf.getSubstring(memspaced, string, offset, length)
@@ -30,7 +31,7 @@ fun Term.withMemspace(memspace: Int): Term {
             is ValueTerm -> tf.getValue(memspaced, name)
             is UndefTerm -> tf.getUndef(memspaced)
             is NullTerm -> this@withMemspace
-            else -> this@withMemspace.also { log.warn("Memspacing unexpected term type: $this") }
+            else -> this@withMemspace.also { log.warn("Memspacing unexpected term type: ${this@withMemspace}") }
         }
     }
 }

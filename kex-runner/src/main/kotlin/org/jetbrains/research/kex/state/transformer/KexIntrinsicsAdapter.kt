@@ -1,7 +1,6 @@
 package org.jetbrains.research.kex.state.transformer
 
 import org.jetbrains.research.kex.asm.manager.MethodManager
-import org.jetbrains.research.kex.ktype.KexArray
 import org.jetbrains.research.kex.ktype.KexBool
 import org.jetbrains.research.kex.ktype.KexInt
 import org.jetbrains.research.kex.state.PredicateState
@@ -83,19 +82,7 @@ class KexIntrinsicsAdapter : RecollectingTransformer<KexIntrinsicsAdapter> {
                     lhv() equality forAll(start, length) {
                         val index = value(KexInt(), "ind")
                         lambda(KexBool(), listOf(index)) {
-                            val currentElement = value((array.type as KexArray).element, "current")
-                            val result = value(KexBool(), "equality")
-                            basic {
-                                state {
-                                    currentElement equality array[index].load()
-                                }
-                                state {
-                                    result equality (currentElement eq value)
-                                }
-                                require {
-                                    result equality true
-                                }
-                            }
+                            array[index].load() eq value
                         }
                     }
                 }
@@ -118,16 +105,7 @@ class KexIntrinsicsAdapter : RecollectingTransformer<KexIntrinsicsAdapter> {
                     lhv() equality forAll(start, length) {
                         val index = value(KexInt(), "ind")
                         lambda(KexBool(), listOf(index)) {
-                            val currentElement = value((array.type as KexArray).element, "current")
-                            val result = value(KexBool(), "equality")
-                            basic {
-                                state {
-                                    result equality (currentElement equls value)
-                                }
-                                require {
-                                    result equality true
-                                }
-                            }
+                            array[index].load() equls value
                         }
                     }
                 }
@@ -137,6 +115,11 @@ class KexIntrinsicsAdapter : RecollectingTransformer<KexIntrinsicsAdapter> {
                 }
                 assume {
                     temp equality true
+                }
+            }
+            in kim.kexGenerateArrayMethods(method.cm) -> {
+                state {
+                    generateArray(lhv(), call.arguments[0], call.arguments[1])
                 }
             }
             else -> nothing()

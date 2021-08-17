@@ -148,7 +148,7 @@ class ${solver}Converter(val tf: TypeFactory) : ${solver}SMTConverter() {
     }
 
 #set($predicates = ["ArrayInitializer", "ArrayStore", "Call", "Catch", "DefaultSwitch", "Inequality", "EnterMonitor",
-    "Equality", "ExitMonitor", "FieldInitializer", "FieldStore", "NewArray", "New", "Throw"])
+    "Equality", "ExitMonitor", "FieldInitializer", "FieldStore", "GenerateArray", "NewArray", "New", "Throw"])
     fun convert(predicate: Predicate, ef: Factory_, ctx: Context_): Bool_ = when (predicate) {
 #foreach($predicate in $predicates)
         is ${predicate}Predicate -> convert(predicate, ef, ctx)
@@ -157,8 +157,8 @@ class ${solver}Converter(val tf: TypeFactory) : ${solver}SMTConverter() {
     }
 
     fun convert(store: ArrayInitializerPredicate, ef: Factory_, ctx: Context_): Bool_ {
-        val memspace = store.arrayRef.memspace
         val indexTerm = store.arrayRef as? ArrayIndexTerm ?: unreachable { log.error("Non-index term in `initializer`") }
+        val memspace = indexTerm.arrayRef.memspace
         val ptr = convert(indexTerm.arrayRef, ef, ctx) as? Ptr_ ?: unreachable { log.error("Non-ptr ref term in `initializer`") }
         val index = convert(indexTerm.index, ef, ctx) as? Int_ ?: unreachable { log.error("Non-int term in array index") }
         val value = convert(store.value, ef, ctx)
@@ -170,8 +170,8 @@ class ${solver}Converter(val tf: TypeFactory) : ${solver}SMTConverter() {
     }
 
     fun convert(store: ArrayStorePredicate, ef: Factory_, ctx: Context_): Bool_ {
-        val memspace = store.arrayRef.memspace
         val indexTerm = store.arrayRef as? ArrayIndexTerm ?: unreachable { log.error("Non-index term in `initializer`") }
+        val memspace = store.arrayRef.memspace
         val ptr = convert(indexTerm.arrayRef, ef, ctx) as? Ptr_ ?: unreachable { log.error("Non-ptr ref term in `initializer`") }
         val index = convert(indexTerm.index, ef, ctx) as? Int_ ?: unreachable { log.error("Non-int term in array index") }
         val value = convert(store.value, ef, ctx)
@@ -243,6 +243,36 @@ class ${solver}Converter(val tf: TypeFactory) : ${solver}SMTConverter() {
         return ef.makeTrue()
     }
 
+    fun convert(generateArray: GenerateArrayPredicate, ef: Factory_, ctx: Context_): Bool_ {
+        val length = convert(generateArray.length, ef, ctx) as Int_
+        val memspace = generateArray.lhv.memspace
+        val lhv = convert(generateArray.lhv, ef, ctx) as? Ptr_ ?: unreachable { log.error("Non-ptr term in `new`") }
+        val generator = generateArray.generator as LambdaTerm
+
+        val ptr = ctx.getLocalArray(memspace, length)
+        val array = Dynamic_.wrap< Array_ >(ef.lambda(
+            { ef.makeLongConst(0) },
+            { listOf(ef.makeIntConst(0)) }
+        ) { params ->
+            val paramMap = generator.parameters.zip(params).toMap().mapValues { cast(it.key.type, it.value) }
+            bounds.push(paramMap)
+            val index = paramMap[generator.parameters.first()]!!
+            if_ { (ef.makeIntConst(0) le index) and (index lt length) }
+                .then_ {
+                    DWord_.forceCast(convert(generator.body, ef, ctx))
+                }.else_ {
+                    ef.makeLongConst(0)
+                }.also {
+                    bounds.pop()
+                }
+        })
+        ctx.writeArrayMemory(lhv, memspace, array)
+
+        val typeVar = ef.getTypeVariable(tf, generateArray.lhv.type)
+        ctx.writeWordProperty(lhv, memspace, "type", typeVar)
+        return lhv.withPtrAxioms(ef, ctx, TermType.LOCAL_PTR) eq ptr
+    }
+
     fun convert(newarray: NewArrayPredicate, ef: Factory_, ctx: Context_): Bool_ {
         val memspace = newarray.lhv.memspace
         val lhv = convert(newarray.lhv, ef, ctx) as? Ptr_ ?: unreachable { log.error("Non-ptr term in `new`") }
@@ -269,7 +299,8 @@ class ${solver}Converter(val tf: TypeFactory) : ${solver}SMTConverter() {
 #set($terms = ["Argument", "ArrayIndex", "ArrayLength", "ArrayLoad", "Binary", "Call", "Cast", "CharAt", "Cmp", "Concat",
     "ConstBool", "ConstByte", "ConstChar", "ConstClass", "ConstDouble", "ConstFloat", "ConstInt", "ConstLong",
     "ConstShort", "ConstString", "EndsWith", "Equals", "IndexOf", "StartsWith", "StringContains", "StringLength",
-    "StringParse", "Substring", "ToString", "FieldLoad", "ForAll", "Field", "InstanceOf", "Lambda", "Neg", "Null", "ReturnValue", "Value", "Undef"])
+    "StringParse", "Substring", "ToString", "FieldLoad", "ForAll", "Field", "InstanceOf", "Ite", "Lambda", "Neg",
+    "Null", "ReturnValue", "Value", "Undef"])
     fun convert(term: Term, ef: Factory_, ctx: Context_): Dynamic_ = when (term) {
 #foreach($term in $terms)
         is ${term}Term -> convert(term, ef, ctx)
@@ -303,8 +334,8 @@ class ${solver}Converter(val tf: TypeFactory) : ${solver}SMTConverter() {
     }
 
     fun convert(arrayload: ArrayLoadTerm, ef: Factory_, ctx: Context_): Dynamic_ {
-        val memspace = arrayload.arrayRef.memspace
         val indexTerm = arrayload.arrayRef as? ArrayIndexTerm ?: unreachable { log.error("Non-index term in `initializer`") }
+        val memspace = indexTerm.arrayRef.memspace
         val ptr = convert(indexTerm.arrayRef, ef, ctx) as? Ptr_ ?: unreachable { log.error("Non-ptr ref term in `initializer`") }
         val index = convert(indexTerm.index, ef, ctx) as? Int_ ?: unreachable { log.error("Non-int term in array index") }
 
@@ -507,9 +538,15 @@ class ${solver}Converter(val tf: TypeFactory) : ${solver}SMTConverter() {
         return isSubtype1
     }
 
+    fun convert(ite: IteTerm, ef: Factory_, ctx: Context_): Dynamic_ {
+        val cond = convert(ite.cond, ef, ctx) as Bool_
+        val lhv = convert(ite.trueValue, ef, ctx)
+        val rhv = convert(ite.falseValue, ef, ctx)
+
+        return cast(ite.type, `if`(cond).then(lhv).`else`(rhv))
+    }
+
     fun convert(lambda: LambdaTerm, ef: Factory_, ctx: Context_): Dynamic_ {
-##        log.warn("Trying to convert lambda term which is not yet supported")
-##        return ef.getVarByTypeAndName(lambda.type, lambda.name)
         return convert(lambda.body, ef, ctx)
     }
 

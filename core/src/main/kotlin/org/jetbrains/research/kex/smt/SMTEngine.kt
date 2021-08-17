@@ -131,6 +131,8 @@ abstract class SMTEngine<in Context_t : Any, Expr_t : Any, Sort_t : Any, Functio
     abstract fun forAll(ctx: Context_t, sorts: List<Sort_t>,
                         body: (List<Expr_t>) -> Expr_t, patternGenerator: (List<Expr_t>) -> List<Pattern_t>): Expr_t
 
+    abstract fun lambda(ctx: Context_t, elementSort: Sort_t, sorts: List<Sort_t>, body: (List<Expr_t>) -> Expr_t): Expr_t
+
     abstract fun contains(ctx: Context_t, seq: Expr_t, value: Expr_t): Expr_t
     abstract fun nths(ctx: Context_t, seq: Expr_t, index: Expr_t): Expr_t
     abstract fun length(ctx: Context_t, seq: Expr_t): Expr_t

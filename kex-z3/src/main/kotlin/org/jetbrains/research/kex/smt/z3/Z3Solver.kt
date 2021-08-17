@@ -218,8 +218,8 @@ class Z3Solver(val tf: TypeFactory) : AbstractSMTSolver {
                     val modelPtr = Z3Unlogic.undo(model.evaluate(arrayPtrExpr.expr, true))
                     val modelIndex = Z3Unlogic.undo(model.evaluate(indexExpr.expr, true))
 
-                    val modelStartArray = ctx.readArrayInitialMemory(arrayPtrExpr, memspace)
-                    val modelArray = ctx.readArrayMemory(arrayPtrExpr, memspace)
+                    val modelStartArray = ctx.readArrayInitialMemory(arrayPtrExpr, ptr.arrayRef.memspace)
+                    val modelArray = ctx.readArrayMemory(arrayPtrExpr, ptr.arrayRef.memspace)
 
                     val cast = { arrayVal: DWord_ ->
                         when (Z3ExprFactory.getTypeSize((ptr.arrayRef.type as KexArray).element)) {
@@ -244,7 +244,7 @@ class Z3Solver(val tf: TypeFactory) : AbstractSMTSolver {
                         )
                     )
 
-                    val arrayPair = arrays.getOrPut(memspace, ::hashMapOf).getOrPut(modelPtr) {
+                    val arrayPair = arrays.getOrPut(ptr.arrayRef.memspace, ::hashMapOf).getOrPut(modelPtr) {
                         hashMapOf<Term, Term>() to hashMapOf()
                     }
                     arrayPair.first[modelIndex] = initialValue
@@ -306,7 +306,7 @@ class Z3Solver(val tf: TypeFactory) : AbstractSMTSolver {
         }
         for (ptr in indices) {
             ptr as ArrayIndexTerm
-            val memspace = ptr.memspace
+            val memspace = ptr.arrayRef.memspace
             val arrayPtrExpr = Z3Converter(tf).convert(ptr.arrayRef, ef, ctx) as? Ptr_
                 ?: unreachable { log.error("Non-ptr expr for pointer $ptr") }
             val indexExpr = Z3Converter(tf).convert(ptr.index, ef, ctx) as? Int_

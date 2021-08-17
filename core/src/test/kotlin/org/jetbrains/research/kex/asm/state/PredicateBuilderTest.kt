@@ -5,12 +5,17 @@ import org.jetbrains.research.kex.asm.transform.LoopDeroller
 import org.jetbrains.research.kex.ktype.kexType
 import org.jetbrains.research.kex.state.predicate.*
 import org.jetbrains.research.kex.state.term.*
+import org.jetbrains.research.kex.state.transformer.TermRenamer
 import org.jetbrains.research.kfg.ClassManager
 import org.jetbrains.research.kfg.analysis.LoopAnalysis
 import org.jetbrains.research.kfg.analysis.LoopSimplifier
+import org.jetbrains.research.kfg.ir.value.Value
 import org.jetbrains.research.kfg.ir.value.instruction.*
 import org.jetbrains.research.kfg.type.mergeTypes
 import org.jetbrains.research.kfg.visitor.MethodVisitor
+import org.jetbrains.research.kthelper.`try`
+import org.jetbrains.research.kthelper.assert.ktassert
+import org.jetbrains.research.kthelper.logging.log
 import org.junit.Assert.*
 import kotlin.test.Test
 import kotlin.test.assertTrue
@@ -90,6 +95,29 @@ class PredicateBuilderTest : KexTest() {
                 )
             }
 
+            fun Value.asTerm() = when (this) {
+                is InvokeDynamicInst -> `try` {
+                    val lambdaBases = bootstrapMethodArgs.filterIsInstance<Handle>()
+                    ktassert(lambdaBases.size == 1) { log.error("Unknown number of bases of ${print()}") }
+                    val lambdaBase = lambdaBases.first()
+
+                    val argParameters = lambdaBase.method.argTypes.withIndex().map { term { arg(it.value.kexType, it.index) } }
+                    val lambdaParameters = lambdaBase.method.argTypes.withIndex().map { (index, type) ->
+                        term { value(type.kexType, "labmda_${lambdaBase.method.name}_$index") }
+                    }
+
+                    val expr = lambdaBase.method.asTermExpr()!!
+
+                    term {
+                        lambda(type.kexType, lambdaParameters) {
+                            TermRenamer("labmda.${lambdaBase.method.name}", argParameters.zip(lambdaParameters).toMap())
+                                .transform(expr)
+                        }
+                    }
+                }.getOrElse { tf.getValue(this) }
+                else -> tf.getValue(this)
+            }
+
             override fun visitCallInst(inst: CallInst) {
                 assertTrue(builder.predicateMap.contains(inst))
 
@@ -99,7 +127,7 @@ class PredicateBuilderTest : KexTest() {
                 val lhv = if (inst.type.isVoid) null else tf.getValue(inst)
                 assertEquals(lhv, predicate.lhvUnsafe)
 
-                val args = inst.args.map { tf.getValue(it) }
+                val args = inst.args.map { it.asTerm() }
                 val callTerm = if (inst.isStatic) {
                     tf.getCall(inst.method, args)
                 } else {
