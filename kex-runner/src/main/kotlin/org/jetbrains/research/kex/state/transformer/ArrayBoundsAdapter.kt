@@ -1,38 +1,40 @@
 package org.jetbrains.research.kex.state.transformer
 
 import org.jetbrains.research.kex.ktype.KexArray
+import org.jetbrains.research.kex.ktype.isArray
 import org.jetbrains.research.kex.state.ChoiceState
 import org.jetbrains.research.kex.state.PredicateState
 import org.jetbrains.research.kex.state.StateBuilder
+import org.jetbrains.research.kex.state.basic
 import org.jetbrains.research.kex.state.predicate.*
 import org.jetbrains.research.kex.state.term.ArrayIndexTerm
 import org.jetbrains.research.kex.state.term.Term
 import org.jetbrains.research.kex.state.term.term
+import org.jetbrains.research.kthelper.assert.ktassert
 import java.util.*
 
 class ArrayBoundsAdapter : RecollectingTransformer<ArrayBoundsAdapter> {
     override val builders = ArrayDeque<StateBuilder>().apply { add(StateBuilder()) }
     private var indices = setOf<ArrayIndexTerm>()
-    private var arrays = setOf<Term>()
+    private val arrays = mutableSetOf<Term>()
 
     override fun apply(ps: PredicateState): PredicateState {
         val (`this`, args) = collectArguments(ps)
         listOfNotNull(`this`, *args.values.toTypedArray()).forEach {
-            adaptArray(it)
+            addArray(it)
         }
-        return super.apply(ps)
+        val res = super.apply(ps)
+        return adaptArrays() + res
     }
 
     override fun transformChoice(ps: ChoiceState): PredicateState {
         val oldIndices = indices.toSet()
-        val oldArrays = arrays.toSet()
         val newChoices = arrayListOf<PredicateState>()
         val choiceAnnotatedTerms = arrayListOf<Set<ArrayIndexTerm>>()
         val choiceAnnotatedArrays = arrayListOf<Set<Term>>()
         for (choice in ps) {
             builders.add(StateBuilder())
             indices = oldIndices.toHashSet()
-            arrays = oldArrays.toHashSet()
 
             super.transformBase(choice)
 
@@ -43,39 +45,37 @@ class ArrayBoundsAdapter : RecollectingTransformer<ArrayBoundsAdapter> {
         }
         currentBuilder += newChoices
         indices = choiceAnnotatedTerms.flatten().toSet()
-                .filter { term -> choiceAnnotatedTerms.all { term in it } }
-                .toHashSet()
-        arrays = choiceAnnotatedArrays.flatten().toSet()
-                .filter { term -> choiceAnnotatedArrays.all { term in it } }
-                .toHashSet()
+            .filter { term -> choiceAnnotatedTerms.all { term in it } }
+            .toHashSet()
         return ps
     }
 
     override fun transformBase(predicate: Predicate): Predicate {
-        if (predicate.hasReceiver && predicate !is NewArrayPredicate) adaptArray(predicate.receiver!!)
+        if (predicate.hasReceiver && predicate !is NewArrayPredicate) addArray(predicate.receiver!!)
 
         TermCollector.getFullTermSet(predicate)
-                .filterIsInstance<ArrayIndexTerm>()
-                .filter { it !in indices }
-                .toSet()
-                .forEach { adaptIndexTerm(it) }
+            .filterIsInstance<ArrayIndexTerm>()
+            .filter { it !in indices }
+            .toSet()
+            .forEach { adaptIndexTerm(it) }
         return super.transformBase(predicate)
     }
 
-    private fun adaptArray(term: Term) {
-        if (term.type is KexArray && term !in arrays) {
-            currentBuilder += assume { (term.length() lt 1000) equality true }
-            arrays = arrays + term
+    private fun addArray(term: Term) {
+        if (term.type.isArray) arrays += term
+    }
+
+    private fun adaptArrays() = basic {
+        for (term in arrays) {
+            ktassert(term.type is KexArray)
+            assume { (term.length() ge 0) equality true }
+            assume { (term.length() lt 1000) equality true }
         }
     }
 
     private fun adaptIndexTerm(index: ArrayIndexTerm) {
         val zero = term { const(0) }
         val length = term { index.arrayRef.length() }
-        if (index.arrayRef !in arrays) {
-            currentBuilder += assume { (length lt 1000) equality true }
-            arrays = arrays + index.arrayRef
-        }
         currentBuilder += assume { (zero le index.index) equality true }
         currentBuilder += assume { (index.index lt length) equality true }
         indices = indices + index

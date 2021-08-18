@@ -131,3 +131,8 @@ class KexVoid : KexType() {
         return true
     }
 }
+
+fun KexType.unmemspaced() = when (this) {
+    is KexPointer -> withoutMemspace()
+    else -> this
+}

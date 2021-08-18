@@ -456,7 +456,7 @@ class ${solver}Converter(val tf: TypeFactory) : ${solver}SMTConverter() {
 
     fun convert(const: ConstClassTerm, ef: Factory_, ctx: Context_): Dynamic_ {
         val expr = ef.getVarByTypeAndName(const.type, const.name)
-        ef.addKlassPtr(const.constantType as KexClass, expr as Ptr_)
+        ef.addKlassPtr(const.constantType, expr as Ptr_)
         var res = const.withAxioms(expr, ef, ctx)
         res = res.withPtrAxioms(ef, ctx, TermType.STATIC_PTR)
         return res.withAxiom(res neq ef.makeNull())
