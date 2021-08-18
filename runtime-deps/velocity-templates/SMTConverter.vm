@@ -298,7 +298,7 @@ class ${solver}Converter(val tf: TypeFactory) : ${solver}SMTConverter() {
 
 #set($terms = ["Argument", "ArrayContains", "ArrayIndex", "ArrayLength", "ArrayLoad", "Binary", "Call", "Cast", "CharAt",
     "Cmp", "Concat", "ConstBool", "ConstByte", "ConstChar", "ConstClass", "StaticClassRef", "ConstDouble", "ConstFloat", "ConstInt", "ConstLong",
-    "ConstShort", "ConstString", "EndsWith", "Equals", "IndexOf", "StartsWith", "StringContains", "StringLength",
+    "ConstShort", "ConstString", "EndsWith", "Equals", "Exists", "IndexOf", "StartsWith", "StringContains", "StringLength",
     "StringParse", "Substring", "ToString", "FieldLoad", "ForAll", "Field", "InstanceOf", "Ite", "Lambda", "Neg",
     "Null", "ReturnValue", "Value", "Undef"])
     fun convert(term: Term, ef: Factory_, ctx: Context_): Dynamic_ = when (term) {
@@ -501,6 +501,28 @@ class ${solver}Converter(val tf: TypeFactory) : ${solver}SMTConverter() {
         val rhv = convert(equals.rhv, ef, ctx) as Ptr_
         // todo: add normal equals
         return lhv eq rhv
+    }
+
+    fun convert(exists: ExistsTerm, ef: Factory_, ctx: Context_): Bool_ {
+        val start = convert(exists.start, ef, ctx) as Int_
+        val end = convert(exists.end, ef, ctx) as Int_
+        val lambda = exists.body as LambdaTerm
+
+        return ef.exists({
+            listOf(ef.makeIntConst(0))
+        }) { params ->
+            val paramMap = lambda.parameters.zip(params).toMap().mapValues { cast(it.key.type, it.value) }
+            bounds.push(paramMap)
+            val index = paramMap[lambda.parameters.first()]!!
+            if_ { (start le index) and (index lt end) }
+                .then_ {
+                    convert(exists.body, ef, ctx) as Bool_
+                }.else_ {
+                    ef.makeFalse()
+                }.also {
+                    bounds.pop()
+                }
+        }
     }
 
     fun convert(fieldload: FieldLoadTerm, ef: Factory_, ctx: Context_): Dynamic_ {

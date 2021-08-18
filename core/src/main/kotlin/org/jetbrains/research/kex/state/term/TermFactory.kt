@@ -182,6 +182,12 @@ object TermFactory {
         body: Term
     ) = ForAllTerm(start, end, body)
 
+    fun getExists(
+        start: Term,
+        end: Term,
+        body: Term
+    ) = ExistsTerm(start, end, body)
+
     fun getIte(
         type: KexType,
         cond: Term,
@@ -391,6 +397,17 @@ abstract class TermBuilder {
     fun forAll(start: Term, end: Int, body: TermBuilder.() -> Term) = forAll(start, const(end), body())
     fun IntRange.forAll(body: Term) = forAll(const(start), const(last), body)
     fun IntRange.forAll(body: TermBuilder.() -> Term) = forAll(const(start), const(last), body)
+
+    fun exists(start: Term, end: Term, body: Term) = tf.getExists(start, end, body)
+    fun exists(start: Term, end: Term, body: TermBuilder.() -> Term) = exists(start, end, body())
+    fun exists(start: Int, end: Int, body: Term) = (start..end).exists(body)
+    fun exists(start: Int, end: Int, body: TermBuilder.() -> Term) = exists(start, end, body())
+    fun exists(start: Int, end: Term, body: TermBuilder.() -> Term) = exists(const(start), end, body())
+    fun exists(start: Int, end: Term, body: Term) = exists(const(start), end, body)
+    fun exists(start: Term, end: Int, body: Term) = exists(start, const(end), body)
+    fun exists(start: Term, end: Int, body: TermBuilder.() -> Term) = exists(start, const(end), body())
+    fun IntRange.exists(body: Term) = exists(const(start), const(last), body)
+    fun IntRange.exists(body: TermBuilder.() -> Term) = exists(const(start), const(last), body)
 
     fun ite(type: KexType, cond: Term, trueValue: Term, falseValue: Term) = tf.getIte(type, cond, trueValue, falseValue)
 

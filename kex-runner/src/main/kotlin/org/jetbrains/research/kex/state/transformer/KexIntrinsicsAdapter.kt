@@ -96,7 +96,7 @@ class KexIntrinsicsAdapter : RecollectingTransformer<KexIntrinsicsAdapter> {
                     length equality array.length()
                 }
                 state {
-                    lhv() equality forAll(start, length) {
+                    lhv() equality exists(start, length) {
                         val index = value(KexInt(), "ind")
                         lambda(KexBool(), listOf(index)) {
                             array[index].load() equls value
