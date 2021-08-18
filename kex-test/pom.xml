@@ -15,7 +15,7 @@
         <maven.compiler.source>${jvm.version}</maven.compiler.source>
         <maven.compiler.target>${jvm.version}</maven.compiler.target>
 
-        <kotlin.version>1.5.0</kotlin.version>
+        <kotlin.version>1.5.21</kotlin.version>
         <compiler-plugin.version>3.5.1</compiler-plugin.version>
         <kex-intrinsics.version>0.0.5</kex-intrinsics.version>
     </properties>

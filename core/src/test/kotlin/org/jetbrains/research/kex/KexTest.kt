@@ -31,7 +31,7 @@ abstract class KexTest {
         jarPath = "$rootDir/kex-test/target/kex-test-$version-jar-with-dependencies.jar"
         val jar = Paths.get(jarPath).asContainer(`package`)!!
         loader = jar.classLoader
-        cm = ClassManager(KfgConfig(flags = Flags.readAll, failOnError = true))
+        cm = ClassManager(KfgConfig(flags = Flags.readAll, failOnError = false))
         cm.initialize(jar)
     }
 
