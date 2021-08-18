@@ -364,6 +364,21 @@ object BoolectorEngine :
     ): BoolectorNode =
         BitvecNode.constBitvec(ctx, "1")
 
+    override fun exists(
+        ctx: Btor,
+        sorts: List<BoolectorSort>,
+        body: (List<BoolectorNode>) -> BoolectorNode
+    ): BoolectorNode =
+        BitvecNode.constBitvec(ctx, "1")
+
+    override fun exists(
+        ctx: Btor,
+        sorts: List<BoolectorSort>,
+        body: (List<BoolectorNode>) -> BoolectorNode,
+        patternGenerator: (List<BoolectorNode>) -> List<FunctionDecl.FunctionParam>
+    ): BoolectorNode =
+        BitvecNode.constBitvec(ctx, "1")
+
     override fun lambda(
         ctx: Btor,
         elementSort: BoolectorSort,

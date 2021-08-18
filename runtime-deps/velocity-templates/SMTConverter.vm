@@ -296,8 +296,8 @@ class ${solver}Converter(val tf: TypeFactory) : ${solver}SMTConverter() {
         return lhv.withPtrAxioms(ef, ctx, TermType.LOCAL_PTR) eq ctx.getLocalPtr(memspace)
     }
 
-#set($terms = ["Argument", "ArrayIndex", "ArrayLength", "ArrayLoad", "Binary", "Call", "Cast", "CharAt", "Cmp", "Concat",
-    "ConstBool", "ConstByte", "ConstChar", "ConstClass", "ConstDouble", "ConstFloat", "ConstInt", "ConstLong",
+#set($terms = ["Argument", "ArrayContains", "ArrayIndex", "ArrayLength", "ArrayLoad", "Binary", "Call", "Cast", "CharAt",
+    "Cmp", "Concat", "ConstBool", "ConstByte", "ConstChar", "ConstClass", "ConstDouble", "ConstFloat", "ConstInt", "ConstLong",
     "ConstShort", "ConstString", "EndsWith", "Equals", "IndexOf", "StartsWith", "StringContains", "StringLength",
     "StringParse", "Substring", "ToString", "FieldLoad", "ForAll", "Field", "InstanceOf", "Ite", "Lambda", "Neg",
     "Null", "ReturnValue", "Value", "Undef"])
@@ -315,6 +315,27 @@ class ${solver}Converter(val tf: TypeFactory) : ${solver}SMTConverter() {
             res = res.withPtrAxioms(ef, ctx, TermType.OUTER_PTR)
         }
         return res
+    }
+
+    fun convert(arrayContains: ArrayContainsTerm, ef: Factory_, ctx: Context_): Dynamic_ {
+        val memspace = arrayContains.array.memspace
+        val ptr = convert(arrayContains.array, ef, ctx) as? Ptr_ ?: unreachable { log.error("Non-ptr ref term in `initializer`") }
+        val value = convert(arrayContains.value, ef, ctx)
+        val length = ctx.readWordProperty(ptr, memspace, "length")
+
+        val array = ctx.readArrayMemory(ptr, memspace)
+
+        return ef.exists({
+            listOf(ef.makeIntConst(0))
+        }) { params ->
+            val index = Int_.forceCast(params[0])
+            if_ { (ef.makeIntConst(0) le index) and (index lt length) }
+                .then_ {
+                    DWord_.forceCast(array[index]) eq DWord_.forceCast(value)
+                }.else_ {
+                    ef.makeFalse()
+                }
+        }
     }
 
     fun convert(arrayindex: ArrayIndexTerm, ef: Factory_, ctx: Context_): Dynamic_ {

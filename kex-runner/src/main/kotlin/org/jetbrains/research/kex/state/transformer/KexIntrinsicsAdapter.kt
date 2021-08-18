@@ -73,18 +73,12 @@ class KexIntrinsicsAdapter : RecollectingTransformer<KexIntrinsicsAdapter> {
             }
             in kim.kexContainsMethods(method.cm) -> {
                 val (array, value) = call.arguments
-                val start = const(0)
                 val length = generate(KexInt())
                 state {
                     length equality array.length()
                 }
                 state {
-                    lhv() equality forAll(start, length) {
-                        val index = value(KexInt(), "ind")
-                        lambda(KexBool(), listOf(index)) {
-                            array[index].load() eq value
-                        }
-                    }
+                    lhv() equality (value `in` array)
                 }
                 val temp = generate(KexBool())
                 state {

@@ -610,6 +610,38 @@ fun < Res : $valexpr > forall(ctx: $context, sortGen: () -> List< $valexpr >,
     return $Bool(ctx, eret, spliceAxioms(ctx, axioms))
 }
 
+fun exists(ctx: $context, sortGen: () -> List< $valexpr >, func: (args: List< $valexpr >) -> $Bool): $Bool {
+    val sorts = sortGen().map{ it.getSort() }
+    val axioms = arrayListOf< $expr >()
+
+    val eret = engine.exists(ctx, sorts, { exprs: List< $expr > ->
+        val ret = func.invoke(exprs.map{ $valexpr(ctx, it) })
+        axioms.add(ret.axiom)
+        ret.expr
+    })
+    return $Bool(ctx, eret, spliceAxioms(ctx, axioms))
+}
+
+fun < Res : $valexpr > exists(ctx: $context, sortGen: () -> List< $valexpr >,
+    func: (args: List< $valexpr >) -> Res, patternGen: (args: List< $valexpr >) -> List< $valexpr >): $Bool {
+    val sorts = sortGen().map{ it.getSort() }
+    val axioms = arrayListOf< $expr >()
+
+    val eret = engine.exists(ctx,
+        sorts,
+        { exprs: List< $expr > ->
+            val ret = func.invoke(exprs.map{ $valexpr(ctx, it) })
+            axioms.add(ret.axiom)
+            ret.expr
+        },
+        { exprs: List< $expr > ->
+            val ret = patternGen.invoke(exprs.map{ $valexpr(ctx, it) })
+            ret.map { engine.makePattern(ctx, it.expr) }
+        }
+    )
+    return $Bool(ctx, eret, spliceAxioms(ctx, axioms))
+}
+
 fun lambda(
     ctx: $context,
     elementSortGen: () -> $valexpr,

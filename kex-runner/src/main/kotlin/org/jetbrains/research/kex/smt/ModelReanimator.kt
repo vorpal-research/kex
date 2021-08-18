@@ -155,10 +155,11 @@ class ObjectReanimator(
     }
 
     private fun reanimateReference(term: Term, addr: Term?): Any? {
-        val memspace = term.memspace
+        var memspace = term.memspace
         return when (term) {
             is ArrayIndexTerm -> {
                 val arrayRef = term.arrayRef
+                memspace = arrayRef.memspace
 
                 val arrayAddr = reanimateFromAssignment(arrayRef) ?: return null
                 val array = memory(arrayRef.memspace, arrayAddr.numericValue.toInt()) ?: return null
@@ -396,10 +397,11 @@ abstract class DescriptorReanimator(
     }
 
     private fun reanimateReference(term: Term, addr: Term?) = descriptor {
-        val memspace = term.memspace
+        var memspace = term.memspace
         when (term) {
             is ArrayIndexTerm -> {
                 val arrayRef = term.arrayRef
+                memspace = arrayRef.memspace
 
                 val arrayAddr = reanimateFromAssignment(arrayRef) ?: return@descriptor default(term.type)
                 val array = memory(arrayRef.memspace, arrayAddr.numericValue.toInt()) as ArrayDescriptor

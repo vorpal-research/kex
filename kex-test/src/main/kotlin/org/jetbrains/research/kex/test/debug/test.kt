@@ -6,8 +6,7 @@ import org.jetbrains.research.kex.intrinsics.CollectionIntrinsics
 
 class BasicTests {
     fun test(a: IntArray): Int {
-        val c = CollectionIntrinsics.generateIntArray(5) { it }
-        if (c[1] == 1) {
+        if (CollectionIntrinsics.containsInt(a, 3) && CollectionIntrinsics.containsInt(a, 5)) {
             return 1
         }
         return 0
