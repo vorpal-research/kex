@@ -1,6 +1,6 @@
 package org.jetbrains.research.kex.test.generation
 
-import org.jetbrains.research.kex.Intrinsics.kexAssert
+import org.jetbrains.research.kex.intrinsics.AssertIntrinsics.kexAssert
 
 
 class ObjectGenerationTests {

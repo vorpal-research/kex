@@ -49,6 +49,7 @@ class Checker(
         if (annotationsEnabled) {
             +AnnotationAdapter(method, AnnotationManager.defaultLoader)
         }
+//        +StringAdapter(ctx)
 
         if (isInliningEnabled) {
             +MethodInliner(psa)
@@ -62,14 +63,15 @@ class Checker(
         +Optimizer()
         +ConstantPropagator
         +BoolTypeAdapter(method.cm.type)
-        +ConstStringAdapter()
         +ArrayBoundsAdapter()
         +NullityInfoAdapter()
+        +ConstStringAdapter()
         +FieldNormalizer(method.cm)
     }
 
     fun prepareState(method: Method, ps: PredicateState, typeInfoMap: TypeInfoMap) = transform(ps) {
         +AnnotationAdapter(method, AnnotationManager.defaultLoader)
+//        +StringAdapter(ctx)
         +RecursiveInliner(psa) { ConcreteImplInliner(method.cm.type, typeInfoMap, psa, inlineIndex = it) }
         +StaticFieldInliner(ctx, psa)
         +RecursiveConstructorInliner(psa)

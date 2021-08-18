@@ -23,9 +23,9 @@ class SMTProxySolver(
             val inheritanceInfo = InheritanceInfo.fromJson(resource.bufferedReader().readText())
             resource.close()
 
-            inheritanceInfo?.inheritors?.associate {
+            inheritanceInfo.inheritors.associate {
                 it.name to loader.loadClass(it.inheritorClass)
-            } ?: mapOf()
+            }
         }
 
         fun getSolver(tf: TypeFactory, engine: String): AbstractSMTSolver {

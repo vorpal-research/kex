@@ -71,6 +71,7 @@ class GeneratorContext(
     ) = transform(ps) {
         val staticTypeInfo = collectStaticTypeInfo(types, ps, typeInfoMap)
         +AnnotationAdapter(method, AnnotationManager.defaultLoader)
+//        +StringAdapter(context)
         +ConcreteImplInliner(types, staticTypeInfo, psa)
         +StaticFieldInliner(context, psa)
         +RecursiveConstructorInliner(psa)
@@ -80,9 +81,9 @@ class GeneratorContext(
         +Optimizer()
         +ConstantPropagator
         +BoolTypeAdapter(types)
-        +ConstStringAdapter()
         +ArrayBoundsAdapter()
         +NullityInfoAdapter()
+        +ConstStringAdapter()
         +FieldNormalizer(context.cm, "state.normalized")
     }
 

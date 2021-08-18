@@ -23,11 +23,12 @@ import org.jetbrains.research.kex.state.PredicateState
 import org.jetbrains.research.kex.trace.TraceManager
 import org.jetbrains.research.kex.trace.`object`.ActionTrace
 import org.jetbrains.research.kex.trace.runner.ObjectTracingRunner
-import org.jetbrains.research.kex.trace.runner.TimeoutException
+import org.jetbrains.research.kex.util.TimeoutException
 import org.jetbrains.research.kfg.ClassManager
 import org.jetbrains.research.kfg.ir.BasicBlock
 import org.jetbrains.research.kfg.ir.Class
 import org.jetbrains.research.kfg.ir.Method
+import org.jetbrains.research.kfg.ir.value.NameMapperContext
 import org.jetbrains.research.kfg.ir.value.instruction.UnreachableInst
 import org.jetbrains.research.kfg.visitor.MethodVisitor
 import org.jetbrains.research.kthelper.`try`
@@ -51,18 +52,19 @@ data class Failure(
         val state: PredicateState
 )
 
+@ExperimentalSerializationApi
+@InternalSerializationApi
 open class MethodChecker(
     val ctx: ExecutionContext,
     protected val tm: TraceManager<ActionTrace>,
     protected val psa: PredicateStateAnalysis) : MethodVisitor {
+    protected val nameContext = NameMapperContext()
     override val cm: ClassManager get() = ctx.cm
     val random: Randomizer get() = ctx.random
     val loader: ClassLoader get() = ctx.loader
     lateinit var generator: ParameterGenerator
         protected set
 
-    @ExperimentalSerializationApi
-    @InternalSerializationApi
     private fun dumpPS(method: Method, message: String, state: PredicateState) = `try` {
         val failDirPath = outputDirectory.resolve(failDir)
         if (!Files.exists(failDirPath)) {
@@ -73,7 +75,9 @@ open class MethodChecker(
         errorDump.writeText(KexSerializer(cm).toJson(Failure(method.klass, method, message, state)))
     }.getOrNull()
 
-    override fun cleanup() {}
+    override fun cleanup() {
+        nameContext.clear()
+    }
 
     protected open fun initializeGenerator(method: Method) {
         generator = ReflectionReanimator(ctx, psa)
@@ -81,8 +85,6 @@ open class MethodChecker(
 
     protected open fun getSearchStrategy(method: Method): SearchStrategy = DfsStrategy(method)
 
-    @ExperimentalSerializationApi
-    @InternalSerializationApi
     override fun visit(method: Method) {
         super.visit(method)
 
@@ -175,7 +177,7 @@ open class MethodChecker(
 
     protected fun collectTrace(method: Method, instance: Any?, args: List<Any?>) = tryOrNull {
         val params = Parameters(instance, args)
-        val runner = ObjectTracingRunner(method.original!!, loader, params)
+        val runner = ObjectTracingRunner(nameContext, method.original!!, loader, params)
         val trace = runner.run() ?: return null
         tm[method] = trace
     }

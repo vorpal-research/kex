@@ -1,8 +1,12 @@
 package org.jetbrains.research.kex
 
+import kotlinx.serialization.ExperimentalSerializationApi
+import kotlinx.serialization.InternalSerializationApi
 import org.jetbrains.research.kex.config.RuntimeConfig
 import kotlin.test.Test
 
+@ExperimentalSerializationApi
+@InternalSerializationApi
 class ArrayTest : KexRunnerTest() {
     @Test
     fun testArrays() {

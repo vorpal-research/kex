@@ -41,3 +41,5 @@ fun Path.resolve(vararg paths: String): Path {
 
 fun String.kapitalize() =
     this.replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString() }
+
+fun <T : Any> T.asList() = listOf(this)

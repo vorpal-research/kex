@@ -14,6 +14,7 @@ import kotlinx.serialization.modules.SerializersModule
 import org.jetbrains.research.kfg.ClassManager
 import org.jetbrains.research.kfg.Package
 import org.jetbrains.research.kfg.ir.*
+import org.jetbrains.research.kfg.ir.value.NameMapperContext
 import org.jetbrains.research.kfg.ir.value.instruction.BinaryOpcode
 import org.jetbrains.research.kfg.ir.value.instruction.CallOpcode
 import org.jetbrains.research.kfg.ir.value.instruction.CmpOpcode
@@ -22,7 +23,7 @@ import org.jetbrains.research.kfg.type.Type
 import org.jetbrains.research.kfg.type.parseDesc
 
 @ExperimentalSerializationApi
-fun getKfgSerialModule(cm: ClassManager): SerializersModule {
+fun getKfgSerialModule(cm: ClassManager, ctx: NameMapperContext): SerializersModule {
     return SerializersModule {
         contextual(BinaryOpcode::class, BinaryOpcodeSerializer)
 
@@ -39,7 +40,7 @@ fun getKfgSerialModule(cm: ClassManager): SerializersModule {
 
         val methodSerializer = MethodSerializer(cm, klassSerializer)
         contextual(Method::class, methodSerializer)
-        contextual(Instruction::class, InstructionSerializer(methodSerializer))
+        contextual(Instruction::class, InstructionSerializer(ctx, methodSerializer))
     }
 }
 
@@ -125,10 +126,10 @@ inline fun <reified T : CallOpcode> CallOpcodeSerializer.to() = object : KSerial
 @Serializer(forClass = Location::class)
 object LocationSerializer : KSerializer<Location> {
     override val descriptor = buildClassSerialDescriptor("Location") {
-            element<String>("package")
-            element<String>("file")
-            element<Int>("line")
-        }
+        element<String>("package")
+        element<String>("file")
+        element<Int>("line")
+    }
 
     override fun serialize(encoder: Encoder, value: Location) {
         val output = encoder.beginStructure(descriptor)
@@ -185,11 +186,11 @@ internal inline fun <reified T : Class> ClassSerializer.to() = object : KSeriali
 @Serializer(forClass = Method::class)
 internal class MethodSerializer(val cm: ClassManager, val classSerializer: KSerializer<Class>) : KSerializer<Method> {
     override val descriptor = buildClassSerialDescriptor("Method") {
-            element("class", classSerializer.descriptor)
-            element<String>("name")
-            element<String>("retval")
-            element<List<String>>("arguments")
-        }
+        element("class", classSerializer.descriptor)
+        element<String>("name")
+        element<String>("retval")
+        element<List<String>>("arguments")
+    }
 
     override fun serialize(encoder: Encoder, value: Method) {
         val output = encoder.beginStructure(descriptor)
@@ -230,11 +231,14 @@ internal class MethodSerializer(val cm: ClassManager, val classSerializer: KSeri
 
 @ExperimentalSerializationApi
 @Serializer(forClass = Instruction::class)
-internal class InstructionSerializer(val methodSerializer: KSerializer<Method>) : KSerializer<Instruction> {
+internal class InstructionSerializer(
+    val ctx: NameMapperContext,
+    val methodSerializer: KSerializer<Method>
+) : KSerializer<Instruction> {
     override val descriptor: SerialDescriptor = buildClassSerialDescriptor("Instruction") {
-            element("method", methodSerializer.descriptor)
-            element<String>("name")
-        }
+        element("method", methodSerializer.descriptor)
+        element<String>("name")
+    }
 
     override fun serialize(encoder: Encoder, value: Instruction) {
         val output = encoder.beginStructure(descriptor)
@@ -256,6 +260,6 @@ internal class InstructionSerializer(val methodSerializer: KSerializer<Method>) 
             }
         }
         input.endStructure(descriptor)
-        return method.slotTracker.getValue(name) as Instruction
+        return ctx.getMapper(method).getValue(name) as Instruction
     }
 }

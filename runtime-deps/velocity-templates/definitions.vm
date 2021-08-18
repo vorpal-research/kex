@@ -16,10 +16,18 @@ import org.jetbrains.research.kthelper.assert.*
 #set($Float = "${solver}Float")
 #set($Double = "${solver}Double")
 #set($Array = "${solver}Array")
+#if($generateString)
+    #set($String = "${solver}String")
+    #set($StringMemory = "${solver}Memory")
+#end
 #set($Memory = "${solver}Memory")
 #set($Function = "${solver}FunctionExpr")
 
-#set($exprClasses = [$Bool, $Bitvector32, $Bitvector64, $Bitvector, $Float, $Double])
+#if($generateString)
+    #set($exprClasses = [$Bool, $Bitvector32, $Bitvector64, $Bitvector, $Float, $Double, $String])
+#else
+    #set($exprClasses = [$Bool, $Bitvector32, $Bitvector64, $Bitvector, $Float, $Double])
+#end
 #set($numClasses = [$Bitvector32, $Bitvector64, $Bitvector, $Float, $Double])
 
 #set($factory = "${solver}ExprFactory")

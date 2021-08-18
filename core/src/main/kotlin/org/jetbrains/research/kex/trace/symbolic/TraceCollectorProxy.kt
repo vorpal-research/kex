@@ -8,6 +8,7 @@ import org.jetbrains.research.kex.serialization.KexSerializer
 import org.jetbrains.research.kex.state.emptyState
 import org.jetbrains.research.kex.state.predicate.Predicate
 import org.jetbrains.research.kex.state.term.Term
+import org.jetbrains.research.kfg.ir.value.NameMapperContext
 import org.jetbrains.research.kfg.ir.value.instruction.Instruction
 import java.nio.file.Path
 
@@ -118,6 +119,13 @@ private class EmptyTraceCollector : InstructionTraceCollector {
 
     override fun instanceOf(value: String, operand: String, concreteValue: Any?, concreteOperand: Any?) {}
 
+    override fun invokeDynamic(
+        value: String,
+        operands: List<String>,
+        concreteValue: Any?,
+        concreteOperands: List<Any?>
+    ) {}
+
     override fun jump(inst: String) {}
 
     override fun newArray(
@@ -147,9 +155,9 @@ object TraceCollectorProxy {
     private var collector: InstructionTraceCollector = EmptyTraceCollector()
 
     @JvmStatic
-    fun enableCollector(ctx: ExecutionContext): InstructionTraceCollector {
+    fun enableCollector(ctx: ExecutionContext, nameMapperContext: NameMapperContext): InstructionTraceCollector {
         this.ctx = ctx
-        collector = SymbolicTraceBuilder(ctx)
+        collector = SymbolicTraceBuilder(ctx, nameMapperContext)
         return collector
     }
 

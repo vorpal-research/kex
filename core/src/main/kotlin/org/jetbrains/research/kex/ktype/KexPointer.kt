@@ -2,6 +2,7 @@ package org.jetbrains.research.kex.ktype
 
 import kotlinx.serialization.Serializable
 import org.jetbrains.research.kex.InheritorOf
+import org.jetbrains.research.kfg.type.SystemTypeNames
 import org.jetbrains.research.kfg.type.Type
 import org.jetbrains.research.kfg.type.TypeFactory
 import org.jetbrains.research.kthelper.defaultHashCode
@@ -19,6 +20,7 @@ sealed class KexPointer : KexType() {
         get() = WORD
 
     abstract fun withMemspace(memspace: Int): KexPointer
+    fun withoutMemspace() = withMemspace(defaultMemspace)
 }
 
 @InheritorOf("KexType")
@@ -114,3 +116,9 @@ class KexNull : KexPointer() {
         return true
     }
 }
+
+fun KexType.asArray() = KexArray(this)
+val KexType.isArray get() = this is KexArray
+fun KexString() = KexClass(SystemTypeNames.stringClass)
+val KexType.isString get() = this is KexClass && this.klass == SystemTypeNames.stringClass
+fun KexJavaClass() = KexClass(SystemTypeNames.classClass)

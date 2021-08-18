@@ -347,7 +347,8 @@ class ObjectDescriptor(klass: KexClass) :
     }
 }
 
-class ClassDescriptor(type: KexClass) : FieldContainingDescriptor<ClassDescriptor>(term { `class`(type) }, type) {
+class ClassDescriptor(type: KexClass) :
+    FieldContainingDescriptor<ClassDescriptor>(term { staticRef(type) }, type) {
     override fun deepCopy(copied: MutableMap<Descriptor, Descriptor>): Descriptor {
         if (this in copied) return copied[this]!!
         val copy = ClassDescriptor(type as KexClass)
@@ -388,7 +389,7 @@ class ClassDescriptor(type: KexClass) : FieldContainingDescriptor<ClassDescripto
 
     fun filterFinalFields(cm: ClassManager): ClassDescriptor {
         val kfgClass = klass.kfgClass(cm.type)
-        for ((name, type) in fields.keys) {
+        for ((name, type) in fields.keys.toSet()) {
             val kfgField = kfgClass.getField(name, type.getKfgType(cm.type))
             if (kfgField.isFinal) remove(name, type)
         }

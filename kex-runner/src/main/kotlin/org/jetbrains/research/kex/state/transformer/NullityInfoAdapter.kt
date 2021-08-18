@@ -1,11 +1,11 @@
 package org.jetbrains.research.kex.state.transformer
 
-import org.jetbrains.research.kthelper.collection.dequeOf
 import org.jetbrains.research.kex.state.ChoiceState
 import org.jetbrains.research.kex.state.PredicateState
 import org.jetbrains.research.kex.state.StateBuilder
 import org.jetbrains.research.kex.state.predicate.assume
 import org.jetbrains.research.kex.state.term.*
+import org.jetbrains.research.kthelper.collection.dequeOf
 
 class NullityInfoAdapter : RecollectingTransformer<NullityInfoAdapter> {
     override val builders = dequeOf(StateBuilder())
@@ -54,6 +54,14 @@ class NullityInfoAdapter : RecollectingTransformer<NullityInfoAdapter> {
             annotatedTerms = annotatedTerms + term
         }
         return super.transformConstClassTerm(term)
+    }
+
+    override fun transformStaticClassRefTerm(term: StaticClassRefTerm): Term {
+        if (term !in annotatedTerms) {
+            currentBuilder += assume { term inequality null }
+            annotatedTerms = annotatedTerms + term
+        }
+        return super.transformStaticClassRefTerm(term)
     }
 
     override fun transformCallTerm(term: CallTerm): Term {

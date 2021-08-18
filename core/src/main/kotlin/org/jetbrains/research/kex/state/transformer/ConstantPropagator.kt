@@ -1,5 +1,6 @@
 package org.jetbrains.research.kex.state.transformer
 
+import org.jetbrains.research.kex.ktype.*
 import org.jetbrains.research.kex.state.PredicateState
 import org.jetbrains.research.kex.state.predicate.EqualityPredicate
 import org.jetbrains.research.kex.state.predicate.InequalityPredicate
@@ -68,6 +69,12 @@ object ConstantPropagator : Transformer<ConstantPropagator> {
         }
     }
 
+    override fun transformCharAtTerm(term: CharAtTerm): Term {
+        val string = (term.string as? ConstStringTerm)?.value ?: return term
+        val index = (term.index as? ConstIntTerm)?.value ?: return term
+        return term { const(string[index]) }
+    }
+
     override fun transformCmpTerm(term: CmpTerm): Term {
         val lhv = getConstantValue(term.lhv) ?: return term
         val rhv = getConstantValue(term.rhv) ?: return term
@@ -95,9 +102,70 @@ object ConstantPropagator : Transformer<ConstantPropagator> {
         }
     }
 
+    override fun transformConcatTerm(term: ConcatTerm): Term {
+        val lhv = (term.lhv as? ConstStringTerm)?.value ?: return term
+        val rhv = (term.rhv as? ConstStringTerm)?.value ?: return term
+        return term { const(lhv + rhv) }
+    }
+
+    override fun transformIndexOf(term: IndexOfTerm): Term {
+        val lhv = (term.string as? ConstStringTerm)?.value ?: return term
+        val rhv = (term.substring as? ConstStringTerm)?.value ?: return term
+        return term { const(lhv.indexOf(rhv)) }
+    }
+
     override fun transformNegTerm(term: NegTerm): Term {
         val operand = getConstantValue(term.operand) ?: return term
         return term { const(operand) }
+    }
+
+    override fun transformStringContainsTerm(term: StringContainsTerm): Term {
+        val lhv = (term.string as? ConstStringTerm)?.value ?: return term
+        val rhv = (term.substring as? ConstStringTerm)?.value ?: return term
+        return term { const(rhv in lhv) }
+    }
+
+    override fun transformStringLengthTerm(term: StringLengthTerm): Term {
+        val string = (term.string as? ConstStringTerm)?.value ?: return term
+        return term { const(string.length) }
+    }
+
+    override fun transformStringParseTerm(term: StringParseTerm): Term {
+        val string = (term.string as? ConstStringTerm)?.value ?: return term
+        return when (term.type) {
+            is KexBool -> term { const(string.toBoolean()) }
+            is KexByte -> term { const(string.toByte()) }
+            is KexChar -> term { const(string.first()) }
+            is KexShort -> term { const(string.toShort()) }
+            is KexInt -> term { const(string.toInt()) }
+            is KexLong -> term { const(string.toLong()) }
+            is KexFloat -> term { const(string.toFloat()) }
+            is KexDouble -> term { const(string.toDouble()) }
+            is KexNull -> term { const(null) }
+            else -> term
+        }
+    }
+
+    override fun transformSubstringTerm(term: SubstringTerm): Term {
+        val lhv = (term.string as? ConstStringTerm)?.value ?: return term
+        val offset = (term.offset as? ConstIntTerm)?.value ?: return term
+        val length = (term.length as? ConstIntTerm)?.value ?: return term
+        return term { const(lhv.substring(offset, length)) }
+    }
+
+    override fun transformToStringTerm(term: ToStringTerm): Term {
+        return when (val value = term.value) {
+            is ConstBoolTerm -> term { const(value.value.toString()) }
+            is ConstByteTerm -> term { const(value.value.toString()) }
+            is ConstCharTerm -> term { const(value.value.toString()) }
+            is ConstClassTerm -> term { const(value.name) }
+            is ConstDoubleTerm -> term { const(value.value.toString()) }
+            is ConstFloatTerm -> term { const(value.value.toString()) }
+            is ConstIntTerm-> term { const(value.value.toString()) }
+            is ConstLongTerm -> term { const(value.value.toString()) }
+            is ConstShortTerm -> term { const(null) }
+            else -> term
+        }
     }
 
     private fun toCompatibleTypes(lhv: Number, rhv: Number): Pair<Number, Number> = when (lhv) {
@@ -120,11 +188,13 @@ object ConstantPropagator : Transformer<ConstantPropagator> {
     }
 
     private fun genMessage(word: String, right: Number, left: Number) =
-            log.error("Obvious error detected: $right $word $left")
+        log.error("Obvious error detected: $right $word $left")
+
     private fun mustBeEqual(right: Number, left: Number) =
-            genMessage("must be equal to", right, left)
+        genMessage("must be equal to", right, left)
+
     private fun mustBeNotEqual(right: Number, left: Number) =
-            genMessage("should not be equal to", right, left)
+        genMessage("should not be equal to", right, left)
 
     override fun transformEqualityPredicate(predicate: EqualityPredicate): Predicate {
         val lhv = getConstantValue(predicate.lhv) ?: return predicate

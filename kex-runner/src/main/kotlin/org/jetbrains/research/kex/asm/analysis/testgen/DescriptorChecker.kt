@@ -1,5 +1,7 @@
 package org.jetbrains.research.kex.asm.analysis.testgen
 
+import kotlinx.serialization.ExperimentalSerializationApi
+import kotlinx.serialization.InternalSerializationApi
 import org.jetbrains.research.kex.ExecutionContext
 import org.jetbrains.research.kex.asm.state.PredicateStateAnalysis
 import org.jetbrains.research.kex.descriptor.concrete
@@ -13,12 +15,14 @@ import org.jetbrains.research.kex.state.PredicateState
 import org.jetbrains.research.kex.state.transformer.*
 import org.jetbrains.research.kex.trace.TraceManager
 import org.jetbrains.research.kex.trace.`object`.ActionTrace
-import org.jetbrains.research.kex.trace.runner.TimeoutException
+import org.jetbrains.research.kex.util.TimeoutException
 import org.jetbrains.research.kfg.ir.BasicBlock
 import org.jetbrains.research.kfg.ir.Method
 import org.jetbrains.research.kthelper.logging.log
 import org.jetbrains.research.kthelper.tryOrNull
 
+@ExperimentalSerializationApi
+@InternalSerializationApi
 class DescriptorChecker(
     ctx: ExecutionContext,
     tm: TraceManager<ActionTrace>,

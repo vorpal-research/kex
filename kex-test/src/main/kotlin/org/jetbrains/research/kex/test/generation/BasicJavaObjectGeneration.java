@@ -1,8 +1,8 @@
 package org.jetbrains.research.kex.test.generation;
 
-import static org.jetbrains.research.kex.Intrinsics.*;
-
 import java.util.Objects;
+
+import static org.jetbrains.research.kex.intrinsics.AssertIntrinsics.kexAssert;
 
 public class BasicJavaObjectGeneration {
     public static class Point {

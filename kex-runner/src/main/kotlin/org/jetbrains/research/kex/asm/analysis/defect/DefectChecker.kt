@@ -231,6 +231,7 @@ class DefectChecker(
 
     fun prepareState(ps: PredicateState, typeInfoMap: TypeInfoMap) = transform(ps) {
         +AnnotationAdapter(method, AnnotationManager.defaultLoader)
+//        +StringAdapter(ctx)
         +RecursiveInliner(psa) { ConcreteImplInliner(method.cm.type, typeInfoMap, psa, inlineIndex = it) }
         +StaticFieldInliner(ctx, psa)
         +RecursiveConstructorInliner(psa)

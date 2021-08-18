@@ -6,58 +6,54 @@ private val engine = ${solver}Engine
 
 #set($self = $Memory)
 @Suppress("UNCHECKED_CAST")
-class $self< in Index : $Bitvector, Element : $Bitvector >(val inner: $Array< Element, Index >, val byteSize: Int) : ${solver}SMTMemory() {
+class $self< in Index : $valexpr, Element : $valexpr >(
+    val inner: $Array< Element, Index >,
+    val ctor: ($valexpr) -> Element
+) : ${solver}SMTMemory() {
     companion object {
-
-        fun < Index : $Bitvector, Element : $Bitvector > merge(default: $self< Index, Element >,
-                                        cases: List< Pair< $Bool, $self< Index, Element >>>): $self< Index, Element > {
+        fun < Index : $valexpr, Element : $valexpr > merge(
+            default: $self< Index, Element >,
+            cases: List< Pair< $Bool, $self< Index, Element >>>,
+        ): $self< Index, Element > {
             val inners = cases.map { it.first to it.second.inner }
-            return $self(${Array}.merge(default.inner, inners), default.byteSize)
+            return $self(${Array}.merge(default.inner, inners), default.ctor)
         }
 
-        inline fun < reified Index : $Bitvector, reified Element : $Bitvector > makeDefault(ctx: $context, name: String, default: Element) =
-            $self< Index, Element >(${Array}.makeDefault< Element, Index >(ctx, name, default), bvStaticBitSize< Element >(ctx))
+        inline fun < reified Index : $valexpr, reified Element : $valexpr > makeDefault(
+            ctx: $context,
+            name: String,
+            default: Element
+        ) = $self< Index, Element >(${Array}.makeDefault< Element, Index >(ctx, name, default)) {
+            ${valexpr}.wrap< Element >(it)
+        }
 
-        inline fun < reified Index : $Bitvector, reified Element : $Bitvector > makeFree(ctx: $context, name: String) =
-            $self< Index, Element >(${Array}.makeFree< Element, Index >(ctx, name), bvStaticBitSize< Element >(ctx))
+        inline fun < reified Index : $valexpr, reified Element : $valexpr > makeFree(
+            ctx: $context,
+            name: String
+        ) = $self< Index, Element >(${Array}.makeFree< Element, Index >(ctx, name)) {
+            ${valexpr}.wrap< Element >(it)
+        }
 
-        inline fun < reified Index : $Bitvector, reified Element : $Bitvector > makeVar(ctx: $context, name: String) =
-            $self< Index, Element >(${Array}.makeVar< Element, Index >(ctx, name), bvStaticBitSize< Element >(ctx))
+        inline fun < reified Index : $valexpr, reified Element : $valexpr > makeVar(
+            ctx: $context,
+            name: String
+        ) = $self< Index, Element >(${Array}.makeVar< Element, Index >(ctx, name)) {
+            ${valexpr}.wrap< Element >(it)
+        }
     }
 
     val ctx = inner.ctx
 
-    fun load(index: Index, elementSize: Int): $Bitvector {
-        val bytes = (0..((elementSize - 1) / byteSize)).map {
-            inner.load((index + it) as Index)
-        }
-        var expr = bytes.first().expr
-        var axiom = bytes.first().axiom
-        bytes.drop(1).forEach {
-            expr = engine.binary(ctx, SMTEngine.Opcode.CONCAT, it.expr, expr)
-            axiom = spliceAxioms(ctx, axiom, it.axiom)
-        }
-        return $Bitvector(ctx, expr, axiom)
+    fun load(index: Index): Element {
+        return ctor(inner.load(index))
     }
-    inline fun < reified T : $valexpr > load(index: Index) =
-        ${valexpr}.forceCast< T >(load(index, ${valexpr}.getStaticBitSize< T >(ctx)))
 
-    fun store(index: Index, element: $Bitvector): $self< Index, Element > {
-        val elementSize = element.getBitSize()
-        var start = 0
-        var shift = 0
+    fun store(index: Index, element: Element): $self< Index, Element > {
         val cases = arrayListOf< Pair< Index, Element >>()
-        while (start < elementSize) {
-            val hi = min(start + byteSize - 1, elementSize - 1)
-            cases.add(((index + (shift++)) as Index) to (element.extract(hi, start).toBV(byteSize) as Element))
-            start += byteSize
-        }
-        return $self(inner.store(cases), byteSize)
+        cases.add(index to element)
+        return $self(inner.store(cases), ctor)
     }
 
-    fun < T : $valexpr > store(index: Index, element: T) = store(index, element.toBV())
-
-    operator fun get(index: Index) = inner[index].toBV(byteSize) as Element
-    operator fun set(index: Index, value: $Bitvector) = store(index, value)
-    operator fun < T : $valexpr > set(index: Index, value: T) = store(index, value)
+    operator fun get(index: Index) = load(index)
+    operator fun set(index: Index, value: Element) = store(index, value)
 }

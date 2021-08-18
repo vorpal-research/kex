@@ -1,22 +1,39 @@
-[
-    {
-        "key": "dump_models",
-        "value": false
-    },
-    {
-        "key": "model",
-        "value": true
-    },
-    {
-        "key": "unsat_core",
-        "value": true
-    },
-    {
-        "key": "rlimit",
-        "value": 0
-    },
-    {
-        "key": "trace_file_name",
-        "value": "z3.log"
-    }
-]
+{
+    "elements":[
+        {
+           "key": "dump_models",
+           "value": {
+               "type": "org.jetbrains.research.kex.smt.z3.Value.BoolValue",
+               "value": false
+           }
+        },
+        {
+           "key": "model",
+           "value": {
+               "type": "org.jetbrains.research.kex.smt.z3.Value.BoolValue",
+               "value": true
+            }
+        },
+        {
+           "key": "unsat_core",
+           "value": {
+               "type": "org.jetbrains.research.kex.smt.z3.Value.BoolValue",
+               "value" :true
+            }
+        },
+        {
+           "key": "rlimit",
+           "value": {
+               "type": "org.jetbrains.research.kex.smt.z3.Value.IntValue",
+               "value": 0
+            }
+        },
+        {
+           "key": "trace_file_name",
+           "value": {
+               "type": "org.jetbrains.research.kex.smt.z3.Value.StringValue",
+               "value": "z3.log"
+            }
+        }
+    ]
+}

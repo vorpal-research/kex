@@ -86,6 +86,15 @@ class StensgaardAA : Transformer<StensgaardAA>, AliasAnalysis, Viewable {
         }
     }
 
+    override fun transformArrayContainsTerm(term: ArrayContainsTerm): Term {
+        val ts = get(term.value)
+        val loads = get(term.array)
+        val res = join(pointsTo(loads), pointsTo(ts))
+        pointsTo[loads] = res
+        pointsTo[ts] = res
+        return term
+    }
+
     override fun transformArrayLoadTerm(term: ArrayLoadTerm): Term {
         val ts = get(term)
         val loads = get(term.arrayRef)
@@ -119,12 +128,32 @@ class StensgaardAA : Transformer<StensgaardAA>, AliasAnalysis, Viewable {
         return term
     }
 
+    override fun transformConcatTerm(term: ConcatTerm): Term {
+        val ls = get(term.lhv)
+        val rs = get(term.rhv)
+
+        val res = join(pointsTo(ls), pointsTo(rs))
+        pointsTo[ls] = res
+        pointsTo[rs] = res
+        return term
+    }
+
     override fun transformCastTerm(term: CastTerm): Term {
         val ts = get(term)
         val operand = get(term.operand)
         val res = join(pointsTo(ts), pointsTo(operand))
         pointsTo[ts] = res
         pointsTo[operand] = res
+        return term
+    }
+
+    override fun transformEqualsTerm(term: EqualsTerm): Term {
+        val ls = get(term.lhv)
+        val rs = get(term.rhv)
+
+        val res = join(pointsTo(ls), pointsTo(rs))
+        pointsTo[ls] = res
+        pointsTo[rs] = res
         return term
     }
 

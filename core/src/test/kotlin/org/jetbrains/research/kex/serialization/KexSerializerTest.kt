@@ -54,25 +54,21 @@ class KexSerializerTest : KexTest() {
         val klassType = KexClass("org/jetbrains/research/kex/Test")
         val valueTerm = term { value(klassType, "testValue") }
         val arrayType = KexArray(KexDouble(), memspace = 42)
-        val fieldName = term { const("mySuperAwesomeField") }
-        val fieldTerm = term { valueTerm.field(arrayType, fieldName) }
+        val fieldTerm = term { valueTerm.field(arrayType, "mySuperAwesomeField") }
         val fieldLoadTerm = term { fieldTerm.load() }
 
         val serializedBool = serializer.toJson<Term>(boolTerm)
         val serializedValue = serializer.toJson<Term>(valueTerm)
-        val serializedFieldName = serializer.toJson<Term>(fieldName)
         val serializedField = serializer.toJson<Term>(fieldTerm)
         val serializedFieldLoad = serializer.toJson<Term>(fieldLoadTerm)
 
         val deserializedBool = serializer.fromJson<Term>(serializedBool)
         val deserializedValue = serializer.fromJson<Term>(serializedValue)
-        val deserializedFieldName = serializer.fromJson<Term>(serializedFieldName)
         val deserializedField = serializer.fromJson<Term>(serializedField)
         val deserializedFieldLoad = serializer.fromJson<Term>(serializedFieldLoad)
 
         assertEquals(boolTerm, deserializedBool)
         assertEquals(valueTerm, deserializedValue)
-        assertEquals(fieldName, deserializedFieldName)
         assertEquals(fieldTerm, deserializedField)
         assertEquals(fieldLoadTerm, deserializedFieldLoad)
         assertEquals((deserializedFieldLoad as FieldLoadTerm).field, fieldTerm)

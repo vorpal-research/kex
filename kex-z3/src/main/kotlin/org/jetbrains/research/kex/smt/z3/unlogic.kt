@@ -1,21 +1,21 @@
 package org.jetbrains.research.kex.smt.z3
 
-import org.jetbrains.research.kthelper.*
-import org.jetbrains.research.kthelper.assert.unreachable
-import org.jetbrains.research.kthelper.logging.log
 import com.microsoft.z3.*
 import com.microsoft.z3.enumerations.Z3_lbool
 import org.jetbrains.research.kex.smt.SMTEngine
 import org.jetbrains.research.kex.state.term.*
-import java.lang.Math.pow
+import org.jetbrains.research.kthelper.*
+import org.jetbrains.research.kthelper.assert.unreachable
+import org.jetbrains.research.kthelper.logging.log
 import kotlin.math.pow
 
 object Z3Unlogic {
-    fun undo(expr: Expr): Term = when (expr) {
+    fun undo(expr: Expr<*>): Term = when (expr) {
         is BoolExpr -> undoBool(expr)
         is BitVecNum -> undoBV(expr)
         is BitVecExpr -> undoBVExpr(expr)
         is FPNum -> undoFloat(expr)
+        is SeqExpr<*> -> undoSeq(expr)
         else -> unreachable { log.error("Unexpected expr in unlogic: $expr") }
     }
 
@@ -106,6 +106,8 @@ object Z3Unlogic {
             expr.isBVSGE -> term { const(undo(expr.args[0]).numericValue >= undo(expr.args[1]).numericValue) }
             expr.isBVSGT -> term { const(undo(expr.args[0]).numericValue > undo(expr.args[1]).numericValue) }
             expr.isEq -> term { const(undo(expr.args[0]).numericValue == undo(expr.args[1]).numericValue) }
+            expr.isQuantifier -> term { const(true) }
+            expr.isNot -> term { const(!(undo(expr.args[0]) as ConstBoolTerm).value) }
             else -> unreachable { log.error("Trying to undo unknown") }
         }
     }
@@ -138,10 +140,15 @@ object Z3Unlogic {
             else -> {
                 val sign = if (expr.sign) -1.0 else 1.0
                 val significand = expr.significand.toDouble()
-                val exponent = pow(2.0, expr.getExponentInt64(false).toDouble())
+                val exponent = 2.0.pow(expr.getExponentInt64(false).toDouble())
                 val res = sign * significand * exponent
                 return termifier(res)
             }
         }
+    }
+
+    private fun undoSeq(expr: SeqExpr<*>) = when {
+        expr.isConst -> term { const(expr.string) }
+        else -> unreachable<ConstStringTerm> { log.error("Unknown seq expr") }
     }
 }

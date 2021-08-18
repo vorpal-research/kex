@@ -60,6 +60,8 @@ import java.nio.file.Paths
 import java.util.*
 import kotlin.system.exitProcess
 
+@ExperimentalSerializationApi
+@InternalSerializationApi
 class Kex(args: Array<String>) {
     private val cmd = RunnerCmdConfig(args)
     private val properties = cmd.getCmdValue("config", "kex.ini")
@@ -185,8 +187,6 @@ class Kex(args: Array<String>) {
         System.setProperty("java.class.path", classPath)
     }
 
-    @ExperimentalSerializationApi
-    @InternalSerializationApi
     fun main() {
         // write all classes to output directory, so they will be seen by ClassLoader
         val instrumentedDirName = kexConfig.getStringValue("output", "instrumentedDir", "instrumented")
@@ -213,8 +213,6 @@ class Kex(args: Array<String>) {
         clearClassPath()
     }
 
-    @ExperimentalSerializationApi
-    @InternalSerializationApi
     fun debug(analysisContext: ExecutionContext) {
         val psa = PredicateStateAnalysis(analysisContext.cm)
 
@@ -344,8 +342,6 @@ class Kex(args: Array<String>) {
         clearClassPath()
     }
 
-    @ExperimentalSerializationApi
-    @InternalSerializationApi
     private fun concolic(originalContext: ExecutionContext, analysisContext: ExecutionContext) {
         val traceManager = InstructionTraceManager()
         val cm = createCoverageCounter(originalContext.cm, traceManager)

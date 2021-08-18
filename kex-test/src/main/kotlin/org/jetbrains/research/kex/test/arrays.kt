@@ -2,8 +2,8 @@
 
 package org.jetbrains.research.kex.test
 
-import org.jetbrains.research.kex.Intrinsics.kexAssert
-import org.jetbrains.research.kex.Intrinsics.kexUnreachable
+import org.jetbrains.research.kex.intrinsics.AssertIntrinsics.kexAssert
+import org.jetbrains.research.kex.intrinsics.AssertIntrinsics.kexUnreachable
 
 open class ArrayTests {
     fun testArrayRead() {

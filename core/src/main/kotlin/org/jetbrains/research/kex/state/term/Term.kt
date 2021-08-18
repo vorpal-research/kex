@@ -27,9 +27,9 @@ abstract class Term : TypeInfo {
             val inheritanceInfo = InheritanceInfo.fromJson(resource.bufferedReader().readText())
             resource.close()
 
-            inheritanceInfo?.inheritors?.associate {
+            inheritanceInfo.inheritors.associate {
                 it.name to loader.loadClass(it.inheritorClass)
-            } ?: mapOf()
+            }
         }
 
         val reverse = terms.map { it.value to it.key }.toMap()
@@ -59,6 +59,7 @@ val Term.isNamed
         is FieldTerm -> true
         is ConstStringTerm -> true
         is ConstClassTerm -> true
+        is StaticClassRefTerm -> true
         else -> false
     }
 
@@ -68,6 +69,7 @@ val Term.isConst
         is ConstByteTerm -> true
         is ConstCharTerm -> true
         is ConstClassTerm -> true
+        is StaticClassRefTerm -> true
         is ConstDoubleTerm -> true
         is ConstFloatTerm -> true
         is ConstIntTerm -> true

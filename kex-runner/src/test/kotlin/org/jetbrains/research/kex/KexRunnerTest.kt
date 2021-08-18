@@ -1,10 +1,13 @@
 package org.jetbrains.research.kex
 
+import kotlinx.serialization.ExperimentalSerializationApi
+import kotlinx.serialization.InternalSerializationApi
 import org.jetbrains.research.kex.asm.analysis.testgen.MethodChecker
 import org.jetbrains.research.kex.asm.state.PredicateStateAnalysis
 import org.jetbrains.research.kex.asm.transform.LoopDeroller
 import org.jetbrains.research.kex.asm.transform.RuntimeTraceCollector
 import org.jetbrains.research.kex.asm.util.ClassWriter
+import org.jetbrains.research.kex.intrinsics.AssertIntrinsics
 import org.jetbrains.research.kex.random.easyrandom.EasyRandomDriver
 import org.jetbrains.research.kex.smt.Checker
 import org.jetbrains.research.kex.smt.Result
@@ -32,6 +35,8 @@ import java.nio.file.Paths
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
+@ExperimentalSerializationApi
+@InternalSerializationApi
 abstract class KexRunnerTest : KexTest() {
     val classPath = System.getProperty("java.class.path")
     val targetDir = Files.createTempDirectory("kex-test")
@@ -56,7 +61,7 @@ abstract class KexRunnerTest : KexTest() {
     }
 
     protected fun getReachables(method: Method): List<Instruction> {
-        val klass = Intrinsics::class.qualifiedName!!.replace(".", "/")
+        val klass = AssertIntrinsics::class.qualifiedName!!.replace(".", "/")
         val intrinsics = cm[klass]
 
         val types = cm.type
@@ -70,7 +75,7 @@ abstract class KexRunnerTest : KexTest() {
     }
 
     protected fun getUnreachables(method: Method): List<Instruction> {
-        val klass = Intrinsics::class.qualifiedName!!.replace(".", "/")
+        val klass = AssertIntrinsics::class.qualifiedName!!.replace(".", "/")
         val intrinsics = cm[klass]
 
         val methodName = "kexUnreachable"

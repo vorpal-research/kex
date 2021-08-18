@@ -181,7 +181,7 @@ class ConcolicStateBuilder(val cm: ClassManager, val psa: PredicateStateAnalysis
                     state(inst.location) {
                         val args = inst.args.map { mkValue(it) }
                         val callee = when {
-                            inst.isStatic -> `class`(inst.method.klass)
+                            inst.isStatic -> staticRef(inst.method.klass)
                             else -> mkValue(inst.callee)
                         }
                         val callTerm = callee.call(inst.method, args)
@@ -293,7 +293,7 @@ class ConcolicStateBuilder(val cm: ClassManager, val psa: PredicateStateAnalysis
         stateBuilder += state(inst.location) {
             val lhv = mkNewValue(inst)
             val owner = when {
-                inst.isStatic -> `class`(inst.field.klass)
+                inst.isStatic -> staticRef(inst.field.klass)
                 else -> mkValue(inst.owner)
             }
             val field = owner.field(inst.type.kexType, inst.field.name)
@@ -306,7 +306,7 @@ class ConcolicStateBuilder(val cm: ClassManager, val psa: PredicateStateAnalysis
     fun buildFieldStoreInst(inst: FieldStoreInst) {
         stateBuilder += state(inst.location) {
             val owner = when {
-                inst.isStatic -> `class`(inst.field.klass)
+                inst.isStatic -> staticRef(inst.field.klass)
                 else -> mkValue(inst.owner)
             }
             val value = mkValue(inst.value)

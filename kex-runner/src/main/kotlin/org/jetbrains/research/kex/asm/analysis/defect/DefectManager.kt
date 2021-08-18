@@ -1,11 +1,11 @@
 package org.jetbrains.research.kex.asm.analysis.defect
 
-import com.beust.klaxon.Klaxon
+import kotlinx.serialization.ExperimentalSerializationApi
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 import org.jetbrains.research.kex.config.kexConfig
 import org.jetbrains.research.kthelper.assert.unreachable
 import org.jetbrains.research.kthelper.logging.log
-
-private val klaxon = Klaxon()
 
 object DefectManager {
     private val innerDefects = mutableSetOf<Defect>()
@@ -20,8 +20,9 @@ object DefectManager {
         innerDefects += defect
     }
 
+    @ExperimentalSerializationApi
     fun emit() {
-        val json = klaxon.toJsonString(defects)
+        val json = Json.encodeToString(defects)
         val file = defectFile.toFile().also {
             it.parentFile?.mkdirs()
         }
