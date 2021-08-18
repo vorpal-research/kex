@@ -59,6 +59,7 @@ val Term.isNamed
         is FieldTerm -> true
         is ConstStringTerm -> true
         is ConstClassTerm -> true
+        is StaticClassRefTerm -> true
         else -> false
     }
 
@@ -68,6 +69,7 @@ val Term.isConst
         is ConstByteTerm -> true
         is ConstCharTerm -> true
         is ConstClassTerm -> true
+        is StaticClassRefTerm -> true
         is ConstDoubleTerm -> true
         is ConstFloatTerm -> true
         is ConstIntTerm -> true

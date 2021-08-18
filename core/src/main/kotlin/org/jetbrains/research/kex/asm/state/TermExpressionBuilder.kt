@@ -59,7 +59,7 @@ class TermExpressionBuilder(override val cm: ClassManager) : TermBuilder(), Meth
     override fun visitCallInst(inst: CallInst) {
         val args = inst.args.map { it.term }
         val callee = when {
-            inst.isStatic -> `class`(inst.method.klass)
+            inst.isStatic -> staticRef(inst.method.klass)
             else -> inst.callee.term
         }
         val callTerm = callee.call(inst.method, args)
@@ -82,7 +82,7 @@ class TermExpressionBuilder(override val cm: ClassManager) : TermBuilder(), Meth
 
     override fun visitFieldLoadInst(inst: FieldLoadInst) {
         termMap[inst] = when {
-            inst.isStatic -> `class`(inst.field.klass)
+            inst.isStatic -> staticRef(inst.field.klass)
             else -> inst.owner.term
         }.field(inst.type.kexType, inst.field.name).load()
     }

@@ -173,7 +173,7 @@ class PredicateBuilderTest : KexTest() {
 
                 assertEquals(rhv.isStatic, inst.isStatic)
                 assertEquals(field.owner, when {
-                    inst.isStatic -> tf.getClass(inst.field.klass)
+                    inst.isStatic -> tf.getStaticRef(inst.field.klass)
                     else -> tf.getValue(inst.owner)
                 })
                 assertEquals(field.fieldName, inst.field.name)
@@ -192,7 +192,7 @@ class PredicateBuilderTest : KexTest() {
 
                 assertEquals(rhv.isStatic, inst.isStatic)
                 assertEquals(rhv.owner, when {
-                    inst.isStatic -> tf.getClass(inst.field.klass)
+                    inst.isStatic -> tf.getStaticRef(inst.field.klass)
                     else -> tf.getValue(inst.owner)
                 })
                 assertEquals(rhv.fieldName, inst.field.name)

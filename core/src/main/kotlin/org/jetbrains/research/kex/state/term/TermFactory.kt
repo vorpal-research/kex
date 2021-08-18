@@ -67,6 +67,8 @@ object TermFactory {
     fun getClass(klass: Class) = getClass(KexJavaClass(), klass.kexType)
     fun getClass(type: KexType, constantType: KexType) = ConstClassTerm(type, constantType)
     fun getClass(const: ClassConstant) = ConstClassTerm(const.type.kexType, const.constantType.kexType)
+    fun getStaticRef(klass: Class) = getStaticRef(klass.kexType)
+    fun getStaticRef(klass: KexClass) = StaticClassRefTerm(klass)
 
     fun getUnaryTerm(operand: Term, opcode: UnaryOpcode) = when (opcode) {
         UnaryOpcode.NEG -> getNegTerm(operand)
@@ -111,7 +113,7 @@ object TermFactory {
         getCall(method.returnType.kexType, objectRef, method, arguments)
 
     fun getCall(type: KexType, method: Method, arguments: List<Term>) =
-        CallTerm(type, getClass(method.klass), method, arguments)
+        CallTerm(type, getStaticRef(method.klass), method, arguments)
 
     fun getCall(type: KexType, objectRef: Term, method: Method, arguments: List<Term>) =
         CallTerm(type, objectRef, method, arguments)
@@ -227,6 +229,8 @@ abstract class TermBuilder {
     fun const(@Suppress("UNUSED_PARAMETER") nothing: Nothing?) = tf.getNull()
     fun `class`(klass: Class) = tf.getClass(klass)
     fun `class`(type: KexType, constantType: KexType) = tf.getClass(type, constantType)
+    fun staticRef(type: Class) = tf.getStaticRef(type)
+    fun staticRef(type: KexClass) = tf.getStaticRef(type)
 
     fun Term.apply(opcode: UnaryOpcode) = tf.getUnaryTerm(this, opcode)
     operator fun Term.not() = tf.getNegTerm(this)

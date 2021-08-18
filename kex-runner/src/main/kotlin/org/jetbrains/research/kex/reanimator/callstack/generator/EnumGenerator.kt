@@ -2,7 +2,7 @@ package org.jetbrains.research.kex.reanimator.callstack.generator
 
 import org.jetbrains.research.kex.descriptor.*
 import org.jetbrains.research.kex.ktype.KexArray
-import org.jetbrains.research.kex.ktype.KexJavaClass
+import org.jetbrains.research.kex.ktype.KexClass
 import org.jetbrains.research.kex.ktype.KexType
 import org.jetbrains.research.kex.reanimator.callstack.CallStack
 import org.jetbrains.research.kex.reanimator.callstack.EnumValueCreation
@@ -36,7 +36,7 @@ class EnumGenerator(private val fallback: Generator) : Generator {
                 val queryBuilder = StateBuilder()
                 with(queryBuilder) {
                     val enumArray = KexArray(enumType)
-                    val valuesField = term { `class`(KexJavaClass(), enumType).field(enumArray, "\$VALUES") }
+                    val valuesField = term { staticRef(enumType as KexClass).field(enumArray, "\$VALUES") }
                     val generatedTerm = term { generate(enumArray) }
                     state { generatedTerm equality valuesField.load() }
                     require { generatedTerm inequality null }
@@ -58,7 +58,7 @@ class EnumGenerator(private val fallback: Generator) : Generator {
                     .fields
 
                 return staticFields.map { (field, value) ->
-                    term { `class`(KexJavaClass(), enumType).field(field.second, field.first) } as FieldTerm to value
+                    term { staticRef(enumType as KexClass).field(field.second, field.first) } as FieldTerm to value
                 }.toMap()
             }
     }

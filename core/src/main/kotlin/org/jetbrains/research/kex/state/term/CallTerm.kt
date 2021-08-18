@@ -18,7 +18,7 @@ class CallTerm(
     override val subTerms by lazy { listOf(owner) + arguments }
 
     val isStatic: Boolean
-        get() = owner is ConstClassTerm
+        get() = owner is StaticClassRefTerm
 
     override fun <T: Transformer<T>> accept(t: Transformer<T>): Term {
         val tOwner = t.transform(owner)

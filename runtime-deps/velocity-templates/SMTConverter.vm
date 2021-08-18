@@ -297,7 +297,7 @@ class ${solver}Converter(val tf: TypeFactory) : ${solver}SMTConverter() {
     }
 
 #set($terms = ["Argument", "ArrayContains", "ArrayIndex", "ArrayLength", "ArrayLoad", "Binary", "Call", "Cast", "CharAt",
-    "Cmp", "Concat", "ConstBool", "ConstByte", "ConstChar", "ConstClass", "ConstDouble", "ConstFloat", "ConstInt", "ConstLong",
+    "Cmp", "Concat", "ConstBool", "ConstByte", "ConstChar", "ConstClass", "StaticClassRef", "ConstDouble", "ConstFloat", "ConstInt", "ConstLong",
     "ConstShort", "ConstString", "EndsWith", "Equals", "IndexOf", "StartsWith", "StringContains", "StringLength",
     "StringParse", "Substring", "ToString", "FieldLoad", "ForAll", "Field", "InstanceOf", "Ite", "Lambda", "Neg",
     "Null", "ReturnValue", "Value", "Undef"])
@@ -459,7 +459,14 @@ class ${solver}Converter(val tf: TypeFactory) : ${solver}SMTConverter() {
         ef.addKlassPtr(const.constantType as KexClass, expr as Ptr_)
         var res = const.withAxioms(expr, ef, ctx)
         res = res.withPtrAxioms(ef, ctx, TermType.STATIC_PTR)
-        return res
+        return res.withAxiom(res neq ef.makeNull())
+    }
+
+    fun convert(const: StaticClassRefTerm, ef: Factory_, ctx: Context_): Dynamic_ {
+        val expr = ef.getVarByTypeAndName(const.type, const.name)
+        var res = const.withAxioms(expr, ef, ctx)
+        res = res.withPtrAxioms(ef, ctx, TermType.STATIC_PTR)
+        return res.withAxiom(res neq ef.makeNull())
     }
 
     fun convert(const: ConstDoubleTerm, ef: Factory_, ctx: Context_): Dynamic_ = ef.makeDoubleConst(const.value)

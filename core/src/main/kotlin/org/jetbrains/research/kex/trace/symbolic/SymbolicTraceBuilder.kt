@@ -473,7 +473,7 @@ class SymbolicTraceBuilder(
         }
 
         val predicate = state(instruction.location) {
-            val actualCallee = termCallee ?: `class`(calledMethod.klass)
+            val actualCallee = termCallee ?: staticRef(calledMethod.klass)
             when {
                 termReturn != null -> termReturn equality actualCallee.call(calledMethod, termArguments)
                 else -> call(actualCallee.call(calledMethod, termArguments))
@@ -636,7 +636,7 @@ class SymbolicTraceBuilder(
         termOwner?.apply { this.updateInfo(kfgOwner, concreteOwner.getAsDescriptor(termOwner.type)) }
 
         val predicate = state(kfgValue.location) {
-            val actualOwner = termOwner ?: `class`(kfgField.klass)
+            val actualOwner = termOwner ?: staticRef(kfgField.klass)
             termValue equality actualOwner.field(kfgField.type.kexType, kfgField.name).load()
         }
 
@@ -668,7 +668,7 @@ class SymbolicTraceBuilder(
         termValue.updateInfo(kfgValue, concreteValue.getAsDescriptor(termValue.type))
 
         val predicate = state(instruction.location) {
-            val actualOwner = termOwner ?: `class`(kfgField.klass)
+            val actualOwner = termOwner ?: staticRef(kfgField.klass)
             actualOwner.field(kfgField.type.kexType, kfgField.name).store(termValue)
         }
 

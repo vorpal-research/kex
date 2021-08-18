@@ -1,5 +1,6 @@
 package org.jetbrains.research.kex.state.transformer
 
+import org.jetbrains.research.kex.ktype.KexClass
 import org.jetbrains.research.kex.ktype.KexPointer
 import org.jetbrains.research.kex.state.PredicateState
 import org.jetbrains.research.kex.state.term.*
@@ -21,6 +22,7 @@ fun Term.withMemspace(memspace: Int): Term {
             is CmpTerm -> tf.getCmp(memspaced, opcode, lhv, rhv)
             is ConstStringTerm -> tf.getString(memspaced, value)
             is ConstClassTerm -> tf.getClass(memspaced, constantType)
+            is StaticClassRefTerm -> tf.getStaticRef(memspaced as KexClass)
             is FieldLoadTerm -> tf.getFieldLoad(memspaced, field)
             is FieldTerm -> tf.getField(memspaced, owner, fieldName)
             is LambdaTerm -> this@withMemspace

@@ -77,7 +77,7 @@ class StaticFieldInliner(
                     if (field.defaultValue != null) {
                         val value = field.defaultValue!!
                         state {
-                            val fieldTerm = `class`(klass).field(field.type.kexType, field.name)
+                            val fieldTerm = staticRef(klass).field(field.type.kexType, field.name)
                             fieldTerm.store(value(value))
                         }
                     }
@@ -89,7 +89,7 @@ class StaticFieldInliner(
 
             val query = with(StateBuilder()) {
                 for (field in klass.fields.filter { it.isFinal && it.isStatic }) {
-                    val valuesField = term { `class`(klass).field(field.type.kexType, field.name) }
+                    val valuesField = term { staticRef(klass).field(field.type.kexType, field.name) }
                     val generatedTerm = term { generate(field.type.kexType) }
                     require { generatedTerm equality valuesField.load() }
                 }
