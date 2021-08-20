@@ -22,19 +22,13 @@ automaton org.jetbrains.research.kex.test.spider.computer.lib.Computer : Compute
     shift OSSelected -> OSLoaded(loadOS);
     shift any -> Closed(shutdown);
 
-    fun boot()
-        requires isMemoryNotInit: !isMemoryInit;
-    {
+    fun boot() {
         isMemoryInit = true;
     }
 
-    fun selectOS(osName: OSName)
-        requires osNameCheck: (osName = "win" | osName = "linux");
+    fun selectOS(osName: OSName);
 
-    fun loadOS()
-        requires isMemoryInit: isMemoryInit;
-        requires isOsNotLoaded: !isOsLoaded;
-    {
+    fun loadOS(){
         isOsLoaded = true;
     }
 
