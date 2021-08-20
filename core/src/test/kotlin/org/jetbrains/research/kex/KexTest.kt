@@ -20,6 +20,7 @@ import org.jetbrains.research.kfg.ir.Method
 import org.jetbrains.research.kfg.util.Flags
 import java.nio.file.Path
 import java.nio.file.Paths
+import kotlin.io.path.Path
 
 
 @OptIn(ExperimentalStdlibApi::class)
@@ -76,6 +77,6 @@ abstract class KexTest(
     private fun jarContainerFromClasspathOrNull(name: String?): JarContainer? {
         name ?: return null
         val path = classPath.split(getPathSeparator()).lastOrNull { it.contains(name) } ?: return null
-        return JarContainer(Path.of(path))
+        return JarContainer(Path(path))
     }
 }
