@@ -36,7 +36,7 @@
         <logback.version>1.2.3</logback.version>
         <slf4j.version>1.7.25</slf4j.version>
         <commons-cli.version>1.4</commons-cli.version>
-        <LibSLParser.version>2f196bd9</LibSLParser.version>
+        <LibSLParser.version>1.0.0</LibSLParser.version>
     </properties>
 
     <repositories>

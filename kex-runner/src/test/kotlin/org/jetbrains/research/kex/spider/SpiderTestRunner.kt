@@ -6,7 +6,7 @@ import com.beust.klaxon.Parser
 import org.jetbrains.research.kex.KexRunnerTest
 import org.jetbrains.research.kex.asm.analysis.defect.DefectManager
 import org.jetbrains.research.kex.asm.analysis.libchecker.CallCiteChecker
-import org.jetbrains.research.kex.asm.analysis.libchecker.InstrumentStateFields
+import org.jetbrains.research.kex.asm.analysis.libchecker.ClassInstrumentator
 import org.jetbrains.research.kex.asm.analysis.libchecker.LibslInstrumentator
 import org.jetbrains.research.kex.asm.manager.OriginalMapper
 import org.jetbrains.research.kex.asm.state.PredicateStateAnalysis
@@ -16,12 +16,12 @@ import org.jetbrains.research.kex.asm.util.ClassWriter
 import org.jetbrains.research.kex.asm.util.Visibility
 import org.jetbrains.research.kex.config.RuntimeConfig
 import org.jetbrains.research.kex.config.kexConfig
-import org.jetbrains.research.kex.libsl.LibslDescriptor
 import org.jetbrains.research.kex.reanimator.collector.ExternalCtorCollector
 import org.jetbrains.research.kex.reanimator.collector.MethodFieldAccessCollector
 import org.jetbrains.research.kex.reanimator.collector.SetterCollector
 import org.jetbrains.research.kfg.analysis.LoopSimplifier
 import org.jetbrains.research.kfg.visitor.executePipeline
+import org.jetbrains.research.libsl.LibSL
 import org.junit.Assert
 import java.io.File
 import java.net.URLClassLoader
@@ -71,15 +71,18 @@ class SpiderTestRunner(private val testName: String) : KexRunnerTest(
 
     private fun runPipeline(lslPath: String) {
         val psa = PredicateStateAnalysis(analysisContext.cm)
-        val librarySpecification = LibslDescriptor(lslPath)
-        val isf = InstrumentStateFields(cm, librarySpecification)
+        val lslFile = File(lslPath)
+        val librarySpecification = LibSL(lslFile.parent)
+        val library = librarySpecification.loadFromFile(lslFile)
+        val context = librarySpecification.context
+        val ci = ClassInstrumentator(cm, library)
 
         executePipeline(cm, packages) {
             +OriginalMapper(analysisContext.cm, originalContext.cm)
             +LoopSimplifier(analysisContext.cm)
             +LoopDeroller(analysisContext.cm)
-            +isf
-            +LibslInstrumentator(cm, librarySpecification, isf.stateFields)
+            +ci
+            +LibslInstrumentator(cm, library, context, ci.syntheticContexts)
             +BranchAdapter(analysisContext.cm)
             +psa
             +MethodFieldAccessCollector(analysisContext, psa)

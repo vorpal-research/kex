@@ -89,8 +89,8 @@
             <artifactId>junit</artifactId>
             <version>4.13.2</version>
         <dependency>
-            <groupId>com.github.vldF</groupId>
-            <artifactId>LibSLParser</artifactId>
+            <groupId>com.jetbrains.research</groupId>
+            <artifactId>libsl</artifactId>
             <version>${LibSLParser.version}</version>
         </dependency>
     </dependencies>
