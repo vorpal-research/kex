@@ -22,7 +22,7 @@ class ClassWriter(val ctx: ExecutionContext, val target: Path) : ClassVisitor {
             klass.write(cm, ctx.loader, classFileName)
         } catch (e: Exception) {
             log.warn("Could not write class $klass")
-            // log.error(e.stackTraceToString())
+            log.error(e.stackTraceToString())
         }
     }
 }
