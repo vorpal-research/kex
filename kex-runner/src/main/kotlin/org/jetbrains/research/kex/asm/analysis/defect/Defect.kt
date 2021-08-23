@@ -3,6 +3,7 @@ package org.jetbrains.research.kex.asm.analysis.defect
 import kotlinx.serialization.Serializable
 import org.jetbrains.research.kfg.ir.value.instruction.Instruction
 import java.nio.file.Path
+import kotlin.io.path.absolutePathString
 
 enum class DefectType(val description: String) {
     OOB("array index out of bounds"),
@@ -15,18 +16,18 @@ data class Defect(
     val type: DefectType,
     val callStack: List<String>,
     val id: String?,
-    val testFile: Path?,
+    val testFile: String?,
     val testCaseName: String?
 ) {
     companion object {
         fun oob(callStack: List<String>, id: String? = null, testFile: Path? = null, testCaseName: String? = null) =
-            Defect(DefectType.OOB, callStack, id, testFile, testCaseName)
+            Defect(DefectType.OOB, callStack, id, testFile?.absolutePathString(), testCaseName)
 
         fun npe(callStack: List<String>, id: String? = null, testFile: Path? = null, testCaseName: String? = null) =
-            Defect(DefectType.NPE, callStack, id, testFile, testCaseName)
+            Defect(DefectType.NPE, callStack, id, testFile?.absolutePathString(), testCaseName)
 
         fun assert(callStack: List<String>, id: String? = null, testFile: Path? = null, testCaseName: String? = null) =
-            Defect(DefectType.ASSERT, callStack, id, testFile, testCaseName)
+            Defect(DefectType.ASSERT, callStack, id, testFile?.absolutePathString(), testCaseName)
 
 
         fun oob(inst: Instruction, id: String? = null, testFile: Path? = null, testCaseName: String? = null) =
