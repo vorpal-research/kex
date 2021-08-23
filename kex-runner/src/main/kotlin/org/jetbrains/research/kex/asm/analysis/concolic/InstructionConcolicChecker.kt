@@ -60,7 +60,7 @@ private class CompilerHelper(val ctx: ExecutionContext) {
 
     fun compileFile(file: Path) {
         val compilerDriver = JavaCompilerDriver(
-            listOf(*ctx.classPath.toTypedArray(), junitJar), compileDir
+            listOf(*ctx.classPath.toTypedArray(), junitJar.path), compileDir
         )
         compilerDriver.compile(listOf(file))
     }

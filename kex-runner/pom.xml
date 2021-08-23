@@ -14,28 +14,8 @@
     <properties>
         <exec.main>org.jetbrains.research.kex.MainKt</exec.main>
 
-        <better-parse.version>0.3.2</better-parse.version>
+        <better-parse.version>0.4.2</better-parse.version>
     </properties>
-
-    <repositories>
-        <repository>
-            <id>jitpack.io</id>
-            <url>https://jitpack.io</url>
-        </repository>
-        <repository>
-            <snapshots>
-                <enabled>false</enabled>
-            </snapshots>
-            <id>bintray-cbeust-maven</id>
-            <name>bintray</name>
-            <url>https://dl.bintray.com/cbeust/maven</url>
-        </repository>
-        <repository>
-            <id>bintray-kotlin-kotlinx</id>
-            <name>bintray</name>
-            <url>https://kotlin.bintray.com/kotlinx</url>
-        </repository>
-    </repositories>
 
     <dependencies>
         <dependency>
@@ -87,9 +67,15 @@
             <version>${kfg.version}</version>
         </dependency>
         <dependency>
-            <groupId>com.github.h0tk3y</groupId>
-            <artifactId>better-parse</artifactId>
+            <groupId>com.github.h0tk3y.betterParse</groupId>
+            <artifactId>better-parse-jvm</artifactId>
             <version>${better-parse.version}</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.jetbrains.kotlin</groupId>
+                    <artifactId>kotlin-stdlib-common</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
 
         <dependency>

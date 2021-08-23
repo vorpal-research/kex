@@ -3,29 +3,13 @@
 package org.jetbrains.research.kex.test.debug
 
 class BasicTests {
-    class A {
-        companion object {
-            @JvmStatic
-            val a = intArrayOf(
-                3, 4, 5, 6, 7, 8, 9
-            )
+    data class Point(
+        val x: Int,
+        val y: Int
+    )
 
-            @JvmStatic
-            fun getArrayVal(index: Int): Int {
-                return when (index) {
-                    0 -> a[1]
-                    1 -> a[4]
-                    5 -> a[7]
-                    2 -> a[2]
-                    else -> a[0]
-                }
-            }
-        }
-
-    }
-
-    fun test(a: Int): Int {
-        val value = A.getArrayVal(a)
+    fun test(a: ArrayList<Point>): Int {
+        val value = a[0].x
         if (value > 3) {
             return 1
         }

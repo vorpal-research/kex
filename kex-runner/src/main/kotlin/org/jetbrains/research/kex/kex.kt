@@ -35,6 +35,7 @@ import org.jetbrains.research.kex.trace.TraceManager
 import org.jetbrains.research.kex.trace.`object`.ObjectTraceManager
 import org.jetbrains.research.kex.trace.symbolic.InstructionTraceManager
 import org.jetbrains.research.kex.util.getIntrinsics
+import org.jetbrains.research.kex.util.getKexRuntime
 import org.jetbrains.research.kex.util.getPathSeparator
 import org.jetbrains.research.kex.util.getRuntime
 import org.jetbrains.research.kfg.ClassManager
@@ -150,7 +151,7 @@ class Kex(args: Array<String>) {
         }
         classManager = ClassManager(KfgConfig(flags = Flags.readAll, failOnError = false, verifyIR = false))
         origManager = ClassManager(KfgConfig(flags = Flags.readAll, failOnError = false, verifyIR = false))
-        val analysisJars = listOfNotNull(*containers.toTypedArray(), getRuntime(), getIntrinsics())
+        val analysisJars = listOfNotNull(*containers.toTypedArray(), getRuntime(), getIntrinsics(), getKexRuntime())
         classManager.initialize(*analysisJars.toTypedArray())
         origManager.initialize(*analysisJars.toTypedArray())
 

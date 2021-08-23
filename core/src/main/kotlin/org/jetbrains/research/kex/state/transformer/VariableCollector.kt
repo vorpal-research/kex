@@ -1,5 +1,6 @@
 package org.jetbrains.research.kex.state.transformer
 
+import org.jetbrains.research.kex.ktype.KexVoid
 import org.jetbrains.research.kex.state.PredicateState
 import org.jetbrains.research.kex.state.term.*
 
@@ -38,5 +39,5 @@ class VariableCollector : Transformer<VariableCollector> {
 fun collectVariables(ps: PredicateState): Set<Term> {
     val collector = VariableCollector()
     collector.apply(ps)
-    return collector.variables.toSet()
+    return collector.variables.filter { it.type !is KexVoid }.toSet()
 }

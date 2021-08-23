@@ -50,6 +50,7 @@ class Checker(
             +AnnotationAdapter(method, AnnotationManager.defaultLoader)
         }
 //        +StringAdapter(ctx)
+        +KexRtAdapter(ctx)
 
         if (isInliningEnabled) {
             +MethodInliner(psa)

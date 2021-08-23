@@ -3,6 +3,8 @@ package org.jetbrains.research.kex.trace.file
 import com.github.h0tk3y.betterParse.combinators.*
 import com.github.h0tk3y.betterParse.grammar.Grammar
 import com.github.h0tk3y.betterParse.grammar.parser
+import com.github.h0tk3y.betterParse.lexer.literalToken
+import com.github.h0tk3y.betterParse.lexer.regexToken
 import com.github.h0tk3y.betterParse.parser.Parser
 import org.jetbrains.research.kfg.ClassManager
 import org.jetbrains.research.kfg.ir.MethodDesc
@@ -27,22 +29,22 @@ class ActionParser(val cm: ClassManager, val ctx: NameMapperContext) : Grammar<A
         get() = trackers.peek() ?: unreachable { log.error("No slot trackers defined") }
 
     // keyword tokens
-    private val `this` by token("this")
-    private val `throw` by token("throw")
-    private val exit by token("exit")
-    private val `return` by token("return")
-    private val enter by token("enter")
-    private val branch by token("branch")
-    private val switch by token("switch")
-    private val tableswitch by token("tableswitch")
-    private val `true` by token("true")
-    private val `false` by token("false")
-    private val `null` by token("null")
-    private val array by token("array")
-    private val arguments by token("arguments")
-    private val instance by token("instance")
-    private val arg by token("arg\\$")
-    private val nan by token("NaN")
+    private val `this` by literalToken("this")
+    private val `throw` by literalToken("throw")
+    private val exit by literalToken("exit")
+    private val `return` by literalToken("return")
+    private val enter by literalToken("enter")
+    private val branch by literalToken("branch")
+    private val switch by literalToken("switch")
+    private val tableswitch by literalToken("tableswitch")
+    private val `true` by literalToken("true")
+    private val `false` by literalToken("false")
+    private val `null` by literalToken("null")
+    private val array by literalToken("array")
+    private val arguments by literalToken("arguments")
+    private val instance by literalToken("instance")
+    private val arg by literalToken("arg$")
+    private val nan by literalToken("NaN")
 
     private val keyword by `this` or
             `throw` or
@@ -61,27 +63,27 @@ class ActionParser(val cm: ClassManager, val ctx: NameMapperContext) : Grammar<A
             arg
 
     // symbol tokens
-    private val space by token("\\s+")
-    private val dot by token("\\.")
-    private val equality by token("==")
-    private val openCurlyBrace by token("\\{")
-    private val closeCurlyBrace by token("}")
-    private val openSquareBrace by token("\\[")
-    private val closeSquareBrace by token("]")
-    private val openBracket by token("\\(")
-    private val closeBracket by token("\\)")
-    private val percent by token("%")
-    private val colon by token(":")
-    private val semicolon by token(";")
-    private val comma by token(",")
-    private val minus by token("-")
-    private val doubleNum by token("\\d+\\.\\d+(E(-)?\\d+)?")
-    private val num by token("\\d+")
-    private val word by token("[a-zA-Z$][\\w$-]*")
-    private val at by token("@")
+    private val space by regexToken("\\s+")
+    private val dot by regexToken("\\.")
+    private val equality by literalToken("==")
+    private val openCurlyBrace by literalToken("{")
+    private val closeCurlyBrace by literalToken("}")
+    private val openSquareBrace by literalToken("[")
+    private val closeSquareBrace by literalToken("]")
+    private val openBracket by literalToken("(")
+    private val closeBracket by literalToken(")")
+    private val percent by literalToken("%")
+    private val colon by literalToken(":")
+    private val semicolon by literalToken(";")
+    private val comma by literalToken(",")
+    private val minus by literalToken("-")
+    private val doubleNum by regexToken("\\d+\\.\\d+(E(-)?\\d+)?")
+    private val num by regexToken("\\d+")
+    private val word by regexToken("[a-zA-Z$][\\w$-]*")
+    private val at by literalToken("@")
 
     @Suppress("RegExpRedundantEscape")
-    private val string by token("\"[\\w\\sа-яА-ЯёЁ\\-.@>=<+*,'\\(\\):\\[\\]/\\n{}]*\"")
+    private val string by regexToken("\"[\\w\\sа-яА-ЯёЁ\\-.@>=<+*,'\\(\\):\\[\\]/\\n{}]*\"")
 
     private val colonAndSpace by colon and space
     private val semicolonAndSpace by semicolon and space

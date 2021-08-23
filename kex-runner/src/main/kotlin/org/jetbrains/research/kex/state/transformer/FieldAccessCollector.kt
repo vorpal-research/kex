@@ -1,6 +1,8 @@
 package org.jetbrains.research.kex.state.transformer
 
 import org.jetbrains.research.kex.ExecutionContext
+import org.jetbrains.research.kex.ktype.KexRtManager.isKexRt
+import org.jetbrains.research.kex.ktype.KexRtManager.rtUnmapped
 import org.jetbrains.research.kex.state.PredicateState
 import org.jetbrains.research.kex.state.predicate.FieldInitializerPredicate
 import org.jetbrains.research.kex.state.predicate.FieldStorePredicate
@@ -21,7 +23,10 @@ class FieldAccessCollector(val context: ExecutionContext) : Transformer<FieldAcc
     override fun transformFieldInitializer(predicate: FieldInitializerPredicate): Predicate {
         val fieldTerm = predicate.field as? FieldTerm ?: unreachable { log.error("Unexpected term in field store") }
         val klass = context.cm[fieldTerm.klass]
-        val field = klass.getField(fieldTerm.fieldName, fieldTerm.type.getKfgType(context.types))
+        val field = when {
+            klass.isKexRt -> klass.getField(fieldTerm.fieldName, fieldTerm.type.getKfgType(context.types))
+            else -> klass.getField(fieldTerm.fieldName, fieldTerm.type.getKfgType(context.types).rtUnmapped)
+        }
         if (fieldTerm.isStatic || fieldTerm.owner.isThis) {
             fieldAccesses += field
             fieldTerms += fieldTerm
@@ -32,7 +37,10 @@ class FieldAccessCollector(val context: ExecutionContext) : Transformer<FieldAcc
     override fun transformFieldStore(predicate: FieldStorePredicate): Predicate {
         val fieldTerm = predicate.field as? FieldTerm ?: unreachable { log.error("Unexpected term in field store") }
         val klass = context.cm[fieldTerm.klass]
-        val field = klass.getField(fieldTerm.fieldName, fieldTerm.type.getKfgType(context.types))
+        val field = when {
+            klass.isKexRt -> klass.getField(fieldTerm.fieldName, fieldTerm.type.getKfgType(context.types))
+            else -> klass.getField(fieldTerm.fieldName, fieldTerm.type.getKfgType(context.types).rtUnmapped)
+        }
         if (fieldTerm.isStatic || fieldTerm.owner.isThis) {
             fieldAccesses += field
             fieldTerms += fieldTerm
