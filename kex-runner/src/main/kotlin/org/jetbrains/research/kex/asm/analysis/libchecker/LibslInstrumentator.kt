@@ -3,10 +3,7 @@ package org.jetbrains.research.kex.asm.analysis.libchecker
 import org.jetbrains.research.kex.asm.manager.MethodManager
 import org.jetbrains.research.kfg.ClassManager
 import org.jetbrains.research.kfg.ir.*
-import org.jetbrains.research.kfg.ir.value.BoolConstant
-import org.jetbrains.research.kfg.ir.value.IntConstant
-import org.jetbrains.research.kfg.ir.value.StringConstant
-import org.jetbrains.research.kfg.ir.value.Value
+import org.jetbrains.research.kfg.ir.value.*
 import org.jetbrains.research.kfg.ir.value.instruction.CallOpcode
 import org.jetbrains.research.kfg.ir.value.instruction.CmpOpcode
 import org.jetbrains.research.kfg.ir.value.instruction.Instruction
@@ -32,6 +29,7 @@ class LibslInstrumentator(
     private val instFactory = cm.instruction
     private val valueFactory = cm.value
     private val typeFactory = cm.type
+    private lateinit var methodUsageContext: UsageContext
 
 
     override fun cleanup() { }
@@ -43,6 +41,7 @@ class LibslInstrumentator(
         val automaton = librarySpecification.automata.firstOrNull { it.name == classQualifiedName } ?: return
         val methodDescription = automaton.functions.firstOrNull { mth -> mth.name == method.name } ?: return
         val classSyntheticContext = syntheticContexts[klass.fullName] ?: error("synthetic context not found")
+        methodUsageContext = method.usageContext
 
         addAutomataAssignments(methodDescription, method, classSyntheticContext)
 
@@ -71,8 +70,8 @@ class LibslInstrumentator(
             prelastBlocks.toSet().forEach { prev ->
                 prev.remove(prev.terminator)
 
-                lastBlock.removePredecessor(prev)
-                prev.removeSuccessor(lastBlock)
+                lastBlock.removePredecessor(methodUsageContext, prev)
+                prev.removeSuccessor(methodUsageContext, lastBlock)
             }
 
             val generator = ExpressionGenerator(method, klass, cm, classSyntheticContext)
@@ -87,11 +86,11 @@ class LibslInstrumentator(
             val entryBlock = method.entry
 
             blockSaver.addAll(savedValuesInstructions.filterIsInstance<Instruction>())
-            blockSaver.add(instFactory.getJump(entryBlock))
+            blockSaver.add(instFactory.getJump(methodUsageContext, entryBlock))
 
-            method.addBefore(entryBlock, blockSaver)
-            entryBlock.addPredecessors(blockSaver)
-            blockSaver.addSuccessor(entryBlock)
+            method.addBefore(methodUsageContext, entryBlock, blockSaver)
+            entryBlock.addPredecessors(methodUsageContext, blockSaver)
+            blockSaver.addSuccessor(methodUsageContext, entryBlock)
 
             val name = ensures.name ?: "assertion"
 
@@ -131,6 +130,7 @@ class LibslInstrumentator(
         val foreignStateField = foreignClass.getField(fieldName, typeFactory.intType)
 
         val storeInstr = instFactory.getFieldStore(
+            block.parent.usageContext,
             returnValue,
             foreignStateField,
             valueFactory.getInt(value)
@@ -141,9 +141,13 @@ class LibslInstrumentator(
 
     private fun insertKexAssert(name: String, block: BasicBlock, nextBlock: BasicBlock, prevBlocks: Collection<BasicBlock>?, condition: Value) {
         val kexAssertion = MethodManager.KexIntrinsicManager.kexAssertWithId(cm)
-        val conditionsArray = instFactory.getNewArray(BoolType, IntConstant(1, IntType))
+        val conditionsArray = instFactory.getNewArray(
+            methodUsageContext,
+            BoolType,
+            IntConstant(1, IntType)
+        )
         block.add(conditionsArray)
-        val initArray = instFactory.getArrayStore(conditionsArray, IntConstant(0, IntType), condition)
+        val initArray = instFactory.getArrayStore(methodUsageContext, conditionsArray, IntConstant(0, IntType), condition)
         block.add(initArray)
 
         val kexAssertionArgs = arrayOf(
@@ -151,24 +155,24 @@ class LibslInstrumentator(
             conditionsArray
         )
 
-        val kexAssertionCall = instFactory.getCall(CallOpcode.STATIC, kexAssertion, kexAssertion.klass, kexAssertionArgs, true)
+        val kexAssertionCall = instFactory.getCall(methodUsageContext, CallOpcode.STATIC, kexAssertion, kexAssertion.klass, kexAssertionArgs, true)
         block.add(kexAssertionCall)
 
-        val gotoNext = instFactory.getJump(nextBlock)
+        val gotoNext = instFactory.getJump(methodUsageContext, nextBlock)
         block.add(gotoNext)
 
-        val gotoCurrentBlock = instFactory.getJump(block)
+        val gotoCurrentBlock = instFactory.getJump(methodUsageContext, block)
 
         prevBlocks?.forEach { prevBlock ->
-            prevBlock.addSuccessor(block)
-            block.addPredecessors(prevBlock)
+            prevBlock.addSuccessor(methodUsageContext, block)
+            block.addPredecessors(methodUsageContext, prevBlock)
 
             prevBlock.add(gotoCurrentBlock)
         }
 
-        nextBlock.parent.addBefore(nextBlock, block)
-        nextBlock.addPredecessors(block)
-        block.addSuccessor(nextBlock)
+        nextBlock.parent.addBefore(methodUsageContext, nextBlock, block)
+        nextBlock.addPredecessors(methodUsageContext, block)
+        block.addSuccessor(methodUsageContext, nextBlock)
     }
 
     private fun addShifts(automaton: Automaton, function: Function, method: Method, stateField: Field, statesMap: Map<State, Int>) {
@@ -179,25 +183,24 @@ class LibslInstrumentator(
         if (shifts.isEmpty()) return
 
         var branchBlock = BodyBlock("shifts")
-        val `this` = valueFactory.getThis(method.klass)
 
         if (shifts.any { it.from.isAny }) {
             val shift = shifts.first()
             val changeToStateConst = statesMap[shift.to] ?: error("state ${shift.to.name} constant wasn't initialized")
             branchBlock.apply {
-                add(instFactory.getFieldStore(`this`, stateField, IntConstant(changeToStateConst, IntType)))
-                add(instFactory.getJump(entryBlock))
-                method.addBefore(entryBlock, this)
+                add(instFactory.getFieldStore(methodUsageContext, stateField, IntConstant(changeToStateConst, IntType)))
+                add(instFactory.getJump(methodUsageContext, entryBlock))
+                method.addBefore(methodUsageContext, entryBlock, this)
 
-                addSuccessor(entryBlock)
-                entryBlock.addPredecessors(this)
+                addSuccessor(methodUsageContext, entryBlock)
+                entryBlock.addPredecessors(methodUsageContext, this)
             }
 
             return
         }
 
         for (shift in shifts) {
-            val lhv = instFactory.getFieldLoad(`this`, stateField)
+            val lhv = instFactory.getFieldLoad(methodUsageContext, stateField)
             branchBlock.add(lhv)
 
             val fromStateCode = statesMap[shift.from] ?: error("state ${shift.from.name} constant wasn't initialized")
@@ -210,40 +213,40 @@ class LibslInstrumentator(
 
             val rhv = IntConstant(fromStateCode, IntType)
 
-            val cmpInst = instFactory.getCmp(BoolType, CmpOpcode.EQ, lhv, rhv)
+            val cmpInst = instFactory.getCmp(methodUsageContext, BoolType, CmpOpcode.EQ, lhv, rhv)
             branchBlock.add(cmpInst)
 
             val failureBlock = BodyBlock("shift-failure").apply {
-                addPredecessors(branchBlock)
-                branchBlock.addSuccessor(this)
+                addPredecessors(methodUsageContext, branchBlock)
+                branchBlock.addSuccessor(methodUsageContext, this)
             }
-            method.add(failureBlock)
+            method.add(methodUsageContext, failureBlock)
 
             val successBlock = BodyBlock("${automaton.name} success branch").apply {
                 val constValue = IntConstant(toStateConst, IntType)
-                val assignment = instFactory.getFieldStore(`this`, stateField, constValue)
+                val assignment = instFactory.getFieldStore(methodUsageContext, stateField, constValue)
                 add(assignment)
 
-                val goto = instFactory.getJump(entryBlock)
+                val goto = instFactory.getJump(methodUsageContext, entryBlock)
                 add(goto)
 
-                addPredecessors(branchBlock)
-                branchBlock.addSuccessor(this)
+                addPredecessors(methodUsageContext, branchBlock)
+                branchBlock.addSuccessor(methodUsageContext, this)
 
-                addSuccessor(entryBlock)
-                entryBlock.addPredecessors(this)
+                addSuccessor(methodUsageContext, entryBlock)
+                entryBlock.addPredecessors(methodUsageContext, this)
             }
-            method.add(successBlock)
+            method.add(methodUsageContext, successBlock)
 
-            val branch = instFactory.getBranch(cmpInst, successBlock, failureBlock)
+            val branch = instFactory.getBranch(methodUsageContext, cmpInst, successBlock, failureBlock)
             branchBlock.add(branch)
 
             if (previousBlock != null) {
-                branchBlock.addPredecessors(previousBlock)
-                previousBlock.addSuccessor(branchBlock)
-                method.addAfter(previousBlock, branchBlock)
+                branchBlock.addPredecessors(methodUsageContext, previousBlock)
+                previousBlock.addSuccessor(methodUsageContext, branchBlock)
+                method.addAfter(methodUsageContext, previousBlock, branchBlock)
             } else {
-                method.addBefore(entryBlock, branchBlock)
+                method.addBefore(methodUsageContext, entryBlock, branchBlock)
             }
 
             previousBlock = branchBlock
@@ -252,9 +255,9 @@ class LibslInstrumentator(
 
         branchBlock.apply {
             val kexAssertion = MethodManager.KexIntrinsicManager.kexAssertWithId(cm)
-            val conditionsArray = instFactory.getNewArray(BoolType, IntConstant(1, IntType))
+            val conditionsArray = instFactory.getNewArray(methodUsageContext, BoolType, IntConstant(1, IntType))
             add(conditionsArray)
-            val initArray = instFactory.getArrayStore(conditionsArray, IntConstant(0, IntType), BoolConstant(false, BoolType))
+            val initArray = instFactory.getArrayStore(methodUsageContext, conditionsArray, IntConstant(0, IntType), BoolConstant(false, BoolType))
             add(initArray)
 
             val kexAssertionArgs = arrayOf(
@@ -262,17 +265,17 @@ class LibslInstrumentator(
                 conditionsArray
             )
 
-            val kexAssertionCall = instFactory.getCall(CallOpcode.STATIC, kexAssertion, kexAssertion.klass, kexAssertionArgs, true)
+            val kexAssertionCall = instFactory.getCall(methodUsageContext, CallOpcode.STATIC, kexAssertion, kexAssertion.klass, kexAssertionArgs, true)
             add(kexAssertionCall)
 
-            val goto = instFactory.getJump(entryBlock)
+            val goto = instFactory.getJump(methodUsageContext, entryBlock)
             add(goto)
         }
 
-        branchBlock.addSuccessor(entryBlock)
-        entryBlock.addPredecessors(branchBlock)
+        branchBlock.addSuccessor(methodUsageContext, entryBlock)
+        entryBlock.addPredecessors(methodUsageContext, branchBlock)
 
-        method.add(branchBlock)
+        method.add(methodUsageContext, branchBlock)
 
         return
     }
@@ -294,8 +297,7 @@ class LibslInstrumentator(
                 val initStateCode = syntheticContext.statesMap[initState]
                     ?: unreachable { log.error("unknown init state provided in automaton $automatonName") }
                 val stateField = syntheticContext.stateField
-                val `this` = valueFactory.getThis(method.klass)
-                val store = instFactory.getFieldStore(`this`, stateField, valueFactory.getInt(initStateCode))
+                val store = instFactory.getFieldStore(methodUsageContext, stateField, valueFactory.getInt(initStateCode))
                 method.entry.insertBefore(method.entry.first(), store)
                 continue
             }
@@ -316,8 +318,8 @@ class LibslInstrumentator(
             }
             val targetClass = cm.concreteClasses.firstOrNull { it.name == automatonName }
                 ?: unreachable { log.error("unknown class $automatonName") }
-            val assignmentValue = instFactory.getNew(automatonName, targetClass)
-            val assignmentInstr = instFactory.getFieldStore(field, assignmentValue)
+            val assignmentValue = instFactory.getNew(methodUsageContext, automatonName, targetClass)
+            val assignmentInstr = instFactory.getFieldStore(methodUsageContext, field, assignmentValue)
             method.entry.insertBefore(method.entry.first(), assignmentValue, assignmentInstr)
         }
     }

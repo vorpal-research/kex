@@ -7,6 +7,6 @@ public class Main {
         // ok
         Computer computer1 = new Computer();
         computer1.boot();
-
+        computer1.selectOS("win");
     }
 }

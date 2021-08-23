@@ -4,9 +4,11 @@ import org.jetbrains.research.kfg.ClassManager
 import org.jetbrains.research.kfg.ir.BodyBlock
 import org.jetbrains.research.kfg.ir.Class
 import org.jetbrains.research.kfg.ir.Method
+import org.jetbrains.research.kfg.ir.value.EmptyUsageContext
 import org.jetbrains.research.kfg.ir.value.Value
 import org.jetbrains.research.kfg.ir.value.ValueFactory
 import org.jetbrains.research.kfg.ir.value.instruction.*
+import org.jetbrains.research.kfg.ir.value.usageContext
 import org.jetbrains.research.kfg.type.TypeFactory
 import org.jetbrains.research.libsl.asg.*
 
@@ -20,9 +22,10 @@ class ExpressionGenerator(
     val expressionBlock = BodyBlock("synthesized expression")
     val oldCallStorage = mutableListOf<Value>()
 
+    private val usageContext = method?.usageContext ?: EmptyUsageContext
+    private val constructorUsageContext = klass.constructors.first().usageContext
     private val instructionFactory = InstructionFactory(cm)
     private val valueFactory = ValueFactory(cm)
-    private val `this` = valueFactory.getThis(klass)
 
     private fun equalsWithObject(obj: Value, objKlass: Class, other: Value): CallInst {
         val equalsMethod = objKlass.allMethods.firstOrNull { method ->
@@ -33,7 +36,7 @@ class ExpressionGenerator(
             other
         )
 
-        return instructionFactory.getCall(CallOpcode.VIRTUAL, equalsMethod, equalsMethod.klass, args, true)
+        return instructionFactory.getCall(usageContext, CallOpcode.VIRTUAL, equalsMethod, equalsMethod.klass, args, true)
     }
 
     override fun visitAccessAlias(node: AccessAlias): Value {
@@ -57,7 +60,7 @@ class ExpressionGenerator(
         val left = visit(node.left)
         val right = visit(node.right)
         return if (opcode != null) {
-            instructionFactory.getBinary(opcode, left, right).also {
+            instructionFactory.getBinary(usageContext, opcode, left, right).also {
                 expressionBlock.add(it)
             }
         } else {
@@ -67,7 +70,7 @@ class ExpressionGenerator(
             } else if (!right.type.isPrimary) {
                 equalsWithObject(right, cm[right.type.name], left)
             } else {
-                instructionFactory.getCmp(TypeFactory(cm).boolType, node.op.comparisonOpCode, left, right)
+                instructionFactory.getCmp(usageContext, TypeFactory(cm).boolType, node.op.comparisonOpCode, left, right)
             }
 
             res.also {
@@ -155,7 +158,7 @@ class ExpressionGenerator(
     }
 
     override fun visitUnaryOpExpression(node: UnaryOpExpression): Value {
-        return instructionFactory.getUnary(UnaryOpcode.NEG, visit(node.value)).also {
+        return instructionFactory.getUnary(usageContext, UnaryOpcode.NEG, visit(node.value)).also {
             expressionBlock.add(it)
         }
     }
@@ -168,7 +171,7 @@ class ExpressionGenerator(
                 valueFactory.getArgument(variable.index, method, variable.type.kfgType(cm))
             } else {
                 val field = syntheticContext.fields[node.variable] ?: error("unknown variable ${node.variable!!.name}")
-                instructionFactory.getFieldLoad(`this`, field).also {
+                instructionFactory.getFieldLoad(constructorUsageContext, field).also {
                     expressionBlock.add(it)
                 }
             }
