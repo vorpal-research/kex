@@ -195,15 +195,14 @@ class CallCiteChecker(
             builder
         }.apply()
 
-        val (checkerState, result) = check(state, assertionQuery)
+        val (_, result) = check(state, assertionQuery)
         return when (result) {
             is Result.SatResult -> {
-                val (path, testName) = getTest("Assertion", checkerState, result, callCite) ?: (null to null)
                 val callStack = listOf(
                     "$method - ${inst.location}",
                     "${callCite.parent.parent} - ${callCite.location}"
                 )
-                dm += Defect.assert(callStack, id, path, testName)
+                dm += Defect.assert(callStack, id)
                 false
             }
             else -> true
@@ -212,10 +211,10 @@ class CallCiteChecker(
 
     fun prepareState(ps: PredicateState, typeInfoMap: TypeInfoMap) = transform(ps) {
         +AnnotationAdapter(method, AnnotationManager.defaultLoader)
-        +RecursiveInliner(psa) { index, psa ->
-            ConcreteImplInliner(method.cm.type, typeInfoMap, psa, inlineIndex = index)
-        }
+//        +StringAdapter(ctx)
+        +RecursiveInliner(psa) { ConcreteImplInliner(method.cm.type, typeInfoMap, psa, inlineIndex = it) }
         +StaticFieldInliner(ctx, psa)
+        +RecursiveInliner(psa) { MethodInliner(psa, inlineIndex = it) }
         +IntrinsicAdapter
         +KexIntrinsicsAdapter()
         +DoubleTypeAdapter()
@@ -225,17 +224,6 @@ class CallCiteChecker(
         +BoolTypeAdapter(method.cm.type)
         +ConstStringAdapter()
         +FieldNormalizer(method.cm)
-    }
-
-    private fun getTest(
-        nameBase: String,
-        state: PredicateState,
-        result: Result.SatResult,
-        callCite: Instruction
-    ): Pair<Path, String>? = tryOrNull {
-        val testName = "test$nameBase${testIndex++}"
-        generator.generate(testName, callCite.parent.parent, state, result.model)
-        generator.printer.targetFile.toPath() to testName
     }
 
     private fun check(state_: PredicateState, query_: PredicateState): Pair<PredicateState, Result> {

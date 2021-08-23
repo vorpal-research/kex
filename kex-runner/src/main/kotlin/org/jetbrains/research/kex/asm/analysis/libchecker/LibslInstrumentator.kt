@@ -30,6 +30,7 @@ class LibslInstrumentator(
     private val valueFactory = cm.value
     private val typeFactory = cm.type
     private lateinit var methodUsageContext: UsageContext
+    private lateinit var classSyntheticContext: SyntheticContext
 
 
     override fun cleanup() { }
@@ -40,7 +41,7 @@ class LibslInstrumentator(
 
         val automaton = librarySpecification.automata.firstOrNull { it.name == classQualifiedName } ?: return
         val methodDescription = automaton.functions.firstOrNull { mth -> mth.name == method.name } ?: return
-        val classSyntheticContext = syntheticContexts[klass.fullName] ?: error("synthetic context not found")
+        classSyntheticContext = syntheticContexts[klass.fullName] ?: error("synthetic context not found")
         methodUsageContext = method.usageContext
 
         addAutomataAssignments(methodDescription, method, classSyntheticContext)
@@ -64,7 +65,7 @@ class LibslInstrumentator(
         }
 
         // ensures contract
-        methodDescription.contracts.filter { it.kind == ContractKind.REQUIRES }.forEach { ensures ->
+        methodDescription.contracts.filter { it.kind == ContractKind.ENSURES }.forEach { ensures ->
             val lastBlock = method.basicBlocks.last { it.instructions.any { instr -> instr is ReturnInst } }
             val prelastBlocks = lastBlock.predecessors.toSet()
             prelastBlocks.toSet().forEach { prev ->
@@ -118,10 +119,6 @@ class LibslInstrumentator(
             insertAutomatonFieldStore(terminateBlock, returnStatement, returnValue, prefix + "STATE", stateConst)
         }
 
-        if (klass.name.contains("Computer")) {
-            println()
-        }
-
         return
     }
 
@@ -155,7 +152,7 @@ class LibslInstrumentator(
             conditionsArray
         )
 
-        val kexAssertionCall = instFactory.getCall(methodUsageContext, CallOpcode.STATIC, kexAssertion, kexAssertion.klass, kexAssertionArgs, true)
+        val kexAssertionCall = instFactory.getCall(methodUsageContext, CallOpcode.STATIC, kexAssertion, kexAssertion.klass, kexAssertionArgs, isNamed=false)
         block.add(kexAssertionCall)
 
         val gotoNext = instFactory.getJump(methodUsageContext, nextBlock)
@@ -208,7 +205,7 @@ class LibslInstrumentator(
             val toStateConst = if (shift.to.isSelf) {
                 fromStateCode
             } else {
-                statesMap[shift.from] ?: error("state ${shift.from.name} constant wasn't initialized")
+                statesMap[shift.to] ?: error("state ${shift.from.name} constant wasn't initialized")
             }
 
             val rhv = IntConstant(fromStateCode, IntType)
@@ -265,7 +262,7 @@ class LibslInstrumentator(
                 conditionsArray
             )
 
-            val kexAssertionCall = instFactory.getCall(methodUsageContext, CallOpcode.STATIC, kexAssertion, kexAssertion.klass, kexAssertionArgs, true)
+            val kexAssertionCall = instFactory.getCall(methodUsageContext, CallOpcode.STATIC, kexAssertion, kexAssertion.klass, kexAssertionArgs, false)
             add(kexAssertionCall)
 
             val goto = instFactory.getJump(methodUsageContext, entryBlock)
@@ -287,44 +284,41 @@ class LibslInstrumentator(
         val automataFields = mutableMapOf<Automaton, Field>()
 
         for (assignment in func.statements.filterIsInstance<Assignment>()) {
-            val automatonCall = (assignment.value as? CallAutomatonConstructor) ?: continue
-            val automaton = automatonCall.automaton
-            val automatonName = automaton.name
+            val variable = (assignment.left as? VariableAccess)?.variable ?: error("unresolved variable ${assignment.left}")
+            val variableField = syntheticContext.fields[variable] ?: error("unresolved variable ${variable.name}")
+            val (field, value) = when (val value = assignment.value) {
+                is CallAutomatonConstructor -> {
+                    val automaton = value.automaton
+                    val automatonName = automaton.name
+                    val targetClass = cm.concreteClasses.firstOrNull { it.name == automatonName }
+                        ?: unreachable { log.error("unknown class $automatonName") }
 
-            if (automaton.name == klass.name) {
-                // this is automaton's constructor
-                val initState = automatonCall.state
-                val initStateCode = syntheticContext.statesMap[initState]
-                    ?: unreachable { log.error("unknown init state provided in automaton $automatonName") }
-                val stateField = syntheticContext.stateField
-                val store = instFactory.getFieldStore(methodUsageContext, stateField, valueFactory.getInt(initStateCode))
-                method.entry.insertBefore(method.entry.first(), store)
-                continue
+                    val field = syntheticContexts[automatonName]?.stateField
+                        ?: error("unknown state field for automaton $automatonName")
+                    field to instFactory.getNew(methodUsageContext, automatonName, targetClass).also {
+                        method.entry.insertBefore(method.entry.first(), it)
+                    }
+                }
+                is BoolLiteral -> {
+                    variableField to valueFactory.getBool(value.value)
+                }
+                is IntegerLiteral -> {
+                    variableField to valueFactory.getInt(value.value)
+                }
+                is FloatLiteral -> {
+                    variableField to valueFactory.getFloat(value.value)
+                }
+                is StringLiteral -> {
+                    variableField to valueFactory.getString(value.value)
+                }
+                else -> error("unresolved literal type ${value::class.java}")
             }
 
-            val field = automataFields.getOrPut(automaton) {
-                val stateFieldName = "${prefix}$automatonName"
-                val fieldType = typeFactory.getRefType(automaton.name.replace(".", "/"))
-                val fn = FieldNode(
-                    Opcodes.ACC_PUBLIC,
-                    stateFieldName,
-                    fieldType.asmDesc,
-                    null,
-                    null
-                )
-                val stateField = Field(cm, fn, klass)
-                klass.cn.fields.add(fn)
-                klass.modifyField(stateField, fieldType)
-            }
-            val targetClass = cm.concreteClasses.firstOrNull { it.name == automatonName }
-                ?: unreachable { log.error("unknown class $automatonName") }
-            val assignmentValue = instFactory.getNew(methodUsageContext, automatonName, targetClass)
-            val assignmentInstr = instFactory.getFieldStore(methodUsageContext, field, assignmentValue)
-            method.entry.insertBefore(method.entry.first(), assignmentValue, assignmentInstr)
+            val assignmentInstr = instFactory.getFieldStore(methodUsageContext, field, value)
+            method.entry.insertBefore(method.entry.first(), assignmentInstr)
         }
     }
 
     private val Method.terminateBlock: BasicBlock?
         get() = this.basicBlocks.lastOrNull { block -> block.any { inst -> inst is ReturnInst } }
-
 }
