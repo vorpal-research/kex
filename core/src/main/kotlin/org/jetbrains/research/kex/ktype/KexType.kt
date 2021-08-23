@@ -4,7 +4,9 @@ import kotlinx.serialization.Serializable
 import org.jetbrains.research.kex.BaseType
 import org.jetbrains.research.kex.InheritanceInfo
 import org.jetbrains.research.kex.InheritorOf
+import org.jetbrains.research.kex.util.getKexRuntime
 import org.jetbrains.research.kfg.type.*
+import org.jetbrains.research.kfg.util.Flags
 import org.jetbrains.research.kthelper.assert.ktassert
 import org.jetbrains.research.kthelper.assert.unreachable
 import org.jetbrains.research.kthelper.defaultHashCode
@@ -12,18 +14,87 @@ import org.jetbrains.research.kthelper.logging.log
 import kotlin.reflect.KClass
 import org.jetbrains.research.kfg.ir.Class as KfgClass
 
+object KexRtManager {
+    val rt2KexMapping: Map<String, String>
+    val kex2RtMapping: Map<String, String>
+
+    init {
+        val kexRt = getKexRuntime()
+        val klasses = kexRt?.parse(Flags.readAll, failOnError = true) ?: mapOf()
+        rt2KexMapping = klasses.keys.associateBy { it.removePrefix("kex/") }
+        kex2RtMapping = klasses.keys.associateWith { it.removePrefix("kex/") }
+    }
+
+    val KfgClass.rtMapped get() = cm[rt2KexMapping.getOrDefault(fullName, fullName)]
+    val Type.rtMapped: Type get() = when (this) {
+        is ClassType -> this.klass.rtMapped.type
+        is ArrayType -> ArrayType(component.rtMapped)
+        else -> this
+    }
+
+    val KfgClass.rtUnmapped get() = cm[kex2RtMapping.getOrDefault(fullName, fullName)]
+    val Type.rtUnmapped: Type get() = when (this) {
+        is ClassType -> this.klass.rtUnmapped.type
+        is ArrayType -> ArrayType(component.rtUnmapped)
+        else -> this
+    }
+
+    val KexType.rtMapped: KexType get() = when (this) {
+        is KexClass -> KexClass(rt2KexMapping.getOrDefault(klass, klass))
+        is KexReference -> KexReference(reference.rtMapped)
+        is KexArray -> KexArray(element.rtMapped)
+        else -> this
+    }
+
+    val KexType.rtUnmapped: KexType get() = when (this) {
+        is KexClass -> KexClass(kex2RtMapping.getOrDefault(klass, klass))
+        is KexReference -> KexReference(reference.rtUnmapped)
+        is KexArray -> KexArray(element.rtUnmapped)
+        else -> this
+    }
+
+
+    val KfgClass.isKexRt get() = fullName in kex2RtMapping
+    val Type.isKexRt: Boolean get() = when (this) {
+        is ClassType -> this.klass.isKexRt
+        is ArrayType -> component.isKexRt
+        else -> false
+    }
+    val KexType.isKexRt: Boolean get() = when (this) {
+        is KexClass -> klass in kex2RtMapping
+        is KexReference -> reference.isKexRt
+        is KexArray -> element.isKexRt
+        else -> false
+    }
+
+
+    val KfgClass.isJavaRt get() = rt2KexMapping.any { fullName.startsWith(it.key) }
+    val Type.isJavaRt: Boolean get() = when (this) {
+        is ClassType -> this.klass.isJavaRt
+        is ArrayType -> component.isJavaRt
+        else -> false
+    }
+    val KexType.isJavaRt: Boolean get() = when (this) {
+        is KexClass -> rt2KexMapping.any { klass.startsWith(it.key) }
+        is KexReference -> reference.isJavaRt
+        is KexArray -> element.isJavaRt
+        else -> false
+    }
+}
+
 val Type.kexType get() = KexType.fromType(this)
 val KfgClass.kexType get() = KexType.fromClass(this)
 val KfgClass.type get() = this.cm.type.getRefType(this.fullName)
 
-private val KexIntegral.actualBitSize get() = when (this) {
-    is KexBool -> 1
-    is KexByte -> 8
-    is KexChar -> 8
-    is KexShort -> 16
-    is KexInt -> 32
-    is KexLong -> 64
-}
+private val KexIntegral.actualBitSize
+    get() = when (this) {
+        is KexBool -> 1
+        is KexByte -> 8
+        is KexChar -> 8
+        is KexShort -> 16
+        is KexInt -> 32
+        is KexLong -> 64
+    }
 
 fun mergeTypes(tf: TypeFactory, vararg types: KexType): KexType = mergeTypes(tf, types.toList())
 
