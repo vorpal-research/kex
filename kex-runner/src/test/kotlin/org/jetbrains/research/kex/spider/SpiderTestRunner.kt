@@ -1,8 +1,7 @@
 package org.jetbrains.research.kex.spider
 
-import com.beust.klaxon.JsonArray
-import com.beust.klaxon.Klaxon
-import com.beust.klaxon.Parser
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 import org.jetbrains.research.kex.KexRunnerTest
 import org.jetbrains.research.kex.asm.analysis.defect.DefectManager
 import org.jetbrains.research.kex.asm.analysis.libchecker.CallCiteChecker
@@ -39,6 +38,8 @@ class SpiderTestRunner(private val testName: String) : KexRunnerTest(
         RuntimeConfig.setValue("defect", "outputFile", tempDir.absolutePath + "/defects.json")
     }
 
+    private val json = Json { prettyPrint = true }
+
     fun runTest() {
         val loader = Thread.currentThread().contextClassLoader
         val lslRes = loader.getResource("org/jetbrains/research/kex/spider/$testName.lsl")?.toURI() ?: error("lsl file not found")
@@ -56,8 +57,7 @@ class SpiderTestRunner(private val testName: String) : KexRunnerTest(
             error("no defects file was received")
         }
         val actual = DefectManager.defects.sortedBy { it.testFile }
-        val sb = StringBuilder(Klaxon().toJsonString(actual))
-        val actualJson = (Parser.default().parse(sb) as JsonArray<*>).toJsonString(true)
+        val actualJson = json.encodeToString(actual)
 
         val referenceFile = referenceDir.resolve(testName).resolve("defects.json")
         if (!referenceFile.exists()) {

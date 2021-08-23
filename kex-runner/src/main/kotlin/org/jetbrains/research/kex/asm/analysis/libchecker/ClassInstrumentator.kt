@@ -3,8 +3,7 @@ package org.jetbrains.research.kex.asm.analysis.libchecker
 import org.jetbrains.research.kfg.ClassManager
 import org.jetbrains.research.kfg.ir.Class
 import org.jetbrains.research.kfg.ir.Field
-import org.jetbrains.research.kfg.ir.value.Value
-import org.jetbrains.research.kfg.ir.value.ValueFactory
+import org.jetbrains.research.kfg.ir.value.*
 import org.jetbrains.research.kfg.ir.value.instruction.InstructionFactory
 import org.jetbrains.research.kfg.visitor.ClassVisitor
 import org.jetbrains.research.libsl.asg.*
@@ -52,8 +51,8 @@ class ClassInstrumentator(
         klass.modifyField(field, type.kfgType(cm))
 
         val constructor = klass.constructors.first()
-        val `this` = ValueFactory(cm).getThis(klass)
-        val storeInstr = InstructionFactory(cm).getFieldStore(`this`, field, value)
+        val usage = constructor.usageContext
+        val storeInstr = InstructionFactory(cm).getFieldStore(usage, field, value)
         val firstBodyBlock = constructor.bodyBlocks.first()
         firstBodyBlock.insertBefore(firstBodyBlock.terminator, storeInstr)
 

@@ -1,6 +1,8 @@
 package org.jetbrains.research.kex
 
+import kotlinx.serialization.InternalSerializationApi
 import org.jetbrains.research.kex.asm.analysis.testgen.MethodChecker
+import org.jetbrains.research.kex.asm.manager.MethodManager
 import org.jetbrains.research.kex.asm.state.PredicateStateAnalysis
 import org.jetbrains.research.kex.asm.transform.LoopDeroller
 import org.jetbrains.research.kex.asm.transform.RuntimeTraceCollector
@@ -71,29 +73,18 @@ abstract class KexRunnerTest(
     }
 
     protected fun getReachables(method: Method): List<Instruction> {
-        val klass = Intrinsics::class.qualifiedName!!.replace(".", "/")
-        val intrinsics = cm[klass]
-
-        val types = cm.type
-        val methodName = "kexAssert"
-        val desc = MethodDesc(arrayOf(types.getArrayType(types.boolType)), types.voidType)
-        val assertReachable = intrinsics.getMethod(methodName, desc)
+        val assertReachable = MethodManager.KexIntrinsicManager.kexAssert(cm)
         return method.flatten().asSequence()
                 .mapNotNull { it as? CallInst }
-                .filter { it.method == assertReachable && it.klass == intrinsics }
+                .filter { it.method == assertReachable && it.klass == assertReachable.klass }
                 .toList()
     }
 
     protected fun getUnreachables(method: Method): List<Instruction> {
-        val klass = Intrinsics::class.qualifiedName!!.replace(".", "/")
-        val intrinsics = cm[klass]
-
-        val methodName = "kexUnreachable"
-        val desc = MethodDesc(arrayOf(), cm.type.voidType)
-        val assertUnreachable = intrinsics.getMethod(methodName, desc)
+        val assertUnreachable = MethodManager.KexIntrinsicManager.kexUnreachable(cm)
         return method.flatten().asSequence()
                 .mapNotNull { it as? CallInst }
-                .filter { it.method == assertUnreachable && it.klass == intrinsics }
+                .filter { it.method == assertUnreachable && it.klass == assertUnreachable.klass }
                 .toList()
     }
 
@@ -154,6 +145,7 @@ abstract class KexRunnerTest(
         System.setProperty("java.class.path", classPath)
     }
 
+    @InternalSerializationApi
     fun runPipelineOn(klass: Class) {
         val traceManager = ObjectTraceManager()
         val psa = PredicateStateAnalysis(analysisContext.cm)
