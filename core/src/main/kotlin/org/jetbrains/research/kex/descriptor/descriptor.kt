@@ -103,8 +103,10 @@ sealed class ConstantDescriptor(term: Term, type: KexType) : Descriptor(term, ty
             require { term equality value }
         }
 
-        override fun structuralEquality(other: Descriptor, map: MutableSet<Pair<Descriptor, Descriptor>>) =
-            this.value == (other as? Bool)?.value
+        override fun structuralEquality(other: Descriptor, map: MutableSet<Pair<Descriptor, Descriptor>>): Boolean {
+            if (other !is Bool) return false
+            return this.value == other.value
+        }
     }
 
     class Byte(val value: kotlin.Byte) : ConstantDescriptor(term { generate(KexByte()) }, KexByte()) {
@@ -114,8 +116,10 @@ sealed class ConstantDescriptor(term: Term, type: KexType) : Descriptor(term, ty
             require { term equality value }
         }
 
-        override fun structuralEquality(other: Descriptor, map: MutableSet<Pair<Descriptor, Descriptor>>) =
-            this.value == (other as? Byte)?.value
+        override fun structuralEquality(other: Descriptor, map: MutableSet<Pair<Descriptor, Descriptor>>): Boolean {
+            if (other !is Byte) return false
+            return this.value == other.value
+        }
     }
 
     class Char(val value: kotlin.Char) : ConstantDescriptor(term { generate(KexChar()) }, KexChar()) {
@@ -125,8 +129,10 @@ sealed class ConstantDescriptor(term: Term, type: KexType) : Descriptor(term, ty
             require { term equality value }
         }
 
-        override fun structuralEquality(other: Descriptor, map: MutableSet<Pair<Descriptor, Descriptor>>) =
-            this.value == (other as? Char)?.value
+        override fun structuralEquality(other: Descriptor, map: MutableSet<Pair<Descriptor, Descriptor>>): Boolean {
+            if (other !is Char) return false
+            return this.value == other.value
+        }
     }
 
     class Short(val value: kotlin.Short) : ConstantDescriptor(term { generate(KexShort()) }, KexShort()) {
@@ -136,8 +142,10 @@ sealed class ConstantDescriptor(term: Term, type: KexType) : Descriptor(term, ty
             require { term equality value }
         }
 
-        override fun structuralEquality(other: Descriptor, map: MutableSet<Pair<Descriptor, Descriptor>>) =
-            this.value == (other as? Short)?.value
+        override fun structuralEquality(other: Descriptor, map: MutableSet<Pair<Descriptor, Descriptor>>): Boolean {
+            if (other !is Short) return false
+            return this.value == other.value
+        }
     }
 
     class Int(val value: kotlin.Int) : ConstantDescriptor(term { generate(KexInt()) }, KexInt()) {
@@ -147,8 +155,10 @@ sealed class ConstantDescriptor(term: Term, type: KexType) : Descriptor(term, ty
             require { term equality value }
         }
 
-        override fun structuralEquality(other: Descriptor, map: MutableSet<Pair<Descriptor, Descriptor>>) =
-            this.value == (other as? Int)?.value
+        override fun structuralEquality(other: Descriptor, map: MutableSet<Pair<Descriptor, Descriptor>>): Boolean {
+            if (other !is Int) return false
+            return this.value == other.value
+        }
     }
 
     class Long(val value: kotlin.Long) : ConstantDescriptor(term { generate(KexLong()) }, KexLong()) {
@@ -158,8 +168,10 @@ sealed class ConstantDescriptor(term: Term, type: KexType) : Descriptor(term, ty
             require { term equality value }
         }
 
-        override fun structuralEquality(other: Descriptor, map: MutableSet<Pair<Descriptor, Descriptor>>) =
-            this.value == (other as? Long)?.value
+        override fun structuralEquality(other: Descriptor, map: MutableSet<Pair<Descriptor, Descriptor>>): Boolean {
+            if (other !is Long) return false
+            return this.value == other.value
+        }
     }
 
     class Float(val value: kotlin.Float) : ConstantDescriptor(term { generate(KexFloat()) }, KexFloat()) {
@@ -169,8 +181,10 @@ sealed class ConstantDescriptor(term: Term, type: KexType) : Descriptor(term, ty
             require { term equality value }
         }
 
-        override fun structuralEquality(other: Descriptor, map: MutableSet<Pair<Descriptor, Descriptor>>) =
-            this.value == (other as? Float)?.value
+        override fun structuralEquality(other: Descriptor, map: MutableSet<Pair<Descriptor, Descriptor>>): Boolean {
+            if (other !is Float) return false
+            return this.value == other.value
+        }
     }
 
     class Double(val value: kotlin.Double) : ConstantDescriptor(term { generate(KexDouble()) }, KexDouble()) {
@@ -180,8 +194,10 @@ sealed class ConstantDescriptor(term: Term, type: KexType) : Descriptor(term, ty
             require { term equality value }
         }
 
-        override fun structuralEquality(other: Descriptor, map: MutableSet<Pair<Descriptor, Descriptor>>) =
-            this.value == (other as? Double)?.value
+        override fun structuralEquality(other: Descriptor, map: MutableSet<Pair<Descriptor, Descriptor>>): Boolean {
+            if (other !is Double) return false
+            return this.value == other.value
+        }
     }
 }
 
@@ -308,7 +324,7 @@ sealed class FieldContainingDescriptor<T : FieldContainingDescriptor<T>>(
 
     override fun structuralEquality(other: Descriptor, map: MutableSet<Pair<Descriptor, Descriptor>>): Boolean {
         if (this == other) return true
-        if (other !is ObjectDescriptor) return false
+        if (other !is FieldContainingDescriptor<*>) return false
         if (this to other in map) return true
         if (this.klass != other.klass) return false
 
@@ -503,7 +519,19 @@ class ArrayDescriptor(val elementType: KexType, val length: Int) :
         for (index in this.elements.keys.intersect(other.elements.keys)) {
             val thisValue = this[index] ?: return false
             val otherValue = other[index] ?: return false
-            if (!thisValue.structuralEquality(otherValue, map)) return false
+            val res = thisValue.structuralEquality(otherValue, map)
+            if (!res) {
+                System.err.println("${thisValue.javaClass}")
+                System.err.println("${otherValue.javaClass}")
+                System.err.println("${thisValue.type}")
+                System.err.println("${otherValue.type}")
+                System.err.println("========================")
+                System.err.println(thisValue)
+                System.err.println("========================")
+                System.err.println(otherValue)
+                System.err.println("========================")
+            }
+            if (!res) return false
         }
         return true
     }
