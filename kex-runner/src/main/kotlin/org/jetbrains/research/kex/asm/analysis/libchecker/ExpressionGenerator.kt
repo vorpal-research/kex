@@ -17,7 +17,7 @@ class ExpressionGenerator(
     val method: Method?,
     val klass: Class,
     val cm: ClassManager,
-    private val syntheticContext: SyntheticContext
+    private val syntheticContexts: Map<String, SyntheticContext>
 ): ExpressionVisitor<Value>() {
     val expressionBlock = BodyBlock("synthesized expression")
     val oldCallStorage = mutableListOf<Value>()
@@ -26,6 +26,8 @@ class ExpressionGenerator(
     private val constructorUsageContext = klass.constructors.first().usageContext
     private val instructionFactory = InstructionFactory(cm)
     private val valueFactory = ValueFactory(cm)
+    private val syntheticContext = syntheticContexts[klass.name.replace("/", ".")]
+        ?: error("unresolved automaton")
 
     private fun equalsWithObject(obj: Value, objKlass: Class, other: Value): CallInst {
         val equalsMethod = objKlass.allMethods.firstOrNull { method ->
@@ -52,7 +54,12 @@ class ExpressionGenerator(
     }
 
     override fun visitAutomatonVariableDeclaration(node: AutomatonVariableDeclaration): Value {
-        return TODO()
+        val automaton = node.automaton
+        val field = syntheticContexts[automaton.name]?.fields?.get(node)
+            ?: error("unresolved variable ${node.fullName}")
+        return instructionFactory.getFieldLoad(usageContext, field).also {
+            expressionBlock.add(it)
+        }
     }
 
     override fun visitBinaryOpExpression(node: BinaryOpExpression): Value {
