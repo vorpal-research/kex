@@ -10,6 +10,7 @@ import org.jetbrains.research.kex.parameters.concreteParameters
 import org.jetbrains.research.kex.random.GenerationException
 import org.jetbrains.research.kex.reanimator.callstack.CallStack
 import org.jetbrains.research.kex.reanimator.callstack.CallStackExecutor
+import org.jetbrains.research.kex.reanimator.callstack.CallStackRtUnmapper
 import org.jetbrains.research.kex.reanimator.callstack.generator.CallStackGenerator
 import org.jetbrains.research.kex.reanimator.codegen.JUnitTestCasePrinter
 import org.jetbrains.research.kex.reanimator.codegen.TestCasePrinter
@@ -51,9 +52,11 @@ class Reanimator(
         val descriptors = generateFinalDescriptors(method, ctx, model, state).concreteParameters(cm)
         log.debug("Generated descriptors:\n$descriptors")
         val callStacks = descriptors.callStacks
-        printer.print(testName, method, callStacks)
         log.debug("Generated call stacks:\n$callStacks")
-        callStacks.executed
+        val unmapped = callStacks.rtUnmapped
+        log.debug("Unmapped call stacks:\n$unmapped")
+        printer.print(testName, method, unmapped)
+        unmapped.executed
     } catch (e: GenerationException) {
         throw e
     } catch (e: Exception) {
@@ -83,6 +86,15 @@ class Reanimator(
             val argCallStacks = arguments.map { it.callStack }
             val staticFields = statics.map { it.callStack }.toSet()
             return Parameters(thisCallStack, argCallStacks, staticFields)
+        }
+
+    val Parameters<CallStack>.rtUnmapped: Parameters<CallStack>
+        get() {
+            val unmapper = CallStackRtUnmapper()
+            val instance = instance?.let { unmapper.unmap(it) }
+            val args = arguments.map { unmapper.unmap(it) }
+            val statics = statics.map { unmapper.unmap(it) }.toSet()
+            return Parameters(instance, args, statics)
         }
 
     val Parameters<CallStack>.executed: Parameters<Any?>

@@ -113,7 +113,7 @@ class StaticFieldGenerator(private val fallback: Generator) : Generator {
 
             if (visibilityLevel <= kfgField.visibility) {
                 log.debug("Directly setting field $field value")
-                calls += StaticFieldSetter(kfgKlass, kfgField, fallback.generate(value, generationDepth + 1))
+                calls += StaticFieldSetter(kfgField, fallback.generate(value, generationDepth + 1))
                 fields.remove(field)
                 reduce()
 

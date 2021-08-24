@@ -227,7 +227,7 @@ open class CallStack2JavaPrinter(
         is DefaultConstructorCall -> {
         }
         is ConstructorCall -> {
-            val reflection = ctx.loader.loadClass(call.klass)
+            val reflection = ctx.loader.loadClass(call.constructor.klass)
             val constructor = reflection.getConstructor(call.constructor, ctx.loader)
             resolveTypes(constructor, call.args)
         }
@@ -419,7 +419,7 @@ open class CallStack2JavaPrinter(
         val args = call.args.joinToString(", ") {
             it.forceCastIfNull(resolvedTypes[it])
         }
-        val actualType = CSClass(call.klass.type)
+        val actualType = CSClass(call.constructor.klass.type)
         return listOf(
             if (resolvedTypes[owner] != null) {
                 val rest = resolvedTypes[owner]!!
@@ -552,7 +552,7 @@ open class CallStack2JavaPrinter(
 
     protected open fun printStaticFieldSetter(call: StaticFieldSetter): List<String> {
         call.value.printAsJava()
-        return listOf("${call.klass.javaString}.${call.field.name} = ${call.value.stackName}")
+        return listOf("${call.field.klass.javaString}.${call.field.name} = ${call.value.stackName}")
     }
 
     protected open fun printEnumValueCreation(owner: CallStack, call: EnumValueCreation): List<String> {
@@ -562,9 +562,9 @@ open class CallStack2JavaPrinter(
     }
 
     protected open fun printStaticFieldGetter(owner: CallStack, call: StaticFieldGetter): List<String> {
-        val actualType = call.klass.type.csType
+        val actualType = call.field.klass.type.csType
         actualTypes[owner] = actualType
-        return listOf("${printVarDeclaration(owner.name, actualType)} = ${call.klass.javaString}.${call.name}")
+        return listOf("${printVarDeclaration(owner.name, actualType)} = ${call.field.klass.javaString}.${call.field.name}")
     }
 
     protected open fun printUnknown(owner: CallStack, call: UnknownCall): List<String> {

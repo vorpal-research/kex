@@ -265,7 +265,7 @@ class CallStack2KotlinPrinter(
         is DefaultConstructorCall -> {
         }
         is ConstructorCall -> {
-            val reflection = ctx.loader.loadClass(call.klass)
+            val reflection = ctx.loader.loadClass(call.constructor.klass)
             val constructor = reflection.getConstructor(call.constructor, ctx.loader)
             resolveTypes(constructor, call.args)
         }
@@ -424,7 +424,7 @@ class CallStack2KotlinPrinter(
         val args = call.args.joinToString(", ") {
             it.forceCastIfNull(resolvedTypes[it])
         }
-        val actualType = CSClass(call.klass.type, nullable = false)
+        val actualType = CSClass(call.constructor.klass.type, nullable = false)
         return if (resolvedTypes[owner] != null) {
             val rest = resolvedTypes[owner]!!
             val type = actualType.merge(rest)
@@ -498,7 +498,7 @@ class CallStack2KotlinPrinter(
 
     private fun printStaticFieldSetter(call: StaticFieldSetter): String {
         call.value.printAsKt()
-        return "${call.klass.kotlinString}.${call.field.name} = ${call.value.stackName}"
+        return "${call.field.klass.kotlinString}.${call.field.name} = ${call.value.stackName}"
     }
 
     private fun printEnumValueCreation(owner: CallStack, call: EnumValueCreation): String {
@@ -508,9 +508,9 @@ class CallStack2KotlinPrinter(
     }
 
     private fun printStaticFieldGetter(owner: CallStack, call: StaticFieldGetter): String {
-        val actualType = call.klass.type.getCsType(false)
+        val actualType = call.field.klass.type.getCsType(false)
         actualTypes[owner] = actualType
-        return "val ${owner.name} = ${call.klass.kotlinString}.${call.name}"
+        return "val ${owner.name} = ${call.field.klass.kotlinString}.${call.field.name}"
     }
 
     private fun printUnknown(owner: CallStack, call: UnknownCall): String {

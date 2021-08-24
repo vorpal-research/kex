@@ -71,7 +71,7 @@ class CallStackExecutor(val ctx: ExecutionContext) {
                         instance
                     }
                     is ConstructorCall -> {
-                        val reflection = ctx.loader.loadClass(call.klass)
+                        val reflection = ctx.loader.loadClass(call.constructor.klass)
                         val constructor = reflection.getConstructor(call.constructor, ctx.loader)
                         constructor.isAccessible = true
                         val args = call.args.map { execute(it) }.toTypedArray()
@@ -164,8 +164,8 @@ class CallStackExecutor(val ctx: ExecutionContext) {
                         fieldReflect.get(null)
                     }
                     is StaticFieldGetter -> {
-                        val reflection = ctx.loader.loadClass(call.klass)
-                        val fieldReflect = reflection.getDeclaredField(call.name)
+                        val reflection = ctx.loader.loadClass(call.field.klass)
+                        val fieldReflect = reflection.getDeclaredField(call.field.name)
                         fieldReflect.get(null)
                     }
                     is UnknownCall -> {

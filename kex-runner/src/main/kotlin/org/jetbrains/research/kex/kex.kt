@@ -143,15 +143,15 @@ class Kex(args: Array<String>) {
                 exitProcess(1)
             }
         }
-        containers = containerPaths.map {
+        containers = listOfNotNull(*containerPaths.map {
             it.asContainer() ?: run {
                 log.error("Can't represent ${it.toAbsolutePath()} as class container")
                 exitProcess(1)
             }
-        }
+        }.toTypedArray(), getKexRuntime())
         classManager = ClassManager(KfgConfig(flags = Flags.readAll, failOnError = false, verifyIR = false))
         origManager = ClassManager(KfgConfig(flags = Flags.readAll, failOnError = false, verifyIR = false))
-        val analysisJars = listOfNotNull(*containers.toTypedArray(), getRuntime(), getIntrinsics(), getKexRuntime())
+        val analysisJars = listOfNotNull(*containers.toTypedArray(), getRuntime(), getIntrinsics())
         classManager.initialize(*analysisJars.toTypedArray())
         origManager.initialize(*analysisJars.toTypedArray())
 
