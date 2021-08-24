@@ -520,17 +520,6 @@ class ArrayDescriptor(val elementType: KexType, val length: Int) :
             val thisValue = this[index] ?: return false
             val otherValue = other[index] ?: return false
             val res = thisValue.structuralEquality(otherValue, map)
-            if (!res) {
-                System.err.println("${thisValue.javaClass}")
-                System.err.println("${otherValue.javaClass}")
-                System.err.println("${thisValue.type}")
-                System.err.println("${otherValue.type}")
-                System.err.println("========================")
-                System.err.println(thisValue)
-                System.err.println("========================")
-                System.err.println(otherValue)
-                System.err.println("========================")
-            }
             if (!res) return false
         }
         return true
