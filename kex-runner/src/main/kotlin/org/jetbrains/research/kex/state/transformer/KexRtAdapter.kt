@@ -1,17 +1,26 @@
 package org.jetbrains.research.kex.state.transformer
 
-import org.jetbrains.research.kex.ExecutionContext
 import org.jetbrains.research.kex.ktype.KexClass
 import org.jetbrains.research.kex.ktype.KexReference
 import org.jetbrains.research.kex.ktype.KexRtManager.isKexRt
 import org.jetbrains.research.kex.ktype.KexRtManager.rtMapped
+import org.jetbrains.research.kex.ktype.KexRtManager.rtUnmapped
 import org.jetbrains.research.kex.state.predicate.PredicateBuilder
 import org.jetbrains.research.kex.state.predicate.PredicateType
 import org.jetbrains.research.kex.state.term.*
+import org.jetbrains.research.kfg.ClassManager
+import org.jetbrains.research.kfg.ir.Field
 import org.jetbrains.research.kfg.ir.Location
 
-class KexRtAdapter(val ctx: ExecutionContext) : PredicateBuilder(), Transformer<KexRtAdapter> {
-    val cm get() = ctx.cm
+fun FieldTerm.unmappedKfgField(cm: ClassManager): Field {
+    val kfgKlass = cm[this.klass]
+    return  when {
+        kfgKlass.isKexRt -> kfgKlass.getField(fieldName, type.getKfgType(cm.type))
+        else -> kfgKlass.getField(fieldName, type.rtUnmapped.getKfgType(cm.type))
+    }
+}
+
+class KexRtAdapter(val cm: ClassManager) : PredicateBuilder(), Transformer<KexRtAdapter> {
     override val type = PredicateType.State()
     override val location = Location()
 

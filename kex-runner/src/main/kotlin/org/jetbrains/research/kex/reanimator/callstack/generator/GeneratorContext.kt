@@ -70,6 +70,7 @@ class GeneratorContext(
         ignores: Set<Term> = setOf()
     ) = transform(ps) {
         val staticTypeInfo = collectStaticTypeInfo(types, ps, typeInfoMap)
+        +KexRtAdapter(cm)
         +AnnotationAdapter(method, AnnotationManager.defaultLoader)
 //        +StringAdapter(context)
         +ConcreteImplInliner(types, staticTypeInfo, psa)

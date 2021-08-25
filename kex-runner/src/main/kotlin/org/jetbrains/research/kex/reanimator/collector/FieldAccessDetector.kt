@@ -36,7 +36,7 @@ class MethodFieldAccessCollector(val ctx: ExecutionContext, val psa: PredicateSt
 
     private fun prepareState(method: Method, ps: PredicateState) = transform(ps) {
         +AnnotationAdapter(method, AnnotationManager.defaultLoader)
-        +KexRtAdapter(ctx)
+        +KexRtAdapter(ctx.cm)
         +MethodInliner(psa)
     }
 }

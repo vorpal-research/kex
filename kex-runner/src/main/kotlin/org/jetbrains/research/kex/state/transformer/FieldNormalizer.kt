@@ -7,7 +7,6 @@ import org.jetbrains.research.kex.state.term.FieldTerm
 import org.jetbrains.research.kex.state.term.Term
 import org.jetbrains.research.kex.state.term.term
 import org.jetbrains.research.kfg.ClassManager
-import org.jetbrains.research.kfg.ir.ConcreteClass
 import org.jetbrains.research.kthelper.collection.dequeOf
 
 class FieldNormalizer(
@@ -19,8 +18,7 @@ class FieldNormalizer(
     private var counter = 0
 
     override fun transformFieldTerm(term: FieldTerm): Term {
-        val kfgKlass = cm[term.klass] as? ConcreteClass ?: return term
-        val field = kfgKlass.getField(term.fieldName, term.type.getKfgType(types))
+        val field = term.unmappedKfgField(cm)
         return when (field.klass.fullName) {
             term.klass -> term
             else -> {

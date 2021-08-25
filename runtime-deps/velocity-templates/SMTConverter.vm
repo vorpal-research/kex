@@ -617,7 +617,7 @@ class ${solver}Converter(val tf: TypeFactory) : ${solver}SMTConverter() {
     }
 
     fun convert(lambda: LambdaTerm, ef: Factory_, ctx: Context_): Dynamic_ {
-        return convert(lambda.body, ef, ctx)
+        return ef.getVarByTypeAndName(lambda.type, lambda.name)
     }
 
     fun convert(neg: NegTerm, ef: Factory_, ctx: Context_): Dynamic_ {

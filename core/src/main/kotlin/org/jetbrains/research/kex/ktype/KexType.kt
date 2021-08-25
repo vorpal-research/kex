@@ -25,6 +25,9 @@ object KexRtManager {
         kex2RtMapping = klasses.keys.associateWith { it.removePrefix("kex/") }
     }
 
+    val String.rtMapped get() = rt2KexMapping.getOrDefault(this, this)
+    val String.rtUnmapped get() = kex2RtMapping.getOrDefault(this, this)
+
     val KfgClass.rtMapped get() = cm[rt2KexMapping.getOrDefault(fullName, fullName)]
     val Type.rtMapped: Type get() = when (this) {
         is ClassType -> this.klass.rtMapped.type

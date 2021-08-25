@@ -46,7 +46,7 @@ class Checker(
     }
 
     fun prepareState(ps: PredicateState) = transform(ps) {
-        +KexRtAdapter(ctx)
+        +KexRtAdapter(ctx.cm)
         if (annotationsEnabled) {
             +AnnotationAdapter(method, AnnotationManager.defaultLoader)
         }
@@ -71,7 +71,7 @@ class Checker(
     }
 
     fun prepareState(method: Method, ps: PredicateState, typeInfoMap: TypeInfoMap) = transform(ps) {
-        +KexRtAdapter(ctx)
+        +KexRtAdapter(ctx.cm)
         +AnnotationAdapter(method, AnnotationManager.defaultLoader)
 //        +StringAdapter(ctx)
         +RecursiveInliner(psa) { ConcreteImplInliner(method.cm.type, typeInfoMap, psa, inlineIndex = it) }

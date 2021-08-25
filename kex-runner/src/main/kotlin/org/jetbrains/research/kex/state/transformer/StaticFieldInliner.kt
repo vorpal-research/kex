@@ -7,8 +7,6 @@ import org.jetbrains.research.kex.config.kexConfig
 import org.jetbrains.research.kex.descriptor.ClassDescriptor
 import org.jetbrains.research.kex.descriptor.Descriptor
 import org.jetbrains.research.kex.descriptor.descriptor
-import org.jetbrains.research.kex.ktype.KexRtManager.isKexRt
-import org.jetbrains.research.kex.ktype.KexRtManager.rtUnmapped
 import org.jetbrains.research.kex.ktype.kexType
 import org.jetbrains.research.kex.smt.Checker
 import org.jetbrains.research.kex.smt.Result
@@ -128,12 +126,7 @@ class StaticFieldInliner(
             .filterIsInstance<FieldLoadTerm>()
             .mapNotNull {
                 val field = it.field as FieldTerm
-                val klass = cm[field.klass]
-                val kfgField = if (klass.isKexRt) {
-                    klass.getField(field.fieldName, field.type.getKfgType(cm.type))
-                } else {
-                    klass.getField(field.fieldName, field.type.rtUnmapped.getKfgType(cm.type))
-                }
+                val kfgField = field.unmappedKfgField(cm)
                 if (kfgField.isStatic && kfgField.isFinal) {
                     kfgField
                 } else {
