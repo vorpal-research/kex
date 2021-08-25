@@ -2,6 +2,7 @@ package org.jetbrains.research.kex.state.transformer
 
 import org.jetbrains.research.kex.ExecutionContext
 import org.jetbrains.research.kex.ktype.KexClass
+import org.jetbrains.research.kex.ktype.KexReference
 import org.jetbrains.research.kex.ktype.KexRtManager.isKexRt
 import org.jetbrains.research.kex.ktype.KexRtManager.rtMapped
 import org.jetbrains.research.kex.state.predicate.PredicateBuilder
@@ -50,7 +51,8 @@ class KexRtAdapter(val ctx: ExecutionContext) : PredicateBuilder(), Transformer<
     }
 
     override fun transformFieldTerm(term: FieldTerm): Term {
-        return term.owner.field(term.type.rtMapped, term.fieldName)
+        val unreferenced = (term.type as KexReference).reference
+        return term.owner.field(unreferenced.rtMapped, term.fieldName)
     }
 
     override fun transformStaticClassRefTerm(term: StaticClassRefTerm): Term {

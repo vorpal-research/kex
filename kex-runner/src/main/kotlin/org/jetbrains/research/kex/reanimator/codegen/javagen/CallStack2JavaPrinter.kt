@@ -323,7 +323,6 @@ open class CallStack2JavaPrinter(
         is EnumValueCreation -> printEnumValueCreation(owner, apiCall)
         is StaticFieldGetter -> printStaticFieldGetter(owner, apiCall)
         is UnknownCall -> printUnknown(owner, apiCall)
-        else -> unreachable { log.error("Unknown call") }
     }
 
     protected val <T> PrimaryValue<T>.asConstant: String

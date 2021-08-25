@@ -1,6 +1,5 @@
 package org.jetbrains.research.kex.asm.state
 
-import org.jetbrains.research.kex.ktype.KexRtManager.isKexRt
 import org.jetbrains.research.kex.ktype.kexType
 import org.jetbrains.research.kex.state.predicate.Predicate
 import org.jetbrains.research.kex.state.predicate.path
@@ -143,9 +142,6 @@ class PredicateBuilder(override val cm: ClassManager) : MethodVisitor {
     }
 
     override fun visitInvokeDynamicInst(inst: InvokeDynamicInst) {
-        if (inst.parent.parent.klass.isKexRt && inst.parent.parent.klass.fullName.contains("ArrayList")) {
-            val a = 10
-        }
         val lambdaBases = inst.bootstrapMethodArgs.filterIsInstance<Handle>()
         ktassert(lambdaBases.size == 1) { log.error("Unknown number of bases of ${inst.print()}") }
         val lambdaBase = lambdaBases.first()

@@ -173,7 +173,6 @@ class CallStackExecutor(val ctx: ExecutionContext) {
 //                    ctx.random.nextOrNull(reflection)
                         null
                     }
-                    else -> null
                 }
             }
         }

@@ -8,9 +8,11 @@ import org.jetbrains.research.kex.state.StateBuilder
 import org.jetbrains.research.kex.state.basic
 import org.jetbrains.research.kex.state.predicate.*
 import org.jetbrains.research.kex.state.term.ArrayIndexTerm
+import org.jetbrains.research.kex.state.term.ConstIntTerm
 import org.jetbrains.research.kex.state.term.Term
 import org.jetbrains.research.kex.state.term.term
 import org.jetbrains.research.kthelper.assert.ktassert
+import org.jetbrains.research.kthelper.logging.log
 import java.util.*
 
 class ArrayBoundsAdapter : RecollectingTransformer<ArrayBoundsAdapter> {
@@ -24,7 +26,7 @@ class ArrayBoundsAdapter : RecollectingTransformer<ArrayBoundsAdapter> {
             addArray(it)
         }
         val res = super.apply(ps)
-        return adaptArrays() + res
+        return res + adaptArrays()
     }
 
     override fun transformChoice(ps: ChoiceState): PredicateState {
@@ -51,7 +53,16 @@ class ArrayBoundsAdapter : RecollectingTransformer<ArrayBoundsAdapter> {
     }
 
     override fun transformBase(predicate: Predicate): Predicate {
-        if (predicate.hasReceiver && predicate !is NewArrayPredicate) addArray(predicate.receiver!!)
+        if (predicate.hasReceiver) {
+            if (predicate is NewArrayPredicate) {
+                val dimensions = predicate.dimensions
+                if (dimensions.size > 1) log.warn("Unexpected number of dimensions in new array $predicate")
+                val length = dimensions.first()
+                if (length !is ConstIntTerm) addArray(predicate.lhv)
+            } else {
+                addArray(predicate.receiver!!)
+            }
+        }
 
         TermCollector.getFullTermSet(predicate)
             .filterIsInstance<ArrayIndexTerm>()

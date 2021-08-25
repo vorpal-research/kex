@@ -15,7 +15,6 @@ import org.jetbrains.research.kthelper.assert.ktassert
 import org.jetbrains.research.kthelper.assert.unreachable
 import org.jetbrains.research.kthelper.logging.debug
 import org.jetbrains.research.kthelper.logging.log
-import kotlin.math.max
 
 private val timeout = kexConfig.getIntValue("smt", "timeout", 3) * 1000
 private val logQuery = kexConfig.getBooleanValue("smt", "logQuery", false)
@@ -289,8 +288,15 @@ class Z3Solver(val tf: TypeFactory) : AbstractSMTSolver {
 //                        strings.getValue(memspace).first[modelPtr] = startStringVal
 //                        strings.getValue(memspace).second[modelPtr] = stringVal
                     } else if (ptr.type.isArray) {
-                        val (startLength, endLength) = properties.recoverProperty(ctx, ptr, memspace, KexInt(), model, "length")
-                        val maxLen = max(startLength.numericValue.toInt(), endLength.numericValue.toInt())
+                        val (startLength, endLength) = properties.recoverProperty(
+                            ctx,
+                            ptr,
+                            memspace,
+                            KexInt(),
+                            model,
+                            "length"
+                        )
+                        val maxLen = endLength.numericValue.toInt()//max(startLength.numericValue.toInt(), endLength.numericValue.toInt())
                         for (i in 0 until maxLen) {
                             val indexTerm = term { ptr[i] }
                             if (indexTerm !in ptrs)
