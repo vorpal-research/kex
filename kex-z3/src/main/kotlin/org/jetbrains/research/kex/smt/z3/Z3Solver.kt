@@ -21,6 +21,7 @@ private val logQuery = kexConfig.getBooleanValue("smt", "logQuery", false)
 private val logFormulae = kexConfig.getBooleanValue("smt", "logFormulae", false)
 private val printSMTLib = kexConfig.getBooleanValue("smt", "logSMTLib", false)
 private val simplifyFormulae = kexConfig.getBooleanValue("smt", "simplifyFormulae", false)
+private val maxArrayLength by lazy { kexConfig.getIntValue("smt", "maxArrayLength", 1000) }
 
 @Solver("z3")
 class Z3Solver(val tf: TypeFactory) : AbstractSMTSolver {
@@ -296,7 +297,13 @@ class Z3Solver(val tf: TypeFactory) : AbstractSMTSolver {
                             model,
                             "length"
                         )
-                        val maxLen = endLength.numericValue.toInt()//max(startLength.numericValue.toInt(), endLength.numericValue.toInt())
+                        var maxLen = maxOf(startLength.numericValue.toInt(), endLength.numericValue.toInt())
+                        if (maxLen > maxArrayLength * 5) {
+                            log.warn("Max len of an array is too big: $maxLen")
+                            maxLen = maxArrayLength
+                            properties.getValue(memspace).getValue("length").first[modelPtr] = term { const(maxLen) }
+                            properties.getValue(memspace).getValue("length").second[modelPtr] = term { const(maxLen) }
+                        }
                         for (i in 0 until maxLen) {
                             val indexTerm = term { ptr[i] }
                             if (indexTerm !in ptrs)
