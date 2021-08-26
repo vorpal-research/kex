@@ -188,7 +188,7 @@ class CallCiteChecker(
         val (checkerState, result) = check(state, assertionQuery)
         return when (result) {
             is Result.SatResult -> {
-                val (path, testName) = getTest("Assertion", checkerState, result, callCite) ?: null to null
+                val (path, testName) = getTest("Assertion", checkerState, result, callCite) ?: (null to null)
                 val callStack = listOf(
                     "$method - ${inst.location}",
                     "${callCite.parent.parent} - ${callCite.location}"

@@ -30,6 +30,15 @@ private val visibilityLevel by lazy {
     kexConfig.getEnumValue("apiGeneration", "visibility", true, Visibility.PUBLIC)
 }
 
+val Parameters<CallStack>.rtUnmapped: Parameters<CallStack>
+    get() {
+        val unmapper = CallStackRtUnmapper()
+        val instance = instance?.let { unmapper.unmap(it) }
+        val args = arguments.map { unmapper.unmap(it) }
+        val statics = statics.map { unmapper.unmap(it) }.toSet()
+        return Parameters(instance, args, statics)
+    }
+
 class Reanimator(
     override val ctx: ExecutionContext,
     override val psa: PredicateStateAnalysis,
@@ -86,15 +95,6 @@ class Reanimator(
             val argCallStacks = arguments.map { it.callStack }
             val staticFields = statics.map { it.callStack }.toSet()
             return Parameters(thisCallStack, argCallStacks, staticFields)
-        }
-
-    val Parameters<CallStack>.rtUnmapped: Parameters<CallStack>
-        get() {
-            val unmapper = CallStackRtUnmapper()
-            val instance = instance?.let { unmapper.unmap(it) }
-            val args = arguments.map { unmapper.unmap(it) }
-            val statics = statics.map { unmapper.unmap(it) }.toSet()
-            return Parameters(instance, args, statics)
         }
 
     val Parameters<CallStack>.executed: Parameters<Any?>

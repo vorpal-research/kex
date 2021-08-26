@@ -72,10 +72,8 @@ class GeneratorContext(
         val staticTypeInfo = collectStaticTypeInfo(types, ps, typeInfoMap)
         +KexRtAdapter(cm)
         +AnnotationAdapter(method, AnnotationManager.defaultLoader)
-//        +StringAdapter(context)
-        +ConcreteImplInliner(types, staticTypeInfo, psa)
+        +SmartInliner(types, staticTypeInfo, psa)
         +StaticFieldInliner(context, psa)
-        +RecursiveConstructorInliner(psa)
         +IntrinsicAdapter
         +KexIntrinsicsAdapter()
         +ReflectionInfoAdapter(method, context.loader, ignores)
@@ -279,7 +277,7 @@ class GeneratorContext(
 
         val transformed = transform(methodState) {
             +AnnotationAdapter(this@collectFieldAccesses, AnnotationManager.defaultLoader)
-            +RecursiveInliner(psa) { ConcreteImplInliner(types, typeInfoMap, psa, inlineIndex = it) }
+            +SmartInliner(types, typeInfoMap, psa)
         }
         return collectFieldAccesses(context, transformed)
     }

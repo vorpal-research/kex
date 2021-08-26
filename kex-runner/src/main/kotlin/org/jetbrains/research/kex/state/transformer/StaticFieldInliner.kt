@@ -33,11 +33,15 @@ class StaticFieldInliner(
 ) : RecollectingTransformer<StaticFieldInliner> {
     companion object {
         private val staticFinalFields = mutableMapOf<Field, Descriptor>()
+        private val failedClasses = mutableSetOf<Class>()
 
-        fun getStaticField(ctx: ExecutionContext, psa: PredicateStateAnalysis, field: Field) = when (field) {
-            in staticFinalFields -> staticFinalFields.getValue(field)
+        fun getStaticField(ctx: ExecutionContext, psa: PredicateStateAnalysis, field: Field) = when {
+            field in staticFinalFields -> staticFinalFields.getValue(field)
+            field.klass in failedClasses -> descriptor { default(field.type.kexType) }
             else -> {
-                staticFinalFields += generateFinalFieldValues(ctx, psa, field.klass)
+                val generatedFields = generateFinalFieldValues(ctx, psa, field.klass)
+                if (generatedFields == null) failedClasses += field.klass
+                staticFinalFields += generatedFields ?: mapOf()
                 staticFinalFields[field] ?: descriptor { default(field.type.kexType) }
             }
         }
@@ -50,8 +54,7 @@ class StaticFieldInliner(
             ignores: Set<Term> = setOf()
         ) = transform(ps) {
             +AnnotationAdapter(method, AnnotationManager.defaultLoader)
-//            +StringAdapter(ctx)
-            +RecursiveConstructorInliner(psa)
+            +SmartInliner(ctx.types, psa)
             +IntrinsicAdapter
             +KexIntrinsicsAdapter()
             +ReflectionInfoAdapter(method, ctx.loader, ignores)
@@ -68,7 +71,7 @@ class StaticFieldInliner(
             ctx: ExecutionContext,
             psa: PredicateStateAnalysis,
             klass: Class
-        ): Map<Field, Descriptor> {
+        ): Map<Field, Descriptor>? {
             val staticInit = klass.getMethod("<clinit>", "()V")
             val staticFields = klass.fields.filter { it.isFinal && it.isStatic }
 
@@ -82,7 +85,7 @@ class StaticFieldInliner(
                         }
                     }
                 }
-                this += psa.builder(staticInit).methodState ?: return mapOf()
+                this += psa.builder(staticInit).methodState ?: return null
                 prepareState(ctx, psa, staticInit, apply())
             }
 
@@ -102,8 +105,8 @@ class StaticFieldInliner(
                     log.debug("Model: ${result.model}")
                     generateFinalDescriptors(staticInit, ctx, result.model, checker.state)
                 }
-                else -> null
-            } ?: return mapOf()
+                else -> return null
+            }
 
             return params.statics.map { descriptor ->
                 descriptor as ClassDescriptor

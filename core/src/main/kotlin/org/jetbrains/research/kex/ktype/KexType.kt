@@ -5,6 +5,7 @@ import org.jetbrains.research.kex.BaseType
 import org.jetbrains.research.kex.InheritanceInfo
 import org.jetbrains.research.kex.InheritorOf
 import org.jetbrains.research.kex.util.getKexRuntime
+import org.jetbrains.research.kfg.ir.Method
 import org.jetbrains.research.kfg.type.*
 import org.jetbrains.research.kfg.util.Flags
 import org.jetbrains.research.kthelper.assert.ktassert
@@ -83,6 +84,8 @@ object KexRtManager {
         is KexArray -> element.isJavaRt
         else -> false
     }
+
+    val Method.isKexRt: Boolean get() = klass.isKexRt
 }
 
 val Type.kexType get() = KexType.fromType(this)
