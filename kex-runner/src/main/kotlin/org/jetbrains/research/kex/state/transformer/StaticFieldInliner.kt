@@ -54,7 +54,9 @@ class StaticFieldInliner(
             ignores: Set<Term> = setOf()
         ) = transform(ps) {
             +AnnotationAdapter(method, AnnotationManager.defaultLoader)
-            +SmartInliner(ctx.types, psa)
+            +RecursiveInliner(psa) {  index, psa ->
+                ConcreteImplInliner(ctx.types, TypeInfoMap(), psa, inlineIndex = index)
+            }
             +IntrinsicAdapter
             +KexIntrinsicsAdapter()
             +ReflectionInfoAdapter(method, ctx.loader, ignores)

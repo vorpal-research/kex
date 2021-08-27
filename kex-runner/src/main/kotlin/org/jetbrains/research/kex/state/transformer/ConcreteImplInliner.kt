@@ -3,6 +3,7 @@ package org.jetbrains.research.kex.state.transformer
 import org.jetbrains.research.kex.asm.manager.MethodManager
 import org.jetbrains.research.kex.asm.state.PredicateStateAnalysis
 import org.jetbrains.research.kex.ktype.KexClass
+import org.jetbrains.research.kex.ktype.KexRtManager.isKexRt
 import org.jetbrains.research.kex.ktype.kexType
 import org.jetbrains.research.kex.state.StateBuilder
 import org.jetbrains.research.kex.state.predicate.CallPredicate
@@ -98,6 +99,7 @@ class AliasingConcreteImplInliner(val types: TypeFactory,
             method.isFinal -> method
             method.isStatic -> method
             method.isConstructor -> method
+            method.isKexRt -> method
             else -> {
                 val typeInfo = run {
                     when (val owner = callTerm.owner) {

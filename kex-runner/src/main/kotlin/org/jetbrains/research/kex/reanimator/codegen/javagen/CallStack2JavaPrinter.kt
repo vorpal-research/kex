@@ -107,7 +107,7 @@ open class CallStack2JavaPrinter(
                 else -> typeParams.zip(other.typeParams).all { (a, b) -> a.isSubtype(b) }
             }
             is CSStarProjection -> true
-            else -> false
+            else -> other.kfg == ctx.types.objectType
         }
 
         override fun toString(): String {
@@ -123,7 +123,7 @@ open class CallStack2JavaPrinter(
         override fun isSubtype(other: CSType): Boolean = when (other) {
             is CSPrimaryArray -> element.isSubtype(other.element)
             is CSStarProjection -> true
-            else -> false
+            else -> other.kfg == ctx.types.objectType
         }
 
         override fun toString() = "${element}[]"
@@ -532,15 +532,17 @@ open class CallStack2JavaPrinter(
         )
     }
 
+    private fun lub(lhv: CSType?, rhv: CSType?): CSType = when {
+        lhv == null -> rhv!!
+        rhv == null -> lhv
+        lhv.isSubtype(rhv) -> lhv
+        rhv.isSubtype(lhv) -> rhv
+        else -> unreachable {  }
+    }
+
     protected open fun printArrayWrite(owner: CallStack, call: ArrayWrite): List<String> {
         call.value.printAsJava()
-        val requiredType = run {
-            when (val resT = resolvedTypes[owner] ?: actualTypes[owner]) {
-                is CSArray -> resT.element
-                is CSPrimaryArray -> resT.element
-                else -> unreachable { }
-            }
-        }
+        val requiredType = lub(resolvedTypes[owner], actualTypes[owner])
         return listOf("${owner.name}[${call.index.stackName}] = ${call.value.cast(requiredType)}")
     }
 

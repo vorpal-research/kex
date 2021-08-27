@@ -260,7 +260,14 @@ class InstructionConcolicChecker(
     private fun prepareState(method: Method, state: PredicateState): PredicateState = transform(state) {
         +KexRtAdapter(cm)
         +AnnotationAdapter(method, AnnotationManager.defaultLoader)
-        +SmartInliner(cm.type, PredicateStateAnalysis(cm))
+        +RecursiveInliner(PredicateStateAnalysis(cm)) { index, psa ->
+            ConcreteImplInliner(
+                cm.type,
+                TypeInfoMap(),
+                psa,
+                inlineIndex = index
+            )
+        }
         +ArrayBoundsAdapter()
         +IntrinsicAdapter
         +KexIntrinsicsAdapter()

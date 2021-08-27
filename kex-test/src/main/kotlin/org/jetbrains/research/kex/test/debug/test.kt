@@ -3,16 +3,22 @@
 package org.jetbrains.research.kex.test.debug
 
 class BasicTests {
-    data class Point(
-        val x: Int,
-        val y: Int
-    )
+//    data class Point(
+//        val x: Int,
+//        val y: Int
+//    )
+//
+//    fun test(a: ArrayList<Point>): Int {
+//        val value = a[0].x
+//        if (value > 3) {
+//            return 1
+//        }
+//        return 0
+//    }
 
-    fun test(a: ArrayList<Point>): Int {
-        val value = a[0].x
-        if (value > 3) {
-            return 1
+    fun test(a: Any) {
+        if (a is IntArray) {
+            println(a[3])
         }
-        return 0
     }
 }

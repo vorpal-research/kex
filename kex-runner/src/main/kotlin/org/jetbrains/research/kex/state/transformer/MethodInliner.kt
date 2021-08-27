@@ -143,7 +143,7 @@ class RecursiveInliner<T>(
     override val psa: PredicateStateAnalysis,
     override val inlineSuffix: String = "recursive",
     val maxDepth: Int = defaultDepth,
-    val inlinerBuilder: (Int) -> Inliner<T>
+    val inlinerBuilder: (Int, PredicateStateAnalysis) -> Inliner<T>
 ) : Inliner<RecursiveInliner<T>> {
     override val im = MethodManager.InlineManager
     override var inlineIndex = 0
@@ -155,7 +155,7 @@ class RecursiveInliner<T>(
         var current = ps
         var depth = 0
         do {
-            val cii = inlinerBuilder(inlineIndex)
+            val cii = inlinerBuilder(inlineIndex, psa)
             current = cii.apply(current)
             hasInlined = cii.hasInlined
             inlineIndex = cii.inlineIndex

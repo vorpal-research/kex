@@ -365,7 +365,18 @@ abstract class DescriptorReanimator(
                             )
                         } as ArrayDescriptor
                         for (i in 0 until res.length) {
-                            reanimate(term { term[i] }, null)
+                            val index = term { const(i) }
+                            val refValue = reanimateFromArray(term.memspace, addr, index)
+
+                            // todo: this is fucked up
+                            val reanimatedValue = reanimateReferenceValue(
+                                ArrayIndexTerm(
+                                    KexReference(reanimatedType.element),
+                                    term,
+                                    index
+                                ), refValue
+                            )
+                            res[i] = reanimatedValue
                         }
                         res
                     }
@@ -387,7 +398,13 @@ abstract class DescriptorReanimator(
                     term.type
                 ) as? KexArray//(reanimateType(term.memspace, addr) ?: term.type) as? KexArray
                     ?: unreachable { log.error("Could not cast ${reanimateType(term.memspace, addr)} to array type") }
-                val res = memory(term.memspace, address) { newArrayInstance(term.memspace, arrayType, addr) } as ArrayDescriptor
+                val res = memory(term.memspace, address) {
+                    newArrayInstance(
+                        term.memspace,
+                        arrayType,
+                        addr
+                    )
+                } as ArrayDescriptor
                 for (i in 0 until res.length) {
                     reanimate(term { term[i] }, null)
                 }
@@ -500,6 +517,7 @@ class FinalDescriptorReanimator(method: Method, model: SMTModel, context: Execut
     override fun reanimateFromMemory(memspace: Int, addr: Term?) = model.memories[memspace]?.finalMemory?.get(addr)
     override fun reanimateFromProperties(memspace: Int, name: String, addr: Term?) =
         model.properties[memspace]?.get(name)?.finalMemory?.get(addr)
+
     override fun reanimateFromArray(memspace: Int, array: Term, index: Term): Term? =
         model.arrays[memspace]?.get(array)?.finalMemory?.get(index)
 }
@@ -510,6 +528,7 @@ class InitialDescriptorReanimator(method: Method, model: SMTModel, context: Exec
     override fun reanimateFromMemory(memspace: Int, addr: Term?) = model.memories[memspace]?.initialMemory?.get(addr)
     override fun reanimateFromProperties(memspace: Int, name: String, addr: Term?) =
         model.properties[memspace]?.get(name)?.initialMemory?.get(addr)
+
     override fun reanimateFromArray(memspace: Int, array: Term, index: Term): Term? =
         model.arrays[memspace]?.get(array)?.initialMemory?.get(index)
 }

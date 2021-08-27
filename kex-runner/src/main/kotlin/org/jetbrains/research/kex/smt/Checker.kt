@@ -50,7 +50,9 @@ class Checker(
         if (annotationsEnabled) {
             +AnnotationAdapter(method, AnnotationManager.defaultLoader)
         }
-        +SmartInliner(method.cm.type, psa)
+        +RecursiveInliner(psa) { index, psa ->
+            ConcreteImplInliner(method.cm.type, TypeInfoMap(), psa, inlineIndex = index)
+        }
         +StaticFieldInliner(ctx, psa)
         +IntrinsicAdapter
         +KexIntrinsicsAdapter()
@@ -67,7 +69,9 @@ class Checker(
     fun prepareState(method: Method, ps: PredicateState, typeInfoMap: TypeInfoMap) = transform(ps) {
         +KexRtAdapter(ctx.cm)
         +AnnotationAdapter(method, AnnotationManager.defaultLoader)
-        +SmartInliner(method.cm.type, typeInfoMap, psa)
+        +RecursiveInliner(psa) { index, psa ->
+            ConcreteImplInliner(method.cm.type, typeInfoMap, psa, inlineIndex = index)
+        }
         +StaticFieldInliner(ctx, psa)
         +IntrinsicAdapter
         +KexIntrinsicsAdapter()
@@ -130,7 +134,9 @@ class Checker(
         query = Optimizer().apply(query)
         if (logQuery) {
             log.debug("Simplified state: $state")
+            log.debug("State size: ${state.size}")
             log.debug("Query: $query")
+            log.debug("Query size: ${query.size}")
         }
 
         val result = SMTProxySolver(method.cm.type).use {

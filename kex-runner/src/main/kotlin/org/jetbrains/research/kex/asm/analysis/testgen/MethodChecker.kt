@@ -117,6 +117,9 @@ open class MethodChecker(
 
             val coverageResult = try {
                 log.debug("Checking reachability of ${block.name}")
+                if (method.toString() == "org/ow2/authzforce/core/pdp/impl/combining/StandardCombiningAlgorithm::values(): org/ow2/authzforce/core/pdp/impl/combining/StandardCombiningAlgorithm[]") {
+                    val a = 10
+                }
                 coverBlock(method, block)
             } catch (e: TimeoutException) {
                 log.warn("Timeout exception when running method $method, skipping it")
