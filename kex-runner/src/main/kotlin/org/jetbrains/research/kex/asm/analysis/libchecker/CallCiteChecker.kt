@@ -7,8 +7,6 @@ import org.jetbrains.research.kex.asm.analysis.defect.DefectManager
 import org.jetbrains.research.kex.asm.manager.MethodManager
 import org.jetbrains.research.kex.asm.state.PredicateStateAnalysis
 import org.jetbrains.research.kex.config.kexConfig
-import org.jetbrains.research.kex.ktype.KexBool
-import org.jetbrains.research.kex.ktype.KexInt
 import org.jetbrains.research.kex.ktype.kexType
 import org.jetbrains.research.kex.smt.Result
 import org.jetbrains.research.kex.smt.SMTProxySolver
@@ -32,7 +30,6 @@ import org.jetbrains.research.kfg.ir.value.instruction.CallInst
 import org.jetbrains.research.kfg.ir.value.instruction.Instruction
 import org.jetbrains.research.kfg.visitor.MethodVisitor
 import org.jetbrains.research.kfg.visitor.executePipeline
-import org.jetbrains.research.kthelper.assert.unreachable
 import org.jetbrains.research.kthelper.logging.log
 import org.jetbrains.research.kthelper.runIf
 
@@ -41,24 +38,22 @@ private val isMemspacingEnabled by lazy { kexConfig.getBooleanValue("smt", "mems
 private val isSlicingEnabled by lazy { kexConfig.getBooleanValue("smt", "slicing", false) }
 
 class CallCiteChecker(
-    val ctx: ExecutionContext,
-    val callCiteTarget: Package,
-    val psa: PredicateStateAnalysis
+        val ctx: ExecutionContext,
+        private val callCiteTarget: Package,
+        val psa: PredicateStateAnalysis
 ) : MethodVisitor {
     override val cm: ClassManager
         get() = ctx.cm
     private val dm get() = DefectManager
     private val im get() = MethodManager.KexIntrinsicManager
     private lateinit var method: Method
-    private val predicateStatesHolder = InterPredicateStatesHolder()
+    private val methodCallGraph = mutableMapOf<Method, Set<CallInst>>()
 
     override fun cleanup() {}
 
     override fun visit(method: Method) {
         this.method = method
-//        if (method.lastOrNull()?.lastOrNull() != null) {
-//            getAllPredicateStates(method.lastOrNull()!!.lastOrNull()!!)
-//        }
+
         super.visit(method)
     }
 
@@ -68,23 +63,17 @@ class CallCiteChecker(
             im.kexAssertWithId(cm) -> getAllAssertions(inst.args[1])
             else -> return
         }
-        val handler = { callStack: List<CallInst>, ps: PredicateState, assertions: Set<Term> ->
+
+        val allPredicateStates = getPredicateStatesAndAssertions(inst, allAssertions)
+        for ((predicateState, callStack, assertions) in allPredicateStates) {
             when (inst.method) {
-                im.kexAssert(cm) -> checkAssertion(inst, callStack, ps, assertions)
+                im.kexAssert(cm) -> checkAssertion(inst, callStack, predicateState, assertions)
                 im.kexAssertWithId(cm) -> {
                     val id = (inst.args[0] as? StringConstant)?.value
-                    checkAssertion(inst, callStack, ps, assertions, id)
+                    checkAssertion(inst, callStack, predicateState, assertions, id)
                 }
                 else -> {}
             }
-        }
-
-        val allPredicateStates = getPredicateStatesAndAssertions(inst, allAssertions)
-        if (allPredicateStates.isEmpty()) {
-            //error("kexAssert not allowed in main function")
-        }
-        for ((predicateState, callStack, lastRenamer, assertions) in allPredicateStates) {
-            handler(callStack, predicateState, assertions)
         }
     }
 
@@ -108,9 +97,9 @@ class CallCiteChecker(
         else -> null
     }
 
-    private fun inlineState(
+    private fun inlineState (
         main: PredicateState,
-        inlinee: PredicateState
+        inline: PredicateState
     ): Pair<PredicateState, TermRenamer>? {
         val callPredicate = main.lastPredicate() ?: return null
         val filteredState = main.dropLast(1)
@@ -119,7 +108,7 @@ class CallCiteChecker(
             return null
         }
         val callTerm = callPredicate.callTerm as CallTerm
-        val (inlinedThis, inlinedArgs) = collectArguments(inlinee)
+        val (inlinedThis, inlinedArgs) = collectArguments(inline)
         val mappings = run {
             val result = mutableMapOf<Term, Term>()
             if (inlinedThis != null && callTerm.method.klass.toType().kexType == callTerm.owner.type) {  // todo this isn't correct
@@ -133,7 +122,7 @@ class CallCiteChecker(
             result
         }
         val remapper =  TermRenamer("call.cite.inlined", mappings)
-        val preparedState = remapper.apply(inlinee)
+        val preparedState = remapper.apply(inline)
         return (filteredState + preparedState) to remapper
     }
 
@@ -152,29 +141,23 @@ class CallCiteChecker(
         for (callCite in getAllCallCites(method)) {
             val callChains = getFullCallChain(listOf(callCite)).map { chain ->
                 var assertions = _assertions
-                val preparedChain = chain
 
                 val init = getState(inst) ?: emptyState()
-                val inlinedChain = preparedChain.fold(init) { acc, inst ->
+                val inlinedChain = chain.fold(init) { acc, inst ->
                     val (inlined, renamer) = inlineState(getState(inst) ?: emptyState(), acc) ?: emptyState() to null
                     assertions = assertions.map { renamer?.transform(it) ?: it }.toSet()
                     inlined
                 }
                 PredicateStateWithInfo(
-                    inlinedChain,
-                    chain.reversed(),
-                    null,
-                    assertions
+                        inlinedChain,
+                        chain.reversed(),
+                        assertions
                 )
             }
             result.addAll(callChains)
         }
 
         return result
-    }
-
-    private fun inlineConstructor(ps: PredicateState) = transform(ps) {
-        +RecursiveInliner(psa) { MethodInliner(psa, inlineIndex = it) }
     }
 
     private fun getFullCallChain(chain: CallInstChain): List<CallInstChain> {
@@ -200,6 +183,9 @@ class CallCiteChecker(
     }
 
     private fun getAllCallCites(method: Method): Set<CallInst> {
+        methodCallGraph[method]?.let {
+            return it
+        }
         val result = mutableSetOf<CallInst>()
         executePipeline(cm, callCiteTarget) {
             +object : MethodVisitor {
@@ -215,6 +201,7 @@ class CallCiteChecker(
                 }
             }
         }
+        methodCallGraph[method] = result
         return result
     }
 
@@ -228,13 +215,9 @@ class CallCiteChecker(
         val preparedCallStack = callStack.callStack
         log.debug("Checking for assertion failure: ${inst.print()} at \n$preparedCallStack")
         log.debug("State: $state")
-        val assertionQuery = assertions.map {
-            when (it.type) {
-                is KexBool -> require { it equality true }
-                is KexInt -> require { it equality 1 }
-                else -> unreachable { log.error("Unknown assertion variable: $it") }
-            }
-        }.fold(StateBuilder()) { builder, predicate ->
+        val assertionQuery = assertions
+                .map { require { it equality true } }
+                .fold(StateBuilder()) { builder, predicate ->
             builder += predicate
             builder
         }.apply()
@@ -322,4 +305,11 @@ class CallCiteChecker(
         return state to result
     }
 }
+
 typealias CallInstChain = List<CallInst>
+
+data class PredicateStateWithInfo(
+        var predicateState: PredicateState,
+        val callStack: List<CallInst>,
+        val asserts: Set<Term>
+)
