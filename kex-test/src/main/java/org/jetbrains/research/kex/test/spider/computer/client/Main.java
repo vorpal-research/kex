@@ -25,5 +25,8 @@ public class Main {
         Computer computer4 = new Computer();
         computer4.boot();
         computer4.selectOS("osx");
+
+        // outer class
+        (new OtherClass()).doSomething();
     }
 }
