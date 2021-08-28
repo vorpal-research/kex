@@ -53,7 +53,7 @@ class LibslInstrumentator(
         // requires contract
         methodDescription.contracts.filter { it.kind == ContractKind.REQUIRES }.forEach { requires ->
             val newEntry = method.entry
-            val generator = ExpressionGenerator(method, klass, cm, classSyntheticContext)
+            val generator = ExpressionGenerator(method, klass, cm, syntheticContexts)
             val condition = generator.visit(requires.expression)
             if (generator.oldCallStorage.isNotEmpty()) {
                 unreachable<Unit> { log.error("usage of old() now allowed in requires contract") }
@@ -75,7 +75,7 @@ class LibslInstrumentator(
                 prev.removeSuccessor(methodUsageContext, lastBlock)
             }
 
-            val generator = ExpressionGenerator(method, klass, cm, classSyntheticContext)
+            val generator = ExpressionGenerator(method, klass, cm, syntheticContexts)
             val condition = generator.visit(ensures.expression)
             val block = generator.expressionBlock
             val savedValuesInstructions = generator.oldCallStorage
@@ -125,6 +125,8 @@ class LibslInstrumentator(
     private fun insertAutomatonFieldStore(block: BasicBlock, returnStatement: ReturnInst, returnValue: Value, fieldName: String, value: Int) {
         val foreignClass = cm[returnStatement.returnType.name]
         val foreignStateField = foreignClass.getField(fieldName, typeFactory.intType)
+        val `this` = valueFactory.getThis(foreignClass)
+        // todo: is it OK?
 
         val storeInstr = instFactory.getFieldStore(
             block.parent.usageContext,
@@ -176,6 +178,7 @@ class LibslInstrumentator(
         var previousBlock: BodyBlock? = null
         val entryBlock = method.entry
         val shifts = automaton.shifts.filter { it.functions.contains(function) }
+        val `this` = valueFactory.getThis(method.klass)
 
         if (shifts.isEmpty()) return
 
@@ -185,7 +188,7 @@ class LibslInstrumentator(
             val shift = shifts.first()
             val changeToStateConst = statesMap[shift.to] ?: error("state ${shift.to.name} constant wasn't initialized")
             branchBlock.apply {
-                add(instFactory.getFieldStore(methodUsageContext, stateField, IntConstant(changeToStateConst, IntType)))
+                add(instFactory.getFieldStore(methodUsageContext, `this`, stateField, IntConstant(changeToStateConst, IntType)))
                 add(instFactory.getJump(methodUsageContext, entryBlock))
                 method.addBefore(methodUsageContext, entryBlock, this)
 
@@ -197,7 +200,7 @@ class LibslInstrumentator(
         }
 
         for (shift in shifts) {
-            val lhv = instFactory.getFieldLoad(methodUsageContext, stateField)
+            val lhv = instFactory.getFieldLoad(methodUsageContext, `this`, stateField)
             branchBlock.add(lhv)
 
             val fromStateCode = statesMap[shift.from] ?: error("state ${shift.from.name} constant wasn't initialized")
@@ -221,7 +224,7 @@ class LibslInstrumentator(
 
             val successBlock = BodyBlock("${automaton.name} success branch").apply {
                 val constValue = IntConstant(toStateConst, IntType)
-                val assignment = instFactory.getFieldStore(methodUsageContext, stateField, constValue)
+                val assignment = instFactory.getFieldStore(methodUsageContext, `this`, stateField, constValue)
                 add(assignment)
 
                 val goto = instFactory.getJump(methodUsageContext, entryBlock)
@@ -280,6 +283,7 @@ class LibslInstrumentator(
     private fun addAutomataAssignments(func: Function, method: Method, syntheticContext: SyntheticContext) {
         if (func.statements.filterIsInstance<Assignment>().isEmpty()) return
         val klass = method.klass
+        val `this` = valueFactory.getThis(klass)
 
         val automataFields = mutableMapOf<Automaton, Field>()
 
@@ -314,7 +318,7 @@ class LibslInstrumentator(
                 else -> error("unresolved literal type ${value::class.java}")
             }
 
-            val assignmentInstr = instFactory.getFieldStore(methodUsageContext, field, value)
+            val assignmentInstr = instFactory.getFieldStore(methodUsageContext, `this`, field, value)
             method.entry.insertBefore(method.entry.first(), assignmentInstr)
         }
     }

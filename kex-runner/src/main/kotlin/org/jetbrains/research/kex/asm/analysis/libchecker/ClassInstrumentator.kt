@@ -52,7 +52,8 @@ class ClassInstrumentator(
 
         val constructor = klass.constructors.first()
         val usage = constructor.usageContext
-        val storeInstr = InstructionFactory(cm).getFieldStore(usage, field, value)
+        val `this` = cm.value.getThis(klass)
+        val storeInstr = InstructionFactory(cm).getFieldStore(usage, `this`, field, value)
         val firstBodyBlock = constructor.bodyBlocks.first()
         firstBodyBlock.insertBefore(firstBodyBlock.terminator, storeInstr)
 

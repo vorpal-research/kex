@@ -26,8 +26,8 @@ class ExpressionGenerator(
     private val constructorUsageContext = klass.constructors.first().usageContext
     private val instructionFactory = InstructionFactory(cm)
     private val valueFactory = ValueFactory(cm)
-    private val syntheticContext = syntheticContexts[klass.name.replace("/", ".")]
-        ?: error("unresolved automaton")
+    private val syntheticContext = syntheticContexts[klass.fullName]
+        ?: error("unresolved automaton ${klass.fullName}")
 
     private fun equalsWithObject(obj: Value, objKlass: Class, other: Value): CallInst {
         val equalsMethod = objKlass.allMethods.firstOrNull { method ->
@@ -57,7 +57,9 @@ class ExpressionGenerator(
         val automaton = node.automaton
         val field = syntheticContexts[automaton.name]?.fields?.get(node)
             ?: error("unresolved variable ${node.fullName}")
-        return instructionFactory.getFieldLoad(usageContext, field).also {
+        val klass = method?.klass ?: error("klass can't be null")
+        val `this` = valueFactory.getThis(klass)
+        return instructionFactory.getFieldLoad(usageContext, `this`, field).also {
             expressionBlock.add(it)
         }
     }
@@ -178,7 +180,8 @@ class ExpressionGenerator(
                 valueFactory.getArgument(variable.index, method, variable.type.kfgType(cm))
             } else {
                 val field = syntheticContext.fields[node.variable] ?: error("unknown variable ${node.variable!!.name}")
-                instructionFactory.getFieldLoad(constructorUsageContext, field).also {
+                val `this` = valueFactory.getThis(method?.klass ?: error("method is empty"))
+                instructionFactory.getFieldLoad(constructorUsageContext, `this`, field).also {
                     expressionBlock.add(it)
                 }
             }
