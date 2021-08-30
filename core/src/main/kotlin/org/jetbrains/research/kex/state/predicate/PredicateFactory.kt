@@ -151,6 +151,8 @@ abstract class PredicateBuilder : TermBuilder() {
 
     fun generateArray(lhv: Term, length: Term, generator: Term) =
         pf.getGenerateArray(lhv, length, generator, type, location)
+    fun generateArray(lhv: Term, length: Term, builder: TermBuilder.() -> Term) =
+        pf.getGenerateArray(lhv, length, builder(), type, location)
 
     @Suppress("FunctionName")
     infix fun Term.`!in`(cases: List<Term>) =

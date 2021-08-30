@@ -72,7 +72,11 @@ interface Inliner<T> : RecollectingTransformer<Inliner<T>> {
         val builder = psa.builder(method)
         val endState = builder.methodState ?: return null
 
-        return TermRenamer("${inlineSuffix}${inlineIndex++}", mappings).apply(endState)
+        return transform(endState) {
+            +TermRenamer("${inlineSuffix}${inlineIndex++}", mappings)
+            +StringMethodAdapter(method.cm)
+            +KexRtAdapter(method.cm)
+        }
     }
 
     override fun transformCallPredicate(predicate: CallPredicate): Predicate {

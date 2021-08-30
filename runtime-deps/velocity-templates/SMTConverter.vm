@@ -527,7 +527,7 @@ class ${solver}Converter(val tf: TypeFactory) : ${solver}SMTConverter() {
             val index = paramMap[lambda.parameters.first()]!!
             if_ { (start le index) and (index lt end) }
                 .then_ {
-                    convert(exists.body, ef, ctx) as Bool_
+                    convert(lambda.body, ef, ctx) as Bool_
                 }.else_ {
                     ef.makeFalse()
                 }.also {
@@ -567,7 +567,7 @@ class ${solver}Converter(val tf: TypeFactory) : ${solver}SMTConverter() {
             val index = paramMap[lambda.parameters.first()]!!
             if_ { (start le index) and (index lt end) }
                 .then_ {
-                    convert(forAll.body, ef, ctx) as Bool_
+                    convert(lambda.body, ef, ctx) as Bool_
                 }.else_ {
                     ef.makeTrue()
                 }.also {

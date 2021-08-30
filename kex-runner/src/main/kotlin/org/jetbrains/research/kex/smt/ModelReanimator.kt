@@ -493,7 +493,8 @@ abstract class DescriptorReanimator(
             is KexArray -> {
                 val res = memory(term.memspace, address) {
                     newArrayInstance(term.memspace, actualType, addr)
-                } as ArrayDescriptor
+                } as? ArrayDescriptor
+                    ?: unreachable("")
                 for (i in 0 until res.length) {
                     reanimate(term { (term.load())[i] }, null)
                 }

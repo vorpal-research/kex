@@ -7,6 +7,7 @@ import org.jetbrains.research.kfg.container.JarContainer
 import java.nio.file.Paths
 
 fun getRuntime(): Container? {
+    if (!kexConfig.getBooleanValue("kex", "useJavaRuntime", true)) return null
     val runtimePath = kexConfig.getStringValue("kex", "libPath") ?: return null
     val runtimeVersion = kexConfig.getStringValue("kex", "rtVersion") ?: return null
     return JarContainer(Paths.get(runtimePath, "rt-${runtimeVersion}.jar"), Package.defaultPackage)
@@ -27,6 +28,7 @@ fun getJunit(): Container? {
 }
 
 fun getKexRuntime(): Container? {
+    if (!kexConfig.getBooleanValue("kex", "useKexRuntime", true)) return null
     val runtimePath = kexConfig.getStringValue("kex", "libPath") ?: return null
     val runtimeVersion = kexConfig.getStringValue("kex", "kexRtVersion") ?: return null
     return JarContainer(Paths.get(runtimePath, "kex-rt-${runtimeVersion}.jar"), Package.defaultPackage)

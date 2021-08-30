@@ -155,7 +155,8 @@ open class CallStack2JavaPrinter(
             is java.lang.Class<*> -> when {
                 this.isArray -> {
                     val element = this.componentType.csType
-                    CSArray(element)
+                    if (this.componentType.isPrimitive) CSPrimaryArray(element)
+                    else CSArray(element)
                 }
                 else -> CSClass(this.kex.getKfgType(ctx.types))
             }

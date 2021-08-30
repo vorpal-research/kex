@@ -259,6 +259,7 @@ class InstructionConcolicChecker(
 
     private fun prepareState(method: Method, state: PredicateState): PredicateState = transform(state) {
         +KexRtAdapter(cm)
+        +StringMethodAdapter(ctx.cm)
         +AnnotationAdapter(method, AnnotationManager.defaultLoader)
         +RecursiveInliner(PredicateStateAnalysis(cm)) { index, psa ->
             ConcreteImplInliner(

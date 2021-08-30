@@ -19,7 +19,7 @@ interface TypeInfo {
 fun emptyState(): PredicateState = BasicState()
 fun Predicate.wrap() = emptyState() + this
 
-class StateBuilder() : PredicateBuilder() {
+open class StateBuilder() : PredicateBuilder() {
     override val type = PredicateType.State()
     override val location = Location()
     var current: PredicateState = emptyState()
@@ -62,7 +62,7 @@ class StateBuilder() : PredicateBuilder() {
         current = ChainState(current, choice)
     }
 
-    fun apply() = current
+    open fun apply() = current
 
     inline fun assume(body: PredicateBuilder.() -> Predicate) {
         this += Assume().body()
@@ -124,6 +124,12 @@ inline fun basic(body: StateBuilder.() -> Unit): PredicateState {
     return sb.apply()
 }
 
+inline fun PredicateState.basic(body: StateBuilder.() -> Unit): PredicateState {
+    val sb = StateBuilder()
+    sb.body()
+    return this + sb.apply()
+}
+
 inline fun (StateBuilder.() -> Unit).chain(curr: StateBuilder.() -> Unit): PredicateState {
     val sb = StateBuilder().apply { this@chain() }
     sb += StateBuilder().apply { curr() }.apply()
@@ -142,9 +148,19 @@ inline fun (StateBuilder.() -> Unit).choice(right: StateBuilder.() -> Unit): Pre
     return StateBuilder().apply { this += listOf(lhv, rhv) }.apply()
 }
 
-inline fun PredicateState.choice(right: StateBuilder.() -> Unit): PredicateState {
-    val rhv = StateBuilder().apply { right() }.apply()
-    return StateBuilder().apply { this += listOf(this@choice, rhv) }.apply()
+class ChoiceBuilder : StateBuilder() {
+    private val choices = mutableListOf<PredicateState>()
+
+    fun or(branch: () -> PredicateState) {
+        choices += branch()
+    }
+
+    override fun apply() = ChoiceState(choices)
+}
+
+inline fun PredicateState.choice(right: ChoiceBuilder.() -> Unit): PredicateState {
+    val rhv = ChoiceBuilder().apply { right() }.apply()
+    return this + rhv
 }
 
 @BaseType("State")
