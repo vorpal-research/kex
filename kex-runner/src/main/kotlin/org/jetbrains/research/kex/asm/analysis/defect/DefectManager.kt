@@ -28,4 +28,8 @@ object DefectManager {
         }
         file.writeText(json)
     }
+
+    fun clear() {
+        innerDefects.clear()
+    }
 }

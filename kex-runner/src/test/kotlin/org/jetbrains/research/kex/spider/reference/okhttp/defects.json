@@ -1,29 +1,29 @@
 [
-  {
-    "type": "ASSERT",
-    "callStack": [
-      "com/squareup/okhttp/Request$Builder::url(java/lang/String): com/squareup/okhttp/Request$Builder - org/jetbrains/research/kex/test/spider/okhttp/client/Main.java:18\n"
-    ],
-    "id": "id1",
-    "testFile": null,
-    "testCaseName": null
-  },
-  {
-    "type": "ASSERT",
-    "callStack": [
-      "com/squareup/okhttp/Request$Builder::build(): com/squareup/okhttp/Request - org/jetbrains/research/kex/test/spider/okhttp/client/Main.java:19\n"
-    ],
-    "id": "id3",
-    "testFile": null,
-    "testCaseName": null
-  },
-  {
-    "type": "ASSERT",
-    "callStack": [
-      "com/squareup/okhttp/Request$Builder::build(): com/squareup/okhttp/Request - org/jetbrains/research/kex/test/spider/okhttp/client/Main.java:31\n"
-    ],
-    "id": "id3",
-    "testFile": null,
-    "testCaseName": null
-  }
+    {
+        "type": "ASSERT",
+        "callStack": [
+            "com/squareup/okhttp/Request$Builder::url(java/lang/String): com/squareup/okhttp/Request$Builder - org/jetbrains/research/kex/test/spider/okhttp/client/Main.java:18\n"
+        ],
+        "id": "id1",
+        "testFile": null,
+        "testCaseName": null
+    },
+    {
+        "type": "ASSERT",
+        "callStack": [
+            "com/squareup/okhttp/Request$Builder::build(): com/squareup/okhttp/Request - org/jetbrains/research/kex/test/spider/okhttp/client/Main.java:19\n"
+        ],
+        "id": "id3",
+        "testFile": null,
+        "testCaseName": null
+    },
+    {
+        "type": "ASSERT",
+        "callStack": [
+            "com/squareup/okhttp/Request$Builder::build(): com/squareup/okhttp/Request - org/jetbrains/research/kex/test/spider/okhttp/client/Main.java:31\n"
+        ],
+        "id": "id3",
+        "testFile": null,
+        "testCaseName": null
+    }
 ]

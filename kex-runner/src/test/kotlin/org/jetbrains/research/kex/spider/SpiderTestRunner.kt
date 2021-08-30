@@ -36,6 +36,7 @@ class SpiderTestRunner(private val testName: String) : KexRunnerTest(
 
     init {
         RuntimeConfig.setValue("defect", "outputFile", tempDir.absolutePath + "/defects.json")
+        DefectManager.clear()
     }
 
     private val json = Json { prettyPrint = true }
