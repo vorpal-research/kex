@@ -10,6 +10,7 @@ import org.jetbrains.research.kfg.ClassManager
 import org.jetbrains.research.kfg.ir.Field
 import org.jetbrains.research.kfg.ir.Method
 import org.jetbrains.research.kfg.visitor.MethodVisitor
+import org.jetbrains.research.kthelper.tryOrNull
 
 val Method.fieldAccesses get() = MethodFieldAccessCollector.fieldAccessMap.getOrDefault(this, setOf())
 
@@ -27,10 +28,12 @@ class MethodFieldAccessCollector(val ctx: ExecutionContext, val psa: PredicateSt
     override fun visit(method: Method) {
         if (method.klass.isJavaRt) return
 
-        val methodState = psa.builder(method).methodState ?: return
-        val preparedState = prepareState(method, methodState)
-        val fieldAccessList = collectFieldAccesses(ctx, preparedState)
-        methodAccessMap[method] = fieldAccessList
+        tryOrNull {
+            val methodState = psa.builder(method).methodState ?: return
+            val preparedState = prepareState(method, methodState)
+            val fieldAccessList = collectFieldAccesses(ctx, preparedState)
+            methodAccessMap[method] = fieldAccessList
+        }
     }
 
 
