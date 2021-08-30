@@ -99,7 +99,8 @@ class LibslInstrumentator(
         }
 
         // insert block that configures state and variables in synthesized automaton
-        if (!method.returnType.isVoid && methodDescription.returnType != null) {
+        // todo: add to the ASG hasBody flag
+        if (!method.returnType.isVoid && methodDescription.returnType != null && methodDescription.statements.isNotEmpty()) {
             val returnVariable = methodDescription.resultVariable
                 ?: error("result variable not specified in function ${methodDescription.qualifiedName}")
             val returnAutomatonCall = methodDescription
@@ -107,7 +108,7 @@ class LibslInstrumentator(
                 .filterIsInstance<Assignment>()
                 .firstOrNull { (it.left as? VariableAccess)?.variable == returnVariable }
                 ?.value as? CallAutomatonConstructor
-                ?: error("result statement not specified")
+                ?: error("result statement not specified in ${method.name}")
 
             val terminateBlock = method.terminateBlock ?: return
             val returnStatement = terminateBlock.first { it is ReturnInst } as ReturnInst
@@ -285,10 +286,10 @@ class LibslInstrumentator(
         val klass = method.klass
         val `this` = valueFactory.getThis(klass)
 
-        val automataFields = mutableMapOf<Automaton, Field>()
-
         for (assignment in func.statements.filterIsInstance<Assignment>()) {
             val variable = (assignment.left as? VariableAccess)?.variable ?: error("unresolved variable ${assignment.left}")
+            if (variable is ResultVariable) continue
+
             val variableField = syntheticContext.fields[variable] ?: error("unresolved variable ${variable.name}")
             val (field, value) = when (val value = assignment.value) {
                 is CallAutomatonConstructor -> {

@@ -28,7 +28,7 @@ public class Main {
 
             Request request = new Request.Builder()
                     .url(url)
-                    .build();
+                    .build();  // todo: wrong error
 
             try {
                 client.newCall(request).execute().body().string();

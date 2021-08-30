@@ -1,4 +1,5 @@
-library okhttp2;
+libsl "1.0.0";
+library okhttp version "2.7.5" url "https://github.com/square/okhttp";
 
 types {
     Request$Builder (com.squareup.okhttp.Request$Builder);
@@ -7,86 +8,53 @@ types {
     Call (com.squareup.okhttp.Call);
     Response (com.squareup.okhttp.Response);
     ResponseBody (com.squareup.okhttp.ResponseBody);
-    String (String);
+    String (string);
 }
 
-automaton Request$Builder {
-    javapackage com.squareup.okhttp;
-    state Created, URLSet;
+automaton com.squareup.okhttp.Request$Builder : Request$Builder {
+    initstate Created;
+    state URLSet;
 
-    shift Created->URLSet(url);
+    shift Created->URLSet(`url`);
     shift URLSet->self(build);
+
+    fun `url`(`url`: String): Request$Builder;
+
+    fun build(): Request {
+        result = new com.squareup.okhttp.Request(state = Created);
+    }
 }
 
-fun Request$Builder.Request$Builder(): Request$Builder {
-    result = new Request$Builder(Created);
+automaton com.squareup.okhttp.Request : Request {
+    initstate Created;
 }
 
-fun Request$Builder.url(url: String): Request$Builder;
+automaton com.squareup.okhttp.OkHttpClient : OkHttpClient {
+    initstate Created;
 
-fun Request$Builder.build(): Request {
-    result = new Request(Created);
+    fun newCall(request: Request): Call {
+        result = new com.squareup.okhttp.Call(state = Created);
+    }
 }
 
-automaton Request {
-    javapackage com.squareup.okhttp;
-    state Created;
+automaton com.squareup.okhttp.Call : Call {
+    initstate Created;
+
+    fun execute(request: Request): Response {
+        result = new com.squareup.okhttp.Response(state = Created);
+    }
 }
 
-fun Request.Request(): Request {
-    result = new Request(Created);
+automaton com.squareup.okhttp.Response : Response {
+    initstate Created;
+
+    fun body(): ResponseBody {
+        result = new com.squareup.okhttp.ResponseBody(state = Created);
+    }
 }
 
-automaton OkHttpClient {
-    javapackage com.squareup.okhttp;
+automaton com.squareup.okhttp.ResponseBody : ResponseBody {
+    initstate Created;
 
-    state Created;
+    fun string(): String;
 }
-
-fun OkHttpClient.OkHttpClient(): OkHttpClient {
-    result = new OkHttpClient(Created);
-}
-
-fun OkHttpClient.newCall(request: Request): Call {
-    result = new Call(Created);
-}
-
-automaton Call {
-    javapackage com.squareup.okhttp;
-
-    state Created;
-}
-
-fun Call.Call(): Call {
-    result = new Call(Created);
-}
-
-fun Call.execute(request: Request): Response {
-    result = new Response(Created);
-}
-
-automaton Response {
-    javapackage com.squareup.okhttp;
-
-    state Created;
-}
-
-fun Response.Response(): Response {
-    result = new Response(Created);
-}
-
-fun Response.body(): ResponseBody {
-    result = new ResponseBody(Created);
-}
-
-automaton ResponseBody {
-    javapackage com.squareup.okhttp;
-
-    state Created;
-}
-
-fun ResponseBody.ResponseBody(): ResponseBody {
-    result = new ResponseBody(Created);
-}
-
-fun ResponseBody.string(): String;
