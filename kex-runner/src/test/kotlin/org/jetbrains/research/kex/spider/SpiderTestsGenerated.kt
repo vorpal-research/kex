@@ -7,12 +7,17 @@ import org.junit.Test
 
 class SpiderTestsGenerated {
     @Test
+    fun testBuilderLibrary() {
+        SpiderTestRunner("builderLibrary").runTest()
+    }
+
+    @Test
     fun testComputer() {
         SpiderTestRunner("computer").runTest()
     }
 
     @Test
-    fun testOkHttp2() {
+    fun testOkhttp() {
         SpiderTestRunner("okhttp").runTest()
     }
 }

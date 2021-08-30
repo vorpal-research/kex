@@ -24,7 +24,7 @@ public class Main {
             }
         } else {
             OkHttpClient client = new OkHttpClient();
-            String url = "";
+            String url = "http://example.com";
 
             Request request = new Request.Builder()
                     .url(url)
