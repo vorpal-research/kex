@@ -483,7 +483,7 @@ abstract class DescriptorReanimator(
         }
     }
 
-    private fun reanimateReferencePointer(term: Term, addr: Term?) = descriptor {
+    private fun reanimateReferencePointer(term: Term, addr: Term?): Descriptor = descriptor {
         val referencedType = (term.type as KexReference).reference
         val address = (addr as? ConstIntTerm)?.value ?: return@descriptor default(term.type)
         if (address == 0) return@descriptor default(term.type)
@@ -497,6 +497,17 @@ abstract class DescriptorReanimator(
                     ?: unreachable("")
                 for (i in 0 until res.length) {
                     reanimate(term { (term.load())[i] }, null)
+                    val index = term { const(i) }
+                    val refValue = reanimateFromArray(term.memspace, addr, index)
+
+                    val reanimatedValue = reanimateReferenceValue(
+                        ArrayIndexTerm(
+                            KexReference(actualType.element),
+                            term { term.load() },
+                            index
+                        ), refValue
+                    )
+                    res[i] = reanimatedValue
                 }
                 res
             }
