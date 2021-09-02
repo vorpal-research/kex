@@ -289,7 +289,7 @@ class Z3Solver(val tf: TypeFactory) : AbstractSMTSolver {
 //                        strings.getValue(memspace).first[modelPtr] = startStringVal
 //                        strings.getValue(memspace).second[modelPtr] = stringVal
                     } else if (ptr.type.isArray) {
-                        val (startLength, endLength) = properties.recoverProperty(
+                        val (_, endLength) = properties.recoverProperty(
                             ctx,
                             ptr,
                             memspace,
@@ -297,13 +297,9 @@ class Z3Solver(val tf: TypeFactory) : AbstractSMTSolver {
                             model,
                             "length"
                         )
-                        var maxLen = maxOf(startLength.numericValue.toInt(), endLength.numericValue.toInt())
-                        if (maxLen > maxArrayLength * 5) {
-                            log.warn("Max len of an array is too big: $maxLen")
-                            maxLen = maxArrayLength
-                            properties.getValue(memspace).getValue("length").first[modelPtr] = term { const(maxLen) }
-                            properties.getValue(memspace).getValue("length").second[modelPtr] = term { const(maxLen) }
-                        }
+                        val maxLen = endLength.numericValue.toInt()
+                        // this is fucked up
+                        properties[memspace]!!["length"]!!.first[modelPtr] = endLength
                         for (i in 0 until maxLen) {
                             val indexTerm = term { ptr[i] }
                             if (indexTerm !in ptrs)
