@@ -157,10 +157,12 @@ class ${solver}Converter(val tf: TypeFactory) : ${solver}SMTConverter() {
     }
 
     fun convert(store: ArrayInitializerPredicate, ef: Factory_, ctx: Context_): Bool_ {
-        val indexTerm = store.arrayRef as? ArrayIndexTerm ?: unreachable { log.error("Non-index term in `initializer`") }
+        val indexTerm = store.arrayRef as? ArrayIndexTerm
+            ?: unreachable { log.error("Non-index term in `initializer`") }
         val memspace = indexTerm.arrayRef.memspace
-        val ptr = convert(indexTerm.arrayRef, ef, ctx) as? Ptr_ ?: unreachable { log.error("Non-ptr ref term in `initializer`") }
-        val index = convert(indexTerm.index, ef, ctx) as? Int_ ?: unreachable { log.error("Non-int term in array index") }
+        val ptr = convert(indexTerm.arrayRef, ef, ctx) as? Ptr_
+            ?: unreachable { log.error("Non-ptr ref term in `initializer`") }
+        val index = Int_.forceCast(convert(indexTerm.index, ef, ctx))
         val value = convert(store.value, ef, ctx)
 
         var array = ctx.readArrayInitialMemory(ptr, memspace)
@@ -170,10 +172,12 @@ class ${solver}Converter(val tf: TypeFactory) : ${solver}SMTConverter() {
     }
 
     fun convert(store: ArrayStorePredicate, ef: Factory_, ctx: Context_): Bool_ {
-        val indexTerm = store.arrayRef as? ArrayIndexTerm ?: unreachable { log.error("Non-index term in `initializer`") }
+        val indexTerm = store.arrayRef as? ArrayIndexTerm
+            ?: unreachable { log.error("Non-index term in `initializer`") }
         val memspace = store.arrayRef.memspace
-        val ptr = convert(indexTerm.arrayRef, ef, ctx) as? Ptr_ ?: unreachable { log.error("Non-ptr ref term in `initializer`") }
-        val index = convert(indexTerm.index, ef, ctx) as? Int_ ?: unreachable { log.error("Non-int term in array index") }
+        val ptr = convert(indexTerm.arrayRef, ef, ctx) as? Ptr_
+            ?: unreachable { log.error("Non-ptr ref term in `initializer`") }
+        val index = Int_.forceCast(convert(indexTerm.index, ef, ctx))
         val value = convert(store.value, ef, ctx)
 
         var array = ctx.readArrayMemory(ptr, memspace)
@@ -270,6 +274,7 @@ class ${solver}Converter(val tf: TypeFactory) : ${solver}SMTConverter() {
 
         val typeVar = ef.getTypeVariable(tf, generateArray.lhv.type)
         ctx.writeWordProperty(lhv, memspace, "type", typeVar)
+        ctx.writeWordProperty(lhv, memspace, "length", length)
         return lhv.withPtrAxioms(ef, ctx, TermType.LOCAL_PTR) eq ptr
     }
 
@@ -319,7 +324,8 @@ class ${solver}Converter(val tf: TypeFactory) : ${solver}SMTConverter() {
 
     fun convert(arrayContains: ArrayContainsTerm, ef: Factory_, ctx: Context_): Dynamic_ {
         val memspace = arrayContains.array.memspace
-        val ptr = convert(arrayContains.array, ef, ctx) as? Ptr_ ?: unreachable { log.error("Non-ptr ref term in `initializer`") }
+        val ptr = convert(arrayContains.array, ef, ctx) as? Ptr_
+            ?: unreachable { log.error("Non-ptr ref term in `initializer`") }
         val value = convert(arrayContains.value, ef, ctx)
         val length = ctx.readWordProperty(ptr, memspace, "length")
 
@@ -340,25 +346,31 @@ class ${solver}Converter(val tf: TypeFactory) : ${solver}SMTConverter() {
 
     fun convert(arrayindex: ArrayIndexTerm, ef: Factory_, ctx: Context_): Dynamic_ {
         // should not be executed anymore
-        val arrayref = convert(arrayindex.arrayRef, ef, ctx) as? Ptr_ ?: unreachable { log.error("Non-ptr operand of array load") }
-        val index = (convert(arrayindex.index, ef, ctx) as? Int_ ?: unreachable { log.error("Non-integer index of array load") }) *
-            ${factory}.getTypeSize(arrayindex.type).int
-        val valuePtr = Ptr_.forceCast(arrayref + index)
-        return arrayindex.withAxioms(valuePtr, ef, ctx)
+        return unreachable< Dynamic_ > { log.error("Array index term can't be directly converted into an SMT expression") }
+##        val arrayref = convert(arrayindex.arrayRef, ef, ctx) as? Ptr_
+##            ?: unreachable { log.error("Non-ptr operand of array load") }
+##        val index = (convert(arrayindex.index, ef, ctx) as? Int_
+##            ?: unreachable { log.error("Non-integer index of array load") }) *
+##            ${factory}.getTypeSize(arrayindex.type).int
+##        val valuePtr = Ptr_.forceCast(arrayref + index)
+##        return arrayindex.withAxioms(valuePtr, ef, ctx)
     }
 
     fun convert(arraylength: ArrayLengthTerm, ef: Factory_, ctx: Context_): Dynamic_ {
         val memspace = arraylength.arrayRef.memspace
-        val ptr = convert(arraylength.arrayRef, ef, ctx) as? Ptr_ ?: unreachable { log.error("Non-ptr term in `arraylength`") }
+        val ptr = convert(arraylength.arrayRef, ef, ctx) as? Ptr_
+            ?: unreachable { log.error("Non-ptr term in `arraylength`") }
 
         return ctx.readWordProperty(ptr, memspace, "length")
     }
 
     fun convert(arrayload: ArrayLoadTerm, ef: Factory_, ctx: Context_): Dynamic_ {
-        val indexTerm = arrayload.arrayRef as? ArrayIndexTerm ?: unreachable { log.error("Non-index term in `initializer`") }
+        val indexTerm = arrayload.arrayRef as? ArrayIndexTerm
+            ?: unreachable { log.error("Non-index term in `initializer`") }
         val memspace = indexTerm.arrayRef.memspace
-        val ptr = convert(indexTerm.arrayRef, ef, ctx) as? Ptr_ ?: unreachable { log.error("Non-ptr ref term in `initializer`") }
-        val index = convert(indexTerm.index, ef, ctx) as? Int_ ?: unreachable { log.error("Non-int term in array index") }
+        val ptr = convert(indexTerm.arrayRef, ef, ctx) as? Ptr_
+            ?: unreachable { log.error("Non-ptr ref term in `initializer`") }
+        val index = Int_.forceCast(convert(indexTerm.index, ef, ctx))
 
         val array = ctx.readArrayMemory(ptr, memspace)
         val ret = array.load(index)
@@ -516,7 +528,7 @@ class ${solver}Converter(val tf: TypeFactory) : ${solver}SMTConverter() {
             val index = paramMap[lambda.parameters.first()]!!
             if_ { (start le index) and (index lt end) }
                 .then_ {
-                    convert(exists.body, ef, ctx) as Bool_
+                    convert(lambda.body, ef, ctx) as Bool_
                 }.else_ {
                     ef.makeFalse()
                 }.also {
@@ -537,7 +549,7 @@ class ${solver}Converter(val tf: TypeFactory) : ${solver}SMTConverter() {
             TypeSize.WORD -> ctx.readWordProperty(ptr, memspace, "${ klass }.${ name }")
             TypeSize.DWORD -> ctx.readDWordProperty(ptr, memspace, "${ klass }.${ name }")
         }
-        return cast(fieldload.type, res)
+        return fieldload.withAxioms(cast(fieldload.type, res), ef, ctx)
     }
 
     fun convert(field: FieldTerm, ef: Factory_, ctx: Context_): Dynamic_ =
@@ -556,7 +568,7 @@ class ${solver}Converter(val tf: TypeFactory) : ${solver}SMTConverter() {
             val index = paramMap[lambda.parameters.first()]!!
             if_ { (start le index) and (index lt end) }
                 .then_ {
-                    convert(forAll.body, ef, ctx) as Bool_
+                    convert(lambda.body, ef, ctx) as Bool_
                 }.else_ {
                     ef.makeTrue()
                 }.also {
@@ -593,16 +605,26 @@ class ${solver}Converter(val tf: TypeFactory) : ${solver}SMTConverter() {
         val lhv = convert(ite.trueValue, ef, ctx)
         val rhv = convert(ite.falseValue, ef, ctx)
 
-        return cast(ite.type, `if`(cond).then(lhv).`else`(rhv))
+        val res = when (ite.type) {
+            is KexLong -> `if`(cond).then(lhv as Long_).`else`(rhv as Long_)
+            is KexBool -> `if`(cond).then(lhv as Bool_).`else`(rhv as Bool_)
+            is KexIntegral -> `if`(cond).then(lhv as Int_).`else`(rhv as Int_)
+            is KexFloat -> `if`(cond).then(lhv as Float_).`else`(rhv as Float_)
+            is KexDouble -> `if`(cond).then(lhv as Double_).`else`(rhv as Double_)
+            is KexClass -> `if`(cond).then(lhv as Ptr_).`else`(rhv as Ptr_)
+            is KexArray -> `if`(cond).then(lhv as Ptr_).`else`(rhv as Ptr_)
+            else -> unreachable { log.error("Unknown type of Ite term: ${ ite.type }") }
+        }
+        return ite.withAxioms(res, ef, ctx)
     }
 
     fun convert(lambda: LambdaTerm, ef: Factory_, ctx: Context_): Dynamic_ {
-        return convert(lambda.body, ef, ctx)
+        return lambda.withAxioms(ef.getVarByTypeAndName(lambda.type, lambda.name), ef, ctx)
     }
 
     fun convert(neg: NegTerm, ef: Factory_, ctx: Context_): Dynamic_ {
         val operand = convert(neg.operand, ef, ctx)
-        return when (operand) {
+        val res = when (operand) {
             is Bool_ -> Bool_.forceCast(!operand)
             is Int_ -> Int_.forceCast(!operand)
             is Long_ -> Long_.forceCast(!operand)
@@ -610,6 +632,7 @@ class ${solver}Converter(val tf: TypeFactory) : ${solver}SMTConverter() {
             is Double_ -> Double_.forceCast(!operand)
             else -> unreachable { log.error("Invalid operand of `neg`: ${ neg.operand }") }
         }
+        return neg.withAxioms(res, ef, ctx)
     }
 
     fun convert(startsWith: StartsWithTerm, ef: Factory_, ctx: Context_): Dynamic_ {

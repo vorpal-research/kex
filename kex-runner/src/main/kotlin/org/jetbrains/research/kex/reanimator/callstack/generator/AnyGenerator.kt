@@ -187,7 +187,7 @@ open class AnyGenerator(private val fallback: Generator) : Generator {
                     method.argTypes.isEmpty() -> DefaultConstructorCall(klass)
                     else -> {
                         val generatedArgs = generateArgs(args, generationDepth + 1) ?: return null
-                        ConstructorCall(klass, method, generatedArgs)
+                        ConstructorCall(method, generatedArgs)
                     }
                 }
             } else null

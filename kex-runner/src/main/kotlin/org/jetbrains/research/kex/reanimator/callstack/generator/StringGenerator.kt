@@ -33,7 +33,7 @@ class StringGenerator(private val fallback: Generator) : Generator {
         val value = fallback.generate(valueDescriptor, generationDepth + 1)
 
         val constructor = stringClass.getMethod("<init>", MethodDesc(arrayOf(types.getArrayType(types.charType)), types.voidType))
-        callStack += ConstructorCall(stringClass, constructor, listOf(value)).wrap(name)
+        callStack += ConstructorCall(constructor, listOf(value)).wrap(name)
         return callStack
     }
 }

@@ -1,6 +1,7 @@
 package org.jetbrains.research.kex.state.transformer
 
 import org.jetbrains.research.kex.ktype.*
+import org.jetbrains.research.kex.ktype.KexRtManager.rtMapped
 import org.jetbrains.research.kex.state.PredicateState
 import org.jetbrains.research.kex.state.StateBuilder
 import org.jetbrains.research.kex.state.predicate.CallPredicate
@@ -33,7 +34,7 @@ class ReflectionInfoAdapter(val method: Method, val loader: ClassLoader, val ign
         if (`this` != null) {
             currentBuilder += assume { `this` inequality null }
         } else if (!method.isStatic) {
-            val nthis = term { `this`(method.klass.kexType) }
+            val nthis = term { `this`(method.klass.kexType.rtMapped) }
             currentBuilder += assume { nthis inequality null }
         }
 
@@ -82,9 +83,9 @@ class ReflectionInfoAdapter(val method: Method, val loader: ClassLoader, val ign
         if (lhv.type is KexArray)
             arrayElementInfo[lhv] = ArrayElementInfo(nullable = lhv.type.isElementNullable(kFunction.returnType))
 
-        call.arguments.filter { it.type is KexPointer }.forEach {
-            currentBuilder += assume { it equality undef(it.type) }
-        }
+//        call.arguments.filter { it.type is KexPointer }.forEach {
+//            currentBuilder += assume { it equality undef(it.type) }
+//        }
 
         return nothing()
     }
@@ -108,7 +109,7 @@ class ReflectionInfoAdapter(val method: Method, val loader: ClassLoader, val ign
         val field = (predicate.rhv as FieldLoadTerm).field as FieldTerm
         val fieldType = (field.type as KexReference).reference
         val kfgClass = cm[field.klass]
-        val actualField = kfgClass.getField(field.fieldName, fieldType.getKfgType(types))
+        val actualField = field.unmappedKfgField(cm)
 
         val klass = tryOrNull { loader.loadKClass(kfgClass) } ?: return result
         val prop = klass.getKProperty(actualField)

@@ -28,14 +28,14 @@ open class $valexpr : ${solver}SMTExpr {
             $class::class -> ${class}.getStaticSort(ctx)
 #end
             $Array::class -> ${Array}.getStaticSort(ctx)
-            else -> unreachable { log.error("Trying to get static sort of non-simple SMTExpr") }
+            else -> unreachable { log.error("Trying to get static sort of non-simple SMTExpr of type ${ Type:: class }") }
         }
 
         inline fun < reified Type : $valexpr> forceCast(value: $valexpr) = when (Type::class) {
 #foreach($class in $exprClasses)
             $class::class -> ${class}.forceCast(value)
 #end
-            else -> unreachable { log.error("Trying to forceCast to non-simple SMTExpr") }
+            else -> unreachable { log.error("Trying to forceCast to non-simple SMTExpr of type ${ Type:: class }") }
         } as Type
 
         inline fun < reified Type : $valexpr> wrap(value: $valexpr) = when (Type::class) {
@@ -43,7 +43,7 @@ open class $valexpr : ${solver}SMTExpr {
             $class::class -> ${class}(value)
 #end
             $Array::class -> ${Array}< $valexpr, $valexpr >(value)
-            else -> unreachable { log.error("Trying to forceCast to non-simple SMTExpr") }
+            else -> unreachable { log.error("Trying to forceCast to non-simple SMTExpr of type ${ Type:: class }") }
         } as Type
 
         inline fun < reified Type : $valexpr > getStaticBitSize(ctx: $context) = when (Type::class) {

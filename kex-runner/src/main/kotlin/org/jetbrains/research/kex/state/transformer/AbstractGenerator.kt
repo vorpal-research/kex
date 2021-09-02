@@ -2,6 +2,7 @@ package org.jetbrains.research.kex.state.transformer
 
 import org.jetbrains.research.kex.ExecutionContext
 import org.jetbrains.research.kex.ktype.KexClass
+import org.jetbrains.research.kex.ktype.KexRtManager.rtMapped
 import org.jetbrains.research.kex.ktype.kexType
 import org.jetbrains.research.kex.smt.ModelReanimator
 import org.jetbrains.research.kex.smt.SMTModel
@@ -58,12 +59,12 @@ interface AbstractGenerator<T> : Transformer<AbstractGenerator<T>> {
     fun generate(ps: PredicateState): Pair<T?, List<T?>> {
         val (tempThis, tempArgs) = collectArguments(ps)
         thisTerm = when {
-            !method.isStatic && tempThis == null -> term { `this`(KexClass(method.klass.fullName)) }
+            !method.isStatic && tempThis == null -> term { `this`(KexClass(method.klass.fullName).rtMapped) }
             else -> tempThis
         }
         argTerms.putAll(tempArgs)
         for ((index, type) in method.argTypes.withIndex()) {
-            argTerms.getOrPut(index) { term { arg(type.kexType, index) } }
+            argTerms.getOrPut(index) { term { arg(type.kexType.rtMapped, index) } }
         }
         generateThis()
         generateArgs()

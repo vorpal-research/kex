@@ -31,7 +31,7 @@ class ExecutionGenerator(val ctx: ExecutionContext, val method: Method) {
 
     fun generate(descriptors: Parameters<Descriptor>) = try {
         val callStacks = descriptors.callStacks
-        printer.print(method, callStacks)
+        printer.print(method, callStacks.rtUnmapped)
     } catch (e: GenerationException) {
         throw e
     } catch (e: Exception) {

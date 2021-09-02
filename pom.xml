@@ -27,11 +27,11 @@
         <kotlin.version>1.5.21</kotlin.version>
         <kotlin.code.style>official</kotlin.code.style>
         <serialization.version>1.2.2</serialization.version>
-        <coroutines.version>1.5.0-RC</coroutines.version>
+        <coroutines.version>1.5.1</coroutines.version>
         <compiler-plugin.version>3.5.1</compiler-plugin.version>
 
-        <kt-helper.version>0.0.12</kt-helper.version>
-        <kfg.version>0.1.0</kfg.version>
+        <kt-helper.version>0.0.13</kt-helper.version>
+        <kfg.version>0.1.1</kfg.version>
 
         <logback.version>1.2.3</logback.version>
         <slf4j.version>1.7.25</slf4j.version>

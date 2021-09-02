@@ -35,6 +35,7 @@ import org.jetbrains.research.kex.trace.TraceManager
 import org.jetbrains.research.kex.trace.`object`.ObjectTraceManager
 import org.jetbrains.research.kex.trace.symbolic.InstructionTraceManager
 import org.jetbrains.research.kex.util.getIntrinsics
+import org.jetbrains.research.kex.util.getKexRuntime
 import org.jetbrains.research.kex.util.getPathSeparator
 import org.jetbrains.research.kex.util.getRuntime
 import org.jetbrains.research.kfg.ClassManager
@@ -142,12 +143,12 @@ class Kex(args: Array<String>) {
                 exitProcess(1)
             }
         }
-        containers = containerPaths.map {
+        containers = listOfNotNull(*containerPaths.map {
             it.asContainer() ?: run {
                 log.error("Can't represent ${it.toAbsolutePath()} as class container")
                 exitProcess(1)
             }
-        }
+        }.toTypedArray(), getKexRuntime())
         classManager = ClassManager(KfgConfig(flags = Flags.readAll, failOnError = false, verifyIR = false))
         origManager = ClassManager(KfgConfig(flags = Flags.readAll, failOnError = false, verifyIR = false))
         val analysisJars = listOfNotNull(*containers.toTypedArray(), getRuntime(), getIntrinsics())

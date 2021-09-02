@@ -60,7 +60,7 @@ private class CompilerHelper(val ctx: ExecutionContext) {
 
     fun compileFile(file: Path) {
         val compilerDriver = JavaCompilerDriver(
-            listOf(*ctx.classPath.toTypedArray(), junitJar), compileDir
+            listOf(*ctx.classPath.toTypedArray(), junitJar.path), compileDir
         )
         compilerDriver.compile(listOf(file))
     }
@@ -258,8 +258,18 @@ class InstructionConcolicChecker(
     }
 
     private fun prepareState(method: Method, state: PredicateState): PredicateState = transform(state) {
+        +KexRtAdapter(cm)
+        +StringMethodAdapter(ctx.cm)
         +AnnotationAdapter(method, AnnotationManager.defaultLoader)
-//        +StringAdapter(ctx)
+        +RecursiveInliner(PredicateStateAnalysis(cm)) { index, psa ->
+            ConcreteImplInliner(
+                cm.type,
+                TypeInfoMap(),
+                psa,
+                inlineIndex = index
+            )
+        }
+        +ArrayBoundsAdapter()
         +IntrinsicAdapter
         +KexIntrinsicsAdapter()
         +ReflectionInfoAdapter(method, ctx.loader)

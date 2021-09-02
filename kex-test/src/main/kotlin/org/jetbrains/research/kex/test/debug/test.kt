@@ -2,33 +2,14 @@
 
 package org.jetbrains.research.kex.test.debug
 
+import org.jetbrains.research.kex.intrinsics.CollectionIntrinsics
+
 class BasicTests {
-    class A {
-        companion object {
-            @JvmStatic
-            val a = intArrayOf(
-                3, 4, 5, 6, 7, 8, 9
-            )
-
-            @JvmStatic
-            fun getArrayVal(index: Int): Int {
-                return when (index) {
-                    0 -> a[1]
-                    1 -> a[4]
-                    5 -> a[7]
-                    2 -> a[2]
-                    else -> a[0]
-                }
-            }
+    fun test(x: String) {
+        val arr = CollectionIntrinsics.generateCharArray(10) { 'a' + it }
+        val s = String(arr)
+        if (s[3] == 'c') {
+            error("")
         }
-
-    }
-
-    fun test(a: Int): Int {
-        val value = A.getArrayVal(a)
-        if (value > 3) {
-            return 1
-        }
-        return 0
     }
 }

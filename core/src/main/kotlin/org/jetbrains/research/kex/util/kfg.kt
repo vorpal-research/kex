@@ -1,5 +1,7 @@
 package org.jetbrains.research.kex.util
 
+import org.jetbrains.research.kfg.Package
+import org.jetbrains.research.kfg.ir.Class
 import org.jetbrains.research.kfg.ir.MethodDesc
 import org.jetbrains.research.kfg.ir.value.NameMapper
 import org.jetbrains.research.kfg.ir.value.Value
@@ -15,6 +17,8 @@ import org.jetbrains.research.kthelper.compareTo
 import org.jetbrains.research.kthelper.logging.log
 
 fun Type.asArray(tf: TypeFactory) = tf.getArrayType(this)
+
+fun Package.isParent(klass: Class) = isParent(klass.pkg)
 
 fun InstructionBuilder.wrapValue(value: Value): Instruction {
     val wrapperType = cm.type.getWrapper(value.type as PrimaryType) as ClassType

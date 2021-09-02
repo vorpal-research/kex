@@ -46,17 +46,15 @@ class Checker(
     }
 
     fun prepareState(ps: PredicateState) = transform(ps) {
+        +KexRtAdapter(ctx.cm)
+        +StringMethodAdapter(ctx.cm)
         if (annotationsEnabled) {
             +AnnotationAdapter(method, AnnotationManager.defaultLoader)
         }
-//        +StringAdapter(ctx)
-
-        if (isInliningEnabled) {
-            +MethodInliner(psa)
+        +RecursiveInliner(psa) { index, psa ->
+            ConcreteImplInliner(method.cm.type, TypeInfoMap(), psa, inlineIndex = index)
         }
-
         +StaticFieldInliner(ctx, psa)
-        +RecursiveConstructorInliner(psa)
         +IntrinsicAdapter
         +KexIntrinsicsAdapter()
         +ReflectionInfoAdapter(method, loader)
@@ -70,11 +68,13 @@ class Checker(
     }
 
     fun prepareState(method: Method, ps: PredicateState, typeInfoMap: TypeInfoMap) = transform(ps) {
+        +KexRtAdapter(ctx.cm)
+        +StringMethodAdapter(ctx.cm)
         +AnnotationAdapter(method, AnnotationManager.defaultLoader)
-//        +StringAdapter(ctx)
-        +RecursiveInliner(psa) { ConcreteImplInliner(method.cm.type, typeInfoMap, psa, inlineIndex = it) }
+        +RecursiveInliner(psa) { index, psa ->
+            ConcreteImplInliner(method.cm.type, typeInfoMap, psa, inlineIndex = index)
+        }
         +StaticFieldInliner(ctx, psa)
-        +RecursiveConstructorInliner(psa)
         +IntrinsicAdapter
         +KexIntrinsicsAdapter()
         +ReflectionInfoAdapter(method, loader)
@@ -136,7 +136,9 @@ class Checker(
         query = Optimizer().apply(query)
         if (logQuery) {
             log.debug("Simplified state: $state")
+            log.debug("State size: ${state.size}")
             log.debug("Query: $query")
+            log.debug("Query size: ${query.size}")
         }
 
         val result = SMTProxySolver(method.cm.type).use {

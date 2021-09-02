@@ -107,7 +107,7 @@ open class CallStack2JavaPrinter(
                 else -> typeParams.zip(other.typeParams).all { (a, b) -> a.isSubtype(b) }
             }
             is CSStarProjection -> true
-            else -> false
+            else -> other.kfg == ctx.types.objectType
         }
 
         override fun toString(): String {
@@ -123,7 +123,7 @@ open class CallStack2JavaPrinter(
         override fun isSubtype(other: CSType): Boolean = when (other) {
             is CSPrimaryArray -> element.isSubtype(other.element)
             is CSStarProjection -> true
-            else -> false
+            else -> other.kfg == ctx.types.objectType
         }
 
         override fun toString() = "${element}[]"
@@ -155,7 +155,8 @@ open class CallStack2JavaPrinter(
             is java.lang.Class<*> -> when {
                 this.isArray -> {
                     val element = this.componentType.csType
-                    CSArray(element)
+                    if (this.componentType.isPrimitive) CSPrimaryArray(element)
+                    else CSArray(element)
                 }
                 else -> CSClass(this.kex.getKfgType(ctx.types))
             }
@@ -227,7 +228,7 @@ open class CallStack2JavaPrinter(
         is DefaultConstructorCall -> {
         }
         is ConstructorCall -> {
-            val reflection = ctx.loader.loadClass(call.klass)
+            val reflection = ctx.loader.loadClass(call.constructor.klass)
             val constructor = reflection.getConstructor(call.constructor, ctx.loader)
             resolveTypes(constructor, call.args)
         }
@@ -323,7 +324,6 @@ open class CallStack2JavaPrinter(
         is EnumValueCreation -> printEnumValueCreation(owner, apiCall)
         is StaticFieldGetter -> printStaticFieldGetter(owner, apiCall)
         is UnknownCall -> printUnknown(owner, apiCall)
-        else -> unreachable { log.error("Unknown call") }
     }
 
     protected val <T> PrimaryValue<T>.asConstant: String
@@ -419,7 +419,7 @@ open class CallStack2JavaPrinter(
         val args = call.args.joinToString(", ") {
             it.forceCastIfNull(resolvedTypes[it])
         }
-        val actualType = CSClass(call.klass.type)
+        val actualType = CSClass(call.constructor.klass.type)
         return listOf(
             if (resolvedTypes[owner] != null) {
                 val rest = resolvedTypes[owner]!!
@@ -533,15 +533,17 @@ open class CallStack2JavaPrinter(
         )
     }
 
+    private fun lub(lhv: CSType?, rhv: CSType?): CSType = when {
+        lhv == null -> rhv!!
+        rhv == null -> lhv
+        lhv.isSubtype(rhv) -> lhv
+        rhv.isSubtype(lhv) -> rhv
+        else -> unreachable {  }
+    }
+
     protected open fun printArrayWrite(owner: CallStack, call: ArrayWrite): List<String> {
         call.value.printAsJava()
-        val requiredType = run {
-            when (val resT = resolvedTypes[owner] ?: actualTypes[owner]) {
-                is CSArray -> resT.element
-                is CSPrimaryArray -> resT.element
-                else -> unreachable { }
-            }
-        }
+        val requiredType = lub(resolvedTypes[owner], actualTypes[owner])
         return listOf("${owner.name}[${call.index.stackName}] = ${call.value.cast(requiredType)}")
     }
 
@@ -552,7 +554,7 @@ open class CallStack2JavaPrinter(
 
     protected open fun printStaticFieldSetter(call: StaticFieldSetter): List<String> {
         call.value.printAsJava()
-        return listOf("${call.klass.javaString}.${call.field.name} = ${call.value.stackName}")
+        return listOf("${call.field.klass.javaString}.${call.field.name} = ${call.value.stackName}")
     }
 
     protected open fun printEnumValueCreation(owner: CallStack, call: EnumValueCreation): List<String> {
@@ -562,9 +564,9 @@ open class CallStack2JavaPrinter(
     }
 
     protected open fun printStaticFieldGetter(owner: CallStack, call: StaticFieldGetter): List<String> {
-        val actualType = call.klass.type.csType
+        val actualType = call.field.klass.type.csType
         actualTypes[owner] = actualType
-        return listOf("${printVarDeclaration(owner.name, actualType)} = ${call.klass.javaString}.${call.name}")
+        return listOf("${printVarDeclaration(owner.name, actualType)} = ${call.field.klass.javaString}.${call.field.name}")
     }
 
     protected open fun printUnknown(owner: CallStack, call: UnknownCall): List<String> {

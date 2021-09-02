@@ -16,15 +16,8 @@
         <slf4j.version>1.7.25</slf4j.version>
         <ini4j.version>0.5.4</ini4j.version>
         <reflections.version>0.9.11</reflections.version>
-        <easy-random.version>easy-random-4.3.0</easy-random.version>
+        <easy-random.version>4.3.0</easy-random.version>
     </properties>
-
-    <repositories>
-        <repository>
-            <id>jitpack.io</id>
-            <url>https://jitpack.io</url>
-        </repository>
-    </repositories>
 
     <dependencies>
         <dependency>
@@ -83,7 +76,7 @@
         </dependency>
 
         <dependency>
-            <groupId>com.github.benas.random-beans</groupId>
+            <groupId>org.jeasy</groupId>
             <artifactId>easy-random-core</artifactId>
             <version>${easy-random.version}</version>
         </dependency>

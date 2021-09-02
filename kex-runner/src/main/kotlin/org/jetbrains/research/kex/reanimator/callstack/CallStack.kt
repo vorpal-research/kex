@@ -1,6 +1,7 @@
 package org.jetbrains.research.kex.reanimator.callstack
 
 import org.jetbrains.research.kex.descriptor.Descriptor
+import org.jetbrains.research.kex.ktype.KexRtManager.rtUnmapped
 import org.jetbrains.research.kfg.ir.Class
 import org.jetbrains.research.kfg.ir.Field
 import org.jetbrains.research.kfg.ir.Method
@@ -9,7 +10,7 @@ import org.jetbrains.research.kfg.type.Type
 import org.jetbrains.research.kthelper.collection.queueOf
 import org.jetbrains.research.kthelper.logging.log
 
-interface ApiCall {
+sealed interface ApiCall {
     val parameters: List<CallStack>
 
     fun wrap(name: String): CallStack = CallStack(name, mutableListOf(this))
@@ -93,7 +94,7 @@ data class DefaultConstructorCall(val klass: Class) : ApiCall {
     }
 }
 
-data class ConstructorCall(val klass: Class, val constructor: Method, val args: List<CallStack>) : ApiCall {
+data class ConstructorCall(val constructor: Method, val args: List<CallStack>) : ApiCall {
     init {
         assert(constructor.isConstructor) { log.error("Trying to create constructor call for non-constructor method") }
     }
@@ -187,10 +188,10 @@ data class UnknownCall(val type: Type, val target: Descriptor) : ApiCall {
     }
 }
 
-data class StaticFieldSetter(val klass: Class, val field: Field, val value: CallStack) : ApiCall {
+data class StaticFieldSetter(val field: Field, val value: CallStack) : ApiCall {
     override val parameters: List<CallStack> get() = listOf(value)
 
-    override fun toString() = "${klass.fullName}.${field.name} = ${value.name}"
+    override fun toString() = "${field.klass.fullName}.${field.name} = ${value.name}"
 
     override fun print(owner: CallStack, builder: StringBuilder, visited: MutableSet<CallStack>) {
         value.print(builder, visited)
@@ -240,12 +241,114 @@ data class EnumValueCreation(val klass: Class, val name: String) : ApiCall {
     }
 }
 
-data class StaticFieldGetter(val klass: Class, val name: String) : ApiCall {
+data class StaticFieldGetter(val field: Field) : ApiCall {
     override val parameters = emptyList<CallStack>()
 
-    override fun toString() = "${klass.fullName}.$name"
+    override fun toString() = "${field.klass.fullName}.${field.name}"
 
     override fun print(owner: CallStack, builder: StringBuilder, visited: MutableSet<CallStack>) {
-        builder.appendLine("${owner.name} = ${klass.fullName}.$name")
+        builder.appendLine("${owner.name} = ${field.klass.fullName}.${field.name}")
+    }
+}
+
+val ApiCall.rtUnmapped: ApiCall get() = when (this) {
+    is ArrayWrite -> TODO()
+    is ConstructorCall -> TODO()
+    is DefaultConstructorCall -> TODO()
+    is EnumValueCreation -> TODO()
+    is ExternalConstructorCall -> TODO()
+    is FieldSetter -> TODO()
+    is InnerClassConstructorCall -> TODO()
+    is MethodCall -> TODO()
+    is NewArray -> TODO()
+    is StaticFieldGetter -> TODO()
+    is StaticFieldSetter -> TODO()
+    is StaticMethodCall -> TODO()
+    is UnknownCall -> TODO()
+}
+
+class CallStackRtUnmapper {
+    private val cache = mutableMapOf<CallStack, CallStack>()
+
+    fun unmap(ct: CallStack): CallStack {
+        if (ct is PrimaryValue<*>) return ct
+        if (ct in cache) return cache[ct]!!
+        val res = CallStack(ct.name)
+        cache[ct] = res
+        for (call in ct) {
+            res += unmap(call)
+        }
+        return res
+    }
+
+    fun unmap(api: ApiCall): ApiCall = when (api) {
+        is ArrayWrite -> ArrayWrite(unmap(api.index), unmap(api.value))
+        is ConstructorCall -> {
+            val unmappedKlass = api.constructor.klass.rtUnmapped
+            val unmappedMethod = unmappedKlass.getMethod(
+                api.constructor.name,
+                api.constructor.returnType.rtUnmapped,
+                *api.constructor.argTypes.map { it.rtUnmapped }.toTypedArray()
+            )
+            ConstructorCall(unmappedMethod, api.args.map { unmap(it) })
+        }
+        is DefaultConstructorCall -> {
+            val unmappedKlass = api.klass.rtUnmapped
+            DefaultConstructorCall(unmappedKlass)
+        }
+        is EnumValueCreation -> EnumValueCreation(api.klass.rtUnmapped, api.name)
+        is ExternalConstructorCall -> {
+            val unmappedKlass = api.constructor.klass.rtUnmapped
+            val unmappedMethod = unmappedKlass.getMethod(
+                api.constructor.name,
+                api.constructor.returnType.rtUnmapped,
+                *api.constructor.argTypes.map { it.rtUnmapped }.toTypedArray()
+            )
+            ExternalConstructorCall(unmappedMethod, api.args.map { unmap(it) })
+        }
+        is FieldSetter -> {
+            val unmappedKlass = api.field.klass.rtUnmapped
+            val unmappedField = unmappedKlass.getField(api.field.name, api.field.type.rtUnmapped)
+            FieldSetter(unmappedField, unmap(api.value))
+        }
+        is InnerClassConstructorCall -> {
+            val unmappedKlass = api.constructor.klass.rtUnmapped
+            val unmappedMethod = unmappedKlass.getMethod(
+                api.constructor.name,
+                api.constructor.returnType.rtUnmapped,
+                *api.constructor.argTypes.map { it.rtUnmapped }.toTypedArray()
+            )
+            InnerClassConstructorCall(unmappedMethod, unmap(api.outerObject), api.args.map { unmap(it) })
+        }
+        is MethodCall -> {
+            val unmappedKlass = api.method.klass.rtUnmapped
+            val unmappedMethod = unmappedKlass.getMethod(
+                api.method.name,
+                api.method.returnType.rtUnmapped,
+                *api.method.argTypes.map { it.rtUnmapped }.toTypedArray()
+            )
+            MethodCall(unmappedMethod, api.args.map { unmap(it) })
+        }
+        is NewArray -> NewArray(api.klass.rtUnmapped, unmap(api.length))
+        is StaticFieldGetter -> {
+            val unmappedKlass = api.field.klass.rtUnmapped
+            val unmappedField = unmappedKlass.getField(api.field.name, api.field.type.rtUnmapped)
+            StaticFieldGetter(unmappedField)
+        }
+        is StaticFieldSetter -> {
+            val unmappedKlass = api.field.klass.rtUnmapped
+            val unmappedField = unmappedKlass.getField(api.field.name, api.field.type.rtUnmapped)
+            StaticFieldSetter(unmappedField, unmap(api.value))
+        }
+        is StaticMethodCall -> {
+            val unmappedKlass = api.method.klass.rtUnmapped
+            val unmappedMethod = unmappedKlass.getMethod(
+                api.method.name,
+                api.method.returnType.rtUnmapped,
+                *api.method.argTypes.map { it.rtUnmapped }.toTypedArray()
+            )
+            StaticMethodCall(unmappedMethod, api.args.map { unmap(it) })
+        }
+        is UnknownCall -> api
     }
 }

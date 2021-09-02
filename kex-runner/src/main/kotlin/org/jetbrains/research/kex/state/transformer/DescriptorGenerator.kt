@@ -6,6 +6,7 @@ import org.jetbrains.research.kex.descriptor.Descriptor
 import org.jetbrains.research.kex.descriptor.descriptor
 import org.jetbrains.research.kex.ktype.KexPointer
 import org.jetbrains.research.kex.ktype.KexReference
+import org.jetbrains.research.kex.ktype.KexRtManager.rtMapped
 import org.jetbrains.research.kex.ktype.kexType
 import org.jetbrains.research.kex.parameters.Parameters
 import org.jetbrains.research.kex.smt.FinalDescriptorReanimator
@@ -77,7 +78,7 @@ fun generateFinalDescriptors(
     return Parameters(
         generator.instance,
         generator.args.mapIndexed { index, arg ->
-            arg ?: descriptor { default(method.argTypes[index].kexType) }
+            arg ?: descriptor { default(method.argTypes[index].kexType.rtMapped) }
         },
         generator.staticFields
     )
@@ -94,7 +95,7 @@ fun generateFinalTypeInfoMap(
     val params = setOfNotNull(
         generator.instance,
         *generator.args.mapIndexed { index, arg ->
-            arg ?: descriptor { default(method.argTypes[index].kexType) }
+            arg ?: descriptor { default(method.argTypes[index].kexType.rtMapped) }
         }.toTypedArray(),
         *generator.staticFields.toTypedArray()
     )

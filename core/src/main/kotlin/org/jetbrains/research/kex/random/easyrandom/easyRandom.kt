@@ -179,7 +179,7 @@ class EasyRandomDriver(val config: BeansConfig = defaultConfig) : Randomizer {
             return null
         }
         repeat(config.attempts) {
-            tryOrNull {
+            tryOrNull<Unit> {
                 return generateType(type, depth)
             }
         }

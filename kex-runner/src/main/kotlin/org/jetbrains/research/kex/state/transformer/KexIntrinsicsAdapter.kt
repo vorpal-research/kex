@@ -69,7 +69,7 @@ class KexIntrinsicsAdapter : RecollectingTransformer<KexIntrinsicsAdapter> {
     private fun collectionIntrinsicsAdapter(method: Method, call: CallTerm, lhv: () -> Term): PredicateState = basic {
         when (method) {
             kim.kexForAll(method.cm) -> state {
-                lhv() equality forAll(call.arguments[0], call.arguments[1], call.arguments[3])
+                lhv() equality forAll(call.arguments[0], call.arguments[1], call.arguments[2])
             }
             in kim.kexContainsMethods(method.cm) -> {
                 val (array, value) = call.arguments

@@ -20,6 +20,7 @@ import org.jetbrains.research.kfg.ir.Field
 import org.jetbrains.research.kfg.ir.Method
 import org.jetbrains.research.kthelper.collection.dequeOf
 import org.jetbrains.research.kthelper.logging.log
+import org.jetbrains.research.kthelper.tryOrNull
 
 val ignores by lazy {
     kexConfig.getMultipleStringValue("inliner", "static-ignore")
@@ -33,11 +34,15 @@ class StaticFieldInliner(
 ) : RecollectingTransformer<StaticFieldInliner> {
     companion object {
         private val staticFinalFields = mutableMapOf<Field, Descriptor>()
+        private val failedClasses = mutableSetOf<Class>()
 
-        fun getStaticField(ctx: ExecutionContext, psa: PredicateStateAnalysis, field: Field) = when (field) {
-            in staticFinalFields -> staticFinalFields.getValue(field)
+        fun getStaticField(ctx: ExecutionContext, psa: PredicateStateAnalysis, field: Field) = when {
+            field in staticFinalFields -> staticFinalFields.getValue(field)
+            field.klass in failedClasses -> descriptor { default(field.type.kexType) }
             else -> {
-                staticFinalFields += generateFinalFieldValues(ctx, psa, field.klass)
+                val generatedFields = tryOrNull { generateFinalFieldValues(ctx, psa, field.klass) }
+                if (generatedFields == null) failedClasses += field.klass
+                staticFinalFields += (generatedFields ?: mapOf())
                 staticFinalFields[field] ?: descriptor { default(field.type.kexType) }
             }
         }
@@ -50,8 +55,11 @@ class StaticFieldInliner(
             ignores: Set<Term> = setOf()
         ) = transform(ps) {
             +AnnotationAdapter(method, AnnotationManager.defaultLoader)
-//            +StringAdapter(ctx)
-            +RecursiveConstructorInliner(psa)
+            +StringMethodAdapter(ctx.cm)
+            +KexRtAdapter(ctx.cm)
+            +RecursiveInliner(psa) {  index, psa ->
+                ConcreteImplInliner(ctx.types, TypeInfoMap(), psa, inlineIndex = index)
+            }
             +IntrinsicAdapter
             +KexIntrinsicsAdapter()
             +ReflectionInfoAdapter(method, ctx.loader, ignores)
@@ -68,7 +76,7 @@ class StaticFieldInliner(
             ctx: ExecutionContext,
             psa: PredicateStateAnalysis,
             klass: Class
-        ): Map<Field, Descriptor> {
+        ): Map<Field, Descriptor>? {
             val staticInit = klass.getMethod("<clinit>", "()V")
             val staticFields = klass.fields.filter { it.isFinal && it.isStatic }
 
@@ -82,7 +90,7 @@ class StaticFieldInliner(
                         }
                     }
                 }
-                this += psa.builder(staticInit).methodState ?: return mapOf()
+                this += psa.builder(staticInit).methodState ?: return null
                 prepareState(ctx, psa, staticInit, apply())
             }
 
@@ -102,8 +110,8 @@ class StaticFieldInliner(
                     log.debug("Model: ${result.model}")
                     generateFinalDescriptors(staticInit, ctx, result.model, checker.state)
                 }
-                else -> null
-            } ?: return mapOf()
+                else -> return null
+            }
 
             return params.statics.map { descriptor ->
                 descriptor as ClassDescriptor
@@ -126,7 +134,7 @@ class StaticFieldInliner(
             .filterIsInstance<FieldLoadTerm>()
             .mapNotNull {
                 val field = it.field as FieldTerm
-                val kfgField = cm[field.klass].getField(field.fieldName, field.type.getKfgType(cm.type))
+                val kfgField = field.unmappedKfgField(cm)
                 if (kfgField.isStatic && kfgField.isFinal) {
                     kfgField
                 } else {
