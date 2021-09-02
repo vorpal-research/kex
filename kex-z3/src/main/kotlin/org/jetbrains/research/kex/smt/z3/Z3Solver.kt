@@ -21,7 +21,6 @@ private val logQuery = kexConfig.getBooleanValue("smt", "logQuery", false)
 private val logFormulae = kexConfig.getBooleanValue("smt", "logFormulae", false)
 private val printSMTLib = kexConfig.getBooleanValue("smt", "logSMTLib", false)
 private val simplifyFormulae = kexConfig.getBooleanValue("smt", "simplifyFormulae", false)
-private val maxArrayLength by lazy { kexConfig.getIntValue("smt", "maxArrayLength", 1000) }
 
 @Solver("z3")
 class Z3Solver(val tf: TypeFactory) : AbstractSMTSolver {
