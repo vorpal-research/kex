@@ -344,7 +344,8 @@ abstract class DescriptorReanimator(
                         memory(term.memspace, address) {
                             when {
                                 term.type.isString && model.hasStrings -> {
-                                    val strValue = (reanimateString(term.memspace, addr) as? ConstStringTerm)?.value ?: ""
+                                    val strValue =
+                                        (reanimateString(term.memspace, addr) as? ConstStringTerm)?.value ?: ""
                                     val string = `object`(KexString())
                                     val valueArray = array(strValue.length, KexChar())
                                     for (index in strValue.indices)
@@ -404,7 +405,8 @@ abstract class DescriptorReanimator(
                         arrayType,
                         addr
                     )
-                } as ArrayDescriptor
+                } as? ArrayDescriptor
+                    ?: unreachable { log.error("Could not cast ${memory(term.memspace, address)} to array type") }
                 for (i in 0 until res.length) {
                     reanimate(term { term[i] }, null)
                 }
@@ -421,7 +423,17 @@ abstract class DescriptorReanimator(
                 memspace = arrayRef.memspace
 
                 val arrayAddr = reanimateFromAssignment(arrayRef) ?: return@descriptor default(term.type)
-                val array = memory(arrayRef.memspace, arrayAddr.numericValue.toInt()) as ArrayDescriptor
+                val array = memory(arrayRef.memspace, arrayAddr.numericValue.toInt()) as? ArrayDescriptor
+                    ?: unreachable {
+                        log.error(
+                            "Could not cast ${
+                                memory(
+                                    term.memspace,
+                                    arrayAddr.numericValue.toInt()
+                                )
+                            } to array type"
+                        )
+                    }
 
                 val index = when (term.index) {
                     is ConstIntTerm -> term.index
@@ -435,8 +447,8 @@ abstract class DescriptorReanimator(
             }
             is FieldTerm -> {
                 val ownerRef = term.owner
-                val ownerAddr = (reanimateFromAssignment(ownerRef) as ConstIntTerm).value
-                val instance = memory(ownerRef.memspace, ownerAddr)
+                val ownerAddress = (reanimateFromAssignment(ownerRef) as ConstIntTerm).value
+                val instance = memory(ownerRef.memspace, ownerAddress)
                     ?: return@descriptor default(term.type)
 
                 val name = "${term.klass}.${term.fieldName}"
@@ -451,7 +463,10 @@ abstract class DescriptorReanimator(
                         instance[fieldName, fieldType] = reanimatedValue
                         instance
                     }
-                    else -> unreachable { log.error("Unknown type of field owner") }
+                    else -> {
+                        reanimate(ownerRef)
+                        unreachable { log.error("Unknown type of field owner") }
+                    }
                 }
             }
             else -> unreachable { log.error("Unknown reference term: $term with address $addr") }
@@ -493,10 +508,8 @@ abstract class DescriptorReanimator(
             is KexArray -> {
                 val res = memory(term.memspace, address) {
                     newArrayInstance(term.memspace, actualType, addr)
-                } as? ArrayDescriptor
-                    ?: unreachable("")
+                } as ArrayDescriptor
                 for (i in 0 until res.length) {
-                    reanimate(term { (term.load())[i] }, null)
                     val index = term { const(i) }
                     val refValue = reanimateFromArray(term.memspace, addr, index)
 

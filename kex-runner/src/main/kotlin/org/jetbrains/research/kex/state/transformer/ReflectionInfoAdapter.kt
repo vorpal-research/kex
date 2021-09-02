@@ -83,9 +83,9 @@ class ReflectionInfoAdapter(val method: Method, val loader: ClassLoader, val ign
         if (lhv.type is KexArray)
             arrayElementInfo[lhv] = ArrayElementInfo(nullable = lhv.type.isElementNullable(kFunction.returnType))
 
-        call.arguments.filter { it.type is KexPointer }.forEach {
-            currentBuilder += assume { it equality undef(it.type) }
-        }
+//        call.arguments.filter { it.type is KexPointer }.forEach {
+//            currentBuilder += assume { it equality undef(it.type) }
+//        }
 
         return nothing()
     }

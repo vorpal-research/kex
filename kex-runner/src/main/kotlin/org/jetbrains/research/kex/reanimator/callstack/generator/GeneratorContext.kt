@@ -73,7 +73,7 @@ class GeneratorContext(
         +KexRtAdapter(cm)
         +StringMethodAdapter(context.cm)
         +AnnotationAdapter(method, AnnotationManager.defaultLoader)
-        +RecursiveInliner(psa) {  index, psa ->
+        +RecursiveInliner(psa) { index, psa ->
             ConcreteImplInliner(types, typeInfoMap + staticTypeInfo, psa, inlineIndex = index)
         }
         +StaticFieldInliner(context, psa)

@@ -26,7 +26,8 @@ import org.jetbrains.research.kthelper.tryOrNull
 class DescriptorChecker(
     ctx: ExecutionContext,
     tm: TraceManager<ActionTrace>,
-    psa: PredicateStateAnalysis) : MethodChecker(ctx, tm, psa) {
+    psa: PredicateStateAnalysis
+) : MethodChecker(ctx, tm, psa) {
 
     override fun initializeGenerator(method: Method) {
         generator = Reanimator(ctx, psa, method)

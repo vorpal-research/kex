@@ -20,6 +20,7 @@ import org.jetbrains.research.kfg.ir.Field
 import org.jetbrains.research.kfg.ir.Method
 import org.jetbrains.research.kthelper.collection.dequeOf
 import org.jetbrains.research.kthelper.logging.log
+import org.jetbrains.research.kthelper.tryOrNull
 
 val ignores by lazy {
     kexConfig.getMultipleStringValue("inliner", "static-ignore")
@@ -39,9 +40,9 @@ class StaticFieldInliner(
             field in staticFinalFields -> staticFinalFields.getValue(field)
             field.klass in failedClasses -> descriptor { default(field.type.kexType) }
             else -> {
-                val generatedFields = generateFinalFieldValues(ctx, psa, field.klass)
+                val generatedFields = tryOrNull { generateFinalFieldValues(ctx, psa, field.klass) }
                 if (generatedFields == null) failedClasses += field.klass
-                staticFinalFields += generatedFields ?: mapOf()
+                staticFinalFields += (generatedFields ?: mapOf())
                 staticFinalFields[field] ?: descriptor { default(field.type.kexType) }
             }
         }

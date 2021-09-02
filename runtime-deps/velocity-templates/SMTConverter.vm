@@ -274,6 +274,7 @@ class ${solver}Converter(val tf: TypeFactory) : ${solver}SMTConverter() {
 
         val typeVar = ef.getTypeVariable(tf, generateArray.lhv.type)
         ctx.writeWordProperty(lhv, memspace, "type", typeVar)
+        ctx.writeWordProperty(lhv, memspace, "length", length)
         return lhv.withPtrAxioms(ef, ctx, TermType.LOCAL_PTR) eq ptr
     }
 
@@ -548,7 +549,7 @@ class ${solver}Converter(val tf: TypeFactory) : ${solver}SMTConverter() {
             TypeSize.WORD -> ctx.readWordProperty(ptr, memspace, "${ klass }.${ name }")
             TypeSize.DWORD -> ctx.readDWordProperty(ptr, memspace, "${ klass }.${ name }")
         }
-        return cast(fieldload.type, res)
+        return fieldload.withAxioms(cast(fieldload.type, res), ef, ctx)
     }
 
     fun convert(field: FieldTerm, ef: Factory_, ctx: Context_): Dynamic_ =
@@ -604,7 +605,7 @@ class ${solver}Converter(val tf: TypeFactory) : ${solver}SMTConverter() {
         val lhv = convert(ite.trueValue, ef, ctx)
         val rhv = convert(ite.falseValue, ef, ctx)
 
-        return when (ite.type) {
+        val res = when (ite.type) {
             is KexLong -> `if`(cond).then(lhv as Long_).`else`(rhv as Long_)
             is KexBool -> `if`(cond).then(lhv as Bool_).`else`(rhv as Bool_)
             is KexIntegral -> `if`(cond).then(lhv as Int_).`else`(rhv as Int_)
@@ -614,15 +615,16 @@ class ${solver}Converter(val tf: TypeFactory) : ${solver}SMTConverter() {
             is KexArray -> `if`(cond).then(lhv as Ptr_).`else`(rhv as Ptr_)
             else -> unreachable { log.error("Unknown type of Ite term: ${ ite.type }") }
         }
+        return ite.withAxioms(res, ef, ctx)
     }
 
     fun convert(lambda: LambdaTerm, ef: Factory_, ctx: Context_): Dynamic_ {
-        return ef.getVarByTypeAndName(lambda.type, lambda.name)
+        return lambda.withAxioms(ef.getVarByTypeAndName(lambda.type, lambda.name), ef, ctx)
     }
 
     fun convert(neg: NegTerm, ef: Factory_, ctx: Context_): Dynamic_ {
         val operand = convert(neg.operand, ef, ctx)
-        return when (operand) {
+        val res = when (operand) {
             is Bool_ -> Bool_.forceCast(!operand)
             is Int_ -> Int_.forceCast(!operand)
             is Long_ -> Long_.forceCast(!operand)
@@ -630,6 +632,7 @@ class ${solver}Converter(val tf: TypeFactory) : ${solver}SMTConverter() {
             is Double_ -> Double_.forceCast(!operand)
             else -> unreachable { log.error("Invalid operand of `neg`: ${ neg.operand }") }
         }
+        return neg.withAxioms(res, ef, ctx)
     }
 
     fun convert(startsWith: StartsWithTerm, ef: Factory_, ctx: Context_): Dynamic_ {
