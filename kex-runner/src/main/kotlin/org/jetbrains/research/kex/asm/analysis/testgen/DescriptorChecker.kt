@@ -5,6 +5,7 @@ import kotlinx.serialization.InternalSerializationApi
 import org.jetbrains.research.kex.ExecutionContext
 import org.jetbrains.research.kex.asm.state.PredicateStateAnalysis
 import org.jetbrains.research.kex.descriptor.concrete
+import org.jetbrains.research.kex.ktype.KexRtManager.rtMapped
 import org.jetbrains.research.kex.parameters.Parameters
 import org.jetbrains.research.kex.random.GenerationException
 import org.jetbrains.research.kex.reanimator.Reanimator
@@ -67,11 +68,20 @@ class DescriptorChecker(
         return result
     }
 
+    private val TypeInfoMap.rtMapped get() = mapValues {
+        it.value.map { ti ->
+            when (ti) {
+                is NullabilityInfo -> ti
+                is CastTypeInfo -> CastTypeInfo(ti.type.rtMapped)
+            }
+        }.toSet()
+    }
+
     private fun Checker.createState(method: Method, block: BasicBlock): PredicateState? {
         val typeInfoMap = resolveTypes(method, block) ?: return null
         val state = this.createState(block.terminator)!!
         val staticTypeInfoMap = collectStaticTypeInfo(types, state, typeInfoMap)
-        return prepareState(method, state, staticTypeInfoMap)
+        return prepareState(method, state, staticTypeInfoMap.rtMapped)
     }
 
     private fun resolveTypes(method: Method, block: BasicBlock): TypeInfoMap? {
