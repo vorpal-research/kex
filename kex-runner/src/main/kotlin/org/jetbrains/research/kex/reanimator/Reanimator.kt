@@ -5,12 +5,13 @@ import org.jetbrains.research.kex.asm.state.PredicateStateAnalysis
 import org.jetbrains.research.kex.asm.util.Visibility
 import org.jetbrains.research.kex.config.kexConfig
 import org.jetbrains.research.kex.descriptor.Descriptor
+import org.jetbrains.research.kex.descriptor.DescriptorRtMapper
 import org.jetbrains.research.kex.parameters.Parameters
 import org.jetbrains.research.kex.parameters.concreteParameters
 import org.jetbrains.research.kex.random.GenerationException
 import org.jetbrains.research.kex.reanimator.callstack.CallStack
 import org.jetbrains.research.kex.reanimator.callstack.CallStackExecutor
-import org.jetbrains.research.kex.reanimator.callstack.CallStackRtUnmapper
+import org.jetbrains.research.kex.reanimator.callstack.CallStackRtMapper
 import org.jetbrains.research.kex.reanimator.callstack.generator.CallStackGenerator
 import org.jetbrains.research.kex.reanimator.codegen.JUnitTestCasePrinter
 import org.jetbrains.research.kex.reanimator.codegen.TestCasePrinter
@@ -30,12 +31,21 @@ private val visibilityLevel by lazy {
     kexConfig.getEnumValue("apiGeneration", "visibility", true, Visibility.PUBLIC)
 }
 
+val Parameters<Descriptor>.rtMapped: Parameters<Descriptor>
+    get() {
+        val mapper = DescriptorRtMapper(DescriptorRtMapper.Mode.MAP)
+        val instance = instance?.let { mapper.map(it) }
+        val args = arguments.map { mapper.map(it) }
+        val statics = statics.map { mapper.map(it) }.toSet()
+        return Parameters(instance, args, statics)
+    }
+
 val Parameters<CallStack>.rtUnmapped: Parameters<CallStack>
     get() {
-        val unmapper = CallStackRtUnmapper()
-        val instance = instance?.let { unmapper.unmap(it) }
-        val args = arguments.map { unmapper.unmap(it) }
-        val statics = statics.map { unmapper.unmap(it) }.toSet()
+        val mapper = CallStackRtMapper(CallStackRtMapper.Mode.UNMAP)
+        val instance = instance?.let { mapper.map(it) }
+        val args = arguments.map { mapper.map(it) }
+        val statics = statics.map { mapper.map(it) }.toSet()
         return Parameters(instance, args, statics)
     }
 
@@ -58,7 +68,7 @@ class Reanimator(
     )
 
     override fun generate(testName: String, method: Method, state: PredicateState, model: SMTModel) = try {
-        val descriptors = generateFinalDescriptors(method, ctx, model, state).concreteParameters(cm)
+        val descriptors = generateFinalDescriptors(method, ctx, model, state).concreteParameters(cm).rtMapped
         log.debug("Generated descriptors:\n$descriptors")
         val callStacks = descriptors.callStacks
         log.debug("Generated call stacks:\n$callStacks")

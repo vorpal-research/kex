@@ -5,6 +5,7 @@ import org.jetbrains.research.kex.reanimator.callstack.CallStack
 import org.jetbrains.research.kex.reanimator.callstack.StaticFieldGetter
 import org.jetbrains.research.kex.reanimator.callstack.UnknownCall
 import org.jetbrains.research.kex.util.loadKClass
+import org.jetbrains.research.kex.util.splitAtLast
 import org.jetbrains.research.kfg.type.ClassType
 import org.jetbrains.research.kthelper.tryOrNull
 
@@ -32,7 +33,7 @@ class KtObjectGenerator(private val fallback: Generator) : Generator {
             ?: return cs.also { it += UnknownCall(kfgType, descriptor).wrap(name) }
 
         if (kClass.isCompanion) {
-            val (parentClass, companionName) = kfgType.klass.fullName.split("\$")
+            val (parentClass, companionName) = kfgType.klass.fullName.splitAtLast('$')
             val kfgParent = cm[parentClass]
             cs += StaticFieldGetter(kfgParent.getField(companionName, descriptor.type.getKfgType(types)))
         } else if (kClass.objectInstance != null) {

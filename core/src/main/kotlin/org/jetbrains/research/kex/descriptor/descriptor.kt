@@ -4,6 +4,8 @@ import org.jetbrains.research.kex.asm.util.Visibility
 import org.jetbrains.research.kex.asm.util.visibility
 import org.jetbrains.research.kex.config.kexConfig
 import org.jetbrains.research.kex.ktype.*
+import org.jetbrains.research.kex.ktype.KexRtManager.rtMapped
+import org.jetbrains.research.kex.ktype.KexRtManager.rtUnmapped
 import org.jetbrains.research.kex.state.PredicateState
 import org.jetbrains.research.kex.state.basic
 import org.jetbrains.research.kex.state.emptyState
@@ -597,3 +599,45 @@ fun descriptor(body: DescriptorBuilder.() -> Descriptor): Descriptor =
     DescriptorBuilder().body()
 
 val descriptorContext get() = DescriptorBuilder()
+
+class DescriptorRtMapper(val mode: Mode) : DescriptorBuilder() {
+    enum class Mode {
+        MAP, UNMAP
+    }
+    private val cache = mutableMapOf<Descriptor, Descriptor>()
+
+    private val KexType.mapped get() = when (mode) {
+        Mode.MAP -> rtMapped
+        Mode.UNMAP -> rtUnmapped
+    }
+
+    fun map(descriptor: Descriptor): Descriptor = cache.getOrElse(descriptor) {
+        when (descriptor) {
+            is ConstantDescriptor -> descriptor
+            is ClassDescriptor -> {
+                val klassDesc = const(descriptor.klass.mapped as KexClass)
+                cache[descriptor] = klassDesc
+                for ((field, value) in descriptor.fields) {
+                    klassDesc[field.first, field.second.mapped] = map(value)
+                }
+                klassDesc
+            }
+            is ObjectDescriptor -> {
+                val objectDesc = `object`(descriptor.klass.mapped as KexClass)
+                cache[descriptor] = objectDesc
+                for ((field, value) in descriptor.fields) {
+                    objectDesc[field.first, field.second.mapped] = map(value)
+                }
+                objectDesc
+            }
+            is ArrayDescriptor -> {
+                val arrayDesc = array(descriptor.length, descriptor.elementType.mapped)
+                cache[descriptor] = arrayDesc
+                for ((index, value) in descriptor.elements) {
+                    arrayDesc[index] = map(value)
+                }
+                arrayDesc
+            }
+        }
+    }
+}
