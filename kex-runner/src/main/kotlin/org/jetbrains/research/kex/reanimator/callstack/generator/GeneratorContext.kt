@@ -279,6 +279,7 @@ class GeneratorContext(
         })
 
         val transformed = transform(methodState) {
+            +KexRtAdapter(cm)
             +AnnotationAdapter(this@collectFieldAccesses, AnnotationManager.defaultLoader)
             +RecursiveInliner(psa) { index, psa ->
                 ConcreteImplInliner(types, typeInfoMap, psa, inlineIndex = index)

@@ -21,6 +21,7 @@ private val logQuery = kexConfig.getBooleanValue("smt", "logQuery", false)
 private val logFormulae = kexConfig.getBooleanValue("smt", "logFormulae", false)
 private val printSMTLib = kexConfig.getBooleanValue("smt", "logSMTLib", false)
 private val simplifyFormulae = kexConfig.getBooleanValue("smt", "simplifyFormulae", false)
+private val maxArrayLength = kexConfig.getIntValue("smt", "maxArrayLength", 1000)
 
 @Solver("z3")
 class Z3Solver(val tf: TypeFactory) : AbstractSMTSolver {
@@ -296,9 +297,14 @@ class Z3Solver(val tf: TypeFactory) : AbstractSMTSolver {
                             model,
                             "length"
                         )
-                        val maxLen = endLength.numericValue.toInt()
+                        var maxLen = endLength.numericValue.toInt()
                         // this is fucked up
-                        properties[memspace]!!["length"]!!.first[modelPtr] = endLength
+                        if (maxLen > maxArrayLength) {
+                            log.warn("Reanimated length of an array is too big: $maxLen")
+                            maxLen = maxArrayLength
+                        }
+                        properties[memspace]!!["length"]!!.first[modelPtr] = term { const(maxLen) }
+                        properties[memspace]!!["length"]!!.second[modelPtr] = term { const(maxLen) }
                         for (i in 0 until maxLen) {
                             val indexTerm = term { ptr[i] }
                             if (indexTerm !in ptrs)

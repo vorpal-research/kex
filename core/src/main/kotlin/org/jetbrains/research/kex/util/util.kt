@@ -44,12 +44,14 @@ fun String.kapitalize() =
 
 fun String.splitAtLast(char: Char): Pair<String, String> {
     val split = this.lastIndexOf(char)
-    return substring(0..split) to substring((split + 1)..length)
+    if (split < 0) return this to ""
+    return substring(0, split) to substring(split + 1, length)
 }
 
 fun String.splitAtLast(str: String): Pair<String, String> {
     val split = this.lastIndexOf(str)
-    return substring(0..split) to substring((split + 1)..length)
+    if (split < 0) return this to ""
+    return substring(0, split) to substring(split + 1, length)
 }
 
 fun <T : Any> T.asList() = listOf(this)

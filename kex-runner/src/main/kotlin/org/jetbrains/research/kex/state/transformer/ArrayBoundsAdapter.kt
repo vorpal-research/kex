@@ -54,13 +54,20 @@ class ArrayBoundsAdapter : RecollectingTransformer<ArrayBoundsAdapter> {
 
     override fun transformBase(predicate: Predicate): Predicate {
         if (predicate.hasReceiver) {
-            if (predicate is NewArrayPredicate) {
-                val dimensions = predicate.dimensions
-                if (dimensions.size > 1) log.warn("Unexpected number of dimensions in new array $predicate")
-                val length = dimensions.first()
-                if (length !is ConstIntTerm) addArray(predicate.lhv)
-            } else {
-                addArray(predicate.receiver!!)
+            when (predicate) {
+                is NewArrayPredicate -> {
+                    val dimensions = predicate.dimensions
+                    if (dimensions.size > 1) log.warn("Unexpected number of dimensions in new array $predicate")
+                    val length = dimensions.first()
+                    if (length !is ConstIntTerm) addArray(predicate.lhv)
+                }
+                is GenerateArrayPredicate -> {
+                    val length = predicate.length
+                    if (length !is ConstIntTerm) addArray(predicate.lhv)
+                }
+                else -> {
+                    addArray(predicate.receiver!!)
+                }
             }
         }
 

@@ -103,6 +103,7 @@ open class CallStack2JavaPrinter(
         override fun isSubtype(other: CSType): Boolean = when (other) {
             is CSClass -> when {
                 !type.isSubtypeOf(other.type) -> false
+                typeParams.isEmpty() && other.typeParams.isNotEmpty() -> true
                 typeParams.size != other.typeParams.size -> false
                 else -> typeParams.zip(other.typeParams).all { (a, b) -> a.isSubtype(b) }
             }
