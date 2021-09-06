@@ -1,11 +1,12 @@
 package org.jetbrains.research.kex.trace.runner
 
-import com.abdullin.kthelper.`try`
-import com.abdullin.kthelper.logging.log
 import org.jetbrains.research.kex.config.kexConfig
+import org.jetbrains.research.kex.parameters.Parameters
 import org.jetbrains.research.kex.util.getConstructor
 import org.jetbrains.research.kex.util.getMethod
+import org.jetbrains.research.kex.util.runWithTimeout
 import org.jetbrains.research.kfg.ir.Method
+import org.jetbrains.research.kthelper.logging.log
 import java.io.ByteArrayOutputStream
 import java.io.PrintStream
 import java.lang.reflect.Constructor
@@ -13,21 +14,6 @@ import java.lang.reflect.InvocationTargetException
 import java.lang.reflect.Method as ReflectMethod
 
 private val timeout = kexConfig.getLongValue("runner", "timeout", 1000L)
-
-class TimeoutException : Exception()
-
-@Suppress("SameParameterValue")
-private fun runWithTimeout(timeout: Long, body: () -> Unit) {
-    val thread = Thread(body)
-
-    thread.start()
-    thread.join(timeout)
-    if (thread.isAlive) {
-        @Suppress("DEPRECATION")
-        thread.stop()
-        throw TimeoutException()
-    }
-}
 
 data class InvocationResult(
         val output: ByteArray,
@@ -57,16 +43,11 @@ data class InvocationResult(
 }
 
 abstract class AbstractRunner(val method: Method, protected val loader: ClassLoader) {
-    protected val javaClass = loader.loadClass(method.`class`.canonicalDesc)
+    protected val javaClass: Class<*> = loader.loadClass(method.klass.canonicalDesc)
     protected val javaMethod by lazy { javaClass.getMethod(method, loader) }
     protected val javaConstructor by lazy { javaClass.getConstructor(method, loader) }
 
     protected open fun invoke(constructor: Constructor<*>, args: Array<Any?>): InvocationResult {
-        `try` {
-            log.debug("Running $method")
-            log.debug("Args: ${args.map { it.toString() }}")
-        }
-
         val oldOut = System.out
         val oldErr = System.err
 
@@ -102,12 +83,6 @@ abstract class AbstractRunner(val method: Method, protected val loader: ClassLoa
     }
 
     protected open fun invoke(method: ReflectMethod, instance: Any?, args: Array<Any?>): InvocationResult {
-        `try` {
-            log.debug("Running $method")
-            log.debug("Instance: $instance")
-            log.debug("Args: ${args.map { it.toString() }}")
-        }
-
         val oldOut = System.out
         val oldErr = System.err
 
@@ -153,7 +128,24 @@ abstract class AbstractRunner(val method: Method, protected val loader: ClassLoa
 
 abstract class TracingAbstractRunner<T>(method: Method, loader: ClassLoader)
     : AbstractRunner(method, loader) {
-    abstract fun collectTrace(instance: Any?, args: Array<Any?>): T
+    abstract fun generateArguments(): Parameters<Any?>?
+    abstract fun enableCollector()
+    abstract fun disableCollector()
+    abstract fun collectTrace(invocationResult: InvocationResult): T
+
+    open fun run(): T? {
+        val (instance, args) = generateArguments() ?: return null
+        if (!method.isStatic && !method.isConstructor && instance == null) {
+            log.error("Cannot generate parameters to invoke method $method")
+            return null
+        }
+
+        enableCollector()
+        val invocationResult = run(instance, args.toTypedArray())
+        disableCollector()
+
+        return collectTrace(invocationResult)
+    }
 }
 
 class DefaultRunner(method: Method, loader: ClassLoader) : AbstractRunner(method, loader)

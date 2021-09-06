@@ -1,16 +1,19 @@
 package org.jetbrains.research.kex.trace.file
 
-import com.abdullin.kthelper.assert.unreachable
-import com.abdullin.kthelper.logging.log
 import com.github.h0tk3y.betterParse.combinators.*
 import com.github.h0tk3y.betterParse.grammar.Grammar
 import com.github.h0tk3y.betterParse.grammar.parser
+import com.github.h0tk3y.betterParse.lexer.literalToken
+import com.github.h0tk3y.betterParse.lexer.regexToken
 import com.github.h0tk3y.betterParse.parser.Parser
 import org.jetbrains.research.kfg.ClassManager
 import org.jetbrains.research.kfg.ir.MethodDesc
-import org.jetbrains.research.kfg.ir.value.SlotTracker
+import org.jetbrains.research.kfg.ir.value.NameMapper
+import org.jetbrains.research.kfg.ir.value.NameMapperContext
 import org.jetbrains.research.kfg.type.ClassType
 import org.jetbrains.research.kfg.type.parseStringToType
+import org.jetbrains.research.kthelper.assert.unreachable
+import org.jetbrains.research.kthelper.logging.log
 import java.util.*
 
 abstract class ActionParseException(msg: String) : Exception(msg)
@@ -19,29 +22,29 @@ class UnknownTypeException(msg: String) : ActionParseException(msg)
 
 class UnknownNameException(msg: String) : ActionParseException(msg)
 
-class ActionParser(val cm: ClassManager) : Grammar<Action>() {
-    private var trackers = Stack<SlotTracker>()
+class ActionParser(val cm: ClassManager, val ctx: NameMapperContext) : Grammar<Action>() {
+    private var trackers = Stack<NameMapper>()
 
-    private val tracker: SlotTracker
+    private val tracker: NameMapper
         get() = trackers.peek() ?: unreachable { log.error("No slot trackers defined") }
 
     // keyword tokens
-    private val `this` by token("this")
-    private val `throw` by token("throw")
-    private val exit by token("exit")
-    private val `return` by token("return")
-    private val enter by token("enter")
-    private val branch by token("branch")
-    private val switch by token("switch")
-    private val tableswitch by token("tableswitch")
-    private val `true` by token("true")
-    private val `false` by token("false")
-    private val `null` by token("null")
-    private val array by token("array")
-    private val arguments by token("arguments")
-    private val instance by token("instance")
-    private val arg by token("arg\\$")
-    private val nan by token("NaN")
+    private val `this` by literalToken("this")
+    private val `throw` by literalToken("throw")
+    private val exit by literalToken("exit")
+    private val `return` by literalToken("return")
+    private val enter by literalToken("enter")
+    private val branch by literalToken("branch")
+    private val switch by literalToken("switch")
+    private val tableswitch by literalToken("tableswitch")
+    private val `true` by literalToken("true")
+    private val `false` by literalToken("false")
+    private val `null` by literalToken("null")
+    private val array by literalToken("array")
+    private val arguments by literalToken("arguments")
+    private val instance by literalToken("instance")
+    private val arg by literalToken("arg$")
+    private val nan by literalToken("NaN")
 
     private val keyword by `this` or
             `throw` or
@@ -60,26 +63,27 @@ class ActionParser(val cm: ClassManager) : Grammar<Action>() {
             arg
 
     // symbol tokens
-    private val space by token("\\s+")
-    private val dot by token("\\.")
-    private val equality by token("==")
-    private val openCurlyBrace by token("\\{")
-    private val closeCurlyBrace by token("}")
-    private val openSquareBrace by token("\\[")
-    private val closeSquareBrace by token("]")
-    private val openBracket by token("\\(")
-    private val closeBracket by token("\\)")
-    private val percent by token("%")
-    private val colon by token(":")
-    private val semicolon by token(";")
-    private val comma by token(",")
-    private val minus by token("-")
-    private val doubleNum by token("\\d+\\.\\d+(E(-)?\\d+)?")
-    private val num by token("\\d+")
-    private val word by token("[a-zA-Z$][\\w$-]*")
-    private val at by token("@")
+    private val space by regexToken("\\s+")
+    private val dot by regexToken("\\.")
+    private val equality by literalToken("==")
+    private val openCurlyBrace by literalToken("{")
+    private val closeCurlyBrace by literalToken("}")
+    private val openSquareBrace by literalToken("[")
+    private val closeSquareBrace by literalToken("]")
+    private val openBracket by literalToken("(")
+    private val closeBracket by literalToken(")")
+    private val percent by literalToken("%")
+    private val colon by literalToken(":")
+    private val semicolon by literalToken(";")
+    private val comma by literalToken(",")
+    private val minus by literalToken("-")
+    private val doubleNum by regexToken("\\d+\\.\\d+(E(-)?\\d+)?")
+    private val num by regexToken("\\d+")
+    private val word by regexToken("[a-zA-Z$][\\w$-]*")
+    private val at by literalToken("@")
+
     @Suppress("RegExpRedundantEscape")
-    private val string by token("\"[\\w\\sа-яА-ЯёЁ\\-.@>=<+*,'\\(\\):\\[\\]/\\n{}]*\"")
+    private val string by regexToken("\"[\\w\\sа-яА-ЯёЁ\\-.@>=<+*,'\\(\\):\\[\\]/\\n{}]*\"")
 
     private val colonAndSpace by colon and space
     private val semicolonAndSpace by semicolon and space
@@ -119,11 +123,11 @@ class ActionParser(val cm: ClassManager) : Grammar<Action>() {
             -openBracket and args and -closeBracket and
             -colonAndSpace and
             typeName) use {
-        val `class` = cm[t1.dropLast(1).fold("") { acc, curr -> "$acc/$curr" }.drop(1)]
+        val klass = cm[t1.dropLast(1).fold("") { acc, curr -> "$acc/$curr" }.drop(1)]
         val methodName = t1.takeLast(1).firstOrNull() ?: throw UnknownNameException(t1.toString())
         val args = t2.toTypedArray()
         val rettype = t3
-        `class`.getMethod(methodName, MethodDesc(args, rettype))
+        klass.getMethod(methodName, MethodDesc(args, rettype))
     }
 
     private val kfgValueParser by valueName use { KfgValue(this) }
@@ -142,13 +146,15 @@ class ActionParser(val cm: ClassManager) : Grammar<Action>() {
             and num and -closeCurlyBrace) use {
         ArrayValue(t1.text.toInt(), t2, t3.text.toInt())
     }
-    private val objectFields by separatedTerms(anyWord and -space and -equality and -space
-            and parser(this::valueParser), commaAndSpace, true) use {
-        map { it.t1 to it.t2 }.toMap()
+    private val objectFields by separatedTerms(
+        anyWord and -space and -equality and -space
+                and parser(this::valueParser), commaAndSpace, true
+    ) use {
+        associate { it.t1 to it.t2 }
     }
     private val objectValueParser: Parser<ActionValue> by (typeName and -at and num and -openCurlyBrace
             and objectFields and -closeCurlyBrace) use {
-        val type = (t1 as? ClassType)?.`class` ?: throw UnknownTypeException(t1.toString())
+        val type = (t1 as? ClassType)?.klass ?: throw UnknownTypeException(t1.toString())
         val identifier = t2.text.toInt()
         val fields = t3
         ObjectValue(type, identifier, fields)
@@ -163,12 +169,17 @@ class ActionParser(val cm: ClassManager) : Grammar<Action>() {
             arrayValueParser or
             objectValueParser
 
-    private val equationParser by (valueParser and -space and -equality and -space and valueParser) use { Equation(t1, t2) }
+    private val equationParser by (valueParser and -space and -equality and -space and valueParser) use {
+        Equation(
+            t1,
+            t2
+        )
+    }
     private val equationList by separatedTerms(equationParser, commaAndSpace)
 
     // action
     private val methodEntryParser by (-enter and -space and methodName) use {
-        trackers.push(this.slotTracker)
+        trackers.push(ctx.getMapper(this))
         MethodEntry(this)
     }
 
@@ -198,7 +209,12 @@ class ActionParser(val cm: ClassManager) : Grammar<Action>() {
     private val blockBranchParser by (-branch and -space and blockName and -commaAndSpace
             and equationList) use { BlockBranch(t1, t2) }
 
-    private val blockSwitchParser by (-switch and -space and blockName and -commaAndSpace and equationParser) use { BlockSwitch(t1, t2) }
+    private val blockSwitchParser by (-switch and -space and blockName and -commaAndSpace and equationParser) use {
+        BlockSwitch(
+            t1,
+            t2
+        )
+    }
 
     private val blockTableSwitchParser by (-tableswitch and -space and blockName and -commaAndSpace
             and equationParser) use { BlockTableSwitch(t1, t2) }

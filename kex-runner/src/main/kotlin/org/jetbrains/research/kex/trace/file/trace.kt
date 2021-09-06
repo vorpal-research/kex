@@ -1,16 +1,18 @@
 package org.jetbrains.research.kex.trace.file
 
-import com.abdullin.kthelper.assert.ktassert
-import com.abdullin.kthelper.logging.error
-import com.abdullin.kthelper.logging.log
+import org.jetbrains.research.kex.trace.AbstractTrace
 import org.jetbrains.research.kfg.ir.BasicBlock
 import org.jetbrains.research.kfg.ir.Method
+import org.jetbrains.research.kthelper.assert.ktassert
+import org.jetbrains.research.kthelper.logging.error
+import org.jetbrains.research.kthelper.logging.log
 import java.util.*
 
 data class BlockInfo internal constructor(
-        val bb: BasicBlock,
-        val predecessor: BlockInfo?,
-        internal var outputAction: BlockExitAction? = null) {
+    val bb: BasicBlock,
+    val predecessor: BlockInfo?,
+    internal var outputAction: BlockExitAction? = null
+) {
 
     val hasPredecessor: Boolean
         get() = predecessor != null
@@ -24,24 +26,36 @@ data class BlockInfo internal constructor(
     }
 }
 
-data class Trace constructor(val method: Method,
-                             val instance: ActionValue?,
-                             val args: Array<ActionValue>,
-                             val blocks: Map<BasicBlock, List<BlockInfo>>,
-                             val retval: ActionValue?,
-                             val throwable: ActionValue?,
-                             val exception: Throwable?,
-                             val subtraces: List<Trace>) {
+data class FileTrace constructor(
+    val method: Method,
+    val instance: ActionValue?,
+    val args: Array<ActionValue>,
+    val blocks: Map<BasicBlock, List<BlockInfo>>,
+    val retval: ActionValue?,
+    val throwable: ActionValue?,
+    val exception: Throwable?,
+    val subtraces: List<FileTrace>
+) : AbstractTrace() {
     fun getBlockInfo(bb: BasicBlock) = blocks.getValue(bb)
 
     companion object {
-        fun parse(actions: List<Action>, exception: Throwable?): Trace {
-            class Info(var instance: ActionValue?,
-                       var args: Array<ActionValue>, var blocks: MutableMap<BasicBlock, MutableList<BlockInfo>>,
-                       var retval: ActionValue?, var throwval: ActionValue?,
-                       val exception: Throwable?, val subinfos: MutableList<Pair<Method, Info>>) {
-                fun toTrace(method: Method): Trace =
-                        Trace(method, instance, args, blocks, retval, throwval, exception, subinfos.map { it.second.toTrace(it.first) })
+        fun parse(actions: List<Action>, exception: Throwable?): FileTrace {
+            class Info(
+                var instance: ActionValue?,
+                var args: Array<ActionValue>, var blocks: MutableMap<BasicBlock, MutableList<BlockInfo>>,
+                var retval: ActionValue?, var throwval: ActionValue?,
+                val exception: Throwable?, val subinfos: MutableList<Pair<Method, Info>>
+            ) {
+                fun toTrace(method: Method): FileTrace =
+                    FileTrace(
+                        method,
+                        instance,
+                        args,
+                        blocks,
+                        retval,
+                        throwval,
+                        exception,
+                        subinfos.map { it.second.toTrace(it.first) })
             }
 
             val infos = ArrayDeque<Info>()
@@ -112,7 +126,7 @@ data class Trace constructor(val method: Method,
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
-        if (other !is Trace) return false
+        if (other !is FileTrace) return false
 
         if (method != other.method) return false
         if (instance != other.instance) return false

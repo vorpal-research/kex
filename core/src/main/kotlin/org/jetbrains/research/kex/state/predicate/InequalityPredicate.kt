@@ -20,11 +20,11 @@ class InequalityPredicate(
     override fun print() = "$lhv != $rhv"
 
     override fun <T : Transformer<T>> accept(t: Transformer<T>): Predicate {
-        val nlhv = t.transform(lhv)
-        val nrhv = t.transform(rhv)
+        val nLhv = t.transform(lhv)
+        val nRhv = t.transform(rhv)
         return when {
-            nlhv == lhv && nrhv == rhv -> this
-            else -> predicate(type, location) { nlhv inequality nrhv }
+            nLhv == lhv && nRhv == rhv -> this
+            else -> predicate(type, location) { nLhv inequality nRhv }
         }
     }
 }

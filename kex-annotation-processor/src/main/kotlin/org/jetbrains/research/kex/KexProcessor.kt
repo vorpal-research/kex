@@ -1,6 +1,6 @@
 package org.jetbrains.research.kex
 
-import com.abdullin.kthelper.assert.unreachable
+import org.jetbrains.research.kthelper.assert.unreachable
 import javax.annotation.processing.AbstractProcessor
 import javax.lang.model.element.Element
 import javax.tools.Diagnostic

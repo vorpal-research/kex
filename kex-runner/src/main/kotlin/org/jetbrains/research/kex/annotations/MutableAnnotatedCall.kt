@@ -1,10 +1,12 @@
 package org.jetbrains.research.kex.annotations
 
-internal class MutableAnnotatedCall(private val packageNode: PackageTreeNode,
-                                    override val name: String,
-                                    override val type: CallType,
-                                    override val returnType: String,
-                                    override val params: MutableList<MutableAnnotatedParam>) : AnnotatedCall {
+internal class MutableAnnotatedCall(
+    private val packageNode: PackageTreeNode,
+    override val name: String,
+    override val type: CallType,
+    override val returnType: String,
+    override val params: MutableList<MutableAnnotatedParam>
+) : AnnotatedCall {
     override fun equals(other: Any?) = other is AnnotatedCall
             && name == other && type == other.type && params == other.params
 

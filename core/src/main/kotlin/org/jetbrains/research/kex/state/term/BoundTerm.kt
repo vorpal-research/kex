@@ -9,11 +9,11 @@ import org.jetbrains.research.kex.state.transformer.Transformer
 @Serializable
 class BoundTerm(override val type: KexType, val ptr: Term) : Term() {
     override val name = "bound($ptr)"
-    override val subterms by lazy { listOf(ptr) }
+    override val subTerms by lazy { listOf(ptr) }
 
     override fun <T : Transformer<T>> accept(t: Transformer<T>): Term =
-            when (val nptr = t.transform(ptr)) {
+            when (val nPtr = t.transform(ptr)) {
                 ptr -> this
-                else -> term { tf.getBound(nptr) }
+                else -> term { tf.getBound(nPtr) }
             }
 }

@@ -21,7 +21,7 @@ class BoolectorSolverTest : KexTest() {
 
         val query = c neq zero
 
-        val state = c eq (ef.if_<Int_>(a gt b).then_(zero).else_(one))
+        val state = c eq (ef.if_<Int_>(a gt b).then(zero).`else`(one))
 
         query.asAxiom().assertForm()
         state.asAxiom().assertForm()
@@ -38,7 +38,7 @@ class BoolectorSolverTest : KexTest() {
             BoolectorEngine.negate(ef.ctx, e.expr).assume()
             ef.ctx.check() == Btor.Status.UNSAT
         }
-        val memory = ef.makeDefaultMemory<Word_>("mem", 0xFF)
+        val memory = ef.makeDefaultMemory<Word_>("mem", ef.makeIntConst(0xFF))
         for (i in 0..128) {
             assertTrue(checkExpr(memory[ef.makePtrConst(i)] eq Word_.makeConst(ef.ctx, 0xFF)))
         }
@@ -49,9 +49,9 @@ class BoolectorSolverTest : KexTest() {
     fun testMergeMemory() {
         val ef = BoolectorExprFactory()
 
-        val default = BoolectorContext(ef, (1 shl 16) + 1, (2 shl 16) + 1)
-        val memA = BoolectorContext(ef, (1 shl 16) + 1, (2 shl 16) + 1)
-        val memB = BoolectorContext(ef, (1 shl 16) + 1, (2 shl 16) + 1)
+        val default = BoolectorContext(ef)
+        val memA = BoolectorContext(ef)
+        val memB = BoolectorContext(ef)
 
         val ptr = ef.makePtr("ptr")
         val a = ef.makeIntConst(0xDEAD)
@@ -62,15 +62,15 @@ class BoolectorSolverTest : KexTest() {
         val condA = cond eq a
         val condB = cond eq b
 
-        memA.writeMemory(ptr, a, 0)
-        memB.writeMemory(ptr, b, 0)
+        memA.writeWordMemory(ptr, 0, a)
+        memB.writeWordMemory(ptr, 0, b)
 
         val merged = BoolectorContext.mergeContexts("merged", default, mapOf(
                 condA to memA,
                 condB to memB
         ))
 
-        val c = merged.readMemory<Int_>(ptr, 0)
+        val c = merged.readWordMemory(ptr, 0)
 
         val checkExprIn = { e: Bool_, `in`: Dynamic_ ->
             `in`.asAxiom().assume()

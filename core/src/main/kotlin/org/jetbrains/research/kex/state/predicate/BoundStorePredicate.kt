@@ -20,11 +20,11 @@ class BoundStorePredicate(
     override fun print() = "bound($ptr, $bound)"
 
     override fun <T : Transformer<T>> accept(t: Transformer<T>): Predicate {
-        val nptr = t.transform(ptr)
-        val nbound = t.transform(bound)
+        val nPtr = t.transform(ptr)
+        val nBound = t.transform(bound)
         return when {
-            nptr == ptr && nbound == bound -> this
-            else -> predicate(type, location) { nptr.bound(nbound) }
+            nPtr == ptr && nBound == bound -> this
+            else -> predicate(type, location) { nPtr.bound(nBound) }
         }
     }
 }

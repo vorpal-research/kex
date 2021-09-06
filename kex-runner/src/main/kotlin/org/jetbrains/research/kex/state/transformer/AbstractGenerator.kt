@@ -1,9 +1,8 @@
 package org.jetbrains.research.kex.state.transformer
 
-import com.abdullin.kthelper.assert.unreachable
-import com.abdullin.kthelper.logging.log
 import org.jetbrains.research.kex.ExecutionContext
 import org.jetbrains.research.kex.ktype.KexClass
+import org.jetbrains.research.kex.ktype.KexRtManager.rtMapped
 import org.jetbrains.research.kex.ktype.kexType
 import org.jetbrains.research.kex.smt.ModelReanimator
 import org.jetbrains.research.kex.smt.SMTModel
@@ -15,6 +14,8 @@ import org.jetbrains.research.kex.state.predicate.Predicate
 import org.jetbrains.research.kex.state.term.*
 import org.jetbrains.research.kfg.ir.Method
 import org.jetbrains.research.kfg.type.TypeFactory
+import org.jetbrains.research.kthelper.assert.unreachable
+import org.jetbrains.research.kthelper.logging.log
 
 // remove all choices in a given PS
 // needed to get entry condition of a given PS
@@ -37,11 +38,11 @@ interface AbstractGenerator<T> : Transformer<AbstractGenerator<T>> {
     val memory: MutableMap<Term, T>
     var thisTerm: Term?
     val argTerms: MutableMap<Int, Term>
-    val staticFieldTerms: MutableSet<FieldTerm>
+    val staticFieldOwners: MutableSet<Term>
 
     val instance get() = thisTerm?.let { memory[it] }
     val args get() = argTerms.map { memory[it.value] }.toList()
-    val staticFields get() = staticFieldTerms.map { it to memory[it] }.toMap()
+    val staticFields get() = staticFieldOwners.map { memory[it]!! }.toSet()
 
     fun generateThis() = thisTerm?.let {
         memory[it] = modelReanimator.reanimate(it)
@@ -58,12 +59,12 @@ interface AbstractGenerator<T> : Transformer<AbstractGenerator<T>> {
     fun generate(ps: PredicateState): Pair<T?, List<T?>> {
         val (tempThis, tempArgs) = collectArguments(ps)
         thisTerm = when {
-            !method.isStatic && tempThis == null -> term { `this`(KexClass(method.`class`.fullname)) }
+            !method.isStatic && tempThis == null -> term { `this`(KexClass(method.klass.fullName).rtMapped) }
             else -> tempThis
         }
         argTerms.putAll(tempArgs)
         for ((index, type) in method.argTypes.withIndex()) {
-            argTerms.getOrPut(index) { term { arg(type.kexType, index) } }
+            argTerms.getOrPut(index) { term { arg(type.kexType.rtMapped, index) } }
         }
         generateThis()
         generateArgs()
@@ -79,7 +80,7 @@ interface AbstractGenerator<T> : Transformer<AbstractGenerator<T>> {
         val vars = collectPointers(ps)
         vars.forEach { ptr ->
             if (ptr is FieldTerm && ptr.isStatic) {
-                staticFieldTerms += ptr
+                staticFieldOwners += ptr.owner
             }
             reanimateTerm(ptr)
         }
@@ -90,7 +91,9 @@ interface AbstractGenerator<T> : Transformer<AbstractGenerator<T>> {
         val paths = ps.choices.map { it to it.path }.map {
             it.first to ChoiceSimplifier.apply(it.second)
         }
-        val ourChoice = paths.firstOrNull { it.second.all { checkPath(it) } }?.first ?: return emptyState()
+        val ourChoice = paths.firstOrNull { path ->
+            path.second.all { checkPath(it) }
+        }?.first ?: return emptyState()
         return super.transformBase(ourChoice)
     }
 

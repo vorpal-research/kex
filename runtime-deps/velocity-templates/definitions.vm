@@ -1,0 +1,33 @@
+package ${packageName}
+
+import ${importPackage}.*
+import org.jetbrains.research.kex.ktype.*
+import org.jetbrains.research.kex.smt.${solver.toLowerCase()}.${solver}Engine
+import org.jetbrains.research.kex.smt.SMTEngine
+import org.jetbrains.research.kthelper.defaultHashCode
+import org.jetbrains.research.kthelper.logging.*
+import org.jetbrains.research.kthelper.assert.*
+
+#set($valexpr = "${solver}ValueExpr")
+#set($Bool = "${solver}Bool")
+#set($Bitvector = "${solver}BV")
+#set($Bitvector32 = "${solver}BV32")
+#set($Bitvector64 = "${solver}BV64")
+#set($Float = "${solver}Float")
+#set($Double = "${solver}Double")
+#set($Array = "${solver}Array")
+#if($generateString)
+    #set($String = "${solver}String")
+    #set($StringMemory = "${solver}Memory")
+#end
+#set($Memory = "${solver}Memory")
+#set($Function = "${solver}FunctionExpr")
+
+#if($generateString)
+    #set($exprClasses = [$Bool, $Bitvector32, $Bitvector64, $Bitvector, $Float, $Double, $String])
+#else
+    #set($exprClasses = [$Bool, $Bitvector32, $Bitvector64, $Bitvector, $Float, $Double])
+#end
+#set($numClasses = [$Bitvector32, $Bitvector64, $Bitvector, $Float, $Double])
+
+#set($factory = "${solver}ExprFactory")

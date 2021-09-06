@@ -4,7 +4,11 @@
 **/kex-instrumented*/*
 repo/*
 testJars/*
+test-jars/*
 trace/*
 fails/*
+tests/*
 **/target/*
 **/*.json
+**/kex-output*/*
+**/temp*/*

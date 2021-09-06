@@ -1,7 +1,11 @@
 package org.jetbrains.research.kex
 
+import kotlinx.serialization.ExperimentalSerializationApi
+import kotlinx.serialization.InternalSerializationApi
 import kotlin.test.Test
 
+@ExperimentalSerializationApi
+@InternalSerializationApi
 class BasicLongTest : KexRunnerTest() {
 
     @Test

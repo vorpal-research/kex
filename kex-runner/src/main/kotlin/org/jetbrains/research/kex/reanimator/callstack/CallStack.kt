@@ -1,15 +1,17 @@
 package org.jetbrains.research.kex.reanimator.callstack
 
-import com.abdullin.kthelper.collection.queueOf
-import com.abdullin.kthelper.logging.log
-import org.jetbrains.research.kex.reanimator.descriptor.Descriptor
+import org.jetbrains.research.kex.descriptor.Descriptor
+import org.jetbrains.research.kex.ktype.KexRtManager.rtMapped
+import org.jetbrains.research.kex.ktype.KexRtManager.rtUnmapped
 import org.jetbrains.research.kfg.ir.Class
 import org.jetbrains.research.kfg.ir.Field
 import org.jetbrains.research.kfg.ir.Method
 import org.jetbrains.research.kfg.type.ArrayType
 import org.jetbrains.research.kfg.type.Type
+import org.jetbrains.research.kthelper.collection.queueOf
+import org.jetbrains.research.kthelper.logging.log
 
-interface ApiCall {
+sealed interface ApiCall {
     val parameters: List<CallStack>
 
     fun wrap(name: String): CallStack = CallStack(name, mutableListOf(this))
@@ -19,26 +21,27 @@ interface ApiCall {
 open class CallStack(val name: String, val stack: MutableList<ApiCall>) : Iterable<ApiCall> by stack {
     constructor(name: String) : this(name, mutableListOf())
 
-    val isComplete: Boolean get() {
-        val visited = mutableSetOf<CallStack>()
-        val queue = queueOf(this)
+    val isComplete: Boolean
+        get() {
+            val visited = mutableSetOf<CallStack>()
+            val queue = queueOf(this)
 
-        while (queue.isNotEmpty()) {
-            val top = queue.poll()
-            if (top in visited) continue
-            visited += top
+            while (queue.isNotEmpty()) {
+                val top = queue.poll()
+                if (top in visited) continue
+                visited += top
 
-            if (top.any { it is UnknownCall }) {
-                return false
+                if (top.any { it is UnknownCall }) {
+                    return false
+                }
+
+                top.flatMap { it.parameters }.forEach {
+                    queue += it
+                }
             }
 
-            top.flatMap { it.parameters }.forEach {
-                queue += it
-            }
+            return true
         }
-
-        return true
-    }
 
     fun add(call: ApiCall): CallStack {
         this.stack += call
@@ -78,7 +81,7 @@ open class CallStack(val name: String, val stack: MutableList<ApiCall>) : Iterab
     fun clone() = CallStack(name, stack.toMutableList())
 }
 
-data class PrimaryValue<T>(val value: T) : CallStack(value.toString(), mutableListOf()) {
+class PrimaryValue<T>(val value: T) : CallStack(value.toString(), mutableListOf()) {
     override fun toString() = value.toString()
 }
 
@@ -86,13 +89,13 @@ data class DefaultConstructorCall(val klass: Class) : ApiCall {
     override val parameters: List<CallStack>
         get() = listOf()
 
-    override fun toString() = "${klass.fullname}()"
+    override fun toString() = "${klass.fullName}()"
     override fun print(owner: CallStack, builder: StringBuilder, visited: MutableSet<CallStack>) {
         builder.appendLine("${owner.name} = $this")
     }
 }
 
-data class ConstructorCall(val klass: Class, val constructor: Method, val args: List<CallStack>) : ApiCall {
+data class ConstructorCall(val constructor: Method, val args: List<CallStack>) : ApiCall {
     init {
         assert(constructor.isConstructor) { log.error("Trying to create constructor call for non-constructor method") }
     }
@@ -105,7 +108,7 @@ data class ConstructorCall(val klass: Class, val constructor: Method, val args: 
         for (arg in args) {
             arg.print(builder, visited)
         }
-        builder.appendLine("${owner.name} = ${constructor.`class`.fullname}(${args.joinToString(", ") { it.name }})")
+        builder.appendLine("${owner.name} = ${constructor.klass.fullName}(${args.joinToString(", ") { it.name }})")
     }
 }
 
@@ -122,7 +125,22 @@ data class ExternalConstructorCall(val constructor: Method, val args: List<CallS
         for (arg in args) {
             arg.print(builder, visited)
         }
-        builder.appendLine("${owner.name} = ${constructor.`class`.fullname}(${args.joinToString(", ") { it.name }})")
+        builder.appendLine("${owner.name} = ${constructor.klass.fullName}(${args.joinToString(", ") { it.name }})")
+    }
+}
+
+data class InnerClassConstructorCall(val constructor: Method, val outerObject: CallStack, val args: List<CallStack>) :
+    ApiCall {
+    override val parameters: List<CallStack> get() = listOf(outerObject) + args
+
+    override fun toString() = "${outerObject}.$constructor(${args.joinToString(", ")})"
+
+    override fun print(owner: CallStack, builder: StringBuilder, visited: MutableSet<CallStack>) {
+        outerObject.print(builder, visited)
+        for (arg in args) {
+            arg.print(builder, visited)
+        }
+        builder.appendLine("${owner.name} = ${outerObject.name}.${constructor.klass.fullName}(${args.joinToString(", ") { it.name }})")
     }
 }
 
@@ -157,7 +175,7 @@ data class StaticMethodCall(val method: Method, val args: List<CallStack>) : Api
         for (arg in args) {
             arg.print(builder, visited)
         }
-        builder.appendLine("${method.`class`.fullname}.${method.name}(${args.joinToString(", ") { it.name }})")
+        builder.appendLine("${method.klass.fullName}.${method.name}(${args.joinToString(", ") { it.name }})")
     }
 }
 
@@ -171,10 +189,10 @@ data class UnknownCall(val type: Type, val target: Descriptor) : ApiCall {
     }
 }
 
-data class StaticFieldSetter(val klass: Class, val field: Field, val value: CallStack) : ApiCall {
+data class StaticFieldSetter(val field: Field, val value: CallStack) : ApiCall {
     override val parameters: List<CallStack> get() = listOf(value)
 
-    override fun toString() = "${klass.fullname}.${field.name} = ${value.name}"
+    override fun toString() = "${field.klass.fullName}.${field.name} = ${value.name}"
 
     override fun print(owner: CallStack, builder: StringBuilder, visited: MutableSet<CallStack>) {
         value.print(builder, visited)
@@ -217,9 +235,136 @@ data class ArrayWrite(val index: CallStack, val value: CallStack) : ApiCall {
 data class EnumValueCreation(val klass: Class, val name: String) : ApiCall {
     override val parameters = listOf<CallStack>()
 
-    override fun toString() = "${klass.fullname}.$name"
+    override fun toString() = "${klass.fullName}.$name"
 
     override fun print(owner: CallStack, builder: StringBuilder, visited: MutableSet<CallStack>) {
-        builder.appendLine("${owner.name} = ${klass.fullname}.$name")
+        builder.appendLine("${owner.name} = ${klass.fullName}.$name")
+    }
+}
+
+data class StaticFieldGetter(val field: Field) : ApiCall {
+    override val parameters = emptyList<CallStack>()
+
+    override fun toString() = "${field.klass.fullName}.${field.name}"
+
+    override fun print(owner: CallStack, builder: StringBuilder, visited: MutableSet<CallStack>) {
+        builder.appendLine("${owner.name} = ${field.klass.fullName}.${field.name}")
+    }
+}
+
+val ApiCall.rtUnmapped: ApiCall get() = when (this) {
+    is ArrayWrite -> TODO()
+    is ConstructorCall -> TODO()
+    is DefaultConstructorCall -> TODO()
+    is EnumValueCreation -> TODO()
+    is ExternalConstructorCall -> TODO()
+    is FieldSetter -> TODO()
+    is InnerClassConstructorCall -> TODO()
+    is MethodCall -> TODO()
+    is NewArray -> TODO()
+    is StaticFieldGetter -> TODO()
+    is StaticFieldSetter -> TODO()
+    is StaticMethodCall -> TODO()
+    is UnknownCall -> TODO()
+}
+
+class CallStackRtMapper(val mode: Mode) {
+    enum class Mode {
+        MAP, UNMAP
+    }
+
+    private val cache = mutableMapOf<CallStack, CallStack>()
+
+    fun map(ct: CallStack): CallStack {
+        if (ct is PrimaryValue<*>) return ct
+        if (ct in cache) return cache[ct]!!
+        val res = CallStack(ct.name)
+        cache[ct] = res
+        for (call in ct) {
+            res += map(call)
+        }
+        return res
+    }
+
+    private val Class.mapped get() = when (mode) {
+        Mode.MAP -> rtMapped
+        Mode.UNMAP -> rtUnmapped
+    }
+
+    private val Type.mapped get() = when (mode) {
+        Mode.MAP -> rtMapped
+        Mode.UNMAP -> rtUnmapped
+    }
+
+    fun map(api: ApiCall): ApiCall = when (api) {
+        is ArrayWrite -> ArrayWrite(map(api.index), map(api.value))
+        is ConstructorCall -> {
+            val unmappedKlass = api.constructor.klass.mapped
+            val unmappedMethod = unmappedKlass.getMethod(
+                api.constructor.name,
+                api.constructor.returnType.mapped,
+                *api.constructor.argTypes.map { it.mapped }.toTypedArray()
+            )
+            ConstructorCall(unmappedMethod, api.args.map { map(it) })
+        }
+        is DefaultConstructorCall -> {
+            val unmappedKlass = api.klass.mapped
+            DefaultConstructorCall(unmappedKlass)
+        }
+        is EnumValueCreation -> EnumValueCreation(api.klass.mapped, api.name)
+        is ExternalConstructorCall -> {
+            val unmappedKlass = api.constructor.klass.mapped
+            val unmappedMethod = unmappedKlass.getMethod(
+                api.constructor.name,
+                api.constructor.returnType.mapped,
+                *api.constructor.argTypes.map { it.mapped }.toTypedArray()
+            )
+            ExternalConstructorCall(unmappedMethod, api.args.map { map(it) })
+        }
+        is FieldSetter -> {
+            val unmappedKlass = api.field.klass.mapped
+            val unmappedField = unmappedKlass.getField(api.field.name, api.field.type.mapped)
+            FieldSetter(unmappedField, map(api.value))
+        }
+        is InnerClassConstructorCall -> {
+            val unmappedKlass = api.constructor.klass.mapped
+            val unmappedMethod = unmappedKlass.getMethod(
+                api.constructor.name,
+                api.constructor.returnType.mapped,
+                *api.constructor.argTypes.map { it.mapped }.toTypedArray()
+            )
+            InnerClassConstructorCall(unmappedMethod,
+                map(api.outerObject), api.args.map { map(it) })
+        }
+        is MethodCall -> {
+            val unmappedKlass = api.method.klass.mapped
+            val unmappedMethod = unmappedKlass.getMethod(
+                api.method.name,
+                api.method.returnType.mapped,
+                *api.method.argTypes.map { it.mapped }.toTypedArray()
+            )
+            MethodCall(unmappedMethod, api.args.map { map(it) })
+        }
+        is NewArray -> NewArray(api.klass.mapped, map(api.length))
+        is StaticFieldGetter -> {
+            val unmappedKlass = api.field.klass.mapped
+            val unmappedField = unmappedKlass.getField(api.field.name, api.field.type.mapped)
+            StaticFieldGetter(unmappedField)
+        }
+        is StaticFieldSetter -> {
+            val unmappedKlass = api.field.klass.mapped
+            val unmappedField = unmappedKlass.getField(api.field.name, api.field.type.mapped)
+            StaticFieldSetter(unmappedField, map(api.value))
+        }
+        is StaticMethodCall -> {
+            val unmappedKlass = api.method.klass.mapped
+            val unmappedMethod = unmappedKlass.getMethod(
+                api.method.name,
+                api.method.returnType.mapped,
+                *api.method.argTypes.map { it.mapped }.toTypedArray()
+            )
+            StaticMethodCall(unmappedMethod, api.args.map { map(it) })
+        }
+        is UnknownCall -> api
     }
 }

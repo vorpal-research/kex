@@ -46,17 +46,21 @@ class CFGTracker : Transformer<CFGTracker> {
     val finalPath get() = currentDominators
 }
 
-class Slicer(val state: PredicateState, sliceTerms: Set<Term>, val aa: AliasAnalysis) : Transformer<Slicer> {
+class Slicer(
+    val state: PredicateState,
+    sliceTerms: Set<Term>,
+    private val aa: AliasAnalysis
+) : Transformer<Slicer> {
     private val sliceVars = hashSetOf<Term>()
     private val slicePtrs = hashSetOf<Term>()
     private val cfg = CFGTracker()
-    var currentPath = setOf<Predicate>()
+    private var currentPath = setOf<Predicate>()
 
     private val isInterestingTerm = { term: Term -> term.isNamed }
 
     init {
-        sliceTerms.filter(isInterestingTerm).forEach {
-            addSliceTerm(it)
+        for (term in sliceTerms.filter(isInterestingTerm)) {
+            addSliceTerm(term)
         }
     }
 

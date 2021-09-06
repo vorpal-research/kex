@@ -3,7 +3,7 @@ package org.jetbrains.research.kex.state.transformer
 import org.jetbrains.research.kex.state.PredicateState
 
 class Transformation : Transformer<Transformation> {
-    val transformers = mutableListOf<(PredicateState) -> PredicateState>()
+    private val transformers = mutableListOf<(PredicateState) -> PredicateState>()
 
     override fun apply(ps: PredicateState): PredicateState {
         var state = ps

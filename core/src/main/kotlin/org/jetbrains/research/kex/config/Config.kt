@@ -1,5 +1,7 @@
 package org.jetbrains.research.kex.config
 
+import java.nio.file.Path
+import java.nio.file.Paths
 import java.util.regex.Pattern
 
 abstract class Config {
@@ -42,7 +44,7 @@ abstract class Config {
     open fun getMultipleDoubleValue(section: String, name: String, delimeter: String = ",") =
             getMultipleStringValue(section, name, delimeter).map { it.toDouble() }
 
-    inline fun <reified T : Enum<T>> getEnumValue(section: String, name: String, ignoreCase: Boolean = false): Enum<T>? {
+    inline fun <reified T : Enum<T>> getEnumValue(section: String, name: String, ignoreCase: Boolean = false): T? {
         val constName = getStringValue(section, name) ?: return null
         val comparator = when {
             ignoreCase -> { a: String, b: String ->
@@ -54,6 +56,11 @@ abstract class Config {
         return T::class.java.enumConstants.firstOrNull { comparator(it.name, constName) }
     }
 
-    inline fun <reified T : Enum<T>> getEnumValue(section: String, name: String, ignoreCase: Boolean = false, default: T): Enum<T> =
-            getEnumValue(section, name, ignoreCase) ?: default
+    inline fun <reified T : Enum<T>> getEnumValue(section: String, name: String, ignoreCase: Boolean = false, default: T): T =
+            getEnumValue<T>(section, name, ignoreCase) ?: default
+
+    open fun getPathValue(section: String, name: String): Path? = getStringValue(section, name)?.let { Paths.get(it) }
+    open fun getPathValue(section: String, name: String, default: String): Path = getStringValue(section, name, default).let { Paths.get(it) }
+    open fun getPathValue(section: String, name: String, default: Path): Path = getStringValue(section, name)?.let { Paths.get(it) } ?: default
+    open fun getPathValue(section: String, name: String, default: () -> Path): Path = getStringValue(section, name)?.let { Paths.get(it) } ?: default()
 }

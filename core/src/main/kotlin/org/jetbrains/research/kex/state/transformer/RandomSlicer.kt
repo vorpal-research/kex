@@ -1,8 +1,8 @@
 package org.jetbrains.research.kex.state.transformer
 
-import com.abdullin.kthelper.logging.log
 import org.jetbrains.research.kex.state.PredicateState
 import org.jetbrains.research.kex.state.predicate.Predicate
+import org.jetbrains.research.kthelper.logging.log
 import java.util.*
 
 object RandomSlicer : Transformer<RandomSlicer> {
@@ -20,15 +20,20 @@ object RandomSlicer : Transformer<RandomSlicer> {
     }
 }
 
-class DeltaDebugger(private val attempmts: Int, private val fails: Int = 10, val predicate: (PredicateState) -> Boolean) {
+class DeltaDebugger(
+    private val attempts: Int,
+    private val fails: Int = 10,
+    val predicate: (PredicateState) -> Boolean
+) {
     fun reduce(ps: PredicateState): PredicateState {
         var current = ps
 
         var failedAttempts = 0
-        for (i in 0..attempmts) {
+        for (i in 0..attempts) {
             val reduced = run {
                 var temp = RandomSlicer.apply(current)
-                while (temp.size >= current.size && current.isNotEmpty) temp = RandomSlicer.apply(current)
+                while (temp.size >= current.size && current.isNotEmpty)
+                    temp = RandomSlicer.apply(current)
                 temp
             }
             log.debug("Old size: ${current.size}, reduced size: ${reduced.size}")
@@ -55,7 +60,7 @@ class DeltaDebugger(private val attempmts: Int, private val fails: Int = 10, val
 }
 
 fun reduceState(ps: PredicateState, attempts: Int, predicate: (PredicateState) -> Boolean) =
-        DeltaDebugger(attempts, attempts, predicate).reduce(ps)
+    DeltaDebugger(attempts, attempts, predicate).reduce(ps)
 
 fun reduceState(ps: PredicateState, attempts: Int, allowedFails: Int, predicate: (PredicateState) -> Boolean) =
-        DeltaDebugger(attempts, allowedFails, predicate).reduce(ps)
+    DeltaDebugger(attempts, allowedFails, predicate).reduce(ps)

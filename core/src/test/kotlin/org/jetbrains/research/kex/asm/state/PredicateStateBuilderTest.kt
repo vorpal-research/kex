@@ -6,6 +6,7 @@ import org.jetbrains.research.kfg.analysis.LoopAnalysis
 import org.jetbrains.research.kfg.analysis.LoopSimplifier
 import org.jetbrains.research.kfg.ir.Method
 import org.jetbrains.research.kfg.ir.value.instruction.UnreachableInst
+import org.jetbrains.research.kthelper.algorithm.NoTopologicalSortingException
 import org.junit.Assert.assertNotNull
 import kotlin.test.Test
 
@@ -29,7 +30,11 @@ class PredicateStateBuilderTest : KexTest() {
             for (method in `class`.allMethods) {
                 if (method.isAbstract) continue
 
-                val psa = performPSA(method)
+                val psa = try {
+                    performPSA(method)
+                } catch (e: NoTopologicalSortingException) {
+                    continue
+                }
 
                 val catchBlocks = method.catchBlocks
                 method.filter { it !in catchBlocks }
