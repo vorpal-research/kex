@@ -45,6 +45,8 @@ abstract class TestCasePrinter(
             targetFile.writeText(printer.emit())
         }
     }
+
+    open fun emitString() = printer.emit()
 }
 
 class JUnitTestCasePrinter(

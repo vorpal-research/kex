@@ -15,6 +15,7 @@
         <exec.main>org.jetbrains.research.kex.MainKt</exec.main>
 
         <better-parse.version>0.4.2</better-parse.version>
+        <descriptor.version>1.2.0</descriptor.version>
     </properties>
 
     <dependencies>
@@ -59,6 +60,12 @@
             <artifactId>kex-test</artifactId>
             <version>${project.version}</version>
             <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.jetbrains.research</groupId>
+            <artifactId>descriptor</artifactId>
+            <version>${descriptor.version}</version>
         </dependency>
 
         <dependency>
