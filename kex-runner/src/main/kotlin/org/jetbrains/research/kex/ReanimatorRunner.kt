@@ -14,7 +14,6 @@ import org.jetbrains.research.kex.reanimator.callstack.CallStack
 import org.jetbrains.research.kex.reanimator.callstack.generator.CallStackGenerator
 import org.jetbrains.research.kex.reanimator.callstack.generator.GeneratorContext
 import org.jetbrains.research.kex.reanimator.codegen.JUnitTestCasePrinter
-import org.jetbrains.research.kex.reanimator.codegen.TestCasePrinter
 import org.jetbrains.research.kex.reanimator.collector.ExternalCtorCollector
 import org.jetbrains.research.kex.reanimator.collector.MethodFieldAccessCollector
 import org.jetbrains.research.kex.reanimator.collector.SetterCollector
@@ -37,15 +36,12 @@ import org.jetbrains.research.descriptor.ObjectDescriptor as JavaObject
 class ReanimatorRunner(
     val config: Path,
     val target: Path,
-    val pkg: Package,
-    val testPackage: String,
-    val testClass: String
+    val pkg: Package
 ) {
     val cm: ClassManager
     val context: ExecutionContext
     val visibilityLevel: Visibility
     val generatorContext: GeneratorContext
-    val printer: TestCasePrinter
 
     init {
         kexConfig.initialize(RuntimeConfig, FileConfig(config.toString()))
@@ -73,7 +69,6 @@ class ReanimatorRunner(
 
         generatorContext = GeneratorContext(context, psa, visibilityLevel)
 
-        printer = JUnitTestCasePrinter(context, testPackage, testClass)
     }
 
     private fun updateClassPath(loader: URLClassLoader) {
@@ -83,18 +78,20 @@ class ReanimatorRunner(
     }
 
     fun print(
-        testName: String,
+        testClassName: String,
+        testMethodName: String,
         klass: String,
         method: String,
         desc: String,
         instance: CallStack,
-        args: List<CallStack>) {
+        args: List<CallStack>
+    ): String {
         val kfgKlass = cm[klass]
         val kfgMethod = kfgKlass.getMethod(method, desc)
-        printer.print(testName, kfgMethod, Parameters(instance, args, setOf()))
+        val printer = JUnitTestCasePrinter(context, testClassName.substringBeforeLast('/'), testClassName.substringAfterLast('/'))
+        printer.print(testMethodName, kfgMethod, Parameters(instance, args, setOf()))
+        return printer.emitString()
     }
-
-    fun emit(): String = printer.emitString()
 
     fun convert(desc: JavaDescriptor): CallStack {
         val map = convert(setOf(desc))
