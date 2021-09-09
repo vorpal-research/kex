@@ -22,7 +22,8 @@ import org.jetbrains.research.kfg.ClassManager
 import org.jetbrains.research.kfg.KfgConfig
 import org.jetbrains.research.kfg.Package
 import org.jetbrains.research.kfg.analysis.LoopSimplifier
-import org.jetbrains.research.kfg.container.JarContainer
+import org.jetbrains.research.kfg.container.Container
+import org.jetbrains.research.kfg.container.asContainer
 import org.jetbrains.research.kfg.util.Flags
 import org.jetbrains.research.kfg.visitor.executePipeline
 import java.net.URLClassLoader
@@ -35,10 +36,10 @@ import org.jetbrains.research.descriptor.ObjectDescriptor as JavaObject
 
 class ReanimatorRunner(
     val config: Path,
-    val target: Path,
-    val pkg: Package
+    targets: List<Path>
 ) {
     val cm: ClassManager
+    val containers: List<Container>
     val context: ExecutionContext
     val visibilityLevel: Visibility
     val generatorContext: GeneratorContext
@@ -47,13 +48,19 @@ class ReanimatorRunner(
         kexConfig.initialize(RuntimeConfig, FileConfig(config.toString()))
         kexConfig.initLog("kex.log")
 
-        val jar = JarContainer(target, pkg)
+        containers = targets.mapNotNull { it.asContainer() }
         cm = ClassManager(KfgConfig(flags = Flags.readAll, failOnError = false))
-        val analysisJars = listOfNotNull(jar, getRuntime())
+        val analysisJars = listOfNotNull(*containers.toTypedArray(), getRuntime())
         cm.initialize(*analysisJars.toTypedArray())
 
-        context = ExecutionContext(cm, pkg, jar.classLoader, EasyRandomDriver(), analysisJars.map { it.path })
-        updateClassPath(jar.classLoader)
+        val containerClassLoader = URLClassLoader(containers.map { it.path.toUri().toURL() }.toTypedArray())
+        context = ExecutionContext(cm,
+            Package.defaultPackage,
+            containerClassLoader,
+            EasyRandomDriver(),
+            analysisJars.map { it.path }
+        )
+        updateClassPath(containerClassLoader)
         val psa = PredicateStateAnalysis(context.cm)
 
         visibilityLevel = kexConfig.getEnumValue("apiGeneration", "visibility", true, Visibility.PUBLIC)
@@ -103,10 +110,10 @@ class ReanimatorRunner(
         for (desc in descs) {
             desc.convert(reanimatorDescs)
         }
-        return descs.map { it to CallStackGenerator(generatorContext).generateDescriptor(reanimatorDescs[it]!!) }.toMap()
+        return descs.associateWith { CallStackGenerator(generatorContext).generateDescriptor(reanimatorDescs[it]!!) }
     }
 
-    fun JavaDescriptor.convert(map: MutableMap<JavaDescriptor, Descriptor>): Descriptor = when (val jd = this) {
+    private fun JavaDescriptor.convert(map: MutableMap<JavaDescriptor, Descriptor>): Descriptor = when (val jd = this) {
         in map -> map[jd]!!
         is JavaNull -> {
             val nullDesc = descriptor { `null` }
