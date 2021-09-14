@@ -260,14 +260,14 @@ open class CallStack2JavaPrinter(
 
     protected open fun CallStack.printAsJava() {
         if (name in printedStacks) return
-        if (this is PrimaryValue<*>) {
-            asConstant
-            return
-        }
         printedStacks += name
-        for (call in this) {
-            with(current) {
-                for (statement in printApiCall(this@printAsJava, call))
+        with(current) {
+            val cs = this@printAsJava
+            if (cs is PrimaryValue<*>) {
+                +cs.asConstant()
+            }
+            for (call in cs) {
+                for (statement in printApiCall(cs, call))
                     +statement
             }
         }
@@ -306,10 +306,7 @@ open class CallStack2JavaPrinter(
         }
 
     private val CallStack.stackName: String
-        get() = when (this) {
-            is PrimaryValue<*> -> asConstant
-            else -> name
-        }
+        get() = name
 
     protected fun printApiCall(owner: CallStack, apiCall: ApiCall): List<String> = when (apiCall) {
         is DefaultConstructorCall -> printDefaultConstructor(owner, apiCall)
@@ -327,62 +324,54 @@ open class CallStack2JavaPrinter(
         is UnknownCall -> printUnknown(owner, apiCall)
     }
 
-    protected val <T> PrimaryValue<T>.asConstant: String
-        get() = when (val value = value) {
-            null -> "null".also {
-                actualTypes[this] = CSClass(ctx.types.nullType)
-            }
-            is Boolean -> "$value".also {
-                actualTypes[this] = CSClass(ctx.types.boolType)
-            }
-            is Byte -> "(byte) $value".also {
+    protected fun <T> PrimaryValue<T>.asConstant(): String =
+        when (val value = value) {
+            null -> "${type.javaString} $name = null"
+            is Boolean -> "$value"
+            is Byte -> "${type.javaString} $name = (byte) $value".also {
                 actualTypes[this] = CSClass(ctx.types.byteType)
             }
-            is Char -> when (value) {
-                in 'a'..'z' -> "'$value'"
-                in 'A'..'Z' -> "'$value'"
-                else -> "(char) ${value.code}"
-            }.also {
-                actualTypes[this] = CSClass(ctx.types.charType)
-            }
-            is Short -> "(short) $value".also {
-                actualTypes[this] = CSClass(ctx.types.shortType)
-            }
-            is Int -> "$value".also {
-                actualTypes[this] = CSClass(ctx.types.intType)
-            }
-            is Long -> "${value}L".also {
-                actualTypes[this] = CSClass(ctx.types.longType)
-            }
-            is Float -> when {
-                value.isNaN() -> "Float.NaN".also {
-                    builder.import("java.lang.Float")
+            is Char -> "${type.javaString} $name = ${
+                when (value) {
+                    in 'a'..'z' -> "'$value'"
+                    in 'A'..'Z' -> "'$value'"
+                    else -> "(char) ${value.code}"
                 }
-                value.isInfinite() && value < 0.0 -> "Float.NEGATIVE_INFINITY".also {
-                    builder.import("java.lang.Float")
+            }"
+            is Short -> "${type.javaString} $name = (short) $value"
+            is Int -> "${type.javaString} $name = $value"
+            is Long -> "${type.javaString} $name = ${value}L"
+            is Float -> "${type.javaString} $name = ${
+                when {
+                    value.isNaN() -> "Float.NaN".also {
+                        builder.import("java.lang.Float")
+                    }
+                    value.isInfinite() && value < 0.0 -> "Float.NEGATIVE_INFINITY".also {
+                        builder.import("java.lang.Float")
+                    }
+                    value.isInfinite() -> "Float.POSITIVE_INFINITY".also {
+                        builder.import("java.lang.Float")
+                    }
+                    else -> "${value}F"
                 }
-                value.isInfinite() -> "Float.POSITIVE_INFINITY".also {
-                    builder.import("java.lang.Float")
+            }"
+            is Double -> "${type.javaString} $name = ${
+                when {
+                    value.isNaN() -> "Double.NaN".also {
+                        builder.import("java.lang.Double")
+                    }
+                    value.isInfinite() && value < 0.0 -> "Double.NEGATIVE_INFINITY".also {
+                        builder.import("java.lang.Double")
+                    }
+                    value.isInfinite() -> "Double.POSITIVE_INFINITY".also {
+                        builder.import("java.lang.Double")
+                    }
+                    else -> "$value"
                 }
-                else -> "${value}F"
-            }.also {
-                actualTypes[this] = CSClass(ctx.types.floatType)
-            }
-            is Double -> when {
-                value.isNaN() -> "Double.NaN".also {
-                    builder.import("java.lang.Double")
-                }
-                value.isInfinite() && value < 0.0 -> "Double.NEGATIVE_INFINITY".also {
-                    builder.import("java.lang.Double")
-                }
-                value.isInfinite() -> "Double.POSITIVE_INFINITY".also {
-                    builder.import("java.lang.Double")
-                }
-                else -> "$value"
-            }.also {
-                actualTypes[this] = CSClass(ctx.types.doubleType)
-            }
+            }"
             else -> unreachable { log.error("Unknown primary value $this") }
+        }.also {
+            actualTypes[this] = type.csType
         }
 
     private fun CallStack.cast(reqType: CSType?): String {
@@ -506,7 +495,7 @@ open class CallStack2JavaPrinter(
         val args = call.args.joinToString(", ") {
             it.forceCastIfNull(resolvedTypes[it])
         }
-        return listOf("${owner.name}.${method.name}($args)")
+        return listOf("${owner.forceCastIfNull(resolvedTypes[owner])}.${method.name}($args)")
     }
 
     protected open fun printStaticMethodCall(call: StaticMethodCall): List<String> {
@@ -530,7 +519,12 @@ open class CallStack2JavaPrinter(
         val (depth, elementType) = actualType.elementTypeDepth()
         actualTypes[owner] = actualType
         return listOf(
-            "${printVarDeclaration(owner.name, actualType)} = new $elementType[${call.length.stackName}]${"[]".repeat(depth)}"
+            "${
+                printVarDeclaration(
+                    owner.name,
+                    actualType
+                )
+            } = new $elementType[${call.length.stackName}]${"[]".repeat(depth)}"
         )
     }
 
@@ -539,7 +533,7 @@ open class CallStack2JavaPrinter(
         rhv == null -> lhv
         lhv.isSubtype(rhv) -> lhv
         rhv.isSubtype(lhv) -> rhv
-        else -> unreachable {  }
+        else -> unreachable { }
     }
 
     protected open fun printArrayWrite(owner: CallStack, call: ArrayWrite): List<String> {
@@ -567,7 +561,14 @@ open class CallStack2JavaPrinter(
     protected open fun printStaticFieldGetter(owner: CallStack, call: StaticFieldGetter): List<String> {
         val actualType = call.field.klass.type.csType
         actualTypes[owner] = actualType
-        return listOf("${printVarDeclaration(owner.name, actualType)} = ${call.field.klass.javaString}.${call.field.name}")
+        return listOf(
+            "${
+                printVarDeclaration(
+                    owner.name,
+                    actualType
+                )
+            } = ${call.field.klass.javaString}.${call.field.name}"
+        )
     }
 
     protected open fun printUnknown(owner: CallStack, call: UnknownCall): List<String> {

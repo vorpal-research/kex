@@ -95,7 +95,8 @@ class ReanimatorRunner(
     ): String {
         val kfgKlass = cm[klass]
         val kfgMethod = kfgKlass.getMethod(method, desc)
-        val printer = JUnitTestCasePrinter(context, testClassName.substringBeforeLast('/'), testClassName.substringAfterLast('/'))
+        val printer =
+            JUnitTestCasePrinter(context, testClassName.substringBeforeLast('/'), testClassName.substringAfterLast('/'))
         printer.print(testMethodName, kfgMethod, Parameters(instance, args, setOf()))
         return printer.emitString()
     }
@@ -157,18 +158,19 @@ class ReanimatorRunner(
         else -> TODO()
     }
 
-    val String.asType: KexType get() = when (this) {
-        "bool" -> KexBool()
-        "byte" -> KexByte()
-        "char" -> KexChar()
-        "short" -> KexShort()
-        "int" -> KexInt()
-        "long" -> KexLong()
-        "float" -> KexFloat()
-        "double" -> KexDouble()
-        else -> when {
-            this.endsWith("[]") -> KexArray(this.dropLast(2).asType)
-            else -> KexClass(this.replace(".", "/"))
+    val String.asType: KexType
+        get() = when (this) {
+            "bool" -> KexBool()
+            "byte" -> KexByte()
+            "char" -> KexChar()
+            "short" -> KexShort()
+            "int" -> KexInt()
+            "long" -> KexLong()
+            "float" -> KexFloat()
+            "double" -> KexDouble()
+            else -> when {
+                this.endsWith("[]") -> KexArray(this.dropLast(2).asType)
+                else -> KexClass(this.replace(".", "/"))
+            }
         }
-    }
 }

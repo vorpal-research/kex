@@ -20,12 +20,20 @@ class ArrayGenerator(private val fallback: Generator) : Generator {
         saveToCache(descriptor, callStack)
 
         val elementType = descriptor.elementType.getKfgType(types)
-        val lengthCall = PrimaryValue(descriptor.length)
+        val lengthCall = PrimaryValue(
+            "${name}Length",
+            descriptor.length,
+            types.intType
+        )
         val array = NewArray(types.getArrayType(elementType), lengthCall)
         callStack += array
 
         for ((index, value) in descriptor.elements) {
-            val indexCall = PrimaryValue(index)
+            val indexCall = PrimaryValue(
+                "${name}Index${index}",
+                index,
+                types.intType
+            )
             val arrayWrite = ArrayWrite(indexCall, fallback.generate(value, generationDepth + 1))
             callStack += arrayWrite
         }

@@ -18,7 +18,10 @@ sealed interface ApiCall {
     fun print(owner: CallStack, builder: StringBuilder, visited: MutableSet<CallStack>)
 }
 
-open class CallStack(val name: String, val stack: MutableList<ApiCall>) : Iterable<ApiCall> by stack {
+open class CallStack(
+    val name: String,
+    val stack: MutableList<ApiCall>
+) : Iterable<ApiCall> by stack {
     constructor(name: String) : this(name, mutableListOf())
 
     val isComplete: Boolean
@@ -78,11 +81,18 @@ open class CallStack(val name: String, val stack: MutableList<ApiCall>) : Iterab
         return this
     }
 
-    fun clone() = CallStack(name, stack.toMutableList())
+    open fun clone() = CallStack(name, stack.toMutableList())
 }
 
-class PrimaryValue<T>(val value: T) : CallStack(value.toString(), mutableListOf()) {
+class PrimaryValue<T>(
+    name: String,
+    val value: T,
+    val type: Type
+) : CallStack(name, mutableListOf()) {
     override fun toString() = value.toString()
+    override fun clone(): CallStack {
+        return PrimaryValue(name, value, type)
+    }
 }
 
 data class DefaultConstructorCall(val klass: Class) : ApiCall {
