@@ -327,7 +327,7 @@ open class CallStack2JavaPrinter(
     protected fun <T> PrimaryValue<T>.asConstant(): String =
         when (val value = value) {
             null -> "${type.javaString} $name = null"
-            is Boolean -> "$value"
+            is Boolean -> "${type.javaString} $name = $value"
             is Byte -> "${type.javaString} $name = (byte) $value".also {
                 actualTypes[this] = CSClass(ctx.types.byteType)
             }
