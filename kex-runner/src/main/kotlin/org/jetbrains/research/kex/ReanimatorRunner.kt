@@ -50,7 +50,7 @@ class ReanimatorRunner(
 
         containers = targets.mapNotNull { it.asContainer() }
         cm = ClassManager(KfgConfig(flags = Flags.readAll, failOnError = false))
-        val analysisJars = listOfNotNull(*containers.toTypedArray(), getRuntime())
+        val analysisJars = listOfNotNull(*containers.toTypedArray(), getRuntime()/*, getKexRuntime()*/)
         cm.initialize(*analysisJars.toTypedArray())
 
         val containerClassLoader = URLClassLoader(containers.map { it.path.toUri().toURL() }.toTypedArray())
@@ -97,7 +97,8 @@ class ReanimatorRunner(
         val kfgMethod = kfgKlass.getMethod(method, desc)
         val printer =
             JUnitTestCasePrinter(context, testClassName.substringBeforeLast('/'), testClassName.substringAfterLast('/'))
-        printer.print(testMethodName, kfgMethod, Parameters(instance, args, setOf()))
+        val params = Parameters(instance, args, setOf())
+        printer.print(testMethodName, kfgMethod, params)
         return printer.emitString()
     }
 
@@ -111,7 +112,8 @@ class ReanimatorRunner(
         for (desc in descs) {
             desc.convert(reanimatorDescs)
         }
-        return descs.associateWith { CallStackGenerator(generatorContext).generateDescriptor(reanimatorDescs[it]!!) }
+        val generator = CallStackGenerator(generatorContext)
+        return descs.associateWith { generator.generateDescriptor(reanimatorDescs[it]!!) }
     }
 
     private fun JavaDescriptor.convert(map: MutableMap<JavaDescriptor, Descriptor>): Descriptor = when (val jd = this) {
