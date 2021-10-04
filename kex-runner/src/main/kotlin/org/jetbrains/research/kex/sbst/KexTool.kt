@@ -87,7 +87,7 @@ class KexTool : Tool {
         log.debug("Initialized class managers")
 
         // write all classes to output directory, so they will be seen by ClassLoader
-        containers.forEach { it.unpack(classManager, outputDir, true, jarClassLoader) }
+        containers.forEach { it.unpack(classManager, outputDir, true, false, jarClassLoader) }
         val classLoader = URLClassLoader(arrayOf(outputDir.toUri().toURL()))
         log.debug("Unpacked jar files")
 
