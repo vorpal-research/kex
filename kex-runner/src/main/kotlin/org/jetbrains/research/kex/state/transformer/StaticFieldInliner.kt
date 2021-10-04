@@ -129,24 +129,28 @@ class StaticFieldInliner(
     val cm get() = ctx.cm
 
     override fun apply(ps: PredicateState): PredicateState {
-        val staticInitializers = TermCollector.getFullTermSet(ps)
-            .asSequence()
-            .filterIsInstance<FieldLoadTerm>()
-            .mapNotNull {
-                val field = it.field as FieldTerm
-                val kfgField = field.unmappedKfgField(cm)
-                if (kfgField.isStatic && kfgField.isFinal) {
-                    kfgField
-                } else {
-                    null
-                }
-            }.toSet()
-            .filterNot { it.klass.fullName in ignores }
-            .toSet()
-        for (field in staticInitializers) {
-            val descriptor = getStaticField(ctx, psa, field)
-            currentBuilder += descriptor.query
+        try {
+            val staticInitializers = TermCollector.getFullTermSet(ps)
+                .asSequence()
+                .filterIsInstance<FieldLoadTerm>()
+                .mapNotNull {
+                    val field = it.field as FieldTerm
+                    val kfgField = field.unmappedKfgField(cm)
+                    if (kfgField.isStatic && kfgField.isFinal) {
+                        kfgField
+                    } else {
+                        null
+                    }
+                }.toSet()
+                .filterNot { it.klass.fullName in ignores }
+                .toSet()
+            for (field in staticInitializers) {
+                val descriptor = getStaticField(ctx, psa, field)
+                currentBuilder += descriptor.query
+            }
+            return super.apply(ps)
+        } catch (e: Throwable) {
+            return ps
         }
-        return super.apply(ps)
     }
 }

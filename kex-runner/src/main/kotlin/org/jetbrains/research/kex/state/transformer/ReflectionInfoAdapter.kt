@@ -29,42 +29,47 @@ class ReflectionInfoAdapter(val method: Method, val loader: ClassLoader, val ign
     private val arrayElementInfo = hashMapOf<Term, ArrayElementInfo>()
 
     override fun apply(ps: PredicateState): PredicateState {
-        val (`this`, arguments) = collectArguments(ps)
+        try {
+            val (`this`, arguments) = collectArguments(ps)
 
-        if (`this` != null) {
-            currentBuilder += assume { `this` inequality null }
-        } else if (!method.isStatic) {
-            val nthis = term { `this`(method.klass.kexType.rtMapped) }
-            currentBuilder += assume { nthis inequality null }
-        }
+            if (`this` != null) {
+                currentBuilder += assume { `this` inequality null }
+            } else if (!method.isStatic) {
+                val nthis = term { `this`(method.klass.kexType.rtMapped) }
+                currentBuilder += assume { nthis inequality null }
+            }
 
-        val methodClassType = KexClass(method.klass.fullName).getKfgType(types)
-        val klass = `try` { loader.loadKClass(methodClassType) }.getOrNull() ?: return super.apply(ps)
-        val kFunction = klass.getKFunction(method) ?: run {
-            log.warn("Could not load kFunction for $method")
+            val methodClassType = KexClass(method.klass.fullName).getKfgType(types)
+            val klass = `try` { loader.loadKClass(methodClassType) }.getOrNull() ?: return super.apply(ps)
+            val kFunction = klass.getKFunction(method) ?: run {
+                log.warn("Could not load kFunction for $method")
+                return super.apply(ps)
+            }
+
+            val parameters = when {
+                method.isAbstract -> kFunction.parameters.map { it.index to it }
+                method.isConstructor -> kFunction.parameters.map { it.index to it }
+                else -> kFunction.parameters.drop(1).map { it.index - 1 to it }
+            }
+
+            for ((param, type) in parameters.zip(method.argTypes)) {
+                val arg = arguments[param.first] ?: continue
+                if (arg in ignores) continue
+
+                if (arg.type.isNonNullable(param.second.type)) {
+                    currentBuilder += assume { arg inequality null }
+                }
+
+                if (type is ArrayType) {
+                    arrayElementInfo[arg] =
+                        ArrayElementInfo(nullable = type.kexType.isElementNullable(param.second.type))
+                }
+            }
+
             return super.apply(ps)
+        } catch (e: Throwable) {
+            return ps
         }
-
-        val parameters = when {
-            method.isAbstract -> kFunction.parameters.map { it.index to it }
-            method.isConstructor -> kFunction.parameters.map { it.index to it }
-            else -> kFunction.parameters.drop(1).map { it.index - 1 to it }
-        }
-
-        for ((param, type) in parameters.zip(method.argTypes)) {
-            val arg = arguments[param.first] ?: continue
-            if (arg in ignores) continue
-
-            if (arg.type.isNonNullable(param.second.type)) {
-                currentBuilder += assume { arg inequality null }
-            }
-
-            if (type is ArrayType) {
-                arrayElementInfo[arg] = ArrayElementInfo(nullable = type.kexType.isElementNullable(param.second.type))
-            }
-        }
-
-        return super.apply(ps)
     }
 
     override fun transformCallPredicate(predicate: CallPredicate): Predicate {
