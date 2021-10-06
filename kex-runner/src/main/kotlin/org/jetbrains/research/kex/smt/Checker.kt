@@ -1,6 +1,6 @@
 package org.jetbrains.research.kex.smt
 
-import com.abdullin.kthelper.logging.log
+import org.jetbrains.research.kex.ExecutionContext
 import org.jetbrains.research.kex.annotations.AnnotationManager
 import org.jetbrains.research.kex.asm.state.PredicateStateAnalysis
 import org.jetbrains.research.kex.config.kexConfig
@@ -14,15 +14,21 @@ import org.jetbrains.research.kex.state.transformer.*
 import org.jetbrains.research.kfg.ir.BasicBlock
 import org.jetbrains.research.kfg.ir.Method
 import org.jetbrains.research.kfg.ir.value.instruction.Instruction
+import org.jetbrains.research.kthelper.logging.log
 
-class Checker(val method: Method, val loader: ClassLoader, private val psa: PredicateStateAnalysis) {
-    private val isInliningEnabled = kexConfig.getBooleanValue("smt", "ps-inlining", true)
+class Checker(
+    val method: Method,
+    val ctx: ExecutionContext,
+    private val psa: PredicateStateAnalysis
+) {
+    private val isInliningEnabled = kexConfig.getBooleanValue("smt", "psInlining", true)
     private val isMemspacingEnabled = kexConfig.getBooleanValue("smt", "memspacing", true)
     private val isSlicingEnabled = kexConfig.getBooleanValue("smt", "slicing", false)
     private val logQuery = kexConfig.getBooleanValue("smt", "logQuery", false)
     private val annotationsEnabled = kexConfig.getBooleanValue("annotations", "enabled", false)
 
-    private val builder = psa.builder(method)
+    private val loader get() = ctx.loader
+    private val builder get() = psa.builder(method)
     lateinit var state: PredicateState
         private set
     lateinit var query: PredicateState
@@ -35,33 +41,42 @@ class Checker(val method: Method, val loader: ClassLoader, private val psa: Pred
         log.debug("Checking reachability of ${inst.print()}")
 
         val state = createState(inst)
-                ?: return Result.UnknownResult("Can't get state for instruction ${inst.print()}")
+            ?: return Result.UnknownResult("Can't get state for instruction ${inst.print()}")
         return prepareAndCheck(state)
     }
 
     fun prepareState(ps: PredicateState) = transform(ps) {
+        +KexRtAdapter(ctx.cm)
+        +StringMethodAdapter(ctx.cm)
         if (annotationsEnabled) {
             +AnnotationAdapter(method, AnnotationManager.defaultLoader)
         }
-
-        if (isInliningEnabled) {
-            +MethodInliner(psa)
+        +RecursiveInliner(psa) { index, psa ->
+            ConcreteImplInliner(method.cm.type, TypeInfoMap(), psa, inlineIndex = index)
         }
-
+        +StaticFieldInliner(ctx, psa)
         +IntrinsicAdapter
+        +KexIntrinsicsAdapter()
         +ReflectionInfoAdapter(method, loader)
         +Optimizer()
         +ConstantPropagator
         +BoolTypeAdapter(method.cm.type)
-        +ConstStringAdapter()
         +ArrayBoundsAdapter()
         +NullityInfoAdapter()
+        +ConstStringAdapter()
+        +FieldNormalizer(method.cm)
     }
 
     fun prepareState(method: Method, ps: PredicateState, typeInfoMap: TypeInfoMap) = transform(ps) {
+        +KexRtAdapter(ctx.cm)
+        +StringMethodAdapter(ctx.cm)
         +AnnotationAdapter(method, AnnotationManager.defaultLoader)
-        +RecursiveInliner(psa) { ConcreteImplInliner(method.cm.type, typeInfoMap, psa, it) }
+        +RecursiveInliner(psa) { index, psa ->
+            ConcreteImplInliner(method.cm.type, typeInfoMap, psa, inlineIndex = index)
+        }
+        +StaticFieldInliner(ctx, psa)
         +IntrinsicAdapter
+        +KexIntrinsicsAdapter()
         +ReflectionInfoAdapter(method, loader)
         +Optimizer()
         +ConstantPropagator
@@ -69,6 +84,7 @@ class Checker(val method: Method, val loader: ClassLoader, private val psa: Pred
         +ConstStringAdapter()
         +ArrayBoundsAdapter()
         +NullityInfoAdapter()
+        +FieldNormalizer(method.cm)
     }
 
     fun prepareAndCheck(ps: PredicateState): Result {
@@ -120,7 +136,9 @@ class Checker(val method: Method, val loader: ClassLoader, private val psa: Pred
         query = Optimizer().apply(query)
         if (logQuery) {
             log.debug("Simplified state: $state")
+            log.debug("State size: ${state.size}")
             log.debug("Query: $query")
+            log.debug("Query size: ${query.size}")
         }
 
         val result = SMTProxySolver(method.cm.type).use {

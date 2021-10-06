@@ -1,10 +1,5 @@
 package org.jetbrains.research.kex.asm.transform
 
-import com.abdullin.kthelper.algorithm.GraphTraversal
-import com.abdullin.kthelper.algorithm.NoTopologicalSortingException
-import com.abdullin.kthelper.assert.unreachable
-import com.abdullin.kthelper.logging.log
-import com.abdullin.kthelper.toInt
 import org.jetbrains.research.kex.config.kexConfig
 import org.jetbrains.research.kfg.ClassManager
 import org.jetbrains.research.kfg.analysis.Loop
@@ -13,24 +8,21 @@ import org.jetbrains.research.kfg.ir.BasicBlock
 import org.jetbrains.research.kfg.ir.BodyBlock
 import org.jetbrains.research.kfg.ir.CatchBlock
 import org.jetbrains.research.kfg.ir.Method
-import org.jetbrains.research.kfg.ir.value.BlockUser
-import org.jetbrains.research.kfg.ir.value.IntConstant
-import org.jetbrains.research.kfg.ir.value.NullConstant
-import org.jetbrains.research.kfg.ir.value.Value
+import org.jetbrains.research.kfg.ir.value.*
 import org.jetbrains.research.kfg.ir.value.instruction.*
+import org.jetbrains.research.kthelper.algorithm.GraphTraversal
+import org.jetbrains.research.kthelper.algorithm.NoTopologicalSortingException
+import org.jetbrains.research.kthelper.assert.unreachable
+import org.jetbrains.research.kthelper.logging.log
+import org.jetbrains.research.kthelper.toInt
 import kotlin.math.abs
 import kotlin.math.min
 
-private val derollCount = kexConfig.getIntValue("loop", "deroll-count", 3)
-private val maxDerollCount = kexConfig.getIntValue("loop", "max-deroll-count", 0)
-
-val BasicBlock.originalBlock: BasicBlock
-    get() = LoopDeroller.blockMapping[this.parent]?.get(this) ?: this
-
-val BasicBlock.isUnreachable: Boolean
-    get() = this in (LoopDeroller.unreachableBlocks[this.parent] ?: hashSetOf())
+private val derollCount = kexConfig.getIntValue("loop", "derollCount", 3)
+private val maxDerollCount = kexConfig.getIntValue("loop", "maxDerollCount", 0)
 
 class LoopDeroller(override val cm: ClassManager) : LoopVisitor {
+    private lateinit var ctx: MethodUsageContext
 
     companion object {
         const val DEROLLED_POSTFIX = ".deroll"
@@ -42,14 +34,14 @@ class LoopDeroller(override val cm: ClassManager) : LoopVisitor {
     class InvalidLoopException : Exception()
 
     private data class State(
-            val header: BasicBlock,
-            val latch: BasicBlock,
-            val terminatingBlock: BasicBlock,
-            val continueOnTrue: Boolean,
-            var lastHeader: BasicBlock,
-            var lastLatch: BasicBlock,
-            val blockMappings: MutableMap<BasicBlock, BasicBlock>,
-            val instMappings: MutableMap<Value, Value>
+        val header: BasicBlock,
+        val latch: BasicBlock,
+        val terminatingBlock: BasicBlock,
+        val continueOnTrue: Boolean,
+        var lastHeader: BasicBlock,
+        var lastLatch: BasicBlock,
+        val blockMappings: MutableMap<BasicBlock, BasicBlock>,
+        val instMappings: MutableMap<Value, Value>
     ) {
         companion object {
             fun createState(loop: Loop): State {
@@ -64,9 +56,11 @@ class LoopDeroller(override val cm: ClassManager) : LoopVisitor {
                     else -> terminatingBlock.terminator.successors.first() in loop
                 }
 
-                val state = State(loop.header, loop.latch, terminatingBlock,
-                        continueOnTrue, loop.header, loop.preheader,
-                        hashMapOf(), hashMapOf())
+                val state = State(
+                    loop.header, loop.latch, terminatingBlock,
+                    continueOnTrue, loop.header, loop.preheader,
+                    hashMapOf(), hashMapOf()
+                )
                 loop.body.flatten().forEach { state[it] = it }
 
                 return state
@@ -81,7 +75,7 @@ class LoopDeroller(override val cm: ClassManager) : LoopVisitor {
             instMappings[value] = newValue
         }
 
-        operator fun get(block: BasicBlock) = blockMappings.getValue(block)
+        operator fun get(block: BasicBlock) = blockMappings[block] ?: block
         operator fun get(value: Value) = instMappings.getValue(value)
 
         fun getOrDefault(block: BasicBlock, default: BasicBlock) = blockMappings.getOrDefault(block, default)
@@ -93,7 +87,8 @@ class LoopDeroller(override val cm: ClassManager) : LoopVisitor {
 
     override val preservesLoopInfo get() = false
 
-    override fun visit(method: Method) {
+    override fun visit(method: Method) = method.usageContext.use {
+        ctx = it
         try {
             super.visit(method)
         } catch (e: InvalidLoopException) {
@@ -103,9 +98,10 @@ class LoopDeroller(override val cm: ClassManager) : LoopVisitor {
         }
     }
 
-    override fun visit(loop: Loop) {
+    override fun visit(loop: Loop) = with(ctx) {
         super.visit(loop)
         if (loop.allEntries.size != 1) throw InvalidLoopException()
+        if (loop.loopExits.isEmpty()) throw InvalidLoopException()
 
         // init state
         val method = loop.method ?: unreachable { log.error("Can't get method of loop") }
@@ -118,9 +114,9 @@ class LoopDeroller(override val cm: ClassManager) : LoopVisitor {
 
         // save current phi instructions of method
         val methodPhis = method.filter { it !in body }.flatten().mapNotNull { it as? PhiInst }
-        val methodPhiMappings = methodPhis.map { phi ->
-            phi to phi.incomings.filterNot { it.key in body }.toMutableMap()
-        }.toMap().toMutableMap()
+        val methodPhiMappings = methodPhis.associateWith { phi ->
+            phi.incomings.filterNot { it.key in body }.toMutableMap()
+        }.toMutableMap()
 
         val methodBlockMapping = blockMapping.getOrPut(method, ::mutableMapOf)
 
@@ -161,21 +157,21 @@ class LoopDeroller(override val cm: ClassManager) : LoopVisitor {
             }
 
             val phiMappings = blockOrder
-                    .flatten()
-                    .zip(blockOrder.map { state[it] }.flatten())
-                    .filter { it.first is PhiInst }
+                .flatten()
+                .zip(blockOrder.map { state[it] }.flatten())
+                .filter { it.first is PhiInst }
             remapBlockPhis(state, phiMappings)
         }
 
         val unreachableBlock = BodyBlock("unreachable")
-        unreachableBlock.add(instructions.getUnreachable())
+        unreachableBlock.add(inst(cm) { unreachable() })
         method.add(unreachableBlock)
         unreachableBlocks.getOrPut(method, ::hashSetOf).add(unreachableBlock)
 
         // remap blocks of last iteration to actual method blocks
         val lastTerminator = state[state.terminatingBlock]
         val continueBlock = lastTerminator.terminator.successors[(!state.continueOnTrue).toInt()]
-        lastTerminator.replaceUsesOf(continueBlock, unreachableBlock)
+        lastTerminator.replaceSuccessorUsesOf(continueBlock, unreachableBlock)
         for (block in blockOrder.reversed()) {
             if (block == state.terminatingBlock) break
             val copy = state[block]
@@ -203,8 +199,8 @@ class LoopDeroller(override val cm: ClassManager) : LoopVisitor {
     }
 
     private fun getOpcodeConstant(opcode: CmpOpcode, constant: IntConstant) = when (opcode) {
-        is CmpOpcode.Le, is CmpOpcode.Ge -> constant
-        else -> values.getIntConstant(constant.value + 1) as IntConstant
+        CmpOpcode.LE, CmpOpcode.GE -> constant
+        else -> values.getInt(constant.value + 1) as IntConstant
     }
 
     private fun getConstantTripCount(loop: Loop): Int {
@@ -242,8 +238,8 @@ class LoopDeroller(override val cm: ClassManager) : LoopVisitor {
                 }
                 when {
                     updateValue != value -> return -1
-                    init.value > max.value && updated.opcode is BinaryOpcode.Sub -> updateSize
-                    init.value < max.value && updated.opcode is BinaryOpcode.Add -> updateSize
+                    init.value > max.value && updated.opcode == BinaryOpcode.SUB -> updateSize
+                    init.value < max.value && updated.opcode == BinaryOpcode.ADD -> updateSize
                     else -> return -1
                 }
             }
@@ -253,13 +249,14 @@ class LoopDeroller(override val cm: ClassManager) : LoopVisitor {
         return abs((max.value - init.value) / update.value)
     }
 
-    private fun getBlockOrder(loop: Loop): List<BasicBlock> {
+    private fun getBlockOrder(loop: Loop): List<BasicBlock> = with(ctx) {
         val latch = loop.latch
         val header = loop.header
         latch.removeSuccessor(header)
         loop.body.mapNotNull { it as? CatchBlock }.forEach { cb -> cb.allPredecessors.forEach { it.addSuccessor(cb) } }
         val order = GraphTraversal(loop).topologicalSort()
-        loop.body.mapNotNull { it as? CatchBlock }.forEach { cb -> cb.allPredecessors.forEach { it.removeSuccessor(cb) } }
+        loop.body.mapNotNull { it as? CatchBlock }
+            .forEach { cb -> cb.allPredecessors.forEach { it.removeSuccessor(cb) } }
         latch.addSuccessor(header)
         return order.map { it.block }
     }
@@ -269,7 +266,7 @@ class LoopDeroller(override val cm: ClassManager) : LoopVisitor {
         is CatchBlock -> CatchBlock("${block.name.name}$DEROLLED_POSTFIX", block.exception)
     }
 
-    private fun copyBlockConnections(state: State, original: BasicBlock) {
+    private fun copyBlockConnections(state: State, original: BasicBlock) = with(ctx) {
         val derolled = state[original]
         when (original) {
             state.header -> {
@@ -301,10 +298,10 @@ class LoopDeroller(override val cm: ClassManager) : LoopVisitor {
         successors.forEach { it.addPredecessor(derolled) }
     }
 
-    private fun copyBlockInstructions(state: State, original: BasicBlock) {
+    private fun copyBlockInstructions(state: State, original: BasicBlock) = with(ctx) {
         val newBlock = state[original]
         for (inst in original) {
-            val updated = inst.update(state.instMappings, inst.location)
+            val updated = inst.update(this, state.instMappings, inst.location)
             state[inst] = updated
             newBlock += updated
 
@@ -320,7 +317,7 @@ class LoopDeroller(override val cm: ClassManager) : LoopVisitor {
                 if (updated.predecessors.toSet().size == 1) {
                     val actual = previousMap.getValue(state.lastLatch)
                     val mappedActual = if (actual is NullConstant) {
-                        val newInst = instructions.getCast(updated.type, actual)
+                        val newInst = inst(cm) { actual `as` updated.type }
                         newBlock.insertBefore(updated, newInst)
                         newInst
                     } else actual
@@ -331,7 +328,7 @@ class LoopDeroller(override val cm: ClassManager) : LoopVisitor {
         }
     }
 
-    private fun remapBlockPhis(state: State, phiMappings: List<Pair<Instruction, Instruction>>) {
+    private fun remapBlockPhis(state: State, phiMappings: List<Pair<Instruction, Instruction>>) = with(ctx) {
         for ((orig, new) in phiMappings) {
             if (new is PhiInst) {
                 val bb = new.parent
@@ -342,8 +339,9 @@ class LoopDeroller(override val cm: ClassManager) : LoopVisitor {
                         incomings.values.first()
                     }
                     else -> {
-                        val newPhi = instructions.getPhi(new.type, incomings)
+                        val newPhi = inst(cm) { phi(new.type, incomings) }
                         bb.replace(new, newPhi)
+                        new.clearUses()
                         newPhi
                     }
                 }
@@ -353,27 +351,28 @@ class LoopDeroller(override val cm: ClassManager) : LoopVisitor {
         }
     }
 
-    private fun remapMethodPhis(phis: List<PhiInst>, newMappings: Map<PhiInst, Map<BasicBlock, Value>>) {
+    private fun remapMethodPhis(phis: List<PhiInst>, newMappings: Map<PhiInst, Map<BasicBlock, Value>>) = with(ctx) {
         for (phi in phis) {
-            val newPhi = instructions.getPhi(phi.type, newMappings.getValue(phi)).update(loc = phi.location)
+            val newPhi = inst(cm) { phi(phi.type, newMappings.getValue(phi)).update(ctx, loc = phi.location) }
 
             val bb = phi.parent
             bb.insertBefore(phi, newPhi)
             phi.replaceAllUsesWith(newPhi)
+            phi.clearUses()
             bb -= phi
         }
     }
 
-    private fun cleanupBody(method: Method, body: List<BasicBlock>) {
+    private fun cleanupBody(method: Method, body: List<BasicBlock>) = with(ctx) {
         for (block in body) {
             block.predecessors.toTypedArray().forEach { block.removePredecessor(it) }
             block.successors.toTypedArray().forEach { block.removeSuccessor(it) }
             method.remove(block)
         }
 
-        val loopThrowers = method.catchEntries.map { catch ->
-            catch to body.filter { it.handlers.contains(catch) }
-        }.toMap()
+        val loopThrowers = method.catchEntries.associateWith { catch ->
+            body.filter { it.handlers.contains(catch) }
+        }
 
         for ((catch, throwers) in loopThrowers) {
             throwers.forEach {

@@ -1,6 +1,6 @@
 package org.jetbrains.research.kex
 
-import com.abdullin.kthelper.assert.unreachable
+import org.jetbrains.research.kthelper.assert.unreachable
 import java.io.File
 import javax.annotation.processing.RoundEnvironment
 import javax.annotation.processing.SupportedAnnotationTypes
@@ -53,7 +53,7 @@ class InheritanceInfoProcessor : KexProcessor() {
 
     private fun processBaseTypeInfo(element: Element) {
         val annotation = element.getAnnotation(BaseType::class.java)
-                ?: unreachable { error("Element $element have no annotation BaseType") }
+            ?: unreachable { error("Element $element have no annotation BaseType") }
 
         val type = annotation.getProperty("type") as String
         bases[type] = element.fullName
@@ -61,7 +61,7 @@ class InheritanceInfoProcessor : KexProcessor() {
 
     private fun processRuntimeTypeInfo(element: Element) {
         val annotation = element.getAnnotation(InheritorOf::class.java)
-                ?: unreachable { error("Element $element have no annotation InheritorOf") }
+            ?: unreachable { error("Element $element have no annotation InheritorOf") }
 
         val type = annotation.getProperty("type") as String
         types.getOrPut(bases[type]!!, ::mutableMapOf)[element.simpleName.removeSuffix(type).toString()] = element.fullName

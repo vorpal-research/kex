@@ -1,0 +1,59 @@
+#parse("definitions.vm")
+import org.jetbrains.research.kex.smt.${solver.toLowerCase()}.${solver}SMTMemory
+import kotlin.math.min
+
+private val engine = ${solver}Engine
+
+#set($self = $Memory)
+@Suppress("UNCHECKED_CAST")
+class $self< in Index : $valexpr, Element : $valexpr >(
+    val inner: $Array< Element, Index >,
+    val ctor: ($valexpr) -> Element
+) : ${solver}SMTMemory() {
+    companion object {
+        fun < Index : $valexpr, Element : $valexpr > merge(
+            default: $self< Index, Element >,
+            cases: List< Pair< $Bool, $self< Index, Element >>>,
+        ): $self< Index, Element > {
+            val inners = cases.map { it.first to it.second.inner }
+            return $self(${Array}.merge(default.inner, inners), default.ctor)
+        }
+
+        inline fun < reified Index : $valexpr, reified Element : $valexpr > makeDefault(
+            ctx: $context,
+            name: String,
+            default: Element
+        ) = $self< Index, Element >(${Array}.makeDefault< Element, Index >(ctx, name, default)) {
+            ${valexpr}.wrap< Element >(it)
+        }
+
+        inline fun < reified Index : $valexpr, reified Element : $valexpr > makeFree(
+            ctx: $context,
+            name: String
+        ) = $self< Index, Element >(${Array}.makeFree< Element, Index >(ctx, name)) {
+            ${valexpr}.wrap< Element >(it)
+        }
+
+        inline fun < reified Index : $valexpr, reified Element : $valexpr > makeVar(
+            ctx: $context,
+            name: String
+        ) = $self< Index, Element >(${Array}.makeVar< Element, Index >(ctx, name)) {
+            ${valexpr}.wrap< Element >(it)
+        }
+    }
+
+    val ctx = inner.ctx
+
+    fun load(index: Index): Element {
+        return ctor(inner.load(index))
+    }
+
+    fun store(index: Index, element: Element): $self< Index, Element > {
+        val cases = arrayListOf< Pair< Index, Element >>()
+        cases.add(index to element)
+        return $self(inner.store(cases), ctor)
+    }
+
+    operator fun get(index: Index) = load(index)
+    operator fun set(index: Index, value: Element) = store(index, value)
+}

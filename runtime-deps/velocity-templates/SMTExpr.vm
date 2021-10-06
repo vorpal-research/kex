@@ -1,0 +1,680 @@
+#parse("definitions.vm")
+import org.jetbrains.research.kex.smt.${solver.toLowerCase()}.${solver}SMTExpr
+import kotlin.math.max
+
+private val engine = ${solver}Engine
+
+fun defaultAxiom(ctx: $context) = engine.makeBooleanConst(ctx, true)
+
+fun spliceAxioms(ctx: $context, lhv: $expr, rhv: $expr) = when {
+    engine.equality(ctx, lhv, defaultAxiom(ctx)) -> rhv
+    engine.equality(ctx, rhv, defaultAxiom(ctx)) -> lhv
+    else -> engine.conjunction(ctx, lhv, rhv)
+}
+
+fun spliceAxioms(ctx: $context, e0: $expr, e1: $expr, e2: $expr) = when {
+    engine.equality(ctx, e0, defaultAxiom(ctx)) -> spliceAxioms(ctx, e1, e2)
+    engine.equality(ctx, e1, defaultAxiom(ctx)) -> spliceAxioms(ctx, e0, e2)
+    engine.equality(ctx, e2, defaultAxiom(ctx)) -> spliceAxioms(ctx, e0, e1)
+    else -> engine.conjunction(ctx, e0, e1, e2)
+}
+
+fun spliceAxioms(ctx: $context, exprs: List< $expr >) = engine.conjunction(ctx, exprs)
+
+open class $valexpr : ${solver}SMTExpr {
+    companion object {
+        inline fun < reified Type : $valexpr> getStaticSort(ctx: $context) = when (Type::class) {
+#foreach($class in $exprClasses)
+            $class::class -> ${class}.getStaticSort(ctx)
+#end
+            $Array::class -> ${Array}.getStaticSort(ctx)
+            else -> unreachable { log.error("Trying to get static sort of non-simple SMTExpr of type ${ Type:: class }") }
+        }
+
+        inline fun < reified Type : $valexpr> forceCast(value: $valexpr) = when (Type::class) {
+#foreach($class in $exprClasses)
+            $class::class -> ${class}.forceCast(value)
+#end
+            else -> unreachable { log.error("Trying to forceCast to non-simple SMTExpr of type ${ Type:: class }") }
+        } as Type
+
+        inline fun < reified Type : $valexpr> wrap(value: $valexpr) = when (Type::class) {
+#foreach($class in $exprClasses)
+            $class::class -> ${class}(value)
+#end
+            $Array::class -> ${Array}< $valexpr, $valexpr >(value)
+            else -> unreachable { log.error("Trying to forceCast to non-simple SMTExpr of type ${ Type:: class }") }
+        } as Type
+
+        inline fun < reified Type : $valexpr > getStaticBitSize(ctx: $context) = when (Type::class) {
+#foreach($class in $exprClasses)
+            $class::class -> ${class}.getStaticBitSize(ctx)
+#end
+            else -> unreachable { log.error("Trying to get static bitsize of non-simple SMTExpr") }
+        }
+    }
+
+    val ctx: $context
+    val expr: $expr
+    val axiom: $expr
+
+    constructor(ctx: $context, expr: $expr, axiom: $expr) : super() {
+        this.ctx = ctx
+        this.expr = expr
+        this.axiom = axiom
+    }
+
+    constructor(ctx: $context, expr: $expr) : super() {
+        this.ctx = ctx
+        this.expr = expr
+        this.axiom = defaultAxiom(ctx)
+    }
+
+    constructor(other: $valexpr) : this(other.ctx, other.expr, other.axiom)
+
+    override fun toString() = engine.toString(ctx, expr)
+    override fun hashCode() = defaultHashCode(engine.hash(ctx, expr), engine.hash(ctx, axiom))
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other?.javaClass != this.javaClass) return false
+        other as $valexpr
+        return engine.equality(ctx, expr, other.expr) and engine.equality(ctx, expr, other.axiom)
+    }
+
+    fun name() = engine.name(ctx, expr)
+    fun getSort() = engine.getSort(ctx, expr)
+
+    fun asAxiom() = spliceAxioms(ctx, expr, axiom)
+    open fun withAxiom(ax: $valexpr) = $valexpr(ctx, expr, ax.asAxiom())
+
+    open fun simplify() = $valexpr(ctx, engine.simplify(ctx, expr), engine.simplify(ctx, axiom))
+
+#set($opcodes = ["ADD", "SUB", "MUL", "DIVIDE", "MOD"])
+#foreach($opcode in $opcodes)
+#* @vtlvariable name="opcode" type="java.lang.String" *#
+    infix fun ${opcode.toLowerCase()}(other: $valexpr): $valexpr = when {
+#foreach($class in $numClasses)
+            this is $class && other is $class -> ${opcode.toLowerCase()}(other)
+#end
+        else -> unreachable { log.error("Invalid operands of `${opcode.toLowerCase()}`: ${ this } and ${ other }") }
+    }
+#end
+#set($opcodes = ["SHL", "SHR", "ASHR"])
+#foreach($opcode in $opcodes)
+    infix fun ${opcode.toLowerCase()}(other: $valexpr): $valexpr = when {
+        this is $Bitvector && other is $Bitvector -> ${opcode.toLowerCase()}(other)
+        else -> unreachable { log.error("Invalid operands of `${opcode.toLowerCase()}`: ${ this } and ${ other }") }
+    }
+#end
+
+#set($opcodes = ["EQ", "NEQ"])
+#foreach($opcode in $opcodes)
+    infix fun ${opcode.toLowerCase()}(other: $valexpr): $Bool = when {
+    #foreach($class in $exprClasses)
+    this is $class && other is $class -> ${opcode.toLowerCase()}(other)
+    #end
+        else -> unreachable { log.error("Invalid operands of `${opcode.toLowerCase()}`: ${ this } and ${ other }") }
+    }
+#end
+
+#set($opcodes = ["GT", "GE", "LT", "LE"])
+#foreach($opcode in $opcodes)
+infix fun ${opcode.toLowerCase()}(other: $valexpr): $Bool = when {
+    #foreach($class in $numClasses)
+    this is $class && other is $class -> ${opcode.toLowerCase()}(other)
+    #end
+else -> unreachable { log.error("Invalid operands of `${opcode.toLowerCase()}`: ${ this } and ${ other }") }
+}
+#end
+
+#set($opcodes = ["AND", "OR", "XOR"])
+#foreach($opcode in $opcodes)
+    infix fun ${opcode.toLowerCase()}(other: $valexpr): $valexpr = when {
+        this is $Bool && other is $Bool -> ${opcode.toLowerCase()}(other)
+        this is $Bitvector && other is $Bitvector -> ${opcode.toLowerCase()}(other)
+        else -> unreachable { log.error("Invalid operands of `${opcode.toLowerCase()}`: ${ this } and ${ other }") }
+    }
+#end
+    operator fun plus(other: $valexpr) = add(other)
+    operator fun minus(other: $valexpr) = sub(other)
+    operator fun times(other: $valexpr) = mul(other)
+    operator fun div(other: $valexpr) = divide(other)
+    operator fun rem(other: $valexpr) = mod(other)
+}
+
+#macro(constructors $class)
+#* @vtlvariable name="class" type="java.lang.String" *#
+    constructor(ctx: $context, expr: $expr) : super(ctx, expr) {
+        ktassert(engine.is$class(ctx, expr)) { log.error("$class created from non-${class.toLowerCase()} expr") }
+    }
+
+    constructor(ctx: $context, expr: $expr, axiom: $expr) : super(ctx, expr, axiom) {
+        ktassert(engine.is$class(ctx, expr)) { log.error("$class created from non-${class.toLowerCase()} expr") }
+    }
+
+    constructor(other: $valexpr) : super(other) {
+        ktassert(engine.is$class(ctx, expr)) { log.error("$class created from non-${class.toLowerCase()} expr") }
+    }
+#end
+
+#macro(makeVars $name $fresh)
+        fun make${name}Var(ctx: $context, name: String) = $self(ctx, engine.makeVar(ctx, getStaticSort(ctx), name, $fresh))
+        fun make${name}Var(ctx: $context, name: String, axiomize: ($self) -> $Bool): $self {
+            val new = $self(ctx, engine.makeVar(ctx, getStaticSort(ctx), name, $fresh))
+            val axiom = axiomize(new)
+            return new.withAxiom(axiom)
+        }
+#end
+
+#macro(generateStatics $self $basetype)
+        fun makeConst(ctx: $context, value: $basetype) = $self(ctx, engine.make${basetype}Const(ctx, value))
+#makeVars("", false)
+#makeVars("Fresh", true)
+#end
+
+#macro(generateClass $fullname $simplename $modifiers $parent $staticSort $basetype)
+#set($self = $fullname)
+$modifiers class $fullname : $parent {
+    companion object {
+        fun getStaticBitSize(ctx: $context) = engine.getSortBitSize(ctx, getStaticSort(ctx))
+        fun getStaticSort(ctx: $context) = $staticSort
+#generateStatics($fullname, $basetype)
+
+        fun forceCast(value: $valexpr) = value.to${simplename}()
+    }
+
+#constructors($simplename)
+#end
+
+#generateClass($Bool, "Bool", "", $valexpr, "engine.getBoolSort(ctx)", "Boolean")
+    override fun withAxiom(ax: $valexpr) = $self(ctx, expr, spliceAxioms(ctx, axiom, ax.expr, ax.axiom))
+
+    override fun simplify() = $self(super.simplify())
+
+#set($opcodes = ["EQ", "NEQ", "AND", "OR", "XOR", "IMPLIES", "IFF"])
+#foreach($opcode in $opcodes)
+    infix fun ${opcode.toLowerCase()}(other: $self) =
+    $self(ctx, engine.binary(ctx, SMTEngine.Opcode.${opcode}, expr, other.expr), spliceAxioms(ctx, axiom, other.axiom))
+#end
+    operator fun not(): $self = $self(ctx, engine.negate(ctx, expr), axiom)
+}
+
+#generateClass($Bitvector, "BV", "open", $valexpr, "engine.getBVSort(ctx, SMTEngine.WORD * 8)", "Long")
+    override fun withAxiom(ax: $valexpr) = $self(ctx, expr, spliceAxioms(ctx, axiom, ax.expr, ax.axiom))
+
+    fun getBitSize() = engine.bvBitSize(ctx, getSort())
+    open fun extract(high: Int, low: Int) = $self(ctx, engine.extract(ctx, expr, high, low), axiom)
+
+    open fun binary(opcode: SMTEngine.Opcode, other: $self): $valexpr {
+        val maxsize = max(getBitSize(), other.getBitSize())
+        val lhv = engine.sext(ctx, maxsize, expr)
+        val rhv = engine.sext(ctx, maxsize, other.expr)
+
+        val nexpr = engine.binary(ctx, opcode, lhv, rhv)
+        val nax = spliceAxioms(ctx, axiom, other.axiom)
+        return $valexpr(ctx, nexpr, nax)
+    }
+
+#set($opcodes = ["EQ", "NEQ", "GT", "GE", "LT", "LE"])
+#foreach($opcode in $opcodes)
+    infix fun ${opcode.toLowerCase()}(other: $self) = binary(SMTEngine.Opcode.$opcode, other).toBool()
+#end
+#set($opcodes = ["ADD", "SUB", "MUL", "DIVIDE", "MOD", "SHL", "SHR", "ASHR", "AND", "OR", "XOR"])
+#foreach($opcode in $opcodes)
+    infix fun ${opcode.toLowerCase()}(other: $self) = binary(SMTEngine.Opcode.$opcode, other).toBV()
+#end
+
+#set($opcodes = ["ADD", "SUB", "MUL", "DIVIDE"])
+#foreach($opcode in $opcodes)
+    infix fun ${opcode.toLowerCase()}(other: Int) =
+        binary(SMTEngine.Opcode.$opcode, $self(ctx, engine.makeNumericConst(ctx, engine.getBVSort(ctx, getBitSize()), other.toLong()))).toBV()
+#end
+
+    operator fun plus(other: $self) = add(other)
+    operator fun plus(other: Int) = add(other)
+    operator fun minus(other: $self) = sub(other)
+    operator fun minus(other: Int) = sub(other)
+    operator fun times(other: $self) = mul(other)
+    operator fun times(other: Int) = mul(other)
+    operator fun div(other: $self) = divide(other)
+    operator fun div(other: Int) = divide(other)
+    operator fun rem(other: $self) = mod(other)
+    operator fun not(): $self = $self(ctx, engine.negate(ctx, expr), axiom)
+}
+
+#set($widths = [32, 64])
+#foreach($width in $widths)
+class $self$width : $self {
+#if($width == 32)
+    #set($base = "Int")
+#else
+    #set($base = "Long")
+#end
+    companion object {
+        const val BITSIZE = $width
+        @Suppress("UNUSED_PARAMETER")
+        fun getStaticBitSize(ctx: $context) = BITSIZE
+
+        fun getStaticSort(ctx: $context) = engine.getBVSort(ctx, BITSIZE)
+#generateStatics("$self$width", $base)
+
+        fun forceCast(value: $valexpr) = value.toBV$width()
+    }
+
+    #constructors("BV")
+    override fun extract(high: Int, low: Int) = $self(ctx, engine.extract(ctx, expr, high, low), axiom)
+    override fun withAxiom(ax: $valexpr) = $self$width(ctx, expr, spliceAxioms(ctx, axiom, ax.expr, ax.axiom))
+    override fun binary(opcode: SMTEngine.Opcode, other: $self) =
+        if (other is $self$width) {
+            $valexpr(ctx, engine.binary(ctx, opcode, expr, other.expr), spliceAxioms(ctx, axiom, other.axiom))
+        } else super.binary(opcode, other)
+}
+
+#end
+
+#set($floats = ["Float", "Double"])
+#foreach($float in $floats)
+#generateClass("$solver$float", $float, "", $valexpr, "engine.get${float}Sort(ctx)", $float)
+    override fun withAxiom(ax: $valexpr) = $self(ctx, expr, spliceAxioms(ctx, axiom, ax.expr, ax.axiom))
+
+    fun getEBitSize() = engine.floatEBitSize(ctx, getSort())
+    fun getSBitSize() = engine.floatSBitSize(ctx, getSort())
+
+    fun binary(opcode: SMTEngine.Opcode, other: $self): $valexpr {
+        val nexpr = engine.binary(ctx, opcode, expr, other.expr)
+        val nax = spliceAxioms(ctx, axiom, other.axiom)
+        return $valexpr(ctx, nexpr, nax)
+    }
+
+#set($opcodes = ["EQ", "NEQ", "GT", "GE", "LT", "LE"])
+#foreach($opcode in $opcodes)
+    infix fun ${opcode.toLowerCase()}(other: $self) = binary(SMTEngine.Opcode.$opcode, other).toBool()
+#end
+#set($opcodes = ["ADD", "SUB", "MUL", "DIVIDE", "MOD"])
+#foreach($opcode in $opcodes)
+    infix fun ${opcode.toLowerCase()}(other: $self) = binary(SMTEngine.Opcode.$opcode, other).to$float()
+#end
+
+    operator fun plus(other: $self) = add(other)
+    operator fun minus(other: $self) = sub(other)
+    operator fun times(other: $self) = mul(other)
+    operator fun div(other: $self) = divide(other)
+    operator fun rem(other: $self) = mod(other)
+    operator fun not(): $self = $self(ctx, engine.negate(ctx, expr), axiom)
+}
+
+#end
+
+#if($generateString)
+#set($self = $String)
+class $String : $valexpr {
+    #constructors("String")
+
+    companion object {
+        fun getStaticSort(ctx: $context) = engine.getStringSort(ctx)
+        fun getStaticBitSize(ctx: $context) = engine.getSortBitSize(ctx, getStaticSort(ctx))
+#generateStatics($self, "String")
+
+        fun parseBool(ctx: $context, str: $self) = str eq makeConst(ctx, "true")
+        fun parseInt(ctx: $context, str: $self) = ${Bitvector32}(ctx, engine.string2bv(ctx, str.expr, ${Bitvector32}.getStaticSort(ctx)))
+        fun parseLong(ctx: $context, str: $self) = ${Bitvector64}(ctx, engine.string2bv(ctx, str.expr, ${Bitvector64}.getStaticSort(ctx)))
+        fun parseFloat(ctx: $context, str: $self) = ${Float}(ctx, engine.string2float(ctx, str.expr))
+        fun parseDouble(ctx: $context, str: $self) = ${Double}(ctx, engine.string2double(ctx, str.expr))
+
+        fun fromBool(ctx: $context, value: $Bool) = ${self}(
+                ctx,
+                engine.ite(ctx, value.expr, engine.makeStringConst(ctx, "true"), engine.makeStringConst(ctx, "false"))
+        )
+        fun fromChar(ctx: $context, value: $Bitvector32) = ${self}(ctx, engine.char2string(ctx, value.expr))
+        fun fromInt(ctx: $context, value: $Bitvector32) = ${self}(ctx, engine.bv2string(ctx, value.expr))
+        fun fromLong(ctx: $context, value: $Bitvector64) = ${self}(ctx, engine.bv2string(ctx, value.expr))
+        fun fromFloat(ctx: $context, value: $Float) = ${self}(ctx, engine.float2string(ctx, value.expr))
+        fun fromDouble(ctx: $context, value: $Double) = ${self}(ctx, engine.double2string(ctx, value.expr))
+
+        fun forceCast(value: $valexpr) = when (value) {
+            is $Bool -> String_.fromBool(value.ctx, value)
+            is $Bitvector -> String_.fromInt(value.ctx, ${Bitvector32}.forceCast(value))
+            is $Bitvector32 -> String_.fromInt(value.ctx, value)
+            is $Bitvector64 -> String_.fromLong(value.ctx, value)
+            is $Float -> String_.fromFloat(value.ctx, value)
+            is $Double -> String_.fromDouble(value.ctx, value)
+            else -> unreachable { log.error("Unknown type in string parse") }
+        }
+    }
+
+    override fun withAxiom(ax: $valexpr) = $self(ctx, expr, spliceAxioms(ctx, axiom, ax.expr, ax.axiom))
+
+    fun binary(opcode: SMTEngine.Opcode, other: $self): $valexpr {
+        val nexpr = engine.binary(ctx, opcode, expr, other.expr)
+        val nax = spliceAxioms(ctx, axiom, other.axiom)
+        return $valexpr(ctx, nexpr, nax)
+    }
+
+    infix fun eq(other: $self) = binary(SMTEngine.Opcode.EQ, other).toBool()
+    infix fun neq(other: $self) = binary(SMTEngine.Opcode.NEQ, other).toBool()
+    fun length() = ${Bitvector}(ctx, engine.length(ctx, expr))
+    fun concat(rhv: $String) = ${String}(ctx, engine.concat(ctx, expr, rhv.expr), spliceAxioms(ctx, axiom, rhv.axiom))
+    operator fun get(index: $Bitvector32) = ${Bitvector}(ctx, engine.nths(ctx, expr, index.expr))
+    operator fun plus(rhv: $String) = concat(rhv)
+    fun startsWith(prefix: $String) = ${Bool}(ctx, engine.prefixOf(ctx, expr, prefix.expr))
+    fun endsWith(suffix: $String) = ${Bool}(ctx, engine.suffixOf(ctx, expr, suffix.expr))
+    fun indexOf(subString: $String, offset: $Bitvector32) = ${Bitvector}(ctx, engine.indexOf(ctx, expr, subString.expr, offset.expr))
+    fun substring(start: $Bitvector32, offset: $Bitvector32) = ${String}(ctx, engine.extract(ctx, expr, start.expr, offset.expr))
+    fun contains(subString: $String) = ${Bool}(ctx, engine.contains(ctx, expr, subString.expr))
+}
+#end
+
+#set($self = $Array)
+class $self< Element : $valexpr, in Index : $valexpr > : $valexpr {
+    companion object {
+        fun getStaticSort(ctx: $context) = engine.getArraySort(ctx, ${Bitvector32}.getStaticSort(ctx), ${Bitvector64}.getStaticSort(ctx))
+
+        fun < Element : $valexpr, Index : $valexpr > merge(default: $self< Element, Index >,
+            cases: List< Pair< $Bool, $self< Element, Index >>>): $self< Element, Index > {
+            return cases.fold(default) { acc, pair ->
+                val ctx = pair.first.ctx
+                $self(ctx, engine.ite(ctx, pair.first.expr, pair.second.expr, acc.expr), spliceAxioms(ctx, acc.axiom, pair.second.axiom))
+            }
+        }
+
+        @Suppress("UNUSED_PARAMETER")
+        inline fun < Element : $valexpr, reified Index : $valexpr > makeDefault(ctx: $context, name: String, default: Element) =
+            $self< Element, Index >(ctx, ${solver}Engine.makeConstArray(ctx, ${valexpr}.getStaticSort< Index >(ctx), default.expr))
+
+        inline fun < reified Element : $valexpr, reified Index : $valexpr > makeFree(ctx: $context, name: String): $self< Element, Index > {
+            val sort = ${solver}Engine.getArraySort(ctx, ${valexpr}.getStaticSort< Index >(ctx), ${valexpr}.getStaticSort< Element >(ctx))
+            return $self< Element, Index >(ctx, ${solver}Engine.makeVar(ctx, sort, name, true))
+        }
+
+
+        inline fun < reified Element : $valexpr, reified Index : $valexpr > makeFree(ctx: $context, name: String, elemSort: $sort): $self< Element, Index > {
+            val sort = ${solver}Engine.getArraySort(ctx, ${valexpr}.getStaticSort< Index >(ctx), elemSort)
+            return $self< Element, Index >(ctx, ${solver}Engine.makeVar(ctx, sort, name, true))
+        }
+
+        inline fun < reified Element : $valexpr, reified Index : $valexpr > makeVar(ctx: $context, name: String): $self< Element, Index > {
+            val sort = ${solver}Engine.getArraySort(ctx, ${valexpr}.getStaticSort< Index >(ctx), ${valexpr}.getStaticSort< Element >(ctx))
+            return $self< Element, Index >(ctx, ${solver}Engine.makeVar(ctx, sort, name, false))
+        }
+
+        inline fun < reified Element : $valexpr, reified Index : $valexpr > makeVar(ctx: $context, name: String, elemSort: $sort): $self< Element, Index > {
+            val sort = ${solver}Engine.getArraySort(ctx, ${valexpr}.getStaticSort< Index >(ctx), elemSort)
+            return $self< Element, Index >(ctx, ${solver}Engine.makeVar(ctx, sort, name, false))
+        }
+    }
+
+    #constructors("Array")
+
+    fun load(index: Index) = $valexpr(ctx, engine.load(ctx, expr, index.expr))
+
+    fun store(index: Index, value: Element): $self< Element, Index > =
+        $self(ctx, engine.store(ctx, expr, index.expr, value.expr))
+
+    fun store(cases: List< Pair< Index, Element >>): $self< Element, Index > {
+        val base: $expr = cases.fold(expr) { expr, pair -> engine.store(ctx, expr, pair.first.expr, pair.second.expr) }
+        return $self(ctx, base)
+    }
+
+    operator fun get(index: Index) = load(index)
+    operator fun set(index: Index, value: Element) = store(index, value)
+
+    fun < Element : $valexpr, Index : $valexpr > withType() = $self< Element, Index >(this)
+}
+
+#set($self = $Function)
+class $self {
+    val ctx: $context
+    val decl: $function
+
+    constructor(ctx: $context, name: String, args: List<$sort>, returnType: $sort) {
+        this.ctx = ctx
+        decl = engine.makeFunction(ctx, name, returnType, args)
+    }
+
+    fun apply(vararg args: $valexpr): $valexpr = $valexpr(ctx, engine.apply(ctx, decl, args.map { it.expr }))
+
+    inline fun < reified T : $valexpr > applyAs(vararg args: $valexpr): T =
+            ${valexpr}.forceCast< T >(apply(*args))
+}
+
+fun ${valexpr}.convert(sort: $sort) = when {
+    engine.isBoolSort(ctx, sort) -> toBool()
+    engine.isBVSort(ctx, sort) -> toBV(sort)
+#foreach($float in $floats)
+    engine.is${float}Sort(ctx, sort) -> to$float()
+#end
+    else -> unreachable { log.error("Trying to convert value to unknown sort") }
+}
+
+fun ${valexpr}.toBool(): $Bool {
+    val newExpr = when {
+        engine.isBool(ctx, expr) -> expr
+        engine.isBV(ctx, expr) -> engine.bv2bool(ctx, expr)
+        else -> unreachable { log.debug("Unexpected SMT expr type in cast") }
+    }
+    return $Bool(ctx, newExpr, axiom)
+}
+
+fun ${valexpr}.toBV32() = toBV(32) as? $Bitvector32 ?: unreachable { log.error("Cast failure") }
+fun ${valexpr}.toBV64() = toBV(64) as? $Bitvector64 ?: unreachable { log.error("Cast failure") }
+fun ${valexpr}.toBV(width: Int) = toBV(engine.getBVSort(ctx, width))
+
+fun ${valexpr}.toBV(sort: $sort): $Bitvector {
+    val newExpr = when {
+        engine.isBool(ctx, expr) -> engine.bool2bv(ctx, expr, sort)
+        engine.isBV(ctx, expr) -> engine.bv2bv(ctx, expr, sort)
+        engine.isFP(ctx, expr) -> {
+            val bv = engine.float2IEEEbv(ctx, expr, sort)
+            engine.bv2bv(ctx, bv, sort)
+        }
+        else -> unreachable { log.debug("Unexpected SMT expr type in cast") }
+    }
+    return when (engine.bvBitSize(ctx, sort)) {
+        32 -> $Bitvector32(ctx, newExpr, axiom)
+        64 -> $Bitvector64(ctx, newExpr, axiom)
+        else -> $Bitvector(ctx, newExpr, axiom)
+    }
+}
+
+fun ${valexpr}.toBV(): $Bitvector {
+    val newExpr = when {
+        engine.isBool(ctx, expr) -> engine.bool2bv(ctx, expr, engine.getBVSort(ctx, SMTEngine.WORD))
+        engine.isBV(ctx, expr) -> this.expr
+        engine.isFloat(ctx, expr) -> engine.float2bv(ctx, expr, engine.getBVSort(ctx, SMTEngine.WORD))
+        engine.isDouble(ctx, expr) -> engine.float2bv(ctx, expr, engine.getBVSort(ctx, SMTEngine.DWORD))
+        else -> unreachable { log.debug("Unexpected SMT expr type in cast") }
+    }
+    return $Bitvector(ctx, newExpr, axiom)
+}
+
+fun ${valexpr}.toFloat(): $Float {
+    val newExpr = when {
+        engine.isBV(ctx, expr) -> {
+            val bv32expr = this.toBV32()
+            engine.bvIEEE2float(ctx, bv32expr.expr, engine.getFloatSort(ctx))
+        }
+        engine.isFloat(ctx, expr) -> this.expr
+        engine.isDouble(ctx, expr) -> engine.float2float(ctx, expr, engine.getFloatSort(ctx))
+        else -> unreachable { log.debug("Unexpected SMT expr type in cast") }
+    }
+    return $Float(ctx, newExpr, axiom)
+}
+
+fun ${valexpr}.toDouble(): $Double {
+    val newExpr = when {
+        engine.isBV(ctx, expr) -> {
+            val bv64expr = this.toBV64()
+            engine.bvIEEE2float(ctx, bv64expr.expr, engine.getDoubleSort(ctx))
+        }
+        engine.isFloat(ctx, expr) -> engine.float2float(ctx, expr, engine.getDoubleSort(ctx))
+        engine.isDouble(ctx, expr) -> this.expr
+        else -> unreachable { log.debug("Unexpected SMT expr type in cast") }
+    }
+    return $Double(ctx, newExpr, axiom)
+}
+
+fun ${valexpr}.convertToLong() = convertToBV64()
+fun ${valexpr}.convertToInt() = convertToBV32()
+
+fun ${valexpr}.convertToBV32() = convertToBV(32) as? $Bitvector32 ?: unreachable { log.error("Cast failure") }
+fun ${valexpr}.convertToBV64() = convertToBV(64) as? $Bitvector64 ?: unreachable { log.error("Cast failure") }
+fun ${valexpr}.convertToBV(width: Int) = convertToBV(engine.getBVSort(ctx, width))
+
+fun ${valexpr}.convertToBV(sort: $sort): $Bitvector {
+    val newExpr = when {
+        engine.isBool(ctx, expr) -> engine.bool2bv(ctx, expr, sort)
+        engine.isBV(ctx, expr) -> engine.bv2bv(ctx, expr, sort)
+        engine.isFP(ctx, expr) -> engine.float2bv(ctx, expr, sort)
+        else -> unreachable { log.debug("Unexpected SMT expr type in cast") }
+    }
+    return when (engine.bvBitSize(ctx, sort)) {
+        32 -> $Bitvector32(ctx, newExpr, axiom)
+        64 -> $Bitvector64(ctx, newExpr, axiom)
+        else -> $Bitvector(ctx, newExpr, axiom)
+    }
+}
+
+fun ${valexpr}.convertToFloat(): $Float {
+    val newExpr = when {
+        engine.isBV(ctx, expr) -> engine.bv2float(ctx, expr, engine.getFloatSort(ctx))
+        engine.isFloat(ctx, expr) -> this.expr
+        engine.isDouble(ctx, expr) -> engine.float2float(ctx, expr, engine.getFloatSort(ctx))
+        else -> unreachable { log.debug("Unexpected SMT expr type in cast") }
+    }
+    return $Float(ctx, newExpr, axiom)
+}
+
+fun ${valexpr}.convertToDouble(): $Double {
+    val newExpr = when {
+        engine.isBV(ctx, expr) -> engine.bv2float(ctx, expr, engine.getDoubleSort(ctx))
+        engine.isFloat(ctx, expr) -> engine.float2float(ctx, expr, engine.getDoubleSort(ctx))
+        engine.isDouble(ctx, expr) -> this.expr
+        else -> unreachable { log.debug("Unexpected SMT expr type in cast") }
+    }
+    return $Double(ctx, newExpr, axiom)
+}
+
+class Ifer {
+    inner class Thener(val cond: $Bool) {
+        inner class Elser< out T : $valexpr >(val cond: $Bool, val `true`: T) {
+            fun engine() = engine
+
+            inline fun < reified T : $valexpr > `else`(`false`: T): T {
+                val ctx = cond.ctx
+                val expr = engine().ite(ctx, cond.expr, `true`.expr, `false`.expr)
+                val axiom = spliceAxioms(ctx, `true`.axiom, `false`.axiom)
+                return ${valexpr}.forceCast< T >($valexpr(ctx, expr, axiom))
+            }
+            inline fun < reified T : $valexpr > else_(`false`: () -> T) = `else`(`false`())
+        }
+
+        inline fun < reified T : $valexpr > then(`true`: T) = Elser(cond, `true`)
+        inline fun < reified T : $valexpr > then_(`true`: () -> T) = then(`true`())
+    }
+
+    operator fun invoke(cond: $Bool) = Thener(cond)
+}
+
+fun `if`(cond: $Bool) = Ifer()(cond)
+fun if_(cond: () -> $Bool) = `if`(cond())
+
+fun forall(ctx: $context, sortGen: () -> List< $valexpr >, func: (args: List< $valexpr >) -> $Bool): $Bool {
+    val sorts = sortGen().map{ it.getSort() }
+    val axioms = arrayListOf< $expr >()
+
+    val eret = engine.forAll(ctx, sorts, { exprs: List< $expr > ->
+        val ret = func.invoke(exprs.map{ $valexpr(ctx, it) })
+        axioms.add(ret.axiom)
+        ret.expr
+    })
+    return $Bool(ctx, eret, spliceAxioms(ctx, axioms))
+}
+
+fun < Res : $valexpr > forall(ctx: $context, sortGen: () -> List< $valexpr >,
+                        func: (args: List< $valexpr >) -> Res, patternGen: (args: List< $valexpr >) -> List< $valexpr >): $Bool {
+    val sorts = sortGen().map{ it.getSort() }
+    val axioms = arrayListOf< $expr >()
+
+    val eret = engine.forAll(ctx,
+            sorts,
+            { exprs: List< $expr > ->
+                val ret = func.invoke(exprs.map{ $valexpr(ctx, it) })
+                axioms.add(ret.axiom)
+                ret.expr
+            },
+            { exprs: List< $expr > ->
+                val ret = patternGen.invoke(exprs.map{ $valexpr(ctx, it) })
+                ret.map { engine.makePattern(ctx, it.expr) }
+            }
+    )
+    return $Bool(ctx, eret, spliceAxioms(ctx, axioms))
+}
+
+fun exists(ctx: $context, sortGen: () -> List< $valexpr >, func: (args: List< $valexpr >) -> $Bool): $Bool {
+    val sorts = sortGen().map{ it.getSort() }
+    val axioms = arrayListOf< $expr >()
+
+    val eret = engine.exists(ctx, sorts, { exprs: List< $expr > ->
+        val ret = func.invoke(exprs.map{ $valexpr(ctx, it) })
+        axioms.add(ret.axiom)
+        ret.expr
+    })
+    return $Bool(ctx, eret, spliceAxioms(ctx, axioms))
+}
+
+fun < Res : $valexpr > exists(ctx: $context, sortGen: () -> List< $valexpr >,
+    func: (args: List< $valexpr >) -> Res, patternGen: (args: List< $valexpr >) -> List< $valexpr >): $Bool {
+    val sorts = sortGen().map{ it.getSort() }
+    val axioms = arrayListOf< $expr >()
+
+    val eret = engine.exists(ctx,
+        sorts,
+        { exprs: List< $expr > ->
+            val ret = func.invoke(exprs.map{ $valexpr(ctx, it) })
+            axioms.add(ret.axiom)
+            ret.expr
+        },
+        { exprs: List< $expr > ->
+            val ret = patternGen.invoke(exprs.map{ $valexpr(ctx, it) })
+            ret.map { engine.makePattern(ctx, it.expr) }
+        }
+    )
+    return $Bool(ctx, eret, spliceAxioms(ctx, axioms))
+}
+
+fun lambda(
+    ctx: $context,
+    elementSortGen: () -> $valexpr,
+    sortGen: () -> List< $valexpr >,
+    func: (args: List< $valexpr >) -> $valexpr
+): $valexpr {
+    val elementSort = elementSortGen().getSort()
+    val sorts = sortGen().map{ it.getSort() }
+    val axioms = arrayListOf< $expr >()
+
+    val eret = engine.lambda(ctx, elementSort, sorts, { exprs: List< $expr > ->
+        val ret = func.invoke(exprs.map{ $valexpr(ctx, it) })
+        axioms.add(ret.axiom)
+        ret.expr
+    })
+    return $valexpr(ctx, eret, spliceAxioms(ctx, axioms))
+}
+
+
+inline fun < reified BV : $Bitvector > bvStaticBitSize(ctx: $context) = when (BV::class) {
+    $Bitvector32::class -> ${Bitvector32}.getStaticBitSize(ctx)
+    $Bitvector64::class -> ${Bitvector64}.getStaticBitSize(ctx)
+    else -> ${Bitvector}.getStaticBitSize(ctx)
+}
+
+inline fun < reified BV : $Bitvector > bvStaticSort(ctx: $context) = when (BV::class) {
+    $Bitvector32::class -> ${Bitvector32}.getStaticSort(ctx)
+    $Bitvector64::class -> ${Bitvector64}.getStaticSort(ctx)
+    else -> ${Bitvector}.getStaticSort(ctx)
+}
+
+inline fun < reified BV : $Bitvector > bvMakeConst(ctx: $context, value: Int) = when (BV::class) {
+    $Bitvector32::class -> ${Bitvector32}.makeConst(ctx, value)
+    $Bitvector64::class -> ${Bitvector64}.makeConst(ctx, value.toLong())
+    else -> ${Bitvector}.makeConst(ctx, value.toLong())
+}

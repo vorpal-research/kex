@@ -2,23 +2,14 @@
 
 package org.jetbrains.research.kex.test.debug
 
+import org.jetbrains.research.kex.intrinsics.CollectionIntrinsics
+
 class BasicTests {
-
-    open class A {
-        open fun value() = 10
-    }
-
-    class B(val a: Int) : A() {
-        override fun value(): Int = a
-    }
-
-    class W(val a: A)
-
-    fun test(w: W) {
-        if (w.a is B) {
-            if (w.a.value() > 10) {
-                println("a")
-            }
+    fun test(x: String) {
+        val arr = CollectionIntrinsics.generateCharArray(10) { 'a' + it }
+        val s = String(arr)
+        if (s[3] == 'c') {
+            error("")
         }
     }
 }

@@ -1,8 +1,6 @@
 package org.jetbrains.research.kex.state.transformer
 
-import com.abdullin.kthelper.*
-import com.abdullin.kthelper.assert.unreachable
-import com.abdullin.kthelper.logging.log
+import org.jetbrains.research.kex.ktype.*
 import org.jetbrains.research.kex.state.PredicateState
 import org.jetbrains.research.kex.state.predicate.EqualityPredicate
 import org.jetbrains.research.kex.state.predicate.InequalityPredicate
@@ -10,6 +8,9 @@ import org.jetbrains.research.kex.state.predicate.Predicate
 import org.jetbrains.research.kex.state.term.*
 import org.jetbrains.research.kfg.ir.value.instruction.BinaryOpcode
 import org.jetbrains.research.kfg.ir.value.instruction.CmpOpcode
+import org.jetbrains.research.kthelper.*
+import org.jetbrains.research.kthelper.assert.unreachable
+import org.jetbrains.research.kthelper.logging.log
 import kotlin.math.abs
 
 object ConstantPropagator : Transformer<ConstantPropagator> {
@@ -29,75 +30,142 @@ object ConstantPropagator : Transformer<ConstantPropagator> {
         val rhv = getConstantValue(term.rhv) ?: return term
         return term {
             when (term.opcode) {
-                is BinaryOpcode.Add -> {
-                    val (nlhv, nrhv) = toCompatibleTypes(lhv, rhv)
-                    const(nlhv + nrhv)
+                BinaryOpcode.ADD -> {
+                    val (nLhv, nRhv) = toCompatibleTypes(lhv, rhv)
+                    const(nLhv + nRhv)
                 }
-                is BinaryOpcode.Sub -> {
-                    val (nlhv, nrhv) = toCompatibleTypes(lhv, rhv)
-                    const(nlhv - nrhv)
+                BinaryOpcode.SUB -> {
+                    val (nLhv, nRhv) = toCompatibleTypes(lhv, rhv)
+                    const(nLhv - nRhv)
                 }
-                is BinaryOpcode.Mul -> {
-                    val (nlhv, nrhv) = toCompatibleTypes(lhv, rhv)
-                    const(nlhv * nrhv)
+                BinaryOpcode.MUL -> {
+                    val (nLhv, nRhv) = toCompatibleTypes(lhv, rhv)
+                    const(nLhv * nRhv)
                 }
-                is BinaryOpcode.Div -> {
-                    val (nlhv, nrhv) = toCompatibleTypes(lhv, rhv)
-                    const(nlhv / nrhv)
+                BinaryOpcode.DIV -> {
+                    val (nLhv, nRhv) = toCompatibleTypes(lhv, rhv)
+                    const(nLhv / nRhv)
                 }
-                is BinaryOpcode.Rem -> {
-                    val (nlhv, nrhv) = toCompatibleTypes(lhv, rhv)
-                    const(nlhv % nrhv)
+                BinaryOpcode.REM -> {
+                    val (nLhv, nRhv) = toCompatibleTypes(lhv, rhv)
+                    const(nLhv % nRhv)
                 }
-                is BinaryOpcode.Shl -> const(lhv.shl(rhv as Int))
-                is BinaryOpcode.Shr -> const(lhv.shr(rhv as Int))
-                is BinaryOpcode.Ushr -> const(lhv.ushr(rhv as Int))
-                is BinaryOpcode.And -> {
-                    val (nlhv, nrhv) = toCompatibleTypes(lhv, rhv)
-                    const(nlhv and nrhv)
+                BinaryOpcode.SHL -> const(lhv.shl(rhv as Int))
+                BinaryOpcode.SHR -> const(lhv.shr(rhv as Int))
+                BinaryOpcode.USHR -> const(lhv.ushr(rhv as Int))
+                BinaryOpcode.AND -> {
+                    val (nLhv, nRhv) = toCompatibleTypes(lhv, rhv)
+                    const(nLhv and nRhv)
                 }
-                is BinaryOpcode.Or -> {
-                    val (nlhv, nrhv) = toCompatibleTypes(lhv, rhv)
-                    const(nlhv or nrhv)
+                BinaryOpcode.OR -> {
+                    val (nLhv, nRhv) = toCompatibleTypes(lhv, rhv)
+                    const(nLhv or nRhv)
                 }
-                is BinaryOpcode.Xor -> {
-                    val (nlhv, nrhv) = toCompatibleTypes(lhv, rhv)
-                    const(nlhv xor nrhv)
+                BinaryOpcode.XOR -> {
+                    val (nLhv, nRhv) = toCompatibleTypes(lhv, rhv)
+                    const(nLhv xor nRhv)
                 }
             }
         }
+    }
+
+    override fun transformCharAtTerm(term: CharAtTerm): Term {
+        val string = (term.string as? ConstStringTerm)?.value ?: return term
+        val index = (term.index as? ConstIntTerm)?.value ?: return term
+        return term { const(string[index]) }
     }
 
     override fun transformCmpTerm(term: CmpTerm): Term {
         val lhv = getConstantValue(term.lhv) ?: return term
         val rhv = getConstantValue(term.rhv) ?: return term
-        val (nlhv, nrhv) = toCompatibleTypes(lhv, rhv)
+        val (nLhv, nRhv) = toCompatibleTypes(lhv, rhv)
         return term {
             when (term.opcode) {
-                is CmpOpcode.Eq -> when (nlhv) {
-                    is Double -> const(nlhv eq nrhv.toDouble())
-                    is Float -> const(nlhv eq nrhv.toFloat())
-                    else -> const(nlhv == nrhv)
+                CmpOpcode.EQ -> when (nLhv) {
+                    is Double -> const(nLhv eq nRhv.toDouble())
+                    is Float -> const(nLhv eq nRhv.toFloat())
+                    else -> const(nLhv == nRhv)
                 }
-                is CmpOpcode.Neq -> when (nlhv) {
-                    is Double -> const(nlhv neq nrhv.toDouble())
-                    is Float -> const(nlhv neq nrhv.toFloat())
-                    else -> const(nlhv != nrhv)
+                CmpOpcode.NEQ -> when (nLhv) {
+                    is Double -> const(nLhv neq nRhv.toDouble())
+                    is Float -> const(nLhv neq nRhv.toFloat())
+                    else -> const(nLhv != nRhv)
                 }
-                is CmpOpcode.Lt -> const(nlhv < nrhv)
-                is CmpOpcode.Gt -> const(nlhv > nrhv)
-                is CmpOpcode.Le -> const(nlhv <= nrhv)
-                is CmpOpcode.Ge -> const(nlhv >= nrhv)
-                is CmpOpcode.Cmp -> const(nlhv.compareTo(nrhv))
-                is CmpOpcode.Cmpg -> const(nlhv.compareTo(nrhv))
-                is CmpOpcode.Cmpl -> const(nlhv.compareTo(nrhv))
+                CmpOpcode.LT -> const(nLhv < nRhv)
+                CmpOpcode.GT -> const(nLhv > nRhv)
+                CmpOpcode.LE -> const(nLhv <= nRhv)
+                CmpOpcode.GE -> const(nLhv >= nRhv)
+                CmpOpcode.CMP -> const(nLhv.compareTo(nRhv))
+                CmpOpcode.CMPG -> const(nLhv.compareTo(nRhv))
+                CmpOpcode.CMPL -> const(nLhv.compareTo(nRhv))
             }
         }
+    }
+
+    override fun transformConcatTerm(term: ConcatTerm): Term {
+        val lhv = (term.lhv as? ConstStringTerm)?.value ?: return term
+        val rhv = (term.rhv as? ConstStringTerm)?.value ?: return term
+        return term { const(lhv + rhv) }
+    }
+
+    override fun transformIndexOf(term: IndexOfTerm): Term {
+        val lhv = (term.string as? ConstStringTerm)?.value ?: return term
+        val rhv = (term.substring as? ConstStringTerm)?.value ?: return term
+        return term { const(lhv.indexOf(rhv)) }
     }
 
     override fun transformNegTerm(term: NegTerm): Term {
         val operand = getConstantValue(term.operand) ?: return term
         return term { const(operand) }
+    }
+
+    override fun transformStringContainsTerm(term: StringContainsTerm): Term {
+        val lhv = (term.string as? ConstStringTerm)?.value ?: return term
+        val rhv = (term.substring as? ConstStringTerm)?.value ?: return term
+        return term { const(rhv in lhv) }
+    }
+
+    override fun transformStringLengthTerm(term: StringLengthTerm): Term {
+        val string = (term.string as? ConstStringTerm)?.value ?: return term
+        return term { const(string.length) }
+    }
+
+    override fun transformStringParseTerm(term: StringParseTerm): Term {
+        val string = (term.string as? ConstStringTerm)?.value ?: return term
+        return when (term.type) {
+            is KexBool -> term { const(string.toBoolean()) }
+            is KexByte -> term { const(string.toByte()) }
+            is KexChar -> term { const(string.first()) }
+            is KexShort -> term { const(string.toShort()) }
+            is KexInt -> term { const(string.toInt()) }
+            is KexLong -> term { const(string.toLong()) }
+            is KexFloat -> term { const(string.toFloat()) }
+            is KexDouble -> term { const(string.toDouble()) }
+            is KexNull -> term { const(null) }
+            else -> term
+        }
+    }
+
+    override fun transformSubstringTerm(term: SubstringTerm): Term {
+        val lhv = (term.string as? ConstStringTerm)?.value ?: return term
+        val offset = (term.offset as? ConstIntTerm)?.value ?: return term
+        val length = (term.length as? ConstIntTerm)?.value ?: return term
+        return term { const(lhv.substring(offset, length)) }
+    }
+
+    override fun transformToStringTerm(term: ToStringTerm): Term {
+        return when (val value = term.value) {
+            is ConstBoolTerm -> term { const(value.value.toString()) }
+            is ConstByteTerm -> term { const(value.value.toString()) }
+            is ConstCharTerm -> term { const(value.value.toString()) }
+            is ConstClassTerm -> term { const(value.name) }
+            is ConstDoubleTerm -> term { const(value.value.toString()) }
+            is ConstFloatTerm -> term { const(value.value.toString()) }
+            is ConstIntTerm-> term { const(value.value.toString()) }
+            is ConstLongTerm -> term { const(value.value.toString()) }
+            is ConstShortTerm -> term { const(null) }
+            else -> term
+        }
     }
 
     private fun toCompatibleTypes(lhv: Number, rhv: Number): Pair<Number, Number> = when (lhv) {
@@ -110,7 +178,7 @@ object ConstantPropagator : Transformer<ConstantPropagator> {
     private fun getConstantValue(term: Term): Number? = when (term) {
         is ConstBoolTerm -> term.value.toInt()
         is ConstByteTerm -> term.value
-        is ConstCharTerm -> term.value.toShort()
+        is ConstCharTerm -> term.value.code.toShort()
         is ConstDoubleTerm -> term.value
         is ConstFloatTerm -> term.value
         is ConstIntTerm -> term.value
@@ -120,39 +188,41 @@ object ConstantPropagator : Transformer<ConstantPropagator> {
     }
 
     private fun genMessage(word: String, right: Number, left: Number) =
-            log.error("Obvious error detected: $right $word $left")
+        log.error("Obvious error detected: $right $word $left")
+
     private fun mustBeEqual(right: Number, left: Number) =
-            genMessage("must be equal to", right, left)
+        genMessage("must be equal to", right, left)
+
     private fun mustBeNotEqual(right: Number, left: Number) =
-            genMessage("should not be equal to", right, left)
+        genMessage("should not be equal to", right, left)
 
     override fun transformEqualityPredicate(predicate: EqualityPredicate): Predicate {
         val lhv = getConstantValue(predicate.lhv) ?: return predicate
         val rhv = getConstantValue(predicate.rhv) ?: return predicate
-        val (nlhv, nrhv) = toCompatibleTypes(lhv, rhv)
-        val isNotError = when (nlhv) {
-            is Float -> abs((nlhv - nrhv) as Float) < epsilon
-            is Double -> abs((nlhv - nrhv) as Double) < epsilon
-            else -> nlhv == nrhv
+        val (nLhv, nRhv) = toCompatibleTypes(lhv, rhv)
+        val isNotError = when (nLhv) {
+            is Float -> abs((nLhv - nRhv) as Float) < epsilon
+            is Double -> abs((nLhv - nRhv) as Double) < epsilon
+            else -> nLhv == nRhv
         }
         return when {
             isNotError -> predicate
-            else -> unreachable { mustBeEqual(nlhv, nrhv) }
+            else -> unreachable { mustBeEqual(nLhv, nRhv) }
         }
     }
 
     override fun transformInequalityPredicate(predicate: InequalityPredicate): Predicate {
         val lhv = getConstantValue(predicate.lhv) ?: return predicate
         val rhv = getConstantValue(predicate.rhv) ?: return predicate
-        val (nlhv, nrhv) = toCompatibleTypes(lhv, rhv)
-        val isNotError = when (nlhv) {
-            is Float -> abs((nlhv - nrhv) as Float) >= epsilon
-            is Double -> abs((nlhv - nrhv) as Double) >= epsilon
-            else -> nlhv != nrhv
+        val (nLhv, nRhv) = toCompatibleTypes(lhv, rhv)
+        val isNotError = when (nLhv) {
+            is Float -> abs((nLhv - nRhv) as Float) >= epsilon
+            is Double -> abs((nLhv - nRhv) as Double) >= epsilon
+            else -> nLhv != nRhv
         }
         return when {
             isNotError -> predicate
-            else -> unreachable { mustBeNotEqual(nlhv, nrhv) }
+            else -> unreachable { mustBeNotEqual(nLhv, nRhv) }
         }
     }
 }

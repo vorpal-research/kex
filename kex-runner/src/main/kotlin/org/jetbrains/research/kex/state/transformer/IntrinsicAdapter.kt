@@ -10,6 +10,7 @@ import org.jetbrains.research.kex.state.term.CallTerm
 object IntrinsicAdapter : Transformer<IntrinsicAdapter> {
     private val im = MethodManager.IntrinsicManager
 
+    // todo
     override fun transformCallPredicate(predicate: CallPredicate): Predicate {
         val call = predicate.call as CallTerm
         return when (val method = call.method) {

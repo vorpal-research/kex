@@ -1,6 +1,6 @@
 package org.jetbrains.research.kex.smt
 
-import com.abdullin.kthelper.assert.unreachable
+import org.jetbrains.research.kthelper.assert.unreachable
 import org.jetbrains.research.kex.KexProcessor
 import java.io.ByteArrayOutputStream
 import java.io.File

@@ -1,20 +1,21 @@
 package org.jetbrains.research.kex.smt.z3
 
-import com.abdullin.kthelper.*
-import com.abdullin.kthelper.assert.unreachable
-import com.abdullin.kthelper.logging.log
 import com.microsoft.z3.*
 import com.microsoft.z3.enumerations.Z3_lbool
 import org.jetbrains.research.kex.smt.SMTEngine
 import org.jetbrains.research.kex.state.term.*
-import java.lang.Math.pow
+import org.jetbrains.research.kthelper.*
+import org.jetbrains.research.kthelper.assert.unreachable
+import org.jetbrains.research.kthelper.logging.log
+import kotlin.math.pow
 
 object Z3Unlogic {
-    fun undo(expr: Expr): Term = when (expr) {
+    fun undo(expr: Expr<*>): Term = when (expr) {
         is BoolExpr -> undoBool(expr)
         is BitVecNum -> undoBV(expr)
         is BitVecExpr -> undoBVExpr(expr)
         is FPNum -> undoFloat(expr)
+        is SeqExpr<*> -> undoSeq(expr)
         else -> unreachable { log.error("Unexpected expr in unlogic: $expr") }
     }
 
@@ -70,10 +71,30 @@ object Z3Unlogic {
                 val cond = undo(expr.args[0]) as ConstBoolTerm
                 if (cond.value) undo(expr.args[1]) else undo(expr.args[2])
             }
-            else -> TODO()
+            expr.isBVConcat -> {
+                val first = undo(expr.args[0]).numericValue
+                val second = undo(expr.args[1]).numericValue
+                term { const(first * (10.0.pow(second.toString().length)) + second) }
+            }
+            expr.isBVOR -> {
+                val first = undo(expr.args[0]).numericValue
+                val second = undo(expr.args[1]).numericValue
+                term { const(first or second) }
+            }
+            expr.isBVAND -> {
+                val first = undo(expr.args[0]).numericValue
+                val second = undo(expr.args[1]).numericValue
+                term { const(first and second) }
+            }
+            expr.isBVXOR -> {
+                val first = undo(expr.args[0]).numericValue
+                val second = undo(expr.args[1]).numericValue
+                term { const(first xor second) }
+            }
+            else -> unreachable { log.error("Not implemented unlogic SMT operation: $expr") }
         }
         // todo: support more bv expressions
-        else -> TODO()
+        else -> unreachable { log.error("Not implemented unlogic SMT operation: $expr") }
     }
 
     private fun undoBool(expr: BoolExpr) = when (expr.boolValue) {
@@ -85,6 +106,8 @@ object Z3Unlogic {
             expr.isBVSGE -> term { const(undo(expr.args[0]).numericValue >= undo(expr.args[1]).numericValue) }
             expr.isBVSGT -> term { const(undo(expr.args[0]).numericValue > undo(expr.args[1]).numericValue) }
             expr.isEq -> term { const(undo(expr.args[0]).numericValue == undo(expr.args[1]).numericValue) }
+            expr.isQuantifier -> term { const(true) }
+            expr.isNot -> term { const(!(undo(expr.args[0]) as ConstBoolTerm).value) }
             else -> unreachable { log.error("Trying to undo unknown") }
         }
     }
@@ -99,7 +122,7 @@ object Z3Unlogic {
             }
             term { const(value) }
         }
-        else -> unreachable { log.error("Trying to undo bv with unexpected size: ${expr.sortSize}") }
+        else -> term { const(expr.long.toInt()) }
     }
 
     private fun undoFloat(expr: FPNum): Term {
@@ -117,10 +140,15 @@ object Z3Unlogic {
             else -> {
                 val sign = if (expr.sign) -1.0 else 1.0
                 val significand = expr.significand.toDouble()
-                val exponent = pow(2.0, expr.getExponentInt64(false).toDouble())
+                val exponent = 2.0.pow(expr.getExponentInt64(false).toDouble())
                 val res = sign * significand * exponent
                 return termifier(res)
             }
         }
+    }
+
+    private fun undoSeq(expr: SeqExpr<*>) = when {
+        expr.isConst -> term { const(expr.string) }
+        else -> unreachable<ConstStringTerm> { log.error("Unknown seq expr") }
     }
 }

@@ -1,10 +1,9 @@
 package org.jetbrains.research.kex.reanimator.codegen.kotlingen
 
-import com.abdullin.kthelper.assert.unreachable
-import com.abdullin.kthelper.logging.log
 import org.jetbrains.research.kex.ExecutionContext
 import org.jetbrains.research.kex.ktype.KexType
 import org.jetbrains.research.kex.ktype.type
+import org.jetbrains.research.kex.parameters.Parameters
 import org.jetbrains.research.kex.reanimator.callstack.*
 import org.jetbrains.research.kex.reanimator.codegen.CallStackPrinter
 import org.jetbrains.research.kex.util.getConstructor
@@ -13,6 +12,8 @@ import org.jetbrains.research.kex.util.kex
 import org.jetbrains.research.kex.util.loadClass
 import org.jetbrains.research.kfg.ir.Class
 import org.jetbrains.research.kfg.type.*
+import org.jetbrains.research.kthelper.assert.unreachable
+import org.jetbrains.research.kthelper.logging.log
 import java.lang.reflect.*
 import kotlin.reflect.KClass
 import kotlin.reflect.KClassifier
@@ -23,18 +24,23 @@ import java.lang.reflect.Type as JType
 
 // TODO: this is work of satan, refactor this damn thing
 class CallStack2KotlinPrinter(
-        val ctx: ExecutionContext,
-        override val packageName: String,
-        override val klassName: String) : CallStackPrinter {
+    val ctx: ExecutionContext,
+    override val packageName: String,
+    override val klassName: String
+) : CallStackPrinter {
     private val printedStacks = mutableSetOf<String>()
     private val builder = KtBuilder(packageName)
     private val klass: KtBuilder.KtClass
     private val resolvedTypes = mutableMapOf<CallStack, CSType>()
     private val actualTypes = mutableMapOf<CallStack, CSType>()
+    private var staticCounter = 0
     lateinit var current: KtBuilder.KtFunction
 
     init {
         with(builder) {
+            import("kotlin.Exception")
+            import("kotlin.IllegalStateException")
+            import("org.junit.Test")
             function("<T> unknown") {
                 returnType = type("T")
                 +"TODO()"
@@ -43,12 +49,32 @@ class CallStack2KotlinPrinter(
         klass = builder.run { klass(packageName, klassName) }
     }
 
-    override fun printCallStack(callStack: CallStack, method: String) {
+    private fun buildCallStack(
+        method: org.jetbrains.research.kfg.ir.Method, callStacks: Parameters<CallStack>
+    ): CallStack = when {
+        method.isStatic -> StaticMethodCall(method, callStacks.arguments).wrap("static${staticCounter++}")
+        method.isConstructor -> callStacks.instance!!
+        else -> {
+            val instance = callStacks.instance!!.clone()
+            instance.stack += MethodCall(method, callStacks.arguments)
+            instance
+        }
+    }
+
+    override fun printCallStack(
+        testName: String,
+        method: org.jetbrains.research.kfg.ir.Method,
+        callStacks: Parameters<CallStack>
+    ) {
+        resolvedTypes.clear()
+        actualTypes.clear()
         printedStacks.clear()
+        val callStack = buildCallStack(method, callStacks)
         with(builder) {
             with(klass) {
-                current = method(method) {
+                current = method(testName) {
                     returnType = unit
+                    annotations += "Test"
                 }
             }
         }
@@ -71,7 +97,11 @@ class CallStack2KotlinPrinter(
         override fun toString() = "*"
     }
 
-    inner class CSClass(val type: Type, val typeParams: List<CSType> = emptyList(), override val nullable: Boolean = true) : CSType {
+    inner class CSClass(
+        val type: Type,
+        val typeParams: List<CSType> = emptyList(),
+        override val nullable: Boolean = true
+    ) : CSType {
         override fun isSubtype(other: CSType): Boolean = when (other) {
             is CSClass -> when {
                 !type.isSubtypeOf(other.type) -> false
@@ -116,7 +146,7 @@ class CallStack2KotlinPrinter(
         override fun toString() = "Array<${element}>" + if (nullable) "?" else ""
     }
 
-    val KClassifier.csType: CSType
+    private val KClassifier.csType: CSType
         get() = when (this) {
             is KClass<*> -> java.kex.getCsType(false)
             is KTypeParameter -> upperBounds.first().csType
@@ -131,7 +161,7 @@ class CallStack2KotlinPrinter(
             else -> unreachable { }
         }
 
-    val KType.csType: CSType
+    private val KType.csType: CSType
         get() {
             val type = this.classifier!!.csType.kfg
             val args = this.arguments.map { it.type?.csType ?: CSStarProjection() }
@@ -145,7 +175,7 @@ class CallStack2KotlinPrinter(
             }
         }
 
-    val JType.csType: CSType
+    private val JType.csType: CSType
         get() = when (this) {
             is java.lang.Class<*> -> when {
                 this.isArray -> {
@@ -171,7 +201,7 @@ class CallStack2KotlinPrinter(
         else -> TODO()
     }
 
-    fun CSType?.isAssignable(other: CSType) = this?.let { other.isSubtype(it) } ?: true
+    private fun CSType?.isAssignable(other: CSType) = this?.let { other.isSubtype(it) } ?: true
 
     private fun KexType.getCsType(nullable: Boolean = true) = this.getKfgType(ctx.types).getCsType(nullable)
 
@@ -188,58 +218,69 @@ class CallStack2KotlinPrinter(
     }
 
     private fun resolveTypes(constructor: Constructor<*>, args: List<CallStack>) =
-            when {
-                constructor.kotlinFunction != null -> {
-                    val params = constructor.kotlinFunction!!.parameters
-                    args.zip(params).forEach { (arg, param) ->
+        when {
+            constructor.kotlinFunction != null -> {
+                val params = constructor.kotlinFunction!!.parameters
+                args.zip(params).forEach { (arg, param) ->
+                    if (arg !in resolvedTypes) {
                         resolvedTypes[arg] = param.type.csType
-                    }
-                }
-                else -> {
-                    val params = constructor.genericParameterTypes
-                    args.zip(params).forEach { (arg, param) ->
-                        resolvedTypes[arg] = param.csType
+                        resolveTypes(arg)
                     }
                 }
             }
+            else -> {
+                val params = constructor.genericParameterTypes
+                args.zip(params).forEach { (arg, param) ->
+                    if (arg !in resolvedTypes) {
+                        resolvedTypes[arg] = param.csType
+                        resolveTypes(arg)
+                    }
+                }
+            }
+        }
 
     private fun resolveTypes(method: Method, args: List<CallStack>) =
-            when {
-                method.kotlinFunction != null -> {
-                    val params = method.kotlinFunction!!.parameters.drop(1)
-                    args.zip(params).forEach { (arg, param) ->
-                        param.type.csType
+        when {
+            method.kotlinFunction != null -> {
+                val params = method.kotlinFunction!!.parameters.drop(1)
+                args.zip(params).forEach { (arg, param) ->
+                    if (arg !in resolvedTypes) {
                         resolvedTypes[arg] = param.type.csType
-                    }
-                }
-                else -> {
-                    val params = method.genericParameterTypes.toList()
-                    args.zip(params).forEach { (arg, param) ->
-                        resolvedTypes[arg] = param.csType
+                        resolveTypes(arg)
                     }
                 }
             }
+            else -> {
+                val params = method.genericParameterTypes.toList()
+                args.zip(params).forEach { (arg, param) ->
+                    if (arg !in resolvedTypes) {
+                        resolvedTypes[arg] = param.csType
+                        resolveTypes(arg)
+                    }
+                }
+            }
+        }
 
     private fun resolveTypes(call: ApiCall) = when (call) {
         is DefaultConstructorCall -> {
         }
         is ConstructorCall -> {
-            val reflection = ctx.loader.loadClass(call.klass)
+            val reflection = ctx.loader.loadClass(call.constructor.klass)
             val constructor = reflection.getConstructor(call.constructor, ctx.loader)
             resolveTypes(constructor, call.args)
         }
         is ExternalConstructorCall -> {
-            val reflection = ctx.loader.loadClass(call.constructor.`class`)
+            val reflection = ctx.loader.loadClass(call.constructor.klass)
             val constructor = reflection.getMethod(call.constructor, ctx.loader)
             resolveTypes(constructor, call.args)
         }
         is MethodCall -> {
-            val reflection = ctx.loader.loadClass(call.method.`class`)
+            val reflection = ctx.loader.loadClass(call.method.klass)
             val method = reflection.getMethod(call.method, ctx.loader)
             resolveTypes(method, call.args)
         }
         is StaticMethodCall -> {
-            val reflection = ctx.loader.loadClass(call.method.`class`)
+            val reflection = ctx.loader.loadClass(call.method.klass)
             val method = reflection.getMethod(call.method, ctx.loader)
             resolveTypes(method, call.args)
         }
@@ -287,7 +328,7 @@ class CallStack2KotlinPrinter(
                 else -> "Array<${type.kotlinString}>"
             }
             else -> {
-                val klass = (this as ClassType).`class`
+                val klass = (this as ClassType).klass
                 val name = klass.canonicalDesc.replace("$", ".")
                 builder.import(name)
                 klass.name.replace("$", ".")
@@ -311,6 +352,7 @@ class CallStack2KotlinPrinter(
         is FieldSetter -> printFieldSetter(owner, apiCall)
         is StaticFieldSetter -> printStaticFieldSetter(apiCall)
         is EnumValueCreation -> printEnumValueCreation(owner, apiCall)
+        is StaticFieldGetter -> printStaticFieldGetter(owner, apiCall)
         is UnknownCall -> printUnknown(owner, apiCall)
         else -> unreachable { log.error("Unknown call") }
     }
@@ -329,7 +371,7 @@ class CallStack2KotlinPrinter(
             is Char -> when (value) {
                 in 'a'..'z' -> "'$value'"
                 in 'A'..'Z' -> "'$value'"
-                else -> "${value.toInt()}.toChar()"
+                else -> "${value.code}.toChar()"
             }.also {
                 actualTypes[this] = CSClass(ctx.types.charType, nullable = false)
             }
@@ -348,7 +390,7 @@ class CallStack2KotlinPrinter(
             is Double -> "$value".also {
                 actualTypes[this] = CSClass(ctx.types.doubleType, nullable = false)
             }
-            else -> unreachable { log.error("Unknown primary value ${this}") }
+            else -> unreachable { log.error("Unknown primary value $this") }
         }
 
     private fun CallStack.cast(reqType: CSType?): String {
@@ -357,6 +399,11 @@ class CallStack2KotlinPrinter(
             reqType.isAssignable(actualType) -> this.stackName
             else -> "${this.stackName} as $reqType"
         }
+    }
+
+    private fun CallStack.forceCastIfNull(reqType: CSType?): String = when (this.stackName) {
+        "null" -> "${this.stackName} as $reqType"
+        else -> this.cast(reqType)
     }
 
     private fun printDefaultConstructor(owner: CallStack, call: DefaultConstructorCall): String {
@@ -375,39 +422,46 @@ class CallStack2KotlinPrinter(
     private fun printConstructorCall(owner: CallStack, call: ConstructorCall): String {
         call.args.forEach { it.printAsKt() }
         val args = call.args.joinToString(", ") {
-            it.cast(resolvedTypes[it])
+            it.forceCastIfNull(resolvedTypes[it])
         }
-        val actualType = CSClass(call.klass.type, nullable = false)
-        actualTypes[owner] = actualType
-        return "val ${owner.name} = $actualType($args)"
+        val actualType = CSClass(call.constructor.klass.type, nullable = false)
+        return if (resolvedTypes[owner] != null) {
+            val rest = resolvedTypes[owner]!!
+            val type = actualType.merge(rest)
+            actualTypes[owner] = type
+            "val ${owner.name} = $type($args)"
+        } else {
+            actualTypes[owner] = actualType
+            "val ${owner.name} = $actualType($args)"
+        }
     }
 
     private fun printExternalConstructorCall(owner: CallStack, call: ExternalConstructorCall): String {
         call.args.forEach { it.printAsKt() }
         val constructor = call.constructor
         val args = call.args.joinToString(", ") {
-            it.cast(resolvedTypes[it])
+            it.forceCastIfNull(resolvedTypes[it])
         }
         val actualType = CSClass(constructor.returnType)
         actualTypes[owner] = actualType
-        return "val ${owner.name} = ${constructor.`class`.kotlinString}.${constructor.name}($args)"
+        return "val ${owner.name} = ${constructor.klass.kotlinString}.${constructor.name}($args)"
     }
 
     private fun printMethodCall(owner: CallStack, call: MethodCall): String {
         call.args.forEach { it.printAsKt() }
         val method = call.method
         val args = call.args.joinToString(", ") {
-            it.cast(resolvedTypes[it])
+            it.forceCastIfNull(resolvedTypes[it])
         }
         return "${owner.name}.${method.name}($args)"
     }
 
     private fun printStaticMethodCall(call: StaticMethodCall): String {
         call.args.forEach { it.printAsKt() }
-        val klass = call.method.`class`
+        val klass = call.method.klass
         val method = call.method
         val args = call.args.joinToString(", ") {
-            it.cast(resolvedTypes[it])
+            it.forceCastIfNull(resolvedTypes[it])
         }
         return "${klass.kotlinString}.${method.name}($args)"
     }
@@ -444,11 +498,19 @@ class CallStack2KotlinPrinter(
 
     private fun printStaticFieldSetter(call: StaticFieldSetter): String {
         call.value.printAsKt()
-        return "${call.klass.kotlinString}.${call.field.name} = ${call.value.stackName}"
+        return "${call.field.klass.kotlinString}.${call.field.name} = ${call.value.stackName}"
     }
 
     private fun printEnumValueCreation(owner: CallStack, call: EnumValueCreation): String {
-        return "${owner.name} = ${call.klass.kotlinString}.${call.name}"
+        val actualType = call.klass.type.getCsType(false)
+        actualTypes[owner] = actualType
+        return "val ${owner.name} = ${call.klass.kotlinString}.${call.name}"
+    }
+
+    private fun printStaticFieldGetter(owner: CallStack, call: StaticFieldGetter): String {
+        val actualType = call.field.klass.type.getCsType(false)
+        actualTypes[owner] = actualType
+        return "val ${owner.name} = ${call.field.klass.kotlinString}.${call.field.name}"
     }
 
     private fun printUnknown(owner: CallStack, call: UnknownCall): String {

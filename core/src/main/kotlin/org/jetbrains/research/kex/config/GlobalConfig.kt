@@ -18,6 +18,11 @@ class GlobalConfig : Config() {
         return sources.flatMap { it.getMultipleStringValue(section, name, delimiter) }
     }
 
+    fun initLog(filename: String) {
+        val outputDir = kexConfig.getPathValue("kex", "outputDir")!!
+        System.setProperty("kex.log.name", outputDir.resolve(filename).toString())
+    }
+
     fun initialize(sources: List<Config>) {
         this.sources.clear()
         this.sources.addAll(sources)

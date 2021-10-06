@@ -1,6 +1,5 @@
 package org.jetbrains.research.kex.state.predicate
 
-import com.abdullin.kthelper.assert.asserted
 import kotlinx.serialization.Contextual
 import kotlinx.serialization.Required
 import kotlinx.serialization.Serializable
@@ -8,6 +7,7 @@ import org.jetbrains.research.kex.InheritorOf
 import org.jetbrains.research.kex.state.term.Term
 import org.jetbrains.research.kex.state.transformer.Transformer
 import org.jetbrains.research.kfg.ir.Location
+import org.jetbrains.research.kthelper.assert.asserted
 
 @InheritorOf("Predicate")
 @Serializable
@@ -29,24 +29,22 @@ class CallPredicate(
         get() = if (hasLhv) operands[1] else operands[0]
 
     override fun <T : Transformer<T>> accept(t: Transformer<T>): Predicate {
-        val tlhv = if (hasLhv) t.transform(lhv) else null
-        val tcall = t.transform(call)
+        val tLhv = if (hasLhv) t.transform(lhv) else null
+        val tCall = t.transform(call)
         return when {
             hasLhv -> when {
-                tlhv == lhv && tcall == call -> this
-                else -> predicate(type, location) { tlhv!!.call(tcall) }
+                tLhv == lhv && tCall == call -> this
+                else -> predicate(type, location) { tLhv!!.call(tCall) }
             }
-            else -> when (tcall) {
+            else -> when (tCall) {
                 call -> this
-                else -> predicate(type, location) { call(tcall) }
+                else -> predicate(type, location) { call(tCall) }
             }
         }
     }
 
-    override fun print(): String {
-        val sb = StringBuilder()
-        if (hasLhv) sb.append("$lhv = ")
-        sb.append(call)
-        return sb.toString()
+    override fun print() = buildString {
+        if (hasLhv) append("$lhv = ")
+        append(call)
     }
 }

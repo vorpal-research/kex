@@ -11,7 +11,7 @@ import org.jetbrains.research.kex.state.transformer.Transformer
 class ConstFloatTerm(val value: Float) : Term() {
     override val name = value.toString()
     override val type: KexType = KexFloat()
-    override val subterms by lazy { listOf<Term>() }
+    override val subTerms by lazy { listOf<Term>() }
 
     override fun <T: Transformer<T>> accept(t: Transformer<T>) = this
 }

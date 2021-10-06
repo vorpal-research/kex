@@ -1,0 +1,165 @@
+#parse("definitions.vm")
+import org.jetbrains.research.kex.smt.${solver.toLowerCase()}.${solver}SMTExprFactory
+import org.jetbrains.research.kfg.ir.Class
+import org.jetbrains.research.kfg.type.ClassType
+import org.jetbrains.research.kfg.type.TypeFactory
+
+typealias Bool_ = $Bool
+typealias Ptr_ = $Bitvector32
+typealias Byte_ = $Bitvector32
+typealias Short_ = $Bitvector32
+typealias Char_ = $Bitvector32
+typealias Int_ = $Bitvector32
+typealias Long_ = $Bitvector64
+typealias Float_ = $Float
+typealias Double_ = $Double
+typealias Array_ = $Array< DWord_, Int_ >
+typealias Word_ = $Bitvector32
+typealias DWord_ = $Bitvector64
+typealias Memory_< T > = $Memory< Ptr_, T >
+typealias Function_ = $Function
+typealias Dynamic_ = $valexpr
+#if($generateString)
+typealias String_ = $String
+#end
+
+enum class TypeSize (val int: Int) {
+    WORD(1), DWORD(2);
+}
+
+private val engine = ${solver}Engine
+
+@Suppress("UNCHECKED_CAST")
+class $factory : ${solver}SMTExprFactory() {
+    companion object {
+
+        fun getTypeSize(type: KexType) = when (type.bitSize) {
+            KexType.WORD -> TypeSize.WORD
+            KexType.DWORD -> TypeSize.DWORD
+            else -> unreachable { log.error("Unknown type bit size ${type.bitSize}") }
+        }
+
+        fun getByteSize(ctx: $context) = ${valexpr}.getStaticBitSize< Word_ >(ctx)
+    }
+
+    val ctx = $context()
+    val subtypeFunction: Function_
+    private val innerTypeMap: MutableMap< KexType, Int_ >
+    val typeMap: Map< KexType, Int_ > get() = innerTypeMap
+    private val innerKlassMap: MutableMap< KexType, Ptr_ >
+
+    init {
+        engine.initialize()
+        subtypeFunction = Function_(ctx, "isSubtype", listOf(Int_.getStaticSort(ctx), Int_.getStaticSort(ctx)), Bool_.getStaticSort(ctx))
+        innerTypeMap = mutableMapOf()
+        innerKlassMap = mutableMapOf()
+    }
+
+#macro(generateMakes $type $basetype)
+    #set($underlined = "${type}_")
+    fun make$type(name: String, fresh: Boolean = false) =
+            if (fresh) ${underlined}.makeFreshVar(ctx, name) else ${underlined}.makeVar(ctx, name)
+    fun make${type}Const(value: $basetype) = ${underlined}.makeConst(ctx, value)
+#end
+
+#generateMakes("Ptr" "Int")
+    fun makeNull() = makePtrConst(0)
+
+#generateMakes("Bool", "Boolean")
+    fun makeTrue() = makeBoolConst(true)
+    fun makeFalse() = makeBoolConst(false)
+
+#generateMakes("Byte", "Int")
+    fun makeByteConst(value: Byte) = makeByteConst(value.toInt())
+#generateMakes("Short", "Int")
+    fun makeShortConst(value: Short) = makeShortConst(value.toInt())
+#generateMakes("Char", "Int")
+    fun makeCharConst(value: Char) = makeCharConst(value.code)
+
+#generateMakes("Int", "Int")
+
+#generateMakes("Long", "Long")
+
+#generateMakes("Float", "Float")
+
+#generateMakes("Double", "Double")
+
+#if($generateString)
+#generateMakes("String", "String")
+#end
+
+    inline fun < reified Element : $valexpr > makeDefaultArray(id: String, default: Element) = Array_.makeDefault< Element, Int_ >(ctx, id, default) as Array_
+    inline fun < reified Element : $valexpr > makeEmptyArray(id: String) = Array_.makeFree< Element, Int_ >(ctx, id) as Array_
+
+    inline fun < reified  Element: $valexpr > makeEmptyMemory(id: String) = Memory_.makeFree< Ptr_, Element >(ctx, id)
+    //            makeDefaultMemory(id, 0xFF)
+    inline fun < reified  Element: $valexpr > makeDefaultMemory(id: String, default: Element) =
+        Memory_.makeDefault< Ptr_, Element >(ctx, id, default)
+
+#set($types = ["Bool", "Byte", "Short", "Char", "Int", "Long", "Float", "Double"])
+    fun getVarByTypeAndName(type: KexType, name: String, fresh: Boolean = false) = when(type) {
+#foreach($type in $types)
+        is Kex${type} -> make${type}(name, fresh)
+#end
+        is KexClass -> makePtr(name, fresh)
+        is KexArray -> makePtr(name, fresh)
+        is KexNull -> makePtr(name, fresh)
+        else -> unreachable { log.error("Unknown type in ExprFactory: ${ type }") }
+    }
+
+    // fucked up but it's the easiest way to ignore memspace
+    fun getTypeVariable(tf: TypeFactory, type: KexType) = innerTypeMap.getOrPut(type.getKfgType(tf).kexType) {
+        makeInt(type.toString(), true)
+    }
+
+    fun buildSubtypeAxioms(tf: TypeFactory): Bool_ {
+        val types = innerTypeMap.mapKeys { it.key.getKfgType(tf) }
+        var result = makeTrue()
+        for ((type1, val1) in types) {
+            for ((type2, val2) in types) {
+                val isSubtype = makeBoolConst(type1.isSubtypeOf(type2))
+                result = result and (subtypeFunction.applyAs< Bool_ >(val1, val2) eq isSubtype)
+            }
+        }
+        return result
+    }
+
+    fun addKlassPtr(klass: KexType, ptr: Ptr_) {
+        innerKlassMap.getOrPut(klass.unmemspaced()) { ptr }
+    }
+
+    fun buildConstClassAxioms(): Bool_ {
+        val klasses = innerKlassMap.values.toList()
+        var result = makeTrue()
+        for (i in 0..(klasses.lastIndex - 1)) {
+            for (j in (i + 1)..klasses.lastIndex) {
+                result = result and (klasses[i] neq klasses[j])
+            }
+        }
+        return result
+    }
+
+    inline fun < T : Dynamic_, reified U : Dynamic_ > switch(value: T, cases: Map< T, U >, default: U) =
+        cases.toList().fold(default) { acc, pair -> `if`(value eq pair.first).then(pair.second).`else`(acc) }
+
+    inline fun < reified U : Dynamic_ > switch(cases: Map< Bool_, U >, default: U) =
+        cases.toList().fold(default) { acc, pair -> `if`(pair.first).then(pair.second).`else`(acc) }
+
+    inline fun < reified U : Dynamic_ > if_(cond: Bool_) = `if`(cond)
+
+    fun forAll(sortGen: () -> List< Dynamic_ >, func: (List< Dynamic_ >) -> Bool_): Bool_ = forall(ctx, sortGen, func)
+
+    fun forAll(sortGen: () -> List< Dynamic_ >, func: (List< Dynamic_ >) -> Bool_, patternGenerator: (List< Dynamic_ >) -> List< Dynamic_ >): Bool_ =
+        forall(ctx, sortGen, func, patternGenerator)
+
+    fun exists(sortGen: () -> List< Dynamic_ >, func: (List< Dynamic_ >) -> Bool_): Bool_ = exists(ctx, sortGen, func)
+
+    fun exists(sortGen: () -> List< Dynamic_ >, func: (List< Dynamic_ >) -> Bool_, patternGenerator: (List< Dynamic_ >) -> List< Dynamic_ >): Bool_ =
+        exists(ctx, sortGen, func, patternGenerator)
+
+    fun lambda(
+        elementSortGen: () -> Dynamic_,
+        sortGen: () -> List< Dynamic_ >,
+        func: (List< Dynamic_ >) -> Dynamic_
+    ): Dynamic_ = lambda(ctx, elementSortGen, sortGen, func)
+}

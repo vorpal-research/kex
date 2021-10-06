@@ -1,10 +1,12 @@
-@file:Suppress("UNUSED_PARAMETER")
 package org.jetbrains.research.kex.test
 
-object Intrinsics {
-    @JvmStatic
-    fun assertReachable(vararg conditions: Boolean) {}
+import org.jetbrains.research.kex.intrinsics.AssertIntrinsics
+import org.jetbrains.research.kex.intrinsics.CollectionIntrinsics
 
-    @JvmStatic
-    fun assertUnreachable() {}
+class IntrinsicsTest {
+    fun testContains(array: ByteArray) {
+        if (CollectionIntrinsics.containsByte(array, 12)) {
+            AssertIntrinsics.kexAssert()
+        }
+    }
 }

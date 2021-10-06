@@ -1,9 +1,9 @@
 package org.jetbrains.research.kex.smt
 
-import com.abdullin.kthelper.assert.unreachable
 import org.jetbrains.research.kex.InheritanceInfo
 import org.jetbrains.research.kex.Inheritor
 import org.jetbrains.research.kex.KexProcessor
+import org.jetbrains.research.kthelper.assert.unreachable
 import java.io.File
 import javax.annotation.processing.RoundEnvironment
 import javax.annotation.processing.SupportedAnnotationTypes
@@ -14,6 +14,7 @@ import javax.lang.model.element.Element
 import javax.lang.model.element.TypeElement
 
 
+@Suppress("SameParameterValue")
 @SupportedSourceVersion(SourceVersion.RELEASE_8)
 @SupportedAnnotationTypes("org.jetbrains.research.kex.smt.AbstractSolver", "org.jetbrains.research.kex.smt.Solver")
 @SupportedOptions(SolverInfoProcessor.RUNNER_RESOURCES)

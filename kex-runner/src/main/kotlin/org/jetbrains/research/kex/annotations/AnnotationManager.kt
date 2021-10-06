@@ -1,11 +1,12 @@
 package org.jetbrains.research.kex.annotations
 
-import com.abdullin.kthelper.`try`
-import com.abdullin.kthelper.assert.ktassert
-import com.abdullin.kthelper.logging.log
-import com.abdullin.kthelper.recast
 import org.apache.commons.lang.StringEscapeUtils.unescapeJava
 import org.jetbrains.research.kex.config.kexConfig
+import org.jetbrains.research.kthelper.assert.ktassert
+import org.jetbrains.research.kthelper.assert.unreachable
+import org.jetbrains.research.kthelper.logging.log
+import org.jetbrains.research.kthelper.recast
+import org.jetbrains.research.kthelper.tryOrNull
 import org.reflections.Reflections
 import java.io.File
 import kotlin.reflect.KClass
@@ -14,7 +15,9 @@ import kotlin.reflect.KParameter
 import kotlin.reflect.full.primaryConstructor
 import kotlin.reflect.jvm.jvmErasure
 
-private val printAnnotationInfo by lazy { kexConfig.getBooleanValue("annotations", "printAnnotationInfo", false) }
+private val printAnnotationInfo by lazy {
+    kexConfig.getBooleanValue("annotations", "printAnnotationInfo", false)
+}
 
 object AnnotationManager {
     private val constructors = hashMapOf<String, KFunction<AnnotationInfo>>()
@@ -24,14 +27,14 @@ object AnnotationManager {
     }
 
     val defaultLoader: AnnotationsLoader = ExternalAnnotationsLoader().apply {
-        `try` {
+        tryOrNull {
             for (path in kexConfig.getMultipleStringValue("annotations", "path", ";")) {
                 loadFrom(File(path))
             }
             if (printAnnotationInfo) {
                 log.debug("Loaded annotated calls $this")
             }
-        }.getOrThrow {
+        } ?: unreachable {
             log.error("Annotations not loaded")
         }
     }
@@ -42,17 +45,19 @@ object AnnotationManager {
             val annotation = type.getAnnotation(AnnotationFunctionality::class.java) ?: continue
             val functionality = annotation.name
             val oldValue = constructors.put(functionality, type.kotlin.primaryConstructor ?: continue)
-            ktassert(oldValue == null) { log.error("Annotation functionality already described for \"$functionality\"") }
+            ktassert(oldValue == null) {
+                log.error("Annotation functionality already described for \"$functionality\"")
+            }
         }
     }
 
-    fun build(name: String, parameters: Map<String, String>) : AnnotationInfo? {
+    fun build(name: String, parameters: Map<String, String>): AnnotationInfo? {
         val call = constructors[name] ?: return null
         val args = hashMapOf<KParameter, Any?>()
         val params = call.parameters
         for (param in params) {
             val paramName = param.name
-                    ?: throw IllegalStateException("Annotation functionality class has parameters without names")
+                ?: throw IllegalStateException("Annotation functionality class has parameters without names")
             val value = parameters[paramName] ?: continue
             args[param] = cast(value, param.type.jvmErasure)
         }
@@ -84,29 +89,29 @@ object AnnotationManager {
         return null
     }
 
-    private inline fun <reified T: Number> getSpecialConstantTyped(value: String): T? =
-            when (val result = getSpecialConstant(value)) {
-                null -> null
-                is Number -> result.recast()
-                else -> throw IllegalStateException("Constant type is not java.lang.Number")
-            }
+    private inline fun <reified T : Number> getSpecialConstantTyped(value: String): T? =
+        when (val result = getSpecialConstant(value)) {
+            null -> null
+            is Number -> result.recast()
+            else -> throw IllegalStateException("Constant type is not java.lang.Number")
+        }
 
     private fun clearStr(str: String) = str.replace("_", "")
 
     @Suppress("RemoveExplicitTypeArguments")
     private fun cast(value: String, type: KClass<*>): Any = when (type) {
         Int::class -> getSpecialConstantTyped<Int>(value)
-                ?: clearStr(value).toInt()
+            ?: clearStr(value).toInt()
         Byte::class -> getSpecialConstantTyped<Byte>(value)
-                ?: clearStr(value).toByte()
+            ?: clearStr(value).toByte()
         Short::class -> getSpecialConstantTyped<Short>(value)
-                ?: clearStr(value).toShort()
+            ?: clearStr(value).toShort()
         Long::class -> getSpecialConstantTyped<Long>(value)
-                ?: clearStr(value).toLong()
+            ?: clearStr(value).toLong()
         Float::class -> getSpecialConstantTyped<Float>(value)
-                ?: clearStr(value).toFloat()
+            ?: clearStr(value).toFloat()
         Double::class -> getSpecialConstantTyped<Double>(value)
-                ?: clearStr(value).toDouble()
+            ?: clearStr(value).toDouble()
         Boolean::class -> when (value) {
             "true" -> true
             "false" -> false

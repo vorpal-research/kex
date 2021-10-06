@@ -1,16 +1,16 @@
 package org.jetbrains.research.kex.state.term
 
-import com.abdullin.kthelper.defaultHashCode
 import kotlinx.serialization.Serializable
 import org.jetbrains.research.kex.InheritorOf
 import org.jetbrains.research.kex.ktype.KexType
 import org.jetbrains.research.kex.state.transformer.Transformer
+import org.jetbrains.research.kthelper.defaultHashCode
 
 @InheritorOf("Term")
 @Serializable
 class ArgumentTerm(override val type: KexType, val index: Int) : Term() {
     override val name = "arg$$index"
-    override val subterms by lazy { listOf<Term>() }
+    override val subTerms by lazy { listOf<Term>() }
 
     override fun <T: Transformer<T>> accept(t: Transformer<T>) = this
 

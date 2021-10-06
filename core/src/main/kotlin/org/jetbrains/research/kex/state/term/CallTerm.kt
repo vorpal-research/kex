@@ -15,17 +15,17 @@ class CallTerm(
         @Contextual val method: Method,
         val arguments: List<Term>) : Term() {
     override val name = "$owner.${method.name}(${arguments.joinToString()})"
-    override val subterms by lazy { listOf(owner) + arguments }
+    override val subTerms by lazy { listOf(owner) + arguments }
 
     val isStatic: Boolean
-        get() = owner is ConstClassTerm
+        get() = owner is StaticClassRefTerm
 
     override fun <T: Transformer<T>> accept(t: Transformer<T>): Term {
-        val towner = t.transform(owner)
-        val targuments = arguments.map { t.transform(it) }
+        val tOwner = t.transform(owner)
+        val tArguments = arguments.map { t.transform(it) }
         return when {
-            towner == owner && targuments == arguments -> this
-            else -> term { tf.getCall(method, towner, targuments) }
+            tOwner == owner && tArguments == arguments -> this
+            else -> term { tf.getCall(method, tOwner, tArguments) }
         }
     }
 }

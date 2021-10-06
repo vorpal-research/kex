@@ -1,8 +1,5 @@
 package org.jetbrains.research.kex.state
 
-import com.abdullin.kthelper.assert.fail
-import com.abdullin.kthelper.assert.unreachable
-import com.abdullin.kthelper.logging.log
 import kotlinx.serialization.Serializable
 import org.jetbrains.research.kex.BaseType
 import org.jetbrains.research.kex.InheritanceInfo
@@ -10,6 +7,9 @@ import org.jetbrains.research.kex.state.predicate.Predicate
 import org.jetbrains.research.kex.state.predicate.PredicateBuilder
 import org.jetbrains.research.kex.state.predicate.PredicateType
 import org.jetbrains.research.kfg.ir.Location
+import org.jetbrains.research.kthelper.assert.fail
+import org.jetbrains.research.kthelper.assert.unreachable
+import org.jetbrains.research.kthelper.logging.log
 
 interface TypeInfo {
     val inheritors: Map<String, Class<*>>
@@ -19,13 +19,18 @@ interface TypeInfo {
 fun emptyState(): PredicateState = BasicState()
 fun Predicate.wrap() = emptyState() + this
 
-class StateBuilder() : PredicateBuilder() {
+open class StateBuilder() : PredicateBuilder() {
     override val type = PredicateType.State()
     override val location = Location()
     var current: PredicateState = emptyState()
 
     constructor(state: PredicateState) : this() {
         this.current = state
+    }
+
+    fun append(state: PredicateState): StateBuilder {
+        this += state
+        return this
     }
 
     operator fun plus(predicate: Predicate): StateBuilder {
@@ -57,7 +62,7 @@ class StateBuilder() : PredicateBuilder() {
         current = ChainState(current, choice)
     }
 
-    fun apply() = current
+    open fun apply() = current
 
     inline fun assume(body: PredicateBuilder.() -> Predicate) {
         this += Assume().body()
@@ -119,16 +124,43 @@ inline fun basic(body: StateBuilder.() -> Unit): PredicateState {
     return sb.apply()
 }
 
-inline fun chain(base: StateBuilder.() -> Unit, curr: StateBuilder.() -> Unit): PredicateState {
-    val sb = StateBuilder().apply { base() }
+inline fun PredicateState.basic(body: StateBuilder.() -> Unit): PredicateState {
+    val sb = StateBuilder()
+    sb.body()
+    return this + sb.apply()
+}
+
+inline fun (StateBuilder.() -> Unit).chain(curr: StateBuilder.() -> Unit): PredicateState {
+    val sb = StateBuilder().apply { this@chain() }
     sb += StateBuilder().apply { curr() }.apply()
     return sb.apply()
 }
 
-inline fun choice(left: StateBuilder.() -> Unit, right: StateBuilder.() -> Unit): PredicateState {
-    val lhv = StateBuilder().apply { left() }.apply()
+inline fun PredicateState.chain(curr: StateBuilder.() -> Unit): PredicateState {
+    val sb = StateBuilder(this)
+    sb += StateBuilder().apply { curr() }.apply()
+    return sb.apply()
+}
+
+inline fun (StateBuilder.() -> Unit).choice(right: StateBuilder.() -> Unit): PredicateState {
+    val lhv = StateBuilder().apply { this@choice() }.apply()
     val rhv = StateBuilder().apply { right() }.apply()
     return StateBuilder().apply { this += listOf(lhv, rhv) }.apply()
+}
+
+class ChoiceBuilder : StateBuilder() {
+    private val choices = mutableListOf<PredicateState>()
+
+    fun or(branch: () -> PredicateState) {
+        choices += branch()
+    }
+
+    override fun apply() = ChoiceState(choices)
+}
+
+inline fun PredicateState.choice(right: ChoiceBuilder.() -> Unit): PredicateState {
+    val rhv = ChoiceBuilder().apply { right() }.apply()
+    return this + rhv
 }
 
 @BaseType("State")
@@ -142,9 +174,9 @@ abstract class PredicateState : TypeInfo {
             val inheritanceInfo = InheritanceInfo.fromJson(resource.bufferedReader().readText())
             resource.close()
 
-            inheritanceInfo?.inheritors?.map {
+            inheritanceInfo.inheritors.associate {
                 it.name to loader.loadClass(it.inheritorClass)
-            }?.toMap() ?: mapOf()
+            }
         }
 
         val reverse = states.map { it.value to it.key }.toMap()
@@ -184,7 +216,7 @@ abstract class PredicateState : TypeInfo {
 
     fun drop(n: Int): PredicateState {
         var counter = 0
-        return this.filter { counter++ > n }
+        return this.filter { ++counter > n }
     }
 
     fun dropLast(n: Int): PredicateState = reverse().drop(n).reverse()

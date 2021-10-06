@@ -1,3 +1,4 @@
 org.jetbrains.research.kex.smt.SMTProcessor
 org.jetbrains.research.kex.smt.SolverInfoProcessor
 org.jetbrains.research.kex.InheritanceInfoProcessor
+org.jetbrains.research.kex.TransformerGenerator

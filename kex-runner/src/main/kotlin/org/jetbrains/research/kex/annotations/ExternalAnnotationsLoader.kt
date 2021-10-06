@@ -1,6 +1,6 @@
 package org.jetbrains.research.kex.annotations
 
-import com.abdullin.kthelper.assert.ktassert
+import org.jetbrains.research.kthelper.assert.ktassert
 import org.w3c.dom.Element
 import java.io.File
 import java.io.InputStream
@@ -56,10 +56,12 @@ class ExternalAnnotationsLoader : AnnotationsLoader {
 
     override fun getCallOverloads(name: String): Sequence<AnnotatedCall> = getCallOverloadsPrivate(name)
 
-    private fun emplaceCall(packageName: String,
-                            callName: String,
-                            returnType: String,
-                            params: List<String>): MutableAnnotatedCall {
+    private fun emplaceCall(
+        packageName: String,
+        callName: String,
+        returnType: String,
+        params: List<String>
+    ): MutableAnnotatedCall {
         val node = emplacePackage(packageName)
         val call = node.entities.find {
             when {
@@ -94,17 +96,17 @@ class ExternalAnnotationsLoader : AnnotationsLoader {
     override fun getExactCall(name: String, vararg params: String): AnnotatedCall? = getExactCallPrivate(name, *params)
 
     private fun parseParamTypes(paramsStr: String) =
-            when {
-                paramsStr.isBlank() -> emptyList()
-                else -> paramsStr.split(',').map { transformTypeName(it.trim()) }
-            }
+        when {
+            paramsStr.isBlank() -> emptyList()
+            else -> paramsStr.split(',').map { transformTypeName(it.trim()) }
+        }
 
     private fun transformTypeName(name: String) = when (name) {
         "boolean" -> "bool"
         else -> name.replace('.', '/')
-                .replace("///", "...")
-                .replace(" ", "")
-                .takeWhile { it != '<' }
+            .replace("///", "...")
+            .replace(" ", "")
+            .takeWhile { it != '<' }
     }
 
     private fun parseAnnotations(node: Element): List<AnnotationInfo> {
@@ -119,7 +121,7 @@ class ExternalAnnotationsLoader : AnnotationsLoader {
                 val paramNode = paramNodes.item(j)
                 val attributes = paramNode.attributes
                 args[attributes.getNamedItem("name")?.nodeValue ?: "value"] =
-                        attributes.getNamedItem("val")?.nodeValue ?: paramNode.textContent.trim()
+                    attributes.getNamedItem("val")?.nodeValue ?: paramNode.textContent.trim()
             }
             result += AnnotationManager.build(name, args) ?: continue
         }
@@ -140,7 +142,7 @@ class ExternalAnnotationsLoader : AnnotationsLoader {
                 val nameAttr = node.attributes.getNamedItem("name").nodeValue.trim()
                 var delimiter = nameAttr.indexOf(' ')
                 if (delimiter < 0)
-                    // this is not a call
+                // this is not a call
                     continue
                 val packageName = nameAttr.substring(0 until delimiter).replace('.', '/')
                 while (nameAttr[delimiter] == ' ') delimiter++
@@ -167,10 +169,11 @@ class ExternalAnnotationsLoader : AnnotationsLoader {
                 delimiter = j + 1
                 while (nameAttr.length > delimiter && nameAttr[delimiter] == ' ') delimiter++
                 if (delimiter == nameAttr.length) delimiter--
-                val annotations = try { parseAnnotations(node as Element) }
-                    catch(thr: Throwable) {
-                        throw AnnotationParserException("Error while parsing annotations for \"$call\"", thr)
-                    }
+                val annotations = try {
+                    parseAnnotations(node as Element)
+                } catch (thr: Throwable) {
+                    throw AnnotationParserException("Error while parsing annotations for \"$call\"", thr)
+                }
                 annotations.forEach { it.mutableCall = call }
                 when (nameAttr[delimiter]) {
                     in '0'..'9' -> {
@@ -179,10 +182,13 @@ class ExternalAnnotationsLoader : AnnotationsLoader {
                         val param = call.params[n]
                         param.annotations += annotations
                         annotations.forEach {
-                            try { it.initialize(n) }
-                            catch (thr: Throwable) {
-                                throw AnnotationParserException("Error while initializing an annotation functionality" +
-                                        " instance $it for parameter #$n of $call", thr)
+                            try {
+                                it.initialize(n)
+                            } catch (thr: Throwable) {
+                                throw AnnotationParserException(
+                                    "Error while initializing an annotation functionality" +
+                                            " instance $it for parameter #$n of $call", thr
+                                )
                             }
                         }
                     }
@@ -190,11 +196,15 @@ class ExternalAnnotationsLoader : AnnotationsLoader {
                         // this is a call
                         call.annotations += annotations
                         annotations.forEach {
-                            try { it.initialize(-1) }
-                            catch (thr: Throwable) {
-                                throw AnnotationParserException("Error while initializing an annotation functionality" +
-                                        " instance $it for $call", thr)
-                            } }
+                            try {
+                                it.initialize(-1)
+                            } catch (thr: Throwable) {
+                                throw AnnotationParserException(
+                                    "Error while initializing an annotation functionality" +
+                                            " instance $it for $call", thr
+                                )
+                            }
+                        }
                     }
                     else -> throw IllegalStateException("Name attribute of the call has invalid format")
                 }

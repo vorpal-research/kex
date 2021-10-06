@@ -1,0 +1,231 @@
+#parse("definitions.vm")
+import org.jetbrains.research.kex.smt.${solver.toLowerCase()}.${solver}SMTContext
+import kotlin.math.max
+
+class VersionedMemory< T : Dynamic_ >(val memory: Memory_< T >, val version: Long = 0) {
+    companion object {
+        @Suppress("UNUSED_PARAMETER")
+        fun < T : Dynamic_ > merge(
+            name: String,
+            default: VersionedMemory< T >,
+            cases: List< Pair< Bool_, VersionedMemory< T >>>
+        ): VersionedMemory< T > {
+            val maxVersion = cases.maxOfOrNull { it.second.version } ?: default.version
+            return if (maxVersion == default.version) default else {
+                val memories = cases.map { it.first to it.second.memory }
+                VersionedMemory(Memory_.merge(default.memory, memories), maxVersion + 1)
+            }
+        }
+    }
+
+    fun load(index: Ptr_) = memory.load(index)
+
+    fun store(index: Ptr_, element: T): VersionedMemory< T > {
+        val newMemory = memory.store(index, element)
+        return VersionedMemory(newMemory, version + 1)
+    }
+
+    operator fun get(index: Ptr_) = memory[index]
+    operator fun set(index: Ptr_, element: T) = store(index, element)
+}
+
+#set($memoryTypes = ["Word", "DWord", "Array"])
+#if($generateString)
+    #set($res = $memoryTypes.add("String"))
+#end
+
+#set($self = "MemoryContext")
+class MemoryContext(
+    val factory: $factory,
+#foreach($type in $memoryTypes)
+    ${type.toLowerCase()}Memories: Map< String, VersionedMemory< ${type}_ >>,
+#end
+) {
+#foreach($type in $memoryTypes)
+    val ${type.toLowerCase()}Memories: MutableMap< String, VersionedMemory< ${type}_ >>
+#end
+
+    init {
+#foreach($type in $memoryTypes)
+        this.${type.toLowerCase()}Memories = ${type.toLowerCase()}Memories.toMutableMap()
+#end
+    }
+
+    constructor(factory: $factory) : this(
+            factory,
+#foreach($type in $memoryTypes)
+            mapOf(),
+#end
+        )
+
+    companion object {
+        fun merge(name: String, default: ${solver}Context, choices: Map< Bool_, ${solver}Context >): MemoryContext {
+#foreach($type in $memoryTypes)
+            val ${type.toLowerCase()}Ids = default.memories.${type.toLowerCase()}Memories.keys + choices.values.flatMap { it.memories.${type.toLowerCase()}Memories.keys }
+
+            val ${type.toLowerCase()}Arrays = ${type.toLowerCase()}Ids.associateWith { id ->
+                val alternatives = choices.map { it.key to it.value.get${type}Memory(id) }
+                VersionedMemory.merge(name, default.get${type}Memory(id), alternatives)
+            }
+#end
+            return MemoryContext(
+                default.factory,
+#foreach($type in $memoryTypes)
+                ${type.toLowerCase()}Arrays,
+#end
+            )
+        }
+    }
+
+#foreach($type in $memoryTypes)
+    fun get${type}Memory(id: String) =
+            ${type.toLowerCase()}Memories.getOrPut(id) { VersionedMemory(factory.makeEmptyMemory(id)) }
+    fun get${type}Memory(id: String, getter: () -> VersionedMemory< ${type}_ >) =
+            ${type.toLowerCase()}Memories.getOrPut(id, getter)
+#end
+
+#foreach($type in $memoryTypes)
+    fun set${type}Memory(id: String, mem: VersionedMemory< ${type}_ >) {
+        ${type.toLowerCase()}Memories[id] = mem
+    }
+#end
+}
+
+#set($self = "${solver}Context")
+class $self : ${solver}SMTContext {
+    companion object {
+#foreach($type in $memoryTypes)
+        const val ${type}_MEMORY_NAME = "__${type.toLowerCase()}__"
+        const val ${type}_PROPERTY_NAME = "__${type.toLowerCase()}__property__"
+#end
+        const val STARTING_LOCAL_PTR = Int.MAX_VALUE / 2
+        const val STARTING_STATIC_PTR = STARTING_LOCAL_PTR + Int.MAX_VALUE / 4
+
+        fun mergeContexts(name: String, default: $self, choices: Map< Bool_, $self >): $self {
+            val maxLocal = max(default.localPointer, choices.map { it.value.localPointer }.maxOrNull() ?: 0)
+            val maxStatic = max(default.staticPointer, choices.map { it.value.staticPointer }.maxOrNull() ?: 0)
+
+            val memories = MemoryContext.merge(name, default, choices)
+            return $self(default.factory, maxLocal, maxStatic, memories)
+        }
+    }
+
+    val factory: $factory
+    private var localPointer: Int
+    private var staticPointer: Int
+    private val initialMemory: MemoryContext
+    var memories: MemoryContext
+        private set
+
+    constructor(
+        factory: $factory,
+        localPointer: Int,
+        staticPointer: Int,
+        memories: MemoryContext
+    ) {
+        this.factory = factory
+        this.localPointer = localPointer
+        this.staticPointer = staticPointer
+        this.memories = memories
+
+        this.initialMemory = MemoryContext(factory)
+    }
+
+    constructor(factory: $factory)
+            : this(factory, STARTING_LOCAL_PTR, STARTING_STATIC_PTR, MemoryContext(factory))
+
+    constructor(ctx: $self) : this(
+        ctx.factory,
+        ctx.localPointer,
+        ctx.staticPointer,
+        ctx.memories
+    )
+
+    constructor() : this($factory())
+
+#foreach($type in $memoryTypes)
+    fun get${type}InitialProperty(memspace: Int, property: String) = get${type}InitialMemory("${ ${type}_PROPERTY_NAME }${ property }${ memspace }")
+    fun get${type}Property(memspace: Int, property: String) = get${type}Memory("${ ${type}_PROPERTY_NAME }${ property }${ memspace }")
+
+    fun get${type}InitialMemory(memspace: Int) = get${type}InitialMemory("${ ${type}_MEMORY_NAME }${ memspace }")
+    fun get${type}Memory(memspace: Int) = get${type}Memory("${ ${type}_MEMORY_NAME }${ memspace }")
+
+    fun get${type}InitialMemory(id: String) =
+        initialMemory.get${type}Memory(id) { VersionedMemory(factory.makeEmptyMemory(id)) }
+
+    fun get${type}Memory(id: String) =
+        memories.get${type}Memory(id) { get${type}InitialMemory(id) }
+
+    private fun set${type}InitialMemory(id: String, mem: VersionedMemory< ${type}_ >) =
+        initialMemory.set${type}Memory(id, mem)
+
+    private fun set${type}Memory(id: String, mem: VersionedMemory< ${type}_ >) =
+        memories.set${type}Memory(id, mem)
+#end
+
+#foreach($type in $memoryTypes)
+    fun read${type}Memory(ptr: Ptr_, memspace: Int) =
+        get${type}Memory("${ ${type}_MEMORY_NAME }${ memspace }").load(ptr)
+
+    fun read${type}InitialMemory(ptr: Ptr_, memspace: Int) =
+        get${type}InitialMemory("${ ${type}_MEMORY_NAME }${ memspace }").load(ptr)
+
+    fun write${type}Memory(ptr: Ptr_, memspace: Int, value: ${type}_) {
+        val name = "${ ${type}_MEMORY_NAME }${ memspace }"
+        val mem = get${type}Memory(name).store(ptr, value)
+        set${type}Memory(name, mem)
+    }
+
+    fun initialize${type}Memory(ptr: Ptr_, memspace: Int, value: ${type}_) {
+        val name = "${ ${type}_PROPERTY_NAME }${ memspace }"
+        val mem = get${type}InitialMemory(name).store(ptr, value)
+        set${type}Memory(name, mem)
+    }
+
+    fun read${type}Property(ptr: Ptr_, memspace: Int, property: String) =
+        get${type}Memory("${ ${type}_PROPERTY_NAME }${ property }${ memspace }").load(ptr)
+
+    fun read${type}InitialProperty(ptr: Ptr_, memspace: Int, property: String) =
+        get${type}InitialMemory("${ ${type}_PROPERTY_NAME }${ property }${ memspace }").load(ptr)
+
+    fun write${type}Property(ptr: Ptr_, memspace: Int, property: String, value: ${type}_) {
+        val name = "${ ${type}_PROPERTY_NAME }${ property }${ memspace }"
+        val mem = get${type}Memory(name).store(ptr, value)
+        set${type}Memory(name, mem)
+    }
+
+    fun initialize${type}Property(ptr: Ptr_, memspace: Int, property: String, value: ${type}_) {
+        val name = "${ ${type}_PROPERTY_NAME }${ property }${ memspace }"
+        val mem = get${type}InitialMemory(name).store(ptr, value)
+        set${type}Memory(name, mem)
+    }
+#end
+
+    @Suppress("UNUSED_PARAMETER")
+    fun getLocalPtr(memspace: Int): Ptr_ =
+        factory.makePtrConst(localPointer).also { localPointer += 1 }
+
+    fun getLocalArray(memspace: Int, length: Int_,): Ptr_ =
+        factory.makePtrConst(localPointer).also {
+            localPointer += 1
+            writeWordProperty(it, memspace, "length", length)
+        }
+
+    @Suppress("UNUSED_PARAMETER")
+    fun getStaticPtr(memspace: Int, size: TypeSize): Ptr_ =
+        factory.makePtrConst(localPointer).also { staticPointer += 1 }
+
+    fun getStaticArray(memspace: Int, length: Int_): Ptr_ =
+        factory.makePtrConst(localPointer).also {
+            staticPointer += 1
+            writeWordProperty(it, memspace, "length", length)
+        }
+
+    fun switchOn(name: String, contexts: Map< Bool_, ${solver}Context >): ${solver}Context {
+        val merged =  mergeContexts(name, this, contexts)
+        this.memories = merged.memories
+        this.localPointer = merged.localPointer
+        this.staticPointer = merged.staticPointer
+        return this
+    }
+}

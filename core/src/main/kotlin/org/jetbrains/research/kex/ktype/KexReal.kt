@@ -1,10 +1,10 @@
 package org.jetbrains.research.kex.ktype
 
-import com.abdullin.kthelper.defaultHashCode
 import kotlinx.serialization.Serializable
 import org.jetbrains.research.kex.InheritorOf
 import org.jetbrains.research.kfg.type.Type
 import org.jetbrains.research.kfg.type.TypeFactory
+import org.jetbrains.research.kthelper.defaultHashCode
 
 @InheritorOf("KexType")
 @Serializable
@@ -16,7 +16,7 @@ class KexFloat : KexReal() {
     override val name: String
         get() = "float"
 
-    override val bitsize: Int
+    override val bitSize: Int
         get() = WORD
 
     override fun getKfgType(types: TypeFactory): Type = types.floatType
@@ -35,7 +35,7 @@ class KexDouble : KexReal() {
     override val name: String
         get() = "double"
 
-    override val bitsize: Int
+    override val bitSize: Int
         get() = DWORD
 
     override fun getKfgType(types: TypeFactory): Type = types.doubleType

@@ -1,5 +1,7 @@
 package org.jetbrains.research.kex.reanimator.codegen.javagen
 
+import org.jetbrains.research.kex.asm.util.Visibility
+
 
 class JavaBuilder(val pkg: String = "") {
     companion object {
@@ -39,38 +41,220 @@ class JavaBuilder(val pkg: String = "") {
     }
 
     interface JavaStatement : JavaCode
+    private object EmptyStatement : JavaStatement {
+        override fun print(level: Int) = ""
+    }
+
     data class StringStatement(val statement: String) : JavaStatement {
         override fun toString() = statement
         override fun print(level: Int): String = "${level.asOffset}$statement;"
     }
 
-    interface ControlStatement : JavaStatement
+    interface ConditionalStatement : JavaStatement
+    data class StringConditionStatement(val statement: String) : ConditionalStatement {
+        override fun toString() = statement
+        override fun print(level: Int): String = statement
+    }
 
-    open class JavaFunction(val name: String, val typeArgs: List<Type> = listOf()) : JavaCode {
+    interface ControlStatement : JavaStatement {
+        val subStatements: MutableList<JavaStatement>
+
+        fun isEmpty() = subStatements.isEmpty()
+        fun isNotEmpty() = !isEmpty()
+
+        operator fun String.unaryPlus() {
+            subStatements += StringStatement(this)
+        }
+
+        fun aDo(body: DoWhileStatement.() -> Unit): DoWhileStatement {
+            val doStatement = DoWhileStatement()
+            doStatement.body()
+            subStatements += doStatement
+            return doStatement
+        }
+
+        fun aTry(body: TryCatchStatement.() -> Unit): TryCatchStatement {
+            val tryStatement = TryCatchStatement()
+            tryStatement.body()
+            subStatements += tryStatement
+            return tryStatement
+        }
+
+        fun anIf(condition: String, body: IfElseStatement.() -> Unit) = anIf(StringConditionStatement(condition), body)
+
+        fun anIf(condition: ConditionalStatement, body: IfElseStatement.() -> Unit): IfElseStatement {
+            val ifStatement = IfElseStatement(condition = condition)
+            ifStatement.body()
+            subStatements += ifStatement
+            return ifStatement
+        }
+    }
+
+    interface ElseBlock : ControlStatement
+
+    data class ElseStatement(
+        override val subStatements: MutableList<JavaStatement> = mutableListOf(),
+    ) : ElseBlock {
+        override fun print(level: Int) = buildString {
+            appendLine("${level.asOffset}else {")
+            subStatements.forEach {
+                appendLine(it.print(level + 1))
+            }
+            append("${level.asOffset}}")
+        }
+    }
+
+    data class ElseIfStatement(
+        override val subStatements: MutableList<JavaStatement> = mutableListOf(),
+        var condition: ConditionalStatement = StringConditionStatement(""),
+    ) : ElseBlock {
+        override fun print(level: Int) = buildString {
+            appendLine("${level.asOffset}else if (${condition.print(0)}) {")
+            subStatements.forEach {
+                appendLine(it.print(level + 1))
+            }
+            append("${level.asOffset}}")
+        }
+    }
+
+    data class IfElseStatement(
+        override val subStatements: MutableList<JavaStatement> = mutableListOf(),
+        var condition: ConditionalStatement = StringConditionStatement(""),
+        val elseBlocks: MutableList<ElseBlock> = mutableListOf()
+    ) : ControlStatement {
+        override fun print(level: Int) = buildString {
+            appendLine("${level.asOffset}if (${condition.print(0)}) {")
+            subStatements.forEach {
+                appendLine(it.print(level + 1))
+            }
+            appendLine("${level.asOffset}}")
+            elseBlocks.forEach {
+                appendLine(it.print(level))
+            }
+        }
+
+        fun anElse(body: ElseStatement.() -> Unit): IfElseStatement {
+            val elseBlock = ElseStatement()
+            elseBlock.body()
+            elseBlocks += elseBlock
+            return this
+        }
+
+        fun ifElse(condition: ConditionalStatement, body: ElseIfStatement.() -> Unit): IfElseStatement {
+            val elseBlock = ElseIfStatement(condition = condition)
+            elseBlock.body()
+            elseBlocks += elseBlock
+            return this
+        }
+
+        fun ifElse(condition: String, body: ElseIfStatement.() -> Unit) = ifElse(StringConditionStatement(condition), body)
+    }
+
+    data class DoWhileStatement(
+        override val subStatements: MutableList<JavaStatement> = mutableListOf(),
+        var condition: ConditionalStatement = StringConditionStatement("")
+    ) : ControlStatement {
+        override fun print(level: Int) = buildString {
+            appendLine("${level.asOffset}do {")
+            subStatements.forEach {
+                appendLine(it.print(level + 1))
+            }
+            appendLine("${level.asOffset}} while (${condition.print(0)});")
+        }
+
+        fun aWhile(condition: ConditionalStatement) {
+            this.condition = condition
+        }
+
+        fun aWhile(condition: String) {
+            this.condition = StringConditionStatement(condition)
+        }
+    }
+
+    data class CatchStatement(
+        val exceptions: MutableList<Type> = mutableListOf(),
+        override val subStatements: MutableList<JavaStatement> = mutableListOf()
+    ) : ControlStatement {
+        override fun print(level: Int) = buildString {
+            appendLine("${level.asOffset}catch (${exceptions.joinToString("|")} e) {")
+            subStatements.forEach {
+                appendLine(it.print(level + 1))
+            }
+            append("${level.asOffset}}")
+        }
+    }
+
+    data class FinallyStatement(
+        override val subStatements: MutableList<JavaStatement> = mutableListOf()
+    ) : ControlStatement {
+        override fun print(level: Int) = buildString {
+            appendLine("${level.asOffset}finally {")
+            subStatements.forEach {
+                appendLine(it.print(level + 1))
+            }
+            append("${level.asOffset}}")
+        }
+    }
+
+    data class TryCatchStatement(
+        override val subStatements: MutableList<JavaStatement> = mutableListOf(),
+        val catchBlocks: MutableList<CatchStatement> = mutableListOf(),
+        val finallyBlock: FinallyStatement = FinallyStatement()
+    ) : ControlStatement {
+
+        override fun print(level: Int) = buildString {
+            appendLine("${level.asOffset} try {")
+            subStatements.forEach {
+                appendLine(it.print(level + 1))
+            }
+            appendLine("${level.asOffset}}")
+            catchBlocks.forEach {
+                appendLine(it.print(level))
+            }
+            if (finallyBlock.isNotEmpty()) appendLine(finallyBlock.print(level))
+        }
+
+        fun catch(body: CatchStatement.() -> Unit): TryCatchStatement {
+            val catch = CatchStatement()
+            catch.body()
+            catchBlocks += catch
+            return this
+        }
+
+        fun finally(body: FinallyStatement.() -> Unit): TryCatchStatement {
+            finallyBlock.body()
+            return this
+        }
+
+    }
+
+    open class JavaFunction(val name: String, val typeArgs: List<Type> = listOf()) : ControlStatement {
         lateinit var returnType: Type
+        var visibility = Visibility.PUBLIC
+        val modifiers = mutableListOf<String>()
         val arguments = mutableListOf<JavaArgument>()
-        val statements = mutableListOf<JavaStatement>()
+        override val subStatements = mutableListOf<JavaStatement>()
         val annotations = mutableListOf<String>()
         val exceptions = mutableListOf<String>()
 
-        open val signature
-            get() = "public ${if (typeArgs.isNotEmpty()) typeArgs.joinToString(", ", prefix = "<", postfix = ">") else ""} " +
-                    "$returnType $name(${arguments.joinToString(", ")})"
+        open val signature: String
+            get() = buildString {
+                append(visibility)
+                if (modifiers.isNotEmpty()) append(modifiers.joinToString(" ", prefix = " "))
+                if (typeArgs.isNotEmpty()) append(typeArgs.joinToString(", ", prefix = " <", postfix = ">"))
+                append(" $returnType $name(${arguments.joinToString(", ")})")
+            }
 
         data class JavaArgument(val name: String, val type: Type) {
             override fun toString() = "$type $name"
         }
 
-        operator fun String.unaryPlus() {
-            statements += StringStatement(this)
-        }
-
         fun statement(statement: String) {
-            statements += StringStatement(statement)
+            subStatements += StringStatement(statement)
         }
 
         fun body(body: String) {
-            statements.addAll(body.split("\n").map { StringStatement(it) })
+            subStatements.addAll(body.split("\n").map { StringStatement(it) })
         }
 
         override fun toString() = print(0)
@@ -85,7 +269,7 @@ class JavaBuilder(val pkg: String = "") {
             }
             appendLine(" {")
             val innerLevel = level + 1
-            for (statement in statements) {
+            for (statement in subStatements) {
                 appendLine(statement.print(innerLevel))
             }
             appendLine("${level.asOffset}}")
@@ -94,7 +278,21 @@ class JavaBuilder(val pkg: String = "") {
 
     class JavaConstructor(val klass: JavaClass) : JavaFunction(klass.name) {
         override val signature: String
-            get() = "${klass.name}(${arguments.joinToString(", ")})"
+            get() = "$visibility ${klass.name}(${arguments.joinToString(", ")})"
+    }
+
+    class JavaStaticInitializer : JavaFunction("static") {
+        override val signature: String
+            get() = "<clinit>"
+
+        override fun print(level: Int): String = buildString {
+            appendLine("${level.asOffset}static {")
+            val innerLevel = level + 1
+            for (statement in subStatements) {
+                appendLine(statement.print(innerLevel))
+            }
+            appendLine("${level.asOffset}}")
+        }
     }
 
     class JavaMethod(val klass: JavaClass, name: String, typeArgs: List<Type> = listOf()) : JavaFunction(name, typeArgs)
@@ -102,18 +300,29 @@ class JavaBuilder(val pkg: String = "") {
     data class JavaClass(val pkg: String, val name: String) : JavaCode {
         val fields = mutableListOf<JavaField>()
         val constructors = mutableListOf<JavaConstructor>()
+        val staticInits = mutableListOf<JavaStaticInitializer>()
         val methods = mutableListOf<JavaMethod>()
 
-        data class JavaField(val name: String, val type: Type, val initializer: String? = null) {
-            override fun toString() = "$type $name ${initializer ?: ""};"
+        data class JavaField(
+            val name: String,
+            val type: Type,
+            var visibility: Visibility = Visibility.PACKAGE,
+            var initializer: String? = null,
+        ) {
+            val modifiers = mutableListOf<String>()
+
+            override fun toString() = buildString {
+                append(visibility)
+                if (modifiers.isNotEmpty()) append(modifiers.joinToString(" ", prefix = " "))
+                append(" $type $name${initializer?.let { " = $it" } ?: ""};")
+            }
         }
 
-        fun field(name: String, type: Type) {
-            fields += JavaField(name, type)
-        }
+        fun field(name: String, type: Type): JavaField = JavaField(name, type).also { fields += it }
 
-        fun field(name: String, type: Type, initializer: String) {
-            fields += JavaField(name, type, initializer)
+        fun field(name: String, type: Type, body: JavaField.() -> Unit) = JavaField(name, type).also {
+            it.body()
+            fields += it
         }
 
         fun constructor(body: JavaFunction.() -> Unit) {
@@ -122,6 +331,14 @@ class JavaBuilder(val pkg: String = "") {
             constructors += funBuilder
         }
 
+        fun static(body: JavaFunction.() -> Unit): JavaFunction {
+            val funBuilder = JavaStaticInitializer()
+            funBuilder.body()
+            staticInits += funBuilder
+            return funBuilder
+        }
+
+
         fun method(name: String, body: JavaFunction.() -> Unit): JavaFunction {
             val funBuilder = JavaMethod(this, name)
             funBuilder.body()
@@ -129,10 +346,11 @@ class JavaBuilder(val pkg: String = "") {
             return funBuilder
         }
 
-        fun method(name: String, typeArgs: List<Type>, body: JavaFunction.() -> Unit) {
+        fun method(name: String, typeArgs: List<Type>, body: JavaFunction.() -> Unit): JavaFunction {
             val funBuilder = JavaMethod(this, name, typeArgs)
             funBuilder.body()
             methods += funBuilder
+            return funBuilder
         }
 
         fun constructor(typeArgs: List<Type>, body: JavaFunction.() -> Unit) {
@@ -145,6 +363,12 @@ class JavaBuilder(val pkg: String = "") {
             appendLine("${level.asOffset}public class $name {")
             fields.forEach { appendLine("${(level + 1).asOffset}$it") }
             appendLine()
+            staticInits.forEach {
+                appendLine(it.print(level + 1))
+            }
+            constructors.forEach {
+                appendLine(it.print(level + 1))
+            }
             methods.forEach {
                 appendLine(it.print(level + 1))
             }
@@ -170,4 +394,5 @@ class JavaBuilder(val pkg: String = "") {
         instances += newKlass
     }
 
+    fun arg(name: String, type: Type) = JavaFunction.JavaArgument(name, type)
 }

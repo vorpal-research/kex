@@ -16,8 +16,8 @@ import org.jetbrains.research.kfg.util.Flags
 import java.nio.file.Paths
 
 abstract class KexTest {
-    val packageName = "org/jetbrains/research/kex/test"
-    val `package` = Package("$packageName/*")
+    val packageName = "org.jetbrains.research.kex.test"
+    val `package` = Package.parse("$packageName.*")
     val jarPath: String
     val cm: ClassManager
     val loader: ClassLoader
@@ -26,13 +26,12 @@ abstract class KexTest {
         val rootDir = System.getProperty("root.dir")
         val version = System.getProperty("project.version")
         kexConfig.initialize(RuntimeConfig, FileConfig("$rootDir/kex-test.ini"))
-        RuntimeConfig.setValue("z3", "tacticsFile", "$rootDir/z3.tactics")
-        RuntimeConfig.setValue("z3", "paramFile", "$rootDir/z3.params")
+        kexConfig.initLog("kex-test.log")
 
         jarPath = "$rootDir/kex-test/target/kex-test-$version-jar-with-dependencies.jar"
         val jar = Paths.get(jarPath).asContainer(`package`)!!
         loader = jar.classLoader
-        cm = ClassManager(KfgConfig(flags = Flags.readAll, failOnError = true))
+        cm = ClassManager(KfgConfig(flags = Flags.readAll, failOnError = false))
         cm.initialize(jar)
     }
 

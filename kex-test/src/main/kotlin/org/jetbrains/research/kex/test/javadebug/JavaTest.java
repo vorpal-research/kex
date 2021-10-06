@@ -1,11 +1,23 @@
 package org.jetbrains.research.kex.test.javadebug;
 
 public class JavaTest {
-    public static int i = 0;
 
-    public void test(int a) {
-        if (a + i == 3 && i > 0) {
-            System.out.println("a");
-        }
+    private final String str;
+    private boolean implicitMultiplication = true;
+
+    public JavaTest(String str) {
+        this.str = str;
     }
+
+    public JavaTest implicitMultiplication(boolean enabled) {
+        this.implicitMultiplication = enabled;
+        return this;
+    }
+
+//    public void test(String a) {
+//        A b = new A(a);
+//        if (b.str.length() > 0) {
+//            throw new IllegalArgumentException();
+//        }
+//    }
 }

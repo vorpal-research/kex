@@ -1,10 +1,9 @@
 package org.jetbrains.research.kex.asm.state
 
-import com.abdullin.kthelper.algorithm.DominatorTree
-import com.abdullin.kthelper.algorithm.DominatorTreeBuilder
-import com.abdullin.kthelper.algorithm.GraphTraversal
-import com.abdullin.kthelper.assert.AssertionException
-import com.abdullin.kthelper.collection.queueOf
+import org.jetbrains.research.kthelper.algorithm.DominatorTree
+import org.jetbrains.research.kthelper.algorithm.DominatorTreeBuilder
+import org.jetbrains.research.kthelper.algorithm.GraphTraversal
+import org.jetbrains.research.kthelper.collection.queueOf
 import org.jetbrains.research.kex.state.PredicateState
 import org.jetbrains.research.kex.state.emptyState
 import org.jetbrains.research.kfg.ir.BasicBlock
@@ -24,12 +23,8 @@ class PredicateStateBuilder(val method: Method) {
     private val predicateBuilder = PredicateBuilder(method.cm)
 
     fun init() {
-        try {
-            predicateBuilder.visit(method)
-        } catch (e: Throwable) {
-            return
-        }
-        if (!method.isAbstract) {
+        predicateBuilder.visit(method)
+        if (!method.isAbstract && !method.isNative && method.hasBody) {
             val order = GraphTraversal(method).topologicalSort()
 
             domTree.putAll(DominatorTreeBuilder(method).build())
