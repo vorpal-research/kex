@@ -51,8 +51,6 @@ private class ActualTraceCollector(val cm: ClassManager, val ctx: NameMapperCont
     override val trace = arrayListOf<Action>()
     private val stack = stackOf<MethodWrapper>()
 
-    private fun String.toType() = parseDesc(cm.type, this)
-
     private fun parseMethod(className: String, methodName: String, args: Array<String>, retType: String): MethodWrapper {
         return MethodWrapper(className, methodName, args.toList(), retType)
     }
