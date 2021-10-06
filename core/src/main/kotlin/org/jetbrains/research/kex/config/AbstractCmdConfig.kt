@@ -100,7 +100,7 @@ abstract class AbstractCmdConfig(
             return sw.toString()
         }
 
-    inline fun <reified T : Enum<T>> getEnumValue(name: String, ignoreCase: Boolean = false): Enum<T>? {
+    inline fun <reified T : Enum<T>> getEnumValue(name: String, ignoreCase: Boolean = false): T? {
         val constName = getCmdValue(name) ?: return null
         val comparator = when {
             ignoreCase -> { a: String, b: String ->
@@ -112,6 +112,6 @@ abstract class AbstractCmdConfig(
         return T::class.java.enumConstants.firstOrNull { comparator(it.name, constName) }
     }
 
-    inline fun <reified T : Enum<T>> getEnumValue(name: String, default: T, ignoreCase: Boolean = false): Enum<T> =
-        getEnumValue(name, ignoreCase) ?: default
+    inline fun <reified T : Enum<T>> getEnumValue(name: String, default: T, ignoreCase: Boolean = false): T =
+        getEnumValue<T>(name, ignoreCase) ?: default
 }
