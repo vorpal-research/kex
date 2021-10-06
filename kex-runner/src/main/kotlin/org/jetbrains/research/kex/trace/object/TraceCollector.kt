@@ -1,5 +1,8 @@
 package org.jetbrains.research.kex.trace.`object`
 
+import org.jetbrains.research.kex.asm.manager.BlockWrapper
+import org.jetbrains.research.kex.asm.manager.MethodWrapper
+import org.jetbrains.research.kex.asm.manager.ValueWrapper
 import org.jetbrains.research.kex.trace.file.UnknownNameException
 import org.jetbrains.research.kex.util.parseValue
 import org.jetbrains.research.kfg.ClassManager
@@ -46,23 +49,20 @@ interface TraceCollector {
 
 private class ActualTraceCollector(val cm: ClassManager, val ctx: NameMapperContext) : TraceCollector {
     override val trace = arrayListOf<Action>()
-    private val stack = stackOf<Method>()
+    private val stack = stackOf<MethodWrapper>()
 
     private fun String.toType() = parseDesc(cm.type, this)
 
-    private fun parseMethod(className: String, methodName: String, args: Array<String>, retType: String): Method {
-        val klass = cm[className]
-        return klass.getMethod(methodName, MethodDesc(args.map { it.toType() }.toTypedArray(), retType.toType()))
+    private fun parseMethod(className: String, methodName: String, args: Array<String>, retType: String): MethodWrapper {
+        return MethodWrapper(className, methodName, args.toList(), retType)
     }
 
-    private fun parseBlock(blockName: String): BasicBlock {
-        val nm = ctx.getMapper(stack.peek())
-        return nm.getBlock(blockName) ?: throw UnknownNameException(blockName)
+    private fun parseBlock(blockName: String): BlockWrapper {
+        return BlockWrapper(blockName)
     }
 
-    private fun parseValue(valueName: String): Value {
-        val nm = ctx.getMapper(stack.peek())
-        return nm.parseValue(valueName)
+    private fun parseValue(valueName: String): ValueWrapper {
+        return ValueWrapper(valueName)
     }
 
     fun addAction(action: Action) = trace.add(action)
@@ -106,15 +106,13 @@ private class ActualTraceCollector(val cm: ClassManager, val ctx: NameMapperCont
     }
 
     override fun staticEntry(className: String) {
-        val klass = cm[className]
-        val method = klass.methods.first { it.isStaticInitializer }
+        val method = MethodWrapper(className, Method.STATIC_INIT_NAME, listOf(), "V")
         addAction(StaticInitEntry(method))
         stack.push(method)
     }
 
     override fun staticExit() {
         val method = stack.pop()
-        ktassert(method.isStaticInitializer)
         addAction(StaticInitExit(method))
     }
 

@@ -11,7 +11,7 @@ import org.jetbrains.research.kex.asm.analysis.testgen.Failure
 import org.jetbrains.research.kex.asm.analysis.testgen.MethodChecker
 import org.jetbrains.research.kex.asm.analysis.testgen.RandomChecker
 import org.jetbrains.research.kex.asm.manager.CoverageCounter
-import org.jetbrains.research.kex.asm.manager.OriginalMapper
+import org.jetbrains.research.kex.asm.manager.MethodWrapperInitializer
 import org.jetbrains.research.kex.asm.state.PredicateStateAnalysis
 import org.jetbrains.research.kex.asm.transform.*
 import org.jetbrains.research.kex.asm.util.ClassWriter
@@ -71,10 +71,8 @@ class Kex(args: Array<String>) {
     val containers: List<Container>
     val containerClassLoader: URLClassLoader
     val outputDir: Path
-    lateinit var instrumentedCodeDir: Path
 
-    val classManager: ClassManager
-    val origManager: ClassManager
+    val context: ExecutionContext
 
     val `package`: Package
     var klass: Class? = null
@@ -149,11 +147,22 @@ class Kex(args: Array<String>) {
                 exitProcess(1)
             }
         }.toTypedArray(), getKexRuntime())
-        classManager = ClassManager(KfgConfig(flags = Flags.readAll, failOnError = false, verifyIR = false))
-        origManager = ClassManager(KfgConfig(flags = Flags.readAll, failOnError = false, verifyIR = false))
         val analysisJars = listOfNotNull(*containers.toTypedArray(), getRuntime(), getIntrinsics())
-        classManager.initialize(*analysisJars.toTypedArray())
-        origManager.initialize(*analysisJars.toTypedArray())
+
+        val instrumentedDirName = kexConfig.getStringValue("output", "instrumentedDir", "instrumented")
+        val instrumentedCodeDir = outputDir.resolve(instrumentedDirName)
+        prepareInstrumentedClasspath(analysisJars, `package`, instrumentedCodeDir)
+
+        val cm = ClassManager(KfgConfig(flags = Flags.readAll, failOnError = false, verifyIR = false))
+        cm.initialize(*analysisJars.toTypedArray())
+
+        // write all classes to output directory, so they will be seen by ClassLoader
+        val classLoader = URLClassLoader(arrayOf(instrumentedCodeDir.toUri().toURL()))
+
+        val klassPath = containers.map { it.path }
+        updateClassPath(classLoader)
+        val randomDriver = EasyRandomDriver()
+        context = ExecutionContext(cm, `package`, classLoader, randomDriver, klassPath)
 
         log.debug("Running with class path:\n${containers.joinToString("\n") { it.name }}")
         when (analysisLevel) {
@@ -161,7 +170,7 @@ class Kex(args: Array<String>) {
                 log.debug("Target: package $`package`")
             }
             is AnalysisLevel.CLASS -> {
-                klass = classManager[analysisLevel.klass]
+                klass = cm[analysisLevel.klass]
                 if (klass !is ConcreteClass) {
                     log.error("Class $klass not found is classpath, exiting")
                     exitProcess(1)
@@ -170,13 +179,35 @@ class Kex(args: Array<String>) {
                 }
             }
             is AnalysisLevel.METHOD -> {
-                klass = classManager[analysisLevel.klass]
+                klass = cm[analysisLevel.klass]
                 methods = klass!!.getMethods(analysisLevel.method)
                 log.debug("Target: methods $methods")
             }
         }
 
         visibilityLevel = kexConfig.getEnumValue("apiGeneration", "visibility", true, Visibility.PUBLIC)
+    }
+
+    private fun prepareInstrumentedClasspath(containers: List<Container>, target: Package, path: Path) {
+        val cm = ClassManager(KfgConfig(flags = Flags.readAll, failOnError = false, verifyIR = false))
+        cm.initialize(*containers.toTypedArray())
+        val klassPath = containers.map { it.path }
+        val context = ExecutionContext(
+            cm,
+            target,
+            containerClassLoader,
+            EasyRandomDriver(),
+            klassPath
+        )
+
+        containers.forEach { it.unpack(cm, path, true) }
+
+        executePipeline(cm, target) {
+            +SystemExitTransformer(cm)
+            +RuntimeTraceCollector(cm)
+//            +SymbolicTraceCollector(context)
+            +ClassWriter(context, path)
+        }
     }
 
     private fun updateClassPath(loader: URLClassLoader) {
@@ -189,27 +220,14 @@ class Kex(args: Array<String>) {
     }
 
     fun main() {
-        // write all classes to output directory, so they will be seen by ClassLoader
-        val instrumentedDirName = kexConfig.getStringValue("output", "instrumentedDir", "instrumented")
-        instrumentedCodeDir = outputDir.resolve(instrumentedDirName)
-
-        containers.forEach { it.unpack(classManager, instrumentedCodeDir, true) }
-        val classLoader = URLClassLoader(arrayOf(instrumentedCodeDir.toUri().toURL()))
-
-        val klassPath = containers.map { it.path }
-        updateClassPath(classLoader)
-        val randomDriver = EasyRandomDriver()
-        val originalContext = ExecutionContext(origManager, `package`, containerClassLoader, randomDriver, klassPath)
-        val analysisContext = ExecutionContext(classManager, `package`, classLoader, randomDriver, klassPath)
-
         when (cmd.getEnumValue("mode", Mode.Symbolic, ignoreCase = true)) {
-            Mode.Fuzzer -> fuzzer(originalContext, analysisContext)
-            Mode.Symbolic -> symbolic(originalContext, analysisContext)
-            Mode.Reanimator -> reanimator(analysisContext)
-            Mode.Checker -> checker(analysisContext)
-            Mode.LibChecker -> libChecker(analysisContext)
-            Mode.Concolic -> concolic(originalContext, analysisContext)
-            Mode.Debug -> debug(analysisContext)
+            Mode.Fuzzer -> fuzzer(context)
+            Mode.Symbolic -> symbolic(context)
+            Mode.Reanimator -> reanimator(context)
+            Mode.Checker -> checker(context)
+            Mode.LibChecker -> libChecker(context)
+            Mode.Concolic -> concolic(context)
+            Mode.Debug -> debug(context)
         }
         clearClassPath()
     }
@@ -230,17 +248,10 @@ class Kex(args: Array<String>) {
         log.debug(recMod)
     }
 
-    private fun symbolic(originalContext: ExecutionContext, analysisContext: ExecutionContext) {
-        // instrument all classes in the target package
-        runPipeline(originalContext, `package`) {
-            +SystemExitTransformer(originalContext.cm)
-            +RuntimeTraceCollector(originalContext.cm)
-            +ClassWriter(originalContext, instrumentedCodeDir)
-        }
-
+    private fun symbolic(analysisContext: ExecutionContext) {
         val traceManager = ObjectTraceManager()
         val psa = PredicateStateAnalysis(analysisContext.cm)
-        val cm = createCoverageCounter(originalContext.cm, traceManager)
+        val cm = createCoverageCounter(analysisContext.cm, traceManager)
 
         val useApiGeneration = kexConfig.getBooleanValue("apiGeneration", "enabled", true)
 
@@ -262,17 +273,10 @@ class Kex(args: Array<String>) {
         DescriptorStatistics.printStatistics()
     }
 
-    private fun fuzzer(originalContext: ExecutionContext, analysisContext: ExecutionContext) {
-        // instrument all classes in the target package
-        runPipeline(originalContext, `package`) {
-            +SystemExitTransformer(originalContext.cm)
-            +RuntimeTraceCollector(originalContext.cm)
-            +ClassWriter(originalContext, instrumentedCodeDir)
-        }
-
+    private fun fuzzer(analysisContext: ExecutionContext) {
         val traceManager = ObjectTraceManager()
         val psa = PredicateStateAnalysis(analysisContext.cm)
-        val cm = createCoverageCounter(originalContext.cm, traceManager)
+        val cm = createCoverageCounter(analysisContext.cm, traceManager)
 
         updateClassPath(analysisContext.loader as URLClassLoader)
 
@@ -330,6 +334,7 @@ class Kex(args: Array<String>) {
         updateClassPath(analysisContext.loader as URLClassLoader)
 
         runPipeline(analysisContext) {
+            +MethodWrapperInitializer(analysisContext.cm)
             +LoopSimplifier(analysisContext.cm)
             +LoopDeroller(analysisContext.cm)
             +psa
@@ -343,16 +348,12 @@ class Kex(args: Array<String>) {
         clearClassPath()
     }
 
-    private fun concolic(originalContext: ExecutionContext, analysisContext: ExecutionContext) {
+    private fun concolic(analysisContext: ExecutionContext) {
         val traceManager = InstructionTraceManager()
-        val cm = createCoverageCounter(originalContext.cm, traceManager)
-        runPipeline(originalContext, `package`) {
-            +SystemExitTransformer(originalContext.cm)
-            +SymbolicTraceCollector(originalContext)
-            +ClassWriter(originalContext, instrumentedCodeDir)
-        }
+        val cm = createCoverageCounter(analysisContext.cm, traceManager)
+
         runPipeline(analysisContext) {
-            +OriginalMapper(analysisContext.cm, analysisContext.cm)
+            +MethodWrapperInitializer(analysisContext.cm)
             +SystemExitTransformer(analysisContext.cm)
             +InstructionConcolicChecker(analysisContext, traceManager)
             +cm
@@ -385,7 +386,7 @@ class Kex(args: Array<String>) {
         psa: PredicateStateAnalysis,
         pkg: Package = Package.defaultPackage
     ) = runPipeline(ctx, pkg) {
-        +OriginalMapper(ctx.cm, origManager)
+        +MethodWrapperInitializer(ctx.cm)
         +LoopSimplifier(ctx.cm)
         +LoopDeroller(ctx.cm)
         +BranchAdapter(ctx.cm)

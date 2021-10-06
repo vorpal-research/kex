@@ -1,5 +1,6 @@
 package org.jetbrains.research.kex.asm.transform
 
+import org.jetbrains.research.kex.asm.manager.wrapper
 import org.jetbrains.research.kex.config.kexConfig
 import org.jetbrains.research.kfg.ClassManager
 import org.jetbrains.research.kfg.analysis.Loop
@@ -153,6 +154,7 @@ class LoopDeroller(override val cm: ClassManager) : LoopVisitor {
             for (block in blockOrder) {
                 val mapping = state[block]
                 method.addBefore(state.header, mapping)
+                mapping.wrapper = block.wrapper
                 if (mapping is CatchBlock) method.addCatchBlock(mapping)
             }
 
@@ -167,6 +169,7 @@ class LoopDeroller(override val cm: ClassManager) : LoopVisitor {
         unreachableBlock.add(inst(cm) { unreachable() })
         method.add(unreachableBlock)
         unreachableBlocks.getOrPut(method, ::hashSetOf).add(unreachableBlock)
+        unreachableBlock.wrapper = null
 
         // remap blocks of last iteration to actual method blocks
         val lastTerminator = state[state.terminatingBlock]
