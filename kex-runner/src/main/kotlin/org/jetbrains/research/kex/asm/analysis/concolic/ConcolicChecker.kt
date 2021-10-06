@@ -5,6 +5,7 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
 import kotlinx.coroutines.yield
 import org.jetbrains.research.kex.ExecutionContext
+import org.jetbrains.research.kex.asm.manager.wrapper
 import org.jetbrains.research.kex.asm.state.PredicateStateAnalysis
 import org.jetbrains.research.kex.config.kexConfig
 import org.jetbrains.research.kex.parameters.Parameters
@@ -27,6 +28,7 @@ import org.jetbrains.research.kfg.ir.BasicBlock
 import org.jetbrains.research.kfg.ir.Method
 import org.jetbrains.research.kfg.ir.value.NameMapperContext
 import org.jetbrains.research.kfg.ir.value.Value
+import org.jetbrains.research.kfg.ir.value.nameMapper
 import org.jetbrains.research.kfg.visitor.MethodVisitor
 import org.jetbrains.research.kthelper.collection.firstOrElse
 import org.jetbrains.research.kthelper.collection.stackOf
@@ -120,60 +122,74 @@ class ConcolicChecker(
                     else -> staticLevel == 0
                 }
             }
-        }.dropWhile { !(it is MethodEntry && it.method == method) }
+        }.dropWhile { !(it is MethodEntry && it.method == method.wrapper) }
 
         val builder = ConcolicStateBuilder(cm, psa)
         for ((index, action) in filteredTrace.withIndex()) {
             when (action) {
                 is MethodEntry -> {
-                    methodStack.push(action.method)
+                    methodStack.push(action.method.unwrap(cm))
                     prevBlockStack.push(BlockWrapper(null))
-                    builder.enterMethod(action.method)
+                    builder.enterMethod(action.method.unwrap(cm))
                 }
                 is MethodReturn -> {
+                    val exitMethod = methodStack.pop()
                     val prevBlock = prevBlockStack.pop()
-                    val current = action.block
-                    val next = filteredTrace.getOrNull(index + 1) as? BlockAction
-                    builder.build(current, prevBlock.block, next?.block)
-                    methodStack.pop()
-                    builder.exitMethod(action.method)
+                    val current = action.block.unwrap(exitMethod)
+                    val next = (filteredTrace.getOrNull(index + 1) as? BlockAction)?.block?.unwrap(methodStack.peek())
+
+                    builder.build(current, prevBlock.block, next)
+                    builder.exitMethod(action.method.unwrap(cm))
                 }
                 is MethodThrow -> {
+                    val exitMethod = methodStack.pop()
                     val prevBlock = prevBlockStack.pop()
-                    val current = action.block
-                    val next = filteredTrace.getOrNull(index + 1) as? BlockAction
-                    builder.build(current, prevBlock.block, next?.block)
-                    methodStack.pop()
-                    builder.exitMethod(action.method)
+                    val current = action.block.unwrap(exitMethod)
+                    val next = (filteredTrace.getOrNull(index + 1) as? BlockAction)?.block?.unwrap(methodStack.peek())
+
+                    builder.build(current, prevBlock.block, next)
+                    builder.exitMethod(action.method.unwrap(cm))
                 }
                 is MethodCall -> {
+                    val currentMethod = methodStack.peek()
+                    val nm = currentMethod.nameMapper
                     val mappings = mutableMapOf<Value, Value>()
-                    action.instance?.run { mappings[values.getThis(action.method.klass)] = this }
+                    action.instance?.run { mappings[values.getThis(currentMethod.klass)] = this.unwrap(nm) }
                     action.args.withIndex().forEach { (index, arg) ->
-                        mappings[values.getArgument(index, action.method, action.method.argTypes[index])] = arg
+                        mappings[values.getArgument(index, currentMethod, currentMethod.argTypes[index])] =
+                            arg.unwrap(nm)
                     }
-                    builder.callMethod(action.method, ConcolicStateBuilder.CallParameters(action.returnValue, mappings))
+                    builder.callMethod(
+                        action.method.unwrap(cm),
+                        ConcolicStateBuilder.CallParameters(action.returnValue?.unwrap(nm), mappings)
+                    )
                 }
 
                 is BlockJump -> {
+                    val currentMethod = methodStack.peek()
                     val prevBlock = prevBlockStack.pop()
-                    val current = action.block
-                    val next = filteredTrace.getOrNull(index + 1) as? BlockAction
-                    builder.build(current, prevBlock.block, next?.block)
+                    val current = action.block.unwrap(currentMethod)
+                    val next = (filteredTrace.getOrNull(index + 1) as? BlockAction)?.block?.unwrap(currentMethod)
+
+                    builder.build(current, prevBlock.block, next)
                     prevBlockStack.push(current.wrap())
                 }
                 is BlockBranch -> {
+                    val currentMethod = methodStack.peek()
                     val prevBlock = prevBlockStack.pop()
-                    val current = action.block
-                    val next = filteredTrace.getOrNull(index + 1) as? BlockAction
-                    builder.build(current, prevBlock.block, next?.block)
+                    val current = action.block.unwrap(currentMethod)
+                    val next = (filteredTrace.getOrNull(index + 1) as? BlockAction)?.block?.unwrap(currentMethod)
+
+                    builder.build(current, prevBlock.block, next)
                     prevBlockStack.push(current.wrap())
                 }
                 is BlockSwitch -> {
+                    val currentMethod = methodStack.peek()
                     val prevBlock = prevBlockStack.pop()
-                    val current = action.block
-                    val next = filteredTrace.getOrNull(index + 1) as? BlockAction
-                    builder.build(current, prevBlock.block, next?.block)
+                    val current = action.block.unwrap(currentMethod)
+                    val next = (filteredTrace.getOrNull(index + 1) as? BlockAction)?.block?.unwrap(currentMethod)
+
+                    builder.build(current, prevBlock.block, next)
                     prevBlockStack.push(current.wrap())
                 }
                 else -> {

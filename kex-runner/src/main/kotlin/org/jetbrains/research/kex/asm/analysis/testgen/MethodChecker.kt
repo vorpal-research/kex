@@ -8,7 +8,6 @@ import org.jetbrains.research.kex.ExecutionContext
 import org.jetbrains.research.kex.asm.analysis.DfsStrategy
 import org.jetbrains.research.kex.asm.analysis.SearchStrategy
 import org.jetbrains.research.kex.asm.manager.isImpactable
-import org.jetbrains.research.kex.asm.manager.original
 import org.jetbrains.research.kex.asm.state.PredicateStateAnalysis
 import org.jetbrains.research.kex.config.kexConfig
 import org.jetbrains.research.kex.parameters.Parameters
@@ -106,8 +105,7 @@ open class MethodChecker(
                 continue
             }
 
-            val originalBlock = block.original ?: continue
-            if (tm.isCovered(originalBlock)) continue
+            if (tm.isCovered(block)) continue
 
             if (block in unreachableBlocks) continue
             if (domTree[block]?.idom?.value in unreachableBlocks) {
@@ -132,7 +130,7 @@ open class MethodChecker(
                 break
             }
 
-            log.debug("Block ${block.name} is covered = ${tm.isCovered(originalBlock)}")
+            log.debug("Block ${block.name} is covered = ${tm.isCovered(block)}")
             log.debug()
 
             if (coverageResult is Result.UnsatResult) unreachableBlocks += block
@@ -177,7 +175,7 @@ open class MethodChecker(
 
     protected fun collectTrace(method: Method, instance: Any?, args: List<Any?>) = tryOrNull {
         val params = Parameters(instance, args)
-        val runner = ObjectTracingRunner(nameContext, method.original!!, loader, params)
+        val runner = ObjectTracingRunner(nameContext, method, loader, params)
         val trace = runner.run() ?: return null
         tm[method] = trace
     }

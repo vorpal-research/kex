@@ -1,6 +1,6 @@
 package org.jetbrains.research.kex.asm.transform
 
-import org.jetbrains.research.kex.asm.manager.original
+import org.jetbrains.research.kex.asm.manager.wrapper
 import org.jetbrains.research.kfg.ClassManager
 import org.jetbrains.research.kfg.ir.BasicBlock
 import org.jetbrains.research.kfg.ir.BodyBlock
@@ -95,6 +95,6 @@ class BranchAdapter(
         }
 
         parent.parent.add(replacement)
-        replacement.original = branch.original
+        replacement.wrapper = branch.wrapper
     }
 }
