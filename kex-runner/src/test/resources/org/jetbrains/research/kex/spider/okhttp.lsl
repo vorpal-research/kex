@@ -20,41 +20,5 @@ automaton com.squareup.okhttp.Request$Builder : Request$Builder {
 
     fun `url`(`url`: String): Request$Builder;
 
-    fun build(): Request {
-        result = new com.squareup.okhttp.Request(state = Created);
-    }
-}
-
-automaton com.squareup.okhttp.Request : Request {
-    initstate Created;
-}
-
-automaton com.squareup.okhttp.OkHttpClient : OkHttpClient {
-    initstate Created;
-
-    fun newCall(request: Request): Call {
-        result = new com.squareup.okhttp.Call(state = Created);
-    }
-}
-
-automaton com.squareup.okhttp.Call : Call {
-    initstate Created;
-
-    fun execute(request: Request): Response {
-        result = new com.squareup.okhttp.Response(state = Created);
-    }
-}
-
-automaton com.squareup.okhttp.Response : Response {
-    initstate Created;
-
-    fun body(): ResponseBody {
-        result = new com.squareup.okhttp.ResponseBody(state = Created);
-    }
-}
-
-automaton com.squareup.okhttp.ResponseBody : ResponseBody {
-    initstate Created;
-
-    fun string(): String;
+    fun build(): Request;
 }

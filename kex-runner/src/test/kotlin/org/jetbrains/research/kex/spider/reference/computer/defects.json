@@ -2,7 +2,7 @@
     {
         "type": "ASSERT",
         "callStack": [
-            "org/jetbrains/research/kex/test/spider/computer/lib/Computer::boot(): void - org/jetbrains/research/kex/test/spider/computer/client/Main.java:22\n"
+            "org/jetbrains/research/kex/test/spider/computer/lib/Computer::boot(): void - org/jetbrains/research/kex/test/spider/computer/client/Main.java:23\n"
         ],
         "id": "id0",
         "testFile": null,
@@ -11,63 +11,25 @@
     {
         "type": "ASSERT",
         "callStack": [
-            "org/jetbrains/research/kex/test/spider/computer/lib/Computer::selectOS(java/lang/String): void - org/jetbrains/research/kex/test/spider/computer/client/Main.java:10\n"
+            "org/jetbrains/research/kex/test/spider/computer/lib/Computer::setBootPartition(int): void - org/jetbrains/research/kex/test/spider/computer/client/Main.java:28\n"
         ],
-        "id": "osNameCheck3",
+        "id": "partitionLimits2",
         "testFile": null,
         "testCaseName": null
     },
     {
         "type": "ASSERT",
         "callStack": [
-            "org/jetbrains/research/kex/test/spider/computer/lib/Computer::selectOS(java/lang/String): void - org/jetbrains/research/kex/test/spider/computer/client/Main.java:17\n"
+            "org/jetbrains/research/kex/test/spider/computer/lib/Computer::selectOS(java/lang/String): void - org/jetbrains/research/kex/test/spider/computer/client/Main.java:18\n"
         ],
-        "id": "osNameCheck3",
+        "id": "id3",
         "testFile": null,
         "testCaseName": null
     },
     {
         "type": "ASSERT",
         "callStack": [
-            "org/jetbrains/research/kex/test/spider/computer/lib/Computer::selectOS(java/lang/String): void - org/jetbrains/research/kex/test/spider/computer/client/Main.java:27\n"
-        ],
-        "id": "osNameCheck3",
-        "testFile": null,
-        "testCaseName": null
-    },
-    {
-        "type": "ASSERT",
-        "callStack": [
-            "org/jetbrains/research/kex/test/spider/computer/client/OtherClass::doSomething(): void - org/jetbrains/research/kex/test/spider/computer/client/Main.java:30\n",
-            "org/jetbrains/research/kex/test/spider/computer/lib/Computer::selectOS(java/lang/String): void - org/jetbrains/research/kex/test/spider/computer/client/OtherClass.java:11\n"
-        ],
-        "id": "osNameCheck3",
-        "testFile": null,
-        "testCaseName": null
-    },
-    {
-        "type": "ASSERT",
-        "callStack": [
-            "org/jetbrains/research/kex/test/spider/computer/lib/Computer::selectOS(java/lang/String): void - org/jetbrains/research/kex/test/spider/computer/client/Main.java:17\n"
-        ],
-        "id": "id2",
-        "testFile": null,
-        "testCaseName": null
-    },
-    {
-        "type": "ASSERT",
-        "callStack": [
-            "org/jetbrains/research/kex/test/spider/computer/lib/Computer::loadOS(): void - org/jetbrains/research/kex/test/spider/computer/client/Main.java:16\n"
-        ],
-        "id": "id4",
-        "testFile": null,
-        "testCaseName": null
-    },
-    {
-        "type": "ASSERT",
-        "callStack": [
-            "org/jetbrains/research/kex/test/spider/computer/client/OtherClass::doSomething(): void - org/jetbrains/research/kex/test/spider/computer/client/Main.java:30\n",
-            "org/jetbrains/research/kex/test/spider/computer/lib/Computer::loadOS(): void - org/jetbrains/research/kex/test/spider/computer/client/OtherClass.java:17\n"
+            "org/jetbrains/research/kex/test/spider/computer/lib/Computer::loadOS(): void - org/jetbrains/research/kex/test/spider/computer/client/Main.java:17\n"
         ],
         "id": "id4",
         "testFile": null,

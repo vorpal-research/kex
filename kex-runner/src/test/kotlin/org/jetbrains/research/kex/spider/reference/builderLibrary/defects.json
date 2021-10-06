@@ -2,7 +2,7 @@
     {
         "type": "ASSERT",
         "callStack": [
-            "org/jetbrains/research/kex/test/spider/builderLibrary/lib/Builder::set3(int): org/jetbrains/research/kex/test/spider/builderLibrary/lib/Builder - org/jetbrains/research/kex/test/spider/builderLibrary/client/Main.java:10\n"
+            "org/jetbrains/research/kex/test/spider/builderLibrary/lib/Builder::set3(int): org/jetbrains/research/kex/test/spider/builderLibrary/lib/Builder - org/jetbrains/research/kex/test/spider/builderLibrary/client/Main.java:13\n"
         ],
         "id": "id2",
         "testFile": null,
@@ -11,7 +11,7 @@
     {
         "type": "ASSERT",
         "callStack": [
-            "org/jetbrains/research/kex/test/spider/builderLibrary/lib/Builder::set3(int): org/jetbrains/research/kex/test/spider/builderLibrary/lib/Builder - org/jetbrains/research/kex/test/spider/builderLibrary/client/Main.java:15\n"
+            "org/jetbrains/research/kex/test/spider/builderLibrary/lib/Builder::set3(int): org/jetbrains/research/kex/test/spider/builderLibrary/lib/Builder - org/jetbrains/research/kex/test/spider/builderLibrary/client/Main.java:18\n"
         ],
         "id": "id2",
         "testFile": null,
@@ -20,7 +20,7 @@
     {
         "type": "ASSERT",
         "callStack": [
-            "org/jetbrains/research/kex/test/spider/builderLibrary/lib/Builder::set3(int): org/jetbrains/research/kex/test/spider/builderLibrary/lib/Builder - org/jetbrains/research/kex/test/spider/builderLibrary/client/Main.java:25\n"
+            "org/jetbrains/research/kex/test/spider/builderLibrary/lib/Builder::set3(int): org/jetbrains/research/kex/test/spider/builderLibrary/lib/Builder - org/jetbrains/research/kex/test/spider/builderLibrary/client/Main.java:28\n"
         ],
         "id": "id2",
         "testFile": null,
