@@ -7,6 +7,7 @@ public class Main {
         // ok
         Computer computer1 = new Computer();
         computer1.boot();
+        computer1.setBootPartition(0);
         computer1.selectOS("win");
         computer1.loadOS();
 
@@ -21,10 +22,10 @@ public class Main {
         computer3.shutdown(); // finishstate!
         computer3.boot();
 
-        // requires: wrong OS name (expected 'win' or 'linux')
+        // precondition violation: partition must be non-negative
         Computer computer4 = new Computer();
         computer4.boot();
-        computer4.selectOS("osx");
+        computer1.setBootPartition(-1);
 
         // outer class
         (new OtherClass()).doSomething();

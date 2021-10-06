@@ -5,6 +5,7 @@ types {
     Computer (org.jetbrains.research.kex.test.spider.computer.lib.Computer);
     OS (org.jetbrains.research.kex.test.spider.computer.lib.OS);
     OSName (string);
+    Int (int32);
 }
 
 automaton org.jetbrains.research.kex.test.spider.computer.lib.Computer : Computer {
@@ -28,8 +29,10 @@ automaton org.jetbrains.research.kex.test.spider.computer.lib.Computer : Compute
         isMemoryInit = true;
     }
 
-    fun selectOS(osName: OSName)
-        requires osNameCheck: (osName = "win" | osName = "linux");
+    fun selectOS(osName: OSName);
+
+    fun setBootPartition(partition: Int)
+        requires partitionLimits: partition >= 0 & partition < 16;
 
     fun loadOS()
         requires isMemoryInit: isMemoryInit;
