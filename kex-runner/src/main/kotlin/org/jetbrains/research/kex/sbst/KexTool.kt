@@ -99,7 +99,7 @@ class KexTool : Tool {
     override fun initialize(src: File, bin: File, classPath: List<File>) {
         val targetContainer = bin.asContainer()!!
         pkg = targetContainer.pkg
-        containers = classPath.mapNotNull { it.asContainer(pkg) }
+        containers = classPath.mapNotNull { it.asContainer() }
 
         val jarClassLoader = URLClassLoader(containers.flatMap { it.urls.toList() }.toTypedArray())
         log.debug("Initialized containers: ${containers.joinToString { it.name }}")
