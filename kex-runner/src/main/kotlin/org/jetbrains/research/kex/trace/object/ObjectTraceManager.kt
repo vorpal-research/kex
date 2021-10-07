@@ -1,5 +1,7 @@
 package org.jetbrains.research.kex.trace.`object`
 
+import org.jetbrains.research.kex.asm.manager.MethodWrapper
+import org.jetbrains.research.kex.asm.manager.wrapper
 import org.jetbrains.research.kex.trace.TraceManager
 import org.jetbrains.research.kfg.ir.BasicBlock
 import org.jetbrains.research.kfg.ir.Method
@@ -8,15 +10,15 @@ import org.jetbrains.research.kthelper.collection.stackOf
 import org.jetbrains.research.kthelper.logging.log
 
 class ObjectTraceManager : TraceManager<ActionTrace>() {
-    private val methodInfos = mutableMapOf<Method, MutableSet<ActionTrace>>()
+    private val methodInfos = mutableMapOf<MethodWrapper, MutableSet<ActionTrace>>()
     private val fullTraces = mutableSetOf<ActionTrace>()
 
-    override fun getTraces(method: Method): List<ActionTrace> = methodInfos.getOrDefault(method, mutableSetOf()).toList()
+    override fun getTraces(method: Method): List<ActionTrace> = methodInfos.getOrDefault(method.wrapper, mutableSetOf()).toList()
 
     override fun addTrace(method: Method, trace: ActionTrace) {
         fullTraces += trace
         val traceStack = stackOf<MutableList<Action>>()
-        val methodStack = stackOf<Method>()
+        val methodStack = stackOf<MethodWrapper>()
         for (action in trace) {
             when (action) {
                 is MethodEntry -> {
@@ -48,5 +50,7 @@ class ObjectTraceManager : TraceManager<ActionTrace>() {
     }
 
     override fun isCovered(bb: BasicBlock): Boolean =
-            methodInfos[bb.parent]?.any { it.isCovered(bb) } ?: false
+            bb.wrapper?.let {
+                methodInfos[bb.parent.wrapper]?.any { trace -> trace.isCovered(it) }
+            } ?: false
 }
