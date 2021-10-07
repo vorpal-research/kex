@@ -106,6 +106,8 @@ class KexTool : Tool {
 
         val instrumentedDirName = kexConfig.getStringValue("output", "instrumentedDir", "instrumented")
         val instrumentedCodeDir = kexConfig.getPathValue("kex", "outputDir")!!.resolve(instrumentedDirName)
+        containerClassLoader = URLClassLoader(arrayOf(instrumentedCodeDir.toUri().toURL()))
+
         prepareInstrumentedClasspath(containers, pkg, instrumentedCodeDir)
 
         val classManager = ClassManager(KfgConfig(flags = Flags.readAll, failOnError = false))
@@ -113,13 +115,12 @@ class KexTool : Tool {
         log.debug("Initialized class managers")
 
         // write all classes to output directory, so they will be seen by ClassLoader
-        val classLoader = URLClassLoader(arrayOf(instrumentedCodeDir.toUri().toURL()))
         log.debug("Unpacked jar files")
 
         val klassPath = containers.map { it.path }
-        updateClassPath(classLoader)
+        updateClassPath(containerClassLoader)
         val randomDriver = EasyRandomDriver()
-        context = ExecutionContext(classManager, pkg, classLoader, randomDriver, klassPath)
+        context = ExecutionContext(classManager, pkg, containerClassLoader, randomDriver, klassPath)
 
         psa = PredicateStateAnalysis(context.cm)
         cm = CoverageCounter(context.cm, traceManager)
