@@ -11,6 +11,8 @@ import org.jetbrains.research.kfg.ir.Method
 import org.jetbrains.research.kfg.ir.value.instruction.Instruction
 import org.jetbrains.research.kfg.ir.value.instruction.PhiInst
 import org.jetbrains.research.kfg.ir.value.instruction.ReturnInst
+import org.jetbrains.research.kthelper.logging.log
+import org.jetbrains.research.kthelper.logging.warn
 
 class InvalidPredicateStateError(msg: String) : Exception(msg)
 
@@ -23,12 +25,16 @@ class PredicateStateBuilder(val method: Method) {
     private val predicateBuilder = PredicateBuilder(method.cm)
 
     fun init() {
-        predicateBuilder.visit(method)
-        if (!method.isAbstract && !method.isNative && method.hasBody) {
-            val order = GraphTraversal(method).topologicalSort()
+        try {
+            predicateBuilder.visit(method)
+            if (!method.isAbstract && !method.isNative && method.hasBody) {
+                val order = GraphTraversal(method).topologicalSort()
 
-            domTree.putAll(DominatorTreeBuilder(method).build())
-            this.order.addAll(order)
+                domTree.putAll(DominatorTreeBuilder(method).build())
+                this.order.addAll(order)
+            }
+        } catch (e: Throwable) {
+            log.warn(e)
         }
     }
 
