@@ -1,7 +1,7 @@
 #!/bin/bash
 
-cp lib/libz3.so /usr/lib/
-cp lib/libz3java.so /usr/lib/
+cp runtime-deps/lib/libz3.so /usr/lib/
+cp runtime-deps/lib/libz3java.so /usr/lib/
 
 # switch to environment JVM as needed
 JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64/

@@ -56,13 +56,22 @@ data class Failure(
 open class MethodChecker(
     val ctx: ExecutionContext,
     protected val tm: TraceManager<ActionTrace>,
-    protected val psa: PredicateStateAnalysis) : MethodVisitor {
+    protected val psa: PredicateStateAnalysis,
+    val timeBudget: Long = 0L
+) : MethodVisitor {
     protected val nameContext = NameMapperContext()
     override val cm: ClassManager get() = ctx.cm
     val random: Randomizer get() = ctx.random
     val loader: ClassLoader get() = ctx.loader
     lateinit var generator: ParameterGenerator
         protected set
+    val startTime = System.currentTimeMillis()
+
+
+    fun hasTimeBudget() = when (timeBudget) {
+        0L -> true
+        else -> (System.currentTimeMillis() - startTime) < timeBudget
+    }
 
     private fun dumpPS(method: Method, message: String, state: PredicateState) = `try` {
         val failDirPath = outputDirectory.resolve(failDir)
@@ -86,6 +95,7 @@ open class MethodChecker(
 
     override fun visit(method: Method) {
         super.visit(method)
+        if (!hasTimeBudget()) return
 
         if (!method.isImpactable || !method.hasBody) return
 
