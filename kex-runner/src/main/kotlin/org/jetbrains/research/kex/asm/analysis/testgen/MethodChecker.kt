@@ -144,6 +144,7 @@ open class MethodChecker(
             log.debug()
 
             if (coverageResult is Result.UnsatResult) unreachableBlocks += block
+            generator.emit()
         }
 
         generator.emit()
