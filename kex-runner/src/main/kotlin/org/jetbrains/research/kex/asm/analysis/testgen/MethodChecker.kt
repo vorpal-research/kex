@@ -110,6 +110,7 @@ open class MethodChecker(
         initializeGenerator(method)
 
         for (block in order) {
+            if (!hasTimeBudget()) return
             if (block.terminator is UnreachableInst) {
                 unreachableBlocks += block
                 continue
