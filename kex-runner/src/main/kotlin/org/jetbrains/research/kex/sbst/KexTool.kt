@@ -4,6 +4,7 @@ import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.InternalSerializationApi
 import org.jetbrains.research.kex.ExecutionContext
 import org.jetbrains.research.kex.asm.analysis.testgen.DescriptorChecker
+import org.jetbrains.research.kex.asm.analysis.testgen.MethodChecker
 import org.jetbrains.research.kex.asm.analysis.testgen.RandomChecker
 import org.jetbrains.research.kex.asm.manager.CoverageCounter
 import org.jetbrains.research.kex.asm.state.PredicateStateAnalysis
@@ -143,8 +144,12 @@ class KexTool : Tool {
         val canonicalName = className.replace('.', '/')
         val klass = context.cm[canonicalName]
         log.debug("Running on klass $klass")
+        val useApiGeneration = kexConfig.getBooleanValue("apiGeneration", "enabled", true)
         executePipeline(context.cm, klass) {
-            +DescriptorChecker(context, traceManager, psa, timeBudget * 1000)
+            +when {
+                useApiGeneration -> DescriptorChecker(context, traceManager, psa, timeBudget * 1000)
+                else -> MethodChecker(context, traceManager, psa, timeBudget * 1000)
+            }
         }
         log.debug("Analyzed klass $klass")
     }
