@@ -17,6 +17,7 @@ import org.jetbrains.research.kthelper.assert.unreachable
 import org.jetbrains.research.kthelper.logging.log
 import org.jetbrains.research.kthelper.toBoolean
 import org.jetbrains.research.kthelper.tryOrNull
+import sun.misc.Unsafe
 import java.lang.reflect.Array
 
 private val Term.isPointer get() = this.type is KexPointer
@@ -74,6 +75,13 @@ class ObjectReanimator(
     override val model: SMTModel,
     override val context: ExecutionContext
 ) : ModelReanimator<Any?> {
+    companion object {
+        private val UNSAFE = run {
+            val field = Unsafe::class.java.getDeclaredField("theUnsafe")
+            field.isAccessible = true
+            field.get(null) as Unsafe
+        }
+    }
     private val randomizer get() = context.random
 
     override val memoryMappings = hashMapOf<Int, MutableMap<Int, Any?>>()
@@ -118,10 +126,10 @@ class ObjectReanimator(
         val address = (addr as? ConstIntTerm)?.value ?: return null
         if (address == 0) return null
 
-        val type = resolveType(term.memspace, addr, term.type)//reanimateType(term.memspace, addr) ?: term.type
+        val type = resolveType(term.memspace, addr, term.type)
         return memory(term.memspace, address) {
             val fallback = {
-                randomizer.nextOrNull(loader.loadClass(context.types, type))
+                UNSAFE.allocateInstance(loader.loadClass(context.types, type))
             }
             when {
                 term.type.isString && model.hasStrings -> reanimateString(term.memspace, addr)
@@ -241,6 +249,9 @@ class ObjectReanimator(
                 when (referencedType) {
                     is KexPointer -> reanimateReferencePointer(term, value)
                     is KexBool -> intVal.toBoolean()
+                    is KexByte -> intVal.toByte()
+                    is KexChar -> intVal.toChar()
+                    is KexShort -> intVal.toShort()
                     is KexLong -> intVal.toLong()
                     is KexFloat -> intVal.toFloat()
                     is KexDouble -> intVal.toDouble()
@@ -269,7 +280,17 @@ class ObjectReanimator(
                 val memspace = term.memspace//referencedType.memspace
                 val instance = newArrayInstance(referencedType, addr)
                 for (i in 0 until arrayLength(instance)) {
-                    reanimate(term { term[i] }, null)
+                    val index = term { const(i) }
+                    val refValue = reanimateFromArray(term.memspace, addr, index)
+
+                    val reanimatedValue = reanimateReferenceValue(
+                        ArrayIndexTerm(
+                            KexReference(referencedType.element),
+                            term { term.load() },
+                            index
+                        ), refValue
+                    )
+                    Array.set(instance, i, reanimatedValue)
                 }
                 memory(memspace, address, instance)
             }

@@ -370,7 +370,6 @@ class Z3Solver(val tf: TypeFactory) : AbstractSMTSolver {
             arrays.map { (memspace, values) ->
                 memspace to values.map { (addr, pair) -> addr to MemoryShape(pair.first, pair.second) }.toMap()
             }.toMap(),
-            strings.map { (memspace, pair) -> memspace to MemoryShape(pair.first, pair.second) }.toMap(),
             typeMap
         )
     }

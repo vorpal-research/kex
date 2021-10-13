@@ -16,6 +16,7 @@ import org.jetbrains.research.kex.reanimator.codegen.packageName
 import org.jetbrains.research.kex.smt.SMTModel
 import org.jetbrains.research.kex.state.PredicateState
 import org.jetbrains.research.kex.state.transformer.generateFinalDescriptors
+import org.jetbrains.research.kex.state.transformer.generateInputByModel
 import org.jetbrains.research.kfg.ir.Method
 import org.jetbrains.research.kthelper.logging.log
 import java.nio.file.Path
@@ -24,7 +25,10 @@ private val visibilityLevel by lazy {
     kexConfig.getEnumValue("apiGeneration", "visibility", true, Visibility.PUBLIC)
 }
 
-class ExecutionGenerator(val ctx: ExecutionContext, val method: Method) {
+class UnsafeGenerator(
+    override val ctx: ExecutionContext,
+    val method: Method
+) : ParameterGenerator {
     private val csGenerator = UnknownGenerator(ctx, PredicateStateAnalysis(ctx.cm), visibilityLevel)
     private val printer = ExecutorTestCasePrinter(ctx, method.packageName, method.klassName)
     val testKlassName = printer.fullKlassName
@@ -46,7 +50,21 @@ class ExecutionGenerator(val ctx: ExecutionContext, val method: Method) {
         generate(descriptors)
     }
 
-    fun emit(): Path {
+    override fun generate(
+        testName: String,
+        method: Method,
+        state: PredicateState,
+        model: SMTModel
+    ): Parameters<Any?> {
+        val descriptors = generateFinalDescriptors(method, ctx, model, state).concreteParameters(ctx.cm)
+        log.debug("Generated descriptors:\n$descriptors")
+        val callStacks = descriptors.callStacks
+        printer.print(method, callStacks.rtUnmapped)
+        return generateInputByModel(ctx, method, state, model)
+    }
+
+
+    override fun emit(): Path {
         printer.emit()
         return printer.targetFile.toPath()
     }

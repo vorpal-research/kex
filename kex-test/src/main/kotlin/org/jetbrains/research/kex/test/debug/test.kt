@@ -8,7 +8,7 @@ class BasicTests {
     fun test(x: String) {
         val arr = CollectionIntrinsics.generateCharArray(10) { 'a' + it }
         val s = String(arr)
-        if (s[3] == 'c') {
+        if (s[2] == 'c') {
             error("")
         }
     }
