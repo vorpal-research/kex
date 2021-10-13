@@ -44,4 +44,5 @@ fun Type.kfgType(cm: ClassManager): org.jetbrains.research.kfg.type.Type = when(
     is EnumType -> TODO()
     is RealType -> TypeFactory(cm).getRefType(this.fullName)
     is ChildrenType -> TODO()
+    is PrimitiveType -> TODO()
 }
