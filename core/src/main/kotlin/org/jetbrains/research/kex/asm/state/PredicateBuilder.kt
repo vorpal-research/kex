@@ -22,7 +22,7 @@ class PredicateBuilder(override val cm: ClassManager) : MethodVisitor {
     val termMap = hashMapOf<Value, Term>()
     val predicateMap = hashMapOf<Instruction, Predicate>()
     val phiPredicateMap = hashMapOf<Pair<BasicBlock, Instruction>, Predicate>()
-    val terminatorPredicateMap = hashMapOf<Pair<BasicBlock, TerminateInst>, Predicate>()
+    val terminatorPredicateMap = hashMapOf<Pair<BasicBlock, TerminateInst>, MutableSet<Predicate>>()
 
     override fun cleanup() {
         termMap.clear()
@@ -67,8 +67,12 @@ class PredicateBuilder(override val cm: ClassManager) : MethodVisitor {
 
     override fun visitBranchInst(inst: BranchInst) {
         val cond = term { mkValue(inst.cond) }
-        terminatorPredicateMap[inst.trueSuccessor to inst] = path(inst.location) { cond equality true }
-        terminatorPredicateMap[inst.falseSuccessor to inst] = path(inst.location) { cond equality false }
+        terminatorPredicateMap.getOrPut(inst.trueSuccessor to inst, ::hashSetOf).add(
+            path(inst.location) { cond equality true }
+        )
+        terminatorPredicateMap.getOrPut(inst.falseSuccessor to inst, ::hashSetOf).add(
+            path(inst.location) { cond equality false }
+        )
     }
 
     override fun visitCallInst(inst: CallInst) {
@@ -201,10 +205,13 @@ class PredicateBuilder(override val cm: ClassManager) : MethodVisitor {
     override fun visitSwitchInst(inst: SwitchInst) {
         val key = term { mkValue(inst.key) }
         for ((value, successor) in inst.branches) {
-            terminatorPredicateMap[successor to inst] = path(inst.location) { key equality mkValue(value) }
+            terminatorPredicateMap.getOrPut(successor to inst, ::hashSetOf).add(
+                path(inst.location) { key equality mkValue(value) }
+            )
         }
-        terminatorPredicateMap[inst.default to inst] =
+        terminatorPredicateMap.getOrPut(inst.default to inst, ::hashSetOf).add(
             path(inst.location) { key `!in` inst.branches.keys.map { mkValue(it) } }
+        )
     }
 
     override fun visitTableSwitchInst(inst: TableSwitchInst) {
@@ -212,10 +219,13 @@ class PredicateBuilder(override val cm: ClassManager) : MethodVisitor {
         val min = inst.min as? IntConstant ?: throw InvalidInstructionError("Unexpected min type in tableSwitchInst")
         val max = inst.max as? IntConstant ?: throw InvalidInstructionError("Unexpected max type in tableSwitchInst")
         for ((index, successor) in inst.branches.withIndex()) {
-            terminatorPredicateMap[successor to inst] = path(inst.location) { key equality (min.value + index) }
+            terminatorPredicateMap.getOrPut(successor to inst, ::hashSetOf).add(
+                path(inst.location) { key equality (min.value + index) }
+            )
         }
-        terminatorPredicateMap[inst.default to inst] =
+        terminatorPredicateMap.getOrPut(inst.default to inst, ::hashSetOf).add(
             path(inst.location) { key `!in` (min.value..max.value).map { const(it) } }
+        )
     }
 
     override fun visitReturnInst(inst: ReturnInst) {

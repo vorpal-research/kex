@@ -42,7 +42,8 @@ class PredicateStateBuilder(val method: Method) {
         get() {
             val insts = method.flatten()
             return when {
-                insts.any { it is ReturnInst } -> insts.firstOrNull { it is ReturnInst }?.run { getInstructionState(this) }
+                insts.any { it is ReturnInst } -> insts.firstOrNull { it is ReturnInst }
+                    ?.run { getInstructionState(this) }
                 method.isConstructor -> insts.lastOrNull()?.run { getInstructionState(this) }
                 method.isStaticInitializer -> insts.lastOrNull()?.run { getInstructionState(this) }
                 else -> null
@@ -99,18 +100,34 @@ class PredicateStateBuilder(val method: Method) {
         val choices = mutableListOf<PredicateState>()
 
         for (predecessor in bb.predecessors) {
-            val predState = blockStates[predecessor]?.builder() ?: continue
+            val predState = blockStates[predecessor] ?: continue
 
-            val terminatorPredicate = predicateBuilder.terminatorPredicateMap[bb to predecessor.terminator]
-            if (terminatorPredicate != null) predState += terminatorPredicate
+            val terminatorPredicate =
+                predicateBuilder.terminatorPredicateMap[bb to predecessor.terminator] ?: hashSetOf()
+            if (terminatorPredicate.isEmpty()) {
+                val builder = predState.builder()
+                for (phi in bb.instructions.mapNotNull { it as? PhiInst }) {
+                    builder += predicateBuilder.phiPredicateMap.getValue(predecessor to phi)
+                }
 
-            for (phi in bb.instructions.mapNotNull { it as? PhiInst }) {
-                predState += predicateBuilder.phiPredicateMap.getValue(predecessor to phi)
-            }
-
-            val sliced = predState.apply().sliceOn(base)
+                val sliced = builder.apply().sliceOn(base)
                     ?: throw InvalidPredicateStateError("Cannot slice predicate state on it's predecessor")
-            choices.add(sliced)
+                choices.add(sliced)
+
+            } else {
+                for (terminator in terminatorPredicate) {
+                    val builder = predState.builder()
+                    builder += terminator
+
+                    for (phi in bb.instructions.mapNotNull { it as? PhiInst }) {
+                        builder += predicateBuilder.phiPredicateMap.getValue(predecessor to phi)
+                    }
+
+                    val sliced = builder.apply().sliceOn(base)
+                        ?: throw InvalidPredicateStateError("Cannot slice predicate state on it's predecessor")
+                    choices.add(sliced)
+                }
+            }
         }
 
         return when {

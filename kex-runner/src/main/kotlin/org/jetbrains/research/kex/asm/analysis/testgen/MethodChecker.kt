@@ -14,7 +14,8 @@ import org.jetbrains.research.kex.parameters.Parameters
 import org.jetbrains.research.kex.random.GenerationException
 import org.jetbrains.research.kex.random.Randomizer
 import org.jetbrains.research.kex.reanimator.ParameterGenerator
-import org.jetbrains.research.kex.reanimator.ReflectionReanimator
+import org.jetbrains.research.kex.reanimator.UnsafeGenerator
+import org.jetbrains.research.kex.reanimator.codegen.validName
 import org.jetbrains.research.kex.serialization.KexSerializer
 import org.jetbrains.research.kex.smt.Checker
 import org.jetbrains.research.kex.smt.Result
@@ -88,7 +89,7 @@ open class MethodChecker(
     }
 
     protected open fun initializeGenerator(method: Method) {
-        generator = ReflectionReanimator(ctx, psa)
+        generator = UnsafeGenerator(ctx, method)
     }
 
     protected open fun getSearchStrategy(method: Method): SearchStrategy = DfsStrategy(method)
@@ -164,7 +165,7 @@ open class MethodChecker(
         when (result) {
             is Result.SatResult -> {
                 val (instance, args) = try {
-                    generator.generate("", method, checker.state, result.model)
+                    generator.generate("test_${block.validName}", method, checker.state, result.model)
                 } catch (e: GenerationException) {
                     log.warn(e.message)
                     return result

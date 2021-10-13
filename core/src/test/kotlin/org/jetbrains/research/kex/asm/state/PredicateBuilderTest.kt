@@ -9,6 +9,7 @@ import org.jetbrains.research.kex.state.transformer.TermRenamer
 import org.jetbrains.research.kfg.ClassManager
 import org.jetbrains.research.kfg.analysis.LoopAnalysis
 import org.jetbrains.research.kfg.analysis.LoopSimplifier
+import org.jetbrains.research.kfg.ir.BasicBlock
 import org.jetbrains.research.kfg.ir.value.Value
 import org.jetbrains.research.kfg.ir.value.instruction.*
 import org.jetbrains.research.kfg.type.mergeTypes
@@ -86,12 +87,12 @@ class PredicateBuilderTest : KexTest() {
 
                 val cond = tf.getValue(inst.cond)
                 assertEquals(
-                        pf.getEquality(cond, tf.getTrue(), PredicateType.Path()),
-                        builder.terminatorPredicateMap[inst.trueSuccessor to inst]
+                    setOf(pf.getEquality(cond, tf.getTrue(), PredicateType.Path())),
+                    builder.terminatorPredicateMap[inst.trueSuccessor to inst]
                 )
                 assertEquals(
-                        pf.getEquality(cond, tf.getFalse(), PredicateType.Path()),
-                        builder.terminatorPredicateMap[inst.falseSuccessor to inst]
+                    setOf(pf.getEquality(cond, tf.getFalse(), PredicateType.Path())),
+                    builder.terminatorPredicateMap[inst.falseSuccessor to inst]
                 )
             }
 
@@ -101,7 +102,8 @@ class PredicateBuilderTest : KexTest() {
                     ktassert(lambdaBases.size == 1) { log.error("Unknown number of bases of ${print()}") }
                     val lambdaBase = lambdaBases.first()
 
-                    val argParameters = lambdaBase.method.argTypes.withIndex().map { term { arg(it.value.kexType, it.index) } }
+                    val argParameters =
+                        lambdaBase.method.argTypes.withIndex().map { term { arg(it.value.kexType, it.index) } }
                     val lambdaParameters = lambdaBase.method.argTypes.withIndex().map { (index, type) ->
                         term { value(type.kexType, "labmda_${lambdaBase.method.name}_$index") }
                     }
@@ -172,10 +174,12 @@ class PredicateBuilderTest : KexTest() {
                 assertTrue(field is FieldTerm)
 
                 assertEquals(rhv.isStatic, inst.isStatic)
-                assertEquals(field.owner, when {
-                    inst.isStatic -> tf.getStaticRef(inst.field.klass)
-                    else -> tf.getValue(inst.owner)
-                })
+                assertEquals(
+                    field.owner, when {
+                        inst.isStatic -> tf.getStaticRef(inst.field.klass)
+                        else -> tf.getValue(inst.owner)
+                    }
+                )
                 assertEquals(field.fieldName, inst.field.name)
             }
 
@@ -191,10 +195,12 @@ class PredicateBuilderTest : KexTest() {
                 assertTrue(rhv is FieldTerm)
 
                 assertEquals(rhv.isStatic, inst.isStatic)
-                assertEquals(rhv.owner, when {
-                    inst.isStatic -> tf.getStaticRef(inst.field.klass)
-                    else -> tf.getValue(inst.owner)
-                })
+                assertEquals(
+                    rhv.owner, when {
+                        inst.isStatic -> tf.getStaticRef(inst.field.klass)
+                        else -> tf.getValue(inst.owner)
+                    }
+                )
                 assertEquals(rhv.fieldName, inst.field.name)
             }
 
@@ -234,8 +240,8 @@ class PredicateBuilderTest : KexTest() {
 
                 inst.incomings.forEach { (from, value) ->
                     assertEquals(
-                            builder.phiPredicateMap[from to inst],
-                            pf.getEquality(tf.getValue(inst), tf.getValue(value))
+                        builder.phiPredicateMap[from to inst],
+                        pf.getEquality(tf.getValue(inst), tf.getValue(value))
                     )
                 }
             }
@@ -262,16 +268,21 @@ class PredicateBuilderTest : KexTest() {
 
             override fun visitSwitchInst(inst: SwitchInst) {
                 val key = tf.getValue(inst.key)
+                val predicates = hashMapOf<Pair<BasicBlock, TerminateInst>, MutableSet<Predicate>>()
                 for ((value, successor) in inst.branches) {
-                    assertEquals(
-                            builder.terminatorPredicateMap[successor to inst],
-                            pf.getEquality(key, tf.getValue(value), PredicateType.Path())
+                    predicates.getOrPut(successor to inst, ::hashSetOf).add(
+                        pf.getEquality(key, tf.getValue(value), PredicateType.Path())
                     )
                 }
-                assertEquals(
-                        builder.terminatorPredicateMap[inst.default to inst],
-                        pf.getDefaultSwitchPredicate(key, inst.branches.keys.map { tf.getValue(it) }, PredicateType.Path())
+                predicates.getOrPut(inst.default to inst, ::hashSetOf).add(
+                    pf.getDefaultSwitchPredicate(key, inst.branches.keys.map { tf.getValue(it) }, PredicateType.Path())
                 )
+                for ((mapKey, value) in predicates) {
+                    assertEquals(
+                        builder.terminatorPredicateMap[mapKey],
+                        value
+                    )
+                }
             }
 
             override fun visitTableSwitchInst(inst: TableSwitchInst) {
@@ -283,24 +294,21 @@ class PredicateBuilderTest : KexTest() {
                 assertTrue(min is ConstIntTerm)
                 assertTrue(max is ConstIntTerm)
 
-                inst.branches.withIndex().forEach { (index, bb) ->
-                    when (bb) {
-                        inst.default ->
-                            assertEquals(
-                                    builder.terminatorPredicateMap[inst.default to inst],
-                                    pf.getDefaultSwitchPredicate(key, (min.value..max.value).map { tf.getInt(it) }, PredicateType.Path())
-                            )
-                        else -> assertEquals(
-                                builder.terminatorPredicateMap[bb to inst],
-                                pf.getEquality(key, tf.getInt(min.value + index), PredicateType.Path())
-                        )
-                    }
-
+                val predicates = hashMapOf<Pair<BasicBlock, TerminateInst>, MutableSet<Predicate>>()
+                for ((index, successor) in inst.branches.withIndex()) {
+                    predicates.getOrPut(successor to inst, ::hashSetOf).add(
+                        path(inst.location) { key equality (min.value + index) }
+                    )
                 }
-                assertEquals(
-                        builder.terminatorPredicateMap[inst.default to inst],
-                        pf.getDefaultSwitchPredicate(key, (min.value..max.value).map { tf.getInt(it) }, PredicateType.Path())
+                predicates.getOrPut(inst.default to inst, ::hashSetOf).add(
+                    path(inst.location) { key `!in` (min.value..max.value).map { const(it) } }
                 )
+                for ((mapKey, value) in predicates) {
+                    assertEquals(
+                        builder.terminatorPredicateMap[mapKey],
+                        value
+                    )
+                }
             }
 
             override fun visitReturnInst(inst: ReturnInst) {
