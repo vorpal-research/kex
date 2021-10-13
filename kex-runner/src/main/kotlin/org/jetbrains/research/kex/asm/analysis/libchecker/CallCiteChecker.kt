@@ -237,9 +237,9 @@ class CallCiteChecker(
 
     private fun prepareState(ps: PredicateState, typeInfoMap: TypeInfoMap) = transform(ps) {
         +AnnotationAdapter(method, AnnotationManager.defaultLoader)
-        +RecursiveInliner(psa) { ConcreteImplInliner(method.cm.type, typeInfoMap, psa, inlineIndex = it) }
+        +RecursiveInliner(psa) { i, psa -> ConcreteImplInliner(method.cm.type, typeInfoMap, psa, inlineIndex = i) }
         +StaticFieldInliner(ctx, psa)
-        +RecursiveInliner(psa) { MethodInliner(psa, inlineIndex = it) }
+        +RecursiveInliner(psa) { i, psa -> MethodInliner(psa, inlineIndex = i) }
         +IntrinsicAdapter
         +KexIntrinsicsAdapter()
         +DoubleTypeAdapter()

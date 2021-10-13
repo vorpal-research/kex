@@ -18,7 +18,6 @@ import org.jetbrains.research.kfg.container.JarContainer
 import org.jetbrains.research.kfg.container.asContainer
 import org.jetbrains.research.kfg.ir.Method
 import org.jetbrains.research.kfg.util.Flags
-import java.nio.file.Path
 import java.nio.file.Paths
 import kotlin.io.path.Path
 

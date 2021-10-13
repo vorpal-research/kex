@@ -38,7 +38,11 @@ fun main(args: Array<String>) {
     val launcher: KexLauncher = when (cmd.getEnumValue("mode", LaunchMode.Symbolic, ignoreCase = true)) {
         LaunchMode.Symbolic -> SymbolicLauncher(classPaths, targetName)
         LaunchMode.Concolic -> ConcolicLauncher(classPaths, targetName)
-        LaunchMode.LibChecker -> LibraryCheckLauncher(classPaths, targetName)
+        LaunchMode.LibChecker -> {
+            val lslFile = cmd.getCmdValue("lslFile")
+            require(lslFile != null, cmd::printHelp)
+            LibraryCheckLauncher(classPaths, targetName, lslFile)
+        }
     }
     launcher.launch()
 }

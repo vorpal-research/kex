@@ -24,8 +24,8 @@ class ExpressionGenerator(
 
     private val usageContext = method?.usageContext ?: EmptyUsageContext
     private val constructorUsageContext = klass.constructors.first().usageContext
-    private val instructionFactory = InstructionFactory(cm)
-    private val valueFactory = ValueFactory(cm)
+    private val instructionFactory = cm.instruction
+    private val valueFactory = cm.value
     private val syntheticContext = syntheticContexts[klass.fullName]
         ?: error("unresolved automaton ${klass.fullName}")
 
@@ -79,7 +79,7 @@ class ExpressionGenerator(
             } else if (!right.type.isPrimary) {
                 equalsWithObject(right, cm[right.type.name], left)
             } else {
-                instructionFactory.getCmp(usageContext, TypeFactory(cm).boolType, node.op.comparisonOpCode, left, right)
+                instructionFactory.getCmp(usageContext, cm.type.boolType, node.op.comparisonOpCode, left, right)
             }
 
             res.also {

@@ -1,7 +1,6 @@
 package org.jetbrains.research.kex.asm.analysis.libchecker
 
 import org.jetbrains.research.kfg.ClassManager
-import org.jetbrains.research.kfg.type.TypeFactory
 import org.jetbrains.research.libsl.asg.*
 
 val Type.asmDescriptor: String
@@ -24,25 +23,25 @@ val Type.asmDescriptor: String
 
 fun Type.kfgType(cm: ClassManager): org.jetbrains.research.kfg.type.Type = when(this) {
     is IntType -> {
-        if (this.capacity == IntType.IntCapacity.INT64) TypeFactory(cm).longType
-        else TypeFactory(cm).intType
+        if (this.capacity == IntType.IntCapacity.INT64) cm.type.longType
+        else cm.type.intType
     }
     is FloatType -> {
-        if (this.capacity == FloatType.FloatCapacity.FLOAT32) TypeFactory(cm).floatType
-        else TypeFactory(cm).doubleType
+        if (this.capacity == FloatType.FloatCapacity.FLOAT32) cm.type.floatType
+        else cm.type.doubleType
     }
-    is BoolType -> TypeFactory(cm).boolType
+    is BoolType -> cm.type.boolType
     is ArrayType -> {
-        TypeFactory(cm).objectArrayClass
+        cm.type.objectArrayClass
     }
-    is StringType -> TypeFactory(cm).stringType
-    is CharType -> TypeFactory(cm).charType
+    is StringType -> cm.type.stringType
+    is CharType -> cm.type.charType
     is SimpleType -> realType.kfgType(cm)
     is TypeAlias -> originalType.kfgType(cm)
     is EnumLikeSemanticType -> TODO()
     is StructuredType -> TODO()
     is EnumType -> TODO()
-    is RealType -> TypeFactory(cm).getRefType(this.fullName)
+    is RealType -> cm.type.getRefType(this.fullName)
     is ChildrenType -> TODO()
     is PrimitiveType -> TODO()
 }
