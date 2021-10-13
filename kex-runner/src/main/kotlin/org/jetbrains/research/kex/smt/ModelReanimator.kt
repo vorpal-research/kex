@@ -1,10 +1,7 @@
 package org.jetbrains.research.kex.smt
 
 import org.jetbrains.research.kex.ExecutionContext
-import org.jetbrains.research.kex.descriptor.ArrayDescriptor
-import org.jetbrains.research.kex.descriptor.Descriptor
-import org.jetbrains.research.kex.descriptor.FieldContainingDescriptor
-import org.jetbrains.research.kex.descriptor.descriptor
+import org.jetbrains.research.kex.descriptor.*
 import org.jetbrains.research.kex.ktype.*
 import org.jetbrains.research.kex.state.term.*
 import org.jetbrains.research.kex.state.transformer.memspace
@@ -129,7 +126,7 @@ class ObjectReanimator(
         val type = resolveType(term.memspace, addr, term.type)
         return memory(term.memspace, address) {
             val fallback = {
-                UNSAFE.allocateInstance(loader.loadClass(context.types, type))
+                UNSAFE.allocateInstance(loader.loadClass(context.types, type.concrete(context.cm)))
             }
             when {
                 term.type.isString && model.hasStrings -> reanimateString(term.memspace, addr)

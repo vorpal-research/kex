@@ -44,7 +44,7 @@ class UnsafeGenerator(
         throw GenerationException(e)
     }
 
-    fun generate(state: PredicateState, model: SMTModel)  {
+    fun generate(state: PredicateState, model: SMTModel) {
         val descriptors = generateFinalDescriptors(method, ctx, model, state).concreteParameters(ctx.cm)
         log.debug("Generated descriptors:\n$descriptors")
         generate(descriptors)
@@ -55,12 +55,18 @@ class UnsafeGenerator(
         method: Method,
         state: PredicateState,
         model: SMTModel
-    ): Parameters<Any?> {
+    ): Parameters<Any?> = try {
         val descriptors = generateFinalDescriptors(method, ctx, model, state).concreteParameters(ctx.cm)
         log.debug("Generated descriptors:\n$descriptors")
         val callStacks = descriptors.callStacks
         printer.print(method, callStacks.rtUnmapped)
-        return generateInputByModel(ctx, method, state, model)
+        generateInputByModel(ctx, method, state, model)
+    } catch (e: GenerationException) {
+        throw e
+    } catch (e: Exception) {
+        throw GenerationException(e)
+    } catch (e: Error) {
+        throw GenerationException(e)
     }
 
 
