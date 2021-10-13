@@ -3,12 +3,10 @@ package org.jetbrains.research.kex.asm.analysis.libchecker
 import org.jetbrains.research.kfg.ClassManager
 import org.jetbrains.research.kfg.ir.Class
 import org.jetbrains.research.kfg.ir.Field
-import org.jetbrains.research.kfg.ir.value.*
-import org.jetbrains.research.kfg.ir.value.instruction.InstructionFactory
+import org.jetbrains.research.kfg.ir.value.Value
+import org.jetbrains.research.kfg.ir.value.usageContext
 import org.jetbrains.research.kfg.visitor.ClassVisitor
 import org.jetbrains.research.libsl.asg.*
-import org.objectweb.asm.Opcodes
-import org.objectweb.asm.tree.FieldNode
 
 class ClassInstrumentator(
     override val cm: ClassManager,
@@ -45,15 +43,12 @@ class ClassInstrumentator(
     }
 
     private fun insertField(name: String, type: Type, value: Value, klass: Class): Field {
-        val fn = FieldNode(Opcodes.ACC_PUBLIC, name, type.asmDescriptor, null, null)
-        val field = Field(cm, fn, klass)
-        klass.cn.fields.add(fn)
-        klass.modifyField(field, type.kfgType(cm))
+        val field = klass.addField(name, type.kfgType(cm))
 
         val constructor = klass.constructors.first()
         val usage = constructor.usageContext
         val `this` = cm.value.getThis(klass)
-        val storeInstr = InstructionFactory(cm).getFieldStore(usage, `this`, field, value)
+        val storeInstr = cm.instruction.getFieldStore(usage, `this`, field, value)
         val firstBodyBlock = constructor.bodyBlocks.first()
         firstBodyBlock.insertBefore(firstBodyBlock.terminator, storeInstr)
 
@@ -64,24 +59,24 @@ class ClassInstrumentator(
 
     private val Expression?.primaryValue: Value
         get() {
-            this ?: return ValueFactory(cm).nullConstant
+            this ?: return cm.value.nullConstant
             return when(this) {
-                is IntegerLiteral -> ValueFactory(cm).getInt(this.value)
-                is FloatLiteral -> ValueFactory(cm).getFloat(this.value)
-                is StringLiteral -> ValueFactory(cm).getString(this.value)
-                is BoolLiteral -> ValueFactory(cm).getBool(this.value)
+                is IntegerLiteral -> cm.value.getInt(this.value)
+                is FloatLiteral -> cm.value.getFloat(this.value)
+                is StringLiteral -> cm.value.getString(this.value)
+                is BoolLiteral -> cm.value.getBool(this.value)
                 else -> error("only primary values are allowed in initializers")
             }
         }
 
     private val Any?.toPrimaryValue: Value
         get() {
-            this ?: return ValueFactory(cm).nullConstant
+            this ?: return cm.value.nullConstant
             return when(this) {
-                is Int -> ValueFactory(cm).getInt(this)
-                is Float -> ValueFactory(cm).getFloat(this)
-                is String -> ValueFactory(cm).getString(this)
-                is Boolean -> ValueFactory(cm).getBool(this)
+                is Int -> cm.value.getInt(this)
+                is Float -> cm.value.getFloat(this)
+                is String -> cm.value.getString(this)
+                is Boolean -> cm.value.getBool(this)
                 else -> error("only primary values are allowed in initializers")
             }
         }

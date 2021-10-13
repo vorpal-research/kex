@@ -1,5 +1,6 @@
 package org.jetbrains.research.kex.spider
 
+import kotlinx.serialization.InternalSerializationApi
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import org.jetbrains.research.kex.KexRunnerTest
@@ -7,7 +8,6 @@ import org.jetbrains.research.kex.asm.analysis.defect.DefectManager
 import org.jetbrains.research.kex.asm.analysis.libchecker.CallCiteChecker
 import org.jetbrains.research.kex.asm.analysis.libchecker.ClassInstrumentator
 import org.jetbrains.research.kex.asm.analysis.libchecker.LibslInstrumentator
-import org.jetbrains.research.kex.asm.manager.OriginalMapper
 import org.jetbrains.research.kex.asm.state.PredicateStateAnalysis
 import org.jetbrains.research.kex.asm.transform.BranchAdapter
 import org.jetbrains.research.kex.asm.transform.LoopDeroller
@@ -26,6 +26,7 @@ import java.io.File
 import java.net.URLClassLoader
 
 
+@OptIn(InternalSerializationApi::class)
 class SpiderTestRunner(private val testName: String) : KexRunnerTest(
     initTR = true,
     initIntrinsics = true,
@@ -79,7 +80,6 @@ class SpiderTestRunner(private val testName: String) : KexRunnerTest(
         val ci = ClassInstrumentator(cm, library)
 
         executePipeline(cm, packages) {
-            +OriginalMapper(analysisContext.cm, originalContext.cm)
             +LoopSimplifier(analysisContext.cm)
             +LoopDeroller(analysisContext.cm)
             +ci
