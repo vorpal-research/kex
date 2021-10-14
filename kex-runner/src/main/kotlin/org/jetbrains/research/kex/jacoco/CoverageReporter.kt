@@ -143,11 +143,11 @@ class CoverageReporter(private val pkg: Package, urlClassLoader: URLClassLoader)
     private fun getPackageCoverage(coverageBuilder: CoverageBuilder): String {
         val pc = PackageCoverageImpl(pkg.canonicalName, coverageBuilder.classes, coverageBuilder.sourceFiles)
         return buildString {
+            appendLine(getClassCoverage(coverageBuilder))
+            appendLine()
             appendLine(getCommonCounters("package", pkg.canonicalName, pc))
             appendLine(getCounter("methods", pc.methodCounter))
             appendLine(getCounter("classes", pc.classCounter))
-            appendLine()
-            appendLine(getClassCoverage(coverageBuilder))
         }
     }
 

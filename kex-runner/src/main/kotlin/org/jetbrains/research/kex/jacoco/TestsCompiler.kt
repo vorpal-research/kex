@@ -23,8 +23,9 @@ class TestsCompiler(private val outputDir: Path) {
             standardFileManager
         )
         val compilationUnit: JavaFileObject = TestJavaFileObject(javaFile)
+        val compilerOutput = ByteArrayOutputStream()
         val compilationTask = compiler.getTask(
-            null, fileManager, null, null, null, listOf(compilationUnit)
+            compilerOutput.writer(), fileManager, null, null, null, listOf(compilationUnit)
         )
         compilationTask.call()
         return fileManager.generatedOutputFiles
