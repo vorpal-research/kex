@@ -83,7 +83,7 @@ class ConcreteImplInliner(val types: TypeFactory,
 
 class AliasingConcreteImplInliner(val types: TypeFactory,
                                   val typeInfoMap: TypeInfoMap,
-                                  val aa: AliasAnalysis,
+                                  val aa: MayAliasAnalysis,
                                   override val psa: PredicateStateAnalysis,
                                   override val inlineSuffix: String = "aliasing.inlined",
                                   override var inlineIndex: Int = 0) : Inliner<ConcreteImplInliner> {
