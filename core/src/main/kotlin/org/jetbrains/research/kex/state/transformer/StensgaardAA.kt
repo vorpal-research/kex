@@ -19,25 +19,25 @@ private val viewer by lazy {
     kexConfig.getStringValue("view", "viewer") ?: unreachable { log.error("Could not find viewer") }
 }
 
-typealias Token = Subset<Term?>?
+typealias Token = Subset<Term?>
 
-interface AliasAnalysis {
+interface MayAliasAnalysis {
     fun mayAlias(lhv: Term, rhv: Term): Boolean
 }
 
-class StensgaardAA : Transformer<StensgaardAA>, AliasAnalysis, Viewable {
+class StensgaardAA : Transformer<StensgaardAA>, MayAliasAnalysis, Viewable {
     private val relations = DisjointSet<Term?>()
-    private val pointsTo = hashMapOf<Token, Token>()
-    private val mapping = hashMapOf<Term, Token>()
+    private val pointsTo = hashMapOf<Token?, Token?>()
+    private val mapping = hashMapOf<Term, Token?>()
     private val nonAliased = hashSetOf<Term>()
-    private val spaces = hashMapOf<KexType, Token>()
+    private val spaces = hashMapOf<KexType, Token?>()
     private val nonFreeTerms = hashSetOf<Term>()
 
-    private fun pointsTo(token: Token) = pointsTo.getOrPut(token) { null }
+    private fun pointsTo(token: Token?) = pointsTo.getOrPut(token) { null }
     private fun spaces(type: KexType) = spaces.getOrPut(type) { null }
 
     private fun quasi(): Token = relations.emplace(null)
-    private fun join(lhv: Token, rhv: Token): Token = when {
+    private fun join(lhv: Token?, rhv: Token?): Token? = when {
         lhv != null && rhv != null ->
             if (lhv == rhv) lhv
             else {
@@ -67,10 +67,10 @@ class StensgaardAA : Transformer<StensgaardAA>, AliasAnalysis, Viewable {
         else -> quasi()
     }
 
-    fun get(term: Term): Token = when (term) {
+    fun get(term: Term): Token? = when (term) {
         in mapping -> mapping[term]!!.getRoot()
         else -> {
-            var token: Token = relations.emplace(term)
+            var token: Token? = relations.emplace(term)
 
             if (term !in nonFreeTerms && term.isNamed) {
                 val result = join(spaces(term.type), token)
@@ -256,8 +256,8 @@ class StensgaardAA : Transformer<StensgaardAA>, AliasAnalysis, Viewable {
     override val graphView: List<GraphView>
         get() {
             val rootNode = GraphView("root", "root")
-            val reverse = mutableMapOf<Token, GraphView>()
-            val data = mutableMapOf<Token, MutableSet<Term>>()
+            val reverse = mutableMapOf<Token?, GraphView>()
+            val data = mutableMapOf<Token?, MutableSet<Term>>()
             for ((term, token) in mapping) {
                 val root = relations.findUnsafe(token)
                 data.getOrPut(root) { mutableSetOf() }.add(term)

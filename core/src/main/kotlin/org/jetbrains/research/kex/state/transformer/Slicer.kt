@@ -49,7 +49,7 @@ class CFGTracker : Transformer<CFGTracker> {
 class Slicer(
     val state: PredicateState,
     sliceTerms: Set<Term>,
-    private val aa: AliasAnalysis
+    private val aa: MayAliasAnalysis
 ) : Transformer<Slicer> {
     private val sliceVars = hashSetOf<Term>()
     private val slicePtrs = hashSetOf<Term>()
@@ -64,10 +64,10 @@ class Slicer(
         }
     }
 
-    constructor(state: PredicateState, query: PredicateState, aa: AliasAnalysis)
+    constructor(state: PredicateState, query: PredicateState, aa: MayAliasAnalysis)
             : this(state, TermCollector.getFullTermSet(query), aa)
 
-    constructor(state: PredicateState, query: PredicateState, sliceTerms: Set<Term>, aa: AliasAnalysis)
+    constructor(state: PredicateState, query: PredicateState, sliceTerms: Set<Term>, aa: MayAliasAnalysis)
             : this(state, TermCollector.getFullTermSet(query) + sliceTerms, aa)
 
 
