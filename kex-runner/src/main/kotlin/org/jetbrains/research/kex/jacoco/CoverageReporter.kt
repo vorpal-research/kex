@@ -10,11 +10,19 @@ import org.jacoco.core.runtime.RuntimeData
 import org.jetbrains.research.kex.config.kexConfig
 import org.jetbrains.research.kex.jacoco.TestsCompiler.CompiledClassLoader
 import org.jetbrains.research.kfg.Package
+import org.jetbrains.research.kfg.ir.Method
+import org.jetbrains.research.kfg.ir.Class as KfgClass
 import org.jetbrains.research.kfg.util.isClass
 import org.jetbrains.research.kthelper.logging.log
 import org.junit.runner.JUnitCore
 import java.net.URLClassLoader
 import java.util.jar.JarFile
+
+sealed class CoverageLevel {
+    object PackageLevel : CoverageLevel()
+    data class ClassLevel(val klass: KfgClass) : CoverageLevel()
+    data class MethodLevel(val method: Method) : CoverageLevel()
+}
 
 class CoverageReporter(private val pkg: Package, urlClassLoader: URLClassLoader) {
     private val compiledClassLoader: CompiledClassLoader
@@ -22,7 +30,7 @@ class CoverageReporter(private val pkg: Package, urlClassLoader: URLClassLoader)
     private val tests: List<String>
     private val outputDir = kexConfig.getPathValue("kex", "outputDir")!!
     private val testsDir = outputDir.resolve(
-        kexConfig.getPathValue("compile", "compileDir", "tests/")
+        kexConfig.getPathValue("compile", "testsDir", "tests/")
     ).also {
         it.toFile().mkdirs()
     }
@@ -40,23 +48,10 @@ class CoverageReporter(private val pkg: Package, urlClassLoader: URLClassLoader)
         tests = testsCompiler.testsNames
     }
 
-    fun execute(analysisLevel: String): String {
-        val canonicalName = analysisLevel.replace("[()]|(CLASS|METHOD)".toRegex(), "")
+    fun execute(analysisLevel: CoverageLevel = CoverageLevel.PackageLevel): String {
         val coverageBuilder: CoverageBuilder
-        val result: String
-        when {
-            canonicalName != analysisLevel -> {
-                val pair = canonicalName.split(", ").toTypedArray()
-                val klass = pair[0].replace("klass=", "")
-                coverageBuilder = getCoverageBuilder(listOf("$klass.class"))
-                result = if (analysisLevel.startsWith("CLASS")) {
-                    getClassCoverage(coverageBuilder)
-                } else {
-                    val method = pair[1].replace("method=", "")
-                    getMethodCoverage(coverageBuilder, method)
-                }
-            }
-            else -> {
+        val result = when (analysisLevel) {
+            CoverageLevel.PackageLevel -> {
                 val urls = compiledClassLoader.urLs
                 val jarPath = urls[urls.size - 1].toString().replace("file:", "")
                 val jarFile = JarFile(jarPath)
@@ -69,10 +64,21 @@ class CoverageReporter(private val pkg: Package, urlClassLoader: URLClassLoader)
                     }
                 }
                 coverageBuilder = getCoverageBuilder(classes)
-                result = getPackageCoverage(coverageBuilder)
+                getPackageCoverage(coverageBuilder)
+            }
+            is CoverageLevel.ClassLevel -> {
+                val klass = analysisLevel.klass.fullName
+                coverageBuilder = getCoverageBuilder(listOf("$klass.class"))
+                getClassCoverage(coverageBuilder)
+            }
+            is CoverageLevel.MethodLevel -> {
+                val method = analysisLevel.method
+                val klass = method.klass.fullName
+                coverageBuilder = getCoverageBuilder(listOf("$klass.class"))
+                getMethodCoverage(coverageBuilder, method.name)
             }
         }
-        return result
+        return result.trimIndent()
     }
 
     private fun getCoverageBuilder(classes: List<String>): CoverageBuilder {
@@ -116,12 +122,12 @@ class CoverageReporter(private val pkg: Package, urlClassLoader: URLClassLoader)
 
     private fun getClassCoverage(coverageBuilder: CoverageBuilder): String = buildString {
         for (cc in coverageBuilder.classes) {
-            append(getCommonCounters("class", cc.name, cc))
+            appendLine(getCommonCounters("class", cc.name, cc))
             appendLine(getCounter("methods", cc.methodCounter))
+            appendLine()
             for (mc in cc.methods) {
                 appendLine(getCommonCounters("method", mc.name, mc))
             }
-            appendLine()
         }
     }
 
@@ -136,10 +142,13 @@ class CoverageReporter(private val pkg: Package, urlClassLoader: URLClassLoader)
 
     private fun getPackageCoverage(coverageBuilder: CoverageBuilder): String {
         val pc = PackageCoverageImpl(pkg.canonicalName, coverageBuilder.classes, coverageBuilder.sourceFiles)
-        return getCommonCounters("package", pkg.canonicalName, pc) +
-                getCounter("methods", pc.methodCounter) +
-                getCounter("classes", pc.classCounter) +
-                getClassCoverage(coverageBuilder)
+        return buildString {
+            appendLine(getCommonCounters("package", pkg.canonicalName, pc))
+            appendLine(getCounter("methods", pc.methodCounter))
+            appendLine(getCounter("classes", pc.classCounter))
+            appendLine()
+            appendLine(getClassCoverage(coverageBuilder))
+        }
     }
 
     private fun getCounter(unit: String, counter: ICounter): String {
@@ -152,12 +161,13 @@ class CoverageReporter(private val pkg: Package, urlClassLoader: URLClassLoader)
         return coverage.trimIndent()
     }
 
-    private fun getCommonCounters(level: String, name: String, coverage: ICoverageNode): String =
-        String.format("Coverage of %s %s:%n", level, name) +
-                getCounter("instructions", coverage.instructionCounter) +
-                getCounter("branches", coverage.branchCounter) +
-                getCounter("lines", coverage.lineCounter) +
-                getCounter("complexity", coverage.complexityCounter)
+    private fun getCommonCounters(level: String, name: String, coverage: ICoverageNode): String = buildString {
+        appendLine(String.format("Coverage of %s %s:", level, name))
+        appendLine(getCounter("  instructions", coverage.instructionCounter))
+        appendLine(getCounter("  branches", coverage.branchCounter))
+        appendLine(getCounter("  lines", coverage.lineCounter))
+        appendLine(getCounter("  complexity", coverage.complexityCounter))
+    }
 
     private class MemoryClassLoader(parent: ClassLoader) : ClassLoader(parent) {
         private val definitions = mutableMapOf<String, ByteArray>()
