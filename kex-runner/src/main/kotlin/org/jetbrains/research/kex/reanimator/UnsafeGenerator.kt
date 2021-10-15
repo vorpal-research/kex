@@ -59,7 +59,7 @@ class UnsafeGenerator(
         val descriptors = generateFinalDescriptors(method, ctx, model, state).concreteParameters(ctx.cm)
         log.debug("Generated descriptors:\n$descriptors")
         val callStacks = descriptors.callStacks
-        printer.print(method, callStacks.rtUnmapped)
+        printer.print(testName, method, callStacks.rtUnmapped)
         generateInputByModel(ctx, method, state, model)
     } catch (e: GenerationException) {
         throw e

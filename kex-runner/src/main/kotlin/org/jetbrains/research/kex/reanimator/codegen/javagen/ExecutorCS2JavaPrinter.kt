@@ -2,6 +2,7 @@ package org.jetbrains.research.kex.reanimator.codegen.javagen
 
 import org.jetbrains.research.kex.ExecutionContext
 import org.jetbrains.research.kex.asm.util.Visibility
+import org.jetbrains.research.kex.config.kexConfig
 import org.jetbrains.research.kex.descriptor.*
 import org.jetbrains.research.kex.ktype.*
 import org.jetbrains.research.kex.parameters.Parameters
@@ -15,6 +16,8 @@ import org.jetbrains.research.kfg.type.Type
 import org.jetbrains.research.kthelper.assert.unreachable
 import org.jetbrains.research.kthelper.logging.log
 import org.jetbrains.research.kthelper.runIf
+
+private val generateSetup by lazy { kexConfig.getBooleanValue("apiGeneration", "generateSetup", false) }
 
 class ExecutorCS2JavaPrinter(
     ctx: ExecutionContext,
@@ -259,24 +262,30 @@ class ExecutorCS2JavaPrinter(
             import("org.junit.Before")
 
             with(klass) {
-                runIf(!method.isConstructor) {
-                    callStacks.instance?.let {
-                        testParams += field(it.name, type("Object"))
+                if (generateSetup) {
+                    runIf(!method.isConstructor) {
+                        callStacks.instance?.let {
+                            testParams += field(it.name, type("Object"))
+                        }
                     }
-                }
-                callStacks.arguments.forEach { arg ->
-                    val type = when (val call = arg.first()) {
-                        is UnknownCall -> call.type
-                        else -> unreachable { log.error("Unexpected call in arg") }
+                    callStacks.arguments.forEach { arg ->
+                        val type = when (val call = arg.first()) {
+                            is UnknownCall -> call.type
+                            else -> unreachable { log.error("Unexpected call in arg") }
+                        }
+                        val fieldType = type.kexType.primitiveName?.let { type(it) } ?: type("Object")
+                        if (testParams.all { it.name != arg.name })
+                            testParams += field(arg.name, fieldType)
                     }
-                    val fieldType = type.kexType.primitiveName?.let { type(it) } ?: type("Object")
-                    if (testParams.all { it.name != arg.name })
-                        testParams += field(arg.name, fieldType)
                 }
 
-                current = method(setupName) {
+                current = if (generateSetup) method(setupName) {
                     returnType = void
                     annotations += "Before"
+                    exceptions += "Throwable"
+                } else method(testName) {
+                    returnType = void
+                    annotations += "Test"
                     exceptions += "Throwable"
                 }
             }
@@ -289,12 +298,14 @@ class ExecutorCS2JavaPrinter(
             cs.printAsJava()
 
         printedStacks.clear()
-        with(builder) {
-            with(klass) {
-                current = method(testName) {
-                    returnType = void
-                    annotations += "Test"
-                    exceptions += "Throwable"
+        if (generateSetup) {
+            with(builder) {
+                with(klass) {
+                    current = method(testName) {
+                        returnType = void
+                        annotations += "Test"
+                        exceptions += "Throwable"
+                    }
                 }
             }
         }
@@ -314,12 +325,14 @@ class ExecutorCS2JavaPrinter(
         printDescriptor(descriptor, result)
         return result
     }
-    val Type.klassType: String get() = when (this) {
-        is PrimaryType -> "${kexType.primitiveName}.class"
-        is ClassType -> "Class.forName(\"${klass.canonicalDesc}\")"
-        is ArrayType -> "Array.newInstance(${component.klassType}, 0).getClass()"
-        else -> unreachable {  }
-    }
+
+    val Type.klassType: String
+        get() = when (this) {
+            is PrimaryType -> "${kexType.primitiveName}.class"
+            is ClassType -> "Class.forName(\"${klass.canonicalDesc}\")"
+            is ArrayType -> "Array.newInstance(${component.klassType}, 0).getClass()"
+            else -> unreachable { }
+        }
 
     private fun printTestCall(method: org.jetbrains.research.kfg.ir.Method, callStacks: Parameters<CallStack>) =
         with(current) {
@@ -407,7 +420,8 @@ class ExecutorCS2JavaPrinter(
                 }"
                 for ((index, element) in descriptor.elements) {
                     val elementName = printDescriptor(element, result)
-                    val setElementMethod = element.type.primitiveName?.let { setPrimitiveElementMap[it]!! } ?: setElement
+                    val setElementMethod =
+                        element.type.primitiveName?.let { setPrimitiveElementMap[it]!! } ?: setElement
                     result += "${setElementMethod.name}($name, $index, $elementName)"
                 }
             }
