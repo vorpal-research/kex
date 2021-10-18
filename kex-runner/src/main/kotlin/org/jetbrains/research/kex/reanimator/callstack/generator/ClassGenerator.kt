@@ -22,7 +22,7 @@ class ClassGenerator(private val fallback: Generator) : Generator {
         saveToCache(descriptor, callStack)
 
         val klassClass = cm.classClass
-        val forNameMethod = klassClass.getMethod("forName", types.stringType)
+        val forNameMethod = klassClass.getMethod("forName", types.classType, types.stringType)
 
         val createForNameCall = { klassName: Descriptor ->
             callStack += StaticMethodCall(

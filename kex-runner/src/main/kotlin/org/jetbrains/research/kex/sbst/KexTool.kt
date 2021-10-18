@@ -23,6 +23,7 @@ import org.jetbrains.research.kex.reanimator.collector.SetterCollector
 import org.jetbrains.research.kex.reanimator.descriptor.DescriptorStatistics
 import org.jetbrains.research.kex.trace.`object`.ActionTrace
 import org.jetbrains.research.kex.trace.`object`.ObjectTraceManager
+import org.jetbrains.research.kex.util.getKexRuntime
 import org.jetbrains.research.kex.util.getRuntime
 import org.jetbrains.research.kfg.ClassManager
 import org.jetbrains.research.kfg.KfgConfig
@@ -113,7 +114,7 @@ class KexTool : Tool {
         prepareInstrumentedClasspath(containers, pkg, instrumentedCodeDir)
 
         val classManager = ClassManager(KfgConfig(flags = Flags.readAll, failOnError = false))
-        classManager.initialize(jarClassLoader, *containers.toTypedArray(), getRuntime()!!)
+        classManager.initialize(jarClassLoader, *containers.toTypedArray(), getRuntime()!!, getKexRuntime()!!)
         log.debug("Initialized class managers")
 
         // write all classes to output directory, so they will be seen by ClassLoader
