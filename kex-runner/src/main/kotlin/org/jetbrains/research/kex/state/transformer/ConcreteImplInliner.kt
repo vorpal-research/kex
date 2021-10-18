@@ -10,6 +10,8 @@ import org.jetbrains.research.kex.state.predicate.CallPredicate
 import org.jetbrains.research.kex.state.predicate.Predicate
 import org.jetbrains.research.kex.state.predicate.state
 import org.jetbrains.research.kex.state.term.CallTerm
+import org.jetbrains.research.kex.state.term.Term
+import org.jetbrains.research.kfg.ir.Class
 import org.jetbrains.research.kfg.ir.ConcreteClass
 import org.jetbrains.research.kfg.ir.Method
 import org.jetbrains.research.kfg.type.TypeFactory
@@ -19,7 +21,8 @@ class ConcreteImplInliner(val types: TypeFactory,
                           val typeInfoMap: TypeInfoMap,
                           override val psa: PredicateStateAnalysis,
                           override val inlineSuffix: String = "concrete.inlined",
-                          override var inlineIndex: Int = 0) : Inliner<ConcreteImplInliner> {
+                          override var inlineIndex: Int = 0,
+                          val maa: MustAliasAnalysis? = null) : Inliner<ConcreteImplInliner> {
     override val im = MethodManager.InlineManager
     override val builders = dequeOf(StateBuilder())
     override var hasInlined: Boolean = false
@@ -33,7 +36,7 @@ class ConcreteImplInliner(val types: TypeFactory,
             method.isStatic -> method
             method.isConstructor -> method
             else -> {
-                val typeInfo = typeInfoMap.getInfo<CastTypeInfo>(callTerm.owner) ?: return null
+                val typeInfo = getInfo(callTerm.owner) ?: return null
                 val kexClass = typeInfo.type as? KexClass ?: return null
                 val concreteClass = kexClass.kfgClass(types) as? ConcreteClass ?: return null
                 val result = try {
@@ -48,6 +51,17 @@ class ConcreteImplInliner(val types: TypeFactory,
             }
         }
     }
+
+    private fun getInfo(owner: Term): CastTypeInfo? {
+        return typeInfoMap.getInfo<CastTypeInfo>(owner) ?: maa?.graph?.lookupVariable(owner)?.context?.toCastTypeInfo
+    }
+
+    private val MustAliasAnalysisContext.toCastTypeInfo: CastTypeInfo?
+        get() {
+            return this.klass?.let {
+                return CastTypeInfo(it.kexType)
+            }
+        }
 
     override fun transformCallPredicate(predicate: CallPredicate): Predicate {
         val call = predicate.call as CallTerm
@@ -71,6 +85,7 @@ class ConcreteImplInliner(val types: TypeFactory,
             }
         }
         val inlinedState = prepareInlinedState(inlinedMethod, mappings) ?: return predicate
+        //maa?.transform(inlinedState)
         castPredicate?.run {
             currentBuilder += this
         }

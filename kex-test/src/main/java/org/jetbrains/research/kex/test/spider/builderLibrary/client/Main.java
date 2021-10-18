@@ -26,5 +26,18 @@ public class Main {
         builder4.set1(1);
         // error here
         builder4.set3(3);
+
+        Builder builder5 = new Builder();
+        builder5.returnSetResult(1); // error here
+
+        Builder builder6 = new Builder();
+        builder6.set1(1);
+        builder6.returnSetResult(1);
+        builder6.set3(1);
+
+        Builder builder7 = new Builder();
+        builder7.set1(1);
+        builder7.returnSetResult(1);
+        builder7.returnSetResult(1);
     }
 }

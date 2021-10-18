@@ -15,7 +15,6 @@ import org.jetbrains.research.kex.state.predicate.CallPredicate
 import org.jetbrains.research.kex.state.predicate.Predicate
 import org.jetbrains.research.kex.state.predicate.require
 import org.jetbrains.research.kex.state.term.CallTerm
-import org.jetbrains.research.kex.state.term.FieldTerm
 import org.jetbrains.research.kex.state.term.Term
 import org.jetbrains.research.kex.state.term.term
 import org.jetbrains.research.kex.state.transformer.*
@@ -144,7 +143,7 @@ class CallCiteChecker(
 
                 val init = getState(inst) ?: emptyState()
                 val inlinedChain = chain.fold(init) { acc, inst ->
-                    val (inlined, renamer) = inlineState(getState(inst) ?: emptyState(), acc) ?: emptyState() to null
+                    val (inlined, renamer) = inlineState(getState(inst) ?: emptyState(), acc) ?: (emptyState() to null)
                     assertions = assertions.map { renamer?.transform(it) ?: it }.toSet()
                     inlined
                 }
@@ -236,8 +235,10 @@ class CallCiteChecker(
         get() = this.map { "${it.method} - ${it.location}\n" }
 
     private fun prepareState(ps: PredicateState, typeInfoMap: TypeInfoMap) = transform(ps) {
+        val maa = MustAliasAnalysis(typeInfoMap.toMap(), psa)
+        +maa
         +AnnotationAdapter(method, AnnotationManager.defaultLoader)
-        +RecursiveInliner(psa) { i, psa -> ConcreteImplInliner(method.cm.type, typeInfoMap, psa, inlineIndex = i) }
+        +RecursiveInliner(psa) { i, psa -> ConcreteImplInliner(method.cm.type, typeInfoMap, psa, inlineIndex = i, maa=maa) }
         +StaticFieldInliner(ctx, psa)
         +RecursiveInliner(psa) { i, psa -> MethodInliner(psa, inlineIndex = i) }
         +IntrinsicAdapter
@@ -263,32 +264,6 @@ class CallCiteChecker(
             state = spacer.apply(state)
             query = spacer.apply(query)
             log.debug("Memspacing finished")
-        }
-
-        // slicing
-        runIf(isSlicingEnabled) {
-            log.debug("Slicing started...")
-
-            val slicingTerms = run {
-                val (`this`, arguments) = collectArguments(state)
-
-                val results = hashSetOf<Term>()
-
-                if (`this` != null) results += `this`
-                results += arguments.values
-                results += collectVariables(state).filter { it is FieldTerm && it.owner == `this` }
-                results += collectAssumedTerms(state)
-                results += collectRequiredTerms(state)
-                results += TermCollector.getFullTermSet(query)
-                results
-            }
-
-            val aa = StensgaardAA()
-            aa.apply(state)
-            log.debug("State size before slicing: ${state.size}")
-            state = Slicer(state, query, slicingTerms, aa).apply(state)
-            log.debug("State size after slicing: ${state.size}")
-            log.debug("Slicing finished")
         }
 
         state = Optimizer().apply(state)

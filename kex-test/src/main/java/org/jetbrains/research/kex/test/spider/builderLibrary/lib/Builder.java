@@ -19,4 +19,8 @@ public class Builder {
         field3 = value;
         return this;
     }
+
+    public Builder returnSetResult(int value) {
+        return set2(value);
+    }
 }

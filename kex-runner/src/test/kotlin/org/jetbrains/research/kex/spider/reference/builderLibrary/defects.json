@@ -2,15 +2,6 @@
     {
         "type": "ASSERT",
         "callStack": [
-            "org/jetbrains/research/kex/test/spider/builderLibrary/lib/Builder::set3(int): org/jetbrains/research/kex/test/spider/builderLibrary/lib/Builder - org/jetbrains/research/kex/test/spider/builderLibrary/client/Main.java:13\n"
-        ],
-        "id": "id2",
-        "testFile": null,
-        "testCaseName": null
-    },
-    {
-        "type": "ASSERT",
-        "callStack": [
             "org/jetbrains/research/kex/test/spider/builderLibrary/lib/Builder::set3(int): org/jetbrains/research/kex/test/spider/builderLibrary/lib/Builder - org/jetbrains/research/kex/test/spider/builderLibrary/client/Main.java:18\n"
         ],
         "id": "id2",
