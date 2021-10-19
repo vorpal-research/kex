@@ -108,10 +108,11 @@ class KexTool : Tool {
         log.debug("Initialized containers: ${containers.joinToString { it.name }}")
 
         val instrumentedDirName = kexConfig.getStringValue("output", "instrumentedDir", "instrumented")
-        val instrumentedCodeDir = kexConfig.getPathValue("kex", "outputDir")!!.resolve(instrumentedDirName)
-        containerClassLoader = URLClassLoader(arrayOf(instrumentedCodeDir.toUri().toURL()))
+        val instrumentedCodeDir = kexConfig.getPathValue("kex", "outputDir")!!.resolve(instrumentedDirName).toAbsolutePath()
+        containerClassLoader = URLClassLoader(containers.map { it.path.toUri().toURL() }.toTypedArray())
 
         prepareInstrumentedClasspath(containers, pkg, instrumentedCodeDir)
+        containerClassLoader = URLClassLoader(arrayOf(instrumentedCodeDir.toUri().toURL()))
 
         val classManager = ClassManager(KfgConfig(flags = Flags.readAll, failOnError = false))
         classManager.initialize(jarClassLoader, *containers.toTypedArray(), getRuntime()!!, getKexRuntime()!!)
