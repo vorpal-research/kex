@@ -329,9 +329,7 @@ open class CallStack2JavaPrinter(
 
     protected val <T> PrimaryValue<T>.asConstant: String
         get() = when (val value = value) {
-            null -> "null".also {
-                actualTypes[this] = CSClass(ctx.types.nullType)
-            }
+            null -> "null"
             is Boolean -> "$value".also {
                 actualTypes[this] = CSClass(ctx.types.boolType)
             }
