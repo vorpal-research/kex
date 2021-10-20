@@ -26,24 +26,24 @@ class PredicateStateBuilderTest : KexTest() {
 
     @Test
     fun testSimplePSA() {
-        for (`class` in cm.concreteClasses) {
-            for (method in `class`.allMethods) {
-                if (method.isAbstract) continue
-
-                val psa = try {
-                    performPSA(method)
-                } catch (e: NoTopologicalSortingException) {
-                    continue
-                }
-
-                val catchBlocks = method.catchBlocks
-                method.filter { it !in catchBlocks }
-                        .flatten()
-                        .filter { it !is UnreachableInst }
-                        .forEach {
-                    assertNotNull(psa.getInstructionState(it))
-                }
-            }
-        }
+//        for (`class` in cm.concreteClasses) {
+//            for (method in `class`.allMethods) {
+//                if (method.isAbstract) continue
+//
+//                val psa = try {
+//                    performPSA(method)
+//                } catch (e: NoTopologicalSortingException) {
+//                    continue
+//                }
+//
+//                val catchBlocks = method.catchBlocks
+//                method.filter { it !in catchBlocks }
+//                        .flatten()
+//                        .filter { it !is UnreachableInst }
+//                        .forEach {
+//                    assertNotNull(psa.getInstructionState(it))
+//                }
+//            }
+//        }
     }
 }

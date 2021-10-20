@@ -25,6 +25,7 @@ import org.jetbrains.research.kfg.ClassManager
 import org.jetbrains.research.kfg.ir.Method
 import org.jetbrains.research.kthelper.`try`
 import org.jetbrains.research.kthelper.logging.log
+import java.nio.file.Path
 import kotlin.system.measureTimeMillis
 
 private val visibilityLevel by lazy {
@@ -51,7 +52,7 @@ val Parameters<CallStack>.rtUnmapped: Parameters<CallStack>
 
 class Reanimator(
     override val ctx: ExecutionContext,
-    override val psa: PredicateStateAnalysis,
+    val psa: PredicateStateAnalysis,
     packageName: String,
     klassName: String
 ) : ParameterGenerator {
@@ -84,8 +85,9 @@ class Reanimator(
         throw GenerationException(e)
     }
 
-    override fun emit() {
+    override fun emit(): Path {
         printer.emit()
+        return printer.targetFile.toPath()
     }
 
     val Descriptor.callStack: CallStack

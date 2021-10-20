@@ -14,7 +14,8 @@ import org.jetbrains.research.kex.parameters.Parameters
 import org.jetbrains.research.kex.random.GenerationException
 import org.jetbrains.research.kex.random.Randomizer
 import org.jetbrains.research.kex.reanimator.ParameterGenerator
-import org.jetbrains.research.kex.reanimator.ReflectionReanimator
+import org.jetbrains.research.kex.reanimator.UnsafeGenerator
+import org.jetbrains.research.kex.reanimator.codegen.validName
 import org.jetbrains.research.kex.serialization.KexSerializer
 import org.jetbrains.research.kex.smt.Checker
 import org.jetbrains.research.kex.smt.Result
@@ -56,13 +57,22 @@ data class Failure(
 open class MethodChecker(
     val ctx: ExecutionContext,
     protected val tm: TraceManager<ActionTrace>,
-    protected val psa: PredicateStateAnalysis) : MethodVisitor {
+    protected val psa: PredicateStateAnalysis,
+    val timeBudget: Long = 0L
+) : MethodVisitor {
     protected val nameContext = NameMapperContext()
     override val cm: ClassManager get() = ctx.cm
     val random: Randomizer get() = ctx.random
     val loader: ClassLoader get() = ctx.loader
     lateinit var generator: ParameterGenerator
         protected set
+    val startTime = System.currentTimeMillis()
+
+
+    fun hasTimeBudget() = when (timeBudget) {
+        0L -> true
+        else -> (System.currentTimeMillis() - startTime) < timeBudget
+    }
 
     private fun dumpPS(method: Method, message: String, state: PredicateState) = `try` {
         val failDirPath = outputDirectory.resolve(failDir)
@@ -79,13 +89,14 @@ open class MethodChecker(
     }
 
     protected open fun initializeGenerator(method: Method) {
-        generator = ReflectionReanimator(ctx, psa)
+        generator = UnsafeGenerator(ctx, method)
     }
 
     protected open fun getSearchStrategy(method: Method): SearchStrategy = DfsStrategy(method)
 
     override fun visit(method: Method) {
         super.visit(method)
+        if (!hasTimeBudget()) return
 
         if (!method.isImpactable || !method.hasBody) return
 
@@ -100,6 +111,7 @@ open class MethodChecker(
         initializeGenerator(method)
 
         for (block in order) {
+            if (!hasTimeBudget()) return
             if (block.terminator is UnreachableInst) {
                 unreachableBlocks += block
                 continue
@@ -134,6 +146,7 @@ open class MethodChecker(
             log.debug()
 
             if (coverageResult is Result.UnsatResult) unreachableBlocks += block
+            generator.emit()
         }
 
         generator.emit()
@@ -152,7 +165,7 @@ open class MethodChecker(
         when (result) {
             is Result.SatResult -> {
                 val (instance, args) = try {
-                    generator.generate("", method, checker.state, result.model)
+                    generator.generate("test_${block.validName}", method, checker.state, result.model)
                 } catch (e: GenerationException) {
                     log.warn(e.message)
                     return result

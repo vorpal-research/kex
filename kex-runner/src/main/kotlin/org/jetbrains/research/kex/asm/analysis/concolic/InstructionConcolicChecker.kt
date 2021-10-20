@@ -16,7 +16,7 @@ import org.jetbrains.research.kex.descriptor.Descriptor
 import org.jetbrains.research.kex.parameters.Parameters
 import org.jetbrains.research.kex.parameters.asDescriptors
 import org.jetbrains.research.kex.parameters.concreteParameters
-import org.jetbrains.research.kex.reanimator.ExecutionGenerator
+import org.jetbrains.research.kex.reanimator.UnsafeGenerator
 import org.jetbrains.research.kex.reanimator.codegen.ExecutorTestCasePrinter
 import org.jetbrains.research.kex.smt.Checker
 import org.jetbrains.research.kex.smt.Result
@@ -114,7 +114,7 @@ class InstructionConcolicChecker(
         collectTrace(method, parameters.asDescriptors)
 
     private fun collectTrace(method: Method, parameters: Parameters<Descriptor>): ExecutionResult? = tryOrNull {
-        val generator = ExecutionGenerator(ctx, method)
+        val generator = UnsafeGenerator(ctx, method)
         generator.generate(parameters)
         val testFile = generator.emit()
 

@@ -30,7 +30,6 @@ class SymbolicLauncher(classPaths: List<String>, targetName: String) : KexLaunch
                 useApiGeneration -> DescriptorChecker(context, traceManager, psa)
                 else -> MethodChecker(context, traceManager, psa)
             }
-            +cm
         }
 
         val coverage = cm.totalCoverage
