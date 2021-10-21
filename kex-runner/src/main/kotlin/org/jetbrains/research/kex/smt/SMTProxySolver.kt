@@ -8,18 +8,18 @@ import org.jetbrains.research.kthelper.assert.unreachable
 import org.jetbrains.research.kthelper.logging.log
 
 private val engine = kexConfig.getStringValue("smt", "engine")
-        ?: unreachable { log.error("No SMT engine specified") }
+    ?: unreachable { log.error("No SMT engine specified") }
 
 class SMTProxySolver(
-        tf: TypeFactory,
-        val solver: AbstractSMTSolver = getSolver(tf, engine)
+    tf: TypeFactory,
+    val solver: AbstractSMTSolver = getSolver(tf, engine)
 ) : AbstractSMTSolver by solver {
 
     companion object {
         val solvers = run {
             val loader = Thread.currentThread().contextClassLoader
             val resource = loader.getResourceAsStream("solvers.json")
-                    ?: fail { log.error("Could not load smt solver inheritance info") }
+                ?: fail { log.error("Could not load smt solver inheritance info") }
             val inheritanceInfo = InheritanceInfo.fromJson(resource.bufferedReader().readText())
             resource.close()
 

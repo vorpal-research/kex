@@ -48,6 +48,14 @@ class NullityInfoAdapter : RecollectingTransformer<NullityInfoAdapter> {
         return super.transformArrayIndexTerm(term)
     }
 
+    override fun transformArrayLengthTerm(term: ArrayLengthTerm): Term {
+        if (term.arrayRef !in annotatedTerms) {
+            currentBuilder += assume { term.arrayRef inequality null }
+            annotatedTerms = annotatedTerms + term.arrayRef
+        }
+        return super.transformArrayLengthTerm(term)
+    }
+
     override fun transformConstClassTerm(term: ConstClassTerm): Term {
         if (term !in annotatedTerms) {
             currentBuilder += assume { term inequality null }
