@@ -515,6 +515,7 @@ open class CallStack2JavaPrinter(
     }
 
     protected open fun printNewArray(owner: CallStack, call: NewArray): List<String> {
+        call.length.printAsJava()
         val actualType = call.asArray.csType
         val (depth, elementType) = actualType.elementTypeDepth()
         actualTypes[owner] = actualType
@@ -544,6 +545,7 @@ open class CallStack2JavaPrinter(
 
     protected open fun printArrayWrite(owner: CallStack, call: ArrayWrite): List<String> {
         call.value.printAsJava()
+        call.index.printAsJava()
         val requiredType = lub(resolvedTypes[owner]?.elementType, actualTypes[owner]?.elementType)
         return listOf("${owner.name}[${call.index.stackName}] = ${call.value.cast(requiredType)}")
     }

@@ -126,11 +126,11 @@ class ReanimatorRunner(
         is JavaConstant -> {
             val const = when (jd.getType()) {
                 "bool" -> descriptor { const(jd.name.toBoolean()) }
-                "byte" -> descriptor { const(jd.name.replace(Regex("[^\\d]"), "").toByte()) }
+                "byte" -> descriptor { const(jd.name.replace(Regex("[^-\\d]"), "").toByte()) }
                 "char" -> descriptor { const(jd.name.first()) }
-                "short" -> descriptor { const(jd.name.replace(Regex("[^\\d]"), "").toShort()) }
-                "int" -> descriptor { const(jd.name.replace(Regex("[^\\d]"), "").toInt()) }
-                "long" -> descriptor { const(jd.name.replace(Regex("[^\\d]"), "").toLong()) }
+                "short" -> descriptor { const(jd.name.replace(Regex("[^-\\d]"), "").toShort()) }
+                "int" -> descriptor { const(jd.name.replace(Regex("[^-\\d]"), "").toInt()) }
+                "long" -> descriptor { const(jd.name.replace(Regex("[^-\\d]"), "").toLong()) }
                 "float" -> descriptor { const(jd.name.toFloat()) }
                 "double" -> descriptor { const(jd.name.toDouble()) }
                 else -> TODO()
@@ -150,7 +150,7 @@ class ReanimatorRunner(
         }
         is JavaArray -> descriptor {
             val arrayType = jd.type.asType as KexArray
-            val arrayDesc = array(jd.length, arrayType)
+            val arrayDesc = array(jd.length, arrayType.element)
             map[jd] = arrayDesc
             for ((index, value) in jd.elements) {
                 arrayDesc[index] = value.convert(map)
