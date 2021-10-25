@@ -84,7 +84,11 @@ open class CallStack2JavaPrinter(
             }
         }
         resolveTypes(callStack)
-        callStack.printAsJava()
+        with(current) {
+            statement("try {")
+            callStack.printAsJava()
+            statement("} catch (Throwable e) {}")
+        }
     }
 
     override fun emit() = builder.toString()
