@@ -3,6 +3,7 @@ package org.jetbrains.research.kex
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.InternalSerializationApi
 import org.jetbrains.research.kex.sbst.KexTool
+import java.io.File
 import java.io.InputStreamReader
 import java.io.PrintWriter
 
@@ -12,7 +13,7 @@ import java.io.PrintWriter
 fun main(args: Array<String>) {
     val timeout = if (args.size > 0) args[0].toInt() else 600
     val benchmarkPath = if (args.size > 1) args[1] else "/var/benchmarks"
-    val actualPath = if (args.size > 2) args[2] else ""
+    val actualPath = if (args.size > 2) args[2] else "/home/abdullin/workspace/JUGE/infrastructure/benchmarks_9th"
     val reader = InputStreamReader(System.`in`).buffered()
     reader.readLine() // skip name
     reader.readLine() // skip {
