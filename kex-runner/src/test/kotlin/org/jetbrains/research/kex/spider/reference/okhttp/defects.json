@@ -2,9 +2,9 @@
     {
         "type": "ASSERT",
         "callStack": [
-            "com/squareup/okhttp/Request$Builder::url(java/lang/String): com/squareup/okhttp/Request$Builder - org/jetbrains/research/kex/test/spider/okhttp/client/Main.java:18\n"
+            "com/squareup/okhttp/Request$Builder::url(com/squareup/okhttp/HttpUrl): com/squareup/okhttp/Request$Builder - org/jetbrains/research/kex/test/spider/okhttp/client/Main.java:20\n"
         ],
-        "id": "id1",
+        "id": "id0",
         "testFile": null,
         "testCaseName": null
     }
