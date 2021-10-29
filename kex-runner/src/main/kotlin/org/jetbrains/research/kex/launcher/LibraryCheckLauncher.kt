@@ -58,7 +58,7 @@ class LibraryCheckLauncher(
         }
 
         executePipeline(cm, callCitePackage) {
-            +CallCiteChecker(context, callCitePackage, psa) // separated package should be here
+            +CallCiteChecker(context, callCitePackage, callCitePackage, psa) // separated package should be here
             +ClassWriter(context, tmpDir)
         }
         clearClassPath()

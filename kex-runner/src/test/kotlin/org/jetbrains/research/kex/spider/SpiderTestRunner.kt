@@ -92,7 +92,7 @@ class SpiderTestRunner(private val testName: String) : KexRunnerTest(
         }
 
         executePipeline(cm, packages) {
-            +CallCiteChecker(analysisContext, `package`, psa)
+            +CallCiteChecker(analysisContext, `package`, packages.last(), psa)
             +ClassWriter(analysisContext, tempDir.toPath())
         }
 

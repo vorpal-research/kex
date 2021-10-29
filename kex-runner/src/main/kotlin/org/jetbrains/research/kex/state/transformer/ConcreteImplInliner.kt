@@ -11,21 +11,25 @@ import org.jetbrains.research.kex.state.predicate.Predicate
 import org.jetbrains.research.kex.state.predicate.state
 import org.jetbrains.research.kex.state.term.CallTerm
 import org.jetbrains.research.kex.state.term.Term
-import org.jetbrains.research.kfg.ir.Class
+import org.jetbrains.research.kfg.Package
 import org.jetbrains.research.kfg.ir.ConcreteClass
 import org.jetbrains.research.kfg.ir.Method
 import org.jetbrains.research.kfg.type.TypeFactory
 import org.jetbrains.research.kthelper.collection.dequeOf
 
-class ConcreteImplInliner(val types: TypeFactory,
-                          val typeInfoMap: TypeInfoMap,
-                          override val psa: PredicateStateAnalysis,
-                          override val inlineSuffix: String = "concrete.inlined",
-                          override var inlineIndex: Int = 0,
-                          val maa: MustAliasAnalysis? = null) : Inliner<ConcreteImplInliner> {
+class ConcreteImplInliner(
+    val types: TypeFactory,
+    val typeInfoMap: TypeInfoMap,
+    override val psa: PredicateStateAnalysis,
+    override val inlineSuffix: String = "concrete.inlined",
+    override var inlineIndex: Int = 0,
+    val maa: MustAliasAnalysis? = null,
+    val analyzingPackage: Package? = null
+) : Inliner<ConcreteImplInliner> {
     override val im = MethodManager.InlineManager
     override val builders = dequeOf(StateBuilder())
     override var hasInlined: Boolean = false
+    private val analyzingPackageName = analyzingPackage?.concreteName
 
     override fun isInlinable(method: Method): Boolean = im.inliningEnabled && !im.isIgnored(method)
 
@@ -38,6 +42,7 @@ class ConcreteImplInliner(val types: TypeFactory,
             else -> {
                 val typeInfo = getInfo(callTerm.owner) ?: return null
                 val kexClass = typeInfo.type as? KexClass ?: return null
+                if (analyzingPackageName != null && !kexClass.klass.startsWith(analyzingPackageName)) return null
                 val concreteClass = kexClass.kfgClass(types) as? ConcreteClass ?: return null
                 val result = try {
                     concreteClass.getMethod(method.name, method.desc)
