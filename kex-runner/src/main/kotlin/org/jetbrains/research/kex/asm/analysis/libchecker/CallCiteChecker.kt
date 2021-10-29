@@ -39,6 +39,7 @@ private val isSlicingEnabled by lazy { kexConfig.getBooleanValue("smt", "slicing
 class CallCiteChecker(
         val ctx: ExecutionContext,
         private val callCiteTarget: Package,
+        private val libraryPackage: Package,
         val psa: PredicateStateAnalysis
 ) : MethodVisitor {
     override val cm: ClassManager
@@ -238,7 +239,7 @@ class CallCiteChecker(
         val maa = MustAliasAnalysis(typeInfoMap.toMap(), psa)
         +maa
         +AnnotationAdapter(method, AnnotationManager.defaultLoader)
-        +RecursiveInliner(psa) { i, psa -> ConcreteImplInliner(method.cm.type, typeInfoMap, psa, inlineIndex = i, maa=maa) }
+        +RecursiveInliner(psa) { i, psa -> ConcreteImplInliner(method.cm.type, typeInfoMap, psa, inlineIndex = i, maa =maa, analyzingPackage = libraryPackage) }
         +StaticFieldInliner(ctx, psa)
         +RecursiveInliner(psa) { i, psa -> MethodInliner(psa, inlineIndex = i) }
         +IntrinsicAdapter
