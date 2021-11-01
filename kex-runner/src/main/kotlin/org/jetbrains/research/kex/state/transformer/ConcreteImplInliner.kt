@@ -42,7 +42,9 @@ class ConcreteImplInliner(
             else -> {
                 val typeInfo = getInfo(callTerm.owner) ?: return null
                 val kexClass = typeInfo.type as? KexClass ?: return null
-                if (analyzingPackageName != null && !kexClass.klass.startsWith(analyzingPackageName)) return null
+                if (analyzingPackageName != null && !kexClass.klass.startsWith(analyzingPackageName)) {
+                    return null
+                }
                 val concreteClass = kexClass.kfgClass(types) as? ConcreteClass ?: return null
                 val result = try {
                     concreteClass.getMethod(method.name, method.desc)
