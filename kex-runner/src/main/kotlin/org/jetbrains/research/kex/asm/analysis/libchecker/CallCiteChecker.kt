@@ -239,9 +239,8 @@ class CallCiteChecker(
         val maa = MustAliasAnalysis(typeInfoMap.toMap(), psa)
         +maa
         +AnnotationAdapter(method, AnnotationManager.defaultLoader)
-        +RecursiveInliner(psa) { i, psa -> ConcreteImplInliner(method.cm.type, typeInfoMap, psa, inlineIndex = i, maa =maa, analyzingPackage = libraryPackage) }
+        +RecursiveInliner(psa) { i, psa -> ConcreteImplInliner(method.cm.type, typeInfoMap, psa, inlineIndex = i, maa = maa, analyzingPackage = libraryPackage) }
         +StaticFieldInliner(ctx, psa)
-        +RecursiveInliner(psa) { i, psa -> MethodInliner(psa, inlineIndex = i) }
         +IntrinsicAdapter
         +KexIntrinsicsAdapter()
         +DoubleTypeAdapter()
