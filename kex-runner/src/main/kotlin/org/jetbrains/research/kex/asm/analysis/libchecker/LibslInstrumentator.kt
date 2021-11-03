@@ -15,8 +15,6 @@ import org.jetbrains.research.kthelper.assert.unreachable
 import org.jetbrains.research.kthelper.logging.log
 import org.jetbrains.research.libsl.asg.*
 import org.jetbrains.research.libsl.asg.Function
-import org.objectweb.asm.Opcodes
-import org.objectweb.asm.tree.FieldNode
 
 class LibslInstrumentator(
     override val cm: ClassManager,
@@ -58,29 +56,36 @@ class LibslInstrumentator(
             if (generator.oldCallStorage.isNotEmpty()) {
                 unreachable<Unit> { log.error("usage of old() now allowed in requires contract") }
             }
-            val block = generator.expressionBlock
+            val firstBlock = generator.expressionBlocks.first()
+            val lastBlock = generator.expressionBlocks.last()
             val name = requires.name ?: "assertion"
 
-            insertKexAssert(name, block, newEntry, null, condition)
+            generator.expressionBlocks.drop(1).dropLast(1).forEach {
+                method.add(methodUsageContext, it)
+            }
+
+            insertKexAssert(name, lastBlock, newEntry, condition)
+            method.addBefore(methodUsageContext, newEntry, firstBlock)
         }
 
         // ensures contract
         methodDescription.contracts.filter { it.kind == ContractKind.ENSURES }.forEach { ensures ->
-            val lastBlock = method.basicBlocks.last { it.instructions.any { instr -> instr is ReturnInst } }
-            val prelastBlocks = lastBlock.predecessors.toSet()
-            prelastBlocks.toSet().forEach { prev ->
+            val exitBlock = method.basicBlocks.last { it.instructions.any { instr -> instr is ReturnInst } }
+            val preexitBlocks = exitBlock.predecessors.toSet()
+            preexitBlocks.toSet().forEach { prev ->
                 prev.remove(prev.terminator)
 
-                lastBlock.removePredecessor(methodUsageContext, prev)
-                prev.removeSuccessor(methodUsageContext, lastBlock)
+                exitBlock.removePredecessor(methodUsageContext, prev)
+                prev.removeSuccessor(methodUsageContext, exitBlock)
             }
 
             val generator = ExpressionGenerator(method, klass, cm, syntheticContexts)
             val condition = generator.visit(ensures.expression)
-            val block = generator.expressionBlock
+            val lastBlock = generator.expressionBlocks.last()
+            val firstBlock = generator.expressionBlocks.first()
             val savedValuesInstructions = generator.oldCallStorage
 
-            savedValuesInstructions.forEach { block.remove(it as Instruction) }
+            savedValuesInstructions.forEach { firstBlock.remove(it as Instruction) }
 
             val blockSaver = BodyBlock("saver")
 
@@ -95,7 +100,16 @@ class LibslInstrumentator(
 
             val name = ensures.name ?: "assertion"
 
-            insertKexAssert(name, block, lastBlock, prelastBlocks, condition)
+            insertKexAssert(name, lastBlock, exitBlock, condition)
+            preexitBlocks.forEach {
+                it.addSuccessor(methodUsageContext, firstBlock)
+                it.add(instFactory.getJump(methodUsageContext, firstBlock))
+                firstBlock.addPredecessor(methodUsageContext, it)
+            }
+
+            generator.expressionBlocks.forEach {
+                method.add(methodUsageContext, it)
+            }
         }
 
         // insert block that configures state and variables in synthesized automaton
@@ -139,7 +153,7 @@ class LibslInstrumentator(
         block.insertBefore(returnStatement, storeInstr)
     }
 
-    private fun insertKexAssert(name: String, block: BasicBlock, nextBlock: BasicBlock, prevBlocks: Collection<BasicBlock>?, condition: Value) {
+    private fun insertKexAssert(name: String, block: BasicBlock, nextBlock: BasicBlock, condition: Value) {
         val kexAssertion = MethodManager.KexIntrinsicManager.kexAssertWithId(cm)
         val conditionsArray = instFactory.getNewArray(
             methodUsageContext,
@@ -160,15 +174,6 @@ class LibslInstrumentator(
 
         val gotoNext = instFactory.getJump(methodUsageContext, nextBlock)
         block.add(gotoNext)
-
-        val gotoCurrentBlock = instFactory.getJump(methodUsageContext, block)
-
-        prevBlocks?.forEach { prevBlock ->
-            prevBlock.addSuccessor(methodUsageContext, block)
-            block.addPredecessors(methodUsageContext, prevBlock)
-
-            prevBlock.add(gotoCurrentBlock)
-        }
 
         nextBlock.parent.addBefore(methodUsageContext, nextBlock, block)
         nextBlock.addPredecessors(methodUsageContext, block)

@@ -1,15 +1,15 @@
 package org.jetbrains.research.kex.asm.analysis.libchecker
 
 import org.jetbrains.research.kfg.ClassManager
+import org.jetbrains.research.kfg.ir.BasicBlock
 import org.jetbrains.research.kfg.ir.BodyBlock
 import org.jetbrains.research.kfg.ir.Class
 import org.jetbrains.research.kfg.ir.Method
 import org.jetbrains.research.kfg.ir.value.EmptyUsageContext
 import org.jetbrains.research.kfg.ir.value.Value
-import org.jetbrains.research.kfg.ir.value.ValueFactory
 import org.jetbrains.research.kfg.ir.value.instruction.*
 import org.jetbrains.research.kfg.ir.value.usageContext
-import org.jetbrains.research.kfg.type.TypeFactory
+import org.jetbrains.research.kfg.type.Type
 import org.jetbrains.research.libsl.asg.*
 
 
@@ -19,7 +19,7 @@ class ExpressionGenerator(
     val cm: ClassManager,
     private val syntheticContexts: Map<String, SyntheticContext>
 ): ExpressionVisitor<Value>() {
-    val expressionBlock = BodyBlock("synthesized expression")
+    val expressionBlocks = mutableListOf(BodyBlock("synthesized expression"))
     val oldCallStorage = mutableListOf<Value>()
 
     private val usageContext = method?.usageContext ?: EmptyUsageContext
@@ -34,11 +34,10 @@ class ExpressionGenerator(
             method.name == "equals" && method.argTypes.size == 1 && method.argTypes.first() == cm.type.objectType
         } ?: error("cannot find equals method for $objKlass")
         val args = arrayOf(
-            obj,
             other
         )
 
-        return instructionFactory.getCall(usageContext, CallOpcode.VIRTUAL, equalsMethod, equalsMethod.klass, args, true)
+        return instructionFactory.getCall(usageContext, CallOpcode.VIRTUAL, equalsMethod, equalsMethod.klass, obj, args, true)
     }
 
     override fun visitAccessAlias(node: AccessAlias): Value {
@@ -60,7 +59,7 @@ class ExpressionGenerator(
         val klass = method?.klass ?: error("klass can't be null")
         val `this` = valueFactory.getThis(klass)
         return instructionFactory.getFieldLoad(usageContext, `this`, field).also {
-            expressionBlock.add(it)
+            expressionBlocks.last().add(it)
         }
     }
 
@@ -70,7 +69,7 @@ class ExpressionGenerator(
         val right = visit(node.right)
         return if (opcode != null) {
             instructionFactory.getBinary(usageContext, opcode, left, right).also {
-                expressionBlock.add(it)
+                expressionBlocks.last().add(it)
             }
         } else {
             // this is equality operation
@@ -79,12 +78,57 @@ class ExpressionGenerator(
             } else if (!right.type.isPrimary) {
                 equalsWithObject(right, cm[right.type.name], left)
             } else {
-                instructionFactory.getCmp(usageContext, cm.type.boolType, node.op.comparisonOpCode, left, right)
+                val cond = instructionFactory.getCmp(usageContext, cm.type.boolType, node.op.comparisonOpCode, left, right)
+                return expandCompOp(cond)
             }
 
             res.also {
-                expressionBlock.add(it)
+                expressionBlocks.last().add(it)
             }
+        }
+    }
+
+    private fun expandCompOp(cond: Instruction): Instruction {
+        val incomingMap = mutableMapOf<BasicBlock, Value>()
+        val lastBlock = expressionBlocks.last()
+        val phiBlock = BodyBlock("phiBranch").apply {
+            expressionBlocks.add(this)
+            method?.add(usageContext, this)
+        }
+        val trueBlock = BodyBlock("trueBlock").apply {
+            add(
+                instructionFactory.getJump(usageContext, phiBlock)
+            )
+            incomingMap[this] = valueFactory.trueConstant
+            method?.add(usageContext, this)
+
+            addPredecessor(usageContext, lastBlock)
+            lastBlock.addSuccessor(usageContext, this)
+
+            addSuccessor(usageContext, phiBlock)
+            phiBlock.addPredecessor(usageContext, this)
+        }
+        val falseBlock = BodyBlock("falseBlock").apply {
+            add(
+                instructionFactory.getJump(usageContext, phiBlock)
+            )
+            incomingMap[this] = valueFactory.falseConstant
+            method?.add(usageContext, this)
+
+            addPredecessor(usageContext, lastBlock)
+            lastBlock.addSuccessor(usageContext, this)
+
+            addSuccessor(usageContext, phiBlock)
+            phiBlock.addPredecessor(usageContext, this)
+        }
+        lastBlock.add(
+            cond
+        )
+        lastBlock.add(
+            instructionFactory.getBranch(usageContext, cond, trueBlock, falseBlock)
+        )
+        return instructionFactory.getPhi(usageContext, cm.type.boolType, incomingMap).also {
+            phiBlock.add(it)
         }
     }
 
@@ -168,7 +212,7 @@ class ExpressionGenerator(
 
     override fun visitUnaryOpExpression(node: UnaryOpExpression): Value {
         return instructionFactory.getUnary(usageContext, UnaryOpcode.NEG, visit(node.value)).also {
-            expressionBlock.add(it)
+            expressionBlocks.last().add(it)
         }
     }
 
@@ -182,7 +226,7 @@ class ExpressionGenerator(
                 val field = syntheticContext.fields[node.variable] ?: error("unknown variable ${node.variable!!.name}")
                 val `this` = valueFactory.getThis(method?.klass ?: error("method is empty"))
                 instructionFactory.getFieldLoad(constructorUsageContext, `this`, field).also {
-                    expressionBlock.add(it)
+                    expressionBlocks.last().add(it)
                 }
             }
         } else {

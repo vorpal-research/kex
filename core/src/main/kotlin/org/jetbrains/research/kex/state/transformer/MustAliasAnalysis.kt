@@ -199,8 +199,7 @@ class MustAliasAnalysisContext {
 }
 
 class MustAliasAnalysis(
-    val toMap: Map<Term, KexType>,
-    private val psa: PredicateStateAnalysis
+    psa: PredicateStateAnalysis
 ) : Transformer<MustAliasAnalysis> {
     private val cm = psa.cm
     val graph = MustAliasGraph()

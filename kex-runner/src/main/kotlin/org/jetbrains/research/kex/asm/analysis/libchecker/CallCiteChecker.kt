@@ -48,6 +48,7 @@ class CallCiteChecker(
     private val im get() = MethodManager.KexIntrinsicManager
     private lateinit var method: Method
     private val methodCallGraph = mutableMapOf<Method, Set<CallInst>>()
+    private val maa = MustAliasAnalysis(psa)
 
     override fun cleanup() {}
 
@@ -228,6 +229,10 @@ class CallCiteChecker(
                 dm += Defect.assert(callStack.callStack, id)
                 false
             }
+            is Result.UnknownResult -> {
+                log.warn("unknown result for PS: $state")
+                true
+            }
             else -> true
         }
     }
@@ -236,11 +241,11 @@ class CallCiteChecker(
         get() = this.map { "${it.method} - ${it.location}\n" }
 
     private fun prepareState(ps: PredicateState, typeInfoMap: TypeInfoMap) = transform(ps) {
-        val maa = MustAliasAnalysis(typeInfoMap.toMap(), psa)
         +maa
         +AnnotationAdapter(method, AnnotationManager.defaultLoader)
         +RecursiveInliner(psa) { i, psa -> ConcreteImplInliner(method.cm.type, typeInfoMap, psa, inlineIndex = i, maa = maa, analyzingPackage = libraryPackage) }
         +StaticFieldInliner(ctx, psa)
+        +StringMethodAdapter(cm)
         +IntrinsicAdapter
         +KexIntrinsicsAdapter()
         +DoubleTypeAdapter()

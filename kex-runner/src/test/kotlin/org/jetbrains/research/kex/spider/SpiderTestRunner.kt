@@ -80,10 +80,11 @@ class SpiderTestRunner(private val testName: String) : KexRunnerTest(
         val ci = ClassInstrumentator(cm, library)
 
         executePipeline(cm, packages) {
-            +LoopSimplifier(analysisContext.cm)
-            +LoopDeroller(analysisContext.cm)
+//            +LoopSimplifier(analysisContext.cm)
+//            +LoopDeroller(analysisContext.cm)
             +ci
             +LibslInstrumentator(cm, library, context, ci.syntheticContexts)
+            +ClassWriter(analysisContext, tempDir.toPath())
             +BranchAdapter(analysisContext.cm)
             +psa
             +MethodFieldAccessCollector(analysisContext, psa)
