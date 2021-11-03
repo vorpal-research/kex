@@ -90,7 +90,7 @@
             <version>4.13.2</version>
         </dependency>>
         <dependency>
-            <groupId>com.jetbrains.research</groupId>
+            <groupId>org.jetbrains.research</groupId>
             <artifactId>libsl</artifactId>
             <version>${LibSLParser.version}</version>
         </dependency>
