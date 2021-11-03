@@ -1,15 +1,11 @@
 package org.jetbrains.research.kex.asm.analysis.libchecker
 
 import org.jetbrains.research.kfg.ClassManager
-import org.jetbrains.research.kfg.ir.BodyBlock
-import org.jetbrains.research.kfg.ir.Class
-import org.jetbrains.research.kfg.ir.Method
+import org.jetbrains.research.kfg.ir.*
 import org.jetbrains.research.kfg.ir.value.EmptyUsageContext
 import org.jetbrains.research.kfg.ir.value.Value
-import org.jetbrains.research.kfg.ir.value.ValueFactory
 import org.jetbrains.research.kfg.ir.value.instruction.*
 import org.jetbrains.research.kfg.ir.value.usageContext
-import org.jetbrains.research.kfg.type.TypeFactory
 import org.jetbrains.research.libsl.asg.*
 
 
@@ -19,7 +15,7 @@ class ExpressionGenerator(
     val cm: ClassManager,
     private val syntheticContexts: Map<String, SyntheticContext>
 ): ExpressionVisitor<Value>() {
-    val expressionBlock = BodyBlock("synthesized expression")
+    val expressionBlocks = mutableListOf(BodyBlock("synthesized expression"))
     val oldCallStorage = mutableListOf<Value>()
 
     private val usageContext = method?.usageContext ?: EmptyUsageContext
@@ -28,18 +24,6 @@ class ExpressionGenerator(
     private val valueFactory = cm.value
     private val syntheticContext = syntheticContexts[klass.fullName]
         ?: error("unresolved automaton ${klass.fullName}")
-
-    private fun equalsWithObject(obj: Value, objKlass: Class, other: Value): CallInst {
-        val equalsMethod = objKlass.allMethods.firstOrNull { method ->
-            method.name == "equals" && method.argTypes.size == 1 && method.argTypes.first() == cm.type.objectType
-        } ?: error("cannot find equals method for $objKlass")
-        val args = arrayOf(
-            obj,
-            other
-        )
-
-        return instructionFactory.getCall(usageContext, CallOpcode.VIRTUAL, equalsMethod, equalsMethod.klass, args, true)
-    }
 
     override fun visitAccessAlias(node: AccessAlias): Value {
         return visit(node.childAccess!!)
@@ -60,7 +44,7 @@ class ExpressionGenerator(
         val klass = method?.klass ?: error("klass can't be null")
         val `this` = valueFactory.getThis(klass)
         return instructionFactory.getFieldLoad(usageContext, `this`, field).also {
-            expressionBlock.add(it)
+            expressionBlocks.last().add(it)
         }
     }
 
@@ -70,21 +54,66 @@ class ExpressionGenerator(
         val right = visit(node.right)
         return if (opcode != null) {
             instructionFactory.getBinary(usageContext, opcode, left, right).also {
-                expressionBlock.add(it)
+                expressionBlocks.last().add(it)
             }
         } else {
             // this is equality operation
             val res = if (!left.type.isPrimary) {
-                equalsWithObject(left, cm[left.type.name], right)
+                equalsWithObject(left, cm[left.type.name], right, node.op)
             } else if (!right.type.isPrimary) {
-                equalsWithObject(right, cm[right.type.name], left)
+                equalsWithObject(right, cm[right.type.name], left, node.op)
             } else {
-                instructionFactory.getCmp(usageContext, cm.type.boolType, node.op.comparisonOpCode, left, right)
+                val cond = instructionFactory.getCmp(usageContext, cm.type.boolType, node.op.comparisonOpCode, left, right)
+                return expandCompOp(cond)
             }
 
             res.also {
-                expressionBlock.add(it)
+                expressionBlocks.last().add(it)
             }
+        }
+    }
+
+    private fun expandCompOp(cond: Instruction): Instruction {
+        val incomingMap = mutableMapOf<BasicBlock, Value>()
+        val lastBlock = expressionBlocks.last()
+        val phiBlock = BodyBlock("phiBranch").apply {
+            expressionBlocks.add(this)
+            method?.add(usageContext, this)
+        }
+        val trueBlock = BodyBlock("trueBlock").apply {
+            add(
+                instructionFactory.getJump(usageContext, phiBlock)
+            )
+            incomingMap[this] = valueFactory.trueConstant
+            method?.add(usageContext, this)
+
+            addPredecessor(usageContext, lastBlock)
+            lastBlock.addSuccessor(usageContext, this)
+
+            addSuccessor(usageContext, phiBlock)
+            phiBlock.addPredecessor(usageContext, this)
+        }
+        val falseBlock = BodyBlock("falseBlock").apply {
+            add(
+                instructionFactory.getJump(usageContext, phiBlock)
+            )
+            incomingMap[this] = valueFactory.falseConstant
+            method?.add(usageContext, this)
+
+            addPredecessor(usageContext, lastBlock)
+            lastBlock.addSuccessor(usageContext, this)
+
+            addSuccessor(usageContext, phiBlock)
+            phiBlock.addPredecessor(usageContext, this)
+        }
+        lastBlock.add(
+            cond
+        )
+        lastBlock.add(
+            instructionFactory.getBranch(usageContext, cond, trueBlock, falseBlock)
+        )
+        return instructionFactory.getPhi(usageContext, cm.type.boolType, incomingMap).also {
+            phiBlock.add(it)
         }
     }
 
@@ -134,7 +163,8 @@ class ExpressionGenerator(
     }
 
     override fun visitFunctionArgument(node: FunctionArgument): Value {
-        return syntheticContext.methodsArgs[method]?.get(node.index) ?: error("unresolved argument #${node.index}")
+        val value = syntheticContext.methodsArgs[method]?.get(node.index) ?: error("unresolved argument #${node.index}")
+        return processValue(value)
     }
 
     override fun visitGlobalVariableDeclaration(node: GlobalVariableDeclaration): Value {
@@ -168,7 +198,7 @@ class ExpressionGenerator(
 
     override fun visitUnaryOpExpression(node: UnaryOpExpression): Value {
         return instructionFactory.getUnary(usageContext, UnaryOpcode.NEG, visit(node.value)).also {
-            expressionBlock.add(it)
+            expressionBlocks.last().add(it)
         }
     }
 
@@ -176,17 +206,76 @@ class ExpressionGenerator(
         val variable = node.variable
         return if (variable != null) {
             if (variable is FunctionArgument) {
+//                visitFunctionArgument(variable)
                 if (method == null) error("function argument ${variable.fullName} accessed not in function")
-                valueFactory.getArgument(variable.index, method, variable.type.kfgType(cm))
+                processValue(valueFactory.getArgument(variable.index, method, variable.type.kfgType(cm)))
             } else {
                 val field = syntheticContext.fields[node.variable] ?: error("unknown variable ${node.variable!!.name}")
                 val `this` = valueFactory.getThis(method?.klass ?: error("method is empty"))
                 instructionFactory.getFieldLoad(constructorUsageContext, `this`, field).also {
-                    expressionBlock.add(it)
+                    expressionBlocks.last().add(it)
                 }
             }
         } else {
             error("chain call")
         }
     }
+
+    private fun equalsWithObject(obj: Value, objKlass: Class, other: Value, op: ArithmeticBinaryOps): Instruction {
+        check(op == ArithmeticBinaryOps.EQ || op == ArithmeticBinaryOps.NOT_EQ)
+
+        val methodDesc = MethodDesc(arrayOf(cm.type.objectType), cm.type.boolType)
+        val equalsMethod = objKlass.getMethodConcrete("equals", methodDesc) ?: error("cannot find equals method for $objKlass")
+        val args = arrayOf(
+            other
+        )
+        val call = instructionFactory.getCall(usageContext, CallOpcode.VIRTUAL, equalsMethod, equalsMethod.klass, obj, args, true)
+        if (op == ArithmeticBinaryOps.NOT_EQ) {
+            expressionBlocks.last().add(call)
+            return instructionFactory.getUnary(usageContext, UnaryOpcode.NEG, call)
+        }
+        return call
+    }
+
+    private fun processValue(value: Value): Value {
+        return when {
+            !value.type.isPrimary && value.type in setOf(
+                cm.type.intWrapper,
+                cm.type.charWrapper,
+                cm.type.longWrapper,
+                cm.type.boolWrapper,
+                cm.type.doubleWrapper,
+                cm.type.floatWrapper
+            ) -> {
+                value.unwrappedValue.also {
+                    expressionBlocks.last().add(it)
+                }
+            }
+            else -> value
+        }
+    }
+
+    private val wrappedTypes = mutableMapOf(
+        cm.type.intWrapper to cm.type.intType,
+        cm.type.charWrapper to cm.type.charType,
+        cm.type.longWrapper to cm.type.longType,
+        cm.type.boolWrapper to cm.type.boolType,
+        cm.type.doubleWrapper to cm.type.doubleType,
+        cm.type.floatWrapper to cm.type.floatType
+    )
+
+    private val wrappedTypesToUnwrapMethods = mutableMapOf(
+        cm.type.intWrapper to cm.intWrapper.getMethod("intValue", MethodDesc(arrayOf(), cm.type.intType)),
+        cm.type.charWrapper to cm.charWrapper.getMethod("charValue", MethodDesc(arrayOf(), cm.type.charType)),
+        cm.type.longWrapper to cm.longWrapper.getMethod("longValue", MethodDesc(arrayOf(), cm.type.longType)),
+        cm.type.boolWrapper to cm.boolWrapper.getMethod("booleanValue", MethodDesc(arrayOf(), cm.type.boolType)),
+        cm.type.doubleWrapper to cm.doubleWrapper.getMethod("doubleValue", MethodDesc(arrayOf(), cm.type.doubleType)),
+        cm.type.floatWrapper to cm.floatWrapper.getMethod("floatValue", MethodDesc(arrayOf(), cm.type.floatType))
+    )
+
+    private val Value.unwrappedValue: Instruction
+        get () {
+            val method = wrappedTypesToUnwrapMethods[this.type]!!
+            return instructionFactory.getCall(usageContext, CallOpcode.VIRTUAL, method, method.klass, this, arrayOf(), isNamed = true)
+        }
 }

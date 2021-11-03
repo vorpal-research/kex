@@ -29,7 +29,8 @@ automaton org.jetbrains.research.kex.test.spider.computer.lib.Computer : Compute
         isMemoryInit = true;
     }
 
-    fun selectOS(osName: OSName);
+    fun selectOS(osName: OSName)
+        requires osName: osName = "win" | osName = "linux";
 
     fun setBootPartition(partition: Int)
         requires partitionLimits: partition >= 0 & partition < 16;

@@ -119,7 +119,9 @@ class ConstructorInliner(
 
 class RecursiveConstructorInliner(
     override val psa: PredicateStateAnalysis,
-    override val inlineSuffix: String = "recursive.ctor.inlined"
+    override val inlineSuffix: String = "recursive.ctor.inlined",
+    val maxDepth: Int = defaultDepth,
+    private val mustAliasAnalysis: MustAliasAnalysis? = null
 ) : Inliner<RecursiveConstructorInliner> {
     override val im = MethodManager.InlineManager
     override var inlineIndex = 0
@@ -133,10 +135,11 @@ class RecursiveConstructorInliner(
         do {
             val cii = ConstructorInliner(psa, inlineSuffix, inlineIndex)
             current = cii.apply(current)
+            mustAliasAnalysis?.apply(current)
             hasInlined = cii.hasInlined
             inlineIndex = cii.inlineIndex
             ++depth
-        } while (hasInlined)
+        } while (hasInlined && depth < maxDepth)
         hasInlined = depth > 1
         return current
     }

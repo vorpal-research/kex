@@ -16,6 +16,7 @@ import org.jetbrains.research.kex.state.term.isConst
 import org.jetbrains.research.kex.state.term.term
 import org.jetbrains.research.kex.trace.`object`.ObjectTraceManager
 import org.jetbrains.research.kex.util.getIntrinsics
+import org.jetbrains.research.kex.util.getKexRuntime
 import org.jetbrains.research.kex.util.getRuntime
 import org.jetbrains.research.kfg.ClassManager
 import org.jetbrains.research.kfg.KfgConfig
@@ -49,6 +50,7 @@ abstract class KexRunnerTest(
 
     init {
         val jar = Paths.get(jarPath).asContainer(`package`)!!
+        val rtJar = getKexRuntime()
         val origManager = ClassManager(KfgConfig(flags = Flags.readAll, failOnError = false))
 
         jar.unpack(cm, targetDir, true)
@@ -56,6 +58,7 @@ abstract class KexRunnerTest(
 
         val containersToInit = buildList {
             add(jar)
+            if (rtJar != null) add(rtJar)
             if (initTR) add(getRuntime()!!)
             if (initIntrinsics) add(getIntrinsics()!!)
             if (additionContainers.isNotEmpty()) addAll(additionContainers)

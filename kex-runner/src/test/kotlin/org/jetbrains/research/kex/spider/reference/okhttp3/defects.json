@@ -1,0 +1,12 @@
+[
+    {
+        "type": "ASSERT",
+        "callStack": [
+            "org/jetbrains/research/kex/test/spider/okhttp/Main::createRequest(): okhttp3/Request - org/jetbrains/research/kex/test/spider/okhttp/Curl.kt:117\n",
+            "okhttp3/Request$Builder::build(): okhttp3/Request - org/jetbrains/research/kex/test/spider/okhttp/Curl.kt:189\n"
+        ],
+        "id": "id3",
+        "testFile": null,
+        "testCaseName": null
+    }
+]

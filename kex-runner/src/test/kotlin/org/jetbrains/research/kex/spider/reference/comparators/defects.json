@@ -1,0 +1,20 @@
+[
+    {
+        "type": "ASSERT",
+        "callStack": [
+            "org/jetbrains/research/kex/test/spider/comparators/Main::foo(java/lang/Integer): int - org/jetbrains/research/kex/test/spider/comparators/Main.java:18\n"
+        ],
+        "id": "iPos0",
+        "testFile": null,
+        "testCaseName": null
+    },
+    {
+        "type": "ASSERT",
+        "callStack": [
+            "org/jetbrains/research/kex/test/spider/comparators/Main::bar(java/lang/String): int - org/jetbrains/research/kex/test/spider/comparators/Main.java:22\n"
+        ],
+        "id": "strNotEmpty1",
+        "testFile": null,
+        "testCaseName": null
+    }
+]

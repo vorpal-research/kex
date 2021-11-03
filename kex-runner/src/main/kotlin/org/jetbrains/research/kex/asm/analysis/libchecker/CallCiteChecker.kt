@@ -7,6 +7,8 @@ import org.jetbrains.research.kex.asm.analysis.defect.DefectManager
 import org.jetbrains.research.kex.asm.manager.MethodManager
 import org.jetbrains.research.kex.asm.state.PredicateStateAnalysis
 import org.jetbrains.research.kex.config.kexConfig
+import org.jetbrains.research.kex.ktype.KexRtManager.isJavaRt
+import org.jetbrains.research.kex.ktype.KexRtManager.isKexRt
 import org.jetbrains.research.kex.ktype.kexType
 import org.jetbrains.research.kex.smt.Result
 import org.jetbrains.research.kex.smt.SMTProxySolver
@@ -31,16 +33,18 @@ import org.jetbrains.research.kfg.visitor.MethodVisitor
 import org.jetbrains.research.kfg.visitor.executePipeline
 import org.jetbrains.research.kthelper.logging.log
 import org.jetbrains.research.kthelper.runIf
+import org.jetbrains.research.libsl.asg.Library
 
 private val logQuery by lazy { kexConfig.getBooleanValue("smt", "logQuery", false) }
 private val isMemspacingEnabled by lazy { kexConfig.getBooleanValue("smt", "memspacing", true) }
 private val isSlicingEnabled by lazy { kexConfig.getBooleanValue("smt", "slicing", false) }
 
 class CallCiteChecker(
-        val ctx: ExecutionContext,
-        private val callCiteTarget: Package,
-        private val libraryPackage: Package,
-        val psa: PredicateStateAnalysis
+    val ctx: ExecutionContext,
+    private val callCiteTarget: Package,
+    private val libraryPackage: Package,
+    private val libslLibrary: Library,
+    val psa: PredicateStateAnalysis
 ) : MethodVisitor {
     override val cm: ClassManager
         get() = ctx.cm
@@ -48,6 +52,8 @@ class CallCiteChecker(
     private val im get() = MethodManager.KexIntrinsicManager
     private lateinit var method: Method
     private val methodCallGraph = mutableMapOf<Method, Set<CallInst>>()
+    private val maa = MustAliasAnalysis(psa)
+    private val methodsInliningAllowList = getInliningAllowMethods()
 
     override fun cleanup() {}
 
@@ -101,7 +107,7 @@ class CallCiteChecker(
         main: PredicateState,
         inline: PredicateState
     ): Pair<PredicateState, TermRenamer>? {
-        val callPredicate = main.lastPredicate() ?: return null
+        val callPredicate = main.lastPredicate() ?: emptyState()
         val filteredState = main.dropLast(1)
         if (callPredicate !is CallPredicate) {
             log.warn("Unknown predicate in call cite: $callPredicate")
@@ -221,12 +227,17 @@ class CallCiteChecker(
             builder += predicate
             builder
         }.apply()
+        log.debug("Query: $assertionQuery")
 
         val (_, result) = check(state, assertionQuery)
         return when (result) {
             is Result.SatResult -> {
                 dm += Defect.assert(callStack.callStack, id)
                 false
+            }
+            is Result.UnknownResult -> {
+                log.warn("unknown result for PS: $state")
+                true
             }
             else -> true
         }
@@ -236,11 +247,15 @@ class CallCiteChecker(
         get() = this.map { "${it.method} - ${it.location}\n" }
 
     private fun prepareState(ps: PredicateState, typeInfoMap: TypeInfoMap) = transform(ps) {
-        val maa = MustAliasAnalysis(typeInfoMap.toMap(), psa)
+        //+UnlistedMethodsCallsRemover(methodsInliningAllowList)
         +maa
         +AnnotationAdapter(method, AnnotationManager.defaultLoader)
+        +KexRtAdapter(cm)
         +RecursiveInliner(psa) { i, psa -> ConcreteImplInliner(method.cm.type, typeInfoMap, psa, inlineIndex = i, maa = maa, analyzingPackage = libraryPackage) }
         +StaticFieldInliner(ctx, psa)
+        +RecursiveInliner(psa) { i, psa -> MethodInliner(psa, inlineIndex = i) }
+        +RecursiveConstructorInliner(psa, mustAliasAnalysis = maa)
+        +StringMethodAdapter(cm)
         +IntrinsicAdapter
         +KexIntrinsicsAdapter()
         +DoubleTypeAdapter()
@@ -269,15 +284,40 @@ class CallCiteChecker(
         state = Optimizer().apply(state)
         query = Optimizer().apply(query)
         if (logQuery) {
-            log.debug("Simplified state: $state")
-            log.debug("Query: $query")
+            log.debug("Optimized state: $state")
+            log.debug("Optimized query: $query")
         }
 
         val result = SMTProxySolver(method.cm.type).use {
             it.isViolated(state, query)
         }
+
+//        val deltaDebugger = DeltaDebugger(5000, 5000) {
+//            val result = SMTProxySolver(method.cm.type).use { solver ->
+//                solver.isViolated(it, query)
+//            }
+//            result is Result.UnsatResult
+//        }
+//        val reduced = deltaDebugger.reduce(state)
+//        val resultReduced = SMTProxySolver(method.cm.type).use {
+//            it.isViolated(reduced, query)
+//        }
+
         log.debug("Acquired $result")
         return state to result
+    }
+
+    private fun getInliningAllowMethods(): Set<Method> {
+        val lslAllowed = libslLibrary
+            .automata
+            .flatMap { it.functions }
+            .mapNotNull { cm[it.automatonName.replace(".", "/")].getMethodConcrete(it.name, it.desc(cm)) }
+            .toSet()
+        val rtAllowed = cm.concreteClasses
+            .filter { it.isKexRt || it.isJavaRt }
+            .flatMap { it.methods }
+            .toSet()
+        return (lslAllowed + rtAllowed).toSet()
     }
 }
 

@@ -1,13 +1,10 @@
 package org.jetbrains.research.kex.state.transformer
 
 import org.jetbrains.research.kex.asm.state.PredicateStateAnalysis
-import org.jetbrains.research.kex.descriptor.concrete
-import org.jetbrains.research.kex.descriptor.concreteClass
 import org.jetbrains.research.kex.ktype.KexType
 import org.jetbrains.research.kex.ktype.kexType
 import org.jetbrains.research.kex.state.predicate.*
 import org.jetbrains.research.kex.state.term.*
-import org.jetbrains.research.kfg.type.ClassType
 import org.jetbrains.research.kthelper.algorithm.GraphView
 import org.jetbrains.research.kthelper.algorithm.Viewable
 
@@ -15,19 +12,19 @@ class MustAliasGraph(
 
 ) : Viewable {
     private val nodes = mutableSetOf<MustAliasNode>()
-    private val varToNode = mutableMapOf<Term, MustAliasNode>()
+    private val varToNode = mutableMapOf<String, MustAliasNode>()
 
     fun addNode(node: MustAliasNode) {
         nodes.add(node)
         for (variable in node.variables) {
-            varToNode[variable] = node
+            varToNode[variable.name] = node
         }
     }
 
     fun removeNode(node: MustAliasNode) {
         nodes.remove(node)
         for (variable in node.variables) {
-            varToNode.remove(variable)
+            varToNode.remove(variable.name)
         }
 
         for ((variable, toNode) in node.getIncomingNodesMap()) {
@@ -40,12 +37,12 @@ class MustAliasGraph(
 
     fun addVariableToNode(node: MustAliasNode, variable: Term) {
         node.addVariable(variable)
-        varToNode[variable] = node
+        varToNode[variable.name] = node
     }
 
     fun removeVariableFromNode(node: MustAliasNode, variable: Term) {
         node.removeVariable(variable)
-        varToNode.remove(variable)
+        varToNode.remove(variable.name)
     }
 
     fun getNodes(): MutableSet<MustAliasNode> {
@@ -53,7 +50,7 @@ class MustAliasGraph(
     }
 
     fun lookupVariable(variable: Term): MustAliasNode? {
-        return varToNode[variable]
+        return varToNode[variable.name]
     }
 
     fun gcNodes() {
@@ -121,7 +118,7 @@ class MustAliasGraph(
         get() {
             val res = mutableListOf<GraphView>()
             for ((key, value) in varToNode) {
-                val terms = GraphView("term:", key.name)
+                val terms = GraphView("term:", key)
                 val obj = GraphView("value", value.variables.joinToString(separator = ", ") { it.name })
                 terms.addSuccessor(obj)
                 res.add(terms)
@@ -195,12 +192,11 @@ class MustAliasNode(
 }
 
 class MustAliasAnalysisContext {
-    var klass: org.jetbrains.research.kfg.ir.Class? = null
+    var klass: KexType? = null
 }
 
 class MustAliasAnalysis(
-    val toMap: Map<Term, KexType>,
-    private val psa: PredicateStateAnalysis
+    psa: PredicateStateAnalysis
 ) : Transformer<MustAliasAnalysis> {
     private val cm = psa.cm
     val graph = MustAliasGraph()
@@ -213,8 +209,15 @@ class MustAliasAnalysis(
     }
 
     override fun transformEqualityPredicate(predicate: EqualityPredicate): Predicate {
-        val node = graph.lookupVariable(predicate.rhv)
+        var node = graph.lookupVariable(predicate.rhv)
         if (node != null) {
+            graph.addVariableToNode(node, predicate.lhv)
+        } else {
+            val context = MustAliasAnalysisContext().apply {
+                klass = predicate.rhv.type
+            }
+            node = MustAliasNode(context)
+            graph.addNode(node)
             graph.addVariableToNode(node, predicate.lhv)
         }
         return predicate
@@ -226,7 +229,7 @@ class MustAliasAnalysis(
         }
         val callee = predicate.call as? CallTerm ?: return predicate
         val context = MustAliasAnalysisContext().apply {
-            klass = callee.method.klass
+            klass = callee.method.returnType.kexType
         }
         val node = MustAliasNode(context)
         graph.addNode(node)
@@ -237,7 +240,7 @@ class MustAliasAnalysis(
 
     override fun transformNewPredicate(predicate: NewPredicate): Predicate {
         val context = MustAliasAnalysisContext().apply {
-            klass = (predicate.lhv.type.getKfgType(cm.type) as? ClassType)?.klass ?: return predicate
+            klass = predicate.lhv.type
         }
         val node = MustAliasNode(context)
         graph.addNode(node)

@@ -8,6 +8,7 @@ import org.jetbrains.research.kex.asm.analysis.defect.DefectManager
 import org.jetbrains.research.kex.asm.analysis.libchecker.CallCiteChecker
 import org.jetbrains.research.kex.asm.analysis.libchecker.ClassInstrumentator
 import org.jetbrains.research.kex.asm.analysis.libchecker.LibslInstrumentator
+import org.jetbrains.research.kex.asm.manager.ClassInstantiationDetector
 import org.jetbrains.research.kex.asm.state.PredicateStateAnalysis
 import org.jetbrains.research.kex.asm.transform.BranchAdapter
 import org.jetbrains.research.kex.asm.transform.LoopDeroller
@@ -15,7 +16,6 @@ import org.jetbrains.research.kex.asm.util.ClassWriter
 import org.jetbrains.research.kex.asm.util.Visibility
 import org.jetbrains.research.kex.config.RuntimeConfig
 import org.jetbrains.research.kex.config.kexConfig
-import org.jetbrains.research.kex.reanimator.collector.ExternalCtorCollector
 import org.jetbrains.research.kex.reanimator.collector.MethodFieldAccessCollector
 import org.jetbrains.research.kex.reanimator.collector.SetterCollector
 import org.jetbrains.research.kfg.analysis.LoopSimplifier
@@ -76,23 +76,30 @@ class SpiderTestRunner(private val testName: String) : KexRunnerTest(
         val lslFile = File(lslPath)
         val librarySpecification = LibSL(lslFile.parent)
         val library = librarySpecification.loadFromFile(lslFile)
+
         val context = librarySpecification.context
         val ci = ClassInstrumentator(cm, library)
+
+//        executePipeline(cm, packages) {
+//            +UnvisitedLslMethodsVisitor(cm, librarySpecification.context)
+//            +ClassWriter(analysisContext, tempDir.toPath())
+//        }
 
         executePipeline(cm, packages) {
             +LoopSimplifier(analysisContext.cm)
             +LoopDeroller(analysisContext.cm)
             +ci
             +LibslInstrumentator(cm, library, context, ci.syntheticContexts)
+            +ClassWriter(analysisContext, tempDir.toPath())
             +BranchAdapter(analysisContext.cm)
             +psa
             +MethodFieldAccessCollector(analysisContext, psa)
             +SetterCollector(analysisContext)
-            +ExternalCtorCollector(analysisContext.cm, Visibility.PUBLIC)
+            +ClassInstantiationDetector(analysisContext.cm, Visibility.PUBLIC)
         }
 
         executePipeline(cm, packages) {
-            +CallCiteChecker(analysisContext, `package`, packages.last(), psa)
+            +CallCiteChecker(analysisContext, `package`, packages.last(), library, psa)
             +ClassWriter(analysisContext, tempDir.toPath())
         }
 
