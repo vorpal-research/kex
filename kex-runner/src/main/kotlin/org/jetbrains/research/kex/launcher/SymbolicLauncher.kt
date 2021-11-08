@@ -8,6 +8,7 @@ import org.jetbrains.research.kex.asm.analysis.testgen.MethodChecker
 import org.jetbrains.research.kex.asm.state.PredicateStateAnalysis
 import org.jetbrains.research.kex.asm.transform.SymbolicTraceCollector
 import org.jetbrains.research.kex.config.kexConfig
+import org.jetbrains.research.kex.jacoco.CoverageLevel
 import org.jetbrains.research.kex.jacoco.CoverageReporter
 import org.jetbrains.research.kex.reanimator.descriptor.DescriptorStatistics
 import org.jetbrains.research.kex.trace.`object`.ObjectTraceManager
@@ -32,6 +33,11 @@ class SymbolicLauncher(classPaths: List<String>, targetName: String) : KexLaunch
         }
 
         DescriptorStatistics.printStatistics()
-        log.info(CoverageReporter(pkg, containerClassLoader).execute())
+        log.info(
+            CoverageReporter(pkg, containerClassLoader)
+                .execute(
+                    CoverageLevel.PackageLevel(printDetailedCoverage = false)
+                )
+        )
     }
 }

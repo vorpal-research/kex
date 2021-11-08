@@ -18,7 +18,10 @@ sealed interface ApiCall {
     fun print(owner: CallStack, builder: StringBuilder, visited: MutableSet<CallStack>)
 }
 
-open class CallStack(val name: String, val stack: MutableList<ApiCall>) : Iterable<ApiCall> by stack {
+open class CallStack(
+    val name: String,
+    val stack: MutableList<ApiCall>
+) : Iterable<ApiCall> by stack {
     constructor(name: String) : this(name, mutableListOf())
 
     val isComplete: Boolean
