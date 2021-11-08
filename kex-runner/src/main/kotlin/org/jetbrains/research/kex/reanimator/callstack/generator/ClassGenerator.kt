@@ -7,7 +7,7 @@ import org.jetbrains.research.kex.descriptor.descriptor
 import org.jetbrains.research.kex.ktype.KexClass
 import org.jetbrains.research.kex.ktype.kexType
 import org.jetbrains.research.kex.reanimator.callstack.CallStack
-import org.jetbrains.research.kex.reanimator.callstack.StaticMethodCall
+import org.jetbrains.research.kex.reanimator.callstack.ExternalConstructorCall
 import org.jetbrains.research.kfg.type.SystemTypeNames
 
 class ClassGenerator(private val fallback: Generator) : Generator {
@@ -25,7 +25,7 @@ class ClassGenerator(private val fallback: Generator) : Generator {
         val forNameMethod = klassClass.getMethod("forName", types.classType, types.stringType)
 
         val createForNameCall = { klassName: Descriptor ->
-            callStack += StaticMethodCall(
+            callStack += ExternalConstructorCall(
                 forNameMethod,
                 listOf(
                     fallback.generate(

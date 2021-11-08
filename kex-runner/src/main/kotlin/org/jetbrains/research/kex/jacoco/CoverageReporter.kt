@@ -19,7 +19,7 @@ import java.net.URLClassLoader
 import java.util.jar.JarFile
 
 sealed class CoverageLevel {
-    object PackageLevel : CoverageLevel()
+    data class PackageLevel(val printDetailedCoverage: Boolean = false) : CoverageLevel()
     data class ClassLevel(val klass: KfgClass) : CoverageLevel()
     data class MethodLevel(val method: Method) : CoverageLevel()
 }
@@ -48,10 +48,10 @@ class CoverageReporter(private val pkg: Package, urlClassLoader: URLClassLoader)
         tests = testsCompiler.testsNames
     }
 
-    fun execute(analysisLevel: CoverageLevel = CoverageLevel.PackageLevel): String {
+    fun execute(analysisLevel: CoverageLevel = CoverageLevel.PackageLevel()): String {
         val coverageBuilder: CoverageBuilder
         val result = when (analysisLevel) {
-            CoverageLevel.PackageLevel -> {
+            is CoverageLevel.PackageLevel -> {
                 val urls = compiledClassLoader.urLs
                 val jarPath = urls[urls.size - 1].toString().replace("file:", "")
                 val jarFile = JarFile(jarPath)
@@ -64,7 +64,7 @@ class CoverageReporter(private val pkg: Package, urlClassLoader: URLClassLoader)
                     }
                 }
                 coverageBuilder = getCoverageBuilder(classes)
-                getPackageCoverage(coverageBuilder)
+                getPackageCoverage(coverageBuilder, analysisLevel.printDetailedCoverage)
             }
             is CoverageLevel.ClassLevel -> {
                 val klass = analysisLevel.klass.fullName
@@ -140,11 +140,13 @@ class CoverageReporter(private val pkg: Package, urlClassLoader: URLClassLoader)
         return ""
     }
 
-    private fun getPackageCoverage(coverageBuilder: CoverageBuilder): String {
+    private fun getPackageCoverage(coverageBuilder: CoverageBuilder, detailedCoverage: Boolean = false): String {
         val pc = PackageCoverageImpl(pkg.canonicalName, coverageBuilder.classes, coverageBuilder.sourceFiles)
         return buildString {
-            appendLine(getClassCoverage(coverageBuilder))
-            appendLine()
+            if (detailedCoverage) {
+                appendLine(getClassCoverage(coverageBuilder))
+                appendLine()
+            }
             appendLine(getCommonCounters("package", pkg.canonicalName, pc))
             appendLine(getCounter("methods", pc.methodCounter))
             appendLine(getCounter("classes", pc.classCounter))

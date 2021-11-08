@@ -7,6 +7,7 @@ import org.jetbrains.research.kex.asm.analysis.concolic.InstructionConcolicCheck
 import org.jetbrains.research.kex.asm.manager.MethodWrapperInitializer
 import org.jetbrains.research.kex.asm.transform.SymbolicTraceCollector
 import org.jetbrains.research.kex.asm.transform.SystemExitTransformer
+import org.jetbrains.research.kex.jacoco.CoverageLevel
 import org.jetbrains.research.kex.jacoco.CoverageReporter
 import org.jetbrains.research.kex.trace.symbolic.InstructionTraceManager
 import org.jetbrains.research.kfg.visitor.MethodVisitor
@@ -14,7 +15,7 @@ import org.jetbrains.research.kthelper.logging.log
 
 @ExperimentalSerializationApi
 @InternalSerializationApi
-class ConcolicLauncher(classPaths: List<String>, targetName: String) : KexLauncher(classPaths, targetName)  {
+class ConcolicLauncher(classPaths: List<String>, targetName: String) : KexLauncher(classPaths, targetName) {
     override fun createInstrumenter(context: ExecutionContext): MethodVisitor {
         return SymbolicTraceCollector(context)
     }
@@ -27,6 +28,11 @@ class ConcolicLauncher(classPaths: List<String>, targetName: String) : KexLaunch
             +SystemExitTransformer(context.cm)
             +InstructionConcolicChecker(context, traceManager)
         }
-        log.info(CoverageReporter(pkg, containerClassLoader).execute())
+        log.info(
+            CoverageReporter(pkg, containerClassLoader)
+                .execute(
+                    CoverageLevel.PackageLevel(printDetailedCoverage = false)
+                )
+        )
     }
 }
