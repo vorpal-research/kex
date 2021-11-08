@@ -18,6 +18,7 @@ import org.jetbrains.research.kex.state.term.Term
 import org.jetbrains.research.kfg.ir.Class
 import org.jetbrains.research.kfg.ir.Field
 import org.jetbrains.research.kfg.ir.Method
+import org.jetbrains.research.kthelper.`try`
 import org.jetbrains.research.kthelper.collection.dequeOf
 import org.jetbrains.research.kthelper.logging.log
 import org.jetbrains.research.kthelper.tryOrNull
@@ -128,7 +129,7 @@ class StaticFieldInliner(
     override val builders = dequeOf(StateBuilder())
     val cm get() = ctx.cm
 
-    override fun apply(ps: PredicateState): PredicateState {
+    override fun apply(ps: PredicateState): PredicateState = `try` {
         val staticInitializers = TermCollector.getFullTermSet(ps)
             .asSequence()
             .filterIsInstance<FieldLoadTerm>()
@@ -147,6 +148,9 @@ class StaticFieldInliner(
             val descriptor = getStaticField(ctx, psa, field)
             currentBuilder += descriptor.query
         }
-        return super.apply(ps)
+        super.apply(ps)
+    }.getOrElse {
+        log.error("Failed to inline static fields in $ps")
+        ps
     }
 }
