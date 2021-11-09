@@ -58,7 +58,7 @@ class StaticFieldInliner(
             +AnnotationAdapter(method, AnnotationManager.defaultLoader)
             +StringMethodAdapter(ctx.cm)
             +KexRtAdapter(ctx.cm)
-            +RecursiveInliner(psa) {  index, psa ->
+            +RecursiveInliner(psa) { index, psa ->
                 ConcreteImplInliner(ctx.types, TypeInfoMap(), psa, inlineIndex = index)
             }
             +IntrinsicAdapter
