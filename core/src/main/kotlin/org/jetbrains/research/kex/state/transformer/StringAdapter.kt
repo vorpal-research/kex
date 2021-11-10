@@ -301,6 +301,7 @@ class StringMethodAdapter(val cm: ClassManager) : RecollectingTransformer<String
         val res = term { generate(KexBool()) }
         return basic {
             state { isNull equality (other eq null) }
+            state { instanceOf equality (other `is` KexString())}
         }.choice {
             or {
                 basic {
