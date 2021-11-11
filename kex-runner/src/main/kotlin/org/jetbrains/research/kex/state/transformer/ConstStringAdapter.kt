@@ -100,4 +100,8 @@ class ConstStringAdapter : RecollectingTransformer<ConstStringAdapter> {
         val owner = term.owner.map
         return term { owner.field(term.type as KexReference, term.fieldName) }
     }
+
+    override fun transformInstanceOf(term: InstanceOfTerm): Term {
+        return term { term.operand.map `is` term.checkedType }
+    }
 }
