@@ -86,13 +86,13 @@ class GeneratorContext(
         +ArrayBoundsAdapter()
         +NullityInfoAdapter()
         +ConstStringAdapter()
-        +FieldNormalizer(context.cm, "state.normalized")
+        +FieldNormalizer(context.cm, ".state.normalized")
     }
 
     fun prepareQuery(ps: PredicateState) = transform(ps) {
         +NullityInfoAdapter()
         +ArrayBoundsAdapter()
-        +FieldNormalizer(context.cm, "query.normalized")
+        +FieldNormalizer(context.cm, ".query.normalized")
     }
 
     val Class.allCtors get() = accessibleCtors + externalCtors
