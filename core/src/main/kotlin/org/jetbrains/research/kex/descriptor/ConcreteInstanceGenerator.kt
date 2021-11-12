@@ -12,6 +12,11 @@ private val visibilityLevel by lazy {
     kexConfig.getEnumValue("apiGeneration", "visibility", true, Visibility.PUBLIC)
 }
 
+val SystemTypeNames.unmodifiableCollection get() = "java/util/Collections\$UnmodifiableCollection"
+val SystemTypeNames.unmodifiableList get() = "java/util/Collections\$UnmodifiableList"
+val SystemTypeNames.unmodifiableSet get() = "java/util/Collections\$UnmodifiableSet"
+val SystemTypeNames.unmodifiableMap get() = "java/util/Collections\$UnmodifiableMap"
+
 object ConcreteInstanceGenerator {
     private val concreteInstanceInfo = with(SystemTypeNames) {
         mutableMapOf(
@@ -24,7 +29,11 @@ object ConcreteInstanceGenerator {
             navigableSetClass to setOf(treeSetClass.rtMapped),
             mapClass to setOf(hashMapClass.rtMapped),
             sortedMapClass to setOf(treeSetClass.rtMapped),
-            navigableMapClass to setOf(treeSetClass.rtMapped)
+            navigableMapClass to setOf(treeSetClass.rtMapped),
+            unmodifiableCollection to setOf(unmodifiableList.rtMapped),
+            unmodifiableList to setOf(unmodifiableList.rtMapped),
+            unmodifiableSet to setOf(unmodifiableSet.rtMapped),
+            unmodifiableMap to setOf(unmodifiableMap.rtMapped),
         )
     }
 
