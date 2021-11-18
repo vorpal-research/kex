@@ -22,6 +22,7 @@ fun main() {
         appendLine()
         appendLine("// DO NOT MODIFY THIS CODE MANUALLY!")
         appendLine("// You should use ./generateTests.kt to do it")
+        appendLine("// Some of these tests are depend by inliner.depth parameter in kex.ini")
         appendLine()
         appendLine("class SpiderTestsGenerated {")
         append(generatedTests.joinToString("\n"))

@@ -6,6 +6,7 @@ import org.jetbrains.research.kex.config.FileConfig
 import org.jetbrains.research.kex.config.RuntimeConfig
 import org.jetbrains.research.kex.config.kexConfig
 import org.jetbrains.research.kex.util.getIntrinsics
+import org.jetbrains.research.kex.util.getKexRuntime
 import org.jetbrains.research.kex.util.getPathSeparator
 import org.jetbrains.research.kex.util.getRuntime
 import org.jetbrains.research.kfg.ClassManager
@@ -45,11 +46,13 @@ abstract class KexTest(
 
         jarPath = "$rootDir/kex-test/target/kex-test-$version-jar-with-dependencies.jar"
         val jar = Paths.get(jarPath).asContainer(`package`)!!
+        val rtJar = getKexRuntime()
         loader = jar.classLoader
         cm = ClassManager(KfgConfig(flags = Flags.readAll, failOnError = false))
         val additionJarContainer = jarContainerFromClasspathOrNull(additionJarName)
         val containersToInit = buildList {
             add(jar)
+            if (rtJar != null) add(rtJar)
             if (initTR) add(getRuntime()!!)
             if (initIntrinsics) add(getIntrinsics()!!)
             if (additionJarContainer != null) {

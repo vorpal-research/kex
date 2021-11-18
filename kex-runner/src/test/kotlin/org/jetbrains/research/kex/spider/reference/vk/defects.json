@@ -1,0 +1,20 @@
+[
+    {
+        "type": "ASSERT",
+        "callStack": [
+            "com/vk/api/sdk/queries/messages/MessagesSendQuery::chatId(java/lang/Integer): com/vk/api/sdk/queries/messages/MessagesSendQuery - org/jetbrains/research/kex/test/spider/vk/Main.java:30\n"
+        ],
+        "id": "assertion0",
+        "testFile": null,
+        "testCaseName": null
+    },
+    {
+        "type": "ASSERT",
+        "callStack": [
+            "com/vk/api/sdk/queries/messages/MessagesSendQuery::message(java/lang/String): com/vk/api/sdk/queries/messages/MessagesSendQuery - org/jetbrains/research/kex/test/spider/vk/Main.java:43\n"
+        ],
+        "id": "isMessageNotEmpty1",
+        "testFile": null,
+        "testCaseName": null
+    }
+]

@@ -43,6 +43,11 @@
             <artifactId>okhttp</artifactId>
             <version>2.7.5</version>
         </dependency>
+        <dependency>
+            <groupId>com.github.VKCOM</groupId>
+            <artifactId>vk-java-sdk</artifactId>
+            <version>1be4f70fcf</version>
+        </dependency>
     </dependencies>
 
     <repositories>
@@ -57,6 +62,10 @@
             <id>central</id>
             <name>Maven Repository Switchboard</name>
             <url>https://repo1.maven.org/maven2</url>
+        </repository>
+        <repository>
+            <id>jitpack.io</id>
+            <url>https://jitpack.io</url>
         </repository>
     </repositories>
 

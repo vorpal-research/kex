@@ -39,6 +39,7 @@ class ConcreteImplInliner(
             method.isFinal -> method
             method.isStatic -> method
             method.isConstructor -> method
+            method.isKexRt -> method
             else -> {
                 val typeInfo = getInfo(callTerm.owner) ?: return null
                 val kexClass = typeInfo.type as? KexClass ?: return null

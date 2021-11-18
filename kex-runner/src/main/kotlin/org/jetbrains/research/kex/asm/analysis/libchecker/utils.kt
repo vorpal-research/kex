@@ -41,7 +41,7 @@ fun Type.kfgType(cm: ClassManager): org.jetbrains.research.kfg.type.Type = when(
     is EnumLikeSemanticType -> TODO()
     is StructuredType -> TODO()
     is EnumType -> TODO()
-    is RealType -> cm.type.getRefType(this.fullName)
+    is RealType -> cm.type.getRefType(this.fullName.replace(".", "/"))
     is ChildrenType -> TODO()
     is PrimitiveType -> TODO()
 }

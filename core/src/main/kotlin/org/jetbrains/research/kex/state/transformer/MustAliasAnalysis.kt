@@ -15,19 +15,19 @@ class MustAliasGraph(
 
 ) : Viewable {
     private val nodes = mutableSetOf<MustAliasNode>()
-    private val varToNode = mutableMapOf<Term, MustAliasNode>()
+    private val varToNode = mutableMapOf<String, MustAliasNode>()
 
     fun addNode(node: MustAliasNode) {
         nodes.add(node)
         for (variable in node.variables) {
-            varToNode[variable] = node
+            varToNode[variable.name] = node
         }
     }
 
     fun removeNode(node: MustAliasNode) {
         nodes.remove(node)
         for (variable in node.variables) {
-            varToNode.remove(variable)
+            varToNode.remove(variable.name)
         }
 
         for ((variable, toNode) in node.getIncomingNodesMap()) {
@@ -40,12 +40,12 @@ class MustAliasGraph(
 
     fun addVariableToNode(node: MustAliasNode, variable: Term) {
         node.addVariable(variable)
-        varToNode[variable] = node
+        varToNode[variable.name] = node
     }
 
     fun removeVariableFromNode(node: MustAliasNode, variable: Term) {
         node.removeVariable(variable)
-        varToNode.remove(variable)
+        varToNode.remove(variable.name)
     }
 
     fun getNodes(): MutableSet<MustAliasNode> {
@@ -53,7 +53,7 @@ class MustAliasGraph(
     }
 
     fun lookupVariable(variable: Term): MustAliasNode? {
-        return varToNode[variable]
+        return varToNode[variable.name]
     }
 
     fun gcNodes() {
@@ -121,7 +121,7 @@ class MustAliasGraph(
         get() {
             val res = mutableListOf<GraphView>()
             for ((key, value) in varToNode) {
-                val terms = GraphView("term:", key.name)
+                val terms = GraphView("term:", key)
                 val obj = GraphView("value", value.variables.joinToString(separator = ", ") { it.name })
                 terms.addSuccessor(obj)
                 res.add(terms)
