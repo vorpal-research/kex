@@ -179,7 +179,7 @@ class $self : ${solver}SMTContext {
     fun initialize${type}Memory(ptr: Ptr_, memspace: Int, value: ${type}_) {
         val name = "${ ${type}_PROPERTY_NAME }${ memspace }"
         val mem = get${type}InitialMemory(name).store(ptr, value)
-        set${type}Memory(name, mem)
+        set${type}InitialMemory(name, mem)
     }
 
     fun read${type}Property(ptr: Ptr_, memspace: Int, property: String) =
@@ -197,7 +197,7 @@ class $self : ${solver}SMTContext {
     fun initialize${type}Property(ptr: Ptr_, memspace: Int, property: String, value: ${type}_) {
         val name = "${ ${type}_PROPERTY_NAME }${ property }${ memspace }"
         val mem = get${type}InitialMemory(name).store(ptr, value)
-        set${type}Memory(name, mem)
+        set${type}InitialMemory(name, mem)
     }
 #end
 
