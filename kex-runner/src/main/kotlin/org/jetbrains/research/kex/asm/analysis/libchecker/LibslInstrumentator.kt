@@ -122,7 +122,7 @@ class LibslInstrumentator(
                 .filterIsInstance<Assignment>()
                 .firstOrNull { (it.left as? VariableAccess)?.variable == returnVariable }
                 ?.value as? CallAutomatonConstructor
-                ?: error("result statement not specified in ${method.name}")
+                ?: return
 
             val terminateBlock = method.terminateBlock ?: return
             val returnStatement = terminateBlock.first { it is ReturnInst } as ReturnInst

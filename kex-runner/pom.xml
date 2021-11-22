@@ -60,7 +60,12 @@
             <version>${project.version}</version>
             <scope>test</scope>
         </dependency>
-
+        <dependency>
+            <groupId>com.squareup.okhttp3</groupId>
+            <artifactId>okhttp</artifactId>
+            <version>4.9.0</version>
+            <scope>runtime</scope>
+        </dependency>
         <dependency>
             <groupId>org.jetbrains.research</groupId>
             <artifactId>kfg</artifactId>

@@ -7,6 +7,7 @@ import org.jetbrains.research.kex.ktype.KexType
 import org.jetbrains.research.kex.ktype.kexType
 import org.jetbrains.research.kex.state.predicate.*
 import org.jetbrains.research.kex.state.term.*
+import org.jetbrains.research.kfg.ir.ConcreteClass
 import org.jetbrains.research.kfg.type.ClassType
 import org.jetbrains.research.kthelper.algorithm.GraphView
 import org.jetbrains.research.kthelper.algorithm.Viewable
@@ -195,7 +196,7 @@ class MustAliasNode(
 }
 
 class MustAliasAnalysisContext {
-    var klass: org.jetbrains.research.kfg.ir.Class? = null
+    var klass: KexType? = null
 }
 
 class MustAliasAnalysis(
@@ -212,8 +213,15 @@ class MustAliasAnalysis(
     }
 
     override fun transformEqualityPredicate(predicate: EqualityPredicate): Predicate {
-        val node = graph.lookupVariable(predicate.rhv)
+        var node = graph.lookupVariable(predicate.rhv)
         if (node != null) {
+            graph.addVariableToNode(node, predicate.lhv)
+        } else {
+            val context = MustAliasAnalysisContext().apply {
+                klass = predicate.rhv.type
+            }
+            node = MustAliasNode(context)
+            graph.addNode(node)
             graph.addVariableToNode(node, predicate.lhv)
         }
         return predicate
@@ -225,7 +233,7 @@ class MustAliasAnalysis(
         }
         val callee = predicate.call as? CallTerm ?: return predicate
         val context = MustAliasAnalysisContext().apply {
-            klass = callee.method.klass
+            klass = callee.method.returnType.kexType
         }
         val node = MustAliasNode(context)
         graph.addNode(node)
@@ -236,7 +244,7 @@ class MustAliasAnalysis(
 
     override fun transformNewPredicate(predicate: NewPredicate): Predicate {
         val context = MustAliasAnalysisContext().apply {
-            klass = (predicate.lhv.type.getKfgType(cm.type) as? ClassType)?.klass ?: return predicate
+            klass = predicate.lhv.type
         }
         val node = MustAliasNode(context)
         graph.addNode(node)

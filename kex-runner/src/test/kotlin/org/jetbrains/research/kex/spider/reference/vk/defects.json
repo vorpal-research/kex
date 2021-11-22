@@ -2,7 +2,7 @@
     {
         "type": "ASSERT",
         "callStack": [
-            "com/vk/api/sdk/queries/messages/MessagesSendQuery::chatId(java/lang/Integer): com/vk/api/sdk/queries/messages/MessagesSendQuery - org/jetbrains/research/kex/test/spider/vk/Main.java:30\n"
+            "com/vk/api/sdk/queries/messages/MessagesSendQuery::peerId(java/lang/Integer): com/vk/api/sdk/queries/messages/MessagesSendQuery - org/jetbrains/research/kex/test/spider/vk/TestWrongArgs.java:50\n"
         ],
         "id": "assertion0",
         "testFile": null,
@@ -11,9 +11,36 @@
     {
         "type": "ASSERT",
         "callStack": [
-            "com/vk/api/sdk/queries/messages/MessagesSendQuery::message(java/lang/String): com/vk/api/sdk/queries/messages/MessagesSendQuery - org/jetbrains/research/kex/test/spider/vk/Main.java:43\n"
+            "com/vk/api/sdk/queries/messages/MessagesSendQuery::peerId(java/lang/Integer): com/vk/api/sdk/queries/messages/MessagesSendQuery - org/jetbrains/research/kex/test/spider/vk/TestWrongArgs.java:61\n"
+        ],
+        "id": "assertion0",
+        "testFile": null,
+        "testCaseName": null
+    },
+    {
+        "type": "ASSERT",
+        "callStack": [
+            "com/vk/api/sdk/queries/messages/MessagesSendQuery::message(java/lang/String): com/vk/api/sdk/queries/messages/MessagesSendQuery - org/jetbrains/research/kex/test/spider/vk/TestWrongArgs.java:60\n"
         ],
         "id": "isMessageNotEmpty1",
+        "testFile": null,
+        "testCaseName": null
+    },
+    {
+        "type": "ASSERT",
+        "callStack": [
+            "com/vk/api/sdk/client/actors/GroupActor::<init>(java/lang/Integer, java/lang/String): void - org/jetbrains/research/kex/test/spider/vk/TestWrongArgs.java:21\n"
+        ],
+        "id": "isGroupIdPositive2",
+        "testFile": null,
+        "testCaseName": null
+    },
+    {
+        "type": "ASSERT",
+        "callStack": [
+            "com/vk/api/sdk/client/VkApiClient::setVersion(java/lang/String): void - org/jetbrains/research/kex/test/spider/vk/TestWrongArgs.java:19\n"
+        ],
+        "id": "isVersionSupported3",
         "testFile": null,
         "testCaseName": null
     }

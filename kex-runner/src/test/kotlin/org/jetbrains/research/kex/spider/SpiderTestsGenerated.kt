@@ -23,8 +23,8 @@ class SpiderTestsGenerated {
     }
 
     @Test
-    fun testOkhttp() {
-        SpiderTestRunner("okhttp").runTest()
+    fun testOkhttp3() {
+        SpiderTestRunner("okhttp3").runTest()
     }
 
     @Test

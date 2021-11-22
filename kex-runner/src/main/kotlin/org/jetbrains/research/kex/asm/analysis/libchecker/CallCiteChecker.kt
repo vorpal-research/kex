@@ -10,6 +10,7 @@ import org.jetbrains.research.kex.config.kexConfig
 import org.jetbrains.research.kex.ktype.kexType
 import org.jetbrains.research.kex.smt.Result
 import org.jetbrains.research.kex.smt.SMTProxySolver
+import org.jetbrains.research.kex.smt.z3.Z3Solver
 import org.jetbrains.research.kex.state.*
 import org.jetbrains.research.kex.state.predicate.CallPredicate
 import org.jetbrains.research.kex.state.predicate.Predicate
@@ -102,7 +103,7 @@ class CallCiteChecker(
         main: PredicateState,
         inline: PredicateState
     ): Pair<PredicateState, TermRenamer>? {
-        val callPredicate = main.lastPredicate() ?: return null
+        val callPredicate = main.lastPredicate() ?: emptyState()
         val filteredState = main.dropLast(1)
         if (callPredicate !is CallPredicate) {
             log.warn("Unknown predicate in call cite: $callPredicate")
@@ -222,6 +223,7 @@ class CallCiteChecker(
             builder += predicate
             builder
         }.apply()
+        log.debug("Query: $assertionQuery")
 
         val (_, result) = check(state, assertionQuery)
         return when (result) {
@@ -247,6 +249,7 @@ class CallCiteChecker(
         +RecursiveInliner(psa) { i, psa -> ConcreteImplInliner(method.cm.type, typeInfoMap, psa, inlineIndex = i, maa = maa, analyzingPackage = libraryPackage) }
         +StaticFieldInliner(ctx, psa)
         +RecursiveInliner(psa) { i, psa -> MethodInliner(psa, inlineIndex = i) }
+        +RecursiveConstructorInliner(psa, mustAliasAnalysis = maa)
         +StringMethodAdapter(cm)
         +IntrinsicAdapter
         +KexIntrinsicsAdapter()
@@ -276,13 +279,25 @@ class CallCiteChecker(
         state = Optimizer().apply(state)
         query = Optimizer().apply(query)
         if (logQuery) {
-            log.debug("Simplified state: $state")
-            log.debug("Query: $query")
+            log.debug("Optimized state: $state")
+            log.debug("Optimized query: $query")
         }
 
         val result = SMTProxySolver(method.cm.type).use {
             it.isViolated(state, query)
         }
+//
+//        val deltaDebugger = DeltaDebugger(5000, 5000) {
+//            val result = SMTProxySolver(method.cm.type).use { solver ->
+//                solver.isViolated(it, query)
+//            }
+//            result is Result.UnsatResult
+//        }
+//        val reduced = deltaDebugger.reduce(state)
+//        val resultReduced = SMTProxySolver(method.cm.type).use {
+//            it.isViolated(reduced, query)
+//        }
+
         log.debug("Acquired $result")
         return state to result
     }

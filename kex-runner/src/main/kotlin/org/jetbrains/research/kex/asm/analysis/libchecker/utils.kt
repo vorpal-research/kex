@@ -32,7 +32,7 @@ fun Type.kfgType(cm: ClassManager): org.jetbrains.research.kfg.type.Type = when(
     }
     is BoolType -> cm.type.boolType
     is ArrayType -> {
-        cm.type.objectArrayClass
+        cm.type.getArrayType(this.generic.kfgType(cm))
     }
     is StringType -> cm.type.stringType
     is CharType -> cm.type.charType

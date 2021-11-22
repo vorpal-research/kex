@@ -67,7 +67,7 @@ class ConcreteImplInliner(
     private val MustAliasAnalysisContext.toCastTypeInfo: CastTypeInfo?
         get() {
             return this.klass?.let {
-                return CastTypeInfo(it.kexType)
+                return CastTypeInfo(it)
             }
         }
 
@@ -93,7 +93,7 @@ class ConcreteImplInliner(
             }
         }
         val inlinedState = prepareInlinedState(inlinedMethod, mappings) ?: return predicate
-        //maa?.transform(inlinedState)
+        maa?.transform(inlinedState)
         castPredicate?.run {
             currentBuilder += this
         }
