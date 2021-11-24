@@ -1,14 +1,10 @@
 package org.jetbrains.research.kex.state.transformer
 
 import org.jetbrains.research.kex.asm.state.PredicateStateAnalysis
-import org.jetbrains.research.kex.descriptor.concrete
-import org.jetbrains.research.kex.descriptor.concreteClass
 import org.jetbrains.research.kex.ktype.KexType
 import org.jetbrains.research.kex.ktype.kexType
 import org.jetbrains.research.kex.state.predicate.*
 import org.jetbrains.research.kex.state.term.*
-import org.jetbrains.research.kfg.ir.ConcreteClass
-import org.jetbrains.research.kfg.type.ClassType
 import org.jetbrains.research.kthelper.algorithm.GraphView
 import org.jetbrains.research.kthelper.algorithm.Viewable
 

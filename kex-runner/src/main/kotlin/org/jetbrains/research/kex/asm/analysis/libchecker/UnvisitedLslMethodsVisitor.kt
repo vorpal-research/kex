@@ -20,13 +20,13 @@ class UnvisitedLslMethodsVisitor(
         val automaton = lslContext.resolveAutomaton(automatonName.replace("/", ".")) ?: return
 
         val undefinedLslFuncs = automaton.functions.filter { func ->
-            val descriptor = func.desc
+            val descriptor = func.desc(cm)
             val name = func.name
             klass.allMethods.firstOrNull { it.name == name && it.desc == descriptor } == null
         }
 
         for (func in undefinedLslFuncs) {
-            val method = klass.getMethodConcrete(func.name, func.desc)
+            val method = klass.getMethodConcrete(func.name, func.desc(cm))
                 ?: error("class $klass doesn't contain method ${func.name}")
 
             val usageContext = method.usageContext
@@ -58,11 +58,4 @@ class UnvisitedLslMethodsVisitor(
             }
         }
     }
-
-    private val Function.desc: MethodDesc
-        get() {
-            val args = args.map { it.type.kfgType(cm) }.toTypedArray()
-            val returnType = returnType?.kfgType(cm) ?: cm.type.voidType
-            return MethodDesc(args, returnType)
-        }
 }

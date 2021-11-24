@@ -5,14 +5,13 @@ import org.jetbrains.research.kex.asm.analysis.defect.DefectManager
 import org.jetbrains.research.kex.asm.analysis.libchecker.CallCiteChecker
 import org.jetbrains.research.kex.asm.analysis.libchecker.ClassInstrumentator
 import org.jetbrains.research.kex.asm.analysis.libchecker.LibslInstrumentator
+import org.jetbrains.research.kex.asm.manager.ClassInstantiationDetector
 import org.jetbrains.research.kex.asm.state.PredicateStateAnalysis
 import org.jetbrains.research.kex.asm.transform.BranchAdapter
 import org.jetbrains.research.kex.asm.transform.LoopDeroller
 import org.jetbrains.research.kex.asm.util.ClassWriter
 import org.jetbrains.research.kex.asm.util.Visibility
-import org.jetbrains.research.kex.config.GlobalConfig
 import org.jetbrains.research.kex.config.kexConfig
-import org.jetbrains.research.kex.reanimator.collector.ExternalCtorCollector
 import org.jetbrains.research.kex.reanimator.collector.MethodFieldAccessCollector
 import org.jetbrains.research.kex.reanimator.collector.SetterCollector
 import org.jetbrains.research.kfg.Package
@@ -54,11 +53,11 @@ class LibraryCheckLauncher(
             +psa
             +MethodFieldAccessCollector(context, psa)
             +SetterCollector(context)
-            +ExternalCtorCollector(cm, Visibility.PUBLIC)
+            +ClassInstantiationDetector(cm, Visibility.PUBLIC)
         }
 
         executePipeline(cm, callCitePackage) {
-            +CallCiteChecker(context, callCitePackage, callCitePackage, psa) // separated package should be here
+            +CallCiteChecker(context, callCitePackage, callCitePackage, library, psa) // separated package should be here
             +ClassWriter(context, tmpDir)
         }
         clearClassPath()
