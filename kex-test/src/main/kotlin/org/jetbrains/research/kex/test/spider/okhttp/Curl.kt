@@ -166,13 +166,13 @@ class Main : Runnable {
 
     fun createRequest(): Request {
         val request = Request.Builder()
-//
+
         val requestMethod = method ?: if (data != null) "POST" else "GET"
-//
-//        val url = url ?: throw IllegalArgumentException("No url provided")
-//
-//        //request.url(url)
-//
+
+        val url = url ?: throw IllegalArgumentException("No url provided")
+
+        request.url(url)
+
         data?.let {
             request.method(requestMethod, it.toRequestBody(mediaType())) // return mediaType() here
         }
