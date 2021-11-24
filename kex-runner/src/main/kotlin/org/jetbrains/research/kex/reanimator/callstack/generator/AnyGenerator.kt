@@ -30,12 +30,7 @@ open class AnyGenerator(private val fallback: Generator) : Generator {
         val callStack = CallStack(name)
         saveToCache(descriptor, callStack)
 
-        val klass = descriptor.klass.kfgClass(types)
-        if (visibilityLevel > klass.visibility) {
-            callStack += UnknownCall(klass.type, descriptor)
-        } else {
-            generateObject(callStack, descriptor, generationDepth)
-        }
+        generateObject(callStack, descriptor, generationDepth)
         return callStack
     }
 
