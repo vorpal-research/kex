@@ -3,12 +3,12 @@ package org.jetbrains.research.kex.reanimator.callstack.generator
 import org.jetbrains.research.kex.descriptor.Descriptor
 import org.jetbrains.research.kex.descriptor.ObjectDescriptor
 import org.jetbrains.research.kex.descriptor.descriptor
-import org.jetbrains.research.kex.descriptor.unmodifiableCollection
 import org.jetbrains.research.kex.ktype.KexClass
 import org.jetbrains.research.kex.ktype.kexType
 import org.jetbrains.research.kex.reanimator.callstack.CallStack
 import org.jetbrains.research.kex.reanimator.callstack.ExternalConstructorCall
 import org.jetbrains.research.kex.util.dekapitalize
+import org.jetbrains.research.kex.util.unmodifiableCollection
 import org.jetbrains.research.kfg.type.SystemTypeNames
 
 class UnmodifiableCollectionGenerator(private val fallback: Generator) : Generator {

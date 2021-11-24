@@ -3,8 +3,8 @@ package org.jetbrains.research.kex.asm.analysis.testgen
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.InternalSerializationApi
 import org.jetbrains.research.kex.ExecutionContext
+import org.jetbrains.research.kex.asm.manager.instantiationManager
 import org.jetbrains.research.kex.asm.state.PredicateStateAnalysis
-import org.jetbrains.research.kex.descriptor.concrete
 import org.jetbrains.research.kex.ktype.KexRtManager.rtMapped
 import org.jetbrains.research.kex.parameters.Parameters
 import org.jetbrains.research.kex.random.GenerationException
@@ -37,7 +37,7 @@ class DescriptorChecker(
     override fun coverBlock(method: Method, block: BasicBlock): Result {
         val checker = Checker(method, ctx, psa)
         val ps = checker.createState(method, block)
-                ?: return Result.UnknownResult("Could not resolve types for ${block.name}")
+            ?: return Result.UnknownResult("Could not resolve types for ${block.name}")
 
         val result = try {
             checker.check(ps, ps.path)
@@ -62,20 +62,23 @@ class DescriptorChecker(
                 }
             }
             is Result.UnsatResult -> log.debug("Instruction ${block.terminator.print()} is unreachable")
-            is Result.UnknownResult -> log.debug("Can't decide on reachability of " +
-                    "instruction ${block.terminator.print()}, reason: ${result.reason}")
+            is Result.UnknownResult -> log.debug(
+                "Can't decide on reachability of " +
+                        "instruction ${block.terminator.print()}, reason: ${result.reason}"
+            )
         }
         return result
     }
 
-    private val TypeInfoMap.rtMapped get() = mapValues {
-        it.value.map { ti ->
-            when (ti) {
-                is NullabilityInfo -> ti
-                is CastTypeInfo -> CastTypeInfo(ti.type.rtMapped)
-            }
-        }.toSet()
-    }
+    private val TypeInfoMap.rtMapped
+        get() = mapValues {
+            it.value.map { ti ->
+                when (ti) {
+                    is NullabilityInfo -> ti
+                    is CastTypeInfo -> CastTypeInfo(ti.type.rtMapped)
+                }
+            }.toSet()
+        }
 
     private fun Checker.createState(method: Method, block: BasicBlock): PredicateState? {
         val typeInfoMap = resolveTypes(method, block) ?: return null
@@ -111,7 +114,7 @@ class DescriptorChecker(
 
     private fun Set<TypeInfo>.concretize(): Set<TypeInfo> = this.map { tryOrNull { it.concretize() } ?: it }.toSet()
     private fun TypeInfo.concretize(): TypeInfo = when (this) {
-        is CastTypeInfo -> CastTypeInfo(this.type.concrete(cm))
+        is CastTypeInfo -> CastTypeInfo(instantiationManager.getConcreteType(this.type, cm))
         else -> this
     }
 }

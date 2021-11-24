@@ -2,6 +2,7 @@ package org.jetbrains.research.kex.reanimator.callstack.generator
 
 import org.jetbrains.research.kex.ExecutionContext
 import org.jetbrains.research.kex.annotations.AnnotationManager
+import org.jetbrains.research.kex.asm.manager.instantiationManager
 import org.jetbrains.research.kex.asm.state.PredicateStateAnalysis
 import org.jetbrains.research.kex.asm.util.Visibility
 import org.jetbrains.research.kex.asm.util.visibility
@@ -11,7 +12,6 @@ import org.jetbrains.research.kex.ktype.*
 import org.jetbrains.research.kex.parameters.Parameters
 import org.jetbrains.research.kex.reanimator.callstack.ApiCall
 import org.jetbrains.research.kex.reanimator.callstack.CallStack
-import org.jetbrains.research.kex.reanimator.collector.externalCtors
 import org.jetbrains.research.kex.smt.Checker
 import org.jetbrains.research.kex.smt.Result
 import org.jetbrains.research.kex.state.PredicateState
@@ -95,6 +95,8 @@ class GeneratorContext(
         +FieldNormalizer(context.cm, ".query.normalized")
     }
 
+    val Class.externalCtors get() = instantiationManager.getExternalCtors(this)
+
     val Class.allCtors get() = accessibleCtors + externalCtors
 
     val Class.nonRecursiveCtors get() = accessibleCtors.filterNot { it.isRecursive }
@@ -137,7 +139,7 @@ class GeneratorContext(
     private val Method.argTypeInfo
         get() = this.parameters.associate {
             val type = it.type.kexType
-            term { arg(type, it.index) } to type.concrete(cm)
+            term { arg(type, it.index) } to instantiationManager.getConcreteType(type, cm)
         }
 
     fun Method.executeAsConstructor(descriptor: ObjectDescriptor): Parameters<Descriptor>? {
