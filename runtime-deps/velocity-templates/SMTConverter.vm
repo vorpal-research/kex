@@ -59,7 +59,7 @@ class ${solver}Converter(val tf: TypeFactory) : ${solver}SMTConverter() {
                     }
                 }
                 typeCond?.apply {
-                    resultExpr = resultExpr.withAxiom(this)
+                    resultExpr = resultExpr.withAxiom((expr neq ef.makeNull()) implies this)
                 }
                 resultExpr = resultExpr.withAxiom(typeVar ge ef.makeIntConst(0))
                 if (this.type is KexArray) {

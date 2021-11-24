@@ -2,6 +2,7 @@ package org.jetbrains.research.kex.reanimator.callstack.generator
 
 import org.jetbrains.research.kex.ExecutionContext
 import org.jetbrains.research.kex.annotations.AnnotationManager
+import org.jetbrains.research.kex.asm.manager.instantiationManager
 import org.jetbrains.research.kex.asm.state.PredicateStateAnalysis
 import org.jetbrains.research.kex.asm.util.Visibility
 import org.jetbrains.research.kex.asm.util.visibility
@@ -11,7 +12,6 @@ import org.jetbrains.research.kex.ktype.*
 import org.jetbrains.research.kex.parameters.Parameters
 import org.jetbrains.research.kex.reanimator.callstack.ApiCall
 import org.jetbrains.research.kex.reanimator.callstack.CallStack
-import org.jetbrains.research.kex.reanimator.collector.externalCtors
 import org.jetbrains.research.kex.smt.Checker
 import org.jetbrains.research.kex.smt.Result
 import org.jetbrains.research.kex.state.PredicateState
@@ -86,14 +86,18 @@ class GeneratorContext(
         +ArrayBoundsAdapter()
         +NullityInfoAdapter()
         +ConstStringAdapter()
-        +FieldNormalizer(context.cm, "state.normalized")
+        +FieldNormalizer(context.cm, ".state.normalized")
     }
 
     fun prepareQuery(ps: PredicateState) = transform(ps) {
         +NullityInfoAdapter()
         +ArrayBoundsAdapter()
-        +FieldNormalizer(context.cm, "query.normalized")
+        +FieldNormalizer(context.cm, ".query.normalized")
     }
+
+    val Class.isVisible get() = visibility >= visibilityLevel
+
+    val Class.externalCtors get() = instantiationManager.getExternalCtors(this)
 
     val Class.allCtors get() = accessibleCtors + externalCtors
 
@@ -114,20 +118,32 @@ class GeneratorContext(
             nonRecursiveCtors + nonRecursiveExtCtors + recursiveCtors + recursiveExtCtors
         }
 
-    val Class.staticMethods
-        get() = methods
-            .filter { it.isStatic }
-            .filter { visibilityLevel <= it.visibility }
+    val Class.staticMethods: Set<Method>
+        get() = when {
+            this.isVisible -> methods
+                .filter { it.isStatic }
+                .filter { visibilityLevel <= it.visibility }
+                .toSet()
+            else -> setOf()
+        }
 
-    val Class.accessibleCtors
-        get() = constructors
-            .filter { visibilityLevel <= it.visibility }
-            .sortedBy { it.argTypes.size }
+    val Class.accessibleCtors: Set<Method>
+        get() = when {
+            this.isVisible -> constructors
+                .filter { visibilityLevel <= it.visibility }
+                .sortedBy { it.argTypes.size }
+                .toSet()
+            else -> setOf()
+        }
 
-    val Class.accessibleMethods
-        get() = methods
-            .filterNot { it.isStatic }
-            .filter { visibilityLevel <= it.visibility }
+    val Class.accessibleMethods: Set<Method>
+        get() = when {
+            this.isVisible -> methods
+                .filterNot { it.isStatic }
+                .filter { visibilityLevel <= it.visibility }
+                .toSet()
+            else -> setOf()
+        }
 
     val Method.isRecursive
         get() = argTypes.any { arg ->
@@ -137,7 +153,7 @@ class GeneratorContext(
     private val Method.argTypeInfo
         get() = this.parameters.associate {
             val type = it.type.kexType
-            term { arg(type, it.index) } to type.concrete(cm)
+            term { arg(type, it.index) } to instantiationManager.getConcreteType(type, cm)
         }
 
     fun Method.executeAsConstructor(descriptor: ObjectDescriptor): Parameters<Descriptor>? {
@@ -331,8 +347,9 @@ class GeneratorContext(
                                     subObjects += elemLoad to elem
                             }
 
-                            val allPairs = value.elements.keys.flatMap { i1 -> value.elements.keys.map { i2 -> i1 to i2 } }
-                                .filter { it.first != it.second }
+                            val allPairs =
+                                value.elements.keys.flatMap { i1 -> value.elements.keys.map { i2 -> i1 to i2 } }
+                                    .filter { it.first != it.second }
                             allPairs.fold(mutableSetOf<Pair<Int, Int>>()) { acc, pair ->
                                 if (pair.second to pair.first !in acc) acc += pair
                                 acc
@@ -387,7 +404,7 @@ class GeneratorContext(
             for ((field, _) in fields) {
                 val fieldTerm = term { term.field(field.second, field.first) }
                 axiom { fieldTerm.initialize(field.second.defaultValue) }
-                axiom { field.second.defaultValue equality fieldTerm.load()  }
+                axiom { field.second.defaultValue equality fieldTerm.load() }
             }
         }
 
@@ -406,20 +423,21 @@ class GeneratorContext(
     val KexType.defaultDescriptor: Descriptor
         get() = descriptor { default(this@defaultDescriptor) }
 
-    val KexType.defaultValue: Term get() = term {
-        when (this@defaultValue) {
-            is KexBool -> const(false)
-            is KexByte -> const(0.toByte())
-            is KexChar -> const(0.toChar())
-            is KexShort -> const(0.toShort())
-            is KexInt -> const(0)
-            is KexLong -> const(0L)
-            is KexFloat -> const(0.0F)
-            is KexDouble -> const(0.0)
-            is KexClass -> const(null)
-            is KexArray -> const(null)
-            is KexReference -> reference.defaultValue
-            else -> unreachable { log.error("Could not generate default descriptor value for unknown type $this") }
+    val KexType.defaultValue: Term
+        get() = term {
+            when (this@defaultValue) {
+                is KexBool -> const(false)
+                is KexByte -> const(0.toByte())
+                is KexChar -> const(0.toChar())
+                is KexShort -> const(0.toShort())
+                is KexInt -> const(0)
+                is KexLong -> const(0L)
+                is KexFloat -> const(0.0F)
+                is KexDouble -> const(0.0)
+                is KexClass -> const(null)
+                is KexArray -> const(null)
+                is KexReference -> reference.defaultValue
+                else -> unreachable { log.error("Could not generate default descriptor value for unknown type $this") }
+            }
         }
-    }
 }

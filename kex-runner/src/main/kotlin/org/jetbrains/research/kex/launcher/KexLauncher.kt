@@ -1,6 +1,7 @@
 package org.jetbrains.research.kex.launcher
 
 import org.jetbrains.research.kex.ExecutionContext
+import org.jetbrains.research.kex.asm.manager.ClassInstantiationDetector
 import org.jetbrains.research.kex.asm.manager.CoverageCounter
 import org.jetbrains.research.kex.asm.manager.MethodWrapperInitializer
 import org.jetbrains.research.kex.asm.state.PredicateStateAnalysis
@@ -10,12 +11,8 @@ import org.jetbrains.research.kex.asm.transform.RuntimeTraceCollector
 import org.jetbrains.research.kex.asm.transform.SystemExitTransformer
 import org.jetbrains.research.kex.asm.util.ClassWriter
 import org.jetbrains.research.kex.asm.util.Visibility
-import org.jetbrains.research.kex.config.FileConfig
-import org.jetbrains.research.kex.config.RunnerCmdConfig
-import org.jetbrains.research.kex.config.RuntimeConfig
 import org.jetbrains.research.kex.config.kexConfig
 import org.jetbrains.research.kex.random.easyrandom.EasyRandomDriver
-import org.jetbrains.research.kex.reanimator.collector.ExternalCtorCollector
 import org.jetbrains.research.kex.reanimator.collector.MethodFieldAccessCollector
 import org.jetbrains.research.kex.reanimator.collector.SetterCollector
 import org.jetbrains.research.kex.trace.AbstractTrace
@@ -66,7 +63,7 @@ abstract class KexLauncher(classPaths: List<String>, targetName: String) {
 
     init {
         val containerPaths = classPaths.map { Paths.get(it).toAbsolutePath() }
-        containerClassLoader = URLClassLoader(*containerPaths.map { it.toUri().toURL() }.toTypedArray())
+        containerClassLoader = URLClassLoader(containerPaths.map { it.toUri().toURL() }.toTypedArray())
 
         val analysisLevel = when {
             targetName.matches(Regex("[a-zA-Z0-9]+(\\.[a-zA-Z0-9]+)*\\.\\*")) -> {
@@ -186,7 +183,7 @@ abstract class KexLauncher(classPaths: List<String>, targetName: String) {
         +psa
         +MethodFieldAccessCollector(ctx, psa)
         +SetterCollector(ctx)
-        +ExternalCtorCollector(ctx.cm, visibilityLevel)
+        +ClassInstantiationDetector(ctx.cm, visibilityLevel)
     }
 
     protected fun updateClassPath(loader: URLClassLoader) {

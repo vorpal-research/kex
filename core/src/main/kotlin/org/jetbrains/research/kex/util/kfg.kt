@@ -8,10 +8,7 @@ import org.jetbrains.research.kfg.ir.value.Value
 import org.jetbrains.research.kfg.ir.value.instruction.CmpOpcode
 import org.jetbrains.research.kfg.ir.value.instruction.Instruction
 import org.jetbrains.research.kfg.ir.value.instruction.InstructionBuilder
-import org.jetbrains.research.kfg.type.ClassType
-import org.jetbrains.research.kfg.type.PrimaryType
-import org.jetbrains.research.kfg.type.Type
-import org.jetbrains.research.kfg.type.TypeFactory
+import org.jetbrains.research.kfg.type.*
 import org.jetbrains.research.kthelper.assert.unreachable
 import org.jetbrains.research.kthelper.compareTo
 import org.jetbrains.research.kthelper.logging.log
@@ -73,3 +70,8 @@ fun NameMapper.parseValue(valueName: String): Value {
         else -> unreachable { log.error("Unknown value name $valueName for object cmp") }
     }
 }
+
+val SystemTypeNames.unmodifiableCollection get() = "java/util/Collections\$UnmodifiableCollection"
+val SystemTypeNames.unmodifiableList get() = "java/util/Collections\$UnmodifiableList"
+val SystemTypeNames.unmodifiableSet get() = "java/util/Collections\$UnmodifiableSet"
+val SystemTypeNames.unmodifiableMap get() = "java/util/Collections\$UnmodifiableMap"

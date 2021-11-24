@@ -329,9 +329,7 @@ open class CallStack2JavaPrinter(
 
     protected val <T> PrimaryValue<T>.asConstant: String
         get() = when (val value = value) {
-            null -> "null".also {
-                actualTypes[this] = CSClass(ctx.types.nullType)
-            }
+            null -> "null"
             is Boolean -> "$value".also {
                 actualTypes[this] = CSClass(ctx.types.boolType)
             }
@@ -542,9 +540,15 @@ open class CallStack2JavaPrinter(
         else -> unreachable {  }
     }
 
+    private val CSType.elementType: CSType get() = when (this) {
+        is CSPrimaryArray -> this.element
+        is CSArray -> this.element
+        else -> TODO()
+    }
+
     protected open fun printArrayWrite(owner: CallStack, call: ArrayWrite): List<String> {
         call.value.printAsJava()
-        val requiredType = lub(resolvedTypes[owner], actualTypes[owner])
+        val requiredType = lub(resolvedTypes[owner]?.elementType, actualTypes[owner]?.elementType)
         return listOf("${owner.name}[${call.index.stackName}] = ${call.value.cast(requiredType)}")
     }
 

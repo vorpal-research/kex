@@ -17,7 +17,7 @@
 
         <kotlin.version>1.5.21</kotlin.version>
         <compiler-plugin.version>3.5.1</compiler-plugin.version>
-        <kex-intrinsics.version>0.0.5</kex-intrinsics.version>
+        <kex-intrinsics.version>0.0.6</kex-intrinsics.version>
     </properties>
 
     <dependencies>

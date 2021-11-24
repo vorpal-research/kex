@@ -33,6 +33,7 @@ class CallStackGenerator(override val context: GeneratorContext) : Generator {
         typeGenerators += EnumGenerator(this)
         typeGenerators += KtObjectGenerator(this)
         typeGenerators += InnerClassGenerator(this)
+        typeGenerators += UnmodifiableCollectionGenerator(this)
         typeGenerators += CollectionGenerator(this)
         typeGenerators += MapGenerator(this)
         typeGenerators += AnyGenerator(this)
@@ -73,8 +74,7 @@ class CallStackGenerator(override val context: GeneratorContext) : Generator {
             throw SearchLimitExceededException(descriptor, "Search depth exceeded maximal limit $maxSearchDepth")
 
         val typeGenerator = descriptor.generator
-        typeGenerator.generate(descriptor, generationDepth + 1)
 
-        return getFromCache(descriptor)!!
+        return typeGenerator.generate(descriptor, generationDepth + 1)
     }
 }

@@ -107,12 +107,15 @@ class PredicateBuilderTest : KexTest() {
                     val lambdaParameters = lambdaBase.method.argTypes.withIndex().map { (index, type) ->
                         term { value(type.kexType, "labmda_${lambdaBase.method.name}_$index") }
                     }
+                    val mapping = argParameters.zip(lambdaParameters).toMap().toMutableMap()
+                    val `this` = term { `this`(lambdaBase.method.klass.kexType) }
+                    mapping[`this`] = `this`
 
                     val expr = lambdaBase.method.asTermExpr()!!
 
                     term {
                         lambda(type.kexType, lambdaParameters) {
-                            TermRenamer("labmda.${lambdaBase.method.name}", argParameters.zip(lambdaParameters).toMap())
+                            TermRenamer("labmda.${lambdaBase.method.name}", mapping)
                                 .transform(expr)
                         }
                     }

@@ -1,22 +1,27 @@
 package org.jetbrains.research.kex.reanimator.codegen
 
 import org.jetbrains.research.kex.ExecutionContext
+import org.jetbrains.research.kex.compile.JavaCompilerDriver
 import org.jetbrains.research.kex.config.kexConfig
 import org.jetbrains.research.kex.parameters.Parameters
 import org.jetbrains.research.kex.reanimator.callstack.CallStack
 import org.jetbrains.research.kex.reanimator.codegen.javagen.CallStack2JavaPrinter
 import org.jetbrains.research.kex.reanimator.codegen.javagen.ExecutorCS2JavaPrinter
 import org.jetbrains.research.kex.reanimator.codegen.kotlingen.CallStack2KotlinPrinter
+import org.jetbrains.research.kex.util.getJunit
 import org.jetbrains.research.kfg.ir.BasicBlock
 import org.jetbrains.research.kfg.ir.Class
 import org.jetbrains.research.kfg.ir.Method
 import org.jetbrains.research.kthelper.assert.unreachable
 import org.jetbrains.research.kthelper.logging.log
+import org.jetbrains.research.kthelper.tryOrNull
 import java.io.File
+import java.nio.file.Paths
 import kotlin.math.abs
 
 private val useApiGeneration by lazy { kexConfig.getBooleanValue("apiGeneration", "enabled", true) }
 private val generateTestCases by lazy { kexConfig.getBooleanValue("apiGeneration", "generateTestCases", false) }
+private val checkTestCompile by lazy { kexConfig.getBooleanValue("apiGeneration", "checkTestCompile", true) }
 private val outputDirectory by lazy { kexConfig.getPathValue("kex", "outputDir")!! }
 private val testCaseDirectory by lazy { kexConfig.getPathValue("apiGeneration", "testCaseDirectory", "tests") }
 private val testCaseLanguage by lazy { kexConfig.getStringValue("apiGeneration", "testCaseLanguage", "java") }
@@ -43,6 +48,24 @@ abstract class TestCasePrinter(
     open fun emit() {
         if (useApiGeneration && generateTestCases) {
             targetFile.writeText(printer.emit())
+        }
+        if (checkTestCompile) {
+            checkTestCompiles()
+        }
+    }
+
+    fun checkTestCompiles() {
+        if (testCaseLanguage == "java") {
+            val compileDir = outputDirectory.resolve(
+                kexConfig.getPathValue("compile", "compileDir", "compiled/")
+            ).also {
+                it.toFile().mkdirs()
+            }
+            val junitPath = getJunit()?.path ?: Paths.get(".")
+            val compiler = JavaCompilerDriver(ctx.classPath + listOf(junitPath), compileDir)
+            tryOrNull {
+                compiler.compile(listOf(targetFile.toPath()))
+            }
         }
     }
 }
