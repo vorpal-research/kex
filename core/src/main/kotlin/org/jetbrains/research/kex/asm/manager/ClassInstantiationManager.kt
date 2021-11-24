@@ -72,7 +72,10 @@ private object ClassInstantiationManagerImpl : ClassInstantiationManager {
         when (klass.fullName) {
             in predefinedConcreteInstanceInfo -> predefinedConcreteInstanceInfo.getValue(klass.fullName).random()
                 .let { klass.cm[it] }
-            else -> classInstantiationInfo.getOrDefault(klass, setOf()).random()
+            else -> classInstantiationInfo.getOrDefault(klass, setOf()).let {
+                if (klass in it) klass
+                else it.random()
+            }
         }
     }.getOrElse {
         throw NoConcreteInstanceException(klass)
