@@ -1,5 +1,6 @@
 package org.jetbrains.research.kex
 
+import org.jetbrains.research.kex.asm.manager.ClassInstantiationDetector
 import org.jetbrains.research.kex.asm.state.PredicateStateAnalysis
 import org.jetbrains.research.kex.asm.transform.LoopDeroller
 import org.jetbrains.research.kex.asm.util.Visibility
@@ -14,7 +15,6 @@ import org.jetbrains.research.kex.reanimator.callstack.CallStack
 import org.jetbrains.research.kex.reanimator.callstack.generator.CallStackGenerator
 import org.jetbrains.research.kex.reanimator.callstack.generator.GeneratorContext
 import org.jetbrains.research.kex.reanimator.codegen.JUnitTestCasePrinter
-import org.jetbrains.research.kex.reanimator.collector.ExternalCtorCollector
 import org.jetbrains.research.kex.reanimator.collector.MethodFieldAccessCollector
 import org.jetbrains.research.kex.reanimator.collector.SetterCollector
 import org.jetbrains.research.kex.util.getRuntime
@@ -71,7 +71,7 @@ class ReanimatorRunner(
             +psa
             +MethodFieldAccessCollector(context, psa)
             +SetterCollector(context)
-            +ExternalCtorCollector(cm, visibilityLevel)
+            +ClassInstantiationDetector(cm, visibilityLevel)
         }
 
         generatorContext = GeneratorContext(context, psa, visibilityLevel)
