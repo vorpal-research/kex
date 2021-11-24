@@ -286,17 +286,17 @@ class CallCiteChecker(
         val result = SMTProxySolver(method.cm.type).use {
             it.isViolated(state, query)
         }
-//
-//        val deltaDebugger = DeltaDebugger(5000, 5000) {
-//            val result = SMTProxySolver(method.cm.type).use { solver ->
-//                solver.isViolated(it, query)
-//            }
-//            result is Result.UnsatResult
-//        }
-//        val reduced = deltaDebugger.reduce(state)
-//        val resultReduced = SMTProxySolver(method.cm.type).use {
-//            it.isViolated(reduced, query)
-//        }
+
+        val deltaDebugger = DeltaDebugger(5000, 5000) {
+            val result = SMTProxySolver(method.cm.type).use { solver ->
+                solver.isViolated(it, query)
+            }
+            result is Result.UnsatResult
+        }
+        val reduced = deltaDebugger.reduce(state)
+        val resultReduced = SMTProxySolver(method.cm.type).use {
+            it.isViolated(reduced, query)
+        }
 
         log.debug("Acquired $result")
         return state to result
