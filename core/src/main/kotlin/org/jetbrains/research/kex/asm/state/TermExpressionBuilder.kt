@@ -129,7 +129,9 @@ class TermExpressionBuilder(override val cm: ClassManager) : TermBuilder(), Meth
         termMap[inst] = inst.operand.term.apply(inst.opcode)
     }
 
-    override fun visitJumpInst(inst: JumpInst) {}
+    override fun visitJumpInst(inst: JumpInst) {
+        path[inst.successor] = currentCond
+    }
 
     override fun visitReturnInst(inst: ReturnInst) {
         if (inst.hasReturnValue) {

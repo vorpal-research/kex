@@ -1,6 +1,7 @@
 package org.jetbrains.research.kex.smt
 
 import org.jetbrains.research.kex.ExecutionContext
+import org.jetbrains.research.kex.asm.manager.instantiationManager
 import org.jetbrains.research.kex.descriptor.*
 import org.jetbrains.research.kex.ktype.*
 import org.jetbrains.research.kex.state.term.*
@@ -126,7 +127,7 @@ class ObjectReanimator(
         val type = resolveType(term.memspace, addr, term.type)
         return memory(term.memspace, address) {
             val fallback = {
-                UNSAFE.allocateInstance(loader.loadClass(context.types, type.concrete(context.cm)))
+                UNSAFE.allocateInstance(loader.loadClass(context.types, instantiationManager.getConcreteType(type, context.cm)))
             }
             when {
                 term.type.isString && model.hasStrings -> reanimateString(term.memspace, addr)

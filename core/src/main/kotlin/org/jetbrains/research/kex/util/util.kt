@@ -42,6 +42,9 @@ fun Path.resolve(vararg paths: String): Path {
 fun String.kapitalize() =
     this.replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString() }
 
+fun String.dekapitalize() =
+    this.replaceFirstChar { it.lowercase(Locale.getDefault()) }
+
 fun String.splitAtLast(char: Char): Pair<String, String> {
     val split = this.lastIndexOf(char)
     if (split < 0) return this to ""

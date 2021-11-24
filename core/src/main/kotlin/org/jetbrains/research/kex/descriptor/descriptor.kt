@@ -1,8 +1,6 @@
 package org.jetbrains.research.kex.descriptor
 
-import org.jetbrains.research.kex.asm.util.Visibility
-import org.jetbrains.research.kex.asm.util.visibility
-import org.jetbrains.research.kex.config.kexConfig
+import org.jetbrains.research.kex.asm.manager.instantiationManager
 import org.jetbrains.research.kex.ktype.*
 import org.jetbrains.research.kex.ktype.KexRtManager.rtMapped
 import org.jetbrains.research.kex.ktype.KexRtManager.rtUnmapped
@@ -12,39 +10,9 @@ import org.jetbrains.research.kex.state.emptyState
 import org.jetbrains.research.kex.state.term.Term
 import org.jetbrains.research.kex.state.term.term
 import org.jetbrains.research.kfg.ClassManager
-import org.jetbrains.research.kfg.ir.Class
-import org.jetbrains.research.kfg.ir.ConcreteClass
-import org.jetbrains.research.kthelper.`try`
 import org.jetbrains.research.kthelper.assert.unreachable
 import org.jetbrains.research.kthelper.logging.log
 
-private val visibilityLevel by lazy { kexConfig.getEnumValue("apiGeneration", "visibility", true, Visibility.PUBLIC) }
-
-class NoConcreteInstanceException(val klass: Class) : Exception()
-
-val Class.isInstantiable: Boolean
-    get() = when {
-        visibilityLevel > this.visibility -> false
-        this.isAbstract -> false
-        this.isInterface -> false
-        else -> true
-    }
-
-fun KexClass.concreteClass(cm: ClassManager): KexClass {
-    val kfgKlass = this.kfgClass(cm.type)
-    val concrete = when {
-        kfgKlass !is ConcreteClass -> throw NoConcreteInstanceException(kfgKlass)
-        kfgKlass.isInstantiable -> kfgKlass
-        else -> ConcreteInstanceGenerator[kfgKlass]
-    }
-    return concrete.kexType
-}
-
-fun KexType.concrete(cm: ClassManager): KexType = when (this) {
-    is KexClass -> `try` { this.concreteClass(cm) }.getOrDefault(this)
-    is KexReference -> KexReference(this.reference.concrete(cm))
-    else -> this
-}
 
 sealed class Descriptor(term: Term, type: KexType) {
     var term = term
@@ -272,7 +240,7 @@ sealed class FieldContainingDescriptor<T : FieldContainingDescriptor<T>>(
         if (this in visited) return this as T
         visited += this
 
-        this.klass = klass.concreteClass(cm)
+        this.klass = instantiationManager.getConcreteClass(klass, cm)
         this.type = klass
         this.term = term { generate(type) }
         for ((field, value) in fields.toMap()) {

@@ -195,7 +195,6 @@ class Z3Solver(val tf: TypeFactory) : AbstractSMTSolver {
         val memories = hashMapOf<Int, Pair<MutableMap<Term, Term>, MutableMap<Term, Term>>>()
         val properties = hashMapOf<Int, MutableMap<String, Pair<MutableMap<Term, Term>, MutableMap<Term, Term>>>>()
         val arrays = hashMapOf<Int, MutableMap<Term, Pair<MutableMap<Term, Term>, MutableMap<Term, Term>>>>()
-        val strings = hashMapOf<Int, Pair<MutableMap<Term, Term>, MutableMap<Term, Term>>>()
         val typeMap = hashMapOf<Term, KexType>()
 
         for ((type, value) in ef.typeMap) {
