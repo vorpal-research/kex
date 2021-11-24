@@ -1,23 +1,35 @@
 package org.jetbrains.research.kex.test.javadebug;
 
-public class JavaTest {
+public abstract class JavaTest {
+    private int value;
 
-    private final String str;
-    private boolean implicitMultiplication = true;
-
-    public JavaTest(String str) {
-        this.str = str;
+    JavaTest(int value) {
+        this.value = value;
     }
 
-    public JavaTest implicitMultiplication(boolean enabled) {
-        this.implicitMultiplication = enabled;
-        return this;
+    static class Impl extends JavaTest {
+        public Impl() {
+            super(10);
+        }
     }
 
-//    public void test(String a) {
-//        A b = new A(a);
-//        if (b.str.length() > 0) {
-//            throw new IllegalArgumentException();
-//        }
-//    }
+    static class Impl2 extends JavaTest {
+        public Impl2() {
+            super(5);
+        }
+    }
+
+    public static JavaTest impl() {
+        return new Impl();
+    }
+
+    public static JavaTest impl2() {
+        return new Impl2();
+    }
+
+    public void foo(int a) {
+        if (a > value) {
+            throw new IllegalStateException();
+        }
+    }
 }

@@ -1,6 +1,7 @@
 package org.jetbrains.research.kex.reanimator.callstack
 
 import org.jetbrains.research.kex.descriptor.Descriptor
+import org.jetbrains.research.kex.descriptor.descriptor
 import org.jetbrains.research.kex.ktype.KexRtManager.rtMapped
 import org.jetbrains.research.kex.ktype.KexRtManager.rtUnmapped
 import org.jetbrains.research.kfg.ir.Class
@@ -288,7 +289,7 @@ class CallStackRtMapper(val mode: Mode) {
     fun map(ct: CallStack): CallStack {
         if (ct is PrimaryValue<*>) return ct
         if (ct in cache) return cache[ct]!!
-        val res = CallStack(ct.name)
+        val res = CallStack(ct.name.mapped)
         cache[ct] = res
         for (call in ct) {
             res += map(call)
@@ -302,6 +303,11 @@ class CallStackRtMapper(val mode: Mode) {
     }
 
     private val Type.mapped get() = when (mode) {
+        Mode.MAP -> rtMapped
+        Mode.UNMAP -> rtUnmapped
+    }
+
+    private val String.mapped get() = when (mode) {
         Mode.MAP -> rtMapped
         Mode.UNMAP -> rtUnmapped
     }
@@ -375,6 +381,6 @@ class CallStackRtMapper(val mode: Mode) {
             )
             StaticMethodCall(unmappedMethod, api.args.map { map(it) })
         }
-        is UnknownCall -> api
+        is UnknownCall -> UnknownCall(api.type.mapped, api.target)
     }
 }

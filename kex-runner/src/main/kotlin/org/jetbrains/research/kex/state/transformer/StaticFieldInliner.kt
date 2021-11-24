@@ -18,6 +18,7 @@ import org.jetbrains.research.kex.state.term.Term
 import org.jetbrains.research.kfg.ir.Class
 import org.jetbrains.research.kfg.ir.Field
 import org.jetbrains.research.kfg.ir.Method
+import org.jetbrains.research.kthelper.`try`
 import org.jetbrains.research.kthelper.collection.dequeOf
 import org.jetbrains.research.kthelper.logging.log
 import org.jetbrains.research.kthelper.tryOrNull
@@ -57,7 +58,7 @@ class StaticFieldInliner(
             +AnnotationAdapter(method, AnnotationManager.defaultLoader)
             +StringMethodAdapter(ctx.cm)
             +KexRtAdapter(ctx.cm)
-            +RecursiveInliner(psa) {  index, psa ->
+            +RecursiveInliner(psa) { index, psa ->
                 ConcreteImplInliner(ctx.types, TypeInfoMap(), psa, inlineIndex = index)
             }
             +IntrinsicAdapter
@@ -128,29 +129,28 @@ class StaticFieldInliner(
     override val builders = dequeOf(StateBuilder())
     val cm get() = ctx.cm
 
-    override fun apply(ps: PredicateState): PredicateState {
-        try {
-            val staticInitializers = TermCollector.getFullTermSet(ps)
-                .asSequence()
-                .filterIsInstance<FieldLoadTerm>()
-                .mapNotNull {
-                    val field = it.field as FieldTerm
-                    val kfgField = field.unmappedKfgField(cm)
-                    if (kfgField.isStatic && kfgField.isFinal) {
-                        kfgField
-                    } else {
-                        null
-                    }
-                }.toSet()
-                .filterNot { it.klass.fullName in ignores }
-                .toSet()
-            for (field in staticInitializers) {
-                val descriptor = getStaticField(ctx, psa, field)
-                currentBuilder += descriptor.query
-            }
-            return super.apply(ps)
-        } catch (e: Throwable) {
-            return ps
+    override fun apply(ps: PredicateState): PredicateState = `try` {
+        val staticInitializers = TermCollector.getFullTermSet(ps)
+            .asSequence()
+            .filterIsInstance<FieldLoadTerm>()
+            .mapNotNull {
+                val field = it.field as FieldTerm
+                val kfgField = field.unmappedKfgField(cm)
+                if (kfgField.isStatic && kfgField.isFinal) {
+                    kfgField
+                } else {
+                    null
+                }
+            }.toSet()
+            .filterNot { it.klass.fullName in ignores }
+            .toSet()
+        for (field in staticInitializers) {
+            val descriptor = getStaticField(ctx, psa, field)
+            currentBuilder += descriptor.query
         }
+        super.apply(ps)
+    }.getOrElse {
+        log.error("Failed to inline static fields in $ps")
+        ps
     }
 }
