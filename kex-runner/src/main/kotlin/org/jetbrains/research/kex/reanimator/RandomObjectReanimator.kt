@@ -1,6 +1,7 @@
 package org.jetbrains.research.kex.reanimator
 
 import org.jetbrains.research.kex.ExecutionContext
+import org.jetbrains.research.kex.asm.manager.instantiationManager
 import org.jetbrains.research.kex.asm.state.PredicateStateAnalysis
 import org.jetbrains.research.kex.asm.util.Visibility
 import org.jetbrains.research.kex.asm.util.visibility
@@ -44,7 +45,7 @@ class RandomObjectReanimator(
         get() {
             val kfgClass = (this.javaClass.kex.getKfgType(cm.type) as ClassType).klass
             if (this is Throwable) return false
-            if (!kfgClass.isInstantiable || visibilityLevel > kfgClass.visibility) return false
+            if (!instantiationManager.isInstantiable(kfgClass) || visibilityLevel > kfgClass.visibility) return false
             if (with(generatorContext) { kfgClass.orderedCtors }.isEmpty()) return false
             return true
         }

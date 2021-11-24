@@ -374,6 +374,6 @@ class CallStackRtMapper(val mode: Mode) {
             )
             StaticMethodCall(unmappedMethod, api.args.map { map(it) })
         }
-        is UnknownCall -> UnknownCall(api.type.mapped, api.descriptor)
+        is UnknownCall -> UnknownCall(api.type.mapped, api.target)
     }
 }
