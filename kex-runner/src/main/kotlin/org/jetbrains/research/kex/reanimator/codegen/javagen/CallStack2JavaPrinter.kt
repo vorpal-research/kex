@@ -84,7 +84,11 @@ open class CallStack2JavaPrinter(
             }
         }
         resolveTypes(callStack)
-        callStack.printAsJava()
+        with(current) {
+            statement("try {")
+                callStack.printAsJava()
+            statement("} catch (Throwable e) {}")
+        }
     }
 
     override fun emit() = builder.toString()
@@ -396,6 +400,13 @@ open class CallStack2JavaPrinter(
         else -> this.cast(reqType)
     }
 
+    private fun CSType.cast(reqType: CSType?): String {
+        return when {
+            reqType.isAssignable(this) -> ""
+            else -> "($reqType)"
+        }
+    }
+
     protected open fun printVarDeclaration(name: String, type: CSType): String = "$type $name"
 
     protected open fun printDefaultConstructor(owner: CallStack, call: DefaultConstructorCall): List<String> {
@@ -485,7 +496,7 @@ open class CallStack2JavaPrinter(
                 val rest = resolvedTypes[owner]!!
                 val type = actualType.merge(rest)
                 actualTypes[owner] = type
-                "${printVarDeclaration(owner.name, type)} = ${constructor.klass.javaString}.${constructor.name}($args)"
+                "${printVarDeclaration(owner.name, type)} = ${type.cast(rest)} ${constructor.klass.javaString}.${constructor.name}($args)"
             } else {
                 actualTypes[owner] = actualType
                 "${

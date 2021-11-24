@@ -6,6 +6,7 @@ import org.jetbrains.research.kex.ExecutionContext
 import org.jetbrains.research.kex.asm.analysis.testgen.DescriptorChecker
 import org.jetbrains.research.kex.asm.analysis.testgen.MethodChecker
 import org.jetbrains.research.kex.asm.analysis.testgen.RandomChecker
+import org.jetbrains.research.kex.asm.manager.ClassInstantiationDetector
 import org.jetbrains.research.kex.asm.manager.CoverageCounter
 import org.jetbrains.research.kex.asm.state.PredicateStateAnalysis
 import org.jetbrains.research.kex.asm.transform.LoopDeroller
@@ -17,7 +18,6 @@ import org.jetbrains.research.kex.config.FileConfig
 import org.jetbrains.research.kex.config.RuntimeConfig
 import org.jetbrains.research.kex.config.kexConfig
 import org.jetbrains.research.kex.random.easyrandom.EasyRandomDriver
-import org.jetbrains.research.kex.reanimator.collector.ExternalCtorCollector
 import org.jetbrains.research.kex.reanimator.collector.MethodFieldAccessCollector
 import org.jetbrains.research.kex.reanimator.collector.SetterCollector
 import org.jetbrains.research.kex.reanimator.descriptor.DescriptorStatistics
@@ -108,10 +108,11 @@ class KexTool : Tool {
         log.debug("Initialized containers: ${containers.joinToString { it.name }}")
 
         val instrumentedDirName = kexConfig.getStringValue("output", "instrumentedDir", "instrumented")
-        val instrumentedCodeDir = kexConfig.getPathValue("kex", "outputDir")!!.resolve(instrumentedDirName)
-        containerClassLoader = URLClassLoader(arrayOf(instrumentedCodeDir.toUri().toURL()))
+        val instrumentedCodeDir = kexConfig.getPathValue("kex", "outputDir")!!.resolve(instrumentedDirName).toAbsolutePath()
+        containerClassLoader = URLClassLoader(containers.map { it.path.toUri().toURL() }.toTypedArray())
 
         prepareInstrumentedClasspath(containers, pkg, instrumentedCodeDir)
+        containerClassLoader = URLClassLoader(arrayOf(instrumentedCodeDir.toUri().toURL()))
 
         val classManager = ClassManager(KfgConfig(flags = Flags.readAll, failOnError = false))
         classManager.initialize(jarClassLoader, *containers.toTypedArray(), getRuntime()!!, getKexRuntime()!!)
@@ -137,7 +138,7 @@ class KexTool : Tool {
             +psa
             +MethodFieldAccessCollector(context, psa)
             +SetterCollector(context)
-            +ExternalCtorCollector(context.cm, visibility)
+            +ClassInstantiationDetector(context.cm, visibility)
         }
         log.debug("Executed analysis pipeline")
     }
