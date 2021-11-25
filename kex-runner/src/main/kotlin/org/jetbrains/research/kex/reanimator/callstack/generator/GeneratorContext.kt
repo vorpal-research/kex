@@ -27,6 +27,7 @@ import org.jetbrains.research.kfg.ir.Field
 import org.jetbrains.research.kfg.ir.Method
 import org.jetbrains.research.kthelper.assert.unreachable
 import org.jetbrains.research.kthelper.logging.log
+import org.jetbrains.research.kthelper.tryOrNull
 
 class GeneratorContext(
     val context: ExecutionContext,
@@ -95,6 +96,8 @@ class GeneratorContext(
         +FieldNormalizer(context.cm, ".query.normalized")
     }
 
+    val Method.isOverride get() = klass.allAncestors.any { tryOrNull { it.getMethod(name, desc) } != null }
+
     val Class.isVisible get() = visibility >= visibilityLevel
 
     val Class.externalCtors get() = instantiationManager.getExternalCtors(this)
@@ -137,12 +140,15 @@ class GeneratorContext(
         }
 
     val Class.accessibleMethods: Set<Method>
-        get() = when {
-            this.isVisible -> methods
+        get() {
+            val visibleMethods = methods
                 .filterNot { it.isStatic }
                 .filter { visibilityLevel <= it.visibility }
                 .toSet()
-            else -> setOf()
+            return when {
+                isVisible -> visibleMethods
+                else -> visibleMethods.filter { it.isOverride }.toSet()
+            }
         }
 
     val Method.isRecursive

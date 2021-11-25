@@ -1,34 +1,28 @@
 package org.jetbrains.research.kex.test.javadebug;
 
 public abstract class JavaTest {
-    private int value;
+    protected int value;
 
     JavaTest(int value) {
         this.value = value;
     }
 
     static class Impl extends JavaTest {
-        public Impl() {
-            super(10);
+        public Impl(int a) {
+            super(a);
         }
-    }
 
-    static class Impl2 extends JavaTest {
-        public Impl2() {
-            super(5);
+        public void setA(int a) {
+            this.value = a;
         }
     }
 
     public static JavaTest impl() {
-        return new Impl();
-    }
-
-    public static JavaTest impl2() {
-        return new Impl2();
+        return new Impl(0);
     }
 
     public void foo(int a) {
-        if (a > value) {
+        if (value > 1 && a > value) {
             throw new IllegalStateException();
         }
     }

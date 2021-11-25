@@ -27,6 +27,7 @@ val instantiationManager: ClassInstantiationManager get() = ClassInstantiationMa
 class NoConcreteInstanceException(val klass: Class) : Exception()
 
 interface ClassInstantiationManager {
+    fun isDirectlyInstantiable(klass: Class, visibilityLevel: Visibility): Boolean
     fun isInstantiable(klass: Class): Boolean
     fun getExternalCtors(klass: Class): Set<Method>
     operator fun get(klass: Class): Class
@@ -61,6 +62,9 @@ private object ClassInstantiationManagerImpl : ClassInstantiationManager {
     private val classInstantiationInfo = mutableMapOf<Class, MutableSet<Class>>()
     private val externalConstructors = mutableMapOf<Class, MutableSet<Method>>()
 
+    override fun isDirectlyInstantiable(klass: Class, visibilityLevel: Visibility): Boolean =
+        klass.visibility >= visibilityLevel && !klass.isAbstract && !klass.isInterface
+
     override fun isInstantiable(klass: Class) = when (klass.fullName) {
         in predefinedConcreteInstanceInfo -> true
         else -> classInstantiationInfo[klass].isNullOrEmpty()
@@ -94,7 +98,7 @@ class ClassInstantiationDetector(override val cm: ClassManager, val visibilityLe
     override fun cleanup() {}
 
     override fun visit(klass: Class) {
-        if (klass.visibility >= visibilityLevel && !klass.isAbstract && !klass.isInterface)
+        if (ClassInstantiationManagerImpl.isDirectlyInstantiable(klass, visibilityLevel))
             addInstantiableClass(klass)
         super.visit(klass)
     }
