@@ -33,7 +33,7 @@ automaton okhttp3.Request$Builder : Request$Builder {
     fun readTimeout(timeout: Long, unit: TimeUnit)
         requires timeoutIsPositive: timeout > 0;
 
-    fun method(method: String, body: RequestBody?)
+    fun method(method: String, body: RequestBody)
         requires isMethodKnown: method = "GET" | method = "POST" | method = "HEAD" | method = "PUT" | method = "DELETE" | method = "PATCH";
 
     fun build(): Request;
