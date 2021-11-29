@@ -21,8 +21,8 @@ public abstract class JavaTest {
         return new Impl(0);
     }
 
-    public void foo(int a) {
-        if (value > 1 && a > value) {
+    public static void foo(JavaTest a) {
+        if (a instanceof Impl) {
             throw new IllegalStateException();
         }
     }

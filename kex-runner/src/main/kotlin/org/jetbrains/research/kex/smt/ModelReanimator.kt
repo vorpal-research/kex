@@ -2,7 +2,10 @@ package org.jetbrains.research.kex.smt
 
 import org.jetbrains.research.kex.ExecutionContext
 import org.jetbrains.research.kex.asm.manager.instantiationManager
-import org.jetbrains.research.kex.descriptor.*
+import org.jetbrains.research.kex.descriptor.ArrayDescriptor
+import org.jetbrains.research.kex.descriptor.Descriptor
+import org.jetbrains.research.kex.descriptor.FieldContainingDescriptor
+import org.jetbrains.research.kex.descriptor.descriptor
 import org.jetbrains.research.kex.ktype.*
 import org.jetbrains.research.kex.state.term.*
 import org.jetbrains.research.kex.state.transformer.memspace
@@ -49,21 +52,31 @@ interface ModelReanimator<T> {
     fun reanimateFromProperties(memspace: Int, name: String, addr: Term?): Term?
     fun reanimateFromArray(memspace: Int, array: Term, index: Term): Term?
 
-    fun reanimateType(memspace: Int, addr: Term?): KexType? {
-        val typeVar = reanimateFromProperties(memspace, "type", addr) ?: return null
-        return model.typeMap[typeVar]
+    fun reanimateType(memspace: Int, addr: Term?): Set<KexType> {
+        val result = mutableSetOf<KexType>()
+        val typeVar = reanimateFromProperties(memspace, "type", addr) ?: return result
+        val binaryString = when (typeVar) {
+            is ConstStringTerm -> typeVar.value
+            else -> typeVar.numericValue.toInt().toString(2)
+        }.reversed()
+        for ((index, char) in binaryString.withIndex()) {
+            if (char == '1') {
+                result += model.typeMap[term { const(index) }] ?: continue
+            }
+        }
+        return result
     }
 
     fun reanimateString(memspace: Int, addr: Term?): Term? = model.strings[memspace]?.finalMemory?.get(addr)
 
     fun resolveType(memspace: Int, addr: Term?, default: KexType): KexType {
-        val resolvedType = reanimateType(memspace, addr) ?: return default
-        val resolvedKfg = resolvedType.getKfgType(context.types)
+        val resolvedTypes = reanimateType(memspace, addr).map { it to it.getKfgType(context.types) }
         val thisKfg = default.getKfgType(context.types)
         return when {
-            !thisKfg.isConcrete -> default
-            resolvedKfg.isSubtypeOf(thisKfg) -> resolvedType
-            else -> default
+            !resolvedTypes.all { it.second.isSubtypeOf(thisKfg) || thisKfg.isSubtypeOf(it.second) } -> default
+            else -> resolvedTypes.firstOrNull { (_, candidateKfg) ->
+                resolvedTypes.all { candidateKfg.isSubtypeOf(it.second) }
+            }?.first ?: default
         }
     }
 }
@@ -80,6 +93,7 @@ class ObjectReanimator(
             field.get(null) as Unsafe
         }
     }
+
     private val randomizer get() = context.random
 
     override val memoryMappings = hashMapOf<Int, MutableMap<Int, Any?>>()
@@ -127,7 +141,12 @@ class ObjectReanimator(
         val type = resolveType(term.memspace, addr, term.type)
         return memory(term.memspace, address) {
             val fallback = {
-                UNSAFE.allocateInstance(loader.loadClass(context.types, instantiationManager.getConcreteType(type, context.cm)))
+                UNSAFE.allocateInstance(
+                    loader.loadClass(
+                        context.types,
+                        instantiationManager.getConcreteType(type, context.cm)
+                    )
+                )
             }
             when {
                 term.type.isString && model.hasStrings -> reanimateString(term.memspace, addr)
@@ -417,7 +436,17 @@ abstract class DescriptorReanimator(
                     addr,
                     term.type
                 ) as? KexArray//(reanimateType(term.memspace, addr) ?: term.type) as? KexArray
-                    ?: unreachable { log.error("Could not cast ${reanimateType(term.memspace, addr)} to array type") }
+                    ?: unreachable {
+                        log.error(
+                            "Could not cast ${
+                                resolveType(
+                                    term.memspace,
+                                    addr,
+                                    term.type
+                                )
+                            } to array type"
+                        )
+                    }
                 val res = memory(term.memspace, address) {
                     newArrayInstance(
                         term.memspace,

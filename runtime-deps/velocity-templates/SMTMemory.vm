@@ -22,22 +22,27 @@ class $self< in Index : $valexpr, Element : $valexpr >(
         inline fun < reified Index : $valexpr, reified Element : $valexpr > makeDefault(
             ctx: $context,
             name: String,
-            default: Element
-        ) = $self< Index, Element >(${Array}.makeDefault< Element, Index >(ctx, name, default)) {
+            defaultIndex: Index,
+            defaultElement: Element
+        ) = $self< Index, Element >(${Array}.makeDefault< Element, Index >(ctx, name, defaultIndex, defaultElement)) {
             ${valexpr}.wrap< Element >(it)
         }
 
         inline fun < reified Index : $valexpr, reified Element : $valexpr > makeFree(
             ctx: $context,
-            name: String
-        ) = $self< Index, Element >(${Array}.makeFree< Element, Index >(ctx, name)) {
+            name: String,
+            defaultIndex: Index,
+            defaultElement: Element
+        ) = $self< Index, Element >(${Array}.makeFree< Element, Index >(ctx, name, defaultIndex, defaultElement)) {
             ${valexpr}.wrap< Element >(it)
         }
 
         inline fun < reified Index : $valexpr, reified Element : $valexpr > makeVar(
             ctx: $context,
-            name: String
-        ) = $self< Index, Element >(${Array}.makeVar< Element, Index >(ctx, name)) {
+            name: String,
+            defaultIndex: Index,
+            defaultElement: Element
+        ) = $self< Index, Element >(${Array}.makeVar< Element, Index >(ctx, name, defaultIndex, defaultElement)) {
             ${valexpr}.wrap< Element >(it)
         }
     }

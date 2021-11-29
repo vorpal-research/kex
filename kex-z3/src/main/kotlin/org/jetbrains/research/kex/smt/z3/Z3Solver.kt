@@ -15,6 +15,7 @@ import org.jetbrains.research.kthelper.assert.ktassert
 import org.jetbrains.research.kthelper.assert.unreachable
 import org.jetbrains.research.kthelper.logging.debug
 import org.jetbrains.research.kthelper.logging.log
+import kotlin.math.log2
 
 private val timeout = kexConfig.getIntValue("smt", "timeout", 3) * 1000
 private val logQuery = kexConfig.getBooleanValue("smt", "logQuery", false)
@@ -47,7 +48,7 @@ class Z3Solver(val tf: TypeFactory) : AbstractSMTSolver {
         val ctx = Z3Context(ef)
 
         val converter = Z3Converter(tf)
-        converter.init(state)
+        converter.init(state, ef)
         val z3State = converter.convert(state, ef, ctx)
         val z3query = converter.convert(query, ef, ctx)
 
@@ -77,7 +78,6 @@ class Z3Solver(val tf: TypeFactory) : AbstractSMTSolver {
         }
 
         solver.add(state_.asAxiom() as BoolExpr)
-        solver.add(ef.buildSubtypeAxioms(tf).asAxiom() as BoolExpr)
         solver.add(ef.buildConstClassAxioms().asAxiom() as BoolExpr)
         solver.add(query_.axiom as BoolExpr)
         solver.add(query_.expr as BoolExpr)
@@ -131,6 +131,25 @@ class Z3Solver(val tf: TypeFactory) : AbstractSMTSolver {
         return ctx.tryFor(tactic, timeout)
     }
 
+    private fun Z3Context.recoverBitvectorProperty(
+        ptr: Term,
+        memspace: Int,
+        model: Model,
+        name: String
+    ): Pair<Term, Term> {
+        val ptrExpr = Z3Converter(tf).convert(ptr, ef, this) as? Ptr_
+            ?: unreachable { log.error("Non-ptr expr for pointer $ptr") }
+        val startProp = getBitvectorInitialProperty(memspace, name)
+        val endProp = getBitvectorProperty(memspace, name)
+
+        val startV = startProp.load(ptrExpr)
+        val endV = endProp.load(ptrExpr)
+
+        val modelStartV = Z3Unlogic.undo(model.evaluate(startV.expr, true))
+        val modelEndV = Z3Unlogic.undo(model.evaluate(endV.expr, true))
+        return modelStartV to modelEndV
+    }
+
     private fun Z3Context.recoverProperty(
         ptr: Term,
         memspace: Int,
@@ -179,6 +198,26 @@ class Z3Solver(val tf: TypeFactory) : AbstractSMTSolver {
         return modelStartT to modelEndT
     }
 
+    private fun MutableMap<Int, MutableMap<String, Pair<MutableMap<Term, Term>, MutableMap<Term, Term>>>>.recoverBitvectorProperty(
+        ctx: Z3Context,
+        ptr: Term,
+        memspace: Int,
+        model: Model,
+        name: String
+    ): Pair<Term, Term> {
+        val ptrExpr = Z3Converter(tf).convert(ptr, ef, ctx) as? Ptr_
+            ?: unreachable { log.error("Non-ptr expr for pointer $ptr") }
+        val modelPtr = Z3Unlogic.undo(model.evaluate(ptrExpr.expr, true))
+
+        val (modelStartT, modelEndT) = ctx.recoverBitvectorProperty(ptr, memspace, model, name)
+        val typePair = this.getOrPut(memspace, ::hashMapOf).getOrPut(name) {
+            hashMapOf<Term, Term>() to hashMapOf()
+        }
+        typePair.first[modelPtr] = modelStartT
+        typePair.second[modelPtr] = modelEndT
+        return modelStartT to modelEndT
+    }
+
     private fun collectModel(ctx: Z3Context, model: Model, vararg states: PredicateState): SMTModel {
         val (ptrs, vars) = states.fold(setOf<Term>() to setOf<Term>()) { acc, ps ->
             acc.first + collectPointers(ps) to acc.second + collectVariables(ps)
@@ -198,8 +237,12 @@ class Z3Solver(val tf: TypeFactory) : AbstractSMTSolver {
         val typeMap = hashMapOf<Term, KexType>()
 
         for ((type, value) in ef.typeMap) {
-            val actualValue = Z3Unlogic.undo(model.evaluate(value.expr, true))
-            typeMap[actualValue] = type
+            val actualValue = Z3Unlogic.undo(value.expr)
+            val index = when (actualValue) {
+                is ConstStringTerm -> term { const(actualValue.value.indexOf('1')) }
+                else -> term { const(log2(actualValue.numericValue.toDouble()).toInt()) }
+            }
+            typeMap[index] = type.kexType
         }
 
         val indices = hashSetOf<Term>()
@@ -260,7 +303,7 @@ class Z3Solver(val tf: TypeFactory) : AbstractSMTSolver {
                         model,
                         name
                     )
-                    properties.recoverProperty(ctx, ptr.owner, memspace, ptr.type, model, "type")
+                    properties.recoverBitvectorProperty(ctx, ptr.owner, memspace, model, "type")
                 }
                 else -> {
                     val startMem = ctx.getWordInitialMemory(memspace)
@@ -311,7 +354,7 @@ class Z3Solver(val tf: TypeFactory) : AbstractSMTSolver {
                         }
                     }
 
-                    properties.recoverProperty(ctx, ptr, memspace, ptr.type, model, "type")
+                    properties.recoverBitvectorProperty(ctx, ptr, memspace, model, "type")
 
                     ktassert(assignments.getOrPut(ptr) { modelPtr } == modelPtr)
                 }
