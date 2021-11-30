@@ -10,8 +10,10 @@ import org.jetbrains.research.kex.descriptor.descriptor
 import org.jetbrains.research.kex.ktype.kexType
 import org.jetbrains.research.kex.smt.Checker
 import org.jetbrains.research.kex.smt.Result
+import org.jetbrains.research.kex.smt.SMTProxySolver
 import org.jetbrains.research.kex.state.PredicateState
 import org.jetbrains.research.kex.state.StateBuilder
+import org.jetbrains.research.kex.state.emptyState
 import org.jetbrains.research.kex.state.term.FieldLoadTerm
 import org.jetbrains.research.kex.state.term.FieldTerm
 import org.jetbrains.research.kex.state.term.Term
@@ -111,7 +113,18 @@ class StaticFieldInliner(
                     log.debug("Model: ${result.model}")
                     generateFinalDescriptors(staticInit, ctx, result.model, checker.state)
                 }
-                else -> return null
+                else -> {
+                    val delta = DeltaDebugger(1000, 1000) { ps ->
+                        SMTProxySolver(ctx.types).use {
+                            it.isPathPossible(ps, emptyState())
+                        } is Result.UnsatResult
+                    }
+                    val reduced = delta.reduce(checker.state)
+                    val res = SMTProxySolver(ctx.types).use {
+                        it.isPathPossible(reduced, emptyState())
+                    }
+                    return null
+                }
             }
 
             return params.statics.map { descriptor ->

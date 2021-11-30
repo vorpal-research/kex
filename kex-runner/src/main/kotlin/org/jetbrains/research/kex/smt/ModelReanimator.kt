@@ -52,31 +52,27 @@ interface ModelReanimator<T> {
     fun reanimateFromProperties(memspace: Int, name: String, addr: Term?): Term?
     fun reanimateFromArray(memspace: Int, array: Term, index: Term): Term?
 
-    fun reanimateType(memspace: Int, addr: Term?): Set<KexType> {
-        val result = mutableSetOf<KexType>()
-        val typeVar = reanimateFromProperties(memspace, "type", addr) ?: return result
+    fun reanimateType(memspace: Int, addr: Term?): KexType? {
+        val typeVar = reanimateFromProperties(memspace, "type", addr) ?: return null
         val binaryString = when (typeVar) {
             is ConstStringTerm -> typeVar.value
             else -> typeVar.numericValue.toInt().toString(2)
         }.reversed()
         for ((index, char) in binaryString.withIndex()) {
             if (char == '1') {
-                result += model.typeMap[term { const(index) }] ?: continue
+                return model.typeMap[term { const(index) }] ?: continue
             }
         }
-        return result
+        return null
     }
 
     fun reanimateString(memspace: Int, addr: Term?): Term? = model.strings[memspace]?.finalMemory?.get(addr)
 
     fun resolveType(memspace: Int, addr: Term?, default: KexType): KexType {
-        val resolvedTypes = reanimateType(memspace, addr).map { it to it.getKfgType(context.types) }
-        val thisKfg = default.getKfgType(context.types)
+        val resolvedType = reanimateType(memspace, addr) ?: return default
         return when {
-            !resolvedTypes.all { it.second.isSubtypeOf(thisKfg) || thisKfg.isSubtypeOf(it.second) } -> default
-            else -> resolvedTypes.firstOrNull { (_, candidateKfg) ->
-                resolvedTypes.all { candidateKfg.isSubtypeOf(it.second) }
-            }?.first ?: default
+            resolvedType.isSubtypeOf(context.types, default) -> resolvedType
+            else -> default
         }
     }
 }

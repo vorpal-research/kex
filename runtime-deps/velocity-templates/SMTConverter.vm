@@ -21,8 +21,8 @@ private typealias Context_ = ${solver}Context
 
 @Suppress("UNUSED_PARAMETER", "UNUSED_VARIABLE")
 class ${solver}Converter(val tf: TypeFactory) : ${solver}SMTConverter() {
-    private var types: Set< Type > = setOf()
     private val bounds = dequeOf< Map< Term, Dynamic_ >>()
+    private val axiomedTerms = mutableSetOf< Term >()
 
     enum class TermType {
         LOCAL_PTR,
@@ -45,6 +45,8 @@ class ${solver}Converter(val tf: TypeFactory) : ${solver}SMTConverter() {
     }
 
     private fun Term.withAxioms(expr: Dynamic_, ef: Factory_, ctx: Context_): Dynamic_ {
+        if (this in axiomedTerms) return expr
+        if (!this.isConst) axiomedTerms += this
         var resultExpr = expr
         when (this.type) {
             is KexPointer -> {
@@ -52,11 +54,11 @@ class ${solver}Converter(val tf: TypeFactory) : ${solver}SMTConverter() {
                 val typeVar = ctx.readBitvectorProperty(expr as Ptr_, this.memspace, "type")
                 val kfgType = this.type.getKfgType(tf)
                 var typeCond: Bool_? = null
-                if (kfgType.isConcrete) {
-                    types.filter { it.isSubtypeOf(kfgType) }.filter { it !is NullType }.forEach {
-                        val tv = ef.getTypeVar(it)
-                        typeCond = if (typeCond == null) (typeVar eq tv) else (typeCond!! or (typeVar eq tv))
-                    }
+                if (kfgType.isConcrete && kfgType !is NullType) {
+                    val isPowerOfTwo = (typeVar and (typeVar - ef.makeBitvectorConst("1", 2, ef.typeWidth))) eq ef.makeBitvectorConst("0", 2, ef.typeWidth)
+                    val isSubtype = (typeVar and ef.getSubTypeMask(kfgType)) eq typeVar
+                    val isGreaterThanZero = typeVar neq ef.makeBitvectorConst("1", 2, ef.typeWidth)
+                    typeCond = isSubtype and isPowerOfTwo and isGreaterThanZero
                 }
                 typeCond?.apply {
                     resultExpr = resultExpr.withAxiom((expr neq ef.makeNull()) implies this)
@@ -112,8 +114,8 @@ class ${solver}Converter(val tf: TypeFactory) : ${solver}SMTConverter() {
 
 
     fun init(state: PredicateState, ef: Factory_) {
-        this.types = collectTypes(state).filter { it !is KexNull }.map { it.getKfgType(tf) }.toSet()
-        ef.initTypes(this.types)
+        val types = collectTypes(state).filter { it !is KexNull }.map { it.getKfgType(tf) }.toSet()
+        ef.initTypes(types)
     }
 
     fun convert(ps: PredicateState, ef: Factory_, ctx: Context_, extractPath: Boolean = false): Bool_ = when (ps) {
@@ -402,13 +404,15 @@ class ${solver}Converter(val tf: TypeFactory) : ${solver}SMTConverter() {
 
     fun convert(cast: CastTerm, ef: Factory_, ctx: Context_): Dynamic_ {
         val op = convert(cast.operand, ef, ctx)
-        if (cast.type is KexPointer) {
+        val kfgCastType = cast.type.getKfgType(tf)
+        return if (cast.type is KexPointer && kfgCastType.isConcrete) {
             val typeVar = ctx.readBitvectorProperty(op as Ptr_, cast.operand.memspace, "type")
-            val castedTypeVar = ef.getSingleTypeVar(cast.type.getKfgType(tf))
-            val subtype = (typeVar and castedTypeVar) eq castedTypeVar
-            return cast(cast.type, op.withAxiom(subtype))
+            val castedTypeVar = ef.getFullTypeMask(cast.type.getKfgType(tf))
+            val subtype = (typeVar and castedTypeVar) eq typeVar
+            cast(cast.type, op.withAxiom(subtype))
+        } else {
+            convertAndCast(cast.type, op)
         }
-        return convertAndCast(cast.type, op)
     }
 
     fun convert(charAt: CharAtTerm, ef: Factory_, ctx: Context_): Dynamic_ {
@@ -595,9 +599,14 @@ class ${solver}Converter(val tf: TypeFactory) : ${solver}SMTConverter() {
         val operand = convert(instanceof.operand, ef, ctx) as? Ptr_ ?: unreachable { log.error("Non-ptr ref in field load") }
 
         val ptrType = ctx.readBitvectorProperty(operand, memspace, "type")
-        val checkedType = ef.getSingleTypeVar(instanceof.checkedType.getKfgType(tf))
-        val isSubtype = (ptrType and checkedType) eq checkedType
-        return isSubtype.withAxiom(operand neq ef.makeNull())
+        val kfgType = instanceof.checkedType.getKfgType(tf)
+        return if (kfgType.isConcrete) {
+            val checkedType = ef.getSubTypeMask(instanceof.checkedType.getKfgType(tf))
+            val isSubtype = (ptrType and checkedType) eq ptrType
+            `if`(operand eq ef.makeNull()).then(ef.makeFalse()).`else`(isSubtype)
+        } else {
+            ef.makeTrue()
+        }
     }
 
     fun convert(ite: IteTerm, ef: Factory_, ctx: Context_): Dynamic_ {
