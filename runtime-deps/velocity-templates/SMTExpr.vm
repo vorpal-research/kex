@@ -378,27 +378,27 @@ class $self< Element : $valexpr, in Index : $valexpr > : $valexpr {
         }
 
         @Suppress("UNUSED_PARAMETER")
-        inline fun < Element : $valexpr, reified Index : $valexpr > makeDefault(ctx: $context, name: String, default: Element) =
-            $self< Element, Index >(ctx, ${solver}Engine.makeConstArray(ctx, ${valexpr}.getStaticSort< Index >(ctx), default.expr))
+        inline fun < Element : $valexpr, reified Index : $valexpr > makeDefault(ctx: $context, name: String, defaultIndex: Index, defaultElement: Element) =
+            $self< Element, Index >(ctx, ${solver}Engine.makeConstArray(ctx, defaultIndex.getSort(), defaultElement.expr))
 
-        inline fun < reified Element : $valexpr, reified Index : $valexpr > makeFree(ctx: $context, name: String): $self< Element, Index > {
-            val sort = ${solver}Engine.getArraySort(ctx, ${valexpr}.getStaticSort< Index >(ctx), ${valexpr}.getStaticSort< Element >(ctx))
+        inline fun < reified Element : $valexpr, reified Index : $valexpr > makeFree(ctx: $context, name: String, defaultIndex: Index, defaultElement: Element): $self< Element, Index > {
+            val sort = ${solver}Engine.getArraySort(ctx, defaultIndex.getSort(), defaultElement.getSort())
             return $self< Element, Index >(ctx, ${solver}Engine.makeVar(ctx, sort, name, true))
         }
 
 
-        inline fun < reified Element : $valexpr, reified Index : $valexpr > makeFree(ctx: $context, name: String, elemSort: $sort): $self< Element, Index > {
-            val sort = ${solver}Engine.getArraySort(ctx, ${valexpr}.getStaticSort< Index >(ctx), elemSort)
+        inline fun < reified Element : $valexpr, reified Index : $valexpr > makeFree(ctx: $context, name: String, indexSort: $sort, elemSort: $sort): $self< Element, Index > {
+            val sort = ${solver}Engine.getArraySort(ctx, indexSort, elemSort)
             return $self< Element, Index >(ctx, ${solver}Engine.makeVar(ctx, sort, name, true))
         }
 
-        inline fun < reified Element : $valexpr, reified Index : $valexpr > makeVar(ctx: $context, name: String): $self< Element, Index > {
-            val sort = ${solver}Engine.getArraySort(ctx, ${valexpr}.getStaticSort< Index >(ctx), ${valexpr}.getStaticSort< Element >(ctx))
+        inline fun < reified Element : $valexpr, reified Index : $valexpr > makeVar(ctx: $context, name: String, defaultIndex: Index, defaultElement: Element): $self< Element, Index > {
+            val sort = ${solver}Engine.getArraySort(ctx, defaultIndex.getSort(), defaultElement.getSort())
             return $self< Element, Index >(ctx, ${solver}Engine.makeVar(ctx, sort, name, false))
         }
 
-        inline fun < reified Element : $valexpr, reified Index : $valexpr > makeVar(ctx: $context, name: String, elemSort: $sort): $self< Element, Index > {
-            val sort = ${solver}Engine.getArraySort(ctx, ${valexpr}.getStaticSort< Index >(ctx), elemSort)
+        inline fun < reified Element : $valexpr, reified Index : $valexpr > makeVar(ctx: $context, name: String, indexSort: $sort, elemSort: $sort): $self< Element, Index > {
+            val sort = ${solver}Engine.getArraySort(ctx, indexSort, elemSort)
             return $self< Element, Index >(ctx, ${solver}Engine.makeVar(ctx, sort, name, false))
         }
     }

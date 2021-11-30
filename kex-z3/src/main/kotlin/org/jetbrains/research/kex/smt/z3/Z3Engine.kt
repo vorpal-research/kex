@@ -4,6 +4,7 @@ import com.microsoft.z3.*
 import org.jetbrains.research.kex.smt.SMTEngine
 import org.jetbrains.research.kthelper.assert.unreachable
 import org.jetbrains.research.kthelper.logging.log
+import java.math.BigInteger
 
 @Suppress("UNCHECKED_CAST")
 object Z3Engine : SMTEngine<Context, Expr<*>, Sort, FuncDecl<*>, Pattern>() {
@@ -136,6 +137,11 @@ object Z3Engine : SMTEngine<Context, Expr<*>, Sort, FuncDecl<*>, Pattern>() {
 
     override fun makeFunction(ctx: Context, name: String, retSort: Sort, args: List<Sort>): FuncDecl<*> =
         ctx.mkFuncDecl(name, args.toTypedArray(), retSort)
+
+    override fun makeBVConst(ctx: Context, value: String, radix: Int, width: Int): Expr<*> {
+        val bitStr = BigInteger(value, radix).toString(10)
+        return ctx.mkNumeral(bitStr, getBVSort(ctx, width))
+    }
 
     override fun apply(ctx: Context, f: FuncDecl<*>, args: List<Expr<*>>): Expr<*> = f.apply(*args.toTypedArray())
 
