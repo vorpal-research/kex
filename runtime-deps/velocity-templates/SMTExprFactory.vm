@@ -46,6 +46,8 @@ class $factory : ${solver}SMTExprFactory() {
 
     val ctx = $context()
     val typeMap: Map< Type, Bitvector_ > get() = innerTypeMap
+    var typeWidth: Int = 1
+        private set
 
     private val innerTypeMap: MutableMap< Type, Bitvector_ >
     private val innerKlassMap: MutableMap< KexType, Ptr_ >
@@ -59,24 +61,33 @@ class $factory : ${solver}SMTExprFactory() {
     }
 
     fun initTypes(types: Set< Type >) {
-        val width = maxOf(types.size, 1)
-        val template = "0".repeat(width)
+        typeWidth = maxOf(types.size, typeWidth)
+        val template = "0".repeat(typeWidth)
         for ((index, type) in types.withIndex()) {
-            innerTypeMap[type] = makeBitvectorConst(template.replaceRange(index, index + 1, "1"), 2, width)
+            innerTypeMap[type] = makeBitvectorConst(template.replaceRange(index, index + 1, "1"), 2, typeWidth)
         }
-        defaultBV = makeBitvectorConst(template, 2, width)
+        defaultBV = makeBitvectorConst(template, 2, typeWidth)
     }
 
-    fun getTypeVar(type: Type): Bitvector_ {
+    fun getSubTypeMask(type: Type): Bitvector_ {
         var res: Bitvector_? = null
         for ((t, v) in innerTypeMap) {
-            if (type.isSubtypeOf(t))
+            if (t.isSubtypeOf(type))
                 res = if (res == null) v else (res or v)
         }
         return res!!
     }
 
-    fun getSingleTypeVar(type: Type): Bitvector_ = innerTypeMap.getValue(type)
+    fun getFullTypeMask(type: Type): Bitvector_ {
+        var res: Bitvector_ = getSubTypeMask(type)
+        for ((t, v) in innerTypeMap) {
+            if (type.isSubtypeOf(t))
+                res = res or v
+        }
+        return res
+    }
+
+    fun getTypeVar(type: Type): Bitvector_ = innerTypeMap.getValue(type)
 
 #macro(generateMakes $type $basetype)
     #set($underlined = "${type}_")
