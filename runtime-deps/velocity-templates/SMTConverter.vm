@@ -46,7 +46,6 @@ class ${solver}Converter(val tf: TypeFactory) : ${solver}SMTConverter() {
 
     private fun Term.withAxioms(expr: Dynamic_, ef: Factory_, ctx: Context_): Dynamic_ {
         if (this in axiomedTerms) return expr
-        if (!this.isConst) axiomedTerms += this
         var resultExpr = expr
         when (this.type) {
             is KexPointer -> {
@@ -57,7 +56,7 @@ class ${solver}Converter(val tf: TypeFactory) : ${solver}SMTConverter() {
                 if (kfgType.isConcrete && kfgType !is NullType) {
                     val isPowerOfTwo = (typeVar and (typeVar - ef.makeBitvectorConst("1", 2, ef.typeWidth))) eq ef.makeBitvectorConst("0", 2, ef.typeWidth)
                     val isSubtype = (typeVar and ef.getSubTypeMask(kfgType)) eq typeVar
-                    val isGreaterThanZero = typeVar neq ef.makeBitvectorConst("1", 2, ef.typeWidth)
+                    val isGreaterThanZero = typeVar neq ef.makeBitvectorConst("0", 2, ef.typeWidth)
                     typeCond = isSubtype and isPowerOfTwo and isGreaterThanZero
                 }
                 typeCond?.apply {

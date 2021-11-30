@@ -113,18 +113,7 @@ class StaticFieldInliner(
                     log.debug("Model: ${result.model}")
                     generateFinalDescriptors(staticInit, ctx, result.model, checker.state)
                 }
-                else -> {
-                    val delta = DeltaDebugger(1000, 1000) { ps ->
-                        SMTProxySolver(ctx.types).use {
-                            it.isPathPossible(ps, emptyState())
-                        } is Result.UnsatResult
-                    }
-                    val reduced = delta.reduce(checker.state)
-                    val res = SMTProxySolver(ctx.types).use {
-                        it.isPathPossible(reduced, emptyState())
-                    }
-                    return null
-                }
+                else -> return null
             }
 
             return params.statics.map { descriptor ->
