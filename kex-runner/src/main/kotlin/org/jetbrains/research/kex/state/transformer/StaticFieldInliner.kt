@@ -10,8 +10,10 @@ import org.jetbrains.research.kex.descriptor.descriptor
 import org.jetbrains.research.kex.ktype.kexType
 import org.jetbrains.research.kex.smt.Checker
 import org.jetbrains.research.kex.smt.Result
+import org.jetbrains.research.kex.smt.SMTProxySolver
 import org.jetbrains.research.kex.state.PredicateState
 import org.jetbrains.research.kex.state.StateBuilder
+import org.jetbrains.research.kex.state.emptyState
 import org.jetbrains.research.kex.state.term.FieldLoadTerm
 import org.jetbrains.research.kex.state.term.FieldTerm
 import org.jetbrains.research.kex.state.term.Term

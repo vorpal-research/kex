@@ -12,7 +12,7 @@ Kex is a white-box fuzzer tool for Java bytecode.
   mvn install:install-file -Dfile=/usr/lib/com.microsoft.z3.jar -DgroupId=com.microsoft 
   -DartifactId=z3 -Dversion=4.8.6 -Dpackaging=jar
   ```
-* [boolector-java](https://aur.archlinux.org/packages/boolector-java/) v3.2.1
+* [boolector-java](https://aur.archlinux.org/packages/boolector-java/) v3.2.5
 
 # Build
 
@@ -36,19 +36,15 @@ mvn clean verify
 
 ```
 Usage: kex
-    --config <arg>                  configuration file
+     --config <arg>                  configuration file
  -cp,--classpath <arg[:arg]>        classpath for analysis, jar files and
                                     directories separated by `:`
- -t,--target <arg>                  target to analyze: package, class or method
  -h,--help                          print this help and quit
-    --attempts <arg>                number of attempts for reanimator mode
-    --libCheck <arg>                package to check use cases of library, used
-                                    in LibChecker mode
- -m,--mode <arg>                    run mode: symbolic, concolic or debug
+ -m,--mode <arg>                    run mode: symbolic, concolic, libchecker
     --option <section:name:value>   set kex option through command line
     --output <arg>                  directory for all temporary output
-    --ps <arg>                      file with predicate state to debug; used
-                                    only in debug mode
+ -t,--target <arg>                  target to analyze: package, class or method
+
 ```
 
 # Example

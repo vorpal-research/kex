@@ -108,6 +108,7 @@ abstract class SMTEngine<in Context_t : Any, Expr_t : Any, Sort_t : Any, Functio
     abstract fun makeConstArray(ctx: Context_t, sort: Sort_t, expr: Expr_t): Expr_t
     abstract fun makeFunction(ctx: Context_t, name: String, retSort: Sort_t, args: List<Sort_t>): Function_t
     abstract fun makeStringConst(ctx: Context_t, value: String): Expr_t
+    abstract fun makeBVConst(ctx: Context_t, value: String, radix: Int, width: Int): Expr_t
 
     abstract fun apply(ctx: Context_t, f: Function_t, args: List<Expr_t>): Expr_t
 

@@ -29,7 +29,7 @@ class VersionedMemory< T : Dynamic_ >(val memory: Memory_< T >, val version: Lon
     operator fun set(index: Ptr_, element: T) = store(index, element)
 }
 
-#set($memoryTypes = ["Word", "DWord", "Array"])
+#set($memoryTypes = ["Word", "DWord", "Array", "Bitvector"])
 #if($generateString)
     #set($res = $memoryTypes.add("String"))
 #end
@@ -79,7 +79,7 @@ class MemoryContext(
 
 #foreach($type in $memoryTypes)
     fun get${type}Memory(id: String) =
-            ${type.toLowerCase()}Memories.getOrPut(id) { VersionedMemory(factory.makeEmptyMemory(id)) }
+            ${type.toLowerCase()}Memories.getOrPut(id) { VersionedMemory(factory.makeEmptyMemory(id, factory.makeDefault${type}())) }
     fun get${type}Memory(id: String, getter: () -> VersionedMemory< ${type}_ >) =
             ${type.toLowerCase()}Memories.getOrPut(id, getter)
 #end
@@ -151,7 +151,7 @@ class $self : ${solver}SMTContext {
     fun get${type}Memory(memspace: Int) = get${type}Memory("${ ${type}_MEMORY_NAME }${ memspace }")
 
     fun get${type}InitialMemory(id: String) =
-        initialMemory.get${type}Memory(id) { VersionedMemory(factory.makeEmptyMemory(id)) }
+        initialMemory.get${type}Memory(id) { VersionedMemory(factory.makeEmptyMemory(id, factory.makeDefault${type}())) }
 
     fun get${type}Memory(id: String) =
         memories.get${type}Memory(id) { get${type}InitialMemory(id) }

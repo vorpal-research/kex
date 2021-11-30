@@ -4,6 +4,7 @@ import org.jetbrains.research.boolector.*
 import org.jetbrains.research.kex.smt.SMTEngine
 import org.jetbrains.research.kthelper.assert.unreachable
 import org.jetbrains.research.kthelper.logging.log
+import java.math.BigInteger
 import kotlin.math.roundToInt
 import kotlin.math.roundToLong
 
@@ -141,6 +142,14 @@ object BoolectorEngine :
     ): BoolectorFunction {
         val sort = FunctionSort.functionSort(args.toTypedArray(), retSort)
         return UninterpretedFunction.func(name, sort)
+    }
+
+    override fun makeBVConst(ctx: Btor, value: String, radix: Int, width: Int): BoolectorNode {
+        var bitStr = BigInteger(value, radix).toString(2)
+        if (bitStr.length > width)
+            unreachable<Unit> { log.error("Bitvector of value '$bitStr' does not fit in width $width") }
+        if (bitStr.length < width) bitStr = "0".repeat(width - bitStr.length) + bitStr
+        return BitvecNode.constBitvec(ctx, bitStr)
     }
 
     override fun apply(ctx: Btor, f: BoolectorFunction, args: List<BoolectorNode>): BoolectorNode = f.apply(args)
