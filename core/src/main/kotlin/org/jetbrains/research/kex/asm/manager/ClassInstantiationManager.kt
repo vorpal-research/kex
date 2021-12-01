@@ -122,6 +122,7 @@ class ClassInstantiationDetector(override val cm: ClassManager, val visibilityLe
     private fun addInstantiableClass(klass: Class) {
         for (parent in klass.allAncestors) {
             ClassInstantiationManagerImpl[parent] = klass
+            addInstantiableClass(parent)
         }
         ClassInstantiationManagerImpl[klass] = klass
     }
@@ -129,6 +130,7 @@ class ClassInstantiationDetector(override val cm: ClassManager, val visibilityLe
     private fun addExternalCtor(klass: Class, method: Method) {
         for (parent in klass.allAncestors) {
             ClassInstantiationManagerImpl[klass] = method
+            addExternalCtor(parent, method)
         }
         ClassInstantiationManagerImpl[klass] = method
     }
