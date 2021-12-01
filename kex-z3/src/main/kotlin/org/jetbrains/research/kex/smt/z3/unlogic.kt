@@ -91,6 +91,10 @@ object Z3Unlogic {
                 val second = undo(expr.args[1]).numericValue
                 term { const(first xor second) }
             }
+            expr.isConst -> {
+                val value = expr.toString().replace("|", "")
+                term { const(value) }
+            }
             else -> unreachable { log.error("Not implemented unlogic SMT operation: $expr") }
         }
         // todo: support more bv expressions
