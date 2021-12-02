@@ -99,7 +99,7 @@ class ClassInstantiationDetector(override val cm: ClassManager, val visibilityLe
 
     override fun visit(klass: Class) {
         if (ClassInstantiationManagerImpl.isDirectlyInstantiable(klass, visibilityLevel))
-            addInstantiableClass(klass)
+            addInstantiableClass(klass, klass)
         super.visit(klass)
     }
 
@@ -115,21 +115,19 @@ class ClassInstantiationDetector(override val cm: ClassManager, val visibilityLe
                 returnClass = (it.returnValue.type as ClassType).klass
             }
         }
-        addInstantiableClass(returnClass)
+        addInstantiableClass(returnClass, returnClass)
         addExternalCtor(returnClass, method)
     }
 
-    private fun addInstantiableClass(klass: Class) {
+    private fun addInstantiableClass(klass: Class, instantiableKlass: Class) {
         for (parent in klass.allAncestors) {
-            ClassInstantiationManagerImpl[parent] = klass
-            addInstantiableClass(parent)
+            addInstantiableClass(parent, instantiableKlass)
         }
-        ClassInstantiationManagerImpl[klass] = klass
+        ClassInstantiationManagerImpl[klass] = instantiableKlass
     }
 
     private fun addExternalCtor(klass: Class, method: Method) {
         for (parent in klass.allAncestors) {
-            ClassInstantiationManagerImpl[klass] = method
             addExternalCtor(parent, method)
         }
         ClassInstantiationManagerImpl[klass] = method
