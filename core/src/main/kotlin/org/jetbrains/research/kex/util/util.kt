@@ -6,6 +6,7 @@ import org.jetbrains.research.kthelper.assert.unreachable
 import org.jetbrains.research.kthelper.logging.log
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import java.io.File
 import java.nio.file.Path
 import java.util.*
 
@@ -58,3 +59,14 @@ fun String.splitAtLast(str: String): Pair<String, String> {
 }
 
 fun <T : Any> T.asList() = listOf(this)
+
+fun deleteDirectory(directoryToBeDeleted: Path) = deleteDirectory(directoryToBeDeleted.toFile())
+fun deleteDirectory(directoryToBeDeleted: File): Boolean {
+    val allContents = directoryToBeDeleted.listFiles()
+    if (allContents != null) {
+        for (file in allContents) {
+            deleteDirectory(file)
+        }
+    }
+    return directoryToBeDeleted.delete()
+}

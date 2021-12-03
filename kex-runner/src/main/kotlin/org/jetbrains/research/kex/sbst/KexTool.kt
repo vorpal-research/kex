@@ -23,6 +23,7 @@ import org.jetbrains.research.kex.reanimator.collector.SetterCollector
 import org.jetbrains.research.kex.reanimator.descriptor.DescriptorStatistics
 import org.jetbrains.research.kex.trace.`object`.ActionTrace
 import org.jetbrains.research.kex.trace.`object`.ObjectTraceManager
+import org.jetbrains.research.kex.util.deleteDirectory
 import org.jetbrains.research.kex.util.getKexRuntime
 import org.jetbrains.research.kex.util.getRuntime
 import org.jetbrains.research.kfg.ClassManager
@@ -164,5 +165,9 @@ class KexTool : Tool {
                 "body coverage: ${String.format(Locale.ENGLISH, "%.2f", coverage.bodyCoverage)}%\n" +
                 "full coverage: ${String.format(Locale.ENGLISH, "%.2f", coverage.fullCoverage)}%")
         DescriptorStatistics.printStatistics()
+
+        val instrumentedDirName = kexConfig.getStringValue("output", "instrumentedDir", "instrumented")
+        val instrumentedCodeDir = kexConfig.getPathValue("kex", "outputDir")!!.resolve(instrumentedDirName).toAbsolutePath()
+        deleteDirectory(instrumentedCodeDir)
     }
 }
