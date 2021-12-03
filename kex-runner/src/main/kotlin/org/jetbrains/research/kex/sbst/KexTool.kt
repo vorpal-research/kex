@@ -5,7 +5,6 @@ import kotlinx.serialization.InternalSerializationApi
 import org.jetbrains.research.kex.ExecutionContext
 import org.jetbrains.research.kex.asm.analysis.testgen.DescriptorChecker
 import org.jetbrains.research.kex.asm.analysis.testgen.MethodChecker
-import org.jetbrains.research.kex.asm.analysis.testgen.RandomChecker
 import org.jetbrains.research.kex.asm.manager.ClassInstantiationDetector
 import org.jetbrains.research.kex.asm.manager.CoverageCounter
 import org.jetbrains.research.kex.asm.state.PredicateStateAnalysis
@@ -132,8 +131,7 @@ class KexTool : Tool {
 
         updateClassPath(context.loader as URLClassLoader)
 
-        executePipeline(context.cm, pkg) {
-            +RandomChecker(context, psa, visibility, traceManager)
+        executePipeline(context.cm, Package.defaultPackage) {
             +LoopSimplifier(context.cm)
             +LoopDeroller(context.cm)
             +psa
