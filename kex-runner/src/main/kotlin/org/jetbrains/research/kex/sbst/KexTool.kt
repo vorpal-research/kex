@@ -35,6 +35,7 @@ import org.jetbrains.research.kfg.ir.Class
 import org.jetbrains.research.kfg.util.Flags
 import org.jetbrains.research.kfg.visitor.executePipeline
 import org.jetbrains.research.kthelper.logging.log
+import org.jetbrains.research.kthelper.tryOrNull
 import java.io.File
 import java.net.URLClassLoader
 import java.nio.file.Path
@@ -166,6 +167,6 @@ class KexTool : Tool {
 
         val instrumentedDirName = kexConfig.getStringValue("output", "instrumentedDir", "instrumented")
         val instrumentedCodeDir = kexConfig.getPathValue("kex", "outputDir")!!.resolve(instrumentedDirName).toAbsolutePath()
-        deleteDirectory(instrumentedCodeDir)
+        tryOrNull { deleteDirectory(instrumentedCodeDir) }
     }
 }
