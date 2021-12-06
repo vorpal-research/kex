@@ -95,61 +95,63 @@ open class MethodChecker(
     protected open fun getSearchStrategy(method: Method): SearchStrategy = DfsStrategy(method)
 
     override fun visit(method: Method) {
-        super.visit(method)
-        if (!hasTimeBudget()) return
-
-        if (!method.isImpactable || !method.hasBody) return
-
-        log.debug("Checking method $method")
-        log.debug(method.print())
-        log.debug()
-
-        val unreachableBlocks = mutableSetOf<BasicBlock>()
-        val domTree = DominatorTreeBuilder(method).build()
-        val order: SearchStrategy = getSearchStrategy(method)
-
-        initializeGenerator(method)
-
-        for (block in order) {
+        tryOrNull {
+            super.visit(method)
             if (!hasTimeBudget()) return
-            if (block.terminator is UnreachableInst) {
-                unreachableBlocks += block
-                continue
-            }
 
-            if (tm.isCovered(block)) continue
+            if (!method.isImpactable || !method.hasBody) return
 
-            if (block in unreachableBlocks) continue
-            if (domTree[block]?.idom?.value in unreachableBlocks) {
-                unreachableBlocks += block
-                continue
-            }
-
-            val coverageResult = try {
-                log.debug("Checking reachability of ${block.name}")
-                coverBlock(method, block)
-            } catch (e: TimeoutException) {
-                log.warn("Timeout exception when running method $method, skipping it")
-                break
-            } catch (e: KexCheckerException) {
-                log.error("Fail when covering block ${block.name} of $method")
-                log.error("Error: ${e.inner}")
-                dumpPS(method, e.inner.toString(), e.reason)
-                break
-            } catch (e: KexRunnerException) {
-                log.error("Fail when running method $method with model ${e.model}")
-                log.error("Error: ${e.inner}")
-                break
-            }
-
-            log.debug("Block ${block.name} is covered = ${tm.isCovered(block)}")
+            log.debug("Checking method $method")
+            log.debug(method.print())
             log.debug()
 
-            if (coverageResult is Result.UnsatResult) unreachableBlocks += block
+            val unreachableBlocks = mutableSetOf<BasicBlock>()
+            val domTree = DominatorTreeBuilder(method).build()
+            val order: SearchStrategy = getSearchStrategy(method)
+
+            initializeGenerator(method)
+
+            for (block in order) {
+                if (!hasTimeBudget()) return
+                if (block.terminator is UnreachableInst) {
+                    unreachableBlocks += block
+                    continue
+                }
+
+                if (tm.isCovered(block)) continue
+
+                if (block in unreachableBlocks) continue
+                if (domTree[block]?.idom?.value in unreachableBlocks) {
+                    unreachableBlocks += block
+                    continue
+                }
+
+                val coverageResult = try {
+                    log.debug("Checking reachability of ${block.name}")
+                    coverBlock(method, block)
+                } catch (e: TimeoutException) {
+                    log.warn("Timeout exception when running method $method, skipping it")
+                    break
+                } catch (e: KexCheckerException) {
+                    log.error("Fail when covering block ${block.name} of $method")
+                    log.error("Error: ${e.inner}")
+                    dumpPS(method, e.inner.toString(), e.reason)
+                    break
+                } catch (e: KexRunnerException) {
+                    log.error("Fail when running method $method with model ${e.model}")
+                    log.error("Error: ${e.inner}")
+                    break
+                }
+
+                log.debug("Block ${block.name} is covered = ${tm.isCovered(block)}")
+                log.debug()
+
+                if (coverageResult is Result.UnsatResult) unreachableBlocks += block
+                generator.emit()
+            }
+
             generator.emit()
         }
-
-        generator.emit()
     }
 
     protected open fun coverBlock(method: Method, block: BasicBlock): Result {

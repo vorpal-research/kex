@@ -22,6 +22,8 @@ class PredicateStateAnalysis(override val cm: ClassManager) : MethodVisitor {
             // during loop derolling we can create instructions,
             // that are not convertible into predicates
             log.error("Unexpected exception during PS building for $method: $e")
+        } catch (e: Throwable) {
+            log.error("Can't perform topological sorting of loops of method $method: $e")
         }
         return builder
     }

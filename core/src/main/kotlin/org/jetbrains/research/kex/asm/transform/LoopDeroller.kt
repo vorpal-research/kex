@@ -96,6 +96,8 @@ class LoopDeroller(override val cm: ClassManager) : LoopVisitor {
             log.error("Can't deroll loops of method $method")
         } catch (e: NoTopologicalSortingException) {
             log.error("Can't perform topological sorting of loops of method $method")
+        } catch (e: Throwable) {
+            log.error("Can't perform topological sorting of loops of method $method: $e")
         }
     }
 

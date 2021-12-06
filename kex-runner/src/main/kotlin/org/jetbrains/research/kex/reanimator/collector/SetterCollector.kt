@@ -11,6 +11,7 @@ import org.jetbrains.research.kfg.visitor.ClassVisitor
 import org.jetbrains.research.kthelper.`try`
 import org.jetbrains.research.kthelper.assert.asserted
 import org.jetbrains.research.kthelper.logging.log
+import org.jetbrains.research.kthelper.tryOrNull
 import java.util.*
 import kotlin.reflect.KMutableProperty
 import kotlin.reflect.KType
@@ -70,15 +71,18 @@ class SetterCollector(val ctx: ExecutionContext) : ClassVisitor {
                 }" }
         }.getOrNull() ?: return
         if (fieldInstances.isEmpty()) return
-        require(fieldInstances.size == 1)
-        val fieldReflection = fieldInstances.first()
-        val methodFA = method.fieldAccesses
-        if (methodFA.size == 1
+        tryOrNull {
+            require(fieldInstances.size == 1)
+            val fieldReflection = fieldInstances.first()
+            val methodFA = method.fieldAccesses
+            if (methodFA.size == 1
                 && `try` { fieldReflection.eq(ctx.loader, methodFA.first()) }.getOrElse { false }
                 && method.argTypes.size == 1
-                && fieldReflection.type.isAssignableFrom(ctx.loader.loadClass(method.argTypes.first()))) {
-            log.info("Method $method is java setter for $fieldReflection")
-            settersInner[methodFA.first()] = method
+                && fieldReflection.type.isAssignableFrom(ctx.loader.loadClass(method.argTypes.first()))
+            ) {
+                log.info("Method $method is java setter for $fieldReflection")
+                settersInner[methodFA.first()] = method
+            }
         }
     }
 }
