@@ -1,6 +1,9 @@
 package org.jetbrains.research.kex.jacoco
 
-import org.jacoco.core.analysis.*
+import org.jacoco.core.analysis.Analyzer
+import org.jacoco.core.analysis.CoverageBuilder
+import org.jacoco.core.analysis.ICounter
+import org.jacoco.core.analysis.ICoverageNode
 import org.jacoco.core.data.ExecutionDataStore
 import org.jacoco.core.data.SessionInfoStore
 import org.jacoco.core.instr.Instrumenter
@@ -11,12 +14,15 @@ import org.jetbrains.research.kex.config.kexConfig
 import org.jetbrains.research.kex.jacoco.TestsCompiler.CompiledClassLoader
 import org.jetbrains.research.kfg.Package
 import org.jetbrains.research.kfg.ir.Method
-import org.jetbrains.research.kfg.ir.Class as KfgClass
 import org.jetbrains.research.kfg.util.isClass
 import org.jetbrains.research.kthelper.logging.log
+import org.jetbrains.research.kthelper.tryOrNull
 import org.junit.runner.JUnitCore
+import java.lang.Class
+import java.lang.ClassLoader
 import java.net.URLClassLoader
 import java.util.jar.JarFile
+import org.jetbrains.research.kfg.ir.Class as KfgClass
 
 sealed class CoverageLevel {
     data class PackageLevel(val printDetailedCoverage: Boolean = false) : CoverageLevel()
@@ -111,7 +117,7 @@ class CoverageReporter(private val pkg: Package, urlClassLoader: URLClassLoader)
         val analyzer = Analyzer(executionData, coverageBuilder)
         for (className in classes) {
             val original = compiledClassLoader.getResourceAsStream(className)
-            analyzer.analyzeClass(original, className.fullyQualifiedName)
+            tryOrNull { analyzer.analyzeClass(original, className.fullyQualifiedName) }
             original.close()
         }
         return coverageBuilder
