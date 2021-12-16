@@ -406,7 +406,7 @@ class ${solver}Converter(val tf: TypeFactory) : ${solver}SMTConverter() {
         val kfgCastType = cast.type.getKfgType(tf)
         return if (cast.type is KexPointer && kfgCastType.isConcrete) {
             val typeVar = ctx.readBitvectorProperty(op as Ptr_, cast.operand.memspace, "type")
-            val castedTypeVar = ef.getFullTypeMask(cast.type.getKfgType(tf))
+            val castedTypeVar = ef.getSubTypeMask(cast.type.getKfgType(tf))
             val subtype = (typeVar and castedTypeVar) eq typeVar
             cast(cast.type, op.withAxiom(subtype))
         } else {
