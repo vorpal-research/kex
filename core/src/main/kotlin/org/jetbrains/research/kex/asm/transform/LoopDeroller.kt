@@ -2,8 +2,12 @@ package org.jetbrains.research.kex.asm.transform
 
 import org.jetbrains.research.kex.asm.manager.wrapper
 import org.jetbrains.research.kex.config.kexConfig
+import org.jetbrains.research.kex.evolutions.LoopOptimizer
+import org.jetbrains.research.kex.evolutions.defaultVar
+import org.jetbrains.research.kex.evolutions.evaluateEvolutions
 import org.jetbrains.research.kfg.ClassManager
 import org.jetbrains.research.kfg.analysis.Loop
+import org.jetbrains.research.kfg.analysis.LoopManager
 import org.jetbrains.research.kfg.analysis.LoopVisitor
 import org.jetbrains.research.kfg.ir.BasicBlock
 import org.jetbrains.research.kfg.ir.BodyBlock
@@ -16,15 +20,14 @@ import org.jetbrains.research.kthelper.algorithm.NoTopologicalSortingException
 import org.jetbrains.research.kthelper.assert.unreachable
 import org.jetbrains.research.kthelper.logging.log
 import org.jetbrains.research.kthelper.toInt
+import ru.spbstu.Var
 import kotlin.math.abs
 import kotlin.math.min
 
 private val derollCount = kexConfig.getIntValue("loop", "derollCount", 3)
 private val maxDerollCount = kexConfig.getIntValue("loop", "maxDerollCount", 0)
 
-class LoopDeroller(override val cm: ClassManager) : LoopVisitor {
-    private lateinit var ctx: MethodUsageContext
-
+class LoopDeroller(override val cm: ClassManager) : LoopOptimizer(cm) {
     companion object {
         const val DEROLLED_POSTFIX = ".deroll"
 
@@ -91,7 +94,11 @@ class LoopDeroller(override val cm: ClassManager) : LoopVisitor {
     override fun visit(method: Method) = method.usageContext.use {
         ctx = it
         try {
-            super.visit(method)
+            precalculateEvolutions(method)
+            val loops = LoopManager.getMethodLoopInfo(method)
+            loops.forEach { loop -> freshVars[loop] = Var.fresh("iteration") }
+            loops.forEach { visit(it) }
+            updateLoopInfo(method)
         } catch (e: InvalidLoopException) {
             log.error("Can't deroll loops of method $method")
         } catch (e: NoTopologicalSortingException) {
@@ -99,16 +106,21 @@ class LoopDeroller(override val cm: ClassManager) : LoopVisitor {
         }
     }
 
-    override fun visit(loop: Loop) = with(ctx) {
-        super.visit(loop)
+
+    override fun visit(loop: Loop) {
+        loop.subLoops.forEach { visit(it) }
         if (loop.allEntries.size != 1) throw InvalidLoopException()
         if (loop.loopExits.isEmpty()) throw InvalidLoopException()
-
+        loop.method ?: unreachable { log.error("Can't get method of loop") }
+        val blockOrder = getBlockOrder(loop)
         // init state
+        unroll(loop, if (tryBackstabbing(loop, blockOrder.first())) 1 else getDerollCount(loop))
+    }
+
+    private fun unroll(loop: Loop, derollCount: Int) = with(ctx) {
         val method = loop.method ?: unreachable { log.error("Can't get method of loop") }
         val blockOrder = getBlockOrder(loop)
         val state = State.createState(loop)
-        val derollCount = getDerollCount(loop)
         val body = loop.body.toMutableList().onEach { loop.removeBlock(it) }
 
         log.debug("Method $method, unrolling loop $loop to $derollCount iterations")
@@ -383,5 +395,74 @@ class LoopDeroller(override val cm: ClassManager) : LoopVisitor {
                 it.removeHandler(catch)
             }
         }
+    }
+
+    private fun precalculateEvolutions(method: Method) {
+        cleanup()
+        if (!method.hasBody) return
+        org.jetbrains.research.kex.evolutions.walkLoops(method).forEach { loop ->
+            loop
+                .header
+                .takeWhile { it is PhiInst }
+                .filterIsInstance<PhiInst>()
+                .forEach {
+                    loopPhis[it] = loop
+                }
+            loop.body.forEach { basicBlock ->
+                basicBlock.forEach {
+                    inst2loop.getOrPut(it) { loop }
+                }
+            }
+        }
+    }
+
+    private fun tryBackstabbing(loop: Loop, firstBlock: BasicBlock): Boolean {
+        if (loop.latches.isEmpty() || loop.preheaders.isEmpty() || loop !in loopPhis.values) {
+            return false
+        }
+        log.error("LATCH & PREHEADER EXISTS")
+
+        for (b in loop.allEntries) for (i in b) {
+            transform(i)
+        }
+        log.error("TRANSFORMED")
+        loopPhis.keys.forEach {
+            try {
+                phiToEvo[it] = evaluateEvolutions(buildPhiEquation(it), freshVars)
+            } catch (e: NoSuchElementException) {
+                //ok
+            } catch (e: StackOverflowError) {
+                return false
+            }
+        }
+        log.error("Evolution")
+
+
+        val inst = createInductive(loop)
+        log.error("inductive created: $inst")
+        val block = rebuild(loop) ?: return false
+        log.error("rebuilded")
+        if (block.isEmpty()) return false
+        log.error("block instructions: $block")
+        log.error("newBlock: $firstBlock")
+        try {
+            val a = firstBlock.last()
+            firstBlock.remove(a)
+            firstBlock.add(inst)
+            firstBlock.addAll(block)
+            firstBlock.add(a)
+        } catch (e: NullPointerException) {
+            return false
+        }
+        clearUnused(loop)
+        return true
+    }
+
+    private fun createInductive(loop: Loop): Instruction {
+        val a = freshVars.getOrPut(loop, defaultVar())
+        val newInst = instructions.getUnknownLoopIterationInst(ctx, a.name)
+        var2inst[a] = newInst
+        inst2var[newInst] = a
+        return newInst
     }
 }
