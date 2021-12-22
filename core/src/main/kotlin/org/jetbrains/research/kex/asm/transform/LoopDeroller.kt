@@ -3,14 +3,14 @@ package org.jetbrains.research.kex.asm.transform
 import org.jetbrains.research.kex.asm.manager.wrapper
 import org.jetbrains.research.kex.config.kexConfig
 import org.jetbrains.research.kfg.ClassManager
-import org.jetbrains.research.kfg.analysis.Loop
-import org.jetbrains.research.kfg.analysis.LoopVisitor
 import org.jetbrains.research.kfg.ir.BasicBlock
 import org.jetbrains.research.kfg.ir.BodyBlock
 import org.jetbrains.research.kfg.ir.CatchBlock
 import org.jetbrains.research.kfg.ir.Method
 import org.jetbrains.research.kfg.ir.value.*
 import org.jetbrains.research.kfg.ir.value.instruction.*
+import org.jetbrains.research.kfg.visitor.Loop
+import org.jetbrains.research.kfg.visitor.LoopVisitor
 import org.jetbrains.research.kthelper.algorithm.GraphTraversal
 import org.jetbrains.research.kthelper.algorithm.NoTopologicalSortingException
 import org.jetbrains.research.kthelper.assert.unreachable
@@ -99,8 +99,8 @@ class LoopDeroller(override val cm: ClassManager) : LoopVisitor {
         }
     }
 
-    override fun visit(loop: Loop) = with(ctx) {
-        super.visit(loop)
+    override fun visitLoop(loop: Loop) = with(ctx) {
+        super.visitLoop(loop)
         if (loop.allEntries.size != 1) throw InvalidLoopException()
         if (loop.loopExits.isEmpty()) throw InvalidLoopException()
 

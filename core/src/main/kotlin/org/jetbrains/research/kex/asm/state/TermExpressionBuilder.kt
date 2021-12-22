@@ -4,7 +4,6 @@ import org.jetbrains.research.kex.ktype.kexType
 import org.jetbrains.research.kex.state.term.Term
 import org.jetbrains.research.kex.state.term.TermBuilder
 import org.jetbrains.research.kfg.ClassManager
-import org.jetbrains.research.kfg.analysis.LoopManager
 import org.jetbrains.research.kfg.ir.BasicBlock
 import org.jetbrains.research.kfg.ir.Method
 import org.jetbrains.research.kfg.ir.value.Value
@@ -165,7 +164,7 @@ class TermExpressionBuilder(override val cm: ClassManager) : TermBuilder(), Meth
 }
 
 fun Method.asTermExpr(): Term? {
-    if (LoopManager.getMethodLoopInfo(this).isNotEmpty()) {
+    if (this.hasLoops) {
         log.warn("Could not convert method with loops into term expr")
         return null
     }

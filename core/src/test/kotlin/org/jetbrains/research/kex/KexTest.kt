@@ -8,7 +8,6 @@ import org.jetbrains.research.kex.config.kexConfig
 import org.jetbrains.research.kfg.ClassManager
 import org.jetbrains.research.kfg.KfgConfig
 import org.jetbrains.research.kfg.Package
-import org.jetbrains.research.kfg.analysis.LoopAnalysis
 import org.jetbrains.research.kfg.analysis.LoopSimplifier
 import org.jetbrains.research.kfg.container.asContainer
 import org.jetbrains.research.kfg.ir.Method
@@ -36,8 +35,7 @@ abstract class KexTest {
     }
 
     protected fun getPSA(method: Method): PredicateStateAnalysis {
-        val loops = LoopAnalysis(cm).invoke(method)
-        if (loops.isNotEmpty()) {
+        if (method.hasLoops) {
             LoopSimplifier(cm).visit(method)
             LoopDeroller(cm).visit(method)
         }
