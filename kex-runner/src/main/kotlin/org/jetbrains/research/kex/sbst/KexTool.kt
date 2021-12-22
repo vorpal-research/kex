@@ -160,7 +160,7 @@ class KexTool : Tool {
     override fun finalize() {
         clearClassPath()
         val coverage = cm.totalCoverage
-        log.info("Overall summary for ${cm.methodInfos.size} methods:\n" +
+        log.info("Overall summary:\n" +
                 "body coverage: ${String.format(Locale.ENGLISH, "%.2f", coverage.bodyCoverage)}%\n" +
                 "full coverage: ${String.format(Locale.ENGLISH, "%.2f", coverage.fullCoverage)}%")
         DescriptorStatistics.printStatistics()
