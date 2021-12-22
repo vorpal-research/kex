@@ -29,7 +29,7 @@ class ConcolicLauncher(classPaths: List<String>, targetName: String) : KexLaunch
             +InstructionConcolicChecker(context, traceManager)
         }
         log.info(
-            CoverageReporter(pkg, containerClassLoader)
+            CoverageReporter(analysisLevel.pkg, containerClassLoader)
                 .execute(
                     CoverageLevel.PackageLevel(printDetailedCoverage = false)
                 )

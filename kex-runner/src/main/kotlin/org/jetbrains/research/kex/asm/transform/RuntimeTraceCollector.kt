@@ -100,7 +100,7 @@ class RuntimeTraceCollector(override val cm: ClassManager) : MethodVisitor, Inst
                 else -> key
             }
         }
-        switchMethod.interfaceCall(
+        +switchMethod.interfaceCall(
             collectorClass,
             traceCollector,
             arrayOf("${inst.parent.name}".asValue, key)
@@ -119,7 +119,7 @@ class RuntimeTraceCollector(override val cm: ClassManager) : MethodVisitor, Inst
                 else -> key
             }
         }
-        switchMethod.interfaceCall(
+        +switchMethod.interfaceCall(
             collectorClass,
             traceCollector,
             arrayOf("${inst.parent.name}".asValue, key)

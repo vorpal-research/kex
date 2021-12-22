@@ -28,8 +28,8 @@ import org.jetbrains.research.kfg.analysis.LoopSimplifier
 import org.jetbrains.research.kfg.container.Container
 import org.jetbrains.research.kfg.container.asContainer
 import org.jetbrains.research.kfg.ir.Class
-import org.jetbrains.research.kfg.ir.ConcreteClass
 import org.jetbrains.research.kfg.ir.Method
+import org.jetbrains.research.kfg.type.parseStringToType
 import org.jetbrains.research.kfg.util.Flags
 import org.jetbrains.research.kfg.visitor.MethodVisitor
 import org.jetbrains.research.kfg.visitor.Pipeline
@@ -46,44 +46,30 @@ abstract class KexLauncher(classPaths: List<String>, targetName: String) {
     val containers: List<Container>
     val containerClassLoader: URLClassLoader
     val context: ExecutionContext
-
-    val pkg: Package
-    var klass: Class? = null
-        private set
-    var methods: Set<Method>? = null
-        private set
-
+    val analysisLevel: AnalysisLevel
     val visibilityLevel: Visibility
 
     sealed class AnalysisLevel {
-        object PACKAGE : AnalysisLevel()
-        data class CLASS(val klass: String) : AnalysisLevel()
-        data class METHOD(val klass: String, val method: String) : AnalysisLevel()
+        abstract val pkg: Package
+    }
+
+    data class PackageLevel(override val pkg: Package) : AnalysisLevel() {
+        override fun toString() = "package $pkg"
+    }
+
+    data class ClassLevel(val klass: Class) : AnalysisLevel() {
+        override val pkg = klass.pkg
+        override fun toString() = "class $klass"
+    }
+
+    data class MethodLevel(val method: Method) : AnalysisLevel() {
+        override val pkg = method.klass.pkg
+        override fun toString() = "method $method"
     }
 
     init {
         val containerPaths = classPaths.map { Paths.get(it).toAbsolutePath() }
         containerClassLoader = URLClassLoader(containerPaths.map { it.toUri().toURL() }.toTypedArray())
-
-        val analysisLevel = when {
-            targetName.matches(Regex("[a-zA-Z0-9]+(\\.[a-zA-Z0-9]+)*\\.\\*")) -> {
-                pkg = Package.parse(targetName)
-                AnalysisLevel.PACKAGE
-            }
-            targetName.matches(Regex("([a-zA-Z0-9]+(\\.[a-zA-Z0-9]+)*\\.)?[a-zA-Z0-9\$_]+::[a-zA-Z0-9\$_]+")) -> {
-                val (klassName, methodName) = targetName.split("::")
-                pkg = Package.parse("${klassName.dropLastWhile { it != '.' }}*")
-                AnalysisLevel.METHOD(klassName.replace('.', '/'), methodName)
-            }
-            targetName.matches(Regex("[a-zA-Z0-9]+(\\.[a-zA-Z0-9]+)*")) -> {
-                pkg = Package.parse("${targetName.dropLastWhile { it != '.' }}*")
-                AnalysisLevel.CLASS(targetName.replace('.', '/'))
-            }
-            else -> {
-                log.error("Could not parse target $targetName")
-                exitProcess(1)
-            }
-        }
         containers = listOfNotNull(*containerPaths.map {
             it.asContainer() ?: run {
                 log.error("Can't represent ${it.toAbsolutePath()} as class container")
@@ -94,10 +80,39 @@ abstract class KexLauncher(classPaths: List<String>, targetName: String) {
 
         val instrumentedDirName = kexConfig.getStringValue("output", "instrumentedDir", "instrumented")
         val instrumentedCodeDir = kexConfig.getPathValue("kex", "outputDir")!!.resolve(instrumentedDirName)
-        prepareInstrumentedClasspath(analysisJars, pkg, instrumentedCodeDir)
+        prepareInstrumentedClasspath(analysisJars, Package.defaultPackage, instrumentedCodeDir)
 
         val cm = ClassManager(KfgConfig(flags = Flags.readAll, failOnError = false, verifyIR = false))
         cm.initialize(*analysisJars.toTypedArray())
+
+        val packageRegex = """[\w$]+(\.[\w$]+)*\.\*"""
+        val klassNameRegex = """(${packageRegex.dropLast(2)})?[\w$]+"""
+        val methodNameRegex = """(<init>|<clinit>|(\w+))"""
+        val typeRegex = """(void|((byte|char|short|int|long|float|double|$klassNameRegex)(\[\])*))"""
+        analysisLevel = when {
+            targetName.matches(Regex(packageRegex)) -> PackageLevel(Package.parse(targetName))
+            targetName.matches(Regex("""$klassNameRegex::$methodNameRegex\((($typeRegex,\s+)*$typeRegex)?\):$typeRegex""")) -> {
+                val (klassName, methodFullDesc) = targetName.split("::")
+                val (methodName, methodArgs, methodReturn) = methodFullDesc.split("(", "):")
+                val klass = cm[klassName.replace('.', '/')]
+                val method = klass.getMethod(
+                    methodName,
+                    parseStringToType(cm.type, methodReturn.replace('.', '/')),
+                    *methodArgs.split(",").filter { it.isNotBlank() }
+                        .map { parseStringToType(cm.type, it.replace('.', '/')) }.toTypedArray()
+                )
+                MethodLevel(method)
+            }
+            targetName.matches(Regex(klassNameRegex)) -> {
+                val klass = cm[targetName.replace('.', '/')]
+                ClassLevel(klass)
+            }
+            else -> {
+                log.error("Could not parse target $targetName")
+                exitProcess(1)
+            }
+        }
+        log.debug("Target: $analysisLevel")
 
         // write all classes to output directory, so they will be seen by ClassLoader
         val classLoader = URLClassLoader(arrayOf(instrumentedCodeDir.toUri().toURL()))
@@ -105,29 +120,9 @@ abstract class KexLauncher(classPaths: List<String>, targetName: String) {
         val klassPath = containers.map { it.path }
         updateClassPath(classLoader)
         val randomDriver = EasyRandomDriver()
-        context = ExecutionContext(cm, pkg, classLoader, randomDriver, klassPath)
+        context = ExecutionContext(cm, analysisLevel.pkg, classLoader, randomDriver, klassPath)
 
         log.debug("Running with class path:\n${containers.joinToString("\n") { it.name }}")
-        when (analysisLevel) {
-            is AnalysisLevel.PACKAGE -> {
-                log.debug("Target: package $pkg")
-            }
-            is AnalysisLevel.CLASS -> {
-                klass = cm[analysisLevel.klass]
-                if (klass !is ConcreteClass) {
-                    log.error("Class $klass not found is classpath, exiting")
-                    exitProcess(1)
-                } else {
-                    log.debug("Target: class $klass")
-                }
-            }
-            is AnalysisLevel.METHOD -> {
-                klass = cm[analysisLevel.klass]
-                methods = klass!!.getMethods(analysisLevel.method)
-                log.debug("Target: methods $methods")
-            }
-        }
-
         visibilityLevel = kexConfig.getEnumValue("apiGeneration", "visibility", true, Visibility.PUBLIC)
     }
 
@@ -156,19 +151,20 @@ abstract class KexLauncher(classPaths: List<String>, targetName: String) {
         }
     }
 
-    protected fun <T : AbstractTrace> createCoverageCounter(cm: ClassManager, tm: TraceManager<T>) = when {
-        methods != null -> CoverageCounter(cm, tm, methods!!)
-        klass != null -> CoverageCounter(cm, tm, klass!!)
-        else -> CoverageCounter(cm, tm, pkg)
-    }
+    protected fun <T : AbstractTrace> createCoverageCounter(cm: ClassManager, tm: TraceManager<T>) =
+        when (analysisLevel) {
+            is MethodLevel -> CoverageCounter(cm, tm, setOf(analysisLevel.method))
+            is ClassLevel -> CoverageCounter(cm, tm, analysisLevel.klass)
+            is PackageLevel -> CoverageCounter(cm, tm, analysisLevel.pkg)
+        }
 
     protected fun runPipeline(context: ExecutionContext, target: Package, init: Pipeline.() -> Unit) =
         executePipeline(context.cm, target, init)
 
-    protected fun runPipeline(context: ExecutionContext, init: Pipeline.() -> Unit) = when {
-        methods != null -> executePipeline(context.cm, methods!!, init)
-        klass != null -> executePipeline(context.cm, klass!!, init)
-        else -> executePipeline(context.cm, pkg, init)
+    protected fun runPipeline(context: ExecutionContext, init: Pipeline.() -> Unit) = when (analysisLevel) {
+        is MethodLevel -> executePipeline(context.cm, setOf(analysisLevel.method), init)
+        is ClassLevel -> executePipeline(context.cm, analysisLevel.klass, init)
+        is PackageLevel -> executePipeline(context.cm, analysisLevel.pkg, init)
     }
 
     protected open fun preparePackage(

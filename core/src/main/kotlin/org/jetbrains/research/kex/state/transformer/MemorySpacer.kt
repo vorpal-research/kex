@@ -46,10 +46,10 @@ val Term.memspace: Int
 
 class MemorySpacer(ps: PredicateState) : Transformer<MemorySpacer> {
     private val aa = StensgaardAA().apply { apply(ps) }
-    private val indices = hashMapOf<Token, Int>(null to 0)
+    private val indices = hashMapOf<Token?, Int>(null to 0)
     private var index = 1
 
-    private fun getIndex(token: Token) = indices.getOrPut(token) { index++ }
+    private fun getIndex(token: Token?) = indices.getOrPut(token) { index++ }
     private fun getMemspace(term: Term) = getIndex(aa.getDereferenced(term))
 
     override fun transformTerm(term: Term) = when (term.type) {

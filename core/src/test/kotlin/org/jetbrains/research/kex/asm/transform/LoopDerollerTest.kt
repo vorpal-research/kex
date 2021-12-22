@@ -1,9 +1,9 @@
 package org.jetbrains.research.kex.asm.transform
 
 import org.jetbrains.research.kex.KexTest
-import org.jetbrains.research.kfg.analysis.LoopAnalysis
 import org.jetbrains.research.kfg.analysis.LoopSimplifier
 import org.jetbrains.research.kfg.ir.Method
+import org.jetbrains.research.kfg.visitor.LoopAnalysis
 import kotlin.test.Test
 import kotlin.test.assertTrue
 
@@ -12,11 +12,10 @@ class LoopDerollerTest : KexTest() {
     private fun checkLoops(method: Method) {
         if (method.isAbstract) return
 
-        var loops = LoopAnalysis(cm).invoke(method)
-        if (loops.isEmpty()) return
+        if (!method.hasLoops) return
 
         LoopSimplifier(cm).visit(method)
-        loops = LoopAnalysis(cm).invoke(method)
+        var loops = LoopAnalysis(cm).invoke(method)
         for (loop in loops) {
             if (!loop.hasSinglePreheader) return
             if (!loop.hasSingleLatch) return
@@ -25,8 +24,6 @@ class LoopDerollerTest : KexTest() {
         LoopDeroller(cm).visit(method)
         loops = LoopAnalysis(cm).invoke(method)
         assertTrue(loops.isEmpty())
-
-//        IRVerifier(cm).visit(method)
     }
 
     @Test
