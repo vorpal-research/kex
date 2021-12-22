@@ -4,8 +4,8 @@ import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.InternalSerializationApi
 import org.jetbrains.research.kex.KexTest
 import org.jetbrains.research.kex.descriptor.Descriptor
-import org.jetbrains.research.kex.descriptor.descriptor
-import org.jetbrains.research.kex.descriptor.descriptorContext
+import org.jetbrains.research.kex.descriptor.DescriptorBuilder
+import org.jetbrains.research.kex.descriptor.convertToDescriptor
 import org.jetbrains.research.kex.ktype.*
 import org.jetbrains.research.kex.state.PredicateState
 import org.jetbrains.research.kex.state.predicate.*
@@ -144,7 +144,7 @@ class KexSerializerTest : KexTest() {
     }
 
     @Test
-    fun descriptorSerializationTest() = with(descriptorContext) {
+    fun descriptorSerializationTest() = with(DescriptorBuilder()) {
         val const = const(1242)
         val constJson = serializer.toJson(const)
         val constFromJson = serializer.fromJson<Descriptor>(constJson)
@@ -161,7 +161,7 @@ class KexSerializerTest : KexTest() {
         val instance = `object`(KexClass("org/jetbrains/research/kex/test/SerializerTest"))
         instance["array" to array.type] = array
         instance["const" to const.type] = const
-        instance["string" to cm.stringClass.kexType] = "test".descriptor
+        instance["string" to cm.stringClass.kexType] = convertToDescriptor("test")
         val instanceJson = serializer.toJson(instance)
         val instanceFromJson = serializer.fromJson<Descriptor>(instanceJson)
         assertTrue { instance eq instanceFromJson }

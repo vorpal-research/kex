@@ -17,7 +17,7 @@ import org.jetbrains.research.kthelper.logging.log
 class TermExpressionBuilder(override val cm: ClassManager) : TermBuilder(), MethodVisitor {
     private val termMap = hashMapOf<Value, Term>()
     private val path = hashMapOf<BasicBlock, Term>()
-    lateinit var currentCond: Term
+    private lateinit var currentCond: Term
     var returnExpr: Term? = null
         private set
 

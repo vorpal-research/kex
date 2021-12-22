@@ -152,7 +152,7 @@ class $factory : ${solver}SMTExprFactory() {
     }
 
     fun addKlassPtr(klass: KexType, ptr: Ptr_) {
-        innerKlassMap.getOrPut(klass.unmemspaced()) { ptr }
+        innerKlassMap.getOrPut(klass.unMemspaced()) { ptr }
     }
 
     fun buildConstClassAxioms(): Bool_ {
