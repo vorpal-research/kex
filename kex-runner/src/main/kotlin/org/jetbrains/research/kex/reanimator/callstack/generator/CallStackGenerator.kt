@@ -5,7 +5,6 @@ import org.jetbrains.research.kex.asm.state.PredicateStateAnalysis
 import org.jetbrains.research.kex.asm.util.Visibility
 import org.jetbrains.research.kex.config.kexConfig
 import org.jetbrains.research.kex.descriptor.Descriptor
-import org.jetbrains.research.kex.descriptor.descriptor
 import org.jetbrains.research.kex.reanimator.callstack.CallStack
 import org.jetbrains.research.kex.reanimator.callstack.UnknownCall
 import org.jetbrains.research.kthelper.KtException
@@ -44,7 +43,7 @@ class CallStackGenerator(override val context: GeneratorContext) : Generator {
 
     val Descriptor.generator: Generator
         get() = typeGenerators.firstOrNull { it.supports(this) } ?: unreachable {
-            log.error("Could not find a generator for $descriptor")
+            log.error("Could not find a generator for $this")
         }
 
     fun generateDescriptor(descriptor: Descriptor): CallStack {

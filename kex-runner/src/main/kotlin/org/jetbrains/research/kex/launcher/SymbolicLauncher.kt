@@ -34,7 +34,7 @@ class SymbolicLauncher(classPaths: List<String>, targetName: String) : KexLaunch
 
         DescriptorStatistics.printStatistics()
         log.info(
-            CoverageReporter(pkg, containerClassLoader)
+            CoverageReporter(analysisLevel.pkg, containerClassLoader)
                 .execute(
                     CoverageLevel.PackageLevel(printDetailedCoverage = false)
                 )

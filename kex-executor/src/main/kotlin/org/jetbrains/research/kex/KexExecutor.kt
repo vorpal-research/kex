@@ -6,7 +6,7 @@ import org.jetbrains.research.kex.config.ExecutorCmdConfig
 import org.jetbrains.research.kex.config.FileConfig
 import org.jetbrains.research.kex.config.RuntimeConfig
 import org.jetbrains.research.kex.config.kexConfig
-import org.jetbrains.research.kex.descriptor.descriptor
+import org.jetbrains.research.kex.descriptor.convertToDescriptor
 import org.jetbrains.research.kex.random.easyrandom.EasyRandomDriver
 import org.jetbrains.research.kex.serialization.KexSerializer
 import org.jetbrains.research.kex.trace.symbolic.ExceptionResult
@@ -98,7 +98,7 @@ class KexExecutor(args: Array<String>) {
             TraceCollectorProxy.disableCollector()
             log.debug("Collected state: ${collector.symbolicState}")
             val result = when {
-                exception != null -> ExceptionResult(exception.descriptor, collector.symbolicState)
+                exception != null -> ExceptionResult(convertToDescriptor(exception), collector.symbolicState)
                 else -> SuccessResult(collector.symbolicState)
             }
             val jsonString = serializer.toJson(result)

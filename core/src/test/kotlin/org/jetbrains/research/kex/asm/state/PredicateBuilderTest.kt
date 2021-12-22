@@ -7,7 +7,6 @@ import org.jetbrains.research.kex.state.predicate.*
 import org.jetbrains.research.kex.state.term.*
 import org.jetbrains.research.kex.state.transformer.TermRenamer
 import org.jetbrains.research.kfg.ClassManager
-import org.jetbrains.research.kfg.analysis.LoopAnalysis
 import org.jetbrains.research.kfg.analysis.LoopSimplifier
 import org.jetbrains.research.kfg.ir.BasicBlock
 import org.jetbrains.research.kfg.ir.value.Value
@@ -357,8 +356,7 @@ class PredicateBuilderTest : KexTest() {
         for (klass in cm.concreteClasses) {
             for (method in klass.allMethods) {
                 if (method.isAbstract) continue
-                val loops = LoopAnalysis(cm).invoke(method)
-                if (loops.isNotEmpty()) {
+                if (method.hasLoops) {
                     LoopSimplifier(cm).visit(method)
                     LoopDeroller(cm).visit(method)
                 }

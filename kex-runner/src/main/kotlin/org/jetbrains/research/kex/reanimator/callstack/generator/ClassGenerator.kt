@@ -3,7 +3,7 @@ package org.jetbrains.research.kex.reanimator.callstack.generator
 import org.jetbrains.research.kex.descriptor.ConstantDescriptor
 import org.jetbrains.research.kex.descriptor.Descriptor
 import org.jetbrains.research.kex.descriptor.ObjectDescriptor
-import org.jetbrains.research.kex.descriptor.descriptor
+import org.jetbrains.research.kex.descriptor.convertToDescriptor
 import org.jetbrains.research.kex.ktype.KexClass
 import org.jetbrains.research.kex.ktype.kexType
 import org.jetbrains.research.kex.reanimator.callstack.CallStack
@@ -36,7 +36,7 @@ class ClassGenerator(private val fallback: Generator) : Generator {
             )
         }
         val randomKlassName = {
-            cm.concreteClasses.random().canonicalDesc.descriptor
+            convertToDescriptor(cm.concreteClasses.random().canonicalDesc)
         }
 
         val klassName = when (descriptor) {

@@ -19,22 +19,27 @@ import org.jetbrains.research.kthelper.logging.log
 class InvalidInstructionError(message: String) : Exception(message)
 
 class PredicateBuilder(override val cm: ClassManager) : MethodVisitor {
-    val termMap = hashMapOf<Value, Term>()
-    val predicateMap = hashMapOf<Instruction, Predicate>()
-    val phiPredicateMap = hashMapOf<Pair<BasicBlock, Instruction>, Predicate>()
-    val terminatorPredicateMap = hashMapOf<Pair<BasicBlock, TerminateInst>, MutableSet<Predicate>>()
+    private val innerTermMap = hashMapOf<Value, Term>()
+    private val innerPredicateMap = hashMapOf<Instruction, Predicate>()
+    private val innerPhiPredicateMap = hashMapOf<Pair<BasicBlock, Instruction>, Predicate>()
+    private val innerTerminatorPredicateMap = hashMapOf<Pair<BasicBlock, TerminateInst>, MutableSet<Predicate>>()
+
+    val termMap: Map<Value, Term> get() = innerTermMap
+    val predicateMap: Map<Instruction, Predicate> get() = innerPredicateMap
+    val phiPredicateMap: Map<Pair<BasicBlock, Instruction>, Predicate> get() = innerPhiPredicateMap
+    val terminatorPredicateMap: Map<Pair<BasicBlock, TerminateInst>, MutableSet<Predicate>> get() = innerTerminatorPredicateMap
 
     override fun cleanup() {
-        termMap.clear()
-        predicateMap.clear()
-        phiPredicateMap.clear()
-        terminatorPredicateMap.clear()
+        innerTermMap.clear()
+        innerPredicateMap.clear()
+        innerPhiPredicateMap.clear()
+        innerTerminatorPredicateMap.clear()
     }
 
-    private fun mkValue(value: Value) = termMap.getOrElse(value) { term { value(value) } }
+    private fun mkValue(value: Value) = innerTermMap.getOrElse(value) { term { value(value) } }
 
     override fun visitArrayLoadInst(inst: ArrayLoadInst) {
-        predicateMap[inst] = state(inst.location) {
+        innerPredicateMap[inst] = state(inst.location) {
             val lhv = mkValue(inst)
             val ref = mkValue(inst.arrayRef)
             val index = mkValue(inst.index)
@@ -46,7 +51,7 @@ class PredicateBuilder(override val cm: ClassManager) : MethodVisitor {
     }
 
     override fun visitArrayStoreInst(inst: ArrayStoreInst) {
-        predicateMap[inst] = state(inst.location) {
+        innerPredicateMap[inst] = state(inst.location) {
             val ref = mkValue(inst.arrayRef)
             val index = mkValue(inst.index)
             val arrayRef = ref[index]
@@ -57,7 +62,7 @@ class PredicateBuilder(override val cm: ClassManager) : MethodVisitor {
     }
 
     override fun visitBinaryInst(inst: BinaryInst) {
-        predicateMap[inst] = state(inst.location) {
+        innerPredicateMap[inst] = state(inst.location) {
             val lhv = mkValue(inst)
             val rhv = mkValue(inst.lhv).apply(types, inst.opcode, mkValue(inst.rhv))
 
@@ -67,16 +72,16 @@ class PredicateBuilder(override val cm: ClassManager) : MethodVisitor {
 
     override fun visitBranchInst(inst: BranchInst) {
         val cond = term { mkValue(inst.cond) }
-        terminatorPredicateMap.getOrPut(inst.trueSuccessor to inst, ::hashSetOf).add(
+        innerTerminatorPredicateMap.getOrPut(inst.trueSuccessor to inst, ::hashSetOf).add(
             path(inst.location) { cond equality true }
         )
-        terminatorPredicateMap.getOrPut(inst.falseSuccessor to inst, ::hashSetOf).add(
+        innerTerminatorPredicateMap.getOrPut(inst.falseSuccessor to inst, ::hashSetOf).add(
             path(inst.location) { cond equality false }
         )
     }
 
     override fun visitCallInst(inst: CallInst) {
-        predicateMap[inst] = state(inst.location) {
+        innerPredicateMap[inst] = state(inst.location) {
             val args = inst.args.map { mkValue(it) }
             val callee = when {
                 inst.isStatic -> staticRef(inst.method.klass)
@@ -92,7 +97,7 @@ class PredicateBuilder(override val cm: ClassManager) : MethodVisitor {
     }
 
     override fun visitCastInst(inst: CastInst) {
-        predicateMap[inst] = state(inst.location) {
+        innerPredicateMap[inst] = state(inst.location) {
             val lhv = mkValue(inst)
             val rhv = mkValue(inst.operand) `as` inst.type.kexType
 
@@ -101,7 +106,7 @@ class PredicateBuilder(override val cm: ClassManager) : MethodVisitor {
     }
 
     override fun visitCmpInst(inst: CmpInst) {
-        predicateMap[inst] = state(inst.location) {
+        innerPredicateMap[inst] = state(inst.location) {
             val lhv = mkValue(inst)
             val rhv = mkValue(inst.lhv).apply(inst.opcode, mkValue(inst.rhv))
 
@@ -110,7 +115,7 @@ class PredicateBuilder(override val cm: ClassManager) : MethodVisitor {
     }
 
     override fun visitFieldLoadInst(inst: FieldLoadInst) {
-        predicateMap[inst] = state(inst.location) {
+        innerPredicateMap[inst] = state(inst.location) {
             val lhv = mkValue(inst)
             val owner = when {
                 inst.isStatic -> staticRef(inst.field.klass)
@@ -124,7 +129,7 @@ class PredicateBuilder(override val cm: ClassManager) : MethodVisitor {
     }
 
     override fun visitFieldStoreInst(inst: FieldStoreInst) {
-        predicateMap[inst] = state(inst.location) {
+        innerPredicateMap[inst] = state(inst.location) {
             val owner = when {
                 inst.isStatic -> staticRef(inst.field.klass)
                 else -> mkValue(inst.owner)
@@ -137,7 +142,7 @@ class PredicateBuilder(override val cm: ClassManager) : MethodVisitor {
     }
 
     override fun visitInstanceOfInst(inst: InstanceOfInst) {
-        predicateMap[inst] = state(inst.location) {
+        innerPredicateMap[inst] = state(inst.location) {
             val lhv = mkValue(inst)
             val rhv = mkValue(inst.operand) `is` inst.targetType.kexType
 
@@ -161,7 +166,7 @@ class PredicateBuilder(override val cm: ClassManager) : MethodVisitor {
         val expr = lambdaBase.method.asTermExpr()
             ?: return log.error("Could not process ${inst.print()}")
 
-        termMap[inst] = term {
+        innerTermMap[inst] = term {
             lambda(inst.type.kexType, lambdaParameters) {
                 TermRenamer("labmda.${lambdaBase.method.name}", mapping)
                     .transform(expr)
@@ -170,7 +175,7 @@ class PredicateBuilder(override val cm: ClassManager) : MethodVisitor {
     }
 
     override fun visitNewArrayInst(inst: NewArrayInst) {
-        predicateMap[inst] = state(inst.location) {
+        innerPredicateMap[inst] = state(inst.location) {
             val lhv = mkValue(inst)
             val dimensions = inst.dimensions.map { mkValue(it) }
 
@@ -179,12 +184,12 @@ class PredicateBuilder(override val cm: ClassManager) : MethodVisitor {
     }
 
     override fun visitNewInst(inst: NewInst) {
-        predicateMap[inst] = state(inst.location) { mkValue(inst).new() }
+        innerPredicateMap[inst] = state(inst.location) { mkValue(inst).new() }
     }
 
     override fun visitPhiInst(inst: PhiInst) {
         for ((from, value) in inst.incomings) {
-            phiPredicateMap[from to inst] = state(inst.location) {
+            innerPhiPredicateMap[from to inst] = state(inst.location) {
                 val lhv = mkValue(inst)
                 val rhv = mkValue(value)
 
@@ -194,7 +199,7 @@ class PredicateBuilder(override val cm: ClassManager) : MethodVisitor {
     }
 
     override fun visitUnaryInst(inst: UnaryInst) {
-        predicateMap[inst] = state(inst.location) {
+        innerPredicateMap[inst] = state(inst.location) {
             val lhv = mkValue(inst)
             val rhv = mkValue(inst.operand).apply(inst.opcode)
 
@@ -205,11 +210,11 @@ class PredicateBuilder(override val cm: ClassManager) : MethodVisitor {
     override fun visitSwitchInst(inst: SwitchInst) {
         val key = term { mkValue(inst.key) }
         for ((value, successor) in inst.branches) {
-            terminatorPredicateMap.getOrPut(successor to inst, ::hashSetOf).add(
+            innerTerminatorPredicateMap.getOrPut(successor to inst, ::hashSetOf).add(
                 path(inst.location) { key equality mkValue(value) }
             )
         }
-        terminatorPredicateMap.getOrPut(inst.default to inst, ::hashSetOf).add(
+        innerTerminatorPredicateMap.getOrPut(inst.default to inst, ::hashSetOf).add(
             path(inst.location) { key `!in` inst.branches.keys.map { mkValue(it) } }
         )
     }
@@ -219,18 +224,18 @@ class PredicateBuilder(override val cm: ClassManager) : MethodVisitor {
         val min = inst.min as? IntConstant ?: throw InvalidInstructionError("Unexpected min type in tableSwitchInst")
         val max = inst.max as? IntConstant ?: throw InvalidInstructionError("Unexpected max type in tableSwitchInst")
         for ((index, successor) in inst.branches.withIndex()) {
-            terminatorPredicateMap.getOrPut(successor to inst, ::hashSetOf).add(
+            innerTerminatorPredicateMap.getOrPut(successor to inst, ::hashSetOf).add(
                 path(inst.location) { key equality (min.value + index) }
             )
         }
-        terminatorPredicateMap.getOrPut(inst.default to inst, ::hashSetOf).add(
+        innerTerminatorPredicateMap.getOrPut(inst.default to inst, ::hashSetOf).add(
             path(inst.location) { key `!in` (min.value..max.value).map { const(it) } }
         )
     }
 
     override fun visitReturnInst(inst: ReturnInst) {
         if (inst.hasReturnValue) {
-            predicateMap[inst] = state(inst.location) {
+            innerPredicateMap[inst] = state(inst.location) {
                 val method = inst.parent.parent
                 val lhv = `return`(method)
                 val rhv = mkValue(inst.returnValue)

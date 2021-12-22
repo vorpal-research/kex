@@ -224,8 +224,8 @@ fun findSubtypesOf(loader: ClassLoader, vararg classes: Class<*>): Set<Class<*>>
     val reflections = Reflections(
         ConfigurationBuilder()
             .addUrls(classes.mapNotNull { (it.classLoader as? URLClassLoader)?.urLs }.flatMap { it.toList() })
-            .addClassLoaders(classes.map { it.classLoader })
-            .addClassLoader(loader)
+            .addClassLoaders(*classes.map { it.classLoader }.toTypedArray())
+            .addClassLoaders(loader)
     )
     val subclasses = classes.map { reflections.getSubTypesOf(it) }
     val allSubclasses = subclasses.flatten().toSet()
