@@ -12,10 +12,8 @@
     <artifactId>core</artifactId>
 
     <properties>
-        <logback.version>1.2.3</logback.version>
-        <slf4j.version>1.7.25</slf4j.version>
         <ini4j.version>0.5.4</ini4j.version>
-        <reflections.version>0.9.11</reflections.version>
+        <reflections.version>0.10.2</reflections.version>
         <easy-random.version>4.3.0</easy-random.version>
     </properties>
 
