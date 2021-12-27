@@ -1,10 +1,11 @@
-package org.jetbrains.research.kex.asm.analysis.concolic
+package org.jetbrains.research.kex.asm.analysis.concolic.legacy
 
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
 import kotlinx.coroutines.yield
 import org.jetbrains.research.kex.ExecutionContext
+import org.jetbrains.research.kex.asm.analysis.concolic.ConcolicStateBuilder
 import org.jetbrains.research.kex.asm.manager.wrapper
 import org.jetbrains.research.kex.asm.state.PredicateStateAnalysis
 import org.jetbrains.research.kex.config.kexConfig
