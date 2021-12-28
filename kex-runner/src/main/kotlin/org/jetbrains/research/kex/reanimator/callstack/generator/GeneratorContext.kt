@@ -132,7 +132,7 @@ class GeneratorContext(
 
     val Class.accessibleCtors: Set<Method>
         get() = when {
-            this.isVisible -> constructors
+            instantiationManager.isDirectlyInstantiable(this, visibilityLevel) -> constructors
                 .filter { visibilityLevel <= it.visibility }
                 .sortedBy { it.argTypes.size }
                 .toSet()
