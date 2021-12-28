@@ -98,9 +98,9 @@ open class CallStack2JavaPrinter(
         fun isSubtype(other: CSType): Boolean
     }
 
-    inner class CSStarProjection : CSType {
-        override fun isSubtype(other: CSType) = other is CSStarProjection
-        override fun toString() = "*"
+    inner class CSWildcard : CSType {
+        override fun isSubtype(other: CSType) = other is CSWildcard
+        override fun toString() = "?"
     }
 
     inner class CSClass(val type: Type, val typeParams: List<CSType> = emptyList()) : CSType {
@@ -111,7 +111,7 @@ open class CallStack2JavaPrinter(
                 typeParams.size != other.typeParams.size -> false
                 else -> typeParams.zip(other.typeParams).all { (a, b) -> a.isSubtype(b) }
             }
-            is CSStarProjection -> true
+            is CSWildcard -> true
             else -> other.kfg == ctx.types.objectType
         }
 
@@ -127,7 +127,7 @@ open class CallStack2JavaPrinter(
     inner class CSPrimaryArray(val element: CSType) : CSType {
         override fun isSubtype(other: CSType): Boolean = when (other) {
             is CSPrimaryArray -> element.isSubtype(other.element)
-            is CSStarProjection -> true
+            is CSWildcard -> true
             else -> other.kfg == ctx.types.objectType
         }
 
@@ -140,7 +140,7 @@ open class CallStack2JavaPrinter(
                 !element.isSubtype(other.element) -> false
                 else -> true
             }
-            is CSStarProjection -> true
+            is CSWildcard -> true
             else -> false
         }
 
@@ -172,7 +172,7 @@ open class CallStack2JavaPrinter(
             }
             is GenericArrayType -> CSArray(this.genericComponentType.csType)
             is TypeVariable<*> -> this.bounds.first().csType
-            is WildcardType -> this.upperBounds.first().csType
+            is WildcardType -> CSWildcard()
             else -> TODO()
         }
 
@@ -395,8 +395,8 @@ open class CallStack2JavaPrinter(
         }
     }
 
-    private fun CallStack.forceCastIfNull(reqType: CSType?): String = when (this.stackName) {
-        "null" -> "($reqType)${this.stackName}"
+    private fun CallStack.forceCastIfNull(reqType: CSType?): String = when {
+        this.stackName == "null" && reqType != null -> "($reqType)${this.stackName}"
         else -> this.cast(reqType)
     }
 
