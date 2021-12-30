@@ -16,6 +16,7 @@ import org.jetbrains.research.kfg.type.Type
 import org.jetbrains.research.kthelper.assert.ktassert
 import org.jetbrains.research.kthelper.assert.unreachable
 import org.jetbrains.research.kthelper.logging.log
+import org.jetbrains.research.kthelper.tryOrNull
 import java.lang.reflect.*
 
 // TODO: this is work of satan, refactor this damn thing
@@ -86,7 +87,7 @@ open class CallStack2JavaPrinter(
         resolveTypes(callStack)
         with(current) {
             statement("try {")
-                callStack.printAsJava()
+            tryOrNull { callStack.printAsJava() }
             statement("} catch (Throwable e) {}")
         }
     }
@@ -580,7 +581,7 @@ open class CallStack2JavaPrinter(
     }
 
     protected open fun printStaticFieldGetter(owner: CallStack, call: StaticFieldGetter): List<String> {
-        val actualType = call.field.klass.type.csType
+        val actualType = call.field.type.csType
         actualTypes[owner] = actualType
         return listOf("${printVarDeclaration(owner.name, actualType)} = ${call.field.klass.javaString}.${call.field.name}")
     }

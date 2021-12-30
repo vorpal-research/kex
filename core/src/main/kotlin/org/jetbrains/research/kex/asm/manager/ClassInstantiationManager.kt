@@ -120,15 +120,19 @@ class ClassInstantiationDetector(override val cm: ClassManager, val visibilityLe
     }
 
     private fun addInstantiableClass(klass: Class, instantiableKlass: Class) {
-        for (parent in klass.allAncestors) {
-            addInstantiableClass(parent, instantiableKlass)
+        if (!instantiableKlass.isEnum) {
+            for (parent in klass.allAncestors) {
+                addInstantiableClass(parent, instantiableKlass)
+            }
         }
         ClassInstantiationManagerImpl[klass] = instantiableKlass
     }
 
     private fun addExternalCtor(klass: Class, method: Method) {
-        for (parent in klass.allAncestors) {
-            addExternalCtor(parent, method)
+        if (!klass.isEnum) {
+            for (parent in klass.allAncestors) {
+                addExternalCtor(parent, method)
+            }
         }
         ClassInstantiationManagerImpl[klass] = method
     }

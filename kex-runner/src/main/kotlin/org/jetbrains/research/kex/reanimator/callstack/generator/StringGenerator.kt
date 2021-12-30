@@ -8,12 +8,13 @@ import org.jetbrains.research.kex.reanimator.callstack.CallStack
 import org.jetbrains.research.kex.reanimator.callstack.ConstructorCall
 import org.jetbrains.research.kex.reanimator.callstack.DefaultConstructorCall
 import org.jetbrains.research.kfg.ir.MethodDesc
+import org.jetbrains.research.kfg.type.SystemTypeNames
 
 class StringGenerator(private val fallback: Generator) : Generator {
     override val context: GeneratorContext
         get() = fallback.context
 
-    override fun supports(descriptor: Descriptor) = descriptor.type.toString() == "java/lang/String"
+    override fun supports(descriptor: Descriptor) = descriptor.type.toString() == SystemTypeNames.stringClass
 
     override fun generate(descriptor: Descriptor, generationDepth: Int): CallStack = with(context) {
         descriptor as? ObjectDescriptor ?: throw IllegalArgumentException()
@@ -23,7 +24,7 @@ class StringGenerator(private val fallback: Generator) : Generator {
         val callStack = CallStack(name)
         saveToCache(descriptor, callStack)
 
-        val stringClass = context.cm["java/lang/String"]
+        val stringClass = context.cm.stringClass
 
         val valueDescriptor = descriptor["value", KexArray(KexChar())]
         if (valueDescriptor == null) {
