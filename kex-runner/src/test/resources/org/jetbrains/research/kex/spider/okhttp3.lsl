@@ -5,6 +5,7 @@ types {
     Request$Builder (okhttp3.Request$Builder);
     Request (okhttp3.Request);
     OkHttpClient (okhttp3.OkHttpClient);
+    OkHttpClient$Builder (okhttp3.OkHttpClient$Builder);
     Call (okhttp3.OkHttpClient.Call);
     Response (okhttp3.Call.Response);
     ResponseBody (okhttp3.Response.ResponseBody);
@@ -24,17 +25,21 @@ automaton okhttp3.Request$Builder : Request$Builder {
     fun `url`(`url`: String): Request$Builder
         requires urlIsNotEmpty: `url` != "";
 
+    fun method(method: String, body: RequestBody)
+        requires isMethodKnown: method = "GET" | method = "POST" | method = "HEAD" | method = "PUT" | method = "DELETE" | method = "PATCH";
+
+    fun build(): Request;
+}
+
+automaton okhttp3.OkHttpClient$Builder : OkHttpClient$Builder {
+    initstate Created;
+
     fun connectTimeout(timeout: Long, unit: TimeUnit)
-        requires timeoutIsPositive: timeout > 0;
+            requires timeoutIsPositive: timeout > 0;
 
     fun callTimeout(timeout: Long, unit: TimeUnit)
         requires timeoutIsPositive: timeout > 0;
 
     fun readTimeout(timeout: Long, unit: TimeUnit)
         requires timeoutIsPositive: timeout > 0;
-
-    fun method(method: String, body: RequestBody)
-        requires isMethodKnown: method = "GET" | method = "POST" | method = "HEAD" | method = "PUT" | method = "DELETE" | method = "PATCH";
-
-    fun build(): Request;
 }
