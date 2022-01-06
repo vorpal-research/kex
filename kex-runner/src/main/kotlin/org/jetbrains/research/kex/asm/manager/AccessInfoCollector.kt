@@ -8,6 +8,7 @@ import org.jetbrains.research.kfg.ir.value.instruction.FieldStoreInst
 import org.jetbrains.research.kfg.visitor.MethodVisitor
 import org.jetbrains.research.kthelper.logging.log
 
+@Deprecated(message = "outdated")
 class AccessInfoCollector(override val cm: ClassManager) : MethodVisitor {
     private val fieldAccessSet = mutableSetOf<Field>()
 

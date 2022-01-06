@@ -6,12 +6,9 @@ import org.jetbrains.research.kfg.ir.BasicBlock
 import org.jetbrains.research.kfg.ir.BodyBlock
 import org.jetbrains.research.kfg.ir.Method
 import org.jetbrains.research.kfg.ir.value.UsageContext
-import org.jetbrains.research.kfg.ir.value.ValueFactory
 import org.jetbrains.research.kfg.ir.value.instruction.BranchInst
-import org.jetbrains.research.kfg.ir.value.instruction.InstructionFactory
 import org.jetbrains.research.kfg.ir.value.instruction.PhiInst
 import org.jetbrains.research.kfg.ir.value.usageContext
-import org.jetbrains.research.kfg.type.TypeFactory
 import org.jetbrains.research.kfg.visitor.MethodVisitor
 import org.jetbrains.research.kthelper.KtException
 import org.jetbrains.research.kthelper.algorithm.DominatorTree
@@ -21,13 +18,6 @@ import org.jetbrains.research.kthelper.logging.log
 class BranchAdapter(
     override val cm: ClassManager,
 ) : MethodVisitor {
-    override val instructions: InstructionFactory
-        get() = cm.instruction
-    override val types: TypeFactory
-        get() = cm.type
-    override val values: ValueFactory
-        get() = cm.value
-
     private lateinit var domTree: DominatorTree<BasicBlock>
     private lateinit var ctx: UsageContext
 

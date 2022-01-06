@@ -5,6 +5,7 @@ import org.jetbrains.research.kex.ktype.*
 import org.jetbrains.research.kex.util.allFields
 import org.jetbrains.research.kex.util.isStatic
 import org.jetbrains.research.kex.util.kex
+import org.jetbrains.research.kfg.type.SystemTypeNames
 import org.jetbrains.research.kthelper.assert.unreachable
 import org.jetbrains.research.kthelper.logging.log
 import java.util.*
@@ -70,56 +71,56 @@ class Object2DescriptorConverter : DescriptorBuilder() {
     }
 
     fun booleanWrapper(any: Boolean): Descriptor {
-        val wrapperClass = KexClass("java/lang/Boolean")
+        val wrapperClass = KexClass(SystemTypeNames.booleanClass)
         val result = `object`(wrapperClass)
         result["value" to KexBool()] = const(any)
         return result
     }
 
     fun byteWrapper(any: Byte): Descriptor {
-        val wrapperClass = KexClass("java/lang/Byte")
+        val wrapperClass = KexClass(SystemTypeNames.byteClass)
         val result = `object`(wrapperClass)
         result["value" to KexByte()] = const(any)
         return result
     }
 
     fun charWrapper(any: Char): Descriptor {
-        val wrapperClass = KexClass("java/lang/Character")
+        val wrapperClass = KexClass(SystemTypeNames.charClass)
         val result = `object`(wrapperClass)
         result["value" to KexChar()] = const(any)
         return result
     }
 
     fun shortWrapper(any: Short): Descriptor {
-        val wrapperClass = KexClass("java/lang/Short")
+        val wrapperClass = KexClass(SystemTypeNames.shortClass)
         val result = `object`(wrapperClass)
         result["value" to KexShort()] = const(any)
         return result
     }
 
     fun intWrapper(any: Int): Descriptor {
-        val wrapperClass = KexClass("java/lang/Integer")
+        val wrapperClass = KexClass(SystemTypeNames.integerClass)
         val result = `object`(wrapperClass)
         result["value" to KexInt()] = const(any)
         return result
     }
 
     fun longWrapper(any: Long): Descriptor {
-        val wrapperClass = KexClass("java/lang/Long")
+        val wrapperClass = KexClass(SystemTypeNames.longClass)
         val result = `object`(wrapperClass)
         result["value" to KexLong()] = const(any)
         return result
     }
 
     fun floatWrapper(any: Float): Descriptor {
-        val wrapperClass = KexClass("java/lang/Float")
+        val wrapperClass = KexClass(SystemTypeNames.floatClass)
         val result = `object`(wrapperClass)
         result["value" to KexFloat()] = const(any)
         return result
     }
 
     fun doubleWrapper(any: Double): Descriptor {
-        val wrapperClass = KexClass("java/lang/Double")
+        val wrapperClass = KexClass(SystemTypeNames.doubleClass)
         val result = `object`(wrapperClass)
         result["value" to KexDouble()] = const(any)
         return result
@@ -153,7 +154,7 @@ class Object2DescriptorConverter : DescriptorBuilder() {
     fun string(any: String, depth: Int): Descriptor {
         if (depth > maxGenerationDepth) return `null`
 
-        val stringType = KexClass("java/lang/String")
+        val stringType = KexClass(SystemTypeNames.stringClass)
         val klass = any.javaClass
         val result = `object`(stringType)
         val field = klass.getDeclaredField("value")
@@ -272,8 +273,7 @@ class Object2DescriptorConverter : DescriptorBuilder() {
     val Any?.descriptor get() = convert(this)
 }
 
-val Any?.descriptor get() = Object2DescriptorConverter().convert(this)
-
-val Iterable<Any?>.descriptors get() = Object2DescriptorConverter().let {
-    this.map { any -> it.convert(any) }
+fun convertToDescriptor(any: Any?) = Object2DescriptorConverter().convert(any)
+fun convertToDescriptors(iterable: Iterable<Any?>) = Object2DescriptorConverter().let { converter ->
+    iterable.map { converter.convert(it) }
 }

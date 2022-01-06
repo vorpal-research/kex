@@ -3,9 +3,8 @@ package org.jetbrains.research.kex.evolutions
 
 import org.jetbrains.research.kfg.ClassManager
 import org.jetbrains.research.kfg.analysis.IRVerifier
-import org.jetbrains.research.kfg.analysis.Loop
-import org.jetbrains.research.kfg.analysis.LoopManager
-import org.jetbrains.research.kfg.analysis.LoopVisitor
+import org.jetbrains.research.kfg.visitor.Loop
+import org.jetbrains.research.kfg.visitor.LoopVisitor
 import org.jetbrains.research.kfg.ir.BasicBlock
 import org.jetbrains.research.kfg.ir.BodyBlock
 import org.jetbrains.research.kfg.ir.Method
@@ -55,16 +54,16 @@ open class LoopOptimizer(cm: ClassManager) : Evolutions(cm), LoopVisitor {
         }
 
 
-        val loops = LoopManager.getMethodLoopInfo(method)
+        val loops = method.getLoopInfo()
         loops.forEach {
-            visit(it)
+            visitLoop(it)
         }
         updateLoopInfo(method)
         IRVerifier(cm).visit(method)
     }
 
-    override fun visit(loop: Loop) {
-        super<LoopVisitor>.visit(loop)
+    override fun visitLoop(loop: Loop) {
+        super.visitLoop(loop)
         if (loop.allEntries.size != 1 || loop !in freshVars.keys) {
             return
         }

@@ -3,7 +3,7 @@ package org.jetbrains.research.kex.trace.runner
 import org.jetbrains.research.kex.ExecutionContext
 import org.jetbrains.research.kex.asm.state.PredicateStateAnalysis
 import org.jetbrains.research.kex.asm.util.Visibility
-import org.jetbrains.research.kex.descriptor.descriptor
+import org.jetbrains.research.kex.descriptor.Object2DescriptorConverter
 import org.jetbrains.research.kex.parameters.Parameters
 import org.jetbrains.research.kex.random.Randomizer
 import org.jetbrains.research.kex.reanimator.Reanimator
@@ -81,11 +81,9 @@ class ReanimatingRandomObjectTracingRunner(
     override fun collectTrace(invocationResult: InvocationResult) = ActionTrace(collector.trace)
 
     private val Parameters<Any?>.descriptors
-        get() = Parameters(
-            instance.descriptor,
-            arguments.map { it.descriptor },
-            setOf()
-        )
+        get() = with (Object2DescriptorConverter()) {
+            Parameters(convert(instance), arguments.map { convert(it) }, statics.map { convert(it) }.toSet())
+        }
 
     override fun generateArguments(): Parameters<Any?>? {
         val (randomInstance, randomArgs) = super.generateArguments() ?: return null

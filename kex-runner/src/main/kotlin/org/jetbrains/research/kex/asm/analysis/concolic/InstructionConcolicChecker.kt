@@ -75,16 +75,12 @@ class InstructionConcolicChecker(
     override val cm: ClassManager
         get() = ctx.cm
 
-    private val paths = mutableSetOf<PathCondition>()
-    private val candidates = mutableSetOf<PathCondition>()
     private val compilerHelper = CompilerHelper(ctx)
 
     private val timeLimit = kexConfig.getLongValue("concolic", "timeLimit", 100000L)
     private val maxFailsInARow = kexConfig.getLongValue("concolic", "maxFailsInARow", 50)
 
-    override fun cleanup() {
-        paths.clear()
-    }
+    override fun cleanup() {}
 
     override fun visit(method: Method) {
         if (method.isStaticInitializer || !method.hasBody) return
@@ -127,136 +123,6 @@ class InstructionConcolicChecker(
         return runner.run(klassName, ExecutorTestCasePrinter.SETUP_METHOD, ExecutorTestCasePrinter.TEST_METHOD)
     }
 
-    private fun Clause.reversed(): Clause? = when (instruction) {
-        is BranchInst -> {
-            val (cond, value) = with(predicate as EqualityPredicate) {
-                lhv to (rhv as ConstBoolTerm).value
-            }
-            val reversed = Clause(instruction, path(instruction.location) {
-                cond equality !value
-            })
-            if (paths.any { reversed in it }) null
-            else reversed
-        }
-        is SwitchInst -> when (predicate) {
-            is DefaultSwitchPredicate -> {
-                val defaultSwitch = predicate as DefaultSwitchPredicate
-                val switchInst = instruction as SwitchInst
-                val cond = defaultSwitch.cond
-                val candidates = switchInst.branches.keys.map { (it as IntConstant).value }.toSet()
-                var result: Clause? = null
-                for (candidate in candidates) {
-                    val mutated = Clause(instruction, path(instruction.location) {
-                        cond equality candidate
-                    })
-                    result = if (paths.any { mutated in it }) null else mutated
-                }
-                result
-            }
-            is EqualityPredicate -> {
-                val equalityPredicate = predicate as EqualityPredicate
-                val switchInst = instruction as SwitchInst
-                val (cond, value) = equalityPredicate.lhv to (equalityPredicate.rhv as ConstIntTerm).value
-                val candidates = switchInst.branches.keys.map { (it as IntConstant).value }.toSet() - value
-                var result: Clause? = null
-                for (candidate in candidates) {
-                    val mutated = Clause(instruction, path(instruction.location) {
-                        cond equality candidate
-                    })
-                    result = if (paths.any { mutated in it }) null else mutated
-                }
-                result ?: run {
-                    val mutated = Clause(instruction, path(instruction.location) {
-                        cond `!in` switchInst.branches.keys.map { value(it) }
-                    })
-                    if (paths.any { mutated in it }) mutated else null
-                }
-            }
-            else -> unreachable { log.error("Unexpected predicate in switch clause: $predicate") }
-        }
-        is TableSwitchInst -> when (predicate) {
-            is DefaultSwitchPredicate -> {
-                val defaultSwitch = predicate as DefaultSwitchPredicate
-                val switchInst = instruction as TableSwitchInst
-                val cond = defaultSwitch.cond
-                val candidates = switchInst.range.toSet()
-                var result: Clause? = null
-                for (candidate in candidates) {
-                    val mutated = Clause(instruction, path(instruction.location) {
-                        cond equality candidate
-                    })
-                    result = if (paths.any { mutated in it }) null else mutated
-                }
-                result
-            }
-            is EqualityPredicate -> {
-                val equalityPredicate = predicate as EqualityPredicate
-                val switchInst = instruction as TableSwitchInst
-                val (cond, value) = equalityPredicate.lhv to (equalityPredicate.rhv as ConstIntTerm).value
-                val candidates = switchInst.range.toSet() - value
-                var result: Clause? = null
-                for (candidate in candidates) {
-                    val mutated = Clause(instruction, path(instruction.location) {
-                        cond equality candidate
-                    })
-                    result = if (paths.any { mutated in it }) null else mutated
-                }
-                result ?: run {
-                    val mutated = Clause(instruction, path(instruction.location) {
-                        cond `!in` switchInst.range.map { const(it) }
-                    })
-                    if (paths.any { mutated in it }) null else mutated
-                }
-            }
-            else -> unreachable { log.error("Unexpected predicate in switch clause: $predicate") }
-        }
-        else -> null
-    }
-
-    private fun mutateState(state: ExecutionResult): SymbolicState? {
-        val predicateState = state.trace.state as BasicState
-        val mutatedPathCondition = state.trace.path.toMutableList()
-        var dropping = false
-        var clause: Clause? = null
-        val newState = predicateState.dropLastWhile {
-            if (it.type is PredicateType.Path) {
-                val instruction = state.trace[it]
-                val reversed = Clause(instruction, it).reversed()
-                if (reversed != null) {
-                    clause = reversed
-                    mutatedPathCondition.removeLast()
-                    mutatedPathCondition += clause!!
-                    if (PathConditionImpl(mutatedPathCondition) !in candidates)
-                        dropping = true
-                    else {
-                        clause = null
-                        mutatedPathCondition.removeLast()
-                    }
-                } else {
-                    mutatedPathCondition.removeLast()
-                }
-            }
-            dropping
-        }
-        if (clause == null) return null
-
-        val mutatedState = newState.dropLast(1) + clause!!.predicate
-        val mutatedValueMap = state.trace.concreteValueMap.toMutableMap()
-        candidates += PathConditionImpl(mutatedPathCondition)
-        clause!!.predicate.operands.forEach {
-            mutatedValueMap.remove(it)
-        }
-
-        return SymbolicStateImpl(
-            mutatedState,
-            PathConditionImpl(mutatedPathCondition),
-            mutatedValueMap,
-            state.trace.termMap,
-            state.trace.predicateMap,
-            InstructionTrace()
-        )
-    }
-
     private fun prepareState(method: Method, state: PredicateState): PredicateState = transform(state) {
         +KexRtAdapter(cm)
         +StringMethodAdapter(ctx.cm)
@@ -294,42 +160,30 @@ class InstructionConcolicChecker(
     }
 
     private suspend fun processMethod(method: Method) {
-        val stateDeque = dequeOf<ExecutionResult>()
+        val selector = BfsPathSelectorImpl(traceManager)
         getRandomTrace(method)?.let {
-            stateDeque += it
-            paths += it.trace.path
-            traceManager.addTrace(method, it.trace.trace)
+            selector.addExecutionTrace(method, it)
         }
         yield()
 
         var failsInARow = 0
-        while (stateDeque.isNotEmpty() && !traceManager.isFullCovered(method)) {
+        while (selector.hasMorePaths(method)) {
             ++failsInARow
             if (failsInARow > maxFailsInARow) {
                 log.debug { "Reached maximum fails in a row for method $method" }
                 return
             }
 
-            val state = stateDeque.pollFirst()
-            log.debug { "Processing state: $state" }
-
-            val mutatedState = mutateState(state) ?: continue
-            log.debug { "Mutated state: $mutatedState" }
+            val state = selector.getNextPath()
+            log.debug { "Checking state: $state" }
             yield()
 
-            val newState = check(method, mutatedState) ?: continue
+            val newState = check(method, state) ?: continue
             if (newState.trace.isEmpty()) {
-                log.warn { "Collected empty state from $mutatedState" }
+                log.warn { "Collected empty state from $state" }
                 continue
             }
-            if (newState.trace.path !in paths) {
-                log.debug { "New state: $newState" }
-
-                stateDeque += newState
-                paths += newState.trace.path
-                failsInARow = 0
-            }
-            traceManager.addTrace(method, newState.trace.trace)
+            selector.addExecutionTrace(method, newState)
             yield()
         }
     }

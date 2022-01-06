@@ -6,15 +6,13 @@ import org.jetbrains.research.kex.evolutions.LoopOptimizer
 import org.jetbrains.research.kex.evolutions.defaultVar
 import org.jetbrains.research.kex.evolutions.evaluateEvolutions
 import org.jetbrains.research.kfg.ClassManager
-import org.jetbrains.research.kfg.analysis.Loop
-import org.jetbrains.research.kfg.analysis.LoopManager
-import org.jetbrains.research.kfg.analysis.LoopVisitor
 import org.jetbrains.research.kfg.ir.BasicBlock
 import org.jetbrains.research.kfg.ir.BodyBlock
 import org.jetbrains.research.kfg.ir.CatchBlock
 import org.jetbrains.research.kfg.ir.Method
 import org.jetbrains.research.kfg.ir.value.*
 import org.jetbrains.research.kfg.ir.value.instruction.*
+import org.jetbrains.research.kfg.visitor.Loop
 import org.jetbrains.research.kthelper.algorithm.GraphTraversal
 import org.jetbrains.research.kthelper.algorithm.NoTopologicalSortingException
 import org.jetbrains.research.kthelper.assert.unreachable
@@ -95,9 +93,9 @@ class LoopDeroller(override val cm: ClassManager) : LoopOptimizer(cm) {
         ctx = it
         try {
             precalculateEvolutions(method)
-            val loops = LoopManager.getMethodLoopInfo(method)
+            val loops = method.getLoopInfo()
             loops.forEach { loop -> freshVars[loop] = Var.fresh("iteration") }
-            loops.forEach { visit(it) }
+            loops.forEach { visitLoop(it) }
             updateLoopInfo(method)
         } catch (e: InvalidLoopException) {
             log.error("Can't deroll loops of method $method")
@@ -107,8 +105,8 @@ class LoopDeroller(override val cm: ClassManager) : LoopOptimizer(cm) {
     }
 
 
-    override fun visit(loop: Loop) {
-        loop.subLoops.forEach { visit(it) }
+    override fun visitLoop(loop: Loop) {
+        loop.subLoops.forEach { visitLoop(it) }
         if (loop.allEntries.size != 1) throw InvalidLoopException()
         if (loop.loopExits.isEmpty()) throw InvalidLoopException()
         loop.method ?: unreachable { log.error("Can't get method of loop") }
@@ -460,7 +458,7 @@ class LoopDeroller(override val cm: ClassManager) : LoopOptimizer(cm) {
 
     private fun createInductive(loop: Loop): Instruction {
         val a = freshVars.getOrPut(loop, defaultVar())
-        val newInst = instructions.getUnknownLoopIterationInst(ctx, a.name)
+        val newInst = instructions.getUnknownValueInst(ctx, a.name)
         var2inst[a] = newInst
         inst2var[newInst] = a
         return newInst

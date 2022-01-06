@@ -13,7 +13,6 @@ import org.jetbrains.research.kfg.ClassManager
 import org.jetbrains.research.kthelper.assert.unreachable
 import org.jetbrains.research.kthelper.logging.log
 
-
 sealed class Descriptor(term: Term, type: KexType) {
     var term = term
         protected set
@@ -30,7 +29,7 @@ sealed class Descriptor(term: Term, type: KexType) {
     operator fun contains(other: Descriptor): Boolean = this.contains(other, mutableSetOf())
 
     override fun toString() = asString
-    infix fun eq(other: Descriptor) = this.structuralEquality(other, mutableSetOf<Pair<Descriptor, Descriptor>>())
+    infix fun eq(other: Descriptor) = this.structuralEquality(other, mutableSetOf())
     infix fun neq(other: Descriptor) = !(this eq other)
 
     abstract fun print(map: MutableMap<Descriptor, String>): String
@@ -566,9 +565,7 @@ open class DescriptorBuilder {
 fun descriptor(body: DescriptorBuilder.() -> Descriptor): Descriptor =
     DescriptorBuilder().body()
 
-val descriptorContext get() = DescriptorBuilder()
-
-class DescriptorRtMapper(val mode: Mode) : DescriptorBuilder() {
+class DescriptorRtMapper(private val mode: Mode) : DescriptorBuilder() {
     enum class Mode {
         MAP, UNMAP
     }

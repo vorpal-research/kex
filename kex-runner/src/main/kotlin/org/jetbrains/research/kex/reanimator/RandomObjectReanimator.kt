@@ -12,7 +12,6 @@ import org.jetbrains.research.kex.reanimator.callstack.CallStack
 import org.jetbrains.research.kex.reanimator.callstack.CallStackExecutor
 import org.jetbrains.research.kex.reanimator.callstack.generator.CallStackGenerator
 import org.jetbrains.research.kex.reanimator.callstack.generator.GeneratorContext
-import org.jetbrains.research.kex.reanimator.codegen.JUnitTestCasePrinter
 import org.jetbrains.research.kex.util.kex
 import org.jetbrains.research.kex.util.loadClass
 import org.jetbrains.research.kfg.ClassManager
@@ -161,7 +160,7 @@ class RandomObjectReanimator(
             if (any.isValid) ++validAttempts
             else continue
 
-            val descriptor = any.descriptor
+            val descriptor = convertToDescriptor(any)
             val descriptorDepth = descriptor.depth
             depth += descriptorDepth
 
@@ -187,7 +186,7 @@ class RandomObjectReanimator(
                 }
             }
 
-            val structuralEq = originalDescriptor eq generatedAny.descriptor
+            val structuralEq = originalDescriptor eq convertToDescriptor(generatedAny)
             if (structuralEq) {
                 successDepths += descriptorDepth
                 ++successes
@@ -257,7 +256,7 @@ class RandomObjectReanimator(
             val any = randomObject()
             if (!any.isValid) continue
 
-            val descriptor = any.descriptor
+            val descriptor = convertToDescriptor(any)
 
             if (descriptor.isValid()) {
                 ++validDescriptorAttempts

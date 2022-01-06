@@ -16,8 +16,8 @@ import kotlin.reflect.KClass
 import org.jetbrains.research.kfg.ir.Class as KfgClass
 
 object KexRtManager {
-    val rt2KexMapping: Map<String, String>
-    val kex2RtMapping: Map<String, String>
+    private val rt2KexMapping: Map<String, String>
+    private val kex2RtMapping: Map<String, String>
 
     init {
         val kexRt = getKexRuntime()
@@ -209,7 +209,7 @@ class KexVoid : KexType() {
     }
 }
 
-fun KexType.unmemspaced() = when (this) {
+fun KexType.unMemspaced() = when (this) {
     is KexPointer -> withoutMemspace()
     else -> this
 }

@@ -55,7 +55,7 @@ class CoverageCounter<T : AbstractTrace> private constructor(
     private val tm: TraceManager<T>,
     val methodFilter: (Method) -> Boolean
 ) : MethodVisitor {
-    val methodInfos = hashMapOf<Method, CoverageInfo>()
+    private val methodInfos = hashMapOf<Method, CoverageInfo>()
 
     constructor(cm: ClassManager, tm: TraceManager<T>) : this(cm, tm, { true })
     constructor(cm: ClassManager, tm: TraceManager<T>, pkg: Package) :

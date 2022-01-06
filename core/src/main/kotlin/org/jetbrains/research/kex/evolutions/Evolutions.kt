@@ -1,11 +1,10 @@
 package org.jetbrains.research.kex.evolutions
 
 import org.jetbrains.research.kfg.ClassManager
-import org.jetbrains.research.kfg.analysis.Loop
-import org.jetbrains.research.kfg.analysis.LoopManager
 import org.jetbrains.research.kfg.ir.Method
 import org.jetbrains.research.kfg.ir.value.*
 import org.jetbrains.research.kfg.ir.value.instruction.*
+import org.jetbrains.research.kfg.visitor.Loop
 import org.jetbrains.research.kfg.visitor.MethodVisitor
 import ru.spbstu.*
 import ru.spbstu.wheels.mapToArray
@@ -287,7 +286,7 @@ open class Evolutions(override val cm: ClassManager) : MethodVisitor {
      * @return sequence of all loops in the method.
      */
     fun walkLoops(method: Method) = sequence {
-        val topLevel = LoopManager.getMethodLoopInfo(method)
+        val topLevel = method.getLoopInfo()
         for (loop in topLevel) yieldAll(walkLoops(loop))
     }
 

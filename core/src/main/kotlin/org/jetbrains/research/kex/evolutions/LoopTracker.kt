@@ -1,6 +1,6 @@
 package org.jetbrains.research.kex.evolutions
 
-import org.jetbrains.research.kfg.analysis.Loop
+import org.jetbrains.research.kfg.visitor.Loop
 
 object LoopTracker { // XXX: remove this)
     private val loops: MutableMap<Loop, Int> = mutableMapOf()
