@@ -27,6 +27,7 @@ class CallStackGenerator(override val context: GeneratorContext) : Generator {
         typeGenerators += ConstantGenerator(context)
         typeGenerators += ArrayGenerator(this)
         typeGenerators += StaticFieldGenerator(this)
+        typeGenerators += CharsetGenerator(this)
         typeGenerators += StringGenerator(this)
         typeGenerators += ClassGenerator(this)
         typeGenerators += EnumGenerator(this)

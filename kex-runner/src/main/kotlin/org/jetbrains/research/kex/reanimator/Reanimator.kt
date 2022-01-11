@@ -6,6 +6,7 @@ import org.jetbrains.research.kex.asm.util.Visibility
 import org.jetbrains.research.kex.config.kexConfig
 import org.jetbrains.research.kex.descriptor.Descriptor
 import org.jetbrains.research.kex.descriptor.DescriptorRtMapper
+import org.jetbrains.research.kex.ktype.KexRtManager
 import org.jetbrains.research.kex.parameters.Parameters
 import org.jetbrains.research.kex.parameters.concreteParameters
 import org.jetbrains.research.kex.random.GenerationException
@@ -34,7 +35,7 @@ private val visibilityLevel by lazy {
 
 val Parameters<Descriptor>.rtMapped: Parameters<Descriptor>
     get() {
-        val mapper = DescriptorRtMapper(DescriptorRtMapper.Mode.MAP)
+        val mapper = DescriptorRtMapper(KexRtManager.Mode.MAP)
         val instance = instance?.let { mapper.map(it) }
         val args = arguments.map { mapper.map(it) }
         val statics = statics.map { mapper.map(it) }.toSet()
@@ -43,7 +44,7 @@ val Parameters<Descriptor>.rtMapped: Parameters<Descriptor>
 
 val Parameters<CallStack>.rtUnmapped: Parameters<CallStack>
     get() {
-        val mapper = CallStackRtMapper(CallStackRtMapper.Mode.UNMAP)
+        val mapper = CallStackRtMapper(KexRtManager.Mode.UNMAP)
         val instance = instance?.let { mapper.map(it) }
         val args = arguments.map { mapper.map(it) }
         val statics = statics.map { mapper.map(it) }.toSet()

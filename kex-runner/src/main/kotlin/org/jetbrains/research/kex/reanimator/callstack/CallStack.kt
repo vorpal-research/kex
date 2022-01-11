@@ -1,7 +1,8 @@
 package org.jetbrains.research.kex.reanimator.callstack
 
 import org.jetbrains.research.kex.descriptor.Descriptor
-import org.jetbrains.research.kex.descriptor.descriptor
+import org.jetbrains.research.kex.descriptor.DescriptorRtMapper
+import org.jetbrains.research.kex.ktype.KexRtManager
 import org.jetbrains.research.kex.ktype.KexRtManager.rtMapped
 import org.jetbrains.research.kex.ktype.KexRtManager.rtUnmapped
 import org.jetbrains.research.kfg.ir.Class
@@ -129,7 +130,7 @@ data class ExternalConstructorCall(val constructor: Method, val args: List<CallS
         for (arg in args) {
             arg.print(builder, visited)
         }
-        builder.appendLine("${owner.name} = ${constructor.klass.fullName}(${args.joinToString(", ") { it.name }})")
+        builder.appendLine("${owner.name} = ${constructor.klass.fullName}.${constructor.name}(${args.joinToString(", ") { it.name }})")
     }
 }
 
@@ -272,11 +273,7 @@ val ApiCall.rtUnmapped: ApiCall get() = when (this) {
     is UnknownCall -> TODO()
 }
 
-class CallStackRtMapper(val mode: Mode) {
-    enum class Mode {
-        MAP, UNMAP
-    }
-
+class CallStackRtMapper(val mode: KexRtManager.Mode) {
     private val cache = mutableMapOf<CallStack, CallStack>()
 
     fun map(ct: CallStack): CallStack {
@@ -291,18 +288,18 @@ class CallStackRtMapper(val mode: Mode) {
     }
 
     private val Class.mapped get() = when (mode) {
-        Mode.MAP -> rtMapped
-        Mode.UNMAP -> rtUnmapped
+        KexRtManager.Mode.MAP -> rtMapped
+        KexRtManager.Mode.UNMAP -> rtUnmapped
     }
 
     private val Type.mapped get() = when (mode) {
-        Mode.MAP -> rtMapped
-        Mode.UNMAP -> rtUnmapped
+        KexRtManager.Mode.MAP -> rtMapped
+        KexRtManager.Mode.UNMAP -> rtUnmapped
     }
 
     private val String.mapped get() = when (mode) {
-        Mode.MAP -> rtMapped
-        Mode.UNMAP -> rtUnmapped
+        KexRtManager.Mode.MAP -> rtMapped
+        KexRtManager.Mode.UNMAP -> rtUnmapped
     }
 
     fun map(api: ApiCall): ApiCall = when (api) {
@@ -374,6 +371,9 @@ class CallStackRtMapper(val mode: Mode) {
             )
             StaticMethodCall(unmappedMethod, api.args.map { map(it) })
         }
-        is UnknownCall -> UnknownCall(api.type.mapped, api.target)
+        is UnknownCall -> {
+            val mapper = DescriptorRtMapper(mode)
+            UnknownCall(api.type.mapped, mapper.map(api.target))
+        }
     }
 }

@@ -1,6 +1,9 @@
 package org.jetbrains.research.kex.reanimator.codegen.javagen
 
 import org.jetbrains.research.kex.ExecutionContext
+import org.jetbrains.research.kex.asm.util.Visibility
+import org.jetbrains.research.kex.asm.util.visibility
+import org.jetbrains.research.kex.config.kexConfig
 import org.jetbrains.research.kex.ktype.KexType
 import org.jetbrains.research.kex.ktype.type
 import org.jetbrains.research.kex.parameters.Parameters
@@ -16,7 +19,12 @@ import org.jetbrains.research.kfg.type.Type
 import org.jetbrains.research.kthelper.assert.ktassert
 import org.jetbrains.research.kthelper.assert.unreachable
 import org.jetbrains.research.kthelper.logging.log
+import org.jetbrains.research.kthelper.tryOrNull
 import java.lang.reflect.*
+
+private val visibilityLevel by lazy {
+    kexConfig.getEnumValue("apiGeneration", "visibility", true, Visibility.PUBLIC)
+}
 
 // TODO: this is work of satan, refactor this damn thing
 open class CallStack2JavaPrinter(
@@ -84,7 +92,7 @@ open class CallStack2JavaPrinter(
             }
         }
         resolveTypes(callStack)
-        callStack.printAsJava()
+        tryOrNull { callStack.printAsJava() }
     }
 
     override fun emit() = builder.toString()
@@ -94,9 +102,12 @@ open class CallStack2JavaPrinter(
         fun isSubtype(other: CSType): Boolean
     }
 
-    inner class CSWildcard : CSType {
+    inner class CSWildcard(val upperBound: CSType, val lowerBound: CSType? = null) : CSType {
         override fun isSubtype(other: CSType) = other is CSWildcard
-        override fun toString() = "?"
+        override fun toString() = when {
+            lowerBound != null -> "? super $lowerBound"
+            else -> "? extends $upperBound"
+        }
     }
 
     inner class CSClass(val type: Type, val typeParams: List<CSType> = emptyList()) : CSType {
@@ -168,7 +179,10 @@ open class CallStack2JavaPrinter(
             }
             is GenericArrayType -> CSArray(this.genericComponentType.csType)
             is TypeVariable<*> -> this.bounds.first().csType
-            is WildcardType -> CSWildcard()
+            is WildcardType -> CSWildcard(
+                upperBounds?.firstOrNull()?.csType ?: ctx.types.objectType.csType,
+                lowerBounds?.firstOrNull()?.csType
+            )
             else -> TODO()
         }
 
@@ -177,12 +191,16 @@ open class CallStack2JavaPrinter(
             val actualKlass = ctx.loader.loadClass(type)
             val requiredKlass = ctx.loader.loadClass(requiredType.type)
             val isAssignable = requiredKlass.isAssignableFrom(actualKlass)
-            if (isAssignable && actualKlass.typeParameters.size == requiredKlass.typeParameters.size) {
-                CSClass(type, requiredType.typeParams)
-            } else if (isAssignable) {
+            val isVisible = ((type as? ClassType)?.klass?.visibility ?: Visibility.PUBLIC )>= visibilityLevel
+            if (isVisible && isAssignable && actualKlass.typeParameters.size == requiredKlass.typeParameters.size) {
+                CSClass(
+                    type,
+                    this.typeParams.zip(requiredType.typeParams).map { (f, s) -> if (f.isSubtype(s)) f else s }
+                )
+            } else if (isVisible && isAssignable) {
                 CSClass(type)
             } else {
-                TODO()
+                requiredType
             }
         }
         else -> TODO()
@@ -486,13 +504,21 @@ open class CallStack2JavaPrinter(
         val args = call.args.joinToString(", ") {
             it.forceCastIfNull(resolvedTypes[it])
         }
-        val actualType = CSClass(constructor.returnType)
+
+        val reflection = ctx.loader.loadClass(call.constructor.klass)
+        val ctor = reflection.getMethod(call.constructor, ctx.loader)
+        val actualType = ctor.genericReturnType.csType
         return listOf(
             if (resolvedTypes[owner] != null) {
                 val rest = resolvedTypes[owner]!!
                 val type = actualType.merge(rest)
                 actualTypes[owner] = type
-                "${printVarDeclaration(owner.name, type)} = ${type.cast(rest)} ${constructor.klass.javaString}.${constructor.name}($args)"
+                "${
+                    printVarDeclaration(
+                        owner.name,
+                        type
+                    )
+                } = ${type.cast(rest)} ${constructor.klass.javaString}.${constructor.name}($args)"
             } else {
                 actualTypes[owner] = actualType
                 "${
@@ -535,7 +561,11 @@ open class CallStack2JavaPrinter(
         val (depth, elementType) = actualType.elementTypeDepth()
         actualTypes[owner] = actualType
         return listOf(
-            "${printVarDeclaration(owner.name, actualType)} = new $elementType[${call.length.stackName}]${"[]".repeat(depth)}"
+            "${printVarDeclaration(owner.name, actualType)} = new $elementType[${call.length.stackName}]${
+                "[]".repeat(
+                    depth
+                )
+            }"
         )
     }
 
@@ -544,14 +574,15 @@ open class CallStack2JavaPrinter(
         rhv == null -> lhv
         lhv.isSubtype(rhv) -> lhv
         rhv.isSubtype(lhv) -> rhv
-        else -> unreachable {  }
+        else -> unreachable { }
     }
 
-    private val CSType.elementType: CSType get() = when (this) {
-        is CSPrimaryArray -> this.element
-        is CSArray -> this.element
-        else -> TODO()
-    }
+    private val CSType.elementType: CSType
+        get() = when (this) {
+            is CSPrimaryArray -> this.element
+            is CSArray -> this.element
+            else -> TODO()
+        }
 
     protected open fun printArrayWrite(owner: CallStack, call: ArrayWrite): List<String> {
         call.value.printAsJava()
@@ -576,9 +607,16 @@ open class CallStack2JavaPrinter(
     }
 
     protected open fun printStaticFieldGetter(owner: CallStack, call: StaticFieldGetter): List<String> {
-        val actualType = call.field.klass.type.csType
+        val actualType = call.field.type.csType
         actualTypes[owner] = actualType
-        return listOf("${printVarDeclaration(owner.name, actualType)} = ${call.field.klass.javaString}.${call.field.name}")
+        return listOf(
+            "${
+                printVarDeclaration(
+                    owner.name,
+                    actualType
+                )
+            } = ${call.field.klass.javaString}.${call.field.name}"
+        )
     }
 
     protected open fun printUnknown(owner: CallStack, call: UnknownCall): List<String> {

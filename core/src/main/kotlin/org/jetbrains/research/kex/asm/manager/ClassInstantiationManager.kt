@@ -106,6 +106,7 @@ class ClassInstantiationDetector(override val cm: ClassManager, val visibilityLe
     override fun visitMethod(method: Method) {
         val returnType = (method.returnType as? ClassType) ?: return
         if (visibilityLevel > method.visibility) return
+        if (visibilityLevel > method.klass.visibility) return
         if (!method.isStatic || method.argTypes.any { it.isSubtypeOf(returnType) } || method.isSynthetic) return
 
         var returnClass = returnType.klass
@@ -120,15 +121,19 @@ class ClassInstantiationDetector(override val cm: ClassManager, val visibilityLe
     }
 
     private fun addInstantiableClass(klass: Class, instantiableKlass: Class) {
-        for (parent in klass.allAncestors) {
-            addInstantiableClass(parent, instantiableKlass)
+        if (!instantiableKlass.isEnum) {
+            for (parent in klass.allAncestors) {
+                addInstantiableClass(parent, instantiableKlass)
+            }
         }
         ClassInstantiationManagerImpl[klass] = instantiableKlass
     }
 
     private fun addExternalCtor(klass: Class, method: Method) {
-        for (parent in klass.allAncestors) {
-            addExternalCtor(parent, method)
+        if (!klass.isEnum) {
+            for (parent in klass.allAncestors) {
+                addExternalCtor(parent, method)
+            }
         }
         ClassInstantiationManagerImpl[klass] = method
     }
