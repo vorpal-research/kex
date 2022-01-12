@@ -565,15 +565,12 @@ open class DescriptorBuilder {
 fun descriptor(body: DescriptorBuilder.() -> Descriptor): Descriptor =
     DescriptorBuilder().body()
 
-class DescriptorRtMapper(private val mode: Mode) : DescriptorBuilder() {
-    enum class Mode {
-        MAP, UNMAP
-    }
+class DescriptorRtMapper(private val mode: KexRtManager.Mode) : DescriptorBuilder() {
     private val cache = mutableMapOf<Descriptor, Descriptor>()
 
     private val KexType.mapped get() = when (mode) {
-        Mode.MAP -> rtMapped
-        Mode.UNMAP -> rtUnmapped
+        KexRtManager.Mode.MAP -> rtMapped
+        KexRtManager.Mode.UNMAP -> rtUnmapped
     }
 
     fun map(descriptor: Descriptor): Descriptor = cache.getOrElse(descriptor) {

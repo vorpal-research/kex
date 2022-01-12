@@ -19,6 +19,10 @@ object KexRtManager {
     private val rt2KexMapping: Map<String, String>
     private val kex2RtMapping: Map<String, String>
 
+    enum class Mode {
+        MAP, UNMAP
+    }
+
     init {
         val kexRt = getKexRuntime()
         val klasses = kexRt?.parse(Flags.readAll, failOnError = true) ?: mapOf()

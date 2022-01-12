@@ -106,6 +106,7 @@ class ClassInstantiationDetector(override val cm: ClassManager, val visibilityLe
     override fun visitMethod(method: Method) {
         val returnType = (method.returnType as? ClassType) ?: return
         if (visibilityLevel > method.visibility) return
+        if (visibilityLevel > method.klass.visibility) return
         if (!method.isStatic || method.argTypes.any { it.isSubtypeOf(returnType) } || method.isSynthetic) return
 
         var returnClass = returnType.klass
