@@ -301,7 +301,7 @@ class ActionSequenceRtMapper(val mode: KexRtManager.Mode) {
         is UnknownSequence -> {
             val mapper = DescriptorRtMapper(mode)
             val newTarget = mapper.map(ct.target)
-            UnknownSequence(ct.name, ct.type.mapped, newTarget)
+            UnknownSequence(newTarget.term.toString(), ct.type.mapped, newTarget)
         }
         is TestCall -> TestCall(ct.name, ct.test, ct.instance?.let { map(it) }, ct.args.map { map(it) })
         is ActionList -> if (ct in cache) cache[ct]!!
