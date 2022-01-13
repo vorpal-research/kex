@@ -1,12 +1,11 @@
-package org.jetbrains.research.kex.reanimator.callstack.generator
+package org.jetbrains.research.kex.reanimator.actionsequence.generator
 
 import org.jetbrains.research.kex.asm.util.visibility
 import org.jetbrains.research.kex.config.kexConfig
 import org.jetbrains.research.kex.descriptor.Descriptor
 import org.jetbrains.research.kex.descriptor.ObjectDescriptor
-import org.jetbrains.research.kex.ktype.type
 import org.jetbrains.research.kex.parameters.Parameters
-import org.jetbrains.research.kex.reanimator.callstack.*
+import org.jetbrains.research.kex.reanimator.actionsequence.*
 import org.jetbrains.research.kex.reanimator.collector.hasSetter
 import org.jetbrains.research.kex.reanimator.collector.setter
 import org.jetbrains.research.kfg.ir.Class
@@ -23,15 +22,17 @@ open class AnyGenerator(private val fallback: Generator) : Generator {
 
     override fun supports(descriptor: Descriptor) = descriptor is ObjectDescriptor
 
-    override fun generate(descriptor: Descriptor, generationDepth: Int): CallStack = with(context) {
+    override fun generate(descriptor: Descriptor, generationDepth: Int): ActionSequence = with(context) {
         descriptor as? ObjectDescriptor ?: throw IllegalArgumentException()
 
         val name = "${descriptor.term}"
-        val callStack = CallStack(name)
-        saveToCache(descriptor, callStack)
+        val actionSequence = ActionList(name)
+        saveToCache(descriptor, actionSequence)
 
-        generateObject(callStack, descriptor, generationDepth)
-        return callStack
+        return if (generateObject(actionSequence, descriptor, generationDepth)) actionSequence
+        else UnknownSequence(name, descriptor.type.getKfgType(types), descriptor).also {
+            saveToCache(descriptor, it)
+        }
     }
 
     class StackWrapper(val value: GeneratorContext.ExecutionStack<ObjectDescriptor>) {
@@ -51,11 +52,11 @@ open class AnyGenerator(private val fallback: Generator) : Generator {
     fun GeneratorContext.ExecutionStack<ObjectDescriptor>.wrap() = StackWrapper(this)
 
     open fun checkCtors(
-        callStack: CallStack,
+        sequence: ActionList,
         klass: Class,
         current: ObjectDescriptor,
-        currentStack: List<ApiCall>,
-        fallbacks: MutableSet<List<ApiCall>>,
+        currentStack: List<CodeAction>,
+        fallbacks: MutableSet<List<CodeAction>>,
         generationDepth: Int
     ): Boolean =
         with(context) {
@@ -67,7 +68,7 @@ open class AnyGenerator(private val fallback: Generator) : Generator {
                 val apiCall = handler(method) ?: continue
                 val result = (currentStack + apiCall).reversed()
                 if (result.isComplete) {
-                    callStack.stack += (currentStack + apiCall).reversed()
+                    sequence += (currentStack + apiCall).reversed()
                     return true
                 } else {
                     fallbacks += result
@@ -77,9 +78,10 @@ open class AnyGenerator(private val fallback: Generator) : Generator {
         }
 
     open fun applyMethods(
+        sequence: ActionList,
         klass: Class,
         current: ObjectDescriptor,
-        currentStack: List<ApiCall>,
+        currentStack: List<CodeAction>,
         searchDepth: Int,
         generationDepth: Int
     ): List<GeneratorContext.ExecutionStack<ObjectDescriptor>> = with(context) {
@@ -108,9 +110,8 @@ open class AnyGenerator(private val fallback: Generator) : Generator {
         return stackList
     }
 
-    fun generateObject(callStack: CallStack, descriptor: ObjectDescriptor, generationDepth: Int) = with(context) {
-        val original = descriptor.deepCopy()
-        val fallbacks = mutableSetOf<List<ApiCall>>()
+    fun generateObject(sequence: ActionList, descriptor: ObjectDescriptor, generationDepth: Int): Boolean = with(context) {
+        val fallbacks = mutableSetOf<List<CodeAction>>()
 
         descriptor.concretize(cm)
         descriptor.reduce()
@@ -119,12 +120,11 @@ open class AnyGenerator(private val fallback: Generator) : Generator {
 
         val klass = descriptor.klass.kfgClass(types)
         if (klass.orderedCtors.isEmpty()) {
-            callStack += UnknownCall(klass.type, original)
-            return
+            return false
         }
 
         val setters = when {
-            useSetters -> descriptor.generateSetters(generationDepth)
+            useSetters -> descriptor.generateSetters(sequence, generationDepth)
             else -> listOf()
         }
         val queue = queueOf(GeneratorContext.ExecutionStack(descriptor, setters, 0))
@@ -145,26 +145,25 @@ open class AnyGenerator(private val fallback: Generator) : Generator {
             log.debug("Depth $generationDepth, stack depth $depth, query size ${queue.size}")
 
 
-            if (checkCtors(callStack, klass, current, stack, fallbacks, generationDepth)) {
-                return
+            if (checkCtors(sequence, klass, current, stack, fallbacks, generationDepth)) {
+                return true
             }
 
             if (depth >= maxStackSize - 1) continue
 
-            for (execStack in applyMethods(klass, current, stack, depth, generationDepth)) {
+            for (execStack in applyMethods(sequence, klass, current, stack, depth, generationDepth)) {
                 queue += execStack
             }
         }
 
-        if (fallbacks.isNotEmpty()) {
-            callStack.stack.clear()
-            callStack.stack += fallbacks.random()
-        } else {
-            callStack += UnknownCall(klass.type, original)
-        }
+        return if (fallbacks.isNotEmpty()) {
+            sequence.clear()
+            sequence += fallbacks.random()
+            true
+        } else false
     }
 
-    fun generateArgs(args: List<Descriptor>, depth: Int): List<CallStack>? = try {
+    fun generateArgs(args: List<Descriptor>, depth: Int): List<ActionSequence>? = try {
         args.map { fallback.generate(it, depth) }
     } catch (e: SearchLimitExceededException) {
         throw e
@@ -172,7 +171,7 @@ open class AnyGenerator(private val fallback: Generator) : Generator {
         null
     }
 
-    fun ObjectDescriptor.checkCtor(klass: Class, method: Method, generationDepth: Int): ApiCall? =
+    fun ObjectDescriptor.checkCtor(klass: Class, method: Method, generationDepth: Int): CodeAction? =
         with(context) {
             val (thisDesc, args) = method.executeAsConstructor(this@checkCtor) ?: return null
 
@@ -188,7 +187,7 @@ open class AnyGenerator(private val fallback: Generator) : Generator {
             } else null
         }
 
-    fun ObjectDescriptor.checkExternalCtor(method: Method, generationDepth: Int): ApiCall? =
+    fun ObjectDescriptor.checkExternalCtor(method: Method, generationDepth: Int): CodeAction? =
         with(context) {
             val (_, args) = method.executeAsExternalConstructor(this@checkExternalCtor) ?: return null
 
@@ -196,8 +195,9 @@ open class AnyGenerator(private val fallback: Generator) : Generator {
             ExternalConstructorCall(method, generatedArgs)
         }
 
-    fun ObjectDescriptor.generateSetters(generationDepth: Int): List<ApiCall> = with(context) {
-        val calls = mutableListOf<ApiCall>()
+    @Suppress("UNUSED_PARAMETER")
+    fun ObjectDescriptor.generateSetters(sequence: ActionList, generationDepth: Int): List<CodeAction> = with(context) {
+        val calls = mutableListOf<CodeAction>()
         val kfgKlass = klass.kfgClass(types)
         for ((field, value) in fields.toMap()) {
             val kfgField = kfgKlass.getField(field.first, field.second.getKfgType(types))

@@ -49,7 +49,7 @@ class KexExecutor(args: Array<String>) {
         val classPaths = cmd.getCmdValue("classpath")!!
             .split(getPathSeparator())
             .map { Paths.get(it).toAbsolutePath() }
-        containerClassLoader = URLClassLoader(*classPaths.map { it.toUri().toURL() }.toTypedArray())
+        containerClassLoader = URLClassLoader(classPaths.map { it.toUri().toURL() }.toTypedArray())
 
         containers = classPaths.map {
             it.asContainer(target) ?: run {

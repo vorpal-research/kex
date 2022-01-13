@@ -1,9 +1,10 @@
-package org.jetbrains.research.kex.reanimator.callstack
+package org.jetbrains.research.kex.reanimator.actionsequence
 
 import org.jetbrains.research.kex.ExecutionContext
 import org.jetbrains.research.kex.config.kexConfig
 import org.jetbrains.research.kex.util.*
 import org.jetbrains.research.kthelper.assert.unreachable
+import org.jetbrains.research.kthelper.logging.error
 import org.jetbrains.research.kthelper.logging.log
 import org.jetbrains.research.kthelper.tryOrNull
 import java.lang.reflect.Array
@@ -13,8 +14,8 @@ private val timeout by lazy {
     kexConfig.getLongValue("runner", "timeout", 1000L)
 }
 
-class CallStackExecutor(val ctx: ExecutionContext) {
-    private val cache = mutableMapOf<CallStack, Any?>()
+class ActionSequenceExecutor(val ctx: ExecutionContext) {
+    private val cache = mutableMapOf<ActionSequence, Any?>()
 
     private fun Field.setValue(instance: Any?, value: Any?) = if (this.type.isPrimitive) {
         when (value!!.javaClass) {
@@ -51,13 +52,14 @@ class CallStackExecutor(val ctx: ExecutionContext) {
         }
     }
 
-    fun execute(callStack: CallStack): Any? = tryOrNull<Any?> {
-        if (callStack in cache) return cache[callStack]
+    fun execute(actionSequence: ActionSequence): Any? = tryOrNull<Any?> {
+        if (actionSequence in cache) return cache[actionSequence]
 
         var current: Any? = null
-        when (callStack) {
-            is PrimaryValue<*> -> current = callStack.value
-            else -> for (call in callStack) {
+        when (actionSequence) {
+            is PrimaryValue<*> -> current = actionSequence.value
+            is UnknownSequence -> current = null
+            is ActionList -> for (call in actionSequence) {
                 current = when (call) {
                     is DefaultConstructorCall -> {
                         val reflection = ctx.loader.loadClass(call.klass)
@@ -67,7 +69,7 @@ class CallStackExecutor(val ctx: ExecutionContext) {
                         runWithTimeout(timeout) {
                             instance = defaultConstructor.newInstance()
                         }
-                        cache[callStack] = instance
+                        cache[actionSequence] = instance
                         instance
                     }
                     is ConstructorCall -> {
@@ -79,7 +81,7 @@ class CallStackExecutor(val ctx: ExecutionContext) {
                         runWithTimeout(timeout) {
                             instance = constructor.newInstance(*args)
                         }
-                        cache[callStack] = instance
+                        cache[actionSequence] = instance
                         instance
                     }
                     is ExternalConstructorCall -> {
@@ -91,7 +93,7 @@ class CallStackExecutor(val ctx: ExecutionContext) {
                         runWithTimeout(timeout) {
                             instance = javaMethod.invoke(null, *args)
                         }
-                        cache[callStack] = instance
+                        cache[actionSequence] = instance
                         instance
                     }
                     is InnerClassConstructorCall -> {
@@ -104,7 +106,7 @@ class CallStackExecutor(val ctx: ExecutionContext) {
                         runWithTimeout(timeout) {
                             instance = constructor.newInstance(outerObject, *args)
                         }
-                        cache[callStack] = instance
+                        cache[actionSequence] = instance
                         instance
                     }
                     is MethodCall -> {
@@ -168,13 +170,9 @@ class CallStackExecutor(val ctx: ExecutionContext) {
                         val fieldReflect = reflection.getDeclaredField(call.field.name)
                         fieldReflect.get(null)
                     }
-                    is UnknownCall -> {
-//                    val reflection = ctx.loader.loadClass(call.type)
-//                    ctx.random.nextOrNull(reflection)
-                        null
-                    }
                 }
             }
+            else -> log.error { "Unexpected type of action sequence in executor: $actionSequence" }
         }
 
         return current

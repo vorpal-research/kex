@@ -1,4 +1,4 @@
-package org.jetbrains.research.kex.reanimator.callstack.generator
+package org.jetbrains.research.kex.reanimator.actionsequence.generator
 
 import org.jetbrains.research.kex.descriptor.Descriptor
 import org.jetbrains.research.kex.descriptor.ObjectDescriptor
@@ -6,9 +6,10 @@ import org.jetbrains.research.kex.descriptor.descriptor
 import org.jetbrains.research.kex.ktype.KexClass
 import org.jetbrains.research.kex.ktype.kexType
 import org.jetbrains.research.kex.ktype.type
-import org.jetbrains.research.kex.reanimator.callstack.ApiCall
-import org.jetbrains.research.kex.reanimator.callstack.CallStack
-import org.jetbrains.research.kex.reanimator.callstack.InnerClassConstructorCall
+import org.jetbrains.research.kex.reanimator.actionsequence.ActionList
+import org.jetbrains.research.kex.reanimator.actionsequence.ActionSequence
+import org.jetbrains.research.kex.reanimator.actionsequence.CodeAction
+import org.jetbrains.research.kex.reanimator.actionsequence.InnerClassConstructorCall
 import org.jetbrains.research.kfg.ir.Class
 import org.jetbrains.research.kfg.ir.ConcreteClass
 import org.jetbrains.research.kfg.ir.Method
@@ -29,7 +30,7 @@ class InnerClassGenerator(fallback: Generator) : AnyGenerator(fallback) {
         return klass.isInnerClass
     }
 
-    override fun generate(descriptor: Descriptor, generationDepth: Int): CallStack {
+    override fun generate(descriptor: Descriptor, generationDepth: Int): ActionSequence {
         descriptor as ObjectDescriptor
         val klass = (descriptor.type as KexClass).klass
         val kfgClass = context.cm[klass] as ConcreteClass
@@ -42,11 +43,11 @@ class InnerClassGenerator(fallback: Generator) : AnyGenerator(fallback) {
     }
 
     override fun checkCtors(
-        callStack: CallStack,
+        sequence: ActionList,
         klass: Class,
         current: ObjectDescriptor,
-        currentStack: List<ApiCall>,
-        fallbacks: MutableSet<List<ApiCall>>,
+        currentStack: List<CodeAction>,
+        fallbacks: MutableSet<List<CodeAction>>,
         generationDepth: Int
     ): Boolean =
         with(context) {
@@ -58,7 +59,7 @@ class InnerClassGenerator(fallback: Generator) : AnyGenerator(fallback) {
                 val apiCall = handler(method) ?: continue
                 val result = (currentStack + apiCall).reversed()
                 if (result.isComplete) {
-                    callStack.stack += (currentStack + apiCall).reversed()
+                    sequence += (currentStack + apiCall).reversed()
                     return true
                 } else {
                     fallbacks += result
@@ -67,7 +68,7 @@ class InnerClassGenerator(fallback: Generator) : AnyGenerator(fallback) {
             return false
         }
 
-    fun ObjectDescriptor.checkInnerCtor(method: Method, generationDepth: Int): ApiCall? =
+    fun ObjectDescriptor.checkInnerCtor(method: Method, generationDepth: Int): CodeAction? =
         with(context) {
             val (thisDesc, args) = method.executeAsConstructor(this@checkInnerCtor) ?: return null
 

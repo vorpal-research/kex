@@ -1,11 +1,10 @@
-package org.jetbrains.research.kex.reanimator.callstack.generator
+package org.jetbrains.research.kex.reanimator.actionsequence.generator
 
 import org.jetbrains.research.kex.asm.util.visibility
 import org.jetbrains.research.kex.config.kexConfig
 import org.jetbrains.research.kex.descriptor.ClassDescriptor
 import org.jetbrains.research.kex.descriptor.Descriptor
-import org.jetbrains.research.kex.ktype.type
-import org.jetbrains.research.kex.reanimator.callstack.*
+import org.jetbrains.research.kex.reanimator.actionsequence.*
 import org.jetbrains.research.kex.reanimator.collector.hasSetter
 import org.jetbrains.research.kex.reanimator.collector.setter
 import org.jetbrains.research.kthelper.assert.ktassert
@@ -21,25 +20,27 @@ class StaticFieldGenerator(private val fallback: Generator) : Generator {
 
     override fun supports(descriptor: Descriptor) = descriptor is ClassDescriptor
 
-    override fun generate(descriptor: Descriptor, generationDepth: Int): CallStack = with(context) {
+    override fun generate(descriptor: Descriptor, generationDepth: Int): ActionSequence = with(context) {
         descriptor as? ClassDescriptor ?: throw IllegalArgumentException()
         val name = "${descriptor.term}"
-        val callStack = CallStack(name)
-        saveToCache(descriptor, callStack)
-        generateStatics(callStack, descriptor, generationDepth)
-        return callStack
+        val actionSequence = ActionList(name)
+        saveToCache(descriptor, actionSequence)
+        return if (generateStatics(actionSequence, descriptor, generationDepth)) actionSequence
+        else UnknownSequence(name, descriptor.type.getKfgType(types), descriptor).also {
+            saveToCache(descriptor, it)
+        }
     }
 
-    data class ExecutionStack(val instance: ClassDescriptor, val calls: List<ApiCall>, val depth: Int)
+    data class ExecutionStack(val instance: ClassDescriptor, val calls: List<CodeAction>, val depth: Int)
 
-    private fun generateStatics(callStack: CallStack, descriptor: ClassDescriptor, generationDepth: Int) = with(context) {
+    private fun generateStatics(actionSequence: ActionList, descriptor: ClassDescriptor, generationDepth: Int): Boolean = with(context) {
         val original = descriptor.deepCopy() as ClassDescriptor
-        val fallbacks = mutableSetOf<List<ApiCall>>()
+        val fallbacks = mutableSetOf<List<CodeAction>>()
 
         descriptor.concretize(cm)
         descriptor.filterFinalFields(cm)
         descriptor.reduce()
-        if (descriptor.isFinal(original)) return
+        if (descriptor.isFinal(original)) return true
 
         log.debug("Generating $descriptor")
 
@@ -75,8 +76,8 @@ class StaticFieldGenerator(private val fallback: Generator) : Generator {
                     if (resultingDescriptor.isFinal(current)) {
                         val result = (stack + apiCall).reversed()
                         if (result.isComplete) {
-                            callStack.stack += (stack + apiCall).reversed()
-                            return
+                            actionSequence += (stack + apiCall).reversed()
+                            return true
                         } else {
                             fallbacks += result
                         }
@@ -89,15 +90,14 @@ class StaticFieldGenerator(private val fallback: Generator) : Generator {
             }
         }
 
-        if (fallbacks.isNotEmpty()) {
-            callStack.stack.clear()
-            callStack.stack += fallbacks.random()
-        } else {
-            callStack += UnknownCall(klass.type, original)
-        }
+        return if (fallbacks.isNotEmpty()) {
+            actionSequence.clear()
+            actionSequence += fallbacks.random()
+            true
+        } else false
     }
 
-    private fun generateArgs(args: List<Descriptor>, depth: Int): List<CallStack>? = try {
+    private fun generateArgs(args: List<Descriptor>, depth: Int): List<ActionSequence>? = try {
         args.map { fallback.generate(it, depth) }
     } catch (e: SearchLimitExceededException) {
         throw e
@@ -105,8 +105,8 @@ class StaticFieldGenerator(private val fallback: Generator) : Generator {
         null
     }
 
-    private fun ClassDescriptor.generateSetters(generationDepth: Int): List<ApiCall> = with(context) {
-        val calls = mutableListOf<ApiCall>()
+    private fun ClassDescriptor.generateSetters(generationDepth: Int): List<CodeAction> = with(context) {
+        val calls = mutableListOf<CodeAction>()
         val kfgKlass = klass.kfgClass(types)
         for ((field, value) in fields.toMap()) {
             val kfgField = kfgKlass.getField(field.first, field.second.getKfgType(types))

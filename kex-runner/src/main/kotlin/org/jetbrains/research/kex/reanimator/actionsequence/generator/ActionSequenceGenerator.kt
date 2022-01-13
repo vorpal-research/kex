@@ -1,12 +1,12 @@
-package org.jetbrains.research.kex.reanimator.callstack.generator
+package org.jetbrains.research.kex.reanimator.actionsequence.generator
 
 import org.jetbrains.research.kex.ExecutionContext
 import org.jetbrains.research.kex.asm.state.PredicateStateAnalysis
 import org.jetbrains.research.kex.asm.util.Visibility
 import org.jetbrains.research.kex.config.kexConfig
 import org.jetbrains.research.kex.descriptor.Descriptor
-import org.jetbrains.research.kex.reanimator.callstack.CallStack
-import org.jetbrains.research.kex.reanimator.callstack.UnknownCall
+import org.jetbrains.research.kex.reanimator.actionsequence.ActionSequence
+import org.jetbrains.research.kex.reanimator.actionsequence.UnknownSequence
 import org.jetbrains.research.kthelper.KtException
 import org.jetbrains.research.kthelper.assert.unreachable
 import org.jetbrains.research.kthelper.logging.debug
@@ -14,7 +14,7 @@ import org.jetbrains.research.kthelper.logging.log
 
 class SearchLimitExceededException(val descriptor: Descriptor, msg: String) : KtException(msg)
 
-class CallStackGenerator(override val context: GeneratorContext) : Generator {
+class ActionSequenceGenerator(override val context: GeneratorContext) : Generator {
     private val maxGenerationDepth by lazy { kexConfig.getIntValue("apiGeneration", "maxGenerationDepth", 100) }
     private val maxSearchDepth by lazy { kexConfig.getIntValue("apiGeneration", "maxSearchDepth", 10000) }
 
@@ -47,7 +47,7 @@ class CallStackGenerator(override val context: GeneratorContext) : Generator {
             log.error("Could not find a generator for $this")
         }
 
-    fun generateDescriptor(descriptor: Descriptor): CallStack {
+    fun generateDescriptor(descriptor: Descriptor): ActionSequence {
         searchDepth = 0
         val originalDescriptor = descriptor.deepCopy()
         return try {
@@ -56,11 +56,11 @@ class CallStackGenerator(override val context: GeneratorContext) : Generator {
             val name = "${originalDescriptor.term}"
             log.debug("Search limit exceeded: ${e.message}")
             log.debug(originalDescriptor)
-            return UnknownCall(originalDescriptor.type.getKfgType(context.types), originalDescriptor).wrap(name)
+            return UnknownSequence(name, originalDescriptor.type.getKfgType(context.types), originalDescriptor)
         }
     }
 
-    override fun generate(descriptor: Descriptor, generationDepth: Int): CallStack = with(context) {
+    override fun generate(descriptor: Descriptor, generationDepth: Int): ActionSequence = with(context) {
         getFromCache(descriptor)?.let { return it }
         searchDepth++
 

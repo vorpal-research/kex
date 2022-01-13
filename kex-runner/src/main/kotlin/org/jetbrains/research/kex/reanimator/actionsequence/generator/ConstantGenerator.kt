@@ -1,16 +1,16 @@
-package org.jetbrains.research.kex.reanimator.callstack.generator
+package org.jetbrains.research.kex.reanimator.actionsequence.generator
 
 import org.jetbrains.research.kex.descriptor.ConstantDescriptor
 import org.jetbrains.research.kex.descriptor.Descriptor
-import org.jetbrains.research.kex.reanimator.callstack.CallStack
-import org.jetbrains.research.kex.reanimator.callstack.PrimaryValue
+import org.jetbrains.research.kex.reanimator.actionsequence.ActionSequence
+import org.jetbrains.research.kex.reanimator.actionsequence.PrimaryValue
 import org.jetbrains.research.kthelper.assert.unreachable
 import org.jetbrains.research.kthelper.logging.log
 
 class ConstantGenerator(override val context: GeneratorContext) : Generator {
     override fun supports(descriptor: Descriptor) = descriptor is ConstantDescriptor
 
-    override fun generate(descriptor: Descriptor, generationDepth: Int): CallStack = with(context) {
+    override fun generate(descriptor: Descriptor, generationDepth: Int): ActionSequence = with(context) {
         val stack = when (descriptor) {
             is ConstantDescriptor.Null -> PrimaryValue(null)
             is ConstantDescriptor.Bool -> PrimaryValue(descriptor.value)

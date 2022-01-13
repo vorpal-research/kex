@@ -1,13 +1,13 @@
-package org.jetbrains.research.kex.reanimator.callstack.generator
+package org.jetbrains.research.kex.reanimator.actionsequence.generator
 
 import org.jetbrains.research.kex.descriptor.Descriptor
 import org.jetbrains.research.kex.descriptor.ObjectDescriptor
 import org.jetbrains.research.kex.ktype.KexClass
 import org.jetbrains.research.kex.ktype.type
 import org.jetbrains.research.kex.parameters.Parameters
-import org.jetbrains.research.kex.reanimator.callstack.ApiCall
-import org.jetbrains.research.kex.reanimator.callstack.CallStack
-import org.jetbrains.research.kex.reanimator.callstack.MethodCall
+import org.jetbrains.research.kex.reanimator.actionsequence.ActionList
+import org.jetbrains.research.kex.reanimator.actionsequence.CodeAction
+import org.jetbrains.research.kex.reanimator.actionsequence.MethodCall
 import org.jetbrains.research.kfg.ir.Class
 import org.jetbrains.research.kfg.ir.Method
 
@@ -36,11 +36,11 @@ class CollectionGenerator(fallback: Generator) : AnyGenerator(fallback) {
     }
 
     override fun checkCtors(
-        callStack: CallStack,
+        sequence: ActionList,
         klass: Class,
         current: ObjectDescriptor,
-        currentStack: List<ApiCall>,
-        fallbacks: MutableSet<List<ApiCall>>,
+        currentStack: List<CodeAction>,
+        fallbacks: MutableSet<List<CodeAction>>,
         generationDepth: Int
     ): Boolean =
         with(context) {
@@ -52,7 +52,7 @@ class CollectionGenerator(fallback: Generator) : AnyGenerator(fallback) {
                 val apiCall = handler(method) ?: continue
                 val result = (currentStack + apiCall).reversed()
                 if (result.isComplete) {
-                    callStack.stack += (currentStack + apiCall).reversed()
+                    sequence += (currentStack + apiCall).reversed()
                     return true
                 } else {
                     fallbacks += result
@@ -62,9 +62,10 @@ class CollectionGenerator(fallback: Generator) : AnyGenerator(fallback) {
         }
 
     override fun applyMethods(
+        sequence: ActionList,
         klass: Class,
         current: ObjectDescriptor,
-        currentStack: List<ApiCall>,
+        currentStack: List<CodeAction>,
         searchDepth: Int,
         generationDepth: Int
     ): List<GeneratorContext.ExecutionStack<ObjectDescriptor>> = with(context) {

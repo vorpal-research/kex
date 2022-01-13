@@ -1,4 +1,4 @@
-package org.jetbrains.research.kex.reanimator.callstack.generator
+package org.jetbrains.research.kex.reanimator.actionsequence.generator
 
 import org.jetbrains.research.kex.ExecutionContext
 import org.jetbrains.research.kex.annotations.AnnotationManager
@@ -10,8 +10,9 @@ import org.jetbrains.research.kex.config.kexConfig
 import org.jetbrains.research.kex.descriptor.*
 import org.jetbrains.research.kex.ktype.*
 import org.jetbrains.research.kex.parameters.Parameters
-import org.jetbrains.research.kex.reanimator.callstack.ApiCall
-import org.jetbrains.research.kex.reanimator.callstack.CallStack
+import org.jetbrains.research.kex.reanimator.actionsequence.ActionList
+import org.jetbrains.research.kex.reanimator.actionsequence.ActionSequence
+import org.jetbrains.research.kex.reanimator.actionsequence.CodeAction
 import org.jetbrains.research.kex.smt.Checker
 import org.jetbrains.research.kex.smt.Result
 import org.jetbrains.research.kex.state.PredicateState
@@ -46,16 +47,16 @@ class GeneratorContext(
     val types get() = context.types
     val loader get() = context.loader
 
-    private val descriptorCache = mutableMapOf<Descriptor, CallStack>()
+    private val descriptorCache = mutableMapOf<Descriptor, ActionSequence>()
     private val klass2Constructors = mutableMapOf<Class, List<Method>>()
 
     data class ExecutionStack<T : FieldContainingDescriptor<T>>(
         val instance: T,
-        val calls: List<ApiCall>,
+        val calls: List<CodeAction>,
         val depth: Int
     )
 
-    fun saveToCache(descriptor: Descriptor, stack: CallStack) {
+    fun saveToCache(descriptor: Descriptor, stack: ActionSequence) {
         descriptorCache[descriptor] = stack
     }
 
@@ -403,7 +404,7 @@ class GeneratorContext(
         return mapper.apply(preStateBuilder.apply())
     }
 
-    val List<ApiCall>.isComplete get() = CallStack("", this.toMutableList()).isComplete
+    val List<CodeAction>.isComplete get() = ActionList("", this.toMutableList()).isComplete
 
     private val ObjectDescriptor.preState: PredicateState
         get() = basic {

@@ -7,8 +7,8 @@ import org.jetbrains.research.kex.config.kexConfig
 import org.jetbrains.research.kex.ktype.KexType
 import org.jetbrains.research.kex.ktype.type
 import org.jetbrains.research.kex.parameters.Parameters
-import org.jetbrains.research.kex.reanimator.callstack.*
-import org.jetbrains.research.kex.reanimator.codegen.CallStackPrinter
+import org.jetbrains.research.kex.reanimator.actionsequence.*
+import org.jetbrains.research.kex.reanimator.codegen.ActionSequencePrinter
 import org.jetbrains.research.kex.util.getConstructor
 import org.jetbrains.research.kex.util.getMethod
 import org.jetbrains.research.kex.util.kex
@@ -27,18 +27,18 @@ private val visibilityLevel by lazy {
 }
 
 // TODO: this is work of satan, refactor this damn thing
-open class CallStack2JavaPrinter(
+open class ActionSequence2JavaPrinter(
     val ctx: ExecutionContext,
     final override val packageName: String,
     final override val klassName: String
-) : CallStackPrinter {
+) : ActionSequencePrinter {
     protected val printedStacks = mutableSetOf<String>()
     protected val builder = JavaBuilder(packageName)
     protected val klass = builder.run { klass(packageName, klassName) }
-    protected val resolvedTypes = mutableMapOf<CallStack, CSType>()
-    protected val actualTypes = mutableMapOf<CallStack, CSType>()
+    protected val resolvedTypes = mutableMapOf<ActionSequence, ASType>()
+    protected val actualTypes = mutableMapOf<ActionSequence, ASType>()
     lateinit var current: JavaBuilder.JavaFunction
-    protected var staticCounter = 0
+    protected var testCounter = 0
 
     init {
         with(builder) {
@@ -57,16 +57,12 @@ open class CallStack2JavaPrinter(
         }
     }
 
-    private fun buildCallStack(
-        method: org.jetbrains.research.kfg.ir.Method, callStacks: Parameters<CallStack>
-    ): CallStack = when {
-        method.isStatic -> StaticMethodCall(method, callStacks.arguments).wrap("static${staticCounter++}")
-        method.isConstructor -> callStacks.instance!!
-        else -> {
-            val instance = callStacks.instance!!.clone()
-            instance.stack += MethodCall(method, callStacks.arguments)
-            instance
-        }
+    private fun buildMethodCall(
+        method: org.jetbrains.research.kfg.ir.Method, actionSequences: Parameters<ActionSequence>
+    ): ActionSequence = when {
+        method.isStatic -> TestCall("test${testCounter++}", method, null, actionSequences.arguments)
+        method.isConstructor -> actionSequences.instance!!
+        else -> TestCall("test${testCounter++}", method, actionSequences.instance, actionSequences.arguments)
     }
 
     protected open fun cleanup() {
@@ -75,13 +71,13 @@ open class CallStack2JavaPrinter(
         actualTypes.clear()
     }
 
-    override fun printCallStack(
+    override fun printActionSequence(
         testName: String,
         method: org.jetbrains.research.kfg.ir.Method,
-        callStacks: Parameters<CallStack>
+        actionSequences: Parameters<ActionSequence>
     ) {
         cleanup()
-        val callStack = buildCallStack(method, callStacks)
+        val actionSequence = buildMethodCall(method, actionSequences)
         with(builder) {
             with(klass) {
                 current = method(testName) {
@@ -91,34 +87,34 @@ open class CallStack2JavaPrinter(
                 }
             }
         }
-        resolveTypes(callStack)
-        tryOrNull { callStack.printAsJava() }
+        resolveTypes(actionSequence)
+        tryOrNull { actionSequence.printAsJava() }
     }
 
     override fun emit() = builder.toString()
 
 
-    interface CSType {
-        fun isSubtype(other: CSType): Boolean
+    interface ASType {
+        fun isSubtype(other: ASType): Boolean
     }
 
-    inner class CSWildcard(val upperBound: CSType, val lowerBound: CSType? = null) : CSType {
-        override fun isSubtype(other: CSType) = other is CSWildcard
+    inner class ASWildcard(val upperBound: ASType, val lowerBound: ASType? = null) : ASType {
+        override fun isSubtype(other: ASType) = other is ASWildcard
         override fun toString() = when {
             lowerBound != null -> "? super $lowerBound"
             else -> "? extends $upperBound"
         }
     }
 
-    inner class CSClass(val type: Type, val typeParams: List<CSType> = emptyList()) : CSType {
-        override fun isSubtype(other: CSType): Boolean = when (other) {
-            is CSClass -> when {
+    inner class ASClass(val type: Type, val typeParams: List<ASType> = emptyList()) : ASType {
+        override fun isSubtype(other: ASType): Boolean = when (other) {
+            is ASClass -> when {
                 !type.isSubtypeOf(other.type) -> false
                 typeParams.isEmpty() && other.typeParams.isNotEmpty() -> true
                 typeParams.size != other.typeParams.size -> false
                 else -> typeParams.zip(other.typeParams).all { (a, b) -> a.isSubtype(b) }
             }
-            is CSWildcard -> true
+            is ASWildcard -> true
             else -> other.kfg == ctx.types.objectType
         }
 
@@ -131,74 +127,74 @@ open class CallStack2JavaPrinter(
         }
     }
 
-    inner class CSPrimaryArray(val element: CSType) : CSType {
-        override fun isSubtype(other: CSType): Boolean = when (other) {
-            is CSPrimaryArray -> element.isSubtype(other.element)
-            is CSWildcard -> true
+    inner class ASPrimaryArray(val element: ASType) : ASType {
+        override fun isSubtype(other: ASType): Boolean = when (other) {
+            is ASPrimaryArray -> element.isSubtype(other.element)
+            is ASWildcard -> true
             else -> other.kfg == ctx.types.objectType
         }
 
         override fun toString() = "${element}[]"
     }
 
-    inner class CSArray(val element: CSType) : CSType {
-        override fun isSubtype(other: CSType): Boolean = when (other) {
-            is CSArray -> when {
+    inner class ASArray(val element: ASType) : ASType {
+        override fun isSubtype(other: ASType): Boolean = when (other) {
+            is ASArray -> when {
                 !element.isSubtype(other.element) -> false
                 else -> true
             }
-            is CSWildcard -> true
+            is ASWildcard -> true
             else -> false
         }
 
         override fun toString() = "${element}[]"
     }
 
-    val CSType.kfg: Type
+    val ASType.kfg: Type
         get() = when (this) {
-            is CSClass -> type
-            is CSArray -> ctx.types.getArrayType(element.kfg)
-            is CSPrimaryArray -> ctx.types.getArrayType(element.kfg)
+            is ASClass -> type
+            is ASArray -> ctx.types.getArrayType(element.kfg)
+            is ASPrimaryArray -> ctx.types.getArrayType(element.kfg)
             else -> unreachable { }
         }
 
-    private val java.lang.reflect.Type.csType: CSType
+    private val java.lang.reflect.Type.asType: ASType
         get() = when (this) {
             is java.lang.Class<*> -> when {
                 this.isArray -> {
-                    val element = this.componentType.csType
-                    if (this.componentType.isPrimitive) CSPrimaryArray(element)
-                    else CSArray(element)
+                    val element = this.componentType.asType
+                    if (this.componentType.isPrimitive) ASPrimaryArray(element)
+                    else ASArray(element)
                 }
-                else -> CSClass(this.kex.getKfgType(ctx.types))
+                else -> ASClass(this.kex.getKfgType(ctx.types))
             }
             is ParameterizedType -> {
-                val rawType = this.rawType.csType.kfg
-                val typeArgs = this.actualTypeArguments.map { it.csType }
-                CSClass(rawType, typeArgs)
+                val rawType = this.rawType.asType.kfg
+                val typeArgs = this.actualTypeArguments.map { it.asType }
+                ASClass(rawType, typeArgs)
             }
-            is GenericArrayType -> CSArray(this.genericComponentType.csType)
-            is TypeVariable<*> -> this.bounds.first().csType
-            is WildcardType -> CSWildcard(
-                upperBounds?.firstOrNull()?.csType ?: ctx.types.objectType.csType,
-                lowerBounds?.firstOrNull()?.csType
+            is GenericArrayType -> ASArray(this.genericComponentType.asType)
+            is TypeVariable<*> -> this.bounds.first().asType
+            is WildcardType -> ASWildcard(
+                upperBounds?.firstOrNull()?.asType ?: ctx.types.objectType.asType,
+                lowerBounds?.firstOrNull()?.asType
             )
             else -> TODO()
         }
 
-    private fun CSType.merge(requiredType: CSType): CSType = when {
-        this is CSClass && requiredType is CSClass -> {
+    private fun ASType.merge(requiredType: ASType): ASType = when {
+        this is ASClass && requiredType is ASClass -> {
             val actualKlass = ctx.loader.loadClass(type)
             val requiredKlass = ctx.loader.loadClass(requiredType.type)
             val isAssignable = requiredKlass.isAssignableFrom(actualKlass)
             val isVisible = ((type as? ClassType)?.klass?.visibility ?: Visibility.PUBLIC )>= visibilityLevel
             if (isVisible && isAssignable && actualKlass.typeParameters.size == requiredKlass.typeParameters.size) {
-                CSClass(
+                ASClass(
                     type,
                     this.typeParams.zip(requiredType.typeParams).map { (f, s) -> if (f.isSubtype(s)) f else s }
                 )
             } else if (isVisible && isAssignable) {
-                CSClass(type)
+                ASClass(type)
             } else {
                 requiredType
             }
@@ -206,44 +202,48 @@ open class CallStack2JavaPrinter(
         else -> TODO()
     }
 
-    private fun CSType?.isAssignable(other: CSType) = this?.let { other.isSubtype(it) } ?: true
+    private fun ASType?.isAssignable(other: ASType) = this?.let { other.isSubtype(it) } ?: true
 
-    private val KexType.csType get() = this.getKfgType(ctx.types).csType
+    private val KexType.asType get() = this.getKfgType(ctx.types).asType
 
-    protected val Type.csType: CSType
+    protected val Type.asType: ASType
         get() = when (this) {
             is ArrayType -> when {
-                this.component.isPrimary -> CSPrimaryArray(component.csType)
-                else -> CSArray(this.component.csType)
+                this.component.isPrimary -> ASPrimaryArray(component.asType)
+                else -> ASArray(this.component.asType)
             }
-            else -> CSClass(this)
+            else -> ASClass(this)
         }
 
-    protected fun resolveTypes(callStack: CallStack) {
-        callStack.reversed().map { resolveTypes(it) }
+    protected fun resolveTypes(actionSequence: ActionSequence) {
+        if (actionSequence is ActionList) actionSequence.reversed().map { resolveTypes(it) }
+        else if (actionSequence is TestCall) {
+            actionSequence.instance?.let { resolveTypes(it) }
+            actionSequence.args.forEach { resolveTypes(it) }
+        }
     }
 
-    private fun resolveTypes(constructor: Constructor<*>, args: List<CallStack>) {
+    private fun resolveTypes(constructor: Constructor<*>, args: List<ActionSequence>) {
         val params = constructor.genericParameterTypes
         args.zip(params).forEach { (arg, param) ->
             if (arg !in resolvedTypes) {
-                resolvedTypes[arg] = param.csType
+                resolvedTypes[arg] = param.asType
                 resolveTypes(arg)
             }
         }
     }
 
-    private fun resolveTypes(method: Method, args: List<CallStack>) {
+    private fun resolveTypes(method: Method, args: List<ActionSequence>) {
         val params = method.genericParameterTypes.toList()
         args.zip(params).forEach { (arg, param) ->
             if (arg !in resolvedTypes) {
-                resolvedTypes[arg] = param.csType
+                resolvedTypes[arg] = param.asType
                 resolveTypes(arg)
             }
         }
     }
 
-    private fun resolveTypes(call: ApiCall) = when (call) {
+    private fun resolveTypes(call: CodeAction) = when (call) {
         is DefaultConstructorCall -> {
         }
         is ConstructorCall -> {
@@ -276,18 +276,20 @@ open class CallStack2JavaPrinter(
         }
     }
 
-    protected open fun CallStack.printAsJava() {
+    protected open fun ActionSequence.printAsJava() {
         if (name in printedStacks) return
-        if (this is PrimaryValue<*>) {
-            asConstant
-            return
-        }
         printedStacks += name
-        for (call in this) {
-            with(current) {
-                for (statement in printApiCall(this@printAsJava, call))
-                    +statement
+        val statements = when (this) {
+            is TestCall -> printTestCall(this)
+            is UnknownSequence -> printUnknownSequence(this)
+            is ActionList -> this.flatMap { printApiCall(this, it) }
+            is PrimaryValue<*> -> listOf<String>().also {
+                asConstant
             }
+        }
+        with(current) {
+            for (statement in statements)
+                +statement
         }
     }
 
@@ -323,52 +325,51 @@ open class CallStack2JavaPrinter(
             }
         }
 
-    private val CallStack.stackName: String
+    private val ActionSequence.stackName: String
         get() = when (this) {
             is PrimaryValue<*> -> asConstant
             else -> name
         }
 
-    protected fun printApiCall(owner: CallStack, apiCall: ApiCall): List<String> = when (apiCall) {
-        is DefaultConstructorCall -> printDefaultConstructor(owner, apiCall)
-        is ConstructorCall -> printConstructorCall(owner, apiCall)
-        is ExternalConstructorCall -> printExternalConstructorCall(owner, apiCall)
-        is InnerClassConstructorCall -> printInnerClassConstructor(owner, apiCall)
-        is MethodCall -> printMethodCall(owner, apiCall)
-        is StaticMethodCall -> printStaticMethodCall(apiCall)
-        is NewArray -> printNewArray(owner, apiCall)
-        is ArrayWrite -> printArrayWrite(owner, apiCall)
-        is FieldSetter -> printFieldSetter(owner, apiCall)
-        is StaticFieldSetter -> printStaticFieldSetter(apiCall)
-        is EnumValueCreation -> printEnumValueCreation(owner, apiCall)
-        is StaticFieldGetter -> printStaticFieldGetter(owner, apiCall)
-        is UnknownCall -> printUnknown(owner, apiCall)
+    protected fun printApiCall(owner: ActionSequence, codeAction: CodeAction): List<String> = when (codeAction) {
+        is DefaultConstructorCall -> printDefaultConstructor(owner, codeAction)
+        is ConstructorCall -> printConstructorCall(owner, codeAction)
+        is ExternalConstructorCall -> printExternalConstructorCall(owner, codeAction)
+        is InnerClassConstructorCall -> printInnerClassConstructor(owner, codeAction)
+        is MethodCall -> printMethodCall(owner, codeAction)
+        is StaticMethodCall -> printStaticMethodCall(codeAction)
+        is NewArray -> printNewArray(owner, codeAction)
+        is ArrayWrite -> printArrayWrite(owner, codeAction)
+        is FieldSetter -> printFieldSetter(owner, codeAction)
+        is StaticFieldSetter -> printStaticFieldSetter(codeAction)
+        is EnumValueCreation -> printEnumValueCreation(owner, codeAction)
+        is StaticFieldGetter -> printStaticFieldGetter(owner, codeAction)
     }
 
     protected val <T> PrimaryValue<T>.asConstant: String
         get() = when (val value = value) {
             null -> "null"
             is Boolean -> "$value".also {
-                actualTypes[this] = CSClass(ctx.types.boolType)
+                actualTypes[this] = ASClass(ctx.types.boolType)
             }
             is Byte -> "(byte) $value".also {
-                actualTypes[this] = CSClass(ctx.types.byteType)
+                actualTypes[this] = ASClass(ctx.types.byteType)
             }
             is Char -> when (value) {
                 in 'a'..'z' -> "'$value'"
                 in 'A'..'Z' -> "'$value'"
                 else -> "(char) ${value.code}"
             }.also {
-                actualTypes[this] = CSClass(ctx.types.charType)
+                actualTypes[this] = ASClass(ctx.types.charType)
             }
             is Short -> "(short) $value".also {
-                actualTypes[this] = CSClass(ctx.types.shortType)
+                actualTypes[this] = ASClass(ctx.types.shortType)
             }
             is Int -> "$value".also {
-                actualTypes[this] = CSClass(ctx.types.intType)
+                actualTypes[this] = ASClass(ctx.types.intType)
             }
             is Long -> "${value}L".also {
-                actualTypes[this] = CSClass(ctx.types.longType)
+                actualTypes[this] = ASClass(ctx.types.longType)
             }
             is Float -> when {
                 value.isNaN() -> "Float.NaN".also {
@@ -382,7 +383,7 @@ open class CallStack2JavaPrinter(
                 }
                 else -> "${value}F"
             }.also {
-                actualTypes[this] = CSClass(ctx.types.floatType)
+                actualTypes[this] = ASClass(ctx.types.floatType)
             }
             is Double -> when {
                 value.isNaN() -> "Double.NaN".also {
@@ -396,12 +397,12 @@ open class CallStack2JavaPrinter(
                 }
                 else -> "$value"
             }.also {
-                actualTypes[this] = CSClass(ctx.types.doubleType)
+                actualTypes[this] = ASClass(ctx.types.doubleType)
             }
             else -> unreachable { log.error("Unknown primary value $this") }
         }
 
-    private fun CallStack.cast(reqType: CSType?): String {
+    private fun ActionSequence.cast(reqType: ASType?): String {
         val actualType = actualTypes[this] ?: return this.stackName
         return when {
             reqType.isAssignable(actualType) -> this.stackName
@@ -409,22 +410,22 @@ open class CallStack2JavaPrinter(
         }
     }
 
-    private fun CallStack.forceCastIfNull(reqType: CSType?): String = when {
+    private fun ActionSequence.forceCastIfNull(reqType: ASType?): String = when {
         this.stackName == "null" && reqType != null -> "($reqType)${this.stackName}"
         else -> this.cast(reqType)
     }
 
-    private fun CSType.cast(reqType: CSType?): String {
+    private fun ASType.cast(reqType: ASType?): String {
         return when {
             reqType.isAssignable(this) -> ""
             else -> "($reqType)"
         }
     }
 
-    protected open fun printVarDeclaration(name: String, type: CSType): String = "$type $name"
+    protected open fun printVarDeclaration(name: String, type: ASType): String = "$type $name"
 
-    protected open fun printDefaultConstructor(owner: CallStack, call: DefaultConstructorCall): List<String> {
-        val actualType = CSClass(call.klass.type)
+    protected open fun printDefaultConstructor(owner: ActionSequence, call: DefaultConstructorCall): List<String> {
+        val actualType = ASClass(call.klass.type)
         return listOf(
             if (resolvedTypes[owner] != null) {
                 val rest = resolvedTypes[owner]!!
@@ -438,12 +439,12 @@ open class CallStack2JavaPrinter(
         )
     }
 
-    protected open fun printConstructorCall(owner: CallStack, call: ConstructorCall): List<String> {
+    protected open fun printConstructorCall(owner: ActionSequence, call: ConstructorCall): List<String> {
         call.args.forEach { it.printAsJava() }
         val args = call.args.joinToString(", ") {
             it.forceCastIfNull(resolvedTypes[it])
         }
-        val actualType = CSClass(call.constructor.klass.type)
+        val actualType = ASClass(call.constructor.klass.type)
         return listOf(
             if (resolvedTypes[owner] != null) {
                 val rest = resolvedTypes[owner]!!
@@ -457,13 +458,13 @@ open class CallStack2JavaPrinter(
         )
     }
 
-    protected open fun innerClassName(innerType: CSType, outerType: CSType, reqOuterType: CSType?): String {
-        if (innerType !is CSClass) return innerType.toString()
-        if (outerType !is CSClass) return innerType.toString()
+    protected open fun innerClassName(innerType: ASType, outerType: ASType, reqOuterType: ASType?): String {
+        if (innerType !is ASClass) return innerType.toString()
+        if (outerType !is ASClass) return innerType.toString()
 
         val innerString = (innerType.type as? ClassType)?.klass?.fullName ?: return innerType.toString()
         val outerString = (outerType.type as? ClassType)?.klass?.fullName ?: return innerType.toString()
-        if (reqOuterType != null && reqOuterType is CSClass) {
+        if (reqOuterType != null && reqOuterType is ASClass) {
             val reqTypeString = (reqOuterType.type as ClassType).klass.fullName
             if (innerString.startsWith(reqTypeString))
                 return innerString.removePrefix("$reqTypeString\$").replace('/', '.')
@@ -473,13 +474,13 @@ open class CallStack2JavaPrinter(
         TODO()
     }
 
-    protected open fun printInnerClassConstructor(owner: CallStack, call: InnerClassConstructorCall): List<String> {
+    protected open fun printInnerClassConstructor(owner: ActionSequence, call: InnerClassConstructorCall): List<String> {
         call.outerObject.printAsJava()
         call.args.forEach { it.printAsJava() }
         val args = call.args.joinToString(", ") {
             it.forceCastIfNull(resolvedTypes[it])
         }
-        val actualType = CSClass(call.constructor.klass.type)
+        val actualType = ASClass(call.constructor.klass.type)
         val outerObject = call.outerObject.forceCastIfNull(resolvedTypes[call.outerObject])
         return listOf(
             if (resolvedTypes[owner] != null) {
@@ -498,7 +499,7 @@ open class CallStack2JavaPrinter(
         )
     }
 
-    protected open fun printExternalConstructorCall(owner: CallStack, call: ExternalConstructorCall): List<String> {
+    protected open fun printExternalConstructorCall(owner: ActionSequence, call: ExternalConstructorCall): List<String> {
         call.args.forEach { it.printAsJava() }
         val constructor = call.constructor
         val args = call.args.joinToString(", ") {
@@ -507,7 +508,7 @@ open class CallStack2JavaPrinter(
 
         val reflection = ctx.loader.loadClass(call.constructor.klass)
         val ctor = reflection.getMethod(call.constructor, ctx.loader)
-        val actualType = ctor.genericReturnType.csType
+        val actualType = ctor.genericReturnType.asType
         return listOf(
             if (resolvedTypes[owner] != null) {
                 val rest = resolvedTypes[owner]!!
@@ -531,7 +532,7 @@ open class CallStack2JavaPrinter(
         )
     }
 
-    protected open fun printMethodCall(owner: CallStack, call: MethodCall): List<String> {
+    protected open fun printMethodCall(owner: ActionSequence, call: MethodCall): List<String> {
         call.args.forEach { it.printAsJava() }
         val method = call.method
         val args = call.args.joinToString(", ") {
@@ -550,14 +551,14 @@ open class CallStack2JavaPrinter(
         return listOf("${klass.javaString}.${method.name}($args)")
     }
 
-    protected open fun CSType.elementTypeDepth(depth: Int = -1): Pair<Int, CSType> = when (this) {
-        is CSArray -> this.element.elementTypeDepth(depth + 1)
-        is CSPrimaryArray -> this.element.elementTypeDepth(depth + 1)
+    protected open fun ASType.elementTypeDepth(depth: Int = -1): Pair<Int, ASType> = when (this) {
+        is ASArray -> this.element.elementTypeDepth(depth + 1)
+        is ASPrimaryArray -> this.element.elementTypeDepth(depth + 1)
         else -> depth to this
     }
 
-    protected open fun printNewArray(owner: CallStack, call: NewArray): List<String> {
-        val actualType = call.asArray.csType
+    protected open fun printNewArray(owner: ActionSequence, call: NewArray): List<String> {
+        val actualType = call.asArray.asType
         val (depth, elementType) = actualType.elementTypeDepth()
         actualTypes[owner] = actualType
         return listOf(
@@ -569,7 +570,7 @@ open class CallStack2JavaPrinter(
         )
     }
 
-    private fun lub(lhv: CSType?, rhv: CSType?): CSType = when {
+    private fun lub(lhv: ASType?, rhv: ASType?): ASType = when {
         lhv == null -> rhv!!
         rhv == null -> lhv
         lhv.isSubtype(rhv) -> lhv
@@ -577,20 +578,20 @@ open class CallStack2JavaPrinter(
         else -> unreachable { }
     }
 
-    private val CSType.elementType: CSType
+    private val ASType.elementType: ASType
         get() = when (this) {
-            is CSPrimaryArray -> this.element
-            is CSArray -> this.element
+            is ASPrimaryArray -> this.element
+            is ASArray -> this.element
             else -> TODO()
         }
 
-    protected open fun printArrayWrite(owner: CallStack, call: ArrayWrite): List<String> {
+    protected open fun printArrayWrite(owner: ActionSequence, call: ArrayWrite): List<String> {
         call.value.printAsJava()
         val requiredType = lub(resolvedTypes[owner]?.elementType, actualTypes[owner]?.elementType)
         return listOf("${owner.name}[${call.index.stackName}] = ${call.value.cast(requiredType)}")
     }
 
-    protected open fun printFieldSetter(owner: CallStack, call: FieldSetter): List<String> {
+    protected open fun printFieldSetter(owner: ActionSequence, call: FieldSetter): List<String> {
         call.value.printAsJava()
         return listOf("${owner.name}.${call.field.name} = ${call.value.stackName}")
     }
@@ -600,14 +601,14 @@ open class CallStack2JavaPrinter(
         return listOf("${call.field.klass.javaString}.${call.field.name} = ${call.value.stackName}")
     }
 
-    protected open fun printEnumValueCreation(owner: CallStack, call: EnumValueCreation): List<String> {
-        val actualType = call.klass.type.csType
+    protected open fun printEnumValueCreation(owner: ActionSequence, call: EnumValueCreation): List<String> {
+        val actualType = call.klass.type.asType
         actualTypes[owner] = actualType
         return listOf("${printVarDeclaration(owner.name, actualType)} = ${call.klass.javaString}.${call.name}")
     }
 
-    protected open fun printStaticFieldGetter(owner: CallStack, call: StaticFieldGetter): List<String> {
-        val actualType = call.field.type.csType
+    protected open fun printStaticFieldGetter(owner: ActionSequence, call: StaticFieldGetter): List<String> {
+        val actualType = call.field.type.asType
         actualTypes[owner] = actualType
         return listOf(
             "${
@@ -619,9 +620,22 @@ open class CallStack2JavaPrinter(
         )
     }
 
-    protected open fun printUnknown(owner: CallStack, call: UnknownCall): List<String> {
-        val type = call.target.type.csType
-        actualTypes[owner] = type
-        return listOf("${printVarDeclaration(owner.name, type)} = unknown()")
+    protected open fun printTestCall(sequence: TestCall): List<String> {
+        sequence.instance?.printAsJava()
+        sequence.args.forEach { it.printAsJava() }
+        val callee = when (sequence.instance) {
+            null -> sequence.test.klass.javaString
+            else -> sequence.instance.name
+        }
+        val args = sequence.args.joinToString(", ") {
+            it.forceCastIfNull(resolvedTypes[it])
+        }
+        return listOf("$callee.${sequence.test.name}($args)")
+    }
+
+    protected open fun printUnknownSequence(sequence: UnknownSequence): List<String> {
+        val type = sequence.target.type.asType
+        actualTypes[sequence] = type
+        return listOf("${printVarDeclaration(sequence.name, type)} = unknown()")
     }
 }

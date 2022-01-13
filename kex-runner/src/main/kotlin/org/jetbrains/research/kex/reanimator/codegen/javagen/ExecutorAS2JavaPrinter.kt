@@ -6,8 +6,8 @@ import org.jetbrains.research.kex.config.kexConfig
 import org.jetbrains.research.kex.descriptor.*
 import org.jetbrains.research.kex.ktype.*
 import org.jetbrains.research.kex.parameters.Parameters
-import org.jetbrains.research.kex.reanimator.callstack.CallStack
-import org.jetbrains.research.kex.reanimator.callstack.UnknownCall
+import org.jetbrains.research.kex.reanimator.actionsequence.ActionSequence
+import org.jetbrains.research.kex.reanimator.actionsequence.UnknownSequence
 import org.jetbrains.research.kex.util.kapitalize
 import org.jetbrains.research.kfg.type.ArrayType
 import org.jetbrains.research.kfg.type.ClassType
@@ -19,12 +19,12 @@ import org.jetbrains.research.kthelper.runIf
 
 private val generateSetup by lazy { kexConfig.getBooleanValue("apiGeneration", "generateSetup", false) }
 
-class ExecutorCS2JavaPrinter(
+class ExecutorAS2JavaPrinter(
     ctx: ExecutionContext,
     packageName: String,
     klassName: String,
     val setupName: String
-) : CallStack2JavaPrinter(ctx, packageName, klassName) {
+) : ActionSequence2JavaPrinter(ctx, packageName, klassName) {
     private val testParams = mutableListOf<JavaBuilder.JavaClass.JavaField>()
     private lateinit var newInstance: JavaBuilder.JavaFunction
     private lateinit var newArray: JavaBuilder.JavaFunction
@@ -248,14 +248,14 @@ class ExecutorCS2JavaPrinter(
         testParams.clear()
     }
 
-    override fun printCallStack(
+    override fun printActionSequence(
         testName: String,
         method: org.jetbrains.research.kfg.ir.Method,
-        callStacks: Parameters<CallStack>
+        actionSequences: Parameters<ActionSequence>
     ) {
         cleanup()
 
-        for (cs in callStacks.asList)
+        for (cs in actionSequences.asList)
             resolveTypes(cs)
 
         with(builder) {
@@ -264,13 +264,13 @@ class ExecutorCS2JavaPrinter(
             with(klass) {
                 if (generateSetup) {
                     runIf(!method.isConstructor) {
-                        callStacks.instance?.let {
+                        actionSequences.instance?.let {
                             testParams += field(it.name, type("Object"))
                         }
                     }
-                    callStacks.arguments.forEach { arg ->
-                        val type = when (val call = arg.first()) {
-                            is UnknownCall -> call.type
+                    actionSequences.arguments.forEach { arg ->
+                        val type = when (arg) {
+                            is UnknownSequence -> arg.type
                             else -> unreachable { log.error("Unexpected call in arg") }
                         }
                         val fieldType = type.kexType.primitiveName?.let { type(it) } ?: type("Object")
@@ -292,9 +292,9 @@ class ExecutorCS2JavaPrinter(
         }
 
         runIf(!method.isConstructor) {
-            callStacks.instance?.printAsJava()
+            actionSequences.instance?.printAsJava()
         }
-        for (cs in callStacks.asList)
+        for (cs in actionSequences.asList)
             cs.printAsJava()
 
         printedStacks.clear()
@@ -310,16 +310,16 @@ class ExecutorCS2JavaPrinter(
             }
         }
 
-        printTestCall(method, callStacks)
+        printTestCall(method, actionSequences)
     }
 
-    override fun printVarDeclaration(name: String, type: CSType) = when {
+    override fun printVarDeclaration(name: String, type: ASType) = when {
         testParams.any { it.name == name } -> name
         else -> super.printVarDeclaration(name, type)
     }
 
-    override fun printUnknown(owner: CallStack, call: UnknownCall): List<String> {
-        val descriptor = call.target
+    override fun printUnknownSequence(sequence: UnknownSequence): List<String> {
+        val descriptor = sequence.target
         printedStacks -= "${descriptor.term}"
         val result = mutableListOf<String>()
         printDescriptor(descriptor, result)
@@ -334,7 +334,7 @@ class ExecutorCS2JavaPrinter(
             else -> unreachable { }
         }
 
-    private fun printTestCall(method: org.jetbrains.research.kfg.ir.Method, callStacks: Parameters<CallStack>) =
+    private fun printTestCall(method: org.jetbrains.research.kfg.ir.Method, actionSequences: Parameters<ActionSequence>) =
         with(current) {
             +"Class<?> klass = Class.forName(\"${method.klass.canonicalDesc}\")"
             +"Class<?>[] argTypes = new Class<?>[${method.argTypes.size}]"
@@ -342,12 +342,12 @@ class ExecutorCS2JavaPrinter(
                 +"argTypes[$index] = ${type.klassType}"
             }
             +"Object[] args = new Object[${method.argTypes.size}]"
-            for ((index, arg) in callStacks.arguments.withIndex()) {
+            for ((index, arg) in actionSequences.arguments.withIndex()) {
                 +"args[$index] = ${arg.name}"
             }
             +when {
                 method.isConstructor -> "${callConstructor.name}(klass, argTypes, args)"
-                else -> "${callMethod.name}(klass, \"${method.name}\", argTypes, ${callStacks.instance?.name}, args)"
+                else -> "${callMethod.name}(klass, \"${method.name}\", argTypes, ${actionSequences.instance?.name}, args)"
             }
         }
 
@@ -397,8 +397,8 @@ class ExecutorCS2JavaPrinter(
         printedStacks += name
 
         val resolveType = when (descriptor.type) {
-            is KexPointer -> ctx.types.objectType.csType
-            else -> descriptor.type.getKfgType(ctx.types).csType
+            is KexPointer -> ctx.types.objectType.asType
+            else -> descriptor.type.getKfgType(ctx.types).asType
         }
         val decl = printVarDeclaration(name, resolveType)
         when (descriptor) {

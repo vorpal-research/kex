@@ -1,12 +1,13 @@
-package org.jetbrains.research.kex.reanimator.callstack.generator
+package org.jetbrains.research.kex.reanimator.actionsequence.generator
 
 import org.jetbrains.research.kex.descriptor.*
 import org.jetbrains.research.kex.ktype.KexArray
 import org.jetbrains.research.kex.ktype.KexClass
 import org.jetbrains.research.kex.ktype.KexType
-import org.jetbrains.research.kex.reanimator.callstack.CallStack
-import org.jetbrains.research.kex.reanimator.callstack.EnumValueCreation
-import org.jetbrains.research.kex.reanimator.callstack.UnknownCall
+import org.jetbrains.research.kex.reanimator.actionsequence.ActionList
+import org.jetbrains.research.kex.reanimator.actionsequence.ActionSequence
+import org.jetbrains.research.kex.reanimator.actionsequence.EnumValueCreation
+import org.jetbrains.research.kex.reanimator.actionsequence.UnknownSequence
 import org.jetbrains.research.kex.smt.Checker
 import org.jetbrains.research.kex.smt.Result
 import org.jetbrains.research.kex.state.StateBuilder
@@ -118,18 +119,20 @@ class EnumGenerator(private val fallback: Generator) : Generator {
         else -> false
     }
 
-    override fun generate(descriptor: Descriptor, generationDepth: Int): CallStack = with(context) {
+    override fun generate(descriptor: Descriptor, generationDepth: Int): ActionSequence = with(context) {
         val name = descriptor.term.toString()
-        val cs = CallStack(name)
-        saveToCache(descriptor, cs)
+        val list = ActionList(name)
+        saveToCache(descriptor, list)
 
         val kfgType = descriptor.type.getKfgType(context.types) as ClassType
         val enumConstants = getEnumConstants(this, descriptor.type).toList()
 
         val result = enumConstants.firstOrNull { it.second.matches(descriptor, mutableMapOf()) }
             ?: enumConstants.randomOrNull()
-            ?: return cs.also { it += UnknownCall(kfgType, descriptor).wrap(name) }
-        cs += EnumValueCreation(cm[result.first.klass], result.first.fieldName)
-        return cs
+            ?: return UnknownSequence(name, kfgType, descriptor).also {
+                saveToCache(descriptor, it)
+            }
+        list += EnumValueCreation(cm[result.first.klass], result.first.fieldName)
+        return list
     }
 }
