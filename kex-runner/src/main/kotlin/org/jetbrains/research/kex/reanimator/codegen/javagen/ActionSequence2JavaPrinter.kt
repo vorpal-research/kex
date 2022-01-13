@@ -187,7 +187,7 @@ open class ActionSequence2JavaPrinter(
             val actualKlass = ctx.loader.loadClass(type)
             val requiredKlass = ctx.loader.loadClass(requiredType.type)
             val isAssignable = requiredKlass.isAssignableFrom(actualKlass)
-            val isVisible = ((type as? ClassType)?.klass?.visibility ?: Visibility.PUBLIC )>= visibilityLevel
+            val isVisible = ((type as? ClassType)?.klass?.visibility ?: Visibility.PUBLIC) >= visibilityLevel
             if (isVisible && isAssignable && actualKlass.typeParameters.size == requiredKlass.typeParameters.size) {
                 ASClass(
                     type,
@@ -474,7 +474,10 @@ open class ActionSequence2JavaPrinter(
         TODO()
     }
 
-    protected open fun printInnerClassConstructor(owner: ActionSequence, call: InnerClassConstructorCall): List<String> {
+    protected open fun printInnerClassConstructor(
+        owner: ActionSequence,
+        call: InnerClassConstructorCall
+    ): List<String> {
         call.outerObject.printAsJava()
         call.args.forEach { it.printAsJava() }
         val args = call.args.joinToString(", ") {
@@ -499,7 +502,10 @@ open class ActionSequence2JavaPrinter(
         )
     }
 
-    protected open fun printExternalConstructorCall(owner: ActionSequence, call: ExternalConstructorCall): List<String> {
+    protected open fun printExternalConstructorCall(
+        owner: ActionSequence,
+        call: ExternalConstructorCall
+    ): List<String> {
         call.args.forEach { it.printAsJava() }
         val constructor = call.constructor
         val args = call.args.joinToString(", ") {
@@ -634,8 +640,17 @@ open class ActionSequence2JavaPrinter(
     }
 
     protected open fun printUnknownSequence(sequence: UnknownSequence): List<String> {
-        val type = sequence.target.type.asType
-        actualTypes[sequence] = type
-        return listOf("${printVarDeclaration(sequence.name, type)} = unknown()")
+        val actualType = sequence.target.type.asType
+        return listOf(
+            if (resolvedTypes[sequence] != null) {
+                val rest = resolvedTypes[sequence]!!
+                val type = actualType.merge(rest)
+                actualTypes[sequence] = type
+                "${printVarDeclaration(sequence.name, actualType)} = unknown()"
+            } else {
+                actualTypes[sequence] = actualType
+                "${printVarDeclaration(sequence.name, actualType)} = unknown()"
+            }
+        )
     }
 }
