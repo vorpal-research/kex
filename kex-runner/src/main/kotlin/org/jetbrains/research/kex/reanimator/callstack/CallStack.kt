@@ -280,10 +280,15 @@ class CallStackRtMapper(val mode: KexRtManager.Mode) {
     fun map(ct: CallStack): CallStack {
         if (ct is PrimaryValue<*>) return ct
         if (ct in cache) return cache[ct]!!
-        val res = CallStack(ct.name.mapped)
+        var res = CallStack(ct.name.mapped)
         cache[ct] = res
         for (call in ct) {
             res += map(call)
+        }
+        if (res.stack.size == 1 && res.stack.all { it is UnknownCall }) {
+            val unknown = res.stack.first() as UnknownCall
+            res = CallStack(unknown.target.term.toString())
+            res += unknown
         }
         return res
     }
