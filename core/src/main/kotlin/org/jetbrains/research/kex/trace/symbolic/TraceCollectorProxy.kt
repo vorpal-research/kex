@@ -148,6 +148,18 @@ private class EmptyTraceCollector : InstructionTraceCollector {
     override fun throwing(inst: String, exception: String, concreteException: Any?) {}
 
     override fun unary(value: String, operand: String, concreteValue: Any?, concreteOperand: Any?) {}
+
+    override fun addNullityConstraints(inst: String, value: String, concreteValue: Any?) {}
+
+    override fun addTypeConstraints(inst: String, value: String, concreteValue: Any?) {}
+
+    override fun addArrayIndexConstraints(
+        inst: String,
+        array: String,
+        index: String,
+        concreteArray: Any?,
+        concreteIndex: Any?
+    ) {}
 }
 
 object TraceCollectorProxy {

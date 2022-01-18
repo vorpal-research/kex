@@ -20,6 +20,7 @@ private val defaultDepth = kexConfig.getIntValue("inliner", "depth", 5)
 
 interface Inliner<T> : RecollectingTransformer<Inliner<T>> {
     val im: MethodManager.InlineManager
+        get() = MethodManager.InlineManager
     val psa: PredicateStateAnalysis
     val inlineSuffix: String
     var inlineIndex: Int
@@ -149,7 +150,6 @@ class RecursiveInliner<T>(
     val maxDepth: Int = defaultDepth,
     val inlinerBuilder: (Int, PredicateStateAnalysis) -> Inliner<T>
 ) : Inliner<RecursiveInliner<T>> {
-    override val im = MethodManager.InlineManager
     override var inlineIndex = 0
     override val builders = dequeOf(StateBuilder())
     override var hasInlined: Boolean = false

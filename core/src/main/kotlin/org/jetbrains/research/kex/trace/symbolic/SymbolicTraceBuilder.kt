@@ -78,6 +78,9 @@ class SymbolicTraceBuilder(
     private val terms = mutableMapOf<Term, WrappedValue>()
     private val predicates = mutableMapOf<Predicate, Instruction>()
 
+    private val nullChecked = mutableSetOf<Value>()
+    private val typeChecked = mutableMapOf<Value, Type>()
+
     /**
      * stack frame info for method
      */
@@ -475,7 +478,7 @@ class SymbolicTraceBuilder(
         val predicate = state(instruction.location) {
             val actualCallee = termCallee ?: staticRef(calledMethod.klass)
             when {
-                termReturn != null -> termReturn equality actualCallee.call(calledMethod, termArguments)
+                termReturn != null -> termReturn.call(actualCallee.call(calledMethod, termArguments))
                 else -> call(actualCallee.call(calledMethod, termArguments))
             }
         }
@@ -949,5 +952,83 @@ class SymbolicTraceBuilder(
         }
 
         postProcess(kfgValue, predicate)
+    }
+
+    override fun addNullityConstraints(inst: String, value: String, concreteValue: Any?) {
+        val instruction = parseValue(inst) as Instruction
+
+        val kfgValue = parseValue(value)
+        val termValue = mkValue(kfgValue)
+
+        if (kfgValue is ThisRef) return
+        else if (kfgValue in nullChecked) return
+        nullChecked += kfgValue
+
+        val predicate = path {
+            when (concreteValue) {
+                null -> termValue equality null
+                else -> termValue inequality null
+            }
+        }
+
+        processPath(instruction, predicate)
+        postProcess(instruction, predicate)
+    }
+
+    override fun addTypeConstraints(inst: String, value: String, concreteValue: Any?) {
+        if (concreteValue == null) return
+
+        val instruction = parseValue(inst) as Instruction
+
+        val kfgValue = parseValue(value)
+        val termValue = mkValue(kfgValue)
+
+        val predicate = path {
+            (termValue `is` concreteValue.getAsDescriptor().type) equality true
+        }
+
+        processPath(instruction, predicate)
+        postProcess(instruction, predicate)
+    }
+
+    override fun addArrayIndexConstraints(
+        inst: String,
+        array: String,
+        index: String,
+        concreteArray: Any?,
+        concreteIndex: Any?
+    ) {
+        if (concreteArray == null) return
+
+        val instruction = parseValue(inst) as Instruction
+
+        val kfgArray = parseValue(array)
+        val kfgIndex = parseValue(index)
+
+        val termArray = mkValue(kfgArray)
+        val termIndex = mkValue(kfgIndex)
+
+        val actualLength = concreteArray.arraySize
+        val actualIndex = (concreteIndex as? Int) ?: return
+
+        val predicate = path {
+            (termIndex lt termArray.length()) equality (actualIndex < actualLength)
+        }
+
+        processPath(instruction, predicate)
+        postProcess(instruction, predicate)
+    }
+
+    private val Any.arraySize: Int get() = when (this) {
+        is BooleanArray -> this.size
+        is ByteArray -> this.size
+        is CharArray -> this.size
+        is ShortArray -> this.size
+        is IntArray -> this.size
+        is LongArray -> this.size
+        is FloatArray -> this.size
+        is DoubleArray -> this.size
+        is Array<*> -> this.size
+        else -> 0
     }
 }
