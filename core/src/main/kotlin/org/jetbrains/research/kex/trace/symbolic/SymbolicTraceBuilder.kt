@@ -769,6 +769,8 @@ class SymbolicTraceBuilder(
         val kfgValue = parseValue(value) as NewArrayInst
         preProcess(kfgValue)
 
+        nullChecked += (kfgValue as Value)
+
         val kfgDimensions = dimensions.map { parseValue(it) }
 
         val termValue = mkNewValue(kfgValue)
@@ -793,6 +795,8 @@ class SymbolicTraceBuilder(
     ) = safeCall {
         val kfgValue = parseValue(value) as NewInst
         preProcess(kfgValue)
+
+        nullChecked += (kfgValue as Value)
 
         val termValue = mkNewValue(kfgValue)
         terms[termValue] = kfgValue.wrapped()

@@ -20,29 +20,18 @@ import org.jetbrains.research.kex.reanimator.UnsafeGenerator
 import org.jetbrains.research.kex.reanimator.codegen.ExecutorTestCasePrinter
 import org.jetbrains.research.kex.smt.Checker
 import org.jetbrains.research.kex.smt.Result
-import org.jetbrains.research.kex.state.BasicState
 import org.jetbrains.research.kex.state.PredicateState
-import org.jetbrains.research.kex.state.predicate.DefaultSwitchPredicate
-import org.jetbrains.research.kex.state.predicate.EqualityPredicate
-import org.jetbrains.research.kex.state.predicate.PredicateType
-import org.jetbrains.research.kex.state.predicate.path
-import org.jetbrains.research.kex.state.term.ConstBoolTerm
-import org.jetbrains.research.kex.state.term.ConstIntTerm
 import org.jetbrains.research.kex.state.transformer.*
 import org.jetbrains.research.kex.trace.TraceManager
 import org.jetbrains.research.kex.trace.runner.SymbolicExternalTracingRunner
 import org.jetbrains.research.kex.trace.runner.generateParameters
-import org.jetbrains.research.kex.trace.symbolic.*
+import org.jetbrains.research.kex.trace.symbolic.ExecutionResult
+import org.jetbrains.research.kex.trace.symbolic.InstructionTrace
+import org.jetbrains.research.kex.trace.symbolic.SymbolicState
 import org.jetbrains.research.kex.util.getJunit
 import org.jetbrains.research.kfg.ClassManager
 import org.jetbrains.research.kfg.ir.Method
-import org.jetbrains.research.kfg.ir.value.IntConstant
-import org.jetbrains.research.kfg.ir.value.instruction.BranchInst
-import org.jetbrains.research.kfg.ir.value.instruction.SwitchInst
-import org.jetbrains.research.kfg.ir.value.instruction.TableSwitchInst
 import org.jetbrains.research.kfg.visitor.MethodVisitor
-import org.jetbrains.research.kthelper.assert.unreachable
-import org.jetbrains.research.kthelper.collection.dequeOf
 import org.jetbrains.research.kthelper.logging.debug
 import org.jetbrains.research.kthelper.logging.log
 import org.jetbrains.research.kthelper.logging.warn
@@ -126,16 +115,14 @@ class InstructionConcolicChecker(
     private fun prepareState(method: Method, state: PredicateState): PredicateState = transform(state) {
         +KexRtAdapter(cm)
         +StringMethodAdapter(ctx.cm)
-        +AnnotationAdapter(method, AnnotationManager.defaultLoader)
         +RecursiveInliner(PredicateStateAnalysis(cm)) { index, psa ->
-            ConcreteImplInliner(
-                cm.type,
-                TypeInfoMap(),
+            ConcolicInliner(
+                ctx,
                 psa,
                 inlineIndex = index
             )
         }
-        +ArrayBoundsAdapter()
+        +AnnotationAdapter(method, AnnotationManager.defaultLoader)
         +IntrinsicAdapter
         +KexIntrinsicsAdapter()
         +ReflectionInfoAdapter(method, ctx.loader)
@@ -149,7 +136,7 @@ class InstructionConcolicChecker(
     private fun check(method: Method, state: SymbolicState): ExecutionResult? {
         val checker = Checker(method, ctx, PredicateStateAnalysis(cm))
         val preparedState = prepareState(method, state.state)
-        val result = checker.check(preparedState, state.state.path)
+        val result = checker.check(preparedState, preparedState.path)
         if (result !is Result.SatResult) return null
 
         return tryOrNull {
