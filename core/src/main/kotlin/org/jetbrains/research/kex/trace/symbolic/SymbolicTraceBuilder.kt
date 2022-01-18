@@ -12,6 +12,7 @@ import org.jetbrains.research.kex.state.StateBuilder
 import org.jetbrains.research.kex.state.predicate.Predicate
 import org.jetbrains.research.kex.state.predicate.path
 import org.jetbrains.research.kex.state.predicate.state
+import org.jetbrains.research.kex.state.term.NullTerm
 import org.jetbrains.research.kex.state.term.Term
 import org.jetbrains.research.kex.state.term.term
 import org.jetbrains.research.kex.state.transformer.TermRenamer
@@ -966,6 +967,7 @@ class SymbolicTraceBuilder(
 
         if (kfgValue is ThisRef) return
         else if (kfgValue in nullChecked) return
+        else if (termValue is NullTerm) return
         nullChecked += kfgValue
 
         val predicate = path {

@@ -4,6 +4,7 @@ import org.jetbrains.research.kex.state.BasicState
 import org.jetbrains.research.kex.state.predicate.*
 import org.jetbrains.research.kex.state.term.ConstBoolTerm
 import org.jetbrains.research.kex.state.term.ConstIntTerm
+import org.jetbrains.research.kex.state.term.NullTerm
 import org.jetbrains.research.kex.trace.TraceManager
 import org.jetbrains.research.kex.trace.symbolic.*
 import org.jetbrains.research.kfg.ir.Method
@@ -151,7 +152,32 @@ class BfsPathSelectorImpl(override val traceManager: TraceManager<InstructionTra
             }
             else -> unreachable { log.error("Unexpected predicate in switch clause: $predicate") }
         }
-        else -> null
+        else -> when (val pred = predicate) {
+            is EqualityPredicate -> {
+                val (lhv, rhv) = pred.lhv to pred.rhv
+                when (rhv) {
+                    is NullTerm -> Clause(instruction, path(instruction.location) {
+                        lhv inequality null
+                    })
+                    is ConstBoolTerm -> {
+                        Clause(instruction, path(instruction.location) {
+                            lhv equality !rhv.value
+                        })
+                    }
+                    else -> log.warn("Unknown clause $this").let { null }
+                }
+            }
+            is InequalityPredicate -> {
+                val (lhv, rhv) = pred.lhv to pred.rhv
+                when (rhv) {
+                    is NullTerm -> Clause(instruction, path(instruction.location) {
+                        lhv equality null
+                    })
+                    else -> log.warn("Unknown clause $this").let { null }
+                }
+            }
+            else -> null
+        }
     }
 
 }
