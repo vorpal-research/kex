@@ -325,6 +325,7 @@ class LoopDeroller(override val cm: ClassManager) : LoopVisitor {
                         newInst
                     } else actual
                     updated.replaceAllUsesWith(mappedActual)
+                    newBlock.remove(updated)
                     state[inst] = mappedActual
                 }
             }

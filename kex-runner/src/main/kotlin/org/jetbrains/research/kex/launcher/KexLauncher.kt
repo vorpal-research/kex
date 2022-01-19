@@ -90,6 +90,7 @@ abstract class KexLauncher(classPaths: List<String>, targetName: String) {
         val methodNameRegex = """(<init>|<clinit>|(\w+))"""
         val typeRegex = """(void|((byte|char|short|int|long|float|double|$klassNameRegex)(\[\])*))"""
         analysisLevel = when {
+            targetName == "${Package.EXPANSION}" -> PackageLevel(Package.defaultPackage)
             targetName.matches(Regex(packageRegex)) -> PackageLevel(Package.parse(targetName))
             targetName.matches(Regex("""$klassNameRegex::$methodNameRegex\((($typeRegex,\s+)*$typeRegex)?\):$typeRegex""")) -> {
                 val (klassName, methodFullDesc) = targetName.split("::")
