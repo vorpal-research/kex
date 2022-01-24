@@ -137,6 +137,23 @@ class ConcolicInliner(val ctx: ExecutionContext,
                     }
                 }
             }
+            is ValueTerm, is ArgumentTerm, is ReturnValueTerm -> when (val lhv = predicate.lhv) {
+                is ValueTerm, is ArgumentTerm, is ReturnValueTerm -> {
+                    val lhvType = knownTypes[lhv]
+                    val rhvType = knownTypes[rhv]
+                    when {
+                        lhvType != null && rhvType != null -> {
+                            if (lhvType.isSubtypeOf(ctx.types, rhvType)) lhvType else rhvType
+                        }
+                        lhvType != null -> lhvType
+                        rhvType != null -> rhvType
+                        else -> null
+                    }?.let {
+                        knownTypes[lhv] = it
+                        knownTypes[rhv] = it
+                    }
+                }
+            }
         }
         return super.transformEqualityPredicate(predicate)
     }
