@@ -7,7 +7,6 @@ import org.jetbrains.research.kex.asm.analysis.concolic.InstructionConcolicCheck
 import org.jetbrains.research.kex.asm.manager.MethodWrapperInitializer
 import org.jetbrains.research.kex.asm.transform.SymbolicTraceCollector
 import org.jetbrains.research.kex.asm.transform.SystemExitTransformer
-import org.jetbrains.research.kex.jacoco.CoverageLevel
 import org.jetbrains.research.kex.jacoco.CoverageReporter
 import org.jetbrains.research.kex.trace.symbolic.InstructionTraceManager
 import org.jetbrains.research.kfg.visitor.MethodVisitor
@@ -29,10 +28,7 @@ class ConcolicLauncher(classPaths: List<String>, targetName: String) : KexLaunch
             +InstructionConcolicChecker(context, traceManager)
         }
         log.info(
-            CoverageReporter(analysisLevel.pkg, containerClassLoader)
-                .execute(
-                    CoverageLevel.PackageLevel(printDetailedCoverage = false)
-                )
+            CoverageReporter(containerClassLoader).execute(analysisLevel, printDetailedCoverage = true)
         )
     }
 }
