@@ -16,12 +16,10 @@ import org.jetbrains.research.kthelper.assert.unreachable
 import org.jetbrains.research.kthelper.collection.dequeOf
 import org.jetbrains.research.kthelper.logging.log
 
-interface PathSelector {
+interface PathSelector : Iterator<SymbolicState> {
     val traceManager: TraceManager<InstructionTrace>
 
-    fun hasMorePaths(method: Method): Boolean
     fun addExecutionTrace(method: Method, result: ExecutionResult)
-    fun getNextPath(): SymbolicState
 }
 
 class BfsPathSelectorImpl(override val traceManager: TraceManager<InstructionTrace>) : PathSelector {
@@ -29,7 +27,7 @@ class BfsPathSelectorImpl(override val traceManager: TraceManager<InstructionTra
     private val candidates = mutableSetOf<PathCondition>()
     private val deque = dequeOf<SymbolicState>()
 
-    override fun hasMorePaths(method: Method): Boolean = deque.isNotEmpty()
+    override fun hasNext(): Boolean = deque.isNotEmpty()
 
     override fun addExecutionTrace(method: Method, result: ExecutionResult) {
         if (result.trace.path in coveredPaths) return
@@ -38,7 +36,7 @@ class BfsPathSelectorImpl(override val traceManager: TraceManager<InstructionTra
         addCandidates(result.trace)
     }
 
-    override fun getNextPath(): SymbolicState = deque.pollFirst()
+    override fun next(): SymbolicState = deque.pollFirst()
 
     private fun addCandidates(state: SymbolicState) {
         val currentState = mutableListOf<Predicate>()

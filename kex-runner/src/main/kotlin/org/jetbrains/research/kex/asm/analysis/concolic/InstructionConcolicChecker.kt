@@ -122,6 +122,7 @@ class InstructionConcolicChecker(
                 inlineIndex = index
             )
         }
+        +ConcolicArrayLengthAdapter()
         +AnnotationAdapter(method, AnnotationManager.defaultLoader)
         +IntrinsicAdapter
         +KexIntrinsicsAdapter()
@@ -147,21 +148,21 @@ class InstructionConcolicChecker(
     }
 
     private suspend fun processMethod(method: Method) {
-        val selector = BfsPathSelectorImpl(traceManager)
+        val pathIterator: PathSelector = BfsPathSelectorImpl(traceManager)
         getRandomTrace(method)?.let {
-            selector.addExecutionTrace(method, it)
+            pathIterator.addExecutionTrace(method, it)
         }
         yield()
 
         var failsInARow = 0
-        while (selector.hasMorePaths(method)) {
+        while (pathIterator.hasNext()) {
             ++failsInARow
             if (failsInARow > maxFailsInARow) {
                 log.debug { "Reached maximum fails in a row for method $method" }
                 return
             }
 
-            val state = selector.getNextPath()
+            val state = pathIterator.next()
             log.debug { "Checking state: $state" }
             yield()
 
@@ -170,7 +171,7 @@ class InstructionConcolicChecker(
                 log.warn { "Collected empty state from $state" }
                 continue
             }
-            selector.addExecutionTrace(method, newState)
+            pathIterator.addExecutionTrace(method, newState)
             yield()
         }
     }
