@@ -171,7 +171,7 @@ class Main : Runnable {
 
         val url = url ?: throw IllegalArgumentException("No url provided")
 
-        request.url(url)
+        //request.url(url)
 
         data?.let {
             request.method(requestMethod, it.toRequestBody(mediaType())) // return mediaType() here
