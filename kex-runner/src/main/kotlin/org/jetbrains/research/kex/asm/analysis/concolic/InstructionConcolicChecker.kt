@@ -67,7 +67,6 @@ class InstructionConcolicChecker(
     private val compilerHelper = CompilerHelper(ctx)
 
     private val timeLimit = kexConfig.getLongValue("concolic", "timeLimit", 100000L)
-    private val maxFailsInARow = kexConfig.getLongValue("concolic", "maxFailsInARow", 50)
 
     override fun cleanup() {}
 
@@ -154,14 +153,7 @@ class InstructionConcolicChecker(
         }
         yield()
 
-        var failsInARow = 0
         while (pathIterator.hasNext()) {
-            ++failsInARow
-            if (failsInARow > maxFailsInARow) {
-                log.debug { "Reached maximum fails in a row for method $method" }
-                return
-            }
-
             val state = pathIterator.next()
             log.debug { "Checking state: $state" }
             yield()

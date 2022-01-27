@@ -47,11 +47,11 @@ class BfsPathSelectorImpl(override val traceManager: TraceManager<InstructionTra
                 val instruction = state[predicate]
                 val reversed = Clause(instruction, predicate).reversed()
                 if (reversed != null) {
-                    val newPath = PathConditionImpl(currentPath.toList() + reversed)
+                    val newPath = PathConditionImpl(currentPath + reversed)
                     if (newPath !in candidates) {
                         candidates += newPath
                         val new = SymbolicStateImpl(
-                            BasicState(currentState.toList()),
+                            BasicState(currentState + reversed.predicate),
                             newPath,
                             state.concreteValueMap.toMutableMap(),
                             state.termMap,

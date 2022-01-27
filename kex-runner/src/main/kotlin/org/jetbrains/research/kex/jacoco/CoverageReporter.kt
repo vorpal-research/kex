@@ -97,6 +97,7 @@ class CoverageReporter(
         for (testName in tests) {
             instrAndTestsClassLoader.addDefinition(testName, compiledClassLoader.getBytes(testName)!!)
             val testClass = instrAndTestsClassLoader.loadClass(testName)
+            log.debug("Running test $testName")
             JUnitCore.runClasses(testClass)
         }
 
@@ -139,7 +140,11 @@ class CoverageReporter(
         return ""
     }
 
-    private fun getPackageCoverage(pkg: Package, coverageBuilder: CoverageBuilder, detailedCoverage: Boolean = false): String {
+    private fun getPackageCoverage(
+        pkg: Package,
+        coverageBuilder: CoverageBuilder,
+        detailedCoverage: Boolean = false
+    ): String {
         val pc = PackageCoverageImpl(pkg.canonicalName, coverageBuilder.classes, coverageBuilder.sourceFiles)
         return buildString {
             if (detailedCoverage) {
