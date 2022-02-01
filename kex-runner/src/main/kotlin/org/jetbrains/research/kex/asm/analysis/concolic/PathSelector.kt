@@ -1,5 +1,6 @@
 package org.jetbrains.research.kex.asm.analysis.concolic
 
+import org.jetbrains.research.kex.asm.analysis.concolic.cgs.ExecutionTree
 import org.jetbrains.research.kex.state.BasicState
 import org.jetbrains.research.kex.state.predicate.*
 import org.jetbrains.research.kex.state.term.ConstBoolTerm
@@ -23,6 +24,7 @@ interface PathSelector : Iterator<SymbolicState> {
 }
 
 class BfsPathSelectorImpl(override val traceManager: TraceManager<InstructionTrace>) : PathSelector {
+    private val executionTree = ExecutionTree()
     private val coveredPaths = mutableSetOf<PathCondition>()
     private val candidates = mutableSetOf<PathCondition>()
     private val deque = dequeOf<SymbolicState>()
@@ -31,6 +33,7 @@ class BfsPathSelectorImpl(override val traceManager: TraceManager<InstructionTra
 
     override fun addExecutionTrace(method: Method, result: ExecutionResult) {
         if (result.trace.path in coveredPaths) return
+        executionTree.addTrace(result.trace)
         coveredPaths += result.trace.path
         traceManager.addTrace(method, result.trace.trace)
         addCandidates(result.trace)
@@ -178,4 +181,5 @@ class BfsPathSelectorImpl(override val traceManager: TraceManager<InstructionTra
         }
     }
 
+    fun view() = executionTree.view("tree", "/usr/bin/dot", "/usr/bin/google-chrome-stable")
 }

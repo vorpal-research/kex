@@ -30,8 +30,8 @@
         <coroutines.version>1.5.2</coroutines.version>
         <compiler-plugin.version>3.5.1</compiler-plugin.version>
 
-        <kt-helper.version>0.0.14</kt-helper.version>
-        <kfg.version>0.1.5</kfg.version>
+        <kt-helper.version>0.0.15</kt-helper.version>
+        <kfg.version>0.1.6</kfg.version>
 
         <logback.version>1.2.8</logback.version>
         <slf4j.version>1.7.32</slf4j.version>

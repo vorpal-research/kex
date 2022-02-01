@@ -277,7 +277,7 @@ class StensgaardAA : Transformer<StensgaardAA>, AliasAnalysis, Viewable {
             }
             val values = reverse.values.map { graphView ->
                 val view = GraphView(graphView.name, graphView.label)
-                graphView.successors.toSet().forEach { view.addSuccessor(it) }
+                graphView.successors.toSet().forEach { view.addSuccessor(it.first, it.second) }
                 view
             }.toMutableSet()
             values.filter { it.successors.isEmpty() }.forEach { it.addSuccessor(rootNode) }

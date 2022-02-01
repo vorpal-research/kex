@@ -988,9 +988,16 @@ class SymbolicTraceBuilder(
 
         val kfgValue = parseValue(value)
         val termValue = mkValue(kfgValue)
+        val descriptorValue = concreteValue.getAsDescriptor()
+        val kfgType = descriptorValue.type.getKfgType(ctx.types)
+        if (kfgValue in typeChecked) {
+            val checkedType = typeChecked.getValue(kfgValue)
+            if (checkedType.isSubtypeOf(kfgType)) return
+        }
+        typeChecked[kfgValue] = kfgType
 
         val predicate = path {
-            (termValue `is` concreteValue.getAsDescriptor().type) equality true
+            (termValue `is` descriptorValue.type) equality true
         }
 
         processPath(instruction, predicate)
