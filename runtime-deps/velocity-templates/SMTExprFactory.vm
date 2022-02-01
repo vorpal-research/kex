@@ -54,7 +54,6 @@ class $factory : ${solver}SMTExprFactory() {
     private var defaultBV: Bitvector_
 
     init {
-        engine.initialize()
         innerTypeMap = mutableMapOf()
         innerKlassMap = mutableMapOf()
         defaultBV = makeBitvectorConst("0", 2, 1)

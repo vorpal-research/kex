@@ -33,8 +33,6 @@ abstract class SMTEngine<in Context_t : Any, Expr_t : Any, Sort_t : Any, Functio
         CONCAT
     }
 
-    abstract fun initialize()
-
     abstract fun makeBound(ctx: Context_t, size: Int, sort: Sort_t): Expr_t
     abstract fun makePattern(ctx: Context_t, expr: Expr_t): Pattern_t
 
