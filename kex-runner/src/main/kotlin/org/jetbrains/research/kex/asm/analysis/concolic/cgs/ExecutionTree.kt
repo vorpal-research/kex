@@ -6,10 +6,11 @@ import org.jetbrains.research.kex.state.predicate.PredicateType
 import org.jetbrains.research.kex.trace.symbolic.Clause
 import org.jetbrains.research.kex.trace.symbolic.SymbolicState
 import org.jetbrains.research.kfg.ir.value.instruction.Instruction
-import org.jetbrains.research.kthelper.algorithm.GraphView
-import org.jetbrains.research.kthelper.algorithm.Viewable
 import org.jetbrains.research.kthelper.assert.ktassert
+import org.jetbrains.research.kthelper.graph.GraphView
+import org.jetbrains.research.kthelper.graph.Viewable
 import org.jetbrains.research.kthelper.logging.log
+import org.jetbrains.research.kthelper.tree.Tree
 import java.util.*
 
 data class Statement(
@@ -19,9 +20,11 @@ data class Statement(
 
 sealed class Node(
     val statements: List<Statement>,
-    val upEdge: Node?
-) {
+    override val parent: Node?
+) : Tree.TreeNode<Node> {
     val downEdges = mutableMapOf<Clause, Node>()
+    override val children: Set<Node>
+        get() = downEdges.values.toSet()
 
     operator fun contains(clause: Clause) = clause in downEdges
     operator fun get(clause: Clause) = downEdges.getValue(clause)
@@ -33,11 +36,17 @@ sealed class Node(
 class RootNode(statements: List<Statement>) : Node(statements.toList(), null)
 class TreeNode(statements: List<Statement>, upEdge: Node) : Node(statements.toList(), upEdge)
 
-class ExecutionTree : Viewable {
-    private var root: Node? = null
+class ExecutionTree : Tree<Node>, Viewable {
+    private var innerRoot: Node? = null
+    private val innerNodes = mutableSetOf<Node>()
+
+    override val root: Node?
+        get() = innerRoot
+    override val nodes: Set<Node>
+        get() = innerNodes
 
     fun addTrace(symbolicState: SymbolicState) {
-        var old: Node? = root
+        var old: Node? = innerRoot
         var entryClause: Clause? = null
         var statements = mutableListOf<Statement>()
 
@@ -47,12 +56,14 @@ class ExecutionTree : Viewable {
                     val clause = Clause(symbolicState[predicate], predicate)
                     old = when {
                         old == null -> RootNode(statements).also {
-                            root = it
+                            innerRoot = it
+                            innerNodes += it
                         }
                         entryClause == null -> old.also { ktassert(it.statements == statements) { log.error("Traces contradict") } }
                         entryClause in old -> old[entryClause]
                         else -> TreeNode(statements, old).also {
                             old!![entryClause!!] = it
+                            innerNodes += it
                         }
                     }
                     entryClause = clause
@@ -62,58 +73,33 @@ class ExecutionTree : Viewable {
             }
         }
         when {
-            old == null -> root = RootNode(statements)
+            old == null -> innerRoot = RootNode(statements).also {
+                innerNodes += it
+            }
             entryClause == null -> {}
             entryClause in old -> {}
-            else -> old[entryClause] = TreeNode(statements, old)
-        }
-
-
-//        if (statements.isNotEmpty()) {
-//            when {
-//                old == null -> root = RootNode(statements)
-//                entryClause == null -> {}
-//                entryClause in old -> {}
-//                else -> old[entryClause] = TreeNode(statements, old)
-//            }
-//        } else if (entryClause != null) {
-//            when {
-//                old == null -> root = RootNode(statements)
-//                entryClause in old -> {}
-//                else -> old[entryClause] = TreeNode(statements, old)
-//            }
-//        }
-    }
-
-    private fun collectTree(): List<Node> = mutableListOf<Node>().apply {
-        collectTree(root, this)
-    }
-
-    private fun collectTree(node: Node?, mutableList: MutableList<Node>) {
-        if (node == null) return
-        mutableList.add(node)
-        for ((_, child) in node.downEdges) {
-            collectTree(child, mutableList)
+            else -> old[entryClause] = TreeNode(statements, old).also {
+                innerNodes += it
+            }
         }
     }
 
     override val graphView: List<GraphView>
         get() {
-            val treeNodes = collectTree()
-            val nodes = IdentityHashMap<Node, GraphView>()
+            val graphNodes = IdentityHashMap<Node, GraphView>()
 
-            for (node in treeNodes) {
+            for (node in nodes) {
                 val label = node.statements.joinToString("\n") { it.predicate.print() }
-                nodes[node] = GraphView(System.identityHashCode(node).toString(), label)
+                graphNodes[node] = GraphView(System.identityHashCode(node).toString(), label)
             }
 
-            for (node in treeNodes) {
-                val current = nodes.getValue(node)
+            for (node in nodes) {
+                val current = graphNodes.getValue(node)
                 for ((clause, child) in node.downEdges) {
-                    current.addSuccessor(nodes.getValue(child), clause.predicate.print())
+                    current.addSuccessor(graphNodes.getValue(child), clause.predicate.print())
                 }
             }
 
-            return nodes.values.toList()
+            return graphNodes.values.toList()
         }
 }

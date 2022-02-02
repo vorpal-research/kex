@@ -4,11 +4,11 @@ import org.jetbrains.research.kex.config.kexConfig
 import org.jetbrains.research.kex.ktype.KexType
 import org.jetbrains.research.kex.state.predicate.*
 import org.jetbrains.research.kex.state.term.*
-import org.jetbrains.research.kthelper.algorithm.GraphView
-import org.jetbrains.research.kthelper.algorithm.Viewable
 import org.jetbrains.research.kthelper.assert.unreachable
 import org.jetbrains.research.kthelper.collection.DisjointSet
 import org.jetbrains.research.kthelper.collection.Subset
+import org.jetbrains.research.kthelper.graph.GraphView
+import org.jetbrains.research.kthelper.graph.Viewable
 import org.jetbrains.research.kthelper.logging.log
 
 private val dot by lazy {

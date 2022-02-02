@@ -166,6 +166,7 @@ class InstructionConcolicChecker(
             pathIterator.addExecutionTrace(method, newState)
             yield()
         }
+        (pathIterator as BfsPathSelectorImpl).view()
     }
 
 }
