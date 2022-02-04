@@ -113,7 +113,6 @@ class InstructionConcolicChecker(
 
     private fun prepareState(method: Method, state: PredicateState): PredicateState = transform(state) {
         +KexRtAdapter(cm)
-        +StringMethodAdapter(ctx.cm)
         +RecursiveInliner(PredicateStateAnalysis(cm)) { index, psa ->
             ConcolicInliner(
                 ctx,
@@ -130,6 +129,7 @@ class InstructionConcolicChecker(
         +ConstantPropagator
         +BoolTypeAdapter(method.cm.type)
         +ConstStringAdapter()
+        +StringMethodAdapter(ctx.cm)
         +FieldNormalizer(method.cm)
     }
 

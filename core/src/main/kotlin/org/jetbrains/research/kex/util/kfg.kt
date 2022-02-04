@@ -75,3 +75,4 @@ val SystemTypeNames.unmodifiableCollection get() = "java/util/Collections\$Unmod
 val SystemTypeNames.unmodifiableList get() = "java/util/Collections\$UnmodifiableList"
 val SystemTypeNames.unmodifiableSet get() = "java/util/Collections\$UnmodifiableSet"
 val SystemTypeNames.unmodifiableMap get() = "java/util/Collections\$UnmodifiableMap"
+val SystemTypeNames.charSequence get() = "java/lang/CharSequence"

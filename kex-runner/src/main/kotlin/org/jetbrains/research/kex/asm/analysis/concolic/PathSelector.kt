@@ -181,5 +181,5 @@ class BfsPathSelectorImpl(override val traceManager: TraceManager<InstructionTra
         }
     }
 
-    fun view() = executionTree.view("tree", "/usr/bin/dot", "/usr/bin/google-chrome-stable")
+    fun view() = executionTree.view("tree", "/usr/bin/dot", "/usr/bin/firefox")
 }

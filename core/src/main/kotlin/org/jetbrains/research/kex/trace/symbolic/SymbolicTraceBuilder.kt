@@ -12,7 +12,6 @@ import org.jetbrains.research.kex.state.StateBuilder
 import org.jetbrains.research.kex.state.predicate.Predicate
 import org.jetbrains.research.kex.state.predicate.path
 import org.jetbrains.research.kex.state.predicate.state
-import org.jetbrains.research.kex.state.term.NullTerm
 import org.jetbrains.research.kex.state.term.Term
 import org.jetbrains.research.kex.state.term.term
 import org.jetbrains.research.kex.state.transformer.TermRenamer
@@ -960,48 +959,48 @@ class SymbolicTraceBuilder(
     }
 
     override fun addNullityConstraints(inst: String, value: String, concreteValue: Any?) {
-        val instruction = parseValue(inst) as Instruction
-
-        val kfgValue = parseValue(value)
-        val termValue = mkValue(kfgValue)
-
-        if (kfgValue is ThisRef) return
-        else if (kfgValue in nullChecked) return
-        else if (termValue is NullTerm) return
-        nullChecked += kfgValue
-
-        val predicate = path {
-            when (concreteValue) {
-                null -> termValue equality null
-                else -> termValue inequality null
-            }
-        }
-
-        processPath(instruction, predicate)
-        postProcess(instruction, predicate)
+//        val instruction = parseValue(inst) as Instruction
+//
+//        val kfgValue = parseValue(value)
+//        val termValue = mkValue(kfgValue)
+//
+//        if (kfgValue is ThisRef) return
+//        else if (kfgValue in nullChecked) return
+//        else if (termValue is NullTerm) return
+//        nullChecked += kfgValue
+//
+//        val predicate = path {
+//            when (concreteValue) {
+//                null -> termValue equality null
+//                else -> termValue inequality null
+//            }
+//        }
+//
+//        processPath(instruction, predicate)
+//        postProcess(instruction, predicate)
     }
 
     override fun addTypeConstraints(inst: String, value: String, concreteValue: Any?) {
-        if (concreteValue == null) return
-
-        val instruction = parseValue(inst) as Instruction
-
-        val kfgValue = parseValue(value)
-        val termValue = mkValue(kfgValue)
-        val descriptorValue = concreteValue.getAsDescriptor()
-        val kfgType = descriptorValue.type.getKfgType(ctx.types)
-        if (kfgValue in typeChecked) {
-            val checkedType = typeChecked.getValue(kfgValue)
-            if (checkedType.isSubtypeOf(kfgType)) return
-        }
-        typeChecked[kfgValue] = kfgType
-
-        val predicate = path {
-            (termValue `is` descriptorValue.type) equality true
-        }
-
-        processPath(instruction, predicate)
-        postProcess(instruction, predicate)
+//        if (concreteValue == null) return
+//
+//        val instruction = parseValue(inst) as Instruction
+//
+//        val kfgValue = parseValue(value)
+//        val termValue = mkValue(kfgValue)
+//        val descriptorValue = concreteValue.getAsDescriptor()
+//        val kfgType = descriptorValue.type.getKfgType(ctx.types)
+//        if (kfgValue in typeChecked) {
+//            val checkedType = typeChecked.getValue(kfgValue)
+//            if (checkedType.isSubtypeOf(kfgType)) return
+//        }
+//        typeChecked[kfgValue] = kfgType
+//
+//        val predicate = path {
+//            (termValue `is` descriptorValue.type) equality true
+//        }
+//
+//        processPath(instruction, predicate)
+//        postProcess(instruction, predicate)
     }
 
     override fun addArrayIndexConstraints(
@@ -1011,25 +1010,25 @@ class SymbolicTraceBuilder(
         concreteArray: Any?,
         concreteIndex: Any?
     ) {
-        if (concreteArray == null) return
-
-        val instruction = parseValue(inst) as Instruction
-
-        val kfgArray = parseValue(array)
-        val kfgIndex = parseValue(index)
-
-        val termArray = mkValue(kfgArray)
-        val termIndex = mkValue(kfgIndex)
-
-        val actualLength = concreteArray.arraySize
-        val actualIndex = (concreteIndex as? Int) ?: return
-
-        val predicate = path {
-            (termIndex lt termArray.length()) equality (actualIndex < actualLength)
-        }
-
-        processPath(instruction, predicate)
-        postProcess(instruction, predicate)
+//        if (concreteArray == null) return
+//
+//        val instruction = parseValue(inst) as Instruction
+//
+//        val kfgArray = parseValue(array)
+//        val kfgIndex = parseValue(index)
+//
+//        val termArray = mkValue(kfgArray)
+//        val termIndex = mkValue(kfgIndex)
+//
+//        val actualLength = concreteArray.arraySize
+//        val actualIndex = (concreteIndex as? Int) ?: return
+//
+//        val predicate = path {
+//            (termIndex lt termArray.length()) equality (actualIndex < actualLength)
+//        }
+//
+//        processPath(instruction, predicate)
+//        postProcess(instruction, predicate)
     }
 
     private val Any.arraySize: Int get() = when (this) {
