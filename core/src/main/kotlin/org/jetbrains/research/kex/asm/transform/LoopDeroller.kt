@@ -11,9 +11,9 @@ import org.jetbrains.research.kfg.ir.value.*
 import org.jetbrains.research.kfg.ir.value.instruction.*
 import org.jetbrains.research.kfg.visitor.Loop
 import org.jetbrains.research.kfg.visitor.LoopVisitor
-import org.jetbrains.research.kthelper.algorithm.GraphTraversal
-import org.jetbrains.research.kthelper.algorithm.NoTopologicalSortingException
 import org.jetbrains.research.kthelper.assert.unreachable
+import org.jetbrains.research.kthelper.graph.GraphTraversal
+import org.jetbrains.research.kthelper.graph.NoTopologicalSortingException
 import org.jetbrains.research.kthelper.logging.log
 import org.jetbrains.research.kthelper.toInt
 import kotlin.math.abs
@@ -325,6 +325,7 @@ class LoopDeroller(override val cm: ClassManager) : LoopVisitor {
                         newInst
                     } else actual
                     updated.replaceAllUsesWith(mappedActual)
+                    newBlock.remove(updated)
                     state[inst] = mappedActual
                 }
             }

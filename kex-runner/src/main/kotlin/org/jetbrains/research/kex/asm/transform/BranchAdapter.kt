@@ -11,8 +11,8 @@ import org.jetbrains.research.kfg.ir.value.instruction.PhiInst
 import org.jetbrains.research.kfg.ir.value.usageContext
 import org.jetbrains.research.kfg.visitor.MethodVisitor
 import org.jetbrains.research.kthelper.KtException
-import org.jetbrains.research.kthelper.algorithm.DominatorTree
-import org.jetbrains.research.kthelper.algorithm.DominatorTreeBuilder
+import org.jetbrains.research.kthelper.graph.DominatorTree
+import org.jetbrains.research.kthelper.graph.DominatorTreeBuilder
 import org.jetbrains.research.kthelper.logging.log
 
 class BranchAdapter(

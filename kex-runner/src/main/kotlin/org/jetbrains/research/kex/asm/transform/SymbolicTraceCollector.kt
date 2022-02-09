@@ -231,7 +231,7 @@ class SymbolicTraceCollector(
             types.objectType, types.objectType
         )
         val instrumented = buildList<Instruction> {
-            +addNullityConstraint(inst, inst.operand)
+            if (inst.type.isReference) +addNullityConstraint(inst, inst.operand)
 
             +collectorClass.interfaceCall(
                 castMethod, traceCollector,

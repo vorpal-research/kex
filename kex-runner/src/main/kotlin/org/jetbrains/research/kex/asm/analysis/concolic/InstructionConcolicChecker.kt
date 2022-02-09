@@ -8,6 +8,8 @@ import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.InternalSerializationApi
 import org.jetbrains.research.kex.ExecutionContext
 import org.jetbrains.research.kex.annotations.AnnotationManager
+import org.jetbrains.research.kex.asm.analysis.concolic.bfs.BfsPathSelectorImpl
+import org.jetbrains.research.kex.asm.analysis.concolic.cgs.ContextGuidedSelector
 import org.jetbrains.research.kex.asm.manager.isImpactable
 import org.jetbrains.research.kex.asm.state.PredicateStateAnalysis
 import org.jetbrains.research.kex.compile.JavaCompilerDriver
@@ -32,6 +34,7 @@ import org.jetbrains.research.kex.util.getJunit
 import org.jetbrains.research.kfg.ClassManager
 import org.jetbrains.research.kfg.ir.Method
 import org.jetbrains.research.kfg.visitor.MethodVisitor
+import org.jetbrains.research.kthelper.assert.unreachable
 import org.jetbrains.research.kthelper.logging.debug
 import org.jetbrains.research.kthelper.logging.log
 import org.jetbrains.research.kthelper.logging.warn
@@ -67,7 +70,7 @@ class InstructionConcolicChecker(
     private val compilerHelper = CompilerHelper(ctx)
 
     private val timeLimit = kexConfig.getLongValue("concolic", "timeLimit", 100000L)
-    private val maxFailsInARow = kexConfig.getLongValue("concolic", "maxFailsInARow", 50)
+    private val searchStrategy = kexConfig.getStringValue("concolic", "searchStrategy", "bfs")
 
     override fun cleanup() {}
 
@@ -114,7 +117,6 @@ class InstructionConcolicChecker(
 
     private fun prepareState(method: Method, state: PredicateState): PredicateState = transform(state) {
         +KexRtAdapter(cm)
-        +StringMethodAdapter(ctx.cm)
         +RecursiveInliner(PredicateStateAnalysis(cm)) { index, psa ->
             ConcolicInliner(
                 ctx,
@@ -122,6 +124,7 @@ class InstructionConcolicChecker(
                 inlineIndex = index
             )
         }
+        +ConcolicArrayLengthAdapter()
         +AnnotationAdapter(method, AnnotationManager.defaultLoader)
         +IntrinsicAdapter
         +KexIntrinsicsAdapter()
@@ -130,13 +133,14 @@ class InstructionConcolicChecker(
         +ConstantPropagator
         +BoolTypeAdapter(method.cm.type)
         +ConstStringAdapter()
+        +StringMethodAdapter(ctx.cm)
         +FieldNormalizer(method.cm)
     }
 
     private fun check(method: Method, state: SymbolicState): ExecutionResult? {
         val checker = Checker(method, ctx, PredicateStateAnalysis(cm))
         val preparedState = prepareState(method, state.state)
-        val result = checker.check(preparedState, preparedState.path)
+        val result = checker.check(preparedState, state.path.asState())
         if (result !is Result.SatResult) return null
 
         return tryOrNull {
@@ -146,22 +150,21 @@ class InstructionConcolicChecker(
         }
     }
 
+    private fun buildPathSelector(traceManager: TraceManager<InstructionTrace>) = when (searchStrategy) {
+        "bfs" -> BfsPathSelectorImpl(traceManager)
+        "cgs" -> ContextGuidedSelector(traceManager)
+        else -> unreachable { log.error("Unknown type of search strategy $searchStrategy") }
+    }
+
     private suspend fun processMethod(method: Method) {
-        val selector = BfsPathSelectorImpl(traceManager)
+        val pathIterator = buildPathSelector(traceManager)
         getRandomTrace(method)?.let {
-            selector.addExecutionTrace(method, it)
+            pathIterator.addExecutionTrace(method, it)
         }
         yield()
 
-        var failsInARow = 0
-        while (selector.hasMorePaths(method)) {
-            ++failsInARow
-            if (failsInARow > maxFailsInARow) {
-                log.debug { "Reached maximum fails in a row for method $method" }
-                return
-            }
-
-            val state = selector.getNextPath()
+        while (pathIterator.hasNext()) {
+            val state = pathIterator.next()
             log.debug { "Checking state: $state" }
             yield()
 
@@ -170,7 +173,7 @@ class InstructionConcolicChecker(
                 log.warn { "Collected empty state from $state" }
                 continue
             }
-            selector.addExecutionTrace(method, newState)
+            pathIterator.addExecutionTrace(method, newState)
             yield()
         }
     }

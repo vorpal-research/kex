@@ -7,10 +7,7 @@ import org.jetbrains.research.kex.ktype.KexReference
 import org.jetbrains.research.kex.ktype.KexRtManager.rtMapped
 import org.jetbrains.research.kex.ktype.KexType
 import org.jetbrains.research.kex.ktype.kexType
-import org.jetbrains.research.kex.util.unmodifiableCollection
-import org.jetbrains.research.kex.util.unmodifiableList
-import org.jetbrains.research.kex.util.unmodifiableMap
-import org.jetbrains.research.kex.util.unmodifiableSet
+import org.jetbrains.research.kex.util.*
 import org.jetbrains.research.kfg.ClassManager
 import org.jetbrains.research.kfg.ir.Class
 import org.jetbrains.research.kfg.ir.Method
@@ -57,6 +54,7 @@ private object ClassInstantiationManagerImpl : ClassInstantiationManager {
             unmodifiableList to setOf(unmodifiableList.rtMapped),
             unmodifiableSet to setOf(unmodifiableSet.rtMapped),
             unmodifiableMap to setOf(unmodifiableMap.rtMapped),
+            charSequence to setOf(charSequence.rtMapped)
         )
     }
     private val classInstantiationInfo = mutableMapOf<Class, MutableSet<Class>>()

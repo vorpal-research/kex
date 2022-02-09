@@ -23,33 +23,8 @@ class ConcolicInliner(val ctx: ExecutionContext,
     override val builders = dequeOf(StateBuilder())
     override var hasInlined: Boolean = false
 
-    override fun isInlinable(method: Method): Boolean = im.inliningEnabled && !im.isIgnored(method)
-
-    override fun getInlinedMethod(callTerm: CallTerm): Method? {
-        val method = callTerm.method
-        return when {
-            method.isFinal -> method
-            method.isStatic -> method
-            method.isConstructor -> method
-            else -> {
-                val kexClass = knownTypes[callTerm.owner] as? KexClass ?: return null
-                val concreteClass = kexClass.kfgClass(ctx.types) as? ConcreteClass ?: return null
-                val result = try {
-                    concreteClass.getMethod(method.name, method.desc)
-                } catch (e: Exception) {
-                    return null
-                }
-                when {
-                    result.isEmpty() -> null
-                    else -> result
-                }
-            }
-        }
-    }
-
     override fun apply(ps: PredicateState): PredicateState {
-        val res = super.apply(ps)
-        return res
+        return super.apply(ps)
     }
 
     override fun transformNewPredicate(predicate: NewPredicate): Predicate {
@@ -149,6 +124,34 @@ class ConcolicInliner(val ctx: ExecutionContext,
                     knownTypes[predicate.lhv] = rhv.type
                 } else {
                     knownTypes[predicate.lhv] = rhv.operand.type
+                }
+            }
+            is ConstBoolTerm -> if (rhv.value) {
+                when (val lhv = predicate.lhv) {
+                    is InstanceOfTerm -> {
+                        knownTypes[lhv.operand] = when (val known = knownTypes[lhv.operand]) {
+                            null -> lhv.checkedType
+                            else -> if (lhv.checkedType.isSubtypeOf(ctx.types, known)) lhv.checkedType
+                            else known
+                        }
+                    }
+                }
+            }
+            is ValueTerm, is ArgumentTerm, is ReturnValueTerm -> when (val lhv = predicate.lhv) {
+                is ValueTerm, is ArgumentTerm, is ReturnValueTerm -> {
+                    val lhvType = knownTypes[lhv]
+                    val rhvType = knownTypes[rhv]
+                    when {
+                        lhvType != null && rhvType != null -> {
+                            if (lhvType.isSubtypeOf(ctx.types, rhvType)) lhvType else rhvType
+                        }
+                        lhvType != null -> lhvType
+                        rhvType != null -> rhvType
+                        else -> null
+                    }?.let {
+                        knownTypes[lhv] = it
+                        knownTypes[rhv] = it
+                    }
                 }
             }
         }
@@ -290,4 +293,29 @@ class ConcolicInliner(val ctx: ExecutionContext,
     override fun transformInstanceOfTerm(term: InstanceOfTerm): Term {
         return super.transformInstanceOfTerm(term)
     }
+
+    override fun isInlinable(method: Method): Boolean = im.inliningEnabled && !im.isIgnored(method)
+
+    override fun getInlinedMethod(callTerm: CallTerm): Method? {
+        val method = callTerm.method
+        return when {
+            method.isFinal -> method
+            method.isStatic -> method
+            method.isConstructor -> method
+            else -> {
+                val kexClass = knownTypes[callTerm.owner] as? KexClass ?: return null
+                val concreteClass = kexClass.kfgClass(ctx.types) as? ConcreteClass ?: return null
+                val result = try {
+                    concreteClass.getMethod(method.name, method.desc)
+                } catch (e: Exception) {
+                    return null
+                }
+                when {
+                    result.isEmpty() -> null
+                    else -> result
+                }
+            }
+        }
+    }
+
 }
