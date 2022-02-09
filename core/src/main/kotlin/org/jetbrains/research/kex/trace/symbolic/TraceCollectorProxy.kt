@@ -16,6 +16,7 @@ private class EmptyTraceCollector : InstructionTraceCollector {
     class EmptyPathCondition: PathCondition() {
         override val path = emptyList<Clause>()
 
+        override fun subPath(startIndex: Int, endIndex: Int) = this
     }
 
     class EmptyState : SymbolicState() {

@@ -8,6 +8,8 @@ import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.InternalSerializationApi
 import org.jetbrains.research.kex.ExecutionContext
 import org.jetbrains.research.kex.annotations.AnnotationManager
+import org.jetbrains.research.kex.asm.analysis.concolic.bfs.BfsPathSelectorImpl
+import org.jetbrains.research.kex.asm.analysis.concolic.cgs.ContextGuidedSelector
 import org.jetbrains.research.kex.asm.manager.isImpactable
 import org.jetbrains.research.kex.asm.state.PredicateStateAnalysis
 import org.jetbrains.research.kex.compile.JavaCompilerDriver
@@ -32,6 +34,7 @@ import org.jetbrains.research.kex.util.getJunit
 import org.jetbrains.research.kfg.ClassManager
 import org.jetbrains.research.kfg.ir.Method
 import org.jetbrains.research.kfg.visitor.MethodVisitor
+import org.jetbrains.research.kthelper.assert.unreachable
 import org.jetbrains.research.kthelper.logging.debug
 import org.jetbrains.research.kthelper.logging.log
 import org.jetbrains.research.kthelper.logging.warn
@@ -67,6 +70,7 @@ class InstructionConcolicChecker(
     private val compilerHelper = CompilerHelper(ctx)
 
     private val timeLimit = kexConfig.getLongValue("concolic", "timeLimit", 100000L)
+    private val searchStrategy = kexConfig.getStringValue("concolic", "searchStrategy", "bfs")
 
     override fun cleanup() {}
 
@@ -136,7 +140,7 @@ class InstructionConcolicChecker(
     private fun check(method: Method, state: SymbolicState): ExecutionResult? {
         val checker = Checker(method, ctx, PredicateStateAnalysis(cm))
         val preparedState = prepareState(method, state.state)
-        val result = checker.check(preparedState, preparedState.path)
+        val result = checker.check(preparedState, state.path.asState())
         if (result !is Result.SatResult) return null
 
         return tryOrNull {
@@ -146,8 +150,14 @@ class InstructionConcolicChecker(
         }
     }
 
+    private fun buildPathSelector(traceManager: TraceManager<InstructionTrace>) = when (searchStrategy) {
+        "bfs" -> BfsPathSelectorImpl(traceManager)
+        "cgs" -> ContextGuidedSelector(traceManager)
+        else -> unreachable { log.error("Unknown type of search strategy $searchStrategy") }
+    }
+
     private suspend fun processMethod(method: Method) {
-        val pathIterator: PathSelector = BfsPathSelectorImpl(traceManager)
+        val pathIterator = buildPathSelector(traceManager)
         getRandomTrace(method)?.let {
             pathIterator.addExecutionTrace(method, it)
         }
@@ -166,7 +176,6 @@ class InstructionConcolicChecker(
             pathIterator.addExecutionTrace(method, newState)
             yield()
         }
-        (pathIterator as BfsPathSelectorImpl).view()
     }
 
 }

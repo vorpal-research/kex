@@ -19,8 +19,8 @@ class ObjectGenerationTests {
 
     }
 
-    fun testLine(line: Line?) {
-        if (line == null) return
+    fun testLine(line: Line?): Int {
+        if (line == null) return -1
         if (line.start != null) {
             AssertIntrinsics.kexAssert()
         }
@@ -31,9 +31,10 @@ class ObjectGenerationTests {
             AssertIntrinsics.kexAssert()
         }
         AssertIntrinsics.kexAssert()
+        return 0
     }
 
-    fun test2(a: Int) {
+    fun test2(a: Int): Int {
         var b = 0
         if (a > 10) b = 12313
         else b = -a
@@ -44,5 +45,6 @@ class ObjectGenerationTests {
         else d = -10
 
         println(d)
+        return d
     }
 }

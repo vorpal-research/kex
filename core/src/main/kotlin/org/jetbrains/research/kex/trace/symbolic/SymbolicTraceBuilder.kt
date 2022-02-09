@@ -46,7 +46,7 @@ class SymbolicTraceBuilder(
     override val state: PredicateState
         get() = builder.current
     override val path: PathCondition
-        get() = PathConditionImpl(pathBuilder.toList())
+        get() = PathCondition(pathBuilder.toList())
     override val concreteValueMap: Map<Term, Descriptor>
         get() = concreteValues.toMap()
     override val termMap: Map<Term, WrappedValue>
