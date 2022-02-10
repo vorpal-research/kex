@@ -265,6 +265,8 @@ class BoolectorSolver(val tf: TypeFactory) : AbstractSMTSolver {
 
                     if (ptr.type.isArray) {
                         properties.recoverProperty(ctx, ptr, memspace, KexInt(), "length")
+                    } else if (ptr is ConstClassTerm || ptr is ClassAccessTerm) {
+                        properties.recoverBitvectorProperty(ctx, ptr, memspace, ConstClassTerm.TYPE_INDEX_PROPERTY)
                     }
 
                     ktassert(assignments.getOrPut(ptr) { modelPtr } == modelPtr)
