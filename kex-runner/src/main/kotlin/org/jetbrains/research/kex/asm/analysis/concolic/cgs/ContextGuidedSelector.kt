@@ -23,7 +23,7 @@ class ContextGuidedSelector(override val traceManager: TraceManager<InstructionT
         private set
     var k = 1
         private set
-    private var branchIterantor: Iterator<PathEdge> = listOf<PathEdge>().iterator()
+    private var branchIterantor: Iterator<PathVertex> = listOf<PathVertex>().iterator()
     private var currentContext: Context? = null
     private val visitedContexts = mutableSetOf<Context>()
 
@@ -62,7 +62,7 @@ class ContextGuidedSelector(override val traceManager: TraceManager<InstructionT
         )
     }
 
-    private fun nextEdge(): PathEdge? {
+    private fun nextEdge(): PathVertex? {
         when {
             branchIterantor.hasNext() -> {}
             currentDepth < executionTree.depth -> {
