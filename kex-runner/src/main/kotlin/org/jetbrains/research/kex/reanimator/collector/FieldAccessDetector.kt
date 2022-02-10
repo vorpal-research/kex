@@ -42,6 +42,7 @@ class MethodFieldAccessCollector(val ctx: ExecutionContext, val psa: PredicateSt
         +AnnotationAdapter(method, AnnotationManager.defaultLoader)
         +KexRtAdapter(ctx.cm)
         +MethodInliner(psa)
+        +ClassAdapter(cm)
         +ConstStringAdapter()
     }
 }

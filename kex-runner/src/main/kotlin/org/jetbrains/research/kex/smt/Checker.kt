@@ -55,6 +55,7 @@ class Checker(
             ConcreteImplInliner(method.cm.type, TypeInfoMap(), psa, inlineIndex = index)
         }
         +StaticFieldInliner(ctx, psa)
+        +ClassAdapter(ctx.cm)
         +IntrinsicAdapter
         +KexIntrinsicsAdapter()
         +ReflectionInfoAdapter(method, loader)
@@ -75,6 +76,7 @@ class Checker(
             ConcreteImplInliner(method.cm.type, typeInfoMap, psa, inlineIndex = index)
         }
         +StaticFieldInliner(ctx, psa)
+        +ClassAdapter(ctx.cm)
         +IntrinsicAdapter
         +KexIntrinsicsAdapter()
         +ReflectionInfoAdapter(method, loader)

@@ -194,6 +194,9 @@ object TermFactory {
         trueValue: Term,
         falseValue: Term
     ) = IteTerm(type, cond, trueValue, falseValue)
+
+    fun getClassAccess(operand: Term) = getClassAccess(KexJavaClass(), operand)
+    fun getClassAccess(type: KexType, operand: Term) = ClassAccessTerm(type, operand)
 }
 
 abstract class TermBuilder {
@@ -410,6 +413,8 @@ abstract class TermBuilder {
     fun IntRange.exists(body: TermBuilder.() -> Term) = exists(const(start), const(last), body)
 
     fun ite(type: KexType, cond: Term, trueValue: Term, falseValue: Term) = tf.getIte(type, cond, trueValue, falseValue)
+
+    val Term.klass get() = tf.getClassAccess(this)
 
     object Terms : TermBuilder()
 }

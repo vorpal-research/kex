@@ -96,9 +96,6 @@
                             </annotationProcessors>
                             <annotationProcessorArgs>
                                 <processorArg>
-                                    kex.templates=${project.parent.basedir}/runtime-deps/velocity-templates/
-                                </processorArg>
-                                <processorArg>
                                     runner.resources=${project.parent.basedir}/kex-runner/src/main/resources/
                                 </processorArg>
                             </annotationProcessorArgs>

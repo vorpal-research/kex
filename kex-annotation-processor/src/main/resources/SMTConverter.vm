@@ -302,7 +302,7 @@ class ${solver}Converter(val tf: TypeFactory) : ${solver}SMTConverter() {
         return lhv.withPtrAxioms(ef, ctx, TermType.LOCAL_PTR) eq ctx.getLocalPtr(memspace)
     }
 
-#set($terms = ["Argument", "ArrayContains", "ArrayIndex", "ArrayLength", "ArrayLoad", "Binary", "Call", "Cast", "CharAt",
+#set($terms = ["Argument", "ArrayContains", "ArrayIndex", "ArrayLength", "ArrayLoad", "Binary", "Call", "Cast", "ClassAccess", "CharAt",
     "Cmp", "Concat", "ConstBool", "ConstByte", "ConstChar", "ConstClass", "StaticClassRef", "ConstDouble", "ConstFloat", "ConstInt", "ConstLong",
     "ConstShort", "ConstString", "EndsWith", "Equals", "Exists", "IndexOf", "StartsWith", "StringContains", "StringLength",
     "StringParse", "Substring", "ToString", "FieldLoad", "ForAll", "Field", "InstanceOf", "Ite", "Lambda", "Neg",
@@ -414,6 +414,18 @@ class ${solver}Converter(val tf: TypeFactory) : ${solver}SMTConverter() {
         }
     }
 
+    fun convert(klass: ClassAccessTerm, ef: Factory_, ctx: Context_): Dynamic_ {
+        val expr = ef.getVarByTypeAndName(klass.type, klass.name) as Ptr_
+        val op = convert(klass.operand, ef, ctx) as Ptr_
+
+        val typeIndex = ctx.readBitvectorProperty(expr, klass.memspace, ConstClassTerm.TYPE_INDEX_PROPERTY)
+        val operandType = ctx.readBitvectorProperty(op, klass.operand.memspace, "type")
+        var res = klass.withAxioms(expr, ef, ctx)
+        return res
+            .withAxiom(res neq ef.makeNull())
+            .withAxiom(typeIndex eq operandType)
+    }
+
     fun convert(charAt: CharAtTerm, ef: Factory_, ctx: Context_): Dynamic_ {
         val ptr = convert(charAt.string, ef, ctx) as Ptr_
         val index = convert(charAt.index, ef, ctx) as Int_
@@ -472,9 +484,13 @@ class ${solver}Converter(val tf: TypeFactory) : ${solver}SMTConverter() {
     fun convert(const: ConstClassTerm, ef: Factory_, ctx: Context_): Dynamic_ {
         val expr = ef.getVarByTypeAndName(const.type, const.name)
         ef.addKlassPtr(const.constantType, expr as Ptr_)
+
+        val typeIndex = ctx.readBitvectorProperty(expr, const.memspace, ConstClassTerm.TYPE_INDEX_PROPERTY)
         var res = const.withAxioms(expr, ef, ctx)
         res = res.withPtrAxioms(ef, ctx, TermType.STATIC_PTR)
-        return res.withAxiom(res neq ef.makeNull())
+        return res
+            .withAxiom(res neq ef.makeNull())
+            .withAxiom(typeIndex eq ef.getTypeVar(const.constantType.getKfgType(tf)))
     }
 
     fun convert(const: StaticClassRefTerm, ef: Factory_, ctx: Context_): Dynamic_ {

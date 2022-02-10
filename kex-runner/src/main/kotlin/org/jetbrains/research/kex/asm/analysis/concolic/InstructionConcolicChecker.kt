@@ -124,6 +124,7 @@ class InstructionConcolicChecker(
                 inlineIndex = index
             )
         }
+        +ClassAdapter(cm)
         +ConcolicArrayLengthAdapter()
         +AnnotationAdapter(method, AnnotationManager.defaultLoader)
         +IntrinsicAdapter

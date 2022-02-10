@@ -305,6 +305,27 @@ class Z3Solver(val tf: TypeFactory) : AbstractSMTSolver {
                     )
                     properties.recoverBitvectorProperty(ctx, ptr.owner, memspace, model, "type")
                 }
+                is ConstClassTerm, is ClassAccessTerm -> {
+                    val startMem = ctx.getWordInitialMemory(memspace)
+                    val endMem = ctx.getWordMemory(memspace)
+
+                    val ptrExpr = Z3Converter(tf).convert(ptr, ef, ctx) as? Ptr_
+                        ?: unreachable { log.error("Non-ptr expr for pointer $ptr") }
+
+                    val startV = startMem.load(ptrExpr)
+                    val endV = endMem.load(ptrExpr)
+
+                    val modelPtr = Z3Unlogic.undo(model.evaluate(ptrExpr.expr, true))
+                    val modelStartV = Z3Unlogic.undo(model.evaluate(startV.expr, true))
+                    val modelEndV = Z3Unlogic.undo(model.evaluate(endV.expr, true))
+
+                    memories.getOrPut(memspace) { hashMapOf<Term, Term>() to hashMapOf() }
+                    memories.getValue(memspace).first[modelPtr] = modelStartV
+                    memories.getValue(memspace).second[modelPtr] = modelEndV
+                    val a = properties.recoverBitvectorProperty(ctx, ptr, memspace, model, "type")
+                    val b = properties.recoverBitvectorProperty(ctx, ptr, memspace, model, ConstClassTerm.TYPE_INDEX_PROPERTY)
+                    val c = 10
+                }
                 else -> {
                     val startMem = ctx.getWordInitialMemory(memspace)
                     val endMem = ctx.getWordMemory(memspace)
