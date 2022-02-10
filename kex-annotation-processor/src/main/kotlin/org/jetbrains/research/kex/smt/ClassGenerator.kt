@@ -3,16 +3,17 @@ package org.jetbrains.research.kex.smt
 import org.apache.velocity.VelocityContext
 import org.apache.velocity.app.VelocityEngine
 import org.apache.velocity.runtime.RuntimeConstants
+import org.apache.velocity.runtime.resource.loader.ClasspathResourceLoader
 import java.io.Writer
 
 class ClassGenerator(
     private val parameters: Map<String, Any>,
-    val path: String,
     private val template: String
 ) {
     fun write(writer: Writer) {
         val engine = VelocityEngine()
-        engine.setProperty(RuntimeConstants.FILE_RESOURCE_LOADER_PATH, path)
+        engine.setProperty(RuntimeConstants.RESOURCE_LOADER, "classpath")
+        engine.setProperty("classpath.resource.loader.class", ClasspathResourceLoader::class.java.name)
         engine.init()
 
         val context = VelocityContext()
