@@ -122,3 +122,5 @@ val KexType.isArray get() = this is KexArray
 fun KexString() = KexClass(SystemTypeNames.stringClass)
 val KexType.isString get() = this is KexClass && this.klass == SystemTypeNames.stringClass
 fun KexJavaClass() = KexClass(SystemTypeNames.classClass)
+
+val KexType.isJavaClass get() = this is KexClass && this.klass == SystemTypeNames.classClass

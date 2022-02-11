@@ -54,6 +54,10 @@ interface ModelReanimator<T> {
 
     fun reanimateType(memspace: Int, addr: Term?): KexType? {
         val typeVar = reanimateFromProperties(memspace, "type", addr) ?: return null
+        return reanimateType(typeVar)
+    }
+
+    fun reanimateType(typeVar: Term): KexType? {
         val binaryString = when (typeVar) {
             is ConstStringTerm -> typeVar.value
             else -> typeVar.numericValue.toInt().toString(2)
@@ -146,6 +150,13 @@ class ObjectReanimator(
             }
             when {
                 term.type.isString && model.hasStrings -> reanimateString(term.memspace, addr)
+                term.type.isJavaClass -> {
+                    val typeIndex = reanimateFromProperties(term.memspace, ConstClassTerm.TYPE_INDEX_PROPERTY, addr)
+                        ?: return@memory fallback()
+                    val klassType = reanimateType(typeIndex)
+                        ?: return@memory fallback()
+                    loader.loadClass(context.types, klassType)
+                }
                 else -> fallback()
             }
         }
@@ -380,12 +391,15 @@ abstract class DescriptorReanimator(
                                 term.type.isString && model.hasStrings -> {
                                     val strValue =
                                         (reanimateString(term.memspace, addr) as? ConstStringTerm)?.value ?: ""
-                                    val string = `object`(KexString())
-                                    val valueArray = array(strValue.length, KexChar())
-                                    for (index in strValue.indices)
-                                        valueArray[index] = const(strValue[index])
-                                    string["value", KexChar().asArray()] = valueArray
-                                    string
+                                    string(strValue)
+                                }
+                                term.type.isJavaClass -> {
+                                    val typeIndex =
+                                        reanimateFromProperties(term.memspace, ConstClassTerm.TYPE_INDEX_PROPERTY, addr)
+                                            ?: return@memory default(term.type)
+                                    val klassType = reanimateType(typeIndex)
+                                        ?: return@memory default(term.type)
+                                    klass(klassType)
                                 }
                                 else -> `object`(reanimatedType)
                             }

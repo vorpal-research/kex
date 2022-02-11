@@ -560,6 +560,21 @@ open class DescriptorBuilder {
     }
 
     fun default(type: KexType): Descriptor = default(type, true)
+
+    fun string(str: String): Descriptor {
+        val string = `object`(KexString())
+        val valueArray = array(str.length, KexChar())
+        for (index in str.indices)
+            valueArray[index] = const(str[index])
+        string["value", KexChar().asArray()] = valueArray
+        return string
+    }
+
+    fun klass(type: KexType): Descriptor {
+        val klass = `object`(KexJavaClass())
+        klass["name", KexString()] = string("$type")
+        return klass
+    }
 }
 
 fun descriptor(body: DescriptorBuilder.() -> Descriptor): Descriptor =
