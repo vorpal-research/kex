@@ -99,7 +99,7 @@ abstract class KexLauncher(classPaths: List<String>, targetName: String) {
                 val method = klass.getMethod(
                     methodName,
                     parseStringToType(cm.type, methodReturn.trim().replace('.', '/')),
-                    *methodArgs.trim().split(""",\s*""".toRegex()).map {
+                    *methodArgs.trim().split(""",\s*""".toRegex()).filter { it.isNotBlank() }.map {
                         parseStringToType(cm.type, it.replace('.', '/')) }.toTypedArray()
                 )
                 MethodLevel(method)
