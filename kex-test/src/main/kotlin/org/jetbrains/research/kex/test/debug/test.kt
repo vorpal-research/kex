@@ -3,7 +3,9 @@
 package org.jetbrains.research.kex.test.debug
 
 class ObjectGenerationTests {
-    class Point(val x: Int, val y: Int) {
+    abstract class PP
+
+    class Point(val x: Int, val y: Int) : PP() {
         override fun toString(): String {
             return "($x, $y)"
         }
@@ -46,9 +48,9 @@ class ObjectGenerationTests {
 //        return d
 //    }
 
-    fun foo(a: Point) {
+    fun foo(a: PP) {
         val x = a.javaClass
-        if (x.name == "java.lang.String") {
+        if (x == Point::class.java) {
             println("aa")
         }
     }

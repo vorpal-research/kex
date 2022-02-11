@@ -20,6 +20,19 @@ sealed class Descriptor(term: Term, type: KexType) {
     var type = type
         protected set
 
+    protected var _klassDescriptor: ObjectDescriptor? = null
+
+    var klassDescriptor: ObjectDescriptor
+        get() {
+            if (_klassDescriptor == null) {
+                _klassDescriptor = descriptor { klass(type) } as ObjectDescriptor
+            }
+            return _klassDescriptor!!
+        }
+        set(value) {
+            _klassDescriptor = value
+        }
+
     val query: PredicateState get() = collectQuery(mutableSetOf())
     val asString: String get() = print(mutableMapOf())
     val depth: Int get() = countDepth(setOf(), mutableMapOf())
@@ -241,6 +254,8 @@ sealed class FieldContainingDescriptor<T : FieldContainingDescriptor<T>>(
 
         this.klass = instantiationManager.getConcreteClass(klass, cm)
         this.type = klass
+        this.klassDescriptor["name" to KexJavaClass()] = descriptor { string("$type") }
+
         this.term = term { generate(type) }
         for ((field, value) in fields.toMap()) {
             fields[field] = value.concretize(cm, visited)
@@ -570,7 +585,7 @@ open class DescriptorBuilder {
         return string
     }
 
-    fun klass(type: KexType): Descriptor {
+    fun klass(type: KexType): ObjectDescriptor {
         val klass = `object`(KexJavaClass())
         klass["name", KexString()] = string("$type")
         return klass
@@ -583,10 +598,11 @@ fun descriptor(body: DescriptorBuilder.() -> Descriptor): Descriptor =
 class DescriptorRtMapper(private val mode: KexRtManager.Mode) : DescriptorBuilder() {
     private val cache = mutableMapOf<Descriptor, Descriptor>()
 
-    private val KexType.mapped get() = when (mode) {
-        KexRtManager.Mode.MAP -> rtMapped
-        KexRtManager.Mode.UNMAP -> rtUnmapped
-    }
+    private val KexType.mapped
+        get() = when (mode) {
+            KexRtManager.Mode.MAP -> rtMapped
+            KexRtManager.Mode.UNMAP -> rtUnmapped
+        }
 
     fun map(descriptor: Descriptor): Descriptor = cache.getOrElse(descriptor) {
         when (descriptor) {

@@ -2,10 +2,7 @@ package org.jetbrains.research.kex.smt
 
 import org.jetbrains.research.kex.ExecutionContext
 import org.jetbrains.research.kex.asm.manager.instantiationManager
-import org.jetbrains.research.kex.descriptor.ArrayDescriptor
-import org.jetbrains.research.kex.descriptor.Descriptor
-import org.jetbrains.research.kex.descriptor.FieldContainingDescriptor
-import org.jetbrains.research.kex.descriptor.descriptor
+import org.jetbrains.research.kex.descriptor.*
 import org.jetbrains.research.kex.ktype.*
 import org.jetbrains.research.kex.state.term.*
 import org.jetbrains.research.kex.state.transformer.memspace
@@ -402,6 +399,17 @@ abstract class DescriptorReanimator(
                                     klass(klassType)
                                 }
                                 else -> `object`(reanimatedType)
+                            }
+                        }.also {
+                            if (term is ClassAccessTerm) {
+                                val operand = term.operand
+                                val operandDesc = memory(
+                                    operand.memspace,
+                                    reanimateFromAssignment(operand)?.numericValue?.toInt() ?: 0
+                                )
+                                if (operandDesc != null) {
+                                    operandDesc.klassDescriptor = it as ObjectDescriptor
+                                }
                             }
                         }
                     }

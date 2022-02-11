@@ -2,6 +2,7 @@ package org.jetbrains.research.kex.state.transformer
 
 import org.jetbrains.research.kex.ktype.KexType
 import org.jetbrains.research.kex.state.PredicateState
+import org.jetbrains.research.kex.state.term.ConstClassTerm
 import org.jetbrains.research.kex.state.term.InstanceOfTerm
 import org.jetbrains.research.kex.state.term.Term
 
@@ -16,6 +17,11 @@ class TypeCollector : Transformer<TypeCollector> {
     override fun transformInstanceOf(term: InstanceOfTerm): Term {
         types += term.checkedType
         return super.transformInstanceOf(term)
+    }
+
+    override fun transformConstClass(term: ConstClassTerm): Term {
+        types += term.constantType
+        return super.transformConstClass(term)
     }
 }
 
