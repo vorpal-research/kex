@@ -1,5 +1,6 @@
 package org.jetbrains.research.kex.asm.analysis.concolic.cgs
 
+import kotlinx.coroutines.yield
 import org.jetbrains.research.kex.asm.analysis.concolic.PathSelector
 import org.jetbrains.research.kex.state.predicate.*
 import org.jetbrains.research.kex.state.term.ConstBoolTerm
@@ -27,8 +28,9 @@ class ContextGuidedSelector(override val traceManager: TraceManager<InstructionT
     private var currentContext: Context? = null
     private val visitedContexts = mutableSetOf<Context>()
 
-    override fun hasNext(): Boolean {
+    override suspend fun hasNext(): Boolean {
         do {
+            yield()
             val next = nextEdge() ?: continue
             when (val context = executionTree.contexts(next, k).firstOrNull { it !in visitedContexts }) {
                 null -> continue
@@ -41,7 +43,7 @@ class ContextGuidedSelector(override val traceManager: TraceManager<InstructionT
         return false
     }
 
-    override fun next(): SymbolicState {
+    override suspend fun next(): SymbolicState {
         val context = currentContext!!
         visitedContexts += context
         currentContext = null
@@ -82,7 +84,7 @@ class ContextGuidedSelector(override val traceManager: TraceManager<InstructionT
         branchIterantor = executionTree.getBranches(currentDepth).shuffled().iterator()
     }
 
-    override fun addExecutionTrace(method: Method, result: ExecutionResult) {
+    override suspend fun addExecutionTrace(method: Method, result: ExecutionResult) {
         executionTree.addTrace(result.trace)
     }
 

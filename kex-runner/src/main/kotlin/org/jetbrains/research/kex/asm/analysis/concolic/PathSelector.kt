@@ -6,8 +6,13 @@ import org.jetbrains.research.kex.trace.symbolic.InstructionTrace
 import org.jetbrains.research.kex.trace.symbolic.SymbolicState
 import org.jetbrains.research.kfg.ir.Method
 
-interface PathSelector : Iterator<SymbolicState> {
+interface SuspendableIterator<T>  {
+    suspend fun hasNext(): Boolean
+    suspend fun next(): T
+}
+
+interface PathSelector : SuspendableIterator<SymbolicState> {
     val traceManager: TraceManager<InstructionTrace>
 
-    fun addExecutionTrace(method: Method, result: ExecutionResult)
+    suspend fun addExecutionTrace(method: Method, result: ExecutionResult)
 }
