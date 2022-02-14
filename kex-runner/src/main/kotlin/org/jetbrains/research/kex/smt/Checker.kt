@@ -64,6 +64,7 @@ class Checker(
         +BoolTypeAdapter(method.cm.type)
         +ArrayBoundsAdapter()
         +NullityInfoAdapter()
+        +ClassMethodAdapter(method.cm)
         +ConstStringAdapter()
         +FieldNormalizer(method.cm)
     }

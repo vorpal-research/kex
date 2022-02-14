@@ -213,6 +213,7 @@ class CallCiteChecker(
         +Optimizer()
         +ConstantPropagator
         +BoolTypeAdapter(method.cm.type)
+        +ClassMethodAdapter(method.cm)
         +ConstStringAdapter()
         +FieldNormalizer(method.cm)
     }

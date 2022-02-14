@@ -278,8 +278,10 @@ abstract class TermBuilder {
 
     infix fun Term.and(rhv: Term) = tf.getBinary(type, BinaryOpcode.AND, this, rhv)
     infix fun Term.and(bool: Boolean) = tf.getBinary(type, BinaryOpcode.AND, this, const(bool))
+    infix fun Term.and(int: Int) = tf.getBinary(type, BinaryOpcode.AND, this, const(int))
     infix fun Term.or(rhv: Term) = tf.getBinary(type, BinaryOpcode.OR, this, rhv)
     infix fun Term.or(bool: Boolean) = tf.getBinary(type, BinaryOpcode.OR, this, const(bool))
+    infix fun Term.or(int: Int) = tf.getBinary(type, BinaryOpcode.OR, this, const(int))
     infix fun Term.xor(rhv: Term) = tf.getBinary(type, BinaryOpcode.XOR, this, rhv)
     infix fun Term.xor(bool: Boolean) = tf.getBinary(type, BinaryOpcode.XOR, this, const(bool))
 

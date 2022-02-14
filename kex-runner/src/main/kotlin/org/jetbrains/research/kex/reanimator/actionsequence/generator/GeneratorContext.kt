@@ -88,6 +88,7 @@ class GeneratorContext(
         +BoolTypeAdapter(types)
         +ArrayBoundsAdapter()
         +NullityInfoAdapter()
+        +ClassMethodAdapter(context.cm)
         +ConstStringAdapter()
         +FieldNormalizer(context.cm, ".state.normalized")
     }

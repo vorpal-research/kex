@@ -133,6 +133,7 @@ class InstructionConcolicChecker(
         +Optimizer()
         +ConstantPropagator
         +BoolTypeAdapter(method.cm.type)
+        +ClassMethodAdapter(method.cm)
         +ConstStringAdapter()
         +StringMethodAdapter(ctx.cm)
         +FieldNormalizer(method.cm)

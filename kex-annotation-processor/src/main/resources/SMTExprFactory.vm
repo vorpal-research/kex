@@ -76,15 +76,14 @@ class $factory : ${solver}SMTExprFactory() {
     }
 
     fun addTypeNameAxioms(typeIndex: Bitvector_, nameVar: Ptr_): Bool_ {
-        var res: Bool_? = null
+        var res = makeFalse()
         for ((type, typeVar) in innerTypeMap) {
             val string = type.javaDesc
             val stringTerm = stringTerms.getValue(string)
             val stringVar = getVarByTypeAndName(stringTerm.type, stringTerm.name)
-            res = if (res == null) nameVar eq stringVar
-            else `if`(typeIndex eq typeVar).then(nameVar eq stringVar).`else`(res)
+            res = `if`(typeIndex eq typeVar).then(nameVar eq stringVar).`else`(res)
         }
-        return res ?: makeTrue()
+        return res
     }
 
     fun getSubTypeMask(type: Type): Bitvector_ {

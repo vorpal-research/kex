@@ -1,5 +1,6 @@
 package org.jetbrains.research.kex.util
 
+import org.jetbrains.research.kfg.ClassManager
 import org.jetbrains.research.kfg.Package
 import org.jetbrains.research.kfg.ir.Class
 import org.jetbrains.research.kfg.ir.MethodDesc
@@ -77,3 +78,7 @@ val SystemTypeNames.unmodifiableList get() = "java/util/Collections\$Unmodifiabl
 val SystemTypeNames.unmodifiableSet get() = "java/util/Collections\$UnmodifiableSet"
 val SystemTypeNames.unmodifiableMap get() = "java/util/Collections\$UnmodifiableMap"
 val SystemTypeNames.charSequence get() = "java/lang/CharSequence"
+
+val SystemTypeNames.classLoader get() = "java/lang/ClassLoader"
+val ClassManager.classLoaderClass get() = this[SystemTypeNames.classLoader]
+val TypeFactory.classLoaderType get() = getRefType(SystemTypeNames.classLoader)

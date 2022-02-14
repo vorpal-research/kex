@@ -77,7 +77,7 @@ class StringTermCollector(val collectTypeNames: Boolean) : Transformer<StringTer
 
     override fun transform(term: Term): Term {
         if (term is ConstStringTerm) strings += term
-        if (collectTypeNames && term.type !is KexNull)
+        if (collectTypeNames && term.type !is KexNull && term.type !is KexReference)
             strings += term { const(term.type.javaName) } as ConstStringTerm
         return super.transform(term)
     }

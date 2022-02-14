@@ -70,6 +70,7 @@ class StaticFieldInliner(
             +BoolTypeAdapter(ctx.types)
             +ArrayBoundsAdapter()
             +NullityInfoAdapter()
+            +ClassMethodAdapter(ctx.cm)
             +ConstStringAdapter()
             +FieldNormalizer(ctx.cm, ".state.normalized")
         }

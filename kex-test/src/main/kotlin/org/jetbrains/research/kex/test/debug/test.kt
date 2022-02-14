@@ -3,14 +3,15 @@
 package org.jetbrains.research.kex.test.debug
 
 class ObjectGenerationTests {
-    abstract class PP
-
-    class Point(val x: Int, val y: Int) : PP() {
-        override fun toString(): String {
-            return "($x, $y)"
-        }
-
-    }
+    open class PP
+    class P2 : PP()
+//
+//    class Point(val x: Int, val y: Int) : PP() {
+//        override fun toString(): String {
+//            return "($x, $y)"
+//        }
+//
+//    }
 //
 //    class Line(var start: Point?, var end: Point?) {
 //        override fun toString(): String {
@@ -48,8 +49,8 @@ class ObjectGenerationTests {
 //        return d
 //    }
 
-    fun foo(a: Any) {
-        if (a.javaClass.name == "java.lang.String") {
+    fun foo(a: PP) {
+        if (a.javaClass.name == "org.jetbrains.research.kex.test.debug.ObjectGenerationTests\$P2") {
             println(a)
         }
     }
