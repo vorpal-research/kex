@@ -2,8 +2,8 @@ package org.jetbrains.research.kex.state.transformer
 
 import org.jetbrains.research.kex.ktype.KexArray
 import org.jetbrains.research.kex.ktype.KexChar
-import org.jetbrains.research.kex.ktype.KexClass
 import org.jetbrains.research.kex.ktype.KexReference
+import org.jetbrains.research.kex.ktype.KexString
 import org.jetbrains.research.kex.state.PredicateState
 import org.jetbrains.research.kex.state.StateBuilder
 import org.jetbrains.research.kex.state.predicate.*
@@ -15,7 +15,7 @@ class ConstStringAdapter : RecollectingTransformer<ConstStringAdapter> {
     private val strings = mutableMapOf<String, Term>()
 
     override fun apply(ps: PredicateState): PredicateState {
-        val strings = collectStringTerms(ps)
+        val strings = collectStringTerms(ps, true)
         for (str in strings) {
             currentBuilder += buildStr(str.value)
         }
@@ -23,7 +23,7 @@ class ConstStringAdapter : RecollectingTransformer<ConstStringAdapter> {
     }
 
     private fun buildStr(string: String): PredicateState = StateBuilder().apply {
-        val strTerm = generate(KexClass("java/lang/String"))
+        val strTerm = generate(KexString())
         state { strTerm.new() }
 
         val charArray = KexArray(KexChar())

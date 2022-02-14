@@ -1,13 +1,10 @@
 package org.jetbrains.research.kex.state.transformer
 
-import org.jetbrains.research.kex.ktype.KexReference
+import org.jetbrains.research.kex.ktype.*
 import org.jetbrains.research.kex.state.PredicateState
 import org.jetbrains.research.kex.state.predicate.Predicate
 import org.jetbrains.research.kex.state.predicate.PredicateType
-import org.jetbrains.research.kex.state.term.ConstStringTerm
-import org.jetbrains.research.kex.state.term.FieldTerm
-import org.jetbrains.research.kex.state.term.Term
-import org.jetbrains.research.kex.state.term.term
+import org.jetbrains.research.kex.state.term.*
 
 class TermCollector(val filter: (Term) -> Boolean) : Transformer<TermCollector> {
     companion object {
@@ -65,7 +62,7 @@ fun collectRequiredTerms(state: PredicateState) = collectPredicateTypeTerms(Pred
 fun collectAssumedTerms(state: PredicateState) = collectPredicateTypeTerms(PredicateType.Assume(), state)
 fun collectAxiomTerms(state: PredicateState) = collectPredicateTypeTerms(PredicateType.Axiom(), state)
 
-class StringTermCollector : Transformer<StringTermCollector> {
+class StringTermCollector(val collectTypeNames: Boolean) : Transformer<StringTermCollector> {
     val strings = mutableSetOf<ConstStringTerm>()
 
     override fun transformField(term: FieldTerm): Term {
@@ -73,15 +70,28 @@ class StringTermCollector : Transformer<StringTermCollector> {
         return term { owner.field((term.type as KexReference).reference, term.fieldName) }
     }
 
+    override fun transformConstClass(term: ConstClassTerm): Term {
+        strings += term { const(term.constantType.javaName) } as ConstStringTerm
+        return super.transformConstClass(term)
+    }
+
     override fun transform(term: Term): Term {
         if (term is ConstStringTerm) strings += term
+        if (collectTypeNames && term.type !is KexNull)
+            strings += term { const(term.type.javaName) } as ConstStringTerm
         return super.transform(term)
     }
 }
 
-fun collectStringTerms(state: PredicateState): Set<ConstStringTerm> {
-    val stringCollector = StringTermCollector()
+fun collectStringTerms(state: PredicateState, collectTypeNames: Boolean = false): Set<ConstStringTerm> {
+    val stringCollector = StringTermCollector(collectTypeNames)
     stringCollector.apply(state)
+    if (collectTypeNames && stringCollector.strings.isNotEmpty()) {
+        stringCollector.strings += term { const(KexString().javaName) } as ConstStringTerm
+        stringCollector.strings += term { const(KexChar().asArray().javaName) } as ConstStringTerm
+        stringCollector.strings += term { const(KexChar().javaName) } as ConstStringTerm
+        stringCollector.strings += term { const(KexInt().javaName) } as ConstStringTerm
+    }
     return stringCollector.strings
 }
 

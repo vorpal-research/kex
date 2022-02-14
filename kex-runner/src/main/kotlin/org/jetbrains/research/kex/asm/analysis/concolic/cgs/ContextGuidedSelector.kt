@@ -24,7 +24,7 @@ class ContextGuidedSelector(override val traceManager: TraceManager<InstructionT
         private set
     var k = 1
         private set
-    private var branchIterantor: Iterator<PathVertex> = listOf<PathVertex>().iterator()
+    private var branchIterator: Iterator<PathVertex> = listOf<PathVertex>().iterator()
     private var currentContext: Context? = null
     private val visitedContexts = mutableSetOf<Context>()
 
@@ -66,7 +66,7 @@ class ContextGuidedSelector(override val traceManager: TraceManager<InstructionT
 
     private fun nextEdge(): PathVertex? {
         when {
-            branchIterantor.hasNext() -> {}
+            branchIterator.hasNext() -> {}
             currentDepth < executionTree.depth -> {
                 ++currentDepth
                 recomputeBranches()
@@ -77,11 +77,11 @@ class ContextGuidedSelector(override val traceManager: TraceManager<InstructionT
                 recomputeBranches()
             }
         }
-        return branchIterantor.nextOrNull()
+        return branchIterator.nextOrNull()
     }
 
     private fun recomputeBranches() {
-        branchIterantor = executionTree.getBranches(currentDepth).shuffled().iterator()
+        branchIterator = executionTree.getBranches(currentDepth).shuffled().iterator()
     }
 
     override suspend fun addExecutionTrace(method: Method, result: ExecutionResult) {

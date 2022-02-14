@@ -48,10 +48,9 @@ class ObjectGenerationTests {
 //        return d
 //    }
 
-    fun foo(a: PP) {
-        val x = a.javaClass
-        if (x == Point::class.java) {
-            println("aa")
+    fun foo(a: Any) {
+        if (a.javaClass.name == "java.lang.String") {
+            println(a)
         }
     }
 }

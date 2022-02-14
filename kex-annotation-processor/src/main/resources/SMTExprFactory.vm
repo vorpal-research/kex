@@ -4,6 +4,8 @@ import org.jetbrains.research.kfg.ir.Class
 import org.jetbrains.research.kfg.type.ClassType
 import org.jetbrains.research.kfg.type.TypeFactory
 import org.jetbrains.research.kfg.type.Type
+import org.jetbrains.research.kex.state.term.Term
+import org.jetbrains.research.kex.util.javaDesc
 
 typealias Bool_ = $Bool
 typealias Ptr_ = $Bitvector32
@@ -52,6 +54,7 @@ class $factory : ${solver}SMTExprFactory() {
     private val innerTypeMap: MutableMap< Type, Bitvector_ >
     private val innerKlassMap: MutableMap< KexType, Ptr_ >
     private var defaultBV: Bitvector_
+    private val stringTerms = mutableMapOf< String, Term >()
 
     init {
         innerTypeMap = mutableMapOf()
@@ -66,6 +69,22 @@ class $factory : ${solver}SMTExprFactory() {
             innerTypeMap[type] = makeBitvectorConst(template.replaceRange(index, index + 1, "1"), 2, typeWidth)
         }
         defaultBV = makeBitvectorConst(template, 2, typeWidth)
+    }
+
+    fun initStrings(strings: Map< String, Term >) {
+        this.stringTerms.putAll(strings)
+    }
+
+    fun addTypeNameAxioms(typeIndex: Bitvector_, nameVar: Ptr_): Bool_ {
+        var res: Bool_? = null
+        for ((type, typeVar) in innerTypeMap) {
+            val string = type.javaDesc
+            val stringTerm = stringTerms.getValue(string)
+            val stringVar = getVarByTypeAndName(stringTerm.type, stringTerm.name)
+            res = if (res == null) nameVar eq stringVar
+            else `if`(typeIndex eq typeVar).then(nameVar eq stringVar).`else`(res)
+        }
+        return res ?: makeTrue()
     }
 
     fun getSubTypeMask(type: Type): Bitvector_ {
