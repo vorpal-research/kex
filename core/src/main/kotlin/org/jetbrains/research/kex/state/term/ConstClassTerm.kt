@@ -10,6 +10,8 @@ import org.jetbrains.research.kex.state.transformer.Transformer
 class ConstClassTerm(override val type: KexType, val constantType: KexType) : Term() {
     companion object {
         const val TYPE_INDEX_PROPERTY = "type_index"
+        const val NAME_PROPERTY = "name"
+        const val MODIFIERS_PROPERTY = "modifiers"
     }
 
     override val name = "$constantType.class"

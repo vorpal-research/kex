@@ -75,13 +75,25 @@ class $factory : ${solver}SMTExprFactory() {
         this.stringTerms.putAll(strings)
     }
 
-    fun addTypeNameAxioms(typeIndex: Bitvector_, nameVar: Ptr_): Bool_ {
+    fun addClassNameAxioms(typeIndex: Bitvector_, nameVar: Ptr_): Bool_ {
         var res = makeFalse()
         for ((type, typeVar) in innerTypeMap) {
             val string = type.javaDesc
             val stringTerm = stringTerms.getValue(string)
             val stringVar = getVarByTypeAndName(stringTerm.type, stringTerm.name)
             res = `if`(typeIndex eq typeVar).then(nameVar eq stringVar).`else`(res)
+        }
+        return res
+    }
+
+    fun addClassModifiersAxioms(typeIndex: Bitvector_, modifiersVar: Ptr_): Bool_ {
+        var res = makeFalse()
+        for ((type, typeVar) in innerTypeMap) {
+            val modifiersValue = makeIntConst(when (type) {
+                is ClassType -> type.klass.modifiers.value
+                else -> 0
+            })
+            res = `if`(typeIndex eq typeVar).then(modifiersVar eq modifiersValue).`else`(res)
         }
         return res
     }

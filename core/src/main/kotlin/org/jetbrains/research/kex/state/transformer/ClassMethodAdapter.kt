@@ -83,12 +83,12 @@ class ClassMethodAdapter(val cm: ClassManager) : RecollectingTransformer<ClassMe
     fun forName(lhv: Term, name: Term) = basic {
         state { lhv.new() }
         val field = generate(KexString())
-        state { field equality lhv.field(KexString(), "name").load() }
+        state { field equality lhv.field(KexString(), ConstClassTerm.NAME_PROPERTY).load() }
         assume { field equality name }
     }
 
     fun getCanonicalName(lhv: Term, instance: Term) = basic {
-        state { lhv equality instance.field(KexString(), "name").load() }
+        state { lhv equality instance.field(KexString(), ConstClassTerm.NAME_PROPERTY).load() }
     }
 
     fun getClasses(lhv: Term, constClass: KexType) = basic {
@@ -132,13 +132,13 @@ class ClassMethodAdapter(val cm: ClassManager) : RecollectingTransformer<ClassMe
 
     fun getModifiers(lhv: Term, instance: Term) = basic {
         state {
-            lhv equality instance.field(KexInt(), "modifiers").load()
+            lhv equality instance.field(KexInt(), ConstClassTerm.MODIFIERS_PROPERTY).load()
         }
     }
 
     fun getName(lhv: Term, instance: Term) = basic {
         state {
-            lhv equality instance.field(KexString(), "name").load()
+            lhv equality instance.field(KexString(), ConstClassTerm.NAME_PROPERTY).load()
         }
     }
 
@@ -155,7 +155,7 @@ class ClassMethodAdapter(val cm: ClassManager) : RecollectingTransformer<ClassMe
 
     fun getTypeName(lhv: Term, instance: Term) = basic {
         state {
-            lhv equality instance.field(KexString(), "name").load()
+            lhv equality instance.field(KexString(), ConstClassTerm.NAME_PROPERTY).load()
         }
     }
 
@@ -163,7 +163,7 @@ class ClassMethodAdapter(val cm: ClassManager) : RecollectingTransformer<ClassMe
         val modifiers = generate(KexInt())
         val andRes = generate(KexInt())
         state {
-            modifiers equality instance.field(KexInt(), "modifiers").load()
+            modifiers equality instance.field(KexInt(), ConstClassTerm.MODIFIERS_PROPERTY).load()
         }
         state {
             andRes equality (modifiers and ANNOTATION_MODIFIER)
@@ -177,7 +177,7 @@ class ClassMethodAdapter(val cm: ClassManager) : RecollectingTransformer<ClassMe
         val modifiers = generate(KexInt())
         val andRes = generate(KexInt())
         state {
-            modifiers equality instance.field(KexInt(), "modifiers").load()
+            modifiers equality instance.field(KexInt(), ConstClassTerm.MODIFIERS_PROPERTY).load()
         }
         state {
             andRes equality (modifiers and ENUM_MODIFIER)
@@ -191,7 +191,7 @@ class ClassMethodAdapter(val cm: ClassManager) : RecollectingTransformer<ClassMe
         val modifiers = generate(KexInt())
         val andRes = generate(KexInt())
         state {
-            modifiers equality instance.field(KexInt(), "modifiers").load()
+            modifiers equality instance.field(KexInt(), ConstClassTerm.MODIFIERS_PROPERTY).load()
         }
         state {
             andRes equality (modifiers and Modifier.INTERFACE)
@@ -205,7 +205,7 @@ class ClassMethodAdapter(val cm: ClassManager) : RecollectingTransformer<ClassMe
         val modifiers = generate(KexInt())
         val andRes = generate(KexInt())
         state {
-            modifiers equality instance.field(KexInt(), "modifiers").load()
+            modifiers equality instance.field(KexInt(), ConstClassTerm.MODIFIERS_PROPERTY).load()
         }
         state {
             andRes equality (modifiers and SYNTHETIC_MODIFIER)
@@ -226,7 +226,7 @@ class ClassMethodAdapter(val cm: ClassManager) : RecollectingTransformer<ClassMe
 
     fun toString(lhv: Term, instance: Term) = basic {
         state {
-            lhv equality instance.field(KexString(), "name").load()
+            lhv equality instance.field(KexString(), ConstClassTerm.NAME_PROPERTY).load()
         }
     }
 }

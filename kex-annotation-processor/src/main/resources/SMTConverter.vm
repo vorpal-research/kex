@@ -67,9 +67,11 @@ class ${solver}Converter(val tf: TypeFactory) : ${solver}SMTConverter() {
                     resultExpr = resultExpr
                         .withAxiom(lengthVar ge ef.makeIntConst(0))
                 } else if (this.type == KexJavaClass()) {
-                    val typeIndex = ctx.readWordProperty(expr, this.memspace, ConstClassTerm.TYPE_INDEX_PROPERTY)
-                    val name = ctx.readWordProperty(expr, this.memspace, "name")
-                    resultExpr = resultExpr.withAxiom(ef.addTypeNameAxioms(typeIndex, name))
+                    val typeIndex = ctx.readBitvectorProperty(expr, this.memspace, "${ this.type }.${ ConstClassTerm.TYPE_INDEX_PROPERTY }")
+                    val name = ctx.readWordProperty(expr, this.memspace, "${ this.type }.${ ConstClassTerm.NAME_PROPERTY }")
+                    val modifiers = ctx.readWordProperty(expr, this.memspace, "${ this.type }.${ ConstClassTerm.NAME_PROPERTY }")
+                    resultExpr = resultExpr.withAxiom(ef.addClassNameAxioms(typeIndex, name))
+                    resultExpr = resultExpr.withAxiom(ef.addClassModifiersAxioms(typeIndex, modifiers))
                 }
             }
             is KexByte -> {
@@ -423,7 +425,7 @@ class ${solver}Converter(val tf: TypeFactory) : ${solver}SMTConverter() {
         val expr = ef.getVarByTypeAndName(klass.type, klass.name) as Ptr_
         val op = convert(klass.operand, ef, ctx) as Ptr_
 
-        val typeIndex = ctx.readBitvectorProperty(expr, klass.memspace, ConstClassTerm.TYPE_INDEX_PROPERTY)
+        val typeIndex = ctx.readBitvectorProperty(expr, klass.memspace, "${ klass.type }.${ ConstClassTerm.TYPE_INDEX_PROPERTY }")
         val operandType = ctx.readBitvectorProperty(op, klass.operand.memspace, "type")
         var res = klass.withAxioms(expr, ef, ctx)
         return res
@@ -490,7 +492,7 @@ class ${solver}Converter(val tf: TypeFactory) : ${solver}SMTConverter() {
         val expr = ef.getVarByTypeAndName(const.type, const.name)
         ef.addKlassPtr(const.constantType, expr as Ptr_)
 
-        val typeIndex = ctx.readBitvectorProperty(expr, const.memspace, ConstClassTerm.TYPE_INDEX_PROPERTY)
+        val typeIndex = ctx.readBitvectorProperty(expr, const.memspace, "${ const.type }.${ ConstClassTerm.TYPE_INDEX_PROPERTY }")
         var res = const.withAxioms(expr, ef, ctx)
         res = res.withPtrAxioms(ef, ctx, TermType.STATIC_PTR)
         return res
