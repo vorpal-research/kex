@@ -86,7 +86,7 @@ class $factory : ${solver}SMTExprFactory() {
         return res
     }
 
-    fun addClassModifiersAxioms(typeIndex: Bitvector_, modifiersVar: Ptr_): Bool_ {
+    fun addClassModifiersAxioms(typeIndex: Bitvector_, modifiersVar: Int_): Bool_ {
         var res = makeFalse()
         for ((type, typeVar) in innerTypeMap) {
             val modifiersValue = makeIntConst(when (type) {

@@ -71,7 +71,7 @@ class StaticFieldInliner(
             +ArrayBoundsAdapter()
             +NullityInfoAdapter()
             +ClassMethodAdapter(ctx.cm)
-            +ConstStringAdapter()
+            +ConstStringAdapter(method.cm.type, adaptTypeNames = true)
             +FieldNormalizer(ctx.cm, ".state.normalized")
         }
 

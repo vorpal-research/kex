@@ -1,21 +1,32 @@
 package org.jetbrains.research.kex.state.transformer
 
-import org.jetbrains.research.kex.ktype.KexArray
-import org.jetbrains.research.kex.ktype.KexChar
-import org.jetbrains.research.kex.ktype.KexReference
-import org.jetbrains.research.kex.ktype.KexString
+import org.jetbrains.research.kex.ktype.*
 import org.jetbrains.research.kex.state.PredicateState
 import org.jetbrains.research.kex.state.StateBuilder
 import org.jetbrains.research.kex.state.predicate.*
 import org.jetbrains.research.kex.state.term.*
+import org.jetbrains.research.kfg.type.TypeFactory
 import org.jetbrains.research.kthelper.collection.dequeOf
 
-class ConstStringAdapter : RecollectingTransformer<ConstStringAdapter> {
+class ConstStringAdapter(
+    val tf: TypeFactory,
+    val adaptTypeNames: Boolean = true
+) : RecollectingTransformer<ConstStringAdapter> {
     override val builders = dequeOf(StateBuilder())
     private val strings = mutableMapOf<String, Term>()
 
     override fun apply(ps: PredicateState): PredicateState {
-        val strings = collectStringTerms(ps, true)
+        val strings = collectStringTerms(ps).toMutableSet()
+
+        if (adaptTypeNames) {
+            strings += collectTypes(tf, ps, true).map { term { const(it.javaName) } as ConstStringTerm }
+            if (strings.isNotEmpty()) {
+                strings += term { const(KexString().javaName) } as ConstStringTerm
+                strings += term { const(KexChar().asArray().javaName) } as ConstStringTerm
+                strings += term { const(KexChar().javaName) } as ConstStringTerm
+                strings += term { const(KexInt().javaName) } as ConstStringTerm
+            }
+        }
         for (str in strings) {
             currentBuilder += buildStr(str.value)
         }

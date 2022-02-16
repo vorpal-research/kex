@@ -393,9 +393,9 @@ abstract class DescriptorReanimator(
                                 term.type.isJavaClass -> {
                                     val typeIndex =
                                         reanimateFromProperties(term.memspace, ConstClassTerm.TYPE_INDEX_PROPERTY, addr)
-                                            ?: return@memory default(term.type)
+                                            ?: return@memory default(term.type, nullable = false)
                                     val klassType = reanimateType(typeIndex)
-                                        ?: return@memory default(term.type)
+                                        ?: return@memory default(term.type, nullable = false)
                                     klass(klassType)
                                 }
                                 else -> `object`(reanimatedType)
@@ -407,8 +407,8 @@ abstract class DescriptorReanimator(
                                     operand.memspace,
                                     reanimateFromAssignment(operand)?.numericValue?.toInt() ?: 0
                                 )
-                                if (operandDesc != null) {
-                                    operandDesc.klassDescriptor = it as ObjectDescriptor
+                                if (operandDesc != null && it is ObjectDescriptor) {
+                                    operandDesc.klassDescriptor = it
                                 }
                             }
                         }

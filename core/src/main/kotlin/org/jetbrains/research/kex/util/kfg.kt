@@ -1,5 +1,6 @@
 package org.jetbrains.research.kex.util
 
+import org.jetbrains.research.kex.ktype.type
 import org.jetbrains.research.kfg.ClassManager
 import org.jetbrains.research.kfg.Package
 import org.jetbrains.research.kfg.ir.Class
@@ -82,3 +83,10 @@ val SystemTypeNames.charSequence get() = "java/lang/CharSequence"
 val SystemTypeNames.classLoader get() = "java/lang/ClassLoader"
 val ClassManager.classLoaderClass get() = this[SystemTypeNames.classLoader]
 val TypeFactory.classLoaderType get() = getRefType(SystemTypeNames.classLoader)
+
+
+fun Type.getAllSubtypes(tf: TypeFactory): Set<Type> = when (this) {
+    is ClassType -> tf.cm.getAllSubtypesOf(this.klass).map { it.type }.toSet()
+    is ArrayType -> this.component.getAllSubtypes(tf).map { tf.getArrayType(it) }.toSet()
+    else -> setOf()
+}

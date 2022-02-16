@@ -65,7 +65,7 @@ class Checker(
         +ArrayBoundsAdapter()
         +NullityInfoAdapter()
         +ClassMethodAdapter(method.cm)
-        +ConstStringAdapter()
+        +ConstStringAdapter(method.cm.type, adaptTypeNames = true)
         +FieldNormalizer(method.cm)
     }
 
@@ -84,7 +84,7 @@ class Checker(
         +Optimizer()
         +ConstantPropagator
         +BoolTypeAdapter(method.cm.type)
-        +ConstStringAdapter()
+        +ConstStringAdapter(method.cm.type, adaptTypeNames = true)
         +ArrayBoundsAdapter()
         +NullityInfoAdapter()
         +FieldNormalizer(method.cm)

@@ -1,6 +1,6 @@
 package org.jetbrains.research.kex.state.transformer
 
-import org.jetbrains.research.kex.ktype.*
+import org.jetbrains.research.kex.ktype.KexReference
 import org.jetbrains.research.kex.state.PredicateState
 import org.jetbrains.research.kex.state.predicate.Predicate
 import org.jetbrains.research.kex.state.predicate.PredicateType
@@ -62,7 +62,7 @@ fun collectRequiredTerms(state: PredicateState) = collectPredicateTypeTerms(Pred
 fun collectAssumedTerms(state: PredicateState) = collectPredicateTypeTerms(PredicateType.Assume(), state)
 fun collectAxiomTerms(state: PredicateState) = collectPredicateTypeTerms(PredicateType.Axiom(), state)
 
-class StringTermCollector(val collectTypeNames: Boolean) : Transformer<StringTermCollector> {
+class StringTermCollector : Transformer<StringTermCollector> {
     val strings = mutableSetOf<ConstStringTerm>()
 
     override fun transformField(term: FieldTerm): Term {
@@ -77,21 +77,13 @@ class StringTermCollector(val collectTypeNames: Boolean) : Transformer<StringTer
 
     override fun transform(term: Term): Term {
         if (term is ConstStringTerm) strings += term
-        if (collectTypeNames && term.type !is KexNull && term.type !is KexReference)
-            strings += term { const(term.type.javaName) } as ConstStringTerm
         return super.transform(term)
     }
 }
 
-fun collectStringTerms(state: PredicateState, collectTypeNames: Boolean = false): Set<ConstStringTerm> {
-    val stringCollector = StringTermCollector(collectTypeNames)
+fun collectStringTerms(state: PredicateState): Set<ConstStringTerm> {
+    val stringCollector = StringTermCollector()
     stringCollector.apply(state)
-    if (collectTypeNames && stringCollector.strings.isNotEmpty()) {
-        stringCollector.strings += term { const(KexString().javaName) } as ConstStringTerm
-        stringCollector.strings += term { const(KexChar().asArray().javaName) } as ConstStringTerm
-        stringCollector.strings += term { const(KexChar().javaName) } as ConstStringTerm
-        stringCollector.strings += term { const(KexInt().javaName) } as ConstStringTerm
-    }
     return stringCollector.strings
 }
 

@@ -69,7 +69,7 @@ class ${solver}Converter(val tf: TypeFactory) : ${solver}SMTConverter() {
                 } else if (this.type == KexJavaClass()) {
                     val typeIndex = ctx.readBitvectorProperty(expr, this.memspace, "${ this.type }.${ ConstClassTerm.TYPE_INDEX_PROPERTY }")
                     val name = ctx.readWordProperty(expr, this.memspace, "${ this.type }.${ ConstClassTerm.NAME_PROPERTY }")
-                    val modifiers = ctx.readWordProperty(expr, this.memspace, "${ this.type }.${ ConstClassTerm.NAME_PROPERTY }")
+                    val modifiers = ctx.readWordProperty(expr, this.memspace, "${ this.type }.${ ConstClassTerm.MODIFIERS_PROPERTY }")
                     resultExpr = resultExpr.withAxiom(ef.addClassNameAxioms(typeIndex, name))
                     resultExpr = resultExpr.withAxiom(ef.addClassModifiersAxioms(typeIndex, modifiers))
                 }
@@ -119,7 +119,7 @@ class ${solver}Converter(val tf: TypeFactory) : ${solver}SMTConverter() {
 
 
     fun init(state: PredicateState, ef: Factory_) {
-        val types = collectTypes(state).filter { it !is KexNull }.map { it.getKfgType(tf) }.toSet()
+        val types = collectTypes(tf, state, true).filter { it !is KexNull }.map { it.getKfgType(tf) }.toSet()
         ef.initTypes(types)
         ef.initStrings(getConstStringMap(state))
     }
@@ -427,9 +427,10 @@ class ${solver}Converter(val tf: TypeFactory) : ${solver}SMTConverter() {
 
         val typeIndex = ctx.readBitvectorProperty(expr, klass.memspace, "${ klass.type }.${ ConstClassTerm.TYPE_INDEX_PROPERTY }")
         val operandType = ctx.readBitvectorProperty(op, klass.operand.memspace, "type")
-        var res = klass.withAxioms(expr, ef, ctx)
+        val res = klass.withAxioms(expr, ef, ctx)
         return res
-            .withAxiom(res neq ef.makeNull())
+            .withAxiom((op neq ef.makeNull()) implies (res neq ef.makeNull()))
+            .withAxiom((op eq ef.makeNull()) implies (res eq ef.makeNull()))
             .withAxiom(typeIndex eq operandType)
     }
 
