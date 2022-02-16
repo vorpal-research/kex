@@ -68,10 +68,11 @@ class StaticFieldInliner(
             +Optimizer()
             +ConstantPropagator
             +BoolTypeAdapter(ctx.types)
+            +ClassMethodAdapter(ctx.cm)
+            +ConstStringAdapter(method.cm.type)
             +ArrayBoundsAdapter()
             +NullityInfoAdapter()
-            +ClassMethodAdapter(ctx.cm)
-            +ConstStringAdapter(method.cm.type, adaptTypeNames = true)
+            +TypeNameAdapter(method.cm.type)
             +FieldNormalizer(ctx.cm, ".state.normalized")
         }
 

@@ -537,13 +537,12 @@ class SymbolicTraceBuilder(
         terms[termException] = kfgException.wrapped()
         concreteValues[termException] = exceptionDescriptor
 
-        val predicate = path(kfgException.location) {
+        val predicate = state(kfgException.location) {
             catch(termException)
         }
 
         thrownException = null
 
-        processPath(kfgException, predicate)
         postProcess(kfgException, predicate)
     }
 
@@ -928,7 +927,6 @@ class SymbolicTraceBuilder(
 
         thrownException = termException
 
-        processPath(instruction, predicate)
         postProcess(instruction, predicate)
     }
 

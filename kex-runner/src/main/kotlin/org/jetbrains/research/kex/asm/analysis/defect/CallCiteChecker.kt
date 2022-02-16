@@ -214,7 +214,8 @@ class CallCiteChecker(
         +ConstantPropagator
         +BoolTypeAdapter(method.cm.type)
         +ClassMethodAdapter(method.cm)
-        +ConstStringAdapter(method.cm.type, adaptTypeNames = true)
+        +ConstStringAdapter(method.cm.type)
+        +TypeNameAdapter(ctx.types)
         +FieldNormalizer(method.cm)
     }
 

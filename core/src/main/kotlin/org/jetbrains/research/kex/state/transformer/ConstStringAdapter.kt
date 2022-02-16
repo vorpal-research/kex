@@ -3,37 +3,27 @@ package org.jetbrains.research.kex.state.transformer
 import org.jetbrains.research.kex.ktype.*
 import org.jetbrains.research.kex.state.PredicateState
 import org.jetbrains.research.kex.state.StateBuilder
+import org.jetbrains.research.kex.state.basic
 import org.jetbrains.research.kex.state.predicate.*
 import org.jetbrains.research.kex.state.term.*
 import org.jetbrains.research.kfg.type.TypeFactory
 import org.jetbrains.research.kthelper.collection.dequeOf
 
 class ConstStringAdapter(
-    val tf: TypeFactory,
-    val adaptTypeNames: Boolean = true
+    val tf: TypeFactory
 ) : RecollectingTransformer<ConstStringAdapter> {
     override val builders = dequeOf(StateBuilder())
     private val strings = mutableMapOf<String, Term>()
 
     override fun apply(ps: PredicateState): PredicateState {
         val strings = collectStringTerms(ps).toMutableSet()
-
-        if (adaptTypeNames) {
-            strings += collectTypes(tf, ps).map { term { const(it.javaName) } as ConstStringTerm }
-            if (strings.isNotEmpty()) {
-                strings += term { const(KexString().javaName) } as ConstStringTerm
-                strings += term { const(KexChar().asArray().javaName) } as ConstStringTerm
-                strings += term { const(KexChar().javaName) } as ConstStringTerm
-                strings += term { const(KexInt().javaName) } as ConstStringTerm
-            }
-        }
         for (str in strings) {
             currentBuilder += buildStr(str.value)
         }
         return super.apply(ps)
     }
 
-    private fun buildStr(string: String): PredicateState = StateBuilder().apply {
+    private fun buildStr(string: String): PredicateState = basic {
         val strTerm = generate(KexString())
         state { strTerm.new() }
 
@@ -46,7 +36,7 @@ class ConstStringAdapter(
 
         state { strTerm.field(charArray, "value").store(valueArray) }
         strings[string] = strTerm
-    }.apply()
+    }
 
     private fun replaceString(constStringTerm: ConstStringTerm) =
         strings.getOrDefault(constStringTerm.value, constStringTerm)
@@ -114,5 +104,46 @@ class ConstStringAdapter(
 
     override fun transformInstanceOf(term: InstanceOfTerm): Term {
         return term { term.operand.map `is` term.checkedType }
+    }
+}
+
+class TypeNameAdapter(
+    val tf: TypeFactory
+) : RecollectingTransformer<TypeNameAdapter> {
+    override val builders = dequeOf(StateBuilder())
+
+    override fun apply(ps: PredicateState): PredicateState {
+        if (!hasClassAccesses(ps)) return ps
+
+        val constStrings = getConstStringMap(ps)
+        val strings = collectTypes(tf, ps)
+            .filter { it !is KexReference }
+            .map { term { const(it.javaName) } as ConstStringTerm }
+            .toMutableSet()
+        if (strings.isNotEmpty()) {
+            strings += term { const(KexString().javaName) } as ConstStringTerm
+            strings += term { const(KexChar().asArray().javaName) } as ConstStringTerm
+            strings += term { const(KexChar().javaName) } as ConstStringTerm
+            strings += term { const(KexInt().javaName) } as ConstStringTerm
+        }
+
+        for (str in strings.filter { it.value !in constStrings }) {
+            currentBuilder += buildStr(str.value)
+        }
+        return super.apply(ps)
+    }
+
+    private fun buildStr(string: String): PredicateState = basic {
+        val strTerm = generate(KexString())
+        state { strTerm.new() }
+
+        val charArray = KexArray(KexChar())
+        val valueArray = generate(charArray)
+        state { valueArray.new(string.length) }
+        for ((index, char) in string.withIndex()) {
+            state { valueArray[index].store(const(char)) }
+        }
+
+        state { strTerm.field(charArray, "value").store(valueArray) }
     }
 }

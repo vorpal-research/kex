@@ -133,8 +133,9 @@ class InstructionConcolicChecker(
         +ConstantPropagator
         +BoolTypeAdapter(method.cm.type)
         +ClassMethodAdapter(method.cm)
-        +ConstStringAdapter(method.cm.type, adaptTypeNames = true)
+        +ConstStringAdapter(method.cm.type)
         +StringMethodAdapter(ctx.cm)
+        +TypeNameAdapter(ctx.types)
         +ConcolicArrayLengthAdapter()
         +FieldNormalizer(method.cm)
     }
