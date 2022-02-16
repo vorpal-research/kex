@@ -10,10 +10,8 @@ import org.jetbrains.research.kex.descriptor.descriptor
 import org.jetbrains.research.kex.ktype.kexType
 import org.jetbrains.research.kex.smt.Checker
 import org.jetbrains.research.kex.smt.Result
-import org.jetbrains.research.kex.smt.SMTProxySolver
 import org.jetbrains.research.kex.state.PredicateState
 import org.jetbrains.research.kex.state.StateBuilder
-import org.jetbrains.research.kex.state.emptyState
 import org.jetbrains.research.kex.state.term.FieldLoadTerm
 import org.jetbrains.research.kex.state.term.FieldTerm
 import org.jetbrains.research.kex.state.term.Term
@@ -63,6 +61,7 @@ class StaticFieldInliner(
             +RecursiveInliner(psa) { index, psa ->
                 ConcreteImplInliner(ctx.types, TypeInfoMap(), psa, inlineIndex = index)
             }
+            +ClassAdapter(ctx.cm)
             +IntrinsicAdapter
             +KexIntrinsicsAdapter()
             +ReflectionInfoAdapter(method, ctx.loader, ignores)
@@ -71,7 +70,8 @@ class StaticFieldInliner(
             +BoolTypeAdapter(ctx.types)
             +ArrayBoundsAdapter()
             +NullityInfoAdapter()
-            +ConstStringAdapter()
+            +ClassMethodAdapter(ctx.cm)
+            +ConstStringAdapter(method.cm.type, adaptTypeNames = true)
             +FieldNormalizer(ctx.cm, ".state.normalized")
         }
 

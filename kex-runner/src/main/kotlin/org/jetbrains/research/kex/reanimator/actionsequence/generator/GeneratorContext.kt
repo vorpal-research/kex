@@ -78,6 +78,7 @@ class GeneratorContext(
         +RecursiveInliner(psa) { index, psa ->
             ConcreteImplInliner(types, typeInfoMap + staticTypeInfo, psa, inlineIndex = index)
         }
+        +ClassAdapter(cm)
         +StaticFieldInliner(context, psa)
         +IntrinsicAdapter
         +KexIntrinsicsAdapter()
@@ -87,7 +88,8 @@ class GeneratorContext(
         +BoolTypeAdapter(types)
         +ArrayBoundsAdapter()
         +NullityInfoAdapter()
-        +ConstStringAdapter()
+        +ClassMethodAdapter(context.cm)
+        +ConstStringAdapter(types, adaptTypeNames = true)
         +FieldNormalizer(context.cm, ".state.normalized")
     }
 

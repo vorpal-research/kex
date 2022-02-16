@@ -55,6 +55,7 @@ class Checker(
             ConcreteImplInliner(method.cm.type, TypeInfoMap(), psa, inlineIndex = index)
         }
         +StaticFieldInliner(ctx, psa)
+        +ClassAdapter(ctx.cm)
         +IntrinsicAdapter
         +KexIntrinsicsAdapter()
         +ReflectionInfoAdapter(method, loader)
@@ -63,7 +64,8 @@ class Checker(
         +BoolTypeAdapter(method.cm.type)
         +ArrayBoundsAdapter()
         +NullityInfoAdapter()
-        +ConstStringAdapter()
+        +ClassMethodAdapter(method.cm)
+        +ConstStringAdapter(method.cm.type, adaptTypeNames = true)
         +FieldNormalizer(method.cm)
     }
 
@@ -75,13 +77,14 @@ class Checker(
             ConcreteImplInliner(method.cm.type, typeInfoMap, psa, inlineIndex = index)
         }
         +StaticFieldInliner(ctx, psa)
+        +ClassAdapter(ctx.cm)
         +IntrinsicAdapter
         +KexIntrinsicsAdapter()
         +ReflectionInfoAdapter(method, loader)
         +Optimizer()
         +ConstantPropagator
         +BoolTypeAdapter(method.cm.type)
-        +ConstStringAdapter()
+        +ConstStringAdapter(method.cm.type, adaptTypeNames = true)
         +ArrayBoundsAdapter()
         +NullityInfoAdapter()
         +FieldNormalizer(method.cm)

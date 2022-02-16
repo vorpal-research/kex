@@ -34,6 +34,24 @@ import org.jetbrains.research.kfg.ir.Field as KfgField
 import java.lang.reflect.Method as JMethod
 import java.lang.reflect.Type as JType
 
+val ANNOTATION_MODIFIER: Int get() {
+    val field1 = Modifier::class.java.getDeclaredField("ANNOTATION")
+    field1.isAccessible = true
+    return field1.getInt(null)
+}
+
+val ENUM_MODIFIER: Int get() {
+    val field1 = Modifier::class.java.getDeclaredField("ENUM")
+    field1.isAccessible = true
+    return field1.getInt(null)
+}
+
+val SYNTHETIC_MODIFIER: Int get() {
+    val field1 = Modifier::class.java.getDeclaredField("SYNTHETIC")
+    field1.isAccessible = true
+    return field1.getInt(null)
+}
+
 val Class<*>.isAbstract get() = (this.modifiers and Modifier.ABSTRACT) == Modifier.ABSTRACT
 
 val Class<*>.isPublic get() = (this.modifiers and Modifier.PUBLIC) == Modifier.PUBLIC

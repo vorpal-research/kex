@@ -23,16 +23,16 @@ class BfsPathSelectorImpl(override val traceManager: TraceManager<InstructionTra
     private val candidates = mutableSetOf<PathCondition>()
     private val deque = dequeOf<SymbolicState>()
 
-    override fun hasNext(): Boolean = deque.isNotEmpty()
+    override suspend fun hasNext(): Boolean = deque.isNotEmpty()
 
-    override fun addExecutionTrace(method: Method, result: ExecutionResult) {
+    override suspend fun addExecutionTrace(method: Method, result: ExecutionResult) {
         if (result.trace.path in coveredPaths) return
         coveredPaths += result.trace.path
         traceManager.addTrace(method, result.trace.trace)
         addCandidates(result.trace)
     }
 
-    override fun next(): SymbolicState = deque.pollFirst()
+    override suspend fun next(): SymbolicState = deque.pollFirst()
 
     private fun addCandidates(state: SymbolicState) {
         val currentState = mutableListOf<Predicate>()

@@ -16,6 +16,7 @@ import org.jetbrains.research.kthelper.assert.unreachable
 import org.jetbrains.research.kthelper.logging.debug
 import org.jetbrains.research.kthelper.logging.log
 import kotlin.math.log2
+import com.microsoft.z3.Solver as NativeSolver
 
 private val timeout = kexConfig.getIntValue("smt", "timeout", 3) * 1000
 private val logQuery = kexConfig.getBooleanValue("smt", "logQuery", false)
@@ -63,7 +64,7 @@ class Z3Solver(val tf: TypeFactory) : AbstractSMTSolver {
     }
 
     private fun check(state: Bool_, query: Bool_): Pair<Status, Any> {
-        val solver = buildTactics().solver ?: unreachable { log.error("Can't create solver") }
+        val solver = buildSolver()
 
         val (state_, query_) = when {
             simplifyFormulae -> state.simplify() to query.simplify()
@@ -109,13 +110,13 @@ class Z3Solver(val tf: TypeFactory) : AbstractSMTSolver {
         }
     }
 
-    private fun buildTactics(): Tactic {
+    private fun buildSolver(): NativeSolver {
         Z3Params.load().forEach { (name, value) ->
             Global.setParameter(name, value.toString())
         }
 
         val ctx = ef.ctx
-        val tactic = Z3Tactics.load().map {
+        val solver = Z3Tactics.load().map {
             val tactic = ctx.mkTactic(it.type)
             val params = ctx.mkParams()
             it.params.forEach { (name, value) ->
@@ -127,8 +128,12 @@ class Z3Solver(val tf: TypeFactory) : AbstractSMTSolver {
                 }
             }
             ctx.with(tactic, params)
-        }.reduce { a, b -> ctx.andThen(a, b) }
-        return ctx.tryFor(tactic, timeout)
+        }.reduceOrNull { a, b -> ctx.andThen(a, b) }?.let { ctx.mkSolver(it) } ?: ctx.mkSolver()
+
+        val parameters = ctx.mkParams()
+        parameters.add("timeout", timeout)
+        solver.setParameters(parameters)
+        return solver
     }
 
     private fun Z3Context.recoverBitvectorProperty(
@@ -352,6 +357,8 @@ class Z3Solver(val tf: TypeFactory) : AbstractSMTSolver {
                             if (indexTerm !in ptrs)
                                 indices += indexTerm
                         }
+                    } else if (ptr is ConstClassTerm || ptr is ClassAccessTerm) {
+                        properties.recoverBitvectorProperty(ctx, ptr, memspace, model, ConstClassTerm.TYPE_INDEX_PROPERTY)
                     }
 
                     properties.recoverBitvectorProperty(ctx, ptr, memspace, model, "type")

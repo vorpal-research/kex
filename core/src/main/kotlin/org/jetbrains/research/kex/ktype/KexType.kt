@@ -5,6 +5,7 @@ import org.jetbrains.research.kex.BaseType
 import org.jetbrains.research.kex.InheritanceInfo
 import org.jetbrains.research.kex.InheritorOf
 import org.jetbrains.research.kex.util.getKexRuntime
+import org.jetbrains.research.kfg.Package
 import org.jetbrains.research.kfg.ir.Method
 import org.jetbrains.research.kfg.type.*
 import org.jetbrains.research.kfg.util.Flags
@@ -186,6 +187,7 @@ abstract class KexType {
     }
 
     abstract val name: String
+    val javaName get() = name.replace(Package.SEPARATOR, Package.CANONICAL_SEPARATOR)
     abstract val bitSize: Int
 
     abstract fun getKfgType(types: TypeFactory): Type

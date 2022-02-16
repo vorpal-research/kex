@@ -66,6 +66,12 @@ class ${solver}Converter(val tf: TypeFactory) : ${solver}SMTConverter() {
                     val lengthVar = ctx.readWordProperty(expr, this.memspace, "length")
                     resultExpr = resultExpr
                         .withAxiom(lengthVar ge ef.makeIntConst(0))
+                } else if (this.type == KexJavaClass()) {
+                    val typeIndex = ctx.readBitvectorProperty(expr, this.memspace, "${ this.type }.${ ConstClassTerm.TYPE_INDEX_PROPERTY }")
+                    val name = ctx.readWordProperty(expr, this.memspace, "${ this.type }.${ ConstClassTerm.NAME_PROPERTY }")
+                    val modifiers = ctx.readWordProperty(expr, this.memspace, "${ this.type }.${ ConstClassTerm.MODIFIERS_PROPERTY }")
+                    resultExpr = resultExpr.withAxiom(ef.addClassNameAxioms(typeIndex, name))
+                    resultExpr = resultExpr.withAxiom(ef.addClassModifiersAxioms(typeIndex, modifiers))
                 }
             }
             is KexByte -> {
@@ -113,8 +119,9 @@ class ${solver}Converter(val tf: TypeFactory) : ${solver}SMTConverter() {
 
 
     fun init(state: PredicateState, ef: Factory_) {
-        val types = collectTypes(state).filter { it !is KexNull }.map { it.getKfgType(tf) }.toSet()
+        val types = collectTypes(tf, state).filter { it !is KexNull }.map { it.getKfgType(tf) }.toSet()
         ef.initTypes(types)
+        ef.initStrings(getConstStringMap(state))
     }
 
     fun convert(ps: PredicateState, ef: Factory_, ctx: Context_, extractPath: Boolean = false): Bool_ = when (ps) {
@@ -302,7 +309,7 @@ class ${solver}Converter(val tf: TypeFactory) : ${solver}SMTConverter() {
         return lhv.withPtrAxioms(ef, ctx, TermType.LOCAL_PTR) eq ctx.getLocalPtr(memspace)
     }
 
-#set($terms = ["Argument", "ArrayContains", "ArrayIndex", "ArrayLength", "ArrayLoad", "Binary", "Call", "Cast", "CharAt",
+#set($terms = ["Argument", "ArrayContains", "ArrayIndex", "ArrayLength", "ArrayLoad", "Binary", "Call", "Cast", "ClassAccess", "CharAt",
     "Cmp", "Concat", "ConstBool", "ConstByte", "ConstChar", "ConstClass", "StaticClassRef", "ConstDouble", "ConstFloat", "ConstInt", "ConstLong",
     "ConstShort", "ConstString", "EndsWith", "Equals", "Exists", "IndexOf", "StartsWith", "StringContains", "StringLength",
     "StringParse", "Substring", "ToString", "FieldLoad", "ForAll", "Field", "InstanceOf", "Ite", "Lambda", "Neg",
@@ -414,6 +421,19 @@ class ${solver}Converter(val tf: TypeFactory) : ${solver}SMTConverter() {
         }
     }
 
+    fun convert(klass: ClassAccessTerm, ef: Factory_, ctx: Context_): Dynamic_ {
+        val expr = ef.getVarByTypeAndName(klass.type, klass.name) as Ptr_
+        val op = convert(klass.operand, ef, ctx) as Ptr_
+
+        val typeIndex = ctx.readBitvectorProperty(expr, klass.memspace, "${ klass.type }.${ ConstClassTerm.TYPE_INDEX_PROPERTY }")
+        val operandType = ctx.readBitvectorProperty(op, klass.operand.memspace, "type")
+        val res = klass.withAxioms(expr, ef, ctx)
+        return res
+            .withAxiom((op neq ef.makeNull()) implies (res neq ef.makeNull()))
+            .withAxiom((op eq ef.makeNull()) implies (res eq ef.makeNull()))
+            .withAxiom(typeIndex eq operandType)
+    }
+
     fun convert(charAt: CharAtTerm, ef: Factory_, ctx: Context_): Dynamic_ {
         val ptr = convert(charAt.string, ef, ctx) as Ptr_
         val index = convert(charAt.index, ef, ctx) as Int_
@@ -472,9 +492,13 @@ class ${solver}Converter(val tf: TypeFactory) : ${solver}SMTConverter() {
     fun convert(const: ConstClassTerm, ef: Factory_, ctx: Context_): Dynamic_ {
         val expr = ef.getVarByTypeAndName(const.type, const.name)
         ef.addKlassPtr(const.constantType, expr as Ptr_)
+
+        val typeIndex = ctx.readBitvectorProperty(expr, const.memspace, "${ const.type }.${ ConstClassTerm.TYPE_INDEX_PROPERTY }")
         var res = const.withAxioms(expr, ef, ctx)
         res = res.withPtrAxioms(ef, ctx, TermType.STATIC_PTR)
-        return res.withAxiom(res neq ef.makeNull())
+        return res
+            .withAxiom(res neq ef.makeNull())
+            .withAxiom(typeIndex eq ef.getTypeVar(const.constantType.getKfgType(tf)))
     }
 
     fun convert(const: StaticClassRefTerm, ef: Factory_, ctx: Context_): Dynamic_ {

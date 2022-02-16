@@ -124,7 +124,7 @@ class InstructionConcolicChecker(
                 inlineIndex = index
             )
         }
-        +ConcolicArrayLengthAdapter()
+        +ClassAdapter(cm)
         +AnnotationAdapter(method, AnnotationManager.defaultLoader)
         +IntrinsicAdapter
         +KexIntrinsicsAdapter()
@@ -132,8 +132,10 @@ class InstructionConcolicChecker(
         +Optimizer()
         +ConstantPropagator
         +BoolTypeAdapter(method.cm.type)
-        +ConstStringAdapter()
+        +ClassMethodAdapter(method.cm)
+        +ConstStringAdapter(method.cm.type, adaptTypeNames = true)
         +StringMethodAdapter(ctx.cm)
+        +ConcolicArrayLengthAdapter()
         +FieldNormalizer(method.cm)
     }
 

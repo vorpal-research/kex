@@ -194,6 +194,9 @@ object TermFactory {
         trueValue: Term,
         falseValue: Term
     ) = IteTerm(type, cond, trueValue, falseValue)
+
+    fun getClassAccess(operand: Term) = getClassAccess(KexJavaClass(), operand)
+    fun getClassAccess(type: KexType, operand: Term) = ClassAccessTerm(type, operand)
 }
 
 abstract class TermBuilder {
@@ -275,8 +278,10 @@ abstract class TermBuilder {
 
     infix fun Term.and(rhv: Term) = tf.getBinary(type, BinaryOpcode.AND, this, rhv)
     infix fun Term.and(bool: Boolean) = tf.getBinary(type, BinaryOpcode.AND, this, const(bool))
+    infix fun Term.and(int: Int) = tf.getBinary(type, BinaryOpcode.AND, this, const(int))
     infix fun Term.or(rhv: Term) = tf.getBinary(type, BinaryOpcode.OR, this, rhv)
     infix fun Term.or(bool: Boolean) = tf.getBinary(type, BinaryOpcode.OR, this, const(bool))
+    infix fun Term.or(int: Int) = tf.getBinary(type, BinaryOpcode.OR, this, const(int))
     infix fun Term.xor(rhv: Term) = tf.getBinary(type, BinaryOpcode.XOR, this, rhv)
     infix fun Term.xor(bool: Boolean) = tf.getBinary(type, BinaryOpcode.XOR, this, const(bool))
 
@@ -410,6 +415,8 @@ abstract class TermBuilder {
     fun IntRange.exists(body: TermBuilder.() -> Term) = exists(const(start), const(last), body)
 
     fun ite(type: KexType, cond: Term, trueValue: Term, falseValue: Term) = tf.getIte(type, cond, trueValue, falseValue)
+
+    val Term.klass get() = tf.getClassAccess(this)
 
     object Terms : TermBuilder()
 }

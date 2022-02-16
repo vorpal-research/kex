@@ -922,7 +922,7 @@ class SymbolicTraceBuilder(
 
         termException.updateInfo(kfgException, concreteException.getAsDescriptor(termException.type))
 
-        val predicate = path(instruction.location) {
+        val predicate = state(instruction.location) {
             `throw`(termException)
         }
 

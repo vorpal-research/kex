@@ -77,6 +77,7 @@ interface Inliner<T> : RecollectingTransformer<Inliner<T>> {
             +TermRenamer("${inlineSuffix}${inlineIndex++}", mappings)
             +StringMethodAdapter(method.cm)
             +KexRtAdapter(method.cm)
+            +ClassAdapter(method.cm)
         }
     }
 

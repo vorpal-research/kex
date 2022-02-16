@@ -1,5 +1,6 @@
 package org.jetbrains.research.kex.asm.analysis.concolic.cgs
 
+import kotlinx.coroutines.yield
 import org.jetbrains.research.kex.asm.analysis.concolic.PathSelector
 import org.jetbrains.research.kex.state.predicate.*
 import org.jetbrains.research.kex.state.term.ConstBoolTerm
@@ -23,12 +24,13 @@ class ContextGuidedSelector(override val traceManager: TraceManager<InstructionT
         private set
     var k = 1
         private set
-    private var branchIterantor: Iterator<PathEdge> = listOf<PathEdge>().iterator()
+    private var branchIterator: Iterator<PathVertex> = listOf<PathVertex>().iterator()
     private var currentContext: Context? = null
     private val visitedContexts = mutableSetOf<Context>()
 
-    override fun hasNext(): Boolean {
+    override suspend fun hasNext(): Boolean {
         do {
+            yield()
             val next = nextEdge() ?: continue
             when (val context = executionTree.contexts(next, k).firstOrNull { it !in visitedContexts }) {
                 null -> continue
@@ -41,7 +43,7 @@ class ContextGuidedSelector(override val traceManager: TraceManager<InstructionT
         return false
     }
 
-    override fun next(): SymbolicState {
+    override suspend fun next(): SymbolicState {
         val context = currentContext!!
         visitedContexts += context
         currentContext = null
@@ -62,9 +64,9 @@ class ContextGuidedSelector(override val traceManager: TraceManager<InstructionT
         )
     }
 
-    private fun nextEdge(): PathEdge? {
+    private fun nextEdge(): PathVertex? {
         when {
-            branchIterantor.hasNext() -> {}
+            branchIterator.hasNext() -> {}
             currentDepth < executionTree.depth -> {
                 ++currentDepth
                 recomputeBranches()
@@ -75,14 +77,14 @@ class ContextGuidedSelector(override val traceManager: TraceManager<InstructionT
                 recomputeBranches()
             }
         }
-        return branchIterantor.nextOrNull()
+        return branchIterator.nextOrNull()
     }
 
     private fun recomputeBranches() {
-        branchIterantor = executionTree.getBranches(currentDepth).shuffled().iterator()
+        branchIterator = executionTree.getBranches(currentDepth).shuffled().iterator()
     }
 
-    override fun addExecutionTrace(method: Method, result: ExecutionResult) {
+    override suspend fun addExecutionTrace(method: Method, result: ExecutionResult) {
         executionTree.addTrace(result.trace)
     }
 
