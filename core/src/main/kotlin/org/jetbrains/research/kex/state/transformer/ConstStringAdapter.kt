@@ -19,7 +19,7 @@ class ConstStringAdapter(
         val strings = collectStringTerms(ps).toMutableSet()
 
         if (adaptTypeNames) {
-            strings += collectTypes(tf, ps, true).map { term { const(it.javaName) } as ConstStringTerm }
+            strings += collectTypes(tf, ps).map { term { const(it.javaName) } as ConstStringTerm }
             if (strings.isNotEmpty()) {
                 strings += term { const(KexString().javaName) } as ConstStringTerm
                 strings += term { const(KexChar().asArray().javaName) } as ConstStringTerm

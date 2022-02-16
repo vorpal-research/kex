@@ -119,7 +119,7 @@ class ${solver}Converter(val tf: TypeFactory) : ${solver}SMTConverter() {
 
 
     fun init(state: PredicateState, ef: Factory_) {
-        val types = collectTypes(tf, state, true).filter { it !is KexNull }.map { it.getKfgType(tf) }.toSet()
+        val types = collectTypes(tf, state).filter { it !is KexNull }.map { it.getKfgType(tf) }.toSet()
         ef.initTypes(types)
         ef.initStrings(getConstStringMap(state))
     }

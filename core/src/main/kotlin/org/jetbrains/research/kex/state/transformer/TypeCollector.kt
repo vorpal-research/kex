@@ -1,23 +1,39 @@
 package org.jetbrains.research.kex.state.transformer
 
+import org.jetbrains.research.kex.ktype.KexJavaClass
 import org.jetbrains.research.kex.ktype.KexType
-import org.jetbrains.research.kex.ktype.kexType
 import org.jetbrains.research.kex.state.PredicateState
-import org.jetbrains.research.kex.state.term.ConstClassTerm
-import org.jetbrains.research.kex.state.term.InstanceOfTerm
-import org.jetbrains.research.kex.state.term.Term
-import org.jetbrains.research.kex.util.getAllSubtypes
+import org.jetbrains.research.kex.state.term.*
+import org.jetbrains.research.kex.util.parseAsConcreteType
 import org.jetbrains.research.kfg.type.TypeFactory
 
-class TypeCollector(val tf: TypeFactory, val concretizeTypes: Boolean = false) : Transformer<TypeCollector> {
+private class ClassAccessDetector : Transformer<ClassAccessDetector> {
+    var hasClassAccess = false
+        private set
+
+    override fun transformTerm(term: Term): Term {
+        if (term.type == KexJavaClass()) hasClassAccess = true
+        return super.transformTerm(term)
+    }
+
+    override fun transformClassAccessTerm(term: ClassAccessTerm): Term {
+        hasClassAccess = true
+        return super.transformClassAccessTerm(term)
+    }
+}
+
+fun hasClassAccesses(ps: PredicateState) = ClassAccessDetector().let {
+    it.apply(ps)
+    it.hasClassAccess
+}
+
+class TypeCollector(val tf: TypeFactory, val checkStringTypes: Boolean = false) : Transformer<TypeCollector> {
     val types = mutableSetOf<KexType>()
 
     override fun apply(ps: PredicateState): PredicateState {
         val res = super.apply(ps)
-        if (concretizeTypes) {
-            for (kfgType in types.map { it.getKfgType(tf) }.toSet()) {
-                types += kfgType.getAllSubtypes(tf).map { it.kexType }
-            }
+        getConstStringMap(ps).keys.forEach {
+            handleStringType(it)
         }
         return res
     }
@@ -36,10 +52,23 @@ class TypeCollector(val tf: TypeFactory, val concretizeTypes: Boolean = false) :
         types += term.constantType
         return super.transformConstClass(term)
     }
+
+    override fun transformConstString(term: ConstStringTerm): Term {
+        handleStringType(term.value)
+        return super.transformConstString(term)
+    }
+
+    private fun handleStringType(string: String) {
+        if (checkStringTypes) {
+            parseAsConcreteType(tf, string)?.let {
+                types += it
+            }
+        }
+    }
 }
 
-fun collectTypes(tf: TypeFactory, ps: PredicateState, concretizeTypes: Boolean = false): Set<KexType> {
-    val tc = TypeCollector(tf, concretizeTypes)
+fun collectTypes(tf: TypeFactory, ps: PredicateState): Set<KexType> {
+    val tc = TypeCollector(tf, hasClassAccesses(ps))
     tc.apply(ps)
     return tc.types
 }

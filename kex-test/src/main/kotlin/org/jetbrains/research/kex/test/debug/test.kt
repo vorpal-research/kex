@@ -4,8 +4,8 @@ package org.jetbrains.research.kex.test.debug
 
 class ObjectGenerationTests {
     open class PP
-    class P2 : PP()
-    class P3 : PP()
+//    class P2 : PP()
+//    class P3 : PP()
 //
 //    class Point(val x: Int, val y: Int) : PP() {
 //        override fun toString(): String {
@@ -50,12 +50,9 @@ class ObjectGenerationTests {
 //        return d
 //    }
 
-    companion object {
-        @JvmStatic
-        fun foo(a: PP, b: PP) {
-            if (a.javaClass == b.javaClass && a.javaClass != PP::class.java) {
-                println(a)
-            }
+    fun foo(a: PP) {
+        if (a.javaClass != PP::class.java) {
+            println(a)
         }
     }
 }

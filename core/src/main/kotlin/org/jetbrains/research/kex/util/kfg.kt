@@ -1,5 +1,7 @@
 package org.jetbrains.research.kex.util
 
+import org.jetbrains.research.kex.ktype.KexType
+import org.jetbrains.research.kex.ktype.kexType
 import org.jetbrains.research.kex.ktype.type
 import org.jetbrains.research.kfg.ClassManager
 import org.jetbrains.research.kfg.Package
@@ -89,4 +91,12 @@ fun Type.getAllSubtypes(tf: TypeFactory): Set<Type> = when (this) {
     is ClassType -> tf.cm.getAllSubtypesOf(this.klass).map { it.type }.toSet()
     is ArrayType -> this.component.getAllSubtypes(tf).map { tf.getArrayType(it) }.toSet()
     else -> setOf()
+}
+
+fun parseAsConcreteType(typeFactory: TypeFactory, name: String): KexType? {
+    val type = parseStringToType(typeFactory, name)
+    return when {
+        type.isConcrete -> type.kexType
+        else -> null
+    }
 }
