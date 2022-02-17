@@ -12,6 +12,7 @@ import org.jetbrains.research.kex.state.StateBuilder
 import org.jetbrains.research.kex.state.predicate.Predicate
 import org.jetbrains.research.kex.state.predicate.path
 import org.jetbrains.research.kex.state.predicate.state
+import org.jetbrains.research.kex.state.term.NullTerm
 import org.jetbrains.research.kex.state.term.Term
 import org.jetbrains.research.kex.state.term.term
 import org.jetbrains.research.kex.state.transformer.TermRenamer
@@ -957,25 +958,33 @@ class SymbolicTraceBuilder(
     }
 
     override fun addNullityConstraints(inst: String, value: String, concreteValue: Any?) {
-//        val instruction = parseValue(inst) as Instruction
-//
-//        val kfgValue = parseValue(value)
-//        val termValue = mkValue(kfgValue)
-//
-//        if (kfgValue is ThisRef) return
-//        else if (kfgValue in nullChecked) return
-//        else if (termValue is NullTerm) return
-//        nullChecked += kfgValue
-//
-//        val predicate = path {
-//            when (concreteValue) {
-//                null -> termValue equality null
-//                else -> termValue inequality null
-//            }
-//        }
-//
-//        processPath(instruction, predicate)
-//        postProcess(instruction, predicate)
+        val instruction = parseValue(inst) as Instruction
+
+        val kfgValue = parseValue(value)
+        val termValue = mkValue(kfgValue)
+
+        if (kfgValue is ThisRef) return
+        else if (kfgValue in nullChecked) return
+        else if (termValue is NullTerm) return
+        nullChecked += kfgValue
+
+        val checkName = term { value(KexBool(), "${termValue}NullCheck") }
+        val checkPredicate = state { checkName equality (termValue eq null) }
+
+        predicates[checkPredicate] = instruction
+        builder += checkPredicate
+
+
+        val pathPredicate = path {
+            when (concreteValue) {
+                null -> checkName equality true
+                else -> checkName equality false
+            }
+        }
+
+        processPath(instruction, pathPredicate)
+        predicates[pathPredicate] = instruction
+        builder += pathPredicate
     }
 
     override fun addTypeConstraints(inst: String, value: String, concreteValue: Any?) {
@@ -1029,16 +1038,17 @@ class SymbolicTraceBuilder(
 //        postProcess(instruction, predicate)
     }
 
-    private val Any.arraySize: Int get() = when (this) {
-        is BooleanArray -> this.size
-        is ByteArray -> this.size
-        is CharArray -> this.size
-        is ShortArray -> this.size
-        is IntArray -> this.size
-        is LongArray -> this.size
-        is FloatArray -> this.size
-        is DoubleArray -> this.size
-        is Array<*> -> this.size
-        else -> 0
-    }
+    private val Any.arraySize: Int
+        get() = when (this) {
+            is BooleanArray -> this.size
+            is ByteArray -> this.size
+            is CharArray -> this.size
+            is ShortArray -> this.size
+            is IntArray -> this.size
+            is LongArray -> this.size
+            is FloatArray -> this.size
+            is DoubleArray -> this.size
+            is Array<*> -> this.size
+            else -> 0
+        }
 }

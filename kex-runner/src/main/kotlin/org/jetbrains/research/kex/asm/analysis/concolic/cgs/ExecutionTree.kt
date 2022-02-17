@@ -143,7 +143,14 @@ class ExecutionTree : PredecessorGraph<Vertex>, Viewable {
     } ?: false
 
     fun contexts(pathVertex: PathVertex, k: Int): List<Context> = pathVertex.states.map { (path, state) ->
-        Context(path.reversed().map { edges[it]!! }.filter { !it.dominates(pathVertex) }.take(k), path, state)
+        Context(
+            path.reversed()
+                .map { edges[it]!! }
+                .filter { !it.dominates(pathVertex) }
+                .take(k),
+            path,
+            state
+        )
     }
 
     private fun getBranchDepths(): Map<PathVertex, Int> {
