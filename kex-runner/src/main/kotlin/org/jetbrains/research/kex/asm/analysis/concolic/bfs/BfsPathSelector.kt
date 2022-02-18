@@ -13,12 +13,16 @@ import org.jetbrains.research.kfg.ir.value.IntConstant
 import org.jetbrains.research.kfg.ir.value.instruction.BranchInst
 import org.jetbrains.research.kfg.ir.value.instruction.SwitchInst
 import org.jetbrains.research.kfg.ir.value.instruction.TableSwitchInst
+import org.jetbrains.research.kfg.type.TypeFactory
 import org.jetbrains.research.kthelper.assert.unreachable
 import org.jetbrains.research.kthelper.collection.dequeOf
 import org.jetbrains.research.kthelper.logging.log
 
 
-class BfsPathSelectorImpl(override val traceManager: TraceManager<InstructionTrace>) : PathSelector {
+class BfsPathSelectorImpl(
+    override val tf: TypeFactory,
+    override val traceManager: TraceManager<InstructionTrace>
+) : PathSelector {
     private val coveredPaths = mutableSetOf<PathCondition>()
     private val candidates = mutableSetOf<PathCondition>()
     private val deque = dequeOf<SymbolicState>()

@@ -158,8 +158,8 @@ class InstructionConcolicChecker(
     }
 
     private fun buildPathSelector(traceManager: TraceManager<InstructionTrace>) = when (searchStrategy) {
-        "bfs" -> BfsPathSelectorImpl(traceManager)
-        "cgs" -> ContextGuidedSelector(traceManager)
+        "bfs" -> BfsPathSelectorImpl(ctx.types, traceManager)
+        "cgs" -> ContextGuidedSelector(ctx.types, traceManager)
         else -> unreachable { log.error("Unknown type of search strategy $searchStrategy") }
     }
 

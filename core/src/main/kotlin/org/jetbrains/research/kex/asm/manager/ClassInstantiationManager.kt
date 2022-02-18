@@ -2,19 +2,15 @@ package org.jetbrains.research.kex.asm.manager
 
 import org.jetbrains.research.kex.asm.util.Visibility
 import org.jetbrains.research.kex.asm.util.visibility
-import org.jetbrains.research.kex.ktype.KexClass
-import org.jetbrains.research.kex.ktype.KexReference
+import org.jetbrains.research.kex.ktype.*
 import org.jetbrains.research.kex.ktype.KexRtManager.rtMapped
-import org.jetbrains.research.kex.ktype.KexType
-import org.jetbrains.research.kex.ktype.kexType
 import org.jetbrains.research.kex.util.*
 import org.jetbrains.research.kfg.ClassManager
 import org.jetbrains.research.kfg.ir.Class
 import org.jetbrains.research.kfg.ir.Method
 import org.jetbrains.research.kfg.ir.value.instruction.NewInst
 import org.jetbrains.research.kfg.ir.value.instruction.ReturnInst
-import org.jetbrains.research.kfg.type.ClassType
-import org.jetbrains.research.kfg.type.SystemTypeNames
+import org.jetbrains.research.kfg.type.*
 import org.jetbrains.research.kfg.visitor.ClassVisitor
 import org.jetbrains.research.kthelper.`try`
 
@@ -28,6 +24,12 @@ interface ClassInstantiationManager {
     fun isInstantiable(klass: Class): Boolean
     fun getExternalCtors(klass: Class): Set<Method>
     operator fun get(klass: Class): Class
+    fun get(klass: Class, excludes: Set<Class>): Class
+    fun get(tf: TypeFactory, type: Type, excludes: Set<Class>): Type = when (type) {
+        is ClassType -> get(type.klass, excludes).type
+        is ArrayType -> tf.getArrayType(get(tf, type.component, excludes))
+        else -> type
+    }
 
     fun getConcreteClass(klass: KexClass, cm: ClassManager): KexClass = get(klass.kfgClass(cm.type)).kexType
     fun getConcreteType(type: KexType, cm: ClassManager): KexType = when (type) {
@@ -54,7 +56,7 @@ private object ClassInstantiationManagerImpl : ClassInstantiationManager {
             unmodifiableList to setOf(unmodifiableList.rtMapped),
             unmodifiableSet to setOf(unmodifiableSet.rtMapped),
             unmodifiableMap to setOf(unmodifiableMap.rtMapped),
-            charSequence to setOf(charSequence.rtMapped)
+            charSequence to setOf(stringClass.rtMapped)
         )
     }
     private val classInstantiationInfo = mutableMapOf<Class, MutableSet<Class>>()
@@ -78,6 +80,22 @@ private object ClassInstantiationManagerImpl : ClassInstantiationManager {
                 if (klass in it) klass
                 else it.random()
             }
+        }
+    }.getOrElse {
+        throw NoConcreteInstanceException(klass)
+    }
+
+    override fun get(klass: Class, excludes: Set<Class>): Class = `try` {
+        when (klass.fullName) {
+            in predefinedConcreteInstanceInfo ->
+                (predefinedConcreteInstanceInfo.getValue(klass.fullName) - excludes.map { it.fullName }.toSet())
+                    .random()
+                    .let { klass.cm[it] }
+            else ->
+                (classInstantiationInfo.getOrDefault(klass, setOf()) - excludes).let {
+                    if (klass in it) klass
+                    else it.random()
+                }
         }
     }.getOrElse {
         throw NoConcreteInstanceException(klass)

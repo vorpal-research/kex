@@ -9,7 +9,7 @@ import org.jetbrains.research.kthelper.collection.queueOf
 import org.jetbrains.research.kthelper.graph.*
 
 
-sealed class Vertex : PredecessorGraph.PredecessorVertex<Vertex> {
+sealed class Vertex(val clause: Clause) : PredecessorGraph.PredecessorVertex<Vertex> {
     val upEdges = mutableSetOf<Vertex>()
     val downEdges = mutableSetOf<Vertex>()
     val states = mutableMapOf<PathCondition, SymbolicState>()
@@ -33,11 +33,11 @@ sealed class Vertex : PredecessorGraph.PredecessorVertex<Vertex> {
     }
 }
 
-class ClauseVertex(val clause: Clause) : Vertex() {
+class ClauseVertex(clause: Clause) : Vertex(clause) {
     override fun toString() = "${clause.predicate}"
 }
 
-data class PathVertex(val clause: Clause) : Vertex() {
+class PathVertex(clause: Clause) : Vertex(clause) {
     override fun toString() = "${clause.predicate}"
 }
 
