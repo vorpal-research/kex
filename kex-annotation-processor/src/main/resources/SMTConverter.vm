@@ -297,7 +297,11 @@ class ${solver}Converter(val tf: TypeFactory) : ${solver}SMTConverter() {
 
         val typeVar = ef.getTypeVar(newarray.lhv.type.getKfgType(tf))
         ctx.writeBitvectorProperty(lhv, memspace, "type", typeVar)
-        return lhv.withPtrAxioms(ef, ctx, TermType.LOCAL_PTR) eq ptr
+
+        val lengthProperty = ctx.readWordProperty(lhv, memspace, "length")
+        return lhv
+            .withPtrAxioms(ef, ctx, TermType.LOCAL_PTR)
+            .withAxiom(lengthProperty ge ef.makeIntConst(0)) eq ptr
     }
 
     fun convert(new: NewPredicate, ef: Factory_, ctx: Context_): Bool_ {
