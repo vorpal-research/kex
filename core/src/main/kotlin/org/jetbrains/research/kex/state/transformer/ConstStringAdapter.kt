@@ -117,7 +117,7 @@ class TypeNameAdapter(
 
         val constStrings = getConstStringMap(ps)
         val strings = collectTypes(tf, ps)
-            .filter { it !is KexReference }
+            .map { it.unreferenced() }
             .map { term { const(it.javaName) } as ConstStringTerm }
             .toMutableSet()
         if (strings.isNotEmpty()) {

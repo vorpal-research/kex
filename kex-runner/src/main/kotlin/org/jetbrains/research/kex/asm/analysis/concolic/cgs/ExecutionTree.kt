@@ -41,45 +41,6 @@ data class PathVertex(val clause: Clause) : Vertex() {
     override fun toString() = "${clause.predicate}"
 }
 
-//sealed class Edge {
-//    private val vertices = mutableListOf<Vertex?>(null, null)
-//
-//    var entry: Vertex
-//        get() = vertices.first()!!
-//        set(value) {
-//            vertices[0] = value
-//        }
-//    var exit
-//        get() = vertices.last()!!
-//        set(value) {
-//            vertices[1] = value
-//        }
-//}
-//
-//class StraightEdge : Edge() {
-//    override fun toString() = ""
-//
-//    override fun hashCode(): Int {
-//        return javaClass.hashCode()
-//    }
-//
-//    override fun equals(other: Any?): Boolean {
-//        if (this === other) return true
-//        if (other !is StraightEdge) return false
-//        return true
-//    }
-//}
-
-//data class PathEdge(val clause: Clause) : Edge() {
-//    val traces = mutableMapOf<PathCondition, SymbolicState>()
-//
-//    operator fun set(path: PathCondition, state: SymbolicState) {
-//        traces[path] = state
-//    }
-//
-//    override fun toString() = "${clause.predicate}"
-//}
-
 data class Context(
     val context: List<PathVertex>,
     val fullPath: PathCondition,
@@ -102,6 +63,8 @@ class ExecutionTree : PredecessorGraph<Vertex>, Viewable {
         get() = _nodes.values.toSet()
     var depth: Int = 0
         private set
+
+    fun getPathVertex(clause: Clause) = edges.getValue(clause)
 
     fun getBranches(depth: Int): Set<PathVertex> = getBranchDepths().filter { it.value == depth }.keys
 
@@ -188,8 +151,8 @@ class ExecutionTree : PredecessorGraph<Vertex>, Viewable {
             for (vertex in nodes) {
                 val current = graphNodes.getValue(vertex)
                 for (child in vertex.downEdges) {
-                    val suffix = depths[child]?.let { " - $it" } ?: ""
-                    current.addSuccessor(graphNodes.getValue(child), "$child$suffix")
+                    val suffix = depths[child]?.let { "$it" } ?: ""
+                    current.addSuccessor(graphNodes.getValue(child), suffix)
                 }
             }
 

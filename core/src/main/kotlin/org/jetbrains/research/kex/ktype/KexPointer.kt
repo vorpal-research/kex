@@ -117,6 +117,11 @@ class KexNull : KexPointer() {
     }
 }
 
+fun KexType.unreferenced(): KexType = when (this) {
+    is KexReference -> this.reference.unreferenced()
+    else -> this
+}
+
 fun KexType.asArray() = KexArray(this)
 val KexType.isArray get() = this is KexArray
 fun KexString() = KexClass(SystemTypeNames.stringClass)

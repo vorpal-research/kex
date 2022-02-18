@@ -18,24 +18,38 @@ import org.jetbrains.research.kfg.ir.value.instruction.TableSwitchInst
 import org.jetbrains.research.kthelper.assert.unreachable
 import org.jetbrains.research.kthelper.logging.log
 
-class ContextGuidedSelector(override val traceManager: TraceManager<InstructionTrace>) : PathSelector {
+class ContextGuidedSelector(
+    override val traceManager: TraceManager<InstructionTrace>
+) : PathSelector {
     val executionTree = ExecutionTree()
     var currentDepth = 0
         private set
     var k = 1
         private set
     private var branchIterator: Iterator<PathVertex> = listOf<PathVertex>().iterator()
-    private var currentContext: Context? = null
     private val visitedContexts = mutableSetOf<Context>()
+    private val revertedVertices = mutableSetOf<PathVertex>()
+    private var state: State? = null
+
+    private class State(
+        val context: Context,
+        val path: List<Clause>,
+        val activeClause: Clause,
+        val revertedClause: Clause
+    )
 
     override suspend fun hasNext(): Boolean {
         do {
             yield()
             val next = nextEdge() ?: continue
+            if (next in revertedVertices) continue
             when (val context = executionTree.contexts(next, k).firstOrNull { it !in visitedContexts }) {
                 null -> continue
                 else -> {
-                    currentContext = context
+                    val path = context.fullPath.dropLast(1)
+                    val activeClause = context.fullPath.lastOrNull() ?: continue
+                    val revertedClause = activeClause.reversed() ?: continue
+                    state = State(context, path, activeClause, revertedClause)
                     return true
                 }
             }
@@ -44,23 +58,23 @@ class ContextGuidedSelector(override val traceManager: TraceManager<InstructionT
     }
 
     override suspend fun next(): SymbolicState {
-        val context = currentContext!!
-        visitedContexts += context
-        currentContext = null
+        val currentState = state!!
+        visitedContexts += currentState.context
+        state = null
 
-        val path = context.fullPath.dropLast(1)
-        val reversed = context.fullPath.last()
-        val state = context.symbolicState.state.takeWhile {
-            it == reversed.predicate
+        revertedVertices += executionTree.getPathVertex(currentState.activeClause)
+
+        val state = currentState.context.symbolicState.state.takeWhile {
+            it == currentState.activeClause.predicate
         }.filter { it.type !is PredicateType.Path }
 
         return SymbolicStateImpl(
             state,
-            PathCondition(path + reversed.reversed()!!),
-            context.symbolicState.concreteValueMap,
-            context.symbolicState.termMap,
-            context.symbolicState.predicateMap,
-            context.symbolicState.trace
+            PathCondition(currentState.path + currentState.revertedClause),
+            currentState.context.symbolicState.concreteValueMap,
+            currentState.context.symbolicState.termMap,
+            currentState.context.symbolicState.predicateMap,
+            currentState.context.symbolicState.trace
         )
     }
 

@@ -115,7 +115,10 @@ class InstructionConcolicChecker(
         return runner.run(klassName, ExecutorTestCasePrinter.SETUP_METHOD, ExecutorTestCasePrinter.TEST_METHOD)
     }
 
-    private fun prepareState(method: Method, state: PredicateState): PredicateState = transform(state) {
+    private fun prepareState(
+        method: Method,
+        state: PredicateState
+    ): PredicateState = transform(state) {
         +KexRtAdapter(cm)
         +RecursiveInliner(PredicateStateAnalysis(cm)) { index, psa ->
             ConcolicInliner(
@@ -142,8 +145,9 @@ class InstructionConcolicChecker(
 
     private fun check(method: Method, state: SymbolicState): ExecutionResult? {
         val checker = Checker(method, ctx, PredicateStateAnalysis(cm))
-        val preparedState = prepareState(method, state.state)
-        val result = checker.check(preparedState, state.path.asState())
+        val query = state.path.asState()
+        val preparedState = prepareState(method, state.state + query)
+        val result = checker.check(preparedState)
         if (result !is Result.SatResult) return null
 
         return tryOrNull {
