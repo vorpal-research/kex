@@ -85,7 +85,8 @@ open class $valexpr : ${solver}SMTExpr {
     fun getSort() = engine.getSort(ctx, expr)
 
     fun asAxiom() = spliceAxioms(ctx, expr, axiom)
-    open fun withAxiom(ax: $valexpr) = $valexpr(ctx, expr, ax.asAxiom())
+    fun axiomExpr() = $Bool(ctx, axiom)
+    open fun withAxiom(ax: $valexpr): $valexpr = $valexpr(ctx, expr, ax.asAxiom())
 
     open fun simplify() = $valexpr(ctx, engine.simplify(ctx, expr), engine.simplify(ctx, axiom))
 

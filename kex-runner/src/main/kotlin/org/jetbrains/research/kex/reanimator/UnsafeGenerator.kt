@@ -11,7 +11,6 @@ import org.jetbrains.research.kex.random.GenerationException
 import org.jetbrains.research.kex.reanimator.actionsequence.ActionSequence
 import org.jetbrains.research.kex.reanimator.actionsequence.generator.UnknownGenerator
 import org.jetbrains.research.kex.reanimator.codegen.ExecutorTestCasePrinter
-import org.jetbrains.research.kex.reanimator.codegen.klassName
 import org.jetbrains.research.kex.reanimator.codegen.packageName
 import org.jetbrains.research.kex.smt.SMTModel
 import org.jetbrains.research.kex.state.PredicateState
@@ -27,10 +26,11 @@ private val visibilityLevel by lazy {
 
 class UnsafeGenerator(
     override val ctx: ExecutionContext,
-    val method: Method
+    val method: Method,
+    val testName: String
 ) : ParameterGenerator {
     private val csGenerator = UnknownGenerator(ctx, PredicateStateAnalysis(ctx.cm), visibilityLevel)
-    private val printer = ExecutorTestCasePrinter(ctx, method.packageName, method.klassName)
+    private val printer = ExecutorTestCasePrinter(ctx, method.packageName, testName)
     val testKlassName = printer.fullKlassName
 
     fun generate(descriptors: Parameters<Descriptor>) = try {

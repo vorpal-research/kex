@@ -3,6 +3,11 @@
 package org.jetbrains.research.kex.test.debug
 
 class ObjectGenerationTests {
+    companion object {
+        @JvmStatic
+        var int = 7
+    }
+
     open class PP
 //    class P2 : PP()
 //    class P3 : PP()
@@ -50,8 +55,8 @@ class ObjectGenerationTests {
 //        return d
 //    }
 
-    fun foo(a: PP) {
-        if (a.javaClass != PP::class.java) {
+    fun foo(a: PP?) {
+        if (a != null && int > 10) {
             println(a)
         }
     }

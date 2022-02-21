@@ -20,6 +20,7 @@ import org.jetbrains.research.kex.parameters.asDescriptors
 import org.jetbrains.research.kex.parameters.concreteParameters
 import org.jetbrains.research.kex.reanimator.UnsafeGenerator
 import org.jetbrains.research.kex.reanimator.codegen.ExecutorTestCasePrinter
+import org.jetbrains.research.kex.reanimator.codegen.klassName
 import org.jetbrains.research.kex.smt.Checker
 import org.jetbrains.research.kex.smt.Result
 import org.jetbrains.research.kex.state.PredicateState
@@ -71,6 +72,7 @@ class InstructionConcolicChecker(
 
     private val timeLimit = kexConfig.getLongValue("concolic", "timeLimit", 100000L)
     private val searchStrategy = kexConfig.getStringValue("concolic", "searchStrategy", "bfs")
+    private var testIndex = 0
 
     override fun cleanup() {}
 
@@ -102,7 +104,7 @@ class InstructionConcolicChecker(
         collectTrace(method, parameters.asDescriptors)
 
     private fun collectTrace(method: Method, parameters: Parameters<Descriptor>): ExecutionResult? = tryOrNull {
-        val generator = UnsafeGenerator(ctx, method)
+        val generator = UnsafeGenerator(ctx, method, method.klassName + testIndex++)
         generator.generate(parameters)
         val testFile = generator.emit()
 
@@ -164,6 +166,7 @@ class InstructionConcolicChecker(
     }
 
     private suspend fun processMethod(method: Method) {
+        testIndex = 0
         val pathIterator = buildPathSelector(traceManager)
         getRandomTrace(method)?.let {
             pathIterator.addExecutionTrace(method, it)

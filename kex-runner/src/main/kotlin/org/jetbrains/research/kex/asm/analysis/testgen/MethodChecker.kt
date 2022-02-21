@@ -15,6 +15,7 @@ import org.jetbrains.research.kex.random.GenerationException
 import org.jetbrains.research.kex.random.Randomizer
 import org.jetbrains.research.kex.reanimator.ParameterGenerator
 import org.jetbrains.research.kex.reanimator.UnsafeGenerator
+import org.jetbrains.research.kex.reanimator.codegen.klassName
 import org.jetbrains.research.kex.reanimator.codegen.validName
 import org.jetbrains.research.kex.serialization.KexSerializer
 import org.jetbrains.research.kex.smt.Checker
@@ -80,7 +81,7 @@ open class MethodChecker(
     }
 
     protected open fun initializeGenerator(method: Method) {
-        generator = UnsafeGenerator(ctx, method)
+        generator = UnsafeGenerator(ctx, method, method.klassName)
     }
 
     protected open fun getSearchStrategy(method: Method): SearchStrategy = DfsStrategy(method)

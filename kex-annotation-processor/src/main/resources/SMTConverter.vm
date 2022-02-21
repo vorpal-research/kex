@@ -580,7 +580,9 @@ class ${solver}Converter(val tf: TypeFactory) : ${solver}SMTConverter() {
             TypeSize.WORD -> ctx.readWordProperty(ptr, memspace, "${ klass }.${ name }")
             TypeSize.DWORD -> ctx.readDWordProperty(ptr, memspace, "${ klass }.${ name }")
         }
-        return fieldload.withAxioms(cast(fieldload.type, res), ef, ctx)
+        return fieldload
+            .withAxioms(cast(fieldload.type, res), ef, ctx)
+            .withAxiom(ptr.axiomExpr())
     }
 
     fun convert(field: FieldTerm, ef: Factory_, ctx: Context_): Dynamic_ =

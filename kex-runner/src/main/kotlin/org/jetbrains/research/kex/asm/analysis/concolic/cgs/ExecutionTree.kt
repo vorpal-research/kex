@@ -167,7 +167,7 @@ class ExecutionTree : PredecessorGraph<Vertex>, Viewable {
             else -> when (val pred = clause.predicate) {
                 is EqualityPredicate -> when (val lhv = pred.lhv) {
                     is InstanceOfTerm -> false
-                    else -> true
+                    else -> neighbors.size == 2
                 }
                 else -> false
             }
