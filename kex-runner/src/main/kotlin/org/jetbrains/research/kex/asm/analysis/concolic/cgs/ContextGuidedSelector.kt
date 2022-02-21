@@ -37,7 +37,6 @@ class ContextGuidedSelector(
         private set
     private var branchIterator: Iterator<PathVertex> = listOf<PathVertex>().iterator()
     private val visitedContexts = mutableSetOf<Context>()
-    private val revertedVertices = mutableSetOf<PathVertex>()
     private var state: State? = null
 
     private class State(
@@ -51,7 +50,7 @@ class ContextGuidedSelector(
         do {
             yield()
             val next = nextEdge() ?: continue
-            if (next in revertedVertices) continue
+            if (executionTree.isExhausted(next)) continue
             when (val context = executionTree.contexts(next, k).firstOrNull { it !in visitedContexts }) {
                 null -> continue
                 else -> {
@@ -70,8 +69,6 @@ class ContextGuidedSelector(
         val currentState = state!!
         visitedContexts += currentState.context
         state = null
-
-        revertedVertices += executionTree.getPathVertex(currentState.activeClause)
 
         val state = currentState.context.symbolicState.state.takeWhile {
             it == currentState.activeClause.predicate
@@ -209,6 +206,7 @@ class ContextGuidedSelector(
                             (lhv.operand `is` newType.kexType) equality true
                         })
                     } catch (e: NoConcreteInstanceException) {
+                        executionTree.markExhausted(this)
                         null
                     }
                 }

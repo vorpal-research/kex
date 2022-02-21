@@ -1,10 +1,16 @@
 package org.jetbrains.research.kex.asm.analysis.concolic.cgs
 
 import org.jetbrains.research.kex.state.BasicState
+import org.jetbrains.research.kex.state.predicate.EqualityPredicate
 import org.jetbrains.research.kex.state.predicate.PredicateType
+import org.jetbrains.research.kex.state.term.InstanceOfTerm
 import org.jetbrains.research.kex.trace.symbolic.Clause
 import org.jetbrains.research.kex.trace.symbolic.PathCondition
 import org.jetbrains.research.kex.trace.symbolic.SymbolicState
+import org.jetbrains.research.kex.util.length
+import org.jetbrains.research.kfg.ir.value.instruction.BranchInst
+import org.jetbrains.research.kfg.ir.value.instruction.SwitchInst
+import org.jetbrains.research.kfg.ir.value.instruction.TableSwitchInst
 import org.jetbrains.research.kthelper.collection.queueOf
 import org.jetbrains.research.kthelper.graph.*
 
@@ -55,6 +61,7 @@ class ExecutionTree : PredecessorGraph<Vertex>, Viewable {
     private var _root: Vertex? = null
     private var dominators: DominatorTree<Vertex>? = null
     private val edges = mutableMapOf<Clause, PathVertex>()
+    private val exhaustedVertices = mutableSetOf<PathVertex>()
 
     val hasEntry get() = _root != null
 
@@ -65,6 +72,13 @@ class ExecutionTree : PredecessorGraph<Vertex>, Viewable {
         private set
 
     fun getPathVertex(clause: Clause) = edges.getValue(clause)
+
+    fun isExhausted(clause: Clause) = isExhausted(getPathVertex(clause))
+    fun isExhausted(vertex: PathVertex) = vertex in exhaustedVertices
+
+    fun markExhausted(clause: Clause) {
+        exhaustedVertices += getPathVertex(clause)
+    }
 
     fun getBranches(depth: Int): Set<PathVertex> = getBranchDepths().filter { it.value == depth }.keys
 
@@ -92,6 +106,10 @@ class ExecutionTree : PredecessorGraph<Vertex>, Viewable {
             prevVertex?.let { prev ->
                 prev.addDownEdge(currentVertex)
                 currentVertex.addUpEdge(prev)
+            }
+
+            if (currentVertex is PathVertex && !isExhausted(currentVertex) && currentVertex.isExhaustive) {
+                exhaustedVertices += currentVertex
             }
 
             prevVertex = currentVertex
@@ -137,6 +155,23 @@ class ExecutionTree : PredecessorGraph<Vertex>, Viewable {
             }
         }
         return search
+    }
+
+    private val PathVertex.isExhaustive: Boolean get() {
+        val neighbors = this.predecessors.flatMap { it.successors }
+
+        return when (val inst = clause.instruction) {
+            is BranchInst -> neighbors.size == 2
+            is SwitchInst -> neighbors.size == (inst.branches.size + 1)
+            is TableSwitchInst -> neighbors.size == (inst.range.length + 1)
+            else -> when (val pred = clause.predicate) {
+                is EqualityPredicate -> when (val lhv = pred.lhv) {
+                    is InstanceOfTerm -> false
+                    else -> true
+                }
+                else -> false
+            }
+        }
     }
 
     override val graphView: List<GraphView>
