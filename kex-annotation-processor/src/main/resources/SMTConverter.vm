@@ -1,0 +1,792 @@
+#parse("definitions.vm")
+import org.jetbrains.research.kex.smt.${solver.toLowerCase()}.${solver}SMTConverter
+import org.jetbrains.research.kex.state.*
+import org.jetbrains.research.kex.state.predicate.*
+import org.jetbrains.research.kex.state.term.*
+import org.jetbrains.research.kex.state.transformer.memspace
+import org.jetbrains.research.kex.state.transformer.*
+import org.jetbrains.research.kfg.ir.Class
+import org.jetbrains.research.kfg.ir.value.instruction.BinaryOpcode
+import org.jetbrains.research.kfg.ir.value.instruction.CmpOpcode
+import org.jetbrains.research.kex.config.kexConfig
+import org.jetbrains.research.kfg.type.ClassType
+import org.jetbrains.research.kfg.type.Type
+import org.jetbrains.research.kfg.type.TypeFactory
+import org.jetbrains.research.kfg.type.NullType
+import org.jetbrains.research.kthelper.collection.dequeOf
+import java.util.*
+
+private typealias Factory_ = $factory
+private typealias Context_ = ${solver}Context
+
+@Suppress("UNUSED_PARAMETER", "UNUSED_VARIABLE")
+class ${solver}Converter(val tf: TypeFactory) : ${solver}SMTConverter() {
+    private val bounds = dequeOf< Map< Term, Dynamic_ >>()
+    private val axiomedTerms = mutableSetOf< Term >()
+
+    enum class TermType {
+        LOCAL_PTR,
+        STATIC_PTR,
+        OUTER_PTR,
+        PRIMARY
+    }
+
+    private fun Dynamic_.withPtrAxioms(ef: Factory_, ctx: Context_, type: TermType): Dynamic_ = when (type) {
+        TermType.LOCAL_PTR -> withAxiom(
+            (this ge ef.makeIntConst(Context_.STARTING_LOCAL_PTR)) and (this lt ef.makeIntConst(Context_.STARTING_STATIC_PTR))
+        )
+        TermType.STATIC_PTR -> withAxiom(
+            (this ge ef.makeIntConst(Context_.STARTING_STATIC_PTR))
+        )
+        TermType.OUTER_PTR -> withAxiom(
+            (this lt ef.makeIntConst(Context_.STARTING_LOCAL_PTR))
+        )
+        else -> this
+    }
+
+    private fun Term.withAxioms(expr: Dynamic_, ef: Factory_, ctx: Context_): Dynamic_ {
+        if (this in axiomedTerms) return expr
+        var resultExpr = expr
+        when (this.type) {
+            is KexPointer -> {
+                resultExpr = resultExpr.withAxiom(resultExpr ge ef.makeIntConst(0))
+                val typeVar = ctx.readBitvectorProperty(expr as Ptr_, this.memspace, "type")
+                val kfgType = this.type.getKfgType(tf)
+                var typeCond: Bool_? = null
+                if (kfgType.isConcrete && kfgType !is NullType) {
+                    val isPowerOfTwo = (typeVar and (typeVar - ef.makeBitvectorConst("1", 2, ef.typeWidth))) eq ef.makeBitvectorConst("0", 2, ef.typeWidth)
+                    val isSubtype = (typeVar and ef.getSubTypeMask(kfgType)) eq typeVar
+                    val isGreaterThanZero = typeVar neq ef.makeBitvectorConst("0", 2, ef.typeWidth)
+                    typeCond = isSubtype and isPowerOfTwo and isGreaterThanZero
+                }
+                typeCond?.apply {
+                    resultExpr = resultExpr.withAxiom((expr neq ef.makeNull()) implies this)
+                }
+                if (this.type is KexArray) {
+                    val lengthVar = ctx.readWordProperty(expr, this.memspace, "length")
+                    resultExpr = resultExpr
+                        .withAxiom(lengthVar ge ef.makeIntConst(0))
+                } else if (this.type == KexJavaClass()) {
+                    val typeIndex = ctx.readBitvectorProperty(expr, this.memspace, "${ this.type }.${ ConstClassTerm.TYPE_INDEX_PROPERTY }")
+                    val name = ctx.readWordProperty(expr, this.memspace, "${ this.type }.${ ConstClassTerm.NAME_PROPERTY }")
+                    val modifiers = ctx.readWordProperty(expr, this.memspace, "${ this.type }.${ ConstClassTerm.MODIFIERS_PROPERTY }")
+                    resultExpr = resultExpr.withAxiom(ef.addClassNameAxioms(typeIndex, name))
+                    resultExpr = resultExpr.withAxiom(ef.addClassModifiersAxioms(typeIndex, modifiers))
+                }
+            }
+            is KexByte -> {
+                resultExpr = resultExpr
+                        .withAxiom(expr ge ef.makeIntConst(Byte.MIN_VALUE.toInt()))
+                        .withAxiom(expr le ef.makeIntConst(Byte.MAX_VALUE.toInt()))
+            }
+            is KexChar -> {
+                resultExpr = resultExpr
+                        .withAxiom(expr ge ef.makeIntConst(Char.MIN_VALUE.code))
+                        .withAxiom(expr le ef.makeIntConst(Char.MAX_VALUE.code))
+            }
+            is KexShort -> {
+                resultExpr = resultExpr
+                        .withAxiom(expr ge ef.makeIntConst(Short.MIN_VALUE.toInt()))
+                        .withAxiom(expr le ef.makeIntConst(Short.MAX_VALUE.toInt()))
+            }
+        }
+        return resultExpr
+    }
+
+    private fun cast(type: KexType, expr: Dynamic_): Dynamic_ =
+            when (type) {
+                is KexLong -> Long_.forceCast(expr)
+                is KexBool -> Bool_.forceCast(expr)
+                is KexIntegral -> Int_.forceCast(expr)
+                is KexFloat -> Float_.forceCast(expr)
+                is KexDouble -> Double_.forceCast(expr)
+                is KexClass -> Ptr_.forceCast(expr)
+                is KexArray -> Ptr_.forceCast(expr)
+                else -> unreachable { log.error("Unable to cast expr ${ expr } to ${ type }") }
+            }
+
+    private fun convertAndCast(type: KexType, expr: Dynamic_): Dynamic_ =
+            when (type) {
+                is KexLong -> expr.convertToLong()
+                is KexBool -> Bool_.forceCast(expr)
+                is KexIntegral -> expr.convertToInt()
+                is KexFloat -> expr.convertToFloat()
+                is KexDouble -> expr.convertToDouble()
+                is KexClass -> Ptr_.forceCast(expr)
+                is KexArray -> Ptr_.forceCast(expr)
+                else -> unreachable { log.error("Unable to cast expr ${ expr } to ${ type }") }
+            }
+
+
+    fun init(state: PredicateState, ef: Factory_) {
+        val types = collectTypes(tf, state).filter { it !is KexNull }.map { it.getKfgType(tf) }.toSet()
+        ef.initTypes(types)
+        ef.initStrings(getConstStringMap(state))
+    }
+
+    fun convert(ps: PredicateState, ef: Factory_, ctx: Context_, extractPath: Boolean = false): Bool_ = when (ps) {
+#set($states = ["Basic", "Chain", "Choice"])
+#foreach($state in $states)
+        is ${state}State -> convert(ps, ef, ctx, extractPath)
+#end
+        else -> unreachable { log.error("Unknown PS type: ${ ps }") }
+    }
+
+    fun convert(basic: BasicState, ef: Factory_, ctx: Context_, extractPath: Boolean = false): Bool_ =
+        basic.predicates.fold(ef.makeTrue()) { acc, predicate -> acc and convert(predicate, ef, ctx) }
+
+    fun convert(chain: ChainState, ef: Factory_, ctx: Context_, extractPath: Boolean = false): Bool_ =
+        ef.makeTrue() and convert(chain.base, ef, ctx) and convert(chain.curr, ef, ctx)
+
+    fun convert(choice: ChoiceState, ef: Factory_, ctx: Context_, extractPath: Boolean = false): Bool_ {
+        var res = ef.makeFalse()
+        val contexts = IdentityHashMap< Bool_, Context_ >()
+        for (branch in choice) {
+            val newCtx = Context_(ctx)
+            val state = convert(branch, ef, newCtx, extractPath)
+
+            res = res or state
+            if (!extractPath) {
+                val path = branch.filterByType(PredicateType.Path())
+                contexts[convert(path, ef, newCtx, true)] = newCtx
+            }
+        }
+        ctx.switchOn("choice", contexts)
+        return res
+    }
+
+#set($predicates = ["ArrayInitializer", "ArrayStore", "Call", "Catch", "DefaultSwitch", "Inequality", "EnterMonitor",
+    "Equality", "ExitMonitor", "FieldInitializer", "FieldStore", "GenerateArray", "NewArray", "New", "Throw"])
+    fun convert(predicate: Predicate, ef: Factory_, ctx: Context_): Bool_ = when (predicate) {
+#foreach($predicate in $predicates)
+        is ${predicate}Predicate -> convert(predicate, ef, ctx)
+#end
+        else -> unreachable { log.error("Unknown predicate: ${ predicate }") }
+    }
+
+    fun convert(store: ArrayInitializerPredicate, ef: Factory_, ctx: Context_): Bool_ {
+        val indexTerm = store.arrayRef as? ArrayIndexTerm
+            ?: unreachable { log.error("Non-index term in `initializer`") }
+        val memspace = indexTerm.arrayRef.memspace
+        val ptr = convert(indexTerm.arrayRef, ef, ctx) as? Ptr_
+            ?: unreachable { log.error("Non-ptr ref term in `initializer`") }
+        val index = Int_.forceCast(convert(indexTerm.index, ef, ctx))
+        val value = convert(store.value, ef, ctx)
+
+        var array = ctx.readArrayInitialMemory(ptr, memspace)
+        array = array.store(listOf(index to DWord_.forceCast(value)))
+        ctx.initializeArrayMemory(ptr, memspace, array)
+        return ef.makeTrue()
+    }
+
+    fun convert(store: ArrayStorePredicate, ef: Factory_, ctx: Context_): Bool_ {
+        val indexTerm = store.arrayRef as? ArrayIndexTerm
+            ?: unreachable { log.error("Non-index term in `initializer`") }
+        val memspace = store.arrayRef.memspace
+        val ptr = convert(indexTerm.arrayRef, ef, ctx) as? Ptr_
+            ?: unreachable { log.error("Non-ptr ref term in `initializer`") }
+        val index = Int_.forceCast(convert(indexTerm.index, ef, ctx))
+        val value = convert(store.value, ef, ctx)
+
+        var array = ctx.readArrayMemory(ptr, memspace)
+        array = array.store(listOf(index to DWord_.forceCast(value)))
+        ctx.writeArrayMemory(ptr, memspace, array)
+        return ef.makeTrue()
+    }
+
+    fun convert(call: CallPredicate, ef: Factory_, ctx: Context_): Bool_ = ef.makeTrue()
+    fun convert(catch: CatchPredicate, ef: Factory_, ctx: Context_): Bool_ = ef.makeTrue()
+    fun convert(`throw`: ThrowPredicate, ef: Factory_, ctx: Context_): Bool_ = ef.makeTrue()
+    fun convert(monitor: EnterMonitorPredicate, ef: Factory_, ctx: Context_): Bool_ = ef.makeTrue()
+    fun convert(monitor: ExitMonitorPredicate, ef: Factory_, ctx: Context_): Bool_ = ef.makeTrue()
+
+    fun convert(defaultswitch: DefaultSwitchPredicate, ef: Factory_, ctx: Context_): Bool_ {
+        var res = ef.makeTrue()
+        val cond = convert(defaultswitch.cond, ef, ctx) as? Int_
+                        ?: unreachable { log.error("Non-integer term in switch") }
+        for (case in defaultswitch.cases) {
+            val case_ = convert(case, ef, ctx) as? Int_ ?: unreachable { log.error("Non-integer term in switch") }
+            res = res and (cond neq case_).toBool()
+        }
+        return res
+    }
+
+    fun convert(equality: InequalityPredicate, ef: Factory_, ctx: Context_): Bool_ {
+        val lhv = convert(equality.lhv, ef, ctx)
+        val rhv = convert(equality.rhv, ef, ctx)
+        return lhv neq rhv
+    }
+
+    fun convert(equality: EqualityPredicate, ef: Factory_, ctx: Context_): Bool_ {
+        val lhv = convert(equality.lhv, ef, ctx)
+        val rhv = convert(equality.rhv, ef, ctx)
+        return lhv eq rhv
+    }
+
+    fun convert(store: FieldInitializerPredicate, ef: Factory_, ctx: Context_): Bool_ {
+        val value = convert(store.value, ef, ctx)
+        val memspace = store.field.memspace
+        val ptr = convert(store.field, ef, ctx) as? Ptr_ ?: unreachable { log.error("Non-ptr ref in field load") }
+
+        val field = (store.field as FieldTerm)
+        val name = field.fieldName
+        val klass = field.klass
+        val actualType = (field.type as KexReference)
+        when (Factory_.getTypeSize(actualType)) {
+            TypeSize.WORD -> ctx.initializeWordProperty(ptr, memspace, "${ klass }.${ name }", Word_.forceCast(value))
+            TypeSize.DWORD -> ctx.initializeDWordProperty(ptr, memspace, "${ klass }.${ name }", DWord_.forceCast(value))
+        }
+        return ef.makeTrue()
+    }
+
+    fun convert(store: FieldStorePredicate, ef: Factory_, ctx: Context_): Bool_ {
+        val value = convert(store.value, ef, ctx)
+        val memspace = store.field.memspace
+        val ptr = convert(store.field, ef, ctx) as? Ptr_ ?: unreachable { log.error("Non-ptr ref in field load") }
+
+        val field = (store.field as FieldTerm)
+        val name = field.fieldName
+        val klass = field.klass
+        val actualType = (field.type as KexReference)
+        when (Factory_.getTypeSize(actualType)) {
+            TypeSize.WORD -> ctx.writeWordProperty(ptr, memspace, "${ klass }.${ name }", Word_.forceCast(value))
+            TypeSize.DWORD -> ctx.writeDWordProperty(ptr, memspace, "${ klass }.${ name }", DWord_.forceCast(value))
+        }
+        return ef.makeTrue()
+    }
+
+    fun convert(generateArray: GenerateArrayPredicate, ef: Factory_, ctx: Context_): Bool_ {
+        val length = convert(generateArray.length, ef, ctx) as Int_
+        val memspace = generateArray.lhv.memspace
+        val lhv = convert(generateArray.lhv, ef, ctx) as? Ptr_ ?: unreachable { log.error("Non-ptr term in `new`") }
+        val generator = generateArray.generator as LambdaTerm
+
+        val ptr = ctx.getLocalArray(memspace, length)
+        val array = Dynamic_.wrap< Array_ >(ef.lambda(
+            { ef.makeLongConst(0) },
+            { listOf(ef.makeIntConst(0)) }
+        ) { params ->
+            val paramMap = generator.parameters.zip(params).toMap().mapValues { cast(it.key.type, it.value) }
+            bounds.push(paramMap)
+            val index = paramMap[generator.parameters.first()]!!
+            if_ { (ef.makeIntConst(0) le index) and (index lt length) }
+                .then_ {
+                    DWord_.forceCast(convert(generator.body, ef, ctx))
+                }.else_ {
+                    ef.makeLongConst(0)
+                }.also {
+                    bounds.pop()
+                }
+        })
+        ctx.writeArrayMemory(lhv, memspace, array)
+
+        val typeVar = ef.getTypeVar(generateArray.lhv.type.getKfgType(tf))
+        ctx.writeBitvectorProperty(lhv, memspace, "type", typeVar)
+        ctx.writeWordProperty(lhv, memspace, "length", length)
+        return lhv.withPtrAxioms(ef, ctx, TermType.LOCAL_PTR) eq ptr
+    }
+
+    fun convert(newarray: NewArrayPredicate, ef: Factory_, ctx: Context_): Bool_ {
+        val memspace = newarray.lhv.memspace
+        val lhv = convert(newarray.lhv, ef, ctx) as? Ptr_ ?: unreachable { log.error("Non-ptr term in `new`") }
+
+        val length = Int_.forceCast(convert(newarray.dimensions.fold(term { const(1) }) { acc: Term, term: Term -> term { acc * term} }, ef, ctx))
+        val ptr = ctx.getLocalArray(memspace, length)
+        val array = ef.makeDefaultArray(newarray.lhv.name, ef.makeLongConst(0))
+        ctx.writeArrayMemory(lhv, memspace, array)
+
+        val typeVar = ef.getTypeVar(newarray.lhv.type.getKfgType(tf))
+        ctx.writeBitvectorProperty(lhv, memspace, "type", typeVar)
+
+        val lengthProperty = ctx.readWordProperty(lhv, memspace, "length")
+        return lhv
+            .withPtrAxioms(ef, ctx, TermType.LOCAL_PTR)
+            .withAxiom(lengthProperty ge ef.makeIntConst(0)) eq ptr
+    }
+
+    fun convert(new: NewPredicate, ef: Factory_, ctx: Context_): Bool_ {
+        val memspace = new.lhv.memspace
+        val lhv = convert(new.lhv, ef, ctx) as? Ptr_ ?: unreachable { log.error("Non-ptr term in `new`") }
+
+        val typeVar = ef.getTypeVar(new.lhv.type.getKfgType(tf))
+        ctx.writeBitvectorProperty(lhv, memspace, "type", typeVar)
+        return lhv.withPtrAxioms(ef, ctx, TermType.LOCAL_PTR) eq ctx.getLocalPtr(memspace)
+    }
+
+#set($terms = ["Argument", "ArrayContains", "ArrayIndex", "ArrayLength", "ArrayLoad", "Binary", "Call", "Cast", "ClassAccess", "CharAt",
+    "Cmp", "Concat", "ConstBool", "ConstByte", "ConstChar", "ConstClass", "StaticClassRef", "ConstDouble", "ConstFloat", "ConstInt", "ConstLong",
+    "ConstShort", "ConstString", "EndsWith", "Equals", "Exists", "IndexOf", "StartsWith", "StringContains", "StringLength",
+    "StringParse", "Substring", "ToString", "FieldLoad", "ForAll", "Field", "InstanceOf", "Ite", "Lambda", "Neg",
+    "Null", "ReturnValue", "Value", "Undef"])
+    fun convert(term: Term, ef: Factory_, ctx: Context_): Dynamic_ = when (term) {
+#foreach($term in $terms)
+        is ${term}Term -> convert(term, ef, ctx)
+#end
+        else -> unreachable { log.error("Unknown term type: ${ term }") }
+    }
+
+    fun convert(argument: ArgumentTerm, ef: Factory_, ctx: Context_): Dynamic_ {
+        val expr = ef.getVarByTypeAndName(argument.type, argument.name)
+        var res = argument.withAxioms(expr, ef, ctx)
+        if (argument.type is KexPointer) {
+            res = res.withPtrAxioms(ef, ctx, TermType.OUTER_PTR)
+        }
+        return res
+    }
+
+    fun convert(arrayContains: ArrayContainsTerm, ef: Factory_, ctx: Context_): Dynamic_ {
+        val memspace = arrayContains.array.memspace
+        val ptr = convert(arrayContains.array, ef, ctx) as? Ptr_
+            ?: unreachable { log.error("Non-ptr ref term in `initializer`") }
+        val value = convert(arrayContains.value, ef, ctx)
+        val length = ctx.readWordProperty(ptr, memspace, "length")
+
+        val array = ctx.readArrayMemory(ptr, memspace)
+
+        return ef.exists({
+            listOf(ef.makeIntConst(0))
+        }) { params ->
+            val index = Int_.forceCast(params[0])
+            if_ { (ef.makeIntConst(0) le index) and (index lt length) }
+                .then_ {
+                    DWord_.forceCast(array[index]) eq DWord_.forceCast(value)
+                }.else_ {
+                    ef.makeFalse()
+                }
+        }
+    }
+
+    fun convert(arrayindex: ArrayIndexTerm, ef: Factory_, ctx: Context_): Dynamic_ {
+        // should not be executed anymore
+        return unreachable< Dynamic_ > { log.error("Array index term can't be directly converted into an SMT expression") }
+##        val arrayref = convert(arrayindex.arrayRef, ef, ctx) as? Ptr_
+##            ?: unreachable { log.error("Non-ptr operand of array load") }
+##        val index = (convert(arrayindex.index, ef, ctx) as? Int_
+##            ?: unreachable { log.error("Non-integer index of array load") }) *
+##            ${factory}.getTypeSize(arrayindex.type).int
+##        val valuePtr = Ptr_.forceCast(arrayref + index)
+##        return arrayindex.withAxioms(valuePtr, ef, ctx)
+    }
+
+    fun convert(arraylength: ArrayLengthTerm, ef: Factory_, ctx: Context_): Dynamic_ {
+        val memspace = arraylength.arrayRef.memspace
+        val ptr = convert(arraylength.arrayRef, ef, ctx) as? Ptr_
+            ?: unreachable { log.error("Non-ptr term in `arraylength`") }
+
+        return ctx.readWordProperty(ptr, memspace, "length")
+    }
+
+    fun convert(arrayload: ArrayLoadTerm, ef: Factory_, ctx: Context_): Dynamic_ {
+        val indexTerm = arrayload.arrayRef as? ArrayIndexTerm
+            ?: unreachable { log.error("Non-index term in `initializer`") }
+        val memspace = indexTerm.arrayRef.memspace
+        val ptr = convert(indexTerm.arrayRef, ef, ctx) as? Ptr_
+            ?: unreachable { log.error("Non-ptr ref term in `initializer`") }
+        val index = Int_.forceCast(convert(indexTerm.index, ef, ctx))
+
+        val array = ctx.readArrayMemory(ptr, memspace)
+        val ret = array.load(index)
+        return cast(arrayload.type, ret)
+    }
+
+    fun convert(binary: BinaryTerm, ef: Factory_, ctx: Context_): Dynamic_ {
+        val lhv = convert(binary.lhv, ef, ctx)
+        val rhv = convert(binary.rhv, ef, ctx)
+        return when (binary.opcode) {
+            BinaryOpcode.ADD -> lhv + rhv
+            BinaryOpcode.SUB -> lhv - rhv
+            BinaryOpcode.MUL -> lhv * rhv
+            BinaryOpcode.DIV -> lhv / rhv
+            BinaryOpcode.REM -> lhv % rhv
+            BinaryOpcode.SHL -> lhv shl rhv
+            BinaryOpcode.SHR -> lhv ashr rhv
+            BinaryOpcode.USHR -> lhv shr rhv
+            BinaryOpcode.AND -> lhv and rhv
+            BinaryOpcode.OR -> lhv or rhv
+            BinaryOpcode.XOR -> lhv xor rhv
+        }
+    }
+
+    fun convert(call: CallTerm, ef: Factory_, ctx: Context_): Dynamic_ {
+        val expr = ef.getVarByTypeAndName(call.type, call.name)
+        return call.withAxioms(expr, ef, ctx)
+    }
+
+    fun convert(cast: CastTerm, ef: Factory_, ctx: Context_): Dynamic_ {
+        val op = convert(cast.operand, ef, ctx)
+        val kfgCastType = cast.type.getKfgType(tf)
+        return if (cast.type is KexPointer && kfgCastType.isConcrete) {
+            val typeVar = ctx.readBitvectorProperty(op as Ptr_, cast.operand.memspace, "type")
+            val castedTypeVar = ef.getSubTypeMask(cast.type.getKfgType(tf))
+            val subtype = (typeVar and castedTypeVar) eq typeVar
+            cast(cast.type, op.withAxiom(subtype))
+        } else {
+            convertAndCast(cast.type, op)
+        }
+    }
+
+    fun convert(klass: ClassAccessTerm, ef: Factory_, ctx: Context_): Dynamic_ {
+        val expr = ef.getVarByTypeAndName(klass.type, klass.name) as Ptr_
+        val op = convert(klass.operand, ef, ctx) as Ptr_
+
+        val typeIndex = ctx.readBitvectorProperty(expr, klass.memspace, "${ klass.type }.${ ConstClassTerm.TYPE_INDEX_PROPERTY }")
+        val operandType = ctx.readBitvectorProperty(op, klass.operand.memspace, "type")
+        val res = klass.withAxioms(expr, ef, ctx)
+        return res
+            .withAxiom((op neq ef.makeNull()) implies (res neq ef.makeNull()))
+            .withAxiom((op eq ef.makeNull()) implies (res eq ef.makeNull()))
+            .withAxiom(typeIndex eq operandType)
+    }
+
+    fun convert(charAt: CharAtTerm, ef: Factory_, ctx: Context_): Dynamic_ {
+        val ptr = convert(charAt.string, ef, ctx) as Ptr_
+        val index = convert(charAt.index, ef, ctx) as Int_
+#if($generateString)
+        val str = ctx.readStringMemory(ptr, charAt.string.memspace)
+        return Char_.forceCast(str[index])
+#else
+        TODO("Not supported")
+#end
+    }
+
+#macro(cmp $opcode $default $type)
+    #* @vtlvariable name="type" type="java.lang.String" *#
+    #* @vtlvariable name="opcode" type="java.lang.String" *#
+            CmpOpcode.$opcode -> {
+                val cases = mapOf(
+                    (lhv gt rhv) to ef.makeIntConst(1),
+                    (lhv eq rhv) to ef.makeIntConst(0),
+                    (lhv lt rhv) to ef.makeIntConst(-1)
+                )
+                ef.switch(cases, ef.makeIntConst($default))
+            }
+#end
+    fun convert(cmp: CmpTerm, ef: Factory_, ctx: Context_): Dynamic_ {
+        val lhv = convert(cmp.lhv, ef, ctx)
+        val rhv = convert(cmp.rhv,ef, ctx)
+#set($opcodes = ["EQ", "NEQ", "LT", "GT", "LE", "GE"])
+        return when (cmp.opcode) {
+#foreach($opcode in $opcodes)
+            CmpOpcode.$opcode -> lhv ${opcode.toLowerCase()} rhv
+#end
+#cmp("CMP", 1, "Long_")
+#cmp("CMPG", 1, "Float_")
+#cmp("CMPL", -1, "Double_")
+        }
+    }
+
+    fun convert(concat: ConcatTerm, ef: Factory_, ctx: Context_): Dynamic_ {
+        val lhv = convert(concat.lhv, ef, ctx) as Ptr_
+        val rhv = convert(concat.rhv, ef, ctx) as Ptr_
+#if($generateString)
+        val str = ef.getVarByTypeAndName(concat.type, concat.name)
+        val lhvStr = ctx.readStringMemory(lhv, concat.lhv.memspace)
+        val rhvStr = ctx.readStringMemory(rhv, concat.rhv.memspace)
+        ctx.writeStringMemory(str as Ptr_, concat.memspace, lhvStr + rhvStr)
+        return concat.withAxioms(str, ef, ctx)
+#else
+        TODO("Not supported")
+#end
+    }
+
+    fun convert(const: ConstBoolTerm, ef: Factory_, ctx: Context_): Dynamic_ = ef.makeBoolConst(const.value)
+    fun convert(const: ConstByteTerm, ef: Factory_, ctx: Context_): Dynamic_ = ef.makeIntConst(const.value.toInt())
+    fun convert(const: ConstCharTerm, ef: Factory_, ctx: Context_): Dynamic_ = ef.makeIntConst(const.value.code)
+
+    fun convert(const: ConstClassTerm, ef: Factory_, ctx: Context_): Dynamic_ {
+        val expr = ef.getVarByTypeAndName(const.type, const.name)
+        ef.addKlassPtr(const.constantType, expr as Ptr_)
+
+        val typeIndex = ctx.readBitvectorProperty(expr, const.memspace, "${ const.type }.${ ConstClassTerm.TYPE_INDEX_PROPERTY }")
+        var res = const.withAxioms(expr, ef, ctx)
+        res = res.withPtrAxioms(ef, ctx, TermType.STATIC_PTR)
+        return res
+            .withAxiom(res neq ef.makeNull())
+            .withAxiom(typeIndex eq ef.getTypeVar(const.constantType.getKfgType(tf)))
+    }
+
+    fun convert(const: StaticClassRefTerm, ef: Factory_, ctx: Context_): Dynamic_ {
+        val expr = ef.getVarByTypeAndName(const.type, const.name)
+        var res = const.withAxioms(expr, ef, ctx)
+        res = res.withPtrAxioms(ef, ctx, TermType.STATIC_PTR)
+        return res.withAxiom(res neq ef.makeNull())
+    }
+
+    fun convert(const: ConstDoubleTerm, ef: Factory_, ctx: Context_): Dynamic_ = ef.makeDoubleConst(const.value)
+    fun convert(const: ConstFloatTerm, ef: Factory_, ctx: Context_): Dynamic_ = ef.makeFloatConst(const.value)
+    fun convert(const: ConstIntTerm, ef: Factory_, ctx: Context_): Dynamic_ = ef.makeIntConst(const.value)
+    fun convert(const: ConstLongTerm, ef: Factory_, ctx: Context_): Dynamic_ = ef.makeLongConst(const.value)
+    fun convert(const: ConstShortTerm, ef: Factory_, ctx: Context_): Dynamic_ = ef.makeIntConst(const.value.toInt())
+
+    fun convert(const: ConstStringTerm, ef: Factory_, ctx: Context_): Dynamic_ {
+        val expr = ef.getVarByTypeAndName(const.type, const.name)
+#if($generateString)
+        ctx.writeStringMemory(expr as Ptr_, const.memspace, ef.makeStringConst(const.value))
+#end
+        return const.withAxioms(expr, ef, ctx)
+    }
+
+    fun convert(endsWith: EndsWithTerm, ef: Factory_, ctx: Context_): Dynamic_ {
+#if($generateString)
+        val memspace = endsWith.string.memspace
+        val stringPtr = convert(endsWith.string, ef, ctx) as Ptr_
+        val suffixPtr = convert(endsWith.suffix, ef, ctx) as Ptr_
+        val stringString = ctx.readStringMemory(stringPtr, memspace)
+        val suffixString = ctx.readStringMemory(suffixPtr, memspace)
+        return stringString.endsWith(suffixString)
+#else
+        TODO("Not supported")
+#end
+    }
+
+    fun convert(equals: EqualsTerm, ef: Factory_, ctx: Context_): Dynamic_ {
+        val lhv = convert(equals.lhv, ef, ctx) as Ptr_
+        val rhv = convert(equals.rhv, ef, ctx) as Ptr_
+        // todo: add normal equals
+        return lhv eq rhv
+    }
+
+    fun convert(exists: ExistsTerm, ef: Factory_, ctx: Context_): Bool_ {
+        val start = convert(exists.start, ef, ctx) as Int_
+        val end = convert(exists.end, ef, ctx) as Int_
+        val lambda = exists.body as LambdaTerm
+
+        return ef.exists({
+            listOf(ef.makeIntConst(0))
+        }) { params ->
+            val paramMap = lambda.parameters.zip(params).toMap().mapValues { cast(it.key.type, it.value) }
+            bounds.push(paramMap)
+            val index = paramMap[lambda.parameters.first()]!!
+            if_ { (start le index) and (index lt end) }
+                .then_ {
+                    convert(lambda.body, ef, ctx) as Bool_
+                }.else_ {
+                    ef.makeFalse()
+                }.also {
+                    bounds.pop()
+                }
+        }
+    }
+
+    fun convert(fieldload: FieldLoadTerm, ef: Factory_, ctx: Context_): Dynamic_ {
+        val memspace = fieldload.field.memspace
+        val ptr = convert(fieldload.field, ef, ctx) as? Ptr_ ?: unreachable { log.error("Non-ptr ref in field load") }
+
+        val field = (fieldload.field as FieldTerm)
+        val name = field.fieldName
+        val klass = field.klass
+        val actualType = (field.type as KexReference)
+        val res = when (Factory_.getTypeSize(actualType)) {
+            TypeSize.WORD -> ctx.readWordProperty(ptr, memspace, "${ klass }.${ name }")
+            TypeSize.DWORD -> ctx.readDWordProperty(ptr, memspace, "${ klass }.${ name }")
+        }
+        return fieldload
+            .withAxioms(cast(fieldload.type, res), ef, ctx)
+            .withAxiom(ptr.axiomExpr())
+    }
+
+    fun convert(field: FieldTerm, ef: Factory_, ctx: Context_): Dynamic_ =
+        convert(field.owner, ef, ctx)
+
+    fun convert(forAll: ForAllTerm, ef: Factory_, ctx: Context_): Bool_ {
+        val start = convert(forAll.start, ef, ctx) as Int_
+        val end = convert(forAll.end, ef, ctx) as Int_
+        val lambda = forAll.body as LambdaTerm
+
+        return ef.forAll({
+                listOf(ef.makeIntConst(0))
+            }) { params ->
+            val paramMap = lambda.parameters.zip(params).toMap().mapValues { cast(it.key.type, it.value) }
+            bounds.push(paramMap)
+            val index = paramMap[lambda.parameters.first()]!!
+            if_ { (start le index) and (index lt end) }
+                .then_ {
+                    convert(lambda.body, ef, ctx) as Bool_
+                }.else_ {
+                    ef.makeTrue()
+                }.also {
+                    bounds.pop()
+                }
+        }
+    }
+
+    fun convert(indexOf: IndexOfTerm, ef: Factory_, ctx: Context_): Dynamic_ {
+#if($generateString)
+        val stringPtr = convert(indexOf.string, ef, ctx) as Ptr_
+        val suffixPtr = convert(indexOf.substring, ef, ctx) as Ptr_
+        val offset = convert(indexOf.string, ef, ctx) as Int_
+        val stringString = ctx.readStringMemory(stringPtr, indexOf.string.memspace)
+        val suffixString = ctx.readStringMemory(suffixPtr, indexOf.substring.memspace)
+        return stringString.indexOf(suffixString, offset)
+#else
+        TODO("Not supported")
+#end
+    }
+
+    fun convert(instanceof: InstanceOfTerm, ef: Factory_, ctx: Context_): Dynamic_ {
+        val memspace = instanceof.operand.memspace
+        val operand = convert(instanceof.operand, ef, ctx) as? Ptr_ ?: unreachable { log.error("Non-ptr ref in field load") }
+
+        val ptrType = ctx.readBitvectorProperty(operand, memspace, "type")
+        val kfgType = instanceof.checkedType.getKfgType(tf)
+        return if (kfgType.isConcrete) {
+            val checkedType = ef.getSubTypeMask(instanceof.checkedType.getKfgType(tf))
+            val isSubtype = (ptrType and checkedType) eq ptrType
+            `if`(operand eq ef.makeNull()).then(ef.makeFalse()).`else`(isSubtype)
+        } else {
+            ef.makeTrue()
+        }
+    }
+
+    fun convert(ite: IteTerm, ef: Factory_, ctx: Context_): Dynamic_ {
+        val cond = convert(ite.cond, ef, ctx) as Bool_
+        val lhv = convert(ite.trueValue, ef, ctx)
+        val rhv = convert(ite.falseValue, ef, ctx)
+
+        val res = when (ite.type) {
+            is KexLong -> `if`(cond).then(lhv as Long_).`else`(rhv as Long_)
+            is KexBool -> `if`(cond).then(lhv as Bool_).`else`(rhv as Bool_)
+            is KexIntegral -> `if`(cond).then(lhv as Int_).`else`(rhv as Int_)
+            is KexFloat -> `if`(cond).then(lhv as Float_).`else`(rhv as Float_)
+            is KexDouble -> `if`(cond).then(lhv as Double_).`else`(rhv as Double_)
+            is KexClass -> `if`(cond).then(lhv as Ptr_).`else`(rhv as Ptr_)
+            is KexArray -> `if`(cond).then(lhv as Ptr_).`else`(rhv as Ptr_)
+            else -> unreachable { log.error("Unknown type of Ite term: ${ ite.type }") }
+        }
+        return ite.withAxioms(res, ef, ctx)
+    }
+
+    fun convert(lambda: LambdaTerm, ef: Factory_, ctx: Context_): Dynamic_ {
+        return lambda.withAxioms(ef.getVarByTypeAndName(lambda.type, lambda.name), ef, ctx)
+    }
+
+    fun convert(neg: NegTerm, ef: Factory_, ctx: Context_): Dynamic_ {
+        val operand = convert(neg.operand, ef, ctx)
+        val res = when (operand) {
+            is Bool_ -> Bool_.forceCast(!operand)
+            is Int_ -> Int_.forceCast(!operand)
+            is Long_ -> Long_.forceCast(!operand)
+            is Float_ -> Float_.forceCast(!operand)
+            is Double_ -> Double_.forceCast(!operand)
+            else -> unreachable { log.error("Invalid operand of `neg`: ${ neg.operand }") }
+        }
+        return neg.withAxioms(res, ef, ctx)
+    }
+
+    fun convert(startsWith: StartsWithTerm, ef: Factory_, ctx: Context_): Dynamic_ {
+#if($generateString)
+        val stringPtr = convert(startsWith.string, ef, ctx) as Ptr_
+        val prefixPtr = convert(startsWith.prefix, ef, ctx) as Ptr_
+        val stringString = ctx.readStringMemory(stringPtr, startsWith.string.memspace)
+        val prefixString = ctx.readStringMemory(prefixPtr, startsWith.prefix.memspace)
+        return stringString.startsWith(prefixString)
+#else
+        TODO("Not supported")
+#end
+    }
+
+    fun convert(stringContains: StringContainsTerm, ef: Factory_, ctx: Context_): Dynamic_ {
+#if($generateString)
+        val stringPtr = convert(stringContains.string, ef, ctx) as Ptr_
+        val substringPtr = convert(stringContains.substring, ef, ctx) as Ptr_
+        val stringString = ctx.readStringMemory(stringPtr, stringContains.string.memspace)
+        val prefixString = ctx.readStringMemory(substringPtr, stringContains.substring.memspace)
+        return stringString.contains(prefixString)
+#else
+        TODO("Not supported")
+#end
+    }
+
+    fun convert(stringLength: StringLengthTerm, ef: Factory_, ctx: Context_): Dynamic_ {
+#if($generateString)
+        val stringPtr = convert(stringLength.string, ef, ctx) as Ptr_
+        val stringString = ctx.readStringMemory(stringPtr, stringLength.string.memspace)
+        return stringString.length()
+#else
+        TODO("Not supported")
+#end
+    }
+
+    fun convert(stringParse: StringParseTerm, ef: Factory_, ctx: Context_): Dynamic_ {
+#if($generateString)
+        val stringPtr = convert(stringParse.string, ef, ctx) as Ptr_
+        val string = ctx.readStringMemory(stringPtr, stringParse.string.memspace)
+        return stringParse.withAxioms(when (stringParse.type) {
+            is KexBool -> String_.parseBool(ef.ctx, string)
+            is KexByte -> String_.parseInt(ef.ctx, string)
+            is KexChar -> String_.parseInt(ef.ctx, string)
+            is KexShort -> String_.parseInt(ef.ctx, string)
+            is KexInt -> String_.parseInt(ef.ctx, string)
+            is KexLong -> String_.parseLong(ef.ctx, string)
+            is KexFloat -> String_.parseFloat(ef.ctx, string)
+            is KexDouble -> String_.parseDouble(ef.ctx, string)
+            else -> unreachable { log.error("Unknown type in string parse") }
+        }, ef, ctx)
+#else
+        TODO("Not supported")
+#end
+    }
+
+    fun convert(substring: SubstringTerm, ef: Factory_, ctx: Context_): Dynamic_ {
+#if($generateString)
+        val stringPtr = convert(substring.string, ef, ctx) as Ptr_
+        val offset = convert(substring.offset, ef, ctx) as Int_
+        val length = convert(substring.length, ef, ctx) as Int_
+        val string = ctx.readStringMemory(stringPtr, substring.string.memspace)
+        val result = string.substring(offset, length)
+
+        val expr = ef.getVarByTypeAndName(substring.type, substring.name) as Ptr_
+        ctx.writeStringMemory(expr, substring.memspace, result)
+        return expr
+#else
+        TODO("Not supported")
+#end
+    }
+
+    fun convert(toString: ToStringTerm, ef: Factory_, ctx: Context_): Dynamic_ {
+#if($generateString)
+        val value = convert(toString.value, ef, ctx)
+        val result = toString.withAxioms(when (toString.value.type) {
+            is KexBool -> String_.fromBool(ef.ctx, Bool_.forceCast(value))
+            is KexByte -> String_.fromInt(ef.ctx, Int_.forceCast(value))
+            is KexChar -> String_.fromInt(ef.ctx, Int_.forceCast(value))
+            is KexShort -> String_.fromInt(ef.ctx, Int_.forceCast(value))
+            is KexInt -> String_.fromInt(ef.ctx, Int_.forceCast(value))
+            is KexLong -> String_.fromLong(ef.ctx, Long_.forceCast(value))
+            is KexFloat -> String_.fromFloat(ef.ctx, Float_.forceCast(value))
+            is KexDouble -> String_.fromDouble(ef.ctx, Double_.forceCast(value))
+            else -> unreachable { log.error("Unknown type in string parse") }
+        }, ef, ctx) as String_
+
+        val expr = ef.getVarByTypeAndName(toString.type, toString.name) as Ptr_
+        ctx.writeStringMemory(expr, toString.memspace, result)
+        return expr
+#else
+        TODO("Not supported")
+#end
+    }
+
+    fun convert(`null`: NullTerm, ef: Factory_, ctx: Context_): Dynamic_ = ef.makeNull()
+
+    fun convert(`return`: ReturnValueTerm, ef: Factory_, ctx: Context_): Dynamic_ {
+        val expr = ef.getVarByTypeAndName(`return`.type, `return`.name)
+        return `return`.withAxioms(expr, ef, ctx)
+    }
+
+    fun convert(value: ValueTerm, ef: Factory_, ctx: Context_): Dynamic_ {
+        for (map in bounds) {
+            if (value in map) return map[value]!!;
+        }
+        val expr = ef.getVarByTypeAndName(value.type, value.name)
+        var res = value.withAxioms(expr, ef, ctx)
+        if (value.name == "this") {
+            res = res.withPtrAxioms(ef, ctx, TermType.OUTER_PTR)
+        }
+        return res
+    }
+
+    fun convert(undef: UndefTerm, ef: Factory_, ctx: Context_): Dynamic_ {
+        val expr = ef.getVarByTypeAndName(undef.type, undef.name, true)
+        return undef.withAxioms(expr, ef, ctx)
+    }
+}

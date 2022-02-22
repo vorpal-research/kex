@@ -1,6 +1,9 @@
 package org.jetbrains.research.kex.jacoco
 
-import org.jacoco.core.analysis.*
+import org.jacoco.core.analysis.Analyzer
+import org.jacoco.core.analysis.CoverageBuilder
+import org.jacoco.core.analysis.ICounter
+import org.jacoco.core.analysis.ICoverageNode
 import org.jacoco.core.data.ExecutionDataStore
 import org.jacoco.core.data.SessionInfoStore
 import org.jacoco.core.instr.Instrumenter
@@ -9,22 +12,18 @@ import org.jacoco.core.runtime.LoggerRuntime
 import org.jacoco.core.runtime.RuntimeData
 import org.jetbrains.research.kex.config.kexConfig
 import org.jetbrains.research.kex.jacoco.TestsCompiler.CompiledClassLoader
+import org.jetbrains.research.kex.launcher.KexLauncher
 import org.jetbrains.research.kfg.Package
-import org.jetbrains.research.kfg.ir.Method
-import org.jetbrains.research.kfg.ir.Class as KfgClass
 import org.jetbrains.research.kfg.util.isClass
 import org.jetbrains.research.kthelper.logging.log
+import org.jetbrains.research.kthelper.tryOrNull
 import org.junit.runner.JUnitCore
 import java.net.URLClassLoader
 import java.util.jar.JarFile
 
-sealed class CoverageLevel {
-    data class PackageLevel(val printDetailedCoverage: Boolean = false) : CoverageLevel()
-    data class ClassLevel(val klass: KfgClass) : CoverageLevel()
-    data class MethodLevel(val method: Method) : CoverageLevel()
-}
-
-class CoverageReporter(private val pkg: Package, urlClassLoader: URLClassLoader) {
+class CoverageReporter(
+    urlClassLoader: URLClassLoader
+) {
     private val compiledClassLoader: CompiledClassLoader
     private val instrAndTestsClassLoader: MemoryClassLoader
     private val tests: List<String>
@@ -48,10 +47,10 @@ class CoverageReporter(private val pkg: Package, urlClassLoader: URLClassLoader)
         tests = testsCompiler.testsNames
     }
 
-    fun execute(analysisLevel: CoverageLevel = CoverageLevel.PackageLevel()): String {
+    fun execute(analysisLevel: KexLauncher.AnalysisLevel, printDetailedCoverage: Boolean = false): String {
         val coverageBuilder: CoverageBuilder
         val result = when (analysisLevel) {
-            is CoverageLevel.PackageLevel -> {
+            is KexLauncher.PackageLevel -> {
                 val urls = compiledClassLoader.urLs
                 val jarPath = urls[urls.size - 1].toString().replace("file:", "")
                 val jarFile = JarFile(jarPath)
@@ -59,19 +58,19 @@ class CoverageReporter(private val pkg: Package, urlClassLoader: URLClassLoader)
                 val classes = mutableListOf<String>()
                 while (jarEntries.hasMoreElements()) {
                     val jarEntry = jarEntries.nextElement()
-                    if (pkg.isParent(jarEntry.name) && jarEntry.isClass) {
+                    if (analysisLevel.pkg.isParent(jarEntry.name) && jarEntry.isClass) {
                         classes.add(jarEntry.name)
                     }
                 }
                 coverageBuilder = getCoverageBuilder(classes)
-                getPackageCoverage(coverageBuilder, analysisLevel.printDetailedCoverage)
+                getPackageCoverage(analysisLevel.pkg, coverageBuilder, printDetailedCoverage)
             }
-            is CoverageLevel.ClassLevel -> {
+            is KexLauncher.ClassLevel -> {
                 val klass = analysisLevel.klass.fullName
                 coverageBuilder = getCoverageBuilder(listOf("$klass.class"))
                 getClassCoverage(coverageBuilder)
             }
-            is CoverageLevel.MethodLevel -> {
+            is KexLauncher.MethodLevel -> {
                 val method = analysisLevel.method
                 val klass = method.klass.fullName
                 coverageBuilder = getCoverageBuilder(listOf("$klass.class"))
@@ -98,6 +97,7 @@ class CoverageReporter(private val pkg: Package, urlClassLoader: URLClassLoader)
         for (testName in tests) {
             instrAndTestsClassLoader.addDefinition(testName, compiledClassLoader.getBytes(testName)!!)
             val testClass = instrAndTestsClassLoader.loadClass(testName)
+            log.debug("Running test $testName")
             JUnitCore.runClasses(testClass)
         }
 
@@ -111,7 +111,7 @@ class CoverageReporter(private val pkg: Package, urlClassLoader: URLClassLoader)
         val analyzer = Analyzer(executionData, coverageBuilder)
         for (className in classes) {
             val original = compiledClassLoader.getResourceAsStream(className)
-            analyzer.analyzeClass(original, className.fullyQualifiedName)
+            tryOrNull { analyzer.analyzeClass(original, className.fullyQualifiedName) }
             original.close()
         }
         return coverageBuilder
@@ -140,7 +140,11 @@ class CoverageReporter(private val pkg: Package, urlClassLoader: URLClassLoader)
         return ""
     }
 
-    private fun getPackageCoverage(coverageBuilder: CoverageBuilder, detailedCoverage: Boolean = false): String {
+    private fun getPackageCoverage(
+        pkg: Package,
+        coverageBuilder: CoverageBuilder,
+        detailedCoverage: Boolean = false
+    ): String {
         val pc = PackageCoverageImpl(pkg.canonicalName, coverageBuilder.classes, coverageBuilder.sourceFiles)
         return buildString {
             if (detailedCoverage) {

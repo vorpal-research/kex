@@ -14,7 +14,9 @@
     <properties>
         <exec.main>org.jetbrains.research.kex.MainKt</exec.main>
 
-        <better-parse.version>0.4.2</better-parse.version>
+        <better-parse.version>0.4.3</better-parse.version>
+        <jacoco.version>0.8.7</jacoco.version>
+        <junit.version>4.13.2</junit.version>
         <descriptor.version>1.2.0</descriptor.version>
     </properties>
 
@@ -94,12 +96,12 @@
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
-            <version>4.13.2</version>
+            <version>${junit.version}</version>
         </dependency>
         <dependency>
             <groupId>org.jacoco</groupId>
             <artifactId>org.jacoco.core</artifactId>
-            <version>0.8.5</version>
+            <version>${jacoco.version}</version>
         </dependency>
     </dependencies>
 

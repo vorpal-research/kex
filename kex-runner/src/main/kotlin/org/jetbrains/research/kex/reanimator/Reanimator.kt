@@ -6,13 +6,14 @@ import org.jetbrains.research.kex.asm.util.Visibility
 import org.jetbrains.research.kex.config.kexConfig
 import org.jetbrains.research.kex.descriptor.Descriptor
 import org.jetbrains.research.kex.descriptor.DescriptorRtMapper
+import org.jetbrains.research.kex.ktype.KexRtManager
 import org.jetbrains.research.kex.parameters.Parameters
 import org.jetbrains.research.kex.parameters.concreteParameters
 import org.jetbrains.research.kex.random.GenerationException
-import org.jetbrains.research.kex.reanimator.callstack.CallStack
-import org.jetbrains.research.kex.reanimator.callstack.CallStackExecutor
-import org.jetbrains.research.kex.reanimator.callstack.CallStackRtMapper
-import org.jetbrains.research.kex.reanimator.callstack.generator.CallStackGenerator
+import org.jetbrains.research.kex.reanimator.actionsequence.ActionSequence
+import org.jetbrains.research.kex.reanimator.actionsequence.ActionSequenceExecutor
+import org.jetbrains.research.kex.reanimator.actionsequence.ActionSequenceRtMapper
+import org.jetbrains.research.kex.reanimator.actionsequence.generator.ActionSequenceGenerator
 import org.jetbrains.research.kex.reanimator.codegen.JUnitTestCasePrinter
 import org.jetbrains.research.kex.reanimator.codegen.TestCasePrinter
 import org.jetbrains.research.kex.reanimator.codegen.klassName
@@ -34,16 +35,16 @@ private val visibilityLevel by lazy {
 
 val Parameters<Descriptor>.rtMapped: Parameters<Descriptor>
     get() {
-        val mapper = DescriptorRtMapper(DescriptorRtMapper.Mode.MAP)
+        val mapper = DescriptorRtMapper(KexRtManager.Mode.MAP)
         val instance = instance?.let { mapper.map(it) }
         val args = arguments.map { mapper.map(it) }
         val statics = statics.map { mapper.map(it) }.toSet()
         return Parameters(instance, args, statics)
     }
 
-val Parameters<CallStack>.rtUnmapped: Parameters<CallStack>
+val Parameters<ActionSequence>.rtUnmapped: Parameters<ActionSequence>
     get() {
-        val mapper = CallStackRtMapper(CallStackRtMapper.Mode.UNMAP)
+        val mapper = ActionSequenceRtMapper(KexRtManager.Mode.UNMAP)
         val instance = instance?.let { mapper.map(it) }
         val args = arguments.map { mapper.map(it) }
         val statics = statics.map { mapper.map(it) }.toSet()
@@ -58,8 +59,8 @@ class Reanimator(
 ) : ParameterGenerator {
     val cm: ClassManager get() = ctx.cm
     val printer: TestCasePrinter = JUnitTestCasePrinter(ctx, packageName, klassName)
-    private val csGenerator = CallStackGenerator(ctx, psa, visibilityLevel)
-    private val csExecutor = CallStackExecutor(ctx)
+    private val csGenerator = ActionSequenceGenerator(ctx, psa, visibilityLevel)
+    private val csExecutor = ActionSequenceExecutor(ctx)
 
     constructor(ctx: ExecutionContext, psa: PredicateStateAnalysis, method: Method) : this(
         ctx,
@@ -71,10 +72,10 @@ class Reanimator(
     override fun generate(testName: String, method: Method, state: PredicateState, model: SMTModel) = try {
         val descriptors = generateFinalDescriptors(method, ctx, model, state).concreteParameters(cm).rtMapped
         log.debug("Generated descriptors:\n$descriptors")
-        val callStacks = descriptors.callStacks
-        log.debug("Generated call stacks:\n$callStacks")
-        val unmapped = callStacks.rtUnmapped
-        log.debug("Unmapped call stacks:\n$unmapped")
+        val actionSequences = descriptors.actionSequences
+        log.debug("Generated action sequences:\n$actionSequences")
+        val unmapped = actionSequences.rtUnmapped
+        log.debug("Unmapped action sequences:\n$unmapped")
         printer.print(testName, method, unmapped)
         unmapped.executed
     } catch (e: GenerationException) {
@@ -90,26 +91,26 @@ class Reanimator(
         return printer.targetFile.toPath()
     }
 
-    val Descriptor.callStack: CallStack
+    val Descriptor.actionSequence: ActionSequence
         get() = `try` {
-            lateinit var cs: CallStack
+            lateinit var cs: ActionSequence
             val time = measureTimeMillis { cs = csGenerator.generateDescriptor(this) }
             DescriptorStatistics.addDescriptor(this, cs, time)
             cs
         }.getOrThrow {
-            DescriptorStatistics.addFailure(this@callStack)
+            DescriptorStatistics.addFailure(this@actionSequence)
             this
         }
 
-    val Parameters<Descriptor>.callStacks: Parameters<CallStack>
+    val Parameters<Descriptor>.actionSequences: Parameters<ActionSequence>
         get() {
-            val thisCallStack = instance?.callStack
-            val argCallStacks = arguments.map { it.callStack }
-            val staticFields = statics.map { it.callStack }.toSet()
-            return Parameters(thisCallStack, argCallStacks, staticFields)
+            val thisSequence = instance?.actionSequence
+            val argSequences = arguments.map { it.actionSequence }
+            val staticFields = statics.map { it.actionSequence }.toSet()
+            return Parameters(thisSequence, argSequences, staticFields)
         }
 
-    val Parameters<CallStack>.executed: Parameters<Any?>
+    val Parameters<ActionSequence>.executed: Parameters<Any?>
         get() {
             val instance = instance?.let { csExecutor.execute(it) }
             val args = arguments.map { csExecutor.execute(it) }

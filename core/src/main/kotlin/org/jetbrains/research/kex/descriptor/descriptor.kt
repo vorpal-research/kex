@@ -13,13 +13,25 @@ import org.jetbrains.research.kfg.ClassManager
 import org.jetbrains.research.kthelper.assert.unreachable
 import org.jetbrains.research.kthelper.logging.log
 
-
 sealed class Descriptor(term: Term, type: KexType) {
     var term = term
         protected set
 
     var type = type
         protected set
+
+    protected var _klassDescriptor: ObjectDescriptor? = null
+
+    var klassDescriptor: ObjectDescriptor
+        get() {
+            if (_klassDescriptor == null) {
+                _klassDescriptor = descriptor { klass(type) } as ObjectDescriptor
+            }
+            return _klassDescriptor!!
+        }
+        set(value) {
+            _klassDescriptor = value
+        }
 
     val query: PredicateState get() = collectQuery(mutableSetOf())
     val asString: String get() = print(mutableMapOf())
@@ -30,7 +42,7 @@ sealed class Descriptor(term: Term, type: KexType) {
     operator fun contains(other: Descriptor): Boolean = this.contains(other, mutableSetOf())
 
     override fun toString() = asString
-    infix fun eq(other: Descriptor) = this.structuralEquality(other, mutableSetOf<Pair<Descriptor, Descriptor>>())
+    infix fun eq(other: Descriptor) = this.structuralEquality(other, mutableSetOf())
     infix fun neq(other: Descriptor) = !(this eq other)
 
     abstract fun print(map: MutableMap<Descriptor, String>): String
@@ -242,6 +254,8 @@ sealed class FieldContainingDescriptor<T : FieldContainingDescriptor<T>>(
 
         this.klass = instantiationManager.getConcreteClass(klass, cm)
         this.type = klass
+        this.klassDescriptor["name" to KexJavaClass()] = descriptor { string("$type") }
+
         this.term = term { generate(type) }
         for ((field, value) in fields.toMap()) {
             fields[field] = value.concretize(cm, visited)
@@ -561,23 +575,34 @@ open class DescriptorBuilder {
     }
 
     fun default(type: KexType): Descriptor = default(type, true)
+
+    fun string(str: String): Descriptor {
+        val string = `object`(KexString())
+        val valueArray = array(str.length, KexChar())
+        for (index in str.indices)
+            valueArray[index] = const(str[index])
+        string["value", KexChar().asArray()] = valueArray
+        return string
+    }
+
+    fun klass(type: KexType): ObjectDescriptor {
+        val klass = `object`(KexJavaClass())
+        klass["name", KexString()] = string("$type")
+        return klass
+    }
 }
 
 fun descriptor(body: DescriptorBuilder.() -> Descriptor): Descriptor =
     DescriptorBuilder().body()
 
-val descriptorContext get() = DescriptorBuilder()
-
-class DescriptorRtMapper(val mode: Mode) : DescriptorBuilder() {
-    enum class Mode {
-        MAP, UNMAP
-    }
+class DescriptorRtMapper(private val mode: KexRtManager.Mode) : DescriptorBuilder() {
     private val cache = mutableMapOf<Descriptor, Descriptor>()
 
-    private val KexType.mapped get() = when (mode) {
-        Mode.MAP -> rtMapped
-        Mode.UNMAP -> rtUnmapped
-    }
+    private val KexType.mapped
+        get() = when (mode) {
+            KexRtManager.Mode.MAP -> rtMapped
+            KexRtManager.Mode.UNMAP -> rtUnmapped
+        }
 
     fun map(descriptor: Descriptor): Descriptor = cache.getOrElse(descriptor) {
         when (descriptor) {

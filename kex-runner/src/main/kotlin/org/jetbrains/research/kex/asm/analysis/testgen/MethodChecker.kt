@@ -15,6 +15,7 @@ import org.jetbrains.research.kex.random.GenerationException
 import org.jetbrains.research.kex.random.Randomizer
 import org.jetbrains.research.kex.reanimator.ParameterGenerator
 import org.jetbrains.research.kex.reanimator.UnsafeGenerator
+import org.jetbrains.research.kex.reanimator.codegen.klassName
 import org.jetbrains.research.kex.reanimator.codegen.validName
 import org.jetbrains.research.kex.serialization.KexSerializer
 import org.jetbrains.research.kex.smt.Checker
@@ -32,7 +33,7 @@ import org.jetbrains.research.kfg.ir.value.NameMapperContext
 import org.jetbrains.research.kfg.ir.value.instruction.UnreachableInst
 import org.jetbrains.research.kfg.visitor.MethodVisitor
 import org.jetbrains.research.kthelper.`try`
-import org.jetbrains.research.kthelper.algorithm.DominatorTreeBuilder
+import org.jetbrains.research.kthelper.graph.DominatorTreeBuilder
 import org.jetbrains.research.kthelper.logging.debug
 import org.jetbrains.research.kthelper.logging.log
 import org.jetbrains.research.kthelper.tryOrNull
@@ -89,7 +90,7 @@ open class MethodChecker(
     }
 
     protected open fun initializeGenerator(method: Method) {
-        generator = UnsafeGenerator(ctx, method)
+        generator = UnsafeGenerator(ctx, method, method.klassName)
     }
 
     protected open fun getSearchStrategy(method: Method): SearchStrategy = DfsStrategy(method)

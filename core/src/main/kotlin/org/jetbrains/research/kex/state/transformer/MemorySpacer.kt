@@ -18,6 +18,7 @@ fun Term.withMemspace(memspace: Int): Term {
             is BinaryTerm -> tf.getBinary(memspaced, opcode, lhv, rhv)
             is CallTerm -> tf.getCall(memspaced, owner, method, arguments)
             is CastTerm -> tf.getCast(memspaced, operand)
+            is ClassAccessTerm -> tf.getClassAccess(memspaced, operand)
             is ConcatTerm -> tf.getConcat(memspaced, lhv, rhv)
             is CmpTerm -> tf.getCmp(memspaced, opcode, lhv, rhv)
             is ConstStringTerm -> tf.getString(memspaced, value)
@@ -46,10 +47,10 @@ val Term.memspace: Int
 
 class MemorySpacer(ps: PredicateState) : Transformer<MemorySpacer> {
     private val aa = StensgaardAA().apply { apply(ps) }
-    private val indices = hashMapOf<Token, Int>(null to 0)
+    private val indices = hashMapOf<Token?, Int>(null to 0)
     private var index = 1
 
-    private fun getIndex(token: Token) = indices.getOrPut(token) { index++ }
+    private fun getIndex(token: Token?) = indices.getOrPut(token) { index++ }
     private fun getMemspace(term: Term) = getIndex(aa.getDereferenced(term))
 
     override fun transformTerm(term: Term) = when (term.type) {

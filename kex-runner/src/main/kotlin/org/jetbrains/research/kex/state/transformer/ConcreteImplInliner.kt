@@ -20,7 +20,6 @@ class ConcreteImplInliner(val types: TypeFactory,
                           override val psa: PredicateStateAnalysis,
                           override val inlineSuffix: String = "concrete.inlined",
                           override var inlineIndex: Int = 0) : Inliner<ConcreteImplInliner> {
-    override val im = MethodManager.InlineManager
     override val builders = dequeOf(StateBuilder())
     override var hasInlined: Boolean = false
 

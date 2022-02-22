@@ -60,6 +60,11 @@ class PointerCollector : Transformer<PointerCollector> {
         return term
     }
 
+    override fun transformClassAccessTerm(term: ClassAccessTerm): Term {
+        ptrs.add(term)
+        return term
+    }
+
     override fun transformConstClassTerm(term: ConstClassTerm): Term {
         ptrs.add(term)
         return term

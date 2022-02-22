@@ -4,11 +4,11 @@ import org.jetbrains.research.kex.config.kexConfig
 import org.jetbrains.research.kex.ktype.KexType
 import org.jetbrains.research.kex.state.predicate.*
 import org.jetbrains.research.kex.state.term.*
-import org.jetbrains.research.kthelper.algorithm.GraphView
-import org.jetbrains.research.kthelper.algorithm.Viewable
 import org.jetbrains.research.kthelper.assert.unreachable
 import org.jetbrains.research.kthelper.collection.DisjointSet
 import org.jetbrains.research.kthelper.collection.Subset
+import org.jetbrains.research.kthelper.graph.GraphView
+import org.jetbrains.research.kthelper.graph.Viewable
 import org.jetbrains.research.kthelper.logging.log
 
 private val dot by lazy {
@@ -19,25 +19,25 @@ private val viewer by lazy {
     kexConfig.getStringValue("view", "viewer") ?: unreachable { log.error("Could not find viewer") }
 }
 
-typealias Token = Subset<Term?>?
+typealias Token = Subset<Term>
 
 interface AliasAnalysis {
     fun mayAlias(lhv: Term, rhv: Term): Boolean
 }
 
 class StensgaardAA : Transformer<StensgaardAA>, AliasAnalysis, Viewable {
-    private val relations = DisjointSet<Term?>()
-    private val pointsTo = hashMapOf<Token, Token>()
-    private val mapping = hashMapOf<Term, Token>()
+    private val relations = DisjointSet<Term>()
+    private val pointsTo = hashMapOf<Token?, Token?>()
+    private val mapping = hashMapOf<Term, Token?>()
     private val nonAliased = hashSetOf<Term>()
-    private val spaces = hashMapOf<KexType, Token>()
+    private val spaces = hashMapOf<KexType, Token?>()
     private val nonFreeTerms = hashSetOf<Term>()
 
-    private fun pointsTo(token: Token) = pointsTo.getOrPut(token) { null }
+    private fun pointsTo(token: Token?) = pointsTo.getOrPut(token) { null }
     private fun spaces(type: KexType) = spaces.getOrPut(type) { null }
 
     private fun quasi(): Token = relations.emplace(null)
-    private fun join(lhv: Token, rhv: Token): Token = when {
+    private fun join(lhv: Token?, rhv: Token?): Token? = when {
         lhv != null && rhv != null ->
             if (lhv == rhv) lhv
             else {
@@ -67,10 +67,10 @@ class StensgaardAA : Transformer<StensgaardAA>, AliasAnalysis, Viewable {
         else -> quasi()
     }
 
-    fun get(term: Term): Token = when (term) {
+    fun get(term: Term): Token? = when (term) {
         in mapping -> mapping[term]!!.getRoot()
         else -> {
-            var token: Token = relations.emplace(term)
+            var token: Token? = relations.emplace(term)
 
             if (term !in nonFreeTerms && term.isNamed) {
                 val result = join(spaces(term.type), token)
@@ -251,13 +251,13 @@ class StensgaardAA : Transformer<StensgaardAA>, AliasAnalysis, Viewable {
         }
     }
 
-    fun getDereferenced(term: Term) = relations.findUnsafe(pointsTo(get(term)))
+    fun getDereferenced(term: Term): Token? = relations.findUnsafe(pointsTo(get(term)))
 
     override val graphView: List<GraphView>
         get() {
             val rootNode = GraphView("root", "root")
-            val reverse = mutableMapOf<Token, GraphView>()
-            val data = mutableMapOf<Token, MutableSet<Term>>()
+            val reverse = mutableMapOf<Token?, GraphView>()
+            val data = mutableMapOf<Token?, MutableSet<Term>>()
             for ((term, token) in mapping) {
                 val root = relations.findUnsafe(token)
                 data.getOrPut(root) { mutableSetOf() }.add(term)
@@ -277,7 +277,7 @@ class StensgaardAA : Transformer<StensgaardAA>, AliasAnalysis, Viewable {
             }
             val values = reverse.values.map { graphView ->
                 val view = GraphView(graphView.name, graphView.label)
-                graphView.successors.toSet().forEach { view.addSuccessor(it) }
+                graphView.successors.toSet().forEach { view.addSuccessor(it.first, it.second) }
                 view
             }.toMutableSet()
             values.filter { it.successors.isEmpty() }.forEach { it.addSuccessor(rootNode) }

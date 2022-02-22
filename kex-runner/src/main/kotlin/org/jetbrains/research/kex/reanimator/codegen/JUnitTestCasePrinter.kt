@@ -4,10 +4,10 @@ import org.jetbrains.research.kex.ExecutionContext
 import org.jetbrains.research.kex.compile.JavaCompilerDriver
 import org.jetbrains.research.kex.config.kexConfig
 import org.jetbrains.research.kex.parameters.Parameters
-import org.jetbrains.research.kex.reanimator.callstack.CallStack
-import org.jetbrains.research.kex.reanimator.codegen.javagen.CallStack2JavaPrinter
-import org.jetbrains.research.kex.reanimator.codegen.javagen.ExecutorCS2JavaPrinter
-import org.jetbrains.research.kex.reanimator.codegen.kotlingen.CallStack2KotlinPrinter
+import org.jetbrains.research.kex.reanimator.actionsequence.ActionSequence
+import org.jetbrains.research.kex.reanimator.codegen.javagen.ActionSequence2JavaPrinter
+import org.jetbrains.research.kex.reanimator.codegen.javagen.ExecutorAS2JavaPrinter
+import org.jetbrains.research.kex.reanimator.codegen.kotlingen.ActionSequence2KotlinPrinter
 import org.jetbrains.research.kex.util.getJunit
 import org.jetbrains.research.kfg.ir.BasicBlock
 import org.jetbrains.research.kfg.ir.Class
@@ -39,11 +39,11 @@ abstract class TestCasePrinter(
     val packageName: String,
 ) {
     abstract val targetFile: File
-    abstract val printer: CallStackPrinter
+    abstract val printer: ActionSequencePrinter
 
     protected fun validateString(string: String) = string.replace(Regex("[^a-zA-Z0-9]"), "")
 
-    abstract fun print(testName: String, method: Method, callStacks: Parameters<CallStack>)
+    abstract fun print(testName: String, method: Method, actionSequences: Parameters<ActionSequence>)
 
     open fun emit() {
         if (useApiGeneration && generateTestCases) {
@@ -78,9 +78,9 @@ class JUnitTestCasePrinter(
     klassName: String
 ) : TestCasePrinter(ctx, packageName) {
     private val testDirectory = outputDirectory.resolve(testCaseDirectory)
-    override val printer: CallStackPrinter = when (testCaseLanguage) {
-        "kotlin" -> CallStack2KotlinPrinter(ctx, packageName.replace("/", "."), klassName)
-        "java" -> CallStack2JavaPrinter(ctx, packageName.replace("/", "."), klassName)
+    override val printer: ActionSequencePrinter = when (testCaseLanguage) {
+        "kotlin" -> ActionSequence2KotlinPrinter(ctx, packageName.replace("/", "."), klassName)
+        "java" -> ActionSequence2JavaPrinter(ctx, packageName.replace("/", "."), klassName)
         else -> unreachable { log.error("Unknown target language for test case generation: $testCaseLanguage") }
     }
     override val targetFile: File = run {
@@ -96,9 +96,9 @@ class JUnitTestCasePrinter(
 
     private var isEmpty = true
 
-    override fun print(testName: String, method: Method, callStacks: Parameters<CallStack>) {
+    override fun print(testName: String, method: Method, actionSequences: Parameters<ActionSequence>) {
         isEmpty = false
-        printer.printCallStack(validateString(testName), method, callStacks)
+        printer.printActionSequence(validateString(testName), method, actionSequences)
     }
 }
 
@@ -109,7 +109,7 @@ class ExecutorTestCasePrinter(
 ) : TestCasePrinter(ctx, packageName) {
     private val testDirectory = outputDirectory.resolve(testCaseDirectory)
     val fullKlassName = "${packageName.replace("/", ".")}.$klassName"
-    override val printer = ExecutorCS2JavaPrinter(ctx, packageName.replace("/", "."), klassName, SETUP_METHOD)
+    override val printer = ExecutorAS2JavaPrinter(ctx, packageName.replace("/", "."), klassName, SETUP_METHOD)
     override val targetFile: File = run {
         val targetFileName = "$klassName.java"
         testDirectory.resolve(packageName).resolve(targetFileName).toAbsolutePath().toFile().apply {
@@ -122,12 +122,12 @@ class ExecutorTestCasePrinter(
         const val TEST_METHOD = "test"
     }
 
-    override fun print(testName: String, method: Method, callStacks: Parameters<CallStack>) {
-        printer.printCallStack(validateString(testName), method, callStacks)
+    override fun print(testName: String, method: Method, actionSequences: Parameters<ActionSequence>) {
+        printer.printActionSequence(validateString(testName), method, actionSequences)
     }
 
-    fun print(method: Method, callStacks: Parameters<CallStack>) {
-        print(TEST_METHOD, method, callStacks)
+    fun print(method: Method, actionSequences: Parameters<ActionSequence>) {
+        print(TEST_METHOD, method, actionSequences)
     }
 
     override fun emit() {

@@ -5,6 +5,7 @@ import org.jetbrains.research.kex.BaseType
 import org.jetbrains.research.kex.InheritanceInfo
 import org.jetbrains.research.kex.InheritorOf
 import org.jetbrains.research.kex.util.getKexRuntime
+import org.jetbrains.research.kfg.Package
 import org.jetbrains.research.kfg.ir.Method
 import org.jetbrains.research.kfg.type.*
 import org.jetbrains.research.kfg.util.Flags
@@ -16,8 +17,12 @@ import kotlin.reflect.KClass
 import org.jetbrains.research.kfg.ir.Class as KfgClass
 
 object KexRtManager {
-    val rt2KexMapping: Map<String, String>
-    val kex2RtMapping: Map<String, String>
+    private val rt2KexMapping: Map<String, String>
+    private val kex2RtMapping: Map<String, String>
+
+    enum class Mode {
+        MAP, UNMAP
+    }
 
     init {
         val kexRt = getKexRuntime()
@@ -182,6 +187,7 @@ abstract class KexType {
     }
 
     abstract val name: String
+    val javaName get() = name.replace(Package.SEPARATOR, Package.CANONICAL_SEPARATOR)
     abstract val bitSize: Int
 
     abstract fun getKfgType(types: TypeFactory): Type
@@ -209,7 +215,7 @@ class KexVoid : KexType() {
     }
 }
 
-fun KexType.unmemspaced() = when (this) {
+fun KexType.unMemspaced() = when (this) {
     is KexPointer -> withoutMemspace()
     else -> this
 }

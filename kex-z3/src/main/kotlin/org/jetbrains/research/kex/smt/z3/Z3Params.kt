@@ -19,7 +19,13 @@ class Z3Params(private val elements: List<Z3Param>) : List<Z3Param> by elements 
     fun toJson() = Json.encodeToString(this)
 
     companion object {
-        fun load() = fromJson(File(paramFile).readText())
+        fun load(): Z3Params {
+            val file = File(paramFile)
+            return when {
+                file.exists() -> fromJson(file.readText())
+                else -> Z3Params(emptyList())
+            }
+        }
 
         fun fromJson(json: String) = Json.decodeFromString<Z3Params>(json)
     }

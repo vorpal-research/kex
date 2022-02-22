@@ -116,7 +116,7 @@ object ConstantPropagator : Transformer<ConstantPropagator> {
 
     override fun transformNegTerm(term: NegTerm): Term {
         val operand = getConstantValue(term.operand) ?: return term
-        return term { const(operand) }
+        return term { const(-operand) }
     }
 
     override fun transformStringContainsTerm(term: StringContainsTerm): Term {
@@ -161,7 +161,7 @@ object ConstantPropagator : Transformer<ConstantPropagator> {
             is ConstClassTerm -> term { const(value.name) }
             is ConstDoubleTerm -> term { const(value.value.toString()) }
             is ConstFloatTerm -> term { const(value.value.toString()) }
-            is ConstIntTerm-> term { const(value.value.toString()) }
+            is ConstIntTerm -> term { const(value.value.toString()) }
             is ConstLongTerm -> term { const(value.value.toString()) }
             is ConstShortTerm -> term { const(null) }
             else -> term

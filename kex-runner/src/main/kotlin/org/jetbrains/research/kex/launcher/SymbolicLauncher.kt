@@ -2,19 +2,14 @@ package org.jetbrains.research.kex.launcher
 
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.InternalSerializationApi
-import org.jetbrains.research.kex.ExecutionContext
 import org.jetbrains.research.kex.asm.analysis.testgen.DescriptorChecker
 import org.jetbrains.research.kex.asm.analysis.testgen.MethodChecker
 import org.jetbrains.research.kex.asm.state.PredicateStateAnalysis
-import org.jetbrains.research.kex.asm.transform.SymbolicTraceCollector
 import org.jetbrains.research.kex.config.kexConfig
-import org.jetbrains.research.kex.jacoco.CoverageLevel
 import org.jetbrains.research.kex.jacoco.CoverageReporter
 import org.jetbrains.research.kex.reanimator.descriptor.DescriptorStatistics
 import org.jetbrains.research.kex.trace.`object`.ObjectTraceManager
-import org.jetbrains.research.kfg.visitor.MethodVisitor
 import org.jetbrains.research.kthelper.logging.log
-import java.util.*
 
 @ExperimentalSerializationApi
 @InternalSerializationApi
@@ -34,10 +29,7 @@ class SymbolicLauncher(classPaths: List<String>, targetName: String) : KexLaunch
 
         DescriptorStatistics.printStatistics()
         log.info(
-            CoverageReporter(pkg, containerClassLoader)
-                .execute(
-                    CoverageLevel.PackageLevel(printDetailedCoverage = false)
-                )
+            CoverageReporter(containerClassLoader).execute(analysisLevel)
         )
     }
 }

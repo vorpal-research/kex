@@ -12,6 +12,7 @@ import org.jetbrains.research.kex.state.StateBuilder
 import org.jetbrains.research.kex.state.predicate.Predicate
 import org.jetbrains.research.kex.state.predicate.path
 import org.jetbrains.research.kex.state.predicate.state
+import org.jetbrains.research.kex.state.term.NullTerm
 import org.jetbrains.research.kex.state.term.Term
 import org.jetbrains.research.kex.state.term.term
 import org.jetbrains.research.kex.state.transformer.TermRenamer
@@ -46,7 +47,7 @@ class SymbolicTraceBuilder(
     override val state: PredicateState
         get() = builder.current
     override val path: PathCondition
-        get() = PathConditionImpl(pathBuilder.toList())
+        get() = PathCondition(pathBuilder.toList())
     override val concreteValueMap: Map<Term, Descriptor>
         get() = concreteValues.toMap()
     override val termMap: Map<Term, WrappedValue>
@@ -77,6 +78,10 @@ class SymbolicTraceBuilder(
     private val concreteValues = mutableMapOf<Term, Descriptor>()
     private val terms = mutableMapOf<Term, WrappedValue>()
     private val predicates = mutableMapOf<Predicate, Instruction>()
+
+    private val nullChecked = mutableSetOf<Term>()
+    private val typeChecked = mutableMapOf<Term, Type>()
+    private val indexChecked = mutableMapOf<Term, MutableSet<Term>>()
 
     /**
      * stack frame info for method
@@ -475,7 +480,7 @@ class SymbolicTraceBuilder(
         val predicate = state(instruction.location) {
             val actualCallee = termCallee ?: staticRef(calledMethod.klass)
             when {
-                termReturn != null -> termReturn equality actualCallee.call(calledMethod, termArguments)
+                termReturn != null -> termReturn.call(actualCallee.call(calledMethod, termArguments))
                 else -> call(actualCallee.call(calledMethod, termArguments))
             }
         }
@@ -534,13 +539,12 @@ class SymbolicTraceBuilder(
         terms[termException] = kfgException.wrapped()
         concreteValues[termException] = exceptionDescriptor
 
-        val predicate = path(kfgException.location) {
+        val predicate = state(kfgException.location) {
             catch(termException)
         }
 
         thrownException = null
 
-        processPath(kfgException, predicate)
         postProcess(kfgException, predicate)
     }
 
@@ -771,6 +775,8 @@ class SymbolicTraceBuilder(
         val termValue = mkNewValue(kfgValue)
         val termDimensions = kfgDimensions.map { mkValue(it) }
 
+        nullChecked += termValue
+        typeChecked[termValue] = kfgValue.type
         terms[termValue] = kfgValue.wrapped()
         concreteValues[termValue] = concreteValue.getAsDescriptor(termValue.type)
 
@@ -792,6 +798,8 @@ class SymbolicTraceBuilder(
         preProcess(kfgValue)
 
         val termValue = mkNewValue(kfgValue)
+        nullChecked += termValue
+        typeChecked[termValue] = kfgValue.type
         terms[termValue] = kfgValue.wrapped()
 
         val predicate = state(kfgValue.location) {
@@ -915,13 +923,12 @@ class SymbolicTraceBuilder(
 
         termException.updateInfo(kfgException, concreteException.getAsDescriptor(termException.type))
 
-        val predicate = path(instruction.location) {
+        val predicate = state(instruction.location) {
             `throw`(termException)
         }
 
         thrownException = termException
 
-        processPath(instruction, predicate)
         postProcess(instruction, predicate)
     }
 
@@ -950,4 +957,112 @@ class SymbolicTraceBuilder(
 
         postProcess(kfgValue, predicate)
     }
+
+    override fun addNullityConstraints(inst: String, value: String, concreteValue: Any?) {
+        val instruction = parseValue(inst) as Instruction
+
+        val kfgValue = parseValue(value)
+        val termValue = mkValue(kfgValue)
+
+        if (kfgValue is ThisRef) return
+        else if (termValue in nullChecked) return
+        else if (termValue is NullTerm) return
+        nullChecked += termValue
+
+        val checkName = term { value(KexBool(), "${termValue}NullCheck") }
+        val checkPredicate = state { checkName equality (termValue eq null) }
+
+        predicates[checkPredicate] = instruction
+        builder += checkPredicate
+
+
+        val pathPredicate = path {
+            when (concreteValue) {
+                null -> checkName equality true
+                else -> checkName equality false
+            }
+        }
+
+        processPath(instruction, pathPredicate)
+        predicates[pathPredicate] = instruction
+        builder += pathPredicate
+    }
+
+    override fun addTypeConstraints(inst: String, value: String, concreteValue: Any?) {
+        if (concreteValue == null) return
+
+        val instruction = parseValue(inst) as Instruction
+
+        val kfgValue = parseValue(value)
+        val termValue = mkValue(kfgValue)
+        val descriptorValue = concreteValue.getAsDescriptor()
+        val kfgType = descriptorValue.type.getKfgType(ctx.types)
+        if (termValue in typeChecked) {
+            val checkedType = typeChecked.getValue(termValue)
+            if (checkedType.isSubtypeOf(kfgType)) return
+        }
+        typeChecked[termValue] = kfgType
+
+        val predicate = path {
+            (termValue `is` descriptorValue.type) equality true
+        }
+
+        processPath(instruction, predicate)
+        predicates[predicate] = instruction
+        builder += predicate
+    }
+
+    override fun addArrayIndexConstraints(
+        inst: String,
+        array: String,
+        index: String,
+        concreteArray: Any?,
+        concreteIndex: Any?
+    ) {
+        if (concreteArray == null) return
+
+        val instruction = parseValue(inst) as Instruction
+
+        val kfgArray = parseValue(array)
+        val kfgIndex = parseValue(index)
+
+        val termArray = mkValue(kfgArray)
+        val termIndex = mkValue(kfgIndex)
+
+        if (termIndex in indexChecked.getOrPut(termArray, :: mutableSetOf)) return
+        indexChecked[termArray]!!.add(termIndex)
+
+        val actualLength = concreteArray.arraySize
+        val actualIndex = (concreteIndex as? Int) ?: return
+
+        val checkTerm = term { value(KexBool(), "${termArray}IndexCheck${termIndex}") }
+        val checkPredicate = state {
+            checkTerm equality (termIndex lt termArray.length())
+        }
+
+        predicates[checkPredicate] = instruction
+        builder += checkPredicate
+
+        val pathPredicate = path {
+            checkTerm equality (actualIndex < actualLength)
+        }
+
+        processPath(instruction, pathPredicate)
+        predicates[pathPredicate] = instruction
+        builder += pathPredicate
+    }
+
+    private val Any.arraySize: Int
+        get() = when (this) {
+            is BooleanArray -> this.size
+            is ByteArray -> this.size
+            is CharArray -> this.size
+            is ShortArray -> this.size
+            is IntArray -> this.size
+            is LongArray -> this.size
+            is FloatArray -> this.size
+            is DoubleArray -> this.size
+            is Array<*> -> this.size
+            else -> 0
+        }
 }

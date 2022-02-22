@@ -1,7 +1,7 @@
 package org.jetbrains.research.kex.smt
 
-import org.jetbrains.research.kthelper.assert.unreachable
 import org.jetbrains.research.kex.KexProcessor
+import org.jetbrains.research.kthelper.assert.unreachable
 import java.io.ByteArrayOutputStream
 import java.io.File
 import javax.annotation.processing.RoundEnvironment
@@ -20,20 +20,16 @@ import kotlin.reflect.KClass
         "org.jetbrains.research.kex.smt.SMTExprFactory",
         "org.jetbrains.research.kex.smt.SMTContext",
         "org.jetbrains.research.kex.smt.SMTConverter")
-@SupportedOptions(SMTProcessor.KAPT_GENERATED_SOURCES, SMTProcessor.KEX_TEMPLATES)
+@SupportedOptions(SMTProcessor.KAPT_GENERATED_SOURCES)
 class SMTProcessor : KexProcessor() {
     companion object {
         const val KAPT_GENERATED_SOURCES = "kapt.kotlin.generated"
-        const val KEX_TEMPLATES = "kex.templates"
     }
 
     private var printedGeneratedSourcesDir = false
 
     private val targetDirectory: String
         get() = processingEnv.options[KAPT_GENERATED_SOURCES] ?: unreachable { error("No codegen directory") }
-
-    private val templates: String
-        get() = processingEnv.options[KEX_TEMPLATES] ?: unreachable { error("No template directory") }
 
     override fun process(annotations: MutableSet<out TypeElement>?, roundEnv: RoundEnvironment?): Boolean {
         roundEnv?.apply {
@@ -75,7 +71,7 @@ class SMTProcessor : KexProcessor() {
 
         val stream = ByteArrayOutputStream()
         stream.bufferedWriter().use {
-            ClassGenerator(parameters, templates, "$template.vm").write(it)
+            ClassGenerator(parameters, "$template.vm").write(it)
             it.flush()
         }
         val resultingFile = stream.toString()
