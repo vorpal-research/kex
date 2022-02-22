@@ -215,8 +215,8 @@ class CallCiteChecker(
         +BoolTypeAdapter(method.cm.type)
         +ClassMethodAdapter(method.cm)
         +ConstStringAdapter(method.cm.type)
-        +TypeNameAdapter(ctx.types)
         +FieldNormalizer(method.cm)
+        +TypeNameAdapter(ctx.types)
     }
 
     private fun getTest(

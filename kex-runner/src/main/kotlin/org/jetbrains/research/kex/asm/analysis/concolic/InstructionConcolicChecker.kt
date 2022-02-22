@@ -140,9 +140,9 @@ class InstructionConcolicChecker(
         +ClassMethodAdapter(method.cm)
         +ConstStringAdapter(method.cm.type)
         +StringMethodAdapter(ctx.cm)
-        +TypeNameAdapter(ctx.types)
         +ConcolicArrayLengthAdapter()
         +FieldNormalizer(method.cm)
+        +TypeNameAdapter(ctx.types)
     }
 
     private fun check(method: Method, state: SymbolicState): ExecutionResult? {

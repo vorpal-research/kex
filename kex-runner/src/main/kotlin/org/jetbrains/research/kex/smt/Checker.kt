@@ -66,8 +66,8 @@ class Checker(
         +NullityInfoAdapter()
         +ClassMethodAdapter(method.cm)
         +ConstStringAdapter(method.cm.type)
-        +TypeNameAdapter(method.cm.type)
         +FieldNormalizer(method.cm)
+        +TypeNameAdapter(method.cm.type)
     }
 
     fun prepareState(method: Method, ps: PredicateState, typeInfoMap: TypeInfoMap) = transform(ps) {
@@ -88,8 +88,8 @@ class Checker(
         +ConstStringAdapter(method.cm.type)
         +ArrayBoundsAdapter()
         +NullityInfoAdapter()
-        +TypeNameAdapter(method.cm.type)
         +FieldNormalizer(method.cm)
+        +TypeNameAdapter(method.cm.type)
     }
 
     fun prepareAndCheck(ps: PredicateState): Result {
