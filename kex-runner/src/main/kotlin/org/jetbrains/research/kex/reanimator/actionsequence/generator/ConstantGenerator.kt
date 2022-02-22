@@ -16,15 +16,15 @@ class ConstantGenerator(override val context: GeneratorContext) : Generator {
 
     override fun generate(descriptor: Descriptor, generationDepth: Int): ActionSequence = with(context) {
         val stack = when (descriptor) {
-            is ConstantDescriptor.Null -> PrimaryValue(getConstName(), null, types.objectType)
-            is ConstantDescriptor.Bool -> PrimaryValue(getConstName(), descriptor.value, descriptor.type.getKfgType(types))
-            is ConstantDescriptor.Byte -> PrimaryValue(getConstName(), descriptor.value, descriptor.type.getKfgType(types))
-            is ConstantDescriptor.Char -> PrimaryValue(getConstName(), descriptor.value, descriptor.type.getKfgType(types))
-            is ConstantDescriptor.Short -> PrimaryValue(getConstName(), descriptor.value, descriptor.type.getKfgType(types))
-            is ConstantDescriptor.Int -> PrimaryValue(getConstName(), descriptor.value, descriptor.type.getKfgType(types))
-            is ConstantDescriptor.Long -> PrimaryValue(getConstName(), descriptor.value, descriptor.type.getKfgType(types))
-            is ConstantDescriptor.Float -> PrimaryValue(getConstName(), descriptor.value, descriptor.type.getKfgType(types))
-            is ConstantDescriptor.Double -> PrimaryValue(getConstName(), descriptor.value, descriptor.type.getKfgType(types))
+            is ConstantDescriptor.Null -> PrimaryValue(null)
+            is ConstantDescriptor.Bool -> PrimaryValue(descriptor.value)
+            is ConstantDescriptor.Byte -> PrimaryValue(descriptor.value)
+            is ConstantDescriptor.Char -> PrimaryValue(descriptor.value)
+            is ConstantDescriptor.Short -> PrimaryValue(descriptor.value)
+            is ConstantDescriptor.Int -> PrimaryValue(descriptor.value)
+            is ConstantDescriptor.Long -> PrimaryValue(descriptor.value)
+            is ConstantDescriptor.Float -> PrimaryValue(descriptor.value)
+            is ConstantDescriptor.Double -> PrimaryValue(descriptor.value)
             else -> unreachable { log.error("Unknown descriptor in constant generator: $descriptor") }
         }
         return stack
