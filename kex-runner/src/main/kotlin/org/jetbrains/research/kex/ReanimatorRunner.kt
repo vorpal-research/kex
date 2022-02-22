@@ -11,9 +11,9 @@ import org.jetbrains.research.kex.descriptor.*
 import org.jetbrains.research.kex.ktype.*
 import org.jetbrains.research.kex.parameters.Parameters
 import org.jetbrains.research.kex.random.easyrandom.EasyRandomDriver
-import org.jetbrains.research.kex.reanimator.callstack.CallStack
-import org.jetbrains.research.kex.reanimator.callstack.generator.CallStackGenerator
-import org.jetbrains.research.kex.reanimator.callstack.generator.GeneratorContext
+import org.jetbrains.research.kex.reanimator.actionsequence.ActionSequence
+import org.jetbrains.research.kex.reanimator.actionsequence.generator.ActionSequenceGenerator
+import org.jetbrains.research.kex.reanimator.actionsequence.generator.GeneratorContext
 import org.jetbrains.research.kex.reanimator.codegen.JUnitTestCasePrinter
 import org.jetbrains.research.kex.reanimator.collector.MethodFieldAccessCollector
 import org.jetbrains.research.kex.reanimator.collector.SetterCollector
@@ -90,29 +90,29 @@ class ReanimatorRunner(
         klass: String,
         method: String,
         desc: String,
-        instance: CallStack,
-        args: List<CallStack>
+        instance: ActionSequence,
+        args: List<ActionSequence>
     ): String {
         val kfgKlass = cm[klass]
         val kfgMethod = kfgKlass.getMethod(method, desc)
         val printer =
             JUnitTestCasePrinter(context, testClassName.substringBeforeLast('/'), testClassName.substringAfterLast('/'))
-        val params = Parameters(instance, args, setOf())
+        val params = Parameters(instance, args)
         printer.print(testMethodName, kfgMethod, params)
         return printer.emitString()
     }
 
-    fun convert(desc: JavaDescriptor): CallStack {
+    fun convert(desc: JavaDescriptor): ActionSequence {
         val map = convert(setOf(desc))
         return map[desc]!!
     }
 
-    fun convert(descs: Set<JavaDescriptor>): Map<JavaDescriptor, CallStack> {
+    fun convert(descs: Set<JavaDescriptor>): Map<JavaDescriptor, ActionSequence> {
         val reanimatorDescs = mutableMapOf<JavaDescriptor, Descriptor>()
         for (desc in descs) {
             desc.convert(reanimatorDescs)
         }
-        val generator = CallStackGenerator(generatorContext)
+        val generator = ActionSequenceGenerator(generatorContext)
         return descs.associateWith { generator.generateDescriptor(reanimatorDescs[it]!!) }
     }
 
