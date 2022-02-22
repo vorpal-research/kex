@@ -11,23 +11,12 @@ import org.jetbrains.research.kex.state.predicate.CallPredicate
 import org.jetbrains.research.kex.state.predicate.Predicate
 import org.jetbrains.research.kex.state.term.CallTerm
 import org.jetbrains.research.kex.state.term.Term
-import org.jetbrains.research.kex.state.term.term
 import org.jetbrains.research.kfg.ir.Method
-import org.jetbrains.research.kfg.ir.value.instruction.ArrayStoreInst
 import org.jetbrains.research.kthelper.collection.dequeOf
 
 class KexIntrinsicsAdapter : RecollectingTransformer<KexIntrinsicsAdapter> {
     override val builders = dequeOf(StateBuilder())
     private val kim = MethodManager.KexIntrinsicManager
-
-    private fun getAllAssertions(method: Method, assertionsArray: Term): Set<Term> = method.flatten()
-        .asSequence()
-        .mapNotNull { it as? ArrayStoreInst }
-        .filter { it.arrayRef.toString() == assertionsArray.toString() }
-        .map { it.value }
-        .map { term { value(it) } }
-        .toSet()
-
 
     override fun transformCallPredicate(predicate: CallPredicate): Predicate {
         val call = predicate.call as CallTerm
@@ -49,10 +38,8 @@ class KexIntrinsicsAdapter : RecollectingTransformer<KexIntrinsicsAdapter> {
     private fun assertionIntrinsicsAdapter(method: Method, call: CallTerm): PredicateState = basic {
         when (method) {
             kim.kexAssume(method.cm) -> {
-                val assertions = getAllAssertions(method, call.arguments[0])
-                assertions.map {
-                    assume { it equality true }
-                }
+                val assumption = call.arguments[0]
+                assume { assumption equality true }
             }
             kim.kexNotNull(method.cm) -> {
                 val value = call.arguments[0]
