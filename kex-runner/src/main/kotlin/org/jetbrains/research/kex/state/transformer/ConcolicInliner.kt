@@ -3,6 +3,7 @@ package org.jetbrains.research.kex.state.transformer
 import org.jetbrains.research.kex.ExecutionContext
 import org.jetbrains.research.kex.asm.state.PredicateStateAnalysis
 import org.jetbrains.research.kex.ktype.KexClass
+import org.jetbrains.research.kex.ktype.KexRtManager.isKexRt
 import org.jetbrains.research.kex.ktype.KexType
 import org.jetbrains.research.kex.ktype.kexType
 import org.jetbrains.research.kex.state.StateBuilder
@@ -24,6 +25,11 @@ class ConcolicInliner(
     private val knownTypes = hashMapOf<Term, KexType>()
     override val builders = dequeOf(StateBuilder())
     override var hasInlined: Boolean = false
+
+    override fun transformTerm(term: Term): Term {
+        if (term.type.isKexRt) knownTypes[term] = term.type
+        return term
+    }
 
     override fun transformCallPredicate(predicate: CallPredicate): Predicate {
         val call = predicate.call as CallTerm
