@@ -101,7 +101,16 @@ class InstructionConcolicChecker(
     }
 
     private fun collectTraceFromAny(method: Method, parameters: Parameters<Any?>): ExecutionResult? =
-        collectTrace(method, parameters.asDescriptors)
+        collectUnknownTrace(method, parameters.asDescriptors)
+
+    private fun collectUnknownTrace(method: Method, parameters: Parameters<Descriptor>): ExecutionResult? = tryOrNull {
+        val generator = UnsafeGenerator(ctx, method, method.klassName + testIndex++)
+        generator.generateUnsafe(parameters)
+        val testFile = generator.emit()
+
+        compilerHelper.compileFile(testFile)
+        collectTrace(generator.testKlassName)
+    }
 
     private fun collectTrace(method: Method, parameters: Parameters<Descriptor>): ExecutionResult? = tryOrNull {
         val generator = UnsafeGenerator(ctx, method, method.klassName + testIndex++)

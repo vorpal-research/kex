@@ -1,31 +1,16 @@
 package org.jetbrains.research.kex.test.javadebug;
 
+import java.util.LinkedList;
+
 public abstract class JavaTest {
-    private static final JavaTest[] EMPTY_THROWABLE_ARRAY = new JavaTest[0];
-    protected int value;
+    public static final int N = 4; //some constant value
 
-    JavaTest(int value) {
-        this.value = value;
-    }
-
-    static class Impl extends JavaTest {
-        public Impl(int a) {
-            super(a);
-        }
-
-        public void setA(int a) {
-            this.value = a;
-        }
-    }
-
-    public static JavaTest impl() {
-        if (EMPTY_THROWABLE_ARRAY.length > 0) return EMPTY_THROWABLE_ARRAY[0];
-        return new Impl(0);
-    }
-
-    public static void foo(Impl a) {
-        if (a instanceof JavaTest) {
+    public static void sample(LinkedList list, Object obj) {
+        list.addLast(obj);
+        Object r = list.remove(N);
+        if (r == obj) {
             throw new IllegalStateException();
         }
     }
+
 }

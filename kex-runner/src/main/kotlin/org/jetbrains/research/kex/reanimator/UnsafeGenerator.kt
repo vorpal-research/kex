@@ -9,6 +9,7 @@ import org.jetbrains.research.kex.parameters.Parameters
 import org.jetbrains.research.kex.parameters.concreteParameters
 import org.jetbrains.research.kex.random.GenerationException
 import org.jetbrains.research.kex.reanimator.actionsequence.ActionSequence
+import org.jetbrains.research.kex.reanimator.actionsequence.generator.ConcolicSequenceGenerator
 import org.jetbrains.research.kex.reanimator.actionsequence.generator.UnknownGenerator
 import org.jetbrains.research.kex.reanimator.codegen.ExecutorTestCasePrinter
 import org.jetbrains.research.kex.reanimator.codegen.packageName
@@ -29,12 +30,24 @@ class UnsafeGenerator(
     val method: Method,
     val testName: String
 ) : ParameterGenerator {
-    private val csGenerator = UnknownGenerator(ctx, PredicateStateAnalysis(ctx.cm), visibilityLevel)
+    private val asGenerator = ConcolicSequenceGenerator(ctx, PredicateStateAnalysis(ctx.cm), visibilityLevel)
+    private val unknownGenerator = UnknownGenerator(asGenerator.context)
     private val printer = ExecutorTestCasePrinter(ctx, method.packageName, testName)
     val testKlassName = printer.fullKlassName
 
     fun generate(descriptors: Parameters<Descriptor>) = try {
         val sequences = descriptors.actionSequences
+        printer.print(method, sequences.rtUnmapped)
+    } catch (e: GenerationException) {
+        throw e
+    } catch (e: Exception) {
+        throw GenerationException(e)
+    } catch (e: Error) {
+        throw GenerationException(e)
+    }
+
+    fun generateUnsafe(descriptors: Parameters<Descriptor>) = try {
+        val sequences = descriptors.unknownActionSequences
         printer.print(method, sequences.rtUnmapped)
     } catch (e: GenerationException) {
         throw e
@@ -76,13 +89,24 @@ class UnsafeGenerator(
     }
 
     val Descriptor.actionSequence: ActionSequence
-        get() = csGenerator.generate(this)
+        get() = asGenerator.generate(this)
+
+    val Descriptor.unknownActionSequence: ActionSequence
+        get() = unknownGenerator.generate(this)
 
     private val Parameters<Descriptor>.actionSequences: Parameters<ActionSequence>
         get() {
             val thisSequence = instance?.actionSequence
             val argSequences = arguments.map { it.actionSequence }
             val staticFields = statics.map { it.actionSequence }.toSet()
+            return Parameters(thisSequence, argSequences, staticFields)
+        }
+
+    private val Parameters<Descriptor>.unknownActionSequences: Parameters<ActionSequence>
+        get() {
+            val thisSequence = instance?.unknownActionSequence
+            val argSequences = arguments.map { it.unknownActionSequence }
+            val staticFields = statics.map { it.unknownActionSequence }.toSet()
             return Parameters(thisSequence, argSequences, staticFields)
         }
 }
