@@ -437,14 +437,33 @@ class ExecutorAS2JavaPrinter(
             }
             is ObjectDescriptor -> {
                 val klass = (descriptor.type.getKfgType(ctx.types) as ClassType).klass
-                result += "$decl = ${newInstance.name}(\"${klass.canonicalDesc}\")"
-                for ((field, element) in descriptor.fields) {
-                    val fieldName = printDescriptor(element, result)
-                    val setFieldMethod = field.second.primitiveName?.let { setPrimitiveFieldMap[it]!! } ?: setField
-                    result += "${setFieldMethod.name}($name, ${name}.getClass(), \"${field.first}\", $fieldName)"
+                result += when {
+                    klass.isEnum -> listOf("$decl = ${klass.javaString}.${getEnumName(descriptor)}")
+                    else -> buildList {
+                        add("$decl = ${newInstance.name}(\"${klass.canonicalDesc}\")")
+                        for ((field, element) in descriptor.fields) {
+                            val fieldName = printDescriptor(element, result)
+                            val setFieldMethod = field.second.primitiveName?.let { setPrimitiveFieldMap[it]!! } ?: setField
+                            add("${setFieldMethod.name}($name, ${name}.getClass(), \"${field.first}\", $fieldName)")
+                        }
+                    }
                 }
             }
         }
         return name
+    }
+
+    private fun getEnumName(descriptor: ObjectDescriptor): String {
+        val klass = (descriptor.type.getKfgType(ctx.types) as ClassType).klass
+
+        val nameDescriptor = descriptor["name", KexString()] as? ObjectDescriptor
+        return nameDescriptor?.let { obj ->
+            val valueDescriptor = obj["value", KexChar().asArray()] as? ArrayDescriptor
+            valueDescriptor?.let { array ->
+                (0 until array.length).map {
+                    (array.elements.getOrDefault(it, descriptor { const(' ') }) as ConstantDescriptor.Char).value
+                }.joinToString("")
+            }
+        } ?: klass.fields.filter { it.isFinal && it.isStatic && it.type == klass.type }.randomOrNull()?.name ?: "NOT_FOUND"
     }
 }
