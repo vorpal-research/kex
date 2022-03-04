@@ -62,6 +62,7 @@ class ExecutorAS2JavaPrinter(
             import("java.lang.reflect.Constructor")
             import("java.lang.reflect.Field")
             import("java.lang.reflect.Array")
+            import("java.lang.reflect.Modifier")
             import("sun.misc.Unsafe")
 
             with(klass) {
@@ -180,6 +181,10 @@ class ExecutorAS2JavaPrinter(
                         exceptions += "Throwable"
 
                         +"Field field = ${getField.name}(klass, name)"
+                        +"Field mods = Field.class.getDeclaredField(\"modifiers\")"
+                        +"mods.setAccessible(true)"
+                        +"int modifiers = mods.getInt(field)"
+                        +"mods.setInt(field, modifiers & ~Modifier.FINAL)"
                         +"field.setAccessible(true)"
                         +"field.set${type.kapitalize()}(instance, value)"
                     }
