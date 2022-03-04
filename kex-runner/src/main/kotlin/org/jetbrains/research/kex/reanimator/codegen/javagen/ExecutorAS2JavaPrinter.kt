@@ -322,7 +322,8 @@ class ExecutorAS2JavaPrinter(
         val descriptor = sequence.target
         printedStacks -= "${descriptor.term}"
         val result = mutableListOf<String>()
-        printDescriptor(descriptor, result)
+        val names = printDeclarations(descriptor, result)
+        printInsides(descriptor, result, names)
         return result
     }
 
@@ -334,7 +335,10 @@ class ExecutorAS2JavaPrinter(
             else -> unreachable { }
         }
 
-    private fun printTestCall(method: org.jetbrains.research.kfg.ir.Method, actionSequences: Parameters<ActionSequence>) =
+    private fun printTestCall(
+        method: org.jetbrains.research.kfg.ir.Method,
+        actionSequences: Parameters<ActionSequence>
+    ) =
         with(current) {
             +"Class<?> klass = Class.forName(\"${method.klass.canonicalDesc}\")"
             +"Class<?>[] argTypes = new Class<?>[${method.argTypes.size}]"
@@ -391,64 +395,104 @@ class ExecutorAS2JavaPrinter(
             else -> unreachable { log.error("Unknown constant descriptor $this") }
         }
 
-    private fun printDescriptor(descriptor: Descriptor, result: MutableList<String>): String = with(current) {
+    private fun printDeclarations(
+        descriptor: Descriptor,
+        result: MutableList<String>,
+        visited: MutableSet<Descriptor> = mutableSetOf(),
+        names: MutableMap<Descriptor, String> = mutableMapOf()
+    ): Map<Descriptor, String> {
         val name = "${descriptor.term}"
-        if (name in printedStacks) return@with name
-        printedStacks += name
+        if (descriptor in visited) return names
+        if (name in printedStacks) return names
+        visited += descriptor
 
         val resolveType = when (descriptor.type) {
             is KexPointer -> ctx.types.objectType.asType
             else -> descriptor.type.getKfgType(ctx.types).asType
         }
         val decl = printVarDeclaration(name, resolveType)
+
         when (descriptor) {
-            ConstantDescriptor.Null -> result += "$decl = null"
-            is ConstantDescriptor.Bool -> result += "$decl = ${descriptor.asConstant}"
-            is ConstantDescriptor.Byte -> result += "$decl = ${descriptor.asConstant}"
-            is ConstantDescriptor.Char -> result += "$decl = ${descriptor.asConstant}"
-            is ConstantDescriptor.Double -> result += "$decl = ${descriptor.asConstant}"
-            is ConstantDescriptor.Float -> result += "$decl = ${descriptor.asConstant}"
-            is ConstantDescriptor.Int -> result += "$decl = ${descriptor.asConstant}"
-            is ConstantDescriptor.Long -> result += "$decl = ${descriptor.asConstant}"
-            is ConstantDescriptor.Short -> result += "$decl = ${descriptor.asConstant}"
+            ConstantDescriptor.Null -> result += "$decl = null".also { names[descriptor] = name }
+            is ConstantDescriptor.Bool -> result += "$decl = ${descriptor.asConstant}".also { names[descriptor] = name }
+            is ConstantDescriptor.Byte -> result += "$decl = ${descriptor.asConstant}".also { names[descriptor] = name }
+            is ConstantDescriptor.Char -> result += "$decl = ${descriptor.asConstant}".also { names[descriptor] = name }
+            is ConstantDescriptor.Double -> result += "$decl = ${descriptor.asConstant}".also { names[descriptor] = name }
+            is ConstantDescriptor.Float -> result += "$decl = ${descriptor.asConstant}".also { names[descriptor] = name }
+            is ConstantDescriptor.Int -> result += "$decl = ${descriptor.asConstant}".also { names[descriptor] = name }
+            is ConstantDescriptor.Long -> result += "$decl = ${descriptor.asConstant}".also { names[descriptor] = name }
+            is ConstantDescriptor.Short -> result += "$decl = ${descriptor.asConstant}".also { names[descriptor] = name }
             is ArrayDescriptor -> {
                 val elementType = (descriptor.type as KexArray).element
                 result += "$decl = ${
                     elementType.primitiveName?.let {
                         "${newPrimitiveArrayMap[it]!!.name}(${descriptor.length})"
                     } ?: "${newArray.name}(\"${(elementType.getKfgType(ctx.types) as ClassType).klass.canonicalDesc}\", ${descriptor.length})"
-                }"
+                }".also { names[descriptor] = name }
+                for ((_, element) in descriptor.elements) {
+                    printDeclarations(element, result, visited, names)
+                }
+            }
+            is ClassDescriptor -> {
+                val klass = (descriptor.type.getKfgType(ctx.types) as ClassType).klass
+                val klassVarName = "klassInstance${klassCounter++}"
+                result += "Class<?> $klassVarName = Class.forName(\"${klass.canonicalDesc}\")".also { names[descriptor] = klassVarName }
+                for ((_, element) in descriptor.fields) {
+                    printDeclarations(element, result, visited, names)
+                }
+            }
+            is ObjectDescriptor -> {
+                val klass = (descriptor.type.getKfgType(ctx.types) as ClassType).klass
+                when {
+                    klass.isEnum -> result += "$decl = ${klass.javaString}.${getEnumName(descriptor)}"
+                    else -> {
+                        result += "$decl = ${newInstance.name}(\"${klass.canonicalDesc}\")"
+                        for ((_, element) in descriptor.fields) {
+                            printDeclarations(element, result, visited, names)
+                        }
+                    }
+                }.also { names[descriptor] = name }
+            }
+        }
+        return names
+    }
+
+    private fun printInsides(descriptor: Descriptor, result: MutableList<String>, names: Map<Descriptor, String>): String = with(current) {
+        val name = names.getValue(descriptor)
+        if (name in printedStacks) return@with name
+        printedStacks += name
+
+        when (descriptor) {
+            is ArrayDescriptor -> {
                 for ((index, element) in descriptor.elements) {
-                    val elementName = printDescriptor(element, result)
+                    val elementName = printInsides(element, result, names)
                     val setElementMethod =
                         element.type.primitiveName?.let { setPrimitiveElementMap[it]!! } ?: setElement
                     result += "${setElementMethod.name}($name, $index, $elementName)"
                 }
             }
             is ClassDescriptor -> {
-                val klass = (descriptor.type.getKfgType(ctx.types) as ClassType).klass
-                val klassVarName = "klassInstance${klassCounter++}"
-                result += "Class<?> $klassVarName = Class.forName(\"${klass.canonicalDesc}\")"
                 for ((field, element) in descriptor.fields) {
-                    val fieldName = printDescriptor(element, result)
+                    val fieldName = printInsides(element, result, names)
                     val setFieldMethod = field.second.primitiveName?.let { setPrimitiveFieldMap[it]!! } ?: setField
-                    result += "${setFieldMethod.name}(null, $klassVarName, \"${field.first}\", $fieldName)"
+                    result += "${setFieldMethod.name}(null, $name, \"${field.first}\", $fieldName)"
                 }
             }
             is ObjectDescriptor -> {
                 val klass = (descriptor.type.getKfgType(ctx.types) as ClassType).klass
-                result += when {
-                    klass.isEnum -> listOf("$decl = ${klass.javaString}.${getEnumName(descriptor)}")
-                    else -> buildList {
-                        add("$decl = ${newInstance.name}(\"${klass.canonicalDesc}\")")
+                when {
+                    klass.isEnum -> {}
+                    else -> {
                         for ((field, element) in descriptor.fields) {
-                            val fieldName = printDescriptor(element, result)
-                            val setFieldMethod = field.second.primitiveName?.let { setPrimitiveFieldMap[it]!! } ?: setField
-                            add("${setFieldMethod.name}($name, ${name}.getClass(), \"${field.first}\", $fieldName)")
+                            val fieldName = printInsides(element, result, names)
+                            val setFieldMethod =
+                                field.second.primitiveName?.let { setPrimitiveFieldMap[it]!! } ?: setField
+                            result += "${setFieldMethod.name}($name, ${name}.getClass(), \"${field.first}\", $fieldName)"
                         }
                     }
                 }
             }
+            else -> {}
         }
         return name
     }
@@ -464,6 +508,7 @@ class ExecutorAS2JavaPrinter(
                     (array.elements.getOrDefault(it, descriptor { const(' ') }) as ConstantDescriptor.Char).value
                 }.joinToString("")
             }
-        } ?: klass.fields.filter { it.isFinal && it.isStatic && it.type == klass.type }.randomOrNull()?.name ?: "NOT_FOUND"
+        } ?: klass.fields.filter { it.isFinal && it.isStatic && it.type == klass.type }.randomOrNull()?.name
+        ?: "NOT_FOUND"
     }
 }
