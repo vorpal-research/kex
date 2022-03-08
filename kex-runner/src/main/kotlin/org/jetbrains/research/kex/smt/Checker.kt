@@ -55,6 +55,7 @@ class Checker(
             ConcreteImplInliner(method.cm.type, TypeInfoMap(), psa, inlineIndex = index)
         }
         +StaticFieldInliner(ctx, psa)
+        +ClassAdapter(ctx.cm)
         +IntrinsicAdapter
         +KexIntrinsicsAdapter()
         +ReflectionInfoAdapter(method, loader)
@@ -63,8 +64,10 @@ class Checker(
         +BoolTypeAdapter(method.cm.type)
         +ArrayBoundsAdapter()
         +NullityInfoAdapter()
-        +ConstStringAdapter()
+        +ClassMethodAdapter(method.cm)
+        +ConstStringAdapter(method.cm.type)
         +FieldNormalizer(method.cm)
+        +TypeNameAdapter(method.cm.type)
     }
 
     fun prepareState(method: Method, ps: PredicateState, typeInfoMap: TypeInfoMap) = transform(ps) {
@@ -75,16 +78,18 @@ class Checker(
             ConcreteImplInliner(method.cm.type, typeInfoMap, psa, inlineIndex = index)
         }
         +StaticFieldInliner(ctx, psa)
+        +ClassAdapter(ctx.cm)
         +IntrinsicAdapter
         +KexIntrinsicsAdapter()
         +ReflectionInfoAdapter(method, loader)
         +Optimizer()
         +ConstantPropagator
         +BoolTypeAdapter(method.cm.type)
-        +ConstStringAdapter()
+        +ConstStringAdapter(method.cm.type)
         +ArrayBoundsAdapter()
         +NullityInfoAdapter()
         +FieldNormalizer(method.cm)
+        +TypeNameAdapter(method.cm.type)
     }
 
     fun prepareAndCheck(ps: PredicateState): Result {

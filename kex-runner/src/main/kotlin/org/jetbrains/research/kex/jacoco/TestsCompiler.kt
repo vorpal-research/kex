@@ -1,7 +1,11 @@
 package org.jetbrains.research.kex.jacoco
 
+import org.jetbrains.research.kthelper.logging.log
 import org.jetbrains.research.kthelper.tryOrNull
-import java.io.*
+import java.io.ByteArrayOutputStream
+import java.io.File
+import java.io.InputStream
+import java.io.OutputStream
 import java.net.URI
 import java.net.URL
 import java.net.URLClassLoader
@@ -27,7 +31,10 @@ class TestsCompiler(private val outputDir: Path) {
         val compilationTask = compiler.getTask(
             compilerOutput.writer(), fileManager, null, null, null, listOf(compilationUnit)
         )
-        compilationTask.call()
+        if (!compilationTask.call()) {
+            log.warn("Failed to compile tests $testsNames")
+            log.warn(compilerOutput.toString())
+        }
         return fileManager.generatedOutputFiles
     }
 

@@ -7,7 +7,7 @@ import org.jetbrains.research.kex.descriptor.Object2DescriptorConverter
 import org.jetbrains.research.kex.parameters.Parameters
 import org.jetbrains.research.kex.random.Randomizer
 import org.jetbrains.research.kex.reanimator.Reanimator
-import org.jetbrains.research.kex.reanimator.callstack.generator.GeneratorContext
+import org.jetbrains.research.kex.reanimator.actionsequence.generator.GeneratorContext
 import org.jetbrains.research.kex.reanimator.codegen.klassName
 import org.jetbrains.research.kex.reanimator.codegen.packageName
 import org.jetbrains.research.kex.trace.`object`.ActionTrace
@@ -94,7 +94,7 @@ class ReanimatingRandomObjectTracingRunner(
         val parameters = Parameters(randomInstance, randomArgs.toList(), setOf())
         val (instance, args) = with(reanimator) {
             val descriptors = parameters.descriptors
-            val callStacks = descriptors.callStacks
+            val callStacks = descriptors.actionSequences
             printer.print("test_$testCounter", method, callStacks)
             callStacks.executed
         }

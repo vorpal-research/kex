@@ -1,31 +1,32 @@
 package org.jetbrains.research.kex.test.javadebug;
 
+import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
+
 public abstract class JavaTest {
-    private static final JavaTest[] EMPTY_THROWABLE_ARRAY = new JavaTest[0];
-    protected int value;
 
-    JavaTest(int value) {
-        this.value = value;
-    }
+    public enum Testter {
+        A(1),
+        B(2),
+        C(3);
 
-    static class Impl extends JavaTest {
-        public Impl(int a) {
-            super(a);
-        }
-
-        public void setA(int a) {
-            this.value = a;
+        int a;
+        private Testter(int v) {
+            this.a = v;
         }
     }
 
-    public static JavaTest impl() {
-        if (EMPTY_THROWABLE_ARRAY.length > 0) return EMPTY_THROWABLE_ARRAY[0];
-        return new Impl(0);
+
+    public void test(Field field) throws Throwable {
+        Field mods = Field.class.getDeclaredField("modifiers");
+        mods.setAccessible(true);
+        int modifiers = mods.getInt(field);
+        mods.setInt(field, modifiers & ~Modifier.FINAL);
     }
 
-    public static void foo(Impl a) {
-        if (a instanceof JavaTest) {
-            throw new IllegalStateException();
+    public static void test(Testter t) {
+        if (t == Testter.A) {
+            System.out.println("a");
         }
     }
 }

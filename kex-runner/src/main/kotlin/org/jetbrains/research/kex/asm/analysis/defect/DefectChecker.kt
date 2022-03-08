@@ -244,8 +244,10 @@ class DefectChecker(
         +Optimizer()
         +ConstantPropagator
         +BoolTypeAdapter(method.cm.type)
-        +ConstStringAdapter()
+        +ClassMethodAdapter(method.cm)
+        +ConstStringAdapter(method.cm.type)
         +FieldNormalizer(method.cm)
+        +TypeNameAdapter(ctx.types)
     }
 
     private fun getSearchStrategy(method: Method): SearchStrategy = UnfilteredDfsStrategy(method)

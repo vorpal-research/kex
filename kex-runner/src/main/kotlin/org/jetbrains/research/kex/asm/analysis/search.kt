@@ -2,7 +2,7 @@ package org.jetbrains.research.kex.asm.analysis
 
 import org.jetbrains.research.kfg.ir.BasicBlock
 import org.jetbrains.research.kfg.ir.Method
-import org.jetbrains.research.kthelper.algorithm.GraphTraversal
+import org.jetbrains.research.kthelper.graph.GraphTraversal
 
 private fun buildBlockMapping(method: Method): Map<BasicBlock, BasicBlock> {
     val result = mutableMapOf<BasicBlock, BasicBlock>()

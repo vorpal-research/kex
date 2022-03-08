@@ -19,7 +19,13 @@ class Z3Tactics(private val elements: List<Z3Tactic>) : List<Z3Tactic> by elemen
     fun toJson() = Json.encodeToString(this)
 
     companion object {
-        fun load(): Z3Tactics = fromJson(File(tacticsFile).readText())
+        fun load(): Z3Tactics {
+            val file = File(tacticsFile)
+            return when {
+                file.exists() -> fromJson(file.readText())
+                else -> Z3Tactics(emptyList())
+            }
+        }
 
         fun fromJson(json: String) = Json.decodeFromString<Z3Tactics>(json)
     }

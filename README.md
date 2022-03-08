@@ -1,6 +1,6 @@
 # Kex
 
-Kex is a white-box fuzzer tool for Java bytecode.
+Kex is a platform for analysis of Java  bytecode.
 
 # Dependencies
 

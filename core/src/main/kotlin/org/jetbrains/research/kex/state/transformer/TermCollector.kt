@@ -4,10 +4,7 @@ import org.jetbrains.research.kex.ktype.KexReference
 import org.jetbrains.research.kex.state.PredicateState
 import org.jetbrains.research.kex.state.predicate.Predicate
 import org.jetbrains.research.kex.state.predicate.PredicateType
-import org.jetbrains.research.kex.state.term.ConstStringTerm
-import org.jetbrains.research.kex.state.term.FieldTerm
-import org.jetbrains.research.kex.state.term.Term
-import org.jetbrains.research.kex.state.term.term
+import org.jetbrains.research.kex.state.term.*
 
 class TermCollector(val filter: (Term) -> Boolean) : Transformer<TermCollector> {
     companion object {
@@ -71,6 +68,11 @@ class StringTermCollector : Transformer<StringTermCollector> {
     override fun transformField(term: FieldTerm): Term {
         val owner = transform(term.owner)
         return term { owner.field((term.type as KexReference).reference, term.fieldName) }
+    }
+
+    override fun transformConstClass(term: ConstClassTerm): Term {
+        strings += term { const(term.constantType.javaName) } as ConstStringTerm
+        return super.transformConstClass(term)
     }
 
     override fun transform(term: Term): Term {

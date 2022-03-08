@@ -7,72 +7,34 @@ import org.jetbrains.research.kthelper.logging.log
 import java.math.BigInteger
 
 @Suppress("UNCHECKED_CAST")
-object Z3Engine : SMTEngine<Context, Expr<*>, Sort, FuncDecl<*>, Pattern>() {
-    private var trueExpr: Expr<BoolSort>? = null
-    private var falseExpr: Expr<BoolSort>? = null
-    private val bvSortCache = mutableMapOf<Int, Sort>()
-    private val bv32Sort get() = bvSortCache[32]
-    private val bv64Sort get() = bvSortCache[64]
-    private var array32to32Sort: Sort? = null
-    private var array32to64Sort: Sort? = null
-    private var array64to64Sort: Sort? = null
+object Z3Engine : SMTEngine<ExtendedContext, Expr<*>, Sort, FuncDecl<*>, Pattern>() {
+    override fun makeBound(ctx: ExtendedContext, size: Int, sort: Sort): Expr<*> = ctx.mkBound(size, sort)
+    override fun makePattern(ctx: ExtendedContext, expr: Expr<*>): Pattern = ctx.mkPattern(expr)
 
-    override fun initialize() {
-        trueExpr = null
-        falseExpr = null
-        array32to32Sort = null
-        array32to64Sort = null
-        array64to64Sort = null
-        bvSortCache.clear()
-    }
+    override fun getSort(ctx: ExtendedContext, expr: Expr<*>): Sort = expr.sort
+    override fun getBoolSort(ctx: ExtendedContext): Sort = ctx.boolSort
+    override fun getBVSort(ctx: ExtendedContext, size: Int): Sort = ctx.mkBitVecSort(size)
+    override fun getFloatSort(ctx: ExtendedContext): Sort = ctx.mkFPSort32()
+    override fun getDoubleSort(ctx: ExtendedContext): Sort = ctx.mkFPSort64()
+    override fun getArraySort(ctx: ExtendedContext, domain: Sort, range: Sort): Sort = ctx.mkArraySort(domain, range)
 
-    override fun makeBound(ctx: Context, size: Int, sort: Sort): Expr<*> = ctx.mkBound(size, sort)
-    override fun makePattern(ctx: Context, expr: Expr<*>): Pattern = ctx.mkPattern(expr)
+    override fun isBoolSort(ctx: ExtendedContext, sort: Sort): Boolean = sort is BoolSort
+    override fun isBVSort(ctx: ExtendedContext, sort: Sort): Boolean = sort is BitVecSort
+    override fun isArraySort(ctx: ExtendedContext, sort: Sort): Boolean = sort is ArraySort<*, *>
+    override fun isFloatSort(ctx: ExtendedContext, sort: Sort): Boolean = sort is FPSort && sort == ctx.mkFPSort32()
+    override fun isDoubleSort(ctx: ExtendedContext, sort: Sort): Boolean = sort is FPSort && sort == ctx.mkFPSort64()
 
-    override fun getSort(ctx: Context, expr: Expr<*>): Sort = expr.sort
-    override fun getBoolSort(ctx: Context): Sort = ctx.boolSort
-    override fun getBVSort(ctx: Context, size: Int): Sort = bvSortCache.getOrPut(size) { ctx.mkBitVecSort(size) }
-    override fun getFloatSort(ctx: Context): Sort = ctx.mkFPSort32()
-    override fun getDoubleSort(ctx: Context): Sort = ctx.mkFPSort64()
-    override fun getArraySort(ctx: Context, domain: Sort, range: Sort): Sort = when {
-        domain === bv32Sort && range === bv32Sort -> {
-            if (array32to32Sort == null) {
-                array32to32Sort = ctx.mkArraySort(bv32Sort, bv32Sort)
-            }
-            array32to32Sort!!
-        }
-        domain === bv32Sort && range === bv64Sort -> {
-            if (array32to64Sort == null) {
-                array32to64Sort = ctx.mkArraySort(bv32Sort, bv64Sort)
-            }
-            array32to64Sort!!
-        }
-        domain === bv64Sort && range === bv64Sort -> {
-            if (array64to64Sort == null) {
-                array64to64Sort = ctx.mkArraySort(bv64Sort, bv64Sort)
-            }
-            array64to64Sort!!
-        }
-        else -> ctx.mkArraySort(domain, range)
-    }
+    override fun bvBitSize(ctx: ExtendedContext, sort: Sort): Int = (sort as BitVecSort).size
+    override fun floatEBitSize(ctx: ExtendedContext, sort: Sort): Int = (sort as FPSort).eBits
+    override fun floatSBitSize(ctx: ExtendedContext, sort: Sort): Int = (sort as FPSort).sBits
 
-    override fun isBoolSort(ctx: Context, sort: Sort): Boolean = sort is BoolSort
-    override fun isBVSort(ctx: Context, sort: Sort): Boolean = sort is BitVecSort
-    override fun isArraySort(ctx: Context, sort: Sort): Boolean = sort is ArraySort<*, *>
-    override fun isFloatSort(ctx: Context, sort: Sort): Boolean = sort is FPSort && sort == ctx.mkFPSort32()
-    override fun isDoubleSort(ctx: Context, sort: Sort): Boolean = sort is FPSort && sort == ctx.mkFPSort64()
-
-    override fun bvBitSize(ctx: Context, sort: Sort): Int = (sort as BitVecSort).size
-    override fun floatEBitSize(ctx: Context, sort: Sort): Int = (sort as FPSort).eBits
-    override fun floatSBitSize(ctx: Context, sort: Sort): Int = (sort as FPSort).sBits
-
-    override fun bool2bv(ctx: Context, expr: Expr<*>, sort: Sort): Expr<*> =
+    override fun bool2bv(ctx: ExtendedContext, expr: Expr<*>, sort: Sort): Expr<*> =
         ite(ctx, expr, makeNumericConst(ctx, sort, 1), makeNumericConst(ctx, sort, 0))
 
-    override fun bv2bool(ctx: Context, expr: Expr<*>): Expr<*> =
+    override fun bv2bool(ctx: ExtendedContext, expr: Expr<*>): Expr<*> =
         binary(ctx, Opcode.NEQ, expr, makeNumericConst(ctx, getSort(ctx, expr), 0))
 
-    override fun bv2bv(ctx: Context, expr: Expr<*>, sort: Sort): Expr<*> {
+    override fun bv2bv(ctx: ExtendedContext, expr: Expr<*>, sort: Sort): Expr<*> {
         val curSize = (getSort(ctx, expr) as BitVecSort).size
         val castSize = (sort as BitVecSort).size
         return when {
@@ -82,77 +44,70 @@ object Z3Engine : SMTEngine<Context, Expr<*>, Sort, FuncDecl<*>, Pattern>() {
         }
     }
 
-    override fun bv2float(ctx: Context, expr: Expr<*>, sort: Sort): Expr<*> =
+    override fun bv2float(ctx: ExtendedContext, expr: Expr<*>, sort: Sort): Expr<*> =
         ctx.mkFPToFP(ctx.mkFPRTZ(), expr as BitVecExpr, sort as FPSort, true)
 
-    override fun float2bv(ctx: Context, expr: Expr<*>, sort: Sort): Expr<*> =
+    override fun float2bv(ctx: ExtendedContext, expr: Expr<*>, sort: Sort): Expr<*> =
         ctx.mkFPToBV(ctx.mkFPRTZ(), expr as FPExpr, (sort as BitVecSort).size, true)
 
-    override fun bvIEEE2float(ctx: Context, expr: Expr<*>, sort: Sort): Expr<*> =
+    override fun bvIEEE2float(ctx: ExtendedContext, expr: Expr<*>, sort: Sort): Expr<*> =
         ctx.mkFPToFP(expr as BitVecExpr, sort as FPSort)
 
-    override fun float2IEEEbv(ctx: Context, expr: Expr<*>, sort: Sort): Expr<*> =
+    override fun float2IEEEbv(ctx: ExtendedContext, expr: Expr<*>, sort: Sort): Expr<*> =
         ctx.mkFPToIEEEBV(expr as FPExpr)
 
-    override fun float2float(ctx: Context, expr: Expr<*>, sort: Sort): Expr<*> =
+    override fun float2float(ctx: ExtendedContext, expr: Expr<*>, sort: Sort): Expr<*> =
         ctx.mkFPToFP(ctx.mkFPRTZ(), expr as FPExpr, sort as FPSort)
 
-    override fun hash(ctx: Context, expr: Expr<*>) = expr.hashCode()
-    override fun name(ctx: Context, expr: Expr<*>) = expr.toString()
-    override fun toString(ctx: Context, expr: Expr<*>) = expr.toString()
-    override fun simplify(ctx: Context, expr: Expr<*>): Expr<*> = expr.simplify()
-    override fun equality(ctx: Context, lhv: Expr<*>, rhv: Expr<*>) = lhv == rhv
+    override fun hash(ctx: ExtendedContext, expr: Expr<*>) = expr.hashCode()
+    override fun name(ctx: ExtendedContext, expr: Expr<*>) = expr.toString()
+    override fun toString(ctx: ExtendedContext, expr: Expr<*>) = expr.toString()
+    override fun simplify(ctx: ExtendedContext, expr: Expr<*>): Expr<*> = expr.simplify()
+    override fun equality(ctx: ExtendedContext, lhv: Expr<*>, rhv: Expr<*>) = lhv == rhv
 
-    override fun makeVar(ctx: Context, sort: Sort, name: String, fresh: Boolean): Expr<*> = when {
+    override fun makeVar(ctx: ExtendedContext, sort: Sort, name: String, fresh: Boolean): Expr<*> = when {
         fresh -> ctx.mkFreshConst(name, sort)
         else -> ctx.mkConst(name, sort)
     }
 
-    fun makeTrue(ctx: Context) = trueExpr ?: run {
-        trueExpr = ctx.mkTrue()
-        trueExpr!!
-    }
+    fun makeTrue(ctx: ExtendedContext) = ctx.mkTrue()
+    fun makeFalse(ctx: ExtendedContext) = ctx.mkFalse()
 
-    fun makeFalse(ctx: Context) = falseExpr ?: run {
-        falseExpr = ctx.mkFalse()
-        falseExpr!!
-    }
-
-    override fun makeBooleanConst(ctx: Context, value: Boolean): Expr<*> = when {
+    override fun makeBooleanConst(ctx: ExtendedContext, value: Boolean): Expr<*> = when {
         value -> makeTrue(ctx)
         else -> makeFalse(ctx)
     }
 
-    override fun makeIntConst(ctx: Context, value: Short): Expr<*> = ctx.mkNumeral(value.toInt(), getBVSort(ctx, WORD))
-    override fun makeIntConst(ctx: Context, value: Int): Expr<*> = ctx.mkNumeral(value, getBVSort(ctx, WORD))
-    override fun makeLongConst(ctx: Context, value: Long): Expr<*> = ctx.mkNumeral(value, getBVSort(ctx, DWORD))
-    override fun makeNumericConst(ctx: Context, sort: Sort, value: Long): Expr<*> = ctx.mkNumeral(value, sort)
-    override fun makeFloatConst(ctx: Context, value: Float): Expr<*> =
+    override fun makeIntConst(ctx: ExtendedContext, value: Short): Expr<*> = ctx.mkNumeral(value.toInt(), getBVSort(ctx, WORD))
+    override fun makeIntConst(ctx: ExtendedContext, value: Int): Expr<*> = ctx.mkNumeral(value, getBVSort(ctx, WORD))
+    override fun makeLongConst(ctx: ExtendedContext, value: Long): Expr<*> = ctx.mkNumeral(value, getBVSort(ctx, DWORD))
+    override fun makeNumericConst(ctx: ExtendedContext, sort: Sort, value: Long): Expr<*> = ctx.mkNumeral(value, sort)
+    override fun makeFloatConst(ctx: ExtendedContext, value: Float): Expr<*> =
         ctx.mkFPNumeral(value, getFloatSort(ctx) as FPSort)
 
-    override fun makeDoubleConst(ctx: Context, value: Double): Expr<*> =
+    override fun makeDoubleConst(ctx: ExtendedContext, value: Double): Expr<*> =
         ctx.mkFPNumeral(value, getDoubleSort(ctx) as FPSort)
 
-    override fun makeConstArray(ctx: Context, sort: Sort, expr: Expr<*>): Expr<*> = ctx.mkConstArray(sort, expr)
+    override fun makeConstArray(ctx: ExtendedContext, sort: Sort, expr: Expr<*>): Expr<*> = ctx.mkConstArray(sort, expr)
 
-    override fun makeFunction(ctx: Context, name: String, retSort: Sort, args: List<Sort>): FuncDecl<*> =
+    override fun makeFunction(ctx: ExtendedContext, name: String, retSort: Sort, args: List<Sort>): FuncDecl<*> =
         ctx.mkFuncDecl(name, args.toTypedArray(), retSort)
 
-    override fun makeBVConst(ctx: Context, value: String, radix: Int, width: Int): Expr<*> {
+    override fun makeBVConst(ctx: ExtendedContext, value: String, radix: Int, width: Int): Expr<*> {
         val bitStr = BigInteger(value, radix).toString(10)
         return ctx.mkNumeral(bitStr, getBVSort(ctx, width))
     }
 
-    override fun apply(ctx: Context, f: FuncDecl<*>, args: List<Expr<*>>): Expr<*> = f.apply(*args.toTypedArray())
+    override fun apply(ctx: ExtendedContext, f: FuncDecl<*>, args: List<Expr<*>>): Expr<*> = f.apply(*args.toTypedArray())
 
-    override fun negate(ctx: Context, expr: Expr<*>): Expr<*> = when (expr) {
+    override fun negate(ctx: ExtendedContext, expr: Expr<*>): Expr<*> = when (expr) {
         is BoolExpr -> ctx.mkNot(expr)
         is BitVecExpr -> ctx.mkBVNeg(expr)
         is FPExpr -> ctx.mkFPNeg(expr)
         else -> unreachable { log.error("Unimplemented operation negate") }
     }
 
-    override fun binary(ctx: Context, opcode: Opcode, lhv: Expr<*>, rhv: Expr<*>): Expr<*> = when (opcode) {
+    override fun binary(ctx: ExtendedContext, opcode: Opcode, lhv: Expr<*>, rhv: Expr<*>): Expr<*> = when (opcode) {
         Opcode.EQ -> eq(ctx, lhv, rhv)
         Opcode.NEQ -> neq(ctx, lhv, rhv)
         Opcode.ADD -> when {
@@ -223,91 +178,91 @@ object Z3Engine : SMTEngine<Context, Expr<*>, Sort, FuncDecl<*>, Pattern>() {
         Opcode.CONCAT -> concat(ctx, lhv as BitVecExpr, rhv as BitVecExpr)
     }
 
-    private fun eq(ctx: Context, lhv: Expr<*>, rhv: Expr<*>) = ctx.mkEq(lhv, rhv)
-    private fun neq(ctx: Context, lhv: Expr<*>, rhv: Expr<*>) = ctx.mkNot(eq(ctx, lhv, rhv))
+    private fun eq(ctx: ExtendedContext, lhv: Expr<*>, rhv: Expr<*>) = ctx.mkEq(lhv, rhv)
+    private fun neq(ctx: ExtendedContext, lhv: Expr<*>, rhv: Expr<*>) = ctx.mkNot(eq(ctx, lhv, rhv))
 
-    private fun add(ctx: Context, lhv: BitVecExpr, rhv: BitVecExpr) = ctx.mkBVAdd(lhv, rhv)
-    private fun add(ctx: Context, lhv: FPExpr, rhv: FPExpr) = ctx.mkFPAdd(ctx.mkFPRNA(), lhv, rhv)
+    private fun add(ctx: ExtendedContext, lhv: BitVecExpr, rhv: BitVecExpr) = ctx.mkBVAdd(lhv, rhv)
+    private fun add(ctx: ExtendedContext, lhv: FPExpr, rhv: FPExpr) = ctx.mkFPAdd(ctx.mkFPRNA(), lhv, rhv)
 
-    private fun sub(ctx: Context, lhv: BitVecExpr, rhv: BitVecExpr) = ctx.mkBVSub(lhv, rhv)
-    private fun sub(ctx: Context, lhv: FPExpr, rhv: FPExpr) = ctx.mkFPSub(ctx.mkFPRNA(), lhv, rhv)
+    private fun sub(ctx: ExtendedContext, lhv: BitVecExpr, rhv: BitVecExpr) = ctx.mkBVSub(lhv, rhv)
+    private fun sub(ctx: ExtendedContext, lhv: FPExpr, rhv: FPExpr) = ctx.mkFPSub(ctx.mkFPRNA(), lhv, rhv)
 
-    private fun mul(ctx: Context, lhv: BitVecExpr, rhv: BitVecExpr) = ctx.mkBVMul(lhv, rhv)
-    private fun mul(ctx: Context, lhv: FPExpr, rhv: FPExpr) = ctx.mkFPMul(ctx.mkFPRNA(), lhv, rhv)
+    private fun mul(ctx: ExtendedContext, lhv: BitVecExpr, rhv: BitVecExpr) = ctx.mkBVMul(lhv, rhv)
+    private fun mul(ctx: ExtendedContext, lhv: FPExpr, rhv: FPExpr) = ctx.mkFPMul(ctx.mkFPRNA(), lhv, rhv)
 
-    private fun sdiv(ctx: Context, lhv: BitVecExpr, rhv: BitVecExpr) = ctx.mkBVSDiv(lhv, rhv)
-    private fun sdiv(ctx: Context, lhv: FPExpr, rhv: FPExpr) = ctx.mkFPDiv(ctx.mkFPRNA(), lhv, rhv)
+    private fun sdiv(ctx: ExtendedContext, lhv: BitVecExpr, rhv: BitVecExpr) = ctx.mkBVSDiv(lhv, rhv)
+    private fun sdiv(ctx: ExtendedContext, lhv: FPExpr, rhv: FPExpr) = ctx.mkFPDiv(ctx.mkFPRNA(), lhv, rhv)
 
-    private fun udiv(ctx: Context, lhv: BitVecExpr, rhv: BitVecExpr) = ctx.mkBVUDiv(lhv, rhv)
-    private fun smod(ctx: Context, lhv: BitVecExpr, rhv: BitVecExpr) = ctx.mkBVSMod(lhv, rhv)
-    private fun umod(ctx: Context, lhv: BitVecExpr, rhv: BitVecExpr) = ctx.mkBVURem(lhv, rhv)
-    private fun fmod(ctx: Context, lhv: FPExpr, rhv: FPExpr) = ctx.mkFPRem(lhv, rhv)
+    private fun udiv(ctx: ExtendedContext, lhv: BitVecExpr, rhv: BitVecExpr) = ctx.mkBVUDiv(lhv, rhv)
+    private fun smod(ctx: ExtendedContext, lhv: BitVecExpr, rhv: BitVecExpr) = ctx.mkBVSMod(lhv, rhv)
+    private fun umod(ctx: ExtendedContext, lhv: BitVecExpr, rhv: BitVecExpr) = ctx.mkBVURem(lhv, rhv)
+    private fun fmod(ctx: ExtendedContext, lhv: FPExpr, rhv: FPExpr) = ctx.mkFPRem(lhv, rhv)
 
-    private fun gt(ctx: Context, lhv: BitVecExpr, rhv: BitVecExpr) = ctx.mkBVSGT(lhv, rhv)
-    private fun gt(ctx: Context, lhv: FPExpr, rhv: FPExpr) = ctx.mkFPGt(lhv, rhv)
+    private fun gt(ctx: ExtendedContext, lhv: BitVecExpr, rhv: BitVecExpr) = ctx.mkBVSGT(lhv, rhv)
+    private fun gt(ctx: ExtendedContext, lhv: FPExpr, rhv: FPExpr) = ctx.mkFPGt(lhv, rhv)
 
-    private fun ge(ctx: Context, lhv: BitVecExpr, rhv: BitVecExpr) = ctx.mkBVSGE(lhv, rhv)
-    private fun ge(ctx: Context, lhv: FPExpr, rhv: FPExpr) = ctx.mkFPGEq(lhv, rhv)
+    private fun ge(ctx: ExtendedContext, lhv: BitVecExpr, rhv: BitVecExpr) = ctx.mkBVSGE(lhv, rhv)
+    private fun ge(ctx: ExtendedContext, lhv: FPExpr, rhv: FPExpr) = ctx.mkFPGEq(lhv, rhv)
 
-    private fun lt(ctx: Context, lhv: BitVecExpr, rhv: BitVecExpr) = ctx.mkBVSLT(lhv, rhv)
-    private fun lt(ctx: Context, lhv: FPExpr, rhv: FPExpr) = ctx.mkFPLt(lhv, rhv)
+    private fun lt(ctx: ExtendedContext, lhv: BitVecExpr, rhv: BitVecExpr) = ctx.mkBVSLT(lhv, rhv)
+    private fun lt(ctx: ExtendedContext, lhv: FPExpr, rhv: FPExpr) = ctx.mkFPLt(lhv, rhv)
 
-    private fun le(ctx: Context, lhv: BitVecExpr, rhv: BitVecExpr) = ctx.mkBVSLE(lhv, rhv)
-    private fun le(ctx: Context, lhv: FPExpr, rhv: FPExpr) = ctx.mkFPLEq(lhv, rhv)
+    private fun le(ctx: ExtendedContext, lhv: BitVecExpr, rhv: BitVecExpr) = ctx.mkBVSLE(lhv, rhv)
+    private fun le(ctx: ExtendedContext, lhv: FPExpr, rhv: FPExpr) = ctx.mkFPLEq(lhv, rhv)
 
-    private fun shl(ctx: Context, lhv: BitVecExpr, rhv: BitVecExpr) = ctx.mkBVSHL(lhv, rhv)
-    private fun lshr(ctx: Context, lhv: BitVecExpr, rhv: BitVecExpr) = ctx.mkBVLSHR(lhv, rhv)
-    private fun ashr(ctx: Context, lhv: BitVecExpr, rhv: BitVecExpr) = ctx.mkBVASHR(lhv, rhv)
+    private fun shl(ctx: ExtendedContext, lhv: BitVecExpr, rhv: BitVecExpr) = ctx.mkBVSHL(lhv, rhv)
+    private fun lshr(ctx: ExtendedContext, lhv: BitVecExpr, rhv: BitVecExpr) = ctx.mkBVLSHR(lhv, rhv)
+    private fun ashr(ctx: ExtendedContext, lhv: BitVecExpr, rhv: BitVecExpr) = ctx.mkBVASHR(lhv, rhv)
 
-    private fun and(ctx: Context, lhv: BoolExpr, rhv: BoolExpr) = ctx.mkAnd(lhv, rhv)
-    private fun or(ctx: Context, lhv: BoolExpr, rhv: BoolExpr) = ctx.mkOr(lhv, rhv)
-    private fun xor(ctx: Context, lhv: BoolExpr, rhv: BoolExpr) = ctx.mkXor(lhv, rhv)
-    private fun and(ctx: Context, lhv: BitVecExpr, rhv: BitVecExpr) = ctx.mkBVAND(lhv, rhv)
-    private fun or(ctx: Context, lhv: BitVecExpr, rhv: BitVecExpr) = ctx.mkBVOR(lhv, rhv)
-    private fun xor(ctx: Context, lhv: BitVecExpr, rhv: BitVecExpr) = ctx.mkBVXOR(lhv, rhv)
-    private fun implies(ctx: Context, lhv: BoolExpr, rhv: BoolExpr) = ctx.mkImplies(lhv, rhv)
-    private fun iff(ctx: Context, lhv: BoolExpr, rhv: BoolExpr) = ctx.mkIff(lhv, rhv)
-    private fun concat(ctx: Context, lhv: BitVecExpr, rhv: BitVecExpr) = ctx.mkConcat(lhv, rhv)
+    private fun and(ctx: ExtendedContext, lhv: BoolExpr, rhv: BoolExpr) = ctx.mkAnd(lhv, rhv)
+    private fun or(ctx: ExtendedContext, lhv: BoolExpr, rhv: BoolExpr) = ctx.mkOr(lhv, rhv)
+    private fun xor(ctx: ExtendedContext, lhv: BoolExpr, rhv: BoolExpr) = ctx.mkXor(lhv, rhv)
+    private fun and(ctx: ExtendedContext, lhv: BitVecExpr, rhv: BitVecExpr) = ctx.mkBVAND(lhv, rhv)
+    private fun or(ctx: ExtendedContext, lhv: BitVecExpr, rhv: BitVecExpr) = ctx.mkBVOR(lhv, rhv)
+    private fun xor(ctx: ExtendedContext, lhv: BitVecExpr, rhv: BitVecExpr) = ctx.mkBVXOR(lhv, rhv)
+    private fun implies(ctx: ExtendedContext, lhv: BoolExpr, rhv: BoolExpr) = ctx.mkImplies(lhv, rhv)
+    private fun iff(ctx: ExtendedContext, lhv: BoolExpr, rhv: BoolExpr) = ctx.mkIff(lhv, rhv)
+    private fun concat(ctx: ExtendedContext, lhv: BitVecExpr, rhv: BitVecExpr) = ctx.mkConcat(lhv, rhv)
 
-    override fun conjunction(ctx: Context, vararg exprs: Expr<*>): Expr<*> {
+    override fun conjunction(ctx: ExtendedContext, vararg exprs: Expr<*>): Expr<*> {
         val boolExprs = exprs.map { it as BoolExpr }.toTypedArray()
         return ctx.mkAnd(*boolExprs)
     }
 
-    override fun conjunction(ctx: Context, exprs: Collection<Expr<*>>): Expr<*> {
+    override fun conjunction(ctx: ExtendedContext, exprs: Collection<Expr<*>>): Expr<*> {
         val boolExprs = exprs.map { it as BoolExpr }.toTypedArray()
         return ctx.mkAnd(*boolExprs)
     }
 
-    override fun sext(ctx: Context, n: Int, expr: Expr<*>): Expr<*> {
+    override fun sext(ctx: ExtendedContext, n: Int, expr: Expr<*>): Expr<*> {
         val exprBitSize = bvBitSize(ctx, getSort(ctx, expr))
         return if (exprBitSize < n) ctx.mkSignExt(n - exprBitSize, expr as BitVecExpr) else expr
     }
 
-    override fun zext(ctx: Context, n: Int, expr: Expr<*>): Expr<*> {
+    override fun zext(ctx: ExtendedContext, n: Int, expr: Expr<*>): Expr<*> {
         val exprBitSize = bvBitSize(ctx, getSort(ctx, expr))
         return if (exprBitSize < n) ctx.mkZeroExt(n - exprBitSize, expr as BitVecExpr) else expr
     }
 
-    fun <T : Sort, R : Sort> ld(ctx: Context, array: Expr<*>, index: Expr<T>): Expr<*> =
+    fun <T : Sort, R : Sort> ld(ctx: ExtendedContext, array: Expr<*>, index: Expr<T>): Expr<*> =
         ctx.mkSelect(array as ArrayExpr<T, R>, index)
 
-    fun <T : Sort, R : Sort> st(ctx: Context, array: Expr<*>, index: Expr<T>, value: Expr<R>): Expr<*> =
+    fun <T : Sort, R : Sort> st(ctx: ExtendedContext, array: Expr<*>, index: Expr<T>, value: Expr<R>): Expr<*> =
         ctx.mkStore(array as ArrayExpr<T, R>, index, value)
 
-    override fun load(ctx: Context, array: Expr<*>, index: Expr<*>): Expr<*> =
+    override fun load(ctx: ExtendedContext, array: Expr<*>, index: Expr<*>): Expr<*> =
         ld<Sort, Sort>(ctx, array, index as Expr<Sort>)
 
-    override fun store(ctx: Context, array: Expr<*>, index: Expr<*>, value: Expr<*>): Expr<*> =
+    override fun store(ctx: ExtendedContext, array: Expr<*>, index: Expr<*>, value: Expr<*>): Expr<*> =
         st<Sort, Sort>(ctx, array, index as Expr<Sort>, value as Expr<Sort>)
 
-    override fun ite(ctx: Context, cond: Expr<*>, lhv: Expr<*>, rhv: Expr<*>): Expr<*> =
+    override fun ite(ctx: ExtendedContext, cond: Expr<*>, lhv: Expr<*>, rhv: Expr<*>): Expr<*> =
         ctx.mkITE(cond as BoolExpr, lhv, rhv)
 
-    override fun extract(ctx: Context, bv: Expr<*>, high: Int, low: Int): Expr<*> =
+    override fun extract(ctx: ExtendedContext, bv: Expr<*>, high: Int, low: Int): Expr<*> =
         ctx.mkExtract(high, low, bv as BitVecExpr)
 
-    override fun forAll(ctx: Context, sorts: List<Sort>, body: (List<Expr<*>>) -> Expr<*>): Expr<*> {
+    override fun forAll(ctx: ExtendedContext, sorts: List<Sort>, body: (List<Expr<*>>) -> Expr<*>): Expr<*> {
         val numArgs = sorts.lastIndex
 
         val bounds = sorts.asSequence().withIndex().map { (index, sort) -> makeBound(ctx, index, sort) }.toList()
@@ -318,7 +273,7 @@ object Z3Engine : SMTEngine<Context, Expr<*>, Sort, FuncDecl<*>, Pattern>() {
     }
 
     override fun forAll(
-        ctx: Context,
+        ctx: ExtendedContext,
         sorts: List<Sort>,
         body: (List<Expr<*>>) -> Expr<*>,
         patternGenerator: (List<Expr<*>>) -> List<Pattern>
@@ -334,7 +289,7 @@ object Z3Engine : SMTEngine<Context, Expr<*>, Sort, FuncDecl<*>, Pattern>() {
         return ctx.mkForall(sortsRaw, names, realBody as BoolExpr, 0, patterns, arrayOf(), null, null)
     }
 
-    override fun exists(ctx: Context, sorts: List<Sort>, body: (List<Expr<*>>) -> Expr<*>): Expr<*> {
+    override fun exists(ctx: ExtendedContext, sorts: List<Sort>, body: (List<Expr<*>>) -> Expr<*>): Expr<*> {
         val numArgs = sorts.lastIndex
 
         val bounds = sorts.asSequence().withIndex().map { (index, sort) -> makeBound(ctx, index, sort) }.toList()
@@ -345,7 +300,7 @@ object Z3Engine : SMTEngine<Context, Expr<*>, Sort, FuncDecl<*>, Pattern>() {
     }
 
     override fun exists(
-        ctx: Context,
+        ctx: ExtendedContext,
         sorts: List<Sort>,
         body: (List<Expr<*>>) -> Expr<*>,
         patternGenerator: (List<Expr<*>>) -> List<Pattern>
@@ -362,7 +317,7 @@ object Z3Engine : SMTEngine<Context, Expr<*>, Sort, FuncDecl<*>, Pattern>() {
     }
 
     override fun lambda(
-        ctx: Context,
+        ctx: ExtendedContext,
         elementSort: Sort,
         sorts: List<Sort>, body: (List<Expr<*>>) -> Expr<*>
     ): Expr<*> {
@@ -375,34 +330,34 @@ object Z3Engine : SMTEngine<Context, Expr<*>, Sort, FuncDecl<*>, Pattern>() {
         return ctx.mkLambda(sortsRaw, names, realBody)
     }
 
-    override fun getStringSort(ctx: Context): Sort = ctx.stringSort
+    override fun getStringSort(ctx: ExtendedContext): Sort = ctx.stringSort
 
-    override fun isStringSort(ctx: Context, sort: Sort): Boolean = sort == ctx.stringSort
+    override fun isStringSort(ctx: ExtendedContext, sort: Sort): Boolean = sort == ctx.stringSort
 
-    override fun bv2string(ctx: Context, expr: Expr<*>): Expr<*> =
+    override fun bv2string(ctx: ExtendedContext, expr: Expr<*>): Expr<*> =
         ctx.intToString(ctx.mkBV2Int(expr as BitVecExpr, true))
 
-    override fun float2string(ctx: Context, expr: Expr<*>): Expr<*> =
+    override fun float2string(ctx: ExtendedContext, expr: Expr<*>): Expr<*> =
         ctx.intToString(ctx.mkBV2Int(ctx.mkFPToBV(ctx.mkFPRTZ(), expr as Expr<FPSort>, WORD, true), true))
 
-    override fun double2string(ctx: Context, expr: Expr<*>): Expr<*> =
+    override fun double2string(ctx: ExtendedContext, expr: Expr<*>): Expr<*> =
         ctx.intToString(ctx.mkBV2Int(ctx.mkFPToBV(ctx.mkFPRTZ(), expr as Expr<FPSort>, DWORD, true), true))
 
-    override fun string2bv(ctx: Context, expr: Expr<*>, sort: Sort): Expr<*> =
+    override fun string2bv(ctx: ExtendedContext, expr: Expr<*>, sort: Sort): Expr<*> =
         ctx.mkInt2BV(getSortBitSize(ctx, sort), ctx.stringToInt(expr as Expr<SeqSort<BitVecSort>>))
 
-    override fun string2float(ctx: Context, expr: Expr<*>): Expr<*> =
+    override fun string2float(ctx: ExtendedContext, expr: Expr<*>): Expr<*> =
         bv2float(ctx, string2bv(ctx, expr, getBVSort(ctx, WORD)), getFloatSort(ctx))
 
-    override fun string2double(ctx: Context, expr: Expr<*>): Expr<*> =
+    override fun string2double(ctx: ExtendedContext, expr: Expr<*>): Expr<*> =
         bv2float(ctx, string2bv(ctx, expr, getBVSort(ctx, DWORD)), getDoubleSort(ctx))
 
-    override fun makeStringConst(ctx: Context, value: String): Expr<*> = ctx.mkString(value)
+    override fun makeStringConst(ctx: ExtendedContext, value: String): Expr<*> = ctx.mkString(value)
 
-    override fun contains(ctx: Context, seq: Expr<*>, value: Expr<*>): Expr<*> =
+    override fun contains(ctx: ExtendedContext, seq: Expr<*>, value: Expr<*>): Expr<*> =
         ctx.mkContains<BoolSort>(seq as Expr<SeqSort<BitVecSort>>, value as Expr<SeqSort<BitVecSort>>)
 
-    override fun nths(ctx: Context, seq: Expr<*>, index: Expr<*>): Expr<*> {
+    override fun nths(ctx: ExtendedContext, seq: Expr<*>, index: Expr<*>): Expr<*> {
 //        val char2Int = ctx.mkFuncDecl("char.to_int", ctx.mkBitVecSort(), ctx.mkIntSort())
 //        val nth = ctx.MkNth(seq as Expr<SeqSort<BitVecSort>>, ctx.mkBV2Int(index as Expr<BitVecSort>, true))
 //        val nthInt = ctx.mkApp(char2Int, nth)
@@ -410,35 +365,35 @@ object Z3Engine : SMTEngine<Context, Expr<*>, Sort, FuncDecl<*>, Pattern>() {
         return ctx.MkNth<BitVecSort>(seq as Expr<SeqSort<BitVecSort>>, ctx.mkBV2Int(index as Expr<BitVecSort>, true))
     }
 
-    override fun length(ctx: Context, seq: Expr<*>): Expr<*> =
+    override fun length(ctx: ExtendedContext, seq: Expr<*>): Expr<*> =
         ctx.mkInt2BV(WORD, ctx.mkLength<IntSort>(seq as Expr<SeqSort<BitVecSort>>))
 
-    override fun prefixOf(ctx: Context, seq: Expr<*>, prefix: Expr<*>): Expr<*> =
+    override fun prefixOf(ctx: ExtendedContext, seq: Expr<*>, prefix: Expr<*>): Expr<*> =
         ctx.mkPrefixOf<BoolSort>(prefix as Expr<SeqSort<BitVecSort>>, seq as Expr<SeqSort<BitVecSort>>)
 
-    override fun suffixOf(ctx: Context, seq: Expr<*>, suffix: Expr<*>): Expr<*> =
+    override fun suffixOf(ctx: ExtendedContext, seq: Expr<*>, suffix: Expr<*>): Expr<*> =
         ctx.mkSuffixOf<BoolSort>(suffix as Expr<SeqSort<BitVecSort>>, seq as Expr<SeqSort<BitVecSort>>)
 
-    override fun at(ctx: Context, seq: Expr<*>, index: Expr<*>): Expr<*> =
+    override fun at(ctx: ExtendedContext, seq: Expr<*>, index: Expr<*>): Expr<*> =
         ctx.mkAt<SeqSort<BitVecSort>>(seq as Expr<SeqSort<BitVecSort>>, ctx.mkBV2Int(index as Expr<BitVecSort>, true))
 
-    override fun extract(ctx: Context, seq: Expr<*>, from: Expr<*>, to: Expr<*>): Expr<*> =
+    override fun extract(ctx: ExtendedContext, seq: Expr<*>, from: Expr<*>, to: Expr<*>): Expr<*> =
         ctx.mkExtract<SeqSort<BitVecSort>>(
             seq as Expr<SeqSort<BitVecSort>>,
             ctx.mkBV2Int(from as Expr<BitVecSort>, true),
             ctx.mkBV2Int(to as Expr<BitVecSort>, true)
         )
 
-    override fun indexOf(ctx: Context, seq: Expr<*>, subSeq: Expr<*>, offset: Expr<*>): Expr<*> =
+    override fun indexOf(ctx: ExtendedContext, seq: Expr<*>, subSeq: Expr<*>, offset: Expr<*>): Expr<*> =
         ctx.mkInt2BV(WORD, ctx.mkIndexOf<SeqSort<BitVecSort>>(
             seq as Expr<SeqSort<BitVecSort>>,
             subSeq as Expr<SeqSort<BitVecSort>>,
             ctx.mkBV2Int(offset as Expr<BitVecSort>, true)
         ))
 
-    override fun concat(ctx: Context, lhv: Expr<*>, rhv: Expr<*>): Expr<*> =
+    override fun concat(ctx: ExtendedContext, lhv: Expr<*>, rhv: Expr<*>): Expr<*> =
         ctx.mkConcat(lhv as Expr<SeqSort<BitVecSort>>, rhv as Expr<SeqSort<BitVecSort>>)
 
-    override fun char2string(ctx: Context, expr: Expr<*>): Expr<*> =
+    override fun char2string(ctx: ExtendedContext, expr: Expr<*>): Expr<*> =
         ctx.mkUnit(bv2bv(ctx, expr, getBVSort(ctx, 8)))
 }

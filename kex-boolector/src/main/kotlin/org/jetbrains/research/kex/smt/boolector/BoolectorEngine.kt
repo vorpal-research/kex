@@ -10,16 +10,6 @@ import kotlin.math.roundToLong
 
 object BoolectorEngine :
     SMTEngine<Btor, BoolectorNode, BoolectorSort, BoolectorFunction, FunctionDecl.FunctionParam>() {
-    private var trueExpr: BoolectorNode? = null
-    private var falseExpr: BoolectorNode? = null
-    private val bvSortCache = mutableMapOf<Int, BoolectorSort>()
-
-    override fun initialize() {
-        trueExpr = null
-        falseExpr = null
-        bvSortCache.clear()
-    }
-
     override fun makeBound(ctx: Btor, size: Int, sort: BoolectorSort): BoolectorNode = BitvecNode.constBitvec(ctx, "1")
 
     override fun makePattern(ctx: Btor, expr: BoolectorNode): FunctionDecl.FunctionParam =
@@ -29,8 +19,7 @@ object BoolectorEngine :
 
     override fun getBoolSort(ctx: Btor): BoolectorSort = BoolSort.boolSort(ctx)
 
-    override fun getBVSort(ctx: Btor, size: Int): BoolectorSort =
-        bvSortCache.getOrPut(size) { BitvecSort.bitvecSort(ctx, size) }
+    override fun getBVSort(ctx: Btor, size: Int): BoolectorSort = BitvecSort.bitvecSort(ctx, size)
 
     override fun getFloatSort(ctx: Btor): BoolectorSort = getBVSort(ctx, 32)
 
@@ -94,15 +83,9 @@ object BoolectorEngine :
         else -> BitvecNode.`var`(sort.toBitvecSort(), name, fresh)
     }
 
-    fun makeTrue(ctx: Btor) = trueExpr ?: run {
-        trueExpr = BoolNode.constBool(ctx, true)
-        trueExpr!!
-    }
+    fun makeTrue(ctx: Btor) = BoolNode.constBool(ctx, true)
 
-    fun makeFalse(ctx: Btor) = falseExpr ?: run {
-        falseExpr = BoolNode.constBool(ctx, false)
-        falseExpr!!
-    }
+    fun makeFalse(ctx: Btor) = BoolNode.constBool(ctx, false)
 
     override fun makeBooleanConst(ctx: Btor, value: Boolean): BoolectorNode = when {
         value -> makeTrue(ctx)
