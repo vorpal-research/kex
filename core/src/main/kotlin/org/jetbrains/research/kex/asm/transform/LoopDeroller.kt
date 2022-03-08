@@ -113,7 +113,7 @@ class LoopDeroller(override val cm: ClassManager) : LoopOptimizer(cm) {
         loop.method ?: unreachable { log.error("Can't get method of loop") }
         val blockOrder = getBlockOrder(loop)
         // init state
-        unroll(loop, if (tryBackstabbing(loop, blockOrder.first())) 1 else getDerollCount(loop))
+        unroll(loop, if (useBackstabbing && tryBackstabbing(loop, blockOrder.first())) 1 else getDerollCount(loop))
     }
 
     private fun unroll(loop: Loop, derollCount: Int) = with(ctx) {
