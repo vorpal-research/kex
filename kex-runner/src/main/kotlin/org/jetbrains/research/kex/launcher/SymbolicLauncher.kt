@@ -6,7 +6,6 @@ import org.jetbrains.research.kex.asm.analysis.testgen.DescriptorChecker
 import org.jetbrains.research.kex.asm.analysis.testgen.MethodChecker
 import org.jetbrains.research.kex.asm.state.PredicateStateAnalysis
 import org.jetbrains.research.kex.config.kexConfig
-import org.jetbrains.research.kex.jacoco.CoverageLevel
 import org.jetbrains.research.kex.jacoco.CoverageReporter
 import org.jetbrains.research.kex.reanimator.descriptor.DescriptorStatistics
 import org.jetbrains.research.kex.trace.`object`.ObjectTraceManager
@@ -30,9 +29,9 @@ class SymbolicLauncher(classPaths: List<String>, targetName: String) : KexLaunch
         }
 
         DescriptorStatistics.printStatistics()
-        val coverage = CoverageReporter(analysisLevel.pkg, containerClassLoader)
+        val coverage = CoverageReporter(containerClassLoader)
             .execute(
-                CoverageLevel.PackageLevel(printDetailedCoverage = false)
+                analysisLevel
             )
         log.info(
             coverage

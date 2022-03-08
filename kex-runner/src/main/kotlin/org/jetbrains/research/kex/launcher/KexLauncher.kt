@@ -90,16 +90,17 @@ abstract class KexLauncher(classPaths: List<String>, targetName: String) {
         val methodNameRegex = """(<init>|<clinit>|(\w+))"""
         val typeRegex = """(void|((byte|char|short|int|long|float|double|$klassNameRegex)(\[\])*))"""
         analysisLevel = when {
+            targetName == "${Package.EXPANSION}" -> PackageLevel(Package.defaultPackage)
             targetName.matches(Regex(packageRegex)) -> PackageLevel(Package.parse(targetName))
-            targetName.matches(Regex("""$klassNameRegex::$methodNameRegex\((($typeRegex,\s+)*$typeRegex)?\):$typeRegex""")) -> {
+            targetName.matches(Regex("""$klassNameRegex::$methodNameRegex\((($typeRegex,\s*)*$typeRegex)?\):\s*$typeRegex""")) -> {
                 val (klassName, methodFullDesc) = targetName.split("::")
                 val (methodName, methodArgs, methodReturn) = methodFullDesc.split("(", "):")
                 val klass = cm[klassName.replace('.', '/')]
                 val method = klass.getMethod(
                     methodName,
-                    parseStringToType(cm.type, methodReturn.replace('.', '/')),
-                    *methodArgs.split(",").filter { it.isNotBlank() }
-                        .map { parseStringToType(cm.type, it.replace('.', '/')) }.toTypedArray()
+                    parseStringToType(cm.type, methodReturn.trim().replace('.', '/')),
+                    *methodArgs.trim().split(""",\s*""".toRegex()).filter { it.isNotBlank() }.map {
+                        parseStringToType(cm.type, it.replace('.', '/')) }.toTypedArray()
                 )
                 MethodLevel(method)
             }

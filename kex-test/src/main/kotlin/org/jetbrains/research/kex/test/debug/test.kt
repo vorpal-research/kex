@@ -2,14 +2,12 @@
 
 package org.jetbrains.research.kex.test.debug
 
-import org.jetbrains.research.kex.intrinsics.CollectionIntrinsics
-
-class BasicTests {
-    fun test(x: String) {
-        val arr = CollectionIntrinsics.generateCharArray(10) { 'a' + it }
-        val s = String(arr)
-        if (s[2] == 'c') {
-            error("")
+class ObjectGenerationTests {
+    fun foo(list: ArrayList<Int>) {
+        for (i in 0 until list.size) {
+            if (i > 2 && list[i] == 7) {
+                println("fuck")
+            }
         }
     }
 }

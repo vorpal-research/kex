@@ -1,0 +1,221 @@
+#parse("definitions.vm")
+import org.jetbrains.research.kex.smt.${solver.toLowerCase()}.${solver}SMTExprFactory
+import org.jetbrains.research.kfg.ir.Class
+import org.jetbrains.research.kfg.type.ClassType
+import org.jetbrains.research.kfg.type.TypeFactory
+import org.jetbrains.research.kfg.type.Type
+import org.jetbrains.research.kex.state.term.Term
+import org.jetbrains.research.kex.util.javaDesc
+
+typealias Bool_ = $Bool
+typealias Ptr_ = $Bitvector32
+typealias Byte_ = $Bitvector32
+typealias Short_ = $Bitvector32
+typealias Char_ = $Bitvector32
+typealias Int_ = $Bitvector32
+typealias Long_ = $Bitvector64
+typealias Float_ = $Float
+typealias Double_ = $Double
+typealias Bitvector_ = $Bitvector
+typealias Array_ = $Array< DWord_, Int_ >
+typealias Word_ = $Bitvector32
+typealias DWord_ = $Bitvector64
+typealias Memory_< T > = $Memory< Ptr_, T >
+typealias Function_ = $Function
+typealias Dynamic_ = $valexpr
+#if($generateString)
+typealias String_ = $String
+#end
+
+enum class TypeSize (val int: Int) {
+    WORD(1), DWORD(2);
+}
+
+private val engine = ${solver}Engine
+
+@Suppress("UNCHECKED_CAST")
+class $factory : ${solver}SMTExprFactory() {
+    companion object {
+
+        fun getTypeSize(type: KexType) = when (type.bitSize) {
+            KexType.WORD -> TypeSize.WORD
+            KexType.DWORD -> TypeSize.DWORD
+            else -> unreachable { log.error("Unknown type bit size ${type.bitSize}") }
+        }
+
+        fun getByteSize(ctx: $context) = ${valexpr}.getStaticBitSize< Word_ >(ctx)
+    }
+
+    val ctx = $context()
+    val typeMap: Map< Type, Bitvector_ > get() = innerTypeMap
+    var typeWidth: Int = 1
+        private set
+
+    private val innerTypeMap: MutableMap< Type, Bitvector_ >
+    private val innerKlassMap: MutableMap< KexType, Ptr_ >
+    private var defaultBV: Bitvector_
+    private val stringTerms = mutableMapOf< String, Term >()
+
+    init {
+        innerTypeMap = mutableMapOf()
+        innerKlassMap = mutableMapOf()
+        defaultBV = makeBitvectorConst("0", 2, 1)
+    }
+
+    fun initTypes(types: Set< Type >) {
+        typeWidth = maxOf(types.size, typeWidth)
+        val template = "0".repeat(typeWidth)
+        for ((index, type) in types.withIndex()) {
+            innerTypeMap[type] = makeBitvectorConst(template.replaceRange(index, index + 1, "1"), 2, typeWidth)
+        }
+        defaultBV = makeBitvectorConst(template, 2, typeWidth)
+    }
+
+    fun initStrings(strings: Map< String, Term >) {
+        this.stringTerms.putAll(strings)
+    }
+
+    fun addClassNameAxioms(typeIndex: Bitvector_, nameVar: Ptr_): Bool_ {
+        var res = makeFalse()
+        for ((type, typeVar) in innerTypeMap) {
+            val string = type.javaDesc
+            val stringTerm = stringTerms.getValue(string)
+            val stringVar = getVarByTypeAndName(stringTerm.type, stringTerm.name)
+            res = `if`(typeIndex eq typeVar).then(nameVar eq stringVar).`else`(res)
+        }
+        return res
+    }
+
+    fun addClassModifiersAxioms(typeIndex: Bitvector_, modifiersVar: Int_): Bool_ {
+        var res = makeFalse()
+        for ((type, typeVar) in innerTypeMap) {
+            val modifiersValue = makeIntConst(when (type) {
+                is ClassType -> type.klass.modifiers.value
+                else -> 0
+            })
+            res = `if`(typeIndex eq typeVar).then(modifiersVar eq modifiersValue).`else`(res)
+        }
+        return res
+    }
+
+    fun getSubTypeMask(type: Type): Bitvector_ {
+        var res: Bitvector_? = null
+        for ((t, v) in innerTypeMap) {
+            if (t.isSubtypeOf(type))
+                res = if (res == null) v else (res or v)
+        }
+        return res!!
+    }
+
+    fun getFullTypeMask(type: Type): Bitvector_ {
+        var res: Bitvector_ = getSubTypeMask(type)
+        for ((t, v) in innerTypeMap) {
+            if (type.isSubtypeOf(t))
+                res = res or v
+        }
+        return res
+    }
+
+    fun getTypeVar(type: Type): Bitvector_ = innerTypeMap.getValue(type)
+
+#macro(generateMakes $type $basetype)
+    #set($underlined = "${type}_")
+    fun make$type(name: String, fresh: Boolean = false) =
+            if (fresh) ${underlined}.makeFreshVar(ctx, name) else ${underlined}.makeVar(ctx, name)
+    fun make${type}Const(value: $basetype) = ${underlined}.makeConst(ctx, value)
+#end
+
+#generateMakes("Ptr" "Int")
+    fun makeNull() = makePtrConst(0)
+
+#generateMakes("Bool", "Boolean")
+    fun makeTrue() = makeBoolConst(true)
+    fun makeFalse() = makeBoolConst(false)
+
+#generateMakes("Byte", "Int")
+    fun makeByteConst(value: Byte) = makeByteConst(value.toInt())
+#generateMakes("Short", "Int")
+    fun makeShortConst(value: Short) = makeShortConst(value.toInt())
+#generateMakes("Char", "Int")
+    fun makeCharConst(value: Char) = makeCharConst(value.code)
+
+#generateMakes("Int", "Int")
+
+#generateMakes("Long", "Long")
+
+#generateMakes("Float", "Float")
+
+#generateMakes("Double", "Double")
+
+#if($generateString)
+#generateMakes("String", "String")
+#end
+
+    fun makeBitvectorConst(value: String, radix: Int, width: Int): Bitvector_ = Bitvector_(ctx, engine.makeBVConst(ctx, value, radix, width))
+
+    fun makeDefaultIndex() = makeNull()
+    fun makeDefaultWord() = makeIntConst(0)
+    fun makeDefaultDWord() = makeLongConst(0L)
+    fun makeDefaultArray() = makeEmptyArray("empty", makeDefaultDWord())
+    fun makeDefaultBitvector() = defaultBV
+
+    inline fun < reified Element : $valexpr > makeDefaultArray(id: String, default: Element) =
+            Array_.makeDefault< Element, Int_ >(ctx, id, makeDefaultIndex(), default) as Array_
+    inline fun < reified Element : $valexpr > makeEmptyArray(id: String, default: Element) =
+            Array_.makeFree< Element, Int_ >(ctx, id, makeDefaultIndex(), default) as Array_
+
+    inline fun < reified  Element: $valexpr > makeEmptyMemory(id: String, default: Element) =
+            Memory_.makeFree< Ptr_, Element >(ctx, id, makeDefaultIndex(), default)
+    inline fun < reified  Element: $valexpr > makeDefaultMemory(id: String, default: Element) =
+        Memory_.makeDefault< Ptr_, Element >(ctx, id, makeDefaultIndex(), default)
+
+#set($types = ["Bool", "Byte", "Short", "Char", "Int", "Long", "Float", "Double"])
+    fun getVarByTypeAndName(type: KexType, name: String, fresh: Boolean = false) = when(type) {
+#foreach($type in $types)
+        is Kex${type} -> make${type}(name, fresh)
+#end
+        is KexClass -> makePtr(name, fresh)
+        is KexArray -> makePtr(name, fresh)
+        is KexNull -> makePtr(name, fresh)
+        else -> unreachable { log.error("Unknown type in ExprFactory: ${ type }") }
+    }
+
+    fun addKlassPtr(klass: KexType, ptr: Ptr_) {
+        innerKlassMap.getOrPut(klass.unMemspaced()) { ptr }
+    }
+
+    fun buildConstClassAxioms(): Bool_ {
+        val klasses = innerKlassMap.values.toList()
+        var result = makeTrue()
+        for (i in 0..(klasses.lastIndex - 1)) {
+            for (j in (i + 1)..klasses.lastIndex) {
+                result = result and (klasses[i] neq klasses[j])
+            }
+        }
+        return result
+    }
+
+    inline fun < T : Dynamic_, reified U : Dynamic_ > switch(value: T, cases: Map< T, U >, default: U) =
+        cases.toList().fold(default) { acc, pair -> `if`(value eq pair.first).then(pair.second).`else`(acc) }
+
+    inline fun < reified U : Dynamic_ > switch(cases: Map< Bool_, U >, default: U) =
+        cases.toList().fold(default) { acc, pair -> `if`(pair.first).then(pair.second).`else`(acc) }
+
+    inline fun < reified U : Dynamic_ > if_(cond: Bool_) = `if`(cond)
+
+    fun forAll(sortGen: () -> List< Dynamic_ >, func: (List< Dynamic_ >) -> Bool_): Bool_ = forall(ctx, sortGen, func)
+
+    fun forAll(sortGen: () -> List< Dynamic_ >, func: (List< Dynamic_ >) -> Bool_, patternGenerator: (List< Dynamic_ >) -> List< Dynamic_ >): Bool_ =
+        forall(ctx, sortGen, func, patternGenerator)
+
+    fun exists(sortGen: () -> List< Dynamic_ >, func: (List< Dynamic_ >) -> Bool_): Bool_ = exists(ctx, sortGen, func)
+
+    fun exists(sortGen: () -> List< Dynamic_ >, func: (List< Dynamic_ >) -> Bool_, patternGenerator: (List< Dynamic_ >) -> List< Dynamic_ >): Bool_ =
+        exists(ctx, sortGen, func, patternGenerator)
+
+    fun lambda(
+        elementSortGen: () -> Dynamic_,
+        sortGen: () -> List< Dynamic_ >,
+        func: (List< Dynamic_ >) -> Dynamic_
+    ): Dynamic_ = lambda(ctx, elementSortGen, sortGen, func)
+}
