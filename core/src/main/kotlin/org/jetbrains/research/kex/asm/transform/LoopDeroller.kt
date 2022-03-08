@@ -24,6 +24,7 @@ import kotlin.math.min
 
 private val derollCount = kexConfig.getIntValue("loop", "derollCount", 3)
 private val maxDerollCount = kexConfig.getIntValue("loop", "maxDerollCount", 0)
+private val useBackstabbing = kexConfig.getBooleanValue("loop", "useBackstabbing", false)
 
 class LoopDeroller(override val cm: ClassManager) : LoopOptimizer(cm) {
     companion object {

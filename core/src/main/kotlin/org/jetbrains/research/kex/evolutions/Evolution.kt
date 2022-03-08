@@ -1,7 +1,7 @@
 package org.jetbrains.research.kex.evolutions
 
 import org.jetbrains.research.kex.evolutions.LoopTracker.name
-import org.jetbrains.research.kfg.analysis.Loop
+import org.jetbrains.research.kfg.visitor.Loop
 import ru.spbstu.Apply
 import ru.spbstu.Symbolic
 
