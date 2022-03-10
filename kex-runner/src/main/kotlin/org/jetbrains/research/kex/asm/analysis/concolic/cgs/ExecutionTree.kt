@@ -165,7 +165,7 @@ class ExecutionTree : PredecessorGraph<Vertex>, Viewable {
             is SwitchInst -> neighbors.size == (inst.branches.size + 1)
             is TableSwitchInst -> neighbors.size == (inst.range.length + 1)
             else -> when (val pred = clause.predicate) {
-                is EqualityPredicate -> when (val lhv = pred.lhv) {
+                is EqualityPredicate -> when (pred.lhv) {
                     is InstanceOfTerm -> false
                     else -> neighbors.size == 2
                 }
