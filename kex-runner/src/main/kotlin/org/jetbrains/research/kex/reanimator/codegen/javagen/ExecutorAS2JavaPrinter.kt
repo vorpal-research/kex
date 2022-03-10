@@ -286,13 +286,13 @@ class ExecutorAS2JavaPrinter(
                                     is StaticFieldGetter -> it.field.type
                                     else -> null
                                 }
-                            }
-                                ?: unreachable { log.error("Unexpected call in arg") }
+                            } ?: unreachable { log.error("Unexpected call in arg") }
                             else -> unreachable { log.error("Unexpected call in arg") }
                         }
                         val fieldType = type.kexType.primitiveName?.let { type(it) } ?: type("Object")
-                        if (testParams.all { it.name != arg.name })
+                        if (testParams.all { it.name != arg.name }) {
                             testParams += field(arg.name, fieldType)
+                        }
                     }
                 }
 
@@ -434,14 +434,20 @@ class ExecutorAS2JavaPrinter(
             is ConstantDescriptor.Bool -> result += "$decl = ${descriptor.asConstant}".also { names[descriptor] = name }
             is ConstantDescriptor.Byte -> result += "$decl = ${descriptor.asConstant}".also { names[descriptor] = name }
             is ConstantDescriptor.Char -> result += "$decl = ${descriptor.asConstant}".also { names[descriptor] = name }
-            is ConstantDescriptor.Double -> result += "$decl = ${descriptor.asConstant}".also { names[descriptor] = name }
-            is ConstantDescriptor.Float -> result += "$decl = ${descriptor.asConstant}".also { names[descriptor] = name }
+            is ConstantDescriptor.Double -> result += "$decl = ${descriptor.asConstant}".also {
+                names[descriptor] = name
+            }
+            is ConstantDescriptor.Float -> result += "$decl = ${descriptor.asConstant}".also {
+                names[descriptor] = name
+            }
             is ConstantDescriptor.Int -> result += "$decl = ${descriptor.asConstant}".also { names[descriptor] = name }
             is ConstantDescriptor.Long -> result += "$decl = ${descriptor.asConstant}".also { names[descriptor] = name }
-            is ConstantDescriptor.Short -> result += "$decl = ${descriptor.asConstant}".also { names[descriptor] = name }
+            is ConstantDescriptor.Short -> result += "$decl = ${descriptor.asConstant}".also {
+                names[descriptor] = name
+            }
             is ArrayDescriptor -> {
                 val elementType = (descriptor.type as KexArray).element
-                result += "$decl = ${
+                result += "$decl = ($resolveType) ${
                     elementType.primitiveName?.let {
                         "${newPrimitiveArrayMap[it]!!.name}(${descriptor.length})"
                     } ?: "${newArray.name}(\"${(elementType.getKfgType(ctx.types) as ClassType).klass.canonicalDesc}\", ${descriptor.length})"
@@ -453,7 +459,9 @@ class ExecutorAS2JavaPrinter(
             is ClassDescriptor -> {
                 val klass = (descriptor.type.getKfgType(ctx.types) as ClassType).klass
                 val klassVarName = "klassInstance${klassCounter++}"
-                result += "Class<?> $klassVarName = Class.forName(\"${klass.canonicalDesc}\")".also { names[descriptor] = klassVarName }
+                result += "Class<?> $klassVarName = Class.forName(\"${klass.canonicalDesc}\")".also {
+                    names[descriptor] = klassVarName
+                }
                 for ((_, element) in descriptor.fields) {
                     printDeclarations(element, result, visited, names)
                 }
@@ -463,7 +471,7 @@ class ExecutorAS2JavaPrinter(
                 when {
                     klass.isEnum -> result += "$decl = ${klass.javaString}.${getEnumName(descriptor)}"
                     else -> {
-                        result += "$decl = ${newInstance.name}(\"${klass.canonicalDesc}\")"
+                        result += "$decl = ($resolveType) ${newInstance.name}(\"${klass.canonicalDesc}\")"
                         for ((_, element) in descriptor.fields) {
                             printDeclarations(element, result, visited, names)
                         }
@@ -474,7 +482,11 @@ class ExecutorAS2JavaPrinter(
         return names
     }
 
-    private fun printInsides(descriptor: Descriptor, result: MutableList<String>, names: Map<Descriptor, String>): String = with(current) {
+    private fun printInsides(
+        descriptor: Descriptor,
+        result: MutableList<String>,
+        names: Map<Descriptor, String>
+    ): String = with(current) {
         val name = names[descriptor] ?: "${descriptor.term}"
         if (name in printedStacks) return@with name
         printedStacks += name
@@ -512,6 +524,15 @@ class ExecutorAS2JavaPrinter(
             else -> {}
         }
         return name
+    }
+
+    override fun printMethodCall(owner: ActionSequence, call: MethodCall): List<String> {
+        call.args.forEach { it.printAsJava() }
+        val method = call.method
+        val args = call.args.joinToString(", ") {
+            it.forceCastIfNull(resolvedTypes[it])
+        }
+        return listOf("((${actualTypes[owner]}) ${owner.name}).${method.name}($args)")
     }
 
     private fun getEnumName(descriptor: ObjectDescriptor): String {

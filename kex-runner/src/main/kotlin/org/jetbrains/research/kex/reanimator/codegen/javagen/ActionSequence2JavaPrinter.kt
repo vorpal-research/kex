@@ -216,10 +216,13 @@ open class ActionSequence2JavaPrinter(
         }
 
     protected fun resolveTypes(actionSequence: ActionSequence) {
-        if (actionSequence is ActionList) actionSequence.reversed().map { resolveTypes(it) }
-        else if (actionSequence is TestCall) {
-            actionSequence.instance?.let { resolveTypes(it) }
-            actionSequence.args.forEach { resolveTypes(it) }
+        when (actionSequence) {
+            is ActionList -> actionSequence.reversed().map { resolveTypes(it) }
+            is TestCall -> {
+                actionSequence.instance?.let { resolveTypes(it) }
+                actionSequence.args.forEach { resolveTypes(it) }
+            }
+            else -> {}
         }
     }
 
@@ -402,7 +405,7 @@ open class ActionSequence2JavaPrinter(
             else -> unreachable { log.error("Unknown primary value $this") }
         }
 
-    private fun ActionSequence.cast(reqType: ASType?): String {
+    protected fun ActionSequence.cast(reqType: ASType?): String {
         val actualType = actualTypes[this] ?: return this.stackName
         return when {
             reqType.isAssignable(actualType) -> this.stackName
@@ -410,7 +413,7 @@ open class ActionSequence2JavaPrinter(
         }
     }
 
-    private fun ActionSequence.forceCastIfNull(reqType: ASType?): String = when {
+    protected fun ActionSequence.forceCastIfNull(reqType: ASType?): String = when {
         this.stackName == "null" && reqType != null -> "($reqType)${this.stackName}"
         else -> this.cast(reqType)
     }
