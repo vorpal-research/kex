@@ -6,8 +6,7 @@ import org.jetbrains.research.kex.config.kexConfig
 import org.jetbrains.research.kex.descriptor.*
 import org.jetbrains.research.kex.ktype.*
 import org.jetbrains.research.kex.parameters.Parameters
-import org.jetbrains.research.kex.reanimator.actionsequence.ActionSequence
-import org.jetbrains.research.kex.reanimator.actionsequence.UnknownSequence
+import org.jetbrains.research.kex.reanimator.actionsequence.*
 import org.jetbrains.research.kex.util.kapitalize
 import org.jetbrains.research.kfg.type.ArrayType
 import org.jetbrains.research.kfg.type.ClassType
@@ -276,6 +275,19 @@ class ExecutorAS2JavaPrinter(
                     actionSequences.arguments.forEach { arg ->
                         val type = when (arg) {
                             is UnknownSequence -> arg.type
+                            is ActionList -> arg.firstNotNullOfOrNull {
+                                when (it) {
+                                    is DefaultConstructorCall -> it.klass.type
+                                    is ConstructorCall -> it.constructor.klass.type
+                                    is NewArray -> it.asArray
+                                    is ExternalConstructorCall -> it.constructor.returnType
+                                    is InnerClassConstructorCall -> it.constructor.klass.type
+                                    is EnumValueCreation -> it.klass.type
+                                    is StaticFieldGetter -> it.field.type
+                                    else -> null
+                                }
+                            }
+                                ?: unreachable { log.error("Unexpected call in arg") }
                             else -> unreachable { log.error("Unexpected call in arg") }
                         }
                         val fieldType = type.kexType.primitiveName?.let { type(it) } ?: type("Object")
@@ -463,7 +475,7 @@ class ExecutorAS2JavaPrinter(
     }
 
     private fun printInsides(descriptor: Descriptor, result: MutableList<String>, names: Map<Descriptor, String>): String = with(current) {
-        val name = names.getValue(descriptor)
+        val name = names[descriptor] ?: "${descriptor.term}"
         if (name in printedStacks) return@with name
         printedStacks += name
 

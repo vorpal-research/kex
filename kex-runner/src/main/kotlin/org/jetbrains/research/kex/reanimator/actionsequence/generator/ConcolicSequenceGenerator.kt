@@ -18,18 +18,10 @@ class ConcolicSequenceGenerator(override val context: GeneratorContext) : Genera
 
 
     init {
-        typeGenerators += ConstantGenerator(context)
-        typeGenerators += ArrayGenerator(this)
-        typeGenerators += StaticFieldGenerator(this)
         typeGenerators += CharsetGenerator(this)
-        typeGenerators += StringGenerator(this)
         typeGenerators += ClassGenerator(this)
         typeGenerators += EnumGenerator(this)
-        typeGenerators += KtObjectGenerator(this)
-        typeGenerators += InnerClassGenerator(this)
-        typeGenerators += UnmodifiableCollectionGenerator(this)
-        typeGenerators += CollectionGenerator(this)
-        typeGenerators += MapGenerator(this)
+        typeGenerators += KexRtGenerator(this)
         typeGenerators += object : Generator {
             override val context: GeneratorContext
                 get() = this@ConcolicSequenceGenerator.context

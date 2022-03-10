@@ -33,6 +33,11 @@ class TermCollector(val filter: (Term) -> Boolean) : Transformer<TermCollector> 
         if (filter(term)) terms.add(term)
         return super.transformTerm(term)
     }
+
+    override fun transformLambdaTerm(term: LambdaTerm): Term {
+        transform(term.body)
+        return super.transformLambdaTerm(term)
+    }
 }
 
 class PredicateTermCollector(val filter: (Predicate) -> Boolean) : Transformer<PredicateTermCollector> {
@@ -78,6 +83,11 @@ class StringTermCollector : Transformer<StringTermCollector> {
     override fun transform(term: Term): Term {
         if (term is ConstStringTerm) strings += term
         return super.transform(term)
+    }
+
+    override fun transformLambdaTerm(term: LambdaTerm): Term {
+        transform(term.body)
+        return super.transformLambdaTerm(term)
     }
 }
 
