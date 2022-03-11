@@ -158,7 +158,7 @@ open class ActionSequence2JavaPrinter(
             else -> unreachable { }
         }
 
-    private val java.lang.reflect.Type.asType: ASType
+    protected val java.lang.reflect.Type.asType: ASType
         get() = when (this) {
             is java.lang.Class<*> -> when {
                 this.isArray -> {
@@ -182,7 +182,7 @@ open class ActionSequence2JavaPrinter(
             else -> TODO()
         }
 
-    private fun ASType.merge(requiredType: ASType): ASType = when {
+    protected fun ASType.merge(requiredType: ASType): ASType = when {
         this is ASClass && requiredType is ASClass -> {
             val actualKlass = ctx.loader.loadClass(type)
             val requiredKlass = ctx.loader.loadClass(requiredType.type)
@@ -328,7 +328,7 @@ open class ActionSequence2JavaPrinter(
             }
         }
 
-    private val ActionSequence.stackName: String
+    protected val ActionSequence.stackName: String
         get() = when (this) {
             is PrimaryValue<*> -> asConstant
             else -> name
@@ -418,7 +418,7 @@ open class ActionSequence2JavaPrinter(
         else -> this.cast(reqType)
     }
 
-    private fun ASType.cast(reqType: ASType?): String {
+    protected fun ASType.cast(reqType: ASType?): String {
         return when {
             reqType.isAssignable(this) -> ""
             else -> "($reqType)"

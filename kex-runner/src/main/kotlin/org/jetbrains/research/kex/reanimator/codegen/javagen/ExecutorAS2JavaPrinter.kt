@@ -7,7 +7,9 @@ import org.jetbrains.research.kex.descriptor.*
 import org.jetbrains.research.kex.ktype.*
 import org.jetbrains.research.kex.parameters.Parameters
 import org.jetbrains.research.kex.reanimator.actionsequence.*
+import org.jetbrains.research.kex.util.getMethod
 import org.jetbrains.research.kex.util.kapitalize
+import org.jetbrains.research.kex.util.loadClass
 import org.jetbrains.research.kfg.type.ArrayType
 import org.jetbrains.research.kfg.type.ClassType
 import org.jetbrains.research.kfg.type.PrimaryType
@@ -533,6 +535,39 @@ class ExecutorAS2JavaPrinter(
             it.forceCastIfNull(resolvedTypes[it])
         }
         return listOf("((${actualTypes[owner]}) ${owner.name}).${method.name}($args)")
+    }
+
+    override fun printExternalConstructorCall(owner: ActionSequence, call: ExternalConstructorCall): List<String> {
+        call.args.forEach { it.printAsJava() }
+        val constructor = call.constructor
+        val args = call.args.withIndex().joinToString(", ") { (index, arg) ->
+            "(${constructor.argTypes[index].javaString}) ${arg.stackName}"
+        }
+
+        val reflection = ctx.loader.loadClass(call.constructor.klass)
+        val ctor = reflection.getMethod(call.constructor, ctx.loader)
+        val actualType = ctor.genericReturnType.asType
+        return listOf(
+            if (resolvedTypes[owner] != null) {
+                val rest = resolvedTypes[owner]!!
+                val type = actualType.merge(rest)
+                actualTypes[owner] = type
+                "${
+                    printVarDeclaration(
+                        owner.name,
+                        type
+                    )
+                } = ${type.cast(rest)} ${constructor.klass.javaString}.${constructor.name}($args)"
+            } else {
+                actualTypes[owner] = actualType
+                "${
+                    printVarDeclaration(
+                        owner.name,
+                        actualType
+                    )
+                } = ${constructor.klass.javaString}.${constructor.name}($args)"
+            }
+        )
     }
 
     private fun getEnumName(descriptor: ObjectDescriptor): String {
