@@ -357,11 +357,14 @@ class LoopDeroller(override val cm: ClassManager) : LoopVisitor {
 
     private fun remapMethodPhis(phis: List<PhiInst>, newMappings: Map<PhiInst, Map<BasicBlock, Value>>) = with(ctx) {
         for (phi in phis) {
-            val newPhi = inst(cm) { phi(phi.type, newMappings.getValue(phi)).update(ctx, loc = phi.location) }
+            val newPhi = inst(cm) { phi(phi.type, newMappings.getValue(phi)) }
+            val newPhiClone = newPhi.update(ctx, loc = phi.location)
+            newPhi.replaceAllUsesWith(newPhiClone)
+            newPhi.clearUses()
 
             val bb = phi.parent
-            bb.insertBefore(phi, newPhi)
-            phi.replaceAllUsesWith(newPhi)
+            bb.insertBefore(phi, newPhiClone)
+            phi.replaceAllUsesWith(newPhiClone)
             phi.clearUses()
             bb -= phi
         }
