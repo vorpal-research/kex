@@ -1,16 +1,16 @@
 package org.jetbrains.research.kex.state.predicate
 
-import org.jetbrains.research.kthelper.assert.unreachable
-import org.jetbrains.research.kthelper.logging.log
 import kotlinx.serialization.Contextual
 import kotlinx.serialization.Required
 import kotlinx.serialization.Serializable
 import org.jetbrains.research.kex.InheritorOf
-import org.jetbrains.research.kex.ktype.KexArray
+import org.jetbrains.research.kex.ktype.KexReference
 import org.jetbrains.research.kex.ktype.KexType
 import org.jetbrains.research.kex.state.term.Term
 import org.jetbrains.research.kex.state.transformer.Transformer
 import org.jetbrains.research.kfg.ir.Location
+import org.jetbrains.research.kthelper.assert.unreachable
+import org.jetbrains.research.kthelper.logging.log
 
 @InheritorOf("Predicate")
 @Serializable
@@ -22,7 +22,7 @@ class ArrayStorePredicate(
     override val operands by lazy { listOf(arrayRef, value) }
 
     val componentType: KexType
-        get() = (arrayRef.type as? KexArray)?.element ?: unreachable { log.error("Non-array type of array ref") }
+        get() = (arrayRef.type as? KexReference)?.reference ?: unreachable { log.error("Non-array type of array ref") }
 
     override fun print() = "*($arrayRef) = $value"
 
