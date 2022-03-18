@@ -48,7 +48,15 @@ class LoopDeroller(override val cm: ClassManager) : LoopVisitor {
             fun createState(loop: Loop): State {
                 val terminatingBlock = run {
                     var current = loop.latch
-                    while (current.terminator is JumpInst) current = current.successors.first()
+                    if (current.isEmpty) {
+                        val a = 10
+                    }
+                    while (current.terminator is JumpInst) {
+                        if (current.successors.isEmpty()) {
+                            val a = 10
+                        }
+                        current = current.successors.first()
+                    }
                     current
                 }
                 val continueOnTrue = when {
@@ -89,6 +97,7 @@ class LoopDeroller(override val cm: ClassManager) : LoopVisitor {
     override val preservesLoopInfo get() = false
 
     override fun visit(method: Method) = method.usageContext.use {
+        if (!method.hasBody) return
         ctx = it
         try {
             super.visit(method)
