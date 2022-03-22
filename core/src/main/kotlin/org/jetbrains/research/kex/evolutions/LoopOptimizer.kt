@@ -111,7 +111,6 @@ open class LoopOptimizer(cm: ClassManager) : Evolutions(cm), LoopVisitor {
     }
 
     protected fun insertAfter(block: BasicBlock, e: BasicBlock, loop: Loop) = with(ctx) {
-//        e.add(instructions.getJump(ctx, block))
         val afterBlock = block.successors.first()
         insertBefore(afterBlock, e, loop)
     }

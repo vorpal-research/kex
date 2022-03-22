@@ -5,6 +5,7 @@ import org.jetbrains.research.kex.config.kexConfig
 import org.jetbrains.research.kex.evolutions.LoopOptimizer
 import org.jetbrains.research.kex.evolutions.defaultVar
 import org.jetbrains.research.kex.evolutions.evaluateEvolutions
+import org.jetbrains.research.kex.evolutions.walkLoops
 import org.jetbrains.research.kfg.ClassManager
 import org.jetbrains.research.kfg.ir.BasicBlock
 import org.jetbrains.research.kfg.ir.BodyBlock
@@ -13,14 +14,15 @@ import org.jetbrains.research.kfg.ir.Method
 import org.jetbrains.research.kfg.ir.value.*
 import org.jetbrains.research.kfg.ir.value.instruction.*
 import org.jetbrains.research.kfg.visitor.Loop
-import org.jetbrains.research.kthelper.algorithm.GraphTraversal
-import org.jetbrains.research.kthelper.algorithm.NoTopologicalSortingException
 import org.jetbrains.research.kthelper.assert.unreachable
+import org.jetbrains.research.kthelper.graph.GraphTraversal
+import org.jetbrains.research.kthelper.graph.NoTopologicalSortingException
 import org.jetbrains.research.kthelper.logging.log
 import org.jetbrains.research.kthelper.toInt
 import ru.spbstu.Var
-import kotlin.math.abs
-import kotlin.math.min
+import java.lang.Math.abs
+import java.lang.Math.min
+
 
 private val derollCount = kexConfig.getIntValue("loop", "derollCount", 3)
 private val maxDerollCount = kexConfig.getIntValue("loop", "maxDerollCount", 0)
@@ -113,7 +115,11 @@ class LoopDeroller(override val cm: ClassManager) : LoopOptimizer(cm) {
         loop.method ?: unreachable { log.error("Can't get method of loop") }
         val blockOrder = getBlockOrder(loop)
         // init state
-        unroll(loop, if (tryBackstabbing(loop, blockOrder.first())) 1 else getDerollCount(loop))
+        unroll(
+            loop,
+            if (useBackstabbing && tryBackstabbing(loop, blockOrder.first())) 1 else
+            getDerollCount(loop)
+        )
     }
 
     private fun unroll(loop: Loop, derollCount: Int) = with(ctx) {
@@ -400,7 +406,7 @@ class LoopDeroller(override val cm: ClassManager) : LoopOptimizer(cm) {
     private fun precalculateEvolutions(method: Method) {
         cleanup()
         if (!method.hasBody) return
-        org.jetbrains.research.kex.evolutions.walkLoops(method).forEach { loop ->
+        walkLoops(method).forEach { loop ->
             loop
                 .header
                 .takeWhile { it is PhiInst }
@@ -420,47 +426,33 @@ class LoopDeroller(override val cm: ClassManager) : LoopOptimizer(cm) {
         if (loop.latches.isEmpty() || loop.preheaders.isEmpty() || loop !in loopPhis.values) {
             return false
         }
-        log.error("LATCH & PREHEADER EXISTS")
 
         for (b in loop.allEntries) for (i in b) {
             transform(i)
         }
-        log.error("TRANSFORMED")
         loopPhis.keys.forEach {
             try {
                 phiToEvo[it] = evaluateEvolutions(buildPhiEquation(it), freshVars)
-            } catch (e: NoSuchElementException) {
-                //ok
             } catch (e: StackOverflowError) {
                 return false
             }
         }
-        log.error("Evolution")
-
 
         val inst = createInductive(loop)
-        log.error("inductive created: $inst")
         val block = rebuild(loop) ?: return false
-        log.error("rebuilded")
         if (block.isEmpty()) return false
-        log.error("block instructions: $block")
-        log.error("newBlock: $firstBlock")
-        try {
-            val a = firstBlock.last()
-            firstBlock.remove(a)
-            firstBlock.add(inst)
-            firstBlock.addAll(block)
-            firstBlock.add(a)
-        } catch (e: NullPointerException) {
-            return false
-        }
+        val a = firstBlock.last()
+        firstBlock.remove(a)
+        firstBlock.add(inst)
+        firstBlock.addAll(block)
+        firstBlock.add(a)
         clearUnused(loop)
         return true
     }
 
     private fun createInductive(loop: Loop): Instruction {
         val a = freshVars.getOrPut(loop, defaultVar())
-        val newInst = instructions.getUnknownValueInst(ctx, a.name)
+        val newInst = instructions.getUnknownValueInst(ctx, a.name, types.intType)
         var2inst[a] = newInst
         inst2var[newInst] = a
         return newInst
