@@ -10,6 +10,7 @@ import org.jetbrains.research.kex.jacoco.CoverageReporter
 import org.jetbrains.research.kex.reanimator.descriptor.DescriptorStatistics
 import org.jetbrains.research.kex.trace.`object`.ObjectTraceManager
 import org.jetbrains.research.kthelper.logging.log
+import java.nio.file.Files
 
 @ExperimentalSerializationApi
 @InternalSerializationApi
@@ -28,8 +29,19 @@ class SymbolicLauncher(classPaths: List<String>, targetName: String) : KexLaunch
         }
 
         DescriptorStatistics.printStatistics()
+        val coverage = CoverageReporter(containerClassLoader)
+            .execute(
+                analysisLevel
+            )
         log.info(
-            CoverageReporter(containerClassLoader).execute(analysisLevel)
+            coverage
         )
+        val coverageResult = kexConfig.getPathValue("kex", "outputDir", "./temp").resolve("coverage.txt")
+        if (Files.notExists(coverageResult)) {
+            Files.createFile(coverageResult)
+        }
+        Files.newBufferedWriter(coverageResult).use {
+            it.write(coverage)
+        }
     }
 }
