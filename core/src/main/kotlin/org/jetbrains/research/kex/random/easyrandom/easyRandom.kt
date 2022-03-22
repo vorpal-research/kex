@@ -28,7 +28,8 @@ class EasyRandomDriver(val config: BeansConfig = defaultConfig) : Randomizer {
             val collectionSize: IntRange,
             val stringLength: IntRange,
             val attempts: Int,
-            val excludes: Set<Package>
+            val excludes: Set<Package>,
+            val ignoreErrors: Boolean
         )
 
         val defaultConfig: BeansConfig by lazy {
@@ -39,12 +40,14 @@ class EasyRandomDriver(val config: BeansConfig = defaultConfig) : Randomizer {
             val maxStringLength = kexConfig.getIntValue("easy-random", "maxStringLength", 1000)
             val attempts = kexConfig.getIntValue("easy-random", "generationAttempts", 1)
             val excludes = kexConfig.getMultipleStringValue("easy-random", "exclude").map { Package.parse(it) }.toSet()
+            val ignoreErrors = kexConfig.getBooleanValue("easy-random", "ignoreErrors", true)
             BeansConfig(
                 depth = depth,
                 collectionSize = minCollectionSize..maxCollectionSize,
                 stringLength = minStringLength..maxStringLength,
                 attempts = attempts,
-                excludes = excludes
+                excludes = excludes,
+                ignoreErrors = ignoreErrors
             )
         }
     }
@@ -101,6 +104,7 @@ class EasyRandomDriver(val config: BeansConfig = defaultConfig) : Randomizer {
 
             })
             .excludeType { type -> type.shouldBeExcluded }
+            .ignoreRandomizationErrors(config.ignoreErrors)
             .objectFactory(KexObjectFactory())
     )
 
