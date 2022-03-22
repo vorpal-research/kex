@@ -1,5 +1,7 @@
 package org.jetbrains.research.kex.util
 
+import org.jetbrains.research.kex.asm.util.Visibility
+import org.jetbrains.research.kex.asm.util.visibility
 import org.jetbrains.research.kex.ktype.KexType
 import org.jetbrains.research.kex.ktype.kexType
 import org.jetbrains.research.kex.ktype.type
@@ -92,6 +94,14 @@ fun Type.getAllSubtypes(tf: TypeFactory): Set<Type> = when (this) {
     is ArrayType -> this.component.getAllSubtypes(tf).map { tf.getArrayType(it) }.toSet()
     else -> setOf()
 }
+
+val Type.visibility: Visibility get() = when (this) {
+    is ClassType -> this.klass.visibility
+    is ArrayType -> this.component.visibility
+    else -> Visibility.PUBLIC
+}
+
+fun KexType.getVisibility(tf: TypeFactory) = this.getKfgType(tf).visibility
 
 fun parseAsConcreteType(typeFactory: TypeFactory, name: String): KexType? {
     val type = parseStringToType(typeFactory, name)

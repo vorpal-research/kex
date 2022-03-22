@@ -4,10 +4,8 @@ import org.jetbrains.research.kex.descriptor.*
 import org.jetbrains.research.kex.ktype.KexArray
 import org.jetbrains.research.kex.ktype.KexClass
 import org.jetbrains.research.kex.ktype.KexType
-import org.jetbrains.research.kex.reanimator.actionsequence.ActionList
-import org.jetbrains.research.kex.reanimator.actionsequence.ActionSequence
-import org.jetbrains.research.kex.reanimator.actionsequence.EnumValueCreation
-import org.jetbrains.research.kex.reanimator.actionsequence.UnknownSequence
+import org.jetbrains.research.kex.ktype.type
+import org.jetbrains.research.kex.reanimator.actionsequence.*
 import org.jetbrains.research.kex.smt.Checker
 import org.jetbrains.research.kex.smt.Result
 import org.jetbrains.research.kex.state.StateBuilder
@@ -15,6 +13,7 @@ import org.jetbrains.research.kex.state.term.FieldTerm
 import org.jetbrains.research.kex.state.term.term
 import org.jetbrains.research.kex.state.transformer.TypeInfoMap
 import org.jetbrains.research.kex.state.transformer.generateFinalDescriptors
+import org.jetbrains.research.kex.util.asArray
 import org.jetbrains.research.kfg.type.ClassType
 import org.jetbrains.research.kthelper.logging.log
 
@@ -126,13 +125,21 @@ class EnumGenerator(private val fallback: Generator) : Generator {
 
         val kfgType = descriptor.type.getKfgType(context.types) as ClassType
         val enumConstants = getEnumConstants(this, descriptor.type).toList()
-
-        val result = enumConstants.firstOrNull { it.second.matches(descriptor, mutableMapOf()) }
-            ?: enumConstants.randomOrNull()
-            ?: return UnknownSequence(name, kfgType, descriptor).also {
-                saveToCache(descriptor, it)
+        list += when (descriptor) {
+            is ClassDescriptor -> {
+                val klass = (descriptor.type.getKfgType(context.types) as ClassType).klass
+                val valuesMethod = klass.getMethod("values", klass.type.asArray(context.types))
+                StaticMethodCall(valuesMethod, emptyList())
             }
-        list += EnumValueCreation(cm[result.first.klass], result.first.fieldName)
+            else -> {
+                val result = enumConstants.firstOrNull { it.second.matches(descriptor, mutableMapOf()) }
+                    ?: enumConstants.filter { it.second.type == descriptor.type }.randomOrNull()
+                    ?: return UnknownSequence(name, kfgType, descriptor).also {
+                        saveToCache(descriptor, it)
+                    }
+                EnumValueCreation(cm[result.first.klass], result.first.fieldName)
+            }
+        }
         return list
     }
 }

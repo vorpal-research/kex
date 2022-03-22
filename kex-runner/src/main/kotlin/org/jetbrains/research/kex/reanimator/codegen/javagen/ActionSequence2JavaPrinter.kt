@@ -158,7 +158,7 @@ open class ActionSequence2JavaPrinter(
             else -> unreachable { }
         }
 
-    private val java.lang.reflect.Type.asType: ASType
+    protected val java.lang.reflect.Type.asType: ASType
         get() = when (this) {
             is java.lang.Class<*> -> when {
                 this.isArray -> {
@@ -182,7 +182,7 @@ open class ActionSequence2JavaPrinter(
             else -> TODO()
         }
 
-    private fun ASType.merge(requiredType: ASType): ASType = when {
+    protected fun ASType.merge(requiredType: ASType): ASType = when {
         this is ASClass && requiredType is ASClass -> {
             val actualKlass = ctx.loader.loadClass(type)
             val requiredKlass = ctx.loader.loadClass(requiredType.type)
@@ -216,10 +216,13 @@ open class ActionSequence2JavaPrinter(
         }
 
     protected fun resolveTypes(actionSequence: ActionSequence) {
-        if (actionSequence is ActionList) actionSequence.reversed().map { resolveTypes(it) }
-        else if (actionSequence is TestCall) {
-            actionSequence.instance?.let { resolveTypes(it) }
-            actionSequence.args.forEach { resolveTypes(it) }
+        when (actionSequence) {
+            is ActionList -> actionSequence.reversed().map { resolveTypes(it) }
+            is TestCall -> {
+                actionSequence.instance?.let { resolveTypes(it) }
+                actionSequence.args.forEach { resolveTypes(it) }
+            }
+            else -> {}
         }
     }
 
@@ -325,7 +328,7 @@ open class ActionSequence2JavaPrinter(
             }
         }
 
-    private val ActionSequence.stackName: String
+    protected val ActionSequence.stackName: String
         get() = when (this) {
             is PrimaryValue<*> -> asConstant
             else -> name
@@ -402,7 +405,7 @@ open class ActionSequence2JavaPrinter(
             else -> unreachable { log.error("Unknown primary value $this") }
         }
 
-    private fun ActionSequence.cast(reqType: ASType?): String {
+    protected fun ActionSequence.cast(reqType: ASType?): String {
         val actualType = actualTypes[this] ?: return this.stackName
         return when {
             reqType.isAssignable(actualType) -> this.stackName
@@ -410,12 +413,12 @@ open class ActionSequence2JavaPrinter(
         }
     }
 
-    private fun ActionSequence.forceCastIfNull(reqType: ASType?): String = when {
+    protected fun ActionSequence.forceCastIfNull(reqType: ASType?): String = when {
         this.stackName == "null" && reqType != null -> "($reqType)${this.stackName}"
         else -> this.cast(reqType)
     }
 
-    private fun ASType.cast(reqType: ASType?): String {
+    protected fun ASType.cast(reqType: ASType?): String {
         return when {
             reqType.isAssignable(this) -> ""
             else -> "($reqType)"

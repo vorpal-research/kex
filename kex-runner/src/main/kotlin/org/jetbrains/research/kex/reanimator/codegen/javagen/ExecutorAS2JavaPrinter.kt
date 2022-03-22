@@ -6,9 +6,10 @@ import org.jetbrains.research.kex.config.kexConfig
 import org.jetbrains.research.kex.descriptor.*
 import org.jetbrains.research.kex.ktype.*
 import org.jetbrains.research.kex.parameters.Parameters
-import org.jetbrains.research.kex.reanimator.actionsequence.ActionSequence
-import org.jetbrains.research.kex.reanimator.actionsequence.UnknownSequence
+import org.jetbrains.research.kex.reanimator.actionsequence.*
+import org.jetbrains.research.kex.util.getMethod
 import org.jetbrains.research.kex.util.kapitalize
+import org.jetbrains.research.kex.util.loadClass
 import org.jetbrains.research.kfg.type.ArrayType
 import org.jetbrains.research.kfg.type.ClassType
 import org.jetbrains.research.kfg.type.PrimaryType
@@ -276,11 +277,24 @@ class ExecutorAS2JavaPrinter(
                     actionSequences.arguments.forEach { arg ->
                         val type = when (arg) {
                             is UnknownSequence -> arg.type
+                            is ActionList -> arg.firstNotNullOfOrNull {
+                                when (it) {
+                                    is DefaultConstructorCall -> it.klass.type
+                                    is ConstructorCall -> it.constructor.klass.type
+                                    is NewArray -> it.asArray
+                                    is ExternalConstructorCall -> it.constructor.returnType
+                                    is InnerClassConstructorCall -> it.constructor.klass.type
+                                    is EnumValueCreation -> it.klass.type
+                                    is StaticFieldGetter -> it.field.type
+                                    else -> null
+                                }
+                            } ?: unreachable { log.error("Unexpected call in arg") }
                             else -> unreachable { log.error("Unexpected call in arg") }
                         }
                         val fieldType = type.kexType.primitiveName?.let { type(it) } ?: type("Object")
-                        if (testParams.all { it.name != arg.name })
+                        if (testParams.all { it.name != arg.name }) {
                             testParams += field(arg.name, fieldType)
+                        }
                     }
                 }
 
@@ -422,14 +436,20 @@ class ExecutorAS2JavaPrinter(
             is ConstantDescriptor.Bool -> result += "$decl = ${descriptor.asConstant}".also { names[descriptor] = name }
             is ConstantDescriptor.Byte -> result += "$decl = ${descriptor.asConstant}".also { names[descriptor] = name }
             is ConstantDescriptor.Char -> result += "$decl = ${descriptor.asConstant}".also { names[descriptor] = name }
-            is ConstantDescriptor.Double -> result += "$decl = ${descriptor.asConstant}".also { names[descriptor] = name }
-            is ConstantDescriptor.Float -> result += "$decl = ${descriptor.asConstant}".also { names[descriptor] = name }
+            is ConstantDescriptor.Double -> result += "$decl = ${descriptor.asConstant}".also {
+                names[descriptor] = name
+            }
+            is ConstantDescriptor.Float -> result += "$decl = ${descriptor.asConstant}".also {
+                names[descriptor] = name
+            }
             is ConstantDescriptor.Int -> result += "$decl = ${descriptor.asConstant}".also { names[descriptor] = name }
             is ConstantDescriptor.Long -> result += "$decl = ${descriptor.asConstant}".also { names[descriptor] = name }
-            is ConstantDescriptor.Short -> result += "$decl = ${descriptor.asConstant}".also { names[descriptor] = name }
+            is ConstantDescriptor.Short -> result += "$decl = ${descriptor.asConstant}".also {
+                names[descriptor] = name
+            }
             is ArrayDescriptor -> {
                 val elementType = (descriptor.type as KexArray).element
-                result += "$decl = ${
+                result += "$decl = ($resolveType) ${
                     elementType.primitiveName?.let {
                         "${newPrimitiveArrayMap[it]!!.name}(${descriptor.length})"
                     } ?: "${newArray.name}(\"${(elementType.getKfgType(ctx.types) as ClassType).klass.canonicalDesc}\", ${descriptor.length})"
@@ -441,7 +461,9 @@ class ExecutorAS2JavaPrinter(
             is ClassDescriptor -> {
                 val klass = (descriptor.type.getKfgType(ctx.types) as ClassType).klass
                 val klassVarName = "klassInstance${klassCounter++}"
-                result += "Class<?> $klassVarName = Class.forName(\"${klass.canonicalDesc}\")".also { names[descriptor] = klassVarName }
+                result += "Class<?> $klassVarName = Class.forName(\"${klass.canonicalDesc}\")".also {
+                    names[descriptor] = klassVarName
+                }
                 for ((_, element) in descriptor.fields) {
                     printDeclarations(element, result, visited, names)
                 }
@@ -451,7 +473,7 @@ class ExecutorAS2JavaPrinter(
                 when {
                     klass.isEnum -> result += "$decl = ${klass.javaString}.${getEnumName(descriptor)}"
                     else -> {
-                        result += "$decl = ${newInstance.name}(\"${klass.canonicalDesc}\")"
+                        result += "$decl = ($resolveType) ${newInstance.name}(\"${klass.canonicalDesc}\")"
                         for ((_, element) in descriptor.fields) {
                             printDeclarations(element, result, visited, names)
                         }
@@ -462,8 +484,12 @@ class ExecutorAS2JavaPrinter(
         return names
     }
 
-    private fun printInsides(descriptor: Descriptor, result: MutableList<String>, names: Map<Descriptor, String>): String = with(current) {
-        val name = names.getValue(descriptor)
+    private fun printInsides(
+        descriptor: Descriptor,
+        result: MutableList<String>,
+        names: Map<Descriptor, String>
+    ): String = with(current) {
+        val name = names[descriptor] ?: "${descriptor.term}"
         if (name in printedStacks) return@with name
         printedStacks += name
 
@@ -500,6 +526,48 @@ class ExecutorAS2JavaPrinter(
             else -> {}
         }
         return name
+    }
+
+    override fun printMethodCall(owner: ActionSequence, call: MethodCall): List<String> {
+        call.args.forEach { it.printAsJava() }
+        val method = call.method
+        val args = call.args.joinToString(", ") {
+            it.forceCastIfNull(resolvedTypes[it])
+        }
+        return listOf("((${actualTypes[owner]}) ${owner.name}).${method.name}($args)")
+    }
+
+    override fun printExternalConstructorCall(owner: ActionSequence, call: ExternalConstructorCall): List<String> {
+        call.args.forEach { it.printAsJava() }
+        val constructor = call.constructor
+        val args = call.args.withIndex().joinToString(", ") { (index, arg) ->
+            "(${constructor.argTypes[index].javaString}) ${arg.stackName}"
+        }
+
+        val reflection = ctx.loader.loadClass(call.constructor.klass)
+        val ctor = reflection.getMethod(call.constructor, ctx.loader)
+        val actualType = ctor.genericReturnType.asType
+        return listOf(
+            if (resolvedTypes[owner] != null) {
+                val rest = resolvedTypes[owner]!!
+                val type = actualType.merge(rest)
+                actualTypes[owner] = type
+                "${
+                    printVarDeclaration(
+                        owner.name,
+                        type
+                    )
+                } = ${type.cast(rest)} ${constructor.klass.javaString}.${constructor.name}($args)"
+            } else {
+                actualTypes[owner] = actualType
+                "${
+                    printVarDeclaration(
+                        owner.name,
+                        actualType
+                    )
+                } = ${constructor.klass.javaString}.${constructor.name}($args)"
+            }
+        )
     }
 
     private fun getEnumName(descriptor: ObjectDescriptor): String {

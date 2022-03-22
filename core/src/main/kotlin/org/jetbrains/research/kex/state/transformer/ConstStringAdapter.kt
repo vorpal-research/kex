@@ -105,6 +105,14 @@ class ConstStringAdapter(
     override fun transformInstanceOf(term: InstanceOfTerm): Term {
         return term { term.operand.map `is` term.checkedType }
     }
+
+    override fun transformEquals(term: EqualsTerm): Term {
+        return term { term.lhv.map equls term.rhv.map }
+    }
+
+    override fun transformLambdaTerm(term: LambdaTerm): Term {
+        return term { lambda(term.type, term.parameters, transform(term.body)) }
+    }
 }
 
 class TypeNameAdapter(
