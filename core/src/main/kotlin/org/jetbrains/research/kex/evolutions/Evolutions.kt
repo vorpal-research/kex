@@ -240,6 +240,7 @@ open class Evolutions(override val cm: ClassManager) : MethodVisitor {
                                 base,
                                 Evolution(v.loop, EvoOpcode.PLUS, Const.ZERO, rhv)
                             )
+                        else -> {} // nothing
                     }
                 }
                 is Apply -> return recur
