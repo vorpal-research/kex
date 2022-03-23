@@ -96,6 +96,8 @@ class SymbolicTraceCollector(
         )
 
         val instrumented = buildList<Instruction> {
+            +addNullityConstraint(inst, inst.arrayRef)
+            +addArrayIndexConstraints(inst, inst.arrayRef, inst.index)
             +collectorClass.interfaceCall(
                 arrayLoadMethod, traceCollector,
                 "$inst".asValue, "${inst.arrayRef}".asValue, "${inst.index}".asValue,
@@ -113,6 +115,8 @@ class SymbolicTraceCollector(
         )
 
         val instrumented = buildList<Instruction> {
+            +addNullityConstraint(inst, inst.arrayRef)
+            +addArrayIndexConstraints(inst, inst.arrayRef, inst.index)
             +collectorClass.interfaceCall(
                 arrayStoreMethod, traceCollector,
                 "$inst".asValue, "${inst.arrayRef}".asValue, "${inst.index}".asValue, "${inst.value}".asValue,
@@ -167,6 +171,11 @@ class SymbolicTraceCollector(
         val klass = calledMethod.klass
 
         val instrumented = buildList<Instruction> {
+            if (!inst.isStatic && !inst.method.isConstructor) {
+                +addNullityConstraint(inst, inst.callee)
+                +addTypeConstraints(inst, inst.callee)
+            }
+
             val arrayListKlass = cm.arrayListClass
             val initMethod = arrayListKlass.getMethod("<init>", types.voidType)
             val addMethod = arrayListKlass.getMethod("add", types.boolType, types.objectType)
@@ -222,6 +231,8 @@ class SymbolicTraceCollector(
             types.objectType, types.objectType
         )
         val instrumented = buildList<Instruction> {
+            if (inst.type.isReference) +addNullityConstraint(inst, inst.operand)
+
             +collectorClass.interfaceCall(
                 castMethod, traceCollector,
                 "$inst".asValue, "${inst.operand}".asValue,
@@ -300,6 +311,8 @@ class SymbolicTraceCollector(
         )
 
         val instrumented = buildList<Instruction> {
+            if (!inst.isStatic) +addNullityConstraint(inst, inst.owner)
+
             val fieldKlass = inst.field.klass.fullName.asValue
             val fieldName = inst.field.name.asValue
             val fieldType = inst.field.type.asmDesc.asValue
@@ -327,6 +340,8 @@ class SymbolicTraceCollector(
         )
 
         val instrumented = buildList<Instruction> {
+            if (!inst.isStatic) +addNullityConstraint(inst, inst.owner)
+
             val fieldKlass = inst.field.klass.fullName.asValue
             val fieldName = inst.field.name.asValue
             val fieldType = inst.field.type.asmDesc.asValue
@@ -559,6 +574,49 @@ class SymbolicTraceCollector(
         inst.insertAfter(instrumented)
     }
 
+    private fun addNullityConstraint(inst: Instruction, value: Value): List<Instruction> = buildList {
+        if (inst.parent.parent.isConstructor && value is ThisRef) return@buildList
+
+        val addNullityConstraintsMethod = collectorClass.getMethod(
+            "addNullityConstraints", types.voidType,
+            types.stringType, types.stringType, types.objectType
+        )
+
+        +collectorClass.interfaceCall(
+            addNullityConstraintsMethod, traceCollector,
+            "$inst".asValue, "$value".asValue,
+            value.wrapped(this)
+        )
+    }
+
+    private fun addTypeConstraints(inst: Instruction, value: Value): List<Instruction> = buildList {
+        val addTypeConstraintsMethod = collectorClass.getMethod(
+            "addTypeConstraints", types.voidType,
+            types.stringType, types.stringType, types.objectType
+        )
+
+        +collectorClass.interfaceCall(
+            addTypeConstraintsMethod, traceCollector,
+            "$inst".asValue, "$value".asValue,
+            value.wrapped(this)
+        )
+    }
+
+    private fun addArrayIndexConstraints(inst: Instruction, array: Value, index: Value): List<Instruction> = buildList {
+        val addArrayIndexConstraintsMethod = collectorClass.getMethod(
+            "addArrayIndexConstraints", types.voidType,
+            types.stringType,
+            types.stringType, types.stringType,
+            types.objectType, types.objectType
+        )
+
+        +collectorClass.interfaceCall(
+            addArrayIndexConstraintsMethod, traceCollector,
+            "$inst".asValue,
+            "$array".asValue, "$index".asValue,
+            array.wrapped(this), index.wrapped(this)
+        )
+    }
 
     private fun getNewCollector(): Instruction {
         val proxy = cm[TraceCollectorProxy::class.java.canonicalName.replace('.', '/')]

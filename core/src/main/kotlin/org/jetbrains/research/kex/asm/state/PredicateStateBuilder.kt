@@ -1,9 +1,5 @@
 package org.jetbrains.research.kex.asm.state
 
-import org.jetbrains.research.kthelper.algorithm.DominatorTree
-import org.jetbrains.research.kthelper.algorithm.DominatorTreeBuilder
-import org.jetbrains.research.kthelper.algorithm.GraphTraversal
-import org.jetbrains.research.kthelper.collection.queueOf
 import org.jetbrains.research.kex.state.PredicateState
 import org.jetbrains.research.kex.state.emptyState
 import org.jetbrains.research.kfg.ir.BasicBlock
@@ -11,6 +7,10 @@ import org.jetbrains.research.kfg.ir.Method
 import org.jetbrains.research.kfg.ir.value.instruction.Instruction
 import org.jetbrains.research.kfg.ir.value.instruction.PhiInst
 import org.jetbrains.research.kfg.ir.value.instruction.ReturnInst
+import org.jetbrains.research.kthelper.collection.queueOf
+import org.jetbrains.research.kthelper.graph.DominatorTree
+import org.jetbrains.research.kthelper.graph.DominatorTreeBuilder
+import org.jetbrains.research.kthelper.graph.GraphTraversal
 import org.jetbrains.research.kthelper.logging.log
 import org.jetbrains.research.kthelper.logging.warn
 

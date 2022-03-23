@@ -1,5 +1,11 @@
 package org.jetbrains.research.kex.util
 
+import org.jetbrains.research.kex.asm.util.Visibility
+import org.jetbrains.research.kex.asm.util.visibility
+import org.jetbrains.research.kex.ktype.KexType
+import org.jetbrains.research.kex.ktype.kexType
+import org.jetbrains.research.kex.ktype.type
+import org.jetbrains.research.kfg.ClassManager
 import org.jetbrains.research.kfg.Package
 import org.jetbrains.research.kfg.ir.Class
 import org.jetbrains.research.kfg.ir.MethodDesc
@@ -14,6 +20,7 @@ import org.jetbrains.research.kthelper.compareTo
 import org.jetbrains.research.kthelper.logging.log
 
 fun Type.asArray(tf: TypeFactory) = tf.getArrayType(this)
+val Type.javaDesc get() = this.name.replace(Package.SEPARATOR, Package.CANONICAL_SEPARATOR)
 
 fun Package.isParent(klass: Class) = isParent(klass.pkg)
 
@@ -75,3 +82,31 @@ val SystemTypeNames.unmodifiableCollection get() = "java/util/Collections\$Unmod
 val SystemTypeNames.unmodifiableList get() = "java/util/Collections\$UnmodifiableList"
 val SystemTypeNames.unmodifiableSet get() = "java/util/Collections\$UnmodifiableSet"
 val SystemTypeNames.unmodifiableMap get() = "java/util/Collections\$UnmodifiableMap"
+val SystemTypeNames.charSequence get() = "java/lang/CharSequence"
+
+val SystemTypeNames.classLoader get() = "java/lang/ClassLoader"
+val ClassManager.classLoaderClass get() = this[SystemTypeNames.classLoader]
+val TypeFactory.classLoaderType get() = getRefType(SystemTypeNames.classLoader)
+
+
+fun Type.getAllSubtypes(tf: TypeFactory): Set<Type> = when (this) {
+    is ClassType -> tf.cm.getAllSubtypesOf(this.klass).map { it.type }.toSet()
+    is ArrayType -> this.component.getAllSubtypes(tf).map { tf.getArrayType(it) }.toSet()
+    else -> setOf()
+}
+
+val Type.visibility: Visibility get() = when (this) {
+    is ClassType -> this.klass.visibility
+    is ArrayType -> this.component.visibility
+    else -> Visibility.PUBLIC
+}
+
+fun KexType.getVisibility(tf: TypeFactory) = this.getKfgType(tf).visibility
+
+fun parseAsConcreteType(typeFactory: TypeFactory, name: String): KexType? {
+    val type = parseStringToType(typeFactory, name)
+    return when {
+        type.isConcrete -> type.kexType
+        else -> null
+    }
+}

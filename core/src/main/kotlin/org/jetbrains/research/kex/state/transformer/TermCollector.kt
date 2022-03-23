@@ -4,10 +4,7 @@ import org.jetbrains.research.kex.ktype.KexReference
 import org.jetbrains.research.kex.state.PredicateState
 import org.jetbrains.research.kex.state.predicate.Predicate
 import org.jetbrains.research.kex.state.predicate.PredicateType
-import org.jetbrains.research.kex.state.term.ConstStringTerm
-import org.jetbrains.research.kex.state.term.FieldTerm
-import org.jetbrains.research.kex.state.term.Term
-import org.jetbrains.research.kex.state.term.term
+import org.jetbrains.research.kex.state.term.*
 
 class TermCollector(val filter: (Term) -> Boolean) : Transformer<TermCollector> {
     companion object {
@@ -35,6 +32,11 @@ class TermCollector(val filter: (Term) -> Boolean) : Transformer<TermCollector> 
     override fun transformTerm(term: Term): Term {
         if (filter(term)) terms.add(term)
         return super.transformTerm(term)
+    }
+
+    override fun transformLambdaTerm(term: LambdaTerm): Term {
+        transform(term.body)
+        return super.transformLambdaTerm(term)
     }
 }
 
@@ -73,9 +75,19 @@ class StringTermCollector : Transformer<StringTermCollector> {
         return term { owner.field((term.type as KexReference).reference, term.fieldName) }
     }
 
+    override fun transformConstClass(term: ConstClassTerm): Term {
+        strings += term { const(term.constantType.javaName) } as ConstStringTerm
+        return super.transformConstClass(term)
+    }
+
     override fun transform(term: Term): Term {
         if (term is ConstStringTerm) strings += term
         return super.transform(term)
+    }
+
+    override fun transformLambdaTerm(term: LambdaTerm): Term {
+        transform(term.body)
+        return super.transformLambdaTerm(term)
     }
 }
 

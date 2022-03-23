@@ -8,10 +8,9 @@ import org.jetbrains.research.kex.descriptor.Descriptor
 import org.jetbrains.research.kex.parameters.Parameters
 import org.jetbrains.research.kex.parameters.concreteParameters
 import org.jetbrains.research.kex.random.GenerationException
-import org.jetbrains.research.kex.reanimator.callstack.CallStack
-import org.jetbrains.research.kex.reanimator.callstack.generator.UnknownGenerator
+import org.jetbrains.research.kex.reanimator.actionsequence.ActionSequence
+import org.jetbrains.research.kex.reanimator.actionsequence.generator.ConcolicSequenceGenerator
 import org.jetbrains.research.kex.reanimator.codegen.ExecutorTestCasePrinter
-import org.jetbrains.research.kex.reanimator.codegen.klassName
 import org.jetbrains.research.kex.reanimator.codegen.packageName
 import org.jetbrains.research.kex.smt.SMTModel
 import org.jetbrains.research.kex.state.PredicateState
@@ -27,15 +26,16 @@ private val visibilityLevel by lazy {
 
 class UnsafeGenerator(
     override val ctx: ExecutionContext,
-    val method: Method
+    val method: Method,
+    val testName: String
 ) : ParameterGenerator {
-    private val csGenerator = UnknownGenerator(ctx, PredicateStateAnalysis(ctx.cm), visibilityLevel)
-    private val printer = ExecutorTestCasePrinter(ctx, method.packageName, method.klassName)
+    private val asGenerator = ConcolicSequenceGenerator(ctx, PredicateStateAnalysis(ctx.cm), visibilityLevel)
+    private val printer = ExecutorTestCasePrinter(ctx, method.packageName, testName)
     val testKlassName = printer.fullKlassName
 
     fun generate(descriptors: Parameters<Descriptor>) = try {
-        val callStacks = descriptors.callStacks
-        printer.print(method, callStacks.rtUnmapped)
+        val sequences = descriptors.actionSequences
+        printer.print(method, sequences.rtUnmapped)
     } catch (e: GenerationException) {
         throw e
     } catch (e: Exception) {
@@ -58,8 +58,8 @@ class UnsafeGenerator(
     ): Parameters<Any?> = try {
         val descriptors = generateFinalDescriptors(method, ctx, model, state).concreteParameters(ctx.cm)
         log.debug("Generated descriptors:\n$descriptors")
-        val callStacks = descriptors.callStacks
-        printer.print(testName, method, callStacks.rtUnmapped)
+        val sequences = descriptors.actionSequences
+        printer.print(testName, method, sequences.rtUnmapped)
         generateInputByModel(ctx, method, state, model)
     } catch (e: GenerationException) {
         throw e
@@ -75,14 +75,14 @@ class UnsafeGenerator(
         return printer.targetFile.toPath()
     }
 
-    val Descriptor.callStack: CallStack
-        get() = csGenerator.generate(this)
+    val Descriptor.actionSequence: ActionSequence
+        get() = asGenerator.generate(this)
 
-    val Parameters<Descriptor>.callStacks: Parameters<CallStack>
+    private val Parameters<Descriptor>.actionSequences: Parameters<ActionSequence>
         get() {
-            val thisCallStack = instance?.callStack
-            val argCallStacks = arguments.map { it.callStack }
-            val staticFields = statics.map { it.callStack }.toSet()
-            return Parameters(thisCallStack, argCallStacks, staticFields)
+            val thisSequence = instance?.actionSequence
+            val argSequences = arguments.map { it.actionSequence }
+            val staticFields = statics.map { it.actionSequence }.toSet()
+            return Parameters(thisSequence, argSequences, staticFields)
         }
 }

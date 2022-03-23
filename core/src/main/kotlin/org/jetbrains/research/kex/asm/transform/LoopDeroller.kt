@@ -2,6 +2,10 @@ package org.jetbrains.research.kex.asm.transform
 
 import org.jetbrains.research.kex.asm.manager.wrapper
 import org.jetbrains.research.kex.config.kexConfig
+import org.jetbrains.research.kex.evolutions.LoopOptimizer
+import org.jetbrains.research.kex.evolutions.defaultVar
+import org.jetbrains.research.kex.evolutions.evaluateEvolutions
+import org.jetbrains.research.kex.evolutions.walkLoops
 import org.jetbrains.research.kfg.ClassManager
 import org.jetbrains.research.kfg.ir.BasicBlock
 import org.jetbrains.research.kfg.ir.BodyBlock
@@ -10,21 +14,21 @@ import org.jetbrains.research.kfg.ir.Method
 import org.jetbrains.research.kfg.ir.value.*
 import org.jetbrains.research.kfg.ir.value.instruction.*
 import org.jetbrains.research.kfg.visitor.Loop
-import org.jetbrains.research.kfg.visitor.LoopVisitor
-import org.jetbrains.research.kthelper.algorithm.GraphTraversal
-import org.jetbrains.research.kthelper.algorithm.NoTopologicalSortingException
 import org.jetbrains.research.kthelper.assert.unreachable
+import org.jetbrains.research.kthelper.graph.GraphTraversal
+import org.jetbrains.research.kthelper.graph.NoTopologicalSortingException
 import org.jetbrains.research.kthelper.logging.log
 import org.jetbrains.research.kthelper.toInt
-import kotlin.math.abs
-import kotlin.math.min
+import ru.spbstu.Var
+import java.lang.Math.abs
+import java.lang.Math.min
+
 
 private val derollCount = kexConfig.getIntValue("loop", "derollCount", 3)
 private val maxDerollCount = kexConfig.getIntValue("loop", "maxDerollCount", 0)
+private val useBackstabbing = kexConfig.getBooleanValue("loop", "useBackstabbing", false)
 
-class LoopDeroller(override val cm: ClassManager) : LoopVisitor {
-    private lateinit var ctx: MethodUsageContext
-
+class LoopDeroller(override val cm: ClassManager) : LoopOptimizer(cm) {
     companion object {
         const val DEROLLED_POSTFIX = ".deroll"
 
@@ -48,7 +52,9 @@ class LoopDeroller(override val cm: ClassManager) : LoopVisitor {
             fun createState(loop: Loop): State {
                 val terminatingBlock = run {
                     var current = loop.latch
-                    while (current.terminator is JumpInst) current = current.successors.first()
+                    while (current.terminator is JumpInst) {
+                        current = current.successors.first()
+                    }
                     current
                 }
                 val continueOnTrue = when {
@@ -89,9 +95,14 @@ class LoopDeroller(override val cm: ClassManager) : LoopVisitor {
     override val preservesLoopInfo get() = false
 
     override fun visit(method: Method) = method.usageContext.use {
+        if (!method.hasBody) return
         ctx = it
         try {
-            super.visit(method)
+            precalculateEvolutions(method)
+            val loops = method.getLoopInfo()
+            loops.forEach { loop -> freshVars[loop] = Var.fresh("iteration") }
+            loops.forEach { visitLoop(it) }
+            updateLoopInfo(method)
         } catch (e: InvalidLoopException) {
             log.error("Can't deroll loops of method $method")
         } catch (e: NoTopologicalSortingException) {
@@ -101,16 +112,25 @@ class LoopDeroller(override val cm: ClassManager) : LoopVisitor {
         }
     }
 
-    override fun visitLoop(loop: Loop) = with(ctx) {
-        super.visitLoop(loop)
+
+    override fun visitLoop(loop: Loop) {
+        loop.subLoops.forEach { visitLoop(it) }
         if (loop.allEntries.size != 1) throw InvalidLoopException()
         if (loop.loopExits.isEmpty()) throw InvalidLoopException()
-
+        loop.method ?: unreachable { log.error("Can't get method of loop") }
+        val blockOrder = getBlockOrder(loop)
         // init state
+        unroll(
+            loop,
+            if (useBackstabbing && tryBackstabbing(loop, blockOrder.first())) 1 else
+            getDerollCount(loop)
+        )
+    }
+
+    private fun unroll(loop: Loop, derollCount: Int) = with(ctx) {
         val method = loop.method ?: unreachable { log.error("Can't get method of loop") }
         val blockOrder = getBlockOrder(loop)
         val state = State.createState(loop)
-        val derollCount = getDerollCount(loop)
         val body = loop.body.toMutableList().onEach { loop.removeBlock(it) }
 
         log.debug("Method $method, unrolling loop $loop to $derollCount iterations")
@@ -327,6 +347,7 @@ class LoopDeroller(override val cm: ClassManager) : LoopVisitor {
                         newInst
                     } else actual
                     updated.replaceAllUsesWith(mappedActual)
+                    newBlock.remove(updated)
                     state[inst] = mappedActual
                 }
             }
@@ -358,11 +379,14 @@ class LoopDeroller(override val cm: ClassManager) : LoopVisitor {
 
     private fun remapMethodPhis(phis: List<PhiInst>, newMappings: Map<PhiInst, Map<BasicBlock, Value>>) = with(ctx) {
         for (phi in phis) {
-            val newPhi = inst(cm) { phi(phi.type, newMappings.getValue(phi)).update(ctx, loc = phi.location) }
+            val newPhi = inst(cm) { phi(phi.type, newMappings.getValue(phi)) }
+            val newPhiClone = newPhi.update(ctx, loc = phi.location)
+            newPhi.replaceAllUsesWith(newPhiClone)
+            newPhi.clearUses()
 
             val bb = phi.parent
-            bb.insertBefore(phi, newPhi)
-            phi.replaceAllUsesWith(newPhi)
+            bb.insertBefore(phi, newPhiClone)
+            phi.replaceAllUsesWith(newPhiClone)
             phi.clearUses()
             bb -= phi
         }
@@ -385,5 +409,60 @@ class LoopDeroller(override val cm: ClassManager) : LoopVisitor {
                 it.removeHandler(catch)
             }
         }
+    }
+
+    private fun precalculateEvolutions(method: Method) {
+        cleanup()
+        if (!method.hasBody) return
+        walkLoops(method).forEach { loop ->
+            loop
+                .header
+                .takeWhile { it is PhiInst }
+                .filterIsInstance<PhiInst>()
+                .forEach {
+                    loopPhis[it] = loop
+                }
+            loop.body.forEach { basicBlock ->
+                basicBlock.forEach {
+                    inst2loop.getOrPut(it) { loop }
+                }
+            }
+        }
+    }
+
+    private fun tryBackstabbing(loop: Loop, firstBlock: BasicBlock): Boolean {
+        if (loop.latches.isEmpty() || loop.preheaders.isEmpty() || loop !in loopPhis.values) {
+            return false
+        }
+
+        for (b in loop.allEntries) for (i in b) {
+            transform(i)
+        }
+        loopPhis.keys.forEach {
+            try {
+                phiToEvo[it] = evaluateEvolutions(buildPhiEquation(it), freshVars)
+            } catch (e: StackOverflowError) {
+                return false
+            }
+        }
+
+        val inst = createInductive(loop)
+        val block = rebuild(loop) ?: return false
+        if (block.isEmpty()) return false
+        val a = firstBlock.last()
+        firstBlock.remove(a)
+        firstBlock.add(inst)
+        firstBlock.addAll(block)
+        firstBlock.add(a)
+        clearUnused(loop)
+        return true
+    }
+
+    private fun createInductive(loop: Loop): Instruction {
+        val a = freshVars.getOrPut(loop, defaultVar())
+        val newInst = instructions.getUnknownValueInst(ctx, a.name, types.intType)
+        var2inst[a] = newInst
+        inst2var[newInst] = a
+        return newInst
     }
 }

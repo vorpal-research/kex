@@ -4,6 +4,7 @@ import org.jetbrains.research.kex.ktype.*
 import org.jetbrains.research.kex.state.*
 import org.jetbrains.research.kex.state.predicate.*
 import org.jetbrains.research.kex.state.term.CallTerm
+import org.jetbrains.research.kex.state.term.LambdaTerm
 import org.jetbrains.research.kex.state.term.Term
 import org.jetbrains.research.kex.state.term.term
 import org.jetbrains.research.kfg.ClassManager
@@ -301,7 +302,7 @@ class StringMethodAdapter(val cm: ClassManager) : RecollectingTransformer<String
         val res = term { generate(KexBool()) }
         return basic {
             state { isNull equality (other eq null) }
-            state { instanceOf equality (other `is` KexString())}
+            state { instanceOf equality (other `is` KexString()) }
         }.choice {
             or {
                 basic {
@@ -538,7 +539,8 @@ class StringMethodAdapter(val cm: ClassManager) : RecollectingTransformer<String
         }
     }
 
-    fun substring(lhv: Term, term: Term, beginIndex: Term) = substringWLength(lhv, term, beginIndex, term { term.valueArray().load().length() })
+    fun substring(lhv: Term, term: Term, beginIndex: Term) =
+        substringWLength(lhv, term, beginIndex, term { term.valueArray().load().length() })
 
     fun substringWLength(lhv: Term, term: Term, beginIndex: Term, endIndex: Term): PredicateState {
         val isGreater = term { generate(KexBool()) }
@@ -596,7 +598,8 @@ class StringMethodAdapter(val cm: ClassManager) : RecollectingTransformer<String
         }
     }
 
-    fun subSequence(lhv: Term, term: Term, beginIndex: Term, endIndex: Term) = substringWLength(lhv, term, beginIndex, endIndex)
+    fun subSequence(lhv: Term, term: Term, beginIndex: Term, endIndex: Term) =
+        substringWLength(lhv, term, beginIndex, endIndex)
 
     fun concat(lhv: Term, term: Term, other: Term) = basic {
         val thisValue = generate(KexCharArray())
@@ -625,7 +628,8 @@ class StringMethodAdapter(val cm: ClassManager) : RecollectingTransformer<String
             generateArray(resValue, resLength) {
                 val index = generate(KexInt())
                 lambda(types.objectType.kexType, index) {
-                    ite(KexChar(),
+                    ite(
+                        KexChar(),
                         index lt thisLength,
                         thisValue[index].load(),
                         otherValue[index - thisValue].load()
@@ -682,4 +686,59 @@ class StringMethodAdapter(val cm: ClassManager) : RecollectingTransformer<String
         return nothing()
     }
 
+    override fun transformLambdaTerm(term: LambdaTerm): Term {
+        val newBody = TermExprStringAdapter(cm).transform(term.body)
+        return term { lambda(term.type, term.parameters, newBody) }
+    }
+
+}
+
+class TermExprStringAdapter(val cm: ClassManager) : Transformer<TermExprStringAdapter> {
+    private fun Term.valueArray(): Term = term { this@valueArray.field(KexCharArray(), "value") }
+    private fun KexCharArray() = KexChar().asArray()
+
+    override fun transformCallTerm(term: CallTerm): Term {
+        val args = term.arguments
+
+        val kfgString = cm.stringClass
+        if (term.owner.type != kfgString.kexType) return term
+
+        val `this` = term.owner
+        val calledMethod = term.method
+
+        return when (calledMethod) {
+            kfgString.length -> term { `this`.valueArray().load().length() }
+            kfgString.isEmpty -> term { `this`.valueArray().load().length() eq 0 }
+            kfgString.charAt -> term { `this`.valueArray().load()[args[0]].load() }
+            kfgString.equals -> term {
+                val other = args[0]
+                ite(
+                    KexBool(),
+                    other eq null,
+                    const(false),
+                    ite(
+                        KexBool(),
+                        other `is` KexString(),
+                        forAll(0, `this`.valueArray().load().length()) {
+                            val index = generate(KexInt())
+                            lambda(cm.type.objectType.kexType, listOf(index)) {
+                                `this`.valueArray().load()[index].load() eq (other `as` KexString()).valueArray()
+                                    .load()[index].load()
+                            }
+                        },
+                        const(false)
+                    )
+                )
+            }
+//            kfgString.startsWith -> startsWith(predicate.lhv, `this`, args[0])
+//            kfgString.startsWithOffset -> startsWithOffset(predicate.lhv, `this`, args[0], args[1])
+//            kfgString.endsWith -> endsWith(predicate.lhv, `this`, args[0])
+//            kfgString.substring -> substring(predicate.lhv, `this`, args[0])
+//            kfgString.substringWLength -> substringWLength(predicate.lhv, `this`, args[0], args[1])
+//            kfgString.subSequence -> subSequence(predicate.lhv, `this`, args[0], args[1])
+//            kfgString.concat -> concat(predicate.lhv, `this`, args[0])
+            kfgString.toString -> `this`
+            else -> term
+        }
+    }
 }

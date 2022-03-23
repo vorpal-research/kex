@@ -1,7 +1,11 @@
 package org.jetbrains.research.kex.reanimator.descriptor
 
 import org.jetbrains.research.kex.descriptor.Descriptor
-import org.jetbrains.research.kex.reanimator.callstack.CallStack
+import org.jetbrains.research.kex.reanimator.actionsequence.ActionList
+import org.jetbrains.research.kex.reanimator.actionsequence.ActionSequence
+import org.jetbrains.research.kex.reanimator.actionsequence.PrimaryValue
+import org.jetbrains.research.kex.reanimator.actionsequence.UnknownSequence
+import org.jetbrains.research.kthelper.logging.error
 import org.jetbrains.research.kthelper.logging.log
 import java.util.*
 
@@ -17,7 +21,7 @@ object DescriptorStatistics {
     private var nonTrivialTime = 0L
     private var nonTrivialCount = 0L
 
-    fun addDescriptor(descriptor: Descriptor, callStack: CallStack, time: Long) {
+    fun addDescriptor(descriptor: Descriptor, actionSequence: ActionSequence, time: Long) {
         val descDepth = descriptor.depth
         depth += descDepth
         if (descDepth > 1) {
@@ -25,16 +29,26 @@ object DescriptorStatistics {
             nonTrivialDepth += descDepth
             nonTrivialTime += time
         }
-        when {
-            callStack.isComplete -> {
-                ++successes
-                if (descDepth > 1) ++nonTrivialSuccesses
-                successTime += time
-            }
-            else -> {
+        when (actionSequence) {
+            is UnknownSequence -> {
                 failures += descriptor
                 failTime += time
             }
+            is PrimaryValue<*> -> {
+                ++successes
+            }
+            is ActionList -> when {
+                actionSequence.isComplete -> {
+                    ++successes
+                    if (descDepth > 1) ++nonTrivialSuccesses
+                    successTime += time
+                }
+                else -> {
+                    failures += descriptor
+                    failTime += time
+                }
+            }
+            else -> log.error { "Unexpected type of action sequence in executor: $actionSequence" }
         }
     }
 
@@ -68,9 +82,33 @@ object DescriptorStatistics {
         log.info("Non-trivial descriptor generation: ${String.format(Locale.ENGLISH, "%.2f", nonTrivialSuccessRate)}%")
         log.info("Average descriptor depth: ${String.format(Locale.ENGLISH, "%.2f", avgDepth)}")
         log.info("Average non-trivial descriptor depth: ${String.format(Locale.ENGLISH, "%.2f", avgNonTrivialDepth)}")
-        log.info("Average time per successful descriptor generation: ${String.format(Locale.ENGLISH, "%.02f", avgSuccessTime)}")
-        log.info("Average time per failed descriptor generation: ${String.format(Locale.ENGLISH, "%.02f", avgFailedTime)}")
+        log.info(
+            "Average time per successful descriptor generation: ${
+                String.format(
+                    Locale.ENGLISH,
+                    "%.02f",
+                    avgSuccessTime
+                )
+            }"
+        )
+        log.info(
+            "Average time per failed descriptor generation: ${
+                String.format(
+                    Locale.ENGLISH,
+                    "%.02f",
+                    avgFailedTime
+                )
+            }"
+        )
         log.info("Average time per descriptor generation: ${String.format(Locale.ENGLISH, "%.02f", avgTotalTime)}")
-        log.info("Average time per non-trivial descriptor generation: ${String.format(Locale.ENGLISH, "%.02f", avgNonTrivialTime)}")
+        log.info(
+            "Average time per non-trivial descriptor generation: ${
+                String.format(
+                    Locale.ENGLISH,
+                    "%.02f",
+                    avgNonTrivialTime
+                )
+            }"
+        )
     }
 }

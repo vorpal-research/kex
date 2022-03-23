@@ -8,6 +8,8 @@ import org.jetbrains.research.kfg.Package
 import org.jetbrains.research.kfg.ir.Method
 import org.jetbrains.research.kfg.ir.MethodDesc
 import org.jetbrains.research.kfg.ir.value.instruction.ReturnInst
+import org.jetbrains.research.kthelper.assert.ktassert
+import org.jetbrains.research.kthelper.logging.log
 
 object MethodManager {
     object InlineManager {
@@ -76,10 +78,19 @@ object MethodManager {
     }
 
     object KexIntrinsicManager {
+        private val supportedVersions = mutableSetOf("0.0.7")
         private const val assertIntrinsics = "org/jetbrains/research/kex/intrinsics/AssertIntrinsics"
         private const val collectionIntrinsics = "org/jetbrains/research/kex/intrinsics/CollectionIntrinsics"
         private const val unknownIntrinsics = "org/jetbrains/research/kex/intrinsics/UnknownIntrinsics"
         private const val objectIntrinsics = "org/jetbrains/research/kex/intrinsics/ObjectIntrinsics"
+
+        init {
+            val currentVersion = kexConfig.getStringValue("kex", "intrinsicsVersion")
+            ktassert(currentVersion in supportedVersions) {
+                log.error("Unsupported version of kex-intrinsics: $currentVersion")
+                log.error("Supported versions: ${supportedVersions.joinToString(", ")}")
+            }
+        }
 
         fun assertionsIntrinsics(cm: ClassManager) = cm[assertIntrinsics]
         fun collectionIntrinsics(cm: ClassManager) = cm[collectionIntrinsics]
@@ -93,7 +104,7 @@ object MethodManager {
         fun kexAssume(cm: ClassManager) = cm[assertIntrinsics].getMethod(
             "kexAssume",
             MethodDesc(
-                arrayOf(cm.type.getArrayType(cm.type.boolType)),
+                arrayOf(cm.type.boolType),
                 cm.type.voidType
             )
         )
@@ -109,7 +120,7 @@ object MethodManager {
         fun kexAssert(cm: ClassManager) = cm[assertIntrinsics].getMethod(
             "kexAssert",
             MethodDesc(
-                arrayOf(cm.type.getArrayType(cm.type.boolType)),
+                arrayOf(cm.type.boolType),
                 cm.type.voidType
             )
         )
@@ -117,7 +128,15 @@ object MethodManager {
         fun kexAssertWithId(cm: ClassManager) = cm[assertIntrinsics].getMethod(
             "kexAssert",
             MethodDesc(
-                arrayOf(cm.type.stringType, cm.type.getArrayType(cm.type.boolType)),
+                arrayOf(cm.type.stringType, cm.type.boolType),
+                cm.type.voidType
+            )
+        )
+
+        fun kexUnreachableEmpty(cm: ClassManager) = cm[assertIntrinsics].getMethod(
+            "kexUnreachable",
+            MethodDesc(
+                arrayOf(),
                 cm.type.voidType
             )
         )
@@ -125,7 +144,7 @@ object MethodManager {
         fun kexUnreachable(cm: ClassManager) = cm[assertIntrinsics].getMethod(
             "kexUnreachable",
             MethodDesc(
-                arrayOf(cm.type.getArrayType(cm.type.boolType)),
+                arrayOf(cm.type.boolType),
                 cm.type.voidType
             )
         )
@@ -133,7 +152,7 @@ object MethodManager {
         fun kexUnreachableWithId(cm: ClassManager) = cm[assertIntrinsics].getMethod(
             "kexUnreachable",
             MethodDesc(
-                arrayOf(cm.type.stringType, cm.type.getArrayType(cm.type.boolType)),
+                arrayOf(cm.type.stringType, cm.type.boolType),
                 cm.type.voidType
             )
         )

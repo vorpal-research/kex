@@ -28,7 +28,10 @@ class EasyRandomDriver(val config: BeansConfig = defaultConfig) : Randomizer {
             val collectionSize: IntRange,
             val stringLength: IntRange,
             val attempts: Int,
-            val excludes: Set<Package>
+            val excludes: Set<Package>,
+            val ignoreErrors: Boolean,
+            val bypassSetters: Boolean,
+            val ignoreFieldInitializationErrors: Boolean
         )
 
         val defaultConfig: BeansConfig by lazy {
@@ -39,12 +42,18 @@ class EasyRandomDriver(val config: BeansConfig = defaultConfig) : Randomizer {
             val maxStringLength = kexConfig.getIntValue("easy-random", "maxStringLength", 1000)
             val attempts = kexConfig.getIntValue("easy-random", "generationAttempts", 1)
             val excludes = kexConfig.getMultipleStringValue("easy-random", "exclude").map { Package.parse(it) }.toSet()
+            val ignoreErrors = kexConfig.getBooleanValue("easy-random", "ignoreErrors", true)
+            val bypassSetters = kexConfig.getBooleanValue("easy-random", "bypassSetters", true)
+            val ignoreFieldInitializationErrors = kexConfig.getBooleanValue("easy-random", "ignoreFieldInitializationErrors", true)
             BeansConfig(
                 depth = depth,
                 collectionSize = minCollectionSize..maxCollectionSize,
                 stringLength = minStringLength..maxStringLength,
                 attempts = attempts,
-                excludes = excludes
+                excludes = excludes,
+                ignoreErrors = ignoreErrors,
+                bypassSetters = bypassSetters,
+                ignoreFieldInitializationErrors = ignoreFieldInitializationErrors
             )
         }
     }
@@ -101,6 +110,9 @@ class EasyRandomDriver(val config: BeansConfig = defaultConfig) : Randomizer {
 
             })
             .excludeType { type -> type.shouldBeExcluded }
+            .ignoreRandomizationErrors(config.ignoreErrors)
+            .bypassSetters(true)
+            .ignoreFieldInitializationErrors(config.ignoreFieldInitializationErrors)
             .objectFactory(KexObjectFactory())
     )
 

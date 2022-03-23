@@ -70,3 +70,8 @@ fun deleteDirectory(directoryToBeDeleted: File): Boolean {
     }
     return directoryToBeDeleted.delete()
 }
+
+fun <T> Iterable<T>.dropLast(n: Int) = take(count() - n)
+fun <T> Iterator<T>.nextOrNull() = if (hasNext()) next() else null
+
+val IntRange.length get() = maxOf(last - start, 0)

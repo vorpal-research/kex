@@ -11,8 +11,8 @@ import org.jetbrains.research.kfg.ir.value.instruction.PhiInst
 import org.jetbrains.research.kfg.ir.value.usageContext
 import org.jetbrains.research.kfg.visitor.MethodVisitor
 import org.jetbrains.research.kthelper.KtException
-import org.jetbrains.research.kthelper.algorithm.DominatorTree
-import org.jetbrains.research.kthelper.algorithm.DominatorTreeBuilder
+import org.jetbrains.research.kthelper.graph.DominatorTree
+import org.jetbrains.research.kthelper.graph.DominatorTreeBuilder
 import org.jetbrains.research.kthelper.logging.log
 
 class BranchAdapter(
@@ -67,9 +67,13 @@ class BranchAdapter(
             branch -> replacement to inst.falseSuccessor
             else -> inst.trueSuccessor to replacement
         }
-        val newTerminator = inst(cm) { ite(inst.cond, trueBranch, falseBranch).update(ctx, loc = inst.location) }
-        inst.replaceAllUsesWith(newTerminator)
-        parent.replace(inst, newTerminator)
+        val newTerminator = inst(cm) { ite(inst.cond, trueBranch, falseBranch) }
+        val newTerminatorClone = newTerminator.update(ctx, loc = inst.location)
+        newTerminator.replaceAllUsesWith(newTerminatorClone)
+        newTerminator.clearUses()
+
+        inst.replaceAllUsesWith(newTerminatorClone)
+        parent.replace(inst, newTerminatorClone)
         inst.clearUses()
 
         val phis = branch.instructions.takeWhile { it is PhiInst }
@@ -78,9 +82,13 @@ class BranchAdapter(
             val newIncomings = phi.incomings.mapKeys {
                 if (it.key == parent) replacement else it.key
             }
-            val newPhi = inst(cm) { phi(phi.type, newIncomings).update(ctx, loc = phi.location) }
-            phi.replaceAllUsesWith(newPhi)
-            branch.replace(phi, newPhi)
+            val newPhi = inst(cm) { phi(phi.type, newIncomings) }
+            val newPhiClone = newPhi.update(ctx, loc = phi.location)
+            newPhi.replaceAllUsesWith(newPhiClone)
+            newPhi.clearUses()
+
+            phi.replaceAllUsesWith(newPhiClone)
+            branch.replace(phi, newPhiClone)
             phi.clearUses()
         }
 

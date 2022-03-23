@@ -4,6 +4,7 @@ import kotlinx.serialization.Contextual
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import org.jetbrains.research.kex.descriptor.Descriptor
+import org.jetbrains.research.kex.state.BasicState
 import org.jetbrains.research.kex.state.PredicateState
 import org.jetbrains.research.kex.state.predicate.Predicate
 import org.jetbrains.research.kex.state.term.Term
@@ -27,6 +28,11 @@ data class Clause(
 abstract class PathCondition : Iterable<Clause> {
     abstract val path: List<Clause>
     override fun iterator() = path.iterator()
+
+    open fun subPath(clause: Clause) = subPath(0, path.indexOf(clause) + 1)
+    abstract fun subPath(startIndex: Int, endIndex: Int): PathCondition
+
+    open fun asState() = BasicState(path.map { it.predicate })
 }
 
 @Serializable
@@ -61,6 +67,11 @@ data class SymbolicStateImpl(
     override fun toString() = "$state"
 }
 
+fun PathCondition(arg: List<Clause>) = PathConditionImpl(arg)
+fun PathCondition(arg: () -> List<Clause>) = PathConditionImpl(arg())
+
 @Serializable
 @SerialName("PathConditionImpl")
-data class PathConditionImpl(override val path: List<Clause>) : PathCondition()
+data class PathConditionImpl(override val path: List<Clause>) : PathCondition() {
+    override fun subPath(startIndex: Int, endIndex: Int) = PathConditionImpl(path.subList(startIndex, endIndex))
+}

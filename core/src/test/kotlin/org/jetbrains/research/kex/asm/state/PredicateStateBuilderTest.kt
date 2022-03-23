@@ -5,7 +5,7 @@ import org.jetbrains.research.kex.asm.transform.LoopDeroller
 import org.jetbrains.research.kfg.analysis.LoopSimplifier
 import org.jetbrains.research.kfg.ir.Method
 import org.jetbrains.research.kfg.ir.value.instruction.UnreachableInst
-import org.jetbrains.research.kthelper.algorithm.NoTopologicalSortingException
+import org.jetbrains.research.kthelper.graph.NoTopologicalSortingException
 import org.junit.Assert.assertNotNull
 import kotlin.test.Test
 
