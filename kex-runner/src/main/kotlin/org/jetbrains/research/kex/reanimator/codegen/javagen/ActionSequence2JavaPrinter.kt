@@ -87,10 +87,10 @@ open class ActionSequence2JavaPrinter(
                 }
             }
         }
-        resolveTypes(callStack)
+        resolveTypes(actionSequence)
         with(current) {
             statement("try {")
-            tryOrNull { callStack.printAsJava() }
+            tryOrNull { actionSequence.printAsJava() }
             statement("} catch (Throwable e) {}")
         }
     }
