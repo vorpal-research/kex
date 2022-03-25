@@ -6,19 +6,24 @@ import org.jeasy.random.ObjectCreationException
 import org.jeasy.random.api.ExclusionPolicy
 import org.jeasy.random.api.ObjectFactory
 import org.jeasy.random.api.RandomizerContext
-import org.jeasy.random.util.ReflectionUtils.getPublicConcreteSubTypesOf
+import org.jeasy.random.util.ReflectionFacade
 import org.jeasy.random.util.ReflectionUtils.isAbstract
 import org.jetbrains.research.kex.config.kexConfig
 import org.jetbrains.research.kex.random.GenerationException
 import org.jetbrains.research.kex.random.Randomizer
 import org.jetbrains.research.kex.random.UnknownTypeException
+import org.jetbrains.research.kex.util.isAbstract
+import org.jetbrains.research.kex.util.isPublic
 import org.jetbrains.research.kex.util.isStatic
 import org.jetbrains.research.kfg.Package
 import org.jetbrains.research.kthelper.assert.ktassert
 import org.jetbrains.research.kthelper.logging.log
 import org.jetbrains.research.kthelper.tryOrNull
 import org.objenesis.ObjenesisStd
+import org.reflections.Reflections
+import org.reflections.util.ConfigurationBuilder
 import java.lang.reflect.*
+import java.net.URLClassLoader
 
 class EasyRandomDriver(val config: BeansConfig = defaultConfig) : Randomizer {
     companion object {
@@ -44,7 +49,8 @@ class EasyRandomDriver(val config: BeansConfig = defaultConfig) : Randomizer {
             val excludes = kexConfig.getMultipleStringValue("easy-random", "exclude").map { Package.parse(it) }.toSet()
             val ignoreErrors = kexConfig.getBooleanValue("easy-random", "ignoreErrors", true)
             val bypassSetters = kexConfig.getBooleanValue("easy-random", "bypassSetters", true)
-            val ignoreFieldInitializationErrors = kexConfig.getBooleanValue("easy-random", "ignoreFieldInitializationErrors", true)
+            val ignoreFieldInitializationErrors =
+                kexConfig.getBooleanValue("easy-random", "ignoreFieldInitializationErrors", true)
             BeansConfig(
                 depth = depth,
                 collectionSize = minCollectionSize..maxCollectionSize,
@@ -58,8 +64,31 @@ class EasyRandomDriver(val config: BeansConfig = defaultConfig) : Randomizer {
         }
     }
 
-    private val Class<*>.shouldBeExcluded: Boolean get() {
-        return config.excludes.any { it.isParent(Package.parse(name)) }
+    private val Class<*>.shouldBeExcluded: Boolean
+        get() {
+            return config.excludes.any { it.isParent(Package.parse(name)) }
+        }
+
+    private inner class KexReflectionFacade : ReflectionFacade {
+        private val reflectionsMap = mutableMapOf<ClassLoader, Reflections>()
+        private val defaultReflections by lazy { Reflections() }
+
+        private fun <T> getReflections(type: Class<T>) = type.classLoader?.let {
+            reflectionsMap.getOrPut(type.classLoader) {
+                Reflections(
+                    ConfigurationBuilder()
+                        .addUrls(
+                            (type.classLoader as? URLClassLoader)?.urLs?.toList() ?: emptyList()
+                        )
+                        .addClassLoaders(type.classLoader)
+                )
+            }
+        } ?: defaultReflections
+
+        override fun <T : Any> getPublicConcreteSubTypesOf(type: Class<T>): List<Class<*>> {
+            return getReflections(type).getSubTypesOf(type).filter { it.isPublic && !it.isAbstract }
+        }
+
     }
 
     private inner class KexObjectFactory : ObjectFactory {
@@ -68,7 +97,10 @@ class EasyRandomDriver(val config: BeansConfig = defaultConfig) : Randomizer {
         override fun <T> createInstance(type: Class<T>, context: RandomizerContext): T =
             when {
                 context.parameters.isScanClasspathForConcreteTypes && isAbstract<T>(type) -> {
-                    val randomConcreteSubType = getPublicConcreteSubTypesOf<T>(type).filterNot { it.shouldBeExcluded }.randomOrNull()
+                    val reflectionFacade = context.parameters.reflectionFacade
+                    val randomConcreteSubType = reflectionFacade.getPublicConcreteSubTypesOf<T>(type)
+                        .filterNot { it.shouldBeExcluded }
+                        .randomOrNull()
                         ?: throw InstantiationError("Unable to find a matching concrete subtype of type: $type in the classpath")
                     @Suppress("UNCHECKED_CAST")
                     createNewInstance(randomConcreteSubType) as T
@@ -92,35 +124,41 @@ class EasyRandomDriver(val config: BeansConfig = defaultConfig) : Randomizer {
         }
     }
 
-    private val randomizer = EasyRandom(
-        EasyRandomParameters()
-            .seed(System.currentTimeMillis())
-            .randomizationDepth(config.depth)
-            .collectionSizeRange(config.collectionSize.first, config.collectionSize.last)
-            .stringLengthRange(config.stringLength.last, config.stringLength.last)
-            .scanClasspathForConcreteTypes(true)
-            .exclusionPolicy(object : ExclusionPolicy {
-                override fun shouldBeExcluded(field: Field?, ctx: RandomizerContext?): Boolean {
-                    if (field == null) return true
-                    return field.type.shouldBeExcluded
-                }
+    private val randomizerParameters = EasyRandomParameters()
+        .seed(System.currentTimeMillis())
+        .randomizationDepth(config.depth)
+        .collectionSizeRange(config.collectionSize.first, config.collectionSize.last)
+        .stringLengthRange(config.stringLength.last, config.stringLength.last)
+        .scanClasspathForConcreteTypes(true)
+        .exclusionPolicy(object : ExclusionPolicy {
+            override fun shouldBeExcluded(field: Field?, ctx: RandomizerContext?): Boolean {
+                if (field == null) return true
+                return field.type.shouldBeExcluded
+            }
 
-                override fun shouldBeExcluded(klass: Class<*>?, ctx: RandomizerContext?): Boolean =
-                    klass?.shouldBeExcluded ?: true
+            override fun shouldBeExcluded(klass: Class<*>?, ctx: RandomizerContext?): Boolean =
+                klass?.shouldBeExcluded ?: true
 
-            })
-            .excludeType { type -> type.shouldBeExcluded }
-            .ignoreRandomizationErrors(config.ignoreErrors)
-            .bypassSetters(true)
-            .ignoreFieldInitializationErrors(config.ignoreFieldInitializationErrors)
-            .objectFactory(KexObjectFactory())
-    )
+        })
+        .excludeType { type -> type.shouldBeExcluded }
+        .ignoreRandomizationErrors(config.ignoreErrors)
+        .bypassSetters(true)
+        .ignoreFieldInitializationErrors(config.ignoreFieldInitializationErrors)
+        .objectFactory(KexObjectFactory())
+        .reflectionFacade(KexReflectionFacade())
+
+    private val randomizer = EasyRandom(randomizerParameters)
 
     private fun <T> generateObject(klass: Class<T>): Any? = randomizer.nextObject(klass)
 
     private fun <T> generateClass(klass: Class<T>): Any? = when {
         Collection::class.java.isAssignableFrom(klass) -> {
-            val cr = CollectionRandomizer.generateCollection(klass, { generateObject(it) }, { next(Any::class.java) })
+            val cr = CollectionRandomizer.generateCollection(
+                klass,
+                { generateObject(it) },
+                { next(Any::class.java) },
+                randomizerParameters.reflectionFacade
+            )
             cr.randomValue
         }
         Map::class.java.isAssignableFrom(klass) -> {
@@ -128,7 +166,9 @@ class EasyRandomDriver(val config: BeansConfig = defaultConfig) : Randomizer {
                 klass,
                 { generateObject(it) },
                 { next(Any::class.java) },
-                { next(Any::class.java) })
+                { next(Any::class.java) },
+                randomizerParameters.reflectionFacade
+            )
             mr.randomValue
         }
         else -> generateObject(klass)
@@ -140,16 +180,25 @@ class EasyRandomDriver(val config: BeansConfig = defaultConfig) : Randomizer {
             Collection::class.java.isAssignableFrom(rawType) -> {
                 ktassert(type.actualTypeArguments.size == 1)
                 val typeParameter = type.actualTypeArguments.first()
-                val cr =
-                    CollectionRandomizer.generateCollection(rawType, { generateObject(it) }, { next(typeParameter) })
+                val cr = CollectionRandomizer.generateCollection(
+                    rawType,
+                    { generateObject(it) },
+                    { next(typeParameter) },
+                    randomizerParameters.reflectionFacade
+                )
                 cr.randomValue
             }
             Map::class.java.isAssignableFrom(rawType) -> {
                 ktassert(type.actualTypeArguments.size == 2)
                 val key = type.actualTypeArguments.first()
                 val value = type.actualTypeArguments.last()
-                val mr =
-                    CollectionRandomizer.generateMap(rawType, { generateObject(it) }, { next(key) }, { next(value) })
+                val mr = CollectionRandomizer.generateMap(
+                    rawType,
+                    { generateObject(it) },
+                    { next(key) },
+                    { next(value) },
+                    randomizerParameters.reflectionFacade
+                )
                 mr.randomValue
             }
             else -> {
