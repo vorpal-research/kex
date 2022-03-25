@@ -35,10 +35,12 @@ class UnknownSequence(name: String, val type: Type, val target: Descriptor) : Ac
         visited += this
         builder.appendLine(print())
     }
+
     override fun clone(): ActionSequence = this
 }
 
-class TestCall(name: String, val test: Method, val instance: ActionSequence?, val args: List<ActionSequence>) : ActionSequence(name) {
+class TestCall(name: String, val test: Method, val instance: ActionSequence?, val args: List<ActionSequence>) :
+    ActionSequence(name) {
     override fun print(): String = buildString {
         if (instance != null) append(instance.name).append(".")
         append(test.name)
@@ -53,7 +55,7 @@ class TestCall(name: String, val test: Method, val instance: ActionSequence?, va
         builder.appendLine(print())
     }
 
-    override fun clone(): ActionSequence = TestCall(name,test, instance, args)
+    override fun clone(): ActionSequence = TestCall(name, test, instance, args)
 }
 
 class ActionList(
@@ -173,6 +175,24 @@ data class ExternalConstructorCall(val constructor: Method, val args: List<Actio
             arg.print(builder, visited)
         }
         builder.appendLine("${owner.name} = ${constructor.klass.fullName}.${constructor.name}(${args.joinToString(", ") { it.name }})")
+    }
+}
+
+data class ExternalMethodCall(
+    val method: Method,
+    val instance: ActionSequence,
+    val args: List<ActionSequence>
+) : CodeAction {
+    override val parameters: List<ActionSequence> get() = args
+
+    override fun toString() = "${instance.name}.${method.name}(${args.joinToString(", ")})"
+
+    override fun print(owner: ActionSequence, builder: StringBuilder, visited: MutableSet<ActionSequence>) {
+        instance.print(builder, visited)
+        for (arg in args) {
+            arg.print(builder, visited)
+        }
+        builder.appendLine("${owner.name} = ${instance.name}.${method.name}(${args.joinToString(", ") { it.name }})")
     }
 }
 
@@ -357,6 +377,15 @@ class ActionSequenceRtMapper(val mode: KexRtManager.Mode) {
                 *api.constructor.argTypes.map { it.mapped }.toTypedArray()
             )
             ExternalConstructorCall(unmappedMethod, api.args.map { map(it) })
+        }
+        is ExternalMethodCall -> {
+            val unmappedKlass = api.method.klass.mapped
+            val unmappedMethod = unmappedKlass.getMethod(
+                api.method.name,
+                api.method.returnType.mapped,
+                *api.method.argTypes.map { it.mapped }.toTypedArray()
+            )
+            ExternalMethodCall(unmappedMethod, map(api.instance), api.args.map { map(it) })
         }
         is FieldSetter -> {
             val unmappedKlass = api.field.klass.mapped

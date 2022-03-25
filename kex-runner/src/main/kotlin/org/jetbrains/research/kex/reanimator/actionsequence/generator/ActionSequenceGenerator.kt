@@ -30,6 +30,7 @@ class ActionSequenceGenerator(override val context: GeneratorContext) : Generato
         typeGenerators += CharsetGenerator(this)
         typeGenerators += StringGenerator(this)
         typeGenerators += ClassGenerator(this)
+        typeGenerators += FieldGenerator(this)
         typeGenerators += EnumGenerator(this)
         typeGenerators += KtObjectGenerator(this)
         typeGenerators += InnerClassGenerator(this)
