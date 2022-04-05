@@ -1,9 +1,7 @@
 package org.jetbrains.research.kex.reanimator.actionsequence.generator
 
 import org.jetbrains.research.kex.descriptor.*
-import org.jetbrains.research.kex.ktype.KexChar
 import org.jetbrains.research.kex.ktype.KexString
-import org.jetbrains.research.kex.ktype.asArray
 import org.jetbrains.research.kex.ktype.type
 import org.jetbrains.research.kex.reanimator.actionsequence.ActionList
 import org.jetbrains.research.kex.reanimator.actionsequence.ActionSequence
@@ -34,14 +32,7 @@ class CharsetGenerator(private val fallback: Generator) : Generator {
         val charsetsClass = context.cm[CHARSETS_CLASS]
 
         val nameDescriptor = descriptor["name", KexString()] as? ObjectDescriptor
-        val actualName = nameDescriptor?.let { obj ->
-            val valueDescriptor = obj["value", KexChar().asArray()] as? ArrayDescriptor
-            valueDescriptor?.let { array ->
-                (0 until array.length).map {
-                    (array.elements.getOrDefault(it, descriptor { const(' ') }) as ConstantDescriptor.Char).value
-                }.joinToString("")
-            }
-        } ?: DEFAULT_CHARSET
+        val actualName = nameDescriptor?.asStringValue ?: DEFAULT_CHARSET
         actionSequence += if (actualName in existingCharsets) {
             StaticFieldGetter(charsetsClass.getField(actualName, charsetClass.type))
         } else {

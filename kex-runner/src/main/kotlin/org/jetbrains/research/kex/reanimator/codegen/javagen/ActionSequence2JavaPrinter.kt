@@ -259,6 +259,11 @@ open class ActionSequence2JavaPrinter(
             val constructor = reflection.getMethod(call.constructor, ctx.loader)
             resolveTypes(constructor, call.args)
         }
+        is ExternalMethodCall -> {
+            val reflection = ctx.loader.loadClass(call.method.klass)
+            val constructor = reflection.getMethod(call.method, ctx.loader)
+            resolveTypes(constructor, call.args)
+        }
         is InnerClassConstructorCall -> {
             val reflection = ctx.loader.loadClass(call.constructor.klass)
             val constructor = reflection.getConstructor(call.constructor, ctx.loader)
@@ -338,6 +343,7 @@ open class ActionSequence2JavaPrinter(
         is DefaultConstructorCall -> printDefaultConstructor(owner, codeAction)
         is ConstructorCall -> printConstructorCall(owner, codeAction)
         is ExternalConstructorCall -> printExternalConstructorCall(owner, codeAction)
+        is ExternalMethodCall -> printExternalMethodCall(owner, codeAction)
         is InnerClassConstructorCall -> printInnerClassConstructor(owner, codeAction)
         is MethodCall -> printMethodCall(owner, codeAction)
         is StaticMethodCall -> printStaticMethodCall(codeAction)
@@ -537,6 +543,44 @@ open class ActionSequence2JavaPrinter(
                         actualType
                     )
                 } = ${constructor.klass.javaString}.${constructor.name}($args)"
+            }
+        )
+    }
+
+    protected open fun printExternalMethodCall(
+        owner: ActionSequence,
+        call: ExternalMethodCall
+    ): List<String> {
+        call.instance.printAsJava()
+        call.args.forEach { it.printAsJava() }
+        val method = call.method
+        val instance = "(${call.instance.forceCastIfNull(resolvedTypes[call.instance])})"
+        val args = call.args.joinToString(", ") {
+            it.forceCastIfNull(resolvedTypes[it])
+        }
+
+        val reflection = ctx.loader.loadClass(call.method.klass)
+        val ctor = reflection.getMethod(call.method, ctx.loader)
+        val actualType = ctor.genericReturnType.asType
+        return listOf(
+            if (resolvedTypes[owner] != null) {
+                val rest = resolvedTypes[owner]!!
+                val type = actualType.merge(rest)
+                actualTypes[owner] = type
+                "${
+                    printVarDeclaration(
+                        owner.name,
+                        type
+                    )
+                } = ${type.cast(rest)} $instance.${method.name}($args)"
+            } else {
+                actualTypes[owner] = actualType
+                "${
+                    printVarDeclaration(
+                        owner.name,
+                        actualType
+                    )
+                } = $instance.${method.name}($args)"
             }
         )
     }

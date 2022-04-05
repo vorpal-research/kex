@@ -52,7 +52,9 @@ class LoopDeroller(override val cm: ClassManager) : LoopOptimizer(cm) {
             fun createState(loop: Loop): State {
                 val terminatingBlock = run {
                     var current = loop.latch
-                    while (current.terminator is JumpInst) current = current.successors.first()
+                    while (current.terminator is JumpInst) {
+                        current = current.successors.first()
+                    }
                     current
                 }
                 val continueOnTrue = when {
@@ -93,6 +95,7 @@ class LoopDeroller(override val cm: ClassManager) : LoopOptimizer(cm) {
     override val preservesLoopInfo get() = false
 
     override fun visit(method: Method) = method.usageContext.use {
+        if (!method.hasBody) return
         ctx = it
         try {
             precalculateEvolutions(method)

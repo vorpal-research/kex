@@ -83,6 +83,7 @@ val SystemTypeNames.unmodifiableList get() = "java/util/Collections\$Unmodifiabl
 val SystemTypeNames.unmodifiableSet get() = "java/util/Collections\$UnmodifiableSet"
 val SystemTypeNames.unmodifiableMap get() = "java/util/Collections\$UnmodifiableMap"
 val SystemTypeNames.charSequence get() = "java/lang/CharSequence"
+val SystemTypeNames.field get() = "java/lang/reflect/Field"
 
 val SystemTypeNames.classLoader get() = "java/lang/ClassLoader"
 val ClassManager.classLoaderClass get() = this[SystemTypeNames.classLoader]

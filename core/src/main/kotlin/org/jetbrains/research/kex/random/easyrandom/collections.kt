@@ -2,7 +2,7 @@ package org.jetbrains.research.kex.random.easyrandom
 
 import org.jeasy.random.api.Randomizer
 import org.jeasy.random.randomizers.number.IntegerRandomizer
-import org.jeasy.random.util.ReflectionUtils
+import org.jeasy.random.util.ReflectionFacade
 import org.jetbrains.research.kex.config.kexConfig
 import org.jetbrains.research.kex.util.isAbstract
 import org.jetbrains.research.kthelper.assert.unreachable
@@ -17,9 +17,9 @@ private infix fun Int.`in`(range: IntRange) = range.first + (this % (range.last 
 private inline val randomInt get() = abs(IntegerRandomizer().randomValue)
 
 abstract class CollectionRandomizer<T>(
-        val collection: () -> MutableCollection<T>,
-        private val delegate: Randomizer<T>,
-        numElements: Int = randomInt
+    val collection: () -> MutableCollection<T>,
+    private val delegate: Randomizer<T>,
+    numElements: Int = randomInt
 ) : Randomizer<Collection<T>> {
     private val nbElements: Int = numElements `in` collectionSizeRange
 
@@ -46,16 +46,19 @@ abstract class CollectionRandomizer<T>(
             minCollectionSize..maxCollectionSize
         }
 
-        fun <T> generateCollection(klass: Class<*>,
-                                   random: (Class<*>) -> Any?,
-                                   elementRandomizer: Randomizer<T>) = when {
+        fun <T> generateCollection(
+            klass: Class<*>,
+            random: (Class<*>) -> Any?,
+            elementRandomizer: Randomizer<T>,
+            reflectionFacade: ReflectionFacade
+        ) = when {
             List::class.java.isAssignableFrom(klass) -> when {
                 klass.isAssignableFrom(LinkedList::class.java) -> ListRandomizer.linkedListRandomizer(elementRandomizer)
                 klass.isAssignableFrom(ArrayList::class.java) -> ListRandomizer.arrayListRandomizer(elementRandomizer)
                 klass.isAssignableFrom(Stack::class.java) -> ListRandomizer.stackRandomizer(elementRandomizer)
                 else -> {
                     log.warn("Unknown list impl: $klass")
-                    ListRandomizer.randomListRandomizer(random, elementRandomizer)
+                    ListRandomizer.randomListRandomizer(random, elementRandomizer, reflectionFacade)
                 }
             }
             Queue::class.java.isAssignableFrom(klass) -> when {
@@ -67,7 +70,7 @@ abstract class CollectionRandomizer<T>(
                     QueueRandomizer.priorityQueueRandomizer(elementRandomizer)
                 else -> {
                     log.warn("Unknown queue impl: $klass")
-                    QueueRandomizer.randomQueueRandomizer(random, elementRandomizer)
+                    QueueRandomizer.randomQueueRandomizer(random, elementRandomizer, reflectionFacade)
                 }
             }
             Set::class.java.isAssignableFrom(klass) -> when {
@@ -79,18 +82,21 @@ abstract class CollectionRandomizer<T>(
                     SetRandomizer.skipListSetRandomizer(elementRandomizer)
                 else -> {
                     log.warn("Unknown set impl: $klass")
-                    SetRandomizer.randomSetRandomizer(random, elementRandomizer)
+                    SetRandomizer.randomSetRandomizer(random, elementRandomizer, reflectionFacade)
                 }
             }
             Collection::class.java.isAssignableFrom(klass) ->
-                CustomCollectionRandomizer.collectionRandomizer(klass, random, elementRandomizer)
+                CustomCollectionRandomizer.collectionRandomizer(klass, random, elementRandomizer, reflectionFacade)
             else -> unreachable { log.error("Unknown collection: $klass") }
         }
 
-        fun <K, V> generateMap(klass: Class<*>,
-                               random: (Class<*>) -> Any?,
-                               keyRandomizer: Randomizer<K>,
-                               valueRandomizer: Randomizer<V>) = when {
+        fun <K, V> generateMap(
+            klass: Class<*>,
+            random: (Class<*>) -> Any?,
+            keyRandomizer: Randomizer<K>,
+            valueRandomizer: Randomizer<V>,
+            reflectionFacade: ReflectionFacade
+        ) = when {
             klass.isAssignableFrom(LinkedHashMap::class.java) ->
                 MapRandomizer.linkedMapRandomizer(keyRandomizer, valueRandomizer)
             klass.isAssignableFrom(HashMap::class.java) ->
@@ -100,18 +106,18 @@ abstract class CollectionRandomizer<T>(
             klass.isAssignableFrom(ConcurrentSkipListMap::class.java) ->
                 MapRandomizer.skipListMapRandomizer(keyRandomizer, valueRandomizer)
             Map::class.java.isAssignableFrom(klass) ->
-                MapRandomizer.customMapRandomizer(klass, random, keyRandomizer, valueRandomizer)
+                MapRandomizer.customMapRandomizer(klass, random, keyRandomizer, valueRandomizer, reflectionFacade)
             else -> {
                 log.warn("Unknown map impl: $klass")
-                MapRandomizer.randomMapRandomizer(random, keyRandomizer, valueRandomizer)
+                MapRandomizer.randomMapRandomizer(random, keyRandomizer, valueRandomizer, reflectionFacade)
             }
         }
     }
 }
 
 
-class ListRandomizer<T>(`impl`: () -> MutableList<T>, elementRandomizer: Randomizer<T>, nbElements: Int)
-    : CollectionRandomizer<T>(`impl`, elementRandomizer, nbElements) {
+class ListRandomizer<T>(`impl`: () -> MutableList<T>, elementRandomizer: Randomizer<T>, nbElements: Int) :
+    CollectionRandomizer<T>(`impl`, elementRandomizer, nbElements) {
 
     constructor(`impl`: () -> MutableList<T>, elementRandomizer: Randomizer<T>)
             : this(`impl`, elementRandomizer, randomInt)
@@ -120,34 +126,38 @@ class ListRandomizer<T>(`impl`: () -> MutableList<T>, elementRandomizer: Randomi
 
     companion object {
         fun <T> newListRandomizer(`impl`: () -> MutableList<T>, elementRandomizer: Randomizer<T>) =
-                ListRandomizer(`impl`, elementRandomizer)
+            ListRandomizer(`impl`, elementRandomizer)
 
         fun <T> newListRandomizer(`impl`: () -> MutableList<T>, elementRandomizer: Randomizer<T>, nbElements: Int) =
-                ListRandomizer(`impl`, elementRandomizer, nbElements)
+            ListRandomizer(`impl`, elementRandomizer, nbElements)
 
         fun <T> linkedListRandomizer(elementRandomizer: Randomizer<T>) =
-                newListRandomizer({ LinkedList() }, elementRandomizer)
+            newListRandomizer({ LinkedList() }, elementRandomizer)
 
         fun <T> arrayListRandomizer(elementRandomizer: Randomizer<T>) =
-                newListRandomizer({ ArrayList() }, elementRandomizer)
+            newListRandomizer({ ArrayList() }, elementRandomizer)
 
         fun <T> stackRandomizer(elementRandomizer: Randomizer<T>) =
-                newListRandomizer({ Stack() }, elementRandomizer)
+            newListRandomizer({ Stack() }, elementRandomizer)
 
-        fun <T> randomListRandomizer(random: (Class<*>) -> Any?, elementRandomizer: Randomizer<T>): ListRandomizer<T> {
-            val impl = ReflectionUtils.getPublicConcreteSubTypesOf(MutableList::class.java).randomOrNull()
+        fun <T> randomListRandomizer(
+            random: (Class<*>) -> Any?,
+            elementRandomizer: Randomizer<T>,
+            reflectionFacade: ReflectionFacade
+        ): ListRandomizer<T> {
+            val impl = reflectionFacade.getPublicConcreteSubTypesOf(MutableList::class.java).randomOrNull()
                 ?: throw InstantiationError("Unable to find a matching concrete subtype of type: MutableList in the classpath")
             return newListRandomizer({
                 @Suppress("UNCHECKED_CAST")
                 (random(impl) as? MutableList<T>)?.also { it.clear() }
-                        ?: unreachable { log.error("Could not create an instance of $impl") }
+                    ?: unreachable { log.error("Could not create an instance of $impl") }
             }, elementRandomizer)
         }
     }
 }
 
-class QueueRandomizer<T>(`impl`: () -> Queue<T>, elementRandomizer: Randomizer<T>, nbElements: Int)
-    : CollectionRandomizer<T>(`impl`, elementRandomizer, nbElements) {
+class QueueRandomizer<T>(`impl`: () -> Queue<T>, elementRandomizer: Randomizer<T>, nbElements: Int) :
+    CollectionRandomizer<T>(`impl`, elementRandomizer, nbElements) {
 
     constructor(`impl`: () -> Queue<T>, elementRandomizer: Randomizer<T>)
             : this(`impl`, elementRandomizer, randomInt)
@@ -156,34 +166,38 @@ class QueueRandomizer<T>(`impl`: () -> Queue<T>, elementRandomizer: Randomizer<T
 
     companion object {
         fun <T> newQueueRandomizer(`impl`: () -> Queue<T>, elementRandomizer: Randomizer<T>) =
-                QueueRandomizer(`impl`, elementRandomizer)
+            QueueRandomizer(`impl`, elementRandomizer)
 
         fun <T> newQueueRandomizer(`impl`: () -> Queue<T>, elementRandomizer: Randomizer<T>, nbElements: Int) =
-                QueueRandomizer(`impl`, elementRandomizer, nbElements)
+            QueueRandomizer(`impl`, elementRandomizer, nbElements)
 
         fun <T> linkedQueueRandomizer(elementRandomizer: Randomizer<T>) =
-                newQueueRandomizer({ LinkedList() }, elementRandomizer)
+            newQueueRandomizer({ LinkedList() }, elementRandomizer)
 
         fun <T> arrayQueueRandomizer(elementRandomizer: Randomizer<T>) =
-                newQueueRandomizer({ ArrayDeque() }, elementRandomizer)
+            newQueueRandomizer({ ArrayDeque() }, elementRandomizer)
 
         fun <T> priorityQueueRandomizer(elementRandomizer: Randomizer<T>) =
-                newQueueRandomizer({ PriorityQueue() }, elementRandomizer)
+            newQueueRandomizer({ PriorityQueue() }, elementRandomizer)
 
-        fun <T> randomQueueRandomizer(random: (Class<*>) -> Any?, elementRandomizer: Randomizer<T>): QueueRandomizer<T> {
-            val impl = ReflectionUtils.getPublicConcreteSubTypesOf(Queue::class.java).randomOrNull()
+        fun <T> randomQueueRandomizer(
+            random: (Class<*>) -> Any?,
+            elementRandomizer: Randomizer<T>,
+            reflectionFacade: ReflectionFacade
+        ): QueueRandomizer<T> {
+            val impl = reflectionFacade.getPublicConcreteSubTypesOf(Queue::class.java).randomOrNull()
                 ?: throw InstantiationError("Unable to find a matching concrete subtype of type: Queue in the classpath")
             return newQueueRandomizer({
                 @Suppress("UNCHECKED_CAST")
                 (random(impl) as? Queue<T>)?.also { it.clear() }
-                        ?: unreachable { log.error("Could not create an instance of $impl") }
+                    ?: unreachable { log.error("Could not create an instance of $impl") }
             }, elementRandomizer)
         }
     }
 }
 
-class SetRandomizer<T>(`impl`: () -> MutableSet<T>, elementRandomizer: Randomizer<T>, nbElements: Int)
-    : CollectionRandomizer<T>(`impl`, elementRandomizer, nbElements) {
+class SetRandomizer<T>(`impl`: () -> MutableSet<T>, elementRandomizer: Randomizer<T>, nbElements: Int) :
+    CollectionRandomizer<T>(`impl`, elementRandomizer, nbElements) {
 
     constructor(`impl`: () -> MutableSet<T>, elementRandomizer: Randomizer<T>)
             : this(`impl`, elementRandomizer, randomInt)
@@ -192,43 +206,47 @@ class SetRandomizer<T>(`impl`: () -> MutableSet<T>, elementRandomizer: Randomize
 
     companion object {
         fun <T> newSetRandomizer(`impl`: () -> MutableSet<T>, elementRandomizer: Randomizer<T>) =
-                SetRandomizer(`impl`, elementRandomizer)
+            SetRandomizer(`impl`, elementRandomizer)
 
         fun <T> newSetRandomizer(`impl`: () -> MutableSet<T>, elementRandomizer: Randomizer<T>, nbElements: Int) =
-                SetRandomizer(`impl`, elementRandomizer, nbElements)
+            SetRandomizer(`impl`, elementRandomizer, nbElements)
 
         fun <T> linkedSetRandomizer(elementRandomizer: Randomizer<T>) =
-                newSetRandomizer({ LinkedHashSet() }, elementRandomizer)
+            newSetRandomizer({ LinkedHashSet() }, elementRandomizer)
 
         fun <T> hashSetRandomizer(elementRandomizer: Randomizer<T>) =
-                newSetRandomizer({ HashSet() }, elementRandomizer)
+            newSetRandomizer({ HashSet() }, elementRandomizer)
 
         fun <T> treeSetRandomizer(elementRandomizer: Randomizer<T>) =
-                newSetRandomizer({ TreeSet() }, elementRandomizer)
+            newSetRandomizer({ TreeSet() }, elementRandomizer)
 
         inline fun <reified T : Enum<T>> enumSetRandomizer(elementRandomizer: Randomizer<T>) =
-                newSetRandomizer({ EnumSet.noneOf(T::class.java) }, elementRandomizer)
+            newSetRandomizer({ EnumSet.noneOf(T::class.java) }, elementRandomizer)
 
         fun <T> skipListSetRandomizer(elementRandomizer: Randomizer<T>) =
-                newSetRandomizer({ ConcurrentSkipListSet() }, elementRandomizer)
+            newSetRandomizer({ ConcurrentSkipListSet() }, elementRandomizer)
 
-        fun <T> randomSetRandomizer(random: (Class<*>) -> Any?, elementRandomizer: Randomizer<T>): SetRandomizer<T> {
-            val impl = ReflectionUtils.getPublicConcreteSubTypesOf(MutableSet::class.java).randomOrNull()
+        fun <T> randomSetRandomizer(
+            random: (Class<*>) -> Any?,
+            elementRandomizer: Randomizer<T>,
+            reflectionFacade: ReflectionFacade
+        ): SetRandomizer<T> {            
+            val impl = reflectionFacade.getPublicConcreteSubTypesOf(MutableSet::class.java).randomOrNull()
                 ?: throw InstantiationError("Unable to find a matching concrete subtype of type: MutableSet in the classpath")
             return newSetRandomizer({
                 @Suppress("UNCHECKED_CAST")
                 (random(impl) as? MutableSet<T>)?.also { it.clear() }
-                        ?: unreachable { log.error("Could not create an instance of $impl") }
+                    ?: unreachable { log.error("Could not create an instance of $impl") }
             }, elementRandomizer)
         }
     }
 }
 
 class MapRandomizer<K, V>(
-        val collection: () -> MutableMap<K, V>,
-        val keyRandomizer: Randomizer<K>,
-        val valueRandomizer: Randomizer<V>,
-        numElements: Int = randomInt
+    val collection: () -> MutableMap<K, V>,
+    val keyRandomizer: Randomizer<K>,
+    val valueRandomizer: Randomizer<V>,
+    numElements: Int = randomInt
 ) : Randomizer<Map<K, V>> {
     private val nbElements: Int = numElements `in` CollectionRandomizer.collectionSizeRange
 
@@ -261,79 +279,99 @@ class MapRandomizer<K, V>(
     }
 
     companion object {
-        fun <K, V> newMapRandomizer(`impl`: () -> MutableMap<K, V>,
-                                    keyRandomizer: Randomizer<K>,
-                                    valueRandomizer: Randomizer<V>) =
-                MapRandomizer(`impl`, keyRandomizer, valueRandomizer)
+        fun <K, V> newMapRandomizer(
+            `impl`: () -> MutableMap<K, V>,
+            keyRandomizer: Randomizer<K>,
+            valueRandomizer: Randomizer<V>
+        ) = MapRandomizer(`impl`, keyRandomizer, valueRandomizer)
 
-        fun <K, V> newMapRandomizer(`impl`: () -> MutableMap<K, V>,
-                                    keyRandomizer: Randomizer<K>,
-                                    valueRandomizer: Randomizer<V>,
-                                    nbElements: Int) =
-                MapRandomizer(`impl`, keyRandomizer, valueRandomizer, nbElements)
+        fun <K, V> newMapRandomizer(
+            `impl`: () -> MutableMap<K, V>,
+            keyRandomizer: Randomizer<K>,
+            valueRandomizer: Randomizer<V>,
+            nbElements: Int
+        ) = MapRandomizer(`impl`, keyRandomizer, valueRandomizer, nbElements)
 
         fun <K, V> linkedMapRandomizer(keyRandomizer: Randomizer<K>, valueRandomizer: Randomizer<V>) =
-                newMapRandomizer({ LinkedHashMap() }, keyRandomizer, valueRandomizer)
+            newMapRandomizer({ LinkedHashMap() }, keyRandomizer, valueRandomizer)
 
         fun <K, V> hashMapRandomizer(keyRandomizer: Randomizer<K>, valueRandomizer: Randomizer<V>) =
-                newMapRandomizer({ HashMap() }, keyRandomizer, valueRandomizer)
+            newMapRandomizer({ HashMap() }, keyRandomizer, valueRandomizer)
 
         fun <K, V> treeMapRandomizer(keyRandomizer: Randomizer<K>, valueRandomizer: Randomizer<V>) =
-                newMapRandomizer({ TreeMap() }, keyRandomizer, valueRandomizer)
+            newMapRandomizer({ TreeMap() }, keyRandomizer, valueRandomizer)
 
-        inline fun <reified K : Enum<K>, V> enumMapRandomizer(keyRandomizer: Randomizer<K>, valueRandomizer: Randomizer<V>) =
-                newMapRandomizer({ EnumMap(K::class.java) }, keyRandomizer, valueRandomizer)
+        inline fun <reified K : Enum<K>, V> enumMapRandomizer(
+            keyRandomizer: Randomizer<K>,
+            valueRandomizer: Randomizer<V>
+        ) =
+            newMapRandomizer({ EnumMap(K::class.java) }, keyRandomizer, valueRandomizer)
 
         fun <K, V> skipListMapRandomizer(keyRandomizer: Randomizer<K>, valueRandomizer: Randomizer<V>) =
-                newMapRandomizer({ ConcurrentSkipListMap() }, keyRandomizer, valueRandomizer)
+            newMapRandomizer({ ConcurrentSkipListMap() }, keyRandomizer, valueRandomizer)
 
-        fun <K, V> randomMapRandomizer(random: (Class<*>) -> Any?,
-                                       keyRandomizer: Randomizer<K>,
-                                       valueRandomizer: Randomizer<V>): MapRandomizer<K, V> {
-            val impl = ReflectionUtils.getPublicConcreteSubTypesOf(MutableMap::class.java).randomOrNull()
+        fun <K, V> randomMapRandomizer(
+            random: (Class<*>) -> Any?,
+            keyRandomizer: Randomizer<K>,
+            valueRandomizer: Randomizer<V>,
+            reflectionFacade: ReflectionFacade
+        ): MapRandomizer<K, V> {
+            
+            val impl = reflectionFacade.getPublicConcreteSubTypesOf(MutableMap::class.java).randomOrNull()
                 ?: throw InstantiationError("Unable to find a matching concrete subtype of type: MutableMap in the classpath")
             return newMapRandomizer({
                 @Suppress("UNCHECKED_CAST")
                 random(impl) as? MutableMap<K, V>
-                        ?: unreachable { log.error("Could not create an instance of $impl") }
+                    ?: unreachable { log.error("Could not create an instance of $impl") }
             }, keyRandomizer, valueRandomizer)
         }
 
-        fun <K, V> customMapRandomizer(klass: Class<*>, random: (Class<*>) -> Any?,
-                                       keyRandomizer: Randomizer<K>,
-                                       valueRandomizer: Randomizer<V>): MapRandomizer<K, V> {
+        fun <K, V> customMapRandomizer(
+            klass: Class<*>, random: (Class<*>) -> Any?,
+            keyRandomizer: Randomizer<K>,
+            valueRandomizer: Randomizer<V>,
+            reflectionFacade: ReflectionFacade
+        ): MapRandomizer<K, V> {
             val actualKlass = when {
-                klass.isAbstract || klass.isInterface -> ReflectionUtils.getPublicConcreteSubTypesOf(klass).randomOrNull()
+                klass.isAbstract || klass.isInterface -> reflectionFacade.getPublicConcreteSubTypesOf(klass)
+                    .randomOrNull()
                     ?: throw InstantiationError("Unable to find a matching concrete subtype of type: $klass in the classpath")
                 else -> klass
             }
             return newMapRandomizer({
                 @Suppress("UNCHECKED_CAST")
                 random(actualKlass) as? MutableMap<K, V>
-                        ?: unreachable { log.error("Could not create an instance of $klass") }
+                    ?: unreachable { log.error("Could not create an instance of $klass") }
             }, keyRandomizer, valueRandomizer)
         }
 
     }
 }
 
-class CustomCollectionRandomizer<T>(`impl`: () -> MutableCollection<T>, delegate: Randomizer<T>, nbElements: Int)
-    : CollectionRandomizer<T>(`impl`, delegate, nbElements) {
+class CustomCollectionRandomizer<T>(`impl`: () -> MutableCollection<T>, delegate: Randomizer<T>, nbElements: Int) :
+    CollectionRandomizer<T>(`impl`, delegate, nbElements) {
     constructor(`impl`: () -> MutableCollection<T>, delegate: Randomizer<T>) : this(impl, delegate, randomInt)
 
     companion object {
-        fun <T> collectionRandomizer(klass: Class<*>, random: (Class<*>) -> Any?, elementRandomizer: Randomizer<T>): CollectionRandomizer<T> {
+        fun <T> collectionRandomizer(
+            klass: Class<*>,
+            random: (Class<*>) -> Any?,
+            elementRandomizer: Randomizer<T>,
+            reflectionFacade: ReflectionFacade
+        ): CollectionRandomizer<T> {
             val actualKlass = when {
-                klass.isAbstract || klass.isInterface -> ReflectionUtils.getPublicConcreteSubTypesOf(klass).randomOrNull()
+                klass.isAbstract || klass.isInterface -> reflectionFacade.getPublicConcreteSubTypesOf(klass)
+                    .randomOrNull()
                     ?: throw InstantiationError("Unable to find a matching concrete subtype of type: $klass in the classpath")
                 else -> klass
             }
             return CustomCollectionRandomizer(
-                    {
-                        @Suppress("UNCHECKED_CAST")
-                        random(actualKlass) as? MutableCollection<T>
-                                ?: unreachable { log.error("Could not create an instance of $klass") }
-                    }, elementRandomizer)
+                {
+                    @Suppress("UNCHECKED_CAST")
+                    random(actualKlass) as? MutableCollection<T>
+                        ?: unreachable { log.error("Could not create an instance of $klass") }
+                }, elementRandomizer
+            )
         }
     }
 }

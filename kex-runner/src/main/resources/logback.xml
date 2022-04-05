@@ -22,6 +22,11 @@
         <appender-ref ref="stdout"/>
     </appender>
 
+    <logger name="org.reflections.Reflections" level="error"
+            additivity="false">
+        <appender-ref ref="STDOUT" />
+    </logger>
+
     <logger name="org.jetbrains.research" level="ALL" additivity="false">
         <appender-ref ref="asyncFileLogger"/>
         <appender-ref ref="asyncStdout"/>

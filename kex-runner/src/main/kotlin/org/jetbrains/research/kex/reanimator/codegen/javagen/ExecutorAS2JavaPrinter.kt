@@ -283,6 +283,7 @@ class ExecutorAS2JavaPrinter(
                                     is ConstructorCall -> it.constructor.klass.type
                                     is NewArray -> it.asArray
                                     is ExternalConstructorCall -> it.constructor.returnType
+                                    is ExternalMethodCall -> it.method.returnType
                                     is InnerClassConstructorCall -> it.constructor.klass.type
                                     is EnumValueCreation -> it.klass.type
                                     is StaticFieldGetter -> it.field.type
@@ -566,6 +567,41 @@ class ExecutorAS2JavaPrinter(
                         actualType
                     )
                 } = ${constructor.klass.javaString}.${constructor.name}($args)"
+            }
+        )
+    }
+
+    override fun printExternalMethodCall(owner: ActionSequence, call: ExternalMethodCall): List<String> {
+        call.instance.printAsJava()
+        call.args.forEach { it.printAsJava() }
+        val method = call.method
+        val instance = "((${method.klass.javaString}) ${call.instance.stackName})"
+        val args = call.args.withIndex().joinToString(", ") { (index, arg) ->
+            "(${method.argTypes[index].javaString}) ${arg.stackName}"
+        }
+
+        val reflection = ctx.loader.loadClass(call.method.klass)
+        val ctor = reflection.getMethod(call.method, ctx.loader)
+        val actualType = ctor.genericReturnType.asType
+        return listOf(
+            if (resolvedTypes[owner] != null) {
+                val rest = resolvedTypes[owner]!!
+                val type = actualType.merge(rest)
+                actualTypes[owner] = type
+                "${
+                    printVarDeclaration(
+                        owner.name,
+                        type
+                    )
+                } = ${type.cast(rest)} $instance.${method.name}($args)"
+            } else {
+                actualTypes[owner] = actualType
+                "${
+                    printVarDeclaration(
+                        owner.name,
+                        actualType
+                    )
+                } = $instance.${method.name}($args)"
             }
         )
     }
