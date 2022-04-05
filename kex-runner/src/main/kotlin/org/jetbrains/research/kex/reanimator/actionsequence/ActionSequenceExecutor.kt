@@ -96,6 +96,19 @@ class ActionSequenceExecutor(val ctx: ExecutionContext) {
                         cache[actionSequence] = instance
                         instance
                     }
+                    is ExternalMethodCall -> {
+                        val reflection = ctx.loader.loadClass(call.method.klass)
+                        val javaMethod = reflection.getMethod(call.method, ctx.loader)
+                        javaMethod.isAccessible = true
+                        val owner = execute(call.instance)
+                        val args = call.args.map { execute(it) }.toTypedArray()
+                        var instance: Any? = null
+                        runWithTimeout(timeout) {
+                            instance = javaMethod.invoke(owner, *args)
+                        }
+                        cache[actionSequence] = instance
+                        instance
+                    }
                     is InnerClassConstructorCall -> {
                         val reflection = ctx.loader.loadClass(call.constructor.klass)
                         val constructor = reflection.getConstructor(call.constructor, ctx.loader)

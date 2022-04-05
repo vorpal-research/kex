@@ -100,7 +100,8 @@ abstract class KexLauncher(classPaths: List<String>, targetName: String) {
                     methodName,
                     parseStringToType(cm.type, methodReturn.trim().replace('.', '/')),
                     *methodArgs.trim().split(""",\s*""".toRegex()).filter { it.isNotBlank() }.map {
-                        parseStringToType(cm.type, it.replace('.', '/')) }.toTypedArray()
+                        parseStringToType(cm.type, it.replace('.', '/'))
+                    }.toTypedArray()
                 )
                 MethodLevel(method)
             }
@@ -132,23 +133,33 @@ abstract class KexLauncher(classPaths: List<String>, targetName: String) {
     protected open fun createInstrumenter(context: ExecutionContext): MethodVisitor = RuntimeTraceCollector(context.cm)
 
     private fun prepareInstrumentedClasspath(containers: List<Container>, target: Package, path: Path) {
-        val cm = ClassManager(KfgConfig(flags = Flags.readAll, failOnError = false, verifyIR = false))
-        cm.initialize(*containers.toTypedArray())
         val klassPath = containers.map { it.path }
-        val context = ExecutionContext(
-            cm,
-            target,
-            containerClassLoader,
-            EasyRandomDriver(),
-            klassPath
-        )
+        for (jar in containers) {
+            log.info("Preparing ${jar.path}")
+            val cm = ClassManager(
+                KfgConfig(
+                    flags = Flags.readAll,
+                    useCachingLoopManager = false,
+                    failOnError = false,
+                    verifyIR = false
+                )
+            )
+            cm.initialize(jar)
+            val context = ExecutionContext(
+                cm,
+                target,
+                containerClassLoader,
+                EasyRandomDriver(),
+                klassPath
+            )
 
-        containers.forEach { it.unpack(cm, path, true) }
+            jar.unpack(cm, path, true)
 
-        executePipeline(cm, target) {
-            +SystemExitTransformer(cm)
-            +createInstrumenter(context)
-            +ClassWriter(context, path)
+            executePipeline(cm, target) {
+                +SystemExitTransformer(cm)
+                +createInstrumenter(context)
+                +ClassWriter(context, path)
+            }
         }
     }
 

@@ -575,6 +575,8 @@ class SymbolicTraceCollector(
     }
 
     private fun addNullityConstraint(inst: Instruction, value: Value): List<Instruction> = buildList {
+        if (inst.parent.parent.isConstructor && value is ThisRef) return@buildList
+
         val addNullityConstraintsMethod = collectorClass.getMethod(
             "addNullityConstraints", types.voidType,
             types.stringType, types.stringType, types.objectType

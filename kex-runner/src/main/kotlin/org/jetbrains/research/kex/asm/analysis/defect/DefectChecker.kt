@@ -215,7 +215,7 @@ class DefectChecker(
         return when (result) {
             is Result.SatResult -> {
                 failingBlocks += currentBlock
-                val (path, testName) = getTest("Assertion", checkerState, result) ?: null to null
+                val (path, testName) = getTest("Assertion", checkerState, result) ?: (null to null)
                 dm += Defect.assert(inst,  id = id, testFile = path, testCaseName = testName)
                 false
             }
