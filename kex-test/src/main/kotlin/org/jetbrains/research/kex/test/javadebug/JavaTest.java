@@ -2,9 +2,11 @@ package org.jetbrains.research.kex.test.javadebug;
 
 public abstract class JavaTest {
 
-    public static void test(Class<?> a) {
-        if (a != null) {
-            System.out.println(a.getName());
+    enum A {A, B, C}
+
+    public static void test(A a) {
+        if (a != A.B) {
+            System.out.println("foo");
         }
     }
 }
