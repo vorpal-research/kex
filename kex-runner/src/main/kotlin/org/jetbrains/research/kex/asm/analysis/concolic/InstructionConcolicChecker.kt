@@ -15,6 +15,9 @@ import org.jetbrains.research.kex.asm.state.PredicateStateAnalysis
 import org.jetbrains.research.kex.compile.JavaCompilerDriver
 import org.jetbrains.research.kex.config.kexConfig
 import org.jetbrains.research.kex.descriptor.Descriptor
+import org.jetbrains.research.kex.ktype.KexRtManager.isJavaRt
+import org.jetbrains.research.kex.ktype.KexRtManager.rtMapped
+import org.jetbrains.research.kex.ktype.KexType
 import org.jetbrains.research.kex.parameters.Parameters
 import org.jetbrains.research.kex.parameters.asDescriptors
 import org.jetbrains.research.kex.parameters.concreteParameters
@@ -24,6 +27,7 @@ import org.jetbrains.research.kex.reanimator.codegen.klassName
 import org.jetbrains.research.kex.smt.Checker
 import org.jetbrains.research.kex.smt.Result
 import org.jetbrains.research.kex.state.PredicateState
+import org.jetbrains.research.kex.state.term.Term
 import org.jetbrains.research.kex.state.transformer.*
 import org.jetbrains.research.kex.trace.TraceManager
 import org.jetbrains.research.kex.trace.runner.SymbolicExternalTracingRunner
@@ -119,12 +123,14 @@ class InstructionConcolicChecker(
 
     private fun prepareState(
         method: Method,
-        state: PredicateState
+        state: PredicateState,
+        typeMap: TypeInfoMap = emptyMap<Term, KexType>().toTypeMap()
     ): PredicateState = transform(state) {
         +KexRtAdapter(cm)
         +RecursiveInliner(PredicateStateAnalysis(cm)) { index, psa ->
             ConcolicInliner(
                 ctx,
+                typeMap,
                 psa,
                 inlineIndex = index
             )
@@ -148,7 +154,12 @@ class InstructionConcolicChecker(
     private fun check(method: Method, state: SymbolicState): ExecutionResult? {
         val checker = Checker(method, ctx, PredicateStateAnalysis(cm))
         val query = state.path.asState()
-        val preparedState = prepareState(method, state.state + query)
+        val concreteTypeInfo = state.concreteValueMap
+            .mapValues { it.value.type }
+            .filterValues { it.isJavaRt }
+            .mapValues { it.value.rtMapped }
+            .toTypeMap()
+        val preparedState = prepareState(method, state.state + query, concreteTypeInfo)
         val result = checker.check(preparedState)
         if (result !is Result.SatResult) return null
 

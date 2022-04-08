@@ -18,6 +18,7 @@ import org.jetbrains.research.kthelper.collection.dequeOf
 
 class ConcolicInliner(
     val ctx: ExecutionContext,
+    val typeInfoMap: TypeInfoMap,
     override val psa: PredicateStateAnalysis,
     override val inlineSuffix: String = "inlined",
     override var inlineIndex: Int = 0
@@ -28,6 +29,8 @@ class ConcolicInliner(
 
     override fun transformTerm(term: Term): Term {
         if (term.type.isKexRt) knownTypes[term] = term.type
+        val typeInfo = typeInfoMap.getInfo<CastTypeInfo>(term) ?: return term
+        knownTypes[term] = typeInfo.type
         return term
     }
 

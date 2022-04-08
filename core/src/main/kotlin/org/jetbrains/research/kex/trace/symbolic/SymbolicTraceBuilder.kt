@@ -264,6 +264,12 @@ class SymbolicTraceBuilder(
                 valueMap[value] = term
             }
             lastCall = null
+        } else {
+            for ((index, argType) in method.argTypes.withIndex()) {
+                val argValue = cm.value.getArgument(index, method, argType)
+                val argTerm = mkNewValue(argValue)
+                concreteValues[argTerm] = args[index].getAsDescriptor()
+            }
         }
     }
 

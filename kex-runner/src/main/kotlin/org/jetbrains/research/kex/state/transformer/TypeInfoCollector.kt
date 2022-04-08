@@ -20,6 +20,8 @@ sealed class TypeInfo
 data class NullabilityInfo(val nullability: Nullability) : TypeInfo()
 data class CastTypeInfo(val type: KexType) : TypeInfo()
 
+fun Map<Term, KexType>.toTypeMap() = TypeInfoMap.create(this)
+
 class TypeInfoMap(val inner: Map<Term, Set<TypeInfo>> = hashMapOf()) : Map<Term, Set<TypeInfo>> by inner {
     inline fun <reified T : TypeInfo> getInfo(term: Term): T? = inner[term]?.mapNotNull { it as? T }?.also {
         assert(it.size <= 1) { log.warn("A lot of type information ${T::class.qualifiedName} about $term: $it") }
