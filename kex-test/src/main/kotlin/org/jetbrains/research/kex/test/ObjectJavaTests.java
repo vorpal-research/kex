@@ -4,6 +4,7 @@ package org.jetbrains.research.kex.test;
 import static org.jetbrains.research.kex.intrinsics.AssertIntrinsics.kexAssert;
 import static org.jetbrains.research.kex.intrinsics.AssertIntrinsics.kexUnreachable;
 
+@SuppressWarnings("ConstantConditions")
 public class ObjectJavaTests {
     public static class PointJava {
         int x;
@@ -48,7 +49,7 @@ public class ObjectJavaTests {
         ten.y = 10;
 
         if (ten.x > zero.x) {
-            kexAssert();
+            kexAssert(true);
         } else {
             kexUnreachable();
         }
@@ -66,7 +67,7 @@ public class ObjectJavaTests {
         PointJava start = new PointJava((int) xs, (int) ys, (int) zs);
         PointJava end = new PointJava((int) xe, (int) ye, (int) ze);
         LineJava result = new LineJava(start, end);
-        kexAssert();
+        kexAssert(true);
         return result;
     }
 

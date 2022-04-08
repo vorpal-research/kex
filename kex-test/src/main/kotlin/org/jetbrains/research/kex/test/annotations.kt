@@ -34,7 +34,7 @@ class NotAnnotatedMethods {
         if (n < 0 || n > Int.MAX_VALUE)
             kexUnreachable()
         else
-            kexAssert()
+            kexAssert(true)
         return n
     }
 
@@ -57,7 +57,7 @@ class NotAnnotatedMethods {
         if (result < 0)
             kexUnreachable()
         else
-            kexAssert()
+            kexAssert(true)
         if (arg0 == null)
             kexUnreachable()
         return result
@@ -71,7 +71,7 @@ class NotAnnotatedMethods {
         if (result !== o)
             kexUnreachable()
         else
-            kexAssert()
+            kexAssert(true)
         return o
     }
 

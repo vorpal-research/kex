@@ -72,13 +72,13 @@ class Icfpc2018Test {
         for ((task, result) in merged) {
             val mode = getModeByModelName(task)
             if (mode == RunMode.REASSEMBLE) {
-                kexAssert()
+                kexAssert(true)
 
                 val bestSolution = result.getSortedSolutions().first().second
                 Files.copy(File(bestSolution.trace).toPath(), File("submit/$task.nbt").toPath(),
                         StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.COPY_ATTRIBUTES)
             } else {
-                kexAssert()
+                kexAssert(true)
 
                 val targetModel = when (mode) {
                     RunMode.ASSEMBLE -> Model.readMDL(ByteArrayInputStream("models/${task}_tgt.mdl".toByteArray()))
@@ -88,11 +88,11 @@ class Icfpc2018Test {
 
                 var haveSolution = false
                 for ((solutionName, solution) in result.getSortedSolutions()) {
-                    kexAssert()
+                    kexAssert(true)
                     val traceFile = File(solution.trace).inputStream()
                     val commands: MutableList<Command> = mutableListOf()
                     while (traceFile.available() != 0) {
-                        kexAssert()
+                        kexAssert(true)
                         commands += Command.read(traceFile)
                     }
                     val system = System(state)
@@ -103,7 +103,7 @@ class Icfpc2018Test {
                     }
 
                     if (system.currentState.matrix != targetModel) {
-                        kexAssert()
+                        kexAssert(true)
                         continue
                     }
 
@@ -114,13 +114,13 @@ class Icfpc2018Test {
                     kexUnreachable()
                 }
                 if (!haveSolution) {
-                    kexAssert()
+                    kexAssert(true)
                     return
                 }
             }
         }
 
-        kexAssert()
+        kexAssert(true)
         ZipWriter().createZip("submit/")
     }
 

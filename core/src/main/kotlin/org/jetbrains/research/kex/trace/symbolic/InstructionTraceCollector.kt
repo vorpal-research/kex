@@ -189,6 +189,13 @@ interface InstructionTraceCollector {
         concreteValue: Any?
     )
 
+    fun addTypeConstraints(
+        inst: String,
+        value: String,
+        type: String,
+        concreteValue: Any?
+    )
+
     fun addArrayIndexConstraints(
         inst: String,
         array: String,

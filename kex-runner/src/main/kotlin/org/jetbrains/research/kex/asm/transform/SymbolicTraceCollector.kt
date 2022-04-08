@@ -12,6 +12,7 @@ import org.jetbrains.research.kfg.ir.Method
 import org.jetbrains.research.kfg.ir.MethodDesc
 import org.jetbrains.research.kfg.ir.value.*
 import org.jetbrains.research.kfg.ir.value.instruction.*
+import org.jetbrains.research.kfg.type.Type
 import org.jetbrains.research.kfg.type.TypeFactory
 import org.jetbrains.research.kfg.visitor.MethodVisitor
 import org.jetbrains.research.kthelper.collection.MutableBuilder
@@ -214,10 +215,16 @@ class SymbolicTraceCollector(
             }
 
             +collectorClass.interfaceCall(
-                callMethod, traceCollector,
+                callMethod,
+                traceCollector,
                 "$inst".asValue,
-                klass.fullName.asValue, calledMethod.name.asValue, argTypesList, calledMethod.returnType.asmDesc.asValue,
-                returnValue, callee, argumentList,
+                klass.fullName.asValue,
+                calledMethod.name.asValue,
+                argTypesList,
+                calledMethod.returnType.asmDesc.asValue,
+                returnValue,
+                callee,
+                argumentList,
                 concreteArgumentsList
             )
         }
@@ -230,8 +237,12 @@ class SymbolicTraceCollector(
             types.stringType, types.stringType,
             types.objectType, types.objectType
         )
-        val instrumented = buildList<Instruction> {
+        val before = buildList<Instruction> {
+            if (inst.type.isReference) +addTypeConstraints(inst, inst.operand, inst.type)
+        }
+        val after = buildList<Instruction> {
             if (inst.type.isReference) +addNullityConstraint(inst, inst.operand)
+            if (inst.type.isReference) +addTypeConstraints(inst, inst.operand, inst.type)
 
             +collectorClass.interfaceCall(
                 castMethod, traceCollector,
@@ -239,7 +250,8 @@ class SymbolicTraceCollector(
                 inst.wrapped(this), inst.operand.wrapped(this)
             )
         }
-        inst.insertAfter(instrumented)
+        inst.insertBefore(before)
+        inst.insertAfter(after)
     }
 
     override fun visitCatchInst(inst: CatchInst) {
@@ -599,6 +611,18 @@ class SymbolicTraceCollector(
             addTypeConstraintsMethod, traceCollector,
             "$inst".asValue, "$value".asValue,
             value.wrapped(this)
+        )
+    }
+
+    private fun addTypeConstraints(inst: Instruction, value: Value, type: Type): List<Instruction> = buildList {
+        val addTypeConstraintsMethod = collectorClass.getMethod(
+            "addTypeConstraints", types.voidType,
+            types.stringType, types.stringType, types.stringType, types.objectType
+        )
+
+        +collectorClass.interfaceCall(
+            addTypeConstraintsMethod, traceCollector,
+            "$inst".asValue, "$value".asValue, type.name.asValue, value.wrapped(this)
         )
     }
 

@@ -20,7 +20,7 @@ open class ArrayTests {
             kexAssert(simpleArray[i] == i)
             ++i
         }
-        kexAssert()
+        kexAssert(true)
     }
 
     fun testArrayWrite() {
@@ -37,7 +37,7 @@ open class ArrayTests {
             kexAssert(emptyArray[i] == i * i)
             ++i
         }
-        kexAssert()
+        kexAssert(true)
     }
 }
 
@@ -58,11 +58,11 @@ open class ArrayLongTests {
         i = 0
         while (i < 5) {
             if (array[i] == i * i) {
-                kexAssert()
+                kexAssert(true)
             }
             ++i
         }
-        kexAssert()
+        kexAssert(true)
     }
 
     fun testObjectArray(nullable: Array<Any?>, nonnulable: Array<Any>) {

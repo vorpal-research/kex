@@ -23,6 +23,7 @@ import org.jetbrains.research.kfg.ir.value.*
 import org.jetbrains.research.kfg.ir.value.instruction.*
 import org.jetbrains.research.kfg.type.Type
 import org.jetbrains.research.kfg.type.parseDesc
+import org.jetbrains.research.kfg.type.parseStringToType
 import org.jetbrains.research.kthelper.KtException
 import org.jetbrains.research.kthelper.`try`
 import org.jetbrains.research.kthelper.assert.ktassert
@@ -1005,6 +1006,29 @@ class SymbolicTraceBuilder(
 
         val predicate = path {
             (termValue `is` descriptorValue.type) equality true
+        }
+
+        processPath(instruction, predicate)
+        predicates[predicate] = instruction
+        builder += predicate
+    }
+
+    override fun addTypeConstraints(inst: String, value: String, type: String, concreteValue: Any?) {
+        val instruction = parseValue(inst) as Instruction
+
+        val kfgValue = parseValue(value)
+        val termValue = mkValue(kfgValue)
+        val expectedKfgType = parseStringToType(cm.type, type)
+        val descriptorValue = concreteValue.getAsDescriptor()
+        val actualKfgType = descriptorValue.type.getKfgType(ctx.types)
+        if (termValue in typeChecked) {
+            val checkedType = typeChecked.getValue(termValue)
+            if (checkedType.isSubtypeOf(expectedKfgType)) return
+        }
+        typeChecked[termValue] = expectedKfgType
+
+        val predicate = path {
+            (termValue `is` expectedKfgType.kexType) equality (actualKfgType.isSubtypeOf(expectedKfgType))
         }
 
         processPath(instruction, predicate)

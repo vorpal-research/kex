@@ -21,30 +21,30 @@ class BasicGenerationTests {
         val ten = Point(x = x2, y = 10, z = 10)
 
         if (ten.x > zero.x) {
-            kexAssert()
+            kexAssert(true)
         } else {
-            kexAssert()
+            kexAssert(true)
         }
-        kexAssert()
+        kexAssert(true)
     }
 
     fun pointCheck(p1: Point, p2: Point) {
         if (p1.x > p2.x) {
-            kexAssert()
+            kexAssert(true)
         } else if (p2 is Point4) {
-            kexAssert()
+            kexAssert(true)
         } else {
-            kexAssert()
+            kexAssert(true)
         }
     }
 
     fun testArray(array: Array<Point>) {
         if (array[0].x > 0) {
-            kexAssert()
+            kexAssert(true)
         }
         if (array[1].y < 0) {
-            kexAssert()
+            kexAssert(true)
         }
-        kexAssert()
+        kexAssert(true)
     }
 }

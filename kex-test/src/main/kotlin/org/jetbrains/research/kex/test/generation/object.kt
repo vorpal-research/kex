@@ -21,14 +21,14 @@ class ObjectGenerationTests {
     fun testLine(line: Line?) {
         if (line == null) return
         if (line.start != null) {
-            kexAssert()
+            kexAssert(true)
         }
         if (line.end != null) {
-            kexAssert()
+            kexAssert(true)
         }
         if (line.start == line.end) {
-            kexAssert()
+            kexAssert(true)
         }
-        kexAssert()
+        kexAssert(true)
     }
 }

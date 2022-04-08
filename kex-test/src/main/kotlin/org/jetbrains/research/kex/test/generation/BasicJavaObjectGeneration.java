@@ -42,25 +42,25 @@ public class BasicJavaObjectGeneration {
 
     public void checkPoint(Point p1, Point p2) {
         if (p1.x > p2.x) {
-            kexAssert();
+            kexAssert(true);
         }
         if (p1.z < p2.z) {
-            kexAssert();
+            kexAssert(true);
         }
-        kexAssert();
+        kexAssert(true);
     }
 
     public void testLine(Line line) {
         if (line == null) return;
         if (line.start != null) {
-            kexAssert();
+            kexAssert(true);
         }
         if (line.end != null) {
-            kexAssert();
+            kexAssert(true);
         }
         if (Objects.equals(line.start, line.end)) {
-            kexAssert();
+            kexAssert(true);
         }
-        kexAssert();
+        kexAssert(true);
     }
 }

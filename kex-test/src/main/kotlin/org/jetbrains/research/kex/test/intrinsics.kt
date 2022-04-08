@@ -6,7 +6,7 @@ import org.jetbrains.research.kex.intrinsics.CollectionIntrinsics
 class IntrinsicsTest {
     fun testContains(array: ByteArray) {
         if (CollectionIntrinsics.containsByte(array, 12)) {
-            AssertIntrinsics.kexAssert()
+            AssertIntrinsics.kexAssert(true)
         }
     }
 }

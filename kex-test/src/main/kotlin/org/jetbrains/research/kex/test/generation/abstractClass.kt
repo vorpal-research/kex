@@ -14,10 +14,10 @@ class AbstractClassTests {
 
     fun testAbstractClass(klass: AbstractClass) {
         if (klass.x > klass.y) {
-            kexAssert()
+            kexAssert(true)
         }
         if (klass is SecondImpl) {
-            kexAssert()
+            kexAssert(true)
         } else if (klass is ThirdImpl) {
             kexUnreachable()
         }
@@ -36,14 +36,14 @@ class AbstractClassTests {
 
     fun testInterface(interfaceInstance: Interface) {
         if (interfaceInstance.value > 50) {
-            kexAssert()
+            kexAssert(true)
             if (interfaceInstance is ACAndInterface) {
-                kexAssert()
+                kexAssert(true)
             }
         } else if (interfaceInstance is InterfaceImpl) {
-            kexAssert()
+            kexAssert(true)
         } else {
-            kexAssert()
+            kexAssert(true)
         }
     }
 }

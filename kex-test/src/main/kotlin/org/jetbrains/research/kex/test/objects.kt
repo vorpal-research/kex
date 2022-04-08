@@ -16,9 +16,9 @@ class ObjectTests {
         val ten = Point(x = x2, y = 10, z = 10)
 
         if (ten.x > zero.x) {
-            kexAssert()
+            kexAssert(true)
         } else {
-            kexAssert()
+            kexAssert(true)
         }
     }
 
@@ -27,7 +27,7 @@ class ObjectTests {
         val ten = Point(x = 10, y = y2, z = 10)
 
         if (ten.x > zero.x) {
-            kexAssert()
+            kexAssert(true)
         } else {
             kexUnreachable()
         }
@@ -44,7 +44,7 @@ class ObjectTests {
 
         val result = Line(Point(xs.toInt(), ys.toInt(), zs.toInt()), Point(xe.toInt(), ye.toInt(), ze.toInt()))
         println(result.start)
-        kexAssert()
+        kexAssert(true)
         return result
     }
 
@@ -53,6 +53,6 @@ class ObjectTests {
         if (null == start)
             kexUnreachable()
         else
-            kexAssert()
+            kexAssert(true)
     }
 }

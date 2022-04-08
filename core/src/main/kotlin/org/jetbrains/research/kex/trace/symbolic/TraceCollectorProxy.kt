@@ -154,6 +154,8 @@ private class EmptyTraceCollector : InstructionTraceCollector {
 
     override fun addTypeConstraints(inst: String, value: String, concreteValue: Any?) {}
 
+    override fun addTypeConstraints(inst: String, value: String, type: String, concreteValue: Any?) {}
+
     override fun addArrayIndexConstraints(
         inst: String,
         array: String,

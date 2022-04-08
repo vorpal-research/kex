@@ -1,4 +1,4 @@
-@file:Suppress("UNUSED_PARAMETER", "UNUSED_VARIABLE")
+@file:Suppress("UNUSED_PARAMETER", "UNUSED_VARIABLE", "KotlinConstantConditions")
 package org.jetbrains.research.kex.test
 
 import org.jetbrains.research.kex.intrinsics.AssertIntrinsics.kexAssert
@@ -12,7 +12,7 @@ class BasicTests {
         val k = j + i - 15
 
         val max = maxOf(a, b, k)
-        kexAssert()
+        kexAssert(true)
         return max
     }
 
@@ -25,7 +25,7 @@ class BasicTests {
             a + b
         }
 
-        kexAssert()
+        kexAssert(true)
         println(res)
         return res
     }
@@ -46,7 +46,7 @@ class BasicTests {
             kexUnreachable()
         }
         if (y in 1..5) {
-            kexAssert()
+            kexAssert(true)
         }
         return y
     }
@@ -56,12 +56,12 @@ class BasicTests {
         while (x < a) {
             kexAssert(x < a)
             if (b > x) {
-                kexAssert(b > x, x < a)
+                kexAssert(b > x)
                 println("b bigger")
             }
             ++x
         }
-        kexAssert()
+        kexAssert(true)
         return x
     }
 
@@ -77,7 +77,7 @@ class BasicTests {
             println("lol2")
             x- 2 * x
         }
-        kexAssert()
+        kexAssert(true)
         return y
     }
 
@@ -99,13 +99,13 @@ class BasicTests {
                 arrayOf(10, 11, 12, 13, 14)
         )
         if (array[2][4] > 10) {
-            kexAssert()
+            kexAssert(true)
         }
         if (array.size > 2) {
-            kexAssert()
+            kexAssert(true)
         }
         if (array[0].size > 4) {
-            kexAssert()
+            kexAssert(true)
         }
         return array.flatten().reduce { a, b -> a + b}
     }
@@ -127,8 +127,8 @@ class BasicTests {
         val b = 42
         val c = abs(a - b)
         // we don't know anything about function `abs`, so result is unknown
-        if (c < 0) kexAssert()
-        else kexAssert()
+        if (c < 0) kexAssert(true)
+        else kexAssert(true)
         return c
     }
 

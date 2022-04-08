@@ -27,6 +27,7 @@ import org.jetbrains.research.kfg.ir.value.instruction.ArrayStoreInst
 import org.jetbrains.research.kfg.ir.value.instruction.CallInst
 import org.jetbrains.research.kfg.ir.value.instruction.Instruction
 import org.jetbrains.research.kfg.util.Flags
+import org.jetbrains.research.kfg.visitor.MethodVisitor
 import org.jetbrains.research.kfg.visitor.executePipeline
 import org.jetbrains.research.kthelper.logging.log
 import java.net.URLClassLoader
@@ -53,12 +54,14 @@ abstract class KexRunnerTest : KexTest() {
         originalContext = ExecutionContext(origManager, `package`, jar.classLoader, EasyRandomDriver(), listOf())
 
         executePipeline(originalContext.cm, `package`) {
-            +RuntimeTraceCollector(originalContext.cm)
+            +createTraceCollector()
             +ClassWriter(originalContext, targetDir)
         }
 
         analysisContext = ExecutionContext(cm, `package`, classLoader, EasyRandomDriver(), listOf())
     }
+
+    protected open fun createTraceCollector(): MethodVisitor = RuntimeTraceCollector(originalContext.cm)
 
     protected fun getReachables(method: Method): List<Instruction> {
         val klass = AssertIntrinsics::class.qualifiedName!!.replace(".", "/")
