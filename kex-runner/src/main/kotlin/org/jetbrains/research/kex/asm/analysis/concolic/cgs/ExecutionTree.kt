@@ -85,13 +85,11 @@ class ExecutionTree : PredecessorGraph<Vertex>, Viewable {
     fun addTrace(symbolicState: SymbolicState) {
         var prevVertex: Vertex? = null
 
-        var currentDepth = 0
         for (predicate in (symbolicState.state as BasicState)) {
             val current = Clause(symbolicState[predicate], predicate)
             val currentVertex = _nodes.getOrPut(current) {
                 when (predicate.type) {
                     is PredicateType.Path -> PathVertex(current).also {
-                        ++currentDepth
                         it[symbolicState.path.subPath(current)] = symbolicState
                         edges[current] = it
                     }
@@ -115,7 +113,9 @@ class ExecutionTree : PredecessorGraph<Vertex>, Viewable {
             prevVertex = currentVertex
         }
 
-        if (currentDepth > depth) depth = currentDepth
+        val currentDepth = (symbolicState.state as BasicState).count { it.type is PredicateType.Path }
+        if (currentDepth > depth)
+            depth = currentDepth
         dominators = DominatorTreeBuilder(this).build()
     }
 
