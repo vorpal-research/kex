@@ -58,6 +58,11 @@ class TypeCollector(val tf: TypeFactory, val checkStringTypes: Boolean = false) 
         return super.transformConstString(term)
     }
 
+    override fun transformLambdaTerm(term: LambdaTerm): Term {
+        transform(term.body)
+        return super.transformLambdaTerm(term)
+    }
+
     private fun handleStringType(string: String) {
         if (checkStringTypes) {
             parseAsConcreteType(tf, string)?.let {
