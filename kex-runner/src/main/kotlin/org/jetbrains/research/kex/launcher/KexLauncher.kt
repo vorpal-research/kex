@@ -82,7 +82,15 @@ abstract class KexLauncher(classPaths: List<String>, targetName: String) {
         val instrumentedCodeDir = kexConfig.getPathValue("kex", "outputDir")!!.resolve(instrumentedDirName)
         prepareInstrumentedClasspath(analysisJars, Package.defaultPackage, instrumentedCodeDir)
 
-        val cm = ClassManager(KfgConfig(flags = Flags.readAll, failOnError = false, verifyIR = false))
+        val cm = ClassManager(
+            KfgConfig(
+                flags = Flags.readAll,
+                useCachingLoopManager = false,
+                failOnError = false,
+                verifyIR = false,
+                checkClasses = false
+            )
+        )
         cm.initialize(*analysisJars.toTypedArray())
 
         val packageRegex = """[\w$]+(\.[\w$]+)*\.\*"""
@@ -141,7 +149,8 @@ abstract class KexLauncher(classPaths: List<String>, targetName: String) {
                     flags = Flags.readAll,
                     useCachingLoopManager = false,
                     failOnError = false,
-                    verifyIR = false
+                    verifyIR = false,
+                    checkClasses = false
                 )
             )
             cm.initialize(jar)
