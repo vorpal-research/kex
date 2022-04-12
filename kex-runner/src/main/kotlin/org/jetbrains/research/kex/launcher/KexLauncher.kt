@@ -40,6 +40,31 @@ import java.nio.file.Path
 import java.nio.file.Paths
 import kotlin.system.exitProcess
 
+sealed class AnalysisLevel {
+    abstract val pkg: Package
+    abstract val levelName: String
+}
+
+data class PackageLevel(override val pkg: Package) : AnalysisLevel() {
+    override val levelName: String
+        get() = "package"
+    override fun toString() = "package $pkg"
+}
+
+data class ClassLevel(val klass: Class) : AnalysisLevel() {
+    override val levelName: String
+        get() = "class"
+    override val pkg = klass.pkg
+    override fun toString() = "class $klass"
+}
+
+data class MethodLevel(val method: Method) : AnalysisLevel() {
+    override val levelName: String
+        get() = "method"
+    override val pkg = method.klass.pkg
+    override fun toString() = "method $method"
+}
+
 abstract class KexLauncher(classPaths: List<String>, targetName: String) {
     val classPath = System.getProperty("java.class.path")
 
@@ -48,24 +73,6 @@ abstract class KexLauncher(classPaths: List<String>, targetName: String) {
     val context: ExecutionContext
     val analysisLevel: AnalysisLevel
     val visibilityLevel: Visibility
-
-    sealed class AnalysisLevel {
-        abstract val pkg: Package
-    }
-
-    data class PackageLevel(override val pkg: Package) : AnalysisLevel() {
-        override fun toString() = "package $pkg"
-    }
-
-    data class ClassLevel(val klass: Class) : AnalysisLevel() {
-        override val pkg = klass.pkg
-        override fun toString() = "class $klass"
-    }
-
-    data class MethodLevel(val method: Method) : AnalysisLevel() {
-        override val pkg = method.klass.pkg
-        override fun toString() = "method $method"
-    }
 
     init {
         val containerPaths = classPaths.map { Paths.get(it).toAbsolutePath() }

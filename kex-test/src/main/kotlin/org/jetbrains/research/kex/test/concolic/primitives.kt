@@ -10,6 +10,8 @@ class PrimitiveConcolicTests {
     fun test(a: TestEnum) {
         if (a != TestEnum.B) {
             AssertIntrinsics.kexAssert(true)
+        } else {
+            AssertIntrinsics.kexAssert(true)
         }
     }
 

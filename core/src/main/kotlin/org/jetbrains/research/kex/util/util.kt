@@ -46,6 +46,8 @@ fun String.kapitalize() =
 fun String.dekapitalize() =
     this.replaceFirstChar { it.lowercase(Locale.getDefault()) }
 
+fun String.lowercased() = this.lowercase(Locale.getDefault())
+
 fun String.splitAtLast(char: Char): Pair<String, String> {
     val split = this.lastIndexOf(char)
     if (split < 0) return this to ""

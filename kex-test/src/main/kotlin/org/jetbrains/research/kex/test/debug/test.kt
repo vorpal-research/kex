@@ -2,12 +2,27 @@
 
 package org.jetbrains.research.kex.test.debug
 
+import org.jetbrains.research.kex.intrinsics.AssertIntrinsics
+import org.jetbrains.research.kex.test.concolic.TestEnum
+
+enum class TestEnum {
+    A, B, C
+}
 class ObjectGenerationTests {
-    fun foo(list: ArrayList<Int>) {
-        for (i in 0 until list.size) {
-            if (i > 2 && list[i] == 7) {
-                println("fuck")
-            }
+    fun test(a: TestEnum) {
+        if (a != TestEnum.B) {
+            AssertIntrinsics.kexAssert(true)
+        } else {
+            AssertIntrinsics.kexAssert(true)
+        }
+    }
+
+
+    fun testInt(a: Int) {
+        if (a > 0) {
+            AssertIntrinsics.kexAssert(true)
+        } else {
+            AssertIntrinsics.kexAssert(true)
         }
     }
 }

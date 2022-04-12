@@ -29,19 +29,16 @@ class SymbolicLauncher(classPaths: List<String>, targetName: String) : KexLaunch
         }
 
         DescriptorStatistics.printStatistics()
-        val coverage = CoverageReporter(containerClassLoader)
-            .execute(
-                analysisLevel
-            )
+        val coverage = CoverageReporter(containerClassLoader).execute(analysisLevel)
         log.info(
-            coverage
+            coverage.print(kexConfig.getBooleanValue("kex", "printDetailedCoverage", false))
         )
         val coverageResult = kexConfig.getPathValue("kex", "outputDir", "./temp").resolve("coverage.txt")
         if (Files.notExists(coverageResult)) {
             Files.createFile(coverageResult)
         }
         Files.newBufferedWriter(coverageResult).use {
-            it.write(coverage)
+            it.write(coverage.print(kexConfig.getBooleanValue("kex", "printDetailedCoverage", false)))
         }
     }
 }
