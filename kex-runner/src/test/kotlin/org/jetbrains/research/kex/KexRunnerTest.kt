@@ -6,7 +6,9 @@ import org.jetbrains.research.kex.asm.analysis.testgen.MethodChecker
 import org.jetbrains.research.kex.asm.state.PredicateStateAnalysis
 import org.jetbrains.research.kex.asm.transform.LoopDeroller
 import org.jetbrains.research.kex.asm.transform.RuntimeTraceCollector
+import org.jetbrains.research.kex.asm.transform.SystemExitTransformer
 import org.jetbrains.research.kex.asm.util.ClassWriter
+import org.jetbrains.research.kex.config.kexConfig
 import org.jetbrains.research.kex.intrinsics.AssertIntrinsics
 import org.jetbrains.research.kex.random.easyrandom.EasyRandomDriver
 import org.jetbrains.research.kex.smt.Checker
@@ -18,7 +20,9 @@ import org.jetbrains.research.kex.state.term.term
 import org.jetbrains.research.kex.trace.`object`.ObjectTraceManager
 import org.jetbrains.research.kfg.ClassManager
 import org.jetbrains.research.kfg.KfgConfig
+import org.jetbrains.research.kfg.Package
 import org.jetbrains.research.kfg.analysis.LoopSimplifier
+import org.jetbrains.research.kfg.container.Container
 import org.jetbrains.research.kfg.container.asContainer
 import org.jetbrains.research.kfg.ir.Class
 import org.jetbrains.research.kfg.ir.Method
@@ -32,6 +36,7 @@ import org.jetbrains.research.kfg.visitor.executePipeline
 import org.jetbrains.research.kthelper.logging.log
 import java.net.URLClassLoader
 import java.nio.file.Files
+import java.nio.file.Path
 import java.nio.file.Paths
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
@@ -41,27 +46,51 @@ import kotlin.test.assertTrue
 abstract class KexRunnerTest : KexTest() {
     val classPath = System.getProperty("java.class.path")
     val targetDir = Files.createTempDirectory("kex-test")
-
     val analysisContext: ExecutionContext
-    val originalContext: ExecutionContext
 
     init {
         val jar = Paths.get(jarPath).asContainer(`package`)!!
-        val origManager = ClassManager(KfgConfig(flags = Flags.readAll, failOnError = false))
 
         jar.unpack(cm, targetDir, true)
         val classLoader = URLClassLoader(arrayOf(targetDir.toUri().toURL()))
-        originalContext = ExecutionContext(origManager, `package`, jar.classLoader, EasyRandomDriver(), listOf())
 
-        executePipeline(originalContext.cm, `package`) {
-            +createTraceCollector()
-            +ClassWriter(originalContext, targetDir)
-        }
+        val instrumentedDirName = kexConfig.getStringValue("output", "instrumentedDir", "instrumented")
+        val instrumentedCodeDir = kexConfig.getPathValue("kex", "outputDir")!!.resolve(instrumentedDirName)
+        prepareInstrumentedClasspath(jar, jar.classLoader, Package.defaultPackage, instrumentedCodeDir)
 
-        analysisContext = ExecutionContext(cm, `package`, classLoader, EasyRandomDriver(), listOf())
+        analysisContext = ExecutionContext(cm, `package`, classLoader, EasyRandomDriver(), listOf(jar.path))
     }
 
-    protected open fun createTraceCollector(): MethodVisitor = RuntimeTraceCollector(originalContext.cm)
+    private fun prepareInstrumentedClasspath(container: Container, containerClassLoader: ClassLoader, target: Package, path: Path) {
+        log.info("Preparing ${container.path}")
+        val cm = ClassManager(
+            KfgConfig(
+                flags = Flags.readAll,
+                useCachingLoopManager = false,
+                failOnError = false,
+                verifyIR = false,
+                checkClasses = false
+            )
+        )
+        cm.initialize(container)
+        val context = ExecutionContext(
+            cm,
+            target,
+            containerClassLoader,
+            EasyRandomDriver(),
+            listOf(container.path)
+        )
+
+        container.unpack(cm, path, true)
+
+        executePipeline(cm, target) {
+            +SystemExitTransformer(cm)
+            +createTraceCollector(context)
+            +ClassWriter(context, path)
+        }
+    }
+
+    protected open fun createTraceCollector(context: ExecutionContext): MethodVisitor = RuntimeTraceCollector(context.cm)
 
     protected fun getReachables(method: Method): List<Instruction> {
         val klass = AssertIntrinsics::class.qualifiedName!!.replace(".", "/")

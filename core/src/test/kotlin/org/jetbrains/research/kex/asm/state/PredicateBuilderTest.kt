@@ -353,7 +353,7 @@ class PredicateBuilderTest : KexTest() {
 
     @Test
     fun testPredicateBuilder() {
-        for (klass in cm.concreteClasses) {
+        for (klass in cm.getByPackage(`package`)) {
             for (method in klass.allMethods) {
                 if (method.isAbstract) continue
                 if (method.hasLoops) {

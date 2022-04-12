@@ -22,10 +22,16 @@ class ExecutionException(cause: Throwable) : KtException("", cause)
 class SymbolicExternalTracingRunner(val ctx: ExecutionContext) {
     private val outputDir = kexConfig.getPathValue("kex", "outputDir")!!
     private val traceFile = outputDir.resolve("trace.json").toAbsolutePath()
+    private val executorPolicyPath = (kexConfig.getPathValue(
+        "kex-executor", "executorPolicyPath"
+    ) ?: Paths.get("kex.policy")).toAbsolutePath()
     private val executorPath = (kexConfig.getPathValue(
-        "kex", "executorPath"
+        "kex-executor", "executorPath"
     ) ?: Paths.get("kex-executor/target/kex-executor-0.0.1-jar-with-dependencies.jar")).toAbsolutePath()
     private val executorKlass = "org.jetbrains.research.kex.KexExecutorKt"
+    private val executorConfigPath = (kexConfig.getPathValue(
+        "kex-executor", "executorConfigPath"
+    ) ?: Paths.get("kex.ini")).toAbsolutePath()
     private val instrumentedCodeDir = outputDir.resolve(
         kexConfig.getStringValue("output", "instrumentedDir", "instrumented")
     ).toAbsolutePath()
@@ -45,9 +51,11 @@ class SymbolicExternalTracingRunner(val ctx: ExecutionContext) {
         val pb = ProcessBuilder(
             "java",
             "-Djava.security.manager",
-            "-Djava.security.policy==kex.policy",
+            "-Djava.security.policy==${executorPolicyPath}",
             "-classpath", executionClassPath.joinToString(getPathSeparator()),
             executorKlass,
+            "--config", executorConfigPath.toString(),
+            "--option", "kex:log:${outputDir.resolve("kex-executor.log").toAbsolutePath()}",
             "--classpath", ctx.classPath.joinToString(getPathSeparator()),
             "--package", ctx.pkg.toString().replace('/', '.'),
             "--class", klass,

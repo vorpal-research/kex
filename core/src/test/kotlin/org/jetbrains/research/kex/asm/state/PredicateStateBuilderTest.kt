@@ -24,7 +24,7 @@ class PredicateStateBuilderTest : KexTest() {
 
     @Test
     fun testSimplePSA() {
-        for (`class` in cm.concreteClasses) {
+        for (`class` in cm.getByPackage(`package`)) {
             for (method in `class`.allMethods) {
                 if (method.isAbstract) continue
 
