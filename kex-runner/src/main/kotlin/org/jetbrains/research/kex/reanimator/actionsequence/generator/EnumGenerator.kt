@@ -187,6 +187,7 @@ class ReflectionEnumGenerator(private val fallback: Generator) : Generator {
             val clazz = `object`(KexJavaClass())
             clazz["name" to KexString()] = string(kfgType.klass.canonicalDesc)
             desc["clazz" to KexJavaClass()] = clazz
+            desc["override" to KexBool()] = const(true)
             desc
         } as ObjectDescriptor
         list += when (descriptor) {

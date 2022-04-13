@@ -52,7 +52,7 @@ class KexExecutor(args: Array<String>) {
         containerClassLoader = URLClassLoader(classPaths.map { it.toUri().toURL() }.toTypedArray())
 
         containers = classPaths.map {
-            it.asContainer(target) ?: run {
+            it.asContainer() ?: run {
                 log.error("Can't represent ${it.toAbsolutePath()} as class container")
                 exitProcess(1)
             }

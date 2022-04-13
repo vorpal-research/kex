@@ -3,13 +3,11 @@ package org.jetbrains.research.kex.reanimator.actionsequence.generator
 import org.jetbrains.research.kex.descriptor.Descriptor
 import org.jetbrains.research.kex.descriptor.ObjectDescriptor
 import org.jetbrains.research.kex.descriptor.descriptor
-import org.jetbrains.research.kex.ktype.KexJavaClass
-import org.jetbrains.research.kex.ktype.KexString
-import org.jetbrains.research.kex.ktype.kexType
-import org.jetbrains.research.kex.ktype.type
+import org.jetbrains.research.kex.ktype.*
 import org.jetbrains.research.kex.reanimator.actionsequence.ActionList
 import org.jetbrains.research.kex.reanimator.actionsequence.ActionSequence
 import org.jetbrains.research.kex.reanimator.actionsequence.ExternalMethodCall
+import org.jetbrains.research.kex.reanimator.actionsequence.MethodCall
 import org.jetbrains.research.kex.util.field
 import org.jetbrains.research.kfg.ir.Class
 import org.jetbrains.research.kfg.type.SystemTypeNames
@@ -51,6 +49,12 @@ class FieldGenerator(val fallback: Generator) : Generator {
         val getDeclField = kfgJavaClass.getMethod("getDeclaredField", kfgFieldClass.type, types.stringType)
 
         actionSequence += ExternalMethodCall(getDeclField, generatedKlass, listOf(generatedName))
+
+        val setAccessible = descriptor["override" to KexBool()] ?: descriptor { const(false) }
+        val setAccessibleAS = fallback.generate(setAccessible, generationDepth)
+        val setAccessibleMethod = kfgFieldClass.getMethod("setAccessible", types.voidType, types.boolType)
+        actionSequence += MethodCall(setAccessibleMethod, listOf(setAccessibleAS))
+
         actionSequence
     }
 }

@@ -37,8 +37,26 @@ class SymbolicTraceCollector(
 
     override fun cleanup() {}
 
+    private fun prepareStaticInitializer(method: Method) {
+        val entryInstructions = buildList<Instruction> {
+            traceCollector = getNewCollector()
+            +traceCollector
+            +disableCollector()
+        }
+        val exitInstructions = buildList<Instruction> {
+            +setNewCollector(traceCollector)
+        }
+        method.entry.first().insertBefore(entryInstructions)
+        val returnInst = method.flatten().filterIsInstance<ReturnInst>().first()
+        returnInst.insertBefore(exitInstructions)
+    }
+
     override fun visit(method: Method) {
-        if (!method.hasBody || method.isStaticInitializer) return
+        if (!method.hasBody) return
+        if (method.isStaticInitializer) {
+            prepareStaticInitializer(method)
+            return
+        }
         if (ignores.any { it.isParent(method.klass.pkg) }) return
 
         val methodEntryInstructions: List<Instruction> = buildList {
@@ -647,6 +665,20 @@ class SymbolicTraceCollector(
         val getter = proxy.getMethod("currentCollector", MethodDesc(arrayOf(), cm.type.getRefType(collectorClass)))
 
         return getter.staticCall(proxy, "collector", arrayOf())
+    }
+
+    private fun setNewCollector(collector: Value): Instruction {
+        val proxy = cm[TraceCollectorProxy::class.java.canonicalName.replace('.', '/')]
+        val setter = proxy.getMethod("setCurrentCollector", cm.type.voidType, cm.type.getRefType(collectorClass))
+
+        return setter.staticCall(proxy, arrayOf(collector))
+    }
+
+    private fun disableCollector(): Instruction {
+        val proxy = cm[TraceCollectorProxy::class.java.canonicalName.replace('.', '/')]
+        val disabler = proxy.getMethod("disableCollector", cm.type.voidType)
+
+        return disabler.staticCall(proxy, arrayOf())
     }
 
     private fun Class.virtualCall(

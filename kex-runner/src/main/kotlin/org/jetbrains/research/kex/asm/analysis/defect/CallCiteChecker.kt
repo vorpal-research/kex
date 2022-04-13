@@ -1,3 +1,5 @@
+@file:Suppress("SameParameterValue")
+
 package org.jetbrains.research.kex.asm.analysis.defect
 
 import org.jetbrains.research.kex.ExecutionContext
@@ -214,6 +216,7 @@ class CallCiteChecker(
         +ConstantPropagator
         +BoolTypeAdapter(method.cm.type)
         +ClassMethodAdapter(method.cm)
+        +ConstEnumAdapter(ctx)
         +ConstStringAdapter(method.cm.type)
         +FieldNormalizer(method.cm)
         +TypeNameAdapter(ctx.types)

@@ -21,6 +21,7 @@ import org.jetbrains.research.kex.ktype.KexType
 import org.jetbrains.research.kex.parameters.Parameters
 import org.jetbrains.research.kex.parameters.asDescriptors
 import org.jetbrains.research.kex.parameters.concreteParameters
+import org.jetbrains.research.kex.parameters.filterStaticFinals
 import org.jetbrains.research.kex.reanimator.UnsafeGenerator
 import org.jetbrains.research.kex.reanimator.codegen.ExecutorTestCasePrinter
 import org.jetbrains.research.kex.reanimator.codegen.klassName
@@ -144,6 +145,7 @@ class InstructionConcolicChecker(
         +ConstantPropagator
         +BoolTypeAdapter(method.cm.type)
         +ClassMethodAdapter(method.cm)
+        +ConstEnumAdapter(ctx)
         +ConstStringAdapter(method.cm.type)
         +StringMethodAdapter(ctx.cm)
         +ConcolicArrayLengthAdapter()
@@ -165,6 +167,7 @@ class InstructionConcolicChecker(
 
         return tryOrNull {
             val params = generateFinalDescriptors(method, ctx, result.model, checker.state)
+                .filterStaticFinals(cm)
                 .concreteParameters(ctx.cm)
             collectTrace(method, params)
         }

@@ -245,6 +245,7 @@ class DefectChecker(
         +ConstantPropagator
         +BoolTypeAdapter(method.cm.type)
         +ClassMethodAdapter(method.cm)
+        +ConstEnumAdapter(ctx)
         +ConstStringAdapter(method.cm.type)
         +FieldNormalizer(method.cm)
         +TypeNameAdapter(ctx.types)

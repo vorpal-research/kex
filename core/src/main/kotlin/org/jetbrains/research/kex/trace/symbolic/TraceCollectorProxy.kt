@@ -180,6 +180,11 @@ object TraceCollectorProxy {
     fun currentCollector() = collector
 
     @JvmStatic
+    fun setCurrentCollector(new: InstructionTraceCollector) {
+        collector = new
+    }
+
+    @JvmStatic
     fun disableCollector() {
         collector = EmptyTraceCollector()
     }

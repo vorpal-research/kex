@@ -87,6 +87,7 @@ class GeneratorContext(
         +ConstantPropagator
         +BoolTypeAdapter(types)
         +ClassMethodAdapter(context.cm)
+        +ConstEnumAdapter(context)
         +ConstStringAdapter(types)
         +ArrayBoundsAdapter()
         +NullityInfoAdapter()

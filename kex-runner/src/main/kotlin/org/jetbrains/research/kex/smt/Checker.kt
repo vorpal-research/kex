@@ -65,6 +65,7 @@ class Checker(
         +ArrayBoundsAdapter()
         +NullityInfoAdapter()
         +ClassMethodAdapter(method.cm)
+        +ConstEnumAdapter(ctx)
         +ConstStringAdapter(method.cm.type)
         +FieldNormalizer(method.cm)
         +TypeNameAdapter(method.cm.type)
@@ -85,6 +86,7 @@ class Checker(
         +Optimizer()
         +ConstantPropagator
         +BoolTypeAdapter(method.cm.type)
+        +ConstEnumAdapter(ctx)
         +ConstStringAdapter(method.cm.type)
         +ArrayBoundsAdapter()
         +NullityInfoAdapter()

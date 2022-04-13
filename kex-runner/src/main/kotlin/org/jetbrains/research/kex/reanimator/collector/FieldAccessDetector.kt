@@ -44,6 +44,7 @@ class MethodFieldAccessCollector(val ctx: ExecutionContext, val psa: PredicateSt
         +MethodInliner(psa)
         +ClassAdapter(cm)
         +ClassMethodAdapter(cm)
+        +ConstEnumAdapter(ctx)
         +ConstStringAdapter(cm.type)
         +TypeNameAdapter(types)
     }
