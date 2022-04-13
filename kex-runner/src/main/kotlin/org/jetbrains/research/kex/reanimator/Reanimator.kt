@@ -9,6 +9,7 @@ import org.jetbrains.research.kex.descriptor.DescriptorRtMapper
 import org.jetbrains.research.kex.ktype.KexRtManager
 import org.jetbrains.research.kex.parameters.Parameters
 import org.jetbrains.research.kex.parameters.concreteParameters
+import org.jetbrains.research.kex.parameters.filterStaticFinals
 import org.jetbrains.research.kex.random.GenerationException
 import org.jetbrains.research.kex.reanimator.actionsequence.ActionSequence
 import org.jetbrains.research.kex.reanimator.actionsequence.ActionSequenceExecutor
@@ -70,7 +71,9 @@ class Reanimator(
     )
 
     override fun generate(testName: String, method: Method, state: PredicateState, model: SMTModel) = try {
-        val descriptors = generateFinalDescriptors(method, ctx, model, state).concreteParameters(cm).rtMapped
+        val descriptors = generateFinalDescriptors(method, ctx, model, state)
+            .filterStaticFinals(cm)
+            .concreteParameters(cm).rtMapped
         log.debug("Generated descriptors:\n$descriptors")
         val actionSequences = descriptors.actionSequences
         log.debug("Generated action sequences:\n$actionSequences")
