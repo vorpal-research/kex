@@ -14,7 +14,7 @@ import org.jetbrains.research.kthelper.logging.log
 import java.util.*
 
 private val visibilityLevel by lazy {
-    kexConfig.getEnumValue("apiGeneration", "visibility", true, Visibility.PUBLIC)
+    kexConfig.getEnumValue("testGen", "visibility", true, Visibility.PUBLIC)
 }
 
 val Method.isImpactable: Boolean

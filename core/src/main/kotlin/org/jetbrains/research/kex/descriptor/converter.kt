@@ -11,7 +11,7 @@ import org.jetbrains.research.kthelper.logging.log
 import java.util.*
 
 private val maxGenerationDepth by lazy {
-    kexConfig.getIntValue("apiGeneration", "maxConversionDepth", 10)
+    kexConfig.getIntValue("reanimator", "maxConversionDepth", 10)
 }
 
 class Object2DescriptorConverter : DescriptorBuilder() {

@@ -37,8 +37,8 @@ class GeneratorContext(
 ) {
     private val useRecCtors by lazy {
         kexConfig.getBooleanValue(
-            "apiGeneration",
-            "use-recursive-constructors",
+            "reanimator",
+            "useRecursiveConstructors",
             false
         )
     }

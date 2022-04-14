@@ -18,12 +18,12 @@ class SymbolicLauncher(classPaths: List<String>, targetName: String) : KexLaunch
     override fun launch() {
         val traceManager = ObjectTraceManager()
         val psa = PredicateStateAnalysis(context.cm)
-        val useApiGeneration = kexConfig.getBooleanValue("apiGeneration", "enabled", true)
+        val useReanimator = kexConfig.getBooleanValue("reanimator", "enabled", true)
 
         preparePackage(context, psa)
         runPipeline(context) {
             +when {
-                useApiGeneration -> DescriptorChecker(context, traceManager, psa)
+                useReanimator -> DescriptorChecker(context, traceManager, psa)
                 else -> MethodChecker(context, traceManager, psa)
             }
         }

@@ -140,7 +140,7 @@ abstract class KexLauncher(classPaths: List<String>, targetName: String) {
         context = ExecutionContext(cm, analysisLevel.pkg, classLoader, randomDriver, klassPath)
 
         log.debug("Running with class path:\n${containers.joinToString("\n") { it.name }}")
-        visibilityLevel = kexConfig.getEnumValue("apiGeneration", "visibility", true, Visibility.PUBLIC)
+        visibilityLevel = kexConfig.getEnumValue("testGen", "visibility", true, Visibility.PUBLIC)
     }
 
     abstract fun launch()

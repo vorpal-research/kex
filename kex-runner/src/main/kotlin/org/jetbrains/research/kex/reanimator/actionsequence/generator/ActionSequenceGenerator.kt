@@ -15,8 +15,8 @@ import org.jetbrains.research.kthelper.logging.log
 class SearchLimitExceededException(val descriptor: Descriptor, msg: String) : KtException(msg)
 
 class ActionSequenceGenerator(override val context: GeneratorContext) : Generator {
-    private val maxGenerationDepth by lazy { kexConfig.getIntValue("apiGeneration", "maxGenerationDepth", 100) }
-    private val maxSearchDepth by lazy { kexConfig.getIntValue("apiGeneration", "maxSearchDepth", 10000) }
+    private val maxGenerationDepth by lazy { kexConfig.getIntValue("reanimator", "maxGenerationDepth", 100) }
+    private val maxSearchDepth by lazy { kexConfig.getIntValue("reanimator", "maxSearchDepth", 10000) }
 
     private val typeGenerators = mutableSetOf<Generator>()
     private var searchDepth = 0

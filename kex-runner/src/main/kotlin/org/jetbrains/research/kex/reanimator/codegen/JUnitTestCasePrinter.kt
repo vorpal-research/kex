@@ -19,12 +19,11 @@ import java.io.File
 import java.nio.file.Paths
 import kotlin.math.abs
 
-private val useApiGeneration by lazy { kexConfig.getBooleanValue("apiGeneration", "enabled", true) }
-private val generateTestCases by lazy { kexConfig.getBooleanValue("apiGeneration", "generateTestCases", false) }
-private val checkTestCompile by lazy { kexConfig.getBooleanValue("apiGeneration", "checkTestCompile", true) }
+private val useReanimator by lazy { kexConfig.getBooleanValue("reanimator", "enabled", true) }
+private val generateTestCases by lazy { kexConfig.getBooleanValue("testGen", "enabled", false) }
 private val outputDirectory by lazy { kexConfig.getPathValue("kex", "outputDir")!! }
-private val testCaseDirectory by lazy { kexConfig.getPathValue("apiGeneration", "testCaseDirectory", "tests") }
-private val testCaseLanguage by lazy { kexConfig.getStringValue("apiGeneration", "testCaseLanguage", "java") }
+private val testCaseDirectory by lazy { kexConfig.getPathValue("testGen", "testsDir", "tests") }
+private val testCaseLanguage by lazy { kexConfig.getStringValue("testGen", "testCaseLanguage", "java") }
 
 val Class.validName get() = name.replace("$", "_")
 val Method.validName get() = name.replace(Regex("[^a-zA-Z0-9]"), "")
@@ -46,11 +45,8 @@ abstract class TestCasePrinter(
     abstract fun print(testName: String, method: Method, actionSequences: Parameters<ActionSequence>)
 
     open fun emit() {
-        if (useApiGeneration && generateTestCases) {
+        if (useReanimator && generateTestCases) {
             targetFile.writeText(printer.emit())
-        }
-        if (checkTestCompile) {
-            checkTestCompiles()
         }
     }
 

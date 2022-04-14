@@ -201,7 +201,7 @@ class CoverageReporter(
     private val tests: List<String>
     private val outputDir = kexConfig.getPathValue("kex", "outputDir")!!
     private val testsDir = outputDir.resolve(
-        kexConfig.getPathValue("compile", "testsDir", "tests/")
+        kexConfig.getPathValue("testGen", "testsDir", "tests/")
     ).also {
         it.toFile().mkdirs()
     }

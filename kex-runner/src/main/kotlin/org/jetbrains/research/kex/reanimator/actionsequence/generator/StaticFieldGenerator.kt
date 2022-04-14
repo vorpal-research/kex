@@ -12,8 +12,8 @@ import org.jetbrains.research.kthelper.collection.queueOf
 import org.jetbrains.research.kthelper.logging.log
 
 class StaticFieldGenerator(private val fallback: Generator) : Generator {
-    private val maxStackSize by lazy { kexConfig.getIntValue("apiGeneration", "maxStackSize", 5) }
-    private val maxQuerySize by lazy { kexConfig.getIntValue("apiGeneration", "maxQuerySize", 1000) }
+    private val maxStackSize by lazy { kexConfig.getIntValue("reanimator", "maxStackSize", 5) }
+    private val maxQuerySize by lazy { kexConfig.getIntValue("reanimator", "maxQuerySize", 1000) }
 
     override val context: GeneratorContext
         get() = fallback.context

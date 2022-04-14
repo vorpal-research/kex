@@ -31,7 +31,7 @@ import java.nio.file.Path
 import kotlin.system.measureTimeMillis
 
 private val visibilityLevel by lazy {
-    kexConfig.getEnumValue("apiGeneration", "visibility", true, Visibility.PUBLIC)
+    kexConfig.getEnumValue("testGen", "visibility", true, Visibility.PUBLIC)
 }
 
 val Parameters<Descriptor>.rtMapped: Parameters<Descriptor>

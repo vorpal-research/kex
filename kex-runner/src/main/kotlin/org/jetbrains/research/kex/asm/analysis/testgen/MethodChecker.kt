@@ -40,7 +40,7 @@ import org.jetbrains.research.kthelper.tryOrNull
 import java.nio.file.Files
 
 private val outputDirectory by lazy { kexConfig.getPathValue("kex", "outputDir")!! }
-private val failDir by lazy { kexConfig.getPathValue("debug", "dump-directory", "fail") }
+private val failDir by lazy { kexConfig.getPathValue("debug", "dumpDirectory", "fail") }
 
 class KexCheckerException(val inner: Exception, val reason: PredicateState) : Exception()
 class KexRunnerException(val inner: Exception, val model: Parameters<Any?>) : Exception()

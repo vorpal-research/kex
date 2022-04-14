@@ -18,7 +18,7 @@ import org.jetbrains.research.kthelper.assert.unreachable
 import org.jetbrains.research.kthelper.logging.log
 import org.jetbrains.research.kthelper.runIf
 
-private val generateSetup by lazy { kexConfig.getBooleanValue("apiGeneration", "generateSetup", false) }
+private val generateSetup by lazy { kexConfig.getBooleanValue("testGen", "generateSetup", false) }
 
 class ExecutorAS2JavaPrinter(
     ctx: ExecutionContext,

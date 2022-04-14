@@ -276,7 +276,7 @@ class RandomObjectReanimator(
     fun runTestDepth(range: IntRange, attempts: Int = 1000) {
         val objects = generateObjects(attempts)
         val stats = range.map { depth ->
-            RuntimeConfig.setValue("apiGeneration", "maxStackSize", depth)
+            RuntimeConfig.setValue("reanimator", "maxStackSize", depth)
             depth to run(objects)
         }
         for ((depth, stat) in stats) {

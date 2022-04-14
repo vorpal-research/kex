@@ -23,7 +23,7 @@ import org.jetbrains.research.kthelper.tryOrNull
 import java.lang.reflect.*
 
 private val visibilityLevel by lazy {
-    kexConfig.getEnumValue("apiGeneration", "visibility", true, Visibility.PUBLIC)
+    kexConfig.getEnumValue("testGen", "visibility", true, Visibility.PUBLIC)
 }
 
 // TODO: this is work of satan, refactor this damn thing
