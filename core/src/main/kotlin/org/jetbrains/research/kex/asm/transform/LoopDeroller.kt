@@ -438,7 +438,10 @@ class LoopDeroller(override val cm: ClassManager) : LoopOptimizer(cm) {
         }
         loopPhis.keys.forEach {
             try {
-                phiToEvo[it] = evaluateEvolutions(buildPhiEquation(it), freshVars)
+                if (loop.latch in it.incomings &&
+                        loop.preheader in it.incomings) {
+                    phiToEvo[it] = evaluateEvolutions(buildPhiEquation(it), freshVars)
+                }
             } catch (e: StackOverflowError) {
                 return false
             }

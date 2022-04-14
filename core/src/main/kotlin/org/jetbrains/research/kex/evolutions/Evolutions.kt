@@ -127,178 +127,133 @@ open class Evolutions(override val cm: ClassManager) : MethodVisitor {
         }
     }.also { equations[v] = it }
 
-//    fun nonRecursiveTransform(value: Value): Symbolic {
-//        val stack = mutableListOf<Pair<Value, Symbolic?>>(Pair(value, null))
-//        var res: Symbolic? = null
-//        while (stack.size > 1) {
-//            val (v, r) = stack.removeLast()
-//            when (v) {
-//                in equations -> res = equations[v]!!
-//                is IntConstant -> res = Const(v.value)
-//                is LongConstant -> res = Const(v.value)
-//                is ShortConstant -> res = Const(v.value.toInt())
-//                is ByteConstant -> res = Const(v.value.toInt())
-//                is UnaryInst -> {
-//                    if (res == null) {
-//                        stack.add(v to r)
-//                        stack.add(v.operand to null)
-//                    } else {
-//                        when (v.opcode) {
-//                            UnaryOpcode.NEG -> res = -res
-//                            UnaryOpcode.LENGTH -> res = Apply("\\length", res)
-//                        }
-//                    }
-//                }
-//                is BinaryInst -> when (v.opcode) {
-//                    BinaryOpcode.ADD -> transform(v.lhv) + transform(v.rhv)
-//                    BinaryOpcode.SUB -> transform(v.lhv) - transform(v.rhv)
-//                    BinaryOpcode.MUL -> transform(v.lhv) * transform(v.rhv)
-//                    BinaryOpcode.DIV -> transform(v.lhv) / transform(v.rhv)
-//                    BinaryOpcode.SHL -> transform(v.lhv) shl transform(v.rhv)
-//                    BinaryOpcode.SHR -> transform(v.lhv) shr transform(v.rhv)
-//                    else -> KFGBinary(v.opcode, transform(v.lhv), transform(v.rhv))
-//                }
-//                else -> {
-//                    if (v.isNameDefined) {
-//                        val res = Var(v.name.toString())
-//                        var2inst[res] = v
-//                        inst2var[v] = res
-//                        res
-//                    } else Undefined
-//                }
-//            }
-//        }
+    private val phiEquations: MutableMap<PhiInst, Symbolic> = mutableMapOf()
 
-        private val phiEquations: MutableMap<PhiInst, Symbolic> = mutableMapOf()
+    /**
+     * Builds evolution for given phi instance.
+     * Uses caching to avoid unnecessary recalculations.
+     * @param v given phi instance.
+     * @return symbolic formula representing evolution of given phi in the loop.
+     */
+    protected fun buildPhiEquation(v: PhiInst): Symbolic {
+        if (v in phiEquations) return phiEquations[v]!!
+        phiEquations[v] = Undefined
+        phiEquations[v] = buildPhiEquationUncached(v)
+        return phiEquations[v]!!
+    }
 
-        /**
-         * Builds evolution for given phi instance.
-         * Uses caching to avoid unnecessary recalculations.
-         * @param v given phi instance.
-         * @return symbolic formula representing evolution of given phi in the loop.
-         */
-        protected fun buildPhiEquation(v: PhiInst): Symbolic {
-            if (v in phiEquations) return phiEquations[v]!!
-            phiEquations[v] = Undefined
-            phiEquations[v] = buildPhiEquationUncached(v)
-            return phiEquations[v]!!
-        }
-
-        /**
-         * Performs depth-first search on CFG graph from given phi instance,
-         * search stops when this phi instance met again. Resulting path used
-         * to compute recurrence relation of phi variable.
-         * Some heuristics used to simplify recurrence relation and turn it into
-         * function from iteration number.
-         * @param v given phi instance.
-         * @return symbolic representation of recurrence relation, possibly simplified.
-         */
-        private fun buildPhiEquationUncached(v: PhiInst): Symbolic {
-            val base = transform(v.baseValue)
-            var recur = transform(v.loopValue)
-
-            val deps = recur.vars()
-            for (dep in deps) {
-                val dvar = var2inst[dep]!!
-                if (dvar != v && dvar is PhiInst && dvar in loopPhis && dvar.loop == v.loop) {
-                    recur = recur.subst(dep to buildPhiEquation(dvar))
-                }
+    /**
+     * Performs depth-first search on CFG graph from given phi instance,
+     * search stops when this phi instance met again. Resulting path used
+     * to compute recurrence relation of phi variable.
+     * Some heuristics used to simplify recurrence relation and turn it into
+     * function from iteration number.
+     * @param v given phi instance.
+     * @return symbolic representation of recurrence relation, possibly simplified.
+     */
+    private fun buildPhiEquationUncached(v: PhiInst): Symbolic {
+        val base = transform(v.baseValue)
+        var recur = transform(v.loopValue)
+        val deps = recur.vars()
+        for (dep in deps) {
+            val dvar = var2inst[dep]!!
+            if (dvar != v && dvar is PhiInst && dvar in loopPhis && dvar.loop == v.loop) {
+                recur = recur.subst(dep to buildPhiEquation(dvar))
             }
-            val me = transform(v) as Var
+        }
+        val me = transform(v) as Var
 
-            when (recur) {
-                is Const, is Var -> return recur
-                is ShiftLeft -> {
-                    val (lhv, rhv) = recur.arguments
-                    if (lhv != me) return Undefined
-                    return ShiftLeft(
-                        base,
-                        Evolution(v.loop, EvoOpcode.PLUS, Const.ZERO, rhv)
-                    )
-                }
-                is ShiftRight -> {
-                    val (lhv, rhv) = recur.arguments
-                    if (lhv != me) return Undefined
-                    return ShiftRight(
-                        base,
-                        Evolution(v.loop, EvoOpcode.PLUS, Const.ZERO, rhv)
-                    )
-                }
-                is KFGBinary -> {
-                    val (lhv, rhv) = recur.arguments
-                    if (lhv != me) return Undefined
+        when (recur) {
+            is Const, is Var -> return recur
+            is ShiftLeft -> {
+                val (lhv, rhv) = recur.arguments
+                if (lhv != me) return Undefined
+                return ShiftLeft(
+                    base,
+                    Evolution(v.loop, EvoOpcode.PLUS, Const.ZERO, rhv)
+                )
+            }
+            is ShiftRight -> {
+                val (lhv, rhv) = recur.arguments
+                if (lhv != me) return Undefined
+                return ShiftRight(
+                    base,
+                    Evolution(v.loop, EvoOpcode.PLUS, Const.ZERO, rhv)
+                )
+            }
+            is KFGBinary -> {
+                val (lhv, rhv) = recur.arguments
+                if (lhv != me) return Undefined
 
-                    when (recur.opcode) {
-                        BinaryOpcode.DIV -> return KFGBinary(
-                            BinaryOpcode.DIV,
+                return when (recur.opcode) {
+                    BinaryOpcode.DIV -> KFGBinary(
+                        BinaryOpcode.DIV,
+                        base,
+                        Evolution(v.loop, EvoOpcode.TIMES, Const.ONE, rhv)
+                    )
+                    BinaryOpcode.USHR ->
+                        KFGBinary(
+                            recur.opcode,
                             base,
-                            Evolution(v.loop, EvoOpcode.TIMES, Const.ONE, rhv)
+                            Evolution(v.loop, EvoOpcode.PLUS, Const.ZERO, rhv)
                         )
-                        BinaryOpcode.USHR ->
-                            return KFGBinary(
-                                recur.opcode,
-                                base,
-                                Evolution(v.loop, EvoOpcode.PLUS, Const.ZERO, rhv)
-                            )
-                        else -> {} // nothing
-                    }
-                }
-                is Apply -> return recur
-                is Product -> {
-                    // decompose recur to (Alpha * me)
-                    val alpha = recur / me
-                    if (alpha.hasVar(me)) return Undefined
-
-                    return Evolution(v.loop, EvoOpcode.TIMES, base, alpha)
-                }
-                is Sum -> {
-                    // decompose recur to (Alpha * me + Beta)
-                    val (l, beta) = recur.partition { it.hasVar(me) }
-                    val alpha = l / me
-                    if (alpha.hasVar(me)) return Undefined
-                    return when {
-                        alpha == Const.ONE -> Evolution(v.loop, EvoOpcode.PLUS, base, beta)
-                        beta == Const.ZERO -> Evolution(v.loop, EvoOpcode.TIMES, base, alpha)
-                        alpha == Const.ZERO -> Evolution(v.loop, EvoOpcode.PLUS, Const.ZERO, beta)
-                        else -> Evolution(
-                            v.loop,
-                            EvoOpcode.TIMES,
-                            Evolution(
-                                v.loop,
-                                EvoOpcode.PLUS,
-                                base,
-                                Evolution(v.loop, EvoOpcode.TIMES, beta, alpha.reciprocal())
-                            ),
-                            alpha
-                        )
-                    }
+                    else -> Undefined
                 }
             }
+        is Apply -> return recur
+        is Product -> {
+            // decompose recur to (Alpha * me)
+            val alpha = recur / me
+            if (alpha.hasVar(me)) return Undefined
 
-            return Undefined
+            return Evolution(v.loop, EvoOpcode.TIMES, base, alpha)
         }
-
-        override fun cleanup() {}
-    }
-
-    /**
-     * Collects all loops in the method.
-     * @param method given method.
-     * @return sequence of all loops in the method.
-     */
-    fun walkLoops(method: Method) = sequence {
-        val topLevel = method.getLoopInfo()
-        for (loop in topLevel) yieldAll(walkLoops(loop))
-    }
-
-    /**
-     * Recursively collects all sub-loops in the given loop.
-     * @param top given top loop.
-     * @return sequence of all sub-loops of the top loop including top loop itself collected recursively.
-     */
-    fun walkLoops(top: Loop): Sequence<Loop> = sequence {
-        for (loop in top.subLoops) {
-            yieldAll(walkLoops(loop))
+        is Sum -> {
+            // decompose recur to (Alpha * me + Beta)
+            val (l, beta) = recur.partition { it.hasVar(me) }
+            val alpha = l / me
+            if (alpha.hasVar(me)) return Undefined
+            return when {
+                alpha == Const.ONE -> Evolution(v.loop, EvoOpcode.PLUS, base, beta)
+                beta == Const.ZERO -> Evolution(v.loop, EvoOpcode.TIMES, base, alpha)
+                alpha == Const.ZERO -> Evolution(v.loop, EvoOpcode.PLUS, Const.ZERO, beta)
+                else -> Evolution(
+                    v.loop,
+                    EvoOpcode.TIMES,
+                    Evolution(
+                        v.loop,
+                        EvoOpcode.PLUS,
+                        base,
+                        Evolution(v.loop, EvoOpcode.TIMES, beta, alpha.reciprocal())
+                    ),
+                    alpha
+                )
+            }
         }
-        yield(top)
     }
+}
+
+override fun cleanup() {}
+}
+
+/**
+ * Collects all loops in the method.
+ * @param method given method.
+ * @return sequence of all loops in the method.
+ */
+fun walkLoops(method: Method) = sequence {
+    val topLevel = method.getLoopInfo()
+    for (loop in topLevel) yieldAll(walkLoops(loop))
+}
+
+/**
+ * Recursively collects all sub-loops in the given loop.
+ * @param top given top loop.
+ * @return sequence of all sub-loops of the top loop including top loop itself collected recursively.
+ */
+fun walkLoops(top: Loop): Sequence<Loop> = sequence {
+    for (loop in top.subLoops) {
+        yieldAll(walkLoops(loop))
+    }
+    yield(top)
+}
