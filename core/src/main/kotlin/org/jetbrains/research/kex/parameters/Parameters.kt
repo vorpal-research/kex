@@ -40,7 +40,7 @@ fun Parameters<Descriptor>.concreteParameters(cm: ClassManager) =
 fun Parameters<Descriptor>.filterStaticFinals(cm: ClassManager): Parameters<Descriptor> {
     val filteredStatics = statics.map { it.deepCopy() }.filterIsInstance<ClassDescriptor>().mapNotNull { klass ->
         val kfgClass = (klass.type as KexClass).kfgClass(cm.type)
-        for ((name, type) in klass.fields.keys) {
+        for ((name, type) in klass.fields.keys.toSet()) {
             val field = kfgClass.getField(name, type.getKfgType(cm.type))
             if (field.isFinal) klass.remove(name to type)
         }

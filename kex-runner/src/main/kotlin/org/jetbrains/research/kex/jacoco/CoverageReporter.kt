@@ -21,7 +21,10 @@ import org.jetbrains.research.kfg.util.isClass
 import org.jetbrains.research.kthelper.assert.unreachable
 import org.jetbrains.research.kthelper.logging.log
 import org.jetbrains.research.kthelper.tryOrNull
+import org.junit.runner.Computer
 import org.junit.runner.JUnitCore
+import org.junit.runner.Result
+import org.junit.runner.notification.RunListener
 import java.net.URLClassLoader
 import java.util.jar.JarFile
 
@@ -249,6 +252,18 @@ class CoverageReporter(
         return result
     }
 
+    class TestLogger : RunListener() {
+        override fun testRunFinished(result: Result) {
+            log.info(buildString {
+                appendLine("Result:")
+                appendLine("run count ${result.runCount}")
+                appendLine("ignore count ${result.ignoreCount}")
+                appendLine("fail count ${result.failureCount}")
+                appendLine("failures: ${result.failures.joinToString("\n")}")
+            })
+        }
+    }
+
     private fun getCoverageBuilder(classes: List<String>): CoverageBuilder {
         val runtime = LoggerRuntime()
         for (className in classes) {
@@ -267,7 +282,9 @@ class CoverageReporter(
             instrAndTestsClassLoader.addDefinition(testName, compiledClassLoader.getBytes(testName)!!)
             val testClass = instrAndTestsClassLoader.loadClass(testName)
             log.debug("Running test $testName")
-            JUnitCore.runClasses(testClass)
+            val jc = JUnitCore()
+//            jc.addListener(TestLogger())
+            jc.run(Computer(), testClass)
         }
 
         log.debug("Analyzing Coverage...")

@@ -52,7 +52,7 @@ class ConstEnumAdapter(val context: ExecutionContext) : RecollectingTransformer<
             .map { it.owner }
             .filterIsInstance<StaticClassRefTerm>()
             .filter { it.isEnum }
-            .toList()
+            .toSet()
 
         val enumFields = mutableMapOf<KexType, Set<Term>>()
 
