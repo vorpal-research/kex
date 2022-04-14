@@ -3,19 +3,18 @@
 package org.jetbrains.research.kex.test.debug
 
 import org.jetbrains.research.kex.intrinsics.AssertIntrinsics
-import org.jetbrains.research.kex.test.concolic.TestEnum
-
-enum class TestEnum {
-    A, B, C
-}
+//
+//enum class TestEnum {
+//    A, B, C
+//}
 class ObjectGenerationTests {
-    fun test(a: TestEnum) {
-        if (a != TestEnum.B) {
-            AssertIntrinsics.kexAssert(true)
-        } else {
-            AssertIntrinsics.kexAssert(true)
-        }
-    }
+//    fun test(a: TestEnum) {
+//        if (a != TestEnum.B) {
+//            AssertIntrinsics.kexAssert(true)
+//        } else {
+//            AssertIntrinsics.kexAssert(true)
+//        }
+//    }
 
 
     fun testInt(a: Int) {

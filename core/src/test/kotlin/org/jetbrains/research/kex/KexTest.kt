@@ -6,6 +6,7 @@ import org.jetbrains.research.kex.config.FileConfig
 import org.jetbrains.research.kex.config.RuntimeConfig
 import org.jetbrains.research.kex.config.kexConfig
 import org.jetbrains.research.kex.util.getIntrinsics
+import org.jetbrains.research.kex.util.getKexRuntime
 import org.jetbrains.research.kex.util.getRuntime
 import org.jetbrains.research.kfg.ClassManager
 import org.jetbrains.research.kfg.KfgConfig
@@ -34,7 +35,7 @@ abstract class KexTest {
         jarPath = "$rootDir/kex-test/target/kex-test-$version-jar-with-dependencies.jar"
         jar = Paths.get(jarPath).asContainer(`package`)!!
 
-        val jars = listOfNotNull(jar, getRuntime(), getIntrinsics())
+        val jars = listOfNotNull(jar, getRuntime(), getKexRuntime(), getIntrinsics())
         loader = jars.first().classLoader
         cm = ClassManager(KfgConfig(flags = Flags.readAll, failOnError = false))
         cm.initialize(*jars.toTypedArray())

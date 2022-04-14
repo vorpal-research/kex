@@ -69,7 +69,6 @@ class StaticFieldInliner(
             +ConstantPropagator
             +BoolTypeAdapter(ctx.types)
             +ClassMethodAdapter(ctx.cm)
-            +ConstEnumAdapter(ctx)
             +ConstStringAdapter(method.cm.type)
             +ArrayBoundsAdapter()
             +NullityInfoAdapter()
