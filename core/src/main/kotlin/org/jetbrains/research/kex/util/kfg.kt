@@ -111,3 +111,15 @@ fun parseAsConcreteType(typeFactory: TypeFactory, name: String): KexType? {
         else -> null
     }
 }
+
+fun TypeFactory.getPrimitive(type: Type): Type = when (type) {
+    boolWrapper -> boolType
+    byteWrapper -> byteType
+    charWrapper -> charType
+    shortWrapper -> shortType
+    intWrapper -> intType
+    longWrapper -> longType
+    floatWrapper -> floatType
+    doubleWrapper -> doubleType
+    else -> unreachable("Unknown primary type $type")
+}

@@ -13,6 +13,7 @@ class KexRtGenerator(val fallback: Generator) : Generator {
     init {
         typeGenerators += KexArrayListGenerator(this)
         typeGenerators += KexLinkedListGenerator(this)
+        typeGenerators += KexWrapperClassGenerator(this)
     }
 
     override fun supports(descriptor: Descriptor): Boolean = descriptor.type.isKexRt
