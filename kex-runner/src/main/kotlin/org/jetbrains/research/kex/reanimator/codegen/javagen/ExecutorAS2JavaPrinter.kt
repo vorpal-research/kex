@@ -529,6 +529,25 @@ class ExecutorAS2JavaPrinter(
         return name
     }
 
+    override fun printConstructorCall(owner: ActionSequence, call: ConstructorCall): List<String> {
+        call.args.forEach { it.printAsJava() }
+        val args = call.args.joinToString(", ") {
+            "(${resolvedTypes[it]}) ${it.stackName}"
+        }
+        val actualType = ASClass(call.constructor.klass.type)
+        return listOf(
+            if (resolvedTypes[owner] != null) {
+                val rest = resolvedTypes[owner]!!
+                val type = actualType.merge(rest)
+                actualTypes[owner] = type
+                "${printVarDeclaration(owner.name, type)} = new $type($args)"
+            } else {
+                actualTypes[owner] = actualType
+                "${printVarDeclaration(owner.name, actualType)} = new $actualType($args)"
+            }
+        )
+    }
+
     override fun printMethodCall(owner: ActionSequence, call: MethodCall): List<String> {
         call.args.forEach { it.printAsJava() }
         val method = call.method

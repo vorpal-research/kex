@@ -283,7 +283,9 @@ class CoverageReporter(
             val testClass = instrAndTestsClassLoader.loadClass(testName)
             log.debug("Running test $testName")
             val jc = JUnitCore()
-//            jc.addListener(TestLogger())
+            if (kexConfig.getBooleanValue("testGen", "logJUnit", false)) {
+                jc.addListener(TestLogger())
+            }
             jc.run(Computer(), testClass)
         }
 

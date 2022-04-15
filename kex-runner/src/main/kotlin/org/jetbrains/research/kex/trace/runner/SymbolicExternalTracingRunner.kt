@@ -10,6 +10,7 @@ import org.jetbrains.research.kex.util.getIntrinsics
 import org.jetbrains.research.kex.util.getPathSeparator
 import org.jetbrains.research.kthelper.KtException
 import org.jetbrains.research.kthelper.logging.log
+import java.io.InputStreamReader
 import java.nio.file.Paths
 import java.util.concurrent.TimeUnit
 import kotlin.io.path.deleteIfExists
@@ -23,14 +24,14 @@ class SymbolicExternalTracingRunner(val ctx: ExecutionContext) {
     private val outputDir = kexConfig.getPathValue("kex", "outputDir")!!
     private val traceFile = outputDir.resolve("trace.json").toAbsolutePath()
     private val executorPolicyPath = (kexConfig.getPathValue(
-        "kex-executor", "executorPolicyPath"
+        "executor", "executorPolicyPath"
     ) ?: Paths.get("kex.policy")).toAbsolutePath()
     private val executorPath = (kexConfig.getPathValue(
-        "kex-executor", "executorPath"
+        "executor", "executorPath"
     ) ?: Paths.get("kex-executor/target/kex-executor-0.0.1-jar-with-dependencies.jar")).toAbsolutePath()
     private val executorKlass = "org.jetbrains.research.kex.KexExecutorKt"
     private val executorConfigPath = (kexConfig.getPathValue(
-        "kex-executor", "executorConfigPath"
+        "executor", "executorConfigPath"
     ) ?: Paths.get("kex.ini")).toAbsolutePath()
     private val instrumentedCodeDir = outputDir.resolve(
         kexConfig.getStringValue("output", "instrumentedDir", "instrumented")
@@ -70,6 +71,11 @@ class SymbolicExternalTracingRunner(val ctx: ExecutionContext) {
             process.waitFor(timeout, TimeUnit.MILLISECONDS)
             if (process.isAlive) {
                 process.destroy()
+            }
+
+            val errorStream = InputStreamReader(process.errorStream).readText()
+            if (errorStream.isNotBlank()) {
+                log.debug("Process error stream: $errorStream")
             }
 
             val result = KexSerializer(ctx.cm).fromJson<ExecutionResult>(traceFile.readText()).also {

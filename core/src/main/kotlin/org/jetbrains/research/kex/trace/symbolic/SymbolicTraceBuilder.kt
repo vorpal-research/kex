@@ -1020,6 +1020,7 @@ class SymbolicTraceBuilder(
     }
 
     override fun addTypeConstraints(inst: String, value: String, type: String, concreteValue: Any?) {
+        if (concreteValue == null) return
         val instruction = parseValue(inst) as Instruction
 
         val kfgValue = parseValue(value)
@@ -1027,6 +1028,7 @@ class SymbolicTraceBuilder(
         val expectedKfgType = parseStringToType(cm.type, type)
         val descriptorValue = concreteValue.getAsDescriptor()
         val actualKfgType = descriptorValue.type.getKfgType(ctx.types)
+        if (kfgValue is NullConstant) return
         if (termValue in typeChecked) {
             val checkedType = typeChecked.getValue(termValue)
             if (checkedType.isSubtypeOf(expectedKfgType)) return

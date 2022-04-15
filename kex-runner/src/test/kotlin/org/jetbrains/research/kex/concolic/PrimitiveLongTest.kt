@@ -6,7 +6,7 @@ import org.junit.Test
 
 @ExperimentalSerializationApi
 @InternalSerializationApi
-class PrimitiveTest : ConcolicTest() {
+class PrimitiveLongTest : ConcolicTest() {
     @Test
     fun primitiveConcolicTest() {
         assertCoverage(cm["org/jetbrains/research/kex/test/concolic/PrimitiveConcolicTests"], 1.0)

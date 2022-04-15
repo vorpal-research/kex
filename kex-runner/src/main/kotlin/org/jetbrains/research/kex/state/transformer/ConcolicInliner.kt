@@ -7,11 +7,8 @@ import org.jetbrains.research.kex.ktype.KexRtManager.isKexRt
 import org.jetbrains.research.kex.ktype.KexType
 import org.jetbrains.research.kex.ktype.kexType
 import org.jetbrains.research.kex.state.StateBuilder
-import org.jetbrains.research.kex.state.predicate.CallPredicate
-import org.jetbrains.research.kex.state.predicate.Predicate
-import org.jetbrains.research.kex.state.predicate.state
-import org.jetbrains.research.kex.state.term.CallTerm
-import org.jetbrains.research.kex.state.term.Term
+import org.jetbrains.research.kex.state.predicate.*
+import org.jetbrains.research.kex.state.term.*
 import org.jetbrains.research.kfg.ir.ConcreteClass
 import org.jetbrains.research.kfg.ir.Method
 import org.jetbrains.research.kthelper.collection.dequeOf
@@ -32,6 +29,21 @@ class ConcolicInliner(
         val typeInfo = typeInfoMap.getInfo<CastTypeInfo>(term) ?: return term
         knownTypes[term] = typeInfo.type
         return term
+    }
+
+    override fun transformEqualityPredicate(predicate: EqualityPredicate): Predicate {
+        val lhv = predicate.lhv
+        when (val rhv = predicate.rhv) {
+            is CastTerm, is ValueTerm, is ArgumentTerm -> knownTypes[rhv]?.let {
+                knownTypes[lhv] = it
+            }
+        }
+        return super.transformEqualityPredicate(predicate)
+    }
+
+    override fun transformNewPredicate(predicate: NewPredicate): Predicate {
+        knownTypes[predicate.lhv] = predicate.lhv.type
+        return super.transformNewPredicate(predicate)
     }
 
     override fun transformCallPredicate(predicate: CallPredicate): Predicate {
