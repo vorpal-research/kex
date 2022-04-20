@@ -1,6 +1,7 @@
 package org.jetbrains.research.kex.test.concolic;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.LinkedList;
 
 @SuppressWarnings("ALL")
@@ -18,10 +19,15 @@ public class ListConcolicTests {
     }
 
     public static void testArrayListIterator(ArrayList<Character> chars) {
-        for (Character character : chars) {
-            if (character.charValue() == 'v') {
+        Iterator<Character> it = chars.iterator();
+        if (it.hasNext()) {
+            if (it.next().charValue() == 'v') {
+                throw new IllegalStateException();
+            } else {
                 throw new IllegalStateException();
             }
+        } else {
+            throw new IllegalStateException();
         }
     }
 }

@@ -6,7 +6,6 @@ import org.jetbrains.research.kex.asm.util.Visibility
 import org.jetbrains.research.kex.descriptor.Descriptor
 import org.jetbrains.research.kex.ktype.KexNull
 import org.jetbrains.research.kex.reanimator.actionsequence.ActionSequence
-import org.jetbrains.research.kex.reanimator.actionsequence.UnknownSequence
 import org.jetbrains.research.kthelper.assert.unreachable
 import org.jetbrains.research.kthelper.logging.log
 
@@ -18,24 +17,13 @@ class ConcolicSequenceGenerator(override val context: GeneratorContext) : Genera
 
 
     init {
+        typeGenerators += ConstantGenerator(context)
         typeGenerators += CharsetGenerator(this)
         typeGenerators += ClassGenerator(this)
         typeGenerators += FieldGenerator(this)
         typeGenerators += ReflectionEnumGenerator(this)
         typeGenerators += KexRtGenerator(this)
-        typeGenerators += object : Generator {
-            override val context: GeneratorContext
-                get() = this@ConcolicSequenceGenerator.context
-
-            override fun supports(descriptor: Descriptor): Boolean = true
-
-            override fun generate(descriptor: Descriptor, generationDepth: Int): ActionSequence = UnknownSequence(
-                "${descriptor.term}",
-                descriptor.wrappedType,
-                descriptor
-            )
-
-        }
+        typeGenerators += UnknownGenerator(this)
     }
 
     private val Descriptor.wrappedType get() = when (this.type) {

@@ -3,7 +3,6 @@ package org.jetbrains.research.kex.reanimator.codegen.javagen
 import org.jetbrains.research.kex.ExecutionContext
 import org.jetbrains.research.kex.asm.util.Visibility
 import org.jetbrains.research.kex.config.kexConfig
-import org.jetbrains.research.kex.descriptor.*
 import org.jetbrains.research.kex.ktype.*
 import org.jetbrains.research.kex.parameters.Parameters
 import org.jetbrains.research.kex.reanimator.actionsequence.*
@@ -271,7 +270,8 @@ class ExecutorAS2JavaPrinter(
                 if (generateSetup) {
                     runIf(!method.isConstructor) {
                         actionSequences.instance?.let {
-                            testParams += field(it.name, type("Object"))
+                            if (it !is PrimaryValue<*>)
+                                testParams += field(it.name, type("Object"))
                         }
                     }
                     actionSequences.arguments.forEach { arg ->
@@ -290,6 +290,14 @@ class ExecutorAS2JavaPrinter(
                                     else -> null
                                 }
                             } ?: unreachable { log.error("Unexpected call in arg") }
+                            is ReflectionList -> arg.firstNotNullOfOrNull {
+                                when (it) {
+                                    is ReflectionNewInstance -> it.type
+                                    is ReflectionNewArray -> it.type
+                                    else -> null
+                                }
+                            } ?: unreachable { log.error("Unexpected call in arg") }
+                            is PrimaryValue<*> -> return@forEach
                             else -> unreachable { log.error("Unexpected call in arg") }
                         }
                         val fieldType = type.kexType.primitiveName?.let { type(it) } ?: type("Object")
@@ -338,15 +346,6 @@ class ExecutorAS2JavaPrinter(
         else -> super.printVarDeclaration(name, type)
     }
 
-    override fun printUnknownSequence(sequence: UnknownSequence): List<String> {
-        val descriptor = sequence.target
-        printedStacks -= "${descriptor.term}"
-        val result = mutableListOf<String>()
-        val names = printDeclarations(descriptor, result)
-        printInsides(descriptor, result, names)
-        return result
-    }
-
     val Type.klassType: String
         get() = when (this) {
             is PrimaryType -> "${kexType.primitiveName}.class"
@@ -375,164 +374,11 @@ class ExecutorAS2JavaPrinter(
             }
         }
 
-    protected val ConstantDescriptor.asConstant: String
-        get() = when (this) {
-            is ConstantDescriptor.Null -> "null"
-            is ConstantDescriptor.Bool -> "$value"
-            is ConstantDescriptor.Byte -> "(byte) $value"
-            is ConstantDescriptor.Char -> when (value) {
-                in 'a'..'z' -> "'$value'"
-                in 'A'..'Z' -> "'$value'"
-                else -> "(char) ${value.code}"
-            }
-            is ConstantDescriptor.Short -> "(short) $value"
-            is ConstantDescriptor.Int -> "$value"
-            is ConstantDescriptor.Long -> "${value}L"
-            is ConstantDescriptor.Float -> when {
-                value.isNaN() -> "Float.NaN".also {
-                    builder.import("java.lang.Float")
-                }
-                value.isInfinite() && value < 0.0 -> "Float.NEGATIVE_INFINITY".also {
-                    builder.import("java.lang.Float")
-                }
-                value.isInfinite() -> "Float.POSITIVE_INFINITY".also {
-                    builder.import("java.lang.Float")
-                }
-                else -> "${value}F"
-            }
-            is ConstantDescriptor.Double -> when {
-                value.isNaN() -> "Double.NaN".also {
-                    builder.import("java.lang.Double")
-                }
-                value.isInfinite() && value < 0.0 -> "Double.NEGATIVE_INFINITY".also {
-                    builder.import("java.lang.Double")
-                }
-                value.isInfinite() -> "Double.POSITIVE_INFINITY".also {
-                    builder.import("java.lang.Double")
-                }
-                else -> "$value"
-            }
-            else -> unreachable { log.error("Unknown constant descriptor $this") }
-        }
-
-    private fun printDeclarations(
-        descriptor: Descriptor,
-        result: MutableList<String>,
-        visited: MutableSet<Descriptor> = mutableSetOf(),
-        names: MutableMap<Descriptor, String> = mutableMapOf()
-    ): Map<Descriptor, String> {
-        val name = "${descriptor.term}"
-        if (descriptor in visited) return names
-        if (name in printedStacks) return names
-        visited += descriptor
-
-        val resolveType = when (descriptor.type) {
-            is KexPointer -> ctx.types.objectType.asType
-            else -> descriptor.type.getKfgType(ctx.types).asType
-        }
-        val decl = printVarDeclaration(name, resolveType)
-
-        when (descriptor) {
-            ConstantDescriptor.Null -> result += "$decl = null".also { names[descriptor] = name }
-            is ConstantDescriptor.Bool -> result += "$decl = ${descriptor.asConstant}".also { names[descriptor] = name }
-            is ConstantDescriptor.Byte -> result += "$decl = ${descriptor.asConstant}".also { names[descriptor] = name }
-            is ConstantDescriptor.Char -> result += "$decl = ${descriptor.asConstant}".also { names[descriptor] = name }
-            is ConstantDescriptor.Double -> result += "$decl = ${descriptor.asConstant}".also {
-                names[descriptor] = name
-            }
-            is ConstantDescriptor.Float -> result += "$decl = ${descriptor.asConstant}".also {
-                names[descriptor] = name
-            }
-            is ConstantDescriptor.Int -> result += "$decl = ${descriptor.asConstant}".also { names[descriptor] = name }
-            is ConstantDescriptor.Long -> result += "$decl = ${descriptor.asConstant}".also { names[descriptor] = name }
-            is ConstantDescriptor.Short -> result += "$decl = ${descriptor.asConstant}".also {
-                names[descriptor] = name
-            }
-            is ArrayDescriptor -> {
-                val elementType = (descriptor.type as KexArray).element
-                result += "$decl = ($resolveType) ${
-                    elementType.primitiveName?.let {
-                        "${newPrimitiveArrayMap[it]!!.name}(${descriptor.length})"
-                    } ?: "${newArray.name}(\"${(elementType.getKfgType(ctx.types) as ClassType).klass.canonicalDesc}\", ${descriptor.length})"
-                }".also { names[descriptor] = name }
-                for ((_, element) in descriptor.elements) {
-                    printDeclarations(element, result, visited, names)
-                }
-            }
-            is ClassDescriptor -> {
-                val klass = (descriptor.type.getKfgType(ctx.types) as ClassType).klass
-                val klassVarName = "klassInstance${klassCounter++}"
-                result += "Class<?> $klassVarName = Class.forName(\"${klass.canonicalDesc}\")".also {
-                    names[descriptor] = klassVarName
-                }
-                for ((_, element) in descriptor.fields) {
-                    printDeclarations(element, result, visited, names)
-                }
-            }
-            is ObjectDescriptor -> {
-                val klass = (descriptor.type.getKfgType(ctx.types) as ClassType).klass
-                when {
-                    klass.isEnum -> result += "$decl = ${klass.javaString}.${getEnumName(descriptor)}"
-                    else -> {
-                        result += "$decl = ($resolveType) ${newInstance.name}(\"${klass.canonicalDesc}\")"
-                        for ((_, element) in descriptor.fields) {
-                            printDeclarations(element, result, visited, names)
-                        }
-                    }
-                }.also { names[descriptor] = name }
-            }
-        }
-        return names
-    }
-
-    private fun printInsides(
-        descriptor: Descriptor,
-        result: MutableList<String>,
-        names: Map<Descriptor, String>
-    ): String = with(current) {
-        val name = names[descriptor] ?: "${descriptor.term}"
-        if (name in printedStacks) return@with name
-        printedStacks += name
-
-        when (descriptor) {
-            is ArrayDescriptor -> {
-                for ((index, element) in descriptor.elements) {
-                    val elementName = printInsides(element, result, names)
-                    val setElementMethod =
-                        element.type.primitiveName?.let { setPrimitiveElementMap[it]!! } ?: setElement
-                    result += "${setElementMethod.name}($name, $index, $elementName)"
-                }
-            }
-            is ClassDescriptor -> {
-                for ((field, element) in descriptor.fields) {
-                    val fieldName = printInsides(element, result, names)
-                    val setFieldMethod = field.second.primitiveName?.let { setPrimitiveFieldMap[it]!! } ?: setField
-                    result += "${setFieldMethod.name}(null, $name, \"${field.first}\", $fieldName)"
-                }
-            }
-            is ObjectDescriptor -> {
-                val klass = (descriptor.type.getKfgType(ctx.types) as ClassType).klass
-                when {
-                    klass.isEnum -> {}
-                    else -> {
-                        for ((field, element) in descriptor.fields) {
-                            val fieldName = printInsides(element, result, names)
-                            val setFieldMethod =
-                                field.second.primitiveName?.let { setPrimitiveFieldMap[it]!! } ?: setField
-                            result += "${setFieldMethod.name}($name, ${name}.getClass(), \"${field.first}\", $fieldName)"
-                        }
-                    }
-                }
-            }
-            else -> {}
-        }
-        return name
-    }
-
     override fun printConstructorCall(owner: ActionSequence, call: ConstructorCall): List<String> {
         call.args.forEach { it.printAsJava() }
         val args = call.args.joinToString(", ") {
-            "(${resolvedTypes[it]}) ${it.stackName}"
+            val prefix = if (it !is PrimaryValue<*>) "(${resolvedTypes[it]}) " else ""
+            prefix + it.stackName
         }
         val actualType = ASClass(call.constructor.klass.type)
         return listOf(
@@ -625,18 +471,108 @@ class ExecutorAS2JavaPrinter(
         )
     }
 
-    private fun getEnumName(descriptor: ObjectDescriptor): String {
-        val klass = (descriptor.type.getKfgType(ctx.types) as ClassType).klass
+    override fun printReflectionList(reflectionList: ReflectionList): List<String> {
+        val res = mutableListOf<String>()
+        printDeclarations(reflectionList, res, mutableSetOf())
+        printInsides(reflectionList, res, mutableSetOf())
+        return res
+    }
 
-        val nameDescriptor = descriptor["name", KexString()] as? ObjectDescriptor
-        return nameDescriptor?.let { obj ->
-            val valueDescriptor = obj["value", KexChar().asArray()] as? ArrayDescriptor
-            valueDescriptor?.let { array ->
-                (0 until array.length).map {
-                    (array.elements.getOrDefault(it, descriptor { const(' ') }) as ConstantDescriptor.Char).value
-                }.joinToString("")
+    fun printDeclarations(
+        owner: ActionSequence,
+        result: MutableList<String>,
+        visited: MutableSet<String>
+    ) {
+        if (owner is ReflectionList) {
+            if (owner.name in visited) return
+            visited += owner.name
+
+            for (api in owner) {
+                when (api) {
+                    is ReflectionNewInstance -> result += printReflectionNewInstance(owner, api)
+                    is ReflectionNewArray -> result += printReflectionNewArray(owner, api)
+                    is ReflectionSetField -> printDeclarations(api.value, result, visited)
+                    is ReflectionArrayWrite -> printDeclarations(api.value, result, visited)
+                }
             }
-        } ?: klass.fields.filter { it.isFinal && it.isStatic && it.type == klass.type }.randomOrNull()?.name
-        ?: "NOT_FOUND"
+        } else {
+            owner.printAsJava()
+        }
+    }
+
+    fun printInsides(
+        owner: ActionSequence,
+        result: MutableList<String>,
+        visited: MutableSet<String>
+    ) {
+        if (owner is ReflectionList) {
+            if (owner.name in visited) return
+            visited += owner.name
+
+            for (api in owner) {
+                when (api) {
+                    is ReflectionSetField -> {
+                        printInsides(api.value, result, visited)
+                        result += printReflectionSetField(owner, api)
+                    }
+                    is ReflectionArrayWrite -> {
+                        printInsides(api.value, result, visited)
+                        result += printReflectionArrayWrite(owner, api)
+                    }
+                    else -> {}
+                }
+            }
+        } else {
+            owner.printAsJava()
+        }
+    }
+
+    override fun printReflectionNewInstance(owner: ActionSequence, call: ReflectionNewInstance): List<String> {
+        val actualType = ASClass(ctx.types.objectType)
+        val kfgClass = (call.type as ClassType).klass
+        return listOf(
+            if (resolvedTypes[owner] != null) {
+                val rest = resolvedTypes[owner]!!
+                val type = actualType.merge(rest)
+                actualTypes[owner] = type
+                "${
+                    printVarDeclaration(
+                        owner.name,
+                        type
+                    )
+                } = ${newInstance.name}(Class.forName(\"${kfgClass.canonicalDesc}\"))"
+            } else {
+                actualTypes[owner] = actualType
+                "${
+                    printVarDeclaration(
+                        owner.name,
+                        actualType
+                    )
+                } = ${newInstance.name}(Class.forName(\"${kfgClass.canonicalDesc}\"))"
+            }
+        )
+    }
+
+    override fun printReflectionNewArray(owner: ActionSequence, call: ReflectionNewArray): List<String> {
+        val actualType = call.asArray.asType
+        actualTypes[owner] = actualType
+        val elementType = call.asArray.component
+        val newArrayCall = elementType.kexType.primitiveName?.let {
+            "${newPrimitiveArrayMap[it]!!.name}(${call.length})"
+        } ?: "${newArray.name}(\"${(elementType as ClassType).klass.canonicalDesc}\", ${call.length})"
+        return listOf(
+            "${printVarDeclaration(owner.name, actualType)} = ($actualType) $newArrayCall"
+        )
+    }
+
+    override fun printReflectionSetField(owner: ActionSequence, call: ReflectionSetField): List<String> {
+        val setFieldMethod = call.field.type.kexType.primitiveName?.let { setPrimitiveFieldMap[it]!! } ?: setField
+        return listOf("${setFieldMethod.name}(${owner.name}, ${owner.name}.getClass(), \"${call.field.name}\", ${call.value.stackName})")
+    }
+
+    override fun printReflectionArrayWrite(owner: ActionSequence, call: ReflectionArrayWrite): List<String> {
+        val elementType = call.elementType
+        val setElementMethod = elementType.kexType.primitiveName?.let { setPrimitiveElementMap[it]!! } ?: setElement
+        return listOf("${setElementMethod.name}(${owner.name}, ${call.index.stackName}, ${call.value.stackName})")
     }
 }

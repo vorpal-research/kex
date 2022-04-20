@@ -39,8 +39,12 @@ class UnknownSequence(name: String, val type: Type, val target: Descriptor) : Ac
     override fun clone(): ActionSequence = this
 }
 
-class TestCall(name: String, val test: Method, val instance: ActionSequence?, val args: List<ActionSequence>) :
-    ActionSequence(name) {
+class TestCall(
+    name: String,
+    val test: Method,
+    val instance: ActionSequence?,
+    val args: List<ActionSequence>
+) : ActionSequence(name) {
     override fun print(): String = buildString {
         if (instance != null) append(instance.name).append(".")
         append(test.name)
@@ -122,6 +126,54 @@ class ActionList(
     }
 
     override fun clone() = ActionList(name, list.toMutableList())
+
+    fun clear() {
+        list.clear()
+    }
+}
+
+class ReflectionList(
+    name: String,
+    val list: MutableList<ReflectionCall>
+) : ActionSequence(name), Iterable<ReflectionCall> by list {
+    constructor(name: String) : this(name, mutableListOf())
+
+    fun add(call: ReflectionCall): ActionSequence {
+        this.list += call
+        return this
+    }
+
+    operator fun plusAssign(call: ReflectionCall) {
+        this.list += call
+    }
+
+    operator fun plusAssign(calls: List<ReflectionCall>) {
+        this.list += calls
+    }
+
+    override fun toString() = print()
+
+    override fun print(): String {
+        val builder = StringBuilder()
+        this.print(builder, mutableSetOf())
+        return builder.toString()
+    }
+
+    override fun print(builder: StringBuilder, visited: MutableSet<ActionSequence>) {
+        if (this in visited) return
+        visited += this
+        for (call in list) {
+            call.print(this, builder, visited)
+        }
+    }
+
+    fun reversed() = ReflectionList(name, list.reversed().toMutableList())
+    fun reverse(): ReflectionList {
+        this.list.reverse()
+        return this
+    }
+
+    override fun clone() = ReflectionList(name, list.toMutableList())
 
     fun clear() {
         list.clear()
@@ -313,6 +365,62 @@ data class StaticFieldGetter(val field: Field) : CodeAction {
     }
 }
 
+sealed interface ReflectionCall {
+    val parameters: List<ActionSequence>
+
+    fun print(owner: ActionSequence, builder: StringBuilder, visited: MutableSet<ActionSequence>)
+}
+
+data class ReflectionNewInstance(val type: Type) : ReflectionCall {
+    override val parameters = emptyList<ActionSequence>()
+
+    override fun toString() = "($type) newInstance($type.class)"
+
+    override fun print(owner: ActionSequence, builder: StringBuilder, visited: MutableSet<ActionSequence>) {
+        builder.appendLine("${owner.name} = ($type) newInstance($type.class)")
+    }
+}
+
+data class ReflectionNewArray(val type: Type, val length: ActionSequence) : ReflectionCall {
+    val asArray get() = type as ArrayType
+    override val parameters get() = listOf(length)
+
+    override fun toString() = "($type) newArray(${asArray.component}.class, $length)"
+
+    override fun print(owner: ActionSequence, builder: StringBuilder, visited: MutableSet<ActionSequence>) {
+        length.print(builder, visited)
+        builder.appendLine("${owner.name} = ($type) newArray(${asArray.component}.class, $length)")
+    }
+}
+
+data class ReflectionSetField(val field: Field, val value: ActionSequence) : ReflectionCall {
+    override val parameters: List<ActionSequence> get() = listOf(value)
+
+
+    override fun toString() = "setField(${field.name}, $value)"
+
+    override fun print(owner: ActionSequence, builder: StringBuilder, visited: MutableSet<ActionSequence>) {
+        value.print(builder, visited)
+        builder.appendLine("setField(${owner.name}, ${field.name}, $value")
+    }
+}
+
+data class ReflectionArrayWrite(
+    val elementType: Type,
+    val index: ActionSequence,
+    val value: ActionSequence
+) : ReflectionCall {
+    override val parameters: List<ActionSequence> get() = listOf(value)
+
+    override fun toString() = "setElement(array, $index, $value)"
+
+    override fun print(owner: ActionSequence, builder: StringBuilder, visited: MutableSet<ActionSequence>) {
+        index.print(builder, visited)
+        value.print(builder, visited)
+        builder.appendLine("setElement(${owner.name}, ${index.name}, ${value.name})")
+    }
+}
+
 class ActionSequenceRtMapper(val mode: KexRtManager.Mode) {
     private val cache = mutableMapOf<ActionSequence, ActionSequence>()
 
@@ -324,14 +432,27 @@ class ActionSequenceRtMapper(val mode: KexRtManager.Mode) {
             UnknownSequence(newTarget.term.toString(), ct.type.mapped, newTarget)
         }
         is TestCall -> TestCall(ct.name, ct.test, ct.instance?.let { map(it) }, ct.args.map { map(it) })
-        is ActionList -> if (ct in cache) cache[ct]!!
-        else {
-            val res = ActionList(ct.name.mapped)
-            cache[ct] = res
-            for (call in ct) {
-                res += map(call)
+        is ReflectionList -> when (ct) {
+            in cache -> cache[ct]!!
+            else -> {
+                val res = ReflectionList(ct.name.mapped)
+                cache[ct] = res
+                for (call in ct) {
+                    res += map(call)
+                }
+                res
             }
-            res
+        }
+        is ActionList -> when (ct) {
+            in cache -> cache[ct]!!
+            else -> {
+                val res = ActionList(ct.name.mapped)
+                cache[ct] = res
+                for (call in ct) {
+                    res += map(call)
+                }
+                res
+            }
         }
     }
 
@@ -352,6 +473,17 @@ class ActionSequenceRtMapper(val mode: KexRtManager.Mode) {
             KexRtManager.Mode.MAP -> rtMapped
             KexRtManager.Mode.UNMAP -> rtUnmapped
         }
+
+    fun map(api: ReflectionCall): ReflectionCall = when (api) {
+        is ReflectionArrayWrite -> ReflectionArrayWrite(api.elementType.mapped, map(api.index), map(api.value))
+        is ReflectionNewArray -> ReflectionNewArray(api.type.mapped, map(api.length))
+        is ReflectionNewInstance -> ReflectionNewInstance(api.type.mapped)
+        is ReflectionSetField -> {
+            val unmappedKlass = api.field.klass.mapped
+            val unmappedField = unmappedKlass.getField(api.field.name, api.field.type.mapped)
+            ReflectionSetField(unmappedField, map(api.value))
+        }
+    }
 
     fun map(api: CodeAction): CodeAction = when (api) {
         is ArrayWrite -> ArrayWrite(map(api.index), map(api.value))
