@@ -322,7 +322,7 @@ class CoverageReporter(
             val classCov = getCommonCounters<ClassCoverageInfo>(it.name, it)
             for (mc in it.methods) {
                 val kfgMethod = kfgClass.getMethod(mc.name, mc.desc)
-                classCov.methods += getCommonCounters<MethodCoverageInfo>(kfgMethod.prototype, mc)
+                classCov.methods += getCommonCounters<MethodCoverageInfo>(kfgMethod.prototype.fullyQualifiedName, mc)
             }
             classCov
         }.toSet()
@@ -330,7 +330,7 @@ class CoverageReporter(
     private fun getMethodCoverage(coverageBuilder: CoverageBuilder, method: Method): CommonCoverageInfo? {
         for (mc in coverageBuilder.classes.iterator().next().methods) {
             if (mc.name == method.name && mc.desc == method.asmDesc) {
-                return getCommonCounters<MethodCoverageInfo>(method.prototype, mc)
+                return getCommonCounters<MethodCoverageInfo>(method.prototype.fullyQualifiedName, mc)
             }
         }
         return null
