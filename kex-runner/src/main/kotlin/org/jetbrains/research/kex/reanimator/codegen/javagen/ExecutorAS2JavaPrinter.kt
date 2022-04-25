@@ -37,6 +37,8 @@ class ExecutorAS2JavaPrinter(
     private lateinit var callConstructor: JavaBuilder.JavaFunction
     private lateinit var callMethod: JavaBuilder.JavaFunction
     private var klassCounter = 0
+    private val printedDeclarations = hashSetOf<String>()
+    private val printedInsides = hashSetOf<String>()
 
     init {
         initReflection()
@@ -251,6 +253,8 @@ class ExecutorAS2JavaPrinter(
     override fun cleanup() {
         super.cleanup()
         testParams.clear()
+        printedDeclarations.clear()
+        printedInsides.clear()
     }
 
     override fun printActionSequence(
@@ -473,26 +477,25 @@ class ExecutorAS2JavaPrinter(
 
     override fun printReflectionList(reflectionList: ReflectionList): List<String> {
         val res = mutableListOf<String>()
-        printDeclarations(reflectionList, res, mutableSetOf())
-        printInsides(reflectionList, res, mutableSetOf())
+        printDeclarations(reflectionList, res)
+        printInsides(reflectionList, res)
         return res
     }
 
     fun printDeclarations(
         owner: ActionSequence,
-        result: MutableList<String>,
-        visited: MutableSet<String>
+        result: MutableList<String>
     ) {
         if (owner is ReflectionList) {
-            if (owner.name in visited) return
-            visited += owner.name
+            if (owner.name in printedDeclarations) return
+            printedDeclarations += owner.name
 
             for (api in owner) {
                 when (api) {
                     is ReflectionNewInstance -> result += printReflectionNewInstance(owner, api)
                     is ReflectionNewArray -> result += printReflectionNewArray(owner, api)
-                    is ReflectionSetField -> printDeclarations(api.value, result, visited)
-                    is ReflectionArrayWrite -> printDeclarations(api.value, result, visited)
+                    is ReflectionSetField -> printDeclarations(api.value, result)
+                    is ReflectionArrayWrite -> printDeclarations(api.value, result)
                 }
             }
         } else {
@@ -502,21 +505,20 @@ class ExecutorAS2JavaPrinter(
 
     fun printInsides(
         owner: ActionSequence,
-        result: MutableList<String>,
-        visited: MutableSet<String>
+        result: MutableList<String>
     ) {
         if (owner is ReflectionList) {
-            if (owner.name in visited) return
-            visited += owner.name
+            if (owner.name in printedInsides) return
+            printedInsides += owner.name
 
             for (api in owner) {
                 when (api) {
                     is ReflectionSetField -> {
-                        printInsides(api.value, result, visited)
+                        printInsides(api.value, result)
                         result += printReflectionSetField(owner, api)
                     }
                     is ReflectionArrayWrite -> {
-                        printInsides(api.value, result, visited)
+                        printInsides(api.value, result)
                         result += printReflectionArrayWrite(owner, api)
                     }
                     else -> {}
