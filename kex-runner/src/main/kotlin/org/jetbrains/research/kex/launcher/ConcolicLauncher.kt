@@ -39,7 +39,7 @@ class ConcolicLauncher(classPaths: List<String>, targetName: String) : KexLaunch
             +InstructionConcolicChecker(context, traceManager)
         }
         log.info(
-            CoverageReporter(containerClassLoader).execute(analysisLevel)
+            CoverageReporter(containerClassLoader).execute(context.cm, analysisLevel)
                 .print(kexConfig.getBooleanValue("kex", "printDetailedCoverage", false))
         )
     }

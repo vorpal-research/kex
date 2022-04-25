@@ -16,7 +16,9 @@ import org.jetbrains.research.kex.launcher.AnalysisLevel
 import org.jetbrains.research.kex.launcher.ClassLevel
 import org.jetbrains.research.kex.launcher.MethodLevel
 import org.jetbrains.research.kex.launcher.PackageLevel
+import org.jetbrains.research.kfg.ClassManager
 import org.jetbrains.research.kfg.Package
+import org.jetbrains.research.kfg.ir.Method
 import org.jetbrains.research.kfg.util.isClass
 import org.jetbrains.research.kthelper.assert.unreachable
 import org.jetbrains.research.kthelper.logging.log
@@ -219,7 +221,10 @@ class CoverageReporter(
         tests = testsCompiler.testsNames
     }
 
-    fun execute(analysisLevel: AnalysisLevel): CommonCoverageInfo {
+    fun execute(
+        cm: ClassManager,
+        analysisLevel: AnalysisLevel,
+    ): CommonCoverageInfo {
         val coverageBuilder: CoverageBuilder
         val result = when (analysisLevel) {
             is PackageLevel -> {
@@ -235,18 +240,18 @@ class CoverageReporter(
                     }
                 }
                 coverageBuilder = getCoverageBuilder(classes)
-                getPackageCoverage(analysisLevel.pkg, coverageBuilder)
+                getPackageCoverage(analysisLevel.pkg, cm, coverageBuilder)
             }
             is ClassLevel -> {
                 val klass = analysisLevel.klass.fullName
                 coverageBuilder = getCoverageBuilder(listOf("$klass.class"))
-                getClassCoverage(coverageBuilder).first()
+                getClassCoverage(cm, coverageBuilder).first()
             }
             is MethodLevel -> {
                 val method = analysisLevel.method
                 val klass = method.klass.fullName
                 coverageBuilder = getCoverageBuilder(listOf("$klass.class"))
-                getMethodCoverage(coverageBuilder, method.name)!!
+                getMethodCoverage(coverageBuilder, method)!!
             }
         }
         return result
@@ -308,19 +313,24 @@ class CoverageReporter(
     private val String.fullyQualifiedName: String
         get() = removeSuffix(".class").replace('/', '.')
 
-    private fun getClassCoverage(coverageBuilder: CoverageBuilder): Set<ClassCoverageInfo> =
+    private fun getClassCoverage(
+        cm: ClassManager,
+        coverageBuilder: CoverageBuilder
+    ): Set<ClassCoverageInfo> =
         coverageBuilder.classes.map {
+            val kfgClass = cm[it.name]
             val classCov = getCommonCounters<ClassCoverageInfo>(it.name, it)
             for (mc in it.methods) {
-                classCov.methods += getCommonCounters<MethodCoverageInfo>(mc.name, mc)
+                val kfgMethod = kfgClass.getMethod(mc.name, mc.desc)
+                classCov.methods += getCommonCounters<MethodCoverageInfo>(kfgMethod.prototype, mc)
             }
             classCov
         }.toSet()
 
-    private fun getMethodCoverage(coverageBuilder: CoverageBuilder, method: String): CommonCoverageInfo? {
+    private fun getMethodCoverage(coverageBuilder: CoverageBuilder, method: Method): CommonCoverageInfo? {
         for (mc in coverageBuilder.classes.iterator().next().methods) {
-            if (mc.name == method) {
-                return getCommonCounters<MethodCoverageInfo>(method, mc)
+            if (mc.name == method.name && mc.desc == method.asmDesc) {
+                return getCommonCounters<MethodCoverageInfo>(method.prototype, mc)
             }
         }
         return null
@@ -328,11 +338,12 @@ class CoverageReporter(
 
     private fun getPackageCoverage(
         pkg: Package,
+        cm: ClassManager,
         coverageBuilder: CoverageBuilder
     ): PackageCoverageInfo {
         val pc = PackageCoverageImpl(pkg.canonicalName, coverageBuilder.classes, coverageBuilder.sourceFiles)
         val packCov = getCommonCounters<PackageCoverageInfo>(pkg.canonicalName, pc)
-        packCov.classes.addAll(getClassCoverage(coverageBuilder))
+        packCov.classes.addAll(getClassCoverage(cm, coverageBuilder))
         return packCov
     }
 
