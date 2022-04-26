@@ -106,7 +106,7 @@ abstract class CommonCoverageInfo(
     open fun print(detailed: Boolean = false) = toString()
 
     override fun toString(): String = buildString {
-        appendLine(String.format("Coverage of %s %s:", name, level))
+        appendLine(String.format("Coverage of `%s` %s:", name, level))
         appendLine("    $instructionCoverage")
         appendLine("    $branchCoverage")
         appendLine("    $linesCoverage")
