@@ -370,7 +370,7 @@ class ExecutorAS2JavaPrinter(
             }
             +"Object[] args = new Object[${method.argTypes.size}]"
             for ((index, arg) in actionSequences.arguments.withIndex()) {
-                +"args[$index] = ${arg.name}"
+                +"args[$index] = ${arg.stackName}"
             }
             +when {
                 method.isConstructor -> "${callConstructor.name}(klass, argTypes, args)"
@@ -563,8 +563,8 @@ class ExecutorAS2JavaPrinter(
         }
         actualTypes[owner] = actualType
         val newArrayCall = elementType.kexType.primitiveName?.let {
-            "${newPrimitiveArrayMap[it]!!.name}(${call.length})"
-        } ?: "${newArray.name}(\"${(elementType as ClassType).klass.canonicalDesc}\", ${call.length})"
+            "${newPrimitiveArrayMap[it]!!.name}(${call.length.stackName})"
+        } ?: "${newArray.name}(\"${(elementType as ClassType).klass.canonicalDesc}\", ${call.length.stackName})"
         return listOf(
             "${printVarDeclaration(owner.name, actualType)} = ($actualType) $newArrayCall"
         )

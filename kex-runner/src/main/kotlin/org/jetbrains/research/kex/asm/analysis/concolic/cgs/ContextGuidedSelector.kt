@@ -7,9 +7,9 @@ import org.jetbrains.research.kex.asm.manager.instantiationManager
 import org.jetbrains.research.kex.ktype.kexType
 import org.jetbrains.research.kex.state.predicate.*
 import org.jetbrains.research.kex.state.term.ConstBoolTerm
-import org.jetbrains.research.kex.state.term.ConstIntTerm
 import org.jetbrains.research.kex.state.term.InstanceOfTerm
 import org.jetbrains.research.kex.state.term.NullTerm
+import org.jetbrains.research.kex.state.term.numericValue
 import org.jetbrains.research.kex.state.transformer.TermCollector
 import org.jetbrains.research.kex.trace.TraceManager
 import org.jetbrains.research.kex.trace.symbolic.*
@@ -123,32 +123,49 @@ class ContextGuidedSelector(
                 val switchInst = instruction as SwitchInst
                 val cond = pred.cond
                 val candidates = switchInst.branches.keys.map { (it as IntConstant).value }.toSet()
-                var result: Clause? = null
-                for (candidate in candidates) {
-                    val mutated = Clause(instruction, path(instruction.location) {
-                        cond equality candidate
+                candidates.randomOrNull()?.let {
+                    Clause(instruction, path(instruction.location) {
+                        cond equality it
                     })
-                    result = mutated
                 }
-                result
             }
             is EqualityPredicate -> {
                 val equalityPredicate = predicate as EqualityPredicate
                 val switchInst = instruction as SwitchInst
-                val (cond, value) = equalityPredicate.lhv to (equalityPredicate.rhv as ConstIntTerm).value
-                val candidates = switchInst.branches.keys.map { (it as IntConstant).value }.toSet() - value
-                var result: Clause? = null
-                for (candidate in candidates) {
-                    val mutated = Clause(instruction, path(instruction.location) {
-                        cond equality candidate
-                    })
-                    result = mutated
+                val cond = equalityPredicate.lhv
+
+
+                val outgoingPaths = switchInst.branches.toList()
+                    .groupBy({ it.second }, { it.first })
+                    .map { it.value.map { (it as IntConstant).value }.toSet() }
+
+                val equivalencePaths = mutableMapOf<Int, Set<Int>>()
+                for (set in outgoingPaths) {
+                    for (value in set) {
+                        equivalencePaths[value] = set
+                    }
                 }
-                result ?: run {
-                    val mutated = Clause(instruction, path(instruction.location) {
-                        cond `!in` switchInst.branches.keys.map { value(it) }
+
+                val visitedCandidates = executionTree.getPathVertex(this).predecessors
+                    .asSequence()
+                    .flatMap { it.successors }
+                    .map { it.clause.predicate }
+                    .filterIsInstance<EqualityPredicate>()
+                    .map { it.rhv.numericValue }
+                    .toSet()
+
+                val candidates = run {
+                    val currentRange = switchInst.branches.keys.map { (it as IntConstant).value }.toMutableSet()
+                    for (candidate in visitedCandidates) {
+                        currentRange.removeAll(equivalencePaths[candidate]!!)
+                    }
+                    currentRange
+                }
+
+                candidates.randomOrNull()?.let {
+                    Clause(instruction, path(instruction.location) {
+                        cond equality it
                     })
-                    mutated
                 }
             }
             else -> unreachable { log.error("Unexpected predicate in switch clause: $predicate") }
@@ -158,31 +175,48 @@ class ContextGuidedSelector(
                 val switchInst = instruction as TableSwitchInst
                 val cond = pred.cond
                 val candidates = switchInst.range.toSet()
-                var result: Clause? = null
-                for (candidate in candidates) {
-                    val mutated = Clause(instruction, path(instruction.location) {
-                        cond equality candidate
+                candidates.randomOrNull()?.let {
+                    Clause(instruction, path(instruction.location) {
+                        cond equality it
                     })
-                    result = mutated
                 }
-                result
             }
             is EqualityPredicate -> {
                 val switchInst = instruction as TableSwitchInst
-                val (cond, value) = pred.lhv to (pred.rhv as ConstIntTerm).value
-                val candidates = switchInst.range.toSet() - value
-                var result: Clause? = null
-                for (candidate in candidates) {
-                    val mutated = Clause(instruction, path(instruction.location) {
-                        cond equality candidate
-                    })
-                    result = mutated
+                val cond = pred.lhv
+
+                val outgoingPaths = switchInst.range
+                    .zip(switchInst.branches)
+                    .groupBy({ it.second }, { it.first })
+                    .map { it.value.toSet() }
+
+                val equivalencePaths = mutableMapOf<Int, Set<Int>>()
+                for (set in outgoingPaths) {
+                    for (value in set) {
+                        equivalencePaths[value] = set
+                    }
                 }
-                result ?: run {
-                    val mutated = Clause(instruction, path(instruction.location) {
-                        cond `!in` switchInst.range.map { const(it) }
+
+                val visitedCandidates = executionTree.getPathVertex(this).predecessors
+                    .asSequence()
+                    .flatMap { it.successors }
+                    .map { it.clause.predicate }
+                    .filterIsInstance<EqualityPredicate>()
+                    .map { it.rhv.numericValue }
+                    .toSet()
+
+                val candidates = run {
+                    val currentRange = switchInst.range.toMutableSet()
+                    for (candidate in visitedCandidates) {
+                        currentRange.removeAll(equivalencePaths[candidate]!!)
+                    }
+                    currentRange
+                }
+
+                candidates.randomOrNull()?.let {
+                    Clause(instruction, path(instruction.location) {
+                        cond equality it
                     })
-                    mutated
                 }
             }
             else -> unreachable { log.error("Unexpected predicate in switch clause: $predicate") }
