@@ -12,6 +12,7 @@ import org.jetbrains.research.kex.serialization.KexSerializer
 import org.jetbrains.research.kex.trace.symbolic.ExceptionResult
 import org.jetbrains.research.kex.trace.symbolic.SuccessResult
 import org.jetbrains.research.kex.trace.symbolic.TraceCollectorProxy
+import org.jetbrains.research.kex.util.getIntrinsics
 import org.jetbrains.research.kex.util.getPathSeparator
 import org.jetbrains.research.kex.util.getRuntime
 import org.jetbrains.research.kfg.ClassManager
@@ -59,7 +60,7 @@ class KexExecutor(args: Array<String>) {
             }
         }
         classManager = ClassManager(KfgConfig(flags = Flags.readAll, failOnError = false, verifyIR = false))
-        classManager.initialize(*listOfNotNull(*containers.toTypedArray(), getRuntime()).toTypedArray())
+        classManager.initialize(*listOfNotNull(*containers.toTypedArray(), getRuntime(), getIntrinsics()).toTypedArray())
     }
 
     @ExperimentalSerializationApi

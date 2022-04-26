@@ -32,7 +32,7 @@ abstract class ConcolicTest : KexRunnerTest() {
         executePipeline(analysisContext.cm, klass) {
             +InstructionConcolicChecker(analysisContext, traceManager)
         }
-        val coverage = CoverageReporter(jar.classLoader as URLClassLoader).execute(ClassLevel(klass))
+        val coverage = CoverageReporter(jar.classLoader as URLClassLoader).execute(klass.cm, ClassLevel(klass))
         log.debug(coverage.print(true))
         assertEquals(expectedCoverage, coverage.instructionCoverage.ratio)
     }

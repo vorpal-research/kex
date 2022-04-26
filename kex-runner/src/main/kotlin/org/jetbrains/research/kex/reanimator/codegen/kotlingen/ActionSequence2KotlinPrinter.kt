@@ -23,7 +23,7 @@ import kotlin.reflect.jvm.kotlinFunction
 import java.lang.reflect.Type as JType
 
 // TODO: this is work of satan, refactor this damn thing
-class ActionSequence2KotlinPrinter(
+open class ActionSequence2KotlinPrinter(
     val ctx: ExecutionContext,
     override val packageName: String,
     override val klassName: String
@@ -295,6 +295,7 @@ class ActionSequence2KotlinPrinter(
             is TestCall -> listOf(printTestCall(this))
             is UnknownSequence -> listOf(printUnknownSequence(this))
             is ActionList -> this.map { printApiCall(this, it) }
+            is ReflectionList -> this.flatMap { printReflectionCall(this, it) }
             is PrimaryValue<*> -> listOf<String>().also {
                 asConstant
             }
@@ -357,6 +358,12 @@ class ActionSequence2KotlinPrinter(
         is EnumValueCreation -> printEnumValueCreation(owner, codeAction)
         is StaticFieldGetter -> printStaticFieldGetter(owner, codeAction)
         else -> unreachable { log.error("Unknown call") }
+    }
+    protected fun printReflectionCall(owner: ActionSequence, reflectionCall: ReflectionCall): List<String> = when (reflectionCall) {
+        is ReflectionArrayWrite -> printReflectionArrayWrite(owner, reflectionCall)
+        is ReflectionNewArray -> printReflectionNewArray(owner, reflectionCall)
+        is ReflectionNewInstance -> printReflectionNewInstance(owner, reflectionCall)
+        is ReflectionSetField -> printReflectionSetField(owner, reflectionCall)
     }
 
     private val <T> PrimaryValue<T>.asConstant: String
@@ -533,4 +540,16 @@ class ActionSequence2KotlinPrinter(
         actualTypes[seq] = type
         return "val ${seq.name} = unknown<$type>()"
     }
+    protected open fun printReflectionNewInstance(owner: ActionSequence, call: ReflectionNewInstance): List<String> =
+        unreachable { log.error("Reflection calls are not supported in AS 2 Java printer") }
+
+    protected open fun printReflectionNewArray(owner: ActionSequence, call: ReflectionNewArray): List<String> =
+        unreachable { log.error("Reflection calls are not supported in AS 2 Java printer") }
+
+    protected open fun printReflectionSetField(owner: ActionSequence, call: ReflectionSetField): List<String> =
+        unreachable { log.error("Reflection calls are not supported in AS 2 Java printer") }
+
+    protected open fun printReflectionArrayWrite(owner: ActionSequence, call: ReflectionArrayWrite): List<String> =
+        unreachable { log.error("Reflection calls are not supported in AS 2 Java printer") }
+
 }

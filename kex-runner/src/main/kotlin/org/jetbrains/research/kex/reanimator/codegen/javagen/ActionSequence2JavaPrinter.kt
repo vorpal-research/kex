@@ -215,73 +215,87 @@ open class ActionSequence2JavaPrinter(
             else -> ASClass(this)
         }
 
-    protected fun resolveTypes(actionSequence: ActionSequence) {
+    protected fun resolveTypes(
+        actionSequence: ActionSequence,
+        visited: MutableSet<String> = mutableSetOf()
+    ) {
+        if (actionSequence.name in visited) return
+        visited += actionSequence.name
+
         when (actionSequence) {
-            is ActionList -> actionSequence.reversed().map { resolveTypes(it) }
+            is ActionList -> actionSequence.reversed().map { resolveTypes(it, visited) }
+            is ReflectionList -> actionSequence.reversed().map { resolveTypes(it, visited) }
             is TestCall -> {
-                actionSequence.instance?.let { resolveTypes(it) }
-                actionSequence.args.forEach { resolveTypes(it) }
+                actionSequence.instance?.let { resolveTypes(it, visited) }
+                actionSequence.args.forEach { resolveTypes(it, visited) }
             }
             else -> {}
         }
     }
 
-    private fun resolveTypes(constructor: Constructor<*>, args: List<ActionSequence>) {
+    private fun resolveTypes(constructor: Constructor<*>, args: List<ActionSequence>, visited: MutableSet<String>) {
         val params = constructor.genericParameterTypes
         args.zip(params).forEach { (arg, param) ->
             if (arg !in resolvedTypes) {
                 resolvedTypes[arg] = param.asType
-                resolveTypes(arg)
+                resolveTypes(arg, visited)
             }
         }
     }
 
-    private fun resolveTypes(method: Method, args: List<ActionSequence>) {
+    private fun resolveTypes(method: Method, args: List<ActionSequence>, visited: MutableSet<String>) {
         val params = method.genericParameterTypes.toList()
         args.zip(params).forEach { (arg, param) ->
             if (arg !in resolvedTypes) {
                 resolvedTypes[arg] = param.asType
-                resolveTypes(arg)
+                resolveTypes(arg, visited)
             }
         }
     }
 
-    private fun resolveTypes(call: CodeAction) = when (call) {
+    private fun resolveTypes(call: CodeAction, visited: MutableSet<String>) = when (call) {
         is DefaultConstructorCall -> {
         }
         is ConstructorCall -> {
             val reflection = ctx.loader.loadClass(call.constructor.klass)
             val constructor = reflection.getConstructor(call.constructor, ctx.loader)
-            resolveTypes(constructor, call.args)
+            resolveTypes(constructor, call.args, visited)
         }
         is ExternalConstructorCall -> {
             val reflection = ctx.loader.loadClass(call.constructor.klass)
             val constructor = reflection.getMethod(call.constructor, ctx.loader)
-            resolveTypes(constructor, call.args)
+            resolveTypes(constructor, call.args, visited)
         }
         is ExternalMethodCall -> {
             val reflection = ctx.loader.loadClass(call.method.klass)
             val constructor = reflection.getMethod(call.method, ctx.loader)
-            resolveTypes(constructor, call.args)
+            resolveTypes(constructor, call.args, visited)
         }
         is InnerClassConstructorCall -> {
             val reflection = ctx.loader.loadClass(call.constructor.klass)
             val constructor = reflection.getConstructor(call.constructor, ctx.loader)
-            resolveTypes(call.outerObject)
-            resolveTypes(constructor, call.args)
+            resolveTypes(call.outerObject, visited)
+            resolveTypes(constructor, call.args, visited)
         }
         is MethodCall -> {
             val reflection = ctx.loader.loadClass(call.method.klass)
             val method = reflection.getMethod(call.method, ctx.loader)
-            resolveTypes(method, call.args)
+            resolveTypes(method, call.args, visited)
         }
         is StaticMethodCall -> {
             val reflection = ctx.loader.loadClass(call.method.klass)
             val method = reflection.getMethod(call.method, ctx.loader)
-            resolveTypes(method, call.args)
+            resolveTypes(method, call.args, visited)
         }
         else -> {
         }
+    }
+
+    private fun resolveTypes(reflectionCall: ReflectionCall, visited: MutableSet<String>) = when (reflectionCall) {
+        is ReflectionArrayWrite -> resolveTypes(reflectionCall.value, visited)
+        is ReflectionSetField -> resolveTypes(reflectionCall.value, visited)
+        is ReflectionNewArray -> {}
+        is ReflectionNewInstance -> {}
     }
 
     protected open fun ActionSequence.printAsJava() {
@@ -290,7 +304,8 @@ open class ActionSequence2JavaPrinter(
         val statements = when (this) {
             is TestCall -> printTestCall(this)
             is UnknownSequence -> printUnknownSequence(this)
-            is ActionList -> this.flatMap { printApiCall(this, it) }
+            is ActionList -> printActionList(this)
+            is ReflectionList -> printReflectionList(this)
             is PrimaryValue<*> -> listOf<String>().also {
                 asConstant
             }
@@ -300,6 +315,12 @@ open class ActionSequence2JavaPrinter(
                 +statement
         }
     }
+
+    protected open fun printActionList(actionList: ActionList): List<String> =
+        actionList.flatMap { printApiCall(actionList, it) }
+
+    protected open fun printReflectionList(reflectionList: ReflectionList): List<String> =
+        reflectionList.flatMap { printReflectionCall(reflectionList, it) }
 
     protected val Class.javaString: String get() = this.type.javaString
 
@@ -337,6 +358,14 @@ open class ActionSequence2JavaPrinter(
         get() = when (this) {
             is PrimaryValue<*> -> asConstant
             else -> name
+        }
+
+    protected fun printReflectionCall(owner: ActionSequence, reflectionCall: ReflectionCall): List<String> =
+        when (reflectionCall) {
+            is ReflectionArrayWrite -> printReflectionArrayWrite(owner, reflectionCall)
+            is ReflectionNewArray -> printReflectionNewArray(owner, reflectionCall)
+            is ReflectionNewInstance -> printReflectionNewInstance(owner, reflectionCall)
+            is ReflectionSetField -> printReflectionSetField(owner, reflectionCall)
         }
 
     protected fun printApiCall(owner: ActionSequence, codeAction: CodeAction): List<String> = when (codeAction) {
@@ -686,6 +715,18 @@ open class ActionSequence2JavaPrinter(
         return listOf("$callee.${sequence.test.name}($args)")
     }
 
+    protected open fun printReflectionNewInstance(owner: ActionSequence, call: ReflectionNewInstance): List<String> =
+        unreachable { log.error("Reflection calls are not supported in AS 2 Java printer") }
+
+    protected open fun printReflectionNewArray(owner: ActionSequence, call: ReflectionNewArray): List<String> =
+        unreachable { log.error("Reflection calls are not supported in AS 2 Java printer") }
+
+    protected open fun printReflectionSetField(owner: ActionSequence, call: ReflectionSetField): List<String> =
+        unreachable { log.error("Reflection calls are not supported in AS 2 Java printer") }
+
+    protected open fun printReflectionArrayWrite(owner: ActionSequence, call: ReflectionArrayWrite): List<String> =
+        unreachable { log.error("Reflection calls are not supported in AS 2 Java printer") }
+
     protected open fun printUnknownSequence(sequence: UnknownSequence): List<String> {
         val actualType = sequence.target.type.asType
         return listOf(
@@ -700,4 +741,5 @@ open class ActionSequence2JavaPrinter(
             }
         )
     }
+
 }

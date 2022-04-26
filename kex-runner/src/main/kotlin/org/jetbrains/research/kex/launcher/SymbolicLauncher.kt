@@ -29,7 +29,7 @@ class SymbolicLauncher(classPaths: List<String>, targetName: String) : KexLaunch
         }
 
         DescriptorStatistics.printStatistics()
-        val coverage = CoverageReporter(containerClassLoader).execute(analysisLevel)
+        val coverage = CoverageReporter(containerClassLoader).execute(context.cm, analysisLevel)
         log.info(
             coverage.print(kexConfig.getBooleanValue("kex", "printDetailedCoverage", false))
         )
