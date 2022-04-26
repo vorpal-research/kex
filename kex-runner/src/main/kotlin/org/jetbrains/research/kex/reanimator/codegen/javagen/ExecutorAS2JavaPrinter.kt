@@ -556,9 +556,12 @@ class ExecutorAS2JavaPrinter(
     }
 
     override fun printReflectionNewArray(owner: ActionSequence, call: ReflectionNewArray): List<String> {
-        val actualType = call.asArray.asType
-        actualTypes[owner] = actualType
         val elementType = call.asArray.component
+        val actualType = when {
+            elementType.isPrimary -> call.asArray.asType
+            else -> ASArray(ASClass(ctx.types.objectType))
+        }
+        actualTypes[owner] = actualType
         val newArrayCall = elementType.kexType.primitiveName?.let {
             "${newPrimitiveArrayMap[it]!!.name}(${call.length})"
         } ?: "${newArray.name}(\"${(elementType as ClassType).klass.canonicalDesc}\", ${call.length})"
