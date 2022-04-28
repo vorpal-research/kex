@@ -236,6 +236,9 @@ class StringMethodAdapter(val cm: ClassManager) : RecollectingTransformer<String
         state {
             argArray equality arg.valueArray().load()
         }
+        assume {
+            (argArray neq null) equality true
+        }
         state {
             term.valueArray().store(argArray)
         }
@@ -267,6 +270,9 @@ class StringMethodAdapter(val cm: ClassManager) : RecollectingTransformer<String
         state {
             fieldTerm equality term.valueArray().load()
         }
+        assume {
+            (fieldTerm neq null) equality true
+        }
         state {
             lhv equality fieldTerm.length()
         }
@@ -277,6 +283,9 @@ class StringMethodAdapter(val cm: ClassManager) : RecollectingTransformer<String
         val length = generate(KexInt())
         state {
             fieldTerm equality term.valueArray().load()
+        }
+        assume {
+            (fieldTerm neq null) equality true
         }
         state {
             length equality fieldTerm.length()
@@ -290,6 +299,9 @@ class StringMethodAdapter(val cm: ClassManager) : RecollectingTransformer<String
         val fieldTerm = generate(KexCharArray())
         state {
             fieldTerm equality term.valueArray().load()
+        }
+        assume {
+            (fieldTerm neq null) equality true
         }
         state {
             lhv equality fieldTerm[index].load()
@@ -350,8 +362,14 @@ class StringMethodAdapter(val cm: ClassManager) : RecollectingTransformer<String
                     state {
                         thisValue equality term.valueArray().load()
                     }
+                    assume {
+                        (thisValue neq null) equality true
+                    }
                     state {
                         otherValue equality casted.valueArray().load()
+                    }
+                    assume {
+                        (otherValue neq null) equality true
                     }
                     state {
                         thisLength equality thisValue.length()
@@ -418,8 +436,14 @@ class StringMethodAdapter(val cm: ClassManager) : RecollectingTransformer<String
                     state {
                         thisValue equality term.valueArray().load()
                     }
+                    assume {
+                        (thisValue neq null) equality true
+                    }
                     state {
                         otherValue equality other.valueArray().load()
+                    }
+                    assume {
+                        (otherValue neq null) equality true
                     }
                     state {
                         thisLength equality thisValue.length()
@@ -490,8 +514,14 @@ class StringMethodAdapter(val cm: ClassManager) : RecollectingTransformer<String
             state {
                 thisValue equality term.valueArray().load()
             }
+            assume {
+                (thisValue neq null) equality true
+            }
             state {
                 otherValue equality other.valueArray().load()
+            }
+            assume {
+                (otherValue neq null) equality true
             }
             state {
                 thisLength equality thisValue.length()
@@ -551,6 +581,9 @@ class StringMethodAdapter(val cm: ClassManager) : RecollectingTransformer<String
         return basic {
             state {
                 thisValue equality term.valueArray().load()
+            }
+            assume {
+                (thisValue neq null) equality true
             }
             state {
                 length equality (endIndex - beginIndex)
@@ -612,8 +645,14 @@ class StringMethodAdapter(val cm: ClassManager) : RecollectingTransformer<String
         state {
             thisValue equality term.valueArray().load()
         }
+        assume {
+            (thisValue neq null) equality true
+        }
         state {
             otherValue equality other.valueArray().load()
+        }
+        assume {
+            (otherValue neq null) equality true
         }
         state {
             thisLength equality thisValue.length()

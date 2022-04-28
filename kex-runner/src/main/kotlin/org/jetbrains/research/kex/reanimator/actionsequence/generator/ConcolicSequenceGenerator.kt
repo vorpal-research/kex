@@ -19,6 +19,7 @@ class ConcolicSequenceGenerator(override val context: GeneratorContext) : Genera
     init {
         typeGenerators += ConstantGenerator(context)
         typeGenerators += CharsetGenerator(this)
+        typeGenerators += StringGenerator(this)
         typeGenerators += ClassGenerator(this)
         typeGenerators += FieldGenerator(this)
         typeGenerators += ReflectionEnumGenerator(this)

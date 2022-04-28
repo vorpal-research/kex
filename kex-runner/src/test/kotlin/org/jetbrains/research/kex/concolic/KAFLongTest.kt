@@ -12,8 +12,8 @@ class KAFLongTest : ConcolicTest() {
         assertCoverage(cm["org/jetbrains/research/kex/test/concolic/kaf/Lesson2"], 1.0)
     }
 
-//    @Test
-//    fun lesson6() {
-//        assertCoverage(cm["org/jetbrains/research/kex/test/concolic/kaf/Lesson6"], 1.0)
-//    }
+    @Test
+    fun lesson6() {
+        assertCoverage(cm["org/jetbrains/research/kex/test/concolic/kaf/Lesson6"], 1.0)
+    }
 }

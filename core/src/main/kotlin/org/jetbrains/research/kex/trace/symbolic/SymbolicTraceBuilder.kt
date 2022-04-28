@@ -25,11 +25,12 @@ import org.jetbrains.research.kfg.type.Type
 import org.jetbrains.research.kfg.type.parseDesc
 import org.jetbrains.research.kfg.type.parseStringToType
 import org.jetbrains.research.kthelper.KtException
-import org.jetbrains.research.kthelper.`try`
 import org.jetbrains.research.kthelper.assert.ktassert
 import org.jetbrains.research.kthelper.assert.unreachable
 import org.jetbrains.research.kthelper.collection.stackOf
 import org.jetbrains.research.kthelper.logging.log
+import org.jetbrains.research.kthelper.toInt
+import org.jetbrains.research.kthelper.`try`
 
 class SymbolicTraceException(message: String, cause: Throwable) : KtException(message, cause) {
     override fun toString() = "SymbolicTraceException: $message: ${cause?.message}"
@@ -871,6 +872,18 @@ class SymbolicTraceBuilder(
         updateCatches(instruction)
     }
 
+    private fun numericValue(value: Any?): Number = when (value) {
+        is Boolean -> value.toInt()
+        is Byte -> value
+        is Char -> value.code
+        is Short -> value
+        is Int -> value
+        is Long -> value
+        is Float -> value
+        is Double -> value
+        else -> unreachable { log.error("Could not compute numeriv value of $value") }
+    }
+
     override fun switch(
         inst: String,
         value: String,
@@ -882,7 +895,7 @@ class SymbolicTraceBuilder(
         val kfgValue = parseValue(value)
         val termValue = mkValue(kfgValue)
 
-        val intValue = concreteValue as Int
+        val intValue = numericValue(concreteValue).toInt()
         val kfgConstant = ctx.values.getInt(intValue)
         termValue.updateInfo(kfgValue, concreteValue.getAsDescriptor(termValue.type))
 

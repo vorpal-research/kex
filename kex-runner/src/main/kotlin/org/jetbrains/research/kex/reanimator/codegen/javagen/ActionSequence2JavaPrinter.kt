@@ -269,6 +269,7 @@ open class ActionSequence2JavaPrinter(
         is ExternalMethodCall -> {
             val reflection = ctx.loader.loadClass(call.method.klass)
             val constructor = reflection.getMethod(call.method, ctx.loader)
+            resolveTypes(call.instance)
             resolveTypes(constructor, call.args, visited)
         }
         is InnerClassConstructorCall -> {
