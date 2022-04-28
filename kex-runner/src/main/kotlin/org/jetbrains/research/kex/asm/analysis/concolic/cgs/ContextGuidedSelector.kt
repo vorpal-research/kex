@@ -208,7 +208,7 @@ class ContextGuidedSelector(
                 val candidates = run {
                     val currentRange = switchInst.range.toMutableSet()
                     for (candidate in visitedCandidates) {
-                        currentRange.removeAll(equivalencePaths[candidate]!!)
+                        currentRange.removeAll(equivalencePaths.getOrDefault(candidate, setOf()))
                     }
                     currentRange
                 }
