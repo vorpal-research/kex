@@ -1,5 +1,5 @@
 #parse("definitions.vm")
-import org.jetbrains.research.kex.smt.${solver.toLowerCase()}.${solver}SMTExpr
+import org.vorpal.research.kex.smt.${solver.toLowerCase()}.${solver}SMTExpr
 import kotlin.math.max
 
 private val engine = ${solver}Engine

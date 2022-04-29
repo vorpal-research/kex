@@ -1,11 +1,11 @@
 #parse("definitions.vm")
-import org.jetbrains.research.kex.smt.${solver.toLowerCase()}.${solver}SMTExprFactory
-import org.jetbrains.research.kfg.ir.Class
-import org.jetbrains.research.kfg.type.ClassType
-import org.jetbrains.research.kfg.type.TypeFactory
-import org.jetbrains.research.kfg.type.Type
-import org.jetbrains.research.kex.state.term.Term
-import org.jetbrains.research.kex.util.javaDesc
+import org.vorpal.research.kex.smt.${solver.toLowerCase()}.${solver}SMTExprFactory
+import org.vorpal.research.kfg.ir.Class
+import org.vorpal.research.kfg.type.ClassType
+import org.vorpal.research.kfg.type.TypeFactory
+import org.vorpal.research.kfg.type.Type
+import org.vorpal.research.kex.state.term.Term
+import org.vorpal.research.kex.util.javaDesc
 
 typealias Bool_ = $Bool
 typealias Ptr_ = $Bitvector32

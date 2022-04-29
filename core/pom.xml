@@ -4,7 +4,7 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <parent>
         <artifactId>kex</artifactId>
-        <groupId>org.jetbrains.research</groupId>
+        <groupId>org.vorpal.research</groupId>
         <version>0.0.1</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
@@ -15,6 +15,7 @@
         <ini4j.version>0.5.4</ini4j.version>
         <reflections.version>0.10.2</reflections.version>
         <easy-random.version>4.3.0-kex-0.0.1</easy-random.version>
+        <symkt.version>0.0.0.4</symkt.version>
     </properties>
 
     <dependencies>
@@ -34,29 +35,29 @@
             <version>${logback.version}</version>
         </dependency>
         <dependency>
-            <groupId>org.jetbrains.research</groupId>
+            <groupId>org.vorpal.research</groupId>
             <artifactId>kt-helper</artifactId>
             <version>${kt-helper.version}</version>
         </dependency>
         <dependency>
             <groupId>ru.spbstu</groupId>
             <artifactId>SymKt</artifactId>
-            <version>0.0.0.4</version>
+            <version>${symkt.version}</version>
         </dependency>
 
 
         <dependency>
-            <groupId>org.jetbrains.research</groupId>
+            <groupId>org.vorpal.research</groupId>
             <artifactId>kfg</artifactId>
             <version>${kfg.version}</version>
         </dependency>
         <dependency>
-            <groupId>org.jetbrains.research</groupId>
+            <groupId>org.vorpal.research</groupId>
             <artifactId>kex-annotation-processor</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
-            <groupId>org.jetbrains.research</groupId>
+            <groupId>org.vorpal.research</groupId>
             <artifactId>kex-test</artifactId>
             <version>${project.version}</version>
             <scope>test</scope>
@@ -122,20 +123,20 @@
                             </sourceDirs>
                             <annotationProcessorPaths>
                                 <annotationProcessorPath>
-                                    <groupId>org.jetbrains.research</groupId>
+                                    <groupId>org.vorpal.research</groupId>
                                     <artifactId>kex-annotation-processor</artifactId>
                                     <version>${project.version}</version>
                                 </annotationProcessorPath>
                             </annotationProcessorPaths>
                             <annotationProcessors>
                                 <annotationProcessor>
-                                    org.jetbrains.research.kex.smt.SolverInfoProcessor
+                                    org.vorpal.research.kex.smt.SolverInfoProcessor
                                 </annotationProcessor>
                                 <annotationProcessor>
-                                    org.jetbrains.research.kex.InheritanceInfoProcessor
+                                    org.vorpal.research.kex.InheritanceInfoProcessor
                                 </annotationProcessor>
                                 <annotationProcessor>
-                                    org.jetbrains.research.kex.TransformerGenerator
+                                    org.vorpal.research.kex.TransformerGenerator
                                 </annotationProcessor>
                             </annotationProcessors>
                             <annotationProcessorArgs>

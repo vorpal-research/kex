@@ -21,7 +21,7 @@
         <appender-ref ref="stdout"/>
     </appender>
 
-    <logger name="org.jetbrains.research" level="ALL" additivity="false">
+    <logger name="org.vorpal.research" level="ALL" additivity="false">
         <appender-ref ref="asyncFileLogger"/>
         <appender-ref ref="asyncStdout"/>
     </logger>

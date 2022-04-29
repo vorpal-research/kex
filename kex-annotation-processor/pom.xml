@@ -4,7 +4,7 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <parent>
         <artifactId>kex</artifactId>
-        <groupId>org.jetbrains.research</groupId>
+        <groupId>org.vorpal.research</groupId>
         <version>0.0.1</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
@@ -14,19 +14,19 @@
     <artifactId>kex-annotation-processor</artifactId>
 
     <properties>
-        <velocity.version>1.7</velocity.version>
+        <velocity.version>2.3</velocity.version>
     </properties>
 
     <dependencies>
         <dependency>
-            <groupId>org.jetbrains.research</groupId>
+            <groupId>org.vorpal.research</groupId>
             <artifactId>kt-helper</artifactId>
             <version>${kt-helper.version}</version>
         </dependency>
 
         <dependency>
             <groupId>org.apache.velocity</groupId>
-            <artifactId>velocity</artifactId>
+            <artifactId>velocity-engine-core</artifactId>
             <version>${velocity.version}</version>
         </dependency>
 
