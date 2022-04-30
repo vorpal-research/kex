@@ -129,7 +129,7 @@ class DefectChecker(
         checkNullity(inst, state, inst.owner)
     }
 
-    private fun getAllAssertions(assertionsArray: Value): Set<Term> = method.flatten()
+    private fun getAllAssertions(assertionsArray: Value): Set<Term> = method.body.flatten()
         .asSequence()
         .mapNotNull { it as? ArrayStoreInst }
         .filter { it.arrayRef == assertionsArray }

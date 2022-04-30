@@ -126,7 +126,7 @@ class ClassInstantiationDetector(override val cm: ClassManager, val visibilityLe
         if (!method.isStatic || method.argTypes.any { it.isSubtypeOf(returnType) } || method.isSynthetic) return
 
         var returnClass = returnType.klass
-        method.flatten().firstOrNull { it is ReturnInst }?.let {
+        method.body.flatten().firstOrNull { it is ReturnInst }?.let {
             it as ReturnInst
             if (it.returnValue is NewInst) {
                 returnClass = (it.returnValue.type as ClassType).klass

@@ -27,7 +27,7 @@ class BranchAdapter(
         ctx = it
         try {
             if (!method.isAbstract && !method.isNative && method.hasBody) {
-                domTree = DominatorTreeBuilder(method).build()
+                domTree = DominatorTreeBuilder(method.body).build()
             }
             super.visit(method)
         } catch (e: KtException) {

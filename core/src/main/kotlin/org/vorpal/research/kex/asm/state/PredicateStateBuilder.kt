@@ -25,16 +25,16 @@ class PredicateStateBuilder(val method: Method) {
     fun init() {
         predicateBuilder.visit(method)
         if (!method.isAbstract && !method.isNative && method.hasBody) {
-            val order = GraphTraversal(method).topologicalSort()
+            val order = GraphTraversal(method.body).topologicalSort()
 
-            domTree.putAll(DominatorTreeBuilder(method).build())
+            domTree.putAll(DominatorTreeBuilder(method.body).build())
             this.order.addAll(order)
         }
     }
 
     val methodState: PredicateState?
         get() {
-            val insts = method.flatten()
+            val insts = method.body.flatten()
             return when {
                 insts.any { it is ReturnInst } -> insts.firstOrNull { it is ReturnInst }
                     ?.run { getInstructionState(this) }
@@ -86,7 +86,7 @@ class PredicateStateBuilder(val method: Method) {
     }
 
     private fun getBlockEntryState(bb: BasicBlock): PredicateState? {
-        if (bb in method.catchBlocks) throw InvalidPredicateStateError("Cannot build predicate state for catch block")
+        if (bb in method.body.catchBlocks) throw InvalidPredicateStateError("Cannot build predicate state for catch block")
 
         val idom = domTree[bb]?.idom ?: return emptyState()
 

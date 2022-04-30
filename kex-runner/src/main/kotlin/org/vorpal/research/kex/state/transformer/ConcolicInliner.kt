@@ -94,7 +94,7 @@ class ConcolicInliner(
                     return null
                 }
                 when {
-                    result.isEmpty() -> null
+                    result.body.isEmpty() -> null
                     else -> result
                 }
             }

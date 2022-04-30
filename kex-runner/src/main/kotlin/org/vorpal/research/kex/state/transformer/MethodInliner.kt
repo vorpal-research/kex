@@ -68,7 +68,7 @@ interface Inliner<T> : RecollectingTransformer<Inliner<T>> {
     }
 
     fun prepareInlinedState(method: Method, mappings: Map<Term, Term>): PredicateState? {
-        if (method.isEmpty()) return null
+        if (method.body.isEmpty()) return null
 
         val builder = psa.builder(method)
         val endState = builder.methodState ?: return null

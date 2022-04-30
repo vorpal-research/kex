@@ -8,7 +8,6 @@ import org.vorpal.research.kex.reanimator.actionsequence.ActionList
 import org.vorpal.research.kex.reanimator.actionsequence.ActionSequence
 import org.vorpal.research.kex.reanimator.actionsequence.ConstructorCall
 import org.vorpal.research.kex.reanimator.actionsequence.DefaultConstructorCall
-import org.vorpal.research.kfg.ir.MethodDesc
 import org.vorpal.research.kfg.type.SystemTypeNames
 
 class StringGenerator(private val fallback: Generator) : Generator {
@@ -34,7 +33,7 @@ class StringGenerator(private val fallback: Generator) : Generator {
         }
         val value = fallback.generate(valueDescriptor, generationDepth + 1)
 
-        val constructor = stringClass.getMethod("<init>", MethodDesc(arrayOf(types.getArrayType(types.charType)), types.voidType))
+        val constructor = stringClass.getMethod("<init>", types.voidType, types.getArrayType(types.charType))
         actionSequence += ConstructorCall(constructor, listOf(value))
         return actionSequence
     }

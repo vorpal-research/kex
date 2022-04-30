@@ -225,7 +225,7 @@ internal class MethodSerializer(val cm: ClassManager, val classSerializer: KSeri
             }
         }
         input.endStructure(descriptor)
-        return klass.getMethod(name, MethodDesc(argTypes, retval))
+        return klass.getMethod(name, MethodDescriptor(argTypes, retval))
     }
 }
 
@@ -242,7 +242,7 @@ internal class InstructionSerializer(
 
     override fun serialize(encoder: Encoder, value: Instruction) {
         val output = encoder.beginStructure(descriptor)
-        output.encodeSerializableElement(descriptor, 0, methodSerializer, value.parent.parent)
+        output.encodeSerializableElement(descriptor, 0, methodSerializer, value.parent.method)
         output.encodeStringElement(descriptor, 1, "${value.name}")
         output.endStructure(descriptor)
     }

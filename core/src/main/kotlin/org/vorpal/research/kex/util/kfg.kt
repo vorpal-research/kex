@@ -8,7 +8,6 @@ import org.vorpal.research.kex.ktype.type
 import org.vorpal.research.kfg.ClassManager
 import org.vorpal.research.kfg.Package
 import org.vorpal.research.kfg.ir.Class
-import org.vorpal.research.kfg.ir.MethodDesc
 import org.vorpal.research.kfg.ir.value.NameMapper
 import org.vorpal.research.kfg.ir.value.Value
 import org.vorpal.research.kfg.ir.value.instruction.CmpOpcode
@@ -27,7 +26,7 @@ fun Package.isParent(klass: Class) = isParent(klass.pkg)
 fun InstructionBuilder.wrapValue(value: Value): Instruction {
     val wrapperType = cm.type.getWrapper(value.type as PrimaryType) as ClassType
     val wrapperClass = wrapperType.klass
-    val valueOfMethod = wrapperClass.getMethod("valueOf", MethodDesc(arrayOf(value.type), wrapperType))
+    val valueOfMethod = wrapperClass.getMethod("valueOf", wrapperType, value.type)
     return valueOfMethod.staticCall(wrapperClass, arrayOf(value))
 }
 

@@ -2,7 +2,7 @@ package org.vorpal.research.kex.asm.util
 
 import org.vorpal.research.kfg.ClassManager
 import org.vorpal.research.kfg.ir.Field
-import org.vorpal.research.kfg.ir.MethodDesc
+import org.vorpal.research.kfg.ir.MethodDescriptor
 import org.vorpal.research.kfg.ir.value.UsageContext
 import org.vorpal.research.kfg.ir.value.Value
 import org.vorpal.research.kfg.ir.value.instruction.Instruction
@@ -27,8 +27,7 @@ abstract class PrintStreamWrapper(final override val cm: ClassManager, override 
 
     private fun call(methodName: String, value: Value): List<Instruction> {
         val printArg = getPrintArgType(value)
-        val desc = MethodDesc(arrayOf(printArg), types.voidType)
-        val printMethod = printStreamClass.getMethod(methodName, desc)
+        val printMethod = printStreamClass.getMethod(methodName, types.voidType, printArg)
         val append = printMethod.virtualCall(printStreamClass, stream, arrayOf(value))
         return listOf(append)
     }
@@ -41,14 +40,12 @@ abstract class PrintStreamWrapper(final override val cm: ClassManager, override 
     fun println(value: Value) = call("println", value)
 
     fun flush(): List<Instruction> = buildList {
-        val desc = MethodDesc(arrayOf(), types.voidType)
-        val flushMethod = printStreamClass.getMethod("flush", desc)
+        val flushMethod = printStreamClass.getMethod("flush", types.voidType)
         +flushMethod.virtualCall(printStreamClass, stream, arrayOf())
     }
 
     fun close(): List<Instruction> = buildList {
-        val desc = MethodDesc(arrayOf(), types.voidType)
-        val closeMethod = printStreamClass.getMethod("close", desc)
+        val closeMethod = printStreamClass.getMethod("close", types.voidType)
         +closeMethod.virtualCall(printStreamClass, stream, arrayOf())
     }
 }
@@ -60,8 +57,7 @@ class StringBuilderWrapper(override val cm: ClassManager, override val ctx: Usag
     val insns = arrayListOf(builder)
 
     init {
-        val desc = MethodDesc(arrayOf(), types.voidType)
-        val initMethod = klass.getMethod("<init>", desc)
+        val initMethod = klass.getMethod("<init>", types.voidType)
         insns.add(initMethod.specialCall(klass, builder, arrayOf()))
     }
 
@@ -79,15 +75,13 @@ class StringBuilderWrapper(override val cm: ClassManager, override val ctx: Usag
                 value.type == types.stringType -> value.type
                 else -> types.objectType
             }
-            val desc = MethodDesc(arrayOf(appendArg), stringBuilderType)
-            val appendMethod = klass.getMethod("append", desc)
+            val appendMethod = klass.getMethod("append", stringBuilderType, appendArg)
             insns.add(appendMethod.virtualCall(klass, builder, arrayOf(value)))
         }
     }
 
     fun toStringWrapper(): Instruction {
-        val desc = MethodDesc(arrayOf(), types.stringType)
-        val toStringMethod = klass.getMethod("toString", desc)
+        val toStringMethod = klass.getMethod("toString", types.stringType)
         val string = toStringMethod.virtualCall(klass, "${name}Str", builder, arrayOf())
         insns.add(string)
         return string
@@ -130,27 +124,26 @@ class ReflectionWrapper(override val cm: ClassManager, override val ctx: UsageCo
 
     fun getClass(value: Value): Instruction {
         val type = types.objectType as ClassType
-        val desc = MethodDesc(arrayOf(), types.getRefType(classClass))
-        val getClassMethod = type.klass.getMethod("loadClass", desc)
+        val getClassMethod = type.klass.getMethod("loadClass", types.getRefType(classClass))
         return getClassMethod.virtualCall(type.klass, "klass", value, arrayOf())
     }
 
     fun getDeclaredField(klass: Value, name: String): Instruction {
         val getFieldMethod = classClass.getMethod(
             "getDeclaredField",
-            MethodDesc(arrayOf(types.stringType), types.getRefType(fieldClass))
+            types.getRefType(fieldClass), types.stringType
         )
         return getFieldMethod.virtualCall(classClass, name, klass, arrayOf(values.getString(name)))
     }
 
     fun setAccessible(field: Value): Instruction {
         val setAccessibleMethod =
-            fieldClass.getMethod("setAccessible", MethodDesc(arrayOf(types.boolType), types.voidType))
+            fieldClass.getMethod("setAccessible", types.voidType, types.boolType)
         return setAccessibleMethod.virtualCall(fieldClass, "set", field, arrayOf(values.trueConstant))
     }
 
     fun getField(field: Value, owner: Value): Instruction {
-        val getMethod = fieldClass.getMethod("get", MethodDesc(arrayOf(types.objectType), types.objectType))
+        val getMethod = fieldClass.getMethod("get", types.objectType, types.objectType)
         return getMethod.virtualCall(fieldClass, "get", field, arrayOf(owner))
     }
 }
@@ -161,7 +154,7 @@ class ValuePrinter(override val cm: ClassManager, override val ctx: UsageContext
     val insns = arrayListOf<Instruction>()
 
     private fun getIdentityHashCode(value: Value): Instruction {
-        val hashCodeMethod = system.getMethod("identityHashCode", MethodDesc(arrayOf(types.objectType), types.intType))
+        val hashCodeMethod = system.getMethod("identityHashCode", types.intType, types.objectType)
         val result = hashCodeMethod.staticCall(system, arrayOf(value))
         insns.add(result)
         return result
@@ -249,26 +242,25 @@ class FileOutputStreamWrapper(
         val file = fileClass.new()
         +file
 
-        val constructorDesc = MethodDesc(arrayOf(types.stringType), types.voidType)
-        val initMethod = fileClass.getMethod("<init>", constructorDesc)
+        val initMethod = fileClass.getMethod("<init>", types.voidType, types.stringType)
         val params = arrayOf(values.getString(fileName))
         +initMethod.specialCall(fileClass, file, params)
 
-        val createFileDesc = MethodDesc(arrayOf(), types.boolType)
-        val createMethod = fileClass.getMethod("createNewFile", createFileDesc)
+        val createMethod = fileClass.getMethod("createNewFile", types.boolType)
         +createMethod.virtualCall(fileClass, file, arrayOf())
 
         val fos = fileOutputStreamClass.new()
         +fos
-        val fosConstructorDesc = MethodDesc(arrayOf(types.getRefType(fileClass), types.boolType), types.voidType)
-        val fosInitMethod = fileOutputStreamClass.getMethod("<init>", fosConstructorDesc)
+        val fosInitMethod = fileOutputStreamClass.getMethod(
+            "<init>",
+            types.voidType, types.getRefType(fileClass), types.boolType
+        )
         val fosParams = arrayOf(file, values.getBool(append))
         +fosInitMethod.specialCall(fileOutputStreamClass, fos, fosParams)
 
         +stream
         val outputStreamClass = types.getRefType("java/io/OutputStream")
-        val psConstructorDesc = MethodDesc(arrayOf(outputStreamClass, types.boolType), types.voidType)
-        val psInitMethod = printStreamClass.getMethod("<init>", psConstructorDesc)
+        val psInitMethod = printStreamClass.getMethod("<init>", types.voidType, outputStreamClass, types.boolType)
         val psParams = arrayOf(fos, values.getBool(autoFlush))
         +psInitMethod.specialCall(printStreamClass, stream, psParams)
     }

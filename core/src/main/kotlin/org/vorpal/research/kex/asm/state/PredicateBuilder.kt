@@ -236,7 +236,7 @@ class PredicateBuilder(override val cm: ClassManager) : MethodVisitor {
     override fun visitReturnInst(inst: ReturnInst) {
         if (inst.hasReturnValue) {
             innerPredicateMap[inst] = state(inst.location) {
-                val method = inst.parent.parent
+                val method = inst.parent.method
                 val lhv = `return`(method)
                 val rhv = mkValue(inst.returnValue)
 
