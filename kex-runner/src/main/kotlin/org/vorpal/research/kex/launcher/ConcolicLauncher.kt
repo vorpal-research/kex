@@ -26,7 +26,7 @@ class ConcolicLauncher(classPaths: List<String>, targetName: String) : KexLaunch
     }
 
     override fun preparePackage(ctx: ExecutionContext, psa: PredicateStateAnalysis, pkg: Package) = executePipeline(ctx.cm, pkg) {
-        +ClassInstantiationDetector(ctx.cm, Visibility.PRIVATE)
+        +ClassInstantiationDetector(ctx.cm, visibilityLevel)
     }
 
     override fun launch() {
@@ -34,7 +34,6 @@ class ConcolicLauncher(classPaths: List<String>, targetName: String) : KexLaunch
 
         preparePackage(context, PredicateStateAnalysis(context.cm))
         runPipeline(context) {
-            +MethodWrapperInitializer(context.cm)
             +SystemExitTransformer(context.cm)
             +InstructionConcolicChecker(context, traceManager)
         }
