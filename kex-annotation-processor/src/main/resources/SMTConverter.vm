@@ -1,19 +1,19 @@
 #parse("definitions.vm")
-import org.jetbrains.research.kex.smt.${solver.toLowerCase()}.${solver}SMTConverter
-import org.jetbrains.research.kex.state.*
-import org.jetbrains.research.kex.state.predicate.*
-import org.jetbrains.research.kex.state.term.*
-import org.jetbrains.research.kex.state.transformer.memspace
-import org.jetbrains.research.kex.state.transformer.*
-import org.jetbrains.research.kfg.ir.Class
-import org.jetbrains.research.kfg.ir.value.instruction.BinaryOpcode
-import org.jetbrains.research.kfg.ir.value.instruction.CmpOpcode
-import org.jetbrains.research.kex.config.kexConfig
-import org.jetbrains.research.kfg.type.ClassType
-import org.jetbrains.research.kfg.type.Type
-import org.jetbrains.research.kfg.type.TypeFactory
-import org.jetbrains.research.kfg.type.NullType
-import org.jetbrains.research.kthelper.collection.dequeOf
+import org.vorpal.research.kex.smt.${solver.toLowerCase()}.${solver}SMTConverter
+import org.vorpal.research.kex.state.*
+import org.vorpal.research.kex.state.predicate.*
+import org.vorpal.research.kex.state.term.*
+import org.vorpal.research.kex.state.transformer.memspace
+import org.vorpal.research.kex.state.transformer.*
+import org.vorpal.research.kfg.ir.Class
+import org.vorpal.research.kfg.ir.value.instruction.BinaryOpcode
+import org.vorpal.research.kfg.ir.value.instruction.CmpOpcode
+import org.vorpal.research.kex.config.kexConfig
+import org.vorpal.research.kfg.type.ClassType
+import org.vorpal.research.kfg.type.Type
+import org.vorpal.research.kfg.type.TypeFactory
+import org.vorpal.research.kfg.type.NullType
+import org.vorpal.research.kthelper.collection.dequeOf
 import java.util.*
 
 private typealias Factory_ = $factory

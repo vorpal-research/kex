@@ -27,7 +27,7 @@
         </encoder>
     </appender>
 
-    <logger name="org.jetbrains.research" level="ALL" additivity="false">
+    <logger name="org.vorpal.research" level="ALL" additivity="false">
         <appender-ref ref="kexTestFileLogger"/>
         <appender-ref ref="filteredStdout"/>
     </logger>

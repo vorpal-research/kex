@@ -12,7 +12,7 @@ Kex is a platform for analysis of Java  bytecode.
   mvn install:install-file -Dfile=/usr/lib/com.microsoft.z3.jar -DgroupId=com.microsoft 
   -DartifactId=z3 -Dversion=4.8.6 -Dpackaging=jar
   ```
-* [boolector-java](https://aur.archlinux.org/packages/boolector-java/) v3.2.5
+* [boolector-java](https://aur.archlinux.org/packages/boolector-java/) v3.2.6
 
 # Build
 
