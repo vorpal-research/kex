@@ -3,8 +3,6 @@ package org.jetbrains.research.kex.evolutions
 
 import org.jetbrains.research.kfg.ClassManager
 import org.jetbrains.research.kfg.analysis.IRVerifier
-import org.jetbrains.research.kfg.visitor.Loop
-import org.jetbrains.research.kfg.visitor.LoopVisitor
 import org.jetbrains.research.kfg.ir.BasicBlock
 import org.jetbrains.research.kfg.ir.BodyBlock
 import org.jetbrains.research.kfg.ir.Method
@@ -17,6 +15,8 @@ import org.jetbrains.research.kfg.ir.value.instruction.Instruction
 import org.jetbrains.research.kfg.ir.value.instruction.PhiInst
 import org.jetbrains.research.kfg.ir.value.usageContext
 import org.jetbrains.research.kfg.type.IntType
+import org.jetbrains.research.kfg.visitor.Loop
+import org.jetbrains.research.kfg.visitor.LoopVisitor
 import ru.spbstu.*
 
 open class LoopOptimizer(cm: ClassManager) : Evolutions(cm), LoopVisitor {
@@ -24,9 +24,10 @@ open class LoopOptimizer(cm: ClassManager) : Evolutions(cm), LoopVisitor {
     protected val phiToEvo = mutableMapOf<PhiInst, Symbolic>()
     protected val freshVars = mutableMapOf<Loop, Var>()
     override val preservesLoopInfo get() = false
+
     override fun cleanup() {}
 
-    override fun visit(method: Method) = method.usageContext.use {
+    protected fun precalculateEvolutions(method: Method) {
         cleanup()
         if (!method.hasBody) return
         walkLoops(method).forEach { loop ->
@@ -43,6 +44,10 @@ open class LoopOptimizer(cm: ClassManager) : Evolutions(cm), LoopVisitor {
                 }
             }
         }
+    }
+
+    override fun visit(method: Method) = method.usageContext.use {
+        precalculateEvolutions(method)
 
         for (b in method) for (i in b) {
             transform(i)
@@ -115,7 +120,7 @@ open class LoopOptimizer(cm: ClassManager) : Evolutions(cm), LoopVisitor {
         insertBefore(afterBlock, e, loop)
     }
 
-    protected fun insertInductive(loop: Loop)  = with(ctx) {
+    protected fun insertInductive(loop: Loop) = with(ctx) {
         val one = values.getInt(1)
         val tmpPhi = instructions.getPhi(ctx, IntType, mapOf())
 
@@ -153,12 +158,18 @@ open class LoopOptimizer(cm: ClassManager) : Evolutions(cm), LoopVisitor {
     }
 
     private fun Sum.generateCode(collector: MutableList<Instruction>): Value? {
-        val lcm = lcm(this.constant.den, this.parts.values.fold(1L) { acc, v -> lcm(acc, v.den) })
+        val lcm = lcm((constant as? SymRational)?.den ?: 1, this.parts.values.fold(1L) { acc, v ->
+            if (v is SymRational) lcm(acc, v.den) else acc
+        })
         val results = mutableListOf<Value>()
         this.parts.forEach {
             val res = it.key.generateCode(collector) ?: return null
+            val coeff = when (val v = it.value) {
+                is SymRational -> values.getInt((v * lcm).toInt())
+                is SymDouble -> values.getDouble((v * lcm).toDouble())
+            }
             val newInstruction =
-                instructions.getBinary(ctx, BinaryOpcode.MUL, res, values.getInt((it.value * lcm).wholePart.toInt()))
+                instructions.getBinary(ctx, BinaryOpcode.MUL, res, coeff)
             collector.add(newInstruction)
             results.add(newInstruction.get())
         }
@@ -167,7 +178,7 @@ open class LoopOptimizer(cm: ClassManager) : Evolutions(cm), LoopVisitor {
             collector.add(newValue)
             newValue
         }
-        if (constant.num == 0L) {
+        if (constant.equals(0L)) {
             if (lcm == 1L) {
                 return res
             }
@@ -175,8 +186,12 @@ open class LoopOptimizer(cm: ClassManager) : Evolutions(cm), LoopVisitor {
             collector.add(divLcm)
             return divLcm
         }
+        val cnst = when (val c = constant) {
+            is SymRational -> values.getInt((c * lcm).toInt())
+            is SymDouble -> values.getDouble((c * lcm).toDouble())
+        }
         val addConst =
-            instructions.getBinary(ctx, BinaryOpcode.ADD, res, values.getInt((this.constant * lcm).wholePart.toInt()))
+            instructions.getBinary(ctx, BinaryOpcode.ADD, res, cnst)
         collector.add(addConst)
         if (lcm == 1L) {
             return addConst
@@ -186,13 +201,15 @@ open class LoopOptimizer(cm: ClassManager) : Evolutions(cm), LoopVisitor {
         return divLcm
     }
 
+
     private fun Product.generateCode(collector: MutableList<Instruction>): Value? {
         val results = mutableListOf<Value>()
         this.parts.forEach {
-            if (it.value.den != 1L) return null
+            val v = it.value
+            if (v !is SymRational || !v.isWhole()) return null
             val base = it.key.generateCode(collector) ?: return null
             var pre = base
-            for (i in 1 until it.value.wholePart) {
+            for (i in 1 until v.wholePart) {
                 val newInst =
                     instructions.getBinary(ctx, BinaryOpcode.MUL, pre, base)
                 collector.add(newInst)
@@ -206,24 +223,37 @@ open class LoopOptimizer(cm: ClassManager) : Evolutions(cm), LoopVisitor {
             collector.add(newValue)
             newValue
         }
-        if (constant.isWhole() && constant.wholePart == 1L) {
-            return res
-        }
-        val mulConst =
-            instructions.getBinary(ctx, BinaryOpcode.MUL, res, values.getInt(constant.num.toInt()))
-        collector.add(mulConst)
+        when (val const = constant) {
+            is SymRational -> {
+                if (const.isWhole() && const.wholePart == 1L) {
+                    return res
+                }
+                val mulConst =
+                    instructions.getBinary(ctx, BinaryOpcode.MUL, res, values.getInt(const.num.toInt()))
+                collector.add(mulConst)
 
-        if (constant.isWhole()) {
-            return mulConst
+                if (const.isWhole()) {
+                    return mulConst
+                }
+                val divLcm =
+                    instructions.getBinary(ctx, BinaryOpcode.DIV, mulConst, values.getInt(const.den.toInt()))
+                collector.add(divLcm)
+                return divLcm
+            }
+            is SymDouble -> {
+                val mulConst =
+                    instructions.getBinary(ctx, BinaryOpcode.MUL, res, values.getDouble(const.toDouble()))
+                collector.add(mulConst)
+                return mulConst
+            }
         }
-        val divLcm = instructions.getBinary(ctx, BinaryOpcode.DIV, mulConst, values.getInt(constant.den.toInt()))
-        collector.add(divLcm)
-        return divLcm
     }
 
-    private fun Const.generateCode(): Value? {
-        return values.getConstant(this.value.wholePart)
-    }
+    private fun Const.generateCode(): Value? =
+        when (val v = this.value) {
+            is SymRational -> values.getConstant(v.toLong())
+            is SymDouble -> values.getConstant(v.toDouble())
+        }
 
     private fun Var.generateCode(): Value {
         return var2inst[this]!!
@@ -273,7 +303,7 @@ open class LoopOptimizer(cm: ClassManager) : Evolutions(cm), LoopVisitor {
                 phiList.add(Pair(it, res))
                 true
             }) {
-                phiList.forEach{ it.first.replaceAllUsesWith(ctx, it.second)}
+            phiList.forEach { it.first.replaceAllUsesWith(ctx, it.second) }
             newBlock
         } else {
             null

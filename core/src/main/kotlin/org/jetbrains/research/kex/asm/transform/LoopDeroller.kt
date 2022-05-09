@@ -5,7 +5,6 @@ import org.jetbrains.research.kex.config.kexConfig
 import org.jetbrains.research.kex.evolutions.LoopOptimizer
 import org.jetbrains.research.kex.evolutions.defaultVar
 import org.jetbrains.research.kex.evolutions.evaluateEvolutions
-import org.jetbrains.research.kex.evolutions.walkLoops
 import org.jetbrains.research.kfg.ClassManager
 import org.jetbrains.research.kfg.ir.BasicBlock
 import org.jetbrains.research.kfg.ir.BodyBlock
@@ -20,9 +19,8 @@ import org.jetbrains.research.kthelper.graph.NoTopologicalSortingException
 import org.jetbrains.research.kthelper.logging.log
 import org.jetbrains.research.kthelper.toInt
 import ru.spbstu.Var
-import java.lang.Math.abs
-import java.lang.Math.min
-
+import kotlin.math.abs
+import kotlin.math.min
 
 private val derollCount = kexConfig.getIntValue("loop", "derollCount", 3)
 private val maxDerollCount = kexConfig.getIntValue("loop", "maxDerollCount", 0)
@@ -120,7 +118,7 @@ class LoopDeroller(override val cm: ClassManager) : LoopOptimizer(cm) {
         // init state
         unroll(
             loop,
-            if (useBackstabbing && tryBackstabbing(loop, blockOrder.first())) 1 else
+            if (tryBackstabbing(loop, blockOrder.first())) 1 else
             getDerollCount(loop)
         )
     }
@@ -409,24 +407,6 @@ class LoopDeroller(override val cm: ClassManager) : LoopOptimizer(cm) {
         }
     }
 
-    private fun precalculateEvolutions(method: Method) {
-        cleanup()
-        if (!method.hasBody) return
-        walkLoops(method).forEach { loop ->
-            loop
-                .header
-                .takeWhile { it is PhiInst }
-                .filterIsInstance<PhiInst>()
-                .forEach {
-                    loopPhis[it] = loop
-                }
-            loop.body.forEach { basicBlock ->
-                basicBlock.forEach {
-                    inst2loop.getOrPut(it) { loop }
-                }
-            }
-        }
-    }
 
     private fun tryBackstabbing(loop: Loop, firstBlock: BasicBlock): Boolean {
         if (loop.latches.isEmpty() || loop.preheaders.isEmpty() || loop !in loopPhis.values) {
@@ -439,7 +419,8 @@ class LoopDeroller(override val cm: ClassManager) : LoopOptimizer(cm) {
         loopPhis.keys.forEach {
             try {
                 if (loop.latch in it.incomings &&
-                        loop.preheader in it.incomings) {
+                    loop.preheader in it.incomings
+                ) {
                     phiToEvo[it] = evaluateEvolutions(buildPhiEquation(it), freshVars)
                 }
             } catch (e: StackOverflowError) {
