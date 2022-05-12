@@ -218,7 +218,7 @@ class ClassInstantiationDetector(override val cm: ClassManager, val visibilityLe
                 addInstantiableClass(parent, instantiableKlass)
             }
         }
-        ClassInstantiationManagerImpl[klass] = instantiableKlass
+        StringClassInstantiationManagerImpl[klass] = instantiableKlass
     }
 
     private fun addExternalCtor(klass: Class, method: Method) {
@@ -227,6 +227,6 @@ class ClassInstantiationDetector(override val cm: ClassManager, val visibilityLe
                 addExternalCtor(parent, method)
             }
         }
-        ClassInstantiationManagerImpl[klass] = method
+        StringClassInstantiationManagerImpl[klass] = method
     }
 }
