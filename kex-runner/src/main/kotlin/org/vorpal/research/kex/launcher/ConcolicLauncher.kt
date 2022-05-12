@@ -32,7 +32,7 @@ class ConcolicLauncher(classPaths: List<String>, targetName: String) : KexLaunch
     override fun launch() {
         val traceManager = InstructionTraceManager()
 
-        preparePackage(context, PredicateStateAnalysis(context.cm))
+//        preparePackage(context, PredicateStateAnalysis(context.cm))
         runPipeline(context) {
             +SystemExitTransformer(context.cm)
             +InstructionConcolicChecker(context, traceManager)
