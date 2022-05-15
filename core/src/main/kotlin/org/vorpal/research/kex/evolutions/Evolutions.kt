@@ -231,8 +231,7 @@ open class Evolutions(override val cm: ClassManager) : MethodVisitor {
  * @param method given method.
  * @return sequence of all loops in the method.
  */
-fun walkLoops(method: Method) = sequence {
-    val topLevel = method.getLoopInfo()
+fun walkLoops(topLevel: List<Loop>) = sequence {
     for (loop in topLevel) yieldAll(walkLoops(loop))
 }
 

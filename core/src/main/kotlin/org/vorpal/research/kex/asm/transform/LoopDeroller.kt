@@ -5,13 +5,14 @@ import org.vorpal.research.kex.config.kexConfig
 import org.vorpal.research.kex.evolutions.LoopOptimizer
 import org.vorpal.research.kex.evolutions.defaultVar
 import org.vorpal.research.kex.evolutions.evaluateEvolutions
-import org.vorpal.research.kex.evolutions.walkLoops
 import org.vorpal.research.kfg.ClassManager
 import org.vorpal.research.kfg.ir.BasicBlock
 import org.vorpal.research.kfg.ir.BodyBlock
 import org.vorpal.research.kfg.ir.CatchBlock
 import org.vorpal.research.kfg.ir.Method
 import org.vorpal.research.kfg.ir.value.*
+import org.vorpal.research.kfg.ir.value.EmptyUsageContext.addUser
+import org.vorpal.research.kfg.ir.value.EmptyUsageContext.users
 import org.vorpal.research.kfg.ir.value.instruction.*
 import org.vorpal.research.kfg.visitor.Loop
 import org.vorpal.research.kthelper.assert.unreachable
@@ -97,8 +98,8 @@ class LoopDeroller(override val cm: ClassManager) : LoopOptimizer(cm) {
         if (!method.hasBody) return
         ctx = it
         try {
-            precalculateEvolutions(method)
             val loops = method.getLoopInfo()
+            precalculateEvolutions(loops)
             loops.forEach { loop -> freshVars[loop] = Var.fresh("iteration") }
             loops.forEach { visitLoop(it) }
             updateLoopInfo(method)
@@ -410,7 +411,13 @@ class LoopDeroller(override val cm: ClassManager) : LoopOptimizer(cm) {
 
 
     private fun tryBackstabbing(loop: Loop, firstBlock: BasicBlock): Boolean {
-        if (loop.latches.isEmpty() || loop.preheaders.isEmpty() || loop !in loopPhis.values) {
+        if (loop.latches.isEmpty()) {
+            return false
+        }
+        if (loop.preheaders.isEmpty() || !loop.hasSinglePreheader) {
+            return false
+        }
+        if (loop !in loopPhis.values) {
             return false
         }
 
@@ -430,7 +437,9 @@ class LoopDeroller(override val cm: ClassManager) : LoopOptimizer(cm) {
         }
 
         val inst = createInductive(loop)
-        val block = rebuild(loop) ?: return false
+        val p = rebuild(loop) ?: return false
+        val block = p.first
+        val phiList = p.second
         if (block.isEmpty()) return false
         val a = firstBlock.last()
         firstBlock.remove(a)

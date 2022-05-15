@@ -1,7 +1,7 @@
-package org.jetbrains.research.kex.evolutions
+package org.vorpal.research.kex.evolutions
 
-import org.jetbrains.research.kfg.ir.value.instruction.BinaryOpcode
-import org.jetbrains.research.kfg.ir.value.instruction.UnaryOpcode
+import org.vorpal.research.kfg.ir.value.instruction.BinaryOpcode
+import org.vorpal.research.kfg.ir.value.instruction.UnaryOpcode
 import ru.spbstu.*
 
 fun BinaryOpcode.toFunc(): (Symbolic, Symbolic) -> Symbolic = when (this) {
