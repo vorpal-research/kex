@@ -299,6 +299,9 @@ open class ActionSequence2KotlinPrinter(
             is PrimaryValue<*> -> listOf<String>().also {
                 asConstant
             }
+            is StringValue -> listOf<String>().also {
+                asConstant
+            }
         }
         with(current) {
             for (statement in statements)
@@ -342,6 +345,7 @@ open class ActionSequence2KotlinPrinter(
     private val ActionSequence.stackName: String
         get() = when (this) {
             is PrimaryValue<*> -> asConstant
+            is StringValue -> asConstant
             else -> name
         }
 
@@ -401,6 +405,11 @@ open class ActionSequence2KotlinPrinter(
             }
             else -> unreachable { log.error("Unknown primary value $this") }
         }
+
+    private val StringValue.asConstant: String
+        get() = "\"$value\"".also {
+                actualTypes[this] = ASClass(ctx.types.nullType)
+            }
 
     private fun ActionSequence.cast(reqType: ASType?): String {
         val actualType = actualTypes[this] ?: return this.stackName

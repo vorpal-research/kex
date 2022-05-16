@@ -39,6 +39,10 @@ interface ClassInstantiationManager {
     }
 }
 
+@Deprecated(
+    message = "use StringClassInstantiationManagerImpl that is more efficient with lazy kfg",
+    replaceWith = ReplaceWith("org.vorpal.research.kex.asm.manager.StringClassInstantiationManagerImpl")
+)
 private object ClassInstantiationManagerImpl : ClassInstantiationManager {
     private val predefinedConcreteInstanceInfo = with(SystemTypeNames) {
         mutableMapOf(
@@ -190,7 +194,7 @@ class ClassInstantiationDetector(override val cm: ClassManager, val visibilityLe
     override fun cleanup() {}
 
     override fun visit(klass: Class) {
-        if (ClassInstantiationManagerImpl.isDirectlyInstantiable(klass, visibilityLevel))
+        if (StringClassInstantiationManagerImpl.isDirectlyInstantiable(klass, visibilityLevel))
             addInstantiableClass(klass, klass)
         super.visit(klass)
     }

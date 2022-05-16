@@ -274,7 +274,7 @@ class ExecutorAS2JavaPrinter(
                 if (generateSetup) {
                     runIf(!method.isConstructor) {
                         actionSequences.instance?.let {
-                            if (it !is PrimaryValue<*>)
+                            if (!it.isConstantValue)
                                 testParams += field(it.name, type("Object"))
                         }
                     }
@@ -302,6 +302,7 @@ class ExecutorAS2JavaPrinter(
                                 }
                             } ?: unreachable { log.error("Unexpected call in arg") }
                             is PrimaryValue<*> -> return@forEach
+                            is StringValue -> return@forEach
                             else -> unreachable { log.error("Unexpected call in arg") }
                         }
                         val fieldType = type.kexType.primitiveName?.let { type(it) } ?: type("Object")
@@ -381,7 +382,7 @@ class ExecutorAS2JavaPrinter(
     override fun printConstructorCall(owner: ActionSequence, call: ConstructorCall): List<String> {
         call.args.forEach { it.printAsJava() }
         val args = call.args.joinToString(", ") {
-            val prefix = if (it !is PrimaryValue<*>) "(${resolvedTypes[it]}) " else ""
+            val prefix = if (!it.isConstantValue) "(${resolvedTypes[it]}) " else ""
             prefix + it.stackName
         }
         val actualType = ASClass(call.constructor.klass.type)

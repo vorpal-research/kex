@@ -1,13 +1,12 @@
 package org.vorpal.research.kex.reanimator.actionsequence.generator
 
+import org.vorpal.research.kex.descriptor.ArrayDescriptor
+import org.vorpal.research.kex.descriptor.ConstantDescriptor
 import org.vorpal.research.kex.descriptor.Descriptor
 import org.vorpal.research.kex.descriptor.ObjectDescriptor
 import org.vorpal.research.kex.ktype.KexArray
 import org.vorpal.research.kex.ktype.KexChar
-import org.vorpal.research.kex.reanimator.actionsequence.ActionList
-import org.vorpal.research.kex.reanimator.actionsequence.ActionSequence
-import org.vorpal.research.kex.reanimator.actionsequence.ConstructorCall
-import org.vorpal.research.kex.reanimator.actionsequence.DefaultConstructorCall
+import org.vorpal.research.kex.reanimator.actionsequence.*
 import org.vorpal.research.kfg.type.SystemTypeNames
 
 class StringGenerator(private val fallback: Generator) : Generator {
@@ -20,21 +19,20 @@ class StringGenerator(private val fallback: Generator) : Generator {
         descriptor as? ObjectDescriptor ?: throw IllegalArgumentException()
         descriptor.reduce()
 
-        val name = "${descriptor.term}"
-        val actionSequence = ActionList(name)
-        saveToCache(descriptor, actionSequence)
-
-        val stringClass = context.cm.stringClass
-
-        val valueDescriptor = descriptor["value", KexArray(KexChar())]
-        if (valueDescriptor == null) {
-            actionSequence += DefaultConstructorCall(stringClass)
-            return actionSequence
+        when (val valueDescriptor = descriptor["value", KexArray(KexChar())] as? ArrayDescriptor) {
+            null -> StringValue()
+            else -> {
+                val actualString = buildString {
+                    for (i in 0 until valueDescriptor.length) {
+                        val currentChar = when (i) {
+                            in valueDescriptor.elements -> (valueDescriptor.elements[i] as ConstantDescriptor.Char).value
+                            else -> ' '
+                        }
+                        append(currentChar)
+                    }
+                }
+                StringValue(actualString)
+            }
         }
-        val value = fallback.generate(valueDescriptor, generationDepth + 1)
-
-        val constructor = stringClass.getMethod("<init>", types.voidType, types.getArrayType(types.charType))
-        actionSequence += ConstructorCall(constructor, listOf(value))
-        return actionSequence
     }
 }

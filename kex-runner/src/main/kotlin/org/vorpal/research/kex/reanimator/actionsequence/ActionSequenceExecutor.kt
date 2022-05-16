@@ -58,6 +58,7 @@ class ActionSequenceExecutor(val ctx: ExecutionContext) {
         var current: Any? = null
         when (actionSequence) {
             is PrimaryValue<*> -> current = actionSequence.value
+            is StringValue -> current = actionSequence.value
             is UnknownSequence -> current = null
             is ActionList -> for (call in actionSequence) {
                 current = when (call) {
