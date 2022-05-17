@@ -13,6 +13,17 @@ class JavaBuilder(val pkg: String = "") {
             '\t', '\n', '\b', '\r', '\u000c', '\'', '\"', '\\' -> true
             else -> false
         }
+
+        fun escapeCharIfNeeded(char: Char) = when (char) {
+            '\t' -> "\\t"
+            '\b' -> "\\b"
+            '\n' -> "\\n"
+            '\r' -> "\\r"
+            '\u000c' -> "\\f"
+            '\'' -> "\\'"
+            '\"' -> "\\\""
+            else -> char
+        }
     }
 
     private val imports = mutableSetOf<String>()

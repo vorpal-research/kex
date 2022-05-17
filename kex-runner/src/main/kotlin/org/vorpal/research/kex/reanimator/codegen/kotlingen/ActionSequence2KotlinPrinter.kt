@@ -6,7 +6,6 @@ import org.vorpal.research.kex.ktype.type
 import org.vorpal.research.kex.parameters.Parameters
 import org.vorpal.research.kex.reanimator.actionsequence.*
 import org.vorpal.research.kex.reanimator.codegen.ActionSequencePrinter
-import org.vorpal.research.kex.reanimator.codegen.javagen.JavaBuilder
 import org.vorpal.research.kex.util.getConstructor
 import org.vorpal.research.kex.util.getMethod
 import org.vorpal.research.kex.util.kex
@@ -364,12 +363,14 @@ open class ActionSequence2KotlinPrinter(
         is StaticFieldGetter -> printStaticFieldGetter(owner, codeAction)
         else -> unreachable { log.error("Unknown call") }
     }
-    protected fun printReflectionCall(owner: ActionSequence, reflectionCall: ReflectionCall): List<String> = when (reflectionCall) {
-        is ReflectionArrayWrite -> printReflectionArrayWrite(owner, reflectionCall)
-        is ReflectionNewArray -> printReflectionNewArray(owner, reflectionCall)
-        is ReflectionNewInstance -> printReflectionNewInstance(owner, reflectionCall)
-        is ReflectionSetField -> printReflectionSetField(owner, reflectionCall)
-    }
+
+    protected fun printReflectionCall(owner: ActionSequence, reflectionCall: ReflectionCall): List<String> =
+        when (reflectionCall) {
+            is ReflectionArrayWrite -> printReflectionArrayWrite(owner, reflectionCall)
+            is ReflectionNewArray -> printReflectionNewArray(owner, reflectionCall)
+            is ReflectionNewInstance -> printReflectionNewInstance(owner, reflectionCall)
+            is ReflectionSetField -> printReflectionSetField(owner, reflectionCall)
+        }
 
     private val <T> PrimaryValue<T>.asConstant: String
         get() = when (val value = value) {
@@ -409,12 +410,7 @@ open class ActionSequence2KotlinPrinter(
 
     private val StringValue.asConstant: String
         get() {
-            val escapedValue = value.map {
-                when {
-                    JavaBuilder.isEscapeChar(it) -> "\\$it"
-                    else -> "$it"
-                }
-            }.joinToString("")
+            val escapedValue = value.map { KtBuilder.escapeCharIfNeeded(it) }.joinToString("")
             return "\"$escapedValue\"".also {
                 actualTypes[this] = ASClass(ctx.types.nullType)
             }
@@ -558,6 +554,7 @@ open class ActionSequence2KotlinPrinter(
         actualTypes[seq] = type
         return "val ${seq.name} = unknown<$type>()"
     }
+
     protected open fun printReflectionNewInstance(owner: ActionSequence, call: ReflectionNewInstance): List<String> =
         unreachable { log.error("Reflection calls are not supported in AS 2 Java printer") }
 
