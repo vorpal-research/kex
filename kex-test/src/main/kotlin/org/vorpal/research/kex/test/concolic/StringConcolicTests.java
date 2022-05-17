@@ -27,11 +27,11 @@ public class StringConcolicTests {
         }
     }
 
-//    public void testStringConcat(String a, String b) {
-//        if ((a.concat(b)).equals("mystring")) {
-//            AssertIntrinsics.kexAssert(true);
-//        } else {
-//            AssertIntrinsics.kexAssert(true);
-//        }
-//    }
+    public void testStringConcat(String a) {
+        if ((a.concat("string")).equals("mystring")) {
+            AssertIntrinsics.kexAssert(true);
+        } else {
+            AssertIntrinsics.kexAssert(true);
+        }
+    }
 }
