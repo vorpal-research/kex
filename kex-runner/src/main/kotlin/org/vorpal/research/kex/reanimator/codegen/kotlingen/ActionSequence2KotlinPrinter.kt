@@ -6,6 +6,7 @@ import org.vorpal.research.kex.ktype.type
 import org.vorpal.research.kex.parameters.Parameters
 import org.vorpal.research.kex.reanimator.actionsequence.*
 import org.vorpal.research.kex.reanimator.codegen.ActionSequencePrinter
+import org.vorpal.research.kex.reanimator.codegen.javagen.JavaBuilder
 import org.vorpal.research.kex.util.getConstructor
 import org.vorpal.research.kex.util.getMethod
 import org.vorpal.research.kex.util.kex
@@ -407,9 +408,17 @@ open class ActionSequence2KotlinPrinter(
         }
 
     private val StringValue.asConstant: String
-        get() = "\"$value\"".also {
+        get() {
+            val escapedValue = value.map {
+                when {
+                    JavaBuilder.isEscapeChar(it) -> "\\$it"
+                    else -> "$it"
+                }
+            }.joinToString("")
+            return "\"$escapedValue\"".also {
                 actualTypes[this] = ASClass(ctx.types.nullType)
             }
+        }
 
     private fun ActionSequence.cast(reqType: ASType?): String {
         val actualType = actualTypes[this] ?: return this.stackName

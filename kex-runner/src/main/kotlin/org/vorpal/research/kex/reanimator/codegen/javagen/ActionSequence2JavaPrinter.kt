@@ -446,8 +446,16 @@ open class ActionSequence2JavaPrinter(
         }
 
     protected val StringValue.asConstant: String
-        get() = "\"$value\"".also {
-            actualTypes[this] = ASClass(ctx.types.nullType)
+        get() {
+            val escapedValue = value.map {
+                when {
+                    JavaBuilder.isEscapeChar(it) -> "\\$it"
+                    else -> "$it"
+                }
+            }.joinToString("")
+            return "\"$escapedValue\"".also {
+                actualTypes[this] = ASClass(ctx.types.nullType)
+            }
         }
     protected fun ActionSequence.cast(reqType: ASType?): String {
         val actualType = actualTypes[this] ?: return this.stackName
