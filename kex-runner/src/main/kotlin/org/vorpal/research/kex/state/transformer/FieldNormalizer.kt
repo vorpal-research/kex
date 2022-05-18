@@ -8,6 +8,7 @@ import org.vorpal.research.kex.state.term.Term
 import org.vorpal.research.kex.state.term.term
 import org.vorpal.research.kfg.ClassManager
 import org.vorpal.research.kthelper.collection.dequeOf
+import org.vorpal.research.kthelper.tryOrNull
 
 class FieldNormalizer(
     val cm: ClassManager,
@@ -18,7 +19,7 @@ class FieldNormalizer(
     private var counter = 0
 
     override fun transformFieldTerm(term: FieldTerm): Term {
-        val field = term.unmappedKfgField(cm)
+        val field = tryOrNull { term.unmappedKfgField(cm) } ?: return term
         return when (field.klass.fullName) {
             term.klass -> term
             else -> {

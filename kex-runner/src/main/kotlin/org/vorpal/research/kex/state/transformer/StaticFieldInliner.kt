@@ -138,11 +138,12 @@ class StaticFieldInliner(
             .filterIsInstance<FieldLoadTerm>()
             .mapNotNull {
                 val field = it.field as FieldTerm
-                val kfgField = field.unmappedKfgField(cm)
-                if (kfgField.isStatic && kfgField.isFinal) {
-                    kfgField
-                } else {
-                    null
+                tryOrNull { field.unmappedKfgField(cm) }?.let { kfgField ->
+                    if (kfgField.isStatic && kfgField.isFinal) {
+                        kfgField
+                    } else {
+                        null
+                    }
                 }
             }.toSet()
             .filterNot { it.klass.fullName in ignores }
