@@ -259,7 +259,7 @@ class SymbolicTraceBuilder(
         frames.push(Frame(method, mutableMapOf(), lastCall?.receiver))
         if (lastCall != null) {
             val call = lastCall!!
-            ktassert(call.method overrides method)
+            ktassert(method overrides call.method)
 
             for ((value, term) in method.parameterValues.asList.zip(call.params.asList)) {
                 valueMap[value] = term
