@@ -5,14 +5,13 @@ import kotlinx.serialization.InternalSerializationApi
 import org.vorpal.research.kex.ExecutionContext
 import org.vorpal.research.kex.asm.analysis.concolic.InstructionConcolicChecker
 import org.vorpal.research.kex.asm.manager.ClassInstantiationDetector
-import org.vorpal.research.kex.asm.manager.MethodWrapperInitializer
 import org.vorpal.research.kex.asm.state.PredicateStateAnalysis
 import org.vorpal.research.kex.asm.transform.SymbolicTraceCollector
 import org.vorpal.research.kex.asm.transform.SystemExitTransformer
-import org.vorpal.research.kex.asm.util.Visibility
 import org.vorpal.research.kex.config.kexConfig
 import org.vorpal.research.kex.jacoco.CoverageReporter
 import org.vorpal.research.kex.trace.symbolic.InstructionTraceManager
+import org.vorpal.research.kex.util.PermanentCoverageInfo
 import org.vorpal.research.kfg.Package
 import org.vorpal.research.kfg.visitor.MethodVisitor
 import org.vorpal.research.kfg.visitor.executePipeline
@@ -25,9 +24,10 @@ class ConcolicLauncher(classPaths: List<String>, targetName: String) : KexLaunch
         return SymbolicTraceCollector(context)
     }
 
-    override fun preparePackage(ctx: ExecutionContext, psa: PredicateStateAnalysis, pkg: Package) = executePipeline(ctx.cm, pkg) {
-        +ClassInstantiationDetector(ctx.cm, visibilityLevel)
-    }
+    override fun preparePackage(ctx: ExecutionContext, psa: PredicateStateAnalysis, pkg: Package) =
+        executePipeline(ctx.cm, pkg) {
+            +ClassInstantiationDetector(ctx.cm, visibilityLevel)
+        }
 
     override fun launch() {
         val traceManager = InstructionTraceManager()
@@ -36,9 +36,12 @@ class ConcolicLauncher(classPaths: List<String>, targetName: String) : KexLaunch
             +SystemExitTransformer(context.cm)
             +InstructionConcolicChecker(context, traceManager)
         }
+        val coverageInfo = CoverageReporter(containerClassLoader).execute(context.cm, analysisLevel)
         log.info(
-            CoverageReporter(containerClassLoader).execute(context.cm, analysisLevel)
-                .print(kexConfig.getBooleanValue("kex", "printDetailedCoverage", false))
+            coverageInfo.print(kexConfig.getBooleanValue("kex", "printDetailedCoverage", false))
         )
+
+        PermanentCoverageInfo.putNewInfo(analysisLevel.toString(), coverageInfo)
+        PermanentCoverageInfo.emit()
     }
 }
