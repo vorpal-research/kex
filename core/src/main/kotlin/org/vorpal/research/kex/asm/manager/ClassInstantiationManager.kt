@@ -15,7 +15,7 @@ import org.vorpal.research.kfg.visitor.ClassVisitor
 import org.vorpal.research.kthelper.`try`
 
 
-val instantiationManager: ClassInstantiationManager get() = ClassInstantiationManagerImpl
+val instantiationManager: ClassInstantiationManager get() = StringClassInstantiationManagerImpl
 
 class NoConcreteInstanceException(val klass: Class) : Exception()
 
@@ -39,6 +39,10 @@ interface ClassInstantiationManager {
     }
 }
 
+@Deprecated(
+    message = "use StringClassInstantiationManagerImpl that is more efficient with lazy kfg",
+    replaceWith = ReplaceWith("org.vorpal.research.kex.asm.manager.StringClassInstantiationManagerImpl")
+)
 private object ClassInstantiationManagerImpl : ClassInstantiationManager {
     private val predefinedConcreteInstanceInfo = with(SystemTypeNames) {
         mutableMapOf(
@@ -110,11 +114,87 @@ private object ClassInstantiationManagerImpl : ClassInstantiationManager {
     }
 }
 
+private object StringClassInstantiationManagerImpl : ClassInstantiationManager {
+    private val predefinedConcreteInstanceInfo = with(SystemTypeNames) {
+        mutableMapOf(
+            collectionClass to setOf(arrayListClass.rtMapped),
+            listClass to setOf(arrayListClass.rtMapped),
+            queueClass to setOf(arrayListClass.rtMapped),
+            dequeClass to setOf(arrayDequeClass.rtMapped),
+            setClass to setOf(hashSetClass.rtMapped),
+            sortedSetClass to setOf(treeSetClass.rtMapped),
+            navigableSetClass to setOf(treeSetClass.rtMapped),
+            mapClass to setOf(hashMapClass.rtMapped),
+            sortedMapClass to setOf(treeSetClass.rtMapped),
+            navigableMapClass to setOf(treeSetClass.rtMapped),
+            unmodifiableCollection to setOf(unmodifiableList.rtMapped),
+            unmodifiableList to setOf(unmodifiableList.rtMapped),
+            unmodifiableSet to setOf(unmodifiableSet.rtMapped),
+            unmodifiableMap to setOf(unmodifiableMap.rtMapped),
+            charSequence to setOf(stringClass.rtMapped)
+        )
+    }
+    private val classInstantiationInfo = mutableMapOf<String, MutableSet<String>>()
+    private val externalConstructors = mutableMapOf<String, MutableSet<Triple<String, String, String>>>()
+
+    override fun isDirectlyInstantiable(klass: Class, visibilityLevel: Visibility): Boolean =
+        klass.visibility >= visibilityLevel && !klass.isAbstract && !klass.isInterface
+
+    override fun isInstantiable(klass: Class) = when (val fullName = klass.fullName) {
+        in predefinedConcreteInstanceInfo -> true
+        else -> classInstantiationInfo[fullName].isNullOrEmpty()
+    }
+
+    override fun getExternalCtors(klass: Class): Set<Method> =
+        externalConstructors.getOrDefault(klass.fullName, setOf()).map { (klassName, methodName, desc) ->
+            klass.cm[klassName].getMethod(methodName, desc)
+        }.toSet()
+
+    override fun get(klass: Class): Class = `try` {
+        val concreteClassName = when (val fullName = klass.fullName) {
+            in predefinedConcreteInstanceInfo -> predefinedConcreteInstanceInfo.getValue(fullName)
+                .random()
+            else -> classInstantiationInfo.getOrDefault(fullName, setOf()).let {
+                if (fullName in it) fullName
+                else it.random()
+            }
+        }
+        klass.cm[concreteClassName]
+    }.getOrElse {
+        throw NoConcreteInstanceException(klass)
+    }
+
+    override fun get(klass: Class, excludes: Set<Class>): Class = `try` {
+        val excludeNames = excludes.map { it.fullName }.toSet()
+        val concreteClassName = when (val fullName = klass.fullName) {
+            in predefinedConcreteInstanceInfo -> (predefinedConcreteInstanceInfo.getValue(fullName) - excludeNames)
+                .random()
+            else -> (classInstantiationInfo.getOrDefault(fullName, setOf()) - excludeNames).let {
+                if (fullName in it) fullName
+                else it.random()
+            }
+        }
+        klass.cm[concreteClassName]
+    }.getOrElse {
+        throw NoConcreteInstanceException(klass)
+    }
+
+    operator fun set(parent: Class, concrete: Class) {
+        classInstantiationInfo.getOrPut(parent.fullName, ::mutableSetOf).add(concrete.fullName)
+    }
+
+    operator fun set(klass: Class, externalCtor: Method) {
+        externalConstructors.getOrPut(klass.fullName, ::mutableSetOf).add(
+            Triple(externalCtor.klass.fullName, externalCtor.name, externalCtor.asmDesc)
+        )
+    }
+}
+
 class ClassInstantiationDetector(override val cm: ClassManager, val visibilityLevel: Visibility) : ClassVisitor {
     override fun cleanup() {}
 
     override fun visit(klass: Class) {
-        if (ClassInstantiationManagerImpl.isDirectlyInstantiable(klass, visibilityLevel))
+        if (StringClassInstantiationManagerImpl.isDirectlyInstantiable(klass, visibilityLevel))
             addInstantiableClass(klass, klass)
         super.visit(klass)
     }
@@ -126,7 +206,7 @@ class ClassInstantiationDetector(override val cm: ClassManager, val visibilityLe
         if (!method.isStatic || method.argTypes.any { it.isSubtypeOf(returnType) } || method.isSynthetic) return
 
         var returnClass = returnType.klass
-        method.flatten().firstOrNull { it is ReturnInst }?.let {
+        method.body.flatten().firstOrNull { it is ReturnInst }?.let {
             it as ReturnInst
             if (it.returnValue is NewInst) {
                 returnClass = (it.returnValue.type as ClassType).klass
@@ -142,7 +222,7 @@ class ClassInstantiationDetector(override val cm: ClassManager, val visibilityLe
                 addInstantiableClass(parent, instantiableKlass)
             }
         }
-        ClassInstantiationManagerImpl[klass] = instantiableKlass
+        StringClassInstantiationManagerImpl[klass] = instantiableKlass
     }
 
     private fun addExternalCtor(klass: Class, method: Method) {
@@ -151,6 +231,6 @@ class ClassInstantiationDetector(override val cm: ClassManager, val visibilityLe
                 addExternalCtor(parent, method)
             }
         }
-        ClassInstantiationManagerImpl[klass] = method
+        StringClassInstantiationManagerImpl[klass] = method
     }
 }

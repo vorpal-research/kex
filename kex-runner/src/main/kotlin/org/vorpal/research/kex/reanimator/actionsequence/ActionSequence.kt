@@ -15,6 +15,8 @@ import org.vorpal.research.kthelper.logging.log
 
 
 sealed class ActionSequence(val name: String) {
+    open val isConstantValue: Boolean get() = false
+
     override fun toString(): String = print()
     abstract fun print(): String
     abstract fun clone(): ActionSequence
@@ -23,7 +25,17 @@ sealed class ActionSequence(val name: String) {
 }
 
 class PrimaryValue<T>(val value: T) : ActionSequence(value.toString()) {
+    override val isConstantValue: Boolean get() = true
+
     override fun print() = value.toString()
+    override fun print(builder: StringBuilder, visited: MutableSet<ActionSequence>) {}
+    override fun clone(): ActionSequence = this
+}
+
+class StringValue(val value: String = "") : ActionSequence(value)  {
+    override val isConstantValue: Boolean get() = true
+
+    override fun print() = value
     override fun print(builder: StringBuilder, visited: MutableSet<ActionSequence>) {}
     override fun clone(): ActionSequence = this
 }
@@ -421,11 +433,12 @@ data class ReflectionArrayWrite(
     }
 }
 
-class ActionSequenceRtMapper(val mode: KexRtManager.Mode) {
+class ActionSequenceRtMapper(private val mode: KexRtManager.Mode) {
     private val cache = mutableMapOf<ActionSequence, ActionSequence>()
 
     fun map(ct: ActionSequence): ActionSequence = when (ct) {
         is PrimaryValue<*> -> ct
+        is StringValue -> ct
         is UnknownSequence -> {
             val mapper = DescriptorRtMapper(mode)
             val newTarget = mapper.map(ct.target)

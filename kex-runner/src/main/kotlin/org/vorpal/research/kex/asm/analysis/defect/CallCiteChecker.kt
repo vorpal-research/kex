@@ -108,7 +108,7 @@ class CallCiteChecker(
     }
 
     private fun getState(instruction: Instruction) =
-        psa.builder(instruction.parent.parent).getInstructionState(instruction)
+        psa.builder(instruction.parent.method).getInstructionState(instruction)
 
     private fun buildInlinedState(
         callState: PredicateState,
@@ -140,7 +140,7 @@ class CallCiteChecker(
         return (filteredState + preparedState) to remapper
     }
 
-    private fun getAllAssertions(assertionsArray: Value): Set<Term> = method.flatten()
+    private fun getAllAssertions(assertionsArray: Value): Set<Term> = method.body.flatten()
         .asSequence()
         .mapNotNull { it as? ArrayStoreInst }
         .filter { it.arrayRef == assertionsArray }
@@ -229,7 +229,7 @@ class CallCiteChecker(
         callCite: Instruction
     ): Pair<Path, String>? = tryOrNull {
         val testName = "test$nameBase${testIndex++}"
-        generator.generate(testName, callCite.parent.parent, state, result.model)
+        generator.generate(testName, callCite.parent.method, state, result.model)
         generator.printer.targetFile.toPath() to testName
     }
 

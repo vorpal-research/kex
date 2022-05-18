@@ -299,6 +299,9 @@ open class ActionSequence2KotlinPrinter(
             is PrimaryValue<*> -> listOf<String>().also {
                 asConstant
             }
+            is StringValue -> listOf<String>().also {
+                asConstant
+            }
         }
         with(current) {
             for (statement in statements)
@@ -342,6 +345,7 @@ open class ActionSequence2KotlinPrinter(
     private val ActionSequence.stackName: String
         get() = when (this) {
             is PrimaryValue<*> -> asConstant
+            is StringValue -> asConstant
             else -> name
         }
 
@@ -359,12 +363,14 @@ open class ActionSequence2KotlinPrinter(
         is StaticFieldGetter -> printStaticFieldGetter(owner, codeAction)
         else -> unreachable { log.error("Unknown call") }
     }
-    protected fun printReflectionCall(owner: ActionSequence, reflectionCall: ReflectionCall): List<String> = when (reflectionCall) {
-        is ReflectionArrayWrite -> printReflectionArrayWrite(owner, reflectionCall)
-        is ReflectionNewArray -> printReflectionNewArray(owner, reflectionCall)
-        is ReflectionNewInstance -> printReflectionNewInstance(owner, reflectionCall)
-        is ReflectionSetField -> printReflectionSetField(owner, reflectionCall)
-    }
+
+    protected fun printReflectionCall(owner: ActionSequence, reflectionCall: ReflectionCall): List<String> =
+        when (reflectionCall) {
+            is ReflectionArrayWrite -> printReflectionArrayWrite(owner, reflectionCall)
+            is ReflectionNewArray -> printReflectionNewArray(owner, reflectionCall)
+            is ReflectionNewInstance -> printReflectionNewInstance(owner, reflectionCall)
+            is ReflectionSetField -> printReflectionSetField(owner, reflectionCall)
+        }
 
     private val <T> PrimaryValue<T>.asConstant: String
         get() = when (val value = value) {
@@ -400,6 +406,14 @@ open class ActionSequence2KotlinPrinter(
                 actualTypes[this] = ASClass(ctx.types.doubleType, nullable = false)
             }
             else -> unreachable { log.error("Unknown primary value $this") }
+        }
+
+    private val StringValue.asConstant: String
+        get() {
+            val escapedValue = value.map { KtBuilder.escapeCharIfNeeded(it) }.joinToString("")
+            return "\"$escapedValue\"".also {
+                actualTypes[this] = ASClass(ctx.types.nullType)
+            }
         }
 
     private fun ActionSequence.cast(reqType: ASType?): String {
@@ -540,6 +554,7 @@ open class ActionSequence2KotlinPrinter(
         actualTypes[seq] = type
         return "val ${seq.name} = unknown<$type>()"
     }
+
     protected open fun printReflectionNewInstance(owner: ActionSequence, call: ReflectionNewInstance): List<String> =
         unreachable { log.error("Reflection calls are not supported in AS 2 Java printer") }
 

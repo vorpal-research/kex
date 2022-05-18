@@ -88,8 +88,8 @@ class CoverageCounter<T : AbstractTrace> private constructor(
         if (!method.isInteresting) return
         if (!methodFilter(method)) return
 
-        val bodyBlocks = method.bodyBlocks.filter { it.wrapper != null }.groupBy { it.wrapper!! }
-        val catchBlocks = method.catchBlocks.filter { it.wrapper != null }.groupBy { it.wrapper!! }
+        val bodyBlocks = method.body.bodyBlocks.filter { it.wrapper != null }.groupBy { it.wrapper!! }
+        val catchBlocks = method.body.catchBlocks.filter { it.wrapper != null }.groupBy { it.wrapper!! }
         val bodyCovered = bodyBlocks.count { (_, blocks) -> blocks.any { tm.isCovered(it) } }
         val catchCovered = catchBlocks.count { (_, blocks) -> blocks.any { tm.isCovered(it) } }
 

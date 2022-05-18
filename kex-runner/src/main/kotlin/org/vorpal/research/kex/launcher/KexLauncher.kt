@@ -75,6 +75,7 @@ abstract class KexLauncher(classPaths: List<String>, targetName: String) {
     val visibilityLevel: Visibility
 
     init {
+        visibilityLevel = kexConfig.getEnumValue("testGen", "visibility", true, Visibility.PUBLIC)
         val containerPaths = classPaths.map { Paths.get(it).toAbsolutePath() }
         containerClassLoader = URLClassLoader(containerPaths.map { it.toUri().toURL() }.toTypedArray())
         containers = listOfNotNull(*containerPaths.map {
@@ -140,7 +141,6 @@ abstract class KexLauncher(classPaths: List<String>, targetName: String) {
         context = ExecutionContext(cm, analysisLevel.pkg, classLoader, randomDriver, klassPath)
 
         log.debug("Running with class path:\n${containers.joinToString("\n") { it.name }}")
-        visibilityLevel = kexConfig.getEnumValue("testGen", "visibility", true, Visibility.PUBLIC)
     }
 
     abstract fun launch()
@@ -173,6 +173,7 @@ abstract class KexLauncher(classPaths: List<String>, targetName: String) {
 
             executePipeline(cm, target) {
                 +SystemExitTransformer(cm)
+                +ClassInstantiationDetector(cm, visibilityLevel)
                 +createInstrumenter(context)
                 +ClassWriter(context, path)
             }

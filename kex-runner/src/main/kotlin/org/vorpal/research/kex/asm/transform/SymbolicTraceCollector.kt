@@ -9,7 +9,6 @@ import org.vorpal.research.kex.util.wrapValue
 import org.vorpal.research.kfg.Package
 import org.vorpal.research.kfg.ir.Class
 import org.vorpal.research.kfg.ir.Method
-import org.vorpal.research.kfg.ir.MethodDesc
 import org.vorpal.research.kfg.ir.value.*
 import org.vorpal.research.kfg.ir.value.instruction.*
 import org.vorpal.research.kfg.type.Type
@@ -46,8 +45,8 @@ class SymbolicTraceCollector(
         val exitInstructions = buildList<Instruction> {
             +setNewCollector(traceCollector)
         }
-        method.entry.first().insertBefore(entryInstructions)
-        val returnInst = method.flatten().filterIsInstance<ReturnInst>().first()
+        method.body.entry.first().insertBefore(entryInstructions)
+        val returnInst = method.body.flatten().filterIsInstance<ReturnInst>().first()
         returnInst.insertBefore(exitInstructions)
     }
 
@@ -104,7 +103,7 @@ class SymbolicTraceCollector(
             )
         }
         super.visit(method)
-        method.entry.first().insertBefore(methodEntryInstructions)
+        method.body.entry.first().insertBefore(methodEntryInstructions)
     }
 
     override fun visitArrayLoadInst(inst: ArrayLoadInst) {
@@ -380,7 +379,7 @@ class SymbolicTraceCollector(
                 else -> "${inst.owner}".asValue to inst.owner
             }
             val defOwner = when {
-                inst.hasOwner && inst.owner is ThisRef && inst.parent.parent.isConstructor -> values.nullConstant
+                inst.hasOwner && inst.owner is ThisRef && inst.parent.method.isConstructor -> values.nullConstant
                 else -> concreteOwner
             }
 
@@ -605,7 +604,7 @@ class SymbolicTraceCollector(
     }
 
     private fun addNullityConstraint(inst: Instruction, value: Value): List<Instruction> = buildList {
-        if (inst.parent.parent.isConstructor && value is ThisRef) return@buildList
+        if (inst.parent.method.isConstructor && value is ThisRef) return@buildList
 
         val addNullityConstraintsMethod = collectorClass.getMethod(
             "addNullityConstraints", types.voidType,
@@ -662,7 +661,7 @@ class SymbolicTraceCollector(
 
     private fun getNewCollector(): Instruction {
         val proxy = cm[TraceCollectorProxy::class.java.canonicalName.replace('.', '/')]
-        val getter = proxy.getMethod("currentCollector", MethodDesc(arrayOf(), cm.type.getRefType(collectorClass)))
+        val getter = proxy.getMethod("currentCollector", cm.type.getRefType(collectorClass))
 
         return getter.staticCall(proxy, "collector", arrayOf())
     }

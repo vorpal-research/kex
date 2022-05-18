@@ -671,7 +671,7 @@ class StringMethodAdapter(val cm: ClassManager) : RecollectingTransformer<String
                         KexChar(),
                         index lt thisLength,
                         thisValue[index].load(),
-                        otherValue[index - thisValue].load()
+                        otherValue[index - thisLength].load()
                     )
                 }
             }

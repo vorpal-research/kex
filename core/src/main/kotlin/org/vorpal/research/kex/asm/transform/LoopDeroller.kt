@@ -134,7 +134,7 @@ class LoopDeroller(override val cm: ClassManager) : LoopOptimizer(cm) {
         log.debug("Method $method, unrolling loop $loop to $derollCount iterations")
 
         // save current phi instructions of method
-        val methodPhis = method.filter { it !in body }.flatten().mapNotNull { it as? PhiInst }
+        val methodPhis = method.body.filter { it !in body }.flatten().mapNotNull { it as? PhiInst }
         val methodPhiMappings = methodPhis.associateWith { phi ->
             phi.incomings.filterNot { it.key in body }.toMutableMap()
         }.toMutableMap()
@@ -173,9 +173,9 @@ class LoopDeroller(override val cm: ClassManager) : LoopOptimizer(cm) {
 
             for (block in blockOrder) {
                 val mapping = state[block]
-                method.addBefore(state.header, mapping)
+                method.body.addBefore(state.header, mapping)
                 mapping.wrapper = block.wrapper
-                if (mapping is CatchBlock) method.addCatchBlock(mapping)
+                if (mapping is CatchBlock) method.body.addCatchBlock(mapping)
             }
 
             val phiMappings = blockOrder
@@ -187,7 +187,7 @@ class LoopDeroller(override val cm: ClassManager) : LoopOptimizer(cm) {
 
         val unreachableBlock = BodyBlock("unreachable")
         unreachableBlock.add(inst(cm) { unreachable() })
-        method.add(unreachableBlock)
+        method.body.add(unreachableBlock)
         unreachableBlocks.getOrPut(method, ::hashSetOf).add(unreachableBlock)
         unreachableBlock.wrapper = null
 
@@ -200,7 +200,7 @@ class LoopDeroller(override val cm: ClassManager) : LoopOptimizer(cm) {
             val copy = state[block]
             copy.predecessors.toTypedArray().forEach { it.removeSuccessor(copy) }
             copy.successors.toTypedArray().forEach { it.removePredecessor(copy) }
-            method.remove(copy)
+            method.body.remove(copy)
         }
 
         // cleanup loop
@@ -394,10 +394,10 @@ class LoopDeroller(override val cm: ClassManager) : LoopOptimizer(cm) {
         for (block in body) {
             block.predecessors.toTypedArray().forEach { block.removePredecessor(it) }
             block.successors.toTypedArray().forEach { block.removeSuccessor(it) }
-            method.remove(block)
+            method.body.remove(block)
         }
 
-        val loopThrowers = method.catchEntries.associateWith { catch ->
+        val loopThrowers = method.body.catchEntries.associateWith { catch ->
             body.filter { it.handlers.contains(catch) }
         }
 

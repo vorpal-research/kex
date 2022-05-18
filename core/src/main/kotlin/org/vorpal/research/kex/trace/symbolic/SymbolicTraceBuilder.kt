@@ -130,7 +130,7 @@ class SymbolicTraceBuilder(
         val returnReceiver: Pair<Value, Term>?
     ) {
         val catchMap = mutableMapOf<Type, Map<Value, Term>>()
-        var previousBlock = method.entry
+        var previousBlock = method.body.entry
 
     }
 
@@ -163,7 +163,7 @@ class SymbolicTraceBuilder(
 
     private fun parseMethod(className: String, methodName: String, args: List<String>, retType: String): Method {
         val klass = cm[className]
-        return klass.getMethod(methodName, MethodDesc(args.map { it.toType() }.toTypedArray(), retType.toType()))
+        return klass.getMethod(methodName, MethodDescriptor(args.map { it.toType() }.toTypedArray(), retType.toType()))
     }
 
     private fun parseBlock(blockName: String): BasicBlock {

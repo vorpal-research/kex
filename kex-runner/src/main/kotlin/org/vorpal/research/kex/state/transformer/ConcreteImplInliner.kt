@@ -41,7 +41,7 @@ class ConcreteImplInliner(val types: TypeFactory,
                     return null
                 }
                 when {
-                    result.isEmpty() -> null
+                    result.body.isEmpty() -> null
                     else -> result
                 }
             }
@@ -118,7 +118,7 @@ class AliasingConcreteImplInliner(val types: TypeFactory,
                     return null
                 }
                 when {
-                    result.isEmpty() -> null
+                    result.body.isEmpty() -> null
                     else -> result
                 }
             }

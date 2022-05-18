@@ -310,6 +310,9 @@ open class ActionSequence2JavaPrinter(
             is PrimaryValue<*> -> listOf<String>().also {
                 asConstant
             }
+            is StringValue -> listOf<String>().also {
+                asConstant
+            }
         }
         with(current) {
             for (statement in statements)
@@ -358,6 +361,7 @@ open class ActionSequence2JavaPrinter(
     protected val ActionSequence.stackName: String
         get() = when (this) {
             is PrimaryValue<*> -> asConstant
+            is StringValue -> asConstant
             else -> name
         }
 
@@ -439,6 +443,14 @@ open class ActionSequence2JavaPrinter(
                 actualTypes[this] = ASClass(ctx.types.doubleType)
             }
             else -> unreachable { log.error("Unknown primary value $this") }
+        }
+
+    protected val StringValue.asConstant: String
+        get() {
+            val escapedValue = value.map { JavaBuilder.escapeCharIfNeeded(it) }.joinToString("")
+            return "\"$escapedValue\"".also {
+                actualTypes[this] = ASClass(ctx.types.nullType)
+            }
         }
 
     protected fun ActionSequence.cast(reqType: ASType?): String {

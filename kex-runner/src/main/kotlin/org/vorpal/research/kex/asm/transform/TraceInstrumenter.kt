@@ -44,7 +44,7 @@ class TraceInstrumenter(override val cm: ClassManager) : MethodVisitor {
 
     override fun visitReturnInst(inst: ReturnInst) = instrumentInst(inst) {
         val bb = inst.parent
-        val method = bb.parent
+        val method = bb.method
 
         buildList {
             +fos.println("exit ${bb.name};")
@@ -63,7 +63,7 @@ class TraceInstrumenter(override val cm: ClassManager) : MethodVisitor {
 
     override fun visitThrowInst(inst: ThrowInst) = instrumentInst(inst) {
         val bb = inst.parent
-        val method = bb.parent
+        val method = bb.method
 
         buildList {
             +fos.println("exit ${bb.name};")
@@ -127,7 +127,7 @@ class TraceInstrumenter(override val cm: ClassManager) : MethodVisitor {
     }
 
     override fun visit(method: Method) {
-        val bb = method.entry
+        val bb = method.body.entry
         val startInsts = buildList<Instruction> {
             val methodName = method.prototype.replace('/', '.')
             val traceFileName = getTraceFile(method).absolutePath
@@ -157,13 +157,13 @@ class TraceInstrumenter(override val cm: ClassManager) : MethodVisitor {
         insertedInsts += startInsts
 
         // visit blocks
-        method.basicBlocks.toTypedArray().forEach { visitBasicBlock(it) }
+        method.body.basicBlocks.toTypedArray().forEach { visitBasicBlock(it) }
 
         val endInsts = fos.close()
         insertedInsts += endInsts
 
         bb.insertBefore(bb.first(), *startInsts.toTypedArray())
-        method.filter { it.any { inst -> inst is ReturnInst } }.forEach {
+        method.body.filter { it.any { inst -> inst is ReturnInst } }.forEach {
             it.insertBefore(it.terminator, *endInsts.toTypedArray())
         }
     }

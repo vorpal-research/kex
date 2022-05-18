@@ -26,7 +26,6 @@ import org.vorpal.research.kfg.container.Container
 import org.vorpal.research.kfg.container.asContainer
 import org.vorpal.research.kfg.ir.Class
 import org.vorpal.research.kfg.ir.Method
-import org.vorpal.research.kfg.ir.MethodDesc
 import org.vorpal.research.kfg.ir.value.instruction.ArrayStoreInst
 import org.vorpal.research.kfg.ir.value.instruction.CallInst
 import org.vorpal.research.kfg.ir.value.instruction.Instruction
@@ -98,9 +97,8 @@ abstract class KexRunnerTest : KexTest() {
 
         val types = cm.type
         val methodName = "kexAssert"
-        val desc = MethodDesc(arrayOf(types.getArrayType(types.boolType)), types.voidType)
-        val assertReachable = intrinsics.getMethod(methodName, desc)
-        return method.flatten().asSequence()
+        val assertReachable = intrinsics.getMethod(methodName, types.voidType, types.getArrayType(types.boolType))
+        return method.body.flatten().asSequence()
                 .mapNotNull { it as? CallInst }
                 .filter { it.method == assertReachable && it.klass == intrinsics }
                 .toList()
@@ -111,9 +109,8 @@ abstract class KexRunnerTest : KexTest() {
         val intrinsics = cm[klass]
 
         val methodName = "kexUnreachable"
-        val desc = MethodDesc(arrayOf(), cm.type.voidType)
-        val assertUnreachable = intrinsics.getMethod(methodName, desc)
-        return method.flatten().asSequence()
+        val assertUnreachable = intrinsics.getMethod(methodName, cm.type.voidType)
+        return method.body.flatten().asSequence()
                 .mapNotNull { it as? CallInst }
                 .filter { it.method == assertUnreachable && it.klass == intrinsics }
                 .toList()
@@ -135,7 +132,7 @@ abstract class KexRunnerTest : KexTest() {
 
                 inst as CallInst
                 val assertionsArray = inst.args.first()
-                val assertions = method.flatten()
+                val assertions = method.body.flatten()
                         .asSequence()
                         .mapNotNull { it as? ArrayStoreInst }
                         .filter { it.arrayRef == assertionsArray }

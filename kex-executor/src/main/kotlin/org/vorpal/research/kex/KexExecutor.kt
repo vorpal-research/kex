@@ -88,6 +88,7 @@ class KexExecutor(args: Array<String>) {
             setup.invoke(instance)
         } catch (e: Throwable) {
             log.error(e)
+            System.err.println(e)
             exitProcess(1)
         }
 

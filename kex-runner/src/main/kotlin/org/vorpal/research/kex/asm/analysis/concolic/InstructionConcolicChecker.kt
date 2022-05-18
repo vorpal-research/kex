@@ -169,6 +169,7 @@ class InstructionConcolicChecker(
             val params = generateFinalDescriptors(method, ctx, result.model, checker.state)
                 .filterStaticFinals(cm)
                 .concreteParameters(ctx.cm)
+            log.debug { "Generated params:\n$params" }
             collectTrace(method, params)
         }
     }

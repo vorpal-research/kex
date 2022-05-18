@@ -34,8 +34,8 @@ class PredicateStateBuilderTest : KexTest() {
                     continue
                 }
 
-                val catchBlocks = method.catchBlocks
-                method.filter { it !in catchBlocks }
+                val catchBlocks = method.body.catchBlocks
+                method.body.filter { it !in catchBlocks }
                         .flatten()
                         .filter { it !is UnreachableInst }
                         .forEach {

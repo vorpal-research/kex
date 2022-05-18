@@ -7,7 +7,7 @@ import com.github.h0tk3y.betterParse.lexer.literalToken
 import com.github.h0tk3y.betterParse.lexer.regexToken
 import com.github.h0tk3y.betterParse.parser.Parser
 import org.vorpal.research.kfg.ClassManager
-import org.vorpal.research.kfg.ir.MethodDesc
+import org.vorpal.research.kfg.ir.MethodDescriptor
 import org.vorpal.research.kfg.ir.value.NameMapper
 import org.vorpal.research.kfg.ir.value.NameMapperContext
 import org.vorpal.research.kfg.type.ClassType
@@ -127,7 +127,7 @@ class ActionParser(val cm: ClassManager, val ctx: NameMapperContext) : Grammar<A
         val methodName = t1.takeLast(1).firstOrNull() ?: throw UnknownNameException(t1.toString())
         val args = t2.toTypedArray()
         val rettype = t3
-        klass.getMethod(methodName, MethodDesc(args, rettype))
+        klass.getMethod(methodName, MethodDescriptor(args, rettype))
     }
 
     private val kfgValueParser by valueName use { KfgValue(this) }

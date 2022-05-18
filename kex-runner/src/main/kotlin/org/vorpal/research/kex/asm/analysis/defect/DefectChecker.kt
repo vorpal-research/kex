@@ -129,7 +129,7 @@ class DefectChecker(
         checkNullity(inst, state, inst.owner)
     }
 
-    private fun getAllAssertions(assertionsArray: Value): Set<Term> = method.flatten()
+    private fun getAllAssertions(assertionsArray: Value): Set<Term> = method.body.flatten()
         .asSequence()
         .mapNotNull { it as? ArrayStoreInst }
         .filter { it.arrayRef == assertionsArray }
@@ -162,7 +162,7 @@ class DefectChecker(
         return when (result) {
             is Result.SatResult -> {
                 failingBlocks += currentBlock
-                val (path, testName) = getTest("NullPointerException", checkerState, result) ?: null to null
+                val (path, testName) = getTest("NullPointerException", checkerState, result) ?: (null to null)
                 dm += Defect.npe(inst, id = null, testFile = path, testCaseName = testName)
                 false
             }
@@ -184,7 +184,7 @@ class DefectChecker(
         return when (result) {
             is Result.SatResult -> {
                 failingBlocks += currentBlock
-                val (path, testName) = getTest("OutOfBounds", checkerState, result) ?: null to null
+                val (path, testName) = getTest("OutOfBounds", checkerState, result) ?: (null to null)
                 dm += Defect.oob(inst,  id = null, testFile = path, testCaseName = testName)
                 false
             }

@@ -20,7 +20,7 @@ class FileTraceManager : TraceManager<FileTrace>() {
     }
 
     override fun isCovered(bb: BasicBlock): Boolean {
-        val traces = getTraces(bb.parent)
+        val traces = getTraces(bb.method)
         val blockInfos = traces.mapNotNull { it.blocks[bb] }.flatten()
         return blockInfos.count { it.hasOutput } > 0
     }

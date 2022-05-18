@@ -44,7 +44,7 @@ open class LoopOptimizer(cm: ClassManager) : Evolutions(cm), LoopVisitor {
             }
         }
 
-        for (b in method) for (i in b) {
+        for (b in method.body) for (i in b) {
             transform(i)
         }
 
@@ -92,7 +92,7 @@ open class LoopOptimizer(cm: ClassManager) : Evolutions(cm), LoopVisitor {
     protected fun insertBefore(block: BasicBlock, e: BasicBlock, loop: Loop) = with(ctx) {
         e.add(instructions.getJump(ctx, block))
         loop.addBlock(e)
-        method.add(e)
+        method.body.add(e)
         block.predecessors.forEach { preBlock ->
             e.addPredecessor(preBlock)
             e.addSuccessor(block)
