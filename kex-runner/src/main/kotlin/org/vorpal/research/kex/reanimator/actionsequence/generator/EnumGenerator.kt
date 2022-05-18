@@ -12,11 +12,13 @@ import org.vorpal.research.kex.state.transformer.TypeInfoMap
 import org.vorpal.research.kex.state.transformer.generateFinalDescriptors
 import org.vorpal.research.kex.util.asArray
 import org.vorpal.research.kex.util.field
+import org.vorpal.research.kex.util.loadClass
 import org.vorpal.research.kfg.type.ClassType
 import org.vorpal.research.kfg.type.SystemTypeNames
 import org.vorpal.research.kthelper.logging.log
+import org.vorpal.research.kthelper.tryOrNull
 
-private fun computeEnumConstants(ctx: GeneratorContext, enumType: KexType): Map<FieldTerm, Descriptor> =
+private fun symbolicComputeEnumConstants(ctx: GeneratorContext, enumType: KexType): Map<FieldTerm, Descriptor> =
     with(ctx) {
         val kfgType = enumType.getKfgType(context.types) as ClassType
         val staticInit = kfgType.klass.getMethod("<clinit>", "()V")
@@ -50,6 +52,22 @@ private fun computeEnumConstants(ctx: GeneratorContext, enumType: KexType): Map<
         return staticFields.map { (field, value) ->
             term { staticRef(enumType as KexClass).field(field.second, field.first) } as FieldTerm to value
         }.toMap()
+    }
+
+private fun extractEnumConstantsFromClass(ctx: GeneratorContext, enumType: KexType): Map<FieldTerm, Descriptor> =
+    with(ctx) {
+        val kfgType = enumType.getKfgType(types) as ClassType
+        val actualEnumClass = tryOrNull { loader.loadClass(kfgType) }
+            ?: return emptyMap()
+        val actualEnumFields = actualEnumClass.declaredFields.filter { it.type == actualEnumClass }.map {
+            it.isAccessible = true
+            it to it.get(null)
+        }
+        actualEnumFields.associate { (field, value) ->
+            val fieldTerm = term { staticRef(kfgType.klass).field(enumType, field.name) } as FieldTerm
+            val fieldDescriptor = convertToDescriptor(value)
+            fieldTerm to fieldDescriptor
+        }
     }
 
 private fun Descriptor.matches(
@@ -103,7 +121,7 @@ class EnumGenerator(private val fallback: Generator) : Generator {
 
         private fun getEnumConstants(ctx: GeneratorContext, enumType: KexType): Map<FieldTerm, Descriptor> =
             enumConstants.getOrPut(enumType) {
-                computeEnumConstants(ctx, enumType)
+                extractEnumConstantsFromClass(ctx, enumType)
             }
     }
 
@@ -154,7 +172,7 @@ class ReflectionEnumGenerator(private val fallback: Generator) : Generator {
 
         private fun getEnumConstants(ctx: GeneratorContext, enumType: KexType): Map<FieldTerm, Descriptor> =
             enumConstants.getOrPut(enumType) {
-                computeEnumConstants(ctx, enumType)
+                extractEnumConstantsFromClass(ctx, enumType)
             }
     }
 
