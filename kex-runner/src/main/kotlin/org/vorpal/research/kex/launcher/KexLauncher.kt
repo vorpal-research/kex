@@ -28,17 +28,22 @@ import org.vorpal.research.kfg.analysis.LoopSimplifier
 import org.vorpal.research.kfg.container.Container
 import org.vorpal.research.kfg.container.asContainer
 import org.vorpal.research.kfg.ir.Class
+import org.vorpal.research.kfg.ir.ConcreteClass
 import org.vorpal.research.kfg.ir.Method
 import org.vorpal.research.kfg.type.parseStringToType
 import org.vorpal.research.kfg.util.Flags
 import org.vorpal.research.kfg.visitor.MethodVisitor
 import org.vorpal.research.kfg.visitor.Pipeline
 import org.vorpal.research.kfg.visitor.executePipeline
+import org.vorpal.research.kthelper.KtException
 import org.vorpal.research.kthelper.logging.log
 import java.net.URLClassLoader
 import java.nio.file.Path
 import java.nio.file.Paths
 import kotlin.system.exitProcess
+
+
+class LauncherException(message: String) : KtException(message)
 
 sealed class AnalysisLevel {
     abstract val pkg: Package
@@ -48,6 +53,7 @@ sealed class AnalysisLevel {
 data class PackageLevel(override val pkg: Package) : AnalysisLevel() {
     override val levelName: String
         get() = "package"
+
     override fun toString() = "package $pkg"
 }
 
@@ -79,10 +85,7 @@ abstract class KexLauncher(classPaths: List<String>, targetName: String) {
         val containerPaths = classPaths.map { Paths.get(it).toAbsolutePath() }
         containerClassLoader = URLClassLoader(containerPaths.map { it.toUri().toURL() }.toTypedArray())
         containers = listOfNotNull(*containerPaths.map {
-            it.asContainer() ?: run {
-                log.error("Can't represent ${it.toAbsolutePath()} as class container")
-                exitProcess(1)
-            }
+            it.asContainer() ?: throw LauncherException("Can't represent ${it.toAbsolutePath()} as class container")
         }.toTypedArray(), getKexRuntime())
         val analysisJars = listOfNotNull(*containers.toTypedArray(), getRuntime(), getIntrinsics())
 
@@ -112,6 +115,9 @@ abstract class KexLauncher(classPaths: List<String>, targetName: String) {
                 val (klassName, methodFullDesc) = targetName.split("::")
                 val (methodName, methodArgs, methodReturn) = methodFullDesc.split("(", "):")
                 val klass = cm[klassName.replace('.', '/')]
+                if (klass !is ConcreteClass) {
+                    throw LauncherException("Target class $klassName is not found in the classPath")
+                }
                 val method = klass.getMethod(
                     methodName,
                     parseStringToType(cm.type, methodReturn.trim().replace('.', '/')),
@@ -123,6 +129,9 @@ abstract class KexLauncher(classPaths: List<String>, targetName: String) {
             }
             targetName.matches(Regex(klassNameRegex)) -> {
                 val klass = cm[targetName.replace('.', '/')]
+                if (klass !is ConcreteClass) {
+                    throw LauncherException("Target class $targetName is not found in the classPath")
+                }
                 ClassLevel(klass)
             }
             else -> {

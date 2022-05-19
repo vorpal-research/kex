@@ -273,6 +273,10 @@ class CoverageReporter(
         val runtime = LoggerRuntime()
         for (className in classes) {
             val original = compiledClassLoader.getResourceAsStream(className)
+            if (original == null) {
+                log.warn("Could not load resource $className")
+                continue
+            }
             val fullyQualifiedName = className.fullyQualifiedName
             val instr = Instrumenter(runtime)
             val instrumented = instr.instrument(original, fullyQualifiedName)
@@ -304,6 +308,10 @@ class CoverageReporter(
         val analyzer = Analyzer(executionData, coverageBuilder)
         for (className in classes) {
             val original = compiledClassLoader.getResourceAsStream(className)
+            if (original == null) {
+                log.warn("Could not load resource $className")
+                continue
+            }
             tryOrNull { analyzer.analyzeClass(original, className.fullyQualifiedName) }
             original.close()
         }

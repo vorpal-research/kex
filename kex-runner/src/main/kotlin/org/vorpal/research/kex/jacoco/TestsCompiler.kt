@@ -124,8 +124,8 @@ class TestsCompiler(private val outputDir: Path) {
             return null
         }
 
-        override fun getResourceAsStream(name: String): InputStream {
-            return parent.getResourceAsStream(name)!!
+        override fun getResourceAsStream(name: String): InputStream? {
+            return parent.getResourceAsStream(name)
         }
 
     }
