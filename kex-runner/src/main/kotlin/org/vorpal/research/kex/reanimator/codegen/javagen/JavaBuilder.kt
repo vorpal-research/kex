@@ -325,9 +325,11 @@ class JavaBuilder(val pkg: String = "") {
             var visibility: Visibility = Visibility.PACKAGE,
             var initializer: String? = null,
         ) {
+            val annotations = mutableListOf<String>()
             val modifiers = mutableListOf<String>()
 
             override fun toString() = buildString {
+                if (annotations.isNotEmpty()) append(annotations.joinToString(" ", postfix = " ") { "@$it" })
                 append(visibility)
                 if (modifiers.isNotEmpty()) append(modifiers.joinToString(" ", prefix = " "))
                 append(" $type $name${initializer?.let { " = $it" } ?: ""};")

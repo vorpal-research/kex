@@ -7,6 +7,7 @@ import org.vorpal.research.kex.config.kexConfig
 import org.vorpal.research.kex.serialization.KexSerializer
 import org.vorpal.research.kex.trace.symbolic.ExecutionResult
 import org.vorpal.research.kex.util.getIntrinsics
+import org.vorpal.research.kex.util.getJunit
 import org.vorpal.research.kex.util.getPathSeparator
 import org.vorpal.research.kthelper.KtException
 import org.vorpal.research.kthelper.logging.log
@@ -43,7 +44,8 @@ class SymbolicExternalTracingRunner(val ctx: ExecutionContext) {
         executorPath,
         instrumentedCodeDir,
         compiledCodeDir,
-        getIntrinsics()?.path
+        getIntrinsics()?.path,
+        getJunit()?.path
     )
 
     @ExperimentalSerializationApi
