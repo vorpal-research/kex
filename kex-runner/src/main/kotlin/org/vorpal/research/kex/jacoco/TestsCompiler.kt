@@ -29,7 +29,12 @@ class TestsCompiler(private val outputDir: Path) {
         val compilationUnit: JavaFileObject = TestJavaFileObject(javaFile)
         val compilerOutput = ByteArrayOutputStream()
         val compilationTask = compiler.getTask(
-            compilerOutput.writer(), fileManager, null, null, null, listOf(compilationUnit)
+            compilerOutput.writer(),
+            fileManager,
+            null,
+            listOf("-Xlint:none", "-Xlint:unchecked"),
+            null,
+            listOf(compilationUnit)
         )
         if (!compilationTask.call()) {
             log.warn("Failed to compile tests $testsNames")
