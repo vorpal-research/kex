@@ -6,6 +6,7 @@ import kotlinx.serialization.Serializable
 import org.vorpal.research.kex.descriptor.Descriptor
 import org.vorpal.research.kex.state.BasicState
 import org.vorpal.research.kex.state.PredicateState
+import org.vorpal.research.kex.state.emptyState
 import org.vorpal.research.kex.state.predicate.Predicate
 import org.vorpal.research.kex.state.term.Term
 import org.vorpal.research.kex.trace.AbstractTrace
@@ -67,7 +68,18 @@ data class SymbolicStateImpl(
     override fun toString() = "$state"
 }
 
-fun PathCondition(arg: List<Clause>) = PathConditionImpl(arg)
+fun symbolicState(
+    state: PredicateState = emptyState(),
+    path: PathCondition = PathCondition(emptyList()),
+    concreteValueMap: Map<Term, Descriptor> = emptyMap(),
+    termMap: Map<Term, WrappedValue> = emptyMap(),
+    predicateMap: Map<Predicate, Instruction> = emptyMap(),
+    trace: InstructionTrace = InstructionTrace()
+) = SymbolicStateImpl(
+    state, path, concreteValueMap, termMap, predicateMap, trace
+)
+
+fun PathCondition(arg: List<Clause>): PathCondition = PathConditionImpl(arg)
 fun PathCondition(arg: () -> List<Clause>) = PathConditionImpl(arg())
 
 @Serializable

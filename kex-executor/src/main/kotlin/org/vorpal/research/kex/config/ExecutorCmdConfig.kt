@@ -6,10 +6,6 @@ class ExecutorCmdConfig(args: Array<String>) : AbstractCmdConfig("kex-executor",
     val options = mutableListOf<Option>()
     options.addAll(defaultOptions())
 
-    val classPath = Option("cp", "classpath", true, "classpath")
-    classPath.isRequired = true
-    options += classPath
-
     val pkg = Option(null, "package", true, "pkg")
     pkg.isRequired = true
     options += pkg
