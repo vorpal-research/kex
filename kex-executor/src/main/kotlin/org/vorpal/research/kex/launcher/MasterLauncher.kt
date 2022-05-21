@@ -1,5 +1,4 @@
 package org.vorpal.research.kex.launcher
-
 import org.vorpal.research.kex.config.FileConfig
 import org.vorpal.research.kex.config.MasterCmdConfig
 import org.vorpal.research.kex.config.RuntimeConfig
@@ -27,6 +26,8 @@ class MasterLauncher(args: Array<String>) {
 
     init {
         kexConfig.initialize(cmd, RuntimeConfig, FileConfig(properties))
+        val logName = kexConfig.getStringValue("kex", "log", "kex-executor-master.log")
+        kexConfig.initLog(logName)
     }
     fun main() {
         val master = ExecutorMaster(

@@ -1,5 +1,6 @@
 package org.vorpal.research.kex.launcher
 
+import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.InternalSerializationApi
 import org.vorpal.research.kex.ExecutionContext
 import org.vorpal.research.kex.config.FileConfig
@@ -8,6 +9,9 @@ import org.vorpal.research.kex.config.WorkerCmdConfig
 import org.vorpal.research.kex.config.kexConfig
 import org.vorpal.research.kex.random.easyrandom.EasyRandomDriver
 import org.vorpal.research.kex.serialization.KexSerializer
+import org.vorpal.research.kex.trace.symbolic.ExecutionResult
+import org.vorpal.research.kex.trace.symbolic.protocol.TestExecutionRequest
+import org.vorpal.research.kex.trace.symbolic.protocol.Worker2MasterConnection
 import org.vorpal.research.kex.trace.symbolic.protocol.Worker2MasterSocketConnection
 import org.vorpal.research.kex.util.getIntrinsics
 import org.vorpal.research.kex.util.getPathSeparator
@@ -23,11 +27,14 @@ import java.net.URLClassLoader
 import java.nio.file.Paths
 import kotlin.system.exitProcess
 
+@ExperimentalSerializationApi
+@InternalSerializationApi
 fun main(args: Array<String>) {
     WorkerLauncher(args).main()
 }
 
-@OptIn(InternalSerializationApi::class)
+@ExperimentalSerializationApi
+@InternalSerializationApi
 class WorkerLauncher(args: Array<String>) {
     private val cmd = WorkerCmdConfig(args)
     private val properties = cmd.getCmdValue("config", "kex.ini")
@@ -52,7 +59,13 @@ class WorkerLauncher(args: Array<String>) {
             }
         }
         val classManager = ClassManager(KfgConfig(flags = Flags.readAll, failOnError = false, verifyIR = false))
-        classManager.initialize(*listOfNotNull(*containers.toTypedArray(), getRuntime(), getIntrinsics()).toTypedArray())
+        classManager.initialize(
+            *listOfNotNull(
+                *containers.toTypedArray(),
+                getRuntime(),
+                getIntrinsics()
+            ).toTypedArray()
+        )
 
         ctx = ExecutionContext(
             classManager,
@@ -61,10 +74,36 @@ class WorkerLauncher(args: Array<String>) {
             EasyRandomDriver(),
             containers.map { it.path }
         )
+        log.debug("Worker started")
     }
 
     fun main() {
-        val worker = ExecutorWorker(ctx, Worker2MasterSocketConnection(KexSerializer(ctx.cm), port))
+        val worker =
+            ExecutorWorker(ctx, Worker2MasterSocketConnection(KexSerializer(ctx.cm, prettyPrint = false), port))
+        worker.run()
+    }
+
+    fun debug() {
+        val worker = ExecutorWorker(ctx, object : Worker2MasterConnection {
+            override fun connect(): Boolean {
+                return true
+            }
+
+            override fun receive(): TestExecutionRequest {
+                return TestExecutionRequest(
+                    "org.vorpal.research.kex.test.concolic.ListConcolicTests_init_19335777650",
+                    testMethod = "test",
+                    setupMethod = "setup"
+                )
+            }
+
+            override fun send(result: ExecutionResult) {
+            }
+
+            override fun close() {
+            }
+
+        })
         worker.run()
     }
 }

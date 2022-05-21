@@ -4,6 +4,7 @@ import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.InternalSerializationApi
 import org.vorpal.research.kex.serialization.KexSerializer
 import org.vorpal.research.kex.trace.symbolic.ExecutionResult
+import org.vorpal.research.kthelper.logging.log
 import java.io.BufferedReader
 import java.io.BufferedWriter
 import java.net.ServerSocket
@@ -46,7 +47,7 @@ class MasterProtocolSocketHandler(
     clientPort: Int
 ) : MasterProtocolHandler {
     private val clientListener = ServerSocket(clientPort)
-    private val workerListener = ServerSocket()
+    private val workerListener = ServerSocket(0)
 
     override val clientPort get() = clientListener.localPort
     override val workerPort get() = workerListener.localPort
@@ -67,10 +68,13 @@ class Master2ClientSocketConnection(private val socket: Socket) : Master2ClientC
     private val reader: BufferedReader = socket.getInputStream().bufferedReader()
 
     override fun receive(): String {
-        return reader.readLine()
+        return reader.readLine().also {
+            log.debug("Master received a request $it")
+        }
     }
 
     override fun send(result: String) {
+        log.debug("Master sends a response")
         writer.write(result)
         writer.newLine()
     }
@@ -79,6 +83,7 @@ class Master2ClientSocketConnection(private val socket: Socket) : Master2ClientC
         writer.close()
         reader.close()
         socket.close()
+        log.debug("Master closed its connection to client")
     }
 }
 
@@ -89,6 +94,7 @@ class Master2WorkerSocketConnection(private val socket: Socket) : Master2WorkerC
     override fun send(request: String) {
         writer.write(request)
         writer.newLine()
+        writer.flush()
     }
 
     override fun receive(): String {
@@ -110,20 +116,26 @@ class Client2MasterSocketConnection(val serializer: KexSerializer, private val p
     private lateinit var reader: BufferedReader
 
     override fun connect(): Boolean {
+        log.debug("Trying to connect to master at port $port")
         socket = Socket("localhost", port)
         writer = socket.getOutputStream().bufferedWriter()
         reader = socket.getInputStream().bufferedReader()
+        log.debug("Connected to master")
         return true
     }
 
     override fun send(request: TestExecutionRequest) {
+        log.debug("Client sending a request: $request")
         val json = serializer.toJson(request)
         writer.write(json)
         writer.newLine()
+        writer.flush()
+        log.debug("Request is sent")
     }
 
     override fun receive(): ExecutionResult {
         val json = reader.readLine()
+        log.debug("Client received an answer")
         return serializer.fromJson(json)
     }
 
@@ -131,6 +143,7 @@ class Client2MasterSocketConnection(val serializer: KexSerializer, private val p
         writer.close()
         reader.close()
         socket.close()
+        log.debug("Client closed its connection")
     }
 }
 
@@ -143,27 +156,33 @@ class Worker2MasterSocketConnection(val serializer: KexSerializer, private val p
     private lateinit var reader: BufferedReader
 
     override fun connect(): Boolean {
+        log.debug("Trying to connect to master at port $port")
         socket = Socket("localhost", port)
         writer = socket.getOutputStream().bufferedWriter()
         reader = socket.getInputStream().bufferedReader()
+        log.debug("Connected to master")
         return true
     }
 
     override fun receive(): TestExecutionRequest {
         val json = reader.readLine()
+        log.debug("Received request: $json")
         return serializer.fromJson(json)
     }
 
     override fun send(result: ExecutionResult) {
         val json = serializer.toJson(result)
+        log.debug("Sending a response")
         writer.write(json)
         writer.newLine()
+        writer.flush()
     }
 
     override fun close() {
         writer.close()
         reader.close()
         socket.close()
+        log.debug("Worker closed its connection")
     }
 
 }

@@ -10,6 +10,12 @@ sealed class ExecutionResult {
 }
 
 @Serializable
+data class ExecutionFailedResult(
+    val message: String,
+    override val trace: @Contextual SymbolicState
+): ExecutionResult()
+
+@Serializable
 data class SetupFailedResult(
     val message: String,
     override val trace: @Contextual SymbolicState

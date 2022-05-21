@@ -14,6 +14,7 @@ class TestExecutor(
     fun executeTest(request: TestExecutionRequest): ExecutionResult {
         val javaClass = Class.forName(request.klass)
         val instance = javaClass.getConstructor().newInstance()
+        log.debug("Loaded a test class and created an instance")
 
         when (val setupMethod = request.setupMethod) {
             null -> {}
@@ -26,6 +27,7 @@ class TestExecutor(
                 return SetupFailedResult(e.message ?: "", symbolicState())
             }
         }
+        log.debug("Executed setup")
 
         val collector = TraceCollectorProxy.enableCollector(ctx, NameMapperContext())
         var exception: Throwable? = null

@@ -1,7 +1,10 @@
 package org.vorpal.research.kex.worker
 
 import org.vorpal.research.kex.ExecutionContext
+import org.vorpal.research.kex.trace.symbolic.ExecutionFailedResult
 import org.vorpal.research.kex.trace.symbolic.protocol.Worker2MasterConnection
+import org.vorpal.research.kex.trace.symbolic.symbolicState
+import org.vorpal.research.kthelper.logging.log
 
 class ExecutorWorker(val ctx: ExecutionContext, val connection: Worker2MasterConnection) : Runnable {
     val executor: TestExecutor
@@ -14,7 +17,12 @@ class ExecutorWorker(val ctx: ExecutionContext, val connection: Worker2MasterCon
     override fun run() {
         while (true) {
             val request = connection.receive()
-            val result = executor.executeTest(request)
+            val result = try {
+                executor.executeTest(request)
+            } catch (e: Throwable) {
+                log.error("Failed: $e")
+                ExecutionFailedResult(e.message ?: "", symbolicState())
+            }
             connection.send(result)
         }
     }
