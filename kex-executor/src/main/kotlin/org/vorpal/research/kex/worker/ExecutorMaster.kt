@@ -8,6 +8,7 @@ import org.vorpal.research.kex.trace.symbolic.protocol.MasterProtocolHandler
 import org.vorpal.research.kex.util.getPathSeparator
 import org.vorpal.research.kthelper.logging.log
 import java.lang.Runnable
+import java.net.SocketTimeoutException
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.concurrent.ArrayBlockingQueue
@@ -47,7 +48,9 @@ class ExecutorMaster(
         private fun reInit() {
             synchronized(connection) {
                 process = createProcess()
-                workerConnection = connection.receiveWorkerConnection()
+                if (this::workerConnection.isInitialized)
+                    workerConnection.close()
+                workerConnection = connection.receiveWorkerConnection(timeout)
                 log.debug("Worker $id connected")
             }
         }
@@ -76,7 +79,14 @@ class ExecutorMaster(
             val request = clientConnection.receive()
             log.debug("Worker $id receiver request $request")
             workerConnection.send(request)
-            val result = workerConnection.receive()
+            val result = try {
+                workerConnection.receive()
+            } catch (e: SocketTimeoutException) {
+                process.destroyForcibly()
+                log.debug("Received socket timeout exception")
+                // this is fucked up
+                "{\"message\":\"timeout\",\"trace\":{\"className\":\"SymbolicStateImpl\",\"state\":{\"className\":\"org.vorpal.research.kex.state.BasicState\",\"predicates\":[]},\"path\":{\"className\":\"PathConditionImpl\",\"path\":[]},\"concreteValueMap\":[],\"termMap\":[],\"predicateMap\":[],\"trace\":{}}}"
+            }
             log.debug("Worker $id processed result: $result")
             clientConnection.send(result)
         }

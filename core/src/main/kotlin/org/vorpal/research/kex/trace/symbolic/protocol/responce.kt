@@ -22,6 +22,12 @@ data class SetupFailedResult(
 ): ExecutionResult()
 
 @Serializable
+data class ExecutionTimedOutResult(
+    val message: String,
+    override val trace: @Contextual SymbolicState
+): ExecutionResult()
+
+@Serializable
 data class ExceptionResult(
     val cause: @Contextual Descriptor,
     override val trace: @Contextual SymbolicState

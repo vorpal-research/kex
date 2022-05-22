@@ -6,10 +6,6 @@ class ExecutorCmdConfig(args: Array<String>) : AbstractCmdConfig("kex-executor",
     val options = mutableListOf<Option>()
     options.addAll(defaultOptions())
 
-    val targetDir = Option(null, "output", true, "directory for all temporary output")
-    targetDir.isRequired = false
-    options += targetDir
-
     val pkg = Option(null, "package", true, "pkg")
     pkg.isRequired = true
     options += pkg

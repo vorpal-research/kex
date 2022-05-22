@@ -15,7 +15,7 @@ interface MasterProtocolHandler {
     val workerPort: Int
 
     fun receiveClientConnection(): Master2ClientConnection
-    fun receiveWorkerConnection(): Master2WorkerConnection
+    fun receiveWorkerConnection(timeout: Long): Master2WorkerConnection
 }
 
 
@@ -57,8 +57,9 @@ class MasterProtocolSocketHandler(
         return Master2ClientSocketConnection(socket)
     }
 
-    override fun receiveWorkerConnection(): Master2WorkerConnection {
+    override fun receiveWorkerConnection(timeout: Long): Master2WorkerConnection {
         val socket = workerListener.accept()
+        socket.soTimeout = timeout.toInt()
         return Master2WorkerSocketConnection(socket)
     }
 }

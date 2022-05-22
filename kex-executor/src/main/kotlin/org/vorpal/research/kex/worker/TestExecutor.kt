@@ -31,7 +31,7 @@ class TestExecutor(
                 val setup = javaClass.getMethod(setupMethod)
                 setup.invoke(instance)
             } catch (e: Throwable) {
-                log.error(e)
+                log.error(e.message)
                 e.printStackTrace(System.err)
                 return SetupFailedResult(e.message ?: "", symbolicState())
             }

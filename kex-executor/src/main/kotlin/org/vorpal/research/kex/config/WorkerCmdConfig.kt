@@ -6,6 +6,10 @@ class WorkerCmdConfig(args: Array<String>) : AbstractCmdConfig("kex-executor-wor
     val options = mutableListOf<Option>()
     options.addAll(defaultOptions())
 
+    val targetDir = Option(null, "output", true, "directory for all temporary output")
+    targetDir.isRequired = false
+    options += targetDir
+
     val port = Option("p", "port", true, "port on which to start listening for clients")
     port.isRequired = true
     options += port
