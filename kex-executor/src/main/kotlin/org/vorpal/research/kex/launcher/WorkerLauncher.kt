@@ -24,6 +24,7 @@ import org.vorpal.research.kfg.container.asContainer
 import org.vorpal.research.kfg.util.Flags
 import org.vorpal.research.kthelper.logging.log
 import java.net.URLClassLoader
+import java.nio.file.Files
 import java.nio.file.Paths
 import kotlin.system.exitProcess
 
@@ -44,6 +45,15 @@ class WorkerLauncher(args: Array<String>) {
 
     init {
         kexConfig.initialize(cmd, RuntimeConfig, FileConfig(properties))
+
+        // initialize output dir
+        (cmd.getCmdValue("output")?.let { Paths.get(it) }
+            ?: kexConfig.getPathValue("kex", "outputDir")
+            ?: Files.createTempDirectory(Paths.get("."), "kex-output"))
+            .toAbsolutePath().also {
+                RuntimeConfig.setValue("kex", "outputDir", it)
+            }
+
         val logName = kexConfig.getStringValue("kex", "log", "kex-executor-worker.log")
         kexConfig.initLog(logName)
 

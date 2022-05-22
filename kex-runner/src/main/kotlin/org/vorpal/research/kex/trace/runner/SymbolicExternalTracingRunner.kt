@@ -58,6 +58,7 @@ internal object ExecutorMasterController : AutoCloseable {
             "java",
             "-classpath", executorPath.toString(),
             executorKlass,
+            "--output", "${outputDir.toAbsolutePath()}",
             "--config", "$executorConfigPath",
             "--port", "$masterPort",
             "--kfgClassPath", kfgClassPath.joinToString(getPathSeparator()),

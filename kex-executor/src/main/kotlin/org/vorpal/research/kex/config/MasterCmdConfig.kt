@@ -5,6 +5,10 @@ import org.apache.commons.cli.Option
 class MasterCmdConfig(args: Array<String>) : AbstractCmdConfig("kex-executor-master", args, {
     val options = mutableListOf<Option>()
 
+    val targetDir = Option(null, "output", true, "directory for all temporary output")
+    targetDir.isRequired = false
+    options += targetDir
+
     val kfgClassPath = Option(null, "kfgClassPath", true, "classpath for kfg initialization")
     kfgClassPath.isRequired = true
     options += kfgClassPath

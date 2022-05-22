@@ -1,14 +1,13 @@
 package org.vorpal.research.kex.worker
 
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.yield
+import kotlinx.coroutines.*
 import org.vorpal.research.kex.config.kexConfig
 import org.vorpal.research.kex.trace.symbolic.protocol.Master2ClientConnection
 import org.vorpal.research.kex.trace.symbolic.protocol.Master2WorkerConnection
 import org.vorpal.research.kex.trace.symbolic.protocol.MasterProtocolHandler
 import org.vorpal.research.kex.util.getPathSeparator
 import org.vorpal.research.kthelper.logging.log
+import java.lang.Runnable
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.concurrent.ArrayBlockingQueue
@@ -60,6 +59,7 @@ class ExecutorMaster(
                 "-Djava.security.policy==${executorPolicyPath}",
                 "-classpath", workerClassPath.joinToString(getPathSeparator()),
                 executorKlass,
+                "--output", "${outputDir.toAbsolutePath()}",
                 "--config", executorConfigPath.toString(),
                 "--option", "kex:log:${outputDir.resolve("kex-executor-worker$id.log").toAbsolutePath()}",
                 "--classpath", kfgClassPath.joinToString(getPathSeparator()),

@@ -6,6 +6,7 @@ import org.vorpal.research.kex.config.kexConfig
 import org.vorpal.research.kex.trace.symbolic.protocol.MasterProtocolSocketHandler
 import org.vorpal.research.kex.util.getPathSeparator
 import org.vorpal.research.kex.worker.ExecutorMaster
+import java.nio.file.Files
 import java.nio.file.Paths
 
 fun main(args: Array<String>) {
@@ -26,6 +27,15 @@ class MasterLauncher(args: Array<String>) {
 
     init {
         kexConfig.initialize(cmd, RuntimeConfig, FileConfig(properties))
+
+        // initialize output dir
+        (cmd.getCmdValue("output")?.let { Paths.get(it) }
+            ?: kexConfig.getPathValue("kex", "outputDir")
+            ?: Files.createTempDirectory(Paths.get("."), "kex-output"))
+            .toAbsolutePath().also {
+                RuntimeConfig.setValue("kex", "outputDir", it)
+            }
+
         val logName = kexConfig.getStringValue("kex", "log", "kex-executor-master.log")
         kexConfig.initLog(logName)
     }
