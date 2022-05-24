@@ -1,18 +1,26 @@
 package org.vorpal.research.kex.worker
 
-import kotlinx.coroutines.*
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.yield
+import kotlinx.serialization.ExperimentalSerializationApi
+import kotlinx.serialization.InternalSerializationApi
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.serializer
 import org.vorpal.research.kex.config.kexConfig
+import org.vorpal.research.kex.trace.symbolic.ExecutionTimedOutResult
 import org.vorpal.research.kex.trace.symbolic.protocol.Master2ClientConnection
 import org.vorpal.research.kex.trace.symbolic.protocol.Master2WorkerConnection
 import org.vorpal.research.kex.trace.symbolic.protocol.MasterProtocolHandler
 import org.vorpal.research.kex.util.getPathSeparator
 import org.vorpal.research.kthelper.logging.log
-import java.lang.Runnable
 import java.net.SocketTimeoutException
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.concurrent.ArrayBlockingQueue
 
+@ExperimentalSerializationApi
+@InternalSerializationApi
 class ExecutorMaster(
     val connection: MasterProtocolHandler,
     val kfgClassPath: List<Path>,
@@ -35,6 +43,15 @@ class ExecutorMaster(
         repeat(numberOfWorkers) {
             workerQueue.add(WorkerWrapper(it))
         }
+    }
+
+    private val json = Json {
+        encodeDefaults = false
+        ignoreUnknownKeys = false
+        prettyPrint = false
+        useArrayPolymorphism = false
+        classDiscriminator = "className"
+        allowStructuredMapKeys = true
     }
 
     inner class WorkerWrapper(val id: Int) {
@@ -84,8 +101,7 @@ class ExecutorMaster(
             } catch (e: SocketTimeoutException) {
                 process.destroyForcibly()
                 log.debug("Received socket timeout exception")
-                // this is fucked up
-                "{\"message\":\"timeout\",\"trace\":{\"className\":\"SymbolicStateImpl\",\"state\":{\"className\":\"org.vorpal.research.kex.state.BasicState\",\"predicates\":[]},\"path\":{\"className\":\"PathConditionImpl\",\"path\":[]},\"concreteValueMap\":[],\"termMap\":[],\"predicateMap\":[],\"trace\":{}}}"
+                json.encodeToString(ExecutionTimedOutResult::class.serializer(), ExecutionTimedOutResult("timeout"))
             }
             log.debug("Worker $id processed result: $result")
             clientConnection.send(result)

@@ -1,11 +1,9 @@
 package org.vorpal.research.kex.asm.analysis.concolic.cgs
 
-import org.vorpal.research.kex.state.BasicState
 import org.vorpal.research.kex.state.predicate.EqualityPredicate
 import org.vorpal.research.kex.state.predicate.PredicateType
 import org.vorpal.research.kex.state.term.InstanceOfTerm
 import org.vorpal.research.kex.trace.symbolic.Clause
-import org.vorpal.research.kex.trace.symbolic.PathCondition
 import org.vorpal.research.kex.trace.symbolic.SymbolicState
 import org.vorpal.research.kex.util.length
 import org.vorpal.research.kfg.ir.value.instruction.BranchInst
@@ -18,7 +16,7 @@ import org.vorpal.research.kthelper.graph.*
 sealed class Vertex(val clause: Clause) : PredecessorGraph.PredecessorVertex<Vertex> {
     val upEdges = mutableSetOf<Vertex>()
     val downEdges = mutableSetOf<Vertex>()
-    val states = mutableMapOf<PathCondition, SymbolicState>()
+    val states = mutableMapOf<List<Clause>, SymbolicState>()
 
     override val predecessors: Set<Vertex>
         get() = upEdges
@@ -26,7 +24,7 @@ sealed class Vertex(val clause: Clause) : PredecessorGraph.PredecessorVertex<Ver
     override val successors: Set<Vertex>
         get() = downEdges
 
-    operator fun set(path: PathCondition, state: SymbolicState) {
+    operator fun set(path: List<Clause>, state: SymbolicState) {
         states[path] = state
     }
 
@@ -49,7 +47,7 @@ class PathVertex(clause: Clause) : Vertex(clause) {
 
 data class Context(
     val context: List<PathVertex>,
-    val fullPath: PathCondition,
+    val fullPath: List<Clause>,
     val symbolicState: SymbolicState
 ) {
     val condition get() = context.last()
@@ -85,12 +83,12 @@ class ExecutionTree : PredecessorGraph<Vertex>, Viewable {
     fun addTrace(symbolicState: SymbolicState) {
         var prevVertex: Vertex? = null
 
-        for (predicate in (symbolicState.state as BasicState)) {
-            val current = Clause(symbolicState[predicate], predicate)
+        for (current in symbolicState.clauses) {
+            val predicate = current.predicate
             val currentVertex = _nodes.getOrPut(current) {
                 when (predicate.type) {
                     is PredicateType.Path -> PathVertex(current).also {
-                        it[symbolicState.path.subPath(current)] = symbolicState
+                        it[symbolicState.subPath(current)] = symbolicState
                         edges[current] = it
                     }
                     else -> ClauseVertex(current).also {
@@ -113,7 +111,7 @@ class ExecutionTree : PredecessorGraph<Vertex>, Viewable {
             prevVertex = currentVertex
         }
 
-        val currentDepth = (symbolicState.state as BasicState).count { it.type is PredicateType.Path }
+        val currentDepth = symbolicState.clauses.count { it.predicate.type is PredicateType.Path }
         if (currentDepth > depth)
             depth = currentDepth
         dominators = DominatorTreeBuilder(this).build()
@@ -179,8 +177,9 @@ class ExecutionTree : PredecessorGraph<Vertex>, Viewable {
             val graphNodes = mutableMapOf<Vertex, GraphView>()
             val depths = getBranchDepths()
 
+            var i = 0
             for (vertex in nodes) {
-                graphNodes[vertex] = GraphView("$vertex", "$vertex")
+                graphNodes[vertex] = GraphView("${i++}", "$vertex")
             }
 
             for (vertex in nodes) {

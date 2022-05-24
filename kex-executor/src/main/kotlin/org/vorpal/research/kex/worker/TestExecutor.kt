@@ -6,7 +6,6 @@ import org.vorpal.research.kex.descriptor.convertToDescriptor
 import org.vorpal.research.kex.trace.symbolic.*
 import org.vorpal.research.kex.trace.symbolic.protocol.TestExecutionRequest
 import org.vorpal.research.kfg.ir.value.NameMapperContext
-import org.vorpal.research.kthelper.logging.error
 import org.vorpal.research.kthelper.logging.log
 import java.net.URLClassLoader
 
@@ -31,9 +30,8 @@ class TestExecutor(
                 val setup = javaClass.getMethod(setupMethod)
                 setup.invoke(instance)
             } catch (e: Throwable) {
-                log.error(e.message)
-                e.printStackTrace(System.err)
-                return SetupFailedResult(e.message ?: "", symbolicState())
+                log.error("Setup failed with an exception", e)
+                return SetupFailedResult(e.message ?: "")
             }
         }
         log.debug("Executed setup")
@@ -45,6 +43,7 @@ class TestExecutor(
             test.invoke(instance)
         } catch (e: Throwable) {
             exception = e
+            log.error("Execution failed with an exception", e)
         }
         TraceCollectorProxy.disableCollector()
         log.debug("Collected state: ${collector.symbolicState}")

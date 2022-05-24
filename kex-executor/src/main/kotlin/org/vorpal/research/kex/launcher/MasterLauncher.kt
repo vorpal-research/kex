@@ -1,4 +1,6 @@
 package org.vorpal.research.kex.launcher
+import kotlinx.serialization.ExperimentalSerializationApi
+import kotlinx.serialization.InternalSerializationApi
 import org.vorpal.research.kex.config.FileConfig
 import org.vorpal.research.kex.config.MasterCmdConfig
 import org.vorpal.research.kex.config.RuntimeConfig
@@ -9,10 +11,14 @@ import org.vorpal.research.kex.worker.ExecutorMaster
 import java.nio.file.Files
 import java.nio.file.Paths
 
+@ExperimentalSerializationApi
+@InternalSerializationApi
 fun main(args: Array<String>) {
     MasterLauncher(args).main()
 }
 
+@ExperimentalSerializationApi
+@InternalSerializationApi
 class MasterLauncher(args: Array<String>) {
     private val cmd = MasterCmdConfig(args)
     private val properties = cmd.getCmdValue("config", "kex.ini")
