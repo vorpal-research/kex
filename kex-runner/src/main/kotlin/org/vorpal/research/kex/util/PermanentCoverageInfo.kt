@@ -31,6 +31,14 @@ object PermanentCoverageInfo {
     )
 
     private fun init(): Map<String, CoverageRes> {
+        val json = Json {
+            encodeDefaults = false
+            ignoreUnknownKeys = false
+            prettyPrint = true
+            useArrayPolymorphism = false
+            classDiscriminator = "className"
+            allowStructuredMapKeys = true
+        }
         val permanentCoverageInfoFile = kexConfig.getPathValue("kex", "coverage", "coverage.json")
         return when {
             permanentCoverageInfoFile.exists() -> json.decodeFromString(permanentCoverageInfoFile.readText())
@@ -39,6 +47,14 @@ object PermanentCoverageInfo {
     }
 
     fun emit() {
+        val json = Json {
+            encodeDefaults = false
+            ignoreUnknownKeys = false
+            prettyPrint = true
+            useArrayPolymorphism = false
+            classDiscriminator = "className"
+            allowStructuredMapKeys = true
+        }
         val permanentCoverageInfoFile = kexConfig.getPathValue("kex", "coverage", "coverage.json")
         permanentCoverageInfoFile.writeText(
             json.encodeToString(

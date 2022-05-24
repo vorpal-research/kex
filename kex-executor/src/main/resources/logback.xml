@@ -17,18 +17,10 @@
     <appender name="asyncFileLogger" class="ch.qos.logback.classic.AsyncAppender">
         <appender-ref ref="kexFileLogger"/>
     </appender>
-    <appender name="asyncStdout" class="ch.qos.logback.classic.AsyncAppender">
-        <appender-ref ref="stdout"/>
-    </appender>
 
     <logger name="org.vorpal.research" level="ALL" additivity="false">
         <appender-ref ref="asyncFileLogger"/>
-        <appender-ref ref="asyncStdout"/>
     </logger>
 
     <logger name="ch.qos.logback" level="OFF"/>
-
-    <root level="ALL">
-        <appender-ref ref="asyncStdout"/>
-    </root>
 </configuration>

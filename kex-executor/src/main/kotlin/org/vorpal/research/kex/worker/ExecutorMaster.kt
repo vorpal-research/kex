@@ -30,6 +30,7 @@ class ExecutorMaster(
     private val timeout = kexConfig.getLongValue("runner", "timeout", 10000L)
     private val workerQueue = ArrayBlockingQueue<WorkerWrapper>(numberOfWorkers)
     private val outputDir = kexConfig.getPathValue("kex", "outputDir")!!
+    private val workerJvmParams = kexConfig.getMultipleStringValue("executor", "masterJvmParams", ",")
     private val executorPolicyPath = (kexConfig.getPathValue(
         "executor", "executorPolicyPath"
     ) ?: Paths.get("kex.policy")).toAbsolutePath()
@@ -75,6 +76,7 @@ class ExecutorMaster(
         private fun createProcess(): Process {
             val pb = ProcessBuilder(
                 "java",
+                *workerJvmParams.toTypedArray(),
                 "-Djava.security.manager",
                 "-Djava.security.policy==${executorPolicyPath}",
                 "-classpath", workerClassPath.joinToString(getPathSeparator()),
@@ -103,7 +105,7 @@ class ExecutorMaster(
                 log.debug("Received socket timeout exception")
                 json.encodeToString(ExecutionTimedOutResult::class.serializer(), ExecutionTimedOutResult("timeout"))
             }
-            log.debug("Worker $id processed result: $result")
+            log.debug("Worker $id processed result")
             clientConnection.send(result)
         }
     }
@@ -114,7 +116,8 @@ class ExecutorMaster(
         worker.processTask(clientConnection)
         workerQueue.add(worker)
     } catch (e: Throwable) {
-        log.error("Error while working with client:", e)
+        log.error("Error while working with client")
+        log.error("${e.message} ${e.javaClass} ${e.stackTrace.joinToString("\n") { "${it.fileName}:${it.lineNumber}" }}")
     }
 
     override fun run() {
