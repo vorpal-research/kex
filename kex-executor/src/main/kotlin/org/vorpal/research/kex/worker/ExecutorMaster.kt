@@ -116,8 +116,7 @@ class ExecutorMaster(
         worker.processTask(clientConnection)
         workerQueue.add(worker)
     } catch (e: Throwable) {
-        log.error("Error while working with client")
-        log.error("${e.message} ${e.javaClass} ${e.stackTrace.joinToString("\n") { "${it.fileName}:${it.lineNumber}" }}")
+        log.error("Error while working with client: ", e)
     }
 
     override fun run() {
