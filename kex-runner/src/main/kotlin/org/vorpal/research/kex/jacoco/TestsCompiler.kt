@@ -37,7 +37,7 @@ class TestsCompiler(private val outputDir: Path) {
             listOf(compilationUnit)
         )
         if (!compilationTask.call()) {
-            log.warn("Failed to compile tests $testsNames")
+            log.warn("Failed to compile tests $javaFile")
             log.warn(compilerOutput.toString())
         }
         return fileManager.generatedOutputFiles
