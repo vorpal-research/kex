@@ -58,7 +58,7 @@ data class SymbolicStateImpl(
     override val concreteValueMap: @Contextual Map<Term, @Contextual Descriptor>,
     override val termMap: @Contextual Map<Term, @Contextual WrappedValue>,
 ) : SymbolicState() {
-    override fun toString() = "$clauses"
+    override fun toString() = "${clauses.asState()}"
 }
 
 fun symbolicState(
