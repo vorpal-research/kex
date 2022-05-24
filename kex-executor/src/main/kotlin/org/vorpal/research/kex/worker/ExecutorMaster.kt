@@ -108,11 +108,13 @@ class ExecutorMaster(
         }
     }
 
-    private fun handleClient(clientConnection: Master2ClientConnection) {
+    private fun handleClient(clientConnection: Master2ClientConnection) = try {
         val worker = workerQueue.poll()
         log.debug("Selected a worker ${worker.id}")
         worker.processTask(clientConnection)
         workerQueue.add(worker)
+    } catch (e: Throwable) {
+        log.error("Error while working with client:", e)
     }
 
     override fun run() {
