@@ -30,7 +30,7 @@ class ExecutorMaster(
     private val timeout = kexConfig.getLongValue("runner", "timeout", 10000L)
     private val workerQueue = ArrayBlockingQueue<WorkerWrapper>(numberOfWorkers)
     private val outputDir = kexConfig.getPathValue("kex", "outputDir")!!
-    private val workerJvmParams = kexConfig.getMultipleStringValue("executor", "masterJvmParams", ",")
+    private val workerJvmParams = kexConfig.getMultipleStringValue("executor", "workerJvmParams", ",")
     private val executorPolicyPath = (kexConfig.getPathValue(
         "executor", "executorPolicyPath"
     ) ?: Paths.get("kex.policy")).toAbsolutePath()
