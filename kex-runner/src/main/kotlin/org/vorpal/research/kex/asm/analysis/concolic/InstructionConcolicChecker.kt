@@ -200,9 +200,7 @@ class InstructionConcolicChecker(
                     newState.trace.isEmpty() -> log.warn { "Collected empty state from $state" }
                     else -> pathIterator.addExecutionTrace(method, newState)
                 }
-                else -> {
-                    log.warn("Failure during execution: $newState")
-                }
+                else -> log.warn("Failure during execution: $newState")
             }
             yield()
         }
