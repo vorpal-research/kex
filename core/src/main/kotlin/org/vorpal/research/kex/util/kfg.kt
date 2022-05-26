@@ -69,10 +69,13 @@ fun Char.apply(opcode: CmpOpcode, other: Char) = this.code.apply(opcode, other.c
 fun NameMapper.parseValue(valueName: String): Value {
     val values = method.cm.value
     return getValue(valueName) ?: when {
-        valueName.matches(Regex("\\d+")) -> values.getInt(valueName.toInt())
-        valueName.matches(Regex("\\d+.\\d+")) -> values.getDouble(valueName.toDouble())
-        valueName.matches(Regex("-\\d+")) -> values.getInt(valueName.toInt())
-        valueName.matches(Regex("-\\d+.\\d+")) -> values.getDouble(valueName.toDouble())
+        valueName.matches(Regex("-?\\d+L")) -> values.getLong(valueName.toLong())
+        valueName.matches(Regex("-?\\d+b")) -> values.getByte(valueName.toByte())
+        valueName.matches(Regex("-?\\d+c")) -> values.getChar(valueName.toInt().toChar())
+        valueName.matches(Regex("-?\\d+s")) -> values.getShort(valueName.toShort())
+        valueName.matches(Regex("-?\\d+")) -> values.getInt(valueName.toInt())
+        valueName.matches(Regex("-?\\d+.\\d+f")) -> values.getFloat(valueName.toFloat())
+        valueName.matches(Regex("-?\\d+.\\d+")) -> values.getDouble(valueName.toDouble())
         valueName.matches(Regex("\".*\"")) -> values.getString(valueName.substring(1, valueName.lastIndex))
         valueName.matches(Regex("\"[\n\\s]*\"")) -> values.getString(valueName.substring(1, valueName.lastIndex))
         valueName.matches(Regex(".*(/.*)+.class")) -> values.getClass("L${valueName.removeSuffix(".class")};")
