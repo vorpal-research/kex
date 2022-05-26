@@ -34,6 +34,10 @@ fun main(args: Array<String>) {
     KexExecutor(args).main()
 }
 
+@Deprecated(
+    message = "replaced with master-worker executor",
+    replaceWith = ReplaceWith("org.vorpal.research.kex.launcher.MasterLauncher")
+)
 class KexExecutor(args: Array<String>) {
     private val cmd = ExecutorCmdConfig(args)
     private val properties = cmd.getCmdValue("config", "kex.ini")

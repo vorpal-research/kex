@@ -11,7 +11,6 @@ import org.vorpal.research.kex.state.term.InstanceOfTerm
 import org.vorpal.research.kex.state.term.NullTerm
 import org.vorpal.research.kex.state.term.numericValue
 import org.vorpal.research.kex.state.transformer.TermCollector
-import org.vorpal.research.kex.trace.TraceManager
 import org.vorpal.research.kex.trace.symbolic.*
 import org.vorpal.research.kex.util.dropLast
 import org.vorpal.research.kex.util.nextOrNull
@@ -28,7 +27,6 @@ import org.vorpal.research.kthelper.logging.log
 
 class ContextGuidedSelector(
     override val tf: TypeFactory,
-    override val traceManager: TraceManager<InstructionTrace>
 ) : PathSelector {
     val executionTree = ExecutionTree()
     var currentDepth = 0
@@ -70,17 +68,17 @@ class ContextGuidedSelector(
         visitedContexts += currentState.context
         state = null
 
-        val state = currentState.context.symbolicState.state.takeWhile {
-            it == currentState.activeClause.predicate
-        }.filter { it.type !is PredicateType.Path }
+        val state = ClauseState(
+            currentState.context.symbolicState.clauses
+                .takeWhile { it != currentState.activeClause }
+                .filter { it.predicate.type !is PredicateType.Path }
+        )
 
         return SymbolicStateImpl(
             state,
             PathCondition(currentState.path + currentState.revertedClause),
             currentState.context.symbolicState.concreteValueMap,
-            currentState.context.symbolicState.termMap,
-            currentState.context.symbolicState.predicateMap,
-            currentState.context.symbolicState.trace
+            currentState.context.symbolicState.termMap
         )
     }
 
@@ -104,7 +102,7 @@ class ContextGuidedSelector(
         branchIterator = executionTree.getBranches(currentDepth).shuffled().iterator()
     }
 
-    override suspend fun addExecutionTrace(method: Method, result: ExecutionResult) {
+    override suspend fun addExecutionTrace(method: Method, result: ExecutionCompletedResult) {
         executionTree.addTrace(result.trace)
     }
 

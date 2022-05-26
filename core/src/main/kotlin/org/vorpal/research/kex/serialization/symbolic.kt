@@ -13,7 +13,7 @@ import kotlinx.serialization.modules.SerializersModule
 import org.vorpal.research.kex.trace.symbolic.WrappedValue
 import org.vorpal.research.kex.util.parseValue
 import org.vorpal.research.kfg.ir.Method
-import org.vorpal.research.kfg.ir.value.NameMapperContext
+import org.vorpal.research.kfg.ir.value.*
 
 @InternalSerializationApi
 @ExperimentalSerializationApi
@@ -79,7 +79,21 @@ internal class WrappedValueSerializer(
     override fun serialize(encoder: Encoder, value: WrappedValue) {
         val output = encoder.beginStructure(descriptor)
         output.encodeSerializableElement(descriptor, 0, methodSerializer, value.method)
-        output.encodeStringElement(descriptor, 1, "${value.value.name}")
+        val encodedString = when (val kfgValue = value.value) {
+            is Constant -> when(kfgValue) {
+                is BoolConstant -> "${kfgValue.value}"
+                is ByteConstant -> "${kfgValue.value}b"
+                is ShortConstant -> "${kfgValue.value}s"
+                is IntConstant -> "${kfgValue.value}"
+                is LongConstant -> "${kfgValue.value}L"
+                is CharConstant -> "${kfgValue.value.code}c"
+                is FloatConstant -> "${kfgValue.value}f"
+                is DoubleConstant -> "${kfgValue.value}"
+                else -> "${value.value.name}"
+            }
+            else -> "${value.value.name}"
+        }
+        output.encodeStringElement(descriptor, 1, encodedString)
         output.endStructure(descriptor)
     }
 

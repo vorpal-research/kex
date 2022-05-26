@@ -30,11 +30,10 @@ import org.vorpal.research.kex.smt.Result
 import org.vorpal.research.kex.state.PredicateState
 import org.vorpal.research.kex.state.term.Term
 import org.vorpal.research.kex.state.transformer.*
-import org.vorpal.research.kex.trace.TraceManager
 import org.vorpal.research.kex.trace.runner.SymbolicExternalTracingRunner
 import org.vorpal.research.kex.trace.runner.generateParameters
+import org.vorpal.research.kex.trace.symbolic.ExecutionCompletedResult
 import org.vorpal.research.kex.trace.symbolic.ExecutionResult
-import org.vorpal.research.kex.trace.symbolic.InstructionTrace
 import org.vorpal.research.kex.trace.symbolic.SymbolicState
 import org.vorpal.research.kex.util.getJunit
 import org.vorpal.research.kfg.ClassManager
@@ -68,7 +67,6 @@ private class CompilerHelper(val ctx: ExecutionContext) {
 @InternalSerializationApi
 class InstructionConcolicChecker(
     val ctx: ExecutionContext,
-    val traceManager: TraceManager<InstructionTrace>
 ) : MethodVisitor {
     override val cm: ClassManager
         get() = ctx.cm
@@ -100,9 +98,12 @@ class InstructionConcolicChecker(
         }
     }
 
-    private fun getRandomTrace(method: Method): ExecutionResult? = tryOrNull {
-        val params = ctx.random.generateParameters(ctx.loader, method) ?: return null
-        collectTraceFromAny(method, params)
+    private fun getRandomTrace(method: Method): ExecutionResult? = try {
+        val params = ctx.random.generateParameters(ctx.loader, method)
+        params?.let { collectTraceFromAny(method, it) }
+    } catch (e: Throwable) {
+        log.warn("Error while collecting random trace:", e)
+        null
     }
 
     private fun collectTraceFromAny(method: Method, parameters: Parameters<Any?>): ExecutionResult? =
@@ -161,7 +162,7 @@ class InstructionConcolicChecker(
             .filterValues { it.isJavaRt }
             .mapValues { it.value.rtMapped }
             .toTypeMap()
-        val preparedState = prepareState(method, state.state + query, concreteTypeInfo)
+        val preparedState = prepareState(method, state.clauses.asState() + query, concreteTypeInfo)
         val result = checker.check(preparedState)
         if (result !is Result.SatResult) return null
 
@@ -174,17 +175,20 @@ class InstructionConcolicChecker(
         }
     }
 
-    private fun buildPathSelector(traceManager: TraceManager<InstructionTrace>) = when (searchStrategy) {
-        "bfs" -> BfsPathSelectorImpl(ctx.types, traceManager)
-        "cgs" -> ContextGuidedSelector(ctx.types, traceManager)
+    private fun buildPathSelector() = when (searchStrategy) {
+        "bfs" -> BfsPathSelectorImpl(ctx.types)
+        "cgs" -> ContextGuidedSelector(ctx.types)
         else -> unreachable { log.error("Unknown type of search strategy $searchStrategy") }
     }
 
     private suspend fun processMethod(method: Method) {
         testIndex = 0
-        val pathIterator = buildPathSelector(traceManager)
+        val pathIterator = buildPathSelector()
         getRandomTrace(method)?.let {
-            pathIterator.addExecutionTrace(method, it)
+            when (it) {
+                is ExecutionCompletedResult -> pathIterator.addExecutionTrace(method, it)
+                else -> log.warn("Failed to generate random trace: $it")
+            }
         }
         yield()
 
@@ -194,11 +198,13 @@ class InstructionConcolicChecker(
             yield()
 
             val newState = check(method, state) ?: continue
-            if (newState.trace.isEmpty()) {
-                log.warn { "Collected empty state from $state" }
-                continue
+            when (newState) {
+                is ExecutionCompletedResult -> when {
+                    newState.trace.isEmpty() -> log.warn { "Collected empty state from $state" }
+                    else -> pathIterator.addExecutionTrace(method, newState)
+                }
+                else -> log.warn("Failure during execution: $newState")
             }
-            pathIterator.addExecutionTrace(method, newState)
             yield()
         }
     }

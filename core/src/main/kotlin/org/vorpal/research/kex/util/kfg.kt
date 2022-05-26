@@ -39,13 +39,16 @@ fun Instruction.insertAfter(instructions: List<Instruction>) {
 
 fun Any?.cmp(opcode: CmpOpcode, other: Any?) = when {
     this is Number && other is Number -> this.apply(opcode, other)
+    this is Char && other is Number -> this.apply(opcode, other)
+    this is Number && other is Char -> this.apply(opcode, other)
+    this is Char && other is Char -> this.apply(opcode, other)
     else -> this.apply(opcode, other)
 }
 
 fun Any?.apply(opcode: CmpOpcode, other: Any?) = when (opcode) {
     CmpOpcode.EQ -> this === other
     CmpOpcode.NEQ -> this !== other
-    else -> unreachable { log.error("Unknown opcode $opcode for object cmp") }
+    else -> unreachable { log.error("Unknown opcode $opcode for object cmp: lhv = $this, other = $other") }
 }
 
 fun Number.apply(opcode: CmpOpcode, other: Number) = when (opcode) {
@@ -59,14 +62,20 @@ fun Number.apply(opcode: CmpOpcode, other: Number) = when (opcode) {
     CmpOpcode.CMPG -> this.compareTo(other)
     CmpOpcode.CMPL -> this.compareTo(other)
 }
+fun Number.apply(opcode: CmpOpcode, other: Char) = this.apply(opcode, other.code)
+fun Char.apply(opcode: CmpOpcode, other: Number) = this.code.apply(opcode, other)
+fun Char.apply(opcode: CmpOpcode, other: Char) = this.code.apply(opcode, other.code)
 
 fun NameMapper.parseValue(valueName: String): Value {
     val values = method.cm.value
     return getValue(valueName) ?: when {
-        valueName.matches(Regex("\\d+")) -> values.getInt(valueName.toInt())
-        valueName.matches(Regex("\\d+.\\d+")) -> values.getDouble(valueName.toDouble())
-        valueName.matches(Regex("-\\d+")) -> values.getInt(valueName.toInt())
-        valueName.matches(Regex("-\\d+.\\d+")) -> values.getDouble(valueName.toDouble())
+        valueName.matches(Regex("-?\\d+L")) -> values.getLong(valueName.toLong())
+        valueName.matches(Regex("-?\\d+b")) -> values.getByte(valueName.toByte())
+        valueName.matches(Regex("-?\\d+c")) -> values.getChar(valueName.toInt().toChar())
+        valueName.matches(Regex("-?\\d+s")) -> values.getShort(valueName.toShort())
+        valueName.matches(Regex("-?\\d+")) -> values.getInt(valueName.toInt())
+        valueName.matches(Regex("-?\\d+.\\d+f")) -> values.getFloat(valueName.toFloat())
+        valueName.matches(Regex("-?\\d+.\\d+")) -> values.getDouble(valueName.toDouble())
         valueName.matches(Regex("\".*\"")) -> values.getString(valueName.substring(1, valueName.lastIndex))
         valueName.matches(Regex("\"[\n\\s]*\"")) -> values.getString(valueName.substring(1, valueName.lastIndex))
         valueName.matches(Regex(".*(/.*)+.class")) -> values.getClass("L${valueName.removeSuffix(".class")};")

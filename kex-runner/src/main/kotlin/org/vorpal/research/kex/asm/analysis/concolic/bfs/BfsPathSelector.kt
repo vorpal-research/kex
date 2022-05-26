@@ -1,12 +1,10 @@
 package org.vorpal.research.kex.asm.analysis.concolic.bfs
 
 import org.vorpal.research.kex.asm.analysis.concolic.PathSelector
-import org.vorpal.research.kex.state.BasicState
 import org.vorpal.research.kex.state.predicate.*
 import org.vorpal.research.kex.state.term.ConstBoolTerm
 import org.vorpal.research.kex.state.term.ConstIntTerm
 import org.vorpal.research.kex.state.term.NullTerm
-import org.vorpal.research.kex.trace.TraceManager
 import org.vorpal.research.kex.trace.symbolic.*
 import org.vorpal.research.kfg.ir.Method
 import org.vorpal.research.kfg.ir.value.IntConstant
@@ -21,7 +19,6 @@ import org.vorpal.research.kthelper.logging.log
 
 class BfsPathSelectorImpl(
     override val tf: TypeFactory,
-    override val traceManager: TraceManager<InstructionTrace>
 ) : PathSelector {
     private val coveredPaths = mutableSetOf<PathCondition>()
     private val candidates = mutableSetOf<PathCondition>()
@@ -29,41 +26,38 @@ class BfsPathSelectorImpl(
 
     override suspend fun hasNext(): Boolean = deque.isNotEmpty()
 
-    override suspend fun addExecutionTrace(method: Method, result: ExecutionResult) {
+    override suspend fun addExecutionTrace(method: Method, result: ExecutionCompletedResult) {
         if (result.trace.path in coveredPaths) return
         coveredPaths += result.trace.path
-        traceManager.addTrace(method, result.trace.trace)
         addCandidates(result.trace)
     }
 
     override suspend fun next(): SymbolicState = deque.pollFirst()
 
     private fun addCandidates(state: SymbolicState) {
-        val currentState = mutableListOf<Predicate>()
+        val currentState = mutableListOf<Clause>()
         val currentPath = mutableListOf<Clause>()
 
-        for (predicate in (state.state as BasicState)) {
+        for (clause in state.clauses) {
+            val predicate = clause.predicate
             if (predicate.type is PredicateType.Path) {
-                val instruction = state[predicate]
-                val reversed = Clause(instruction, predicate).reversed()
+                val reversed = clause.reversed()
                 if (reversed != null) {
                     val newPath = PathCondition(currentPath + reversed)
                     if (newPath !in candidates) {
                         candidates += newPath
                         val new = SymbolicStateImpl(
-                            BasicState(currentState + reversed.predicate),
+                            ClauseState(currentState + reversed),
                             newPath,
                             state.concreteValueMap.toMutableMap(),
-                            state.termMap,
-                            state.predicateMap,
-                            InstructionTrace()
+                            state.termMap
                         )
                         deque += new
                     }
                 }
-                currentPath += Clause(instruction, predicate)
+                currentPath += clause
             }
-            currentState += predicate
+            currentState += clause
         }
     }
 

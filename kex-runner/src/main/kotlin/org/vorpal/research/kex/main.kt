@@ -42,6 +42,7 @@ fun main(args: Array<String>) {
             LaunchMode.Symbolic -> SymbolicLauncher(classPaths, targetName)
             LaunchMode.Concolic -> ConcolicLauncher(classPaths, targetName)
             LaunchMode.LibChecker -> LibraryCheckLauncher(classPaths, targetName)
+            LaunchMode.DefectChecker -> DefectCheckerLauncher(classPaths, targetName)
         }
         launcher.launch()
     } catch (e: LauncherException) {

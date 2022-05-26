@@ -10,7 +10,7 @@ import org.vorpal.research.kex.asm.transform.SymbolicTraceCollector
 import org.vorpal.research.kex.asm.transform.SystemExitTransformer
 import org.vorpal.research.kex.config.kexConfig
 import org.vorpal.research.kex.jacoco.CoverageReporter
-import org.vorpal.research.kex.trace.symbolic.InstructionTraceManager
+import org.vorpal.research.kex.trace.runner.ExecutorMasterController
 import org.vorpal.research.kex.util.PermanentCoverageInfo
 import org.vorpal.research.kfg.Package
 import org.vorpal.research.kfg.visitor.MethodVisitor
@@ -30,18 +30,20 @@ class ConcolicLauncher(classPaths: List<String>, targetName: String) : KexLaunch
         }
 
     override fun launch() {
-        val traceManager = InstructionTraceManager()
+        ExecutorMasterController.use {
+            it.start(context)
 
-        runPipeline(context) {
-            +SystemExitTransformer(context.cm)
-            +InstructionConcolicChecker(context, traceManager)
+            runPipeline(context) {
+                +SystemExitTransformer(context.cm)
+                +InstructionConcolicChecker(context)
+            }
+            val coverageInfo = CoverageReporter(containerClassLoader).execute(context.cm, analysisLevel)
+            log.info(
+                coverageInfo.print(kexConfig.getBooleanValue("kex", "printDetailedCoverage", false))
+            )
+
+            PermanentCoverageInfo.putNewInfo(analysisLevel.toString(), coverageInfo)
+            PermanentCoverageInfo.emit()
         }
-        val coverageInfo = CoverageReporter(containerClassLoader).execute(context.cm, analysisLevel)
-        log.info(
-            coverageInfo.print(kexConfig.getBooleanValue("kex", "printDetailedCoverage", false))
-        )
-
-        PermanentCoverageInfo.putNewInfo(analysisLevel.toString(), coverageInfo)
-        PermanentCoverageInfo.emit()
     }
 }

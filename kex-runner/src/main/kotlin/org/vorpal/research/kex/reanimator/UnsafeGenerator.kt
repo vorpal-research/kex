@@ -37,10 +37,13 @@ class UnsafeGenerator(
         val sequences = descriptors.actionSequences
         printer.print(method, sequences.rtUnmapped)
     } catch (e: GenerationException) {
+        log.warn("Generation error when generating action sequences:", e)
         throw e
     } catch (e: Exception) {
+        log.warn("Exception when generating action sequences:", e)
         throw GenerationException(e)
     } catch (e: Error) {
+        log.warn("Error when generating action sequences:", e)
         throw GenerationException(e)
     }
 
@@ -62,10 +65,13 @@ class UnsafeGenerator(
         printer.print(testName, method, sequences.rtUnmapped)
         generateInputByModel(ctx, method, state, model)
     } catch (e: GenerationException) {
+        log.warn("Generation error when generating action sequences:", e)
         throw e
     } catch (e: Exception) {
+        log.warn("Exception when generating action sequences:", e)
         throw GenerationException(e)
     } catch (e: Error) {
+        log.warn("Error when generating action sequences:", e)
         throw GenerationException(e)
     }
 

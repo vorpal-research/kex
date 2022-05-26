@@ -8,7 +8,6 @@ import org.vorpal.research.kex.trace.TraceManager
 import org.vorpal.research.kex.trace.`object`.ActionTrace
 import org.vorpal.research.kex.trace.runner.RandomSymbolicTracingRunner
 import org.vorpal.research.kex.trace.runner.ReanimatingRandomObjectTracingRunner
-import org.vorpal.research.kex.trace.symbolic.InstructionTrace
 import org.vorpal.research.kex.util.TimeoutException
 import org.vorpal.research.kfg.ClassManager
 import org.vorpal.research.kfg.ir.Method
@@ -63,7 +62,6 @@ class RandomChecker(
 class SymbolicRandomChecker(
     val ctx: ExecutionContext,
     val loader: ClassLoader,
-    val tm: TraceManager<InstructionTrace>
 ) : MethodVisitor {
     override val cm: ClassManager
         get() = ctx.cm
@@ -85,7 +83,6 @@ class SymbolicRandomChecker(
             try {
                 log.debug("Running method $method")
                 val trace = randomRunner.run() ?: return@repeat
-                tm[method] = trace.trace
                 log.debug(trace)
             } catch (e: TimeoutException) {
                 log.warn("Method $method failed with timeout, skipping it")

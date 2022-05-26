@@ -9,6 +9,7 @@ import org.vorpal.research.kex.reanimator.actionsequence.ActionSequence
 import org.vorpal.research.kex.reanimator.actionsequence.ExternalMethodCall
 import org.vorpal.research.kex.reanimator.actionsequence.MethodCall
 import org.vorpal.research.kex.util.field
+import org.vorpal.research.kfg.Package
 import org.vorpal.research.kfg.ir.Class
 import org.vorpal.research.kfg.type.SystemTypeNames
 
@@ -29,22 +30,29 @@ class FieldGenerator(val fallback: Generator) : Generator {
 
         var klass: Class? = null
 
-        val klassDescriptor = descriptor["clazz" to KexJavaClass()]?.also { klassDesc ->
-            klassDesc as ObjectDescriptor
+        val klassDescriptor = (descriptor["clazz" to KexJavaClass()] as? ObjectDescriptor)?.also { klassDesc ->
             val klassName = klassDesc["name" to KexString()]?.asStringValue
-            klass = klassName?.let { cm[it] } ?: context.cm.concreteClasses.random().also {
+            val asmKlassName = klassName?.replace(Package.CANONICAL_SEPARATOR, Package.SEPARATOR)
+            klass = asmKlassName?.let { cm[it] } ?: context.cm.concreteClasses.random().also {
                 klassDesc["name" to KexString()] = descriptor { string(it.canonicalDesc) }
             }
         } ?: descriptor {
             val klassDesc = `object`(KexJavaClass())
-            klass = context.cm.concreteClasses.random()
+            klass = context.cm.concreteClasses.filter { it.fields.isNotEmpty() }.random()
             klassDesc["name" to KexString()] = string(klass!!.canonicalDesc)
             klassDesc
         }
 
         val generatedKlass = fallback.generate(klassDescriptor, generationDepth)
-        val nameField = descriptor["name" to KexString()] ?: descriptor { string(klass!!.fields.random().name) }
-        val generatedName = fallback.generate(nameField, generationDepth)
+        val nameField = descriptor["name" to KexString()]
+        val fixedNameField = when (val descriptorName = nameField?.asStringValue) {
+            null -> descriptor { string(klass!!.fields.random().name) }
+            else -> when {
+                klass!!.fields.any { it.name == descriptorName } -> nameField
+                else -> descriptor { string(klass!!.fields.random().name) }
+            }
+        }
+        val generatedName = fallback.generate(fixedNameField, generationDepth)
 
         val getDeclField = kfgJavaClass.getMethod("getDeclaredField", kfgFieldClass.type, types.stringType)
 
