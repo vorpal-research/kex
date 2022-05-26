@@ -98,9 +98,12 @@ class InstructionConcolicChecker(
         }
     }
 
-    private fun getRandomTrace(method: Method): ExecutionResult? = tryOrNull {
-        val params = ctx.random.generateParameters(ctx.loader, method) ?: return null
-        collectTraceFromAny(method, params)
+    private fun getRandomTrace(method: Method): ExecutionResult? = try {
+        val params = ctx.random.generateParameters(ctx.loader, method)
+        params?.let { collectTraceFromAny(method, it) }
+    } catch (e: Throwable) {
+        log.warn("Error while collecting random trace:", e)
+        null
     }
 
     private fun collectTraceFromAny(method: Method, parameters: Parameters<Any?>): ExecutionResult? =

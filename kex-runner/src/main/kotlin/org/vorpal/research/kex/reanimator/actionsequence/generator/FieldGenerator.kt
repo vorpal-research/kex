@@ -9,6 +9,7 @@ import org.vorpal.research.kex.reanimator.actionsequence.ActionSequence
 import org.vorpal.research.kex.reanimator.actionsequence.ExternalMethodCall
 import org.vorpal.research.kex.reanimator.actionsequence.MethodCall
 import org.vorpal.research.kex.util.field
+import org.vorpal.research.kfg.Package
 import org.vorpal.research.kfg.ir.Class
 import org.vorpal.research.kfg.type.SystemTypeNames
 
@@ -31,7 +32,8 @@ class FieldGenerator(val fallback: Generator) : Generator {
 
         val klassDescriptor = (descriptor["clazz" to KexJavaClass()] as? ObjectDescriptor)?.also { klassDesc ->
             val klassName = klassDesc["name" to KexString()]?.asStringValue
-            klass = klassName?.let { cm[it] } ?: context.cm.concreteClasses.random().also {
+            val asmKlassName = klassName?.replace(Package.CANONICAL_SEPARATOR, Package.SEPARATOR)
+            klass = asmKlassName?.let { cm[it] } ?: context.cm.concreteClasses.random().also {
                 klassDesc["name" to KexString()] = descriptor { string(it.canonicalDesc) }
             }
         } ?: descriptor {
