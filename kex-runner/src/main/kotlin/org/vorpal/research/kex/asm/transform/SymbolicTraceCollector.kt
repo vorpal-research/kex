@@ -52,6 +52,7 @@ class SymbolicTraceCollector(
 
     override fun visit(method: Method) {
         if (!method.hasBody) return
+        method.body.slotTracker.rerun()
         if (method.isStaticInitializer) {
             prepareStaticInitializer(method)
             return
