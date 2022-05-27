@@ -17,6 +17,7 @@ abstract class AbstractSerializer(val context: SerializersModule, val prettyPrin
         classDiscriminator = "className"
         serializersModule = context
         allowStructuredMapKeys = true
+        allowSpecialFloatingPointValues = true
     }
 
     @ExperimentalSerializationApi

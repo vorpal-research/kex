@@ -12,7 +12,6 @@ import kotlin.io.path.readText
 import kotlin.io.path.writeText
 
 object PermanentCoverageInfo {
-    private val permanentInfo = init().toMutableMap()
     private val json = Json {
         encodeDefaults = false
         ignoreUnknownKeys = false
@@ -20,7 +19,9 @@ object PermanentCoverageInfo {
         useArrayPolymorphism = false
         classDiscriminator = "className"
         allowStructuredMapKeys = true
+        allowSpecialFloatingPointValues = true
     }
+    private val permanentInfo = init().toMutableMap()
 
     @Serializable
     private data class CoverageRes(
@@ -31,14 +32,6 @@ object PermanentCoverageInfo {
     )
 
     private fun init(): Map<String, CoverageRes> {
-        val json = Json {
-            encodeDefaults = false
-            ignoreUnknownKeys = false
-            prettyPrint = true
-            useArrayPolymorphism = false
-            classDiscriminator = "className"
-            allowStructuredMapKeys = true
-        }
         val permanentCoverageInfoFile = kexConfig.getPathValue("kex", "coverage", "coverage.json")
         return when {
             permanentCoverageInfoFile.exists() -> json.decodeFromString(permanentCoverageInfoFile.readText())
@@ -47,14 +40,6 @@ object PermanentCoverageInfo {
     }
 
     fun emit() {
-        val json = Json {
-            encodeDefaults = false
-            ignoreUnknownKeys = false
-            prettyPrint = true
-            useArrayPolymorphism = false
-            classDiscriminator = "className"
-            allowStructuredMapKeys = true
-        }
         val permanentCoverageInfoFile = kexConfig.getPathValue("kex", "coverage", "coverage.json")
         permanentCoverageInfoFile.writeText(
             json.encodeToString(

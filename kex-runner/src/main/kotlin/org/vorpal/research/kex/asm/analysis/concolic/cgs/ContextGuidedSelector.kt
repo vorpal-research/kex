@@ -24,6 +24,7 @@ import org.vorpal.research.kfg.type.ClassType
 import org.vorpal.research.kfg.type.TypeFactory
 import org.vorpal.research.kthelper.assert.unreachable
 import org.vorpal.research.kthelper.logging.log
+import org.vorpal.research.kthelper.`try`
 
 class ContextGuidedSelector(
     override val tf: TypeFactory,
@@ -44,7 +45,7 @@ class ContextGuidedSelector(
         val revertedClause: Clause
     )
 
-    override suspend fun hasNext(): Boolean {
+    override suspend fun hasNext(): Boolean = `try` {
         do {
             yield()
             val next = nextEdge() ?: continue
@@ -60,8 +61,8 @@ class ContextGuidedSelector(
                 }
             }
         } while (currentDepth <= executionTree.depth && k <= executionTree.depth)
-        return false
-    }
+        false
+    }.getOrElse { false }
 
     override suspend fun next(): SymbolicState {
         val currentState = state!!
