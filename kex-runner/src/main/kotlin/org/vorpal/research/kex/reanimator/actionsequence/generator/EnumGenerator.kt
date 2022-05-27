@@ -13,6 +13,7 @@ import org.vorpal.research.kex.state.transformer.generateFinalDescriptors
 import org.vorpal.research.kex.util.asArray
 import org.vorpal.research.kex.util.field
 import org.vorpal.research.kex.util.loadClass
+import org.vorpal.research.kfg.ir.Class
 import org.vorpal.research.kfg.type.ClassType
 import org.vorpal.research.kfg.type.SystemTypeNames
 import org.vorpal.research.kthelper.logging.log
@@ -197,13 +198,16 @@ class ReflectionEnumGenerator(private val fallback: Generator) : Generator {
         saveToCache(descriptor, list)
 
         val kfgType = descriptor.type.getKfgType(context.types) as ClassType
-        val enumConstants = getEnumConstants(this, descriptor.type).toList()
+        val normalizedEnumCLass = kfgType.klass.normalizedEnum
+        val normalizedKexType = normalizedEnumCLass.kexType
+
+        val enumConstants = getEnumConstants(this, normalizedKexType).toList()
         val getMethod = kfgFieldClass.getMethod("get", types.objectType, types.objectType)
 
         val valuesFieldDescriptor = descriptor {
             val desc = `object`(kfgFieldClass.kexType)
             val clazz = `object`(KexJavaClass())
-            clazz["name" to KexString()] = string(kfgType.klass.canonicalDesc)
+            clazz["name" to KexString()] = string(normalizedEnumCLass.canonicalDesc)
             desc["clazz" to KexJavaClass()] = clazz
             desc["override" to KexBool()] = const(true)
             desc
@@ -217,7 +221,7 @@ class ReflectionEnumGenerator(private val fallback: Generator) : Generator {
             else -> {
                 val enumPair = enumConstants.firstOrNull { it.second.matches(descriptor, mutableMapOf()) }
                     ?: enumConstants.filter { it.second.type == descriptor.type }.randomOrNull()
-                    ?: return UnknownSequence(name, kfgType, descriptor).also {
+                    ?: return UnknownSequence(name, normalizedEnumCLass.type, descriptor).also {
                         saveToCache(descriptor, it)
                     }
                 valuesFieldDescriptor["name" to KexString()] = descriptor { string(enumPair.first.fieldName) }
@@ -227,4 +231,15 @@ class ReflectionEnumGenerator(private val fallback: Generator) : Generator {
         }
         return list
     }
+
+    private val Class.normalizedEnum: Class
+        get() = superClass?.let { superKlass ->
+            outerClass?.let { outerKlass ->
+                when {
+                    !superKlass.isEnum -> this
+                    outerKlass != superKlass -> this
+                    else -> superKlass
+                }
+            } ?: this
+        } ?: this
 }
