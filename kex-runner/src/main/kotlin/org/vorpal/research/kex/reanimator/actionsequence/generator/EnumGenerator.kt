@@ -115,6 +115,17 @@ private fun Descriptor.matches(
     else -> false
 }
 
+private val Class.normalizedEnum: Class
+    get() = superClass?.let { superKlass ->
+        outerClass?.let { outerKlass ->
+            when {
+                !superKlass.isEnum -> this
+                outerKlass != superKlass -> this
+                else -> superKlass
+            }
+        } ?: this
+    } ?: this
+
 class EnumGenerator(private val fallback: Generator) : Generator {
     companion object {
         private val enumConstants = mutableMapOf<KexType, Map<FieldTerm, Descriptor>>()
@@ -145,17 +156,19 @@ class EnumGenerator(private val fallback: Generator) : Generator {
         saveToCache(descriptor, list)
 
         val kfgType = descriptor.type.getKfgType(context.types) as ClassType
-        val enumConstants = getEnumConstants(this, descriptor.type).toList()
+        val normalizedEnumCLass = kfgType.klass.normalizedEnum
+        val normalizedKexType = normalizedEnumCLass.kexType
+
+        val enumConstants = getEnumConstants(this, normalizedKexType).toList()
         list += when (descriptor) {
             is ClassDescriptor -> {
-                val klass = kfgType.klass
-                val valuesMethod = klass.getMethod("values", klass.type.asArray(context.types))
+                val valuesMethod = normalizedEnumCLass.getMethod("values", normalizedEnumCLass.type.asArray(context.types))
                 StaticMethodCall(valuesMethod, emptyList())
             }
             else -> {
                 val result = enumConstants.firstOrNull { it.second.matches(descriptor, mutableMapOf()) }
-                    ?: enumConstants.filter { it.second.type == descriptor.type }.randomOrNull()
-                    ?: return UnknownSequence(name, kfgType, descriptor).also {
+                    ?: enumConstants.filter { it.second.type == normalizedKexType }.randomOrNull()
+                    ?: return UnknownSequence(name, normalizedEnumCLass.type, descriptor).also {
                         saveToCache(descriptor, it)
                     }
                 EnumValueCreation(cm[result.first.klass], result.first.fieldName)
@@ -231,15 +244,4 @@ class ReflectionEnumGenerator(private val fallback: Generator) : Generator {
         }
         return list
     }
-
-    private val Class.normalizedEnum: Class
-        get() = superClass?.let { superKlass ->
-            outerClass?.let { outerKlass ->
-                when {
-                    !superKlass.isEnum -> this
-                    outerKlass != superKlass -> this
-                    else -> superKlass
-                }
-            } ?: this
-        } ?: this
 }
