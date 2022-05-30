@@ -605,7 +605,7 @@ class ${solver}Converter(val tf: TypeFactory) : ${solver}SMTConverter() {
             val index = paramMap[lambda.parameters.first()]!!
             if_ { (start le index) and (index lt end) }
                 .then_ {
-                    convert(lambda.body, ef, ctx) as Bool_
+                    Bool_.forceCast(convert(lambda.body, ef, ctx))
                 }.else_ {
                     ef.makeTrue()
                 }.also {
