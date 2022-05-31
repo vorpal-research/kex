@@ -13,5 +13,5 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: vorpal-research/kex-dockerfile@v1
     - name: Run Kex tests docker
+      uses: vorpal-research/kex-dockerfile@v1
