@@ -5,13 +5,6 @@ Kex is a platform for analysis of Java  bytecode.
 # Dependencies
 
 * [z3](https://github.com/Z3Prover/z3/tree/z3-4.8.12) v4.8.12 with java bindings
-
-  you need to manually install jar package with java bindings to your local maven repository using
-  following command:
-  ```
-  mvn install:install-file -Dfile=/usr/lib/com.microsoft.z3.jar -DgroupId=com.microsoft 
-  -DartifactId=z3 -Dversion=4.8.12 -Dpackaging=jar
-  ```
 * [boolector-java](https://aur.archlinux.org/packages/boolector-java/) v3.2.6
 
 # Build
@@ -36,9 +29,9 @@ mvn clean verify
 
 ```
 Usage: kex
-     --config <arg>                  configuration file
+     --config <arg>                 configuration file
  -cp,--classpath <arg[:arg]>        classpath for analysis, jar files and
-                                    directories separated by `:`
+                                    directories separated by path separator
  -h,--help                          print this help and quit
  -m,--mode <arg>                    run mode: symbolic, concolic, libchecker
     --option <section:name:value>   set kex option through command line
