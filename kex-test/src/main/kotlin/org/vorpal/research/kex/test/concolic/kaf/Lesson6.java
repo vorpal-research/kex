@@ -1,10 +1,7 @@
 package org.vorpal.research.kex.test.concolic.kaf;
 
-import java.util.ArrayList;
-import java.util.List;
-
 public class Lesson6 {
-    public static List<Integer> computeDeviceCells(
+    public static int[] computeDeviceCells(
             int cells,
             String commands,
             int limit
@@ -12,11 +9,10 @@ public class Lesson6 {
         if (cells < 1) return null;
         if (cells > 5) return null;
         if (commands == null) return null;
+        if (commands.length() > 10) return null;
+        if (limit > 10) return null;
 
-        List<Integer> cellsList = new ArrayList<>();
-        for (int i = 0; i < cells; ++i) {
-            cellsList.add(0);
-        }
+        int[] cellsList = new int[limit];
 
         if (commands.equals("")) return null;
 
@@ -26,13 +22,13 @@ public class Lesson6 {
         for (int i = 0; i <= limit; i++) {
             switch (commands.charAt(numberOfCommand)) {
                 case '+': {
-                    int current = cellsList.get(numberOfCell);
-                    cellsList.set(numberOfCell, ++current);
+                    int current = cellsList[numberOfCell];
+                    cellsList[numberOfCell] = ++current;
                     break;
                 }
                 case '-': {
-                    int current = cellsList.get(numberOfCell);
-                    cellsList.set(numberOfCell, --current);
+                    int current = cellsList[numberOfCell];
+                    cellsList[numberOfCell] = --current;
                     break;
                 }
                 case '>': {
@@ -44,12 +40,12 @@ public class Lesson6 {
                     break;
                 }
                 case '[': {
-                    if (cellsList.get(numberOfCell) == 0)
+                    if (cellsList[numberOfCell] == 0)
                         numberOfCommand += 5;
                     break;
                 }
                 case ']': {
-                    if (cellsList.get(numberOfCell) == 0)
+                    if (cellsList[numberOfCell] == 0)
                         numberOfCommand -= 5;
                     break;
                 }

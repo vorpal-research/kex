@@ -47,10 +47,16 @@ Usage: kex
 
 ```
 
-## Docker
+# Docker
 
 If you want to try out Kex you can use [these](https://github.com/vorpal-research/kex-dockerfile)
-Docker images with the latest version installed.
+Docker images with the latest version installed. Example:
+
+```bash
+docker run -v ~/myproject:/home/myproject -v ~/kex-output:/home/kex-output \
+ abdullin/kex-standalone:run --classpath /home/myproject/target/myproject.jar \
+ --target myproject.\* --output /home/kex-output
+```
 
 # Example
 
