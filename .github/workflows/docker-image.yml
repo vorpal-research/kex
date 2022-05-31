@@ -1,0 +1,17 @@
+name: Kex test CI
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: vorpal-research/kex-dockerfile@v1
+    - name: Run Kex tests docker
