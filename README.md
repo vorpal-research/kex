@@ -47,6 +47,11 @@ Usage: kex
 
 ```
 
+## Docker
+
+If you want to try out Kex you can use [these](https://github.com/vorpal-research/kex-dockerfile)
+Docker images with the latest version installed.
+
 # Example
 
 Consider an example class:
