@@ -6,6 +6,7 @@ import org.vorpal.research.kex.descriptor.Descriptor
 import org.vorpal.research.kex.descriptor.Object2DescriptorConverter
 import org.vorpal.research.kex.ktype.KexClass
 import org.vorpal.research.kfg.ClassManager
+import kotlin.random.Random
 
 @Serializable
 data class Parameters<T>(
@@ -34,8 +35,12 @@ val Parameters<Any?>.asDescriptors: Parameters<Descriptor>
         )
     }
 
-fun Parameters<Descriptor>.concreteParameters(cm: ClassManager) =
-    Parameters(instance?.concretize(cm), arguments.map { it.concretize(cm) }, statics.map { it.concretize(cm) }.toSet())
+fun Parameters<Descriptor>.concreteParameters(cm: ClassManager, random: Random) =
+    Parameters(
+        instance?.concretize(cm, random),
+        arguments.map { it.concretize(cm, random) },
+        statics.map { it.concretize(cm, random) }.toSet()
+    )
 
 fun Parameters<Descriptor>.filterStaticFinals(cm: ClassManager): Parameters<Descriptor> {
     val filteredStatics = statics.map { it.deepCopy() }.filterIsInstance<ClassDescriptor>().mapNotNull { klass ->

@@ -13,6 +13,7 @@ import org.vorpal.research.kfg.ir.value.instruction.ReturnInst
 import org.vorpal.research.kfg.type.*
 import org.vorpal.research.kfg.visitor.ClassVisitor
 import org.vorpal.research.kthelper.`try`
+import kotlin.random.Random
 
 
 val instantiationManager: ClassInstantiationManager get() = StringClassInstantiationManagerImpl
@@ -23,18 +24,20 @@ interface ClassInstantiationManager {
     fun isDirectlyInstantiable(klass: Class, visibilityLevel: Visibility): Boolean
     fun isInstantiable(klass: Class): Boolean
     fun getExternalCtors(klass: Class): Set<Method>
-    operator fun get(klass: Class): Class
-    fun get(klass: Class, excludes: Set<Class>): Class
-    fun get(tf: TypeFactory, type: Type, excludes: Set<Class>): Type = when (type) {
-        is ClassType -> get(type.klass, excludes).type
-        is ArrayType -> tf.getArrayType(get(tf, type.component, excludes))
+    operator fun get(klass: Class, random: Random): Class
+    fun get(klass: Class, excludes: Set<Class>, random: Random): Class
+    fun get(tf: TypeFactory, type: Type, excludes: Set<Class>, random: Random): Type = when (type) {
+        is ClassType -> get(type.klass, excludes, random).type
+        is ArrayType -> tf.getArrayType(get(tf, type.component, excludes, random))
         else -> type
     }
 
-    fun getConcreteClass(klass: KexClass, cm: ClassManager): KexClass = get(klass.kfgClass(cm.type)).kexType
-    fun getConcreteType(type: KexType, cm: ClassManager): KexType = when (type) {
-        is KexClass -> getConcreteClass(type, cm)
-        is KexReference -> KexReference(getConcreteType(type.reference, cm))
+    fun getConcreteClass(klass: KexClass, cm: ClassManager, random: Random): KexClass =
+        get(klass.kfgClass(cm.type), random).kexType
+
+    fun getConcreteType(type: KexType, cm: ClassManager, random: Random): KexType = when (type) {
+        is KexClass -> getConcreteClass(type, cm, random)
+        is KexReference -> KexReference(getConcreteType(type.reference, cm, random))
         else -> type
     }
 }
@@ -76,29 +79,29 @@ private object ClassInstantiationManagerImpl : ClassInstantiationManager {
 
     override fun getExternalCtors(klass: Class): Set<Method> = externalConstructors.getOrDefault(klass, setOf())
 
-    override fun get(klass: Class): Class = `try` {
+    override fun get(klass: Class, random: Random): Class = `try` {
         when (klass.fullName) {
-            in predefinedConcreteInstanceInfo -> predefinedConcreteInstanceInfo.getValue(klass.fullName).random()
+            in predefinedConcreteInstanceInfo -> predefinedConcreteInstanceInfo.getValue(klass.fullName).random(random)
                 .let { klass.cm[it] }
             else -> classInstantiationInfo.getOrDefault(klass, setOf()).let {
                 if (klass in it) klass
-                else it.random()
+                else it.random(random)
             }
         }
     }.getOrElse {
         throw NoConcreteInstanceException(klass)
     }
 
-    override fun get(klass: Class, excludes: Set<Class>): Class = `try` {
+    override fun get(klass: Class, excludes: Set<Class>, random: Random): Class = `try` {
         when (klass.fullName) {
             in predefinedConcreteInstanceInfo ->
                 (predefinedConcreteInstanceInfo.getValue(klass.fullName) - excludes.map { it.fullName }.toSet())
-                    .random()
+                    .random(random)
                     .let { klass.cm[it] }
             else ->
                 (classInstantiationInfo.getOrDefault(klass, setOf()) - excludes).let {
                     if (klass in it) klass
-                    else it.random()
+                    else it.random(random)
                 }
         }
     }.getOrElse {
@@ -150,13 +153,13 @@ private object StringClassInstantiationManagerImpl : ClassInstantiationManager {
             klass.cm[klassName].getMethod(methodName, desc)
         }.toSet()
 
-    override fun get(klass: Class): Class = `try` {
+    override fun get(klass: Class, random: Random): Class = `try` {
         val concreteClassName = when (val fullName = klass.fullName) {
             in predefinedConcreteInstanceInfo -> predefinedConcreteInstanceInfo.getValue(fullName)
-                .random()
+                .random(random)
             else -> classInstantiationInfo.getOrDefault(fullName, setOf()).let {
                 if (fullName in it) fullName
-                else it.random()
+                else it.random(random)
             }
         }
         klass.cm[concreteClassName]
@@ -164,14 +167,14 @@ private object StringClassInstantiationManagerImpl : ClassInstantiationManager {
         throw NoConcreteInstanceException(klass)
     }
 
-    override fun get(klass: Class, excludes: Set<Class>): Class = `try` {
+    override fun get(klass: Class, excludes: Set<Class>, random: Random): Class = `try` {
         val excludeNames = excludes.map { it.fullName }.toSet()
         val concreteClassName = when (val fullName = klass.fullName) {
             in predefinedConcreteInstanceInfo -> (predefinedConcreteInstanceInfo.getValue(fullName) - excludeNames)
-                .random()
+                .random(random)
             else -> (classInstantiationInfo.getOrDefault(fullName, setOf()) - excludeNames).let {
                 if (fullName in it) fullName
-                else it.random()
+                else it.random(random)
             }
         }
         klass.cm[concreteClassName]

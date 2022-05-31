@@ -212,7 +212,7 @@ class ConcolicChecker(
                 currentState += it
                 false
             } else {
-                val current = it.inverse()
+                val current = it.inverse(ctx.random)
                 when {
                     (currentPath + current).apply() covered paths -> {
                         currentPath += it

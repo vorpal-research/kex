@@ -167,7 +167,7 @@ class EnumGenerator(private val fallback: Generator) : Generator {
             }
             else -> {
                 val result = enumConstants.firstOrNull { it.second.matches(descriptor, mutableMapOf()) }
-                    ?: enumConstants.filter { it.second.type == normalizedKexType }.randomOrNull()
+                    ?: enumConstants.filter { it.second.type == normalizedKexType }.randomOrNull(context.random)
                     ?: return UnknownSequence(name, normalizedEnumCLass.type, descriptor).also {
                         saveToCache(descriptor, it)
                     }
@@ -233,7 +233,7 @@ class ReflectionEnumGenerator(private val fallback: Generator) : Generator {
             }
             else -> {
                 val enumPair = enumConstants.firstOrNull { it.second.matches(descriptor, mutableMapOf()) }
-                    ?: enumConstants.filter { it.second.type == descriptor.type }.randomOrNull()
+                    ?: enumConstants.filter { it.second.type == descriptor.type }.randomOrNull(context.random)
                     ?: return UnknownSequence(name, normalizedEnumCLass.type, descriptor).also {
                         saveToCache(descriptor, it)
                     }

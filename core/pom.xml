@@ -14,7 +14,7 @@
     <properties>
         <ini4j.version>0.5.4</ini4j.version>
         <reflections.version>0.10.2</reflections.version>
-        <easy-random.version>4.3.0-kex-0.0.1</easy-random.version>
+        <easy-random.version>4.3.0-kex-0.0.2</easy-random.version>
         <symkt.version>0.0.0.4</symkt.version>
     </properties>
 

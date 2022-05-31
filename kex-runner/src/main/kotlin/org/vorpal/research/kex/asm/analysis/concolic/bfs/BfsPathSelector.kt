@@ -1,5 +1,6 @@
 package org.vorpal.research.kex.asm.analysis.concolic.bfs
 
+import org.vorpal.research.kex.ExecutionContext
 import org.vorpal.research.kex.asm.analysis.concolic.PathSelector
 import org.vorpal.research.kex.state.predicate.*
 import org.vorpal.research.kex.state.term.ConstBoolTerm
@@ -11,14 +12,13 @@ import org.vorpal.research.kfg.ir.value.IntConstant
 import org.vorpal.research.kfg.ir.value.instruction.BranchInst
 import org.vorpal.research.kfg.ir.value.instruction.SwitchInst
 import org.vorpal.research.kfg.ir.value.instruction.TableSwitchInst
-import org.vorpal.research.kfg.type.TypeFactory
 import org.vorpal.research.kthelper.assert.unreachable
 import org.vorpal.research.kthelper.collection.dequeOf
 import org.vorpal.research.kthelper.logging.log
 
 
 class BfsPathSelectorImpl(
-    override val tf: TypeFactory,
+    override val ctx: ExecutionContext,
 ) : PathSelector {
     private val coveredPaths = mutableSetOf<PathCondition>()
     private val candidates = mutableSetOf<PathCondition>()

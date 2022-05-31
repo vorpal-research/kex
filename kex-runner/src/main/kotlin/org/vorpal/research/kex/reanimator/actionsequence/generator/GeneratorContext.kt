@@ -164,7 +164,7 @@ class GeneratorContext(
     private val Method.argTypeInfo
         get() = this.parameters.associate {
             val type = it.type.kexType
-            term { arg(type, it.index) } to instantiationManager.getConcreteType(type, cm)
+            term { arg(type, it.index) } to instantiationManager.getConcreteType(type, cm, context.random)
         }
 
     fun Method.executeAsConstructor(descriptor: ObjectDescriptor): Parameters<Descriptor>? {

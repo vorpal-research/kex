@@ -38,7 +38,7 @@ class RandomObjectReanimator(
         get() = this.concreteClasses
             .filter { it.pkg.isChild(target) }
             .filterNot { it.isEnum }
-            .random()
+            .random(ctx.random)
 
     private val Any.isValid: Boolean
         get() {

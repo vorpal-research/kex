@@ -25,7 +25,7 @@ import org.vorpal.research.kthelper.tryOrNull
 import java.lang.reflect.*
 import java.net.URLClassLoader
 
-class EasyRandomDriver(val config: BeansConfig = defaultConfig) : Randomizer {
+class EasyRandomDriver(val config: BeansConfig = defaultConfig) : Randomizer() {
     companion object {
 
         data class BeansConfig(
@@ -103,7 +103,7 @@ class EasyRandomDriver(val config: BeansConfig = defaultConfig) : Randomizer {
                     val reflectionFacade = context.parameters.reflectionFacade
                     val randomConcreteSubType = reflectionFacade.getPublicConcreteSubTypesOf<T>(type)
                         .filterNot { it.shouldBeExcluded }
-                        .randomOrNull()
+                        .randomOrNull(this@EasyRandomDriver)
                         ?: throw InstantiationError("Unable to find a matching concrete subtype of type: $type in the classpath")
                     @Suppress("UNCHECKED_CAST")
                     createNewInstance(randomConcreteSubType) as T
@@ -160,7 +160,8 @@ class EasyRandomDriver(val config: BeansConfig = defaultConfig) : Randomizer {
                 klass,
                 { generateObject(it) },
                 { next(Any::class.java) },
-                randomizerParameters.reflectionFacade
+                randomizerParameters.reflectionFacade,
+                this
             )
             cr.randomValue
         }
@@ -170,7 +171,8 @@ class EasyRandomDriver(val config: BeansConfig = defaultConfig) : Randomizer {
                 { generateObject(it) },
                 { next(Any::class.java) },
                 { next(Any::class.java) },
-                randomizerParameters.reflectionFacade
+                randomizerParameters.reflectionFacade,
+                this
             )
             mr.randomValue
         }
@@ -187,7 +189,8 @@ class EasyRandomDriver(val config: BeansConfig = defaultConfig) : Randomizer {
                     rawType,
                     { generateObject(it) },
                     { next(typeParameter) },
-                    randomizerParameters.reflectionFacade
+                    randomizerParameters.reflectionFacade,
+                    this
                 )
                 cr.randomValue
             }
@@ -200,7 +203,8 @@ class EasyRandomDriver(val config: BeansConfig = defaultConfig) : Randomizer {
                     { generateObject(it) },
                     { next(key) },
                     { next(value) },
-                    randomizerParameters.reflectionFacade
+                    randomizerParameters.reflectionFacade,
+                    this
                 )
                 mr.randomValue
             }
@@ -251,4 +255,7 @@ class EasyRandomDriver(val config: BeansConfig = defaultConfig) : Randomizer {
     }
 
     override fun next(type: Type): Any? = next(type, depth = 0)
+    override fun nextBits(bitCount: Int): Int {
+        return randomizer.nextBits(bitCount)
+    }
 }

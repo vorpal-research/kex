@@ -21,7 +21,7 @@
 
     <appender name="kexTestFileLogger" class="ch.qos.logback.core.FileAppender">
         <file>${kex.log.name}</file>
-        <param name="Append" value="false" />
+        <param name="Append" value="true" />
         <encoder>
             <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%-5p][%c] - %m%n</pattern>
         </encoder>

@@ -4,6 +4,7 @@ import kotlinx.serialization.Required
 import kotlinx.serialization.Serializable
 import org.vorpal.research.kex.BaseType
 import org.vorpal.research.kex.InheritanceInfo
+import org.vorpal.research.kex.random.easyrandom.EasyRandomDriver
 import org.vorpal.research.kex.state.TypeInfo
 import org.vorpal.research.kex.state.term.Term
 import org.vorpal.research.kex.state.term.term
@@ -12,6 +13,7 @@ import org.vorpal.research.kfg.ir.Location
 import org.vorpal.research.kthelper.assert.fail
 import org.vorpal.research.kthelper.defaultHashCode
 import org.vorpal.research.kthelper.logging.log
+import kotlin.random.Random
 
 @Serializable
 abstract class PredicateType {
@@ -103,13 +105,13 @@ val Predicate.hasReceiver
 
 val Predicate.receiver get() = if (hasReceiver) operands[0] else null
 
-fun Predicate.inverse(): Predicate = when (this) {
+fun Predicate.inverse(random: Random = EasyRandomDriver()): Predicate = when (this) {
     is EqualityPredicate -> when (rhv) {
         term { const(true) } -> predicate(type, location) { lhv equality false }
         term { const(false) } -> predicate(type, location) { lhv equality true }
         else -> predicate(type, location) { lhv inequality rhv }
     }
-    is DefaultSwitchPredicate -> predicate(type, location) { cond equality cases.random() }
+    is DefaultSwitchPredicate -> predicate(type, location) { cond equality cases.random(random) }
     is InequalityPredicate -> predicate(type, location) { lhv equality rhv }
     else -> this
 }

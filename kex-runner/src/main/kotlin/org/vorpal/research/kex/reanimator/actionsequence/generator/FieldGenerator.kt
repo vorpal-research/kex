@@ -33,12 +33,12 @@ class FieldGenerator(val fallback: Generator) : Generator {
         val klassDescriptor = (descriptor["clazz" to KexJavaClass()] as? ObjectDescriptor)?.also { klassDesc ->
             val klassName = klassDesc["name" to KexString()]?.asStringValue
             val asmKlassName = klassName?.replace(Package.CANONICAL_SEPARATOR, Package.SEPARATOR)
-            klass = asmKlassName?.let { cm[it] } ?: context.cm.concreteClasses.random().also {
+            klass = asmKlassName?.let { cm[it] } ?: context.cm.concreteClasses.random(context.random).also {
                 klassDesc["name" to KexString()] = descriptor { string(it.canonicalDesc) }
             }
         } ?: descriptor {
             val klassDesc = `object`(KexJavaClass())
-            klass = context.cm.concreteClasses.filter { it.fields.isNotEmpty() }.random()
+            klass = context.cm.concreteClasses.filter { it.fields.isNotEmpty() }.random(context.random)
             klassDesc["name" to KexString()] = string(klass!!.canonicalDesc)
             klassDesc
         }
@@ -46,10 +46,10 @@ class FieldGenerator(val fallback: Generator) : Generator {
         val generatedKlass = fallback.generate(klassDescriptor, generationDepth)
         val nameField = descriptor["name" to KexString()]
         val fixedNameField = when (val descriptorName = nameField?.asStringValue) {
-            null -> descriptor { string(klass!!.fields.random().name) }
+            null -> descriptor { string(klass!!.fields.random(context.random).name) }
             else -> when {
                 klass!!.fields.any { it.name == descriptorName } -> nameField
-                else -> descriptor { string(klass!!.fields.random().name) }
+                else -> descriptor { string(klass!!.fields.random(context.random).name) }
             }
         }
         val generatedName = fallback.generate(fixedNameField, generationDepth)

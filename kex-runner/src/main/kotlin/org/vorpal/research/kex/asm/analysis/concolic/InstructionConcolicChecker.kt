@@ -169,15 +169,15 @@ class InstructionConcolicChecker(
         return tryOrNull {
             val params = generateFinalDescriptors(method, ctx, result.model, checker.state)
                 .filterStaticFinals(cm)
-                .concreteParameters(ctx.cm)
+                .concreteParameters(ctx.cm, ctx.random)
             log.debug { "Generated params:\n$params" }
             collectTrace(method, params)
         }
     }
 
     private fun buildPathSelector() = when (searchStrategy) {
-        "bfs" -> BfsPathSelectorImpl(ctx.types)
-        "cgs" -> ContextGuidedSelector(ctx.types)
+        "bfs" -> BfsPathSelectorImpl(ctx)
+        "cgs" -> ContextGuidedSelector(ctx)
         else -> unreachable { log.error("Unknown type of search strategy $searchStrategy") }
     }
 
