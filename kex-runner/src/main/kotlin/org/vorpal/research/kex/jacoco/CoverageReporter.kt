@@ -20,15 +20,26 @@ import org.vorpal.research.kex.launcher.AnalysisLevel
 import org.vorpal.research.kex.launcher.ClassLevel
 import org.vorpal.research.kex.launcher.MethodLevel
 import org.vorpal.research.kex.launcher.PackageLevel
+import org.vorpal.research.kex.util.isFinal
+import org.vorpal.research.kex.util.resolve
 import org.vorpal.research.kfg.ClassManager
 import org.vorpal.research.kfg.Package
+import org.vorpal.research.kfg.container.Container
 import org.vorpal.research.kfg.ir.Method
 import org.vorpal.research.kfg.util.isClass
 import org.vorpal.research.kthelper.assert.unreachable
 import org.vorpal.research.kthelper.logging.log
 import org.vorpal.research.kthelper.tryOrNull
+import java.io.File
 import java.net.URLClassLoader
+import java.nio.file.Files
+import java.nio.file.Path
 import java.util.jar.JarFile
+import kotlin.io.path.inputStream
+import kotlin.io.path.name
+import kotlin.io.path.relativeTo
+import kotlin.io.path.writeBytes
+import kotlin.streams.toList
 
 interface CoverageInfo {
     val covered: Int
@@ -196,14 +207,11 @@ class PackageCoverageInfo(
 }
 
 class CoverageReporter(
-    urlClassLoader: URLClassLoader
+    containers: List<Container> = listOf()
 ) {
-    private val compiledClassLoader: CompiledClassLoader
-    private val instrAndTestsClassLoader: MemoryClassLoader
-    private val tests: List<String>
     private val outputDir = kexConfig.getPathValue("kex", "outputDir")!!
-    private val testsDir = outputDir.resolve(
-        kexConfig.getPathValue("testGen", "testsDir", "tests/")
+    private val jacocoInstrumentedDir = outputDir.resolve(
+        kexConfig.getPathValue("testGen", "jacocoDir", "jacoco/")
     ).also {
         it.toFile().mkdirs()
     }
@@ -214,12 +222,12 @@ class CoverageReporter(
     }
 
     init {
-        val testsCompiler = TestsCompiler(compileDir)
-        testsCompiler.generateAll(testsDir)
-        compiledClassLoader = testsCompiler.getCompiledClassLoader(urlClassLoader)
-        instrAndTestsClassLoader = MemoryClassLoader(compiledClassLoader)
-        tests = testsCompiler.testsNames
+        for (container in containers) {
+            container.extract(jacocoInstrumentedDir)
+        }
     }
+
+    private val Path.isClass get() = name.endsWith(".class")
 
     fun execute(
         cm: ClassManager,
@@ -228,29 +236,25 @@ class CoverageReporter(
         val coverageBuilder: CoverageBuilder
         val result = when (analysisLevel) {
             is PackageLevel -> {
-                val urls = compiledClassLoader.urLs
-                val jarPath = urls[urls.size - 1].toString().replace("file:", "")
-                val jarFile = JarFile(jarPath)
-                val jarEntries = jarFile.entries()
-                val classes = mutableListOf<String>()
-                while (jarEntries.hasMoreElements()) {
-                    val jarEntry = jarEntries.nextElement()
-                    if (analysisLevel.pkg.isParent(jarEntry.name) && jarEntry.isClass) {
-                        classes.add(jarEntry.name)
+                val a = Files.walk(jacocoInstrumentedDir).toList()
+                val classes = Files.walk(jacocoInstrumentedDir)
+                    .filter { it.isClass }
+                    .filter {
+                        analysisLevel.pkg.isParent(it.fullyQualifiedName(jacocoInstrumentedDir).replace('.', '/'))
                     }
-                }
+                    .toList()
                 coverageBuilder = getCoverageBuilder(classes)
                 getPackageCoverage(analysisLevel.pkg, cm, coverageBuilder)
             }
             is ClassLevel -> {
                 val klass = analysisLevel.klass.fullName
-                coverageBuilder = getCoverageBuilder(listOf("$klass.class"))
+                coverageBuilder = getCoverageBuilder(listOf(jacocoInstrumentedDir.resolve("$klass.class")))
                 getClassCoverage(cm, coverageBuilder).first()
             }
             is MethodLevel -> {
                 val method = analysisLevel.method
                 val klass = method.klass.fullName
-                coverageBuilder = getCoverageBuilder(listOf("$klass.class"))
+                coverageBuilder = getCoverageBuilder(listOf(jacocoInstrumentedDir.resolve("$klass.class")))
                 getMethodCoverage(coverageBuilder, method)!!
             }
         }
@@ -269,28 +273,25 @@ class CoverageReporter(
         }
     }
 
-    private fun getCoverageBuilder(classes: List<String>): CoverageBuilder {
+    private fun getCoverageBuilder(classes: List<Path>): CoverageBuilder {
         val runtime = LoggerRuntime()
-        for (className in classes) {
-            val original = compiledClassLoader.getResourceAsStream(className)
-            if (original == null) {
-                log.warn("Could not load resource $className")
-                continue
+        for (classPath in classes) {
+            val instrumented = classPath.inputStream().use {
+                val fullyQualifiedName = classPath.fullyQualifiedName(jacocoInstrumentedDir)
+                val instr = Instrumenter(runtime)
+                instr.instrument(it, fullyQualifiedName)
             }
-            val fullyQualifiedName = className.fullyQualifiedName
-            val instr = Instrumenter(runtime)
-            val instrumented = instr.instrument(original, fullyQualifiedName)
-            original.close()
-            instrAndTestsClassLoader.addDefinition(fullyQualifiedName, instrumented)
+            classPath.writeBytes(instrumented)
         }
         val data = RuntimeData()
         runtime.startup(data)
 
         log.debug("Running tests...")
-        for (testName in tests) {
-            instrAndTestsClassLoader.addDefinition(testName, compiledClassLoader.getBytes(testName)!!)
-            val testClass = instrAndTestsClassLoader.loadClass(testName)
-            log.debug("Running test $testName")
+        for (testPath in Files.walk(compileDir).filter { it.isClass }) {
+            val classLoader = URLClassLoader(arrayOf(jacocoInstrumentedDir.toUri().toURL(), compileDir.toUri().toURL()))
+            val testClassName = testPath.fullyQualifiedName(compileDir)
+            val testClass = classLoader.loadClass(testClassName)
+            log.debug("Running test $testClassName")
             val jc = JUnitCore()
             if (kexConfig.getBooleanValue("testGen", "logJUnit", false)) {
                 jc.addListener(TestLogger())
@@ -307,19 +308,18 @@ class CoverageReporter(
         val coverageBuilder = CoverageBuilder()
         val analyzer = Analyzer(executionData, coverageBuilder)
         for (className in classes) {
-            val original = compiledClassLoader.getResourceAsStream(className)
-            if (original == null) {
-                log.warn("Could not load resource $className")
-                continue
+            className.inputStream().use {
+                tryOrNull { analyzer.analyzeClass(it, className.fullyQualifiedName(jacocoInstrumentedDir)) }
             }
-            tryOrNull { analyzer.analyzeClass(original, className.fullyQualifiedName) }
-            original.close()
         }
         return coverageBuilder
     }
 
     private val String.fullyQualifiedName: String
         get() = removeSuffix(".class").replace('/', '.')
+
+    private fun Path.fullyQualifiedName(base: Path): String =
+        relativeTo(base).toString().removePrefix("../").replace('/', '.').removeSuffix(".class")
 
     private fun getClassCoverage(
         cm: ClassManager,
