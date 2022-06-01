@@ -15,30 +15,21 @@ import org.junit.runner.JUnitCore
 import org.junit.runner.Result
 import org.junit.runner.notification.RunListener
 import org.vorpal.research.kex.config.kexConfig
-import org.vorpal.research.kex.jacoco.TestsCompiler.CompiledClassLoader
 import org.vorpal.research.kex.launcher.AnalysisLevel
 import org.vorpal.research.kex.launcher.ClassLevel
 import org.vorpal.research.kex.launcher.MethodLevel
 import org.vorpal.research.kex.launcher.PackageLevel
-import org.vorpal.research.kex.util.isFinal
-import org.vorpal.research.kex.util.resolve
 import org.vorpal.research.kfg.ClassManager
 import org.vorpal.research.kfg.Package
 import org.vorpal.research.kfg.container.Container
 import org.vorpal.research.kfg.ir.Method
-import org.vorpal.research.kfg.util.isClass
 import org.vorpal.research.kthelper.assert.unreachable
 import org.vorpal.research.kthelper.logging.log
 import org.vorpal.research.kthelper.tryOrNull
-import java.io.File
 import java.net.URLClassLoader
 import java.nio.file.Files
 import java.nio.file.Path
-import java.util.jar.JarFile
-import kotlin.io.path.inputStream
-import kotlin.io.path.name
-import kotlin.io.path.relativeTo
-import kotlin.io.path.writeBytes
+import kotlin.io.path.*
 import kotlin.streams.toList
 
 interface CoverageInfo {
@@ -275,7 +266,9 @@ class CoverageReporter(
 
     private fun getCoverageBuilder(classes: List<Path>): CoverageBuilder {
         val runtime = LoggerRuntime()
+        val originalClasses = mutableMapOf<Path, ByteArray>()
         for (classPath in classes) {
+            originalClasses[classPath] = classPath.readBytes()
             val instrumented = classPath.inputStream().use {
                 val fullyQualifiedName = classPath.fullyQualifiedName(jacocoInstrumentedDir)
                 val instr = Instrumenter(runtime)
@@ -308,8 +301,10 @@ class CoverageReporter(
         val coverageBuilder = CoverageBuilder()
         val analyzer = Analyzer(executionData, coverageBuilder)
         for (className in classes) {
-            className.inputStream().use {
-                tryOrNull { analyzer.analyzeClass(it, className.fullyQualifiedName(jacocoInstrumentedDir)) }
+            originalClasses[className]?.inputStream()?.use {
+                tryOrNull {
+                    analyzer.analyzeClass(it, className.fullyQualifiedName(jacocoInstrumentedDir))
+                }
             }
         }
         return coverageBuilder
@@ -373,20 +368,5 @@ class CoverageReporter(
             PackageCoverageInfo::class.java -> PackageCoverageInfo(name, insts, brs, lines, complexities)
             else -> unreachable { log.error("Unknown common coverage info class ${T::class.java}") }
         } as T
-    }
-
-    private class MemoryClassLoader(parent: ClassLoader) : ClassLoader(parent) {
-        private val definitions = mutableMapOf<String, ByteArray>()
-
-        fun addDefinition(name: String, bytes: ByteArray) {
-            definitions[name] = bytes
-        }
-
-        override fun loadClass(name: String): Class<*> {
-            val bytes = definitions[name]
-            return if (bytes != null) {
-                defineClass(name, bytes, 0, bytes.size)
-            } else parent.loadClass(name)
-        }
     }
 }
