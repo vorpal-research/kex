@@ -15,7 +15,6 @@ import org.vorpal.research.kfg.Package
 import org.vorpal.research.kfg.ir.Class
 import org.vorpal.research.kfg.visitor.executePipeline
 import org.vorpal.research.kthelper.logging.log
-import java.net.URLClassLoader
 import kotlin.test.assertEquals
 
 @ExperimentalSerializationApi
@@ -33,7 +32,7 @@ abstract class ConcolicTest : KexRunnerTest() {
             executePipeline(analysisContext.cm, klass) {
                 +InstructionConcolicChecker(analysisContext)
             }
-            val coverage = CoverageReporter(jar.classLoader as URLClassLoader).execute(klass.cm, ClassLevel(klass))
+            val coverage = CoverageReporter(listOf(jar)).execute(klass.cm, ClassLevel(klass))
             log.debug(coverage.print(true))
             assertEquals(expectedCoverage, coverage.instructionCoverage.ratio)
         }

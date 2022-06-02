@@ -227,7 +227,6 @@ class CoverageReporter(
         val coverageBuilder: CoverageBuilder
         val result = when (analysisLevel) {
             is PackageLevel -> {
-                val a = Files.walk(jacocoInstrumentedDir).toList()
                 val classes = Files.walk(jacocoInstrumentedDir)
                     .filter { it.isClass }
                     .filter {
