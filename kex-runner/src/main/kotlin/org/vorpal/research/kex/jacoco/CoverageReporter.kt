@@ -26,7 +26,6 @@ import org.vorpal.research.kfg.ir.Method
 import org.vorpal.research.kthelper.assert.unreachable
 import org.vorpal.research.kthelper.logging.log
 import org.vorpal.research.kthelper.tryOrNull
-import java.net.URLClassLoader
 import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.io.path.*
@@ -279,8 +278,8 @@ class CoverageReporter(
         runtime.startup(data)
 
         log.debug("Running tests...")
+        val classLoader = PathClassLoader(listOf(jacocoInstrumentedDir, compileDir))
         for (testPath in Files.walk(compileDir).filter { it.isClass }) {
-            val classLoader = URLClassLoader(arrayOf(jacocoInstrumentedDir.toUri().toURL(), compileDir.toUri().toURL()))
             val testClassName = testPath.fullyQualifiedName(compileDir)
             val testClass = classLoader.loadClass(testClassName)
             log.debug("Running test $testClassName")
@@ -367,5 +366,26 @@ class CoverageReporter(
             PackageCoverageInfo::class.java -> PackageCoverageInfo(name, insts, brs, lines, complexities)
             else -> unreachable { log.error("Unknown common coverage info class ${T::class.java}") }
         } as T
+    }
+
+    class PathClassLoader(val paths: List<Path>) : ClassLoader() {
+        private val cache = hashMapOf<String, Class<*>>()
+        override fun loadClass(name: String): Class<*> {
+            synchronized(this.getClassLoadingLock(name)) {
+                if (name in cache) return cache[name]!!
+
+                val fileName = name.replace('.', '/') + ".class"
+                for (path in paths) {
+                    val resolved = path.resolve(fileName)
+                    if (resolved.exists()) {
+                        val bytes = resolved.readBytes()
+                        val klass = defineClass(name, bytes, 0, bytes.size)
+                        cache[name] = klass
+                        return klass
+                    }
+                }
+            }
+            return parent?.loadClass(name) ?: throw ClassNotFoundException()
+        }
     }
 }
