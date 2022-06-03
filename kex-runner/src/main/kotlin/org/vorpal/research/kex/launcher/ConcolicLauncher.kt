@@ -37,7 +37,7 @@ class ConcolicLauncher(classPaths: List<String>, targetName: String) : KexLaunch
                 +SystemExitTransformer(context.cm)
                 +InstructionConcolicChecker(context)
             }
-            val coverageInfo = CoverageReporter(containerClassLoader).execute(context.cm, analysisLevel)
+            val coverageInfo = CoverageReporter(containers).execute(context.cm, analysisLevel)
             log.info(
                 coverageInfo.print(kexConfig.getBooleanValue("kex", "printDetailedCoverage", false))
             )

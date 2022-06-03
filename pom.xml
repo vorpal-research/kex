@@ -10,9 +10,9 @@
     <packaging>pom</packaging>
     <version>0.0.1</version>
     <modules>
+        <module>kex-test</module>
         <module>core</module>
         <module>kex-annotation-processor</module>
-        <module>kex-test</module>
         <module>kex-runner</module>
         <module>kex-executor</module>
     </modules>
@@ -31,7 +31,7 @@
         <compiler-plugin.version>3.5.1</compiler-plugin.version>
 
         <kt-helper.version>0.1.2</kt-helper.version>
-        <kfg.version>0.3.1</kfg.version>
+        <kfg.version>0.3.2</kfg.version>
 
         <logback.version>1.2.11</logback.version>
         <slf4j.version>1.7.36</slf4j.version>
