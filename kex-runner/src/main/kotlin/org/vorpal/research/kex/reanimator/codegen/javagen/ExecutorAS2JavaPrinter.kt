@@ -28,6 +28,7 @@ class ExecutorAS2JavaPrinter(
     private val testParams = mutableListOf<JavaBuilder.JavaClass.JavaField>()
     private lateinit var newInstance: JavaBuilder.JavaFunction
     private lateinit var newArray: JavaBuilder.JavaFunction
+    private lateinit var newObjectArray: JavaBuilder.JavaFunction
     private val newPrimitiveArrayMap = mutableMapOf<String, JavaBuilder.JavaFunction>()
     private lateinit var getField: JavaBuilder.JavaFunction
     private lateinit var setField: JavaBuilder.JavaFunction
@@ -36,7 +37,6 @@ class ExecutorAS2JavaPrinter(
     private val setPrimitiveElementMap = mutableMapOf<String, JavaBuilder.JavaFunction>()
     private lateinit var callConstructor: JavaBuilder.JavaFunction
     private lateinit var callMethod: JavaBuilder.JavaFunction
-    private var klassCounter = 0
     private val printedDeclarations = hashSetOf<String>()
     private val printedInsides = hashSetOf<String>()
 
@@ -118,6 +118,17 @@ class ExecutorAS2JavaPrinter(
 
                     +"Class<?> reflect = Class.forName(elementType)"
                     +"return Array.newInstance(reflect, length)"
+                }
+
+                newObjectArray = method("newObjectArray") {
+                    arguments += arg("elementType", type("Class<?>"))
+                    arguments += arg("length", type("int"))
+                    returnType = type("Object")
+                    visibility = Visibility.PRIVATE
+                    modifiers += "static"
+                    exceptions += "Throwable"
+
+                    +"return Array.newInstance(elementType, length)"
                 }
 
                 for (type in primitiveTypes) {
@@ -556,16 +567,43 @@ class ExecutorAS2JavaPrinter(
         )
     }
 
+    private fun getClass(type: Type): String = when {
+        type.isPrimary -> "${type.kexType.primitiveName}.class"
+        type is ClassType -> "Class.forName(\"${type.klass.canonicalDesc}\")"
+        type is ArrayType -> "Array.newInstance(${getClass(type.component)}, 0).getClass()"
+        else -> "Class.forName(\"java.lang.Object\")"
+    }
+
     override fun printReflectionNewArray(owner: ActionSequence, call: ReflectionNewArray): List<String> {
         val elementType = call.asArray.component
-        val actualType = when {
-            elementType.isPrimary -> call.asArray.asType
-            else -> ASArray(ASClass(ctx.types.objectType))
+        val (newArrayCall, actualType) = when {
+            elementType.isPrimary -> {
+                "${newPrimitiveArrayMap[elementType.kexType.primitiveName]!!.name}(${call.length.stackName})" to call.asArray.asType
+            }
+            elementType is ClassType -> {
+                "${newArray.name}(\"${elementType.klass.canonicalDesc}\", ${call.length.stackName})" to ASArray(ASClass(ctx.types.objectType))
+            }
+            else -> {
+                val base = run {
+                    var current = elementType
+                    while (current is ArrayType) {
+                        current = current.component
+                    }
+                    current
+                }
+                when {
+                    base.isPrimary -> {
+                        "${newArray.name}(\"${elementType.canonicalDesc}\", ${call.length.stackName})" to ASArray(
+                            ASClass(ctx.types.objectType)
+                        )
+                    }
+                    else -> {
+                        "${newObjectArray.name}(${getClass(elementType)}, ${call.length.stackName})" to ASArray(ASClass(ctx.types.objectType))
+                    }
+                }
+            }
         }
         actualTypes[owner] = actualType
-        val newArrayCall = elementType.kexType.primitiveName?.let {
-            "${newPrimitiveArrayMap[it]!!.name}(${call.length.stackName})"
-        } ?: "${newArray.name}(\"${(elementType as ClassType).klass.canonicalDesc}\", ${call.length.stackName})"
         return listOf(
             "${printVarDeclaration(owner.name, actualType)} = ($actualType) $newArrayCall"
         )
