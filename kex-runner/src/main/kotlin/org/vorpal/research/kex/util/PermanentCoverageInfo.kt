@@ -7,6 +7,7 @@ import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 import org.vorpal.research.kex.config.kexConfig
 import org.vorpal.research.kex.jacoco.CommonCoverageInfo
+import org.vorpal.research.kthelper.tryOrNull
 import kotlin.io.path.exists
 import kotlin.io.path.readText
 import kotlin.io.path.writeText
@@ -34,21 +35,25 @@ object PermanentCoverageInfo {
     private fun init(): Map<String, CoverageRes> {
         val permanentCoverageInfoFile = kexConfig.getPathValue("kex", "coverage", "coverage.json")
         return when {
-            permanentCoverageInfoFile.exists() -> json.decodeFromString(permanentCoverageInfoFile.readText())
+            permanentCoverageInfoFile.exists() -> tryOrNull {
+                json.decodeFromString(permanentCoverageInfoFile.readText())
+            } ?: emptyMap()
             else -> emptyMap()
         }
     }
 
     fun emit() {
         val permanentCoverageInfoFile = kexConfig.getPathValue("kex", "coverage", "coverage.json")
-        permanentCoverageInfoFile.writeText(
+        tryOrNull {
             json.encodeToString(
                 MapSerializer(
                     String.serializer(),
                     CoverageRes.serializer()
                 ), permanentInfo
             )
-        )
+        }?.apply {
+            permanentCoverageInfoFile.writeText(this)
+        }
     }
 
     fun putNewInfo(target: String, coverageInfo: CommonCoverageInfo) {
