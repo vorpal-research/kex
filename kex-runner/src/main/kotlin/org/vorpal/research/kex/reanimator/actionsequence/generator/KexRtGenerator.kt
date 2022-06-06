@@ -1,9 +1,7 @@
 package org.vorpal.research.kex.reanimator.actionsequence.generator
 
 import org.vorpal.research.kex.descriptor.Descriptor
-import org.vorpal.research.kex.ktype.KexRtManager.isKexRt
 import org.vorpal.research.kex.reanimator.actionsequence.ActionSequence
-import org.vorpal.research.kthelper.logging.log
 
 class KexRtGenerator(val fallback: Generator) : Generator {
     override val context: GeneratorContext
@@ -14,6 +12,7 @@ class KexRtGenerator(val fallback: Generator) : Generator {
     init {
         typeGenerators += KexArrayListGenerator(this)
         typeGenerators += KexLinkedListGenerator(this)
+        typeGenerators += KexArrayDequeGenerator(this)
         typeGenerators += KexWrapperClassGenerator(this)
         typeGenerators += KexStringBuilderGenerator(this)
     }
