@@ -64,8 +64,27 @@ class ${solver}Converter(val tf: TypeFactory) : ${solver}SMTConverter() {
                 }
                 if (this.type is KexArray) {
                     val lengthVar = ctx.readWordProperty(expr, this.memspace, "length")
+                    val componentTypeVar = ef.getSubTypeMask((this.type as KexArray).element.getKfgType(tf))
                     resultExpr = resultExpr
                         .withAxiom(lengthVar ge ef.makeIntConst(0))
+                        .withAxiom(
+                            ef.forAll(
+                                { listOf(ef.makeIntConst(0)) },
+                                { args ->
+                                    val index = Int_.forceCast(args[0])
+                                    `if`((index ge ef.makeIntConst(0)) and (index lt lengthVar))
+                                    .then(run {
+                                        val array = ctx.readArrayMemory(expr, this.memspace)
+                                        val element = array.load(Int_.forceCast(index))
+                                        val elementTypeVar = ctx.readBitvectorProperty(Ptr_.forceCast(element), this.memspace, "type")
+                                        (elementTypeVar and componentTypeVar) eq elementTypeVar
+                                    })
+                                    .`else`(
+                                        ef.makeTrue()
+                                    )
+                                }
+                            )
+                        )
                 } else if (this.type == KexJavaClass()) {
                     val typeIndex = ctx.readBitvectorProperty(expr, this.memspace, "${ this.type }.${ ConstClassTerm.TYPE_INDEX_PROPERTY }")
                     val name = ctx.readWordProperty(expr, this.memspace, "${ this.type }.${ ConstClassTerm.NAME_PROPERTY }")

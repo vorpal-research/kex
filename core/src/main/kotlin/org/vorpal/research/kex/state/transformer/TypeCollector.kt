@@ -1,5 +1,6 @@
 package org.vorpal.research.kex.state.transformer
 
+import org.vorpal.research.kex.ktype.KexArray
 import org.vorpal.research.kex.ktype.KexJavaClass
 import org.vorpal.research.kex.ktype.KexType
 import org.vorpal.research.kex.state.PredicateState
@@ -39,17 +40,17 @@ class TypeCollector(val tf: TypeFactory, val checkStringTypes: Boolean = false) 
     }
 
     override fun transformTerm(term: Term): Term {
-        types += term.type
+        addType(term.type)
         return super.transformTerm(term)
     }
 
     override fun transformInstanceOf(term: InstanceOfTerm): Term {
-        types += term.checkedType
+        addType(term.checkedType)
         return super.transformInstanceOf(term)
     }
 
     override fun transformConstClass(term: ConstClassTerm): Term {
-        types += term.constantType
+        addType(term.constantType)
         return super.transformConstClass(term)
     }
 
@@ -66,9 +67,16 @@ class TypeCollector(val tf: TypeFactory, val checkStringTypes: Boolean = false) 
     private fun handleStringType(string: String) {
         if (checkStringTypes) {
             parseAsConcreteType(tf, string)?.let {
-                types += it
+                addType(it)
             }
         }
+    }
+
+    private fun addType(type: KexType) {
+        if (type is KexArray) {
+            addType(type.element)
+        }
+        types += type
     }
 }
 

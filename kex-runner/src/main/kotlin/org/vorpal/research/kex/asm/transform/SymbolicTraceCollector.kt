@@ -114,16 +114,19 @@ class SymbolicTraceCollector(
             types.objectType, types.objectType, types.objectType
         )
 
-        val instrumented = buildList<Instruction> {
+        val before = buildList<Instruction> {
             +addNullityConstraint(inst, inst.arrayRef)
             +addArrayIndexConstraints(inst, inst.arrayRef, inst.index)
+        }
+        val after = buildList<Instruction> {
             +collectorClass.interfaceCall(
                 arrayLoadMethod, traceCollector,
                 "$inst".asValue, "${inst.arrayRef}".asValue, "${inst.index}".asValue,
                 inst.wrapped(this), inst.arrayRef, inst.index.wrapped(this)
             )
         }
-        inst.insertAfter(instrumented)
+        inst.insertBefore(before)
+        inst.insertAfter(after)
     }
 
     override fun visitArrayStoreInst(inst: ArrayStoreInst) {
@@ -133,16 +136,19 @@ class SymbolicTraceCollector(
             types.objectType, types.objectType, types.objectType
         )
 
-        val instrumented = buildList<Instruction> {
+        val before = buildList<Instruction> {
             +addNullityConstraint(inst, inst.arrayRef)
             +addArrayIndexConstraints(inst, inst.arrayRef, inst.index)
+        }
+        val after = buildList<Instruction> {
             +collectorClass.interfaceCall(
                 arrayStoreMethod, traceCollector,
                 "$inst".asValue, "${inst.arrayRef}".asValue, "${inst.index}".asValue, "${inst.value}".asValue,
                 inst.arrayRef, inst.index.wrapped(this), inst.value.wrapped(this)
             )
         }
-        inst.insertAfter(instrumented)
+        inst.insertBefore(before)
+        inst.insertAfter(after)
     }
 
     override fun visitBinaryInst(inst: BinaryInst) {
@@ -256,12 +262,10 @@ class SymbolicTraceCollector(
             types.objectType, types.objectType
         )
         val before = buildList<Instruction> {
+            if (inst.type.isReference) +addNullityConstraint(inst, inst.operand)
             if (inst.type.isReference) +addTypeConstraints(inst, inst.operand, inst.type)
         }
         val after = buildList<Instruction> {
-            if (inst.type.isReference) +addNullityConstraint(inst, inst.operand)
-            if (inst.type.isReference) +addTypeConstraints(inst, inst.operand, inst.type)
-
             +collectorClass.interfaceCall(
                 castMethod, traceCollector,
                 "$inst".asValue, "${inst.operand}".asValue,
@@ -340,9 +344,10 @@ class SymbolicTraceCollector(
             types.objectType, types.objectType
         )
 
-        val instrumented = buildList<Instruction> {
+        val before = buildList<Instruction> {
             if (!inst.isStatic) +addNullityConstraint(inst, inst.owner)
-
+        }
+        val after = buildList<Instruction> {
             val fieldKlass = inst.field.klass.fullName.asValue
             val fieldName = inst.field.name.asValue
             val fieldType = inst.field.type.asmDesc.asValue
@@ -357,7 +362,8 @@ class SymbolicTraceCollector(
                 inst.wrapped(this), concreteOwner.wrapped(this)
             )
         }
-        inst.insertAfter(instrumented)
+        inst.insertBefore(before)
+        inst.insertAfter(after)
     }
 
     override fun visitFieldStoreInst(inst: FieldStoreInst) {
@@ -369,9 +375,10 @@ class SymbolicTraceCollector(
             types.objectType, types.objectType
         )
 
-        val instrumented = buildList<Instruction> {
+        val before = buildList<Instruction> {
             if (!inst.isStatic) +addNullityConstraint(inst, inst.owner)
-
+        }
+        val after = buildList<Instruction> {
             val fieldKlass = inst.field.klass.fullName.asValue
             val fieldName = inst.field.name.asValue
             val fieldType = inst.field.type.asmDesc.asValue
@@ -391,7 +398,8 @@ class SymbolicTraceCollector(
                 inst.value.wrapped(this), defOwner
             )
         }
-        inst.insertAfter(instrumented)
+        inst.insertBefore(before)
+        inst.insertAfter(after)
     }
 
     override fun visitInstanceOfInst(inst: InstanceOfInst) {
@@ -594,14 +602,18 @@ class SymbolicTraceCollector(
             types.objectType, types.objectType
         )
 
-        val instrumented = buildList<Instruction> {
+        val before = buildList<Instruction> {
+            if (inst.opcode == UnaryOpcode.LENGTH) +addNullityConstraint(inst, inst.operand)
+        }
+        val after = buildList<Instruction> {
             +collectorClass.interfaceCall(
                 unaryMethod, traceCollector,
                 "$inst".asValue, "${inst.operand}".asValue,
                 inst.wrapped(this), inst.operand.wrapped(this)
             )
         }
-        inst.insertAfter(instrumented)
+        inst.insertBefore(before)
+        inst.insertAfter(after)
     }
 
     private fun addNullityConstraint(inst: Instruction, value: Value): List<Instruction> = buildList {

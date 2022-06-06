@@ -27,4 +27,19 @@ public class JavaTest {
         }
         return res;
     }
+
+    public void foo2(char[][] a) {
+        if (a.length > 10) {
+            if (a[0].length < 2) {
+                System.out.println("s");
+            }
+        }
+    }
+    public void foo3(String[][] a) {
+        if (a.length > 10) {
+            if (a[0].length < 2) {
+                System.out.println("s");
+            }
+        }
+    }
 }
