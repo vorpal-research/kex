@@ -1,4 +1,4 @@
-package org.jetbrains.research.kex
+package org.vorpal.research.kex
 
 import org.vorpal.research.kex.sbst.SBSTProtocol
 import org.vorpal.research.kex.sbst.Tool

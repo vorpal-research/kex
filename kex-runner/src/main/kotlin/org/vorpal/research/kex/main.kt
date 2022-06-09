@@ -1,4 +1,4 @@
-package org.jetbrains.research.kex
+package org.vorpal.research.kex
 
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.InternalSerializationApi
