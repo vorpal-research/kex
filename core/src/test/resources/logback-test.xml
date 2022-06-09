@@ -20,14 +20,14 @@
     </appender>
 
     <appender name="kexTestFileLogger" class="ch.qos.logback.core.FileAppender">
-        <file>kex.log</file>
-        <param name="Append" value="false" />
+        <file>${kex.log.name}</file>
+        <param name="Append" value="true" />
         <encoder>
             <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%-5p][%c] - %m%n</pattern>
         </encoder>
     </appender>
 
-    <logger name="org.jetbrains.research" level="ALL" additivity="false">
+    <logger name="org.vorpal.research" level="ALL" additivity="false">
         <appender-ref ref="kexTestFileLogger"/>
         <appender-ref ref="filteredStdout"/>
     </logger>

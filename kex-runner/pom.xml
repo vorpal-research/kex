@@ -4,7 +4,7 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <parent>
         <artifactId>kex</artifactId>
-        <groupId>org.jetbrains.research</groupId>
+        <groupId>org.vorpal.research</groupId>
         <version>0.0.1</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
@@ -12,16 +12,18 @@
     <artifactId>kex-runner</artifactId>
 
     <properties>
-        <exec.main>org.jetbrains.research.kex.MainKt</exec.main>
+        <exec.main>org.vorpal.research.kex.MainKt</exec.main>
 
-        <better-parse.version>0.4.3</better-parse.version>
-        <jacoco.version>0.8.7</jacoco.version>
+        <better-parse.version>0.4.4</better-parse.version>
+        <jacoco.version>0.8.8</jacoco.version>
         <junit.version>4.13.2</junit.version>
+
+        <commons-text.version>1.9</commons-text.version>
     </properties>
 
     <dependencies>
         <dependency>
-            <groupId>org.jetbrains.research</groupId>
+            <groupId>org.vorpal.research</groupId>
             <artifactId>kt-helper</artifactId>
             <version>${kt-helper.version}</version>
         </dependency>
@@ -44,12 +46,12 @@
         </dependency>
 
         <dependency>
-            <groupId>org.jetbrains.research</groupId>
+            <groupId>org.vorpal.research</groupId>
             <artifactId>core</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
-            <groupId>org.jetbrains.research</groupId>
+            <groupId>org.vorpal.research</groupId>
             <artifactId>core</artifactId>
             <version>${project.version}</version>
             <classifier>tests</classifier>
@@ -57,14 +59,20 @@
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>org.jetbrains.research</groupId>
+            <groupId>org.vorpal.research</groupId>
             <artifactId>kex-test</artifactId>
+            <version>${project.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.vorpal.research</groupId>
+            <artifactId>kex-executor</artifactId>
             <version>${project.version}</version>
             <scope>test</scope>
         </dependency>
 
         <dependency>
-            <groupId>org.jetbrains.research</groupId>
+            <groupId>org.vorpal.research</groupId>
             <artifactId>kfg</artifactId>
             <version>${kfg.version}</version>
         </dependency>
@@ -95,6 +103,11 @@
             <groupId>org.jacoco</groupId>
             <artifactId>org.jacoco.core</artifactId>
             <version>${jacoco.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-text</artifactId>
+            <version>${commons-text.version}</version>
         </dependency>
     </dependencies>
 
@@ -223,12 +236,12 @@
 
             <dependencies>
                 <dependency>
-                    <groupId>org.jetbrains.research</groupId>
+                    <groupId>org.vorpal.research</groupId>
                     <artifactId>kex-boolector</artifactId>
                     <version>${project.version}</version>
                 </dependency>
                 <dependency>
-                    <groupId>org.jetbrains.research</groupId>
+                    <groupId>org.vorpal.research</groupId>
                     <artifactId>kex-z3</artifactId>
                     <version>${project.version}</version>
                 </dependency>
@@ -246,7 +259,7 @@
 
             <dependencies>
                 <dependency>
-                    <groupId>org.jetbrains.research</groupId>
+                    <groupId>org.vorpal.research</groupId>
                     <artifactId>kex-boolector</artifactId>
                     <version>${project.version}</version>
                 </dependency>
@@ -264,7 +277,7 @@
 
             <dependencies>
                 <dependency>
-                    <groupId>org.jetbrains.research</groupId>
+                    <groupId>org.vorpal.research</groupId>
                     <artifactId>kex-z3</artifactId>
                     <version>${project.version}</version>
                 </dependency>

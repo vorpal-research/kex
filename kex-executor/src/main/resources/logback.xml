@@ -7,8 +7,8 @@
         </encoder>
     </appender>
     <appender name="kexFileLogger" class="ch.qos.logback.core.FileAppender">
-        <file>kex.log</file>
-        <param name="Append" value="false" />
+        <file>${kex.log.name}</file>
+        <param name="Append" value="true" />
         <encoder>
             <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%-5p][%c] - %m%n</pattern>
         </encoder>
@@ -17,14 +17,10 @@
     <appender name="asyncFileLogger" class="ch.qos.logback.classic.AsyncAppender">
         <appender-ref ref="kexFileLogger"/>
     </appender>
-    <appender name="asyncStdout" class="ch.qos.logback.classic.AsyncAppender">
-        <appender-ref ref="stdout"/>
-    </appender>
 
-    <logger name="org.jetbrains.research" level="ALL" additivity="false">
+    <logger name="org.vorpal.research" level="ALL" additivity="false">
         <appender-ref ref="asyncFileLogger"/>
     </logger>
 
     <logger name="ch.qos.logback" level="OFF"/>
-
 </configuration>

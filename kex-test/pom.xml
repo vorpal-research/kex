@@ -4,7 +4,7 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 
     <modelVersion>4.0.0</modelVersion>
-    <groupId>org.jetbrains.research</groupId>
+    <groupId>org.vorpal.research</groupId>
     <version>0.0.1</version>
     <artifactId>kex-test</artifactId>
 
@@ -15,9 +15,9 @@
         <maven.compiler.source>${jvm.version}</maven.compiler.source>
         <maven.compiler.target>${jvm.version}</maven.compiler.target>
 
-        <kotlin.version>1.6.10</kotlin.version>
+        <kotlin.version>1.6.21</kotlin.version>
         <compiler-plugin.version>3.5.1</compiler-plugin.version>
-        <kex-intrinsics.version>0.0.6</kex-intrinsics.version>
+        <kex-intrinsics.version>0.1.0</kex-intrinsics.version>
     </properties>
 
     <dependencies>
@@ -33,7 +33,7 @@
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>org.jetbrains.research</groupId>
+            <groupId>org.vorpal.research</groupId>
             <artifactId>kex-intrinsics</artifactId>
             <version>${kex-intrinsics.version}</version>
         </dependency>

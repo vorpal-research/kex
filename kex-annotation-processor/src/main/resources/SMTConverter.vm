@@ -1,19 +1,19 @@
 #parse("definitions.vm")
-import org.jetbrains.research.kex.smt.${solver.toLowerCase()}.${solver}SMTConverter
-import org.jetbrains.research.kex.state.*
-import org.jetbrains.research.kex.state.predicate.*
-import org.jetbrains.research.kex.state.term.*
-import org.jetbrains.research.kex.state.transformer.memspace
-import org.jetbrains.research.kex.state.transformer.*
-import org.jetbrains.research.kfg.ir.Class
-import org.jetbrains.research.kfg.ir.value.instruction.BinaryOpcode
-import org.jetbrains.research.kfg.ir.value.instruction.CmpOpcode
-import org.jetbrains.research.kex.config.kexConfig
-import org.jetbrains.research.kfg.type.ClassType
-import org.jetbrains.research.kfg.type.Type
-import org.jetbrains.research.kfg.type.TypeFactory
-import org.jetbrains.research.kfg.type.NullType
-import org.jetbrains.research.kthelper.collection.dequeOf
+import org.vorpal.research.kex.smt.${solver.toLowerCase()}.${solver}SMTConverter
+import org.vorpal.research.kex.state.*
+import org.vorpal.research.kex.state.predicate.*
+import org.vorpal.research.kex.state.term.*
+import org.vorpal.research.kex.state.transformer.memspace
+import org.vorpal.research.kex.state.transformer.*
+import org.vorpal.research.kfg.ir.Class
+import org.vorpal.research.kfg.ir.value.instruction.BinaryOpcode
+import org.vorpal.research.kfg.ir.value.instruction.CmpOpcode
+import org.vorpal.research.kex.config.kexConfig
+import org.vorpal.research.kfg.type.ClassType
+import org.vorpal.research.kfg.type.Type
+import org.vorpal.research.kfg.type.TypeFactory
+import org.vorpal.research.kfg.type.NullType
+import org.vorpal.research.kthelper.collection.dequeOf
 import java.util.*
 
 private typealias Factory_ = $factory
@@ -64,8 +64,27 @@ class ${solver}Converter(val tf: TypeFactory) : ${solver}SMTConverter() {
                 }
                 if (this.type is KexArray) {
                     val lengthVar = ctx.readWordProperty(expr, this.memspace, "length")
+                    val componentTypeVar = ef.getSubTypeMask((this.type as KexArray).element.getKfgType(tf))
                     resultExpr = resultExpr
                         .withAxiom(lengthVar ge ef.makeIntConst(0))
+                        .withAxiom(
+                            ef.forAll(
+                                { listOf(ef.makeIntConst(0)) },
+                                { args ->
+                                    val index = Int_.forceCast(args[0])
+                                    `if`((index ge ef.makeIntConst(0)) and (index lt lengthVar))
+                                    .then(run {
+                                        val array = ctx.readArrayMemory(expr, this.memspace)
+                                        val element = array.load(Int_.forceCast(index))
+                                        val elementTypeVar = ctx.readBitvectorProperty(Ptr_.forceCast(element), this.memspace, "type")
+                                        (elementTypeVar and componentTypeVar) eq elementTypeVar
+                                    })
+                                    .`else`(
+                                        ef.makeTrue()
+                                    )
+                                }
+                            )
+                        )
                 } else if (this.type == KexJavaClass()) {
                     val typeIndex = ctx.readBitvectorProperty(expr, this.memspace, "${ this.type }.${ ConstClassTerm.TYPE_INDEX_PROPERTY }")
                     val name = ctx.readWordProperty(expr, this.memspace, "${ this.type }.${ ConstClassTerm.NAME_PROPERTY }")
@@ -605,7 +624,7 @@ class ${solver}Converter(val tf: TypeFactory) : ${solver}SMTConverter() {
             val index = paramMap[lambda.parameters.first()]!!
             if_ { (start le index) and (index lt end) }
                 .then_ {
-                    convert(lambda.body, ef, ctx) as Bool_
+                    Bool_.forceCast(convert(lambda.body, ef, ctx))
                 }.else_ {
                     ef.makeTrue()
                 }.also {

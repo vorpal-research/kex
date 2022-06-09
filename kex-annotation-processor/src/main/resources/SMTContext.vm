@@ -1,5 +1,5 @@
 #parse("definitions.vm")
-import org.jetbrains.research.kex.smt.${solver.toLowerCase()}.${solver}SMTContext
+import org.vorpal.research.kex.smt.${solver.toLowerCase()}.${solver}SMTContext
 import kotlin.math.max
 
 class VersionedMemory< T : Dynamic_ >(val memory: Memory_< T >, val version: Long = 0) {

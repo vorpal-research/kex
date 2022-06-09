@@ -6,7 +6,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
-        <groupId>org.jetbrains.research</groupId>
+        <groupId>org.vorpal.research</groupId>
         <artifactId>kex</artifactId>
         <version>0.0.1</version>
     </parent>
@@ -14,7 +14,7 @@
     <packaging>jar</packaging>
 
     <properties>
-        <exec.main>org.jetbrains.research.kex.KexExecutorKt</exec.main>
+        <exec.main>org.vorpal.research.kex.KexExecutorKt</exec.main>
     </properties>
 
     <dependencies>
@@ -30,21 +30,27 @@
         </dependency>
 
         <dependency>
-            <groupId>org.jetbrains.research</groupId>
+            <groupId>org.vorpal.research</groupId>
             <artifactId>core</artifactId>
             <version>${project.version}</version>
         </dependency>
 
         <dependency>
-            <groupId>org.jetbrains.research</groupId>
+            <groupId>org.vorpal.research</groupId>
             <artifactId>kt-helper</artifactId>
             <version>${kt-helper.version}</version>
         </dependency>
 
         <dependency>
-            <groupId>org.jetbrains.research</groupId>
+            <groupId>org.vorpal.research</groupId>
             <artifactId>kfg</artifactId>
             <version>${kfg.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.jetbrains.kotlinx</groupId>
+            <artifactId>kotlinx-coroutines-core</artifactId>
+            <version>${coroutines.version}</version>
         </dependency>
     </dependencies>
 
