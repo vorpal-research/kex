@@ -41,7 +41,7 @@ class ConcolicLauncher(classPaths: List<String>, targetName: String) : KexLaunch
         ExecutorMasterController.use {
             it.start(context)
 
-            runPipeline(context) {
+            executePipeline(context.cm, Package.defaultPackage) {
                 +SystemExitTransformer(context.cm)
             }
 

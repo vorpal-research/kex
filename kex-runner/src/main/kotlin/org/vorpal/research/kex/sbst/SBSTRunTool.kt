@@ -1,11 +1,10 @@
 package org.jetbrains.research.kex
 
-import org.jetbrains.research.kex.sbst.SBSTProtocol
-import org.jetbrains.research.kex.sbst.Tool
+import org.vorpal.research.kex.sbst.SBSTProtocol
+import org.vorpal.research.kex.sbst.Tool
 import java.io.File
 import java.io.Reader
 import java.io.Writer
-import java.util.*
 
 
 class SBSTRunTool(private val tool: Tool, input: Reader, output: Writer) {

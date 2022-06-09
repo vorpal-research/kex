@@ -1,6 +1,6 @@
-package org.jetbrains.research.kex.sbst
+package org.vorpal.research.kex.sbst
 
-import org.jetbrains.research.kthelper.logging.log
+import org.vorpal.research.kthelper.logging.log
 import java.io.*
 
 class SBSTProtocol(input: Reader, output: Writer) {

@@ -1,4 +1,4 @@
-package org.jetbrains.research.kex.sbst
+package org.vorpal.research.kex.sbst
 
 import java.io.File
 

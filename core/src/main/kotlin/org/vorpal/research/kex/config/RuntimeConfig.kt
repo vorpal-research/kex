@@ -14,6 +14,9 @@ object RuntimeConfig : Config() {
     fun setValue(section: String, name: String, value: Int) =
             options.getOrPut(section) { mutableMapOf() }.set(name, value.toString())
 
+    fun setValue(section: String, name: String, value: Long) =
+        options.getOrPut(section) { mutableMapOf() }.set(name, value.toString())
+
     fun setValue(section: String, name: String, value: Double) =
             options.getOrPut(section) { mutableMapOf() }.set(name, value.toString())
 

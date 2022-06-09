@@ -27,9 +27,8 @@ import org.vorpal.research.kthelper.tryOrNull
 class DescriptorChecker(
     ctx: ExecutionContext,
     tm: TraceManager<ActionTrace>,
-    psa: PredicateStateAnalysis,
-    timeBudget: Long = 0L
-) : MethodChecker(ctx, tm, psa, timeBudget) {
+    psa: PredicateStateAnalysis
+) : MethodChecker(ctx, tm, psa) {
 
     override fun initializeGenerator(method: Method) {
         generator = Reanimator(ctx, psa, method)

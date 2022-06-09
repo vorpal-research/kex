@@ -1,45 +1,34 @@
-package org.jetbrains.research.kex.sbst
+package org.vorpal.research.kex.sbst
 
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.InternalSerializationApi
-import org.jetbrains.research.kex.ExecutionContext
-import org.jetbrains.research.kex.asm.analysis.testgen.DescriptorChecker
-import org.jetbrains.research.kex.asm.analysis.testgen.MethodChecker
-import org.jetbrains.research.kex.asm.manager.ClassInstantiationDetector
-import org.jetbrains.research.kex.asm.manager.CoverageCounter
-import org.jetbrains.research.kex.asm.state.PredicateStateAnalysis
-import org.jetbrains.research.kex.asm.transform.LoopDeroller
-import org.jetbrains.research.kex.asm.transform.RuntimeTraceCollector
-import org.jetbrains.research.kex.asm.transform.SystemExitTransformer
-import org.jetbrains.research.kex.asm.util.ClassWriter
-import org.jetbrains.research.kex.asm.util.Visibility
-import org.jetbrains.research.kex.config.FileConfig
-import org.jetbrains.research.kex.config.RuntimeConfig
-import org.jetbrains.research.kex.config.kexConfig
-import org.jetbrains.research.kex.random.easyrandom.EasyRandomDriver
-import org.jetbrains.research.kex.reanimator.collector.MethodFieldAccessCollector
-import org.jetbrains.research.kex.reanimator.collector.SetterCollector
-import org.jetbrains.research.kex.reanimator.descriptor.DescriptorStatistics
-import org.jetbrains.research.kex.trace.`object`.ActionTrace
-import org.jetbrains.research.kex.trace.`object`.ObjectTraceManager
-import org.jetbrains.research.kex.util.deleteDirectory
-import org.jetbrains.research.kex.util.getKexRuntime
-import org.jetbrains.research.kex.util.getRuntime
-import org.jetbrains.research.kfg.ClassManager
-import org.jetbrains.research.kfg.KfgConfig
-import org.jetbrains.research.kfg.Package
-import org.jetbrains.research.kfg.analysis.LoopSimplifier
-import org.jetbrains.research.kfg.container.Container
-import org.jetbrains.research.kfg.container.asContainer
-import org.jetbrains.research.kfg.ir.Class
-import org.jetbrains.research.kfg.util.Flags
-import org.jetbrains.research.kfg.visitor.executePipeline
-import org.jetbrains.research.kthelper.logging.log
-import org.jetbrains.research.kthelper.tryOrNull
+import org.vorpal.research.kex.ExecutionContext
+import org.vorpal.research.kex.asm.analysis.concolic.InstructionConcolicChecker
+import org.vorpal.research.kex.asm.manager.ClassInstantiationDetector
+import org.vorpal.research.kex.asm.transform.SymbolicTraceCollector
+import org.vorpal.research.kex.asm.transform.SystemExitTransformer
+import org.vorpal.research.kex.asm.util.ClassWriter
+import org.vorpal.research.kex.asm.util.Visibility
+import org.vorpal.research.kex.config.FileConfig
+import org.vorpal.research.kex.config.RuntimeConfig
+import org.vorpal.research.kex.config.kexConfig
+import org.vorpal.research.kex.launcher.AnalysisLevel
+import org.vorpal.research.kex.launcher.LauncherException
+import org.vorpal.research.kex.random.easyrandom.EasyRandomDriver
+import org.vorpal.research.kex.trace.runner.ExecutorMasterController
+import org.vorpal.research.kex.util.*
+import org.vorpal.research.kfg.ClassManager
+import org.vorpal.research.kfg.KfgConfig
+import org.vorpal.research.kfg.Package
+import org.vorpal.research.kfg.container.Container
+import org.vorpal.research.kfg.container.asContainer
+import org.vorpal.research.kfg.util.Flags
+import org.vorpal.research.kfg.visitor.executePipeline
+import org.vorpal.research.kthelper.logging.log
+import org.vorpal.research.kthelper.tryOrNull
 import java.io.File
 import java.net.URLClassLoader
 import java.nio.file.Path
-import java.util.*
 
 val Container.urls get() = (this.classLoader as? URLClassLoader)?.urLs ?: arrayOf()
 
@@ -47,29 +36,12 @@ val Container.urls get() = (this.classLoader as? URLClassLoader)?.urLs ?: arrayO
 @InternalSerializationApi
 class KexTool : Tool {
     val configFile = "kex.ini"
+    val classPath = System.getProperty("java.class.path")
     lateinit var containers: List<Container>
     lateinit var containerClassLoader: URLClassLoader
     lateinit var context: ExecutionContext
-
-    lateinit var pkg: Package
-    var klass: Class? = null
-        private set
-    val classPath = System.getProperty("java.class.path")
-
-    val traceManager = ObjectTraceManager()
-    lateinit var cm: CoverageCounter<ActionTrace>
-    lateinit var psa: PredicateStateAnalysis
-    val visibility = Visibility.PUBLIC
-
-
-    private fun updateClassPath(loader: URLClassLoader) {
-        val urlClassPath = loader.urLs.joinToString(separator = ":") { "${it.path}." }
-        System.setProperty("java.class.path", "$classPath:$urlClassPath")
-    }
-
-    private fun clearClassPath() {
-        System.setProperty("java.class.path", classPath)
-    }
+    lateinit var analysisLevel: AnalysisLevel
+    lateinit var visibilityLevel: Visibility
 
     init {
         kexConfig.initialize(RuntimeConfig, FileConfig(configFile))
@@ -77,94 +49,110 @@ class KexTool : Tool {
 
     override fun getExtraClassPath(): List<File> = emptyList()
 
+    protected fun updateClassPath(loader: URLClassLoader) {
+        val urlClassPath = loader.urLs.joinToString(separator = getPathSeparator()) { "${it.path}." }
+        System.setProperty("java.class.path", "$classPath${getPathSeparator()}$urlClassPath")
+    }
+
+    protected fun clearClassPath() {
+        System.setProperty("java.class.path", classPath)
+    }
+
     private fun prepareInstrumentedClasspath(containers: List<Container>, target: Package, path: Path) {
-        val cm = ClassManager(KfgConfig(flags = Flags.readAll, failOnError = false, verifyIR = false))
-        cm.initialize(*containers.toTypedArray())
         val klassPath = containers.map { it.path }
-        val context = ExecutionContext(
-            cm,
-            target,
-            containerClassLoader,
-            EasyRandomDriver(),
-            klassPath
-        )
+        for (jar in containers) {
+            log.info("Preparing ${jar.path}")
+            val cm = ClassManager(
+                KfgConfig(
+                    flags = Flags.readAll,
+                    useCachingLoopManager = false,
+                    failOnError = false,
+                    verifyIR = false,
+                    checkClasses = false
+                )
+            )
+            cm.initialize(jar)
+            val context = ExecutionContext(
+                cm,
+                target,
+                containerClassLoader,
+                EasyRandomDriver(),
+                klassPath
+            )
 
-        containers.forEach { it.unpack(cm, path, true) }
+            jar.unpack(cm, path, true)
 
-        executePipeline(cm, target) {
-            +SystemExitTransformer(cm)
-            +RuntimeTraceCollector(context.cm)
-            +ClassWriter(context, path)
+            executePipeline(cm, target) {
+                +SystemExitTransformer(cm)
+                +ClassInstantiationDetector(cm, visibilityLevel)
+                +SymbolicTraceCollector(context)
+                +ClassWriter(context, path)
+            }
         }
         log.debug("Executed instrumentation pipeline")
     }
 
 
     override fun initialize(src: File, bin: File, classPath: List<File>) {
-        val targetContainer = bin.asContainer()!!
-        pkg = targetContainer.pkg
-        containers = classPath.mapNotNull { it.asContainer() }
-
-        val jarClassLoader = URLClassLoader(containers.flatMap { it.urls.toList() }.toTypedArray())
-        log.debug("Initialized containers: ${containers.joinToString { it.name }}")
+        visibilityLevel = kexConfig.getEnumValue("testGen", "visibility", true, Visibility.PUBLIC)
+        val containerPaths = classPath.map { it.toPath().toAbsolutePath() }
+        containerClassLoader = URLClassLoader(containerPaths.map { it.toUri().toURL() }.toTypedArray())
+        containers = listOfNotNull(*containerPaths.map {
+            it.asContainer() ?: throw LauncherException("Can't represent ${it.toAbsolutePath()} as class container")
+        }.toTypedArray(), getKexRuntime())
+        val analysisJars = listOfNotNull(*containers.toTypedArray(), getRuntime(), getIntrinsics())
 
         val instrumentedDirName = kexConfig.getStringValue("output", "instrumentedDir", "instrumented")
-        val instrumentedCodeDir = kexConfig.getPathValue("kex", "outputDir")!!.resolve(instrumentedDirName).toAbsolutePath()
-        containerClassLoader = URLClassLoader(containers.map { it.path.toUri().toURL() }.toTypedArray())
+        val instrumentedCodeDir = kexConfig.getPathValue("kex", "outputDir")!!.resolve(instrumentedDirName)
+        prepareInstrumentedClasspath(analysisJars, Package.defaultPackage, instrumentedCodeDir)
 
-        prepareInstrumentedClasspath(containers, pkg, instrumentedCodeDir)
-        containerClassLoader = URLClassLoader(arrayOf(instrumentedCodeDir.toUri().toURL()))
+        val cm = ClassManager(
+            KfgConfig(
+                flags = Flags.readAll,
+                useCachingLoopManager = false,
+                failOnError = false,
+                verifyIR = false,
+                checkClasses = false
+            )
+        )
+        cm.initialize(*analysisJars.toTypedArray())
 
-        val classManager = ClassManager(KfgConfig(flags = Flags.readAll, failOnError = false))
-        classManager.initialize(jarClassLoader, *containers.toTypedArray(), getRuntime()!!, getKexRuntime()!!)
-        log.debug("Initialized class managers")
+        log.debug("Target: $analysisLevel")
 
         // write all classes to output directory, so they will be seen by ClassLoader
-        log.debug("Unpacked jar files")
+        val classLoader = URLClassLoader(arrayOf(instrumentedCodeDir.toUri().toURL()))
 
         val klassPath = containers.map { it.path }
-        updateClassPath(containerClassLoader)
+        updateClassPath(classLoader)
         val randomDriver = EasyRandomDriver()
-        context = ExecutionContext(classManager, pkg, containerClassLoader, randomDriver, klassPath)
+        context = ExecutionContext(cm, analysisLevel.pkg, classLoader, randomDriver, klassPath)
 
-        psa = PredicateStateAnalysis(context.cm)
-        cm = CoverageCounter(context.cm, traceManager)
-
-        updateClassPath(context.loader as URLClassLoader)
-
-        executePipeline(context.cm, Package.defaultPackage) {
-            +LoopSimplifier(context.cm)
-            +LoopDeroller(context.cm)
-            +psa
-            +MethodFieldAccessCollector(context, psa)
-            +SetterCollector(context)
-            +ClassInstantiationDetector(context.cm, visibility)
-        }
+        log.debug("Running with class path:\n${containers.joinToString("\n") { it.name }}")
         log.debug("Executed analysis pipeline")
     }
 
     override fun run(className: String, timeBudget: Long) {
-        val canonicalName = className.replace('.', '/')
-        val klass = context.cm[canonicalName]
-        log.debug("Running on klass $klass")
-        val useApiGeneration = kexConfig.getBooleanValue("apiGeneration", "enabled", true)
-        executePipeline(context.cm, klass) {
-            +when {
-                useApiGeneration -> DescriptorChecker(context, traceManager, psa, timeBudget * 1000)
-                else -> MethodChecker(context, traceManager, psa, timeBudget * 1000)
+        ExecutorMasterController.use {
+            it.start(context)
+
+            RuntimeConfig.setValue("concolic", "timeLimit", timeBudget)
+
+            val canonicalName = className.replace('.', '/')
+            val klass = context.cm[canonicalName]
+            log.debug("Running on klass $klass")
+
+            executePipeline(context.cm, Package.defaultPackage) {
+                +SystemExitTransformer(context.cm)
             }
+
+            InstructionConcolicChecker.run(context, klass.allMethods)
+
+            log.debug("Analyzed klass $klass")
         }
-        log.debug("Analyzed klass $klass")
     }
 
     override fun finalize() {
         clearClassPath()
-        val coverage = cm.totalCoverage
-        log.info("Overall summary:\n" +
-                "body coverage: ${String.format(Locale.ENGLISH, "%.2f", coverage.bodyCoverage)}%\n" +
-                "full coverage: ${String.format(Locale.ENGLISH, "%.2f", coverage.fullCoverage)}%")
-        DescriptorStatistics.printStatistics()
-
         val instrumentedDirName = kexConfig.getStringValue("output", "instrumentedDir", "instrumented")
         val instrumentedCodeDir = kexConfig.getPathValue("kex", "outputDir")!!.resolve(instrumentedDirName).toAbsolutePath()
         tryOrNull { deleteDirectory(instrumentedCodeDir) }
