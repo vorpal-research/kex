@@ -45,6 +45,8 @@ class KexTool : Tool {
 
     init {
         kexConfig.initialize(RuntimeConfig, FileConfig(configFile))
+        val logName = kexConfig.getStringValue("kex", "log", "kex.log")
+        kexConfig.initLog(logName)
     }
 
     override fun getExtraClassPath(): List<File> = emptyList()
