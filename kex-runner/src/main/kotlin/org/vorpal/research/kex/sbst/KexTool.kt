@@ -12,7 +12,6 @@ import org.vorpal.research.kex.asm.util.Visibility
 import org.vorpal.research.kex.config.FileConfig
 import org.vorpal.research.kex.config.RuntimeConfig
 import org.vorpal.research.kex.config.kexConfig
-import org.vorpal.research.kex.launcher.AnalysisLevel
 import org.vorpal.research.kex.launcher.LauncherException
 import org.vorpal.research.kex.random.easyrandom.EasyRandomDriver
 import org.vorpal.research.kex.trace.runner.ExecutorMasterController
@@ -30,8 +29,6 @@ import java.io.File
 import java.net.URLClassLoader
 import java.nio.file.Path
 
-val Container.urls get() = (this.classLoader as? URLClassLoader)?.urLs ?: arrayOf()
-
 @ExperimentalSerializationApi
 @InternalSerializationApi
 class KexTool : Tool {
@@ -40,7 +37,6 @@ class KexTool : Tool {
     lateinit var containers: List<Container>
     lateinit var containerClassLoader: URLClassLoader
     lateinit var context: ExecutionContext
-    lateinit var analysisLevel: AnalysisLevel
     lateinit var visibilityLevel: Visibility
 
     init {
@@ -119,15 +115,13 @@ class KexTool : Tool {
         )
         cm.initialize(*analysisJars.toTypedArray())
 
-        log.debug("Target: $analysisLevel")
-
         // write all classes to output directory, so they will be seen by ClassLoader
         val classLoader = URLClassLoader(arrayOf(instrumentedCodeDir.toUri().toURL()))
 
         val klassPath = containers.map { it.path }
         updateClassPath(classLoader)
         val randomDriver = EasyRandomDriver()
-        context = ExecutionContext(cm, analysisLevel.pkg, classLoader, randomDriver, klassPath)
+        context = ExecutionContext(cm, Package.defaultPackage, classLoader, randomDriver, klassPath)
 
         log.debug("Running with class path:\n${containers.joinToString("\n") { it.name }}")
         log.debug("Executed analysis pipeline")
