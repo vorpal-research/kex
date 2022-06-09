@@ -30,11 +30,11 @@ class ConcolicLauncher(classPaths: List<String>, targetName: String) : KexLaunch
             +ClassInstantiationDetector(ctx.cm, visibilityLevel)
         }
 
-    private val targetMethods: Set<Method>
+    private val batchedTargets: Set<Set<Method>>
         get() = when (analysisLevel) {
-            is ClassLevel -> analysisLevel.klass.allMethods
-            is MethodLevel -> setOf(analysisLevel.method)
-            is PackageLevel -> context.cm.getByPackage(analysisLevel.pkg).flatMap { it.allMethods }.toSet()
+            is ClassLevel -> setOf(analysisLevel.klass.allMethods)
+            is MethodLevel -> setOf(setOf(analysisLevel.method))
+            is PackageLevel -> context.cm.getByPackage(analysisLevel.pkg).map { it.allMethods }.toSet()
         }
 
     override fun launch() {
@@ -45,7 +45,9 @@ class ConcolicLauncher(classPaths: List<String>, targetName: String) : KexLaunch
                 +SystemExitTransformer(context.cm)
             }
 
-            InstructionConcolicChecker.run(context, targetMethods)
+            for (setOfTargets in batchedTargets) {
+                InstructionConcolicChecker.run(context, setOfTargets)
+            }
 
             val coverageInfo = CoverageReporter(containers).execute(context.cm, analysisLevel)
             log.info(
