@@ -13,6 +13,7 @@ import org.vorpal.research.kex.jacoco.CoverageReporter
 import org.vorpal.research.kex.trace.runner.ExecutorMasterController
 import org.vorpal.research.kex.util.PermanentCoverageInfo
 import org.vorpal.research.kfg.Package
+import org.vorpal.research.kfg.ir.Method
 import org.vorpal.research.kfg.visitor.MethodVisitor
 import org.vorpal.research.kfg.visitor.executePipeline
 import org.vorpal.research.kthelper.logging.log
@@ -29,14 +30,23 @@ class ConcolicLauncher(classPaths: List<String>, targetName: String) : KexLaunch
             +ClassInstantiationDetector(ctx.cm, visibilityLevel)
         }
 
+    private val targetMethods: Set<Method>
+        get() = when (analysisLevel) {
+            is ClassLevel -> analysisLevel.klass.allMethods
+            is MethodLevel -> setOf(analysisLevel.method)
+            is PackageLevel -> context.cm.getByPackage(analysisLevel.pkg).flatMap { it.allMethods }.toSet()
+        }
+
     override fun launch() {
         ExecutorMasterController.use {
             it.start(context)
 
             runPipeline(context) {
                 +SystemExitTransformer(context.cm)
-                +InstructionConcolicChecker(context)
             }
+
+            InstructionConcolicChecker.run(context, targetMethods)
+
             val coverageInfo = CoverageReporter(containers).execute(context.cm, analysisLevel)
             log.info(
                 coverageInfo.print(kexConfig.getBooleanValue("kex", "printDetailedCoverage", false))

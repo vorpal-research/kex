@@ -1,9 +1,6 @@
 package org.vorpal.research.kex.asm.analysis.concolic
 
-import kotlinx.coroutines.TimeoutCancellationException
-import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withTimeout
-import kotlinx.coroutines.yield
+import kotlinx.coroutines.*
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.InternalSerializationApi
 import org.vorpal.research.kex.ExecutionContext
@@ -38,7 +35,6 @@ import org.vorpal.research.kex.trace.symbolic.SymbolicState
 import org.vorpal.research.kex.util.getJunit
 import org.vorpal.research.kfg.ClassManager
 import org.vorpal.research.kfg.ir.Method
-import org.vorpal.research.kfg.visitor.MethodVisitor
 import org.vorpal.research.kthelper.assert.unreachable
 import org.vorpal.research.kthelper.logging.debug
 import org.vorpal.research.kthelper.logging.log
@@ -67,8 +63,8 @@ private class CompilerHelper(val ctx: ExecutionContext) {
 @InternalSerializationApi
 class InstructionConcolicChecker(
     val ctx: ExecutionContext,
-) : MethodVisitor {
-    override val cm: ClassManager
+) {
+    val cm: ClassManager
         get() = ctx.cm
 
     private val compilerHelper = CompilerHelper(ctx)
@@ -77,24 +73,34 @@ class InstructionConcolicChecker(
     private val searchStrategy = kexConfig.getStringValue("concolic", "searchStrategy", "bfs")
     private var testIndex = 0
 
-    override fun cleanup() {}
+    companion object {
+        fun run(context: ExecutionContext, targets: Set<Method>) {
+            runBlocking(Dispatchers.Default) {
+                val jobs = targets.map {
+                    launch { InstructionConcolicChecker(context).visit(it) }
+                }
+                yield()
+                for (job in jobs) {
+                    job.join()
+                }
+            }
+        }
+    }
 
-    override fun visit(method: Method) {
+    suspend fun visit(method: Method) {
         if (method.isStaticInitializer || !method.hasBody) return
         if (!method.isImpactable) return
 
-        log.debug { "Processing method $method" }
-        log.debug { method.print() }
+        try {
+            log.debug { "Processing method $method" }
+            log.debug { method.print() }
 
-        runBlocking {
-            try {
-                withTimeout(timeLimit) {
-                    processMethod(method)
-                }
-                log.debug { "Method $method processing is finished normally" }
-            } catch (e: TimeoutCancellationException) {
-                log.debug { "Method $method processing is finished with timeout exception" }
+            withTimeout(timeLimit) {
+                processMethod(method)
             }
+            log.debug { "Method $method processing is finished normally" }
+        } catch (e: TimeoutCancellationException) {
+            log.debug { "Method $method processing is finished with timeout exception" }
         }
     }
 

@@ -29,9 +29,9 @@ abstract class ConcolicTest : KexRunnerTest() {
             executePipeline(analysisContext.cm, Package.defaultPackage) {
                 +ClassInstantiationDetector(analysisContext.cm, Visibility.PRIVATE)
             }
-            executePipeline(analysisContext.cm, klass) {
-                +InstructionConcolicChecker(analysisContext)
-            }
+
+            InstructionConcolicChecker.run(analysisContext, klass.allMethods)
+
             val coverage = CoverageReporter(listOf(jar)).execute(klass.cm, ClassLevel(klass))
             log.debug(coverage.print(true))
             assertEquals(expectedCoverage, coverage.instructionCoverage.ratio)
