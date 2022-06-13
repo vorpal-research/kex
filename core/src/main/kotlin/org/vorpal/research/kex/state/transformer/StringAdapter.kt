@@ -297,11 +297,21 @@ class StringMethodAdapter(val cm: ClassManager) : RecollectingTransformer<String
 
     fun charAt(lhv: Term, term: Term, index: Term): PredicateState = basic {
         val fieldTerm = generate(KexCharArray())
+        val length = generate(KexInt())
         state {
             fieldTerm equality term.valueArray().load()
         }
         assume {
             (fieldTerm neq null) equality true
+        }
+        state {
+            length equality fieldTerm.length()
+        }
+        assume {
+            (index ge 0) equality true
+        }
+        assume {
+            (index lt length) equality true
         }
         state {
             lhv equality fieldTerm[index].load()
@@ -671,7 +681,7 @@ class StringMethodAdapter(val cm: ClassManager) : RecollectingTransformer<String
                         KexChar(),
                         index lt thisLength,
                         thisValue[index].load(),
-                        otherValue[index - thisValue].load()
+                        otherValue[index - thisLength].load()
                     )
                 }
             }

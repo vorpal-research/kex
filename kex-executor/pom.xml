@@ -46,6 +46,12 @@
             <artifactId>kfg</artifactId>
             <version>${kfg.version}</version>
         </dependency>
+
+        <dependency>
+            <groupId>org.jetbrains.kotlinx</groupId>
+            <artifactId>kotlinx-coroutines-core</artifactId>
+            <version>${coroutines.version}</version>
+        </dependency>
     </dependencies>
 
     <build>

@@ -109,7 +109,7 @@ class ReflectionInfoAdapter(val method: Method, val loader: ClassLoader, val ign
         val field = (predicate.rhv as FieldLoadTerm).field as FieldTerm
         val fieldType = (field.type as KexReference).reference
         val kfgClass = cm[field.klass]
-        val actualField = field.unmappedKfgField(cm)
+        val actualField = tryOrNull { field.unmappedKfgField(cm) } ?: return result
 
         val klass = tryOrNull { loader.loadKClass(kfgClass) } ?: return result
         val prop = klass.getKProperty(actualField)

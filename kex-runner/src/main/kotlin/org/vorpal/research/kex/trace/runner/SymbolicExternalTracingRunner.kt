@@ -6,85 +6,94 @@ import org.vorpal.research.kex.ExecutionContext
 import org.vorpal.research.kex.config.kexConfig
 import org.vorpal.research.kex.serialization.KexSerializer
 import org.vorpal.research.kex.trace.symbolic.ExecutionResult
+import org.vorpal.research.kex.trace.symbolic.protocol.Client2MasterConnection
+import org.vorpal.research.kex.trace.symbolic.protocol.Client2MasterSocketConnection
+import org.vorpal.research.kex.trace.symbolic.protocol.TestExecutionRequest
 import org.vorpal.research.kex.util.getIntrinsics
+import org.vorpal.research.kex.util.getJunit
 import org.vorpal.research.kex.util.getPathSeparator
-import org.vorpal.research.kthelper.KtException
 import org.vorpal.research.kthelper.logging.log
-import java.io.InputStreamReader
+import java.net.ServerSocket
 import java.nio.file.Paths
-import java.util.concurrent.TimeUnit
-import kotlin.io.path.deleteIfExists
-import kotlin.io.path.readText
 
-private val timeout = kexConfig.getLongValue("runner", "timeout", 10000L)
+@ExperimentalSerializationApi
+@InternalSerializationApi
+internal object ExecutorMasterController : AutoCloseable {
+    private lateinit var process: Process
+    private val masterPort: Int
 
-class ExecutionException(cause: Throwable) : KtException("", cause)
+    init {
+        val tempSocket = ServerSocket(0)
+        masterPort = tempSocket.localPort
+        tempSocket.close()
+        Thread.sleep(1000)
+    }
+
+    fun start(ctx: ExecutionContext) {
+        val outputDir = kexConfig.getPathValue("kex", "outputDir")!!
+        val executorPath = (kexConfig.getPathValue(
+            "executor", "executorPath"
+        ) ?: Paths.get("kex-executor/target/kex-executor-0.0.1-jar-with-dependencies.jar")).toAbsolutePath()
+        val executorKlass = "org.vorpal.research.kex.launcher.MasterLauncherKt"
+        val executorConfigPath = (kexConfig.getPathValue(
+            "executor", "executorConfigPath"
+        ) ?: Paths.get("kex.ini")).toAbsolutePath()
+        val masterJvmParams = kexConfig.getMultipleStringValue("executor", "masterJvmParams", ",")
+        val numberOfWorkers = kexConfig.getIntValue("executor", "numberOfWorkers", 1)
+        val instrumentedCodeDir = outputDir.resolve(
+            kexConfig.getStringValue("output", "instrumentedDir", "instrumented")
+        ).toAbsolutePath()
+        val compiledCodeDir = outputDir.resolve(
+            kexConfig.getStringValue("compile", "compileDir", "compiled")
+        ).toAbsolutePath()
+        val workerClassPath = listOfNotNull(
+            executorPath,
+            instrumentedCodeDir,
+            compiledCodeDir,
+            getIntrinsics()?.path,
+            getJunit()?.path
+        )
+
+        val kfgClassPath = ctx.classPath
+        val pb = ProcessBuilder(
+            "java",
+            "-classpath", executorPath.toString(),
+            *masterJvmParams.toTypedArray(),
+            executorKlass,
+            "--output", "${outputDir.toAbsolutePath()}",
+            "--config", "$executorConfigPath",
+            "--port", "$masterPort",
+            "--kfgClassPath", kfgClassPath.joinToString(getPathSeparator()),
+            "--workerClassPath", workerClassPath.joinToString(getPathSeparator()),
+            "--numOfWorkers", "$numberOfWorkers"
+        )
+        log.debug("Starting executor master process with command: '${pb.command().joinToString(" ")}'")
+        process = pb.start()
+    }
+
+    fun getClientConnection(ctx: ExecutionContext): Client2MasterConnection {
+        return Client2MasterSocketConnection(KexSerializer(ctx.cm, prettyPrint = false), masterPort)
+    }
+
+    override fun close() {
+        process.destroy()
+    }
+}
 
 class SymbolicExternalTracingRunner(val ctx: ExecutionContext) {
-    private val outputDir = kexConfig.getPathValue("kex", "outputDir")!!
-    private val traceFile = outputDir.resolve("trace.json").toAbsolutePath()
-    private val executorPolicyPath = (kexConfig.getPathValue(
-        "executor", "executorPolicyPath"
-    ) ?: Paths.get("kex.policy")).toAbsolutePath()
-    private val executorPath = (kexConfig.getPathValue(
-        "executor", "executorPath"
-    ) ?: Paths.get("kex-executor/target/kex-executor-0.0.1-jar-with-dependencies.jar")).toAbsolutePath()
-    private val executorKlass = "org.vorpal.research.kex.KexExecutorKt"
-    private val executorConfigPath = (kexConfig.getPathValue(
-        "executor", "executorConfigPath"
-    ) ?: Paths.get("kex.ini")).toAbsolutePath()
-    private val instrumentedCodeDir = outputDir.resolve(
-        kexConfig.getStringValue("output", "instrumentedDir", "instrumented")
-    ).toAbsolutePath()
-    private val compiledCodeDir = outputDir.resolve(
-        kexConfig.getStringValue("compile", "compileDir", "compiled")
-    ).toAbsolutePath()
-    private val executionClassPath = listOfNotNull(
-        executorPath,
-        instrumentedCodeDir,
-        compiledCodeDir,
-        getIntrinsics()?.path
-    )
 
     @ExperimentalSerializationApi
     @InternalSerializationApi
     fun run(klass: String, setup: String, test: String): ExecutionResult {
-        val pb = ProcessBuilder(
-            "java",
-            "-Djava.security.manager",
-            "-Djava.security.policy==${executorPolicyPath}",
-            "-classpath", executionClassPath.joinToString(getPathSeparator()),
-            executorKlass,
-            "--config", executorConfigPath.toString(),
-            "--option", "kex:log:${outputDir.resolve("kex-executor.log").toAbsolutePath()}",
-            "--classpath", ctx.classPath.joinToString(getPathSeparator()),
-            "--package", ctx.pkg.toString().replace('/', '.'),
-            "--class", klass,
-            "--setup", setup,
-            "--test", test,
-            "--output", "$traceFile"
-        )
-        log.debug("Executing process with command:\n${pb.command().joinToString(" ")}")
+        log.debug("Executing test $klass")
 
-        try {
-            val process = pb.start()
-            process.waitFor(timeout, TimeUnit.MILLISECONDS)
-            if (process.isAlive) {
-                process.destroy()
-            }
-
-            val errorStream = InputStreamReader(process.errorStream).readText()
-            if (errorStream.isNotBlank()) {
-                log.debug("Process error stream: $errorStream")
-            }
-
-            val result = KexSerializer(ctx.cm).fromJson<ExecutionResult>(traceFile.readText()).also {
-                traceFile.deleteIfExists()
-            }
+        val connection = ExecutorMasterController.getClientConnection(ctx)
+        connection.use {
+            it.connect()
+            it.send(TestExecutionRequest(klass, test, setup))
+            val result = it.receive()
             log.debug("Execution result: $result")
             return result
-        } catch (e: InterruptedException) {
-            throw ExecutionException(e)
         }
     }
 }

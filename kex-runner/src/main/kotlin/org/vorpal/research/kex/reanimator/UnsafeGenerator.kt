@@ -37,15 +37,18 @@ class UnsafeGenerator(
         val sequences = descriptors.actionSequences
         printer.print(method, sequences.rtUnmapped)
     } catch (e: GenerationException) {
+        log.warn("Generation error when generating action sequences:", e)
         throw e
     } catch (e: Exception) {
+        log.warn("Exception when generating action sequences:", e)
         throw GenerationException(e)
     } catch (e: Error) {
+        log.warn("Error when generating action sequences:", e)
         throw GenerationException(e)
     }
 
     fun generate(state: PredicateState, model: SMTModel) {
-        val descriptors = generateFinalDescriptors(method, ctx, model, state).concreteParameters(ctx.cm)
+        val descriptors = generateFinalDescriptors(method, ctx, model, state).concreteParameters(ctx.cm, ctx.random)
         log.debug("Generated descriptors:\n$descriptors")
         generate(descriptors)
     }
@@ -56,16 +59,19 @@ class UnsafeGenerator(
         state: PredicateState,
         model: SMTModel
     ): Parameters<Any?> = try {
-        val descriptors = generateFinalDescriptors(method, ctx, model, state).concreteParameters(ctx.cm)
+        val descriptors = generateFinalDescriptors(method, ctx, model, state).concreteParameters(ctx.cm, ctx.random)
         log.debug("Generated descriptors:\n$descriptors")
         val sequences = descriptors.actionSequences
         printer.print(testName, method, sequences.rtUnmapped)
         generateInputByModel(ctx, method, state, model)
     } catch (e: GenerationException) {
+        log.warn("Generation error when generating action sequences:", e)
         throw e
     } catch (e: Exception) {
+        log.warn("Exception when generating action sequences:", e)
         throw GenerationException(e)
     } catch (e: Error) {
+        log.warn("Error when generating action sequences:", e)
         throw GenerationException(e)
     }
 

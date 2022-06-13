@@ -5,18 +5,11 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import org.vorpal.research.kex.descriptor.Descriptor
 import org.vorpal.research.kex.state.BasicState
-import org.vorpal.research.kex.state.PredicateState
 import org.vorpal.research.kex.state.predicate.Predicate
 import org.vorpal.research.kex.state.term.Term
-import org.vorpal.research.kex.trace.AbstractTrace
 import org.vorpal.research.kfg.ir.Method
 import org.vorpal.research.kfg.ir.value.Value
 import org.vorpal.research.kfg.ir.value.instruction.Instruction
-
-@Serializable
-data class InstructionTrace(
-    val trace: List<@Contextual Instruction> = listOf()
-) : AbstractTrace(), Iterable<Instruction> by trace
 
 @Serializable
 data class Clause(
@@ -25,14 +18,18 @@ data class Clause(
 )
 
 @Serializable
-abstract class PathCondition : Iterable<Clause> {
-    abstract val path: List<Clause>
+data class ClauseState(val state: List<Clause> = emptyList()) : List<Clause> by state {
+    override fun iterator() = state.iterator()
+    fun asState() = BasicState(state.map { it.predicate })
+}
+
+@Serializable
+data class PathCondition(val path: List<Clause> = emptyList()) : List<Clause> by path {
     override fun iterator() = path.iterator()
 
-    open fun subPath(clause: Clause) = subPath(0, path.indexOf(clause) + 1)
-    abstract fun subPath(startIndex: Int, endIndex: Int): PathCondition
+    fun subPath(clause: Clause) = path.subList(0, path.indexOf(clause) + 1)
 
-    open fun asState() = BasicState(path.map { it.predicate })
+    fun asState() = BasicState(path.map { it.predicate })
 }
 
 @Serializable
@@ -40,38 +37,35 @@ data class WrappedValue(val method: @Contextual Method, val value: @Contextual V
 
 @Serializable
 abstract class SymbolicState {
-    abstract val state: PredicateState
+    abstract val clauses: ClauseState
     abstract val path: PathCondition
     abstract val concreteValueMap: Map<Term, @Contextual Descriptor>
     abstract val termMap: Map<Term, @Contextual WrappedValue>
-    abstract val predicateMap: Map<Predicate, @Contextual Instruction>
-    abstract val trace: InstructionTrace
 
     operator fun get(term: Term) = termMap.getValue(term)
-    operator fun get(predicate: Predicate) = predicateMap.getValue(predicate)
 
-    fun isEmpty() = state.isEmpty
-    fun isNotEmpty() = state.isNotEmpty
+    fun subPath(clause: Clause): List<Clause> = path.subList(0, path.indexOf(clause) + 1)
+
+    fun isEmpty() = clauses.isEmpty()
+    fun isNotEmpty() = clauses.isNotEmpty()
 }
 
 @Serializable
 @SerialName("SymbolicStateImpl")
 data class SymbolicStateImpl(
-    override val state: PredicateState,
+    override val clauses: ClauseState,
     override val path: PathCondition,
     override val concreteValueMap: @Contextual Map<Term, @Contextual Descriptor>,
     override val termMap: @Contextual Map<Term, @Contextual WrappedValue>,
-    override val predicateMap: @Contextual Map<Predicate, @Contextual Instruction>,
-    override val trace: InstructionTrace
 ) : SymbolicState() {
-    override fun toString() = "$state"
+    override fun toString() = "${clauses.asState()}"
 }
 
-fun PathCondition(arg: List<Clause>) = PathConditionImpl(arg)
-fun PathCondition(arg: () -> List<Clause>) = PathConditionImpl(arg())
-
-@Serializable
-@SerialName("PathConditionImpl")
-data class PathConditionImpl(override val path: List<Clause>) : PathCondition() {
-    override fun subPath(startIndex: Int, endIndex: Int) = PathConditionImpl(path.subList(startIndex, endIndex))
-}
+fun symbolicState(
+    state: ClauseState = ClauseState(emptyList()),
+    path: PathCondition = PathCondition(emptyList()),
+    concreteValueMap: Map<Term, Descriptor> = emptyMap(),
+    termMap: Map<Term, WrappedValue> = emptyMap(),
+) = SymbolicStateImpl(
+    state, path, concreteValueMap, termMap
+)

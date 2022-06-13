@@ -16,7 +16,7 @@ import org.vorpal.research.kex.util.isStatic
 import org.vorpal.research.kex.util.loadClass
 import org.vorpal.research.kfg.type.ClassType
 import org.vorpal.research.kthelper.collection.dequeOf
-import org.vorpal.research.kthelper.tryOrNull
+import org.vorpal.research.kthelper.logging.log
 
 class ConstEnumAdapter(val context: ExecutionContext) : RecollectingTransformer<ConstEnumAdapter> {
     val cm get() = context.cm
@@ -33,15 +33,11 @@ class ConstEnumAdapter(val context: ExecutionContext) : RecollectingTransformer<
             }
 
     private fun getEnumName(obj: Any): String {
-        val nameField = obj.javaClass.superclass.getDeclaredField("name")
-        nameField.isAccessible = true
-        return nameField.get(obj) as String
+        return (obj as Enum<*>).name
     }
 
     private fun getEnumOrdinal(obj: Any): Int {
-        val ordinalField = obj.javaClass.superclass.getDeclaredField("ordinal")
-        ordinalField.isAccessible = true
-        return ordinalField.getInt(obj)
+        return (obj as Enum<*>).ordinal
     }
 
     private fun prepareEnumConstants(ps: PredicateState): Map<KexType, Set<Term>> {
@@ -57,7 +53,7 @@ class ConstEnumAdapter(val context: ExecutionContext) : RecollectingTransformer<
         val enumFields = mutableMapOf<KexType, Set<Term>>()
 
         for (staticClass in enumClasses) {
-            tryOrNull {
+            try {
                 val enumKlass = context.loader.loadClass(cm.type, staticClass.type)
                 val fields = mutableSetOf<Term>()
 
@@ -81,6 +77,8 @@ class ConstEnumAdapter(val context: ExecutionContext) : RecollectingTransformer<
                     }
                 }
                 enumFields[staticClass.type] = fields
+            } catch (e: Throwable) {
+                log.error("Error while inlining enum constant ${staticClass.type}", e)
             }
         }
         return enumFields

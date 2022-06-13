@@ -164,11 +164,11 @@ class GeneratorContext(
     private val Method.argTypeInfo
         get() = this.parameters.associate {
             val type = it.type.kexType
-            term { arg(type, it.index) } to instantiationManager.getConcreteType(type, cm)
+            term { arg(type, it.index) } to instantiationManager.getConcreteType(type, cm, context.random)
         }
 
     fun Method.executeAsConstructor(descriptor: ObjectDescriptor): Parameters<Descriptor>? {
-        if (isEmpty()) return null
+        if (body.isEmpty()) return null
         log.debug("Executing constructor $this for $descriptor")
 
         val mapper = descriptor.mapper
@@ -184,7 +184,7 @@ class GeneratorContext(
     }
 
     fun Method.executeAsExternalConstructor(descriptor: ObjectDescriptor): Parameters<Descriptor>? {
-        if (isEmpty()) return null
+        if (body.isEmpty()) return null
         log.debug("Executing external constructor $this for $descriptor")
 
         val externalMapper = TermRemapper(
@@ -205,7 +205,7 @@ class GeneratorContext(
         descriptor: ObjectDescriptor,
         preStateGetter: (Method, ObjectDescriptor) -> PredicateState?
     ): Parameters<Descriptor>? {
-        if (isEmpty()) return null
+        if (body.isEmpty()) return null
         log.debug("Executing method $this for $descriptor")
 
         val mapper = descriptor.mapper
@@ -241,7 +241,7 @@ class GeneratorContext(
         descriptor: ClassDescriptor,
         preStateGetter: (Method, ClassDescriptor) -> PredicateState?
     ): Parameters<Descriptor>? {
-        if (isEmpty()) return null
+        if (body.isEmpty()) return null
         log.debug("Executing method $this for $descriptor")
 
         val preState = preStateGetter(this, descriptor) ?: return null

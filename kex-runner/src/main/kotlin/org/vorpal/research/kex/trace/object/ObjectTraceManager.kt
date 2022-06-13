@@ -51,6 +51,6 @@ class ObjectTraceManager : TraceManager<ActionTrace>() {
 
     override fun isCovered(bb: BasicBlock): Boolean =
             bb.wrapper?.let {
-                methodInfos[bb.parent.wrapper]?.any { trace -> trace.isCovered(it) }
+                methodInfos[bb.method.wrapper]?.any { trace -> trace.isCovered(it) }
             } ?: false
 }

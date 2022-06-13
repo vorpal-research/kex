@@ -29,7 +29,7 @@ class TermExpressionBuilder(override val cm: ClassManager) : TermBuilder(), Meth
     val BasicBlock.condition get() = path.getOrDefault(this, const(true))
 
     override fun visit(method: Method) {
-        val queue = queueOf(method.entry)
+        val queue = queueOf(method.body.entry)
         while (queue.isNotEmpty()) {
             val current = queue.poll()
             currentCond = current.condition

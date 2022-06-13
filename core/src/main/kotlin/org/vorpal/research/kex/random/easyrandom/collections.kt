@@ -50,7 +50,8 @@ abstract class CollectionRandomizer<T>(
             klass: Class<*>,
             random: (Class<*>) -> Any?,
             elementRandomizer: Randomizer<T>,
-            reflectionFacade: ReflectionFacade
+            reflectionFacade: ReflectionFacade,
+            ktRandom: kotlin.random.Random
         ) = when {
             List::class.java.isAssignableFrom(klass) -> when {
                 klass.isAssignableFrom(LinkedList::class.java) -> ListRandomizer.linkedListRandomizer(elementRandomizer)
@@ -58,7 +59,7 @@ abstract class CollectionRandomizer<T>(
                 klass.isAssignableFrom(Stack::class.java) -> ListRandomizer.stackRandomizer(elementRandomizer)
                 else -> {
                     log.warn("Unknown list impl: $klass")
-                    ListRandomizer.randomListRandomizer(random, elementRandomizer, reflectionFacade)
+                    ListRandomizer.randomListRandomizer(random, elementRandomizer, reflectionFacade, ktRandom)
                 }
             }
             Queue::class.java.isAssignableFrom(klass) -> when {
@@ -70,7 +71,7 @@ abstract class CollectionRandomizer<T>(
                     QueueRandomizer.priorityQueueRandomizer(elementRandomizer)
                 else -> {
                     log.warn("Unknown queue impl: $klass")
-                    QueueRandomizer.randomQueueRandomizer(random, elementRandomizer, reflectionFacade)
+                    QueueRandomizer.randomQueueRandomizer(random, elementRandomizer, reflectionFacade, ktRandom)
                 }
             }
             Set::class.java.isAssignableFrom(klass) -> when {
@@ -82,11 +83,11 @@ abstract class CollectionRandomizer<T>(
                     SetRandomizer.skipListSetRandomizer(elementRandomizer)
                 else -> {
                     log.warn("Unknown set impl: $klass")
-                    SetRandomizer.randomSetRandomizer(random, elementRandomizer, reflectionFacade)
+                    SetRandomizer.randomSetRandomizer(random, elementRandomizer, reflectionFacade, ktRandom)
                 }
             }
             Collection::class.java.isAssignableFrom(klass) ->
-                CustomCollectionRandomizer.collectionRandomizer(klass, random, elementRandomizer, reflectionFacade)
+                CustomCollectionRandomizer.collectionRandomizer(klass, random, elementRandomizer, reflectionFacade, ktRandom)
             else -> unreachable { log.error("Unknown collection: $klass") }
         }
 
@@ -95,7 +96,8 @@ abstract class CollectionRandomizer<T>(
             random: (Class<*>) -> Any?,
             keyRandomizer: Randomizer<K>,
             valueRandomizer: Randomizer<V>,
-            reflectionFacade: ReflectionFacade
+            reflectionFacade: ReflectionFacade,
+            ktRandom: kotlin.random.Random
         ) = when {
             klass.isAssignableFrom(LinkedHashMap::class.java) ->
                 MapRandomizer.linkedMapRandomizer(keyRandomizer, valueRandomizer)
@@ -106,10 +108,10 @@ abstract class CollectionRandomizer<T>(
             klass.isAssignableFrom(ConcurrentSkipListMap::class.java) ->
                 MapRandomizer.skipListMapRandomizer(keyRandomizer, valueRandomizer)
             Map::class.java.isAssignableFrom(klass) ->
-                MapRandomizer.customMapRandomizer(klass, random, keyRandomizer, valueRandomizer, reflectionFacade)
+                MapRandomizer.customMapRandomizer(klass, random, keyRandomizer, valueRandomizer, reflectionFacade, ktRandom)
             else -> {
                 log.warn("Unknown map impl: $klass")
-                MapRandomizer.randomMapRandomizer(random, keyRandomizer, valueRandomizer, reflectionFacade)
+                MapRandomizer.randomMapRandomizer(random, keyRandomizer, valueRandomizer, reflectionFacade, ktRandom)
             }
         }
     }
@@ -143,9 +145,10 @@ class ListRandomizer<T>(`impl`: () -> MutableList<T>, elementRandomizer: Randomi
         fun <T> randomListRandomizer(
             random: (Class<*>) -> Any?,
             elementRandomizer: Randomizer<T>,
-            reflectionFacade: ReflectionFacade
+            reflectionFacade: ReflectionFacade,
+            ktRandom: kotlin.random.Random
         ): ListRandomizer<T> {
-            val impl = reflectionFacade.getPublicConcreteSubTypesOf(MutableList::class.java).randomOrNull()
+            val impl = reflectionFacade.getPublicConcreteSubTypesOf(MutableList::class.java).randomOrNull(ktRandom)
                 ?: throw InstantiationError("Unable to find a matching concrete subtype of type: MutableList in the classpath")
             return newListRandomizer({
                 @Suppress("UNCHECKED_CAST")
@@ -183,9 +186,10 @@ class QueueRandomizer<T>(`impl`: () -> Queue<T>, elementRandomizer: Randomizer<T
         fun <T> randomQueueRandomizer(
             random: (Class<*>) -> Any?,
             elementRandomizer: Randomizer<T>,
-            reflectionFacade: ReflectionFacade
+            reflectionFacade: ReflectionFacade,
+            ktRandom: kotlin.random.Random
         ): QueueRandomizer<T> {
-            val impl = reflectionFacade.getPublicConcreteSubTypesOf(Queue::class.java).randomOrNull()
+            val impl = reflectionFacade.getPublicConcreteSubTypesOf(Queue::class.java).randomOrNull(ktRandom)
                 ?: throw InstantiationError("Unable to find a matching concrete subtype of type: Queue in the classpath")
             return newQueueRandomizer({
                 @Suppress("UNCHECKED_CAST")
@@ -229,9 +233,10 @@ class SetRandomizer<T>(`impl`: () -> MutableSet<T>, elementRandomizer: Randomize
         fun <T> randomSetRandomizer(
             random: (Class<*>) -> Any?,
             elementRandomizer: Randomizer<T>,
-            reflectionFacade: ReflectionFacade
+            reflectionFacade: ReflectionFacade,
+            ktRandom: kotlin.random.Random
         ): SetRandomizer<T> {            
-            val impl = reflectionFacade.getPublicConcreteSubTypesOf(MutableSet::class.java).randomOrNull()
+            val impl = reflectionFacade.getPublicConcreteSubTypesOf(MutableSet::class.java).randomOrNull(ktRandom)
                 ?: throw InstantiationError("Unable to find a matching concrete subtype of type: MutableSet in the classpath")
             return newSetRandomizer({
                 @Suppress("UNCHECKED_CAST")
@@ -314,10 +319,11 @@ class MapRandomizer<K, V>(
             random: (Class<*>) -> Any?,
             keyRandomizer: Randomizer<K>,
             valueRandomizer: Randomizer<V>,
-            reflectionFacade: ReflectionFacade
+            reflectionFacade: ReflectionFacade,
+            ktRandom: kotlin.random.Random
         ): MapRandomizer<K, V> {
             
-            val impl = reflectionFacade.getPublicConcreteSubTypesOf(MutableMap::class.java).randomOrNull()
+            val impl = reflectionFacade.getPublicConcreteSubTypesOf(MutableMap::class.java).randomOrNull(ktRandom)
                 ?: throw InstantiationError("Unable to find a matching concrete subtype of type: MutableMap in the classpath")
             return newMapRandomizer({
                 @Suppress("UNCHECKED_CAST")
@@ -330,11 +336,12 @@ class MapRandomizer<K, V>(
             klass: Class<*>, random: (Class<*>) -> Any?,
             keyRandomizer: Randomizer<K>,
             valueRandomizer: Randomizer<V>,
-            reflectionFacade: ReflectionFacade
+            reflectionFacade: ReflectionFacade,
+            ktRandom: kotlin.random.Random
         ): MapRandomizer<K, V> {
             val actualKlass = when {
                 klass.isAbstract || klass.isInterface -> reflectionFacade.getPublicConcreteSubTypesOf(klass)
-                    .randomOrNull()
+                    .randomOrNull(ktRandom)
                     ?: throw InstantiationError("Unable to find a matching concrete subtype of type: $klass in the classpath")
                 else -> klass
             }
@@ -357,11 +364,12 @@ class CustomCollectionRandomizer<T>(`impl`: () -> MutableCollection<T>, delegate
             klass: Class<*>,
             random: (Class<*>) -> Any?,
             elementRandomizer: Randomizer<T>,
-            reflectionFacade: ReflectionFacade
+            reflectionFacade: ReflectionFacade,
+            ktRandom: kotlin.random.Random
         ): CollectionRandomizer<T> {
             val actualKlass = when {
                 klass.isAbstract || klass.isInterface -> reflectionFacade.getPublicConcreteSubTypesOf(klass)
-                    .randomOrNull()
+                    .randomOrNull(ktRandom)
                     ?: throw InstantiationError("Unable to find a matching concrete subtype of type: $klass in the classpath")
                 else -> klass
             }

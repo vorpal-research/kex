@@ -8,15 +8,16 @@ import kotlinx.serialization.serializer
 import org.vorpal.research.kfg.ClassManager
 import org.vorpal.research.kfg.ir.value.NameMapperContext
 
-abstract class AbstractSerializer(val context: SerializersModule) {
+abstract class AbstractSerializer(val context: SerializersModule, val prettyPrint: Boolean = true) {
     val json = Json {
         encodeDefaults = false
         ignoreUnknownKeys = false
-        prettyPrint = true
+        prettyPrint = this@AbstractSerializer.prettyPrint
         useArrayPolymorphism = false
         classDiscriminator = "className"
         serializersModule = context
         allowStructuredMapKeys = true
+        allowSpecialFloatingPointValues = true
     }
 
     @ExperimentalSerializationApi
@@ -34,6 +35,7 @@ abstract class AbstractSerializer(val context: SerializersModule) {
 @InternalSerializationApi
 class KexSerializer(
     val cm: ClassManager,
-    val ctx: NameMapperContext = NameMapperContext()
-) : AbstractSerializer(getKexSerialModule(cm, ctx))
+    val ctx: NameMapperContext = NameMapperContext(),
+    prettyPrint: Boolean = true
+) : AbstractSerializer(getKexSerialModule(cm, ctx), prettyPrint)
 

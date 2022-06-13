@@ -7,6 +7,23 @@ class KtBuilder(val pkg: String = "") {
         private fun offset(level: Int) = "    ".repeat(level)
 
         private val Int.asOffset get() = offset(this)
+
+        fun isEscapeChar(char: Char) = when (char) {
+            '\t', '\n', '\b', '\r', '\u000c', '\'', '\"', '\\', '$' -> true
+            else -> false
+        }
+
+        fun escapeCharIfNeeded(char: Char) = when (char) {
+            '\t' -> "\\t"
+            '\b' -> "\\b"
+            '\n' -> "\\n"
+            '\r' -> "\\r"
+            '\u000c' -> "\\f"
+            '\'' -> "\\'"
+            '\"' -> "\\\""
+            '$' -> "\\$"
+            else -> char
+        }
     }
 
     private val imports = mutableSetOf<String>()

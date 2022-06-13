@@ -1,6 +1,7 @@
 package org.vorpal.research.kex.asm.analysis.concolic.cgs
 
 import kotlinx.coroutines.yield
+import org.vorpal.research.kex.ExecutionContext
 import org.vorpal.research.kex.asm.analysis.concolic.PathSelector
 import org.vorpal.research.kex.asm.manager.NoConcreteInstanceException
 import org.vorpal.research.kex.asm.manager.instantiationManager
@@ -11,7 +12,6 @@ import org.vorpal.research.kex.state.term.InstanceOfTerm
 import org.vorpal.research.kex.state.term.NullTerm
 import org.vorpal.research.kex.state.term.numericValue
 import org.vorpal.research.kex.state.transformer.TermCollector
-import org.vorpal.research.kex.trace.TraceManager
 import org.vorpal.research.kex.trace.symbolic.*
 import org.vorpal.research.kex.util.dropLast
 import org.vorpal.research.kex.util.nextOrNull
@@ -22,13 +22,12 @@ import org.vorpal.research.kfg.ir.value.instruction.CallInst
 import org.vorpal.research.kfg.ir.value.instruction.SwitchInst
 import org.vorpal.research.kfg.ir.value.instruction.TableSwitchInst
 import org.vorpal.research.kfg.type.ClassType
-import org.vorpal.research.kfg.type.TypeFactory
 import org.vorpal.research.kthelper.assert.unreachable
 import org.vorpal.research.kthelper.logging.log
+import org.vorpal.research.kthelper.`try`
 
 class ContextGuidedSelector(
-    override val tf: TypeFactory,
-    override val traceManager: TraceManager<InstructionTrace>
+    override val ctx: ExecutionContext,
 ) : PathSelector {
     val executionTree = ExecutionTree()
     var currentDepth = 0
@@ -46,7 +45,7 @@ class ContextGuidedSelector(
         val revertedClause: Clause
     )
 
-    override suspend fun hasNext(): Boolean {
+    override suspend fun hasNext(): Boolean = `try` {
         do {
             yield()
             val next = nextEdge() ?: continue
@@ -62,25 +61,25 @@ class ContextGuidedSelector(
                 }
             }
         } while (currentDepth <= executionTree.depth && k <= executionTree.depth)
-        return false
-    }
+        false
+    }.getOrElse { false }
 
     override suspend fun next(): SymbolicState {
         val currentState = state!!
         visitedContexts += currentState.context
         state = null
 
-        val state = currentState.context.symbolicState.state.takeWhile {
-            it == currentState.activeClause.predicate
-        }.filter { it.type !is PredicateType.Path }
+        val state = ClauseState(
+            currentState.context.symbolicState.clauses
+                .takeWhile { it != currentState.activeClause }
+                .filter { it.predicate.type !is PredicateType.Path }
+        )
 
         return SymbolicStateImpl(
             state,
             PathCondition(currentState.path + currentState.revertedClause),
             currentState.context.symbolicState.concreteValueMap,
-            currentState.context.symbolicState.termMap,
-            currentState.context.symbolicState.predicateMap,
-            currentState.context.symbolicState.trace
+            currentState.context.symbolicState.termMap
         )
     }
 
@@ -101,10 +100,10 @@ class ContextGuidedSelector(
     }
 
     private fun recomputeBranches() {
-        branchIterator = executionTree.getBranches(currentDepth).shuffled().iterator()
+        branchIterator = executionTree.getBranches(currentDepth).shuffled(ctx.random).iterator()
     }
 
-    override suspend fun addExecutionTrace(method: Method, result: ExecutionResult) {
+    override suspend fun addExecutionTrace(method: Method, result: ExecutionCompletedResult) {
         executionTree.addTrace(result.trace)
     }
 
@@ -123,7 +122,7 @@ class ContextGuidedSelector(
                 val switchInst = instruction as SwitchInst
                 val cond = pred.cond
                 val candidates = switchInst.branches.keys.map { (it as IntConstant).value }.toSet()
-                candidates.randomOrNull()?.let {
+                candidates.randomOrNull(ctx.random)?.let {
                     Clause(instruction, path(instruction.location) {
                         cond equality it
                     })
@@ -162,7 +161,7 @@ class ContextGuidedSelector(
                     currentRange
                 }
 
-                candidates.randomOrNull()?.let {
+                candidates.randomOrNull(ctx.random)?.let {
                     Clause(instruction, path(instruction.location) {
                         cond equality it
                     })
@@ -175,7 +174,7 @@ class ContextGuidedSelector(
                 val switchInst = instruction as TableSwitchInst
                 val cond = pred.cond
                 val candidates = switchInst.range.toSet()
-                candidates.randomOrNull()?.let {
+                candidates.randomOrNull(ctx.random)?.let {
                     Clause(instruction, path(instruction.location) {
                         cond equality it
                     })
@@ -213,7 +212,7 @@ class ContextGuidedSelector(
                     currentRange
                 }
 
-                candidates.randomOrNull()?.let {
+                candidates.randomOrNull(ctx.random)?.let {
                     Clause(instruction, path(instruction.location) {
                         cond equality it
                     })
@@ -224,18 +223,18 @@ class ContextGuidedSelector(
         is CallInst -> when (val pred = predicate) {
             is EqualityPredicate -> when (val lhv = pred.lhv) {
                 is InstanceOfTerm -> {
-                    val termType = lhv.operand.type.getKfgType(tf)
+                    val termType = lhv.operand.type.getKfgType(ctx.types)
                     val excludeClasses = executionTree.getPathVertex(this).predecessors
                         .asSequence()
                         .flatMap { it.successors }
                         .map { it.clause.predicate }
                         .flatMap { TermCollector.getFullTermSet(it).filterIsInstance<InstanceOfTerm>() }
-                        .map { it.checkedType.getKfgType(tf) }
+                        .map { it.checkedType.getKfgType(ctx.types) }
                         .filterIsInstance<ClassType>()
                         .map { it.klass }
                         .toSet()
                     try {
-                        val newType = instantiationManager.get(tf, termType, excludeClasses)
+                        val newType = instantiationManager.get(ctx.types, termType, excludeClasses, ctx.random)
                         Clause(instruction, path(instruction.location) {
                             (lhv.operand `is` newType.kexType) equality true
                         })

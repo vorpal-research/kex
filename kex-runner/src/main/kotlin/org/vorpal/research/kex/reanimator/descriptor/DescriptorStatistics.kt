@@ -1,10 +1,7 @@
 package org.vorpal.research.kex.reanimator.descriptor
 
 import org.vorpal.research.kex.descriptor.Descriptor
-import org.vorpal.research.kex.reanimator.actionsequence.ActionList
-import org.vorpal.research.kex.reanimator.actionsequence.ActionSequence
-import org.vorpal.research.kex.reanimator.actionsequence.PrimaryValue
-import org.vorpal.research.kex.reanimator.actionsequence.UnknownSequence
+import org.vorpal.research.kex.reanimator.actionsequence.*
 import org.vorpal.research.kthelper.logging.error
 import org.vorpal.research.kthelper.logging.log
 import java.util.*
@@ -35,6 +32,9 @@ object DescriptorStatistics {
                 failTime += time
             }
             is PrimaryValue<*> -> {
+                ++successes
+            }
+            is StringValue -> {
                 ++successes
             }
             is ActionList -> when {

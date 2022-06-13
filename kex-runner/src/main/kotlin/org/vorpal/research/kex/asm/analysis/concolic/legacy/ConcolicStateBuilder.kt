@@ -232,7 +232,7 @@ class ConcolicStateBuilder(val cm: ClassManager, val psa: PredicateStateAnalysis
 
     private fun resolveMethodCall(method: Method): PredicateState? {
         if (lastCall == null) return null
-        if (method.isEmpty()) return null
+        if (method.body.isEmpty()) return null
         if (method.klass !is ConcreteClass) return null
         val (callMethod, callMappings) = lastCall!!
         return when {

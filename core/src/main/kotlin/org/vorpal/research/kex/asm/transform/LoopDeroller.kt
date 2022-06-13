@@ -139,7 +139,7 @@ class LoopDeroller(override val cm: ClassManager) : LoopOptimizer(cm) {
         log.debug("Method $method, unrolling loop $loop to $derollCount iterations")
 
         // save current phi instructions of method
-        val methodPhis = method.filter { it !in body }.flatten().mapNotNull { it as? PhiInst }
+        val methodPhis = method.bodyBlocks.filter { it !in body }.flatten().mapNotNull { it as? PhiInst }
         val methodPhiMappings = methodPhis.associateWith { phi ->
             phi.incomings.filterNot { it.key in body }.toMutableMap()
         }.toMutableMap()

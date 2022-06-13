@@ -5,27 +5,17 @@ import kotlinx.serialization.InternalSerializationApi
 import org.vorpal.research.kex.ExecutionContext
 import org.vorpal.research.kex.descriptor.Descriptor
 import org.vorpal.research.kex.serialization.KexSerializer
-import org.vorpal.research.kex.state.emptyState
-import org.vorpal.research.kex.state.predicate.Predicate
 import org.vorpal.research.kex.state.term.Term
 import org.vorpal.research.kfg.ir.value.NameMapperContext
-import org.vorpal.research.kfg.ir.value.instruction.Instruction
 import java.nio.file.Path
 
 private class EmptyTraceCollector : InstructionTraceCollector {
-    class EmptyPathCondition: PathCondition() {
-        override val path = emptyList<Clause>()
-
-        override fun subPath(startIndex: Int, endIndex: Int) = this
-    }
 
     class EmptyState : SymbolicState() {
-        override val state = emptyState()
-        override val path = EmptyPathCondition()
+        override val clauses = ClauseState()
+        override val path = PathCondition()
         override val concreteValueMap = emptyMap<Term, Descriptor>()
         override val termMap = emptyMap<Term, WrappedValue>()
-        override val predicateMap = emptyMap<Predicate, Instruction>()
-        override val trace = InstructionTrace()
     }
 
     override val symbolicState = EmptyState()

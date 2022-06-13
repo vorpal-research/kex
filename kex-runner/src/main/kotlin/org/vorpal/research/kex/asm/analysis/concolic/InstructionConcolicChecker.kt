@@ -1,9 +1,6 @@
 package org.vorpal.research.kex.asm.analysis.concolic
 
-import kotlinx.coroutines.TimeoutCancellationException
-import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withTimeout
-import kotlinx.coroutines.yield
+import kotlinx.coroutines.*
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.InternalSerializationApi
 import org.vorpal.research.kex.ExecutionContext
@@ -30,16 +27,14 @@ import org.vorpal.research.kex.smt.Result
 import org.vorpal.research.kex.state.PredicateState
 import org.vorpal.research.kex.state.term.Term
 import org.vorpal.research.kex.state.transformer.*
-import org.vorpal.research.kex.trace.TraceManager
 import org.vorpal.research.kex.trace.runner.SymbolicExternalTracingRunner
 import org.vorpal.research.kex.trace.runner.generateParameters
+import org.vorpal.research.kex.trace.symbolic.ExecutionCompletedResult
 import org.vorpal.research.kex.trace.symbolic.ExecutionResult
-import org.vorpal.research.kex.trace.symbolic.InstructionTrace
 import org.vorpal.research.kex.trace.symbolic.SymbolicState
 import org.vorpal.research.kex.util.getJunit
 import org.vorpal.research.kfg.ClassManager
 import org.vorpal.research.kfg.ir.Method
-import org.vorpal.research.kfg.visitor.MethodVisitor
 import org.vorpal.research.kthelper.assert.unreachable
 import org.vorpal.research.kthelper.logging.debug
 import org.vorpal.research.kthelper.logging.log
@@ -68,9 +63,8 @@ private class CompilerHelper(val ctx: ExecutionContext) {
 @InternalSerializationApi
 class InstructionConcolicChecker(
     val ctx: ExecutionContext,
-    val traceManager: TraceManager<InstructionTrace>
-) : MethodVisitor {
-    override val cm: ClassManager
+) {
+    val cm: ClassManager
         get() = ctx.cm
 
     private val compilerHelper = CompilerHelper(ctx)
@@ -79,30 +73,43 @@ class InstructionConcolicChecker(
     private val searchStrategy = kexConfig.getStringValue("concolic", "searchStrategy", "bfs")
     private var testIndex = 0
 
-    override fun cleanup() {}
-
-    override fun visit(method: Method) {
-        if (method.isStaticInitializer || !method.hasBody) return
-        if (!method.isImpactable) return
-
-        log.debug { "Processing method $method" }
-        log.debug { method.print() }
-
-        runBlocking {
-            try {
-                withTimeout(timeLimit) {
-                    processMethod(method)
+    companion object {
+        fun run(context: ExecutionContext, targets: Set<Method>) {
+            runBlocking(Dispatchers.Default) {
+                val jobs = targets.map {
+                    launch { InstructionConcolicChecker(context).visit(it) }
                 }
-                log.debug { "Method $method processing is finished normally" }
-            } catch (e: TimeoutCancellationException) {
-                log.debug { "Method $method processing is finished with timeout exception" }
+                yield()
+                for (job in jobs) {
+                    job.join()
+                }
             }
         }
     }
 
-    private fun getRandomTrace(method: Method): ExecutionResult? = tryOrNull {
-        val params = ctx.random.generateParameters(ctx.loader, method) ?: return null
-        collectTraceFromAny(method, params)
+    suspend fun visit(method: Method) {
+        if (method.isStaticInitializer || !method.hasBody) return
+        if (!method.isImpactable) return
+
+        try {
+            log.debug { "Processing method $method" }
+            log.debug { method.print() }
+
+            withTimeout(timeLimit) {
+                processMethod(method)
+            }
+            log.debug { "Method $method processing is finished normally" }
+        } catch (e: TimeoutCancellationException) {
+            log.debug { "Method $method processing is finished with timeout exception" }
+        }
+    }
+
+    private fun getRandomTrace(method: Method): ExecutionResult? = try {
+        val params = ctx.random.generateParameters(ctx.loader, method)
+        params?.let { collectTraceFromAny(method, it) }
+    } catch (e: Throwable) {
+        log.warn("Error while collecting random trace:", e)
+        null
     }
 
     private fun collectTraceFromAny(method: Method, parameters: Parameters<Any?>): ExecutionResult? =
@@ -161,29 +168,33 @@ class InstructionConcolicChecker(
             .filterValues { it.isJavaRt }
             .mapValues { it.value.rtMapped }
             .toTypeMap()
-        val preparedState = prepareState(method, state.state + query, concreteTypeInfo)
+        val preparedState = prepareState(method, state.clauses.asState() + query, concreteTypeInfo)
         val result = checker.check(preparedState)
         if (result !is Result.SatResult) return null
 
         return tryOrNull {
             val params = generateFinalDescriptors(method, ctx, result.model, checker.state)
                 .filterStaticFinals(cm)
-                .concreteParameters(ctx.cm)
+                .concreteParameters(ctx.cm, ctx.random)
+            log.debug { "Generated params:\n$params" }
             collectTrace(method, params)
         }
     }
 
-    private fun buildPathSelector(traceManager: TraceManager<InstructionTrace>) = when (searchStrategy) {
-        "bfs" -> BfsPathSelectorImpl(ctx.types, traceManager)
-        "cgs" -> ContextGuidedSelector(ctx.types, traceManager)
+    private fun buildPathSelector() = when (searchStrategy) {
+        "bfs" -> BfsPathSelectorImpl(ctx)
+        "cgs" -> ContextGuidedSelector(ctx)
         else -> unreachable { log.error("Unknown type of search strategy $searchStrategy") }
     }
 
     private suspend fun processMethod(method: Method) {
         testIndex = 0
-        val pathIterator = buildPathSelector(traceManager)
+        val pathIterator = buildPathSelector()
         getRandomTrace(method)?.let {
-            pathIterator.addExecutionTrace(method, it)
+            when (it) {
+                is ExecutionCompletedResult -> pathIterator.addExecutionTrace(method, it)
+                else -> log.warn("Failed to generate random trace: $it")
+            }
         }
         yield()
 
@@ -193,11 +204,13 @@ class InstructionConcolicChecker(
             yield()
 
             val newState = check(method, state) ?: continue
-            if (newState.trace.isEmpty()) {
-                log.warn { "Collected empty state from $state" }
-                continue
+            when (newState) {
+                is ExecutionCompletedResult -> when {
+                    newState.trace.isEmpty() -> log.warn { "Collected empty state from $state" }
+                    else -> pathIterator.addExecutionTrace(method, newState)
+                }
+                else -> log.warn("Failure during execution: $newState")
             }
-            pathIterator.addExecutionTrace(method, newState)
             yield()
         }
     }

@@ -20,7 +20,7 @@ data class BlockWrapper(
 ) {
     val insts = mutableListOf<String>()
 
-    fun unwrap(method: Method): BasicBlock = method.getBlockByName(name)!!
+    fun unwrap(method: Method): BasicBlock = method.body.getBlockByName(name)!!
 }
 
 data class MethodWrapper(
@@ -56,7 +56,7 @@ private object MethodWrapperManager {
 
     fun initMethod(method: Method) {
         val map = blockMappings.getOrPut(method, ::mutableMapOf)
-        for (block in method) {
+        for (block in method.body) {
             map[block] = BlockWrapper(block.name.toString()).also { bw ->
                 bw.insts.addAll(block.instructions.map { it.name.toString() })
             }
@@ -64,12 +64,12 @@ private object MethodWrapperManager {
     }
 
     fun addBlock(block: BasicBlock, wrapper: BlockWrapper?) {
-        val map = blockMappings.getOrPut(block.parent, ::mutableMapOf)
+        val map = blockMappings.getOrPut(block.method, ::mutableMapOf)
         map[block] = wrapper
     }
 
     fun getBlock(block: BasicBlock): BlockWrapper? {
-        return blockMappings[block.parent]?.get(block)
+        return blockMappings[block.method]?.get(block)
     }
 }
 

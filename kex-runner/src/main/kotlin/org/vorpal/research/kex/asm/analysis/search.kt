@@ -8,7 +8,7 @@ private fun buildBlockMapping(method: Method): Map<BasicBlock, BasicBlock> {
     val result = mutableMapOf<BasicBlock, BasicBlock>()
     val visited = mutableSetOf<BasicBlock>()
 
-    for (block in method) {
+    for (block in method.body) {
         if (block in visited) continue
 
         val list = mutableListOf<BasicBlock>()
@@ -49,7 +49,7 @@ class TopologicalStrategy(override val method: Method) : SearchStrategy {
     private val order: List<BasicBlock>
 
     init {
-        val tpOrder = GraphTraversal(method).topologicalSort()
+        val tpOrder = GraphTraversal(method.body).topologicalSort()
         order = filterBlockOrder(method, tpOrder)
     }
 
@@ -60,7 +60,7 @@ class BfsStrategy(override val method: Method) : SearchStrategy {
     private val bfsSearch: List<BasicBlock>
 
     init {
-        val bfsOrder = GraphTraversal(method).bfs()
+        val bfsOrder = GraphTraversal(method.body).bfs()
         bfsSearch = filterBlockOrder(method, bfsOrder)
     }
 
@@ -71,7 +71,7 @@ class DfsStrategy(override val method: Method) : SearchStrategy {
     private val dfsSearch: List<BasicBlock>
 
     init {
-        val dfsOrder = GraphTraversal(method).dfs()
+        val dfsOrder = GraphTraversal(method.body).dfs()
         dfsSearch = filterBlockOrder(method, dfsOrder)
     }
 
@@ -79,7 +79,7 @@ class DfsStrategy(override val method: Method) : SearchStrategy {
 }
 
 class UnfilteredDfsStrategy(override val method: Method) : SearchStrategy {
-    private val dfsOrder: List<BasicBlock> = GraphTraversal(method).dfs()
+    private val dfsOrder: List<BasicBlock> = GraphTraversal(method.body).dfs()
 
     override fun iterator() = dfsOrder.iterator()
 }

@@ -25,6 +25,9 @@ import java.lang.reflect.*
 private val visibilityLevel by lazy {
     kexConfig.getEnumValue("testGen", "visibility", true, Visibility.PUBLIC)
 }
+private val testTimeout by lazy {
+    kexConfig.getLongValue("testGen", "testTimeout", 10000L)
+}
 
 // TODO: this is work of satan, refactor this damn thing
 open class ActionSequence2JavaPrinter(
@@ -45,9 +48,18 @@ open class ActionSequence2JavaPrinter(
             import("java.lang.Throwable")
             import("java.lang.IllegalStateException")
             import("org.junit.Test")
+            import("org.junit.Rule")
+            import("org.junit.rules.Timeout")
+            import("java.util.concurrent.TimeUnit")
 
             with(klass) {
                 constructor() {}
+
+                field("globalTimeout", type("Timeout")) {
+                    visibility = Visibility.PUBLIC
+                    initializer = "new Timeout($testTimeout, TimeUnit.MILLISECONDS)"
+                    annotations += "Rule"
+                }
 
                 method("unknown", listOf(type("T"))) {
                     returnType = type("T")
@@ -310,6 +322,9 @@ open class ActionSequence2JavaPrinter(
             is PrimaryValue<*> -> listOf<String>().also {
                 asConstant
             }
+            is StringValue -> listOf<String>().also {
+                asConstant
+            }
         }
         with(current) {
             for (statement in statements)
@@ -358,6 +373,7 @@ open class ActionSequence2JavaPrinter(
     protected val ActionSequence.stackName: String
         get() = when (this) {
             is PrimaryValue<*> -> asConstant
+            is StringValue -> asConstant
             else -> name
         }
 
@@ -439,6 +455,14 @@ open class ActionSequence2JavaPrinter(
                 actualTypes[this] = ASClass(ctx.types.doubleType)
             }
             else -> unreachable { log.error("Unknown primary value $this") }
+        }
+
+    protected val StringValue.asConstant: String
+        get() {
+            val escapedValue = value.map { JavaBuilder.escapeCharIfNeeded(it) }.joinToString("")
+            return "\"$escapedValue\"".also {
+                actualTypes[this] = ASClass(ctx.types.nullType)
+            }
         }
 
     protected fun ActionSequence.cast(reqType: ASType?): String {

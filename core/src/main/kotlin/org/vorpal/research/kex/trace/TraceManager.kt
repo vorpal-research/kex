@@ -11,11 +11,11 @@ abstract class TraceManager<T : AbstractTrace> {
     operator fun set(method: Method, trace: T) = addTrace(method, trace)
 
     abstract fun isCovered(bb: BasicBlock): Boolean
-    fun isBodyCovered(method: Method) = method.bodyBlocks.map { isCovered(it) }.run {
+    fun isBodyCovered(method: Method) = method.body.bodyBlocks.map { isCovered(it) }.run {
         when {
             this.isEmpty() -> false
             else -> reduce { acc, b -> acc && b }
         }
     }
-    fun isFullCovered(method: Method) = method.basicBlocks.all { isCovered(it) }
+    fun isFullCovered(method: Method) = method.body.basicBlocks.all { isCovered(it) }
 }

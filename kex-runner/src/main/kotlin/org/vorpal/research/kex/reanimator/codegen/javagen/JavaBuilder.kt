@@ -8,6 +8,22 @@ class JavaBuilder(val pkg: String = "") {
         private fun offset(level: Int) = "    ".repeat(level)
 
         private val Int.asOffset get() = offset(this)
+
+        fun isEscapeChar(char: Char) = when (char) {
+            '\t', '\n', '\b', '\r', '\u000c', '\'', '\"', '\\' -> true
+            else -> false
+        }
+
+        fun escapeCharIfNeeded(char: Char) = when (char) {
+            '\t' -> "\\t"
+            '\b' -> "\\b"
+            '\n' -> "\\n"
+            '\r' -> "\\r"
+            '\u000c' -> "\\f"
+            '\'' -> "\\'"
+            '\"' -> "\\\""
+            else -> char
+        }
     }
 
     private val imports = mutableSetOf<String>()
@@ -309,9 +325,11 @@ class JavaBuilder(val pkg: String = "") {
             var visibility: Visibility = Visibility.PACKAGE,
             var initializer: String? = null,
         ) {
+            val annotations = mutableListOf<String>()
             val modifiers = mutableListOf<String>()
 
             override fun toString() = buildString {
+                if (annotations.isNotEmpty()) append(annotations.joinToString(" ", postfix = " ") { "@$it" })
                 append(visibility)
                 if (modifiers.isNotEmpty()) append(modifiers.joinToString(" ", prefix = " "))
                 append(" $type $name${initializer?.let { " = $it" } ?: ""};")

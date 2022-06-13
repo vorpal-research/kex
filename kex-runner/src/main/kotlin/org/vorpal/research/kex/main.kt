@@ -8,8 +8,10 @@ import org.vorpal.research.kex.config.RuntimeConfig
 import org.vorpal.research.kex.config.kexConfig
 import org.vorpal.research.kex.launcher.*
 import org.vorpal.research.kex.util.getPathSeparator
+import org.vorpal.research.kthelper.logging.log
 import java.nio.file.Files
 import java.nio.file.Paths
+import kotlin.system.exitProcess
 
 @ExperimentalSerializationApi
 @InternalSerializationApi
@@ -35,11 +37,16 @@ fun main(args: Array<String>) {
     val targetName = cmd.getCmdValue("target")
     require(targetName != null, cmd::printHelp)
 
-    val launcher: KexLauncher = when (cmd.getEnumValue("mode", LaunchMode.Symbolic, ignoreCase = true)) {
-        LaunchMode.Symbolic -> SymbolicLauncher(classPaths, targetName)
-        LaunchMode.Concolic -> ConcolicLauncher(classPaths, targetName)
-        LaunchMode.LibChecker -> LibraryCheckLauncher(classPaths, targetName)
-        LaunchMode.DefectChecker -> DefectCheckerLauncher(classPaths, targetName)
+    try {
+        val launcher: KexLauncher = when (cmd.getEnumValue("mode", LaunchMode.Concolic, ignoreCase = true)) {
+            LaunchMode.Symbolic -> SymbolicLauncher(classPaths, targetName)
+            LaunchMode.Concolic -> ConcolicLauncher(classPaths, targetName)
+            LaunchMode.LibChecker -> LibraryCheckLauncher(classPaths, targetName)
+            LaunchMode.DefectChecker -> DefectCheckerLauncher(classPaths, targetName)
+        }
+        launcher.launch()
+    } catch (e: LauncherException) {
+        log.error(e.message)
+        exitProcess(1)
     }
-    launcher.launch()
 }

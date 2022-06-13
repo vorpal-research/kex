@@ -11,6 +11,7 @@ import org.vorpal.research.kex.state.term.Term
 import org.vorpal.research.kfg.ir.Field
 import org.vorpal.research.kthelper.assert.unreachable
 import org.vorpal.research.kthelper.logging.log
+import org.vorpal.research.kthelper.tryOrNull
 
 val Term.isThis: Boolean get() = this.toString() == "this"
 
@@ -20,7 +21,8 @@ class FieldAccessCollector(val context: ExecutionContext) : Transformer<FieldAcc
 
     override fun transformFieldInitializer(predicate: FieldInitializerPredicate): Predicate {
         val fieldTerm = predicate.field as? FieldTerm ?: unreachable { log.error("Unexpected term in field store") }
-        val field = fieldTerm.unmappedKfgField(context.cm)
+        val field = tryOrNull { fieldTerm.unmappedKfgField(context.cm) }
+            ?: return super.transformFieldInitializer(predicate)
         if (fieldTerm.isStatic || fieldTerm.owner.isThis) {
             fieldAccesses += field
             fieldTerms += fieldTerm
@@ -30,7 +32,8 @@ class FieldAccessCollector(val context: ExecutionContext) : Transformer<FieldAcc
 
     override fun transformFieldStore(predicate: FieldStorePredicate): Predicate {
         val fieldTerm = predicate.field as? FieldTerm ?: unreachable { log.error("Unexpected term in field store") }
-        val field = fieldTerm.unmappedKfgField(context.cm)
+        val field = tryOrNull { fieldTerm.unmappedKfgField(context.cm) }
+            ?: return super.transformFieldStore(predicate)
         if (fieldTerm.isStatic || fieldTerm.owner.isThis) {
             fieldAccesses += field
             fieldTerms += fieldTerm

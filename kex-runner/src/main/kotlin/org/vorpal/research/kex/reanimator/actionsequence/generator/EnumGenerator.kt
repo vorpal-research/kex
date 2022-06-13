@@ -12,11 +12,14 @@ import org.vorpal.research.kex.state.transformer.TypeInfoMap
 import org.vorpal.research.kex.state.transformer.generateFinalDescriptors
 import org.vorpal.research.kex.util.asArray
 import org.vorpal.research.kex.util.field
+import org.vorpal.research.kex.util.loadClass
+import org.vorpal.research.kfg.ir.Class
 import org.vorpal.research.kfg.type.ClassType
 import org.vorpal.research.kfg.type.SystemTypeNames
 import org.vorpal.research.kthelper.logging.log
+import org.vorpal.research.kthelper.tryOrNull
 
-private fun computeEnumConstants(ctx: GeneratorContext, enumType: KexType): Map<FieldTerm, Descriptor> =
+private fun symbolicComputeEnumConstants(ctx: GeneratorContext, enumType: KexType): Map<FieldTerm, Descriptor> =
     with(ctx) {
         val kfgType = enumType.getKfgType(context.types) as ClassType
         val staticInit = kfgType.klass.getMethod("<clinit>", "()V")
@@ -50,6 +53,22 @@ private fun computeEnumConstants(ctx: GeneratorContext, enumType: KexType): Map<
         return staticFields.map { (field, value) ->
             term { staticRef(enumType as KexClass).field(field.second, field.first) } as FieldTerm to value
         }.toMap()
+    }
+
+private fun extractEnumConstantsFromClass(ctx: GeneratorContext, enumType: KexType): Map<FieldTerm, Descriptor> =
+    with(ctx) {
+        val kfgType = enumType.getKfgType(types) as ClassType
+        val actualEnumClass = tryOrNull { loader.loadClass(kfgType) }
+            ?: return emptyMap()
+        val actualEnumFields = actualEnumClass.declaredFields.filter { it.type == actualEnumClass }.map {
+            it.isAccessible = true
+            it to it.get(null)
+        }
+        actualEnumFields.associate { (field, value) ->
+            val fieldTerm = term { staticRef(kfgType.klass).field(enumType, field.name) } as FieldTerm
+            val fieldDescriptor = convertToDescriptor(value)
+            fieldTerm to fieldDescriptor
+        }
     }
 
 private fun Descriptor.matches(
@@ -96,6 +115,17 @@ private fun Descriptor.matches(
     else -> false
 }
 
+private val Class.normalizedEnum: Class
+    get() = superClass?.let { superKlass ->
+        outerClass?.let { outerKlass ->
+            when {
+                !superKlass.isEnum -> this
+                outerKlass != superKlass -> this
+                else -> superKlass
+            }
+        } ?: this
+    } ?: this
+
 class EnumGenerator(private val fallback: Generator) : Generator {
     companion object {
         private val enumConstants = mutableMapOf<KexType, Map<FieldTerm, Descriptor>>()
@@ -103,7 +133,7 @@ class EnumGenerator(private val fallback: Generator) : Generator {
 
         private fun getEnumConstants(ctx: GeneratorContext, enumType: KexType): Map<FieldTerm, Descriptor> =
             enumConstants.getOrPut(enumType) {
-                computeEnumConstants(ctx, enumType)
+                extractEnumConstantsFromClass(ctx, enumType)
             }
     }
 
@@ -126,17 +156,19 @@ class EnumGenerator(private val fallback: Generator) : Generator {
         saveToCache(descriptor, list)
 
         val kfgType = descriptor.type.getKfgType(context.types) as ClassType
-        val enumConstants = getEnumConstants(this, descriptor.type).toList()
+        val normalizedEnumCLass = kfgType.klass.normalizedEnum
+        val normalizedKexType = normalizedEnumCLass.kexType
+
+        val enumConstants = getEnumConstants(this, normalizedKexType).toList()
         list += when (descriptor) {
             is ClassDescriptor -> {
-                val klass = kfgType.klass
-                val valuesMethod = klass.getMethod("values", klass.type.asArray(context.types))
+                val valuesMethod = normalizedEnumCLass.getMethod("values", normalizedEnumCLass.type.asArray(context.types))
                 StaticMethodCall(valuesMethod, emptyList())
             }
             else -> {
                 val result = enumConstants.firstOrNull { it.second.matches(descriptor, mutableMapOf()) }
-                    ?: enumConstants.filter { it.second.type == descriptor.type }.randomOrNull()
-                    ?: return UnknownSequence(name, kfgType, descriptor).also {
+                    ?: enumConstants.filter { it.second.type == normalizedKexType }.randomOrNull(context.random)
+                    ?: return UnknownSequence(name, normalizedEnumCLass.type, descriptor).also {
                         saveToCache(descriptor, it)
                     }
                 EnumValueCreation(cm[result.first.klass], result.first.fieldName)
@@ -154,7 +186,7 @@ class ReflectionEnumGenerator(private val fallback: Generator) : Generator {
 
         private fun getEnumConstants(ctx: GeneratorContext, enumType: KexType): Map<FieldTerm, Descriptor> =
             enumConstants.getOrPut(enumType) {
-                computeEnumConstants(ctx, enumType)
+                extractEnumConstantsFromClass(ctx, enumType)
             }
     }
 
@@ -179,13 +211,16 @@ class ReflectionEnumGenerator(private val fallback: Generator) : Generator {
         saveToCache(descriptor, list)
 
         val kfgType = descriptor.type.getKfgType(context.types) as ClassType
-        val enumConstants = getEnumConstants(this, descriptor.type).toList()
+        val normalizedEnumCLass = kfgType.klass.normalizedEnum
+        val normalizedKexType = normalizedEnumCLass.kexType
+
+        val enumConstants = getEnumConstants(this, normalizedKexType).toList()
         val getMethod = kfgFieldClass.getMethod("get", types.objectType, types.objectType)
 
         val valuesFieldDescriptor = descriptor {
             val desc = `object`(kfgFieldClass.kexType)
             val clazz = `object`(KexJavaClass())
-            clazz["name" to KexString()] = string(kfgType.klass.canonicalDesc)
+            clazz["name" to KexString()] = string(normalizedEnumCLass.canonicalDesc)
             desc["clazz" to KexJavaClass()] = clazz
             desc["override" to KexBool()] = const(true)
             desc
@@ -198,8 +233,8 @@ class ReflectionEnumGenerator(private val fallback: Generator) : Generator {
             }
             else -> {
                 val enumPair = enumConstants.firstOrNull { it.second.matches(descriptor, mutableMapOf()) }
-                    ?: enumConstants.filter { it.second.type == descriptor.type }.randomOrNull()
-                    ?: return UnknownSequence(name, kfgType, descriptor).also {
+                    ?: enumConstants.filter { it.second.type == descriptor.type }.randomOrNull(context.random)
+                    ?: return UnknownSequence(name, normalizedEnumCLass.type, descriptor).also {
                         saveToCache(descriptor, it)
                     }
                 valuesFieldDescriptor["name" to KexString()] = descriptor { string(enumPair.first.fieldName) }

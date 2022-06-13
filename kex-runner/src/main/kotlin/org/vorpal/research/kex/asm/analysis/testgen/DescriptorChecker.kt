@@ -114,7 +114,7 @@ class DescriptorChecker(
 
     private fun Set<TypeInfo>.concretize(): Set<TypeInfo> = this.map { tryOrNull { it.concretize() } ?: it }.toSet()
     private fun TypeInfo.concretize(): TypeInfo = when (this) {
-        is CastTypeInfo -> CastTypeInfo(instantiationManager.getConcreteType(this.type, cm))
+        is CastTypeInfo -> CastTypeInfo(instantiationManager.getConcreteType(this.type, cm, ctx.random))
         else -> this
     }
 }

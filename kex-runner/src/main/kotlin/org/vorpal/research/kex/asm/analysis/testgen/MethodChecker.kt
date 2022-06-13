@@ -96,7 +96,7 @@ open class MethodChecker(
         log.debug()
 
         val unreachableBlocks = mutableSetOf<BasicBlock>()
-        val domTree = DominatorTreeBuilder(method).build()
+        val domTree = DominatorTreeBuilder(method.body).build()
         val order: SearchStrategy = getSearchStrategy(method)
 
         initializeGenerator(method)

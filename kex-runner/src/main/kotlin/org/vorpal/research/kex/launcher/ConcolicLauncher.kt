@@ -5,15 +5,15 @@ import kotlinx.serialization.InternalSerializationApi
 import org.vorpal.research.kex.ExecutionContext
 import org.vorpal.research.kex.asm.analysis.concolic.InstructionConcolicChecker
 import org.vorpal.research.kex.asm.manager.ClassInstantiationDetector
-import org.vorpal.research.kex.asm.manager.MethodWrapperInitializer
 import org.vorpal.research.kex.asm.state.PredicateStateAnalysis
 import org.vorpal.research.kex.asm.transform.SymbolicTraceCollector
 import org.vorpal.research.kex.asm.transform.SystemExitTransformer
-import org.vorpal.research.kex.asm.util.Visibility
 import org.vorpal.research.kex.config.kexConfig
 import org.vorpal.research.kex.jacoco.CoverageReporter
-import org.vorpal.research.kex.trace.symbolic.InstructionTraceManager
+import org.vorpal.research.kex.trace.runner.ExecutorMasterController
+import org.vorpal.research.kex.util.PermanentCoverageInfo
 import org.vorpal.research.kfg.Package
+import org.vorpal.research.kfg.ir.Method
 import org.vorpal.research.kfg.visitor.MethodVisitor
 import org.vorpal.research.kfg.visitor.executePipeline
 import org.vorpal.research.kthelper.logging.log
@@ -25,22 +25,37 @@ class ConcolicLauncher(classPaths: List<String>, targetName: String) : KexLaunch
         return SymbolicTraceCollector(context)
     }
 
-    override fun preparePackage(ctx: ExecutionContext, psa: PredicateStateAnalysis, pkg: Package) = executePipeline(ctx.cm, pkg) {
-        +ClassInstantiationDetector(ctx.cm, Visibility.PRIVATE)
-    }
+    override fun preparePackage(ctx: ExecutionContext, psa: PredicateStateAnalysis, pkg: Package) =
+        executePipeline(ctx.cm, pkg) {
+            +ClassInstantiationDetector(ctx.cm, visibilityLevel)
+        }
+
+    private val batchedTargets: Set<Set<Method>>
+        get() = when (analysisLevel) {
+            is ClassLevel -> setOf(analysisLevel.klass.allMethods)
+            is MethodLevel -> setOf(setOf(analysisLevel.method))
+            is PackageLevel -> context.cm.getByPackage(analysisLevel.pkg).map { it.allMethods }.toSet()
+        }
 
     override fun launch() {
-        val traceManager = InstructionTraceManager()
+        ExecutorMasterController.use {
+            it.start(context)
 
-        preparePackage(context, PredicateStateAnalysis(context.cm))
-        runPipeline(context) {
-            +MethodWrapperInitializer(context.cm)
-            +SystemExitTransformer(context.cm)
-            +InstructionConcolicChecker(context, traceManager)
+            runPipeline(context) {
+                +SystemExitTransformer(context.cm)
+            }
+
+            for (setOfTargets in batchedTargets) {
+                InstructionConcolicChecker.run(context, setOfTargets)
+            }
+
+            val coverageInfo = CoverageReporter(containers).execute(context.cm, analysisLevel)
+            log.info(
+                coverageInfo.print(kexConfig.getBooleanValue("kex", "printDetailedCoverage", false))
+            )
+
+            PermanentCoverageInfo.putNewInfo(analysisLevel.toString(), coverageInfo)
+            PermanentCoverageInfo.emit()
         }
-        log.info(
-            CoverageReporter(containerClassLoader).execute(context.cm, analysisLevel)
-                .print(kexConfig.getBooleanValue("kex", "printDetailedCoverage", false))
-        )
     }
 }

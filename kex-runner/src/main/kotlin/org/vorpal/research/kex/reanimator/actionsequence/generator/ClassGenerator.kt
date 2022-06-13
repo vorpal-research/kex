@@ -37,7 +37,7 @@ class ClassGenerator(private val fallback: Generator) : Generator {
             )
         }
         val randomKlassName = {
-            convertToDescriptor(cm.concreteClasses.random().canonicalDesc)
+            convertToDescriptor(cm.concreteClasses.random(context.random).canonicalDesc)
         }
 
         val klassName = when (descriptor) {
