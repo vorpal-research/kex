@@ -1,7 +1,6 @@
 package org.vorpal.research.kex.evolutions
 
 import org.vorpal.research.kfg.ClassManager
-import org.vorpal.research.kfg.ir.Method
 import org.vorpal.research.kfg.ir.value.*
 import org.vorpal.research.kfg.ir.value.instruction.*
 import org.vorpal.research.kfg.visitor.Loop
@@ -173,9 +172,8 @@ open class Evolutions(override val cm: ClassManager) : MethodVisitor {
             is KFGBinary -> {
                 val (lhv, rhv) = recur.arguments
                 if (lhv != me) return Undefined
-
                 return when (recur.opcode) {
-                    BinaryOpcode.DIV -> KFGBinary(
+                        BinaryOpcode.DIV -> KFGBinary(
                         BinaryOpcode.DIV,
                         base,
                         Evolution(v.loop, EvoOpcode.TIMES, Const.ONE, rhv)

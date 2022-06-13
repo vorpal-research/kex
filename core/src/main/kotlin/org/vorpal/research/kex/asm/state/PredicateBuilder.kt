@@ -15,6 +15,8 @@ import org.vorpal.research.kfg.ir.value.instruction.*
 import org.vorpal.research.kfg.visitor.MethodVisitor
 import org.vorpal.research.kthelper.assert.ktassert
 import org.vorpal.research.kthelper.logging.log
+import ru.spbstu.Const
+import ru.spbstu.SymRational
 
 class InvalidInstructionError(message: String) : Exception(message)
 
@@ -242,6 +244,13 @@ class PredicateBuilder(override val cm: ClassManager) : MethodVisitor {
 
                 lhv equality rhv
             }
+        }
+    }
+
+    override fun visitUnknownValueInst(inst: UnknownValueInst) {
+        innerPredicateMap[inst] = state(inst.location) {
+            val i = mkValue(inst).apply(CmpOpcode.CMPG, mkValue(values.getInt(0)))
+            i equality true
         }
     }
 

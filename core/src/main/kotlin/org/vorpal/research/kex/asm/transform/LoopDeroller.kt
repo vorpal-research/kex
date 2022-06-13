@@ -5,6 +5,8 @@ import org.vorpal.research.kex.config.kexConfig
 import org.vorpal.research.kex.evolutions.LoopOptimizer
 import org.vorpal.research.kex.evolutions.defaultVar
 import org.vorpal.research.kex.evolutions.evaluateEvolutions
+import org.vorpal.research.kex.util.insertAfter
+import org.vorpal.research.kex.util.insertBefore
 import org.vorpal.research.kfg.ClassManager
 import org.vorpal.research.kfg.ir.BasicBlock
 import org.vorpal.research.kfg.ir.BodyBlock
@@ -95,6 +97,9 @@ class LoopDeroller(override val cm: ClassManager) : LoopOptimizer(cm) {
     override val preservesLoopInfo get() = false
 
     override fun visit(method: Method) = method.usageContext.use {
+        if (method.name == "kek") {
+            log.error("found")
+        }
         if (!method.hasBody) return
         ctx = it
         try {
@@ -121,7 +126,7 @@ class LoopDeroller(override val cm: ClassManager) : LoopOptimizer(cm) {
         unroll(
             loop,
             if (tryBackstabbing(loop, blockOrder.first())) 1 else
-            getDerollCount(loop)
+                getDerollCount(loop)
         )
     }
 
@@ -440,12 +445,13 @@ class LoopDeroller(override val cm: ClassManager) : LoopOptimizer(cm) {
         val p = rebuild(loop) ?: return false
         val block = p.first
         val phiList = p.second
-        if (block.isEmpty()) return false
-        val a = firstBlock.last()
-        firstBlock.remove(a)
-        firstBlock.add(inst)
-        firstBlock.addAll(block)
-        firstBlock.add(a)
+        val bblock : List<Instruction> = listOf(inst) +  block
+
+        firstBlock.first().insertBefore(bblock)
+        phiList.forEach { (phi, value) ->
+            phi.users.forEach { user -> value.addUser(user) }
+            phi.replaceAllUsesWith(ctx, value)
+        }
         clearUnused(loop)
         return true
     }
