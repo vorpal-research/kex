@@ -132,7 +132,9 @@ fun mergeTypes(tf: TypeFactory, types: Collection<KexType>): KexType {
         uniqueTypes.all { it is KexLong } -> KexLong()
         uniqueTypes.all { it is KexIntegral } -> uniqueTypes.maxByOrNull { (it as KexIntegral).actualBitSize }!!
         uniqueTypes.all { it is KexFloat } -> KexFloat()
-        uniqueTypes.all { it is KexDouble } -> KexDouble()
+        uniqueTypes.all { it is KexReal } -> KexDouble()
+        uniqueTypes.all { it is KexIntegral || it is KexFloat } -> KexFloat()
+        uniqueTypes.all { it is KexIntegral || it is KexReal } -> KexDouble()
         else -> unreachable { log.error("Unexpected set of types: $types") }
     }
 }

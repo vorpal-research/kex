@@ -1,7 +1,6 @@
 package org.vorpal.research.kex.evolutions
 
 import org.vorpal.research.kfg.ClassManager
-import org.vorpal.research.kfg.ir.Method
 import org.vorpal.research.kfg.ir.value.*
 import org.vorpal.research.kfg.ir.value.instruction.*
 import org.vorpal.research.kfg.visitor.Loop
@@ -12,7 +11,7 @@ import ru.spbstu.wheels.mapToArray
 /**
  * Evaluates evolutions in given symbolic expression.
  * @param s given symbolic expression.
- * @param iterations map from loop to it's induction variable.
+ * @param iterations map from loop to its induction variable.
  */
 fun evaluateEvolutions(s: Symbolic, iterations: MutableMap<Loop, Var>): Symbolic = s.transform { sym ->
     when (sym) {
@@ -92,7 +91,7 @@ open class Evolutions(override val cm: ClassManager) : MethodVisitor {
     private val equations = mutableMapOf<Value, Symbolic?>()
 
     /**
-     * Transforms given value to it's symbolic form.
+     * Transforms given value to its symbolic form.
      * Using cache to avoid unnecessary evaluations.
      * Corresponds to AnalyzeEvolution from the paper.
      * @param v given value.
@@ -104,19 +103,8 @@ open class Evolutions(override val cm: ClassManager) : MethodVisitor {
         is LongConstant -> Const(v.value)
         is ShortConstant -> Const(v.value.toInt())
         is ByteConstant -> Const(v.value.toInt())
-        is UnaryInst -> when (v.opcode) {
-            UnaryOpcode.NEG -> -transform(v.operand)
-            UnaryOpcode.LENGTH -> Apply("\\length", transform(v.operand))
-        }
-        is BinaryInst -> when (v.opcode) {
-            BinaryOpcode.ADD -> transform(v.lhv) + transform(v.rhv)
-            BinaryOpcode.SUB -> transform(v.lhv) - transform(v.rhv)
-            BinaryOpcode.MUL -> transform(v.lhv) * transform(v.rhv)
-            BinaryOpcode.DIV -> transform(v.lhv) / transform(v.rhv)
-            BinaryOpcode.SHL -> transform(v.lhv) shl transform(v.rhv)
-            BinaryOpcode.SHR -> transform(v.lhv) shr transform(v.rhv)
-            else -> KFGBinary(v.opcode, transform(v.lhv), transform(v.rhv))
-        }
+        is UnaryInst -> v.opcode.toFunc().invoke(transform(v.operand))
+        is BinaryInst -> v.opcode.toFunc().invoke(transform(v.lhv), transform(v.rhv))
         else -> {
             if (v.isNameDefined) {
                 val res = Var(v.name.toString())
@@ -184,9 +172,8 @@ open class Evolutions(override val cm: ClassManager) : MethodVisitor {
             is KFGBinary -> {
                 val (lhv, rhv) = recur.arguments
                 if (lhv != me) return Undefined
-
                 return when (recur.opcode) {
-                    BinaryOpcode.DIV -> KFGBinary(
+                        BinaryOpcode.DIV -> KFGBinary(
                         BinaryOpcode.DIV,
                         base,
                         Evolution(v.loop, EvoOpcode.TIMES, Const.ONE, rhv)
@@ -200,49 +187,49 @@ open class Evolutions(override val cm: ClassManager) : MethodVisitor {
                     else -> Undefined
                 }
             }
-        is Apply -> return recur
-        is Product -> {
-            // decompose recur to (Alpha * me)
-            val alpha = recur / me
-            if (alpha.hasVar(me)) return Undefined
+            is Apply -> return recur
+            is Product -> {
+                // decompose recur to (Alpha * me)
+                val alpha = recur / me
+                if (alpha.hasVar(me)) return Undefined
 
-            return Evolution(v.loop, EvoOpcode.TIMES, base, alpha)
-        }
-        is Sum -> {
-            // decompose recur to (Alpha * me + Beta)
-            val (l, beta) = recur.partition { it.hasVar(me) }
-            val alpha = l / me
-            if (alpha.hasVar(me)) return Undefined
-            return when {
-                alpha == Const.ONE -> Evolution(v.loop, EvoOpcode.PLUS, base, beta)
-                beta == Const.ZERO -> Evolution(v.loop, EvoOpcode.TIMES, base, alpha)
-                alpha == Const.ZERO -> Evolution(v.loop, EvoOpcode.PLUS, Const.ZERO, beta)
-                else -> Evolution(
-                    v.loop,
-                    EvoOpcode.TIMES,
-                    Evolution(
+                return Evolution(v.loop, EvoOpcode.TIMES, base, alpha)
+            }
+            is Sum -> {
+                // decompose recur to (Alpha * me + Beta)
+                val (l, beta) = recur.partition { it.hasVar(me) }
+                val alpha = l / me
+                if (alpha.hasVar(me)) return Undefined
+                return when {
+                    alpha == Const.ONE -> Evolution(v.loop, EvoOpcode.PLUS, base, beta)
+                    beta == Const.ZERO -> Evolution(v.loop, EvoOpcode.TIMES, base, alpha)
+                    alpha == Const.ZERO -> Evolution(v.loop, EvoOpcode.PLUS, Const.ZERO, beta)
+                    else -> Evolution(
                         v.loop,
-                        EvoOpcode.PLUS,
-                        base,
-                        Evolution(v.loop, EvoOpcode.TIMES, beta, alpha.reciprocal())
-                    ),
-                    alpha
-                )
+                        EvoOpcode.TIMES,
+                        Evolution(
+                            v.loop,
+                            EvoOpcode.PLUS,
+                            base,
+                            Evolution(v.loop, EvoOpcode.TIMES, beta, alpha.reciprocal())
+                        ),
+                        alpha
+                    )
+                }
             }
         }
     }
+
+    override fun cleanup() {}
 }
 
-override fun cleanup() {}
-}
 
 /**
  * Collects all loops in the method.
  * @param method given method.
  * @return sequence of all loops in the method.
  */
-fun walkLoops(method: Method) = sequence {
-    val topLevel = method.getLoopInfo()
+fun walkLoops(topLevel: List<Loop>) = sequence {
     for (loop in topLevel) yieldAll(walkLoops(loop))
 }
 
