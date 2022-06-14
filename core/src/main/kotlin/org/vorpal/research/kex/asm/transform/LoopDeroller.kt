@@ -5,7 +5,6 @@ import org.vorpal.research.kex.config.kexConfig
 import org.vorpal.research.kex.evolutions.LoopOptimizer
 import org.vorpal.research.kex.evolutions.defaultVar
 import org.vorpal.research.kex.evolutions.evaluateEvolutions
-import org.vorpal.research.kex.util.insertAfter
 import org.vorpal.research.kex.util.insertBefore
 import org.vorpal.research.kfg.ClassManager
 import org.vorpal.research.kfg.ir.BasicBlock
@@ -97,9 +96,6 @@ class LoopDeroller(override val cm: ClassManager) : LoopOptimizer(cm) {
     override val preservesLoopInfo get() = false
 
     override fun visit(method: Method) = method.usageContext.use {
-        if (method.name == "kek") {
-            log.error("found")
-        }
         if (!method.hasBody) return
         ctx = it
         try {
@@ -125,8 +121,10 @@ class LoopDeroller(override val cm: ClassManager) : LoopOptimizer(cm) {
         // init state
         unroll(
             loop,
-            if (tryBackstabbing(loop, blockOrder.first())) 1 else
-                getDerollCount(loop)
+            when {
+                tryBackstabbing(loop, blockOrder.first()) -> 1
+                else -> getDerollCount(loop)
+            }
         )
     }
 
@@ -139,7 +137,7 @@ class LoopDeroller(override val cm: ClassManager) : LoopOptimizer(cm) {
         log.debug("Method $method, unrolling loop $loop to $derollCount iterations")
 
         // save current phi instructions of method
-        val methodPhis = method.bodyBlocks.filter { it !in body }.flatten().mapNotNull { it as? PhiInst }
+        val methodPhis = method.body.bodyBlocks.filter { it !in body }.flatten().mapNotNull { it as? PhiInst }
         val methodPhiMappings = methodPhis.associateWith { phi ->
             phi.incomings.filterNot { it.key in body }.toMutableMap()
         }.toMutableMap()
@@ -178,9 +176,9 @@ class LoopDeroller(override val cm: ClassManager) : LoopOptimizer(cm) {
 
             for (block in blockOrder) {
                 val mapping = state[block]
-                method.addBefore(state.header, mapping)
+                method.body.addBefore(state.header, mapping)
                 mapping.wrapper = block.wrapper
-                if (mapping is CatchBlock) method.addCatchBlock(mapping)
+                if (mapping is CatchBlock) method.body.addCatchBlock(mapping)
             }
 
             val phiMappings = blockOrder
@@ -192,7 +190,7 @@ class LoopDeroller(override val cm: ClassManager) : LoopOptimizer(cm) {
 
         val unreachableBlock = BodyBlock("unreachable")
         unreachableBlock.add(inst(cm) { unreachable() })
-        method.add(unreachableBlock)
+        method.body.add(unreachableBlock)
         unreachableBlocks.getOrPut(method, ::hashSetOf).add(unreachableBlock)
         unreachableBlock.wrapper = null
 
@@ -205,7 +203,7 @@ class LoopDeroller(override val cm: ClassManager) : LoopOptimizer(cm) {
             val copy = state[block]
             copy.predecessors.toTypedArray().forEach { it.removeSuccessor(copy) }
             copy.successors.toTypedArray().forEach { it.removePredecessor(copy) }
-            method.remove(copy)
+            method.body.remove(copy)
         }
 
         // cleanup loop
@@ -399,10 +397,10 @@ class LoopDeroller(override val cm: ClassManager) : LoopOptimizer(cm) {
         for (block in body) {
             block.predecessors.toTypedArray().forEach { block.removePredecessor(it) }
             block.successors.toTypedArray().forEach { block.removeSuccessor(it) }
-            method.remove(block)
+            method.body.remove(block)
         }
 
-        val loopThrowers = method.catchEntries.associateWith { catch ->
+        val loopThrowers = method.body.catchEntries.associateWith { catch ->
             body.filter { it.handlers.contains(catch) }
         }
 

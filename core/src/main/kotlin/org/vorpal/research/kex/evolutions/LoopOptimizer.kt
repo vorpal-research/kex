@@ -2,11 +2,9 @@ package org.vorpal.research.kex.evolutions
 
 
 import org.vorpal.research.kfg.ClassManager
-import org.vorpal.research.kfg.analysis.IRVerifier
 import org.vorpal.research.kfg.ir.BasicBlock
 import org.vorpal.research.kfg.ir.BodyBlock
 import org.vorpal.research.kfg.ir.Method
-import org.vorpal.research.kfg.ir.value.EmptyUsageContext.users
 import org.vorpal.research.kfg.ir.value.MethodUsageContext
 import org.vorpal.research.kfg.ir.value.Value
 import org.vorpal.research.kfg.ir.value.instruction.BinaryInst
@@ -17,7 +15,6 @@ import org.vorpal.research.kfg.ir.value.usageContext
 import org.vorpal.research.kfg.type.IntType
 import org.vorpal.research.kfg.visitor.Loop
 import org.vorpal.research.kfg.visitor.LoopVisitor
-import org.vorpal.research.kthelper.logging.log
 import ru.spbstu.*
 
 open class LoopOptimizer(cm: ClassManager) : Evolutions(cm), LoopVisitor {
@@ -79,7 +76,7 @@ open class LoopOptimizer(cm: ClassManager) : Evolutions(cm), LoopVisitor {
     protected fun insertBefore(block: BasicBlock, e: BasicBlock, loop: Loop) = with(ctx) {
         e.add(instructions.getJump(ctx, block))
         loop.addBlock(e)
-        method.add(e)
+        method.body.add(e)
         block.predecessors.forEach { preBlock ->
             e.addPredecessor(preBlock)
             e.addSuccessor(block)
