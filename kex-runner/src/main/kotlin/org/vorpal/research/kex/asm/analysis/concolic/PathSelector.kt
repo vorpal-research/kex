@@ -13,5 +13,6 @@ interface SuspendableIterator<T>  {
 interface PathSelector : SuspendableIterator<SymbolicState> {
     val ctx: ExecutionContext
 
+    suspend fun isEmpty(): Boolean
     suspend fun addExecutionTrace(method: Method, result: ExecutionCompletedResult)
 }

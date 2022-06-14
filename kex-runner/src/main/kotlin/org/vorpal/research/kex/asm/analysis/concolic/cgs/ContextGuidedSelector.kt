@@ -45,6 +45,8 @@ class ContextGuidedSelector(
         val revertedClause: Clause
     )
 
+    override suspend fun isEmpty(): Boolean = executionTree.isEmpty()
+
     override suspend fun hasNext(): Boolean = `try` {
         do {
             yield()

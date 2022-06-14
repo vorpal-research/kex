@@ -69,6 +69,8 @@ class ExecutionTree : PredecessorGraph<Vertex>, Viewable {
     var depth: Int = 0
         private set
 
+    fun isEmpty(): Boolean = _root == null
+
     fun getPathVertex(clause: Clause) = edges.getValue(clause)
 
     fun isExhausted(clause: Clause) = isExhausted(getPathVertex(clause))

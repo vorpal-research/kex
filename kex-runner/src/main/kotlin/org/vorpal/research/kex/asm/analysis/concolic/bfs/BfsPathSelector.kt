@@ -24,6 +24,7 @@ class BfsPathSelectorImpl(
     private val candidates = mutableSetOf<PathCondition>()
     private val deque = dequeOf<SymbolicState>()
 
+    override suspend fun isEmpty(): Boolean = deque.isEmpty()
     override suspend fun hasNext(): Boolean = deque.isNotEmpty()
 
     override suspend fun addExecutionTrace(method: Method, result: ExecutionCompletedResult) {

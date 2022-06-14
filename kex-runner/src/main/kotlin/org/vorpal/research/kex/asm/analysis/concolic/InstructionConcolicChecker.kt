@@ -28,6 +28,7 @@ import org.vorpal.research.kex.state.PredicateState
 import org.vorpal.research.kex.state.term.Term
 import org.vorpal.research.kex.state.transformer.*
 import org.vorpal.research.kex.trace.runner.SymbolicExternalTracingRunner
+import org.vorpal.research.kex.trace.runner.generateDefaultParameters
 import org.vorpal.research.kex.trace.runner.generateParameters
 import org.vorpal.research.kex.trace.symbolic.ExecutionCompletedResult
 import org.vorpal.research.kex.trace.symbolic.ExecutionResult
@@ -40,6 +41,7 @@ import org.vorpal.research.kthelper.logging.debug
 import org.vorpal.research.kthelper.logging.log
 import org.vorpal.research.kthelper.logging.warn
 import org.vorpal.research.kthelper.tryOrNull
+import java.awt.geom.PathIterator
 import java.nio.file.Path
 
 private class CompilerHelper(val ctx: ExecutionContext) {
@@ -102,6 +104,14 @@ class InstructionConcolicChecker(
         } catch (e: TimeoutCancellationException) {
             log.debug { "Method $method processing is finished with timeout exception" }
         }
+    }
+
+    private fun getDefaultTrace(method: Method): ExecutionResult? = try {
+        val params = generateDefaultParameters(ctx.loader, method)
+        params?.let { collectTraceFromAny(method, it) }
+    } catch (e: Throwable) {
+        log.warn("Error while collecting random trace:", e)
+        null
     }
 
     private fun getRandomTrace(method: Method): ExecutionResult? = try {
@@ -187,14 +197,26 @@ class InstructionConcolicChecker(
         else -> unreachable { log.error("Unknown type of search strategy $searchStrategy") }
     }
 
-    private suspend fun processMethod(method: Method) {
-        testIndex = 0
-        val pathIterator = buildPathSelector()
-        getRandomTrace(method)?.let {
+    private suspend fun handleStartingTrace(
+        method: Method,
+        pathIterator: PathSelector,
+        executionResult: ExecutionResult?
+    ) {
+        executionResult?.let {
             when (it) {
                 is ExecutionCompletedResult -> pathIterator.addExecutionTrace(method, it)
                 else -> log.warn("Failed to generate random trace: $it")
             }
+        }
+    }
+
+    private suspend fun processMethod(method: Method) {
+        testIndex = 0
+        val pathIterator = buildPathSelector()
+
+        handleStartingTrace(method, pathIterator, getRandomTrace(method))
+        if (pathIterator.isEmpty()) {
+            handleStartingTrace(method, pathIterator, getDefaultTrace(method))
         }
         yield()
 
