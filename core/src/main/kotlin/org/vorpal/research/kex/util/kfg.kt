@@ -94,11 +94,15 @@ val SystemTypeNames.charSequence get() = "java/lang/CharSequence"
 val SystemTypeNames.field get() = "java/lang/reflect/Field"
 val SystemTypeNames.stringBuilder get() = "java/lang/StringBuilder"
 val SystemTypeNames.stringBuffer get() = "java/lang/StringBuffer"
+val SystemTypeNames.linkedHashSet get() = "java/util/LinkedHashSet"
+val SystemTypeNames.linkedHashMap get() = "java/util/LinkedHashMap"
 
 val SystemTypeNames.classLoader get() = "java/lang/ClassLoader"
 val ClassManager.classLoaderClass get() = this[SystemTypeNames.classLoader]
 val ClassManager.stringBuilderClass get() = this[SystemTypeNames.stringBuilder]
 val ClassManager.stringBufferClass get() = this[SystemTypeNames.stringBuffer]
+val ClassManager.linkedHashSetClass get() = this[SystemTypeNames.linkedHashSet]
+val ClassManager.linkedHashMapClass get() = this[SystemTypeNames.linkedHashMap]
 val TypeFactory.classLoaderType get() = getRefType(SystemTypeNames.classLoader)
 
 

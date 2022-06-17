@@ -41,7 +41,6 @@ import org.vorpal.research.kthelper.logging.debug
 import org.vorpal.research.kthelper.logging.log
 import org.vorpal.research.kthelper.logging.warn
 import org.vorpal.research.kthelper.tryOrNull
-import java.awt.geom.PathIterator
 import java.nio.file.Path
 
 private class CompilerHelper(val ctx: ExecutionContext) {
@@ -150,7 +149,19 @@ class InstructionConcolicChecker(
                 ctx,
                 typeMap,
                 psa,
-                inlineIndex = index
+                inlineSuffix = "inlined",
+                inlineIndex = index,
+                kexRtOnly = false
+            )
+        }
+        +RecursiveInliner(PredicateStateAnalysis(cm)) { index, psa ->
+            ConcolicInliner(
+                ctx,
+                typeMap,
+                psa,
+                inlineSuffix = "rt.inlined",
+                inlineIndex = index,
+                kexRtOnly = true
             )
         }
         +ClassAdapter(cm)

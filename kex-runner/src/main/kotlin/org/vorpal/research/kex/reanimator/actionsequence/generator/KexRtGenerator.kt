@@ -13,6 +13,7 @@ class KexRtGenerator(val fallback: Generator) : Generator {
         typeGenerators += KexArrayListGenerator(this)
         typeGenerators += KexLinkedListGenerator(this)
         typeGenerators += KexArrayDequeGenerator(this)
+        typeGenerators += KexHashSetGenerator(this)
         typeGenerators += KexWrapperClassGenerator(this)
         typeGenerators += KexStringBuilderGenerator(this)
     }

@@ -17,6 +17,7 @@ class ConcolicInliner(
     val ctx: ExecutionContext,
     val typeInfoMap: TypeInfoMap,
     override val psa: PredicateStateAnalysis,
+    val kexRtOnly: Boolean = false,
     override val inlineSuffix: String = "inlined",
     override var inlineIndex: Int = 0
 ) : Inliner<ConcolicInliner> {
@@ -77,7 +78,10 @@ class ConcolicInliner(
         return nothing()
     }
 
-    override fun isInlinable(method: Method): Boolean = im.inliningEnabled && !im.isIgnored(method)
+    override fun isInlinable(method: Method): Boolean = when {
+        kexRtOnly -> method.isKexRt
+        else -> im.inliningEnabled && !im.isIgnored(method)
+    }
 
     override fun getInlinedMethod(callTerm: CallTerm): Method? {
         val method = callTerm.method

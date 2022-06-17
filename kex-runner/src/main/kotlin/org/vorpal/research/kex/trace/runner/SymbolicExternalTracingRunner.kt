@@ -5,6 +5,7 @@ import kotlinx.serialization.InternalSerializationApi
 import org.vorpal.research.kex.ExecutionContext
 import org.vorpal.research.kex.config.kexConfig
 import org.vorpal.research.kex.serialization.KexSerializer
+import org.vorpal.research.kex.trace.symbolic.ExecutionCompletedResult
 import org.vorpal.research.kex.trace.symbolic.ExecutionResult
 import org.vorpal.research.kex.trace.symbolic.protocol.Client2MasterConnection
 import org.vorpal.research.kex.trace.symbolic.protocol.Client2MasterSocketConnection
@@ -92,7 +93,10 @@ class SymbolicExternalTracingRunner(val ctx: ExecutionContext) {
             it.connect()
             it.send(TestExecutionRequest(klass, test, setup))
             val result = it.receive()
-            log.debug("Execution result: $result")
+            when (result) {
+                is ExecutionCompletedResult -> log.debug("Execution result: ${result.trace}")
+                else -> log.debug("Execution result: $result")
+            }
             return result
         }
     }
