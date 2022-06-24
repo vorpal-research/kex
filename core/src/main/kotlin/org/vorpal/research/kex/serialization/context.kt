@@ -11,9 +11,7 @@ import org.vorpal.research.kex.state.PredicateState
 import org.vorpal.research.kex.state.predicate.Predicate
 import org.vorpal.research.kex.state.predicate.PredicateType
 import org.vorpal.research.kex.state.term.Term
-import org.vorpal.research.kex.trace.symbolic.SymbolicState
-import org.vorpal.research.kex.trace.symbolic.SymbolicStateImpl
-import org.vorpal.research.kex.trace.symbolic.WrappedValue
+import org.vorpal.research.kex.trace.symbolic.*
 import org.vorpal.research.kfg.ClassManager
 import org.vorpal.research.kfg.ir.Method
 import org.vorpal.research.kfg.ir.value.NameMapperContext
@@ -106,6 +104,10 @@ fun getDescriptorSerialModule(): SerializersModule = SerializersModule {
 @ExperimentalSerializationApi
 @InternalSerializationApi
 fun getSymbolicStateSerialModule(): SerializersModule = SerializersModule {
+    polymorphic(Clause::class) {
+        subclass(StateClause::class, StateClause.serializer())
+        subclass(PathClause::class, PathClause.serializer())
+    }
     polymorphic(SymbolicState::class) {
         subclass(SymbolicStateImpl::class, SymbolicStateImpl.serializer())
     }

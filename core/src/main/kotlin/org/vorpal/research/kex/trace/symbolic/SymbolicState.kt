@@ -11,11 +11,34 @@ import org.vorpal.research.kfg.ir.Method
 import org.vorpal.research.kfg.ir.value.Value
 import org.vorpal.research.kfg.ir.value.instruction.Instruction
 
+enum class PathClauseType {
+    NULL_CHECK,
+    TYPE_CHECK,
+    CONDITION_CHECK,
+    BOUNDS_CHECK
+}
+
 @Serializable
-data class Clause(
-    @Contextual val instruction: Instruction,
-    val predicate: Predicate
-)
+sealed class Clause {
+    @Contextual
+    abstract val instruction: Instruction
+    abstract val predicate: Predicate
+}
+
+@Serializable
+data class StateClause(
+    @Contextual
+    override val instruction: Instruction,
+    override val predicate: Predicate
+) : Clause()
+
+@Serializable
+data class PathClause(
+    val type: PathClauseType,
+    @Contextual
+    override val instruction: Instruction,
+    override val predicate: Predicate
+) : Clause()
 
 @Serializable
 data class ClauseState(val state: List<Clause> = emptyList()) : List<Clause> by state {
@@ -24,10 +47,10 @@ data class ClauseState(val state: List<Clause> = emptyList()) : List<Clause> by 
 }
 
 @Serializable
-data class PathCondition(val path: List<Clause> = emptyList()) : List<Clause> by path {
+data class PathCondition(val path: List<PathClause> = emptyList()) : List<PathClause> by path {
     override fun iterator() = path.iterator()
 
-    fun subPath(clause: Clause) = path.subList(0, path.indexOf(clause) + 1)
+    fun subPath(clause: PathClause) = path.subList(0, path.indexOf(clause) + 1)
 
     fun asState() = BasicState(path.map { it.predicate })
 }
@@ -44,7 +67,7 @@ abstract class SymbolicState {
 
     operator fun get(term: Term) = termMap.getValue(term)
 
-    fun subPath(clause: Clause): List<Clause> = path.subList(0, path.indexOf(clause) + 1)
+    fun subPath(clause: PathClause): List<PathClause> = path.subList(0, path.indexOf(clause) + 1)
 
     fun isEmpty() = clauses.isEmpty()
     fun isNotEmpty() = clauses.isNotEmpty()

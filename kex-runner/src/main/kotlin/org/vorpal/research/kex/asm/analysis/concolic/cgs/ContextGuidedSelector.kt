@@ -40,9 +40,9 @@ class ContextGuidedSelector(
 
     private class State(
         val context: Context,
-        val path: List<Clause>,
-        val activeClause: Clause,
-        val revertedClause: Clause
+        val path: List<PathClause>,
+        val activeClause: PathClause,
+        val revertedClause: PathClause
     )
 
     override suspend fun isEmpty(): Boolean = executionTree.isEmpty()
@@ -109,15 +109,14 @@ class ContextGuidedSelector(
         executionTree.addTrace(result.trace)
     }
 
-    private fun Clause.reversed(): Clause? = when (instruction) {
+    private fun PathClause.reversed(): PathClause? = when (instruction) {
         is BranchInst -> {
             val (cond, value) = with(predicate as EqualityPredicate) {
                 lhv to (rhv as ConstBoolTerm).value
             }
-            val reversed = Clause(instruction, path(instruction.location) {
+            copy(predicate = path(instruction.location) {
                 cond equality !value
             })
-            reversed
         }
         is SwitchInst -> when (val pred = predicate) {
             is DefaultSwitchPredicate -> {
@@ -125,7 +124,7 @@ class ContextGuidedSelector(
                 val cond = pred.cond
                 val candidates = switchInst.branches.keys.map { (it as IntConstant).value }.toSet()
                 candidates.randomOrNull(ctx.random)?.let {
-                    Clause(instruction, path(instruction.location) {
+                    copy(predicate = path(instruction.location) {
                         cond equality it
                     })
                 }
@@ -164,7 +163,7 @@ class ContextGuidedSelector(
                 }
 
                 candidates.randomOrNull(ctx.random)?.let {
-                    Clause(instruction, path(instruction.location) {
+                    copy(predicate = path(instruction.location) {
                         cond equality it
                     })
                 }
@@ -177,7 +176,7 @@ class ContextGuidedSelector(
                 val cond = pred.cond
                 val candidates = switchInst.range.toSet()
                 candidates.randomOrNull(ctx.random)?.let {
-                    Clause(instruction, path(instruction.location) {
+                    copy(predicate = path(instruction.location) {
                         cond equality it
                     })
                 }
@@ -215,7 +214,7 @@ class ContextGuidedSelector(
                 }
 
                 candidates.randomOrNull(ctx.random)?.let {
-                    Clause(instruction, path(instruction.location) {
+                    copy(predicate = path(instruction.location) {
                         cond equality it
                     })
                 }
@@ -237,7 +236,7 @@ class ContextGuidedSelector(
                         .toSet()
                     try {
                         val newType = instantiationManager.get(ctx.types, termType, excludeClasses, ctx.random)
-                        Clause(instruction, path(instruction.location) {
+                        copy(predicate = path(instruction.location) {
                             (lhv.operand `is` newType.kexType) equality true
                         })
                     } catch (e: NoConcreteInstanceException) {
@@ -246,11 +245,11 @@ class ContextGuidedSelector(
                     }
                 }
                 else -> when (val rhv = pred.rhv) {
-                    is NullTerm -> Clause(instruction, path(instruction.location) {
+                    is NullTerm -> copy(predicate = path(instruction.location) {
                         lhv inequality null
                     })
                     is ConstBoolTerm -> {
-                        Clause(instruction, path(instruction.location) {
+                        copy(predicate = path(instruction.location) {
                             lhv equality !rhv.value
                         })
                     }
@@ -263,21 +262,19 @@ class ContextGuidedSelector(
             is EqualityPredicate -> {
                 val (lhv, rhv) = pred.lhv to pred.rhv
                 when (rhv) {
-                    is NullTerm -> Clause(instruction, path(instruction.location) {
+                    is NullTerm -> copy(predicate = path(instruction.location) {
                         lhv inequality null
                     })
-                    is ConstBoolTerm -> {
-                        Clause(instruction, path(instruction.location) {
-                            lhv equality !rhv.value
-                        })
-                    }
+                    is ConstBoolTerm -> copy(predicate = path(instruction.location) {
+                        lhv equality !rhv.value
+                    })
                     else -> log.warn("Unknown clause $this").let { null }
                 }
             }
             is InequalityPredicate -> {
                 val (lhv, rhv) = pred.lhv to pred.rhv
                 when (rhv) {
-                    is NullTerm -> Clause(instruction, path(instruction.location) {
+                    is NullTerm -> copy(predicate = path(instruction.location) {
                         lhv equality null
                     })
                     else -> log.warn("Unknown clause $this").let { null }

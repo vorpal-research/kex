@@ -68,7 +68,7 @@ class SymbolicTraceBuilder(
     private val converter = Object2DescriptorConverter()
     private val stateBuilder = arrayListOf<Clause>()
     private val traceBuilder = arrayListOf<Instruction>()
-    private val pathBuilder = arrayListOf<Clause>()
+    private val pathBuilder = arrayListOf<PathClause>()
     private val concreteValues = mutableMapOf<Term, Descriptor>()
     private val terms = mutableMapOf<Term, WrappedValue>()
 
@@ -267,7 +267,7 @@ class SymbolicTraceBuilder(
 
     private fun checkCall() = safeCall {
         lastCall?.let {
-            stateBuilder += Clause(it.call, it.predicate)
+            stateBuilder += StateClause(it.call, it.predicate)
         }
         lastCall = null
     }
@@ -300,14 +300,22 @@ class SymbolicTraceBuilder(
      * for more information @see(SymbolicTraceBuilder.call), @see(SymbolicTraceBuilder.jump), @see(SymbolicTraceBuilder.ret)
      */
     private fun postProcess(instruction: Instruction, predicate: Predicate) {
-        stateBuilder += Clause(instruction, predicate)
-        traceBuilder += instruction
-        updateCatches(instruction)
+        postProcess(StateClause(instruction, predicate))
     }
 
-    private fun processPath(instruction: Instruction, predicate: Predicate) {
+    private fun postProcess(type: PathClauseType, instruction: Instruction, predicate: Predicate) {
+        postProcess(PathClause(type, instruction, predicate))
+    }
+
+    private fun postProcess(clause: Clause) {
+        stateBuilder += clause
+        traceBuilder += clause.instruction
+        updateCatches(clause.instruction)
+    }
+
+    private fun processPath(type: PathClauseType, instruction: Instruction, predicate: Predicate) {
         previousBlock = instruction.parent
-        pathBuilder += Clause(instruction, predicate)
+        pathBuilder += PathClause(type, instruction, predicate)
     }
 
     private fun restoreCatchFrame(exceptionType: Type) {
@@ -437,8 +445,8 @@ class SymbolicTraceBuilder(
             termCondition equality booleanValue
         }
 
-        processPath(instruction, predicate)
-        postProcess(instruction, predicate)
+        processPath(PathClauseType.CONDITION_CHECK, instruction, predicate)
+        postProcess(PathClauseType.CONDITION_CHECK, instruction, predicate)
     }
 
     override fun call(
@@ -849,7 +857,7 @@ class SymbolicTraceBuilder(
             terms[termReceiver] = kfgReceiver.wrapped()
             concreteValues[termReceiver] = concreteValue.getAsDescriptor(termReceiver.type)
 
-            stateBuilder += Clause(instruction, predicate)
+            stateBuilder += StateClause(instruction, predicate)
         }
 
         /**
@@ -891,8 +899,8 @@ class SymbolicTraceBuilder(
             else termValue `!in` instruction.branches.keys.map { value(it) }
         }
 
-        processPath(instruction, predicate)
-        postProcess(instruction, predicate)
+        processPath(PathClauseType.CONDITION_CHECK, instruction, predicate)
+        postProcess(PathClauseType.CONDITION_CHECK, instruction, predicate)
     }
 
     override fun tableSwitch(
@@ -913,8 +921,8 @@ class SymbolicTraceBuilder(
             termValue equality intValue
         }
 
-        processPath(instruction, predicate)
-        postProcess(instruction, predicate)
+        processPath(PathClauseType.CONDITION_CHECK, instruction, predicate)
+        postProcess(PathClauseType.CONDITION_CHECK, instruction, predicate)
     }
 
     override fun throwing(
@@ -979,7 +987,7 @@ class SymbolicTraceBuilder(
         val checkName = term { value(KexBool(), "${termValue}NullCheck") }
         val checkPredicate = state { checkName equality (termValue eq null) }
 
-        stateBuilder += Clause(instruction, checkPredicate)
+        stateBuilder += StateClause(instruction, checkPredicate)
 
 
         val pathPredicate = path {
@@ -989,8 +997,8 @@ class SymbolicTraceBuilder(
             }
         }
 
-        processPath(instruction, pathPredicate)
-        stateBuilder += Clause(instruction, pathPredicate)
+        processPath(PathClauseType.NULL_CHECK, instruction, pathPredicate)
+        stateBuilder += PathClause(PathClauseType.NULL_CHECK, instruction, pathPredicate)
     }
 
     override fun addTypeConstraints(inst: String, value: String, concreteValue: Any?) {
@@ -1012,8 +1020,8 @@ class SymbolicTraceBuilder(
             (termValue `is` descriptorValue.type) equality true
         }
 
-        processPath(instruction, predicate)
-        stateBuilder += Clause(instruction, predicate)
+        processPath(PathClauseType.TYPE_CHECK, instruction, predicate)
+        stateBuilder += PathClause(PathClauseType.TYPE_CHECK, instruction, predicate)
     }
 
     override fun addTypeConstraints(inst: String, value: String, type: String, concreteValue: Any?) {
@@ -1036,8 +1044,8 @@ class SymbolicTraceBuilder(
             (termValue `is` expectedKfgType.kexType) equality (actualKfgType.isSubtypeOf(expectedKfgType))
         }
 
-        processPath(instruction, predicate)
-        stateBuilder += Clause(instruction, predicate)
+        processPath(PathClauseType.TYPE_CHECK, instruction, predicate)
+        stateBuilder += PathClause(PathClauseType.TYPE_CHECK, instruction, predicate)
     }
 
     override fun addArrayIndexConstraints(
@@ -1068,14 +1076,14 @@ class SymbolicTraceBuilder(
             checkTerm equality (termIndex lt termArray.length())
         }
 
-        stateBuilder += Clause(instruction, checkPredicate)
+        stateBuilder += StateClause(instruction, checkPredicate)
 
         val pathPredicate = path {
             checkTerm equality (actualIndex < actualLength)
         }
 
-        processPath(instruction, pathPredicate)
-        stateBuilder += Clause(instruction, pathPredicate)
+        processPath(PathClauseType.BOUNDS_CHECK, instruction, pathPredicate)
+        stateBuilder += PathClause(PathClauseType.BOUNDS_CHECK, instruction, pathPredicate)
     }
 
     private val Any.arraySize: Int
