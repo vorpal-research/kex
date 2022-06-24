@@ -1,12 +1,14 @@
 package org.vorpal.research.kex.state.transformer
 
-import org.vorpal.research.kex.state.term.ArgumentTerm
-import org.vorpal.research.kex.state.term.ReturnValueTerm
-import org.vorpal.research.kex.state.term.Term
-import org.vorpal.research.kex.state.term.ValueTerm
+import org.vorpal.research.kex.state.term.*
 
 class TermRemapper(val mapping: Map<Term, Term>) : Transformer<TermRemapper> {
     override fun transformTerm(term: Term) = mapping.getOrDefault(term, term)
+
+    override fun transformLambdaTerm(term: LambdaTerm): Term {
+        val body = transform(term.body)
+        return term { lambda(term.type, term.parameters, body) }
+    }
 }
 
 class TermRenamer(val suffix: String, val remapping: Map<Term, Term>) : Transformer<TermRenamer> {
@@ -18,5 +20,10 @@ class TermRenamer(val suffix: String, val remapping: Map<Term, Term>) : Transfor
             )
         }
         else -> term
+    }
+
+    override fun transformLambdaTerm(term: LambdaTerm): Term {
+        val body = transform(term.body)
+        return term { lambda(term.type, term.parameters, body) }
     }
 }

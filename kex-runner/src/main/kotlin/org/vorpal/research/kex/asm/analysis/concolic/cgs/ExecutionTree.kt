@@ -46,7 +46,7 @@ class ClauseVertex(clause: Clause) : Vertex(clause) {
 }
 
 class PathVertex(clause: PathClause) : Vertex(clause) {
-    val pathClause = clause as PathClause
+    val pathClause = clause
     override fun toString() = "${clause.predicate}"
 }
 

@@ -168,6 +168,7 @@ class InstructionConcolicChecker(
         +AnnotationAdapter(method, AnnotationManager.defaultLoader)
         +IntrinsicAdapter
         +KexIntrinsicsAdapter()
+        +EqualsTransformer()
         +ReflectionInfoAdapter(method, ctx.loader)
         +Optimizer()
         +ConstantPropagator

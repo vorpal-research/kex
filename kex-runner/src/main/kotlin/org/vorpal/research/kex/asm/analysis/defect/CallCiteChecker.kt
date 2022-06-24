@@ -210,6 +210,7 @@ class CallCiteChecker(
         +StaticFieldInliner(ctx, psa)
         +IntrinsicAdapter
         +KexIntrinsicsAdapter()
+        +EqualsTransformer()
         +DoubleTypeAdapter()
         +ReflectionInfoAdapter(method, ctx.loader)
         +Optimizer()

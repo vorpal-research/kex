@@ -34,18 +34,18 @@ public class ListConcolicTests {
     public static void testArrayListIndexOf(ArrayList<Point> points, Point p) {
         int i = points.indexOf(p);
         if (i > 0) {
-            throw new IllegalStateException();
-        } else if (i == -1) {
-            throw new IllegalStateException();
+            throw new IllegalStateException("a");
+        } else {
+            throw new IllegalStateException("b");
         }
     }
 
     public static void testLinkedListIndexOf(LinkedList<Point> points, Point p) {
         int i = points.indexOf(p);
         if (i > 0) {
-            throw new IllegalStateException();
-        } else if (i == -1) {
-            throw new IllegalStateException();
+            throw new IllegalStateException("a");
+        } else {
+            throw new IllegalStateException("b");
         }
     }
 }

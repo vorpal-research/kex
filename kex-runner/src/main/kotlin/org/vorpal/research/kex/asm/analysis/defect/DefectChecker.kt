@@ -238,6 +238,7 @@ class DefectChecker                                                             
         +RecursiveConstructorInliner(psa)
         +IntrinsicAdapter
         +KexIntrinsicsAdapter()
+        +EqualsTransformer()
         +NullityAnnotator(nonNulls.map { term { value(it) } }.toSet())
         +DoubleTypeAdapter()
         +ReflectionInfoAdapter(method, loader)

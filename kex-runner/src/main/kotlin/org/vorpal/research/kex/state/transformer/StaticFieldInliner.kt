@@ -64,6 +64,7 @@ class StaticFieldInliner(
             +ClassAdapter(ctx.cm)
             +IntrinsicAdapter
             +KexIntrinsicsAdapter()
+            +EqualsTransformer()
             +ReflectionInfoAdapter(method, ctx.loader, ignores)
             +Optimizer()
             +ConstantPropagator

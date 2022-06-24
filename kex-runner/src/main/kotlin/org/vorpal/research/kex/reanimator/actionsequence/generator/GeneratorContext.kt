@@ -82,6 +82,7 @@ class GeneratorContext(
         +StaticFieldInliner(context, psa)
         +IntrinsicAdapter
         +KexIntrinsicsAdapter()
+        +EqualsTransformer()
         +ReflectionInfoAdapter(method, context.loader, ignores)
         +Optimizer()
         +ConstantPropagator

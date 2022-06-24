@@ -24,4 +24,8 @@ class LambdaTerm (
             else -> term { lambda(type, tParams, body) }
         }
     }
+
+    override fun equals(other: Any?): Boolean {
+        return other is LambdaTerm && type == other.type && parameters == other.parameters && body == other.body
+    }
 }
