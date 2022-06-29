@@ -241,7 +241,7 @@ class EasyRandomDriver(val config: BeansConfig = defaultConfig) : Randomizer() {
         else -> throw UnknownTypeException(type.toString())
     }
 
-    fun next(type: Type, depth: Int): Any? {
+    fun next(type: Type, depth: Int): Any? = synchronized(this) {
         if (depth > config.depth) {
             log.warn("Reached maximum depth of generation $depth")
             return null
