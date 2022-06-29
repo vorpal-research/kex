@@ -4,8 +4,7 @@ import org.vorpal.research.kex.ExecutionContext
 import org.vorpal.research.kex.annotations.AnnotationManager
 import org.vorpal.research.kex.asm.manager.instantiationManager
 import org.vorpal.research.kex.asm.state.PredicateStateAnalysis
-import org.vorpal.research.kex.asm.util.Visibility
-import org.vorpal.research.kex.asm.util.visibility
+import org.vorpal.research.kex.asm.util.accessModifier
 import org.vorpal.research.kex.config.kexConfig
 import org.vorpal.research.kex.descriptor.*
 import org.vorpal.research.kex.ktype.*
@@ -32,8 +31,7 @@ import org.vorpal.research.kthelper.tryOrNull
 
 class GeneratorContext(
     val context: ExecutionContext,
-    val psa: PredicateStateAnalysis,
-    val visibilityLevel: Visibility
+    val psa: PredicateStateAnalysis
 ) {
     private val useRecCtors by lazy {
         kexConfig.getBooleanValue(
@@ -46,6 +44,7 @@ class GeneratorContext(
     val cm get() = context.cm
     val types get() = context.types
     val loader get() = context.loader
+    val accessLevel get() = context.accessLevel
 
     private val descriptorCache = mutableMapOf<Descriptor, ActionSequence>()
     private val klass2Constructors = mutableMapOf<Class, List<Method>>()
@@ -104,7 +103,7 @@ class GeneratorContext(
 
     val Method.isOverride get() = klass.allAncestors.any { tryOrNull { it.getMethod(name, desc) } != null }
 
-    val Class.isVisible get() = visibility >= visibilityLevel
+    val Class.isVisible get() = this@GeneratorContext.accessLevel.canAccess(this.accessModifier)
 
     val Class.externalCtors get() = instantiationManager.getExternalCtors(this)
 
@@ -131,15 +130,15 @@ class GeneratorContext(
         get() = when {
             this.isVisible -> methods
                 .filter { it.isStatic }
-                .filter { visibilityLevel <= it.visibility }
+                .filter { this@GeneratorContext.accessLevel.canAccess(it.accessModifier) }
                 .toSet()
             else -> setOf()
         }
 
     val Class.accessibleCtors: Set<Method>
         get() = when {
-            instantiationManager.isDirectlyInstantiable(this, visibilityLevel) -> constructors
-                .filter { visibilityLevel <= it.visibility }
+            instantiationManager.isDirectlyInstantiable(this, this@GeneratorContext.accessLevel) -> constructors
+                .filter { this@GeneratorContext.accessLevel.canAccess(it.accessModifier) }
                 .sortedBy { it.argTypes.size }
                 .toSet()
             else -> setOf()
@@ -149,7 +148,7 @@ class GeneratorContext(
         get() {
             val visibleMethods = methods
                 .filterNot { it.isStatic }
-                .filter { visibilityLevel <= it.visibility }
+                .filter { this@GeneratorContext.accessLevel.canAccess(it.accessModifier) }
                 .toSet()
             return when {
                 isVisible -> visibleMethods

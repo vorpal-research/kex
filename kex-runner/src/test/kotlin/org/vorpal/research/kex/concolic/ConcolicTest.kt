@@ -7,7 +7,6 @@ import org.vorpal.research.kex.KexRunnerTest
 import org.vorpal.research.kex.asm.analysis.concolic.InstructionConcolicChecker
 import org.vorpal.research.kex.asm.manager.ClassInstantiationDetector
 import org.vorpal.research.kex.asm.transform.SymbolicTraceCollector
-import org.vorpal.research.kex.asm.util.Visibility
 import org.vorpal.research.kex.jacoco.CoverageReporter
 import org.vorpal.research.kex.launcher.ClassLevel
 import org.vorpal.research.kex.trace.runner.ExecutorMasterController
@@ -27,7 +26,7 @@ abstract class ConcolicTest : KexRunnerTest() {
         ExecutorMasterController.use {
             it.start(analysisContext)
             executePipeline(analysisContext.cm, Package.defaultPackage) {
-                +ClassInstantiationDetector(analysisContext.cm, Visibility.PRIVATE)
+                +ClassInstantiationDetector(analysisContext)
             }
 
             InstructionConcolicChecker.run(analysisContext, klass.allMethods)

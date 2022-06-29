@@ -1,7 +1,5 @@
 package org.vorpal.research.kex.util
 
-import org.vorpal.research.kex.asm.util.Visibility
-import org.vorpal.research.kex.asm.util.visibility
 import org.vorpal.research.kex.ktype.KexType
 import org.vorpal.research.kex.ktype.kexType
 import org.vorpal.research.kex.ktype.type
@@ -112,13 +110,6 @@ fun Type.getAllSubtypes(tf: TypeFactory): Set<Type> = when (this) {
     else -> setOf()
 }
 
-val Type.visibility: Visibility get() = when (this) {
-    is ClassType -> this.klass.visibility
-    is ArrayType -> this.component.visibility
-    else -> Visibility.PUBLIC
-}
-
-fun KexType.getVisibility(tf: TypeFactory) = this.getKfgType(tf).visibility
 
 fun parseAsConcreteType(typeFactory: TypeFactory, name: String): KexType? {
     val type = parseStringToType(typeFactory, name)

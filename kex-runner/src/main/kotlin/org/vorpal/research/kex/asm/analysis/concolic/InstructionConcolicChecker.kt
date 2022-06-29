@@ -7,7 +7,7 @@ import org.vorpal.research.kex.ExecutionContext
 import org.vorpal.research.kex.annotations.AnnotationManager
 import org.vorpal.research.kex.asm.analysis.concolic.bfs.BfsPathSelectorImpl
 import org.vorpal.research.kex.asm.analysis.concolic.cgs.ContextGuidedSelector
-import org.vorpal.research.kex.asm.manager.isImpactable
+import org.vorpal.research.kex.asm.manager.MethodManager
 import org.vorpal.research.kex.asm.state.PredicateStateAnalysis
 import org.vorpal.research.kex.compile.JavaCompilerDriver
 import org.vorpal.research.kex.config.kexConfig
@@ -46,7 +46,7 @@ import java.nio.file.Path
 private class CompilerHelper(val ctx: ExecutionContext) {
     private val junitJar = getJunit()!!
     private val outputDir = kexConfig.getPathValue("kex", "outputDir")!!
-    val compileDir = outputDir.resolve(
+    val compileDir: Path = outputDir.resolve(
         kexConfig.getPathValue("compile", "compileDir", "compiled/")
     ).also {
         it.toFile().mkdirs()
@@ -90,7 +90,7 @@ class InstructionConcolicChecker(
 
     suspend fun visit(method: Method) {
         if (method.isStaticInitializer || !method.hasBody) return
-        if (!method.isImpactable) return
+        if (!MethodManager.canBeImpacted(method, ctx.accessLevel)) return
 
         try {
             log.debug { "Processing method $method" }

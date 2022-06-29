@@ -2,12 +2,10 @@ package org.vorpal.research.kex.trace.runner
 
 import org.vorpal.research.kex.ExecutionContext
 import org.vorpal.research.kex.asm.state.PredicateStateAnalysis
-import org.vorpal.research.kex.asm.util.Visibility
 import org.vorpal.research.kex.descriptor.Object2DescriptorConverter
 import org.vorpal.research.kex.parameters.Parameters
 import org.vorpal.research.kex.random.Randomizer
 import org.vorpal.research.kex.reanimator.Reanimator
-import org.vorpal.research.kex.reanimator.actionsequence.generator.GeneratorContext
 import org.vorpal.research.kex.reanimator.codegen.klassName
 import org.vorpal.research.kex.reanimator.codegen.packageName
 import org.vorpal.research.kex.trace.`object`.ActionTrace
@@ -61,10 +59,8 @@ class ReanimatingRandomObjectTracingRunner(
     val ctx: ExecutionContext,
     val nameContext: NameMapperContext,
     psa: PredicateStateAnalysis,
-    visibilityLevel: Visibility,
     method: Method
 ) : TracingRandomRunner<ActionTrace>(method, ctx.loader, ctx.random) {
-    val generatorContext = GeneratorContext(ctx, psa, visibilityLevel)
     val reanimator = Reanimator(ctx, psa, method.packageName, "Random${method.klassName}")
     private var testCounter = 0
 

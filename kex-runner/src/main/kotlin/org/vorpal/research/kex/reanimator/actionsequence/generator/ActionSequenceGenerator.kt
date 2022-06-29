@@ -2,7 +2,6 @@ package org.vorpal.research.kex.reanimator.actionsequence.generator
 
 import org.vorpal.research.kex.ExecutionContext
 import org.vorpal.research.kex.asm.state.PredicateStateAnalysis
-import org.vorpal.research.kex.asm.util.Visibility
 import org.vorpal.research.kex.config.kexConfig
 import org.vorpal.research.kex.descriptor.Descriptor
 import org.vorpal.research.kex.reanimator.actionsequence.ActionSequence
@@ -40,8 +39,8 @@ class ActionSequenceGenerator(override val context: GeneratorContext) : Generato
         typeGenerators += AnyGenerator(this)
     }
 
-    constructor(executionCtx: ExecutionContext, psa: PredicateStateAnalysis, visibilityLevel: Visibility)
-            : this(GeneratorContext(executionCtx, psa, visibilityLevel))
+    constructor(executionCtx: ExecutionContext, psa: PredicateStateAnalysis)
+            : this(GeneratorContext(executionCtx, psa))
 
     val Descriptor.generator: Generator
         get() = typeGenerators.firstOrNull { it.supports(this) } ?: unreachable {

@@ -2,8 +2,6 @@ package org.vorpal.research.kex.reanimator
 
 import org.vorpal.research.kex.ExecutionContext
 import org.vorpal.research.kex.asm.state.PredicateStateAnalysis
-import org.vorpal.research.kex.asm.util.Visibility
-import org.vorpal.research.kex.config.kexConfig
 import org.vorpal.research.kex.descriptor.Descriptor
 import org.vorpal.research.kex.descriptor.DescriptorRtMapper
 import org.vorpal.research.kex.ktype.KexRtManager
@@ -29,10 +27,6 @@ import org.vorpal.research.kthelper.logging.log
 import org.vorpal.research.kthelper.`try`
 import java.nio.file.Path
 import kotlin.system.measureTimeMillis
-
-private val visibilityLevel by lazy {
-    kexConfig.getEnumValue("testGen", "visibility", true, Visibility.PUBLIC)
-}
 
 val Parameters<Descriptor>.rtMapped: Parameters<Descriptor>
     get() {
@@ -60,7 +54,7 @@ class Reanimator(
 ) : ParameterGenerator {
     val cm: ClassManager get() = ctx.cm
     val printer: TestCasePrinter = JUnitTestCasePrinter(ctx, packageName, klassName)
-    private val csGenerator = ActionSequenceGenerator(ctx, psa, visibilityLevel)
+    private val csGenerator = ActionSequenceGenerator(ctx, psa)
     private val csExecutor = ActionSequenceExecutor(ctx)
 
     constructor(ctx: ExecutionContext, psa: PredicateStateAnalysis, method: Method) : this(

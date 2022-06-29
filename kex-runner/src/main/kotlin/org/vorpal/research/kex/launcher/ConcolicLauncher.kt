@@ -27,7 +27,7 @@ class ConcolicLauncher(classPaths: List<String>, targetName: String) : KexLaunch
 
     override fun preparePackage(ctx: ExecutionContext, psa: PredicateStateAnalysis, pkg: Package) =
         executePipeline(ctx.cm, pkg) {
-            +ClassInstantiationDetector(ctx.cm, visibilityLevel)
+            +ClassInstantiationDetector(ctx)
         }
 
     private val batchedTargets: Set<Set<Method>>

@@ -7,7 +7,7 @@ import kotlinx.serialization.Serializable
 import org.vorpal.research.kex.ExecutionContext
 import org.vorpal.research.kex.asm.analysis.DfsStrategy
 import org.vorpal.research.kex.asm.analysis.SearchStrategy
-import org.vorpal.research.kex.asm.manager.isImpactable
+import org.vorpal.research.kex.asm.manager.MethodManager
 import org.vorpal.research.kex.asm.state.PredicateStateAnalysis
 import org.vorpal.research.kex.config.kexConfig
 import org.vorpal.research.kex.parameters.Parameters
@@ -89,7 +89,7 @@ open class MethodChecker(
     override fun visit(method: Method) {
         super.visit(method)
 
-        if (!method.isImpactable || !method.hasBody) return
+        if (!MethodManager.canBeImpacted(method, ctx.accessLevel) || !method.hasBody) return
 
         log.debug("Checking method $method")
         log.debug(method.print())
