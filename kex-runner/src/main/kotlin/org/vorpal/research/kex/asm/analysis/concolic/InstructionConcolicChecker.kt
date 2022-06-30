@@ -82,12 +82,8 @@ class InstructionConcolicChecker(
             val coroutineContext = newFixedThreadPoolContext(executors, "concolic-dispatcher")
             runBlocking(coroutineContext) {
                 withTimeoutOrNull(timeLimit) {
-                    val jobs = targets.map {
+                    targets.forEach {
                         launch { InstructionConcolicChecker(context).visit(it) }
-                    }
-                    yield()
-                    for (job in jobs) {
-                        job.join()
                     }
                 }
             }

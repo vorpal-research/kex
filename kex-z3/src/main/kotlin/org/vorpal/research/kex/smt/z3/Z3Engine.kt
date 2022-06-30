@@ -344,7 +344,7 @@ object Z3Engine : SMTEngine<ExtendedContext, Expr<*>, Sort, FuncDecl<*>, Pattern
         ctx.intToString(ctx.mkBV2Int(ctx.mkFPToBV(ctx.mkFPRTZ(), expr as Expr<FPSort>, DWORD, true), true))
 
     override fun string2bv(ctx: ExtendedContext, expr: Expr<*>, sort: Sort): Expr<*> =
-        ctx.mkInt2BV(getSortBitSize(ctx, sort), ctx.stringToInt(expr as Expr<SeqSort<BitVecSort>>))
+        ctx.mkInt2BV(getSortBitSize(ctx, sort), ctx.stringToInt(expr as Expr<SeqSort<CharSort>>))
 
     override fun string2float(ctx: ExtendedContext, expr: Expr<*>): Expr<*> =
         bv2float(ctx, string2bv(ctx, expr, getBVSort(ctx, WORD)), getFloatSort(ctx))
@@ -355,37 +355,37 @@ object Z3Engine : SMTEngine<ExtendedContext, Expr<*>, Sort, FuncDecl<*>, Pattern
     override fun makeStringConst(ctx: ExtendedContext, value: String): Expr<*> = ctx.mkString(value)
 
     override fun contains(ctx: ExtendedContext, seq: Expr<*>, value: Expr<*>): Expr<*> =
-        ctx.mkContains<BoolSort>(seq as Expr<SeqSort<BitVecSort>>, value as Expr<SeqSort<BitVecSort>>)
+        ctx.mkContains(seq as Expr<SeqSort<BitVecSort>>, value as Expr<SeqSort<BitVecSort>>)
 
     override fun nths(ctx: ExtendedContext, seq: Expr<*>, index: Expr<*>): Expr<*> {
 //        val char2Int = ctx.mkFuncDecl("char.to_int", ctx.mkBitVecSort(), ctx.mkIntSort())
 //        val nth = ctx.MkNth(seq as Expr<SeqSort<BitVecSort>>, ctx.mkBV2Int(index as Expr<BitVecSort>, true))
 //        val nthInt = ctx.mkApp(char2Int, nth)
 //        return ctx.mkInt2BV(WORD, nthInt)
-        return ctx.MkNth<BitVecSort>(seq as Expr<SeqSort<BitVecSort>>, ctx.mkBV2Int(index as Expr<BitVecSort>, true))
+        return ctx.mkNth(seq as Expr<SeqSort<BitVecSort>>, ctx.mkBV2Int(index as Expr<BitVecSort>, true))
     }
 
     override fun length(ctx: ExtendedContext, seq: Expr<*>): Expr<*> =
-        ctx.mkInt2BV(WORD, ctx.mkLength<IntSort>(seq as Expr<SeqSort<BitVecSort>>))
+        ctx.mkInt2BV(WORD, ctx.mkLength(seq as Expr<SeqSort<CharSort>>))
 
     override fun prefixOf(ctx: ExtendedContext, seq: Expr<*>, prefix: Expr<*>): Expr<*> =
-        ctx.mkPrefixOf<BoolSort>(prefix as Expr<SeqSort<BitVecSort>>, seq as Expr<SeqSort<BitVecSort>>)
+        ctx.mkPrefixOf(prefix as Expr<SeqSort<CharSort>>, seq as Expr<SeqSort<CharSort>>)
 
     override fun suffixOf(ctx: ExtendedContext, seq: Expr<*>, suffix: Expr<*>): Expr<*> =
-        ctx.mkSuffixOf<BoolSort>(suffix as Expr<SeqSort<BitVecSort>>, seq as Expr<SeqSort<BitVecSort>>)
+        ctx.mkSuffixOf(suffix as Expr<SeqSort<CharSort>>, seq as Expr<SeqSort<CharSort>>)
 
     override fun at(ctx: ExtendedContext, seq: Expr<*>, index: Expr<*>): Expr<*> =
-        ctx.mkAt<SeqSort<BitVecSort>>(seq as Expr<SeqSort<BitVecSort>>, ctx.mkBV2Int(index as Expr<BitVecSort>, true))
+        ctx.mkAt(seq as Expr<SeqSort<CharSort>>, ctx.mkBV2Int(index as Expr<BitVecSort>, true))
 
     override fun extract(ctx: ExtendedContext, seq: Expr<*>, from: Expr<*>, to: Expr<*>): Expr<*> =
-        ctx.mkExtract<SeqSort<BitVecSort>>(
+        ctx.mkExtract(
             seq as Expr<SeqSort<BitVecSort>>,
             ctx.mkBV2Int(from as Expr<BitVecSort>, true),
             ctx.mkBV2Int(to as Expr<BitVecSort>, true)
         )
 
     override fun indexOf(ctx: ExtendedContext, seq: Expr<*>, subSeq: Expr<*>, offset: Expr<*>): Expr<*> =
-        ctx.mkInt2BV(WORD, ctx.mkIndexOf<SeqSort<BitVecSort>>(
+        ctx.mkInt2BV(WORD, ctx.mkIndexOf(
             seq as Expr<SeqSort<BitVecSort>>,
             subSeq as Expr<SeqSort<BitVecSort>>,
             ctx.mkBV2Int(offset as Expr<BitVecSort>, true)

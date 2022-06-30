@@ -1,7 +1,6 @@
 package org.vorpal.research.kex.state.transformer
 
 import org.vorpal.research.kex.ktype.*
-import org.vorpal.research.kex.state.PredicateState
 import org.vorpal.research.kex.state.predicate.EqualityPredicate
 import org.vorpal.research.kex.state.predicate.InequalityPredicate
 import org.vorpal.research.kex.state.predicate.Predicate
@@ -20,10 +19,6 @@ object ConstantPropagator : Transformer<ConstantPropagator> {
     infix fun Double.neq(other: Double) = (this - other) >= epsilon
     infix fun Float.eq(other: Float) = (this - other) < epsilon
     infix fun Float.neq(other: Float) = (this - other) >= epsilon
-
-    override fun apply(ps: PredicateState): PredicateState {
-        return ps
-    }
 
     override fun transformBinaryTerm(term: BinaryTerm): Term {
         val lhv = getConstantValue(term.lhv) ?: return term

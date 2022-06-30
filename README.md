@@ -4,7 +4,7 @@ Kex is a platform for analysis of Java  bytecode.
 
 # Dependencies
 
-* [z3](https://github.com/Z3Prover/z3/tree/z3-4.8.12) v4.8.12 with java bindings
+* [z3](https://github.com/Z3Prover/z3/tree/z3-4.8.17) v4.8.17 with java bindings
 * [boolector-java](https://aur.archlinux.org/packages/boolector-java/) v3.2.6
 
 # Build
