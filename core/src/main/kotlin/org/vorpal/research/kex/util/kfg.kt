@@ -37,6 +37,9 @@ fun Instruction.insertAfter(instructions: List<Instruction>) {
     this.parent.insertAfter(this, *instructions.toTypedArray())
 }
 
+val Instruction.next: Instruction? get() = parent.instructions.getOrNull(parent.indexOf(this) + 1)
+val Instruction.previous: Instruction? get() = parent.instructions.getOrNull(parent.indexOf(this) - 1)
+
 fun Any?.cmp(opcode: CmpOpcode, other: Any?) = when {
     this is Number && other is Number -> this.apply(opcode, other)
     this is Char && other is Number -> this.apply(opcode, other)
@@ -66,7 +69,10 @@ fun Number.apply(opcode: CmpOpcode, other: Char) = this.apply(opcode, other.code
 fun Char.apply(opcode: CmpOpcode, other: Number) = this.code.apply(opcode, other)
 fun Char.apply(opcode: CmpOpcode, other: Char) = this.code.apply(opcode, other.code)
 
-fun NameMapper.parseValue(valueName: String): Value {
+fun NameMapper.parseValue(valueName: String): Value =
+    parseValueOrNull(valueName) ?:  unreachable { log.error("Unknown value name $valueName for object cmp") }
+
+fun NameMapper.parseValueOrNull(valueName: String): Value? {
     val values = method.cm.value
     return getValue(valueName) ?: when {
         valueName.matches(Regex("-?\\d+L")) -> values.getLong(valueName.toLong())
@@ -82,7 +88,7 @@ fun NameMapper.parseValue(valueName: String): Value {
         valueName == "null" -> values.nullConstant
         valueName == "true" -> values.trueConstant
         valueName == "false" -> values.falseConstant
-        else -> unreachable { log.error("Unknown value name $valueName for object cmp") }
+        else -> null
     }
 }
 
