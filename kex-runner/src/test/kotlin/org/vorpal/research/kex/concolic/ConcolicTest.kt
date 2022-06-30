@@ -1,5 +1,6 @@
 package org.vorpal.research.kex.concolic
 
+import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.InternalSerializationApi
 import org.vorpal.research.kex.ExecutionContext
@@ -18,6 +19,7 @@ import kotlin.test.assertEquals
 
 @ExperimentalSerializationApi
 @InternalSerializationApi
+@DelicateCoroutinesApi
 abstract class ConcolicTest : KexRunnerTest() {
 
     override fun createTraceCollector(context: ExecutionContext) = SymbolicTraceCollector(context)

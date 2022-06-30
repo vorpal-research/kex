@@ -70,38 +70,43 @@ class InstructionConcolicChecker(
 
     private val compilerHelper = CompilerHelper(ctx)
 
-    private val timeLimit = kexConfig.getLongValue("concolic", "timeLimit", 100000L)
     private val searchStrategy = kexConfig.getStringValue("concolic", "searchStrategy", "bfs")
     private var testIndex = 0
 
     companion object {
+        @DelicateCoroutinesApi
         fun run(context: ExecutionContext, targets: Set<Method>) {
-            runBlocking(Dispatchers.Default) {
-                val jobs = targets.map {
-                    launch { InstructionConcolicChecker(context).visit(it) }
-                }
-                yield()
-                for (job in jobs) {
-                    job.join()
+            val executors = kexConfig.getIntValue("concolic", "numberOfExecutors", 8)
+            val timeLimit = kexConfig.getLongValue("concolic", "timeLimit", 100000L)
+
+            val coroutineContext = newFixedThreadPoolContext(executors, "concolic-dispatcher")
+            runBlocking(coroutineContext) {
+                withTimeoutOrNull(timeLimit) {
+                    val jobs = targets.map {
+                        launch { InstructionConcolicChecker(context).visit(it) }
+                    }
+                    yield()
+                    for (job in jobs) {
+                        job.join()
+                    }
                 }
             }
         }
     }
 
     suspend fun visit(method: Method) {
-        if (method.isStaticInitializer || !method.hasBody) return
-        if (!MethodManager.canBeImpacted(method, ctx.accessLevel)) return
-
         try {
+            if (method.isStaticInitializer || !method.hasBody) return
+            if (!MethodManager.canBeImpacted(method, ctx.accessLevel)) return
+
             log.debug { "Processing method $method" }
             log.debug { method.print() }
 
-            withTimeout(timeLimit) {
-                processMethod(method)
-            }
+            processMethod(method)
             log.debug { "Method $method processing is finished normally" }
-        } catch (e: TimeoutCancellationException) {
-            log.debug { "Method $method processing is finished with timeout exception" }
+        } catch (e: CancellationException) {
+            log.warn { "Method $method processing is finished with timeout" }
+            throw e
         }
     }
 

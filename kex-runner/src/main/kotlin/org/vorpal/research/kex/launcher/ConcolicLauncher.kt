@@ -1,5 +1,6 @@
 package org.vorpal.research.kex.launcher
 
+import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.InternalSerializationApi
 import org.vorpal.research.kex.ExecutionContext
@@ -20,6 +21,7 @@ import org.vorpal.research.kthelper.logging.log
 
 @ExperimentalSerializationApi
 @InternalSerializationApi
+@DelicateCoroutinesApi
 class ConcolicLauncher(classPaths: List<String>, targetName: String) : KexLauncher(classPaths, targetName) {
     override fun createInstrumenter(context: ExecutionContext): MethodVisitor {
         return SymbolicTraceCollector(context)

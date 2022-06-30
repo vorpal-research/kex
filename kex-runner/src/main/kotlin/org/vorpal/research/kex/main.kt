@@ -1,5 +1,6 @@
 package org.vorpal.research.kex
 
+import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.InternalSerializationApi
 import org.vorpal.research.kex.config.FileConfig
@@ -15,6 +16,7 @@ import kotlin.system.exitProcess
 
 @ExperimentalSerializationApi
 @InternalSerializationApi
+@DelicateCoroutinesApi
 fun main(args: Array<String>) {
     val cmd = RunnerCmdConfig(args)
     val properties = cmd.getCmdValue("config", "kex.ini")
