@@ -14,4 +14,4 @@ jobs:
 
     steps:
     - name: Run Kex tests docker
-      uses: vorpal-research/kex-dockerfile@v1
+      uses: vorpal-research/kex-dockerfile@v2

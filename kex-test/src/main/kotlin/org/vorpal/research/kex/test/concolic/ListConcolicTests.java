@@ -40,9 +40,27 @@ public class ListConcolicTests {
         }
     }
 
+    public static void testArrayListIndexOf2(ArrayList<Point> points, Point p) {
+        int i = points.indexOf(p);
+        if (i == -1) {
+            throw new IllegalStateException("a");
+        } else {
+            throw new IllegalStateException("b");
+        }
+    }
+
     public static void testLinkedListIndexOf(LinkedList<Point> points, Point p) {
         int i = points.indexOf(p);
         if (i > 0) {
+            throw new IllegalStateException("a");
+        } else {
+            throw new IllegalStateException("b");
+        }
+    }
+
+    public static void testLinkedListIndexOf2(LinkedList<Point> points, Point p) {
+        int i = points.indexOf(p);
+        if (i == -1) {
             throw new IllegalStateException("a");
         } else {
             throw new IllegalStateException("b");

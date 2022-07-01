@@ -110,7 +110,7 @@ class SymbolicTraceBuilder(
     private val callStack = stackOf<CallFrame>()
     private val traceCollectingEnabled get() = callStack.isEmpty()
 
-    private data class CallFrame(val call: Instruction, val next: Instruction)
+    private data class CallFrame(val call: CallInst, val next: Instruction)
 
     private class FrameStack : Iterable<Frame> {
         private val frames = stackOf<Frame>()
@@ -162,7 +162,7 @@ class SymbolicTraceBuilder(
         SymbolicTraceException("", this)
     }
 
-    private fun addToCallTrace(call: Instruction) {
+    private fun addToCallTrace(call: CallInst) {
         callStack.push(CallFrame(call, call.next!!))
     }
 
@@ -173,13 +173,14 @@ class SymbolicTraceBuilder(
     private fun preCheck(name: String) {
         if (callStack.isEmpty()) return
         val (currentCall, expectedNext) = callStack.peek()
-        log.debug("Current inst: ${(parseValueOrNull(name) as? Instruction)?.print()}")
-        log.debug("Current call stack: ${callStack.joinToString("\n") { "${it.call.print()} - ${it.next.print()}"} }")
-        when (parseValueOrNull(name)) {
+        when (val currentInst = parseValueOrNull(name)) {
             currentCall -> addToCallTrace(currentCall)
             expectedNext -> popFromCallTrace()
+            is ReturnInst -> {
+                ktassert(frames.peek().method == currentInst.parent.method)
+                frames.pop()
+            }
         }
-        log.debug("Tracing: ${traceCollectingEnabled}")
     }
 
     private fun parseMethod(className: String, methodName: String, args: List<String>, retType: String): Method {
@@ -281,14 +282,12 @@ class SymbolicTraceBuilder(
         instance: Any?,
         args: List<Any?>
     ) = safeCall {
-        if (!traceCollectingEnabled) return@safeCall
-
         val method = parseMethod(className, methodName, argTypes, retType)
         frames.push(Frame(method, mutableMapOf(), lastCall?.receiver))
         if (lastCall != null) {
             val call = lastCall!!
             if (!(method overrides call.method)) {
-                frames.pop()
+                checkCall()
                 return@safeCall
             }
             popFromCallTrace()
@@ -298,6 +297,8 @@ class SymbolicTraceBuilder(
             }
             lastCall = null
         } else {
+            if (!traceCollectingEnabled) return@safeCall
+
             for ((index, argType) in method.argTypes.withIndex()) {
                 val argValue = cm.value.getArgument(index, method, argType)
                 val argTerm = mkNewValue(argValue)
@@ -364,6 +365,11 @@ class SymbolicTraceBuilder(
             val frame = currentFrame
             val candidates = frame.catchMap.keys.filter { exceptionType.isSubtypeOf(it) }
             val candidate = candidates.find { candidate -> candidates.all { candidate.isSubtypeOf(it) } }
+
+            if (callStack.isNotEmpty() && frames.peek().method overrides callStack.peek().call.parent.method) {
+                callStack.pop()
+            }
+
             if (candidate != null) {
                 valueMap.clear()
                 valueMap.putAll(frame.catchMap[candidate]!!)
@@ -593,11 +599,12 @@ class SymbolicTraceBuilder(
         exception: String,
         concreteException: Any?
     ) = safeCall {
-        preCheck(exception)
-        if (!traceCollectingEnabled) return@safeCall
 
         val exceptionDescriptor = converter.convert(concreteException)
         restoreCatchFrame(exceptionDescriptor.type.getKfgType(ctx.types))
+
+//        preCheck(exception)
+        if (!traceCollectingEnabled) return@safeCall
 
         val kfgException = parseValue(exception) as CatchInst
         preProcess(kfgException)
@@ -974,7 +981,7 @@ class SymbolicTraceBuilder(
         is Long -> value
         is Float -> value
         is Double -> value
-        else -> unreachable { log.error("Could not compute numeriv value of $value") }
+        else -> unreachable { log.error("Could not compute numeric value of $value") }
     }
 
     override fun switch(
@@ -1083,15 +1090,18 @@ class SymbolicTraceBuilder(
         postProcess(kfgValue, predicate)
     }
 
-    override fun addNullityConstraints(inst: String, value: String, concreteValue: Any?) {
+    override fun addNullityConstraints(inst: String, value: String, concreteValue: Any?) = safeCall {
+        preCheck(inst)
+        if (!traceCollectingEnabled) return@safeCall
+
         val instruction = parseValue(inst) as Instruction
 
         val kfgValue = parseValue(value)
         val termValue = mkValue(kfgValue)
 
-        if (kfgValue is ThisRef) return
-        else if (termValue in nullChecked) return
-        else if (termValue is NullTerm) return
+        if (kfgValue is ThisRef) return@safeCall
+        else if (termValue in nullChecked) return@safeCall
+        else if (termValue is NullTerm) return@safeCall
         nullChecked += termValue
 
         val checkName = term { value(KexBool(), "${termValue}NullCheck") }
@@ -1111,8 +1121,11 @@ class SymbolicTraceBuilder(
         stateBuilder += PathClause(PathClauseType.NULL_CHECK, instruction, pathPredicate)
     }
 
-    override fun addTypeConstraints(inst: String, value: String, concreteValue: Any?) {
-        if (concreteValue == null) return
+    override fun addTypeConstraints(inst: String, value: String, concreteValue: Any?) = safeCall {
+        preCheck(inst)
+        if (!traceCollectingEnabled) return@safeCall
+
+        if (concreteValue == null) return@safeCall
 
         val instruction = parseValue(inst) as Instruction
 
@@ -1122,7 +1135,7 @@ class SymbolicTraceBuilder(
         val kfgType = descriptorValue.type.getKfgType(ctx.types)
         if (termValue in typeChecked) {
             val checkedType = typeChecked.getValue(termValue)
-            if (checkedType.isSubtypeOf(kfgType)) return
+            if (checkedType.isSubtypeOf(kfgType)) return@safeCall
         }
         typeChecked[termValue] = kfgType
 
@@ -1134,8 +1147,11 @@ class SymbolicTraceBuilder(
         stateBuilder += PathClause(PathClauseType.TYPE_CHECK, instruction, predicate)
     }
 
-    override fun addTypeConstraints(inst: String, value: String, type: String, concreteValue: Any?) {
-        if (concreteValue == null) return
+    override fun addTypeConstraints(inst: String, value: String, type: String, concreteValue: Any?) = safeCall {
+        preCheck(inst)
+        if (!traceCollectingEnabled) return@safeCall
+
+        if (concreteValue == null) return@safeCall
         val instruction = parseValue(inst) as Instruction
 
         val kfgValue = parseValue(value)
@@ -1143,10 +1159,10 @@ class SymbolicTraceBuilder(
         val expectedKfgType = parseStringToType(cm.type, type)
         val descriptorValue = concreteValue.getAsDescriptor()
         val actualKfgType = descriptorValue.type.getKfgType(ctx.types)
-        if (kfgValue is NullConstant) return
+        if (kfgValue is NullConstant) return@safeCall
         if (termValue in typeChecked) {
             val checkedType = typeChecked.getValue(termValue)
-            if (checkedType.isSubtypeOf(expectedKfgType)) return
+            if (checkedType.isSubtypeOf(expectedKfgType)) return@safeCall
         }
         typeChecked[termValue] = expectedKfgType
 
@@ -1164,8 +1180,11 @@ class SymbolicTraceBuilder(
         index: String,
         concreteArray: Any?,
         concreteIndex: Any?
-    ) {
-        if (concreteArray == null) return
+    ) = safeCall {
+        preCheck(inst)
+        if (!traceCollectingEnabled) return@safeCall
+
+        if (concreteArray == null) return@safeCall
 
         val instruction = parseValue(inst) as Instruction
 
@@ -1175,11 +1194,11 @@ class SymbolicTraceBuilder(
         val termArray = mkValue(kfgArray)
         val termIndex = mkValue(kfgIndex)
 
-        if (termIndex in indexChecked.getOrPut(termArray, :: mutableSetOf)) return
+        if (termIndex in indexChecked.getOrPut(termArray, :: mutableSetOf)) return@safeCall
         indexChecked[termArray]!!.add(termIndex)
 
         val actualLength = concreteArray.arraySize
-        val actualIndex = (concreteIndex as? Int) ?: return
+        val actualIndex = (concreteIndex as? Int) ?: return@safeCall
 
         val checkTerm = term { value(KexBool(), "${termArray}IndexCheck${termIndex}") }
         val checkPredicate = state {
