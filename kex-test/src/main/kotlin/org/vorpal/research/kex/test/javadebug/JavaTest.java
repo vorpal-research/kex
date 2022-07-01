@@ -1,5 +1,7 @@
 package org.vorpal.research.kex.test.javadebug;
 
+import org.vorpal.research.kex.intrinsics.AssertIntrinsics;
+
 import java.util.ArrayList;
 
 public class JavaTest {
@@ -44,12 +46,13 @@ public class JavaTest {
 //    }
 
     public static void testArrayListIndexOf(ArrayList<org.vorpal.research.kex.test.concolic.Point> points, org.vorpal.research.kex.test.concolic.Point p) {
+        if (p == null) return;
         int i = points.indexOf(p);
         if (i > 0) {
             throw new IllegalStateException("a");
-        } else {
-            throw new IllegalStateException("b");
         }
+        AssertIntrinsics.kexAssert(i == -1);
+        throw new IllegalStateException("b");
     }
 
 //    public static void testLinkedListIndexOf(LinkedList<org.vorpal.research.kex.test.concolic.Point> points, Point p) {

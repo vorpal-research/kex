@@ -15,7 +15,9 @@ import org.vorpal.research.kex.state.term.Term
 import org.vorpal.research.kex.state.term.term
 import org.vorpal.research.kex.state.transformer.TermRenamer
 import org.vorpal.research.kex.util.cmp
+import org.vorpal.research.kex.util.next
 import org.vorpal.research.kex.util.parseValue
+import org.vorpal.research.kex.util.parseValueOrNull
 import org.vorpal.research.kfg.ir.*
 import org.vorpal.research.kfg.ir.value.*
 import org.vorpal.research.kfg.ir.value.instruction.*
@@ -102,6 +104,14 @@ class SymbolicTraceBuilder(
             currentFrame.previousBlock = block
         }
 
+    /**
+     * call stack info for collecting the right trace
+     */
+    private val callStack = stackOf<CallFrame>()
+    private val traceCollectingEnabled get() = callStack.isEmpty()
+
+    private data class CallFrame(val call: Instruction, val next: Instruction)
+
     private class FrameStack : Iterable<Frame> {
         private val frames = stackOf<Frame>()
 
@@ -152,6 +162,26 @@ class SymbolicTraceBuilder(
         SymbolicTraceException("", this)
     }
 
+    private fun addToCallTrace(call: Instruction) {
+        callStack.push(CallFrame(call, call.next!!))
+    }
+
+    private fun popFromCallTrace() {
+        if (callStack.isNotEmpty()) callStack.pop()
+    }
+
+    private fun preCheck(name: String) {
+        if (callStack.isEmpty()) return
+        val (currentCall, expectedNext) = callStack.peek()
+        log.debug("Current inst: ${(parseValueOrNull(name) as? Instruction)?.print()}")
+        log.debug("Current call stack: ${callStack.joinToString("\n") { "${it.call.print()} - ${it.next.print()}"} }")
+        when (parseValueOrNull(name)) {
+            currentCall -> addToCallTrace(currentCall)
+            expectedNext -> popFromCallTrace()
+        }
+        log.debug("Tracing: ${traceCollectingEnabled}")
+    }
+
     private fun parseMethod(className: String, methodName: String, args: List<String>, retType: String): Method {
         val klass = cm[className]
         return klass.getMethod(methodName, MethodDescriptor(args.map { it.toType() }.toTypedArray(), retType.toType()))
@@ -167,6 +197,11 @@ class SymbolicTraceBuilder(
     private fun parseValue(valueName: String): Value {
         val nm = nameMapperContext.getMapper(currentMethod)
         return nm.parseValue(valueName)
+    }
+
+    private fun parseValueOrNull(valueName: String): Value? {
+        val nm = nameMapperContext.getMapper(currentMethod)
+        return nm.parseValueOrNull(valueName)
     }
 
     private fun newValue(value: Value) = term {
@@ -246,11 +281,17 @@ class SymbolicTraceBuilder(
         instance: Any?,
         args: List<Any?>
     ) = safeCall {
+        if (!traceCollectingEnabled) return@safeCall
+
         val method = parseMethod(className, methodName, argTypes, retType)
         frames.push(Frame(method, mutableMapOf(), lastCall?.receiver))
         if (lastCall != null) {
             val call = lastCall!!
-            ktassert(method overrides call.method)
+            if (!(method overrides call.method)) {
+                frames.pop()
+                return@safeCall
+            }
+            popFromCallTrace()
 
             for ((value, term) in method.parameterValues.asList.zip(call.params.asList)) {
                 valueMap[value] = term
@@ -344,6 +385,9 @@ class SymbolicTraceBuilder(
         concreteRef: Any?,
         concreteIndex: Any?
     ) = safeCall {
+        preCheck(value)
+        if (!traceCollectingEnabled) return@safeCall
+
         val kfgValue = parseValue(value) as ArrayLoadInst
         preProcess(kfgValue)
 
@@ -376,6 +420,9 @@ class SymbolicTraceBuilder(
         concreteIndex: Any?,
         concreteValue: Any?
     ) = safeCall {
+        preCheck(inst)
+        if (!traceCollectingEnabled) return@safeCall
+
         val instruction = parseValue(inst) as ArrayStoreInst
         preProcess(instruction)
 
@@ -406,6 +453,9 @@ class SymbolicTraceBuilder(
         concreteLhv: Any?,
         concreteRhv: Any?
     ) = safeCall {
+        preCheck(value)
+        if (!traceCollectingEnabled) return@safeCall
+
         val kfgValue = parseValue(value) as BinaryInst
         preProcess(kfgValue)
 
@@ -433,6 +483,9 @@ class SymbolicTraceBuilder(
         inst: String,
         condition: String
     ) = safeCall {
+        preCheck(inst)
+        if (!traceCollectingEnabled) return@safeCall
+
         val instruction = parseValue(inst) as BranchInst
         preProcess(instruction)
 
@@ -460,8 +513,12 @@ class SymbolicTraceBuilder(
         arguments: List<String>,
         concreteArguments: List<Any?>
     ) = safeCall {
+        preCheck(inst)
+        if (!traceCollectingEnabled) return@safeCall
+
         val instruction = parseValue(inst) as CallInst
         preProcess(instruction)
+        addToCallTrace(instruction)
 
         val calledMethod = parseMethod(className, methodName, argTypes, retType)
         val kfgReturn = returnValue?.let { parseValue(it) }
@@ -510,6 +567,9 @@ class SymbolicTraceBuilder(
         concreteValue: Any?,
         concreteOperand: Any?
     ) = safeCall {
+        preCheck(value)
+        if (!traceCollectingEnabled) return@safeCall
+
         val kfgValue = parseValue(value) as CastInst
         preProcess(kfgValue)
 
@@ -533,6 +593,9 @@ class SymbolicTraceBuilder(
         exception: String,
         concreteException: Any?
     ) = safeCall {
+        preCheck(exception)
+        if (!traceCollectingEnabled) return@safeCall
+
         val exceptionDescriptor = converter.convert(concreteException)
         restoreCatchFrame(exceptionDescriptor.type.getKfgType(ctx.types))
 
@@ -559,6 +622,9 @@ class SymbolicTraceBuilder(
         concreteLhv: Any?,
         concreteRhv: Any?
     ) = safeCall {
+        preCheck(value)
+        if (!traceCollectingEnabled) return@safeCall
+
         val kfgValue = parseValue(value) as CmpInst
         preProcess(kfgValue)
 
@@ -587,6 +653,9 @@ class SymbolicTraceBuilder(
         operand: String,
         concreteOperand: Any?
     ) = safeCall {
+        preCheck(inst)
+        if (!traceCollectingEnabled) return@safeCall
+
         val instruction = parseValue(inst) as EnterMonitorInst
         preProcess(instruction)
 
@@ -606,6 +675,9 @@ class SymbolicTraceBuilder(
         operand: String,
         concreteOperand: Any?
     ) = safeCall {
+        preCheck(inst)
+        if (!traceCollectingEnabled) return@safeCall
+
         val instruction = parseValue(inst) as ExitMonitorInst
         preProcess(instruction)
 
@@ -629,6 +701,9 @@ class SymbolicTraceBuilder(
         concreteValue: Any?,
         concreteOwner: Any?
     ) = safeCall {
+        preCheck(value)
+        if (!traceCollectingEnabled) return@safeCall
+
         val kfgValue = parseValue(value) as FieldLoadInst
         preProcess(kfgValue)
 
@@ -661,7 +736,9 @@ class SymbolicTraceBuilder(
         concreteValue: Any?,
         concreteOwner: Any?
     ) = safeCall {
-        checkCall()
+        preCheck(inst)
+        if (!traceCollectingEnabled) return@safeCall
+
         val instruction = parseValue(inst) as FieldStoreInst
         preProcess(instruction)
 
@@ -689,6 +766,9 @@ class SymbolicTraceBuilder(
         concreteValue: Any?,
         concreteOperand: Any?
     ) = safeCall {
+        preCheck(value)
+        if (!traceCollectingEnabled) return@safeCall
+
         val kfgValue = parseValue(value) as InstanceOfInst
         preProcess(kfgValue)
 
@@ -714,7 +794,10 @@ class SymbolicTraceBuilder(
         operands: List<String>,
         concreteValue: Any?,
         concreteOperands: List<Any?>
-    ) {
+    ) = safeCall {
+        preCheck(value)
+        if (!traceCollectingEnabled) return@safeCall
+
         val kfgValue = parseValue(value) as InvokeDynamicInst
         preProcess(kfgValue)
 
@@ -740,7 +823,7 @@ class SymbolicTraceBuilder(
             }
 
             val expr = lambdaBase.method.asTermExpr()
-                ?: return log.error("Could not process ${kfgValue.print()}")
+                ?: return@safeCall log.error("Could not process ${kfgValue.print()}")
 
             termValue equality lambda(kfgValue.type.kexType, lambdaParameters) {
                 TermRenamer(".labmda.${lambdaBase.method.name}", argParameters.zip(lambdaParameters).toMap())
@@ -754,6 +837,9 @@ class SymbolicTraceBuilder(
     override fun jump(
         inst: String
     ) = safeCall {
+        preCheck(inst)
+        if (!traceCollectingEnabled) return@safeCall
+
         val instruction = parseValue(inst) as JumpInst
         preProcess(instruction)
 
@@ -771,6 +857,9 @@ class SymbolicTraceBuilder(
         concreteValue: Any?,
         concreteDimensions: List<Any?>
     ) = safeCall {
+        preCheck(value)
+        if (!traceCollectingEnabled) return@safeCall
+
         val kfgValue = parseValue(value) as NewArrayInst
         preProcess(kfgValue)
 
@@ -798,6 +887,9 @@ class SymbolicTraceBuilder(
     override fun new(
         value: String
     ) = safeCall {
+        preCheck(value)
+        if (!traceCollectingEnabled) return@safeCall
+
         val kfgValue = parseValue(value) as NewInst
         preProcess(kfgValue)
 
@@ -817,6 +909,9 @@ class SymbolicTraceBuilder(
         value: String,
         concreteValue: Any?
     ) = safeCall {
+        preCheck(value)
+        if (!traceCollectingEnabled) return@safeCall
+
         val kfgValue = parseValue(value) as PhiInst
         preProcess(kfgValue)
 
@@ -841,6 +936,9 @@ class SymbolicTraceBuilder(
         returnValue: String?,
         concreteValue: Any?
     ) = safeCall {
+        preCheck(inst)
+        if (!traceCollectingEnabled) return@safeCall
+
         val instruction = parseValue(inst) as ReturnInst
         preProcess(instruction)
 
@@ -884,6 +982,9 @@ class SymbolicTraceBuilder(
         value: String,
         concreteValue: Any?
     ) = safeCall {
+        preCheck(inst)
+        if (!traceCollectingEnabled) return@safeCall
+
         val instruction = parseValue(inst) as SwitchInst
         preProcess(instruction)
 
@@ -908,6 +1009,9 @@ class SymbolicTraceBuilder(
         value: String,
         concreteValue: Any?
     ) = safeCall {
+        preCheck(inst)
+        if (!traceCollectingEnabled) return@safeCall
+
         val instruction = parseValue(inst) as TableSwitchInst
         preProcess(instruction)
 
@@ -930,6 +1034,9 @@ class SymbolicTraceBuilder(
         exception: String,
         concreteException: Any?
     ) = safeCall {
+        preCheck(inst)
+        if (!traceCollectingEnabled) return@safeCall
+
         val instruction = parseValue(inst) as ThrowInst
         preProcess(instruction)
 
@@ -953,6 +1060,9 @@ class SymbolicTraceBuilder(
         concreteValue: Any?,
         concreteOperand: Any?
     ) = safeCall {
+        preCheck(value)
+        if (!traceCollectingEnabled) return@safeCall
+
         val kfgValue = parseValue(value) as UnaryInst
         preProcess(kfgValue)
 
