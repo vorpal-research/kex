@@ -21,6 +21,7 @@ import org.vorpal.research.kex.util.parseValueOrNull
 import org.vorpal.research.kfg.ir.*
 import org.vorpal.research.kfg.ir.value.*
 import org.vorpal.research.kfg.ir.value.instruction.*
+import org.vorpal.research.kfg.type.SystemTypeNames
 import org.vorpal.research.kfg.type.Type
 import org.vorpal.research.kfg.type.parseDesc
 import org.vorpal.research.kfg.type.parseStringToType
@@ -225,21 +226,26 @@ class SymbolicTraceBuilder(
     private fun Descriptor.unwrapped(type: KexType) = when (type) {
         is KexIntegral, is KexReal -> when (this) {
             is ObjectDescriptor -> when {
-                type is KexBool && this.type == KexClass("java/lang/Integer") -> {
+                type is KexBool && this.type == KexClass(SystemTypeNames.integerClass) -> {
                     val value = this["value", KexInt()]!! as ConstantDescriptor.Int
                     if (value.value == 0) descriptor { const(false) }
                     else descriptor { const(true) }
                 }
-                type is KexInt && this.type == KexClass("java/lang/Boolean") -> {
+                type is KexInt && this.type == KexClass(SystemTypeNames.booleanClass) -> {
                     val value = this["value", KexBool()]!! as ConstantDescriptor.Bool
                     if (value.value) descriptor { const(1) }
                     else descriptor { const(0) }
                 }
-                type is KexInt && this.type == KexClass("java/lang/Character") -> {
+                type is KexInt && this.type == KexClass(SystemTypeNames.charClass) -> {
                     val value = this["value", KexChar()]!! as ConstantDescriptor.Char
                     descriptor { const(value.value.code) }
                 }
-                else -> this["value", type]!!
+                type is KexChar && this.type == KexClass(SystemTypeNames.integerClass) -> {
+                    val value = this["value", KexInt()]!! as ConstantDescriptor.Int
+                    descriptor { const(value.value.toChar()) }
+                }
+                else -> this["value", type]
+                    ?: unreachable { log.error("Unknown descriptor for type $type: $this") }
             }
             else -> this
         }

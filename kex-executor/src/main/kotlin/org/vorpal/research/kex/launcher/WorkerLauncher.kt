@@ -101,7 +101,7 @@ class WorkerLauncher(args: Array<String>) {
 //            {"klass":"org.vorpal.research.kex.test.javadebug.JavaTest_testLinkedListIndexOf_741047150","testMethod":"test","setupMethod":"setup"}
             override fun receive(): TestExecutionRequest {
                 return TestExecutionRequest(
-                    "org.vorpal.research.kex.test.javadebug.JavaTest_testLinkedListIndexOf_741047153",
+                    "net.objecthunter.exp4j.shuntingyard.ShuntingYard_convertToRPN_21409962550",
                     testMethod = "test",
                     setupMethod = "setup"
                 )
