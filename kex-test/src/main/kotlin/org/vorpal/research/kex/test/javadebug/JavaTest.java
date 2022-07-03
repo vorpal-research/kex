@@ -2,6 +2,7 @@ package org.vorpal.research.kex.test.javadebug;
 
 import org.vorpal.research.kex.test.concolic.Point;
 
+import java.util.ArrayList;
 import java.util.LinkedList;
 
 public class JavaTest {
@@ -54,22 +55,28 @@ public class JavaTest {
 //        }
 //    }
 
-    public static void testLinkedListIndexOf(LinkedList<Point> points, Point p) {
-        int i = points.indexOf(p);
-        if (i > 0) {
-            throw new IllegalStateException("a");
-        } else {
-            throw new IllegalStateException("b");
-        }
-    }
-
-    public static void testLinkedListIndexOf2(LinkedList<Point> points, Point p) {
-        int i = points.indexOf(p);
-        if (i == -1) {
-            throw new IllegalStateException("b");
-        } else {
-            throw new IllegalStateException("a");
-        }
-    }
+//    public static void testLinkedListIndexOf(LinkedList<Point> points, Point p) {
+//        int i = points.indexOf(p);
+//        if (i > 0) {
+//            throw new IllegalStateException("a");
+//        } else {
+//            throw new IllegalStateException("b");
+//        }
+//    }
+//
+//    public static void testLinkedListIndexOf2(LinkedList<Point> points, Point p) {
+//        int i = points.indexOf(p);
+//        if (i == -1) {
+//            throw new IllegalStateException("b");
+//        } else {
+//            throw new IllegalStateException("a");
+//        }
+//    }
+//    public static void testArrayList(ArrayList<Point> points) {
+//        if (points.size() == 0) return;
+//        if (points.get(0).getX() == 10) {
+//            throw new IllegalStateException();
+//        }
+//    }
 }
 

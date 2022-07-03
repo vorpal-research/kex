@@ -3,6 +3,7 @@ package org.vorpal.research.kex.concolic
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.InternalSerializationApi
+import org.junit.Ignore
 import org.junit.Test
 
 @ExperimentalSerializationApi
@@ -10,6 +11,7 @@ import org.junit.Test
 @DelicateCoroutinesApi
 class ListLongTest : ConcolicTest() {
     @Test
+    @Ignore
     fun listConcolicTest() {
         assertCoverage(cm["org/vorpal/research/kex/test/concolic/ListConcolicTests"], 1.0)
     }

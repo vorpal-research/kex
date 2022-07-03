@@ -1,13 +1,13 @@
 package org.vorpal.research.kex.reanimator.actionsequence.generator
 
+import org.vorpal.research.kex.descriptor.ArrayDescriptor
 import org.vorpal.research.kex.descriptor.Descriptor
 import org.vorpal.research.kex.descriptor.ObjectDescriptor
+import org.vorpal.research.kex.descriptor.descriptor
 import org.vorpal.research.kex.ktype.KexRtManager.rtMapped
+import org.vorpal.research.kex.ktype.asArray
 import org.vorpal.research.kex.ktype.kexType
-import org.vorpal.research.kex.reanimator.actionsequence.ActionList
-import org.vorpal.research.kex.reanimator.actionsequence.ActionSequence
-import org.vorpal.research.kex.reanimator.actionsequence.ConstructorCall
-import org.vorpal.research.kex.reanimator.actionsequence.DefaultConstructorCall
+import org.vorpal.research.kex.reanimator.actionsequence.*
 import org.vorpal.research.kex.state.transformer.getCtor
 
 class KexLinkedListGenerator(val fallback: Generator) : Generator {
@@ -15,24 +15,31 @@ class KexLinkedListGenerator(val fallback: Generator) : Generator {
         get() = fallback.context
     private val kfgKexLinkedList = context.cm.linkedListClass.rtMapped
     private val kexLinkedList = kfgKexLinkedList.kexType
+    private val kfgKexArrayList = context.cm.arrayListClass.rtMapped
+    private val kexArrayList = kfgKexArrayList.kexType
 
     override fun supports(descriptor: Descriptor): Boolean = descriptor.type == kexLinkedList
 
     override fun generate(descriptor: Descriptor, generationDepth: Int): ActionSequence = with (context) {
         descriptor as ObjectDescriptor
         val kexArrayListType = context.types.arrayListType.kexType.rtMapped
-        val inner = descriptor["inner" to kexArrayListType]
+        val inner = descriptor["inner" to kexArrayListType] as? ObjectDescriptor
 
         val name = "${descriptor.term}"
         val actionSequence = ActionList(name)
         saveToCache(descriptor, actionSequence)
+        actionSequence += DefaultConstructorCall(kfgKexLinkedList)
 
-        actionSequence += when (inner) {
-            null -> DefaultConstructorCall(kfgKexLinkedList)
-            else -> {
-                val innerAS = fallback.generate(inner, generationDepth)
-                val collectionCtor = kfgKexLinkedList.getCtor(context.types.collectionType)
-                ConstructorCall(collectionCtor, listOf(innerAS))
+        if (inner != null) {
+            val elementData = inner["elementData" to cm.type.objectType.kexType.asArray()] as? ArrayDescriptor
+
+            if (elementData != null) {
+                val addMethod = kfgKexLinkedList.getMethod("add", cm.type.boolType, cm.type.objectType)
+                for (i in 0 until elementData.length) {
+                    val element = elementData[i] ?: descriptor { default(elementData.elementType) }
+                    val elementAS = fallback.generate(element, generationDepth)
+                    actionSequence += MethodCall(addMethod, listOf(elementAS))
+                }
             }
         }
 

@@ -20,8 +20,9 @@ class KexRtGenerator(val fallback: Generator) : Generator {
 
     override fun supports(descriptor: Descriptor): Boolean = typeGenerators.any { it.supports(descriptor) }
 
-    override fun generate(descriptor: Descriptor, generationDepth: Int): ActionSequence {
+    override fun generate(descriptor: Descriptor, generationDepth: Int): ActionSequence = with(context) {
+        getFromCache(descriptor)?.let { return it }
         val generator = typeGenerators.firstOrNull { it.supports(descriptor) } ?: fallback
-        return generator.generate(descriptor, generationDepth)
+        generator.generate(descriptor, generationDepth)
     }
 }
