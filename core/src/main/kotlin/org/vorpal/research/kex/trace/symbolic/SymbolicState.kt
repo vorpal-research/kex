@@ -14,6 +14,7 @@ import org.vorpal.research.kfg.ir.value.instruction.Instruction
 enum class PathClauseType {
     NULL_CHECK,
     TYPE_CHECK,
+    OVERLOAD_CHECK,
     CONDITION_CHECK,
     BOUNDS_CHECK
 }

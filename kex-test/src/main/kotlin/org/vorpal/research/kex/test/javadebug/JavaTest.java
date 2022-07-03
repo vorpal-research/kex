@@ -3,8 +3,10 @@ package org.vorpal.research.kex.test.javadebug;
 import org.vorpal.research.kex.test.concolic.Point;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.LinkedList;
 
+@SuppressWarnings("ALL")
 public class JavaTest {
 //    public static void testList(List<Point> points) {
 //        if (points.get(0).x == 10) {
@@ -72,11 +74,17 @@ public class JavaTest {
 //            throw new IllegalStateException("a");
 //        }
 //    }
-//    public static void testArrayList(ArrayList<Point> points) {
-//        if (points.size() == 0) return;
-//        if (points.get(0).getX() == 10) {
-//            throw new IllegalStateException();
-//        }
-//    }
+    public static void testArrayListIterator(ArrayList<Character> chars) {
+        Iterator<Character> it = chars.iterator();
+        if (it.hasNext()) {
+            if (it.next().charValue() == 'v') {
+                throw new IllegalStateException();
+            } else {
+                throw new IllegalStateException();
+            }
+        } else {
+            throw new IllegalStateException();
+        }
+    }
 }
 

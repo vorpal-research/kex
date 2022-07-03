@@ -111,7 +111,8 @@ class ContextGuidedSelector(
 
     private fun PathClause.reversed(): PathClause? = when (type) {
         PathClauseType.NULL_CHECK -> copy(predicate = predicate.reverseBoolCond())
-        PathClauseType.TYPE_CHECK -> {
+        PathClauseType.TYPE_CHECK -> copy(predicate = predicate.reverseBoolCond())
+        PathClauseType.OVERLOAD_CHECK -> {
             val lhv = predicate.operands[0] as InstanceOfTerm
             val termType = lhv.operand.type.getKfgType(ctx.types)
             val excludeClasses = executionTree.getPathVertex(this).predecessors

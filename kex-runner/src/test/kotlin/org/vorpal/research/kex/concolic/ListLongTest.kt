@@ -11,7 +11,6 @@ import org.junit.Test
 @DelicateCoroutinesApi
 class ListLongTest : ConcolicTest() {
     @Test
-    @Ignore
     fun listConcolicTest() {
         assertCoverage(cm["org/vorpal/research/kex/test/concolic/ListConcolicTests"], 1.0)
     }

@@ -192,6 +192,7 @@ class InstructionConcolicChecker(
             .mapValues { it.value.rtMapped }
             .toTypeMap()
         val preparedState = prepareState(method, state.clauses.asState() + query, concreteTypeInfo)
+        log.debug { "Prepared state: $preparedState" }
         val result = checker.check(preparedState)
         if (result !is Result.SatResult) return null
 

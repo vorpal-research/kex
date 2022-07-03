@@ -57,12 +57,15 @@ class SymbolicTraceBuilder(
         get() = terms.toMap()
 
     override val symbolicState: SymbolicState
-        get() = SymbolicStateImpl(
-            clauses,
-            path,
-            concreteValueMap,
-            termMap
-        )
+        get() {
+            checkCall()
+            return SymbolicStateImpl(
+                clauses,
+                path,
+                concreteValueMap,
+                termMap
+            )
+        }
 
     /**
      * mutable backing fields for required fields
@@ -351,6 +354,7 @@ class SymbolicTraceBuilder(
         postProcess(StateClause(instruction, predicate))
     }
 
+    @Suppress("SameParameterValue")
     private fun postProcess(type: PathClauseType, instruction: Instruction, predicate: Predicate) {
         postProcess(PathClause(type, instruction, predicate))
     }
@@ -1149,22 +1153,27 @@ class SymbolicTraceBuilder(
             (termValue `is` descriptorValue.type) equality true
         }
 
-        processPath(PathClauseType.TYPE_CHECK, instruction, predicate)
-        stateBuilder += PathClause(PathClauseType.TYPE_CHECK, instruction, predicate)
+        processPath(PathClauseType.OVERLOAD_CHECK, instruction, predicate)
+        stateBuilder += PathClause(PathClauseType.OVERLOAD_CHECK, instruction, predicate)
     }
 
     override fun addTypeConstraints(inst: String, value: String, type: String, concreteValue: Any?) = safeCall {
         preCheck(inst)
         if (!traceCollectingEnabled) return@safeCall
 
-        if (concreteValue == null) return@safeCall
         val instruction = parseValue(inst) as Instruction
 
         val kfgValue = parseValue(value)
         val termValue = mkValue(kfgValue)
         val expectedKfgType = parseStringToType(cm.type, type)
-        val descriptorValue = concreteValue.getAsDescriptor()
-        val actualKfgType = descriptorValue.type.getKfgType(ctx.types)
+        val comparisonResult = when (concreteValue) {
+            null -> false
+            else -> {
+                val descriptorValue = concreteValue.getAsDescriptor()
+                val actualKfgType = descriptorValue.type.getKfgType(ctx.types)
+                actualKfgType.isSubtypeOf(expectedKfgType)
+            }
+        }
         if (kfgValue is NullConstant) return@safeCall
         if (termValue in typeChecked) {
             val checkedType = typeChecked.getValue(termValue)
@@ -1173,7 +1182,7 @@ class SymbolicTraceBuilder(
         typeChecked[termValue] = expectedKfgType
 
         val predicate = path {
-            (termValue `is` expectedKfgType.kexType) equality (actualKfgType.isSubtypeOf(expectedKfgType))
+            (termValue `is` expectedKfgType.kexType) equality comparisonResult
         }
 
         processPath(PathClauseType.TYPE_CHECK, instruction, predicate)

@@ -198,7 +198,9 @@ class ExecutionTree : PredecessorGraph<Vertex>, Viewable {
             }
 
             return when (pathClause.type) {
-                PathClauseType.TYPE_CHECK -> false
+                PathClauseType.OVERLOAD_CHECK -> false
+                PathClauseType.TYPE_CHECK -> allPredicates.map { it as EqualityPredicate }.map { it.rhv }
+                    .toSet().size == 2
                 PathClauseType.NULL_CHECK -> allPredicates.map { it as EqualityPredicate }.map { it.rhv }
                     .toSet().size == 2
                 PathClauseType.BOUNDS_CHECK -> allPredicates.map { it as EqualityPredicate }.toSet().size == 2
