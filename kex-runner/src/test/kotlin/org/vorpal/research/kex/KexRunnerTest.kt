@@ -7,6 +7,7 @@ import org.vorpal.research.kex.asm.state.PredicateStateAnalysis
 import org.vorpal.research.kex.asm.transform.LoopDeroller
 import org.vorpal.research.kex.asm.transform.RuntimeTraceCollector
 import org.vorpal.research.kex.asm.transform.SystemExitTransformer
+import org.vorpal.research.kex.asm.util.AccessModifier
 import org.vorpal.research.kex.asm.util.ClassWriter
 import org.vorpal.research.kex.config.kexConfig
 import org.vorpal.research.kex.intrinsics.AssertIntrinsics
@@ -57,7 +58,7 @@ abstract class KexRunnerTest : KexTest() {
         val instrumentedCodeDir = kexConfig.getPathValue("kex", "outputDir")!!.resolve(instrumentedDirName)
         prepareInstrumentedClasspath(jar, jar.classLoader, Package.defaultPackage, instrumentedCodeDir)
 
-        analysisContext = ExecutionContext(cm, `package`, classLoader, EasyRandomDriver(), listOf(jar.path))
+        analysisContext = ExecutionContext(cm, `package`, classLoader, EasyRandomDriver(), listOf(jar.path), AccessModifier.Private)
     }
 
     private fun prepareInstrumentedClasspath(container: Container, containerClassLoader: ClassLoader, target: Package, path: Path) {

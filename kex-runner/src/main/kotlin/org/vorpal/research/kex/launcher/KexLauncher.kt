@@ -159,7 +159,7 @@ abstract class KexLauncher(classPaths: List<String>, targetName: String) {
         val klassPath = containers.map { it.path }
         updateClassPath(classLoader)
         val randomDriver = EasyRandomDriver()
-        context = ExecutionContext(cm, analysisLevel.pkg, classLoader, randomDriver, klassPath)
+        context = ExecutionContext(cm, analysisLevel.pkg, classLoader, randomDriver, klassPath, accessLevel)
 
         log.debug("Running with class path:\n${containers.joinToString("\n") { it.name }}")
     }
