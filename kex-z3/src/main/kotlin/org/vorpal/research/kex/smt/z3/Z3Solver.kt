@@ -32,7 +32,7 @@ private val simplifyFormulae = kexConfig.getBooleanValue("smt", "simplifyFormula
 private val maxArrayLength = kexConfig.getIntValue("smt", "maxArrayLength", 1000)
 
 @Solver("z3")
-class Z3Solver(val tf: TypeFactory) : AbstractSMTSolver {
+class Z3Solver(val tf: TypeFactory) : Z3NativeHandler(), AbstractSMTSolver {
     val ef = Z3ExprFactory()
 
     override fun isReachable(state: PredicateState) =

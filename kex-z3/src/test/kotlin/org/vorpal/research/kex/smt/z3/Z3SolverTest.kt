@@ -6,10 +6,17 @@ import com.microsoft.z3.Status
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.vorpal.research.kex.KexTest
+import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertTrue
 
 class Z3SolverTest : KexTest() {
+
+    @BeforeTest
+    fun setup() {
+        Z3NativeHandler.initializeCallback
+    }
+
     @Test
     fun testRunnable() {
         val ef = Z3ExprFactory()
