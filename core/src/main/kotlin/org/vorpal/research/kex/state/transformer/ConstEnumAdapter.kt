@@ -17,6 +17,7 @@ import org.vorpal.research.kex.util.loadClass
 import org.vorpal.research.kfg.type.ClassType
 import org.vorpal.research.kthelper.collection.dequeOf
 import org.vorpal.research.kthelper.logging.log
+import org.vorpal.research.kthelper.tryOrNull
 
 class ConstEnumAdapter(val context: ExecutionContext) : RecollectingTransformer<ConstEnumAdapter> {
     val cm get() = context.cm
@@ -110,10 +111,10 @@ class ConstEnumAdapter(val context: ExecutionContext) : RecollectingTransformer<
         }
     }
 
-    override fun apply(ps: PredicateState): PredicateState {
+    override fun apply(ps: PredicateState): PredicateState = tryOrNull {
         val enumConstantsMap = prepareEnumConstants(ps)
         super.apply(ps)
         mapEnumTerms(ps, enumConstantsMap)
         return state.simplify()
-    }
+    } ?: ps
 }

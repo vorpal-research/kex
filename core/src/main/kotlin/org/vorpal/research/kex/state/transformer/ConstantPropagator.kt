@@ -4,12 +4,11 @@ import org.vorpal.research.kex.ktype.*
 import org.vorpal.research.kex.state.predicate.EqualityPredicate
 import org.vorpal.research.kex.state.predicate.InequalityPredicate
 import org.vorpal.research.kex.state.predicate.Predicate
+import org.vorpal.research.kex.state.predicate.predicate
 import org.vorpal.research.kex.state.term.*
 import org.vorpal.research.kfg.ir.value.instruction.BinaryOpcode
 import org.vorpal.research.kfg.ir.value.instruction.CmpOpcode
 import org.vorpal.research.kthelper.*
-import org.vorpal.research.kthelper.assert.unreachable
-import org.vorpal.research.kthelper.logging.log
 import kotlin.math.abs
 
 object ConstantPropagator : Transformer<ConstantPropagator> {
@@ -182,15 +181,6 @@ object ConstantPropagator : Transformer<ConstantPropagator> {
         else -> null
     }
 
-    private fun genMessage(word: String, right: Number, left: Number) =
-        log.error("Obvious error detected: $right $word $left")
-
-    private fun mustBeEqual(right: Number, left: Number) =
-        genMessage("must be equal to", right, left)
-
-    private fun mustBeNotEqual(right: Number, left: Number) =
-        genMessage("should not be equal to", right, left)
-
     override fun transformEqualityPredicate(predicate: EqualityPredicate): Predicate {
         val lhv = getConstantValue(predicate.lhv) ?: return predicate
         val rhv = getConstantValue(predicate.rhv) ?: return predicate
@@ -202,7 +192,9 @@ object ConstantPropagator : Transformer<ConstantPropagator> {
         }
         return when {
             isNotError -> predicate
-            else -> unreachable { mustBeEqual(nLhv, nRhv) }
+            else -> predicate(predicate.type, predicate.location) {
+                true equality false
+            }
         }
     }
 
@@ -217,7 +209,9 @@ object ConstantPropagator : Transformer<ConstantPropagator> {
         }
         return when {
             isNotError -> predicate
-            else -> unreachable { mustBeNotEqual(nLhv, nRhv) }
+            else -> predicate(predicate.type, predicate.location) {
+                true inequality true
+            }
         }
     }
 }

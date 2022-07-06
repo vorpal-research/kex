@@ -201,9 +201,9 @@ class ClassInstantiationDetector(
             it as ReturnInst
             if (it.returnValue is NewInst) {
                 returnClass = (it.returnValue.type as ClassType).klass
+                addInstantiableClass(returnClass, returnClass)
             }
         }
-        addInstantiableClass(returnClass, returnClass)
         addExternalCtor(returnClass, method)
     }
 

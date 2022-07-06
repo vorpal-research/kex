@@ -9,6 +9,7 @@ import org.vorpal.research.kex.asm.analysis.DfsStrategy
 import org.vorpal.research.kex.asm.analysis.SearchStrategy
 import org.vorpal.research.kex.asm.manager.MethodManager
 import org.vorpal.research.kex.asm.state.PredicateStateAnalysis
+import org.vorpal.research.kex.compile.CompilerHelper
 import org.vorpal.research.kex.config.kexConfig
 import org.vorpal.research.kex.parameters.Parameters
 import org.vorpal.research.kex.random.GenerationException
@@ -63,6 +64,7 @@ open class MethodChecker(
     override val cm: ClassManager get() = ctx.cm
     val random: Randomizer get() = ctx.random
     val loader: ClassLoader get() = ctx.loader
+    private val compilerHelper = CompilerHelper(ctx)
     lateinit var generator: ParameterGenerator
         protected set
 
@@ -138,7 +140,8 @@ open class MethodChecker(
             if (coverageResult is Result.UnsatResult) unreachableBlocks += block
         }
 
-        generator.emit()
+        val testFile = generator.emit()
+        tryOrNull { compilerHelper.compileFile(testFile) }
     }
 
     protected open fun coverBlock(method: Method, block: BasicBlock): Result {
