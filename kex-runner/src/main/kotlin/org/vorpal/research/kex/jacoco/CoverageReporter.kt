@@ -19,7 +19,6 @@ import org.vorpal.research.kex.launcher.AnalysisLevel
 import org.vorpal.research.kex.launcher.ClassLevel
 import org.vorpal.research.kex.launcher.MethodLevel
 import org.vorpal.research.kex.launcher.PackageLevel
-import org.vorpal.research.kex.util.getPathSeparator
 import org.vorpal.research.kfg.ClassManager
 import org.vorpal.research.kfg.Package
 import org.vorpal.research.kfg.container.Container
@@ -27,6 +26,7 @@ import org.vorpal.research.kfg.ir.Method
 import org.vorpal.research.kthelper.assert.unreachable
 import org.vorpal.research.kthelper.logging.log
 import org.vorpal.research.kthelper.tryOrNull
+import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.io.path.*
@@ -375,7 +375,7 @@ class CoverageReporter(
             synchronized(this.getClassLoadingLock(name)) {
                 if (name in cache) return cache[name]!!
 
-                val fileName = name.replace(".", getPathSeparator()) + ".class"
+                val fileName = name.replace('.', File.separatorChar) + ".class"
                 for (path in paths) {
                     val resolved = path.resolve(fileName)
                     if (resolved.exists()) {
