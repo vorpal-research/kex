@@ -1,6 +1,5 @@
 package org.vorpal.research.kex.util
 
-import java.io.File
 import java.io.IOException
 import java.io.InputStream
 import java.nio.file.Files
@@ -17,9 +16,8 @@ fun unzipArchive(zipFile: InputStream, prefix: String): Path {
         var zipEntry = it.nextEntry
 
         while (zipEntry != null) {
-            val isDirectory = zipEntry.name.endsWith(File.separator)
             val newPath = zipSlipProtect(zipEntry, tempDir)
-            if (isDirectory) {
+            if (zipEntry.isDirectory) {
                 Files.createDirectories(newPath)
             } else {
                 newPath.parent?.let { parent ->
