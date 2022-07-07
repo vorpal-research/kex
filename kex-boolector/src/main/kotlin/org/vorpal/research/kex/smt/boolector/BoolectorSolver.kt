@@ -22,7 +22,7 @@ private typealias MemoryState = MutableMap<Term, Term>
 private typealias MemoryPair = Pair<MemoryState, MemoryState>
 
 @Solver("boolector")
-class BoolectorSolver(val tf: TypeFactory) : AbstractSMTSolver {
+class BoolectorSolver(val tf: TypeFactory) : BoolectorNativeLoader(), AbstractSMTSolver {
     val ef = BoolectorExprFactory()
 
     override fun isReachable(state: PredicateState) =

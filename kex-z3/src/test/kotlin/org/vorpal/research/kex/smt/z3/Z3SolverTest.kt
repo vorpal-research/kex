@@ -14,7 +14,7 @@ class Z3SolverTest : KexTest() {
 
     @BeforeTest
     fun setup() {
-        Z3NativeHandler.initializeCallback
+        object : Z3NativeLoader() {}
     }
 
     @Test
