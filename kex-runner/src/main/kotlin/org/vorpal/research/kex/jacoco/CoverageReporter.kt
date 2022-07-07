@@ -19,6 +19,7 @@ import org.vorpal.research.kex.launcher.AnalysisLevel
 import org.vorpal.research.kex.launcher.ClassLevel
 import org.vorpal.research.kex.launcher.MethodLevel
 import org.vorpal.research.kex.launcher.PackageLevel
+import org.vorpal.research.kex.util.getPathSeparator
 import org.vorpal.research.kfg.ClassManager
 import org.vorpal.research.kfg.Package
 import org.vorpal.research.kfg.container.Container
@@ -374,7 +375,7 @@ class CoverageReporter(
             synchronized(this.getClassLoadingLock(name)) {
                 if (name in cache) return cache[name]!!
 
-                val fileName = name.replace('.', '/') + ".class"
+                val fileName = name.replace(".", getPathSeparator()) + ".class"
                 for (path in paths) {
                     val resolved = path.resolve(fileName)
                     if (resolved.exists()) {
