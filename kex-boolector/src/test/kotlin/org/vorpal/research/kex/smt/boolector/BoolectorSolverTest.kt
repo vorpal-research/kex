@@ -4,10 +4,17 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.vorpal.research.boolector.Btor
 import org.vorpal.research.kex.KexTest
+import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertTrue
 
 class BoolectorSolverTest : KexTest() {
+
+    @BeforeTest
+    fun setup() {
+        object : BoolectorNativeLoader() {}
+    }
+
     @Test
     fun testRunnable() {
         val ef = BoolectorExprFactory()
