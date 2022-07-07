@@ -313,7 +313,11 @@ class CoverageReporter(
         get() = removeSuffix(".class").replace('/', '.')
 
     private fun Path.fullyQualifiedName(base: Path): String =
-        relativeTo(base).toString().removePrefix("../").replace('/', '.').removeSuffix(".class")
+        relativeTo(base).toString()
+            .removePrefix("..")
+            .removePrefix(File.separatorChar.toString())
+            .replace(File.separatorChar, '.')
+            .removeSuffix(".class")
 
     private fun getClassCoverage(
         cm: ClassManager,
