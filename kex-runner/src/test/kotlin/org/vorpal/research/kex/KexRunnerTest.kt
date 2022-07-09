@@ -93,7 +93,7 @@ abstract class KexRunnerTest : KexTest() {
     protected open fun createTraceCollector(context: ExecutionContext): MethodVisitor = RuntimeTraceCollector(context.cm)
 
     protected fun getReachables(method: Method): List<Instruction> {
-        val klass = AssertIntrinsics::class.qualifiedName!!.replace(".", "/")
+        val klass = AssertIntrinsics::class.qualifiedName!!.replace(Package.CANONICAL_SEPARATOR, Package.SEPARATOR)
         val intrinsics = cm[klass]
 
         val types = cm.type
@@ -106,7 +106,7 @@ abstract class KexRunnerTest : KexTest() {
     }
 
     protected fun getUnreachables(method: Method): List<Instruction> {
-        val klass = AssertIntrinsics::class.qualifiedName!!.replace(".", "/")
+        val klass = AssertIntrinsics::class.qualifiedName!!.replace(Package.CANONICAL_SEPARATOR, Package.SEPARATOR)
         val intrinsics = cm[klass]
 
         val methodName = "kexUnreachable"

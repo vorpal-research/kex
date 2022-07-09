@@ -12,6 +12,7 @@ import org.vorpal.research.kex.util.getJunit
 import org.vorpal.research.kfg.ir.BasicBlock
 import org.vorpal.research.kfg.ir.Class
 import org.vorpal.research.kfg.ir.Method
+import org.vorpal.research.kfg.Package
 import org.vorpal.research.kthelper.assert.unreachable
 import org.vorpal.research.kthelper.logging.log
 import org.vorpal.research.kthelper.tryOrNull
@@ -73,8 +74,16 @@ class JUnitTestCasePrinter(
 ) : TestCasePrinter(ctx, packageName) {
     private val testDirectory = outputDirectory.resolve(testCaseDirectory)
     override val printer: ActionSequencePrinter = when (testCaseLanguage) {
-        "kotlin" -> ActionSequence2KotlinPrinter(ctx, packageName.replace("/", "."), klassName)
-        "java" -> ActionSequence2JavaPrinter(ctx, packageName.replace("/", "."), klassName)
+        "kotlin" -> ActionSequence2KotlinPrinter(
+            ctx,
+            packageName.replace(Package.SEPARATOR, Package.CANONICAL_SEPARATOR),
+            klassName
+        )
+        "java" -> ActionSequence2JavaPrinter(
+            ctx,
+            packageName.replace(Package.SEPARATOR, Package.CANONICAL_SEPARATOR),
+            klassName
+        )
         else -> unreachable { log.error("Unknown target language for test case generation: $testCaseLanguage") }
     }
     override val targetFile: File = run {
@@ -102,8 +111,13 @@ class ExecutorTestCasePrinter(
     val klassName: String
 ) : TestCasePrinter(ctx, packageName) {
     private val testDirectory = outputDirectory.resolve(testCaseDirectory)
-    val fullKlassName = "${packageName.replace("/", ".")}.$klassName"
-    override val printer = ExecutorAS2JavaPrinter(ctx, packageName.replace("/", "."), klassName, SETUP_METHOD)
+    val fullKlassName = "${packageName.replace(Package.SEPARATOR, Package.CANONICAL_SEPARATOR)}.$klassName"
+    override val printer = ExecutorAS2JavaPrinter(
+        ctx,
+        packageName.replace(Package.SEPARATOR, Package.CANONICAL_SEPARATOR),
+        klassName,
+        SETUP_METHOD
+    )
     override val targetFile: File = run {
         val targetFileName = "$klassName.java"
         testDirectory.resolve(packageName).resolve(targetFileName).toAbsolutePath().toFile().apply {

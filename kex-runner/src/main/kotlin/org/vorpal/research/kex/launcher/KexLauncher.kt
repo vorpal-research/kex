@@ -115,21 +115,21 @@ abstract class KexLauncher(classPaths: List<String>, targetName: String) {
             targetName.matches(Regex("""$klassNameRegex::$methodNameRegex\((($typeRegex,\s*)*$typeRegex)?\):\s*$typeRegex""")) -> {
                 val (klassName, methodFullDesc) = targetName.split("::")
                 val (methodName, methodArgs, methodReturn) = methodFullDesc.split("(", "):")
-                val klass = cm[klassName.replace('.', '/')]
+                val klass = cm[klassName.replace(Package.CANONICAL_SEPARATOR, Package.SEPARATOR)]
                 if (klass !is ConcreteClass) {
                     throw LauncherException("Target class $klassName is not found in the classPath")
                 }
                 val method = klass.getMethod(
                     methodName,
-                    parseStringToType(cm.type, methodReturn.trim().replace('.', '/')),
+                    parseStringToType(cm.type, methodReturn.trim().replace(Package.CANONICAL_SEPARATOR, Package.SEPARATOR)),
                     *methodArgs.trim().split(""",\s*""".toRegex()).filter { it.isNotBlank() }.map {
-                        parseStringToType(cm.type, it.replace('.', '/'))
+                        parseStringToType(cm.type, it.replace(Package.CANONICAL_SEPARATOR, Package.SEPARATOR))
                     }.toTypedArray()
                 )
                 MethodLevel(method)
             }
             targetName.matches(Regex(klassNameRegex)) -> {
-                val klass = cm[targetName.replace('.', '/')]
+                val klass = cm[targetName.replace(Package.CANONICAL_SEPARATOR, Package.SEPARATOR)]
                 if (klass !is ConcreteClass) {
                     throw LauncherException("Target class $targetName is not found in the classPath")
                 }

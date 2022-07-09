@@ -5,6 +5,7 @@ import org.vorpal.research.kex.InheritorOf
 import org.vorpal.research.kfg.type.SystemTypeNames
 import org.vorpal.research.kfg.type.Type
 import org.vorpal.research.kfg.type.TypeFactory
+import org.vorpal.research.kfg.Package
 import org.vorpal.research.kthelper.defaultHashCode
 
 @InheritorOf("KexType")
@@ -29,7 +30,7 @@ class KexClass(val klass: String, override val memspace: Int = defaultMemspace) 
     override val name: String
         get() = klass
 
-    val canonicalDesc get() = name.replace("/", ".")
+    val canonicalDesc get() = name.replace(Package.SEPARATOR, Package.CANONICAL_SEPARATOR)
 
     fun kfgClass(types: TypeFactory) = types.cm[klass]
 

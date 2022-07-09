@@ -1,6 +1,7 @@
 package org.vorpal.research.kex.annotations
 
 import org.vorpal.research.kthelper.assert.ktassert
+import org.vorpal.research.kfg.Package
 import org.w3c.dom.Element
 import java.io.File
 import java.io.InputStream
@@ -27,7 +28,7 @@ class ExternalAnnotationsLoader : AnnotationsLoader {
 
     private fun findPackage(name: String, emplace: Boolean = false): PackageTreeNode? {
         var current = root
-        val names = name.split('/')
+        val names = name.split(Package.SEPARATOR)
         for (word in names) {
             when (val p = current.nodes.find { it.name == word }) {
                 null -> when {
@@ -103,7 +104,7 @@ class ExternalAnnotationsLoader : AnnotationsLoader {
 
     private fun transformTypeName(name: String) = when (name) {
         "boolean" -> "bool"
-        else -> name.replace('.', '/')
+        else -> name.replace(Package.CANONICAL_SEPARATOR, Package.SEPARATOR)
             .replace("///", "...")
             .replace(" ", "")
             .takeWhile { it != '<' }
@@ -144,7 +145,8 @@ class ExternalAnnotationsLoader : AnnotationsLoader {
                 if (delimiter < 0)
                 // this is not a call
                     continue
-                val packageName = nameAttr.substring(0 until delimiter).replace('.', '/')
+                val packageName = nameAttr.substring(0 until delimiter)
+                    .replace(Package.CANONICAL_SEPARATOR, Package.SEPARATOR)
                 while (nameAttr[delimiter] == ' ') delimiter++
                 var j = nameAttr.indexOfAny(charArrayOf(' ', '('), delimiter)
                 var returnType = nameAttr.substring(delimiter until j)
