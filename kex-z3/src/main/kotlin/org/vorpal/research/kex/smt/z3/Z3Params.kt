@@ -11,7 +11,6 @@ import java.io.File
 
 private val paramFile by lazy {
     kexConfig.getStringValue("z3", "paramFile")
-        ?: unreachable { log.error("You need to specify parameters file to be able to use Z3 SMT") }
 }
 
 @Serializable
@@ -19,13 +18,13 @@ class Z3Params(private val elements: List<Z3Param>) : List<Z3Param> by elements 
     fun toJson() = Json.encodeToString(this)
 
     companion object {
-        fun load(): Z3Params {
-            val file = File(paramFile)
-            return when {
+        fun load(): Z3Params = paramFile?.let {
+            val file = File(it)
+            when {
                 file.exists() -> fromJson(file.readText())
                 else -> Z3Params(emptyList())
             }
-        }
+        } ?: Z3Params(emptyList())
 
         fun fromJson(json: String) = Json.decodeFromString<Z3Params>(json)
     }

@@ -14,11 +14,13 @@ import kotlin.test.Test
 @InternalSerializationApi
 class AnnotationsTest : KexRunnerTest() {
     companion object {
-        init {
-            (AnnotationManager.defaultLoader as ExternalAnnotationsLoader).
-                    loadFrom(AnnotationsTest::class.java.getResource("annotations.2.xml") ?: unreachable {
-                        log.error("Could not find test annotations")
-                    })
+        val annotationInitializer by lazy {
+            (AnnotationManager.defaultLoader as ExternalAnnotationsLoader).loadFrom(
+                AnnotationsTest::class.java.getResource(
+                    "annotations.2.xml"
+                ) ?: unreachable {
+                    log.error("Could not find test annotations")
+                })
         }
     }
 
@@ -26,6 +28,7 @@ class AnnotationsTest : KexRunnerTest() {
 
     @BeforeTest
     fun before() {
+        annotationInitializer
         RuntimeConfig.setValue("smt", "psInlining", false)
     }
 

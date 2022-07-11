@@ -26,6 +26,7 @@ import org.vorpal.research.kfg.ir.Method
 import org.vorpal.research.kthelper.assert.unreachable
 import org.vorpal.research.kthelper.logging.log
 import org.vorpal.research.kthelper.tryOrNull
+import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.io.path.*
@@ -312,7 +313,11 @@ class CoverageReporter(
         get() = removeSuffix(".class").replace('/', '.')
 
     private fun Path.fullyQualifiedName(base: Path): String =
-        relativeTo(base).toString().removePrefix("../").replace('/', '.').removeSuffix(".class")
+        relativeTo(base).toString()
+            .removePrefix("..")
+            .removePrefix(File.separatorChar.toString())
+            .replace(File.separatorChar, '.')
+            .removeSuffix(".class")
 
     private fun getClassCoverage(
         cm: ClassManager,
@@ -374,7 +379,7 @@ class CoverageReporter(
             synchronized(this.getClassLoadingLock(name)) {
                 if (name in cache) return cache[name]!!
 
-                val fileName = name.replace('.', '/') + ".class"
+                val fileName = name.replace('.', File.separatorChar) + ".class"
                 for (path in paths) {
                     val resolved = path.resolve(fileName)
                     if (resolved.exists()) {
