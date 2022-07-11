@@ -115,6 +115,6 @@ class ConstEnumAdapter(val context: ExecutionContext) : RecollectingTransformer<
         val enumConstantsMap = prepareEnumConstants(ps)
         super.apply(ps)
         mapEnumTerms(ps, enumConstantsMap)
-        return state.simplify()
+        state.simplify()
     } ?: ps
 }
