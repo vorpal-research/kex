@@ -128,7 +128,7 @@ private object StringClassInstantiationManagerImpl : ClassInstantiationManager {
 
     override fun isInstantiable(klass: Class) = when (val fullName = klass.fullName) {
         in predefinedConcreteInstanceInfo -> true
-        else -> classInstantiationInfo[fullName].isNullOrEmpty()
+        else -> !classInstantiationInfo[fullName].isNullOrEmpty()
     }
 
     override fun getExternalCtors(klass: Class): Set<Method> =

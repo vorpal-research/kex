@@ -97,8 +97,22 @@ class RandomObjectReanimator(
             appendLine("Total attempts: $totalAttempts")
             appendLine("Valid attempts: $validAttempts")
             appendLine("Valid descriptor attempts: $validDescriptorAttempts")
-            appendLine("Total attempts success rate: ${String.format("%.02f", 100 * successes.toDouble() / totalAttempts)}%")
-            appendLine("Valid attempts success rate: ${String.format("%.02f", 100 * successes.toDouble() / validAttempts)}%")
+            appendLine(
+                "Total attempts success rate: ${
+                    String.format(
+                        "%.02f",
+                        100 * successes.toDouble() / totalAttempts
+                    )
+                }%"
+            )
+            appendLine(
+                "Valid attempts success rate: ${
+                    String.format(
+                        "%.02f",
+                        100 * successes.toDouble() / validAttempts
+                    )
+                }%"
+            )
             appendLine(
                 "Valid descriptor attempts success rate: ${
                     String.format(
@@ -108,7 +122,14 @@ class RandomObjectReanimator(
                 }%"
             )
             appendLine("Average random descriptor depth: ${String.format("%.02f", depth.toDouble() / validAttempts)}")
-            appendLine("Average success descriptor depth: ${String.format("%.02f", successDepths.toDouble() / successes)}")
+            appendLine(
+                "Average success descriptor depth: ${
+                    String.format(
+                        "%.02f",
+                        successDepths.toDouble() / successes
+                    )
+                }"
+            )
             appendLine(
                 "Average valid descriptor depth: ${
                     String.format(
@@ -125,7 +146,14 @@ class RandomObjectReanimator(
                     )
                 }"
             )
-            appendLine("Average time per descriptor generation: ${String.format("%.02f", time.toDouble() / validAttempts)}")
+            appendLine(
+                "Average time per descriptor generation: ${
+                    String.format(
+                        "%.02f",
+                        time.toDouble() / validAttempts
+                    )
+                }"
+            )
             appendLine(
                 "Average time per valid descriptor generation: ${
                     String.format(
@@ -258,9 +286,8 @@ class RandomObjectReanimator(
 
             if (descriptor.isValid()) {
                 ++validDescriptorAttempts
+                objects += any
             }
-
-            objects += any
         }
         return objects
     }
