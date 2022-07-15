@@ -60,6 +60,9 @@ class InstructionConcolicChecker(
             val executors = kexConfig.getIntValue("concolic", "numberOfExecutors", 8)
             val timeLimit = kexConfig.getLongValue("concolic", "timeLimit", 100000L)
 
+            log.debug("Running on: ${targets.joinToString("\n", prefix = "\n")}")
+            log.debug("Time budget: $timeLimit")
+
             val coroutineContext = newFixedThreadPoolContext(executors, "concolic-dispatcher")
             runBlocking(coroutineContext) {
                 withTimeoutOrNull(timeLimit) {

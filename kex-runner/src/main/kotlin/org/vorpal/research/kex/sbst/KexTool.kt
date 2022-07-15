@@ -1,5 +1,6 @@
 package org.vorpal.research.kex.sbst
 
+import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.InternalSerializationApi
 import org.vorpal.research.kex.ExecutionContext
@@ -7,12 +8,16 @@ import org.vorpal.research.kex.asm.analysis.concolic.InstructionConcolicChecker
 import org.vorpal.research.kex.asm.manager.ClassInstantiationDetector
 import org.vorpal.research.kex.asm.transform.SymbolicTraceCollector
 import org.vorpal.research.kex.asm.transform.SystemExitTransformer
+import org.vorpal.research.kex.asm.util.AccessModifier
 import org.vorpal.research.kex.asm.util.ClassWriter
 import org.vorpal.research.kex.asm.util.Visibility
 import org.vorpal.research.kex.config.FileConfig
 import org.vorpal.research.kex.config.RuntimeConfig
 import org.vorpal.research.kex.config.kexConfig
+import org.vorpal.research.kex.launcher.ClassLevel
 import org.vorpal.research.kex.launcher.LauncherException
+import org.vorpal.research.kex.launcher.MethodLevel
+import org.vorpal.research.kex.launcher.PackageLevel
 import org.vorpal.research.kex.random.easyrandom.EasyRandomDriver
 import org.vorpal.research.kex.trace.runner.ExecutorMasterController
 import org.vorpal.research.kex.util.*
@@ -21,6 +26,8 @@ import org.vorpal.research.kfg.KfgConfig
 import org.vorpal.research.kfg.Package
 import org.vorpal.research.kfg.container.Container
 import org.vorpal.research.kfg.container.asContainer
+import org.vorpal.research.kfg.ir.ConcreteClass
+import org.vorpal.research.kfg.type.parseStringToType
 import org.vorpal.research.kfg.util.Flags
 import org.vorpal.research.kfg.visitor.executePipeline
 import org.vorpal.research.kthelper.logging.log
@@ -28,7 +35,10 @@ import org.vorpal.research.kthelper.tryOrNull
 import java.io.File
 import java.net.URLClassLoader
 import java.nio.file.Path
+import java.nio.file.Paths
+import kotlin.system.exitProcess
 
+@DelicateCoroutinesApi
 @ExperimentalSerializationApi
 @InternalSerializationApi
 class KexTool : Tool {
@@ -82,7 +92,7 @@ class KexTool : Tool {
 
             executePipeline(cm, target) {
                 +SystemExitTransformer(cm)
-                +ClassInstantiationDetector(cm, visibilityLevel)
+                +ClassInstantiationDetector(context)
                 +SymbolicTraceCollector(context)
                 +ClassWriter(context, path)
             }
@@ -92,7 +102,6 @@ class KexTool : Tool {
 
 
     override fun initialize(src: File, bin: File, classPath: List<File>) {
-        visibilityLevel = kexConfig.getEnumValue("testGen", "visibility", true, Visibility.PUBLIC)
         val containerPaths = classPath.map { it.toPath().toAbsolutePath() }
         containerClassLoader = URLClassLoader(containerPaths.map { it.toUri().toURL() }.toTypedArray())
         containers = listOfNotNull(*containerPaths.map {
@@ -100,8 +109,7 @@ class KexTool : Tool {
         }.toTypedArray(), getKexRuntime())
         val analysisJars = listOfNotNull(*containers.toTypedArray(), getRuntime(), getIntrinsics())
 
-        val instrumentedDirName = kexConfig.getStringValue("output", "instrumentedDir", "instrumented")
-        val instrumentedCodeDir = kexConfig.getPathValue("kex", "outputDir")!!.resolve(instrumentedDirName)
+        val instrumentedCodeDir = kexConfig.instrumentedCodeDirectory
         prepareInstrumentedClasspath(analysisJars, Package.defaultPackage, instrumentedCodeDir)
 
         val cm = ClassManager(
@@ -115,16 +123,18 @@ class KexTool : Tool {
         )
         cm.initialize(*analysisJars.toTypedArray())
 
+        val accessLevel = AccessModifier.Private
+        log.debug("Access level: $accessLevel")
+
         // write all classes to output directory, so they will be seen by ClassLoader
         val classLoader = URLClassLoader(arrayOf(instrumentedCodeDir.toUri().toURL()))
 
         val klassPath = containers.map { it.path }
         updateClassPath(classLoader)
         val randomDriver = EasyRandomDriver()
-        context = ExecutionContext(cm, Package.defaultPackage, classLoader, randomDriver, klassPath)
+        context = ExecutionContext(cm, Package.defaultPackage, classLoader, randomDriver, klassPath, accessLevel)
 
         log.debug("Running with class path:\n${containers.joinToString("\n") { it.name }}")
-        log.debug("Executed analysis pipeline")
     }
 
     override fun run(className: String, timeBudget: Long) {
@@ -149,8 +159,5 @@ class KexTool : Tool {
 
     override fun finalize() {
         clearClassPath()
-        val instrumentedDirName = kexConfig.getStringValue("output", "instrumentedDir", "instrumented")
-        val instrumentedCodeDir = kexConfig.getPathValue("kex", "outputDir")!!.resolve(instrumentedDirName).toAbsolutePath()
-        tryOrNull { deleteDirectory(instrumentedCodeDir) }
     }
 }
