@@ -28,6 +28,7 @@ import java.net.URLClassLoader
 import java.nio.file.Paths
 import kotlin.system.exitProcess
 
+@Suppress("DEPRECATION")
 @ExperimentalSerializationApi
 @InternalSerializationApi
 fun main(args: Array<String>) {

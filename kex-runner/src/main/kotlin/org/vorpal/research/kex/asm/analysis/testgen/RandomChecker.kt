@@ -2,7 +2,6 @@ package org.vorpal.research.kex.asm.analysis.testgen
 
 import org.vorpal.research.kex.ExecutionContext
 import org.vorpal.research.kex.asm.state.PredicateStateAnalysis
-import org.vorpal.research.kex.asm.util.Visibility
 import org.vorpal.research.kex.config.kexConfig
 import org.vorpal.research.kex.trace.TraceManager
 import org.vorpal.research.kex.trace.`object`.ActionTrace
@@ -26,7 +25,6 @@ private val runner: Boolean by lazy {
 class RandomChecker(
     val ctx: ExecutionContext,
     val psa: PredicateStateAnalysis,
-    val visibilityLevel: Visibility,
     val tm: TraceManager<ActionTrace>
 ) : MethodVisitor {
     override val cm: ClassManager
@@ -43,9 +41,9 @@ class RandomChecker(
         if (method.klass.isSynthetic) return
         if (method.isAbstract || method.isConstructor || method.isStaticInitializer) return
 
-        val randomRunner = ReanimatingRandomObjectTracingRunner(ctx, nameContext, psa, visibilityLevel, method)
+        val randomRunner = ReanimatingRandomObjectTracingRunner(ctx, nameContext, psa, method)
 
-        repeat(runs) { _ ->
+        repeat(runs) {
             try {
                 val trace = randomRunner.run() ?: return@repeat
                 tm[method] = trace

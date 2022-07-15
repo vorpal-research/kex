@@ -3,8 +3,7 @@ package org.vorpal.research.kex.reanimator
 import org.vorpal.research.kex.ExecutionContext
 import org.vorpal.research.kex.asm.manager.instantiationManager
 import org.vorpal.research.kex.asm.state.PredicateStateAnalysis
-import org.vorpal.research.kex.asm.util.Visibility
-import org.vorpal.research.kex.asm.util.visibility
+import org.vorpal.research.kex.asm.util.accessModifier
 import org.vorpal.research.kex.config.RuntimeConfig
 import org.vorpal.research.kex.descriptor.*
 import org.vorpal.research.kex.random.Randomizer
@@ -28,11 +27,10 @@ class RandomObjectReanimator(
     val ctx: ExecutionContext,
     val target: Package,
     val psa: PredicateStateAnalysis,
-    val visibilityLevel: Visibility
 ) {
     val random: Randomizer get() = ctx.random
     val cm: ClassManager get() = ctx.cm
-    val generatorContext = GeneratorContext(ctx, psa, visibilityLevel)
+    val generatorContext = GeneratorContext(ctx, psa)
 
     private val ClassManager.randomClass
         get() = this.concreteClasses
@@ -44,7 +42,7 @@ class RandomObjectReanimator(
         get() {
             val kfgClass = (this.javaClass.kex.getKfgType(cm.type) as ClassType).klass
             if (this is Throwable) return false
-            if (!instantiationManager.isInstantiable(kfgClass) || visibilityLevel > kfgClass.visibility) return false
+            if (!instantiationManager.isInstantiable(kfgClass) || !ctx.accessLevel.canAccess(kfgClass.accessModifier)) return false
             if (with(generatorContext) { kfgClass.orderedCtors }.isEmpty()) return false
             return true
         }
@@ -99,8 +97,22 @@ class RandomObjectReanimator(
             appendLine("Total attempts: $totalAttempts")
             appendLine("Valid attempts: $validAttempts")
             appendLine("Valid descriptor attempts: $validDescriptorAttempts")
-            appendLine("Total attempts success rate: ${String.format("%.02f", 100 * successes.toDouble() / totalAttempts)}%")
-            appendLine("Valid attempts success rate: ${String.format("%.02f", 100 * successes.toDouble() / validAttempts)}%")
+            appendLine(
+                "Total attempts success rate: ${
+                    String.format(
+                        "%.02f",
+                        100 * successes.toDouble() / totalAttempts
+                    )
+                }%"
+            )
+            appendLine(
+                "Valid attempts success rate: ${
+                    String.format(
+                        "%.02f",
+                        100 * successes.toDouble() / validAttempts
+                    )
+                }%"
+            )
             appendLine(
                 "Valid descriptor attempts success rate: ${
                     String.format(
@@ -110,7 +122,14 @@ class RandomObjectReanimator(
                 }%"
             )
             appendLine("Average random descriptor depth: ${String.format("%.02f", depth.toDouble() / validAttempts)}")
-            appendLine("Average success descriptor depth: ${String.format("%.02f", successDepths.toDouble() / successes)}")
+            appendLine(
+                "Average success descriptor depth: ${
+                    String.format(
+                        "%.02f",
+                        successDepths.toDouble() / successes
+                    )
+                }"
+            )
             appendLine(
                 "Average valid descriptor depth: ${
                     String.format(
@@ -127,7 +146,14 @@ class RandomObjectReanimator(
                     )
                 }"
             )
-            appendLine("Average time per descriptor generation: ${String.format("%.02f", time.toDouble() / validAttempts)}")
+            appendLine(
+                "Average time per descriptor generation: ${
+                    String.format(
+                        "%.02f",
+                        time.toDouble() / validAttempts
+                    )
+                }"
+            )
             appendLine(
                 "Average time per valid descriptor generation: ${
                     String.format(
@@ -260,9 +286,8 @@ class RandomObjectReanimator(
 
             if (descriptor.isValid()) {
                 ++validDescriptorAttempts
+                objects += any
             }
-
-            objects += any
         }
         return objects
     }

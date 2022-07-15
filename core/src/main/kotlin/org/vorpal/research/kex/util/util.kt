@@ -6,9 +6,15 @@ import org.vorpal.research.kex.config.kexConfig
 import org.vorpal.research.kfg.ir.Method
 import org.vorpal.research.kthelper.assert.unreachable
 import org.vorpal.research.kthelper.logging.log
+import org.vorpal.research.kthelper.tryOrNull
 import java.io.File
+import java.nio.file.FileVisitResult
+import java.nio.file.Files
 import java.nio.file.Path
+import java.nio.file.SimpleFileVisitor
+import java.nio.file.attribute.BasicFileAttributes
 import java.util.*
+
 
 private val dot by lazy { kexConfig.getStringValue("view", "dot") ?: unreachable { log.error("Could not find dot") } }
 private val viewer by lazy {
@@ -61,6 +67,30 @@ fun String.splitAtLast(str: String): Pair<String, String> {
 }
 
 fun <T : Any> T.asList() = listOf(this)
+
+
+fun deleteOnExit(file: File) = deleteOnExit(file.toPath())
+fun deleteOnExit(directoryToBeDeleted: Path) = Runtime.getRuntime().addShutdownHook(Thread {
+    tryOrNull {
+        Files.walkFileTree(directoryToBeDeleted, object : SimpleFileVisitor<Path>() {
+            override fun visitFile(
+                file: Path,
+                @SuppressWarnings("unused") attrs: BasicFileAttributes
+            ): FileVisitResult {
+                file.toFile().deleteOnExit()
+                return FileVisitResult.CONTINUE
+            }
+
+            override fun preVisitDirectory(
+                dir: Path,
+                @SuppressWarnings("unused") attrs: BasicFileAttributes
+            ): FileVisitResult {
+                dir.toFile().deleteOnExit()
+                return FileVisitResult.CONTINUE
+            }
+        })
+    }
+})
 
 fun deleteDirectory(directoryToBeDeleted: Path) = deleteDirectory(directoryToBeDeleted.toFile())
 fun deleteDirectory(directoryToBeDeleted: File): Boolean {

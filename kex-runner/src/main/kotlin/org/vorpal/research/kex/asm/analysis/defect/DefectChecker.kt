@@ -36,7 +36,7 @@ private val isMemspacingEnabled by lazy { kexConfig.getBooleanValue("smt", "mems
 private val isSlicingEnabled by lazy { kexConfig.getBooleanValue("smt", "slicing", false) }
 private val logQuery by lazy { kexConfig.getBooleanValue("smt", "logQuery", false) }
 
-class DefectChecker(
+class DefectChecker                                                                                                                                                                                                                                                                                                                                                                                                                                         (
     val ctx: ExecutionContext,
     private val psa: PredicateStateAnalysis
 ) : MethodVisitor {
@@ -238,6 +238,7 @@ class DefectChecker(
         +RecursiveConstructorInliner(psa)
         +IntrinsicAdapter
         +KexIntrinsicsAdapter()
+        +EqualsTransformer()
         +NullityAnnotator(nonNulls.map { term { value(it) } }.toSet())
         +DoubleTypeAdapter()
         +ReflectionInfoAdapter(method, loader)

@@ -160,6 +160,7 @@ class EasyRandomDriver(val config: BeansConfig = defaultConfig) : Randomizer() {
                 klass,
                 { generateObject(it) },
                 { next(Any::class.java) },
+                { nextInt() },
                 randomizerParameters.reflectionFacade,
                 this
             )
@@ -171,6 +172,7 @@ class EasyRandomDriver(val config: BeansConfig = defaultConfig) : Randomizer() {
                 { generateObject(it) },
                 { next(Any::class.java) },
                 { next(Any::class.java) },
+                { nextInt() },
                 randomizerParameters.reflectionFacade,
                 this
             )
@@ -189,6 +191,7 @@ class EasyRandomDriver(val config: BeansConfig = defaultConfig) : Randomizer() {
                     rawType,
                     { generateObject(it) },
                     { next(typeParameter) },
+                    { nextInt() },
                     randomizerParameters.reflectionFacade,
                     this
                 )
@@ -203,6 +206,7 @@ class EasyRandomDriver(val config: BeansConfig = defaultConfig) : Randomizer() {
                     { generateObject(it) },
                     { next(key) },
                     { next(value) },
+                    { nextInt() },
                     randomizerParameters.reflectionFacade,
                     this
                 )
@@ -241,7 +245,7 @@ class EasyRandomDriver(val config: BeansConfig = defaultConfig) : Randomizer() {
         else -> throw UnknownTypeException(type.toString())
     }
 
-    fun next(type: Type, depth: Int): Any? {
+    fun next(type: Type, depth: Int): Any? = synchronized(this) {
         if (depth > config.depth) {
             log.warn("Reached maximum depth of generation $depth")
             return null

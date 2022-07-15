@@ -9,6 +9,7 @@ import org.vorpal.research.kex.asm.transform.BranchAdapter
 import org.vorpal.research.kex.asm.transform.LoopDeroller
 import org.vorpal.research.kex.asm.transform.RuntimeTraceCollector
 import org.vorpal.research.kex.asm.transform.SystemExitTransformer
+import org.vorpal.research.kex.asm.util.AccessModifier
 import org.vorpal.research.kex.asm.util.ClassWriter
 import org.vorpal.research.kex.asm.util.Visibility
 import org.vorpal.research.kex.config.kexConfig
@@ -17,10 +18,7 @@ import org.vorpal.research.kex.reanimator.collector.MethodFieldAccessCollector
 import org.vorpal.research.kex.reanimator.collector.SetterCollector
 import org.vorpal.research.kex.trace.AbstractTrace
 import org.vorpal.research.kex.trace.TraceManager
-import org.vorpal.research.kex.util.getIntrinsics
-import org.vorpal.research.kex.util.getKexRuntime
-import org.vorpal.research.kex.util.getPathSeparator
-import org.vorpal.research.kex.util.getRuntime
+import org.vorpal.research.kex.util.*
 import org.vorpal.research.kfg.ClassManager
 import org.vorpal.research.kfg.KfgConfig
 import org.vorpal.research.kfg.Package
@@ -78,10 +76,10 @@ abstract class KexLauncher(classPaths: List<String>, targetName: String) {
     val containerClassLoader: URLClassLoader
     val context: ExecutionContext
     val analysisLevel: AnalysisLevel
-    val visibilityLevel: Visibility
+    val accessLevel: AccessModifier
 
     init {
-        visibilityLevel = kexConfig.getEnumValue("testGen", "visibility", true, Visibility.PUBLIC)
+        val visibilityLevel = kexConfig.getEnumValue("testGen", "accessLevel", true, Visibility.PUBLIC)
         val containerPaths = classPaths.map { Paths.get(it).toAbsolutePath() }
         containerClassLoader = URLClassLoader(containerPaths.map { it.toUri().toURL() }.toTypedArray())
         containers = listOfNotNull(*containerPaths.map {
@@ -89,8 +87,7 @@ abstract class KexLauncher(classPaths: List<String>, targetName: String) {
         }.toTypedArray(), getKexRuntime())
         val analysisJars = listOfNotNull(*containers.toTypedArray(), getRuntime(), getIntrinsics())
 
-        val instrumentedDirName = kexConfig.getStringValue("output", "instrumentedDir", "instrumented")
-        val instrumentedCodeDir = kexConfig.getPathValue("kex", "outputDir")!!.resolve(instrumentedDirName)
+        val instrumentedCodeDir = kexConfig.instrumentedCodeDirectory
         prepareInstrumentedClasspath(analysisJars, Package.defaultPackage, instrumentedCodeDir)
 
         val cm = ClassManager(
@@ -141,13 +138,24 @@ abstract class KexLauncher(classPaths: List<String>, targetName: String) {
         }
         log.debug("Target: $analysisLevel")
 
+        accessLevel = when (visibilityLevel) {
+            Visibility.PRIVATE -> AccessModifier.Private
+            Visibility.PROTECTED -> AccessModifier.Protected(
+                (analysisLevel as? ClassLevel)?.klass
+                    ?: throw LauncherException("For 'protected' access level the target should be a class")
+            )
+            Visibility.PACKAGE -> AccessModifier.Package(analysisLevel.pkg.concretePackage)
+            Visibility.PUBLIC -> AccessModifier.Public
+        }
+        log.debug("Access level: $accessLevel")
+
         // write all classes to output directory, so they will be seen by ClassLoader
         val classLoader = URLClassLoader(arrayOf(instrumentedCodeDir.toUri().toURL()))
 
         val klassPath = containers.map { it.path }
         updateClassPath(classLoader)
         val randomDriver = EasyRandomDriver()
-        context = ExecutionContext(cm, analysisLevel.pkg, classLoader, randomDriver, klassPath)
+        context = ExecutionContext(cm, analysisLevel.pkg, classLoader, randomDriver, klassPath, accessLevel)
 
         log.debug("Running with class path:\n${containers.joinToString("\n") { it.name }}")
     }
@@ -182,7 +190,7 @@ abstract class KexLauncher(classPaths: List<String>, targetName: String) {
 
             executePipeline(cm, target) {
                 +SystemExitTransformer(cm)
-                +ClassInstantiationDetector(cm, visibilityLevel)
+                +ClassInstantiationDetector(context)
                 +createInstrumenter(context)
                 +ClassWriter(context, path)
             }
@@ -217,7 +225,7 @@ abstract class KexLauncher(classPaths: List<String>, targetName: String) {
         +psa
         +MethodFieldAccessCollector(ctx, psa)
         +SetterCollector(ctx)
-        +ClassInstantiationDetector(ctx.cm, visibilityLevel)
+        +ClassInstantiationDetector(ctx)
     }
 
     protected fun updateClassPath(loader: URLClassLoader) {

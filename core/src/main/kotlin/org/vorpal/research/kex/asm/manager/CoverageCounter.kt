@@ -1,8 +1,5 @@
 package org.vorpal.research.kex.asm.manager
 
-import org.vorpal.research.kex.asm.util.Visibility
-import org.vorpal.research.kex.asm.util.visibility
-import org.vorpal.research.kex.config.kexConfig
 import org.vorpal.research.kex.trace.AbstractTrace
 import org.vorpal.research.kex.trace.TraceManager
 import org.vorpal.research.kfg.ClassManager
@@ -12,22 +9,6 @@ import org.vorpal.research.kfg.ir.Method
 import org.vorpal.research.kfg.visitor.MethodVisitor
 import org.vorpal.research.kthelper.logging.log
 import java.util.*
-
-private val visibilityLevel by lazy {
-    kexConfig.getEnumValue("testGen", "visibility", true, Visibility.PUBLIC)
-}
-
-val Method.isImpactable: Boolean
-    get() = when {
-        this.isAbstract -> false
-        this.isStaticInitializer -> false
-        this.klass.isSynthetic -> false
-        this.klass.isAbstract && this.isConstructor -> false
-        this.isSynthetic -> false
-        visibilityLevel > this.klass.visibility -> false
-        visibilityLevel > this.visibility -> false
-        else -> true
-    }
 
 data class CoverageInfo(
     val bodyCovered: Int,

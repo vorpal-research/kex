@@ -1,6 +1,6 @@
 package org.vorpal.research.kex.reanimator.actionsequence.generator
 
-import org.vorpal.research.kex.asm.util.visibility
+import org.vorpal.research.kex.asm.util.accessModifier
 import org.vorpal.research.kex.config.kexConfig
 import org.vorpal.research.kex.descriptor.Descriptor
 import org.vorpal.research.kex.descriptor.ObjectDescriptor
@@ -202,13 +202,13 @@ open class AnyGenerator(private val fallback: Generator) : Generator {
         for ((field, value) in fields.toMap()) {
             val kfgField = kfgKlass.getField(field.first, field.second.getKfgType(types))
 
-            if (visibilityLevel <= kfgField.visibility) {
+            if (accessLevel.canAccess(kfgField.accessModifier)) {
                 log.debug("Directly setting field $field value")
                 calls += FieldSetter(kfgField, fallback.generate(value, generationDepth + 1))
                 fields.remove(field)
                 reduce()
 
-            } else if (kfgField.hasSetter && visibilityLevel <= kfgField.setter.visibility) {
+            } else if (kfgField.hasSetter && accessLevel.canAccess(kfgField.setter.accessModifier)) {
                 log.info("Using setter for $field")
 
                 val (result, args) = kfgField.setter.executeAsSetter(this@generateSetters) ?: continue

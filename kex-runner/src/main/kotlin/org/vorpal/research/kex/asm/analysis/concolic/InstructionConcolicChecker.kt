@@ -7,9 +7,9 @@ import org.vorpal.research.kex.ExecutionContext
 import org.vorpal.research.kex.annotations.AnnotationManager
 import org.vorpal.research.kex.asm.analysis.concolic.bfs.BfsPathSelectorImpl
 import org.vorpal.research.kex.asm.analysis.concolic.cgs.ContextGuidedSelector
-import org.vorpal.research.kex.asm.manager.isImpactable
+import org.vorpal.research.kex.asm.manager.MethodManager
 import org.vorpal.research.kex.asm.state.PredicateStateAnalysis
-import org.vorpal.research.kex.compile.JavaCompilerDriver
+import org.vorpal.research.kex.compile.CompilerHelper
 import org.vorpal.research.kex.config.kexConfig
 import org.vorpal.research.kex.descriptor.Descriptor
 import org.vorpal.research.kex.ktype.KexRtManager.isJavaRt
@@ -28,11 +28,11 @@ import org.vorpal.research.kex.state.PredicateState
 import org.vorpal.research.kex.state.term.Term
 import org.vorpal.research.kex.state.transformer.*
 import org.vorpal.research.kex.trace.runner.SymbolicExternalTracingRunner
+import org.vorpal.research.kex.trace.runner.generateDefaultParameters
 import org.vorpal.research.kex.trace.runner.generateParameters
 import org.vorpal.research.kex.trace.symbolic.ExecutionCompletedResult
 import org.vorpal.research.kex.trace.symbolic.ExecutionResult
 import org.vorpal.research.kex.trace.symbolic.SymbolicState
-import org.vorpal.research.kex.util.getJunit
 import org.vorpal.research.kfg.ClassManager
 import org.vorpal.research.kfg.ir.Method
 import org.vorpal.research.kthelper.assert.unreachable
@@ -40,24 +40,6 @@ import org.vorpal.research.kthelper.logging.debug
 import org.vorpal.research.kthelper.logging.log
 import org.vorpal.research.kthelper.logging.warn
 import org.vorpal.research.kthelper.tryOrNull
-import java.nio.file.Path
-
-private class CompilerHelper(val ctx: ExecutionContext) {
-    private val junitJar = getJunit()!!
-    private val outputDir = kexConfig.getPathValue("kex", "outputDir")!!
-    val compileDir = outputDir.resolve(
-        kexConfig.getPathValue("compile", "compileDir", "compiled/")
-    ).also {
-        it.toFile().mkdirs()
-    }
-
-    fun compileFile(file: Path) {
-        val compilerDriver = JavaCompilerDriver(
-            listOf(*ctx.classPath.toTypedArray(), junitJar.path), compileDir
-        )
-        compilerDriver.compile(listOf(file))
-    }
-}
 
 @ExperimentalSerializationApi
 @InternalSerializationApi
@@ -69,39 +51,48 @@ class InstructionConcolicChecker(
 
     private val compilerHelper = CompilerHelper(ctx)
 
-    private val timeLimit = kexConfig.getLongValue("concolic", "timeLimit", 100000L)
     private val searchStrategy = kexConfig.getStringValue("concolic", "searchStrategy", "bfs")
     private var testIndex = 0
 
     companion object {
+        @DelicateCoroutinesApi
         fun run(context: ExecutionContext, targets: Set<Method>) {
-            runBlocking(Dispatchers.Default) {
-                val jobs = targets.map {
-                    launch { InstructionConcolicChecker(context).visit(it) }
-                }
-                yield()
-                for (job in jobs) {
-                    job.join()
+            val executors = kexConfig.getIntValue("concolic", "numberOfExecutors", 8)
+            val timeLimit = kexConfig.getLongValue("concolic", "timeLimit", 100000L)
+
+            val coroutineContext = newFixedThreadPoolContext(executors, "concolic-dispatcher")
+            runBlocking(coroutineContext) {
+                withTimeoutOrNull(timeLimit) {
+                    targets.forEach {
+                        launch { InstructionConcolicChecker(context).visit(it) }
+                    }
                 }
             }
         }
     }
 
     suspend fun visit(method: Method) {
-        if (method.isStaticInitializer || !method.hasBody) return
-        if (!method.isImpactable) return
-
         try {
+            if (method.isStaticInitializer || !method.hasBody) return
+            if (!MethodManager.canBeImpacted(method, ctx.accessLevel)) return
+
             log.debug { "Processing method $method" }
             log.debug { method.print() }
 
-            withTimeout(timeLimit) {
-                processMethod(method)
-            }
+            processMethod(method)
             log.debug { "Method $method processing is finished normally" }
-        } catch (e: TimeoutCancellationException) {
-            log.debug { "Method $method processing is finished with timeout exception" }
+        } catch (e: CancellationException) {
+            log.warn { "Method $method processing is finished with timeout" }
+            throw e
         }
+    }
+
+    private fun getDefaultTrace(method: Method): ExecutionResult? = try {
+        val params = generateDefaultParameters(ctx.loader, method)
+        params?.let { collectTraceFromAny(method, it) }
+    } catch (e: Throwable) {
+        log.warn("Error while collecting random trace:", e)
+        null
     }
 
     private fun getRandomTrace(method: Method): ExecutionResult? = try {
@@ -140,13 +131,26 @@ class InstructionConcolicChecker(
                 ctx,
                 typeMap,
                 psa,
-                inlineIndex = index
+                inlineSuffix = "inlined",
+                inlineIndex = index,
+                kexRtOnly = false
+            )
+        }
+        +RecursiveInliner(PredicateStateAnalysis(cm)) { index, psa ->
+            ConcolicInliner(
+                ctx,
+                typeMap,
+                psa,
+                inlineSuffix = "rt.inlined",
+                inlineIndex = index,
+                kexRtOnly = true
             )
         }
         +ClassAdapter(cm)
         +AnnotationAdapter(method, AnnotationManager.defaultLoader)
         +IntrinsicAdapter
         +KexIntrinsicsAdapter()
+        +EqualsTransformer()
         +ReflectionInfoAdapter(method, ctx.loader)
         +Optimizer()
         +ConstantPropagator
@@ -169,6 +173,7 @@ class InstructionConcolicChecker(
             .mapValues { it.value.rtMapped }
             .toTypeMap()
         val preparedState = prepareState(method, state.clauses.asState() + query, concreteTypeInfo)
+        log.debug { "Prepared state: $preparedState" }
         val result = checker.check(preparedState)
         if (result !is Result.SatResult) return null
 
@@ -187,14 +192,26 @@ class InstructionConcolicChecker(
         else -> unreachable { log.error("Unknown type of search strategy $searchStrategy") }
     }
 
-    private suspend fun processMethod(method: Method) {
-        testIndex = 0
-        val pathIterator = buildPathSelector()
-        getRandomTrace(method)?.let {
+    private suspend fun handleStartingTrace(
+        method: Method,
+        pathIterator: PathSelector,
+        executionResult: ExecutionResult?
+    ) {
+        executionResult?.let {
             when (it) {
                 is ExecutionCompletedResult -> pathIterator.addExecutionTrace(method, it)
                 else -> log.warn("Failed to generate random trace: $it")
             }
+        }
+    }
+
+    private suspend fun processMethod(method: Method) {
+        testIndex = 0
+        val pathIterator = buildPathSelector()
+
+        handleStartingTrace(method, pathIterator, getRandomTrace(method))
+        if (pathIterator.isEmpty()) {
+            handleStartingTrace(method, pathIterator, getDefaultTrace(method))
         }
         yield()
 

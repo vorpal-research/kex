@@ -2,8 +2,6 @@ package org.vorpal.research.kex.reanimator
 
 import org.vorpal.research.kex.ExecutionContext
 import org.vorpal.research.kex.asm.state.PredicateStateAnalysis
-import org.vorpal.research.kex.asm.util.Visibility
-import org.vorpal.research.kex.config.kexConfig
 import org.vorpal.research.kex.descriptor.Descriptor
 import org.vorpal.research.kex.parameters.Parameters
 import org.vorpal.research.kex.parameters.concreteParameters
@@ -20,16 +18,12 @@ import org.vorpal.research.kfg.ir.Method
 import org.vorpal.research.kthelper.logging.log
 import java.nio.file.Path
 
-private val visibilityLevel by lazy {
-    kexConfig.getEnumValue("testGen", "visibility", true, Visibility.PUBLIC)
-}
-
 class UnsafeGenerator(
     override val ctx: ExecutionContext,
     val method: Method,
     val testName: String
 ) : ParameterGenerator {
-    private val asGenerator = ConcolicSequenceGenerator(ctx, PredicateStateAnalysis(ctx.cm), visibilityLevel)
+    private val asGenerator = ConcolicSequenceGenerator(ctx, PredicateStateAnalysis(ctx.cm))
     private val printer = ExecutorTestCasePrinter(ctx, method.packageName, testName)
     val testKlassName = printer.fullKlassName
 

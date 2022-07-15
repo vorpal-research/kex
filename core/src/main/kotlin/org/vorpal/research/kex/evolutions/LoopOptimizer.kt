@@ -2,11 +2,9 @@ package org.vorpal.research.kex.evolutions
 
 
 import org.vorpal.research.kfg.ClassManager
-import org.vorpal.research.kfg.analysis.IRVerifier
 import org.vorpal.research.kfg.ir.BasicBlock
 import org.vorpal.research.kfg.ir.BodyBlock
 import org.vorpal.research.kfg.ir.Method
-import org.vorpal.research.kfg.ir.value.EmptyUsageContext.users
 import org.vorpal.research.kfg.ir.value.MethodUsageContext
 import org.vorpal.research.kfg.ir.value.Value
 import org.vorpal.research.kfg.ir.value.instruction.BinaryInst
@@ -24,15 +22,15 @@ open class LoopOptimizer(cm: ClassManager) : Evolutions(cm), LoopVisitor {
     protected val phiToEvo = mutableMapOf<PhiInst, Symbolic>()
     protected val freshVars = mutableMapOf<Loop, Var>()
     override val preservesLoopInfo get() = false
+
     override fun cleanup() {}
 
-    override fun visit(method: Method) = method.usageContext.use {
+    protected fun precalculateEvolutions(topLoops : List<Loop>) {
         cleanup()
-        if (!method.hasBody) return
-        walkLoops(method).forEach { loop ->
+        walkLoops(topLoops).forEach { loop ->
             loop
                 .header
-                .takeWhile { it is PhiInst }
+                .instructions
                 .filterIsInstance<PhiInst>()
                 .forEach {
                     loopPhis[it] = loop
@@ -43,23 +41,9 @@ open class LoopOptimizer(cm: ClassManager) : Evolutions(cm), LoopVisitor {
                 }
             }
         }
+    }
 
-        for (b in method.body) for (i in b) {
-            transform(i)
-        }
-
-        loopPhis.keys.forEach {
-            phiToEvo[it] = evaluateEvolutions(buildPhiEquation(it), freshVars)
-            println(phiToEvo[it])
-        }
-
-
-        val loops = method.getLoopInfo()
-        loops.forEach {
-            visitLoop(it)
-        }
-        updateLoopInfo(method)
-        IRVerifier(cm).visit(method)
+    override fun visit(method: Method) = method.usageContext.use {
     }
 
     override fun visitLoop(loop: Loop) {
@@ -72,7 +56,7 @@ open class LoopOptimizer(cm: ClassManager) : Evolutions(cm), LoopVisitor {
         clearUnused(loop)
     }
 
-    protected fun clearUnused(loop: Loop) {
+    protected fun clearUnused(loop: Loop) = with(ctx){
         val unused = mutableListOf<Instruction>()
         for (b in loop.body) {
             for (i in b) {
@@ -115,7 +99,7 @@ open class LoopOptimizer(cm: ClassManager) : Evolutions(cm), LoopVisitor {
         insertBefore(afterBlock, e, loop)
     }
 
-    protected fun insertInductive(loop: Loop)  = with(ctx) {
+    protected fun insertInductive(loop: Loop) = with(ctx) {
         val one = values.getInt(1)
         val tmpPhi = instructions.getPhi(ctx, IntType, mapOf())
 
@@ -153,12 +137,18 @@ open class LoopOptimizer(cm: ClassManager) : Evolutions(cm), LoopVisitor {
     }
 
     private fun Sum.generateCode(collector: MutableList<Instruction>): Value? {
-        val lcm = lcm(this.constant.den, this.parts.values.fold(1L) { acc, v -> lcm(acc, v.den) })
+        val lcm = lcm((constant as? SymRational)?.den ?: 1, this.parts.values.fold(1L) { acc, v ->
+            if (v is SymRational) lcm(acc, v.den) else acc
+        })
         val results = mutableListOf<Value>()
         this.parts.forEach {
             val res = it.key.generateCode(collector) ?: return null
+            val coeff = when (val v = it.value) {
+                is SymRational -> values.getInt((v * lcm).toInt())
+                is SymDouble -> values.getDouble((v * lcm).toDouble())
+            }
             val newInstruction =
-                instructions.getBinary(ctx, BinaryOpcode.MUL, res, values.getInt((it.value * lcm).wholePart.toInt()))
+                instructions.getBinary(ctx, BinaryOpcode.MUL, res, coeff)
             collector.add(newInstruction)
             results.add(newInstruction.get())
         }
@@ -167,7 +157,7 @@ open class LoopOptimizer(cm: ClassManager) : Evolutions(cm), LoopVisitor {
             collector.add(newValue)
             newValue
         }
-        if (constant.num == 0L) {
+        if (constant.equals(0L)) {
             if (lcm == 1L) {
                 return res
             }
@@ -175,8 +165,12 @@ open class LoopOptimizer(cm: ClassManager) : Evolutions(cm), LoopVisitor {
             collector.add(divLcm)
             return divLcm
         }
+        val cnst = when (val c = constant) {
+            is SymRational -> values.getInt((c * lcm).toInt())
+            is SymDouble -> values.getDouble((c * lcm).toDouble())
+        }
         val addConst =
-            instructions.getBinary(ctx, BinaryOpcode.ADD, res, values.getInt((this.constant * lcm).wholePart.toInt()))
+            instructions.getBinary(ctx, BinaryOpcode.ADD, res, cnst)
         collector.add(addConst)
         if (lcm == 1L) {
             return addConst
@@ -186,13 +180,15 @@ open class LoopOptimizer(cm: ClassManager) : Evolutions(cm), LoopVisitor {
         return divLcm
     }
 
+
     private fun Product.generateCode(collector: MutableList<Instruction>): Value? {
         val results = mutableListOf<Value>()
         this.parts.forEach {
-            if (it.value.den != 1L) return null
+            val v = it.value
+            if (v !is SymRational || !v.isWhole()) return null
             val base = it.key.generateCode(collector) ?: return null
             var pre = base
-            for (i in 1 until it.value.wholePart) {
+            for (i in 1 until v.wholePart) {
                 val newInst =
                     instructions.getBinary(ctx, BinaryOpcode.MUL, pre, base)
                 collector.add(newInst)
@@ -206,24 +202,37 @@ open class LoopOptimizer(cm: ClassManager) : Evolutions(cm), LoopVisitor {
             collector.add(newValue)
             newValue
         }
-        if (constant.isWhole() && constant.wholePart == 1L) {
-            return res
-        }
-        val mulConst =
-            instructions.getBinary(ctx, BinaryOpcode.MUL, res, values.getInt(constant.num.toInt()))
-        collector.add(mulConst)
+        when (val const = constant) {
+            is SymRational -> {
+                if (const.isWhole() && const.wholePart == 1L) {
+                    return res
+                }
+                val mulConst =
+                    instructions.getBinary(ctx, BinaryOpcode.MUL, res, values.getInt(const.num.toInt()))
+                collector.add(mulConst)
 
-        if (constant.isWhole()) {
-            return mulConst
+                if (const.isWhole()) {
+                    return mulConst
+                }
+                val divLcm =
+                    instructions.getBinary(ctx, BinaryOpcode.DIV, mulConst, values.getInt(const.den.toInt()))
+                collector.add(divLcm)
+                return divLcm
+            }
+            is SymDouble -> {
+                val mulConst =
+                    instructions.getBinary(ctx, BinaryOpcode.MUL, res, values.getDouble(const.toDouble()))
+                collector.add(mulConst)
+                return mulConst
+            }
         }
-        val divLcm = instructions.getBinary(ctx, BinaryOpcode.DIV, mulConst, values.getInt(constant.den.toInt()))
-        collector.add(divLcm)
-        return divLcm
     }
 
-    private fun Const.generateCode(): Value? {
-        return values.getConstant(this.value.wholePart)
-    }
+    private fun Const.generateCode(): Value? =
+        when (val v = this.value) {
+            is SymRational -> values.getConstant(v.toLong())
+            is SymDouble -> values.getConstant(v.toDouble())
+        }
 
     private fun Var.generateCode(): Value {
         return var2inst[this]!!
@@ -263,7 +272,7 @@ open class LoopOptimizer(cm: ClassManager) : Evolutions(cm), LoopVisitor {
 
     private fun lcm(a: Long, b: Long): Long = (a / gcd(a, b)) * b
 
-    protected fun rebuild(loop: Loop): List<Instruction>? {
+    protected fun rebuild(loop: Loop): Pair<List<Instruction>,List<Pair<PhiInst, Value>>>?   {
         val phis = loop.body.flatMap { it.instructions }.mapNotNull { it as? PhiInst }
             .mapNotNull { if (phiToEvo.containsKey(it)) it else null }
         val newBlock = mutableListOf<Instruction>()
@@ -273,8 +282,8 @@ open class LoopOptimizer(cm: ClassManager) : Evolutions(cm), LoopVisitor {
                 phiList.add(Pair(it, res))
                 true
             }) {
-                phiList.forEach{ it.first.replaceAllUsesWith(ctx, it.second)}
-            newBlock
+//            phiList.forEach { it.first.replaceAllUsesWith(ctx, it.second) }
+            newBlock to phiList
         } else {
             null
         }

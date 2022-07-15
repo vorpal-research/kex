@@ -2,11 +2,6 @@
 
 Kex is a platform for analysis of Java  bytecode.
 
-# Dependencies
-
-* [z3](https://github.com/Z3Prover/z3/tree/z3-4.8.12) v4.8.12 with java bindings
-* [boolector-java](https://aur.archlinux.org/packages/boolector-java/) v3.2.6
-
 # Build
 
 * build jar with all the dependencies:
@@ -18,11 +13,13 @@ Kex is a platform for analysis of Java  bytecode.
     ```
     mvn clean package -Psolver
     ```
-    where `solver` stand for required solver name (`boolector` or `z3`) 
+    where `solver` stands for required solver name:
+  * `z3`
+  * `boolector` (supported only on linux)
 
 Run all the tests:
 ```
-mvn clean verify
+mvn clean verify [-Psolver]
 ```
 
 # Usage

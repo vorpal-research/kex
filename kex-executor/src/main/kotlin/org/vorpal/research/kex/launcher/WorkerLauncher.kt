@@ -88,8 +88,10 @@ class WorkerLauncher(args: Array<String>) {
     }
 
     fun main() {
-        val worker =
-            ExecutorWorker(ctx, Worker2MasterSocketConnection(KexSerializer(ctx.cm, prettyPrint = false), port))
+        val worker = ExecutorWorker(
+            ctx,
+            Worker2MasterSocketConnection(KexSerializer(ctx.cm, prettyPrint = false), port)
+        )
         worker.run()
     }
 
@@ -98,10 +100,10 @@ class WorkerLauncher(args: Array<String>) {
             override fun connect(): Boolean {
                 return true
             }
-
+//            {"klass":"org.vorpal.research.kex.test.javadebug.JavaTest_testLinkedListIndexOf_741047150","testMethod":"test","setupMethod":"setup"}
             override fun receive(): TestExecutionRequest {
                 return TestExecutionRequest(
-                    "org.vorpal.research.kex.test.concolic.ListConcolicTests_init_19335777650",
+                    "org.vorpal.research.kex.test.javadebug.JavaTest_testArrayList_9966534043",
                     testMethod = "test",
                     setupMethod = "setup"
                 )

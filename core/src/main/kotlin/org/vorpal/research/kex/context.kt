@@ -1,5 +1,6 @@
 package org.vorpal.research.kex
 
+import org.vorpal.research.kex.asm.util.AccessModifier
 import org.vorpal.research.kex.random.Randomizer
 import org.vorpal.research.kfg.ClassManager
 import org.vorpal.research.kfg.Package
@@ -10,7 +11,8 @@ data class ExecutionContext(
     val pkg: Package,
     val loader: ClassLoader,
     val random: Randomizer,
-    val classPath: List<Path>
+    val classPath: List<Path>,
+    val accessLevel: AccessModifier = AccessModifier.Public
 ) {
     val types get() = cm.type
     val values get() = cm.value

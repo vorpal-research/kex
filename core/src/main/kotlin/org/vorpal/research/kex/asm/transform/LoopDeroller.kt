@@ -5,13 +5,15 @@ import org.vorpal.research.kex.config.kexConfig
 import org.vorpal.research.kex.evolutions.LoopOptimizer
 import org.vorpal.research.kex.evolutions.defaultVar
 import org.vorpal.research.kex.evolutions.evaluateEvolutions
-import org.vorpal.research.kex.evolutions.walkLoops
+import org.vorpal.research.kex.util.insertBefore
 import org.vorpal.research.kfg.ClassManager
 import org.vorpal.research.kfg.ir.BasicBlock
 import org.vorpal.research.kfg.ir.BodyBlock
 import org.vorpal.research.kfg.ir.CatchBlock
 import org.vorpal.research.kfg.ir.Method
 import org.vorpal.research.kfg.ir.value.*
+import org.vorpal.research.kfg.ir.value.EmptyUsageContext.addUser
+import org.vorpal.research.kfg.ir.value.EmptyUsageContext.users
 import org.vorpal.research.kfg.ir.value.instruction.*
 import org.vorpal.research.kfg.visitor.Loop
 import org.vorpal.research.kthelper.assert.unreachable
@@ -20,9 +22,8 @@ import org.vorpal.research.kthelper.graph.NoTopologicalSortingException
 import org.vorpal.research.kthelper.logging.log
 import org.vorpal.research.kthelper.toInt
 import ru.spbstu.Var
-import java.lang.Math.abs
-import java.lang.Math.min
-
+import kotlin.math.abs
+import kotlin.math.min
 
 private val derollCount = kexConfig.getIntValue("loop", "derollCount", 3)
 private val maxDerollCount = kexConfig.getIntValue("loop", "maxDerollCount", 0)
@@ -98,8 +99,8 @@ class LoopDeroller(override val cm: ClassManager) : LoopOptimizer(cm) {
         if (!method.hasBody) return
         ctx = it
         try {
-            precalculateEvolutions(method)
             val loops = method.getLoopInfo()
+            precalculateEvolutions(loops)
             loops.forEach { loop -> freshVars[loop] = Var.fresh("iteration") }
             loops.forEach { visitLoop(it) }
             updateLoopInfo(method)
@@ -122,8 +123,10 @@ class LoopDeroller(override val cm: ClassManager) : LoopOptimizer(cm) {
         // init state
         unroll(
             loop,
-            if (useBackstabbing && tryBackstabbing(loop, blockOrder.first())) 1 else
-            getDerollCount(loop)
+            when {
+                tryBackstabbing(loop, blockOrder.first()) -> 1
+                else -> getDerollCount(loop)
+            }
         )
     }
 
@@ -136,7 +139,7 @@ class LoopDeroller(override val cm: ClassManager) : LoopOptimizer(cm) {
         log.debug("Method $method, unrolling loop $loop to $derollCount iterations")
 
         // save current phi instructions of method
-        val methodPhis = method.body.filter { it !in body }.flatten().mapNotNull { it as? PhiInst }
+        val methodPhis = method.body.bodyBlocks.filter { it !in body }.flatten().mapNotNull { it as? PhiInst }
         val methodPhiMappings = methodPhis.associateWith { phi ->
             phi.incomings.filterNot { it.key in body }.toMutableMap()
         }.toMutableMap()
@@ -411,27 +414,15 @@ class LoopDeroller(override val cm: ClassManager) : LoopOptimizer(cm) {
         }
     }
 
-    private fun precalculateEvolutions(method: Method) {
-        cleanup()
-        if (!method.hasBody) return
-        walkLoops(method).forEach { loop ->
-            loop
-                .header
-                .takeWhile { it is PhiInst }
-                .filterIsInstance<PhiInst>()
-                .forEach {
-                    loopPhis[it] = loop
-                }
-            loop.body.forEach { basicBlock ->
-                basicBlock.forEach {
-                    inst2loop.getOrPut(it) { loop }
-                }
-            }
-        }
-    }
 
     private fun tryBackstabbing(loop: Loop, firstBlock: BasicBlock): Boolean {
-        if (loop.latches.isEmpty() || loop.preheaders.isEmpty() || loop !in loopPhis.values) {
+        if (loop.latches.isEmpty()) {
+            return false
+        }
+        if (loop.preheaders.isEmpty() || !loop.hasSinglePreheader) {
+            return false
+        }
+        if (loop !in loopPhis.values) {
             return false
         }
 
@@ -441,7 +432,8 @@ class LoopDeroller(override val cm: ClassManager) : LoopOptimizer(cm) {
         loopPhis.keys.forEach {
             try {
                 if (loop.latch in it.incomings &&
-                        loop.preheader in it.incomings) {
+                    loop.preheader in it.incomings
+                ) {
                     phiToEvo[it] = evaluateEvolutions(buildPhiEquation(it), freshVars)
                 }
             } catch (e: StackOverflowError) {
@@ -450,13 +442,16 @@ class LoopDeroller(override val cm: ClassManager) : LoopOptimizer(cm) {
         }
 
         val inst = createInductive(loop)
-        val block = rebuild(loop) ?: return false
-        if (block.isEmpty()) return false
-        val a = firstBlock.last()
-        firstBlock.remove(a)
-        firstBlock.add(inst)
-        firstBlock.addAll(block)
-        firstBlock.add(a)
+        val p = rebuild(loop) ?: return false
+        val block = p.first
+        val phiList = p.second
+        val bblock : List<Instruction> = listOf(inst) +  block
+
+        firstBlock.first().insertBefore(bblock)
+        phiList.forEach { (phi, value) ->
+            phi.users.forEach { user -> value.addUser(user) }
+            phi.replaceAllUsesWith(ctx, value)
+        }
         clearUnused(loop)
         return true
     }

@@ -89,6 +89,8 @@ val Class<*>.kex: KexType
         else -> KexClass(this.trimmedName.replace('.', '/'))
     }
 
+fun Class<*>.toKfgType(types: TypeFactory): Type = kex.getKfgType(types)
+
 val Class<*>.allFields
     get(): List<Field> {
         val result = mutableListOf<Field>()

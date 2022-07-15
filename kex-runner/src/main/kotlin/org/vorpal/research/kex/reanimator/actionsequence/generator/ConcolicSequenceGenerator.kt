@@ -2,9 +2,7 @@ package org.vorpal.research.kex.reanimator.actionsequence.generator
 
 import org.vorpal.research.kex.ExecutionContext
 import org.vorpal.research.kex.asm.state.PredicateStateAnalysis
-import org.vorpal.research.kex.asm.util.Visibility
 import org.vorpal.research.kex.descriptor.Descriptor
-import org.vorpal.research.kex.ktype.KexNull
 import org.vorpal.research.kex.reanimator.actionsequence.ActionSequence
 import org.vorpal.research.kthelper.assert.unreachable
 import org.vorpal.research.kthelper.logging.log
@@ -27,13 +25,8 @@ class ConcolicSequenceGenerator(override val context: GeneratorContext) : Genera
         typeGenerators += UnknownGenerator(this)
     }
 
-    private val Descriptor.wrappedType get() = when (this.type) {
-        is KexNull -> context.types.objectType
-        else -> this.type.getKfgType(context.types)
-    }
-
-    constructor(executionCtx: ExecutionContext, psa: PredicateStateAnalysis, visibilityLevel: Visibility)
-            : this(GeneratorContext(executionCtx, psa, visibilityLevel))
+    constructor(executionCtx: ExecutionContext, psa: PredicateStateAnalysis)
+            : this(GeneratorContext(executionCtx, psa))
 
     val Descriptor.generator: Generator
         get() = typeGenerators.firstOrNull { it.supports(this) } ?: unreachable {

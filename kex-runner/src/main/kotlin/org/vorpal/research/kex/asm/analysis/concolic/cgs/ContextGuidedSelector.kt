@@ -9,16 +9,16 @@ import org.vorpal.research.kex.ktype.kexType
 import org.vorpal.research.kex.state.predicate.*
 import org.vorpal.research.kex.state.term.ConstBoolTerm
 import org.vorpal.research.kex.state.term.InstanceOfTerm
-import org.vorpal.research.kex.state.term.NullTerm
 import org.vorpal.research.kex.state.term.numericValue
 import org.vorpal.research.kex.state.transformer.TermCollector
 import org.vorpal.research.kex.trace.symbolic.*
 import org.vorpal.research.kex.util.dropLast
 import org.vorpal.research.kex.util.nextOrNull
+import org.vorpal.research.kfg.ir.BasicBlock
 import org.vorpal.research.kfg.ir.Method
 import org.vorpal.research.kfg.ir.value.IntConstant
+import org.vorpal.research.kfg.ir.value.Value
 import org.vorpal.research.kfg.ir.value.instruction.BranchInst
-import org.vorpal.research.kfg.ir.value.instruction.CallInst
 import org.vorpal.research.kfg.ir.value.instruction.SwitchInst
 import org.vorpal.research.kfg.ir.value.instruction.TableSwitchInst
 import org.vorpal.research.kfg.type.ClassType
@@ -40,10 +40,12 @@ class ContextGuidedSelector(
 
     private class State(
         val context: Context,
-        val path: List<Clause>,
-        val activeClause: Clause,
-        val revertedClause: Clause
+        val path: List<PathClause>,
+        val activeClause: PathClause,
+        val revertedClause: PathClause
     )
+
+    override suspend fun isEmpty(): Boolean = executionTree.isEmpty()
 
     override suspend fun hasNext(): Boolean = `try` {
         do {
@@ -107,182 +109,112 @@ class ContextGuidedSelector(
         executionTree.addTrace(result.trace)
     }
 
-    private fun Clause.reversed(): Clause? = when (instruction) {
-        is BranchInst -> {
-            val (cond, value) = with(predicate as EqualityPredicate) {
-                lhv to (rhv as ConstBoolTerm).value
+    private fun PathClause.reversed(): PathClause? = when (type) {
+        PathClauseType.NULL_CHECK -> copy(predicate = predicate.reverseBoolCond())
+        PathClauseType.TYPE_CHECK -> copy(predicate = predicate.reverseBoolCond())
+        PathClauseType.OVERLOAD_CHECK -> {
+            val lhv = predicate.operands[0] as InstanceOfTerm
+            val termType = lhv.operand.type.getKfgType(ctx.types)
+            val excludeClasses = executionTree.getPathVertex(this).predecessors
+                .asSequence()
+                .flatMap { it.successors }
+                .map { it.clause.predicate }
+                .flatMap { TermCollector.getFullTermSet(it).filterIsInstance<InstanceOfTerm>() }
+                .map { it.checkedType.getKfgType(ctx.types) }
+                .filterIsInstance<ClassType>()
+                .map { it.klass }
+                .toSet()
+
+            try {
+                val newType = instantiationManager.get(ctx.types, termType, excludeClasses, ctx.random)
+                copy(predicate = path(instruction.location) {
+                    (lhv.operand `is` newType.kexType) equality true
+                })
+            } catch (e: NoConcreteInstanceException) {
+                executionTree.markExhausted(this)
+                null
             }
-            val reversed = Clause(instruction, path(instruction.location) {
-                cond equality !value
-            })
-            reversed
         }
-        is SwitchInst -> when (val pred = predicate) {
-            is DefaultSwitchPredicate -> {
-                val switchInst = instruction as SwitchInst
-                val cond = pred.cond
-                val candidates = switchInst.branches.keys.map { (it as IntConstant).value }.toSet()
-                candidates.randomOrNull(ctx.random)?.let {
-                    Clause(instruction, path(instruction.location) {
-                        cond equality it
-                    })
+        PathClauseType.CONDITION_CHECK -> when (val inst = instruction) {
+            is BranchInst -> copy(predicate = predicate.reverseBoolCond())
+            is SwitchInst -> {
+                val predecessors = executionTree.getPathVertex(this).predecessors
+                predicate.reverseSwitchCond(predecessors, inst.branches)?.let {
+                    copy(predicate = it)
                 }
             }
-            is EqualityPredicate -> {
-                val equalityPredicate = predicate as EqualityPredicate
-                val switchInst = instruction as SwitchInst
-                val cond = equalityPredicate.lhv
-
-
-                val outgoingPaths = switchInst.branches.toList()
-                    .groupBy({ it.second }, { it.first })
-                    .map { it.value.map { (it as IntConstant).value }.toSet() }
-
-                val equivalencePaths = mutableMapOf<Int, Set<Int>>()
-                for (set in outgoingPaths) {
-                    for (value in set) {
-                        equivalencePaths[value] = set
-                    }
+            is TableSwitchInst -> {
+                val predecessors = executionTree.getPathVertex(this).predecessors
+                val branches = inst.range.let { range ->
+                    range.associateWith { inst.branches[it - range.first] }
+                        .mapKeys { ctx.values.getInt(it.key) }
                 }
-
-                val visitedCandidates = executionTree.getPathVertex(this).predecessors
-                    .asSequence()
-                    .flatMap { it.successors }
-                    .map { it.clause.predicate }
-                    .filterIsInstance<EqualityPredicate>()
-                    .map { it.rhv.numericValue }
-                    .toSet()
-
-                val candidates = run {
-                    val currentRange = switchInst.branches.keys.map { (it as IntConstant).value }.toMutableSet()
-                    for (candidate in visitedCandidates) {
-                        currentRange.removeAll(equivalencePaths[candidate]!!)
-                    }
-                    currentRange
-                }
-
-                candidates.randomOrNull(ctx.random)?.let {
-                    Clause(instruction, path(instruction.location) {
-                        cond equality it
-                    })
+                predicate.reverseSwitchCond(predecessors, branches)?.let {
+                    copy(predicate = it)
                 }
             }
-            else -> unreachable { log.error("Unexpected predicate in switch clause: $predicate") }
+            else -> unreachable { log.error("Unexpected predicate in clause $inst") }
         }
-        is TableSwitchInst -> when (val pred = predicate) {
-            is DefaultSwitchPredicate -> {
-                val switchInst = instruction as TableSwitchInst
-                val cond = pred.cond
-                val candidates = switchInst.range.toSet()
-                candidates.randomOrNull(ctx.random)?.let {
-                    Clause(instruction, path(instruction.location) {
-                        cond equality it
-                    })
-                }
-            }
-            is EqualityPredicate -> {
-                val switchInst = instruction as TableSwitchInst
-                val cond = pred.lhv
+        PathClauseType.BOUNDS_CHECK -> copy(predicate = predicate.reverseBoolCond())
+    }
 
-                val outgoingPaths = switchInst.range
-                    .zip(switchInst.branches)
-                    .groupBy({ it.second }, { it.first })
-                    .map { it.value.toSet() }
-
-                val equivalencePaths = mutableMapOf<Int, Set<Int>>()
-                for (set in outgoingPaths) {
-                    for (value in set) {
-                        equivalencePaths[value] = set
-                    }
-                }
-
-                val visitedCandidates = executionTree.getPathVertex(this).predecessors
-                    .asSequence()
-                    .flatMap { it.successors }
-                    .map { it.clause.predicate }
-                    .filterIsInstance<EqualityPredicate>()
-                    .map { it.rhv.numericValue }
-                    .toSet()
-
-                val candidates = run {
-                    val currentRange = switchInst.range.toMutableSet()
-                    for (candidate in visitedCandidates) {
-                        currentRange.removeAll(equivalencePaths.getOrDefault(candidate, setOf()))
-                    }
-                    currentRange
-                }
-
-                candidates.randomOrNull(ctx.random)?.let {
-                    Clause(instruction, path(instruction.location) {
-                        cond equality it
-                    })
-                }
-            }
-            else -> unreachable { log.error("Unexpected predicate in switch clause: $predicate") }
+    private fun Predicate.reverseBoolCond() = when (this) {
+        is EqualityPredicate -> predicate(this.type, this.location) {
+            lhv equality !(rhv as ConstBoolTerm).value
         }
-        is CallInst -> when (val pred = predicate) {
-            is EqualityPredicate -> when (val lhv = pred.lhv) {
-                is InstanceOfTerm -> {
-                    val termType = lhv.operand.type.getKfgType(ctx.types)
-                    val excludeClasses = executionTree.getPathVertex(this).predecessors
-                        .asSequence()
-                        .flatMap { it.successors }
-                        .map { it.clause.predicate }
-                        .flatMap { TermCollector.getFullTermSet(it).filterIsInstance<InstanceOfTerm>() }
-                        .map { it.checkedType.getKfgType(ctx.types) }
-                        .filterIsInstance<ClassType>()
-                        .map { it.klass }
-                        .toSet()
-                    try {
-                        val newType = instantiationManager.get(ctx.types, termType, excludeClasses, ctx.random)
-                        Clause(instruction, path(instruction.location) {
-                            (lhv.operand `is` newType.kexType) equality true
-                        })
-                    } catch (e: NoConcreteInstanceException) {
-                        executionTree.markExhausted(this)
-                        null
-                    }
-                }
-                else -> when (val rhv = pred.rhv) {
-                    is NullTerm -> Clause(instruction, path(instruction.location) {
-                        lhv inequality null
-                    })
-                    is ConstBoolTerm -> {
-                        Clause(instruction, path(instruction.location) {
-                            lhv equality !rhv.value
-                        })
-                    }
-                    else -> log.warn("Unknown clause $this").let { null }
-                }
-            }
-            else -> unreachable { log.error("Unexpected predicate in call clause: $predicate") }
+        is InequalityPredicate -> predicate(this.type, this.location) {
+            lhv inequality !(rhv as ConstBoolTerm).value
         }
-        else -> when (val pred = predicate) {
-            is EqualityPredicate -> {
-                val (lhv, rhv) = pred.lhv to pred.rhv
-                when (rhv) {
-                    is NullTerm -> Clause(instruction, path(instruction.location) {
-                        lhv inequality null
-                    })
-                    is ConstBoolTerm -> {
-                        Clause(instruction, path(instruction.location) {
-                            lhv equality !rhv.value
-                        })
-                    }
-                    else -> log.warn("Unknown clause $this").let { null }
+        else -> unreachable { log.error("Unexpected predicate in bool cond: $this") }
+    }
+
+    private fun Predicate.reverseSwitchCond(
+        neighbouringVertices: Set<Vertex>,
+        branches: Map<Value, BasicBlock>
+    ): Predicate? = when (this) {
+        is DefaultSwitchPredicate -> {
+            val candidates = branches.keys.map { (it as IntConstant).value }.toSet()
+            candidates.randomOrNull(ctx.random)?.let {
+                predicate(this.type, this.location) {
+                    cond equality it
                 }
             }
-            is InequalityPredicate -> {
-                val (lhv, rhv) = pred.lhv to pred.rhv
-                when (rhv) {
-                    is NullTerm -> Clause(instruction, path(instruction.location) {
-                        lhv equality null
-                    })
-                    else -> log.warn("Unknown clause $this").let { null }
-                }
-            }
-            else -> null
         }
+        is EqualityPredicate -> {
+            val outgoingPaths = branches.toList()
+                .groupBy({ it.second }, { it.first })
+                .map { it.value.map { const -> (const as IntConstant).value }.toSet() }
+
+            val equivalencePaths = mutableMapOf<Int, Set<Int>>()
+            for (set in outgoingPaths) {
+                for (value in set) {
+                    equivalencePaths[value] = set
+                }
+            }
+
+            val visitedCandidates = neighbouringVertices
+                .asSequence()
+                .flatMap { it.successors }
+                .map { it.clause.predicate }
+                .filterIsInstance<EqualityPredicate>()
+                .map { it.rhv.numericValue }
+                .toSet()
+
+            val candidates = run {
+                val currentRange = branches.keys.map { (it as IntConstant).value }.toMutableSet()
+                for (candidate in visitedCandidates) {
+                    currentRange.removeAll(equivalencePaths[candidate]!!)
+                }
+                currentRange
+            }
+
+            candidates.randomOrNull(ctx.random)?.let {
+                predicate(type, location) {
+                    lhv equality it
+                }
+            }
+        }
+        else -> unreachable { log.error("Unexpected predicate in switch clause: $this") }
     }
 
     fun view() {

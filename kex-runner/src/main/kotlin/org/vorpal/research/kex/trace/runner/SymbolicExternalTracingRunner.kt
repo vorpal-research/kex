@@ -5,6 +5,7 @@ import kotlinx.serialization.InternalSerializationApi
 import org.vorpal.research.kex.ExecutionContext
 import org.vorpal.research.kex.config.kexConfig
 import org.vorpal.research.kex.serialization.KexSerializer
+import org.vorpal.research.kex.trace.symbolic.ExecutionCompletedResult
 import org.vorpal.research.kex.trace.symbolic.ExecutionResult
 import org.vorpal.research.kex.trace.symbolic.protocol.Client2MasterConnection
 import org.vorpal.research.kex.trace.symbolic.protocol.Client2MasterSocketConnection
@@ -12,6 +13,7 @@ import org.vorpal.research.kex.trace.symbolic.protocol.TestExecutionRequest
 import org.vorpal.research.kex.util.getIntrinsics
 import org.vorpal.research.kex.util.getJunit
 import org.vorpal.research.kex.util.getPathSeparator
+import org.vorpal.research.kex.util.outputDirectory
 import org.vorpal.research.kthelper.logging.log
 import java.net.ServerSocket
 import java.nio.file.Paths
@@ -30,7 +32,7 @@ internal object ExecutorMasterController : AutoCloseable {
     }
 
     fun start(ctx: ExecutionContext) {
-        val outputDir = kexConfig.getPathValue("kex", "outputDir")!!
+        val outputDir = kexConfig.outputDirectory
         val executorPath = (kexConfig.getPathValue(
             "executor", "executorPath"
         ) ?: Paths.get("kex-executor/target/kex-executor-0.0.1-jar-with-dependencies.jar")).toAbsolutePath()
@@ -92,7 +94,10 @@ class SymbolicExternalTracingRunner(val ctx: ExecutionContext) {
             it.connect()
             it.send(TestExecutionRequest(klass, test, setup))
             val result = it.receive()
-            log.debug("Execution result: $result")
+            when (result) {
+                is ExecutionCompletedResult -> log.debug("Execution result: ${result.trace}")
+                else -> log.debug("Execution result: $result")
+            }
             return result
         }
     }

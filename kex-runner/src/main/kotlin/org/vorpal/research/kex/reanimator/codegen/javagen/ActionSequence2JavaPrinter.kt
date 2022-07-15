@@ -2,7 +2,7 @@ package org.vorpal.research.kex.reanimator.codegen.javagen
 
 import org.vorpal.research.kex.ExecutionContext
 import org.vorpal.research.kex.asm.util.Visibility
-import org.vorpal.research.kex.asm.util.visibility
+import org.vorpal.research.kex.asm.util.accessModifier
 import org.vorpal.research.kex.config.kexConfig
 import org.vorpal.research.kex.ktype.KexType
 import org.vorpal.research.kex.ktype.type
@@ -22,9 +22,6 @@ import org.vorpal.research.kthelper.logging.log
 import org.vorpal.research.kthelper.tryOrNull
 import java.lang.reflect.*
 
-private val visibilityLevel by lazy {
-    kexConfig.getEnumValue("testGen", "visibility", true, Visibility.PUBLIC)
-}
 private val testTimeout by lazy {
     kexConfig.getLongValue("testGen", "testTimeout", 10000L)
 }
@@ -203,7 +200,7 @@ open class ActionSequence2JavaPrinter(
             val actualKlass = ctx.loader.loadClass(type)
             val requiredKlass = ctx.loader.loadClass(requiredType.type)
             val isAssignable = requiredKlass.isAssignableFrom(actualKlass)
-            val isVisible = ((type as? ClassType)?.klass?.visibility ?: Visibility.PUBLIC) >= visibilityLevel
+            val isVisible = ctx.accessLevel.canAccess(type.accessModifier)
             if (isVisible && isAssignable && actualKlass.typeParameters.size == requiredKlass.typeParameters.size) {
                 ASClass(
                     type,

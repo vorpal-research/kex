@@ -1,7 +1,5 @@
 package org.vorpal.research.kex.util
 
-import org.vorpal.research.kex.asm.util.Visibility
-import org.vorpal.research.kex.asm.util.visibility
 import org.vorpal.research.kex.ktype.KexType
 import org.vorpal.research.kex.ktype.kexType
 import org.vorpal.research.kex.ktype.type
@@ -37,6 +35,9 @@ fun Instruction.insertAfter(instructions: List<Instruction>) {
     this.parent.insertAfter(this, *instructions.toTypedArray())
 }
 
+val Instruction.next: Instruction? get() = parent.instructions.getOrNull(parent.indexOf(this) + 1)
+val Instruction.previous: Instruction? get() = parent.instructions.getOrNull(parent.indexOf(this) - 1)
+
 fun Any?.cmp(opcode: CmpOpcode, other: Any?) = when {
     this is Number && other is Number -> this.apply(opcode, other)
     this is Char && other is Number -> this.apply(opcode, other)
@@ -66,7 +67,10 @@ fun Number.apply(opcode: CmpOpcode, other: Char) = this.apply(opcode, other.code
 fun Char.apply(opcode: CmpOpcode, other: Number) = this.code.apply(opcode, other)
 fun Char.apply(opcode: CmpOpcode, other: Char) = this.code.apply(opcode, other.code)
 
-fun NameMapper.parseValue(valueName: String): Value {
+fun NameMapper.parseValue(valueName: String): Value =
+    parseValueOrNull(valueName) ?:  unreachable { log.error("Unknown value name $valueName for object cmp") }
+
+fun NameMapper.parseValueOrNull(valueName: String): Value? {
     val values = method.cm.value
     return getValue(valueName) ?: when {
         valueName.matches(Regex("-?\\d+L")) -> values.getLong(valueName.toLong())
@@ -82,7 +86,7 @@ fun NameMapper.parseValue(valueName: String): Value {
         valueName == "null" -> values.nullConstant
         valueName == "true" -> values.trueConstant
         valueName == "false" -> values.falseConstant
-        else -> unreachable { log.error("Unknown value name $valueName for object cmp") }
+        else -> null
     }
 }
 
@@ -94,11 +98,15 @@ val SystemTypeNames.charSequence get() = "java/lang/CharSequence"
 val SystemTypeNames.field get() = "java/lang/reflect/Field"
 val SystemTypeNames.stringBuilder get() = "java/lang/StringBuilder"
 val SystemTypeNames.stringBuffer get() = "java/lang/StringBuffer"
+val SystemTypeNames.linkedHashSet get() = "java/util/LinkedHashSet"
+val SystemTypeNames.linkedHashMap get() = "java/util/LinkedHashMap"
 
 val SystemTypeNames.classLoader get() = "java/lang/ClassLoader"
 val ClassManager.classLoaderClass get() = this[SystemTypeNames.classLoader]
 val ClassManager.stringBuilderClass get() = this[SystemTypeNames.stringBuilder]
 val ClassManager.stringBufferClass get() = this[SystemTypeNames.stringBuffer]
+val ClassManager.linkedHashSetClass get() = this[SystemTypeNames.linkedHashSet]
+val ClassManager.linkedHashMapClass get() = this[SystemTypeNames.linkedHashMap]
 val TypeFactory.classLoaderType get() = getRefType(SystemTypeNames.classLoader)
 
 
@@ -108,13 +116,6 @@ fun Type.getAllSubtypes(tf: TypeFactory): Set<Type> = when (this) {
     else -> setOf()
 }
 
-val Type.visibility: Visibility get() = when (this) {
-    is ClassType -> this.klass.visibility
-    is ArrayType -> this.component.visibility
-    else -> Visibility.PUBLIC
-}
-
-fun KexType.getVisibility(tf: TypeFactory) = this.getKfgType(tf).visibility
 
 fun parseAsConcreteType(typeFactory: TypeFactory, name: String): KexType? {
     val type = parseStringToType(typeFactory, name)

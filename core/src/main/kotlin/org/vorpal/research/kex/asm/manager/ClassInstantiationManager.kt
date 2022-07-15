@@ -1,7 +1,8 @@
 package org.vorpal.research.kex.asm.manager
 
-import org.vorpal.research.kex.asm.util.Visibility
-import org.vorpal.research.kex.asm.util.visibility
+import org.vorpal.research.kex.ExecutionContext
+import org.vorpal.research.kex.asm.util.AccessModifier
+import org.vorpal.research.kex.asm.util.accessModifier
 import org.vorpal.research.kex.ktype.*
 import org.vorpal.research.kex.ktype.KexRtManager.rtMapped
 import org.vorpal.research.kex.util.*
@@ -21,7 +22,7 @@ val instantiationManager: ClassInstantiationManager get() = StringClassInstantia
 class NoConcreteInstanceException(val klass: Class) : Exception()
 
 interface ClassInstantiationManager {
-    fun isDirectlyInstantiable(klass: Class, visibilityLevel: Visibility): Boolean
+    fun isDirectlyInstantiable(klass: Class, accessLevel: AccessModifier): Boolean
     fun isInstantiable(klass: Class): Boolean
     fun getExternalCtors(klass: Class): Set<Method>
     operator fun get(klass: Class, random: Random): Class
@@ -42,35 +43,36 @@ interface ClassInstantiationManager {
     }
 }
 
+private val predefinedConcreteInstanceInfo = with(SystemTypeNames) {
+    mutableMapOf(
+        collectionClass to setOf(arrayListClass.rtMapped),
+        listClass to setOf(arrayListClass.rtMapped),
+        queueClass to setOf(arrayListClass.rtMapped),
+        dequeClass to setOf(arrayDequeClass.rtMapped),
+        setClass to setOf(hashSetClass.rtMapped),
+        sortedSetClass to setOf(treeSetClass.rtMapped),
+        navigableSetClass to setOf(treeSetClass.rtMapped),
+        mapClass to setOf(hashMapClass.rtMapped),
+        sortedMapClass to setOf(treeSetClass.rtMapped),
+        navigableMapClass to setOf(treeSetClass.rtMapped),
+        unmodifiableCollection to setOf(unmodifiableList.rtMapped),
+        unmodifiableList to setOf(unmodifiableList.rtMapped),
+        unmodifiableSet to setOf(unmodifiableSet.rtMapped),
+        unmodifiableMap to setOf(unmodifiableMap.rtMapped),
+        charSequence to setOf(stringClass.rtMapped)
+    )
+}
+
 @Deprecated(
     message = "use StringClassInstantiationManagerImpl that is more efficient with lazy kfg",
     replaceWith = ReplaceWith("org.vorpal.research.kex.asm.manager.StringClassInstantiationManagerImpl")
 )
 private object ClassInstantiationManagerImpl : ClassInstantiationManager {
-    private val predefinedConcreteInstanceInfo = with(SystemTypeNames) {
-        mutableMapOf(
-            collectionClass to setOf(arrayListClass.rtMapped),
-            listClass to setOf(arrayListClass.rtMapped),
-            queueClass to setOf(arrayListClass.rtMapped),
-            dequeClass to setOf(arrayDequeClass.rtMapped),
-            setClass to setOf(hashSetClass.rtMapped),
-            sortedSetClass to setOf(treeSetClass.rtMapped),
-            navigableSetClass to setOf(treeSetClass.rtMapped),
-            mapClass to setOf(hashMapClass.rtMapped),
-            sortedMapClass to setOf(treeSetClass.rtMapped),
-            navigableMapClass to setOf(treeSetClass.rtMapped),
-            unmodifiableCollection to setOf(unmodifiableList.rtMapped),
-            unmodifiableList to setOf(unmodifiableList.rtMapped),
-            unmodifiableSet to setOf(unmodifiableSet.rtMapped),
-            unmodifiableMap to setOf(unmodifiableMap.rtMapped),
-            charSequence to setOf(stringClass.rtMapped)
-        )
-    }
     private val classInstantiationInfo = mutableMapOf<Class, MutableSet<Class>>()
     private val externalConstructors = mutableMapOf<Class, MutableSet<Method>>()
 
-    override fun isDirectlyInstantiable(klass: Class, visibilityLevel: Visibility): Boolean =
-        klass.visibility >= visibilityLevel && !klass.isAbstract && !klass.isInterface
+    override fun isDirectlyInstantiable(klass: Class, accessLevel: AccessModifier): Boolean =
+        accessLevel.canAccess(klass.accessModifier) && !klass.isAbstract && !klass.isInterface
 
     override fun isInstantiable(klass: Class) = when (klass.fullName) {
         in predefinedConcreteInstanceInfo -> true
@@ -118,34 +120,15 @@ private object ClassInstantiationManagerImpl : ClassInstantiationManager {
 }
 
 private object StringClassInstantiationManagerImpl : ClassInstantiationManager {
-    private val predefinedConcreteInstanceInfo = with(SystemTypeNames) {
-        mutableMapOf(
-            collectionClass to setOf(arrayListClass.rtMapped),
-            listClass to setOf(arrayListClass.rtMapped),
-            queueClass to setOf(arrayListClass.rtMapped),
-            dequeClass to setOf(arrayDequeClass.rtMapped),
-            setClass to setOf(hashSetClass.rtMapped),
-            sortedSetClass to setOf(treeSetClass.rtMapped),
-            navigableSetClass to setOf(treeSetClass.rtMapped),
-            mapClass to setOf(hashMapClass.rtMapped),
-            sortedMapClass to setOf(treeSetClass.rtMapped),
-            navigableMapClass to setOf(treeSetClass.rtMapped),
-            unmodifiableCollection to setOf(unmodifiableList.rtMapped),
-            unmodifiableList to setOf(unmodifiableList.rtMapped),
-            unmodifiableSet to setOf(unmodifiableSet.rtMapped),
-            unmodifiableMap to setOf(unmodifiableMap.rtMapped),
-            charSequence to setOf(stringClass.rtMapped)
-        )
-    }
     private val classInstantiationInfo = mutableMapOf<String, MutableSet<String>>()
     private val externalConstructors = mutableMapOf<String, MutableSet<Triple<String, String, String>>>()
 
-    override fun isDirectlyInstantiable(klass: Class, visibilityLevel: Visibility): Boolean =
-        klass.visibility >= visibilityLevel && !klass.isAbstract && !klass.isInterface
+    override fun isDirectlyInstantiable(klass: Class, accessLevel: AccessModifier): Boolean =
+        accessLevel.canAccess(klass.accessModifier) && !klass.isAbstract && !klass.isInterface
 
     override fun isInstantiable(klass: Class) = when (val fullName = klass.fullName) {
         in predefinedConcreteInstanceInfo -> true
-        else -> classInstantiationInfo[fullName].isNullOrEmpty()
+        else -> !classInstantiationInfo[fullName].isNullOrEmpty()
     }
 
     override fun getExternalCtors(klass: Class): Set<Method> =
@@ -193,19 +176,24 @@ private object StringClassInstantiationManagerImpl : ClassInstantiationManager {
     }
 }
 
-class ClassInstantiationDetector(override val cm: ClassManager, val visibilityLevel: Visibility) : ClassVisitor {
+class ClassInstantiationDetector(
+    private val ctx: ExecutionContext
+) : ClassVisitor {
+    override val cm: ClassManager get() = ctx.cm
+    val accessLevel: AccessModifier get() = ctx.accessLevel
+
     override fun cleanup() {}
 
     override fun visit(klass: Class) {
-        if (StringClassInstantiationManagerImpl.isDirectlyInstantiable(klass, visibilityLevel))
+        if (StringClassInstantiationManagerImpl.isDirectlyInstantiable(klass, accessLevel))
             addInstantiableClass(klass, klass)
         super.visit(klass)
     }
 
     override fun visitMethod(method: Method) {
         val returnType = (method.returnType as? ClassType) ?: return
-        if (visibilityLevel > method.visibility) return
-        if (visibilityLevel > method.klass.visibility) return
+        if (!accessLevel.canAccess(method.accessModifier)) return
+        if (!accessLevel.canAccess(method.klass.accessModifier)) return
         if (!method.isStatic || method.argTypes.any { it.isSubtypeOf(returnType) } || method.isSynthetic) return
 
         var returnClass = returnType.klass
@@ -213,9 +201,9 @@ class ClassInstantiationDetector(override val cm: ClassManager, val visibilityLe
             it as ReturnInst
             if (it.returnValue is NewInst) {
                 returnClass = (it.returnValue.type as ClassType).klass
+                addInstantiableClass(returnClass, returnClass)
             }
         }
-        addInstantiableClass(returnClass, returnClass)
         addExternalCtor(returnClass, method)
     }
 

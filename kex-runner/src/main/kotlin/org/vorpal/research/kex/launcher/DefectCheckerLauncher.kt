@@ -26,7 +26,7 @@ class DefectCheckerLauncher(classPaths: List<String>, targetName: String) : KexL
         +psa
         +MethodFieldAccessCollector(ctx, psa)
         +SetterCollector(ctx)
-        +ClassInstantiationDetector(ctx.cm, visibilityLevel)
+        +ClassInstantiationDetector(ctx)
     }
 
     override fun launch() {

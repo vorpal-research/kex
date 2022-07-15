@@ -1,5 +1,7 @@
 package org.vorpal.research.kex.asm.manager
 
+import org.vorpal.research.kex.asm.util.AccessModifier
+import org.vorpal.research.kex.asm.util.accessModifier
 import org.vorpal.research.kex.config.kexConfig
 import org.vorpal.research.kex.ktype.type
 import org.vorpal.research.kex.util.asArray
@@ -11,6 +13,18 @@ import org.vorpal.research.kthelper.assert.ktassert
 import org.vorpal.research.kthelper.logging.log
 
 object MethodManager {
+
+    fun canBeImpacted(method: Method, accessLevel: AccessModifier): Boolean = when {
+        method.isAbstract -> false
+        method.isStaticInitializer -> false
+        method.klass.isSynthetic -> false
+        method.klass.isAbstract && method.isConstructor -> false
+        method.isSynthetic -> false
+        !accessLevel.canAccess(method.klass.accessModifier) -> false
+        !accessLevel.canAccess(method.accessModifier) -> false
+        else -> true
+    }
+
     object InlineManager {
         val inliningEnabled = kexConfig.getBooleanValue("inliner", "enabled", true)
         private val ignorePackages = hashSetOf<Package>()

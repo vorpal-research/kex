@@ -58,6 +58,7 @@ class Checker(
         +ClassAdapter(ctx.cm)
         +IntrinsicAdapter
         +KexIntrinsicsAdapter()
+        +EqualsTransformer()
         +ReflectionInfoAdapter(method, loader)
         +Optimizer()
         +ConstantPropagator
@@ -82,6 +83,7 @@ class Checker(
         +ClassAdapter(ctx.cm)
         +IntrinsicAdapter
         +KexIntrinsicsAdapter()
+        +EqualsTransformer()
         +ReflectionInfoAdapter(method, loader)
         +Optimizer()
         +ConstantPropagator

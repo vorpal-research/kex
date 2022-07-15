@@ -1,5 +1,6 @@
 package org.vorpal.research.kex.launcher
 
+import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.InternalSerializationApi
 import org.vorpal.research.kex.ExecutionContext
@@ -20,6 +21,7 @@ import org.vorpal.research.kthelper.logging.log
 
 @ExperimentalSerializationApi
 @InternalSerializationApi
+@DelicateCoroutinesApi
 class ConcolicLauncher(classPaths: List<String>, targetName: String) : KexLauncher(classPaths, targetName) {
     override fun createInstrumenter(context: ExecutionContext): MethodVisitor {
         return SymbolicTraceCollector(context)
@@ -27,14 +29,14 @@ class ConcolicLauncher(classPaths: List<String>, targetName: String) : KexLaunch
 
     override fun preparePackage(ctx: ExecutionContext, psa: PredicateStateAnalysis, pkg: Package) =
         executePipeline(ctx.cm, pkg) {
-            +ClassInstantiationDetector(ctx.cm, visibilityLevel)
+            +ClassInstantiationDetector(ctx)
         }
 
-    private val targetMethods: Set<Method>
+    private val batchedTargets: Set<Set<Method>>
         get() = when (analysisLevel) {
-            is ClassLevel -> analysisLevel.klass.allMethods
-            is MethodLevel -> setOf(analysisLevel.method)
-            is PackageLevel -> context.cm.getByPackage(analysisLevel.pkg).flatMap { it.allMethods }.toSet()
+            is ClassLevel -> setOf(analysisLevel.klass.allMethods)
+            is MethodLevel -> setOf(setOf(analysisLevel.method))
+            is PackageLevel -> context.cm.getByPackage(analysisLevel.pkg).map { it.allMethods }.toSet()
         }
 
     override fun launch() {
@@ -45,7 +47,9 @@ class ConcolicLauncher(classPaths: List<String>, targetName: String) : KexLaunch
                 +SystemExitTransformer(context.cm)
             }
 
-            InstructionConcolicChecker.run(context, targetMethods)
+            for (setOfTargets in batchedTargets) {
+                InstructionConcolicChecker.run(context, setOfTargets)
+            }
 
             val coverageInfo = CoverageReporter(containers).execute(context.cm, analysisLevel)
             log.info(

@@ -5,6 +5,7 @@ import org.vorpal.research.kex.config.kexConfig
 import org.vorpal.research.kex.descriptor.convertToDescriptor
 import org.vorpal.research.kex.trace.symbolic.*
 import org.vorpal.research.kex.trace.symbolic.protocol.TestExecutionRequest
+import org.vorpal.research.kex.util.outputDirectory
 import org.vorpal.research.kfg.ir.value.NameMapperContext
 import org.vorpal.research.kthelper.logging.log
 import java.net.URLClassLoader
@@ -15,7 +16,7 @@ class TestExecutor(
     fun executeTest(request: TestExecutionRequest): ExecutionResult {
         val compiledClassLoader = URLClassLoader(
             arrayOf(
-                kexConfig.getPathValue("kex", "outputDir")!!.resolve(
+                kexConfig.outputDirectory.resolve(
                     kexConfig.getStringValue("compile", "compileDir", "compiled")
                 ).toAbsolutePath().toUri().toURL()
             )

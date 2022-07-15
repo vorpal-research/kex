@@ -8,7 +8,9 @@ import org.vorpal.research.kex.reanimator.actionsequence.ActionSequence
 import org.vorpal.research.kex.reanimator.codegen.javagen.ActionSequence2JavaPrinter
 import org.vorpal.research.kex.reanimator.codegen.javagen.ExecutorAS2JavaPrinter
 import org.vorpal.research.kex.reanimator.codegen.kotlingen.ActionSequence2KotlinPrinter
+import org.vorpal.research.kex.util.compiledCodeDirectory
 import org.vorpal.research.kex.util.getJunit
+import org.vorpal.research.kex.util.outputDirectory
 import org.vorpal.research.kfg.ir.BasicBlock
 import org.vorpal.research.kfg.ir.Class
 import org.vorpal.research.kfg.ir.Method
@@ -21,7 +23,6 @@ import kotlin.math.abs
 
 private val useReanimator by lazy { kexConfig.getBooleanValue("reanimator", "enabled", true) }
 private val generateTestCases by lazy { kexConfig.getBooleanValue("testGen", "enabled", false) }
-private val outputDirectory by lazy { kexConfig.getPathValue("kex", "outputDir")!! }
 private val testCaseDirectory by lazy { kexConfig.getPathValue("testGen", "testsDir", "tests") }
 private val testCaseLanguage by lazy { kexConfig.getStringValue("testGen", "testCaseLanguage", "java") }
 
@@ -52,11 +53,7 @@ abstract class TestCasePrinter(
 
     fun checkTestCompiles() {
         if (testCaseLanguage == "java") {
-            val compileDir = outputDirectory.resolve(
-                kexConfig.getPathValue("compile", "compileDir", "compiled/")
-            ).also {
-                it.toFile().mkdirs()
-            }
+            val compileDir = kexConfig.compiledCodeDirectory
             val junitPath = getJunit()?.path ?: Paths.get(".")
             val compiler = JavaCompilerDriver(ctx.classPath + listOf(junitPath), compileDir)
             tryOrNull {
@@ -71,7 +68,7 @@ class JUnitTestCasePrinter(
     packageName: String,
     klassName: String
 ) : TestCasePrinter(ctx, packageName) {
-    private val testDirectory = outputDirectory.resolve(testCaseDirectory)
+    private val testDirectory = kexConfig.outputDirectory.resolve(testCaseDirectory)
     override val printer: ActionSequencePrinter = when (testCaseLanguage) {
         "kotlin" -> ActionSequence2KotlinPrinter(ctx, packageName.replace("/", "."), klassName)
         "java" -> ActionSequence2JavaPrinter(ctx, packageName.replace("/", "."), klassName)
@@ -101,7 +98,7 @@ class ExecutorTestCasePrinter(
     packageName: String,
     val klassName: String
 ) : TestCasePrinter(ctx, packageName) {
-    private val testDirectory = outputDirectory.resolve(testCaseDirectory)
+    private val testDirectory = kexConfig.outputDirectory.resolve(testCaseDirectory)
     val fullKlassName = "${packageName.replace("/", ".")}.$klassName"
     override val printer = ExecutorAS2JavaPrinter(ctx, packageName.replace("/", "."), klassName, SETUP_METHOD)
     override val targetFile: File = run {

@@ -167,6 +167,6 @@ class RecursiveInliner<T>(
             ++depth
         } while (hasInlined && depth < maxDepth)
         hasInlined = depth > 1
-        return current
+        return current.simplify()
     }
 }

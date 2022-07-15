@@ -1,5 +1,6 @@
 package org.vorpal.research.kex.concolic
 
+import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.InternalSerializationApi
 import org.vorpal.research.kex.ExecutionContext
@@ -7,7 +8,6 @@ import org.vorpal.research.kex.KexRunnerTest
 import org.vorpal.research.kex.asm.analysis.concolic.InstructionConcolicChecker
 import org.vorpal.research.kex.asm.manager.ClassInstantiationDetector
 import org.vorpal.research.kex.asm.transform.SymbolicTraceCollector
-import org.vorpal.research.kex.asm.util.Visibility
 import org.vorpal.research.kex.jacoco.CoverageReporter
 import org.vorpal.research.kex.launcher.ClassLevel
 import org.vorpal.research.kex.trace.runner.ExecutorMasterController
@@ -19,6 +19,7 @@ import kotlin.test.assertEquals
 
 @ExperimentalSerializationApi
 @InternalSerializationApi
+@DelicateCoroutinesApi
 abstract class ConcolicTest : KexRunnerTest() {
 
     override fun createTraceCollector(context: ExecutionContext) = SymbolicTraceCollector(context)
@@ -27,10 +28,12 @@ abstract class ConcolicTest : KexRunnerTest() {
         ExecutorMasterController.use {
             it.start(analysisContext)
             executePipeline(analysisContext.cm, Package.defaultPackage) {
-                +ClassInstantiationDetector(analysisContext.cm, Visibility.PRIVATE)
+                +ClassInstantiationDetector(analysisContext)
             }
 
-            InstructionConcolicChecker.run(analysisContext, klass.allMethods)
+            for (method in klass.allMethods) {
+                InstructionConcolicChecker.run(analysisContext, setOf(method))
+            }
 
             val coverage = CoverageReporter(listOf(jar)).execute(klass.cm, ClassLevel(klass))
             log.debug(coverage.print(true))

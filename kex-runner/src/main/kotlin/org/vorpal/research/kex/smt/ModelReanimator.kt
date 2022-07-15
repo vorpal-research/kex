@@ -572,6 +572,8 @@ abstract class DescriptorReanimator(
         when (val actualType = resolveType(term.memspace, addr, referencedType)) {
             is KexClass -> memory(term.memspace, address) { `object`(actualType) }
             is KexArray -> {
+                if (memory(term.memspace, address) != null)
+                    return@descriptor memory(term.memspace, address)!!
                 val res = memory(term.memspace, address) {
                     newArrayInstance(term.memspace, actualType, addr)
                 } as ArrayDescriptor

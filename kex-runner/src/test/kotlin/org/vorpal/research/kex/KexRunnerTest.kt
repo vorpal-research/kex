@@ -7,6 +7,7 @@ import org.vorpal.research.kex.asm.state.PredicateStateAnalysis
 import org.vorpal.research.kex.asm.transform.LoopDeroller
 import org.vorpal.research.kex.asm.transform.RuntimeTraceCollector
 import org.vorpal.research.kex.asm.transform.SystemExitTransformer
+import org.vorpal.research.kex.asm.util.AccessModifier
 import org.vorpal.research.kex.asm.util.ClassWriter
 import org.vorpal.research.kex.config.kexConfig
 import org.vorpal.research.kex.intrinsics.AssertIntrinsics
@@ -18,6 +19,8 @@ import org.vorpal.research.kex.state.term.ConstIntTerm
 import org.vorpal.research.kex.state.term.isConst
 import org.vorpal.research.kex.state.term.term
 import org.vorpal.research.kex.trace.`object`.ObjectTraceManager
+import org.vorpal.research.kex.util.deleteOnExit
+import org.vorpal.research.kex.util.instrumentedCodeDirectory
 import org.vorpal.research.kfg.ClassManager
 import org.vorpal.research.kfg.KfgConfig
 import org.vorpal.research.kfg.Package
@@ -44,7 +47,9 @@ import kotlin.test.assertTrue
 @InternalSerializationApi
 abstract class KexRunnerTest : KexTest() {
     val classPath = System.getProperty("java.class.path")
-    val targetDir = Files.createTempDirectory("kex-test")
+    val targetDir = Files.createTempDirectory("kex-test").also {
+        deleteOnExit(it)
+    }
     val analysisContext: ExecutionContext
 
     init {
@@ -53,14 +58,19 @@ abstract class KexRunnerTest : KexTest() {
         jar.unpack(cm, targetDir, true)
         val classLoader = URLClassLoader(arrayOf(targetDir.toUri().toURL()))
 
-        val instrumentedDirName = kexConfig.getStringValue("output", "instrumentedDir", "instrumented")
-        val instrumentedCodeDir = kexConfig.getPathValue("kex", "outputDir")!!.resolve(instrumentedDirName)
-        prepareInstrumentedClasspath(jar, jar.classLoader, Package.defaultPackage, instrumentedCodeDir)
+        prepareInstrumentedClasspath(jar, jar.classLoader, Package.defaultPackage, kexConfig.instrumentedCodeDirectory)
 
-        analysisContext = ExecutionContext(cm, `package`, classLoader, EasyRandomDriver(), listOf(jar.path))
+        analysisContext = ExecutionContext(
+            cm, `package`, classLoader, EasyRandomDriver(), listOf(jar.path), AccessModifier.Private
+        )
     }
 
-    private fun prepareInstrumentedClasspath(container: Container, containerClassLoader: ClassLoader, target: Package, path: Path) {
+    private fun prepareInstrumentedClasspath(
+        container: Container,
+        containerClassLoader: ClassLoader,
+        target: Package,
+        path: Path
+    ) {
         log.info("Preparing ${container.path}")
         val cm = ClassManager(
             KfgConfig(
@@ -89,7 +99,8 @@ abstract class KexRunnerTest : KexTest() {
         }
     }
 
-    protected open fun createTraceCollector(context: ExecutionContext): MethodVisitor = RuntimeTraceCollector(context.cm)
+    protected open fun createTraceCollector(context: ExecutionContext): MethodVisitor =
+        RuntimeTraceCollector(context.cm)
 
     protected fun getReachables(method: Method): List<Instruction> {
         val klass = AssertIntrinsics::class.qualifiedName!!.replace(".", "/")
@@ -99,9 +110,9 @@ abstract class KexRunnerTest : KexTest() {
         val methodName = "kexAssert"
         val assertReachable = intrinsics.getMethod(methodName, types.voidType, types.getArrayType(types.boolType))
         return method.body.flatten().asSequence()
-                .mapNotNull { it as? CallInst }
-                .filter { it.method == assertReachable && it.klass == intrinsics }
-                .toList()
+            .mapNotNull { it as? CallInst }
+            .filter { it.method == assertReachable && it.klass == intrinsics }
+            .toList()
     }
 
     protected fun getUnreachables(method: Method): List<Instruction> {
@@ -111,9 +122,9 @@ abstract class KexRunnerTest : KexTest() {
         val methodName = "kexUnreachable"
         val assertUnreachable = intrinsics.getMethod(methodName, cm.type.voidType)
         return method.body.flatten().asSequence()
-                .mapNotNull { it as? CallInst }
-                .filter { it.method == assertUnreachable && it.klass == intrinsics }
-                .toList()
+            .mapNotNull { it as? CallInst }
+            .filter { it.method == assertUnreachable && it.klass == intrinsics }
+            .toList()
     }
 
     fun testClassReachability(klass: Class) {
@@ -128,16 +139,19 @@ abstract class KexRunnerTest : KexTest() {
                 val checker = Checker(method, ctx, psa)
                 val state = checker.createState(inst) ?: return
                 val result = checker.prepareAndCheck(state)
-                assertTrue(result is Result.SatResult, "Class $klass; method $method; ${inst.print()} should be reachable")
+                assertTrue(
+                    result is Result.SatResult,
+                    "Class $klass; method $method; ${inst.print()} should be reachable"
+                )
 
                 inst as CallInst
                 val assertionsArray = inst.args.first()
                 val assertions = method.body.flatten()
-                        .asSequence()
-                        .mapNotNull { it as? ArrayStoreInst }
-                        .filter { it.arrayRef == assertionsArray }
-                        .map { it.value }
-                        .toList()
+                    .asSequence()
+                    .mapNotNull { it as? ArrayStoreInst }
+                    .filter { it.arrayRef == assertionsArray }
+                    .map { it.value }
+                    .toList()
 
                 val model = result.model
                 log.debug("Acquired model: $model")
@@ -150,8 +164,8 @@ abstract class KexRunnerTest : KexTest() {
                     val modelValue = model.assignments[argTerm]
                     assertNotNull(modelValue)
                     assertTrue(
-                            ((modelValue is ConstBoolTerm) && modelValue.value) ||
-                                    (modelValue is ConstIntTerm) && modelValue.value > 0
+                        ((modelValue is ConstBoolTerm) && modelValue.value) ||
+                                (modelValue is ConstIntTerm) && modelValue.value > 0
                     )
                 }
             }
@@ -159,14 +173,20 @@ abstract class KexRunnerTest : KexTest() {
             getUnreachables(method).forEach { inst ->
                 val checker = Checker(method, ctx, psa)
                 val result = checker.checkReachable(inst)
-                assertTrue(result is Result.UnsatResult, "Class $klass; method $method; ${inst.print()} should be unreachable")
+                assertTrue(
+                    result is Result.UnsatResult,
+                    "Class $klass; method $method; ${inst.print()} should be unreachable"
+                )
             }
         }
     }
 
     private fun updateClassPath(loader: URLClassLoader) {
         val urlClassPath = loader.urLs.joinToString(separator = ":") { "${it.path}." }
-        System.setProperty("java.class.path", "${classPath.split(":").filter { "kex-test" !in it }.joinToString(":")}:$urlClassPath")
+        System.setProperty(
+            "java.class.path",
+            "${classPath.split(":").filter { "kex-test" !in it }.joinToString(":")}:$urlClassPath"
+        )
     }
 
     private fun clearClassPath() {
