@@ -4,14 +4,14 @@ import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import org.vorpal.research.kex.config.kexConfig
+import org.vorpal.research.kex.util.outputDirectory
 import org.vorpal.research.kthelper.assert.unreachable
 import org.vorpal.research.kthelper.logging.log
 
 object DefectManager {
     private val innerDefects = mutableSetOf<Defect>()
-    private val outputDirectory by lazy { kexConfig.getPathValue("kex", "outputDir")!! }
     val defectFile by lazy {
-        outputDirectory.resolve(kexConfig.getStringValue("defect", "outputFile")
+        kexConfig.outputDirectory.resolve(kexConfig.getStringValue("defect", "outputFile")
             ?: unreachable { log.error("You need to specify parameters file to be able to use Z3 SMT") })
     }
     val defects: Set<Defect> get() = innerDefects

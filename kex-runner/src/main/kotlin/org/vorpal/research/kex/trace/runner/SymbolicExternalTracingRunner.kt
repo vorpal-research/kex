@@ -13,6 +13,7 @@ import org.vorpal.research.kex.trace.symbolic.protocol.TestExecutionRequest
 import org.vorpal.research.kex.util.getIntrinsics
 import org.vorpal.research.kex.util.getJunit
 import org.vorpal.research.kex.util.getPathSeparator
+import org.vorpal.research.kex.util.outputDirectory
 import org.vorpal.research.kthelper.logging.log
 import java.net.ServerSocket
 import java.nio.file.Paths
@@ -31,7 +32,7 @@ internal object ExecutorMasterController : AutoCloseable {
     }
 
     fun start(ctx: ExecutionContext) {
-        val outputDir = kexConfig.getPathValue("kex", "outputDir")!!
+        val outputDir = kexConfig.outputDirectory
         val executorPath = (kexConfig.getPathValue(
             "executor", "executorPath"
         ) ?: Paths.get("kex-executor/target/kex-executor-0.0.1-jar-with-dependencies.jar")).toAbsolutePath()

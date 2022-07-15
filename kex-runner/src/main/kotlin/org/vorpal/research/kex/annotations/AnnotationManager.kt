@@ -3,13 +3,12 @@ package org.vorpal.research.kex.annotations
 import org.apache.commons.text.StringEscapeUtils.unescapeJava
 import org.reflections.Reflections
 import org.vorpal.research.kex.config.kexConfig
-import org.vorpal.research.kex.util.getRuntimeDepsPath
+import org.vorpal.research.kex.util.runtimeDepsPath
 import org.vorpal.research.kthelper.assert.ktassert
 import org.vorpal.research.kthelper.assert.unreachable
 import org.vorpal.research.kthelper.logging.log
 import org.vorpal.research.kthelper.recast
 import org.vorpal.research.kthelper.tryOrNull
-import java.io.File
 import kotlin.reflect.KClass
 import kotlin.reflect.KFunction
 import kotlin.reflect.KParameter
@@ -29,7 +28,7 @@ object AnnotationManager {
 
     val defaultLoader: AnnotationsLoader = ExternalAnnotationsLoader().apply {
         tryOrNull {
-            val runtimeDepsPath = getRuntimeDepsPath()!!
+            val runtimeDepsPath = kexConfig.runtimeDepsPath!!
             val annotationsPaths = kexConfig.getMultipleStringValue("annotations", "path", ";")
                 .map { runtimeDepsPath.resolve(it) }
             for (path in annotationsPaths) {

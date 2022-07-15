@@ -26,6 +26,7 @@ import org.vorpal.research.kex.trace.TraceManager
 import org.vorpal.research.kex.trace.`object`.ActionTrace
 import org.vorpal.research.kex.trace.runner.ObjectTracingRunner
 import org.vorpal.research.kex.util.TimeoutException
+import org.vorpal.research.kex.util.outputDirectory
 import org.vorpal.research.kfg.ClassManager
 import org.vorpal.research.kfg.ir.BasicBlock
 import org.vorpal.research.kfg.ir.Class
@@ -40,7 +41,6 @@ import org.vorpal.research.kthelper.`try`
 import org.vorpal.research.kthelper.tryOrNull
 import java.nio.file.Files
 
-private val outputDirectory by lazy { kexConfig.getPathValue("kex", "outputDir")!! }
 private val failDir by lazy { kexConfig.getPathValue("debug", "dumpDirectory", "fail") }
 
 class KexCheckerException(val inner: Exception, val reason: PredicateState) : Exception()
@@ -69,7 +69,7 @@ open class MethodChecker(
         protected set
 
     private fun dumpPS(method: Method, message: String, state: PredicateState) = `try` {
-        val failDirPath = outputDirectory.resolve(failDir)
+        val failDirPath = kexConfig.outputDirectory.resolve(failDir)
         if (!Files.exists(failDirPath)) {
             Files.createDirectory(failDirPath)
         }

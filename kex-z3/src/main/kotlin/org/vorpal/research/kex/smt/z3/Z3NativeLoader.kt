@@ -1,12 +1,11 @@
 package org.vorpal.research.kex.smt.z3
 
-import org.vorpal.research.kex.util.deleteDirectory
+import org.vorpal.research.kex.util.deleteOnExit
 import org.vorpal.research.kex.util.lowercased
 import org.vorpal.research.kex.util.unzipArchive
 import org.vorpal.research.kthelper.assert.ktassert
 import org.vorpal.research.kthelper.assert.unreachable
 import org.vorpal.research.kthelper.logging.log
-import org.vorpal.research.kthelper.tryOrNull
 import kotlin.io.path.listDirectoryEntries
 
 abstract class Z3NativeLoader {
@@ -39,20 +38,18 @@ abstract class Z3NativeLoader {
                 Z3NativeLoader::class.java.classLoader.getResourceAsStream(zipName)
                     ?: unreachable { log.error("z3 archive not found") },
                 "lib"
-            ).listDirectoryEntries().first()
+            ).also {
+                deleteOnExit(it)
+            }.listDirectoryEntries().first()
 
-            try {
-                val resolvedLibraries = libraryNames.map { lib ->
-                    tempDir
-                        .resolve("bin")
-                        .resolve(lib)
-                        .toAbsolutePath()
-                        .toString()
-                }
-                resolvedLibraries.forEach { System.load(it) }
-            } finally {
-                tryOrNull { deleteDirectory(tempDir) }
+            val resolvedLibraries = libraryNames.map { lib ->
+                tempDir
+                    .resolve("bin")
+                    .resolve(lib)
+                    .toAbsolutePath()
+                    .toString()
             }
+            resolvedLibraries.forEach { System.load(it) }
         }
     }
 
