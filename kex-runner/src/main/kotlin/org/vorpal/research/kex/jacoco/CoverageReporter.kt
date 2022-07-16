@@ -19,6 +19,9 @@ import org.vorpal.research.kex.launcher.AnalysisLevel
 import org.vorpal.research.kex.launcher.ClassLevel
 import org.vorpal.research.kex.launcher.MethodLevel
 import org.vorpal.research.kex.launcher.PackageLevel
+import org.vorpal.research.kex.util.compiledCodeDirectory
+import org.vorpal.research.kex.util.deleteOnExit
+import org.vorpal.research.kex.util.outputDirectory
 import org.vorpal.research.kfg.ClassManager
 import org.vorpal.research.kfg.Package
 import org.vorpal.research.kfg.container.Container
@@ -200,17 +203,14 @@ class PackageCoverageInfo(
 class CoverageReporter(
     containers: List<Container> = listOf()
 ) {
-    private val outputDir = kexConfig.getPathValue("kex", "outputDir")!!
-    private val jacocoInstrumentedDir = outputDir.resolve(
+    private val jacocoInstrumentedDir = kexConfig.outputDirectory.resolve(
         kexConfig.getPathValue("testGen", "jacocoDir", "jacoco/")
     ).also {
         it.toFile().mkdirs()
+    }.also {
+        deleteOnExit(it)
     }
-    private val compileDir = outputDir.resolve(
-        kexConfig.getPathValue("compile", "compileDir", "compiled/")
-    ).also {
-        it.toFile().mkdirs()
-    }
+    private val compileDir = kexConfig.compiledCodeDirectory
 
     init {
         for (container in containers) {

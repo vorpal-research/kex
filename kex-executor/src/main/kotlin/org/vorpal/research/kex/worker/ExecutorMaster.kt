@@ -13,6 +13,7 @@ import org.vorpal.research.kex.trace.symbolic.protocol.Master2ClientConnection
 import org.vorpal.research.kex.trace.symbolic.protocol.Master2WorkerConnection
 import org.vorpal.research.kex.trace.symbolic.protocol.MasterProtocolHandler
 import org.vorpal.research.kex.util.getPathSeparator
+import org.vorpal.research.kex.util.outputDirectory
 import org.vorpal.research.kthelper.logging.log
 import java.net.SocketTimeoutException
 import java.nio.file.Path
@@ -29,7 +30,7 @@ class ExecutorMaster(
 ) : Runnable {
     private val timeout = kexConfig.getLongValue("runner", "timeout", 10000L)
     private val workerQueue = ArrayBlockingQueue<WorkerWrapper>(numberOfWorkers)
-    private val outputDir = kexConfig.getPathValue("kex", "outputDir")!!
+    private val outputDir = kexConfig.outputDirectory
     private val workerJvmParams = kexConfig.getMultipleStringValue("executor", "workerJvmParams", ",")
     private val executorPolicyPath = (kexConfig.getPathValue(
         "executor", "executorPolicyPath"

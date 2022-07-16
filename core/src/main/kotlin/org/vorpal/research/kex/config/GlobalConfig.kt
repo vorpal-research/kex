@@ -1,5 +1,7 @@
 package org.vorpal.research.kex.config
 
+import org.vorpal.research.kex.util.outputDirectory
+
 val kexConfig: GlobalConfig by lazy { GlobalConfig() }
 
 class GlobalConfig : Config() {
@@ -19,8 +21,7 @@ class GlobalConfig : Config() {
     }
 
     fun initLog(filename: String) {
-        val outputDir = kexConfig.getPathValue("kex", "outputDir")!!
-        System.setProperty("kex.log.name", outputDir.resolve(filename).toString())
+        System.setProperty("kex.log.name", outputDirectory.resolve(filename).toString())
     }
 
     fun initialize(sources: List<Config>) {

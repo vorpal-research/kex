@@ -33,6 +33,7 @@ class ActionSequenceGenerator(override val context: GeneratorContext) : Generato
         typeGenerators += EnumGenerator(this)
         typeGenerators += KtObjectGenerator(this)
         typeGenerators += InnerClassGenerator(this)
+        typeGenerators += KexRtGenerator(this)
         typeGenerators += UnmodifiableCollectionGenerator(this)
         typeGenerators += CollectionGenerator(this)
         typeGenerators += MapGenerator(this)

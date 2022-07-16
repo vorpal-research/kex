@@ -9,7 +9,7 @@ import org.vorpal.research.kex.asm.analysis.concolic.bfs.BfsPathSelectorImpl
 import org.vorpal.research.kex.asm.analysis.concolic.cgs.ContextGuidedSelector
 import org.vorpal.research.kex.asm.manager.MethodManager
 import org.vorpal.research.kex.asm.state.PredicateStateAnalysis
-import org.vorpal.research.kex.compile.JavaCompilerDriver
+import org.vorpal.research.kex.compile.CompilerHelper
 import org.vorpal.research.kex.config.kexConfig
 import org.vorpal.research.kex.descriptor.Descriptor
 import org.vorpal.research.kex.ktype.KexRtManager.isJavaRt
@@ -33,7 +33,6 @@ import org.vorpal.research.kex.trace.runner.generateParameters
 import org.vorpal.research.kex.trace.symbolic.ExecutionCompletedResult
 import org.vorpal.research.kex.trace.symbolic.ExecutionResult
 import org.vorpal.research.kex.trace.symbolic.SymbolicState
-import org.vorpal.research.kex.util.getJunit
 import org.vorpal.research.kfg.ClassManager
 import org.vorpal.research.kfg.ir.Method
 import org.vorpal.research.kthelper.assert.unreachable
@@ -41,24 +40,6 @@ import org.vorpal.research.kthelper.logging.debug
 import org.vorpal.research.kthelper.logging.log
 import org.vorpal.research.kthelper.logging.warn
 import org.vorpal.research.kthelper.tryOrNull
-import java.nio.file.Path
-
-private class CompilerHelper(val ctx: ExecutionContext) {
-    private val junitJar = getJunit()!!
-    private val outputDir = kexConfig.getPathValue("kex", "outputDir")!!
-    val compileDir: Path = outputDir.resolve(
-        kexConfig.getPathValue("compile", "compileDir", "compiled/")
-    ).also {
-        it.toFile().mkdirs()
-    }
-
-    fun compileFile(file: Path) {
-        val compilerDriver = JavaCompilerDriver(
-            listOf(*ctx.classPath.toTypedArray(), junitJar.path), compileDir
-        )
-        compilerDriver.compile(listOf(file))
-    }
-}
 
 @ExperimentalSerializationApi
 @InternalSerializationApi

@@ -179,6 +179,9 @@ abstract class PredicateBuilder : TermBuilder() {
     infix fun Boolean.equality(other: Term) =
         pf.getEquality(tf.getBool(this), other, this@PredicateBuilder.type, location)
 
+    infix fun Boolean.equality(other: Boolean) =
+        pf.getEquality(tf.getBool(this), tf.getBool(other), this@PredicateBuilder.type, location)
+
     infix fun Term.inequality(other: Term) =
         pf.getInequality(this, other, this@PredicateBuilder.type, location)
 
@@ -196,6 +199,9 @@ abstract class PredicateBuilder : TermBuilder() {
 
     infix fun Boolean.inequality(other: Term) =
         pf.getInequality(tf.getBool(this), other, this@PredicateBuilder.type, location)
+
+    infix fun Boolean.inequality(other: Boolean) =
+        pf.getInequality(tf.getBool(this), tf.getBool(other), this@PredicateBuilder.type, location)
 
     fun Term.new() = pf.getNew(this, this@PredicateBuilder.type, location)
     fun Term.new(dimensions: List<Term>) = pf.getNewArray(this, dimensions, this@PredicateBuilder.type, location)

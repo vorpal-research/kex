@@ -18,10 +18,7 @@ import org.vorpal.research.kex.reanimator.collector.MethodFieldAccessCollector
 import org.vorpal.research.kex.reanimator.collector.SetterCollector
 import org.vorpal.research.kex.trace.AbstractTrace
 import org.vorpal.research.kex.trace.TraceManager
-import org.vorpal.research.kex.util.getIntrinsics
-import org.vorpal.research.kex.util.getKexRuntime
-import org.vorpal.research.kex.util.getPathSeparator
-import org.vorpal.research.kex.util.getRuntime
+import org.vorpal.research.kex.util.*
 import org.vorpal.research.kfg.ClassManager
 import org.vorpal.research.kfg.KfgConfig
 import org.vorpal.research.kfg.Package
@@ -90,8 +87,7 @@ abstract class KexLauncher(classPaths: List<String>, targetName: String) {
         }.toTypedArray(), getKexRuntime())
         val analysisJars = listOfNotNull(*containers.toTypedArray(), getRuntime(), getIntrinsics())
 
-        val instrumentedDirName = kexConfig.getStringValue("output", "instrumentedDir", "instrumented")
-        val instrumentedCodeDir = kexConfig.getPathValue("kex", "outputDir")!!.resolve(instrumentedDirName)
+        val instrumentedCodeDir = kexConfig.instrumentedCodeDirectory
         prepareInstrumentedClasspath(analysisJars, Package.defaultPackage, instrumentedCodeDir)
 
         val cm = ClassManager(

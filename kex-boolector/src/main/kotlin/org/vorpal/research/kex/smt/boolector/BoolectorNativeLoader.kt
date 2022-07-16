@@ -1,12 +1,11 @@
 package org.vorpal.research.kex.smt.boolector
 
-import org.vorpal.research.kex.util.deleteDirectory
+import org.vorpal.research.kex.util.deleteOnExit
 import org.vorpal.research.kex.util.lowercased
 import org.vorpal.research.kex.util.unzipArchive
 import org.vorpal.research.kthelper.assert.ktassert
 import org.vorpal.research.kthelper.assert.unreachable
 import org.vorpal.research.kthelper.logging.log
-import org.vorpal.research.kthelper.tryOrNull
 
 abstract class BoolectorNativeLoader {
     companion object {
@@ -31,12 +30,12 @@ abstract class BoolectorNativeLoader {
                 BoolectorNativeLoader::class.java.classLoader.getResourceAsStream(zipName)
                     ?: unreachable { log.error("boolector archive not found") },
                 "lib"
-            )
+            ).also {
+                deleteOnExit(it)
+            }
 
             val resolvedLibraries = libraryNames.map { tempDir.resolve(it).toAbsolutePath().toString() }
             resolvedLibraries.forEach { System.load(it) }
-
-            tryOrNull { deleteDirectory(tempDir) }
         }
     }
 

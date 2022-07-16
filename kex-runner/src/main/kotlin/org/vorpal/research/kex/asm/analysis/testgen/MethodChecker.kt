@@ -9,6 +9,7 @@ import org.vorpal.research.kex.asm.analysis.DfsStrategy
 import org.vorpal.research.kex.asm.analysis.SearchStrategy
 import org.vorpal.research.kex.asm.manager.MethodManager
 import org.vorpal.research.kex.asm.state.PredicateStateAnalysis
+import org.vorpal.research.kex.compile.CompilerHelper
 import org.vorpal.research.kex.config.kexConfig
 import org.vorpal.research.kex.parameters.Parameters
 import org.vorpal.research.kex.random.GenerationException
@@ -25,6 +26,7 @@ import org.vorpal.research.kex.trace.TraceManager
 import org.vorpal.research.kex.trace.`object`.ActionTrace
 import org.vorpal.research.kex.trace.runner.ObjectTracingRunner
 import org.vorpal.research.kex.util.TimeoutException
+import org.vorpal.research.kex.util.outputDirectory
 import org.vorpal.research.kfg.ClassManager
 import org.vorpal.research.kfg.ir.BasicBlock
 import org.vorpal.research.kfg.ir.Class
@@ -39,7 +41,6 @@ import org.vorpal.research.kthelper.`try`
 import org.vorpal.research.kthelper.tryOrNull
 import java.nio.file.Files
 
-private val outputDirectory by lazy { kexConfig.getPathValue("kex", "outputDir")!! }
 private val failDir by lazy { kexConfig.getPathValue("debug", "dumpDirectory", "fail") }
 
 class KexCheckerException(val inner: Exception, val reason: PredicateState) : Exception()
@@ -63,11 +64,12 @@ open class MethodChecker(
     override val cm: ClassManager get() = ctx.cm
     val random: Randomizer get() = ctx.random
     val loader: ClassLoader get() = ctx.loader
+    private val compilerHelper = CompilerHelper(ctx)
     lateinit var generator: ParameterGenerator
         protected set
 
     private fun dumpPS(method: Method, message: String, state: PredicateState) = `try` {
-        val failDirPath = outputDirectory.resolve(failDir)
+        val failDirPath = kexConfig.outputDirectory.resolve(failDir)
         if (!Files.exists(failDirPath)) {
             Files.createDirectory(failDirPath)
         }
@@ -138,7 +140,8 @@ open class MethodChecker(
             if (coverageResult is Result.UnsatResult) unreachableBlocks += block
         }
 
-        generator.emit()
+        val testFile = generator.emit()
+        tryOrNull { compilerHelper.compileFile(testFile) }
     }
 
     protected open fun coverBlock(method: Method, block: BasicBlock): Result {
