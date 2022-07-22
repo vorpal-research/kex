@@ -98,7 +98,6 @@ class ExecutionTree : PredecessorGraph<Vertex>, Viewable {
             val currentVertex = _nodes.getOrPut(current) {
                 when (current) {
                     is PathClause -> PathVertex(current).also {
-                        it[symbolicState.subPath(current)] = symbolicState
                         edges[current] = it
                     }
                     else -> ClauseVertex(current).also {
@@ -107,6 +106,9 @@ class ExecutionTree : PredecessorGraph<Vertex>, Viewable {
                         }
                     }
                 }
+            }
+            if (currentVertex is PathVertex) {
+                currentVertex[symbolicState.subPath(current as PathClause)] = symbolicState
             }
 
             prevVertex?.let { prev ->
