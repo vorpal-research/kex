@@ -24,7 +24,7 @@ abstract class ConcolicTest : KexRunnerTest() {
 
     override fun createTraceCollector(context: ExecutionContext) = SymbolicTraceCollector(context)
 
-    fun assertCoverage(klass: Class, expectedCoverage: Double = 1.0) {
+    fun assertCoverage(klass: Class, expectedCoverage: Double = 1.0, eps: Double = 0.0) {
         ExecutorMasterController.use {
             it.start(analysisContext)
             executePipeline(analysisContext.cm, Package.defaultPackage) {
@@ -37,7 +37,7 @@ abstract class ConcolicTest : KexRunnerTest() {
 
             val coverage = CoverageReporter(listOf(jar)).execute(klass.cm, ClassLevel(klass))
             log.debug(coverage.print(true))
-            assertEquals(expectedCoverage, coverage.instructionCoverage.ratio)
+            assertEquals(expectedCoverage, coverage.instructionCoverage.ratio, eps)
         }
     }
 }

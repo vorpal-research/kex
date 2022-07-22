@@ -13,6 +13,7 @@ import org.vorpal.research.kex.util.getConstructor
 import org.vorpal.research.kex.util.getMethod
 import org.vorpal.research.kex.util.kex
 import org.vorpal.research.kex.util.loadClass
+import org.vorpal.research.kfg.Package
 import org.vorpal.research.kfg.ir.Class
 import org.vorpal.research.kfg.type.*
 import org.vorpal.research.kfg.type.Type
@@ -531,10 +532,10 @@ open class ActionSequence2JavaPrinter(
         if (reqOuterType != null && reqOuterType is ASClass) {
             val reqTypeString = (reqOuterType.type as ClassType).klass.fullName
             if (innerString.startsWith(reqTypeString))
-                return innerString.removePrefix("$reqTypeString\$").replace('/', '.')
+                return innerString.removePrefix("$reqTypeString\$").replace(Package.SEPARATOR, Package.CANONICAL_SEPARATOR)
         }
         if (innerString.startsWith(outerString))
-            return innerString.removePrefix("$outerString\$").replace('/', '.')
+            return innerString.removePrefix("$outerString\$").replace(Package.SEPARATOR, Package.CANONICAL_SEPARATOR)
         TODO()
     }
 

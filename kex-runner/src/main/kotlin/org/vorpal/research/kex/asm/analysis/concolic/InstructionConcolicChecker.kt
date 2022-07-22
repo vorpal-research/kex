@@ -221,6 +221,7 @@ class InstructionConcolicChecker(
         while (pathIterator.hasNext()) {
             val state = pathIterator.next()
             log.debug { "Checking state: $state" }
+            log.debug { "Path:\n${state.path.asState()}" }
             yield()
 
             val newState = check(method, state) ?: continue

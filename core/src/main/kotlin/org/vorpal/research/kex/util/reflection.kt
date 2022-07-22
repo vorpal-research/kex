@@ -31,6 +31,7 @@ import kotlin.also
 import kotlin.require
 import org.vorpal.research.kfg.ir.Class as KfgClass
 import org.vorpal.research.kfg.ir.Field as KfgField
+import org.vorpal.research.kfg.Package as KfgPackage
 import java.lang.reflect.Method as JMethod
 import java.lang.reflect.Type as JType
 
@@ -86,7 +87,7 @@ val Class<*>.kex: KexType
             else -> unreachable { log.error("Unknown primitive type $this") }
         }
         this.isArray -> KexArray(this.componentType.kex)
-        else -> KexClass(this.trimmedName.replace('.', '/'))
+        else -> KexClass(this.trimmedName.replace(KfgPackage.CANONICAL_SEPARATOR, KfgPackage.SEPARATOR))
     }
 
 fun Class<*>.toKfgType(types: TypeFactory): Type = kex.getKfgType(types)

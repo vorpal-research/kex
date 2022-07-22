@@ -6,7 +6,7 @@ import org.vorpal.research.kex.util.wrapValue
 import org.vorpal.research.kfg.ClassManager
 import org.vorpal.research.kfg.ir.BasicBlock
 import org.vorpal.research.kfg.ir.Method
-//import org.vorpal.research.kfg.ir.MethodDesc
+import org.vorpal.research.kfg.Package
 import org.vorpal.research.kfg.ir.value.EmptyUsageContext
 import org.vorpal.research.kfg.ir.value.UsageContext
 import org.vorpal.research.kfg.ir.value.ValueFactory
@@ -17,7 +17,8 @@ import org.vorpal.research.kthelper.collection.buildList
 
 class RuntimeTraceCollector(override val cm: ClassManager) : MethodVisitor, InstructionBuilder {
     override val ctx: UsageContext = EmptyUsageContext
-    private val collectorClass = cm[TraceCollector::class.java.canonicalName.replace('.', '/')]
+    private val collectorClass =
+        cm[TraceCollector::class.java.canonicalName.replace(Package.CANONICAL_SEPARATOR, Package.SEPARATOR)]
     private lateinit var traceCollector: Instruction
 
     override val instructions: InstructionFactory
@@ -28,7 +29,8 @@ class RuntimeTraceCollector(override val cm: ClassManager) : MethodVisitor, Inst
         get() = cm.value
 
     private fun getNewCollector(): Instruction {
-        val proxy = cm[TraceCollectorProxy::class.java.canonicalName.replace('.', '/')]
+        val proxy =
+            cm[TraceCollectorProxy::class.java.canonicalName.replace(Package.CANONICAL_SEPARATOR, Package.SEPARATOR)]
         val getter = proxy.getMethod("currentCollector", cm.type.getRefType(collectorClass))
 
         return getter.staticCall(proxy, "collector", arrayOf())

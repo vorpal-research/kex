@@ -3,6 +3,7 @@ package org.vorpal.research.kex.asm.transform
 import org.vorpal.research.kex.asm.util.FileOutputStreamWrapper
 import org.vorpal.research.kex.config.kexConfig
 import org.vorpal.research.kfg.ClassManager
+import org.vorpal.research.kfg.Package
 import org.vorpal.research.kfg.analysis.IRVerifier
 import org.vorpal.research.kfg.ir.BasicBlock
 import org.vorpal.research.kfg.ir.Method
@@ -48,7 +49,7 @@ class TraceInstrumenter(override val cm: ClassManager) : MethodVisitor {
 
         buildList {
             +fos.println("exit ${bb.name};")
-            +fos.print("return ${method.prototype.replace('/', '.')}, ")
+            +fos.print("return ${method.prototype.replace(Package.SEPARATOR, Package.CANONICAL_SEPARATOR)}, ")
 
             when {
                 inst.hasReturnValue -> {
@@ -67,7 +68,7 @@ class TraceInstrumenter(override val cm: ClassManager) : MethodVisitor {
 
         buildList {
             +fos.println("exit ${bb.name};")
-            +fos.print("throw ${method.prototype.replace('/', '.')}, ")
+            +fos.print("throw ${method.prototype.replace(Package.SEPARATOR, Package.CANONICAL_SEPARATOR)}, ")
             +fos.print("${inst.throwable.name} == ")
             +fos.printValue(inst.throwable)
             +fos.println(";")
@@ -129,7 +130,7 @@ class TraceInstrumenter(override val cm: ClassManager) : MethodVisitor {
     override fun visit(method: Method) {
         val bb = method.body.entry
         val startInsts = buildList<Instruction> {
-            val methodName = method.prototype.replace('/', '.')
+            val methodName = method.prototype.replace(Package.SEPARATOR, Package.CANONICAL_SEPARATOR)
             val traceFileName = getTraceFile(method).absolutePath
 
             fos = FileOutputStreamWrapper(cm, EmptyUsageContext, "traceFile", traceFileName, append = true, autoFlush = true)

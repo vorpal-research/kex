@@ -230,20 +230,23 @@ class CoverageReporter(
                 val classes = Files.walk(jacocoInstrumentedDir)
                     .filter { it.isClass }
                     .filter {
-                        analysisLevel.pkg.isParent(it.fullyQualifiedName(jacocoInstrumentedDir).replace('.', '/'))
+                        analysisLevel.pkg.isParent(
+                            it.fullyQualifiedName(jacocoInstrumentedDir)
+                                .replace(Package.CANONICAL_SEPARATOR, Package.SEPARATOR)
+                        )
                     }
                     .toList()
                 coverageBuilder = getCoverageBuilder(classes)
                 getPackageCoverage(analysisLevel.pkg, cm, coverageBuilder)
             }
             is ClassLevel -> {
-                val klass = analysisLevel.klass.fullName
+                val klass = analysisLevel.klass.fullName.replace(Package.SEPARATOR, File.separatorChar)
                 coverageBuilder = getCoverageBuilder(listOf(jacocoInstrumentedDir.resolve("$klass.class")))
                 getClassCoverage(cm, coverageBuilder).first()
             }
             is MethodLevel -> {
                 val method = analysisLevel.method
-                val klass = method.klass.fullName
+                val klass = method.klass.fullName.replace(Package.SEPARATOR, File.separatorChar)
                 coverageBuilder = getCoverageBuilder(listOf(jacocoInstrumentedDir.resolve("$klass.class")))
                 getMethodCoverage(coverageBuilder, method)!!
             }
@@ -310,13 +313,13 @@ class CoverageReporter(
     }
 
     private val String.fullyQualifiedName: String
-        get() = removeSuffix(".class").replace('/', '.')
+        get() = removeSuffix(".class").replace(Package.SEPARATOR, Package.CANONICAL_SEPARATOR)
 
     private fun Path.fullyQualifiedName(base: Path): String =
         relativeTo(base).toString()
             .removePrefix("..")
             .removePrefix(File.separatorChar.toString())
-            .replace(File.separatorChar, '.')
+            .replace(File.separatorChar, Package.CANONICAL_SEPARATOR)
             .removeSuffix(".class")
 
     private fun getClassCoverage(
@@ -379,7 +382,7 @@ class CoverageReporter(
             synchronized(this.getClassLoadingLock(name)) {
                 if (name in cache) return cache[name]!!
 
-                val fileName = name.replace('.', File.separatorChar) + ".class"
+                val fileName = name.replace(Package.CANONICAL_SEPARATOR, File.separatorChar) + ".class"
                 for (path in paths) {
                     val resolved = path.resolve(fileName)
                     if (resolved.exists()) {
