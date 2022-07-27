@@ -31,7 +31,28 @@ data class StateClause(
     @Contextual
     override val instruction: Instruction,
     override val predicate: Predicate
-) : Clause()
+) : Clause() {
+    private var hashCode: Int = 0
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as StateClause
+
+        if (instruction != other.instruction) return false
+        if (predicate != other.predicate) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        if (hashCode == 0) {
+            hashCode = 31 * instruction.hashCode() + predicate.hashCode()
+        }
+        return hashCode
+    }
+
+}
 
 @Serializable
 data class PathClause(
@@ -39,7 +60,28 @@ data class PathClause(
     @Contextual
     override val instruction: Instruction,
     override val predicate: Predicate
-) : Clause()
+) : Clause() {
+    private var hashCode: Int = 0
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as PathClause
+
+        if (type != other.type) return false
+        if (instruction != other.instruction) return false
+        if (predicate != other.predicate) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        if (hashCode == 0) {
+            hashCode = 31 * (type.hashCode() + 31 * instruction.hashCode()) + predicate.hashCode()
+        }
+        return hashCode
+    }
+}
 
 @Serializable
 data class ClauseState(val state: List<Clause> = emptyList()) : List<Clause> by state {

@@ -25,7 +25,7 @@ class ChoiceState(val choices: List<PredicateState>) : PredicateState(), Iterabl
         if (this === other) return true
         if (other?.javaClass != this.javaClass) return false
         other as ChoiceState
-        return this.choices.toTypedArray().contentEquals(other.choices.toTypedArray())
+        return this.choices == other.choices
     }
 
     override fun addPredicate(predicate: Predicate) = ChainState(ChoiceState(choices), BasicState(arrayListOf(predicate)))
