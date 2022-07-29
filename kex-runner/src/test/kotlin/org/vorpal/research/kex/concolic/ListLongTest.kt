@@ -9,6 +9,7 @@ import org.junit.Test
 @ExperimentalSerializationApi
 @InternalSerializationApi
 @DelicateCoroutinesApi
+@Ignore
 class ListLongTest : ConcolicTest() {
     @Test
     fun listConcolicTest() {
