@@ -87,7 +87,7 @@ class InstructionConcolicChecker(
         }
     }
 
-    private fun getDefaultTrace(method: Method): ExecutionResult? = try {
+    private suspend fun getDefaultTrace(method: Method): ExecutionResult? = try {
         val params = generateDefaultParameters(ctx.loader, method)
         params?.let { collectTraceFromAny(method, it) }
     } catch (e: Throwable) {
@@ -95,7 +95,7 @@ class InstructionConcolicChecker(
         null
     }
 
-    private fun getRandomTrace(method: Method): ExecutionResult? = try {
+    private suspend fun getRandomTrace(method: Method): ExecutionResult? = try {
         val params = ctx.random.generateParameters(ctx.loader, method)
         params?.let { collectTraceFromAny(method, it) }
     } catch (e: Throwable) {
@@ -103,10 +103,10 @@ class InstructionConcolicChecker(
         null
     }
 
-    private fun collectTraceFromAny(method: Method, parameters: Parameters<Any?>): ExecutionResult? =
+    private suspend fun collectTraceFromAny(method: Method, parameters: Parameters<Any?>): ExecutionResult? =
         collectTrace(method, parameters.asDescriptors)
 
-    private fun collectTrace(method: Method, parameters: Parameters<Descriptor>): ExecutionResult? = tryOrNull {
+    private suspend fun collectTrace(method: Method, parameters: Parameters<Descriptor>): ExecutionResult? = tryOrNull {
         val generator = UnsafeGenerator(ctx, method, method.klassName + testIndex++)
         generator.generate(parameters)
         val testFile = generator.emit()
@@ -115,7 +115,7 @@ class InstructionConcolicChecker(
         collectTrace(generator.testKlassName)
     }
 
-    private fun collectTrace(klassName: String): ExecutionResult {
+    private suspend fun collectTrace(klassName: String): ExecutionResult {
         val runner = SymbolicExternalTracingRunner(ctx)
         return runner.run(klassName, ExecutorTestCasePrinter.SETUP_METHOD, ExecutorTestCasePrinter.TEST_METHOD)
     }
@@ -164,7 +164,7 @@ class InstructionConcolicChecker(
         +TypeNameAdapter(ctx.types)
     }
 
-    private fun check(method: Method, state: SymbolicState): ExecutionResult? {
+    private suspend fun check(method: Method, state: SymbolicState): ExecutionResult? {
         val checker = Checker(method, ctx, PredicateStateAnalysis(cm))
         val query = state.path.asState()
         val concreteTypeInfo = state.concreteValueMap

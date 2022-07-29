@@ -4,7 +4,6 @@ import kotlinx.serialization.Serializable
 import org.vorpal.research.kex.InheritorOf
 import org.vorpal.research.kfg.type.Type
 import org.vorpal.research.kfg.type.TypeFactory
-import org.vorpal.research.kthelper.defaultHashCode
 
 @InheritorOf("KexType")
 @Serializable
@@ -21,7 +20,7 @@ class KexFloat : KexReal() {
 
     override fun getKfgType(types: TypeFactory): Type = types.floatType
 
-    override fun hashCode() = defaultHashCode(name)
+    override fun hashCode() = name.hashCode()
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (other !is KexFloat) return false
@@ -40,7 +39,7 @@ class KexDouble : KexReal() {
 
     override fun getKfgType(types: TypeFactory): Type = types.doubleType
 
-    override fun hashCode() = defaultHashCode(name)
+    override fun hashCode() = name.hashCode()
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (other !is KexDouble) return false

@@ -109,6 +109,10 @@ class WorkerLauncher(args: Array<String>) {
                 )
             }
 
+            override fun ready(): Boolean {
+                return true
+            }
+
             override fun send(result: ExecutionResult) {
             }
 

@@ -21,6 +21,16 @@ class SymbolicTraceCollector(
     val executionContext: ExecutionContext,
     val ignores: Set<Package> = setOf()
 ) : MethodVisitor, InstructionBuilder {
+    companion object {
+        private val INSTRUCTION_TRACE_COLLECTOR = InstructionTraceCollector::class.java
+            .canonicalName
+            .replace(Package.CANONICAL_SEPARATOR, Package.SEPARATOR)
+
+        private val TRACE_COLLECTOR_PROXY = TraceCollectorProxy::class.java
+            .canonicalName
+            .replace(Package.CANONICAL_SEPARATOR, Package.SEPARATOR)
+    }
+
     override val ctx: UsageContext = EmptyUsageContext
     override val cm get() = executionContext.cm
 
@@ -31,7 +41,8 @@ class SymbolicTraceCollector(
     override val values: ValueFactory
         get() = cm.value
 
-    private val collectorClass = cm[InstructionTraceCollector::class.java.canonicalName.replace('.', '/')]
+    private val collectorClass = cm[INSTRUCTION_TRACE_COLLECTOR]
+    private val collectorProxyClass = cm[TRACE_COLLECTOR_PROXY]
     private lateinit var traceCollector: Instruction
 
     override fun cleanup() {}
@@ -673,24 +684,22 @@ class SymbolicTraceCollector(
     }
 
     private fun getNewCollector(): Instruction {
-        val proxy = cm[TraceCollectorProxy::class.java.canonicalName.replace('.', '/')]
-        val getter = proxy.getMethod("currentCollector", cm.type.getRefType(collectorClass))
+        val getter = collectorProxyClass.getMethod("currentCollector", cm.type.getRefType(collectorClass))
 
-        return getter.staticCall(proxy, "collector", arrayOf())
+        return getter.staticCall(collectorProxyClass, "collector", arrayOf())
     }
 
     private fun setNewCollector(collector: Value): Instruction {
-        val proxy = cm[TraceCollectorProxy::class.java.canonicalName.replace('.', '/')]
-        val setter = proxy.getMethod("setCurrentCollector", cm.type.voidType, cm.type.getRefType(collectorClass))
+        val setter =
+            collectorProxyClass.getMethod("setCurrentCollector", cm.type.voidType, cm.type.getRefType(collectorClass))
 
-        return setter.staticCall(proxy, arrayOf(collector))
+        return setter.staticCall(collectorProxyClass, arrayOf(collector))
     }
 
     private fun disableCollector(): Instruction {
-        val proxy = cm[TraceCollectorProxy::class.java.canonicalName.replace('.', '/')]
-        val disabler = proxy.getMethod("disableCollector", cm.type.voidType)
+        val disabler = collectorProxyClass.getMethod("disableCollector", cm.type.voidType)
 
-        return disabler.staticCall(proxy, arrayOf())
+        return disabler.staticCall(collectorProxyClass, arrayOf())
     }
 
     private fun Class.virtualCall(

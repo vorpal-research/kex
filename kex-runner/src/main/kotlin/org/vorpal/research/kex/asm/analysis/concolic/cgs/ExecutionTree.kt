@@ -172,24 +172,6 @@ class ExecutionTree : PredecessorGraph<Vertex>, Viewable {
         return search
     }
 
-//    private val PathVertex.isExhaustive: Boolean
-//        get() {
-//            val neighbors = this.predecessors.flatMap { it.successors }
-//
-//            return when (val inst = clause.instruction) {
-//                is BranchInst -> neighbors.size == 2
-//                is SwitchInst -> neighbors.size == (inst.branches.size + 1)
-//                is TableSwitchInst -> neighbors.size == (inst.range.length + 1)
-//                else -> when (val pred = clause.predicate) {
-//                    is EqualityPredicate -> when (pred.lhv) {
-//                        is InstanceOfTerm -> false
-//                        else -> neighbors.size == 2
-//                    }
-//                    else -> false
-//                }
-//            }
-//        }
-
     private val PathVertex.isInstructionExhaustive: Boolean
         get() {
             val pathClause = clause as PathClause

@@ -20,23 +20,27 @@ interface MasterProtocolHandler {
 
 
 interface Master2ClientConnection : AutoCloseable {
+    fun ready(): Boolean
     fun receive(): String
     fun send(result: String)
 }
 
 interface Master2WorkerConnection : AutoCloseable {
+    fun ready(): Boolean
     fun send(request: String)
     fun receive(): String
 }
 
 interface Client2MasterConnection : AutoCloseable {
     fun connect(): Boolean
+    fun ready(): Boolean
     fun send(request: TestExecutionRequest)
     fun receive(): ExecutionResult
 }
 
 interface Worker2MasterConnection : AutoCloseable {
     fun connect(): Boolean
+    fun ready(): Boolean
     fun receive(): TestExecutionRequest
     fun send(result: ExecutionResult)
 }
@@ -68,6 +72,10 @@ class Master2ClientSocketConnection(private val socket: Socket) : Master2ClientC
     private val writer: BufferedWriter = socket.getOutputStream().bufferedWriter()
     private val reader: BufferedReader = socket.getInputStream().bufferedReader()
 
+    override fun ready(): Boolean {
+        return reader.ready()
+    }
+
     override fun receive(): String {
         return reader.readLine().also {
             log.debug("Master received a request $it")
@@ -96,6 +104,10 @@ class Master2WorkerSocketConnection(private val socket: Socket) : Master2WorkerC
         writer.write(request)
         writer.newLine()
         writer.flush()
+    }
+
+    override fun ready(): Boolean {
+        return reader.ready()
     }
 
     override fun receive(): String {
@@ -134,6 +146,10 @@ class Client2MasterSocketConnection(val serializer: KexSerializer, private val p
         log.debug("Request is sent")
     }
 
+    override fun ready(): Boolean {
+        return reader.ready()
+    }
+
     override fun receive(): ExecutionResult {
         val json = reader.readLine()
         log.debug("Client received an answer")
@@ -163,6 +179,10 @@ class Worker2MasterSocketConnection(val serializer: KexSerializer, private val p
         reader = socket.getInputStream().bufferedReader()
         log.debug("Connected to master")
         return true
+    }
+
+    override fun ready(): Boolean {
+        return reader.ready()
     }
 
     override fun receive(): TestExecutionRequest {

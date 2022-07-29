@@ -1,5 +1,6 @@
 package org.vorpal.research.kex.trace.runner
 
+import kotlinx.coroutines.yield
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.InternalSerializationApi
 import org.vorpal.research.kex.ExecutionContext
@@ -14,6 +15,7 @@ import org.vorpal.research.kex.util.getIntrinsics
 import org.vorpal.research.kex.util.getJunit
 import org.vorpal.research.kex.util.getPathSeparator
 import org.vorpal.research.kex.util.outputDirectory
+import org.vorpal.research.kfg.ClassManager
 import org.vorpal.research.kthelper.logging.log
 import java.net.ServerSocket
 import java.nio.file.Paths
@@ -23,6 +25,7 @@ import java.nio.file.Paths
 internal object ExecutorMasterController : AutoCloseable {
     private lateinit var process: Process
     private val masterPort: Int
+    private val serializers = mutableMapOf<ClassManager, KexSerializer>()
 
     init {
         val tempSocket = ServerSocket(0)
@@ -74,7 +77,12 @@ internal object ExecutorMasterController : AutoCloseable {
     }
 
     fun getClientConnection(ctx: ExecutionContext): Client2MasterConnection {
-        return Client2MasterSocketConnection(KexSerializer(ctx.cm, prettyPrint = false), masterPort)
+        return Client2MasterSocketConnection(serializers.getOrPut(ctx.cm) {
+            KexSerializer(
+                ctx.cm,
+                prettyPrint = false
+            )
+        }, masterPort)
     }
 
     override fun close() {
@@ -86,13 +94,16 @@ class SymbolicExternalTracingRunner(val ctx: ExecutionContext) {
 
     @ExperimentalSerializationApi
     @InternalSerializationApi
-    fun run(klass: String, setup: String, test: String): ExecutionResult {
+    suspend fun run(klass: String, setup: String, test: String): ExecutionResult {
         log.debug("Executing test $klass")
 
         val connection = ExecutorMasterController.getClientConnection(ctx)
         connection.use {
             it.connect()
             it.send(TestExecutionRequest(klass, test, setup))
+            while (!it.ready()) {
+                yield()
+            }
             val result = it.receive()
             when (result) {
                 is ExecutionCompletedResult -> log.debug("Execution result: ${result.trace}")
