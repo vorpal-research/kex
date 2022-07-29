@@ -31,7 +31,7 @@ abstract class ConcolicTest : KexRunnerTest() {
                 +ClassInstantiationDetector(analysisContext)
             }
 
-            for (method in klass.allMethods) {
+            for (method in klass.allMethods.sortedBy { method -> method.prototype }) {
                 InstructionConcolicChecker.run(analysisContext, setOf(method))
             }
 

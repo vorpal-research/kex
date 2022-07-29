@@ -37,6 +37,7 @@ import org.vorpal.research.kfg.ClassManager
 import org.vorpal.research.kfg.ir.Method
 import org.vorpal.research.kthelper.assert.unreachable
 import org.vorpal.research.kthelper.logging.debug
+import org.vorpal.research.kthelper.logging.error
 import org.vorpal.research.kthelper.logging.log
 import org.vorpal.research.kthelper.logging.warn
 import org.vorpal.research.kthelper.tryOrNull
@@ -77,7 +78,7 @@ class InstructionConcolicChecker(
             if (method.isStaticInitializer || !method.hasBody) return
             if (!MethodManager.canBeImpacted(method, ctx.accessLevel)) return
 
-            log.debug { "Processing method $method" }
+            log.error { "Processing method $method" }
             log.debug { method.print() }
 
             processMethod(method)
@@ -98,10 +99,6 @@ class InstructionConcolicChecker(
 
     private suspend fun getRandomTrace(method: Method): ExecutionResult? = try {
         val params = ctx.random.generateParameters(ctx.loader, method)
-        log.run {
-            error("Method $method")
-            error("Generated params: ${params?.asDescriptors}")
-        }
         params?.let { collectTraceFromAny(method, it) }
     } catch (e: Throwable) {
         log.warn("Error while collecting random trace:", e)
