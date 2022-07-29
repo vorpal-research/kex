@@ -9,7 +9,6 @@ import org.junit.Test
 @ExperimentalSerializationApi
 @InternalSerializationApi
 @DelicateCoroutinesApi
-@Ignore
 class KAFLongTest : ConcolicTest() {
     @Test
     fun lesson2() {

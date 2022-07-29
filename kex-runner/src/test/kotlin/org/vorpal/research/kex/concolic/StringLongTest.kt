@@ -9,7 +9,6 @@ import org.junit.Test
 @ExperimentalSerializationApi
 @InternalSerializationApi
 @DelicateCoroutinesApi
-@Ignore
 class StringLongTest : ConcolicTest() {
     @Test
     fun primitiveConcolicTest() {
