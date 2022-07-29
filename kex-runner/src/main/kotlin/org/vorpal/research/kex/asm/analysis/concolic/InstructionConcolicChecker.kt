@@ -98,6 +98,10 @@ class InstructionConcolicChecker(
 
     private suspend fun getRandomTrace(method: Method): ExecutionResult? = try {
         val params = ctx.random.generateParameters(ctx.loader, method)
+        log.run {
+            error("Method $method")
+            error("Generated params: ${params?.asDescriptors}")
+        }
         params?.let { collectTraceFromAny(method, it) }
     } catch (e: Throwable) {
         log.warn("Error while collecting random trace:", e)
