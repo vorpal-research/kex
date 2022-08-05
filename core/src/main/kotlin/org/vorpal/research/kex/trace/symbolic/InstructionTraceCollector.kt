@@ -203,4 +203,10 @@ interface InstructionTraceCollector {
         concreteArray: Any?,
         concreteIndex: Any?
     )
+
+    fun addArrayLengthConstraints(
+        inst: String,
+        length: String,
+        concreteLength: Any?
+    )
 }

@@ -100,10 +100,10 @@ class WorkerLauncher(args: Array<String>) {
             override fun connect(): Boolean {
                 return true
             }
-//            {"klass":"org.vorpal.research.kex.test.javadebug.JavaTest_testLinkedListIndexOf_741047150","testMethod":"test","setupMethod":"setup"}
+//            {"klass":"org.vorpal.research.kex.test.javadebug.ByteVector_putByte_2858805831","testMethod":"test","setupMethod":"setup"}
             override fun receive(): TestExecutionRequest {
                 return TestExecutionRequest(
-                    "org.vorpal.research.kex.test.javadebug.JavaTest_testArrayList_9966534043",
+                    "org.vorpal.research.kex.test.javadebug.ByteVector_putByte_2858805831",
                     testMethod = "test",
                     setupMethod = "setup"
                 )
@@ -114,6 +114,7 @@ class WorkerLauncher(args: Array<String>) {
             }
 
             override fun send(result: ExecutionResult) {
+                KexSerializer(ctx.cm, prettyPrint = false).toJson(result)
             }
 
             override fun close() {

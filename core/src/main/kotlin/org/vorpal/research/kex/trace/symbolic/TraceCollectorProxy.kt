@@ -153,6 +153,8 @@ private class EmptyTraceCollector : InstructionTraceCollector {
         concreteArray: Any?,
         concreteIndex: Any?
     ) {}
+
+    override fun addArrayLengthConstraints(inst: String, length: String, concreteLength: Any?) {}
 }
 
 object TraceCollectorProxy {

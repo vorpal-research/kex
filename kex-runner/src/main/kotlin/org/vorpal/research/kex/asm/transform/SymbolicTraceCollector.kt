@@ -506,6 +506,10 @@ class SymbolicTraceCollector(
                 )
             }
 
+            for (dimension in inst.dimensions) {
+                +addArrayLengthConstraints(inst, dimension)
+            }
+
             +collectorClass.interfaceCall(
                 newArrayMethod, traceCollector,
                 "$inst".asValue, dimensions,
@@ -680,6 +684,20 @@ class SymbolicTraceCollector(
             "$inst".asValue,
             "$array".asValue, "$index".asValue,
             array.wrapped(this), index.wrapped(this)
+        )
+    }
+
+    private fun addArrayLengthConstraints(inst: Instruction, length: Value): List<Instruction> = buildList {
+        val addArrayIndexConstraintsMethod = collectorClass.getMethod(
+            "addArrayLengthConstraints", types.voidType,
+            types.stringType,
+            types.stringType, types.objectType
+        )
+
+        +collectorClass.interfaceCall(
+            addArrayIndexConstraintsMethod, traceCollector,
+            "$inst".asValue,
+            "$length".asValue, length.wrapped(this)
         )
     }
 

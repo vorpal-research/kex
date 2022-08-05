@@ -1,6 +1,5 @@
 package org.vorpal.research.kex.trace.runner
 
-import kotlinx.coroutines.yield
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.InternalSerializationApi
 import org.vorpal.research.kex.ExecutionContext
@@ -94,16 +93,13 @@ class SymbolicExternalTracingRunner(val ctx: ExecutionContext) {
 
     @ExperimentalSerializationApi
     @InternalSerializationApi
-    suspend fun run(klass: String, setup: String, test: String): ExecutionResult {
+    fun run(klass: String, setup: String, test: String): ExecutionResult {
         log.debug("Executing test $klass")
 
         val connection = ExecutorMasterController.getClientConnection(ctx)
         connection.use {
             it.connect()
             it.send(TestExecutionRequest(klass, test, setup))
-            while (!it.ready()) {
-                yield()
-            }
             val result = it.receive()
             when (result) {
                 is ExecutionCompletedResult -> log.debug("Execution result: ${result.trace}")
