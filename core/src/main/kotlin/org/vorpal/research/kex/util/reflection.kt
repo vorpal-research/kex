@@ -6,6 +6,7 @@ import org.vorpal.research.kex.ktype.*
 import org.vorpal.research.kex.state.term.FieldTerm
 import org.vorpal.research.kfg.ClassManager
 import org.vorpal.research.kfg.InvalidTypeException
+import org.vorpal.research.kfg.Package
 import org.vorpal.research.kfg.ir.Method
 import org.vorpal.research.kfg.type.*
 import org.vorpal.research.kfg.type.Type
@@ -29,9 +30,9 @@ import kotlin.String
 import kotlin.Suppress
 import kotlin.also
 import kotlin.require
+import org.vorpal.research.kfg.Package as KfgPackage
 import org.vorpal.research.kfg.ir.Class as KfgClass
 import org.vorpal.research.kfg.ir.Field as KfgField
-import org.vorpal.research.kfg.Package as KfgPackage
 import java.lang.reflect.Method as JMethod
 import java.lang.reflect.Type as JType
 
@@ -285,6 +286,33 @@ fun mergeTypes(lhv: java.lang.reflect.Type, rhv: java.lang.reflect.Type, loader:
             rhv
         }
     }
+}
+
+fun ClassLoader.loadClassByName(name: String): Class<*> {
+    fun parseNamedType(name: String): Class<*>? = when (name) {
+        "void" -> Void::class.javaPrimitiveType
+        "bool" -> Boolean::class.javaPrimitiveType
+        "byte" -> Byte::class.javaPrimitiveType
+        "short" -> Short::class.javaPrimitiveType
+        "long" -> Long::class.javaPrimitiveType
+        "char" -> Char::class.javaPrimitiveType
+        "int" -> Int::class.javaPrimitiveType
+        "float" -> Float::class.javaPrimitiveType
+        "double" -> Double::class.javaPrimitiveType
+        else -> null
+    }
+
+    var arrCount = 0
+    val end = name.dropLastWhile {
+        if (it == '[') ++arrCount
+        it == '[' || it == ']'
+    }
+    var subClass = parseNamedType(end) ?: loadClass(end.replace(Package.SEPARATOR, Package.CANONICAL_SEPARATOR))
+    while (arrCount > 0) {
+        --arrCount
+        subClass = Array.newInstance(subClass, 0).javaClass
+    }
+    return subClass
 }
 
 fun parseTypeDesc(classLoader: ClassLoader, desc: String): List<Class<*>> {
