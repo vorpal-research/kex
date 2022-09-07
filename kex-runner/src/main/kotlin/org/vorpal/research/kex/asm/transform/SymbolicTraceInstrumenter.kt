@@ -17,7 +17,7 @@ import org.vorpal.research.kfg.visitor.MethodVisitor
 import org.vorpal.research.kthelper.collection.MutableBuilder
 import org.vorpal.research.kthelper.collection.buildList
 
-class SymbolicTraceCollector(
+class SymbolicTraceInstrumenter(
     val executionContext: ExecutionContext,
     val ignores: Set<Package> = setOf()
 ) : MethodVisitor, InstructionBuilder {

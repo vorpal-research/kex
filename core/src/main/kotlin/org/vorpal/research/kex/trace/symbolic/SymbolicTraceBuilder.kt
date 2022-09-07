@@ -194,7 +194,7 @@ class SymbolicTraceBuilder(
 
     private fun parseMethod(className: String, methodName: String, args: List<String>, retType: String): Method {
         val klass = cm[className]
-        return klass.getMethod(methodName, MethodDescriptor(args.map { it.toType() }.toTypedArray(), retType.toType()))
+        return klass.getMethod(methodName, MethodDescriptor(args.map { it.toType() }, retType.toType()))
     }
 
     private fun parseBlock(blockName: String): BasicBlock {

@@ -125,7 +125,7 @@ class ActionParser(val cm: ClassManager, val ctx: NameMapperContext) : Grammar<A
             typeName) use {
         val klass = cm[t1.dropLast(1).fold("") { acc, curr -> "$acc/$curr" }.drop(1)]
         val methodName = t1.takeLast(1).firstOrNull() ?: throw UnknownNameException(t1.toString())
-        val args = t2.toTypedArray()
+        val args = t2
         val rettype = t3
         klass.getMethod(methodName, MethodDescriptor(args, rettype))
     }

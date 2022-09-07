@@ -7,7 +7,7 @@ import org.vorpal.research.kex.ExecutionContext
 import org.vorpal.research.kex.KexRunnerTest
 import org.vorpal.research.kex.asm.analysis.concolic.InstructionConcolicChecker
 import org.vorpal.research.kex.asm.manager.ClassInstantiationDetector
-import org.vorpal.research.kex.asm.transform.SymbolicTraceCollector
+import org.vorpal.research.kex.asm.transform.SymbolicTraceInstrumenter
 import org.vorpal.research.kex.jacoco.CoverageReporter
 import org.vorpal.research.kex.launcher.ClassLevel
 import org.vorpal.research.kex.trace.runner.ExecutorMasterController
@@ -22,7 +22,7 @@ import kotlin.test.assertEquals
 @DelicateCoroutinesApi
 abstract class ConcolicTest : KexRunnerTest() {
 
-    override fun createTraceCollector(context: ExecutionContext) = SymbolicTraceCollector(context)
+    override fun createTraceCollector(context: ExecutionContext) = SymbolicTraceInstrumenter(context)
 
     fun assertCoverage(klass: Class, expectedCoverage: Double = 1.0, eps: Double = 0.0) {
         ExecutorMasterController.use {

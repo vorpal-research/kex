@@ -7,7 +7,7 @@ import org.vorpal.research.kex.ExecutionContext
 import org.vorpal.research.kex.asm.analysis.concolic.InstructionConcolicChecker
 import org.vorpal.research.kex.asm.manager.ClassInstantiationDetector
 import org.vorpal.research.kex.asm.state.PredicateStateAnalysis
-import org.vorpal.research.kex.asm.transform.SymbolicTraceCollector
+import org.vorpal.research.kex.asm.transform.SymbolicTraceInstrumenter
 import org.vorpal.research.kex.asm.transform.SystemExitTransformer
 import org.vorpal.research.kex.config.kexConfig
 import org.vorpal.research.kex.jacoco.CoverageReporter
@@ -24,7 +24,7 @@ import org.vorpal.research.kthelper.logging.log
 @DelicateCoroutinesApi
 class ConcolicLauncher(classPaths: List<String>, targetName: String) : KexLauncher(classPaths, targetName) {
     override fun createInstrumenter(context: ExecutionContext): MethodVisitor {
-        return SymbolicTraceCollector(context)
+        return SymbolicTraceInstrumenter(context)
     }
 
     override fun preparePackage(ctx: ExecutionContext, psa: PredicateStateAnalysis, pkg: Package) =
