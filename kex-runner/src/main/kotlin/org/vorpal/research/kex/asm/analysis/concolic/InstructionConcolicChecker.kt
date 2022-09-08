@@ -64,9 +64,9 @@ class InstructionConcolicChecker(
             val coroutineContext = newFixedThreadPoolContext(actualNumberOfExecutors, "concolic-dispatcher")
             runBlocking(coroutineContext) {
                 withTimeoutOrNull(timeLimit) {
-                    targets.forEach {
-                        launch { InstructionConcolicChecker(context).visit(it) }
-                    }
+                    targets.map {
+                        async { InstructionConcolicChecker(context).visit(it) }
+                    }.awaitAll()
                 }
             }
         }
