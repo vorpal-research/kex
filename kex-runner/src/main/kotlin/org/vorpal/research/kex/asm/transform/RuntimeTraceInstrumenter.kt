@@ -12,6 +12,8 @@ import org.vorpal.research.kfg.ir.value.UsageContext
 import org.vorpal.research.kfg.ir.value.ValueFactory
 import org.vorpal.research.kfg.ir.value.instruction.*
 import org.vorpal.research.kfg.type.TypeFactory
+import org.vorpal.research.kfg.type.objectType
+import org.vorpal.research.kfg.type.stringType
 import org.vorpal.research.kfg.visitor.MethodVisitor
 import org.vorpal.research.kthelper.collection.buildList
 

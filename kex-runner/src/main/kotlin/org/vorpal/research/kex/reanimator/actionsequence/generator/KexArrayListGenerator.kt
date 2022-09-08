@@ -11,6 +11,8 @@ import org.vorpal.research.kex.reanimator.actionsequence.ActionList
 import org.vorpal.research.kex.reanimator.actionsequence.ActionSequence
 import org.vorpal.research.kex.reanimator.actionsequence.DefaultConstructorCall
 import org.vorpal.research.kex.reanimator.actionsequence.MethodCall
+import org.vorpal.research.kfg.arrayListClass
+import org.vorpal.research.kfg.type.objectType
 
 class KexArrayListGenerator(val fallback: Generator) : Generator {
     override val context: GeneratorContext

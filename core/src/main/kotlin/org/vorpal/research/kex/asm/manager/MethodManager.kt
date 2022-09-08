@@ -9,6 +9,8 @@ import org.vorpal.research.kfg.ClassManager
 import org.vorpal.research.kfg.Package
 import org.vorpal.research.kfg.ir.Method
 import org.vorpal.research.kfg.ir.value.instruction.ReturnInst
+import org.vorpal.research.kfg.type.objectType
+import org.vorpal.research.kfg.type.stringType
 import org.vorpal.research.kthelper.assert.ktassert
 import org.vorpal.research.kthelper.logging.log
 

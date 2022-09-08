@@ -3,7 +3,6 @@ package org.vorpal.research.kex.util
 import org.vorpal.research.kex.ktype.KexType
 import org.vorpal.research.kex.ktype.kexType
 import org.vorpal.research.kex.ktype.type
-import org.vorpal.research.kfg.ClassManager
 import org.vorpal.research.kfg.Package
 import org.vorpal.research.kfg.ir.Class
 import org.vorpal.research.kfg.ir.value.NameMapper
@@ -89,26 +88,6 @@ fun NameMapper.parseValueOrNull(valueName: String): Value? {
         else -> null
     }
 }
-
-val SystemTypeNames.unmodifiableCollection get() = "java/util/Collections\$UnmodifiableCollection"
-val SystemTypeNames.unmodifiableList get() = "java/util/Collections\$UnmodifiableList"
-val SystemTypeNames.unmodifiableSet get() = "java/util/Collections\$UnmodifiableSet"
-val SystemTypeNames.unmodifiableMap get() = "java/util/Collections\$UnmodifiableMap"
-val SystemTypeNames.charSequence get() = "java/lang/CharSequence"
-val SystemTypeNames.field get() = "java/lang/reflect/Field"
-val SystemTypeNames.stringBuilder get() = "java/lang/StringBuilder"
-val SystemTypeNames.stringBuffer get() = "java/lang/StringBuffer"
-val SystemTypeNames.linkedHashSet get() = "java/util/LinkedHashSet"
-val SystemTypeNames.linkedHashMap get() = "java/util/LinkedHashMap"
-
-val SystemTypeNames.classLoader get() = "java/lang/ClassLoader"
-val ClassManager.classLoaderClass get() = this[SystemTypeNames.classLoader]
-val ClassManager.stringBuilderClass get() = this[SystemTypeNames.stringBuilder]
-val ClassManager.stringBufferClass get() = this[SystemTypeNames.stringBuffer]
-val ClassManager.linkedHashSetClass get() = this[SystemTypeNames.linkedHashSet]
-val ClassManager.linkedHashMapClass get() = this[SystemTypeNames.linkedHashMap]
-val TypeFactory.classLoaderType get() = getRefType(SystemTypeNames.classLoader)
-
 
 fun Type.getAllSubtypes(tf: TypeFactory): Set<Type> = when (this) {
     is ClassType -> tf.cm.getAllSubtypesOf(this.klass).map { it.type }.toSet()

@@ -8,10 +8,10 @@ import org.vorpal.research.kex.reanimator.actionsequence.ActionList
 import org.vorpal.research.kex.reanimator.actionsequence.ActionSequence
 import org.vorpal.research.kex.reanimator.actionsequence.ExternalMethodCall
 import org.vorpal.research.kex.reanimator.actionsequence.MethodCall
-import org.vorpal.research.kex.util.field
 import org.vorpal.research.kfg.Package
 import org.vorpal.research.kfg.ir.Class
 import org.vorpal.research.kfg.type.SystemTypeNames
+import org.vorpal.research.kfg.type.stringType
 
 class FieldGenerator(val fallback: Generator) : Generator {
     override val context: GeneratorContext

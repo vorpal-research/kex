@@ -9,10 +9,7 @@ import org.vorpal.research.kex.reanimator.actionsequence.*
 import org.vorpal.research.kex.util.getMethod
 import org.vorpal.research.kex.util.kapitalize
 import org.vorpal.research.kex.util.loadClass
-import org.vorpal.research.kfg.type.ArrayType
-import org.vorpal.research.kfg.type.ClassType
-import org.vorpal.research.kfg.type.PrimaryType
-import org.vorpal.research.kfg.type.Type
+import org.vorpal.research.kfg.type.*
 import org.vorpal.research.kthelper.assert.unreachable
 import org.vorpal.research.kthelper.logging.log
 import org.vorpal.research.kthelper.runIf

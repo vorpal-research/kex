@@ -10,6 +10,7 @@ import org.vorpal.research.kex.reanimator.actionsequence.*
 import org.vorpal.research.kfg.UnknownInstanceException
 import org.vorpal.research.kfg.type.ArrayType
 import org.vorpal.research.kfg.type.ClassType
+import org.vorpal.research.kfg.type.objectType
 import org.vorpal.research.kthelper.logging.log
 
 class UnknownGenerator(
@@ -63,8 +64,8 @@ class UnknownGenerator(
         getFromCache(descriptor)!!
     }
 
-    private val Descriptor.wrappedType get() = when {
-        this.type is KexNull -> context.types.objectType
+    private val Descriptor.wrappedType get() = when (this.type) {
+        is KexNull -> context.types.objectType
         else -> this.type.getKfgType(context.types)
     }
 }

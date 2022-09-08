@@ -9,6 +9,7 @@ import org.vorpal.research.kex.state.*
 import org.vorpal.research.kex.state.predicate.*
 import org.vorpal.research.kex.state.term.*
 import org.vorpal.research.kfg.type.TypeFactory
+import org.vorpal.research.kfg.type.stringType
 import org.vorpal.research.kthelper.logging.log
 
 enum class Nullability {

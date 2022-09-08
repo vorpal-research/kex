@@ -9,7 +9,10 @@ import org.vorpal.research.kex.ktype.kexType
 import org.vorpal.research.kex.reanimator.actionsequence.ActionList
 import org.vorpal.research.kex.reanimator.actionsequence.ActionSequence
 import org.vorpal.research.kex.reanimator.actionsequence.ExternalConstructorCall
+import org.vorpal.research.kfg.classClass
 import org.vorpal.research.kfg.type.SystemTypeNames
+import org.vorpal.research.kfg.type.classType
+import org.vorpal.research.kfg.type.stringType
 
 class ClassGenerator(private val fallback: Generator) : Generator {
     override val context get() = fallback.context

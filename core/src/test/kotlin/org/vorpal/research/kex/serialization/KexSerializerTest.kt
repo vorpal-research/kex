@@ -14,6 +14,7 @@ import org.vorpal.research.kex.state.predicate.*
 import org.vorpal.research.kex.state.term.FieldLoadTerm
 import org.vorpal.research.kex.state.term.Term
 import org.vorpal.research.kex.state.term.term
+import org.vorpal.research.kfg.stringClass
 import kotlin.test.assertTrue
 
 @ExperimentalSerializationApi

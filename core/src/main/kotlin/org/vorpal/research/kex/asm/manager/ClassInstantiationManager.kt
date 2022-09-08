@@ -5,7 +5,6 @@ import org.vorpal.research.kex.asm.util.AccessModifier
 import org.vorpal.research.kex.asm.util.accessModifier
 import org.vorpal.research.kex.ktype.*
 import org.vorpal.research.kex.ktype.KexRtManager.rtMapped
-import org.vorpal.research.kex.util.*
 import org.vorpal.research.kfg.ClassManager
 import org.vorpal.research.kfg.ir.Class
 import org.vorpal.research.kfg.ir.Method

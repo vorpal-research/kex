@@ -7,8 +7,14 @@ import org.vorpal.research.kex.descriptor.descriptor
 import org.vorpal.research.kex.ktype.KexRtManager.rtMapped
 import org.vorpal.research.kex.ktype.asArray
 import org.vorpal.research.kex.ktype.kexType
-import org.vorpal.research.kex.reanimator.actionsequence.*
-import org.vorpal.research.kex.state.transformer.getCtor
+import org.vorpal.research.kex.reanimator.actionsequence.ActionList
+import org.vorpal.research.kex.reanimator.actionsequence.ActionSequence
+import org.vorpal.research.kex.reanimator.actionsequence.DefaultConstructorCall
+import org.vorpal.research.kex.reanimator.actionsequence.MethodCall
+import org.vorpal.research.kfg.arrayListClass
+import org.vorpal.research.kfg.linkedListClass
+import org.vorpal.research.kfg.type.arrayListType
+import org.vorpal.research.kfg.type.objectType
 
 class KexLinkedListGenerator(val fallback: Generator) : Generator {
     override val context: GeneratorContext

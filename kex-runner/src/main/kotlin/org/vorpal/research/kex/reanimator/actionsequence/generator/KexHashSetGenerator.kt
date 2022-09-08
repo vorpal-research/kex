@@ -10,9 +10,12 @@ import org.vorpal.research.kex.reanimator.actionsequence.ActionList
 import org.vorpal.research.kex.reanimator.actionsequence.ActionSequence
 import org.vorpal.research.kex.reanimator.actionsequence.DefaultConstructorCall
 import org.vorpal.research.kex.reanimator.actionsequence.MethodCall
-import org.vorpal.research.kex.util.linkedHashMapClass
-import org.vorpal.research.kex.util.linkedHashSetClass
+import org.vorpal.research.kfg.hashSetClass
+import org.vorpal.research.kfg.linkedHashMapClass
+import org.vorpal.research.kfg.linkedHashSetClass
 import org.vorpal.research.kfg.type.ClassType
+import org.vorpal.research.kfg.type.arrayListType
+import org.vorpal.research.kfg.type.objectType
 
 
 class KexHashSetGenerator(val fallback: Generator) : Generator {

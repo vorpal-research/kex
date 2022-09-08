@@ -9,10 +9,14 @@ import org.vorpal.research.kex.state.term.CallTerm
 import org.vorpal.research.kex.state.term.ConstClassTerm
 import org.vorpal.research.kex.state.term.Term
 import org.vorpal.research.kex.state.wrap
-import org.vorpal.research.kex.util.*
+import org.vorpal.research.kex.util.ANNOTATION_MODIFIER
+import org.vorpal.research.kex.util.ENUM_MODIFIER
+import org.vorpal.research.kex.util.SYNTHETIC_MODIFIER
+import org.vorpal.research.kex.util.asArray
 import org.vorpal.research.kfg.ClassManager
-import org.vorpal.research.kfg.type.ArrayType
-import org.vorpal.research.kfg.type.ClassType
+import org.vorpal.research.kfg.classClass
+import org.vorpal.research.kfg.objectClass
+import org.vorpal.research.kfg.type.*
 import org.vorpal.research.kthelper.collection.dequeOf
 import java.lang.reflect.Modifier
 import org.vorpal.research.kfg.ir.Class as KfgClass

@@ -7,12 +7,12 @@ import org.vorpal.research.kex.util.insertAfter
 import org.vorpal.research.kex.util.insertBefore
 import org.vorpal.research.kex.util.wrapValue
 import org.vorpal.research.kfg.Package
+import org.vorpal.research.kfg.arrayListClass
 import org.vorpal.research.kfg.ir.Class
 import org.vorpal.research.kfg.ir.Method
 import org.vorpal.research.kfg.ir.value.*
 import org.vorpal.research.kfg.ir.value.instruction.*
-import org.vorpal.research.kfg.type.Type
-import org.vorpal.research.kfg.type.TypeFactory
+import org.vorpal.research.kfg.type.*
 import org.vorpal.research.kfg.visitor.MethodVisitor
 import org.vorpal.research.kthelper.collection.MutableBuilder
 import org.vorpal.research.kthelper.collection.buildList

@@ -11,8 +11,11 @@ import org.vorpal.research.kex.reanimator.actionsequence.ActionList
 import org.vorpal.research.kex.reanimator.actionsequence.ActionSequence
 import org.vorpal.research.kex.reanimator.actionsequence.DefaultConstructorCall
 import org.vorpal.research.kex.reanimator.actionsequence.MethodCall
-import org.vorpal.research.kex.util.linkedHashMapClass
+import org.vorpal.research.kfg.hashMapClass
+import org.vorpal.research.kfg.linkedHashMapClass
 import org.vorpal.research.kfg.type.ClassType
+import org.vorpal.research.kfg.type.arrayListType
+import org.vorpal.research.kfg.type.objectType
 import org.vorpal.research.kthelper.assert.ktassert
 
 class KexHashMapGenerator(val fallback: Generator) : Generator {
