@@ -37,7 +37,7 @@ class StaticFieldGenerator(private val fallback: Generator) : Generator {
         val original = descriptor.deepCopy() as ClassDescriptor
         val fallbacks = mutableSetOf<List<CodeAction>>()
 
-        descriptor.concretize(cm, context.random)
+        descriptor.concretize(cm, accessLevel, context.random)
         descriptor.filterFinalFields(cm)
         descriptor.reduce()
         if (descriptor.isFinal(original)) return true

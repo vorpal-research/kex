@@ -211,7 +211,7 @@ public class ByteVector {
             enlarge(len);
         }
         if (b != null) {
-            System.arraycopy(b, off, data, length, len);
+            arrayCopy(b, off, data, length, len);
         }
         length += len;
         return this;
@@ -227,7 +227,16 @@ public class ByteVector {
         final int length1 = 2 * data.length;
         final int length2 = length + size;
         final byte[] newData = new byte[length1 > length2 ? length1 : length2];
-        System.arraycopy(data, 0, newData, 0, length);
+        arrayCopy(data, 0, newData, 0, length);
         data = newData;
+    }
+
+    private static void arrayCopy(byte[] data, int from, byte[] newData, int from1, int length) {
+        if (from < 0) throw new IllegalArgumentException();
+        if (from1 < 0) throw new IllegalArgumentException();
+        if (length > 10000) throw new IllegalArgumentException();
+        for (int i = 0; i < length; ++i) {
+            newData[from1 + i] = data[from + i];
+        }
     }
 }

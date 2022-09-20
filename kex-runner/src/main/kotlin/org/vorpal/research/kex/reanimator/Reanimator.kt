@@ -67,7 +67,7 @@ class Reanimator(
     override fun generate(testName: String, method: Method, state: PredicateState, model: SMTModel) = try {
         val descriptors = generateFinalDescriptors(method, ctx, model, state)
             .filterStaticFinals(cm)
-            .concreteParameters(cm, ctx.random).rtMapped
+            .concreteParameters(cm, ctx.accessLevel, ctx.random).rtMapped
         log.debug("Generated descriptors:\n$descriptors")
         val actionSequences = descriptors.actionSequences
         log.debug("Generated action sequences:\n$actionSequences")

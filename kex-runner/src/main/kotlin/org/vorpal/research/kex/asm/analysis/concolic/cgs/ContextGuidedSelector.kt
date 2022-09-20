@@ -126,7 +126,7 @@ class ContextGuidedSelector(
                 .toSet()
 
             try {
-                val newType = instantiationManager.get(ctx.types, termType, excludeClasses, ctx.random)
+                val newType = instantiationManager.get(ctx.types, termType, ctx.accessLevel, excludeClasses, ctx.random)
                 copy(predicate = path(instruction.location) {
                     (lhv.operand `is` newType.kexType) equality true
                 })

@@ -113,7 +113,7 @@ open class AnyGenerator(private val fallback: Generator) : Generator {
     fun generateObject(sequence: ActionList, descriptor: ObjectDescriptor, generationDepth: Int): Boolean = with(context) {
         val fallbacks = mutableSetOf<List<CodeAction>>()
 
-        descriptor.concretize(cm, context.random)
+        descriptor.concretize(cm, accessLevel, context.random)
         descriptor.reduce()
 
         log.debug("Generating $descriptor")

@@ -141,7 +141,7 @@ class ObjectReanimator(
                 UNSAFE.allocateInstance(
                     loader.loadClass(
                         context.types,
-                        instantiationManager.getConcreteType(type, context.cm, context.random)
+                        instantiationManager.getConcreteType(type, context.cm, context.accessLevel, context.random)
                     )
                 )
             }

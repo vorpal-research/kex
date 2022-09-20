@@ -1,6 +1,7 @@
 package org.vorpal.research.kex.parameters
 
 import kotlinx.serialization.Serializable
+import org.vorpal.research.kex.asm.util.AccessModifier
 import org.vorpal.research.kex.descriptor.ClassDescriptor
 import org.vorpal.research.kex.descriptor.Descriptor
 import org.vorpal.research.kex.descriptor.Object2DescriptorConverter
@@ -35,12 +36,15 @@ val Parameters<Any?>.asDescriptors: Parameters<Descriptor>
         )
     }
 
-fun Parameters<Descriptor>.concreteParameters(cm: ClassManager, random: Random) =
-    Parameters(
-        instance?.concretize(cm, random),
-        arguments.map { it.concretize(cm, random) },
-        statics.map { it.concretize(cm, random) }.toSet()
-    )
+fun Parameters<Descriptor>.concreteParameters(
+    cm: ClassManager,
+    accessLevel: AccessModifier,
+    random: Random
+) = Parameters(
+    instance?.concretize(cm, accessLevel, random),
+    arguments.map { it.concretize(cm, accessLevel, random) },
+    statics.map { it.concretize(cm, accessLevel, random) }.toSet()
+)
 
 fun Parameters<Descriptor>.filterStaticFinals(cm: ClassManager): Parameters<Descriptor> {
     val filteredStatics = statics.map { it.deepCopy() }.filterIsInstance<ClassDescriptor>().mapNotNull { klass ->
