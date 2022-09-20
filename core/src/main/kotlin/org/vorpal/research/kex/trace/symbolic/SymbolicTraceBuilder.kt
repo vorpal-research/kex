@@ -248,6 +248,14 @@ class SymbolicTraceBuilder(
                     val value = this["value", KexChar()]!! as ConstantDescriptor.Char
                     descriptor { const(value.value.code) }
                 }
+                type is KexInt && this.type == KexClass(SystemTypeNames.longClass) -> {
+                    val value = this["value", KexLong()]!! as ConstantDescriptor.Long
+                    descriptor { const(value.value.toInt()) }
+                }
+                type is KexLong && this.type == KexClass(SystemTypeNames.longClass) -> {
+                    val value = this["value", KexLong()]!! as ConstantDescriptor.Long
+                    descriptor { const(value.value) }
+                }
                 type is KexChar && this.type == KexClass(SystemTypeNames.integerClass) -> {
                     val value = this["value", KexInt()]!! as ConstantDescriptor.Int
                     descriptor { const(value.value.toChar()) }
