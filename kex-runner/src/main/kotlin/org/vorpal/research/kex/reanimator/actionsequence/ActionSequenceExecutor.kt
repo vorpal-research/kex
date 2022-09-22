@@ -154,6 +154,12 @@ class ActionSequenceExecutor(val ctx: ExecutionContext) {
                         setValue(current!!, index, value)
                         current
                     }
+                    is NewArrayWithInitializer -> {
+                        val length = call.elements.size
+                        val elementReflection = ctx.loader.loadClass(call.asArray.component)
+                        val array = Array.newInstance(elementReflection, length)
+                        (0 until length).forEach { setValue(array, it, execute(call.elements[it])) }
+                    }
                     is FieldSetter -> {
                         val field = call.field
                         val reflection = ctx.loader.loadClass(field.klass)

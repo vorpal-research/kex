@@ -5,6 +5,7 @@ import org.vorpal.research.kex.descriptor.ConstantDescriptor
 import org.vorpal.research.kex.descriptor.Descriptor
 import org.vorpal.research.kex.descriptor.ObjectDescriptor
 import org.vorpal.research.kex.ktype.KexNull
+import org.vorpal.research.kex.ktype.kexType
 import org.vorpal.research.kex.ktype.type
 import org.vorpal.research.kex.reanimator.actionsequence.*
 import org.vorpal.research.kfg.UnknownInstanceException
@@ -49,9 +50,11 @@ class UnknownGenerator(
 
                 actionSequence += ReflectionNewArray(kfgArray, lengthCall)
                 for ((index, element) in descriptor.elements) {
-                    val indexAS = PrimaryValue(index)
-                    val elementAS = fallback.generate(element)
-                    actionSequence += ReflectionArrayWrite(element.type.getKfgType(types), indexAS, elementAS)
+                    if (element != kfgArray.component.kexType.defaultDescriptor) {
+                        val indexAS = PrimaryValue(index)
+                        val elementAS = fallback.generate(element)
+                        actionSequence += ReflectionArrayWrite(element.type.getKfgType(types), indexAS, elementAS)
+                    }
                 }
             }
             else -> UnknownSequence(
