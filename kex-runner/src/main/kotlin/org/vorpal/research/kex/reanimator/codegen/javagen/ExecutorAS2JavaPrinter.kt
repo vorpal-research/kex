@@ -175,6 +175,10 @@ class ExecutorAS2JavaPrinter(
                     exceptions += "Throwable"
 
                     +"Field field = ${getField.name}(klass, name)"
+                    +"Field mods = Field.class.getDeclaredField(\"modifiers\")"
+                    +"mods.setAccessible(true)"
+                    +"int modifiers = mods.getInt(field)"
+                    +"mods.setInt(field, modifiers & ~Modifier.FINAL)"
                     +"field.setAccessible(true)"
                     +"field.set(instance, value)"
                 }
@@ -504,6 +508,7 @@ class ExecutorAS2JavaPrinter(
                     is ReflectionNewInstance -> result += printReflectionNewInstance(owner, api)
                     is ReflectionNewArray -> result += printReflectionNewArray(owner, api)
                     is ReflectionSetField -> printDeclarations(api.value, result)
+                    is ReflectionSetStaticField -> printDeclarations(api.value, result)
                     is ReflectionArrayWrite -> printDeclarations(api.value, result)
                 }
             }
@@ -525,6 +530,10 @@ class ExecutorAS2JavaPrinter(
                     is ReflectionSetField -> {
                         printInsides(api.value, result)
                         result += printReflectionSetField(owner, api)
+                    }
+                    is ReflectionSetStaticField -> {
+                        printInsides(api.value, result)
+                        result += printReflectionSetStaticField(owner, api)
                     }
                     is ReflectionArrayWrite -> {
                         printInsides(api.value, result)
@@ -609,6 +618,11 @@ class ExecutorAS2JavaPrinter(
     override fun printReflectionSetField(owner: ActionSequence, call: ReflectionSetField): List<String> {
         val setFieldMethod = call.field.type.kexType.primitiveName?.let { setPrimitiveFieldMap[it]!! } ?: setField
         return listOf("${setFieldMethod.name}(${owner.name}, ${owner.name}.getClass(), \"${call.field.name}\", ${call.value.stackName})")
+    }
+
+    override fun printReflectionSetStaticField(owner: ActionSequence, call: ReflectionSetStaticField): List<String> {
+        val setFieldMethod = call.field.type.kexType.primitiveName?.let { setPrimitiveFieldMap[it]!! } ?: setField
+        return listOf("${setFieldMethod.name}(null, Class.forName(\"${call.field.klass.canonicalDesc}\"), \"${call.field.name}\", ${call.value.stackName})")
     }
 
     override fun printReflectionArrayWrite(owner: ActionSequence, call: ReflectionArrayWrite): List<String> {

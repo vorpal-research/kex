@@ -430,6 +430,18 @@ data class ReflectionSetField(val field: Field, val value: ActionSequence) : Ref
     }
 }
 
+data class ReflectionSetStaticField(val field: Field, val value: ActionSequence) : ReflectionCall {
+    override val parameters: List<ActionSequence> get() = listOf(value)
+
+
+    override fun toString() = "setStaticField(${field.name}, $value)"
+
+    override fun print(owner: ActionSequence, builder: StringBuilder, visited: MutableSet<ActionSequence>) {
+        value.print(builder, visited)
+        builder.appendLine("setStaticField(${owner.name}, ${field.name}, $value")
+    }
+}
+
 data class ReflectionArrayWrite(
     val elementType: Type,
     val index: ActionSequence,
@@ -508,6 +520,11 @@ class ActionSequenceRtMapper(private val mode: KexRtManager.Mode) {
             val unmappedKlass = api.field.klass.mapped
             val unmappedField = unmappedKlass.getField(api.field.name, api.field.type.mapped)
             ReflectionSetField(unmappedField, map(api.value))
+        }
+        is ReflectionSetStaticField -> {
+            val unmappedKlass = api.field.klass.mapped
+            val unmappedField = unmappedKlass.getField(api.field.name, api.field.type.mapped)
+            ReflectionSetStaticField(unmappedField, map(api.value))
         }
     }
 

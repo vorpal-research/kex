@@ -370,6 +370,7 @@ open class ActionSequence2KotlinPrinter(
             is ReflectionNewArray -> printReflectionNewArray(owner, reflectionCall)
             is ReflectionNewInstance -> printReflectionNewInstance(owner, reflectionCall)
             is ReflectionSetField -> printReflectionSetField(owner, reflectionCall)
+            is ReflectionSetStaticField -> printReflectionSetStaticField(owner, reflectionCall)
         }
 
     private val <T> PrimaryValue<T>.asConstant: String
@@ -562,6 +563,9 @@ open class ActionSequence2KotlinPrinter(
         unreachable { log.error("Reflection calls are not supported in AS 2 Java printer") }
 
     protected open fun printReflectionSetField(owner: ActionSequence, call: ReflectionSetField): List<String> =
+        unreachable { log.error("Reflection calls are not supported in AS 2 Java printer") }
+
+    protected open fun printReflectionSetStaticField(owner: ActionSequence, call: ReflectionSetStaticField): List<String> =
         unreachable { log.error("Reflection calls are not supported in AS 2 Java printer") }
 
     protected open fun printReflectionArrayWrite(owner: ActionSequence, call: ReflectionArrayWrite): List<String> =

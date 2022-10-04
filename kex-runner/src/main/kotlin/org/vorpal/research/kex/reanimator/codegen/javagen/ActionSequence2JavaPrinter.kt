@@ -321,6 +321,7 @@ open class ActionSequence2JavaPrinter(
     private fun resolveTypes(reflectionCall: ReflectionCall, visited: MutableSet<String>) = when (reflectionCall) {
         is ReflectionArrayWrite -> resolveTypes(reflectionCall.value, visited)
         is ReflectionSetField -> resolveTypes(reflectionCall.value, visited)
+        is ReflectionSetStaticField -> resolveTypes(reflectionCall.value, visited)
         is ReflectionNewArray -> {}
         is ReflectionNewInstance -> {}
     }
@@ -398,6 +399,7 @@ open class ActionSequence2JavaPrinter(
             is ReflectionNewArray -> printReflectionNewArray(owner, reflectionCall)
             is ReflectionNewInstance -> printReflectionNewInstance(owner, reflectionCall)
             is ReflectionSetField -> printReflectionSetField(owner, reflectionCall)
+            is ReflectionSetStaticField -> printReflectionSetStaticField(owner, reflectionCall)
         }
 
     protected fun printApiCall(owner: ActionSequence, codeAction: CodeAction): List<String> = when (codeAction) {
@@ -796,6 +798,9 @@ open class ActionSequence2JavaPrinter(
         unreachable { log.error("Reflection calls are not supported in AS 2 Java printer") }
 
     protected open fun printReflectionSetField(owner: ActionSequence, call: ReflectionSetField): List<String> =
+        unreachable { log.error("Reflection calls are not supported in AS 2 Java printer") }
+
+    protected open fun printReflectionSetStaticField(owner: ActionSequence, call: ReflectionSetStaticField): List<String> =
         unreachable { log.error("Reflection calls are not supported in AS 2 Java printer") }
 
     protected open fun printReflectionArrayWrite(owner: ActionSequence, call: ReflectionArrayWrite): List<String> =
