@@ -47,7 +47,7 @@ class UnknownGenerator(
 
                 actionSequence += ReflectionNewArray(kfgArray, lengthCall)
                 for ((index, element) in descriptor.elements) {
-                    if (element != kfgArray.component.kexType.defaultDescriptor) {
+                    if (element neq kfgArray.component.kexType.defaultDescriptor) {
                         val indexAS = PrimaryValue(index)
                         val elementAS = fallback.generate(element)
                         actionSequence += ReflectionArrayWrite(element.type.getKfgType(types), indexAS, elementAS)
