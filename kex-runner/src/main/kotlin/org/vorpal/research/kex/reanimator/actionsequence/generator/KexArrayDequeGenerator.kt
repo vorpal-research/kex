@@ -9,6 +9,9 @@ import org.vorpal.research.kex.reanimator.actionsequence.ActionSequence
 import org.vorpal.research.kex.reanimator.actionsequence.ConstructorCall
 import org.vorpal.research.kex.reanimator.actionsequence.DefaultConstructorCall
 import org.vorpal.research.kex.state.transformer.getCtor
+import org.vorpal.research.kfg.arrayDequeClass
+import org.vorpal.research.kfg.type.arrayListType
+import org.vorpal.research.kfg.type.collectionType
 
 class KexArrayDequeGenerator(val fallback: Generator) : Generator {
     override val context: GeneratorContext

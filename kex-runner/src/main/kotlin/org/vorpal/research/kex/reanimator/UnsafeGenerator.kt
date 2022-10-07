@@ -42,7 +42,7 @@ class UnsafeGenerator(
     }
 
     fun generate(state: PredicateState, model: SMTModel) {
-        val descriptors = generateFinalDescriptors(method, ctx, model, state).concreteParameters(ctx.cm, ctx.random)
+        val descriptors = generateFinalDescriptors(method, ctx, model, state).concreteParameters(ctx.cm, ctx.accessLevel, ctx.random)
         log.debug("Generated descriptors:\n$descriptors")
         generate(descriptors)
     }
@@ -53,7 +53,7 @@ class UnsafeGenerator(
         state: PredicateState,
         model: SMTModel
     ): Parameters<Any?> = try {
-        val descriptors = generateFinalDescriptors(method, ctx, model, state).concreteParameters(ctx.cm, ctx.random)
+        val descriptors = generateFinalDescriptors(method, ctx, model, state).concreteParameters(ctx.cm, ctx.accessLevel, ctx.random)
         log.debug("Generated descriptors:\n$descriptors")
         val sequences = descriptors.actionSequences
         printer.print(testName, method, sequences.rtUnmapped)

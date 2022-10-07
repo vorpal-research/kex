@@ -11,7 +11,6 @@ import org.vorpal.research.kfg.type.*
 import org.vorpal.research.kfg.util.Flags
 import org.vorpal.research.kthelper.assert.ktassert
 import org.vorpal.research.kthelper.assert.unreachable
-import org.vorpal.research.kthelper.defaultHashCode
 import org.vorpal.research.kthelper.logging.log
 import kotlin.reflect.KClass
 import org.vorpal.research.kfg.ir.Class as KfgClass
@@ -209,7 +208,7 @@ class KexVoid : KexType() {
 
     override fun getKfgType(types: TypeFactory): Type = types.voidType
 
-    override fun hashCode() = defaultHashCode(name)
+    override fun hashCode() = name.hashCode()
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (other !is KexVoid) return false

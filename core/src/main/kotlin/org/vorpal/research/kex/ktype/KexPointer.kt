@@ -2,11 +2,10 @@ package org.vorpal.research.kex.ktype
 
 import kotlinx.serialization.Serializable
 import org.vorpal.research.kex.InheritorOf
+import org.vorpal.research.kfg.Package
 import org.vorpal.research.kfg.type.SystemTypeNames
 import org.vorpal.research.kfg.type.Type
 import org.vorpal.research.kfg.type.TypeFactory
-import org.vorpal.research.kfg.Package
-import org.vorpal.research.kthelper.defaultHashCode
 
 @InheritorOf("KexType")
 @Serializable
@@ -38,7 +37,7 @@ class KexClass(val klass: String, override val memspace: Int = defaultMemspace) 
 
     override fun withMemspace(memspace: Int) = KexClass(klass, memspace)
 
-    override fun hashCode() = defaultHashCode(klass)
+    override fun hashCode() = klass.hashCode()
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
@@ -62,7 +61,7 @@ class KexArray(
 
     override fun withMemspace(memspace: Int) = KexArray(element, memspace)
 
-    override fun hashCode() = defaultHashCode(element)
+    override fun hashCode() = element.hashCode()
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
@@ -86,7 +85,7 @@ class KexReference(
 
     override fun withMemspace(memspace: Int) = KexReference(reference, memspace)
 
-    override fun hashCode() = defaultHashCode(reference)
+    override fun hashCode() = reference.hashCode()
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
@@ -110,7 +109,7 @@ class KexNull : KexPointer() {
 
     override fun withMemspace(memspace: Int) = this
 
-    override fun hashCode() = defaultHashCode(name)
+    override fun hashCode() = name.hashCode()
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (other !is KexNull) return false

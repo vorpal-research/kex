@@ -357,6 +357,19 @@ data class ArrayWrite(val index: ActionSequence, val value: ActionSequence) : Co
     }
 }
 
+data class NewArrayWithInitializer(
+    val klass: Type, val elements: List<ActionSequence>
+) : CodeAction {
+    val asArray get() = klass as ArrayType
+    override val parameters: List<ActionSequence> get() = elements
+
+    override fun toString() = elements.joinToString(", ", prefix = "{", postfix = "}") { it.name }
+    override fun print(owner: ActionSequence, builder: StringBuilder, visited: MutableSet<ActionSequence>) {
+        elements.forEach { it.print(builder, visited) }
+        builder.appendLine("${asArray.component} ${owner.name} = ${elements.joinToString(", ", prefix = "{", postfix = "}") { it.name }}")
+    }
+}
+
 data class EnumValueCreation(val klass: Class, val name: String) : CodeAction {
     override val parameters = listOf<ActionSequence>()
 
@@ -414,6 +427,18 @@ data class ReflectionSetField(val field: Field, val value: ActionSequence) : Ref
     override fun print(owner: ActionSequence, builder: StringBuilder, visited: MutableSet<ActionSequence>) {
         value.print(builder, visited)
         builder.appendLine("setField(${owner.name}, ${field.name}, $value")
+    }
+}
+
+data class ReflectionSetStaticField(val field: Field, val value: ActionSequence) : ReflectionCall {
+    override val parameters: List<ActionSequence> get() = listOf(value)
+
+
+    override fun toString() = "setStaticField(${field.name}, $value)"
+
+    override fun print(owner: ActionSequence, builder: StringBuilder, visited: MutableSet<ActionSequence>) {
+        value.print(builder, visited)
+        builder.appendLine("setStaticField(${owner.name}, ${field.name}, $value")
     }
 }
 
@@ -496,6 +521,11 @@ class ActionSequenceRtMapper(private val mode: KexRtManager.Mode) {
             val unmappedField = unmappedKlass.getField(api.field.name, api.field.type.mapped)
             ReflectionSetField(unmappedField, map(api.value))
         }
+        is ReflectionSetStaticField -> {
+            val unmappedKlass = api.field.klass.mapped
+            val unmappedField = unmappedKlass.getField(api.field.name, api.field.type.mapped)
+            ReflectionSetStaticField(unmappedField, map(api.value))
+        }
     }
 
     fun map(api: CodeAction): CodeAction = when (api) {
@@ -557,6 +587,7 @@ class ActionSequenceRtMapper(private val mode: KexRtManager.Mode) {
             MethodCall(unmappedMethod, api.args.map { map(it) })
         }
         is NewArray -> NewArray(api.klass.mapped, map(api.length))
+        is NewArrayWithInitializer -> NewArrayWithInitializer(api.klass.mapped, api.elements.map { map(it) })
         is StaticFieldGetter -> {
             val unmappedKlass = api.field.klass.mapped
             val unmappedField = unmappedKlass.getField(api.field.name, api.field.type.mapped)

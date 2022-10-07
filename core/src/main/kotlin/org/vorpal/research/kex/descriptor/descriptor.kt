@@ -1,6 +1,7 @@
 package org.vorpal.research.kex.descriptor
 
 import org.vorpal.research.kex.asm.manager.instantiationManager
+import org.vorpal.research.kex.asm.util.AccessModifier
 import org.vorpal.research.kex.ktype.*
 import org.vorpal.research.kex.ktype.KexRtManager.rtMapped
 import org.vorpal.research.kex.ktype.KexRtManager.rtUnmapped
@@ -51,7 +52,13 @@ sealed class Descriptor(term: Term, type: KexType) {
     abstract fun collectQuery(set: MutableSet<Descriptor>): PredicateState
 
     abstract fun countDepth(visited: Set<Descriptor>, cache: MutableMap<Descriptor, Int>): Int
-    abstract fun concretize(cm: ClassManager, random: Random, visited: MutableSet<Descriptor> = mutableSetOf()): Descriptor
+    abstract fun concretize(
+        cm: ClassManager,
+        accessLevel: AccessModifier,
+        random: Random,
+        visited: MutableSet<Descriptor> = mutableSetOf()
+    ): Descriptor
+
     abstract fun deepCopy(copied: MutableMap<Descriptor, Descriptor> = mutableMapOf()): Descriptor
     abstract fun reduce(visited: MutableSet<Descriptor> = mutableSetOf()): Descriptor
     abstract fun generateTypeInfo(visited: MutableSet<Descriptor> = mutableSetOf()): PredicateState
@@ -60,7 +67,13 @@ sealed class Descriptor(term: Term, type: KexType) {
 
 sealed class ConstantDescriptor(term: Term, type: KexType) : Descriptor(term, type) {
 
-    override fun concretize(cm: ClassManager, random: Random, visited: MutableSet<Descriptor>) = this
+    override fun concretize(
+        cm: ClassManager,
+        accessLevel: AccessModifier,
+        random: Random,
+        visited: MutableSet<Descriptor>
+    ) = this
+
     override fun deepCopy(copied: MutableMap<Descriptor, Descriptor>) = this
     override fun reduce(visited: MutableSet<Descriptor>) = this
     override fun generateTypeInfo(visited: MutableSet<Descriptor>) = emptyState()
@@ -249,17 +262,22 @@ sealed class FieldContainingDescriptor<T : FieldContainingDescriptor<T>>(
         }
     }
 
-    override fun concretize(cm: ClassManager, random: Random, visited: MutableSet<Descriptor>): T {
+    override fun concretize(
+        cm: ClassManager,
+        accessLevel: AccessModifier,
+        random: Random,
+        visited: MutableSet<Descriptor>
+    ): T {
         if (this in visited) return this as T
         visited += this
 
-        this.klass = instantiationManager.getConcreteClass(klass, cm, random)
+        this.klass = instantiationManager.getConcreteClass(klass, cm, accessLevel, random)
         this.type = klass
         this.klassDescriptor["name" to KexJavaClass()] = descriptor { string("$type") }
 
         this.term = term { generate(type) }
         for ((field, value) in fields.toMap()) {
-            fields[field] = value.concretize(cm, random, visited)
+            fields[field] = value.concretize(cm, accessLevel, random, visited)
         }
 
         return this as T
@@ -377,12 +395,17 @@ class ClassDescriptor(type: KexClass) :
         }
     }
 
-    override fun concretize(cm: ClassManager, random: Random, visited: MutableSet<Descriptor>): ClassDescriptor {
+    override fun concretize(
+        cm: ClassManager,
+        accessLevel: AccessModifier,
+        random: Random,
+        visited: MutableSet<Descriptor>
+    ): ClassDescriptor {
         if (this in visited) return this
         visited += this
 
         for ((field, value) in fields.toMap()) {
-            fields[field] = value.concretize(cm, random, visited)
+            fields[field] = value.concretize(cm, accessLevel, random, visited)
         }
 
         return this
@@ -437,7 +460,12 @@ class ArrayDescriptor(val elementType: KexType, val length: Int) :
     }
 
 
-    override fun concretize(cm: ClassManager, random: Random, visited: MutableSet<Descriptor>): ArrayDescriptor {
+    override fun concretize(
+        cm: ClassManager,
+        accessLevel: AccessModifier,
+        random: Random,
+        visited: MutableSet<Descriptor>
+    ): ArrayDescriptor {
         if (this in visited) return this
         visited += this
         return this
@@ -616,6 +644,7 @@ class DescriptorRtMapper(private val mode: KexRtManager.Mode) : DescriptorBuilde
                 }
                 klassDesc
             }
+
             is ObjectDescriptor -> {
                 val objectDesc = `object`(descriptor.klass.mapped as KexClass)
                 cache[descriptor] = objectDesc
@@ -624,6 +653,7 @@ class DescriptorRtMapper(private val mode: KexRtManager.Mode) : DescriptorBuilde
                 }
                 objectDesc
             }
+
             is ArrayDescriptor -> {
                 val arrayDesc = array(descriptor.length, descriptor.elementType.mapped)
                 cache[descriptor] = arrayDesc

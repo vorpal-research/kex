@@ -4,12 +4,11 @@ import kotlinx.serialization.Serializable
 import org.vorpal.research.kex.InheritorOf
 import org.vorpal.research.kfg.type.Type
 import org.vorpal.research.kfg.type.TypeFactory
-import org.vorpal.research.kthelper.defaultHashCode
 
 @InheritorOf("KexType")
 @Serializable
 sealed class KexIntegral : KexType() {
-    override fun hashCode() = defaultHashCode(name)
+    override fun hashCode() = name.hashCode()
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (other?.javaClass != this.javaClass) return false
@@ -76,7 +75,7 @@ class KexInt : KexIntegral() {
 
     override fun getKfgType(types: TypeFactory): Type = types.intType
 
-    override fun hashCode() = defaultHashCode(name)
+    override fun hashCode() = name.hashCode()
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (other !is KexInt) return false

@@ -5,7 +5,6 @@ import org.vorpal.research.kex.asm.util.AccessModifier
 import org.vorpal.research.kex.asm.util.accessModifier
 import org.vorpal.research.kex.ktype.*
 import org.vorpal.research.kex.ktype.KexRtManager.rtMapped
-import org.vorpal.research.kex.util.*
 import org.vorpal.research.kfg.ClassManager
 import org.vorpal.research.kfg.ir.Class
 import org.vorpal.research.kfg.ir.Method
@@ -25,22 +24,24 @@ interface ClassInstantiationManager {
     fun isDirectlyInstantiable(klass: Class, accessLevel: AccessModifier): Boolean
     fun isInstantiable(klass: Class): Boolean
     fun getExternalCtors(klass: Class): Set<Method>
-    operator fun get(klass: Class, random: Random): Class
-    fun get(klass: Class, excludes: Set<Class>, random: Random): Class
-    fun get(tf: TypeFactory, type: Type, excludes: Set<Class>, random: Random): Type = when (type) {
-        is ClassType -> get(type.klass, excludes, random).type
-        is ArrayType -> tf.getArrayType(get(tf, type.component, excludes, random))
-        else -> type
-    }
+    operator fun get(klass: Class, accessLevel: AccessModifier, random: Random): Class
+    fun get(klass: Class, accessLevel: AccessModifier, excludes: Set<Class>, random: Random): Class
+    fun get(tf: TypeFactory, type: Type, accessLevel: AccessModifier, excludes: Set<Class>, random: Random): Type =
+        when (type) {
+            is ClassType -> get(type.klass, accessLevel, excludes, random).type
+            is ArrayType -> tf.getArrayType(get(tf, type.component, accessLevel, excludes, random))
+            else -> type
+        }
 
-    fun getConcreteClass(klass: KexClass, cm: ClassManager, random: Random): KexClass =
-        get(klass.kfgClass(cm.type), random).kexType
+    fun getConcreteClass(klass: KexClass, cm: ClassManager, accessLevel: AccessModifier, random: Random): KexClass =
+        get(klass.kfgClass(cm.type), accessLevel, random).kexType
 
-    fun getConcreteType(type: KexType, cm: ClassManager, random: Random): KexType = when (type) {
-        is KexClass -> getConcreteClass(type, cm, random)
-        is KexReference -> KexReference(getConcreteType(type.reference, cm, random))
-        else -> type
-    }
+    fun getConcreteType(type: KexType, cm: ClassManager, accessLevel: AccessModifier, random: Random): KexType =
+        when (type) {
+            is KexClass -> getConcreteClass(type, cm, accessLevel, random)
+            is KexReference -> KexReference(getConcreteType(type.reference, cm, accessLevel, random))
+            else -> type
+        }
 }
 
 private val predefinedConcreteInstanceInfo = with(SystemTypeNames) {
@@ -81,27 +82,35 @@ private object ClassInstantiationManagerImpl : ClassInstantiationManager {
 
     override fun getExternalCtors(klass: Class): Set<Method> = externalConstructors.getOrDefault(klass, setOf())
 
-    override fun get(klass: Class, random: Random): Class = `try` {
+    override fun get(klass: Class, accessLevel: AccessModifier, random: Random): Class = `try` {
         when (klass.fullName) {
-            in predefinedConcreteInstanceInfo -> predefinedConcreteInstanceInfo.getValue(klass.fullName).random(random)
+            in predefinedConcreteInstanceInfo -> predefinedConcreteInstanceInfo.getValue(klass.fullName)
+                .filter { isDirectlyInstantiable(klass.cm[it], accessLevel) }
+                .random(random)
                 .let { klass.cm[it] }
-            else -> classInstantiationInfo.getOrDefault(klass, setOf()).let {
-                if (klass in it) klass
-                else it.random(random)
-            }
+
+            else -> classInstantiationInfo.getOrDefault(klass, setOf())
+                .filter { isDirectlyInstantiable(it, accessLevel) }
+                .let {
+                    if (klass in it) klass
+                    else it.random(random)
+                }
         }
     }.getOrElse {
         throw NoConcreteInstanceException(klass)
     }
 
-    override fun get(klass: Class, excludes: Set<Class>, random: Random): Class = `try` {
+    override fun get(klass: Class, accessLevel: AccessModifier, excludes: Set<Class>, random: Random): Class = `try` {
         when (klass.fullName) {
             in predefinedConcreteInstanceInfo ->
                 (predefinedConcreteInstanceInfo.getValue(klass.fullName) - excludes.map { it.fullName }.toSet())
+                    .filter { isDirectlyInstantiable(klass.cm[it], accessLevel) }
                     .random(random)
                     .let { klass.cm[it] }
-            else ->
-                (classInstantiationInfo.getOrDefault(klass, setOf()) - excludes).let {
+
+            else -> (classInstantiationInfo.getOrDefault(klass, setOf()) - excludes)
+                .filter { isDirectlyInstantiable(it, accessLevel) }
+                .let {
                     if (klass in it) klass
                     else it.random(random)
                 }
@@ -136,29 +145,37 @@ private object StringClassInstantiationManagerImpl : ClassInstantiationManager {
             klass.cm[klassName].getMethod(methodName, desc)
         }.toSet()
 
-    override fun get(klass: Class, random: Random): Class = `try` {
+    override fun get(klass: Class, accessLevel: AccessModifier, random: Random): Class = `try` {
         val concreteClassName = when (val fullName = klass.fullName) {
             in predefinedConcreteInstanceInfo -> predefinedConcreteInstanceInfo.getValue(fullName)
+                .filter { isDirectlyInstantiable(klass.cm[it], accessLevel) }
                 .random(random)
-            else -> classInstantiationInfo.getOrDefault(fullName, setOf()).let {
-                if (fullName in it) fullName
-                else it.random(random)
-            }
+
+            else -> classInstantiationInfo.getOrDefault(fullName, setOf())
+                .filter { isDirectlyInstantiable(klass.cm[it], accessLevel) }
+                .let {
+                    if (fullName in it) fullName
+                    else it.random(random)
+                }
         }
         klass.cm[concreteClassName]
     }.getOrElse {
         throw NoConcreteInstanceException(klass)
     }
 
-    override fun get(klass: Class, excludes: Set<Class>, random: Random): Class = `try` {
+    override fun get(klass: Class, accessLevel: AccessModifier, excludes: Set<Class>, random: Random): Class = `try` {
         val excludeNames = excludes.map { it.fullName }.toSet()
         val concreteClassName = when (val fullName = klass.fullName) {
             in predefinedConcreteInstanceInfo -> (predefinedConcreteInstanceInfo.getValue(fullName) - excludeNames)
+                .filter { isDirectlyInstantiable(klass.cm[it], accessLevel) }
                 .random(random)
-            else -> (classInstantiationInfo.getOrDefault(fullName, setOf()) - excludeNames).let {
-                if (fullName in it) fullName
-                else it.random(random)
-            }
+
+            else -> (classInstantiationInfo.getOrDefault(fullName, setOf()) - excludeNames)
+                .filter { isDirectlyInstantiable(klass.cm[it], accessLevel) }
+                .let {
+                    if (fullName in it) fullName
+                    else it.random(random)
+                }
         }
         klass.cm[concreteClassName]
     }.getOrElse {
@@ -177,23 +194,23 @@ private object StringClassInstantiationManagerImpl : ClassInstantiationManager {
 }
 
 class ClassInstantiationDetector(
-    private val ctx: ExecutionContext
+    private val ctx: ExecutionContext,
+    private val baseAccessLevel: AccessModifier = AccessModifier.Private
 ) : ClassVisitor {
     override val cm: ClassManager get() = ctx.cm
-    val accessLevel: AccessModifier get() = ctx.accessLevel
 
     override fun cleanup() {}
 
     override fun visit(klass: Class) {
-        if (StringClassInstantiationManagerImpl.isDirectlyInstantiable(klass, accessLevel))
+        if (StringClassInstantiationManagerImpl.isDirectlyInstantiable(klass, baseAccessLevel))
             addInstantiableClass(klass, klass)
         super.visit(klass)
     }
 
     override fun visitMethod(method: Method) {
         val returnType = (method.returnType as? ClassType) ?: return
-        if (!accessLevel.canAccess(method.accessModifier)) return
-        if (!accessLevel.canAccess(method.klass.accessModifier)) return
+        if (!baseAccessLevel.canAccess(method.accessModifier)) return
+        if (!baseAccessLevel.canAccess(method.klass.accessModifier)) return
         if (!method.isStatic || method.argTypes.any { it.isSubtypeOf(returnType) } || method.isSynthetic) return
 
         var returnClass = returnType.klass

@@ -9,8 +9,11 @@ import org.vorpal.research.kex.state.term.Term
 import org.vorpal.research.kex.state.term.term
 import org.vorpal.research.kfg.ClassManager
 import org.vorpal.research.kfg.ir.Class
+import org.vorpal.research.kfg.stringClass
 import org.vorpal.research.kfg.type.Type
 import org.vorpal.research.kfg.type.TypeFactory
+import org.vorpal.research.kfg.type.objectType
+import org.vorpal.research.kfg.type.stringType
 import org.vorpal.research.kthelper.collection.buildList
 import org.vorpal.research.kthelper.collection.dequeOf
 

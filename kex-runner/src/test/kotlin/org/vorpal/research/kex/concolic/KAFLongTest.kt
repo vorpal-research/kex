@@ -3,6 +3,7 @@ package org.vorpal.research.kex.concolic
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.InternalSerializationApi
+import org.junit.Ignore
 import org.junit.Test
 
 @ExperimentalSerializationApi
@@ -17,6 +18,6 @@ class KAFLongTest : ConcolicTest() {
     @Test
     fun lesson6() {
         // TODO: investigate test failure (with only 99% coverage) on CI
-        assertCoverage(cm["org/vorpal/research/kex/test/concolic/kaf/Lesson6"], 1.0, eps = 0.01)
+        assertCoverage(cm["org/vorpal/research/kex/test/concolic/kaf/Lesson6"], 1.0)
     }
 }

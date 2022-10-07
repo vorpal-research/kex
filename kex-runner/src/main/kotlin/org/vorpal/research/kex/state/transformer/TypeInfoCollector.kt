@@ -9,6 +9,7 @@ import org.vorpal.research.kex.state.*
 import org.vorpal.research.kex.state.predicate.*
 import org.vorpal.research.kex.state.term.*
 import org.vorpal.research.kfg.type.TypeFactory
+import org.vorpal.research.kfg.type.stringType
 import org.vorpal.research.kthelper.logging.log
 
 enum class Nullability {
@@ -128,6 +129,7 @@ class TypeInfoCollector(val model: SMTModel, val tf: TypeFactory) : Transformer<
                 val existingCond = typeInfo.getOrDefault(checkedType, emptyState())
                 typeInfo[checkedType] = existingCond or fullPath
             }
+
             is CastTerm -> {
                 val newType = CastTypeInfo(rhv.type)
                 val operand = rhv.operand
@@ -143,6 +145,7 @@ class TypeInfoCollector(val model: SMTModel, val tf: TypeFactory) : Transformer<
                 val existingCond = typeInfo.getOrDefault(newType, emptyState())
                 typeInfo[newType] = existingCond or stub
             }
+
             is FieldLoadTerm -> copyInfos(rhv.field, predicate.lhv, condition)
             is ArrayLoadTerm -> copyInfos(rhv.arrayRef, predicate.lhv, condition)
             else -> copyInfos(rhv, predicate.lhv, condition)
@@ -201,6 +204,7 @@ class PlainTypeInfoCollector(val tf: TypeFactory) : Transformer<TypeInfoCollecto
                 val typeInfo = typeInfos.getOrPut(operand, ::mutableSetOf)
                 typeInfo += checkedType
             }
+
             is CastTerm -> {
                 val newType = CastTypeInfo(rhv.type)
                 val operand = rhv.operand
@@ -229,8 +233,10 @@ class PlainTypeInfoCollector(val tf: TypeFactory) : Transformer<TypeInfoCollecto
     }
 }
 
-class StaticTypeInfoCollector(val tf: TypeFactory, tip: TypeInfoMap = TypeInfoMap()) :
-    Transformer<StaticTypeInfoCollector> {
+class StaticTypeInfoCollector(
+    val tf: TypeFactory,
+    tip: TypeInfoMap = TypeInfoMap()
+) : Transformer<StaticTypeInfoCollector> {
     val typeInfoMap = tip.toMap().toMutableMap()
 
     override fun transformTerm(term: Term): Term {

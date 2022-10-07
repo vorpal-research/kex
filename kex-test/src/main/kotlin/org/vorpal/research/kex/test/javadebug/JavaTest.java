@@ -1,26 +1,16 @@
 package org.vorpal.research.kex.test.javadebug;
 
-import org.vorpal.research.kex.test.concolic.Point;
-
 import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.LinkedList;
 
 @SuppressWarnings("ALL")
 public class JavaTest {
-//    public static void testList(List<Point> points) {
-//        if (points.get(0).x == 10) {
-//            throw new IllegalStateException();
-//        }
-//    }
-//
 //    public int foo(Point a, Point b) {
-//        int ax = a.x;
-//        int bx = b.x;
+//        int ax = a.getX();
+//        int bx = b.getX();
 //        int mx = Math.max(ax, bx);
 //
-//        int ay = a.y;
-//        int by = b.y;
+//        int ay = a.getY();
+//        int by = b.getY();
 //        int my = Math.min(ay, by);
 //        int res;
 //        if (mx < my) {
@@ -32,59 +22,12 @@ public class JavaTest {
 //        }
 //        return res;
 //    }
-//
-//    public void foo2(char[][] a) {
-//        if (a.length > 10) {
-//            if (a[0].length < 2) {
-//                System.out.println("s");
-//            }
-//        }
-//    }
-//    public void foo3(String[][] a) {
-//        if (a.length > 10) {
-//            if (a[0].length < 2) {
-//                System.out.println("s");
-//            }
-//        }
-//    }
 
-//    public static void testArrayListIndexOf(ArrayList<org.vorpal.research.kex.test.concolic.Point> points, org.vorpal.research.kex.test.concolic.Point p) {
-//        int i = points.indexOf(p);
-//        if (i > 0) {
-//            throw new IllegalStateException("a");
-//        } else {
-//            throw new IllegalStateException("b");
-//        }
-//    }
-
-//    public static void testLinkedListIndexOf(LinkedList<Point> points, Point p) {
-//        int i = points.indexOf(p);
-//        if (i > 0) {
-//            throw new IllegalStateException("a");
-//        } else {
-//            throw new IllegalStateException("b");
-//        }
-//    }
-//
-//    public static void testLinkedListIndexOf2(LinkedList<Point> points, Point p) {
-//        int i = points.indexOf(p);
-//        if (i == -1) {
-//            throw new IllegalStateException("b");
-//        } else {
-//            throw new IllegalStateException("a");
-//        }
-//    }
-    public static void testArrayListIterator(ArrayList<Character> chars) {
-        Iterator<Character> it = chars.iterator();
-        if (it.hasNext()) {
-            if (it.next().charValue() == 'v') {
-                throw new IllegalStateException();
-            } else {
-                throw new IllegalStateException();
-            }
-        } else {
-            throw new IllegalStateException();
+    public int testWrapper(ArrayList<Integer> b) {
+        if (b.get(0) < 0) {
+            throw new IllegalArgumentException();
         }
+        return b.size();
     }
 }
 

@@ -44,6 +44,10 @@ class SymbolicTraceBuilder(
     val ctx: ExecutionContext,
     val nameMapperContext: NameMapperContext
 ) : SymbolicState(), InstructionTraceCollector {
+    companion object {
+        private const val MAX_ARRAY_LENGTH = 10000
+    }
+
     /**
      * required fields
      */
@@ -81,6 +85,7 @@ class SymbolicTraceBuilder(
     private val nullChecked = mutableSetOf<Term>()
     private val typeChecked = mutableMapOf<Term, Type>()
     private val indexChecked = mutableMapOf<Term, MutableSet<Term>>()
+    private val lengthChecked = mutableSetOf<Term>()
 
     /**
      * stack frame info for method
@@ -189,7 +194,7 @@ class SymbolicTraceBuilder(
 
     private fun parseMethod(className: String, methodName: String, args: List<String>, retType: String): Method {
         val klass = cm[className]
-        return klass.getMethod(methodName, MethodDescriptor(args.map { it.toType() }.toTypedArray(), retType.toType()))
+        return klass.getMethod(methodName, MethodDescriptor(args.map { it.toType() }, retType.toType()))
     }
 
     private fun parseBlock(blockName: String): BasicBlock {
@@ -242,6 +247,14 @@ class SymbolicTraceBuilder(
                 type is KexInt && this.type == KexClass(SystemTypeNames.charClass) -> {
                     val value = this["value", KexChar()]!! as ConstantDescriptor.Char
                     descriptor { const(value.value.code) }
+                }
+                type is KexInt && this.type == KexClass(SystemTypeNames.longClass) -> {
+                    val value = this["value", KexLong()]!! as ConstantDescriptor.Long
+                    descriptor { const(value.value.toInt()) }
+                }
+                type is KexLong && this.type == KexClass(SystemTypeNames.longClass) -> {
+                    val value = this["value", KexLong()]!! as ConstantDescriptor.Long
+                    descriptor { const(value.value) }
                 }
                 type is KexChar && this.type == KexClass(SystemTypeNames.integerClass) -> {
                     val value = this["value", KexInt()]!! as ConstantDescriptor.Int
@@ -1209,7 +1222,7 @@ class SymbolicTraceBuilder(
         val termArray = mkValue(kfgArray)
         val termIndex = mkValue(kfgIndex)
 
-        if (termIndex in indexChecked.getOrPut(termArray, :: mutableSetOf)) return@safeCall
+        if (termIndex in indexChecked.getOrPut(termArray, ::mutableSetOf)) return@safeCall
         indexChecked[termArray]!!.add(termIndex)
 
         val actualLength = concreteArray.arraySize
@@ -1228,6 +1241,54 @@ class SymbolicTraceBuilder(
 
         processPath(PathClauseType.BOUNDS_CHECK, instruction, pathPredicate)
         stateBuilder += PathClause(PathClauseType.BOUNDS_CHECK, instruction, pathPredicate)
+    }
+
+    override fun addArrayLengthConstraints(
+        inst: String,
+        length: String,
+        concreteLength: Any?
+    ) = safeCall {
+        preCheck(inst)
+        if (!traceCollectingEnabled) return@safeCall
+
+        val instruction = parseValue(inst) as Instruction
+
+        val kfgLength = parseValue(length)
+        if (kfgLength is Constant) return@safeCall
+
+        val termLength = mkValue(kfgLength)
+
+        if (termLength in lengthChecked) return@safeCall
+
+        val actualLength = (concreteLength as? Int) ?: return@safeCall
+
+        val positiveCheckTerm = term { value(KexBool(), "${termLength}PositiveLengthCheck") }
+        val positiveCheckPredicate = state {
+            positiveCheckTerm equality (termLength ge 0)
+        }
+
+        stateBuilder += StateClause(instruction, positiveCheckPredicate)
+
+        val positivePathPredicate = path {
+            positiveCheckTerm equality (actualLength >= 0)
+        }
+
+        processPath(PathClauseType.BOUNDS_CHECK, instruction, positivePathPredicate)
+        stateBuilder += PathClause(PathClauseType.BOUNDS_CHECK, instruction, positivePathPredicate)
+
+        val upperBoundCheckTerm = term { value(KexBool(), "${termLength}UpperBoundLengthCheck") }
+        val upperBoundCheckPredicate = state {
+            upperBoundCheckTerm equality (termLength lt MAX_ARRAY_LENGTH)
+        }
+
+        stateBuilder += StateClause(instruction, upperBoundCheckPredicate)
+
+        val upperBoundPathPredicate = path {
+            upperBoundCheckTerm equality (actualLength < MAX_ARRAY_LENGTH)
+        }
+
+        processPath(PathClauseType.BOUNDS_CHECK, instruction, upperBoundPathPredicate)
+        stateBuilder += PathClause(PathClauseType.BOUNDS_CHECK, instruction, upperBoundPathPredicate)
     }
 
     private val Any.arraySize: Int

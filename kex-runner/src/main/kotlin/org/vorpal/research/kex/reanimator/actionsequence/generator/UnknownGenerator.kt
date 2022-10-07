@@ -1,15 +1,14 @@
 package org.vorpal.research.kex.reanimator.actionsequence.generator
 
-import org.vorpal.research.kex.descriptor.ArrayDescriptor
-import org.vorpal.research.kex.descriptor.ConstantDescriptor
-import org.vorpal.research.kex.descriptor.Descriptor
-import org.vorpal.research.kex.descriptor.ObjectDescriptor
+import org.vorpal.research.kex.descriptor.*
 import org.vorpal.research.kex.ktype.KexNull
+import org.vorpal.research.kex.ktype.kexType
 import org.vorpal.research.kex.ktype.type
 import org.vorpal.research.kex.reanimator.actionsequence.*
 import org.vorpal.research.kfg.UnknownInstanceException
 import org.vorpal.research.kfg.type.ArrayType
 import org.vorpal.research.kfg.type.ClassType
+import org.vorpal.research.kfg.type.objectType
 import org.vorpal.research.kthelper.logging.log
 
 class UnknownGenerator(
@@ -48,9 +47,25 @@ class UnknownGenerator(
 
                 actionSequence += ReflectionNewArray(kfgArray, lengthCall)
                 for ((index, element) in descriptor.elements) {
-                    val indexAS = PrimaryValue(index)
-                    val elementAS = fallback.generate(element)
-                    actionSequence += ReflectionArrayWrite(element.type.getKfgType(types), indexAS, elementAS)
+                    if (element neq kfgArray.component.kexType.defaultDescriptor) {
+                        val indexAS = PrimaryValue(index)
+                        val elementAS = fallback.generate(element)
+                        actionSequence += ReflectionArrayWrite(element.type.getKfgType(types), indexAS, elementAS)
+                    }
+                }
+            }
+            is ClassDescriptor -> {
+                val kfgClass = (descriptor.type.getKfgType(types) as ClassType).klass
+                for ((field, value) in descriptor.fields) {
+                    val fieldType = field.second.getKfgType(types)
+                    val kfgField = try {
+                        kfgClass.getField(field.first, fieldType)
+                    } catch (e: UnknownInstanceException) {
+                        log.warn("Field ${field.first}: ${field.second} is not found in class $kfgClass")
+                        continue
+                    }
+                    val valueAS = fallback.generate(value)
+                    actionSequence += ReflectionSetStaticField(kfgField, valueAS)
                 }
             }
             else -> UnknownSequence(
@@ -63,8 +78,8 @@ class UnknownGenerator(
         getFromCache(descriptor)!!
     }
 
-    private val Descriptor.wrappedType get() = when {
-        this.type is KexNull -> context.types.objectType
+    private val Descriptor.wrappedType get() = when (this.type) {
+        is KexNull -> context.types.objectType
         else -> this.type.getKfgType(context.types)
     }
 }

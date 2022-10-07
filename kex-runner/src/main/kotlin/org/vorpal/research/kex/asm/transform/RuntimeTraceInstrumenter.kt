@@ -4,18 +4,20 @@ import org.vorpal.research.kex.trace.`object`.TraceCollector
 import org.vorpal.research.kex.trace.`object`.TraceCollectorProxy
 import org.vorpal.research.kex.util.wrapValue
 import org.vorpal.research.kfg.ClassManager
+import org.vorpal.research.kfg.Package
 import org.vorpal.research.kfg.ir.BasicBlock
 import org.vorpal.research.kfg.ir.Method
-import org.vorpal.research.kfg.Package
 import org.vorpal.research.kfg.ir.value.EmptyUsageContext
 import org.vorpal.research.kfg.ir.value.UsageContext
 import org.vorpal.research.kfg.ir.value.ValueFactory
 import org.vorpal.research.kfg.ir.value.instruction.*
 import org.vorpal.research.kfg.type.TypeFactory
+import org.vorpal.research.kfg.type.objectType
+import org.vorpal.research.kfg.type.stringType
 import org.vorpal.research.kfg.visitor.MethodVisitor
 import org.vorpal.research.kthelper.collection.buildList
 
-class RuntimeTraceCollector(override val cm: ClassManager) : MethodVisitor, InstructionBuilder {
+class RuntimeTraceInstrumenter(override val cm: ClassManager) : MethodVisitor, InstructionBuilder {
     override val ctx: UsageContext = EmptyUsageContext
     private val collectorClass =
         cm[TraceCollector::class.java.canonicalName.replace(Package.CANONICAL_SEPARATOR, Package.SEPARATOR)]

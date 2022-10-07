@@ -102,12 +102,17 @@ class ExecutorMaster(
             val result = try {
                 workerConnection.receive()
             } catch (e: SocketTimeoutException) {
-                process.destroyForcibly()
+                process.destroy()
                 log.debug("Received socket timeout exception")
                 json.encodeToString(ExecutionTimedOutResult::class.serializer(), ExecutionTimedOutResult("timeout"))
             }
             log.debug("Worker $id processed result")
             clientConnection.send(result)
+        }
+
+        fun destroy() {
+            log.debug("Worker $id is destroyed")
+            process.destroy()
         }
     }
 
@@ -131,6 +136,13 @@ class ExecutorMaster(
                 }
                 yield()
             }
+        }
+    }
+
+    fun destroy() {
+        while (workerQueue.isNotEmpty()) {
+            val worker = workerQueue.poll()
+            worker.destroy()
         }
     }
 

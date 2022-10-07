@@ -2,7 +2,7 @@ package org.vorpal.research.kex.trace.runner
 
 import com.github.h0tk3y.betterParse.grammar.parseToEnd
 import com.github.h0tk3y.betterParse.parser.ParseException
-import org.vorpal.research.kex.asm.transform.TraceInstrumenter
+import org.vorpal.research.kex.asm.transform.FileTraceInstrumenter
 import org.vorpal.research.kex.parameters.Parameters
 import org.vorpal.research.kex.random.Randomizer
 import org.vorpal.research.kex.trace.file.ActionParseException
@@ -13,7 +13,7 @@ import org.vorpal.research.kfg.ir.value.NameMapperContext
 import org.vorpal.research.kthelper.logging.log
 
 private fun parse(nameContext: NameMapperContext, method: Method, result: InvocationResult): FileTrace {
-    val traceFile = TraceInstrumenter.getTraceFile(method)
+    val traceFile = FileTraceInstrumenter.getTraceFile(method)
     val trace = traceFile.readText().split(";").map { it.trim() }
 
     val lines = trace.filter { it.isNotBlank() }

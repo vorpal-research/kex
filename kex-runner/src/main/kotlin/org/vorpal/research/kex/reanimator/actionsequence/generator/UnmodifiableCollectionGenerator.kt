@@ -9,8 +9,9 @@ import org.vorpal.research.kex.reanimator.actionsequence.ActionList
 import org.vorpal.research.kex.reanimator.actionsequence.ActionSequence
 import org.vorpal.research.kex.reanimator.actionsequence.ExternalConstructorCall
 import org.vorpal.research.kex.util.dekapitalize
-import org.vorpal.research.kex.util.unmodifiableCollection
+import org.vorpal.research.kfg.collectionClass
 import org.vorpal.research.kfg.type.SystemTypeNames
+import org.vorpal.research.kfg.type.listType
 
 class UnmodifiableCollectionGenerator(private val fallback: Generator) : Generator {
     override val context get() = fallback.context

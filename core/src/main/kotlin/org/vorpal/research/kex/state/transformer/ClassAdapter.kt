@@ -6,6 +6,8 @@ import org.vorpal.research.kex.state.predicate.Predicate
 import org.vorpal.research.kex.state.predicate.predicate
 import org.vorpal.research.kex.state.term.CallTerm
 import org.vorpal.research.kfg.ClassManager
+import org.vorpal.research.kfg.classClass
+import org.vorpal.research.kfg.objectClass
 
 class ClassAdapter(val cm: ClassManager) : Transformer<ClassAdapter> {
     val getClassMethod = cm.objectClass.getMethod("getClass", cm.classClass.type)

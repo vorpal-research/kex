@@ -132,6 +132,7 @@ class GeneratorContext(
                 .filter { it.isStatic }
                 .filter { this@GeneratorContext.accessLevel.canAccess(it.accessModifier) }
                 .toSet()
+
             else -> setOf()
         }
 
@@ -141,6 +142,7 @@ class GeneratorContext(
                 .filter { this@GeneratorContext.accessLevel.canAccess(it.accessModifier) }
                 .sortedBy { it.argTypes.size }
                 .toSet()
+
             else -> setOf()
         }
 
@@ -164,7 +166,12 @@ class GeneratorContext(
     private val Method.argTypeInfo
         get() = this.parameters.associate {
             val type = it.type.kexType
-            term { arg(type, it.index) } to instantiationManager.getConcreteType(type, cm, context.random)
+            term { arg(type, it.index) } to instantiationManager.getConcreteType(
+                type,
+                cm,
+                context.accessLevel,
+                context.random
+            )
         }
 
     fun Method.executeAsConstructor(descriptor: ObjectDescriptor): Parameters<Descriptor>? {
@@ -275,6 +282,7 @@ class GeneratorContext(
                 log.debug("Model: ${result.model}")
                 generateInitialDescriptors(this, context, result.model, checker.state)
             }
+
             else -> null
         }
     }
@@ -342,6 +350,7 @@ class GeneratorContext(
                         preStateBuilder += state { genLoad equality fieldTerm.load() }
                         subObjects += genLoad to value
                     }
+
                     is ArrayDescriptor -> {
                         val fieldTerm = term { term.field(field.second, field.first) }
                         val genLoad = term { generate(field.second) }
@@ -383,6 +392,7 @@ class GeneratorContext(
                             }
                         }
                     }
+
                     else -> {}
                 }
             }
@@ -452,12 +462,13 @@ class GeneratorContext(
             }
         }
 
-    val Descriptor.asStringValue: String? get() = (this as? ObjectDescriptor)?.let { obj ->
-        val valueDescriptor = obj["value", KexChar().asArray()] as? ArrayDescriptor
-        valueDescriptor?.let { array ->
-            (0 until array.length).map {
-                (array.elements.getOrDefault(it, descriptor { const(' ') }) as ConstantDescriptor.Char).value
-            }.joinToString("")
+    val Descriptor.asStringValue: String?
+        get() = (this as? ObjectDescriptor)?.let { obj ->
+            val valueDescriptor = obj["value", KexChar().asArray()] as? ArrayDescriptor
+            valueDescriptor?.let { array ->
+                (0 until array.length).map {
+                    (array.elements.getOrDefault(it, descriptor { const(' ') }) as ConstantDescriptor.Char).value
+                }.joinToString("")
+            }
         }
-    }
 }

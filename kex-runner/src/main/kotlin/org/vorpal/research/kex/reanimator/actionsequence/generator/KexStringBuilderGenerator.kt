@@ -3,9 +3,7 @@ package org.vorpal.research.kex.reanimator.actionsequence.generator
 import org.vorpal.research.kex.descriptor.ArrayDescriptor
 import org.vorpal.research.kex.descriptor.Descriptor
 import org.vorpal.research.kex.descriptor.ObjectDescriptor
-import org.vorpal.research.kex.descriptor.descriptor
 import org.vorpal.research.kex.ktype.KexChar
-import org.vorpal.research.kex.ktype.KexRtManager.isKexRt
 import org.vorpal.research.kex.ktype.KexRtManager.rtMapped
 import org.vorpal.research.kex.ktype.asArray
 import org.vorpal.research.kex.ktype.kexType
@@ -14,8 +12,8 @@ import org.vorpal.research.kex.reanimator.actionsequence.ActionList
 import org.vorpal.research.kex.reanimator.actionsequence.ActionSequence
 import org.vorpal.research.kex.reanimator.actionsequence.DefaultConstructorCall
 import org.vorpal.research.kex.reanimator.actionsequence.MethodCall
-import org.vorpal.research.kex.util.stringBufferClass
-import org.vorpal.research.kex.util.stringBuilderClass
+import org.vorpal.research.kfg.stringBufferClass
+import org.vorpal.research.kfg.stringBuilderClass
 import org.vorpal.research.kfg.type.ClassType
 
 class KexStringBuilderGenerator(val fallback: Generator) : Generator {

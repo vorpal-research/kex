@@ -53,6 +53,13 @@ class MasterLauncher(args: Array<String>) {
             numberOfWorkers
         )
 
+        val shutdownHook = object : Thread() {
+            override fun run() {
+                master.destroy()
+            }
+        }
+        Runtime.getRuntime().addShutdownHook(shutdownHook)
+
         master.run()
     }
 }

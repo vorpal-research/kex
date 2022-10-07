@@ -11,11 +11,11 @@ import org.vorpal.research.kex.state.term.term
 import org.vorpal.research.kex.state.transformer.TypeInfoMap
 import org.vorpal.research.kex.state.transformer.generateFinalDescriptors
 import org.vorpal.research.kex.util.asArray
-import org.vorpal.research.kex.util.field
 import org.vorpal.research.kex.util.loadClass
 import org.vorpal.research.kfg.ir.Class
 import org.vorpal.research.kfg.type.ClassType
 import org.vorpal.research.kfg.type.SystemTypeNames
+import org.vorpal.research.kfg.type.objectType
 import org.vorpal.research.kthelper.logging.log
 import org.vorpal.research.kthelper.tryOrNull
 

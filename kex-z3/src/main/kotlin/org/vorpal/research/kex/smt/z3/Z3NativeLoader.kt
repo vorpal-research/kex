@@ -1,5 +1,6 @@
 package org.vorpal.research.kex.smt.z3
 
+import com.microsoft.z3.Native
 import org.vorpal.research.kex.util.deleteOnExit
 import org.vorpal.research.kex.util.lowercased
 import org.vorpal.research.kex.util.unzipArchive
@@ -50,6 +51,11 @@ abstract class Z3NativeLoader {
                     .toString()
             }
             resolvedLibraries.forEach { System.load(it) }
+            setGlobalParams()
+        }
+
+        private fun setGlobalParams() {
+            Native.globalParamSet("memory_max_size", "${8L * 1024 * 1024 * 1024}")
         }
     }
 

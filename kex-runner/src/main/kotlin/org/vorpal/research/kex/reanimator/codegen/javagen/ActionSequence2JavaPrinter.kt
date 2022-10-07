@@ -128,6 +128,7 @@ open class ActionSequence2JavaPrinter(
                 typeParams.size != other.typeParams.size -> false
                 else -> typeParams.zip(other.typeParams).all { (a, b) -> a.isSubtype(b) }
             }
+
             is ASWildcard -> true
             else -> other.kfg == ctx.types.objectType
         }
@@ -157,6 +158,7 @@ open class ActionSequence2JavaPrinter(
                 !element.isSubtype(other.element) -> false
                 else -> true
             }
+
             is ASWildcard -> true
             else -> false
         }
@@ -180,19 +182,23 @@ open class ActionSequence2JavaPrinter(
                     if (this.componentType.isPrimitive) ASPrimaryArray(element)
                     else ASArray(element)
                 }
+
                 else -> ASClass(this.kex.getKfgType(ctx.types))
             }
+
             is ParameterizedType -> {
                 val rawType = this.rawType.asType.kfg
                 val typeArgs = this.actualTypeArguments.map { it.asType }
                 ASClass(rawType, typeArgs)
             }
+
             is GenericArrayType -> ASArray(this.genericComponentType.asType)
             is TypeVariable<*> -> this.bounds.first().asType
             is WildcardType -> ASWildcard(
                 upperBounds?.firstOrNull()?.asType ?: ctx.types.objectType.asType,
                 lowerBounds?.firstOrNull()?.asType
             )
+
             else -> TODO()
         }
 
@@ -213,6 +219,7 @@ open class ActionSequence2JavaPrinter(
                 requiredType
             }
         }
+
         else -> TODO()
     }
 
@@ -226,6 +233,7 @@ open class ActionSequence2JavaPrinter(
                 this.component.isPrimary -> ASPrimaryArray(component.asType)
                 else -> ASArray(this.component.asType)
             }
+
             else -> ASClass(this)
         }
 
@@ -243,6 +251,7 @@ open class ActionSequence2JavaPrinter(
                 actionSequence.instance?.let { resolveTypes(it, visited) }
                 actionSequence.args.forEach { resolveTypes(it, visited) }
             }
+
             else -> {}
         }
     }
@@ -270,38 +279,45 @@ open class ActionSequence2JavaPrinter(
     private fun resolveTypes(call: CodeAction, visited: MutableSet<String>) = when (call) {
         is DefaultConstructorCall -> {
         }
+
         is ConstructorCall -> {
             val reflection = ctx.loader.loadClass(call.constructor.klass)
             val constructor = reflection.getConstructor(call.constructor, ctx.loader)
             resolveTypes(constructor, call.args, visited)
         }
+
         is ExternalConstructorCall -> {
             val reflection = ctx.loader.loadClass(call.constructor.klass)
             val constructor = reflection.getMethod(call.constructor, ctx.loader)
             resolveTypes(constructor, call.args, visited)
         }
+
         is ExternalMethodCall -> {
             val reflection = ctx.loader.loadClass(call.method.klass)
             val constructor = reflection.getMethod(call.method, ctx.loader)
             resolveTypes(call.instance)
             resolveTypes(constructor, call.args, visited)
         }
+
         is InnerClassConstructorCall -> {
             val reflection = ctx.loader.loadClass(call.constructor.klass)
             val constructor = reflection.getConstructor(call.constructor, ctx.loader)
             resolveTypes(call.outerObject, visited)
             resolveTypes(constructor, call.args, visited)
         }
+
         is MethodCall -> {
             val reflection = ctx.loader.loadClass(call.method.klass)
             val method = reflection.getMethod(call.method, ctx.loader)
             resolveTypes(method, call.args, visited)
         }
+
         is StaticMethodCall -> {
             val reflection = ctx.loader.loadClass(call.method.klass)
             val method = reflection.getMethod(call.method, ctx.loader)
             resolveTypes(method, call.args, visited)
         }
+
         else -> {
         }
     }
@@ -309,6 +325,7 @@ open class ActionSequence2JavaPrinter(
     private fun resolveTypes(reflectionCall: ReflectionCall, visited: MutableSet<String>) = when (reflectionCall) {
         is ReflectionArrayWrite -> resolveTypes(reflectionCall.value, visited)
         is ReflectionSetField -> resolveTypes(reflectionCall.value, visited)
+        is ReflectionSetStaticField -> resolveTypes(reflectionCall.value, visited)
         is ReflectionNewArray -> {}
         is ReflectionNewInstance -> {}
     }
@@ -324,6 +341,7 @@ open class ActionSequence2JavaPrinter(
             is PrimaryValue<*> -> listOf<String>().also {
                 asConstant
             }
+
             is StringValue -> listOf<String>().also {
                 asConstant
             }
@@ -385,6 +403,7 @@ open class ActionSequence2JavaPrinter(
             is ReflectionNewArray -> printReflectionNewArray(owner, reflectionCall)
             is ReflectionNewInstance -> printReflectionNewInstance(owner, reflectionCall)
             is ReflectionSetField -> printReflectionSetField(owner, reflectionCall)
+            is ReflectionSetStaticField -> printReflectionSetStaticField(owner, reflectionCall)
         }
 
     protected fun printApiCall(owner: ActionSequence, codeAction: CodeAction): List<String> = when (codeAction) {
@@ -397,6 +416,7 @@ open class ActionSequence2JavaPrinter(
         is StaticMethodCall -> printStaticMethodCall(codeAction)
         is NewArray -> printNewArray(owner, codeAction)
         is ArrayWrite -> printArrayWrite(owner, codeAction)
+        is NewArrayWithInitializer -> printNewArrayWithInitializer(owner, codeAction)
         is FieldSetter -> printFieldSetter(owner, codeAction)
         is StaticFieldSetter -> printStaticFieldSetter(codeAction)
         is EnumValueCreation -> printEnumValueCreation(owner, codeAction)
@@ -409,9 +429,11 @@ open class ActionSequence2JavaPrinter(
             is Boolean -> "$value".also {
                 actualTypes[this] = ASClass(ctx.types.boolType)
             }
+
             is Byte -> "(byte) $value".also {
                 actualTypes[this] = ASClass(ctx.types.byteType)
             }
+
             is Char -> when (value) {
                 in 'a'..'z' -> "'$value'"
                 in 'A'..'Z' -> "'$value'"
@@ -419,43 +441,55 @@ open class ActionSequence2JavaPrinter(
             }.also {
                 actualTypes[this] = ASClass(ctx.types.charType)
             }
+
             is Short -> "(short) $value".also {
                 actualTypes[this] = ASClass(ctx.types.shortType)
             }
+
             is Int -> "$value".also {
                 actualTypes[this] = ASClass(ctx.types.intType)
             }
+
             is Long -> "${value}L".also {
                 actualTypes[this] = ASClass(ctx.types.longType)
             }
+
             is Float -> when {
                 value.isNaN() -> "Float.NaN".also {
                     builder.import("java.lang.Float")
                 }
+
                 value.isInfinite() && value < 0.0 -> "Float.NEGATIVE_INFINITY".also {
                     builder.import("java.lang.Float")
                 }
+
                 value.isInfinite() -> "Float.POSITIVE_INFINITY".also {
                     builder.import("java.lang.Float")
                 }
+
                 else -> "${value}F"
             }.also {
                 actualTypes[this] = ASClass(ctx.types.floatType)
             }
+
             is Double -> when {
                 value.isNaN() -> "Double.NaN".also {
                     builder.import("java.lang.Double")
                 }
+
                 value.isInfinite() && value < 0.0 -> "Double.NEGATIVE_INFINITY".also {
                     builder.import("java.lang.Double")
                 }
+
                 value.isInfinite() -> "Double.POSITIVE_INFINITY".also {
                     builder.import("java.lang.Double")
                 }
+
                 else -> "$value"
             }.also {
                 actualTypes[this] = ASClass(ctx.types.doubleType)
             }
+
             else -> unreachable { log.error("Unknown primary value $this") }
         }
 
@@ -532,7 +566,8 @@ open class ActionSequence2JavaPrinter(
         if (reqOuterType != null && reqOuterType is ASClass) {
             val reqTypeString = (reqOuterType.type as ClassType).klass.fullName
             if (innerString.startsWith(reqTypeString))
-                return innerString.removePrefix("$reqTypeString\$").replace(Package.SEPARATOR, Package.CANONICAL_SEPARATOR)
+                return innerString.removePrefix("$reqTypeString\$")
+                    .replace(Package.SEPARATOR, Package.CANONICAL_SEPARATOR)
         }
         if (innerString.startsWith(outerString))
             return innerString.removePrefix("$outerString\$").replace(Package.SEPARATOR, Package.CANONICAL_SEPARATOR)
@@ -700,6 +735,24 @@ open class ActionSequence2JavaPrinter(
         return listOf("${owner.name}[${call.index.stackName}] = ${call.value.cast(requiredType)}")
     }
 
+    protected open fun printNewArrayWithInitializer(
+        owner: ActionSequence,
+        call: NewArrayWithInitializer
+    ): List<String> {
+        call.elements.forEach { it.printAsJava() }
+        val actualType = call.asArray.asType
+        actualTypes[owner] = actualType
+        return listOf(
+            "${printVarDeclaration(owner.name, actualType)} = ${
+                call.elements.joinToString(
+                    separator = ", ",
+                    prefix = "{",
+                    postfix = "}"
+                ) { it.stackName }
+            }"
+        )
+    }
+
     protected open fun printFieldSetter(owner: ActionSequence, call: FieldSetter): List<String> {
         call.value.printAsJava()
         return listOf("${owner.name}.${call.field.name} = ${call.value.stackName}")
@@ -749,6 +802,9 @@ open class ActionSequence2JavaPrinter(
         unreachable { log.error("Reflection calls are not supported in AS 2 Java printer") }
 
     protected open fun printReflectionSetField(owner: ActionSequence, call: ReflectionSetField): List<String> =
+        unreachable { log.error("Reflection calls are not supported in AS 2 Java printer") }
+
+    protected open fun printReflectionSetStaticField(owner: ActionSequence, call: ReflectionSetStaticField): List<String> =
         unreachable { log.error("Reflection calls are not supported in AS 2 Java printer") }
 
     protected open fun printReflectionArrayWrite(owner: ActionSequence, call: ReflectionArrayWrite): List<String> =

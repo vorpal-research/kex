@@ -7,7 +7,7 @@ import org.vorpal.research.kex.asm.manager.MethodWrapperInitializer
 import org.vorpal.research.kex.asm.state.PredicateStateAnalysis
 import org.vorpal.research.kex.asm.transform.BranchAdapter
 import org.vorpal.research.kex.asm.transform.LoopDeroller
-import org.vorpal.research.kex.asm.transform.RuntimeTraceCollector
+import org.vorpal.research.kex.asm.transform.RuntimeTraceInstrumenter
 import org.vorpal.research.kex.asm.transform.SystemExitTransformer
 import org.vorpal.research.kex.asm.util.AccessModifier
 import org.vorpal.research.kex.asm.util.ClassWriter
@@ -162,7 +162,7 @@ abstract class KexLauncher(classPaths: List<String>, targetName: String) {
 
     abstract fun launch()
 
-    protected open fun createInstrumenter(context: ExecutionContext): MethodVisitor = RuntimeTraceCollector(context.cm)
+    protected open fun createInstrumenter(context: ExecutionContext): MethodVisitor = RuntimeTraceInstrumenter(context.cm)
 
     private fun prepareInstrumentedClasspath(containers: List<Container>, target: Package, path: Path) {
         val klassPath = containers.map { it.path }

@@ -211,7 +211,7 @@ internal class MethodSerializer(val cm: ClassManager, val classSerializer: KSeri
         lateinit var klass: Class
         lateinit var name: String
         lateinit var retval: Type
-        lateinit var argTypes: Array<Type>
+        lateinit var argTypes: List<Type>
         loop@ while (true) {
             when (val i = input.decodeElementIndex(descriptor)) {
                 CompositeDecoder.DECODE_DONE -> break@loop
@@ -220,7 +220,6 @@ internal class MethodSerializer(val cm: ClassManager, val classSerializer: KSeri
                 2 -> retval = parseDesc(cm.type, input.decodeStringElement(descriptor, i))
                 3 -> argTypes = input.decodeSerializableElement(descriptor, i, ListSerializer(String.serializer()))
                     .map { parseDesc(cm.type, it) }
-                    .toTypedArray()
                 else -> throw SerializationException("Unknown index $i")
             }
         }

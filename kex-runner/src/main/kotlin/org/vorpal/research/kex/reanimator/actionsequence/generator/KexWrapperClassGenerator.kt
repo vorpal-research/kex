@@ -11,6 +11,7 @@ import org.vorpal.research.kex.reanimator.actionsequence.ActionSequence
 import org.vorpal.research.kex.reanimator.actionsequence.ConstructorCall
 import org.vorpal.research.kex.state.transformer.getCtor
 import org.vorpal.research.kex.util.getPrimitive
+import org.vorpal.research.kfg.*
 import org.vorpal.research.kfg.type.ClassType
 
 class KexWrapperClassGenerator(val fallback: Generator) : Generator {

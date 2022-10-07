@@ -3,7 +3,6 @@ package org.vorpal.research.kex.state
 import kotlinx.serialization.Serializable
 import org.vorpal.research.kex.InheritorOf
 import org.vorpal.research.kex.state.predicate.Predicate
-import org.vorpal.research.kthelper.defaultHashCode
 
 @InheritorOf("State")
 @Serializable
@@ -20,21 +19,20 @@ class ChoiceState(val choices: List<PredicateState>) : PredicateState(), Iterabl
     override fun fmap(transform: (PredicateState) -> PredicateState): PredicateState = ChoiceState(choices.map { transform(it) })
     override fun reverse() = ChoiceState(choices.map { it.reverse() })
 
-    override fun hashCode() = defaultHashCode(*choices.toTypedArray())
+    override fun hashCode() = choices.hashCode()
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (other?.javaClass != this.javaClass) return false
         other as ChoiceState
-        return this.choices.toTypedArray().contentEquals(other.choices.toTypedArray())
+        return this.choices == other.choices
     }
 
     override fun addPredicate(predicate: Predicate) = ChainState(ChoiceState(choices), BasicState(arrayListOf(predicate)))
 
     override fun sliceOn(state: PredicateState): PredicateState? {
         if (this == state) return emptyState()
-        val slices = choices.map { it.sliceOn(state) }
-        val filtered = slices.filterNotNull()
-        return if (slices.size == filtered.size) ChoiceState(filtered) else null
+        val slices = choices.mapNotNull { it.sliceOn(state) }
+        return if (slices.size == choices.size) ChoiceState(slices) else null
     }
 
     override fun iterator() = choices.iterator()

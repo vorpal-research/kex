@@ -7,6 +7,7 @@ import org.vorpal.research.kex.state.predicate.predicate
 import org.vorpal.research.kex.state.predicate.receiver
 import org.vorpal.research.kex.state.term.*
 import org.vorpal.research.kfg.ClassManager
+import org.vorpal.research.kfg.objectClass
 import org.vorpal.research.kthelper.assert.unreachable
 import org.vorpal.research.kthelper.logging.log
 

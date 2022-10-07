@@ -5,7 +5,7 @@ import kotlinx.serialization.InternalSerializationApi
 import org.vorpal.research.kex.asm.analysis.testgen.MethodChecker
 import org.vorpal.research.kex.asm.state.PredicateStateAnalysis
 import org.vorpal.research.kex.asm.transform.LoopDeroller
-import org.vorpal.research.kex.asm.transform.RuntimeTraceCollector
+import org.vorpal.research.kex.asm.transform.RuntimeTraceInstrumenter
 import org.vorpal.research.kex.asm.transform.SystemExitTransformer
 import org.vorpal.research.kex.asm.util.AccessModifier
 import org.vorpal.research.kex.asm.util.ClassWriter
@@ -100,7 +100,7 @@ abstract class KexRunnerTest : KexTest() {
     }
 
     protected open fun createTraceCollector(context: ExecutionContext): MethodVisitor =
-        RuntimeTraceCollector(context.cm)
+        RuntimeTraceInstrumenter(context.cm)
 
     protected fun getReachables(method: Method): List<Instruction> {
         val klass = AssertIntrinsics::class.qualifiedName!!.replace(Package.CANONICAL_SEPARATOR, Package.SEPARATOR)

@@ -9,7 +9,9 @@ import org.vorpal.research.kex.config.WorkerCmdConfig
 import org.vorpal.research.kex.config.kexConfig
 import org.vorpal.research.kex.random.easyrandom.EasyRandomDriver
 import org.vorpal.research.kex.serialization.KexSerializer
-import org.vorpal.research.kex.trace.symbolic.protocol.Worker2MasterSocketConnection
+import org.vorpal.research.kex.trace.symbolic.ExecutionResult
+import org.vorpal.research.kex.trace.symbolic.protocol.TestExecutionRequest
+import org.vorpal.research.kex.trace.symbolic.protocol.Worker2MasterConnection
 import org.vorpal.research.kex.util.getIntrinsics
 import org.vorpal.research.kex.util.getPathSeparator
 import org.vorpal.research.kex.util.getRuntime
@@ -28,12 +30,12 @@ import kotlin.system.exitProcess
 @ExperimentalSerializationApi
 @InternalSerializationApi
 fun main(args: Array<String>) {
-    WorkerLauncher(args).main()
+    WorkerLauncherDebug(args).debug()
 }
 
 @ExperimentalSerializationApi
 @InternalSerializationApi
-class WorkerLauncher(args: Array<String>) {
+class WorkerLauncherDebug(args: Array<String>) {
     private val cmd = WorkerCmdConfig(args)
     private val properties = cmd.getCmdValue("config", "kex.ini")
     private val port = cmd.getCmdValue("port")!!.toInt()
@@ -84,11 +86,32 @@ class WorkerLauncher(args: Array<String>) {
         log.debug("Worker started")
     }
 
-    fun main() {
-        val worker = ExecutorWorker(
-            ctx,
-            Worker2MasterSocketConnection(KexSerializer(ctx.cm, prettyPrint = false), port)
-        )
+    fun debug() {
+        val worker = ExecutorWorker(ctx, object : Worker2MasterConnection {
+            override fun connect(): Boolean {
+                return true
+            }
+            //            {"klass":"org.vorpal.research.kex.test.javadebug.JavaTest_foo_15237490801","testMethod":"test","setupMethod":"setup"}
+            override fun receive(): TestExecutionRequest {
+                return TestExecutionRequest(
+                    "org.vorpal.research.kex.test.javadebug.JavaTest_foo_15237490801",
+                    testMethod = "test",
+                    setupMethod = "setup"
+                )
+            }
+
+            override fun ready(): Boolean {
+                return true
+            }
+
+            override fun send(result: ExecutionResult) {
+                KexSerializer(ctx.cm, prettyPrint = false).toJson(result)
+            }
+
+            override fun close() {
+            }
+
+        })
         worker.run()
     }
 }
