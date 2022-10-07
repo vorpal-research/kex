@@ -6,7 +6,7 @@ import kotlinx.serialization.InternalSerializationApi
 import org.vorpal.research.kex.ExecutionContext
 import org.vorpal.research.kex.asm.analysis.concolic.InstructionConcolicChecker
 import org.vorpal.research.kex.asm.manager.ClassInstantiationDetector
-import org.vorpal.research.kex.asm.transform.SymbolicTraceCollector
+import org.vorpal.research.kex.asm.transform.SymbolicTraceInstrumenter
 import org.vorpal.research.kex.asm.transform.SystemExitTransformer
 import org.vorpal.research.kex.asm.util.AccessModifier
 import org.vorpal.research.kex.asm.util.ClassWriter
@@ -14,10 +14,7 @@ import org.vorpal.research.kex.asm.util.Visibility
 import org.vorpal.research.kex.config.FileConfig
 import org.vorpal.research.kex.config.RuntimeConfig
 import org.vorpal.research.kex.config.kexConfig
-import org.vorpal.research.kex.launcher.ClassLevel
 import org.vorpal.research.kex.launcher.LauncherException
-import org.vorpal.research.kex.launcher.MethodLevel
-import org.vorpal.research.kex.launcher.PackageLevel
 import org.vorpal.research.kex.random.easyrandom.EasyRandomDriver
 import org.vorpal.research.kex.trace.runner.ExecutorMasterController
 import org.vorpal.research.kex.util.*
@@ -93,7 +90,7 @@ class KexTool : Tool {
             executePipeline(cm, target) {
                 +SystemExitTransformer(cm)
                 +ClassInstantiationDetector(context)
-                +SymbolicTraceCollector(context)
+                +SymbolicTraceInstrumenter(context)
                 +ClassWriter(context, path)
             }
         }
