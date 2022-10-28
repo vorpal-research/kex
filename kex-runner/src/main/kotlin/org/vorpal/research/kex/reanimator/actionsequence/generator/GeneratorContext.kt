@@ -164,8 +164,8 @@ class GeneratorContext(
         }
 
     private val Method.argTypeInfo
-        get() = this.parameters.associate {
-            val type = it.type.kexType
+        get() = this.argTypes.withIndex().associate {
+            val type = it.value.kexType
             term { arg(type, it.index) } to instantiationManager.getConcreteType(
                 type,
                 cm,
