@@ -18,7 +18,7 @@
         <jacoco.version>0.8.8</jacoco.version>
         <junit.version>4.13.2</junit.version>
 
-        <commons-text.version>1.9</commons-text.version>
+        <commons-text.version>1.10.0</commons-text.version>
     </properties>
 
     <dependencies>
