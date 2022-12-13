@@ -7,7 +7,9 @@ import org.vorpal.research.kex.state.predicate.Predicate
 
 @InheritorOf("State")
 @Serializable
-class BasicState(@Required val predicates: List<Predicate> = listOf()) : PredicateState(), Iterable<Predicate> {
+class BasicState(
+    @Required val predicates: List<Predicate> = listOf()
+) : PredicateState(), Iterable<Predicate> {
 
     override val size: Int
         get() = predicates.size
@@ -39,6 +41,7 @@ class BasicState(@Required val predicates: List<Predicate> = listOf()) : Predica
             state.predicates -> BasicState(predicates.drop(state.size))
             else -> null
         }
+
         else -> null
     }
 

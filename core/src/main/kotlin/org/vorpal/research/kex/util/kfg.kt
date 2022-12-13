@@ -30,8 +30,17 @@ fun InstructionBuilder.wrapValue(value: Value): Instruction {
 fun Instruction.insertBefore(instructions: List<Instruction>) {
     this.parent.insertBefore(this, *instructions.toTypedArray())
 }
+
+fun Instruction.insertBefore(vararg instructions: Instruction) {
+    this.parent.insertBefore(this, *instructions)
+}
+
 fun Instruction.insertAfter(instructions: List<Instruction>) {
     this.parent.insertAfter(this, *instructions.toTypedArray())
+}
+
+fun Instruction.insertAfter(vararg instructions: Instruction) {
+    this.parent.insertAfter(this, *instructions)
 }
 
 val Instruction.next: Instruction? get() = parent.instructions.getOrNull(parent.indexOf(this) + 1)
@@ -55,19 +64,20 @@ fun Number.apply(opcode: CmpOpcode, other: Number) = when (opcode) {
     CmpOpcode.EQ -> this == other
     CmpOpcode.NEQ -> this != other
     CmpOpcode.LT -> this < other
-    CmpOpcode.GT  -> this > other
+    CmpOpcode.GT -> this > other
     CmpOpcode.LE -> this <= other
     CmpOpcode.GE -> this >= other
     CmpOpcode.CMP -> this.compareTo(other)
     CmpOpcode.CMPG -> this.compareTo(other)
     CmpOpcode.CMPL -> this.compareTo(other)
 }
+
 fun Number.apply(opcode: CmpOpcode, other: Char) = this.apply(opcode, other.code)
 fun Char.apply(opcode: CmpOpcode, other: Number) = this.code.apply(opcode, other)
 fun Char.apply(opcode: CmpOpcode, other: Char) = this.code.apply(opcode, other.code)
 
 fun NameMapper.parseValue(valueName: String): Value =
-    parseValueOrNull(valueName) ?:  unreachable { log.error("Unknown value name $valueName for object cmp") }
+    parseValueOrNull(valueName) ?: unreachable { log.error("Unknown value name $valueName for object cmp") }
 
 fun NameMapper.parseValueOrNull(valueName: String): Value? {
     val values = method.cm.value

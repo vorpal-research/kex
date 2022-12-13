@@ -2,7 +2,6 @@ package org.vorpal.research.kex.config
 
 import org.apache.commons.cli.*
 import org.vorpal.research.kthelper.assert.exit
-import org.vorpal.research.kthelper.collection.buildList
 import org.vorpal.research.kthelper.logging.log
 import java.io.PrintWriter
 import java.io.StringWriter
@@ -20,28 +19,37 @@ abstract class AbstractCmdConfig(
 
     companion object {
         fun defaultOptions(): List<Option> = buildList {
-            +Option("h", "help", false, "print this help and quit").also {
-                it.isRequired = false
-            }
+            add(
+                Option("h", "help", false, "print this help and quit").also {
+                    it.isRequired = false
+                }
+            )
 
-            +Option.builder("cp")
-                .longOpt("classpath")
-                .hasArg(true)
-                .argName("arg[:arg]")
-                .desc("classpath for analysis, jar files and directories separated by `:`")
-                .required(true)
-                .build()
+            add(
+                Option.builder("cp")
+                    .longOpt("classpath")
+                    .hasArg(true)
+                    .argName("arg[:arg]")
+                    .desc("classpath for analysis, jar files and directories separated by `:`")
+                    .required(true)
+                    .build()
+            )
 
-            +Option(null, "config", true, "configuration file").also { it.isRequired = false }
+            add(
+                Option(null, "config", true, "configuration file")
+                    .also { it.isRequired = false }
+            )
 
-            +Option.builder()
-                .longOpt("option")
-                .argName("section:name:value")
-                .valueSeparator(':')
-                .numberOfArgs(3)
-                .desc("set kex option through command line")
-                .required(false)
-                .build()
+            add(
+                Option.builder()
+                    .longOpt("option")
+                    .argName("section:name:value")
+                    .valueSeparator(':')
+                    .numberOfArgs(3)
+                    .desc("set kex option through command line")
+                    .required(false)
+                    .build()
+            )
         }
     }
 
@@ -91,7 +99,7 @@ abstract class AbstractCmdConfig(
         println(helpString)
     }
 
-    val helpString: String
+    private val helpString: String
         get() {
             val helpFormatter = HelpFormatter()
             val sw = StringWriter()
@@ -107,6 +115,7 @@ abstract class AbstractCmdConfig(
                 val pattern = Pattern.compile(a, Pattern.CASE_INSENSITIVE)
                 pattern.matcher(b).matches()
             }
+
             else -> { a: String, b: String -> a == b }
         }
         return T::class.java.enumConstants.firstOrNull { comparator(it.name, constName) }

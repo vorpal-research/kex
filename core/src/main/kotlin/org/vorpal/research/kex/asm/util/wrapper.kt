@@ -9,7 +9,6 @@ import org.vorpal.research.kfg.ir.value.instruction.Instruction
 import org.vorpal.research.kfg.ir.value.instruction.InstructionBuilder
 import org.vorpal.research.kfg.ir.value.instruction.InstructionFactory
 import org.vorpal.research.kfg.type.*
-import org.vorpal.research.kthelper.collection.buildList
 
 interface Wrapper : InstructionBuilder
 
@@ -41,12 +40,12 @@ abstract class PrintStreamWrapper(final override val cm: ClassManager, override 
 
     fun flush(): List<Instruction> = buildList {
         val flushMethod = printStreamClass.getMethod("flush", types.voidType)
-        +flushMethod.virtualCall(printStreamClass, stream, arrayOf())
+        add(flushMethod.virtualCall(printStreamClass, stream, arrayOf()))
     }
 
     fun close(): List<Instruction> = buildList {
         val closeMethod = printStreamClass.getMethod("close", types.voidType)
-        +closeMethod.virtualCall(printStreamClass, stream, arrayOf())
+        add(closeMethod.virtualCall(printStreamClass, stream, arrayOf()))
     }
 }
 
@@ -240,37 +239,37 @@ class FileOutputStreamWrapper(
 
     override fun open(): List<Instruction> = buildList {
         val file = fileClass.new()
-        +file
+        add(file)
 
         val initMethod = fileClass.getMethod("<init>", types.voidType, types.stringType)
         val params = arrayOf(values.getString(fileName))
-        +initMethod.specialCall(fileClass, file, params)
+        add(initMethod.specialCall(fileClass, file, params))
 
         val createMethod = fileClass.getMethod("createNewFile", types.boolType)
-        +createMethod.virtualCall(fileClass, file, arrayOf())
+        add(createMethod.virtualCall(fileClass, file, arrayOf()))
 
         val fos = fileOutputStreamClass.new()
-        +fos
+        add(fos)
         val fosInitMethod = fileOutputStreamClass.getMethod(
             "<init>",
             types.voidType, types.getRefType(fileClass), types.boolType
         )
         val fosParams = arrayOf(file, values.getBool(append))
-        +fosInitMethod.specialCall(fileOutputStreamClass, fos, fosParams)
+        add(fosInitMethod.specialCall(fileOutputStreamClass, fos, fosParams))
 
-        +stream
+        add(stream)
         val outputStreamClass = types.getRefType("java/io/OutputStream")
         val psInitMethod = printStreamClass.getMethod("<init>", types.voidType, outputStreamClass, types.boolType)
         val psParams = arrayOf(fos, values.getBool(autoFlush))
-        +psInitMethod.specialCall(printStreamClass, stream, psParams)
+        add(psInitMethod.specialCall(printStreamClass, stream, psParams))
     }
 
     fun printValue(value: Value): List<Instruction> {
         val printer = ValuePrinter(cm, ctx)
         val str = printer.print(value)
         return buildList {
-            +printer.insns
-            +print(str)
+            addAll(printer.insns)
+            addAll(print(str))
         }
     }
 }

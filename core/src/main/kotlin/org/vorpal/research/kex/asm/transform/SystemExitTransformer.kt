@@ -6,7 +6,6 @@ import org.vorpal.research.kfg.ir.value.EmptyUsageContext
 import org.vorpal.research.kfg.ir.value.instruction.CallInst
 import org.vorpal.research.kfg.ir.value.instruction.Instruction
 import org.vorpal.research.kfg.visitor.MethodVisitor
-import org.vorpal.research.kthelper.collection.buildList
 
 class SystemExitCallException(val code: Int) : Throwable()
 
@@ -23,9 +22,9 @@ class SystemExitTransformer(override val cm: ClassManager) : MethodVisitor {
         val calledMethod = inst.method
         if (calledMethod == exitMethod) {
             val newInsts = buildList<Instruction> {
-                val exception = inst(cm) { exceptionClass.type.new() }.also { +it }
-                +inst(cm) { exceptionConstructor.specialCall(exceptionClass, exception, inst.args.toTypedArray()) }
-                +inst(cm) { exception.`throw`() }
+                val exception = inst(cm) { exceptionClass.type.new() }.also { add(it) }
+                add(inst(cm) { exceptionConstructor.specialCall(exceptionClass, exception, inst.args.toTypedArray()) })
+                add(inst(cm) { exception.`throw`() })
             }
 
             inst.parent.insertBefore(inst, *newInsts.toTypedArray())
