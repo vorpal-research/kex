@@ -44,6 +44,32 @@ class ${solver}Converter(val tf: TypeFactory) : ${solver}SMTConverter() {
         else -> this
     }
 
+    private fun ArrayIndexTerm.withIndexAxioms(
+        expr: Dynamic_, ef: Factory_, ctx: Context_
+    ): Dynamic_ {
+        val arrayExpr = convert(arrayRef, ef, ctx) as Ptr_
+        val index = convert(index, ef, ctx) as Int_
+
+        val typeVar = ctx.readBitvectorProperty(arrayExpr, this.memspace, "type")
+        val lengthVar = ctx.readWordProperty(arrayExpr, this.memspace, "length")
+        val componentTypeVar = ef.getSubTypeMask((arrayRef.type as KexArray).element.getKfgType(tf))
+        val resultExpr = expr
+            .withAxiom(lengthVar ge ef.makeIntConst(0))
+            .withAxiom(
+                `if`((index ge ef.makeIntConst(0)) and (index lt lengthVar))
+                    .then(run {
+                        val array = ctx.readArrayMemory(arrayExpr, this.memspace)
+                        val element = array.load(Int_.forceCast(index))
+                        val elementTypeVar = ctx.readBitvectorProperty(Ptr_.forceCast(element), this.memspace, "type")
+                        (elementTypeVar and componentTypeVar) eq elementTypeVar
+                    })
+                    .`else`(
+                        ef.makeTrue()
+                    )
+            )
+        return resultExpr
+    }
+
     private fun Term.withAxioms(expr: Dynamic_, ef: Factory_, ctx: Context_): Dynamic_ {
         if (this in axiomedTerms) return expr
         var resultExpr = expr
@@ -67,24 +93,26 @@ class ${solver}Converter(val tf: TypeFactory) : ${solver}SMTConverter() {
                     val componentTypeVar = ef.getSubTypeMask((this.type as KexArray).element.getKfgType(tf))
                     resultExpr = resultExpr
                         .withAxiom(lengthVar ge ef.makeIntConst(0))
-                        .withAxiom(
-                            ef.forAll(
-                                { listOf(ef.makeIntConst(0)) },
-                                { args ->
-                                    val index = Int_.forceCast(args[0])
-                                    `if`((index ge ef.makeIntConst(0)) and (index lt lengthVar))
-                                    .then(run {
-                                        val array = ctx.readArrayMemory(expr, this.memspace)
-                                        val element = array.load(Int_.forceCast(index))
-                                        val elementTypeVar = ctx.readBitvectorProperty(Ptr_.forceCast(element), this.memspace, "type")
-                                        (elementTypeVar and componentTypeVar) eq elementTypeVar
-                                    })
-                                    .`else`(
-                                        ef.makeTrue()
-                                    )
-                                }
+                    if ((this.type as KexArray).element is KexPointer)
+                        resultExpr = resultExpr
+                            .withAxiom(
+                                ef.forAll(
+                                    { listOf(ef.makeIntConst(0)) },
+                                    { args ->
+                                        val index = Int_.forceCast(args[0])
+                                        `if`((index ge ef.makeIntConst(0)) and (index lt lengthVar))
+                                        .then(run {
+                                            val array = ctx.readArrayMemory(expr, this.memspace)
+                                            val element = array.load(Int_.forceCast(index))
+                                            val elementTypeVar = ctx.readBitvectorProperty(Ptr_.forceCast(element), this.memspace, "type")
+                                            (elementTypeVar and componentTypeVar) eq elementTypeVar
+                                        })
+                                        .`else`(
+                                            ef.makeTrue()
+                                        )
+                                    }
+                                )
                             )
-                        )
                 } else if (this.type == KexJavaClass()) {
                     val typeIndex = ctx.readBitvectorProperty(expr, this.memspace, "${ this.type }.${ ConstClassTerm.TYPE_INDEX_PROPERTY }")
                     val name = ctx.readWordProperty(expr, this.memspace, "${ this.type }.${ ConstClassTerm.NAME_PROPERTY }")
