@@ -226,7 +226,7 @@ open class ActionSequence2JavaPrinter(
     protected val Type.asType: ASType
         get() = when (this) {
             is ArrayType -> when {
-                this.component.isPrimary -> ASPrimaryArray(component.asType)
+                this.component.isPrimitive -> ASPrimaryArray(component.asType)
                 else -> ASArray(this.component.asType)
             }
 

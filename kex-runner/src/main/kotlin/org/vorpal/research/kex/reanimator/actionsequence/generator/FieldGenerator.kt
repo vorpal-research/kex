@@ -58,7 +58,7 @@ class FieldGenerator(val fallback: Generator) : Generator {
 
         actionSequence += ExternalMethodCall(getDeclField, generatedKlass, listOf(generatedName))
 
-        val setAccessible = descriptor["override" to KexBool()] ?: descriptor { const(false) }
+        val setAccessible = descriptor["override" to KexBool] ?: descriptor { const(false) }
         val setAccessibleAS = fallback.generate(setAccessible, generationDepth)
         val setAccessibleMethod = kfgFieldClass.getMethod("setAccessible", types.voidType, types.boolType)
         actionSequence += MethodCall(setAccessibleMethod, listOf(setAccessibleAS))

@@ -12,7 +12,7 @@ class IndexOfTerm(
     val substring: Term,
     val offset: Term
 ) : Term() {
-    override val type = KexInt()
+    override val type = KexInt
     override val name = "${string}.indexOf($substring, $offset)"
     override val subTerms by lazy { listOf(string, substring, offset) }
 

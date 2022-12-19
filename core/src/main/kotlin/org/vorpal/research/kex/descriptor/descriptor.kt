@@ -92,7 +92,7 @@ sealed class ConstantDescriptor(term: Term, type: KexType) : Descriptor(term, ty
             other is Null
     }
 
-    class Bool(val value: Boolean) : ConstantDescriptor(term { generate(KexBool()) }, KexBool()) {
+    class Bool(val value: Boolean) : ConstantDescriptor(term { generate(KexBool) }, KexBool) {
         override fun print(map: MutableMap<Descriptor, String>) = "$term = $value"
 
         override fun collectQuery(set: MutableSet<Descriptor>): PredicateState = basic {
@@ -105,7 +105,7 @@ sealed class ConstantDescriptor(term: Term, type: KexType) : Descriptor(term, ty
         }
     }
 
-    class Byte(val value: kotlin.Byte) : ConstantDescriptor(term { generate(KexByte()) }, KexByte()) {
+    class Byte(val value: kotlin.Byte) : ConstantDescriptor(term { generate(KexByte) }, KexByte) {
         override fun print(map: MutableMap<Descriptor, String>) = "$term = $value"
 
         override fun collectQuery(set: MutableSet<Descriptor>): PredicateState = basic {
@@ -118,7 +118,7 @@ sealed class ConstantDescriptor(term: Term, type: KexType) : Descriptor(term, ty
         }
     }
 
-    class Char(val value: kotlin.Char) : ConstantDescriptor(term { generate(KexChar()) }, KexChar()) {
+    class Char(val value: kotlin.Char) : ConstantDescriptor(term { generate(KexChar) }, KexChar) {
         override fun print(map: MutableMap<Descriptor, String>) = "$term = $value"
 
         override fun collectQuery(set: MutableSet<Descriptor>): PredicateState = basic {
@@ -131,7 +131,7 @@ sealed class ConstantDescriptor(term: Term, type: KexType) : Descriptor(term, ty
         }
     }
 
-    class Short(val value: kotlin.Short) : ConstantDescriptor(term { generate(KexShort()) }, KexShort()) {
+    class Short(val value: kotlin.Short) : ConstantDescriptor(term { generate(KexShort) }, KexShort) {
         override fun print(map: MutableMap<Descriptor, String>) = "$term = $value"
 
         override fun collectQuery(set: MutableSet<Descriptor>): PredicateState = basic {
@@ -144,7 +144,7 @@ sealed class ConstantDescriptor(term: Term, type: KexType) : Descriptor(term, ty
         }
     }
 
-    class Int(val value: kotlin.Int) : ConstantDescriptor(term { generate(KexInt()) }, KexInt()) {
+    class Int(val value: kotlin.Int) : ConstantDescriptor(term { generate(KexInt) }, KexInt) {
         override fun print(map: MutableMap<Descriptor, String>) = "$term = $value"
 
         override fun collectQuery(set: MutableSet<Descriptor>): PredicateState = basic {
@@ -157,7 +157,7 @@ sealed class ConstantDescriptor(term: Term, type: KexType) : Descriptor(term, ty
         }
     }
 
-    class Long(val value: kotlin.Long) : ConstantDescriptor(term { generate(KexLong()) }, KexLong()) {
+    class Long(val value: kotlin.Long) : ConstantDescriptor(term { generate(KexLong) }, KexLong) {
         override fun print(map: MutableMap<Descriptor, String>) = "$term = $value"
 
         override fun collectQuery(set: MutableSet<Descriptor>): PredicateState = basic {
@@ -170,7 +170,7 @@ sealed class ConstantDescriptor(term: Term, type: KexType) : Descriptor(term, ty
         }
     }
 
-    class Float(val value: kotlin.Float) : ConstantDescriptor(term { generate(KexFloat()) }, KexFloat()) {
+    class Float(val value: kotlin.Float) : ConstantDescriptor(term { generate(KexFloat) }, KexFloat) {
         override fun print(map: MutableMap<Descriptor, String>) = "$term = $value"
 
         override fun collectQuery(set: MutableSet<Descriptor>): PredicateState = basic {
@@ -183,7 +183,7 @@ sealed class ConstantDescriptor(term: Term, type: KexType) : Descriptor(term, ty
         }
     }
 
-    class Double(val value: kotlin.Double) : ConstantDescriptor(term { generate(KexDouble()) }, KexDouble()) {
+    class Double(val value: kotlin.Double) : ConstantDescriptor(term { generate(KexDouble) }, KexDouble) {
         override fun print(map: MutableMap<Descriptor, String>) = "$term = $value"
 
         override fun collectQuery(set: MutableSet<Descriptor>): PredicateState = basic {
@@ -309,7 +309,7 @@ sealed class FieldContainingDescriptor<T : FieldContainingDescriptor<T>>(
         if (this in visited) return emptyState()
         visited += this
 
-        val instanceOfTerm = term { generate(KexBool()) }
+        val instanceOfTerm = term { generate(KexBool) }
         return basic {
             axiom { instanceOfTerm equality (term `is` this@FieldContainingDescriptor.type) }
             axiom { instanceOfTerm equality true }
@@ -507,7 +507,7 @@ class ArrayDescriptor(val elementType: KexType, val length: Int) :
         if (this in visited) return emptyState()
         visited += this
 
-        val instanceOfTerm = term { generate(KexBool()) }
+        val instanceOfTerm = term { generate(KexBool) }
         return basic {
             axiom { instanceOfTerm equality (term `is` this@ArrayDescriptor.type) }
             axiom { instanceOfTerm equality true }
@@ -607,10 +607,10 @@ open class DescriptorBuilder {
 
     fun string(str: String): Descriptor {
         val string = `object`(KexString())
-        val valueArray = array(str.length, KexChar())
+        val valueArray = array(str.length, KexChar)
         for (index in str.indices)
             valueArray[index] = const(str[index])
-        string["value", KexChar().asArray()] = valueArray
+        string["value", KexChar.asArray()] = valueArray
         return string
     }
 

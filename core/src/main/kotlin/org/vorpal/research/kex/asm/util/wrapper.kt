@@ -2,7 +2,6 @@ package org.vorpal.research.kex.asm.util
 
 import org.vorpal.research.kfg.ClassManager
 import org.vorpal.research.kfg.ir.Field
-import org.vorpal.research.kfg.ir.MethodDescriptor
 import org.vorpal.research.kfg.ir.value.UsageContext
 import org.vorpal.research.kfg.ir.value.Value
 import org.vorpal.research.kfg.ir.value.instruction.Instruction
@@ -19,7 +18,7 @@ abstract class PrintStreamWrapper(final override val cm: ClassManager, override 
     abstract fun open(): List<Instruction>
 
     private fun getPrintArgType(value: Value) = when {
-        value.type.isPrimary -> value.type
+        value.type.isPrimitive -> value.type
         value.type == types.stringType -> value.type
         else -> types.objectType
     }
@@ -70,7 +69,7 @@ class StringBuilderWrapper(override val cm: ClassManager, override val ctx: Usag
         else -> {
             val appendArg = when {
                 value.type is CharType -> types.intType
-                value.type.isPrimary -> value.type
+                value.type.isPrimitive -> value.type
                 value.type == types.stringType -> value.type
                 else -> types.objectType
             }
@@ -209,7 +208,7 @@ class ValuePrinter(override val cm: ClassManager, override val ctx: UsageContext
         val type = value.type
         val sb = StringBuilderWrapper(cm, ctx, "sb")
         when {
-            type.isPrimary -> sb.append(value)
+            type.isPrimitive -> sb.append(value)
             type == types.stringType -> {
                 sb.append("\"")
                 sb.append(value)

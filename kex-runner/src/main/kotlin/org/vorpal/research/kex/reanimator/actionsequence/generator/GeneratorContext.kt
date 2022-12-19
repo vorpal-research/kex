@@ -464,7 +464,7 @@ class GeneratorContext(
 
     val Descriptor.asStringValue: String?
         get() = (this as? ObjectDescriptor)?.let { obj ->
-            val valueDescriptor = obj["value", KexChar().asArray()] as? ArrayDescriptor
+            val valueDescriptor = obj["value", KexChar.asArray()] as? ArrayDescriptor
             valueDescriptor?.let { array ->
                 (0 until array.length).map {
                     (array.elements.getOrDefault(it, descriptor { const(' ') }) as ConstantDescriptor.Char).value

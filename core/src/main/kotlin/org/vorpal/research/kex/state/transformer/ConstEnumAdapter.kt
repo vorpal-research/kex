@@ -72,7 +72,7 @@ class ConstEnumAdapter(val context: ExecutionContext) : RecollectingTransformer<
                             enumLoad.field(KexString(), "name").store(const(enumName))
                         }
                         state {
-                            enumLoad.field(KexInt(), "ordinal").store(const(enumOrdinal))
+                            enumLoad.field(KexInt, "ordinal").store(const(enumOrdinal))
                         }
                         fields += enumLoad
                     }

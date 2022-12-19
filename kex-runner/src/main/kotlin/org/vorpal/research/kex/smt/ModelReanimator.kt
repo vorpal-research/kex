@@ -19,7 +19,7 @@ import sun.misc.Unsafe
 import java.lang.reflect.Array
 
 private val Term.isPointer get() = this.type is KexPointer
-private val Term.isPrimary get() = !this.isPointer
+private val Term.isPrimitive get() = !this.isPointer
 
 interface ModelReanimator<T> {
     val method: Method
@@ -96,7 +96,7 @@ class ObjectReanimator(
     override val memoryMappings = hashMapOf<Int, MutableMap<Int, Any?>>()
 
     override fun reanimate(term: Term, value: Term?): Any? = when {
-        term.isPrimary -> reanimatePrimary(term.type, value)
+        term.isPrimitive -> reanimatePrimary(term.type, value)
         else -> reanimatePointer(term, value)
     }
 
@@ -343,7 +343,7 @@ abstract class DescriptorReanimator(
     override val memoryMappings = hashMapOf<Int, MutableMap<Int, Descriptor>>()
 
     override fun reanimate(term: Term, value: Term?): Descriptor = when {
-        term.isPrimary -> reanimatePrimary(term, value)
+        term.isPrimitive -> reanimatePrimary(term, value)
         else -> reanimatePointer(term, value)
     }
 

@@ -10,7 +10,7 @@ import org.vorpal.research.kex.state.transformer.Transformer
 @Serializable
 class ConstFloatTerm(val value: Float) : Term() {
     override val name = value.toString()
-    override val type: KexType = KexFloat()
+    override val type: KexType = KexFloat
     override val subTerms by lazy { listOf<Term>() }
 
     override fun <T: Transformer<T>> accept(t: Transformer<T>) = this

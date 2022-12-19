@@ -2,7 +2,7 @@ package org.vorpal.research.kex.state.transformer
 
 import org.vorpal.research.kex.ktype.KexBool
 import org.vorpal.research.kex.ktype.KexInt
-import org.vorpal.research.kex.ktype.KexIntegral
+import org.vorpal.research.kex.ktype.KexInteger
 import org.vorpal.research.kex.ktype.mergeTypes
 import org.vorpal.research.kex.state.predicate.EqualityPredicate
 import org.vorpal.research.kex.state.predicate.Predicate
@@ -23,16 +23,16 @@ class BoolTypeAdapter(val types: TypeFactory) : Transformer<BoolTypeAdapter> {
         val type = predicate.type
         val loc = predicate.location
         return when {
-            lhv.type is KexBool && rhv.type is KexInt -> predicate(type, loc) { lhv equality (rhv `as` KexBool()) }
-            lhv.type is KexInt && rhv.type is KexBool -> predicate(type, loc) { lhv equality (rhv `as` KexInt()) }
+            lhv.type is KexBool && rhv.type is KexInt -> predicate(type, loc) { lhv equality (rhv `as` KexBool) }
+            lhv.type is KexInt && rhv.type is KexBool -> predicate(type, loc) { lhv equality (rhv `as` KexInt) }
             else -> predicate
         }
     }
 
     fun adaptTerm(term: Term) = when (term.type) {
-        is KexBool -> term { term `as` KexInt() }
+        is KexBool -> term { term `as` KexInt }
         is KexInt -> term
-        is KexIntegral -> term { term `as` KexInt() }
+        is KexInteger -> term { term `as` KexInt }
         else -> unreachable { log.error("Non-boolean term in boolean binary: $term") }
     }
 
@@ -57,7 +57,7 @@ class BoolTypeAdapter(val types: TypeFactory) : Transformer<BoolTypeAdapter> {
 
     override fun transformCmpTerm(term: CmpTerm): Term = when {
         term.lhv.type == term.rhv.type -> term
-        term.lhv.type is KexIntegral || term.rhv.type is KexIntegral -> {
+        term.lhv.type is KexInteger || term.rhv.type is KexInteger -> {
             val lhv = adaptTerm(term.lhv)
             val rhv = adaptTerm(term.rhv)
             term { lhv.apply(term.opcode, rhv) }

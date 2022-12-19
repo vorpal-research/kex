@@ -232,32 +232,32 @@ class SymbolicTraceBuilder(
     }
 
     private fun Descriptor.unwrapped(type: KexType) = when (type) {
-        is KexIntegral, is KexReal -> when (this) {
+        is KexInteger, is KexReal -> when (this) {
             is ObjectDescriptor -> when {
                 type is KexBool && this.type == KexClass(SystemTypeNames.integerClass) -> {
-                    val value = this["value", KexInt()]!! as ConstantDescriptor.Int
+                    val value = this["value", KexInt]!! as ConstantDescriptor.Int
                     if (value.value == 0) descriptor { const(false) }
                     else descriptor { const(true) }
                 }
                 type is KexInt && this.type == KexClass(SystemTypeNames.booleanClass) -> {
-                    val value = this["value", KexBool()]!! as ConstantDescriptor.Bool
+                    val value = this["value", KexBool]!! as ConstantDescriptor.Bool
                     if (value.value) descriptor { const(1) }
                     else descriptor { const(0) }
                 }
                 type is KexInt && this.type == KexClass(SystemTypeNames.charClass) -> {
-                    val value = this["value", KexChar()]!! as ConstantDescriptor.Char
+                    val value = this["value", KexChar]!! as ConstantDescriptor.Char
                     descriptor { const(value.value.code) }
                 }
                 type is KexInt && this.type == KexClass(SystemTypeNames.longClass) -> {
-                    val value = this["value", KexLong()]!! as ConstantDescriptor.Long
+                    val value = this["value", KexLong]!! as ConstantDescriptor.Long
                     descriptor { const(value.value.toInt()) }
                 }
                 type is KexLong && this.type == KexClass(SystemTypeNames.longClass) -> {
-                    val value = this["value", KexLong()]!! as ConstantDescriptor.Long
+                    val value = this["value", KexLong]!! as ConstantDescriptor.Long
                     descriptor { const(value.value) }
                 }
                 type is KexChar && this.type == KexClass(SystemTypeNames.integerClass) -> {
-                    val value = this["value", KexInt()]!! as ConstantDescriptor.Int
+                    val value = this["value", KexInt]!! as ConstantDescriptor.Int
                     descriptor { const(value.value.toChar()) }
                 }
                 else -> this["value", type]
@@ -1127,7 +1127,7 @@ class SymbolicTraceBuilder(
         else if (termValue is NullTerm) return@safeCall
         nullChecked += termValue
 
-        val checkName = term { value(KexBool(), "${termValue}NullCheck") }
+        val checkName = term { value(KexBool, "${termValue}NullCheck") }
         val checkPredicate = state { checkName equality (termValue eq null) }
 
         stateBuilder += StateClause(instruction, checkPredicate)
@@ -1228,7 +1228,7 @@ class SymbolicTraceBuilder(
         val actualLength = concreteArray.arraySize
         val actualIndex = (concreteIndex as? Int) ?: return@safeCall
 
-        val checkTerm = term { value(KexBool(), "${termArray}IndexCheck${termIndex}") }
+        val checkTerm = term { value(KexBool, "${termArray}IndexCheck${termIndex}") }
         val checkPredicate = state {
             checkTerm equality (termIndex lt termArray.length())
         }
@@ -1262,7 +1262,7 @@ class SymbolicTraceBuilder(
 
         val actualLength = (concreteLength as? Int) ?: return@safeCall
 
-        val positiveCheckTerm = term { value(KexBool(), "${termLength}PositiveLengthCheck") }
+        val positiveCheckTerm = term { value(KexBool, "${termLength}PositiveLengthCheck") }
         val positiveCheckPredicate = state {
             positiveCheckTerm equality (termLength ge 0)
         }
@@ -1276,7 +1276,7 @@ class SymbolicTraceBuilder(
         processPath(PathClauseType.BOUNDS_CHECK, instruction, positivePathPredicate)
         stateBuilder += PathClause(PathClauseType.BOUNDS_CHECK, instruction, positivePathPredicate)
 
-        val upperBoundCheckTerm = term { value(KexBool(), "${termLength}UpperBoundLengthCheck") }
+        val upperBoundCheckTerm = term { value(KexBool, "${termLength}UpperBoundLengthCheck") }
         val upperBoundCheckPredicate = state {
             upperBoundCheckTerm equality (termLength lt MAX_ARRAY_LENGTH)
         }

@@ -7,7 +7,7 @@ import org.vorpal.research.kfg.type.TypeFactory
 
 @InheritorOf("KexType")
 @Serializable
-sealed class KexIntegral : KexType() {
+sealed class KexInteger : KexType() {
     override fun hashCode() = name.hashCode()
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
@@ -18,7 +18,7 @@ sealed class KexIntegral : KexType() {
 
 @InheritorOf("KexType")
 @Serializable
-class KexBool : KexIntegral() {
+object KexBool : KexInteger() {
     override val name: String
         get() = "bool"
 
@@ -30,7 +30,7 @@ class KexBool : KexIntegral() {
 
 @InheritorOf("KexType")
 @Serializable
-class KexByte : KexIntegral() {
+object KexByte : KexInteger() {
     override val name: String
         get() = "byte"
 
@@ -42,7 +42,7 @@ class KexByte : KexIntegral() {
 
 @InheritorOf("KexType")
 @Serializable
-class KexChar : KexIntegral() {
+object KexChar : KexInteger() {
     override val name: String
         get() = "char"
 
@@ -54,7 +54,7 @@ class KexChar : KexIntegral() {
 
 @InheritorOf("KexType")
 @Serializable
-class KexShort : KexIntegral() {
+object KexShort : KexInteger() {
     override val name: String
         get() = "short"
 
@@ -66,7 +66,7 @@ class KexShort : KexIntegral() {
 
 @InheritorOf("KexType")
 @Serializable
-class KexInt : KexIntegral() {
+object KexInt : KexInteger() {
     override val name: String
         get() = "int"
 
@@ -74,18 +74,11 @@ class KexInt : KexIntegral() {
         get() = WORD
 
     override fun getKfgType(types: TypeFactory): Type = types.intType
-
-    override fun hashCode() = name.hashCode()
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (other !is KexInt) return false
-        return true
-    }
 }
 
 @InheritorOf("KexType")
 @Serializable
-class KexLong : KexIntegral() {
+object KexLong : KexInteger() {
     override val name: String
         get() = "long"
 

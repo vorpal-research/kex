@@ -11,7 +11,7 @@ import org.vorpal.research.kthelper.defaultHashCode
 @Serializable
 class InstanceOfTerm(val checkedType: KexType, val operand: Term) : Term() {
     override val name = "$operand instanceof $checkedType"
-    override val type: KexType = KexBool()
+    override val type: KexType = KexBool
     override val subTerms by lazy { listOf(operand) }
 
     override fun <T: Transformer<T>> accept(t: Transformer<T>): Term =

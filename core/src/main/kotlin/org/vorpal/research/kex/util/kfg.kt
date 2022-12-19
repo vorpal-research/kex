@@ -21,7 +21,7 @@ val Type.javaDesc get() = this.name.replace(Package.SEPARATOR, Package.CANONICAL
 fun Package.isParent(klass: Class) = isParent(klass.pkg)
 
 fun InstructionBuilder.wrapValue(value: Value): Instruction {
-    val wrapperType = cm.type.getWrapper(value.type as PrimaryType) as ClassType
+    val wrapperType = cm.type.getWrapper(value.type as PrimitiveType) as ClassType
     val wrapperClass = wrapperType.klass
     val valueOfMethod = wrapperClass.getMethod("valueOf", wrapperType, value.type)
     return valueOfMethod.staticCall(wrapperClass, arrayOf(value))

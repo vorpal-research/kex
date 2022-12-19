@@ -11,7 +11,7 @@ sealed class KexReal : KexType()
 
 @InheritorOf("KexType")
 @Serializable
-class KexFloat : KexReal() {
+object KexFloat : KexReal() {
     override val name: String
         get() = "float"
 
@@ -30,7 +30,7 @@ class KexFloat : KexReal() {
 
 @InheritorOf("KexType")
 @Serializable
-class KexDouble : KexReal() {
+object KexDouble : KexReal() {
     override val name: String
         get() = "double"
 

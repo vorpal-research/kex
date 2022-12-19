@@ -12,7 +12,7 @@ class ExistsTerm(
     val end: Term,
     val body: Term
 ) : Term() {
-    override val type = KexBool()
+    override val type = KexBool
     override val name = "exists($start, $end, $body)"
     override val subTerms by lazy { listOf(start, end, body) }
 

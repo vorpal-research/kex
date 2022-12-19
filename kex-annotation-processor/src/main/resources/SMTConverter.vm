@@ -144,7 +144,7 @@ class ${solver}Converter(val tf: TypeFactory) : ${solver}SMTConverter() {
             when (type) {
                 is KexLong -> Long_.forceCast(expr)
                 is KexBool -> Bool_.forceCast(expr)
-                is KexIntegral -> Int_.forceCast(expr)
+                is KexInteger -> Int_.forceCast(expr)
                 is KexFloat -> Float_.forceCast(expr)
                 is KexDouble -> Double_.forceCast(expr)
                 is KexClass -> Ptr_.forceCast(expr)
@@ -156,7 +156,7 @@ class ${solver}Converter(val tf: TypeFactory) : ${solver}SMTConverter() {
             when (type) {
                 is KexLong -> expr.convertToLong()
                 is KexBool -> Bool_.forceCast(expr)
-                is KexIntegral -> expr.convertToInt()
+                is KexInteger -> expr.convertToInt()
                 is KexFloat -> expr.convertToFloat()
                 is KexDouble -> expr.convertToDouble()
                 is KexClass -> Ptr_.forceCast(expr)
@@ -697,7 +697,7 @@ class ${solver}Converter(val tf: TypeFactory) : ${solver}SMTConverter() {
         val res = when (ite.type) {
             is KexLong -> `if`(cond).then(lhv as Long_).`else`(rhv as Long_)
             is KexBool -> `if`(cond).then(lhv as Bool_).`else`(rhv as Bool_)
-            is KexIntegral -> `if`(cond).then(lhv as Int_).`else`(rhv as Int_)
+            is KexInteger -> `if`(cond).then(lhv as Int_).`else`(rhv as Int_)
             is KexFloat -> `if`(cond).then(lhv as Float_).`else`(rhv as Float_)
             is KexDouble -> `if`(cond).then(lhv as Double_).`else`(rhv as Double_)
             is KexClass -> `if`(cond).then(lhv as Ptr_).`else`(rhv as Ptr_)

@@ -346,7 +346,7 @@ class Z3Solver(val tf: TypeFactory) : Z3NativeLoader(), AbstractSMTSolver {
                             ctx,
                             ptr,
                             memspace,
-                            KexInt(),
+                            KexInt,
                             model,
                             "length"
                         )

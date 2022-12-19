@@ -25,8 +25,8 @@ class KexSerializerTest : KexTest() {
     @Test
     fun typeSerializationTest() {
         val voidType = KexVoid()
-        val intType = KexInt()
-        val doubleType = KexDouble()
+        val intType = KexInt
+        val doubleType = KexDouble
         val klassType = KexClass("org/vorpal/research/kex/Test")
         val arrayType = KexArray(klassType, memspace = 15)
 
@@ -54,7 +54,7 @@ class KexSerializerTest : KexTest() {
         val boolTerm = term { const(true) }
         val klassType = KexClass("org/vorpal/research/kex/Test")
         val valueTerm = term { value(klassType, "testValue") }
-        val arrayType = KexArray(KexDouble(), memspace = 42)
+        val arrayType = KexArray(KexDouble, memspace = 42)
         val fieldTerm = term { valueTerm.field(arrayType, "mySuperAwesomeField") }
         val fieldLoadTerm = term { fieldTerm.load() }
 
@@ -104,11 +104,11 @@ class KexSerializerTest : KexTest() {
     @Test
     fun predicateSerializationTest() {
         val klassType = KexClass("org/vorpal/research/kex/Test")
-        val argTerm = term { arg(KexInt(), 0) }
+        val argTerm = term { arg(KexInt, 0) }
         val constantInt = term { const(137) }
         val equalityPredicate = state { argTerm equality constantInt }
         val cmpTerm = term { argTerm gt 0 }
-        val pathTerm = term { value(KexBool(), "path") }
+        val pathTerm = term { value(KexBool, "path") }
         val assignPredicate = state { pathTerm equality cmpTerm }
         val pathPredicate = path { pathTerm equality true }
         val assumePredicate = assume { `this`(klassType) inequality null }
@@ -151,7 +151,7 @@ class KexSerializerTest : KexTest() {
         val constFromJson = serializer.fromJson<Descriptor>(constJson)
         assertTrue { const eq constFromJson }
 
-        val array = array(100, KexDouble())
+        val array = array(100, KexDouble)
         array[0] = const(43.123)
         array[42] = const(-12.111111)
         array[99] = const(0.1e-10)

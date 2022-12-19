@@ -35,7 +35,7 @@ class KexStringBuilderGenerator(val fallback: Generator) : Generator {
         saveToCache(descriptor, actionSequence)
 
         val kfgClass = (descriptor.type.getKfgType(cm.type) as ClassType).klass
-        val value = descriptor["value" to KexChar().asArray()] as? ArrayDescriptor
+        val value = descriptor["value" to KexChar.asArray()] as? ArrayDescriptor
         actionSequence += DefaultConstructorCall(kfgClass)
 
         if (value != null) {

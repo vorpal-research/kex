@@ -11,7 +11,7 @@ class CharAtTerm(
     val string: Term,
     val index: Term
 ) : Term() {
-    override val type = KexChar()
+    override val type = KexChar
     override val name = "$string[$index]"
     override val subTerms by lazy { listOf(string, index) }
 

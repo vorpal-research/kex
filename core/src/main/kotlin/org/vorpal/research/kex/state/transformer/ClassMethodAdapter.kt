@@ -101,7 +101,7 @@ class ClassMethodAdapter(val cm: ClassManager) : RecollectingTransformer<ClassMe
                 .filter { it.isPublic } + kfgType.klass.innerClasses.keys.filter { it.isPublic }
             else -> listOf()
         }
-        val length = generate(KexInt())
+        val length = generate(KexInt)
         state { length equality lhv.length() }
         assume { length equality const (members.size) }
         for ((index, member) in members.withIndex()) {
@@ -124,7 +124,7 @@ class ClassMethodAdapter(val cm: ClassManager) : RecollectingTransformer<ClassMe
             else kfgType.klass.interfaces
             else -> listOf()
         }
-        val length = generate(KexInt())
+        val length = generate(KexInt)
         state { length equality lhv.length() }
         assume { length equality const (interfaces.size) }
         for ((index, member) in interfaces.withIndex()) {
@@ -136,7 +136,7 @@ class ClassMethodAdapter(val cm: ClassManager) : RecollectingTransformer<ClassMe
 
     fun getModifiers(lhv: Term, instance: Term) = basic {
         state {
-            lhv equality instance.field(KexInt(), ConstClassTerm.MODIFIERS_PROPERTY).load()
+            lhv equality instance.field(KexInt, ConstClassTerm.MODIFIERS_PROPERTY).load()
         }
     }
 
@@ -164,10 +164,10 @@ class ClassMethodAdapter(val cm: ClassManager) : RecollectingTransformer<ClassMe
     }
 
     fun isAnnotated(lhv: Term, instance: Term) = basic {
-        val modifiers = generate(KexInt())
-        val andRes = generate(KexInt())
+        val modifiers = generate(KexInt)
+        val andRes = generate(KexInt)
         state {
-            modifiers equality instance.field(KexInt(), ConstClassTerm.MODIFIERS_PROPERTY).load()
+            modifiers equality instance.field(KexInt, ConstClassTerm.MODIFIERS_PROPERTY).load()
         }
         state {
             andRes equality (modifiers and ANNOTATION_MODIFIER)
@@ -178,10 +178,10 @@ class ClassMethodAdapter(val cm: ClassManager) : RecollectingTransformer<ClassMe
     }
 
     fun isEnum(lhv: Term, instance: Term) = basic {
-        val modifiers = generate(KexInt())
-        val andRes = generate(KexInt())
+        val modifiers = generate(KexInt)
+        val andRes = generate(KexInt)
         state {
-            modifiers equality instance.field(KexInt(), ConstClassTerm.MODIFIERS_PROPERTY).load()
+            modifiers equality instance.field(KexInt, ConstClassTerm.MODIFIERS_PROPERTY).load()
         }
         state {
             andRes equality (modifiers and ENUM_MODIFIER)
@@ -192,10 +192,10 @@ class ClassMethodAdapter(val cm: ClassManager) : RecollectingTransformer<ClassMe
     }
 
     fun isInterface(lhv: Term, instance: Term) = basic {
-        val modifiers = generate(KexInt())
-        val andRes = generate(KexInt())
+        val modifiers = generate(KexInt)
+        val andRes = generate(KexInt)
         state {
-            modifiers equality instance.field(KexInt(), ConstClassTerm.MODIFIERS_PROPERTY).load()
+            modifiers equality instance.field(KexInt, ConstClassTerm.MODIFIERS_PROPERTY).load()
         }
         state {
             andRes equality (modifiers and Modifier.INTERFACE)
@@ -206,10 +206,10 @@ class ClassMethodAdapter(val cm: ClassManager) : RecollectingTransformer<ClassMe
     }
 
     fun isSynthetic(lhv: Term, instance: Term) = basic {
-        val modifiers = generate(KexInt())
-        val andRes = generate(KexInt())
+        val modifiers = generate(KexInt)
+        val andRes = generate(KexInt)
         state {
-            modifiers equality instance.field(KexInt(), ConstClassTerm.MODIFIERS_PROPERTY).load()
+            modifiers equality instance.field(KexInt, ConstClassTerm.MODIFIERS_PROPERTY).load()
         }
         state {
             andRes equality (modifiers and SYNTHETIC_MODIFIER)

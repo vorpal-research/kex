@@ -53,11 +53,11 @@ class RuntimeTraceInstrumenter(override val cm: ClassManager) : MethodVisitor, I
                 is CmpInst -> {
                     val cmp = inst.cond as CmpInst
                     val lhv = when {
-                        cmp.lhv.type.isPrimary -> wrapValue(cmp.lhv).also { add(it) }
+                        cmp.lhv.type.isPrimitive -> wrapValue(cmp.lhv).also { add(it) }
                         else -> cmp.lhv
                     }
                     val rhv = when {
-                        cmp.rhv.type.isPrimary -> wrapValue(cmp.rhv).also { add(it) }
+                        cmp.rhv.type.isPrimitive -> wrapValue(cmp.rhv).also { add(it) }
                         else -> cmp.rhv
                     }
                     lhv to rhv
@@ -104,7 +104,7 @@ class RuntimeTraceInstrumenter(override val cm: ClassManager) : MethodVisitor, I
         val key = run {
             val key = inst.key
             when {
-                key.type.isPrimary -> wrapValue(key).also { add(it) }
+                key.type.isPrimitive -> wrapValue(key).also { add(it) }
                 else -> key
             }
         }
@@ -125,7 +125,7 @@ class RuntimeTraceInstrumenter(override val cm: ClassManager) : MethodVisitor, I
         val key = run {
             val key = inst.index
             when {
-                key.type.isPrimary -> wrapValue(key).also { add(it) }
+                key.type.isPrimitive -> wrapValue(key).also { add(it) }
                 else -> key
             }
         }
@@ -260,7 +260,7 @@ class RuntimeTraceInstrumenter(override val cm: ClassManager) : MethodVisitor, I
                     add(stringArray.store(index, arg.asmDesc.asValue))
                     val argValue = values.getArgument(index, method, arg).let { argValue ->
                         when {
-                            arg.isPrimary -> wrapValue(argValue).also { add(it) }
+                            arg.isPrimitive -> wrapValue(argValue).also { add(it) }
                             else -> argValue
                         }
                     }

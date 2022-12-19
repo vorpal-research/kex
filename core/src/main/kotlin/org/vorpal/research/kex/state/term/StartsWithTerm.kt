@@ -11,7 +11,7 @@ class StartsWithTerm(
     val string: Term,
     val prefix: Term
 ) : Term() {
-    override val type = KexBool()
+    override val type = KexBool
     override val name = "$string.startsWith($prefix)"
     override val subTerms by lazy { listOf(string, prefix) }
 

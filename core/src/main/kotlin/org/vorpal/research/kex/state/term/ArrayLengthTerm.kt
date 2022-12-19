@@ -8,7 +8,7 @@ import org.vorpal.research.kex.state.transformer.Transformer
 @InheritorOf("Term")
 @Serializable
 class ArrayLengthTerm(val arrayRef: Term) : Term() {
-    override val type = KexInt()
+    override val type = KexInt
     override val name = "$arrayRef.length"
     override val subTerms by lazy { listOf(arrayRef) }
 

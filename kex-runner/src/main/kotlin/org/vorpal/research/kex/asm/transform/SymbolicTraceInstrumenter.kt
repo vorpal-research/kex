@@ -787,7 +787,7 @@ class SymbolicTraceInstrumenter(
     ) = method.specialCall(this, instance, args.toList().toTypedArray())
 
     private fun Value.wrapped(list: MutableList<Instruction>): Value = when {
-        this.type.isPrimary -> wrapValue(this).also {
+        this.type.isPrimitive -> wrapValue(this).also {
             list += it
         }
 

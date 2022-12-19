@@ -333,63 +333,63 @@ object MethodManager {
             "generateBoolArray",
             cm.type.boolType.asArray(cm.type),
             cm.type.intType,
-            getGenerator(cm, "Boolean").toType()
+            getGenerator(cm, "Boolean").asType
         )
 
         fun kexGenerateByteArray(cm: ClassManager) = cm[collectionIntrinsics].getMethod(
             "generateByteArray",
             cm.type.byteType.asArray(cm.type),
             cm.type.intType,
-            getGenerator(cm, "Byte").toType()
+            getGenerator(cm, "Byte").asType
         )
 
         fun kexGenerateCharArray(cm: ClassManager) = cm[collectionIntrinsics].getMethod(
             "generateCharArray",
             cm.type.charType.asArray(cm.type),
             cm.type.intType,
-            getGenerator(cm, "Char").toType()
+            getGenerator(cm, "Char").asType
         )
 
         fun kexGenerateShortArray(cm: ClassManager) = cm[collectionIntrinsics].getMethod(
             "generateShortArray",
             cm.type.shortType.asArray(cm.type),
             cm.type.intType,
-            getGenerator(cm, "Short").toType()
+            getGenerator(cm, "Short").asType
         )
 
         fun kexGenerateIntArray(cm: ClassManager) = cm[collectionIntrinsics].getMethod(
             "generateIntArray",
             cm.type.intType.asArray(cm.type),
             cm.type.intType,
-            getGenerator(cm, "Int").toType()
+            getGenerator(cm, "Int").asType
         )
 
         fun kexGenerateLongArray(cm: ClassManager) = cm[collectionIntrinsics].getMethod(
             "generateLongArray",
             cm.type.longType.asArray(cm.type),
             cm.type.intType,
-            getGenerator(cm, "Long").toType()
+            getGenerator(cm, "Long").asType
         )
 
         fun kexGenerateFloatArray(cm: ClassManager) = cm[collectionIntrinsics].getMethod(
             "generateFloatArray",
             cm.type.floatType.asArray(cm.type),
             cm.type.intType,
-            getGenerator(cm, "Float").toType()
+            getGenerator(cm, "Float").asType
         )
 
         fun kexGenerateDoubleArray(cm: ClassManager) = cm[collectionIntrinsics].getMethod(
             "generateDoubleArray",
             cm.type.doubleType.asArray(cm.type),
             cm.type.intType,
-            getGenerator(cm, "Double").toType()
+            getGenerator(cm, "Double").asType
         )
 
         fun kexGenerateObjectArray(cm: ClassManager) = cm[collectionIntrinsics].getMethod(
             "generateObjectArray",
             cm.type.objectType.asArray(cm.type),
             cm.type.intType,
-            getGenerator(cm, "Object").toType()
+            getGenerator(cm, "Object").asType
         )
 
         fun kexGenerateArrayMethods(cm: ClassManager) = setOf(

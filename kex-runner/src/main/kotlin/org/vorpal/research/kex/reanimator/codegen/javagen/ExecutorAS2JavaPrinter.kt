@@ -365,7 +365,7 @@ class ExecutorAS2JavaPrinter(
 
     val Type.klassType: String
         get() = when (this) {
-            is PrimaryType -> "${kexType.primitiveName}.class"
+            is PrimitiveType -> "${kexType.primitiveName}.class"
             is ClassType -> "Class.forName(\"${klass.canonicalDesc}\")"
             is ArrayType -> "Array.newInstance(${component.klassType}, 0).getClass()"
             else -> unreachable { }
@@ -574,7 +574,7 @@ class ExecutorAS2JavaPrinter(
     }
 
     private fun getClass(type: Type): String = when {
-        type.isPrimary -> "${type.kexType.primitiveName}.class"
+        type.isPrimitive -> "${type.kexType.primitiveName}.class"
         type is ClassType -> "Class.forName(\"${type.klass.canonicalDesc}\")"
         type is ArrayType -> "Array.newInstance(${getClass(type.component)}, 0).getClass()"
         else -> "Class.forName(\"java.lang.Object\")"
@@ -583,7 +583,7 @@ class ExecutorAS2JavaPrinter(
     override fun printReflectionNewArray(owner: ActionSequence, call: ReflectionNewArray): List<String> {
         val elementType = call.asArray.component
         val (newArrayCall, actualType) = when {
-            elementType.isPrimary -> {
+            elementType.isPrimitive -> {
                 "${newPrimitiveArrayMap[elementType.kexType.primitiveName]!!.name}(${call.length.stackName})" to call.asArray.asType
             }
             elementType is ClassType -> {
@@ -598,7 +598,7 @@ class ExecutorAS2JavaPrinter(
                     current
                 }
                 when {
-                    base.isPrimary -> {
+                    base.isPrimitive -> {
                         "${newArray.name}(\"${elementType.canonicalDesc}\", ${call.length.stackName})" to ASArray(
                             ASClass(ctx.types.objectType)
                         )

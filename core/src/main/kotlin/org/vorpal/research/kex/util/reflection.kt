@@ -77,14 +77,14 @@ fun FieldTerm.isFinal(cm: ClassManager): Boolean {
 val Class<*>.kex: KexType
     get() = when {
         this.isPrimitive -> when (this) {
-            Boolean::class.java -> KexBool()
-            Byte::class.java -> KexByte()
-            Char::class.java -> KexChar()
-            Short::class.java -> KexShort()
-            Int::class.java -> KexInt()
-            Long::class.java -> KexLong()
-            Float::class.java -> KexFloat()
-            Double::class.java -> KexDouble()
+            Boolean::class.java -> KexBool
+            Byte::class.java -> KexByte
+            Char::class.java -> KexChar
+            Short::class.java -> KexShort
+            Int::class.java -> KexInt
+            Long::class.java -> KexLong
+            Float::class.java -> KexFloat
+            Double::class.java -> KexDouble
             else -> unreachable { log.error("Unknown primitive type $this") }
         }
         this.isArray -> KexArray(this.componentType.kex)

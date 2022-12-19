@@ -11,7 +11,7 @@ class EndsWithTerm(
     val string: Term,
     val suffix: Term
 ) : Term() {
-    override val type = KexBool()
+    override val type = KexBool
     override val name = "$string.endsWith($suffix)"
     override val subTerms by lazy { listOf(string, suffix) }
 

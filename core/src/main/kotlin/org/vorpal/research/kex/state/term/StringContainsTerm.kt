@@ -11,7 +11,7 @@ class StringContainsTerm(
     val string: Term,
     val substring: Term
 ) : Term() {
-    override val type = KexBool()
+    override val type = KexBool
     override val name = "$substring in $string"
     override val subTerms by lazy { listOf(string, substring) }
 
