@@ -100,6 +100,7 @@ class ExecutionTree : PredecessorGraph<Vertex>, Viewable {
                     is PathClause -> PathVertex(current).also {
                         edges[current] = it
                     }
+
                     else -> ClauseVertex(current).also {
                         if (_root == null) {
                             _root = it
@@ -183,37 +184,37 @@ class ExecutionTree : PredecessorGraph<Vertex>, Viewable {
 
             return when (pathClause.type) {
                 PathClauseType.OVERLOAD_CHECK -> false
-                PathClauseType.TYPE_CHECK -> allPredicates.map { it as EqualityPredicate }.map { it.rhv }
-                    .toSet().size == 2
-                PathClauseType.NULL_CHECK -> allPredicates.map { it as EqualityPredicate }.map { it.rhv }
-                    .toSet().size == 2
-                PathClauseType.BOUNDS_CHECK -> allPredicates.map { it as EqualityPredicate }.toSet().size == 2
+                PathClauseType.TYPE_CHECK -> allPredicates.map { it as EqualityPredicate }
+                    .mapTo(mutableSetOf()) { it.rhv }.size == 2
+
+                PathClauseType.NULL_CHECK -> allPredicates.map { it as EqualityPredicate }
+                    .mapTo(mutableSetOf()) { it.rhv }.size == 2
+
+                PathClauseType.BOUNDS_CHECK -> allPredicates.mapTo(mutableSetOf()) { it as EqualityPredicate }.size == 2
                 PathClauseType.CONDITION_CHECK -> when (val inst = clause.instruction) {
-                    is BranchInst -> allPredicates.map { it as EqualityPredicate }.toSet().size == 2
+                    is BranchInst -> allPredicates.mapTo(mutableSetOf()) { it as EqualityPredicate }.size == 2
                     is SwitchInst -> {
-                        val visitedValues = allPredicates
-                            .map {
-                                when (it) {
-                                    is EqualityPredicate -> it.rhv
-                                    else -> it.receiver
-                                }
+                        val visitedValues = allPredicates.mapTo(mutableSetOf()) {
+                            when (it) {
+                                is EqualityPredicate -> it.rhv
+                                else -> it.receiver
                             }
-                            .toSet()
-                        val keys = inst.branches.keys.map { term { value(it) } }.toSet()
+                        }
+                        val keys = inst.branches.keys.mapTo(mutableSetOf()) { term { value(it) } }
                         keys.all { it in visitedValues } && visitedValues.size >= keys.size + 1
                     }
+
                     is TableSwitchInst -> {
-                        val visitedValues = allPredicates
-                            .map {
-                                when (it) {
-                                    is EqualityPredicate -> it.rhv
-                                    else -> it.receiver
-                                }
+                        val visitedValues = allPredicates.mapTo(mutableSetOf()) {
+                            when (it) {
+                                is EqualityPredicate -> it.rhv
+                                else -> it.receiver
                             }
-                            .toSet()
-                        val keys = inst.range.map { term { const(it) } }.toSet()
+                        }
+                        val keys = inst.range.mapTo(mutableSetOf()) { term { const(it) } }
                         keys.all { it in visitedValues } && visitedValues.size >= keys.size + 1
                     }
+
                     else -> false.also {
                         log.error("Unknown instruction in condition check ${inst.print()}")
                     }

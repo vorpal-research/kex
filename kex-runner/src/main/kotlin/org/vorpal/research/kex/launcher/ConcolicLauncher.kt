@@ -36,7 +36,7 @@ class ConcolicLauncher(classPaths: List<String>, targetName: String) : KexLaunch
         get() = when (analysisLevel) {
             is ClassLevel -> setOf(analysisLevel.klass.allMethods)
             is MethodLevel -> setOf(setOf(analysisLevel.method))
-            is PackageLevel -> context.cm.getByPackage(analysisLevel.pkg).map { it.allMethods }.toSet()
+            is PackageLevel -> context.cm.getByPackage(analysisLevel.pkg).mapTo(mutableSetOf()) { it.allMethods }
         }
 
     override fun launch() {

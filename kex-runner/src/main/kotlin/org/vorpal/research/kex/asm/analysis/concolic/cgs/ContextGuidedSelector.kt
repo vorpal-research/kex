@@ -122,8 +122,7 @@ class ContextGuidedSelector(
                 .flatMap { TermCollector.getFullTermSet(it).filterIsInstance<InstanceOfTerm>() }
                 .map { it.checkedType.getKfgType(ctx.types) }
                 .filterIsInstance<ClassType>()
-                .map { it.klass }
-                .toSet()
+                .mapTo(mutableSetOf()) { it.klass }
 
             try {
                 val newType = instantiationManager.get(ctx.types, termType, ctx.accessLevel, excludeClasses, ctx.random)
@@ -173,7 +172,7 @@ class ContextGuidedSelector(
         branches: Map<Value, BasicBlock>
     ): Predicate? = when (this) {
         is DefaultSwitchPredicate -> {
-            val candidates = branches.keys.map { (it as IntConstant).value }.toSet()
+            val candidates = branches.keys.mapTo(mutableSetOf()) { (it as IntConstant).value }
             candidates.randomOrNull(ctx.random)?.let {
                 predicate(this.type, this.location) {
                     cond equality it
@@ -183,7 +182,7 @@ class ContextGuidedSelector(
         is EqualityPredicate -> {
             val outgoingPaths = branches.toList()
                 .groupBy({ it.second }, { it.first })
-                .map { it.value.map { const -> (const as IntConstant).value }.toSet() }
+                .map { it.value.mapTo(mutableSetOf()) { const -> (const as IntConstant).value } }
 
             val equivalencePaths = mutableMapOf<Int, Set<Int>>()
             for (set in outgoingPaths) {
@@ -197,8 +196,7 @@ class ContextGuidedSelector(
                 .flatMap { it.successors }
                 .map { it.clause.predicate }
                 .filterIsInstance<EqualityPredicate>()
-                .map { it.rhv.numericValue }
-                .toSet()
+                .mapTo(mutableSetOf()) { it.rhv.numericValue }
 
             val candidates = run {
                 val currentRange = branches.keys.map { (it as IntConstant).value }.toMutableSet()

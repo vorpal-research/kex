@@ -40,7 +40,7 @@ class InheritanceInfoProcessor : KexProcessor() {
                 else -> InheritanceInfo(base, setOf())
             }
 
-            val newTypeInfo = InheritanceInfo(base, inheritors.map { Inheritor(it.key, it.value) }.toSet())
+            val newTypeInfo = InheritanceInfo(base, inheritors.mapTo(mutableSetOf()) { Inheritor(it.key, it.value) })
             if (typeInfo != newTypeInfo) {
                 info("Updated type information for $base")
                 val writer = targetFile.writer()
@@ -64,6 +64,7 @@ class InheritanceInfoProcessor : KexProcessor() {
             ?: unreachable { error("Element $element have no annotation InheritorOf") }
 
         val type = annotation.getProperty("type") as String
-        types.getOrPut(bases[type]!!, ::mutableMapOf)[element.simpleName.removeSuffix(type).toString()] = element.fullName
+        types.getOrPut(bases[type]!!, ::mutableMapOf)[element.simpleName.removeSuffix(type).toString()] =
+            element.fullName
     }
 }

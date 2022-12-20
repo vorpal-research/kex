@@ -103,7 +103,7 @@ private object ClassInstantiationManagerImpl : ClassInstantiationManager {
     override fun get(klass: Class, accessLevel: AccessModifier, excludes: Set<Class>, random: Random): Class = `try` {
         when (klass.fullName) {
             in predefinedConcreteInstanceInfo ->
-                (predefinedConcreteInstanceInfo.getValue(klass.fullName) - excludes.map { it.fullName }.toSet())
+                (predefinedConcreteInstanceInfo.getValue(klass.fullName) - excludes.mapTo(mutableSetOf()) { it.fullName })
                     .filter { isDirectlyInstantiable(klass.cm[it], accessLevel) }
                     .random(random)
                     .let { klass.cm[it] }
@@ -141,9 +141,10 @@ private object StringClassInstantiationManagerImpl : ClassInstantiationManager {
     }
 
     override fun getExternalCtors(klass: Class): Set<Method> =
-        externalConstructors.getOrDefault(klass.fullName, setOf()).map { (klassName, methodName, desc) ->
-            klass.cm[klassName].getMethod(methodName, desc)
-        }.toSet()
+        externalConstructors.getOrDefault(klass.fullName, setOf())
+            .mapTo(mutableSetOf()) { (klassName, methodName, desc) ->
+                klass.cm[klassName].getMethod(methodName, desc)
+            }
 
     override fun get(klass: Class, accessLevel: AccessModifier, random: Random): Class = `try` {
         val concreteClassName = when (val fullName = klass.fullName) {
@@ -164,7 +165,7 @@ private object StringClassInstantiationManagerImpl : ClassInstantiationManager {
     }
 
     override fun get(klass: Class, accessLevel: AccessModifier, excludes: Set<Class>, random: Random): Class = `try` {
-        val excludeNames = excludes.map { it.fullName }.toSet()
+        val excludeNames = excludes.mapTo(mutableSetOf()) { it.fullName }
         val concreteClassName = when (val fullName = klass.fullName) {
             in predefinedConcreteInstanceInfo -> (predefinedConcreteInstanceInfo.getValue(fullName) - excludeNames)
                 .filter { isDirectlyInstantiable(klass.cm[it], accessLevel) }

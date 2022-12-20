@@ -54,13 +54,13 @@ class PredicateTermCollector(val filter: (Predicate) -> Boolean) : Transformer<P
 fun collectPredicateTypeTerms(type: PredicateType, state: PredicateState): Set<Term> {
     val collector = PredicateTermCollector { it.type == type }
     collector.apply(state)
-    return collector.terms.filter { it.isVariable }.toSet()
+    return collector.terms.filterTo(mutableSetOf()) { it.isVariable }
 }
 
 fun collectPredicateTerms(state: PredicateState, filter: (Predicate) -> Boolean): Set<Term> {
     val collector = PredicateTermCollector(filter)
     collector.apply(state)
-    return collector.terms.filter { it.isVariable }.toSet()
+    return collector.terms.filterTo(mutableSetOf()) { it.isVariable }
 }
 
 fun collectRequiredTerms(state: PredicateState) = collectPredicateTypeTerms(PredicateType.Require(), state)

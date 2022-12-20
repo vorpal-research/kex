@@ -75,11 +75,21 @@ class CallCiteChecker(
 
         val handler = { callCite: Instruction, ps: PredicateState, remapper: TermRenamer ->
             when (inst.method) {
-                im.kexAssert(cm) -> checkAssertion(inst, callCite, ps, getAllAssertions(inst.args[0]).map { remapper.transformTerm(it) }.toSet())
-                im.kexAssertWithId(cm) -> {
-                    val id = (inst.args[0] as? StringConstant)?.value
-                    checkAssertion(inst, callCite, ps, getAllAssertions(inst.args[1]).map { remapper.transformTerm(it) }.toSet(), id)
-                }
+                im.kexAssert(cm) -> checkAssertion(
+                    inst,
+                    callCite,
+                    ps,
+                    getAllAssertions(inst.args[0]).mapTo(mutableSetOf()) { remapper.transformTerm(it) }
+                )
+
+                im.kexAssertWithId(cm) -> checkAssertion(
+                    inst,
+                    callCite,
+                    ps,
+                    getAllAssertions(inst.args[1]).mapTo(mutableSetOf()) { remapper.transformTerm(it) },
+                    (inst.args[0] as? StringConstant)?.value
+                )
+
                 else -> {}
             }
         }
@@ -135,7 +145,7 @@ class CallCiteChecker(
             }
             result
         }
-        val remapper =  TermRenamer("call.cite.inlined", mappings)
+        val remapper = TermRenamer("call.cite.inlined", mappings)
         val preparedState = remapper.apply(inlinedState)
         return (filteredState + preparedState) to remapper
     }
@@ -145,8 +155,7 @@ class CallCiteChecker(
         .mapNotNull { it as? ArrayStoreInst }
         .filter { it.arrayRef == assertionsArray }
         .map { it.value }
-        .map { term { value(it) } }
-        .toSet()
+        .mapTo(mutableSetOf()) { term { value(it) } }
 
     private fun getAllCallCites(method: Method): Set<Instruction> {
         val result = mutableSetOf<Instruction>()
@@ -198,6 +207,7 @@ class CallCiteChecker(
                 dm += Defect.assert(callStack, id, path, testName)
                 false
             }
+
             else -> true
         }
     }

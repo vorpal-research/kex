@@ -39,5 +39,5 @@ class VariableCollector : Transformer<VariableCollector> {
 fun collectVariables(ps: PredicateState): Set<Term> {
     val collector = VariableCollector()
     collector.apply(ps)
-    return collector.variables.filter { it.type !is KexVoid }.toSet()
+    return collector.variables.filterTo(mutableSetOf()) { it.type !is KexVoid }
 }

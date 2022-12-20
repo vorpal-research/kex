@@ -41,6 +41,10 @@ class SymbolicTraceInstrumenter(
 
     private val collectorClass = cm[INSTRUCTION_TRACE_COLLECTOR]
     private val collectorProxyClass = cm[TRACE_COLLECTOR_PROXY]
+    private val objectType = types.objectType
+    private val stringType = types.stringType
+    private val listType = types.listType
+    private val arrayListType = types.arrayListType
     private lateinit var traceCollector: Instruction
 
     override fun cleanup() {}
@@ -71,18 +75,18 @@ class SymbolicTraceInstrumenter(
             add(traceCollector)
             val entryMethod = collectorClass.getMethod(
                 "methodEnter", types.voidType,
-                types.stringType, types.stringType, types.listType,
-                types.stringType, types.objectType, types.listType
+                stringType, stringType, listType,
+                stringType, objectType, listType
             )
 
             val arrayListKlass = cm.arrayListClass
             val initMethod = arrayListKlass.getMethod("<init>", types.voidType)
-            val addMethod = arrayListKlass.getMethod("add", types.boolType, types.objectType)
+            val addMethod = arrayListKlass.getMethod("add", types.boolType, objectType)
 
-            val argTypesList = types.arrayListType.new().also { add(it) }
+            val argTypesList = arrayListType.new().also { add(it) }
             add(arrayListKlass.specialCall(initMethod, argTypesList, emptyList()))
 
-            val argumentList = types.arrayListType.new().also { add(it) }
+            val argumentList = arrayListType.new().also { add(it) }
             add(arrayListKlass.specialCall(initMethod, argumentList, emptyList()))
 
             for ((index, arg) in method.argTypes.withIndex()) {
@@ -125,8 +129,8 @@ class SymbolicTraceInstrumenter(
     override fun visitArrayLoadInst(inst: ArrayLoadInst) {
         val arrayLoadMethod = collectorClass.getMethod(
             "arrayLoad", types.voidType,
-            types.stringType, types.stringType, types.stringType,
-            types.objectType, types.objectType, types.objectType
+            stringType, stringType, stringType,
+            objectType, objectType, objectType
         )
 
         val before = buildList {
@@ -155,8 +159,8 @@ class SymbolicTraceInstrumenter(
     override fun visitArrayStoreInst(inst: ArrayStoreInst) {
         val arrayStoreMethod = collectorClass.getMethod(
             "arrayStore", types.voidType,
-            types.stringType, types.stringType, types.stringType, types.stringType,
-            types.objectType, types.objectType, types.objectType
+            stringType, stringType, stringType, stringType,
+            objectType, objectType, objectType
         )
 
         val before = buildList {
@@ -186,8 +190,8 @@ class SymbolicTraceInstrumenter(
     override fun visitBinaryInst(inst: BinaryInst) {
         val binaryMethod = collectorClass.getMethod(
             "binary", types.voidType,
-            types.stringType, types.stringType, types.stringType,
-            types.objectType, types.objectType, types.objectType
+            stringType, stringType, stringType,
+            objectType, objectType, objectType
         )
 
         val instrumented = buildList {
@@ -211,7 +215,7 @@ class SymbolicTraceInstrumenter(
     override fun visitBranchInst(inst: BranchInst) {
         val branchMethod = collectorClass.getMethod(
             "branch", types.voidType,
-            types.stringType, types.stringType
+            stringType, stringType
         )
 
         val instrumented = collectorClass.interfaceCall(
@@ -227,10 +231,10 @@ class SymbolicTraceInstrumenter(
     override fun visitCallInst(inst: CallInst) {
         val callMethod = collectorClass.getMethod(
             "call", types.voidType,
-            types.stringType,
-            types.stringType, types.stringType, types.listType, types.stringType,
-            types.stringType, types.stringType, types.listType,
-            types.listType
+            stringType,
+            stringType, stringType, listType, stringType,
+            stringType, stringType, listType,
+            listType
         )
 
         val calledMethod = inst.method
@@ -244,9 +248,9 @@ class SymbolicTraceInstrumenter(
 
             val arrayListKlass = cm.arrayListClass
             val initMethod = arrayListKlass.getMethod("<init>", types.voidType)
-            val addMethod = arrayListKlass.getMethod("add", types.boolType, types.objectType)
+            val addMethod = arrayListKlass.getMethod("add", types.boolType, objectType)
 
-            val argTypesList = types.arrayListType.new().also { add(it) }
+            val argTypesList = arrayListType.new().also { add(it) }
             add(arrayListKlass.specialCall(initMethod, argTypesList, emptyList()))
             for (arg in calledMethod.argTypes) {
                 add(
@@ -256,7 +260,7 @@ class SymbolicTraceInstrumenter(
                 )
             }
 
-            val argumentList = types.arrayListType.new().also { add(it) }
+            val argumentList = arrayListType.new().also { add(it) }
             add(arrayListKlass.specialCall(initMethod, argumentList, emptyList()))
             for (arg in inst.args) {
                 add(
@@ -266,7 +270,7 @@ class SymbolicTraceInstrumenter(
                 )
             }
 
-            val concreteArgumentsList = types.arrayListType.new().also { add(it) }
+            val concreteArgumentsList = arrayListType.new().also { add(it) }
             add(arrayListKlass.specialCall(initMethod, concreteArgumentsList, emptyList()))
             for (arg in inst.args) {
                 add(
@@ -309,8 +313,8 @@ class SymbolicTraceInstrumenter(
     override fun visitCastInst(inst: CastInst) {
         val castMethod = collectorClass.getMethod(
             "cast", types.voidType,
-            types.stringType, types.stringType,
-            types.objectType, types.objectType
+            stringType, stringType,
+            objectType, objectType
         )
         val before = buildList {
             if (inst.type.isReference) addAll(addNullityConstraint(inst, inst.operand))
@@ -336,7 +340,7 @@ class SymbolicTraceInstrumenter(
     override fun visitCatchInst(inst: CatchInst) {
         val catchMethod = collectorClass.getMethod(
             "catch", types.voidType,
-            types.stringType, types.objectType
+            stringType, objectType
         )
 
         val instrumented = collectorClass.interfaceCall(
@@ -352,8 +356,8 @@ class SymbolicTraceInstrumenter(
     override fun visitCmpInst(inst: CmpInst) {
         val cmpMethod = collectorClass.getMethod(
             "cmp", types.voidType,
-            types.stringType, types.stringType, types.stringType,
-            types.objectType, types.objectType
+            stringType, stringType, stringType,
+            objectType, objectType
         )
 
         val instrumented = buildList {
@@ -376,7 +380,7 @@ class SymbolicTraceInstrumenter(
     override fun visitEnterMonitorInst(inst: EnterMonitorInst) {
         val enterMonitorMethod = collectorClass.getMethod(
             "enterMonitor", types.voidType,
-            types.stringType, types.stringType, types.objectType
+            stringType, stringType, objectType
         )
         val instrumented = collectorClass.interfaceCall(
             enterMonitorMethod, traceCollector,
@@ -392,7 +396,7 @@ class SymbolicTraceInstrumenter(
     override fun visitExitMonitorInst(inst: ExitMonitorInst) {
         val exitMonitorMethod = collectorClass.getMethod(
             "exitMonitor", types.voidType,
-            types.stringType, types.stringType, types.objectType
+            stringType, stringType, objectType
         )
         val instrumented = collectorClass.interfaceCall(
             exitMonitorMethod, traceCollector,
@@ -408,9 +412,9 @@ class SymbolicTraceInstrumenter(
     override fun visitFieldLoadInst(inst: FieldLoadInst) {
         val fieldLoadMethod = collectorClass.getMethod(
             "fieldLoad", types.voidType,
-            types.stringType, types.stringType, types.stringType,
-            types.stringType, types.stringType,
-            types.objectType, types.objectType
+            stringType, stringType, stringType,
+            stringType, stringType,
+            objectType, objectType
         )
 
         val before = when {
@@ -448,10 +452,10 @@ class SymbolicTraceInstrumenter(
     override fun visitFieldStoreInst(inst: FieldStoreInst) {
         val fieldStoreMethod = collectorClass.getMethod(
             "fieldStore", types.voidType,
-            types.stringType,
-            types.stringType, types.stringType, types.stringType,
-            types.stringType, types.stringType,
-            types.objectType, types.objectType
+            stringType,
+            stringType, stringType, stringType,
+            stringType, stringType,
+            objectType, objectType
         )
 
         val before = when {
@@ -495,8 +499,8 @@ class SymbolicTraceInstrumenter(
     override fun visitInstanceOfInst(inst: InstanceOfInst) {
         val instanceOfMethod = collectorClass.getMethod(
             "instanceOf", types.voidType,
-            types.stringType, types.stringType,
-            types.objectType, types.objectType
+            stringType, stringType,
+            objectType, objectType
         )
 
         val instrumented = buildList {
@@ -518,15 +522,15 @@ class SymbolicTraceInstrumenter(
     override fun visitInvokeDynamicInst(inst: InvokeDynamicInst) {
         val invokeDynamicMethod = collectorClass.getMethod(
             "invokeDynamic", types.voidType,
-            types.stringType, types.listType,
-            types.objectType, types.listType
+            stringType, listType,
+            objectType, listType
         )
 
         val instrumented = buildList {
             val arrayListKlass = cm.arrayListClass
             val initMethod = arrayListKlass.getMethod("<init>", types.voidType)
-            val addMethod = arrayListKlass.getMethod("add", types.boolType, types.objectType)
-            val args = types.arrayListType.new().also { add(it) }
+            val addMethod = arrayListKlass.getMethod("add", types.boolType, objectType)
+            val args = arrayListType.new().also { add(it) }
             add(arrayListKlass.specialCall(initMethod, args, emptyList()))
             for (arg in inst.args) {
                 add(
@@ -536,7 +540,7 @@ class SymbolicTraceInstrumenter(
                 )
             }
 
-            val concreteArgs = types.arrayListType.new().also { add(it) }
+            val concreteArgs = arrayListType.new().also { add(it) }
             add(arrayListKlass.specialCall(initMethod, concreteArgs, emptyList()))
             for (arg in inst.args) {
                 add(
@@ -563,7 +567,7 @@ class SymbolicTraceInstrumenter(
 
     override fun visitJumpInst(inst: JumpInst) {
         val jumpMethod = collectorClass.getMethod(
-            "jump", types.voidType, types.stringType
+            "jump", types.voidType, stringType
         )
 
         val instrumented = collectorClass.interfaceCall(
@@ -575,15 +579,15 @@ class SymbolicTraceInstrumenter(
     override fun visitNewArrayInst(inst: NewArrayInst) {
         val newArrayMethod = collectorClass.getMethod(
             "newArray", types.voidType,
-            types.stringType, types.listType,
-            types.objectType, types.listType
+            stringType, listType,
+            objectType, listType
         )
 
         val instrumented = buildList {
             val arrayListKlass = cm.arrayListClass
             val initMethod = arrayListKlass.getMethod("<init>", types.voidType)
-            val addMethod = arrayListKlass.getMethod("add", types.boolType, types.objectType)
-            val dimensions = types.arrayListType.new().also { add(it) }
+            val addMethod = arrayListKlass.getMethod("add", types.boolType, objectType)
+            val dimensions = arrayListType.new().also { add(it) }
             add(arrayListKlass.specialCall(initMethod, dimensions, emptyList()))
             for (dimension in inst.dimensions) {
                 add(
@@ -593,7 +597,7 @@ class SymbolicTraceInstrumenter(
                 )
             }
 
-            val concreteDimensions = types.arrayListType.new().also { add(it) }
+            val concreteDimensions = arrayListType.new().also { add(it) }
             add(arrayListKlass.specialCall(initMethod, concreteDimensions, emptyList()))
             for (dimension in inst.dimensions) {
                 add(
@@ -624,7 +628,7 @@ class SymbolicTraceInstrumenter(
 
     override fun visitNewInst(inst: NewInst) {
         val newMethod = collectorClass.getMethod(
-            "new", types.voidType, types.stringType
+            "new", types.voidType, stringType
         )
 
         val instrumented = collectorClass.interfaceCall(
@@ -635,7 +639,7 @@ class SymbolicTraceInstrumenter(
 
     override fun visitPhiInst(inst: PhiInst) {
         val phiMethod = collectorClass.getMethod(
-            "phi", types.voidType, types.stringType, types.objectType
+            "phi", types.voidType, stringType, objectType
         )
 
         val instrumented = buildList {
@@ -655,7 +659,7 @@ class SymbolicTraceInstrumenter(
     override fun visitReturnInst(inst: ReturnInst) {
         val returnMethod = collectorClass.getMethod(
             "ret", types.voidType,
-            types.stringType, types.stringType, types.objectType
+            stringType, stringType, objectType
         )
 
 
@@ -681,7 +685,7 @@ class SymbolicTraceInstrumenter(
     override fun visitSwitchInst(inst: SwitchInst) {
         val switchMethod = collectorClass.getMethod(
             "switch", types.voidType,
-            types.stringType, types.stringType, types.objectType
+            stringType, stringType, objectType
         )
 
         val instrumented = buildList {
@@ -702,7 +706,7 @@ class SymbolicTraceInstrumenter(
     override fun visitTableSwitchInst(inst: TableSwitchInst) {
         val tableSwitchMethod = collectorClass.getMethod(
             "tableSwitch", types.voidType,
-            types.stringType, types.stringType, types.objectType
+            stringType, stringType, objectType
         )
 
         val instrumented = buildList {
@@ -723,7 +727,7 @@ class SymbolicTraceInstrumenter(
     override fun visitThrowInst(inst: ThrowInst) {
         val throwMethod = collectorClass.getMethod(
             "throwing", types.voidType,
-            types.stringType, types.stringType, types.objectType
+            stringType, stringType, objectType
         )
 
         val instrumented = collectorClass.interfaceCall(
@@ -740,8 +744,8 @@ class SymbolicTraceInstrumenter(
     override fun visitUnaryInst(inst: UnaryInst) {
         val unaryMethod = collectorClass.getMethod(
             "unary", types.voidType,
-            types.stringType, types.stringType,
-            types.objectType, types.objectType
+            stringType, stringType,
+            objectType, objectType
         )
 
         val before = when (inst.opcode) {
@@ -770,7 +774,7 @@ class SymbolicTraceInstrumenter(
 
         val addNullityConstraintsMethod = collectorClass.getMethod(
             "addNullityConstraints", types.voidType,
-            types.stringType, types.stringType, types.objectType
+            stringType, stringType, objectType
         )
 
         add(
@@ -788,7 +792,7 @@ class SymbolicTraceInstrumenter(
     private fun addTypeConstraints(inst: Instruction, value: Value): List<Instruction> = buildList {
         val addTypeConstraintsMethod = collectorClass.getMethod(
             "addTypeConstraints", types.voidType,
-            types.stringType, types.stringType, types.objectType
+            stringType, stringType, objectType
         )
 
         add(
@@ -806,7 +810,7 @@ class SymbolicTraceInstrumenter(
     private fun addTypeConstraints(inst: Instruction, value: Value, type: Type): List<Instruction> = buildList {
         val addTypeConstraintsMethod = collectorClass.getMethod(
             "addTypeConstraints", types.voidType,
-            types.stringType, types.stringType, types.stringType, types.objectType
+            stringType, stringType, stringType, objectType
         )
 
         add(
@@ -825,9 +829,9 @@ class SymbolicTraceInstrumenter(
     private fun addArrayIndexConstraints(inst: Instruction, array: Value, index: Value): List<Instruction> = buildList {
         val addArrayIndexConstraintsMethod = collectorClass.getMethod(
             "addArrayIndexConstraints", types.voidType,
-            types.stringType,
-            types.stringType, types.stringType,
-            types.objectType, types.objectType
+            stringType,
+            stringType, stringType,
+            objectType, objectType
         )
 
         add(
@@ -847,8 +851,8 @@ class SymbolicTraceInstrumenter(
     private fun addArrayLengthConstraints(inst: Instruction, length: Value): List<Instruction> = buildList {
         val addArrayIndexConstraintsMethod = collectorClass.getMethod(
             "addArrayLengthConstraints", types.voidType,
-            types.stringType,
-            types.stringType, types.objectType
+            stringType,
+            stringType, objectType
         )
 
         add(

@@ -40,8 +40,7 @@ class NullityAnnotator(private val nonNulls: Set<Term> = setOf()) : Recollecting
         val predicateTerms = TermCollector.getFullTermSet(predicate)
             .asSequence()
             .filter { it in nonNulls }
-            .filter { it !in annotatedTerms }
-            .toSet()
+            .filterTo(mutableSetOf()) { it !in annotatedTerms }
         for (term in predicateTerms) {
             currentBuilder += assume { term inequality null }
             annotatedTerms.add(term)

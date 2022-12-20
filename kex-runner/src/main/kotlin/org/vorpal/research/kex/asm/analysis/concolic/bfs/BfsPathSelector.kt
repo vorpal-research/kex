@@ -80,7 +80,7 @@ class BfsPathSelectorImpl(
                 val defaultSwitch = predicate as DefaultSwitchPredicate
                 val switchInst = instruction as SwitchInst
                 val cond = defaultSwitch.cond
-                val candidates = switchInst.branches.keys.map { (it as IntConstant).value }.toSet()
+                val candidates = switchInst.branches.keys.mapTo(mutableSetOf()) { (it as IntConstant).value }
                 var result: PathClause? = null
                 for (candidate in candidates) {
                     val mutated = copy(predicate = path(instruction.location) {
@@ -94,7 +94,8 @@ class BfsPathSelectorImpl(
                 val equalityPredicate = predicate as EqualityPredicate
                 val switchInst = instruction as SwitchInst
                 val (cond, value) = equalityPredicate.lhv to (equalityPredicate.rhv as ConstIntTerm).value
-                val candidates = switchInst.branches.keys.map { (it as IntConstant).value }.toSet() - value
+                val candidates = switchInst.branches.keys.mapTo(mutableSetOf()) { (it as IntConstant).value }
+                candidates.remove(value)
                 var result: PathClause? = null
                 for (candidate in candidates) {
                     val mutated = copy(predicate = path(instruction.location) {
@@ -130,7 +131,8 @@ class BfsPathSelectorImpl(
                 val equalityPredicate = predicate as EqualityPredicate
                 val switchInst = instruction as TableSwitchInst
                 val (cond, value) = equalityPredicate.lhv to (equalityPredicate.rhv as ConstIntTerm).value
-                val candidates = switchInst.range.toSet() - value
+                val candidates = switchInst.range.toMutableSet()
+                candidates.remove(value)
                 var result: PathClause? = null
                 for (candidate in candidates) {
                     val mutated = copy(predicate = path(instruction.location) {

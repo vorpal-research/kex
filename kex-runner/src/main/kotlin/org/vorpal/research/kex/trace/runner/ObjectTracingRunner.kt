@@ -77,8 +77,8 @@ class ReanimatingRandomObjectTracingRunner(
     override fun collectTrace(invocationResult: InvocationResult) = ActionTrace(collector.trace)
 
     private val Parameters<Any?>.descriptors
-        get() = with (Object2DescriptorConverter()) {
-            Parameters(convert(instance), arguments.map { convert(it) }, statics.map { convert(it) }.toSet())
+        get() = with(Object2DescriptorConverter()) {
+            Parameters(convert(instance), arguments.map { convert(it) }, statics.mapTo(mutableSetOf()) { convert(it) })
         }
 
     override fun generateArguments(): Parameters<Any?>? {

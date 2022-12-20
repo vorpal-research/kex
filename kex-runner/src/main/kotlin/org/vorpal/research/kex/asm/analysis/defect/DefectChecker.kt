@@ -134,8 +134,7 @@ class DefectChecker                                                             
         .mapNotNull { it as? ArrayStoreInst }
         .filter { it.arrayRef == assertionsArray }
         .map { it.value }
-        .map { term { value(it) } }
-        .toSet()
+        .mapTo(mutableSetOf()) { term { value(it) } }
 
     override fun visitCallInst(inst: CallInst) {
         val state = builder.getInstructionState(inst) ?: return
@@ -239,7 +238,7 @@ class DefectChecker                                                             
         +IntrinsicAdapter
         +KexIntrinsicsAdapter()
         +EqualsTransformer()
-        +NullityAnnotator(nonNulls.map { term { value(it) } }.toSet())
+        +NullityAnnotator(nonNulls.mapTo(mutableSetOf()) { term { value(it) } })
         +DoubleTypeAdapter()
         +ReflectionInfoAdapter(method, loader)
         +Optimizer()

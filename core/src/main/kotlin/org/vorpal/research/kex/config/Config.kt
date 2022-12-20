@@ -30,9 +30,7 @@ abstract class Config {
     open fun getMultipleStringValue(section: String, name: String, delimiter: String = ",") =
             getStringValue(section, name)
                     ?.split(delimiter)
-                    ?.asSequence()
                     ?.map { it.replace("\\s".toRegex(), "") }
-                    ?.toList()
                     ?: listOf()
 
     open fun getMultipleIntValue(section: String, name: String, delimeter: String = ",") =

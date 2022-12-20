@@ -251,7 +251,7 @@ fun findSubtypesOf(loader: ClassLoader, vararg classes: Class<*>): Set<Class<*>>
     )
     val subclasses = classes.map { reflections.getSubTypesOf(it) }
     val allSubclasses = subclasses.flatten().toSet()
-    return allSubclasses.filter { klass -> subclasses.all { klass in it } }.toSet()
+    return allSubclasses.filterTo(mutableSetOf()) { klass -> subclasses.all { klass in it } }
 }
 
 fun mergeTypes(lhv: java.lang.reflect.Type, rhv: java.lang.reflect.Type, loader: ClassLoader): java.lang.reflect.Type {

@@ -130,8 +130,7 @@ class GeneratorContext(
         get() = when {
             this.isVisible -> methods
                 .filter { it.isStatic }
-                .filter { this@GeneratorContext.accessLevel.canAccess(it.accessModifier) }
-                .toSet()
+                .filterTo(mutableSetOf()) { this@GeneratorContext.accessLevel.canAccess(it.accessModifier) }
 
             else -> setOf()
         }
@@ -150,11 +149,10 @@ class GeneratorContext(
         get() {
             val visibleMethods = methods
                 .filterNot { it.isStatic }
-                .filter { this@GeneratorContext.accessLevel.canAccess(it.accessModifier) }
-                .toSet()
+                .filterTo(mutableSetOf()) { this@GeneratorContext.accessLevel.canAccess(it.accessModifier) }
             return when {
                 isVisible -> visibleMethods
-                else -> visibleMethods.filter { it.isOverride }.toSet()
+                else -> visibleMethods.filterTo(mutableSetOf()) { it.isOverride }
             }
         }
 

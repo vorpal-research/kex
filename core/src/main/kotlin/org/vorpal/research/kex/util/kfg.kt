@@ -100,8 +100,8 @@ fun NameMapper.parseValueOrNull(valueName: String): Value? {
 }
 
 fun Type.getAllSubtypes(tf: TypeFactory): Set<Type> = when (this) {
-    is ClassType -> tf.cm.getAllSubtypesOf(this.klass).map { it.type }.toSet()
-    is ArrayType -> this.component.getAllSubtypes(tf).map { tf.getArrayType(it) }.toSet()
+    is ClassType -> tf.cm.getAllSubtypesOf(this.klass).mapTo(mutableSetOf()) { it.type }
+    is ArrayType -> this.component.getAllSubtypes(tf).mapTo(mutableSetOf()) { tf.getArrayType(it) }
     else -> setOf()
 }
 

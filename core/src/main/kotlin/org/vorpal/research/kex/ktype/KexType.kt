@@ -109,8 +109,7 @@ private val KexInteger.actualBitSize
 fun mergeTypes(tf: TypeFactory, vararg types: KexType): KexType = mergeTypes(tf, types.toList())
 
 fun mergeTypes(tf: TypeFactory, types: Collection<KexType>): KexType {
-    val nonNullTypes = types.filterNot { it is KexNull }
-    val uniqueTypes = nonNullTypes.toSet()
+    val uniqueTypes = types.filterNotTo(mutableSetOf()) { it is KexNull }
     ktassert(uniqueTypes.isNotEmpty()) { log.error("Trying to merge null-only types") }
     return when {
         uniqueTypes.size == 1 -> uniqueTypes.first()
@@ -128,6 +127,7 @@ fun mergeTypes(tf: TypeFactory, types: Collection<KexType>): KexType {
             }
             result
         }
+
         uniqueTypes.all { it is KexLong } -> KexLong
         uniqueTypes.all { it is KexInteger } -> uniqueTypes.maxByOrNull { (it as KexInteger).actualBitSize }!!
         uniqueTypes.all { it is KexFloat } -> KexFloat

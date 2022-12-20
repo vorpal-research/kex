@@ -73,8 +73,7 @@ class ArrayBoundsAdapter : RecollectingTransformer<ArrayBoundsAdapter> {
 
         TermCollector.getFullTermSet(predicate)
             .filterIsInstance<ArrayIndexTerm>()
-            .filter { it !in indices }
-            .toSet()
+            .filterTo(mutableSetOf()) { it !in indices }
             .forEach { adaptIndexTerm(it) }
         return super.transformBase(predicate)
     }
