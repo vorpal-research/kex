@@ -52,9 +52,9 @@ class SymbolicTraceBuilder(
      * required fields
      */
     override val clauses: ClauseState
-        get() = ClauseState(stateBuilder.toList())
+        get() = stateBuilder.toClauseState()
     override val path: PathCondition
-        get() = PathCondition(pathBuilder.toList())
+        get() = pathBuilder.toPathCondition()
     override val concreteValueMap: Map<Term, Descriptor>
         get() = concreteValues.toMap()
     override val termMap: Map<Term, WrappedValue>

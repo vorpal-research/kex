@@ -23,36 +23,37 @@ import org.vorpal.research.kthelper.logging.log
 class BfsPathSelectorImpl(
     override val ctx: ExecutionContext,
 ) : PathSelector {
-    private val coveredPaths = mutableSetOf<PathCondition>()
-    private val candidates = mutableSetOf<PathCondition>()
-    private val deque = dequeOf<SymbolicState>()
+    private val coveredPaths = mutableSetOf<PersistentPathCondition>()
+    private val candidates = mutableSetOf<PersistentPathCondition>()
+    private val deque = dequeOf<PersistentSymbolicState>()
 
     override suspend fun isEmpty(): Boolean = deque.isEmpty()
     override suspend fun hasNext(): Boolean = deque.isNotEmpty()
 
     override suspend fun addExecutionTrace(method: Method, result: ExecutionCompletedResult) {
-        if (result.trace.path in coveredPaths) return
-        coveredPaths += result.trace.path
-        addCandidates(result.trace)
+        val persistentResult = result.trace.toPersistentState()
+        if (persistentResult.path in coveredPaths) return
+        coveredPaths += persistentResult.path
+        addCandidates(persistentResult)
     }
 
-    override suspend fun next(): SymbolicState = deque.pollFirst()
+    override suspend fun next(): PersistentSymbolicState = deque.pollFirst()
 
-    private fun addCandidates(state: SymbolicState) {
-        val currentState = mutableListOf<Clause>()
-        val currentPath = mutableListOf<PathClause>()
+    private fun addCandidates(state: PersistentSymbolicState) {
+        var currentState = PersistentClauseState()
+        var currentPath = PersistentPathCondition()
 
         for (clause in state.clauses) {
             if (clause is PathClause) {
                 val reversed = clause.reversed()
                 if (reversed != null) {
-                    val newPath = PathCondition(currentPath + reversed)
+                    val newPath = currentPath + reversed
                     if (newPath !in candidates) {
                         candidates += newPath
-                        val new = SymbolicStateImpl(
-                            ClauseState(currentState + reversed),
+                        val new = persistentSymbolicState(
+                            currentState + reversed,
                             newPath,
-                            state.concreteValueMap.toMutableMap(),
+                            state.concreteValueMap,
                             state.termMap
                         )
                         deque += new

@@ -12,8 +12,8 @@ import java.nio.file.Path
 private class EmptyTraceCollector : InstructionTraceCollector {
 
     class EmptyState : SymbolicState() {
-        override val clauses = ClauseState()
-        override val path = PathCondition()
+        override val clauses = ClauseStateImpl()
+        override val path = PathConditionImpl()
         override val concreteValueMap = emptyMap<Term, Descriptor>()
         override val termMap = emptyMap<Term, WrappedValue>()
     }
