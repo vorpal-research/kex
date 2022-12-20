@@ -8,6 +8,7 @@ import kotlinx.serialization.InternalSerializationApi
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.serializer
 import org.vorpal.research.kex.config.kexConfig
+import org.vorpal.research.kex.trace.symbolic.ExecutionFailedResult
 import org.vorpal.research.kex.trace.symbolic.ExecutionTimedOutResult
 import org.vorpal.research.kex.trace.symbolic.protocol.Master2ClientConnection
 import org.vorpal.research.kex.trace.symbolic.protocol.Master2WorkerConnection
@@ -105,6 +106,10 @@ class ExecutorMaster(
                 process.destroy()
                 log.debug("Received socket timeout exception")
                 json.encodeToString(ExecutionTimedOutResult::class.serializer(), ExecutionTimedOutResult("timeout"))
+            } catch (e: Throwable) {
+                process.destroy()
+                log.debug("Worker failed with an error", e)
+                json.encodeToString(ExecutionFailedResult::class.serializer(), ExecutionFailedResult(e.message ?: ""))
             }
             log.debug("Worker $id processed result")
             clientConnection.send(result)
@@ -117,7 +122,7 @@ class ExecutorMaster(
     }
 
     private fun handleClient(clientConnection: Master2ClientConnection) = try {
-        val worker = workerQueue.poll()
+        val worker = workerQueue.take()
         log.debug("Selected a worker ${worker.id}")
         worker.processTask(clientConnection)
         workerQueue.add(worker)
