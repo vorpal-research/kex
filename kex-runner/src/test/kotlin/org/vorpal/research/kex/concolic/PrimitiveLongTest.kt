@@ -11,7 +11,6 @@ import org.junit.Test
 class PrimitiveLongTest : ConcolicTest() {
     @Test
     fun primitiveConcolicTest() {
-        // TODO: Fix this test in CI
-        assertCoverage(cm["org/vorpal/research/kex/test/concolic/PrimitiveConcolicTests"], 1.0, 0.6)
+        assertCoverage(cm["org/vorpal/research/kex/test/concolic/PrimitiveConcolicTests"], 1.0)
     }
 }
