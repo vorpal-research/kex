@@ -12,7 +12,7 @@
     <artifactId>kex-z3</artifactId>
 
     <properties>
-        <z3.version>4.8.17</z3.version>
+        <z3.version>4.11.2</z3.version>
     </properties>
 
     <dependencies>

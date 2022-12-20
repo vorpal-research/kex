@@ -18,7 +18,6 @@ import org.vorpal.research.kex.ktype.KexType
 import org.vorpal.research.kex.parameters.Parameters
 import org.vorpal.research.kex.parameters.asDescriptors
 import org.vorpal.research.kex.parameters.concreteParameters
-import org.vorpal.research.kex.parameters.filterStaticFinals
 import org.vorpal.research.kex.reanimator.UnsafeGenerator
 import org.vorpal.research.kex.reanimator.codegen.ExecutorTestCasePrinter
 import org.vorpal.research.kex.reanimator.codegen.klassName
@@ -160,7 +159,7 @@ class InstructionConcolicChecker(
         +ConstantPropagator
         +BoolTypeAdapter(method.cm.type)
         +ClassMethodAdapter(method.cm)
-        +ConstEnumAdapter(ctx)
+//        +ConstEnumAdapter(ctx)
         +ConstStringAdapter(method.cm.type)
         +StringMethodAdapter(ctx.cm)
         +ConcolicArrayLengthAdapter()

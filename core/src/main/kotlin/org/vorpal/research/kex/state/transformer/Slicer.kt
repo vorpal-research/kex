@@ -154,10 +154,10 @@ class Slicer(
 
         val receiver = predicate.receiver
         val lhvTerms = when {
-            receiver != null -> TermCollector.getFullTermSet(receiver).filter(isInterestingTerm).toSet()
+            receiver != null -> TermCollector.getFullTermSet(receiver).filterTo(mutableSetOf(), isInterestingTerm)
             else -> setOf()
         }
-        val rhvTerms = predicate.operands.drop(1).flatMap { TermCollector.getFullTermSet(it) }.toSet()
+        val rhvTerms = predicate.operands.drop(1).flatMapTo(mutableSetOf()) { TermCollector.getFullTermSet(it) }
 
         val asVar = checkVars(lhvTerms, rhvTerms)
         val asPtr = checkPtrs(predicate, lhvTerms, rhvTerms)

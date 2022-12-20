@@ -19,7 +19,7 @@ class StringGenerator(private val fallback: Generator) : Generator {
         descriptor as? ObjectDescriptor ?: throw IllegalArgumentException()
         descriptor.reduce()
 
-        when (val valueDescriptor = descriptor["value", KexArray(KexChar())] as? ArrayDescriptor) {
+        when (val valueDescriptor = descriptor["value", KexArray(KexChar)] as? ArrayDescriptor) {
             null -> StringValue()
             else -> {
                 val actualString = buildString {

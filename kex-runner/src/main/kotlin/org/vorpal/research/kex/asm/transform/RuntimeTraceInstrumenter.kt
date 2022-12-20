@@ -15,7 +15,6 @@ import org.vorpal.research.kfg.type.TypeFactory
 import org.vorpal.research.kfg.type.objectType
 import org.vorpal.research.kfg.type.stringType
 import org.vorpal.research.kfg.visitor.MethodVisitor
-import org.vorpal.research.kthelper.collection.buildList
 
 class RuntimeTraceInstrumenter(override val cm: ClassManager) : MethodVisitor, InstructionBuilder {
     override val ctx: UsageContext = EmptyUsageContext
@@ -30,12 +29,15 @@ class RuntimeTraceInstrumenter(override val cm: ClassManager) : MethodVisitor, I
     override val values: ValueFactory
         get() = cm.value
 
+    private val objectType = types.objectType
+    private val stringType = types.stringType
+
     private fun getNewCollector(): Instruction {
         val proxy =
             cm[TraceCollectorProxy::class.java.canonicalName.replace(Package.CANONICAL_SEPARATOR, Package.SEPARATOR)]
         val getter = proxy.getMethod("currentCollector", cm.type.getRefType(collectorClass))
 
-        return getter.staticCall(proxy, "collector", arrayOf())
+        return getter.staticCall(proxy, "collector", listOf())
     }
 
     private fun List<Instruction>.insertBefore(inst: Instruction) {
@@ -48,30 +50,33 @@ class RuntimeTraceInstrumenter(override val cm: ClassManager) : MethodVisitor, I
         val blockExitInsts = buildList<Instruction> {
             val branchMethod = collectorClass.getMethod(
                 "blockBranch",
-                types.voidType, types.stringType, types.objectType, types.objectType
+                types.voidType, stringType, objectType, objectType
             )
             val (condition, expected) = when (inst.cond) {
                 is CmpInst -> {
                     val cmp = inst.cond as CmpInst
                     val lhv = when {
-                        cmp.lhv.type.isPrimary -> wrapValue(cmp.lhv).also { +it }
+                        cmp.lhv.type.isPrimitive -> wrapValue(cmp.lhv).also { add(it) }
                         else -> cmp.lhv
                     }
                     val rhv = when {
-                        cmp.rhv.type.isPrimary -> wrapValue(cmp.rhv).also { +it }
+                        cmp.rhv.type.isPrimitive -> wrapValue(cmp.rhv).also { add(it) }
                         else -> cmp.rhv
                     }
                     lhv to rhv
                 }
+
                 else -> {
-                    val wrap = wrapValue(inst.cond).also { +it }
+                    val wrap = wrapValue(inst.cond).also { add(it) }
                     wrap to values.nullConstant
                 }
             }
-            +branchMethod.interfaceCall(
-                collectorClass,
-                traceCollector,
-                arrayOf("${inst.parent.name}".asValue, condition, expected)
+            add(
+                branchMethod.interfaceCall(
+                    collectorClass,
+                    traceCollector,
+                    listOf("${inst.parent.name}".asValue, condition, expected)
+                )
             )
         }
         inst.parent.insertBefore(inst, *blockExitInsts.toTypedArray())
@@ -81,115 +86,127 @@ class RuntimeTraceInstrumenter(override val cm: ClassManager) : MethodVisitor, I
         val blockExitInsts = buildList<Instruction> {
             val jumpMethod = collectorClass.getMethod(
                 "blockJump",
-                types.voidType, types.stringType
+                types.voidType, stringType
             )
-            +jumpMethod.interfaceCall(
-                collectorClass,
-                traceCollector,
-                arrayOf("${inst.parent.name}".asValue)
+            add(
+                jumpMethod.interfaceCall(
+                    collectorClass,
+                    traceCollector,
+                    listOf("${inst.parent.name}".asValue)
+                )
             )
         }
         inst.parent.insertBefore(inst, *blockExitInsts.toTypedArray())
     }
 
-    override fun visitSwitchInst(inst: SwitchInst) = buildList<Instruction> {
+    override fun visitSwitchInst(inst: SwitchInst) = buildList {
         val switchMethod = collectorClass.getMethod(
             "blockSwitch",
-            types.voidType, types.stringType, types.objectType
+            types.voidType, stringType, objectType
         )
         val key = run {
             val key = inst.key
             when {
-                key.type.isPrimary -> wrapValue(key).also { +it }
+                key.type.isPrimitive -> wrapValue(key).also { add(it) }
                 else -> key
             }
         }
-        +switchMethod.interfaceCall(
-            collectorClass,
-            traceCollector,
-            arrayOf("${inst.parent.name}".asValue, key)
+        add(
+            switchMethod.interfaceCall(
+                collectorClass,
+                traceCollector,
+                listOf("${inst.parent.name}".asValue, key)
+            )
         )
     }.insertBefore(inst)
 
-    override fun visitTableSwitchInst(inst: TableSwitchInst) = buildList<Instruction> {
+    override fun visitTableSwitchInst(inst: TableSwitchInst) = buildList {
         val switchMethod = collectorClass.getMethod(
             "blockSwitch",
-            types.voidType, types.stringType, types.objectType
+            types.voidType, stringType, objectType
         )
         val key = run {
             val key = inst.index
             when {
-                key.type.isPrimary -> wrapValue(key).also { +it }
+                key.type.isPrimitive -> wrapValue(key).also { add(it) }
                 else -> key
             }
         }
-        +switchMethod.interfaceCall(
-            collectorClass,
-            traceCollector,
-            arrayOf("${inst.parent.name}".asValue, key)
+        add(
+            switchMethod.interfaceCall(
+                collectorClass,
+                traceCollector,
+                listOf("${inst.parent.name}".asValue, key)
+            )
         )
     }.insertBefore(inst)
 
     override fun visitThrowInst(inst: ThrowInst) = when {
-        inst.parent.method.isStaticInitializer -> buildList<Instruction> {
+        inst.parent.method.isStaticInitializer -> buildList {
             val returnMethod = collectorClass.getMethod("staticExit", types.voidType)
-            +returnMethod.interfaceCall(collectorClass, traceCollector, arrayOf())
+            add(returnMethod.interfaceCall(collectorClass, traceCollector, listOf()))
         }
-        else -> buildList<Instruction> {
+
+        else -> buildList {
             val throwMethod = collectorClass.getMethod(
                 "methodThrow",
-                types.voidType, types.stringType, types.getRefType("java/lang/Throwable")
+                types.voidType, stringType, types.getRefType("java/lang/Throwable")
             )
-            +throwMethod.interfaceCall(
-                collectorClass,
-                traceCollector,
-                arrayOf("${inst.parent.name}".asValue, inst.throwable)
+            add(
+                throwMethod.interfaceCall(
+                    collectorClass,
+                    traceCollector,
+                    listOf("${inst.parent.name}".asValue, inst.throwable)
+                )
             )
         }
     }.insertBefore(inst)
 
     override fun visitReturnInst(inst: ReturnInst) = when {
-        inst.parent.method.isStaticInitializer -> buildList<Instruction> {
+        inst.parent.method.isStaticInitializer -> buildList {
             val returnMethod = collectorClass.getMethod("staticExit", types.voidType)
-            +returnMethod.interfaceCall(collectorClass, traceCollector, arrayOf())
+            add(returnMethod.interfaceCall(collectorClass, traceCollector, listOf()))
         }
-        else -> buildList<Instruction> {
+
+        else -> buildList {
             val returnMethod = collectorClass.getMethod(
                 "methodReturn",
-                types.voidType, types.stringType
+                types.voidType, stringType
             )
-            +returnMethod.interfaceCall(collectorClass, traceCollector, arrayOf("${inst.parent.name}".asValue))
+            add(returnMethod.interfaceCall(collectorClass, traceCollector, listOf("${inst.parent.name}".asValue)))
         }
     }.insertBefore(inst)
 
     override fun visitCallInst(inst: CallInst) {
-        buildList<Instruction> {
+        buildList {
             val callMethod = collectorClass.getMethod(
                 "methodCall",
                 types.voidType,
-                types.stringType, types.stringType, types.stringType.asArray,
-                types.stringType, types.stringType, types.stringType, types.stringType.asArray
+                stringType, stringType, stringType.asArray,
+                stringType, stringType, stringType, stringType.asArray
             )
             val sizeVal = values.getInt(inst.method.argTypes.size)
-            val stringArray = types.stringType.newArray(sizeVal).also { +it }
-            val argArray = types.stringType.newArray(sizeVal).also { +it }
+            val stringArray = stringType.newArray(sizeVal).also { add(it) }
+            val argArray = stringType.newArray(sizeVal).also { add(it) }
             for ((index, arg) in inst.method.argTypes.withIndex()) {
-                +stringArray.store(index, arg.asmDesc.asValue)
-                +argArray.store(index, inst.args[index].toString().asValue)
+                add(stringArray.store(index, arg.asmDesc.asValue))
+                add(argArray.store(index, inst.args[index].toString().asValue))
             }
 
             val method = inst.method
-            +callMethod.interfaceCall(
-                collectorClass,
-                traceCollector,
-                arrayOf(
-                    method.klass.fullName.asValue,
-                    method.name.asValue,
-                    stringArray,
-                    method.returnType.asmDesc.asValue,
-                    if (inst.isNameDefined) inst.toString().asValue else values.nullConstant,
-                    if (inst.isStatic) values.nullConstant else inst.callee.toString().asValue,
-                    argArray
+            add(
+                callMethod.interfaceCall(
+                    collectorClass,
+                    traceCollector,
+                    listOf(
+                        method.klass.fullName.asValue,
+                        method.name.asValue,
+                        stringArray,
+                        method.returnType.asmDesc.asValue,
+                        if (inst.isNameDefined) inst.toString().asValue else values.nullConstant,
+                        if (inst.isStatic) values.nullConstant else inst.callee.toString().asValue,
+                        argArray
+                    )
                 )
             )
         }.insertBefore(inst)
@@ -199,12 +216,14 @@ class RuntimeTraceInstrumenter(override val cm: ClassManager) : MethodVisitor, I
         super.visitBasicBlock(bb)
         buildList<Instruction> {
             val entryMethod = collectorClass.getMethod(
-                "blockEnter", types.voidType, types.stringType
+                "blockEnter", types.voidType, stringType
             )
-            +entryMethod.interfaceCall(
-                collectorClass,
-                traceCollector,
-                arrayOf("${bb.name}".asValue)
+            add(
+                entryMethod.interfaceCall(
+                    collectorClass,
+                    traceCollector,
+                    listOf("${bb.name}".asValue)
+                )
             )
         }.insertBefore(bb.first())
     }
@@ -215,49 +234,54 @@ class RuntimeTraceInstrumenter(override val cm: ClassManager) : MethodVisitor, I
         val methodEntryInsts = when {
             method.isStaticInitializer -> buildList {
                 traceCollector = getNewCollector()
-                +traceCollector
+                add(traceCollector)
                 val entryMethod = collectorClass.getMethod(
                     "staticEntry",
-                    types.voidType, types.stringType
+                    types.voidType, stringType
                 )
-                +entryMethod.interfaceCall(
-                    collectorClass,
-                    traceCollector,
-                    arrayOf(method.klass.fullName.asValue)
+                add(
+                    entryMethod.interfaceCall(
+                        collectorClass,
+                        traceCollector,
+                        listOf(method.klass.fullName.asValue)
+                    )
                 )
             }
-            else -> buildList<Instruction> {
+
+            else -> buildList {
                 traceCollector = getNewCollector()
-                +traceCollector
+                add(traceCollector)
                 val entryMethod = collectorClass.getMethod(
                     "methodEnter", types.voidType,
-                    types.stringType, types.stringType, types.stringType.asArray,
-                    types.stringType, types.objectType, types.objectType.asArray
+                    stringType, stringType, stringType.asArray,
+                    stringType, objectType, objectType.asArray
                 )
                 val sizeVal = method.argTypes.size.asValue
-                val stringArray = types.stringType.newArray(sizeVal).also { +it }
-                val argArray = types.objectType.newArray(sizeVal).also { +it }
+                val stringArray = stringType.newArray(sizeVal).also { add(it) }
+                val argArray = objectType.newArray(sizeVal).also { add(it) }
                 for ((index, arg) in method.argTypes.withIndex()) {
-                    +stringArray.store(index, arg.asmDesc.asValue)
+                    add(stringArray.store(index, arg.asmDesc.asValue))
                     val argValue = values.getArgument(index, method, arg).let { argValue ->
                         when {
-                            arg.isPrimary -> wrapValue(argValue).also { +it }
+                            arg.isPrimitive -> wrapValue(argValue).also { add(it) }
                             else -> argValue
                         }
                     }
-                    +argArray.store(index, argValue)
+                    add(argArray.store(index, argValue))
                 }
 
-                +entryMethod.interfaceCall(
-                    collectorClass,
-                    traceCollector,
-                    arrayOf(
-                        method.klass.fullName.asValue,
-                        method.name.asValue,
-                        stringArray,
-                        method.returnType.asmDesc.asValue,
-                        if (method.isStatic || method.isConstructor) values.nullConstant else values.getThis(method.klass),
-                        argArray
+                add(
+                    entryMethod.interfaceCall(
+                        collectorClass,
+                        traceCollector,
+                        listOf(
+                            method.klass.fullName.asValue,
+                            method.name.asValue,
+                            stringArray,
+                            method.returnType.asmDesc.asValue,
+                            if (method.isStatic || method.isConstructor) values.nullConstant else values.getThis(method.klass),
+                            argArray
+                        )
                     )
                 )
             }

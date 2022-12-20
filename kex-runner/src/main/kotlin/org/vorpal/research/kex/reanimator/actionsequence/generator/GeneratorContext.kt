@@ -130,8 +130,7 @@ class GeneratorContext(
         get() = when {
             this.isVisible -> methods
                 .filter { it.isStatic }
-                .filter { this@GeneratorContext.accessLevel.canAccess(it.accessModifier) }
-                .toSet()
+                .filterTo(mutableSetOf()) { this@GeneratorContext.accessLevel.canAccess(it.accessModifier) }
 
             else -> setOf()
         }
@@ -150,11 +149,10 @@ class GeneratorContext(
         get() {
             val visibleMethods = methods
                 .filterNot { it.isStatic }
-                .filter { this@GeneratorContext.accessLevel.canAccess(it.accessModifier) }
-                .toSet()
+                .filterTo(mutableSetOf()) { this@GeneratorContext.accessLevel.canAccess(it.accessModifier) }
             return when {
                 isVisible -> visibleMethods
-                else -> visibleMethods.filter { it.isOverride }.toSet()
+                else -> visibleMethods.filterTo(mutableSetOf()) { it.isOverride }
             }
         }
 
@@ -164,8 +162,8 @@ class GeneratorContext(
         }
 
     private val Method.argTypeInfo
-        get() = this.parameters.associate {
-            val type = it.type.kexType
+        get() = this.argTypes.withIndex().associate {
+            val type = it.value.kexType
             term { arg(type, it.index) } to instantiationManager.getConcreteType(
                 type,
                 cm,
@@ -464,7 +462,7 @@ class GeneratorContext(
 
     val Descriptor.asStringValue: String?
         get() = (this as? ObjectDescriptor)?.let { obj ->
-            val valueDescriptor = obj["value", KexChar().asArray()] as? ArrayDescriptor
+            val valueDescriptor = obj["value", KexChar.asArray()] as? ArrayDescriptor
             valueDescriptor?.let { array ->
                 (0 until array.length).map {
                     (array.elements.getOrDefault(it, descriptor { const(' ') }) as ConstantDescriptor.Char).value

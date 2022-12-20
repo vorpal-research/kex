@@ -10,7 +10,7 @@ import org.vorpal.research.kex.state.transformer.Transformer
 class StringLengthTerm(
     val string: Term
 ) : Term() {
-    override val type = KexInt()
+    override val type = KexInt
     override val name = "$string.length"
     override val subTerms by lazy { listOf(string) }
 

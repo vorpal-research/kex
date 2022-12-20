@@ -10,7 +10,7 @@ import org.vorpal.research.kex.state.transformer.Transformer
 @Serializable
 class ConstLongTerm(val value: Long) : Term() {
     override val name = value.toString()
-    override val type: KexType = KexLong()
+    override val type: KexType = KexLong
     override val subTerms by lazy { listOf<Term>() }
 
     override fun <T: Transformer<T>> accept(t: Transformer<T>) = this

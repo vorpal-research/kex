@@ -82,7 +82,12 @@ interface Transformer<T : Transformer<T>> {
         get() = processingEnv.options[KAPT_GENERATED_SOURCES] ?: unreachable { error("No source directory") }
 
 
-    private fun delegate(baseClass: String, types: Set<String>, baseName: String = baseClass, checkStub: Boolean = false) = buildString {
+    private fun delegate(
+        baseClass: String,
+        types: Set<String>,
+        baseName: String = baseClass,
+        checkStub: Boolean = false
+    ) = buildString {
         appendLine("${SHIFT}private fun delegateType(argument: $baseClass): $baseClass = when (argument) {")
         for (type in types) {
             appendLine("${DOUBLE_SHIFT}is $type$baseName -> transform$type$baseName(argument)")
@@ -100,6 +105,7 @@ interface Transformer<T : Transformer<T>> {
                     appendLine("${TRIPLE_SHIFT}if (res is Stub) res")
                     appendLine("${TRIPLE_SHIFT}else delegateType(res)")
                 }
+
                 else -> {
                     appendLine("${TRIPLE_SHIFT}delegateType(res)")
                 }
@@ -156,9 +162,21 @@ interface Transformer<T : Transformer<T>> {
             buildString {
                 appendLine(header)
 
-                appendLine(delegate(predicateStates.baseClass, predicateStates.inheritors.map { it.name }.toSet(), baseName = "State"))
-                appendLine(delegate(terms.baseClass, terms.inheritors.map { it.name }.toSet()))
-                appendLine(delegate(predicates.baseClass, predicates.inheritors.map { it.name }.toSet(), checkStub = true))
+                appendLine(
+                    delegate(
+                        predicateStates.baseClass,
+                        predicateStates.inheritors.mapTo(mutableSetOf()) { it.name },
+                        baseName = "State"
+                    )
+                )
+                appendLine(delegate(terms.baseClass, terms.inheritors.mapTo(mutableSetOf()) { it.name }))
+                appendLine(
+                    delegate(
+                        predicates.baseClass,
+                        predicates.inheritors.mapTo(mutableSetOf()) { it.name },
+                        checkStub = true
+                    )
+                )
 
                 appendLine(predicateState)
                 appendLine()

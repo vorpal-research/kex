@@ -43,7 +43,7 @@ class KexIntrinsicsAdapter : RecollectingTransformer<KexIntrinsicsAdapter> {
             }
             kim.kexNotNull(method.cm) -> {
                 val value = call.arguments[0]
-                val term = term { generate(KexBool()) }
+                val term = term { generate(KexBool) }
                 listOf(
                     state { term equality (value eq null) },
                     assume { term equality false }
@@ -60,14 +60,14 @@ class KexIntrinsicsAdapter : RecollectingTransformer<KexIntrinsicsAdapter> {
             }
             in kim.kexContainsMethods(method.cm) -> {
                 val (array, value) = call.arguments
-                val length = generate(KexInt())
+                val length = generate(KexInt)
                 state {
                     length equality array.length()
                 }
                 state {
                     lhv() equality (value `in` array)
                 }
-                val temp = generate(KexBool())
+                val temp = generate(KexBool)
                 state {
                     temp equality (length gt 0)
                 }
@@ -78,19 +78,19 @@ class KexIntrinsicsAdapter : RecollectingTransformer<KexIntrinsicsAdapter> {
             kim.kexContains(method.cm) -> {
                 val (array, value) = call.arguments
                 val start = const(0)
-                val length = generate(KexInt())
+                val length = generate(KexInt)
                 state {
                     length equality array.length()
                 }
                 state {
                     lhv() equality exists(start, length) {
-                        val index = value(KexInt(), "ind")
-                        lambda(KexBool(), listOf(index)) {
+                        val index = value(KexInt, "ind")
+                        lambda(KexBool, listOf(index)) {
                             array[index].load() equls value
                         }
                     }
                 }
-                val temp = generate(KexBool())
+                val temp = generate(KexBool)
                 state {
                     temp equality (length gt 0)
                 }

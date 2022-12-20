@@ -2,14 +2,12 @@ package org.vorpal.research.kex.asm.util
 
 import org.vorpal.research.kfg.ClassManager
 import org.vorpal.research.kfg.ir.Field
-import org.vorpal.research.kfg.ir.MethodDescriptor
 import org.vorpal.research.kfg.ir.value.UsageContext
 import org.vorpal.research.kfg.ir.value.Value
 import org.vorpal.research.kfg.ir.value.instruction.Instruction
 import org.vorpal.research.kfg.ir.value.instruction.InstructionBuilder
 import org.vorpal.research.kfg.ir.value.instruction.InstructionFactory
 import org.vorpal.research.kfg.type.*
-import org.vorpal.research.kthelper.collection.buildList
 
 interface Wrapper : InstructionBuilder
 
@@ -20,7 +18,7 @@ abstract class PrintStreamWrapper(final override val cm: ClassManager, override 
     abstract fun open(): List<Instruction>
 
     private fun getPrintArgType(value: Value) = when {
-        value.type.isPrimary -> value.type
+        value.type.isPrimitive -> value.type
         value.type == types.stringType -> value.type
         else -> types.objectType
     }
@@ -28,7 +26,7 @@ abstract class PrintStreamWrapper(final override val cm: ClassManager, override 
     private fun call(methodName: String, value: Value): List<Instruction> {
         val printArg = getPrintArgType(value)
         val printMethod = printStreamClass.getMethod(methodName, types.voidType, printArg)
-        val append = printMethod.virtualCall(printStreamClass, stream, arrayOf(value))
+        val append = printMethod.virtualCall(printStreamClass, stream, listOf(value))
         return listOf(append)
     }
 
@@ -41,12 +39,12 @@ abstract class PrintStreamWrapper(final override val cm: ClassManager, override 
 
     fun flush(): List<Instruction> = buildList {
         val flushMethod = printStreamClass.getMethod("flush", types.voidType)
-        +flushMethod.virtualCall(printStreamClass, stream, arrayOf())
+        add(flushMethod.virtualCall(printStreamClass, stream, listOf()))
     }
 
     fun close(): List<Instruction> = buildList {
         val closeMethod = printStreamClass.getMethod("close", types.voidType)
-        +closeMethod.virtualCall(printStreamClass, stream, arrayOf())
+        add(closeMethod.virtualCall(printStreamClass, stream, listOf()))
     }
 }
 
@@ -58,7 +56,7 @@ class StringBuilderWrapper(override val cm: ClassManager, override val ctx: Usag
 
     init {
         val initMethod = klass.getMethod("<init>", types.voidType)
-        insns.add(initMethod.specialCall(klass, builder, arrayOf()))
+        insns.add(initMethod.specialCall(klass, builder, listOf()))
     }
 
     fun append(vararg values: Value) {
@@ -71,18 +69,18 @@ class StringBuilderWrapper(override val cm: ClassManager, override val ctx: Usag
         else -> {
             val appendArg = when {
                 value.type is CharType -> types.intType
-                value.type.isPrimary -> value.type
+                value.type.isPrimitive -> value.type
                 value.type == types.stringType -> value.type
                 else -> types.objectType
             }
             val appendMethod = klass.getMethod("append", stringBuilderType, appendArg)
-            insns.add(appendMethod.virtualCall(klass, builder, arrayOf(value)))
+            insns.add(appendMethod.virtualCall(klass, builder, listOf(value)))
         }
     }
 
     fun toStringWrapper(): Instruction {
         val toStringMethod = klass.getMethod("toString", types.stringType)
-        val string = toStringMethod.virtualCall(klass, "${name}Str", builder, arrayOf())
+        val string = toStringMethod.virtualCall(klass, "${name}Str", builder, listOf())
         insns.add(string)
         return string
     }
@@ -125,7 +123,7 @@ class ReflectionWrapper(override val cm: ClassManager, override val ctx: UsageCo
     fun getClass(value: Value): Instruction {
         val type = types.objectType as ClassType
         val getClassMethod = type.klass.getMethod("loadClass", types.getRefType(classClass))
-        return getClassMethod.virtualCall(type.klass, "klass", value, arrayOf())
+        return getClassMethod.virtualCall(type.klass, "klass", value, listOf())
     }
 
     fun getDeclaredField(klass: Value, name: String): Instruction {
@@ -133,18 +131,18 @@ class ReflectionWrapper(override val cm: ClassManager, override val ctx: UsageCo
             "getDeclaredField",
             types.getRefType(fieldClass), types.stringType
         )
-        return getFieldMethod.virtualCall(classClass, name, klass, arrayOf(values.getString(name)))
+        return getFieldMethod.virtualCall(classClass, name, klass, listOf(values.getString(name)))
     }
 
     fun setAccessible(field: Value): Instruction {
         val setAccessibleMethod =
             fieldClass.getMethod("setAccessible", types.voidType, types.boolType)
-        return setAccessibleMethod.virtualCall(fieldClass, "set", field, arrayOf(values.trueConstant))
+        return setAccessibleMethod.virtualCall(fieldClass, "set", field, listOf(values.trueConstant))
     }
 
     fun getField(field: Value, owner: Value): Instruction {
         val getMethod = fieldClass.getMethod("get", types.objectType, types.objectType)
-        return getMethod.virtualCall(fieldClass, "get", field, arrayOf(owner))
+        return getMethod.virtualCall(fieldClass, "get", field, listOf(owner))
     }
 }
 
@@ -155,7 +153,7 @@ class ValuePrinter(override val cm: ClassManager, override val ctx: UsageContext
 
     private fun getIdentityHashCode(value: Value): Instruction {
         val hashCodeMethod = system.getMethod("identityHashCode", types.intType, types.objectType)
-        val result = hashCodeMethod.staticCall(system, arrayOf(value))
+        val result = hashCodeMethod.staticCall(system, listOf(value))
         insns.add(result)
         return result
     }
@@ -210,12 +208,13 @@ class ValuePrinter(override val cm: ClassManager, override val ctx: UsageContext
         val type = value.type
         val sb = StringBuilderWrapper(cm, ctx, "sb")
         when {
-            type.isPrimary -> sb.append(value)
+            type.isPrimitive -> sb.append(value)
             type == types.stringType -> {
                 sb.append("\"")
                 sb.append(value)
                 sb.append("\"")
             }
+
             type is ArrayType -> sb.append(printArray(value, type))
             type is ClassType -> sb.append(printClass(value, type))
             type is NullType -> sb.append("null")
@@ -240,37 +239,34 @@ class FileOutputStreamWrapper(
 
     override fun open(): List<Instruction> = buildList {
         val file = fileClass.new()
-        +file
+        add(file)
 
         val initMethod = fileClass.getMethod("<init>", types.voidType, types.stringType)
-        val params = arrayOf(values.getString(fileName))
-        +initMethod.specialCall(fileClass, file, params)
+        add(initMethod.specialCall(fileClass, file, listOf(values.getString(fileName))))
 
         val createMethod = fileClass.getMethod("createNewFile", types.boolType)
-        +createMethod.virtualCall(fileClass, file, arrayOf())
+        add(createMethod.virtualCall(fileClass, file, listOf()))
 
         val fos = fileOutputStreamClass.new()
-        +fos
+        add(fos)
         val fosInitMethod = fileOutputStreamClass.getMethod(
             "<init>",
             types.voidType, types.getRefType(fileClass), types.boolType
         )
-        val fosParams = arrayOf(file, values.getBool(append))
-        +fosInitMethod.specialCall(fileOutputStreamClass, fos, fosParams)
+        add(fosInitMethod.specialCall(fileOutputStreamClass, fos, listOf(file, values.getBool(append))))
 
-        +stream
+        add(stream)
         val outputStreamClass = types.getRefType("java/io/OutputStream")
         val psInitMethod = printStreamClass.getMethod("<init>", types.voidType, outputStreamClass, types.boolType)
-        val psParams = arrayOf(fos, values.getBool(autoFlush))
-        +psInitMethod.specialCall(printStreamClass, stream, psParams)
+        add(psInitMethod.specialCall(printStreamClass, stream, listOf(fos, values.getBool(autoFlush))))
     }
 
     fun printValue(value: Value): List<Instruction> {
         val printer = ValuePrinter(cm, ctx)
         val str = printer.print(value)
         return buildList {
-            +printer.insns
-            +print(str)
+            addAll(printer.insns)
+            addAll(print(str))
         }
     }
 }

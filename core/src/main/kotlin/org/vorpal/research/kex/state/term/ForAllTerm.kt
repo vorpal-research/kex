@@ -12,7 +12,7 @@ class ForAllTerm(
     val end: Term,
     val body: Term
 ) : Term() {
-    override val type = KexBool()
+    override val type = KexBool
     override val name = "forAll($start, $end, $body)"
     override val subTerms by lazy { listOf(start, end, body) }
 

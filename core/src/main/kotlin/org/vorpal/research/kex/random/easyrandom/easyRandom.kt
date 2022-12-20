@@ -48,7 +48,8 @@ class EasyRandomDriver(val config: BeansConfig = defaultConfig) : Randomizer() {
             val minStringLength = kexConfig.getIntValue("easy-random", "minStringLength", 0)
             val maxStringLength = kexConfig.getIntValue("easy-random", "maxStringLength", 1000)
             val attempts = kexConfig.getIntValue("easy-random", "generationAttempts", 1)
-            val excludes = kexConfig.getMultipleStringValue("easy-random", "exclude").map { Package.parse(it) }.toSet()
+            val excludes = kexConfig.getMultipleStringValue("easy-random", "exclude")
+                .mapTo(mutableSetOf()) { Package.parse(it) }
             val ignoreErrors = kexConfig.getBooleanValue("easy-random", "ignoreErrors", true)
             val bypassSetters = kexConfig.getBooleanValue("easy-random", "bypassSetters", true)
             val ignoreFieldInitializationErrors =
@@ -108,6 +109,7 @@ class EasyRandomDriver(val config: BeansConfig = defaultConfig) : Randomizer() {
                     @Suppress("UNCHECKED_CAST")
                     createNewInstance(randomConcreteSubType) as T
                 }
+
                 else -> try {
                     createNewInstance(type)
                 } catch (e: Error) {
@@ -166,6 +168,7 @@ class EasyRandomDriver(val config: BeansConfig = defaultConfig) : Randomizer() {
             )
             cr.randomValue
         }
+
         Map::class.java.isAssignableFrom(klass) -> {
             val mr = CollectionRandomizer.generateMap(
                 klass,
@@ -178,6 +181,7 @@ class EasyRandomDriver(val config: BeansConfig = defaultConfig) : Randomizer() {
             )
             mr.randomValue
         }
+
         else -> generateObject(klass)
     }
 
@@ -197,6 +201,7 @@ class EasyRandomDriver(val config: BeansConfig = defaultConfig) : Randomizer() {
                 )
                 cr.randomValue
             }
+
             Map::class.java.isAssignableFrom(rawType) -> {
                 ktassert(type.actualTypeArguments.size == 2)
                 val key = type.actualTypeArguments.first()
@@ -212,6 +217,7 @@ class EasyRandomDriver(val config: BeansConfig = defaultConfig) : Randomizer() {
                 )
                 mr.randomValue
             }
+
             else -> {
                 val obj = next(rawType, depth)
                 if (obj != null) {
@@ -242,6 +248,7 @@ class EasyRandomDriver(val config: BeansConfig = defaultConfig) : Randomizer() {
             assert(type.upperBounds.size == 1) { log.debug("Unexpected size of wildcard type upper bounds: $type") }
             generateType(type.upperBounds.first(), depth)
         }
+
         else -> throw UnknownTypeException(type.toString())
     }
 

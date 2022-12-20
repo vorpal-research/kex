@@ -132,7 +132,7 @@ class Contract(val value: String = ""/*, pure: Boolean = false*/) : AnnotationIn
         if (!inlineEnabled && records.any { it.result == Constraints.New }) {
             for ((i, record) in records.asSequence().withIndex().filter { it.value.result == Constraints.New }) {
                 val params = record.params
-                val argUnion = term { value(KexBool(), "%contract$id.$i.args") }
+                val argUnion = term { value(KexBool, "%contract$id.$i.args") }
                 result += axiom {
                     var accumulator: Term = const(true)
                     for (j in params.indices) {
@@ -143,7 +143,7 @@ class Contract(val value: String = ""/*, pure: Boolean = false*/) : AnnotationIn
                 }
                 result += listOf(
                         path { argUnion equality true }.wrap() + state {
-                            if (returnTerm.type is KexArray) returnTerm.new(generate(KexInt()))
+                            if (returnTerm.type is KexArray) returnTerm.new(generate(KexInt))
                             else returnTerm.new()
                         },
                         path { argUnion equality false }.wrap()
@@ -154,7 +154,7 @@ class Contract(val value: String = ""/*, pure: Boolean = false*/) : AnnotationIn
         if (!inlineEnabled && records.any { it.result == Constraints.Empty }) {
             for ((i, record) in records.asSequence().withIndex().filter { it.value.result == Constraints.Empty }) {
                 val params = record.params
-                val argUnion = term { value(KexBool(), "%contract$id.$i.args") }
+                val argUnion = term { value(KexBool, "%contract$id.$i.args") }
                 result += axiom {
                     var accumulator: Term = const(true)
                     for (j in params.indices) {
@@ -206,7 +206,7 @@ class Contract(val value: String = ""/*, pure: Boolean = false*/) : AnnotationIn
         if (records.any { it.result in effects2 }) {
             for ((i, record) in records.withIndex().filter { it.value.result in effects2 }) {
                 val params = record.params
-                val argUnion = term { value(KexBool(), "%contract$id.$i.args") }
+                val argUnion = term { value(KexBool, "%contract$id.$i.args") }
                 result += assume {
                     var accumulator: Term = const(true)
                     for (j in params.indices) {

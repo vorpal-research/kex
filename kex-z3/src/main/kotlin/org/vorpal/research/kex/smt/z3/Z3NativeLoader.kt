@@ -11,7 +11,7 @@ import kotlin.io.path.listDirectoryEntries
 
 abstract class Z3NativeLoader {
     companion object {
-        const val Z3_VERSION = "4.8.17"
+        const val Z3_VERSION = "4.11.2"
         private val libraries = listOf("libz3", "libz3java")
         private val vcWinLibrariesToLoadBefore = listOf("vcruntime140", "vcruntime140_1")
         private val supportedArchs = setOf("amd64", "x86_64")

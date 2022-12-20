@@ -72,12 +72,12 @@ class DescriptorChecker(
 
     private val TypeInfoMap.rtMapped
         get() = mapValues {
-            it.value.map { ti ->
+            it.value.mapTo(mutableSetOf()) { ti ->
                 when (ti) {
                     is NullabilityInfo -> ti
                     is CastTypeInfo -> CastTypeInfo(ti.type.rtMapped)
                 }
-            }.toSet()
+            }
         }
 
     private fun Checker.createState(method: Method, block: BasicBlock): PredicateState? {
@@ -112,7 +112,7 @@ class DescriptorChecker(
     }
 
 
-    private fun Set<TypeInfo>.concretize(): Set<TypeInfo> = this.map { tryOrNull { it.concretize() } ?: it }.toSet()
+    private fun Set<TypeInfo>.concretize(): Set<TypeInfo> = this.mapTo(mutableSetOf()) { tryOrNull { it.concretize() } ?: it }
     private fun TypeInfo.concretize(): TypeInfo = when (this) {
         is CastTypeInfo -> CastTypeInfo(instantiationManager.getConcreteType(this.type, cm, ctx.accessLevel, ctx.random))
         else -> this

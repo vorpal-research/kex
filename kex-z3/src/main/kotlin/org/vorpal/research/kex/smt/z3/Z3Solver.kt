@@ -248,8 +248,7 @@ class Z3Solver(val tf: TypeFactory) : Z3NativeLoader(), AbstractSMTSolver {
         val typeMap = hashMapOf<Term, KexType>()
 
         for ((type, value) in ef.typeMap) {
-            val actualValue = Z3Unlogic.undo(value.expr)
-            val index = when (actualValue) {
+            val index = when (val actualValue = Z3Unlogic.undo(value.expr)) {
                 is ConstStringTerm -> term { const(actualValue.value.indexOf('1')) }
                 else -> term { const(log2(actualValue.numericValue.toDouble()).toInt()) }
             }
@@ -346,7 +345,7 @@ class Z3Solver(val tf: TypeFactory) : Z3NativeLoader(), AbstractSMTSolver {
                             ctx,
                             ptr,
                             memspace,
-                            KexInt(),
+                            KexInt,
                             model,
                             "length"
                         )

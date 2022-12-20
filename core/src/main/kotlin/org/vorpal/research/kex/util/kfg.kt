@@ -15,23 +15,31 @@ import org.vorpal.research.kthelper.assert.unreachable
 import org.vorpal.research.kthelper.compareTo
 import org.vorpal.research.kthelper.logging.log
 
-fun Type.asArray(tf: TypeFactory) = tf.getArrayType(this)
 val Type.javaDesc get() = this.name.replace(Package.SEPARATOR, Package.CANONICAL_SEPARATOR)
 
 fun Package.isParent(klass: Class) = isParent(klass.pkg)
 
 fun InstructionBuilder.wrapValue(value: Value): Instruction {
-    val wrapperType = cm.type.getWrapper(value.type as PrimaryType) as ClassType
+    val wrapperType = cm.type.getWrapper(value.type as PrimitiveType) as ClassType
     val wrapperClass = wrapperType.klass
     val valueOfMethod = wrapperClass.getMethod("valueOf", wrapperType, value.type)
-    return valueOfMethod.staticCall(wrapperClass, arrayOf(value))
+    return valueOfMethod.staticCall(wrapperClass, listOf(value))
 }
 
 fun Instruction.insertBefore(instructions: List<Instruction>) {
     this.parent.insertBefore(this, *instructions.toTypedArray())
 }
+
+fun Instruction.insertBefore(vararg instructions: Instruction) {
+    this.parent.insertBefore(this, *instructions)
+}
+
 fun Instruction.insertAfter(instructions: List<Instruction>) {
     this.parent.insertAfter(this, *instructions.toTypedArray())
+}
+
+fun Instruction.insertAfter(vararg instructions: Instruction) {
+    this.parent.insertAfter(this, *instructions)
 }
 
 val Instruction.next: Instruction? get() = parent.instructions.getOrNull(parent.indexOf(this) + 1)
@@ -55,19 +63,20 @@ fun Number.apply(opcode: CmpOpcode, other: Number) = when (opcode) {
     CmpOpcode.EQ -> this == other
     CmpOpcode.NEQ -> this != other
     CmpOpcode.LT -> this < other
-    CmpOpcode.GT  -> this > other
+    CmpOpcode.GT -> this > other
     CmpOpcode.LE -> this <= other
     CmpOpcode.GE -> this >= other
     CmpOpcode.CMP -> this.compareTo(other)
     CmpOpcode.CMPG -> this.compareTo(other)
     CmpOpcode.CMPL -> this.compareTo(other)
 }
+
 fun Number.apply(opcode: CmpOpcode, other: Char) = this.apply(opcode, other.code)
 fun Char.apply(opcode: CmpOpcode, other: Number) = this.code.apply(opcode, other)
 fun Char.apply(opcode: CmpOpcode, other: Char) = this.code.apply(opcode, other.code)
 
 fun NameMapper.parseValue(valueName: String): Value =
-    parseValueOrNull(valueName) ?:  unreachable { log.error("Unknown value name $valueName for object cmp") }
+    parseValueOrNull(valueName) ?: unreachable { log.error("Unknown value name $valueName for object cmp") }
 
 fun NameMapper.parseValueOrNull(valueName: String): Value? {
     val values = method.cm.value
@@ -90,8 +99,8 @@ fun NameMapper.parseValueOrNull(valueName: String): Value? {
 }
 
 fun Type.getAllSubtypes(tf: TypeFactory): Set<Type> = when (this) {
-    is ClassType -> tf.cm.getAllSubtypesOf(this.klass).map { it.type }.toSet()
-    is ArrayType -> this.component.getAllSubtypes(tf).map { tf.getArrayType(it) }.toSet()
+    is ClassType -> tf.cm.getAllSubtypesOf(this.klass).mapTo(mutableSetOf()) { it.type }
+    is ArrayType -> this.component.getAllSubtypes(tf).mapTo(mutableSetOf()) { tf.getArrayType(it) }
     else -> setOf()
 }
 

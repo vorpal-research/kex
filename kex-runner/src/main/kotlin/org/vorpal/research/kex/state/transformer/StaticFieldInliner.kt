@@ -25,8 +25,7 @@ import org.vorpal.research.kthelper.tryOrNull
 
 val ignores by lazy {
     kexConfig.getMultipleStringValue("inliner", "static-ignore")
-        .map { it.replace(".", "/") }
-        .toSet()
+        .mapTo(mutableSetOf()) { it.replace(".", "/") }
 }
 
 class StaticFieldInliner(
@@ -137,7 +136,7 @@ class StaticFieldInliner(
         val staticInitializers = TermCollector.getFullTermSet(ps)
             .asSequence()
             .filterIsInstance<FieldLoadTerm>()
-            .mapNotNull {
+            .mapNotNullTo(mutableSetOf()) {
                 val field = it.field as FieldTerm
                 tryOrNull { field.unmappedKfgField(cm) }?.let { kfgField ->
                     if (kfgField.isStatic && kfgField.isFinal) {
@@ -146,9 +145,8 @@ class StaticFieldInliner(
                         null
                     }
                 }
-            }.toSet()
-            .filterNot { it.klass.fullName in ignores }
-            .toSet()
+            }
+            .filterNotTo(mutableSetOf()) { it.klass.fullName in ignores }
         for (field in staticInitializers) {
             val descriptor = getStaticField(ctx, psa, field)
             currentBuilder += descriptor.query

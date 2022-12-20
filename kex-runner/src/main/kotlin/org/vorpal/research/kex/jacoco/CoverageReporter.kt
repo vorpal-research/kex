@@ -326,7 +326,7 @@ class CoverageReporter(
         cm: ClassManager,
         coverageBuilder: CoverageBuilder
     ): Set<ClassCoverageInfo> =
-        coverageBuilder.classes.map {
+        coverageBuilder.classes.mapTo(mutableSetOf()) {
             val kfgClass = cm[it.name]
             val classCov = getCommonCounters<ClassCoverageInfo>(it.name, it)
             for (mc in it.methods) {
@@ -334,7 +334,7 @@ class CoverageReporter(
                 classCov.methods += getCommonCounters<MethodCoverageInfo>(kfgMethod.prototype.fullyQualifiedName, mc)
             }
             classCov
-        }.toSet()
+        }
 
     private fun getMethodCoverage(coverageBuilder: CoverageBuilder, method: Method): CommonCoverageInfo? {
         for (mc in coverageBuilder.classes.iterator().next().methods) {

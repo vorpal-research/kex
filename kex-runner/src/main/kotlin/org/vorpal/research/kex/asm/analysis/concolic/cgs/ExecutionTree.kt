@@ -1,13 +1,12 @@
 package org.vorpal.research.kex.asm.analysis.concolic.cgs
 
+import kotlinx.collections.immutable.PersistentList
+import kotlinx.collections.immutable.toPersistentList
 import org.vorpal.research.kex.state.predicate.EqualityPredicate
 import org.vorpal.research.kex.state.predicate.PredicateType
 import org.vorpal.research.kex.state.predicate.receiver
 import org.vorpal.research.kex.state.term.term
-import org.vorpal.research.kex.trace.symbolic.Clause
-import org.vorpal.research.kex.trace.symbolic.PathClause
-import org.vorpal.research.kex.trace.symbolic.PathClauseType
-import org.vorpal.research.kex.trace.symbolic.SymbolicState
+import org.vorpal.research.kex.trace.symbolic.*
 import org.vorpal.research.kfg.ir.value.instruction.BranchInst
 import org.vorpal.research.kfg.ir.value.instruction.Instruction
 import org.vorpal.research.kfg.ir.value.instruction.SwitchInst
@@ -20,7 +19,7 @@ import org.vorpal.research.kthelper.logging.log
 sealed class Vertex(val clause: Clause) : PredecessorGraph.PredecessorVertex<Vertex> {
     val upEdges = mutableSetOf<Vertex>()
     val downEdges = mutableSetOf<Vertex>()
-    val states = mutableMapOf<List<PathClause>, SymbolicState>()
+    val states = mutableMapOf<PersistentPathCondition, PersistentSymbolicState>()
 
     override val predecessors: Set<Vertex>
         get() = upEdges
@@ -28,7 +27,7 @@ sealed class Vertex(val clause: Clause) : PredecessorGraph.PredecessorVertex<Ver
     override val successors: Set<Vertex>
         get() = downEdges
 
-    operator fun set(path: List<PathClause>, state: SymbolicState) {
+    operator fun set(path: PersistentPathCondition, state: PersistentSymbolicState) {
         states[path] = state
     }
 
@@ -51,9 +50,9 @@ class PathVertex(clause: PathClause) : Vertex(clause) {
 }
 
 data class Context(
-    val context: List<PathVertex>,
-    val fullPath: List<PathClause>,
-    val symbolicState: SymbolicState
+    val context: PersistentList<PathVertex>,
+    val fullPath: PersistentPathCondition,
+    val symbolicState: PersistentSymbolicState
 ) {
     val condition get() = context.last()
     val size get() = context.size
@@ -91,15 +90,17 @@ class ExecutionTree : PredecessorGraph<Vertex>, Viewable {
 
     fun getBranches(depth: Int): Set<PathVertex> = getBranchDepths().filter { it.value == depth }.keys
 
-    fun addTrace(symbolicState: SymbolicState) {
+    fun addTrace(symbolicState: PersistentSymbolicState) {
         var prevVertex: Vertex? = null
 
+        var pathClauses = 1
         for (current in symbolicState.clauses) {
             val currentVertex = _nodes.getOrPut(current) {
                 when (current) {
                     is PathClause -> PathVertex(current).also {
                         edges[current] = it
                     }
+
                     else -> ClauseVertex(current).also {
                         if (_root == null) {
                             _root = it
@@ -108,7 +109,7 @@ class ExecutionTree : PredecessorGraph<Vertex>, Viewable {
                 }
             }
             if (currentVertex is PathVertex) {
-                currentVertex[symbolicState.subPath(current as PathClause)] = symbolicState
+                currentVertex[symbolicState.path.subPath(0, pathClauses++)] = symbolicState
             }
 
             prevVertex?.let { prev ->
@@ -140,10 +141,11 @@ class ExecutionTree : PredecessorGraph<Vertex>, Viewable {
 
     fun contexts(pathVertex: PathVertex, k: Int): List<Context> = pathVertex.states.map { (path, state) ->
         Context(
-            path.reversed()
+            path.builder()
                 .map { edges[it]!! }
                 .filter { !it.dominates(pathVertex) }
-                .take(k),
+                .take(k)
+                .toPersistentList(),
             path,
             state
         )
@@ -183,37 +185,37 @@ class ExecutionTree : PredecessorGraph<Vertex>, Viewable {
 
             return when (pathClause.type) {
                 PathClauseType.OVERLOAD_CHECK -> false
-                PathClauseType.TYPE_CHECK -> allPredicates.map { it as EqualityPredicate }.map { it.rhv }
-                    .toSet().size == 2
-                PathClauseType.NULL_CHECK -> allPredicates.map { it as EqualityPredicate }.map { it.rhv }
-                    .toSet().size == 2
-                PathClauseType.BOUNDS_CHECK -> allPredicates.map { it as EqualityPredicate }.toSet().size == 2
+                PathClauseType.TYPE_CHECK -> allPredicates.map { it as EqualityPredicate }
+                    .mapTo(mutableSetOf()) { it.rhv }.size == 2
+
+                PathClauseType.NULL_CHECK -> allPredicates.map { it as EqualityPredicate }
+                    .mapTo(mutableSetOf()) { it.rhv }.size == 2
+
+                PathClauseType.BOUNDS_CHECK -> allPredicates.mapTo(mutableSetOf()) { it as EqualityPredicate }.size == 2
                 PathClauseType.CONDITION_CHECK -> when (val inst = clause.instruction) {
-                    is BranchInst -> allPredicates.map { it as EqualityPredicate }.toSet().size == 2
+                    is BranchInst -> allPredicates.mapTo(mutableSetOf()) { it as EqualityPredicate }.size == 2
                     is SwitchInst -> {
-                        val visitedValues = allPredicates
-                            .map {
-                                when (it) {
-                                    is EqualityPredicate -> it.rhv
-                                    else -> it.receiver
-                                }
+                        val visitedValues = allPredicates.mapTo(mutableSetOf()) {
+                            when (it) {
+                                is EqualityPredicate -> it.rhv
+                                else -> it.receiver
                             }
-                            .toSet()
-                        val keys = inst.branches.keys.map { term { value(it) } }.toSet()
+                        }
+                        val keys = inst.branches.keys.mapTo(mutableSetOf()) { term { value(it) } }
                         keys.all { it in visitedValues } && visitedValues.size >= keys.size + 1
                     }
+
                     is TableSwitchInst -> {
-                        val visitedValues = allPredicates
-                            .map {
-                                when (it) {
-                                    is EqualityPredicate -> it.rhv
-                                    else -> it.receiver
-                                }
+                        val visitedValues = allPredicates.mapTo(mutableSetOf()) {
+                            when (it) {
+                                is EqualityPredicate -> it.rhv
+                                else -> it.receiver
                             }
-                            .toSet()
-                        val keys = inst.range.map { term { const(it) } }.toSet()
+                        }
+                        val keys = inst.range.mapTo(mutableSetOf()) { term { const(it) } }
                         keys.all { it in visitedValues } && visitedValues.size >= keys.size + 1
                     }
+
                     else -> false.also {
                         log.error("Unknown instruction in condition check ${inst.print()}")
                     }

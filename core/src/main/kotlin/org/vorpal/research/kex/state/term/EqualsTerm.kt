@@ -13,7 +13,7 @@ class EqualsTerm(
     val rhv: Term
 ) : Term() {
     override val name = "${lhv}.equals($rhv)"
-    override val type: KexType = KexBool()
+    override val type: KexType = KexBool
     override val subTerms: List<Term> by lazy {
         listOf(lhv, rhv)
     }

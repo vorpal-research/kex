@@ -96,7 +96,7 @@ val Type.kexType get() = KexType.fromType(this)
 val KfgClass.kexType get() = KexType.fromClass(this)
 val KfgClass.type get() = this.cm.type.getRefType(this.fullName)
 
-private val KexIntegral.actualBitSize
+private val KexInteger.actualBitSize
     get() = when (this) {
         is KexBool -> 1
         is KexByte -> 8
@@ -109,8 +109,7 @@ private val KexIntegral.actualBitSize
 fun mergeTypes(tf: TypeFactory, vararg types: KexType): KexType = mergeTypes(tf, types.toList())
 
 fun mergeTypes(tf: TypeFactory, types: Collection<KexType>): KexType {
-    val nonNullTypes = types.filterNot { it is KexNull }
-    val uniqueTypes = nonNullTypes.toSet()
+    val uniqueTypes = types.filterNotTo(mutableSetOf()) { it is KexNull }
     ktassert(uniqueTypes.isNotEmpty()) { log.error("Trying to merge null-only types") }
     return when {
         uniqueTypes.size == 1 -> uniqueTypes.first()
@@ -128,12 +127,13 @@ fun mergeTypes(tf: TypeFactory, types: Collection<KexType>): KexType {
             }
             result
         }
-        uniqueTypes.all { it is KexLong } -> KexLong()
-        uniqueTypes.all { it is KexIntegral } -> uniqueTypes.maxByOrNull { (it as KexIntegral).actualBitSize }!!
-        uniqueTypes.all { it is KexFloat } -> KexFloat()
-        uniqueTypes.all { it is KexReal } -> KexDouble()
-        uniqueTypes.all { it is KexIntegral || it is KexFloat } -> KexFloat()
-        uniqueTypes.all { it is KexIntegral || it is KexReal } -> KexDouble()
+
+        uniqueTypes.all { it is KexLong } -> KexLong
+        uniqueTypes.all { it is KexInteger } -> uniqueTypes.maxByOrNull { (it as KexInteger).actualBitSize }!!
+        uniqueTypes.all { it is KexFloat } -> KexFloat
+        uniqueTypes.all { it is KexReal } -> KexDouble
+        uniqueTypes.all { it is KexInteger || it is KexFloat } -> KexFloat
+        uniqueTypes.all { it is KexInteger || it is KexReal } -> KexDouble
         else -> unreachable { log.error("Unexpected set of types: $types") }
     }
 }
@@ -161,17 +161,17 @@ abstract class KexType {
         val reverse = types.map { it.value to it.key }.toMap()
 
         fun fromType(type: Type): KexType = when (type) {
-            is Integral -> when (type) {
-                is BoolType -> KexBool()
-                is ByteType -> KexByte()
-                is ShortType -> KexShort()
-                is CharType -> KexChar()
-                is LongType -> KexLong()
-                else -> KexInt()
+            is Integer -> when (type) {
+                is BoolType -> KexBool
+                is ByteType -> KexByte
+                is ShortType -> KexShort
+                is CharType -> KexChar
+                is LongType -> KexLong
+                else -> KexInt
             }
             is Real -> when (type) {
-                is FloatType -> KexFloat()
-                is DoubleType -> KexDouble()
+                is FloatType -> KexFloat
+                is DoubleType -> KexDouble
                 else -> unreachable { log.error("Unknown real type: $type") }
             }
             is Reference -> when (type) {
@@ -180,7 +180,7 @@ abstract class KexType {
                 is NullType -> KexNull()
                 else -> unreachable { log.error("Unknown reference type: $type") }
             }
-            is VoidType -> KexVoid()
+            is VoidType -> KexVoid
             else -> unreachable { log.error("Unknown type: $type") }
         }
 
@@ -199,7 +199,7 @@ abstract class KexType {
 
 @InheritorOf("KexType")
 @Serializable
-class KexVoid : KexType() {
+object KexVoid : KexType() {
     override val name: String
         get() = "void"
 

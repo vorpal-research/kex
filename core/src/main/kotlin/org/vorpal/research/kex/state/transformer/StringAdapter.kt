@@ -10,10 +10,7 @@ import org.vorpal.research.kex.state.term.term
 import org.vorpal.research.kfg.ClassManager
 import org.vorpal.research.kfg.ir.Class
 import org.vorpal.research.kfg.stringClass
-import org.vorpal.research.kfg.type.Type
-import org.vorpal.research.kfg.type.TypeFactory
-import org.vorpal.research.kfg.type.objectType
-import org.vorpal.research.kfg.type.stringType
+import org.vorpal.research.kfg.type.*
 import org.vorpal.research.kthelper.collection.buildList
 import org.vorpal.research.kthelper.collection.dequeOf
 
@@ -24,55 +21,62 @@ private fun Type.getArray(types: TypeFactory) = types.getArrayType(this)
 fun Class.getCtor(vararg argTypes: Type) =
     getMethod("<init>", cm.type.voidType, *argTypes)
 
-private val Class.emptyInit
-    get() = getCtor()
-private val Class.copyInit
-    get() = getCtor(cm.type.stringType)
-private val Class.charArrayInit
-    get() = getCtor(cm.type.charType.getArray(cm.type))
-private val Class.charArrayWOffsetInit
-    get() = getCtor(cm.type.charType.getArray(cm.type), cm.type.intType, cm.type.intType)
 
-private val Class.length
-    get() = getMethod("length", cm.type.intType)
-private val Class.isEmpty
-    get() = getMethod("isEmpty", cm.type.boolType)
-private val Class.charAt
-    get() = getMethod("charAt", cm.type.charType, cm.type.intType)
-private val Class.equals
-    get() = getMethod("equals", cm.type.boolType, cm.type.objectType)
-private val Class.startsWith
-    get() = getMethod("startsWith", cm.type.boolType, cm.type.stringType)
-private val Class.startsWithOffset
-    get() = getMethod("startsWith", cm.type.boolType, cm.type.stringType, cm.type.intType)
-private val Class.endsWith
-    get() = getMethod("endsWith", cm.type.boolType, cm.type.stringType)
-private val Class.indexOf
-    get() = getMethod("indexOf", cm.type.intType, cm.type.intType)
-private val Class.indexOfWOffset
-    get() = getMethod("indexOf", cm.type.intType, cm.type.intType, cm.type.intType)
-private val Class.stringIndexOf
-    get() = getMethod("indexOf", cm.type.intType, cm.type.stringType)
-private val Class.stringIndexOfWOffset
-    get() = getMethod("indexOf", cm.type.intType, cm.type.stringType, cm.type.intType)
-private val Class.substring
-    get() = getMethod("substring", cm.type.stringType, cm.type.intType)
-private val Class.substringWLength
-    get() = getMethod("substring", cm.type.stringType, cm.type.intType, cm.type.intType)
-private val Class.subSequence
-    get() = getMethod("subSequence", cm.type.charSeqType, cm.type.intType, cm.type.intType)
-private val Class.concat
-    get() = getMethod("concat", cm.type.stringType, cm.type.stringType)
-private val Class.contains
-    get() = getMethod("contains", cm.type.boolType, cm.type.charSeqType)
-private val Class.toString
-    get() = getMethod("toString", cm.type.stringType)
-private val Class.compareTo
-    get() = getMethod("compareTo", cm.type.intType, cm.type.stringType)
+abstract class StringMethodContext(val cm: ClassManager) {
+    val stringType = cm.type.stringType
+    val objectType = cm.type.objectType
+    val charSeqType = cm.type.charSeqType
+
+    val Class.emptyInit
+        get() = getCtor()
+    val Class.copyInit
+        get() = getCtor(stringType)
+    val Class.charArrayInit
+        get() = getCtor(cm.type.charType.getArray(cm.type))
+    val Class.charArrayWOffsetInit
+        get() = getCtor(cm.type.charType.getArray(cm.type), cm.type.intType, cm.type.intType)
+
+    val Class.length
+        get() = getMethod("length", cm.type.intType)
+    val Class.isEmpty
+        get() = getMethod("isEmpty", cm.type.boolType)
+    val Class.charAt
+        get() = getMethod("charAt", cm.type.charType, cm.type.intType)
+    val Class.equals
+        get() = getMethod("equals", cm.type.boolType, objectType)
+    val Class.startsWith
+        get() = getMethod("startsWith", cm.type.boolType, stringType)
+    val Class.startsWithOffset
+        get() = getMethod("startsWith", cm.type.boolType, stringType, cm.type.intType)
+    val Class.endsWith
+        get() = getMethod("endsWith", cm.type.boolType, stringType)
+    val Class.indexOf
+        get() = getMethod("indexOf", cm.type.intType, cm.type.intType)
+    val Class.indexOfWOffset
+        get() = getMethod("indexOf", cm.type.intType, cm.type.intType, cm.type.intType)
+    val Class.stringIndexOf
+        get() = getMethod("indexOf", cm.type.intType, stringType)
+    val Class.stringIndexOfWOffset
+        get() = getMethod("indexOf", cm.type.intType, stringType, cm.type.intType)
+    val Class.substring
+        get() = getMethod("substring", stringType, cm.type.intType)
+    val Class.substringWLength
+        get() = getMethod("substring", stringType, cm.type.intType, cm.type.intType)
+    val Class.subSequence
+        get() = getMethod("subSequence", charSeqType, cm.type.intType, cm.type.intType)
+    val Class.concat
+        get() = getMethod("concat", stringType, stringType)
+    val Class.contains
+        get() = getMethod("contains", cm.type.boolType, charSeqType)
+    val Class.toString
+        get() = getMethod("toString", stringType)
+    val Class.compareTo
+        get() = getMethod("compareTo", cm.type.intType, stringType)
+}
 
 @Suppress("DEPRECATION")
 @Deprecated("use StringMethodAdapter instead")
-class StringAdapter(val cm: ClassManager) : RecollectingTransformer<StringAdapter> {
+class StringAdapter(cm: ClassManager) : StringMethodContext(cm), RecollectingTransformer<StringAdapter> {
     override val builders = dequeOf(StateBuilder())
     val types get() = cm.type
 
@@ -87,11 +91,11 @@ class StringAdapter(val cm: ClassManager) : RecollectingTransformer<StringAdapte
         charArray: Term,
         offset: Term = term { const(0) }
     ) = buildList<Predicate> {
-        val res = term { generate(KexBool()) }
+        val res = term { generate(KexBool) }
         +remap(predicate) {
             res equality forAll(offset, charArray.length()) {
-                val lambdaParam = generate(KexInt())
-                lambda(KexBool(), listOf(lambdaParam)) {
+                val lambdaParam = generate(KexInt)
+                lambda(KexBool, listOf(lambdaParam)) {
                     `this`.charAt(lambdaParam) eq charArray[lambdaParam].load()
                 }
             }
@@ -122,7 +126,7 @@ class StringAdapter(val cm: ClassManager) : RecollectingTransformer<StringAdapte
                 predicate.lhv equality `this`.length()
             }.list()
             kfgString.isEmpty -> buildList {
-                val lengthTerm = term { generate(KexInt()) }
+                val lengthTerm = term { generate(KexInt) }
                 +remap(predicate) {
                     lengthTerm equality `this`.length()
                 }
@@ -142,7 +146,7 @@ class StringAdapter(val cm: ClassManager) : RecollectingTransformer<StringAdapte
             kfgString.startsWithOffset -> buildList {
                 val offset = args[1]
                 val wOffset = term { generate(KexString()) }
-                val offsetLength = term { generate(KexInt()) }
+                val offsetLength = term { generate(KexInt) }
                 +remap(predicate) {
                     offsetLength equality (`this`.length() - offset)
                 }
@@ -181,7 +185,7 @@ class StringAdapter(val cm: ClassManager) : RecollectingTransformer<StringAdapte
                 predicate.lhv equality `this`.indexOf(args[0], args[1])
             }.list()
             kfgString.substring -> buildList {
-                val substringLength = term { generate(KexInt()) }
+                val substringLength = term { generate(KexInt) }
                 +remap(predicate) {
                     substringLength equality (`this`.length() - args[0])
                 }
@@ -217,12 +221,12 @@ class StringAdapter(val cm: ClassManager) : RecollectingTransformer<StringAdapte
 
 }
 
-class StringMethodAdapter(val cm: ClassManager) : RecollectingTransformer<StringMethodAdapter> {
+class StringMethodAdapter(cm: ClassManager) : StringMethodContext(cm), RecollectingTransformer<StringMethodAdapter> {
     override val builders = dequeOf(StateBuilder())
     val types get() = cm.type
 
     private fun Term.valueArray(): Term = term { this@valueArray.field(KexCharArray(), "value") }
-    private fun KexCharArray() = KexChar().asArray()
+    private fun KexCharArray() = KexChar.asArray()
 
     fun emptyInit(term: Term): PredicateState = basic {
         val emptyArray = generate(KexCharArray())
@@ -257,8 +261,8 @@ class StringMethodAdapter(val cm: ClassManager) : RecollectingTransformer<String
         val valueArray = generate(KexCharArray())
         state {
             generateArray(valueArray, length) {
-                val index = value(KexInt(), "lambda.index")
-                lambda(types.objectType.kexType, index) {
+                val index = value(KexInt, "lambda.index")
+                lambda(objectType.kexType, index) {
                     array[offset + index].load()
                 }
             }
@@ -283,7 +287,7 @@ class StringMethodAdapter(val cm: ClassManager) : RecollectingTransformer<String
 
     fun isEmpty(lhv: Term, term: Term): PredicateState = basic {
         val fieldTerm = generate(KexCharArray())
-        val length = generate(KexInt())
+        val length = generate(KexInt)
         state {
             fieldTerm equality term.valueArray().load()
         }
@@ -300,7 +304,7 @@ class StringMethodAdapter(val cm: ClassManager) : RecollectingTransformer<String
 
     fun charAt(lhv: Term, term: Term, index: Term): PredicateState = basic {
         val fieldTerm = generate(KexCharArray())
-        val length = generate(KexInt())
+        val length = generate(KexInt)
         state {
             fieldTerm equality term.valueArray().load()
         }
@@ -322,9 +326,9 @@ class StringMethodAdapter(val cm: ClassManager) : RecollectingTransformer<String
     }
 
     fun equals(lhv: Term, term: Term, other: Term): PredicateState {
-        val isNull = term { generate(KexBool()) }
-        val instanceOf = term { generate(KexBool()) }
-        val res = term { generate(KexBool()) }
+        val isNull = term { generate(KexBool) }
+        val instanceOf = term { generate(KexBool) }
+        val res = term { generate(KexBool) }
         return basic {
             state { isNull equality (other eq null) }
             state { instanceOf equality (other `is` KexString()) }
@@ -356,9 +360,9 @@ class StringMethodAdapter(val cm: ClassManager) : RecollectingTransformer<String
             val casted = generate(KexString())
             val thisValue = generate(KexCharArray())
             val otherValue = generate(KexCharArray())
-            val thisLength = generate(KexInt())
-            val otherLength = generate(KexInt())
-            val lengthEquals = generate(KexBool())
+            val thisLength = generate(KexInt)
+            val otherLength = generate(KexInt)
+            val lengthEquals = generate(KexBool)
             or {
                 basic {
                     path {
@@ -401,8 +405,8 @@ class StringMethodAdapter(val cm: ClassManager) : RecollectingTransformer<String
                             }
                             state {
                                 res equality forAll(0, thisLength) {
-                                    val index = generate(KexInt())
-                                    lambda(types.objectType.kexType, listOf(index)) {
+                                    val index = generate(KexInt)
+                                    lambda(objectType.kexType, listOf(index)) {
                                         thisValue[index].load() eq otherValue[index].load()
                                     }
                                 }
@@ -431,17 +435,17 @@ class StringMethodAdapter(val cm: ClassManager) : RecollectingTransformer<String
     fun startsWith(lhv: Term, term: Term, other: Term) = startsWithOffset(lhv, term, other, term { const(0) })
 
     fun startsWithOffset(lhv: Term, term: Term, other: Term, offset: Term): PredicateState {
-        val isGreater = term { generate(KexBool()) }
-        val res = term { generate(KexBool()) }
+        val isGreater = term { generate(KexBool) }
+        val res = term { generate(KexBool) }
         return basic {
             state { isGreater equality (offset ge 0) }
         }.choice {
             or {
                 val thisValue = generate(KexCharArray())
                 val otherValue = generate(KexCharArray())
-                val thisLength = generate(KexInt())
-                val otherLength = generate(KexInt())
-                val lengthLess = generate(KexBool())
+                val thisLength = generate(KexInt)
+                val otherLength = generate(KexInt)
+                val lengthLess = generate(KexBool)
                 basic {
                     path {
                         isGreater equality true
@@ -475,9 +479,9 @@ class StringMethodAdapter(val cm: ClassManager) : RecollectingTransformer<String
                             }
                             state {
                                 res equality forAll(0, otherLength) {
-                                    val index = generate(KexInt())
+                                    val index = generate(KexInt)
                                     lambda(
-                                        types.objectType.kexType,
+                                        objectType.kexType,
                                         listOf(index)
                                     ) {
                                         thisValue[offset + index].load() eq otherValue[index].load()
@@ -516,13 +520,13 @@ class StringMethodAdapter(val cm: ClassManager) : RecollectingTransformer<String
     }
 
     fun endsWith(lhv: Term, term: Term, other: Term): PredicateState {
-        val isGreater = term { generate(KexBool()) }
-        val res = term { generate(KexBool()) }
-        val offset = term { generate(KexInt()) }
+        val isGreater = term { generate(KexBool) }
+        val res = term { generate(KexBool) }
+        val offset = term { generate(KexInt) }
         val thisValue = term { generate(KexCharArray()) }
         val otherValue = term { generate(KexCharArray()) }
-        val thisLength = term { generate(KexInt()) }
-        val otherLength = term { generate(KexInt()) }
+        val thisLength = term { generate(KexInt) }
+        val otherLength = term { generate(KexInt) }
         return basic {
             state {
                 thisValue equality term.valueArray().load()
@@ -554,9 +558,9 @@ class StringMethodAdapter(val cm: ClassManager) : RecollectingTransformer<String
                     }
                     state {
                         res equality forAll(0, otherLength) {
-                            val index = generate(KexInt())
+                            val index = generate(KexInt)
                             lambda(
-                                types.objectType.kexType,
+                                objectType.kexType,
                                 listOf(index)
                             ) {
                                 thisValue[offset + index].load() eq otherValue[index].load()
@@ -586,10 +590,10 @@ class StringMethodAdapter(val cm: ClassManager) : RecollectingTransformer<String
         substringWLength(lhv, term, beginIndex, term { term.valueArray().load().length() })
 
     fun substringWLength(lhv: Term, term: Term, beginIndex: Term, endIndex: Term): PredicateState {
-        val isGreater = term { generate(KexBool()) }
+        val isGreater = term { generate(KexBool) }
         val res = term { generate(KexString()) }
         val resValue = term { generate(KexCharArray()) }
-        val length = term { generate(KexInt()) }
+        val length = term { generate(KexInt) }
         val thisValue = term { generate(KexCharArray()) }
         return basic {
             state {
@@ -610,9 +614,9 @@ class StringMethodAdapter(val cm: ClassManager) : RecollectingTransformer<String
                     }
                     state {
                         generateArray(resValue, length) {
-                            val index = generate(KexInt())
+                            val index = generate(KexInt)
                             lambda(
-                                types.objectType.kexType,
+                                objectType.kexType,
                                 listOf(index)
                             ) {
                                 thisValue[beginIndex + index].load()
@@ -650,9 +654,9 @@ class StringMethodAdapter(val cm: ClassManager) : RecollectingTransformer<String
     fun concat(lhv: Term, term: Term, other: Term) = basic {
         val thisValue = generate(KexCharArray())
         val otherValue = generate(KexCharArray())
-        val thisLength = generate(KexInt())
-        val otherLength = generate(KexInt())
-        val resLength = generate(KexInt())
+        val thisLength = generate(KexInt)
+        val otherLength = generate(KexInt)
+        val resLength = generate(KexInt)
         val resValue = generate(KexCharArray())
         val res = generate(KexString())
         state {
@@ -678,10 +682,10 @@ class StringMethodAdapter(val cm: ClassManager) : RecollectingTransformer<String
         }
         state {
             generateArray(resValue, resLength) {
-                val index = generate(KexInt())
-                lambda(types.objectType.kexType, index) {
+                val index = generate(KexInt)
+                lambda(objectType.kexType, index) {
                     ite(
-                        KexChar(),
+                        KexChar,
                         index lt thisLength,
                         thisValue[index].load(),
                         otherValue[index - thisLength].load()
@@ -710,7 +714,7 @@ class StringMethodAdapter(val cm: ClassManager) : RecollectingTransformer<String
         val call = predicate.call as CallTerm
         val args = call.arguments
 
-        val kfgString = cm.stringClass
+        val kfgString = (stringType as ClassType).klass
         if (call.owner.type != kfgString.kexType) return predicate
 
         val `this` = call.owner
@@ -745,9 +749,9 @@ class StringMethodAdapter(val cm: ClassManager) : RecollectingTransformer<String
 
 }
 
-class TermExprStringAdapter(val cm: ClassManager) : Transformer<TermExprStringAdapter> {
+class TermExprStringAdapter(cm: ClassManager) : StringMethodContext(cm), Transformer<TermExprStringAdapter> {
     private fun Term.valueArray(): Term = term { this@valueArray.field(KexCharArray(), "value") }
-    private fun KexCharArray() = KexChar().asArray()
+    private fun KexCharArray() = KexChar.asArray()
 
     override fun transformCallTerm(term: CallTerm): Term {
         val args = term.arguments
@@ -765,14 +769,14 @@ class TermExprStringAdapter(val cm: ClassManager) : Transformer<TermExprStringAd
             kfgString.equals -> term {
                 val other = args[0]
                 ite(
-                    KexBool(),
+                    KexBool,
                     other eq null,
                     const(false),
                     ite(
-                        KexBool(),
+                        KexBool,
                         other `is` KexString(),
                         forAll(0, `this`.valueArray().load().length()) {
-                            val index = generate(KexInt())
+                            val index = generate(KexInt)
                             lambda(cm.type.objectType.kexType, listOf(index)) {
                                 `this`.valueArray().load()[index].load() eq (other `as` KexString()).valueArray()
                                     .load()[index].load()

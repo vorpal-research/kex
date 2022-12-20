@@ -44,6 +44,32 @@ class ${solver}Converter(val tf: TypeFactory) : ${solver}SMTConverter() {
         else -> this
     }
 
+    private fun ArrayIndexTerm.withIndexAxioms(
+        expr: Dynamic_, ef: Factory_, ctx: Context_
+    ): Dynamic_ {
+        val arrayExpr = convert(arrayRef, ef, ctx) as Ptr_
+        val index = convert(index, ef, ctx) as Int_
+
+        val typeVar = ctx.readBitvectorProperty(arrayExpr, this.memspace, "type")
+        val lengthVar = ctx.readWordProperty(arrayExpr, this.memspace, "length")
+        val componentTypeVar = ef.getSubTypeMask((arrayRef.type as KexArray).element.getKfgType(tf))
+        val resultExpr = expr
+            .withAxiom(lengthVar ge ef.makeIntConst(0))
+            .withAxiom(
+                `if`((index ge ef.makeIntConst(0)) and (index lt lengthVar))
+                    .then(run {
+                        val array = ctx.readArrayMemory(arrayExpr, this.memspace)
+                        val element = array.load(Int_.forceCast(index))
+                        val elementTypeVar = ctx.readBitvectorProperty(Ptr_.forceCast(element), this.memspace, "type")
+                        (elementTypeVar and componentTypeVar) eq elementTypeVar
+                    })
+                    .`else`(
+                        ef.makeTrue()
+                    )
+            )
+        return resultExpr
+    }
+
     private fun Term.withAxioms(expr: Dynamic_, ef: Factory_, ctx: Context_): Dynamic_ {
         if (this in axiomedTerms) return expr
         var resultExpr = expr
@@ -67,24 +93,26 @@ class ${solver}Converter(val tf: TypeFactory) : ${solver}SMTConverter() {
                     val componentTypeVar = ef.getSubTypeMask((this.type as KexArray).element.getKfgType(tf))
                     resultExpr = resultExpr
                         .withAxiom(lengthVar ge ef.makeIntConst(0))
-                        .withAxiom(
-                            ef.forAll(
-                                { listOf(ef.makeIntConst(0)) },
-                                { args ->
-                                    val index = Int_.forceCast(args[0])
-                                    `if`((index ge ef.makeIntConst(0)) and (index lt lengthVar))
-                                    .then(run {
-                                        val array = ctx.readArrayMemory(expr, this.memspace)
-                                        val element = array.load(Int_.forceCast(index))
-                                        val elementTypeVar = ctx.readBitvectorProperty(Ptr_.forceCast(element), this.memspace, "type")
-                                        (elementTypeVar and componentTypeVar) eq elementTypeVar
-                                    })
-                                    .`else`(
-                                        ef.makeTrue()
-                                    )
-                                }
+                    if ((this.type as KexArray).element is KexPointer)
+                        resultExpr = resultExpr
+                            .withAxiom(
+                                ef.forAll(
+                                    { listOf(ef.makeIntConst(0)) },
+                                    { args ->
+                                        val index = Int_.forceCast(args[0])
+                                        `if`((index ge ef.makeIntConst(0)) and (index lt lengthVar))
+                                        .then(run {
+                                            val array = ctx.readArrayMemory(expr, this.memspace)
+                                            val element = array.load(Int_.forceCast(index))
+                                            val elementTypeVar = ctx.readBitvectorProperty(Ptr_.forceCast(element), this.memspace, "type")
+                                            (elementTypeVar and componentTypeVar) eq elementTypeVar
+                                        })
+                                        .`else`(
+                                            ef.makeTrue()
+                                        )
+                                    }
+                                )
                             )
-                        )
                 } else if (this.type == KexJavaClass()) {
                     val typeIndex = ctx.readBitvectorProperty(expr, this.memspace, "${ this.type }.${ ConstClassTerm.TYPE_INDEX_PROPERTY }")
                     val name = ctx.readWordProperty(expr, this.memspace, "${ this.type }.${ ConstClassTerm.NAME_PROPERTY }")
@@ -116,7 +144,7 @@ class ${solver}Converter(val tf: TypeFactory) : ${solver}SMTConverter() {
             when (type) {
                 is KexLong -> Long_.forceCast(expr)
                 is KexBool -> Bool_.forceCast(expr)
-                is KexIntegral -> Int_.forceCast(expr)
+                is KexInteger -> Int_.forceCast(expr)
                 is KexFloat -> Float_.forceCast(expr)
                 is KexDouble -> Double_.forceCast(expr)
                 is KexClass -> Ptr_.forceCast(expr)
@@ -128,7 +156,7 @@ class ${solver}Converter(val tf: TypeFactory) : ${solver}SMTConverter() {
             when (type) {
                 is KexLong -> expr.convertToLong()
                 is KexBool -> Bool_.forceCast(expr)
-                is KexIntegral -> expr.convertToInt()
+                is KexInteger -> expr.convertToInt()
                 is KexFloat -> expr.convertToFloat()
                 is KexDouble -> expr.convertToDouble()
                 is KexClass -> Ptr_.forceCast(expr)
@@ -138,7 +166,7 @@ class ${solver}Converter(val tf: TypeFactory) : ${solver}SMTConverter() {
 
 
     fun init(state: PredicateState, ef: Factory_) {
-        val types = collectTypes(tf, state).filter { it !is KexNull }.map { it.getKfgType(tf) }.toSet()
+        val types = collectTypes(tf, state).filter { it !is KexNull }.mapTo(mutableSetOf()) { it.getKfgType(tf) }
         ef.initTypes(types)
         ef.initStrings(getConstStringMap(state))
     }
@@ -669,7 +697,7 @@ class ${solver}Converter(val tf: TypeFactory) : ${solver}SMTConverter() {
         val res = when (ite.type) {
             is KexLong -> `if`(cond).then(lhv as Long_).`else`(rhv as Long_)
             is KexBool -> `if`(cond).then(lhv as Bool_).`else`(rhv as Bool_)
-            is KexIntegral -> `if`(cond).then(lhv as Int_).`else`(rhv as Int_)
+            is KexInteger -> `if`(cond).then(lhv as Int_).`else`(rhv as Int_)
             is KexFloat -> `if`(cond).then(lhv as Float_).`else`(rhv as Float_)
             is KexDouble -> `if`(cond).then(lhv as Double_).`else`(rhv as Double_)
             is KexClass -> `if`(cond).then(lhv as Ptr_).`else`(rhv as Ptr_)

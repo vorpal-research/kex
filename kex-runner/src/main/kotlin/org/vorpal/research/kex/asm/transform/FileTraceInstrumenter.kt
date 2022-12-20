@@ -10,7 +10,6 @@ import org.vorpal.research.kfg.ir.Method
 import org.vorpal.research.kfg.ir.value.EmptyUsageContext
 import org.vorpal.research.kfg.ir.value.instruction.*
 import org.vorpal.research.kfg.visitor.MethodVisitor
-import org.vorpal.research.kthelper.collection.buildList
 import java.io.File
 import java.nio.file.Files
 import java.nio.file.Paths
@@ -48,17 +47,18 @@ class FileTraceInstrumenter(override val cm: ClassManager) : MethodVisitor {
         val method = bb.method
 
         buildList {
-            +fos.println("exit ${bb.name};")
-            +fos.print("return ${method.prototype.replace(Package.SEPARATOR, Package.CANONICAL_SEPARATOR)}, ")
+            addAll(fos.println("exit ${bb.name};"))
+            addAll(fos.print("return ${method.prototype.replace(Package.SEPARATOR, Package.CANONICAL_SEPARATOR)}, "))
 
             when {
                 inst.hasReturnValue -> {
-                    +fos.print("${inst.returnValue.name} == ")
-                    +fos.printValue(inst.returnValue)
+                    addAll(fos.print("${inst.returnValue.name} == "))
+                    addAll(fos.printValue(inst.returnValue))
                 }
-                else -> +fos.print("void")
+
+                else -> addAll(fos.print("void"))
             }
-            +fos.println(";")
+            addAll(fos.println(";"))
         }
     }
 
@@ -67,20 +67,17 @@ class FileTraceInstrumenter(override val cm: ClassManager) : MethodVisitor {
         val method = bb.method
 
         buildList {
-            +fos.println("exit ${bb.name};")
-            +fos.print("throw ${method.prototype.replace(Package.SEPARATOR, Package.CANONICAL_SEPARATOR)}, ")
-            +fos.print("${inst.throwable.name} == ")
-            +fos.printValue(inst.throwable)
-            +fos.println(";")
+            addAll(fos.println("exit ${bb.name};"))
+            addAll(fos.print("throw ${method.prototype.replace(Package.SEPARATOR, Package.CANONICAL_SEPARATOR)}, "))
+            addAll(fos.print("${inst.throwable.name} == "))
+            addAll(fos.printValue(inst.throwable))
+            addAll(fos.println(";"))
         }
     }
 
     override fun visitJumpInst(inst: JumpInst) = instrumentInst(inst) {
         val bb = inst.parent
-
-        buildList {
-            +fos.println("exit ${bb.name};")
-        }
+        fos.println("exit ${bb.name};")
     }
 
     override fun visitBranchInst(inst: BranchInst) = instrumentInst(inst) {
@@ -88,11 +85,11 @@ class FileTraceInstrumenter(override val cm: ClassManager) : MethodVisitor {
         val bb = inst.parent
 
         buildList {
-            +fos.print("branch ${bb.name}, ${condition.lhv.name} == ")
-            +fos.printValue(condition.lhv)
-            +fos.print(", ${condition.rhv.name} == ")
-            +fos.printValue(condition.rhv)
-            +fos.println(";")
+            addAll(fos.print("branch ${bb.name}, ${condition.lhv.name} == "))
+            addAll(fos.printValue(condition.lhv))
+            addAll(fos.print(", ${condition.rhv.name} == "))
+            addAll(fos.printValue(condition.rhv))
+            addAll(fos.println(";"))
         }
     }
 
@@ -100,9 +97,9 @@ class FileTraceInstrumenter(override val cm: ClassManager) : MethodVisitor {
         val bb = inst.parent
 
         buildList {
-            +fos.print("switch ${bb.name}, ${inst.key.name} == ")
-            +fos.printValue(inst.key)
-            +fos.println(";")
+            addAll(fos.print("switch ${bb.name}, ${inst.key.name} == "))
+            addAll(fos.printValue(inst.key))
+            addAll(fos.println(";"))
         }
     }
 
@@ -110,19 +107,16 @@ class FileTraceInstrumenter(override val cm: ClassManager) : MethodVisitor {
         val bb = inst.parent
 
         buildList {
-            +fos.print("tableswitch ${bb.name}, ${inst.index.name} == ")
-            +fos.printValue(inst.index)
-            +fos.println(";")
+            addAll(fos.print("tableswitch ${bb.name}, ${inst.index.name} == "))
+            addAll(fos.printValue(inst.index))
+            addAll(fos.println(";"))
         }
     }
 
     override fun visitBasicBlock(bb: BasicBlock) {
         super.visitBasicBlock(bb)
 
-        val insts = buildList<Instruction> {
-            +fos.println("enter ${bb.name};")
-        }
-
+        val insts = fos.println("enter ${bb.name};")
         insertedInsts += insts
         bb.insertBefore(bb.first(), *insts.toTypedArray())
     }
@@ -133,26 +127,33 @@ class FileTraceInstrumenter(override val cm: ClassManager) : MethodVisitor {
             val methodName = method.prototype.replace(Package.SEPARATOR, Package.CANONICAL_SEPARATOR)
             val traceFileName = getTraceFile(method).absolutePath
 
-            fos = FileOutputStreamWrapper(cm, EmptyUsageContext, "traceFile", traceFileName, append = true, autoFlush = true)
-            +fos.open()
-            +fos.println("enter $methodName;")
+            fos = FileOutputStreamWrapper(
+                cm,
+                EmptyUsageContext,
+                "traceFile",
+                traceFileName,
+                append = true,
+                autoFlush = true
+            )
+            addAll(fos.open())
+            addAll(fos.println("enter $methodName;"))
 
             val args = method.argTypes
             if (!method.isStatic) {
                 val thisType = types.getRefType(method.klass)
                 val `this` = values.getThis(thisType)
-                +fos.print("instance $methodName, this == ")
-                +fos.printValue(`this`)
-                +fos.println(";")
+                addAll(fos.print("instance $methodName, this == "))
+                addAll(fos.printValue(`this`))
+                addAll(fos.println(";"))
             }
             if (args.isNotEmpty()) {
-                +fos.print("arguments $methodName")
+                addAll(fos.print("arguments $methodName"))
                 for ((index, type) in args.withIndex()) {
                     val argValue = values.getArgument(index, method, type)
-                    +fos.print(", ${argValue.name} == ")
-                    +fos.printValue(argValue)
+                    addAll(fos.print(", ${argValue.name} == "))
+                    addAll(fos.printValue(argValue))
                 }
-                +fos.println(";")
+                addAll(fos.println(";"))
             }
         }
         insertedInsts += startInsts

@@ -1,6 +1,6 @@
 package org.vorpal.research.kex.state.transformer
 
-import org.vorpal.research.kex.ktype.KexIntegral
+import org.vorpal.research.kex.ktype.KexInteger
 import org.vorpal.research.kex.ktype.KexReal
 import org.vorpal.research.kex.ktype.KexType
 import org.vorpal.research.kex.ktype.kexType
@@ -139,7 +139,7 @@ class TypeInfoCollector(val model: SMTModel, val tf: TypeFactory) : Transformer<
                 }
 
                 // we can't do anything with primary type casts
-                if (newType.type is KexIntegral || newType.type is KexReal) return predicate
+                if (newType.type is KexInteger || newType.type is KexReal) return predicate
 
                 val typeInfo = typeInfos.getOrPut(operand, ::mutableMapOf)
                 val existingCond = typeInfo.getOrDefault(newType, emptyState())
@@ -210,7 +210,7 @@ class PlainTypeInfoCollector(val tf: TypeFactory) : Transformer<TypeInfoCollecto
                 val operand = rhv.operand
 
                 // we can't do anything with primary type casts
-                if (newType.type is KexIntegral || newType.type is KexReal) return predicate
+                if (newType.type is KexInteger || newType.type is KexReal) return predicate
 
                 val typeInfo = typeInfos.getOrPut(operand, ::mutableSetOf)
                 typeInfo += newType

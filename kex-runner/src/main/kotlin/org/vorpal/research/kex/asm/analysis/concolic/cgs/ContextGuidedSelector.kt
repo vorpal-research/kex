@@ -12,7 +12,6 @@ import org.vorpal.research.kex.state.term.InstanceOfTerm
 import org.vorpal.research.kex.state.term.numericValue
 import org.vorpal.research.kex.state.transformer.TermCollector
 import org.vorpal.research.kex.trace.symbolic.*
-import org.vorpal.research.kex.util.dropLast
 import org.vorpal.research.kex.util.nextOrNull
 import org.vorpal.research.kfg.ir.BasicBlock
 import org.vorpal.research.kfg.ir.Method
@@ -29,18 +28,16 @@ import org.vorpal.research.kthelper.`try`
 class ContextGuidedSelector(
     override val ctx: ExecutionContext,
 ) : PathSelector {
-    val executionTree = ExecutionTree()
-    var currentDepth = 0
-        private set
-    var k = 1
-        private set
+    private val executionTree = ExecutionTree()
+    private var currentDepth = 0
+    private var k = 1
     private var branchIterator: Iterator<PathVertex> = listOf<PathVertex>().iterator()
     private val visitedContexts = mutableSetOf<Context>()
     private var state: State? = null
 
     private class State(
         val context: Context,
-        val path: List<PathClause>,
+        val path: PersistentPathCondition,
         val activeClause: PathClause,
         val revertedClause: PathClause
     )
@@ -55,7 +52,8 @@ class ContextGuidedSelector(
             when (val context = executionTree.contexts(next, k).firstOrNull { it !in visitedContexts }) {
                 null -> continue
                 else -> {
-                    val path = context.fullPath.dropLast(1)
+                    val path = context.fullPath.removeAt(context.fullPath.lastIndex)
+                        .toPathCondition()
                     val activeClause = context.fullPath.lastOrNull() ?: continue
                     val revertedClause = activeClause.reversed() ?: continue
                     state = State(context, path, activeClause, revertedClause)
@@ -66,22 +64,20 @@ class ContextGuidedSelector(
         false
     }.getOrElse { false }
 
-    override suspend fun next(): SymbolicState {
+    override suspend fun next(): PersistentSymbolicState {
         val currentState = state!!
         visitedContexts += currentState.context
         state = null
 
-        val state = ClauseState(
-            currentState.context.symbolicState.clauses
-                .takeWhile { it != currentState.activeClause }
-                .filter { it.predicate.type !is PredicateType.Path }
-        )
+        val currentStateState = currentState.context.symbolicState
+        val stateSize = currentStateState.clauses.indexOf(currentState.activeClause)
+        val state = currentStateState.clauses.subState(0, stateSize)
 
-        return SymbolicStateImpl(
+        return persistentSymbolicState(
             state,
-            PathCondition(currentState.path + currentState.revertedClause),
-            currentState.context.symbolicState.concreteValueMap,
-            currentState.context.symbolicState.termMap
+            currentState.path + currentState.revertedClause,
+            currentStateState.concreteValueMap,
+            currentStateState.termMap
         )
     }
 
@@ -92,6 +88,7 @@ class ContextGuidedSelector(
                 ++currentDepth
                 recomputeBranches()
             }
+
             else -> {
                 ++k
                 currentDepth = 0
@@ -106,7 +103,7 @@ class ContextGuidedSelector(
     }
 
     override suspend fun addExecutionTrace(method: Method, result: ExecutionCompletedResult) {
-        executionTree.addTrace(result.trace)
+        executionTree.addTrace(result.trace.toPersistentState())
     }
 
     private fun PathClause.reversed(): PathClause? = when (type) {
@@ -122,8 +119,7 @@ class ContextGuidedSelector(
                 .flatMap { TermCollector.getFullTermSet(it).filterIsInstance<InstanceOfTerm>() }
                 .map { it.checkedType.getKfgType(ctx.types) }
                 .filterIsInstance<ClassType>()
-                .map { it.klass }
-                .toSet()
+                .mapTo(mutableSetOf()) { it.klass }
 
             try {
                 val newType = instantiationManager.get(ctx.types, termType, ctx.accessLevel, excludeClasses, ctx.random)
@@ -135,6 +131,7 @@ class ContextGuidedSelector(
                 null
             }
         }
+
         PathClauseType.CONDITION_CHECK -> when (val inst = instruction) {
             is BranchInst -> copy(predicate = predicate.reverseBoolCond())
             is SwitchInst -> {
@@ -143,6 +140,7 @@ class ContextGuidedSelector(
                     copy(predicate = it)
                 }
             }
+
             is TableSwitchInst -> {
                 val predecessors = executionTree.getPathVertex(this).predecessors
                 val branches = inst.range.let { range ->
@@ -153,8 +151,10 @@ class ContextGuidedSelector(
                     copy(predicate = it)
                 }
             }
+
             else -> unreachable { log.error("Unexpected predicate in clause $inst") }
         }
+
         PathClauseType.BOUNDS_CHECK -> copy(predicate = predicate.reverseBoolCond())
     }
 
@@ -162,9 +162,11 @@ class ContextGuidedSelector(
         is EqualityPredicate -> predicate(this.type, this.location) {
             lhv equality !(rhv as ConstBoolTerm).value
         }
+
         is InequalityPredicate -> predicate(this.type, this.location) {
             lhv inequality !(rhv as ConstBoolTerm).value
         }
+
         else -> unreachable { log.error("Unexpected predicate in bool cond: $this") }
     }
 
@@ -173,17 +175,18 @@ class ContextGuidedSelector(
         branches: Map<Value, BasicBlock>
     ): Predicate? = when (this) {
         is DefaultSwitchPredicate -> {
-            val candidates = branches.keys.map { (it as IntConstant).value }.toSet()
+            val candidates = branches.keys.mapTo(mutableSetOf()) { (it as IntConstant).value }
             candidates.randomOrNull(ctx.random)?.let {
                 predicate(this.type, this.location) {
                     cond equality it
                 }
             }
         }
+
         is EqualityPredicate -> {
             val outgoingPaths = branches.toList()
                 .groupBy({ it.second }, { it.first })
-                .map { it.value.map { const -> (const as IntConstant).value }.toSet() }
+                .map { it.value.mapTo(mutableSetOf()) { const -> (const as IntConstant).value } }
 
             val equivalencePaths = mutableMapOf<Int, Set<Int>>()
             for (set in outgoingPaths) {
@@ -197,8 +200,7 @@ class ContextGuidedSelector(
                 .flatMap { it.successors }
                 .map { it.clause.predicate }
                 .filterIsInstance<EqualityPredicate>()
-                .map { it.rhv.numericValue }
-                .toSet()
+                .mapTo(mutableSetOf()) { it.rhv.numericValue }
 
             val candidates = run {
                 val currentRange = branches.keys.map { (it as IntConstant).value }.toMutableSet()
@@ -214,6 +216,7 @@ class ContextGuidedSelector(
                 }
             }
         }
+
         else -> unreachable { log.error("Unexpected predicate in switch clause: $this") }
     }
 

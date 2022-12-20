@@ -11,7 +11,7 @@ class ArrayContainsTerm(
     val array: Term,
     val value: Term
 ) : Term() {
-    override val type = KexBool()
+    override val type = KexBool
     override val name = "$value in $array"
     override val subTerms by lazy { listOf(array, value) }
 

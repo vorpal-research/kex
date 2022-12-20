@@ -173,7 +173,7 @@ class BoolectorSolver(val tf: TypeFactory) : BoolectorNativeLoader(), AbstractSM
                     is ConstIntTerm -> term { const(undone.value.toFloat()) }
                     is ConstLongTerm -> term { const(undone.value.toDouble()) }
                     else -> unreachable {
-                        log.error("Unexpected integral term when trying to reanimate floating point value: $undone")
+                        log.error("Unexpected Integer term when trying to reanimate floating point value: $undone")
                     }
                 }
                 else -> undone
@@ -264,7 +264,7 @@ class BoolectorSolver(val tf: TypeFactory) : BoolectorNativeLoader(), AbstractSM
                     properties.recoverBitvectorProperty(ctx, ptr, memspace, "type")
 
                     if (ptr.type.isArray) {
-                        properties.recoverProperty(ctx, ptr, memspace, KexInt(), "length")
+                        properties.recoverProperty(ctx, ptr, memspace, KexInt, "length")
                     } else if (ptr is ConstClassTerm || ptr is ClassAccessTerm) {
                         properties.recoverBitvectorProperty(ctx, ptr, memspace, ConstClassTerm.TYPE_INDEX_PROPERTY)
                     }

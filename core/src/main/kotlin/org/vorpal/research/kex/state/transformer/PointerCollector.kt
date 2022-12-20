@@ -86,5 +86,5 @@ class PointerCollector : Transformer<PointerCollector> {
 fun collectPointers(ps: PredicateState): Set<Term> {
     val collector = PointerCollector()
     collector.apply(ps)
-    return collector.ptrs.toSet()
+    return collector.ptrs
 }

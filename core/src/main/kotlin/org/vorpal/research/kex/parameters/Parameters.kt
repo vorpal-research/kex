@@ -32,7 +32,7 @@ val Parameters<Any?>.asDescriptors: Parameters<Descriptor>
         return Parameters(
             context.convert(instance),
             arguments.map { context.convert(it) },
-            statics.map { context.convert(it) }.toSet()
+            statics.mapTo(mutableSetOf()) { context.convert(it) }
         )
     }
 
@@ -43,21 +43,24 @@ fun Parameters<Descriptor>.concreteParameters(
 ) = Parameters(
     instance?.concretize(cm, accessLevel, random),
     arguments.map { it.concretize(cm, accessLevel, random) },
-    statics.map { it.concretize(cm, accessLevel, random) }.toSet()
+    statics.mapTo(mutableSetOf()) { it.concretize(cm, accessLevel, random) }
 )
 
 fun Parameters<Descriptor>.filterStaticFinals(cm: ClassManager): Parameters<Descriptor> {
-    val filteredStatics = statics.map { it.deepCopy() }.filterIsInstance<ClassDescriptor>().mapNotNull { klass ->
-        val kfgClass = (klass.type as KexClass).kfgClass(cm.type)
-        for ((name, type) in klass.fields.keys.toSet()) {
-            val field = kfgClass.getField(name, type.getKfgType(cm.type))
-            if (field.isFinal) klass.remove(name to type)
+    val filteredStatics = statics
+        .map { it.deepCopy() }
+        .filterIsInstance<ClassDescriptor>()
+        .mapNotNullTo(mutableSetOf()) { klass ->
+            val kfgClass = (klass.type as KexClass).kfgClass(cm.type)
+            for ((name, type) in klass.fields.keys.toSet()) {
+                val field = kfgClass.getField(name, type.getKfgType(cm.type))
+                if (field.isFinal) klass.remove(name to type)
+            }
+            when {
+                klass.fields.isNotEmpty() -> klass
+                else -> null
+            }
         }
-        when {
-            klass.fields.isNotEmpty() -> klass
-            else -> null
-        }
-    }.toSet()
     return Parameters(instance, arguments, filteredStatics)
 }
 

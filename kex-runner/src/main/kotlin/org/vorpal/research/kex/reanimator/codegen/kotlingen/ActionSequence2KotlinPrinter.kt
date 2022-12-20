@@ -164,7 +164,7 @@ open class ActionSequence2KotlinPrinter(
             val nullability = this.isMarkedNullable
             return when (type) {
                 is ArrayType -> when {
-                    type.component.isPrimary -> ASPrimaryArray(type.component.getAsType(false), nullability)
+                    type.component.isPrimitive -> ASPrimaryArray(type.component.getAsType(false), nullability)
                     else -> ASArray(args.first(), nullability)
                 }
                 else -> ASClass(type, args, nullability)
@@ -203,7 +203,7 @@ open class ActionSequence2KotlinPrinter(
 
     private fun Type.getAsType(nullable: Boolean = true): ASType = when (this) {
         is ArrayType -> when {
-            this.component.isPrimary -> ASPrimaryArray(component.getAsType(false), nullable)
+            this.component.isPrimitive -> ASPrimaryArray(component.getAsType(false), nullable)
             else -> ASArray(this.component.getAsType(nullable), nullable)
         }
         else -> ASClass(this, nullable = nullable)

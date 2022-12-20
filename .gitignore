@@ -12,6 +12,6 @@ fails/*
 **/kex-output*/*
 **/temp*/*
 **/test-temp*/*
-/kex-z3/src/main/resources/z3-4.8.17-linux64-native.zip
-/kex-z3/src/main/resources/z3-4.8.17-win64-native.zip
-/kex-z3/src/main/resources/z3-4.8.17-osx64-native.zip
+/kex-z3/src/main/resources/z3-*-linux64-native.zip
+/kex-z3/src/main/resources/z3-*-win64-native.zip
+/kex-z3/src/main/resources/z3-*-osx64-native.zip

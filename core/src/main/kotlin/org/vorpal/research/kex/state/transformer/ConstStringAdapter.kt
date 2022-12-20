@@ -27,7 +27,7 @@ class ConstStringAdapter(
         val strTerm = generate(KexString())
         state { strTerm.new() }
 
-        val charArray = KexArray(KexChar())
+        val charArray = KexArray(KexChar)
         val valueArray = generate(charArray)
         state { valueArray.new(string.length) }
         for ((index, char) in string.withIndex()) {
@@ -130,9 +130,9 @@ class TypeNameAdapter(
             .toMutableSet()
         if (strings.isNotEmpty()) {
             strings += term { const(KexString().javaName) } as ConstStringTerm
-            strings += term { const(KexChar().asArray().javaName) } as ConstStringTerm
-            strings += term { const(KexChar().javaName) } as ConstStringTerm
-            strings += term { const(KexInt().javaName) } as ConstStringTerm
+            strings += term { const(KexChar.asArray().javaName) } as ConstStringTerm
+            strings += term { const(KexChar.javaName) } as ConstStringTerm
+            strings += term { const(KexInt.javaName) } as ConstStringTerm
         }
 
         for (str in strings.filter { it.value !in constStrings }) {
@@ -145,7 +145,7 @@ class TypeNameAdapter(
         val strTerm = generate(KexString())
         state { strTerm.new() }
 
-        val charArray = KexArray(KexChar())
+        val charArray = KexArray(KexChar)
         val valueArray = generate(charArray)
         state { valueArray.new(string.length) }
         for ((index, char) in string.withIndex()) {

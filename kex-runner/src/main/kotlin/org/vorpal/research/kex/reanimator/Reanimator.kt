@@ -33,7 +33,7 @@ val Parameters<Descriptor>.rtMapped: Parameters<Descriptor>
         val mapper = DescriptorRtMapper(KexRtManager.Mode.MAP)
         val instance = instance?.let { mapper.map(it) }
         val args = arguments.map { mapper.map(it) }
-        val statics = statics.map { mapper.map(it) }.toSet()
+        val statics = statics.mapTo(mutableSetOf()) { mapper.map(it) }
         return Parameters(instance, args, statics)
     }
 
@@ -42,7 +42,7 @@ val Parameters<ActionSequence>.rtUnmapped: Parameters<ActionSequence>
         val mapper = ActionSequenceRtMapper(KexRtManager.Mode.UNMAP)
         val instance = instance?.let { mapper.map(it) }
         val args = arguments.map { mapper.map(it) }
-        val statics = statics.map { mapper.map(it) }.toSet()
+        val statics = statics.mapTo(mutableSetOf()) { mapper.map(it) }
         return Parameters(instance, args, statics)
     }
 
@@ -103,7 +103,7 @@ class Reanimator(
         get() {
             val thisSequence = instance?.actionSequence
             val argSequences = arguments.map { it.actionSequence }
-            val staticFields = statics.map { it.actionSequence }.toSet()
+            val staticFields = statics.mapTo(mutableSetOf()) { it.actionSequence }
             return Parameters(thisSequence, argSequences, staticFields)
         }
 
@@ -111,7 +111,7 @@ class Reanimator(
         get() {
             val instance = instance?.let { csExecutor.execute(it) }
             val args = arguments.map { csExecutor.execute(it) }
-            val statics = statics.map { csExecutor.execute(it) }.toSet()
+            val statics = statics.mapTo(mutableSetOf()) { csExecutor.execute(it) }
             return Parameters(instance, args, statics)
         }
 }
