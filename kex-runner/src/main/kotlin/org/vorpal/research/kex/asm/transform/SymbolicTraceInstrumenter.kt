@@ -80,21 +80,21 @@ class SymbolicTraceInstrumenter(
             val addMethod = arrayListKlass.getMethod("add", types.boolType, types.objectType)
 
             val argTypesList = types.arrayListType.new().also { add(it) }
-            add(arrayListKlass.specialCall(initMethod, argTypesList))
+            add(arrayListKlass.specialCall(initMethod, argTypesList, emptyList()))
 
             val argumentList = types.arrayListType.new().also { add(it) }
-            add(arrayListKlass.specialCall(initMethod, argumentList))
+            add(arrayListKlass.specialCall(initMethod, argumentList, emptyList()))
 
             for ((index, arg) in method.argTypes.withIndex()) {
                 add(
                     arrayListKlass.virtualCall(
-                        addMethod, argTypesList, arg.asmDesc.asValue
+                        addMethod, argTypesList, listOf(arg.asmDesc.asValue)
                     )
                 )
                 val argument = values.getArgument(index, method, arg)
                 add(
                     arrayListKlass.virtualCall(
-                        addMethod, argumentList, argument.wrapped(this)
+                        addMethod, argumentList, listOf(argument.wrapped(this))
                     )
                 )
             }
@@ -107,12 +107,14 @@ class SymbolicTraceInstrumenter(
                 collectorClass.interfaceCall(
                     entryMethod,
                     traceCollector,
-                    method.klass.fullName.asValue,
-                    method.name.asValue,
-                    argTypesList,
-                    method.returnType.asmDesc.asValue,
-                    instance,
-                    argumentList
+                    listOf(
+                        method.klass.fullName.asValue,
+                        method.name.asValue,
+                        argTypesList,
+                        method.returnType.asmDesc.asValue,
+                        instance,
+                        argumentList
+                    )
                 )
             )
         }
@@ -135,8 +137,14 @@ class SymbolicTraceInstrumenter(
             add(
                 collectorClass.interfaceCall(
                     arrayLoadMethod, traceCollector,
-                    "$inst".asValue, "${inst.arrayRef}".asValue, "${inst.index}".asValue,
-                    inst.wrapped(this), inst.arrayRef, inst.index.wrapped(this)
+                    listOf(
+                        "$inst".asValue,
+                        "${inst.arrayRef}".asValue,
+                        "${inst.index}".asValue,
+                        inst.wrapped(this),
+                        inst.arrayRef,
+                        inst.index.wrapped(this)
+                    )
                 )
             )
         }
@@ -159,8 +167,15 @@ class SymbolicTraceInstrumenter(
             add(
                 collectorClass.interfaceCall(
                     arrayStoreMethod, traceCollector,
-                    "$inst".asValue, "${inst.arrayRef}".asValue, "${inst.index}".asValue, "${inst.value}".asValue,
-                    inst.arrayRef, inst.index.wrapped(this), inst.value.wrapped(this)
+                    listOf(
+                        "$inst".asValue,
+                        "${inst.arrayRef}".asValue,
+                        "${inst.index}".asValue,
+                        "${inst.value}".asValue,
+                        inst.arrayRef,
+                        inst.index.wrapped(this),
+                        inst.value.wrapped(this)
+                    )
                 )
             )
         }
@@ -179,8 +194,14 @@ class SymbolicTraceInstrumenter(
             add(
                 collectorClass.interfaceCall(
                     binaryMethod, traceCollector,
-                    "$inst".asValue, "${inst.lhv}".asValue, "${inst.rhv}".asValue,
-                    inst.wrapped(this), inst.lhv.wrapped(this), inst.rhv.wrapped(this)
+                    listOf(
+                        "$inst".asValue,
+                        "${inst.lhv}".asValue,
+                        "${inst.rhv}".asValue,
+                        inst.wrapped(this),
+                        inst.lhv.wrapped(this),
+                        inst.rhv.wrapped(this)
+                    )
                 )
             )
         }
@@ -195,7 +216,10 @@ class SymbolicTraceInstrumenter(
 
         val instrumented = collectorClass.interfaceCall(
             branchMethod, traceCollector,
-            "$inst".asValue, "${inst.cond}".asValue
+            listOf(
+                "$inst".asValue,
+                "${inst.cond}".asValue
+            )
         )
         inst.insertBefore(instrumented)
     }
@@ -223,31 +247,31 @@ class SymbolicTraceInstrumenter(
             val addMethod = arrayListKlass.getMethod("add", types.boolType, types.objectType)
 
             val argTypesList = types.arrayListType.new().also { add(it) }
-            add(arrayListKlass.specialCall(initMethod, argTypesList))
+            add(arrayListKlass.specialCall(initMethod, argTypesList, emptyList()))
             for (arg in calledMethod.argTypes) {
                 add(
                     arrayListKlass.virtualCall(
-                        addMethod, argTypesList, arg.asmDesc.asValue
+                        addMethod, argTypesList, listOf(arg.asmDesc.asValue)
                     )
                 )
             }
 
             val argumentList = types.arrayListType.new().also { add(it) }
-            add(arrayListKlass.specialCall(initMethod, argumentList))
+            add(arrayListKlass.specialCall(initMethod, argumentList, emptyList()))
             for (arg in inst.args) {
                 add(
                     arrayListKlass.virtualCall(
-                        addMethod, argumentList, "$arg".asValue
+                        addMethod, argumentList, listOf("$arg".asValue)
                     )
                 )
             }
 
             val concreteArgumentsList = types.arrayListType.new().also { add(it) }
-            add(arrayListKlass.specialCall(initMethod, concreteArgumentsList))
+            add(arrayListKlass.specialCall(initMethod, concreteArgumentsList, emptyList()))
             for (arg in inst.args) {
                 add(
                     arrayListKlass.virtualCall(
-                        addMethod, concreteArgumentsList, arg.wrapped(this)
+                        addMethod, concreteArgumentsList, listOf(arg.wrapped(this))
                     )
                 )
             }
@@ -265,15 +289,17 @@ class SymbolicTraceInstrumenter(
                 collectorClass.interfaceCall(
                     callMethod,
                     traceCollector,
-                    "$inst".asValue,
-                    klass.fullName.asValue,
-                    calledMethod.name.asValue,
-                    argTypesList,
-                    calledMethod.returnType.asmDesc.asValue,
-                    returnValue,
-                    callee,
-                    argumentList,
-                    concreteArgumentsList
+                    listOf(
+                        "$inst".asValue,
+                        klass.fullName.asValue,
+                        calledMethod.name.asValue,
+                        argTypesList,
+                        calledMethod.returnType.asmDesc.asValue,
+                        returnValue,
+                        callee,
+                        argumentList,
+                        concreteArgumentsList
+                    )
                 )
             )
         }
@@ -294,8 +320,12 @@ class SymbolicTraceInstrumenter(
             add(
                 collectorClass.interfaceCall(
                     castMethod, traceCollector,
-                    "$inst".asValue, "${inst.operand}".asValue,
-                    inst.wrapped(this), inst.operand.wrapped(this)
+                    listOf(
+                        "$inst".asValue,
+                        "${inst.operand}".asValue,
+                        inst.wrapped(this),
+                        inst.operand.wrapped(this)
+                    )
                 )
             )
         }
@@ -311,7 +341,10 @@ class SymbolicTraceInstrumenter(
 
         val instrumented = collectorClass.interfaceCall(
             catchMethod, traceCollector,
-            "$inst".asValue, inst
+            listOf(
+                "$inst".asValue,
+                inst
+            )
         )
         inst.insertAfter(instrumented)
     }
@@ -327,8 +360,13 @@ class SymbolicTraceInstrumenter(
             add(
                 collectorClass.interfaceCall(
                     cmpMethod, traceCollector,
-                    "$inst".asValue, "${inst.lhv}".asValue, "${inst.rhv}".asValue,
-                    inst.lhv.wrapped(this), inst.rhv.wrapped(this)
+                    listOf(
+                        "$inst".asValue,
+                        "${inst.lhv}".asValue,
+                        "${inst.rhv}".asValue,
+                        inst.lhv.wrapped(this),
+                        inst.rhv.wrapped(this)
+                    )
                 )
             )
         }
@@ -342,7 +380,11 @@ class SymbolicTraceInstrumenter(
         )
         val instrumented = collectorClass.interfaceCall(
             enterMonitorMethod, traceCollector,
-            "$inst".asValue, "${inst.owner}".asValue, inst.owner
+            listOf(
+                "$inst".asValue,
+                "${inst.owner}".asValue,
+                inst.owner
+            )
         )
         inst.insertAfter(instrumented)
     }
@@ -354,7 +396,11 @@ class SymbolicTraceInstrumenter(
         )
         val instrumented = collectorClass.interfaceCall(
             exitMonitorMethod, traceCollector,
-            "$inst".asValue, "${inst.owner}".asValue, inst.owner
+            listOf(
+                "$inst".asValue,
+                "${inst.owner}".asValue,
+                inst.owner
+            )
         )
         inst.insertAfter(instrumented)
     }
@@ -383,8 +429,15 @@ class SymbolicTraceInstrumenter(
             add(
                 collectorClass.interfaceCall(
                     fieldLoadMethod, traceCollector,
-                    "$inst".asValue, owner, fieldKlass, fieldName, fieldType,
-                    inst.wrapped(this), concreteOwner.wrapped(this)
+                    listOf(
+                        "$inst".asValue,
+                        owner,
+                        fieldKlass,
+                        fieldName,
+                        fieldType,
+                        inst.wrapped(this),
+                        concreteOwner.wrapped(this)
+                    )
                 )
             )
         }
@@ -422,9 +475,16 @@ class SymbolicTraceInstrumenter(
             add(
                 collectorClass.interfaceCall(
                     fieldStoreMethod, traceCollector,
-                    "$inst".asValue,
-                    owner, fieldKlass, fieldName, fieldType, "${inst.value}".asValue,
-                    inst.value.wrapped(this), defOwner
+                    listOf(
+                        "$inst".asValue,
+                        owner,
+                        fieldKlass,
+                        fieldName,
+                        fieldType,
+                        "${inst.value}".asValue,
+                        inst.value.wrapped(this),
+                        defOwner
+                    )
                 )
             )
         }
@@ -443,8 +503,12 @@ class SymbolicTraceInstrumenter(
             add(
                 collectorClass.interfaceCall(
                     instanceOfMethod, traceCollector,
-                    "$inst".asValue, "${inst.operand}".asValue,
-                    inst.wrapped(this), inst.operand.wrapped(this)
+                    listOf(
+                        "$inst".asValue,
+                        "${inst.operand}".asValue,
+                        inst.wrapped(this),
+                        inst.operand.wrapped(this)
+                    )
                 )
             )
         }
@@ -463,21 +527,21 @@ class SymbolicTraceInstrumenter(
             val initMethod = arrayListKlass.getMethod("<init>", types.voidType)
             val addMethod = arrayListKlass.getMethod("add", types.boolType, types.objectType)
             val args = types.arrayListType.new().also { add(it) }
-            add(arrayListKlass.specialCall(initMethod, args))
+            add(arrayListKlass.specialCall(initMethod, args, emptyList()))
             for (arg in inst.args) {
                 add(
                     arrayListKlass.virtualCall(
-                        addMethod, args, "$arg".asValue
+                        addMethod, args, listOf("$arg".asValue)
                     )
                 )
             }
 
             val concreteArgs = types.arrayListType.new().also { add(it) }
-            add(arrayListKlass.specialCall(initMethod, concreteArgs))
+            add(arrayListKlass.specialCall(initMethod, concreteArgs, emptyList()))
             for (arg in inst.args) {
                 add(
                     arrayListKlass.virtualCall(
-                        addMethod, concreteArgs, arg.wrapped(this)
+                        addMethod, concreteArgs, listOf(arg.wrapped(this))
                     )
                 )
             }
@@ -485,8 +549,12 @@ class SymbolicTraceInstrumenter(
             add(
                 collectorClass.interfaceCall(
                     invokeDynamicMethod, traceCollector,
-                    "$inst".asValue, args,
-                    inst.wrapped(this), concreteArgs
+                    listOf(
+                        "$inst".asValue,
+                        args,
+                        inst.wrapped(this),
+                        concreteArgs
+                    )
                 )
             )
         }
@@ -499,7 +567,7 @@ class SymbolicTraceInstrumenter(
         )
 
         val instrumented = collectorClass.interfaceCall(
-            jumpMethod, traceCollector, "$inst".asValue
+            jumpMethod, traceCollector, listOf("$inst".asValue)
         )
         inst.insertBefore(instrumented)
     }
@@ -516,21 +584,21 @@ class SymbolicTraceInstrumenter(
             val initMethod = arrayListKlass.getMethod("<init>", types.voidType)
             val addMethod = arrayListKlass.getMethod("add", types.boolType, types.objectType)
             val dimensions = types.arrayListType.new().also { add(it) }
-            add(arrayListKlass.specialCall(initMethod, dimensions))
+            add(arrayListKlass.specialCall(initMethod, dimensions, emptyList()))
             for (dimension in inst.dimensions) {
                 add(
                     arrayListKlass.virtualCall(
-                        addMethod, dimensions, "$dimension".asValue
+                        addMethod, dimensions, listOf("$dimension".asValue)
                     )
                 )
             }
 
             val concreteDimensions = types.arrayListType.new().also { add(it) }
-            add(arrayListKlass.specialCall(initMethod, concreteDimensions))
+            add(arrayListKlass.specialCall(initMethod, concreteDimensions, emptyList()))
             for (dimension in inst.dimensions) {
                 add(
                     arrayListKlass.virtualCall(
-                        addMethod, concreteDimensions, dimension.wrapped(this)
+                        addMethod, concreteDimensions, listOf(dimension.wrapped(this))
                     )
                 )
             }
@@ -542,8 +610,12 @@ class SymbolicTraceInstrumenter(
             add(
                 collectorClass.interfaceCall(
                     newArrayMethod, traceCollector,
-                    "$inst".asValue, dimensions,
-                    inst, concreteDimensions
+                    listOf(
+                        "$inst".asValue,
+                        dimensions,
+                        inst,
+                        concreteDimensions
+                    )
                 )
             )
         }
@@ -556,7 +628,7 @@ class SymbolicTraceInstrumenter(
         )
 
         val instrumented = collectorClass.interfaceCall(
-            newMethod, traceCollector, "$inst".asValue
+            newMethod, traceCollector, listOf("$inst".asValue)
         )
         inst.insertAfter(instrumented)
     }
@@ -569,7 +641,11 @@ class SymbolicTraceInstrumenter(
         val instrumented = buildList {
             add(
                 collectorClass.interfaceCall(
-                    phiMethod, traceCollector, "$inst".asValue, inst.wrapped(this)
+                    phiMethod, traceCollector,
+                    listOf(
+                        "$inst".asValue,
+                        inst.wrapped(this)
+                    )
                 )
             )
         }
@@ -591,7 +667,11 @@ class SymbolicTraceInstrumenter(
             add(
                 collectorClass.interfaceCall(
                     returnMethod, traceCollector,
-                    "$inst".asValue, returnValue, concreteValue.wrapped(this)
+                    listOf(
+                        "$inst".asValue,
+                        returnValue,
+                        concreteValue.wrapped(this)
+                    )
                 )
             )
         }
@@ -608,7 +688,11 @@ class SymbolicTraceInstrumenter(
             add(
                 collectorClass.interfaceCall(
                     switchMethod, traceCollector,
-                    "$inst".asValue, "${inst.key}".asValue, inst.key.wrapped(this)
+                    listOf(
+                        "$inst".asValue,
+                        "${inst.key}".asValue,
+                        inst.key.wrapped(this)
+                    )
                 )
             )
         }
@@ -625,7 +709,11 @@ class SymbolicTraceInstrumenter(
             add(
                 collectorClass.interfaceCall(
                     tableSwitchMethod, traceCollector,
-                    "$inst".asValue, "${inst.index}".asValue, inst.index.wrapped(this)
+                    listOf(
+                        "$inst".asValue,
+                        "${inst.index}".asValue,
+                        inst.index.wrapped(this)
+                    )
                 )
             )
         }
@@ -640,7 +728,11 @@ class SymbolicTraceInstrumenter(
 
         val instrumented = collectorClass.interfaceCall(
             throwMethod, traceCollector,
-            "$inst".asValue, "${inst.throwable}".asValue, inst.throwable
+            listOf(
+                "$inst".asValue,
+                "${inst.throwable}".asValue,
+                inst.throwable
+            )
         )
         inst.insertBefore(instrumented)
     }
@@ -660,8 +752,12 @@ class SymbolicTraceInstrumenter(
             add(
                 collectorClass.interfaceCall(
                     unaryMethod, traceCollector,
-                    "$inst".asValue, "${inst.operand}".asValue,
-                    inst.wrapped(this), inst.operand.wrapped(this)
+                    listOf(
+                        "$inst".asValue,
+                        "${inst.operand}".asValue,
+                        inst.wrapped(this),
+                        inst.operand.wrapped(this)
+                    )
                 )
             )
         }
@@ -680,8 +776,11 @@ class SymbolicTraceInstrumenter(
         add(
             collectorClass.interfaceCall(
                 addNullityConstraintsMethod, traceCollector,
-                "$inst".asValue, "$value".asValue,
-                value.wrapped(this)
+                listOf(
+                    "$inst".asValue,
+                    "$value".asValue,
+                    value.wrapped(this)
+                )
             )
         )
     }
@@ -695,8 +794,11 @@ class SymbolicTraceInstrumenter(
         add(
             collectorClass.interfaceCall(
                 addTypeConstraintsMethod, traceCollector,
-                "$inst".asValue, "$value".asValue,
-                value.wrapped(this)
+                listOf(
+                    "$inst".asValue,
+                    "$value".asValue,
+                    value.wrapped(this)
+                )
             )
         )
     }
@@ -710,7 +812,12 @@ class SymbolicTraceInstrumenter(
         add(
             collectorClass.interfaceCall(
                 addTypeConstraintsMethod, traceCollector,
-                "$inst".asValue, "$value".asValue, type.name.asValue, value.wrapped(this)
+                listOf(
+                    "$inst".asValue,
+                    "$value".asValue,
+                    type.name.asValue,
+                    value.wrapped(this)
+                )
             )
         )
     }
@@ -726,9 +833,13 @@ class SymbolicTraceInstrumenter(
         add(
             collectorClass.interfaceCall(
                 addArrayIndexConstraintsMethod, traceCollector,
-                "$inst".asValue,
-                "$array".asValue, "$index".asValue,
-                array.wrapped(this), index.wrapped(this)
+                listOf(
+                    "$inst".asValue,
+                    "$array".asValue,
+                    "$index".asValue,
+                    array.wrapped(this),
+                    index.wrapped(this)
+                )
             )
         )
     }
@@ -743,8 +854,11 @@ class SymbolicTraceInstrumenter(
         add(
             collectorClass.interfaceCall(
                 addArrayIndexConstraintsMethod, traceCollector,
-                "$inst".asValue,
-                "$length".asValue, length.wrapped(this)
+                listOf(
+                    "$inst".asValue,
+                    "$length".asValue,
+                    length.wrapped(this)
+                )
             )
         )
     }
@@ -752,39 +866,39 @@ class SymbolicTraceInstrumenter(
     private fun getNewCollector(): Instruction {
         val getter = collectorProxyClass.getMethod("currentCollector", cm.type.getRefType(collectorClass))
 
-        return getter.staticCall(collectorProxyClass, "collector", arrayOf())
+        return getter.staticCall(collectorProxyClass, "collector", emptyList())
     }
 
     private fun setNewCollector(collector: Value): Instruction {
         val setter =
             collectorProxyClass.getMethod("setCurrentCollector", cm.type.voidType, cm.type.getRefType(collectorClass))
 
-        return setter.staticCall(collectorProxyClass, arrayOf(collector))
+        return setter.staticCall(collectorProxyClass, listOf(collector))
     }
 
     private fun disableCollector(): Instruction {
         val disabler = collectorProxyClass.getMethod("disableCollector", cm.type.voidType)
 
-        return disabler.staticCall(collectorProxyClass, arrayOf())
+        return disabler.staticCall(collectorProxyClass, listOf())
     }
 
     private fun Class.virtualCall(
         method: Method,
         instance: Value,
-        vararg args: Value
-    ) = method.virtualCall(this, instance, args.toList().toTypedArray())
+        args: List<Value>
+    ) = method.virtualCall(this, instance, args)
 
     private fun Class.interfaceCall(
         method: Method,
         instance: Value,
-        vararg args: Value
-    ) = method.interfaceCall(this, instance, args.toList().toTypedArray())
+        args: List<Value>
+    ) = method.interfaceCall(this, instance, args)
 
     private fun Class.specialCall(
         method: Method,
         instance: Value,
-        vararg args: Value
-    ) = method.specialCall(this, instance, args.toList().toTypedArray())
+        args: List<Value>
+    ) = method.specialCall(this, instance, args)
 
     private fun Value.wrapped(list: MutableList<Instruction>): Value = when {
         this.type.isPrimitive -> wrapValue(this).also {

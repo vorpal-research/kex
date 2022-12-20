@@ -24,7 +24,7 @@ class KexSerializerTest : KexTest() {
 
     @Test
     fun typeSerializationTest() {
-        val voidType = KexVoid()
+        val voidType = KexVoid
         val intType = KexInt
         val doubleType = KexDouble
         val klassType = KexClass("org/vorpal/research/kex/Test")

@@ -23,7 +23,7 @@ class SystemExitTransformer(override val cm: ClassManager) : MethodVisitor {
         if (calledMethod == exitMethod) {
             val newInsts = buildList<Instruction> {
                 val exception = inst(cm) { exceptionClass.type.new() }.also { add(it) }
-                add(inst(cm) { exceptionConstructor.specialCall(exceptionClass, exception, inst.args.toTypedArray()) })
+                add(inst(cm) { exceptionConstructor.specialCall(exceptionClass, exception, inst.args) })
                 add(inst(cm) { exception.`throw`() })
             }
 

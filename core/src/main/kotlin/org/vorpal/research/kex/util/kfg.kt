@@ -24,7 +24,7 @@ fun InstructionBuilder.wrapValue(value: Value): Instruction {
     val wrapperType = cm.type.getWrapper(value.type as PrimitiveType) as ClassType
     val wrapperClass = wrapperType.klass
     val valueOfMethod = wrapperClass.getMethod("valueOf", wrapperType, value.type)
-    return valueOfMethod.staticCall(wrapperClass, arrayOf(value))
+    return valueOfMethod.staticCall(wrapperClass, listOf(value))
 }
 
 fun Instruction.insertBefore(instructions: List<Instruction>) {

@@ -34,7 +34,7 @@ class RuntimeTraceInstrumenter(override val cm: ClassManager) : MethodVisitor, I
             cm[TraceCollectorProxy::class.java.canonicalName.replace(Package.CANONICAL_SEPARATOR, Package.SEPARATOR)]
         val getter = proxy.getMethod("currentCollector", cm.type.getRefType(collectorClass))
 
-        return getter.staticCall(proxy, "collector", arrayOf())
+        return getter.staticCall(proxy, "collector", listOf())
     }
 
     private fun List<Instruction>.insertBefore(inst: Instruction) {
@@ -72,7 +72,7 @@ class RuntimeTraceInstrumenter(override val cm: ClassManager) : MethodVisitor, I
                 branchMethod.interfaceCall(
                     collectorClass,
                     traceCollector,
-                    arrayOf("${inst.parent.name}".asValue, condition, expected)
+                    listOf("${inst.parent.name}".asValue, condition, expected)
                 )
             )
         }
@@ -89,14 +89,14 @@ class RuntimeTraceInstrumenter(override val cm: ClassManager) : MethodVisitor, I
                 jumpMethod.interfaceCall(
                     collectorClass,
                     traceCollector,
-                    arrayOf("${inst.parent.name}".asValue)
+                    listOf("${inst.parent.name}".asValue)
                 )
             )
         }
         inst.parent.insertBefore(inst, *blockExitInsts.toTypedArray())
     }
 
-    override fun visitSwitchInst(inst: SwitchInst) = buildList<Instruction> {
+    override fun visitSwitchInst(inst: SwitchInst) = buildList {
         val switchMethod = collectorClass.getMethod(
             "blockSwitch",
             types.voidType, types.stringType, types.objectType
@@ -112,12 +112,12 @@ class RuntimeTraceInstrumenter(override val cm: ClassManager) : MethodVisitor, I
             switchMethod.interfaceCall(
                 collectorClass,
                 traceCollector,
-                arrayOf("${inst.parent.name}".asValue, key)
+                listOf("${inst.parent.name}".asValue, key)
             )
         )
     }.insertBefore(inst)
 
-    override fun visitTableSwitchInst(inst: TableSwitchInst) = buildList<Instruction> {
+    override fun visitTableSwitchInst(inst: TableSwitchInst) = buildList {
         val switchMethod = collectorClass.getMethod(
             "blockSwitch",
             types.voidType, types.stringType, types.objectType
@@ -133,18 +133,18 @@ class RuntimeTraceInstrumenter(override val cm: ClassManager) : MethodVisitor, I
             switchMethod.interfaceCall(
                 collectorClass,
                 traceCollector,
-                arrayOf("${inst.parent.name}".asValue, key)
+                listOf("${inst.parent.name}".asValue, key)
             )
         )
     }.insertBefore(inst)
 
     override fun visitThrowInst(inst: ThrowInst) = when {
-        inst.parent.method.isStaticInitializer -> buildList<Instruction> {
+        inst.parent.method.isStaticInitializer -> buildList {
             val returnMethod = collectorClass.getMethod("staticExit", types.voidType)
-            add(returnMethod.interfaceCall(collectorClass, traceCollector, arrayOf()))
+            add(returnMethod.interfaceCall(collectorClass, traceCollector, listOf()))
         }
 
-        else -> buildList<Instruction> {
+        else -> buildList {
             val throwMethod = collectorClass.getMethod(
                 "methodThrow",
                 types.voidType, types.stringType, types.getRefType("java/lang/Throwable")
@@ -153,29 +153,29 @@ class RuntimeTraceInstrumenter(override val cm: ClassManager) : MethodVisitor, I
                 throwMethod.interfaceCall(
                     collectorClass,
                     traceCollector,
-                    arrayOf("${inst.parent.name}".asValue, inst.throwable)
+                    listOf("${inst.parent.name}".asValue, inst.throwable)
                 )
             )
         }
     }.insertBefore(inst)
 
     override fun visitReturnInst(inst: ReturnInst) = when {
-        inst.parent.method.isStaticInitializer -> buildList<Instruction> {
+        inst.parent.method.isStaticInitializer -> buildList {
             val returnMethod = collectorClass.getMethod("staticExit", types.voidType)
-            add(returnMethod.interfaceCall(collectorClass, traceCollector, arrayOf()))
+            add(returnMethod.interfaceCall(collectorClass, traceCollector, listOf()))
         }
 
-        else -> buildList<Instruction> {
+        else -> buildList {
             val returnMethod = collectorClass.getMethod(
                 "methodReturn",
                 types.voidType, types.stringType
             )
-            add(returnMethod.interfaceCall(collectorClass, traceCollector, arrayOf("${inst.parent.name}".asValue)))
+            add(returnMethod.interfaceCall(collectorClass, traceCollector, listOf("${inst.parent.name}".asValue)))
         }
     }.insertBefore(inst)
 
     override fun visitCallInst(inst: CallInst) {
-        buildList<Instruction> {
+        buildList {
             val callMethod = collectorClass.getMethod(
                 "methodCall",
                 types.voidType,
@@ -195,7 +195,7 @@ class RuntimeTraceInstrumenter(override val cm: ClassManager) : MethodVisitor, I
                 callMethod.interfaceCall(
                     collectorClass,
                     traceCollector,
-                    arrayOf(
+                    listOf(
                         method.klass.fullName.asValue,
                         method.name.asValue,
                         stringArray,
@@ -219,7 +219,7 @@ class RuntimeTraceInstrumenter(override val cm: ClassManager) : MethodVisitor, I
                 entryMethod.interfaceCall(
                     collectorClass,
                     traceCollector,
-                    arrayOf("${bb.name}".asValue)
+                    listOf("${bb.name}".asValue)
                 )
             )
         }.insertBefore(bb.first())
@@ -240,12 +240,12 @@ class RuntimeTraceInstrumenter(override val cm: ClassManager) : MethodVisitor, I
                     entryMethod.interfaceCall(
                         collectorClass,
                         traceCollector,
-                        arrayOf(method.klass.fullName.asValue)
+                        listOf(method.klass.fullName.asValue)
                     )
                 )
             }
 
-            else -> buildList<Instruction> {
+            else -> buildList {
                 traceCollector = getNewCollector()
                 add(traceCollector)
                 val entryMethod = collectorClass.getMethod(
@@ -271,7 +271,7 @@ class RuntimeTraceInstrumenter(override val cm: ClassManager) : MethodVisitor, I
                     entryMethod.interfaceCall(
                         collectorClass,
                         traceCollector,
-                        arrayOf(
+                        listOf(
                             method.klass.fullName.asValue,
                             method.name.asValue,
                             stringArray,

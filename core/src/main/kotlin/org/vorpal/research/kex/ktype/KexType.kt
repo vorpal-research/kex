@@ -180,7 +180,7 @@ abstract class KexType {
                 is NullType -> KexNull()
                 else -> unreachable { log.error("Unknown reference type: $type") }
             }
-            is VoidType -> KexVoid()
+            is VoidType -> KexVoid
             else -> unreachable { log.error("Unknown type: $type") }
         }
 
@@ -199,7 +199,7 @@ abstract class KexType {
 
 @InheritorOf("KexType")
 @Serializable
-class KexVoid : KexType() {
+object KexVoid : KexType() {
     override val name: String
         get() = "void"
 
