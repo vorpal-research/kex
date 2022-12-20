@@ -15,7 +15,6 @@ import org.vorpal.research.kthelper.assert.unreachable
 import org.vorpal.research.kthelper.compareTo
 import org.vorpal.research.kthelper.logging.log
 
-fun Type.asArray(tf: TypeFactory) = tf.getArrayType(this)
 val Type.javaDesc get() = this.name.replace(Package.SEPARATOR, Package.CANONICAL_SEPARATOR)
 
 fun Package.isParent(klass: Class) = isParent(klass.pkg)

@@ -10,7 +10,6 @@ import org.vorpal.research.kex.state.term.FieldTerm
 import org.vorpal.research.kex.state.term.term
 import org.vorpal.research.kex.state.transformer.TypeInfoMap
 import org.vorpal.research.kex.state.transformer.generateFinalDescriptors
-import org.vorpal.research.kex.util.asArray
 import org.vorpal.research.kex.util.loadClass
 import org.vorpal.research.kfg.ir.Class
 import org.vorpal.research.kfg.type.ClassType
@@ -162,7 +161,7 @@ class EnumGenerator(private val fallback: Generator) : Generator {
         val enumConstants = getEnumConstants(this, normalizedKexType).toList()
         list += when (descriptor) {
             is ClassDescriptor -> {
-                val valuesMethod = normalizedEnumCLass.getMethod("values", normalizedEnumCLass.type.asArray(context.types))
+                val valuesMethod = normalizedEnumCLass.getMethod("values", normalizedEnumCLass.type.asArray)
                 StaticMethodCall(valuesMethod, emptyList())
             }
             else -> {

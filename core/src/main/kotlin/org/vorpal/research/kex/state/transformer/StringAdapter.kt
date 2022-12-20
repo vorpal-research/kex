@@ -10,10 +10,7 @@ import org.vorpal.research.kex.state.term.term
 import org.vorpal.research.kfg.ClassManager
 import org.vorpal.research.kfg.ir.Class
 import org.vorpal.research.kfg.stringClass
-import org.vorpal.research.kfg.type.Type
-import org.vorpal.research.kfg.type.TypeFactory
-import org.vorpal.research.kfg.type.objectType
-import org.vorpal.research.kfg.type.stringType
+import org.vorpal.research.kfg.type.*
 import org.vorpal.research.kthelper.collection.buildList
 import org.vorpal.research.kthelper.collection.dequeOf
 
@@ -24,55 +21,62 @@ private fun Type.getArray(types: TypeFactory) = types.getArrayType(this)
 fun Class.getCtor(vararg argTypes: Type) =
     getMethod("<init>", cm.type.voidType, *argTypes)
 
-private val Class.emptyInit
-    get() = getCtor()
-private val Class.copyInit
-    get() = getCtor(cm.type.stringType)
-private val Class.charArrayInit
-    get() = getCtor(cm.type.charType.getArray(cm.type))
-private val Class.charArrayWOffsetInit
-    get() = getCtor(cm.type.charType.getArray(cm.type), cm.type.intType, cm.type.intType)
 
-private val Class.length
-    get() = getMethod("length", cm.type.intType)
-private val Class.isEmpty
-    get() = getMethod("isEmpty", cm.type.boolType)
-private val Class.charAt
-    get() = getMethod("charAt", cm.type.charType, cm.type.intType)
-private val Class.equals
-    get() = getMethod("equals", cm.type.boolType, cm.type.objectType)
-private val Class.startsWith
-    get() = getMethod("startsWith", cm.type.boolType, cm.type.stringType)
-private val Class.startsWithOffset
-    get() = getMethod("startsWith", cm.type.boolType, cm.type.stringType, cm.type.intType)
-private val Class.endsWith
-    get() = getMethod("endsWith", cm.type.boolType, cm.type.stringType)
-private val Class.indexOf
-    get() = getMethod("indexOf", cm.type.intType, cm.type.intType)
-private val Class.indexOfWOffset
-    get() = getMethod("indexOf", cm.type.intType, cm.type.intType, cm.type.intType)
-private val Class.stringIndexOf
-    get() = getMethod("indexOf", cm.type.intType, cm.type.stringType)
-private val Class.stringIndexOfWOffset
-    get() = getMethod("indexOf", cm.type.intType, cm.type.stringType, cm.type.intType)
-private val Class.substring
-    get() = getMethod("substring", cm.type.stringType, cm.type.intType)
-private val Class.substringWLength
-    get() = getMethod("substring", cm.type.stringType, cm.type.intType, cm.type.intType)
-private val Class.subSequence
-    get() = getMethod("subSequence", cm.type.charSeqType, cm.type.intType, cm.type.intType)
-private val Class.concat
-    get() = getMethod("concat", cm.type.stringType, cm.type.stringType)
-private val Class.contains
-    get() = getMethod("contains", cm.type.boolType, cm.type.charSeqType)
-private val Class.toString
-    get() = getMethod("toString", cm.type.stringType)
-private val Class.compareTo
-    get() = getMethod("compareTo", cm.type.intType, cm.type.stringType)
+abstract class StringMethodContext(val cm: ClassManager) {
+    val stringType = cm.type.stringType
+    val objectType = cm.type.objectType
+    val charSeqType = cm.type.charSeqType
+
+    val Class.emptyInit
+        get() = getCtor()
+    val Class.copyInit
+        get() = getCtor(stringType)
+    val Class.charArrayInit
+        get() = getCtor(cm.type.charType.getArray(cm.type))
+    val Class.charArrayWOffsetInit
+        get() = getCtor(cm.type.charType.getArray(cm.type), cm.type.intType, cm.type.intType)
+
+    val Class.length
+        get() = getMethod("length", cm.type.intType)
+    val Class.isEmpty
+        get() = getMethod("isEmpty", cm.type.boolType)
+    val Class.charAt
+        get() = getMethod("charAt", cm.type.charType, cm.type.intType)
+    val Class.equals
+        get() = getMethod("equals", cm.type.boolType, objectType)
+    val Class.startsWith
+        get() = getMethod("startsWith", cm.type.boolType, stringType)
+    val Class.startsWithOffset
+        get() = getMethod("startsWith", cm.type.boolType, stringType, cm.type.intType)
+    val Class.endsWith
+        get() = getMethod("endsWith", cm.type.boolType, stringType)
+    val Class.indexOf
+        get() = getMethod("indexOf", cm.type.intType, cm.type.intType)
+    val Class.indexOfWOffset
+        get() = getMethod("indexOf", cm.type.intType, cm.type.intType, cm.type.intType)
+    val Class.stringIndexOf
+        get() = getMethod("indexOf", cm.type.intType, stringType)
+    val Class.stringIndexOfWOffset
+        get() = getMethod("indexOf", cm.type.intType, stringType, cm.type.intType)
+    val Class.substring
+        get() = getMethod("substring", stringType, cm.type.intType)
+    val Class.substringWLength
+        get() = getMethod("substring", stringType, cm.type.intType, cm.type.intType)
+    val Class.subSequence
+        get() = getMethod("subSequence", charSeqType, cm.type.intType, cm.type.intType)
+    val Class.concat
+        get() = getMethod("concat", stringType, stringType)
+    val Class.contains
+        get() = getMethod("contains", cm.type.boolType, charSeqType)
+    val Class.toString
+        get() = getMethod("toString", stringType)
+    val Class.compareTo
+        get() = getMethod("compareTo", cm.type.intType, stringType)
+}
 
 @Suppress("DEPRECATION")
 @Deprecated("use StringMethodAdapter instead")
-class StringAdapter(val cm: ClassManager) : RecollectingTransformer<StringAdapter> {
+class StringAdapter(cm: ClassManager) : StringMethodContext(cm), RecollectingTransformer<StringAdapter> {
     override val builders = dequeOf(StateBuilder())
     val types get() = cm.type
 
@@ -217,7 +221,7 @@ class StringAdapter(val cm: ClassManager) : RecollectingTransformer<StringAdapte
 
 }
 
-class StringMethodAdapter(val cm: ClassManager) : RecollectingTransformer<StringMethodAdapter> {
+class StringMethodAdapter(cm: ClassManager) : StringMethodContext(cm), RecollectingTransformer<StringMethodAdapter> {
     override val builders = dequeOf(StateBuilder())
     val types get() = cm.type
 
@@ -258,7 +262,7 @@ class StringMethodAdapter(val cm: ClassManager) : RecollectingTransformer<String
         state {
             generateArray(valueArray, length) {
                 val index = value(KexInt, "lambda.index")
-                lambda(types.objectType.kexType, index) {
+                lambda(objectType.kexType, index) {
                     array[offset + index].load()
                 }
             }
@@ -402,7 +406,7 @@ class StringMethodAdapter(val cm: ClassManager) : RecollectingTransformer<String
                             state {
                                 res equality forAll(0, thisLength) {
                                     val index = generate(KexInt)
-                                    lambda(types.objectType.kexType, listOf(index)) {
+                                    lambda(objectType.kexType, listOf(index)) {
                                         thisValue[index].load() eq otherValue[index].load()
                                     }
                                 }
@@ -477,7 +481,7 @@ class StringMethodAdapter(val cm: ClassManager) : RecollectingTransformer<String
                                 res equality forAll(0, otherLength) {
                                     val index = generate(KexInt)
                                     lambda(
-                                        types.objectType.kexType,
+                                        objectType.kexType,
                                         listOf(index)
                                     ) {
                                         thisValue[offset + index].load() eq otherValue[index].load()
@@ -556,7 +560,7 @@ class StringMethodAdapter(val cm: ClassManager) : RecollectingTransformer<String
                         res equality forAll(0, otherLength) {
                             val index = generate(KexInt)
                             lambda(
-                                types.objectType.kexType,
+                                objectType.kexType,
                                 listOf(index)
                             ) {
                                 thisValue[offset + index].load() eq otherValue[index].load()
@@ -612,7 +616,7 @@ class StringMethodAdapter(val cm: ClassManager) : RecollectingTransformer<String
                         generateArray(resValue, length) {
                             val index = generate(KexInt)
                             lambda(
-                                types.objectType.kexType,
+                                objectType.kexType,
                                 listOf(index)
                             ) {
                                 thisValue[beginIndex + index].load()
@@ -679,7 +683,7 @@ class StringMethodAdapter(val cm: ClassManager) : RecollectingTransformer<String
         state {
             generateArray(resValue, resLength) {
                 val index = generate(KexInt)
-                lambda(types.objectType.kexType, index) {
+                lambda(objectType.kexType, index) {
                     ite(
                         KexChar,
                         index lt thisLength,
@@ -710,7 +714,7 @@ class StringMethodAdapter(val cm: ClassManager) : RecollectingTransformer<String
         val call = predicate.call as CallTerm
         val args = call.arguments
 
-        val kfgString = cm.stringClass
+        val kfgString = (stringType as ClassType).klass
         if (call.owner.type != kfgString.kexType) return predicate
 
         val `this` = call.owner
@@ -745,7 +749,7 @@ class StringMethodAdapter(val cm: ClassManager) : RecollectingTransformer<String
 
 }
 
-class TermExprStringAdapter(val cm: ClassManager) : Transformer<TermExprStringAdapter> {
+class TermExprStringAdapter(cm: ClassManager) : StringMethodContext(cm), Transformer<TermExprStringAdapter> {
     private fun Term.valueArray(): Term = term { this@valueArray.field(KexCharArray(), "value") }
     private fun KexCharArray() = KexChar.asArray()
 

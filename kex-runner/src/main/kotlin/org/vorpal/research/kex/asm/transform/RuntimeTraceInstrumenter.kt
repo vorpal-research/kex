@@ -29,6 +29,9 @@ class RuntimeTraceInstrumenter(override val cm: ClassManager) : MethodVisitor, I
     override val values: ValueFactory
         get() = cm.value
 
+    private val objectType = types.objectType
+    private val stringType = types.stringType
+
     private fun getNewCollector(): Instruction {
         val proxy =
             cm[TraceCollectorProxy::class.java.canonicalName.replace(Package.CANONICAL_SEPARATOR, Package.SEPARATOR)]
@@ -47,7 +50,7 @@ class RuntimeTraceInstrumenter(override val cm: ClassManager) : MethodVisitor, I
         val blockExitInsts = buildList<Instruction> {
             val branchMethod = collectorClass.getMethod(
                 "blockBranch",
-                types.voidType, types.stringType, types.objectType, types.objectType
+                types.voidType, stringType, objectType, objectType
             )
             val (condition, expected) = when (inst.cond) {
                 is CmpInst -> {
@@ -83,7 +86,7 @@ class RuntimeTraceInstrumenter(override val cm: ClassManager) : MethodVisitor, I
         val blockExitInsts = buildList<Instruction> {
             val jumpMethod = collectorClass.getMethod(
                 "blockJump",
-                types.voidType, types.stringType
+                types.voidType, stringType
             )
             add(
                 jumpMethod.interfaceCall(
@@ -99,7 +102,7 @@ class RuntimeTraceInstrumenter(override val cm: ClassManager) : MethodVisitor, I
     override fun visitSwitchInst(inst: SwitchInst) = buildList {
         val switchMethod = collectorClass.getMethod(
             "blockSwitch",
-            types.voidType, types.stringType, types.objectType
+            types.voidType, stringType, objectType
         )
         val key = run {
             val key = inst.key
@@ -120,7 +123,7 @@ class RuntimeTraceInstrumenter(override val cm: ClassManager) : MethodVisitor, I
     override fun visitTableSwitchInst(inst: TableSwitchInst) = buildList {
         val switchMethod = collectorClass.getMethod(
             "blockSwitch",
-            types.voidType, types.stringType, types.objectType
+            types.voidType, stringType, objectType
         )
         val key = run {
             val key = inst.index
@@ -147,7 +150,7 @@ class RuntimeTraceInstrumenter(override val cm: ClassManager) : MethodVisitor, I
         else -> buildList {
             val throwMethod = collectorClass.getMethod(
                 "methodThrow",
-                types.voidType, types.stringType, types.getRefType("java/lang/Throwable")
+                types.voidType, stringType, types.getRefType("java/lang/Throwable")
             )
             add(
                 throwMethod.interfaceCall(
@@ -168,7 +171,7 @@ class RuntimeTraceInstrumenter(override val cm: ClassManager) : MethodVisitor, I
         else -> buildList {
             val returnMethod = collectorClass.getMethod(
                 "methodReturn",
-                types.voidType, types.stringType
+                types.voidType, stringType
             )
             add(returnMethod.interfaceCall(collectorClass, traceCollector, listOf("${inst.parent.name}".asValue)))
         }
@@ -179,12 +182,12 @@ class RuntimeTraceInstrumenter(override val cm: ClassManager) : MethodVisitor, I
             val callMethod = collectorClass.getMethod(
                 "methodCall",
                 types.voidType,
-                types.stringType, types.stringType, types.stringType.asArray,
-                types.stringType, types.stringType, types.stringType, types.stringType.asArray
+                stringType, stringType, stringType.asArray,
+                stringType, stringType, stringType, stringType.asArray
             )
             val sizeVal = values.getInt(inst.method.argTypes.size)
-            val stringArray = types.stringType.newArray(sizeVal).also { add(it) }
-            val argArray = types.stringType.newArray(sizeVal).also { add(it) }
+            val stringArray = stringType.newArray(sizeVal).also { add(it) }
+            val argArray = stringType.newArray(sizeVal).also { add(it) }
             for ((index, arg) in inst.method.argTypes.withIndex()) {
                 add(stringArray.store(index, arg.asmDesc.asValue))
                 add(argArray.store(index, inst.args[index].toString().asValue))
@@ -213,7 +216,7 @@ class RuntimeTraceInstrumenter(override val cm: ClassManager) : MethodVisitor, I
         super.visitBasicBlock(bb)
         buildList<Instruction> {
             val entryMethod = collectorClass.getMethod(
-                "blockEnter", types.voidType, types.stringType
+                "blockEnter", types.voidType, stringType
             )
             add(
                 entryMethod.interfaceCall(
@@ -234,7 +237,7 @@ class RuntimeTraceInstrumenter(override val cm: ClassManager) : MethodVisitor, I
                 add(traceCollector)
                 val entryMethod = collectorClass.getMethod(
                     "staticEntry",
-                    types.voidType, types.stringType
+                    types.voidType, stringType
                 )
                 add(
                     entryMethod.interfaceCall(
@@ -250,12 +253,12 @@ class RuntimeTraceInstrumenter(override val cm: ClassManager) : MethodVisitor, I
                 add(traceCollector)
                 val entryMethod = collectorClass.getMethod(
                     "methodEnter", types.voidType,
-                    types.stringType, types.stringType, types.stringType.asArray,
-                    types.stringType, types.objectType, types.objectType.asArray
+                    stringType, stringType, stringType.asArray,
+                    stringType, objectType, objectType.asArray
                 )
                 val sizeVal = method.argTypes.size.asValue
-                val stringArray = types.stringType.newArray(sizeVal).also { add(it) }
-                val argArray = types.objectType.newArray(sizeVal).also { add(it) }
+                val stringArray = stringType.newArray(sizeVal).also { add(it) }
+                val argArray = objectType.newArray(sizeVal).also { add(it) }
                 for ((index, arg) in method.argTypes.withIndex()) {
                     add(stringArray.store(index, arg.asmDesc.asValue))
                     val argValue = values.getArgument(index, method, arg).let { argValue ->
