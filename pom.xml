@@ -24,7 +24,7 @@
         <maven.compiler.source>${jvm.version}</maven.compiler.source>
         <maven.compiler.target>${jvm.version}</maven.compiler.target>
 
-        <kotlin.version>1.7.21</kotlin.version>
+        <kotlin.version>1.7.20</kotlin.version>
         <kotlin.code.style>official</kotlin.code.style>
         <serialization.version>1.4.1</serialization.version>
         <coroutines.version>1.6.4</coroutines.version>
@@ -94,6 +94,7 @@
             <modules>
                 <module>kex-boolector</module>
                 <module>kex-z3</module>
+                <module>kex-ksmt</module>
             </modules>
         </profile>
 
@@ -118,6 +119,18 @@
 
             <modules>
                 <module>kex-z3</module>
+            </modules>
+        </profile>
+
+        <profile>
+            <id>ksmt</id>
+
+            <properties>
+                <ksmt-only>true</ksmt-only>
+            </properties>
+
+            <modules>
+                <module>kex-ksmt</module>
             </modules>
         </profile>
     </profiles>
