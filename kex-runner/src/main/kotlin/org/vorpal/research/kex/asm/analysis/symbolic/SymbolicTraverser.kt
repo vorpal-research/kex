@@ -10,6 +10,7 @@ import org.vorpal.research.kex.asm.state.PredicateStateAnalysis
 import org.vorpal.research.kex.compile.CompilerHelper
 import org.vorpal.research.kex.config.kexConfig
 import org.vorpal.research.kex.descriptor.Descriptor
+import org.vorpal.research.kex.ktype.KexPointer
 import org.vorpal.research.kex.ktype.KexRtManager.isJavaRt
 import org.vorpal.research.kex.ktype.KexRtManager.rtMapped
 import org.vorpal.research.kex.ktype.KexType
@@ -70,6 +71,7 @@ class SymbolicTraverser(
 
     private val pathSelector: PathSelector = DequePathSelector()
     private val callResolver: CallResolver = DefaultCallResolver()
+    private val invokeDynamicResolver: InvokeDynamicResolver = DefaultCallResolver()
     private var currentState: TraverserState? = null
     private var testIndex = AtomicInteger(0)
     private val compilerHelper = CompilerHelper(ctx)
@@ -464,7 +466,39 @@ class SymbolicTraverser(
     }
 
     override fun visitInvokeDynamicInst(inst: InvokeDynamicInst) {
-        TODO()
+        var traverserState = currentState ?: return
+        val resolvedCall = invokeDynamicResolver.resolve(traverserState, inst)
+        if (resolvedCall == null) {
+            currentState = traverserState.copy(
+                valueMap = traverserState.valueMap.put(inst, generate(inst.type.kexType))
+            )
+            return
+        }
+        val candidate = resolvedCall.method
+        val callee = resolvedCall.instance?.let {
+            traverserState.mkValue(it)
+        } ?: staticRef(candidate.klass)
+        val argumentTerms = resolvedCall.arguments.map { traverserState.mkValue(it) }
+
+        val newValueMap = traverserState.valueMap.builder().let { builder ->
+            if (!candidate.isStatic) builder[values.getThis(candidate.klass)] = callee
+            for ((index, type) in candidate.argTypes.withIndex()) {
+                builder[values.getArgument(index, candidate, type)] = argumentTerms[index]
+            }
+            builder.build()
+        }
+        if (!candidate.isStatic) {
+            traverserState = typeCheck(traverserState, inst, callee, candidate.klass.kexType)
+        }
+        val newState = traverserState.copy(
+            state = traverserState.symbolicState,
+            valueMap = newValueMap,
+            stackTrace = traverserState.stackTrace.add(inst.parent.method to inst)
+        )
+        pathSelector.add(
+            newState, candidate.body.entry
+        )
+        currentState = null
     }
 
     override fun visitNewArrayInst(inst: NewArrayInst) {
@@ -777,6 +811,8 @@ class SymbolicTraverser(
     }
 
     private fun typeCheck(state: TraverserState, inst: Instruction, term: Term, type: KexType): TraverserState {
+        if (type !is KexPointer) return state
+
         val persistentState = state.symbolicState
         val typeClause = PathClause(
             PathClauseType.TYPE_CHECK,
