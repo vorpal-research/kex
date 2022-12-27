@@ -70,8 +70,8 @@ class SymbolicTraverser(
         get() = ctx.cm
 
     private val pathSelector: PathSelector = DequePathSelector()
-    private val callResolver: CallResolver = DefaultCallResolver()
-    private val invokeDynamicResolver: InvokeDynamicResolver = DefaultCallResolver()
+    private val callResolver: CallResolver = DefaultCallResolver(ctx)
+    private val invokeDynamicResolver: InvokeDynamicResolver = DefaultCallResolver(ctx)
     private var currentState: TraverserState? = null
     private var testIndex = AtomicInteger(0)
     private val compilerHelper = CompilerHelper(ctx)
@@ -165,7 +165,7 @@ class SymbolicTraverser(
         traverserState = nullabilityCheck(traverserState, inst, arrayTerm)
         traverserState = boundsCheck(traverserState, inst, indexTerm, arrayTerm.length())
 
-        val clause = StateClause(inst, state { res equality arrayTerm[indexTerm] })
+        val clause = StateClause(inst, state { res equality arrayTerm[indexTerm].load() })
         currentState = checkReachability(
             traverserState.copy(
                 state = traverserState.symbolicState.copy(

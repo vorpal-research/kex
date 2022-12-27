@@ -7,6 +7,7 @@ import org.vorpal.research.kex.ktype.*
 import org.vorpal.research.kex.ktype.KexRtManager.rtMapped
 import org.vorpal.research.kfg.ClassManager
 import org.vorpal.research.kfg.ir.Class
+import org.vorpal.research.kfg.ir.ConcreteClass
 import org.vorpal.research.kfg.ir.Method
 import org.vorpal.research.kfg.ir.value.instruction.NewInst
 import org.vorpal.research.kfg.ir.value.instruction.ReturnInst
@@ -26,12 +27,14 @@ interface ClassInstantiationManager {
     fun getExternalCtors(klass: Class): Set<Method>
     operator fun get(klass: Class, accessLevel: AccessModifier, random: Random): Class
     fun get(klass: Class, accessLevel: AccessModifier, excludes: Set<Class>, random: Random): Class
-    fun get(tf: TypeFactory, type: Type, accessLevel: AccessModifier, excludes: Set<Class>, random: Random): Type =
+    fun get(type: Type, accessLevel: AccessModifier, excludes: Set<Class>, random: Random): Type =
         when (type) {
             is ClassType -> get(type.klass, accessLevel, excludes, random).type
-            is ArrayType -> tf.getArrayType(get(tf, type.component, accessLevel, excludes, random))
+            is ArrayType -> get(type.component, accessLevel, excludes, random).asArray
             else -> type
         }
+
+    fun getAllConcreteSubtypes(klass: Class, accessLevel: AccessModifier): Set<Class>
 
     fun getConcreteClass(klass: KexClass, cm: ClassManager, accessLevel: AccessModifier, random: Random): KexClass =
         get(klass.kfgClass(cm.type), accessLevel, random).kexType
@@ -110,6 +113,7 @@ private object ClassInstantiationManagerImpl : ClassInstantiationManager {
 
             else -> (classInstantiationInfo.getOrDefault(klass, setOf()) - excludes)
                 .filter { isDirectlyInstantiable(it, accessLevel) }
+                .filterIsInstance<ConcreteClass>()
                 .let {
                     if (klass in it) klass
                     else it.random(random)
@@ -118,6 +122,16 @@ private object ClassInstantiationManagerImpl : ClassInstantiationManager {
     }.getOrElse {
         throw NoConcreteInstanceException(klass)
     }
+
+    override fun getAllConcreteSubtypes(klass: Class, accessLevel: AccessModifier): Set<Class> =
+        when (klass.fullName) {
+            in predefinedConcreteInstanceInfo -> predefinedConcreteInstanceInfo.getValue(klass.fullName)
+                .filter { isDirectlyInstantiable(klass.cm[it], accessLevel) }
+                .mapTo(mutableSetOf()) { klass.cm[it] }
+
+            else -> classInstantiationInfo.getOrDefault(klass, setOf())
+                .filterTo(mutableSetOf()) { isDirectlyInstantiable(it, accessLevel) }
+        }
 
     operator fun set(parent: Class, concrete: Class) {
         classInstantiationInfo.getOrPut(parent, ::mutableSetOf).add(concrete)
@@ -182,6 +196,18 @@ private object StringClassInstantiationManagerImpl : ClassInstantiationManager {
     }.getOrElse {
         throw NoConcreteInstanceException(klass)
     }
+
+    override fun getAllConcreteSubtypes(klass: Class, accessLevel: AccessModifier): Set<Class> =
+        when (klass.fullName) {
+            in predefinedConcreteInstanceInfo -> predefinedConcreteInstanceInfo.getValue(klass.fullName)
+                .filter { isDirectlyInstantiable(klass.cm[it], accessLevel) }
+                .mapTo(mutableSetOf()) { klass.cm[it] }
+
+            else -> classInstantiationInfo.getOrDefault(klass.fullName, setOf())
+                .mapTo(mutableSetOf()) { klass.cm[it] }
+                .filterIsInstance<ConcreteClass>()
+                .filterTo(mutableSetOf()) { isDirectlyInstantiable(it, accessLevel) }
+        }
 
     operator fun set(parent: Class, concrete: Class) {
         classInstantiationInfo.getOrPut(parent.fullName, ::mutableSetOf).add(concrete.fullName)
