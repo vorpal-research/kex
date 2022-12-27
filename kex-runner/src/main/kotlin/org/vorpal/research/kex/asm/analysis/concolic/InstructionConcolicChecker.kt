@@ -39,6 +39,7 @@ import org.vorpal.research.kthelper.logging.debug
 import org.vorpal.research.kthelper.logging.log
 import org.vorpal.research.kthelper.logging.warn
 import org.vorpal.research.kthelper.tryOrNull
+import java.util.concurrent.atomic.AtomicInteger
 
 @ExperimentalSerializationApi
 @InternalSerializationApi
@@ -51,7 +52,7 @@ class InstructionConcolicChecker(
     private val compilerHelper = CompilerHelper(ctx)
 
     private val searchStrategy = kexConfig.getStringValue("concolic", "searchStrategy", "bfs")
-    private var testIndex = 0
+    private var testIndex = AtomicInteger(0)
 
     companion object {
         @DelicateCoroutinesApi
@@ -107,7 +108,7 @@ class InstructionConcolicChecker(
         collectTrace(method, parameters.asDescriptors)
 
     private suspend fun collectTrace(method: Method, parameters: Parameters<Descriptor>): ExecutionResult? = tryOrNull {
-        val generator = UnsafeGenerator(ctx, method, method.klassName + testIndex++)
+        val generator = UnsafeGenerator(ctx, method, method.klassName + testIndex.getAndIncrement())
         generator.generate(parameters)
         val testFile = generator.emit()
 
@@ -205,7 +206,7 @@ class InstructionConcolicChecker(
     }
 
     private suspend fun processMethod(method: Method) {
-        testIndex = 0
+        testIndex = AtomicInteger(0)
         val pathIterator = buildPathSelector()
 
         handleStartingTrace(method, pathIterator, getRandomTrace(method))

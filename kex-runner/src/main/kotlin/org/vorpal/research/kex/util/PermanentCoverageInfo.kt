@@ -2,6 +2,7 @@ package org.vorpal.research.kex.util
 
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.builtins.MapSerializer
+import kotlinx.serialization.builtins.PairSerializer
 import kotlinx.serialization.builtins.serializer
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
@@ -32,7 +33,7 @@ object PermanentCoverageInfo {
         val complexity: Double
     )
 
-    private fun init(): Map<String, CoverageRes> {
+    private fun init(): Map<Pair<String, String>, CoverageRes> {
         val permanentCoverageInfoFile = kexConfig.getPathValue("kex", "coverage", "coverage.json")
         return when {
             permanentCoverageInfoFile.exists() -> tryOrNull {
@@ -47,7 +48,7 @@ object PermanentCoverageInfo {
         tryOrNull {
             json.encodeToString(
                 MapSerializer(
-                    String.serializer(),
+                    PairSerializer(String.serializer(), String.serializer()),
                     CoverageRes.serializer()
                 ), permanentInfo
             )
@@ -56,8 +57,8 @@ object PermanentCoverageInfo {
         }
     }
 
-    fun putNewInfo(target: String, coverageInfo: CommonCoverageInfo) {
-        permanentInfo[target] = CoverageRes(
+    fun putNewInfo(mode: String, target: String, coverageInfo: CommonCoverageInfo) {
+        permanentInfo[target to mode] = CoverageRes(
             coverageInfo.instructionCoverage.ratio,
             coverageInfo.branchCoverage.ratio,
             coverageInfo.linesCoverage.ratio,

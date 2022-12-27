@@ -56,7 +56,7 @@ class ConcolicLauncher(classPaths: List<String>, targetName: String) : KexLaunch
                 coverageInfo.print(kexConfig.getBooleanValue("kex", "printDetailedCoverage", false))
             )
 
-            PermanentCoverageInfo.putNewInfo(analysisLevel.toString(), coverageInfo)
+            PermanentCoverageInfo.putNewInfo("concolic", analysisLevel.toString(), coverageInfo)
             PermanentCoverageInfo.emit()
         }
     }

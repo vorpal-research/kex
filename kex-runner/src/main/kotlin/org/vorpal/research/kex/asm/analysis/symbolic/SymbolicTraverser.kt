@@ -1,11 +1,14 @@
 package org.vorpal.research.kex.asm.analysis.symbolic
 
 import kotlinx.collections.immutable.*
-import kotlinx.coroutines.yield
+import kotlinx.coroutines.*
 import org.vorpal.research.kex.ExecutionContext
 import org.vorpal.research.kex.annotations.AnnotationManager
+import org.vorpal.research.kex.asm.analysis.concolic.InstructionConcolicChecker
 import org.vorpal.research.kex.asm.manager.MethodManager
 import org.vorpal.research.kex.asm.state.PredicateStateAnalysis
+import org.vorpal.research.kex.compile.CompilerHelper
+import org.vorpal.research.kex.config.kexConfig
 import org.vorpal.research.kex.descriptor.Descriptor
 import org.vorpal.research.kex.ktype.KexRtManager.isJavaRt
 import org.vorpal.research.kex.ktype.KexRtManager.rtMapped
@@ -39,6 +42,7 @@ import org.vorpal.research.kthelper.logging.log
 import org.vorpal.research.kthelper.logging.warn
 import org.vorpal.research.kthelper.tryOrNull
 import java.util.concurrent.CancellationException
+import java.util.concurrent.atomic.AtomicInteger
 
 class TraverserState(
     val symbolicState: PersistentSymbolicState,
@@ -67,7 +71,26 @@ class SymbolicTraverser(
     private val pathSelector: PathSelector = DequePathSelector()
     private val callResolver: CallResolver = DefaultCallResolver()
     private var currentState: TraverserState? = null
-    private var testIndex = 0
+    private var testIndex = AtomicInteger(0)
+    private val compilerHelper = CompilerHelper(ctx)
+
+    companion object {
+        @DelicateCoroutinesApi
+        fun run(context: ExecutionContext, targets: Set<Method>) {
+            val executors = kexConfig.getIntValue("symbolic", "numberOfExecutors", 8)
+            val timeLimit = kexConfig.getLongValue("symbolic", "timeLimit", 100000L)
+
+            val actualNumberOfExecutors = maxOf(1, minOf(executors, targets.size))
+            val coroutineContext = newFixedThreadPoolContext(actualNumberOfExecutors, "symbolic-dispatcher")
+            runBlocking(coroutineContext) {
+                withTimeoutOrNull(timeLimit) {
+                    targets.map {
+                        async { SymbolicTraverser(context, it).analyze() }
+                    }.awaitAll()
+                }
+            }
+        }
+    }
 
     fun TraverserState.mkValue(value: Value): Term = when (value) {
         is Constant -> const(value)
@@ -131,292 +154,313 @@ class SymbolicTraverser(
 
 
     override fun visitArrayLoadInst(inst: ArrayLoadInst) {
-        currentState?.let {
-            var traverserState = it
-            val arrayTerm = traverserState.mkValue(inst.arrayRef)
-            val indexTerm = traverserState.mkValue(inst.index)
-            val res = generate(inst.type.kexType)
+        var traverserState = currentState ?: return
 
-            traverserState = nullabilityCheck(traverserState, inst, arrayTerm)
-            traverserState = boundsCheck(traverserState, inst, indexTerm, arrayTerm.length())
+        val arrayTerm = traverserState.mkValue(inst.arrayRef)
+        val indexTerm = traverserState.mkValue(inst.index)
+        val res = generate(inst.type.kexType)
 
-            val clause = StateClause(inst, state { res equality arrayTerm[indexTerm] })
-            currentState = traverserState.copy(
+        traverserState = nullabilityCheck(traverserState, inst, arrayTerm)
+        traverserState = boundsCheck(traverserState, inst, indexTerm, arrayTerm.length())
+
+        val clause = StateClause(inst, state { res equality arrayTerm[indexTerm] })
+        currentState = checkReachability(
+            traverserState.copy(
                 state = traverserState.symbolicState.copy(
                     clauses = traverserState.symbolicState.clauses.add(clause)
                 ),
                 valueMap = traverserState.valueMap.put(inst, res)
             )
-        }
+        )
     }
 
     override fun visitArrayStoreInst(inst: ArrayStoreInst) {
-        currentState?.let {
-            var traverserState = it
-            val arrayTerm = traverserState.mkValue(inst.arrayRef)
-            val indexTerm = traverserState.mkValue(inst.index)
-            val valueTerm = traverserState.mkValue(inst.value)
+        var traverserState = currentState ?: return
 
-            traverserState = nullabilityCheck(traverserState, inst, arrayTerm)
-            traverserState = boundsCheck(traverserState, inst, indexTerm, arrayTerm.length())
+        val arrayTerm = traverserState.mkValue(inst.arrayRef)
+        val indexTerm = traverserState.mkValue(inst.index)
+        val valueTerm = traverserState.mkValue(inst.value)
 
-            val clause = StateClause(inst, state { arrayTerm[indexTerm].store(valueTerm) })
-            currentState = traverserState.copy(
+        traverserState = nullabilityCheck(traverserState, inst, arrayTerm)
+        traverserState = boundsCheck(traverserState, inst, indexTerm, arrayTerm.length())
+
+        val clause = StateClause(inst, state { arrayTerm[indexTerm].store(valueTerm) })
+        currentState = checkReachability(
+            traverserState.copy(
                 state = traverserState.symbolicState.copy(
                     clauses = traverserState.symbolicState.clauses.add(clause)
                 )
             )
-        }
+        )
     }
 
     override fun visitBinaryInst(inst: BinaryInst) {
-        currentState?.let { traverserState ->
-            val lhvTerm = traverserState.mkValue(inst.lhv)
-            val rhvTerm = traverserState.mkValue(inst.rhv)
-            val resultTerm = generate(inst.type.kexType)
+        val traverserState = currentState ?: return
 
-            val clause = StateClause(
-                inst,
-                state { resultTerm equality lhvTerm.apply(resultTerm.type, inst.opcode, rhvTerm) }
-            )
-            currentState = traverserState.copy(
+        val lhvTerm = traverserState.mkValue(inst.lhv)
+        val rhvTerm = traverserState.mkValue(inst.rhv)
+        val resultTerm = generate(inst.type.kexType)
+
+        val clause = StateClause(
+            inst,
+            state { resultTerm equality lhvTerm.apply(resultTerm.type, inst.opcode, rhvTerm) }
+        )
+        currentState = checkReachability(
+            traverserState.copy(
                 state = traverserState.symbolicState.copy(
                     clauses = traverserState.symbolicState.clauses.add(clause)
                 ),
                 valueMap = traverserState.valueMap.put(inst, resultTerm)
             )
-        }
+        )
     }
 
     override fun visitBranchInst(inst: BranchInst) {
-        currentState?.let { traverserState ->
-            val condTerm = traverserState.mkValue(inst.cond)
+        val traverserState = currentState ?: return
+        val condTerm = traverserState.mkValue(inst.cond)
 
-            val trueClause = PathClause(
-                PathClauseType.CONDITION_CHECK,
-                inst,
-                path { condTerm equality true }
-            )
-            val falseClause = trueClause.copy(predicate = trueClause.predicate.inverse())
+        val trueClause = PathClause(
+            PathClauseType.CONDITION_CHECK,
+            inst,
+            path { condTerm equality true }
+        )
+        val falseClause = trueClause.copy(predicate = trueClause.predicate.inverse())
 
-            pathSelector += traverserState.copy(
+        checkReachability(
+            traverserState.copy(
                 state = traverserState.symbolicState.copy(
                     path = traverserState.symbolicState.path.add(trueClause)
                 ),
                 blockPath = traverserState.blockPath.add(inst.parent)
-            ) to inst.trueSuccessor
+            )
+        )?.let { pathSelector += it to inst.trueSuccessor }
 
-            pathSelector += traverserState.copy(
+        checkReachability(
+            traverserState.copy(
                 state = traverserState.symbolicState.copy(
                     path = traverserState.symbolicState.path.add(falseClause)
                 ),
                 blockPath = traverserState.blockPath.add(inst.parent)
-            ) to inst.falseSuccessor
-        }
+            )
+        )?.let { pathSelector += it to inst.trueSuccessor }
+
         currentState = null
     }
 
     override fun visitCallInst(inst: CallInst) {
-        currentState?.let {
-            var traverserState = it
-            val callee = when {
-                inst.isStatic -> null
-                else -> traverserState.mkValue(inst.callee)
+        var traverserState = currentState ?: return
+
+        val callee = when {
+            inst.isStatic -> staticRef(inst.method.klass)
+            else -> traverserState.mkValue(inst.callee)
+        }
+        val argumentTerms = inst.args.map { traverserState.mkValue(it) }
+        if (!inst.isStatic) {
+            traverserState = nullabilityCheck(traverserState, inst, callee)
+        }
+
+        val candidates = callResolver.resolve(traverserState, inst)
+        for (candidate in candidates) {
+            val newValueMap = traverserState.valueMap.builder().let { builder ->
+                if (!inst.isStatic) builder[values.getThis(candidate.klass)] = callee
+                for ((index, type) in candidate.argTypes.withIndex()) {
+                    builder[values.getArgument(index, candidate, type)] = argumentTerms[index]
+                }
+                builder.build()
             }
-            val argumentTerms = inst.args.map { traverserState.mkValue(it) }
             if (!inst.isStatic) {
-                traverserState = nullabilityCheck(traverserState, inst, callee!!)
+                traverserState = typeCheck(traverserState, inst, callee, candidate.klass.kexType)
             }
-
-            val candidates = callResolver.resolve(traverserState, inst)
-            for (candidate in candidates) {
-                val newValueMap = traverserState.valueMap.builder().let { builder ->
-                    if (callee != null) builder[values.getThis(candidate.klass)] = callee
-                    for ((index, type) in candidate.argTypes.withIndex()) {
-                        builder[values.getArgument(index, candidate, type)] = argumentTerms[index]
+            val newState = traverserState.copy(
+                state = traverserState.symbolicState,
+                valueMap = newValueMap,
+                stackTrace = traverserState.stackTrace.add(inst.parent.method to inst)
+            )
+            pathSelector.add(
+                newState, candidate.body.entry
+            )
+        }
+        currentState = when {
+            candidates.isEmpty() -> {
+                val receiver = when {
+                    inst.isNameDefined -> {
+                        val res = generate(inst.type.kexType)
+                        traverserState = traverserState.copy(
+                            valueMap = traverserState.valueMap.put(inst, res)
+                        )
+                        res
                     }
-                    builder.build()
-                }
-                if (callee != null) {
-                    traverserState = typeCheck(traverserState, inst, callee, candidate.klass.kexType)
-                }
-                val newState = traverserState.copy(
-                    state = traverserState.symbolicState,
-                    valueMap = newValueMap,
-                    stackTrace = traverserState.stackTrace.add(inst.parent.method to inst)
-                )
-                pathSelector.add(
-                    newState, candidate.body.entry
-                )
-            }
-            currentState = when {
-                candidates.isEmpty() -> {
-                    val receiver = when {
-                        inst.isNameDefined -> {
-                            val res = generate(inst.type.kexType)
-                            traverserState = traverserState.copy(
-                                valueMap = traverserState.valueMap.put(inst, res)
-                            )
-                            res
-                        }
 
-                        else -> null
+                    else -> null
+                }
+                val callClause = StateClause(
+                    inst, state {
+                        val callTerm = callee.call(inst.method, argumentTerms)
+                        receiver?.call(callTerm) ?: call(callTerm)
                     }
-                    val callClause = StateClause(
-                        inst, state {
-                            val callTerm = when (callee) {
-                                null -> TermFactory.getCall(inst.method, argumentTerms)
-                                else -> callee.call(inst.method, argumentTerms)
-                            }
-                            receiver?.call(callTerm) ?: call(callTerm)
-                        }
-                    )
+                )
+                checkReachability(
                     traverserState.copy(
                         state = traverserState.symbolicState.copy(
                             clauses = traverserState.symbolicState.clauses.add(callClause)
                         )
                     )
-                }
-                else -> {
-                    null
-                }
+                )
+            }
+
+            else -> {
+                null
             }
         }
     }
 
     override fun visitCastInst(inst: CastInst) {
-        currentState?.let {
-            var traverserState = it
-            val operandTerm = traverserState.mkValue(inst.operand)
-            val resultTerm = generate(inst.type.kexType)
+        var traverserState = currentState ?: return
 
-            traverserState = typeCheck(traverserState, inst, operandTerm, resultTerm.type)
-            val clause = StateClause(
-                inst,
-                state { resultTerm equality (operandTerm `as` resultTerm.type) }
-            )
-            currentState = traverserState.copy(
+        val operandTerm = traverserState.mkValue(inst.operand)
+        val resultTerm = generate(inst.type.kexType)
+
+        traverserState = typeCheck(traverserState, inst, operandTerm, resultTerm.type)
+        val clause = StateClause(
+            inst,
+            state { resultTerm equality (operandTerm `as` resultTerm.type) }
+        )
+        currentState = checkReachability(
+            traverserState.copy(
                 state = traverserState.symbolicState.copy(
                     clauses = traverserState.symbolicState.clauses.add(clause)
                 ),
                 valueMap = traverserState.valueMap.put(inst, resultTerm)
             )
-        }
+        )
     }
 
     override fun visitCatchInst(inst: CatchInst) {}
 
     override fun visitCmpInst(inst: CmpInst) {
-        currentState?.let { traverserState ->
-            val lhvTerm = traverserState.mkValue(inst.lhv)
-            val rhvTerm = traverserState.mkValue(inst.rhv)
-            val resultTerm = generate(inst.type.kexType)
+        val traverserState = currentState ?: return
 
-            val clause = StateClause(
-                inst,
-                state { resultTerm equality lhvTerm.apply(inst.opcode, rhvTerm) }
-            )
-            currentState = traverserState.copy(
+        val lhvTerm = traverserState.mkValue(inst.lhv)
+        val rhvTerm = traverserState.mkValue(inst.rhv)
+        val resultTerm = generate(inst.type.kexType)
+
+        val clause = StateClause(
+            inst,
+            state { resultTerm equality lhvTerm.apply(inst.opcode, rhvTerm) }
+        )
+        currentState = checkReachability(
+            traverserState.copy(
                 state = traverserState.symbolicState.copy(
                     clauses = traverserState.symbolicState.clauses.add(clause)
                 ),
                 valueMap = traverserState.valueMap.put(inst, resultTerm)
             )
-        }
+        )
     }
 
     override fun visitEnterMonitorInst(inst: EnterMonitorInst) {
-        currentState?.let {
-            var traverserState = it
-            val monitorTerm = traverserState.mkValue(inst.owner)
+        var traverserState = currentState ?: return
+        val monitorTerm = traverserState.mkValue(inst.owner)
 
-            traverserState = nullabilityCheck(traverserState, inst, monitorTerm)
-            val clause = StateClause(
-                inst,
-                state { enterMonitor(monitorTerm) }
-            )
-            currentState = traverserState.copy(
+        traverserState = nullabilityCheck(traverserState, inst, monitorTerm)
+        val clause = StateClause(
+            inst,
+            state { enterMonitor(monitorTerm) }
+        )
+        currentState = checkReachability(
+            traverserState.copy(
                 state = traverserState.symbolicState.copy(
                     clauses = traverserState.symbolicState.clauses.add(clause)
                 )
             )
-        }
+        )
     }
 
     override fun visitExitMonitorInst(inst: ExitMonitorInst) {
-        currentState?.let { traverserState ->
-            val monitorTerm = traverserState.mkValue(inst.owner)
+        val traverserState = currentState ?: return
 
-            val clause = StateClause(
-                inst,
-                state { exitMonitor(monitorTerm) }
-            )
-            currentState = traverserState.copy(
+        val monitorTerm = traverserState.mkValue(inst.owner)
+
+        val clause = StateClause(
+            inst,
+            state { exitMonitor(monitorTerm) }
+        )
+        currentState = checkReachability(
+            traverserState.copy(
                 state = traverserState.symbolicState.copy(
                     clauses = traverserState.symbolicState.clauses.add(clause)
                 )
             )
-        }
+        )
     }
 
     override fun visitFieldLoadInst(inst: FieldLoadInst) {
-        currentState?.let {
-            var traverserState = it
-            val objectTerm = traverserState.mkValue(inst.owner)
-            val res = generate(inst.type.kexType)
+        var traverserState = currentState ?: return
 
-            traverserState = nullabilityCheck(traverserState, inst, objectTerm)
+        val objectTerm = when {
+            inst.isStatic -> staticRef(inst.field.klass)
+            else -> traverserState.mkValue(inst.owner)
+        }
+        val res = generate(inst.type.kexType)
 
-            val clause = StateClause(
-                inst,
-                state { res equality objectTerm.field(inst.field.type.kexType, inst.field.name) }
-            )
-            currentState = traverserState.copy(
+        traverserState = nullabilityCheck(traverserState, inst, objectTerm)
+
+        val clause = StateClause(
+            inst,
+            state { res equality objectTerm.field(inst.field.type.kexType, inst.field.name).load() }
+        )
+        currentState = checkReachability(
+            traverserState.copy(
                 state = traverserState.symbolicState.copy(
                     clauses = traverserState.symbolicState.clauses.add(clause)
                 ),
                 valueMap = traverserState.valueMap.put(inst, res)
             )
-        }
+        )
     }
 
     override fun visitFieldStoreInst(inst: FieldStoreInst) {
-        currentState?.let {
-            var traverserState = it
-            val objectTerm = traverserState.mkValue(inst.owner)
-            val valueTerm = traverserState.mkValue(inst.value)
+        var traverserState = currentState ?: return
 
-            traverserState = nullabilityCheck(traverserState, inst, objectTerm)
+        val objectTerm = when {
+            inst.isStatic -> staticRef(inst.field.klass)
+            else -> traverserState.mkValue(inst.owner)
+        }
+        val valueTerm = traverserState.mkValue(inst.value)
 
-            val clause = StateClause(
-                inst,
-                state { objectTerm.field(inst.field.type.kexType, inst.field.name).store(valueTerm) }
-            )
-            currentState = traverserState.copy(
+        traverserState = nullabilityCheck(traverserState, inst, objectTerm)
+
+        val clause = StateClause(
+            inst,
+            state { objectTerm.field(inst.field.type.kexType, inst.field.name).store(valueTerm) }
+        )
+        currentState = checkReachability(
+            traverserState.copy(
                 state = traverserState.symbolicState.copy(
                     clauses = traverserState.symbolicState.clauses.add(clause)
                 ),
                 valueMap = traverserState.valueMap.put(inst, valueTerm)
             )
-        }
+        )
     }
 
     override fun visitInstanceOfInst(inst: InstanceOfInst) {
-        currentState?.let { traverserState ->
-            val operandTerm = traverserState.mkValue(inst.operand)
-            val resultTerm = generate(inst.type.kexType)
+        val traverserState = currentState ?: return
+        val operandTerm = traverserState.mkValue(inst.operand)
+        val resultTerm = generate(inst.type.kexType)
 
-            val clause = StateClause(
-                inst,
-                state { resultTerm equality (operandTerm `is` inst.targetType.kexType) }
-            )
-            currentState = traverserState.copy(
+        val clause = StateClause(
+            inst,
+            state { resultTerm equality (operandTerm `is` inst.targetType.kexType) }
+        )
+        currentState = checkReachability(
+            traverserState.copy(
                 state = traverserState.symbolicState.copy(
                     clauses = traverserState.symbolicState.clauses.add(clause)
                 ),
                 valueMap = traverserState.valueMap.put(inst, resultTerm)
             )
-        }
+        )
     }
 
     override fun visitInvokeDynamicInst(inst: InvokeDynamicInst) {
@@ -424,196 +468,212 @@ class SymbolicTraverser(
     }
 
     override fun visitNewArrayInst(inst: NewArrayInst) {
-        currentState?.let {
-            var traverserState = it
-            val dimensions = inst.dimensions.map { traverserState.mkValue(it) }
-            val resultTerm = generate(inst.type.kexType)
+        var traverserState = currentState ?: return
 
-            dimensions.forEach {
-                traverserState = newArrayBoundsCheck(traverserState, inst, it)
-            }
-            val clause = StateClause(
-                inst,
-                state { resultTerm.new(dimensions) }
-            )
-            currentState = traverserState.copy(
+        val dimensions = inst.dimensions.map { traverserState.mkValue(it) }
+        val resultTerm = generate(inst.type.kexType)
+
+        dimensions.forEach {
+            traverserState = newArrayBoundsCheck(traverserState, inst, it)
+        }
+        val clause = StateClause(
+            inst,
+            state { resultTerm.new(dimensions) }
+        )
+        currentState = checkReachability(
+            traverserState.copy(
                 state = traverserState.symbolicState.copy(
                     clauses = traverserState.symbolicState.clauses.add(clause)
                 ),
                 valueMap = traverserState.valueMap.put(inst, resultTerm)
             )
-        }
+        )
     }
 
     override fun visitNewInst(inst: NewInst) {
-        currentState?.let { traverserState ->
-            val resultTerm = generate(inst.type.kexType)
+        val traverserState = currentState ?: return
+        val resultTerm = generate(inst.type.kexType)
 
-            val clause = StateClause(
-                inst,
-                state { resultTerm.new() }
-            )
-            currentState = traverserState.copy(
+        val clause = StateClause(
+            inst,
+            state { resultTerm.new() }
+        )
+        currentState = checkReachability(
+            traverserState.copy(
                 state = traverserState.symbolicState.copy(
                     clauses = traverserState.symbolicState.clauses.add(clause)
                 ),
                 valueMap = traverserState.valueMap.put(inst, resultTerm)
             )
-        }
+        )
     }
 
     override fun visitPhiInst(inst: PhiInst) {
-        currentState?.let { traverserState ->
-            currentState = traverserState.copy(
-                valueMap = traverserState.valueMap.put(
-                    inst,
-                    traverserState.mkValue(inst.incomings.getValue(traverserState.blockPath.last()))
-                )
+        val traverserState = currentState ?: return
+        currentState = traverserState.copy(
+            valueMap = traverserState.valueMap.put(
+                inst,
+                traverserState.mkValue(inst.incomings.getValue(traverserState.blockPath.last()))
             )
-        }
+        )
     }
 
     override fun visitUnaryInst(inst: UnaryInst) {
-        currentState?.let { traverserState ->
-            val operandTerm = traverserState.mkValue(inst.operand)
-            val resultTerm = generate(inst.type.kexType)
+        val traverserState = currentState ?: return
+        val operandTerm = traverserState.mkValue(inst.operand)
+        val resultTerm = generate(inst.type.kexType)
 
-            val clause = StateClause(
-                inst,
-                state { resultTerm equality operandTerm.apply(inst.opcode) }
-            )
-            currentState = traverserState.copy(
+        val clause = StateClause(
+            inst,
+            state { resultTerm equality operandTerm.apply(inst.opcode) }
+        )
+        currentState = checkReachability(
+            traverserState.copy(
                 state = traverserState.symbolicState.copy(
                     clauses = traverserState.symbolicState.clauses.add(clause)
                 ),
                 valueMap = traverserState.valueMap.put(inst, resultTerm)
             )
-        }
+        )
     }
 
     override fun visitJumpInst(inst: JumpInst) {
-        currentState?.let { traverserState ->
-            pathSelector += traverserState.copy(
-                blockPath = traverserState.blockPath.add(inst.parent)
-            ) to inst.successor
-        }
+        val traverserState = currentState ?: return
+        pathSelector += traverserState.copy(
+            blockPath = traverserState.blockPath.add(inst.parent)
+        ) to inst.successor
+
         currentState = null
     }
 
     override fun visitReturnInst(inst: ReturnInst) {
-        currentState?.let { traverserState ->
-            val stackTrace = traverserState.stackTrace
-            val receiver = stackTrace.last().second
-            currentState = when {
-                inst.hasReturnValue && receiver.isNameDefined -> {
-                    val returnTerm = traverserState.mkValue(inst.returnValue)
-                    traverserState.copy(
-                        valueMap = traverserState.valueMap.put(receiver, returnTerm),
-                        stackTrace = stackTrace.removeAt(stackTrace.lastIndex)
-                    )
+        val traverserState = currentState ?: return
+        val stackTrace = traverserState.stackTrace
+        val receiver = stackTrace.lastOrNull()?.second
+        currentState = when {
+            receiver == null -> {
+                val result = check(rootMethod, traverserState.symbolicState)
+                if (result != null) {
+                    report(result)
                 }
+                null
+            }
 
-                else -> traverserState.copy(
+            inst.hasReturnValue && receiver.isNameDefined -> {
+                val returnTerm = traverserState.mkValue(inst.returnValue)
+                traverserState.copy(
+                    valueMap = traverserState.valueMap.put(receiver, returnTerm),
                     stackTrace = stackTrace.removeAt(stackTrace.lastIndex)
                 )
             }
+
+            else -> traverserState.copy(
+                stackTrace = stackTrace.removeAt(stackTrace.lastIndex)
+            )
+        }
+        if (receiver != null) {
             val nextInst = receiver.parent.indexOf(receiver) + 1
             traverseBlock(receiver.parent, nextInst)
         }
     }
 
     override fun visitSwitchInst(inst: SwitchInst) {
-        currentState?.let { traverserState ->
-            val key = traverserState.mkValue(inst.key)
-            for ((value, branch) in inst.branches) {
-                val path = PathClause(
-                    PathClauseType.CONDITION_CHECK,
-                    inst,
-                    path { (key eq traverserState.mkValue(value)) equality true }
-                )
-                pathSelector += traverserState.run {
-                    copy(
-                        state = symbolicState.copy(
-                            path = symbolicState.path.add(path)
-                        ),
-                        blockPath = blockPath.add(inst.parent)
-                    )
-                } to branch
-            }
-            val defaultPath = PathClause(
+        val traverserState = currentState ?: return
+        val key = traverserState.mkValue(inst.key)
+        for ((value, branch) in inst.branches) {
+            val path = PathClause(
                 PathClauseType.CONDITION_CHECK,
                 inst,
-                path { key `!in` inst.operands.map { traverserState.mkValue(it) } }
+                path { (key eq traverserState.mkValue(value)) equality true }
             )
-            pathSelector += traverserState.run {
-                copy(
-                    state = symbolicState.copy(
-                        path = symbolicState.path.add(defaultPath)
+            checkReachability(
+                traverserState.copy(
+                    state = traverserState.symbolicState.copy(
+                        path = traverserState.symbolicState.path.add(path)
                     ),
-                    blockPath = blockPath.add(inst.parent)
+                    blockPath = traverserState.blockPath.add(inst.parent)
                 )
-            } to inst.default
+            )?.let {
+                pathSelector += it to branch
+            }
         }
+        val defaultPath = PathClause(
+            PathClauseType.CONDITION_CHECK,
+            inst,
+            path { key `!in` inst.operands.map { traverserState.mkValue(it) } }
+        )
+        checkReachability(
+            traverserState.copy(
+                state = traverserState.symbolicState.copy(
+                    path = traverserState.symbolicState.path.add(defaultPath)
+                ),
+                blockPath = traverserState.blockPath.add(inst.parent)
+            )
+        )?.let {
+            pathSelector += it to inst.default
+        }
+
         currentState = null
     }
 
     override fun visitTableSwitchInst(inst: TableSwitchInst) {
-        currentState?.let { traverserState ->
-            val key = traverserState.mkValue(inst.index)
-            val min = inst.range.first
-            for ((index, branch) in inst.branches.withIndex()) {
-                val path = PathClause(
-                    PathClauseType.CONDITION_CHECK,
-                    inst,
-                    path { (key eq const(min + index)) equality true }
-                )
-                pathSelector += traverserState.run {
-                    copy(
-                        state = symbolicState.copy(
-                            path = symbolicState.path.add(path)
-                        ),
-                        blockPath = blockPath.add(inst.parent)
-                    )
-                } to branch
-            }
-            val defaultPath = PathClause(
+        val traverserState = currentState ?: return
+        val key = traverserState.mkValue(inst.index)
+        val min = inst.range.first
+        for ((index, branch) in inst.branches.withIndex()) {
+            val path = PathClause(
                 PathClauseType.CONDITION_CHECK,
                 inst,
-                path { key `!in` inst.range.map { const(it) } }
+                path { (key eq const(min + index)) equality true }
             )
-            pathSelector += traverserState.run {
-                copy(
-                    state = symbolicState.copy(
-                        path = symbolicState.path.add(defaultPath)
+            checkReachability(
+                traverserState.copy(
+                    state = traverserState.symbolicState.copy(
+                        path = traverserState.symbolicState.path.add(path)
                     ),
-                    blockPath = blockPath.add(inst.parent)
+                    blockPath = traverserState.blockPath.add(inst.parent)
                 )
-            } to inst.default
+            )?.let {
+                pathSelector += it to branch
+            }
+        }
+        val defaultPath = PathClause(
+            PathClauseType.CONDITION_CHECK,
+            inst,
+            path { key `!in` inst.range.map { const(it) } }
+        )
+        checkReachability(
+            traverserState.copy(
+                state = traverserState.symbolicState.copy(
+                    path = traverserState.symbolicState.path.add(defaultPath)
+                ),
+                blockPath = traverserState.blockPath.add(inst.parent)
+            )
+        )?.let {
+            pathSelector += it to inst.default
         }
         currentState = null
     }
 
     override fun visitThrowInst(inst: ThrowInst) {
-        currentState?.let {
-            var traverserState = it
-            val persistentState = traverserState.symbolicState
-            val throwableTerm = traverserState.mkValue(inst.throwable)
+        var traverserState = currentState ?: return
+        val persistentState = traverserState.symbolicState
+        val throwableTerm = traverserState.mkValue(inst.throwable)
 
-            traverserState = nullabilityCheck(traverserState, inst, throwableTerm)
-            val throwClause = StateClause(
-                inst,
-                state { `throw`(throwableTerm) }
-            )
-            checkExceptionAndReport(
-                traverserState.copy(
-                    state = persistentState.copy(
-                        clauses = persistentState.clauses.add(throwClause)
-                    )
-                ),
-                inst,
-                throwableTerm
-            )
-        }
+        traverserState = nullabilityCheck(traverserState, inst, throwableTerm)
+        val throwClause = StateClause(
+            inst,
+            state { `throw`(throwableTerm) }
+        )
+        checkExceptionAndReport(
+            traverserState.copy(
+                state = persistentState.copy(
+                    clauses = persistentState.clauses.add(throwClause)
+                )
+            ),
+            inst,
+            throwableTerm
+        )
         currentState = null
     }
 
@@ -741,6 +801,13 @@ class SymbolicTraverser(
         )
     }
 
+    private fun checkReachability(
+        state: TraverserState
+    ): TraverserState? {
+        val res = check(rootMethod, state.symbolicState)
+        return res?.let { state }
+    }
+
     private fun checkExceptionAndReport(
         state: TraverserState,
         inst: Instruction,
@@ -769,16 +836,21 @@ class SymbolicTraverser(
             else -> {
                 val params = check(rootMethod, state.symbolicState)
                 if (params != null) {
-                    report(params, "Throw${throwableType}")
+                    report(params, "_throw_${throwableType.toString().replace("[/$.]".toRegex(), "_")}")
                 }
             }
         }
     }
 
     private fun report(parameters: Parameters<Descriptor>, testPostfix: String = "") {
-        val generator = UnsafeGenerator(ctx, rootMethod, rootMethod.klassName + testPostfix + testIndex++)
+        val generator = UnsafeGenerator(
+            ctx,
+            rootMethod,
+            rootMethod.klassName + testPostfix + testIndex.getAndIncrement()
+        )
         generator.generate(parameters)
-        generator.emit()
+        val testFile = generator.emit()
+        compilerHelper.compileFile(testFile)
     }
 
     private fun check(method: Method, state: SymbolicState): Parameters<Descriptor>? {
