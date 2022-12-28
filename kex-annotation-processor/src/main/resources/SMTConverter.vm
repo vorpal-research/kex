@@ -223,7 +223,7 @@ class ${solver}Converter(val tf: TypeFactory) : ${solver}SMTConverter() {
         var array = ctx.readArrayInitialMemory(ptr, memspace)
         array = array.store(listOf(index to DWord_.forceCast(value)))
         ctx.initializeArrayMemory(ptr, memspace, array)
-        return ef.makeTrue()
+        return value.axiomExpr()
     }
 
     fun convert(store: ArrayStorePredicate, ef: Factory_, ctx: Context_): Bool_ {
@@ -238,7 +238,7 @@ class ${solver}Converter(val tf: TypeFactory) : ${solver}SMTConverter() {
         var array = ctx.readArrayMemory(ptr, memspace)
         array = array.store(listOf(index to DWord_.forceCast(value)))
         ctx.writeArrayMemory(ptr, memspace, array)
-        return ef.makeTrue()
+        return value.axiomExpr()
     }
 
     fun convert(call: CallPredicate, ef: Factory_, ctx: Context_): Bool_ = ef.makeTrue()
@@ -283,7 +283,7 @@ class ${solver}Converter(val tf: TypeFactory) : ${solver}SMTConverter() {
             TypeSize.WORD -> ctx.initializeWordProperty(ptr, memspace, "${ klass }.${ name }", Word_.forceCast(value))
             TypeSize.DWORD -> ctx.initializeDWordProperty(ptr, memspace, "${ klass }.${ name }", DWord_.forceCast(value))
         }
-        return ef.makeTrue()
+        return value.axiomExpr()
     }
 
     fun convert(store: FieldStorePredicate, ef: Factory_, ctx: Context_): Bool_ {
@@ -299,7 +299,7 @@ class ${solver}Converter(val tf: TypeFactory) : ${solver}SMTConverter() {
             TypeSize.WORD -> ctx.writeWordProperty(ptr, memspace, "${ klass }.${ name }", Word_.forceCast(value))
             TypeSize.DWORD -> ctx.writeDWordProperty(ptr, memspace, "${ klass }.${ name }", DWord_.forceCast(value))
         }
-        return ef.makeTrue()
+        return value.axiomExpr()
     }
 
     fun convert(generateArray: GenerateArrayPredicate, ef: Factory_, ctx: Context_): Bool_ {

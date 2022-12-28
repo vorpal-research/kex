@@ -67,6 +67,9 @@ class ConstEnumAdapter(val context: ExecutionContext) : RecollectingTransformer<
                         state {
                             enumLoad equality enumFieldTerm.load()
                         }
+                        axiom {
+                            enumLoad inequality null
+                        }
                         state {
                             enumLoad.field(KexString(), "name").store(const(enumName))
                         }
