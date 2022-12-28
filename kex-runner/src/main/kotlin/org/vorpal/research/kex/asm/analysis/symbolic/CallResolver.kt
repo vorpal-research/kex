@@ -7,6 +7,7 @@ import org.vorpal.research.kfg.ir.OuterClass
 import org.vorpal.research.kfg.ir.value.Value
 import org.vorpal.research.kfg.ir.value.instruction.CallInst
 import org.vorpal.research.kfg.ir.value.instruction.InvokeDynamicInst
+import org.vorpal.research.kfg.stringClass
 import org.vorpal.research.kfg.type.ClassType
 
 
@@ -25,8 +26,15 @@ interface InvokeDynamicResolver {
 }
 
 class DefaultCallResolver(val ctx: ExecutionContext) : CallResolver, InvokeDynamicResolver {
+
+    fun shouldResolve(inst: CallInst): Boolean = when (inst.klass) {
+        ctx.cm.stringClass -> false
+        else -> true
+    }
+
     override fun resolve(state: TraverserState, inst: CallInst): List<Method> {
         val method = inst.method
+        if (!shouldResolve(inst)) return emptyList()
         if (method.klass is OuterClass) return emptyList()
         if (method.isNative) return emptyList()
         if (method.isStatic) return listOf(method)
@@ -37,7 +45,7 @@ class DefaultCallResolver(val ctx: ExecutionContext) : CallResolver, InvokeDynam
         val calleeType = (callee.type.getKfgType(ctx.types) as? ClassType)?.klass ?: return emptyList()
         return when (callee) {
             in state.typeInfo -> {
-                val concreteType = state.typeInfo.getValue(callee).getKfgType(ctx.types) as ClassType
+                val concreteType = state.typeInfo.getValue(callee) as ClassType
                 listOf(concreteType.klass.getMethod(method.name, method.desc))
             }
 
@@ -48,7 +56,7 @@ class DefaultCallResolver(val ctx: ExecutionContext) : CallResolver, InvokeDynam
                     it.getMethod(method.name, method.desc)
                 }
                 .filter { it.body.isNotEmpty() }
-                .shuffled()
+                .shuffled(ctx.random)
                 .take(20)
         }
     }

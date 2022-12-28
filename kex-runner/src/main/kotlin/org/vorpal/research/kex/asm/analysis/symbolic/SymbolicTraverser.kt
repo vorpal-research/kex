@@ -4,17 +4,14 @@ import kotlinx.collections.immutable.*
 import kotlinx.coroutines.*
 import org.vorpal.research.kex.ExecutionContext
 import org.vorpal.research.kex.annotations.AnnotationManager
-import org.vorpal.research.kex.asm.analysis.concolic.InstructionConcolicChecker
 import org.vorpal.research.kex.asm.manager.MethodManager
 import org.vorpal.research.kex.asm.state.PredicateStateAnalysis
 import org.vorpal.research.kex.compile.CompilerHelper
 import org.vorpal.research.kex.config.kexConfig
 import org.vorpal.research.kex.descriptor.Descriptor
-import org.vorpal.research.kex.ktype.KexPointer
+import org.vorpal.research.kex.ktype.*
 import org.vorpal.research.kex.ktype.KexRtManager.isJavaRt
 import org.vorpal.research.kex.ktype.KexRtManager.rtMapped
-import org.vorpal.research.kex.ktype.KexType
-import org.vorpal.research.kex.ktype.kexType
 import org.vorpal.research.kex.parameters.Parameters
 import org.vorpal.research.kex.parameters.concreteParameters
 import org.vorpal.research.kex.reanimator.UnsafeGenerator
@@ -25,9 +22,10 @@ import org.vorpal.research.kex.state.PredicateState
 import org.vorpal.research.kex.state.predicate.inverse
 import org.vorpal.research.kex.state.predicate.path
 import org.vorpal.research.kex.state.predicate.state
+import org.vorpal.research.kex.state.term.ArgumentTerm
 import org.vorpal.research.kex.state.term.Term
 import org.vorpal.research.kex.state.term.TermBuilder
-import org.vorpal.research.kex.state.term.TermFactory
+import org.vorpal.research.kex.state.term.ValueTerm
 import org.vorpal.research.kex.state.transformer.*
 import org.vorpal.research.kex.trace.symbolic.*
 import org.vorpal.research.kfg.ClassManager
@@ -36,7 +34,9 @@ import org.vorpal.research.kfg.ir.Method
 import org.vorpal.research.kfg.ir.value.Constant
 import org.vorpal.research.kfg.ir.value.Value
 import org.vorpal.research.kfg.ir.value.instruction.*
+import org.vorpal.research.kfg.type.Type
 import org.vorpal.research.kfg.visitor.MethodVisitor
+import org.vorpal.research.kthelper.KtException
 import org.vorpal.research.kthelper.assert.unreachable
 import org.vorpal.research.kthelper.logging.debug
 import org.vorpal.research.kthelper.logging.log
@@ -45,22 +45,16 @@ import org.vorpal.research.kthelper.tryOrNull
 import java.util.concurrent.CancellationException
 import java.util.concurrent.atomic.AtomicInteger
 
-class TraverserState(
+data class TraverserState(
     val symbolicState: PersistentSymbolicState,
     val valueMap: PersistentMap<Value, Term>,
     val stackTrace: PersistentList<Pair<Method, Instruction>>,
-    val typeInfo: PersistentMap<Term, KexType>,
+    val typeInfo: PersistentMap<Term, Type>,
     val blockPath: PersistentList<BasicBlock>,
-) {
-
-    fun copy(
-        state: PersistentSymbolicState = this.symbolicState,
-        valueMap: PersistentMap<Value, Term> = this.valueMap,
-        stackTrace: PersistentList<Pair<Method, Instruction>> = this.stackTrace,
-        typeInfo: PersistentMap<Term, KexType> = this.typeInfo,
-        blockPath: PersistentList<BasicBlock> = this.blockPath,
-    ): TraverserState = TraverserState(state, valueMap, stackTrace, typeInfo, blockPath)
-}
+    val nullCheckedTerms: PersistentSet<Term>,
+    val boundCheckedTerms: PersistentSet<Pair<Term, Term>>,
+    val typeCheckedTerms: PersistentMap<Term, Type>
+)
 
 class SymbolicTraverser(
     val ctx: ExecutionContext,
@@ -94,6 +88,9 @@ class SymbolicTraverser(
         }
     }
 
+    private val Type.symbolicType: KexType get() = kexType.rtMapped
+    private val org.vorpal.research.kfg.ir.Class.symbolicClass: KexType get() = kexType.rtMapped
+
     fun TraverserState.mkValue(value: Value): Term = when (value) {
         is Constant -> const(value)
         else -> valueMap.getValue(value)
@@ -119,9 +116,9 @@ class SymbolicTraverser(
 
     private suspend fun processMethod(method: Method) {
         val initialArguments = buildMap {
-            this[this@SymbolicTraverser.values.getThis(method.klass)] = `this`(method.klass.kexType)
+            this[this@SymbolicTraverser.values.getThis(method.klass)] = `this`(method.klass.symbolicClass)
             for ((index, type) in method.argTypes.withIndex()) {
-                this[this@SymbolicTraverser.values.getArgument(index, method, type)] = arg(type.kexType, index)
+                this[this@SymbolicTraverser.values.getArgument(index, method, type)] = arg(type.symbolicType, index)
             }
         }
         pathSelector.add(
@@ -131,6 +128,9 @@ class SymbolicTraverser(
                 persistentListOf(),
                 persistentMapOf(),
                 persistentListOf(),
+                persistentSetOf(),
+                persistentSetOf(),
+                persistentMapOf()
             ),
             method.body.entry
         )
@@ -154,13 +154,12 @@ class SymbolicTraverser(
         }
     }
 
-
     override fun visitArrayLoadInst(inst: ArrayLoadInst) {
         var traverserState = currentState ?: return
 
         val arrayTerm = traverserState.mkValue(inst.arrayRef)
         val indexTerm = traverserState.mkValue(inst.index)
-        val res = generate(inst.type.kexType)
+        val res = generate(inst.type.symbolicType)
 
         traverserState = nullabilityCheck(traverserState, inst, arrayTerm)
         traverserState = boundsCheck(traverserState, inst, indexTerm, arrayTerm.length())
@@ -168,7 +167,7 @@ class SymbolicTraverser(
         val clause = StateClause(inst, state { res equality arrayTerm[indexTerm].load() })
         currentState = checkReachability(
             traverserState.copy(
-                state = traverserState.symbolicState.copy(
+                symbolicState = traverserState.symbolicState.copy(
                     clauses = traverserState.symbolicState.clauses.add(clause)
                 ),
                 valueMap = traverserState.valueMap.put(inst, res)
@@ -189,7 +188,7 @@ class SymbolicTraverser(
         val clause = StateClause(inst, state { arrayTerm[indexTerm].store(valueTerm) })
         currentState = checkReachability(
             traverserState.copy(
-                state = traverserState.symbolicState.copy(
+                symbolicState = traverserState.symbolicState.copy(
                     clauses = traverserState.symbolicState.clauses.add(clause)
                 )
             )
@@ -201,7 +200,7 @@ class SymbolicTraverser(
 
         val lhvTerm = traverserState.mkValue(inst.lhv)
         val rhvTerm = traverserState.mkValue(inst.rhv)
-        val resultTerm = generate(inst.type.kexType)
+        val resultTerm = generate(inst.type.symbolicType)
 
         val clause = StateClause(
             inst,
@@ -209,7 +208,7 @@ class SymbolicTraverser(
         )
         currentState = checkReachability(
             traverserState.copy(
-                state = traverserState.symbolicState.copy(
+                symbolicState = traverserState.symbolicState.copy(
                     clauses = traverserState.symbolicState.clauses.add(clause)
                 ),
                 valueMap = traverserState.valueMap.put(inst, resultTerm)
@@ -230,7 +229,7 @@ class SymbolicTraverser(
 
         checkReachability(
             traverserState.copy(
-                state = traverserState.symbolicState.copy(
+                symbolicState = traverserState.symbolicState.copy(
                     path = traverserState.symbolicState.path.add(trueClause)
                 ),
                 blockPath = traverserState.blockPath.add(inst.parent)
@@ -239,12 +238,12 @@ class SymbolicTraverser(
 
         checkReachability(
             traverserState.copy(
-                state = traverserState.symbolicState.copy(
+                symbolicState = traverserState.symbolicState.copy(
                     path = traverserState.symbolicState.path.add(falseClause)
                 ),
                 blockPath = traverserState.blockPath.add(inst.parent)
             )
-        )?.let { pathSelector += it to inst.trueSuccessor }
+        )?.let { pathSelector += it to inst.falseSuccessor }
 
         currentState = null
     }
@@ -271,10 +270,10 @@ class SymbolicTraverser(
                 builder.build()
             }
             if (!inst.isStatic) {
-                traverserState = typeCheck(traverserState, inst, callee, candidate.klass.kexType)
+                traverserState = typeCheck(traverserState, inst, callee, candidate.klass.symbolicClass)
             }
             val newState = traverserState.copy(
-                state = traverserState.symbolicState,
+                symbolicState = traverserState.symbolicState,
                 valueMap = newValueMap,
                 stackTrace = traverserState.stackTrace.add(inst.parent.method to inst)
             )
@@ -286,7 +285,7 @@ class SymbolicTraverser(
             candidates.isEmpty() -> {
                 val receiver = when {
                     inst.isNameDefined -> {
-                        val res = generate(inst.type.kexType)
+                        val res = generate(inst.type.symbolicType)
                         traverserState = traverserState.copy(
                             valueMap = traverserState.valueMap.put(inst, res)
                         )
@@ -303,7 +302,7 @@ class SymbolicTraverser(
                 )
                 checkReachability(
                     traverserState.copy(
-                        state = traverserState.symbolicState.copy(
+                        symbolicState = traverserState.symbolicState.copy(
                             clauses = traverserState.symbolicState.clauses.add(callClause)
                         )
                     )
@@ -320,7 +319,7 @@ class SymbolicTraverser(
         var traverserState = currentState ?: return
 
         val operandTerm = traverserState.mkValue(inst.operand)
-        val resultTerm = generate(inst.type.kexType)
+        val resultTerm = generate(inst.type.symbolicType)
 
         traverserState = typeCheck(traverserState, inst, operandTerm, resultTerm.type)
         val clause = StateClause(
@@ -329,7 +328,7 @@ class SymbolicTraverser(
         )
         currentState = checkReachability(
             traverserState.copy(
-                state = traverserState.symbolicState.copy(
+                symbolicState = traverserState.symbolicState.copy(
                     clauses = traverserState.symbolicState.clauses.add(clause)
                 ),
                 valueMap = traverserState.valueMap.put(inst, resultTerm)
@@ -344,7 +343,7 @@ class SymbolicTraverser(
 
         val lhvTerm = traverserState.mkValue(inst.lhv)
         val rhvTerm = traverserState.mkValue(inst.rhv)
-        val resultTerm = generate(inst.type.kexType)
+        val resultTerm = generate(inst.type.symbolicType)
 
         val clause = StateClause(
             inst,
@@ -352,7 +351,7 @@ class SymbolicTraverser(
         )
         currentState = checkReachability(
             traverserState.copy(
-                state = traverserState.symbolicState.copy(
+                symbolicState = traverserState.symbolicState.copy(
                     clauses = traverserState.symbolicState.clauses.add(clause)
                 ),
                 valueMap = traverserState.valueMap.put(inst, resultTerm)
@@ -371,7 +370,7 @@ class SymbolicTraverser(
         )
         currentState = checkReachability(
             traverserState.copy(
-                state = traverserState.symbolicState.copy(
+                symbolicState = traverserState.symbolicState.copy(
                     clauses = traverserState.symbolicState.clauses.add(clause)
                 )
             )
@@ -389,7 +388,7 @@ class SymbolicTraverser(
         )
         currentState = checkReachability(
             traverserState.copy(
-                state = traverserState.symbolicState.copy(
+                symbolicState = traverserState.symbolicState.copy(
                     clauses = traverserState.symbolicState.clauses.add(clause)
                 )
             )
@@ -403,17 +402,17 @@ class SymbolicTraverser(
             inst.isStatic -> staticRef(inst.field.klass)
             else -> traverserState.mkValue(inst.owner)
         }
-        val res = generate(inst.type.kexType)
+        val res = generate(inst.type.symbolicType)
 
         traverserState = nullabilityCheck(traverserState, inst, objectTerm)
 
         val clause = StateClause(
             inst,
-            state { res equality objectTerm.field(inst.field.type.kexType, inst.field.name).load() }
+            state { res equality objectTerm.field(inst.field.type.symbolicType, inst.field.name).load() }
         )
         currentState = checkReachability(
             traverserState.copy(
-                state = traverserState.symbolicState.copy(
+                symbolicState = traverserState.symbolicState.copy(
                     clauses = traverserState.symbolicState.clauses.add(clause)
                 ),
                 valueMap = traverserState.valueMap.put(inst, res)
@@ -434,11 +433,11 @@ class SymbolicTraverser(
 
         val clause = StateClause(
             inst,
-            state { objectTerm.field(inst.field.type.kexType, inst.field.name).store(valueTerm) }
+            state { objectTerm.field(inst.field.type.symbolicType, inst.field.name).store(valueTerm) }
         )
         currentState = checkReachability(
             traverserState.copy(
-                state = traverserState.symbolicState.copy(
+                symbolicState = traverserState.symbolicState.copy(
                     clauses = traverserState.symbolicState.clauses.add(clause)
                 ),
                 valueMap = traverserState.valueMap.put(inst, valueTerm)
@@ -449,15 +448,15 @@ class SymbolicTraverser(
     override fun visitInstanceOfInst(inst: InstanceOfInst) {
         val traverserState = currentState ?: return
         val operandTerm = traverserState.mkValue(inst.operand)
-        val resultTerm = generate(inst.type.kexType)
+        val resultTerm = generate(inst.type.symbolicType)
 
         val clause = StateClause(
             inst,
-            state { resultTerm equality (operandTerm `is` inst.targetType.kexType) }
+            state { resultTerm equality (operandTerm `is` inst.targetType.symbolicType) }
         )
         currentState = checkReachability(
             traverserState.copy(
-                state = traverserState.symbolicState.copy(
+                symbolicState = traverserState.symbolicState.copy(
                     clauses = traverserState.symbolicState.clauses.add(clause)
                 ),
                 valueMap = traverserState.valueMap.put(inst, resultTerm)
@@ -470,7 +469,7 @@ class SymbolicTraverser(
         val resolvedCall = invokeDynamicResolver.resolve(traverserState, inst)
         if (resolvedCall == null) {
             currentState = traverserState.copy(
-                valueMap = traverserState.valueMap.put(inst, generate(inst.type.kexType))
+                valueMap = traverserState.valueMap.put(inst, generate(inst.type.symbolicType))
             )
             return
         }
@@ -488,10 +487,10 @@ class SymbolicTraverser(
             builder.build()
         }
         if (!candidate.isStatic) {
-            traverserState = typeCheck(traverserState, inst, callee, candidate.klass.kexType)
+            traverserState = typeCheck(traverserState, inst, callee, candidate.klass.symbolicClass)
         }
         val newState = traverserState.copy(
-            state = traverserState.symbolicState,
+            symbolicState = traverserState.symbolicState,
             valueMap = newValueMap,
             stackTrace = traverserState.stackTrace.add(inst.parent.method to inst)
         )
@@ -505,7 +504,7 @@ class SymbolicTraverser(
         var traverserState = currentState ?: return
 
         val dimensions = inst.dimensions.map { traverserState.mkValue(it) }
-        val resultTerm = generate(inst.type.kexType)
+        val resultTerm = generate(inst.type.symbolicType)
 
         dimensions.forEach {
             traverserState = newArrayBoundsCheck(traverserState, inst, it)
@@ -516,17 +515,20 @@ class SymbolicTraverser(
         )
         currentState = checkReachability(
             traverserState.copy(
-                state = traverserState.symbolicState.copy(
+                symbolicState = traverserState.symbolicState.copy(
                     clauses = traverserState.symbolicState.clauses.add(clause)
                 ),
-                valueMap = traverserState.valueMap.put(inst, resultTerm)
+                typeInfo = traverserState.typeInfo.put(resultTerm, inst.type),
+                valueMap = traverserState.valueMap.put(inst, resultTerm),
+                nullCheckedTerms = traverserState.nullCheckedTerms.add(resultTerm),
+                typeCheckedTerms = traverserState.typeCheckedTerms.put(resultTerm, inst.type)
             )
         )
     }
 
     override fun visitNewInst(inst: NewInst) {
         val traverserState = currentState ?: return
-        val resultTerm = generate(inst.type.kexType)
+        val resultTerm = generate(inst.type.symbolicType)
 
         val clause = StateClause(
             inst,
@@ -534,10 +536,13 @@ class SymbolicTraverser(
         )
         currentState = checkReachability(
             traverserState.copy(
-                state = traverserState.symbolicState.copy(
+                symbolicState = traverserState.symbolicState.copy(
                     clauses = traverserState.symbolicState.clauses.add(clause)
                 ),
-                valueMap = traverserState.valueMap.put(inst, resultTerm)
+                typeInfo = traverserState.typeInfo.put(resultTerm, inst.type),
+                valueMap = traverserState.valueMap.put(inst, resultTerm),
+                nullCheckedTerms = traverserState.nullCheckedTerms.add(resultTerm),
+                typeCheckedTerms = traverserState.typeCheckedTerms.put(resultTerm, inst.type)
             )
         )
     }
@@ -553,17 +558,20 @@ class SymbolicTraverser(
     }
 
     override fun visitUnaryInst(inst: UnaryInst) {
-        val traverserState = currentState ?: return
+        var traverserState = currentState ?: return
         val operandTerm = traverserState.mkValue(inst.operand)
-        val resultTerm = generate(inst.type.kexType)
+        val resultTerm = generate(inst.type.symbolicType)
 
+        if (inst.opcode == UnaryOpcode.LENGTH) {
+            traverserState = nullabilityCheck(traverserState, inst, operandTerm)
+        }
         val clause = StateClause(
             inst,
             state { resultTerm equality operandTerm.apply(inst.opcode) }
         )
         currentState = checkReachability(
             traverserState.copy(
-                state = traverserState.symbolicState.copy(
+                symbolicState = traverserState.symbolicState.copy(
                     clauses = traverserState.symbolicState.clauses.add(clause)
                 ),
                 valueMap = traverserState.valueMap.put(inst, resultTerm)
@@ -622,7 +630,7 @@ class SymbolicTraverser(
             )
             checkReachability(
                 traverserState.copy(
-                    state = traverserState.symbolicState.copy(
+                    symbolicState = traverserState.symbolicState.copy(
                         path = traverserState.symbolicState.path.add(path)
                     ),
                     blockPath = traverserState.blockPath.add(inst.parent)
@@ -638,7 +646,7 @@ class SymbolicTraverser(
         )
         checkReachability(
             traverserState.copy(
-                state = traverserState.symbolicState.copy(
+                symbolicState = traverserState.symbolicState.copy(
                     path = traverserState.symbolicState.path.add(defaultPath)
                 ),
                 blockPath = traverserState.blockPath.add(inst.parent)
@@ -662,7 +670,7 @@ class SymbolicTraverser(
             )
             checkReachability(
                 traverserState.copy(
-                    state = traverserState.symbolicState.copy(
+                    symbolicState = traverserState.symbolicState.copy(
                         path = traverserState.symbolicState.path.add(path)
                     ),
                     blockPath = traverserState.blockPath.add(inst.parent)
@@ -678,7 +686,7 @@ class SymbolicTraverser(
         )
         checkReachability(
             traverserState.copy(
-                state = traverserState.symbolicState.copy(
+                symbolicState = traverserState.symbolicState.copy(
                     path = traverserState.symbolicState.path.add(defaultPath)
                 ),
                 blockPath = traverserState.blockPath.add(inst.parent)
@@ -701,7 +709,7 @@ class SymbolicTraverser(
         )
         checkExceptionAndReport(
             traverserState.copy(
-                state = persistentState.copy(
+                symbolicState = persistentState.copy(
                     clauses = persistentState.clauses.add(throwClause)
                 )
             ),
@@ -720,6 +728,8 @@ class SymbolicTraverser(
     }
 
     private fun nullabilityCheck(state: TraverserState, inst: Instruction, term: Term): TraverserState {
+        if (term in state.nullCheckedTerms) return state
+
         val persistentState = state.symbolicState
         val nullityClause = PathClause(
             PathClauseType.NULL_CHECK,
@@ -728,23 +738,26 @@ class SymbolicTraverser(
         )
         checkExceptionAndReport(
             state.copy(
-                state = persistentState.copy(
+                symbolicState = persistentState.copy(
                     path = persistentState.path.add(nullityClause)
                 )
             ),
             inst,
-            generate(cm["java/lang/NullPointerException"].kexType)
+            generate(cm["java/lang/NullPointerException"].symbolicClass)
         )
         return state.copy(
-            state = persistentState.copy(
+            symbolicState = persistentState.copy(
                 path = persistentState.path.add(
                     nullityClause.copy(predicate = nullityClause.predicate.inverse())
                 )
-            )
+            ),
+            nullCheckedTerms = state.nullCheckedTerms.add(term)
         )
     }
 
     private fun boundsCheck(state: TraverserState, inst: Instruction, index: Term, length: Term): TraverserState {
+        if (index to length in state.boundCheckedTerms) return state
+
         val persistentState = state.symbolicState
         val zeroClause = PathClause(
             PathClauseType.BOUNDS_CHECK,
@@ -758,34 +771,37 @@ class SymbolicTraverser(
         )
         checkExceptionAndReport(
             state.copy(
-                state = persistentState.copy(
+                symbolicState = persistentState.copy(
                     path = persistentState.path.add(zeroClause)
                 )
             ),
             inst,
-            generate(cm["java/lang/ArrayIndexOutOfBoundsException"].kexType)
+            generate(cm["java/lang/ArrayIndexOutOfBoundsException"].symbolicClass)
         )
         checkExceptionAndReport(
             state.copy(
-                state = persistentState.copy(
+                symbolicState = persistentState.copy(
                     path = persistentState.path.add(lengthClause)
                 )
             ),
             inst,
-            generate(cm["java/lang/ArrayIndexOutOfBoundsException"].kexType)
+            generate(cm["java/lang/ArrayIndexOutOfBoundsException"].symbolicClass)
         )
         return state.copy(
-            state = persistentState.copy(
+            symbolicState = persistentState.copy(
                 path = persistentState.path.add(
                     zeroClause.copy(predicate = zeroClause.predicate.inverse())
                 ).add(
                     lengthClause.copy(predicate = lengthClause.predicate.inverse())
                 )
-            )
+            ),
+            boundCheckedTerms = state.boundCheckedTerms.add(index to length)
         )
     }
 
     private fun newArrayBoundsCheck(state: TraverserState, inst: Instruction, index: Term): TraverserState {
+        if (index to index in state.boundCheckedTerms) return state
+
         val persistentState = state.symbolicState
         val zeroClause = PathClause(
             PathClauseType.BOUNDS_CHECK,
@@ -794,24 +810,30 @@ class SymbolicTraverser(
         )
         checkExceptionAndReport(
             state.copy(
-                state = persistentState.copy(
+                symbolicState = persistentState.copy(
                     path = persistentState.path.add(zeroClause)
                 )
             ),
             inst,
-            generate(cm["java/lang/NegativeArraySizeException"].kexType)
+            generate(cm["java/lang/NegativeArraySizeException"].symbolicClass)
         )
         return state.copy(
-            state = persistentState.copy(
+            symbolicState = persistentState.copy(
                 path = persistentState.path.add(
                     zeroClause.copy(predicate = zeroClause.predicate.inverse())
                 )
-            )
+            ),
+            boundCheckedTerms = state.boundCheckedTerms.add(index to index)
         )
     }
 
     private fun typeCheck(state: TraverserState, inst: Instruction, term: Term, type: KexType): TraverserState {
         if (type !is KexPointer) return state
+        val previouslyCheckedType = state.typeCheckedTerms[term]
+        val currentlyCheckedType = type.getKfgType(ctx.types)
+        if (previouslyCheckedType != null && currentlyCheckedType.isSubtypeOf(previouslyCheckedType)) {
+            return state
+        }
 
         val persistentState = state.symbolicState
         val typeClause = PathClause(
@@ -821,19 +843,20 @@ class SymbolicTraverser(
         )
         checkExceptionAndReport(
             state.copy(
-                state = persistentState.copy(
+                symbolicState = persistentState.copy(
                     path = persistentState.path.add(typeClause)
                 )
             ),
             inst,
-            generate(cm["java/lang/ClassCastException"].kexType)
+            generate(cm["java/lang/ClassCastException"].symbolicClass)
         )
         return state.copy(
-            state = persistentState.copy(
+            symbolicState = persistentState.copy(
                 path = persistentState.path.add(
                     typeClause.copy(predicate = typeClause.predicate.inverse())
                 )
-            )
+            ),
+            typeCheckedTerms = state.typeCheckedTerms.put(term, currentlyCheckedType)
         )
     }
 
@@ -900,7 +923,9 @@ class SymbolicTraverser(
         val preparedState = prepareState(method, state.clauses.asState() + query, concreteTypeInfo)
         log.debug { "Prepared state: $preparedState" }
         val result = checker.check(preparedState)
-        if (result !is Result.SatResult) return null
+        if (result !is Result.SatResult) {
+            return null
+        }
 
         return tryOrNull {
             generateFinalDescriptors(method, ctx, result.model, checker.state)
