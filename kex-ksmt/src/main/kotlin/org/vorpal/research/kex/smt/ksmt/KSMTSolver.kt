@@ -29,12 +29,12 @@ import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.ExperimentalTime
 
-private val timeout = kexConfig.getIntValue("smt", "timeout", 3) * 1000
+private val timeout = kexConfig.getIntValue("smt", "timeout", 3)
 private val logQuery = kexConfig.getBooleanValue("smt", "logQuery", false)
 private val logFormulae = kexConfig.getBooleanValue("smt", "logFormulae", false)
 private val printSMTLib = kexConfig.getBooleanValue("smt", "logSMTLib", false)
-private val simplifyFormulae = kexConfig.getBooleanValue("smt", "simplifyFormulae", false)
 private val maxArrayLength = kexConfig.getIntValue("smt", "maxArrayLength", 1000)
+private val ksmtRunners = kexConfig.getIntValue("ksmt", "runners", 4)
 
 @Suppress("UNCHECKED_CAST")
 @Solver("ksmt")
@@ -42,8 +42,8 @@ class KSMTSolver(val tf: TypeFactory) : AbstractSMTSolver {
     companion object {
         private val solverManager: KSolverRunnerManager by lazy {
             KSolverRunnerManager(
-                workerPoolSize = 1,
-                hardTimeout = timeout.milliseconds,
+                workerPoolSize = ksmtRunners,
+                hardTimeout = timeout.seconds * 2,
                 workerProcessIdleTimeout = 10.seconds,
             )
         }
@@ -114,11 +114,13 @@ class KSMTSolver(val tf: TypeFactory) : AbstractSMTSolver {
                 if (logFormulae) log.debug(model)
                 result to model
             }
+
             KSolverStatus.UNSAT -> {
                 val core = solver.unsatCore()
                 log.debug("Unsat core: $core")
                 result to core
             }
+
             KSolverStatus.UNKNOWN -> {
                 val reason = solver.reasonOfUnknown()
                 log.debug(reason)
@@ -131,7 +133,7 @@ class KSMTSolver(val tf: TypeFactory) : AbstractSMTSolver {
         return solverManager.createSolver(ef.ctx, KZ3Solver::class)
     }
 
-        private fun KSMTContext.recoverBitvectorProperty(
+    private fun KSMTContext.recoverBitvectorProperty(
         ptr: Term,
         memspace: Int,
         model: KModel,
@@ -237,8 +239,7 @@ class KSMTSolver(val tf: TypeFactory) : AbstractSMTSolver {
         val typeMap = hashMapOf<Term, KexType>()
 
         for ((type, value) in ef.typeMap) {
-            val actualValue = KSMTUnlogic.undo(value.expr.asExpr(ctx.factory.ctx))
-            val index = when (actualValue) {
+            val index = when (val actualValue = KSMTUnlogic.undo(value.expr.asExpr(ctx.factory.ctx))) {
                 is ConstStringTerm -> term { const(actualValue.value.indexOf('1')) }
                 else -> term { const(log2(actualValue.numericValue.toDouble()).toInt()) }
             }
@@ -292,6 +293,7 @@ class KSMTSolver(val tf: TypeFactory) : AbstractSMTSolver {
                     arrayPair.first[modelIndex] = initialValue
                     arrayPair.second[modelIndex] = value
                 }
+
                 is FieldLoadTerm -> {}
                 is FieldTerm -> {
                     val name = "${ptr.klass}.${ptr.fieldName}"
@@ -305,6 +307,7 @@ class KSMTSolver(val tf: TypeFactory) : AbstractSMTSolver {
                     )
                     properties.recoverBitvectorProperty(ctx, ptr.owner, memspace, model, "type")
                 }
+
                 else -> {
                     val startMem = ctx.getWordInitialMemory(memspace)
                     val endMem = ctx.getWordMemory(memspace)
@@ -353,7 +356,13 @@ class KSMTSolver(val tf: TypeFactory) : AbstractSMTSolver {
                                 indices += indexTerm
                         }
                     } else if (ptr is ConstClassTerm || ptr is ClassAccessTerm) {
-                        properties.recoverBitvectorProperty(ctx, ptr, memspace, model, ConstClassTerm.TYPE_INDEX_PROPERTY)
+                        properties.recoverBitvectorProperty(
+                            ctx,
+                            ptr,
+                            memspace,
+                            model,
+                            ConstClassTerm.TYPE_INDEX_PROPERTY
+                        )
                     }
 
                     properties.recoverBitvectorProperty(ctx, ptr, memspace, model, "type")
