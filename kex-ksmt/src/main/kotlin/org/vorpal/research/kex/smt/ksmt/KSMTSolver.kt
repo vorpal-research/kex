@@ -12,16 +12,19 @@ import org.ksmt.solver.z3.KZ3Solver
 import org.ksmt.sort.KBoolSort
 import org.vorpal.research.kex.config.kexConfig
 import org.vorpal.research.kex.ktype.*
-import org.vorpal.research.kex.smt.AbstractSMTSolver
-import org.vorpal.research.kex.smt.Result
-import org.vorpal.research.kex.smt.SMTModel
-import org.vorpal.research.kex.smt.Solver
+import org.vorpal.research.kex.smt.*
+import org.vorpal.research.kex.smt.ksmt.KSMTEngine.asExpr
 import org.vorpal.research.kex.state.PredicateState
 import org.vorpal.research.kex.state.term.*
+import org.vorpal.research.kex.state.transformer.collectPointers
+import org.vorpal.research.kex.state.transformer.collectVariables
+import org.vorpal.research.kex.state.transformer.memspace
 import org.vorpal.research.kfg.type.TypeFactory
+import org.vorpal.research.kthelper.assert.ktassert
 import org.vorpal.research.kthelper.assert.unreachable
 import org.vorpal.research.kthelper.logging.debug
 import org.vorpal.research.kthelper.logging.log
+import kotlin.math.log2
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.ExperimentalTime
@@ -142,279 +145,277 @@ class KSMTSolver(val tf: TypeFactory) : AbstractSMTSolver {
         val startV = startProp.load(ptrExpr)
         val endV = endProp.load(ptrExpr)
 
-//        val modelStartV = Z3Unlogic.undo(model.evaluate(startV.expr, true))
-//        val modelEndV = Z3Unlogic.undo(model.evaluate(endV.expr, true))
-//        return modelStartV to modelEndV
-            TODO()
+        val modelStartV = KSMTUnlogic.undo(model.eval(startV.expr.asExpr(this.factory.ctx), true))
+        val modelEndV = KSMTUnlogic.undo(model.eval(endV.expr.asExpr(this.factory.ctx), true))
+        return modelStartV to modelEndV
     }
 
-//    private fun Z3Context.recoverProperty(
-//        ptr: Term,
-//        memspace: Int,
-//        type: KexType,
-//        model: Model,
-//        name: String
-//    ): Pair<Term, Term> {
-//        val ptrExpr = Z3Converter(tf).convert(ptr, ef, this) as? Ptr_
-//            ?: unreachable { org.vorpal.research.kthelper.logging.log.error("Non-ptr expr for pointer $ptr") }
-//        val typeSize = Z3ExprFactory.getTypeSize(type)
-//        val startProp = when (typeSize) {
-//            TypeSize.WORD -> getWordInitialProperty(memspace, name)
-//            TypeSize.DWORD -> getDWordInitialProperty(memspace, name)
-//        }
-//        val endProp = when (typeSize) {
-//            TypeSize.WORD -> getWordProperty(memspace, name)
-//            TypeSize.DWORD -> getDWordProperty(memspace, name)
-//        }
-//
-//        val startV = startProp.load(ptrExpr)
-//        val endV = endProp.load(ptrExpr)
-//
-//        val modelStartV = Z3Unlogic.undo(model.evaluate(startV.expr, true))
-//        val modelEndV = Z3Unlogic.undo(model.evaluate(endV.expr, true))
-//        return modelStartV to modelEndV
-//    }
-//
-//    private fun MutableMap<Int, MutableMap<String, Pair<MutableMap<Term, Term>, MutableMap<Term, Term>>>>.recoverProperty(
-//        ctx: Z3Context,
-//        ptr: Term,
-//        memspace: Int,
-//        type: KexType,
-//        model: Model,
-//        name: String
-//    ): Pair<Term, Term> {
-//        val ptrExpr = Z3Converter(tf).convert(ptr, ef, ctx) as? Ptr_
-//            ?: unreachable { log.error("Non-ptr expr for pointer $ptr") }
-//        val modelPtr = Z3Unlogic.undo(model.evaluate(ptrExpr.expr, true))
-//
-//        val (modelStartT, modelEndT) = ctx.recoverProperty(ptr, memspace, type, model, name)
-//        val typePair = this.getOrPut(memspace, ::hashMapOf).getOrPut(name) {
-//            hashMapOf<Term, Term>() to hashMapOf()
-//        }
-//        typePair.first[modelPtr] = modelStartT
-//        typePair.second[modelPtr] = modelEndT
-//        return modelStartT to modelEndT
-//    }
-//
-//    private fun MutableMap<Int, MutableMap<String, Pair<MutableMap<Term, Term>, MutableMap<Term, Term>>>>.recoverBitvectorProperty(
-//        ctx: Z3Context,
-//        ptr: Term,
-//        memspace: Int,
-//        model: Model,
-//        name: String
-//    ): Pair<Term, Term> {
-//        val ptrExpr = Z3Converter(tf).convert(ptr, ef, ctx) as? Ptr_
-//            ?: unreachable { log.error("Non-ptr expr for pointer $ptr") }
-//        val modelPtr = Z3Unlogic.undo(model.evaluate(ptrExpr.expr, true))
-//
-//        val (modelStartT, modelEndT) = ctx.recoverBitvectorProperty(ptr, memspace, model, name)
-//        val typePair = this.getOrPut(memspace, ::hashMapOf).getOrPut(name) {
-//            hashMapOf<Term, Term>() to hashMapOf()
-//        }
-//        typePair.first[modelPtr] = modelStartT
-//        typePair.second[modelPtr] = modelEndT
-//        return modelStartT to modelEndT
-//    }
-//
+    private fun KSMTContext.recoverProperty(
+        ptr: Term,
+        memspace: Int,
+        type: KexType,
+        model: KModel,
+        name: String
+    ): Pair<Term, Term> {
+        val ptrExpr = KSMTConverter(tf).convert(ptr, ef, this) as? Ptr_
+            ?: unreachable { log.error("Non-ptr expr for pointer $ptr") }
+        val typeSize = KSMTExprFactory.getTypeSize(type)
+        val startProp = when (typeSize) {
+            TypeSize.WORD -> getWordInitialProperty(memspace, name)
+            TypeSize.DWORD -> getDWordInitialProperty(memspace, name)
+        }
+        val endProp = when (typeSize) {
+            TypeSize.WORD -> getWordProperty(memspace, name)
+            TypeSize.DWORD -> getDWordProperty(memspace, name)
+        }
+
+        val startV = startProp.load(ptrExpr)
+        val endV = endProp.load(ptrExpr)
+
+        val modelStartV = KSMTUnlogic.undo(model.eval(startV.expr.asExpr(this.factory.ctx), true))
+        val modelEndV = KSMTUnlogic.undo(model.eval(endV.expr.asExpr(this.factory.ctx), true))
+        return modelStartV to modelEndV
+    }
+
+    private fun MutableMap<Int, MutableMap<String, Pair<MutableMap<Term, Term>, MutableMap<Term, Term>>>>.recoverProperty(
+        ctx: KSMTContext,
+        ptr: Term,
+        memspace: Int,
+        type: KexType,
+        model: KModel,
+        name: String
+    ): Pair<Term, Term> {
+        val ptrExpr = KSMTConverter(tf).convert(ptr, ef, ctx) as? Ptr_
+            ?: unreachable { log.error("Non-ptr expr for pointer $ptr") }
+        val modelPtr = KSMTUnlogic.undo(model.eval(ptrExpr.expr.asExpr(ctx.factory.ctx), true))
+
+        val (modelStartT, modelEndT) = ctx.recoverProperty(ptr, memspace, type, model, name)
+        val typePair = this.getOrPut(memspace, ::hashMapOf).getOrPut(name) {
+            hashMapOf<Term, Term>() to hashMapOf()
+        }
+        typePair.first[modelPtr] = modelStartT
+        typePair.second[modelPtr] = modelEndT
+        return modelStartT to modelEndT
+    }
+
+    private fun MutableMap<Int, MutableMap<String, Pair<MutableMap<Term, Term>, MutableMap<Term, Term>>>>.recoverBitvectorProperty(
+        ctx: KSMTContext,
+        ptr: Term,
+        memspace: Int,
+        model: KModel,
+        name: String
+    ): Pair<Term, Term> {
+        val ptrExpr = KSMTConverter(tf).convert(ptr, ef, ctx) as? Ptr_
+            ?: unreachable { log.error("Non-ptr expr for pointer $ptr") }
+        val modelPtr = KSMTUnlogic.undo(model.eval(ptrExpr.expr.asExpr(ctx.factory.ctx), true))
+
+        val (modelStartT, modelEndT) = ctx.recoverBitvectorProperty(ptr, memspace, model, name)
+        val typePair = this.getOrPut(memspace, ::hashMapOf).getOrPut(name) {
+            hashMapOf<Term, Term>() to hashMapOf()
+        }
+        typePair.first[modelPtr] = modelStartT
+        typePair.second[modelPtr] = modelEndT
+        return modelStartT to modelEndT
+    }
+
     private fun collectModel(ctx: KSMTContext, model: KModel, vararg states: PredicateState): SMTModel {
-//        val (ptrs, vars) = states.fold(setOf<Term>() to setOf<Term>()) { acc, ps ->
-//            acc.first + collectPointers(ps) to acc.second + collectVariables(ps)
-//        }
-//
-//        val assignments = vars.associateWith {
-//            val expr = Z3Converter(tf).convert(it, ef, ctx)
-//            val z3expr = expr.expr
-//
-//            val evaluatedExpr = model.evaluate(z3expr, true)
-//            Z3Unlogic.undo(evaluatedExpr)
-//        }.toMutableMap()
-//
-//        val memories = hashMapOf<Int, Pair<MutableMap<Term, Term>, MutableMap<Term, Term>>>()
-//        val properties = hashMapOf<Int, MutableMap<String, Pair<MutableMap<Term, Term>, MutableMap<Term, Term>>>>()
-//        val arrays = hashMapOf<Int, MutableMap<Term, Pair<MutableMap<Term, Term>, MutableMap<Term, Term>>>>()
-//        val typeMap = hashMapOf<Term, KexType>()
-//
-//        for ((type, value) in ef.typeMap) {
-//            val actualValue = Z3Unlogic.undo(value.expr)
-//            val index = when (actualValue) {
-//                is ConstStringTerm -> term { const(actualValue.value.indexOf('1')) }
-//                else -> term { const(log2(actualValue.numericValue.toDouble()).toInt()) }
-//            }
-//            typeMap[index] = type.kexType
-//        }
-//
-//        val indices = hashSetOf<Term>()
-//        for (ptr in ptrs) {
-//            val memspace = ptr.memspace
-//
-//            when (ptr) {
-//                is ArrayLoadTerm -> {}
-//                is ArrayIndexTerm -> {
-//                    val arrayPtrExpr = Z3Converter(tf).convert(ptr.arrayRef, ef, ctx) as? Ptr_
-//                        ?: unreachable { log.error("Non-ptr expr for pointer $ptr") }
-//                    val indexExpr = Z3Converter(tf).convert(ptr.index, ef, ctx) as? Int_
-//                        ?: unreachable { log.error("Non integer expr for index in $ptr") }
-//
-//                    val modelPtr = Z3Unlogic.undo(model.evaluate(arrayPtrExpr.expr, true))
-//                    val modelIndex = Z3Unlogic.undo(model.evaluate(indexExpr.expr, true))
-//
-//                    val modelStartArray = ctx.readArrayInitialMemory(arrayPtrExpr, ptr.arrayRef.memspace)
-//                    val modelArray = ctx.readArrayMemory(arrayPtrExpr, ptr.arrayRef.memspace)
-//
-//                    val cast = { arrayVal: DWord_ ->
-//                        when (Z3ExprFactory.getTypeSize((ptr.arrayRef.type as KexArray).element)) {
-//                            TypeSize.WORD -> Word_.forceCast(arrayVal)
-//                            TypeSize.DWORD -> arrayVal
-//                        }
-//                    }
-//                    val initialValue = Z3Unlogic.undo(
-//                        model.evaluate(
-//                            cast(
-//                                DWord_.forceCast(modelStartArray.load(indexExpr))
-//                            ).expr,
-//                            true
-//                        )
-//                    )
-//                    val value = Z3Unlogic.undo(
-//                        model.evaluate(
-//                            cast(
-//                                DWord_.forceCast(modelArray.load(indexExpr))
-//                            ).expr,
-//                            true
-//                        )
-//                    )
-//
-//                    val arrayPair = arrays.getOrPut(ptr.arrayRef.memspace, ::hashMapOf).getOrPut(modelPtr) {
-//                        hashMapOf<Term, Term>() to hashMapOf()
-//                    }
-//                    arrayPair.first[modelIndex] = initialValue
-//                    arrayPair.second[modelIndex] = value
-//                }
-//                is FieldLoadTerm -> {}
-//                is FieldTerm -> {
-//                    val name = "${ptr.klass}.${ptr.fieldName}"
-//                    properties.recoverProperty(
-//                        ctx,
-//                        ptr.owner,
-//                        memspace,
-//                        (ptr.type as KexReference).reference,
-//                        model,
-//                        name
-//                    )
-//                    properties.recoverBitvectorProperty(ctx, ptr.owner, memspace, model, "type")
-//                }
-//                else -> {
-//                    val startMem = ctx.getWordInitialMemory(memspace)
-//                    val endMem = ctx.getWordMemory(memspace)
-//
-//                    val ptrExpr = Z3Converter(tf).convert(ptr, ef, ctx) as? Ptr_
-//                        ?: unreachable { log.error("Non-ptr expr for pointer $ptr") }
-//
-//                    val startV = startMem.load(ptrExpr)
-//                    val endV = endMem.load(ptrExpr)
-//
-//                    val modelPtr = Z3Unlogic.undo(model.evaluate(ptrExpr.expr, true))
-//                    val modelStartV = Z3Unlogic.undo(model.evaluate(startV.expr, true))
-//                    val modelEndV = Z3Unlogic.undo(model.evaluate(endV.expr, true))
-//
-//                    memories.getOrPut(memspace) { hashMapOf<Term, Term>() to hashMapOf() }
-//                    memories.getValue(memspace).first[modelPtr] = modelStartV
-//                    memories.getValue(memspace).second[modelPtr] = modelEndV
-//                    if (ptr.type.isString) {
-////                        val modelStartStr = ctx.readInitialStringMemory(ptrExpr, memspace)
-////                        val modelStr = ctx.readStringMemory(ptrExpr, memspace)
-////                        val startStringVal = Z3Unlogic.undo(model.evaluate(modelStartStr.expr, true))
-////                        val stringVal = Z3Unlogic.undo(model.evaluate(modelStr.expr, true))
-////                        strings.getOrPut(memspace) { hashMapOf<Term, Term>() to hashMapOf() }
-////                        strings.getValue(memspace).first[modelPtr] = startStringVal
-////                        strings.getValue(memspace).second[modelPtr] = stringVal
-//                    } else if (ptr.type.isArray) {
-//                        val (_, endLength) = properties.recoverProperty(
-//                            ctx,
-//                            ptr,
-//                            memspace,
-//                            KexInt(),
-//                            model,
-//                            "length"
-//                        )
-//                        var maxLen = endLength.numericValue.toInt()
-//                        // this is fucked up
-//                        if (maxLen > maxArrayLength) {
-//                            log.warn("Reanimated length of an array is too big: $maxLen")
-//                            maxLen = maxArrayLength
-//                        }
-//                        properties[memspace]!!["length"]!!.first[modelPtr] = term { const(maxLen) }
-//                        properties[memspace]!!["length"]!!.second[modelPtr] = term { const(maxLen) }
-//                        for (i in 0 until maxLen) {
-//                            val indexTerm = term { ptr[i] }
-//                            if (indexTerm !in ptrs)
-//                                indices += indexTerm
-//                        }
-//                    } else if (ptr is ConstClassTerm || ptr is ClassAccessTerm) {
-//                        properties.recoverBitvectorProperty(ctx, ptr, memspace, model, ConstClassTerm.TYPE_INDEX_PROPERTY)
-//                    }
-//
-//                    properties.recoverBitvectorProperty(ctx, ptr, memspace, model, "type")
-//
-//                    ktassert(assignments.getOrPut(ptr) { modelPtr } == modelPtr)
-//                }
-//            }
-//        }
-//        for (ptr in indices) {
-//            ptr as ArrayIndexTerm
-//            val memspace = ptr.arrayRef.memspace
-//            val arrayPtrExpr = Z3Converter(tf).convert(ptr.arrayRef, ef, ctx) as? Ptr_
-//                ?: unreachable { log.error("Non-ptr expr for pointer $ptr") }
-//            val indexExpr = Z3Converter(tf).convert(ptr.index, ef, ctx) as? Int_
-//                ?: unreachable { log.error("Non integer expr for index in $ptr") }
-//
-//            val modelPtr = Z3Unlogic.undo(model.evaluate(arrayPtrExpr.expr, true))
-//            val modelIndex = Z3Unlogic.undo(model.evaluate(indexExpr.expr, true))
-//
-//            val modelStartArray = ctx.readArrayInitialMemory(arrayPtrExpr, memspace)
-//            val modelArray = ctx.readArrayMemory(arrayPtrExpr, memspace)
-//
-//            val cast = { arrayVal: DWord_ ->
-//                when (Z3ExprFactory.getTypeSize((ptr.arrayRef.type as KexArray).element)) {
-//                    TypeSize.WORD -> Word_.forceCast(arrayVal)
-//                    TypeSize.DWORD -> arrayVal
-//                }
-//            }
-//            val initialValue = Z3Unlogic.undo(
-//                model.evaluate(
-//                    cast(
-//                        DWord_.forceCast(modelStartArray.load(indexExpr))
-//                    ).expr,
-//                    true
-//                )
-//            )
-//            val value = Z3Unlogic.undo(
-//                model.evaluate(
-//                    cast(
-//                        DWord_.forceCast(modelArray.load(indexExpr))
-//                    ).expr,
-//                    true
-//                )
-//            )
-//
-//            val arrayPair = arrays.getOrPut(memspace, ::hashMapOf).getOrPut(modelPtr) {
-//                hashMapOf<Term, Term>() to hashMapOf()
-//            }
-//            arrayPair.first[modelIndex] = initialValue
-//            arrayPair.second[modelIndex] = value
-//        }
-//        return SMTModel(
-//            assignments,
-//            memories.map { (memspace, pair) -> memspace to MemoryShape(pair.first, pair.second) }.toMap(),
-//            properties.map { (memspace, names) ->
-//                memspace to names.map { (name, pair) -> name to MemoryShape(pair.first, pair.second) }.toMap()
-//            }.toMap(),
-//            arrays.map { (memspace, values) ->
-//                memspace to values.map { (addr, pair) -> addr to MemoryShape(pair.first, pair.second) }.toMap()
-//            }.toMap(),
-//            typeMap
-//        )
-        return TODO()
+        val (ptrs, vars) = states.fold(setOf<Term>() to setOf<Term>()) { acc, ps ->
+            acc.first + collectPointers(ps) to acc.second + collectVariables(ps)
+        }
+
+        val assignments = vars.associateWith {
+            val expr = KSMTConverter(tf).convert(it, ef, ctx)
+            val ksmtExpr = expr.expr
+
+            val evaluatedExpr = model.eval(ksmtExpr.asExpr(ctx.factory.ctx), true)
+            KSMTUnlogic.undo(evaluatedExpr)
+        }.toMutableMap()
+
+        val memories = hashMapOf<Int, Pair<MutableMap<Term, Term>, MutableMap<Term, Term>>>()
+        val properties = hashMapOf<Int, MutableMap<String, Pair<MutableMap<Term, Term>, MutableMap<Term, Term>>>>()
+        val arrays = hashMapOf<Int, MutableMap<Term, Pair<MutableMap<Term, Term>, MutableMap<Term, Term>>>>()
+        val typeMap = hashMapOf<Term, KexType>()
+
+        for ((type, value) in ef.typeMap) {
+            val actualValue = KSMTUnlogic.undo(value.expr.asExpr(ctx.factory.ctx))
+            val index = when (actualValue) {
+                is ConstStringTerm -> term { const(actualValue.value.indexOf('1')) }
+                else -> term { const(log2(actualValue.numericValue.toDouble()).toInt()) }
+            }
+            typeMap[index] = type.kexType
+        }
+
+        val indices = hashSetOf<Term>()
+        for (ptr in ptrs) {
+            val memspace = ptr.memspace
+
+            when (ptr) {
+                is ArrayLoadTerm -> {}
+                is ArrayIndexTerm -> {
+                    val arrayPtrExpr = KSMTConverter(tf).convert(ptr.arrayRef, ef, ctx) as? Ptr_
+                        ?: unreachable { log.error("Non-ptr expr for pointer $ptr") }
+                    val indexExpr = KSMTConverter(tf).convert(ptr.index, ef, ctx) as? Int_
+                        ?: unreachable { log.error("Non integer expr for index in $ptr") }
+
+                    val modelPtr = KSMTUnlogic.undo(model.eval(arrayPtrExpr.expr.asExpr(ctx.factory.ctx), true))
+                    val modelIndex = KSMTUnlogic.undo(model.eval(indexExpr.expr.asExpr(ctx.factory.ctx), true))
+
+                    val modelStartArray = ctx.readArrayInitialMemory(arrayPtrExpr, ptr.arrayRef.memspace)
+                    val modelArray = ctx.readArrayMemory(arrayPtrExpr, ptr.arrayRef.memspace)
+
+                    val cast = { arrayVal: DWord_ ->
+                        when (KSMTExprFactory.getTypeSize((ptr.arrayRef.type as KexArray).element)) {
+                            TypeSize.WORD -> Word_.forceCast(arrayVal)
+                            TypeSize.DWORD -> arrayVal
+                        }
+                    }
+                    val initialValue = KSMTUnlogic.undo(
+                        model.eval(
+                            cast(
+                                DWord_.forceCast(modelStartArray.load(indexExpr))
+                            ).expr.asExpr(ctx.factory.ctx),
+                            true
+                        )
+                    )
+                    val value = KSMTUnlogic.undo(
+                        model.eval(
+                            cast(
+                                DWord_.forceCast(modelArray.load(indexExpr))
+                            ).expr.asExpr(ctx.factory.ctx),
+                            true
+                        )
+                    )
+
+                    val arrayPair = arrays.getOrPut(ptr.arrayRef.memspace, ::hashMapOf).getOrPut(modelPtr) {
+                        hashMapOf<Term, Term>() to hashMapOf()
+                    }
+                    arrayPair.first[modelIndex] = initialValue
+                    arrayPair.second[modelIndex] = value
+                }
+                is FieldLoadTerm -> {}
+                is FieldTerm -> {
+                    val name = "${ptr.klass}.${ptr.fieldName}"
+                    properties.recoverProperty(
+                        ctx,
+                        ptr.owner,
+                        memspace,
+                        (ptr.type as KexReference).reference,
+                        model,
+                        name
+                    )
+                    properties.recoverBitvectorProperty(ctx, ptr.owner, memspace, model, "type")
+                }
+                else -> {
+                    val startMem = ctx.getWordInitialMemory(memspace)
+                    val endMem = ctx.getWordMemory(memspace)
+
+                    val ptrExpr = KSMTConverter(tf).convert(ptr, ef, ctx) as? Ptr_
+                        ?: unreachable { log.error("Non-ptr expr for pointer $ptr") }
+
+                    val startV = startMem.load(ptrExpr)
+                    val endV = endMem.load(ptrExpr)
+
+                    val modelPtr = KSMTUnlogic.undo(model.eval(ptrExpr.expr.asExpr(ctx.factory.ctx), true))
+                    val modelStartV = KSMTUnlogic.undo(model.eval(startV.expr.asExpr(ctx.factory.ctx), true))
+                    val modelEndV = KSMTUnlogic.undo(model.eval(endV.expr.asExpr(ctx.factory.ctx), true))
+
+                    memories.getOrPut(memspace) { hashMapOf<Term, Term>() to hashMapOf() }
+                    memories.getValue(memspace).first[modelPtr] = modelStartV
+                    memories.getValue(memspace).second[modelPtr] = modelEndV
+                    if (ptr.type.isString) {
+//                        val modelStartStr = ctx.readInitialStringMemory(ptrExpr, memspace)
+//                        val modelStr = ctx.readStringMemory(ptrExpr, memspace)
+//                        val startStringVal = KSMTUnlogic.undo(model.evaluate(modelStartStr.expr, true))
+//                        val stringVal = KSMTUnlogic.undo(model.evaluate(modelStr.expr, true))
+//                        strings.getOrPut(memspace) { hashMapOf<Term, Term>() to hashMapOf() }
+//                        strings.getValue(memspace).first[modelPtr] = startStringVal
+//                        strings.getValue(memspace).second[modelPtr] = stringVal
+                    } else if (ptr.type.isArray) {
+                        val (_, endLength) = properties.recoverProperty(
+                            ctx,
+                            ptr,
+                            memspace,
+                            KexInt(),
+                            model,
+                            "length"
+                        )
+                        var maxLen = endLength.numericValue.toInt()
+                        // this is fucked up
+                        if (maxLen > maxArrayLength) {
+                            log.warn("Reanimated length of an array is too big: $maxLen")
+                            maxLen = maxArrayLength
+                        }
+                        properties[memspace]!!["length"]!!.first[modelPtr] = term { const(maxLen) }
+                        properties[memspace]!!["length"]!!.second[modelPtr] = term { const(maxLen) }
+                        for (i in 0 until maxLen) {
+                            val indexTerm = term { ptr[i] }
+                            if (indexTerm !in ptrs)
+                                indices += indexTerm
+                        }
+                    } else if (ptr is ConstClassTerm || ptr is ClassAccessTerm) {
+                        properties.recoverBitvectorProperty(ctx, ptr, memspace, model, ConstClassTerm.TYPE_INDEX_PROPERTY)
+                    }
+
+                    properties.recoverBitvectorProperty(ctx, ptr, memspace, model, "type")
+
+                    ktassert(assignments.getOrPut(ptr) { modelPtr } == modelPtr)
+                }
+            }
+        }
+        for (ptr in indices) {
+            ptr as ArrayIndexTerm
+            val memspace = ptr.arrayRef.memspace
+            val arrayPtrExpr = KSMTConverter(tf).convert(ptr.arrayRef, ef, ctx) as? Ptr_
+                ?: unreachable { log.error("Non-ptr expr for pointer $ptr") }
+            val indexExpr = KSMTConverter(tf).convert(ptr.index, ef, ctx) as? Int_
+                ?: unreachable { log.error("Non integer expr for index in $ptr") }
+
+            val modelPtr = KSMTUnlogic.undo(model.eval(arrayPtrExpr.expr.asExpr(ctx.factory.ctx), true))
+            val modelIndex = KSMTUnlogic.undo(model.eval(indexExpr.expr.asExpr(ctx.factory.ctx), true))
+
+            val modelStartArray = ctx.readArrayInitialMemory(arrayPtrExpr, memspace)
+            val modelArray = ctx.readArrayMemory(arrayPtrExpr, memspace)
+
+            val cast = { arrayVal: DWord_ ->
+                when (KSMTExprFactory.getTypeSize((ptr.arrayRef.type as KexArray).element)) {
+                    TypeSize.WORD -> Word_.forceCast(arrayVal)
+                    TypeSize.DWORD -> arrayVal
+                }
+            }
+            val initialValue = KSMTUnlogic.undo(
+                model.eval(
+                    cast(
+                        DWord_.forceCast(modelStartArray.load(indexExpr))
+                    ).expr.asExpr(ctx.factory.ctx),
+                    true
+                )
+            )
+            val value = KSMTUnlogic.undo(
+                model.eval(
+                    cast(
+                        DWord_.forceCast(modelArray.load(indexExpr))
+                    ).expr.asExpr(ctx.factory.ctx),
+                    true
+                )
+            )
+
+            val arrayPair = arrays.getOrPut(memspace, ::hashMapOf).getOrPut(modelPtr) {
+                hashMapOf<Term, Term>() to hashMapOf()
+            }
+            arrayPair.first[modelIndex] = initialValue
+            arrayPair.second[modelIndex] = value
+        }
+        return SMTModel(
+            assignments,
+            memories.map { (memspace, pair) -> memspace to MemoryShape(pair.first, pair.second) }.toMap(),
+            properties.map { (memspace, names) ->
+                memspace to names.map { (name, pair) -> name to MemoryShape(pair.first, pair.second) }.toMap()
+            }.toMap(),
+            arrays.map { (memspace, values) ->
+                memspace to values.map { (addr, pair) -> addr to MemoryShape(pair.first, pair.second) }.toMap()
+            }.toMap(),
+            typeMap
+        )
     }
 
     override fun close() {

@@ -42,8 +42,18 @@
         </dependency>
 
         <dependency>
-            <groupId>com.github.UnitTestBot</groupId>
-            <artifactId>ksmt</artifactId>
+            <groupId>com.github.UnitTestBot.ksmt</groupId>
+            <artifactId>ksmt-core</artifactId>
+            <version>${ksmt.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.github.UnitTestBot.ksmt</groupId>
+            <artifactId>ksmt-z3</artifactId>
+            <version>${ksmt.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.github.UnitTestBot.ksmt</groupId>
+            <artifactId>ksmt-runner</artifactId>
             <version>${ksmt.version}</version>
         </dependency>
     </dependencies>
