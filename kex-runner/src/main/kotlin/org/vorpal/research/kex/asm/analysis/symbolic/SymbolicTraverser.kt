@@ -6,6 +6,7 @@ import org.vorpal.research.kex.ExecutionContext
 import org.vorpal.research.kex.annotations.AnnotationManager
 import org.vorpal.research.kex.asm.manager.MethodManager
 import org.vorpal.research.kex.asm.state.PredicateStateAnalysis
+import org.vorpal.research.kex.compile.CompilationException
 import org.vorpal.research.kex.compile.CompilerHelper
 import org.vorpal.research.kex.config.kexConfig
 import org.vorpal.research.kex.descriptor.Descriptor
@@ -909,7 +910,11 @@ class SymbolicTraverser(
         )
         generator.generate(parameters)
         val testFile = generator.emit()
-        compilerHelper.compileFile(testFile)
+        try {
+            compilerHelper.compileFile(testFile)
+        } catch (e: CompilationException) {
+            log.error("Failed to compile test file $testFile")
+        }
     }
 
     private fun check(method: Method, state: SymbolicState): Parameters<Descriptor>? {
