@@ -4,6 +4,7 @@ import org.vorpal.research.kex.ExecutionContext
 import org.vorpal.research.kex.annotations.AnnotationManager
 import org.vorpal.research.kex.asm.state.PredicateStateAnalysis
 import org.vorpal.research.kex.config.kexConfig
+import org.vorpal.research.kex.ktype.KexType
 import org.vorpal.research.kex.state.PredicateState
 import org.vorpal.research.kex.state.emptyState
 import org.vorpal.research.kex.state.term.ArgumentTerm
@@ -11,110 +12,82 @@ import org.vorpal.research.kex.state.term.FieldTerm
 import org.vorpal.research.kex.state.term.Term
 import org.vorpal.research.kex.state.term.ValueTerm
 import org.vorpal.research.kex.state.transformer.*
-import org.vorpal.research.kfg.ir.BasicBlock
 import org.vorpal.research.kfg.ir.Method
-import org.vorpal.research.kfg.ir.value.instruction.Instruction
+import org.vorpal.research.kthelper.logging.debug
 import org.vorpal.research.kthelper.logging.log
 
-class Checker(
+class AsyncChecker(
     val method: Method,
     val ctx: ExecutionContext,
-    private val psa: PredicateStateAnalysis
 ) {
-    private val isInliningEnabled = kexConfig.getBooleanValue("smt", "psInlining", true)
-    private val isMemspacingEnabled = kexConfig.getBooleanValue("smt", "memspacing", true)
     private val isSlicingEnabled = kexConfig.getBooleanValue("smt", "slicing", false)
     private val logQuery = kexConfig.getBooleanValue("smt", "logQuery", false)
-    private val annotationsEnabled = kexConfig.getBooleanValue("annotations", "enabled", false)
+    private val psa = PredicateStateAnalysis(ctx.cm)
 
     private val loader get() = ctx.loader
-    private val builder get() = psa.builder(method)
     lateinit var state: PredicateState
         private set
     lateinit var query: PredicateState
         private set
 
-    fun createState(block: BasicBlock) = createState(block.terminator)
-    fun createState(inst: Instruction) = builder.getInstructionState(inst)
-
-    fun checkReachable(inst: Instruction): Result {
-        log.debug("Checking reachability of ${inst.print()}")
-
-        val state = createState(inst)
-            ?: return Result.UnknownResult("Can't get state for instruction ${inst.print()}")
-        return prepareAndCheck(state)
-    }
-
-    fun prepareState(ps: PredicateState) = transform(ps) {
+    private fun prepareState(
+        method: Method,
+        state: PredicateState,
+        typeMap: TypeInfoMap
+    ): PredicateState = transform(state) {
         +KexRtAdapter(ctx.cm)
-        +StringMethodAdapter(ctx.cm)
-        if (annotationsEnabled) {
-            +AnnotationAdapter(method, AnnotationManager.defaultLoader)
+        +RecursiveInliner(psa) { index, psa ->
+            ConcolicInliner(
+                ctx,
+                typeMap,
+                psa,
+                inlineSuffix = "inlined",
+                inlineIndex = index,
+                kexRtOnly = false
+            )
         }
         +RecursiveInliner(psa) { index, psa ->
-            ConcreteImplInliner(method.cm.type, TypeInfoMap(), psa, inlineIndex = index)
+            ConcolicInliner(
+                ctx,
+                typeMap,
+                psa,
+                inlineSuffix = "rt.inlined",
+                inlineIndex = index,
+                kexRtOnly = true
+            )
         }
-        +StaticFieldInliner(ctx, psa)
         +ClassAdapter(ctx.cm)
+        +AnnotationAdapter(method, AnnotationManager.defaultLoader)
         +IntrinsicAdapter
         +KexIntrinsicsAdapter()
         +EqualsTransformer()
-        +ReflectionInfoAdapter(method, loader)
+        +ReflectionInfoAdapter(method, ctx.loader)
         +Optimizer()
         +ConstantPropagator
         +BoolTypeAdapter(method.cm.type)
-        +ArrayBoundsAdapter()
-        +NullityInfoAdapter()
         +ClassMethodAdapter(method.cm)
         +ConstEnumAdapter(ctx)
         +ConstStringAdapter(method.cm.type)
-        +FieldNormalizer(method.cm)
-        +TypeNameAdapter(method.cm.type)
-    }
-
-    fun prepareState(method: Method, ps: PredicateState, typeInfoMap: TypeInfoMap) = transform(ps) {
-        +KexRtAdapter(ctx.cm)
         +StringMethodAdapter(ctx.cm)
-        +AnnotationAdapter(method, AnnotationManager.defaultLoader)
-        +RecursiveInliner(psa) { index, psa ->
-            ConcreteImplInliner(method.cm.type, typeInfoMap, psa, inlineIndex = index)
-        }
-        +StaticFieldInliner(ctx, psa)
-        +ClassAdapter(ctx.cm)
-        +IntrinsicAdapter
-        +KexIntrinsicsAdapter()
-        +EqualsTransformer()
-        +ReflectionInfoAdapter(method, loader)
-        +Optimizer()
-        +ConstantPropagator
-        +BoolTypeAdapter(method.cm.type)
-        +ConstEnumAdapter(ctx)
-        +ConstStringAdapter(method.cm.type)
-        +ArrayBoundsAdapter()
-        +NullityInfoAdapter()
+        +ConcolicArrayLengthAdapter()
         +FieldNormalizer(method.cm)
-        +TypeNameAdapter(method.cm.type)
+        +TypeNameAdapter(ctx.types)
     }
 
-    fun prepareAndCheck(ps: PredicateState): Result {
-        val state = prepareState(ps)
-        return check(state, state.path)
+    suspend fun prepareAndCheck(
+        method: Method,
+        state: PredicateState,
+        typeMap: TypeInfoMap = emptyMap<Term, KexType>().toTypeMap()
+    ): Result {
+        val preparedState = prepareState(method, state, typeMap)
+        log.debug { "Prepared state: $preparedState" }
+        return check(preparedState)
     }
 
-    fun prepareAndCheck(ps: PredicateState, qry: PredicateState) = check(prepareState(ps), qry)
-
-    fun check(ps: PredicateState, qry: PredicateState = emptyState()): Result {
+    suspend fun check(ps: PredicateState, qry: PredicateState = emptyState()): Result {
         state = ps
         query = qry
         if (logQuery) log.debug("State: $state")
-
-        if (isMemspacingEnabled) {
-            log.debug("Memspacing started...")
-            val spacer = MemorySpacer(state)
-            state = spacer.apply(state)
-            query = spacer.apply(query)
-            log.debug("Memspacing finished")
-        }
 
         if (isSlicingEnabled) {
             log.debug("Slicing started...")
@@ -150,8 +123,8 @@ class Checker(
             log.debug("Query size: ${query.size}")
         }
 
-        val result = SMTProxySolver(method.cm.type).use {
-            it.isPathPossible(state, query)
+        val result = AsyncSMTProxySolver(method.cm.type).use {
+            it.isPathPossibleAsync(state, query)
         }
         log.debug("Acquired $result")
         return result

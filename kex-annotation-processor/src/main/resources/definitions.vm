@@ -1,6 +1,8 @@
 package ${packageName}
 
-import ${importPackage}.*
+#foreach($pkg in ${importPackages})
+import ${pkg}.*
+#end
 import org.vorpal.research.kex.ktype.*
 import org.vorpal.research.kex.smt.${solver.toLowerCase()}.${solver}Engine
 import org.vorpal.research.kex.smt.SMTEngine

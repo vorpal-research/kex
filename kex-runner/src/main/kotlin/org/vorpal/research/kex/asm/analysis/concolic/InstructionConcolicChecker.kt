@@ -21,10 +21,8 @@ import org.vorpal.research.kex.parameters.concreteParameters
 import org.vorpal.research.kex.reanimator.UnsafeGenerator
 import org.vorpal.research.kex.reanimator.codegen.ExecutorTestCasePrinter
 import org.vorpal.research.kex.reanimator.codegen.klassName
-import org.vorpal.research.kex.smt.Checker
+import org.vorpal.research.kex.smt.AsyncChecker
 import org.vorpal.research.kex.smt.Result
-import org.vorpal.research.kex.state.PredicateState
-import org.vorpal.research.kex.state.term.Term
 import org.vorpal.research.kex.state.transformer.*
 import org.vorpal.research.kex.trace.runner.SymbolicExternalTracingRunner
 import org.vorpal.research.kex.trace.runner.generateDefaultParameters
@@ -121,61 +119,16 @@ class InstructionConcolicChecker(
         return runner.run(klassName, ExecutorTestCasePrinter.SETUP_METHOD, ExecutorTestCasePrinter.TEST_METHOD)
     }
 
-    private fun prepareState(
-        method: Method,
-        state: PredicateState,
-        typeMap: TypeInfoMap = emptyMap<Term, KexType>().toTypeMap()
-    ): PredicateState = transform(state) {
-        +KexRtAdapter(cm)
-        +RecursiveInliner(PredicateStateAnalysis(cm)) { index, psa ->
-            ConcolicInliner(
-                ctx,
-                typeMap,
-                psa,
-                inlineSuffix = "inlined",
-                inlineIndex = index,
-                kexRtOnly = false
-            )
-        }
-        +RecursiveInliner(PredicateStateAnalysis(cm)) { index, psa ->
-            ConcolicInliner(
-                ctx,
-                typeMap,
-                psa,
-                inlineSuffix = "rt.inlined",
-                inlineIndex = index,
-                kexRtOnly = true
-            )
-        }
-        +ClassAdapter(cm)
-        +AnnotationAdapter(method, AnnotationManager.defaultLoader)
-        +IntrinsicAdapter
-        +KexIntrinsicsAdapter()
-        +EqualsTransformer()
-        +ReflectionInfoAdapter(method, ctx.loader)
-        +Optimizer()
-        +ConstantPropagator
-        +BoolTypeAdapter(method.cm.type)
-        +ClassMethodAdapter(method.cm)
-        +ConstEnumAdapter(ctx)
-        +ConstStringAdapter(method.cm.type)
-        +StringMethodAdapter(ctx.cm)
-        +ConcolicArrayLengthAdapter()
-        +FieldNormalizer(method.cm)
-        +TypeNameAdapter(ctx.types)
-    }
-
     private suspend fun check(method: Method, state: SymbolicState): ExecutionResult? {
-        val checker = Checker(method, ctx, PredicateStateAnalysis(cm))
+        val checker = AsyncChecker(method, ctx)
+        val clauses = state.clauses.asState()
         val query = state.path.asState()
         val concreteTypeInfo = state.concreteValueMap
             .mapValues { it.value.type }
             .filterValues { it.isJavaRt }
             .mapValues { it.value.rtMapped }
             .toTypeMap()
-        val preparedState = prepareState(method, state.clauses.asState() + query, concreteTypeInfo)
-        log.debug { "Prepared state: $preparedState" }
-        val result = checker.check(preparedState)
+        val result = checker.prepareAndCheck(method, clauses + query, concreteTypeInfo)
         if (result !is Result.SatResult) return null
 
         return tryOrNull {

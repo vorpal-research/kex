@@ -92,14 +92,16 @@
 
     <profiles>
         <profile>
-            <id>default</id>
-            <activation>
-                <activeByDefault>true</activeByDefault>
-            </activation>
+            <id>full-smt</id>
+
+            <properties>
+                <full-smt>true</full-smt>
+            </properties>
 
             <modules>
                 <module>kex-boolector</module>
                 <module>kex-z3</module>
+                <module>kex-ksmt</module>
             </modules>
         </profile>
 
@@ -124,6 +126,17 @@
 
             <modules>
                 <module>kex-z3</module>
+            </modules>
+        </profile>
+
+        <profile>
+            <id>ksmt</id>
+            <activation>
+                <activeByDefault>true</activeByDefault>
+            </activation>
+
+            <modules>
+                <module>kex-ksmt</module>
             </modules>
         </profile>
     </profiles>
