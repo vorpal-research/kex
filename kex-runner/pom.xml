@@ -229,11 +229,13 @@
 
     <profiles>
         <profile>
-            <id>default</id>
+            <id>full-smt</id>
             <activation>
-                <activeByDefault>true</activeByDefault>
+                <property>
+                    <name>full-smt</name>
+                    <value>true</value>
+                </property>
             </activation>
-
             <dependencies>
                 <dependency>
                     <groupId>org.vorpal.research</groupId>
@@ -292,10 +294,7 @@
         <profile>
             <id>ksmt</id>
             <activation>
-                <property>
-                    <name>ksmt-only</name>
-                    <value>true</value>
-                </property>
+                <activeByDefault>true</activeByDefault>
             </activation>
 
             <dependencies>

@@ -86,10 +86,11 @@
 
     <profiles>
         <profile>
-            <id>default</id>
-            <activation>
-                <activeByDefault>true</activeByDefault>
-            </activation>
+            <id>full-smt</id>
+
+            <properties>
+                <full-smt>true</full-smt>
+            </properties>
 
             <modules>
                 <module>kex-boolector</module>
@@ -124,10 +125,9 @@
 
         <profile>
             <id>ksmt</id>
-
-            <properties>
-                <ksmt-only>true</ksmt-only>
-            </properties>
+            <activation>
+                <activeByDefault>true</activeByDefault>
+            </activation>
 
             <modules>
                 <module>kex-ksmt</module>
