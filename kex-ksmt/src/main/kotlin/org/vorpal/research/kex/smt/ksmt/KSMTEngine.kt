@@ -12,6 +12,7 @@ import org.vorpal.research.kthelper.assert.unreachable
 import org.vorpal.research.kthelper.logging.log
 import java.math.BigInteger
 
+@Suppress("UNCHECKED_CAST")
 object KSMTEngine : SMTEngine<KContext, KAst, KSort, KFuncDecl<*>, KAst>() {
 
     fun KAst.asExpr(ctx: KContext): KExpr<*> = when (this) {
@@ -132,7 +133,7 @@ object KSMTEngine : SMTEngine<KContext, KAst, KSort, KFuncDecl<*>, KAst>() {
         val fpSort = sort as KFpSort
         val bv = expr.asExpr(ctx) as KExpr<KBvSort>
         val exponentBits = fpSort.exponentBits.toInt()
-        val size = bv.sort().sizeBits.toInt()
+        val size = bv.sort.sizeBits.toInt()
 
         @Suppress("UNCHECKED_CAST")
         val sign = extract(ctx, bv, size - 1, size - 1) as KExpr<KBv1Sort>
