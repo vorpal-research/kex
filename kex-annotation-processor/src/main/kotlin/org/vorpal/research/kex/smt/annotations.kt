@@ -43,3 +43,9 @@ annotation class AbstractSolver
 annotation class Solver(
         val name: String
 )
+
+annotation class AbstractAsyncSolver
+
+annotation class AsyncSolver(
+        val name: String
+)

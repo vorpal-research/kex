@@ -2,11 +2,13 @@
 
 package org.vorpal.research.kex.smt.ksmt
 
+import kotlinx.coroutines.runBlocking
 import org.ksmt.expr.KExpr
 import org.ksmt.runner.core.*
 import org.ksmt.solver.KModel
-import org.ksmt.solver.KSolver
+import org.ksmt.solver.KSolverException
 import org.ksmt.solver.KSolverStatus
+import org.ksmt.solver.runner.KSolverRunner
 import org.ksmt.solver.runner.KSolverRunnerManager
 import org.ksmt.solver.z3.KZ3Solver
 import org.ksmt.sort.KBoolSort
@@ -38,7 +40,8 @@ private val ksmtRunners = kexConfig.getIntValue("ksmt", "runners", 4)
 
 @Suppress("UNCHECKED_CAST")
 @Solver("ksmt")
-class KSMTSolver(val tf: TypeFactory) : AbstractSMTSolver {
+@AsyncSolver("ksmt")
+class KSMTSolver(val tf: TypeFactory) : AbstractSMTSolver, AbstractAsyncSMTSolver {
     companion object {
         private val solverManager: KSolverRunnerManager by lazy {
             KSolverRunnerManager(
@@ -51,15 +54,30 @@ class KSMTSolver(val tf: TypeFactory) : AbstractSMTSolver {
 
     val ef = KSMTExprFactory()
 
-    override fun isReachable(state: PredicateState) =
+
+    override fun isReachable(state: PredicateState): Result = runBlocking {
+        isReachableAsync(state)
+    }
+
+    override fun isPathPossible(state: PredicateState, path: PredicateState): Result = runBlocking {
+        isPathPossibleAsync(state, path)
+    }
+
+    override fun isViolated(state: PredicateState, query: PredicateState): Result = runBlocking {
+        isViolatedAsync(state, query)
+    }
+
+    override suspend fun isReachableAsync(state: PredicateState) =
         isPathPossible(state, state.path)
 
-    override fun isPathPossible(state: PredicateState, path: PredicateState): Result = check(state, path) { it }
+    override suspend fun isPathPossibleAsync(state: PredicateState, path: PredicateState): Result =
+        check(state, path) { it }
 
 
-    override fun isViolated(state: PredicateState, query: PredicateState): Result = check(state, query) { !it }
+    override suspend fun isViolatedAsync(state: PredicateState, query: PredicateState): Result =
+        check(state, query) { !it }
 
-    fun check(state: PredicateState, query: PredicateState, queryBuilder: (Bool_) -> Bool_): Result {
+    suspend fun check(state: PredicateState, query: PredicateState, queryBuilder: (Bool_) -> Bool_): Result = try {
         if (logQuery) {
             log.run {
                 debug("KSMT solver check")
@@ -78,16 +96,17 @@ class KSMTSolver(val tf: TypeFactory) : AbstractSMTSolver {
         log.debug("Check started")
         val result = check(ksmtState, queryBuilder(ksmtQuery))
         log.debug("Check finished")
-        return when (result.first) {
+        when (result.first) {
             KSolverStatus.UNSAT -> Result.UnsatResult
             KSolverStatus.UNKNOWN -> Result.UnknownResult(result.second as String)
             KSolverStatus.SAT -> Result.SatResult(collectModel(ctx, result.second as KModel, state))
         }
+    } catch (e: KSolverException) {
+        log.warn("KSMT thrown an exception during check", e)
+        Result.UnknownResult(e.message ?: "Exception in KSMT")
     }
 
-    private fun check(state: Bool_, query: Bool_): Pair<KSolverStatus, Any> {
-        val solver = buildSolver()
-
+    private suspend fun check(state: Bool_, query: Bool_): Pair<KSolverStatus, Any> = buildSolver().use { solver ->
         if (logFormulae) {
             log.run {
                 debug("State: $state")
@@ -95,28 +114,28 @@ class KSMTSolver(val tf: TypeFactory) : AbstractSMTSolver {
             }
         }
 
-        solver.assert(state.asAxiom() as KExpr<KBoolSort>)
-        solver.assert(ef.buildConstClassAxioms().asAxiom() as KExpr<KBoolSort>)
-        solver.assert(query.axiom as KExpr<KBoolSort>)
-        solver.assert(query.expr as KExpr<KBoolSort>)
+        solver.assertAsync(state.asAxiom() as KExpr<KBoolSort>)
+        solver.assertAsync(ef.buildConstClassAxioms().asAxiom() as KExpr<KBoolSort>)
+        solver.assertAsync(query.axiom as KExpr<KBoolSort>)
+        solver.assertAsync(query.expr as KExpr<KBoolSort>)
 
         log.debug("Running KSMT solver")
         if (printSMTLib) {
             log.debug("SMTLib formula:")
             log.debug(solver.toString())
         }
-        val result = solver.check(timeout.milliseconds)
+        val result = solver.checkAsync(timeout.milliseconds)
         log.debug("Solver finished")
 
         return when (result) {
             KSolverStatus.SAT -> {
-                val model = solver.model()
+                val model = solver.modelAsync()
                 if (logFormulae) log.debug(model)
                 result to model
             }
 
             KSolverStatus.UNSAT -> {
-                val core = solver.unsatCore()
+                val core = solver.unsatCoreAsync()
                 log.debug("Unsat core: $core")
                 result to core
             }
@@ -129,8 +148,8 @@ class KSMTSolver(val tf: TypeFactory) : AbstractSMTSolver {
         }
     }
 
-    private fun buildSolver(): KSolver<*> {
-        return solverManager.createSolver(ef.ctx, KZ3Solver::class)
+    private suspend fun buildSolver(): KSolverRunner<*> {
+        return solverManager.createSolverAsync(ef.ctx, KZ3Solver::class)
     }
 
     private fun KSMTContext.recoverBitvectorProperty(
@@ -147,8 +166,9 @@ class KSMTSolver(val tf: TypeFactory) : AbstractSMTSolver {
         val startV = startProp.load(ptrExpr)
         val endV = endProp.load(ptrExpr)
 
-        val modelStartV = KSMTUnlogic.undo(model.eval(startV.expr.asExpr(factory.ctx), true), factory.ctx, model)
-        val modelEndV = KSMTUnlogic.undo(model.eval(endV.expr.asExpr(factory.ctx), true), factory.ctx, model)
+        val kCtx = factory.ctx
+        val modelStartV = KSMTUnlogic.undo(model.eval(startV.expr.asExpr(kCtx), true), kCtx, model)
+        val modelEndV = KSMTUnlogic.undo(model.eval(endV.expr.asExpr(kCtx), true), kCtx, model)
         return modelStartV to modelEndV
     }
 
@@ -174,8 +194,9 @@ class KSMTSolver(val tf: TypeFactory) : AbstractSMTSolver {
         val startV = startProp.load(ptrExpr)
         val endV = endProp.load(ptrExpr)
 
-        val modelStartV = KSMTUnlogic.undo(model.eval(startV.expr.asExpr(factory.ctx), true), factory.ctx, model)
-        val modelEndV = KSMTUnlogic.undo(model.eval(endV.expr.asExpr(factory.ctx), true), factory.ctx, model)
+        val kCtx = factory.ctx
+        val modelStartV = KSMTUnlogic.undo(model.eval(startV.expr.asExpr(kCtx), true), kCtx, model)
+        val modelEndV = KSMTUnlogic.undo(model.eval(endV.expr.asExpr(kCtx), true), kCtx, model)
         return modelStartV to modelEndV
     }
 
@@ -187,9 +208,10 @@ class KSMTSolver(val tf: TypeFactory) : AbstractSMTSolver {
         model: KModel,
         name: String
     ): Pair<Term, Term> {
+        val kCtx = ctx.factory.ctx
         val ptrExpr = KSMTConverter(tf).convert(ptr, ef, ctx) as? Ptr_
             ?: unreachable { log.error("Non-ptr expr for pointer $ptr") }
-        val modelPtr = KSMTUnlogic.undo(model.eval(ptrExpr.expr.asExpr(ctx.factory.ctx), true), ctx.factory.ctx, model)
+        val modelPtr = KSMTUnlogic.undo(model.eval(ptrExpr.expr.asExpr(kCtx), true), kCtx, model)
 
         val (modelStartT, modelEndT) = ctx.recoverProperty(ptr, memspace, type, model, name)
         val typePair = this.getOrPut(memspace, ::hashMapOf).getOrPut(name) {
@@ -207,9 +229,10 @@ class KSMTSolver(val tf: TypeFactory) : AbstractSMTSolver {
         model: KModel,
         name: String
     ): Pair<Term, Term> {
+        val kCtx = ctx.factory.ctx
         val ptrExpr = KSMTConverter(tf).convert(ptr, ef, ctx) as? Ptr_
             ?: unreachable { log.error("Non-ptr expr for pointer $ptr") }
-        val modelPtr = KSMTUnlogic.undo(model.eval(ptrExpr.expr.asExpr(ctx.factory.ctx), true), ctx.factory.ctx, model)
+        val modelPtr = KSMTUnlogic.undo(model.eval(ptrExpr.expr.asExpr(kCtx), true), kCtx, model)
 
         val (modelStartT, modelEndT) = ctx.recoverBitvectorProperty(ptr, memspace, model, name)
         val typePair = this.getOrPut(memspace, ::hashMapOf).getOrPut(name) {
@@ -221,6 +244,7 @@ class KSMTSolver(val tf: TypeFactory) : AbstractSMTSolver {
     }
 
     private fun collectModel(ctx: KSMTContext, model: KModel, vararg states: PredicateState): SMTModel {
+        val kCtx = ctx.factory.ctx
         val (ptrs, vars) = states.fold(setOf<Term>() to setOf<Term>()) { acc, ps ->
             acc.first + collectPointers(ps) to acc.second + collectVariables(ps)
         }
@@ -229,8 +253,8 @@ class KSMTSolver(val tf: TypeFactory) : AbstractSMTSolver {
             val expr = KSMTConverter(tf).convert(it, ef, ctx)
             val ksmtExpr = expr.expr
 
-            val evaluatedExpr = model.eval(ksmtExpr.asExpr(ctx.factory.ctx), true)
-            KSMTUnlogic.undo(evaluatedExpr, ctx.factory.ctx, model)
+            val evaluatedExpr = model.eval(ksmtExpr.asExpr(kCtx), true)
+            KSMTUnlogic.undo(evaluatedExpr, kCtx, model)
         }.toMutableMap()
 
         val memories = hashMapOf<Int, Pair<MutableMap<Term, Term>, MutableMap<Term, Term>>>()
@@ -240,7 +264,7 @@ class KSMTSolver(val tf: TypeFactory) : AbstractSMTSolver {
 
         for ((type, value) in ef.typeMap) {
             val index =
-                when (val actualValue = KSMTUnlogic.undo(value.expr.asExpr(ctx.factory.ctx), ctx.factory.ctx, model)) {
+                when (val actualValue = KSMTUnlogic.undo(value.expr.asExpr(kCtx), kCtx, model)) {
                     is ConstStringTerm -> term { const(actualValue.value.length - actualValue.value.indexOf('1') - 1) }
                     else -> term { const(log2(actualValue.numericValue.toDouble()).toInt()) }
                 }
@@ -260,13 +284,13 @@ class KSMTSolver(val tf: TypeFactory) : AbstractSMTSolver {
                         ?: unreachable { log.error("Non integer expr for index in $ptr") }
 
                     val modelPtr = KSMTUnlogic.undo(
-                        model.eval(arrayPtrExpr.expr.asExpr(ctx.factory.ctx), true),
-                        ctx.factory.ctx,
+                        model.eval(arrayPtrExpr.expr.asExpr(kCtx), true),
+                        kCtx,
                         model
                     )
                     val modelIndex = KSMTUnlogic.undo(
-                        model.eval(indexExpr.expr.asExpr(ctx.factory.ctx), true),
-                        ctx.factory.ctx,
+                        model.eval(indexExpr.expr.asExpr(kCtx), true),
+                        kCtx,
                         model
                     )
 
@@ -283,17 +307,17 @@ class KSMTSolver(val tf: TypeFactory) : AbstractSMTSolver {
                         model.eval(
                             cast(
                                 DWord_.forceCast(modelStartArray.load(indexExpr))
-                            ).expr.asExpr(ctx.factory.ctx),
+                            ).expr.asExpr(kCtx),
                             true
-                        ), ctx.factory.ctx, model
+                        ), kCtx, model
                     )
                     val value = KSMTUnlogic.undo(
                         model.eval(
                             cast(
                                 DWord_.forceCast(modelArray.load(indexExpr))
-                            ).expr.asExpr(ctx.factory.ctx),
+                            ).expr.asExpr(kCtx),
                             true
-                        ), ctx.factory.ctx, model
+                        ), kCtx, model
                     )
 
                     val arrayPair = arrays.getOrPut(ptr.arrayRef.memspace, ::hashMapOf).getOrPut(modelPtr) {
@@ -327,12 +351,9 @@ class KSMTSolver(val tf: TypeFactory) : AbstractSMTSolver {
                     val startV = startMem.load(ptrExpr)
                     val endV = endMem.load(ptrExpr)
 
-                    val modelPtr =
-                        KSMTUnlogic.undo(model.eval(ptrExpr.expr.asExpr(ctx.factory.ctx), true), ctx.factory.ctx, model)
-                    val modelStartV =
-                        KSMTUnlogic.undo(model.eval(startV.expr.asExpr(ctx.factory.ctx), true), ctx.factory.ctx, model)
-                    val modelEndV =
-                        KSMTUnlogic.undo(model.eval(endV.expr.asExpr(ctx.factory.ctx), true), ctx.factory.ctx, model)
+                    val modelPtr = KSMTUnlogic.undo(model.eval(ptrExpr.expr.asExpr(kCtx), true), kCtx, model)
+                    val modelStartV = KSMTUnlogic.undo(model.eval(startV.expr.asExpr(kCtx), true), kCtx, model)
+                    val modelEndV = KSMTUnlogic.undo(model.eval(endV.expr.asExpr(kCtx), true), kCtx, model)
 
                     memories.getOrPut(memspace) { hashMapOf<Term, Term>() to hashMapOf() }
                     memories.getValue(memspace).first[modelPtr] = modelStartV
@@ -392,9 +413,9 @@ class KSMTSolver(val tf: TypeFactory) : AbstractSMTSolver {
                 ?: unreachable { log.error("Non integer expr for index in $ptr") }
 
             val modelPtr =
-                KSMTUnlogic.undo(model.eval(arrayPtrExpr.expr.asExpr(ctx.factory.ctx), true), ctx.factory.ctx, model)
+                KSMTUnlogic.undo(model.eval(arrayPtrExpr.expr.asExpr(kCtx), true), kCtx, model)
             val modelIndex =
-                KSMTUnlogic.undo(model.eval(indexExpr.expr.asExpr(ctx.factory.ctx), true), ctx.factory.ctx, model)
+                KSMTUnlogic.undo(model.eval(indexExpr.expr.asExpr(kCtx), true), kCtx, model)
 
             val modelStartArray = ctx.readArrayInitialMemory(arrayPtrExpr, memspace)
             val modelArray = ctx.readArrayMemory(arrayPtrExpr, memspace)
@@ -409,17 +430,17 @@ class KSMTSolver(val tf: TypeFactory) : AbstractSMTSolver {
                 model.eval(
                     cast(
                         DWord_.forceCast(modelStartArray.load(indexExpr))
-                    ).expr.asExpr(ctx.factory.ctx),
+                    ).expr.asExpr(kCtx),
                     true
-                ), ctx.factory.ctx, model
+                ), kCtx, model
             )
             val value = KSMTUnlogic.undo(
                 model.eval(
                     cast(
                         DWord_.forceCast(modelArray.load(indexExpr))
-                    ).expr.asExpr(ctx.factory.ctx),
+                    ).expr.asExpr(kCtx),
                     true
-                ), ctx.factory.ctx, model
+                ), kCtx, model
             )
 
             val arrayPair = arrays.getOrPut(memspace, ::hashMapOf).getOrPut(modelPtr) {
