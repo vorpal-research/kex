@@ -371,7 +371,7 @@ class KSMTSolver(val tf: TypeFactory) : AbstractSMTSolver, AbstractAsyncSMTSolve
                             ctx,
                             ptr,
                             memspace,
-                            KexInt(),
+                            KexInt,
                             model,
                             "length"
                         )

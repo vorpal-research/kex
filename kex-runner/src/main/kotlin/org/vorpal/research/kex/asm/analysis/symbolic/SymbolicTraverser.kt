@@ -3,9 +3,7 @@ package org.vorpal.research.kex.asm.analysis.symbolic
 import kotlinx.collections.immutable.*
 import kotlinx.coroutines.*
 import org.vorpal.research.kex.ExecutionContext
-import org.vorpal.research.kex.annotations.AnnotationManager
 import org.vorpal.research.kex.asm.manager.MethodManager
-import org.vorpal.research.kex.asm.state.PredicateStateAnalysis
 import org.vorpal.research.kex.compile.CompilationException
 import org.vorpal.research.kex.compile.CompilerHelper
 import org.vorpal.research.kex.config.kexConfig
@@ -17,16 +15,13 @@ import org.vorpal.research.kex.parameters.Parameters
 import org.vorpal.research.kex.parameters.concreteParameters
 import org.vorpal.research.kex.reanimator.UnsafeGenerator
 import org.vorpal.research.kex.reanimator.codegen.klassName
-import org.vorpal.research.kex.smt.Checker
+import org.vorpal.research.kex.smt.AsyncChecker
 import org.vorpal.research.kex.smt.Result
-import org.vorpal.research.kex.state.PredicateState
 import org.vorpal.research.kex.state.predicate.inverse
 import org.vorpal.research.kex.state.predicate.path
 import org.vorpal.research.kex.state.predicate.state
-import org.vorpal.research.kex.state.term.ArgumentTerm
 import org.vorpal.research.kex.state.term.Term
 import org.vorpal.research.kex.state.term.TermBuilder
-import org.vorpal.research.kex.state.term.ValueTerm
 import org.vorpal.research.kex.state.transformer.*
 import org.vorpal.research.kex.trace.symbolic.*
 import org.vorpal.research.kfg.ClassManager
@@ -34,10 +29,10 @@ import org.vorpal.research.kfg.ir.BasicBlock
 import org.vorpal.research.kfg.ir.Method
 import org.vorpal.research.kfg.ir.value.Constant
 import org.vorpal.research.kfg.ir.value.Value
+import org.vorpal.research.kfg.ir.value.ValueFactory
 import org.vorpal.research.kfg.ir.value.instruction.*
 import org.vorpal.research.kfg.type.Type
-import org.vorpal.research.kfg.visitor.MethodVisitor
-import org.vorpal.research.kthelper.KtException
+import org.vorpal.research.kfg.type.TypeFactory
 import org.vorpal.research.kthelper.assert.unreachable
 import org.vorpal.research.kthelper.logging.debug
 import org.vorpal.research.kthelper.logging.log
@@ -57,12 +52,17 @@ data class TraverserState(
     val typeCheckedTerms: PersistentMap<Term, Type>
 )
 
+@Suppress("RedundantSuspendModifier")
 class SymbolicTraverser(
     val ctx: ExecutionContext,
     val rootMethod: Method
-) : TermBuilder(), MethodVisitor {
-    override val cm: ClassManager
+) : TermBuilder() {
+    val cm: ClassManager
         get() = ctx.cm
+    val types: TypeFactory
+        get() = ctx.types
+    val values: ValueFactory
+        get() = ctx.values
 
     private val pathSelector: PathSelector = DequePathSelector()
     private val callResolver: CallResolver = DefaultCallResolver(ctx)
@@ -97,8 +97,6 @@ class SymbolicTraverser(
         else -> valueMap.getValue(value)
     }
 
-    override fun cleanup() {}
-
     suspend fun analyze() {
         try {
             if (rootMethod.isStaticInitializer || !rootMethod.hasBody) return
@@ -116,7 +114,7 @@ class SymbolicTraverser(
     }
 
     private suspend fun processMethod(method: Method) {
-        val initialArguments = buildMap {
+        val initialArguments = buildMap<Value, Term> {
             this[this@SymbolicTraverser.values.getThis(method.klass)] = `this`(method.klass.symbolicClass)
             for ((index, type) in method.argTypes.withIndex()) {
                 this[this@SymbolicTraverser.values.getArgument(index, method, type)] = arg(type.symbolicType, index)
@@ -139,23 +137,51 @@ class SymbolicTraverser(
         while (pathSelector.hasNext()) {
             val (currentState, currentBlock) = pathSelector.next()
             this.currentState = currentState
-            visitBasicBlock(currentBlock)
+            traverseBlock(currentBlock)
             yield()
         }
     }
 
-    override fun visitBasicBlock(bb: BasicBlock) {
-        traverseBlock(bb, startIndex = 0)
-    }
-
-    private fun traverseBlock(bb: BasicBlock, startIndex: Int = 0) {
+    private suspend fun traverseBlock(bb: BasicBlock, startIndex: Int = 0) {
         for (index in startIndex..bb.instructions.lastIndex) {
             val inst = bb.instructions[index]
-            visitInstruction(inst)
+            traverseInstruction(inst)
         }
     }
 
-    override fun visitArrayLoadInst(inst: ArrayLoadInst) {
+
+    private suspend fun traverseInstruction(inst: Instruction) {
+        when (inst) {
+            is ArrayLoadInst -> traverseArrayLoadInst(inst)
+            is ArrayStoreInst -> traverseArrayStoreInst(inst)
+            is BinaryInst -> traverseBinaryInst(inst)
+            is CallInst -> traverseCallInst(inst)
+            is CastInst -> traverseCastInst(inst)
+            is CatchInst -> traverseCatchInst(inst)
+            is CmpInst -> traverseCmpInst(inst)
+            is EnterMonitorInst -> traverseEnterMonitorInst(inst)
+            is ExitMonitorInst -> traverseExitMonitorInst(inst)
+            is FieldLoadInst -> traverseFieldLoadInst(inst)
+            is FieldStoreInst -> traverseFieldStoreInst(inst)
+            is InstanceOfInst -> traverseInstanceOfInst(inst)
+            is InvokeDynamicInst -> traverseInvokeDynamicInst(inst)
+            is NewArrayInst -> traverseNewArrayInst(inst)
+            is NewInst -> traverseNewInst(inst)
+            is PhiInst -> traversePhiInst(inst)
+            is UnaryInst -> traverseUnaryInst(inst)
+            is BranchInst -> traverseBranchInst(inst)
+            is JumpInst -> traverseJumpInst(inst)
+            is ReturnInst -> traverseReturnInst(inst)
+            is SwitchInst -> traverseSwitchInst(inst)
+            is TableSwitchInst -> traverseTableSwitchInst(inst)
+            is ThrowInst -> traverseThrowInst(inst)
+            is UnreachableInst -> traverseUnreachableInst(inst)
+            is UnknownValueInst -> traverseUnknownValueInst(inst)
+            else -> unreachable("Unknown instruction ${inst.print()}")
+        }
+    }
+
+    private suspend fun traverseArrayLoadInst(inst: ArrayLoadInst) {
         var traverserState = currentState ?: return
 
         val arrayTerm = traverserState.mkValue(inst.arrayRef)
@@ -176,7 +202,7 @@ class SymbolicTraverser(
         )
     }
 
-    override fun visitArrayStoreInst(inst: ArrayStoreInst) {
+    private suspend fun traverseArrayStoreInst(inst: ArrayStoreInst) {
         var traverserState = currentState ?: return
 
         val arrayTerm = traverserState.mkValue(inst.arrayRef)
@@ -196,7 +222,7 @@ class SymbolicTraverser(
         )
     }
 
-    override fun visitBinaryInst(inst: BinaryInst) {
+    private suspend fun traverseBinaryInst(inst: BinaryInst) {
         val traverserState = currentState ?: return
 
         val lhvTerm = traverserState.mkValue(inst.lhv)
@@ -217,7 +243,7 @@ class SymbolicTraverser(
         )
     }
 
-    override fun visitBranchInst(inst: BranchInst) {
+    private suspend fun traverseBranchInst(inst: BranchInst) {
         val traverserState = currentState ?: return
         val condTerm = traverserState.mkValue(inst.cond)
 
@@ -249,7 +275,7 @@ class SymbolicTraverser(
         currentState = null
     }
 
-    override fun visitCallInst(inst: CallInst) {
+    private suspend fun traverseCallInst(inst: CallInst) {
         var traverserState = currentState ?: return
 
         val callee = when {
@@ -316,7 +342,7 @@ class SymbolicTraverser(
         }
     }
 
-    override fun visitCastInst(inst: CastInst) {
+    private suspend fun traverseCastInst(inst: CastInst) {
         var traverserState = currentState ?: return
 
         val operandTerm = traverserState.mkValue(inst.operand)
@@ -337,9 +363,10 @@ class SymbolicTraverser(
         )
     }
 
-    override fun visitCatchInst(inst: CatchInst) {}
+    @Suppress("UNUSED_PARAMETER")
+    private suspend fun traverseCatchInst(inst: CatchInst) {}
 
-    override fun visitCmpInst(inst: CmpInst) {
+    private suspend fun traverseCmpInst(inst: CmpInst) {
         val traverserState = currentState ?: return
 
         val lhvTerm = traverserState.mkValue(inst.lhv)
@@ -360,7 +387,7 @@ class SymbolicTraverser(
         )
     }
 
-    override fun visitEnterMonitorInst(inst: EnterMonitorInst) {
+    private suspend fun traverseEnterMonitorInst(inst: EnterMonitorInst) {
         var traverserState = currentState ?: return
         val monitorTerm = traverserState.mkValue(inst.owner)
 
@@ -378,7 +405,7 @@ class SymbolicTraverser(
         )
     }
 
-    override fun visitExitMonitorInst(inst: ExitMonitorInst) {
+    private suspend fun traverseExitMonitorInst(inst: ExitMonitorInst) {
         val traverserState = currentState ?: return
 
         val monitorTerm = traverserState.mkValue(inst.owner)
@@ -396,7 +423,7 @@ class SymbolicTraverser(
         )
     }
 
-    override fun visitFieldLoadInst(inst: FieldLoadInst) {
+    private suspend fun traverseFieldLoadInst(inst: FieldLoadInst) {
         var traverserState = currentState ?: return
 
         val objectTerm = when {
@@ -421,7 +448,7 @@ class SymbolicTraverser(
         )
     }
 
-    override fun visitFieldStoreInst(inst: FieldStoreInst) {
+    private suspend fun traverseFieldStoreInst(inst: FieldStoreInst) {
         var traverserState = currentState ?: return
 
         val objectTerm = when {
@@ -446,7 +473,7 @@ class SymbolicTraverser(
         )
     }
 
-    override fun visitInstanceOfInst(inst: InstanceOfInst) {
+    private suspend fun traverseInstanceOfInst(inst: InstanceOfInst) {
         val traverserState = currentState ?: return
         val operandTerm = traverserState.mkValue(inst.operand)
         val resultTerm = generate(inst.type.symbolicType)
@@ -465,7 +492,7 @@ class SymbolicTraverser(
         )
     }
 
-    override fun visitInvokeDynamicInst(inst: InvokeDynamicInst) {
+    private suspend fun traverseInvokeDynamicInst(inst: InvokeDynamicInst) {
         var traverserState = currentState ?: return
         val resolvedCall = invokeDynamicResolver.resolve(traverserState, inst)
         if (resolvedCall == null) {
@@ -501,7 +528,7 @@ class SymbolicTraverser(
         currentState = null
     }
 
-    override fun visitNewArrayInst(inst: NewArrayInst) {
+    private suspend fun traverseNewArrayInst(inst: NewArrayInst) {
         var traverserState = currentState ?: return
 
         val dimensions = inst.dimensions.map { traverserState.mkValue(it) }
@@ -527,7 +554,7 @@ class SymbolicTraverser(
         )
     }
 
-    override fun visitNewInst(inst: NewInst) {
+    private suspend fun traverseNewInst(inst: NewInst) {
         val traverserState = currentState ?: return
         val resultTerm = generate(inst.type.symbolicType)
 
@@ -548,7 +575,7 @@ class SymbolicTraverser(
         )
     }
 
-    override fun visitPhiInst(inst: PhiInst) {
+    private suspend fun traversePhiInst(inst: PhiInst) {
         val traverserState = currentState ?: return
         currentState = traverserState.copy(
             valueMap = traverserState.valueMap.put(
@@ -558,7 +585,7 @@ class SymbolicTraverser(
         )
     }
 
-    override fun visitUnaryInst(inst: UnaryInst) {
+    private suspend fun traverseUnaryInst(inst: UnaryInst) {
         var traverserState = currentState ?: return
         val operandTerm = traverserState.mkValue(inst.operand)
         val resultTerm = generate(inst.type.symbolicType)
@@ -580,7 +607,7 @@ class SymbolicTraverser(
         )
     }
 
-    override fun visitJumpInst(inst: JumpInst) {
+    private suspend fun traverseJumpInst(inst: JumpInst) {
         val traverserState = currentState ?: return
         pathSelector += traverserState.copy(
             blockPath = traverserState.blockPath.add(inst.parent)
@@ -589,7 +616,7 @@ class SymbolicTraverser(
         currentState = null
     }
 
-    override fun visitReturnInst(inst: ReturnInst) {
+    private suspend fun traverseReturnInst(inst: ReturnInst) {
         val traverserState = currentState ?: return
         val stackTrace = traverserState.stackTrace
         val receiver = stackTrace.lastOrNull()?.second
@@ -620,7 +647,7 @@ class SymbolicTraverser(
         }
     }
 
-    override fun visitSwitchInst(inst: SwitchInst) {
+    private suspend fun traverseSwitchInst(inst: SwitchInst) {
         val traverserState = currentState ?: return
         val key = traverserState.mkValue(inst.key)
         for ((value, branch) in inst.branches) {
@@ -659,7 +686,7 @@ class SymbolicTraverser(
         currentState = null
     }
 
-    override fun visitTableSwitchInst(inst: TableSwitchInst) {
+    private suspend fun traverseTableSwitchInst(inst: TableSwitchInst) {
         val traverserState = currentState ?: return
         val key = traverserState.mkValue(inst.index)
         val min = inst.range.first
@@ -698,7 +725,7 @@ class SymbolicTraverser(
         currentState = null
     }
 
-    override fun visitThrowInst(inst: ThrowInst) {
+    private suspend fun traverseThrowInst(inst: ThrowInst) {
         var traverserState = currentState ?: return
         val persistentState = traverserState.symbolicState
         val throwableTerm = traverserState.mkValue(inst.throwable)
@@ -720,15 +747,15 @@ class SymbolicTraverser(
         currentState = null
     }
 
-    override fun visitUnreachableInst(inst: UnreachableInst) {
+    private suspend fun traverseUnreachableInst(inst: UnreachableInst) {
         unreachable<Unit>("Unexpected visit of $inst in symbolic traverser")
     }
 
-    override fun visitUnknownValueInst(inst: UnknownValueInst) {
+    private suspend fun traverseUnknownValueInst(inst: UnknownValueInst) {
         unreachable<Unit>("Unexpected visit of $inst in symbolic traverser")
     }
 
-    private fun nullabilityCheck(state: TraverserState, inst: Instruction, term: Term): TraverserState {
+    private suspend fun nullabilityCheck(state: TraverserState, inst: Instruction, term: Term): TraverserState {
         if (term in state.nullCheckedTerms) return state
 
         val persistentState = state.symbolicState
@@ -756,7 +783,12 @@ class SymbolicTraverser(
         )
     }
 
-    private fun boundsCheck(state: TraverserState, inst: Instruction, index: Term, length: Term): TraverserState {
+    private suspend fun boundsCheck(
+        state: TraverserState,
+        inst: Instruction,
+        index: Term,
+        length: Term
+    ): TraverserState {
         if (index to length in state.boundCheckedTerms) return state
 
         val persistentState = state.symbolicState
@@ -800,7 +832,7 @@ class SymbolicTraverser(
         )
     }
 
-    private fun newArrayBoundsCheck(state: TraverserState, inst: Instruction, index: Term): TraverserState {
+    private suspend fun newArrayBoundsCheck(state: TraverserState, inst: Instruction, index: Term): TraverserState {
         if (index to index in state.boundCheckedTerms) return state
 
         val persistentState = state.symbolicState
@@ -828,7 +860,7 @@ class SymbolicTraverser(
         )
     }
 
-    private fun typeCheck(state: TraverserState, inst: Instruction, term: Term, type: KexType): TraverserState {
+    private suspend fun typeCheck(state: TraverserState, inst: Instruction, term: Term, type: KexType): TraverserState {
         if (type !is KexPointer) return state
         val previouslyCheckedType = state.typeCheckedTerms[term]
         val currentlyCheckedType = type.getKfgType(ctx.types)
@@ -861,14 +893,13 @@ class SymbolicTraverser(
         )
     }
 
-    private fun checkReachability(
+    private suspend fun checkReachability(
         state: TraverserState
     ): TraverserState? {
-        val res = check(rootMethod, state.symbolicState)
-        return res?.let { state }
+        return check(rootMethod, state.symbolicState)?.let { state }
     }
 
-    private fun checkExceptionAndReport(
+    private suspend fun checkExceptionAndReport(
         state: TraverserState,
         inst: Instruction,
         throwable: Term
@@ -917,17 +948,16 @@ class SymbolicTraverser(
         }
     }
 
-    private fun check(method: Method, state: SymbolicState): Parameters<Descriptor>? {
-        val checker = Checker(method, ctx, PredicateStateAnalysis(cm))
+    private suspend fun check(method: Method, state: SymbolicState): Parameters<Descriptor>? {
+        val checker = AsyncChecker(method, ctx)
+        val clauses = state.clauses.asState()
         val query = state.path.asState()
         val concreteTypeInfo = state.concreteValueMap
             .mapValues { it.value.type }
             .filterValues { it.isJavaRt }
             .mapValues { it.value.rtMapped }
             .toTypeMap()
-        val preparedState = prepareState(method, state.clauses.asState() + query, concreteTypeInfo)
-        log.debug { "Prepared state: $preparedState" }
-        val result = checker.check(preparedState)
+        val result = checker.prepareAndCheck(method, clauses + query, concreteTypeInfo)
         if (result !is Result.SatResult) {
             return null
         }
@@ -938,49 +968,5 @@ class SymbolicTraverser(
                     log.debug { "Generated params:\n$it" }
                 }
         }
-    }
-
-    private fun prepareState(
-        method: Method,
-        state: PredicateState,
-        typeMap: TypeInfoMap = emptyMap<Term, KexType>().toTypeMap()
-    ): PredicateState = transform(state) {
-        +KexRtAdapter(cm)
-        +RecursiveInliner(PredicateStateAnalysis(cm)) { index, psa ->
-            ConcolicInliner(
-                ctx,
-                typeMap,
-                psa,
-                inlineSuffix = "inlined",
-                inlineIndex = index,
-                kexRtOnly = false
-            )
-        }
-        +RecursiveInliner(PredicateStateAnalysis(cm)) { index, psa ->
-            ConcolicInliner(
-                ctx,
-                typeMap,
-                psa,
-                inlineSuffix = "rt.inlined",
-                inlineIndex = index,
-                kexRtOnly = true
-            )
-        }
-        +ClassAdapter(cm)
-        +AnnotationAdapter(method, AnnotationManager.defaultLoader)
-        +IntrinsicAdapter
-        +KexIntrinsicsAdapter()
-        +EqualsTransformer()
-        +ReflectionInfoAdapter(method, ctx.loader)
-        +Optimizer()
-        +ConstantPropagator
-        +BoolTypeAdapter(method.cm.type)
-        +ClassMethodAdapter(method.cm)
-        +ConstEnumAdapter(ctx)
-        +ConstStringAdapter(method.cm.type)
-        +StringMethodAdapter(ctx.cm)
-        +ConcolicArrayLengthAdapter()
-        +FieldNormalizer(method.cm)
-        +TypeNameAdapter(ctx.types)
     }
 }
