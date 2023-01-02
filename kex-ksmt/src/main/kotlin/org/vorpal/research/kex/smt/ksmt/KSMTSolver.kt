@@ -147,8 +147,8 @@ class KSMTSolver(val tf: TypeFactory) : AbstractSMTSolver {
         val startV = startProp.load(ptrExpr)
         val endV = endProp.load(ptrExpr)
 
-        val modelStartV = KSMTUnlogic.undo(model.eval(startV.expr.asExpr(this.factory.ctx), true))
-        val modelEndV = KSMTUnlogic.undo(model.eval(endV.expr.asExpr(this.factory.ctx), true))
+        val modelStartV = KSMTUnlogic.undo(model.eval(startV.expr.asExpr(factory.ctx), true), factory.ctx, model)
+        val modelEndV = KSMTUnlogic.undo(model.eval(endV.expr.asExpr(factory.ctx), true), factory.ctx, model)
         return modelStartV to modelEndV
     }
 
@@ -174,8 +174,8 @@ class KSMTSolver(val tf: TypeFactory) : AbstractSMTSolver {
         val startV = startProp.load(ptrExpr)
         val endV = endProp.load(ptrExpr)
 
-        val modelStartV = KSMTUnlogic.undo(model.eval(startV.expr.asExpr(this.factory.ctx), true))
-        val modelEndV = KSMTUnlogic.undo(model.eval(endV.expr.asExpr(this.factory.ctx), true))
+        val modelStartV = KSMTUnlogic.undo(model.eval(startV.expr.asExpr(factory.ctx), true), factory.ctx, model)
+        val modelEndV = KSMTUnlogic.undo(model.eval(endV.expr.asExpr(factory.ctx), true), factory.ctx, model)
         return modelStartV to modelEndV
     }
 
@@ -189,7 +189,7 @@ class KSMTSolver(val tf: TypeFactory) : AbstractSMTSolver {
     ): Pair<Term, Term> {
         val ptrExpr = KSMTConverter(tf).convert(ptr, ef, ctx) as? Ptr_
             ?: unreachable { log.error("Non-ptr expr for pointer $ptr") }
-        val modelPtr = KSMTUnlogic.undo(model.eval(ptrExpr.expr.asExpr(ctx.factory.ctx), true))
+        val modelPtr = KSMTUnlogic.undo(model.eval(ptrExpr.expr.asExpr(ctx.factory.ctx), true), ctx.factory.ctx, model)
 
         val (modelStartT, modelEndT) = ctx.recoverProperty(ptr, memspace, type, model, name)
         val typePair = this.getOrPut(memspace, ::hashMapOf).getOrPut(name) {
@@ -209,7 +209,7 @@ class KSMTSolver(val tf: TypeFactory) : AbstractSMTSolver {
     ): Pair<Term, Term> {
         val ptrExpr = KSMTConverter(tf).convert(ptr, ef, ctx) as? Ptr_
             ?: unreachable { log.error("Non-ptr expr for pointer $ptr") }
-        val modelPtr = KSMTUnlogic.undo(model.eval(ptrExpr.expr.asExpr(ctx.factory.ctx), true))
+        val modelPtr = KSMTUnlogic.undo(model.eval(ptrExpr.expr.asExpr(ctx.factory.ctx), true), ctx.factory.ctx, model)
 
         val (modelStartT, modelEndT) = ctx.recoverBitvectorProperty(ptr, memspace, model, name)
         val typePair = this.getOrPut(memspace, ::hashMapOf).getOrPut(name) {
@@ -230,7 +230,7 @@ class KSMTSolver(val tf: TypeFactory) : AbstractSMTSolver {
             val ksmtExpr = expr.expr
 
             val evaluatedExpr = model.eval(ksmtExpr.asExpr(ctx.factory.ctx), true)
-            KSMTUnlogic.undo(evaluatedExpr)
+            KSMTUnlogic.undo(evaluatedExpr, ctx.factory.ctx, model)
         }.toMutableMap()
 
         val memories = hashMapOf<Int, Pair<MutableMap<Term, Term>, MutableMap<Term, Term>>>()
@@ -239,10 +239,11 @@ class KSMTSolver(val tf: TypeFactory) : AbstractSMTSolver {
         val typeMap = hashMapOf<Term, KexType>()
 
         for ((type, value) in ef.typeMap) {
-            val index = when (val actualValue = KSMTUnlogic.undo(value.expr.asExpr(ctx.factory.ctx))) {
-                is ConstStringTerm -> term { const(actualValue.value.indexOf('1')) }
-                else -> term { const(log2(actualValue.numericValue.toDouble()).toInt()) }
-            }
+            val index =
+                when (val actualValue = KSMTUnlogic.undo(value.expr.asExpr(ctx.factory.ctx), ctx.factory.ctx, model)) {
+                    is ConstStringTerm -> term { const(actualValue.value.length - actualValue.value.indexOf('1') - 1) }
+                    else -> term { const(log2(actualValue.numericValue.toDouble()).toInt()) }
+                }
             typeMap[index] = type.kexType
         }
 
@@ -258,8 +259,16 @@ class KSMTSolver(val tf: TypeFactory) : AbstractSMTSolver {
                     val indexExpr = KSMTConverter(tf).convert(ptr.index, ef, ctx) as? Int_
                         ?: unreachable { log.error("Non integer expr for index in $ptr") }
 
-                    val modelPtr = KSMTUnlogic.undo(model.eval(arrayPtrExpr.expr.asExpr(ctx.factory.ctx), true))
-                    val modelIndex = KSMTUnlogic.undo(model.eval(indexExpr.expr.asExpr(ctx.factory.ctx), true))
+                    val modelPtr = KSMTUnlogic.undo(
+                        model.eval(arrayPtrExpr.expr.asExpr(ctx.factory.ctx), true),
+                        ctx.factory.ctx,
+                        model
+                    )
+                    val modelIndex = KSMTUnlogic.undo(
+                        model.eval(indexExpr.expr.asExpr(ctx.factory.ctx), true),
+                        ctx.factory.ctx,
+                        model
+                    )
 
                     val modelStartArray = ctx.readArrayInitialMemory(arrayPtrExpr, ptr.arrayRef.memspace)
                     val modelArray = ctx.readArrayMemory(arrayPtrExpr, ptr.arrayRef.memspace)
@@ -276,7 +285,7 @@ class KSMTSolver(val tf: TypeFactory) : AbstractSMTSolver {
                                 DWord_.forceCast(modelStartArray.load(indexExpr))
                             ).expr.asExpr(ctx.factory.ctx),
                             true
-                        )
+                        ), ctx.factory.ctx, model
                     )
                     val value = KSMTUnlogic.undo(
                         model.eval(
@@ -284,7 +293,7 @@ class KSMTSolver(val tf: TypeFactory) : AbstractSMTSolver {
                                 DWord_.forceCast(modelArray.load(indexExpr))
                             ).expr.asExpr(ctx.factory.ctx),
                             true
-                        )
+                        ), ctx.factory.ctx, model
                     )
 
                     val arrayPair = arrays.getOrPut(ptr.arrayRef.memspace, ::hashMapOf).getOrPut(modelPtr) {
@@ -318,9 +327,12 @@ class KSMTSolver(val tf: TypeFactory) : AbstractSMTSolver {
                     val startV = startMem.load(ptrExpr)
                     val endV = endMem.load(ptrExpr)
 
-                    val modelPtr = KSMTUnlogic.undo(model.eval(ptrExpr.expr.asExpr(ctx.factory.ctx), true))
-                    val modelStartV = KSMTUnlogic.undo(model.eval(startV.expr.asExpr(ctx.factory.ctx), true))
-                    val modelEndV = KSMTUnlogic.undo(model.eval(endV.expr.asExpr(ctx.factory.ctx), true))
+                    val modelPtr =
+                        KSMTUnlogic.undo(model.eval(ptrExpr.expr.asExpr(ctx.factory.ctx), true), ctx.factory.ctx, model)
+                    val modelStartV =
+                        KSMTUnlogic.undo(model.eval(startV.expr.asExpr(ctx.factory.ctx), true), ctx.factory.ctx, model)
+                    val modelEndV =
+                        KSMTUnlogic.undo(model.eval(endV.expr.asExpr(ctx.factory.ctx), true), ctx.factory.ctx, model)
 
                     memories.getOrPut(memspace) { hashMapOf<Term, Term>() to hashMapOf() }
                     memories.getValue(memspace).first[modelPtr] = modelStartV
@@ -379,8 +391,10 @@ class KSMTSolver(val tf: TypeFactory) : AbstractSMTSolver {
             val indexExpr = KSMTConverter(tf).convert(ptr.index, ef, ctx) as? Int_
                 ?: unreachable { log.error("Non integer expr for index in $ptr") }
 
-            val modelPtr = KSMTUnlogic.undo(model.eval(arrayPtrExpr.expr.asExpr(ctx.factory.ctx), true))
-            val modelIndex = KSMTUnlogic.undo(model.eval(indexExpr.expr.asExpr(ctx.factory.ctx), true))
+            val modelPtr =
+                KSMTUnlogic.undo(model.eval(arrayPtrExpr.expr.asExpr(ctx.factory.ctx), true), ctx.factory.ctx, model)
+            val modelIndex =
+                KSMTUnlogic.undo(model.eval(indexExpr.expr.asExpr(ctx.factory.ctx), true), ctx.factory.ctx, model)
 
             val modelStartArray = ctx.readArrayInitialMemory(arrayPtrExpr, memspace)
             val modelArray = ctx.readArrayMemory(arrayPtrExpr, memspace)
@@ -397,7 +411,7 @@ class KSMTSolver(val tf: TypeFactory) : AbstractSMTSolver {
                         DWord_.forceCast(modelStartArray.load(indexExpr))
                     ).expr.asExpr(ctx.factory.ctx),
                     true
-                )
+                ), ctx.factory.ctx, model
             )
             val value = KSMTUnlogic.undo(
                 model.eval(
@@ -405,7 +419,7 @@ class KSMTSolver(val tf: TypeFactory) : AbstractSMTSolver {
                         DWord_.forceCast(modelArray.load(indexExpr))
                     ).expr.asExpr(ctx.factory.ctx),
                     true
-                )
+                ), ctx.factory.ctx, model
             )
 
             val arrayPair = arrays.getOrPut(memspace, ::hashMapOf).getOrPut(modelPtr) {

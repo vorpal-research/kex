@@ -12,7 +12,7 @@
     <artifactId>kex-ksmt</artifactId>
 
     <properties>
-        <ksmt.version>0.3.0</ksmt.version>
+        <ksmt.version>0.3.1</ksmt.version>
     </properties>
 
     <dependencies>
