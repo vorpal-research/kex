@@ -7,7 +7,6 @@ import org.vorpal.research.kex.ExecutionContext
 import org.vorpal.research.kex.asm.analysis.symbolic.SymbolicTraverser
 import org.vorpal.research.kex.asm.manager.ClassInstantiationDetector
 import org.vorpal.research.kex.asm.state.PredicateStateAnalysis
-import org.vorpal.research.kex.asm.transform.SystemExitTransformer
 import org.vorpal.research.kex.config.kexConfig
 import org.vorpal.research.kex.jacoco.CoverageReporter
 import org.vorpal.research.kex.util.PermanentCoverageInfo

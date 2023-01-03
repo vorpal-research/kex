@@ -70,7 +70,7 @@ data class MethodLevel(val method: Method) : AnalysisLevel() {
 }
 
 abstract class KexLauncher(classPaths: List<String>, targetName: String) {
-    val classPath = System.getProperty("java.class.path")
+    private val classPath: String = System.getProperty("java.class.path")
 
     val containers: List<Container>
     val containerClassLoader: URLClassLoader
@@ -228,7 +228,7 @@ abstract class KexLauncher(classPaths: List<String>, targetName: String) {
         +ClassInstantiationDetector(ctx)
     }
 
-    protected fun updateClassPath(loader: URLClassLoader) {
+    private fun updateClassPath(loader: URLClassLoader) {
         val urlClassPath = loader.urLs.joinToString(separator = getPathSeparator()) { "${it.path}." }
         System.setProperty("java.class.path", "$classPath${getPathSeparator()}$urlClassPath")
     }

@@ -4,26 +4,18 @@ import kotlinx.coroutines.*
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.InternalSerializationApi
 import org.vorpal.research.kex.ExecutionContext
-import org.vorpal.research.kex.annotations.AnnotationManager
 import org.vorpal.research.kex.asm.analysis.concolic.bfs.BfsPathSelectorImpl
 import org.vorpal.research.kex.asm.analysis.concolic.cgs.ContextGuidedSelector
-import org.vorpal.research.kex.asm.manager.MethodManager
-import org.vorpal.research.kex.asm.state.PredicateStateAnalysis
+import org.vorpal.research.kex.asm.analysis.util.analyzeOrTimeout
+import org.vorpal.research.kex.asm.analysis.util.checkAsync
 import org.vorpal.research.kex.compile.CompilerHelper
 import org.vorpal.research.kex.config.kexConfig
 import org.vorpal.research.kex.descriptor.Descriptor
-import org.vorpal.research.kex.ktype.KexRtManager.isJavaRt
-import org.vorpal.research.kex.ktype.KexRtManager.rtMapped
-import org.vorpal.research.kex.ktype.KexType
 import org.vorpal.research.kex.parameters.Parameters
 import org.vorpal.research.kex.parameters.asDescriptors
-import org.vorpal.research.kex.parameters.concreteParameters
 import org.vorpal.research.kex.reanimator.UnsafeGenerator
 import org.vorpal.research.kex.reanimator.codegen.ExecutorTestCasePrinter
 import org.vorpal.research.kex.reanimator.codegen.klassName
-import org.vorpal.research.kex.smt.AsyncChecker
-import org.vorpal.research.kex.smt.Result
-import org.vorpal.research.kex.state.transformer.*
 import org.vorpal.research.kex.trace.runner.SymbolicExternalTracingRunner
 import org.vorpal.research.kex.trace.runner.generateDefaultParameters
 import org.vorpal.research.kex.trace.runner.generateParameters
@@ -71,18 +63,8 @@ class InstructionConcolicChecker(
     }
 
     suspend fun visit(method: Method) {
-        try {
-            if (method.isStaticInitializer || !method.hasBody) return
-            if (!MethodManager.canBeImpacted(method, ctx.accessLevel)) return
-
-            log.debug { "Processing method $method" }
-            log.debug { method.print() }
-
-            processMethod(method)
-            log.debug { "Method $method processing is finished normally" }
-        } catch (e: CancellationException) {
-            log.warn { "Method $method processing is finished with timeout" }
-            throw e
+        method.analyzeOrTimeout(ctx.accessLevel) {
+            processMethod(it)
         }
     }
 
@@ -119,24 +101,8 @@ class InstructionConcolicChecker(
         return runner.run(klassName, ExecutorTestCasePrinter.SETUP_METHOD, ExecutorTestCasePrinter.TEST_METHOD)
     }
 
-    private suspend fun check(method: Method, state: SymbolicState): ExecutionResult? {
-        val checker = AsyncChecker(method, ctx)
-        val clauses = state.clauses.asState()
-        val query = state.path.asState()
-        val concreteTypeInfo = state.concreteValueMap
-            .mapValues { it.value.type }
-            .filterValues { it.isJavaRt }
-            .mapValues { it.value.rtMapped }
-            .toTypeMap()
-        val result = checker.prepareAndCheck(method, clauses + query, concreteTypeInfo)
-        if (result !is Result.SatResult) return null
-
-        return tryOrNull {
-            val params = generateFinalDescriptors(method, ctx, result.model, checker.state)
-                .concreteParameters(ctx.cm, ctx.accessLevel, ctx.random)
-            log.debug { "Generated params:\n$params" }
-            collectTrace(method, params)
-        }
+    private suspend fun check(method: Method, state: SymbolicState): ExecutionResult? = tryOrNull {
+        method.checkAsync(ctx, state)?.let { collectTrace(method, it) }
     }
 
     private fun buildPathSelector() = when (searchStrategy) {
@@ -147,7 +113,7 @@ class InstructionConcolicChecker(
 
     private suspend fun handleStartingTrace(
         method: Method,
-        pathIterator: PathSelector,
+        pathIterator: ConcolicPathSelector,
         executionResult: ExecutionResult?
     ) {
         executionResult?.let {
@@ -180,6 +146,7 @@ class InstructionConcolicChecker(
                     newState.trace.isEmpty() -> log.warn { "Collected empty state from $state" }
                     else -> pathIterator.addExecutionTrace(method, newState)
                 }
+
                 else -> log.warn("Failure during execution: $newState")
             }
             yield()

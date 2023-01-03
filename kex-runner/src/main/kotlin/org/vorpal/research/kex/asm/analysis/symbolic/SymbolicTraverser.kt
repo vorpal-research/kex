@@ -3,20 +3,17 @@ package org.vorpal.research.kex.asm.analysis.symbolic
 import kotlinx.collections.immutable.*
 import kotlinx.coroutines.*
 import org.vorpal.research.kex.ExecutionContext
-import org.vorpal.research.kex.asm.manager.MethodManager
+import org.vorpal.research.kex.asm.analysis.util.analyzeOrTimeout
+import org.vorpal.research.kex.asm.analysis.util.checkAsync
 import org.vorpal.research.kex.compile.CompilationException
 import org.vorpal.research.kex.compile.CompilerHelper
 import org.vorpal.research.kex.config.kexConfig
 import org.vorpal.research.kex.descriptor.Descriptor
 import org.vorpal.research.kex.ktype.*
-import org.vorpal.research.kex.ktype.KexRtManager.isJavaRt
 import org.vorpal.research.kex.ktype.KexRtManager.rtMapped
 import org.vorpal.research.kex.parameters.Parameters
-import org.vorpal.research.kex.parameters.concreteParameters
 import org.vorpal.research.kex.reanimator.UnsafeGenerator
 import org.vorpal.research.kex.reanimator.codegen.klassName
-import org.vorpal.research.kex.smt.AsyncChecker
-import org.vorpal.research.kex.smt.Result
 import org.vorpal.research.kex.state.predicate.inverse
 import org.vorpal.research.kex.state.predicate.path
 import org.vorpal.research.kex.state.predicate.state
@@ -34,11 +31,7 @@ import org.vorpal.research.kfg.ir.value.instruction.*
 import org.vorpal.research.kfg.type.Type
 import org.vorpal.research.kfg.type.TypeFactory
 import org.vorpal.research.kthelper.assert.unreachable
-import org.vorpal.research.kthelper.logging.debug
 import org.vorpal.research.kthelper.logging.log
-import org.vorpal.research.kthelper.logging.warn
-import org.vorpal.research.kthelper.tryOrNull
-import java.util.concurrent.CancellationException
 import java.util.concurrent.atomic.AtomicInteger
 
 data class TraverserState(
@@ -55,7 +48,7 @@ data class TraverserState(
 @Suppress("RedundantSuspendModifier")
 class SymbolicTraverser(
     val ctx: ExecutionContext,
-    val rootMethod: Method
+    private val rootMethod: Method
 ) : TermBuilder() {
     val cm: ClassManager
         get() = ctx.cm
@@ -64,12 +57,18 @@ class SymbolicTraverser(
     val values: ValueFactory
         get() = ctx.values
 
-    private val pathSelector: PathSelector = DequePathSelector()
-    private val callResolver: CallResolver = DefaultCallResolver(ctx)
-    private val invokeDynamicResolver: InvokeDynamicResolver = DefaultCallResolver(ctx)
+    private val pathSelector: SymbolicPathSelector = DequePathSelector()
+    private val callResolver: SymbolicCallResolver = DefaultCallResolver(ctx)
+    private val invokeDynamicResolver: SymbolicInvokeDynamicResolver = DefaultCallResolver(ctx)
     private var currentState: TraverserState? = null
     private var testIndex = AtomicInteger(0)
     private val compilerHelper = CompilerHelper(ctx)
+
+
+    private val nullptrClass = cm["java/lang/NullPointerException"]
+    private val arrayIndexOOBClass = cm["java/lang/ArrayIndexOutOfBoundsException"]
+    private val negativeArrayClass = cm["java/lang/NegativeArraySizeException"]
+    private val classCastClass = cm["java/lang/ClassCastException"]
 
     companion object {
         @DelicateCoroutinesApi
@@ -92,32 +91,21 @@ class SymbolicTraverser(
     private val Type.symbolicType: KexType get() = kexType.rtMapped
     private val org.vorpal.research.kfg.ir.Class.symbolicClass: KexType get() = kexType.rtMapped
 
-    fun TraverserState.mkValue(value: Value): Term = when (value) {
+    private fun TraverserState.mkValue(value: Value): Term = when (value) {
         is Constant -> const(value)
         else -> valueMap.getValue(value)
     }
 
-    suspend fun analyze() {
-        try {
-            if (rootMethod.isStaticInitializer || !rootMethod.hasBody) return
-            if (!MethodManager.canBeImpacted(rootMethod, ctx.accessLevel)) return
-
-            log.debug { "Processing method $rootMethod" }
-            log.debug { rootMethod.print() }
-
-            processMethod(rootMethod)
-            log.debug { "Method $rootMethod processing is finished normally" }
-        } catch (e: CancellationException) {
-            log.warn { "Method $rootMethod processing is finished with timeout" }
-            throw e
-        }
+    suspend fun analyze() = rootMethod.analyzeOrTimeout(ctx.accessLevel) {
+        processMethod(it)
     }
 
     private suspend fun processMethod(method: Method) {
-        val initialArguments = buildMap<Value, Term> {
-            this[this@SymbolicTraverser.values.getThis(method.klass)] = `this`(method.klass.symbolicClass)
+        val initialArguments = buildMap {
+            val values = this@SymbolicTraverser.values
+            this[values.getThis(method.klass)] = `this`(method.klass.symbolicClass)
             for ((index, type) in method.argTypes.withIndex()) {
-                this[this@SymbolicTraverser.values.getArgument(index, method, type)] = arg(type.symbolicType, index)
+                this[values.getArgument(index, method, type)] = arg(type.symbolicType, index)
             }
         }
         pathSelector.add(
@@ -289,24 +277,7 @@ class SymbolicTraverser(
 
         val candidates = callResolver.resolve(traverserState, inst)
         for (candidate in candidates) {
-            val newValueMap = traverserState.valueMap.builder().let { builder ->
-                if (!inst.isStatic) builder[values.getThis(candidate.klass)] = callee
-                for ((index, type) in candidate.argTypes.withIndex()) {
-                    builder[values.getArgument(index, candidate, type)] = argumentTerms[index]
-                }
-                builder.build()
-            }
-            if (!inst.isStatic) {
-                traverserState = typeCheck(traverserState, inst, callee, candidate.klass.symbolicClass)
-            }
-            val newState = traverserState.copy(
-                symbolicState = traverserState.symbolicState,
-                valueMap = newValueMap,
-                stackTrace = traverserState.stackTrace.add(inst.parent.method to inst)
-            )
-            pathSelector.add(
-                newState, candidate.body.entry
-            )
+            processMethodCall(traverserState, inst, candidate, callee, argumentTerms)
         }
         currentState = when {
             candidates.isEmpty() -> {
@@ -364,7 +335,8 @@ class SymbolicTraverser(
     }
 
     @Suppress("UNUSED_PARAMETER")
-    private suspend fun traverseCatchInst(inst: CatchInst) {}
+    private suspend fun traverseCatchInst(inst: CatchInst) {
+    }
 
     private suspend fun traverseCmpInst(inst: CmpInst) {
         val traverserState = currentState ?: return
@@ -493,7 +465,7 @@ class SymbolicTraverser(
     }
 
     private suspend fun traverseInvokeDynamicInst(inst: InvokeDynamicInst) {
-        var traverserState = currentState ?: return
+        val traverserState = currentState ?: return
         val resolvedCall = invokeDynamicResolver.resolve(traverserState, inst)
         if (resolvedCall == null) {
             currentState = traverserState.copy(
@@ -507,6 +479,18 @@ class SymbolicTraverser(
         } ?: staticRef(candidate.klass)
         val argumentTerms = resolvedCall.arguments.map { traverserState.mkValue(it) }
 
+        processMethodCall(traverserState, inst, candidate, callee, argumentTerms)
+        currentState = null
+    }
+
+    private suspend fun processMethodCall(
+        state: TraverserState,
+        inst: Instruction,
+        candidate: Method,
+        callee: Term,
+        argumentTerms: List<Term>
+    ) {
+        var traverserState = state
         val newValueMap = traverserState.valueMap.builder().let { builder ->
             if (!candidate.isStatic) builder[values.getThis(candidate.klass)] = callee
             for ((index, type) in candidate.argTypes.withIndex()) {
@@ -525,7 +509,6 @@ class SymbolicTraverser(
         pathSelector.add(
             newState, candidate.body.entry
         )
-        currentState = null
     }
 
     private suspend fun traverseNewArrayInst(inst: NewArrayInst) {
@@ -771,7 +754,7 @@ class SymbolicTraverser(
                 )
             ),
             inst,
-            generate(cm["java/lang/NullPointerException"].symbolicClass)
+            generate(nullptrClass.symbolicClass)
         )
         return state.copy(
             symbolicState = persistentState.copy(
@@ -809,7 +792,7 @@ class SymbolicTraverser(
                 )
             ),
             inst,
-            generate(cm["java/lang/ArrayIndexOutOfBoundsException"].symbolicClass)
+            generate(arrayIndexOOBClass.symbolicClass)
         )
         checkExceptionAndReport(
             state.copy(
@@ -818,7 +801,7 @@ class SymbolicTraverser(
                 )
             ),
             inst,
-            generate(cm["java/lang/ArrayIndexOutOfBoundsException"].symbolicClass)
+            generate(arrayIndexOOBClass.symbolicClass)
         )
         return state.copy(
             symbolicState = persistentState.copy(
@@ -848,7 +831,7 @@ class SymbolicTraverser(
                 )
             ),
             inst,
-            generate(cm["java/lang/NegativeArraySizeException"].symbolicClass)
+            generate(negativeArrayClass.symbolicClass)
         )
         return state.copy(
             symbolicState = persistentState.copy(
@@ -881,7 +864,7 @@ class SymbolicTraverser(
                 )
             ),
             inst,
-            generate(cm["java/lang/ClassCastException"].symbolicClass)
+            generate(classCastClass.symbolicClass)
         )
         return state.copy(
             symbolicState = persistentState.copy(
@@ -948,25 +931,6 @@ class SymbolicTraverser(
         }
     }
 
-    private suspend fun check(method: Method, state: SymbolicState): Parameters<Descriptor>? {
-        val checker = AsyncChecker(method, ctx)
-        val clauses = state.clauses.asState()
-        val query = state.path.asState()
-        val concreteTypeInfo = state.concreteValueMap
-            .mapValues { it.value.type }
-            .filterValues { it.isJavaRt }
-            .mapValues { it.value.rtMapped }
-            .toTypeMap()
-        val result = checker.prepareAndCheck(method, clauses + query, concreteTypeInfo)
-        if (result !is Result.SatResult) {
-            return null
-        }
-
-        return tryOrNull {
-            generateFinalDescriptors(method, ctx, result.model, checker.state)
-                .concreteParameters(ctx.cm, ctx.accessLevel, ctx.random).also {
-                    log.debug { "Generated params:\n$it" }
-                }
-        }
-    }
+    private suspend fun check(method: Method, state: SymbolicState): Parameters<Descriptor>? =
+        method.checkAsync(ctx, state)
 }

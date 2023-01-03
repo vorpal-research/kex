@@ -1,6 +1,7 @@
 package org.vorpal.research.kex.symbolic
 
 import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.InternalSerializationApi
 import org.vorpal.research.kex.ExecutionContext

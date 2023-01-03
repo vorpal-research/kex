@@ -1,7 +1,7 @@
 package org.vorpal.research.kex.asm.analysis.concolic.bfs
 
 import org.vorpal.research.kex.ExecutionContext
-import org.vorpal.research.kex.asm.analysis.concolic.PathSelector
+import org.vorpal.research.kex.asm.analysis.concolic.ConcolicPathSelector
 import org.vorpal.research.kex.state.predicate.DefaultSwitchPredicate
 import org.vorpal.research.kex.state.predicate.EqualityPredicate
 import org.vorpal.research.kex.state.predicate.InequalityPredicate
@@ -22,7 +22,7 @@ import org.vorpal.research.kthelper.logging.log
 
 class BfsPathSelectorImpl(
     override val ctx: ExecutionContext,
-) : PathSelector {
+) : ConcolicPathSelector {
     private val coveredPaths = mutableSetOf<PersistentPathCondition>()
     private val candidates = mutableSetOf<PersistentPathCondition>()
     private val deque = dequeOf<PersistentSymbolicState>()

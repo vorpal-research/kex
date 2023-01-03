@@ -11,11 +11,11 @@ import org.vorpal.research.kfg.stringClass
 import org.vorpal.research.kfg.type.ClassType
 
 
-interface CallResolver {
+interface SymbolicCallResolver {
     fun resolve(state: TraverserState, inst: CallInst): List<Method>
 }
 
-interface InvokeDynamicResolver {
+interface SymbolicInvokeDynamicResolver {
     data class ResolvedDynamicCall(
         val instance: Value?,
         val arguments: List<Value>,
@@ -25,9 +25,9 @@ interface InvokeDynamicResolver {
     fun resolve(state: TraverserState, inst: InvokeDynamicInst): ResolvedDynamicCall?
 }
 
-class DefaultCallResolver(val ctx: ExecutionContext) : CallResolver, InvokeDynamicResolver {
+class DefaultCallResolver(val ctx: ExecutionContext) : SymbolicCallResolver, SymbolicInvokeDynamicResolver {
 
-    fun shouldResolve(inst: CallInst): Boolean = when (inst.klass) {
+    private fun shouldResolve(inst: CallInst): Boolean = when (inst.klass) {
         ctx.cm.stringClass -> false
         else -> true
     }
@@ -61,6 +61,8 @@ class DefaultCallResolver(val ctx: ExecutionContext) : CallResolver, InvokeDynam
         }
     }
 
-    override fun resolve(state: TraverserState, inst: InvokeDynamicInst): InvokeDynamicResolver.ResolvedDynamicCall? =
-        null
+    override fun resolve(
+        state: TraverserState,
+        inst: InvokeDynamicInst
+    ): SymbolicInvokeDynamicResolver.ResolvedDynamicCall? = null
 }

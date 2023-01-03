@@ -41,7 +41,7 @@ private val ksmtRunners = kexConfig.getIntValue("ksmt", "runners", 4)
 @Suppress("UNCHECKED_CAST")
 @Solver("ksmt")
 @AsyncSolver("ksmt")
-class KSMTSolver(val tf: TypeFactory) : AbstractSMTSolver, AbstractAsyncSMTSolver {
+class KSMTSolver(private val tf: TypeFactory) : AbstractSMTSolver, AbstractAsyncSMTSolver {
     companion object {
         private val solverManager: KSolverRunnerManager by lazy {
             KSolverRunnerManager(
@@ -52,7 +52,7 @@ class KSMTSolver(val tf: TypeFactory) : AbstractSMTSolver, AbstractAsyncSMTSolve
         }
     }
 
-    val ef = KSMTExprFactory()
+    private val ef = KSMTExprFactory()
 
 
     override fun isReachable(state: PredicateState): Result = runBlocking {
