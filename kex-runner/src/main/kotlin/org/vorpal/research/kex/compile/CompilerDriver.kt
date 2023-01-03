@@ -31,7 +31,14 @@ class JavaCompilerDriver(classPath: List<Path>, outputDir: Path) : CompilerDrive
         val objects = fileManager.getJavaFileObjectsFromFiles(sources.map { it.toFile() })
 
         val compilerOutput = ByteArrayOutputStream()
-        val task = compiler.getTask(compilerOutput.writer(), fileManager, null, listOf("-Xlint:none", "-Xlint:unchecked"), null, objects)
+        val task = compiler.getTask(
+            compilerOutput.writer(),
+            fileManager,
+            null,
+            listOf("-Xlint:none", "-Xlint:unchecked"),
+            null,
+            objects
+        )
         val compileSuccess = `try` { task.call() }.getOrElse { false }
         if (!compileSuccess) {
             log.error("Task $task failed")

@@ -2,7 +2,7 @@ package org.vorpal.research.kex.asm.analysis.concolic.cgs
 
 import kotlinx.coroutines.yield
 import org.vorpal.research.kex.ExecutionContext
-import org.vorpal.research.kex.asm.analysis.concolic.PathSelector
+import org.vorpal.research.kex.asm.analysis.concolic.ConcolicPathSelector
 import org.vorpal.research.kex.asm.manager.NoConcreteInstanceException
 import org.vorpal.research.kex.asm.manager.instantiationManager
 import org.vorpal.research.kex.ktype.kexType
@@ -27,7 +27,7 @@ import org.vorpal.research.kthelper.`try`
 
 class ContextGuidedSelector(
     override val ctx: ExecutionContext,
-) : PathSelector {
+) : ConcolicPathSelector {
     private val executionTree = ExecutionTree()
     private var currentDepth = 0
     private var k = 1
@@ -122,7 +122,7 @@ class ContextGuidedSelector(
                 .mapTo(mutableSetOf()) { it.klass }
 
             try {
-                val newType = instantiationManager.get(ctx.types, termType, ctx.accessLevel, excludeClasses, ctx.random)
+                val newType = instantiationManager.get(termType, ctx.accessLevel, excludeClasses, ctx.random)
                 copy(predicate = path(instruction.location) {
                     (lhv.operand `is` newType.kexType) equality true
                 })

@@ -21,7 +21,7 @@ class KexArrayListGenerator(val fallback: Generator) : Generator {
     private val kexArrayList = kfgKexArrayList.kexType
 
     override fun supports(descriptor: Descriptor): Boolean =
-        descriptor.type == kexArrayList
+        descriptor.type == kexArrayList && descriptor is ObjectDescriptor
 
     override fun generate(descriptor: Descriptor, generationDepth: Int): ActionSequence = with(context) {
         descriptor as ObjectDescriptor

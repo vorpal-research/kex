@@ -153,7 +153,9 @@
                             <goal>wget</goal>
                         </goals>
                         <configuration>
-                            <url>https://github.com/Z3Prover/z3/releases/download/z3-${z3.version}/z3-${z3.version}-x64-glibc-2.31.zip</url>
+                            <url>
+                                https://github.com/Z3Prover/z3/releases/download/z3-${z3.version}/z3-${z3.version}-x64-glibc-2.31.zip
+                            </url>
                             <outputFileName>z3-${z3.version}-linux64-native.zip</outputFileName>
                             <outputDirectory>${project.basedir}/src/main/resources</outputDirectory>
                         </configuration>
@@ -165,7 +167,9 @@
                             <goal>wget</goal>
                         </goals>
                         <configuration>
-                            <url>https://github.com/Z3Prover/z3/releases/download/z3-${z3.version}/z3-${z3.version}-x64-win.zip</url>
+                            <url>
+                                https://github.com/Z3Prover/z3/releases/download/z3-${z3.version}/z3-${z3.version}-x64-win.zip
+                            </url>
                             <outputFileName>z3-${z3.version}-win64-native.zip</outputFileName>
                             <outputDirectory>${project.basedir}/src/main/resources</outputDirectory>
                         </configuration>
@@ -177,7 +181,9 @@
                             <goal>wget</goal>
                         </goals>
                         <configuration>
-                            <url>https://github.com/Z3Prover/z3/releases/download/z3-${z3.version}/z3-${z3.version}-x64-osx-10.16.zip</url>
+                            <url>
+                                https://github.com/Z3Prover/z3/releases/download/z3-${z3.version}/z3-${z3.version}-x64-osx-10.16.zip
+                            </url>
                             <outputFileName>z3-${z3.version}-osx64-native.zip</outputFileName>
                             <outputDirectory>${project.basedir}/src/main/resources</outputDirectory>
                         </configuration>

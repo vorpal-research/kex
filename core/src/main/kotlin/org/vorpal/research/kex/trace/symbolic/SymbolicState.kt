@@ -104,14 +104,61 @@ data class ClauseStateImpl(
 @Serializable
 data class PersistentClauseState(
     override val state: PersistentList<Clause> = persistentListOf()
-) : ClauseState(), PersistentList<Clause> by state {
+) : ClauseState(), PersistentList<Clause> {
+    override val size: Int
+        get() = state.size
+
+    override fun builder(): PersistentList.Builder<Clause> = state.builder()
+
+    override fun add(element: Clause): PersistentClauseState = PersistentClauseState(state.add(element))
+    override fun addAll(elements: Collection<Clause>): PersistentClauseState =
+        PersistentClauseState(state.addAll(elements))
+
+    override fun remove(element: Clause): PersistentClauseState = PersistentClauseState(state.remove(element))
+
+    override fun removeAll(elements: Collection<Clause>): PersistentClauseState =
+        PersistentClauseState(state.removeAll(elements))
+
+    override fun removeAll(predicate: (Clause) -> Boolean): PersistentClauseState =
+        PersistentClauseState(state.removeAll(predicate))
+
+    override fun retainAll(elements: Collection<Clause>): PersistentClauseState =
+        PersistentClauseState(state.removeAll(elements))
+
+    override fun clear(): PersistentClauseState = PersistentClauseState(state.clear())
+    override fun get(index: Int): Clause = state[index]
+
+    override fun isEmpty(): Boolean = state.isEmpty()
+
+    override fun indexOf(element: Clause): Int = state.indexOf(element)
+
+    override fun containsAll(elements: Collection<Clause>): Boolean = state.containsAll(elements)
+
+    override fun contains(element: Clause): Boolean = element in state
+
+    override fun addAll(index: Int, c: Collection<Clause>): PersistentClauseState =
+        PersistentClauseState(state.addAll(index, c))
+
+    override fun set(index: Int, element: Clause): PersistentClauseState =
+        PersistentClauseState(state.set(index, element))
+
+    override fun add(index: Int, element: Clause): PersistentClauseState =
+        PersistentClauseState(state.add(index, element))
+
+    override fun removeAt(index: Int): PersistentClauseState = PersistentClauseState(state.removeAt(index))
+
+    override fun iterator(): Iterator<Clause> = state.iterator()
+    override fun listIterator(): ListIterator<Clause> = state.listIterator()
+
+    override fun listIterator(index: Int): ListIterator<Clause> = state.listIterator(index)
+
+    override fun lastIndexOf(element: Clause): Int = state.lastIndexOf(element)
+
     override fun subState(startInclusive: Int, endExclusive: Int): PersistentClauseState =
         PersistentClauseState(state.subList(startInclusive, endExclusive).toPersistentList())
 
     override fun subList(fromIndex: Int, toIndex: Int): PersistentList<Clause> =
         state.subList(fromIndex, toIndex).toPersistentList()
-
-    override fun iterator(): Iterator<Clause> = state.iterator()
 }
 
 @Serializable
@@ -133,15 +180,62 @@ data class PathConditionImpl(
 @Serializable
 data class PersistentPathCondition(
     override val path: PersistentList<PathClause> = persistentListOf()
-) : PathCondition(), PersistentList<PathClause> by path {
+) : PathCondition(), PersistentList<PathClause> {
+    override val size: Int
+        get() = path.size
+
+    override fun builder(): PersistentList.Builder<PathClause> = path.builder()
+
+    override fun add(element: PathClause): PersistentPathCondition = PersistentPathCondition(path.add(element))
+    override fun addAll(elements: Collection<PathClause>): PersistentPathCondition =
+        PersistentPathCondition(path.addAll(elements))
+
+    override fun remove(element: PathClause): PersistentPathCondition = PersistentPathCondition(path.remove(element))
+
+    override fun removeAll(elements: Collection<PathClause>): PersistentPathCondition =
+        PersistentPathCondition(path.removeAll(elements))
+
+    override fun removeAll(predicate: (PathClause) -> Boolean): PersistentPathCondition =
+        PersistentPathCondition(path.removeAll(predicate))
+
+    override fun retainAll(elements: Collection<PathClause>): PersistentPathCondition =
+        PersistentPathCondition(path.removeAll(elements))
+
+    override fun clear(): PersistentPathCondition = PersistentPathCondition(path.clear())
+    override fun get(index: Int): PathClause = path[index]
+
+    override fun isEmpty(): Boolean = path.isEmpty()
+
+    override fun indexOf(element: PathClause): Int = path.indexOf(element)
+
+    override fun containsAll(elements: Collection<PathClause>): Boolean = path.containsAll(elements)
+
+    override fun contains(element: PathClause): Boolean = element in path
+
+    override fun addAll(index: Int, c: Collection<PathClause>): PersistentPathCondition =
+        PersistentPathCondition(path.addAll(index, c))
+
+    override fun set(index: Int, element: PathClause): PersistentPathCondition =
+        PersistentPathCondition(path.set(index, element))
+
+    override fun add(index: Int, element: PathClause): PersistentPathCondition =
+        PersistentPathCondition(path.add(index, element))
+
+    override fun removeAt(index: Int): PersistentPathCondition = PersistentPathCondition(path.removeAt(index))
+
+    override fun iterator(): Iterator<PathClause> = path.iterator()
+    override fun listIterator(): ListIterator<PathClause> = path.listIterator()
+
+    override fun listIterator(index: Int): ListIterator<PathClause> = path.listIterator(index)
+
+    override fun lastIndexOf(element: PathClause): Int = path.lastIndexOf(element)
+
     override fun subPath(startInclusive: Int, endExclusive: Int): PersistentPathCondition = PersistentPathCondition(
         subList(startInclusive, endExclusive).toPersistentList()
     )
 
     override fun subList(fromIndex: Int, toIndex: Int): PersistentList<PathClause> =
         path.subList(fromIndex, toIndex).toPersistentList()
-
-    override fun iterator(): Iterator<PathClause> = path.iterator()
 }
 
 @Serializable

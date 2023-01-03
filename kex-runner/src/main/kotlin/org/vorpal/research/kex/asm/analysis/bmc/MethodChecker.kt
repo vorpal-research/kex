@@ -1,4 +1,4 @@
-package org.vorpal.research.kex.asm.analysis.testgen
+package org.vorpal.research.kex.asm.analysis.bmc
 
 import kotlinx.serialization.Contextual
 import kotlinx.serialization.ExperimentalSerializationApi

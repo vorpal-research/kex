@@ -89,3 +89,8 @@ val Term.numericValue: Number get() = when (this) {
     is ConstDoubleTerm -> value
     else -> unreachable { log.error("Trying to get value of term: $this with type $type") }
 }
+
+val Term.boolValue: Boolean get() = when (this) {
+    is ConstBoolTerm -> value
+    else -> unreachable { log.error("Trying to get value of term: $this with type $type") }
+}

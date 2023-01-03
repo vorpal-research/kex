@@ -1,4 +1,4 @@
-package org.vorpal.research.kex.asm.analysis.testgen
+package org.vorpal.research.kex.asm.analysis.bmc
 
 import org.vorpal.research.kex.ExecutionContext
 import org.vorpal.research.kex.asm.state.PredicateStateAnalysis

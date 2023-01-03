@@ -2,7 +2,7 @@ package org.vorpal.research.kex
 
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.InternalSerializationApi
-import org.vorpal.research.kex.asm.analysis.testgen.MethodChecker
+import org.vorpal.research.kex.asm.analysis.bmc.MethodChecker
 import org.vorpal.research.kex.asm.state.PredicateStateAnalysis
 import org.vorpal.research.kex.asm.transform.LoopDeroller
 import org.vorpal.research.kex.asm.transform.RuntimeTraceInstrumenter
