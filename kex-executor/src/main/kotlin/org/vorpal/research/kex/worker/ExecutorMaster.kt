@@ -20,6 +20,7 @@ import java.net.SocketTimeoutException
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.concurrent.ArrayBlockingQueue
+import kotlin.time.Duration.Companion.seconds
 
 @ExperimentalSerializationApi
 @InternalSerializationApi
@@ -29,7 +30,7 @@ class ExecutorMaster(
     val workerClassPath: List<Path>,
     numberOfWorkers: Int
 ) : Runnable {
-    private val timeout = kexConfig.getLongValue("runner", "timeout", 10000L)
+    private val timeout = kexConfig.getIntValue("runner", "timeout", 100)
     private val workerQueue = ArrayBlockingQueue<WorkerWrapper>(numberOfWorkers)
     private val outputDir = kexConfig.outputDirectory
     private val workerJvmParams = kexConfig.getMultipleStringValue("executor", "workerJvmParams", ",")
@@ -70,7 +71,7 @@ class ExecutorMaster(
                 process = createProcess()
                 if (this::workerConnection.isInitialized)
                     workerConnection.close()
-                workerConnection = connection.receiveWorkerConnection(timeout)
+                workerConnection = connection.receiveWorkerConnection(timeout.seconds)
                 log.debug("Worker $id connected")
             }
         }

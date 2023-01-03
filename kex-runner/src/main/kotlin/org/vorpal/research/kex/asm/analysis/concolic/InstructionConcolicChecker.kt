@@ -30,6 +30,8 @@ import org.vorpal.research.kthelper.logging.log
 import org.vorpal.research.kthelper.logging.warn
 import org.vorpal.research.kthelper.tryOrNull
 import java.util.concurrent.atomic.AtomicInteger
+import kotlin.time.Duration.Companion.seconds
+import kotlin.time.ExperimentalTime
 
 @ExperimentalSerializationApi
 @InternalSerializationApi
@@ -45,10 +47,11 @@ class InstructionConcolicChecker(
     private var testIndex = AtomicInteger(0)
 
     companion object {
+        @ExperimentalTime
         @DelicateCoroutinesApi
         fun run(context: ExecutionContext, targets: Set<Method>) {
             val executors = kexConfig.getIntValue("concolic", "numberOfExecutors", 8)
-            val timeLimit = kexConfig.getLongValue("concolic", "timeLimit", 100000L)
+            val timeLimit = kexConfig.getIntValue("concolic", "timeLimit", 100)
 
             log.debug("Running on: ${targets.joinToString("\n", prefix = "\n")}")
             log.debug("Time budget: $timeLimit")
@@ -56,7 +59,7 @@ class InstructionConcolicChecker(
             val actualNumberOfExecutors = maxOf(1, minOf(executors, targets.size))
             val coroutineContext = newFixedThreadPoolContext(actualNumberOfExecutors, "concolic-dispatcher")
             runBlocking(coroutineContext) {
-                withTimeoutOrNull(timeLimit) {
+                withTimeoutOrNull(timeLimit.seconds) {
                     targets.map {
                         async { InstructionConcolicChecker(context).visit(it) }
                     }.awaitAll()

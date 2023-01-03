@@ -24,7 +24,7 @@ import org.vorpal.research.kthelper.tryOrNull
 import java.lang.reflect.*
 
 private val testTimeout by lazy {
-    kexConfig.getLongValue("testGen", "testTimeout", 10000L)
+    kexConfig.getIntValue("testGen", "testTimeout", 10)
 }
 
 // TODO: this is work of satan, refactor this damn thing

@@ -27,7 +27,6 @@ import org.vorpal.research.kthelper.assert.unreachable
 import org.vorpal.research.kthelper.logging.debug
 import org.vorpal.research.kthelper.logging.log
 import kotlin.math.log2
-import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.ExperimentalTime
 
@@ -104,6 +103,9 @@ class KSMTSolver(private val tf: TypeFactory) : AbstractSMTSolver, AbstractAsync
     } catch (e: KSolverException) {
         log.warn("KSMT thrown an exception during check", e)
         Result.UnknownResult(e.message ?: "Exception in KSMT")
+    } catch (e: WorkerInitializationFailedException) {
+        log.warn("KSMT thrown an exception during check", e)
+        Result.UnknownResult(e.message ?: "Exception in KSMT")
     }
 
     private suspend fun check(state: Bool_, query: Bool_): Pair<KSolverStatus, Any> = buildSolver().use { solver ->
@@ -124,7 +126,7 @@ class KSMTSolver(private val tf: TypeFactory) : AbstractSMTSolver, AbstractAsync
             log.debug("SMTLib formula:")
             log.debug(solver.toString())
         }
-        val result = solver.checkAsync(timeout.milliseconds)
+        val result = solver.checkAsync(timeout.seconds)
         log.debug("Solver finished")
 
         return when (result) {

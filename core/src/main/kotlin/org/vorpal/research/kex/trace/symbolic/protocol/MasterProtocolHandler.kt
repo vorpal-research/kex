@@ -9,13 +9,14 @@ import java.io.BufferedReader
 import java.io.BufferedWriter
 import java.net.ServerSocket
 import java.net.Socket
+import kotlin.time.Duration
 
 interface MasterProtocolHandler {
     val clientPort: Int
     val workerPort: Int
 
     fun receiveClientConnection(): Master2ClientConnection
-    fun receiveWorkerConnection(timeout: Long): Master2WorkerConnection
+    fun receiveWorkerConnection(timeout: Duration): Master2WorkerConnection
 }
 
 
@@ -61,9 +62,9 @@ class MasterProtocolSocketHandler(
         return Master2ClientSocketConnection(socket)
     }
 
-    override fun receiveWorkerConnection(timeout: Long): Master2WorkerConnection {
+    override fun receiveWorkerConnection(timeout: Duration): Master2WorkerConnection {
         val socket = workerListener.accept()
-        socket.soTimeout = timeout.toInt()
+        socket.soTimeout = timeout.inWholeMilliseconds.toInt()
         return Master2WorkerSocketConnection(socket)
     }
 }
