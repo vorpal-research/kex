@@ -35,7 +35,6 @@ suspend fun Method.analyzeOrTimeout(
         log.debug { "Method $this processing is finished normally" }
     } catch (e: TimeoutCancellationException) {
         log.warn { "Method $this processing is finished with timeout" }
-        throw e
     }
 }
 

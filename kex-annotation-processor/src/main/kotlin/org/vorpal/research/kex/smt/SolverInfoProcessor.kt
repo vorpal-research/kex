@@ -47,8 +47,12 @@ class SolverInfoProcessor : KexProcessor() {
                 processAsyncSolver(it)
             }
         }
-        writeInheritanceInfo(base, inheritanceInfo)
-        writeInheritanceInfo(asyncBase, asyncInheritanceInfo)
+        if (::inheritanceInfo.isInitialized) {
+            writeInheritanceInfo(base, inheritanceInfo)
+        }
+        if (::asyncInheritanceInfo.isInitialized) {
+            writeInheritanceInfo(asyncBase, asyncInheritanceInfo)
+        }
         return true
     }
 
