@@ -4,7 +4,10 @@ import org.ksmt.KContext
 import org.ksmt.expr.*
 import org.ksmt.solver.KModel
 import org.vorpal.research.kex.smt.ksmt.KSMTEngine.asExpr
-import org.vorpal.research.kex.state.term.*
+import org.vorpal.research.kex.state.term.Term
+import org.vorpal.research.kex.state.term.boolValue
+import org.vorpal.research.kex.state.term.numericValue
+import org.vorpal.research.kex.state.term.term
 import org.vorpal.research.kthelper.assert.unreachable
 import org.vorpal.research.kthelper.compareTo
 import org.vorpal.research.kthelper.logging.log
@@ -20,6 +23,7 @@ object KSMTUnlogic {
         when (expr) {
             is KTrue -> const(true)
             is KFalse -> const(false)
+            is KBitVec1Value -> const(expr.stringValue.toInt())
             is KBitVec8Value -> const(expr.numberValue)
             is KBitVec16Value -> const(expr.numberValue)
             is KBitVec32Value -> const(expr.numberValue)
@@ -36,7 +40,7 @@ object KSMTUnlogic {
             is KUniversalQuantifier -> {
                 TODO()
             }
-            
+
             in mappings -> mappings.getValue(expr)
 
             is KAndExpr -> {
