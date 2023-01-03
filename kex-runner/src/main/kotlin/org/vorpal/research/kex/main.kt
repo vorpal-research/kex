@@ -13,7 +13,9 @@ import org.vorpal.research.kthelper.logging.log
 import java.nio.file.Files
 import java.nio.file.Paths
 import kotlin.system.exitProcess
+import kotlin.time.ExperimentalTime
 
+@ExperimentalTime
 @ExperimentalSerializationApi
 @InternalSerializationApi
 @DelicateCoroutinesApi
