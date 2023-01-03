@@ -6,7 +6,9 @@ import kotlinx.serialization.InternalSerializationApi
 import org.vorpal.research.kex.sbst.SymbolicKexTool
 import java.io.InputStreamReader
 import java.io.PrintWriter
+import kotlin.time.ExperimentalTime
 
+@ExperimentalTime
 @ExperimentalSerializationApi
 @InternalSerializationApi
 @DelicateCoroutinesApi

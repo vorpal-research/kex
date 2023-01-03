@@ -24,7 +24,9 @@ import org.vorpal.research.kthelper.logging.log
 import java.io.File
 import java.net.URLClassLoader
 import java.nio.file.Path
+import kotlin.time.ExperimentalTime
 
+@ExperimentalTime
 @DelicateCoroutinesApi
 @ExperimentalSerializationApi
 @InternalSerializationApi

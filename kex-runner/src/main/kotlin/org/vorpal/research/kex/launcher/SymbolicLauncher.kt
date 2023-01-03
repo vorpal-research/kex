@@ -16,7 +16,9 @@ import org.vorpal.research.kfg.ir.Method
 import org.vorpal.research.kfg.visitor.MethodVisitor
 import org.vorpal.research.kfg.visitor.executePipeline
 import org.vorpal.research.kthelper.logging.log
+import kotlin.time.ExperimentalTime
 
+@ExperimentalTime
 @ExperimentalSerializationApi
 @InternalSerializationApi
 @DelicateCoroutinesApi
