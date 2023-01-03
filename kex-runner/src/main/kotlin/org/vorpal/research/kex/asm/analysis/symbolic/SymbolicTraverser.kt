@@ -33,6 +33,8 @@ import org.vorpal.research.kfg.type.TypeFactory
 import org.vorpal.research.kthelper.assert.unreachable
 import org.vorpal.research.kthelper.logging.log
 import java.util.concurrent.atomic.AtomicInteger
+import kotlin.time.Duration.Companion.seconds
+import kotlin.time.ExperimentalTime
 
 data class TraverserState(
     val symbolicState: PersistentSymbolicState,
@@ -71,15 +73,16 @@ class SymbolicTraverser(
     private val classCastClass = cm["java/lang/ClassCastException"]
 
     companion object {
+        @ExperimentalTime
         @DelicateCoroutinesApi
         fun run(context: ExecutionContext, targets: Set<Method>) {
             val executors = kexConfig.getIntValue("symbolic", "numberOfExecutors", 8)
-            val timeLimit = kexConfig.getLongValue("symbolic", "timeLimit", 100000L)
+            val timeLimit = kexConfig.getIntValue("symbolic", "timeLimit", 100)
 
             val actualNumberOfExecutors = maxOf(1, minOf(executors, targets.size))
             val coroutineContext = newFixedThreadPoolContext(actualNumberOfExecutors, "symbolic-dispatcher")
             runBlocking(coroutineContext) {
-                withTimeoutOrNull(timeLimit) {
+                withTimeoutOrNull(timeLimit.seconds) {
                     targets.map {
                         async { SymbolicTraverser(context, it).analyze() }
                     }.awaitAll()
