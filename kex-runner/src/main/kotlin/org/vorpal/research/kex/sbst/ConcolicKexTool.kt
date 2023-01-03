@@ -10,7 +10,6 @@ import org.vorpal.research.kex.asm.transform.SymbolicTraceInstrumenter
 import org.vorpal.research.kex.asm.transform.SystemExitTransformer
 import org.vorpal.research.kex.asm.util.AccessModifier
 import org.vorpal.research.kex.asm.util.ClassWriter
-import org.vorpal.research.kex.asm.util.Visibility
 import org.vorpal.research.kex.config.FileConfig
 import org.vorpal.research.kex.config.RuntimeConfig
 import org.vorpal.research.kex.config.kexConfig
@@ -23,28 +22,22 @@ import org.vorpal.research.kfg.KfgConfig
 import org.vorpal.research.kfg.Package
 import org.vorpal.research.kfg.container.Container
 import org.vorpal.research.kfg.container.asContainer
-import org.vorpal.research.kfg.ir.ConcreteClass
-import org.vorpal.research.kfg.type.parseStringToType
 import org.vorpal.research.kfg.util.Flags
 import org.vorpal.research.kfg.visitor.executePipeline
 import org.vorpal.research.kthelper.logging.log
-import org.vorpal.research.kthelper.tryOrNull
 import java.io.File
 import java.net.URLClassLoader
 import java.nio.file.Path
-import java.nio.file.Paths
-import kotlin.system.exitProcess
 
 @DelicateCoroutinesApi
 @ExperimentalSerializationApi
 @InternalSerializationApi
-class KexTool : Tool {
+class ConcolicKexTool : Tool {
     val configFile = "kex.ini"
     val classPath = System.getProperty("java.class.path")
     lateinit var containers: List<Container>
     lateinit var containerClassLoader: URLClassLoader
     lateinit var context: ExecutionContext
-    lateinit var visibilityLevel: Visibility
 
     init {
         kexConfig.initialize(RuntimeConfig, FileConfig(configFile))

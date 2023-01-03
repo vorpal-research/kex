@@ -12,7 +12,7 @@
     <artifactId>kex-runner</artifactId>
 
     <properties>
-        <exec.main>org.vorpal.research.kex.MainKt</exec.main>
+        <mainClass>org.vorpal.research.kex.ConcolicKt</mainClass>
 
         <better-parse.version>0.4.4</better-parse.version>
         <jacoco.version>0.8.8</jacoco.version>
@@ -205,7 +205,7 @@
                 <configuration>
                     <archive>
                         <manifest>
-                            <mainClass>${exec.main}</mainClass>
+                            <mainClass>${mainClass}</mainClass>
                             <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
                             <addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>
                         </manifest>
