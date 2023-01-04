@@ -1,14 +1,12 @@
 package org.vorpal.research.kex.symbolic
 
 import kotlinx.coroutines.DelicateCoroutinesApi
-import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.InternalSerializationApi
 import org.vorpal.research.kex.ExecutionContext
 import org.vorpal.research.kex.KexRunnerTest
 import org.vorpal.research.kex.asm.analysis.symbolic.SymbolicTraverser
 import org.vorpal.research.kex.asm.manager.ClassInstantiationDetector
-import org.vorpal.research.kex.asm.transform.SymbolicTraceInstrumenter
 import org.vorpal.research.kex.jacoco.CoverageReporter
 import org.vorpal.research.kex.launcher.ClassLevel
 import org.vorpal.research.kfg.ClassManager
