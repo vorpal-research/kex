@@ -143,7 +143,11 @@ class ConcolicKexTool : Tool {
                 +SystemExitTransformer(context.cm)
             }
 
-            InstructionConcolicChecker.run(context, klass.allMethods)
+            try {
+                InstructionConcolicChecker.run(context, klass.allMethods)
+            } catch (e: Throwable) {
+                log.error("Error: ", e)
+            }
 
             log.debug("Analyzed klass $klass")
         }

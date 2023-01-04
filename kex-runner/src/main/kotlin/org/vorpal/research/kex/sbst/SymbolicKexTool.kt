@@ -128,7 +128,11 @@ class SymbolicKexTool : Tool {
         val canonicalName = className.replace('.', '/')
         val klass = context.cm[canonicalName]
         log.debug("Running on klass $klass")
-        SymbolicTraverser.run(context, klass.allMethods)
+        try {
+            SymbolicTraverser.run(context, klass.allMethods)
+        } catch (e: Throwable) {
+            log.error("Error: ", e)
+        }
 
         log.debug("Analyzed klass $klass")
     }
