@@ -306,6 +306,7 @@ class ExecutorAS2JavaPrinter(
                                     else -> null
                                 }
                             } ?: unreachable { log.error("Unexpected call in arg") }
+
                             is ReflectionList -> arg.firstNotNullOfOrNull {
                                 when (it) {
                                     is ReflectionNewInstance -> it.type
@@ -313,6 +314,7 @@ class ExecutorAS2JavaPrinter(
                                     else -> null
                                 }
                             } ?: unreachable { log.error("Unexpected call in arg") }
+
                             is PrimaryValue<*> -> return@forEach
                             is StringValue -> return@forEach
                             else -> unreachable { log.error("Unexpected call in arg") }
@@ -336,11 +338,15 @@ class ExecutorAS2JavaPrinter(
             }
         }
 
-        runIf(!method.isConstructor) {
-            actionSequences.instance?.printAsJava()
+        with(current) {
+            statement("try {")
+            runIf(!method.isConstructor) {
+                actionSequences.instance?.printAsJava()
+            }
+            for (cs in actionSequences.asList)
+                cs.printAsJava()
+            statement("} catch (Throwable e) {}")
         }
-        for (cs in actionSequences.asList)
-            cs.printAsJava()
 
         printedStacks.clear()
         if (generateSetup) {
@@ -355,7 +361,11 @@ class ExecutorAS2JavaPrinter(
             }
         }
 
-        printTestCall(method, actionSequences)
+        with(current) {
+            statement("try {")
+            printTestCall(method, actionSequences)
+            statement("} catch (Throwable e) {}")
+        }
     }
 
     override fun printVarDeclaration(name: String, type: ASType) = when {
@@ -531,14 +541,17 @@ class ExecutorAS2JavaPrinter(
                         printInsides(api.value, result)
                         result += printReflectionSetField(owner, api)
                     }
+
                     is ReflectionSetStaticField -> {
                         printInsides(api.value, result)
                         result += printReflectionSetStaticField(owner, api)
                     }
+
                     is ReflectionArrayWrite -> {
                         printInsides(api.value, result)
                         result += printReflectionArrayWrite(owner, api)
                     }
+
                     else -> {}
                 }
             }
@@ -586,9 +599,15 @@ class ExecutorAS2JavaPrinter(
             elementType.isPrimitive -> {
                 "${newPrimitiveArrayMap[elementType.kexType.primitiveName]!!.name}(${call.length.stackName})" to call.asArray.asType
             }
+
             elementType is ClassType -> {
-                "${newArray.name}(\"${elementType.klass.canonicalDesc}\", ${call.length.stackName})" to ASArray(ASClass(ctx.types.objectType))
+                "${newArray.name}(\"${elementType.klass.canonicalDesc}\", ${call.length.stackName})" to ASArray(
+                    ASClass(
+                        ctx.types.objectType
+                    )
+                )
             }
+
             else -> {
                 val base = run {
                     var current = elementType
@@ -603,8 +622,13 @@ class ExecutorAS2JavaPrinter(
                             ASClass(ctx.types.objectType)
                         )
                     }
+
                     else -> {
-                        "${newObjectArray.name}(${getClass(elementType)}, ${call.length.stackName})" to ASArray(ASClass(ctx.types.objectType))
+                        "${newObjectArray.name}(${getClass(elementType)}, ${call.length.stackName})" to ASArray(
+                            ASClass(
+                                ctx.types.objectType
+                            )
+                        )
                     }
                 }
             }
