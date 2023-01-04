@@ -563,10 +563,11 @@ class SymbolicTraverser(
 
     private suspend fun traversePhiInst(inst: PhiInst) {
         val traverserState = currentState ?: return
+        val previousBlock = traverserState.blockPath.last { it.method == inst.parent.method }
         currentState = traverserState.copy(
             valueMap = traverserState.valueMap.put(
                 inst,
-                traverserState.mkValue(inst.incomings.getValue(traverserState.blockPath.last()))
+                traverserState.mkValue(inst.incomings.getValue(previousBlock))
             )
         )
     }
