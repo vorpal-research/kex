@@ -2,6 +2,7 @@ package org.vorpal.research.kex.asm.analysis.symbolic
 
 import org.vorpal.research.kex.ExecutionContext
 import org.vorpal.research.kex.asm.manager.instantiationManager
+import org.vorpal.research.kex.state.term.Term
 import org.vorpal.research.kfg.ir.Method
 import org.vorpal.research.kfg.ir.OuterClass
 import org.vorpal.research.kfg.ir.value.Value
@@ -25,7 +26,10 @@ interface SymbolicInvokeDynamicResolver {
     fun resolve(state: TraverserState, inst: InvokeDynamicInst): ResolvedDynamicCall?
 }
 
-class DefaultCallResolver(val ctx: ExecutionContext) : SymbolicCallResolver, SymbolicInvokeDynamicResolver {
+class DefaultCallResolver(
+    val ctx: ExecutionContext,
+    val converter: TraverserState.(Value) -> Term,
+) : SymbolicCallResolver, SymbolicInvokeDynamicResolver {
 
     private fun shouldResolve(inst: CallInst): Boolean = when (inst.klass) {
         ctx.cm.stringClass -> false
@@ -40,7 +44,7 @@ class DefaultCallResolver(val ctx: ExecutionContext) : SymbolicCallResolver, Sym
         if (method.isStatic) return listOf(method)
         if (method.isConstructor) return listOf(method)
 
-        val callee = state.valueMap.getValue(inst.callee)
+        val callee = state.converter(inst.callee)
         val baseType = method.klass
         val calleeType = (callee.type.getKfgType(ctx.types) as? ClassType)?.klass ?: return emptyList()
         return when (callee) {
