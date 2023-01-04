@@ -60,8 +60,8 @@ class SymbolicTraverser(
         get() = ctx.values
 
     private val pathSelector: SymbolicPathSelector = DequePathSelector()
-    private val callResolver: SymbolicCallResolver = DefaultCallResolver(ctx)
-    private val invokeDynamicResolver: SymbolicInvokeDynamicResolver = DefaultCallResolver(ctx)
+    private val callResolver: SymbolicCallResolver = DefaultCallResolver(ctx) { this.mkValue(it) }
+    private val invokeDynamicResolver: SymbolicInvokeDynamicResolver = DefaultCallResolver(ctx) { this.mkValue(it) }
     private var currentState: TraverserState? = null
     private var testIndex = AtomicInteger(0)
     private val compilerHelper = CompilerHelper(ctx)
