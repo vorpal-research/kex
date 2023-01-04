@@ -2,7 +2,7 @@
 
 package org.vorpal.research.kex.smt.ksmt
 
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.*
 import org.ksmt.expr.KExpr
 import org.ksmt.runner.core.*
 import org.ksmt.solver.KModel
@@ -101,10 +101,14 @@ class KSMTSolver(private val tf: TypeFactory) : AbstractSMTSolver, AbstractAsync
             KSolverStatus.SAT -> Result.SatResult(collectModel(ctx, result.second as KModel, state))
         }
     } catch (e: KSolverException) {
-        log.warn("KSMT thrown an exception during check", e)
+        if (e.cause !is TimeoutCancellationException) {
+            log.warn("KSMT thrown an exception during check", e)
+        }
         Result.UnknownResult(e.message ?: "Exception in KSMT")
     } catch (e: WorkerInitializationFailedException) {
-        log.warn("KSMT thrown an exception during check", e)
+        if (e.cause !is TimeoutCancellationException) {
+            log.warn("KSMT thrown an exception during worker initialization", e)
+        }
         Result.UnknownResult(e.message ?: "Exception in KSMT")
     }
 
@@ -151,6 +155,7 @@ class KSMTSolver(private val tf: TypeFactory) : AbstractSMTSolver, AbstractAsync
     }
 
     private suspend fun buildSolver(): KSolverRunner<*> {
+        if (!currentCoroutineContext().isActive) yield()
         return solverManager.createSolverAsync(ef.ctx, KZ3Solver::class)
     }
 
