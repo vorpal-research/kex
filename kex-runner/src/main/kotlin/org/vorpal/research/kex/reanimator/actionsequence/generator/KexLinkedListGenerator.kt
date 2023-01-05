@@ -24,9 +24,10 @@ class KexLinkedListGenerator(val fallback: Generator) : Generator {
     private val kfgKexArrayList = context.cm.arrayListClass.rtMapped
     private val kexArrayList = kfgKexArrayList.kexType
 
-    override fun supports(descriptor: Descriptor): Boolean = descriptor.type == kexLinkedList
+    override fun supports(descriptor: Descriptor): Boolean =
+        descriptor.type == kexLinkedList && descriptor is ObjectDescriptor
 
-    override fun generate(descriptor: Descriptor, generationDepth: Int): ActionSequence = with (context) {
+    override fun generate(descriptor: Descriptor, generationDepth: Int): ActionSequence = with(context) {
         descriptor as ObjectDescriptor
         val kexArrayListType = context.types.arrayListType.kexType.rtMapped
         val inner = descriptor["inner" to kexArrayListType] as? ObjectDescriptor

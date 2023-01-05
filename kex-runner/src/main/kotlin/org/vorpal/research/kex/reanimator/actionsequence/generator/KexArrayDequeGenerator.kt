@@ -19,7 +19,7 @@ class KexArrayDequeGenerator(val fallback: Generator) : Generator {
     private val kfgKexArrayDeque = context.cm.arrayDequeClass.rtMapped
     private val kexArrayDeque = kfgKexArrayDeque.kexType
 
-    override fun supports(descriptor: Descriptor): Boolean = descriptor.type == kexArrayDeque
+    override fun supports(descriptor: Descriptor): Boolean = descriptor.type == kexArrayDeque && descriptor is ObjectDescriptor
 
     override fun generate(descriptor: Descriptor, generationDepth: Int): ActionSequence = with (context) {
         descriptor as ObjectDescriptor

@@ -25,7 +25,7 @@ class KexStringBuilderGenerator(val fallback: Generator) : Generator {
     private val kexStringBuffer = kfgKexStringBuffer.kexType
 
     override fun supports(descriptor: Descriptor): Boolean =
-        descriptor.type == kexStringBuilder || descriptor.type == kexStringBuffer
+        (descriptor.type == kexStringBuilder || descriptor.type == kexStringBuffer) && descriptor is ObjectDescriptor
 
     override fun generate(descriptor: Descriptor, generationDepth: Int): ActionSequence = with(context) {
         descriptor as ObjectDescriptor

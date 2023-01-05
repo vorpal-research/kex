@@ -27,7 +27,7 @@ class InnerClassGenerator(fallback: Generator) : AnyGenerator(fallback) {
     override fun supports(descriptor: Descriptor): Boolean {
         val type = descriptor.type
         val klass = type as? KexClass ?: return false
-        return klass.isInnerClass
+        return klass.isInnerClass && descriptor is ObjectDescriptor
     }
 
     override fun generate(descriptor: Descriptor, generationDepth: Int): ActionSequence {

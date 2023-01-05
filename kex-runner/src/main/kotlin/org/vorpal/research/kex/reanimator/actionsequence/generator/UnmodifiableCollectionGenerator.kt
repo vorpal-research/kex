@@ -17,7 +17,10 @@ class UnmodifiableCollectionGenerator(private val fallback: Generator) : Generat
     override val context get() = fallback.context
 
     override fun supports(descriptor: Descriptor): Boolean =
-        descriptor.type.isSubtypeOf(context.types, KexClass(SystemTypeNames.unmodifiableCollection))
+        descriptor.type.isSubtypeOf(
+            context.types,
+            KexClass(SystemTypeNames.unmodifiableCollection)
+        ) && descriptor is ObjectDescriptor
 
     override fun generate(descriptor: Descriptor, generationDepth: Int): ActionSequence = with(context) {
         descriptor as ObjectDescriptor

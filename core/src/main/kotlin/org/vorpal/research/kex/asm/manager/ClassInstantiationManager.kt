@@ -5,6 +5,7 @@ import org.vorpal.research.kex.asm.util.AccessModifier
 import org.vorpal.research.kex.asm.util.accessModifier
 import org.vorpal.research.kex.ktype.*
 import org.vorpal.research.kex.ktype.KexRtManager.rtMapped
+import org.vorpal.research.kex.util.*
 import org.vorpal.research.kfg.ClassManager
 import org.vorpal.research.kfg.ir.Class
 import org.vorpal.research.kfg.ir.ConcreteClass
@@ -50,17 +51,22 @@ interface ClassInstantiationManager {
 private val predefinedConcreteInstanceInfo = with(SystemTypeNames) {
     mutableMapOf(
         collectionClass to setOf(arrayListClass.rtMapped),
+        abstractCollectionClass to setOf(arrayListClass.rtMapped),
         listClass to setOf(arrayListClass.rtMapped),
+        abstractListClass to setOf(arrayListClass.rtMapped),
         queueClass to setOf(arrayListClass.rtMapped),
+        abstractQueueClass to setOf(arrayListClass.rtMapped),
         arrayListClass to setOf(arrayListClass.rtMapped),
         linkedListClass to setOf(arrayListClass.rtMapped),
         dequeClass to setOf(arrayDequeClass.rtMapped),
         setClass to setOf(hashSetClass.rtMapped),
+        abstractSetClass to setOf(hashSetClass.rtMapped),
         sortedSetClass to setOf(treeSetClass.rtMapped),
         hashSetClass to setOf(hashSetClass.rtMapped),
         treeSetClass to setOf(treeSetClass.rtMapped),
         navigableSetClass to setOf(treeSetClass.rtMapped),
         mapClass to setOf(hashMapClass.rtMapped),
+        abstractMapClass to setOf(hashMapClass.rtMapped),
         sortedMapClass to setOf(treeMapClass.rtMapped),
         navigableMapClass to setOf(treeMapClass.rtMapped),
         hashMapClass to setOf(hashMapClass.rtMapped),

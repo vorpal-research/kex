@@ -15,6 +15,12 @@ class CmpTerm(
         @Contextual val opcode: CmpOpcode,
         val lhv: Term,
         val rhv: Term) : Term() {
+    init {
+        if (lhv is NullTerm && rhv is ConstBoolTerm) {
+            val a = 10
+        }
+    }
+
     override val name = "$lhv $opcode $rhv"
     override val subTerms by lazy { listOf(lhv, rhv) }
 

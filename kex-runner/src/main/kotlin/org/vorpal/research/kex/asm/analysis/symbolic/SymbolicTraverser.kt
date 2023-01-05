@@ -564,11 +564,9 @@ class SymbolicTraverser(
     private suspend fun traversePhiInst(inst: PhiInst) {
         val traverserState = currentState ?: return
         val previousBlock = traverserState.blockPath.last { it.method == inst.parent.method }
+        val value = traverserState.mkValue(inst.incomings.getValue(previousBlock))
         currentState = traverserState.copy(
-            valueMap = traverserState.valueMap.put(
-                inst,
-                traverserState.mkValue(inst.incomings.getValue(previousBlock))
-            )
+            valueMap = traverserState.valueMap.put(inst, value)
         )
     }
 
@@ -907,7 +905,11 @@ class SymbolicTraverser(
                 val catchInst = catcher.instructions.first { it is CatchInst } as CatchInst
                 pathSelector += state.copy(
                     valueMap = state.valueMap.put(catchInst, throwable),
-                    blockPath = state.blockPath.add(inst.parent)
+                    blockPath = state.blockPath.add(inst.parent),
+                    stackTrace = state.stackTrace.builder().also {
+                        while (it.isNotEmpty() && it.last().first != catcher.method) it.removeLast()
+                        if (it.isNotEmpty()) it.removeLast()
+                    }.build()
                 ) to catcher
             }
 
