@@ -13,6 +13,7 @@ import org.vorpal.research.kex.state.transformer.getCtor
 import org.vorpal.research.kex.util.getPrimitive
 import org.vorpal.research.kfg.*
 import org.vorpal.research.kfg.type.ClassType
+import org.vorpal.research.kthelper.assert.unreachable
 
 class KexWrapperClassGenerator(val fallback: Generator) : Generator {
     override val context: GeneratorContext
@@ -28,7 +29,7 @@ class KexWrapperClassGenerator(val fallback: Generator) : Generator {
         context.cm.doubleWrapper.rtMapped.kexType
     )
 
-    override fun supports(descriptor: Descriptor): Boolean = descriptor.type in supportedTypes
+    override fun supports(descriptor: Descriptor): Boolean = descriptor.type in supportedTypes && descriptor is ObjectDescriptor
 
     override fun generate(descriptor: Descriptor, generationDepth: Int): ActionSequence = with(context) {
         descriptor as ObjectDescriptor

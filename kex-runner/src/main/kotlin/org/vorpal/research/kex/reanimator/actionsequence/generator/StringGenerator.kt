@@ -13,7 +13,8 @@ class StringGenerator(private val fallback: Generator) : Generator {
     override val context: GeneratorContext
         get() = fallback.context
 
-    override fun supports(descriptor: Descriptor) = descriptor.type.toString() == SystemTypeNames.stringClass
+    override fun supports(descriptor: Descriptor) =
+        (descriptor.type.toString() == SystemTypeNames.stringClass) && descriptor is ObjectDescriptor
 
     override fun generate(descriptor: Descriptor, generationDepth: Int): ActionSequence = with(context) {
         descriptor as? ObjectDescriptor ?: throw IllegalArgumentException()

@@ -3,6 +3,7 @@ package org.vorpal.research.kex.util
 import org.vorpal.research.kex.ktype.KexType
 import org.vorpal.research.kex.ktype.kexType
 import org.vorpal.research.kex.ktype.type
+import org.vorpal.research.kfg.ClassManager
 import org.vorpal.research.kfg.Package
 import org.vorpal.research.kfg.ir.Class
 import org.vorpal.research.kfg.ir.value.NameMapper
@@ -124,3 +125,15 @@ fun TypeFactory.getPrimitive(type: Type): Type = when (type) {
     doubleWrapper -> doubleType
     else -> unreachable("Unknown primary type $type")
 }
+
+val SystemTypeNames.abstractCollectionClass: String get() = "java/util/AbstractCollection"
+val SystemTypeNames.abstractListClass: String get() = "java/util/AbstractList"
+val SystemTypeNames.abstractQueueClass: String get() = "java/util/AbstractQueue"
+val SystemTypeNames.abstractSetClass: String get() = "java/util/AbstractSet"
+val SystemTypeNames.abstractMapClass: String get() = "java/util/AbstractMap"
+
+val ClassManager.abstractCollectionClass get() = this[SystemTypeNames.abstractCollectionClass]
+val ClassManager.abstractListClass get() = this[SystemTypeNames.abstractListClass]
+val ClassManager.abstractQueueClass get() = this[SystemTypeNames.abstractQueueClass]
+val ClassManager.abstractSetClass get() = this[SystemTypeNames.abstractSetClass]
+val ClassManager.abstractMapClass get() = this[SystemTypeNames.abstractMapClass]

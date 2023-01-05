@@ -27,7 +27,7 @@ class KexHashSetGenerator(val fallback: Generator) : Generator {
     private val kexLinkedHashSet = kfgKexLinkedHashSet.kexType
 
     override fun supports(descriptor: Descriptor): Boolean =
-        descriptor.type == kexHashSet || descriptor.type == kexLinkedHashSet
+        (descriptor.type == kexHashSet || descriptor.type == kexLinkedHashSet) && descriptor is ObjectDescriptor
 
     override fun generate(descriptor: Descriptor, generationDepth: Int): ActionSequence = with(context) {
         descriptor as ObjectDescriptor

@@ -26,9 +26,10 @@ class KexHashMapGenerator(val fallback: Generator) : Generator {
     private val kexHashMap = kfgKexHashMap.kexType
     private val kexLinkedHashMap = kfgKexLinkedHashMap.kexType
 
-    override fun supports(descriptor: Descriptor): Boolean = descriptor.type == kexHashMap || descriptor.type == kexLinkedHashMap
+    override fun supports(descriptor: Descriptor): Boolean =
+        (descriptor.type == kexHashMap || descriptor.type == kexLinkedHashMap) && descriptor is ObjectDescriptor
 
-    override fun generate(descriptor: Descriptor, generationDepth: Int): ActionSequence = with (context) {
+    override fun generate(descriptor: Descriptor, generationDepth: Int): ActionSequence = with(context) {
         descriptor as ObjectDescriptor
         val kexArrayListType = context.types.arrayListType.kexType.rtMapped
         val keys = descriptor["keys" to kexArrayListType] as? ObjectDescriptor

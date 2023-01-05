@@ -239,11 +239,13 @@ class CoverageReporter(
                 coverageBuilder = getCoverageBuilder(classes)
                 getPackageCoverage(analysisLevel.pkg, cm, coverageBuilder)
             }
+
             is ClassLevel -> {
                 val klass = analysisLevel.klass.fullName.replace(Package.SEPARATOR, File.separatorChar)
                 coverageBuilder = getCoverageBuilder(listOf(jacocoInstrumentedDir.resolve("$klass.class")))
                 getClassCoverage(cm, coverageBuilder).first()
             }
+
             is MethodLevel -> {
                 val method = analysisLevel.method
                 val klass = method.klass.fullName.replace(Package.SEPARATOR, File.separatorChar)

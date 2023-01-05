@@ -56,9 +56,7 @@ class DefaultCallResolver(
             else -> instantiationManager
                 .getAllConcreteSubtypes(baseType, ctx.accessLevel)
                 .filter { it.isInheritorOf(calleeType) }
-                .mapTo(mutableSetOf()) {
-                    it.getMethod(method.name, method.desc)
-                }
+                .mapTo(mutableSetOf()) { it.getMethod(method.name, method.desc) }
                 .filter { it.body.isNotEmpty() }
                 .shuffled(ctx.random)
                 .take(20)
