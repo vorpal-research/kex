@@ -15,6 +15,9 @@ import org.vorpal.research.kthelper.logging.log
 import org.vorpal.research.kthelper.runIf
 
 private val generateSetup by lazy { kexConfig.getBooleanValue("testGen", "generateSetup", false) }
+private val testTimeout by lazy {
+    kexConfig.getIntValue("testGen", "testTimeout", 10) * 1000
+}
 
 class ExecutorAS2JavaPrinter(
     ctx: ExecutionContext,
@@ -332,7 +335,7 @@ class ExecutorAS2JavaPrinter(
                     exceptions += "Throwable"
                 } else method(testName) {
                     returnType = void
-                    annotations += "Test"
+                    annotations += "Test(timeout = $testTimeout)"
                     exceptions += "Throwable"
                 }
             }
