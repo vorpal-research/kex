@@ -47,17 +47,17 @@ open class ActionSequence2JavaPrinter(
             import("java.lang.IllegalStateException")
             import("org.junit.Test")
             import("org.junit.Rule")
-            import("org.junit.rules.Timeout")
-            import("java.util.concurrent.TimeUnit")
+//            import("org.junit.rules.Timeout")
+//            import("java.util.concurrent.TimeUnit")
 
             with(klass) {
                 constructor() {}
 
-                field("globalTimeout", type("Timeout")) {
-                    visibility = Visibility.PUBLIC
-                    initializer = "new Timeout($testTimeout, TimeUnit.SECONDS)"
-                    annotations += "Rule"
-                }
+//                field("globalTimeout", type("Timeout")) {
+//                    visibility = Visibility.PUBLIC
+//                    initializer = "new Timeout($testTimeout, TimeUnit.MILLISECONDS)"
+//                    annotations += "Rule"
+//                }
 
                 method("unknown", listOf(type("T"))) {
                     returnType = type("T")
