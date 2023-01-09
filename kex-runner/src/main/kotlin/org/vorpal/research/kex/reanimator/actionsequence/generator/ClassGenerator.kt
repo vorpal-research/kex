@@ -21,7 +21,7 @@ class ClassGenerator(private val fallback: Generator) : Generator {
         descriptor.type == KexClass(SystemTypeNames.classClass)
 
     override fun generate(descriptor: Descriptor, generationDepth: Int): ActionSequence = with(context) {
-        val name = "${descriptor.term}"
+        val name = "${descriptor.term}".replace("[/$.]".toRegex(), "_")
         val actionSequence = ActionList(name)
         saveToCache(descriptor, actionSequence)
 
