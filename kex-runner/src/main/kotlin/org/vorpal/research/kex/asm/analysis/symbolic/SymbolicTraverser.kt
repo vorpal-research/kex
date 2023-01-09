@@ -5,8 +5,6 @@ import kotlinx.coroutines.*
 import org.vorpal.research.kex.ExecutionContext
 import org.vorpal.research.kex.asm.analysis.util.analyzeOrTimeout
 import org.vorpal.research.kex.asm.analysis.util.checkAsync
-import org.vorpal.research.kex.compile.CompilationException
-import org.vorpal.research.kex.compile.CompilerHelper
 import org.vorpal.research.kex.config.kexConfig
 import org.vorpal.research.kex.descriptor.Descriptor
 import org.vorpal.research.kex.ktype.*
@@ -64,8 +62,6 @@ class SymbolicTraverser(
     private val invokeDynamicResolver: SymbolicInvokeDynamicResolver = DefaultCallResolver(ctx) { this.mkValue(it) }
     private var currentState: TraverserState? = null
     private var testIndex = AtomicInteger(0)
-    private val compilerHelper = CompilerHelper(ctx)
-
 
     private val nullptrClass = cm["java/lang/NullPointerException"]
     private val arrayIndexOOBClass = cm["java/lang/ArrayIndexOutOfBoundsException"]
@@ -930,11 +926,7 @@ class SymbolicTraverser(
         )
         generator.generate(parameters)
         val testFile = generator.emit()
-        try {
-            compilerHelper.compileFile(testFile)
-        } catch (e: CompilationException) {
-            log.error("Failed to compile test file $testFile")
-        }
+        log.debug("Emitted test file $testFile")
     }
 
     private suspend fun check(method: Method, state: SymbolicState): Parameters<Descriptor>? =
