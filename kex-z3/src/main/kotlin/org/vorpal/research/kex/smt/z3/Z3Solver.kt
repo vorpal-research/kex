@@ -6,11 +6,7 @@ import com.microsoft.z3.Model
 import com.microsoft.z3.Status
 import org.vorpal.research.kex.config.kexConfig
 import org.vorpal.research.kex.ktype.*
-import org.vorpal.research.kex.smt.AbstractSMTSolver
-import org.vorpal.research.kex.smt.MemoryShape
-import org.vorpal.research.kex.smt.Result
-import org.vorpal.research.kex.smt.SMTModel
-import org.vorpal.research.kex.smt.Solver
+import org.vorpal.research.kex.smt.*
 import org.vorpal.research.kex.state.PredicateState
 import org.vorpal.research.kex.state.term.*
 import org.vorpal.research.kex.state.transformer.collectPointers
@@ -31,8 +27,9 @@ private val printSMTLib = kexConfig.getBooleanValue("smt", "logSMTLib", false)
 private val simplifyFormulae = kexConfig.getBooleanValue("smt", "simplifyFormulae", false)
 private val maxArrayLength = kexConfig.getIntValue("smt", "maxArrayLength", 1000)
 
+@AsyncSolver("z3")
 @Solver("z3")
-class Z3Solver(val tf: TypeFactory) : Z3NativeLoader(), AbstractSMTSolver {
+class Z3Solver(val tf: TypeFactory) : Z3NativeLoader(), AbstractSMTSolver, AbstractAsyncSMTSolver {
     val ef = Z3ExprFactory()
 
     override fun isReachable(state: PredicateState) =
@@ -427,6 +424,14 @@ class Z3Solver(val tf: TypeFactory) : Z3NativeLoader(), AbstractSMTSolver {
             typeMap
         )
     }
+
+    override suspend fun isReachableAsync(state: PredicateState): Result = isReachable(state)
+
+    override suspend fun isPathPossibleAsync(state: PredicateState, path: PredicateState): Result =
+        isPathPossible(state, path)
+
+    override suspend fun isViolatedAsync(state: PredicateState, query: PredicateState): Result =
+        isViolated(state, query)
 
     override fun close() {
         ef.ctx.close()

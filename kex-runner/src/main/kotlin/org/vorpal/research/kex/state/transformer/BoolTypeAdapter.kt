@@ -29,7 +29,7 @@ class BoolTypeAdapter(val types: TypeFactory) : Transformer<BoolTypeAdapter> {
         }
     }
 
-    fun adaptTerm(term: Term) = when (term.type) {
+    private fun adaptTerm(term: Term) = when (term.type) {
         is KexBool -> term { term `as` KexInt }
         is KexInt -> term
         is KexInteger -> term { term `as` KexInt }
@@ -51,6 +51,7 @@ class BoolTypeAdapter(val types: TypeFactory) : Transformer<BoolTypeAdapter> {
                 val newType = mergeTypes(types, lhv.type, rhv.type)
                 term { lhv.apply(newType, term.opcode, rhv) }
             }
+
             else -> term
         }
     }
@@ -62,6 +63,7 @@ class BoolTypeAdapter(val types: TypeFactory) : Transformer<BoolTypeAdapter> {
             val rhv = adaptTerm(term.rhv)
             term { lhv.apply(term.opcode, rhv) }
         }
+
         else -> term
     }
 }

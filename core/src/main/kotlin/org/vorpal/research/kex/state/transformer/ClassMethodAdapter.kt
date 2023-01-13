@@ -104,18 +104,18 @@ class ClassMethodAdapter(cm: ClassManager) : ClassMethodContext(cm), Recollectin
         return nothing()
     }
 
-    fun forName(lhv: Term, name: Term) = basic {
+    private fun forName(lhv: Term, name: Term) = basic {
         state { lhv.new() }
         val field = generate(KexString())
         state { field equality lhv.field(KexString(), ConstClassTerm.NAME_PROPERTY).load() }
         assume { field equality name }
     }
 
-    fun getCanonicalName(lhv: Term, instance: Term) = basic {
+    private fun getCanonicalName(lhv: Term, instance: Term) = basic {
         state { lhv equality instance.field(KexString(), ConstClassTerm.NAME_PROPERTY).load() }
     }
 
-    fun getClasses(lhv: Term, constClass: KexType) = basic {
+    private fun getClasses(lhv: Term, constClass: KexType) = basic {
         val members = when (val kfgType = constClass.getKfgType(cm.type)) {
             is ClassType -> kfgType.klass.allAncestors.flatMap { it.innerClasses.keys }
                 .filter { it.isPublic } + kfgType.klass.innerClasses.keys.filter { it.isPublic }
@@ -132,14 +132,14 @@ class ClassMethodAdapter(cm: ClassManager) : ClassMethodContext(cm), Recollectin
         }
     }
 
-    fun getComponentType(lhv: Term, constClass: KexType) = basic {
+    private fun getComponentType(lhv: Term, constClass: KexType) = basic {
         val kfgType = constClass.getKfgType(cm.type)
         state {
             lhv equality if (kfgType is ArrayType) `class`(KexJavaClass(), kfgType.component.kexType) else const(null)
         }
     }
 
-    fun getInterfaces(lhv: Term, constClass: KexType) = basic {
+    private fun getInterfaces(lhv: Term, constClass: KexType) = basic {
         val interfaces = when (val kfgType = constClass.getKfgType(cm.type)) {
             is ClassType -> if (kfgType.klass.isInterface) listOf(kfgType.klass)
             else kfgType.klass.interfaces
@@ -156,19 +156,19 @@ class ClassMethodAdapter(cm: ClassManager) : ClassMethodContext(cm), Recollectin
         }
     }
 
-    fun getModifiers(lhv: Term, instance: Term) = basic {
+    private fun getModifiers(lhv: Term, instance: Term) = basic {
         state {
             lhv equality instance.field(KexInt, ConstClassTerm.MODIFIERS_PROPERTY).load()
         }
     }
 
-    fun getName(lhv: Term, instance: Term) = basic {
+    private fun getName(lhv: Term, instance: Term) = basic {
         state {
             lhv equality instance.field(KexString(), ConstClassTerm.NAME_PROPERTY).load()
         }
     }
 
-    fun getSuperclass(lhv: Term, constClass: KexType) = basic {
+    private fun getSuperclass(lhv: Term, constClass: KexType) = basic {
         val kfgType = constClass.getKfgType(cm.type)
         state {
             lhv equality when (kfgType) {
@@ -185,7 +185,7 @@ class ClassMethodAdapter(cm: ClassManager) : ClassMethodContext(cm), Recollectin
         }
     }
 
-    fun isAnnotated(lhv: Term, instance: Term) = basic {
+    private fun isAnnotated(lhv: Term, instance: Term) = basic {
         val modifiers = generate(KexInt)
         val andRes = generate(KexInt)
         state {
@@ -199,7 +199,7 @@ class ClassMethodAdapter(cm: ClassManager) : ClassMethodContext(cm), Recollectin
         }
     }
 
-    fun isEnum(lhv: Term, instance: Term) = basic {
+    private fun isEnum(lhv: Term, instance: Term) = basic {
         val modifiers = generate(KexInt)
         val andRes = generate(KexInt)
         state {
@@ -213,7 +213,7 @@ class ClassMethodAdapter(cm: ClassManager) : ClassMethodContext(cm), Recollectin
         }
     }
 
-    fun isInterface(lhv: Term, instance: Term) = basic {
+    private fun isInterface(lhv: Term, instance: Term) = basic {
         val modifiers = generate(KexInt)
         val andRes = generate(KexInt)
         state {
@@ -227,7 +227,7 @@ class ClassMethodAdapter(cm: ClassManager) : ClassMethodContext(cm), Recollectin
         }
     }
 
-    fun isSynthetic(lhv: Term, instance: Term) = basic {
+    private fun isSynthetic(lhv: Term, instance: Term) = basic {
         val modifiers = generate(KexInt)
         val andRes = generate(KexInt)
         state {
@@ -241,7 +241,7 @@ class ClassMethodAdapter(cm: ClassManager) : ClassMethodContext(cm), Recollectin
         }
     }
 
-    fun newInstance(lhv: Term, instance: Term) = basic {
+    private fun newInstance(lhv: Term, instance: Term) = basic {
         state {
             lhv.new()
         }
@@ -250,7 +250,7 @@ class ClassMethodAdapter(cm: ClassManager) : ClassMethodContext(cm), Recollectin
         assume { klass equality instance }
     }
 
-    fun toString(lhv: Term, instance: Term) = basic {
+    private fun toString(lhv: Term, instance: Term) = basic {
         state {
             lhv equality instance.field(KexString(), ConstClassTerm.NAME_PROPERTY).load()
         }

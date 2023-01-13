@@ -11,11 +11,11 @@ import org.vorpal.research.kfg.ir.Location
 @InheritorOf("Predicate")
 @Serializable
 class FieldInitializerPredicate(
-        val field: Term,
-        val value: Term,
-        @Required override val type: PredicateType = PredicateType.State(),
-        @Required @Contextual override val location: Location = Location()) : Predicate() {
-
+    val field: Term,
+    val value: Term,
+    @Required override val type: PredicateType = PredicateType.State(),
+    @Required @Contextual override val location: Location = Location()
+) : Predicate() {
     override val operands by lazy { listOf(this.field, this.value) }
 
     override fun print() = "init *($field) = $value"

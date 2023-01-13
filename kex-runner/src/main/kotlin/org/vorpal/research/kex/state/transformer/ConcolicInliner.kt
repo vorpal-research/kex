@@ -15,7 +15,7 @@ import org.vorpal.research.kthelper.collection.dequeOf
 
 class ConcolicInliner(
     val ctx: ExecutionContext,
-    val typeInfoMap: TypeInfoMap,
+    private val typeInfoMap: TypeInfoMap,
     override val psa: PredicateStateAnalysis,
     val kexRtOnly: Boolean = false,
     override val inlineSuffix: String = "inlined",
@@ -45,6 +45,11 @@ class ConcolicInliner(
     override fun transformNewPredicate(predicate: NewPredicate): Predicate {
         knownTypes[predicate.lhv] = predicate.lhv.type
         return super.transformNewPredicate(predicate)
+    }
+
+    override fun transformNewInitializerPredicate(predicate: NewInitializerPredicate): Predicate {
+        knownTypes[predicate.lhv] = predicate.lhv.type
+        return super.transformNewInitializerPredicate(predicate)
     }
 
     override fun transformCallPredicate(predicate: CallPredicate): Predicate {

@@ -28,7 +28,10 @@ fun hasClassAccesses(ps: PredicateState) = ClassAccessDetector().let {
     it.hasClassAccess
 }
 
-class TypeCollector(val tf: TypeFactory, val checkStringTypes: Boolean = false) : Transformer<TypeCollector> {
+class TypeCollector(
+    val tf: TypeFactory,
+    private val checkStringTypes: Boolean = false
+) : Transformer<TypeCollector> {
     val types = mutableSetOf<KexType>()
 
     override fun apply(ps: PredicateState): PredicateState {

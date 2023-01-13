@@ -41,8 +41,8 @@ interface AbstractGenerator<T> : Transformer<AbstractGenerator<T>> {
     val staticFieldOwners: MutableSet<Term>
 
     val instance get() = thisTerm?.let { memory[it] }
-    val args get() = argTerms.map { memory[it.value] }.toList()
-    val staticFields get() = staticFieldOwners.map { memory[it]!! }.toSet()
+    val args get() = argTerms.map { memory[it.value] }
+    val staticFields get() = staticFieldOwners.mapTo(mutableSetOf()) { memory[it]!! }
 
     fun generateThis() = thisTerm?.let {
         memory[it] = modelReanimator.reanimate(it)
@@ -59,12 +59,19 @@ interface AbstractGenerator<T> : Transformer<AbstractGenerator<T>> {
     fun generate(ps: PredicateState): Pair<T?, List<T?>> {
         val (tempThis, tempArgs) = collectArguments(ps)
         thisTerm = when {
-            !method.isStatic && tempThis == null -> term { `this`(KexClass(method.klass.fullName).rtMapped) }
+            !method.isStatic && tempThis == null -> term {
+                `this`(KexClass(method.klass.fullName).rtMapped)
+            }
+
             else -> tempThis
         }
         argTerms.putAll(tempArgs)
         for ((index, type) in method.argTypes.withIndex()) {
-            argTerms.getOrPut(index) { term { arg(type.kexType.rtMapped, index) } }
+            argTerms.getOrPut(index) {
+                term {
+                    arg(type.kexType.rtMapped, index)
+                }
+            }
         }
         generateThis()
         generateArgs()

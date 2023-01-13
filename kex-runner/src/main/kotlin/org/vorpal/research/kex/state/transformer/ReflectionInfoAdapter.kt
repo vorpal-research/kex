@@ -17,8 +17,11 @@ import org.vorpal.research.kthelper.logging.log
 import org.vorpal.research.kthelper.`try`
 import org.vorpal.research.kthelper.tryOrNull
 
-class ReflectionInfoAdapter(val method: Method, val loader: ClassLoader, val ignores: Set<Term> = setOf()) :
-    RecollectingTransformer<ReflectionInfoAdapter> {
+class ReflectionInfoAdapter(
+    val method: Method,
+    val loader: ClassLoader,
+    private val ignores: Set<Term> = setOf()
+) : RecollectingTransformer<ReflectionInfoAdapter> {
     val cm get() = method.cm
     val types get() = method.cm.type
 
@@ -34,8 +37,8 @@ class ReflectionInfoAdapter(val method: Method, val loader: ClassLoader, val ign
         if (`this` != null) {
             currentBuilder += assume { `this` inequality null }
         } else if (!method.isStatic) {
-            val nthis = term { `this`(method.klass.kexType.rtMapped) }
-            currentBuilder += assume { nthis inequality null }
+            val nThis = term { `this`(method.klass.kexType.rtMapped) }
+            currentBuilder += assume { nThis inequality null }
         }
 
         val methodClassType = KexClass(method.klass.fullName).getKfgType(types)

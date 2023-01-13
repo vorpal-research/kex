@@ -15,6 +15,8 @@ import org.vorpal.research.kex.reanimator.codegen.klassName
 import org.vorpal.research.kex.state.predicate.inverse
 import org.vorpal.research.kex.state.predicate.path
 import org.vorpal.research.kex.state.predicate.state
+import org.vorpal.research.kex.state.term.ConstClassTerm
+import org.vorpal.research.kex.state.term.StaticClassRefTerm
 import org.vorpal.research.kex.state.term.Term
 import org.vorpal.research.kex.state.term.TermBuilder
 import org.vorpal.research.kex.state.transformer.*
@@ -306,9 +308,7 @@ class SymbolicTraverser(
                 )
             }
 
-            else -> {
-                null
-            }
+            else -> null
         }
     }
 
@@ -738,6 +738,9 @@ class SymbolicTraverser(
 
     private suspend fun nullabilityCheck(state: TraverserState, inst: Instruction, term: Term): TraverserState {
         if (term in state.nullCheckedTerms) return state
+        if (term is ConstClassTerm) return state
+        if (term is StaticClassRefTerm) return state
+        if (term.isThis) return state
 
         val persistentState = state.symbolicState
         val nullityClause = PathClause(

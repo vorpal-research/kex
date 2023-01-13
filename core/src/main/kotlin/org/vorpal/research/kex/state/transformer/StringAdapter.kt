@@ -11,7 +11,6 @@ import org.vorpal.research.kfg.ClassManager
 import org.vorpal.research.kfg.ir.Class
 import org.vorpal.research.kfg.stringClass
 import org.vorpal.research.kfg.type.*
-import org.vorpal.research.kthelper.collection.buildList
 import org.vorpal.research.kthelper.collection.dequeOf
 
 
@@ -25,7 +24,7 @@ fun Class.getCtor(vararg argTypes: Type) =
 abstract class StringMethodContext(val cm: ClassManager) {
     val stringType = cm.type.stringType
     val objectType = cm.type.objectType
-    val charSeqType = cm.type.charSeqType
+    private val charSeqType = cm.type.charSeqType
 
     val Class.emptyInit
         get() = getCtor()
@@ -80,7 +79,7 @@ class StringAdapter(cm: ClassManager) : StringMethodContext(cm), RecollectingTra
     override val builders = dequeOf(StateBuilder())
     val types get() = cm.type
 
-    fun remap(predicate: Predicate, body: PredicateBuilder.() -> Predicate) =
+    private fun remap(predicate: Predicate, body: PredicateBuilder.() -> Predicate) =
         predicate(predicate.type, predicate.location, body)
 
     fun <T : Any> T.list() = listOf(this)
@@ -90,9 +89,9 @@ class StringAdapter(cm: ClassManager) : StringMethodContext(cm), RecollectingTra
         `this`: Term,
         charArray: Term,
         offset: Term = term { const(0) }
-    ) = buildList<Predicate> {
+    ) = buildList {
         val res = term { generate(KexBool) }
-        +remap(predicate) {
+        this += remap(predicate) {
             res equality forAll(offset, charArray.length()) {
                 val lambdaParam = generate(KexInt)
                 lambda(KexBool, listOf(lambdaParam)) {
@@ -100,7 +99,8 @@ class StringAdapter(cm: ClassManager) : StringMethodContext(cm), RecollectingTra
                 }
             }
         }
-        +assume {
+
+        this += assume {
             res equality true
         }
     }
@@ -113,104 +113,122 @@ class StringAdapter(cm: ClassManager) : StringMethodContext(cm), RecollectingTra
         if (call.owner.type != kfgString.kexType) return predicate
 
         val `this` = call.owner
-        val calledMethod = call.method
 
-        val newPredicates = when (calledMethod) {
+        val newPredicates = when (call.method) {
             kfgString.emptyInit -> return nothing()
             kfgString.copyInit -> remap(predicate) {
                 `this` equality args[0]
             }.list()
+
             kfgString.charArrayInit -> generateCharArrayInit(predicate, `this`, args[0])
             kfgString.charArrayWOffsetInit -> generateCharArrayInit(predicate, `this`, args[0], args[1])
             kfgString.length -> remap(predicate) {
                 predicate.lhv equality `this`.length()
             }.list()
+
             kfgString.isEmpty -> buildList {
                 val lengthTerm = term { generate(KexInt) }
-                +remap(predicate) {
+                this += remap(predicate) {
                     lengthTerm equality `this`.length()
                 }
-                +remap(predicate) {
+                this += remap(predicate) {
                     predicate.lhv equality (lengthTerm ge 0)
                 }
             }
+
             kfgString.charAt -> remap(predicate) {
                 predicate.lhv equality `this`.charAt(args[0])
             }.list()
+
             kfgString.equals -> remap(predicate) {
                 predicate.lhv equality (`this` equls args[0])
             }.list()
+
             kfgString.startsWith -> remap(predicate) {
                 predicate.lhv equality `this`.startsWith(args[0])
             }.list()
+
             kfgString.startsWithOffset -> buildList {
                 val offset = args[1]
                 val wOffset = term { generate(KexString()) }
                 val offsetLength = term { generate(KexInt) }
-                +remap(predicate) {
+                this += remap(predicate) {
                     offsetLength equality (`this`.length() - offset)
                 }
-                +remap(predicate) {
+                this += remap(predicate) {
                     wOffset equality `this`.substring(args[1], offsetLength)
                 }
-                +remap(predicate) {
+                this += remap(predicate) {
                     predicate.lhv equality wOffset.startsWith(args[0])
                 }
             }
+
             kfgString.endsWith -> remap(predicate) {
                 predicate.lhv equality `this`.endsWith(args[0])
             }.list()
+
             kfgString.indexOf -> buildList {
                 val substring = term { generate(KexString()) }
-                +remap(predicate) {
+                this += remap(predicate) {
                     substring equality args[0].toStr()
                 }
-                +remap(predicate) {
+                this += remap(predicate) {
                     predicate.lhv equality `this`.indexOf(substring)
                 }
             }
+
             kfgString.indexOfWOffset -> buildList {
                 val substring = term { generate(KexString()) }
-                +remap(predicate) {
+                this += remap(predicate) {
                     substring equality args[0].toStr()
                 }
-                +remap(predicate) {
+                this += remap(predicate) {
                     predicate.lhv equality `this`.indexOf(substring, args[1])
                 }
             }
+
             kfgString.stringIndexOf -> remap(predicate) {
                 predicate.lhv equality `this`.indexOf(args[0])
             }.list()
+
             kfgString.stringIndexOfWOffset -> remap(predicate) {
                 predicate.lhv equality `this`.indexOf(args[0], args[1])
             }.list()
+
             kfgString.substring -> buildList {
                 val substringLength = term { generate(KexInt) }
-                +remap(predicate) {
+                this += remap(predicate) {
                     substringLength equality (`this`.length() - args[0])
                 }
-                +remap(predicate) {
+                this += remap(predicate) {
                     predicate.lhv equality `this`.substring(args[0], substringLength)
                 }
             }
+
             kfgString.substringWLength -> remap(predicate) {
                 predicate.lhv equality `this`.substring(args[0], args[1])
             }.list()
+
             kfgString.subSequence -> remap(predicate) {
                 predicate.lhv equality `this`.substring(args[0], args[1])
             }.list()
+
             kfgString.concat -> remap(predicate) {
                 predicate.lhv equality (`this` `++` args[0])
             }.list()
+
             kfgString.contains -> remap(predicate) {
                 predicate.lhv equality (args[0] `in` `this`)
             }.list()
+
             kfgString.toString -> remap(predicate) {
                 predicate.lhv equality `this`
             }.list()
+
             kfgString.compareTo -> remap(predicate) {
                 predicate.lhv equality `this`.cmp(args[0])
             }.list()
+
             else -> predicate.list()
         }
         for (statement in newPredicates) {
@@ -225,11 +243,11 @@ class StringMethodAdapter(cm: ClassManager) : StringMethodContext(cm), Recollect
     override val builders = dequeOf(StateBuilder())
     val types get() = cm.type
 
-    private fun Term.valueArray(): Term = term { this@valueArray.field(KexCharArray(), "value") }
-    private fun KexCharArray() = KexChar.asArray()
+    private fun Term.valueArray(): Term = term { this@valueArray.field(kexCharArrayType(), "value") }
+    private fun kexCharArrayType() = KexChar.asArray()
 
-    fun emptyInit(term: Term): PredicateState = basic {
-        val emptyArray = generate(KexCharArray())
+    private fun emptyInit(term: Term): PredicateState = basic {
+        val emptyArray = generate(kexCharArrayType())
         state {
             emptyArray.new(0)
         }
@@ -238,8 +256,8 @@ class StringMethodAdapter(cm: ClassManager) : StringMethodContext(cm), Recollect
         }
     }
 
-    fun copyInit(term: Term, arg: Term): PredicateState = basic {
-        val argArray = generate(KexCharArray())
+    private fun copyInit(term: Term, arg: Term): PredicateState = basic {
+        val argArray = generate(kexCharArrayType())
         state {
             argArray equality arg.valueArray().load()
         }
@@ -251,14 +269,14 @@ class StringMethodAdapter(cm: ClassManager) : StringMethodContext(cm), Recollect
         }
     }
 
-    fun charArrayInit(term: Term, arg: Term): PredicateState = basic {
+    private fun charArrayInit(term: Term, arg: Term): PredicateState = basic {
         state {
             term.valueArray().store(arg)
         }
     }
 
-    fun charArrayWOffsetInit(term: Term, array: Term, offset: Term, length: Term): PredicateState = basic {
-        val valueArray = generate(KexCharArray())
+    private fun charArrayWOffsetInit(term: Term, array: Term, offset: Term, length: Term): PredicateState = basic {
+        val valueArray = generate(kexCharArrayType())
         state {
             generateArray(valueArray, length) {
                 val index = value(KexInt, "lambda.index")
@@ -272,8 +290,8 @@ class StringMethodAdapter(cm: ClassManager) : StringMethodContext(cm), Recollect
         }
     }
 
-    fun length(lhv: Term, term: Term): PredicateState = basic {
-        val fieldTerm = generate(KexCharArray())
+    private fun length(lhv: Term, term: Term): PredicateState = basic {
+        val fieldTerm = generate(kexCharArrayType())
         state {
             fieldTerm equality term.valueArray().load()
         }
@@ -285,8 +303,8 @@ class StringMethodAdapter(cm: ClassManager) : StringMethodContext(cm), Recollect
         }
     }
 
-    fun isEmpty(lhv: Term, term: Term): PredicateState = basic {
-        val fieldTerm = generate(KexCharArray())
+    private fun isEmpty(lhv: Term, term: Term): PredicateState = basic {
+        val fieldTerm = generate(kexCharArrayType())
         val length = generate(KexInt)
         state {
             fieldTerm equality term.valueArray().load()
@@ -302,8 +320,8 @@ class StringMethodAdapter(cm: ClassManager) : StringMethodContext(cm), Recollect
         }
     }
 
-    fun charAt(lhv: Term, term: Term, index: Term): PredicateState = basic {
-        val fieldTerm = generate(KexCharArray())
+    private fun charAt(lhv: Term, term: Term, index: Term): PredicateState = basic {
+        val fieldTerm = generate(kexCharArrayType())
         val length = generate(KexInt)
         state {
             fieldTerm equality term.valueArray().load()
@@ -325,7 +343,7 @@ class StringMethodAdapter(cm: ClassManager) : StringMethodContext(cm), Recollect
         }
     }
 
-    fun equals(lhv: Term, term: Term, other: Term): PredicateState {
+    private fun equals(lhv: Term, term: Term, other: Term): PredicateState {
         val isNull = term { generate(KexBool) }
         val instanceOf = term { generate(KexBool) }
         val res = term { generate(KexBool) }
@@ -358,8 +376,8 @@ class StringMethodAdapter(cm: ClassManager) : StringMethodContext(cm), Recollect
             }
 
             val casted = generate(KexString())
-            val thisValue = generate(KexCharArray())
-            val otherValue = generate(KexCharArray())
+            val thisValue = generate(kexCharArrayType())
+            val otherValue = generate(kexCharArrayType())
             val thisLength = generate(KexInt)
             val otherLength = generate(KexInt)
             val lengthEquals = generate(KexBool)
@@ -432,17 +450,17 @@ class StringMethodAdapter(cm: ClassManager) : StringMethodContext(cm), Recollect
         }
     }
 
-    fun startsWith(lhv: Term, term: Term, other: Term) = startsWithOffset(lhv, term, other, term { const(0) })
+    private fun startsWith(lhv: Term, term: Term, other: Term) = startsWithOffset(lhv, term, other, term { const(0) })
 
-    fun startsWithOffset(lhv: Term, term: Term, other: Term, offset: Term): PredicateState {
+    private fun startsWithOffset(lhv: Term, term: Term, other: Term, offset: Term): PredicateState {
         val isGreater = term { generate(KexBool) }
         val res = term { generate(KexBool) }
         return basic {
             state { isGreater equality (offset ge 0) }
         }.choice {
             or {
-                val thisValue = generate(KexCharArray())
-                val otherValue = generate(KexCharArray())
+                val thisValue = generate(kexCharArrayType())
+                val otherValue = generate(kexCharArrayType())
                 val thisLength = generate(KexInt)
                 val otherLength = generate(KexInt)
                 val lengthLess = generate(KexBool)
@@ -519,12 +537,12 @@ class StringMethodAdapter(cm: ClassManager) : StringMethodContext(cm), Recollect
         }
     }
 
-    fun endsWith(lhv: Term, term: Term, other: Term): PredicateState {
+    private fun endsWith(lhv: Term, term: Term, other: Term): PredicateState {
         val isGreater = term { generate(KexBool) }
         val res = term { generate(KexBool) }
         val offset = term { generate(KexInt) }
-        val thisValue = term { generate(KexCharArray()) }
-        val otherValue = term { generate(KexCharArray()) }
+        val thisValue = term { generate(kexCharArrayType()) }
+        val otherValue = term { generate(kexCharArrayType()) }
         val thisLength = term { generate(KexInt) }
         val otherLength = term { generate(KexInt) }
         return basic {
@@ -586,15 +604,15 @@ class StringMethodAdapter(cm: ClassManager) : StringMethodContext(cm), Recollect
         }
     }
 
-    fun substring(lhv: Term, term: Term, beginIndex: Term) =
+    private fun substring(lhv: Term, term: Term, beginIndex: Term) =
         substringWLength(lhv, term, beginIndex, term { term.valueArray().load().length() })
 
-    fun substringWLength(lhv: Term, term: Term, beginIndex: Term, endIndex: Term): PredicateState {
+    private fun substringWLength(lhv: Term, term: Term, beginIndex: Term, endIndex: Term): PredicateState {
         val isGreater = term { generate(KexBool) }
         val res = term { generate(KexString()) }
-        val resValue = term { generate(KexCharArray()) }
+        val resValue = term { generate(kexCharArrayType()) }
         val length = term { generate(KexInt) }
-        val thisValue = term { generate(KexCharArray()) }
+        val thisValue = term { generate(kexCharArrayType()) }
         return basic {
             state {
                 thisValue equality term.valueArray().load()
@@ -648,16 +666,16 @@ class StringMethodAdapter(cm: ClassManager) : StringMethodContext(cm), Recollect
         }
     }
 
-    fun subSequence(lhv: Term, term: Term, beginIndex: Term, endIndex: Term) =
+    private fun subSequence(lhv: Term, term: Term, beginIndex: Term, endIndex: Term) =
         substringWLength(lhv, term, beginIndex, endIndex)
 
-    fun concat(lhv: Term, term: Term, other: Term) = basic {
-        val thisValue = generate(KexCharArray())
-        val otherValue = generate(KexCharArray())
+    private fun concat(lhv: Term, term: Term, other: Term) = basic {
+        val thisValue = generate(kexCharArrayType())
+        val otherValue = generate(kexCharArrayType())
         val thisLength = generate(KexInt)
         val otherLength = generate(KexInt)
         val resLength = generate(KexInt)
-        val resValue = generate(KexCharArray())
+        val resValue = generate(kexCharArrayType())
         val res = generate(KexString())
         state {
             thisValue equality term.valueArray().load()
@@ -704,7 +722,7 @@ class StringMethodAdapter(cm: ClassManager) : StringMethodContext(cm), Recollect
         }
     }
 
-    fun toString(lhv: Term, term: Term) = basic {
+    private fun toString(lhv: Term, term: Term) = basic {
         state {
             lhv equality term
         }
@@ -750,8 +768,8 @@ class StringMethodAdapter(cm: ClassManager) : StringMethodContext(cm), Recollect
 }
 
 class TermExprStringAdapter(cm: ClassManager) : StringMethodContext(cm), Transformer<TermExprStringAdapter> {
-    private fun Term.valueArray(): Term = term { this@valueArray.field(KexCharArray(), "value") }
-    private fun KexCharArray() = KexChar.asArray()
+    private fun Term.valueArray(): Term = term { this@valueArray.field(kexCharArray(), "value") }
+    private fun kexCharArray() = KexChar.asArray()
 
     override fun transformCallTerm(term: CallTerm): Term {
         val args = term.arguments
@@ -760,9 +778,7 @@ class TermExprStringAdapter(cm: ClassManager) : StringMethodContext(cm), Transfo
         if (term.owner.type != kfgString.kexType) return term
 
         val `this` = term.owner
-        val calledMethod = term.method
-
-        return when (calledMethod) {
+        return when (term.method) {
             kfgString.length -> term { `this`.valueArray().load().length() }
             kfgString.isEmpty -> term { `this`.valueArray().load().length() eq 0 }
             kfgString.charAt -> term { `this`.valueArray().load()[args[0]].load() }

@@ -9,10 +9,10 @@ import org.vorpal.research.kex.state.predicate.assume
 import org.vorpal.research.kex.state.predicate.hasReceiver
 import org.vorpal.research.kex.state.predicate.receiver
 import org.vorpal.research.kex.state.term.Term
-import java.util.*
+import org.vorpal.research.kthelper.collection.dequeOf
 
 class DoubleTypeAdapter : RecollectingTransformer<DoubleTypeAdapter> {
-    override val builders = ArrayDeque<StateBuilder>().apply { push(StateBuilder()) }
+    override val builders = dequeOf(StateBuilder())
 
     private fun addFPContract(terms: Set<Term>) {
         terms.forEach {

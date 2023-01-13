@@ -12,7 +12,7 @@ import org.vorpal.research.kex.parameters.concreteParameters
 import org.vorpal.research.kex.parameters.filterStaticFinals
 import org.vorpal.research.kex.smt.AsyncChecker
 import org.vorpal.research.kex.smt.Result
-import org.vorpal.research.kex.state.transformer.generateFinalDescriptors
+import org.vorpal.research.kex.state.transformer.generateInitialDescriptors
 import org.vorpal.research.kex.state.transformer.toTypeMap
 import org.vorpal.research.kex.trace.symbolic.SymbolicState
 import org.vorpal.research.kfg.ir.Method
@@ -54,7 +54,7 @@ suspend fun Method.checkAsync(ctx: ExecutionContext, state: SymbolicState): Para
     }
 
     return tryOrNull {
-        generateFinalDescriptors(this, ctx, result.model, checker.state)
+        generateInitialDescriptors(this, ctx, result.model, checker.state)
             .concreteParameters(ctx.cm, ctx.accessLevel, ctx.random).also {
                 log.debug { "Generated params:\n$it" }
             }

@@ -46,9 +46,9 @@ class ArrayBoundsAdapter : RecollectingTransformer<ArrayBoundsAdapter> {
             builders.pollLast()
         }
         currentBuilder += newChoices
-        indices = choiceAnnotatedTerms.flatten().toSet()
-            .filter { term -> choiceAnnotatedTerms.all { term in it } }
-            .toHashSet()
+        indices = choiceAnnotatedTerms
+            .flatten().toSet()
+            .filterTo(hashSetOf()) { term -> choiceAnnotatedTerms.all { term in it } }
         return ps
     }
 

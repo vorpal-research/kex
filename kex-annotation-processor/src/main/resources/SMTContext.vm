@@ -59,6 +59,23 @@ class MemoryContext(
         )
 
     companion object {
+        fun mergeInitial(name: String, default: ${solver}Context, choices: Map< Bool_, ${solver}Context >): MemoryContext {
+#foreach($type in $memoryTypes)
+            val ${type.toLowerCase()}Ids = default.initialMemory.${type.toLowerCase()}Memories.keys + choices.values.flatMap { it.initialMemory.${type.toLowerCase()}Memories.keys }
+
+            val ${type.toLowerCase()}Arrays = ${type.toLowerCase()}Ids.associateWith { id ->
+                val alternatives = choices.map { it.key to it.value.get${type}InitialMemory(id) }
+                VersionedMemory.merge(name, default.get${type}InitialMemory(id), alternatives)
+            }
+#end
+            return MemoryContext(
+                default.factory,
+#foreach($type in $memoryTypes)
+                ${type.toLowerCase()}Arrays,
+#end
+            )
+        }
+
         fun merge(name: String, default: ${solver}Context, choices: Map< Bool_, ${solver}Context >): MemoryContext {
 #foreach($type in $memoryTypes)
             val ${type.toLowerCase()}Ids = default.memories.${type.toLowerCase()}Memories.keys + choices.values.flatMap { it.memories.${type.toLowerCase()}Memories.keys }
@@ -100,20 +117,28 @@ class $self : ${solver}SMTContext {
 #end
         const val STARTING_LOCAL_PTR = Int.MAX_VALUE / 2
         const val STARTING_STATIC_PTR = STARTING_LOCAL_PTR + Int.MAX_VALUE / 4
+        const val KEX_SYMBOLIC_INITIAL_PTR = "KEX_SYMBOLIC_INITIAL_PTR"
 
         fun mergeContexts(name: String, default: $self, choices: Map< Bool_, $self >): $self {
             val maxLocal = max(default.localPointer, choices.map { it.value.localPointer }.maxOrNull() ?: 0)
             val maxStatic = max(default.staticPointer, choices.map { it.value.staticPointer }.maxOrNull() ?: 0)
+            val maxInitial = default.factory.maxOf(
+                default.initialPointer,
+                default.factory.maxOfOrNull(choices.map { it.value.initialPointer }) ?: default.initialPointer
+            )
 
+            val initialMemories = MemoryContext.mergeInitial(name, default, choices)
             val memories = MemoryContext.merge(name, default, choices)
-            return $self(default.factory, maxLocal, maxStatic, memories)
+            return $self(default.factory, maxLocal, maxStatic, maxInitial, initialMemories, memories)
         }
     }
 
     val factory: $factory
     private var localPointer: Int
     private var staticPointer: Int
-    private val initialMemory: MemoryContext
+    private var initialPointer: Ptr_
+    var initialMemory: MemoryContext
+        private set
     var memories: MemoryContext
         private set
 
@@ -121,23 +146,33 @@ class $self : ${solver}SMTContext {
         factory: $factory,
         localPointer: Int,
         staticPointer: Int,
+        initialPointer: Ptr_,
+        initialMemories: MemoryContext,
         memories: MemoryContext
     ) {
         this.factory = factory
         this.localPointer = localPointer
         this.staticPointer = staticPointer
+        this.initialPointer = initialPointer
+        this.initialMemory = initialMemories
         this.memories = memories
-
-        this.initialMemory = MemoryContext(factory)
     }
 
-    constructor(factory: $factory)
-            : this(factory, STARTING_LOCAL_PTR, STARTING_STATIC_PTR, MemoryContext(factory))
+    constructor(factory: $factory) : this(
+        factory,
+        STARTING_LOCAL_PTR,
+        STARTING_STATIC_PTR,
+        factory.makePtr(KEX_SYMBOLIC_INITIAL_PTR),
+        MemoryContext(factory),
+        MemoryContext(factory)
+    )
 
     constructor(ctx: $self) : this(
         ctx.factory,
         ctx.localPointer,
         ctx.staticPointer,
+        ctx.initialPointer,
+        ctx.initialMemory,
         ctx.memories
     )
 
@@ -177,7 +212,7 @@ class $self : ${solver}SMTContext {
     }
 
     fun initialize${type}Memory(ptr: Ptr_, memspace: Int, value: ${type}_) {
-        val name = "${ ${type}_PROPERTY_NAME }${ memspace }"
+        val name = "${ ${type}_MEMORY_NAME }${ memspace }"
         val mem = get${type}InitialMemory(name).store(ptr, value)
         set${type}InitialMemory(name, mem)
     }
@@ -221,8 +256,33 @@ class $self : ${solver}SMTContext {
             writeWordProperty(it, memspace, "length", length)
         }
 
+    @Suppress("UNUSED_PARAMETER")
+    fun getInitialLocalPtr(memspace: Int): Ptr_ =
+        initialPointer.also {
+            initialPointer = Ptr_.forceCast(initialPointer add factory.makePtrConst(1))
+        }
+
+    fun getInitialLocalArray(memspace: Int, length: Int_,): Ptr_ =
+        initialPointer.also {
+            initialPointer = Ptr_.forceCast(initialPointer add factory.makePtrConst(1))
+            initializeWordProperty(it, memspace, "length", length)
+        }
+
+    @Suppress("UNUSED_PARAMETER")
+    fun getInitialStaticPtr(memspace: Int, size: TypeSize): Ptr_ =
+        initialPointer.also {
+            initialPointer = Ptr_.forceCast(initialPointer add factory.makePtrConst(1))
+        }
+
+    fun getInitialStaticArray(memspace: Int, length: Int_): Ptr_ =
+        initialPointer.also {
+            initialPointer = Ptr_.forceCast(initialPointer add factory.makePtrConst(1))
+            initializeWordProperty(it, memspace, "length", length)
+        }
+
     fun switchOn(name: String, contexts: Map< Bool_, ${solver}Context >): ${solver}Context {
         val merged =  mergeContexts(name, this, contexts)
+        this.initialMemory = merged.initialMemory
         this.memories = merged.memories
         this.localPointer = merged.localPointer
         this.staticPointer = merged.staticPointer

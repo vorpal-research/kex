@@ -7,6 +7,7 @@ import org.vorpal.research.kfg.ir.Method
 import org.vorpal.research.kfg.ir.OuterClass
 import org.vorpal.research.kfg.ir.value.Value
 import org.vorpal.research.kfg.ir.value.instruction.CallInst
+import org.vorpal.research.kfg.ir.value.instruction.CallOpcode
 import org.vorpal.research.kfg.ir.value.instruction.InvokeDynamicInst
 import org.vorpal.research.kfg.stringClass
 import org.vorpal.research.kfg.type.ClassType
@@ -43,6 +44,8 @@ class DefaultCallResolver(
         if (method.isNative) return emptyList()
         if (method.isStatic) return listOf(method)
         if (method.isConstructor) return listOf(method)
+        if (inst.opcode == CallOpcode.SPECIAL) return listOf(inst.method)
+        if (inst.opcode == CallOpcode.STATIC) return listOf(inst.method)
 
         val callee = state.converter(inst.callee)
         val baseType = method.klass

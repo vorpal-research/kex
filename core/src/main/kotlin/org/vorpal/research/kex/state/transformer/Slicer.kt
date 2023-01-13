@@ -64,9 +64,6 @@ class Slicer(
         }
     }
 
-    constructor(state: PredicateState, query: PredicateState, aa: AliasAnalysis)
-            : this(state, TermCollector.getFullTermSet(query), aa)
-
     constructor(state: PredicateState, query: PredicateState, sliceTerms: Set<Term>, aa: AliasAnalysis)
             : this(state, TermCollector.getFullTermSet(query) + sliceTerms, aa)
 

@@ -12,8 +12,10 @@ import org.vorpal.research.kfg.ir.Method
 import org.vorpal.research.kthelper.collection.dequeOf
 import java.util.*
 
-class AnnotationAdapter(val method: Method, val annotations: AnnotationsLoader) :
-    RecollectingTransformer<AnnotationAdapter> {
+class AnnotationAdapter(
+    val method: Method,
+    val annotations: AnnotationsLoader
+) : RecollectingTransformer<AnnotationAdapter> {
     override val builders = dequeOf(StateBuilder())
 
     private val Method.exactCall: AnnotatedCall?

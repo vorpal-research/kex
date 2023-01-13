@@ -83,6 +83,23 @@ object PredicateFactory {
         return NewArrayPredicate(lhv, dimensions, current, type, location)
     }
 
+    fun getNewInitializer(lhv: Term, type: PredicateType = PredicateType.State(), location: Location = Location()) =
+        NewInitializerPredicate(lhv, type, location)
+
+    fun getNewArrayInitializer(
+        lhv: Term,
+        dimensions: List<Term>,
+        type: PredicateType = PredicateType.State(),
+        location: Location = Location()
+    ): Predicate {
+        var current = lhv.type
+        dimensions.forEach { _ ->
+            current = (current as? KexArray)?.element
+                ?: unreachable { log.error("Trying to create new array predicate with non-array type") }
+        }
+        return NewArrayInitializerPredicate(lhv, dimensions, current, type, location)
+    }
+
     fun getEquality(
         lhv: Term,
         rhv: Term,
@@ -207,6 +224,12 @@ abstract class PredicateBuilder : TermBuilder() {
     fun Term.new(dimensions: List<Term>) = pf.getNewArray(this, dimensions, this@PredicateBuilder.type, location)
     fun Term.new(vararg dimensions: Term) = this.new(dimensions.toList())
     fun Term.new(vararg dimensions: Int) = this.new(dimensions.map { const(it) })
+
+    fun Term.initializeNew() = pf.getNewInitializer(this, this@PredicateBuilder.type, location)
+    fun Term.initializeNew(dimensions: List<Term>) = pf.getNewArrayInitializer(this, dimensions, this@PredicateBuilder.type, location)
+    fun Term.initializeNew(vararg dimensions: Term) = this.initializeNew(dimensions.toList())
+    fun Term.initializeNew(vararg dimensions: Int) = this.initializeNew(dimensions.map { const(it) })
+
 
     class Assume(override val location: Location = Location()) : PredicateBuilder() {
         override val type get() = PredicateType.Assume()
