@@ -27,18 +27,16 @@ class NullityAnnotator(private val nonNulls: Set<Term> = setOf()) : Recollecting
             builders.pollLast()
         }
         currentBuilder += newChoices
-        annotatedTerms = choiceAnnotatedTerms.asSequence()
+        annotatedTerms = choiceAnnotatedTerms
             .flatten()
             .toSet()
-            .filter { term -> choiceAnnotatedTerms.all { term in it } }
-            .toHashSet()
+            .filterTo(hashSetOf()) { term -> choiceAnnotatedTerms.all { term in it } }
         return ps
     }
 
     override fun transformBase(predicate: Predicate): Predicate {
         currentBuilder += predicate
         val predicateTerms = TermCollector.getFullTermSet(predicate)
-            .asSequence()
             .filter { it in nonNulls }
             .filterTo(mutableSetOf()) { it !in annotatedTerms }
         for (term in predicateTerms) {

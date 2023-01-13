@@ -168,7 +168,7 @@ class ClassCoverageInfo(
         if (detailed) {
             methods.forEach {
                 appendLine()
-                appendLine(it.print(detailed))
+                appendLine(it.print(true))
             }
         }
     }
@@ -193,7 +193,7 @@ class PackageCoverageInfo(
     override fun print(detailed: Boolean) = buildString {
         if (detailed) {
             classes.forEach {
-                appendLine(it.print(detailed))
+                appendLine(it.print(true))
             }
         }
         appendLine(this@PackageCoverageInfo.toString())

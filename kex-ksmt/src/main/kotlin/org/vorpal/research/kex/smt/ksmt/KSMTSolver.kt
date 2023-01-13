@@ -27,6 +27,8 @@ import org.vorpal.research.kthelper.assert.unreachable
 import org.vorpal.research.kthelper.logging.debug
 import org.vorpal.research.kthelper.logging.log
 import kotlin.math.log2
+import kotlin.reflect.full.declaredMemberProperties
+import kotlin.reflect.jvm.isAccessible
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.ExperimentalTime
 
@@ -128,7 +130,19 @@ class KSMTSolver(private val tf: TypeFactory) : AbstractSMTSolver, AbstractAsync
         log.debug("Running KSMT solver")
         if (printSMTLib) {
             log.debug("SMTLib formula:")
-            log.debug(solver.toString())
+            log.debug(
+                KZ3Solver(ef.ctx).use {
+                    it.assert(state.asAxiom() as KExpr<KBoolSort>)
+                    it.assert(ef.buildConstClassAxioms().asAxiom() as KExpr<KBoolSort>)
+                    it.assert(query.axiom)
+                    it.assert(query.expr)
+
+                    val solverProp = KZ3Solver::class.declaredMemberProperties.first { prop -> prop.name == "solver" }
+                    solverProp.isAccessible = true
+                    val z3SolverInternal = solverProp.get(it) as com.microsoft.z3.Solver
+                    z3SolverInternal.toString()
+                }
+            )
         }
         val result = solver.checkAsync(timeout.seconds)
         log.debug("Solver finished")
@@ -374,7 +388,7 @@ class KSMTSolver(private val tf: TypeFactory) : AbstractSMTSolver, AbstractAsync
 //                        strings.getValue(memspace).first[modelPtr] = startStringVal
 //                        strings.getValue(memspace).second[modelPtr] = stringVal
                     } else if (ptr.type.isArray) {
-                        val (_, endLength) = properties.recoverProperty(
+                        val (startLength, endLength) = properties.recoverProperty(
                             ctx,
                             ptr,
                             memspace,
@@ -382,14 +396,20 @@ class KSMTSolver(private val tf: TypeFactory) : AbstractSMTSolver, AbstractAsync
                             model,
                             "length"
                         )
-                        var maxLen = endLength.numericValue.toInt()
+                        var (initialLength, finalLength) = (startLength.numericValue.toInt() to endLength.numericValue.toInt())
                         // this is fucked up
-                        if (maxLen > maxArrayLength) {
-                            log.warn("Reanimated length of an array is too big: $maxLen")
-                            maxLen = maxArrayLength
+                        if (initialLength > maxArrayLength) {
+                            log.warn("Reanimated length of an array is too big: $initialLength")
+                            initialLength = maxArrayLength
                         }
-                        properties[memspace]!!["length"]!!.first[modelPtr] = term { const(maxLen) }
-                        properties[memspace]!!["length"]!!.second[modelPtr] = term { const(maxLen) }
+                        // this is fucked up
+                        if (finalLength > maxArrayLength) {
+                            log.warn("Reanimated length of an array is too big: $finalLength")
+                            finalLength = maxArrayLength
+                        }
+                        val maxLen = maxOf(initialLength, finalLength)
+                        properties[memspace]!!["length"]!!.first[modelPtr] = term { const(initialLength) }
+                        properties[memspace]!!["length"]!!.second[modelPtr] = term { const(finalLength) }
                         for (i in 0 until maxLen) {
                             val indexTerm = term { ptr[i] }
                             if (indexTerm !in ptrs)

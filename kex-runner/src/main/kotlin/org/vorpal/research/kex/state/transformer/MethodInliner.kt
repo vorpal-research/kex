@@ -43,8 +43,8 @@ interface Inliner<T> : RecollectingTransformer<Inliner<T>> {
             mappings[`this`] = callTerm.owner
         }
         if (returnTerm != null) {
-            val retval = term { `return`(method) }
-            mappings[retval] = returnTerm
+            val returnValue = term { `return`(method) }
+            mappings[returnValue] = returnTerm
         }
 
         for ((index, argType) in method.argTypes.withIndex()) {
@@ -148,7 +148,7 @@ class RecursiveConstructorInliner(
 class RecursiveInliner<T>(
     override val psa: PredicateStateAnalysis,
     override val inlineSuffix: String = "recursive",
-    val maxDepth: Int = defaultDepth,
+    private val maxDepth: Int = defaultDepth,
     val inlinerBuilder: (Int, PredicateStateAnalysis) -> Inliner<T>
 ) : Inliner<RecursiveInliner<T>> {
     override var inlineIndex = 0

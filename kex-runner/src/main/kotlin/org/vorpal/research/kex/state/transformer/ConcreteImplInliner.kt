@@ -15,11 +15,13 @@ import org.vorpal.research.kfg.ir.Method
 import org.vorpal.research.kfg.type.TypeFactory
 import org.vorpal.research.kthelper.collection.dequeOf
 
-class ConcreteImplInliner(val types: TypeFactory,
-                          val typeInfoMap: TypeInfoMap,
-                          override val psa: PredicateStateAnalysis,
-                          override val inlineSuffix: String = "concrete.inlined",
-                          override var inlineIndex: Int = 0) : Inliner<ConcreteImplInliner> {
+class ConcreteImplInliner(
+    val types: TypeFactory,
+    private val typeInfoMap: TypeInfoMap,
+    override val psa: PredicateStateAnalysis,
+    override val inlineSuffix: String = "concrete.inlined",
+    override var inlineIndex: Int = 0
+) : Inliner<ConcreteImplInliner> {
     override val builders = dequeOf(StateBuilder())
     override var hasInlined: Boolean = false
 
@@ -57,7 +59,7 @@ class ConcreteImplInliner(val types: TypeFactory,
         var (casts, mappings) = buildMappings(call, inlinedMethod, predicate.lhvUnsafe)
 
         val callerClass = when (val kexType = call.owner.type) {
-            is KexClass ->  kexType.kfgClass(types)
+            is KexClass -> kexType.kfgClass(types)
             else -> return predicate //unreachable { log.error("Unknown call owner $kexType") }
         }
         var castPredicate: Predicate? = null
@@ -80,12 +82,14 @@ class ConcreteImplInliner(val types: TypeFactory,
     }
 }
 
-class AliasingConcreteImplInliner(val types: TypeFactory,
-                                  val typeInfoMap: TypeInfoMap,
-                                  val aa: AliasAnalysis,
-                                  override val psa: PredicateStateAnalysis,
-                                  override val inlineSuffix: String = "aliasing.inlined",
-                                  override var inlineIndex: Int = 0) : Inliner<ConcreteImplInliner> {
+class AliasingConcreteImplInliner(
+    val types: TypeFactory,
+    private val typeInfoMap: TypeInfoMap,
+    private val aa: AliasAnalysis,
+    override val psa: PredicateStateAnalysis,
+    override val inlineSuffix: String = "aliasing.inlined",
+    override var inlineIndex: Int = 0
+) : Inliner<ConcreteImplInliner> {
     override val im = MethodManager.InlineManager
     override val builders = dequeOf(StateBuilder())
     override var hasInlined: Boolean = false

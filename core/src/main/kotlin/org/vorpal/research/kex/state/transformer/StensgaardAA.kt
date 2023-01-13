@@ -191,7 +191,25 @@ class StensgaardAA : Transformer<StensgaardAA>, AliasAnalysis, Viewable {
         return predicate
     }
 
+    override fun transformNewArrayInitializerPredicate(predicate: NewArrayInitializerPredicate): Predicate {
+        nonAliased.add(predicate.lhv)
+        nonFreeTerms.add(predicate.lhv)
+
+        val ls = get(predicate.lhv)
+        pointsTo[ls] = quasi()
+        return predicate
+    }
+
     override fun transformNewPredicate(predicate: NewPredicate): Predicate {
+        nonAliased.add(predicate.lhv)
+        nonFreeTerms.add(predicate.lhv)
+
+        val ls = get(predicate.lhv)
+        pointsTo[ls] = quasi()
+        return predicate
+    }
+
+    override fun transformNewInitializerPredicate(predicate: NewInitializerPredicate): Predicate {
         nonAliased.add(predicate.lhv)
         nonFreeTerms.add(predicate.lhv)
 

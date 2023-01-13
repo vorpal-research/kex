@@ -10,7 +10,7 @@ import org.vorpal.research.kfg.classClass
 import org.vorpal.research.kfg.objectClass
 
 class ClassAdapter(val cm: ClassManager) : Transformer<ClassAdapter> {
-    val getClassMethod = cm.objectClass.getMethod("getClass", cm.classClass.type)
+    private val getClassMethod = cm.objectClass.getMethod("getClass", cm.classClass.type)
 
     override fun transformCallPredicate(predicate: CallPredicate): Predicate {
         val call = predicate.call as CallTerm

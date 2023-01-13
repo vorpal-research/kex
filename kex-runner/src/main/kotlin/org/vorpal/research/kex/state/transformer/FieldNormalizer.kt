@@ -12,7 +12,7 @@ import org.vorpal.research.kthelper.tryOrNull
 
 class FieldNormalizer(
     val cm: ClassManager,
-    val prefix: String = ".normalized"
+    private val prefix: String = ".normalized"
 ) : RecollectingTransformer<FieldNormalizer> {
     val types get() = cm.type
     override val builders = dequeOf(StateBuilder())

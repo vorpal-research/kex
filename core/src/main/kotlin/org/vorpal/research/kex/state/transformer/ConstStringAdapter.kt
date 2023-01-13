@@ -1,5 +1,6 @@
 package org.vorpal.research.kex.state.transformer
 
+import org.vorpal.research.kex.asm.manager.MethodManager
 import org.vorpal.research.kex.ktype.*
 import org.vorpal.research.kex.state.PredicateState
 import org.vorpal.research.kex.state.StateBuilder
@@ -25,16 +26,16 @@ class ConstStringAdapter(
 
     private fun buildStr(string: String): PredicateState = basic {
         val strTerm = generate(KexString())
-        state { strTerm.new() }
+        state { strTerm.initializeNew() }
 
         val charArray = KexArray(KexChar)
         val valueArray = generate(charArray)
-        state { valueArray.new(string.length) }
+        state { valueArray.initializeNew(string.length) }
         for ((index, char) in string.withIndex()) {
-            state { valueArray[index].store(const(char)) }
+            state { valueArray[index].initialize(const(char)) }
         }
 
-        state { strTerm.field(charArray, "value").store(valueArray) }
+        state { strTerm.field(charArray, "value").initialize(valueArray) }
         strings[string] = strTerm
     }
 
@@ -143,15 +144,15 @@ class TypeNameAdapter(
 
     private fun buildStr(string: String): PredicateState = basic {
         val strTerm = generate(KexString())
-        state { strTerm.new() }
+        state { strTerm.initializeNew() }
 
         val charArray = KexArray(KexChar)
         val valueArray = generate(charArray)
-        state { valueArray.new(string.length) }
+        state { valueArray.initializeNew(string.length) }
         for ((index, char) in string.withIndex()) {
-            state { valueArray[index].store(const(char)) }
+            state { valueArray[index].initialize(const(char)) }
         }
 
-        state { strTerm.field(charArray, "value").store(valueArray) }
+        state { strTerm.field(charArray, "value").initialize(valueArray) }
     }
 }

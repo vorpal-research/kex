@@ -23,6 +23,14 @@ private typealias Context_ = ${solver}Context
 class ${solver}Converter(val tf: TypeFactory) : ${solver}SMTConverter() {
     private val bounds = dequeOf< Map< Term, Dynamic_ >>()
     private val axiomedTerms = mutableSetOf< Term >()
+    private var noAxioms = false
+
+    private inline fun < reified T: Dynamic_ > withNoAxioms(body: KSMTConverter.()-> T): T {
+        noAxioms = true
+        val res = this.body()
+        noAxioms = false
+        return res
+    }
 
     enum class TermType {
         LOCAL_PTR,
@@ -67,6 +75,61 @@ class ${solver}Converter(val tf: TypeFactory) : ${solver}SMTConverter() {
                         ef.makeTrue()
                     )
             )
+        return resultExpr
+    }
+
+    private fun Term.withInitialAxioms(expr: Dynamic_, ef: Factory_, ctx: Context_): Dynamic_ {
+        if (this in axiomedTerms) return expr
+        var resultExpr = expr
+        when (this.type) {
+            is KexPointer -> {
+                resultExpr = resultExpr.withAxiom(resultExpr ge ef.makeIntConst(0))
+                val typeVar = ctx.readBitvectorInitialProperty(expr as Ptr_, this.memspace, "type")
+                val kfgType = this.type.getKfgType(tf)
+                var typeCond: Bool_? = null
+                if (kfgType.isConcrete && kfgType !is NullType) {
+                    val isPowerOfTwo = (typeVar and (typeVar - ef.makeBitvectorConst("1", 2, ef.typeWidth))) eq ef.makeBitvectorConst("0", 2, ef.typeWidth)
+                    val isSubtype = (typeVar and ef.getSubTypeMask(kfgType)) eq typeVar
+                    val isGreaterThanZero = typeVar neq ef.makeBitvectorConst("0", 2, ef.typeWidth)
+                    typeCond = isSubtype and isPowerOfTwo and isGreaterThanZero
+                }
+                typeCond?.apply {
+                    resultExpr = resultExpr.withAxiom((expr neq ef.makeNull()) implies this)
+                }
+                if (this.type is KexArray) {
+                    val lengthVar = ctx.readWordInitialProperty(expr, this.memspace, "length")
+                    val componentTypeVar = ef.getSubTypeMask((this.type as KexArray).element.getKfgType(tf))
+                    resultExpr = resultExpr
+                        .withAxiom(lengthVar ge ef.makeIntConst(0))
+                    if ((this.type as KexArray).element is KexPointer)
+                        resultExpr = resultExpr
+                            .withAxiom(
+                                ef.forAll(
+                                    { listOf(ef.makeIntConst(0)) },
+                                    { args ->
+                                        val index = Int_.forceCast(args[0])
+                                        `if`((index ge ef.makeIntConst(0)) and (index lt lengthVar))
+                                        .then(run {
+                                            val array = ctx.readArrayInitialMemory(expr, this.memspace)
+                                            val element = array.load(Int_.forceCast(index))
+                                            val elementTypeVar = ctx.readBitvectorInitialProperty(Ptr_.forceCast(element), this.memspace, "type")
+                                            (elementTypeVar and componentTypeVar) eq elementTypeVar
+                                        })
+                                        .`else`(
+                                            ef.makeTrue()
+                                        )
+                                    }
+                                )
+                            )
+                } else if (this.type == KexJavaClass()) {
+                    val typeIndex = ctx.readBitvectorInitialProperty(expr, this.memspace, "${ this.type }.${ ConstClassTerm.TYPE_INDEX_PROPERTY }")
+                    val name = ctx.readWordInitialProperty(expr, this.memspace, "${ this.type }.${ ConstClassTerm.NAME_PROPERTY }")
+                    val modifiers = ctx.readWordInitialProperty(expr, this.memspace, "${ this.type }.${ ConstClassTerm.MODIFIERS_PROPERTY }")
+                    resultExpr = resultExpr.withAxiom(ef.addClassNameAxioms(typeIndex, name))
+                    resultExpr = resultExpr.withAxiom(ef.addClassModifiersAxioms(typeIndex, modifiers))
+                }
+            }
+        }
         return resultExpr
     }
 
@@ -203,7 +266,7 @@ class ${solver}Converter(val tf: TypeFactory) : ${solver}SMTConverter() {
     }
 
 #set($predicates = ["ArrayInitializer", "ArrayStore", "Call", "Catch", "DefaultSwitch", "Inequality", "EnterMonitor",
-    "Equality", "ExitMonitor", "FieldInitializer", "FieldStore", "GenerateArray", "NewArray", "New", "Throw"])
+    "Equality", "ExitMonitor", "FieldInitializer", "FieldStore", "GenerateArray", "NewArray", "New", "NewArrayInitializer", "NewInitializer", "Throw"])
     fun convert(predicate: Predicate, ef: Factory_, ctx: Context_): Bool_ = when (predicate) {
 #foreach($predicate in $predicates)
         is ${predicate}Predicate -> convert(predicate, ef, ctx)
@@ -211,7 +274,7 @@ class ${solver}Converter(val tf: TypeFactory) : ${solver}SMTConverter() {
         else -> unreachable { log.error("Unknown predicate: ${ predicate }") }
     }
 
-    fun convert(store: ArrayInitializerPredicate, ef: Factory_, ctx: Context_): Bool_ {
+    fun convert(store: ArrayInitializerPredicate, ef: Factory_, ctx: Context_): Bool_ = withNoAxioms {
         val indexTerm = store.arrayRef as? ArrayIndexTerm
             ?: unreachable { log.error("Non-index term in `initializer`") }
         val memspace = indexTerm.arrayRef.memspace
@@ -223,7 +286,7 @@ class ${solver}Converter(val tf: TypeFactory) : ${solver}SMTConverter() {
         var array = ctx.readArrayInitialMemory(ptr, memspace)
         array = array.store(listOf(index to DWord_.forceCast(value)))
         ctx.initializeArrayMemory(ptr, memspace, array)
-        return value.axiomExpr()
+        ptr.axiomExpr() and value.axiomExpr()
     }
 
     fun convert(store: ArrayStorePredicate, ef: Factory_, ctx: Context_): Bool_ {
@@ -238,7 +301,7 @@ class ${solver}Converter(val tf: TypeFactory) : ${solver}SMTConverter() {
         var array = ctx.readArrayMemory(ptr, memspace)
         array = array.store(listOf(index to DWord_.forceCast(value)))
         ctx.writeArrayMemory(ptr, memspace, array)
-        return value.axiomExpr()
+        return ptr.axiomExpr() and value.axiomExpr()
     }
 
     fun convert(call: CallPredicate, ef: Factory_, ctx: Context_): Bool_ = ef.makeTrue()
@@ -270,7 +333,7 @@ class ${solver}Converter(val tf: TypeFactory) : ${solver}SMTConverter() {
         return lhv eq rhv
     }
 
-    fun convert(store: FieldInitializerPredicate, ef: Factory_, ctx: Context_): Bool_ {
+    fun convert(store: FieldInitializerPredicate, ef: Factory_, ctx: Context_): Bool_ = withNoAxioms {
         val value = convert(store.value, ef, ctx)
         val memspace = store.field.memspace
         val ptr = convert(store.field, ef, ctx) as? Ptr_ ?: unreachable { log.error("Non-ptr ref in field load") }
@@ -283,7 +346,7 @@ class ${solver}Converter(val tf: TypeFactory) : ${solver}SMTConverter() {
             TypeSize.WORD -> ctx.initializeWordProperty(ptr, memspace, "${ klass }.${ name }", Word_.forceCast(value))
             TypeSize.DWORD -> ctx.initializeDWordProperty(ptr, memspace, "${ klass }.${ name }", DWord_.forceCast(value))
         }
-        return value.axiomExpr()
+        ptr.axiomExpr() and value.axiomExpr()
     }
 
     fun convert(store: FieldStorePredicate, ef: Factory_, ctx: Context_): Bool_ {
@@ -299,7 +362,7 @@ class ${solver}Converter(val tf: TypeFactory) : ${solver}SMTConverter() {
             TypeSize.WORD -> ctx.writeWordProperty(ptr, memspace, "${ klass }.${ name }", Word_.forceCast(value))
             TypeSize.DWORD -> ctx.writeDWordProperty(ptr, memspace, "${ klass }.${ name }", DWord_.forceCast(value))
         }
-        return value.axiomExpr()
+        return ptr.axiomExpr() and value.axiomExpr()
     }
 
     fun convert(generateArray: GenerateArrayPredicate, ef: Factory_, ctx: Context_): Bool_ {
@@ -364,6 +427,31 @@ class ${solver}Converter(val tf: TypeFactory) : ${solver}SMTConverter() {
         return lhv.withPtrAxioms(ef, ctx, TermType.LOCAL_PTR) eq ctx.getLocalPtr(memspace)
     }
 
+    fun convert(newarray: NewArrayInitializerPredicate, ef: Factory_, ctx: Context_): Bool_ = withNoAxioms {
+        val memspace = newarray.lhv.memspace
+        val lhv = convert(newarray.lhv, ef, ctx) as? Ptr_ ?: unreachable { log.error("Non-ptr term in `new`") }
+
+        val length = Int_.forceCast(convert(newarray.dimensions.fold(term { const(1) }) { acc: Term, term: Term -> term { acc * term} }, ef, ctx))
+        val ptr = ctx.getInitialLocalArray(memspace, length)
+        val array = ef.makeDefaultArray(newarray.lhv.name, ef.makeLongConst(0))
+        ctx.initializeArrayMemory(lhv, memspace, array)
+
+        val typeVar = ef.getTypeVar(newarray.lhv.type.getKfgType(tf))
+        ctx.initializeBitvectorProperty(lhv, memspace, "type", typeVar)
+
+        val lengthProperty = ctx.readWordInitialProperty(lhv, memspace, "length")
+        newarray.lhv.withInitialAxioms(lhv.withAxiom(lengthProperty ge ef.makeIntConst(0)).withAxiom(lhv neq ef.makeNull()), ef, ctx) eq ptr
+    }
+
+    fun convert(new: NewInitializerPredicate, ef: Factory_, ctx: Context_): Bool_ = withNoAxioms {
+        val memspace = new.lhv.memspace
+        val lhv = convert(new.lhv, ef, ctx) as? Ptr_ ?: unreachable { log.error("Non-ptr term in `new`") }
+
+        val typeVar = ef.getTypeVar(new.lhv.type.getKfgType(tf))
+        ctx.initializeBitvectorProperty(lhv, memspace, "type", typeVar)
+        new.lhv.withInitialAxioms(lhv.withAxiom(lhv neq ef.makeNull()), ef, ctx) eq ctx.getInitialLocalPtr(memspace)
+    }
+
 #set($terms = ["Argument", "ArrayContains", "ArrayIndex", "ArrayLength", "ArrayLoad", "Binary", "Call", "Cast", "ClassAccess", "CharAt",
     "Cmp", "Concat", "ConstBool", "ConstByte", "ConstChar", "ConstClass", "StaticClassRef", "ConstDouble", "ConstFloat", "ConstInt", "ConstLong",
     "ConstShort", "ConstString", "EndsWith", "Equals", "Exists", "IndexOf", "StartsWith", "StringContains", "StringLength",
@@ -378,6 +466,7 @@ class ${solver}Converter(val tf: TypeFactory) : ${solver}SMTConverter() {
 
     fun convert(argument: ArgumentTerm, ef: Factory_, ctx: Context_): Dynamic_ {
         val expr = ef.getVarByTypeAndName(argument.type, argument.name)
+        if (noAxioms) return expr
         var res = argument.withAxioms(expr, ef, ctx)
         if (argument.type is KexPointer) {
             res = res.withPtrAxioms(ef, ctx, TermType.OUTER_PTR)
@@ -547,6 +636,7 @@ class ${solver}Converter(val tf: TypeFactory) : ${solver}SMTConverter() {
     fun convert(const: ConstClassTerm, ef: Factory_, ctx: Context_): Dynamic_ {
         val expr = ef.getVarByTypeAndName(const.type, const.name)
         ef.addKlassPtr(const.constantType, expr as Ptr_)
+        if (noAxioms) return expr
 
         val typeIndex = ctx.readBitvectorProperty(expr, const.memspace, "${ const.type }.${ ConstClassTerm.TYPE_INDEX_PROPERTY }")
         var res = const.withAxioms(expr, ef, ctx)
@@ -558,6 +648,7 @@ class ${solver}Converter(val tf: TypeFactory) : ${solver}SMTConverter() {
 
     fun convert(const: StaticClassRefTerm, ef: Factory_, ctx: Context_): Dynamic_ {
         val expr = ef.getVarByTypeAndName(const.type, const.name)
+        if (noAxioms) return expr
         var res = const.withAxioms(expr, ef, ctx)
         res = res.withPtrAxioms(ef, ctx, TermType.STATIC_PTR)
         return res.withAxiom(res neq ef.makeNull())
@@ -821,6 +912,7 @@ class ${solver}Converter(val tf: TypeFactory) : ${solver}SMTConverter() {
 
     fun convert(`return`: ReturnValueTerm, ef: Factory_, ctx: Context_): Dynamic_ {
         val expr = ef.getVarByTypeAndName(`return`.type, `return`.name)
+        if (noAxioms) return expr
         return `return`.withAxioms(expr, ef, ctx)
     }
 
@@ -829,6 +921,7 @@ class ${solver}Converter(val tf: TypeFactory) : ${solver}SMTConverter() {
             if (value in map) return map[value]!!;
         }
         val expr = ef.getVarByTypeAndName(value.type, value.name)
+        if (noAxioms) return expr
         var res = value.withAxioms(expr, ef, ctx)
         if (value.name == "this") {
             res = res.withPtrAxioms(ef, ctx, TermType.OUTER_PTR)
@@ -838,6 +931,7 @@ class ${solver}Converter(val tf: TypeFactory) : ${solver}SMTConverter() {
 
     fun convert(undef: UndefTerm, ef: Factory_, ctx: Context_): Dynamic_ {
         val expr = ef.getVarByTypeAndName(undef.type, undef.name, true)
+        if (noAxioms) return expr
         return undef.withAxioms(expr, ef, ctx)
     }
 }

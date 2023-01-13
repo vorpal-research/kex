@@ -1,10 +1,7 @@
 package org.vorpal.research.kex.state.transformer
 
 import org.vorpal.research.kex.ExecutionContext
-import org.vorpal.research.kex.ktype.KexInt
-import org.vorpal.research.kex.ktype.KexReference
-import org.vorpal.research.kex.ktype.KexString
-import org.vorpal.research.kex.ktype.KexType
+import org.vorpal.research.kex.ktype.*
 import org.vorpal.research.kex.state.PredicateState
 import org.vorpal.research.kex.state.StateBuilder
 import org.vorpal.research.kex.state.basic
@@ -44,11 +41,14 @@ class ConstEnumAdapter(val context: ExecutionContext) : RecollectingTransformer<
     private fun prepareEnumConstants(ps: PredicateState): Map<KexType, Set<Term>> {
         val enumClasses = TermCollector
             .getFullTermSet(ps)
-            .asSequence()
-            .filterIsInstance<FieldTerm>()
-            .map { it.owner }
-            .filterIsInstance<StaticClassRefTerm>()
-            .filterTo(mutableSetOf()) { it.isEnum }
+            .mapNotNullTo(mutableSetOf()) {
+                val kfgType = it.type.getKfgType(context.types)
+                when {
+                    kfgType is ClassType && kfgType.klass.isEnum -> kfgType.kexType
+                    else -> null
+                }
+            }
+            .mapTo(mutableSetOf()) { term { staticRef(it as KexClass) } }
 
         val enumFields = mutableMapOf<KexType, Set<Term>>()
 
@@ -64,17 +64,15 @@ class ConstEnumAdapter(val context: ExecutionContext) : RecollectingTransformer<
 
                     currentBuilder += basic {
                         val enumLoad = generate(staticClass.type)
+                        state { enumLoad.initializeNew() }
                         state {
-                            enumLoad equality enumFieldTerm.load()
-                        }
-                        axiom {
-                            enumLoad inequality null
+                            enumLoad.field(KexString(), "name").initialize(const(enumName))
                         }
                         state {
-                            enumLoad.field(KexString(), "name").store(const(enumName))
+                            enumLoad.field(KexInt, "ordinal").initialize(const(enumOrdinal))
                         }
                         state {
-                            enumLoad.field(KexInt, "ordinal").store(const(enumOrdinal))
+                            enumFieldTerm.initialize(enumLoad)
                         }
                         fields += enumLoad
                     }

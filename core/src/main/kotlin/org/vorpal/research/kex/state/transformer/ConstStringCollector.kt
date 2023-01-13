@@ -8,7 +8,7 @@ import org.vorpal.research.kex.state.term.*
 
 class ConstStringCollector : Transformer<ConstStringCollector> {
     val strings = mutableMapOf<Term, MutableList<Char>>()
-    val charArrays = mutableMapOf<Term, MutableList<Char>>()
+    private val charArrays = mutableMapOf<Term, MutableList<Char>>()
 
     override fun transformNewPredicate(predicate: NewPredicate): Predicate {
         if (predicate.lhv.type == KexString()) {
@@ -17,11 +17,31 @@ class ConstStringCollector : Transformer<ConstStringCollector> {
         return super.transformNewPredicate(predicate)
     }
 
+    override fun transformNewInitializerPredicate(predicate: NewInitializerPredicate): Predicate {
+        if (predicate.lhv.type == KexString()) {
+            strings[predicate.lhv] = mutableListOf()
+        }
+        return super.transformNewInitializerPredicate(predicate)
+    }
+
     override fun transformNewArray(predicate: NewArrayPredicate): Predicate {
-        if (predicate.elementType is KexChar && predicate.numDimensions == 1 && predicate.dimensions.first() is ConstIntTerm) {
+        if (predicate.elementType is KexChar
+            && predicate.numDimensions == 1
+            && predicate.dimensions.first() is ConstIntTerm
+        ) {
             charArrays[predicate.lhv] = MutableList(predicate.dimensions.first().numericValue.toInt()) { ' ' }
         }
         return super.transformNewArray(predicate)
+    }
+
+    override fun transformNewArrayInitializer(predicate: NewArrayInitializerPredicate): Predicate {
+        if (predicate.elementType is KexChar
+            && predicate.numDimensions == 1
+            && predicate.dimensions.first() is ConstIntTerm
+        ) {
+            charArrays[predicate.lhv] = MutableList(predicate.dimensions.first().numericValue.toInt()) { ' ' }
+        }
+        return super.transformNewArrayInitializer(predicate)
     }
 
     override fun transformFieldStorePredicate(predicate: FieldStorePredicate): Predicate {
@@ -32,12 +52,36 @@ class ConstStringCollector : Transformer<ConstStringCollector> {
         return super.transformFieldStorePredicate(predicate)
     }
 
+    override fun transformFieldInitializerPredicate(predicate: FieldInitializerPredicate): Predicate {
+        val field = predicate.field as FieldTerm
+        if (field.owner in strings && predicate.value in charArrays) {
+            strings[field.owner] = charArrays[predicate.value]!!
+        }
+        return super.transformFieldInitializerPredicate(predicate)
+    }
+
     override fun transformArrayStore(predicate: ArrayStorePredicate): Predicate {
         val arrayIndex = predicate.arrayRef as ArrayIndexTerm
-        if (arrayIndex.arrayRef in charArrays && arrayIndex.index is ConstIntTerm && predicate.value is ConstCharTerm) {
-            charArrays[arrayIndex.arrayRef]!![arrayIndex.index.numericValue.toInt()] = predicate.value.numericValue.toChar()
+        if (arrayIndex.arrayRef in charArrays
+            && arrayIndex.index is ConstIntTerm
+            && predicate.value is ConstCharTerm
+        ) {
+            charArrays[arrayIndex.arrayRef]!![arrayIndex.index.numericValue.toInt()] =
+                predicate.value.numericValue.toChar()
         }
         return super.transformArrayStore(predicate)
+    }
+
+    override fun transformArrayInitializer(predicate: ArrayInitializerPredicate): Predicate {
+        val arrayIndex = predicate.arrayRef as ArrayIndexTerm
+        if (arrayIndex.arrayRef in charArrays
+            && arrayIndex.index is ConstIntTerm
+            && predicate.value is ConstCharTerm
+        ) {
+            charArrays[arrayIndex.arrayRef]!![arrayIndex.index.numericValue.toInt()] =
+                predicate.value.numericValue.toChar()
+        }
+        return super.transformArrayInitializer(predicate)
     }
 
 }

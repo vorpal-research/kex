@@ -218,4 +218,15 @@ class $factory : ${solver}SMTExprFactory() {
         sortGen: () -> List< Dynamic_ >,
         func: (List< Dynamic_ >) -> Dynamic_
     ): Dynamic_ = lambda(ctx, elementSortGen, sortGen, func)
+
+    inline fun < reified T : Bitvector_ > maxOf(lhv: T, rhv: T) = `if`(lhv gt rhv).then(lhv).`else`(rhv)
+
+    inline fun < reified T : Bitvector_ > maxOfOrNull(values: List< T >): T? {
+        if (values.isEmpty()) return null
+        var result = values[0]
+        for (index in 1..values.lastIndex) {
+            result = `if`(result gt values[index]).then(result).`else`(values[index])
+        }
+        return result
+    }
 }

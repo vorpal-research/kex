@@ -32,5 +32,5 @@ class ArgumentCollector : Transformer<ArgumentCollector> {
 fun collectArguments(ps: PredicateState): Pair<ValueTerm?, Map<Int, ArgumentTerm>> {
     val collector = ArgumentCollector()
     collector.apply(ps)
-    return collector.thisTerm to collector.arguments.toMap()
+    return collector.thisTerm to collector.arguments
 }

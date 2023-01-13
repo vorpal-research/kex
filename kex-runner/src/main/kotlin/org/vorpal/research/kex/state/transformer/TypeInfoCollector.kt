@@ -75,9 +75,12 @@ class TypeInfoMap(val inner: Map<Term, Set<TypeInfo>> = hashMapOf()) : Map<Term,
     }
 }
 
-class TypeInfoCollector(val model: SMTModel, val tf: TypeFactory) : Transformer<TypeInfoCollector> {
+class TypeInfoCollector(
+    val model: SMTModel,
+    private val tf: TypeFactory
+) : Transformer<TypeInfoCollector> {
     private val typeInfos = mutableMapOf<Term, MutableMap<TypeInfo, PredicateState>>()
-    private val cfgt = CFGTracker()
+    private val cfgTracker = CFGTracker()
 
     val infos: TypeInfoMap
         get() = TypeInfoMap.create(
@@ -113,12 +116,12 @@ class TypeInfoCollector(val model: SMTModel, val tf: TypeFactory) : Transformer<
     }
 
     override fun apply(ps: PredicateState): PredicateState {
-        cfgt.apply(ps)
+        cfgTracker.apply(ps)
         return super.apply(ps)
     }
 
     override fun transformEquality(predicate: EqualityPredicate): Predicate {
-        val condition = cfgt.getDominatingPaths(predicate)
+        val condition = cfgTracker.getDominatingPaths(predicate)
         when (val rhv = predicate.rhv) {
             is InstanceOfTerm -> {
                 val checkedType = CastTypeInfo(rhv.checkedType)
@@ -157,7 +160,7 @@ class TypeInfoCollector(val model: SMTModel, val tf: TypeFactory) : Transformer<
         when (predicate.rhv) {
             is NullTerm -> {
                 val nullability = NullabilityInfo(Nullability.NON_NULLABLE)
-                val condition = cfgt.getDominatingPaths(predicate)
+                val condition = cfgTracker.getDominatingPaths(predicate)
                 val lhv = predicate.lhv
 
                 val typeInfo = typeInfos.getOrPut(lhv, ::mutableMapOf)
@@ -169,27 +172,29 @@ class TypeInfoCollector(val model: SMTModel, val tf: TypeFactory) : Transformer<
     }
 
     override fun transformFieldInitializer(predicate: FieldInitializerPredicate): Predicate {
-        copyInfos(predicate.value, predicate.field, cfgt.getDominatingPaths(predicate))
+        copyInfos(predicate.value, predicate.field, cfgTracker.getDominatingPaths(predicate))
         return super.transformFieldInitializer(predicate)
     }
 
     override fun transformFieldStore(predicate: FieldStorePredicate): Predicate {
-        copyInfos(predicate.value, predicate.field, cfgt.getDominatingPaths(predicate))
+        copyInfos(predicate.value, predicate.field, cfgTracker.getDominatingPaths(predicate))
         return super.transformFieldStore(predicate)
     }
 
     override fun transformArrayInitializer(predicate: ArrayInitializerPredicate): Predicate {
-        copyInfos(predicate.value, predicate.arrayRef, cfgt.getDominatingPaths(predicate))
+        copyInfos(predicate.value, predicate.arrayRef, cfgTracker.getDominatingPaths(predicate))
         return super.transformArrayInitializer(predicate)
     }
 
     override fun transformArrayStore(predicate: ArrayStorePredicate): Predicate {
-        copyInfos(predicate.value, predicate.arrayRef, cfgt.getDominatingPaths(predicate))
+        copyInfos(predicate.value, predicate.arrayRef, cfgTracker.getDominatingPaths(predicate))
         return super.transformArrayStore(predicate)
     }
 }
 
-class PlainTypeInfoCollector(val tf: TypeFactory) : Transformer<TypeInfoCollector> {
+class PlainTypeInfoCollector(
+    private val tf: TypeFactory
+) : Transformer<TypeInfoCollector> {
     private val typeInfos = mutableMapOf<Term, MutableSet<TypeInfo>>()
 
     val infos: TypeInfoMap
@@ -234,7 +239,7 @@ class PlainTypeInfoCollector(val tf: TypeFactory) : Transformer<TypeInfoCollecto
 }
 
 class StaticTypeInfoCollector(
-    val tf: TypeFactory,
+    private val tf: TypeFactory,
     tip: TypeInfoMap = TypeInfoMap()
 ) : Transformer<StaticTypeInfoCollector> {
     val typeInfoMap = tip.toMap().toMutableMap()
@@ -253,18 +258,31 @@ class StaticTypeInfoCollector(
         return super.transformNewPredicate(predicate)
     }
 
+    override fun transformNewInitializerPredicate(predicate: NewInitializerPredicate): Predicate {
+        if (predicate.lhv !in typeInfoMap) {
+            typeInfoMap[predicate.lhv] = predicate.lhv.type
+        }
+        return super.transformNewInitializerPredicate(predicate)
+    }
+
     override fun transformNewArrayPredicate(predicate: NewArrayPredicate): Predicate {
         if (predicate.lhv !in typeInfoMap) {
             typeInfoMap[predicate.lhv] = predicate.lhv.type
         }
         return super.transformNewArrayPredicate(predicate)
     }
+
+    override fun transformNewArrayInitializerPredicate(predicate: NewArrayInitializerPredicate): Predicate {
+        if (predicate.lhv !in typeInfoMap) {
+            typeInfoMap[predicate.lhv] = predicate.lhv.type
+        }
+        return super.transformNewArrayInitializerPredicate(predicate)
+    }
 }
 
 fun collectStaticTypeInfo(tf: TypeFactory, state: PredicateState, tip: TypeInfoMap = TypeInfoMap()): TypeInfoMap {
-    val stic = StaticTypeInfoCollector(tf, tip)
-    stic.apply(state)
-    return TypeInfoMap.create(stic.typeInfoMap)
+    val typeInfoCollector = StaticTypeInfoCollector(tf, tip).also { it.apply(state) }
+    return TypeInfoMap.create(typeInfoCollector.typeInfoMap)
 }
 
 fun collectTypeInfos(model: SMTModel, tf: TypeFactory, ps: PredicateState): TypeInfoMap {

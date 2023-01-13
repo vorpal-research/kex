@@ -8,7 +8,10 @@ import org.vorpal.research.kex.state.term.Term
 import org.vorpal.research.kfg.type.TypeFactory
 
 // propagate all type infos backwards to arguments
-class TypeInfoDFA(val tf: TypeFactory, val typeInfo: TypeInfoMap) : Transformer<TypeInfoDFA> {
+class TypeInfoDFA(
+    private val tf: TypeFactory,
+    private val typeInfo: TypeInfoMap
+) : Transformer<TypeInfoDFA> {
     private val innerTypeInfo = typeInfo.map { it.key to it.value.toMutableSet() }.toMap().toMutableMap()
 
     val freshTypeInfo: TypeInfoMap get() = TypeInfoMap.create(tf, innerTypeInfo)
