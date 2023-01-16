@@ -2,6 +2,8 @@ package org.vorpal.research.kex.asm.analysis.symbolic
 
 import org.vorpal.research.kex.ExecutionContext
 import org.vorpal.research.kex.asm.manager.instantiationManager
+import org.vorpal.research.kex.ktype.KexRtManager.isKexRt
+import org.vorpal.research.kex.ktype.KexRtManager.rtMapped
 import org.vorpal.research.kex.state.term.Term
 import org.vorpal.research.kfg.ir.Method
 import org.vorpal.research.kfg.ir.OuterClass
@@ -48,13 +50,15 @@ class DefaultCallResolver(
         if (inst.opcode == CallOpcode.STATIC) return listOf(inst.method)
 
         val callee = state.converter(inst.callee)
-        val baseType = method.klass
+        val baseType = method.klass.rtMapped
         val calleeType = (callee.type.getKfgType(ctx.types) as? ClassType)?.klass ?: return emptyList()
-        return when (callee) {
-            in state.typeInfo -> {
+        return when {
+            callee in state.typeInfo -> {
                 val concreteType = state.typeInfo.getValue(callee) as ClassType
                 listOf(concreteType.klass.getMethod(method.name, method.desc))
             }
+
+            calleeType.isKexRt -> listOf(calleeType.getMethod(method.name, method.desc))
 
             else -> instantiationManager
                 .getAllConcreteSubtypes(baseType, ctx.accessLevel)

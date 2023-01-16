@@ -75,7 +75,39 @@ private val predefinedConcreteInstanceInfo = with(SystemTypeNames) {
         unmodifiableList to setOf(unmodifiableList.rtMapped),
         unmodifiableSet to setOf(unmodifiableSet.rtMapped),
         unmodifiableMap to setOf(unmodifiableMap.rtMapped),
-        charSequence to setOf(stringClass.rtMapped)
+        charSequence to setOf(stringClass.rtMapped),
+
+        abstractStringBuilderClass to setOf(stringBuilder.rtMapped),
+        stringBuilder to setOf(stringBuilder.rtMapped),
+        stringBuffer to setOf(stringBuffer.rtMapped),
+
+        booleanClass to setOf(booleanClass.rtMapped),
+        byteClass to setOf(byteClass.rtMapped),
+        charClass to setOf(charClass.rtMapped),
+        doubleClass to setOf(doubleClass.rtMapped),
+        floatClass to setOf(floatClass.rtMapped),
+        integerClass to setOf(integerClass.rtMapped),
+        longClass to setOf(longClass.rtMapped),
+        shortClass to setOf(shortClass.rtMapped),
+        numberClass to setOf(
+            booleanClass.rtMapped,
+            byteClass.rtMapped,
+            charClass.rtMapped,
+            doubleClass.rtMapped,
+            floatClass.rtMapped,
+            integerClass.rtMapped,
+            longClass.rtMapped,
+            shortClass.rtMapped
+        ),
+
+        atomicBooleanClass to setOf(atomicBooleanClass.rtMapped),
+        atomicIntegerClass to setOf(atomicIntegerClass),
+        atomicIntegerArrayClass to setOf(atomicIntegerArrayClass),
+        atomicLongClass to setOf(atomicLongClass),
+        atomicLongArrayClass to setOf(atomicLongArrayClass),
+        atomicReferenceClass to setOf(atomicReferenceClass),
+        atomicReferenceArrayClass to setOf(atomicReferenceArrayClass),
+        atomicStampedReferenceClass to setOf(atomicStampedReferenceClass)
     )
 }
 
