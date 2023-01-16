@@ -65,20 +65,26 @@ object MethodManager {
     object IntrinsicManager {
         private const val intrinsicsClass = "kotlin/jvm/internal/Intrinsics"
 
-        fun checkParameterIsNotNull(cm: ClassManager) = cm[intrinsicsClass].getMethod(
+        fun checkParameterIsNotNull(cm: ClassManager) = synchronized(KexIntrinsicManager) {
+            cm[intrinsicsClass].getMethod(
                 "checkParameterIsNotNull",
                 cm.type.voidType, cm.type.objectType, cm.type.stringType
-        )
+            )
+        }
 
-        fun checkNotNullParameter(cm: ClassManager) = cm[intrinsicsClass].getMethod(
+        fun checkNotNullParameter(cm: ClassManager) = synchronized(KexIntrinsicManager) {
+            cm[intrinsicsClass].getMethod(
                 "checkNotNullParameter",
                 cm.type.voidType, cm.type.objectType, cm.type.stringType
-        )
+            )
+        }
 
-        fun areEqual(cm: ClassManager) = cm[intrinsicsClass].getMethod(
+        fun areEqual(cm: ClassManager) = synchronized(KexIntrinsicManager) {
+            cm[intrinsicsClass].getMethod(
                 "areEqual",
                 cm.type.boolType, cm.type.objectType, cm.type.objectType
-        )
+            )
+        }
 
     }
 

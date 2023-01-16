@@ -132,6 +132,18 @@ val SystemTypeNames.abstractQueueClass: String get() = "java/util/AbstractQueue"
 val SystemTypeNames.abstractSetClass: String get() = "java/util/AbstractSet"
 val SystemTypeNames.abstractMapClass: String get() = "java/util/AbstractMap"
 
+val SystemTypeNames.abstractStringBuilderClass: String get() = "java/lang/AbstractStringBuilder"
+val SystemTypeNames.numberClass: String get() = "java/lang/Number"
+
+val SystemTypeNames.atomicBooleanClass: String get() = "java/util/concurrent/atomic/AtomicBoolean"
+val SystemTypeNames.atomicIntegerClass: String get() = "java/util/concurrent/atomic/AtomicInteger"
+val SystemTypeNames.atomicIntegerArrayClass: String get() = "java/util/concurrent/atomic/AtomicIntegerArray"
+val SystemTypeNames.atomicLongClass: String get() = "java/util/concurrent/atomic/AtomicLong"
+val SystemTypeNames.atomicLongArrayClass: String get() = "java/util/concurrent/atomic/AtomicLongArray"
+val SystemTypeNames.atomicReferenceClass: String get() = "java/util/concurrent/atomic/AtomicReference"
+val SystemTypeNames.atomicReferenceArrayClass: String get() = "java/util/concurrent/atomic/AtomicReferenceArray"
+val SystemTypeNames.atomicStampedReferenceClass: String get() = "java/util/concurrent/atomic/AtomicStampedReference"
+
 val ClassManager.abstractCollectionClass get() = this[SystemTypeNames.abstractCollectionClass]
 val ClassManager.abstractListClass get() = this[SystemTypeNames.abstractListClass]
 val ClassManager.abstractQueueClass get() = this[SystemTypeNames.abstractQueueClass]

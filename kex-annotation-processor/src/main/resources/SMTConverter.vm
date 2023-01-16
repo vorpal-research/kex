@@ -25,7 +25,7 @@ class ${solver}Converter(val tf: TypeFactory) : ${solver}SMTConverter() {
     private val axiomedTerms = mutableSetOf< Term >()
     private var noAxioms = false
 
-    private inline fun < reified T: Dynamic_ > withNoAxioms(body: KSMTConverter.()-> T): T {
+    private inline fun < reified T: Dynamic_ > withNoAxioms(body: ${solver}Converter.()-> T): T {
         noAxioms = true
         val res = this.body()
         noAxioms = false
