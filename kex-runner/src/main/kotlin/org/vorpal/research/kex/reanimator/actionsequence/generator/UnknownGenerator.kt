@@ -2,6 +2,7 @@ package org.vorpal.research.kex.reanimator.actionsequence.generator
 
 import org.vorpal.research.kex.descriptor.*
 import org.vorpal.research.kex.ktype.KexNull
+import org.vorpal.research.kex.ktype.KexRtManager.rtUnmapped
 import org.vorpal.research.kex.ktype.kexType
 import org.vorpal.research.kex.ktype.type
 import org.vorpal.research.kex.reanimator.actionsequence.*
@@ -30,7 +31,7 @@ class UnknownGenerator(
 
                 actionSequence += ReflectionNewInstance(kfgClass.type)
                 for ((field, value) in descriptor.fields) {
-                    val fieldType = field.second.getKfgType(types)
+                    val fieldType = field.second.getKfgType(types).rtUnmapped
                     val kfgField = try {
                         kfgClass.getField(field.first, fieldType)
                     } catch (e: UnknownInstanceException) {
@@ -57,7 +58,7 @@ class UnknownGenerator(
             is ClassDescriptor -> {
                 val kfgClass = (descriptor.type.getKfgType(types) as ClassType).klass
                 for ((field, value) in descriptor.fields) {
-                    val fieldType = field.second.getKfgType(types)
+                    val fieldType = field.second.getKfgType(types).rtUnmapped
                     val kfgField = try {
                         kfgClass.getField(field.first, fieldType)
                     } catch (e: UnknownInstanceException) {
