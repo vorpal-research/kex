@@ -1,0 +1,87 @@
+package org.vorpal.research.kex.reanimator.actionsequence.generator
+
+import org.vorpal.research.kex.descriptor.Descriptor
+import org.vorpal.research.kex.descriptor.ObjectDescriptor
+import org.vorpal.research.kex.descriptor.convertToDescriptor
+import org.vorpal.research.kex.descriptor.descriptor
+import org.vorpal.research.kex.ktype.*
+import org.vorpal.research.kex.reanimator.actionsequence.ActionList
+import org.vorpal.research.kex.reanimator.actionsequence.ActionSequence
+import org.vorpal.research.kex.reanimator.actionsequence.ExternalMethodCall
+import org.vorpal.research.kex.reanimator.actionsequence.MethodCall
+import org.vorpal.research.kfg.Package
+import org.vorpal.research.kfg.stringClass
+import org.vorpal.research.kfg.type.SystemTypeNames
+import org.vorpal.research.kfg.type.stringType
+
+class MethodGenerator(private val fallback: Generator) : Generator {
+    override val context get() = fallback.context
+
+    private val kfgMethodClass = context.cm["java/lang/reflect/Method"]
+    private val kexMethodClass = kfgMethodClass.kexType
+    private val kfgStringClass = context.cm.stringClass
+    private val kfgJavaClass = KexJavaClass().kfgClass(context.types)
+    private val classClass = KexClass(SystemTypeNames.classClass)
+    private val stringClass = kfgStringClass.kexType
+
+    override fun supports(descriptor: Descriptor): Boolean =
+        descriptor.type == kexMethodClass && descriptor is ObjectDescriptor
+
+    override fun generate(descriptor: Descriptor, generationDepth: Int): ActionSequence = with(context) {
+        descriptor as ObjectDescriptor
+
+        val name = "${descriptor.term}".replace("[/$.]".toRegex(), "_")
+        val actionSequence = ActionList(name)
+
+        val klass = descriptor["class", classClass]
+            ?: generateKlassByName(cm.concreteClasses.filter { it.methods.isNotEmpty() }.random(context.random).canonicalDesc)
+        klass as ObjectDescriptor
+
+        val klassName = klass["name", stringClass]!!.asStringValue!!
+        val asmKlassName = klassName.replace(Package.CANONICAL_SEPARATOR, Package.SEPARATOR)
+        val kfgClass = cm[asmKlassName]
+
+        val klassAS = fallback.generate(klass, generationDepth)
+        val methodName = descriptor["name", types.stringType.kexType]?.asStringValue ?: kfgClass.methods.random(
+            context.random
+        ).name
+        val methodNameDescriptor = fallback.generate(convertToDescriptor(methodName))
+
+        val kfgMethod = kfgClass.getMethods(methodName).random(context.random)
+        val returnType = generateKlassByName(kfgMethod.returnType.canonicalDesc)
+        val argumentTypes = kfgMethod.argTypes.map {generateKlassByName(it.canonicalDesc) }
+        val arrayDescriptor = descriptor {
+            val array = array(argumentTypes.size + 1, classClass)
+            array[0] = returnType
+            for ((index, element) in argumentTypes.withIndex()) {
+                array[index + 1] = element
+            }
+            array
+        }
+        val typesAS = fallback.generate(arrayDescriptor)
+
+        val getDeclMethod = kfgJavaClass.getMethod("getDeclaredMethod",
+            kfgMethodClass.type,
+            kfgStringClass.type,
+            kfgJavaClass.type.asArray
+        )
+
+        actionSequence += ExternalMethodCall(getDeclMethod, klassAS, listOf(methodNameDescriptor, typesAS))
+
+        val setAccessible = descriptor["override" to KexBool] ?: descriptor { const(false) }
+        val setAccessibleAS = fallback.generate(setAccessible, generationDepth)
+        val setAccessibleMethod = kfgMethodClass.getMethod("setAccessible", types.voidType, types.boolType)
+        actionSequence += MethodCall(setAccessibleMethod, listOf(setAccessibleAS))
+
+        actionSequence
+    }
+
+    private fun generateKlassByName(name: String): ObjectDescriptor = with(context) {
+        val nameDescriptor = convertToDescriptor(name)
+        return descriptor {
+            `object`(classClass).also { klass ->
+                klass["name", stringClass] = nameDescriptor
+            }
+        } as ObjectDescriptor
+    }
+}

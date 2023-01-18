@@ -17,9 +17,9 @@ class FieldGenerator(val fallback: Generator) : Generator {
     override val context: GeneratorContext
         get() = fallback.context
 
-    val kfgJavaClass = KexJavaClass().kfgClass(context.types)
-    val kfgFieldClass = context.cm[SystemTypeNames.field]
-    val kexFieldClass = kfgFieldClass.kexType
+    private val kfgJavaClass = KexJavaClass().kfgClass(context.types)
+    private val kfgFieldClass = context.cm[SystemTypeNames.field]
+    private val kexFieldClass = kfgFieldClass.kexType
 
     override fun supports(descriptor: Descriptor): Boolean = descriptor.type == kexFieldClass
 
