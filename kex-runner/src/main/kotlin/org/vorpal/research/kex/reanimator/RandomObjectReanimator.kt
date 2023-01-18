@@ -23,6 +23,7 @@ import org.vorpal.research.kthelper.`try`
 import org.vorpal.research.kthelper.tryOrNull
 import kotlin.system.measureTimeMillis
 
+@Suppress("unused")
 class RandomObjectReanimator(
     val ctx: ExecutionContext,
     val target: Package,
@@ -30,7 +31,7 @@ class RandomObjectReanimator(
 ) {
     val random: Randomizer get() = ctx.random
     val cm: ClassManager get() = ctx.cm
-    val generatorContext = GeneratorContext(ctx, psa)
+    private val generatorContext = GeneratorContext(ctx, psa)
 
     private val ClassManager.randomClass
         get() = this.concreteClasses

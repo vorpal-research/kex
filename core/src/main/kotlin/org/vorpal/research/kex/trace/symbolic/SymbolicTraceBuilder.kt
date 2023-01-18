@@ -23,7 +23,7 @@ import org.vorpal.research.kfg.ir.value.*
 import org.vorpal.research.kfg.ir.value.instruction.*
 import org.vorpal.research.kfg.type.SystemTypeNames
 import org.vorpal.research.kfg.type.Type
-import org.vorpal.research.kfg.type.parseDesc
+import org.vorpal.research.kfg.type.parseDescOrNull
 import org.vorpal.research.kfg.type.parseStringToType
 import org.vorpal.research.kthelper.KtException
 import org.vorpal.research.kthelper.assert.ktassert
@@ -163,7 +163,7 @@ class SymbolicTraceBuilder(
 
     override fun toString() = "$clauses"
 
-    private fun String.toType() = parseDesc(cm.type, this)
+    private fun String.toType() = parseDescOrNull(cm.type, this)!!
 
     private fun safeCall(body: () -> Unit) = `try` {
         body()
@@ -738,7 +738,7 @@ class SymbolicTraceBuilder(
         preProcess(kfgValue)
 
         val kfgOwner = owner?.let { parseValue(it) }
-        val kfgField = cm[klass].getField(field, parseDesc(cm.type, type))
+        val kfgField = cm[klass].getField(field, parseDescOrNull(cm.type, type)!!)
 
         val termValue = mkNewValue(kfgValue)
         val termOwner = kfgOwner?.let { mkValue(it) }
@@ -773,7 +773,7 @@ class SymbolicTraceBuilder(
         preProcess(instruction)
 
         val kfgOwner = owner?.let { parseValue(it) }
-        val kfgField = cm[klass].getField(field, parseDesc(cm.type, type))
+        val kfgField = cm[klass].getField(field, parseDescOrNull(cm.type, type)!!)
         val kfgValue = parseValue(value)
 
         val termOwner = kfgOwner?.let { mkValue(it) }

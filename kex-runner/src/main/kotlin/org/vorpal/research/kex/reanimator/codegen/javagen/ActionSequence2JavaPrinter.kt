@@ -28,6 +28,7 @@ private val testTimeout by lazy {
 }
 
 // TODO: this is work of satan, refactor this damn thing
+@Suppress("MemberVisibilityCanBePrivate")
 open class ActionSequence2JavaPrinter(
     val ctx: ExecutionContext,
     final override val packageName: String,
@@ -39,7 +40,7 @@ open class ActionSequence2JavaPrinter(
     protected val resolvedTypes = mutableMapOf<ActionSequence, ASType>()
     protected val actualTypes = mutableMapOf<ActionSequence, ASType>()
     lateinit var current: JavaBuilder.JavaFunction
-    protected var testCounter = 0
+    private var testCounter = 0
 
     init {
         with(builder) {
@@ -51,7 +52,7 @@ open class ActionSequence2JavaPrinter(
             import("java.util.concurrent.TimeUnit")
 
             with(klass) {
-                constructor() {}
+                constructor {}
 
                 field("globalTimeout", type("Timeout")) {
                     visibility = Visibility.PUBLIC
@@ -108,7 +109,10 @@ open class ActionSequence2JavaPrinter(
         fun isSubtype(other: ASType): Boolean
     }
 
-    inner class ASWildcard(val upperBound: ASType, val lowerBound: ASType? = null) : ASType {
+    inner class ASWildcard(
+        private val upperBound: ASType,
+        private val lowerBound: ASType? = null
+    ) : ASType {
         override fun isSubtype(other: ASType) = other is ASWildcard
         override fun toString() = when {
             lowerBound != null -> "? super $lowerBound"
@@ -372,12 +376,12 @@ open class ActionSequence2JavaPrinter(
             else -> {
                 val klass = (this as ClassType).klass
                 val canonicalDesc = klass.canonicalDesc
-                val splitted = canonicalDesc.split("$")
-                ktassert(splitted.isNotEmpty())
+                val splitDescriptor = canonicalDesc.split("$")
+                ktassert(splitDescriptor.isNotEmpty())
                 buildString {
-                    append(splitted[0])
+                    append(splitDescriptor[0])
                     builder.import(this.toString())
-                    for (substring in splitted.drop(1)) {
+                    for (substring in splitDescriptor.drop(1)) {
                         append(".$substring")
                         builder.import(this.toString())
                     }
@@ -598,15 +602,14 @@ open class ActionSequence2JavaPrinter(
         )
     }
 
-    protected open fun printExternalConstructorCall(
+    protected fun printConstructorCommon(
         owner: ActionSequence,
-        call: ExternalConstructorCall
+        call: ExternalConstructorCall,
+        argsPrinter: (List<ActionSequence>) -> String
     ): List<String> {
         call.args.forEach { it.printAsJava() }
         val constructor = call.constructor
-        val args = call.args.joinToString(", ") {
-            it.forceCastIfNull(resolvedTypes[it])
-        }
+        val args = argsPrinter(call.args)
 
         val reflection = ctx.loader.loadClass(call.constructor.klass)
         val ctor = reflection.getMethod(call.constructor, ctx.loader)
@@ -634,17 +637,26 @@ open class ActionSequence2JavaPrinter(
         )
     }
 
-    protected open fun printExternalMethodCall(
+    protected open fun printExternalConstructorCall(
         owner: ActionSequence,
-        call: ExternalMethodCall
+        call: ExternalConstructorCall
+    ): List<String> = printConstructorCommon(owner, call) { args ->
+        args.joinToString(", ") {
+            it.forceCastIfNull(resolvedTypes[it])
+        }
+    }
+
+    protected fun printExternalMethodCallCommon(
+        owner: ActionSequence,
+        call: ExternalMethodCall,
+        instancePrinter: (ActionSequence) -> String,
+        argsPrinter: (List<ActionSequence>) -> String
     ): List<String> {
         call.instance.printAsJava()
         call.args.forEach { it.printAsJava() }
         val method = call.method
-        val instance = "(${call.instance.forceCastIfNull(resolvedTypes[call.instance])})"
-        val args = call.args.joinToString(", ") {
-            it.forceCastIfNull(resolvedTypes[it])
-        }
+        val instance = instancePrinter(call.instance)
+        val args = argsPrinter(call.args)
 
         val reflection = ctx.loader.loadClass(call.method.klass)
         val ctor = reflection.getMethod(call.method, ctx.loader)
@@ -671,6 +683,20 @@ open class ActionSequence2JavaPrinter(
             }
         )
     }
+
+    protected open fun printExternalMethodCall(
+        owner: ActionSequence,
+        call: ExternalMethodCall
+    ): List<String> = printExternalMethodCallCommon(
+        owner,
+        call,
+        { instance -> "(${instance.forceCastIfNull(resolvedTypes[instance])})" },
+        { args ->
+            args.joinToString(", ") {
+                it.forceCastIfNull(resolvedTypes[it])
+            }
+        }
+    )
 
     protected open fun printMethodCall(owner: ActionSequence, call: MethodCall): List<String> {
         call.args.forEach { it.printAsJava() }
@@ -800,7 +826,10 @@ open class ActionSequence2JavaPrinter(
     protected open fun printReflectionSetField(owner: ActionSequence, call: ReflectionSetField): List<String> =
         unreachable { log.error("Reflection calls are not supported in AS 2 Java printer") }
 
-    protected open fun printReflectionSetStaticField(owner: ActionSequence, call: ReflectionSetStaticField): List<String> =
+    protected open fun printReflectionSetStaticField(
+        owner: ActionSequence,
+        call: ReflectionSetStaticField
+    ): List<String> =
         unreachable { log.error("Reflection calls are not supported in AS 2 Java printer") }
 
     protected open fun printReflectionArrayWrite(owner: ActionSequence, call: ReflectionArrayWrite): List<String> =

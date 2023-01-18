@@ -29,6 +29,7 @@ import org.vorpal.research.kthelper.assert.unreachable
 import org.vorpal.research.kthelper.logging.log
 import org.vorpal.research.kthelper.tryOrNull
 
+@Suppress("MemberVisibilityCanBePrivate", "unused")
 class GeneratorContext(
     val context: ExecutionContext,
     val psa: PredicateStateAnalysis
@@ -225,7 +226,10 @@ class GeneratorContext(
         return execute(preparedState, preparedQuery)
     }
 
-    private fun Method.getStaticPreState(descriptor: ClassDescriptor, initializer: (KexType) -> Term): PredicateState? {
+    private fun <T : FieldContainingDescriptor<T>> Method.getPreStateCommon(
+        descriptor: T,
+        initializer: (KexType) -> Term
+    ): PredicateState? {
         val fieldAccessList = this.collectFieldAccesses(context, psa)
         val intersection = descriptor.fields.filter { (key, _) ->
             fieldAccessList.find { field -> key.first == field.name } != null
@@ -241,6 +245,9 @@ class GeneratorContext(
         }
         return preStateBuilder.apply()
     }
+
+    private fun Method.getStaticPreState(descriptor: ClassDescriptor, initializer: (KexType) -> Term): PredicateState? =
+        this.getPreStateCommon(descriptor, initializer)
 
     private fun Method.executeAsStatic(
         descriptor: ClassDescriptor,
@@ -323,19 +330,8 @@ class GeneratorContext(
 
     fun Method.getMethodPreState(descriptor: ObjectDescriptor, initializer: (KexType) -> Term): PredicateState? {
         val mapper = descriptor.mapper
-        val fieldAccessList = this.collectFieldAccesses(context, psa)
-        val intersection = descriptor.fields.filter { (key, _) ->
-            fieldAccessList.find { field -> key.first == field.name } != null
-        }.toMap()
-        if (intersection.isEmpty()) return null
 
-        val preStateBuilder = StateBuilder()
-        for ((field, _) in intersection) {
-            val fieldTerm = term { descriptor.term.field(field.second, field.first) }
-            val initializerTerm = initializer(field.second)
-            preStateBuilder += axiom { fieldTerm.initialize(initializerTerm) }
-            preStateBuilder += axiom { initializerTerm equality fieldTerm.load() }
-        }
+        val preStateBuilder = this.getPreStateCommon(descriptor, initializer)?.builder() ?: return null
 
         // experimental check
         val subObjects = linkedSetOf(descriptor.term to descriptor)
@@ -398,23 +394,10 @@ class GeneratorContext(
         return mapper.apply(preStateBuilder.apply())
     }
 
-    fun Method.getPreState(descriptor: ObjectDescriptor, initializer: (KexType) -> Term): PredicateState? {
-        val mapper = descriptor.mapper
-        val fieldAccessList = this.collectFieldAccesses(context, psa)
-        val intersection = descriptor.fields.filter { (key, _) ->
-            fieldAccessList.find { field -> key.first == field.name } != null
-        }.toMap()
-        if (intersection.isEmpty()) return null
-
-        val preStateBuilder = StateBuilder()
-        for ((field, _) in intersection) {
-            val fieldTerm = term { descriptor.term.field(field.second, field.first) }
-            val initializerTerm = initializer(field.second)
-            preStateBuilder += axiom { fieldTerm.initialize(initializerTerm) }
-            preStateBuilder += axiom { initializerTerm equality fieldTerm.load() }
+    fun Method.getPreState(descriptor: ObjectDescriptor, initializer: (KexType) -> Term): PredicateState? =
+        this.getPreStateCommon(descriptor, initializer)?.also {
+            descriptor.mapper.apply(it)
         }
-        return mapper.apply(preStateBuilder.apply())
-    }
 
     val List<CodeAction>.isComplete get() = ActionList("", this.toMutableList()).isComplete
 

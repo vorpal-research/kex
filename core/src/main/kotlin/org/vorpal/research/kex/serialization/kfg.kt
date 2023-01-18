@@ -20,7 +20,7 @@ import org.vorpal.research.kfg.ir.value.instruction.CallOpcode
 import org.vorpal.research.kfg.ir.value.instruction.CmpOpcode
 import org.vorpal.research.kfg.ir.value.instruction.Instruction
 import org.vorpal.research.kfg.type.Type
-import org.vorpal.research.kfg.type.parseDesc
+import org.vorpal.research.kfg.type.parseDescOrNull
 
 @ExperimentalSerializationApi
 fun getKfgSerialModule(cm: ClassManager, ctx: NameMapperContext): SerializersModule {
@@ -217,9 +217,9 @@ internal class MethodSerializer(val cm: ClassManager, val classSerializer: KSeri
                 CompositeDecoder.DECODE_DONE -> break@loop
                 0 -> klass = input.decodeSerializableElement(descriptor, i, classSerializer)
                 1 -> name = input.decodeStringElement(descriptor, i)
-                2 -> retval = parseDesc(cm.type, input.decodeStringElement(descriptor, i))
+                2 -> retval = parseDescOrNull(cm.type, input.decodeStringElement(descriptor, i))!!
                 3 -> argTypes = input.decodeSerializableElement(descriptor, i, ListSerializer(String.serializer()))
-                    .map { parseDesc(cm.type, it) }
+                    .map { parseDescOrNull(cm.type, it)!! }
                 else -> throw SerializationException("Unknown index $i")
             }
         }

@@ -25,7 +25,7 @@ import java.lang.reflect.Type as JType
 // TODO: this is work of satan, refactor this damn thing
 open class ActionSequence2KotlinPrinter(
     val ctx: ExecutionContext,
-    override val packageName: String,
+    final override val packageName: String,
     override val klassName: String
 ) : ActionSequencePrinter {
     private val printedStacks = mutableSetOf<String>()
@@ -105,6 +105,7 @@ open class ActionSequence2KotlinPrinter(
                 typeParams.zip(other.typeParams).any { (a, b) -> !a.isSubtype(b) } -> false
                 else -> !(!nullable && other.nullable)
             }
+
             is ASStarProjection -> true
             else -> false
         }
@@ -135,6 +136,7 @@ open class ActionSequence2KotlinPrinter(
                 !nullable && other.nullable -> false
                 else -> true
             }
+
             is ASStarProjection -> true
             else -> false
         }
@@ -167,6 +169,7 @@ open class ActionSequence2KotlinPrinter(
                     type.component.isPrimitive -> ASPrimaryArray(type.component.getAsType(false), nullability)
                     else -> ASArray(args.first(), nullability)
                 }
+
                 else -> ASClass(type, args, nullability)
             }
         }
@@ -178,8 +181,10 @@ open class ActionSequence2KotlinPrinter(
                     val element = this.componentType.asType
                     ASArray(element)
                 }
+
                 else -> ASClass(this.kex.getKfgType(ctx.types))
             }
+
             is ParameterizedType -> this.ownerType.asType
             is TypeVariable<*> -> this.bounds.first().asType
             is WildcardType -> this.upperBounds.first().asType
@@ -194,6 +199,7 @@ open class ActionSequence2KotlinPrinter(
                 ASClass(type, requiredType.typeParams, false)
             } else TODO()
         }
+
         else -> TODO()
     }
 
@@ -206,6 +212,7 @@ open class ActionSequence2KotlinPrinter(
             this.component.isPrimitive -> ASPrimaryArray(component.getAsType(false), nullable)
             else -> ASArray(this.component.getAsType(nullable), nullable)
         }
+
         else -> ASClass(this, nullable = nullable)
     }
 
@@ -228,6 +235,7 @@ open class ActionSequence2KotlinPrinter(
                     }
                 }
             }
+
             else -> {
                 val params = constructor.genericParameterTypes
                 args.zip(params).forEach { (arg, param) ->
@@ -250,6 +258,7 @@ open class ActionSequence2KotlinPrinter(
                     }
                 }
             }
+
             else -> {
                 val params = method.genericParameterTypes.toList()
                 args.zip(params).forEach { (arg, param) ->
@@ -264,26 +273,31 @@ open class ActionSequence2KotlinPrinter(
     private fun resolveTypes(call: CodeAction) = when (call) {
         is DefaultConstructorCall -> {
         }
+
         is ConstructorCall -> {
             val reflection = ctx.loader.loadClass(call.constructor.klass)
             val constructor = reflection.getConstructor(call.constructor, ctx.loader)
             resolveTypes(constructor, call.args)
         }
+
         is ExternalConstructorCall -> {
             val reflection = ctx.loader.loadClass(call.constructor.klass)
             val constructor = reflection.getMethod(call.constructor, ctx.loader)
             resolveTypes(constructor, call.args)
         }
+
         is MethodCall -> {
             val reflection = ctx.loader.loadClass(call.method.klass)
             val method = reflection.getMethod(call.method, ctx.loader)
             resolveTypes(method, call.args)
         }
+
         is StaticMethodCall -> {
             val reflection = ctx.loader.loadClass(call.method.klass)
             val method = reflection.getMethod(call.method, ctx.loader)
             resolveTypes(method, call.args)
         }
+
         else -> {
         }
     }
@@ -299,6 +313,7 @@ open class ActionSequence2KotlinPrinter(
             is PrimaryValue<*> -> listOf<String>().also {
                 asConstant
             }
+
             is StringValue -> listOf<String>().also {
                 asConstant
             }
@@ -334,6 +349,7 @@ open class ActionSequence2KotlinPrinter(
                 DoubleType -> "DoubleArray"
                 else -> "Array<${type.kotlinString}>"
             }
+
             else -> {
                 val klass = (this as ClassType).klass
                 val name = klass.canonicalDesc.replace("$", ".")
@@ -364,7 +380,7 @@ open class ActionSequence2KotlinPrinter(
         else -> unreachable { log.error("Unknown call") }
     }
 
-    protected fun printReflectionCall(owner: ActionSequence, reflectionCall: ReflectionCall): List<String> =
+    private fun printReflectionCall(owner: ActionSequence, reflectionCall: ReflectionCall): List<String> =
         when (reflectionCall) {
             is ReflectionArrayWrite -> printReflectionArrayWrite(owner, reflectionCall)
             is ReflectionNewArray -> printReflectionNewArray(owner, reflectionCall)
@@ -378,12 +394,15 @@ open class ActionSequence2KotlinPrinter(
             null -> "null".also {
                 actualTypes[this] = ASClass(ctx.types.nullType)
             }
+
             is Boolean -> "$value".also {
                 actualTypes[this] = ASClass(ctx.types.boolType, nullable = false)
             }
+
             is Byte -> "${value}.toByte()".also {
                 actualTypes[this] = ASClass(ctx.types.byteType, nullable = false)
             }
+
             is Char -> when (value) {
                 in 'a'..'z' -> "'$value'"
                 in 'A'..'Z' -> "'$value'"
@@ -391,21 +410,27 @@ open class ActionSequence2KotlinPrinter(
             }.also {
                 actualTypes[this] = ASClass(ctx.types.charType, nullable = false)
             }
+
             is Short -> "${value}.toShort()".also {
                 actualTypes[this] = ASClass(ctx.types.shortType, nullable = false)
             }
+
             is Int -> "$value".also {
                 actualTypes[this] = ASClass(ctx.types.intType, nullable = false)
             }
+
             is Long -> "${value}L".also {
                 actualTypes[this] = ASClass(ctx.types.longType, nullable = false)
             }
+
             is Float -> "${value}F".also {
                 actualTypes[this] = ASClass(ctx.types.floatType, nullable = false)
             }
+
             is Double -> "$value".also {
                 actualTypes[this] = ASClass(ctx.types.doubleType, nullable = false)
             }
+
             else -> unreachable { log.error("Unknown primary value $this") }
         }
 
@@ -496,6 +521,7 @@ open class ActionSequence2KotlinPrinter(
                 actualTypes[owner] = ASArray(type.getAsType(), false)
                 "arrayOfNulls<${type.kotlinString}>"
             }
+
             else -> {
                 actualTypes[owner] = call.asArray.getAsType(false)
                 call.asArray.kotlinString
@@ -506,11 +532,10 @@ open class ActionSequence2KotlinPrinter(
 
     private fun printArrayWrite(owner: ActionSequence, call: ArrayWrite): String {
         call.value.printAsKt()
-        val requiredType = run {
-            val resT = resolvedTypes[owner] ?: actualTypes[owner]
-            if (resT is ASArray) resT.element
-            else if (resT is ASPrimaryArray) resT.element
-            else unreachable { }
+        val requiredType = when (val resT = resolvedTypes[owner] ?: actualTypes[owner]) {
+            is ASArray -> resT.element
+            is ASPrimaryArray -> resT.element
+            else -> unreachable { }
         }
         return "${owner.name}[${call.index.stackName}] = ${call.value.cast(requiredType)}"
     }
@@ -565,7 +590,10 @@ open class ActionSequence2KotlinPrinter(
     protected open fun printReflectionSetField(owner: ActionSequence, call: ReflectionSetField): List<String> =
         unreachable { log.error("Reflection calls are not supported in AS 2 Java printer") }
 
-    protected open fun printReflectionSetStaticField(owner: ActionSequence, call: ReflectionSetStaticField): List<String> =
+    protected open fun printReflectionSetStaticField(
+        owner: ActionSequence,
+        call: ReflectionSetStaticField
+    ): List<String> =
         unreachable { log.error("Reflection calls are not supported in AS 2 Java printer") }
 
     protected open fun printReflectionArrayWrite(owner: ActionSequence, call: ReflectionArrayWrite): List<String> =

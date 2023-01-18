@@ -13,7 +13,6 @@ import org.vorpal.research.kex.reanimator.actionsequence.DefaultConstructorCall
 import org.vorpal.research.kex.reanimator.actionsequence.MethodCall
 import org.vorpal.research.kfg.arrayListClass
 import org.vorpal.research.kfg.linkedListClass
-import org.vorpal.research.kfg.type.arrayListType
 import org.vorpal.research.kfg.type.objectType
 
 class KexLinkedListGenerator(val fallback: Generator) : Generator {
@@ -23,13 +22,14 @@ class KexLinkedListGenerator(val fallback: Generator) : Generator {
     private val kexLinkedList = kfgKexLinkedList.kexType
     private val kfgKexArrayList = context.cm.arrayListClass.rtMapped
     private val kexArrayList = kfgKexArrayList.kexType
+    private val kfgObjectType = context.cm.type.objectType
 
     override fun supports(descriptor: Descriptor): Boolean =
         descriptor.type == kexLinkedList && descriptor is ObjectDescriptor
 
     override fun generate(descriptor: Descriptor, generationDepth: Int): ActionSequence = with(context) {
         descriptor as ObjectDescriptor
-        val kexArrayListType = context.types.arrayListType.kexType.rtMapped
+        val kexArrayListType = kexArrayList
         val inner = descriptor["inner" to kexArrayListType] as? ObjectDescriptor
 
         val name = "${descriptor.term}"
@@ -38,10 +38,10 @@ class KexLinkedListGenerator(val fallback: Generator) : Generator {
         actionSequence += DefaultConstructorCall(kfgKexLinkedList)
 
         if (inner != null) {
-            val elementData = inner["elementData" to cm.type.objectType.kexType.asArray()] as? ArrayDescriptor
+            val elementData = inner["elementData" to kfgObjectType.kexType.asArray()] as? ArrayDescriptor
 
             if (elementData != null) {
-                val addMethod = kfgKexLinkedList.getMethod("add", cm.type.boolType, cm.type.objectType)
+                val addMethod = kfgKexLinkedList.getMethod("add", cm.type.boolType, kfgObjectType)
                 for (i in 0 until elementData.length) {
                     val element = elementData[i] ?: descriptor { default(elementData.elementType) }
                     val elementAS = fallback.generate(element, generationDepth)

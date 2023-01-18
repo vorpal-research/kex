@@ -13,7 +13,6 @@ import org.vorpal.research.kex.state.transformer.getCtor
 import org.vorpal.research.kex.util.getPrimitive
 import org.vorpal.research.kfg.*
 import org.vorpal.research.kfg.type.ClassType
-import org.vorpal.research.kthelper.assert.unreachable
 
 class KexWrapperClassGenerator(val fallback: Generator) : Generator {
     override val context: GeneratorContext

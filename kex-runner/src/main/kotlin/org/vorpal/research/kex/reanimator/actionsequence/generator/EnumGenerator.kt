@@ -18,6 +18,7 @@ import org.vorpal.research.kfg.type.objectType
 import org.vorpal.research.kthelper.logging.log
 import org.vorpal.research.kthelper.tryOrNull
 
+@Suppress("unused")
 private fun symbolicComputeEnumConstants(ctx: GeneratorContext, enumType: KexType): Map<FieldTerm, Descriptor> =
     with(ctx) {
         val kfgType = enumType.getKfgType(context.types) as ClassType
@@ -192,7 +193,7 @@ class ReflectionEnumGenerator(private val fallback: Generator) : Generator {
     override val context: GeneratorContext
         get() = fallback.context
 
-    val kfgFieldClass = context.cm[SystemTypeNames.field]
+    private val kfgFieldClass = context.cm[SystemTypeNames.field]
 
     private fun getEnumName() = "enum${enumCounter++}"
 

@@ -62,6 +62,7 @@ object DescriptorStatistics {
         else -> this / other
     }
 
+    @Suppress("unused")
     fun printStatistics() {
         val totalSize = successes + failures.size
 

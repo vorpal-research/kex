@@ -6,9 +6,7 @@ import org.vorpal.research.kex.config.kexConfig
 import org.vorpal.research.kex.ktype.*
 import org.vorpal.research.kex.parameters.Parameters
 import org.vorpal.research.kex.reanimator.actionsequence.*
-import org.vorpal.research.kex.util.getMethod
 import org.vorpal.research.kex.util.kapitalize
-import org.vorpal.research.kex.util.loadClass
 import org.vorpal.research.kfg.type.*
 import org.vorpal.research.kthelper.assert.unreachable
 import org.vorpal.research.kthelper.logging.log
@@ -20,7 +18,7 @@ class ExecutorAS2JavaPrinter(
     ctx: ExecutionContext,
     packageName: String,
     klassName: String,
-    val setupName: String
+    private val setupName: String
 ) : ActionSequence2JavaPrinter(ctx, packageName, klassName) {
     private val testParams = mutableListOf<JavaBuilder.JavaClass.JavaField>()
     private lateinit var newInstance: JavaBuilder.JavaFunction
@@ -373,7 +371,7 @@ class ExecutorAS2JavaPrinter(
         else -> super.printVarDeclaration(name, type)
     }
 
-    val Type.klassType: String
+    private val Type.klassType: String
         get() = when (this) {
             is PrimitiveType -> "${kexType.primitiveName}.class"
             is ClassType -> "Class.forName(\"${klass.canonicalDesc}\")"
@@ -430,73 +428,29 @@ class ExecutorAS2JavaPrinter(
         return listOf("((${actualTypes[owner]}) ${owner.name}).${method.name}($args)")
     }
 
-    override fun printExternalConstructorCall(owner: ActionSequence, call: ExternalConstructorCall): List<String> {
-        call.args.forEach { it.printAsJava() }
+    override fun printExternalConstructorCall(
+        owner: ActionSequence,
+        call: ExternalConstructorCall
+    ): List<String> = printConstructorCommon(owner, call) { args ->
         val constructor = call.constructor
-        val args = call.args.withIndex().joinToString(", ") { (index, arg) ->
+        args.withIndex().joinToString(", ") { (index, arg) ->
             "(${constructor.argTypes[index].javaString}) ${arg.stackName}"
         }
-
-        val reflection = ctx.loader.loadClass(call.constructor.klass)
-        val ctor = reflection.getMethod(call.constructor, ctx.loader)
-        val actualType = ctor.genericReturnType.asType
-        return listOf(
-            if (resolvedTypes[owner] != null) {
-                val rest = resolvedTypes[owner]!!
-                val type = actualType.merge(rest)
-                actualTypes[owner] = type
-                "${
-                    printVarDeclaration(
-                        owner.name,
-                        type
-                    )
-                } = ${type.cast(rest)} ${constructor.klass.javaString}.${constructor.name}($args)"
-            } else {
-                actualTypes[owner] = actualType
-                "${
-                    printVarDeclaration(
-                        owner.name,
-                        actualType
-                    )
-                } = ${constructor.klass.javaString}.${constructor.name}($args)"
-            }
-        )
     }
 
-    override fun printExternalMethodCall(owner: ActionSequence, call: ExternalMethodCall): List<String> {
-        call.instance.printAsJava()
-        call.args.forEach { it.printAsJava() }
-        val method = call.method
-        val instance = "((${method.klass.javaString}) ${call.instance.stackName})"
-        val args = call.args.withIndex().joinToString(", ") { (index, arg) ->
-            "(${method.argTypes[index].javaString}) ${arg.stackName}"
+    override fun printExternalMethodCall(
+        owner: ActionSequence,
+        call: ExternalMethodCall
+    ): List<String> = printExternalMethodCallCommon(
+        owner,
+        call,
+        { instance -> "((${call.method.klass.javaString}) ${instance.stackName})" },
+        { args ->
+            args.withIndex().joinToString(", ") { (index, arg) ->
+                "(${call.method.argTypes[index].javaString}) ${arg.stackName}"
+            }
         }
-
-        val reflection = ctx.loader.loadClass(call.method.klass)
-        val ctor = reflection.getMethod(call.method, ctx.loader)
-        val actualType = ctor.genericReturnType.asType
-        return listOf(
-            if (resolvedTypes[owner] != null) {
-                val rest = resolvedTypes[owner]!!
-                val type = actualType.merge(rest)
-                actualTypes[owner] = type
-                "${
-                    printVarDeclaration(
-                        owner.name,
-                        type
-                    )
-                } = ${type.cast(rest)} $instance.${method.name}($args)"
-            } else {
-                actualTypes[owner] = actualType
-                "${
-                    printVarDeclaration(
-                        owner.name,
-                        actualType
-                    )
-                } = $instance.${method.name}($args)"
-            }
-        )
-    }
+    )
 
     override fun printReflectionList(reflectionList: ReflectionList): List<String> {
         val res = mutableListOf<String>()
@@ -505,7 +459,7 @@ class ExecutorAS2JavaPrinter(
         return res
     }
 
-    fun printDeclarations(
+    private fun printDeclarations(
         owner: ActionSequence,
         result: MutableList<String>
     ) {
@@ -527,7 +481,7 @@ class ExecutorAS2JavaPrinter(
         }
     }
 
-    fun printInsides(
+    private fun printInsides(
         owner: ActionSequence,
         result: MutableList<String>
     ) {

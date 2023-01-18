@@ -19,6 +19,7 @@ class KexArrayListGenerator(val fallback: Generator) : Generator {
         get() = fallback.context
     private val kfgKexArrayList = context.cm.arrayListClass.rtMapped
     private val kexArrayList = kfgKexArrayList.kexType
+    private val kfgObjectType = context.cm.type.objectType
 
     override fun supports(descriptor: Descriptor): Boolean =
         descriptor.type == kexArrayList && descriptor is ObjectDescriptor
@@ -30,11 +31,11 @@ class KexArrayListGenerator(val fallback: Generator) : Generator {
         val actionSequence = ActionList(name)
         saveToCache(descriptor, actionSequence)
 
-        val elementData = descriptor["elementData" to cm.type.objectType.kexType.asArray()] as? ArrayDescriptor
+        val elementData = descriptor["elementData" to kfgObjectType.kexType.asArray()] as? ArrayDescriptor
         actionSequence += DefaultConstructorCall(kfgKexArrayList)
 
         if (elementData != null) {
-            val addMethod = kfgKexArrayList.getMethod("add", cm.type.boolType, cm.type.objectType)
+            val addMethod = kfgKexArrayList.getMethod("add", cm.type.boolType, kfgObjectType)
             for (i in 0 until elementData.length) {
                 val element = elementData[i] ?: descriptor { default(elementData.elementType) }
                 val elementAS = fallback.generate(element, generationDepth)

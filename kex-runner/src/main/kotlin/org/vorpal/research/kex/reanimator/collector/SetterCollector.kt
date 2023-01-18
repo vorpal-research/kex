@@ -33,8 +33,8 @@ class SetterCollector(val ctx: ExecutionContext) : ClassVisitor {
         get() = ctx.cm
 
     private val KType.kfgType
-        get() = when (val jtype = this.javaType) {
-            is Class<*> -> ctx.types.get(jtype)
+        get() = when (val jType = this.javaType) {
+            is Class<*> -> ctx.types.get(jType)
             else -> TODO()
         }
 

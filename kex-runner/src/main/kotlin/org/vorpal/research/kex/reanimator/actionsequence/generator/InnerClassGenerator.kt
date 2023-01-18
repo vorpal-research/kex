@@ -18,7 +18,7 @@ import org.vorpal.research.kthelper.logging.log
 
 class InnerClassGenerator(fallback: Generator) : AnyGenerator(fallback) {
 
-    val KexClass.isInnerClass: Boolean
+    private val KexClass.isInnerClass: Boolean
         get() {
             val kfgClass = context.cm[klass] as? ConcreteClass ?: return false
             return kfgClass.outerClass != null && kfgClass.fields.any { it.name == "this\$0" && it.type == kfgClass.outerClass!!.type }
@@ -68,7 +68,7 @@ class InnerClassGenerator(fallback: Generator) : AnyGenerator(fallback) {
             return false
         }
 
-    fun ObjectDescriptor.checkInnerCtor(method: Method, generationDepth: Int): CodeAction? =
+    private fun ObjectDescriptor.checkInnerCtor(method: Method, generationDepth: Int): CodeAction? =
         with(context) {
             val (thisDesc, args) = method.executeAsConstructor(this@checkInnerCtor) ?: return null
 

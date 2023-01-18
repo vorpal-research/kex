@@ -132,10 +132,6 @@ class ActionList(
     }
 
     fun reversed() = ActionList(name, list.reversed().toMutableList())
-    fun reverse(): ActionList {
-        this.list.reverse()
-        return this
-    }
 
     override fun clone() = ActionList(name, list.toMutableList())
 
@@ -180,10 +176,6 @@ class ReflectionList(
     }
 
     fun reversed() = ReflectionList(name, list.reversed().toMutableList())
-    fun reverse(): ReflectionList {
-        this.list.reverse()
-        return this
-    }
 
     override fun clone() = ReflectionList(name, list.toMutableList())
 

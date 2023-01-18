@@ -52,6 +52,7 @@ abstract class TestCasePrinter(
         }
     }
 
+    @Suppress("unused")
     fun checkTestCompiles() {
         if (testCaseLanguage == "java") {
             val compileDir = kexConfig.compiledCodeDirectory
