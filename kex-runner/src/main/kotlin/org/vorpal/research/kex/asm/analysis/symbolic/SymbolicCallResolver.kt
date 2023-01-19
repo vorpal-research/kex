@@ -58,12 +58,24 @@ class DefaultCallResolver(
                 listOf(concreteType.klass.getMethod(method.name, method.desc))
             }
 
-            calleeType.isKexRt -> listOf(calleeType.getMethod(method.name, method.desc))
+            calleeType.isKexRt -> listOf(
+                calleeType.getMethod(
+                    method.name,
+                    method.returnType.rtMapped,
+                    *method.argTypes.map { it.rtMapped }.toTypedArray()
+                )
+            )
 
             else -> instantiationManager
                 .getAllConcreteSubtypes(baseType, ctx.accessLevel)
                 .filter { it.isInheritorOf(calleeType) }
-                .mapTo(mutableSetOf()) { it.getMethod(method.name, method.desc) }
+                .mapTo(mutableSetOf()) {
+                    it.getMethod(
+                        method.name,
+                        method.returnType.rtMapped,
+                        *method.argTypes.map { arg -> arg.rtMapped }.toTypedArray()
+                    )
+                }
                 .filter { it.body.isNotEmpty() }
                 .shuffled(ctx.random)
                 .take(20)
