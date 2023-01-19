@@ -2,6 +2,7 @@ package org.vorpal.research.kex.asm.analysis.symbolic
 
 import org.vorpal.research.kex.ExecutionContext
 import org.vorpal.research.kex.asm.manager.instantiationManager
+import org.vorpal.research.kex.config.kexConfig
 import org.vorpal.research.kex.ktype.KexRtManager.isKexRt
 import org.vorpal.research.kex.ktype.KexRtManager.rtMapped
 import org.vorpal.research.kex.state.term.Term
@@ -33,6 +34,9 @@ class DefaultCallResolver(
     val ctx: ExecutionContext,
     val converter: TraverserState.(Value) -> Term,
 ) : SymbolicCallResolver, SymbolicInvokeDynamicResolver {
+    private val maximumNumberOfConcreteMethods = kexConfig.getIntValue(
+        "symbolic", "numberOfConcreteMethods", 20
+    )
 
     private fun shouldResolve(inst: CallInst): Boolean = when (inst.klass) {
         ctx.cm.stringClass -> false
@@ -70,15 +74,25 @@ class DefaultCallResolver(
                 .getAllConcreteSubtypes(baseType, ctx.accessLevel)
                 .filter { it.isInheritorOf(calleeType) }
                 .mapTo(mutableSetOf()) {
-                    it.getMethod(
-                        method.name,
-                        method.returnType.rtMapped,
-                        *method.argTypes.map { arg -> arg.rtMapped }.toTypedArray()
-                    )
+                    when {
+                        it != it.rtMapped -> it.rtMapped.getMethod(
+                            method.name,
+                            method.returnType.rtMapped,
+                            *method.argTypes.map { arg -> arg.rtMapped }.toTypedArray()
+                        )
+
+                        it.isKexRt -> it.getMethod(
+                            method.name,
+                            method.returnType.rtMapped,
+                            *method.argTypes.map { arg -> arg.rtMapped }.toTypedArray()
+                        )
+
+                        else -> it.getMethod(method.name, method.desc)
+                    }
                 }
                 .filter { it.body.isNotEmpty() }
                 .shuffled(ctx.random)
-                .take(20)
+                .take(maximumNumberOfConcreteMethods)
         }
     }
 
