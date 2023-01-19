@@ -7,7 +7,7 @@ import org.vorpal.research.kex.descriptor.ClassDescriptor
 import org.vorpal.research.kex.descriptor.Descriptor
 import org.vorpal.research.kex.descriptor.Object2DescriptorConverter
 import org.vorpal.research.kex.ktype.KexClass
-import org.vorpal.research.kex.ktype.KexType
+import org.vorpal.research.kex.ktype.KexRtManager.rtMapped
 import org.vorpal.research.kfg.ClassManager
 import org.vorpal.research.kfg.Package
 import kotlin.random.Random
@@ -63,6 +63,24 @@ fun Parameters<Descriptor>.filterStaticFinals(cm: ClassManager): Parameters<Desc
                 klass.fields.isNotEmpty() -> klass
                 else -> null
             }
+        }
+    return Parameters(instance, arguments, filteredStatics)
+}
+
+private val ignoredStatics: Set<Package> by lazy {
+    kexConfig.getMultipleStringValue("testGen", "ignoreStatic").flatMapTo(mutableSetOf()) {
+        val originalPackage = Package.parse(it)
+        val rtMapped = Package(originalPackage.concreteName.rtMapped)
+        listOf(originalPackage, rtMapped)
+    }
+}
+
+fun Parameters<Descriptor>.filterIgnoredStatic(): Parameters<Descriptor> {
+    val filteredStatics = statics
+        .filterIsInstance<ClassDescriptor>()
+        .filterTo(mutableSetOf()) { descriptor ->
+            val typeName = Package.parse(descriptor.type.toString())
+            ignoredStatics.all { ignored -> !ignored.isParent(typeName) }
         }
     return Parameters(instance, arguments, filteredStatics)
 }

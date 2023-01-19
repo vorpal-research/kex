@@ -7,6 +7,7 @@ import org.vorpal.research.kex.descriptor.DescriptorRtMapper
 import org.vorpal.research.kex.ktype.KexRtManager
 import org.vorpal.research.kex.parameters.Parameters
 import org.vorpal.research.kex.parameters.concreteParameters
+import org.vorpal.research.kex.parameters.filterIgnoredStatic
 import org.vorpal.research.kex.parameters.filterStaticFinals
 import org.vorpal.research.kex.random.GenerationException
 import org.vorpal.research.kex.reanimator.actionsequence.ActionSequence
@@ -67,6 +68,7 @@ class Reanimator(
     override fun generate(testName: String, method: Method, state: PredicateState, model: SMTModel) = try {
         val descriptors = generateFinalDescriptors(method, ctx, model, state)
             .filterStaticFinals(cm)
+            .filterIgnoredStatic()
             .concreteParameters(cm, ctx.accessLevel, ctx.random).rtMapped
         log.debug("Generated descriptors:\n$descriptors")
         val actionSequences = descriptors.actionSequences

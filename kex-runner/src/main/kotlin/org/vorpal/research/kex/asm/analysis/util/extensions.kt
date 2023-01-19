@@ -9,6 +9,7 @@ import org.vorpal.research.kex.ktype.KexRtManager.isJavaRt
 import org.vorpal.research.kex.ktype.KexRtManager.rtMapped
 import org.vorpal.research.kex.parameters.Parameters
 import org.vorpal.research.kex.parameters.concreteParameters
+import org.vorpal.research.kex.parameters.filterIgnoredStatic
 import org.vorpal.research.kex.parameters.filterStaticFinals
 import org.vorpal.research.kex.smt.AsyncChecker
 import org.vorpal.research.kex.smt.Result
@@ -59,5 +60,6 @@ suspend fun Method.checkAsync(ctx: ExecutionContext, state: SymbolicState): Para
                 log.debug { "Generated params:\n$it" }
             }
             .filterStaticFinals(ctx.cm)
+            .filterIgnoredStatic()
     }
 }
