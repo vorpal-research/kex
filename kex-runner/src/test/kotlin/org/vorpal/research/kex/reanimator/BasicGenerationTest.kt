@@ -7,7 +7,7 @@ import kotlin.test.Test
 
 @ExperimentalSerializationApi
 @InternalSerializationApi
-class BasicGenerationTest : KexRunnerTest() {
+class BasicGenerationTest : KexRunnerTest("basic-generation") {
 
     @Test
     fun testBasic() {

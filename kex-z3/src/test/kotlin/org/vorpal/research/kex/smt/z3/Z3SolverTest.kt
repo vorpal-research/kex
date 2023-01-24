@@ -10,7 +10,7 @@ import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertTrue
 
-class Z3SolverTest : KexTest() {
+class Z3SolverTest : KexTest("z3-solver") {
 
     @BeforeTest
     fun setup() {

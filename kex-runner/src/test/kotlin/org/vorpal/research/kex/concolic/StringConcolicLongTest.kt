@@ -10,7 +10,7 @@ import kotlin.time.ExperimentalTime
 @ExperimentalSerializationApi
 @InternalSerializationApi
 @DelicateCoroutinesApi
-class StringConcolicLongTest : ConcolicTest() {
+class StringConcolicLongTest : ConcolicTest("string-concolic") {
     @Test
     fun primitiveConcolicTest() {
         assertCoverage(cm["org/vorpal/research/kex/test/concolic/StringConcolicTests"], 1.0)

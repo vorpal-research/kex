@@ -10,7 +10,7 @@ import kotlin.time.ExperimentalTime
 @ExperimentalSerializationApi
 @InternalSerializationApi
 @DelicateCoroutinesApi
-class KAFSymbolicLongTest : SymbolicTest() {
+class KAFSymbolicLongTest : SymbolicTest("kaf-symbolic") {
     @Test
     fun lesson2() {
         assertCoverage(cm["org/vorpal/research/kex/test/concolic/kaf/Lesson2"], 1.0)

@@ -20,7 +20,7 @@ import org.vorpal.research.kthelper.`try`
 import kotlin.test.Test
 import kotlin.test.assertTrue
 
-class PredicateBuilderTest : KexTest() {
+class PredicateBuilderTest : KexTest("predicate-builder") {
     val tf = TermFactory
     val pf = PredicateFactory
 
