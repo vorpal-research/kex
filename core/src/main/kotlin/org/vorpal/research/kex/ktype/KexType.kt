@@ -5,7 +5,7 @@ import org.vorpal.research.kex.BaseType
 import org.vorpal.research.kex.InheritanceInfo
 import org.vorpal.research.kex.InheritorOf
 import org.vorpal.research.kex.util.getKexRuntime
-import org.vorpal.research.kfg.Package
+import org.vorpal.research.kex.util.javaString
 import org.vorpal.research.kfg.ir.Method
 import org.vorpal.research.kfg.type.*
 import org.vorpal.research.kfg.util.Flags
@@ -188,7 +188,7 @@ abstract class KexType {
     }
 
     abstract val name: String
-    val javaName get() = name.replace(Package.SEPARATOR, Package.CANONICAL_SEPARATOR)
+    val javaName get() = name.javaString
     abstract val bitSize: Int
 
     abstract fun getKfgType(types: TypeFactory): Type

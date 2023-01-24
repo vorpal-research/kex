@@ -10,6 +10,7 @@ import org.vorpal.research.kex.reanimator.codegen.javagen.ExecutorAS2JavaPrinter
 import org.vorpal.research.kex.reanimator.codegen.kotlingen.ActionSequence2KotlinPrinter
 import org.vorpal.research.kex.util.compiledCodeDirectory
 import org.vorpal.research.kex.util.getJunit
+import org.vorpal.research.kex.util.javaString
 import org.vorpal.research.kex.util.outputDirectory
 import org.vorpal.research.kfg.ir.BasicBlock
 import org.vorpal.research.kfg.ir.Class
@@ -74,12 +75,12 @@ class JUnitTestCasePrinter(
     override val printer: ActionSequencePrinter = when (testCaseLanguage) {
         "kotlin" -> ActionSequence2KotlinPrinter(
             ctx,
-            packageName.replace(Package.SEPARATOR, Package.CANONICAL_SEPARATOR),
+            packageName.javaString,
             klassName
         )
         "java" -> ActionSequence2JavaPrinter(
             ctx,
-            packageName.replace(Package.SEPARATOR, Package.CANONICAL_SEPARATOR),
+            packageName.javaString,
             klassName
         )
         else -> unreachable { log.error("Unknown target language for test case generation: $testCaseLanguage") }
@@ -109,7 +110,7 @@ class ExecutorTestCasePrinter(
     val klassName: String
 ) : TestCasePrinter(ctx, packageName) {
     private val testDirectory = kexConfig.outputDirectory.resolve(testCaseDirectory)
-    val fullKlassName = "${packageName.replace(Package.SEPARATOR, Package.CANONICAL_SEPARATOR)}.$klassName"
+    val fullKlassName = "${packageName.javaString}.$klassName"
     override val printer = ExecutorAS2JavaPrinter(ctx, packageName.replace("/", "."), klassName, SETUP_METHOD)
     override val targetFile: File = run {
         val targetFileName = "$klassName.java"

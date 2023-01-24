@@ -2,7 +2,7 @@ package org.vorpal.research.kex.ktype
 
 import kotlinx.serialization.Serializable
 import org.vorpal.research.kex.InheritorOf
-import org.vorpal.research.kfg.Package
+import org.vorpal.research.kex.util.javaString
 import org.vorpal.research.kfg.type.SystemTypeNames
 import org.vorpal.research.kfg.type.Type
 import org.vorpal.research.kfg.type.TypeFactory
@@ -29,7 +29,7 @@ class KexClass(val klass: String, override val memspace: Int = defaultMemspace) 
     override val name: String
         get() = klass
 
-    val canonicalDesc get() = name.replace(Package.SEPARATOR, Package.CANONICAL_SEPARATOR)
+    val canonicalDesc get() = name.javaString
 
     fun kfgClass(types: TypeFactory) = types.cm[klass]
 
@@ -124,8 +124,10 @@ fun KexType.unreferenced(): KexType = when (this) {
 
 fun KexType.asArray() = KexArray(this)
 val KexType.isArray get() = this is KexArray
+@Suppress("FunctionName")
 fun KexString() = KexClass(SystemTypeNames.stringClass)
 val KexType.isString get() = this is KexClass && this.klass == SystemTypeNames.stringClass
+@Suppress("FunctionName")
 fun KexJavaClass() = KexClass(SystemTypeNames.classClass)
 
 val KexType.isJavaClass get() = this is KexClass && this.klass == SystemTypeNames.classClass

@@ -10,8 +10,6 @@ import org.vorpal.research.kfg.ClassManager
 import org.vorpal.research.kfg.ir.Class
 import org.vorpal.research.kfg.ir.ConcreteClass
 import org.vorpal.research.kfg.ir.Method
-import org.vorpal.research.kfg.ir.value.instruction.NewInst
-import org.vorpal.research.kfg.ir.value.instruction.ReturnInst
 import org.vorpal.research.kfg.type.*
 import org.vorpal.research.kfg.visitor.ClassVisitor
 import org.vorpal.research.kthelper.`try`
@@ -284,15 +282,7 @@ class ClassInstantiationDetector(
         if (!baseAccessLevel.canAccess(method.klass.accessModifier)) return
         if (!method.isStatic || method.argTypes.any { it.isSubtypeOf(returnType) } || method.isSynthetic) return
 
-        var returnClass = returnType.klass
-        method.body.flatten().firstOrNull { it is ReturnInst }?.let {
-            it as ReturnInst
-            if (it.returnValue is NewInst) {
-                returnClass = (it.returnValue.type as ClassType).klass
-                addInstantiableClass(returnClass, returnClass)
-            }
-        }
-        addExternalCtor(returnClass, method)
+        addExternalCtor(returnType.klass, method)
     }
 
     private fun addInstantiableClass(klass: Class, instantiableKlass: Class) {

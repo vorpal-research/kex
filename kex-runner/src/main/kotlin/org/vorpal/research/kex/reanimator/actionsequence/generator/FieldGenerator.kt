@@ -8,7 +8,7 @@ import org.vorpal.research.kex.reanimator.actionsequence.ActionList
 import org.vorpal.research.kex.reanimator.actionsequence.ActionSequence
 import org.vorpal.research.kex.reanimator.actionsequence.ExternalMethodCall
 import org.vorpal.research.kex.reanimator.actionsequence.MethodCall
-import org.vorpal.research.kfg.Package
+import org.vorpal.research.kex.util.asmString
 import org.vorpal.research.kfg.ir.Class
 import org.vorpal.research.kfg.type.SystemTypeNames
 import org.vorpal.research.kfg.type.stringType
@@ -32,7 +32,7 @@ class FieldGenerator(val fallback: Generator) : Generator {
 
         val klassDescriptor = (descriptor["clazz" to KexJavaClass()] as? ObjectDescriptor)?.also { klassDesc ->
             val klassName = klassDesc["name" to KexString()]?.asStringValue
-            val asmKlassName = klassName?.replace(Package.CANONICAL_SEPARATOR, Package.SEPARATOR)
+            val asmKlassName = klassName?.asmString
             klass = asmKlassName?.let { cm[it] } ?: context.cm.concreteClasses.random(context.random).also {
                 klassDesc["name" to KexString()] = descriptor { string(it.canonicalDesc) }
             }

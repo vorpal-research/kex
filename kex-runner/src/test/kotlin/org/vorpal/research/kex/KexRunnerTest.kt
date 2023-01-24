@@ -19,6 +19,7 @@ import org.vorpal.research.kex.state.term.ConstIntTerm
 import org.vorpal.research.kex.state.term.isConst
 import org.vorpal.research.kex.state.term.term
 import org.vorpal.research.kex.trace.`object`.ObjectTraceManager
+import org.vorpal.research.kex.util.asmString
 import org.vorpal.research.kex.util.deleteOnExit
 import org.vorpal.research.kex.util.instrumentedCodeDirectory
 import org.vorpal.research.kfg.ClassManager
@@ -46,8 +47,8 @@ import kotlin.test.assertTrue
 @ExperimentalSerializationApi
 @InternalSerializationApi
 abstract class KexRunnerTest : KexTest() {
-    val classPath = System.getProperty("java.class.path")
-    val targetDir = Files.createTempDirectory("kex-test").also {
+    private val classPath = System.getProperty("java.class.path")
+    private val targetDir = Files.createTempDirectory("kex-test").also {
         deleteOnExit(it)
     }
     val analysisContext: ExecutionContext
@@ -61,7 +62,7 @@ abstract class KexRunnerTest : KexTest() {
         prepareInstrumentedClasspath(jar, jar.classLoader, Package.defaultPackage, kexConfig.instrumentedCodeDirectory)
 
         analysisContext = ExecutionContext(
-            cm, `package`, classLoader, EasyRandomDriver(), listOf(jar.path), AccessModifier.Private
+            cm, classLoader, EasyRandomDriver(), listOf(jar.path), AccessModifier.Private
         )
     }
 
@@ -84,7 +85,6 @@ abstract class KexRunnerTest : KexTest() {
         cm.initialize(container)
         val context = ExecutionContext(
             cm,
-            target,
             containerClassLoader,
             EasyRandomDriver(),
             listOf(container.path)
@@ -102,8 +102,8 @@ abstract class KexRunnerTest : KexTest() {
     protected open fun createTraceCollector(context: ExecutionContext): MethodVisitor =
         RuntimeTraceInstrumenter(context.cm)
 
-    protected fun getReachables(method: Method): List<Instruction> {
-        val klass = AssertIntrinsics::class.qualifiedName!!.replace(Package.CANONICAL_SEPARATOR, Package.SEPARATOR)
+    private fun getReachables(method: Method): List<Instruction> {
+        val klass = AssertIntrinsics::class.qualifiedName!!.asmString
         val intrinsics = cm[klass]
 
         val types = cm.type
@@ -115,8 +115,8 @@ abstract class KexRunnerTest : KexTest() {
             .toList()
     }
 
-    protected fun getUnreachables(method: Method): List<Instruction> {
-        val klass = AssertIntrinsics::class.qualifiedName!!.replace(Package.CANONICAL_SEPARATOR, Package.SEPARATOR)
+    private fun getUnreachables(method: Method): List<Instruction> {
+        val klass = AssertIntrinsics::class.qualifiedName!!.asmString
         val intrinsics = cm[klass]
 
         val methodName = "kexUnreachable"
@@ -133,7 +133,7 @@ abstract class KexRunnerTest : KexTest() {
             log.debug(method.print())
 
             val psa = getPSA(method)
-            val ctx = ExecutionContext(cm, `package`, loader, EasyRandomDriver(), listOf())
+            val ctx = ExecutionContext(cm, loader, EasyRandomDriver(), listOf())
 
             getReachables(method).forEach { inst ->
                 val checker = Checker(method, ctx, psa)

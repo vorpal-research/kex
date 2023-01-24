@@ -19,6 +19,7 @@
         <junit.version>4.13.2</junit.version>
 
         <commons-text.version>1.10.0</commons-text.version>
+        <java-stack-trace-parser.version>v1.0.1</java-stack-trace-parser.version>
     </properties>
 
     <dependencies>
@@ -109,7 +110,20 @@
             <artifactId>commons-text</artifactId>
             <version>${commons-text.version}</version>
         </dependency>
+
+        <dependency>
+            <groupId>com.github.alexscheitlin</groupId>
+            <artifactId>java-stack-trace-parser</artifactId>
+            <version>${java-stack-trace-parser.version}</version>
+        </dependency>
     </dependencies>
+
+    <repositories>
+        <repository>
+            <id>jitpack.io</id>
+            <url>https://jitpack.io</url>
+        </repository>
+    </repositories>
 
     <build>
         <sourceDirectory>${project.basedir}/src/main/kotlin</sourceDirectory>

@@ -40,7 +40,7 @@ fun main(args: Array<String>) {
     require(targetName != null, cmd::printHelp)
 
     try {
-        val launcher: KexLauncher = when (cmd.getEnumValue("mode", LaunchMode.Concolic, ignoreCase = true)) {
+        val launcher: KexAnalysisLauncher = when (cmd.getEnumValue("mode", LaunchMode.Concolic, ignoreCase = true)) {
             LaunchMode.Symbolic -> SymbolicLauncher(classPaths, targetName)
             LaunchMode.Concolic -> ConcolicLauncher(classPaths, targetName)
             LaunchMode.LibChecker -> LibraryCheckLauncher(classPaths, targetName)

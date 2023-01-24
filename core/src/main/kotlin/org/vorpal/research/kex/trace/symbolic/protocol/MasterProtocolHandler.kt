@@ -124,7 +124,10 @@ class Master2WorkerSocketConnection(private val socket: Socket) : Master2WorkerC
 
 @ExperimentalSerializationApi
 @InternalSerializationApi
-class Client2MasterSocketConnection(val serializer: KexSerializer, private val port: Int) : Client2MasterConnection {
+class Client2MasterSocketConnection(
+    val serializer: KexSerializer,
+    private val port: Int
+) : Client2MasterConnection {
     private lateinit var socket: Socket
     private lateinit var writer: BufferedWriter
     private lateinit var reader: BufferedReader

@@ -19,9 +19,7 @@ import org.vorpal.research.kex.launcher.AnalysisLevel
 import org.vorpal.research.kex.launcher.ClassLevel
 import org.vorpal.research.kex.launcher.MethodLevel
 import org.vorpal.research.kex.launcher.PackageLevel
-import org.vorpal.research.kex.util.compiledCodeDirectory
-import org.vorpal.research.kex.util.deleteOnExit
-import org.vorpal.research.kex.util.outputDirectory
+import org.vorpal.research.kex.util.*
 import org.vorpal.research.kfg.ClassManager
 import org.vorpal.research.kfg.Package
 import org.vorpal.research.kfg.container.Container
@@ -232,7 +230,7 @@ class CoverageReporter(
                     .filter {
                         analysisLevel.pkg.isParent(
                             it.fullyQualifiedName(jacocoInstrumentedDir)
-                                .replace(Package.CANONICAL_SEPARATOR, Package.SEPARATOR)
+                                .asmString
                         )
                     }
                     .toList()
@@ -315,7 +313,7 @@ class CoverageReporter(
     }
 
     private val String.fullyQualifiedName: String
-        get() = removeSuffix(".class").replace(Package.SEPARATOR, Package.CANONICAL_SEPARATOR)
+        get() = removeSuffix(".class").javaString
 
     private fun Path.fullyQualifiedName(base: Path): String =
         relativeTo(base).toString()

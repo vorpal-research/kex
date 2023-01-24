@@ -307,7 +307,7 @@ fun ClassLoader.loadClassByName(name: String): Class<*> {
         if (it == '[') ++arrCount
         it == '[' || it == ']'
     }
-    var subClass = parseNamedType(end) ?: loadClass(end.replace(Package.SEPARATOR, Package.CANONICAL_SEPARATOR))
+    var subClass = parseNamedType(end) ?: loadClass(end.javaString)
     while (arrCount > 0) {
         --arrCount
         subClass = Array.newInstance(subClass, 0).javaClass
