@@ -22,7 +22,7 @@ import kotlin.time.ExperimentalTime
 @ExperimentalSerializationApi
 @InternalSerializationApi
 @DelicateCoroutinesApi
-abstract class SymbolicTest : KexRunnerTest() {
+abstract class SymbolicTest(testDirectoryName: String) : KexRunnerTest(testDirectoryName) {
 
     override fun createTraceCollector(context: ExecutionContext) = object : MethodVisitor {
         override val cm: ClassManager

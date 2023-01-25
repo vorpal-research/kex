@@ -6,7 +6,7 @@ import kotlin.test.Test
 
 @ExperimentalSerializationApi
 @InternalSerializationApi
-class BasicLongTest : KexRunnerTest() {
+class BasicLongTest : KexRunnerTest("basic-long") {
 
     @Test
     fun testIcfpc2018() {

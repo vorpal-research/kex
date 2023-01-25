@@ -19,7 +19,7 @@ import kotlin.test.assertTrue
 
 @ExperimentalSerializationApi
 @InternalSerializationApi
-class KexSerializerTest : KexTest() {
+class KexSerializerTest : KexTest("kex-serializer") {
     val serializer = KexSerializer(cm)
 
     @Test

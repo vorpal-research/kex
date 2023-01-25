@@ -3,20 +3,20 @@ package org.vorpal.research.kex.smt.ksmt
 import org.junit.AfterClass
 import org.junit.BeforeClass
 import org.ksmt.KContext
-import kotlin.test.assertEquals
 import org.ksmt.expr.KExpr
 import org.ksmt.solver.KSolverStatus
-import kotlin.test.Test
 import org.ksmt.solver.runner.KSolverRunnerManager
 import org.ksmt.solver.z3.KZ3Solver
 import org.ksmt.sort.KBoolSort
 import org.vorpal.research.kex.KexTest
 import org.vorpal.research.kex.smt.ksmt.KSMTEngine.asExpr
+import kotlin.test.Test
+import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 @Suppress("UNCHECKED_CAST")
-class KSMTSolverTest : KexTest() {
+class KSMTSolverTest : KexTest("ksmt-solver") {
     companion object {
         private lateinit var solverManager: KSolverRunnerManager
 

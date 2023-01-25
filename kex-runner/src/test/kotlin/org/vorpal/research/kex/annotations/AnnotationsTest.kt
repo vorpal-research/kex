@@ -12,7 +12,7 @@ import kotlin.test.Test
 
 @ExperimentalSerializationApi
 @InternalSerializationApi
-class AnnotationsTest : KexRunnerTest() {
+class AnnotationsTest : KexRunnerTest("annotation") {
     companion object {
         val annotationInitializer by lazy {
             (AnnotationManager.defaultLoader as ExternalAnnotationsLoader).loadFrom(

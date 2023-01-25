@@ -10,7 +10,7 @@ import kotlin.time.ExperimentalTime
 @ExperimentalSerializationApi
 @InternalSerializationApi
 @DelicateCoroutinesApi
-class EnumSymbolicLongTest : SymbolicTest() {
+class EnumSymbolicLongTest : SymbolicTest("enum-symbolic") {
     @Test
     fun enumTest() {
         assertCoverage(cm["org/vorpal/research/kex/test/concolic/EnumConcolicTests"], 1.0)

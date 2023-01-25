@@ -9,7 +9,7 @@ import org.vorpal.research.kfg.ir.value.instruction.UnreachableInst
 import org.vorpal.research.kthelper.graph.NoTopologicalSortingException
 import kotlin.test.Test
 
-class PredicateStateBuilderTest : KexTest() {
+class PredicateStateBuilderTest : KexTest("predicate-state-builder") {
 
     private fun performPSA(method: Method): PredicateStateBuilder {
         if (method.hasLoops) {

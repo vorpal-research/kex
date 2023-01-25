@@ -6,7 +6,7 @@ import kotlin.test.Test
 
 @ExperimentalSerializationApi
 @InternalSerializationApi
-class ObjectTest : KexRunnerTest() {
+class ObjectTest : KexRunnerTest("object") {
 
     @Test
     fun testBasicReachability() {

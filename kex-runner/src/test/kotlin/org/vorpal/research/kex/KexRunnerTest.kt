@@ -46,7 +46,7 @@ import kotlin.test.assertTrue
 
 @ExperimentalSerializationApi
 @InternalSerializationApi
-abstract class KexRunnerTest : KexTest() {
+abstract class KexRunnerTest(testDirectoryName: String) : KexTest(testDirectoryName) {
     private val classPath = System.getProperty("java.class.path")
     private val targetDir = Files.createTempDirectory("kex-test").also {
         deleteOnExit(it)

@@ -6,7 +6,7 @@ import kotlin.test.Test
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
-class AccessModifierTest : KexTest() {
+class AccessModifierTest : KexTest("access-modifier") {
 
     @Test
     fun checkAccessModifiers() {

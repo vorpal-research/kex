@@ -8,6 +8,7 @@ import org.vorpal.research.kex.config.kexConfig
 import org.vorpal.research.kex.util.getIntrinsics
 import org.vorpal.research.kex.util.getKexRuntime
 import org.vorpal.research.kex.util.getRuntime
+import org.vorpal.research.kex.util.outputDirectory
 import org.vorpal.research.kfg.ClassManager
 import org.vorpal.research.kfg.KfgConfig
 import org.vorpal.research.kfg.Package
@@ -18,7 +19,7 @@ import org.vorpal.research.kfg.ir.Method
 import org.vorpal.research.kfg.util.Flags
 import java.nio.file.Paths
 
-abstract class KexTest {
+abstract class KexTest(testDirectoryName: String) {
     val packageName = "org.vorpal.research.kex.test"
     val `package` = Package.parse("$packageName.*")
     val jarPath: String
@@ -29,7 +30,10 @@ abstract class KexTest {
     init {
         val rootDir = System.getProperty("root.dir")
         val version = System.getProperty("project.version")
-        kexConfig.initialize(RuntimeConfig, FileConfig("$rootDir/kex-test.ini"))
+        val fileConfig = FileConfig("$rootDir/kex-test.ini")
+        kexConfig.initialize(RuntimeConfig, fileConfig)
+
+        RuntimeConfig.setValue("kex", "outputDir", fileConfig.outputDirectory.resolve(testDirectoryName).toString())
         kexConfig.initLog("kex-test.log")
 
         jarPath = "$rootDir/kex-test/target/kex-test-$version-jar-with-dependencies.jar"

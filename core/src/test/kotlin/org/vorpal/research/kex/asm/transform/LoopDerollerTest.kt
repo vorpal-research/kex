@@ -7,7 +7,7 @@ import org.vorpal.research.kfg.visitor.LoopAnalysis
 import kotlin.test.Test
 import kotlin.test.assertTrue
 
-class LoopDerollerTest : KexTest() {
+class LoopDerollerTest : KexTest("loop-deroller") {
 
     private fun checkLoops(method: Method) {
         if (method.isAbstract) return
