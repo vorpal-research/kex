@@ -63,6 +63,7 @@ object KexRtManager {
 
 
     val KfgClass.isKexRt get() = fullName in kex2RtMapping
+    @Suppress("unused")
     val Type.isKexRt: Boolean get() = when (this) {
         is ClassType -> this.klass.isKexRt
         is ArrayType -> component.isKexRt
@@ -77,6 +78,7 @@ object KexRtManager {
 
 
     val KfgClass.isJavaRt get() = rt2KexMapping.any { fullName.startsWith(it.key) }
+    @Suppress("unused")
     val Type.isJavaRt: Boolean get() = when (this) {
         is ClassType -> this.klass.isJavaRt
         is ArrayType -> component.isJavaRt
