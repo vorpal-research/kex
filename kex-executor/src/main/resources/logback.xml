@@ -6,16 +6,24 @@
             <pattern>[%-5p] - %m%n</pattern>
         </encoder>
     </appender>
-    <appender name="kexFileLogger" class="ch.qos.logback.core.FileAppender">
-        <file>${kex.log.name}</file>
-        <param name="Append" value="true" />
-        <encoder>
-            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%-5p][%c] - %m%n</pattern>
-        </encoder>
+    <appender name="kexSiftingFileLogger" class="ch.qos.logback.classic.sift.SiftingAppender">
+        <discriminator>
+            <key>kex-run-id</key>
+            <defaultValue>kex-test</defaultValue>
+        </discriminator>
+        <sift>
+            <appender name="kexTestFileLogger-${kex-run-id}" class="ch.qos.logback.core.FileAppender">
+                <file>${kex-run-id}</file>
+                <append>true</append>
+                <encoder>
+                    <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%-5p][%c] - %m%n</pattern>
+                </encoder>
+            </appender>
+        </sift>
     </appender>
 
     <appender name="asyncFileLogger" class="ch.qos.logback.classic.AsyncAppender">
-        <appender-ref ref="kexFileLogger"/>
+        <appender-ref ref="kexSiftingFileLogger"/>
     </appender>
 
     <logger name="org.vorpal.research" level="ALL" additivity="false">
