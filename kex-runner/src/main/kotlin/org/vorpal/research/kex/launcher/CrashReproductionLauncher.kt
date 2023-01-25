@@ -1,5 +1,7 @@
 package org.vorpal.research.kex.launcher
 
+import ch.scheitlin.alex.java.StackTrace
+import ch.scheitlin.alex.java.StackTraceParser
 import org.vorpal.research.kex.ExecutionContext
 import org.vorpal.research.kex.asm.util.AccessModifier
 import org.vorpal.research.kex.asm.util.Visibility
@@ -15,16 +17,19 @@ import org.vorpal.research.kfg.util.Flags
 import org.vorpal.research.kthelper.logging.log
 import java.net.URLClassLoader
 import java.nio.file.Paths
+import kotlin.io.path.readText
 
 class CrashReproductionLauncher(
     classPaths: List<String>,
-    crashPath: String
+    crashPath: String,
+    val depth: UInt
 ) : KexLauncher {
     private val classPath: String = System.getProperty("java.class.path")
 
-    val containers: List<Container>
-    val context: ExecutionContext
-    val accessLevel: AccessModifier
+    private val containers: List<Container>
+    private val context: ExecutionContext
+    private val accessLevel: AccessModifier
+    private val stackTrace: StackTrace
 
     init {
         val containerPaths = classPaths.map { Paths.get(it).toAbsolutePath() }
@@ -67,6 +72,8 @@ class CrashReproductionLauncher(
         context = ExecutionContext(cm, classLoader, randomDriver, klassPath, accessLevel)
 
         log.debug("Running with class path:\n${containers.joinToString("\n") { it.name }}")
+        stackTrace = StackTraceParser.parse(Paths.get(crashPath).readText())
+        log.debug("Running on stack trace:\n${stackTrace.originalStackTrace}")
     }
 
     private fun updateClassPath(loader: URLClassLoader) {

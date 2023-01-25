@@ -12,12 +12,13 @@ import org.vorpal.research.kthelper.assert.unreachable
 import org.vorpal.research.kthelper.logging.log
 
 @ExperimentalSerializationApi
-class LibraryCheckLauncher(classPaths: List<String>, targetName: String) : KexAnalysisLauncher(classPaths, targetName) {
+class LibraryCheckLauncher(
+    classPaths: List<String>,
+    targetName: String,
+    callCitePackage: String
+) : KexAnalysisLauncher(classPaths, targetName) {
+    private val callCitePackage: Package = Package.parse(callCitePackage)
     override fun launch() {
-        val callCitePackage = Package.parse(
-            kexConfig.getStringValue("libCheck", "target")
-                ?: unreachable { log.error("You need to specify package in which to look for library usages") }
-        )
         val psa = PredicateStateAnalysis(context.cm)
 
         preparePackage(context, psa, Package.defaultPackage)
