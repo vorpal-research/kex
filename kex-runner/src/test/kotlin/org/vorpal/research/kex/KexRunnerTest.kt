@@ -40,19 +40,24 @@ import java.net.URLClassLoader
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
+import kotlin.test.BeforeTest
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
+@Suppress("HasPlatformType", "MemberVisibilityCanBePrivate")
 @ExperimentalSerializationApi
 @InternalSerializationApi
-abstract class KexRunnerTest(testDirectoryName: String) : KexTest(testDirectoryName) {
+abstract class KexRunnerTest(
+    testDirectoryName: String,
+) : KexTest(testDirectoryName) {
     val classPath = System.getProperty("java.class.path")
     val targetDir = Files.createTempDirectory("kex-test").also {
         deleteOnExit(it)
     }
-    val analysisContext: ExecutionContext
+    lateinit var analysisContext: ExecutionContext
 
-    init {
+    @BeforeTest
+    fun init() {
         val jar = Paths.get(jarPath).asContainer(`package`)!!
 
         jar.unpack(cm, targetDir, true)
