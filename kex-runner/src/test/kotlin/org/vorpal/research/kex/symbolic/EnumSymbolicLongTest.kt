@@ -12,9 +12,6 @@ import kotlin.time.ExperimentalTime
 @InternalSerializationApi
 @DelicateCoroutinesApi
 class EnumSymbolicLongTest : SymbolicTest("enum-symbolic") {
-    init {
-        RuntimeConfig.setValue("easy-random", "seed", "666")
-    }
     @Test
     fun enumTest() {
         assertCoverage(cm["org/vorpal/research/kex/test/concolic/EnumConcolicTests"], 1.0)
