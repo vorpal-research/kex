@@ -57,7 +57,7 @@ internal fun prepareInstrumentedClasspath(
             +ClassInstantiationDetector(context)
             val initializerBody = prepareClassPath(context)
             initializerBody()
-            +ClassWriter(context, path)
+//            +ClassWriter(context, path)
         }
     }
 }

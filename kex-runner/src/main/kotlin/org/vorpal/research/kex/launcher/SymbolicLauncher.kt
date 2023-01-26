@@ -4,7 +4,7 @@ import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.InternalSerializationApi
 import org.vorpal.research.kex.ExecutionContext
-import org.vorpal.research.kex.asm.analysis.symbolic.SymbolicTraverser
+import org.vorpal.research.kex.asm.analysis.symbolic.InstructionSymbolicChecker
 import org.vorpal.research.kex.config.kexConfig
 import org.vorpal.research.kex.jacoco.CoverageReporter
 import org.vorpal.research.kex.util.PermanentCoverageInfo
@@ -30,7 +30,7 @@ class SymbolicLauncher(classPaths: List<String>, targetName: String) : KexAnalys
 
     override fun launch() {
         for (setOfTargets in batchedTargets) {
-            SymbolicTraverser.run(context, setOfTargets)
+            InstructionSymbolicChecker.run(context, setOfTargets)
         }
 
         val coverageInfo = CoverageReporter(containers).execute(context.cm, analysisLevel)

@@ -5,7 +5,7 @@ import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.InternalSerializationApi
 import org.vorpal.research.kex.ExecutionContext
 import org.vorpal.research.kex.KexRunnerTest
-import org.vorpal.research.kex.asm.analysis.symbolic.SymbolicTraverser
+import org.vorpal.research.kex.asm.analysis.symbolic.InstructionSymbolicChecker
 import org.vorpal.research.kex.asm.manager.ClassInstantiationDetector
 import org.vorpal.research.kex.jacoco.CoverageReporter
 import org.vorpal.research.kex.launcher.ClassLevel
@@ -37,7 +37,7 @@ abstract class SymbolicTest(testDirectoryName: String) : KexRunnerTest(testDirec
         }
 
         for (method in klass.allMethods.sortedBy { method -> method.prototype }) {
-            SymbolicTraverser.run(analysisContext, setOf(method))
+            InstructionSymbolicChecker.run(analysisContext, setOf(method))
         }
 
         val coverage = CoverageReporter(listOf(jar)).execute(klass.cm, ClassLevel(klass))

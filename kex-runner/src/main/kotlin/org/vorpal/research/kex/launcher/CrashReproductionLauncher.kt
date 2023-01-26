@@ -2,7 +2,10 @@ package org.vorpal.research.kex.launcher
 
 import ch.scheitlin.alex.java.StackTrace
 import ch.scheitlin.alex.java.StackTraceParser
+import kotlinx.coroutines.DelicateCoroutinesApi
 import org.vorpal.research.kex.ExecutionContext
+import org.vorpal.research.kex.asm.analysis.symbolic.CrashReproductionChecker
+import org.vorpal.research.kex.asm.manager.ClassInstantiationDetector
 import org.vorpal.research.kex.asm.util.AccessModifier
 import org.vorpal.research.kex.asm.util.Visibility
 import org.vorpal.research.kex.config.kexConfig
@@ -14,11 +17,15 @@ import org.vorpal.research.kfg.Package
 import org.vorpal.research.kfg.container.Container
 import org.vorpal.research.kfg.container.asContainer
 import org.vorpal.research.kfg.util.Flags
+import org.vorpal.research.kfg.visitor.executePipeline
 import org.vorpal.research.kthelper.logging.log
 import java.net.URLClassLoader
 import java.nio.file.Paths
 import kotlin.io.path.readText
+import kotlin.time.ExperimentalTime
 
+@DelicateCoroutinesApi
+@ExperimentalTime
 class CrashReproductionLauncher(
     classPaths: List<String>,
     crashPath: String,
@@ -39,14 +46,6 @@ class CrashReproductionLauncher(
         }.toTypedArray(), getKexRuntime())
         val analysisJars = listOfNotNull(*containers.toTypedArray(), getRuntime(), getIntrinsics())
 
-        val instrumentedCodeDir = kexConfig.instrumentedCodeDirectory
-        prepareInstrumentedClasspath(
-            analysisJars,
-            containerClassLoader,
-            Package.defaultPackage,
-            instrumentedCodeDir
-        ) { {} }
-
         val cm = ClassManager(
             KfgConfig(
                 flags = Flags.readAll,
@@ -65,14 +64,15 @@ class CrashReproductionLauncher(
         }
         log.debug("Access level: $accessLevel")
 
-        val classLoader = URLClassLoader(arrayOf(instrumentedCodeDir.toUri().toURL()))
         val klassPath = containers.map { it.path }
-        updateClassPath(classLoader)
+        updateClassPath(containerClassLoader)
         val randomDriver = EasyRandomDriver()
-        context = ExecutionContext(cm, classLoader, randomDriver, klassPath, accessLevel)
+        context = ExecutionContext(cm, containerClassLoader, randomDriver, klassPath, accessLevel)
 
         log.debug("Running with class path:\n${containers.joinToString("\n") { it.name }}")
-        stackTrace = StackTraceParser.parse(Paths.get(crashPath).readText())
+        stackTrace = StackTraceParser.parse(Paths.get(crashPath).readText()).let {
+            StackTrace(it.firstLine, it.stackTraceLines.take(depth.toInt()))
+        }
         log.debug("Running on stack trace:\n${stackTrace.originalStackTrace}")
     }
 
@@ -82,6 +82,9 @@ class CrashReproductionLauncher(
     }
 
     override fun launch() {
-        TODO("Not yet implemented")
+        executePipeline(context.cm, Package.defaultPackage) {
+            +ClassInstantiationDetector(context, context.accessLevel)
+        }
+        CrashReproductionChecker.run(context, stackTrace)
     }
 }

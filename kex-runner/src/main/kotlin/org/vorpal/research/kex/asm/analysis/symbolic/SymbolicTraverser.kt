@@ -7,7 +7,6 @@ import org.vorpal.research.kex.asm.analysis.util.analyzeOrTimeout
 import org.vorpal.research.kex.asm.analysis.util.checkAsync
 import org.vorpal.research.kex.compile.CompilationException
 import org.vorpal.research.kex.compile.CompilerHelper
-import org.vorpal.research.kex.config.kexConfig
 import org.vorpal.research.kex.descriptor.Descriptor
 import org.vorpal.research.kex.ktype.*
 import org.vorpal.research.kex.ktype.KexRtManager.rtMapped
@@ -20,7 +19,6 @@ import org.vorpal.research.kex.state.predicate.state
 import org.vorpal.research.kex.state.term.*
 import org.vorpal.research.kex.state.transformer.*
 import org.vorpal.research.kex.trace.symbolic.*
-import org.vorpal.research.kex.util.newFixedThreadPoolContextWithMDC
 import org.vorpal.research.kfg.ClassManager
 import org.vorpal.research.kfg.ir.BasicBlock
 import org.vorpal.research.kfg.ir.Method
@@ -33,8 +31,6 @@ import org.vorpal.research.kfg.type.TypeFactory
 import org.vorpal.research.kthelper.assert.unreachable
 import org.vorpal.research.kthelper.logging.log
 import java.util.concurrent.atomic.AtomicInteger
-import kotlin.time.Duration.Companion.seconds
-import kotlin.time.ExperimentalTime
 
 data class TraverserState(
     val symbolicState: PersistentSymbolicState,
@@ -52,10 +48,10 @@ data class TraverserState(
     }
 }
 
-@Suppress("RedundantSuspendModifier")
-class SymbolicTraverser(
+@Suppress("RedundantSuspendModifier", "MemberVisibilityCanBePrivate")
+abstract class SymbolicTraverser(
     val ctx: ExecutionContext,
-    private val rootMethod: Method
+    val rootMethod: Method,
 ) : TermBuilder() {
     val cm: ClassManager
         get() = ctx.cm
@@ -64,37 +60,18 @@ class SymbolicTraverser(
     val values: ValueFactory
         get() = ctx.values
 
-    private val pathSelector: SymbolicPathSelector = DequePathSelector()
-    private val callResolver: SymbolicCallResolver = DefaultCallResolver(ctx)
-    private val invokeDynamicResolver: SymbolicInvokeDynamicResolver = DefaultCallResolver(ctx)
+    abstract val pathSelector: SymbolicPathSelector
+    abstract val callResolver: SymbolicCallResolver
+    abstract val invokeDynamicResolver: SymbolicInvokeDynamicResolver
+
     private var currentState: TraverserState? = null
     private var testIndex = AtomicInteger(0)
     private val compilerHelper = CompilerHelper(ctx)
-
 
     private val nullptrClass = cm["java/lang/NullPointerException"]
     private val arrayIndexOOBClass = cm["java/lang/ArrayIndexOutOfBoundsException"]
     private val negativeArrayClass = cm["java/lang/NegativeArraySizeException"]
     private val classCastClass = cm["java/lang/ClassCastException"]
-
-    companion object {
-        @ExperimentalTime
-        @DelicateCoroutinesApi
-        fun run(context: ExecutionContext, targets: Set<Method>) {
-            val executors = kexConfig.getIntValue("symbolic", "numberOfExecutors", 8)
-            val timeLimit = kexConfig.getIntValue("symbolic", "timeLimit", 100)
-
-            val actualNumberOfExecutors = maxOf(1, minOf(executors, targets.size))
-            val coroutineContext = newFixedThreadPoolContextWithMDC(actualNumberOfExecutors, "symbolic-dispatcher")
-            runBlocking(coroutineContext) {
-                withTimeoutOrNull(timeLimit.seconds) {
-                    targets.map {
-                        async { SymbolicTraverser(context, it).analyze() }
-                    }.awaitAll()
-                }
-            }
-        }
-    }
 
     private val Type.symbolicType: KexType get() = kexType.rtMapped
     private val org.vorpal.research.kfg.ir.Class.symbolicClass: KexType get() = kexType.rtMapped
@@ -184,7 +161,8 @@ class SymbolicTraverser(
         val res = generate(inst.type.symbolicType)
 
         traverserState = nullabilityCheck(traverserState, inst, arrayTerm) ?: return nullableCurrentState()
-        traverserState = boundsCheck(traverserState, inst, indexTerm, arrayTerm.length()) ?: return nullableCurrentState()
+        traverserState =
+            boundsCheck(traverserState, inst, indexTerm, arrayTerm.length()) ?: return nullableCurrentState()
 
         val clause = StateClause(inst, state { res equality arrayTerm[indexTerm].load() })
         currentState = checkReachability(
@@ -193,7 +171,7 @@ class SymbolicTraverser(
                     clauses = traverserState.symbolicState.clauses.add(clause)
                 ),
                 valueMap = traverserState.valueMap.put(inst, res)
-            )
+            ), inst
         )
     }
 
@@ -205,7 +183,8 @@ class SymbolicTraverser(
         val valueTerm = traverserState.mkTerm(inst.value)
 
         traverserState = nullabilityCheck(traverserState, inst, arrayTerm) ?: return nullableCurrentState()
-        traverserState = boundsCheck(traverserState, inst, indexTerm, arrayTerm.length()) ?: return nullableCurrentState()
+        traverserState =
+            boundsCheck(traverserState, inst, indexTerm, arrayTerm.length()) ?: return nullableCurrentState()
 
         val clause = StateClause(inst, state { arrayTerm[indexTerm].store(valueTerm) })
         currentState = checkReachability(
@@ -213,7 +192,7 @@ class SymbolicTraverser(
                 symbolicState = traverserState.symbolicState.copy(
                     clauses = traverserState.symbolicState.clauses.add(clause)
                 )
-            )
+            ), inst
         )
     }
 
@@ -234,7 +213,7 @@ class SymbolicTraverser(
                     clauses = traverserState.symbolicState.clauses.add(clause)
                 ),
                 valueMap = traverserState.valueMap.put(inst, resultTerm)
-            )
+            ), inst
         )
     }
 
@@ -255,7 +234,7 @@ class SymbolicTraverser(
                     path = traverserState.symbolicState.path.add(trueClause)
                 ),
                 blockPath = traverserState.blockPath.add(inst.parent)
-            )
+            ), inst
         )?.let { pathSelector += it to inst.trueSuccessor }
 
         checkReachability(
@@ -264,7 +243,7 @@ class SymbolicTraverser(
                     path = traverserState.symbolicState.path.add(falseClause)
                 ),
                 blockPath = traverserState.blockPath.add(inst.parent)
-            )
+            ), inst
         )?.let { pathSelector += it to inst.falseSuccessor }
 
         currentState = null
@@ -310,7 +289,7 @@ class SymbolicTraverser(
                         symbolicState = traverserState.symbolicState.copy(
                             clauses = traverserState.symbolicState.clauses.add(callClause)
                         )
-                    )
+                    ), inst
                 )
             }
 
@@ -335,7 +314,7 @@ class SymbolicTraverser(
                     clauses = traverserState.symbolicState.clauses.add(clause)
                 ),
                 valueMap = traverserState.valueMap.put(inst, resultTerm)
-            )
+            ), inst
         )
     }
 
@@ -360,7 +339,7 @@ class SymbolicTraverser(
                     clauses = traverserState.symbolicState.clauses.add(clause)
                 ),
                 valueMap = traverserState.valueMap.put(inst, resultTerm)
-            )
+            ), inst
         )
     }
 
@@ -378,7 +357,7 @@ class SymbolicTraverser(
                 symbolicState = traverserState.symbolicState.copy(
                     clauses = traverserState.symbolicState.clauses.add(clause)
                 )
-            )
+            ), inst
         )
     }
 
@@ -396,7 +375,7 @@ class SymbolicTraverser(
                 symbolicState = traverserState.symbolicState.copy(
                     clauses = traverserState.symbolicState.clauses.add(clause)
                 )
-            )
+            ), inst
         )
     }
 
@@ -421,7 +400,7 @@ class SymbolicTraverser(
                     clauses = traverserState.symbolicState.clauses.add(clause)
                 ),
                 valueMap = traverserState.valueMap.put(inst, res)
-            )
+            ), inst
         )
     }
 
@@ -446,7 +425,7 @@ class SymbolicTraverser(
                     clauses = traverserState.symbolicState.clauses.add(clause)
                 ),
                 valueMap = traverserState.valueMap.put(inst, valueTerm)
-            )
+            ), inst
         )
     }
 
@@ -465,7 +444,7 @@ class SymbolicTraverser(
                     clauses = traverserState.symbolicState.clauses.add(clause)
                 ),
                 valueMap = traverserState.valueMap.put(inst, resultTerm)
-            )
+            ), inst
         )
     }
 
@@ -490,7 +469,8 @@ class SymbolicTraverser(
             builder.build()
         }
         if (!candidate.isStatic) {
-            traverserState = typeCheck(traverserState, inst, callee, candidate.klass.symbolicClass) ?: return nullableCurrentState()
+            traverserState =
+                typeCheck(traverserState, inst, callee, candidate.klass.symbolicClass) ?: return nullableCurrentState()
             if (candidate.klass.type.isSubtypeOf(callee.type.getKfgType(types))) {
                 val newCalleeTerm = generate(candidate.klass.symbolicClass)
                 val convertClause = StateClause(inst, state {
@@ -543,7 +523,7 @@ class SymbolicTraverser(
                 valueMap = traverserState.valueMap.put(inst, resultTerm),
                 nullCheckedTerms = traverserState.nullCheckedTerms.add(resultTerm),
                 typeCheckedTerms = traverserState.typeCheckedTerms.put(resultTerm, inst.type)
-            )
+            ), inst
         )
     }
 
@@ -564,7 +544,7 @@ class SymbolicTraverser(
                 valueMap = traverserState.valueMap.put(inst, resultTerm),
                 nullCheckedTerms = traverserState.nullCheckedTerms.add(resultTerm),
                 typeCheckedTerms = traverserState.typeCheckedTerms.put(resultTerm, inst.type)
-            )
+            ), inst
         )
     }
 
@@ -595,7 +575,7 @@ class SymbolicTraverser(
                     clauses = traverserState.symbolicState.clauses.add(clause)
                 ),
                 valueMap = traverserState.valueMap.put(inst, resultTerm)
-            )
+            ), inst
         )
     }
 
@@ -616,7 +596,7 @@ class SymbolicTraverser(
             receiver == null -> {
                 val result = check(rootMethod, traverserState.symbolicState)
                 if (result != null) {
-                    report(result)
+                    report(inst, result)
                 }
                 null
             }
@@ -654,7 +634,7 @@ class SymbolicTraverser(
                         path = traverserState.symbolicState.path.add(path)
                     ),
                     blockPath = traverserState.blockPath.add(inst.parent)
-                )
+                ), inst
             )?.let {
                 pathSelector += it to branch
             }
@@ -670,7 +650,7 @@ class SymbolicTraverser(
                     path = traverserState.symbolicState.path.add(defaultPath)
                 ),
                 blockPath = traverserState.blockPath.add(inst.parent)
-            )
+            ), inst
         )?.let {
             pathSelector += it to inst.default
         }
@@ -694,7 +674,7 @@ class SymbolicTraverser(
                         path = traverserState.symbolicState.path.add(path)
                     ),
                     blockPath = traverserState.blockPath.add(inst.parent)
-                )
+                ), inst
             )?.let {
                 pathSelector += it to branch
             }
@@ -710,7 +690,7 @@ class SymbolicTraverser(
                     path = traverserState.symbolicState.path.add(defaultPath)
                 ),
                 blockPath = traverserState.blockPath.add(inst.parent)
-            )
+            ), inst
         )?.let {
             pathSelector += it to inst.default
         }
@@ -776,7 +756,7 @@ class SymbolicTraverser(
                     )
                 ),
                 nullCheckedTerms = state.nullCheckedTerms.add(term)
-            )
+            ), inst
         )
     }
 
@@ -827,7 +807,7 @@ class SymbolicTraverser(
                     )
                 ),
                 boundCheckedTerms = state.boundCheckedTerms.add(index to length)
-            )
+            ), inst
         )
     }
 
@@ -857,7 +837,7 @@ class SymbolicTraverser(
                     )
                 ),
                 boundCheckedTerms = state.boundCheckedTerms.add(index to index)
-            )
+            ), inst
         )
     }
 
@@ -897,17 +877,18 @@ class SymbolicTraverser(
                     )
                 ),
                 typeCheckedTerms = state.typeCheckedTerms.put(term, currentlyCheckedType)
-            )
+            ), inst
         )
     }
 
-    private suspend fun checkReachability(
-        state: TraverserState
+    protected open suspend fun checkReachability(
+        state: TraverserState,
+        inst: Instruction
     ): TraverserState? {
         return check(rootMethod, state.symbolicState)?.let { state }
     }
 
-    private suspend fun checkExceptionAndReport(
+    protected open suspend fun checkExceptionAndReport(
         state: TraverserState,
         inst: Instruction,
         throwable: Term
@@ -939,13 +920,17 @@ class SymbolicTraverser(
             else -> {
                 val params = check(rootMethod, state.symbolicState)
                 if (params != null) {
-                    report(params, "_throw_${throwableType.toString().replace("[/$.]".toRegex(), "_")}")
+                    report(inst, params, "_throw_${throwableType.toString().replace("[/$.]".toRegex(), "_")}")
                 }
             }
         }
     }
 
-    private fun report(parameters: Parameters<Descriptor>, testPostfix: String = "") {
+    protected open fun report(
+        inst: Instruction,
+        parameters: Parameters<Descriptor>,
+        testPostfix: String = ""
+    ) {
         val generator = UnsafeGenerator(
             ctx,
             rootMethod,
@@ -960,6 +945,6 @@ class SymbolicTraverser(
         }
     }
 
-    private suspend fun check(method: Method, state: SymbolicState): Parameters<Descriptor>? =
+    protected open suspend fun check(method: Method, state: SymbolicState): Parameters<Descriptor>? =
         method.checkAsync(ctx, state)
 }
