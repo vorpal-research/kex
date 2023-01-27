@@ -68,13 +68,13 @@ abstract class SymbolicTraverser(
     private var testIndex = AtomicInteger(0)
     private val compilerHelper = CompilerHelper(ctx)
 
-    private val nullptrClass = cm["java/lang/NullPointerException"]
-    private val arrayIndexOOBClass = cm["java/lang/ArrayIndexOutOfBoundsException"]
-    private val negativeArrayClass = cm["java/lang/NegativeArraySizeException"]
-    private val classCastClass = cm["java/lang/ClassCastException"]
+    protected val nullptrClass = cm["java/lang/NullPointerException"]
+    protected val arrayIndexOOBClass = cm["java/lang/ArrayIndexOutOfBoundsException"]
+    protected val negativeArrayClass = cm["java/lang/NegativeArraySizeException"]
+    protected val classCastClass = cm["java/lang/ClassCastException"]
 
-    private val Type.symbolicType: KexType get() = kexType.rtMapped
-    private val org.vorpal.research.kfg.ir.Class.symbolicClass: KexType get() = kexType.rtMapped
+    protected val Type.symbolicType: KexType get() = kexType.rtMapped
+    protected val org.vorpal.research.kfg.ir.Class.symbolicClass: KexType get() = kexType.rtMapped
 
     suspend fun analyze() = rootMethod.analyzeOrTimeout(ctx.accessLevel) {
         processMethod(it)
@@ -727,7 +727,7 @@ abstract class SymbolicTraverser(
         unreachable<Unit>("Unexpected visit of $inst in symbolic traverser")
     }
 
-    private suspend fun nullabilityCheck(state: TraverserState, inst: Instruction, term: Term): TraverserState? {
+    protected open suspend fun nullabilityCheck(state: TraverserState, inst: Instruction, term: Term): TraverserState? {
         if (term in state.nullCheckedTerms) return state
         if (term is ConstClassTerm) return state
         if (term is StaticClassRefTerm) return state
@@ -760,7 +760,7 @@ abstract class SymbolicTraverser(
         )
     }
 
-    private suspend fun boundsCheck(
+    protected open suspend fun boundsCheck(
         state: TraverserState,
         inst: Instruction,
         index: Term,
@@ -811,7 +811,7 @@ abstract class SymbolicTraverser(
         )
     }
 
-    private suspend fun newArrayBoundsCheck(state: TraverserState, inst: Instruction, index: Term): TraverserState? {
+    protected open suspend fun newArrayBoundsCheck(state: TraverserState, inst: Instruction, index: Term): TraverserState? {
         if (index to index in state.boundCheckedTerms) return state
 
         val persistentState = state.symbolicState
@@ -841,7 +841,7 @@ abstract class SymbolicTraverser(
         )
     }
 
-    private suspend fun typeCheck(
+    protected open suspend fun typeCheck(
         state: TraverserState,
         inst: Instruction,
         term: Term,

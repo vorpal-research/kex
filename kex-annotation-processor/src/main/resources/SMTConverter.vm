@@ -342,7 +342,7 @@ class ${solver}Converter(val tf: TypeFactory) : ${solver}SMTConverter() {
         val name = field.fieldName
         val klass = field.klass
         val actualType = (field.type as KexReference)
-        when (Factory_.getTypeSize(actualType)) {
+        when (Factory_.getTypeSize(actualType.reference)) {
             TypeSize.WORD -> ctx.initializeWordProperty(ptr, memspace, "${ klass }.${ name }", Word_.forceCast(value))
             TypeSize.DWORD -> ctx.initializeDWordProperty(ptr, memspace, "${ klass }.${ name }", DWord_.forceCast(value))
         }
@@ -358,7 +358,7 @@ class ${solver}Converter(val tf: TypeFactory) : ${solver}SMTConverter() {
         val name = field.fieldName
         val klass = field.klass
         val actualType = (field.type as KexReference)
-        when (Factory_.getTypeSize(actualType)) {
+        when (Factory_.getTypeSize(actualType.reference)) {
             TypeSize.WORD -> ctx.writeWordProperty(ptr, memspace, "${ klass }.${ name }", Word_.forceCast(value))
             TypeSize.DWORD -> ctx.writeDWordProperty(ptr, memspace, "${ klass }.${ name }", DWord_.forceCast(value))
         }
@@ -718,7 +718,7 @@ class ${solver}Converter(val tf: TypeFactory) : ${solver}SMTConverter() {
         val name = field.fieldName
         val klass = field.klass
         val actualType = (field.type as KexReference)
-        val res = when (Factory_.getTypeSize(actualType)) {
+        val res = when (Factory_.getTypeSize(actualType.reference)) {
             TypeSize.WORD -> ctx.readWordProperty(ptr, memspace, "${ klass }.${ name }")
             TypeSize.DWORD -> ctx.readDWordProperty(ptr, memspace, "${ klass }.${ name }")
         }
