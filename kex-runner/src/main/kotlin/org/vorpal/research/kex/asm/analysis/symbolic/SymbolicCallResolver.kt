@@ -50,10 +50,10 @@ class DefaultCallResolver(
         if (!shouldResolve(inst)) return emptyList()
         if (method.klass is OuterClass) return emptyList()
         if (method.isNative) return emptyList()
-        if (method.isStatic) return listOf(method)
-        if (method.isConstructor) return listOf(method)
-        if (inst.opcode == CallOpcode.SPECIAL) return listOf(inst.method)
-        if (inst.opcode == CallOpcode.STATIC) return listOf(inst.method)
+        if (method.isStatic) return listOf(method.rtMapped)
+        if (method.isConstructor) return listOf(method.rtMapped)
+        if (inst.opcode == CallOpcode.SPECIAL) return listOf(method.rtMapped)
+        if (inst.opcode == CallOpcode.STATIC) return listOf(method.rtMapped)
 
         val callee = state.mkTerm(inst.callee)
         val baseType = method.klass.rtMapped

@@ -33,7 +33,8 @@ private operator fun ClassManager.get(frame: StackTraceElement): Method {
 class CrashReproductionChecker(
     ctx: ExecutionContext,
     @Suppress("MemberVisibilityCanBePrivate")
-    val stackTrace: StackTrace
+    val stackTrace: StackTrace,
+    private val shouldStopAfterFirst: Boolean
 ) : SymbolicTraverser(ctx, ctx.cm[stackTrace.stackTraceLines.last()]) {
     override val pathSelector: SymbolicPathSelector = DequePathSelector()
     override val callResolver: SymbolicCallResolver = StackTraceCallResolver(
@@ -42,7 +43,6 @@ class CrashReproductionChecker(
     override val invokeDynamicResolver: SymbolicInvokeDynamicResolver = DefaultCallResolver(ctx)
 
     private val targetException = ctx.cm[stackTrace.firstLine.takeWhile { it != ':' }.asmString]
-
     private val targetInstructions = ctx.cm[stackTrace.stackTraceLines.first()].body.flatten()
         .filter { it.location.line == stackTrace.stackTraceLines.first().lineNumber }
         .filterTo(mutableSetOf()) {
@@ -55,19 +55,30 @@ class CrashReproductionChecker(
             }
         }
 
+    private var foundAnExample: Boolean = false
+
     companion object {
         @ExperimentalTime
         @DelicateCoroutinesApi
         fun run(context: ExecutionContext, stackTrace: StackTrace) {
-            val timeLimit = kexConfig.getIntValue("symbolic", "timeLimit", 100)
+            val timeLimit = kexConfig.getIntValue("crash", "timeLimit", 100)
+            val stopAfterFirstCrash = kexConfig.getBooleanValue("crash", "stopAfterFirstCrash", false)
 
-            val coroutineContext = newFixedThreadPoolContextWithMDC(1, "symbolic-dispatcher")
+            val coroutineContext = newFixedThreadPoolContextWithMDC(1, "crash-dispatcher")
             runBlocking(coroutineContext) {
                 withTimeoutOrNull(timeLimit.seconds) {
-                    async { CrashReproductionChecker(context, stackTrace).analyze() }.await()
+                    async { CrashReproductionChecker(context, stackTrace, stopAfterFirstCrash).analyze() }.await()
                 }
             }
         }
+    }
+
+    override suspend fun traverseInstruction(inst: Instruction) {
+        if (shouldStopAfterFirst && foundAnExample) {
+            return
+        }
+
+        super.traverseInstruction(inst)
     }
 
     override suspend fun nullabilityCheck(
@@ -207,12 +218,9 @@ class CrashReproductionChecker(
         }
     }
 
-    override suspend fun checkExceptionAndReport(state: TraverserState, inst: Instruction, throwable: Term) {
-        super.checkExceptionAndReport(state, inst, throwable)
-    }
-
     override fun report(inst: Instruction, parameters: Parameters<Descriptor>, testPostfix: String) {
         if (inst in targetInstructions) {
+            foundAnExample = true
             super.report(inst, parameters, testPostfix)
         }
     }

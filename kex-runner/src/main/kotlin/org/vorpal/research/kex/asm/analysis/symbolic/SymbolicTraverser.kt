@@ -118,7 +118,7 @@ abstract class SymbolicTraverser(
     }
 
 
-    private suspend fun traverseInstruction(inst: Instruction) {
+    protected open suspend fun traverseInstruction(inst: Instruction) {
         when (inst) {
             is ArrayLoadInst -> traverseArrayLoadInst(inst)
             is ArrayStoreInst -> traverseArrayStoreInst(inst)
