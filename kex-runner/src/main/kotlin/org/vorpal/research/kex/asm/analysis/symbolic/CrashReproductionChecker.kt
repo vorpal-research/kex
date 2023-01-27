@@ -20,8 +20,7 @@ import kotlin.time.Duration.Companion.seconds
 import kotlin.time.ExperimentalTime
 
 
-@Suppress("MemberVisibilityCanBePrivate")
-private operator fun ClassManager.get(frame: StackTraceElement): Method {
+operator fun ClassManager.get(frame: StackTraceElement): Method {
     val entryClass = this[frame.className.asmString]
     return entryClass.getMethods(frame.methodName).first { method ->
         method.body.flatten().any { inst ->

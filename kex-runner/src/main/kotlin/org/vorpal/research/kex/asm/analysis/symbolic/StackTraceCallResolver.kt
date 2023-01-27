@@ -1,14 +1,36 @@
 package org.vorpal.research.kex.asm.analysis.symbolic
 
 import ch.scheitlin.alex.java.StackTrace
+import org.vorpal.research.kex.ktype.KexRtManager.rtMapped
+import org.vorpal.research.kex.util.javaString
+import org.vorpal.research.kfg.ir.Location
 import org.vorpal.research.kfg.ir.Method
 import org.vorpal.research.kfg.ir.value.instruction.CallInst
 
 class StackTraceCallResolver(
-    val stackTrace: StackTrace,
+    stackTrace: StackTrace,
     val fallback: SymbolicCallResolver
 ) : SymbolicCallResolver {
+    private val stackTraceLines = stackTrace.stackTraceLines.reversed()
+
+    private infix fun Pair<Method, Location>.eq(stackTraceElement: StackTraceElement): Boolean {
+        val (method, location) = this
+        return method.klass.fullName.javaString == stackTraceElement.className
+                && method.name == stackTraceElement.methodName
+                && location.file == stackTraceElement.fileName
+                && location.line == stackTraceElement.lineNumber
+    }
+
     override fun resolve(state: TraverserState, inst: CallInst): List<Method> {
-        return fallback.resolve(state, inst)
+        val currentTrace = state.stackTrace.map { it.first to it.second.location } + (inst.method to inst.location)
+        return when {
+            currentTrace.size < stackTraceLines.size &&
+                    currentTrace.withIndex().all { (index, it) -> it eq stackTraceLines[index] } -> {
+                listOf(inst.method.cm[stackTraceLines[currentTrace.size]].rtMapped)
+            }
+            else -> {
+                fallback.resolve(state, inst)
+            }
+        }
     }
 }
