@@ -93,12 +93,12 @@ abstract class CollectionRandomizer<T>(
                 }
             }
             Set::class.java.isAssignableFrom(klass) -> when {
-                klass.isAssignableFrom(LinkedHashSet::class.java) ->
-                    SetRandomizer.linkedSetRandomizer(elementRandomizer, intRandomizer)
                 klass.isAssignableFrom(HashSet::class.java) -> SetRandomizer.hashSetRandomizer(
                     elementRandomizer,
                     intRandomizer
                 )
+                klass.isAssignableFrom(LinkedHashSet::class.java) ->
+                    SetRandomizer.linkedSetRandomizer(elementRandomizer, intRandomizer)
                 klass.isAssignableFrom(TreeSet::class.java) -> SetRandomizer.treeSetRandomizer(
                     elementRandomizer,
                     intRandomizer

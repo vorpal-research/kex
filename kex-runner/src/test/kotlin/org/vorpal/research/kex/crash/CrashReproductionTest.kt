@@ -21,6 +21,7 @@ import java.io.StringWriter
 import java.lang.reflect.InvocationTargetException
 import java.net.URLClassLoader
 import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 import kotlin.time.ExperimentalTime
 
 @ExperimentalTime
@@ -47,6 +48,7 @@ abstract class CrashReproductionTest(testDirectoryName: String) : KexRunnerTest(
         }
 
         val crashes = CrashReproductionChecker.run(analysisContext, expectedStackTrace)
+        assertTrue(crashes.isNotEmpty())
         for (crash in crashes) {
             val resultingStackTrace = executeTest(crash)
             assertEquals(expectedStackTrace.firstLine, resultingStackTrace.firstLine)

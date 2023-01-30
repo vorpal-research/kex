@@ -5,8 +5,6 @@ public class Square {
     private final Point upperRight;
 
     public Square(Point lowerLeft, Point upperRight) {
-        assert lowerLeft.getX().longValue() < upperRight.getX().longValue();
-        assert lowerLeft.getY().longValue() < upperRight.getY().longValue();
         this.lowerLeft = lowerLeft;
         this.upperRight = upperRight;
     }
