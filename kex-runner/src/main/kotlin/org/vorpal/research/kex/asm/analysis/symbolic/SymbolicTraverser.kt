@@ -64,9 +64,9 @@ abstract class SymbolicTraverser(
     abstract val callResolver: SymbolicCallResolver
     abstract val invokeDynamicResolver: SymbolicInvokeDynamicResolver
 
-    private var currentState: TraverserState? = null
-    private var testIndex = AtomicInteger(0)
-    private val compilerHelper = CompilerHelper(ctx)
+    protected var currentState: TraverserState? = null
+    protected var testIndex = AtomicInteger(0)
+    protected val compilerHelper = CompilerHelper(ctx)
 
     protected val nullptrClass = cm["java/lang/NullPointerException"]
     protected val arrayIndexOOBClass = cm["java/lang/ArrayIndexOutOfBoundsException"]

@@ -1,12 +1,16 @@
-package org.vorpal.research.kex.asm.analysis.symbolic
+package org.vorpal.research.kex.asm.analysis.crash
 
 import ch.scheitlin.alex.java.StackTrace
 import kotlinx.coroutines.*
 import org.vorpal.research.kex.ExecutionContext
+import org.vorpal.research.kex.asm.analysis.symbolic.*
+import org.vorpal.research.kex.compile.CompilationException
 import org.vorpal.research.kex.config.kexConfig
 import org.vorpal.research.kex.descriptor.Descriptor
 import org.vorpal.research.kex.ktype.KexType
 import org.vorpal.research.kex.parameters.Parameters
+import org.vorpal.research.kex.reanimator.UnsafeGenerator
+import org.vorpal.research.kex.reanimator.codegen.klassName
 import org.vorpal.research.kex.state.predicate.path
 import org.vorpal.research.kex.state.term.Term
 import org.vorpal.research.kex.trace.symbolic.PathClause
@@ -16,6 +20,7 @@ import org.vorpal.research.kex.util.newFixedThreadPoolContextWithMDC
 import org.vorpal.research.kfg.ClassManager
 import org.vorpal.research.kfg.ir.Method
 import org.vorpal.research.kfg.ir.value.instruction.*
+import org.vorpal.research.kthelper.logging.log
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.ExperimentalTime
 
@@ -41,6 +46,7 @@ class CrashReproductionChecker(
     )
     override val invokeDynamicResolver: SymbolicInvokeDynamicResolver = DefaultCallResolver(ctx)
 
+
     private val targetException = ctx.cm[stackTrace.firstLine.takeWhile { it != ':' }.asmString]
     private val targetInstructions = ctx.cm[stackTrace.stackTraceLines.first()].body.flatten()
         .filter { it.location.line == stackTrace.stackTraceLines.first().lineNumber }
@@ -54,20 +60,25 @@ class CrashReproductionChecker(
             }
         }
 
-    private var foundAnExample: Boolean = false
+    private var foundAnExample = false
+    private val generatedTestClasses = mutableSetOf<String>()
 
     companion object {
         @ExperimentalTime
         @DelicateCoroutinesApi
-        fun run(context: ExecutionContext, stackTrace: StackTrace) {
+        fun run(context: ExecutionContext, stackTrace: StackTrace): Set<String> {
             val timeLimit = kexConfig.getIntValue("crash", "timeLimit", 100)
             val stopAfterFirstCrash = kexConfig.getBooleanValue("crash", "stopAfterFirstCrash", false)
 
             val coroutineContext = newFixedThreadPoolContextWithMDC(1, "crash-dispatcher")
-            runBlocking(coroutineContext) {
+            return runBlocking(coroutineContext) {
                 withTimeoutOrNull(timeLimit.seconds) {
-                    async { CrashReproductionChecker(context, stackTrace, stopAfterFirstCrash).analyze() }.await()
-                }
+                    async {
+                        val checker = CrashReproductionChecker(context, stackTrace, stopAfterFirstCrash)
+                        checker.analyze()
+                        checker.generatedTestClasses
+                    }.await()
+                } ?: emptySet()
             }
         }
     }
@@ -220,7 +231,19 @@ class CrashReproductionChecker(
     override fun report(inst: Instruction, parameters: Parameters<Descriptor>, testPostfix: String) {
         if (inst in targetInstructions) {
             foundAnExample = true
-            super.report(inst, parameters, testPostfix)
+            val generator = UnsafeGenerator(
+                ctx,
+                rootMethod,
+                rootMethod.klassName + testPostfix + testIndex.getAndIncrement()
+            )
+            generator.generate(parameters)
+            val testFile = generator.emit()
+            try {
+                compilerHelper.compileFile(testFile)
+                generatedTestClasses += generator.testKlassName
+            } catch (e: CompilationException) {
+                log.error("Failed to compile test file $testFile")
+            }
         }
     }
 

@@ -4,7 +4,7 @@ import ch.scheitlin.alex.java.StackTrace
 import ch.scheitlin.alex.java.StackTraceParser
 import kotlinx.coroutines.DelicateCoroutinesApi
 import org.vorpal.research.kex.ExecutionContext
-import org.vorpal.research.kex.asm.analysis.symbolic.CrashReproductionChecker
+import org.vorpal.research.kex.asm.analysis.crash.CrashReproductionChecker
 import org.vorpal.research.kex.asm.manager.ClassInstantiationDetector
 import org.vorpal.research.kex.asm.util.AccessModifier
 import org.vorpal.research.kex.asm.util.Visibility

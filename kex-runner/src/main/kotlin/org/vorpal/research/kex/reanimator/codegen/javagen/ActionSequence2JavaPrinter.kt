@@ -30,6 +30,7 @@ open class ActionSequence2JavaPrinter(
     final override val packageName: String,
     final override val klassName: String
 ) : ActionSequencePrinter {
+    protected val generateSetup = kexConfig.getBooleanValue("testGen", "generateSetup", false)
     protected val printedStacks = mutableSetOf<String>()
     protected val builder = JavaBuilder(packageName)
     protected val klass = builder.run { klass(packageName, klassName) }
@@ -37,6 +38,7 @@ open class ActionSequence2JavaPrinter(
     protected val actualTypes = mutableMapOf<ActionSequence, ASType>()
     lateinit var current: JavaBuilder.JavaFunction
     private var testCounter = 0
+
 
     init {
         with(builder) {

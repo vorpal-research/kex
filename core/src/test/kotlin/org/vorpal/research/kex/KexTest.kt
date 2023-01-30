@@ -55,4 +55,12 @@ abstract class KexTest(testDirectoryName: String) {
         psa.visit(method)
         return psa
     }
+
+
+    inline fun withConfigOption(section: String, option: String, value: String, body: () -> Unit) {
+        val oldValue = kexConfig.getStringValue(section, option)
+        RuntimeConfig.setValue(section, option, value)
+        body()
+        RuntimeConfig.setValue(section, option, oldValue.toString())
+    }
 }

@@ -12,7 +12,6 @@ import org.vorpal.research.kthelper.assert.unreachable
 import org.vorpal.research.kthelper.logging.log
 import org.vorpal.research.kthelper.runIf
 
-private val generateSetup by lazy { kexConfig.getBooleanValue("testGen", "generateSetup", false) }
 
 class ExecutorAS2JavaPrinter(
     ctx: ExecutionContext,
@@ -20,6 +19,7 @@ class ExecutorAS2JavaPrinter(
     klassName: String,
     private val setupName: String
 ) : ActionSequence2JavaPrinter(ctx, packageName, klassName) {
+    private val surroundInTryCatch = kexConfig.getBooleanValue("testGen", "surroundInTryCatch", true)
     private val testParams = mutableListOf<JavaBuilder.JavaClass.JavaField>()
     private lateinit var newInstance: JavaBuilder.JavaFunction
     private lateinit var newArray: JavaBuilder.JavaFunction
@@ -337,13 +337,13 @@ class ExecutorAS2JavaPrinter(
         }
 
         with(current) {
-            statement("try {")
+            if (surroundInTryCatch) statement("try {")
             runIf(!method.isConstructor) {
                 actionSequences.instance?.printAsJava()
             }
             for (cs in actionSequences.asList)
                 cs.printAsJava()
-            statement("} catch (Throwable e) {}")
+            if (surroundInTryCatch) statement("} catch (Throwable e) {}")
         }
 
         printedStacks.clear()
@@ -360,9 +360,9 @@ class ExecutorAS2JavaPrinter(
         }
 
         with(current) {
-            statement("try {")
+            if (surroundInTryCatch) statement("try {")
             printTestCall(method, actionSequences)
-            statement("} catch (Throwable e) {}")
+            if (surroundInTryCatch) statement("} catch (Throwable e) {}")
         }
     }
 
