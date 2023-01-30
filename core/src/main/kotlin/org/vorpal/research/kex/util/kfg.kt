@@ -16,7 +16,7 @@ import org.vorpal.research.kthelper.assert.unreachable
 import org.vorpal.research.kthelper.compareTo
 import org.vorpal.research.kthelper.logging.log
 
-val Type.javaDesc get() = this.name.replace(Package.SEPARATOR, Package.CANONICAL_SEPARATOR)
+val Type.javaDesc get() = this.name.javaString
 
 fun Package.isParent(klass: Class) = isParent(klass.pkg)
 
@@ -149,3 +149,7 @@ val ClassManager.abstractListClass get() = this[SystemTypeNames.abstractListClas
 val ClassManager.abstractQueueClass get() = this[SystemTypeNames.abstractQueueClass]
 val ClassManager.abstractSetClass get() = this[SystemTypeNames.abstractSetClass]
 val ClassManager.abstractMapClass get() = this[SystemTypeNames.abstractMapClass]
+
+
+val String.asmString get() = replace(Package.CANONICAL_SEPARATOR, Package.SEPARATOR)
+val String.javaString get() = replace(Package.SEPARATOR, Package.CANONICAL_SEPARATOR)

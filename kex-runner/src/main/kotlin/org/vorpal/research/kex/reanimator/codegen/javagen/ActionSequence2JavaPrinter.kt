@@ -9,11 +9,7 @@ import org.vorpal.research.kex.ktype.type
 import org.vorpal.research.kex.parameters.Parameters
 import org.vorpal.research.kex.reanimator.actionsequence.*
 import org.vorpal.research.kex.reanimator.codegen.ActionSequencePrinter
-import org.vorpal.research.kex.util.getConstructor
-import org.vorpal.research.kex.util.getMethod
-import org.vorpal.research.kex.util.kex
-import org.vorpal.research.kex.util.loadClass
-import org.vorpal.research.kfg.Package
+import org.vorpal.research.kex.util.*
 import org.vorpal.research.kfg.ir.Class
 import org.vorpal.research.kfg.type.*
 import org.vorpal.research.kfg.type.Type
@@ -34,6 +30,7 @@ open class ActionSequence2JavaPrinter(
     final override val packageName: String,
     final override val klassName: String
 ) : ActionSequencePrinter {
+    protected val generateSetup = kexConfig.getBooleanValue("testGen", "generateSetup", false)
     protected val printedStacks = mutableSetOf<String>()
     protected val builder = JavaBuilder(packageName)
     protected val klass = builder.run { klass(packageName, klassName) }
@@ -41,6 +38,7 @@ open class ActionSequence2JavaPrinter(
     protected val actualTypes = mutableMapOf<ActionSequence, ASType>()
     lateinit var current: JavaBuilder.JavaFunction
     private var testCounter = 0
+
 
     init {
         with(builder) {
@@ -566,11 +564,10 @@ open class ActionSequence2JavaPrinter(
         if (reqOuterType != null && reqOuterType is ASClass) {
             val reqTypeString = (reqOuterType.type as ClassType).klass.fullName
             if (innerString.startsWith(reqTypeString))
-                return innerString.removePrefix("$reqTypeString\$")
-                    .replace(Package.SEPARATOR, Package.CANONICAL_SEPARATOR)
+                return innerString.removePrefix("$reqTypeString\$").javaString
         }
         if (innerString.startsWith(outerString))
-            return innerString.removePrefix("$outerString\$").replace(Package.SEPARATOR, Package.CANONICAL_SEPARATOR)
+            return innerString.removePrefix("$outerString\$").javaString
         TODO()
     }
 

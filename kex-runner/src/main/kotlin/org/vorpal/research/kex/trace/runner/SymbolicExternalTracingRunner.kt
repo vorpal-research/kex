@@ -31,7 +31,8 @@ internal object ExecutorMasterController : AutoCloseable {
         val tempSocket = ServerSocket(0)
         masterPort = tempSocket.localPort
         tempSocket.close()
-        Thread.sleep(1000)
+        // this is fucked up
+        Thread.sleep(2000)
     }
 
     fun start(ctx: ExecutionContext) {
@@ -74,6 +75,7 @@ internal object ExecutorMasterController : AutoCloseable {
         )
         log.debug("Starting executor master process with command: '${pb.command().joinToString(" ")}'")
         process = pb.start()
+        Thread.sleep(1000)
     }
 
     fun getClientConnection(ctx: ExecutionContext): Client2MasterConnection {

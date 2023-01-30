@@ -16,7 +16,6 @@ import org.vorpal.research.kex.util.getRuntime
 import org.vorpal.research.kex.worker.ExecutorWorker
 import org.vorpal.research.kfg.ClassManager
 import org.vorpal.research.kfg.KfgConfig
-import org.vorpal.research.kfg.Package
 import org.vorpal.research.kfg.container.asContainer
 import org.vorpal.research.kfg.util.Flags
 import org.vorpal.research.kthelper.logging.log
@@ -76,7 +75,6 @@ class WorkerLauncher(args: Array<String>) {
 
         ctx = ExecutionContext(
             classManager,
-            Package.defaultPackage,
             containerClassLoader,
             EasyRandomDriver(),
             containers.map { it.path }

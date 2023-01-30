@@ -1,6 +1,5 @@
 package org.vorpal.research.kex.state.transformer
 
-import org.vorpal.research.kex.asm.manager.MethodManager
 import org.vorpal.research.kex.ktype.*
 import org.vorpal.research.kex.state.PredicateState
 import org.vorpal.research.kex.state.StateBuilder

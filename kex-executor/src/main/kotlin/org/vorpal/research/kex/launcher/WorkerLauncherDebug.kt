@@ -18,7 +18,6 @@ import org.vorpal.research.kex.util.getRuntime
 import org.vorpal.research.kex.worker.ExecutorWorker
 import org.vorpal.research.kfg.ClassManager
 import org.vorpal.research.kfg.KfgConfig
-import org.vorpal.research.kfg.Package
 import org.vorpal.research.kfg.container.asContainer
 import org.vorpal.research.kfg.util.Flags
 import org.vorpal.research.kthelper.logging.log
@@ -38,6 +37,7 @@ fun main(args: Array<String>) {
 class WorkerLauncherDebug(args: Array<String>) {
     private val cmd = WorkerCmdConfig(args)
     private val properties = cmd.getCmdValue("config", "kex.ini")
+    @Suppress("unused")
     private val port = cmd.getCmdValue("port")!!.toInt()
 
     val ctx: ExecutionContext
@@ -78,7 +78,6 @@ class WorkerLauncherDebug(args: Array<String>) {
 
         ctx = ExecutionContext(
             classManager,
-            Package.defaultPackage,
             containerClassLoader,
             EasyRandomDriver(),
             containers.map { it.path }

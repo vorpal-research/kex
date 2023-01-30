@@ -4,6 +4,7 @@ import org.vorpal.research.kex.asm.util.AccessModifier
 import org.vorpal.research.kex.asm.util.accessModifier
 import org.vorpal.research.kex.config.kexConfig
 import org.vorpal.research.kex.ktype.type
+import org.vorpal.research.kex.util.asmString
 import org.vorpal.research.kfg.ClassManager
 import org.vorpal.research.kfg.Package
 import org.vorpal.research.kfg.ir.Method
@@ -13,6 +14,7 @@ import org.vorpal.research.kfg.type.stringType
 import org.vorpal.research.kthelper.assert.ktassert
 import org.vorpal.research.kthelper.logging.log
 
+@Suppress("unused", "MemberVisibilityCanBePrivate")
 object MethodManager {
 
     fun canBeImpacted(method: Method, accessLevel: AccessModifier): Boolean = when {
@@ -39,7 +41,7 @@ object MethodManager {
             )
             ignoreClasses.addAll(
                 kexConfig.getMultipleStringValue("inliner", "ignoreClass", ",").map {
-                    it.replace(Package.CANONICAL_SEPARATOR, Package.SEPARATOR)
+                    it.asmString
                 }
             )
             ignorePackages += Package.parse("org.vorpal.research.kex.intrinsics.*")

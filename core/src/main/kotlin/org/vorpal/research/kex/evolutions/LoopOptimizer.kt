@@ -17,6 +17,7 @@ import org.vorpal.research.kfg.visitor.Loop
 import org.vorpal.research.kfg.visitor.LoopVisitor
 import ru.spbstu.*
 
+@Suppress("MemberVisibilityCanBePrivate", "unused")
 open class LoopOptimizer(cm: ClassManager) : Evolutions(cm), LoopVisitor {
     protected lateinit var ctx: MethodUsageContext
     protected val phiToEvo = mutableMapOf<PhiInst, Symbolic>()
@@ -66,7 +67,7 @@ open class LoopOptimizer(cm: ClassManager) : Evolutions(cm), LoopVisitor {
                     }
             }
             unused.forEach {
-                it.clearUses(ctx)
+                it.clearAllUses()
                 b -= it
             }
             unused.clear()
@@ -112,7 +113,7 @@ open class LoopOptimizer(cm: ClassManager) : Evolutions(cm), LoopVisitor {
         var2inst[freshVars[loop]!!] = newPhi
         inst2var[newPhi] = freshVars[loop]!!
         tmpPhi.replaceAllUsesWith(newPhi)
-        tmpPhi.clearUses()
+        tmpPhi.clearAllUses()
         loop.header.insertBefore(loop.header.first(), newPhi)
 
         val updater = BodyBlock("loop.updater")
@@ -143,12 +144,12 @@ open class LoopOptimizer(cm: ClassManager) : Evolutions(cm), LoopVisitor {
         val results = mutableListOf<Value>()
         this.parts.forEach {
             val res = it.key.generateCode(collector) ?: return null
-            val coeff = when (val v = it.value) {
+            val coefficient = when (val v = it.value) {
                 is SymRational -> values.getInt((v * lcm).toInt())
                 is SymDouble -> values.getDouble((v * lcm).toDouble())
             }
             val newInstruction =
-                instructions.getBinary(ctx, BinaryOpcode.MUL, res, coeff)
+                instructions.getBinary(ctx, BinaryOpcode.MUL, res, coefficient)
             collector.add(newInstruction)
             results.add(newInstruction.get())
         }
@@ -165,12 +166,12 @@ open class LoopOptimizer(cm: ClassManager) : Evolutions(cm), LoopVisitor {
             collector.add(divLcm)
             return divLcm
         }
-        val cnst = when (val c = constant) {
+        val constantValue = when (val c = constant) {
             is SymRational -> values.getInt((c * lcm).toInt())
             is SymDouble -> values.getDouble((c * lcm).toDouble())
         }
         val addConst =
-            instructions.getBinary(ctx, BinaryOpcode.ADD, res, cnst)
+            instructions.getBinary(ctx, BinaryOpcode.ADD, res, constantValue)
         collector.add(addConst)
         if (lcm == 1L) {
             return addConst

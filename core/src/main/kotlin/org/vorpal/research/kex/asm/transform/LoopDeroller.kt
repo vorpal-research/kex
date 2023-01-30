@@ -27,7 +27,6 @@ import kotlin.math.min
 
 private val derollCount = kexConfig.getIntValue("loop", "derollCount", 3)
 private val maxDerollCount = kexConfig.getIntValue("loop", "maxDerollCount", 0)
-private val useBackstabbing = kexConfig.getBooleanValue("loop", "useBackstabbing", false)
 
 class LoopDeroller(override val cm: ClassManager) : LoopOptimizer(cm) {
     companion object {
@@ -102,7 +101,7 @@ class LoopDeroller(override val cm: ClassManager) : LoopOptimizer(cm) {
             val loops = method.getLoopInfo()
             precalculateEvolutions(loops)
             loops.forEach { loop -> freshVars[loop] = Var.fresh("iteration") }
-            loops.forEach { visitLoop(it) }
+            loops.forEach { loop -> visitLoop(loop) }
             updateLoopInfo(method)
         } catch (e: InvalidLoopException) {
             log.error("Can't deroll loops of method $method")
@@ -368,7 +367,7 @@ class LoopDeroller(override val cm: ClassManager) : LoopOptimizer(cm) {
                     else -> {
                         val newPhi = inst(cm) { phi(new.type, incomings) }
                         bb.replace(new, newPhi)
-                        new.clearUses()
+                        new.clearAllUses()
                         newPhi
                     }
                 }
@@ -383,12 +382,12 @@ class LoopDeroller(override val cm: ClassManager) : LoopOptimizer(cm) {
             val newPhi = inst(cm) { phi(phi.type, newMappings.getValue(phi)) }
             val newPhiClone = newPhi.update(ctx, loc = phi.location)
             newPhi.replaceAllUsesWith(newPhiClone)
-            newPhi.clearUses()
+            newPhi.clearAllUses()
 
             val bb = phi.parent
             bb.insertBefore(phi, newPhiClone)
             phi.replaceAllUsesWith(newPhiClone)
-            phi.clearUses()
+            phi.clearAllUses()
             bb -= phi
         }
     }
@@ -443,9 +442,9 @@ class LoopDeroller(override val cm: ClassManager) : LoopOptimizer(cm) {
         val p = rebuild(loop) ?: return false
         val block = p.first
         val phiList = p.second
-        val bblock : List<Instruction> = listOf(inst) +  block
+        val instructionList = listOf(inst) +  block
 
-        firstBlock.first().insertBefore(bblock)
+        firstBlock.first().insertBefore(instructionList)
         phiList.forEach { (phi, value) ->
             phi.users.forEach { user -> value.addUser(user) }
             phi.replaceAllUsesWith(ctx, value)

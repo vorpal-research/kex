@@ -44,7 +44,7 @@ class ReflectionInfoAdapter(
         val methodClassType = KexClass(method.klass.fullName).getKfgType(types)
         val klass = `try` { loader.loadKClass(methodClassType) }.getOrNull() ?: return super.apply(ps)
         val kFunction = klass.getKFunction(method) ?: run {
-            log.warn("Could not load kFunction for $method")
+//            log.warn("Could not load kFunction for $method")
             return super.apply(ps)
         }
 

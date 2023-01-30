@@ -1,6 +1,7 @@
 package org.vorpal.research.kex.config
 
 import org.vorpal.research.kex.util.outputDirectory
+import org.slf4j.MDC
 
 val kexConfig: GlobalConfig by lazy { GlobalConfig() }
 
@@ -21,7 +22,7 @@ class GlobalConfig : Config() {
     }
 
     fun initLog(filename: String) {
-        System.setProperty("kex.log.name", outputDirectory.resolve(filename).toString())
+        MDC.put("kex-run-id", outputDirectory.resolve(filename).toAbsolutePath().toString())
     }
 
     fun initialize(sources: List<Config>) {

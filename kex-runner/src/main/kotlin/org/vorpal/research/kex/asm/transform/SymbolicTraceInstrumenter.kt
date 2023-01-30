@@ -3,6 +3,7 @@ package org.vorpal.research.kex.asm.transform
 import org.vorpal.research.kex.ExecutionContext
 import org.vorpal.research.kex.trace.symbolic.InstructionTraceCollector
 import org.vorpal.research.kex.trace.symbolic.TraceCollectorProxy
+import org.vorpal.research.kex.util.asmString
 import org.vorpal.research.kex.util.insertAfter
 import org.vorpal.research.kex.util.insertBefore
 import org.vorpal.research.kex.util.wrapValue
@@ -16,17 +17,17 @@ import org.vorpal.research.kfg.type.*
 import org.vorpal.research.kfg.visitor.MethodVisitor
 
 class SymbolicTraceInstrumenter(
-    val executionContext: ExecutionContext,
-    val ignores: Set<Package> = setOf()
+    private val executionContext: ExecutionContext,
+    private val ignores: Set<Package> = setOf()
 ) : MethodVisitor, InstructionBuilder {
     companion object {
         private val INSTRUCTION_TRACE_COLLECTOR = InstructionTraceCollector::class.java
             .canonicalName
-            .replace(Package.CANONICAL_SEPARATOR, Package.SEPARATOR)
+            .asmString
 
         private val TRACE_COLLECTOR_PROXY = TraceCollectorProxy::class.java
             .canonicalName
-            .replace(Package.CANONICAL_SEPARATOR, Package.SEPARATOR)
+            .asmString
     }
 
     override val ctx: UsageContext = EmptyUsageContext

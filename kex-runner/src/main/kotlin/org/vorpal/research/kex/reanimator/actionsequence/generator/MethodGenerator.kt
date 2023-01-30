@@ -9,7 +9,7 @@ import org.vorpal.research.kex.reanimator.actionsequence.ActionList
 import org.vorpal.research.kex.reanimator.actionsequence.ActionSequence
 import org.vorpal.research.kex.reanimator.actionsequence.ExternalMethodCall
 import org.vorpal.research.kex.reanimator.actionsequence.MethodCall
-import org.vorpal.research.kfg.Package
+import org.vorpal.research.kex.util.asmString
 import org.vorpal.research.kfg.stringClass
 import org.vorpal.research.kfg.type.SystemTypeNames
 import org.vorpal.research.kfg.type.stringType
@@ -38,7 +38,7 @@ class MethodGenerator(private val fallback: Generator) : Generator {
         klass as ObjectDescriptor
 
         val klassName = klass["name", stringClass]!!.asStringValue!!
-        val asmKlassName = klassName.replace(Package.CANONICAL_SEPARATOR, Package.SEPARATOR)
+        val asmKlassName = klassName.asmString
         val kfgClass = cm[asmKlassName]
 
         val klassAS = fallback.generate(klass, generationDepth)

@@ -17,7 +17,6 @@ import org.vorpal.research.kex.util.getPathSeparator
 import org.vorpal.research.kex.util.getRuntime
 import org.vorpal.research.kfg.ClassManager
 import org.vorpal.research.kfg.KfgConfig
-import org.vorpal.research.kfg.Package
 import org.vorpal.research.kfg.container.Container
 import org.vorpal.research.kfg.container.asContainer
 import org.vorpal.research.kfg.ir.value.NameMapperContext
@@ -43,11 +42,10 @@ class KexExecutor(args: Array<String>) {
     private val cmd = ExecutorCmdConfig(args)
     private val properties = cmd.getCmdValue("config", "kex.ini")
     private val output = cmd.getCmdValue("output")!!.let { Paths.get(it) }
-    private val target = Package.parse(cmd.getCmdValue("package")!!)
 
-    val containers: List<Container>
-    val containerClassLoader: URLClassLoader
-    val classManager: ClassManager
+    private val containers: List<Container>
+    private val containerClassLoader: URLClassLoader
+    private val classManager: ClassManager
 
     init {
         kexConfig.initialize(cmd, RuntimeConfig, FileConfig(properties))
@@ -74,7 +72,6 @@ class KexExecutor(args: Array<String>) {
     fun main() {
         val ctx = ExecutionContext(
             classManager,
-            target,
             containerClassLoader,
             EasyRandomDriver(),
             containers.map { it.path }
