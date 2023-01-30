@@ -95,7 +95,7 @@ class DefaultCallResolver(
                 .filter { it.body.isNotEmpty() }
                 .shuffled(ctx.random)
                 .take(maximumNumberOfConcreteMethods)
-        }
+        }.sortedBy { it.prototype }
     }
 
     override fun resolve(

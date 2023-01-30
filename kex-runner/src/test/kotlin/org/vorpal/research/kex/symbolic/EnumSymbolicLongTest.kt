@@ -4,6 +4,7 @@ import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.InternalSerializationApi
 import org.junit.Test
+import org.vorpal.research.kex.config.RuntimeConfig
 import kotlin.time.ExperimentalTime
 
 @ExperimentalTime
