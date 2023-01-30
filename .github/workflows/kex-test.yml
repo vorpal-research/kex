@@ -2,7 +2,7 @@ name: Kex test CI
 
 on:
   push:
-    branches: [ master, crash-reproduction ]
+    branches: [ master ]
   pull_request:
     branches: [ master ]
 
