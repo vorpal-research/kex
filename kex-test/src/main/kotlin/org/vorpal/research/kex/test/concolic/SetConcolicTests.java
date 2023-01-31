@@ -6,7 +6,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 
 public class SetConcolicTests {
-    public static void testHashSetIterator(HashSet<Character> chars) {
+    public static void testCharHashSetIterator(HashSet<Character> chars) {
         if (chars.size() > 1) {
             throw new IllegalStateException();
         }
