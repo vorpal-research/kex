@@ -137,6 +137,7 @@ class CrashReproductionChecker(
                 else -> checkResult
             }
         }
+
         else -> {
             val persistentState = state.symbolicState
             val zeroClause = PathClause(
@@ -177,6 +178,7 @@ class CrashReproductionChecker(
                 else -> checkResult
             }
         }
+
         else -> {
             val persistentState = state.symbolicState
             val zeroClause = PathClause(
@@ -209,6 +211,7 @@ class CrashReproductionChecker(
                 else -> checkResult
             }
         }
+
         else -> {
             val currentlyCheckedType = type.getKfgType(ctx.types)
             val persistentState = state.symbolicState
@@ -231,11 +234,8 @@ class CrashReproductionChecker(
     override fun report(inst: Instruction, parameters: Parameters<Descriptor>, testPostfix: String) {
         if (inst in targetInstructions) {
             foundAnExample = true
-            val generator = UnsafeGenerator(
-                ctx,
-                rootMethod,
-                rootMethod.klassName + testPostfix + testIndex.getAndIncrement()
-            )
+            val testName = rootMethod.klassName + testPostfix + testIndex.getAndIncrement()
+            val generator = UnsafeGenerator(ctx, rootMethod, testName)
             generator.generate(parameters)
             val testFile = generator.emit()
             try {
