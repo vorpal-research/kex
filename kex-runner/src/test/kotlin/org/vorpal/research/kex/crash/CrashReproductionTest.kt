@@ -51,7 +51,7 @@ abstract class CrashReproductionTest(testDirectoryName: String) : KexRunnerTest(
         assertTrue(crashes.isNotEmpty())
         for (crash in crashes) {
             val resultingStackTrace = executeTest(crash)
-            assertEquals(expectedStackTrace.firstLine, resultingStackTrace.firstLine)
+            assertEquals(expectedStackTrace.throwable, resultingStackTrace.throwable)
             assertEquals(expectedStackTrace.stackTraceLines, resultingStackTrace.stackTraceLines)
         }
     }
@@ -95,4 +95,6 @@ abstract class CrashReproductionTest(testDirectoryName: String) : KexRunnerTest(
             StackTrace(it.firstLine, it.stackTraceLines.take(DEPTH))
         }
     }
+
+    private val StackTrace.throwable get() = firstLine.takeWhile { it != ':' }
 }

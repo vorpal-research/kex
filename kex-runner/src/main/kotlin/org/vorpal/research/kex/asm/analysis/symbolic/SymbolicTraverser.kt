@@ -303,7 +303,10 @@ abstract class SymbolicTraverser(
         val operandTerm = traverserState.mkTerm(inst.operand)
         val resultTerm = generate(inst.type.symbolicType)
 
-        traverserState = typeCheck(traverserState, inst, operandTerm, resultTerm.type) ?: return nullableCurrentState()
+        if (operandTerm.type is KexPointer) {
+            traverserState = typeCheck(traverserState, inst, operandTerm, resultTerm.type)
+                ?: return nullableCurrentState()
+        }
         val clause = StateClause(
             inst,
             state { resultTerm equality (operandTerm `as` resultTerm.type) }
@@ -811,7 +814,11 @@ abstract class SymbolicTraverser(
         )
     }
 
-    protected open suspend fun newArrayBoundsCheck(state: TraverserState, inst: Instruction, index: Term): TraverserState? {
+    protected open suspend fun newArrayBoundsCheck(
+        state: TraverserState,
+        inst: Instruction,
+        index: Term
+    ): TraverserState? {
         if (index to index in state.boundCheckedTerms) return state
 
         val persistentState = state.symbolicState

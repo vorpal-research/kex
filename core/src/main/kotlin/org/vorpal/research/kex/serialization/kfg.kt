@@ -1,9 +1,7 @@
 package org.vorpal.research.kex.serialization
 
-import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.SerializationException
-import kotlinx.serialization.Serializer
 import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.builtins.serializer
 import kotlinx.serialization.descriptors.*
@@ -22,7 +20,6 @@ import org.vorpal.research.kfg.ir.value.instruction.Instruction
 import org.vorpal.research.kfg.type.Type
 import org.vorpal.research.kfg.type.parseDescOrNull
 
-@ExperimentalSerializationApi
 fun getKfgSerialModule(cm: ClassManager, ctx: NameMapperContext): SerializersModule {
     return SerializersModule {
         contextual(BinaryOpcode::class, BinaryOpcodeSerializer)
@@ -44,8 +41,6 @@ fun getKfgSerialModule(cm: ClassManager, ctx: NameMapperContext): SerializersMod
     }
 }
 
-@ExperimentalSerializationApi
-@Serializer(forClass = BinaryOpcode::class)
 object BinaryOpcodeSerializer : KSerializer<BinaryOpcode> {
     override val descriptor = PrimitiveSerialDescriptor("opcode", PrimitiveKind.STRING)
 
@@ -59,7 +54,6 @@ object BinaryOpcodeSerializer : KSerializer<BinaryOpcode> {
     }
 }
 
-@ExperimentalSerializationApi
 inline fun <reified T : BinaryOpcode> BinaryOpcodeSerializer.to() = object : KSerializer<T> {
     override val descriptor get() = this@to.descriptor
 
@@ -70,8 +64,6 @@ inline fun <reified T : BinaryOpcode> BinaryOpcodeSerializer.to() = object : KSe
     }
 }
 
-@ExperimentalSerializationApi
-@Serializer(forClass = CmpOpcode::class)
 object CmpOpcodeSerializer : KSerializer<CmpOpcode> {
     override val descriptor = PrimitiveSerialDescriptor("opcode", PrimitiveKind.STRING)
 
@@ -85,7 +77,6 @@ object CmpOpcodeSerializer : KSerializer<CmpOpcode> {
     }
 }
 
-@ExperimentalSerializationApi
 inline fun <reified T : CmpOpcode> CmpOpcodeSerializer.to() = object : KSerializer<T> {
     override val descriptor get() = this@to.descriptor
 
@@ -96,8 +87,6 @@ inline fun <reified T : CmpOpcode> CmpOpcodeSerializer.to() = object : KSerializ
     }
 }
 
-@ExperimentalSerializationApi
-@Serializer(forClass = CallOpcode::class)
 object CallOpcodeSerializer : KSerializer<CallOpcode> {
     override val descriptor = PrimitiveSerialDescriptor("opcode", PrimitiveKind.STRING)
 
@@ -111,7 +100,6 @@ object CallOpcodeSerializer : KSerializer<CallOpcode> {
     }
 }
 
-@ExperimentalSerializationApi
 inline fun <reified T : CallOpcode> CallOpcodeSerializer.to() = object : KSerializer<T> {
     override val descriptor get() = this@to.descriptor
 
@@ -122,8 +110,6 @@ inline fun <reified T : CallOpcode> CallOpcodeSerializer.to() = object : KSerial
     }
 }
 
-@ExperimentalSerializationApi
-@Serializer(forClass = Location::class)
 object LocationSerializer : KSerializer<Location> {
     override val descriptor = buildClassSerialDescriptor("Location") {
         element<String>("package")
@@ -158,8 +144,6 @@ object LocationSerializer : KSerializer<Location> {
     }
 }
 
-@ExperimentalSerializationApi
-@Serializer(forClass = Class::class)
 internal class ClassSerializer(val cm: ClassManager) : KSerializer<Class> {
 
     override val descriptor = PrimitiveSerialDescriptor("fullname", PrimitiveKind.STRING)
@@ -171,7 +155,6 @@ internal class ClassSerializer(val cm: ClassManager) : KSerializer<Class> {
     override fun deserialize(decoder: Decoder) = cm[decoder.decodeString()]
 }
 
-@ExperimentalSerializationApi
 internal inline fun <reified T : Class> ClassSerializer.to() = object : KSerializer<T> {
     override val descriptor get() = this@to.descriptor
 
@@ -182,9 +165,10 @@ internal inline fun <reified T : Class> ClassSerializer.to() = object : KSeriali
     }
 }
 
-@ExperimentalSerializationApi
-@Serializer(forClass = Method::class)
-internal class MethodSerializer(val cm: ClassManager, val classSerializer: KSerializer<Class>) : KSerializer<Method> {
+internal class MethodSerializer(
+    val cm: ClassManager,
+    private val classSerializer: KSerializer<Class>
+) : KSerializer<Method> {
     override val descriptor = buildClassSerialDescriptor("Method") {
         element("class", classSerializer.descriptor)
         element<String>("name")
@@ -220,6 +204,7 @@ internal class MethodSerializer(val cm: ClassManager, val classSerializer: KSeri
                 2 -> retval = parseDescOrNull(cm.type, input.decodeStringElement(descriptor, i))!!
                 3 -> argTypes = input.decodeSerializableElement(descriptor, i, ListSerializer(String.serializer()))
                     .map { parseDescOrNull(cm.type, it)!! }
+
                 else -> throw SerializationException("Unknown index $i")
             }
         }
@@ -228,11 +213,9 @@ internal class MethodSerializer(val cm: ClassManager, val classSerializer: KSeri
     }
 }
 
-@ExperimentalSerializationApi
-@Serializer(forClass = Instruction::class)
 internal class InstructionSerializer(
     val ctx: NameMapperContext,
-    val methodSerializer: KSerializer<Method>
+    private val methodSerializer: KSerializer<Method>
 ) : KSerializer<Instruction> {
     override val descriptor: SerialDescriptor = buildClassSerialDescriptor("Instruction") {
         element("method", methodSerializer.descriptor)

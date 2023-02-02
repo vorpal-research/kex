@@ -15,8 +15,8 @@ import org.vorpal.research.kex.util.parseValue
 import org.vorpal.research.kfg.ir.Method
 import org.vorpal.research.kfg.ir.value.*
 
+@Suppress("unused")
 @InternalSerializationApi
-@ExperimentalSerializationApi
 inline fun <reified K : Any, reified V : Any, R> mapSerializer(
     crossinline resultDestructor: (R) -> Map<K, V>,
     crossinline resultBuilder: (Map<K, V>) -> R
@@ -39,6 +39,7 @@ inline fun <reified K : Any, reified V : Any, R> mapSerializer(
     }
 }
 
+@Suppress("unused")
 @InternalSerializationApi
 @ExperimentalSerializationApi
 inline fun <reified K : Any, reified V : Any, R> mapSerializer(
@@ -64,12 +65,10 @@ inline fun <reified K : Any, reified V : Any, R> mapSerializer(
     }
 }
 
-@ExperimentalSerializationApi
-@Serializer(forClass = WrappedValue::class)
 internal class WrappedValueSerializer(
     val ctx: NameMapperContext,
-    val methodSerializer: KSerializer<Method>
-    ) : KSerializer<WrappedValue> {
+    private val methodSerializer: KSerializer<Method>
+) : KSerializer<WrappedValue> {
     override val descriptor: SerialDescriptor
         get() = buildClassSerialDescriptor("WrappedValue") {
             element("method", methodSerializer.descriptor)
@@ -80,7 +79,7 @@ internal class WrappedValueSerializer(
         val output = encoder.beginStructure(descriptor)
         output.encodeSerializableElement(descriptor, 0, methodSerializer, value.method)
         val encodedString = when (val kfgValue = value.value) {
-            is Constant -> when(kfgValue) {
+            is Constant -> when (kfgValue) {
                 is BoolConstant -> "${kfgValue.value}"
                 is ByteConstant -> "${kfgValue.value}b"
                 is ShortConstant -> "${kfgValue.value}s"
@@ -91,6 +90,7 @@ internal class WrappedValueSerializer(
                 is DoubleConstant -> "${kfgValue.value}"
                 else -> "${value.value.name}"
             }
+
             else -> "${value.value.name}"
         }
         output.encodeStringElement(descriptor, 1, encodedString)

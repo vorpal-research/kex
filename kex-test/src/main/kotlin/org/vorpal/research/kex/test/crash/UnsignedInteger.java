@@ -56,6 +56,12 @@ public class UnsignedInteger {
         return value;
     }
 
+    public boolean in(int[] array) {
+        int element = array[intValue()];
+        int[] newArray = new int[element];
+        return newArray.length < intValue();
+    }
+
     @Override
     public String toString() {
         return Long.toString(value);

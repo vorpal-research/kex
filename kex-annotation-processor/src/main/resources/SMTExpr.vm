@@ -73,7 +73,7 @@ open class $valexpr : ${solver}SMTExpr {
     constructor(other: $valexpr) : this(other.ctx, other.expr, other.axiom)
 
     override fun toString() = engine.toString(ctx, expr)
-    override fun hashCode() = defaultHashCode(engine.hash(ctx, expr), engine.hash(ctx, axiom))
+    override fun hashCode() = 31 * engine.hash(ctx, expr) + engine.hash(ctx, axiom)
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (other?.javaClass != this.javaClass) return false

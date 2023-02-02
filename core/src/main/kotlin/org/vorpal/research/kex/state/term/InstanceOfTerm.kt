@@ -20,7 +20,8 @@ class InstanceOfTerm(val checkedType: KexType, val operand: Term) : Term() {
                 else -> term { tf.getInstanceOf(checkedType, tOperand) }
              }
 
-    override fun hashCode() = defaultHashCode(super.hashCode(), checkedType)
+    override fun hashCode() = 31 * super.hashCode() + checkedType.hashCode()
+
     override fun equals(other: Any?): Boolean {
         if (other?.javaClass != this.javaClass) return false
         other as InstanceOfTerm

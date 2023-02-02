@@ -1,3 +1,5 @@
+@file:Suppress("unused")
+
 package org.vorpal.research.kex.util
 
 import org.slf4j.Logger
@@ -14,6 +16,8 @@ import java.nio.file.Path
 import java.nio.file.SimpleFileVisitor
 import java.nio.file.attribute.BasicFileAttributes
 import java.util.*
+import kotlin.io.path.ExperimentalPathApi
+import kotlin.io.path.deleteRecursively
 
 
 private val dot by lazy { kexConfig.getStringValue("view", "dot") ?: unreachable { log.error("Could not find dot") } }
@@ -93,14 +97,9 @@ fun deleteOnExit(directoryToBeDeleted: Path) = Runtime.getRuntime().addShutdownH
 })
 
 fun deleteDirectory(directoryToBeDeleted: Path) = deleteDirectory(directoryToBeDeleted.toFile())
-fun deleteDirectory(directoryToBeDeleted: File): Boolean {
-    val allContents = directoryToBeDeleted.listFiles()
-    if (allContents != null) {
-        for (file in allContents) {
-            deleteDirectory(file)
-        }
-    }
-    return directoryToBeDeleted.delete()
+@OptIn(ExperimentalPathApi::class)
+fun deleteDirectory(directoryToBeDeleted: File) {
+    directoryToBeDeleted.toPath().deleteRecursively()
 }
 
 fun <T> Iterable<T>.dropLast(n: Int) = take(count() - n)

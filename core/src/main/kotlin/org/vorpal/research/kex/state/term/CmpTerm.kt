@@ -28,7 +28,8 @@ class CmpTerm(
          }
     }
 
-    override fun hashCode() = defaultHashCode(super.hashCode(), opcode)
+    override fun hashCode() = 31 * super.hashCode() + opcode.hashCode()
+
     override fun equals(other: Any?): Boolean {
         if (other?.javaClass != this.javaClass) return false
         other as CmpTerm

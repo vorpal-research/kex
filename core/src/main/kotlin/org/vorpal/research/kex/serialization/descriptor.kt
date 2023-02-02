@@ -18,7 +18,7 @@ import org.vorpal.research.kex.ktype.KexType
 internal value class Id(val name: String)
 
 @Serializable
-internal sealed class DescriptorWrapper() {
+internal sealed class DescriptorWrapper {
     abstract val id: Id
     abstract val type: KexType
 
@@ -164,8 +164,6 @@ private fun Descriptor.toWrapper(visited: MutableMap<Id, DescriptorWrapper>) {
     }
 }
 
-@ExperimentalSerializationApi
-@Serializer(forClass = Descriptor::class)
 internal class DescriptorSerializer : KSerializer<Descriptor> {
     private val context = mutableMapOf<Id, Descriptor>()
     private val idSerializer = Id.serializer()
@@ -202,7 +200,6 @@ internal class DescriptorSerializer : KSerializer<Descriptor> {
     }
 }
 
-@ExperimentalSerializationApi
 internal inline fun <reified T : Descriptor> DescriptorSerializer.to() = object : KSerializer<T> {
     override val descriptor get() = this@to.descriptor
 

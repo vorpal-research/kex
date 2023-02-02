@@ -1,5 +1,6 @@
 package org.vorpal.research.kex.test.crash;
 
+@SuppressWarnings("UnusedReturnValue")
 public class Square {
     private final Point lowerLeft;
     private final Point upperRight;
@@ -14,9 +15,11 @@ public class Square {
     }
 
     public Square shrink(UnsignedInteger step) {
-        UnsignedInteger newX = upperRight.getX().sub(lowerLeft.getX()).div(step);
-        UnsignedInteger newY = upperRight.getY().sub(lowerLeft.getY()).div(step);
-        return new Square(lowerLeft, new Point(newX, newY));
+        return new Square(lowerLeft, lowerLeft.shrunk(upperRight, step));
+    }
+
+    public boolean contained(int[] array) {
+        return lowerLeft.getX().in(array) && upperRight.getY().in(array);
     }
 
     @Override

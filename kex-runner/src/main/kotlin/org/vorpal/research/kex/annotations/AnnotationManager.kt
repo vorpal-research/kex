@@ -6,8 +6,8 @@ import org.vorpal.research.kex.config.kexConfig
 import org.vorpal.research.kex.util.runtimeDepsPath
 import org.vorpal.research.kthelper.assert.ktassert
 import org.vorpal.research.kthelper.assert.unreachable
+import org.vorpal.research.kthelper.cast
 import org.vorpal.research.kthelper.logging.log
-import org.vorpal.research.kthelper.recast
 import org.vorpal.research.kthelper.tryOrNull
 import kotlin.reflect.KClass
 import kotlin.reflect.KFunction
@@ -95,7 +95,7 @@ object AnnotationManager {
     private inline fun <reified T : Number> getSpecialConstantTyped(value: String): T? =
         when (val result = getSpecialConstant(value)) {
             null -> null
-            is Number -> result.recast()
+            is Number -> result.cast()
             else -> throw IllegalStateException("Constant type is not java.lang.Number")
         }
 

@@ -27,6 +27,12 @@ public class Point {
         return xDiff.add(yDiff).sqrt();
     }
 
+    public Point shrunk(Point other, UnsignedInteger step) {
+        UnsignedInteger newX = other.getX().sub(this.getX()).div(step);
+        UnsignedInteger newY = other.getY().sub(this.getY()).div(step);
+        return new Point(newX, newY);
+    }
+
     public Point move(UnsignedInteger step) {
         return new Point(x.add(step), y.add(step));
     }

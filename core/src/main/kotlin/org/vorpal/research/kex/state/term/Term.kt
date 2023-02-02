@@ -38,7 +38,14 @@ abstract class Term : TypeInfo {
     abstract fun <T : Transformer<T>> accept(t: Transformer<T>): Term
 
     override fun toString() = name
-    override fun hashCode() = defaultHashCode(name, type, subTerms)
+
+    override fun hashCode(): Int {
+        var result = name.hashCode()
+        result = 31 * result + subTerms.hashCode()
+        result = 31 * result + type.hashCode()
+        return result
+    }
+
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (other?.javaClass != this.javaClass) return false

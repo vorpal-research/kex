@@ -14,7 +14,7 @@ class ArgumentTerm(override val type: KexType, val index: Int) : Term() {
 
     override fun <T: Transformer<T>> accept(t: Transformer<T>) = this
 
-    override fun hashCode() = defaultHashCode(index, super.hashCode())
+    override fun hashCode() = 31 * super.hashCode() + index.hashCode()
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (this.javaClass != other?.javaClass) return false

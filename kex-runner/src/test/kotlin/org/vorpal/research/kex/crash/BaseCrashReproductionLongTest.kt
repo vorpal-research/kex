@@ -30,4 +30,16 @@ class BaseCrashReproductionLongTest : CrashReproductionTest("base-crash-reproduc
         val expectedStackTrace = produceStackTrace { CrashTrigger().triggerException() }
         assertCrash(expectedStackTrace)
     }
+
+    @Test
+    fun testNegativeSizeArrayException() {
+        val expectedStackTrace = produceStackTrace { CrashTrigger().triggerNegativeArray() }
+        assertCrash(expectedStackTrace)
+    }
+
+    @Test
+    fun testArrayIndexOOBException() {
+        val expectedStackTrace = produceStackTrace { CrashTrigger().triggerArrayOOB() }
+        assertCrash(expectedStackTrace)
+    }
 }

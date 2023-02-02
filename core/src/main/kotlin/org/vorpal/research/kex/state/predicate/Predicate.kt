@@ -74,7 +74,7 @@ abstract class Predicate : TypeInfo {
     abstract fun print(): String
     abstract fun <T : Transformer<T>> accept(t: Transformer<T>): Predicate
 
-    override fun hashCode() = defaultHashCode(type, operands)
+    override fun hashCode() = 31 * type.hashCode() + operands.hashCode()
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (other?.javaClass != this.javaClass) return false

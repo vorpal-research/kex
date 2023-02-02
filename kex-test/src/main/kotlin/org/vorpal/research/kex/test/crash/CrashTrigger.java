@@ -17,6 +17,12 @@ public class CrashTrigger {
             sq = sq.move(param);
         } else if (move == Move.SHRINK) {
             sq = sq.shrink(param);
+        } else if (move == Move.CONTAINED) {
+            int[] array = new int[param.intValue()];
+            array[0] = 10;
+            array[1] = 9;
+            array[2] = -10;
+            sq.contained(array);
         }
     }
 
@@ -51,5 +57,31 @@ public class CrashTrigger {
                 Move.SHRINK,
                 new UnsignedInteger(0)
         );
+    }
+
+    public void triggerNegativeArray() {
+        foo(
+                new UnsignedInteger(2),
+                new UnsignedInteger(2),
+                new UnsignedInteger(3),
+                new UnsignedInteger(3),
+                Move.CONTAINED,
+                new UnsignedInteger(5)
+        );
+    }
+
+    public void triggerArrayOOB() {
+        foo(
+                new UnsignedInteger(10),
+                new UnsignedInteger(10),
+                new UnsignedInteger(10),
+                new UnsignedInteger(10),
+                Move.CONTAINED,
+                new UnsignedInteger(3)
+        );
+    }
+
+    public static void main(String[] args) {
+        new CrashTrigger().triggerArrayOOB();
     }
 }

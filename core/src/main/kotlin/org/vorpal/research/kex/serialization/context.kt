@@ -28,7 +28,6 @@ val kexTypeSerialModule: SerializersModule
         }
     }
 
-@ExperimentalSerializationApi
 @InternalSerializationApi
 fun getTermSerialModule(cm: ClassManager, ctx: NameMapperContext): SerializersModule = SerializersModule {
     include(getKfgSerialModule(cm, ctx))
@@ -53,7 +52,6 @@ val predicateTypeSerialModule: SerializersModule
         }
     }
 
-@ExperimentalSerializationApi
 @InternalSerializationApi
 fun getPredicateSerialModule(cm: ClassManager, ctx: NameMapperContext): SerializersModule = SerializersModule {
     include(getTermSerialModule(cm, ctx))
@@ -67,7 +65,6 @@ fun getPredicateSerialModule(cm: ClassManager, ctx: NameMapperContext): Serializ
     }
 }
 
-@ExperimentalSerializationApi
 @InternalSerializationApi
 fun getPredicateStateSerialModule(cm: ClassManager, ctx: NameMapperContext): SerializersModule = SerializersModule {
     include(getPredicateSerialModule(cm, ctx))
@@ -80,7 +77,6 @@ fun getPredicateStateSerialModule(cm: ClassManager, ctx: NameMapperContext): Ser
     }
 }
 
-@ExperimentalSerializationApi
 @InternalSerializationApi
 fun getDescriptorSerialModule(): SerializersModule = SerializersModule {
     val descriptorSerializer = DescriptorSerializer()
@@ -101,7 +97,6 @@ fun getDescriptorSerialModule(): SerializersModule = SerializersModule {
     contextual(ArrayDescriptor::class, descriptorSerializer.to())
 }
 
-@ExperimentalSerializationApi
 @InternalSerializationApi
 fun getSymbolicStateSerialModule(): SerializersModule = SerializersModule {
     polymorphic(Clause::class) {

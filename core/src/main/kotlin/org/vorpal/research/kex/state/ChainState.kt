@@ -20,7 +20,7 @@ class ChainState(val base: PredicateState, val curr: PredicateState) : Predicate
     override fun fmap(transform: (PredicateState) -> PredicateState) = ChainState(transform(base), transform(curr))
     override fun reverse() = ChainState(curr.reverse(), base.reverse())
 
-    override fun hashCode() = defaultHashCode(base, curr)
+    override fun hashCode() = 31 * base.hashCode() + curr.hashCode()
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (other?.javaClass != this.javaClass) return false
