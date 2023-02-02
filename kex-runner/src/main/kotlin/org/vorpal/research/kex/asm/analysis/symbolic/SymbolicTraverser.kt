@@ -32,10 +32,16 @@ import org.vorpal.research.kthelper.assert.unreachable
 import org.vorpal.research.kthelper.logging.log
 import java.util.concurrent.atomic.AtomicInteger
 
+data class SymbolicStackTraceElement(
+    val method: Method,
+    val instruction: Instruction,
+    val valueMap: PersistentMap<Value, Term>
+)
+
 data class TraverserState(
     val symbolicState: PersistentSymbolicState,
     val valueMap: PersistentMap<Value, Term>,
-    val stackTrace: PersistentList<Pair<Method, Instruction>>,
+    val stackTrace: PersistentList<SymbolicStackTraceElement>,
     val typeInfo: PersistentMap<Term, Type>,
     val blockPath: PersistentList<BasicBlock>,
     val nullCheckedTerms: PersistentSet<Term>,
@@ -497,7 +503,9 @@ abstract class SymbolicTraverser(
         val newState = traverserState.copy(
             symbolicState = traverserState.symbolicState,
             valueMap = newValueMap,
-            stackTrace = traverserState.stackTrace.add(inst.parent.method to inst)
+            stackTrace = traverserState.stackTrace.add(
+                SymbolicStackTraceElement(inst.parent.method, inst, traverserState.valueMap)
+            )
         )
         pathSelector.add(
             newState, candidate.body.entry
@@ -594,7 +602,8 @@ abstract class SymbolicTraverser(
     private suspend fun traverseReturnInst(inst: ReturnInst) {
         val traverserState = currentState ?: return
         val stackTrace = traverserState.stackTrace
-        val receiver = stackTrace.lastOrNull()?.second
+        val stackTraceElement = stackTrace.lastOrNull()
+        val receiver = stackTraceElement?.instruction
         currentState = when {
             receiver == null -> {
                 val result = check(rootMethod, traverserState.symbolicState)
@@ -607,12 +616,13 @@ abstract class SymbolicTraverser(
             inst.hasReturnValue && receiver.isNameDefined -> {
                 val returnTerm = traverserState.mkTerm(inst.returnValue)
                 traverserState.copy(
-                    valueMap = traverserState.valueMap.put(receiver, returnTerm),
+                    valueMap = stackTraceElement.valueMap.put(receiver, returnTerm),
                     stackTrace = stackTrace.removeAt(stackTrace.lastIndex)
                 )
             }
 
             else -> traverserState.copy(
+                valueMap = stackTraceElement.valueMap,
                 stackTrace = stackTrace.removeAt(stackTrace.lastIndex)
             )
         }
@@ -901,27 +911,28 @@ abstract class SymbolicTraverser(
         throwable: Term
     ) {
         val throwableType = throwable.type.getKfgType(types)
-        val catcher: BasicBlock? = state.run {
+        val catchFrame: Pair<BasicBlock, PersistentMap<Value, Term>>? = state.run {
             var catcher = inst.parent.handlers.firstOrNull { throwableType.isSubtypeOf(it.exception) }
-            if (catcher != null) return@run catcher
+            if (catcher != null) return@run catcher to this.valueMap
             for (i in stackTrace.indices.reversed()) {
-                val block = stackTrace[i].second.parent
+                val block = stackTrace[i].instruction.parent
                 catcher = block.handlers.firstOrNull { throwableType.isSubtypeOf(it.exception) }
-                if (catcher != null) return@run catcher
+                if (catcher != null) return@run catcher to stackTrace[i].valueMap
             }
             null
         }
         when {
-            catcher != null -> {
-                val catchInst = catcher.instructions.first { it is CatchInst } as CatchInst
+            catchFrame != null -> {
+                val (catchBlock, catchValueMap) = catchFrame
+                val catchInst = catchBlock.instructions.first { it is CatchInst } as CatchInst
                 pathSelector += state.copy(
-                    valueMap = state.valueMap.put(catchInst, throwable),
+                    valueMap = catchValueMap.put(catchInst, throwable),
                     blockPath = state.blockPath.add(inst.parent),
                     stackTrace = state.stackTrace.builder().also {
-                        while (it.isNotEmpty() && it.last().first != catcher.method) it.removeLast()
+                        while (it.isNotEmpty() && it.last().method != catchBlock.method) it.removeLast()
                         if (it.isNotEmpty()) it.removeLast()
                     }.build()
-                ) to catcher
+                ) to catchBlock
             }
 
             else -> {

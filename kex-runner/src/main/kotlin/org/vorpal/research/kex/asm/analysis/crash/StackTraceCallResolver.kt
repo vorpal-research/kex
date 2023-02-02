@@ -24,7 +24,7 @@ class StackTraceCallResolver(
     }
 
     override fun resolve(state: TraverserState, inst: CallInst): List<Method> {
-        val currentTrace = state.stackTrace.map { it.first to it.second.location } + (inst.method to inst.location)
+        val currentTrace = state.stackTrace.map { it.method to it.instruction.location } + (inst.method to inst.location)
         return when {
             currentTrace.size < stackTraceLines.size &&
                     currentTrace.withIndex().all { (index, it) -> it eq stackTraceLines[index] } -> {
