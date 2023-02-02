@@ -23,7 +23,6 @@ public class UnsignedInteger {
 
     public UnsignedInteger sub(UnsignedInteger other) {
         long newValue = value - other.value;
-        assert newValue >= 0;
         return new UnsignedInteger(newValue);
     }
 

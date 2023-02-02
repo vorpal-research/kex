@@ -31,7 +31,7 @@ object KSMTUnlogic {
             is KBitVec16Value -> const(expr.numberValue)
             is KBitVec32Value -> const(expr.numberValue)
             is KBitVec64Value -> const(expr.numberValue)
-            is KBitVecCustomValue -> const(expr.binaryStringValue)
+            is KBitVecCustomValue -> const(expr.stringValue)
             is KFp32Value -> const(expr.value)
             is KFp64Value -> const(expr.value)
             is KExistentialQuantifier -> {
