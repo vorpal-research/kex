@@ -14,7 +14,7 @@ private val paramFile by lazy {
 }
 
 @Serializable
-class Z3Params(private val elements: List<Z3Param>) : List<Z3Param> by elements {
+class Z3Params(private val elements: List<Z3Param>) : Iterable<Z3Param> {
     fun toJson() = Json.encodeToString(this)
 
     companion object {
@@ -28,6 +28,8 @@ class Z3Params(private val elements: List<Z3Param>) : List<Z3Param> by elements 
 
         fun fromJson(json: String) = Json.decodeFromString<Z3Params>(json)
     }
+
+    override fun iterator(): Iterator<Z3Param> = elements.iterator()
 }
 
 @Serializable

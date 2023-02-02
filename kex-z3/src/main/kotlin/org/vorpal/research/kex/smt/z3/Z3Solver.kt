@@ -29,8 +29,10 @@ private val maxArrayLength = kexConfig.getIntValue("smt", "maxArrayLength", 1000
 
 @AsyncSolver("z3")
 @Solver("z3")
-class Z3Solver(val tf: TypeFactory) : Z3NativeLoader(), AbstractSMTSolver, AbstractAsyncSMTSolver {
-    val ef = Z3ExprFactory()
+class Z3Solver(
+    private val tf: TypeFactory
+) : Z3NativeLoader(), AbstractSMTSolver, AbstractAsyncSMTSolver {
+    private val ef = Z3ExprFactory()
 
     override fun isReachable(state: PredicateState) =
         isPathPossible(state, state.path)
@@ -40,7 +42,7 @@ class Z3Solver(val tf: TypeFactory) : Z3NativeLoader(), AbstractSMTSolver, Abstr
 
     override fun isViolated(state: PredicateState, query: PredicateState): Result = check(state, query) { !it }
 
-    fun check(state: PredicateState, query: PredicateState, queryBuilder: (Bool_) -> Bool_): Result {
+    private fun check(state: PredicateState, query: PredicateState, queryBuilder: (Bool_) -> Bool_): Result {
         if (logQuery) {
             log.run {
                 debug("Z3 solver check")
@@ -69,22 +71,22 @@ class Z3Solver(val tf: TypeFactory) : Z3NativeLoader(), AbstractSMTSolver, Abstr
     private fun check(state: Bool_, query: Bool_): Pair<Status, Any> {
         val solver = buildSolver()
 
-        val (state_, query_) = when {
+        val (simplifiedState, simplifiedQuery) = when {
             simplifyFormulae -> state.simplify() to query.simplify()
             else -> state to query
         }
 
         if (logFormulae) {
             log.run {
-                debug("State: $state_")
-                debug("Query: $query_")
+                debug("State: $simplifiedState")
+                debug("Query: $simplifiedQuery")
             }
         }
 
-        solver.add(state_.asAxiom() as BoolExpr)
+        solver.add(simplifiedState.asAxiom() as BoolExpr)
         solver.add(ef.buildConstClassAxioms().asAxiom() as BoolExpr)
-        solver.add(query_.axiom as BoolExpr)
-        solver.add(query_.expr as BoolExpr)
+        solver.add(simplifiedQuery.axiom as BoolExpr)
+        solver.add(simplifiedQuery.expr as BoolExpr)
 
         log.debug("Running z3 solver")
         if (printSMTLib) {
