@@ -1,8 +1,6 @@
 package org.vorpal.research.kex.state.transformer
 
-import org.vorpal.research.kex.ktype.KexArray
-import org.vorpal.research.kex.ktype.KexJavaClass
-import org.vorpal.research.kex.ktype.KexType
+import org.vorpal.research.kex.ktype.*
 import org.vorpal.research.kex.state.PredicateState
 import org.vorpal.research.kex.state.term.*
 import org.vorpal.research.kex.util.parseAsConcreteType
@@ -78,6 +76,8 @@ class TypeCollector(
     private fun addType(type: KexType) {
         if (type is KexArray) {
             addType(type.element)
+        } else if (type is KexReference) {
+            addType(type.reference)
         }
         types += type
     }
