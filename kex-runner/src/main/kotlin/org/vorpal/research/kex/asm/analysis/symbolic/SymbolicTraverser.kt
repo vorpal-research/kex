@@ -530,7 +530,7 @@ abstract class SymbolicTraverser(
                 symbolicState = traverserState.symbolicState.copy(
                     clauses = traverserState.symbolicState.clauses.add(clause)
                 ),
-                typeInfo = traverserState.typeInfo.put(resultTerm, inst.type),
+                typeInfo = traverserState.typeInfo.put(resultTerm, inst.type.rtMapped),
                 valueMap = traverserState.valueMap.put(inst, resultTerm),
                 nullCheckedTerms = traverserState.nullCheckedTerms.add(resultTerm),
                 typeCheckedTerms = traverserState.typeCheckedTerms.put(resultTerm, inst.type)
@@ -551,7 +551,7 @@ abstract class SymbolicTraverser(
                 symbolicState = traverserState.symbolicState.copy(
                     clauses = traverserState.symbolicState.clauses.add(clause)
                 ),
-                typeInfo = traverserState.typeInfo.put(resultTerm, inst.type),
+                typeInfo = traverserState.typeInfo.put(resultTerm, inst.type.rtMapped),
                 valueMap = traverserState.valueMap.put(inst, resultTerm),
                 nullCheckedTerms = traverserState.nullCheckedTerms.add(resultTerm),
                 typeCheckedTerms = traverserState.typeCheckedTerms.put(resultTerm, inst.type)

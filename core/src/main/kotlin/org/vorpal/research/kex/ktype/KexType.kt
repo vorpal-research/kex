@@ -38,11 +38,14 @@ object KexRtManager {
     val KfgClass.rtMapped get() = cm[rt2KexMapping.getOrDefault(fullName, fullName)]
 
     val KfgMethod.rtMapped
-        get() = this.klass.rtMapped.getMethod(
-            this.name,
-            this.returnType.rtMapped,
-            *this.argTypes.map { it.rtMapped }.toTypedArray()
-        )
+        get() = when {
+            this.klass.isKexRt -> this.klass.rtMapped.getMethod(
+                this.name,
+                this.returnType.rtMapped,
+                *this.argTypes.map { it.rtMapped }.toTypedArray()
+            )
+            else -> this
+        }
 
     val Type.rtMapped: Type
         get() = when (this) {

@@ -1,6 +1,6 @@
 #!/bin/bash
 
-time java \
+java \
   -Xmx8g \
 	-Djava.security.manager \
 	-Djava.security.policy==kex.policy \
