@@ -480,7 +480,7 @@ abstract class SymbolicTraverser(
         if (!candidate.isStatic) {
             traverserState =
                 typeCheck(traverserState, inst, callee, candidate.klass.symbolicClass) ?: return nullableCurrentState()
-            if (candidate.klass.type.isSubtypeOf(callee.type.getKfgType(types))) {
+            if (candidate.klass.type != callee.type.getKfgType(types)) {
                 val newCalleeTerm = generate(candidate.klass.symbolicClass)
                 val convertClause = StateClause(inst, state {
                     newCalleeTerm equality (callee `as` candidate.klass.symbolicClass)
