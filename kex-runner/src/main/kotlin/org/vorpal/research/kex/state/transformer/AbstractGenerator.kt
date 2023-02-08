@@ -84,7 +84,7 @@ interface AbstractGenerator<T> : Transformer<AbstractGenerator<T>> {
     }
 
     override fun transformBasic(ps: BasicState): PredicateState {
-        val vars = collectPointers(ps)
+        val vars = collectPointers(ps, ignoreLambdaParams = true)
         vars.forEach { ptr ->
             if (ptr is FieldTerm && ptr.isStatic) {
                 staticFieldOwners += ptr.owner

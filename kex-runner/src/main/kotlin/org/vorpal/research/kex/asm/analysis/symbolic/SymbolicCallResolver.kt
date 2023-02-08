@@ -51,9 +51,6 @@ class DefaultCallResolver(
         if (method.klass is OuterClass) return emptyList()
         if (method.isNative) return emptyList()
         if (method.isStatic) return listOf(method.rtMapped)
-        if (method.isConstructor) return listOf(method.rtMapped)
-        if (inst.opcode == CallOpcode.SPECIAL) return listOf(method.rtMapped)
-        if (inst.opcode == CallOpcode.STATIC) return listOf(method.rtMapped)
 
         val callee = state.mkTerm(inst.callee)
         val baseType = method.klass.rtMapped
@@ -66,6 +63,10 @@ class DefaultCallResolver(
                     *method.argTypes.map { it.rtMapped }.toTypedArray()
                 )
             )
+
+            method.isConstructor -> listOf(method.rtMapped)
+            inst.opcode == CallOpcode.SPECIAL -> listOf(method.rtMapped)
+            inst.opcode == CallOpcode.STATIC -> listOf(method.rtMapped)
 
             callee in state.typeInfo -> {
                 val concreteType = state.typeInfo.getValue(callee) as ClassType

@@ -15,6 +15,7 @@ import org.vorpal.research.kthelper.logging.log
 import kotlin.reflect.KClass
 import org.vorpal.research.kfg.ir.Class as KfgClass
 import org.vorpal.research.kfg.ir.Method as KfgMethod
+import org.vorpal.research.kfg.ir.Field as KfgField
 
 @Suppress("unused")
 object KexRtManager {
@@ -47,6 +48,12 @@ object KexRtManager {
             else -> this
         }
 
+    val KfgField.rtMapped
+        get() = when {
+            this.klass.isKexRt -> this.klass.rtMapped.getField(this.name, this.type.rtMapped)
+            else -> this
+        }
+
     val Type.rtMapped: Type
         get() = when (this) {
             is ClassType -> this.klass.rtMapped.type
@@ -62,6 +69,9 @@ object KexRtManager {
             this.returnType.rtUnmapped,
             *this.argTypes.map { it.rtUnmapped }.toTypedArray()
         )
+
+    val KfgField.rtUnmapped
+        get() = this.klass.rtUnmapped.getField(this.name, this.type.rtUnmapped)
 
     val Type.rtUnmapped: Type
         get() = when (this) {

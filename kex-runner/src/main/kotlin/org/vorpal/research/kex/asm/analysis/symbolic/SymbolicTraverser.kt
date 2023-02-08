@@ -490,14 +490,12 @@ abstract class SymbolicTraverser(
                         clauses = traverserState.symbolicState.clauses.add(convertClause)
                     )
                 )
-                newValueMap = newValueMap.builder().also {
-                    it.mapValues { (_, term) ->
-                        when (term) {
-                            callee -> newCalleeTerm
-                            else -> term
-                        }
+                newValueMap = newValueMap.mapValues { (_, term) ->
+                    when (term) {
+                        callee -> newCalleeTerm
+                        else -> term
                     }
-                }.build()
+                }.toPersistentMap()
             }
         }
         val newState = traverserState.copy(

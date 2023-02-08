@@ -71,6 +71,9 @@ abstract class StringMethodContext(val cm: ClassManager) {
         get() = getMethod("toString", stringType)
     val Class.compareTo
         get() = getMethod("compareTo", cm.type.intType, stringType)
+
+    val Class.toCharArray
+        get() = getMethod("toCharArray", cm.type.charType.asArray)
 }
 
 @Suppress("DEPRECATION")
@@ -728,6 +731,12 @@ class StringMethodAdapter(cm: ClassManager) : StringMethodContext(cm), Recollect
         }
     }
 
+    private fun toCharArray(lhv: Term, term: Term) = basic {
+        state {
+            lhv equality term.valueArray().load()
+        }
+    }
+
     override fun transformCallPredicate(predicate: CallPredicate): Predicate {
         val call = predicate.call as CallTerm
         val args = call.arguments
@@ -755,6 +764,7 @@ class StringMethodAdapter(cm: ClassManager) : StringMethodContext(cm), Recollect
             kfgString.subSequence -> subSequence(predicate.lhv, `this`, args[0], args[1])
             kfgString.concat -> concat(predicate.lhv, `this`, args[0])
             kfgString.toString -> toString(predicate.lhv, `this`)
+            kfgString.toCharArray -> toCharArray(predicate.lhv, `this`)
             else -> predicate.wrap()
         }
         return nothing()
@@ -810,6 +820,7 @@ class TermExprStringAdapter(cm: ClassManager) : StringMethodContext(cm), Transfo
 //            kfgString.subSequence -> subSequence(predicate.lhv, `this`, args[0], args[1])
 //            kfgString.concat -> concat(predicate.lhv, `this`, args[0])
             kfgString.toString -> `this`
+            kfgString.toCharArray -> term { term.valueArray().load() }
             else -> term
         }
     }

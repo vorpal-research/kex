@@ -70,6 +70,7 @@ class AsyncChecker(
         +ConstStringAdapter(method.cm.type)
         +StringMethodAdapter(ctx.cm)
         +ConcolicArrayLengthAdapter()
+        +NewFieldInitializer(ctx)
         +FieldNormalizer(method.cm)
         +TypeNameAdapter(ctx.types)
     }

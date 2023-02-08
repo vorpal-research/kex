@@ -5,6 +5,27 @@ import org.vorpal.research.kex.state.PredicateState
 import org.vorpal.research.kex.state.predicate.*
 import org.vorpal.research.kex.state.term.*
 
+class LambdaParametersCollector : Transformer<PointerCollector> {
+    val lambdaParams = mutableSetOf<Term>()
+    private var inLambda = false
+
+    override fun transformLambdaTerm(term: LambdaTerm): Term {
+        inLambda = true
+        lambdaParams += term.parameters
+        val res = super.transformLambdaTerm(term)
+        inLambda = false
+        return res
+    }
+
+    override fun transformTerm(term: Term): Term {
+        if (!inLambda) return term
+        if (term in lambdaParams || term.subTerms.any { it in lambdaParams }) {
+            lambdaParams += term
+        }
+        return term
+    }
+}
+
 class PointerCollector : Transformer<PointerCollector> {
     val ptrs = linkedSetOf<Term>()
 
@@ -83,8 +104,12 @@ class PointerCollector : Transformer<PointerCollector> {
     }
 }
 
-fun collectPointers(ps: PredicateState): Set<Term> {
+fun collectPointers(ps: PredicateState, ignoreLambdaParams: Boolean = false): Set<Term> {
     val collector = PointerCollector()
     collector.apply(ps)
-    return collector.ptrs
+    val ptrs = collector.ptrs
+    return ptrs - when {
+        ignoreLambdaParams -> LambdaParametersCollector().also { it.apply(ps) }.lambdaParams
+        else -> emptySet()
+    }
 }
