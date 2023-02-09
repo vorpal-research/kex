@@ -56,6 +56,8 @@ class DefaultCallResolver(
         val baseType = method.klass.rtMapped
         val calleeType = (callee.type.getKfgType(ctx.types) as? ClassType)?.klass ?: return emptyList()
         return when {
+            method.isConstructor -> listOf(method.rtMapped)
+
             calleeType.isKexRt -> listOf(
                 calleeType.getMethod(
                     method.name,
@@ -64,7 +66,6 @@ class DefaultCallResolver(
                 )
             )
 
-            method.isConstructor -> listOf(method.rtMapped)
             inst.opcode == CallOpcode.SPECIAL -> listOf(method.rtMapped)
             inst.opcode == CallOpcode.STATIC -> listOf(method.rtMapped)
 
