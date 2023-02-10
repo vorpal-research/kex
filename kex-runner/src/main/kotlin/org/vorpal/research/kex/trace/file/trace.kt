@@ -6,6 +6,7 @@ import org.vorpal.research.kfg.ir.Method
 import org.vorpal.research.kthelper.assert.ktassert
 import org.vorpal.research.kthelper.logging.error
 import org.vorpal.research.kthelper.logging.log
+import ru.spbstu.wheels.mapToArray
 import java.util.*
 
 data class BlockInfo internal constructor(
@@ -77,7 +78,7 @@ data class FileTrace constructor(
                     }
                     is MethodArgs -> {
                         val info = infos.peek()
-                        info.args = action.args.map { it.rhv }.toTypedArray()
+                        info.args = action.args.mapToArray { it.rhv }
                     }
                     is MethodReturn -> {
                         val info = infos.peek()

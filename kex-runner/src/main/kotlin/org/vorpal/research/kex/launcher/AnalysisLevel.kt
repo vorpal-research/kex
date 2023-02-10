@@ -10,6 +10,7 @@ import org.vorpal.research.kfg.ir.Class
 import org.vorpal.research.kfg.ir.ConcreteClass
 import org.vorpal.research.kfg.ir.Method
 import org.vorpal.research.kfg.type.parseStringToType
+import ru.spbstu.wheels.mapToArray
 
 sealed class AnalysisLevel {
     abstract val pkg: Package
@@ -37,9 +38,10 @@ sealed class AnalysisLevel {
                             cm.type,
                             methodReturn.trim().asmString
                         ),
-                        *methodArgs.trim().split(""",\s*""".toRegex()).filter { it.isNotBlank() }.map {
-                            parseStringToType(cm.type, it.asmString)
-                        }.toTypedArray()
+                        *methodArgs.trim()
+                            .split(""",\s*""".toRegex())
+                            .filter { it.isNotBlank() }
+                            .mapToArray { parseStringToType(cm.type, it.asmString) }
                     )
                     MethodLevel(method)
                 }

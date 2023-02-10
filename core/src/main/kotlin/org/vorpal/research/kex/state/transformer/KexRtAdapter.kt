@@ -11,6 +11,7 @@ import org.vorpal.research.kex.state.term.*
 import org.vorpal.research.kfg.ClassManager
 import org.vorpal.research.kfg.ir.Field
 import org.vorpal.research.kfg.ir.Location
+import ru.spbstu.wheels.mapToArray
 
 fun FieldTerm.unmappedKfgField(cm: ClassManager): Field {
     val kfgKlass = cm[this.klass]
@@ -40,7 +41,7 @@ class KexRtAdapter(val cm: ClassManager) : PredicateBuilder(), Transformer<KexRt
         val mappedMethod = mappedKlass.getMethod(
             method.name,
             method.returnType.rtMapped,
-            *method.argTypes.map { it.rtMapped }.toTypedArray()
+            *method.argTypes.mapToArray { it.rtMapped }
         )
         return term.owner.call(mappedMethod, term.arguments)
     }

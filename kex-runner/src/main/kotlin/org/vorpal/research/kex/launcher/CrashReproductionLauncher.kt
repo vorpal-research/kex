@@ -19,8 +19,10 @@ import org.vorpal.research.kfg.container.asContainer
 import org.vorpal.research.kfg.util.Flags
 import org.vorpal.research.kfg.visitor.executePipeline
 import org.vorpal.research.kthelper.logging.log
+import ru.spbstu.wheels.mapToArray
 import java.net.URLClassLoader
 import java.nio.file.Paths
+import kotlin.io.path.exists
 import kotlin.io.path.readText
 import kotlin.time.ExperimentalTime
 
@@ -40,10 +42,16 @@ class CrashReproductionLauncher(
 
     init {
         val containerPaths = classPaths.map { Paths.get(it).toAbsolutePath() }
-        val containerClassLoader = URLClassLoader(containerPaths.map { it.toUri().toURL() }.toTypedArray())
-        containers = listOfNotNull(*containerPaths.map {
-            it.asContainer() ?: throw LauncherException("Can't represent ${it.toAbsolutePath()} as class container")
-        }.toTypedArray(), getKexRuntime())
+        val containerClassLoader = URLClassLoader(containerPaths.mapToArray { it.toUri().toURL() })
+        containers = listOfNotNull(
+            *containerPaths
+                .filter { it.exists() }
+                .mapToArray {
+                    it.asContainer()
+                        ?: throw LauncherException("Can't represent ${it.toAbsolutePath()} as class container")
+                },
+            getKexRuntime()
+        )
         val analysisJars = listOfNotNull(*containers.toTypedArray(), getRuntime(), getIntrinsics())
 
         val cm = ClassManager(
@@ -55,7 +63,7 @@ class CrashReproductionLauncher(
                 checkClasses = false
             )
         )
-        cm.initialize(*analysisJars.toTypedArray())
+        cm.initialize(analysisJars)
 
         accessLevel = when (kexConfig.getEnumValue("testGen", "accessLevel", true, Visibility.PUBLIC)) {
             Visibility.PRIVATE -> AccessModifier.Private

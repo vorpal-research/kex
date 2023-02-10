@@ -47,8 +47,8 @@ class BfsStrategy(override val method: Method, override val paths: Set<Predicate
 
 class DfsStrategy(override val method: Method, override val paths: Set<PredicateState>) : SearchStrategy {
     override fun next(state: PredicateState): PredicateState? {
-        val currentState = dequeOf(*(state as BasicState).predicates.toTypedArray())
-        val currentPath = dequeOf(*currentState.filter { it.type is PredicateType.Path }.toTypedArray())
+        val currentState = dequeOf((state as BasicState).predicates)
+        val currentPath = dequeOf(currentState.filter { it.type is PredicateType.Path })
         while (currentState.isNotEmpty()) {
             val last = currentState.pollLast()
             if (last == currentPath.peekLast()) {

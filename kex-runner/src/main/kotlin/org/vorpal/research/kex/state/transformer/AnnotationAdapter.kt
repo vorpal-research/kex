@@ -10,6 +10,7 @@ import org.vorpal.research.kex.state.predicate.Predicate
 import org.vorpal.research.kex.state.term.CallTerm
 import org.vorpal.research.kfg.ir.Method
 import org.vorpal.research.kthelper.collection.dequeOf
+import ru.spbstu.wheels.mapToArray
 import java.util.*
 
 class AnnotationAdapter(
@@ -19,7 +20,7 @@ class AnnotationAdapter(
     override val builders = dequeOf(StateBuilder())
 
     private val Method.exactCall: AnnotatedCall?
-        get() = annotations.getExactCall("$klass.$name", *argTypes.map { it.name }.toTypedArray())
+        get() = annotations.getExactCall("$klass.$name", *argTypes.mapToArray { it.name })
 
     override fun apply(ps: PredicateState): PredicateState {
         method.exactCall?.run {

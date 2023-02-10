@@ -12,6 +12,7 @@ import org.vorpal.research.kfg.util.Flags
 import org.vorpal.research.kthelper.assert.ktassert
 import org.vorpal.research.kthelper.assert.unreachable
 import org.vorpal.research.kthelper.logging.log
+import ru.spbstu.wheels.mapToArray
 import kotlin.reflect.KClass
 import org.vorpal.research.kfg.ir.Class as KfgClass
 import org.vorpal.research.kfg.ir.Method as KfgMethod
@@ -43,7 +44,7 @@ object KexRtManager {
             this.klass.isKexRt -> this.klass.rtMapped.getMethod(
                 this.name,
                 this.returnType.rtMapped,
-                *this.argTypes.map { it.rtMapped }.toTypedArray()
+                *this.argTypes.mapToArray { it.rtMapped }
             )
             else -> this
         }
@@ -67,7 +68,7 @@ object KexRtManager {
         get() = this.klass.rtUnmapped.getMethod(
             this.name,
             this.returnType.rtUnmapped,
-            *this.argTypes.map { it.rtUnmapped }.toTypedArray()
+            *this.argTypes.mapToArray { it.rtUnmapped }
         )
 
     val KfgField.rtUnmapped

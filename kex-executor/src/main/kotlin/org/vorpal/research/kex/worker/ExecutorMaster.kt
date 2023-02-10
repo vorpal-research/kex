@@ -33,7 +33,7 @@ class ExecutorMaster(
     private val timeout = kexConfig.getIntValue("runner", "timeout", 100)
     private val workerQueue = ArrayBlockingQueue<WorkerWrapper>(numberOfWorkers)
     private val outputDir = kexConfig.outputDirectory
-    private val workerJvmParams = kexConfig.getMultipleStringValue("executor", "workerJvmParams", ",")
+    private val workerJvmParams = kexConfig.getMultipleStringValue("executor", "workerJvmParams", ",").toTypedArray()
     private val executorPolicyPath = (kexConfig.getPathValue(
         "executor", "executorPolicyPath"
     ) ?: Paths.get("kex.policy")).toAbsolutePath()
@@ -79,7 +79,7 @@ class ExecutorMaster(
         private fun createProcess(): Process {
             val pb = ProcessBuilder(
                 "java",
-                *workerJvmParams.toTypedArray(),
+                *workerJvmParams,
                 "-Djava.security.manager",
                 "-Djava.security.policy==${executorPolicyPath}",
                 "-classpath", workerClassPath.joinToString(getPathSeparator()),

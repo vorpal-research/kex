@@ -4,6 +4,7 @@ import org.vorpal.research.kex.parameters.Parameters
 import org.vorpal.research.kex.random.GenerationException
 import org.vorpal.research.kex.random.Randomizer
 import org.vorpal.research.kex.util.*
+import org.vorpal.research.kthelper.collection.mapToArray
 import org.vorpal.research.kthelper.logging.log
 import sun.misc.Unsafe
 import java.lang.reflect.Constructor
@@ -21,7 +22,7 @@ fun Randomizer.generateParameters(klass: Class<*>, method: Method): Parameters<A
         method.isStatic -> null
         else -> next(klass)
     }
-    val a = method.genericParameterTypes.map { next(it) }.toTypedArray()
+    val a = method.genericParameterTypes.mapToArray { next(it) }
     Parameters(i, a.toList(), setOf())
 } catch (e: GenerationException) {
     log.debug("Cannot invoke $method")

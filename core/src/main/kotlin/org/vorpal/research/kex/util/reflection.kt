@@ -6,11 +6,11 @@ import org.vorpal.research.kex.ktype.*
 import org.vorpal.research.kex.state.term.FieldTerm
 import org.vorpal.research.kfg.ClassManager
 import org.vorpal.research.kfg.InvalidTypeException
-import org.vorpal.research.kfg.Package
 import org.vorpal.research.kfg.ir.Method
 import org.vorpal.research.kfg.type.*
 import org.vorpal.research.kfg.type.Type
 import org.vorpal.research.kthelper.assert.unreachable
+import org.vorpal.research.kthelper.collection.mapToArray
 import org.vorpal.research.kthelper.logging.log
 import org.vorpal.research.kthelper.`try`
 import java.lang.Class
@@ -172,7 +172,7 @@ fun ClassLoader.loadClass(type: Type): Class<*> = try {
 }
 
 fun Class<*>.getMethod(method: Method, loader: ClassLoader): java.lang.reflect.Method {
-    val argumentTypes = method.argTypes.map { loader.loadClass(it) }.toTypedArray()
+    val argumentTypes = method.argTypes.mapToArray { loader.loadClass(it) }
     return `try` {
         this.getDeclaredMethod(method.name, *argumentTypes)
     }.getOrThrow {
@@ -190,7 +190,7 @@ fun Class<*>.getMethod(loader: ClassLoader, name: String, desc: String): java.la
 }
 
 fun Class<*>.getMethod(loader: ClassLoader, name: String, vararg types: Type): java.lang.reflect.Method {
-    val argumentTypes = types.map { loader.loadClass(it) }.toTypedArray()
+    val argumentTypes = types.mapToArray { loader.loadClass(it) }
     return `try` {
         this.getDeclaredMethod(name, *argumentTypes)
     }.getOrThrow {
@@ -200,7 +200,7 @@ fun Class<*>.getMethod(loader: ClassLoader, name: String, vararg types: Type): j
 
 fun Class<*>.getConstructor(method: Method, loader: ClassLoader): Constructor<*> {
     require(method.isConstructor)
-    val argumentTypes = method.argTypes.map { loader.loadClass(it) }.toTypedArray()
+    val argumentTypes = method.argTypes.mapToArray { loader.loadClass(it) }
     return `try` {
         this.getDeclaredConstructor(*argumentTypes)
     }.getOrThrow {
@@ -209,7 +209,7 @@ fun Class<*>.getConstructor(method: Method, loader: ClassLoader): Constructor<*>
 }
 
 fun Class<*>.getConstructor(loader: ClassLoader, vararg types: Type): Constructor<*> {
-    val argumentTypes = types.map { loader.loadClass(it) }.toTypedArray()
+    val argumentTypes = types.mapToArray { loader.loadClass(it) }
     return `try` {
         this.getDeclaredConstructor(*argumentTypes)
     }.getOrThrow {

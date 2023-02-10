@@ -17,6 +17,7 @@ import org.vorpal.research.kfg.visitor.Pipeline
 import org.vorpal.research.kfg.visitor.executePipeline
 import org.vorpal.research.kthelper.KtException
 import org.vorpal.research.kthelper.logging.log
+import ru.spbstu.wheels.mapToArray
 import java.net.URLClassLoader
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -81,10 +82,13 @@ abstract class KexAnalysisLauncher(classPaths: List<String>, targetName: String)
 
     init {
         val containerPaths = classPaths.map { Paths.get(it).toAbsolutePath() }
-        val containerClassLoader = URLClassLoader(containerPaths.map { it.toUri().toURL() }.toTypedArray())
-        containers = listOfNotNull(*containerPaths.map {
-            it.asContainer() ?: throw LauncherException("Can't represent ${it.toAbsolutePath()} as class container")
-        }.toTypedArray(), getKexRuntime())
+        val containerClassLoader = URLClassLoader(containerPaths.mapToArray { it.toUri().toURL() })
+        containers = listOfNotNull(
+            *containerPaths.mapToArray {
+                it.asContainer() ?: throw LauncherException("Can't represent ${it.toAbsolutePath()} as class container")
+            },
+            getKexRuntime()
+        )
         val analysisJars = listOfNotNull(*containers.toTypedArray(), getRuntime(), getIntrinsics())
 
         val instrumentedCodeDir = kexConfig.instrumentedCodeDirectory
@@ -105,7 +109,7 @@ abstract class KexAnalysisLauncher(classPaths: List<String>, targetName: String)
                 checkClasses = false
             )
         )
-        cm.initialize(*analysisJars.toTypedArray())
+        cm.initialize(analysisJars)
 
         analysisLevel = AnalysisLevel.parse(cm, targetName)
         log.debug("Target: $analysisLevel")

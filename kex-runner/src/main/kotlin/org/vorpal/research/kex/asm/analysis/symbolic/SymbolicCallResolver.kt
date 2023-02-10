@@ -18,6 +18,7 @@ import org.vorpal.research.kfg.ir.value.instruction.Handle
 import org.vorpal.research.kfg.ir.value.instruction.InvokeDynamicInst
 import org.vorpal.research.kfg.stringClass
 import org.vorpal.research.kfg.type.ClassType
+import ru.spbstu.wheels.mapToArray
 
 
 interface SymbolicCallResolver {
@@ -62,7 +63,7 @@ class DefaultCallResolver(
                 calleeType.getMethod(
                     method.name,
                     method.returnType.rtMapped,
-                    *method.argTypes.map { it.rtMapped }.toTypedArray()
+                    *method.argTypes.mapToArray { it.rtMapped }
                 )
             )
 
@@ -83,13 +84,13 @@ class DefaultCallResolver(
                         it != it.rtMapped -> it.rtMapped.getMethod(
                             method.name,
                             method.returnType.rtMapped,
-                            *method.argTypes.map { arg -> arg.rtMapped }.toTypedArray()
+                            *method.argTypes.mapToArray { arg -> arg.rtMapped }
                         )
 
                         it.isKexRt -> it.getMethod(
                             method.name,
                             method.returnType.rtMapped,
-                            *method.argTypes.map { arg -> arg.rtMapped }.toTypedArray()
+                            *method.argTypes.mapToArray { arg -> arg.rtMapped }
                         )
 
                         else -> it.getMethod(method.name, method.desc)

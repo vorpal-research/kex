@@ -23,6 +23,7 @@ import org.vorpal.research.kfg.ir.value.NameMapperContext
 import org.vorpal.research.kfg.util.Flags
 import org.vorpal.research.kthelper.logging.error
 import org.vorpal.research.kthelper.logging.log
+import ru.spbstu.wheels.mapToArray
 import java.net.URLClassLoader
 import java.nio.file.Paths
 import kotlin.system.exitProcess
@@ -55,7 +56,7 @@ class KexExecutor(args: Array<String>) {
         val classPaths = cmd.getCmdValue("classpath")!!
             .split(getPathSeparator())
             .map { Paths.get(it).toAbsolutePath() }
-        containerClassLoader = URLClassLoader(classPaths.map { it.toUri().toURL() }.toTypedArray())
+        containerClassLoader = URLClassLoader(classPaths.mapToArray { it.toUri().toURL() })
 
         containers = classPaths.map {
             it.asContainer() ?: run {

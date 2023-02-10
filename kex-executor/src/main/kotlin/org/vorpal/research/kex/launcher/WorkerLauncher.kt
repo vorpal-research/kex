@@ -19,6 +19,7 @@ import org.vorpal.research.kfg.KfgConfig
 import org.vorpal.research.kfg.container.asContainer
 import org.vorpal.research.kfg.util.Flags
 import org.vorpal.research.kthelper.logging.log
+import ru.spbstu.wheels.mapToArray
 import java.net.URLClassLoader
 import java.nio.file.Files
 import java.nio.file.Paths
@@ -56,7 +57,7 @@ class WorkerLauncher(args: Array<String>) {
         val classPaths = cmd.getCmdValue("classpath")!!
             .split(getPathSeparator())
             .map { Paths.get(it).toAbsolutePath() }
-        val containerClassLoader = URLClassLoader(classPaths.map { it.toUri().toURL() }.toTypedArray())
+        val containerClassLoader = URLClassLoader(classPaths.mapToArray { it.toUri().toURL() })
 
         val containers = classPaths.map {
             it.asContainer() ?: run {

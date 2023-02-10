@@ -156,7 +156,6 @@ abstract class KexRunnerTest(
                     .mapNotNull { it as? ArrayStoreInst }
                     .filter { it.arrayRef == assertionsArray }
                     .map { it.value }
-                    .toList()
 
                 val model = result.model
                 log.debug("Acquired model: $model")

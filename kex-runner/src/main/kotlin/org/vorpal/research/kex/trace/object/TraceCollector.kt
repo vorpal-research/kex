@@ -6,6 +6,7 @@ import org.vorpal.research.kex.asm.manager.ValueWrapper
 import org.vorpal.research.kfg.ClassManager
 import org.vorpal.research.kfg.ir.Method
 import org.vorpal.research.kfg.ir.value.NameMapperContext
+import org.vorpal.research.kthelper.collection.mapToArray
 import org.vorpal.research.kthelper.collection.stackOf
 
 interface TraceCollector {
@@ -92,7 +93,7 @@ private class ActualTraceCollector(val cm: ClassManager, val ctx: NameMapperCont
         val method = parseMethod(className, methodName, argTypes, retType)
         val retval = returnValueName?.run { parseValue(this) }
         val instance = instanceName?.run { parseValue(this) }
-        val args = argNames.map { parseValue(it) }.toTypedArray()
+        val args = argNames.mapToArray { parseValue(it) }
         addAction(MethodCall(method, retval, instance, args))
     }
 

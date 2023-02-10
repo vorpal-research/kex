@@ -7,6 +7,7 @@ import org.vorpal.research.kfg.ir.value.NameMapper
 import org.vorpal.research.kfg.ir.value.Value
 import org.vorpal.research.kfg.type.parseStringToType
 import org.vorpal.research.kfg.visitor.MethodVisitor
+import ru.spbstu.wheels.mapToArray
 
 @JvmInline
 value class ValueWrapper(
@@ -32,7 +33,7 @@ data class MethodWrapper(
     fun unwrap(cm: ClassManager) = cm[klass].getMethod(
         name,
         parseStringToType(cm.type, returnType),
-        *argsTypes.map { parseStringToType(cm.type, it) }.toTypedArray()
+        *argsTypes.mapToArray { parseStringToType(cm.type, it) }
     )
 }
 
