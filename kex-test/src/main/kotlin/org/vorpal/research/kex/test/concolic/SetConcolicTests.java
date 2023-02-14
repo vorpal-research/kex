@@ -7,6 +7,9 @@ import java.util.Iterator;
 
 public class SetConcolicTests {
     public static void testCharHashSetIterator(HashSet<Character> chars) {
+        if (chars.contains(null)) {
+            throw new IllegalStateException();
+        }
         if (chars.size() > 1) {
             throw new IllegalStateException();
         }
@@ -18,7 +21,8 @@ public class SetConcolicTests {
                 throw new IllegalStateException();
             }
         } else {
-            throw new IllegalStateException();
+// todo: add this after we learn to create non-default iterator
+//            throw new IllegalStateException();
         }
     }
 
