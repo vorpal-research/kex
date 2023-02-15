@@ -21,8 +21,7 @@ public class SetConcolicTests {
                 throw new IllegalStateException();
             }
         } else {
-// todo: add this after we learn to create non-default iterator
-//            throw new IllegalStateException();
+            throw new IllegalStateException();
         }
     }
 
