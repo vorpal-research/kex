@@ -15,7 +15,10 @@ data class StackTrace(
                 val codeElement = line.removePrefix("\tat ")
                 val (klassAndMethod, location) = codeElement.split('(')
                 val (klassName, methodName) = klassAndMethod.splitAtLast('.')
-                val (fileName, lineNumber) = location.dropLast(1).splitAtLast(':')
+                val (fileName, lineNumber) = when {
+                    line.endsWith("(Native Method)") -> null to "-2"
+                    else -> location.dropLast(1).splitAtLast(':')
+                }
                 stackTraceLines += StackTraceElement(klassName, methodName, fileName, lineNumber.toInt())
             }
             return StackTrace(firstLine, stackTraceLines)
@@ -23,9 +26,10 @@ data class StackTrace(
     }
 
 
-    val originalStackTrace: String get() = buildString {
-        appendLine(firstLine)
-        for (line in stackTraceLines)
-            appendLine("\tat $line")
-    }
+    val originalStackTrace: String
+        get() = buildString {
+            appendLine(firstLine)
+            for (line in stackTraceLines)
+                appendLine("\tat $line")
+        }
 }
