@@ -27,7 +27,7 @@ class TermCollector(val filter: (Term) -> Boolean) : Transformer<TermCollector> 
         }
     }
 
-    val terms = hashSetOf<Term>()
+    val terms = mutableSetOf<Term>()
 
     override fun transformTerm(term: Term): Term {
         if (filter(term)) terms.add(term)

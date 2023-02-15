@@ -1,13 +1,12 @@
 package org.vorpal.research.kex.crash
 
-import ch.scheitlin.alex.java.StackTrace
-import ch.scheitlin.alex.java.StackTraceParser
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.InternalSerializationApi
 import org.vorpal.research.kex.ExecutionContext
 import org.vorpal.research.kex.KexRunnerTest
 import org.vorpal.research.kex.asm.analysis.crash.CrashReproductionChecker
+import org.vorpal.research.kex.asm.analysis.crash.StackTrace
 import org.vorpal.research.kex.asm.manager.ClassInstantiationDetector
 import org.vorpal.research.kex.config.kexConfig
 import org.vorpal.research.kex.util.compiledCodeDirectory
@@ -91,7 +90,7 @@ abstract class CrashReproductionTest(testDirectoryName: String) : KexRunnerTest(
     fun Throwable.toStackTrace(): StackTrace {
         val stringWriter = StringWriter()
         this.printStackTrace(PrintWriter(stringWriter))
-        return StackTraceParser.parse(stringWriter.toString()).let {
+        return StackTrace.parse(stringWriter.toString()).let {
             StackTrace(it.firstLine, it.stackTraceLines.take(DEPTH))
         }
     }

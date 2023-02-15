@@ -59,7 +59,8 @@ interface AbstractGenerator<T> : Transformer<AbstractGenerator<T>> {
     fun generate(ps: PredicateState): Pair<T?, List<T?>> {
         val (tempThis, tempArgs) = collectArguments(ps)
         thisTerm = when {
-            !method.isStatic && tempThis == null -> term {
+            method.isStatic -> null
+            tempThis == null -> term {
                 `this`(KexClass(method.klass.fullName).rtMapped)
             }
 

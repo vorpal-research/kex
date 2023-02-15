@@ -1,10 +1,9 @@
 package org.vorpal.research.kex.launcher
 
-import ch.scheitlin.alex.java.StackTrace
-import ch.scheitlin.alex.java.StackTraceParser
 import kotlinx.coroutines.DelicateCoroutinesApi
 import org.vorpal.research.kex.ExecutionContext
 import org.vorpal.research.kex.asm.analysis.crash.CrashReproductionChecker
+import org.vorpal.research.kex.asm.analysis.crash.StackTrace
 import org.vorpal.research.kex.asm.manager.ClassInstantiationDetector
 import org.vorpal.research.kex.asm.util.AccessModifier
 import org.vorpal.research.kex.asm.util.Visibility
@@ -78,7 +77,7 @@ class CrashReproductionLauncher(
         context = ExecutionContext(cm, containerClassLoader, randomDriver, klassPath, accessLevel)
 
         log.debug("Running with class path:\n${containers.joinToString("\n") { it.name }}")
-        stackTrace = StackTraceParser.parse(Paths.get(crashPath).readText()).let {
+        stackTrace = StackTrace.parse(Paths.get(crashPath).readText()).let {
             StackTrace(it.firstLine, it.stackTraceLines.take(depth.toInt()))
         }
         log.debug("Running on stack trace:\n${stackTrace.originalStackTrace}")

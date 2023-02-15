@@ -1,6 +1,5 @@
 package org.vorpal.research.kex.asm.analysis.crash
 
-import ch.scheitlin.alex.java.StackTrace
 import kotlinx.coroutines.*
 import org.vorpal.research.kex.ExecutionContext
 import org.vorpal.research.kex.asm.analysis.symbolic.*
@@ -20,6 +19,7 @@ import org.vorpal.research.kex.util.newFixedThreadPoolContextWithMDC
 import org.vorpal.research.kfg.ClassManager
 import org.vorpal.research.kfg.ir.Method
 import org.vorpal.research.kfg.ir.value.instruction.*
+import org.vorpal.research.kthelper.assert.ktassert
 import org.vorpal.research.kthelper.logging.log
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.ExperimentalTime
@@ -27,7 +27,7 @@ import kotlin.time.ExperimentalTime
 
 operator fun ClassManager.get(frame: StackTraceElement): Method {
     val entryClass = this[frame.className.asmString]
-    return entryClass.getMethods(frame.methodName).first { method ->
+    return entryClass.allMethods.filter { it.name == frame.methodName }.first { method ->
         method.body.flatten().any { inst ->
             inst.location.file == frame.fileName && inst.location.line == frame.lineNumber
         }
@@ -62,6 +62,13 @@ class CrashReproductionChecker(
 
     private var foundAnExample = false
     private val generatedTestClasses = mutableSetOf<String>()
+
+    init {
+        ktassert(
+            targetInstructions.isNotEmpty(),
+            "Could not find target instructions for stack trace\n\"\"\"${stackTrace.originalStackTrace}\"\"\""
+        )
+    }
 
     companion object {
         @ExperimentalTime

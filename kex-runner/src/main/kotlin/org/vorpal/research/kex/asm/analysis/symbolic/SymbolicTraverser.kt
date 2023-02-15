@@ -241,7 +241,9 @@ abstract class SymbolicTraverser(
                 ),
                 blockPath = traverserState.blockPath.add(inst.parent)
             ), inst
-        )?.let { pathSelector += it to inst.trueSuccessor }
+        )?.let {
+            pathSelector += it to inst.trueSuccessor
+        }
 
         checkReachability(
             traverserState.copy(
@@ -250,7 +252,9 @@ abstract class SymbolicTraverser(
                 ),
                 blockPath = traverserState.blockPath.add(inst.parent)
             ), inst
-        )?.let { pathSelector += it to inst.falseSuccessor }
+        )?.let {
+            pathSelector += it to inst.falseSuccessor
+        }
 
         currentState = null
     }
