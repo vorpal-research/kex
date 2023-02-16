@@ -12,7 +12,7 @@ data class StackTrace(
             val firstLine = lines.first()
             val stackTraceLines = mutableListOf<StackTraceElement>()
             for (line in lines.drop(1)) {
-                val codeElement = line.removePrefix("\tat ")
+                val codeElement = line.replace("\\s*at ".toRegex(), "")
                 val (klassAndMethod, location) = codeElement.split('(')
                 val (klassName, methodName) = klassAndMethod.splitAtLast('.')
                 val (fileName, lineNumber) = when {
