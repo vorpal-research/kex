@@ -12,11 +12,12 @@ data class StackTrace(
             val firstLine = lines.first()
             val stackTraceLines = mutableListOf<StackTraceElement>()
             for (line in lines.drop(1)) {
-                val codeElement = line.replace("\\s*at ".toRegex(), "")
+                val codeElement = line.trim().replace("\\s*at ".toRegex(), "")
                 val (klassAndMethod, location) = codeElement.split('(')
                 val (klassName, methodName) = klassAndMethod.splitAtLast('.')
                 val (fileName, lineNumber) = when {
                     line.endsWith("(Native Method)") -> null to "-2"
+                    line.endsWith("(Unknown Source)") -> null to "-1"
                     else -> location.dropLast(1).splitAtLast(':')
                 }
                 stackTraceLines += StackTraceElement(klassName, methodName, fileName, lineNumber.toInt())
