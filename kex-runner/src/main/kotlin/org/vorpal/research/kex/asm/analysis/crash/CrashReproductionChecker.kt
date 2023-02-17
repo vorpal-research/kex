@@ -56,7 +56,11 @@ class CrashReproductionChecker(
                 arrayIndexOOBClass -> it is ArrayStoreInst || it is ArrayLoadInst
                 negativeArrayClass -> it is NewArrayInst
                 classCastClass -> it is CastInst
-                else -> it is ThrowInst
+                else -> when (it) {
+                    is ThrowInst -> true
+                    is CallInst -> targetException.isInheritorOf(cm["java/lang/RuntimeException"]) || targetException in it.method.exceptions
+                    else -> false
+                }
             }
         }
 
