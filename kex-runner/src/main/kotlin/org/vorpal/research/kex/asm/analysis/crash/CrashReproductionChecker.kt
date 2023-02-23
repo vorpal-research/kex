@@ -18,6 +18,7 @@ import org.vorpal.research.kex.util.asmString
 import org.vorpal.research.kex.util.newFixedThreadPoolContextWithMDC
 import org.vorpal.research.kfg.ClassManager
 import org.vorpal.research.kfg.ir.Method
+import org.vorpal.research.kfg.ir.value.ThisRef
 import org.vorpal.research.kfg.ir.value.instruction.*
 import org.vorpal.research.kthelper.assert.ktassert
 import org.vorpal.research.kthelper.logging.log
@@ -40,13 +41,6 @@ class CrashReproductionChecker(
     val stackTrace: StackTrace,
     private val shouldStopAfterFirst: Boolean
 ) : SymbolicTraverser(ctx, ctx.cm[stackTrace.stackTraceLines.last()]) {
-    override val pathSelector: SymbolicPathSelector = DequePathSelector()
-    override val callResolver: SymbolicCallResolver = StackTraceCallResolver(
-        stackTrace, DefaultCallResolver(ctx)
-    )
-    override val invokeDynamicResolver: SymbolicInvokeDynamicResolver = DefaultCallResolver(ctx)
-
-
     private val targetException = ctx.cm[stackTrace.firstLine.takeWhile { it != ':' }.asmString]
     private val targetInstructions = ctx.cm[stackTrace.stackTraceLines.first()].body.flatten()
         .filter { it.location.line == stackTrace.stackTraceLines.first().lineNumber }
@@ -63,6 +57,12 @@ class CrashReproductionChecker(
                 }
             }
         }
+
+    override val pathSelector: SymbolicPathSelector = DistancePathSelector(rootMethod, targetInstructions, stackTrace)
+    override val callResolver: SymbolicCallResolver = StackTraceCallResolver(
+        stackTrace, DefaultCallResolver(ctx)
+    )
+    override val invokeDynamicResolver: SymbolicInvokeDynamicResolver = DefaultCallResolver(ctx)
 
     private var foundAnExample = false
     private val generatedTestClasses = mutableSetOf<String>()
@@ -260,11 +260,11 @@ class CrashReproductionChecker(
 
     private val Instruction.isNullptrThrowing
         get() = when (this) {
-            is ArrayLoadInst -> true
-            is ArrayStoreInst -> true
-            is FieldLoadInst -> true
-            is FieldStoreInst -> true
-            is CallInst -> !this.isStatic
+            is ArrayLoadInst -> this.arrayRef !is ThisRef
+            is ArrayStoreInst -> this.arrayRef !is ThisRef
+            is FieldLoadInst -> !this.isStatic && this.owner !is ThisRef
+            is FieldStoreInst -> !this.isStatic && this.owner !is ThisRef
+            is CallInst -> !this.isStatic && this.callee !is ThisRef
             else -> false
         }
 }
