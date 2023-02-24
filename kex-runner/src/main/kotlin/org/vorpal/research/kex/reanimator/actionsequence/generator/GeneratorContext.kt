@@ -93,7 +93,7 @@ class GeneratorContext(
         +ArrayBoundsAdapter()
         +NullityInfoAdapter()
         +FieldNormalizer(context.cm, ".state.normalized")
-        +TypeNameAdapter(types)
+        +TypeNameAdapter(context)
     }
 
     fun prepareQuery(ps: PredicateState) = transform(ps) {

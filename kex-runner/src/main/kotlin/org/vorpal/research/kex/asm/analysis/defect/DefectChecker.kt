@@ -248,7 +248,7 @@ class DefectChecker                                                             
         +ConstEnumAdapter(ctx)
         +ConstStringAdapter(method.cm.type)
         +FieldNormalizer(method.cm)
-        +TypeNameAdapter(ctx.types)
+        +TypeNameAdapter(ctx)
     }
 
     private fun getSearchStrategy(method: Method): SearchStrategy = UnfilteredDfsStrategy(method)
@@ -298,7 +298,7 @@ class DefectChecker                                                             
             log.debug("Query: $query")
         }
 
-        val result = SMTProxySolver(method.cm.type).use {
+        val result = SMTProxySolver(ctx).use {
             it.isViolated(state, query)
         }
         log.debug("Acquired $result")

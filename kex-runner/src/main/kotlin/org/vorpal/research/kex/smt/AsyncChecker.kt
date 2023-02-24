@@ -72,7 +72,7 @@ class AsyncChecker(
         +ConcolicArrayLengthAdapter()
         +NewFieldInitializer(ctx)
         +FieldNormalizer(method.cm)
-        +TypeNameAdapter(ctx.types)
+        +TypeNameAdapter(ctx)
     }
 
     suspend fun prepareAndCheck(
@@ -124,7 +124,7 @@ class AsyncChecker(
             log.debug("Query size: ${query.size}")
         }
 
-        val result = AsyncSMTProxySolver(method.cm.type).use {
+        val result = AsyncSMTProxySolver(ctx).use {
             it.isPathPossibleAsync(state, query)
         }
         log.debug("Acquired $result")

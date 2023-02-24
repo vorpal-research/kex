@@ -230,7 +230,7 @@ class CallCiteChecker(
         +ConstEnumAdapter(ctx)
         +ConstStringAdapter(method.cm.type)
         +FieldNormalizer(method.cm)
-        +TypeNameAdapter(ctx.types)
+        +TypeNameAdapter(ctx)
     }
 
     private fun getTest(
@@ -291,7 +291,7 @@ class CallCiteChecker(
             log.debug("Query: $query")
         }
 
-        val result = SMTProxySolver(method.cm.type).use {
+        val result = SMTProxySolver(ctx).use {
             it.isViolated(state, query)
         }
         log.debug("Acquired $result")

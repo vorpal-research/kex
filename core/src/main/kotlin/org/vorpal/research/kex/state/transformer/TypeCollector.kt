@@ -1,10 +1,13 @@
 package org.vorpal.research.kex.state.transformer
 
+import org.vorpal.research.kex.ExecutionContext
+import org.vorpal.research.kex.asm.manager.instantiationManager
 import org.vorpal.research.kex.ktype.*
 import org.vorpal.research.kex.state.PredicateState
 import org.vorpal.research.kex.state.term.*
 import org.vorpal.research.kex.util.getAllSubtypes
 import org.vorpal.research.kex.util.parseAsConcreteType
+import org.vorpal.research.kfg.type.ClassType
 import org.vorpal.research.kfg.type.TypeFactory
 
 private class ClassAccessDetector : Transformer<ClassAccessDetector> {
@@ -28,7 +31,7 @@ fun hasClassAccesses(ps: PredicateState) = ClassAccessDetector().let {
 }
 
 class TypeCollector(
-    val tf: TypeFactory,
+    val ctx: ExecutionContext,
     private val checkStringTypes: Boolean = false
 ) : Transformer<TypeCollector> {
     val types = mutableSetOf<KexType>()
@@ -47,13 +50,17 @@ class TypeCollector(
     }
 
     override fun transformInstanceOf(term: InstanceOfTerm): Term {
-        val kfgChecked = term.checkedType.getKfgType(tf)
-        val kfgCurrent = term.operand.type.getKfgType(tf)
+        val kfgChecked = term.checkedType.getKfgType(ctx.types)
+        val kfgCurrent = term.operand.type.getKfgType(ctx.types)
         if (kfgCurrent.isSubtypeOf(kfgChecked)) {
             addType(term.checkedType)
         } else {
-            val checkedSubtypes = kfgChecked.getAllSubtypes(tf)
-            val currentSubtypes = kfgCurrent.getAllSubtypes(tf)
+            val checkedSubtypes = instantiationManager.getAllConcreteSubtypes(
+                (kfgChecked as ClassType).klass, ctx.accessLevel
+            )
+            val currentSubtypes = instantiationManager.getAllConcreteSubtypes(
+                (kfgCurrent as ClassType).klass, ctx.accessLevel
+            )
             val intersection = currentSubtypes.intersect(checkedSubtypes)
             intersection.forEach {
                 addType(it.kexType)
@@ -79,7 +86,7 @@ class TypeCollector(
 
     private fun handleStringType(string: String) {
         if (checkStringTypes) {
-            parseAsConcreteType(tf, string)?.let {
+            parseAsConcreteType(ctx.types, string)?.let {
                 addType(it)
             }
         }
@@ -95,8 +102,8 @@ class TypeCollector(
     }
 }
 
-fun collectTypes(tf: TypeFactory, ps: PredicateState): Set<KexType> {
-    val tc = TypeCollector(tf, hasClassAccesses(ps))
+fun collectTypes(ctx: ExecutionContext, ps: PredicateState): Set<KexType> {
+    val tc = TypeCollector(ctx, hasClassAccesses(ps))
     tc.apply(ps)
     return tc.types
 }

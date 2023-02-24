@@ -1,5 +1,6 @@
 #parse("definitions.vm")
 import org.vorpal.research.kex.smt.${solver.toLowerCase()}.${solver}SMTConverter
+import org.vorpal.research.kex.ExecutionContext
 import org.vorpal.research.kex.state.*
 import org.vorpal.research.kex.state.predicate.*
 import org.vorpal.research.kex.state.term.*
@@ -20,7 +21,7 @@ private typealias Factory_ = $factory
 private typealias Context_ = ${solver}Context
 
 @Suppress("UNUSED_PARAMETER", "UNUSED_VARIABLE")
-class ${solver}Converter(val tf: TypeFactory) : ${solver}SMTConverter() {
+class ${solver}Converter(val executionContext: ExecutionContext) : ${solver}SMTConverter() {
     private val bounds = dequeOf< Map< Term, Dynamic_ >>()
     private val axiomedTerms = mutableSetOf< Term >()
     private var noAxioms = false
@@ -60,7 +61,7 @@ class ${solver}Converter(val tf: TypeFactory) : ${solver}SMTConverter() {
 
         val typeVar = ctx.readBitvectorProperty(arrayExpr, this.memspace, "type")
         val lengthVar = ctx.readWordProperty(arrayExpr, this.memspace, "length")
-        val componentTypeVar = ef.getSubTypeMask((arrayRef.type as KexArray).element.getKfgType(tf))
+        val componentTypeVar = ef.getSubTypeMask((arrayRef.type as KexArray).element.getKfgType(executionContext.types))
         val resultExpr = expr
             .withAxiom(lengthVar ge ef.makeIntConst(0))
             .withAxiom(
@@ -85,7 +86,7 @@ class ${solver}Converter(val tf: TypeFactory) : ${solver}SMTConverter() {
             is KexPointer -> {
                 resultExpr = resultExpr.withAxiom(resultExpr ge ef.makeIntConst(0))
                 val typeVar = ctx.readBitvectorInitialProperty(expr as Ptr_, this.memspace, "type")
-                val kfgType = this.type.getKfgType(tf)
+                val kfgType = this.type.getKfgType(executionContext.types)
                 var typeCond: Bool_? = null
                 if (kfgType.isConcrete && kfgType !is NullType) {
                     val isPowerOfTwo = (typeVar and (typeVar - ef.makeBitvectorConst("1", 2, ef.typeWidth))) eq ef.makeBitvectorConst("0", 2, ef.typeWidth)
@@ -98,7 +99,7 @@ class ${solver}Converter(val tf: TypeFactory) : ${solver}SMTConverter() {
                 }
                 if (this.type is KexArray) {
                     val lengthVar = ctx.readWordInitialProperty(expr, this.memspace, "length")
-                    val componentTypeVar = ef.getSubTypeMask((this.type as KexArray).element.getKfgType(tf))
+                    val componentTypeVar = ef.getSubTypeMask((this.type as KexArray).element.getKfgType(executionContext.types))
                     resultExpr = resultExpr
                         .withAxiom(lengthVar ge ef.makeIntConst(0))
                     if ((this.type as KexArray).element is KexPointer)
@@ -140,7 +141,7 @@ class ${solver}Converter(val tf: TypeFactory) : ${solver}SMTConverter() {
             is KexPointer -> {
                 resultExpr = resultExpr.withAxiom(resultExpr ge ef.makeIntConst(0))
                 val typeVar = ctx.readBitvectorProperty(expr as Ptr_, this.memspace, "type")
-                val kfgType = this.type.getKfgType(tf)
+                val kfgType = this.type.getKfgType(executionContext.types)
                 var typeCond: Bool_? = null
                 if (kfgType.isConcrete && kfgType !is NullType) {
                     val isPowerOfTwo = (typeVar and (typeVar - ef.makeBitvectorConst("1", 2, ef.typeWidth))) eq ef.makeBitvectorConst("0", 2, ef.typeWidth)
@@ -153,7 +154,7 @@ class ${solver}Converter(val tf: TypeFactory) : ${solver}SMTConverter() {
                 }
                 if (this.type is KexArray) {
                     val lengthVar = ctx.readWordProperty(expr, this.memspace, "length")
-                    val componentTypeVar = ef.getSubTypeMask((this.type as KexArray).element.getKfgType(tf))
+                    val componentTypeVar = ef.getSubTypeMask((this.type as KexArray).element.getKfgType(executionContext.types))
                     resultExpr = resultExpr
                         .withAxiom(lengthVar ge ef.makeIntConst(0))
                     if ((this.type as KexArray).element is KexPointer)
@@ -229,7 +230,8 @@ class ${solver}Converter(val tf: TypeFactory) : ${solver}SMTConverter() {
 
 
     fun init(state: PredicateState, ef: Factory_) {
-        val types = collectTypes(tf, state).filter { it !is KexNull }.mapTo(mutableSetOf()) { it.getKfgType(tf) }
+        val types = collectTypes(executionContext, state).filter { it !is KexNull }
+            .mapTo(mutableSetOf()) { it.getKfgType(executionContext.types) }
         ef.initTypes(types)
         ef.initStrings(getConstStringMap(state))
     }
@@ -402,7 +404,7 @@ class ${solver}Converter(val tf: TypeFactory) : ${solver}SMTConverter() {
         })
         ctx.writeArrayMemory(lhv, memspace, array)
 
-        val typeVar = ef.getTypeVar(generateArray.lhv.type.getKfgType(tf))
+        val typeVar = ef.getTypeVar(generateArray.lhv.type.getKfgType(executionContext.types))
         ctx.writeBitvectorProperty(lhv, memspace, "type", typeVar)
         ctx.writeWordProperty(lhv, memspace, "length", length)
 
@@ -421,7 +423,7 @@ class ${solver}Converter(val tf: TypeFactory) : ${solver}SMTConverter() {
         val array = ef.makeDefaultArray(newarray.lhv.name, ef.makeLongConst(0))
         ctx.writeArrayMemory(lhv, memspace, array)
 
-        val typeVar = ef.getTypeVar(newarray.lhv.type.getKfgType(tf))
+        val typeVar = ef.getTypeVar(newarray.lhv.type.getKfgType(executionContext.types))
         ctx.writeBitvectorProperty(lhv, memspace, "type", typeVar)
 
         val lengthProperty = ctx.readWordProperty(lhv, memspace, "length")
@@ -434,7 +436,7 @@ class ${solver}Converter(val tf: TypeFactory) : ${solver}SMTConverter() {
         val memspace = new.lhv.memspace
         val lhv = convert(new.lhv, ef, ctx) as? Ptr_ ?: unreachable { log.error("Non-ptr term in `new`") }
 
-        val typeVar = ef.getTypeVar(new.lhv.type.getKfgType(tf))
+        val typeVar = ef.getTypeVar(new.lhv.type.getKfgType(executionContext.types))
         ctx.writeBitvectorProperty(lhv, memspace, "type", typeVar)
         return lhv.withPtrAxioms(ef, ctx, TermType.LOCAL_PTR) eq ctx.getLocalPtr(memspace)
     }
@@ -448,7 +450,7 @@ class ${solver}Converter(val tf: TypeFactory) : ${solver}SMTConverter() {
         val array = ef.makeDefaultArray(newarray.lhv.name, ef.makeLongConst(0))
         ctx.initializeArrayMemory(lhv, memspace, array)
 
-        val typeVar = ef.getTypeVar(newarray.lhv.type.getKfgType(tf))
+        val typeVar = ef.getTypeVar(newarray.lhv.type.getKfgType(executionContext.types))
         ctx.initializeBitvectorProperty(lhv, memspace, "type", typeVar)
 
         val lengthProperty = ctx.readWordInitialProperty(lhv, memspace, "length")
@@ -459,7 +461,7 @@ class ${solver}Converter(val tf: TypeFactory) : ${solver}SMTConverter() {
         val memspace = new.lhv.memspace
         val lhv = convert(new.lhv, ef, ctx) as? Ptr_ ?: unreachable { log.error("Non-ptr term in `new`") }
 
-        val typeVar = ef.getTypeVar(new.lhv.type.getKfgType(tf))
+        val typeVar = ef.getTypeVar(new.lhv.type.getKfgType(executionContext.types))
         ctx.initializeBitvectorProperty(lhv, memspace, "type", typeVar)
         new.lhv.withInitialAxioms(lhv.withAxiom(lhv neq ef.makeNull()), ef, ctx) eq ctx.getInitialLocalPtr(memspace)
     }
@@ -566,10 +568,10 @@ class ${solver}Converter(val tf: TypeFactory) : ${solver}SMTConverter() {
 
     fun convert(cast: CastTerm, ef: Factory_, ctx: Context_): Dynamic_ {
         val op = convert(cast.operand, ef, ctx)
-        val kfgCastType = cast.type.getKfgType(tf)
+        val kfgCastType = cast.type.getKfgType(executionContext.types)
         return if (cast.type is KexPointer && kfgCastType.isConcrete) {
             val typeVar = ctx.readBitvectorProperty(op as Ptr_, cast.operand.memspace, "type")
-            val castedTypeVar = ef.getSubTypeMask(cast.type.getKfgType(tf))
+            val castedTypeVar = ef.getSubTypeMask(cast.type.getKfgType(executionContext.types))
             val subtype = (typeVar and castedTypeVar) eq typeVar
             cast(cast.type, op.withAxiom(subtype))
         } else {
@@ -655,7 +657,7 @@ class ${solver}Converter(val tf: TypeFactory) : ${solver}SMTConverter() {
         res = res.withPtrAxioms(ef, ctx, TermType.STATIC_PTR)
         return res
             .withAxiom(res neq ef.makeNull())
-            .withAxiom(typeIndex eq ef.getTypeVar(const.constantType.getKfgType(tf)))
+            .withAxiom(typeIndex eq ef.getTypeVar(const.constantType.getKfgType(executionContext.types)))
     }
 
     fun convert(const: StaticClassRefTerm, ef: Factory_, ctx: Context_): Dynamic_ {
@@ -782,9 +784,9 @@ class ${solver}Converter(val tf: TypeFactory) : ${solver}SMTConverter() {
         val operand = convert(instanceof.operand, ef, ctx) as? Ptr_ ?: unreachable { log.error("Non-ptr ref in field load") }
 
         val ptrType = ctx.readBitvectorProperty(operand, memspace, "type")
-        val kfgType = instanceof.checkedType.getKfgType(tf)
+        val kfgType = instanceof.checkedType.getKfgType(executionContext.types)
         return if (kfgType.isConcrete) {
-            val checkedType = ef.getSubTypeMask(instanceof.checkedType.getKfgType(tf))
+            val checkedType = ef.getSubTypeMask(instanceof.checkedType.getKfgType(executionContext.types))
             val isSubtype = (ptrType and checkedType) eq ptrType
             `if`(operand eq ef.makeNull()).then(ef.makeFalse()).`else`(isSubtype)
         } else {

@@ -69,7 +69,7 @@ class Checker(
         +ConstEnumAdapter(ctx)
         +ConstStringAdapter(method.cm.type)
         +FieldNormalizer(method.cm)
-        +TypeNameAdapter(method.cm.type)
+        +TypeNameAdapter(ctx)
     }
 
     fun prepareState(method: Method, ps: PredicateState, typeInfoMap: TypeInfoMap) = transform(ps) {
@@ -93,7 +93,7 @@ class Checker(
         +ArrayBoundsAdapter()
         +NullityInfoAdapter()
         +FieldNormalizer(method.cm)
-        +TypeNameAdapter(method.cm.type)
+        +TypeNameAdapter(ctx)
     }
 
     fun prepareAndCheck(ps: PredicateState): Result {
@@ -150,7 +150,7 @@ class Checker(
             log.debug("Query size: ${query.size}")
         }
 
-        val result = SMTProxySolver(method.cm.type).use {
+        val result = SMTProxySolver(ctx).use {
             it.isPathPossible(state, query)
         }
         log.debug("Acquired $result")

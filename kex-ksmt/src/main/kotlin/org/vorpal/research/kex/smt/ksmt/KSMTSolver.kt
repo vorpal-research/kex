@@ -12,6 +12,7 @@ import org.ksmt.solver.runner.KSolverRunner
 import org.ksmt.solver.runner.KSolverRunnerManager
 import org.ksmt.solver.z3.KZ3Solver
 import org.ksmt.sort.KBoolSort
+import org.vorpal.research.kex.ExecutionContext
 import org.vorpal.research.kex.config.kexConfig
 import org.vorpal.research.kex.ktype.*
 import org.vorpal.research.kex.smt.*
@@ -42,7 +43,7 @@ private val ksmtRunners = kexConfig.getIntValue("ksmt", "runners", 4)
 @Suppress("UNCHECKED_CAST")
 @Solver("ksmt")
 @AsyncSolver("ksmt")
-class KSMTSolver(private val tf: TypeFactory) : AbstractSMTSolver, AbstractAsyncSMTSolver {
+class KSMTSolver(private val executionContext: ExecutionContext) : AbstractSMTSolver, AbstractAsyncSMTSolver {
     companion object {
         private val solverManager: KSolverRunnerManager by lazy {
             KSolverRunnerManager(
@@ -89,7 +90,7 @@ class KSMTSolver(private val tf: TypeFactory) : AbstractSMTSolver, AbstractAsync
 
         val ctx = KSMTContext(ef)
 
-        val converter = KSMTConverter(tf)
+        val converter = KSMTConverter(executionContext)
         converter.init(state, ef)
         val ksmtState = converter.convert(state, ef, ctx)
         val ksmtQuery = converter.convert(query, ef, ctx)
@@ -179,7 +180,7 @@ class KSMTSolver(private val tf: TypeFactory) : AbstractSMTSolver, AbstractAsync
         model: KModel,
         name: String
     ): Pair<Term, Term> {
-        val ptrExpr = KSMTConverter(tf).convert(ptr, ef, this) as? Ptr_
+        val ptrExpr = KSMTConverter(executionContext).convert(ptr, ef, this) as? Ptr_
             ?: unreachable { log.error("Non-ptr expr for pointer $ptr") }
         val startProp = getBitvectorInitialProperty(memspace, name)
         val endProp = getBitvectorProperty(memspace, name)
@@ -200,7 +201,7 @@ class KSMTSolver(private val tf: TypeFactory) : AbstractSMTSolver, AbstractAsync
         model: KModel,
         name: String
     ): Pair<Term, Term> {
-        val ptrExpr = KSMTConverter(tf).convert(ptr, ef, this) as? Ptr_
+        val ptrExpr = KSMTConverter(executionContext).convert(ptr, ef, this) as? Ptr_
             ?: unreachable { log.error("Non-ptr expr for pointer $ptr") }
         val typeSize = KSMTExprFactory.getTypeSize(type)
         val startProp = when (typeSize) {
@@ -230,7 +231,7 @@ class KSMTSolver(private val tf: TypeFactory) : AbstractSMTSolver, AbstractAsync
         name: String
     ): Pair<Term, Term> {
         val kCtx = ctx.factory.ctx
-        val ptrExpr = KSMTConverter(tf).convert(ptr, ef, ctx) as? Ptr_
+        val ptrExpr = KSMTConverter(executionContext).convert(ptr, ef, ctx) as? Ptr_
             ?: unreachable { log.error("Non-ptr expr for pointer $ptr") }
         val modelPtr = KSMTUnlogic.undo(model.eval(ptrExpr.expr.asExpr(kCtx), true), kCtx, model)
 
@@ -251,7 +252,7 @@ class KSMTSolver(private val tf: TypeFactory) : AbstractSMTSolver, AbstractAsync
         name: String
     ): Pair<Term, Term> {
         val kCtx = ctx.factory.ctx
-        val ptrExpr = KSMTConverter(tf).convert(ptr, ef, ctx) as? Ptr_
+        val ptrExpr = KSMTConverter(executionContext).convert(ptr, ef, ctx) as? Ptr_
             ?: unreachable { log.error("Non-ptr expr for pointer $ptr") }
         val modelPtr = KSMTUnlogic.undo(model.eval(ptrExpr.expr.asExpr(kCtx), true), kCtx, model)
 
@@ -271,7 +272,7 @@ class KSMTSolver(private val tf: TypeFactory) : AbstractSMTSolver, AbstractAsync
         }
 
         val assignments = vars.associateWith {
-            val expr = KSMTConverter(tf).convert(it, ef, ctx)
+            val expr = KSMTConverter(executionContext).convert(it, ef, ctx)
             val ksmtExpr = expr.expr
 
             val evaluatedExpr = model.eval(ksmtExpr.asExpr(kCtx), true)
@@ -299,9 +300,9 @@ class KSMTSolver(private val tf: TypeFactory) : AbstractSMTSolver, AbstractAsync
             when (ptr) {
                 is ArrayLoadTerm -> {}
                 is ArrayIndexTerm -> {
-                    val arrayPtrExpr = KSMTConverter(tf).convert(ptr.arrayRef, ef, ctx) as? Ptr_
+                    val arrayPtrExpr = KSMTConverter(executionContext).convert(ptr.arrayRef, ef, ctx) as? Ptr_
                         ?: unreachable { log.error("Non-ptr expr for pointer $ptr") }
-                    val indexExpr = KSMTConverter(tf).convert(ptr.index, ef, ctx) as? Int_
+                    val indexExpr = KSMTConverter(executionContext).convert(ptr.index, ef, ctx) as? Int_
                         ?: unreachable { log.error("Non integer expr for index in $ptr") }
 
                     val modelPtr = KSMTUnlogic.undo(
@@ -366,7 +367,7 @@ class KSMTSolver(private val tf: TypeFactory) : AbstractSMTSolver, AbstractAsync
                     val startMem = ctx.getWordInitialMemory(memspace)
                     val endMem = ctx.getWordMemory(memspace)
 
-                    val ptrExpr = KSMTConverter(tf).convert(ptr, ef, ctx) as? Ptr_
+                    val ptrExpr = KSMTConverter(executionContext).convert(ptr, ef, ctx) as? Ptr_
                         ?: unreachable { log.error("Non-ptr expr for pointer $ptr") }
 
                     val startV = startMem.load(ptrExpr)
@@ -434,9 +435,9 @@ class KSMTSolver(private val tf: TypeFactory) : AbstractSMTSolver, AbstractAsync
         for (ptr in indices) {
             ptr as ArrayIndexTerm
             val memspace = ptr.arrayRef.memspace
-            val arrayPtrExpr = KSMTConverter(tf).convert(ptr.arrayRef, ef, ctx) as? Ptr_
+            val arrayPtrExpr = KSMTConverter(executionContext).convert(ptr.arrayRef, ef, ctx) as? Ptr_
                 ?: unreachable { log.error("Non-ptr expr for pointer $ptr") }
-            val indexExpr = KSMTConverter(tf).convert(ptr.index, ef, ctx) as? Int_
+            val indexExpr = KSMTConverter(executionContext).convert(ptr.index, ef, ctx) as? Int_
                 ?: unreachable { log.error("Non integer expr for index in $ptr") }
 
             val modelPtr =

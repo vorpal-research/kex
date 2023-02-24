@@ -1,6 +1,7 @@
 package org.vorpal.research.kex.smt.boolector
 
 import org.vorpal.research.boolector.Btor
+import org.vorpal.research.kex.ExecutionContext
 import org.vorpal.research.kex.config.kexConfig
 import org.vorpal.research.kex.ktype.*
 import org.vorpal.research.kex.smt.*
@@ -23,7 +24,7 @@ private typealias MemoryPair = Pair<MemoryState, MemoryState>
 
 @Solver("boolector")
 class BoolectorSolver(
-    private val tf: TypeFactory
+    private val executionContext: ExecutionContext
 ) : BoolectorNativeLoader(), AbstractSMTSolver {
     private val ef = BoolectorExprFactory()
 
@@ -43,7 +44,7 @@ class BoolectorSolver(
 
         val ctx = BoolectorContext(ef)
 
-        val converter = BoolectorConverter(tf)
+        val converter = BoolectorConverter(executionContext)
         converter.init(state, ef)
         val boolectorState = converter.convert(state, ef, ctx)
         val boolectorQuery = converter.convert(query, ef, ctx)
@@ -80,7 +81,7 @@ class BoolectorSolver(
         memspace: Int,
         name: String
     ): Pair<Term, Term> {
-        val ptrExpr = BoolectorConverter(tf).convert(ptr, ef, this) as? Ptr_
+        val ptrExpr = BoolectorConverter(executionContext).convert(ptr, ef, this) as? Ptr_
             ?: unreachable { log.error("Non-ptr expr for pointer $ptr") }
         val startProp = getBitvectorInitialProperty(memspace, name)
         val endProp = getBitvectorProperty(memspace, name)
@@ -99,7 +100,7 @@ class BoolectorSolver(
         type: KexType,
         name: String
     ): Pair<Term, Term> {
-        val ptrExpr = BoolectorConverter(tf).convert(ptr, ef, this) as? Ptr_
+        val ptrExpr = BoolectorConverter(executionContext).convert(ptr, ef, this) as? Ptr_
             ?: unreachable { log.error("Non-ptr expr for pointer $ptr") }
         val typeSize = BoolectorExprFactory.getTypeSize(type)
         val startProp = when (typeSize) {
@@ -126,7 +127,7 @@ class BoolectorSolver(
         type: KexType,
         name: String
     ) {
-        val ptrExpr = BoolectorConverter(tf).convert(ptr, ef, ctx) as? Ptr_
+        val ptrExpr = BoolectorConverter(executionContext).convert(ptr, ef, ctx) as? Ptr_
             ?: unreachable { log.error("Non-ptr expr for pointer $ptr") }
         val modelPtr = BoolectorUnlogic.undo(ptrExpr.expr)
 
@@ -144,7 +145,7 @@ class BoolectorSolver(
         memspace: Int,
         name: String
     ): Pair<Term, Term> {
-        val ptrExpr = BoolectorConverter(tf).convert(ptr, ef, ctx) as? Ptr_
+        val ptrExpr = BoolectorConverter(executionContext).convert(ptr, ef, ctx) as? Ptr_
             ?: unreachable { log.error("Non-ptr expr for pointer $ptr") }
         val modelPtr = BoolectorUnlogic.undo(ptrExpr.expr)
 
@@ -163,7 +164,7 @@ class BoolectorSolver(
         }
 
         val assignments = vars.associateWith {
-            val expr = BoolectorConverter(tf).convert(it, ef, ctx)
+            val expr = BoolectorConverter(executionContext).convert(it, ef, ctx)
             val boolectorExpr = expr.expr
 
             // this is needed because boolector represents real numbers as integers
@@ -203,9 +204,9 @@ class BoolectorSolver(
                 }
 
                 is ArrayIndexTerm -> {
-                    val arrayPtrExpr = BoolectorConverter(tf).convert(ptr.arrayRef, ef, ctx) as? Ptr_
+                    val arrayPtrExpr = BoolectorConverter(executionContext).convert(ptr.arrayRef, ef, ctx) as? Ptr_
                         ?: unreachable { log.error("Non-ptr expr for pointer $ptr") }
-                    val indexExpr = BoolectorConverter(tf).convert(ptr.index, ef, ctx) as? Int_
+                    val indexExpr = BoolectorConverter(executionContext).convert(ptr.index, ef, ctx) as? Int_
                         ?: unreachable { log.error("Non integer expr for index in $ptr") }
 
                     val modelPtr = BoolectorUnlogic.undo(arrayPtrExpr.expr)
@@ -251,7 +252,7 @@ class BoolectorSolver(
                     val startMem = ctx.getWordInitialMemory(memspace)
                     val endMem = ctx.getWordMemory(memspace)
 
-                    val ptrExpr = BoolectorConverter(tf).convert(ptr, ef, ctx) as? Ptr_
+                    val ptrExpr = BoolectorConverter(executionContext).convert(ptr, ef, ctx) as? Ptr_
                         ?: unreachable { log.error("Non-ptr expr for pointer $ptr") }
 
                     val startV = startMem.load(ptrExpr)

@@ -73,7 +73,7 @@ class StaticFieldInliner(
             +ArrayBoundsAdapter()
             +NullityInfoAdapter()
             +FieldNormalizer(ctx.cm, ".state.normalized")
-            +TypeNameAdapter(method.cm.type)
+            +TypeNameAdapter(ctx)
         }
 
         private fun generateFinalFieldValues(

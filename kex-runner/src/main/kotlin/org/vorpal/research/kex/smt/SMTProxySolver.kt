@@ -1,5 +1,6 @@
 package org.vorpal.research.kex.smt
 
+import org.vorpal.research.kex.ExecutionContext
 import org.vorpal.research.kex.InheritanceInfo
 import org.vorpal.research.kex.config.kexConfig
 import org.vorpal.research.kfg.type.TypeFactory
@@ -11,8 +12,8 @@ private val engine = kexConfig.getStringValue("smt", "engine")
     ?: unreachable { log.error("No SMT engine specified") }
 
 class SMTProxySolver(
-    tf: TypeFactory,
-    val solver: AbstractSMTSolver = getSolver(tf, engine)
+    ctx: ExecutionContext,
+    val solver: AbstractSMTSolver = getSolver(ctx, engine)
 ) : AbstractSMTSolver by solver {
 
     companion object {
@@ -28,19 +29,19 @@ class SMTProxySolver(
             }
         }
 
-        fun getSolver(tf: TypeFactory, engine: String): AbstractSMTSolver {
+        fun getSolver(ctx: ExecutionContext, engine: String): AbstractSMTSolver {
             val solverClass = solvers[engine] ?: unreachable { log.error("Unknown engine name: $engine") }
-            val constructor = solverClass.getConstructor(TypeFactory::class.java)
-            return constructor.newInstance(tf) as AbstractSMTSolver
+            val constructor = solverClass.getConstructor(ExecutionContext::class.java)
+            return constructor.newInstance(ctx) as AbstractSMTSolver
         }
     }
 
-    constructor(tf: TypeFactory, engine: String) : this(tf, getSolver(tf, engine))
+    constructor(ctx: ExecutionContext, engine: String) : this(ctx, getSolver(ctx, engine))
 }
 
 class AsyncSMTProxySolver(
-    tf: TypeFactory,
-    val solver: AbstractAsyncSMTSolver = getSolver(tf, engine)
+    ctx: ExecutionContext,
+    val solver: AbstractAsyncSMTSolver = getSolver(ctx, engine)
 ) : AbstractAsyncSMTSolver by solver {
 
     companion object {
@@ -56,12 +57,12 @@ class AsyncSMTProxySolver(
             }
         }
 
-        fun getSolver(tf: TypeFactory, engine: String): AbstractAsyncSMTSolver {
+        fun getSolver(ctx: ExecutionContext, engine: String): AbstractAsyncSMTSolver {
             val solverClass = solvers[engine] ?: unreachable { log.error("Unknown engine name: $engine") }
-            val constructor = solverClass.getConstructor(TypeFactory::class.java)
-            return constructor.newInstance(tf) as AbstractAsyncSMTSolver
+            val constructor = solverClass.getConstructor(ExecutionContext::class.java)
+            return constructor.newInstance(ctx) as AbstractAsyncSMTSolver
         }
     }
 
-    constructor(tf: TypeFactory, engine: String) : this(tf, getSolver(tf, engine))
+    constructor(ctx: ExecutionContext, engine: String) : this(ctx, getSolver(ctx, engine))
 }

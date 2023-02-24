@@ -1,5 +1,6 @@
 package org.vorpal.research.kex.state.transformer
 
+import org.vorpal.research.kex.ExecutionContext
 import org.vorpal.research.kex.ktype.*
 import org.vorpal.research.kex.state.PredicateState
 import org.vorpal.research.kex.state.StateBuilder
@@ -116,7 +117,7 @@ class ConstStringAdapter(
 }
 
 class TypeNameAdapter(
-    val tf: TypeFactory
+    val ctx: ExecutionContext
 ) : RecollectingTransformer<TypeNameAdapter> {
     override val builders = dequeOf(StateBuilder())
 
@@ -124,7 +125,7 @@ class TypeNameAdapter(
         if (!hasClassAccesses(ps)) return ps
 
         val constStrings = getConstStringMap(ps)
-        val strings = collectTypes(tf, ps)
+        val strings = collectTypes(ctx, ps)
             .map { it.unreferenced() }
             .map { term { const(it.javaName) } as ConstStringTerm }
             .toMutableSet()
