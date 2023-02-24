@@ -102,6 +102,23 @@ class CrashReproductionChecker(
         super.traverseInstruction(inst)
     }
 
+    override suspend fun processMethodCall(
+        state: TraverserState,
+        inst: Instruction,
+        candidate: Method,
+        callee: Term,
+        argumentTerms: List<Term>
+    ) {
+        super.processMethodCall(state, inst, candidate, callee, argumentTerms)
+        if (inst in targetInstructions) {
+            val result = check(rootMethod, state.symbolicState)
+            if (result != null) {
+                report(inst, result)
+                targetInstructions -= inst
+            }
+        }
+    }
+
     override suspend fun nullabilityCheck(
         state: TraverserState,
         inst: Instruction,

@@ -14,12 +14,12 @@ import org.vorpal.research.kthelper.graph.Viewable
 class MethodDistanceCounter(
     private val stackTrace: StackTrace
 ) {
-    private val scores = mutableMapOf<Method, MapWithDefault<BasicBlock, Int>>()
+    private val scores = mutableMapOf<Method, MapWithDefault<BasicBlock, ULong>>()
 
     companion object {
-        private const val INF = 1_000_000_000
-        private const val DEFAULT_WEIGHT = 1
-        private const val CATCH_WEIGHT = 1000
+        private const val INF = 1_000_000_000UL
+        private const val DEFAULT_WEIGHT = 1UL
+        private const val CATCH_WEIGHT = 1000UL
     }
 
     private infix fun Pair<Method, Location>.eq(stackTraceElement: StackTraceElement): Boolean {
@@ -37,13 +37,13 @@ class MethodDistanceCounter(
     }
 
 
-    private fun computeMethodScores(method: Method): MapWithDefault<BasicBlock, Int> {
+    private fun computeMethodScores(method: Method): MapWithDefault<BasicBlock, ULong> {
         val targetInstructions = method.targetInstructions().ifEmpty {
             method.body.flatten()
                 .filterIsInstanceTo<ReturnInst, MutableSet<ReturnInst>>(mutableSetOf())
         }.mapTo(mutableSetOf()) { it.parent }
 
-        val weights = targetInstructions.associateWith { 0 }.toMutableMap().withDefault(INF)
+        val weights = targetInstructions.associateWith { 0UL }.toMutableMap().withDefault(INF)
         val queue = queueOf(targetInstructions)
         while (queue.isNotEmpty()) {
             val current = queue.poll()
@@ -66,13 +66,13 @@ class MethodDistanceCounter(
         return weights.toMap().withDefault(INF)
     }
 
-    fun score(basicBlock: BasicBlock): Int = scores.getOrPut(basicBlock.method) {
+    fun score(basicBlock: BasicBlock): ULong = scores.getOrPut(basicBlock.method) {
         computeMethodScores(basicBlock.method).also {
 //            viewMethod(basicBlock.method, it)
         }
     }[basicBlock]
 
-    private fun viewMethod(method: Method, scores: MapWithDefault<BasicBlock, Int>) {
+    private fun viewMethod(method: Method, scores: MapWithDefault<BasicBlock, ULong>) {
         val viewable = object : Viewable {
             override val graphView: List<GraphView>
                 get() {
