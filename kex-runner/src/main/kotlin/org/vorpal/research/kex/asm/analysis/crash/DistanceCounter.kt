@@ -7,6 +7,8 @@ import org.vorpal.research.kfg.ir.value.instruction.ReturnInst
 import org.vorpal.research.kthelper.collection.MapWithDefault
 import org.vorpal.research.kthelper.collection.queueOf
 import org.vorpal.research.kthelper.collection.withDefault
+import org.vorpal.research.kthelper.graph.GraphView
+import org.vorpal.research.kthelper.graph.Viewable
 
 
 class MethodDistanceCounter(
@@ -65,6 +67,40 @@ class MethodDistanceCounter(
     }
 
     fun score(basicBlock: BasicBlock): Int = scores.getOrPut(basicBlock.method) {
-        computeMethodScores(basicBlock.method)
+        computeMethodScores(basicBlock.method).also {
+//            viewMethod(basicBlock.method, it)
+        }
     }[basicBlock]
+
+    private fun viewMethod(method: Method, scores: MapWithDefault<BasicBlock, Int>) {
+        val viewable = object : Viewable {
+            override val graphView: List<GraphView>
+                get() {
+                    val nodes = hashMapOf<String, GraphView>()
+                    nodes[method.name] = GraphView(method.name, method.prototype)
+
+                    for (bb in method.body.basicBlocks) {
+                        val label = StringBuilder()
+                        label.append("${scores[bb]}\t${bb.name}: ${bb.predecessors.joinToString(", ") { it.name.toString() }}\\l")
+                        bb.instructions.forEach { label.append("    ${it.print().replace("\"", "\\\"")}\\l") }
+                        nodes[bb.name.toString()] = GraphView(bb.name.toString(), label.toString())
+                    }
+
+                    if (!method.isAbstract) {
+                        val entryNode = nodes.getValue(method.body.entry.name.toString())
+                        nodes.getValue(method.name).addSuccessor(entryNode)
+                    }
+
+                    for (it in method.body.basicBlocks) {
+                        val current = nodes.getValue(it.name.toString())
+                        for (successor in it.successors) {
+                            current.addSuccessor(nodes.getValue(successor.name.toString()))
+                        }
+                    }
+
+                    return nodes.values.toList()
+                }
+        }
+        viewable.view("", "/usr/bin/dot", "/usr/bin/firefox")
+    }
 }

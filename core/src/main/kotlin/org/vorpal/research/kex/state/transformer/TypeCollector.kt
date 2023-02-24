@@ -3,6 +3,7 @@ package org.vorpal.research.kex.state.transformer
 import org.vorpal.research.kex.ktype.*
 import org.vorpal.research.kex.state.PredicateState
 import org.vorpal.research.kex.state.term.*
+import org.vorpal.research.kex.util.getAllSubtypes
 import org.vorpal.research.kex.util.parseAsConcreteType
 import org.vorpal.research.kfg.type.TypeFactory
 
@@ -46,7 +47,18 @@ class TypeCollector(
     }
 
     override fun transformInstanceOf(term: InstanceOfTerm): Term {
-        addType(term.checkedType)
+        val kfgChecked = term.checkedType.getKfgType(tf)
+        val kfgCurrent = term.operand.type.getKfgType(tf)
+        if (kfgCurrent.isSubtypeOf(kfgChecked)) {
+            addType(term.checkedType)
+        } else {
+            val checkedSubtypes = kfgChecked.getAllSubtypes(tf)
+            val currentSubtypes = kfgCurrent.getAllSubtypes(tf)
+            val intersection = currentSubtypes.intersect(checkedSubtypes)
+            intersection.forEach {
+                addType(it.kexType)
+            }
+        }
         return super.transformInstanceOf(term)
     }
 

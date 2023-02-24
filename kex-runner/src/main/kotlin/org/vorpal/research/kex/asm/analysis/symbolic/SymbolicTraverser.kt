@@ -86,24 +86,40 @@ abstract class SymbolicTraverser(
         processMethod(it)
     }
 
-    private suspend fun processMethod(method: Method) {
+    protected open suspend fun processMethod(method: Method) {
+        val thisValue = values.getThis(method.klass)
         val initialArguments = buildMap {
             val values = this@SymbolicTraverser.values
-            this[values.getThis(method.klass)] = `this`(method.klass.symbolicClass)
+            if (!method.isStatic) {
+                this[thisValue] = `this`(method.klass.symbolicClass)
+            }
             for ((index, type) in method.argTypes.withIndex()) {
                 this[values.getArgument(index, method, type)] = arg(type.symbolicType, index)
             }
         }
+        val (initialTypeInfo, initialNullCheckTerms, initialTypeCheckedTerms) = when {
+            !method.isStatic -> {
+                val thisTerm = initialArguments[thisValue]!!
+                val thisType = method.klass.symbolicClass.getKfgType(types)
+                Triple(
+                    persistentMapOf(thisTerm to thisType),
+                    persistentSetOf(thisTerm),
+                    persistentMapOf(thisTerm to thisType)
+                )
+            }
+
+            else -> Triple(persistentMapOf(), persistentSetOf(), persistentMapOf())
+        }
         pathSelector.add(
             TraverserState(
-                persistentSymbolicState(),
-                initialArguments.toPersistentMap(),
-                persistentListOf(),
-                persistentMapOf(),
-                persistentListOf(),
-                persistentSetOf(),
-                persistentSetOf(),
-                persistentMapOf()
+                symbolicState = persistentSymbolicState(),
+                valueMap = initialArguments.toPersistentMap(),
+                stackTrace = persistentListOf(),
+                typeInfo = initialTypeInfo,
+                blockPath = persistentListOf(),
+                nullCheckedTerms = initialNullCheckTerms,
+                boundCheckedTerms = persistentSetOf(),
+                typeCheckedTerms = initialTypeCheckedTerms
             ),
             method.body.entry
         )
@@ -116,7 +132,7 @@ abstract class SymbolicTraverser(
         }
     }
 
-    private suspend fun traverseBlock(bb: BasicBlock, startIndex: Int = 0) {
+    protected open suspend fun traverseBlock(bb: BasicBlock, startIndex: Int = 0) {
         for (index in startIndex..bb.instructions.lastIndex) {
             val inst = bb.instructions[index]
             traverseInstruction(inst)
@@ -159,7 +175,7 @@ abstract class SymbolicTraverser(
         currentState = null
     }
 
-    private suspend fun traverseArrayLoadInst(inst: ArrayLoadInst) {
+    protected open suspend fun traverseArrayLoadInst(inst: ArrayLoadInst) {
         var traverserState = currentState ?: return
 
         val arrayTerm = traverserState.mkTerm(inst.arrayRef)
@@ -181,7 +197,7 @@ abstract class SymbolicTraverser(
         )
     }
 
-    private suspend fun traverseArrayStoreInst(inst: ArrayStoreInst) {
+    protected open suspend fun traverseArrayStoreInst(inst: ArrayStoreInst) {
         var traverserState = currentState ?: return
 
         val arrayTerm = traverserState.mkTerm(inst.arrayRef)
@@ -202,7 +218,7 @@ abstract class SymbolicTraverser(
         )
     }
 
-    private suspend fun traverseBinaryInst(inst: BinaryInst) {
+    protected open suspend fun traverseBinaryInst(inst: BinaryInst) {
         val traverserState = currentState ?: return
 
         val lhvTerm = traverserState.mkTerm(inst.lhv)
@@ -223,7 +239,7 @@ abstract class SymbolicTraverser(
         )
     }
 
-    private suspend fun traverseBranchInst(inst: BranchInst) {
+    protected open suspend fun traverseBranchInst(inst: BranchInst) {
         val traverserState = currentState ?: return
         val condTerm = traverserState.mkTerm(inst.cond)
 
@@ -259,7 +275,7 @@ abstract class SymbolicTraverser(
         currentState = null
     }
 
-    private suspend fun traverseCallInst(inst: CallInst) {
+    protected open suspend fun traverseCallInst(inst: CallInst) {
         var traverserState = currentState ?: return
 
         val callee = when {
@@ -307,7 +323,7 @@ abstract class SymbolicTraverser(
         }
     }
 
-    private suspend fun traverseCastInst(inst: CastInst) {
+    protected open suspend fun traverseCastInst(inst: CastInst) {
         var traverserState = currentState ?: return
 
         val operandTerm = traverserState.mkTerm(inst.operand)
@@ -332,10 +348,10 @@ abstract class SymbolicTraverser(
     }
 
     @Suppress("UNUSED_PARAMETER")
-    private suspend fun traverseCatchInst(inst: CatchInst) {
+    protected open suspend fun traverseCatchInst(inst: CatchInst) {
     }
 
-    private suspend fun traverseCmpInst(inst: CmpInst) {
+    protected open suspend fun traverseCmpInst(inst: CmpInst) {
         val traverserState = currentState ?: return
 
         val lhvTerm = traverserState.mkTerm(inst.lhv)
@@ -356,7 +372,7 @@ abstract class SymbolicTraverser(
         )
     }
 
-    private suspend fun traverseEnterMonitorInst(inst: EnterMonitorInst) {
+    protected open suspend fun traverseEnterMonitorInst(inst: EnterMonitorInst) {
         var traverserState = currentState ?: return
         val monitorTerm = traverserState.mkTerm(inst.owner)
 
@@ -374,7 +390,7 @@ abstract class SymbolicTraverser(
         )
     }
 
-    private suspend fun traverseExitMonitorInst(inst: ExitMonitorInst) {
+    protected open suspend fun traverseExitMonitorInst(inst: ExitMonitorInst) {
         val traverserState = currentState ?: return
 
         val monitorTerm = traverserState.mkTerm(inst.owner)
@@ -392,7 +408,7 @@ abstract class SymbolicTraverser(
         )
     }
 
-    private suspend fun traverseFieldLoadInst(inst: FieldLoadInst) {
+    protected open suspend fun traverseFieldLoadInst(inst: FieldLoadInst) {
         var traverserState = currentState ?: return
 
         val objectTerm = when {
@@ -417,7 +433,7 @@ abstract class SymbolicTraverser(
         )
     }
 
-    private suspend fun traverseFieldStoreInst(inst: FieldStoreInst) {
+    protected open suspend fun traverseFieldStoreInst(inst: FieldStoreInst) {
         var traverserState = currentState ?: return
 
         val objectTerm = when {
@@ -442,7 +458,7 @@ abstract class SymbolicTraverser(
         )
     }
 
-    private suspend fun traverseInstanceOfInst(inst: InstanceOfInst) {
+    protected open suspend fun traverseInstanceOfInst(inst: InstanceOfInst) {
         val traverserState = currentState ?: return
         val operandTerm = traverserState.mkTerm(inst.operand)
         val resultTerm = generate(inst.type.symbolicType)
@@ -461,12 +477,12 @@ abstract class SymbolicTraverser(
         )
     }
 
-    private suspend fun traverseInvokeDynamicInst(inst: InvokeDynamicInst) {
+    protected open suspend fun traverseInvokeDynamicInst(inst: InvokeDynamicInst) {
         val traverserState = currentState ?: return
         currentState = invokeDynamicResolver.resolve(traverserState, inst) ?: return
     }
 
-    private suspend fun processMethodCall(
+    protected open suspend fun processMethodCall(
         state: TraverserState,
         inst: Instruction,
         candidate: Method,
@@ -514,7 +530,7 @@ abstract class SymbolicTraverser(
         )
     }
 
-    private suspend fun traverseNewArrayInst(inst: NewArrayInst) {
+    protected open suspend fun traverseNewArrayInst(inst: NewArrayInst) {
         var traverserState = currentState ?: return
 
         val dimensions = inst.dimensions.map { traverserState.mkTerm(it) }
@@ -540,7 +556,7 @@ abstract class SymbolicTraverser(
         )
     }
 
-    private suspend fun traverseNewInst(inst: NewInst) {
+    protected open suspend fun traverseNewInst(inst: NewInst) {
         val traverserState = currentState ?: return
         val resultTerm = generate(inst.type.symbolicType)
 
@@ -561,7 +577,7 @@ abstract class SymbolicTraverser(
         )
     }
 
-    private suspend fun traversePhiInst(inst: PhiInst) {
+    protected open suspend fun traversePhiInst(inst: PhiInst) {
         val traverserState = currentState ?: return
         val previousBlock = traverserState.blockPath.last { it.method == inst.parent.method }
         val value = traverserState.mkTerm(inst.incomings.getValue(previousBlock))
@@ -570,7 +586,7 @@ abstract class SymbolicTraverser(
         )
     }
 
-    private suspend fun traverseUnaryInst(inst: UnaryInst) {
+    protected open suspend fun traverseUnaryInst(inst: UnaryInst) {
         var traverserState = currentState ?: return
         val operandTerm = traverserState.mkTerm(inst.operand)
         val resultTerm = generate(inst.type.symbolicType)
@@ -592,7 +608,7 @@ abstract class SymbolicTraverser(
         )
     }
 
-    private suspend fun traverseJumpInst(inst: JumpInst) {
+    protected open suspend fun traverseJumpInst(inst: JumpInst) {
         val traverserState = currentState ?: return
         pathSelector += traverserState.copy(
             blockPath = traverserState.blockPath.add(inst.parent)
@@ -601,7 +617,7 @@ abstract class SymbolicTraverser(
         currentState = null
     }
 
-    private suspend fun traverseReturnInst(inst: ReturnInst) {
+    protected open suspend fun traverseReturnInst(inst: ReturnInst) {
         val traverserState = currentState ?: return
         val stackTrace = traverserState.stackTrace
         val stackTraceElement = stackTrace.lastOrNull()
@@ -634,7 +650,7 @@ abstract class SymbolicTraverser(
         }
     }
 
-    private suspend fun traverseSwitchInst(inst: SwitchInst) {
+    protected open suspend fun traverseSwitchInst(inst: SwitchInst) {
         val traverserState = currentState ?: return
         val key = traverserState.mkTerm(inst.key)
         for ((value, branch) in inst.branches) {
@@ -673,7 +689,7 @@ abstract class SymbolicTraverser(
         currentState = null
     }
 
-    private suspend fun traverseTableSwitchInst(inst: TableSwitchInst) {
+    protected open suspend fun traverseTableSwitchInst(inst: TableSwitchInst) {
         val traverserState = currentState ?: return
         val key = traverserState.mkTerm(inst.index)
         val min = inst.range.first
@@ -712,7 +728,7 @@ abstract class SymbolicTraverser(
         currentState = null
     }
 
-    private suspend fun traverseThrowInst(inst: ThrowInst) {
+    protected open suspend fun traverseThrowInst(inst: ThrowInst) {
         var traverserState = currentState ?: return
         val persistentState = traverserState.symbolicState
         val throwableTerm = traverserState.mkTerm(inst.throwable)
@@ -734,11 +750,11 @@ abstract class SymbolicTraverser(
         currentState = null
     }
 
-    private suspend fun traverseUnreachableInst(inst: UnreachableInst) {
+    protected open suspend fun traverseUnreachableInst(inst: UnreachableInst) {
         unreachable<Unit>("Unexpected visit of $inst in symbolic traverser")
     }
 
-    private suspend fun traverseUnknownValueInst(inst: UnknownValueInst) {
+    protected open suspend fun traverseUnknownValueInst(inst: UnknownValueInst) {
         unreachable<Unit>("Unexpected visit of $inst in symbolic traverser")
     }
 
