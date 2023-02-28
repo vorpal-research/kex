@@ -5,10 +5,10 @@ import org.vorpal.research.kex.asm.manager.instantiationManager
 import org.vorpal.research.kex.ktype.*
 import org.vorpal.research.kex.state.PredicateState
 import org.vorpal.research.kex.state.term.*
-import org.vorpal.research.kex.util.getAllSubtypes
 import org.vorpal.research.kex.util.parseAsConcreteType
+import org.vorpal.research.kfg.ir.Class
 import org.vorpal.research.kfg.type.ClassType
-import org.vorpal.research.kfg.type.TypeFactory
+import org.vorpal.research.kfg.type.Type
 
 private class ClassAccessDetector : Transformer<ClassAccessDetector> {
     var hasClassAccess = false
@@ -34,6 +34,10 @@ class TypeCollector(
     val ctx: ExecutionContext,
     private val checkStringTypes: Boolean = false
 ) : Transformer<TypeCollector> {
+    companion object {
+        private val instanceOfCache = mutableMapOf<Set<Type>, Set<Class>>()
+    }
+
     val types = mutableSetOf<KexType>()
 
     override fun apply(ps: PredicateState): PredicateState {
@@ -52,16 +56,13 @@ class TypeCollector(
     override fun transformInstanceOf(term: InstanceOfTerm): Term {
         val kfgChecked = term.checkedType.getKfgType(ctx.types)
         val kfgCurrent = term.operand.type.getKfgType(ctx.types)
-        if (kfgCurrent.isSubtypeOf(kfgChecked)) {
-            addType(term.checkedType)
-        } else {
-            val checkedSubtypes = instantiationManager.getAllConcreteSubtypes(
-                (kfgChecked as ClassType).klass, ctx.accessLevel
-            )
-            val currentSubtypes = instantiationManager.getAllConcreteSubtypes(
-                (kfgCurrent as ClassType).klass, ctx.accessLevel
-            )
-            val intersection = currentSubtypes.intersect(checkedSubtypes)
+        addType(term.checkedType)
+        if (!kfgCurrent.isSubtypeOf(kfgChecked) && kfgCurrent is ClassType && kfgChecked is ClassType) {
+            val intersection = instanceOfCache.getOrPut(setOf(kfgChecked, kfgCurrent)) {
+                val checkedSubtypes = instantiationManager.getAllConcreteSubtypes(kfgChecked.klass, ctx.accessLevel)
+                val currentSubtypes = instantiationManager.getAllConcreteSubtypes(kfgCurrent.klass, ctx.accessLevel)
+                currentSubtypes.intersect(checkedSubtypes)
+            }
             intersection.forEach {
                 addType(it.kexType)
             }
