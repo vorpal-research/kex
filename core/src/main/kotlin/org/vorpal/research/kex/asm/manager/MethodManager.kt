@@ -410,5 +410,12 @@ object MethodManager {
             kexGenerateDoubleArray(cm),
             kexGenerateObjectArray(cm)
         )
+
+        fun kexEquals(cm: ClassManager) = cm[objectIntrinsics].getMethod(
+            "equals",
+            cm.type.boolType,
+            cm.type.objectType,
+            cm.type.objectType
+        )
     }
 }

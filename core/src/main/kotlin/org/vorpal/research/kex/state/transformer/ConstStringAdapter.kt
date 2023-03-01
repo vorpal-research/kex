@@ -30,11 +30,7 @@ class ConstStringAdapter(
 
         val charArray = KexArray(KexChar)
         val valueArray = generate(charArray)
-        state { valueArray.initializeNew(string.length) }
-        for ((index, char) in string.withIndex()) {
-            state { valueArray[index].initialize(const(char)) }
-        }
-
+        state { valueArray.initializeNew(string.length, string.map { const(it) }) }
         state { strTerm.field(charArray, "value").initialize(valueArray) }
         strings[string] = strTerm
     }
@@ -148,11 +144,7 @@ class TypeNameAdapter(
 
         val charArray = KexArray(KexChar)
         val valueArray = generate(charArray)
-        state { valueArray.initializeNew(string.length) }
-        for ((index, char) in string.withIndex()) {
-            state { valueArray[index].initialize(const(char)) }
-        }
-
+        state { valueArray.initializeNew(string.length, string.map { const(it) }) }
         state { strTerm.field(charArray, "value").initialize(valueArray) }
     }
 }

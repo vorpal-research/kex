@@ -285,10 +285,10 @@ class ${solver}Converter(val executionContext: ExecutionContext) : ${solver}SMTC
         val index = Int_.forceCast(convert(indexTerm.index, ef, ctx))
         val value = convert(store.value, ef, ctx)
 
-        var array = ctx.readArrayInitialMemory(ptr, memspace)
-        array = array.store(listOf(index to DWord_.forceCast(value)))
-        ctx.initializeArrayMemory(ptr, memspace, array)
-        ptr.axiomExpr() and value.axiomExpr()
+        val array = ctx.readArrayInitialMemory(ptr, memspace)
+        val initialValue = array.load(index)
+        val axiom = DWord_.forceCast(initialValue) eq DWord_.forceCast(value)
+        ptr.axiomExpr() and value.axiomExpr() and axiom
     }
 
     fun convert(store: ArrayStorePredicate, ef: Factory_, ctx: Context_): Bool_ {
@@ -349,11 +349,17 @@ class ${solver}Converter(val executionContext: ExecutionContext) : ${solver}SMTC
         val name = field.fieldName
         val klass = field.klass
         val actualType = (field.type as KexReference)
-        when (Factory_.getTypeSize(actualType.reference)) {
-            TypeSize.WORD -> ctx.initializeWordProperty(ptr, memspace, "${ klass }.${ name }", Word_.forceCast(value))
-            TypeSize.DWORD -> ctx.initializeDWordProperty(ptr, memspace, "${ klass }.${ name }", DWord_.forceCast(value))
+        val axiom = when (Factory_.getTypeSize(actualType.reference)) {
+            TypeSize.WORD -> {
+                val initialWordProperty = ctx.readWordInitialProperty(ptr, memspace, "${ klass }.${ name }")
+                Word_.forceCast(initialWordProperty) eq Word_.forceCast(value)
+            }
+            TypeSize.DWORD -> {
+                val initialDWordProperty = ctx.readDWordInitialProperty(ptr, memspace, "${ klass }.${ name }")
+                DWord_.forceCast(initialDWordProperty) eq DWord_.forceCast(value)
+            }
         }
-        ptr.axiomExpr() and value.axiomExpr()
+        ptr.axiomExpr() and value.axiomExpr() and axiom
     }
 
     fun convert(store: FieldStorePredicate, ef: Factory_, ctx: Context_): Bool_ {
@@ -402,16 +408,19 @@ class ${solver}Converter(val executionContext: ExecutionContext) : ${solver}SMTC
                     bounds.pop()
                 }
         })
-        ctx.writeArrayMemory(lhv, memspace, array)
+        val initialArray = ctx.readArrayInitialMemory(lhv, memspace)
 
         val typeVar = ef.getTypeVar(generateArray.lhv.type.getKfgType(executionContext.types))
-        ctx.writeBitvectorProperty(lhv, memspace, "type", typeVar)
-        ctx.writeWordProperty(lhv, memspace, "length", length)
+        val initialType = ctx.readBitvectorInitialProperty(lhv, memspace, "type")
+        val initialLength = ctx.readWordInitialProperty(lhv, memspace, "length")
 
         val lengthProperty = ctx.readWordProperty(lhv, memspace, "length")
         return lhv
             .withPtrAxioms(ef, ctx, TermType.LOCAL_PTR)
             .withAxiom(lengthProperty ge ef.makeIntConst(0)) eq ptr
+            .withAxiom(initialType eq typeVar)
+            .withAxiom(initialLength eq length)
+            .withAxiom(initialArray eq array)
     }
 
     fun convert(newarray: NewArrayPredicate, ef: Factory_, ctx: Context_): Bool_ {
@@ -421,15 +430,17 @@ class ${solver}Converter(val executionContext: ExecutionContext) : ${solver}SMTC
         val length = Int_.forceCast(convert(newarray.dimensions.fold(term { const(1) }) { acc: Term, term: Term -> term { acc * term} }, ef, ctx))
         val ptr = ctx.getLocalArray(memspace, length)
         val array = ef.makeDefaultArray(newarray.lhv.name, ef.makeLongConst(0))
-        ctx.writeArrayMemory(lhv, memspace, array)
+        val initialArrayMemory = ctx.readArrayInitialMemory(lhv, memspace)
 
         val typeVar = ef.getTypeVar(newarray.lhv.type.getKfgType(executionContext.types))
-        ctx.writeBitvectorProperty(lhv, memspace, "type", typeVar)
+        val initialType = ctx.readBitvectorInitialProperty(lhv, memspace, "type")
 
         val lengthProperty = ctx.readWordProperty(lhv, memspace, "length")
         return lhv
             .withPtrAxioms(ef, ctx, TermType.LOCAL_PTR)
             .withAxiom(lengthProperty ge ef.makeIntConst(0)) eq ptr
+            .withAxiom(initialType eq typeVar)
+            .withAxiom(initialArrayMemory eq array)
     }
 
     fun convert(new: NewPredicate, ef: Factory_, ctx: Context_): Bool_ {
@@ -437,24 +448,40 @@ class ${solver}Converter(val executionContext: ExecutionContext) : ${solver}SMTC
         val lhv = convert(new.lhv, ef, ctx) as? Ptr_ ?: unreachable { log.error("Non-ptr term in `new`") }
 
         val typeVar = ef.getTypeVar(new.lhv.type.getKfgType(executionContext.types))
-        ctx.writeBitvectorProperty(lhv, memspace, "type", typeVar)
-        return lhv.withPtrAxioms(ef, ctx, TermType.LOCAL_PTR) eq ctx.getLocalPtr(memspace)
+        val initialType = ctx.readBitvectorInitialProperty(lhv, memspace, "type")
+        return lhv
+            .withAxiom(typeVar eq initialType)
+            .withPtrAxioms(ef, ctx, TermType.LOCAL_PTR) eq ctx.getLocalPtr(memspace)
     }
 
     fun convert(newarray: NewArrayInitializerPredicate, ef: Factory_, ctx: Context_): Bool_ = withNoAxioms {
         val memspace = newarray.lhv.memspace
         val lhv = convert(newarray.lhv, ef, ctx) as? Ptr_ ?: unreachable { log.error("Non-ptr term in `new`") }
 
-        val length = Int_.forceCast(convert(newarray.dimensions.fold(term { const(1) }) { acc: Term, term: Term -> term { acc * term} }, ef, ctx))
+        val length = Int_.forceCast(convert(newarray.length, ef, ctx))
         val ptr = ctx.getInitialLocalArray(memspace, length)
-        val array = ef.makeDefaultArray(newarray.lhv.name, ef.makeLongConst(0))
-        ctx.initializeArrayMemory(lhv, memspace, array)
+        var array = ef.makeDefaultArray(newarray.lhv.name, ef.makeLongConst(0))
+        for ((i, element) in newarray.elements.withIndex()) {
+            val index = ef.makeIntConst(i)
+            val value = DWord_.forceCast(convert(element, ef, ctx))
+            array = array.store(index, value)
+        }
 
+        val initialArrayMemory = ctx.readArrayInitialMemory(lhv, memspace)
         val typeVar = ef.getTypeVar(newarray.lhv.type.getKfgType(executionContext.types))
-        ctx.initializeBitvectorProperty(lhv, memspace, "type", typeVar)
+        val initialType = ctx.readBitvectorInitialProperty(lhv, memspace, "type")
 
         val lengthProperty = ctx.readWordInitialProperty(lhv, memspace, "length")
-        newarray.lhv.withInitialAxioms(lhv.withAxiom(lengthProperty ge ef.makeIntConst(0)).withAxiom(lhv neq ef.makeNull()), ef, ctx) eq ptr
+        newarray.lhv
+            .withInitialAxioms(
+                lhv
+                    .withAxiom(lengthProperty ge ef.makeIntConst(0))
+                    .withAxiom(lhv neq ef.makeNull())
+                    .withAxiom(initialArrayMemory eq array)
+                    .withAxiom(initialType eq typeVar),
+                ef,
+                ctx
+            ) eq ptr
     }
 
     fun convert(new: NewInitializerPredicate, ef: Factory_, ctx: Context_): Bool_ = withNoAxioms {
@@ -464,6 +491,10 @@ class ${solver}Converter(val executionContext: ExecutionContext) : ${solver}SMTC
         val typeVar = ef.getTypeVar(new.lhv.type.getKfgType(executionContext.types))
         ctx.initializeBitvectorProperty(lhv, memspace, "type", typeVar)
         new.lhv.withInitialAxioms(lhv.withAxiom(lhv neq ef.makeNull()), ef, ctx) eq ctx.getInitialLocalPtr(memspace)
+        val type = ctx.readBitvectorInitialProperty(lhv, memspace, "type")
+        new.lhv
+            .withInitialAxioms(lhv.withAxiom(lhv neq ef.makeNull()), ef, ctx) eq ctx.getInitialLocalPtr(memspace)
+            .withAxiom(type eq typeVar)
     }
 
 #set($terms = ["Argument", "ArrayContains", "ArrayIndex", "ArrayLength", "ArrayLoad", "Binary", "Call", "Cast", "ClassAccess", "CharAt",

@@ -13,7 +13,8 @@ import org.vorpal.research.kfg.ir.Location
 @Serializable
 class NewArrayInitializerPredicate(
     val lhv: Term,
-    val dimensions: List<Term>,
+    val length: Term,
+    val elements: List<Term>,
     val elementType: KexType,
     @Required
     override val type: PredicateType = PredicateType.State(),
@@ -21,19 +22,23 @@ class NewArrayInitializerPredicate(
     @Contextual
     override val location: Location = Location()
 ) : Predicate() {
-    override val operands by lazy { listOf(lhv) + dimensions }
+    override val operands by lazy { listOf(lhv, length) + elements }
 
-    val numDimensions: Int
-        get() = dimensions.size
-
-    override fun print() = "$lhv = initialize $elementType${dimensions.joinToString { "[$it]" }}"
+    override fun print() = "$lhv = initialize $elementType[$length] ${
+        elements.joinToString(
+            separator = ", ",
+            prefix = "{",
+            postfix = "}"
+        )
+    }"
 
     override fun <T : Transformer<T>> accept(t: Transformer<T>): Predicate {
         val tLhv = t.transform(lhv)
-        val tDimensions = dimensions.map { t.transform(it) }
+        val tLength = t.transform(length)
+        val tElements = elements.map { t.transform(it) }
         return when {
-            tLhv == lhv && tDimensions == dimensions -> this
-            else -> predicate(type, location) { tLhv.initializeNew(tDimensions) }
+            tLhv == lhv && tLength == length && tElements == elements -> this
+            else -> predicate(type, location) { tLhv.initializeNew(tLength, tElements) }
         }
     }
 }

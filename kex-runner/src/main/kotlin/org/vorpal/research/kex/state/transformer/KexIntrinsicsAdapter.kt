@@ -26,6 +26,7 @@ class KexIntrinsicsAdapter : RecollectingTransformer<KexIntrinsicsAdapter> {
         val ps = when (call.method.klass) {
             kim.assertionsIntrinsics(cm) -> assertionIntrinsicsAdapter(method, call)
             kim.collectionIntrinsics(cm) -> collectionIntrinsicsAdapter(method, call) { predicate.lhv }
+            kim.objectIntrinsics(cm) -> objectIntrinsicsAdapter(method, call) { predicate.lhv }
             else -> emptyState()
         }
         currentBuilder += ps
@@ -48,6 +49,10 @@ class KexIntrinsicsAdapter : RecollectingTransformer<KexIntrinsicsAdapter> {
                     state { term equality (value eq null) },
                     assume { term equality false }
                 )
+            }
+            kim.kexAssert(method.cm) -> {
+                val assertion = call.arguments[0]
+                require { assertion equality true }
             }
             else -> nothing()
         }
@@ -103,6 +108,13 @@ class KexIntrinsicsAdapter : RecollectingTransformer<KexIntrinsicsAdapter> {
                     generateArray(lhv(), call.arguments[0], call.arguments[1])
                 }
             }
+            else -> nothing()
+        }
+    }
+
+    private fun objectIntrinsicsAdapter(method: Method, call: CallTerm, lhv: () -> Term): PredicateState = basic {
+        when (method) {
+            kim.kexEquals(method.cm) -> state { lhv() equality (call.arguments[0].equls(call.arguments[1]))  }
             else -> nothing()
         }
     }

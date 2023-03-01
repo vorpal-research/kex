@@ -36,10 +36,10 @@ class ConstStringCollector : Transformer<ConstStringCollector> {
 
     override fun transformNewArrayInitializer(predicate: NewArrayInitializerPredicate): Predicate {
         if (predicate.elementType is KexChar
-            && predicate.numDimensions == 1
-            && predicate.dimensions.first() is ConstIntTerm
+            && predicate.length is ConstIntTerm
+            && predicate.elements.all { it is ConstCharTerm }
         ) {
-            charArrays[predicate.lhv] = MutableList(predicate.dimensions.first().numericValue.toInt()) { ' ' }
+            charArrays[predicate.lhv] = predicate.elements.mapTo(mutableListOf()) { (it as ConstCharTerm).value }
         }
         return super.transformNewArrayInitializer(predicate)
     }

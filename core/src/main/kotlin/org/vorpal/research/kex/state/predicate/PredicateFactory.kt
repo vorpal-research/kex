@@ -88,16 +88,12 @@ object PredicateFactory {
 
     fun getNewArrayInitializer(
         lhv: Term,
-        dimensions: List<Term>,
+        length: Term,
+        elements: List<Term>,
         type: PredicateType = PredicateType.State(),
         location: Location = Location()
     ): Predicate {
-        var current = lhv.type
-        dimensions.forEach { _ ->
-            current = (current as? KexArray)?.element
-                ?: unreachable { log.error("Trying to create new array predicate with non-array type") }
-        }
-        return NewArrayInitializerPredicate(lhv, dimensions, current, type, location)
+        return NewArrayInitializerPredicate(lhv, length, elements, (lhv.type as KexArray).element, type, location)
     }
 
     fun getEquality(
@@ -168,6 +164,7 @@ abstract class PredicateBuilder : TermBuilder() {
 
     fun generateArray(lhv: Term, length: Term, generator: Term) =
         pf.getGenerateArray(lhv, length, generator, type, location)
+
     fun generateArray(lhv: Term, length: Term, builder: TermBuilder.() -> Term) =
         pf.getGenerateArray(lhv, length, builder(), type, location)
 
@@ -226,9 +223,21 @@ abstract class PredicateBuilder : TermBuilder() {
     fun Term.new(vararg dimensions: Int) = this.new(dimensions.map { const(it) })
 
     fun Term.initializeNew() = pf.getNewInitializer(this, this@PredicateBuilder.type, location)
-    fun Term.initializeNew(dimensions: List<Term>) = pf.getNewArrayInitializer(this, dimensions, this@PredicateBuilder.type, location)
-    fun Term.initializeNew(vararg dimensions: Term) = this.initializeNew(dimensions.toList())
-    fun Term.initializeNew(vararg dimensions: Int) = this.initializeNew(dimensions.map { const(it) })
+    fun Term.initializeNew(length: Term, elements: List<Term>) =
+        pf.getNewArrayInitializer(this, length, elements, this@PredicateBuilder.type, location)
+    fun Term.initializeNew(length: Int, elements: List<Term>) =
+        pf.getNewArrayInitializer(this, const(length), elements, this@PredicateBuilder.type, location)
+
+    fun Term.initializeNew(length: Term, vararg elements: Term) = this.initializeNew(length, elements.toList())
+    fun Term.initializeNew(length: Term, vararg elements: Number) =
+        this.initializeNew(length, elements.map { const(it) })
+
+    fun Term.initializeNew(length: Int, vararg elements: Number) =
+        this.initializeNew(const(length), elements.map { const(it) })
+
+    fun Term.initializeNew(length: Term, vararg elements: Char) = this.initializeNew(length, elements.map { const(it) })
+    fun Term.initializeNew(length: Int, vararg elements: Char) =
+        this.initializeNew(const(length), elements.map { const(it) })
 
 
     class Assume(override val location: Location = Location()) : PredicateBuilder() {
