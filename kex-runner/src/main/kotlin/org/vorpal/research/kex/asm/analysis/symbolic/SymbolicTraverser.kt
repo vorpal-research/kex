@@ -920,6 +920,7 @@ abstract class SymbolicTraverser(
         state: TraverserState,
         inst: Instruction
     ): TraverserState? {
+        if (inst !is TerminateInst) return state
         return check(rootMethod, state.symbolicState)?.let { state }
     }
 
