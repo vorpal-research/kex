@@ -1,5 +1,6 @@
 package org.vorpal.research.kex.state.transformer
 
+import org.vorpal.research.kex.config.kexConfig
 import org.vorpal.research.kex.ktype.*
 import org.vorpal.research.kex.ktype.KexRtManager.rtMapped
 import org.vorpal.research.kex.state.PredicateState
@@ -32,6 +33,9 @@ class ReflectionInfoAdapter(
     private val arrayElementInfo = hashMapOf<Term, ArrayElementInfo>()
 
     override fun apply(ps: PredicateState): PredicateState {
+        val useReflectionInfo = kexConfig.getBooleanValue("kex", "useReflectionInfo", true)
+        if (!useReflectionInfo) return ps
+
         val (`this`, arguments) = collectArguments(ps)
 
         if (`this` != null) {

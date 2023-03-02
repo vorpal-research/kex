@@ -248,7 +248,7 @@ abstract class SymbolicTraverser(
             inst,
             path { condTerm equality true }
         )
-        val falseClause = trueClause.copy(predicate = trueClause.predicate.inverse())
+        val falseClause = trueClause.copy(predicate = trueClause.predicate.inverse(ctx.random))
 
         checkReachability(
             traverserState.copy(
@@ -783,7 +783,7 @@ abstract class SymbolicTraverser(
             state.copy(
                 symbolicState = persistentState.copy(
                     path = persistentState.path.add(
-                        nullityClause.copy(predicate = nullityClause.predicate.inverse())
+                        nullityClause.copy(predicate = nullityClause.predicate.inverse(ctx.random))
                     )
                 ),
                 nullCheckedTerms = state.nullCheckedTerms.add(term)
@@ -832,9 +832,9 @@ abstract class SymbolicTraverser(
             state.copy(
                 symbolicState = persistentState.copy(
                     path = persistentState.path.add(
-                        zeroClause.copy(predicate = zeroClause.predicate.inverse())
+                        zeroClause.copy(predicate = zeroClause.predicate.inverse(ctx.random))
                     ).add(
-                        lengthClause.copy(predicate = lengthClause.predicate.inverse())
+                        lengthClause.copy(predicate = lengthClause.predicate.inverse(ctx.random))
                     )
                 ),
                 boundCheckedTerms = state.boundCheckedTerms.add(index to length)
@@ -868,7 +868,7 @@ abstract class SymbolicTraverser(
             state.copy(
                 symbolicState = persistentState.copy(
                     path = persistentState.path.add(
-                        zeroClause.copy(predicate = zeroClause.predicate.inverse())
+                        zeroClause.copy(predicate = zeroClause.predicate.inverse(ctx.random))
                     )
                 ),
                 boundCheckedTerms = state.boundCheckedTerms.add(index to index)
@@ -908,7 +908,7 @@ abstract class SymbolicTraverser(
             state.copy(
                 symbolicState = persistentState.copy(
                     path = persistentState.path.add(
-                        typeClause.copy(predicate = typeClause.predicate.inverse())
+                        typeClause.copy(predicate = typeClause.predicate.inverse(ctx.random))
                     )
                 ),
                 typeCheckedTerms = state.typeCheckedTerms.put(term, currentlyCheckedType)

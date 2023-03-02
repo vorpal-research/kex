@@ -105,7 +105,7 @@ val Predicate.hasReceiver
 
 val Predicate.receiver get() = if (hasReceiver) operands[0] else null
 
-fun Predicate.inverse(random: Random = EasyRandomDriver()): Predicate = when (this) {
+fun Predicate.inverse(random: Random): Predicate = when (this) {
     is EqualityPredicate -> when (rhv) {
         term { const(true) } -> predicate(type, location) { lhv equality false }
         term { const(false) } -> predicate(type, location) { lhv equality true }
