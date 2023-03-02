@@ -29,6 +29,12 @@ val Config.compiledCodeDirectory: Path
         return compiledCodeDir
     }
 
+val Config.testcaseDirectory: Path
+    get() {
+        val testcaseDirName = getPathValue("testGen", "testsDir", "tests")
+        return outputDirectory.resolve(testcaseDirName).toAbsolutePath()
+    }
+
 val Config.runtimeDepsPath: Path?
     get() = getPathValue("kex", "runtimeDepsPath")
 

@@ -4,6 +4,8 @@ import org.vorpal.research.kex.ExecutionContext
 import org.vorpal.research.kex.config.kexConfig
 import org.vorpal.research.kex.util.compiledCodeDirectory
 import org.vorpal.research.kex.util.getJunit
+import org.vorpal.research.kex.util.outputDirectory
+import org.vorpal.research.kex.util.testcaseDirectory
 import java.nio.file.Path
 
 class CompilerHelper(val ctx: ExecutionContext) {
@@ -11,10 +13,11 @@ class CompilerHelper(val ctx: ExecutionContext) {
     private val compileDir: Path = kexConfig.compiledCodeDirectory.also {
         it.toFile().mkdirs()
     }
+    private val testDirectory = kexConfig.testcaseDirectory
 
     fun compileFile(file: Path) {
         val compilerDriver = JavaCompilerDriver(
-            listOf(*ctx.classPath.toTypedArray(), junitJar.path), compileDir
+            listOf(*ctx.classPath.toTypedArray(), junitJar.path, testDirectory), compileDir
         )
         compilerDriver.compile(listOf(file))
     }

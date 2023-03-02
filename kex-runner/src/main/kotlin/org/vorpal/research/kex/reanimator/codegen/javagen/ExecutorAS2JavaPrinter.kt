@@ -1,12 +1,10 @@
 package org.vorpal.research.kex.reanimator.codegen.javagen
 
 import org.vorpal.research.kex.ExecutionContext
-import org.vorpal.research.kex.asm.util.Visibility
 import org.vorpal.research.kex.config.kexConfig
 import org.vorpal.research.kex.ktype.*
 import org.vorpal.research.kex.parameters.Parameters
 import org.vorpal.research.kex.reanimator.actionsequence.*
-import org.vorpal.research.kex.util.kapitalize
 import org.vorpal.research.kfg.type.*
 import org.vorpal.research.kthelper.assert.unreachable
 import org.vorpal.research.kthelper.logging.log
@@ -21,23 +19,9 @@ class ExecutorAS2JavaPrinter(
 ) : ActionSequence2JavaPrinter(ctx, packageName, klassName) {
     private val surroundInTryCatch = kexConfig.getBooleanValue("testGen", "surroundInTryCatch", true)
     private val testParams = mutableListOf<JavaBuilder.JavaClass.JavaField>()
-    private lateinit var newInstance: JavaBuilder.JavaFunction
-    private lateinit var newArray: JavaBuilder.JavaFunction
-    private lateinit var newObjectArray: JavaBuilder.JavaFunction
-    private val newPrimitiveArrayMap = mutableMapOf<String, JavaBuilder.JavaFunction>()
-    private lateinit var getField: JavaBuilder.JavaFunction
-    private lateinit var setField: JavaBuilder.JavaFunction
-    private val setPrimitiveFieldMap = mutableMapOf<String, JavaBuilder.JavaFunction>()
-    private lateinit var setElement: JavaBuilder.JavaFunction
-    private val setPrimitiveElementMap = mutableMapOf<String, JavaBuilder.JavaFunction>()
-    private lateinit var callConstructor: JavaBuilder.JavaFunction
-    private lateinit var callMethod: JavaBuilder.JavaFunction
+    private val reflectionUtils = ReflectionUtilsPrinter.reflectionUtils(packageName)
     private val printedDeclarations = hashSetOf<String>()
     private val printedInsides = hashSetOf<String>()
-
-    init {
-        initReflection()
-    }
 
     private val KexType.primitiveName: String?
         get() = when (this) {
@@ -51,214 +35,6 @@ class ExecutorAS2JavaPrinter(
             is KexDouble -> "double"
             else -> null
         }
-
-    private fun initReflection() {
-        with(builder) {
-            import("java.lang.Class")
-            import("java.lang.reflect.Method")
-            import("java.lang.reflect.Constructor")
-            import("java.lang.reflect.Field")
-            import("java.lang.reflect.Array")
-            import("java.lang.reflect.Modifier")
-            import("sun.misc.Unsafe")
-
-            with(klass) {
-                field("UNSAFE", type("Unsafe")) {
-                    visibility = Visibility.PRIVATE
-                    modifiers += "static"
-                    modifiers += "final"
-                }
-
-                static {
-                    aTry {
-                        +"final Field uns = Unsafe.class.getDeclaredField(\"theUnsafe\")"
-                        +"uns.setAccessible(true)"
-                        +"UNSAFE = (Unsafe) uns.get(null)"
-                    }.catch {
-                        exceptions += type("Throwable")
-                        +"throw new RuntimeException()"
-                    }
-                }
-
-                method("newInstance") {
-                    arguments += arg("klass", type("Class<?>"))
-                    returnType = type("Object")
-                    visibility = Visibility.PRIVATE
-                    modifiers += "static"
-                    exceptions += "Throwable"
-
-                    +"Object instance = klass.cast(UNSAFE.allocateInstance(klass))"
-                    +"return instance"
-                }
-                val primitiveTypes = listOf("boolean", "byte", "char", "short", "int", "long", "double", "float")
-
-                newInstance = method("newInstance") {
-                    arguments += arg("klass", type("String"))
-                    returnType = type("Object")
-                    visibility = Visibility.PRIVATE
-                    modifiers += "static"
-                    exceptions += "Throwable"
-
-                    +"Class<?> reflect = Class.forName(klass)"
-                    +"return newInstance(reflect)"
-                }
-
-                newArray = method("newArray") {
-                    arguments += arg("elementType", type("String"))
-                    arguments += arg("length", type("int"))
-                    returnType = type("Object")
-                    visibility = Visibility.PRIVATE
-                    modifiers += "static"
-                    exceptions += "Throwable"
-
-                    +"Class<?> reflect = Class.forName(elementType)"
-                    +"return Array.newInstance(reflect, length)"
-                }
-
-                newObjectArray = method("newObjectArray") {
-                    arguments += arg("elementType", type("Class<?>"))
-                    arguments += arg("length", type("int"))
-                    returnType = type("Object")
-                    visibility = Visibility.PRIVATE
-                    modifiers += "static"
-                    exceptions += "Throwable"
-
-                    +"return Array.newInstance(elementType, length)"
-                }
-
-                for (type in primitiveTypes) {
-                    newPrimitiveArrayMap[type] = method("new${type.kapitalize()}Array") {
-                        arguments += arg("length", type("int"))
-                        returnType = type("Object")
-                        visibility = Visibility.PRIVATE
-                        modifiers += "static"
-                        exceptions += "Throwable"
-
-                        +"return Array.newInstance(${type}.class, length)"
-                    }
-                }
-
-                getField = method("getField") {
-                    arguments += arg("klass", type("Class<?>"))
-                    arguments += arg("name", type("String"))
-                    returnType = type("Field")
-                    visibility = Visibility.PRIVATE
-                    modifiers += "static"
-                    exceptions += "Throwable"
-
-                    +"Field result = null"
-                    +"Class<?> current = klass"
-                    aDo {
-                        aTry {
-                            +"result = current.getDeclaredField(name)"
-                        }.catch {
-                            exceptions += type("Throwable")
-                        }
-                        +"current = current.getSuperclass()"
-                    }.aWhile("current != null")
-                    anIf("result == null") {
-                        +"throw new NoSuchFieldException()"
-                    }
-                    +"return result"
-                }
-
-                setField = method("setField") {
-                    arguments += arg("instance", type("Object"))
-                    arguments += arg("klass", type("Class<?>"))
-                    arguments += arg("name", type("String"))
-                    arguments += arg("value", type("Object"))
-                    returnType = void
-                    visibility = Visibility.PRIVATE
-                    modifiers += "static"
-                    exceptions += "Throwable"
-
-                    +"Field field = ${getField.name}(klass, name)"
-                    +"Field mods = Field.class.getDeclaredField(\"modifiers\")"
-                    +"mods.setAccessible(true)"
-                    +"int modifiers = mods.getInt(field)"
-                    +"mods.setInt(field, modifiers & ~Modifier.FINAL)"
-                    +"field.setAccessible(true)"
-                    +"field.set(instance, value)"
-                }
-
-                for (type in primitiveTypes) {
-                    setPrimitiveFieldMap[type] = method("set${type.kapitalize()}Field") {
-                        arguments += arg("instance", type("Object"))
-                        arguments += arg("klass", type("Class<?>"))
-                        arguments += arg("name", type("String"))
-                        arguments += arg("value", type(type))
-                        returnType = void
-                        visibility = Visibility.PRIVATE
-                        modifiers += "static"
-                        exceptions += "Throwable"
-
-                        +"Field field = ${getField.name}(klass, name)"
-                        +"Field mods = Field.class.getDeclaredField(\"modifiers\")"
-                        +"mods.setAccessible(true)"
-                        +"int modifiers = mods.getInt(field)"
-                        +"mods.setInt(field, modifiers & ~Modifier.FINAL)"
-                        +"field.setAccessible(true)"
-                        +"field.set${type.kapitalize()}(instance, value)"
-                    }
-                }
-
-                setElement = method("setElement") {
-                    arguments += arg("array", type("Object"))
-                    arguments += arg("index", type("int"))
-                    arguments += arg("element", type("Object"))
-                    returnType = void
-                    visibility = Visibility.PRIVATE
-                    modifiers += "static"
-                    exceptions += "Throwable"
-
-                    +"Array.set(array, index, element)"
-                }
-                for (type in primitiveTypes) {
-                    setPrimitiveElementMap[type] = method("set${type.kapitalize()}Element") {
-                        arguments += arg("array", type("Object"))
-                        arguments += arg("index", type("int"))
-                        arguments += arg("element", type(type))
-                        returnType = void
-                        visibility = Visibility.PRIVATE
-                        modifiers += "static"
-                        exceptions += "Throwable"
-
-                        +"Array.set${type.kapitalize()}(array, index, element)"
-                    }
-                }
-
-                callConstructor = method("callConstructor") {
-                    arguments += arg("klass", type("Class<?>"))
-                    arguments += arg("argTypes", type("Class<?>[]"))
-                    arguments += arg("args", type("Object[]"))
-                    returnType = type("Object")
-                    visibility = Visibility.PRIVATE
-                    modifiers += "static"
-                    exceptions += "Throwable"
-
-                    +"Constructor<?> method = klass.getDeclaredConstructor(argTypes)"
-                    +"method.setAccessible(true)"
-                    +"return method.newInstance(args)"
-                }
-
-                callMethod = method("callMethod") {
-                    arguments += arg("klass", type("Class<?>"))
-                    arguments += arg("name", type("String"))
-                    arguments += arg("argTypes", type("Class<?>[]"))
-                    arguments += arg("instance", type("Object"))
-                    arguments += arg("args", type("Object[]"))
-                    returnType = type("Object")
-                    visibility = Visibility.PRIVATE
-                    modifiers += "static"
-                    exceptions += "Throwable"
-
-                    +"Method method = klass.getDeclaredMethod(name, argTypes)"
-                    +"method.setAccessible(true)"
-                    +"return method.invoke(instance, args)"
-                }
-            }
-        }
-    }
 
     override fun cleanup() {
         super.cleanup()
@@ -279,6 +55,12 @@ class ExecutorAS2JavaPrinter(
 
         with(builder) {
             import("org.junit.Before")
+            import("java.lang.Class")
+            import("java.lang.reflect.Method")
+            import("java.lang.reflect.Constructor")
+            import("java.lang.reflect.Field")
+            import("java.lang.reflect.Array")
+            importStatic("${reflectionUtils.klass.pkg}.${reflectionUtils.klass.name}.*")
 
             with(klass) {
                 if (generateSetup) {
@@ -394,8 +176,8 @@ class ExecutorAS2JavaPrinter(
                 +"args[$index] = ${arg.stackName}"
             }
             +when {
-                method.isConstructor -> "${callConstructor.name}(klass, argTypes, args)"
-                else -> "${callMethod.name}(klass, \"${method.name}\", argTypes, ${actionSequences.instance?.name}, args)"
+                method.isConstructor -> "${reflectionUtils.callConstructor.name}(klass, argTypes, args)"
+                else -> "${reflectionUtils.callMethod.name}(klass, \"${method.name}\", argTypes, ${actionSequences.instance?.name}, args)"
             }
         }
 
@@ -527,7 +309,7 @@ class ExecutorAS2JavaPrinter(
                         owner.name,
                         type
                     )
-                } = ${newInstance.name}(Class.forName(\"${kfgClass.canonicalDesc}\"))"
+                } = ${reflectionUtils.newInstance.name}(Class.forName(\"${kfgClass.canonicalDesc}\"))"
             } else {
                 actualTypes[owner] = actualType
                 "${
@@ -535,7 +317,7 @@ class ExecutorAS2JavaPrinter(
                         owner.name,
                         actualType
                     )
-                } = ${newInstance.name}(Class.forName(\"${kfgClass.canonicalDesc}\"))"
+                } = ${reflectionUtils.newInstance.name}(Class.forName(\"${kfgClass.canonicalDesc}\"))"
             }
         )
     }
@@ -551,11 +333,11 @@ class ExecutorAS2JavaPrinter(
         val elementType = call.asArray.component
         val (newArrayCall, actualType) = when {
             elementType.isPrimitive -> {
-                "${newPrimitiveArrayMap[elementType.kexType.primitiveName]!!.name}(${call.length.stackName})" to call.asArray.asType
+                "${reflectionUtils.newPrimitiveArrayMap[elementType.kexType.primitiveName]!!.name}(${call.length.stackName})" to call.asArray.asType
             }
 
             elementType is ClassType -> {
-                "${newArray.name}(\"${elementType.klass.canonicalDesc}\", ${call.length.stackName})" to ASArray(
+                "${reflectionUtils.newArray.name}(\"${elementType.klass.canonicalDesc}\", ${call.length.stackName})" to ASArray(
                     ASClass(
                         ctx.types.objectType
                     )
@@ -572,13 +354,13 @@ class ExecutorAS2JavaPrinter(
                 }
                 when {
                     base.isPrimitive -> {
-                        "${newArray.name}(\"${elementType.canonicalDesc}\", ${call.length.stackName})" to ASArray(
+                        "${reflectionUtils.newArray.name}(\"${elementType.canonicalDesc}\", ${call.length.stackName})" to ASArray(
                             ASClass(ctx.types.objectType)
                         )
                     }
 
                     else -> {
-                        "${newObjectArray.name}(${getClass(elementType)}, ${call.length.stackName})" to ASArray(
+                        "${reflectionUtils.newObjectArray.name}(${getClass(elementType)}, ${call.length.stackName})" to ASArray(
                             ASClass(
                                 ctx.types.objectType
                             )
@@ -594,18 +376,21 @@ class ExecutorAS2JavaPrinter(
     }
 
     override fun printReflectionSetField(owner: ActionSequence, call: ReflectionSetField): List<String> {
-        val setFieldMethod = call.field.type.kexType.primitiveName?.let { setPrimitiveFieldMap[it]!! } ?: setField
+        val setFieldMethod = call.field.type.kexType.primitiveName?.let { reflectionUtils.setPrimitiveFieldMap[it]!! }
+            ?: reflectionUtils.setField
         return listOf("${setFieldMethod.name}(${owner.name}, ${owner.name}.getClass(), \"${call.field.name}\", ${call.value.stackName})")
     }
 
     override fun printReflectionSetStaticField(owner: ActionSequence, call: ReflectionSetStaticField): List<String> {
-        val setFieldMethod = call.field.type.kexType.primitiveName?.let { setPrimitiveFieldMap[it]!! } ?: setField
+        val setFieldMethod = call.field.type.kexType.primitiveName?.let { reflectionUtils.setPrimitiveFieldMap[it]!! }
+            ?: reflectionUtils.setField
         return listOf("${setFieldMethod.name}(null, Class.forName(\"${call.field.klass.canonicalDesc}\"), \"${call.field.name}\", ${call.value.stackName})")
     }
 
     override fun printReflectionArrayWrite(owner: ActionSequence, call: ReflectionArrayWrite): List<String> {
         val elementType = call.elementType
-        val setElementMethod = elementType.kexType.primitiveName?.let { setPrimitiveElementMap[it]!! } ?: setElement
+        val setElementMethod = elementType.kexType.primitiveName?.let { reflectionUtils.setPrimitiveElementMap[it]!! }
+            ?: reflectionUtils.setElement
         return listOf("${setElementMethod.name}(${owner.name}, ${call.index.stackName}, ${call.value.stackName})")
     }
 }

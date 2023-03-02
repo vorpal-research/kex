@@ -399,6 +399,10 @@ class JavaBuilder(val pkg: String = "") {
         imports += name
     }
 
+    fun importStatic(name: String) {
+        imports += "static $name"
+    }
+
     fun type(name: String): Type = StringType(name)
 
     fun klass(pkg: String, name: String): JavaClass {
