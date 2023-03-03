@@ -489,6 +489,7 @@ abstract class SymbolicTraverser(
         callee: Term,
         argumentTerms: List<Term>
     ) {
+        if (candidate.body.isEmpty()) return
         var traverserState = state
         var newValueMap = traverserState.valueMap.builder().let { builder ->
             if (!candidate.isStatic) builder[values.getThis(candidate.klass)] = callee
