@@ -242,9 +242,13 @@ sealed class FieldContainingDescriptor<T : FieldContainingDescriptor<T>>(
             for ((field, value) in fields) {
                 appendLine("    $field = ${value.term}")
             }
-            appendLine("}")
+            append("}")
             for ((_, value) in fields) {
-                appendLine(value.print(map))
+                val valueStr = value.print(map)
+                if (valueStr.isNotBlank()) {
+                    appendLine()
+                    append(valueStr)
+                }
             }
         }
     }
@@ -439,9 +443,13 @@ class ArrayDescriptor(val elementType: KexType, val length: Int) :
             for ((index, value) in elements) {
                 appendLine("    $index = ${value.term}")
             }
-            appendLine("}")
+            append("}")
             for ((_, value) in elements) {
-                appendLine(value.print(map))
+                val valueStr = value.print(map)
+                if (valueStr.isNotBlank()) {
+                    appendLine()
+                    append(valueStr)
+                }
             }
         }
     }
