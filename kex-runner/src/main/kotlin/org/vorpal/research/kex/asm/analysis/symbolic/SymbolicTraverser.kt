@@ -97,32 +97,46 @@ abstract class SymbolicTraverser(
                 this[values.getArgument(index, method, type)] = arg(type.symbolicType, index)
             }
         }
-        val (initialTypeInfo, initialNullCheckTerms, initialTypeCheckedTerms) = when {
+
+        val initialState = when {
             !method.isStatic -> {
                 val thisTerm = initialArguments[thisValue]!!
                 val thisType = method.klass.symbolicClass.getKfgType(types)
-                Triple(
-                    persistentMapOf(thisTerm to thisType),
-                    persistentSetOf(thisTerm),
-                    persistentMapOf(thisTerm to thisType)
+                TraverserState(
+                    symbolicState = persistentSymbolicState(
+                        path = PersistentPathCondition(
+                            persistentListOf(
+                                PathClause(
+                                    PathClauseType.NULL_CHECK,
+                                    method.body.entry.first(),
+                                    path { (thisTerm eq null) equality false }
+                                )
+                            )
+                        )
+                    ),
+                    valueMap = initialArguments.toPersistentMap(),
+                    stackTrace = persistentListOf(),
+                    typeInfo = persistentMapOf(thisTerm to thisType),
+                    blockPath = persistentListOf(),
+                    nullCheckedTerms = persistentSetOf(thisTerm),
+                    boundCheckedTerms = persistentSetOf(),
+                    typeCheckedTerms = persistentMapOf(thisTerm to thisType)
                 )
             }
 
-            else -> Triple(persistentMapOf(), persistentSetOf(), persistentMapOf())
-        }
-        pathSelector.add(
-            TraverserState(
+            else -> TraverserState(
                 symbolicState = persistentSymbolicState(),
                 valueMap = initialArguments.toPersistentMap(),
                 stackTrace = persistentListOf(),
-                typeInfo = initialTypeInfo,
+                typeInfo = persistentMapOf(),
                 blockPath = persistentListOf(),
-                nullCheckedTerms = initialNullCheckTerms,
+                nullCheckedTerms = persistentSetOf(),
                 boundCheckedTerms = persistentSetOf(),
-                typeCheckedTerms = initialTypeCheckedTerms
-            ),
-            method.body.entry
-        )
+                typeCheckedTerms = persistentMapOf()
+            )
+        }
+
+        pathSelector.add(initialState, method.body.entry)
 
         while (pathSelector.hasNext()) {
             val (currentState, currentBlock) = pathSelector.next()
@@ -411,8 +425,9 @@ abstract class SymbolicTraverser(
     protected open suspend fun traverseFieldLoadInst(inst: FieldLoadInst) {
         var traverserState = currentState ?: return
 
+        val field = inst.field
         val objectTerm = when {
-            inst.isStatic -> staticRef(inst.field.klass)
+            inst.isStatic -> staticRef(field.klass)
             else -> traverserState.mkTerm(inst.owner)
         }
         val res = generate(inst.type.symbolicType)
@@ -421,14 +436,24 @@ abstract class SymbolicTraverser(
 
         val clause = StateClause(
             inst,
-            state { res equality objectTerm.field(inst.field.type.symbolicType, inst.field.name).load() }
+            state { res equality objectTerm.field(field.type.symbolicType, field.name).load() }
         )
+        val newNullChecked = when {
+            field.isStatic && field.isFinal -> when (field.defaultValue) {
+                    null -> traverserState.nullCheckedTerms.add(res)
+                    ctx.values.nullConstant -> traverserState.nullCheckedTerms
+                    else -> traverserState.nullCheckedTerms.add(res)
+                }
+
+            else -> traverserState.nullCheckedTerms
+        }
         currentState = checkReachability(
             traverserState.copy(
                 symbolicState = traverserState.symbolicState.copy(
                     clauses = traverserState.symbolicState.clauses.add(clause)
                 ),
-                valueMap = traverserState.valueMap.put(inst, res)
+                valueMap = traverserState.valueMap.put(inst, res),
+                nullCheckedTerms = newNullChecked
             ), inst
         )
     }

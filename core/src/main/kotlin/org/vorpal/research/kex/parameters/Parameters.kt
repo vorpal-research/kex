@@ -80,7 +80,9 @@ fun Parameters<Descriptor>.filterIgnoredStatic(): Parameters<Descriptor> {
         .filterIsInstance<ClassDescriptor>()
         .filterTo(mutableSetOf()) { descriptor ->
             val typeName = Package.parse(descriptor.type.toString())
-            ignoredStatics.all { ignored -> !ignored.isParent(typeName) }
+            ignoredStatics.all { ignored ->
+                !ignored.isParent(typeName)
+            }
         }
     return Parameters(instance, arguments, filteredStatics)
 }
