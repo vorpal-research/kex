@@ -103,9 +103,9 @@ class CrashReproductionChecker(
 
         if (inst in targetInstructions) {
             val state = currentState ?: return
-            for (postCondition in generatePostCondition(inst, state)) {
+            for (preCondition in generatePreCondition(inst, state)) {
                 val triggerState = state.copy(
-                    symbolicState = state.symbolicState + postCondition
+                    symbolicState = state.symbolicState + preCondition
                 )
                 checkExceptionAndReport(triggerState, inst, generate(targetException.symbolicClass))
             }
@@ -238,7 +238,7 @@ class CrashReproductionChecker(
         }
 
 
-    private fun generatePostCondition(targetInst: Instruction, state: TraverserState): List<PersistentSymbolicState> =
+    private fun generatePreCondition(targetInst: Instruction, state: TraverserState): List<PersistentSymbolicState> =
         when (targetException) {
             nullptrClass -> persistentSymbolicState(
                 path = when (targetInst) {
