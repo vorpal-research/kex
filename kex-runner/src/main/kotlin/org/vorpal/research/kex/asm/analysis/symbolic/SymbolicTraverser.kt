@@ -104,13 +104,11 @@ abstract class SymbolicTraverser(
                 val thisType = method.klass.symbolicClass.getKfgType(types)
                 TraverserState(
                     symbolicState = persistentSymbolicState(
-                        path = PersistentPathCondition(
-                            persistentListOf(
-                                PathClause(
-                                    PathClauseType.NULL_CHECK,
-                                    method.body.entry.first(),
-                                    path { (thisTerm eq null) equality false }
-                                )
+                        path = persistentPathConditionOf(
+                            PathClause(
+                                PathClauseType.NULL_CHECK,
+                                method.body.entry.first(),
+                                path { (thisTerm eq null) equality false }
                             )
                         )
                     ),
@@ -440,10 +438,10 @@ abstract class SymbolicTraverser(
         )
         val newNullChecked = when {
             field.isStatic && field.isFinal -> when (field.defaultValue) {
-                    null -> traverserState.nullCheckedTerms.add(res)
-                    ctx.values.nullConstant -> traverserState.nullCheckedTerms
-                    else -> traverserState.nullCheckedTerms.add(res)
-                }
+                null -> traverserState.nullCheckedTerms.add(res)
+                ctx.values.nullConstant -> traverserState.nullCheckedTerms
+                else -> traverserState.nullCheckedTerms.add(res)
+            }
 
             else -> traverserState.nullCheckedTerms
         }

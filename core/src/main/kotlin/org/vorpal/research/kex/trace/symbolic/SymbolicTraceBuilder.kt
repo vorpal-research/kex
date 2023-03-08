@@ -119,6 +119,8 @@ class SymbolicTraceBuilder(
     private val callStack = stackOf<CallFrame>()
     private val traceCollectingEnabled get() = callStack.isEmpty()
 
+    override fun plus(other: SymbolicState): SymbolicState = symbolicState + other
+
     private data class CallFrame(val call: CallInst, val next: Instruction)
 
     private class FrameStack : Iterable<Frame> {

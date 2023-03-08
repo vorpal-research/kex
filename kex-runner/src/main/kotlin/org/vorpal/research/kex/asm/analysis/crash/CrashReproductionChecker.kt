@@ -7,13 +7,14 @@ import org.vorpal.research.kex.compile.CompilationException
 import org.vorpal.research.kex.config.kexConfig
 import org.vorpal.research.kex.descriptor.Descriptor
 import org.vorpal.research.kex.ktype.KexType
+import org.vorpal.research.kex.ktype.kexType
 import org.vorpal.research.kex.parameters.Parameters
 import org.vorpal.research.kex.reanimator.UnsafeGenerator
 import org.vorpal.research.kex.reanimator.codegen.klassName
 import org.vorpal.research.kex.state.predicate.path
 import org.vorpal.research.kex.state.term.Term
-import org.vorpal.research.kex.trace.symbolic.PathClause
-import org.vorpal.research.kex.trace.symbolic.PathClauseType
+import org.vorpal.research.kex.trace.symbolic.*
+import org.vorpal.research.kex.util.asList
 import org.vorpal.research.kex.util.asmString
 import org.vorpal.research.kex.util.newFixedThreadPoolContextWithMDC
 import org.vorpal.research.kfg.ClassManager
@@ -21,6 +22,7 @@ import org.vorpal.research.kfg.ir.Method
 import org.vorpal.research.kfg.ir.value.ThisRef
 import org.vorpal.research.kfg.ir.value.instruction.*
 import org.vorpal.research.kthelper.assert.ktassert
+import org.vorpal.research.kthelper.assert.unreachable
 import org.vorpal.research.kthelper.logging.log
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.ExperimentalTime
@@ -51,7 +53,7 @@ class CrashReproductionChecker(
                 negativeArrayClass -> it is NewArrayInst
                 classCastClass -> it is CastInst
                 else -> when (it) {
-                    is ThrowInst -> true
+                    is ThrowInst -> it.throwable.type == targetException.asType
                     is CallInst -> targetException.isInheritorOf(cm["java/lang/RuntimeException"]) || targetException in it.method.exceptions
                     else -> false
                 }
@@ -99,56 +101,38 @@ class CrashReproductionChecker(
             return
         }
 
-        super.traverseInstruction(inst)
-    }
-
-    override suspend fun processMethodCall(
-        state: TraverserState,
-        inst: Instruction,
-        candidate: Method,
-        callee: Term,
-        argumentTerms: List<Term>
-    ) {
-        super.processMethodCall(state, inst, candidate, callee, argumentTerms)
         if (inst in targetInstructions) {
-            val result = check(rootMethod, state.symbolicState)
-            if (result != null) {
-                report(inst, result)
-                targetInstructions -= inst
+            val state = currentState ?: return
+            for (postCondition in generatePostCondition(inst, state)) {
+                val triggerState = state.copy(
+                    symbolicState = state.symbolicState + postCondition
+                )
+                checkExceptionAndReport(triggerState, inst, generate(targetException.symbolicClass))
             }
         }
+
+        super.traverseInstruction(inst)
     }
 
     override suspend fun nullabilityCheck(
         state: TraverserState,
         inst: Instruction,
         term: Term
-    ): TraverserState? = when {
-        inst in targetInstructions && targetException == nullptrClass -> {
-            val checkResult = super.nullabilityCheck(state, inst, term)
-            targetInstructions -= inst
-            when {
-                targetInstructions.isEmpty() -> null
-                else -> checkResult
-            }
-        }
-
-        else -> {
-            val persistentState = state.symbolicState
-            val nullityClause = PathClause(
-                PathClauseType.NULL_CHECK,
-                inst,
-                path { (term eq null) equality false }
-            )
-            checkReachability(
-                state.copy(
-                    symbolicState = persistentState.copy(
-                        path = persistentState.path.add(nullityClause)
-                    ),
-                    nullCheckedTerms = state.nullCheckedTerms.add(term)
-                ), inst
-            )
-        }
+    ): TraverserState? {
+        val persistentState = state.symbolicState
+        val nullityClause = PathClause(
+            PathClauseType.NULL_CHECK,
+            inst,
+            path { (term eq null) equality false }
+        )
+        return checkReachability(
+            state.copy(
+                symbolicState = persistentState.copy(
+                    path = persistentState.path.add(nullityClause)
+                ),
+                nullCheckedTerms = state.nullCheckedTerms.add(term)
+            ), inst
+        )
     }
 
     override suspend fun boundsCheck(
@@ -156,73 +140,52 @@ class CrashReproductionChecker(
         inst: Instruction,
         index: Term,
         length: Term
-    ): TraverserState? = when {
-        inst in targetInstructions && targetException == arrayIndexOOBClass -> {
-            val checkResult = super.boundsCheck(state, inst, index, length)
-            targetInstructions -= inst
-            when {
-                targetInstructions.isEmpty() -> null
-                else -> checkResult
-            }
-        }
+    ): TraverserState? {
 
-        else -> {
-            val persistentState = state.symbolicState
-            val zeroClause = PathClause(
-                PathClauseType.BOUNDS_CHECK,
-                inst,
-                path { (index ge 0) equality true }
-            )
-            val lengthClause = PathClause(
-                PathClauseType.BOUNDS_CHECK,
-                inst,
-                path { (index lt length) equality true }
-            )
-            checkReachability(
-                state.copy(
-                    symbolicState = persistentState.copy(
-                        path = persistentState.path.add(
-                            zeroClause.copy(predicate = zeroClause.predicate)
-                        ).add(
-                            lengthClause.copy(predicate = lengthClause.predicate)
-                        )
-                    ),
-                    boundCheckedTerms = state.boundCheckedTerms.add(index to length)
-                ), inst
-            )
-        }
+        val persistentState = state.symbolicState
+        val zeroClause = PathClause(
+            PathClauseType.BOUNDS_CHECK,
+            inst,
+            path { (index ge 0) equality true }
+        )
+        val lengthClause = PathClause(
+            PathClauseType.BOUNDS_CHECK,
+            inst,
+            path { (index lt length) equality true }
+        )
+        return checkReachability(
+            state.copy(
+                symbolicState = persistentState.copy(
+                    path = persistentState.path.add(
+                        zeroClause.copy(predicate = zeroClause.predicate)
+                    ).add(
+                        lengthClause.copy(predicate = lengthClause.predicate)
+                    )
+                ),
+                boundCheckedTerms = state.boundCheckedTerms.add(index to length)
+            ), inst
+        )
     }
 
     override suspend fun newArrayBoundsCheck(
         state: TraverserState,
         inst: Instruction,
         index: Term
-    ): TraverserState? = when {
-        inst in targetInstructions && targetException == negativeArrayClass -> {
-            val checkResult = super.newArrayBoundsCheck(state, inst, index)
-            targetInstructions -= inst
-            when {
-                targetInstructions.isEmpty() -> null
-                else -> checkResult
-            }
-        }
-
-        else -> {
-            val persistentState = state.symbolicState
-            val zeroClause = PathClause(
-                PathClauseType.BOUNDS_CHECK,
-                inst,
-                path { (index ge 0) equality true }
-            )
-            checkReachability(
-                state.copy(
-                    symbolicState = persistentState.copy(
-                        path = persistentState.path.add(zeroClause)
-                    ),
-                    boundCheckedTerms = state.boundCheckedTerms.add(index to index)
-                ), inst
-            )
-        }
+    ): TraverserState? {
+        val persistentState = state.symbolicState
+        val zeroClause = PathClause(
+            PathClauseType.BOUNDS_CHECK,
+            inst,
+            path { (index ge 0) equality true }
+        )
+        return checkReachability(
+            state.copy(
+                symbolicState = persistentState.copy(
+                    path = persistentState.path.add(zeroClause)
+                ),
+                boundCheckedTerms = state.boundCheckedTerms.add(index to index)
+            ), inst
+        )
     }
 
     override suspend fun typeCheck(
@@ -230,33 +193,22 @@ class CrashReproductionChecker(
         inst: Instruction,
         term: Term,
         type: KexType
-    ): TraverserState? = when {
-        inst in targetInstructions && targetException == classCastClass -> {
-            val checkResult = super.typeCheck(state, inst, term, type)
-            targetInstructions -= inst
-            when {
-                targetInstructions.isEmpty() -> null
-                else -> checkResult
-            }
-        }
-
-        else -> {
-            val currentlyCheckedType = type.getKfgType(ctx.types)
-            val persistentState = state.symbolicState
-            val typeClause = PathClause(
-                PathClauseType.TYPE_CHECK,
-                inst,
-                path { (term `is` type) equality true }
-            )
-            checkReachability(
-                state.copy(
-                    symbolicState = persistentState.copy(
-                        path = persistentState.path.add(typeClause)
-                    ),
-                    typeCheckedTerms = state.typeCheckedTerms.put(term, currentlyCheckedType)
-                ), inst
-            )
-        }
+    ): TraverserState? {
+        val currentlyCheckedType = type.getKfgType(ctx.types)
+        val persistentState = state.symbolicState
+        val typeClause = PathClause(
+            PathClauseType.TYPE_CHECK,
+            inst,
+            path { (term `is` type) equality true }
+        )
+        return checkReachability(
+            state.copy(
+                symbolicState = persistentState.copy(
+                    path = persistentState.path.add(typeClause)
+                ),
+                typeCheckedTerms = state.typeCheckedTerms.put(term, currentlyCheckedType)
+            ), inst
+        )
     }
 
     override fun report(inst: Instruction, parameters: Parameters<Descriptor>, testPostfix: String) {
@@ -283,5 +235,119 @@ class CrashReproductionChecker(
             is FieldStoreInst -> !this.isStatic && this.owner !is ThisRef
             is CallInst -> !this.isStatic && this.callee !is ThisRef
             else -> false
+        }
+
+
+    private fun generatePostCondition(targetInst: Instruction, state: TraverserState): List<PersistentSymbolicState> =
+        when (targetException) {
+            nullptrClass -> persistentSymbolicState(
+                path = when (targetInst) {
+                    is ArrayLoadInst -> persistentPathConditionOf(
+                        PathClause(PathClauseType.NULL_CHECK, targetInst, path {
+                            (state.mkTerm(targetInst.arrayRef) eq null) equality true
+                        })
+                    )
+
+                    is ArrayStoreInst -> persistentPathConditionOf(
+                        PathClause(PathClauseType.NULL_CHECK, targetInst, path {
+                            (state.mkTerm(targetInst.arrayRef) eq null) equality true
+                        })
+                    )
+
+                    is FieldLoadInst -> when {
+                        targetInst.isStatic -> persistentPathConditionOf()
+                        else -> persistentPathConditionOf(
+                            PathClause(PathClauseType.NULL_CHECK, targetInst, path {
+                                (state.mkTerm(targetInst.owner) eq null) equality true
+                            })
+                        )
+                    }
+
+                    is FieldStoreInst -> when {
+                        targetInst.isStatic -> persistentPathConditionOf()
+                        else -> persistentPathConditionOf(
+                            PathClause(PathClauseType.NULL_CHECK, targetInst, path {
+                                (state.mkTerm(targetInst.owner) eq null) equality true
+                            })
+                        )
+                    }
+
+                    is CallInst -> when {
+                        targetInst.isStatic -> persistentPathConditionOf()
+                        else -> persistentPathConditionOf(
+                            PathClause(PathClauseType.NULL_CHECK, targetInst, path {
+                                (state.mkTerm(targetInst.callee) eq null) equality true
+                            })
+                        )
+                    }
+
+                    else -> unreachable { log.error("Instruction ${targetInst.print()} does not throw null pointer") }
+                }
+            ).asList()
+
+            arrayIndexOOBClass -> {
+                val (arrayTerm, indexTerm) = when (targetInst) {
+                    is ArrayLoadInst -> state.mkTerm(targetInst.arrayRef) to state.mkTerm(targetInst.index)
+                    is ArrayStoreInst -> state.mkTerm(targetInst.arrayRef) to state.mkTerm(targetInst.index)
+                    else -> unreachable { log.error("Instruction ${targetInst.print()} does not throw array index out of bounds") }
+                }
+                listOf(
+                    persistentSymbolicState(
+                        path = persistentPathConditionOf(
+                            PathClause(PathClauseType.BOUNDS_CHECK, targetInst, path {
+                                (indexTerm ge 0) equality false
+                            })
+                        )
+                    ),
+                    persistentSymbolicState(
+                        path = persistentPathConditionOf(
+                            PathClause(PathClauseType.BOUNDS_CHECK, targetInst, path {
+                                (indexTerm lt arrayTerm.length()) equality false
+                            }),
+                        )
+                    )
+                )
+            }
+
+            negativeArrayClass -> when (targetInst) {
+                is NewArrayInst -> targetInst.dimensions.map { length ->
+                    persistentSymbolicState(
+                        path = persistentPathConditionOf(
+                            PathClause(PathClauseType.BOUNDS_CHECK, targetInst, path {
+                                (state.mkTerm(length) ge 0) equality false
+                            }),
+                        )
+                    )
+                }
+
+                else -> unreachable { log.error("Instruction ${targetInst.print()} does not throw negative array size") }
+            }
+
+            classCastClass -> when (targetInst) {
+                is CastInst -> listOf(
+                    persistentSymbolicState(
+                        path = persistentPathConditionOf(
+                            PathClause(PathClauseType.BOUNDS_CHECK, targetInst, path {
+                                (state.mkTerm(targetInst.operand) `is` targetInst.type.kexType) equality false
+                            }),
+                        )
+                    )
+                )
+
+                else -> unreachable { log.error("Instruction ${targetInst.print()} does not throw class cast") }
+            }
+
+            else -> when (targetInst) {
+                is ThrowInst -> when (targetInst.throwable.type) {
+                    targetException.asType -> persistentSymbolicState().asList()
+                    else -> emptyList()
+                }
+
+                is CallInst -> {
+                    persistentSymbolicState().asList()
+                }
+
+                else -> unreachable { log.error("Instruction ${targetInst.print()} does not throw class cast") }
+            }
         }
 }
