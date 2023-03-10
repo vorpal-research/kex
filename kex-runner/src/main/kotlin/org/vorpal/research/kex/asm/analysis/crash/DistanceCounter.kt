@@ -17,8 +17,8 @@ class MethodDistanceCounter(
     private val scores = mutableMapOf<Method, MapWithDefault<BasicBlock, ULong>>()
 
     companion object {
-        private const val INF = 1_000_000_000UL
-        private const val DEFAULT_WEIGHT = 1UL
+        private const val INF = 1_000_000UL
+        private const val DEFAULT_WEIGHT = 10UL
         private const val CATCH_WEIGHT = 1000UL
     }
 

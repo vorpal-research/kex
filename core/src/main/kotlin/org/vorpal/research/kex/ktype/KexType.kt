@@ -41,7 +41,7 @@ object KexRtManager {
 
     val KfgMethod.rtMapped
         get() = when {
-            this.klass.isKexRt -> this.klass.rtMapped.getMethod(
+            this.klass.inKexRt -> this.klass.rtMapped.getMethod(
                 this.name,
                 this.returnType.rtMapped,
                 *this.argTypes.mapToArray { it.rtMapped }
@@ -51,7 +51,7 @@ object KexRtManager {
 
     val KfgField.rtMapped
         get() = when {
-            this.klass.isKexRt -> this.klass.rtMapped.getField(this.name, this.type.rtMapped)
+            this.klass.inKexRt -> this.klass.rtMapped.getField(this.name, this.type.rtMapped)
             else -> this
         }
 
@@ -99,7 +99,6 @@ object KexRtManager {
 
 
     val KfgClass.isKexRt get() = fullName in kex2RtMapping
-
     @Suppress("unused")
     val Type.isKexRt: Boolean
         get() = when (this) {
@@ -112,6 +111,23 @@ object KexRtManager {
             is KexClass -> klass in kex2RtMapping
             is KexReference -> reference.isKexRt
             is KexArray -> element.isKexRt
+            else -> false
+        }
+
+    val KfgClass.inKexRt get() = fullName in rt2KexMapping
+
+    @Suppress("unused")
+    val Type.inKexRt: Boolean
+        get() = when (this) {
+            is ClassType -> this.klass.inKexRt
+            is ArrayType -> component.inKexRt
+            else -> false
+        }
+    val KexType.inKexRt: Boolean
+        get() = when (this) {
+            is KexClass -> klass in rt2KexMapping
+            is KexReference -> reference.inKexRt
+            is KexArray -> element.inKexRt
             else -> false
         }
 

@@ -432,6 +432,11 @@ abstract class SymbolicTraverser(
 
         traverserState = nullabilityCheck(traverserState, inst, objectTerm) ?: return nullableCurrentState()
 
+        if (objectTerm is NullTerm) {
+            currentState = null
+            return
+        }
+
         val clause = StateClause(
             inst,
             state { res equality objectTerm.field(field.type.symbolicType, field.name).load() }

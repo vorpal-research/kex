@@ -39,6 +39,7 @@ class DefaultCallResolver(
 
     private fun shouldResolve(inst: CallInst): Boolean = when (inst.klass) {
         ctx.cm.stringClass -> false
+        ctx.cm["java/lang/CharSequence"] -> false
         MethodManager.KexIntrinsicManager.unknownIntrinsics(ctx.cm) -> false
         MethodManager.KexIntrinsicManager.collectionIntrinsics(ctx.cm) -> false
         MethodManager.KexIntrinsicManager.assertionsIntrinsics(ctx.cm) -> false

@@ -60,7 +60,7 @@ class CrashReproductionChecker(
             }
         }
 
-    override val pathSelector: SymbolicPathSelector = DistancePathSelector(rootMethod, targetInstructions, stackTrace)
+    override val pathSelector: SymbolicPathSelector = RandomizedDistancePathSelector(ctx, rootMethod, targetInstructions, stackTrace)
     override val callResolver: SymbolicCallResolver = StackTraceCallResolver(
         stackTrace, DefaultCallResolver(ctx)
     )
