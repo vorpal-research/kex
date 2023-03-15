@@ -16,7 +16,7 @@ class ArrayIndexTerm(override val type: KexType, val arrayRef: Term, val index: 
         val tIndex = t.transform(index)
         return when {
             tArrayRef == arrayRef && tIndex == index -> this
-            else -> term { tf.getArrayIndex(type, tArrayRef, tIndex) }
+            else -> term { termFactory.getArrayIndex(type, tArrayRef, tIndex) }
         }
     }
 

@@ -14,6 +14,6 @@ class BoundTerm(override val type: KexType, val ptr: Term) : Term() {
     override fun <T : Transformer<T>> accept(t: Transformer<T>): Term =
             when (val nPtr = t.transform(ptr)) {
                 ptr -> this
-                else -> term { tf.getBound(nPtr) }
+                else -> term { termFactory.getBound(nPtr) }
             }
 }

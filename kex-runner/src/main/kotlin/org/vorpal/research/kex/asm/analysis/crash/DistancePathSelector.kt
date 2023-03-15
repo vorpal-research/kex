@@ -1,27 +1,16 @@
 package org.vorpal.research.kex.asm.analysis.crash
 
-import info.leadinglight.jdot.Edge
-import info.leadinglight.jdot.Graph
-import info.leadinglight.jdot.Node
-import info.leadinglight.jdot.enums.Color
-import info.leadinglight.jdot.enums.Shape
-import info.leadinglight.jdot.impl.Util
 import org.vorpal.research.kex.ExecutionContext
 import org.vorpal.research.kex.asm.analysis.concolic.cgs.ExecutionTree
 import org.vorpal.research.kex.asm.analysis.symbolic.SymbolicPathSelector
 import org.vorpal.research.kex.asm.analysis.symbolic.TraverserState
+import org.vorpal.research.kex.util.view
 import org.vorpal.research.kfg.ir.BasicBlock
 import org.vorpal.research.kfg.ir.Method
 import org.vorpal.research.kfg.ir.value.instruction.Instruction
 import org.vorpal.research.kthelper.assert.unreachable
-import org.vorpal.research.kthelper.graph.Viewable
 import org.vorpal.research.kthelper.logging.log
-import java.io.File
-import java.nio.file.Files
-import java.nio.file.Path
-import java.nio.file.Paths
 import java.util.PriorityQueue
-import kotlin.io.path.writeText
 import kotlin.random.nextULong
 
 class DistancePathSelector(
@@ -55,7 +44,7 @@ class RandomizedDistancePathSelector(
     private val distanceCounter = MethodDistanceCounter(stackTrace)
     private val queue = mutableSetOf<Triple<TraverserState, BasicBlock, ULong>>()
     private var maxScore = 0UL
-    private val executionTree = ExecutionTree()
+//    private val executionTree = ExecutionTree()
 
     private fun score(state: TraverserState, block: BasicBlock) =
         state.stackTrace.sumOf { distanceCounter.score(it.instruction.parent) } + distanceCounter.score(block)
@@ -64,7 +53,8 @@ class RandomizedDistancePathSelector(
         val triple = Triple(state, block, score(state, block))
         queue += triple
         maxScore += triple.third
-        executionTree.addTrace(state.symbolicState)
+//        executionTree.addTrace(state.symbolicState)
+//        executionTree.view()
     }
 
     override suspend fun hasNext(): Boolean = queue.isNotEmpty()

@@ -15,6 +15,6 @@ class ArrayLengthTerm(val arrayRef: Term) : Term() {
     override fun <T : Transformer<T>> accept(t: Transformer<T>): Term =
             when (val tArrayRef = t.transform(arrayRef)) {
                 arrayRef -> this
-                else -> term { tf.getArrayLength(tArrayRef) }
+                else -> term { termFactory.getArrayLength(tArrayRef) }
             }
 }

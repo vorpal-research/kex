@@ -59,8 +59,10 @@ class CrashReproductionChecker(
                 }
             }
         }
+    private val preconditionManager = ExceptionPreconditionManager(ctx)
 
-    override val pathSelector: SymbolicPathSelector = RandomizedDistancePathSelector(ctx, rootMethod, targetInstructions, stackTrace)
+    override val pathSelector: SymbolicPathSelector =
+        RandomizedDistancePathSelector(ctx, rootMethod, targetInstructions, stackTrace)
     override val callResolver: SymbolicCallResolver = StackTraceCallResolver(
         stackTrace, DefaultCallResolver(ctx)
     )
@@ -343,9 +345,9 @@ class CrashReproductionChecker(
                     else -> emptyList()
                 }
 
-                is CallInst -> {
-                    persistentSymbolicState().asList()
-                }
+                is CallInst -> preconditionManager.resolve(targetInst, targetException)
+                    ?.build(targetInst, state)
+                    ?: emptyList()
 
                 else -> unreachable { log.error("Instruction ${targetInst.print()} does not throw class cast") }
             }

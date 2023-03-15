@@ -5,8 +5,8 @@ package org.vorpal.research.kex.util
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.vorpal.research.kex.config.kexConfig
-import org.vorpal.research.kfg.ir.Method
 import org.vorpal.research.kthelper.assert.unreachable
+import org.vorpal.research.kthelper.graph.Viewable
 import org.vorpal.research.kthelper.logging.log
 import org.vorpal.research.kthelper.tryOrNull
 import java.io.File
@@ -25,8 +25,8 @@ private val viewer by lazy {
     kexConfig.getStringValue("view", "viewer") ?: unreachable { log.error("Could not find viewer") }
 }
 
-fun Method.view() {
-    this.view(dot, viewer)
+fun Viewable.view() {
+    this.view("", dot, viewer)
 }
 
 infix fun <A, B> A.with(b: B): Pair<A, B> = this to b

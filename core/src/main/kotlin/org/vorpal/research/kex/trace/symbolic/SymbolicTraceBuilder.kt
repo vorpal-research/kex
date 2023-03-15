@@ -221,7 +221,7 @@ class SymbolicTraceBuilder(
             is Argument -> arg(value)
             is Constant -> const(value)
             is ThisRef -> `this`(value.type.kexType)
-            else -> tf.getValue(value.type.kexType, nameGenerator.nextName("${value.name}"))
+            else -> termFactory.getValue(value.type.kexType, nameGenerator.nextName("${value.name}"))
         }
     }
 

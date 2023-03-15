@@ -6,7 +6,6 @@ import org.vorpal.research.kex.InheritorOf
 import org.vorpal.research.kex.ktype.KexType
 import org.vorpal.research.kex.state.transformer.Transformer
 import org.vorpal.research.kfg.ir.value.instruction.BinaryOpcode
-import org.vorpal.research.kthelper.defaultHashCode
 
 @InheritorOf("Term")
 @Serializable
@@ -23,7 +22,7 @@ class BinaryTerm(
         val tRhv = t.transform(rhv)
         return when {
             tLhv == lhv && tRhv == rhv -> this
-            else -> term { tf.getBinary(type, opcode, tLhv, tRhv) }
+            else -> term { termFactory.getBinary(type, opcode, tLhv, tRhv) }
         }
     }
 

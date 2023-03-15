@@ -5,7 +5,6 @@ import org.vorpal.research.kex.InheritorOf
 import org.vorpal.research.kex.ktype.KexBool
 import org.vorpal.research.kex.ktype.KexType
 import org.vorpal.research.kex.state.transformer.Transformer
-import org.vorpal.research.kthelper.defaultHashCode
 
 @InheritorOf("Term")
 @Serializable
@@ -17,7 +16,7 @@ class InstanceOfTerm(val checkedType: KexType, val operand: Term) : Term() {
     override fun <T: Transformer<T>> accept(t: Transformer<T>): Term =
             when (val tOperand = t.transform(operand)) {
                 operand -> this
-                else -> term { tf.getInstanceOf(checkedType, tOperand) }
+                else -> term { termFactory.getInstanceOf(checkedType, tOperand) }
              }
 
     override fun hashCode() = 31 * super.hashCode() + checkedType.hashCode()

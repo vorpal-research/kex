@@ -58,7 +58,7 @@ data class TraverserState(
 abstract class SymbolicTraverser(
     val ctx: ExecutionContext,
     val rootMethod: Method,
-) : TermBuilder() {
+) : TermBuilder {
     val cm: ClassManager
         get() = ctx.cm
     val types: TypeFactory

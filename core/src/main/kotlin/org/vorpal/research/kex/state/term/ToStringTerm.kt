@@ -17,6 +17,6 @@ class ToStringTerm(
     override fun <T : Transformer<T>> accept(t: Transformer<T>): Term =
         when (val tValue = t.transform(value)) {
             value -> this
-            else -> term { tf.getArrayLength(tValue) }
+            else -> term { termFactory.getArrayLength(tValue) }
         }
 }

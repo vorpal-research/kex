@@ -19,6 +19,6 @@ class FieldLoadTerm(override val type: KexType, val field: Term) : Term() {
     override fun <T : Transformer<T>> accept(t: Transformer<T>): Term =
             when (val tField = t.transform(field)) {
                 field -> this
-                else -> term { tf.getFieldLoad(type, tField) }
+                else -> term { termFactory.getFieldLoad(type, tField) }
              }
 }

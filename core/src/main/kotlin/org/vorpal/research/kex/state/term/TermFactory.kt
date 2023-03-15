@@ -199,8 +199,8 @@ object TermFactory {
     fun getClassAccess(type: KexType, operand: Term) = ClassAccessTerm(type, operand)
 }
 
-abstract class TermBuilder {
-    val tf = TermFactory
+interface TermBuilder {
+    val termFactory get() = TermFactory
 
     private object TermGenerator {
         private var index = 0
@@ -212,7 +212,7 @@ abstract class TermBuilder {
 
     fun generate(type: KexType) = TermGenerator.nextTerm(type)
 
-    fun `this`(type: KexType) = tf.getThis(type)
+    fun `this`(type: KexType) = termFactory.getThis(type)
 
     fun default(type: KexType) = when (type) {
         is KexBool -> const(false)
@@ -227,172 +227,173 @@ abstract class TermBuilder {
         else -> unreachable { log.error("Unknown type $type") }
     }
 
-    fun arg(argument: Argument) = tf.getArgument(argument)
-    fun arg(type: KexType, index: Int) = tf.getArgument(type, index)
+    fun arg(argument: Argument) = termFactory.getArgument(argument)
+    fun arg(type: KexType, index: Int) = termFactory.getArgument(type, index)
 
-    fun const(constant: Constant) = tf.getConstant(constant)
-    fun const(bool: Boolean) = tf.getBool(bool)
-    fun const(str: String) = tf.getString(str)
-    fun const(char: Char) = tf.getChar(char)
-    fun <T : Number> const(number: T) = tf.getConstant(number)
-    fun const(@Suppress("UNUSED_PARAMETER") nothing: Nothing?) = tf.getNull()
-    fun `class`(klass: Class) = tf.getClass(klass)
-    fun `class`(type: KexType, constantType: KexType) = tf.getClass(type, constantType)
-    fun staticRef(type: Class) = tf.getStaticRef(type)
-    fun staticRef(type: KexClass) = tf.getStaticRef(type)
+    fun const(constant: Constant) = termFactory.getConstant(constant)
+    fun const(bool: Boolean) = termFactory.getBool(bool)
+    fun const(str: String) = termFactory.getString(str)
+    fun const(char: Char) = termFactory.getChar(char)
+    fun <T : Number> const(number: T) = termFactory.getConstant(number)
+    fun const(@Suppress("UNUSED_PARAMETER") nothing: Nothing?) = termFactory.getNull()
+    fun `class`(klass: Class) = termFactory.getClass(klass)
+    fun `class`(type: KexType, constantType: KexType) = termFactory.getClass(type, constantType)
+    fun staticRef(type: Class) = termFactory.getStaticRef(type)
+    fun staticRef(type: KexClass) = termFactory.getStaticRef(type)
 
-    fun Term.apply(opcode: UnaryOpcode) = tf.getUnaryTerm(this, opcode)
-    operator fun Term.not() = tf.getNegTerm(this)
+    fun Term.apply(opcode: UnaryOpcode) = termFactory.getUnaryTerm(this, opcode)
+    operator fun Term.not() = termFactory.getNegTerm(this)
     fun Term.length() = when (this.type) {
-        is KexArray -> tf.getArrayLength(this)
-        else -> tf.getStringLength(this)
+        is KexArray -> termFactory.getArrayLength(this)
+        else -> termFactory.getStringLength(this)
     }
 
-    operator fun Term.get(index: Term) = tf.getArrayIndex(this, index)
-    operator fun Term.get(index: Int) = tf.getArrayIndex(this, const(index))
+    operator fun Term.get(index: Term) = termFactory.getArrayIndex(this, index)
+    operator fun Term.get(index: Int) = termFactory.getArrayIndex(this, const(index))
 
     fun Term.load() = when (this) {
-        is ArrayIndexTerm -> tf.getArrayLoad(this)
+        is ArrayIndexTerm -> termFactory.getArrayLoad(this)
         is FieldTerm -> {
             val type = (this.type as KexReference).reference
-            tf.getFieldLoad(type, this)
+            termFactory.getFieldLoad(type, this)
         }
         else -> unreachable { log.error("Unknown term type in load: $this") }
     }
 
-    infix fun Term.add(rhv: Term) = tf.getBinary(type, BinaryOpcode.ADD, this, rhv)
+    infix fun Term.add(rhv: Term) = termFactory.getBinary(type, BinaryOpcode.ADD, this, rhv)
     operator fun Term.plus(rhv: Term) = this add rhv
 
-    infix fun Term.sub(rhv: Term) = tf.getBinary(type, BinaryOpcode.SUB, this, rhv)
+    infix fun Term.sub(rhv: Term) = termFactory.getBinary(type, BinaryOpcode.SUB, this, rhv)
     operator fun Term.minus(rhv: Term) = this sub rhv
 
-    infix fun Term.mul(rhv: Term) = tf.getBinary(type, BinaryOpcode.MUL, this, rhv)
+    infix fun Term.mul(rhv: Term) = termFactory.getBinary(type, BinaryOpcode.MUL, this, rhv)
     operator fun Term.times(rhv: Term) = this mul rhv
 
-    operator fun Term.div(rhv: Term) = tf.getBinary(type, BinaryOpcode.DIV, this, rhv)
-    operator fun Term.rem(rhv: Term) = tf.getBinary(type, BinaryOpcode.REM, this, rhv)
+    operator fun Term.div(rhv: Term) = termFactory.getBinary(type, BinaryOpcode.DIV, this, rhv)
+    operator fun Term.rem(rhv: Term) = termFactory.getBinary(type, BinaryOpcode.REM, this, rhv)
 
-    infix fun Term.shl(shift: Term) = tf.getBinary(type, BinaryOpcode.SHL, this, shift)
-    infix fun Term.shr(shift: Term) = tf.getBinary(type, BinaryOpcode.SHR, this, shift)
-    infix fun Term.ushr(shift: Term) = tf.getBinary(type, BinaryOpcode.USHR, this, shift)
+    infix fun Term.shl(shift: Term) = termFactory.getBinary(type, BinaryOpcode.SHL, this, shift)
+    infix fun Term.shr(shift: Term) = termFactory.getBinary(type, BinaryOpcode.SHR, this, shift)
+    infix fun Term.ushr(shift: Term) = termFactory.getBinary(type, BinaryOpcode.USHR, this, shift)
 
-    infix fun Term.and(rhv: Term) = tf.getBinary(type, BinaryOpcode.AND, this, rhv)
-    infix fun Term.and(bool: Boolean) = tf.getBinary(type, BinaryOpcode.AND, this, const(bool))
-    infix fun Term.and(int: Int) = tf.getBinary(type, BinaryOpcode.AND, this, const(int))
-    infix fun Term.or(rhv: Term) = tf.getBinary(type, BinaryOpcode.OR, this, rhv)
-    infix fun Term.or(bool: Boolean) = tf.getBinary(type, BinaryOpcode.OR, this, const(bool))
-    infix fun Term.or(int: Int) = tf.getBinary(type, BinaryOpcode.OR, this, const(int))
-    infix fun Term.xor(rhv: Term) = tf.getBinary(type, BinaryOpcode.XOR, this, rhv)
-    infix fun Term.xor(bool: Boolean) = tf.getBinary(type, BinaryOpcode.XOR, this, const(bool))
+    infix fun Term.and(rhv: Term) = termFactory.getBinary(type, BinaryOpcode.AND, this, rhv)
+    infix fun Term.and(bool: Boolean) = termFactory.getBinary(type, BinaryOpcode.AND, this, const(bool))
+    infix fun Term.and(int: Int) = termFactory.getBinary(type, BinaryOpcode.AND, this, const(int))
+    infix fun Term.or(rhv: Term) = termFactory.getBinary(type, BinaryOpcode.OR, this, rhv)
+    infix fun Term.or(bool: Boolean) = termFactory.getBinary(type, BinaryOpcode.OR, this, const(bool))
+    infix fun Term.or(int: Int) = termFactory.getBinary(type, BinaryOpcode.OR, this, const(int))
+    infix fun Term.xor(rhv: Term) = termFactory.getBinary(type, BinaryOpcode.XOR, this, rhv)
+    infix fun Term.xor(bool: Boolean) = termFactory.getBinary(type, BinaryOpcode.XOR, this, const(bool))
 
     infix fun Term.implies(rhv: Term) = !this or rhv
     infix fun Term.implies(rhv: Boolean) = !this or rhv
 
-    fun Term.apply(types: TypeFactory, opcode: BinaryOpcode, rhv: Term) = tf.getBinary(types, opcode, this, rhv)
-    fun Term.apply(type: KexType, opcode: BinaryOpcode, rhv: Term) = tf.getBinary(type, opcode, this, rhv)
-    fun Term.apply(opcode: CmpOpcode, rhv: Term) = tf.getCmp(opcode, this, rhv)
+    fun Term.apply(types: TypeFactory, opcode: BinaryOpcode, rhv: Term) = termFactory.getBinary(types, opcode, this, rhv)
+    fun Term.apply(type: KexType, opcode: BinaryOpcode, rhv: Term) = termFactory.getBinary(type, opcode, this, rhv)
+    fun Term.apply(opcode: CmpOpcode, rhv: Term) = termFactory.getCmp(opcode, this, rhv)
 
-    infix fun Term.eq(rhv: Term) = tf.getCmp(CmpOpcode.EQ, this, rhv)
-    infix fun <T : Number> Term.eq(rhv: T) = tf.getCmp(CmpOpcode.EQ, this, const(rhv))
-    infix fun Term.eq(rhv: Boolean) = tf.getCmp(CmpOpcode.EQ, this, const(rhv))
-    infix fun Term.eq(rhv: Nothing?) = tf.getCmp(CmpOpcode.EQ, this, const(rhv))
+    infix fun Term.eq(rhv: Term) = termFactory.getCmp(CmpOpcode.EQ, this, rhv)
+    infix fun <T : Number> Term.eq(rhv: T) = termFactory.getCmp(CmpOpcode.EQ, this, const(rhv))
+    infix fun Term.eq(rhv: Boolean) = termFactory.getCmp(CmpOpcode.EQ, this, const(rhv))
+    infix fun Term.eq(rhv: Nothing?) = termFactory.getCmp(CmpOpcode.EQ, this, const(rhv))
 
-    infix fun Term.neq(rhv: Term) = tf.getCmp(CmpOpcode.NEQ, this, rhv)
-    infix fun <T : Number> Term.neq(rhv: T) = tf.getCmp(CmpOpcode.NEQ, this, const(rhv))
-    infix fun Term.neq(rhv: Boolean) = tf.getCmp(CmpOpcode.NEQ, this, const(rhv))
-    infix fun Term.neq(rhv: Nothing?) = tf.getCmp(CmpOpcode.NEQ, this, const(rhv))
+    infix fun Term.neq(rhv: Term) = termFactory.getCmp(CmpOpcode.NEQ, this, rhv)
+    infix fun <T : Number> Term.neq(rhv: T) = termFactory.getCmp(CmpOpcode.NEQ, this, const(rhv))
+    infix fun Term.neq(rhv: Boolean) = termFactory.getCmp(CmpOpcode.NEQ, this, const(rhv))
+    infix fun Term.neq(rhv: Nothing?) = termFactory.getCmp(CmpOpcode.NEQ, this, const(rhv))
 
-    infix fun Term.lt(rhv: Term) = tf.getCmp(CmpOpcode.LT, this, rhv)
-    infix fun <T : Number> Term.lt(rhv: T) = tf.getCmp(CmpOpcode.LT, this, const(rhv))
-    infix fun Term.lt(rhv: Boolean) = tf.getCmp(CmpOpcode.LT, this, const(rhv))
-    infix fun Term.lt(rhv: Nothing?) = tf.getCmp(CmpOpcode.LT, this, const(rhv))
+    infix fun Term.lt(rhv: Term) = termFactory.getCmp(CmpOpcode.LT, this, rhv)
+    infix fun <T : Number> Term.lt(rhv: T) = termFactory.getCmp(CmpOpcode.LT, this, const(rhv))
+    infix fun Term.lt(rhv: Boolean) = termFactory.getCmp(CmpOpcode.LT, this, const(rhv))
+    infix fun Term.lt(rhv: Nothing?) = termFactory.getCmp(CmpOpcode.LT, this, const(rhv))
 
-    infix fun Term.gt(rhv: Term) = tf.getCmp(CmpOpcode.GT, this, rhv)
-    infix fun <T : Number> Term.gt(rhv: T) = tf.getCmp(CmpOpcode.GT, this, const(rhv))
-    infix fun Term.gt(rhv: Boolean) = tf.getCmp(CmpOpcode.GT, this, const(rhv))
-    infix fun Term.gt(rhv: Nothing?) = tf.getCmp(CmpOpcode.GT, this, const(rhv))
+    infix fun Term.gt(rhv: Term) = termFactory.getCmp(CmpOpcode.GT, this, rhv)
+    infix fun <T : Number> Term.gt(rhv: T) = termFactory.getCmp(CmpOpcode.GT, this, const(rhv))
+    infix fun Term.gt(rhv: Boolean) = termFactory.getCmp(CmpOpcode.GT, this, const(rhv))
+    infix fun Term.gt(rhv: Nothing?) = termFactory.getCmp(CmpOpcode.GT, this, const(rhv))
 
-    infix fun Term.le(rhv: Term) = tf.getCmp(CmpOpcode.LE, this, rhv)
-    infix fun <T : Number> Term.le(rhv: T) = tf.getCmp(CmpOpcode.LE, this, const(rhv))
-    infix fun Term.le(rhv: Boolean) = tf.getCmp(CmpOpcode.LE, this, const(rhv))
-    infix fun Term.le(rhv: Nothing?) = tf.getCmp(CmpOpcode.LE, this, const(rhv))
+    infix fun Term.le(rhv: Term) = termFactory.getCmp(CmpOpcode.LE, this, rhv)
+    infix fun <T : Number> Term.le(rhv: T) = termFactory.getCmp(CmpOpcode.LE, this, const(rhv))
+    infix fun Term.le(rhv: Boolean) = termFactory.getCmp(CmpOpcode.LE, this, const(rhv))
+    infix fun Term.le(rhv: Nothing?) = termFactory.getCmp(CmpOpcode.LE, this, const(rhv))
 
-    infix fun Term.ge(rhv: Term) = tf.getCmp(CmpOpcode.GE, this, rhv)
-    infix fun <T : Number> Term.ge(rhv: T) = tf.getCmp(CmpOpcode.GE, this, const(rhv))
-    infix fun Term.ge(rhv: Boolean) = tf.getCmp(CmpOpcode.GE, this, const(rhv))
-    infix fun Term.ge(rhv: Nothing?) = tf.getCmp(CmpOpcode.GE, this, const(rhv))
+    infix fun Term.ge(rhv: Term) = termFactory.getCmp(CmpOpcode.GE, this, rhv)
+    infix fun <T : Number> Term.ge(rhv: T) = termFactory.getCmp(CmpOpcode.GE, this, const(rhv))
+    infix fun Term.ge(rhv: Boolean) = termFactory.getCmp(CmpOpcode.GE, this, const(rhv))
+    infix fun Term.ge(rhv: Nothing?) = termFactory.getCmp(CmpOpcode.GE, this, const(rhv))
 
-    infix fun Term.cmp(rhv: Term) = tf.getCmp(CmpOpcode.CMP, this, rhv)
-    infix fun Term.cmpg(rhv: Term) = tf.getCmp(CmpOpcode.CMPG, this, rhv)
-    infix fun Term.cmpl(rhv: Term) = tf.getCmp(CmpOpcode.CMPL, this, rhv)
+    infix fun Term.cmp(rhv: Term) = termFactory.getCmp(CmpOpcode.CMP, this, rhv)
+    infix fun Term.cmpg(rhv: Term) = termFactory.getCmp(CmpOpcode.CMPG, this, rhv)
+    infix fun Term.cmpl(rhv: Term) = termFactory.getCmp(CmpOpcode.CMPL, this, rhv)
 
     infix fun Term.`in`(container: Term) = when {
-        container.type is KexArray -> tf.getArrayContains(container, this)
-        else -> tf.getStringContains(container, this)
+        container.type is KexArray -> termFactory.getArrayContains(container, this)
+        else -> termFactory.getStringContains(container, this)
     }
 
-    infix fun Term.equls(rhv: Term) = tf.getEquals(this, rhv)
+    infix fun Term.equls(rhv: Term) = termFactory.getEquals(this, rhv)
 
     @Suppress("DeprecatedCallableAddReplaceWith")
     @Deprecated(message = "not used in current SMT model")
-    fun Term.bound() = tf.getBound(this)
+    fun Term.bound() = termFactory.getBound(this)
 
-    fun Term.call(method: Method, arguments: List<Term>) = tf.getCall(method, this, arguments)
+    fun Term.call(method: Method, arguments: List<Term>) = termFactory.getCall(method, this, arguments)
+    fun Term.call(method: Method, vararg arguments: Term) = termFactory.getCall(method, this, arguments.toList())
 
-    fun Term.field(type: KexReference, name: String) = tf.getField(type, this, name)
-    fun Term.field(type: KexType, name: String) = tf.getField(KexReference(type), this, name)
+    fun Term.field(type: KexReference, name: String) = termFactory.getField(type, this, name)
+    fun Term.field(type: KexType, name: String) = termFactory.getField(KexReference(type), this, name)
 
-    infix fun Term.`as`(type: KexType) = tf.getCast(type, this)
-    infix fun Term.`is`(type: KexType) = tf.getInstanceOf(type, this)
+    infix fun Term.`as`(type: KexType) = termFactory.getCast(type, this)
+    infix fun Term.`is`(type: KexType) = termFactory.getInstanceOf(type, this)
 
-    infix fun Term.`++`(rhv: Term) = tf.getConcat(this, rhv)
-    infix fun Term.`++`(rhv: String) = tf.getConcat(this, const(rhv))
-    infix fun String.`++`(rhv: String) = tf.getConcat(const(this), const(rhv))
-    infix fun String.`++`(rhv: Term) = tf.getConcat(const(this), rhv)
+    infix fun Term.`++`(rhv: Term) = termFactory.getConcat(this, rhv)
+    infix fun Term.`++`(rhv: String) = termFactory.getConcat(this, const(rhv))
+    infix fun String.`++`(rhv: String) = termFactory.getConcat(const(this), const(rhv))
+    infix fun String.`++`(rhv: Term) = termFactory.getConcat(const(this), rhv)
 
-    fun Term.substring(offset: Term, length: Term) = tf.getSubstring(this, offset, length)
+    fun Term.substring(offset: Term, length: Term) = termFactory.getSubstring(this, offset, length)
     fun Term.substring(offset: Int, length: Int) = this.substring(const(offset), const(length))
 
-    fun Term.indexOf(substring: Term, offset: Term) = tf.getIndexOf(this, substring, offset)
+    fun Term.indexOf(substring: Term, offset: Term) = termFactory.getIndexOf(this, substring, offset)
     fun Term.indexOf(substring: Term) = this.indexOf(substring, const(0))
-    fun Term.indexOf(substring: String, offset: Term) = tf.getIndexOf(this, const(substring), offset)
-    fun Term.indexOf(substring: String, offset: Int) = tf.getIndexOf(this, const(substring), const(offset))
+    fun Term.indexOf(substring: String, offset: Term) = termFactory.getIndexOf(this, const(substring), offset)
+    fun Term.indexOf(substring: String, offset: Int) = termFactory.getIndexOf(this, const(substring), const(offset))
     fun Term.indexOf(substring: String) = this.indexOf(const(substring), const(0))
 
-    fun Term.charAt(index: Term) = tf.getCharAt(this, index)
+    fun Term.charAt(index: Term) = termFactory.getCharAt(this, index)
     fun Term.charAt(index: Int) = this.charAt(const(index))
 
-    fun KexType.fromString(string: Term) = tf.getFromString(string, this)
+    fun KexType.fromString(string: Term) = termFactory.getFromString(string, this)
     fun KexType.fromString(string: String) = this.fromString(const(string))
 
-    fun Term.toStr() = tf.getToString(this)
+    fun Term.toStr() = termFactory.getToString(this)
 
-    fun Term.startsWith(prefix: Term) = tf.getStartsWith(this, prefix)
+    fun Term.startsWith(prefix: Term) = termFactory.getStartsWith(this, prefix)
     fun Term.startsWith(prefix: String) = startsWith(const(prefix))
 
-    fun Term.endsWith(suffix: Term) = tf.getEndsWith(this, suffix)
+    fun Term.endsWith(suffix: Term) = termFactory.getEndsWith(this, suffix)
     fun Term.endsWith(suffix: String) = endsWith(const(suffix))
 
-    fun `return`(method: Method) = tf.getReturn(method)
+    fun `return`(method: Method) = termFactory.getReturn(method)
 
-    fun value(value: Value) = tf.getValue(value)
-    fun value(type: KexType, name: String) = tf.getValue(type, name)
-    fun undef(type: KexType) = tf.getUndef(type)
+    fun value(value: Value) = termFactory.getValue(value)
+    fun value(type: KexType, name: String) = termFactory.getValue(type, name)
+    fun undef(type: KexType) = termFactory.getUndef(type)
 
     fun lambda(type: KexType, params: List<Term>, bodyBuilder: TermBuilder.() -> Term) =
         lambda(type, params, bodyBuilder())
 
     fun lambda(type: KexType, params: List<Term>, body: Term) =
-        tf.getLambda(type, params, body)
+        termFactory.getLambda(type, params, body)
 
     fun lambda(type: KexType, vararg params: Term, bodyBuilder: TermBuilder.() -> Term) =
         lambda(type, *params, body = bodyBuilder())
 
 
     fun lambda(type: KexType, vararg params: Term, body: Term) =
-        tf.getLambda(type, params.toList(), body)
+        termFactory.getLambda(type, params.toList(), body)
 
-    fun forAll(start: Term, end: Term, body: Term) = tf.getForAll(start, end, body)
+    fun forAll(start: Term, end: Term, body: Term) = termFactory.getForAll(start, end, body)
     fun forAll(start: Term, end: Term, body: TermBuilder.() -> Term) = forAll(start, end, body())
     fun forAll(start: Int, end: Int, body: Term) = (start..end).forAll(body)
     fun forAll(start: Int, end: Int, body: TermBuilder.() -> Term) = forAll(start, end, body())
@@ -403,7 +404,7 @@ abstract class TermBuilder {
     fun IntRange.forAll(body: Term) = forAll(const(start), const(last), body)
     fun IntRange.forAll(body: TermBuilder.() -> Term) = forAll(const(start), const(last), body)
 
-    fun exists(start: Term, end: Term, body: Term) = tf.getExists(start, end, body)
+    fun exists(start: Term, end: Term, body: Term) = termFactory.getExists(start, end, body)
     fun exists(start: Term, end: Term, body: TermBuilder.() -> Term) = exists(start, end, body())
     fun exists(start: Int, end: Int, body: Term) = (start..end).exists(body)
     fun exists(start: Int, end: Int, body: TermBuilder.() -> Term) = exists(start, end, body())
@@ -414,11 +415,11 @@ abstract class TermBuilder {
     fun IntRange.exists(body: Term) = exists(const(start), const(last), body)
     fun IntRange.exists(body: TermBuilder.() -> Term) = exists(const(start), const(last), body)
 
-    fun ite(type: KexType, cond: Term, trueValue: Term, falseValue: Term) = tf.getIte(type, cond, trueValue, falseValue)
+    fun ite(type: KexType, cond: Term, trueValue: Term, falseValue: Term) = termFactory.getIte(type, cond, trueValue, falseValue)
 
-    val Term.klass get() = tf.getClassAccess(this)
+    val Term.klass get() = termFactory.getClassAccess(this)
 
-    object Terms : TermBuilder()
+    object Terms : TermBuilder
 }
 
 inline fun term(body: TermBuilder.() -> Term) = TermBuilder.Terms.body()

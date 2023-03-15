@@ -14,7 +14,7 @@ import org.vorpal.research.kfg.visitor.MethodVisitor
 import org.vorpal.research.kthelper.collection.queueOf
 import org.vorpal.research.kthelper.logging.log
 
-class TermExpressionBuilder(override val cm: ClassManager) : TermBuilder(), MethodVisitor {
+class TermExpressionBuilder(override val cm: ClassManager) : TermBuilder, MethodVisitor {
     private val termMap = mutableMapOf<Value, Term>()
     private val path = mutableMapOf<BasicBlock, Term>()
     private lateinit var currentCond: Term

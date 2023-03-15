@@ -6,7 +6,6 @@ import org.vorpal.research.kex.InheritorOf
 import org.vorpal.research.kex.ktype.KexType
 import org.vorpal.research.kex.state.transformer.Transformer
 import org.vorpal.research.kfg.ir.value.instruction.CmpOpcode
-import org.vorpal.research.kthelper.defaultHashCode
 
 @InheritorOf("Term")
 @Serializable
@@ -24,7 +23,7 @@ class CmpTerm(
         val tRhv = t.transform(rhv)
         return when {
             tLhv == lhv && tRhv == rhv -> this
-            else -> term { tf.getCmp(opcode, tLhv, tRhv) }
+            else -> term { termFactory.getCmp(opcode, tLhv, tRhv) }
          }
     }
 

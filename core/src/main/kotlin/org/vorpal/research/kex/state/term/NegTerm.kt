@@ -14,6 +14,6 @@ class NegTerm(override val type: KexType, val operand: Term) : Term() {
     override fun <T: Transformer<T>> accept(t: Transformer<T>): Term =
             when (val tOperand = t.transform(operand)) {
                 operand -> this
-                else -> term { tf.getNegTerm(tOperand) }
+                else -> term { termFactory.getNegTerm(tOperand) }
              }
 }

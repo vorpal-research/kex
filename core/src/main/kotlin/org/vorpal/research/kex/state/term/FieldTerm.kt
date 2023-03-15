@@ -29,7 +29,7 @@ class FieldTerm(override val type: KexType, val owner: Term, val fieldName: Stri
     override fun <T : Transformer<T>> accept(t: Transformer<T>): Term =
         when (val tOwner = t.transform(owner)) {
             owner -> this
-            else -> term { tf.getField(type, tOwner, fieldName) }
+            else -> term { termFactory.getField(type, tOwner, fieldName) }
         }
 
 }

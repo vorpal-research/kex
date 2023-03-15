@@ -21,7 +21,7 @@ fun FieldTerm.unmappedKfgField(cm: ClassManager): Field {
     }
 }
 
-class KexRtAdapter(val cm: ClassManager) : PredicateBuilder(), Transformer<KexRtAdapter> {
+class KexRtAdapter(val cm: ClassManager) : PredicateBuilder, Transformer<KexRtAdapter> {
     override val type = PredicateType.State()
     override val location = Location()
 

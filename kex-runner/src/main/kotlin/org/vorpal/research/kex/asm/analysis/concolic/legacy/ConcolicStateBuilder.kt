@@ -118,7 +118,7 @@ class ConcolicStateBuilder(val cm: ClassManager, val psa: PredicateStateAnalysis
             is Argument -> arg(value)
             is Constant -> const(value)
             is ThisRef -> `this`(value.type.kexType)
-            else -> tf.getValue(value.type.kexType, "$value.${++counter}")
+            else -> termFactory.getValue(value.type.kexType, "$value.${++counter}")
         }
     }
 

@@ -14,6 +14,6 @@ class ArrayLoadTerm(override val type: KexType, val arrayRef: Term) : Term() {
     override fun <T: Transformer<T>> accept(t: Transformer<T>): Term =
             when (val tArrayRef = t.transform(arrayRef)) {
                 arrayRef -> this
-                else -> term { tf.getArrayLoad(type, tArrayRef) }
+                else -> term { termFactory.getArrayLoad(type, tArrayRef) }
             }
 }
