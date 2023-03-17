@@ -24,7 +24,7 @@ fun Class.getCtor(vararg argTypes: Type) =
 abstract class StringMethodContext(val cm: ClassManager) {
     val stringType = cm.type.stringType
     val objectType = cm.type.objectType
-    private val charSeqType = cm.type.charSeqType
+    val charSeqType = cm.type.charSeqType
 
     val Class.emptyInit
         get() = getCtor()
@@ -248,6 +248,10 @@ class StringMethodAdapter(cm: ClassManager) : StringMethodContext(cm), Recollect
 
     private fun Term.valueArray(): Term = term { this@valueArray.field(kexCharArrayType(), "value") }
     private fun kexCharArrayType() = KexChar.asArray()
+
+    override fun apply(ps: PredicateState): PredicateState {
+        return super.apply(ps)
+    }
 
     private fun emptyInit(term: Term): PredicateState = basic {
         val emptyArray = generate(kexCharArrayType())
@@ -742,29 +746,42 @@ class StringMethodAdapter(cm: ClassManager) : StringMethodContext(cm), Recollect
         val args = call.arguments
 
         val kfgString = (stringType as ClassType).klass
-        if (call.owner.type != kfgString.kexType) return predicate
+        val kfgCharSequence = (charSeqType as ClassType).klass
+        val kfgOwnerType = (call.owner.type.getKfgType(cm.type) as ClassType).klass
+        if (!kfgOwnerType.asType.isSubtypeOf(charSeqType)) return predicate
 
-        val `this` = call.owner
+
+        val `this` = when (kfgOwnerType) {
+            kfgString -> call.owner
+            kfgCharSequence -> {
+                val stringTerm = term { generate(kfgString.kexType) }
+                currentBuilder += assume {
+                    stringTerm equality (call.owner `as` kfgString.kexType)
+                }
+                stringTerm
+            }
+
+            else -> return predicate
+        }
         val calledMethod = call.method
-
         currentBuilder += when (calledMethod) {
             kfgString.emptyInit -> emptyInit(`this`)
             kfgString.copyInit -> copyInit(`this`, args[0])
             kfgString.charArrayInit -> charArrayInit(`this`, args[0])
             kfgString.charArrayWOffsetInit -> charArrayWOffsetInit(`this`, args[0], args[1], args[2])
-            kfgString.length -> length(predicate.lhv, `this`)
+            kfgString.length, kfgCharSequence.length -> length(predicate.lhv, `this`)
             kfgString.isEmpty -> isEmpty(predicate.lhv, `this`)
-            kfgString.charAt -> charAt(predicate.lhv, `this`, args[0])
-            kfgString.equals -> equals(predicate.lhv, `this`, args[0])
+            kfgString.charAt, kfgCharSequence.charAt -> charAt(predicate.lhv, `this`, args[0])
+            kfgString.equals, kfgCharSequence.charAt -> equals(predicate.lhv, `this`, args[0])
             kfgString.startsWith -> startsWith(predicate.lhv, `this`, args[0])
             kfgString.startsWithOffset -> startsWithOffset(predicate.lhv, `this`, args[0], args[1])
             kfgString.endsWith -> endsWith(predicate.lhv, `this`, args[0])
             kfgString.substring -> substring(predicate.lhv, `this`, args[0])
             kfgString.substringWLength -> substringWLength(predicate.lhv, `this`, args[0], args[1])
-            kfgString.subSequence -> subSequence(predicate.lhv, `this`, args[0], args[1])
+            kfgString.subSequence, kfgCharSequence.charAt -> subSequence(predicate.lhv, `this`, args[0], args[1])
             kfgString.concat -> concat(predicate.lhv, `this`, args[0])
-            kfgString.toString -> toString(predicate.lhv, `this`)
-            kfgString.toCharArray -> toCharArray(predicate.lhv, `this`)
+            kfgString.toString, kfgCharSequence.charAt -> toString(predicate.lhv, `this`)
+            kfgString.toCharArray, kfgCharSequence.charAt -> toCharArray(predicate.lhv, `this`)
             else -> predicate.wrap()
         }
         return nothing()

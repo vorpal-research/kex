@@ -151,9 +151,46 @@ class ExceptionPreconditionManager(
             val contracts = mutableMapOf<Class, ExceptionPreConditionBuilder>()
             contracts[cm["java/lang/NumberFormatException"]] = object : ExceptionPreConditionBuilder {
                 override fun build(location: CallInst, state: TraverserState): List<PersistentSymbolicState> {
-                    val startsWithMethod = stringClass.getMethod("startsWith", tf.boolType, stringClass.asType)
+//                    val startsWithMethod = stringClass.getMethod("startsWith", tf.boolType, stringClass.asType)
                     val lengthMethod = stringClass.getMethod("length", tf.intType)
-                    val prefixConditionTerm = generate(KexBool)
+//                    val prefixConditionTerm = generate(KexBool)
+                    val lengthTerm = generate(KexInt)
+                    val argTerm = state.mkTerm(location.args[0])
+
+                    return listOf(
+                        persistentSymbolicState(
+                            state = persistentClauseStateOf(
+                                StateClause(location, state { lengthTerm.call(argTerm.call(lengthMethod)) })
+                            ),
+                            path = persistentPathConditionOf(
+                                PathClause(PathClauseType.BOUNDS_CHECK, location, path {
+                                    (lengthTerm gt 0) equality false
+                                })
+                            )
+                        ),
+                        persistentSymbolicState(
+                            state = persistentClauseStateOf(
+                                StateClause(location, state { lengthTerm.call(argTerm.call(lengthMethod)) })
+                            ),
+                            path = persistentPathConditionOf(
+                                PathClause(PathClauseType.BOUNDS_CHECK, location, path {
+                                    (lengthTerm le 32) equality false
+                                })
+                            )
+                        ),
+                    )
+                }
+            }
+            contracts
+        }
+
+
+        val inetAddressClass = cm["java/net/InetAddress"]
+        conditions.getOrPut(inetAddressClass.getMethod("getAllByName", inetAddressClass.asType.asArray, stringClass.asType)) {
+            val contracts = mutableMapOf<Class, ExceptionPreConditionBuilder>()
+            contracts[cm["java/lang/IllegalArgumentException"]] = object : ExceptionPreConditionBuilder {
+                override fun build(location: CallInst, state: TraverserState): List<PersistentSymbolicState> {
+                    val lengthMethod = stringClass.getMethod("length", tf.intType)
                     val lengthTerm = generate(KexInt)
                     val argTerm = state.mkTerm(location.args[0])
 

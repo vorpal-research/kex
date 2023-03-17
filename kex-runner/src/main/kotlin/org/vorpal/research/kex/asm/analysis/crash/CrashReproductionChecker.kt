@@ -347,7 +347,7 @@ class CrashReproductionChecker(
 
                 is CallInst -> preconditionManager.resolve(targetInst, targetException)
                     ?.build(targetInst, state)
-                    ?: emptyList()
+                    ?: persistentSymbolicState().asList()
 
                 else -> unreachable { log.error("Instruction ${targetInst.print()} does not throw class cast") }
             }
