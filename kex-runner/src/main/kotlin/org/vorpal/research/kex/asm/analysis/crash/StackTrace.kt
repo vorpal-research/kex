@@ -19,7 +19,8 @@ data class StackTrace(
                 val (fileName, lineNumber) = when {
                     line.endsWith("(Native Method)") -> null to "-2"
                     line.endsWith("(Unknown Source)") -> null to "-1"
-                    else -> location.dropLast(1).splitAtLast(':')
+                    ':' in location -> location.dropLast(1).splitAtLast(':')
+                    else -> location.dropLast(1) to "-1"
                 }
                 stackTraceLines += StackTraceElement(klassName, methodName, fileName, lineNumber.toInt())
             }
