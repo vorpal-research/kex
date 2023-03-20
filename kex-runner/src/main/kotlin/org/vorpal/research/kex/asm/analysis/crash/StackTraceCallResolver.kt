@@ -37,6 +37,6 @@ class StackTraceCallResolver(
             else -> {
                 fallback.resolve(state, inst)
             }
-        }
+        }.filter { it.body.isNotEmpty() }
     }
 }

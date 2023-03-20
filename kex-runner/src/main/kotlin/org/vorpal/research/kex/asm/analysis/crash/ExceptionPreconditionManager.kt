@@ -8,6 +8,7 @@ import org.vorpal.research.kex.state.predicate.path
 import org.vorpal.research.kex.state.predicate.state
 import org.vorpal.research.kex.state.term.TermBuilder
 import org.vorpal.research.kex.trace.symbolic.*
+import org.vorpal.research.kfg.charWrapper
 import org.vorpal.research.kfg.intWrapper
 import org.vorpal.research.kfg.ir.Class
 import org.vorpal.research.kfg.ir.Method
@@ -212,6 +213,40 @@ class ExceptionPreconditionManager(
                             path = persistentPathConditionOf(
                                 PathClause(PathClauseType.BOUNDS_CHECK, location, path {
                                     (lengthTerm le 32) equality false
+                                })
+                            )
+                        ),
+                    )
+                }
+            }
+            contracts
+        }
+
+        val charClass = cm.charWrapper
+        conditions.getOrPut(charClass.getMethod("codePointAt", tf.intType, charSequenceClass.asType, tf.intType)) {
+            val contracts = mutableMapOf<Class, ExceptionPreConditionBuilder>()
+            contracts[cm["java/lang/StringIndexOutOfBoundsException"]] = object : ExceptionPreConditionBuilder {
+                override fun build(location: CallInst, state: TraverserState): List<PersistentSymbolicState> {
+                    val lengthMethod = charSequenceClass.getMethod("length", tf.intType)
+                    val lengthTerm = generate(KexInt)
+                    val charSeqTerm = state.mkTerm(location.args[0])
+                    val indexTerm = state.mkTerm(location.args[1])
+
+                    return listOf(
+                        persistentSymbolicState(
+                            path = persistentPathConditionOf(
+                                PathClause(PathClauseType.BOUNDS_CHECK, location, path {
+                                    (indexTerm gt 0) equality false
+                                })
+                            )
+                        ),
+                        persistentSymbolicState(
+                            state = persistentClauseStateOf(
+                                StateClause(location, state { lengthTerm.call(charSeqTerm.call(lengthMethod)) })
+                            ),
+                            path = persistentPathConditionOf(
+                                PathClause(PathClauseType.BOUNDS_CHECK, location, path {
+                                    (indexTerm lt lengthTerm) equality false
                                 })
                             )
                         ),

@@ -14,9 +14,7 @@ import org.vorpal.research.kex.reanimator.codegen.klassName
 import org.vorpal.research.kex.state.predicate.path
 import org.vorpal.research.kex.state.term.Term
 import org.vorpal.research.kex.trace.symbolic.*
-import org.vorpal.research.kex.util.asList
-import org.vorpal.research.kex.util.asmString
-import org.vorpal.research.kex.util.newFixedThreadPoolContextWithMDC
+import org.vorpal.research.kex.util.*
 import org.vorpal.research.kfg.ClassManager
 import org.vorpal.research.kfg.ir.Method
 import org.vorpal.research.kfg.ir.value.ThisRef
@@ -24,6 +22,11 @@ import org.vorpal.research.kfg.ir.value.instruction.*
 import org.vorpal.research.kthelper.assert.ktassert
 import org.vorpal.research.kthelper.assert.unreachable
 import org.vorpal.research.kthelper.logging.log
+import java.io.PrintWriter
+import java.io.StringWriter
+import java.lang.reflect.InvocationTargetException
+import java.net.URL
+import java.net.URLClassLoader
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.ExperimentalTime
 
@@ -215,13 +218,16 @@ class CrashReproductionChecker(
 
     override fun report(inst: Instruction, parameters: Parameters<Descriptor>, testPostfix: String) {
         if (inst in targetInstructions) {
-            foundAnExample = true
             val testName = rootMethod.klassName + testPostfix + testIndex.getAndIncrement()
             val generator = UnsafeGenerator(ctx, rootMethod, testName)
             generator.generate(parameters)
             val testFile = generator.emit()
             try {
                 compilerHelper.compileFile(testFile)
+                if (!generator.testKlassName.reproducesTestCase) {
+                    return
+                }
+                foundAnExample = true
                 generatedTestClasses += generator.testKlassName
             } catch (e: CompilationException) {
                 log.error("Failed to compile test file $testFile")
@@ -352,4 +358,65 @@ class CrashReproductionChecker(
                 else -> unreachable { log.error("Instruction ${targetInst.print()} does not throw class cast") }
             }
         }
+
+
+    private val String.reproducesTestCase: Boolean
+        get() {
+            val resultingStackTrace = executeTest(this)
+            return stackTrace.throwable == resultingStackTrace.throwable &&
+                    resultingStackTrace.stackTraceLines.containsAll(stackTrace.stackTraceLines)
+        }
+
+
+    private fun executeTest(testKlass: String): StackTrace {
+        val loader = CustomURLClassLoader(
+            listOfNotNull(kexConfig.compiledCodeDirectory.toUri().toURL(), getJunit()?.path?.toUri()?.toURL()) +
+                    ctx.classPath.map { it.toUri().toURL() }
+        )
+        val actualClass = loader.loadClass(testKlass)
+        val instance = actualClass.getConstructor().newInstance()
+
+        try {
+            val setup = actualClass.getMethod("setup")
+            setup.invoke(instance)
+        } catch (e: Throwable) {
+            throw e
+        }
+
+        return try {
+            val test = actualClass.getMethod("test")
+            test.invoke(instance)
+            unreachable("Provided test did not produce any crashes")
+        } catch (e: Throwable) {
+            var exception = e
+            while (exception is InvocationTargetException) {
+                exception = exception.targetException
+            }
+            exception.toStackTrace()
+        }
+    }
+
+    private fun Throwable.toStackTrace(): StackTrace {
+        val stringWriter = StringWriter()
+        this.printStackTrace(PrintWriter(stringWriter))
+        return StackTrace.parse(stringWriter.toString()).let {
+            StackTrace(it.firstLine, it.stackTraceLines)
+        }
+    }
+
+    private val StackTrace.throwable get() = firstLine.takeWhile { it != ':' }
+
+    class CustomURLClassLoader(
+        urls: List<URL>
+    ) : ClassLoader() {
+        private val inner = URLClassLoader(urls.toTypedArray(), null)
+
+        override fun loadClass(name: String?): Class<*> {
+            return try {
+                inner.loadClass(name)
+            } catch (e: Throwable) {
+                return parent.loadClass(name)
+            }
+        }
+    }
 }

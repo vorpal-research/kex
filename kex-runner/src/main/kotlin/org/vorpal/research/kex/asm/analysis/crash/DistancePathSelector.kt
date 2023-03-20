@@ -57,6 +57,8 @@ class RandomizedDistancePathSelector(
 //        executionTree.view()
     }
 
+    private val ULong.normalized: ULong get() = maxScore - this
+
     override suspend fun hasNext(): Boolean = queue.isNotEmpty()
 
     override suspend fun next(): Pair<TraverserState, BasicBlock> {
@@ -69,13 +71,12 @@ class RandomizedDistancePathSelector(
         val randomWeight = ctx.random.nextULong(maxScore + 1UL)
         var currentWeight = 0UL
         for (triple in queue) {
-            val normalizedScore = maxScore - triple.third
-            if (currentWeight + normalizedScore >= randomWeight) {
+            if (currentWeight + triple.third.normalized >= randomWeight) {
                 queue.remove(triple)
                 maxScore -= triple.third
                 return triple.first to triple.second
             } else {
-                currentWeight += normalizedScore
+                currentWeight += triple.third.normalized
             }
         }
         return unreachable { log.error("Something went wrong with the randomized choice") }
