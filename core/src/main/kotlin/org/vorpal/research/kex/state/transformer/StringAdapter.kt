@@ -744,6 +744,7 @@ class StringMethodAdapter(cm: ClassManager) : StringMethodContext(cm), Recollect
     override fun transformCallPredicate(predicate: CallPredicate): Predicate {
         val call = predicate.call as CallTerm
         val args = call.arguments
+        if (call.owner.type !is KexClass) return predicate
 
         val kfgString = (stringType as ClassType).klass
         val kfgCharSequence = (charSeqType as ClassType).klass
