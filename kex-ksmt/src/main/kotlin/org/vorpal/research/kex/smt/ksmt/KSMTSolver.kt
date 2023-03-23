@@ -8,8 +8,10 @@ import org.ksmt.runner.core.*
 import org.ksmt.solver.KModel
 import org.ksmt.solver.KSolverException
 import org.ksmt.solver.KSolverStatus
-import org.ksmt.solver.runner.KSolverRunner
-import org.ksmt.solver.runner.KSolverRunnerManager
+import org.ksmt.solver.bitwuzla.KBitwuzlaSolver
+import org.ksmt.solver.cvc5.KCvc5Solver
+import org.ksmt.solver.portfolio.KPortfolioSolver
+import org.ksmt.solver.portfolio.KPortfolioSolverManager
 import org.ksmt.solver.z3.KZ3Solver
 import org.ksmt.sort.KBoolSort
 import org.vorpal.research.kex.ExecutionContext
@@ -44,9 +46,10 @@ private val ksmtRunners = kexConfig.getIntValue("ksmt", "runners", 4)
 @AsyncSolver("ksmt")
 class KSMTSolver(private val executionContext: ExecutionContext) : AbstractSMTSolver, AbstractAsyncSMTSolver {
     companion object {
-        private val solverManager: KSolverRunnerManager by lazy {
-            KSolverRunnerManager(
-                workerPoolSize = ksmtRunners,
+        private val portfolioSolverManager: KPortfolioSolverManager by lazy {
+            KPortfolioSolverManager(
+                solvers = listOf(KZ3Solver::class, KBitwuzlaSolver::class, KCvc5Solver::class),
+                portfolioPoolSize = ksmtRunners,
                 hardTimeout = timeout.seconds * 2,
                 workerProcessIdleTimeout = 10.seconds,
             )
@@ -168,9 +171,9 @@ class KSMTSolver(private val executionContext: ExecutionContext) : AbstractSMTSo
         }
     }
 
-    private suspend fun buildSolver(): KSolverRunner<*> {
+    private suspend fun buildSolver(): KPortfolioSolver {
         if (!currentCoroutineContext().isActive) yield()
-        return solverManager.createSolverAsync(ef.ctx, KZ3Solver::class)
+        return portfolioSolverManager.createPortfolioSolver(ef.ctx)
     }
 
     private fun KSMTContext.recoverBitvectorProperty(

@@ -183,7 +183,7 @@ abstract class SymbolicTraverser(
         }
     }
 
-    private fun nullableCurrentState() {
+    protected fun nullableCurrentState() {
         currentState = null
     }
 
