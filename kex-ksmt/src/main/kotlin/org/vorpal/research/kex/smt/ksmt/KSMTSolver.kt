@@ -5,11 +5,7 @@ package org.vorpal.research.kex.smt.ksmt
 import kotlinx.coroutines.*
 import org.ksmt.expr.KExpr
 import org.ksmt.runner.core.*
-import org.ksmt.solver.KModel
-import org.ksmt.solver.KSolverException
-import org.ksmt.solver.KSolverStatus
-import org.ksmt.solver.bitwuzla.KBitwuzlaSolver
-import org.ksmt.solver.cvc5.KCvc5Solver
+import org.ksmt.solver.*
 import org.ksmt.solver.portfolio.KPortfolioSolver
 import org.ksmt.solver.portfolio.KPortfolioSolverManager
 import org.ksmt.solver.z3.KZ3Solver
@@ -24,11 +20,13 @@ import org.vorpal.research.kex.state.term.*
 import org.vorpal.research.kex.state.transformer.collectPointers
 import org.vorpal.research.kex.state.transformer.collectVariables
 import org.vorpal.research.kex.state.transformer.memspace
+import org.vorpal.research.kex.util.kapitalize
 import org.vorpal.research.kthelper.assert.ktassert
 import org.vorpal.research.kthelper.assert.unreachable
 import org.vorpal.research.kthelper.logging.debug
 import org.vorpal.research.kthelper.logging.log
 import kotlin.math.log2
+import kotlin.reflect.KClass
 import kotlin.reflect.full.declaredMemberProperties
 import kotlin.reflect.jvm.isAccessible
 import kotlin.time.Duration.Companion.seconds
@@ -40,6 +38,7 @@ private val logFormulae = kexConfig.getBooleanValue("smt", "logFormulae", false)
 private val printSMTLib = kexConfig.getBooleanValue("smt", "logSMTLib", false)
 private val maxArrayLength = kexConfig.getIntValue("smt", "maxArrayLength", 1000)
 private val ksmtRunners = kexConfig.getIntValue("ksmt", "runners", 4)
+private val ksmtSolvers = kexConfig.getMultipleStringValue("ksmt", "solver")
 
 @Suppress("UNCHECKED_CAST")
 @Solver("ksmt")
@@ -48,7 +47,10 @@ class KSMTSolver(private val executionContext: ExecutionContext) : AbstractSMTSo
     companion object {
         private val portfolioSolverManager: KPortfolioSolverManager by lazy {
             KPortfolioSolverManager(
-                solvers = listOf(KZ3Solver::class, KBitwuzlaSolver::class, KCvc5Solver::class),
+                solvers = ksmtSolvers.map {
+                    Class.forName("org.ksmt.solver.${it}.K${it.kapitalize()}Solver").kotlin
+                            as KClass<out KSolver<out KSolverConfiguration>>
+                },
                 portfolioPoolSize = ksmtRunners,
                 hardTimeout = timeout.seconds * 2,
                 workerProcessIdleTimeout = 10.seconds,
