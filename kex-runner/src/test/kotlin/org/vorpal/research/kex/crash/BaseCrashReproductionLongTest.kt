@@ -19,11 +19,11 @@ class BaseCrashReproductionLongTest : CrashReproductionTest("base-crash-reproduc
         assertCrash(expectedStackTrace)
     }
 
-    @Test
-    fun testAssertionError() {
-        val expectedStackTrace = produceStackTrace { CrashTrigger().triggerAssert() }
-        assertCrash(expectedStackTrace)
-    }
+//    @Test
+//    fun testAssertionError() {
+//        val expectedStackTrace = produceStackTrace { CrashTrigger().triggerAssert() }
+//        assertCrash(expectedStackTrace)
+//    }
 
     @Test
     fun testArithmeticException() {

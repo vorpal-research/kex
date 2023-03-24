@@ -48,7 +48,6 @@ abstract class CrashReproductionTest(testDirectoryName: String) : KexRunnerTest(
             +ClassInstantiationDetector(analysisContext)
         }
 
-        log.error(expectedStackTrace)
         val crashes = CrashReproductionChecker.run(analysisContext, expectedStackTrace)
         assertTrue(crashes.isNotEmpty())
         for (crash in crashes) {
