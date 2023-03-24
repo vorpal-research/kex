@@ -11,8 +11,8 @@ data class StackTrace(
             val lines = text.split(System.lineSeparator()).filter { it.isNotBlank() }
             val firstLine = lines.first()
             val stackTraceLines = mutableListOf<StackTraceElement>()
-            for (line in lines.drop(1)) {
-                val codeElement = line.trim().replace("\\s*at ".toRegex(), "")
+            for (line in lines.drop(1).dropWhile { !it.contains("^\\s*at ".toRegex()) }) {
+                val codeElement = line.trim().replace("\\s*at\\s+".toRegex(), "")
                     .substringBefore(' ').trim()
                 val (klassAndMethod, location) = codeElement.split('(')
                 val (klassName, methodName) = klassAndMethod.splitAtLast('.')
