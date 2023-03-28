@@ -22,17 +22,17 @@ sealed class Descriptor(term: Term, type: KexType) {
     var type = type
         protected set
 
-    protected var _klassDescriptor: ObjectDescriptor? = null
+    private var innerKlassDescriptor: ObjectDescriptor? = null
 
     var klassDescriptor: ObjectDescriptor
         get() {
-            if (_klassDescriptor == null) {
-                _klassDescriptor = descriptor { klass(type) } as ObjectDescriptor
+            if (innerKlassDescriptor == null) {
+                innerKlassDescriptor = descriptor { klass(type) } as ObjectDescriptor
             }
-            return _klassDescriptor!!
+            return innerKlassDescriptor!!
         }
         set(value) {
-            _klassDescriptor = value
+            innerKlassDescriptor = value
         }
 
     val query: PredicateState get() = collectQuery(mutableSetOf())
