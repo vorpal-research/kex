@@ -90,6 +90,30 @@ object KSMTUnlogic {
                 const(lhv.numericValue >= rhv.numericValue)
             }
 
+            is KBvUnsignedLessExpr<*> -> {
+                val lhv = undo(expr.args[0], ctx, model, mappings)
+                val rhv = undo(expr.args[1], ctx, model, mappings)
+                const(lhv.numericValue < rhv.numericValue)
+            }
+
+            is KBvUnsignedLessOrEqualExpr<*> -> {
+                val lhv = undo(expr.args[0], ctx, model, mappings)
+                val rhv = undo(expr.args[1], ctx, model, mappings)
+                const(lhv.numericValue <= rhv.numericValue)
+            }
+
+            is KBvUnsignedGreaterExpr<*> -> {
+                val lhv = undo(expr.args[0], ctx, model, mappings)
+                val rhv = undo(expr.args[1], ctx, model, mappings)
+                const(lhv.numericValue > rhv.numericValue)
+            }
+
+            is KBvUnsignedGreaterOrEqualExpr<*> -> {
+                val lhv = undo(expr.args[0], ctx, model, mappings)
+                val rhv = undo(expr.args[1], ctx, model, mappings)
+                const(lhv.numericValue >= rhv.numericValue)
+            }
+
             is KNotExpr -> const(!undo(expr.args[0], ctx, model, mappings).boolValue)
 
             is KEqExpr<*> -> {

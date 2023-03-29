@@ -22,6 +22,7 @@ annotation class SMTExprFactory(
         val solver: String,
         val importPackages: Array<String>,
         val context: String,
+        val contextInitializer: String = "",
         val generateString: Boolean = false
 )
 

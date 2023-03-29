@@ -1,0 +1,7 @@
+#* @implicitly included *#
+#* @vtlvariable name="packageName" type="java.lang.String" *#
+#* @vtlvariable name="importPackages" type="java.lang.String[]" *#
+#* @vtlvariable name="solver" type="java.lang.String" *#
+#* @vtlvariable name="generateString" type="boolean" *#
+#* @vtlvariable name="context" type="java.lang.String" *#
+#* @vtlvariable name="contextInitializer" type="java.lang.String" *#
