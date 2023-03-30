@@ -544,7 +544,10 @@ object KSMTEngine : SMTEngine<KContext, KAst, KSort, KFuncDecl<*>, KAst>() {
 
     override fun conjunction(ctx: KContext, exprs: Collection<KAst>): KExpr<*> {
         val boolExpressions = exprs.map { it.asExpr(ctx) as KExpr<KBoolSort> }
-        return ctx.mkAnd(boolExpressions)
+        return when (boolExpressions.size) {
+            1 -> boolExpressions.single()
+            else -> ctx.mkAnd(boolExpressions)
+        }
     }
 
     override fun zext(ctx: KContext, n: Int, expr: KAst): KExpr<*> {

@@ -110,6 +110,7 @@ class KSMTSolver(private val executionContext: ExecutionContext) : AbstractSMTSo
     } catch (e: KSolverException) {
         if (e.cause !is TimeoutCancellationException) {
             log.warn("KSMT thrown an exception during check", e)
+            throw e
         }
         Result.UnknownResult(e.message ?: "Exception in KSMT")
     } catch (e: WorkerInitializationFailedException) {
@@ -127,20 +128,14 @@ class KSMTSolver(private val executionContext: ExecutionContext) : AbstractSMTSo
             }
         }
 
-        solver.assertAsync(state.asAxiom() as KExpr<KBoolSort>)
-        solver.assertAsync(ef.buildConstClassAxioms().asAxiom() as KExpr<KBoolSort>)
-        solver.assertAsync(query.axiom as KExpr<KBoolSort>)
-        solver.assertAsync(query.expr as KExpr<KBoolSort>)
-
-        log.debug("Running KSMT solver")
         if (printSMTLib) {
             log.debug("SMTLib formula:")
             log.debug(
                 KZ3Solver(ef.ctx).use {
                     it.assert(state.asAxiom() as KExpr<KBoolSort>)
                     it.assert(ef.buildConstClassAxioms().asAxiom() as KExpr<KBoolSort>)
-                    it.assert(query.axiom)
-                    it.assert(query.expr)
+                    it.assert(query.axiom as KExpr<KBoolSort>)
+                    it.assert(query.expr as KExpr<KBoolSort>)
 
                     val solverProp = KZ3Solver::class.declaredMemberProperties.first { prop -> prop.name == "solver" }
                     solverProp.isAccessible = true
@@ -149,6 +144,12 @@ class KSMTSolver(private val executionContext: ExecutionContext) : AbstractSMTSo
                 }
             )
         }
+
+        solver.assertAsync(state.asAxiom() as KExpr<KBoolSort>)
+        solver.assertAsync(ef.buildConstClassAxioms().asAxiom() as KExpr<KBoolSort>)
+        solver.assertAsync(query.axiom as KExpr<KBoolSort>)
+        solver.assertAsync(query.expr as KExpr<KBoolSort>)
+        log.debug("Running KSMT solver")
         val result = solver.checkAsync(timeout.seconds)
         log.debug("Solver finished")
 
