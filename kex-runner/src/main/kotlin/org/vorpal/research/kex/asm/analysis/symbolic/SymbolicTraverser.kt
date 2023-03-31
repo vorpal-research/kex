@@ -19,6 +19,10 @@ import org.vorpal.research.kex.state.predicate.state
 import org.vorpal.research.kex.state.term.*
 import org.vorpal.research.kex.state.transformer.*
 import org.vorpal.research.kex.trace.symbolic.*
+import org.vorpal.research.kex.util.arrayIndexOOBClass
+import org.vorpal.research.kex.util.classCastClass
+import org.vorpal.research.kex.util.negativeArrayClass
+import org.vorpal.research.kex.util.nullptrClass
 import org.vorpal.research.kfg.ClassManager
 import org.vorpal.research.kfg.ir.BasicBlock
 import org.vorpal.research.kfg.ir.Method
@@ -74,10 +78,10 @@ abstract class SymbolicTraverser(
     protected var testIndex = AtomicInteger(0)
     protected val compilerHelper = CompilerHelper(ctx)
 
-    protected val nullptrClass = cm["java/lang/NullPointerException"]
-    protected val arrayIndexOOBClass = cm["java/lang/ArrayIndexOutOfBoundsException"]
-    protected val negativeArrayClass = cm["java/lang/NegativeArraySizeException"]
-    protected val classCastClass = cm["java/lang/ClassCastException"]
+    protected val nullptrClass = cm.nullptrClass
+    protected val arrayIndexOOBClass = cm.arrayIndexOOBClass
+    protected val negativeArrayClass = cm.negativeArrayClass
+    protected val classCastClass = cm.classCastClass
 
     protected val Type.symbolicType: KexType get() = kexType.rtMapped
     protected val org.vorpal.research.kfg.ir.Class.symbolicClass: KexType get() = kexType.rtMapped
@@ -996,7 +1000,7 @@ abstract class SymbolicTraverser(
         inst: Instruction,
         parameters: Parameters<Descriptor>,
         testPostfix: String = ""
-    ) {
+    ): Boolean {
         val generator = UnsafeGenerator(
             ctx,
             rootMethod,
@@ -1004,10 +1008,12 @@ abstract class SymbolicTraverser(
         )
         generator.generate(parameters)
         val testFile = generator.emit()
-        try {
+        return try {
             compilerHelper.compileFile(testFile)
+            true
         } catch (e: CompilationException) {
             log.error("Failed to compile test file $testFile")
+            false
         }
     }
 

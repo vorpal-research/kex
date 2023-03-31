@@ -16,6 +16,7 @@ import org.vorpal.research.kfg.ir.Method
 import org.vorpal.research.kthelper.logging.debug
 import org.vorpal.research.kthelper.logging.log
 
+@Suppress("MemberVisibilityCanBePrivate")
 class AsyncChecker(
     val method: Method,
     val ctx: ExecutionContext,
@@ -24,13 +25,12 @@ class AsyncChecker(
     private val logQuery = kexConfig.getBooleanValue("smt", "logQuery", false)
     private val psa = PredicateStateAnalysis(ctx.cm)
 
-    private val loader get() = ctx.loader
     lateinit var state: PredicateState
         private set
     lateinit var query: PredicateState
         private set
 
-    private fun prepareState(
+    fun prepareState(
         method: Method,
         state: PredicateState,
         typeMap: TypeInfoMap

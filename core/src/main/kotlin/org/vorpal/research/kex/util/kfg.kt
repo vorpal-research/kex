@@ -153,3 +153,14 @@ val ClassManager.abstractMapClass get() = this[SystemTypeNames.abstractMapClass]
 
 val String.asmString get() = replace(Package.CANONICAL_SEPARATOR, Package.SEPARATOR)
 val String.javaString get() = replace(Package.SEPARATOR, Package.CANONICAL_SEPARATOR)
+
+
+
+val ClassManager.nullptrClass get() = this["java/lang/NullPointerException"]
+val ClassManager.arrayIndexOOBClass get() = this["java/lang/ArrayIndexOutOfBoundsException"]
+val ClassManager.negativeArrayClass get() = this["java/lang/NegativeArraySizeException"]
+val ClassManager.classCastClass get() = this["java/lang/ClassCastException"]
+val ClassManager.stringIndexOOB get() = this["java/lang/StringIndexOutOfBoundsException"]
+
+val ClassManager.numberFormatClass get() = this["java/lang/NumberFormatException"]
+val ClassManager.illegalArgumentClass get() = this["java/lang/IllegalArgumentException"]
