@@ -71,6 +71,7 @@ fun String.splitAtLast(str: String): Pair<String, String> {
 }
 
 fun <T : Any> T.asList() = listOf(this)
+fun <T : Any> T.asSet() = setOf(this)
 
 
 fun deleteOnExit(file: File) = deleteOnExit(file.toPath())

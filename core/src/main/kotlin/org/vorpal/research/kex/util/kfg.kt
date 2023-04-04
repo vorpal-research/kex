@@ -164,3 +164,5 @@ val ClassManager.stringIndexOOB get() = this["java/lang/StringIndexOutOfBoundsEx
 
 val ClassManager.numberFormatClass get() = this["java/lang/NumberFormatException"]
 val ClassManager.illegalArgumentClass get() = this["java/lang/IllegalArgumentException"]
+
+val ClassManager.runtimeException get() = this["java/lang/RuntimeException"]

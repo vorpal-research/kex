@@ -2,34 +2,62 @@ package org.vorpal.research.kex.asm.analysis.crash
 
 import org.vorpal.research.kex.ExecutionContext
 import org.vorpal.research.kex.asm.analysis.symbolic.TraverserState
+import org.vorpal.research.kex.descriptor.ArrayDescriptor
+import org.vorpal.research.kex.descriptor.ConstantDescriptor
+import org.vorpal.research.kex.descriptor.Descriptor
+import org.vorpal.research.kex.descriptor.FieldContainingDescriptor
 import org.vorpal.research.kex.ktype.KexInt
 import org.vorpal.research.kex.ktype.kexType
+import org.vorpal.research.kex.parameters.Parameters
 import org.vorpal.research.kex.state.predicate.path
 import org.vorpal.research.kex.state.predicate.state
+import org.vorpal.research.kex.state.term.Term
 import org.vorpal.research.kex.state.term.TermBuilder
-import org.vorpal.research.kex.trace.symbolic.*
-import org.vorpal.research.kex.util.*
+import org.vorpal.research.kex.trace.symbolic.PathClause
+import org.vorpal.research.kex.trace.symbolic.PathClauseType
+import org.vorpal.research.kex.trace.symbolic.PersistentSymbolicState
+import org.vorpal.research.kex.trace.symbolic.StateClause
+import org.vorpal.research.kex.trace.symbolic.persistentClauseStateOf
+import org.vorpal.research.kex.trace.symbolic.persistentPathConditionOf
+import org.vorpal.research.kex.trace.symbolic.persistentSymbolicState
+import org.vorpal.research.kex.util.arrayIndexOOBClass
+import org.vorpal.research.kex.util.asSet
+import org.vorpal.research.kex.util.classCastClass
+import org.vorpal.research.kex.util.illegalArgumentClass
+import org.vorpal.research.kex.util.negativeArrayClass
+import org.vorpal.research.kex.util.nullptrClass
+import org.vorpal.research.kex.util.numberFormatClass
+import org.vorpal.research.kex.util.stringIndexOOB
 import org.vorpal.research.kfg.charWrapper
 import org.vorpal.research.kfg.intWrapper
 import org.vorpal.research.kfg.ir.Class
 import org.vorpal.research.kfg.ir.Method
-import org.vorpal.research.kfg.ir.value.instruction.*
+import org.vorpal.research.kfg.ir.value.instruction.Instruction
+import org.vorpal.research.kfg.ir.value.instruction.ArrayLoadInst
+import org.vorpal.research.kfg.ir.value.instruction.ArrayStoreInst
+import org.vorpal.research.kfg.ir.value.instruction.CallInst
+import org.vorpal.research.kfg.ir.value.instruction.CastInst
+import org.vorpal.research.kfg.ir.value.instruction.FieldLoadInst
+import org.vorpal.research.kfg.ir.value.instruction.FieldStoreInst
+import org.vorpal.research.kfg.ir.value.instruction.NewArrayInst
+import org.vorpal.research.kfg.ir.value.instruction.ThrowInst
 import org.vorpal.research.kfg.stringClass
 import org.vorpal.research.kfg.type.SystemTypeNames
 import org.vorpal.research.kthelper.assert.unreachable
 import org.vorpal.research.kthelper.logging.log
 
 interface ExceptionPreConditionBuilder {
-    fun build(location: Instruction, state: TraverserState): List<PersistentSymbolicState>
+    val targetException: Class
+    fun build(location: Instruction, state: TraverserState): Set<PersistentSymbolicState>
 }
 
 class ExceptionPreConditionBuilderImpl(
     val ctx: ExecutionContext,
-    private val targetException: Class,
+    override val targetException: Class,
 ) : ExceptionPreConditionBuilder {
     val cm get() = ctx.cm
     private val preconditionManager = ExceptionPreconditionManager(ctx)
-    override fun build(location: Instruction, state: TraverserState): List<PersistentSymbolicState> =
+    override fun build(location: Instruction, state: TraverserState): Set<PersistentSymbolicState> =
         when (targetException) {
             cm.nullptrClass -> persistentSymbolicState(
                 path = when (location) {
@@ -74,7 +102,7 @@ class ExceptionPreConditionBuilderImpl(
 
                     else -> unreachable { log.error("Instruction ${location.print()} does not throw null pointer") }
                 }
-            ).asList()
+            ).asSet()
 
             cm.arrayIndexOOBClass -> {
                 val (arrayTerm, indexTerm) = when (location) {
@@ -82,7 +110,7 @@ class ExceptionPreConditionBuilderImpl(
                     is ArrayStoreInst -> state.mkTerm(location.arrayRef) to state.mkTerm(location.index)
                     else -> unreachable { log.error("Instruction ${location.print()} does not throw array index out of bounds") }
                 }
-                listOf(
+                setOf(
                     persistentSymbolicState(
                         path = persistentPathConditionOf(
                             PathClause(PathClauseType.BOUNDS_CHECK, location, path {
@@ -101,7 +129,7 @@ class ExceptionPreConditionBuilderImpl(
             }
 
             cm.negativeArrayClass -> when (location) {
-                is NewArrayInst -> location.dimensions.map { length ->
+                is NewArrayInst -> location.dimensions.mapTo(mutableSetOf()) { length ->
                     persistentSymbolicState(
                         path = persistentPathConditionOf(
                             PathClause(PathClauseType.BOUNDS_CHECK, location, path {
@@ -115,28 +143,26 @@ class ExceptionPreConditionBuilderImpl(
             }
 
             cm.classCastClass -> when (location) {
-                is CastInst -> listOf(
-                    persistentSymbolicState(
-                        path = persistentPathConditionOf(
-                            PathClause(PathClauseType.BOUNDS_CHECK, location, path {
-                                (state.mkTerm(location.operand) `is` location.type.kexType) equality false
-                            }),
-                        )
+                is CastInst -> persistentSymbolicState(
+                    path = persistentPathConditionOf(
+                        PathClause(PathClauseType.BOUNDS_CHECK, location, path {
+                            (state.mkTerm(location.operand) `is` location.type.kexType) equality false
+                        }),
                     )
-                )
+                ).asSet()
 
                 else -> unreachable { log.error("Instruction ${location.print()} does not throw class cast") }
             }
 
             else -> when (location) {
                 is ThrowInst -> when (location.throwable.type) {
-                    targetException.asType -> persistentSymbolicState().asList()
-                    else -> emptyList()
+                    targetException.asType -> persistentSymbolicState().asSet()
+                    else -> emptySet()
                 }
 
                 is CallInst -> preconditionManager.resolve(location, targetException)
                     ?.build(location, state)
-                    ?: persistentSymbolicState().asList()
+                    ?: persistentSymbolicState().asSet()
 
                 else -> unreachable { log.error("Instruction ${location.print()} does not throw target exception") }
             }
@@ -159,11 +185,13 @@ class ExceptionPreconditionManager(
         conditions.getOrPut(charSequenceClass.getMethod("charAt", tf.charType, tf.intType)) {
             val contracts = mutableMapOf<Class, ExceptionPreConditionBuilder>()
             contracts[cm.stringIndexOOB] = object : ExceptionPreConditionBuilder {
-                override fun build(location: Instruction, state: TraverserState): List<PersistentSymbolicState> {
+                override val targetException get() = cm.stringIndexOOB
+
+                override fun build(location: Instruction, state: TraverserState): Set<PersistentSymbolicState> {
                     location as CallInst
                     val lengthMethod = charSequenceClass.getMethod("length", tf.intType)
                     val lengthTerm = generate(KexInt)
-                    return listOf(
+                    return setOf(
                         persistentSymbolicState(
                             path = persistentPathConditionOf(
                                 PathClause(PathClauseType.BOUNDS_CHECK, location, path {
@@ -192,11 +220,13 @@ class ExceptionPreconditionManager(
         conditions.getOrPut(stringClass.getMethod("substring", stringClass.asType, tf.intType)) {
             val contracts = mutableMapOf<Class, ExceptionPreConditionBuilder>()
             contracts[cm.stringIndexOOB] = object : ExceptionPreConditionBuilder {
-                override fun build(location: Instruction, state: TraverserState): List<PersistentSymbolicState> {
+                override val targetException get() = cm.stringIndexOOB
+
+                override fun build(location: Instruction, state: TraverserState): Set<PersistentSymbolicState> {
                     location as CallInst
                     val lengthMethod = stringClass.getMethod("length", tf.intType)
                     val lengthTerm = generate(KexInt)
-                    return listOf(
+                    return setOf(
                         persistentSymbolicState(
                             path = persistentPathConditionOf(
                                 PathClause(PathClauseType.BOUNDS_CHECK, location, path {
@@ -225,11 +255,13 @@ class ExceptionPreconditionManager(
         conditions.getOrPut(stringClass.getMethod("substring", stringClass.asType, tf.intType, tf.intType)) {
             val contracts = mutableMapOf<Class, ExceptionPreConditionBuilder>()
             contracts[cm.stringIndexOOB] = object : ExceptionPreConditionBuilder {
-                override fun build(location: Instruction, state: TraverserState): List<PersistentSymbolicState> {
+                override val targetException get() = cm.stringIndexOOB
+
+                override fun build(location: Instruction, state: TraverserState): Set<PersistentSymbolicState> {
                     location as CallInst
                     val lengthMethod = stringClass.getMethod("length", tf.intType)
                     val lengthTerm = generate(KexInt)
-                    return listOf(
+                    return setOf(
                         persistentSymbolicState(
                             path = persistentPathConditionOf(
                                 PathClause(PathClauseType.BOUNDS_CHECK, location, path {
@@ -277,7 +309,9 @@ class ExceptionPreconditionManager(
         conditions.getOrPut(integerClass.getMethod("decode", integerClass.asType, stringClass.asType)) {
             val contracts = mutableMapOf<Class, ExceptionPreConditionBuilder>()
             contracts[cm.numberFormatClass] = object : ExceptionPreConditionBuilder {
-                override fun build(location: Instruction, state: TraverserState): List<PersistentSymbolicState> {
+                override val targetException get() = cm.numberFormatClass
+
+                override fun build(location: Instruction, state: TraverserState): Set<PersistentSymbolicState> {
                     location as CallInst
 //                    val startsWithMethod = stringClass.getMethod("startsWith", tf.boolType, stringClass.asType)
                     val lengthMethod = stringClass.getMethod("length", tf.intType)
@@ -285,7 +319,7 @@ class ExceptionPreconditionManager(
                     val lengthTerm = generate(KexInt)
                     val argTerm = state.mkTerm(location.args[0])
 
-                    return listOf(
+                    return setOf(
                         persistentSymbolicState(
                             state = persistentClauseStateOf(
                                 StateClause(location, state { lengthTerm.call(argTerm.call(lengthMethod)) })
@@ -314,16 +348,24 @@ class ExceptionPreconditionManager(
 
 
         val inetAddressClass = cm["java/net/InetAddress"]
-        conditions.getOrPut(inetAddressClass.getMethod("getAllByName", inetAddressClass.asType.asArray, stringClass.asType)) {
+        conditions.getOrPut(
+            inetAddressClass.getMethod(
+                "getAllByName",
+                inetAddressClass.asType.asArray,
+                stringClass.asType
+            )
+        ) {
             val contracts = mutableMapOf<Class, ExceptionPreConditionBuilder>()
             contracts[cm.illegalArgumentClass] = object : ExceptionPreConditionBuilder {
-                override fun build(location: Instruction, state: TraverserState): List<PersistentSymbolicState> {
+                override val targetException get() = cm.illegalArgumentClass
+
+                override fun build(location: Instruction, state: TraverserState): Set<PersistentSymbolicState> {
                     location as CallInst
                     val lengthMethod = stringClass.getMethod("length", tf.intType)
                     val lengthTerm = generate(KexInt)
                     val argTerm = state.mkTerm(location.args[0])
 
-                    return listOf(
+                    return setOf(
                         persistentSymbolicState(
                             state = persistentClauseStateOf(
                                 StateClause(location, state { lengthTerm.call(argTerm.call(lengthMethod)) })
@@ -354,14 +396,16 @@ class ExceptionPreconditionManager(
         conditions.getOrPut(charClass.getMethod("codePointAt", tf.intType, charSequenceClass.asType, tf.intType)) {
             val contracts = mutableMapOf<Class, ExceptionPreConditionBuilder>()
             contracts[cm.stringIndexOOB] = object : ExceptionPreConditionBuilder {
-                override fun build(location: Instruction, state: TraverserState): List<PersistentSymbolicState> {
+                override val targetException get() = cm.stringIndexOOB
+
+                override fun build(location: Instruction, state: TraverserState): Set<PersistentSymbolicState> {
                     location as CallInst
                     val lengthMethod = charSequenceClass.getMethod("length", tf.intType)
                     val lengthTerm = generate(KexInt)
                     val charSeqTerm = state.mkTerm(location.args[0])
                     val indexTerm = state.mkTerm(location.args[1])
 
-                    return listOf(
+                    return setOf(
                         persistentSymbolicState(
                             path = persistentPathConditionOf(
                                 PathClause(PathClauseType.BOUNDS_CHECK, location, path {
@@ -388,4 +432,106 @@ class ExceptionPreconditionManager(
 
     fun resolve(callInst: CallInst, exception: Class): ExceptionPreConditionBuilder? =
         conditions.getOrDefault(callInst.method, emptyMap())[exception]
+}
+
+class DescriptorPreconditionBuilder(
+    val ctx: ExecutionContext,
+    override val targetException: Class,
+    private val parameterSet: Set<Parameters<Descriptor>>,
+) : ExceptionPreConditionBuilder {
+    override fun build(location: Instruction, state: TraverserState): Set<PersistentSymbolicState> {
+        val callInst = (location as? CallInst)
+            ?: unreachable { log.error("Descriptor precondition is not valid for non-call instructions") }
+
+        return parameterSet.mapTo(mutableSetOf()) { parameters ->
+            var result = persistentSymbolicState()
+
+            val mapping = buildMap {
+                if (!callInst.isStatic)
+                    this[parameters.instance!!.term] = state.mkTerm(callInst.callee)
+                for ((argValue, argDescriptor) in callInst.args.zip(parameters.arguments)) {
+                    this[argDescriptor.term] = state.mkTerm(argValue)
+                }
+            }
+            for (descriptor in parameters.asList) {
+                result += descriptor.asSymbolicState(callInst, mapping)
+            }
+            result
+        }
+    }
+
+    private fun Descriptor.asSymbolicState(
+        location: Instruction,
+        mapping: Map<Term, Term>
+    ): PersistentSymbolicState = when (this) {
+        is ConstantDescriptor -> this.asSymbolicState(location, mapping)
+        is FieldContainingDescriptor<*> -> this.asSymbolicState(location, mapping)
+        is ArrayDescriptor -> this.asSymbolicState(location, mapping)
+    }
+
+    private fun ConstantDescriptor.asSymbolicState(
+        location: Instruction,
+        @Suppress("UNUSED_PARAMETER")
+        mapping: Map<Term, Term>
+    ) = persistentSymbolicState(
+        path = persistentPathConditionOf(
+            PathClause(
+                PathClauseType.CONDITION_CHECK,
+                location,
+                path {
+                    (this@asSymbolicState.term eq when (this@asSymbolicState) {
+                        is ConstantDescriptor.Null -> const(null)
+                        is ConstantDescriptor.Bool -> const(this@asSymbolicState.value)
+                        is ConstantDescriptor.Byte -> const(this@asSymbolicState.value)
+                        is ConstantDescriptor.Short -> const(this@asSymbolicState.value)
+                        is ConstantDescriptor.Char -> const(this@asSymbolicState.value)
+                        is ConstantDescriptor.Int -> const(this@asSymbolicState.value)
+                        is ConstantDescriptor.Long -> const(this@asSymbolicState.value)
+                        is ConstantDescriptor.Float -> const(this@asSymbolicState.value)
+                        is ConstantDescriptor.Double -> const(this@asSymbolicState.value)
+                    }) equality true
+                }
+            )
+        )
+    )
+
+    private fun FieldContainingDescriptor<*>.asSymbolicState(
+        location: Instruction,
+        mapping: Map<Term, Term>
+    ): PersistentSymbolicState {
+        var current = persistentSymbolicState()
+        val objectTerm = mapping.getOrDefault(this.term, this.term)
+        for ((field, descriptor) in this.fields) {
+            current += descriptor.asSymbolicState(location, mapping)
+            current += persistentSymbolicState(
+                path = persistentPathConditionOf(
+                    PathClause(PathClauseType.CONDITION_CHECK, location, path {
+                        val fieldTerm = mapping.getOrDefault(descriptor.term, descriptor.term)
+                        (objectTerm.field(field).load() eq fieldTerm) equality true
+                    })
+                )
+            )
+        }
+        return current
+    }
+
+    private fun ArrayDescriptor.asSymbolicState(
+        location: Instruction,
+        mapping: Map<Term, Term>
+    ): PersistentSymbolicState {
+        var current = persistentSymbolicState()
+        val arrayTerm = mapping.getOrDefault(this.term, this.term)
+        for ((index, descriptor) in this.elements) {
+            current += descriptor.asSymbolicState(location, mapping)
+            current += persistentSymbolicState(
+                path = persistentPathConditionOf(
+                    PathClause(PathClauseType.CONDITION_CHECK, location, path {
+                        val elementTerm = mapping.getOrDefault(descriptor.term, descriptor.term)
+                        (arrayTerm[index].load() eq elementTerm) equality true
+                    })
+                )
+            )
+        }
+        return current
+    }
 }

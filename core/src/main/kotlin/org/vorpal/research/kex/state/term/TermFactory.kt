@@ -342,6 +342,7 @@ interface TermBuilder {
 
     fun Term.field(type: KexReference, name: String) = termFactory.getField(type, this, name)
     fun Term.field(type: KexType, name: String) = termFactory.getField(KexReference(type), this, name)
+    fun Term.field(field: Pair<String, KexType>) = termFactory.getField(KexReference(field.second), this, field.first)
 
     infix fun Term.`as`(type: KexType) = termFactory.getCast(type, this)
     infix fun Term.`is`(type: KexType) = termFactory.getInstanceOf(type, this)

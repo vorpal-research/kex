@@ -69,7 +69,7 @@ class CrashReproductionLauncher(
             Visibility.PUBLIC -> AccessModifier.Public
             else -> throw LauncherException("Crash reproduction supports only private or public visibility")
         }
-        log.debug("Access level: $accessLevel")
+        log.debug("Access level: {}", accessLevel)
 
         val klassPath = containers.map { it.path }
         updateClassPath(containerClassLoader)
@@ -92,6 +92,6 @@ class CrashReproductionLauncher(
         executePipeline(context.cm, Package.defaultPackage) {
             +ClassInstantiationDetector(context, context.accessLevel)
         }
-        CrashReproductionChecker.run(context, stackTrace)
+        CrashReproductionChecker.runIteratively(context, stackTrace)
     }
 }

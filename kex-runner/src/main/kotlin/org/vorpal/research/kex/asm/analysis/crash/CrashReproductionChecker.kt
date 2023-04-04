@@ -1,8 +1,16 @@
 package org.vorpal.research.kex.asm.analysis.crash
 
-import kotlinx.coroutines.*
+import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.async
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withTimeoutOrNull
 import org.vorpal.research.kex.ExecutionContext
-import org.vorpal.research.kex.asm.analysis.symbolic.*
+import org.vorpal.research.kex.asm.analysis.symbolic.DefaultCallResolver
+import org.vorpal.research.kex.asm.analysis.symbolic.SymbolicCallResolver
+import org.vorpal.research.kex.asm.analysis.symbolic.SymbolicInvokeDynamicResolver
+import org.vorpal.research.kex.asm.analysis.symbolic.SymbolicPathSelector
+import org.vorpal.research.kex.asm.analysis.symbolic.SymbolicTraverser
+import org.vorpal.research.kex.asm.analysis.symbolic.TraverserState
 import org.vorpal.research.kex.compile.CompilationException
 import org.vorpal.research.kex.config.kexConfig
 import org.vorpal.research.kex.descriptor.Descriptor
@@ -12,13 +20,27 @@ import org.vorpal.research.kex.reanimator.UnsafeGenerator
 import org.vorpal.research.kex.reanimator.codegen.klassName
 import org.vorpal.research.kex.state.predicate.path
 import org.vorpal.research.kex.state.term.Term
-import org.vorpal.research.kex.state.transformer.*
-import org.vorpal.research.kex.trace.symbolic.*
-import org.vorpal.research.kex.util.*
+import org.vorpal.research.kex.trace.symbolic.PathClause
+import org.vorpal.research.kex.trace.symbolic.PathClauseType
+import org.vorpal.research.kex.util.arrayIndexOOBClass
+import org.vorpal.research.kex.util.asmString
+import org.vorpal.research.kex.util.classCastClass
+import org.vorpal.research.kex.util.negativeArrayClass
+import org.vorpal.research.kex.util.newFixedThreadPoolContextWithMDC
+import org.vorpal.research.kex.util.nullptrClass
+import org.vorpal.research.kex.util.runtimeException
 import org.vorpal.research.kfg.ClassManager
 import org.vorpal.research.kfg.ir.Method
 import org.vorpal.research.kfg.ir.value.ThisRef
-import org.vorpal.research.kfg.ir.value.instruction.*
+import org.vorpal.research.kfg.ir.value.instruction.ArrayLoadInst
+import org.vorpal.research.kfg.ir.value.instruction.ArrayStoreInst
+import org.vorpal.research.kfg.ir.value.instruction.CallInst
+import org.vorpal.research.kfg.ir.value.instruction.CastInst
+import org.vorpal.research.kfg.ir.value.instruction.FieldLoadInst
+import org.vorpal.research.kfg.ir.value.instruction.FieldStoreInst
+import org.vorpal.research.kfg.ir.value.instruction.Instruction
+import org.vorpal.research.kfg.ir.value.instruction.NewArrayInst
+import org.vorpal.research.kfg.ir.value.instruction.ThrowInst
 import org.vorpal.research.kthelper.assert.ktassert
 import org.vorpal.research.kthelper.logging.log
 import kotlin.time.Duration.Companion.seconds
@@ -48,7 +70,6 @@ class CrashReproductionChecker(
     ctx: ExecutionContext,
     @Suppress("MemberVisibilityCanBePrivate")
     val stackTrace: StackTrace,
-    private val targetException: org.vorpal.research.kfg.ir.Class,
     private val targetInstructions: Set<Instruction>,
     private val preconditionBuilder: ExceptionPreConditionBuilder,
     private val reproductionChecker: TestKlassReproductionChecker,
@@ -84,13 +105,13 @@ class CrashReproductionChecker(
                 .filter { it.location.line == stackTrace.stackTraceLines.first().lineNumber }
                 .filterTo(mutableSetOf()) {
                     when (targetException) {
-                        context.cm["java/lang/NullPointerException"] -> it.isNullptrThrowing
-                        context.cm["java/lang/ArrayIndexOutOfBoundsException"] -> it is ArrayStoreInst || it is ArrayLoadInst
-                        context.cm["java/lang/NegativeArraySizeException"] -> it is NewArrayInst
-                        context.cm["java/lang/ClassCastException"] -> it is CastInst
+                        context.cm.nullptrClass -> it.isNullptrThrowing
+                        context.cm.arrayIndexOOBClass -> it is ArrayStoreInst || it is ArrayLoadInst
+                        context.cm.negativeArrayClass -> it is NewArrayInst
+                        context.cm.classCastClass -> it is CastInst
                         else -> when (it) {
                             is ThrowInst -> it.throwable.type == targetException.asType
-                            is CallInst -> targetException.isInheritorOf(context.cm["java/lang/RuntimeException"])
+                            is CallInst -> targetException.isInheritorOf(context.cm.runtimeException)
                                     || targetException in it.method.exceptions
 
                             else -> false
@@ -105,7 +126,6 @@ class CrashReproductionChecker(
                         val checker = CrashReproductionChecker(
                             context,
                             stackTrace,
-                            targetException,
                             targetInstructions,
                             ExceptionPreConditionBuilderImpl(context, targetException),
                             TestKlassReproductionCheckerImpl(context, stackTrace),
@@ -117,12 +137,79 @@ class CrashReproductionChecker(
                 } ?: emptySet()
             }
         }
-//
-//        @ExperimentalTime
-//        @DelicateCoroutinesApi
-//        fun runIteratively(context: ExecutionContext, stackTrace: StackTrace): Set<String> {
-//            TODO()
-//        }
+
+        @ExperimentalTime
+        @DelicateCoroutinesApi
+        fun runIteratively(context: ExecutionContext, stackTrace: StackTrace): Set<String> {
+            val timeLimit = kexConfig.getIntValue("crash", "timeLimit", 100)
+            val stopAfterFirstCrash = kexConfig.getBooleanValue("crash", "stopAfterFirstCrash", false)
+
+            val targetException = context.cm[stackTrace.firstLine.takeWhile { it != ':' }.asmString]
+            val targetInstructions = context.cm[stackTrace.stackTraceLines.first()].body.flatten()
+                .filter { it.location.line == stackTrace.stackTraceLines.first().lineNumber }
+                .filterTo(mutableSetOf()) {
+                    when (targetException) {
+                        context.cm.nullptrClass -> it.isNullptrThrowing
+                        context.cm.arrayIndexOOBClass -> it is ArrayStoreInst || it is ArrayLoadInst
+                        context.cm.negativeArrayClass -> it is NewArrayInst
+                        context.cm.classCastClass -> it is CastInst
+                        else -> when (it) {
+                            is ThrowInst -> it.throwable.type == targetException.asType
+                            is CallInst -> targetException.isInheritorOf(context.cm.runtimeException)
+                                    || targetException in it.method.exceptions
+
+                            else -> false
+                        }
+                    }
+                }
+            val coroutineContext = newFixedThreadPoolContextWithMDC(1, "crash-dispatcher")
+
+            val firstLine = stackTrace.stackTraceLines.first()
+            var descriptors = runBlocking(coroutineContext) {
+                withTimeoutOrNull(timeLimit.seconds) {
+                    async {
+                        val checker = CrashReproductionChecker(
+                            context,
+                            stackTrace,
+                            targetInstructions,
+                            ExceptionPreConditionBuilderImpl(context, targetException),
+                            TestKlassReproductionCheckerImpl(
+                                context,
+                                StackTrace(stackTrace.firstLine, listOf(firstLine))
+                            ),
+                            stopAfterFirstCrash
+                        )
+                        checker.analyze()
+                        checker.generatedTestClasses.associateWith { checker.descriptors[it]!! }
+                    }.await()
+                } ?: emptyMap()
+            }
+            for (line in stackTrace.stackTraceLines.drop(1)) {
+                if (descriptors.isEmpty()) break
+
+                descriptors = runBlocking(coroutineContext) {
+                    withTimeoutOrNull(timeLimit.seconds) {
+                        async {
+                            val checker = CrashReproductionChecker(
+                                context,
+                                stackTrace,
+                                targetInstructions,
+                                DescriptorPreconditionBuilder(context, targetException, descriptors.values.toSet()),
+                                TestKlassReproductionCheckerImpl(
+                                    context,
+                                    StackTrace(stackTrace.firstLine, listOf(firstLine))
+                                ),
+                                stopAfterFirstCrash
+                            )
+                            checker.analyze()
+                            checker.generatedTestClasses.associateWith { checker.descriptors[it]!! }
+                        }.await()
+                    } ?: emptyMap()
+                }
+            }
+
+            return descriptors.keys
+        }
     }
 
     override suspend fun traverseInstruction(inst: Instruction) {
@@ -136,7 +223,7 @@ class CrashReproductionChecker(
                 val triggerState = state.copy(
                     symbolicState = state.symbolicState + preCondition
                 )
-                checkExceptionAndReport(triggerState, inst, generate(targetException.symbolicClass))
+                checkExceptionAndReport(triggerState, inst, generate(preconditionBuilder.targetException.symbolicClass))
             }
         }
 

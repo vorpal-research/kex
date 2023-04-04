@@ -1,24 +1,44 @@
 package org.vorpal.research.kex.asm.analysis.symbolic
 
-import kotlinx.collections.immutable.*
-import kotlinx.coroutines.*
+import kotlinx.collections.immutable.PersistentList
+import kotlinx.collections.immutable.PersistentMap
+import kotlinx.collections.immutable.PersistentSet
+import kotlinx.collections.immutable.persistentListOf
+import kotlinx.collections.immutable.persistentMapOf
+import kotlinx.collections.immutable.persistentSetOf
+import kotlinx.collections.immutable.toPersistentMap
+import kotlinx.coroutines.yield
 import org.vorpal.research.kex.ExecutionContext
 import org.vorpal.research.kex.asm.analysis.util.analyzeOrTimeout
 import org.vorpal.research.kex.asm.analysis.util.checkAsync
 import org.vorpal.research.kex.compile.CompilationException
 import org.vorpal.research.kex.compile.CompilerHelper
 import org.vorpal.research.kex.descriptor.Descriptor
-import org.vorpal.research.kex.ktype.*
+import org.vorpal.research.kex.ktype.KexPointer
 import org.vorpal.research.kex.ktype.KexRtManager.rtMapped
+import org.vorpal.research.kex.ktype.KexType
+import org.vorpal.research.kex.ktype.kexType
+import org.vorpal.research.kex.ktype.type
 import org.vorpal.research.kex.parameters.Parameters
 import org.vorpal.research.kex.reanimator.UnsafeGenerator
 import org.vorpal.research.kex.reanimator.codegen.klassName
 import org.vorpal.research.kex.state.predicate.inverse
 import org.vorpal.research.kex.state.predicate.path
 import org.vorpal.research.kex.state.predicate.state
-import org.vorpal.research.kex.state.term.*
-import org.vorpal.research.kex.state.transformer.*
-import org.vorpal.research.kex.trace.symbolic.*
+import org.vorpal.research.kex.state.term.ConstClassTerm
+import org.vorpal.research.kex.state.term.NullTerm
+import org.vorpal.research.kex.state.term.StaticClassRefTerm
+import org.vorpal.research.kex.state.term.Term
+import org.vorpal.research.kex.state.term.TermBuilder
+import org.vorpal.research.kex.state.term.term
+import org.vorpal.research.kex.state.transformer.isThis
+import org.vorpal.research.kex.trace.symbolic.PathClause
+import org.vorpal.research.kex.trace.symbolic.PathClauseType
+import org.vorpal.research.kex.trace.symbolic.PersistentSymbolicState
+import org.vorpal.research.kex.trace.symbolic.StateClause
+import org.vorpal.research.kex.trace.symbolic.SymbolicState
+import org.vorpal.research.kex.trace.symbolic.persistentPathConditionOf
+import org.vorpal.research.kex.trace.symbolic.persistentSymbolicState
 import org.vorpal.research.kex.util.arrayIndexOOBClass
 import org.vorpal.research.kex.util.classCastClass
 import org.vorpal.research.kex.util.negativeArrayClass
@@ -29,7 +49,34 @@ import org.vorpal.research.kfg.ir.Method
 import org.vorpal.research.kfg.ir.value.Constant
 import org.vorpal.research.kfg.ir.value.Value
 import org.vorpal.research.kfg.ir.value.ValueFactory
-import org.vorpal.research.kfg.ir.value.instruction.*
+import org.vorpal.research.kfg.ir.value.instruction.ArrayLoadInst
+import org.vorpal.research.kfg.ir.value.instruction.ArrayStoreInst
+import org.vorpal.research.kfg.ir.value.instruction.BinaryInst
+import org.vorpal.research.kfg.ir.value.instruction.BranchInst
+import org.vorpal.research.kfg.ir.value.instruction.CallInst
+import org.vorpal.research.kfg.ir.value.instruction.CastInst
+import org.vorpal.research.kfg.ir.value.instruction.CatchInst
+import org.vorpal.research.kfg.ir.value.instruction.CmpInst
+import org.vorpal.research.kfg.ir.value.instruction.EnterMonitorInst
+import org.vorpal.research.kfg.ir.value.instruction.ExitMonitorInst
+import org.vorpal.research.kfg.ir.value.instruction.FieldLoadInst
+import org.vorpal.research.kfg.ir.value.instruction.FieldStoreInst
+import org.vorpal.research.kfg.ir.value.instruction.InstanceOfInst
+import org.vorpal.research.kfg.ir.value.instruction.Instruction
+import org.vorpal.research.kfg.ir.value.instruction.InvokeDynamicInst
+import org.vorpal.research.kfg.ir.value.instruction.JumpInst
+import org.vorpal.research.kfg.ir.value.instruction.NewArrayInst
+import org.vorpal.research.kfg.ir.value.instruction.NewInst
+import org.vorpal.research.kfg.ir.value.instruction.PhiInst
+import org.vorpal.research.kfg.ir.value.instruction.ReturnInst
+import org.vorpal.research.kfg.ir.value.instruction.SwitchInst
+import org.vorpal.research.kfg.ir.value.instruction.TableSwitchInst
+import org.vorpal.research.kfg.ir.value.instruction.TerminateInst
+import org.vorpal.research.kfg.ir.value.instruction.ThrowInst
+import org.vorpal.research.kfg.ir.value.instruction.UnaryInst
+import org.vorpal.research.kfg.ir.value.instruction.UnaryOpcode
+import org.vorpal.research.kfg.ir.value.instruction.UnknownValueInst
+import org.vorpal.research.kfg.ir.value.instruction.UnreachableInst
 import org.vorpal.research.kfg.type.Type
 import org.vorpal.research.kfg.type.TypeFactory
 import org.vorpal.research.kthelper.assert.unreachable
@@ -58,7 +105,7 @@ data class TraverserState(
     }
 }
 
-@Suppress("RedundantSuspendModifier", "MemberVisibilityCanBePrivate")
+@Suppress("MemberVisibilityCanBePrivate")
 abstract class SymbolicTraverser(
     val ctx: ExecutionContext,
     val rootMethod: Method,
@@ -363,7 +410,6 @@ abstract class SymbolicTraverser(
         )
     }
 
-    @Suppress("UNUSED_PARAMETER")
     protected open suspend fun traverseCatchInst(inst: CatchInst) {
     }
 
