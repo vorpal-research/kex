@@ -5,6 +5,7 @@ import org.vorpal.research.kex.config.kexConfig
 import org.vorpal.research.kex.util.compiledCodeDirectory
 import org.vorpal.research.kex.util.getJunit
 import org.vorpal.research.kthelper.assert.unreachable
+import org.vorpal.research.kthelper.logging.log
 import java.io.PrintWriter
 import java.io.StringWriter
 import java.lang.reflect.InvocationTargetException
@@ -21,13 +22,13 @@ class TestKlassReproductionCheckerImpl(
     private val stackTrace: StackTrace
 ) : TestKlassReproductionChecker {
     override fun isReproduced(testKlass: String): Boolean {
-        val resultingStackTrace = executeTest(testKlass)
+        val resultingStackTrace = executeTest(testKlass) ?: return false
         return stackTrace.throwable == resultingStackTrace.throwable &&
                 resultingStackTrace.stackTraceLines.containsAll(stackTrace.stackTraceLines)
     }
 
 
-    private fun executeTest(testKlass: String): StackTrace {
+    private fun executeTest(testKlass: String): StackTrace? {
         val loader = CustomURLClassLoader(
             listOfNotNull(kexConfig.compiledCodeDirectory.toUri().toURL(), getJunit()?.path?.toUri()?.toURL()) +
                     ctx.classPath.map { it.toUri().toURL() }
@@ -39,7 +40,8 @@ class TestKlassReproductionCheckerImpl(
             val setup = actualClass.getMethod("setup")
             setup.invoke(instance)
         } catch (e: Throwable) {
-            throw e
+            log.error("Error during test setup execution:", e)
+            return null
         }
 
         return try {

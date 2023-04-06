@@ -3,6 +3,8 @@
 package org.vorpal.research.kex.smt.ksmt
 
 import kotlinx.coroutines.*
+import org.ksmt.expr.KAndBinaryExpr
+import org.ksmt.expr.KAndNaryExpr
 import org.ksmt.expr.KExpr
 import org.ksmt.runner.core.*
 import org.ksmt.solver.*
@@ -10,6 +12,8 @@ import org.ksmt.solver.portfolio.KPortfolioSolver
 import org.ksmt.solver.portfolio.KPortfolioSolverManager
 import org.ksmt.solver.z3.KZ3Solver
 import org.ksmt.sort.KBoolSort
+import org.ksmt.sort.KBvSort
+import org.ksmt.sort.KSort
 import org.vorpal.research.kex.ExecutionContext
 import org.vorpal.research.kex.config.kexConfig
 import org.vorpal.research.kex.ktype.*
@@ -118,6 +122,62 @@ class KSMTSolver(private val executionContext: ExecutionContext) : AbstractSMTSo
             log.warn("KSMT thrown an exception during worker initialization", e)
         }
         Result.UnknownResult(e.message ?: "Exception in KSMT")
+    }
+
+
+    @Suppress("unused")
+    private suspend fun reduce(state: Bool_, query: Bool_, errorCondition: (KSolverException) -> Boolean) {
+        var actualState = state
+        var actualQuery = query
+        var currentState = actualState
+        var currentQuery = actualQuery
+        repeat(1000) {
+            currentState = reduce(actualState)
+            currentQuery = reduce(actualQuery)
+            val reproduced = try {
+                check(currentState, currentQuery)
+                false
+            } catch (e: KSolverException) {
+                errorCondition(e)
+            }
+            if (reproduced) {
+                actualState = currentState
+                actualQuery = currentQuery
+            } else {
+                currentState = actualState
+                currentQuery = actualQuery
+            }
+        }
+
+        check(currentState, currentQuery)
+    }
+
+    private fun reduce(expr: Bool_): Bool_ = Bool_(expr.ctx, reduce(expr.expr as KExpr<*>), reduce(expr.axiom as KExpr<*>))
+
+    private fun <T : KSort> reduce(state: KExpr<T>): KExpr<T> = when {
+        state is KAndBinaryExpr -> when (executionContext.random.nextInt(100)) {
+            in 0..2 -> when (executionContext.random.nextBoolean()) {
+                true -> state.lhs
+                else -> state.rhs
+            }
+            else -> ef.ctx.mkAnd(reduce(state.lhs), reduce(state.rhs))
+        } as KExpr<T>
+        state is KAndNaryExpr -> when (executionContext.random.nextInt(100)) {
+            in 0..2 -> {
+                val nth = executionContext.random.nextInt(state.args.size)
+                ef.ctx.mkAnd(state.args.filterIndexed { index, _ -> index != nth })
+            }
+            else -> ef.ctx.mkAnd(state.args.map { reduce(it) })
+        } as KExpr<T>
+        state.sort is KBoolSort -> when (executionContext.random.nextInt(100)) {
+            in 0..2 -> ef.ctx.mkBool(executionContext.random.nextBoolean())
+            else -> state
+        } as KExpr<T>
+        state.sort is KBvSort -> when (executionContext.random.nextInt(100)) {
+            in 0..2 -> ef.ctx.mkBv(executionContext.random.nextInt(100), state.sort as KBvSort)
+            else -> state
+        } as KExpr<T>
+        else -> state
     }
 
     private suspend fun check(state: Bool_, query: Bool_): Pair<KSolverStatus, Any> = buildSolver().use { solver ->

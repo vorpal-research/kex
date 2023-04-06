@@ -13,6 +13,7 @@ import org.vorpal.research.kex.state.predicate.path
 import org.vorpal.research.kex.state.predicate.state
 import org.vorpal.research.kex.state.term.Term
 import org.vorpal.research.kex.state.term.TermBuilder
+import org.vorpal.research.kex.state.term.term
 import org.vorpal.research.kex.trace.symbolic.PathClause
 import org.vorpal.research.kex.trace.symbolic.PathClauseType
 import org.vorpal.research.kex.trace.symbolic.PersistentSymbolicState
@@ -452,7 +453,7 @@ class DescriptorPreconditionBuilder(
                 for ((argValue, argDescriptor) in callInst.args.zip(parameters.arguments)) {
                     this[argDescriptor.term] = state.mkTerm(argValue)
                 }
-            }
+            }.toMutableMap()
             for (descriptor in parameters.asList) {
                 result += descriptor.asSymbolicState(callInst, mapping)
             }
@@ -462,7 +463,7 @@ class DescriptorPreconditionBuilder(
 
     private fun Descriptor.asSymbolicState(
         location: Instruction,
-        mapping: Map<Term, Term>
+        mapping: MutableMap<Term, Term>
     ): PersistentSymbolicState = when (this) {
         is ConstantDescriptor -> this.asSymbolicState(location, mapping)
         is FieldContainingDescriptor<*> -> this.asSymbolicState(location, mapping)
@@ -472,7 +473,7 @@ class DescriptorPreconditionBuilder(
     private fun ConstantDescriptor.asSymbolicState(
         location: Instruction,
         @Suppress("UNUSED_PARAMETER")
-        mapping: Map<Term, Term>
+        mapping: MutableMap<Term, Term>
     ) = persistentSymbolicState(
         path = persistentPathConditionOf(
             PathClause(
@@ -497,10 +498,26 @@ class DescriptorPreconditionBuilder(
 
     private fun FieldContainingDescriptor<*>.asSymbolicState(
         location: Instruction,
-        mapping: Map<Term, Term>
+        mapping: MutableMap<Term, Term>
     ): PersistentSymbolicState {
         var current = persistentSymbolicState()
-        val objectTerm = mapping.getOrDefault(this.term, this.term)
+        val objectTerm = run {
+            val objectTerm = mapping.getOrDefault(this.term, this.term)
+            when {
+                objectTerm.type != this.type -> term { generate(this@asSymbolicState.type) }.also { replacement ->
+                    current += persistentSymbolicState(
+                        state = persistentClauseStateOf(
+                            StateClause(location, state {
+                                replacement equality (objectTerm `as` this@asSymbolicState.type)
+                            })
+                        )
+                    )
+                    mapping[this.term] = replacement
+                }
+
+                else -> objectTerm
+            }
+        }
         for ((field, descriptor) in this.fields) {
             current += descriptor.asSymbolicState(location, mapping)
             current += persistentSymbolicState(
@@ -517,10 +534,33 @@ class DescriptorPreconditionBuilder(
 
     private fun ArrayDescriptor.asSymbolicState(
         location: Instruction,
-        mapping: Map<Term, Term>
+        mapping: MutableMap<Term, Term>
     ): PersistentSymbolicState {
         var current = persistentSymbolicState()
-        val arrayTerm = mapping.getOrDefault(this.term, this.term)
+        val arrayTerm = run {
+            val arrayTerm = mapping.getOrDefault(this.term, this.term)
+            when {
+                arrayTerm.type != this.type -> term { generate(this@asSymbolicState.type) }.also { replacement ->
+                    current += persistentSymbolicState(
+                        state = persistentClauseStateOf(
+                            StateClause(location, state {
+                                replacement equality (arrayTerm `as` this@asSymbolicState.type)
+                            })
+                        )
+                    )
+                    mapping[this.term] = replacement
+                }
+
+                else -> arrayTerm
+            }
+        }
+        current += persistentSymbolicState(
+            path = persistentPathConditionOf(
+                PathClause(PathClauseType.CONDITION_CHECK, location, path {
+                    (arrayTerm.length() eq this@asSymbolicState.length) equality true
+                })
+            )
+        )
         for ((index, descriptor) in this.elements) {
             current += descriptor.asSymbolicState(location, mapping)
             current += persistentSymbolicState(

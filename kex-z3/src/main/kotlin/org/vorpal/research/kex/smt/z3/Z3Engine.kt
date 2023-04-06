@@ -263,8 +263,7 @@ object Z3Engine : SMTEngine<ExtendedContext, Expr<*>, Sort, FuncDecl<*>, Pattern
 
     override fun forAll(ctx: ExtendedContext, sorts: List<Sort>, body: (List<Expr<*>>) -> Expr<*>): Expr<*> {
         val numArgs = sorts.lastIndex
-
-        val bounds = sorts.asSequence().withIndex().map { (index, sort) -> makeBound(ctx, index, sort) }.toList()
+        val bounds = sorts.mapIndexed { index, sort -> makeBound(ctx, index, sort) }
         val realBody = body(bounds)
         val names = (0..numArgs).map { "forall_bound_${numArgs - it}" }.mapToArray { ctx.mkSymbol(it) }
         val sortsRaw = sorts.toTypedArray()
@@ -278,8 +277,7 @@ object Z3Engine : SMTEngine<ExtendedContext, Expr<*>, Sort, FuncDecl<*>, Pattern
         patternGenerator: (List<Expr<*>>) -> List<Pattern>
     ): Expr<*> {
         val numArgs = sorts.lastIndex
-
-        val bounds = sorts.asSequence().withIndex().map { (index, sort) -> makeBound(ctx, index, sort) }.toList()
+        val bounds = sorts.mapIndexed { index, sort -> makeBound(ctx, index, sort) }
         val realBody = body(bounds)
         val names = (0..numArgs).map { "forall_bound_${numArgs - it - 1}" }.mapToArray { ctx.mkSymbol(it) }
         val sortsRaw = sorts.toTypedArray()
@@ -290,8 +288,7 @@ object Z3Engine : SMTEngine<ExtendedContext, Expr<*>, Sort, FuncDecl<*>, Pattern
 
     override fun exists(ctx: ExtendedContext, sorts: List<Sort>, body: (List<Expr<*>>) -> Expr<*>): Expr<*> {
         val numArgs = sorts.lastIndex
-
-        val bounds = sorts.asSequence().withIndex().map { (index, sort) -> makeBound(ctx, index, sort) }.toList()
+        val bounds = sorts.mapIndexed { index, sort -> makeBound(ctx, index, sort) }
         val realBody = body(bounds)
         val names = (0..numArgs).map { "exists_bound_${numArgs - it}" }.mapToArray { ctx.mkSymbol(it) }
         val sortsRaw = sorts.toTypedArray()
@@ -305,8 +302,7 @@ object Z3Engine : SMTEngine<ExtendedContext, Expr<*>, Sort, FuncDecl<*>, Pattern
         patternGenerator: (List<Expr<*>>) -> List<Pattern>
     ): Expr<*> {
         val numArgs = sorts.lastIndex
-
-        val bounds = sorts.asSequence().withIndex().map { (index, sort) -> makeBound(ctx, index, sort) }.toList()
+        val bounds = sorts.mapIndexed { index, sort -> makeBound(ctx, index, sort) }
         val realBody = body(bounds)
         val names = (0..numArgs).map { "forall_bound_${numArgs - it - 1}" }.mapToArray { ctx.mkSymbol(it) }
         val sortsRaw = sorts.toTypedArray()
@@ -321,8 +317,7 @@ object Z3Engine : SMTEngine<ExtendedContext, Expr<*>, Sort, FuncDecl<*>, Pattern
         sorts: List<Sort>, body: (List<Expr<*>>) -> Expr<*>
     ): Expr<*> {
         val numArgs = sorts.lastIndex
-
-        val bounds = sorts.asSequence().withIndex().map { (index, sort) -> makeBound(ctx, index, sort) }.toList()
+        val bounds = sorts.mapIndexed { index, sort -> makeBound(ctx, index, sort) }
         val realBody = body(bounds)
         val names = (0..numArgs).map { "lambda_bound_${numArgs - it}" }.mapToArray { ctx.mkSymbol(it) }
         val sortsRaw = sorts.toTypedArray()

@@ -396,7 +396,8 @@ class ${solver}Converter(val executionContext: ExecutionContext) : ${solver}SMTC
             { ef.makeLongConst(0) },
             { listOf(ef.makeIntConst(0)) }
         ) { params ->
-            val paramMap = generator.parameters.zip(params).toMap().mapValues { cast(it.key.type, it.value) }
+            val paramMap = generator.parameters.zip(params).toMap().mapValues { convert(it.key, ef, ctx) }
+                //generator.parameters.zip(params).toMap().mapValues { cast(it.key.type, it.value) }
             bounds.push(paramMap)
             val index = paramMap[generator.parameters.first()]!!
             if_ { (ef.makeIntConst(0) le index) and (index lt length) }
