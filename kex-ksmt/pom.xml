@@ -12,7 +12,7 @@
     <artifactId>kex-ksmt</artifactId>
 
     <properties>
-        <ksmt.version>0.4.6</ksmt.version>
+        <ksmt.version>0.4.6-kex.0.0.2</ksmt.version>
     </properties>
 
     <dependencies>
@@ -48,32 +48,32 @@
         </dependency>
 
         <dependency>
-            <groupId>com.github.UnitTestBot.ksmt</groupId>
+            <groupId>org.ksmt</groupId>
             <artifactId>ksmt-core</artifactId>
             <version>${ksmt.version}</version>
         </dependency>
         <dependency>
-            <groupId>com.github.UnitTestBot.ksmt</groupId>
+            <groupId>org.ksmt</groupId>
             <artifactId>ksmt-z3</artifactId>
             <version>${ksmt.version}</version>
         </dependency>
         <dependency>
-            <groupId>com.github.UnitTestBot.ksmt</groupId>
+            <groupId>org.ksmt</groupId>
             <artifactId>ksmt-bitwuzla</artifactId>
             <version>${ksmt.version}</version>
         </dependency>
         <dependency>
-            <groupId>com.github.UnitTestBot.ksmt</groupId>
+            <groupId>org.ksmt</groupId>
             <artifactId>ksmt-cvc5</artifactId>
             <version>${ksmt.version}</version>
         </dependency>
         <dependency>
-            <groupId>com.github.UnitTestBot.ksmt</groupId>
+            <groupId>org.ksmt</groupId>
             <artifactId>ksmt-yices</artifactId>
             <version>${ksmt.version}</version>
         </dependency>
         <dependency>
-            <groupId>com.github.UnitTestBot.ksmt</groupId>
+            <groupId>org.ksmt</groupId>
             <artifactId>ksmt-runner</artifactId>
             <version>${ksmt.version}</version>
         </dependency>
