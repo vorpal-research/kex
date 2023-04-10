@@ -1,21 +1,18 @@
 package org.vorpal.research.kex.asm.analysis.symbolic
 
-import kotlinx.collections.immutable.*
-import kotlinx.coroutines.*
+import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withTimeoutOrNull
 import org.vorpal.research.kex.ExecutionContext
 import org.vorpal.research.kex.config.kexConfig
-import org.vorpal.research.kex.ktype.*
-import org.vorpal.research.kex.state.term.*
-import org.vorpal.research.kex.state.transformer.*
-import org.vorpal.research.kex.trace.symbolic.*
 import org.vorpal.research.kex.util.newFixedThreadPoolContextWithMDC
 import org.vorpal.research.kfg.ir.Method
-import org.vorpal.research.kfg.ir.value.instruction.*
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.ExperimentalTime
 
 
-@Suppress("RedundantSuspendModifier")
 class InstructionSymbolicChecker(
     ctx: ExecutionContext,
     rootMethod: Method,

@@ -1,3 +1,5 @@
+@file:Suppress("unused")
+
 package org.vorpal.research.kex.asm.analysis
 
 import org.vorpal.research.kfg.ir.BasicBlock

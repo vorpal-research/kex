@@ -29,6 +29,7 @@ import org.vorpal.research.kex.util.negativeArrayClass
 import org.vorpal.research.kex.util.newFixedThreadPoolContextWithMDC
 import org.vorpal.research.kex.util.nullptrClass
 import org.vorpal.research.kex.util.runtimeException
+import org.vorpal.research.kex.util.testcaseDirectory
 import org.vorpal.research.kfg.ClassManager
 import org.vorpal.research.kfg.ir.Class
 import org.vorpal.research.kfg.ir.Method
@@ -44,6 +45,8 @@ import org.vorpal.research.kfg.ir.value.instruction.NewArrayInst
 import org.vorpal.research.kfg.ir.value.instruction.ThrowInst
 import org.vorpal.research.kthelper.assert.ktassert
 import org.vorpal.research.kthelper.logging.log
+import kotlin.io.path.ExperimentalPathApi
+import kotlin.io.path.deleteRecursively
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.ExperimentalTime
 
@@ -164,6 +167,7 @@ class CrashReproductionChecker(
             }
         }
 
+        @OptIn(ExperimentalPathApi::class)
         @ExperimentalTime
         @DelicateCoroutinesApi
         fun runIteratively(context: ExecutionContext, stackTrace: StackTrace): Set<String> {
@@ -190,6 +194,7 @@ class CrashReproductionChecker(
                     }.await()
                     for ((line, prev) in stackTrace.stackTraceLines.drop(1).zip(stackTrace.stackTraceLines.dropLast(1))) {
                         if (descriptors.isEmpty()) break
+                        kexConfig.testcaseDirectory.deleteRecursively()
 
                         val targetInstructions = context.cm[line].body.flatten()
                             .filter { it.location.line == line.lineNumber }
@@ -212,6 +217,9 @@ class CrashReproductionChecker(
                                 stopAfterFirstCrash
                             )
                         }.await()
+                    }
+                    if (descriptors.isEmpty()) {
+                        kexConfig.testcaseDirectory.deleteRecursively()
                     }
                     descriptors.keys
                 }

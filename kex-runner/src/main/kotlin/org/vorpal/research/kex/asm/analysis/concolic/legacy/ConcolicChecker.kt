@@ -5,7 +5,6 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
 import kotlinx.coroutines.yield
 import org.vorpal.research.kex.ExecutionContext
-import org.vorpal.research.kex.asm.analysis.concolic.ConcolicStateBuilder
 import org.vorpal.research.kex.asm.manager.wrapper
 import org.vorpal.research.kex.asm.state.PredicateStateAnalysis
 import org.vorpal.research.kex.config.kexConfig
@@ -20,7 +19,17 @@ import org.vorpal.research.kex.state.StateBuilder
 import org.vorpal.research.kex.state.predicate.PredicateType
 import org.vorpal.research.kex.state.predicate.inverse
 import org.vorpal.research.kex.trace.TraceManager
-import org.vorpal.research.kex.trace.`object`.*
+import org.vorpal.research.kex.trace.`object`.ActionTrace
+import org.vorpal.research.kex.trace.`object`.BlockAction
+import org.vorpal.research.kex.trace.`object`.BlockBranch
+import org.vorpal.research.kex.trace.`object`.BlockJump
+import org.vorpal.research.kex.trace.`object`.BlockSwitch
+import org.vorpal.research.kex.trace.`object`.MethodCall
+import org.vorpal.research.kex.trace.`object`.MethodEntry
+import org.vorpal.research.kex.trace.`object`.MethodReturn
+import org.vorpal.research.kex.trace.`object`.MethodThrow
+import org.vorpal.research.kex.trace.`object`.StaticInitEntry
+import org.vorpal.research.kex.trace.`object`.StaticInitExit
 import org.vorpal.research.kex.trace.runner.ObjectTracingRunner
 import org.vorpal.research.kex.trace.runner.RandomObjectTracingRunner
 import org.vorpal.research.kex.util.TimeoutException
@@ -63,7 +72,7 @@ class ConcolicChecker(
     private val paths = mutableSetOf<PredicateState>()
     private var counter = 0
     lateinit var generator: ParameterGenerator
-        protected set
+        private set
 
     override fun cleanup() {
         paths.clear()

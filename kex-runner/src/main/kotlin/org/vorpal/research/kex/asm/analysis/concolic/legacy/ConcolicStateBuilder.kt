@@ -1,4 +1,4 @@
-package org.vorpal.research.kex.asm.analysis.concolic
+package org.vorpal.research.kex.asm.analysis.concolic.legacy
 
 import org.vorpal.research.kex.asm.state.InvalidInstructionError
 import org.vorpal.research.kex.asm.state.PredicateStateAnalysis
@@ -18,8 +18,36 @@ import org.vorpal.research.kfg.ClassManager
 import org.vorpal.research.kfg.ir.BasicBlock
 import org.vorpal.research.kfg.ir.ConcreteClass
 import org.vorpal.research.kfg.ir.Method
-import org.vorpal.research.kfg.ir.value.*
-import org.vorpal.research.kfg.ir.value.instruction.*
+import org.vorpal.research.kfg.ir.value.Argument
+import org.vorpal.research.kfg.ir.value.Constant
+import org.vorpal.research.kfg.ir.value.IntConstant
+import org.vorpal.research.kfg.ir.value.ThisRef
+import org.vorpal.research.kfg.ir.value.Value
+import org.vorpal.research.kfg.ir.value.instruction.ArrayLoadInst
+import org.vorpal.research.kfg.ir.value.instruction.ArrayStoreInst
+import org.vorpal.research.kfg.ir.value.instruction.BinaryInst
+import org.vorpal.research.kfg.ir.value.instruction.BranchInst
+import org.vorpal.research.kfg.ir.value.instruction.CallInst
+import org.vorpal.research.kfg.ir.value.instruction.CastInst
+import org.vorpal.research.kfg.ir.value.instruction.CatchInst
+import org.vorpal.research.kfg.ir.value.instruction.CmpInst
+import org.vorpal.research.kfg.ir.value.instruction.EnterMonitorInst
+import org.vorpal.research.kfg.ir.value.instruction.ExitMonitorInst
+import org.vorpal.research.kfg.ir.value.instruction.FieldLoadInst
+import org.vorpal.research.kfg.ir.value.instruction.FieldStoreInst
+import org.vorpal.research.kfg.ir.value.instruction.InstanceOfInst
+import org.vorpal.research.kfg.ir.value.instruction.Instruction
+import org.vorpal.research.kfg.ir.value.instruction.JumpInst
+import org.vorpal.research.kfg.ir.value.instruction.NewArrayInst
+import org.vorpal.research.kfg.ir.value.instruction.NewInst
+import org.vorpal.research.kfg.ir.value.instruction.PhiInst
+import org.vorpal.research.kfg.ir.value.instruction.ReturnInst
+import org.vorpal.research.kfg.ir.value.instruction.SwitchInst
+import org.vorpal.research.kfg.ir.value.instruction.TableSwitchInst
+import org.vorpal.research.kfg.ir.value.instruction.TerminateInst
+import org.vorpal.research.kfg.ir.value.instruction.ThrowInst
+import org.vorpal.research.kfg.ir.value.instruction.UnaryInst
+import org.vorpal.research.kfg.ir.value.instruction.UnreachableInst
 import org.vorpal.research.kfg.type.ClassType
 import org.vorpal.research.kthelper.collection.listOf
 import org.vorpal.research.kthelper.collection.stackOf
@@ -78,7 +106,7 @@ class ConcolicStateBuilder(val cm: ClassManager, val psa: PredicateStateAnalysis
         else -> buildInst(instruction)
     }
 
-    fun buildInst(instruction: Instruction) = when (instruction) {
+    private fun buildInst(instruction: Instruction) = when (instruction) {
         is ArrayLoadInst -> buildArrayLoadInst(instruction)
         is ArrayStoreInst -> buildArrayStoreInst(instruction)
         is BinaryInst -> buildBinaryInst(instruction)
@@ -97,7 +125,7 @@ class ConcolicStateBuilder(val cm: ClassManager, val psa: PredicateStateAnalysis
         else -> throw UnsupportedInstructionException(instruction)
     }
 
-    fun buildTerminateInst(inst: TerminateInst, next: BasicBlock?) =
+    private fun buildTerminateInst(inst: TerminateInst, next: BasicBlock?) =
         when (inst) {
             is ReturnInst -> buildReturnInst(inst)
             is ThrowInst -> buildThrowInst(inst)
@@ -130,7 +158,7 @@ class ConcolicStateBuilder(val cm: ClassManager, val psa: PredicateStateAnalysis
         return v
     }
 
-    fun buildPhiInst(inst: PhiInst, entry: BasicBlock) {
+    private fun buildPhiInst(inst: PhiInst, entry: BasicBlock) {
         stateBuilder += state(inst.location) {
             val lhv = mkNewValue(inst)
             val rhv = mkValue(
@@ -141,30 +169,30 @@ class ConcolicStateBuilder(val cm: ClassManager, val psa: PredicateStateAnalysis
         }
     }
 
-    fun buildArrayLoadInst(inst: ArrayLoadInst) {
+    private fun buildArrayLoadInst(inst: ArrayLoadInst) {
         stateBuilder += state(inst.location) {
             val lhv = mkNewValue(inst)
             val ref = mkValue(inst.arrayRef)
-            val indx = mkValue(inst.index)
-            val arrayRef = ref[indx]
+            val index = mkValue(inst.index)
+            val arrayRef = ref[index]
             val load = arrayRef.load()
 
             lhv equality load
         }
     }
 
-    fun buildArrayStoreInst(inst: ArrayStoreInst) {
+    private fun buildArrayStoreInst(inst: ArrayStoreInst) {
         stateBuilder += state(inst.location) {
             val ref = mkValue(inst.arrayRef)
-            val indx = mkValue(inst.index)
-            val arrayRef = ref[indx]
+            val index = mkValue(inst.index)
+            val arrayRef = ref[index]
             val value = mkValue(inst.value)
 
             arrayRef.store(value)
         }
     }
 
-    fun buildBinaryInst(inst: BinaryInst) {
+    private fun buildBinaryInst(inst: BinaryInst) {
         stateBuilder += state(inst.location) {
             val lhv = mkNewValue(inst)
             val rhv = mkValue(inst.lhv).apply(types, inst.opcode, mkValue(inst.rhv))
@@ -173,7 +201,7 @@ class ConcolicStateBuilder(val cm: ClassManager, val psa: PredicateStateAnalysis
         }
     }
 
-    fun buildCallInst(inst: CallInst) {
+    private fun buildCallInst(inst: CallInst) {
         when (inst.method) {
             inlinedCalls.peek() -> inlinedCalls.pop()
             else -> {
@@ -259,7 +287,7 @@ class ConcolicStateBuilder(val cm: ClassManager, val psa: PredicateStateAnalysis
     }
 
 
-    fun buildCastInst(inst: CastInst) {
+    private fun buildCastInst(inst: CastInst) {
         stateBuilder += state(inst.location) {
             val lhv = mkNewValue(inst)
             val rhv = mkValue(inst.operand) `as` inst.type.kexType
@@ -269,10 +297,10 @@ class ConcolicStateBuilder(val cm: ClassManager, val psa: PredicateStateAnalysis
     }
 
     @Suppress("UNUSED_PARAMETER")
-    fun buildCatchInst(inst: CatchInst) {
+    private fun buildCatchInst(inst: CatchInst) {
     }
 
-    fun buildCmpInst(inst: CmpInst) {
+    private fun buildCmpInst(inst: CmpInst) {
         stateBuilder += state(inst.location) {
             val lhv = mkNewValue(inst)
             val rhv = mkValue(inst.lhv).apply(inst.opcode, mkValue(inst.rhv))
@@ -282,14 +310,14 @@ class ConcolicStateBuilder(val cm: ClassManager, val psa: PredicateStateAnalysis
     }
 
     @Suppress("UNUSED_PARAMETER")
-    fun buildEnterMonitorInst(inst: EnterMonitorInst) {
+    private fun buildEnterMonitorInst(inst: EnterMonitorInst) {
     }
 
     @Suppress("UNUSED_PARAMETER")
-    fun buildExitMonitorInst(inst: ExitMonitorInst) {
+    private fun buildExitMonitorInst(inst: ExitMonitorInst) {
     }
 
-    fun buildFieldLoadInst(inst: FieldLoadInst) {
+    private fun buildFieldLoadInst(inst: FieldLoadInst) {
         stateBuilder += state(inst.location) {
             val lhv = mkNewValue(inst)
             val owner = when {
@@ -303,7 +331,7 @@ class ConcolicStateBuilder(val cm: ClassManager, val psa: PredicateStateAnalysis
         }
     }
 
-    fun buildFieldStoreInst(inst: FieldStoreInst) {
+    private fun buildFieldStoreInst(inst: FieldStoreInst) {
         stateBuilder += state(inst.location) {
             val owner = when {
                 inst.isStatic -> staticRef(inst.field.klass)
@@ -316,7 +344,7 @@ class ConcolicStateBuilder(val cm: ClassManager, val psa: PredicateStateAnalysis
         }
     }
 
-    fun buildInstanceOfInst(inst: InstanceOfInst) {
+    private fun buildInstanceOfInst(inst: InstanceOfInst) {
         stateBuilder += state(inst.location) {
             val lhv = mkNewValue(inst)
             val rhv = mkValue(inst.operand) `is` inst.targetType.kexType
@@ -325,7 +353,7 @@ class ConcolicStateBuilder(val cm: ClassManager, val psa: PredicateStateAnalysis
         }
     }
 
-    fun buildNewArrayInst(inst: NewArrayInst) {
+    private fun buildNewArrayInst(inst: NewArrayInst) {
         stateBuilder += state(inst.location) {
             val lhv = mkNewValue(inst)
             val dimensions = inst.dimensions.map { mkValue(it) }
@@ -334,14 +362,14 @@ class ConcolicStateBuilder(val cm: ClassManager, val psa: PredicateStateAnalysis
         }
     }
 
-    fun buildNewInst(inst: NewInst) {
+    private fun buildNewInst(inst: NewInst) {
         stateBuilder += state(inst.location) {
             val lhv = mkNewValue(inst)
             lhv.new()
         }
     }
 
-    fun buildUnaryInst(inst: UnaryInst) {
+    private fun buildUnaryInst(inst: UnaryInst) {
         stateBuilder += state(inst.location) {
             val lhv = mkNewValue(inst)
             val rhv = mkValue(inst.operand).apply(inst.opcode)
@@ -350,7 +378,7 @@ class ConcolicStateBuilder(val cm: ClassManager, val psa: PredicateStateAnalysis
         }
     }
 
-    fun buildBranchInst(inst: BranchInst, next: BasicBlock) {
+    private fun buildBranchInst(inst: BranchInst, next: BasicBlock) {
         stateBuilder += path(inst.location) {
             val cond = mkValue(inst.cond)
             when (next) {
@@ -362,10 +390,10 @@ class ConcolicStateBuilder(val cm: ClassManager, val psa: PredicateStateAnalysis
     }
 
     @Suppress("UNUSED_PARAMETER")
-    fun buildJumpInst(inst: JumpInst, next: BasicBlock) {
+    private fun buildJumpInst(inst: JumpInst, next: BasicBlock) {
     }
 
-    fun buildReturnInst(inst: ReturnInst) {
+    private fun buildReturnInst(inst: ReturnInst) {
         stateBuilder += state(inst.location) {
             when {
                 !inst.hasReturnValue -> const(true) equality true
@@ -379,7 +407,7 @@ class ConcolicStateBuilder(val cm: ClassManager, val psa: PredicateStateAnalysis
         }
     }
 
-    fun buildSwitchInst(inst: SwitchInst, next: BasicBlock) {
+    private fun buildSwitchInst(inst: SwitchInst, next: BasicBlock) {
         val key = mkValue(inst.key)
 
         when (next) {
@@ -395,7 +423,7 @@ class ConcolicStateBuilder(val cm: ClassManager, val psa: PredicateStateAnalysis
         }
     }
 
-    fun buildTableSwitchInst(inst: TableSwitchInst, next: BasicBlock) {
+    private fun buildTableSwitchInst(inst: TableSwitchInst, next: BasicBlock) {
         val key = mkValue(inst.index)
         val min = inst.min as? IntConstant ?: throw InvalidInstructionError("Unexpected min type in tableSwitchInst")
         val max = inst.max as? IntConstant ?: throw InvalidInstructionError("Unexpected max type in tableSwitchInst")
@@ -414,10 +442,10 @@ class ConcolicStateBuilder(val cm: ClassManager, val psa: PredicateStateAnalysis
     }
 
     @Suppress("UNUSED_PARAMETER")
-    fun buildThrowInst(inst: ThrowInst) {
+    private fun buildThrowInst(inst: ThrowInst) {
     }
 
     @Suppress("UNUSED_PARAMETER")
-    fun buildUnreachableInst(inst: UnreachableInst) {
+    private fun buildUnreachableInst(inst: UnreachableInst) {
     }
 }

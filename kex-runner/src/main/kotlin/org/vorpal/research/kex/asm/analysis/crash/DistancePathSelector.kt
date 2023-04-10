@@ -1,10 +1,8 @@
 package org.vorpal.research.kex.asm.analysis.crash
 
 import org.vorpal.research.kex.ExecutionContext
-import org.vorpal.research.kex.asm.analysis.concolic.cgs.ExecutionTree
 import org.vorpal.research.kex.asm.analysis.symbolic.SymbolicPathSelector
 import org.vorpal.research.kex.asm.analysis.symbolic.TraverserState
-import org.vorpal.research.kex.util.view
 import org.vorpal.research.kfg.ir.BasicBlock
 import org.vorpal.research.kfg.ir.Method
 import org.vorpal.research.kfg.ir.value.instruction.Instruction
@@ -13,6 +11,7 @@ import org.vorpal.research.kthelper.logging.log
 import java.util.PriorityQueue
 import kotlin.random.nextULong
 
+@Suppress("unused", "CanBeParameter")
 class DistancePathSelector(
     private val ctx: ExecutionContext,
     private val rootMethod: Method,
@@ -35,6 +34,7 @@ class DistancePathSelector(
     }
 }
 
+@Suppress("unused", "CanBeParameter")
 class RandomizedDistancePathSelector(
     private val ctx: ExecutionContext,
     private val rootMethod: Method,

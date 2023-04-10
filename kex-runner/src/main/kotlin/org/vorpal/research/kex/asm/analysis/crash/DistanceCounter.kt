@@ -1,7 +1,10 @@
 package org.vorpal.research.kex.asm.analysis.crash
 
 import org.vorpal.research.kex.util.javaString
-import org.vorpal.research.kfg.ir.*
+import org.vorpal.research.kfg.ir.BasicBlock
+import org.vorpal.research.kfg.ir.CatchBlock
+import org.vorpal.research.kfg.ir.Location
+import org.vorpal.research.kfg.ir.Method
 import org.vorpal.research.kfg.ir.value.instruction.Instruction
 import org.vorpal.research.kfg.ir.value.instruction.ReturnInst
 import org.vorpal.research.kthelper.collection.MapWithDefault
@@ -67,9 +70,10 @@ class MethodDistanceCounter(
     }
 
     fun score(basicBlock: BasicBlock): ULong = scores.getOrPut(basicBlock.method) {
-        computeMethodScores(basicBlock.method).also {
-//            viewMethod(basicBlock.method, it)
-        }
+        computeMethodScores(basicBlock.method)
+//            .also {
+//                viewMethod(basicBlock.method, it)
+//            }
     }[basicBlock]
 
     private fun viewMethod(method: Method, scores: MapWithDefault<BasicBlock, ULong>) {

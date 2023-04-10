@@ -54,6 +54,7 @@ data class Failure(
         val state: PredicateState
 )
 
+@Suppress("MemberVisibilityCanBePrivate")
 @ExperimentalSerializationApi
 @InternalSerializationApi
 open class MethodChecker(

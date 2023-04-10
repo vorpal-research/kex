@@ -6,12 +6,24 @@ import org.vorpal.research.kex.asm.analysis.concolic.ConcolicPathSelector
 import org.vorpal.research.kex.asm.manager.NoConcreteInstanceException
 import org.vorpal.research.kex.asm.manager.instantiationManager
 import org.vorpal.research.kex.ktype.kexType
-import org.vorpal.research.kex.state.predicate.*
+import org.vorpal.research.kex.state.predicate.DefaultSwitchPredicate
+import org.vorpal.research.kex.state.predicate.EqualityPredicate
+import org.vorpal.research.kex.state.predicate.InequalityPredicate
+import org.vorpal.research.kex.state.predicate.Predicate
+import org.vorpal.research.kex.state.predicate.path
+import org.vorpal.research.kex.state.predicate.predicate
 import org.vorpal.research.kex.state.term.ConstBoolTerm
 import org.vorpal.research.kex.state.term.InstanceOfTerm
 import org.vorpal.research.kex.state.term.numericValue
 import org.vorpal.research.kex.state.transformer.TermCollector
-import org.vorpal.research.kex.trace.symbolic.*
+import org.vorpal.research.kex.trace.symbolic.ExecutionCompletedResult
+import org.vorpal.research.kex.trace.symbolic.PathClause
+import org.vorpal.research.kex.trace.symbolic.PathClauseType
+import org.vorpal.research.kex.trace.symbolic.PersistentPathCondition
+import org.vorpal.research.kex.trace.symbolic.PersistentSymbolicState
+import org.vorpal.research.kex.trace.symbolic.persistentSymbolicState
+import org.vorpal.research.kex.trace.symbolic.plus
+import org.vorpal.research.kex.trace.symbolic.toPersistentState
 import org.vorpal.research.kex.util.nextOrNull
 import org.vorpal.research.kfg.ir.BasicBlock
 import org.vorpal.research.kfg.ir.Method
@@ -56,7 +68,6 @@ class ContextGuidedSelector(
             val contexts = executionTree.contexts(next, k).filter { it !in visitedContexts }
             for (context in contexts) {
                 val path = context.fullPath.removeAt(context.fullPath.lastIndex)
-                    .toPathCondition()
                 val activeClause = context.fullPath.lastOrNull() ?: continue
                 val revertedClause = activeClause.reversed() ?: continue
                 states += State(context, path, activeClause, revertedClause)
@@ -221,6 +232,7 @@ class ContextGuidedSelector(
         else -> unreachable { log.error("Unexpected predicate in switch clause: $this") }
     }
 
+    @Suppress("unused")
     fun view() {
         executionTree.view("tree", "/usr/bin/dot", "/usr/bin/firefox")
     }

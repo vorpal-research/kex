@@ -6,18 +6,26 @@ import org.vorpal.research.kex.state.predicate.EqualityPredicate
 import org.vorpal.research.kex.state.predicate.PredicateType
 import org.vorpal.research.kex.state.predicate.receiver
 import org.vorpal.research.kex.state.term.term
-import org.vorpal.research.kex.trace.symbolic.*
+import org.vorpal.research.kex.trace.symbolic.Clause
+import org.vorpal.research.kex.trace.symbolic.PathClause
+import org.vorpal.research.kex.trace.symbolic.PathClauseType
+import org.vorpal.research.kex.trace.symbolic.PersistentPathCondition
+import org.vorpal.research.kex.trace.symbolic.PersistentSymbolicState
 import org.vorpal.research.kfg.ir.value.instruction.BranchInst
 import org.vorpal.research.kfg.ir.value.instruction.Instruction
 import org.vorpal.research.kfg.ir.value.instruction.SwitchInst
 import org.vorpal.research.kfg.ir.value.instruction.TableSwitchInst
 import org.vorpal.research.kthelper.collection.queueOf
-import org.vorpal.research.kthelper.graph.*
+import org.vorpal.research.kthelper.graph.DominatorTree
+import org.vorpal.research.kthelper.graph.DominatorTreeBuilder
+import org.vorpal.research.kthelper.graph.GraphView
+import org.vorpal.research.kthelper.graph.PredecessorGraph
+import org.vorpal.research.kthelper.graph.Viewable
 import org.vorpal.research.kthelper.logging.log
 
 
 sealed class Vertex(val clause: Clause) : PredecessorGraph.PredecessorVertex<Vertex> {
-    val upEdges = mutableSetOf<Vertex>()
+    private val upEdges = mutableSetOf<Vertex>()
     val downEdges = mutableSetOf<Vertex>()
     val states = mutableMapOf<PersistentPathCondition, PersistentSymbolicState>()
 
@@ -54,6 +62,7 @@ data class Context(
     val fullPath: PersistentPathCondition,
     val symbolicState: PersistentSymbolicState
 ) {
+    @Suppress("unused")
     val condition get() = context.last()
     val size get() = context.size
 }
@@ -81,6 +90,7 @@ class ExecutionTree : PredecessorGraph<Vertex>, Viewable {
 
     fun getPathVertex(clause: Clause) = edges.getValue(clause)
 
+    @Suppress("unused")
     fun isExhausted(clause: Clause) = isExhausted(getPathVertex(clause))
     fun isExhausted(vertex: PathVertex) = vertex in exhaustedVertices
 
@@ -135,7 +145,7 @@ class ExecutionTree : PredecessorGraph<Vertex>, Viewable {
         dominators = DominatorTreeBuilder(this).build()
     }
 
-    fun Vertex.dominates(other: Vertex) = dominators?.let { tree ->
+    private fun Vertex.dominates(other: Vertex) = dominators?.let { tree ->
         tree[this]?.dominates(other)
     } ?: false
 

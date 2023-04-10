@@ -22,10 +22,11 @@ private val runner: Boolean by lazy {
     kexConfig.getBooleanValue("random-runner", "enabled", false)
 }
 
+@Suppress("unused")
 class RandomChecker(
     val ctx: ExecutionContext,
     val psa: PredicateStateAnalysis,
-    val tm: TraceManager<ActionTrace>
+    private val tm: TraceManager<ActionTrace>
 ) : MethodVisitor {
     override val cm: ClassManager
         get() = ctx.cm
@@ -57,6 +58,7 @@ class RandomChecker(
     }
 }
 
+@Suppress("unused")
 class SymbolicRandomChecker(
     val ctx: ExecutionContext,
     val loader: ClassLoader,

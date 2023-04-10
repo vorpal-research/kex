@@ -146,7 +146,8 @@ object KSMTEngine : SMTEngine<KContext, KAst, KSort, KFuncDecl<*>, KAst>() {
     }
 
     override fun float2IEEEbv(ctx: KContext, expr: KAst, sort: KSort): KExpr<*> {
-        return ctx.mkFpToIEEEBvExpr(expr.asExpr(ctx) as KExpr<KFpSort>)
+        return unreachable { log.error("Should not use float2ieee bv") }
+//        return ctx.mkFpToIEEEBvExpr(expr.asExpr(ctx) as KExpr<KFpSort>)
     }
 
     override fun float2float(ctx: KContext, expr: KAst, sort: KSort): KExpr<*> {

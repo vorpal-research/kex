@@ -1,4 +1,4 @@
-package org.vorpal.research.kex.asm.analysis.concolic
+package org.vorpal.research.kex.asm.analysis.concolic.legacy
 
 import org.vorpal.research.kex.random.easyrandom.EasyRandomDriver
 import org.vorpal.research.kex.state.BasicState
@@ -18,6 +18,7 @@ interface SearchStrategy {
     fun next(state: PredicateState): PredicateState?
 }
 
+@Suppress("unused")
 class BfsStrategy(override val method: Method, override val paths: Set<PredicateState>) : SearchStrategy {
     private val random = EasyRandomDriver()
     override fun next(state: PredicateState): PredicateState? {
@@ -47,6 +48,7 @@ class BfsStrategy(override val method: Method, override val paths: Set<Predicate
     }
 }
 
+@Suppress("unused")
 class DfsStrategy(override val method: Method, override val paths: Set<PredicateState>) : SearchStrategy {
     private val random = EasyRandomDriver()
 

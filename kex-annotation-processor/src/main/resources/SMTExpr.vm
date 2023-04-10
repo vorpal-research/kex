@@ -500,7 +500,9 @@ fun ${valexpr}.toFloat(): $Float {
     val newExpr = when {
         engine.isBV(ctx, expr) -> {
             val bv32expr = this.toBV32()
-            engine.bvIEEE2float(ctx, bv32expr.expr, engine.getFloatSort(ctx))
+            val result = $Float(ctx, engine.makeVar(ctx, engine.getDoubleSort(ctx), "to_double", true))
+            val resultConv = $Bitvector32(ctx, engine.float2IEEEbv(ctx, result.expr, engine.getBVSort(ctx, 64)))
+            return result.withAxiom(resultConv eq bv32expr)
         }
         engine.isFloat(ctx, expr) -> this.expr
         engine.isDouble(ctx, expr) -> engine.float2float(ctx, expr, engine.getFloatSort(ctx))
@@ -512,8 +514,10 @@ fun ${valexpr}.toFloat(): $Float {
 fun ${valexpr}.toDouble(): $Double {
     val newExpr = when {
         engine.isBV(ctx, expr) -> {
+            val result = $Double(ctx, engine.makeVar(ctx, engine.getDoubleSort(ctx), "to_double", true))
             val bv64expr = this.toBV64()
-            engine.bvIEEE2float(ctx, bv64expr.expr, engine.getDoubleSort(ctx))
+            val resultConv = $Bitvector64(ctx, engine.float2IEEEbv(ctx, result.expr, engine.getBVSort(ctx, 64)))
+            return result.withAxiom(resultConv eq bv64expr)
         }
         engine.isFloat(ctx, expr) -> engine.float2float(ctx, expr, engine.getDoubleSort(ctx))
         engine.isDouble(ctx, expr) -> this.expr
