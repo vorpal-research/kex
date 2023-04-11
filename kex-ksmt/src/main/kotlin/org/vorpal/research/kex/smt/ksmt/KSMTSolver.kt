@@ -29,6 +29,7 @@ import org.vorpal.research.kthelper.assert.ktassert
 import org.vorpal.research.kthelper.assert.unreachable
 import org.vorpal.research.kthelper.logging.debug
 import org.vorpal.research.kthelper.logging.log
+import org.vorpal.research.kthelper.tryOrNull
 import kotlin.math.log2
 import kotlin.reflect.KClass
 import kotlin.reflect.full.declaredMemberProperties
@@ -227,7 +228,7 @@ class KSMTSolver(private val executionContext: ExecutionContext) : AbstractSMTSo
             }
 
             KSolverStatus.UNKNOWN -> {
-                val reason = solver.reasonOfUnknown()
+                val reason = tryOrNull { solver.reasonOfUnknown() } ?: "Solver executor is not alive"
                 log.debug(reason)
                 result to reason
             }
