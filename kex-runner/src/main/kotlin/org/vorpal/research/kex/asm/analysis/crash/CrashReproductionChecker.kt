@@ -5,12 +5,18 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeoutOrNull
 import org.vorpal.research.kex.ExecutionContext
+import org.vorpal.research.kex.asm.analysis.crash.precondition.ConstraintExceptionPrecondition
+import org.vorpal.research.kex.asm.analysis.crash.precondition.ConstraintExceptionPreconditionBuilder
+import org.vorpal.research.kex.asm.analysis.crash.precondition.DescriptorExceptionPreconditionBuilder
+import org.vorpal.research.kex.asm.analysis.crash.precondition.ExceptionPreconditionBuilder
+import org.vorpal.research.kex.asm.analysis.crash.precondition.ExceptionPreconditionBuilderImpl
 import org.vorpal.research.kex.asm.analysis.symbolic.DefaultCallResolver
 import org.vorpal.research.kex.asm.analysis.symbolic.SymbolicCallResolver
 import org.vorpal.research.kex.asm.analysis.symbolic.SymbolicInvokeDynamicResolver
 import org.vorpal.research.kex.asm.analysis.symbolic.SymbolicPathSelector
 import org.vorpal.research.kex.asm.analysis.symbolic.SymbolicTraverser
 import org.vorpal.research.kex.asm.analysis.symbolic.TraverserState
+import org.vorpal.research.kex.asm.analysis.util.checkAsyncAndSlice
 import org.vorpal.research.kex.compile.CompilationException
 import org.vorpal.research.kex.config.kexConfig
 import org.vorpal.research.kex.descriptor.Descriptor
@@ -22,6 +28,7 @@ import org.vorpal.research.kex.state.predicate.path
 import org.vorpal.research.kex.state.term.Term
 import org.vorpal.research.kex.trace.symbolic.PathClause
 import org.vorpal.research.kex.trace.symbolic.PathClauseType
+import org.vorpal.research.kex.trace.symbolic.SymbolicState
 import org.vorpal.research.kex.util.arrayIndexOOBClass
 import org.vorpal.research.kex.util.asmString
 import org.vorpal.research.kex.util.classCastClass
@@ -100,8 +107,8 @@ class CrashReproductionChecker(
     @Suppress("MemberVisibilityCanBePrivate")
     val stackTrace: StackTrace,
     private val targetInstructions: Set<Instruction>,
-    private val preconditionBuilder: ExceptionPreConditionBuilder,
-    private val reproductionChecker: TestKlassReproductionChecker,
+    private val preconditionBuilder: ExceptionPreconditionBuilder,
+    private val reproductionChecker: ExceptionReproductionChecker,
     private val shouldStopAfterFirst: Boolean
 ) : SymbolicTraverser(ctx, ctx.cm[stackTrace.stackTraceLines.last()]) {
     override val pathSelector: SymbolicPathSelector =
@@ -114,6 +121,8 @@ class CrashReproductionChecker(
     private var foundAnExample = false
     private val generatedTestClasses = mutableSetOf<String>()
     private val descriptors = mutableMapOf<String, Parameters<Descriptor>>()
+    private val preconditions = mutableMapOf<String, ConstraintExceptionPrecondition>()
+    private var lastPrecondition: ConstraintExceptionPrecondition? = null
 
     init {
         ktassert(
@@ -122,16 +131,23 @@ class CrashReproductionChecker(
         )
     }
 
+    @Suppress("unused")
     companion object {
+
+        data class CrashReproductionResult(
+            val testClasses: Set<String>,
+            val descriptors: Map<String, Parameters<Descriptor>>,
+            val preconditions: Map<String, ConstraintExceptionPrecondition>
+        )
 
         private suspend fun runChecker(
             context: ExecutionContext,
             stackTrace: StackTrace,
             targetInstructions: Set<Instruction>,
-            preconditionBuilder: ExceptionPreConditionBuilder,
-            reproductionChecker: TestKlassReproductionChecker,
+            preconditionBuilder: ExceptionPreconditionBuilder,
+            reproductionChecker: ExceptionReproductionChecker,
             shouldStopAfterFirst: Boolean
-        ): Map<String, Parameters<Descriptor>> {
+        ): CrashReproductionResult {
             val checker = CrashReproductionChecker(
                 context,
                 stackTrace,
@@ -141,7 +157,11 @@ class CrashReproductionChecker(
                 shouldStopAfterFirst
             )
             checker.analyze()
-            return checker.generatedTestClasses.associateWith { checker.descriptors[it]!! }
+            return CrashReproductionResult(
+                checker.generatedTestClasses,
+                checker.descriptors,
+                checker.preconditions
+            )
         }
 
         @ExperimentalTime
@@ -158,19 +178,45 @@ class CrashReproductionChecker(
                             context,
                             stackTrace,
                             stackTrace.targetInstructions(context),
-                            ExceptionPreConditionBuilderImpl(context, stackTrace.targetException(context)),
-                            TestKlassReproductionCheckerImpl(context, stackTrace),
+                            ExceptionPreconditionBuilderImpl(context, stackTrace.targetException(context)),
+                            ExceptionReproductionCheckerImpl(context, stackTrace),
                             stopAfterFirstCrash
-                        ).keys
+                        ).testClasses
                     }.await()
                 } ?: emptySet()
             }
         }
 
+        @ExperimentalTime
+        @DelicateCoroutinesApi
+        fun runWithDescriptorPreconditions(context: ExecutionContext, stackTrace: StackTrace): Set<String> =
+            runIteratively(context, stackTrace) { result ->
+                DescriptorExceptionPreconditionBuilder(
+                    context,
+                    stackTrace.targetException(context),
+                    result.descriptors.values.toSet()
+                )
+            }
+
+        @ExperimentalTime
+        @DelicateCoroutinesApi
+        fun runWithConstraintPreconditions(context: ExecutionContext, stackTrace: StackTrace): Set<String> =
+            runIteratively(context, stackTrace) { result ->
+                ConstraintExceptionPreconditionBuilder(
+                    context,
+                    stackTrace.targetException(context),
+                    result.preconditions.values.toSet()
+                )
+            }
+
         @OptIn(ExperimentalPathApi::class)
         @ExperimentalTime
         @DelicateCoroutinesApi
-        fun runIteratively(context: ExecutionContext, stackTrace: StackTrace): Set<String> {
+        fun runIteratively(
+            context: ExecutionContext,
+            stackTrace: StackTrace,
+            preconditionBuilder: (CrashReproductionResult) -> ExceptionPreconditionBuilder
+        ): Set<String> {
             val timeLimit = kexConfig.getIntValue("crash", "timeLimit", 100)
             val stopAfterFirstCrash = kexConfig.getBooleanValue("crash", "stopAfterFirstCrash", false)
 
@@ -179,38 +225,35 @@ class CrashReproductionChecker(
             val firstLine = stackTrace.stackTraceLines.first()
             return runBlocking(coroutineContext) {
                 withTimeoutOrNull(timeLimit.seconds) {
-                    var descriptors = async {
+                    var result = async {
                         runChecker(
                             context,
                             StackTrace(stackTrace.firstLine, listOf(firstLine)),
                             stackTrace.targetInstructions(context),
-                            ExceptionPreConditionBuilderImpl(context, stackTrace.targetException(context)),
-                            TestKlassReproductionCheckerImpl(
+                            ExceptionPreconditionBuilderImpl(context, stackTrace.targetException(context)),
+                            ExceptionReproductionCheckerImpl(
                                 context,
                                 StackTrace(stackTrace.firstLine, listOf(firstLine))
                             ),
                             stopAfterFirstCrash
                         )
                     }.await()
-                    for ((line, prev) in stackTrace.stackTraceLines.drop(1).zip(stackTrace.stackTraceLines.dropLast(1))) {
-                        if (descriptors.isEmpty()) break
+                    for ((line, prev) in stackTrace.stackTraceLines.drop(1)
+                        .zip(stackTrace.stackTraceLines.dropLast(1))) {
+                        if (result.testClasses.isEmpty()) break
                         kexConfig.testcaseDirectory.deleteRecursively()
 
                         val targetInstructions = context.cm[line].body.flatten()
                             .filter { it.location.line == line.lineNumber }
                             .filterTo(mutableSetOf()) { it is CallInst && it.method.name == prev.methodName }
 
-                        descriptors = async {
+                        result = async {
                             runChecker(
                                 context,
                                 StackTrace(stackTrace.firstLine, listOf(line)),
                                 targetInstructions,
-                                DescriptorPreconditionBuilder(
-                                    context,
-                                    stackTrace.targetException(context),
-                                    descriptors.values.toSet()
-                                ),
-                                TestKlassReproductionCheckerImpl(
+                                preconditionBuilder(result),
+                                ExceptionReproductionCheckerImpl(
                                     context,
                                     StackTrace(stackTrace.firstLine, listOf(line)),
                                 ),
@@ -218,10 +261,10 @@ class CrashReproductionChecker(
                             )
                         }.await()
                     }
-                    if (descriptors.isEmpty()) {
+                    if (result.testClasses.isEmpty()) {
                         kexConfig.testcaseDirectory.deleteRecursively()
                     }
-                    descriptors.keys
+                    result.testClasses
                 }
             } ?: emptySet()
         }
@@ -272,7 +315,6 @@ class CrashReproductionChecker(
         index: Term,
         length: Term
     ): TraverserState? {
-
         val persistentState = state.symbolicState
         val zeroClause = PathClause(
             PathClauseType.BOUNDS_CHECK,
@@ -342,6 +384,12 @@ class CrashReproductionChecker(
         )
     }
 
+    override suspend fun check(method: Method, state: SymbolicState): Parameters<Descriptor>? {
+        val (params, precondition) = method.checkAsyncAndSlice(ctx, state) ?: return null
+        lastPrecondition = precondition
+        return params
+    }
+
     override fun report(inst: Instruction, parameters: Parameters<Descriptor>, testPostfix: String): Boolean {
         if (inst !in targetInstructions) return false
         val testName = rootMethod.klassName + testPostfix + testIndex.getAndIncrement()
@@ -356,6 +404,8 @@ class CrashReproductionChecker(
             foundAnExample = true
             generatedTestClasses += generator.testKlassName
             descriptors[generator.testKlassName] = parameters
+            preconditions[generator.testKlassName] = lastPrecondition!!
+            lastPrecondition = null
             return true
         } catch (e: CompilationException) {
             log.error("Failed to compile test file $testFile")

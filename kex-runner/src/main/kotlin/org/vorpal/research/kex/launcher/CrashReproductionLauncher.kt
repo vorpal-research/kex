@@ -9,7 +9,10 @@ import org.vorpal.research.kex.asm.util.AccessModifier
 import org.vorpal.research.kex.asm.util.Visibility
 import org.vorpal.research.kex.config.kexConfig
 import org.vorpal.research.kex.random.easyrandom.EasyRandomDriver
-import org.vorpal.research.kex.util.*
+import org.vorpal.research.kex.util.getIntrinsics
+import org.vorpal.research.kex.util.getKexRuntime
+import org.vorpal.research.kex.util.getPathSeparator
+import org.vorpal.research.kex.util.getRuntime
 import org.vorpal.research.kfg.ClassManager
 import org.vorpal.research.kfg.KfgConfig
 import org.vorpal.research.kfg.Package
@@ -92,6 +95,6 @@ class CrashReproductionLauncher(
         executePipeline(context.cm, Package.defaultPackage) {
             +ClassInstantiationDetector(context, context.accessLevel)
         }
-        CrashReproductionChecker.runIteratively(context, stackTrace)
+        CrashReproductionChecker.runWithConstraintPreconditions(context, stackTrace)
     }
 }

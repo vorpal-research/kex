@@ -9,6 +9,12 @@ import org.vorpal.research.kex.state.predicate.hasReceiver
 import org.vorpal.research.kex.state.predicate.receiver
 import org.vorpal.research.kex.state.term.Term
 import org.vorpal.research.kex.state.term.isNamed
+import org.vorpal.research.kex.trace.symbolic.PathClause
+import org.vorpal.research.kex.trace.symbolic.PersistentSymbolicState
+import org.vorpal.research.kex.trace.symbolic.StateClause
+import org.vorpal.research.kex.trace.symbolic.SymbolicState
+import org.vorpal.research.kex.trace.symbolic.persistentSymbolicState
+import org.vorpal.research.kex.trace.symbolic.plus
 
 class CFGTracker : Transformer<CFGTracker> {
     private var currentDominators = setOf<Predicate>()
@@ -82,6 +88,7 @@ class Slicer(
             rhv.forEach { addSliceTerm(it) }
             true
         }
+
         else -> false
     }
 
@@ -123,6 +130,7 @@ class Slicer(
             currentPath = savedDeps
             result
         }
+
         else -> super.transformChoice(ps)
     }
 
@@ -161,6 +169,99 @@ class Slicer(
         return when {
             asVar || asPtr -> predicate.also { addCFGDeps(predicate) }
             else -> nothing()
+        }
+    }
+}
+
+
+class SymbolicStateSlicer(
+    sliceTerms: Set<Term>,
+    private val aa: AliasAnalysis
+) {
+    private val sliceVars = hashSetOf<Term>()
+    private val slicePtrs = hashSetOf<Term>()
+
+    private val isInterestingTerm = { term: Term -> term.isNamed }
+
+    init {
+        for (term in sliceTerms.filter(isInterestingTerm)) {
+            addSliceTerm(term)
+        }
+    }
+
+    private fun addSliceTerm(term: Term) = when (term.type) {
+        is KexPointer -> slicePtrs.add(term)
+        else -> sliceVars.add(term)
+    }
+
+    private fun checkVars(lhv: Set<Term>, rhv: Set<Term>) = when {
+        lhv.filterNot { it.type is KexPointer }.any { sliceVars.contains(it) } -> {
+            rhv.forEach { addSliceTerm(it) }
+            true
+        }
+
+        else -> false
+    }
+
+    private fun checkPtrs(predicate: Predicate, lhv: Set<Term>, rhv: Set<Term>): Boolean {
+        if (lhv.isEmpty()) return false
+
+        if (lhv.filter { it.type is KexPointer }.any { it in slicePtrs }) {
+            rhv.forEach { addSliceTerm(it) }
+            return true
+        }
+
+        if (predicate.hasReceiver) {
+            val lhvPtrs = lhv.filter { it.type is KexPointer }
+            if (lhvPtrs.any { ref -> slicePtrs.any { slice -> aa.mayAlias(ref, slice) } }) {
+                lhv.forEach { addSliceTerm(it) }
+                rhv.forEach { addSliceTerm(it) }
+                return true
+            }
+        }
+        return false
+    }
+
+    fun apply(state: SymbolicState): PersistentSymbolicState {
+        var result = persistentSymbolicState()
+        for (clause in state.clauses) {
+            val transformed = transformBase(clause.predicate) ?: continue
+            result = result.copy(
+                clauses = result.clauses + StateClause(clause.instruction, transformed)
+            )
+        }
+        for (clause in state.path) {
+            val transformed = transformBase(clause.predicate) ?: continue
+            result = result.copy(
+                path = result.path + PathClause(clause.type, clause.instruction, transformed)
+            )
+        }
+        return result
+    }
+
+    fun transformBase(predicate: Predicate): Predicate? {
+        val (lhvTerms, rhvTerms) = when (predicate.type) {
+            is PredicateType.Path -> emptySet<Term>() to TermCollector.getFullTermSet(predicate)
+                .filterTo(mutableSetOf(), isInterestingTerm)
+
+            else -> {
+                val receiver = predicate.receiver
+                val lhvTerms = when {
+                    receiver != null -> TermCollector.getFullTermSet(receiver)
+                        .filterTo(mutableSetOf(), isInterestingTerm)
+
+                    else -> setOf()
+                }
+                val rhvTerms = predicate.operands.drop(1).flatMapTo(mutableSetOf()) { TermCollector.getFullTermSet(it) }
+                lhvTerms to rhvTerms
+            }
+        }
+
+        val asVar = checkVars(lhvTerms, rhvTerms)
+        val asPtr = checkPtrs(predicate, lhvTerms, rhvTerms)
+        return when {
+            asVar || asPtr -> predicate
+            else -> null
         }
     }
 }

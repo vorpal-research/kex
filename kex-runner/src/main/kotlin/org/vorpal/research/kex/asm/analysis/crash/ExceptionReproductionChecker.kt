@@ -13,14 +13,14 @@ import java.net.URL
 import java.net.URLClassLoader
 
 
-interface TestKlassReproductionChecker {
+interface ExceptionReproductionChecker {
     fun isReproduced(testKlass: String): Boolean
 }
 
-class TestKlassReproductionCheckerImpl(
+class ExceptionReproductionCheckerImpl(
     val ctx: ExecutionContext,
     private val stackTrace: StackTrace
-) : TestKlassReproductionChecker {
+) : ExceptionReproductionChecker {
     override fun isReproduced(testKlass: String): Boolean {
         val resultingStackTrace = executeTest(testKlass) ?: return false
         return stackTrace.throwable == resultingStackTrace.throwable &&
