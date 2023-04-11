@@ -10,6 +10,7 @@ import javax.lang.model.SourceVersion
 import javax.lang.model.element.Element
 import javax.lang.model.element.TypeElement
 
+@Suppress("SameParameterValue")
 @SupportedSourceVersion(SourceVersion.RELEASE_8)
 @SupportedAnnotationTypes("org.vorpal.research.kex.TransformerBase")
 @SupportedOptions(TransformerGenerator.KEX_RESOURCES, TransformerGenerator.KAPT_GENERATED_SOURCES)
@@ -92,7 +93,7 @@ interface Transformer<T : Transformer<T>> {
         for (type in types) {
             appendLine("${DOUBLE_SHIFT}is $type$baseName -> transform$type$baseName(argument)")
         }
-        appendLine("${DOUBLE_SHIFT}else -> unreachable { log.error(\"Unknwon argument \$argument of base $baseClass\") }")
+        appendLine("${DOUBLE_SHIFT}else -> unreachable { log.error(\"Unknown argument \$argument of base $baseClass\") }")
         appendLine("${SHIFT}}")
 
 
@@ -115,7 +116,7 @@ interface Transformer<T : Transformer<T>> {
         if (checkStub) {
             appendLine("${DOUBLE_SHIFT}is Stub -> argument")
         }
-        appendLine("${DOUBLE_SHIFT}else -> unreachable { log.error(\"Unknwon argument \$argument of base $baseClass\") }")
+        appendLine("${DOUBLE_SHIFT}else -> unreachable { log.error(\"Unknown argument \$argument of base $baseClass\") }")
         appendLine("${SHIFT}}")
     }
 
