@@ -6,7 +6,16 @@ import org.vorpal.research.kex.config.kexConfig
 import org.vorpal.research.kex.util.isAbstract
 import org.vorpal.research.kthelper.assert.unreachable
 import org.vorpal.research.kthelper.logging.log
-import java.util.*
+import java.util.ArrayList
+import java.util.ArrayDeque
+import java.util.EnumSet
+import java.util.EnumMap
+import java.util.LinkedList
+import java.util.Stack
+import java.util.Queue
+import java.util.PriorityQueue
+import java.util.TreeSet
+import java.util.TreeMap
 import java.util.concurrent.ConcurrentSkipListMap
 import java.util.concurrent.ConcurrentSkipListSet
 
@@ -19,8 +28,7 @@ abstract class CollectionRandomizer<T>(
 ) : Randomizer<Collection<T>> {
     private val nbElements: Int = intRandomizer.randomValue `in` collectionSizeRange
 
-    val randomElement: T
-        get() = delegate.randomValue
+    private fun getRandomElement(): T = delegate.randomValue
 
     override fun toString(): String {
         return "CollectionRandomizer [impl=$collection, delegate=$delegate, nbElements=$nbElements]"
@@ -29,12 +37,11 @@ abstract class CollectionRandomizer<T>(
     override fun getRandomValue(): MutableCollection<T> {
         val collection = collection()
         for (i in 0 until nbElements) {
-            collection.add(randomElement)
+            collection.add(getRandomElement())
         }
         return collection
     }
 
-    @Suppress("UNCHECKED_CAST")
     companion object {
         val collectionSizeRange: IntRange by lazy {
             val minCollectionSize = kexConfig.getIntValue("easy-random", "minCollectionSize", 0)
@@ -55,14 +62,17 @@ abstract class CollectionRandomizer<T>(
                     elementRandomizer,
                     intRandomizer
                 )
+
                 klass.isAssignableFrom(ArrayList::class.java) -> ListRandomizer.arrayListRandomizer(
                     elementRandomizer,
                     intRandomizer
                 )
+
                 klass.isAssignableFrom(Stack::class.java) -> ListRandomizer.stackRandomizer(
                     elementRandomizer,
                     intRandomizer
                 )
+
                 else -> {
                     log.warn("Unknown list impl: $klass")
                     ListRandomizer.randomListRandomizer(
@@ -74,13 +84,17 @@ abstract class CollectionRandomizer<T>(
                     )
                 }
             }
+
             Queue::class.java.isAssignableFrom(klass) -> when {
                 klass.isAssignableFrom(LinkedList::class.java) ->
                     QueueRandomizer.linkedQueueRandomizer(elementRandomizer, intRandomizer)
+
                 klass.isAssignableFrom(ArrayDeque::class.java) ->
                     QueueRandomizer.arrayQueueRandomizer(elementRandomizer, intRandomizer)
+
                 klass.isAssignableFrom(PriorityQueue::class.java) ->
                     QueueRandomizer.priorityQueueRandomizer(elementRandomizer, intRandomizer)
+
                 else -> {
                     log.warn("Unknown queue impl: $klass")
                     QueueRandomizer.randomQueueRandomizer(
@@ -92,19 +106,24 @@ abstract class CollectionRandomizer<T>(
                     )
                 }
             }
+
             Set::class.java.isAssignableFrom(klass) -> when {
                 klass.isAssignableFrom(HashSet::class.java) -> SetRandomizer.hashSetRandomizer(
                     elementRandomizer,
                     intRandomizer
                 )
+
                 klass.isAssignableFrom(LinkedHashSet::class.java) ->
                     SetRandomizer.linkedSetRandomizer(elementRandomizer, intRandomizer)
+
                 klass.isAssignableFrom(TreeSet::class.java) -> SetRandomizer.treeSetRandomizer(
                     elementRandomizer,
                     intRandomizer
                 )
+
                 klass.isAssignableFrom(ConcurrentSkipListSet::class.java) ->
                     SetRandomizer.skipListSetRandomizer(elementRandomizer, intRandomizer)
+
                 else -> {
                     log.warn("Unknown set impl: $klass")
                     SetRandomizer.randomSetRandomizer(
@@ -116,6 +135,7 @@ abstract class CollectionRandomizer<T>(
                     )
                 }
             }
+
             Collection::class.java.isAssignableFrom(klass) ->
                 CustomCollectionRandomizer.collectionRandomizer(
                     klass,
@@ -125,6 +145,7 @@ abstract class CollectionRandomizer<T>(
                     reflectionFacade,
                     ktRandom
                 )
+
             else -> unreachable { log.error("Unknown collection: $klass") }
         }
 
@@ -139,12 +160,16 @@ abstract class CollectionRandomizer<T>(
         ) = when {
             klass.isAssignableFrom(LinkedHashMap::class.java) ->
                 MapRandomizer.linkedMapRandomizer(keyRandomizer, valueRandomizer, intRandomizer)
+
             klass.isAssignableFrom(HashMap::class.java) ->
                 MapRandomizer.hashMapRandomizer(keyRandomizer, valueRandomizer, intRandomizer)
+
             klass.isAssignableFrom(TreeMap::class.java) ->
                 MapRandomizer.treeMapRandomizer(keyRandomizer, valueRandomizer, intRandomizer)
+
             klass.isAssignableFrom(ConcurrentSkipListMap::class.java) ->
                 MapRandomizer.skipListMapRandomizer(keyRandomizer, valueRandomizer, intRandomizer)
+
             Map::class.java.isAssignableFrom(klass) ->
                 MapRandomizer.customMapRandomizer(
                     klass,
@@ -155,6 +180,7 @@ abstract class CollectionRandomizer<T>(
                     reflectionFacade,
                     ktRandom
                 )
+
             else -> {
                 log.warn("Unknown map impl: $klass")
                 MapRandomizer.randomMapRandomizer(
@@ -180,6 +206,7 @@ class ListRandomizer<T>(
 
     override fun getRandomValue() = super.getRandomValue() as MutableList<T>
 
+    @Suppress("MemberVisibilityCanBePrivate")
     companion object {
         fun <T> newListRandomizer(
             `impl`: () -> MutableList<T>,
@@ -219,6 +246,7 @@ class QueueRandomizer<T>(`impl`: () -> Queue<T>, elementRandomizer: Randomizer<T
 
     override fun getRandomValue() = super.getRandomValue() as Queue<T>
 
+    @Suppress("MemberVisibilityCanBePrivate")
     companion object {
         fun <T> newQueueRandomizer(
             `impl`: () -> Queue<T>,
@@ -258,6 +286,7 @@ class SetRandomizer<T>(`impl`: () -> MutableSet<T>, elementRandomizer: Randomize
 
     override fun getRandomValue() = super.getRandomValue() as MutableSet<T>
 
+    @Suppress("unused")
     companion object {
         fun <T> newSetRandomizer(
             `impl`: () -> MutableSet<T>,
@@ -277,8 +306,7 @@ class SetRandomizer<T>(`impl`: () -> MutableSet<T>, elementRandomizer: Randomize
         inline fun <reified T : Enum<T>> enumSetRandomizer(
             elementRandomizer: Randomizer<T>,
             intRandomizer: Randomizer<Int>
-        ) =
-            newSetRandomizer({ EnumSet.noneOf(T::class.java) }, elementRandomizer, intRandomizer)
+        ) = newSetRandomizer({ EnumSet.noneOf(T::class.java) }, elementRandomizer, intRandomizer)
 
         fun <T> skipListSetRandomizer(elementRandomizer: Randomizer<T>, intRandomizer: Randomizer<Int>) =
             newSetRandomizer({ ConcurrentSkipListSet() }, elementRandomizer, intRandomizer)
@@ -303,17 +331,15 @@ class SetRandomizer<T>(`impl`: () -> MutableSet<T>, elementRandomizer: Randomize
 
 class MapRandomizer<K, V>(
     val collection: () -> MutableMap<K, V>,
-    val keyRandomizer: Randomizer<K>,
-    val valueRandomizer: Randomizer<V>,
+    private val keyRandomizer: Randomizer<K>,
+    private val valueRandomizer: Randomizer<V>,
     intRandomizer: Randomizer<Int>
 ) : Randomizer<Map<K, V>> {
     private val nbElements: Int = intRandomizer.randomValue `in` CollectionRandomizer.collectionSizeRange
 
-    val randomKey: K
-        get() = keyRandomizer.randomValue
+    private fun getRandomKey(): K = keyRandomizer.randomValue
 
-    val randomVal: V
-        get() = valueRandomizer.randomValue
+    private fun getRandomVal(): V = valueRandomizer.randomValue
 
     init {
         checkArguments(nbElements)
@@ -326,7 +352,7 @@ class MapRandomizer<K, V>(
     override fun getRandomValue(): Map<K, V> {
         val collection = collection()
         for (i in 0 until nbElements) {
-            collection[randomKey] = randomVal
+            collection[getRandomKey()] = getRandomVal()
         }
         return collection
     }
@@ -337,6 +363,7 @@ class MapRandomizer<K, V>(
         }
     }
 
+    @Suppress("unused")
     companion object {
         fun <K, V> newMapRandomizer(
             `impl`: () -> MutableMap<K, V>,
@@ -404,6 +431,7 @@ class MapRandomizer<K, V>(
                 klass.isAbstract || klass.isInterface -> reflectionFacade.getPublicConcreteSubTypesOf(klass)
                     .randomOrNull(ktRandom)
                     ?: throw InstantiationError("Unable to find a matching concrete subtype of type: $klass in the classpath")
+
                 else -> klass
             }
             return newMapRandomizer({
@@ -435,6 +463,7 @@ class CustomCollectionRandomizer<T>(
                 klass.isAbstract || klass.isInterface -> reflectionFacade.getPublicConcreteSubTypesOf(klass)
                     .randomOrNull(ktRandom)
                     ?: throw InstantiationError("Unable to find a matching concrete subtype of type: $klass in the classpath")
+
                 else -> klass
             }
             return CustomCollectionRandomizer(

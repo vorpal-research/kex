@@ -5,7 +5,15 @@ import org.vorpal.research.kex.config.kexConfig
 import org.vorpal.research.kex.descriptor.Descriptor
 import org.vorpal.research.kex.descriptor.ObjectDescriptor
 import org.vorpal.research.kex.parameters.Parameters
-import org.vorpal.research.kex.reanimator.actionsequence.*
+import org.vorpal.research.kex.reanimator.actionsequence.ActionList
+import org.vorpal.research.kex.reanimator.actionsequence.ActionSequence
+import org.vorpal.research.kex.reanimator.actionsequence.CodeAction
+import org.vorpal.research.kex.reanimator.actionsequence.ConstructorCall
+import org.vorpal.research.kex.reanimator.actionsequence.DefaultConstructorCall
+import org.vorpal.research.kex.reanimator.actionsequence.ExternalConstructorCall
+import org.vorpal.research.kex.reanimator.actionsequence.FieldSetter
+import org.vorpal.research.kex.reanimator.actionsequence.MethodCall
+import org.vorpal.research.kex.reanimator.actionsequence.UnknownSequence
 import org.vorpal.research.kex.reanimator.collector.hasSetter
 import org.vorpal.research.kex.reanimator.collector.setter
 import org.vorpal.research.kfg.ir.Class
@@ -44,8 +52,7 @@ open class AnyGenerator(private val fallback: Generator) : Generator {
 
             other as StackWrapper
 
-            if (value.instance eq other.value.instance && value.depth <= other.value.depth) return true
-            return false
+            return value.instance eq other.value.instance && value.depth <= other.value.depth
         }
     }
 

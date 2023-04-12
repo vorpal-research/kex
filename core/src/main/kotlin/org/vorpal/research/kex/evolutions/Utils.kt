@@ -2,7 +2,16 @@ package org.vorpal.research.kex.evolutions
 
 import org.vorpal.research.kfg.ir.value.instruction.BinaryOpcode
 import org.vorpal.research.kfg.ir.value.instruction.UnaryOpcode
-import ru.spbstu.*
+import ru.spbstu.Apply
+import ru.spbstu.Symbolic
+import ru.spbstu.gcd
+import ru.spbstu.plus
+import ru.spbstu.minus
+import ru.spbstu.times
+import ru.spbstu.div
+import ru.spbstu.shl
+import ru.spbstu.shr
+import ru.spbstu.unaryMinus
 
 fun BinaryOpcode.toFunc(): (Symbolic, Symbolic) -> Symbolic = when (this) {
     BinaryOpcode.ADD -> Symbolic::plus
@@ -19,4 +28,5 @@ fun UnaryOpcode.toFunc(): (Symbolic) -> Symbolic = when (this) {
     UnaryOpcode.LENGTH -> { a -> Apply("\\length", a) }
 }
 
+@Suppress("unused")
 fun lcm(a: Long, b: Long): Long = (a / gcd(a, b)) * b

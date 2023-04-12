@@ -3,7 +3,6 @@ package org.vorpal.research.kex.util
 import org.vorpal.research.kex.ktype.KexArray
 import org.vorpal.research.kex.ktype.KexPointer
 import org.vorpal.research.kex.ktype.KexType
-import org.vorpal.research.kex.ktype.type
 import org.vorpal.research.kfg.ir.Field
 import org.vorpal.research.kfg.ir.Method
 import org.vorpal.research.kfg.type.Reference
@@ -17,7 +16,12 @@ import kotlin.reflect.KClass
 import kotlin.reflect.KFunction
 import kotlin.reflect.KMutableProperty
 import kotlin.reflect.KType
-import kotlin.reflect.full.*
+import kotlin.reflect.full.declaredMemberExtensionFunctions
+import kotlin.reflect.full.declaredMemberExtensionProperties
+import kotlin.reflect.full.declaredMemberFunctions
+import kotlin.reflect.full.declaredMemberProperties
+import kotlin.reflect.full.staticFunctions
+import kotlin.reflect.full.staticProperties
 import kotlin.reflect.jvm.javaMethod
 import kotlin.reflect.jvm.jvmErasure
 
@@ -82,7 +86,7 @@ fun KClass<*>.find(method: Method) = allFunctions.find { it eq method }
 
 fun ClassLoader.loadKClass(type: Type) = this.loadClass(type).kotlin
 fun ClassLoader.loadKClass(tf: TypeFactory, type: KexType) = this.loadClass(tf, type).kotlin
-fun ClassLoader.loadKClass(klass: org.vorpal.research.kfg.ir.Class) = this.loadKClass(klass.type)
+fun ClassLoader.loadKClass(klass: org.vorpal.research.kfg.ir.Class) = this.loadKClass(klass.asType)
 
 fun KClass<*>.getKFunction(method: Method): KFunction<*>? {
     val queue = queueOf(this)

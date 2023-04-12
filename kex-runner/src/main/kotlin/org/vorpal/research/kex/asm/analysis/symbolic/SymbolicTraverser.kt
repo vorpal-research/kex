@@ -18,7 +18,6 @@ import org.vorpal.research.kex.ktype.KexPointer
 import org.vorpal.research.kex.ktype.KexRtManager.rtMapped
 import org.vorpal.research.kex.ktype.KexType
 import org.vorpal.research.kex.ktype.kexType
-import org.vorpal.research.kex.ktype.type
 import org.vorpal.research.kex.parameters.Parameters
 import org.vorpal.research.kex.reanimator.UnsafeGenerator
 import org.vorpal.research.kex.reanimator.codegen.klassName
@@ -579,7 +578,7 @@ abstract class SymbolicTraverser(
         if (!candidate.isStatic) {
             traverserState =
                 typeCheck(traverserState, inst, callee, candidate.klass.symbolicClass) ?: return nullableCurrentState()
-            if (candidate.klass.type != callee.type.getKfgType(types)) {
+            if (candidate.klass.asType != callee.type.getKfgType(types)) {
                 val newCalleeTerm = generate(candidate.klass.symbolicClass)
                 val convertClause = StateClause(inst, state {
                     newCalleeTerm equality (callee `as` candidate.klass.symbolicClass)

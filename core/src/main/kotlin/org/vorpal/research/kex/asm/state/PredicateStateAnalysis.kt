@@ -19,7 +19,7 @@ class PredicateStateAnalysis(override val cm: ClassManager) : MethodVisitor {
         } catch (e: NoTopologicalSortingException) {
             log.error("Can't perform topological sorting of $method")
         } catch (e: KtException) {
-            // during loop derolling we can create instructions,
+            // during loop unrolling we can create instructions,
             // that are not convertible into predicates
             log.error("Unexpected exception during PS building for $method: $e")
         }

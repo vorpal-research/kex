@@ -3,10 +3,13 @@ package org.vorpal.research.kex.launcher
 import org.vorpal.research.kex.ExecutionContext
 import org.vorpal.research.kex.asm.manager.ClassInstantiationDetector
 import org.vorpal.research.kex.asm.util.AccessModifier
-import org.vorpal.research.kex.asm.util.ClassWriter
 import org.vorpal.research.kex.config.kexConfig
 import org.vorpal.research.kex.random.easyrandom.EasyRandomDriver
-import org.vorpal.research.kex.util.*
+import org.vorpal.research.kex.util.getIntrinsics
+import org.vorpal.research.kex.util.getKexRuntime
+import org.vorpal.research.kex.util.getPathSeparator
+import org.vorpal.research.kex.util.getRuntime
+import org.vorpal.research.kex.util.instrumentedCodeDirectory
 import org.vorpal.research.kfg.ClassManager
 import org.vorpal.research.kfg.KfgConfig
 import org.vorpal.research.kfg.Package
@@ -71,7 +74,6 @@ internal fun runPipeline(context: ExecutionContext, analysisLevel: AnalysisLevel
     }
 
 
-@Suppress("LeakingThis")
 abstract class KexAnalysisLauncher(classPaths: List<String>, targetName: String) : KexLauncher {
     private val classPath: String = System.getProperty("java.class.path")
 

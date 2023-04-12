@@ -3,14 +3,34 @@ package org.vorpal.research.kex.asm.manager
 import org.vorpal.research.kex.ExecutionContext
 import org.vorpal.research.kex.asm.util.AccessModifier
 import org.vorpal.research.kex.asm.util.accessModifier
-import org.vorpal.research.kex.ktype.*
+import org.vorpal.research.kex.ktype.KexClass
+import org.vorpal.research.kex.ktype.KexReference
 import org.vorpal.research.kex.ktype.KexRtManager.rtMapped
-import org.vorpal.research.kex.util.*
+import org.vorpal.research.kex.ktype.KexType
+import org.vorpal.research.kex.ktype.kexType
+import org.vorpal.research.kex.util.abstractCollectionClass
+import org.vorpal.research.kex.util.abstractListClass
+import org.vorpal.research.kex.util.abstractMapClass
+import org.vorpal.research.kex.util.abstractQueueClass
+import org.vorpal.research.kex.util.abstractSetClass
+import org.vorpal.research.kex.util.abstractStringBuilderClass
+import org.vorpal.research.kex.util.atomicBooleanClass
+import org.vorpal.research.kex.util.atomicIntegerArrayClass
+import org.vorpal.research.kex.util.atomicIntegerClass
+import org.vorpal.research.kex.util.atomicLongArrayClass
+import org.vorpal.research.kex.util.atomicLongClass
+import org.vorpal.research.kex.util.atomicReferenceArrayClass
+import org.vorpal.research.kex.util.atomicReferenceClass
+import org.vorpal.research.kex.util.atomicStampedReferenceClass
+import org.vorpal.research.kex.util.numberClass
 import org.vorpal.research.kfg.ClassManager
 import org.vorpal.research.kfg.ir.Class
 import org.vorpal.research.kfg.ir.ConcreteClass
 import org.vorpal.research.kfg.ir.Method
-import org.vorpal.research.kfg.type.*
+import org.vorpal.research.kfg.type.ArrayType
+import org.vorpal.research.kfg.type.ClassType
+import org.vorpal.research.kfg.type.SystemTypeNames
+import org.vorpal.research.kfg.type.Type
 import org.vorpal.research.kfg.visitor.ClassVisitor
 import org.vorpal.research.kthelper.`try`
 import kotlin.random.Random
@@ -28,7 +48,7 @@ interface ClassInstantiationManager {
     fun get(klass: Class, accessLevel: AccessModifier, excludes: Set<Class>, random: Random): Class
     fun get(type: Type, accessLevel: AccessModifier, excludes: Set<Class>, random: Random): Type =
         when (type) {
-            is ClassType -> get(type.klass, accessLevel, excludes, random).type
+            is ClassType -> get(type.klass, accessLevel, excludes, random).asType
             is ArrayType -> get(type.component, accessLevel, excludes, random).asArray
             else -> type
         }

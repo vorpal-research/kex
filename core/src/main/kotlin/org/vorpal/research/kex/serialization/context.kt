@@ -5,13 +5,23 @@ import kotlinx.serialization.InternalSerializationApi
 import kotlinx.serialization.modules.SerializersModule
 import kotlinx.serialization.modules.polymorphic
 import kotlinx.serialization.serializer
-import org.vorpal.research.kex.descriptor.*
+import org.vorpal.research.kex.descriptor.ArrayDescriptor
+import org.vorpal.research.kex.descriptor.ClassDescriptor
+import org.vorpal.research.kex.descriptor.ConstantDescriptor
+import org.vorpal.research.kex.descriptor.Descriptor
+import org.vorpal.research.kex.descriptor.FieldContainingDescriptor
+import org.vorpal.research.kex.descriptor.ObjectDescriptor
 import org.vorpal.research.kex.ktype.KexType
 import org.vorpal.research.kex.state.PredicateState
 import org.vorpal.research.kex.state.predicate.Predicate
 import org.vorpal.research.kex.state.predicate.PredicateType
 import org.vorpal.research.kex.state.term.Term
-import org.vorpal.research.kex.trace.symbolic.*
+import org.vorpal.research.kex.trace.symbolic.Clause
+import org.vorpal.research.kex.trace.symbolic.PathClause
+import org.vorpal.research.kex.trace.symbolic.StateClause
+import org.vorpal.research.kex.trace.symbolic.SymbolicState
+import org.vorpal.research.kex.trace.symbolic.SymbolicStateImpl
+import org.vorpal.research.kex.trace.symbolic.WrappedValue
 import org.vorpal.research.kfg.ClassManager
 import org.vorpal.research.kfg.ir.Method
 import org.vorpal.research.kfg.ir.value.NameMapperContext
@@ -114,10 +124,12 @@ fun getPreSymbolicSerialModule(cm: ClassManager, ctx: NameMapperContext): Serial
     val base = getPredicateStateSerialModule(cm, ctx)
     include(base)
     include(getDescriptorSerialModule())
-    contextual(WrappedValue::class, WrappedValueSerializer(
-        ctx,
-        base.getContextual(Method::class)!!
-    ))
+    contextual(
+        WrappedValue::class, WrappedValueSerializer(
+            ctx,
+            base.getContextual(Method::class)!!
+        )
+    )
 }
 
 @ExperimentalSerializationApi

@@ -15,6 +15,7 @@ class ReflectionUtilsPrinter(
     val newArray: JavaBuilder.JavaFunction
     val newObjectArray: JavaBuilder.JavaFunction
     val newPrimitiveArrayMap = mutableMapOf<String, JavaBuilder.JavaFunction>()
+    @Suppress("MemberVisibilityCanBePrivate")
     val getField: JavaBuilder.JavaFunction
     val setField: JavaBuilder.JavaFunction
     val setPrimitiveFieldMap = mutableMapOf<String, JavaBuilder.JavaFunction>()

@@ -159,6 +159,7 @@ private class EmptyTraceCollector : InstructionTraceCollector {
     override fun addArrayLengthConstraints(inst: String, length: String, concreteLength: Any?) {}
 }
 
+@Suppress("unused")
 object TraceCollectorProxy {
     private lateinit var ctx: ExecutionContext
     private var collector: InstructionTraceCollector = EmptyTraceCollector()

@@ -3,7 +3,11 @@ package org.vorpal.research.kex.worker
 import org.vorpal.research.kex.ExecutionContext
 import org.vorpal.research.kex.config.kexConfig
 import org.vorpal.research.kex.descriptor.convertToDescriptor
-import org.vorpal.research.kex.trace.symbolic.*
+import org.vorpal.research.kex.trace.symbolic.TraceCollectorProxy
+import org.vorpal.research.kex.trace.symbolic.protocol.ExceptionResult
+import org.vorpal.research.kex.trace.symbolic.protocol.ExecutionResult
+import org.vorpal.research.kex.trace.symbolic.protocol.SetupFailedResult
+import org.vorpal.research.kex.trace.symbolic.protocol.SuccessResult
 import org.vorpal.research.kex.trace.symbolic.protocol.TestExecutionRequest
 import org.vorpal.research.kex.util.outputDirectory
 import org.vorpal.research.kfg.ir.value.NameMapperContext

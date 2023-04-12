@@ -16,13 +16,13 @@ import org.vorpal.research.kex.state.term.ConstBoolTerm
 import org.vorpal.research.kex.state.term.InstanceOfTerm
 import org.vorpal.research.kex.state.term.numericValue
 import org.vorpal.research.kex.state.transformer.TermCollector
-import org.vorpal.research.kex.trace.symbolic.ExecutionCompletedResult
 import org.vorpal.research.kex.trace.symbolic.PathClause
 import org.vorpal.research.kex.trace.symbolic.PathClauseType
 import org.vorpal.research.kex.trace.symbolic.PersistentPathCondition
 import org.vorpal.research.kex.trace.symbolic.PersistentSymbolicState
 import org.vorpal.research.kex.trace.symbolic.persistentSymbolicState
 import org.vorpal.research.kex.trace.symbolic.plus
+import org.vorpal.research.kex.trace.symbolic.protocol.ExecutionCompletedResult
 import org.vorpal.research.kex.trace.symbolic.toPersistentState
 import org.vorpal.research.kex.util.nextOrNull
 import org.vorpal.research.kfg.ir.BasicBlock

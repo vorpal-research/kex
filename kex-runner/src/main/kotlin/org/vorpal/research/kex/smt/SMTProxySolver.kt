@@ -1,9 +1,10 @@
+@file:Suppress("unused")
+
 package org.vorpal.research.kex.smt
 
 import org.vorpal.research.kex.ExecutionContext
 import org.vorpal.research.kex.InheritanceInfo
 import org.vorpal.research.kex.config.kexConfig
-import org.vorpal.research.kfg.type.TypeFactory
 import org.vorpal.research.kthelper.assert.fail
 import org.vorpal.research.kthelper.assert.unreachable
 import org.vorpal.research.kthelper.logging.log
@@ -13,11 +14,11 @@ private val engine = kexConfig.getStringValue("smt", "engine")
 
 class SMTProxySolver(
     ctx: ExecutionContext,
-    val solver: AbstractSMTSolver = getSolver(ctx, engine)
+    private val solver: AbstractSMTSolver = getSolver(ctx, engine)
 ) : AbstractSMTSolver by solver {
 
     companion object {
-        val solvers = run {
+        private val solvers = run {
             val loader = Thread.currentThread().contextClassLoader
             val resource = loader.getResourceAsStream("solvers.json")
                 ?: fail { log.error("Could not load smt solver inheritance info") }
@@ -41,11 +42,11 @@ class SMTProxySolver(
 
 class AsyncSMTProxySolver(
     ctx: ExecutionContext,
-    val solver: AbstractAsyncSMTSolver = getSolver(ctx, engine)
+    private val solver: AbstractAsyncSMTSolver = getSolver(ctx, engine)
 ) : AbstractAsyncSMTSolver by solver {
 
     companion object {
-        val solvers = run {
+        private val solvers = run {
             val loader = Thread.currentThread().contextClassLoader
             val resource = loader.getResourceAsStream("async-solvers.json")
                 ?: fail { log.error("Could not load smt solver inheritance info") }

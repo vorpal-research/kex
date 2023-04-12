@@ -1,3 +1,5 @@
+@file:Suppress("unused")
+
 package org.vorpal.research.kex.asm.util
 
 import org.vorpal.research.kex.ktype.KexType
@@ -96,6 +98,7 @@ val KfgField.accessModifier: AccessModifier
         else -> AccessModifier.Package(this.klass.pkg)
     }
 
+@Suppress("RecursivePropertyAccessor")
 val KfgType.accessModifier: AccessModifier
     get() = when (this) {
         is ClassType -> this.klass.accessModifier

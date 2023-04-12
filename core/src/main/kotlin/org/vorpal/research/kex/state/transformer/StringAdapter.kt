@@ -1,20 +1,39 @@
 package org.vorpal.research.kex.state.transformer
 
-import org.vorpal.research.kex.ktype.*
-import org.vorpal.research.kex.state.*
-import org.vorpal.research.kex.state.predicate.*
+import org.vorpal.research.kex.ktype.KexBool
+import org.vorpal.research.kex.ktype.KexChar
+import org.vorpal.research.kex.ktype.KexClass
+import org.vorpal.research.kex.ktype.KexInt
+import org.vorpal.research.kex.ktype.KexString
+import org.vorpal.research.kex.ktype.asArray
+import org.vorpal.research.kex.ktype.kexType
+import org.vorpal.research.kex.state.PredicateState
+import org.vorpal.research.kex.state.StateBuilder
+import org.vorpal.research.kex.state.basic
+import org.vorpal.research.kex.state.choice
+import org.vorpal.research.kex.state.predicate.CallPredicate
+import org.vorpal.research.kex.state.predicate.Predicate
+import org.vorpal.research.kex.state.predicate.PredicateBuilder
+import org.vorpal.research.kex.state.predicate.assume
+import org.vorpal.research.kex.state.predicate.predicate
 import org.vorpal.research.kex.state.term.CallTerm
 import org.vorpal.research.kex.state.term.LambdaTerm
 import org.vorpal.research.kex.state.term.Term
 import org.vorpal.research.kex.state.term.term
+import org.vorpal.research.kex.state.wrap
 import org.vorpal.research.kfg.ClassManager
 import org.vorpal.research.kfg.ir.Class
 import org.vorpal.research.kfg.stringClass
-import org.vorpal.research.kfg.type.*
+import org.vorpal.research.kfg.type.ClassType
+import org.vorpal.research.kfg.type.SystemTypeNames
+import org.vorpal.research.kfg.type.Type
+import org.vorpal.research.kfg.type.TypeFactory
+import org.vorpal.research.kfg.type.objectType
+import org.vorpal.research.kfg.type.stringType
 import org.vorpal.research.kthelper.collection.dequeOf
 
 
-private val TypeFactory.charSeqType get() = cm["java/lang/CharSequence"].type
+private val TypeFactory.charSeqType get() = cm[SystemTypeNames.charSequence].asType
 private fun Type.getArray(types: TypeFactory) = types.getArrayType(this)
 
 fun Class.getCtor(vararg argTypes: Type) =
@@ -248,10 +267,6 @@ class StringMethodAdapter(cm: ClassManager) : StringMethodContext(cm), Recollect
 
     private fun Term.valueArray(): Term = term { this@valueArray.field(kexCharArrayType(), "value") }
     private fun kexCharArrayType() = KexChar.asArray()
-
-    override fun apply(ps: PredicateState): PredicateState {
-        return super.apply(ps)
-    }
 
     private fun emptyInit(term: Term): PredicateState = basic {
         val emptyArray = generate(kexCharArrayType())
@@ -747,7 +762,7 @@ class StringMethodAdapter(cm: ClassManager) : StringMethodContext(cm), Recollect
         if (call.owner.type !is KexClass) return predicate
 
         val kfgString = (stringType as ClassType).klass
-        val kfgCharSequence = (charSeqType as ClassType).klass
+        val kfgCharSequence = charSeqType.klass
         val kfgOwnerType = (call.owner.type.getKfgType(cm.type) as ClassType).klass
         if (!kfgOwnerType.asType.isSubtypeOf(charSeqType)) return predicate
 

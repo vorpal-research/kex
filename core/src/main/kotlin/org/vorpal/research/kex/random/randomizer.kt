@@ -4,17 +4,17 @@ import org.vorpal.research.kthelper.tryOrNull
 import java.lang.reflect.Type
 import kotlin.random.Random
 
-abstract class RandomizerError : Exception {
+abstract class RandomizerException : Exception {
     constructor(msg: String) : super(msg)
     constructor(e: Throwable) : super(e)
 }
 
-class GenerationException : RandomizerError {
+class GenerationException : RandomizerException {
     constructor(msg: String) : super(msg)
     constructor(e: Throwable) : super(e)
 }
 
-class UnknownTypeException(msg: String) : RandomizerError(msg)
+class UnknownTypeException(msg: String) : RandomizerException(msg)
 
 abstract class Randomizer : Random() {
     /**

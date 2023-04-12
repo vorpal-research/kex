@@ -112,8 +112,7 @@ class KexNull : KexPointer() {
     override fun hashCode() = name.hashCode()
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
-        if (other !is KexNull) return false
-        return true
+        return other is KexNull
     }
 }
 

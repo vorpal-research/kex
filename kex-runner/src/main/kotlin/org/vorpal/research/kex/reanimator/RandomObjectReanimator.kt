@@ -5,7 +5,12 @@ import org.vorpal.research.kex.asm.manager.instantiationManager
 import org.vorpal.research.kex.asm.state.PredicateStateAnalysis
 import org.vorpal.research.kex.asm.util.accessModifier
 import org.vorpal.research.kex.config.RuntimeConfig
-import org.vorpal.research.kex.descriptor.*
+import org.vorpal.research.kex.descriptor.ArrayDescriptor
+import org.vorpal.research.kex.descriptor.ClassDescriptor
+import org.vorpal.research.kex.descriptor.ConstantDescriptor
+import org.vorpal.research.kex.descriptor.Descriptor
+import org.vorpal.research.kex.descriptor.ObjectDescriptor
+import org.vorpal.research.kex.descriptor.convertToDescriptor
 import org.vorpal.research.kex.random.Randomizer
 import org.vorpal.research.kex.reanimator.actionsequence.ActionSequence
 import org.vorpal.research.kex.reanimator.actionsequence.ActionSequenceExecutor
@@ -44,8 +49,7 @@ class RandomObjectReanimator(
             val kfgClass = (this.javaClass.kex.getKfgType(cm.type) as ClassType).klass
             if (this is Throwable) return false
             if (!instantiationManager.isInstantiable(kfgClass) || !ctx.accessLevel.canAccess(kfgClass.accessModifier)) return false
-            if (with(generatorContext) { kfgClass.orderedCtors }.isEmpty()) return false
-            return true
+            return with(generatorContext) { kfgClass.orderedCtors }.isNotEmpty()
         }
 
     private fun Descriptor.isValid(visited: Set<Descriptor> = setOf()): Boolean = when (this) {

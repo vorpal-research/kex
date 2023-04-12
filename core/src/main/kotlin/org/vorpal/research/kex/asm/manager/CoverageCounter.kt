@@ -8,7 +8,7 @@ import org.vorpal.research.kfg.ir.Class
 import org.vorpal.research.kfg.ir.Method
 import org.vorpal.research.kfg.visitor.MethodVisitor
 import org.vorpal.research.kthelper.logging.log
-import java.util.*
+import java.util.Locale
 
 data class CoverageInfo(
     val bodyCovered: Int,
@@ -31,6 +31,7 @@ data class CoverageInfo(
     }
 }
 
+@Suppress("unused")
 class CoverageCounter<T : AbstractTrace> private constructor(
     override val cm: ClassManager,
     private val tm: TraceManager<T>,

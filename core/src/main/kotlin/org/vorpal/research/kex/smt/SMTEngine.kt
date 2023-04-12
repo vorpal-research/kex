@@ -1,3 +1,5 @@
+@file:Suppress("unused")
+
 package org.vorpal.research.kex.smt
 
 import org.vorpal.research.kex.ktype.KexType

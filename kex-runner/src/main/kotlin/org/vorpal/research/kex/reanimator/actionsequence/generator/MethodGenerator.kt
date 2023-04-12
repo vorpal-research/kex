@@ -4,7 +4,10 @@ import org.vorpal.research.kex.descriptor.Descriptor
 import org.vorpal.research.kex.descriptor.ObjectDescriptor
 import org.vorpal.research.kex.descriptor.convertToDescriptor
 import org.vorpal.research.kex.descriptor.descriptor
-import org.vorpal.research.kex.ktype.*
+import org.vorpal.research.kex.ktype.KexBool
+import org.vorpal.research.kex.ktype.KexClass
+import org.vorpal.research.kex.ktype.KexJavaClass
+import org.vorpal.research.kex.ktype.kexType
 import org.vorpal.research.kex.reanimator.actionsequence.ActionList
 import org.vorpal.research.kex.reanimator.actionsequence.ActionSequence
 import org.vorpal.research.kex.reanimator.actionsequence.ExternalMethodCall
@@ -61,9 +64,9 @@ class MethodGenerator(private val fallback: Generator) : Generator {
         val typesAS = fallback.generate(arrayDescriptor)
 
         val getDeclMethod = kfgJavaClass.getMethod("getDeclaredMethod",
-            kfgMethodClass.type,
-            kfgStringClass.type,
-            kfgJavaClass.type.asArray
+            kfgMethodClass.asType,
+            kfgStringClass.asType,
+            kfgJavaClass.asType.asArray
         )
 
         actionSequence += ExternalMethodCall(getDeclMethod, klassAS, listOf(methodNameDescriptor, typesAS))

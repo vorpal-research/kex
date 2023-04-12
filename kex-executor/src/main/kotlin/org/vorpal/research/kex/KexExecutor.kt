@@ -9,9 +9,9 @@ import org.vorpal.research.kex.config.kexConfig
 import org.vorpal.research.kex.descriptor.convertToDescriptor
 import org.vorpal.research.kex.random.easyrandom.EasyRandomDriver
 import org.vorpal.research.kex.serialization.KexSerializer
-import org.vorpal.research.kex.trace.symbolic.ExceptionResult
-import org.vorpal.research.kex.trace.symbolic.SuccessResult
 import org.vorpal.research.kex.trace.symbolic.TraceCollectorProxy
+import org.vorpal.research.kex.trace.symbolic.protocol.ExceptionResult
+import org.vorpal.research.kex.trace.symbolic.protocol.SuccessResult
 import org.vorpal.research.kex.util.getIntrinsics
 import org.vorpal.research.kex.util.getPathSeparator
 import org.vorpal.research.kex.util.getRuntime

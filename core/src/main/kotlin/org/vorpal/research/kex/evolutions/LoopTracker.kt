@@ -9,6 +9,7 @@ object LoopTracker { // XXX: remove this)
     val Loop.name
         get() = "%loop.${loops.getOrPut(this) { ++currentIndex }}"
 
+    @Suppress("unused")
     fun clean() {
         currentIndex = 0
         loops.clear()

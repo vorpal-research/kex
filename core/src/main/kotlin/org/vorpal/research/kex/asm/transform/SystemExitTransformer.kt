@@ -1,6 +1,7 @@
+@file:Suppress("unused")
+
 package org.vorpal.research.kex.asm.transform
 
-import org.vorpal.research.kex.ktype.type
 import org.vorpal.research.kfg.ClassManager
 import org.vorpal.research.kfg.ir.value.EmptyUsageContext
 import org.vorpal.research.kfg.ir.value.instruction.CallInst
@@ -22,7 +23,7 @@ class SystemExitTransformer(override val cm: ClassManager) : MethodVisitor {
         val calledMethod = inst.method
         if (calledMethod == exitMethod) {
             val newInsts = buildList<Instruction> {
-                val exception = inst(cm) { exceptionClass.type.new() }.also { add(it) }
+                val exception = inst(cm) { exceptionClass.asType.new() }.also { add(it) }
                 add(inst(cm) { exceptionConstructor.specialCall(exceptionClass, exception, inst.args) })
                 add(inst(cm) { exception.`throw`() })
             }

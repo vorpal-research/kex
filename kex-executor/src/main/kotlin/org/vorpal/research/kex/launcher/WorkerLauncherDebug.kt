@@ -9,7 +9,7 @@ import org.vorpal.research.kex.config.WorkerCmdConfig
 import org.vorpal.research.kex.config.kexConfig
 import org.vorpal.research.kex.random.easyrandom.EasyRandomDriver
 import org.vorpal.research.kex.serialization.KexSerializer
-import org.vorpal.research.kex.trace.symbolic.ExecutionResult
+import org.vorpal.research.kex.trace.symbolic.protocol.ExecutionResult
 import org.vorpal.research.kex.trace.symbolic.protocol.TestExecutionRequest
 import org.vorpal.research.kex.trace.symbolic.protocol.Worker2MasterConnection
 import org.vorpal.research.kex.util.getIntrinsics

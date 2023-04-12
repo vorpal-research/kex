@@ -8,8 +8,11 @@ import org.vorpal.research.kex.ktype.KexClass
 import org.vorpal.research.kex.ktype.KexRtManager.rtMapped
 import org.vorpal.research.kex.ktype.asArray
 import org.vorpal.research.kex.ktype.kexType
-import org.vorpal.research.kex.ktype.type
-import org.vorpal.research.kex.reanimator.actionsequence.*
+import org.vorpal.research.kex.reanimator.actionsequence.ActionList
+import org.vorpal.research.kex.reanimator.actionsequence.ActionSequence
+import org.vorpal.research.kex.reanimator.actionsequence.DefaultConstructorCall
+import org.vorpal.research.kex.reanimator.actionsequence.ExternalMethodCall
+import org.vorpal.research.kex.reanimator.actionsequence.MethodCall
 import org.vorpal.research.kfg.collectionClass
 import org.vorpal.research.kfg.ir.ConcreteClass
 import org.vorpal.research.kfg.setClass
@@ -73,7 +76,7 @@ class KexHashMapGenerator(val fallback: Generator) : Generator {
         saveToCache(descriptor, actionSequence)
 
         val outerMapField =
-            kfgClass.fields.first { it.name.startsWith("this\$") && it.type == kfgClass.outerClass!!.type }
+            kfgClass.fields.first { it.name.startsWith("this\$") && it.type == kfgClass.outerClass!!.asType }
         val outerMapClass = (outerMapField.type as ClassType).klass
         val outerMapFieldKey = outerMapField.name to outerMapField.type.kexType
         if (outerMapFieldKey !in descriptor.fields) {
@@ -84,14 +87,14 @@ class KexHashMapGenerator(val fallback: Generator) : Generator {
 
         val outerSetAS = ActionList("${name}_OuterSet")
         val creationMethod = when {
-            "KeyIterator" in kfgClass.fullName -> outerMapClass.getMethod("keySet", kfgSetClass.type)
-            "ValueIterator" in kfgClass.fullName -> outerMapClass.getMethod("values", kfgCollectionClass.type)
-            "EntryIterator" in kfgClass.fullName -> outerMapClass.getMethod("entrySet", kfgSetClass.type)
+            "KeyIterator" in kfgClass.fullName -> outerMapClass.getMethod("keySet", kfgSetClass.asType)
+            "ValueIterator" in kfgClass.fullName -> outerMapClass.getMethod("values", kfgCollectionClass.asType)
+            "EntryIterator" in kfgClass.fullName -> outerMapClass.getMethod("entrySet", kfgSetClass.asType)
             else -> unreachable("Unknown iterator impl: $kfgClass")
         }
         outerSetAS += ExternalMethodCall(creationMethod, outerMapAS, emptyList())
 
-        val iteratorMethod = kfgSetClass.getMethod("iterator", cm["java/util/Iterator"].type)
+        val iteratorMethod = kfgSetClass.getMethod("iterator", cm["java/util/Iterator"].asType)
         actionSequence += ExternalMethodCall(iteratorMethod, outerSetAS, emptyList())
 
         actionSequence
@@ -107,7 +110,7 @@ class KexHashMapGenerator(val fallback: Generator) : Generator {
         saveToCache(descriptor, actionSequence)
 
         val outerMapField =
-            kfgClass.fields.first { it.name.startsWith("this\$") && it.type == kfgClass.outerClass!!.type }
+            kfgClass.fields.first { it.name.startsWith("this\$") && it.type == kfgClass.outerClass!!.asType }
         val outerMapClass = (outerMapField.type as ClassType).klass
         val outerMapFieldKey = outerMapField.name to outerMapField.type.kexType
         if (outerMapFieldKey !in descriptor.fields) {
@@ -117,9 +120,9 @@ class KexHashMapGenerator(val fallback: Generator) : Generator {
         val outerMapAS = fallback.generate(outerMapDescriptor, generationDepth)
 
         val createSetMethod = when {
-            "KeySet" in kfgClass.fullName -> outerMapClass.getMethod("keySet", kfgSetClass.type)
-            "Values" in kfgClass.fullName -> outerMapClass.getMethod("values", kfgCollectionClass.type)
-            "EntrySet" in kfgClass.fullName -> outerMapClass.getMethod("entrySet", kfgSetClass.type)
+            "KeySet" in kfgClass.fullName -> outerMapClass.getMethod("keySet", kfgSetClass.asType)
+            "Values" in kfgClass.fullName -> outerMapClass.getMethod("values", kfgCollectionClass.asType)
+            "EntrySet" in kfgClass.fullName -> outerMapClass.getMethod("entrySet", kfgSetClass.asType)
             else -> unreachable("Unexpected iterator type $kfgClass")
         }
         actionSequence += ExternalMethodCall(createSetMethod, outerMapAS, emptyList())

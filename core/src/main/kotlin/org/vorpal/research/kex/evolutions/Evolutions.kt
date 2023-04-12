@@ -1,8 +1,16 @@
 package org.vorpal.research.kex.evolutions
 
 import org.vorpal.research.kfg.ClassManager
-import org.vorpal.research.kfg.ir.value.*
-import org.vorpal.research.kfg.ir.value.instruction.*
+import org.vorpal.research.kfg.ir.value.ByteConstant
+import org.vorpal.research.kfg.ir.value.IntConstant
+import org.vorpal.research.kfg.ir.value.LongConstant
+import org.vorpal.research.kfg.ir.value.ShortConstant
+import org.vorpal.research.kfg.ir.value.Value
+import org.vorpal.research.kfg.ir.value.instruction.BinaryInst
+import org.vorpal.research.kfg.ir.value.instruction.BinaryOpcode
+import org.vorpal.research.kfg.ir.value.instruction.Instruction
+import org.vorpal.research.kfg.ir.value.instruction.PhiInst
+import org.vorpal.research.kfg.ir.value.instruction.UnaryInst
 import org.vorpal.research.kfg.visitor.Loop
 import org.vorpal.research.kfg.visitor.MethodVisitor
 import ru.spbstu.*
@@ -144,9 +152,9 @@ open class Evolutions(override val cm: ClassManager) : MethodVisitor {
         var recur = transform(v.loopValue)
         val deps = recur.vars()
         for (dep in deps) {
-            val dvar = var2inst[dep]!!
-            if (dvar != v && dvar is PhiInst && dvar in loopPhis && dvar.loop == v.loop) {
-                recur = recur.subst(dep to buildPhiEquation(dvar))
+            val dVar = var2inst[dep]!!
+            if (dVar != v && dVar is PhiInst && dVar in loopPhis && dVar.loop == v.loop) {
+                recur = recur.subst(dep to buildPhiEquation(dVar))
             }
         }
         val me = transform(v) as Var
@@ -226,7 +234,7 @@ open class Evolutions(override val cm: ClassManager) : MethodVisitor {
 
 /**
  * Collects all loops in the method.
- * @param method given method.
+ * @param topLevel top level loops of a given method.
  * @return sequence of all loops in the method.
  */
 fun walkLoops(topLevel: List<Loop>) = sequence {

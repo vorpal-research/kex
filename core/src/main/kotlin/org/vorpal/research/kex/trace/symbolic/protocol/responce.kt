@@ -1,8 +1,9 @@
-package org.vorpal.research.kex.trace.symbolic
+package org.vorpal.research.kex.trace.symbolic.protocol
 
 import kotlinx.serialization.Contextual
 import kotlinx.serialization.Serializable
 import org.vorpal.research.kex.descriptor.Descriptor
+import org.vorpal.research.kex.trace.symbolic.SymbolicState
 
 @Serializable
 sealed class ExecutionResult

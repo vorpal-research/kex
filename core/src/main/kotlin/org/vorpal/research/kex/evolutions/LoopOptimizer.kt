@@ -15,7 +15,18 @@ import org.vorpal.research.kfg.ir.value.usageContext
 import org.vorpal.research.kfg.type.IntType
 import org.vorpal.research.kfg.visitor.Loop
 import org.vorpal.research.kfg.visitor.LoopVisitor
-import ru.spbstu.*
+import ru.spbstu.Apply
+import ru.spbstu.Const
+import ru.spbstu.Product
+import ru.spbstu.Shift
+import ru.spbstu.ShiftLeft
+import ru.spbstu.ShiftRight
+import ru.spbstu.Sum
+import ru.spbstu.SymDouble
+import ru.spbstu.SymRational
+import ru.spbstu.Symbolic
+import ru.spbstu.Var
+import ru.spbstu.gcd
 
 @Suppress("MemberVisibilityCanBePrivate", "unused")
 open class LoopOptimizer(cm: ClassManager) : Evolutions(cm), LoopVisitor {

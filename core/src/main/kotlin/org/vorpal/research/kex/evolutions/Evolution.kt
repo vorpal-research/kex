@@ -9,7 +9,7 @@ import ru.spbstu.Symbolic
  * Represents operations, supported by Evolution.
  *
  */
-enum class EvoOpcode(val rep: String) {
+enum class EvoOpcode(@Suppress("MemberVisibilityCanBePrivate") val rep: String) {
     PLUS("+"), TIMES("*");
 
     override fun toString(): String = rep

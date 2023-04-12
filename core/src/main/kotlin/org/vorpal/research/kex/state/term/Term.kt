@@ -4,16 +4,15 @@ import kotlinx.serialization.Serializable
 import org.vorpal.research.kex.BaseType
 import org.vorpal.research.kex.InheritanceInfo
 import org.vorpal.research.kex.ktype.KexType
-import org.vorpal.research.kex.state.TypeInfo
+import org.vorpal.research.kex.state.InheritanceTypeInfo
 import org.vorpal.research.kex.state.transformer.Transformer
 import org.vorpal.research.kthelper.assert.fail
 import org.vorpal.research.kthelper.assert.unreachable
-import org.vorpal.research.kthelper.defaultHashCode
 import org.vorpal.research.kthelper.logging.log
 
 @BaseType("Term")
 @Serializable
-abstract class Term : TypeInfo {
+abstract class Term : InheritanceTypeInfo {
     abstract val name: String
     abstract val subTerms: List<Term>
     abstract val type: KexType

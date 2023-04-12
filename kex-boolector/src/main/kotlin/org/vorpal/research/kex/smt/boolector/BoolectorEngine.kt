@@ -1,6 +1,18 @@
 package org.vorpal.research.kex.smt.boolector
 
-import org.vorpal.research.boolector.*
+import org.vorpal.research.boolector.ArrayNode
+import org.vorpal.research.boolector.ArraySort
+import org.vorpal.research.boolector.BitvecNode
+import org.vorpal.research.boolector.BitvecSort
+import org.vorpal.research.boolector.BoolNode
+import org.vorpal.research.boolector.BoolSort
+import org.vorpal.research.boolector.BoolectorFunction
+import org.vorpal.research.boolector.BoolectorNode
+import org.vorpal.research.boolector.BoolectorSort
+import org.vorpal.research.boolector.Btor
+import org.vorpal.research.boolector.FunctionDecl
+import org.vorpal.research.boolector.FunctionSort
+import org.vorpal.research.boolector.UninterpretedFunction
 import org.vorpal.research.kex.smt.SMTEngine
 import org.vorpal.research.kthelper.assert.unreachable
 import org.vorpal.research.kthelper.logging.log
@@ -8,6 +20,7 @@ import java.math.BigInteger
 import kotlin.math.roundToInt
 import kotlin.math.roundToLong
 
+@Suppress("MemberVisibilityCanBePrivate")
 object BoolectorEngine :
     SMTEngine<Btor, BoolectorNode, BoolectorSort, BoolectorFunction, FunctionDecl.FunctionParam>() {
     override fun makeBound(ctx: Btor, size: Int, sort: BoolectorSort): BoolectorNode = BitvecNode.constBitvec(ctx, "1")
@@ -83,9 +96,9 @@ object BoolectorEngine :
         else -> BitvecNode.`var`(sort.toBitvecSort(), name, fresh)
     }
 
-    fun makeTrue(ctx: Btor) = BoolNode.constBool(ctx, true)
+    fun makeTrue(ctx: Btor): BoolNode = BoolNode.constBool(ctx, true)
 
-    fun makeFalse(ctx: Btor) = BoolNode.constBool(ctx, false)
+    fun makeFalse(ctx: Btor): BoolNode = BoolNode.constBool(ctx, false)
 
     override fun makeBooleanConst(ctx: Btor, value: Boolean): BoolectorNode = when {
         value -> makeTrue(ctx)

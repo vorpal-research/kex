@@ -13,6 +13,7 @@ class ExternalAnnotationsLoader : AnnotationsLoader {
     private val root = PackageTreeNode("", null)
 
     fun loadFrom(path: File) = scanSubTree(path)
+    @Suppress("unused")
     fun loadFrom(stream: InputStream) = loadAnnotations(stream, "[stream source]")
     fun loadFrom(url: URL) = loadAnnotations(url.openStream(), url.toString())
 

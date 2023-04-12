@@ -33,14 +33,14 @@ abstract class Config {
                     ?.map { it.replace("\\s".toRegex(), "") }
                     ?: listOf()
 
-    open fun getMultipleIntValue(section: String, name: String, delimeter: String = ",") =
-            getMultipleStringValue(section, name, delimeter).map { it.toInt() }
+    open fun getMultipleIntValue(section: String, name: String, delimiter: String = ",") =
+            getMultipleStringValue(section, name, delimiter).map { it.toInt() }
 
-    open fun getMultipleLongValue(section: String, name: String, delimeter: String = ",") =
-            getMultipleStringValue(section, name, delimeter).map { it.toLong() }
+    open fun getMultipleLongValue(section: String, name: String, delimiter: String = ",") =
+            getMultipleStringValue(section, name, delimiter).map { it.toLong() }
 
-    open fun getMultipleDoubleValue(section: String, name: String, delimeter: String = ",") =
-            getMultipleStringValue(section, name, delimeter).map { it.toDouble() }
+    open fun getMultipleDoubleValue(section: String, name: String, delimiter: String = ",") =
+            getMultipleStringValue(section, name, delimiter).map { it.toDouble() }
 
     inline fun <reified T : Enum<T>> getEnumValue(section: String, name: String, ignoreCase: Boolean = false): T? {
         val constName = getStringValue(section, name) ?: return null

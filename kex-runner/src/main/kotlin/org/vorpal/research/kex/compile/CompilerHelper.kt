@@ -4,7 +4,6 @@ import org.vorpal.research.kex.ExecutionContext
 import org.vorpal.research.kex.config.kexConfig
 import org.vorpal.research.kex.util.compiledCodeDirectory
 import org.vorpal.research.kex.util.getJunit
-import org.vorpal.research.kex.util.outputDirectory
 import org.vorpal.research.kex.util.testcaseDirectory
 import java.nio.file.Path
 

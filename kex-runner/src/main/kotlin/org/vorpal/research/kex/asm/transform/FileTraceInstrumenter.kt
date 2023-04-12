@@ -4,7 +4,6 @@ import org.vorpal.research.kex.asm.util.FileOutputStreamWrapper
 import org.vorpal.research.kex.config.kexConfig
 import org.vorpal.research.kex.util.javaString
 import org.vorpal.research.kfg.ClassManager
-import org.vorpal.research.kfg.Package
 import org.vorpal.research.kfg.analysis.IRVerifier
 import org.vorpal.research.kfg.ir.BasicBlock
 import org.vorpal.research.kfg.ir.Method
@@ -20,10 +19,10 @@ class FileTraceInstrumenter(override val cm: ClassManager) : MethodVisitor {
     private lateinit var fos: FileOutputStreamWrapper
 
     companion object {
-        const val TRACE_POSTFIX = ".trace"
+        private const val TRACE_POSTFIX = ".trace"
         val TRACE_DIRECTORY = kexConfig.getStringValue("runner", "trace-directory", "./traces")
 
-        fun generateTraceFileName(method: Method): String {
+        private fun generateTraceFileName(method: Method): String {
             val name = "${method.klass.canonicalDesc}.${method.name}"
             return "$name$TRACE_POSTFIX"
         }
@@ -124,7 +123,7 @@ class FileTraceInstrumenter(override val cm: ClassManager) : MethodVisitor {
 
     override fun visit(method: Method) {
         val bb = method.body.entry
-        val startInsts = buildList<Instruction> {
+        val startInsts = buildList {
             val methodName = method.prototype.javaString
             val traceFileName = getTraceFile(method).absolutePath
 

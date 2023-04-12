@@ -1,6 +1,8 @@
 package org.vorpal.research.kex.serialization
 
-import kotlinx.serialization.*
+import kotlinx.serialization.KSerializer
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.SerializationException
 import kotlinx.serialization.builtins.MapSerializer
 import kotlinx.serialization.descriptors.SerialDescriptor
 import kotlinx.serialization.descriptors.buildClassSerialDescriptor
@@ -8,7 +10,13 @@ import kotlinx.serialization.descriptors.element
 import kotlinx.serialization.encoding.CompositeDecoder
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
-import org.vorpal.research.kex.descriptor.*
+import org.vorpal.research.kex.descriptor.ArrayDescriptor
+import org.vorpal.research.kex.descriptor.ClassDescriptor
+import org.vorpal.research.kex.descriptor.ConstantDescriptor
+import org.vorpal.research.kex.descriptor.Descriptor
+import org.vorpal.research.kex.descriptor.FieldContainingDescriptor
+import org.vorpal.research.kex.descriptor.ObjectDescriptor
+import org.vorpal.research.kex.descriptor.descriptor
 import org.vorpal.research.kex.ktype.KexArray
 import org.vorpal.research.kex.ktype.KexClass
 import org.vorpal.research.kex.ktype.KexType

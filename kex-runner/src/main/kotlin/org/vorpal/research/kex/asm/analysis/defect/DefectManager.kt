@@ -7,13 +7,15 @@ import org.vorpal.research.kex.config.kexConfig
 import org.vorpal.research.kex.util.outputDirectory
 import org.vorpal.research.kthelper.assert.unreachable
 import org.vorpal.research.kthelper.logging.log
+import java.nio.file.Path
 
 object DefectManager {
     private val innerDefects = mutableSetOf<Defect>()
-    val defectFile by lazy {
+    val defectFile: Path by lazy {
         kexConfig.outputDirectory.resolve(kexConfig.getStringValue("defect", "outputFile")
             ?: unreachable { log.error("You need to specify parameters file to be able to use Z3 SMT") })
     }
+    @Suppress("MemberVisibilityCanBePrivate")
     val defects: Set<Defect> get() = innerDefects
 
     operator fun plusAssign(defect: Defect) {

@@ -1,7 +1,17 @@
+@file:Suppress("unused")
+
 package org.vorpal.research.kex.descriptor
 
 import org.vorpal.research.kex.config.kexConfig
-import org.vorpal.research.kex.ktype.*
+import org.vorpal.research.kex.ktype.KexBool
+import org.vorpal.research.kex.ktype.KexByte
+import org.vorpal.research.kex.ktype.KexChar
+import org.vorpal.research.kex.ktype.KexClass
+import org.vorpal.research.kex.ktype.KexDouble
+import org.vorpal.research.kex.ktype.KexFloat
+import org.vorpal.research.kex.ktype.KexInt
+import org.vorpal.research.kex.ktype.KexLong
+import org.vorpal.research.kex.ktype.KexShort
 import org.vorpal.research.kex.util.allFields
 import org.vorpal.research.kex.util.isStatic
 import org.vorpal.research.kex.util.kex
@@ -54,7 +64,7 @@ class Object2DescriptorConverter : DescriptorBuilder() {
         }
     }
 
-    fun convertElement(type: Class<*>, any: Any?, depth: Int): Descriptor = if (type.isPrimitive) {
+    private fun convertElement(type: Class<*>, any: Any?, depth: Int): Descriptor = if (type.isPrimitive) {
         when (any) {
             is Boolean -> const(any)
             is Byte -> const(any)
@@ -70,56 +80,56 @@ class Object2DescriptorConverter : DescriptorBuilder() {
         convert(any, depth)
     }
 
-    fun booleanWrapper(any: Boolean): Descriptor {
+    private fun booleanWrapper(any: Boolean): Descriptor {
         val wrapperClass = KexClass(SystemTypeNames.booleanClass)
         val result = `object`(wrapperClass)
         result["value" to KexBool] = const(any)
         return result
     }
 
-    fun byteWrapper(any: Byte): Descriptor {
+    private fun byteWrapper(any: Byte): Descriptor {
         val wrapperClass = KexClass(SystemTypeNames.byteClass)
         val result = `object`(wrapperClass)
         result["value" to KexByte] = const(any)
         return result
     }
 
-    fun charWrapper(any: Char): Descriptor {
+    private fun charWrapper(any: Char): Descriptor {
         val wrapperClass = KexClass(SystemTypeNames.charClass)
         val result = `object`(wrapperClass)
         result["value" to KexChar] = const(any)
         return result
     }
 
-    fun shortWrapper(any: Short): Descriptor {
+    private fun shortWrapper(any: Short): Descriptor {
         val wrapperClass = KexClass(SystemTypeNames.shortClass)
         val result = `object`(wrapperClass)
         result["value" to KexShort] = const(any)
         return result
     }
 
-    fun intWrapper(any: Int): Descriptor {
+    private fun intWrapper(any: Int): Descriptor {
         val wrapperClass = KexClass(SystemTypeNames.integerClass)
         val result = `object`(wrapperClass)
         result["value" to KexInt] = const(any)
         return result
     }
 
-    fun longWrapper(any: Long): Descriptor {
+    private fun longWrapper(any: Long): Descriptor {
         val wrapperClass = KexClass(SystemTypeNames.longClass)
         val result = `object`(wrapperClass)
         result["value" to KexLong] = const(any)
         return result
     }
 
-    fun floatWrapper(any: Float): Descriptor {
+    private fun floatWrapper(any: Float): Descriptor {
         val wrapperClass = KexClass(SystemTypeNames.floatClass)
         val result = `object`(wrapperClass)
         result["value" to KexFloat] = const(any)
         return result
     }
 
-    fun doubleWrapper(any: Double): Descriptor {
+    private fun doubleWrapper(any: Double): Descriptor {
         val wrapperClass = KexClass(SystemTypeNames.doubleClass)
         val result = `object`(wrapperClass)
         result["value" to KexDouble] = const(any)
@@ -182,7 +192,7 @@ class Object2DescriptorConverter : DescriptorBuilder() {
         return result
     }
 
-    fun booleanArray(array: BooleanArray, depth: Int): Descriptor {
+    private fun booleanArray(array: BooleanArray, depth: Int): Descriptor {
         if (depth > maxGenerationDepth) return `null`
 
         val result = array(array.size, KexBool)
@@ -192,7 +202,7 @@ class Object2DescriptorConverter : DescriptorBuilder() {
         return result
     }
 
-    fun byteArray(array: ByteArray, depth: Int): Descriptor {
+    private fun byteArray(array: ByteArray, depth: Int): Descriptor {
         if (depth > maxGenerationDepth) return `null`
 
         val result = array(array.size, KexByte)
@@ -202,7 +212,7 @@ class Object2DescriptorConverter : DescriptorBuilder() {
         return result
     }
 
-    fun charArray(array: CharArray, depth: Int): Descriptor {
+    private fun charArray(array: CharArray, depth: Int): Descriptor {
         if (depth > maxGenerationDepth) return `null`
 
         val result = array(array.size, KexChar)
@@ -212,7 +222,7 @@ class Object2DescriptorConverter : DescriptorBuilder() {
         return result
     }
 
-    fun shortArray(array: ShortArray, depth: Int): Descriptor {
+    private fun shortArray(array: ShortArray, depth: Int): Descriptor {
         if (depth > maxGenerationDepth) return `null`
 
         val result = array(array.size, KexShort)
@@ -222,7 +232,7 @@ class Object2DescriptorConverter : DescriptorBuilder() {
         return result
     }
 
-    fun intArray(array: IntArray, depth: Int): Descriptor {
+    private fun intArray(array: IntArray, depth: Int): Descriptor {
         if (depth > maxGenerationDepth) return `null`
 
         val result = array(array.size, KexInt)
@@ -232,7 +242,7 @@ class Object2DescriptorConverter : DescriptorBuilder() {
         return result
     }
 
-    fun longArray(array: LongArray, depth: Int): Descriptor {
+    private fun longArray(array: LongArray, depth: Int): Descriptor {
         if (depth > maxGenerationDepth) return `null`
 
         val result = array(array.size, KexLong)
@@ -242,7 +252,7 @@ class Object2DescriptorConverter : DescriptorBuilder() {
         return result
     }
 
-    fun floatArray(array: FloatArray, depth: Int): Descriptor {
+    private fun floatArray(array: FloatArray, depth: Int): Descriptor {
         if (depth > maxGenerationDepth) return `null`
 
         val result = array(array.size, KexFloat)
@@ -252,7 +262,7 @@ class Object2DescriptorConverter : DescriptorBuilder() {
         return result
     }
 
-    fun doubleArray(array: DoubleArray, depth: Int): Descriptor {
+    private fun doubleArray(array: DoubleArray, depth: Int): Descriptor {
         if (depth > maxGenerationDepth) return `null`
 
         val result = array(array.size, KexDouble)

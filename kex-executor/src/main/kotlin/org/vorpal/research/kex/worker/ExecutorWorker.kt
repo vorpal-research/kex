@@ -1,15 +1,17 @@
 package org.vorpal.research.kex.worker
 
 import org.vorpal.research.kex.ExecutionContext
-import org.vorpal.research.kex.trace.symbolic.ExecutionFailedResult
+import org.vorpal.research.kex.trace.symbolic.protocol.ExecutionFailedResult
 import org.vorpal.research.kex.trace.symbolic.protocol.Worker2MasterConnection
 import org.vorpal.research.kthelper.logging.log
 
-class ExecutorWorker(val ctx: ExecutionContext, val connection: Worker2MasterConnection) : Runnable {
-    val executor: TestExecutor
+class ExecutorWorker(
+    val ctx: ExecutionContext,
+    private val connection: Worker2MasterConnection
+) : Runnable {
+    val executor: TestExecutor = TestExecutor(ctx)
 
     init {
-        executor = TestExecutor(ctx)
         connection.connect()
     }
 

@@ -15,7 +15,7 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.SimpleFileVisitor
 import java.nio.file.attribute.BasicFileAttributes
-import java.util.*
+import java.util.Locale
 import kotlin.io.path.ExperimentalPathApi
 import kotlin.io.path.deleteRecursively
 

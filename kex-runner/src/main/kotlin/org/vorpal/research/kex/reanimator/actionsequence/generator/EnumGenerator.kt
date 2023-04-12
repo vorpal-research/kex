@@ -1,8 +1,26 @@
 package org.vorpal.research.kex.reanimator.actionsequence.generator
 
-import org.vorpal.research.kex.descriptor.*
-import org.vorpal.research.kex.ktype.*
-import org.vorpal.research.kex.reanimator.actionsequence.*
+import org.vorpal.research.kex.descriptor.ArrayDescriptor
+import org.vorpal.research.kex.descriptor.ClassDescriptor
+import org.vorpal.research.kex.descriptor.ConstantDescriptor
+import org.vorpal.research.kex.descriptor.Descriptor
+import org.vorpal.research.kex.descriptor.ObjectDescriptor
+import org.vorpal.research.kex.descriptor.convertToDescriptor
+import org.vorpal.research.kex.descriptor.descriptor
+import org.vorpal.research.kex.ktype.KexArray
+import org.vorpal.research.kex.ktype.KexBool
+import org.vorpal.research.kex.ktype.KexClass
+import org.vorpal.research.kex.ktype.KexJavaClass
+import org.vorpal.research.kex.ktype.KexString
+import org.vorpal.research.kex.ktype.KexType
+import org.vorpal.research.kex.ktype.kexType
+import org.vorpal.research.kex.reanimator.actionsequence.ActionList
+import org.vorpal.research.kex.reanimator.actionsequence.ActionSequence
+import org.vorpal.research.kex.reanimator.actionsequence.EnumValueCreation
+import org.vorpal.research.kex.reanimator.actionsequence.ExternalMethodCall
+import org.vorpal.research.kex.reanimator.actionsequence.PrimaryValue
+import org.vorpal.research.kex.reanimator.actionsequence.StaticMethodCall
+import org.vorpal.research.kex.reanimator.actionsequence.UnknownSequence
 import org.vorpal.research.kex.smt.Checker
 import org.vorpal.research.kex.smt.Result
 import org.vorpal.research.kex.state.StateBuilder
@@ -162,13 +180,13 @@ class EnumGenerator(private val fallback: Generator) : Generator {
         val enumConstants = getEnumConstants(this, normalizedKexType).toList()
         list += when (descriptor) {
             is ClassDescriptor -> {
-                val valuesMethod = normalizedEnumCLass.getMethod("values", normalizedEnumCLass.type.asArray)
+                val valuesMethod = normalizedEnumCLass.getMethod("values", normalizedEnumCLass.asType.asArray)
                 StaticMethodCall(valuesMethod, emptyList())
             }
             else -> {
                 val result = enumConstants.firstOrNull { it.second.matches(descriptor, mutableMapOf()) }
                     ?: enumConstants.filter { it.second.type == normalizedKexType }.randomOrNull(context.random)
-                    ?: return UnknownSequence(name, normalizedEnumCLass.type, descriptor).also {
+                    ?: return UnknownSequence(name, normalizedEnumCLass.asType, descriptor).also {
                         saveToCache(descriptor, it)
                     }
                 EnumValueCreation(cm[result.first.klass], result.first.fieldName)
@@ -234,7 +252,7 @@ class ReflectionEnumGenerator(private val fallback: Generator) : Generator {
             else -> {
                 val enumPair = enumConstants.firstOrNull { it.second.matches(descriptor, mutableMapOf()) }
                     ?: enumConstants.filter { it.second.type == descriptor.type }.randomOrNull(context.random)
-                    ?: return UnknownSequence(name, normalizedEnumCLass.type, descriptor).also {
+                    ?: return UnknownSequence(name, normalizedEnumCLass.asType, descriptor).also {
                         saveToCache(descriptor, it)
                     }
                 valuesFieldDescriptor["name" to KexString()] = descriptor { string(enumPair.first.fieldName) }

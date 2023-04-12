@@ -3,7 +3,6 @@ package org.vorpal.research.kex.asm.manager
 import org.vorpal.research.kex.asm.util.AccessModifier
 import org.vorpal.research.kex.asm.util.accessModifier
 import org.vorpal.research.kex.config.kexConfig
-import org.vorpal.research.kex.ktype.type
 import org.vorpal.research.kex.util.asmString
 import org.vorpal.research.kfg.ClassManager
 import org.vorpal.research.kfg.Package
@@ -251,7 +250,7 @@ object MethodManager {
             cm.type.boolType,
             cm.type.intType,
             cm.type.intType,
-            cm["org/vorpal/research/kex/intrinsics/internal/IntConsumer"].type
+            cm["org/vorpal/research/kex/intrinsics/internal/IntConsumer"].asType
         )
 
         fun kexContainsBool(cm: ClassManager) = cm[collectionIntrinsics].getMethod(

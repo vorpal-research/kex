@@ -23,7 +23,7 @@ fun unzipArchive(zipFile: InputStream, prefix: String): Path {
                 newPath.parent?.let { parent ->
                     if (!parent.exists()) Files.createDirectories(parent)
                 }
-                Files.copy(it, newPath, StandardCopyOption.REPLACE_EXISTING);
+                Files.copy(it, newPath, StandardCopyOption.REPLACE_EXISTING)
             }
             zipEntry = it.nextEntry
         }

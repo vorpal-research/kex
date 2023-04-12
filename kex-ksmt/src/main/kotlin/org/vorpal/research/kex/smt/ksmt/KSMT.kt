@@ -1,6 +1,10 @@
 package org.vorpal.research.kex.smt.ksmt
 
-import org.vorpal.research.kex.smt.*
+import org.vorpal.research.kex.smt.SMTContext
+import org.vorpal.research.kex.smt.SMTConverter
+import org.vorpal.research.kex.smt.SMTExpr
+import org.vorpal.research.kex.smt.SMTExprFactory
+import org.vorpal.research.kex.smt.SMTMemory
 
 
 const val generateStrings = false

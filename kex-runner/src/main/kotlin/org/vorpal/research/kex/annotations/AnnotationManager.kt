@@ -101,7 +101,6 @@ object AnnotationManager {
 
     private fun clearStr(str: String) = str.replace("_", "")
 
-    @Suppress("RemoveExplicitTypeArguments")
     private fun cast(value: String, type: KClass<*>): Any = when (type) {
         Int::class -> getSpecialConstantTyped<Int>(value)
             ?: clearStr(value).toInt()

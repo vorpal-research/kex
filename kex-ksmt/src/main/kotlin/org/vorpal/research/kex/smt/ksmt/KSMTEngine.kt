@@ -8,7 +8,14 @@ import org.ksmt.decl.KDecl
 import org.ksmt.decl.KFuncDecl
 import org.ksmt.expr.KExpr
 import org.ksmt.expr.KFpRoundingMode
-import org.ksmt.sort.*
+import org.ksmt.sort.KArraySort
+import org.ksmt.sort.KBoolSort
+import org.ksmt.sort.KBv1Sort
+import org.ksmt.sort.KBvSort
+import org.ksmt.sort.KFp32Sort
+import org.ksmt.sort.KFp64Sort
+import org.ksmt.sort.KFpSort
+import org.ksmt.sort.KSort
 import org.vorpal.research.kex.smt.SMTEngine
 import org.vorpal.research.kthelper.assert.unreachable
 import org.vorpal.research.kthelper.logging.log
@@ -137,7 +144,6 @@ object KSMTEngine : SMTEngine<KContext, KAst, KSort, KFuncDecl<*>, KAst>() {
         val exponentBits = fpSort.exponentBits.toInt()
         val size = bv.sort.sizeBits.toInt()
 
-        @Suppress("UNCHECKED_CAST")
         val sign = extract(ctx, bv, size - 1, size - 1) as KExpr<KBv1Sort>
         val exponent = extract(ctx, bv, size - 2, size - exponentBits - 1) as KExpr<out KBvSort>
         val significand = extract(ctx, bv, size - exponentBits - 2, 0) as KExpr<out KBvSort>

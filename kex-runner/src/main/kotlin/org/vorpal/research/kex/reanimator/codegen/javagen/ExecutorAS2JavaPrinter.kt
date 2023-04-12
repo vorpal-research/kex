@@ -2,10 +2,42 @@ package org.vorpal.research.kex.reanimator.codegen.javagen
 
 import org.vorpal.research.kex.ExecutionContext
 import org.vorpal.research.kex.config.kexConfig
-import org.vorpal.research.kex.ktype.*
+import org.vorpal.research.kex.ktype.KexBool
+import org.vorpal.research.kex.ktype.KexByte
+import org.vorpal.research.kex.ktype.KexChar
+import org.vorpal.research.kex.ktype.KexDouble
+import org.vorpal.research.kex.ktype.KexFloat
+import org.vorpal.research.kex.ktype.KexInt
+import org.vorpal.research.kex.ktype.KexLong
+import org.vorpal.research.kex.ktype.KexShort
+import org.vorpal.research.kex.ktype.KexType
+import org.vorpal.research.kex.ktype.kexType
 import org.vorpal.research.kex.parameters.Parameters
-import org.vorpal.research.kex.reanimator.actionsequence.*
-import org.vorpal.research.kfg.type.*
+import org.vorpal.research.kex.reanimator.actionsequence.ActionList
+import org.vorpal.research.kex.reanimator.actionsequence.ActionSequence
+import org.vorpal.research.kex.reanimator.actionsequence.ConstructorCall
+import org.vorpal.research.kex.reanimator.actionsequence.DefaultConstructorCall
+import org.vorpal.research.kex.reanimator.actionsequence.EnumValueCreation
+import org.vorpal.research.kex.reanimator.actionsequence.ExternalConstructorCall
+import org.vorpal.research.kex.reanimator.actionsequence.ExternalMethodCall
+import org.vorpal.research.kex.reanimator.actionsequence.InnerClassConstructorCall
+import org.vorpal.research.kex.reanimator.actionsequence.MethodCall
+import org.vorpal.research.kex.reanimator.actionsequence.NewArray
+import org.vorpal.research.kex.reanimator.actionsequence.PrimaryValue
+import org.vorpal.research.kex.reanimator.actionsequence.ReflectionArrayWrite
+import org.vorpal.research.kex.reanimator.actionsequence.ReflectionList
+import org.vorpal.research.kex.reanimator.actionsequence.ReflectionNewArray
+import org.vorpal.research.kex.reanimator.actionsequence.ReflectionNewInstance
+import org.vorpal.research.kex.reanimator.actionsequence.ReflectionSetField
+import org.vorpal.research.kex.reanimator.actionsequence.ReflectionSetStaticField
+import org.vorpal.research.kex.reanimator.actionsequence.StaticFieldGetter
+import org.vorpal.research.kex.reanimator.actionsequence.StringValue
+import org.vorpal.research.kex.reanimator.actionsequence.UnknownSequence
+import org.vorpal.research.kfg.type.ArrayType
+import org.vorpal.research.kfg.type.ClassType
+import org.vorpal.research.kfg.type.PrimitiveType
+import org.vorpal.research.kfg.type.Type
+import org.vorpal.research.kfg.type.objectType
 import org.vorpal.research.kthelper.assert.unreachable
 import org.vorpal.research.kthelper.logging.log
 import org.vorpal.research.kthelper.runIf
@@ -75,13 +107,13 @@ class ExecutorAS2JavaPrinter(
                             is UnknownSequence -> arg.type
                             is ActionList -> arg.firstNotNullOfOrNull {
                                 when (it) {
-                                    is DefaultConstructorCall -> it.klass.type
-                                    is ConstructorCall -> it.constructor.klass.type
+                                    is DefaultConstructorCall -> it.klass.asType
+                                    is ConstructorCall -> it.constructor.klass.asType
                                     is NewArray -> it.asArray
                                     is ExternalConstructorCall -> it.constructor.returnType
                                     is ExternalMethodCall -> it.method.returnType
-                                    is InnerClassConstructorCall -> it.constructor.klass.type
-                                    is EnumValueCreation -> it.klass.type
+                                    is InnerClassConstructorCall -> it.constructor.klass.asType
+                                    is EnumValueCreation -> it.klass.asType
                                     is StaticFieldGetter -> it.field.type
                                     else -> null
                                 }
@@ -153,6 +185,7 @@ class ExecutorAS2JavaPrinter(
         else -> super.printVarDeclaration(name, type)
     }
 
+    @Suppress("RecursivePropertyAccessor")
     private val Type.klassType: String
         get() = when (this) {
             is PrimitiveType -> "${kexType.primitiveName}.class"
@@ -187,7 +220,7 @@ class ExecutorAS2JavaPrinter(
             val prefix = if (!it.isConstantValue) "(${resolvedTypes[it]}) " else ""
             prefix + it.stackName
         }
-        val actualType = ASClass(call.constructor.klass.type)
+        val actualType = ASClass(call.constructor.klass.asType)
         return listOf(
             if (resolvedTypes[owner] != null) {
                 val rest = resolvedTypes[owner]!!

@@ -3,7 +3,10 @@ package org.vorpal.research.kex.reanimator.actionsequence.generator
 import org.vorpal.research.kex.descriptor.Descriptor
 import org.vorpal.research.kex.descriptor.ObjectDescriptor
 import org.vorpal.research.kex.descriptor.descriptor
-import org.vorpal.research.kex.ktype.*
+import org.vorpal.research.kex.ktype.KexBool
+import org.vorpal.research.kex.ktype.KexJavaClass
+import org.vorpal.research.kex.ktype.KexString
+import org.vorpal.research.kex.ktype.kexType
 import org.vorpal.research.kex.reanimator.actionsequence.ActionList
 import org.vorpal.research.kex.reanimator.actionsequence.ActionSequence
 import org.vorpal.research.kex.reanimator.actionsequence.ExternalMethodCall
@@ -54,7 +57,7 @@ class FieldGenerator(val fallback: Generator) : Generator {
         }
         val generatedName = fallback.generate(fixedNameField, generationDepth)
 
-        val getDeclField = kfgJavaClass.getMethod("getDeclaredField", kfgFieldClass.type, types.stringType)
+        val getDeclField = kfgJavaClass.getMethod("getDeclaredField", kfgFieldClass.asType, types.stringType)
 
         actionSequence += ExternalMethodCall(getDeclField, generatedKlass, listOf(generatedName))
 

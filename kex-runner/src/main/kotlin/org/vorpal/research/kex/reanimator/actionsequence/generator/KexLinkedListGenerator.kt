@@ -1,9 +1,20 @@
 package org.vorpal.research.kex.reanimator.actionsequence.generator
 
-import org.vorpal.research.kex.descriptor.*
-import org.vorpal.research.kex.ktype.*
+import org.vorpal.research.kex.descriptor.ArrayDescriptor
+import org.vorpal.research.kex.descriptor.ConstantDescriptor
+import org.vorpal.research.kex.descriptor.Descriptor
+import org.vorpal.research.kex.descriptor.ObjectDescriptor
+import org.vorpal.research.kex.descriptor.descriptor
+import org.vorpal.research.kex.ktype.KexClass
+import org.vorpal.research.kex.ktype.KexInt
 import org.vorpal.research.kex.ktype.KexRtManager.rtMapped
-import org.vorpal.research.kex.reanimator.actionsequence.*
+import org.vorpal.research.kex.ktype.asArray
+import org.vorpal.research.kex.ktype.kexType
+import org.vorpal.research.kex.reanimator.actionsequence.ActionList
+import org.vorpal.research.kex.reanimator.actionsequence.ActionSequence
+import org.vorpal.research.kex.reanimator.actionsequence.DefaultConstructorCall
+import org.vorpal.research.kex.reanimator.actionsequence.ExternalMethodCall
+import org.vorpal.research.kex.reanimator.actionsequence.MethodCall
 import org.vorpal.research.kfg.arrayListClass
 import org.vorpal.research.kfg.ir.ConcreteClass
 import org.vorpal.research.kfg.linkedListClass
@@ -37,7 +48,7 @@ class KexLinkedListGenerator(val fallback: Generator) : Generator {
         saveToCache(descriptor, actionSequence)
 
         val outerListField =
-            kfgClass.fields.first { it.name.startsWith("this\$") && it.type == kfgClass.outerClass!!.type }
+            kfgClass.fields.first { it.name.startsWith("this\$") && it.type == kfgClass.outerClass!!.asType }
         val outerListClass = (outerListField.type as ClassType).klass
         val outerListFieldKey = outerListField.name to outerListField.type.kexType
         if (outerListFieldKey !in descriptor.fields) {
@@ -46,7 +57,7 @@ class KexLinkedListGenerator(val fallback: Generator) : Generator {
         val outerListDescriptor = descriptor[outerListFieldKey]!!
         val outerListAS = fallback.generate(outerListDescriptor, generationDepth)
 
-        val iteratorMethod = outerListClass.getMethod("listIterator", cm["java/util/ListIterator"].type)
+        val iteratorMethod = outerListClass.getMethod("listIterator", cm["java/util/ListIterator"].asType)
         actionSequence += ExternalMethodCall(iteratorMethod, outerListAS, emptyList())
 
         val cursorValue =

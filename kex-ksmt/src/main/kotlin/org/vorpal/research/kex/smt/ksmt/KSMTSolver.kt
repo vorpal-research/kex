@@ -2,12 +2,20 @@
 
 package org.vorpal.research.kex.smt.ksmt
 
-import kotlinx.coroutines.*
+import kotlinx.coroutines.TimeoutCancellationException
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.yield
 import org.ksmt.expr.KAndBinaryExpr
 import org.ksmt.expr.KAndNaryExpr
 import org.ksmt.expr.KExpr
-import org.ksmt.runner.core.*
-import org.ksmt.solver.*
+import org.ksmt.runner.core.WorkerInitializationFailedException
+import org.ksmt.solver.KModel
+import org.ksmt.solver.KSolver
+import org.ksmt.solver.KSolverConfiguration
+import org.ksmt.solver.KSolverException
+import org.ksmt.solver.KSolverStatus
 import org.ksmt.solver.portfolio.KPortfolioSolver
 import org.ksmt.solver.portfolio.KPortfolioSolverManager
 import org.ksmt.solver.z3.KZ3Solver
@@ -16,11 +24,32 @@ import org.ksmt.sort.KBvSort
 import org.ksmt.sort.KSort
 import org.vorpal.research.kex.ExecutionContext
 import org.vorpal.research.kex.config.kexConfig
-import org.vorpal.research.kex.ktype.*
-import org.vorpal.research.kex.smt.*
+import org.vorpal.research.kex.ktype.KexArray
+import org.vorpal.research.kex.ktype.KexInt
+import org.vorpal.research.kex.ktype.KexReference
+import org.vorpal.research.kex.ktype.KexType
+import org.vorpal.research.kex.ktype.isArray
+import org.vorpal.research.kex.ktype.isString
+import org.vorpal.research.kex.ktype.kexType
+import org.vorpal.research.kex.smt.AbstractAsyncSMTSolver
+import org.vorpal.research.kex.smt.AbstractSMTSolver
+import org.vorpal.research.kex.smt.AsyncSolver
+import org.vorpal.research.kex.smt.MemoryShape
+import org.vorpal.research.kex.smt.Solver
+import org.vorpal.research.kex.smt.Result
+import org.vorpal.research.kex.smt.SMTModel
 import org.vorpal.research.kex.smt.ksmt.KSMTEngine.asExpr
 import org.vorpal.research.kex.state.PredicateState
-import org.vorpal.research.kex.state.term.*
+import org.vorpal.research.kex.state.term.ArrayIndexTerm
+import org.vorpal.research.kex.state.term.ArrayLoadTerm
+import org.vorpal.research.kex.state.term.ClassAccessTerm
+import org.vorpal.research.kex.state.term.ConstClassTerm
+import org.vorpal.research.kex.state.term.ConstStringTerm
+import org.vorpal.research.kex.state.term.FieldLoadTerm
+import org.vorpal.research.kex.state.term.FieldTerm
+import org.vorpal.research.kex.state.term.Term
+import org.vorpal.research.kex.state.term.numericValue
+import org.vorpal.research.kex.state.term.term
 import org.vorpal.research.kex.state.transformer.collectPointers
 import org.vorpal.research.kex.state.transformer.collectVariables
 import org.vorpal.research.kex.state.transformer.memspace
@@ -153,7 +182,8 @@ class KSMTSolver(private val executionContext: ExecutionContext) : AbstractSMTSo
         check(currentState, currentQuery)
     }
 
-    private fun reduce(expr: Bool_): Bool_ = Bool_(expr.ctx, reduce(expr.expr as KExpr<*>), reduce(expr.axiom as KExpr<*>))
+    private fun reduce(expr: Bool_): Bool_ =
+        Bool_(expr.ctx, reduce(expr.expr as KExpr<*>), reduce(expr.axiom as KExpr<*>))
 
     private fun <T : KSort> reduce(state: KExpr<T>): KExpr<T> = when {
         state is KAndBinaryExpr -> when (executionContext.random.nextInt(100)) {
@@ -161,23 +191,29 @@ class KSMTSolver(private val executionContext: ExecutionContext) : AbstractSMTSo
                 true -> state.lhs
                 else -> state.rhs
             }
+
             else -> ef.ctx.mkAnd(reduce(state.lhs), reduce(state.rhs))
         } as KExpr<T>
+
         state is KAndNaryExpr -> when (executionContext.random.nextInt(100)) {
             in 0..2 -> {
                 val nth = executionContext.random.nextInt(state.args.size)
                 ef.ctx.mkAnd(state.args.filterIndexed { index, _ -> index != nth })
             }
+
             else -> ef.ctx.mkAnd(state.args.map { reduce(it) })
         } as KExpr<T>
+
         state.sort is KBoolSort -> when (executionContext.random.nextInt(100)) {
             in 0..2 -> ef.ctx.mkBool(executionContext.random.nextBoolean())
             else -> state
         } as KExpr<T>
+
         state.sort is KBvSort -> when (executionContext.random.nextInt(100)) {
             in 0..2 -> ef.ctx.mkBv(executionContext.random.nextInt(100), state.sort as KBvSort)
             else -> state
         } as KExpr<T>
+
         else -> state
     }
 
@@ -353,7 +389,9 @@ class KSMTSolver(private val executionContext: ExecutionContext) : AbstractSMTSo
         for ((type, value) in ef.typeMap) {
             val index =
                 when (val actualValue = KSMTUnlogic.undo(value.expr.asExpr(kCtx), kCtx, model)) {
-                    is ConstStringTerm -> term { const(actualValue.value.length - actualValue.value.indexOf('1') - 1) }
+                    is ConstStringTerm -> term {
+                        const(actualValue.value.length - actualValue.value.indexOf('1') - 1)
+                    }
                     else -> term { const(log2(actualValue.numericValue.toDouble()).toInt()) }
                 }
             typeMap[index] = type.kexType

@@ -3,7 +3,6 @@ package org.vorpal.research.kex.reanimator.actionsequence.generator
 import org.vorpal.research.kex.descriptor.Descriptor
 import org.vorpal.research.kex.descriptor.ObjectDescriptor
 import org.vorpal.research.kex.ktype.KexClass
-import org.vorpal.research.kex.ktype.type
 import org.vorpal.research.kex.reanimator.actionsequence.ActionList
 import org.vorpal.research.kex.reanimator.actionsequence.CodeAction
 import org.vorpal.research.kfg.ir.Class
@@ -29,7 +28,7 @@ class CollectionGenerator(fallback: Generator) : AnyGenerator(fallback) {
         val type = descriptor.type
         val klass = type as? KexClass ?: return false
         val tf = context.types
-        return klass.getKfgType(tf).isSubtypeOf(tf.cm["java/util/Collection"].type)
+        return klass.getKfgType(tf).isSubtypeOf(tf.cm["java/util/Collection"].asType)
     }
 
     override fun checkCtors(
@@ -54,7 +53,7 @@ class CollectionGenerator(fallback: Generator) : AnyGenerator(fallback) {
         current, currentStack, searchDepth, generationDepth
     ) {
         with(context) {
-            val collectionKlass = cm["java/util/Collection"].type
+            val collectionKlass = cm["java/util/Collection"].asType
             klass.accessibleMethods
                 .filter { it.name !in ignoredMethods }
                 .filterNotTo(mutableSetOf()) {

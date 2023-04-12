@@ -22,7 +22,11 @@ import org.vorpal.research.kfg.Package
 import org.vorpal.research.kthelper.assert.ktassert
 import org.vorpal.research.kthelper.logging.log
 import org.vorpal.research.kthelper.tryOrNull
-import java.lang.reflect.*
+import java.lang.reflect.Field
+import java.lang.reflect.ParameterizedType
+import java.lang.reflect.Type
+import java.lang.reflect.TypeVariable
+import java.lang.reflect.WildcardType
 import java.net.URLClassLoader
 
 class EasyRandomDriver(val config: BeansConfig = defaultConfig) : Randomizer() {
@@ -100,9 +104,9 @@ class EasyRandomDriver(val config: BeansConfig = defaultConfig) : Randomizer() {
 
         override fun <T> createInstance(type: Class<T>, context: RandomizerContext): T =
             when {
-                context.parameters.isScanClasspathForConcreteTypes && isAbstract<T>(type) -> {
+                context.parameters.isScanClasspathForConcreteTypes && isAbstract(type) -> {
                     val reflectionFacade = context.parameters.reflectionFacade
-                    val randomConcreteSubType = reflectionFacade.getPublicConcreteSubTypesOf<T>(type)
+                    val randomConcreteSubType = reflectionFacade.getPublicConcreteSubTypesOf(type)
                         .filterNot { it.shouldBeExcluded }
                         .randomOrNull(this@EasyRandomDriver)
                         ?: throw InstantiationError("Unable to find a matching concrete subtype of type: $type in the classpath")
@@ -119,7 +123,6 @@ class EasyRandomDriver(val config: BeansConfig = defaultConfig) : Randomizer() {
 
         private fun <T> createNewInstance(type: Class<T>): T = try {
             val noArgConstructor = type.getDeclaredConstructor()
-            @Suppress("DEPRECATION")
             if (!noArgConstructor.isAccessible) {
                 noArgConstructor.isAccessible = true
             }

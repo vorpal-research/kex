@@ -69,7 +69,7 @@ interface InstructionTraceCollector {
         concreteException: Any?
     )
 
-    // can't receive concrete value of cmp result because there is not separate cmp instruction on bytecode level,
+    // can't receive concrete value of cmp result because there is no separate cmp instruction on bytecode level,
     // it is combined with branch instruction
     fun cmp(
         value: String,

@@ -8,7 +8,10 @@ import kotlinx.serialization.serializer
 import org.vorpal.research.kfg.ClassManager
 import org.vorpal.research.kfg.ir.value.NameMapperContext
 
-abstract class AbstractSerializer(val context: SerializersModule, val prettyPrint: Boolean = true) {
+abstract class AbstractSerializer(
+    val context: SerializersModule,
+    private val prettyPrint: Boolean = true
+) {
     val json = Json {
         encodeDefaults = false
         ignoreUnknownKeys = false

@@ -4,14 +4,12 @@ import kotlinx.serialization.Required
 import kotlinx.serialization.Serializable
 import org.vorpal.research.kex.BaseType
 import org.vorpal.research.kex.InheritanceInfo
-import org.vorpal.research.kex.random.easyrandom.EasyRandomDriver
-import org.vorpal.research.kex.state.TypeInfo
+import org.vorpal.research.kex.state.InheritanceTypeInfo
 import org.vorpal.research.kex.state.term.Term
 import org.vorpal.research.kex.state.term.term
 import org.vorpal.research.kex.state.transformer.Transformer
 import org.vorpal.research.kfg.ir.Location
 import org.vorpal.research.kthelper.assert.fail
-import org.vorpal.research.kthelper.defaultHashCode
 import org.vorpal.research.kthelper.logging.log
 import kotlin.random.Random
 
@@ -47,7 +45,7 @@ abstract class PredicateType {
 
 @BaseType("Predicate")
 @Serializable
-abstract class Predicate : TypeInfo {
+abstract class Predicate : InheritanceTypeInfo {
     abstract val type: PredicateType
     abstract val location: Location
     abstract val operands: List<Term>

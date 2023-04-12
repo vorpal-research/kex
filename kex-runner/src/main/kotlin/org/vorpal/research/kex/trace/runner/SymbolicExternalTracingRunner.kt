@@ -6,8 +6,8 @@ import kotlinx.serialization.InternalSerializationApi
 import org.vorpal.research.kex.ExecutionContext
 import org.vorpal.research.kex.config.kexConfig
 import org.vorpal.research.kex.serialization.KexSerializer
-import org.vorpal.research.kex.trace.symbolic.ExecutionCompletedResult
-import org.vorpal.research.kex.trace.symbolic.ExecutionResult
+import org.vorpal.research.kex.trace.symbolic.protocol.ExecutionCompletedResult
+import org.vorpal.research.kex.trace.symbolic.protocol.ExecutionResult
 import org.vorpal.research.kex.trace.symbolic.protocol.Client2MasterConnection
 import org.vorpal.research.kex.trace.symbolic.protocol.Client2MasterSocketConnection
 import org.vorpal.research.kex.trace.symbolic.protocol.TestExecutionRequest

@@ -5,7 +5,6 @@ import org.vorpal.research.kex.trace.`object`.TraceCollectorProxy
 import org.vorpal.research.kex.util.asmString
 import org.vorpal.research.kex.util.wrapValue
 import org.vorpal.research.kfg.ClassManager
-import org.vorpal.research.kfg.Package
 import org.vorpal.research.kfg.ir.BasicBlock
 import org.vorpal.research.kfg.ir.Method
 import org.vorpal.research.kfg.ir.value.EmptyUsageContext
@@ -19,8 +18,7 @@ import org.vorpal.research.kfg.visitor.MethodVisitor
 
 class RuntimeTraceInstrumenter(override val cm: ClassManager) : MethodVisitor, InstructionBuilder {
     override val ctx: UsageContext = EmptyUsageContext
-    private val collectorClass =
-        cm[TraceCollector::class.java.canonicalName.asmString]
+    private val collectorClass = cm[TraceCollector::class.java.canonicalName.asmString]
     private lateinit var traceCollector: Instruction
 
     override val instructions: InstructionFactory
@@ -34,8 +32,7 @@ class RuntimeTraceInstrumenter(override val cm: ClassManager) : MethodVisitor, I
     private val stringType = types.stringType
 
     private fun getNewCollector(): Instruction {
-        val proxy =
-            cm[TraceCollectorProxy::class.java.canonicalName.asmString]
+        val proxy = cm[TraceCollectorProxy::class.java.canonicalName.asmString]
         val getter = proxy.getMethod("currentCollector", cm.type.getRefType(collectorClass))
 
         return getter.staticCall(proxy, "collector", listOf())
@@ -48,7 +45,7 @@ class RuntimeTraceInstrumenter(override val cm: ClassManager) : MethodVisitor, I
     override fun cleanup() {}
 
     override fun visitBranchInst(inst: BranchInst) {
-        val blockExitInsts = buildList<Instruction> {
+        val blockExitInsts = buildList {
             val branchMethod = collectorClass.getMethod(
                 "blockBranch",
                 types.voidType, stringType, objectType, objectType

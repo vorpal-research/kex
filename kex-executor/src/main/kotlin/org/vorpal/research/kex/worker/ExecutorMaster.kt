@@ -8,8 +8,8 @@ import kotlinx.serialization.InternalSerializationApi
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.serializer
 import org.vorpal.research.kex.config.kexConfig
-import org.vorpal.research.kex.trace.symbolic.ExecutionFailedResult
-import org.vorpal.research.kex.trace.symbolic.ExecutionTimedOutResult
+import org.vorpal.research.kex.trace.symbolic.protocol.ExecutionFailedResult
+import org.vorpal.research.kex.trace.symbolic.protocol.ExecutionTimedOutResult
 import org.vorpal.research.kex.trace.symbolic.protocol.Master2ClientConnection
 import org.vorpal.research.kex.trace.symbolic.protocol.Master2WorkerConnection
 import org.vorpal.research.kex.trace.symbolic.protocol.MasterProtocolHandler

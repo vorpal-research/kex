@@ -23,8 +23,7 @@ object KexFloat : KexReal() {
     override fun hashCode() = name.hashCode()
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
-        if (other !is KexFloat) return false
-        return true
+        return other is KexFloat
     }
 }
 
@@ -42,7 +41,6 @@ object KexDouble : KexReal() {
     override fun hashCode() = name.hashCode()
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
-        if (other !is KexDouble) return false
-        return true
+        return other is KexDouble
     }
 }

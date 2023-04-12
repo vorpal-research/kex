@@ -4,7 +4,12 @@ import org.vorpal.research.kex.asm.util.accessModifier
 import org.vorpal.research.kex.config.kexConfig
 import org.vorpal.research.kex.descriptor.ClassDescriptor
 import org.vorpal.research.kex.descriptor.Descriptor
-import org.vorpal.research.kex.reanimator.actionsequence.*
+import org.vorpal.research.kex.reanimator.actionsequence.ActionList
+import org.vorpal.research.kex.reanimator.actionsequence.ActionSequence
+import org.vorpal.research.kex.reanimator.actionsequence.CodeAction
+import org.vorpal.research.kex.reanimator.actionsequence.StaticFieldSetter
+import org.vorpal.research.kex.reanimator.actionsequence.StaticMethodCall
+import org.vorpal.research.kex.reanimator.actionsequence.UnknownSequence
 import org.vorpal.research.kex.reanimator.collector.hasSetter
 import org.vorpal.research.kex.reanimator.collector.setter
 import org.vorpal.research.kthelper.assert.ktassert
@@ -33,7 +38,11 @@ class StaticFieldGenerator(private val fallback: Generator) : Generator {
 
     data class ExecutionStack(val instance: ClassDescriptor, val calls: List<CodeAction>, val depth: Int)
 
-    private fun generateStatics(actionSequence: ActionList, descriptor: ClassDescriptor, generationDepth: Int): Boolean = with(context) {
+    private fun generateStatics(
+        actionSequence: ActionList,
+        descriptor: ClassDescriptor,
+        generationDepth: Int
+    ): Boolean = with(context) {
         val original = descriptor.deepCopy() as ClassDescriptor
         val fallbacks = mutableSetOf<List<CodeAction>>()
 

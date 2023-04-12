@@ -2,9 +2,25 @@ package org.vorpal.research.kex.descriptor
 
 import org.vorpal.research.kex.asm.manager.instantiationManager
 import org.vorpal.research.kex.asm.util.AccessModifier
-import org.vorpal.research.kex.ktype.*
+import org.vorpal.research.kex.ktype.KexArray
+import org.vorpal.research.kex.ktype.KexBool
+import org.vorpal.research.kex.ktype.KexByte
+import org.vorpal.research.kex.ktype.KexChar
+import org.vorpal.research.kex.ktype.KexClass
+import org.vorpal.research.kex.ktype.KexDouble
+import org.vorpal.research.kex.ktype.KexFloat
+import org.vorpal.research.kex.ktype.KexInt
+import org.vorpal.research.kex.ktype.KexJavaClass
+import org.vorpal.research.kex.ktype.KexLong
+import org.vorpal.research.kex.ktype.KexNull
+import org.vorpal.research.kex.ktype.KexReference
+import org.vorpal.research.kex.ktype.KexRtManager
 import org.vorpal.research.kex.ktype.KexRtManager.rtMapped
 import org.vorpal.research.kex.ktype.KexRtManager.rtUnmapped
+import org.vorpal.research.kex.ktype.KexShort
+import org.vorpal.research.kex.ktype.KexString
+import org.vorpal.research.kex.ktype.KexType
+import org.vorpal.research.kex.ktype.asArray
 import org.vorpal.research.kex.state.PredicateState
 import org.vorpal.research.kex.state.basic
 import org.vorpal.research.kex.state.emptyState
@@ -36,14 +52,13 @@ sealed class Descriptor(term: Term, type: KexType) {
         }
 
     val query: PredicateState get() = collectQuery(mutableSetOf())
-    val asString: String get() = print(mutableMapOf())
     val depth: Int get() = countDepth(setOf(), mutableMapOf())
 
     val typeInfo: PredicateState get() = generateTypeInfo(mutableSetOf())
 
     operator fun contains(other: Descriptor): Boolean = this.contains(other, mutableSetOf())
 
-    override fun toString() = asString
+    override fun toString() = print(mutableMapOf())
     infix fun eq(other: Descriptor) = this.structuralEquality(other, mutableSetOf())
     infix fun neq(other: Descriptor) = !(this eq other)
 
@@ -291,8 +306,7 @@ sealed class FieldContainingDescriptor<T : FieldContainingDescriptor<T>>(
         if (this in visited) return false
         if (this == other) return true
         visited += this
-        if (fields.values.any { it.contains(other, visited) }) return true
-        return false
+        return fields.values.any { it.contains(other, visited) }
     }
 
     override fun reduce(visited: MutableSet<Descriptor>): T {
@@ -496,8 +510,7 @@ class ArrayDescriptor(val elementType: KexType, val length: Int) :
         if (this in visited) return false
         if (this == other) return true
         visited += this
-        if (elements.values.any { it.contains(other, visited) }) return true
-        return false
+        return elements.values.any { it.contains(other, visited) }
     }
 
     override fun reduce(visited: MutableSet<Descriptor>): Descriptor {

@@ -1,9 +1,20 @@
 package org.vorpal.research.kex.reanimator.actionsequence.generator
 
-import org.vorpal.research.kex.descriptor.*
-import org.vorpal.research.kex.ktype.*
+import org.vorpal.research.kex.descriptor.ArrayDescriptor
+import org.vorpal.research.kex.descriptor.ConstantDescriptor
+import org.vorpal.research.kex.descriptor.Descriptor
+import org.vorpal.research.kex.descriptor.ObjectDescriptor
+import org.vorpal.research.kex.descriptor.descriptor
+import org.vorpal.research.kex.ktype.KexClass
+import org.vorpal.research.kex.ktype.KexInt
 import org.vorpal.research.kex.ktype.KexRtManager.rtMapped
-import org.vorpal.research.kex.reanimator.actionsequence.*
+import org.vorpal.research.kex.ktype.asArray
+import org.vorpal.research.kex.ktype.kexType
+import org.vorpal.research.kex.reanimator.actionsequence.ActionList
+import org.vorpal.research.kex.reanimator.actionsequence.ActionSequence
+import org.vorpal.research.kex.reanimator.actionsequence.DefaultConstructorCall
+import org.vorpal.research.kex.reanimator.actionsequence.ExternalMethodCall
+import org.vorpal.research.kex.reanimator.actionsequence.MethodCall
 import org.vorpal.research.kfg.arrayListClass
 import org.vorpal.research.kfg.ir.ConcreteClass
 import org.vorpal.research.kfg.type.ClassType
@@ -57,7 +68,7 @@ class KexArrayListGenerator(val fallback: Generator) : Generator {
         val actionSequence = ActionList(name)
         saveToCache(descriptor, actionSequence)
 
-        val outerListField = kfgClass.fields.first { it.name.startsWith("this\$") && it.type == kfgClass.outerClass!!.type }
+        val outerListField = kfgClass.fields.first { it.name.startsWith("this\$") && it.type == kfgClass.outerClass!!.asType }
         val outerListClass = (outerListField.type as ClassType).klass
         val outerListFieldKey = outerListField.name to outerListField.type.kexType
         if (outerListFieldKey !in descriptor.fields) {
@@ -67,8 +78,8 @@ class KexArrayListGenerator(val fallback: Generator) : Generator {
         val outerListAS = fallback.generate(outerListDescriptor, generationDepth)
 
         val iteratorMethod = when (descriptor.type) {
-            iteratorClass ->  outerListClass.getMethod("iterator", cm["java/util/Iterator"].type)
-            else ->  outerListClass.getMethod("listIterator", cm["java/util/ListIterator"].type)
+            iteratorClass ->  outerListClass.getMethod("iterator", cm["java/util/Iterator"].asType)
+            else ->  outerListClass.getMethod("listIterator", cm["java/util/ListIterator"].asType)
         }
         actionSequence += ExternalMethodCall(iteratorMethod, outerListAS, emptyList())
 

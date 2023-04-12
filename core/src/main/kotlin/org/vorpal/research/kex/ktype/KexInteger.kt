@@ -11,8 +11,7 @@ sealed class KexInteger : KexType() {
     override fun hashCode() = name.hashCode()
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
-        if (other?.javaClass != this.javaClass) return false
-        return true
+        return other?.javaClass == this.javaClass
     }
 }
 

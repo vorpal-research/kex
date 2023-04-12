@@ -11,9 +11,44 @@ import org.vorpal.research.kfg.Package
 import org.vorpal.research.kfg.arrayListClass
 import org.vorpal.research.kfg.ir.Class
 import org.vorpal.research.kfg.ir.Method
-import org.vorpal.research.kfg.ir.value.*
-import org.vorpal.research.kfg.ir.value.instruction.*
-import org.vorpal.research.kfg.type.*
+import org.vorpal.research.kfg.ir.value.EmptyUsageContext
+import org.vorpal.research.kfg.ir.value.ThisRef
+import org.vorpal.research.kfg.ir.value.UsageContext
+import org.vorpal.research.kfg.ir.value.Value
+import org.vorpal.research.kfg.ir.value.ValueFactory
+import org.vorpal.research.kfg.ir.value.instruction.ArrayLoadInst
+import org.vorpal.research.kfg.ir.value.instruction.ArrayStoreInst
+import org.vorpal.research.kfg.ir.value.instruction.BinaryInst
+import org.vorpal.research.kfg.ir.value.instruction.BranchInst
+import org.vorpal.research.kfg.ir.value.instruction.CallInst
+import org.vorpal.research.kfg.ir.value.instruction.CastInst
+import org.vorpal.research.kfg.ir.value.instruction.CatchInst
+import org.vorpal.research.kfg.ir.value.instruction.CmpInst
+import org.vorpal.research.kfg.ir.value.instruction.EnterMonitorInst
+import org.vorpal.research.kfg.ir.value.instruction.ExitMonitorInst
+import org.vorpal.research.kfg.ir.value.instruction.FieldLoadInst
+import org.vorpal.research.kfg.ir.value.instruction.FieldStoreInst
+import org.vorpal.research.kfg.ir.value.instruction.InstanceOfInst
+import org.vorpal.research.kfg.ir.value.instruction.Instruction
+import org.vorpal.research.kfg.ir.value.instruction.InstructionBuilder
+import org.vorpal.research.kfg.ir.value.instruction.InstructionFactory
+import org.vorpal.research.kfg.ir.value.instruction.InvokeDynamicInst
+import org.vorpal.research.kfg.ir.value.instruction.JumpInst
+import org.vorpal.research.kfg.ir.value.instruction.NewArrayInst
+import org.vorpal.research.kfg.ir.value.instruction.NewInst
+import org.vorpal.research.kfg.ir.value.instruction.PhiInst
+import org.vorpal.research.kfg.ir.value.instruction.ReturnInst
+import org.vorpal.research.kfg.ir.value.instruction.SwitchInst
+import org.vorpal.research.kfg.ir.value.instruction.TableSwitchInst
+import org.vorpal.research.kfg.ir.value.instruction.ThrowInst
+import org.vorpal.research.kfg.ir.value.instruction.UnaryInst
+import org.vorpal.research.kfg.ir.value.instruction.UnaryOpcode
+import org.vorpal.research.kfg.type.Type
+import org.vorpal.research.kfg.type.TypeFactory
+import org.vorpal.research.kfg.type.arrayListType
+import org.vorpal.research.kfg.type.listType
+import org.vorpal.research.kfg.type.objectType
+import org.vorpal.research.kfg.type.stringType
 import org.vorpal.research.kfg.visitor.MethodVisitor
 
 class SymbolicTraceInstrumenter(
@@ -870,20 +905,21 @@ class SymbolicTraceInstrumenter(
 
     private fun getNewCollector(): Instruction {
         val getter = collectorProxyClass.getMethod("currentCollector", cm.type.getRefType(collectorClass))
-
         return getter.staticCall(collectorProxyClass, "collector", emptyList())
     }
 
     private fun setNewCollector(collector: Value): Instruction {
-        val setter =
-            collectorProxyClass.getMethod("setCurrentCollector", cm.type.voidType, cm.type.getRefType(collectorClass))
+        val setter = collectorProxyClass.getMethod(
+            "setCurrentCollector",
+            cm.type.voidType,
+            cm.type.getRefType(collectorClass)
+        )
 
         return setter.staticCall(collectorProxyClass, listOf(collector))
     }
 
     private fun disableCollector(): Instruction {
         val disabler = collectorProxyClass.getMethod("disableCollector", cm.type.voidType)
-
         return disabler.staticCall(collectorProxyClass, listOf())
     }
 

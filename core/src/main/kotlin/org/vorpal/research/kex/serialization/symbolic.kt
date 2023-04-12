@@ -1,6 +1,9 @@
 package org.vorpal.research.kex.serialization
 
-import kotlinx.serialization.*
+import kotlinx.serialization.ExperimentalSerializationApi
+import kotlinx.serialization.InternalSerializationApi
+import kotlinx.serialization.KSerializer
+import kotlinx.serialization.SerializationException
 import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.builtins.PairSerializer
 import kotlinx.serialization.descriptors.SerialDescriptor
@@ -10,10 +13,20 @@ import kotlinx.serialization.encoding.CompositeDecoder
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
 import kotlinx.serialization.modules.SerializersModule
+import kotlinx.serialization.serializer
 import org.vorpal.research.kex.trace.symbolic.WrappedValue
 import org.vorpal.research.kex.util.parseValue
 import org.vorpal.research.kfg.ir.Method
-import org.vorpal.research.kfg.ir.value.*
+import org.vorpal.research.kfg.ir.value.BoolConstant
+import org.vorpal.research.kfg.ir.value.ByteConstant
+import org.vorpal.research.kfg.ir.value.CharConstant
+import org.vorpal.research.kfg.ir.value.Constant
+import org.vorpal.research.kfg.ir.value.DoubleConstant
+import org.vorpal.research.kfg.ir.value.FloatConstant
+import org.vorpal.research.kfg.ir.value.IntConstant
+import org.vorpal.research.kfg.ir.value.LongConstant
+import org.vorpal.research.kfg.ir.value.NameMapperContext
+import org.vorpal.research.kfg.ir.value.ShortConstant
 
 @Suppress("unused")
 @InternalSerializationApi

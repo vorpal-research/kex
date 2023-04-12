@@ -1,8 +1,9 @@
+@file:Suppress("unused", "UnusedReceiverParameter")
+
 package org.vorpal.research.kex.util
 
 import org.vorpal.research.kex.ktype.KexType
 import org.vorpal.research.kex.ktype.kexType
-import org.vorpal.research.kex.ktype.type
 import org.vorpal.research.kfg.ClassManager
 import org.vorpal.research.kfg.Package
 import org.vorpal.research.kfg.ir.Class
@@ -100,7 +101,7 @@ fun NameMapper.parseValueOrNull(valueName: String): Value? {
 }
 
 fun Type.getAllSubtypes(tf: TypeFactory): Set<Type> = when (this) {
-    is ClassType -> tf.cm.getAllSubtypesOf(this.klass).mapTo(mutableSetOf()) { it.type }
+    is ClassType -> tf.cm.getAllSubtypesOf(this.klass).mapTo(mutableSetOf()) { it.asType }
     is ArrayType -> this.component.getAllSubtypes(tf).mapTo(mutableSetOf()) { tf.getArrayType(it) }
     else -> setOf()
 }

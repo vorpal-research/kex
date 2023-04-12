@@ -1,3 +1,5 @@
+@file:Suppress("unused", "MemberVisibilityCanBePrivate")
+
 package org.vorpal.research.kex.asm.util
 
 import org.vorpal.research.kfg.ClassManager
@@ -103,7 +105,7 @@ abstract class SystemOutputWrapper(cm: ClassManager, ctx: UsageContext, name: St
     private val printStream = cm["java/io/PrintStream"]
     val klass = cm["java/lang/System"]
     val field = klass.getField(streamType.name, types.getRefType(printStream))
-    override val stream = field.load(name)
+    override val stream by lazy { field.load(name) }
 
     override fun open(): List<Instruction> {
         return listOf(stream)

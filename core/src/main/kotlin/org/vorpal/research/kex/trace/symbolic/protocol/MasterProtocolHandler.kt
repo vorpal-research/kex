@@ -3,7 +3,6 @@ package org.vorpal.research.kex.trace.symbolic.protocol
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.InternalSerializationApi
 import org.vorpal.research.kex.serialization.KexSerializer
-import org.vorpal.research.kex.trace.symbolic.ExecutionResult
 import org.vorpal.research.kthelper.logging.log
 import java.io.BufferedReader
 import java.io.BufferedWriter

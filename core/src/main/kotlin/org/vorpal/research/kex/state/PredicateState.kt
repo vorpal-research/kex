@@ -1,3 +1,5 @@
+@file:Suppress("unused")
+
 package org.vorpal.research.kex.state
 
 import kotlinx.serialization.Serializable
@@ -11,7 +13,7 @@ import org.vorpal.research.kthelper.assert.fail
 import org.vorpal.research.kthelper.assert.unreachable
 import org.vorpal.research.kthelper.logging.log
 
-interface TypeInfo {
+interface InheritanceTypeInfo {
     val inheritors: Map<String, Class<*>>
     val reverseMapping: Map<Class<*>, String>
 }
@@ -163,9 +165,10 @@ inline fun PredicateState.choice(right: ChoiceBuilder.() -> Unit): PredicateStat
     return this + rhv
 }
 
+@Suppress("MemberVisibilityCanBePrivate")
 @BaseType("State")
 @Serializable
-abstract class PredicateState : TypeInfo {
+abstract class PredicateState : InheritanceTypeInfo {
     companion object {
         val states = run {
             val loader = Thread.currentThread().contextClassLoader

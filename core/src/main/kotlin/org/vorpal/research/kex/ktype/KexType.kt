@@ -7,7 +7,23 @@ import org.vorpal.research.kex.InheritorOf
 import org.vorpal.research.kex.util.getKexRuntime
 import org.vorpal.research.kex.util.javaString
 import org.vorpal.research.kfg.ir.Method
-import org.vorpal.research.kfg.type.*
+import org.vorpal.research.kfg.type.ArrayType
+import org.vorpal.research.kfg.type.BoolType
+import org.vorpal.research.kfg.type.ByteType
+import org.vorpal.research.kfg.type.CharType
+import org.vorpal.research.kfg.type.ClassType
+import org.vorpal.research.kfg.type.DoubleType
+import org.vorpal.research.kfg.type.FloatType
+import org.vorpal.research.kfg.type.LongType
+import org.vorpal.research.kfg.type.NullType
+import org.vorpal.research.kfg.type.Integer
+import org.vorpal.research.kfg.type.Real
+import org.vorpal.research.kfg.type.Reference
+import org.vorpal.research.kfg.type.ShortType
+import org.vorpal.research.kfg.type.Type
+import org.vorpal.research.kfg.type.TypeFactory
+import org.vorpal.research.kfg.type.VoidType
+import org.vorpal.research.kfg.type.objectType
 import org.vorpal.research.kfg.util.Flags
 import org.vorpal.research.kthelper.assert.ktassert
 import org.vorpal.research.kthelper.assert.unreachable
@@ -18,7 +34,7 @@ import org.vorpal.research.kfg.ir.Class as KfgClass
 import org.vorpal.research.kfg.ir.Method as KfgMethod
 import org.vorpal.research.kfg.ir.Field as KfgField
 
-@Suppress("unused")
+@Suppress("unused", "RecursivePropertyAccessor")
 object KexRtManager {
     private val rt2KexMapping: Map<String, String>
     private val kex2RtMapping: Map<String, String>
@@ -57,7 +73,7 @@ object KexRtManager {
 
     val Type.rtMapped: Type
         get() = when (this) {
-            is ClassType -> this.klass.rtMapped.type
+            is ClassType -> this.klass.rtMapped.asType
             is ArrayType -> ArrayType(component.rtMapped)
             else -> this
         }
@@ -76,7 +92,7 @@ object KexRtManager {
 
     val Type.rtUnmapped: Type
         get() = when (this) {
-            is ClassType -> this.klass.rtUnmapped.type
+            is ClassType -> this.klass.rtUnmapped.asType
             is ArrayType -> ArrayType(component.rtUnmapped)
             else -> this
         }
@@ -99,7 +115,7 @@ object KexRtManager {
 
 
     val KfgClass.isKexRt get() = fullName in kex2RtMapping
-    @Suppress("unused")
+
     val Type.isKexRt: Boolean
         get() = when (this) {
             is ClassType -> this.klass.isKexRt
@@ -114,15 +130,18 @@ object KexRtManager {
             else -> false
         }
 
+    @Suppress("MemberVisibilityCanBePrivate")
     val KfgClass.inKexRt get() = fullName in rt2KexMapping
 
-    @Suppress("unused")
+    @Suppress("MemberVisibilityCanBePrivate")
     val Type.inKexRt: Boolean
         get() = when (this) {
             is ClassType -> this.klass.inKexRt
             is ArrayType -> component.inKexRt
             else -> false
         }
+
+    @Suppress("MemberVisibilityCanBePrivate")
     val KexType.inKexRt: Boolean
         get() = when (this) {
             is KexClass -> klass in rt2KexMapping
@@ -154,6 +173,8 @@ object KexRtManager {
 
 val Type.kexType get() = KexType.fromType(this)
 val KfgClass.kexType get() = KexType.fromClass(this)
+
+@Deprecated("replace with built in properties", replaceWith = ReplaceWith(".asType"))
 val KfgClass.type get() = this.cm.type.getRefType(this.fullName)
 
 private val KexInteger.actualBitSize
@@ -274,8 +295,7 @@ object KexVoid : KexType() {
     override fun hashCode() = name.hashCode()
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
-        if (other !is KexVoid) return false
-        return true
+        return other is KexVoid
     }
 }
 
