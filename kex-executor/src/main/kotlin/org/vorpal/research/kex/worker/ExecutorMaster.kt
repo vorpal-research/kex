@@ -117,7 +117,6 @@ class ExecutorMaster(
         }
 
         fun destroy() {
-            log.debug("Worker $id is destroyed")
             process.destroy()
         }
     }
