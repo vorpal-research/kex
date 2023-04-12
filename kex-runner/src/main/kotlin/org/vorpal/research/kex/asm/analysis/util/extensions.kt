@@ -8,12 +8,14 @@ import org.vorpal.research.kex.asm.util.AccessModifier
 import org.vorpal.research.kex.descriptor.Descriptor
 import org.vorpal.research.kex.ktype.KexRtManager.isJavaRt
 import org.vorpal.research.kex.ktype.KexRtManager.rtMapped
+import org.vorpal.research.kex.ktype.kexType
 import org.vorpal.research.kex.parameters.Parameters
 import org.vorpal.research.kex.parameters.concreteParameters
 import org.vorpal.research.kex.parameters.filterIgnoredStatic
 import org.vorpal.research.kex.parameters.filterStaticFinals
 import org.vorpal.research.kex.smt.AsyncChecker
 import org.vorpal.research.kex.smt.Result
+import org.vorpal.research.kex.state.term.term
 import org.vorpal.research.kex.state.transformer.SymbolicStateSlicer
 import org.vorpal.research.kex.state.transformer.collectArguments
 import org.vorpal.research.kex.state.transformer.generateInitialDescriptors
@@ -94,7 +96,9 @@ suspend fun Method.checkAsyncAndSlice(
             .filterIgnoredStatic()
 
         val (thisTerm, argTerms) = collectArguments(checker.state)
-        val termParams = Parameters(thisTerm, argTerms.values.toList())
+        val termParams = Parameters(thisTerm, this@checkAsyncAndSlice.argTypes.mapIndexed { index, type ->
+            argTerms[index] ?: term { arg(type.kexType, index) }
+        })
 
         filteredParams to ConstraintExceptionPrecondition(
             termParams,
