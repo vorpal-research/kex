@@ -24,7 +24,9 @@ class DistancePathSelector(
     })
 
     override suspend fun add(state: TraverserState, block: BasicBlock) {
-        queue += state to block
+        if (distanceCounter.score(block) < MethodDistanceCounter.INF) {
+            queue += state to block
+        }
     }
 
     override suspend fun hasNext(): Boolean = queue.isNotEmpty()

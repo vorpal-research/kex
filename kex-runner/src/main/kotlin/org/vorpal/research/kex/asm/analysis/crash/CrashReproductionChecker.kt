@@ -261,10 +261,14 @@ class CrashReproductionChecker(
                             )
                         }.await()
                     }
-                    if (result.testClasses.isEmpty()) {
+                    val reproductionChecker = ExceptionReproductionCheckerImpl(context, stackTrace)
+                    val resultingTestClasses = result.testClasses.filterTo(mutableSetOf()) {
+                        reproductionChecker.isReproduced(it)
+                    }
+                    if (resultingTestClasses.isEmpty()) {
                         kexConfig.testcaseDirectory.deleteRecursively()
                     }
-                    result.testClasses
+                    resultingTestClasses
                 }
             } ?: emptySet()
         }

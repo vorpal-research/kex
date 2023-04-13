@@ -149,7 +149,9 @@ class ExceptionPreconditionBuilderImpl(
 
                 is CallInst -> preconditionManager.resolve(location, targetException)
                     ?.build(location, state)
-                    ?: persistentSymbolicState().asSet()
+                    ?: emptySet<PersistentSymbolicState>().also {
+                        log.warn("Could not resolve exception type $targetException in ${location.print()}")
+                    }
 
                 else -> unreachable { log.error("Instruction ${location.print()} does not throw target exception") }
             }
