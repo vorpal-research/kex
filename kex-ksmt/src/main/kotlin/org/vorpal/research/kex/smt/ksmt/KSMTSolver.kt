@@ -18,6 +18,7 @@ import org.ksmt.solver.KSolverException
 import org.ksmt.solver.KSolverStatus
 import org.ksmt.solver.portfolio.KPortfolioSolver
 import org.ksmt.solver.portfolio.KPortfolioSolverManager
+import org.ksmt.solver.runner.KSolverExecutorTimeoutException
 import org.ksmt.solver.z3.KZ3Solver
 import org.ksmt.sort.KBoolSort
 import org.ksmt.sort.KBvSort
@@ -142,11 +143,14 @@ class KSMTSolver(private val executionContext: ExecutionContext) : AbstractSMTSo
             KSolverStatus.SAT -> Result.SatResult(collectModel(ctx, result.second as KModel, state))
         }
     } catch (e: KSolverException) {
-        if (e.cause !is TimeoutCancellationException) {
-            log.warn("KSMT thrown an exception during check", e)
-            throw e
+        when (e.cause) {
+            is TimeoutCancellationException -> Result.UnknownResult(e.message ?: "Exception in KSMT")
+            is KSolverExecutorTimeoutException -> Result.UnknownResult(e.message ?: "Exception in KSMT")
+            else -> {
+                log.warn("KSMT thrown an exception during check", e)
+                throw e
+            }
         }
-        Result.UnknownResult(e.message ?: "Exception in KSMT")
     } catch (e: WorkerInitializationFailedException) {
         if (e.cause !is TimeoutCancellationException) {
             log.warn("KSMT thrown an exception during worker initialization", e)
@@ -392,6 +396,7 @@ class KSMTSolver(private val executionContext: ExecutionContext) : AbstractSMTSo
                     is ConstStringTerm -> term {
                         const(actualValue.value.length - actualValue.value.indexOf('1') - 1)
                     }
+
                     else -> term { const(log2(actualValue.numericValue.toDouble()).toInt()) }
                 }
             typeMap[index] = type.kexType
