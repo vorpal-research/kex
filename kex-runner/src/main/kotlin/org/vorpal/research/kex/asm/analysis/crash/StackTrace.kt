@@ -6,6 +6,8 @@ data class StackTrace(
     val firstLine: String,
     val stackTraceLines: List<StackTraceElement>
 ) {
+    val size: Int get() = stackTraceLines.size
+
     companion object {
         fun parse(text: String): StackTrace {
             val lines = text.split(System.lineSeparator()).filter { it.isNotBlank() }
@@ -35,4 +37,27 @@ data class StackTrace(
             for (line in stackTraceLines)
                 appendLine("\tat $line")
         }
+
+    val throwable get() = firstLine.takeWhile { it != ':' }
+
+    infix fun `in`(other: StackTrace): Boolean {
+        if (this.throwable != other.throwable) return false
+        var thisIndex = 0
+        var otherIndex = 0
+        while (otherIndex < other.stackTraceLines.size) {
+            val thisLine = this.stackTraceLines[thisIndex]
+            val otherLine = other.stackTraceLines[otherIndex]
+
+            if (thisLine == otherLine) {
+                ++thisIndex
+                ++otherIndex
+                if (thisIndex == this.stackTraceLines.size) return true
+            } else if (thisIndex > 0) {
+                thisIndex = 0
+            } else {
+                ++otherIndex
+            }
+        }
+        return false
+    }
 }

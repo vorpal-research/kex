@@ -81,7 +81,10 @@ class CrashReproductionLauncher(
 
         log.debug("Running with class path:\n${containers.joinToString("\n") { it.name }}")
         stackTrace = StackTrace.parse(Paths.get(crashPath).readText()).let {
-            StackTrace(it.firstLine, it.stackTraceLines.take(depth.toInt()))
+            when (depth) {
+                0U -> it
+                else -> StackTrace(it.firstLine, it.stackTraceLines.take(depth.toInt()))
+            }
         }
         log.debug("Running on stack trace:\n${stackTrace.originalStackTrace}")
     }

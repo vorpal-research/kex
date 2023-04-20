@@ -23,10 +23,8 @@ class ExceptionReproductionCheckerImpl(
 ) : ExceptionReproductionChecker {
     override fun isReproduced(testKlass: String): Boolean {
         val resultingStackTrace = executeTest(testKlass) ?: return false
-        return stackTrace.throwable == resultingStackTrace.throwable &&
-                resultingStackTrace.stackTraceLines.containsAll(stackTrace.stackTraceLines)
+        return stackTrace `in` resultingStackTrace
     }
-
 
     private fun executeTest(testKlass: String): StackTrace? {
         val loader = CustomURLClassLoader(
@@ -64,8 +62,6 @@ class ExceptionReproductionCheckerImpl(
             StackTrace(it.firstLine, it.stackTraceLines)
         }
     }
-
-    private val StackTrace.throwable get() = firstLine.takeWhile { it != ':' }
 
     class CustomURLClassLoader(
         urls: List<URL>
