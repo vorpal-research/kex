@@ -15,8 +15,6 @@ import org.vorpal.research.kfg.Package
 import org.vorpal.research.kfg.visitor.MethodVisitor
 import org.vorpal.research.kfg.visitor.executePipeline
 import org.vorpal.research.kthelper.assert.unreachable
-import org.vorpal.research.kthelper.logging.error
-import org.vorpal.research.kthelper.logging.log
 import java.io.PrintWriter
 import java.io.StringWriter
 import java.lang.reflect.InvocationTargetException
@@ -96,6 +94,4 @@ abstract class CrashReproductionTest(testDirectoryName: String) : KexRunnerTest(
             StackTrace(it.firstLine, it.stackTraceLines.take(DEPTH))
         }
     }
-
-    private val StackTrace.throwable get() = firstLine.takeWhile { it != ':' }
 }
