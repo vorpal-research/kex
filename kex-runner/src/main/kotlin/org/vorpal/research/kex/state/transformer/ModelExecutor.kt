@@ -23,7 +23,7 @@ class ModelExecutor(
     override val ctx: ExecutionContext,
     override val model: SMTModel
 ) : AbstractGenerator<Any?> {
-    override val modelReanimator: ModelReanimator<Any?> = ObjectReanimator(method, model, ctx)
+    override val modelReanimator: ModelReanimator<Any?> = ObjectReanimator(model, ctx)
 
     override val memory = hashMapOf<Term, Any?>()
 

@@ -81,7 +81,7 @@ fun generateFinalDescriptors(
     model: SMTModel,
     state: PredicateState
 ): Parameters<Descriptor> {
-    val generator = DescriptorGenerator(method, ctx, model, FinalDescriptorReanimator(method, model, ctx))
+    val generator = DescriptorGenerator(method, ctx, model, FinalDescriptorReanimator(model, ctx))
     generator.apply(state)
     return Parameters(
         generator.instance,
@@ -98,7 +98,7 @@ fun generateFinalTypeInfoMap(
     model: SMTModel,
     state: PredicateState
 ): TypeInfoMap {
-    val generator = DescriptorGenerator(method, ctx, model, FinalDescriptorReanimator(method, model, ctx))
+    val generator = DescriptorGenerator(method, ctx, model, FinalDescriptorReanimator(model, ctx))
     generator.apply(state)
     val params = setOfNotNull(
         generator.instance,
@@ -126,7 +126,7 @@ fun generateInitialDescriptors(
     model: SMTModel,
     state: PredicateState
 ): Parameters<Descriptor> {
-    val generator = DescriptorGenerator(method, ctx, model, InitialDescriptorReanimator(method, model, ctx))
+    val generator = DescriptorGenerator(method, ctx, model, InitialDescriptorReanimator(model, ctx))
     generator.apply(state)
     return Parameters(
         generator.instance,
@@ -143,7 +143,7 @@ fun generateInitialDescriptorsAndAA(
     model: SMTModel,
     state: PredicateState
 ): Pair<Parameters<Descriptor>, AliasAnalysis> {
-    val generator = DescriptorGenerator(method, ctx, model, InitialDescriptorReanimator(method, model, ctx))
+    val generator = DescriptorGenerator(method, ctx, model, InitialDescriptorReanimator(model, ctx))
     generator.apply(state)
     return Parameters(
         generator.instance,
