@@ -53,6 +53,7 @@ class RandomizedDistancePathSelector(
 
     override suspend fun add(state: TraverserState, block: BasicBlock) {
         val triple = Triple(state, block, score(state, block))
+        if (triple.third >= MethodDistanceCounter.INF) return
         queue += triple
         maxScore += triple.third
 //        executionTree.addTrace(state.symbolicState)

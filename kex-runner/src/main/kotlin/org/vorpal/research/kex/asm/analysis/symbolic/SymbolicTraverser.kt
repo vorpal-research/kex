@@ -688,10 +688,11 @@ abstract class SymbolicTraverser(
 
     protected open suspend fun traverseJumpInst(inst: JumpInst) {
         val traverserState = currentState ?: return
-        pathSelector += traverserState.copy(
-            blockPath = traverserState.blockPath.add(inst.parent)
-        ) to inst.successor
-
+        checkReachability(traverserState, inst)?.let {
+            pathSelector += traverserState.copy(
+                blockPath = traverserState.blockPath.add(inst.parent)
+            ) to inst.successor
+        }
         currentState = null
     }
 
