@@ -246,18 +246,15 @@ class CrashReproductionChecker(
             stackTrace: StackTrace,
             preconditionBuilder: (CrashReproductionResult) -> ExceptionPreconditionBuilder
         ): Set<String> {
-            val globalTimeLimit = kexConfig.getIntValue("crash", "timeLimit", 100).seconds
-            var leftTimeLimit = globalTimeLimit
-            var requiredTimeIntervals = stackTrace.size
-            var localTimeLimit = leftTimeLimit / requiredTimeIntervals
+            val globalTimeLimit = kexConfig.getIntValue("crash", "globalTimeLimit", 100).seconds
+            val localTimeLimit = kexConfig.getIntValue("crash", "localTimeLimit")?.seconds ?: (globalTimeLimit / 10)
             val stopAfterFirstCrash = kexConfig.getBooleanValue("crash", "stopAfterFirstCrash", false)
 
             val coroutineContext = newFixedThreadPoolContextWithMDC(1, "crash-dispatcher")
-
             val firstLine = stackTrace.stackTraceLines.first()
             return runBlocking(coroutineContext) {
                 val result = withTimeoutOrNull(globalTimeLimit) {
-                    var (result, duration) = runCheckerWithTimeLimit(
+                    var (result, _) = runCheckerWithTimeLimit(
                         localTimeLimit,
                         context,
                         StackTrace(stackTrace.firstLine, listOf(firstLine)),
@@ -269,8 +266,6 @@ class CrashReproductionChecker(
                         ),
                         stopAfterFirstCrash
                     ) ?: return@withTimeoutOrNull CrashReproductionResult.empty()
-                    leftTimeLimit -= duration
-                    --requiredTimeIntervals
 
                     for ((line, prev) in stackTrace.stackTraceLines.drop(1)
                         .zip(stackTrace.stackTraceLines.dropLast(1))) {
@@ -281,8 +276,7 @@ class CrashReproductionChecker(
                             .filter { it.location.line == line.lineNumber }
                             .filterTo(mutableSetOf()) { it is CallInst && it.method.name == prev.methodName }
 
-                        localTimeLimit = leftTimeLimit / requiredTimeIntervals
-                        val (currentResult, currentDuration) = runCheckerWithTimeLimit(
+                        val (currentResult, _) = runCheckerWithTimeLimit(
                             localTimeLimit,
                             context,
                             StackTrace(stackTrace.firstLine, listOf(line)),
@@ -294,8 +288,6 @@ class CrashReproductionChecker(
                             ),
                             stopAfterFirstCrash
                         ) ?: return@withTimeoutOrNull CrashReproductionResult.empty()
-                        leftTimeLimit -= currentDuration
-                        --requiredTimeIntervals
 
                         val reproductionChecker = ExceptionReproductionCheckerImpl(
                             context,

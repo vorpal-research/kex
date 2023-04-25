@@ -36,9 +36,17 @@ class FieldGenerator(val fallback: Generator) : Generator {
         val klassDescriptor = (descriptor["clazz" to KexJavaClass()] as? ObjectDescriptor)?.also { klassDesc ->
             val klassName = klassDesc["name" to KexString()]?.asStringValue
             val asmKlassName = klassName?.asmString
-            klass = asmKlassName?.let { cm[it] } ?: context.cm.concreteClasses.random(context.random).also {
-                klassDesc["name" to KexString()] = descriptor { string(it.canonicalDesc) }
-            }
+            klass = asmKlassName?.let {
+                val asmKlass = cm[it]
+                when {
+                    asmKlass.fields.isEmpty() -> null
+                    else -> asmKlass
+                }
+            } ?: context.cm.concreteClasses
+                .filter { it.fields.isNotEmpty() }
+                .random(context.random).also {
+                    klassDesc["name" to KexString()] = descriptor { string(it.canonicalDesc) }
+                }
         } ?: descriptor {
             val klassDesc = `object`(KexJavaClass())
             klass = context.cm.concreteClasses.filter { it.fields.isNotEmpty() }.random(context.random)
