@@ -7,10 +7,10 @@ import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicInteger
 
 class MDCWrappedRunnable(private val runnable: Runnable) : Runnable {
-    private val context: Map<String, String> = MDC.getCopyOfContextMap()
+    private val context: Map<String, String>? = MDC.getCopyOfContextMap()
     override fun run() {
         try {
-            MDC.setContextMap(context)
+            context?.let { context -> MDC.setContextMap(context) }
             runnable.run()
         } finally {
             MDC.clear()
