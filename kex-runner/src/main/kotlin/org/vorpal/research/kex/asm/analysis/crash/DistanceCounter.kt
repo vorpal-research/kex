@@ -7,6 +7,7 @@ import org.vorpal.research.kfg.ir.Location
 import org.vorpal.research.kfg.ir.Method
 import org.vorpal.research.kfg.ir.value.instruction.Instruction
 import org.vorpal.research.kfg.ir.value.instruction.ReturnInst
+import org.vorpal.research.kfg.ir.value.instruction.ThrowInst
 import org.vorpal.research.kthelper.collection.MapWithDefault
 import org.vorpal.research.kthelper.collection.queueOf
 import org.vorpal.research.kthelper.collection.withDefault
@@ -42,8 +43,10 @@ class MethodDistanceCounter(
 
     private fun computeMethodScores(method: Method): MapWithDefault<BasicBlock, ULong> {
         val targetInstructions = method.targetInstructions().ifEmpty {
-            method.body.flatten()
-                .filterIsInstanceTo<ReturnInst, MutableSet<ReturnInst>>(mutableSetOf())
+            val instructions = method.body.flatten()
+            instructions.filterIsInstanceTo<ReturnInst, MutableSet<ReturnInst>>(mutableSetOf()) +
+                    instructions.filterIsInstanceTo<ThrowInst, MutableSet<ThrowInst>>(mutableSetOf())
+                        .filter { it.parent.successors.isEmpty() && it.parent.handlers.isEmpty() }
         }.mapTo(mutableSetOf()) { it.parent }
 
         val weights = targetInstructions.associateWith { 0UL }.toMutableMap().withDefault(INF)

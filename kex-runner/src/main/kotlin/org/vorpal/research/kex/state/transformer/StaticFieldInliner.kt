@@ -15,6 +15,7 @@ import org.vorpal.research.kex.state.StateBuilder
 import org.vorpal.research.kex.state.term.FieldLoadTerm
 import org.vorpal.research.kex.state.term.FieldTerm
 import org.vorpal.research.kex.state.term.Term
+import org.vorpal.research.kex.util.asmString
 import org.vorpal.research.kfg.ir.Class
 import org.vorpal.research.kfg.ir.Field
 import org.vorpal.research.kfg.ir.Method
@@ -24,8 +25,8 @@ import org.vorpal.research.kthelper.`try`
 import org.vorpal.research.kthelper.tryOrNull
 
 val ignores by lazy {
-    kexConfig.getMultipleStringValue("inliner", "static-ignore")
-        .mapTo(mutableSetOf()) { it.replace(".", "/") }
+    kexConfig.getMultipleStringValue("inliner", "ignoreStatic")
+        .mapTo(mutableSetOf()) { it.asmString }
 }
 
 class StaticFieldInliner(

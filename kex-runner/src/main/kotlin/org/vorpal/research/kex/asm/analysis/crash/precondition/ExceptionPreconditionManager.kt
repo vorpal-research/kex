@@ -73,6 +73,41 @@ class ExceptionPreconditionManager(
             contracts
         }
 
+        conditions.getOrPut(stringClass.getMethod("charAt", tf.charType, tf.intType)) {
+            val contracts = mutableMapOf<Class, ExceptionPreconditionBuilder>()
+            contracts[cm.stringIndexOOB] = object : ExceptionPreconditionBuilder {
+                override val targetException get() = cm.stringIndexOOB
+
+                override fun build(location: Instruction, state: TraverserState): Set<PersistentSymbolicState> {
+                    location as CallInst
+                    val lengthMethod = charSequenceClass.getMethod("length", tf.intType)
+                    val lengthTerm = generate(KexInt)
+                    return setOf(
+                        persistentSymbolicState(
+                            path = persistentPathConditionOf(
+                                PathClause(PathClauseType.BOUNDS_CHECK, location, path {
+                                    (state.mkTerm(location.args[0]) ge 0) equality false
+                                })
+                            )
+                        ),
+                        persistentSymbolicState(
+                            state = persistentClauseStateOf(
+                                StateClause(location, org.vorpal.research.kex.state.predicate.state {
+                                    lengthTerm.call(state.mkTerm(location.callee).call(lengthMethod))
+                                })
+                            ),
+                            path = persistentPathConditionOf(
+                                PathClause(PathClauseType.BOUNDS_CHECK, location, path {
+                                    (state.mkTerm(location.args[0]) lt lengthTerm) equality false
+                                })
+                            )
+                        )
+                    )
+                }
+            }
+            contracts
+        }
+
         conditions.getOrPut(stringClass.getMethod("substring", stringClass.asType, tf.intType)) {
             val contracts = mutableMapOf<Class, ExceptionPreconditionBuilder>()
             contracts[cm.stringIndexOOB] = object : ExceptionPreconditionBuilder {

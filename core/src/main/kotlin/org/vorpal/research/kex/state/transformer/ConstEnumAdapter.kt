@@ -1,6 +1,7 @@
 package org.vorpal.research.kex.state.transformer
 
 import org.vorpal.research.kex.ExecutionContext
+import org.vorpal.research.kex.config.kexConfig
 import org.vorpal.research.kex.ktype.*
 import org.vorpal.research.kex.state.PredicateState
 import org.vorpal.research.kex.state.StateBuilder
@@ -9,12 +10,18 @@ import org.vorpal.research.kex.state.predicate.axiom
 import org.vorpal.research.kex.state.term.*
 import org.vorpal.research.kex.state.term.TermBuilder.Terms.field
 import org.vorpal.research.kex.util.allFields
+import org.vorpal.research.kex.util.asmString
 import org.vorpal.research.kex.util.isStatic
 import org.vorpal.research.kex.util.loadClass
 import org.vorpal.research.kfg.type.ClassType
 import org.vorpal.research.kthelper.collection.dequeOf
 import org.vorpal.research.kthelper.logging.log
 import org.vorpal.research.kthelper.tryOrNull
+
+val ignores by lazy {
+    kexConfig.getMultipleStringValue("inliner", "ignoreStatic")
+        .mapTo(mutableSetOf()) { it.asmString }
+}
 
 class ConstEnumAdapter(val context: ExecutionContext) : RecollectingTransformer<ConstEnumAdapter> {
     val cm get() = context.cm
@@ -48,6 +55,7 @@ class ConstEnumAdapter(val context: ExecutionContext) : RecollectingTransformer<
                     else -> null
                 }
             }
+            .filterNot { it.toString() in ignores }
             .mapTo(mutableSetOf()) { term { staticRef(it as KexClass) } }
 
         val enumFields = mutableMapOf<KexType, Set<Term>>()

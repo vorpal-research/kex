@@ -15,19 +15,15 @@ import org.vorpal.research.kex.asm.analysis.symbolic.SymbolicCallResolver
 import org.vorpal.research.kex.asm.analysis.symbolic.SymbolicInvokeDynamicResolver
 import org.vorpal.research.kex.asm.analysis.symbolic.SymbolicPathSelector
 import org.vorpal.research.kex.asm.analysis.symbolic.SymbolicTraverser
-import org.vorpal.research.kex.asm.analysis.symbolic.TraverserState
 import org.vorpal.research.kex.asm.analysis.util.checkAsyncAndSlice
 import org.vorpal.research.kex.compile.CompilationException
 import org.vorpal.research.kex.config.kexConfig
 import org.vorpal.research.kex.descriptor.Descriptor
-import org.vorpal.research.kex.ktype.KexType
 import org.vorpal.research.kex.parameters.Parameters
 import org.vorpal.research.kex.reanimator.UnsafeGenerator
 import org.vorpal.research.kex.reanimator.codegen.klassName
-import org.vorpal.research.kex.state.predicate.path
-import org.vorpal.research.kex.state.term.Term
-import org.vorpal.research.kex.trace.symbolic.PathClause
-import org.vorpal.research.kex.trace.symbolic.PathClauseType
+import org.vorpal.research.kex.state.predicate.state
+import org.vorpal.research.kex.trace.symbolic.StateClause
 import org.vorpal.research.kex.trace.symbolic.SymbolicState
 import org.vorpal.research.kex.util.arrayIndexOOBClass
 import org.vorpal.research.kex.util.asmString
@@ -95,7 +91,7 @@ private fun StackTrace.targetInstructions(context: ExecutionContext): Set<Instru
                 context.cm.negativeArrayClass -> it is NewArrayInst
                 context.cm.classCastClass -> it is CastInst
                 else -> when (it) {
-                    is ThrowInst -> it.throwable.type == targetException.asType
+                    is ThrowInst -> targetException.asType.isSubtypeOf(it.throwable.type)
                     is CallInst -> targetException.isInheritorOf(context.cm.runtimeException)
                             || targetException in it.method.exceptions
 
@@ -192,7 +188,6 @@ class CrashReproductionChecker(
             }
         }
 
-
         @ExperimentalTime
         @DelicateCoroutinesApi
         fun run(context: ExecutionContext, stackTrace: StackTrace): Set<String> {
@@ -247,7 +242,8 @@ class CrashReproductionChecker(
             preconditionBuilder: (CrashReproductionResult) -> ExceptionPreconditionBuilder
         ): Set<String> {
             val globalTimeLimit = kexConfig.getIntValue("crash", "globalTimeLimit", 100).seconds
-            val localTimeLimit = kexConfig.getIntValue("crash", "localTimeLimit")?.seconds ?: (globalTimeLimit / 10)
+            val localTimeLimit = kexConfig.getIntValue("crash", "localTimeLimit")?.seconds
+                ?: (globalTimeLimit / stackTrace.size)
             val stopAfterFirstCrash = kexConfig.getBooleanValue("crash", "stopAfterFirstCrash", false)
 
             val coroutineContext = newFixedThreadPoolContextWithMDC(1, "crash-dispatcher")
@@ -335,101 +331,50 @@ class CrashReproductionChecker(
         super.traverseInstruction(inst)
     }
 
-    override suspend fun nullabilityCheck(
-        state: TraverserState,
-        inst: Instruction,
-        term: Term
-    ): TraverserState? {
-        val persistentState = state.symbolicState
-        val nullityClause = PathClause(
-            PathClauseType.NULL_CHECK,
-            inst,
-            path { (term eq null) equality false }
-        )
-        return checkReachability(
-            state.copy(
-                symbolicState = persistentState.copy(
-                    path = persistentState.path.add(nullityClause)
-                ),
-                nullCheckedTerms = state.nullCheckedTerms.add(term)
-            ), inst
-        )
-    }
+    override suspend fun traverseCallInst(inst: CallInst) {
+        var traverserState = currentState ?: return
 
-    override suspend fun boundsCheck(
-        state: TraverserState,
-        inst: Instruction,
-        index: Term,
-        length: Term
-    ): TraverserState? {
-        val persistentState = state.symbolicState
-        val zeroClause = PathClause(
-            PathClauseType.BOUNDS_CHECK,
-            inst,
-            path { (index ge 0) equality true }
-        )
-        val lengthClause = PathClause(
-            PathClauseType.BOUNDS_CHECK,
-            inst,
-            path { (index lt length) equality true }
-        )
-        return checkReachability(
-            state.copy(
-                symbolicState = persistentState.copy(
-                    path = persistentState.path.add(
-                        zeroClause.copy(predicate = zeroClause.predicate)
-                    ).add(
-                        lengthClause.copy(predicate = lengthClause.predicate)
+        val callee = when {
+            inst.isStatic -> staticRef(inst.method.klass)
+            else -> traverserState.mkTerm(inst.callee)
+        }
+        val argumentTerms = inst.args.map { traverserState.mkTerm(it) }
+        if (!inst.isStatic) {
+            traverserState = nullabilityCheck(traverserState, inst, callee) ?: return nullableCurrentState()
+        }
+
+        val candidates = callResolver.resolve(traverserState, inst)
+        for (candidate in candidates) {
+            processMethodCall(traverserState, inst, candidate, callee, argumentTerms)
+        }
+        currentState = run {
+            val receiver = when {
+                inst.isNameDefined -> {
+                    val res = generate(inst.type.symbolicType)
+                    traverserState = traverserState.copy(
+                        valueMap = traverserState.valueMap.put(inst, res)
                     )
-                ),
-                boundCheckedTerms = state.boundCheckedTerms.add(index to length)
-            ), inst
-        )
+                    res
+                }
+
+                else -> null
+            }
+            val callClause = StateClause(
+                inst, state {
+                    val callTerm = callee.call(inst.method, argumentTerms)
+                    receiver?.call(callTerm) ?: call(callTerm)
+                }
+            )
+            checkReachability(
+                traverserState.copy(
+                    symbolicState = traverserState.symbolicState.copy(
+                        clauses = traverserState.symbolicState.clauses.add(callClause)
+                    )
+                ), inst
+            )
+        }
     }
 
-    override suspend fun newArrayBoundsCheck(
-        state: TraverserState,
-        inst: Instruction,
-        index: Term
-    ): TraverserState? {
-        val persistentState = state.symbolicState
-        val zeroClause = PathClause(
-            PathClauseType.BOUNDS_CHECK,
-            inst,
-            path { (index ge 0) equality true }
-        )
-        return checkReachability(
-            state.copy(
-                symbolicState = persistentState.copy(
-                    path = persistentState.path.add(zeroClause)
-                ),
-                boundCheckedTerms = state.boundCheckedTerms.add(index to index)
-            ), inst
-        )
-    }
-
-    override suspend fun typeCheck(
-        state: TraverserState,
-        inst: Instruction,
-        term: Term,
-        type: KexType
-    ): TraverserState? {
-        val currentlyCheckedType = type.getKfgType(ctx.types)
-        val persistentState = state.symbolicState
-        val typeClause = PathClause(
-            PathClauseType.TYPE_CHECK,
-            inst,
-            path { (term `is` type) equality true }
-        )
-        return checkReachability(
-            state.copy(
-                symbolicState = persistentState.copy(
-                    path = persistentState.path.add(typeClause)
-                ),
-                typeCheckedTerms = state.typeCheckedTerms.put(term, currentlyCheckedType)
-            ), inst
-        )
-    }
 
     override suspend fun check(method: Method, state: SymbolicState): Parameters<Descriptor>? {
         val (params, precondition) = method.checkAsyncAndSlice(ctx, state) ?: return null
