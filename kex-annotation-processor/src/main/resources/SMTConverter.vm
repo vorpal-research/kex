@@ -311,7 +311,16 @@ class ${solver}Converter(val executionContext: ExecutionContext) : ${solver}SMTC
         return ptr.axiomExpr() and value.axiomExpr() and arrayLoad.withAxioms(cast(elementType, previousValue), ef, ctx).axiomExpr()
     }
 
-    fun convert(call: CallPredicate, ef: Factory_, ctx: Context_): Bool_ = ef.makeTrue()
+    fun convert(call: CallPredicate, ef: Factory_, ctx: Context_): Bool_ = when {
+        call.hasLhv -> {
+            val lhv = convert(call.lhv, ef, ctx)
+            val rhv = convert(call.call, ef, ctx)
+            lhv eq rhv
+        }
+        call.call.type !is KexVoid -> convert(call.call, ef, ctx).axiomExpr()
+        else -> ef.makeTrue()
+    }
+
     fun convert(catch: CatchPredicate, ef: Factory_, ctx: Context_): Bool_ = ef.makeTrue()
     fun convert(`throw`: ThrowPredicate, ef: Factory_, ctx: Context_): Bool_ = ef.makeTrue()
     fun convert(monitor: EnterMonitorPredicate, ef: Factory_, ctx: Context_): Bool_ = ef.makeTrue()

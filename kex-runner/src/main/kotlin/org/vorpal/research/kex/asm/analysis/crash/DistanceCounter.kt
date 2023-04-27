@@ -21,9 +21,10 @@ class MethodDistanceCounter(
     private val scores = mutableMapOf<Method, MapWithDefault<BasicBlock, ULong>>()
 
     companion object {
-        const val INF = 1_000_000UL
-        private const val DEFAULT_WEIGHT = 10UL
-        private const val CATCH_WEIGHT = 1000UL
+        const val INF = 100_000_000_000UL
+        const val DEFAULT_WEIGHT = 10UL
+        const val CATCH_WEIGHT = 1000UL
+        const val CALL_WEIGHT = 5000UL
     }
 
     private infix fun Pair<Method, Location>.eq(stackTraceElement: StackTraceElement): Boolean {

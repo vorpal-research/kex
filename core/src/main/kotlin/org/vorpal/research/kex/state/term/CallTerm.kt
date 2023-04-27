@@ -28,4 +28,12 @@ class CallTerm(
             else -> term { termFactory.getCall(method, tOwner, tArguments) }
         }
     }
+
+    override fun hashCode() = 31 * super.hashCode() + method.hashCode()
+
+    override fun equals(other: Any?): Boolean {
+        if (other?.javaClass != this.javaClass) return false
+        other as CallTerm
+        return super.equals(other) && this.method == other.method
+    }
 }

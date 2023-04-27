@@ -49,7 +49,9 @@ class RandomizedDistancePathSelector(
 //    private val executionTree = ExecutionTree()
 
     private fun score(state: TraverserState, block: BasicBlock) =
-        state.stackTrace.sumOf { distanceCounter.score(it.instruction.parent) } + distanceCounter.score(block)
+        state.stackTrace.sumOf { distanceCounter.score(it.instruction.parent) } +
+                state.stackTrace.size.toULong() * MethodDistanceCounter.CALL_WEIGHT +
+                distanceCounter.score(block)
 
     override suspend fun add(state: TraverserState, block: BasicBlock) {
         val triple = Triple(state, block, score(state, block))
