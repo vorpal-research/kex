@@ -175,17 +175,23 @@ class CrashReproductionChecker(
             preconditionBuilder: ExceptionPreconditionBuilder,
             reproductionChecker: ExceptionReproductionChecker,
             shouldStopAfterFirst: Boolean
-        ): TimedValue<CrashReproductionResult>? = withTimeoutOrNull(timeLimit) {
-            measureTimedValue {
-                runChecker(
-                    context,
-                    stackTrace,
-                    targetInstructions,
-                    preconditionBuilder,
-                    reproductionChecker,
-                    shouldStopAfterFirst
-                )
+        ): TimedValue<CrashReproductionResult> = measureTimedValue {
+            val checker = CrashReproductionChecker(
+                context,
+                stackTrace,
+                targetInstructions,
+                preconditionBuilder,
+                reproductionChecker,
+                shouldStopAfterFirst
+            )
+            withTimeoutOrNull(timeLimit) {
+                checker.analyze()
             }
+            CrashReproductionResult(
+                checker.generatedTestClasses,
+                checker.descriptors,
+                checker.preconditions
+            )
         }
 
         @ExperimentalTime
@@ -261,7 +267,7 @@ class CrashReproductionChecker(
                             StackTrace(stackTrace.firstLine, listOf(firstLine))
                         ),
                         stopAfterFirstCrash
-                    ) ?: return@withTimeoutOrNull CrashReproductionResult.empty()
+                    )
 
                     for ((line, prev) in stackTrace.stackTraceLines.drop(1)
                         .zip(stackTrace.stackTraceLines.dropLast(1))) {
@@ -283,7 +289,7 @@ class CrashReproductionChecker(
                                 StackTrace(stackTrace.firstLine, listOf(line)),
                             ),
                             stopAfterFirstCrash
-                        ) ?: return@withTimeoutOrNull CrashReproductionResult.empty()
+                        )
 
                         val reproductionChecker = ExceptionReproductionCheckerImpl(
                             context,
