@@ -58,7 +58,7 @@ class ExceptionReproductionCheckerImpl(
     private fun Throwable.toStackTrace(): StackTrace {
         val stringWriter = StringWriter()
         this.printStackTrace(PrintWriter(stringWriter))
-        return StackTrace.parse(stringWriter.toString()).let {
+        return StackTrace.parse(stringWriter.toString().split("Caused by")[0].trim()).let {
             StackTrace(it.firstLine, it.stackTraceLines)
         }
     }
