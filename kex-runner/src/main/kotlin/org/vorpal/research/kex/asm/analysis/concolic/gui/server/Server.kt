@@ -3,6 +3,7 @@ package org.vorpal.research.kex.asm.analysis.concolic.gui.server
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import org.vorpal.research.kthelper.logging.log
 import java.net.ServerSocket
 
 class Server(port: Int) {
@@ -15,8 +16,12 @@ class Server(port: Int) {
     private val clients = mutableSetOf<ClientSocket>()
 
     fun start() {
-        if (isRunning) return
+        if (isRunning) {
+            log.debug("GUI Server is already running")
+            return
+        }
 
+        log.debug("Start GUI Server at port ${serverSocket.localPort}")
         isRunning = true
         scope.launch {
             while (isRunning) {
@@ -38,6 +43,7 @@ class Server(port: Int) {
 
     fun broadcast(message: String) {
         if (!isRunning) return
+        log.debug("Broadcasting to ${clients.size} client(s): $message")
         clients.forEach {
             it.send(message)
         }
