@@ -40,6 +40,10 @@ class ReflectionUtilsPrinter(
                 utils
             }
         }
+
+        fun invalidateAll() {
+            reflectionUtilsInstances.clear()
+        }
     }
 
     init {

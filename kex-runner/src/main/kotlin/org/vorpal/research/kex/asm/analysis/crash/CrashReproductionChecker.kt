@@ -21,6 +21,7 @@ import org.vorpal.research.kex.config.kexConfig
 import org.vorpal.research.kex.descriptor.Descriptor
 import org.vorpal.research.kex.parameters.Parameters
 import org.vorpal.research.kex.reanimator.UnsafeGenerator
+import org.vorpal.research.kex.reanimator.codegen.javagen.ReflectionUtilsPrinter
 import org.vorpal.research.kex.reanimator.codegen.klassName
 import org.vorpal.research.kex.state.predicate.state
 import org.vorpal.research.kex.trace.symbolic.StateClause
@@ -297,6 +298,7 @@ class CrashReproductionChecker(
                         .zip(stackTrace.stackTraceLines.dropLast(1))) {
                         if (result.testClasses.isEmpty()) break
                         kexConfig.testcaseDirectory.deleteRecursively()
+                        ReflectionUtilsPrinter.invalidateAll()
 
                         val targetInstructions = context.cm[line].body.flatten()
                             .filter { it.location.line == line.lineNumber }
@@ -337,6 +339,7 @@ class CrashReproductionChecker(
                 }
                 if (resultingTestClasses.isEmpty()) {
                     kexConfig.testcaseDirectory.deleteRecursively()
+                    ReflectionUtilsPrinter.invalidateAll()
                 }
                 resultingTestClasses
             }
