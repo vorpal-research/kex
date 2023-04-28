@@ -45,6 +45,7 @@ import org.vorpal.research.kfg.ir.value.instruction.FieldLoadInst
 import org.vorpal.research.kfg.ir.value.instruction.FieldStoreInst
 import org.vorpal.research.kfg.ir.value.instruction.Instruction
 import org.vorpal.research.kfg.ir.value.instruction.NewArrayInst
+import org.vorpal.research.kfg.ir.value.instruction.NewInst
 import org.vorpal.research.kfg.ir.value.instruction.ThrowInst
 import org.vorpal.research.kthelper.assert.ktassert
 import org.vorpal.research.kthelper.logging.log
@@ -76,13 +77,22 @@ private val Instruction.isNullptrThrowing
         else -> false
     }
 
+private fun Instruction.dominates(other: Instruction): Boolean {
+    var current = this.parent
+    while (current != other.parent) {
+        if (current.successors.size != 1) return false
+        current = current.successors.single()
+    }
+    return true
+}
+
 
 private fun StackTrace.targetException(context: ExecutionContext): Class =
     context.cm[firstLine.takeWhile { it != ':' }.asmString]
 
 private fun StackTrace.targetInstructions(context: ExecutionContext): Set<Instruction> {
     val targetException = targetException(context)
-    return context.cm[stackTraceLines.first()].body.flatten()
+    val candidates = context.cm[stackTraceLines.first()].body.flatten()
         .filter { it.location.line == stackTraceLines.first().lineNumber }
         .filterTo(mutableSetOf()) {
             when (targetException) {
@@ -99,6 +109,20 @@ private fun StackTrace.targetInstructions(context: ExecutionContext): Set<Instru
                 }
             }
         }
+
+    val candidateNewInsts = candidates.filterIsInstance<ThrowInst>().mapNotNullTo(mutableSetOf()) {
+        (it.throwable as? NewInst)?.let { throwable ->
+            when {
+                throwable.type == targetException.asType && throwable.dominates(it) -> throwable
+                else -> null
+            }
+        }
+    }
+
+    return when {
+        candidateNewInsts.isNotEmpty() -> candidateNewInsts
+        else -> candidates
+    }
 }
 
 class CrashReproductionChecker(

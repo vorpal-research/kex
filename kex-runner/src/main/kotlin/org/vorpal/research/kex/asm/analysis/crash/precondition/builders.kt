@@ -34,6 +34,7 @@ import org.vorpal.research.kfg.ir.value.instruction.CastInst
 import org.vorpal.research.kfg.ir.value.instruction.FieldLoadInst
 import org.vorpal.research.kfg.ir.value.instruction.FieldStoreInst
 import org.vorpal.research.kfg.ir.value.instruction.NewArrayInst
+import org.vorpal.research.kfg.ir.value.instruction.NewInst
 import org.vorpal.research.kfg.ir.value.instruction.ThrowInst
 import org.vorpal.research.kthelper.assert.unreachable
 import org.vorpal.research.kthelper.logging.log
@@ -142,7 +143,12 @@ class ExceptionPreconditionBuilderImpl(
             }
 
             else -> when (location) {
-                is ThrowInst -> when (location.throwable.type) {
+                is ThrowInst -> when {
+                    targetException.asType.isSubtypeOf(location.throwable.type) -> persistentSymbolicState().asSet()
+                    else -> emptySet()
+                }
+
+                is NewInst -> when (location.type) {
                     targetException.asType -> persistentSymbolicState().asSet()
                     else -> emptySet()
                 }

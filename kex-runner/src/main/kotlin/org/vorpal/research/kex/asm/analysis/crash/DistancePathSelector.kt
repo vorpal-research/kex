@@ -18,7 +18,7 @@ class DistancePathSelector(
     private val targetInstructions: Set<Instruction>,
     private val stackTrace: StackTrace
 ) : SymbolicPathSelector {
-    private val distanceCounter = MethodDistanceCounter(stackTrace)
+    private val distanceCounter = MethodDistanceCounter(rootMethod, targetInstructions, stackTrace)
     private val queue = PriorityQueue<Pair<TraverserState, BasicBlock>>(compareBy { (state, block) ->
         state.stackTrace.sumOf { distanceCounter.score(it.instruction.parent) } + distanceCounter.score(block)
     })
@@ -43,7 +43,11 @@ class RandomizedDistancePathSelector(
     private val targetInstructions: Set<Instruction>,
     private val stackTrace: StackTrace
 ) : SymbolicPathSelector {
-    private val distanceCounter = MethodDistanceCounter(stackTrace)
+    private val distanceCounter = MethodDistanceCounter(
+        rootMethod,
+        targetInstructions,
+        stackTrace
+    )
     private val queue = mutableSetOf<Triple<TraverserState, BasicBlock, ULong>>()
     private var maxScore = 0UL
 //    private val executionTree = ExecutionTree()

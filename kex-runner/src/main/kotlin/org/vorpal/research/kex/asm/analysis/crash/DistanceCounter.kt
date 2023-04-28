@@ -16,6 +16,8 @@ import org.vorpal.research.kthelper.graph.Viewable
 
 
 class MethodDistanceCounter(
+    private val rootMethod: Method,
+    private val targetInstructions: Set<Instruction>,
     private val stackTrace: StackTrace
 ) {
     private val scores = mutableMapOf<Method, MapWithDefault<BasicBlock, ULong>>()
@@ -36,8 +38,11 @@ class MethodDistanceCounter(
     }
 
     private fun Method.targetInstructions(): Set<Instruction> {
-        return this.body.flatten().filterTo(mutableSetOf()) { inst ->
-            stackTrace.stackTraceLines.any { (this to inst.location) eq it }
+        return when (this) {
+            rootMethod -> targetInstructions
+            else -> this.body.flatten().filterTo(mutableSetOf()) { inst ->
+                stackTrace.stackTraceLines.any { (this to inst.location) eq it }
+            }
         }
     }
 
