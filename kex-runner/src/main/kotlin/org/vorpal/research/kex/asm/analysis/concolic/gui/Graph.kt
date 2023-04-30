@@ -14,40 +14,24 @@ class Graph {
     val vertices: List<Vertex>
         get() = nodes.values.toList()
 
-    fun addTrace(symbolicState: PersistentSymbolicState) {
-        var prevVertex: Vertex? = null
+    fun addTrace(symbolicState: PersistentSymbolicState): List<Vertex> {
+        val vertices = mutableListOf<Vertex>()
         for (clause in symbolicState.clauses) {
-            val currentVertex = nodes.getOrPut(clause) { Vertex(vertexId++, clause.predicate.toString()) }
-            prevVertex?.successors?.add(currentVertex)
-            prevVertex = currentVertex
+            val vertex = nodes.getOrPut(clause) { Vertex(vertexId++, clause.predicate.toString()) }
+            vertices.add(vertex)
         }
+        return vertices
     }
 
-    override fun toString() = vertices.joinToString("\n")
+    override fun toString(): String {
+        return "Graph(depth=$depth):\n\t${vertices.joinToString("\n\t")})"
+    }
 }
 
 @Serializable
 data class Vertex(
     val id: Int,
-    val name: String,
-    val successors: MutableSet<Vertex> = mutableSetOf()
+    val name: String
 ) {
-    override fun toString(): String {
-        return "Vertex(id=$id, name='$name', successors=${successors.map { it.toStringSingle() }})"
-    }
-
-    fun toStringSingle() = "Vertex(id=$id, name='$name')"
-
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (javaClass != other?.javaClass) return false
-
-        other as Vertex
-
-        return id == other.id
-    }
-
-    override fun hashCode(): Int {
-        return id
-    }
+    override fun toString() = "Vertex(id=$id, name='$name')"
 }
