@@ -19,9 +19,6 @@ public class CrashTrigger {
             sq = sq.shrink(param);
         } else if (move == Move.CONTAINED) {
             int[] array = new int[param.intValue()];
-            array[0] = 10;
-            array[1] = 9;
-            array[2] = -10;
             sq.contained(array);
         }
     }

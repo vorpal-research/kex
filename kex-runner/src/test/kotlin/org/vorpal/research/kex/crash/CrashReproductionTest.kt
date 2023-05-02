@@ -46,12 +46,17 @@ abstract class CrashReproductionTest(testDirectoryName: String) : KexRunnerTest(
             +ClassInstantiationDetector(analysisContext)
         }
 
-        val crashes = CrashReproductionChecker.run(analysisContext, expectedStackTrace)
-        assertTrue(crashes.isNotEmpty())
-        for (crash in crashes) {
-            val resultingStackTrace = executeTest(crash)
-            assertEquals(expectedStackTrace.throwable, resultingStackTrace.throwable)
-            assertEquals(expectedStackTrace.stackTraceLines, resultingStackTrace.stackTraceLines)
+        for (reproductionAnalysisRunner in listOf(
+            CrashReproductionChecker::runWithDescriptorPreconditions,
+//            CrashReproductionChecker::runWithConstraintPreconditions
+        )) {
+            val crashes = reproductionAnalysisRunner(analysisContext, expectedStackTrace)
+            assertTrue(crashes.isNotEmpty())
+            for (crash in crashes) {
+                val resultingStackTrace = executeTest(crash)
+                assertEquals(expectedStackTrace.throwable, resultingStackTrace.throwable)
+                assertEquals(expectedStackTrace.stackTraceLines, resultingStackTrace.stackTraceLines)
+            }
         }
     }
 

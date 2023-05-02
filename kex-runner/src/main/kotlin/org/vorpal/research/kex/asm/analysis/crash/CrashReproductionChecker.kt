@@ -326,8 +326,8 @@ class CrashReproductionChecker(
                         }
                         result = currentResult.copy(
                             testClasses = filteredTestCases,
-                            descriptors = result.descriptors.filterKeys { it in filteredTestCases },
-                            preconditions = result.preconditions.filterKeys { it in filteredTestCases }
+                            descriptors = currentResult.descriptors.filterKeys { it in filteredTestCases },
+                            preconditions = currentResult.preconditions.filterKeys { it in filteredTestCases }
                         )
                     }
                     result

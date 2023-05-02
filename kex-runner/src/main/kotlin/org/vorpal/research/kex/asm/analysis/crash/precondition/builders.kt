@@ -201,7 +201,6 @@ class DescriptorExceptionPreconditionBuilder(
 
     private fun ConstantDescriptor.asSymbolicState(
         location: Instruction,
-        @Suppress("UNUSED_PARAMETER")
         mapping: MutableMap<Term, Term>
     ) = persistentSymbolicState(
         path = persistentPathConditionOf(
@@ -209,7 +208,10 @@ class DescriptorExceptionPreconditionBuilder(
                 PathClauseType.CONDITION_CHECK,
                 location,
                 path {
-                    (this@asSymbolicState.term eq when (this@asSymbolicState) {
+                    (mapping.getOrDefault(
+                        this@asSymbolicState.term,
+                        this@asSymbolicState.term
+                    ) eq when (this@asSymbolicState) {
                         is ConstantDescriptor.Null -> const(null)
                         is ConstantDescriptor.Bool -> const(this@asSymbolicState.value)
                         is ConstantDescriptor.Byte -> const(this@asSymbolicState.value)
@@ -247,6 +249,13 @@ class DescriptorExceptionPreconditionBuilder(
                 else -> objectTerm
             }
         }
+        current += persistentSymbolicState(
+            path = persistentPathConditionOf(
+                PathClause(PathClauseType.NULL_CHECK, location, path {
+                    (objectTerm eq null) equality false
+                })
+            )
+        )
         for ((field, descriptor) in this.fields) {
             current += descriptor.asSymbolicState(location, mapping)
             current += persistentSymbolicState(
@@ -283,6 +292,13 @@ class DescriptorExceptionPreconditionBuilder(
                 else -> arrayTerm
             }
         }
+        current += persistentSymbolicState(
+            path = persistentPathConditionOf(
+                PathClause(PathClauseType.NULL_CHECK, location, path {
+                    (arrayTerm eq null) equality false
+                })
+            )
+        )
         current += persistentSymbolicState(
             path = persistentPathConditionOf(
                 PathClause(PathClauseType.CONDITION_CHECK, location, path {
