@@ -491,7 +491,7 @@ class ArrayDescriptor(val elementType: KexType, val length: Int) :
         if (this in visited) return this
         visited += this
         for ((_, element) in elements) {
-            element.concretize(cm, accessLevel, random)
+            element.concretize(cm, accessLevel, random, visited)
         }
         return this
     }

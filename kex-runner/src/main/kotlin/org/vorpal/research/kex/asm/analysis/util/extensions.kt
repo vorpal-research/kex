@@ -26,7 +26,6 @@ import org.vorpal.research.kfg.ir.Method
 import org.vorpal.research.kthelper.logging.debug
 import org.vorpal.research.kthelper.logging.log
 import org.vorpal.research.kthelper.logging.warn
-import org.vorpal.research.kthelper.tryOrNull
 
 suspend fun Method.analyzeOrTimeout(
     accessLevel: AccessModifier,
@@ -60,13 +59,16 @@ suspend fun Method.checkAsync(ctx: ExecutionContext, state: SymbolicState): Para
         return null
     }
 
-    return tryOrNull {
+    return try {
         generateInitialDescriptors(this, ctx, result.model, checker.state)
             .concreteParameters(ctx.cm, ctx.accessLevel, ctx.random).also {
                 log.debug { "Generated params:\n$it" }
             }
             .filterStaticFinals(ctx.cm)
             .filterIgnoredStatic()
+    } catch (e: Throwable) {
+        log.error("Error during descriptor generation: ", e)
+        null
     }
 }
 
@@ -87,7 +89,7 @@ suspend fun Method.checkAsyncAndSlice(
         return null
     }
 
-    return tryOrNull {
+    return try {
         val (params, aa) = generateInitialDescriptorsAndAA(this, ctx, result.model, checker.state)
         val filteredParams = params.concreteParameters(ctx.cm, ctx.accessLevel, ctx.random).also {
             log.debug { "Generated params:\n$it" }
@@ -104,5 +106,8 @@ suspend fun Method.checkAsyncAndSlice(
             termParams,
             SymbolicStateSlicer(termParams.asList.toSet(), aa).apply(state)
         )
+    } catch (e: Throwable) {
+        log.error("Error during descriptor generation: ", e)
+        null
     }
 }
