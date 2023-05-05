@@ -13,29 +13,29 @@ import kotlin.time.ExperimentalTime
 @DelicateCoroutinesApi
 class BaseCrashReproductionLongTest : CrashReproductionTest("base-crash-reproduction") {
 
-//    @Test
-//    fun testNullPointerException() {
-//        val expectedStackTrace = produceStackTrace { CrashTrigger().triggerNullPtr() }
-//        assertCrash(expectedStackTrace)
-//    }
-//
-//    @Test
-//    fun testAssertionError() {
-//        val expectedStackTrace = produceStackTrace { CrashTrigger().triggerAssert() }
-//        assertCrash(expectedStackTrace)
-//    }
-//
-//    @Test
-//    fun testArithmeticException() {
-//        val expectedStackTrace = produceStackTrace { CrashTrigger().triggerException() }
-//        assertCrash(expectedStackTrace)
-//    }
-//
-//    @Test
-//    fun testNegativeSizeArrayException() {
-//        val expectedStackTrace = produceStackTrace { CrashTrigger().triggerNegativeArray() }
-//        assertCrash(expectedStackTrace)
-//    }
+    @Test
+    fun testNullPointerException() {
+        val expectedStackTrace = produceStackTrace { CrashTrigger().triggerNullPtr() }
+        assertCrash(expectedStackTrace)
+    }
+
+    @Test
+    fun testAssertionError() {
+        val expectedStackTrace = produceStackTrace { CrashTrigger().triggerAssert() }
+        assertCrash(expectedStackTrace)
+    }
+
+    @Test
+    fun testArithmeticException() {
+        val expectedStackTrace = produceStackTrace { CrashTrigger().triggerException() }
+        assertCrash(expectedStackTrace)
+    }
+
+    @Test
+    fun testNegativeSizeArrayException() {
+        val expectedStackTrace = produceStackTrace { CrashTrigger().triggerNegativeArray() }
+        assertCrash(expectedStackTrace)
+    }
 
     @Test
     fun testArrayIndexOOBException() {

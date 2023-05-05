@@ -58,8 +58,8 @@ public class CrashTrigger {
 
     public void triggerNegativeArray() {
         foo(
-                new UnsignedInteger(2),
-                new UnsignedInteger(2),
+                new UnsignedInteger(-2),
+                new UnsignedInteger(-2),
                 new UnsignedInteger(3),
                 new UnsignedInteger(3),
                 Move.CONTAINED,
