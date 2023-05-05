@@ -26,6 +26,7 @@ class Server(port: Int) {
         scope.launch {
             while (isRunning) {
                 val clientSocket = ClientSocket(serverSocket.accept())
+                clientSocket.send("Handshake")
                 clients.add(clientSocket)
                 launch {
                     try {
