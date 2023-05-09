@@ -9,12 +9,9 @@ import org.vorpal.research.kex.state.predicate.hasReceiver
 import org.vorpal.research.kex.state.predicate.receiver
 import org.vorpal.research.kex.state.term.Term
 import org.vorpal.research.kex.state.term.isNamed
-import org.vorpal.research.kex.trace.symbolic.PathClause
 import org.vorpal.research.kex.trace.symbolic.PersistentSymbolicState
-import org.vorpal.research.kex.trace.symbolic.StateClause
 import org.vorpal.research.kex.trace.symbolic.SymbolicState
-import org.vorpal.research.kex.trace.symbolic.persistentSymbolicState
-import org.vorpal.research.kex.trace.symbolic.plus
+import org.vorpal.research.kex.trace.symbolic.toPersistentState
 
 class CFGTracker : Transformer<CFGTracker> {
     private var currentDominators = setOf<Predicate>()
@@ -223,39 +220,36 @@ class SymbolicStateSlicer(
     }
 
     fun apply(state: SymbolicState): PersistentSymbolicState {
-        var result = persistentSymbolicState()
-        for (clause in state.clauses) {
-            val transformed = transformBase(clause.predicate) ?: continue
-            result = result.copy(
-                clauses = result.clauses + StateClause(clause.instruction, transformed)
-            )
-        }
-        for (clause in state.path) {
-            val transformed = transformBase(clause.predicate) ?: continue
-            result = result.copy(
-                path = result.path + PathClause(clause.type, clause.instruction, transformed)
-            )
-        }
-        return result
+        return state.toPersistentState()
+//        var result = persistentSymbolicState()
+//        for (clause in state.clauses) {
+//            val transformed = transformBase(clause.predicate) ?: continue
+//            result = result.copy(
+//                clauses = result.clauses + StateClause(clause.instruction, transformed)
+//            )
+//        }
+//        for (clause in state.path) {
+//            val transformed = transformBase(clause.predicate) ?: continue
+//            result = result.copy(
+//                path = result.path + PathClause(clause.type, clause.instruction, transformed)
+//            )
+//        }
+//        return result
     }
 
     fun transformBase(predicate: Predicate): Predicate? {
-        val (lhvTerms, rhvTerms) = when (predicate.type) {
-            is PredicateType.Path -> emptySet<Term>() to TermCollector.getFullTermSet(predicate)
-                .filterTo(mutableSetOf(), isInterestingTerm)
-
-            else -> {
-                val receiver = predicate.receiver
-                val lhvTerms = when {
-                    receiver != null -> TermCollector.getFullTermSet(receiver)
-                        .filterTo(mutableSetOf(), isInterestingTerm)
-
-                    else -> setOf()
-                }
-                val rhvTerms = predicate.operands.drop(1).flatMapTo(mutableSetOf()) { TermCollector.getFullTermSet(it) }
-                lhvTerms to rhvTerms
-            }
+        if (predicate.type == PredicateType.Axiom()) {
+            return predicate
         }
+        if (predicate.type == PredicateType.Path()) {
+            return predicate
+        }
+
+        val lhvTerms = when (val receiver = predicate.receiver) {
+            null -> setOf()
+            else -> TermCollector.getFullTermSet(receiver).filterTo(mutableSetOf(), isInterestingTerm)
+        }
+        val rhvTerms = predicate.operands.drop(1).flatMapTo(mutableSetOf()) { TermCollector.getFullTermSet(it) }
 
         val asVar = checkVars(lhvTerms, rhvTerms)
         val asPtr = checkPtrs(predicate, lhvTerms, rhvTerms)

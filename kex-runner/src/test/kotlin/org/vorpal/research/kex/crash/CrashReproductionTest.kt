@@ -27,7 +27,10 @@ import kotlin.time.ExperimentalTime
 @ExperimentalSerializationApi
 @InternalSerializationApi
 @DelicateCoroutinesApi
-abstract class CrashReproductionTest(testDirectoryName: String) : KexRunnerTest(testDirectoryName) {
+abstract class CrashReproductionTest(
+    testDirectoryName: String,
+    private val runnerCmd: (ExecutionContext, StackTrace) -> Set<String>
+) : KexRunnerTest(testDirectoryName) {
     companion object {
         private const val DEPTH = 3
         private const val SETUP_METHOD = "setup"
@@ -46,17 +49,12 @@ abstract class CrashReproductionTest(testDirectoryName: String) : KexRunnerTest(
             +ClassInstantiationDetector(analysisContext)
         }
 
-        for (reproductionAnalysisRunner in listOf(
-            CrashReproductionChecker::runWithDescriptorPreconditions,
-//            CrashReproductionChecker::runWithConstraintPreconditions
-        )) {
-            val crashes = reproductionAnalysisRunner(analysisContext, expectedStackTrace)
-            assertTrue(crashes.isNotEmpty())
-            for (crash in crashes) {
-                val resultingStackTrace = executeTest(crash)
-                assertEquals(expectedStackTrace.throwable, resultingStackTrace.throwable)
-                assertEquals(expectedStackTrace.stackTraceLines, resultingStackTrace.stackTraceLines)
-            }
+        val crashes = runnerCmd(analysisContext, expectedStackTrace)
+        assertTrue(crashes.isNotEmpty())
+        for (crash in crashes) {
+            val resultingStackTrace = executeTest(crash)
+            assertEquals(expectedStackTrace.throwable, resultingStackTrace.throwable)
+            assertEquals(expectedStackTrace.stackTraceLines, resultingStackTrace.stackTraceLines)
         }
     }
 
