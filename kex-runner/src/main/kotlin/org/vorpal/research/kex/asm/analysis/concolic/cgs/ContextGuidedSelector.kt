@@ -21,7 +21,6 @@ import org.vorpal.research.kex.trace.symbolic.PathClauseType
 import org.vorpal.research.kex.trace.symbolic.PersistentPathCondition
 import org.vorpal.research.kex.trace.symbolic.PersistentSymbolicState
 import org.vorpal.research.kex.trace.symbolic.persistentSymbolicState
-import org.vorpal.research.kex.trace.symbolic.plus
 import org.vorpal.research.kex.trace.symbolic.protocol.ExecutionCompletedResult
 import org.vorpal.research.kex.trace.symbolic.toPersistentState
 import org.vorpal.research.kex.util.nextOrNull

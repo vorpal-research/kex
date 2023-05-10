@@ -96,7 +96,7 @@ class SymbolicTraceBuilder(
     /**
      * required fields
      */
-    override val clauses: ClauseState
+    override val clauses: ClauseList
         get() = stateBuilder.toClauseState()
     override val path: PathCondition
         get() = pathBuilder.toPathCondition()
@@ -165,6 +165,10 @@ class SymbolicTraceBuilder(
     private val traceCollectingEnabled get() = callStack.isEmpty()
 
     override fun plus(other: SymbolicState): SymbolicState = symbolicState + other
+    override fun plus(other: StateClause): SymbolicState = symbolicState + other
+    override fun plus(other: PathClause): SymbolicState = symbolicState + other
+    override fun plus(other: ClauseList): SymbolicState = symbolicState + other
+    override fun plus(other: PathCondition): SymbolicState = symbolicState + other
 
     private data class CallFrame(val call: CallInst, val next: Instruction)
 

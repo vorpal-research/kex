@@ -338,11 +338,29 @@ class ConstraintExceptionPreconditionBuilder(
             ?: unreachable { log.error("Descriptor precondition is not valid for non-call instructions") }
 
         return parameterSet.mapTo(mutableSetOf()) { (parameters, precondition) ->
+            var typePrecondition = persistentSymbolicState()
+
             val mapping = buildMap {
-                if (!callInst.isStatic)
-                    this[parameters.instance!!] = state.mkTerm(callInst.callee)
+                val buildMapping = { original: Term, mapped: Term ->
+                    if (original.type == mapped.type) {
+                        this[original] = mapped
+                    } else {
+                        val casted = term { generate(original.type) }
+                        typePrecondition += PathClause(
+                            PathClauseType.TYPE_CHECK,
+                            location,
+                            state { (mapped `is` original.type) equality true }
+                        )
+                        typePrecondition += StateClause(location, state { casted equality (mapped `as` original.type) })
+                        this[original] = casted
+                    }
+                }
+
+                if (!callInst.isStatic) {
+                    buildMapping(parameters.instance!!, state.mkTerm(callInst.callee))
+                }
                 for ((argValue, argDescriptor) in callInst.args.zip(parameters.arguments)) {
-                    this[argDescriptor] = state.mkTerm(argValue)
+                    buildMapping(argDescriptor, state.mkTerm(argValue))
                 }
             }
 

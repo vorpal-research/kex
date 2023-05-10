@@ -10,12 +10,11 @@ import org.vorpal.research.kex.state.term.ConstBoolTerm
 import org.vorpal.research.kex.state.term.ConstIntTerm
 import org.vorpal.research.kex.state.term.NullTerm
 import org.vorpal.research.kex.trace.symbolic.PathClause
-import org.vorpal.research.kex.trace.symbolic.PersistentClauseState
+import org.vorpal.research.kex.trace.symbolic.PersistentClauseList
 import org.vorpal.research.kex.trace.symbolic.PersistentPathCondition
 import org.vorpal.research.kex.trace.symbolic.PersistentSymbolicState
 import org.vorpal.research.kex.trace.symbolic.persistentSymbolicState
 import org.vorpal.research.kex.trace.symbolic.toPersistentState
-import org.vorpal.research.kex.trace.symbolic.plus
 import org.vorpal.research.kex.trace.symbolic.protocol.ExecutionCompletedResult
 import org.vorpal.research.kfg.ir.Method
 import org.vorpal.research.kfg.ir.value.IntConstant
@@ -47,7 +46,7 @@ class BfsPathSelectorImpl(
     override suspend fun next(): PersistentSymbolicState = deque.pollFirst()
 
     private fun addCandidates(state: PersistentSymbolicState) {
-        var currentState = PersistentClauseState()
+        var currentState = PersistentClauseList()
         var currentPath = PersistentPathCondition()
 
         for (clause in state.clauses) {

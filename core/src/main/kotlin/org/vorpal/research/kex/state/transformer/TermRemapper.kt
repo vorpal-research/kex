@@ -11,7 +11,6 @@ import org.vorpal.research.kex.trace.symbolic.PersistentSymbolicState
 import org.vorpal.research.kex.trace.symbolic.StateClause
 import org.vorpal.research.kex.trace.symbolic.SymbolicState
 import org.vorpal.research.kex.trace.symbolic.persistentSymbolicState
-import org.vorpal.research.kex.trace.symbolic.plus
 
 class TermRemapper(
     private val mapping: Map<Term, Term>

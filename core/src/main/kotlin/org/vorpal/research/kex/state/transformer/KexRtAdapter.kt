@@ -17,7 +17,11 @@ fun FieldTerm.unmappedKfgField(cm: ClassManager): Field {
     val kfgKlass = cm[this.klass]
     return  when {
         kfgKlass.isKexRt -> kfgKlass.getField(fieldName, type.getKfgType(cm.type))
-        else -> kfgKlass.getField(fieldName, type.rtUnmapped.getKfgType(cm.type))
+        else -> try {
+            kfgKlass.getField(fieldName, type.rtUnmapped.getKfgType(cm.type))
+        } catch (e: Throwable) {
+            TODO()
+        }
     }
 }
 

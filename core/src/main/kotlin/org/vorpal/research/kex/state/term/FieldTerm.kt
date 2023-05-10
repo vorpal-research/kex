@@ -14,6 +14,10 @@ import org.vorpal.research.kthelper.logging.log
 class FieldTerm(override val type: KexType, val owner: Term, val fieldName: String) : Term() {
     init {
         ktassert(owner.type is KexClass)
+
+        if ("$owner.$fieldName" == "this.gamma" && owner.type.toString() != "org/apache/commons/math/optimization/direct/MultiDirectional") {
+            val a = 10
+        }
     }
 
     override val name = "$owner.$fieldName"
