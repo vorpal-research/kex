@@ -26,15 +26,12 @@ import org.vorpal.research.kex.reanimator.codegen.klassName
 import org.vorpal.research.kex.state.predicate.state
 import org.vorpal.research.kex.trace.symbolic.StateClause
 import org.vorpal.research.kex.trace.symbolic.SymbolicState
-import org.vorpal.research.kex.util.arrayIndexOOBClass
 import org.vorpal.research.kex.util.asmString
-import org.vorpal.research.kex.util.classCastClass
-import org.vorpal.research.kex.util.negativeArrayClass
 import org.vorpal.research.kex.util.newFixedThreadPoolContextWithMDC
-import org.vorpal.research.kex.util.nullptrClass
-import org.vorpal.research.kex.util.runtimeException
 import org.vorpal.research.kex.util.testcaseDirectory
 import org.vorpal.research.kfg.ClassManager
+import org.vorpal.research.kfg.arrayIndexOOBClass
+import org.vorpal.research.kfg.classCastClass
 import org.vorpal.research.kfg.ir.Class
 import org.vorpal.research.kfg.ir.Method
 import org.vorpal.research.kfg.ir.value.ThisRef
@@ -48,6 +45,9 @@ import org.vorpal.research.kfg.ir.value.instruction.Instruction
 import org.vorpal.research.kfg.ir.value.instruction.NewArrayInst
 import org.vorpal.research.kfg.ir.value.instruction.NewInst
 import org.vorpal.research.kfg.ir.value.instruction.ThrowInst
+import org.vorpal.research.kfg.negativeArrayClass
+import org.vorpal.research.kfg.nullptrClass
+import org.vorpal.research.kfg.runtimeException
 import org.vorpal.research.kthelper.assert.ktassert
 import org.vorpal.research.kthelper.logging.log
 import kotlin.io.path.ExperimentalPathApi

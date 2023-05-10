@@ -219,7 +219,7 @@ class SymbolicTraceBuilder(
     private fun safeCall(body: () -> Unit) = `try` {
         body()
     }.getOrThrow {
-        SymbolicTraceException("", this)
+        SymbolicTraceException("", it)
     }
 
     private fun addToCallTrace(call: CallInst) {

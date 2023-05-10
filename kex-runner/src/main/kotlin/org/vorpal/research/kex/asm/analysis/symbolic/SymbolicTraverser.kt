@@ -38,11 +38,9 @@ import org.vorpal.research.kex.trace.symbolic.StateClause
 import org.vorpal.research.kex.trace.symbolic.SymbolicState
 import org.vorpal.research.kex.trace.symbolic.persistentPathConditionOf
 import org.vorpal.research.kex.trace.symbolic.persistentSymbolicState
-import org.vorpal.research.kex.util.arrayIndexOOBClass
-import org.vorpal.research.kex.util.classCastClass
-import org.vorpal.research.kex.util.negativeArrayClass
-import org.vorpal.research.kex.util.nullptrClass
 import org.vorpal.research.kfg.ClassManager
+import org.vorpal.research.kfg.arrayIndexOOBClass
+import org.vorpal.research.kfg.classCastClass
 import org.vorpal.research.kfg.ir.BasicBlock
 import org.vorpal.research.kfg.ir.Method
 import org.vorpal.research.kfg.ir.value.Constant
@@ -76,6 +74,8 @@ import org.vorpal.research.kfg.ir.value.instruction.UnaryInst
 import org.vorpal.research.kfg.ir.value.instruction.UnaryOpcode
 import org.vorpal.research.kfg.ir.value.instruction.UnknownValueInst
 import org.vorpal.research.kfg.ir.value.instruction.UnreachableInst
+import org.vorpal.research.kfg.negativeArrayClass
+import org.vorpal.research.kfg.nullptrClass
 import org.vorpal.research.kfg.type.Type
 import org.vorpal.research.kfg.type.TypeFactory
 import org.vorpal.research.kthelper.assert.unreachable

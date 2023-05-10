@@ -12,16 +12,16 @@ import org.vorpal.research.kex.trace.symbolic.StateClause
 import org.vorpal.research.kex.trace.symbolic.persistentClauseStateOf
 import org.vorpal.research.kex.trace.symbolic.persistentPathConditionOf
 import org.vorpal.research.kex.trace.symbolic.persistentSymbolicState
-import org.vorpal.research.kex.util.illegalArgumentClass
-import org.vorpal.research.kex.util.numberFormatClass
-import org.vorpal.research.kex.util.stringIndexOOB
 import org.vorpal.research.kfg.charWrapper
+import org.vorpal.research.kfg.illegalArgumentClass
 import org.vorpal.research.kfg.intWrapper
 import org.vorpal.research.kfg.ir.Class
 import org.vorpal.research.kfg.ir.Method
 import org.vorpal.research.kfg.ir.value.instruction.CallInst
 import org.vorpal.research.kfg.ir.value.instruction.Instruction
+import org.vorpal.research.kfg.numberFormatClass
 import org.vorpal.research.kfg.stringClass
+import org.vorpal.research.kfg.stringIndexOOB
 import org.vorpal.research.kfg.type.SystemTypeNames
 
 

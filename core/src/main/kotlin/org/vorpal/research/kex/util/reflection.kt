@@ -1,4 +1,4 @@
-@file:Suppress("unused")
+@file:Suppress("unused", "DEPRECATION")
 
 package org.vorpal.research.kex.util
 
@@ -203,7 +203,7 @@ fun Class<*>.getMethod(method: Method, loader: ClassLoader): java.lang.reflect.M
     return `try` {
         this.getDeclaredMethod(method.name, *argumentTypes)
     }.getOrThrow {
-        ClassNotFoundException("Could not load method $method", this)
+        ClassNotFoundException("Could not load method $method", it)
     }
 }
 
@@ -212,7 +212,7 @@ fun Class<*>.getMethod(loader: ClassLoader, name: String, desc: String): java.la
     return `try` {
         this.getDeclaredMethod(name, *argumentTypes.toTypedArray())
     }.getOrThrow {
-        ClassNotFoundException("Could not load method $name", this)
+        ClassNotFoundException("Could not load method $name", it)
     }
 }
 
@@ -221,7 +221,7 @@ fun Class<*>.getMethod(loader: ClassLoader, name: String, vararg types: Type): j
     return `try` {
         this.getDeclaredMethod(name, *argumentTypes)
     }.getOrThrow {
-        ClassNotFoundException("Could not load method $name", this)
+        ClassNotFoundException("Could not load method $name", it)
     }
 }
 
@@ -231,7 +231,7 @@ fun Class<*>.getConstructor(method: Method, loader: ClassLoader): Constructor<*>
     return `try` {
         this.getDeclaredConstructor(*argumentTypes)
     }.getOrThrow {
-        ClassNotFoundException("Could not load constructor $method", this)
+        ClassNotFoundException("Could not load constructor $method", it)
     }
 }
 
@@ -240,7 +240,7 @@ fun Class<*>.getConstructor(loader: ClassLoader, vararg types: Type): Constructo
     return `try` {
         this.getDeclaredConstructor(*argumentTypes)
     }.getOrThrow {
-        ClassNotFoundException("Could not load constructor", this)
+        ClassNotFoundException("Could not load constructor", it)
     }
 }
 

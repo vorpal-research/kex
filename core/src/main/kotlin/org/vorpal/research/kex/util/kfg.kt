@@ -4,7 +4,6 @@ package org.vorpal.research.kex.util
 
 import org.vorpal.research.kex.ktype.KexType
 import org.vorpal.research.kex.ktype.kexType
-import org.vorpal.research.kfg.ClassManager
 import org.vorpal.research.kfg.Package
 import org.vorpal.research.kfg.ir.Class
 import org.vorpal.research.kfg.ir.value.NameMapper
@@ -127,43 +126,5 @@ fun TypeFactory.getPrimitive(type: Type): Type = when (type) {
     else -> unreachable("Unknown primary type $type")
 }
 
-val SystemTypeNames.abstractCollectionClass: String get() = "java/util/AbstractCollection"
-val SystemTypeNames.abstractListClass: String get() = "java/util/AbstractList"
-val SystemTypeNames.abstractQueueClass: String get() = "java/util/AbstractQueue"
-val SystemTypeNames.abstractSetClass: String get() = "java/util/AbstractSet"
-val SystemTypeNames.abstractMapClass: String get() = "java/util/AbstractMap"
-
-val SystemTypeNames.abstractStringBuilderClass: String get() = "java/lang/AbstractStringBuilder"
-val SystemTypeNames.numberClass: String get() = "java/lang/Number"
-
-val SystemTypeNames.atomicBooleanClass: String get() = "java/util/concurrent/atomic/AtomicBoolean"
-val SystemTypeNames.atomicIntegerClass: String get() = "java/util/concurrent/atomic/AtomicInteger"
-val SystemTypeNames.atomicIntegerArrayClass: String get() = "java/util/concurrent/atomic/AtomicIntegerArray"
-val SystemTypeNames.atomicLongClass: String get() = "java/util/concurrent/atomic/AtomicLong"
-val SystemTypeNames.atomicLongArrayClass: String get() = "java/util/concurrent/atomic/AtomicLongArray"
-val SystemTypeNames.atomicReferenceClass: String get() = "java/util/concurrent/atomic/AtomicReference"
-val SystemTypeNames.atomicReferenceArrayClass: String get() = "java/util/concurrent/atomic/AtomicReferenceArray"
-val SystemTypeNames.atomicStampedReferenceClass: String get() = "java/util/concurrent/atomic/AtomicStampedReference"
-
-val ClassManager.abstractCollectionClass get() = this[SystemTypeNames.abstractCollectionClass]
-val ClassManager.abstractListClass get() = this[SystemTypeNames.abstractListClass]
-val ClassManager.abstractQueueClass get() = this[SystemTypeNames.abstractQueueClass]
-val ClassManager.abstractSetClass get() = this[SystemTypeNames.abstractSetClass]
-val ClassManager.abstractMapClass get() = this[SystemTypeNames.abstractMapClass]
-
-
 val String.asmString get() = replace(Package.CANONICAL_SEPARATOR, Package.SEPARATOR)
 val String.javaString get() = replace(Package.SEPARATOR, Package.CANONICAL_SEPARATOR)
-
-
-
-val ClassManager.nullptrClass get() = this["java/lang/NullPointerException"]
-val ClassManager.arrayIndexOOBClass get() = this["java/lang/ArrayIndexOutOfBoundsException"]
-val ClassManager.negativeArrayClass get() = this["java/lang/NegativeArraySizeException"]
-val ClassManager.classCastClass get() = this["java/lang/ClassCastException"]
-val ClassManager.stringIndexOOB get() = this["java/lang/StringIndexOutOfBoundsException"]
-
-val ClassManager.numberFormatClass get() = this["java/lang/NumberFormatException"]
-val ClassManager.illegalArgumentClass get() = this["java/lang/IllegalArgumentException"]
-
-val ClassManager.runtimeException get() = this["java/lang/RuntimeException"]

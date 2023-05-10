@@ -98,7 +98,7 @@ class Reanimator(
             cs
         }.getOrThrow {
             DescriptorStatistics.addFailure(this@actionSequence)
-            this
+            it
         }
 
     val Parameters<Descriptor>.actionSequences: Parameters<ActionSequence>

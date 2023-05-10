@@ -80,7 +80,7 @@ val KClass<*>.allFunctions
                 declaredMemberExtensionProperties.filterIsInstance<KMutableProperty<*>>().map { it.setter } +
                 staticProperties.map { it.getter } +
                 staticProperties.filterIsInstance<KMutableProperty<*>>().map { it.setter }
-    }.getOrElse(::listOf)
+    }.getOrElse { emptyList() }
 
 fun KClass<*>.find(method: Method) = allFunctions.find { it eq method }
 
@@ -94,7 +94,7 @@ fun KClass<*>.getKFunction(method: Method): KFunction<*>? {
         val klass = queue.poll()
         when (val kFunction = klass.find(method)) {
             null -> {
-                val supertypes = `try` { klass.supertypes }.getOrElse(::listOf)
+                val supertypes = `try` { klass.supertypes }.getOrElse { emptyList() }
                 queue.addAll(supertypes.map { it.classifier }.filterIsInstance<KClass<*>>())
             }
             else -> return kFunction

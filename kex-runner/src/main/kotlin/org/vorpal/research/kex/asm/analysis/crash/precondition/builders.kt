@@ -20,11 +20,9 @@ import org.vorpal.research.kex.trace.symbolic.StateClause
 import org.vorpal.research.kex.trace.symbolic.persistentClauseStateOf
 import org.vorpal.research.kex.trace.symbolic.persistentPathConditionOf
 import org.vorpal.research.kex.trace.symbolic.persistentSymbolicState
-import org.vorpal.research.kex.util.arrayIndexOOBClass
 import org.vorpal.research.kex.util.asSet
-import org.vorpal.research.kex.util.classCastClass
-import org.vorpal.research.kex.util.negativeArrayClass
-import org.vorpal.research.kex.util.nullptrClass
+import org.vorpal.research.kfg.arrayIndexOOBClass
+import org.vorpal.research.kfg.classCastClass
 import org.vorpal.research.kfg.ir.Class
 import org.vorpal.research.kfg.ir.value.instruction.Instruction
 import org.vorpal.research.kfg.ir.value.instruction.ArrayLoadInst
@@ -36,6 +34,8 @@ import org.vorpal.research.kfg.ir.value.instruction.FieldStoreInst
 import org.vorpal.research.kfg.ir.value.instruction.NewArrayInst
 import org.vorpal.research.kfg.ir.value.instruction.NewInst
 import org.vorpal.research.kfg.ir.value.instruction.ThrowInst
+import org.vorpal.research.kfg.negativeArrayClass
+import org.vorpal.research.kfg.nullptrClass
 import org.vorpal.research.kthelper.assert.unreachable
 import org.vorpal.research.kthelper.logging.log
 
