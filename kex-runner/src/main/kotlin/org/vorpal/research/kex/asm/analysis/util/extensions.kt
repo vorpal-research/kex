@@ -16,7 +16,7 @@ import org.vorpal.research.kex.parameters.filterStaticFinals
 import org.vorpal.research.kex.smt.AsyncChecker
 import org.vorpal.research.kex.smt.Result
 import org.vorpal.research.kex.state.term.term
-import org.vorpal.research.kex.state.transformer.SymbolicStateSlicer
+import org.vorpal.research.kex.state.transformer.SymbolicStateForwardSlicer
 import org.vorpal.research.kex.state.transformer.collectArguments
 import org.vorpal.research.kex.state.transformer.generateInitialDescriptors
 import org.vorpal.research.kex.state.transformer.generateInitialDescriptorsAndAA
@@ -104,7 +104,7 @@ suspend fun Method.checkAsyncAndSlice(
 
         filteredParams to ConstraintExceptionPrecondition(
             termParams,
-            SymbolicStateSlicer(termParams.asList.toSet(), aa).apply(state)
+            SymbolicStateForwardSlicer(termParams.asList.toSet(), aa).apply(state)
         )
     } catch (e: Throwable) {
         log.error("Error during descriptor generation: ", e)

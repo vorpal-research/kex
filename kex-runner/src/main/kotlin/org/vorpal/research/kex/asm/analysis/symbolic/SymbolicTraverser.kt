@@ -556,7 +556,13 @@ abstract class SymbolicTraverser(
 
     protected open suspend fun traverseInvokeDynamicInst(inst: InvokeDynamicInst) {
         val traverserState = currentState ?: return
-        currentState = invokeDynamicResolver.resolve(traverserState, inst) ?: return
+        currentState = when (invokeDynamicResolver.resolve(traverserState, inst)) {
+            null -> traverserState.copy(
+                valueMap = traverserState.valueMap.put(inst, generate(inst.type.kexType))
+            )
+
+            else -> invokeDynamicResolver.resolve(traverserState, inst)
+        }
     }
 
     protected open suspend fun processMethodCall(
