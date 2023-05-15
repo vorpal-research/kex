@@ -11,7 +11,7 @@ import kotlinx.serialization.InternalSerializationApi
 import org.vorpal.research.kex.ExecutionContext
 import org.vorpal.research.kex.asm.analysis.concolic.bfs.BfsPathSelectorImpl
 import org.vorpal.research.kex.asm.analysis.concolic.cgs.ContextGuidedSelector
-import org.vorpal.research.kex.asm.analysis.concolic.gui.GraphServerProxySelector
+import org.vorpal.research.kex.asm.analysis.concolic.gui.GUIProxySelector
 import org.vorpal.research.kex.asm.analysis.util.analyzeOrTimeout
 import org.vorpal.research.kex.asm.analysis.util.checkAsync
 import org.vorpal.research.kex.compile.CompilerHelper
@@ -118,8 +118,8 @@ class InstructionConcolicChecker(
     private fun buildPathSelector() = when (searchStrategy) {
         "bfs" -> BfsPathSelectorImpl(ctx)
         "cgs" -> ContextGuidedSelector(ctx)
-        "bfs-gui" -> GraphServerProxySelector(BfsPathSelectorImpl(ctx))
-        "cgs-gui" -> GraphServerProxySelector(ContextGuidedSelector(ctx))
+        "bfs-gui" -> GUIProxySelector(BfsPathSelectorImpl(ctx))
+        "cgs-gui" -> GUIProxySelector(ContextGuidedSelector(ctx))
         else -> unreachable { log.error("Unknown type of search strategy $searchStrategy") }
     }
 

@@ -8,20 +8,25 @@ import java.net.Socket
 
 class ClientSocket(private val socket: Socket) {
 
-    private val input = BufferedReader(InputStreamReader(socket.getInputStream()))
-    private val output = PrintWriter(socket.getOutputStream(), true)
+    private val reader = BufferedReader(InputStreamReader(socket.getInputStream()))
+    private val writer = PrintWriter(socket.getOutputStream(), true)
 
-    fun send(message: String) {
-        output.println(message)
+    fun send(message: String): Boolean = try {
+        writer.println(message)
+        true
+    } catch (_: Exception) {
+        false
     }
 
-    fun receive() {
-        input.readLine()
+    fun receive(): String? = try {
+        reader.readLine()
+    } catch (_: Exception) {
+        null
     }
 
     fun close() {
-        input.close()
-        output.close()
+        reader.close()
+        writer.close()
         socket.close()
     }
 }

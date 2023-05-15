@@ -6,6 +6,7 @@ import kotlinx.coroutines.launch
 import org.vorpal.research.kthelper.logging.log
 import java.net.ServerSocket
 
+@Deprecated("Multiple clients support is redundant")
 class Server(port: Int) {
 
     private val scope = CoroutineScope(Dispatchers.IO)
