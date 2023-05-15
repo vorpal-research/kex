@@ -27,8 +27,8 @@ class GraphServerProxySelector(private val concolicPathSelector: ConcolicPathSel
 
     override suspend fun addExecutionTrace(method: Method, result: ExecutionCompletedResult) {
         val vertices = graph.addTrace(result.trace.toPersistentState())
-        concolicPathSelector.addExecutionTrace(method, result)
         server.broadcast(Json.encodeToString(vertices))
+        concolicPathSelector.addExecutionTrace(method, result)
     }
 
     override suspend fun hasNext(): Boolean = concolicPathSelector.hasNext()
