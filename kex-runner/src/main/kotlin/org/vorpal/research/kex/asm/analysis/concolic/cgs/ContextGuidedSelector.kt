@@ -117,6 +117,8 @@ class ContextGuidedSelector(
         executionTree.addTrace(result.trace.toPersistentState())
     }
 
+    override fun reverse(pathClause: PathClause): PathClause? = pathClause.reversed()
+
     private fun PathClause.reversed(): PathClause? = when (type) {
         PathClauseType.NULL_CHECK -> copy(predicate = predicate.reverseBoolCond())
         PathClauseType.TYPE_CHECK -> copy(predicate = predicate.reverseBoolCond())

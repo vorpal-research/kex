@@ -45,6 +45,8 @@ class BfsPathSelectorImpl(
 
     override suspend fun next(): PersistentSymbolicState = deque.pollFirst()
 
+    override fun reverse(pathClause: PathClause): PathClause? = pathClause.reversed()
+
     private fun addCandidates(state: PersistentSymbolicState) {
         var currentState = PersistentClauseList()
         var currentPath = PersistentPathCondition()

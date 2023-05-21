@@ -4,6 +4,7 @@ import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import org.vorpal.research.kex.asm.analysis.concolic.ConcolicPathSelector
 import org.vorpal.research.kex.asm.analysis.concolic.gui.server.ClientSocket
+import org.vorpal.research.kex.trace.symbolic.PathClause
 import org.vorpal.research.kex.trace.symbolic.PersistentSymbolicState
 import org.vorpal.research.kex.trace.symbolic.protocol.ExecutionCompletedResult
 import org.vorpal.research.kex.trace.symbolic.toPersistentState
@@ -39,9 +40,11 @@ class GUIProxySelector(private val concolicPathSelector: ConcolicPathSelector) :
         concolicPathSelector.addExecutionTrace(method, result)
     }
 
+    override suspend fun next(): PersistentSymbolicState = concolicPathSelector.next()
+
     override suspend fun hasNext(): Boolean = concolicPathSelector.hasNext()
 
-    override suspend fun next(): PersistentSymbolicState = concolicPathSelector.next()
+    override fun reverse(pathClause: PathClause): PathClause? = concolicPathSelector.reverse(pathClause)
 
     private fun logDebugGUI(s: String) {
         log.debug("[GUI] $s")
