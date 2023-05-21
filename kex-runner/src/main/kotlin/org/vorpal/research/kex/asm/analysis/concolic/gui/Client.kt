@@ -1,4 +1,4 @@
-package org.vorpal.research.kex.asm.analysis.concolic.gui.server
+package org.vorpal.research.kex.asm.analysis.concolic.gui
 
 import java.io.BufferedReader
 import java.io.InputStreamReader
@@ -6,7 +6,7 @@ import java.io.PrintWriter
 import java.net.Socket
 
 
-class ClientSocket(private val socket: Socket) {
+class Client(private val socket: Socket) {
 
     private val reader = BufferedReader(InputStreamReader(socket.getInputStream()))
     private val writer = PrintWriter(socket.getOutputStream(), true)

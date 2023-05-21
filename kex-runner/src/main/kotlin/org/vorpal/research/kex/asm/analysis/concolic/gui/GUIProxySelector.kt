@@ -3,7 +3,6 @@ package org.vorpal.research.kex.asm.analysis.concolic.gui
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import org.vorpal.research.kex.asm.analysis.concolic.ConcolicPathSelector
-import org.vorpal.research.kex.asm.analysis.concolic.gui.server.ClientSocket
 import org.vorpal.research.kex.trace.symbolic.PathClause
 import org.vorpal.research.kex.trace.symbolic.PersistentSymbolicState
 import org.vorpal.research.kex.trace.symbolic.protocol.ExecutionCompletedResult
@@ -19,12 +18,12 @@ class GUIProxySelector(private val concolicPathSelector: ConcolicPathSelector) :
     private companion object {
         val server = ServerSocket(8080)
         // TODO: server.soTimeout = ? (+ create Server wrapper)
-        val clientSocket = ClientSocket(server.accept())
+        val client = Client(server.accept())
     }
 
     init {
         logDebugGUI("Init")
-        clientSocket.send("INIT")
+        client.send("INIT")
     }
 
     private val graph = Graph()
@@ -36,7 +35,7 @@ class GUIProxySelector(private val concolicPathSelector: ConcolicPathSelector) :
         val json = Json.encodeToString(vertices)
         logDebugGUI("Vertices trace: $json")
         logDebugGUI("$graph")
-        clientSocket.send(json)
+        client.send(json)
         concolicPathSelector.addExecutionTrace(method, result)
     }
 
