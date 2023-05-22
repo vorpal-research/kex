@@ -1,10 +1,12 @@
 package org.vorpal.research.kex.asm.analysis.concolic.gui
 
+import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import org.vorpal.research.kex.asm.analysis.concolic.ConcolicPathSelector
 import org.vorpal.research.kex.trace.symbolic.PathClause
 import org.vorpal.research.kex.trace.symbolic.PersistentSymbolicState
+import org.vorpal.research.kex.trace.symbolic.persistentSymbolicState
 import org.vorpal.research.kex.trace.symbolic.protocol.ExecutionCompletedResult
 import org.vorpal.research.kex.trace.symbolic.toPersistentState
 import org.vorpal.research.kfg.ir.Method
@@ -17,7 +19,7 @@ class GUIProxySelector(private val concolicPathSelector: ConcolicPathSelector) :
 
     private companion object {
         val server = ServerSocket(8080)
-        // TODO: server.soTimeout = ? (+ create Server wrapper)
+        // TODO: server.soTimeout = ? (+ create Server wrapper); move client to instance level?
         val client = Client(server.accept())
     }
 
@@ -39,7 +41,36 @@ class GUIProxySelector(private val concolicPathSelector: ConcolicPathSelector) :
         concolicPathSelector.addExecutionTrace(method, result)
     }
 
-    override suspend fun next(): PersistentSymbolicState = concolicPathSelector.next()
+    override suspend fun next(): PersistentSymbolicState {
+        logDebugGUI("Waiting for client decision")
+        val received = client.receive()
+
+        if (received == null || received == "NEXT") {
+            logDebugGUI("Client sent 'NEXT' or closed its connection")
+            return concolicPathSelector.next()
+        }
+
+        val vertex: Vertex = Json.decodeFromString(received)
+        logDebugGUI("Received vertex: $vertex")
+
+        return interactiveNext(vertex) ?: concolicPathSelector.next()
+    }
+
+    private fun interactiveNext(vertex: Vertex): PersistentSymbolicState? {
+        val pathClause = graph.findClauseByVertex(vertex) as? PathClause ?: return null
+        val state = graph.findStateByPathClause(pathClause) ?: return null
+
+        val revertedClause = reverse(pathClause) ?: return null
+        val clauses = state.clauses.subState(0, state.clauses.indexOf(pathClause))
+        val path = state.path.subPath(0, state.path.indexOf(pathClause))
+
+        return persistentSymbolicState(
+            clauses,
+            path + revertedClause,
+            state.concreteValueMap,
+            state.termMap
+        )
+    }
 
     override suspend fun hasNext(): Boolean = concolicPathSelector.hasNext()
 
