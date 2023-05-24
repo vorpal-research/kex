@@ -12,20 +12,28 @@ import org.vorpal.research.kex.trace.symbolic.toPersistentState
 import org.vorpal.research.kfg.ir.Method
 import org.vorpal.research.kthelper.logging.log
 import java.net.ServerSocket
+import kotlin.system.exitProcess
 
 class GUIProxySelector(private val concolicPathSelector: ConcolicPathSelector) : ConcolicPathSelector {
 
     override val ctx = concolicPathSelector.ctx
 
     private companion object {
-        val server = ServerSocket(8080)
-        // TODO: server.soTimeout = ? (+ create Server wrapper); move client to instance level?
-        val client = Client(server.accept())
+        const val guiLogPrefix = "[GUI]"
+        val server = ServerSocket(8080).apply {
+            soTimeout = 20000
+        }
     }
 
-    init {
-        logDebugGUI("Init")
-        client.send("INIT")
+    private val client = try {
+        logDebugGUI("Waiting for client connection")
+        Client(server.accept()).apply {
+            send("INIT")
+            logDebugGUI("Client is connected")
+        }
+    } catch (_: Exception) {
+        logErrorGUI("Connection timeout has expired")
+        exitProcess(1)
     }
 
     private val graph = Graph()
@@ -72,11 +80,21 @@ class GUIProxySelector(private val concolicPathSelector: ConcolicPathSelector) :
         )
     }
 
-    override suspend fun hasNext(): Boolean = concolicPathSelector.hasNext()
+    override suspend fun hasNext(): Boolean = concolicPathSelector.hasNext().also {
+        if (!it) {
+            logDebugGUI("Closing client connection...")
+            client.close()
+            logDebugGUI("Client connection is closed")
+        }
+    }
 
     override fun reverse(pathClause: PathClause): PathClause? = concolicPathSelector.reverse(pathClause)
 
     private fun logDebugGUI(s: String) {
-        log.debug("[GUI] $s")
+        log.debug("$guiLogPrefix $s")
+    }
+
+    private fun logErrorGUI(s: String) {
+        log.error("$guiLogPrefix $s")
     }
 }
