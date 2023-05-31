@@ -12,7 +12,7 @@
     <artifactId>kex-ksmt</artifactId>
 
     <properties>
-        <ksmt.version>0.5.0</ksmt.version>
+        <ksmt.version>0.5.3</ksmt.version>
     </properties>
 
     <dependencies>
@@ -48,32 +48,32 @@
         </dependency>
 
         <dependency>
-            <groupId>com.github.UnitTestBot.ksmt</groupId>
+            <groupId>io.ksmt</groupId>
             <artifactId>ksmt-core</artifactId>
             <version>${ksmt.version}</version>
         </dependency>
         <dependency>
-            <groupId>com.github.UnitTestBot.ksmt</groupId>
+            <groupId>io.ksmt</groupId>
             <artifactId>ksmt-z3</artifactId>
             <version>${ksmt.version}</version>
         </dependency>
         <dependency>
-            <groupId>com.github.UnitTestBot.ksmt</groupId>
+            <groupId>io.ksmt</groupId>
             <artifactId>ksmt-bitwuzla</artifactId>
             <version>${ksmt.version}</version>
         </dependency>
         <dependency>
-            <groupId>com.github.UnitTestBot.ksmt</groupId>
+            <groupId>io.ksmt</groupId>
             <artifactId>ksmt-cvc5</artifactId>
             <version>${ksmt.version}</version>
         </dependency>
         <dependency>
-            <groupId>com.github.UnitTestBot.ksmt</groupId>
+            <groupId>io.ksmt</groupId>
             <artifactId>ksmt-yices</artifactId>
             <version>${ksmt.version}</version>
         </dependency>
         <dependency>
-            <groupId>com.github.UnitTestBot.ksmt</groupId>
+            <groupId>io.ksmt</groupId>
             <artifactId>ksmt-runner</artifactId>
             <version>${ksmt.version}</version>
         </dependency>
@@ -173,13 +173,5 @@
             </plugin>
         </plugins>
     </build>
-
-    <repositories>
-        <repository>
-            <id>jitpack</id>
-            <url>https://jitpack.io</url>
-        </repository>
-    </repositories>
-
 
 </project>
