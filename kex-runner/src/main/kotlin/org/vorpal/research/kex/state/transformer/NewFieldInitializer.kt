@@ -12,6 +12,7 @@ import org.vorpal.research.kex.state.term.Term
 import org.vorpal.research.kfg.ir.Field
 import org.vorpal.research.kfg.type.ClassType
 import org.vorpal.research.kthelper.collection.dequeOf
+import org.vorpal.research.kthelper.tryOrNull
 import java.util.Deque
 
 class NewFieldInitializer(val ctx: ExecutionContext) : RecollectingTransformer<NewFieldInitializer> {
@@ -24,7 +25,7 @@ class NewFieldInitializer(val ctx: ExecutionContext) : RecollectingTransformer<N
         fields = TermCollector { it is FieldTerm }
             .also { it.apply(ps) }
             .terms
-            .mapTo(hashSetOf()) { (it as FieldTerm).unmappedKfgField(ctx.cm) }
+            .mapNotNullTo(hashSetOf()) { tryOrNull { (it as FieldTerm).unmappedKfgField(ctx.cm) } }
         return super.apply(ps)
     }
 

@@ -15,6 +15,7 @@ import org.vorpal.research.kex.state.term.Term
 import org.vorpal.research.kex.state.term.term
 import org.vorpal.research.kfg.ir.Method
 import org.vorpal.research.kthelper.collection.dequeOf
+import org.vorpal.research.kthelper.tryOrNull
 
 private val defaultDepth = kexConfig.getIntValue("inliner", "depth", 5)
 
@@ -73,11 +74,13 @@ interface Inliner<T> : RecollectingTransformer<Inliner<T>> {
         val builder = psa.builder(method)
         val endState = builder.methodState ?: return null
 
-        return transform(endState) {
-            +TermRenamer("${inlineSuffix}${inlineIndex++}", mappings)
-            +StringMethodAdapter(method.cm)
-            +KexRtAdapter(method.cm)
-            +ClassAdapter(method.cm)
+        return tryOrNull {
+            transform(endState) {
+                +TermRenamer("${inlineSuffix}${inlineIndex++}", mappings)
+                +StringMethodAdapter(method.cm)
+                +KexRtAdapter(method.cm)
+                +ClassAdapter(method.cm)
+            }
         }
     }
 

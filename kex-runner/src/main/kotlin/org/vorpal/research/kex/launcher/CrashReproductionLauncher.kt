@@ -98,6 +98,6 @@ class CrashReproductionLauncher(
         executePipeline(context.cm, Package.defaultPackage) {
             +ClassInstantiationDetector(context, context.accessLevel)
         }
-        CrashReproductionChecker.runWithConstraintPreconditions(context, stackTrace)
+        CrashReproductionChecker.runWithDescriptorPreconditions(context, stackTrace)
     }
 }
