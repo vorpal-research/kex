@@ -7,22 +7,22 @@ import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.yield
-import org.ksmt.expr.KAndBinaryExpr
-import org.ksmt.expr.KAndNaryExpr
-import org.ksmt.expr.KExpr
-import org.ksmt.runner.core.WorkerInitializationFailedException
-import org.ksmt.solver.KModel
-import org.ksmt.solver.KSolver
-import org.ksmt.solver.KSolverConfiguration
-import org.ksmt.solver.KSolverException
-import org.ksmt.solver.KSolverStatus
-import org.ksmt.solver.portfolio.KPortfolioSolver
-import org.ksmt.solver.portfolio.KPortfolioSolverManager
-import org.ksmt.solver.runner.KSolverExecutorTimeoutException
-import org.ksmt.solver.z3.KZ3Solver
-import org.ksmt.sort.KBoolSort
-import org.ksmt.sort.KBvSort
-import org.ksmt.sort.KSort
+import io.ksmt.expr.KAndBinaryExpr
+import io.ksmt.expr.KAndNaryExpr
+import io.ksmt.expr.KExpr
+import io.ksmt.runner.core.WorkerInitializationFailedException
+import io.ksmt.solver.KModel
+import io.ksmt.solver.KSolver
+import io.ksmt.solver.KSolverConfiguration
+import io.ksmt.solver.KSolverException
+import io.ksmt.solver.KSolverStatus
+import io.ksmt.solver.portfolio.KPortfolioSolver
+import io.ksmt.solver.portfolio.KPortfolioSolverManager
+import io.ksmt.solver.runner.KSolverExecutorTimeoutException
+import io.ksmt.solver.z3.KZ3Solver
+import io.ksmt.sort.KBoolSort
+import io.ksmt.sort.KBvSort
+import io.ksmt.sort.KSort
 import org.vorpal.research.kex.ExecutionContext
 import org.vorpal.research.kex.config.kexConfig
 import org.vorpal.research.kex.ktype.KexArray
@@ -83,7 +83,7 @@ class KSMTSolver(private val executionContext: ExecutionContext) : AbstractSMTSo
         private val portfolioSolverManager: KPortfolioSolverManager by lazy {
             KPortfolioSolverManager(
                 solvers = ksmtSolvers.map {
-                    Class.forName("org.ksmt.solver.${it}.K${it.kapitalize()}Solver").kotlin
+                    Class.forName("io.ksmt.solver.${it}.K${it.kapitalize()}Solver").kotlin
                             as KClass<out KSolver<out KSolverConfiguration>>
                 },
                 portfolioPoolSize = ksmtRunners,
