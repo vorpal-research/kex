@@ -52,3 +52,15 @@ annotation class AbstractAsyncSolver
 annotation class AsyncSolver(
         val name: String
 )
+
+annotation class AbstractIncrementalSolver
+
+annotation class IncrementalSolver(
+        val name: String
+)
+
+annotation class AbstractAsyncIncrementalSolver
+
+annotation class AsyncIncrementalSolver(
+        val name: String
+)
