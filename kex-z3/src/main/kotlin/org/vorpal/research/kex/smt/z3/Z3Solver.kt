@@ -13,7 +13,6 @@ import org.vorpal.research.kex.state.term.*
 import org.vorpal.research.kex.state.transformer.collectPointers
 import org.vorpal.research.kex.state.transformer.collectVariables
 import org.vorpal.research.kex.state.transformer.memspace
-import org.vorpal.research.kfg.type.TypeFactory
 import org.vorpal.research.kthelper.assert.ktassert
 import org.vorpal.research.kthelper.assert.unreachable
 import org.vorpal.research.kthelper.logging.debug
@@ -29,10 +28,12 @@ private val simplifyFormulae = kexConfig.getBooleanValue("smt", "simplifyFormula
 private val maxArrayLength = kexConfig.getIntValue("smt", "maxArrayLength", 1000)
 
 @AsyncSolver("z3")
+@AsyncIncrementalSolver("z3")
 @Solver("z3")
+@IncrementalSolver("z3")
 class Z3Solver(
     private val executionContext: ExecutionContext
-) : Z3NativeLoader(), AbstractSMTSolver, AbstractAsyncSMTSolver {
+) : Z3NativeLoader(), AbstractSMTSolver, AbstractAsyncSMTSolver, AbstractIncrementalSMTSolver, AbstractAsyncIncrementalSMTSolver {
     private val ef = Z3ExprFactory()
 
     override fun isReachable(state: PredicateState) =
@@ -435,6 +436,131 @@ class Z3Solver(
 
     override suspend fun isViolatedAsync(state: PredicateState, query: PredicateState): Result =
         isViolated(state, query)
+
+    override fun isSatisfiable(state: PredicateState, queries: List<PredicateQuery>): List<Result> {
+        if (logQuery) {
+            log.run {
+                debug("Z3 solver check")
+                debug("State: $state")
+                debug("Queries: ${queries.joinToString("\n")}")
+            }
+        }
+
+        val ctx = Z3Context(ef)
+
+        val converter = Z3Converter(executionContext)
+        converter.init(state, ef)
+        val z3State = converter.convert(state, ef, ctx)
+        val z3Queries = queries.map { (hard, soft) ->
+            converter.convert(hard, ef, ctx) to soft.map { converter.convert(it, ef, ctx) }
+        }
+
+        log.debug("Check started")
+        val results = checkIncremental(z3State, z3Queries)
+        log.debug("Check finished")
+        return results.map { (status, any) ->
+            when (status) {
+                Status.UNSATISFIABLE -> Result.UnsatResult
+                Status.UNKNOWN -> Result.UnknownResult(any as String)
+                Status.SATISFIABLE -> Result.SatResult(collectModel(ctx, any as Model, state))
+            }
+        }
+    }
+
+    private fun checkIncremental(state: Bool_, queries: List<Pair<Bool_, List<Bool_>>>): List<Pair<Status, Any>> {
+        val solver = buildSolver()
+
+        val (simplifiedState, simplifiedQueries) = when {
+            simplifyFormulae -> state.simplify() to queries.map { it.first.simplify() to it.second }
+            else -> state to queries
+        }
+
+        if (logFormulae) {
+            log.run {
+                debug("State: $simplifiedState")
+                debug("Query: ${simplifiedQueries.joinToString("\n")}")
+            }
+        }
+
+        solver.assertAndTrack(simplifiedState.asAxiom() as BoolExpr, ef.ctx.mkBoolConst("State"))
+        solver.assertAndTrack(ef.buildConstClassAxioms().asAxiom() as BoolExpr, ef.ctx.mkBoolConst("ClassAxioms"))
+        solver.push()
+
+        return simplifiedQueries.map { (hardConstraints, softConstraints) ->
+            solver.assertAndTrack(hardConstraints.asAxiom() as BoolExpr, ef.ctx.mkBoolConst("HardConstraints"))
+            val softConstraintsMap = when {
+                softConstraints.isNotEmpty() -> {
+                    solver.push()
+                    softConstraints.withIndex().associate { (index, softConstraint) ->
+                        val expr = ef.ctx.mkBoolConst("SoftConstraint$index")
+                        solver.assertAndTrack(softConstraint.asAxiom() as BoolExpr, expr)
+                        expr to softConstraint.asAxiom() as BoolExpr
+                    }
+                }
+                else -> emptyMap()
+            }
+
+            log.debug("Running z3 solver")
+            if (printSMTLib) {
+                log.debug("SMTLib formula:")
+                log.debug(solver)
+            }
+            val result = solver.checkAndMinimize(softConstraintsMap)
+
+            when (result) {
+                Status.SATISFIABLE -> {
+                    val model = solver.model ?: unreachable { log.error("Solver result does not contain model") }
+                    if (logFormulae) log.debug(model)
+                    result to model
+                }
+
+                Status.UNSATISFIABLE -> {
+                    val core = solver.unsatCore.toList()
+                    log.debug("Unsat core: $core")
+                    result to core
+                }
+
+                Status.UNKNOWN -> {
+                    val reason = solver.reasonUnknown
+                    log.debug(reason)
+                    result to reason
+                }
+            }.also {
+                solver.pop()
+                if (softConstraints.isNotEmpty()) {
+                    solver.pop()
+                }
+                solver.push()
+            }
+        }
+    }
+
+    private fun com.microsoft.z3.Solver.checkAndMinimize(softConstraintsMap: Map<BoolExpr, BoolExpr>): Status {
+        var result = this.check() ?: unreachable { log.error("Solver error") }
+        return when (result) {
+            Status.UNSATISFIABLE -> {
+                while (result == Status.UNSATISFIABLE && softConstraintsMap.isNotEmpty()) {
+                    val softCopies = softConstraintsMap.toMutableMap()
+                    val core = this.unsatCore.toSet()
+                    if (core.any { it !in softCopies }) break
+                    else {
+                        this.pop()
+                        this.push()
+                        for (key in core) softCopies.remove(key)
+                        for ((expr, softConstraint) in softCopies) {
+                            this.assertAndTrack(softConstraint, expr)
+                        }
+                        result = this.check() ?: unreachable { log.error("Solver error") }
+                    }
+                }
+                result
+            }
+            else -> result
+        }
+    }
+
+    override suspend fun isSatisfiableAsync(state: PredicateState, queries: List<PredicateQuery>) =
+        isSatisfiable(state, queries)
 
     override fun close() {
         ef.ctx.close()

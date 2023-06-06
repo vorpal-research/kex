@@ -32,10 +32,15 @@ import org.vorpal.research.kex.ktype.KexType
 import org.vorpal.research.kex.ktype.isArray
 import org.vorpal.research.kex.ktype.isString
 import org.vorpal.research.kex.ktype.kexType
+import org.vorpal.research.kex.smt.AbstractAsyncIncrementalSMTSolver
 import org.vorpal.research.kex.smt.AbstractAsyncSMTSolver
+import org.vorpal.research.kex.smt.AbstractIncrementalSMTSolver
 import org.vorpal.research.kex.smt.AbstractSMTSolver
+import org.vorpal.research.kex.smt.AsyncIncrementalSolver
 import org.vorpal.research.kex.smt.AsyncSolver
+import org.vorpal.research.kex.smt.IncrementalSolver
 import org.vorpal.research.kex.smt.MemoryShape
+import org.vorpal.research.kex.smt.PredicateQuery
 import org.vorpal.research.kex.smt.Solver
 import org.vorpal.research.kex.smt.Result
 import org.vorpal.research.kex.smt.SMTModel
@@ -76,9 +81,13 @@ private val ksmtRunners = kexConfig.getIntValue("ksmt", "runners", 4)
 private val ksmtSolvers = kexConfig.getMultipleStringValue("ksmt", "solver")
 
 @Suppress("UNCHECKED_CAST")
-@Solver("ksmt")
 @AsyncSolver("ksmt")
-class KSMTSolver(private val executionContext: ExecutionContext) : AbstractSMTSolver, AbstractAsyncSMTSolver {
+@AsyncIncrementalSolver("ksmt")
+@Solver("ksmt")
+@IncrementalSolver("ksmt")
+class KSMTSolver(
+    private val executionContext: ExecutionContext
+) : AbstractSMTSolver, AbstractAsyncSMTSolver, AbstractIncrementalSMTSolver, AbstractAsyncIncrementalSMTSolver {
     companion object {
         private val portfolioSolverManager: KPortfolioSolverManager by lazy {
             KPortfolioSolverManager(
@@ -597,6 +606,137 @@ class KSMTSolver(private val executionContext: ExecutionContext) : AbstractSMTSo
             }.toMap(),
             typeMap
         )
+    }
+
+    override fun isSatisfiable(state: PredicateState, queries: List<PredicateQuery>): List<Result> = runBlocking {
+        isSatisfiableAsync(state, queries)
+    }
+
+    override suspend fun isSatisfiableAsync(state: PredicateState, queries: List<PredicateQuery>): List<Result> = try {
+        if (logQuery) {
+            log.run {
+                debug("KSMT solver check")
+                debug("State: $state")
+                debug("Queries: ${queries.joinToString("\n")}")
+            }
+        }
+
+        val ctx = KSMTContext(ef)
+
+        val converter = KSMTConverter(executionContext)
+        converter.init(state, ef)
+        val ksmtState = converter.convert(state, ef, ctx)
+        val ksmtQueries = queries.map { (hard, soft) ->
+            converter.convert(hard, ef, ctx) to soft.map { converter.convert(it, ef, ctx) }
+        }
+
+        log.debug("Check started")
+        val results = checkIncremental(ksmtState, ksmtQueries)
+        log.debug("Check finished")
+        results.map { (status, any) ->
+            when (status) {
+                KSolverStatus.UNSAT -> Result.UnsatResult
+                KSolverStatus.UNKNOWN -> Result.UnknownResult(any as String)
+                KSolverStatus.SAT -> Result.SatResult(collectModel(ctx, any as KModel, state))
+            }
+        }
+    } catch (e: KSolverException) {
+        when (e.cause) {
+            is TimeoutCancellationException ->
+                queries.map { Result.UnknownResult(e.message ?: "Exception in KSMT") }
+
+            is KSolverExecutorTimeoutException ->
+                queries.map { Result.UnknownResult(e.message ?: "Exception in KSMT") }
+
+            else -> {
+                log.warn("KSMT thrown an exception during check", e)
+                throw e
+            }
+        }
+    } catch (e: WorkerInitializationFailedException) {
+        if (e.cause !is TimeoutCancellationException) {
+            log.warn("KSMT thrown an exception during worker initialization", e)
+        }
+        queries.map { Result.UnknownResult(e.message ?: "Exception in KSMT") }
+    }
+
+    private suspend fun checkIncremental(
+        state: Bool_,
+        queries: List<Pair<Bool_, List<Bool_>>>
+    ): List<Pair<KSolverStatus, Any>> {
+        val solver = buildSolver()
+
+        solver.assertAndTrackAsync(state.asAxiom() as KExpr<KBoolSort>)
+        solver.assertAndTrackAsync(ef.buildConstClassAxioms().asAxiom() as KExpr<KBoolSort>)
+        solver.push()
+
+        return queries.map { (hardConstraints, softConstraints) ->
+            solver.assertAndTrackAsync(hardConstraints.asAxiom() as KExpr<KBoolSort>)
+            if (softConstraints.isNotEmpty()) {
+                solver.push()
+                softConstraints.forEach { softConstraint ->
+                    solver.assertAndTrackAsync(softConstraint.asAxiom() as KExpr<KBoolSort>)
+                }
+            }
+
+            log.debug("Running z3 solver")
+            if (printSMTLib) {
+                log.debug("SMTLib formula:")
+                log.debug(solver)
+            }
+            val result = solver.checkAndMinimize(softConstraints.map { it.asAxiom() as KExpr<KBoolSort> })
+
+            when (result) {
+                KSolverStatus.SAT -> {
+                    val model = solver.modelAsync()
+                    if (logFormulae) log.debug(model)
+                    result to model
+                }
+
+                KSolverStatus.UNSAT -> {
+                    val core = solver.unsatCoreAsync()
+                    log.debug("Unsat core: $core")
+                    result to core
+                }
+
+                KSolverStatus.UNKNOWN -> {
+                    val reason = solver.reasonOfUnknownAsync()
+                    log.debug(reason)
+                    result to reason
+                }
+            }.also {
+                solver.pop()
+                if (softConstraints.isNotEmpty()) {
+                    solver.pop()
+                }
+                solver.push()
+            }
+        }
+    }
+
+    private suspend fun KPortfolioSolver.checkAndMinimize(softConstraintsMap: List<KExpr<KBoolSort>>): KSolverStatus {
+        var result = this.check()
+        return when (result) {
+            KSolverStatus.UNSAT -> {
+                while (result == KSolverStatus.UNSAT && softConstraintsMap.isNotEmpty()) {
+                    val softCopies = softConstraintsMap.toMutableSet()
+                    val core = this.unsatCoreAsync().toSet()
+                    if (core.any { it !in softCopies }) break
+                    else {
+                        this.pop()
+                        this.push()
+                        for (key in core) softCopies.remove(key)
+                        for (softConstraint in softCopies) {
+                            this.assertAndTrackAsync(softConstraint)
+                        }
+                        result = this.checkAsync(timeout.seconds)
+                    }
+                }
+                result
+            }
+
+            else -> result
+        }
     }
 
     override fun close() {

@@ -1,3 +1,5 @@
+@file:Suppress("MemberVisibilityCanBePrivate")
+
 package org.vorpal.research.kex.state.term
 
 import org.vorpal.research.kex.ktype.*
@@ -199,6 +201,7 @@ object TermFactory {
     fun getClassAccess(type: KexType, operand: Term) = ClassAccessTerm(type, operand)
 }
 
+@Suppress("FunctionName")
 interface TermBuilder {
     val termFactory get() = TermFactory
 
@@ -235,7 +238,7 @@ interface TermBuilder {
     fun const(str: String) = termFactory.getString(str)
     fun const(char: Char) = termFactory.getChar(char)
     fun <T : Number> const(number: T) = termFactory.getConstant(number)
-    fun const(@Suppress("UNUSED_PARAMETER") nothing: Nothing?) = termFactory.getNull()
+    fun const(nothing: Nothing?) = termFactory.getNull()
     fun `class`(klass: Class) = termFactory.getClass(klass)
     fun `class`(type: KexType, constantType: KexType) = termFactory.getClass(type, constantType)
     fun staticRef(type: Class) = termFactory.getStaticRef(type)
@@ -262,15 +265,25 @@ interface TermBuilder {
 
     infix fun Term.add(rhv: Term) = termFactory.getBinary(type, BinaryOpcode.ADD, this, rhv)
     operator fun Term.plus(rhv: Term) = this add rhv
+    operator fun Int.plus(rhv: Term) = const(this) add rhv
+    operator fun Double.plus(rhv: Term) = const(this) add rhv
 
     infix fun Term.sub(rhv: Term) = termFactory.getBinary(type, BinaryOpcode.SUB, this, rhv)
     operator fun Term.minus(rhv: Term) = this sub rhv
+    operator fun Int.minus(rhv: Term) = const(this) sub rhv
+    operator fun Double.minus(rhv: Term) = const(this) sub rhv
 
     infix fun Term.mul(rhv: Term) = termFactory.getBinary(type, BinaryOpcode.MUL, this, rhv)
     operator fun Term.times(rhv: Term) = this mul rhv
+    operator fun Int.times(rhv: Term) = const(this) mul rhv
+    operator fun Double.times(rhv: Term) = const(this) mul rhv
 
     operator fun Term.div(rhv: Term) = termFactory.getBinary(type, BinaryOpcode.DIV, this, rhv)
+    operator fun Int.div(rhv: Term) = const(this) / rhv
+    operator fun Double.div(rhv: Term) = const(this) / rhv
     operator fun Term.rem(rhv: Term) = termFactory.getBinary(type, BinaryOpcode.REM, this, rhv)
+    operator fun Int.rem(rhv: Term) = const(this) % rhv
+    operator fun Double.rem(rhv: Term) = const(this) % rhv
 
     infix fun Term.shl(shift: Term) = termFactory.getBinary(type, BinaryOpcode.SHL, this, shift)
     infix fun Term.shr(shift: Term) = termFactory.getBinary(type, BinaryOpcode.SHR, this, shift)
@@ -326,8 +339,8 @@ interface TermBuilder {
     infix fun Term.cmpg(rhv: Term) = termFactory.getCmp(CmpOpcode.CMPG, this, rhv)
     infix fun Term.cmpl(rhv: Term) = termFactory.getCmp(CmpOpcode.CMPL, this, rhv)
 
-    infix fun Term.`in`(container: Term) = when {
-        container.type is KexArray -> termFactory.getArrayContains(container, this)
+    infix fun Term.`in`(container: Term) = when (container.type) {
+        is KexArray -> termFactory.getArrayContains(container, this)
         else -> termFactory.getStringContains(container, this)
     }
 
