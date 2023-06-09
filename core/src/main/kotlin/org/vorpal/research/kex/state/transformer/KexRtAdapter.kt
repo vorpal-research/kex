@@ -1,10 +1,13 @@
 package org.vorpal.research.kex.state.transformer
 
+import kotlinx.collections.immutable.toPersistentList
 import org.vorpal.research.kex.ktype.KexClass
 import org.vorpal.research.kex.ktype.KexReference
 import org.vorpal.research.kex.ktype.KexRtManager.isKexRt
 import org.vorpal.research.kex.ktype.KexRtManager.rtMapped
 import org.vorpal.research.kex.ktype.KexRtManager.rtUnmapped
+import org.vorpal.research.kex.state.IncrementalPredicateState
+import org.vorpal.research.kex.state.PredicateQuery
 import org.vorpal.research.kex.state.predicate.PredicateBuilder
 import org.vorpal.research.kex.state.predicate.PredicateType
 import org.vorpal.research.kex.state.term.*
@@ -21,9 +24,21 @@ fun FieldTerm.unmappedKfgField(cm: ClassManager): Field {
     }
 }
 
-class KexRtAdapter(val cm: ClassManager) : PredicateBuilder, Transformer<KexRtAdapter> {
+class KexRtAdapter(val cm: ClassManager) : PredicateBuilder, Transformer<KexRtAdapter>,  IncrementalTransformer {
     override val type = PredicateType.State()
     override val location = Location()
+
+    override fun apply(state: IncrementalPredicateState): IncrementalPredicateState {
+        return IncrementalPredicateState(
+            apply(state.state),
+            state.queries.map { query ->
+                PredicateQuery(
+                    apply(query.hardConstraints),
+                    query.softConstraints.map { transform(it) }.toPersistentList()
+                )
+            }
+        )
+    }
 
     override fun transformArgumentTerm(term: ArgumentTerm): Term {
         return arg(term.type.rtMapped, term.index)

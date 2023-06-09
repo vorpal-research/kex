@@ -7,6 +7,8 @@ import org.vorpal.research.kex.ktype.KexInt
 import org.vorpal.research.kex.ktype.KexString
 import org.vorpal.research.kex.ktype.asArray
 import org.vorpal.research.kex.ktype.kexType
+import org.vorpal.research.kex.state.IncrementalPredicateState
+import org.vorpal.research.kex.state.PredicateQuery
 import org.vorpal.research.kex.state.PredicateState
 import org.vorpal.research.kex.state.StateBuilder
 import org.vorpal.research.kex.state.basic
@@ -261,7 +263,9 @@ class StringAdapter(cm: ClassManager) : StringMethodContext(cm), RecollectingTra
 
 }
 
-class StringMethodAdapter(cm: ClassManager) : StringMethodContext(cm), RecollectingTransformer<StringMethodAdapter> {
+class StringMethodAdapter(
+    cm: ClassManager
+) : StringMethodContext(cm), RecollectingTransformer<StringMethodAdapter>, IncrementalTransformer {
     override val builders = dequeOf(StateBuilder())
     val types get() = cm.type
 
@@ -806,6 +810,18 @@ class StringMethodAdapter(cm: ClassManager) : StringMethodContext(cm), Recollect
     override fun transformLambdaTerm(term: LambdaTerm): Term {
         val newBody = TermExprStringAdapter(cm).transform(term.body)
         return term { lambda(term.type, term.parameters, newBody) }
+    }
+
+    override fun apply(state: IncrementalPredicateState): IncrementalPredicateState {
+        return IncrementalPredicateState(
+            apply(state.state),
+            state.queries.map { query ->
+                PredicateQuery(
+                    apply(query.hardConstraints),
+                    query.softConstraints
+                )
+            }
+        )
     }
 
 }

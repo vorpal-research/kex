@@ -27,6 +27,7 @@ import org.vorpal.research.kex.ExecutionContext
 import org.vorpal.research.kex.config.kexConfig
 import org.vorpal.research.kex.ktype.KexArray
 import org.vorpal.research.kex.ktype.KexInt
+import org.vorpal.research.kex.ktype.KexNull
 import org.vorpal.research.kex.ktype.KexReference
 import org.vorpal.research.kex.ktype.KexType
 import org.vorpal.research.kex.ktype.isArray
@@ -40,11 +41,11 @@ import org.vorpal.research.kex.smt.AsyncIncrementalSolver
 import org.vorpal.research.kex.smt.AsyncSolver
 import org.vorpal.research.kex.smt.IncrementalSolver
 import org.vorpal.research.kex.smt.MemoryShape
-import org.vorpal.research.kex.smt.PredicateQuery
 import org.vorpal.research.kex.smt.Solver
 import org.vorpal.research.kex.smt.Result
 import org.vorpal.research.kex.smt.SMTModel
 import org.vorpal.research.kex.smt.ksmt.KSMTEngine.asExpr
+import org.vorpal.research.kex.state.PredicateQuery
 import org.vorpal.research.kex.state.PredicateState
 import org.vorpal.research.kex.state.term.ArrayIndexTerm
 import org.vorpal.research.kex.state.term.ArrayLoadTerm
@@ -57,7 +58,9 @@ import org.vorpal.research.kex.state.term.Term
 import org.vorpal.research.kex.state.term.numericValue
 import org.vorpal.research.kex.state.term.term
 import org.vorpal.research.kex.state.transformer.collectPointers
+import org.vorpal.research.kex.state.transformer.collectTypes
 import org.vorpal.research.kex.state.transformer.collectVariables
+import org.vorpal.research.kex.state.transformer.getConstStringMap
 import org.vorpal.research.kex.state.transformer.memspace
 import org.vorpal.research.kex.util.kapitalize
 import org.vorpal.research.kthelper.assert.ktassert
@@ -136,10 +139,13 @@ class KSMTSolver(
             }
         }
 
-        val ctx = KSMTContext(ef)
+        val types = collectTypes(executionContext, state).filter { it !is KexNull }
+            .mapTo(mutableSetOf()) { it.getKfgType(executionContext.types) }
+        ef.initTypes(types)
+        ef.initStrings(getConstStringMap(state))
 
+        val ctx = KSMTContext(ef)
         val converter = KSMTConverter(executionContext)
-        converter.init(state, ef)
         val ksmtState = converter.convert(state, ef, ctx)
         val ksmtQuery = converter.convert(query, ef, ctx)
 
@@ -621,10 +627,26 @@ class KSMTSolver(
             }
         }
 
-        val ctx = KSMTContext(ef)
+        val allTypes = buildSet {
+            addAll(collectTypes(executionContext, state))
+            for (query in queries) {
+                addAll(collectTypes(executionContext, query.hardConstraints))
+                for (softConstraint in query.softConstraints) {
+                    addAll(collectTypes(executionContext, query.hardConstraints))
+                }
+            }
+        }.filter { it !is KexNull }.mapTo(mutableSetOf()) { it.getKfgType(executionContext.types) }
+        val allConstStrings = buildMap {
+            putAll(getConstStringMap(state))
+            for (query in queries) {
+                putAll(getConstStringMap(query.hardConstraints))
+            }
+        }
+        ef.initTypes(allTypes)
+        ef.initStrings(allConstStrings)
 
+        val ctx = KSMTContext(ef)
         val converter = KSMTConverter(executionContext)
-        converter.init(state, ef)
         val ksmtState = converter.convert(state, ef, ctx)
         val ksmtQueries = queries.map { (hard, soft) ->
             converter.convert(hard, ef, ctx) to soft.map { converter.convert(it, ef, ctx) }

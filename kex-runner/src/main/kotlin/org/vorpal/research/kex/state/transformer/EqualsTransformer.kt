@@ -1,5 +1,6 @@
 package org.vorpal.research.kex.state.transformer
 
+import org.vorpal.research.kex.state.IncrementalPredicateState
 import org.vorpal.research.kex.state.predicate.CallPredicate
 import org.vorpal.research.kex.state.predicate.Predicate
 import org.vorpal.research.kex.state.predicate.predicate
@@ -14,7 +15,7 @@ import org.vorpal.research.kfg.objectClass
 import org.vorpal.research.kthelper.assert.unreachable
 import org.vorpal.research.kthelper.logging.log
 
-class EqualsTransformer : Transformer<EqualsTransformer> {
+class EqualsTransformer : Transformer<EqualsTransformer>, IncrementalTransformer {
 
     private val ClassManager.equalsMethod
         get() = objectClass.getMethod("equals", type.boolType, objectClass.asType)
@@ -42,5 +43,12 @@ class EqualsTransformer : Transformer<EqualsTransformer> {
     override fun transformLambda(term: LambdaTerm): Term {
         val body = transform(term.body)
         return term { lambda(term.type, term.parameters, body) }
+    }
+
+    override fun apply(state: IncrementalPredicateState): IncrementalPredicateState {
+        return IncrementalPredicateState(
+            apply(state.state),
+            state.queries
+        )
     }
 }

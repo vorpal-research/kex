@@ -1,6 +1,13 @@
+@file:Suppress("unused")
+
 package org.vorpal.research.kex.state.transformer
 
-import org.vorpal.research.kex.ktype.*
+import org.vorpal.research.kex.ktype.KexInt
+import org.vorpal.research.kex.ktype.KexJavaClass
+import org.vorpal.research.kex.ktype.KexString
+import org.vorpal.research.kex.ktype.KexType
+import org.vorpal.research.kex.ktype.kexType
+import org.vorpal.research.kex.state.IncrementalPredicateState
 import org.vorpal.research.kex.state.StateBuilder
 import org.vorpal.research.kex.state.basic
 import org.vorpal.research.kex.state.predicate.CallPredicate
@@ -14,7 +21,12 @@ import org.vorpal.research.kex.util.ENUM_MODIFIER
 import org.vorpal.research.kex.util.SYNTHETIC_MODIFIER
 import org.vorpal.research.kfg.ClassManager
 import org.vorpal.research.kfg.objectClass
-import org.vorpal.research.kfg.type.*
+import org.vorpal.research.kfg.type.ArrayType
+import org.vorpal.research.kfg.type.ClassType
+import org.vorpal.research.kfg.type.classLoaderType
+import org.vorpal.research.kfg.type.classType
+import org.vorpal.research.kfg.type.objectType
+import org.vorpal.research.kfg.type.stringType
 import org.vorpal.research.kthelper.collection.dequeOf
 import java.lang.reflect.Modifier
 import org.vorpal.research.kfg.ir.Class as KfgClass
@@ -53,9 +65,19 @@ abstract class ClassMethodContext(val cm: ClassManager) {
     val KfgClass.toString get() = this.getMethod("toString", stringType)
 }
 
-class ClassMethodAdapter(cm: ClassManager) : ClassMethodContext(cm), RecollectingTransformer<ClassMethodAdapter> {
+class ClassMethodAdapter(
+    cm: ClassManager
+) : ClassMethodContext(cm), RecollectingTransformer<ClassMethodAdapter>, IncrementalTransformer {
     override val builders = dequeOf(StateBuilder())
 
+    override fun apply(state: IncrementalPredicateState): IncrementalPredicateState {
+        return IncrementalPredicateState(
+            apply(state.state),
+            state.queries
+        )
+    }
+
+    @Suppress("unused")
     override fun transformCallPredicate(predicate: CallPredicate): Predicate {
         val call = predicate.call as CallTerm
         val args = call.arguments

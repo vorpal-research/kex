@@ -3,14 +3,15 @@ package org.vorpal.research.kex.smt.z3
 import com.microsoft.z3.BoolExpr
 import com.microsoft.z3.ExtendedContext
 import com.microsoft.z3.Status
+import kotlinx.collections.immutable.persistentListOf
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.vorpal.research.kex.ExecutionContext
 import org.vorpal.research.kex.KexTest
 import org.vorpal.research.kex.ktype.KexInt
 import org.vorpal.research.kex.random.StubRandomizer
-import org.vorpal.research.kex.smt.PredicateQuery
 import org.vorpal.research.kex.smt.Result
+import org.vorpal.research.kex.state.PredicateQuery
 import org.vorpal.research.kex.state.basic
 import org.vorpal.research.kex.state.predicate.path
 import org.vorpal.research.kex.state.term.term
@@ -201,7 +202,7 @@ class Z3SolverTest : KexTest("z3-solver") {
                 basic {
                     path { (x eq (3 * z)) equality true }
                 },
-                listOf(
+                persistentListOf(
                     path { (y gt 0) equality true },
                     path { (z gt 0) equality true },
                     path { (x gt 0) equality true }
@@ -211,7 +212,7 @@ class Z3SolverTest : KexTest("z3-solver") {
                 basic {
                     path { (x neq (3 * z)) equality true }
                 },
-                listOf(
+                persistentListOf(
                     path { (y gt 0) equality true },
                     path { (z gt 0) equality true },
                     path { (x gt 0) equality true }
@@ -221,7 +222,7 @@ class Z3SolverTest : KexTest("z3-solver") {
                 basic {
                     path { (x eq (3 * z)) equality true }
                 },
-                listOf(
+                persistentListOf(
                     path { (y gt 0) equality true },
                     path { (z gt 0) equality true },
                     path { (x lt 0) equality true }
@@ -230,7 +231,7 @@ class Z3SolverTest : KexTest("z3-solver") {
             PredicateQuery(
                 basic {
                     path { (x eq (3 * z)) equality true }
-                }, listOf(
+                }, persistentListOf(
                     path { (y gt 0) equality true },
                     path { (y lt 0) equality true },
                 )
