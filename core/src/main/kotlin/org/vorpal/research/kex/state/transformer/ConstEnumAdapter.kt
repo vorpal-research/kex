@@ -2,13 +2,22 @@ package org.vorpal.research.kex.state.transformer
 
 import org.vorpal.research.kex.ExecutionContext
 import org.vorpal.research.kex.config.kexConfig
-import org.vorpal.research.kex.ktype.*
+import org.vorpal.research.kex.ktype.KexClass
+import org.vorpal.research.kex.ktype.KexInt
+import org.vorpal.research.kex.ktype.KexReference
+import org.vorpal.research.kex.ktype.KexString
+import org.vorpal.research.kex.ktype.KexType
+import org.vorpal.research.kex.ktype.kexType
+import org.vorpal.research.kex.state.IncrementalPredicateState
 import org.vorpal.research.kex.state.PredicateState
 import org.vorpal.research.kex.state.StateBuilder
 import org.vorpal.research.kex.state.basic
 import org.vorpal.research.kex.state.predicate.axiom
-import org.vorpal.research.kex.state.term.*
+import org.vorpal.research.kex.state.term.FieldLoadTerm
+import org.vorpal.research.kex.state.term.StaticClassRefTerm
+import org.vorpal.research.kex.state.term.Term
 import org.vorpal.research.kex.state.term.TermBuilder.Terms.field
+import org.vorpal.research.kex.state.term.term
 import org.vorpal.research.kex.util.allFields
 import org.vorpal.research.kex.util.asmString
 import org.vorpal.research.kex.util.isStatic
@@ -23,7 +32,9 @@ val ignores by lazy {
         .mapTo(mutableSetOf()) { it.asmString }
 }
 
-class ConstEnumAdapter(val context: ExecutionContext) : RecollectingTransformer<ConstEnumAdapter> {
+class ConstEnumAdapter(
+    val context: ExecutionContext
+) : RecollectingTransformer<ConstEnumAdapter>, IncrementalTransformer {
     val cm get() = context.cm
     override val builders = dequeOf(StateBuilder())
 
@@ -121,8 +132,26 @@ class ConstEnumAdapter(val context: ExecutionContext) : RecollectingTransformer<
 
     override fun apply(ps: PredicateState): PredicateState = tryOrNull {
         val enumConstantsMap = prepareEnumConstants(ps)
+        apply(ps, enumConstantsMap)
+    } ?: ps
+
+    private fun apply(ps: PredicateState, enumConstantsMap: Map<KexType, Set<Term>>) = tryOrNull {
         super.apply(ps)
         mapEnumTerms(ps, enumConstantsMap)
         state.simplify()
     } ?: ps
+
+
+    override fun apply(state: IncrementalPredicateState): IncrementalPredicateState {
+        val enumConstantsMap = buildMap {
+            putAll(prepareEnumConstants(state.state))
+            for (query in state.queries) {
+                putAll(prepareEnumConstants(query.hardConstraints))
+            }
+        }
+        return IncrementalPredicateState(
+            apply(state.state, enumConstantsMap),
+            state.queries
+        )
+    }
 }

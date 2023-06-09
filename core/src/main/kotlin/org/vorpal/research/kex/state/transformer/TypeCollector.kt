@@ -4,6 +4,7 @@ import org.vorpal.research.kex.ExecutionContext
 import org.vorpal.research.kex.asm.manager.instantiationManager
 import org.vorpal.research.kex.ktype.*
 import org.vorpal.research.kex.state.PredicateState
+import org.vorpal.research.kex.state.predicate.Predicate
 import org.vorpal.research.kex.state.term.*
 import org.vorpal.research.kex.util.parseAsConcreteType
 import org.vorpal.research.kfg.ir.Class
@@ -27,6 +28,11 @@ private class ClassAccessDetector : Transformer<ClassAccessDetector> {
 
 fun hasClassAccesses(ps: PredicateState) = ClassAccessDetector().let {
     it.apply(ps)
+    it.hasClassAccess
+}
+
+fun hasClassAccesses(predicate: Predicate) = ClassAccessDetector().let {
+    it.transform(predicate)
     it.hasClassAccess
 }
 
@@ -106,5 +112,11 @@ class TypeCollector(
 fun collectTypes(ctx: ExecutionContext, ps: PredicateState): Set<KexType> {
     val tc = TypeCollector(ctx, hasClassAccesses(ps))
     tc.apply(ps)
+    return tc.types
+}
+
+fun collectTypes(ctx: ExecutionContext, predicate: Predicate): Set<KexType> {
+    val tc = TypeCollector(ctx, hasClassAccesses(predicate))
+    tc.transform(predicate)
     return tc.types
 }

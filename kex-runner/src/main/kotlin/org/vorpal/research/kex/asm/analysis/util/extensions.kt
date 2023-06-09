@@ -1,5 +1,6 @@
 package org.vorpal.research.kex.asm.analysis.util
 
+import kotlinx.collections.immutable.toPersistentList
 import kotlinx.coroutines.TimeoutCancellationException
 import org.vorpal.research.kex.ExecutionContext
 import org.vorpal.research.kex.asm.analysis.crash.precondition.ConstraintExceptionPrecondition
@@ -14,7 +15,10 @@ import org.vorpal.research.kex.parameters.concreteParameters
 import org.vorpal.research.kex.parameters.filterIgnoredStatic
 import org.vorpal.research.kex.parameters.filterStaticFinals
 import org.vorpal.research.kex.smt.AsyncChecker
+import org.vorpal.research.kex.smt.AsyncIncrementalChecker
 import org.vorpal.research.kex.smt.Result
+import org.vorpal.research.kex.state.IncrementalPredicateState
+import org.vorpal.research.kex.state.PredicateQuery
 import org.vorpal.research.kex.state.term.term
 import org.vorpal.research.kex.state.transformer.SymbolicStateForwardSlicer
 import org.vorpal.research.kex.state.transformer.collectArguments
@@ -109,5 +113,48 @@ suspend fun Method.checkAsyncAndSlice(
     } catch (e: Throwable) {
         log.error("Error during descriptor generation: ", e)
         null
+    }
+}
+
+
+suspend fun Method.checkAsyncIncremental(
+    ctx: ExecutionContext,
+    state: SymbolicState,
+    queries: List<SymbolicState>
+): List<Parameters<Descriptor>?> {
+    val checker = AsyncIncrementalChecker(this, ctx)
+    val clauses = state.clauses.asState()
+    val query = state.path.asState()
+    val concreteTypeInfo = state.concreteValueMap
+        .mapValues { it.value.type }
+        .filterValues { it.isJavaRt }
+        .mapValues { it.value.rtMapped }
+        .toTypeMap()
+
+    val results = checker.prepareAndCheck(
+        this,
+        IncrementalPredicateState(
+            clauses + query,
+            queries.map { PredicateQuery(it.clauses.asState() + it.path.asState()) }.toPersistentList()
+        ),
+        concreteTypeInfo
+    )
+
+    return results.map { result ->
+        when (result) {
+            is Result.SatResult -> try {
+                generateInitialDescriptors(this, ctx, result.model, checker.state)
+                    .concreteParameters(ctx.cm, ctx.accessLevel, ctx.random).also {
+                        log.debug { "Generated params:\n$it" }
+                    }
+                    .filterStaticFinals(ctx.cm)
+                    .filterIgnoredStatic()
+            } catch (e: Throwable) {
+                log.error("Error during descriptor generation: ", e)
+                null
+            }
+
+            else -> null
+        }
     }
 }

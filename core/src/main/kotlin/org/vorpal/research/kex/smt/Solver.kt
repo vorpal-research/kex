@@ -1,7 +1,7 @@
 package org.vorpal.research.kex.smt
 
+import org.vorpal.research.kex.state.PredicateQuery
 import org.vorpal.research.kex.state.PredicateState
-import org.vorpal.research.kex.state.predicate.Predicate
 import java.io.Closeable
 
 sealed class Result {
@@ -44,11 +44,6 @@ interface AbstractAsyncSMTSolver : Closeable {
     suspend fun isPathPossibleAsync(state: PredicateState, path: PredicateState): Result
     suspend fun isViolatedAsync(state: PredicateState, query: PredicateState): Result
 }
-
-data class PredicateQuery(
-    val hardConstraints: PredicateState,
-    val softConstraints: List<Predicate> = emptyList()
-)
 
 @AbstractIncrementalSolver
 interface AbstractIncrementalSMTSolver : AbstractSMTSolver, Closeable {

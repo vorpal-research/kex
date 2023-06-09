@@ -3,6 +3,7 @@ package org.vorpal.research.kex.state.transformer
 import org.vorpal.research.kex.asm.manager.MethodManager
 import org.vorpal.research.kex.ktype.KexBool
 import org.vorpal.research.kex.ktype.KexInt
+import org.vorpal.research.kex.state.IncrementalPredicateState
 import org.vorpal.research.kex.state.PredicateState
 import org.vorpal.research.kex.state.StateBuilder
 import org.vorpal.research.kex.state.basic
@@ -14,9 +15,16 @@ import org.vorpal.research.kex.state.term.Term
 import org.vorpal.research.kfg.ir.Method
 import org.vorpal.research.kthelper.collection.dequeOf
 
-class KexIntrinsicsAdapter : RecollectingTransformer<KexIntrinsicsAdapter> {
+class KexIntrinsicsAdapter : RecollectingTransformer<KexIntrinsicsAdapter>, IncrementalTransformer {
     override val builders = dequeOf(StateBuilder())
     private val kim = MethodManager.KexIntrinsicManager
+
+    override fun apply(state: IncrementalPredicateState): IncrementalPredicateState {
+        return IncrementalPredicateState(
+            apply(state.state),
+            state.queries
+        )
+    }
 
     override fun transformCallPredicate(predicate: CallPredicate): Predicate {
         val call = predicate.call as CallTerm

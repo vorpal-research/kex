@@ -8,10 +8,13 @@ import org.vorpal.research.kex.ExecutionContext
 import org.vorpal.research.kex.config.kexConfig
 import org.vorpal.research.kex.ktype.*
 import org.vorpal.research.kex.smt.*
+import org.vorpal.research.kex.state.PredicateQuery
 import org.vorpal.research.kex.state.PredicateState
 import org.vorpal.research.kex.state.term.*
 import org.vorpal.research.kex.state.transformer.collectPointers
+import org.vorpal.research.kex.state.transformer.collectTypes
 import org.vorpal.research.kex.state.transformer.collectVariables
+import org.vorpal.research.kex.state.transformer.getConstStringMap
 import org.vorpal.research.kex.state.transformer.memspace
 import org.vorpal.research.kthelper.assert.ktassert
 import org.vorpal.research.kthelper.assert.unreachable
@@ -445,11 +448,26 @@ class Z3Solver(
                 debug("Queries: ${queries.joinToString("\n")}")
             }
         }
+        val allTypes = buildSet {
+            addAll(collectTypes(executionContext, state))
+            for (query in queries) {
+                addAll(collectTypes(executionContext, query.hardConstraints))
+                for (softConstraint in query.softConstraints) {
+                    addAll(collectTypes(executionContext, query.hardConstraints))
+                }
+            }
+        }.filter { it !is KexNull }.mapTo(mutableSetOf()) { it.getKfgType(executionContext.types) }
+        val allConstStrings = buildMap {
+            putAll(getConstStringMap(state))
+            for (query in queries) {
+                putAll(getConstStringMap(query.hardConstraints))
+            }
+        }
+        ef.initTypes(allTypes)
+        ef.initStrings(allConstStrings)
 
         val ctx = Z3Context(ef)
-
         val converter = Z3Converter(executionContext)
-        converter.init(state, ef)
         val z3State = converter.convert(state, ef, ctx)
         val z3Queries = queries.map { (hard, soft) ->
             converter.convert(hard, ef, ctx) to soft.map { converter.convert(it, ef, ctx) }
