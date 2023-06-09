@@ -1,5 +1,6 @@
 package org.vorpal.research.kex.smt.ksmt
 
+import kotlinx.collections.immutable.persistentListOf
 import org.junit.AfterClass
 import org.junit.BeforeClass
 import org.ksmt.KContext
@@ -8,6 +9,7 @@ import org.ksmt.solver.KSolverStatus
 import org.ksmt.solver.runner.KSolverRunnerManager
 import org.ksmt.solver.z3.KZ3Solver
 import org.ksmt.sort.KBoolSort
+import org.vorpal.research.kex.ExecutionContext
 import org.vorpal.research.kex.KexTest
 import org.vorpal.research.kex.ktype.KexInt
 import org.vorpal.research.kex.random.StubRandomizer
