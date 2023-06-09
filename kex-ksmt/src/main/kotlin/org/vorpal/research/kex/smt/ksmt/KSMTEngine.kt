@@ -2,20 +2,20 @@
 
 package org.vorpal.research.kex.smt.ksmt
 
-import io.ksmt.KAst
-import io.ksmt.KContext
-import io.ksmt.decl.KDecl
-import io.ksmt.decl.KFuncDecl
-import io.ksmt.expr.KExpr
-import io.ksmt.expr.KFpRoundingMode
-import io.ksmt.sort.KArraySort
-import io.ksmt.sort.KBoolSort
-import io.ksmt.sort.KBv1Sort
-import io.ksmt.sort.KBvSort
-import io.ksmt.sort.KFp32Sort
-import io.ksmt.sort.KFp64Sort
-import io.ksmt.sort.KFpSort
-import io.ksmt.sort.KSort
+import org.ksmt.KAst
+import org.ksmt.KContext
+import org.ksmt.decl.KDecl
+import org.ksmt.decl.KFuncDecl
+import org.ksmt.expr.KExpr
+import org.ksmt.expr.KFpRoundingMode
+import org.ksmt.sort.KArraySort
+import org.ksmt.sort.KBoolSort
+import org.ksmt.sort.KBv1Sort
+import org.ksmt.sort.KBvSort
+import org.ksmt.sort.KFp32Sort
+import org.ksmt.sort.KFp64Sort
+import org.ksmt.sort.KFpSort
+import org.ksmt.sort.KSort
 import org.vorpal.research.kex.smt.SMTEngine
 import org.vorpal.research.kthelper.assert.unreachable
 import org.vorpal.research.kthelper.logging.log
