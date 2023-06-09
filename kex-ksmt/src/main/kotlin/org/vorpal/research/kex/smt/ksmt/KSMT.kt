@@ -11,7 +11,7 @@ const val generateStrings = false
 
 @SMTExpr(
     solver = "KSMT",
-    importPackages = ["io.ksmt", "io.ksmt.decl", "io.ksmt.sort", "io.ksmt.expr"],
+    importPackages = ["org.ksmt", "org.ksmt.decl", "org.ksmt.sort", "org.ksmt.expr"],
     context = "KContext",
     expr = "KAst",
     sort = "KSort",
@@ -22,7 +22,7 @@ abstract class KSMTSMTExpr
 
 @SMTMemory(
     solver = "KSMT",
-    importPackages = ["io.ksmt", "io.ksmt.decl", "io.ksmt.sort", "io.ksmt.expr"],
+    importPackages = ["org.ksmt", "org.ksmt.decl", "org.ksmt.sort", "org.ksmt.expr"],
     context = "KContext",
     byteSize = 32,
     generateString = generateStrings
@@ -31,7 +31,7 @@ abstract class KSMTSMTMemory
 
 @SMTExprFactory(
     solver = "KSMT",
-    importPackages = ["io.ksmt", "io.ksmt.decl", "io.ksmt.sort", "io.ksmt.expr"],
+    importPackages = ["org.ksmt", "org.ksmt.decl", "org.ksmt.sort", "org.ksmt.expr"],
     context = "KContext",
     contextInitializer = "simplificationMode = KContext.SimplificationMode.NO_SIMPLIFY",
     generateString = generateStrings
@@ -40,7 +40,7 @@ abstract class KSMTSMTExprFactory
 
 @SMTContext(
     solver = "KSMT",
-    importPackages = ["io.ksmt", "io.ksmt.decl", "io.ksmt.sort", "io.ksmt.expr"],
+    importPackages = ["org.ksmt", "org.ksmt.decl", "org.ksmt.sort", "org.ksmt.expr"],
     context = "KContext",
     generateString = generateStrings
 )
@@ -48,7 +48,7 @@ abstract class KSMTSMTContext
 
 @SMTConverter(
     solver = "KSMT",
-    importPackages = ["io.ksmt", "io.ksmt.decl", "io.ksmt.sort", "io.ksmt.expr"],
+    importPackages = ["org.ksmt", "org.ksmt.decl", "org.ksmt.sort", "org.ksmt.expr"],
     generateString = generateStrings
 )
 abstract class KSMTSMTConverter
