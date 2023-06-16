@@ -100,12 +100,19 @@ data class TraverserState(
 ) {
     fun mkTerm(value: Value): Term = when (value) {
         is Constant -> term { const(value) }
-        else -> try {
-            valueMap.getValue(value)
-        } catch (e: Throwable) {
-            TODO()
-        }
+        else -> valueMap.getValue(value)
     }
+
+    fun copyTermInfo(from: Term, to: Term): TraverserState = this.copy(
+        nullCheckedTerms = when (from) {
+            in nullCheckedTerms -> nullCheckedTerms.add(to)
+            else -> nullCheckedTerms
+        },
+        typeCheckedTerms = when (from) {
+            in typeCheckedTerms -> typeCheckedTerms.put(to, typeCheckedTerms[from]!!)
+            else -> typeCheckedTerms
+        }
+    )
 
     operator fun plus(state: PersistentSymbolicState): TraverserState = this.copy(
         symbolicState = this.symbolicState + state
@@ -402,7 +409,7 @@ abstract class SymbolicTraverser(
             state.copy(
                 symbolicState = state.symbolicState + clause,
                 valueMap = state.valueMap.put(inst, resultTerm)
-            ).also { currentState = it }
+            ).copyTermInfo(operandTerm, resultTerm).also { currentState = it }
         }
 
         checkReachabilityIncremental(traverserState, typeQuery)
@@ -553,18 +560,25 @@ abstract class SymbolicTraverser(
             }
 
             else -> typeCheckInc(traverserState, inst, callee, candidate.klass.symbolicClass).withHandler { state ->
-                val newCalleeTerm = generate(candidate.klass.symbolicClass)
-                val convertClause = StateClause(inst, state {
-                    newCalleeTerm equality (callee `as` candidate.klass.symbolicClass)
-                })
-                newValueMap = newValueMap.mapValues { (_, term) ->
-                    when (term) {
-                        callee -> newCalleeTerm
-                        else -> term
+                when {
+                    candidate.klass.asType.isSubtypeOf(callee.type.getKfgType(types)) -> {
+                        val newCalleeTerm = generate(candidate.klass.symbolicClass)
+                        val convertClause = StateClause(inst, state {
+                            newCalleeTerm equality (callee `as` candidate.klass.symbolicClass)
+                        })
+                        newValueMap = newValueMap.mapValues { (_, term) ->
+                            when (term) {
+                                callee -> newCalleeTerm
+                                else -> term
+                            }
+                        }.toPersistentMap()
+                        state.copy(
+                            symbolicState = state.symbolicState + convertClause
+                        ).copyTermInfo(callee, newCalleeTerm)
                     }
-                }.toPersistentMap()
-                state.copy(
-                    symbolicState = state.symbolicState + convertClause,
+
+                    else -> state
+                }.copy(
                     valueMap = newValueMap,
                     stackTrace = state.stackTrace.add(
                         SymbolicStackTraceElement(inst.parent.method, inst, state.valueMap)
