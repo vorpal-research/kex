@@ -516,10 +516,19 @@ abstract class SymbolicTraverser(
             inst,
             state { resultTerm equality (operandTerm `is` inst.targetType.symbolicType) }
         )
+
+        val previouslyCheckedType = traverserState.typeCheckedTerms[operandTerm]
+        val currentlyCheckedType = operandTerm.type.getKfgType(ctx.types)
+
         currentState = traverserState.copy(
             symbolicState = traverserState.symbolicState + clause,
             valueMap = traverserState.valueMap.put(inst, resultTerm),
-            typeCheckedTerms = traverserState.typeCheckedTerms.put(operandTerm, inst.targetType)
+            typeCheckedTerms = when {
+                previouslyCheckedType != null && currentlyCheckedType.isSubtypeOf(previouslyCheckedType) ->
+                    traverserState.typeCheckedTerms.put(operandTerm, inst.targetType)
+
+                else -> traverserState.typeCheckedTerms
+            }
         )
     }
 
