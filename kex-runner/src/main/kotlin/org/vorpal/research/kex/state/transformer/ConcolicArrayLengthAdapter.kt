@@ -21,11 +21,11 @@ class ConcolicArrayLengthAdapter : IncrementalTransformer, RecollectingTransform
 
     override fun apply(ps: PredicateState): PredicateState {
         val arrays = collectArrays(ps)
-        super.apply(ps)
+        val state = super.apply(ps).builder()
         for (array in arrays) {
-            currentBuilder.assume { (array.length() le maxArrayLength) equality true }
+            state.assume { (array.length() le maxArrayLength) equality true }
         }
-        return state.simplify()
+        return state.apply().simplify()
     }
 
     override fun apply(state: IncrementalPredicateState): IncrementalPredicateState {

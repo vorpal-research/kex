@@ -13,7 +13,7 @@ import kotlin.time.ExperimentalTime
 @InternalSerializationApi
 @DelicateCoroutinesApi
 class ConstraintCrashReproductionLongTest : CrashReproductionTest(
-    "descriptor-crash-reproduction",
+    "constraint-crash-reproduction",
     CrashReproductionChecker::runWithConstraintPreconditions
 ) {
 

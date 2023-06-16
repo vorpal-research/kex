@@ -74,7 +74,7 @@ class AsyncIncrementalChecker(
             )
         }
         +ClassAdapter(ctx.cm)
-        +AnnotationAdapter(method, AnnotationManager.defaultLoader)
+//        +AnnotationAdapter(method, AnnotationManager.defaultLoader)
         +IntrinsicAdapter
         +KexIntrinsicsAdapter()
         +EqualsTransformer()
