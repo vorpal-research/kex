@@ -7,39 +7,46 @@ import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.yield
-import io.ksmt.expr.KAndBinaryExpr
-import io.ksmt.expr.KAndNaryExpr
-import io.ksmt.expr.KExpr
-import io.ksmt.runner.core.WorkerInitializationFailedException
-import io.ksmt.solver.KModel
-import io.ksmt.solver.KSolver
-import io.ksmt.solver.KSolverConfiguration
-import io.ksmt.solver.KSolverException
-import io.ksmt.solver.KSolverStatus
-import io.ksmt.solver.portfolio.KPortfolioSolver
-import io.ksmt.solver.portfolio.KPortfolioSolverManager
-import io.ksmt.solver.runner.KSolverExecutorTimeoutException
-import io.ksmt.solver.z3.KZ3Solver
-import io.ksmt.sort.KBoolSort
-import io.ksmt.sort.KBvSort
-import io.ksmt.sort.KSort
+import org.ksmt.decl.KConstDecl
+import org.ksmt.expr.KAndBinaryExpr
+import org.ksmt.expr.KAndNaryExpr
+import org.ksmt.expr.KExpr
+import org.ksmt.runner.core.WorkerInitializationFailedException
+import org.ksmt.solver.KModel
+import org.ksmt.solver.KSolver
+import org.ksmt.solver.KSolverConfiguration
+import org.ksmt.solver.KSolverException
+import org.ksmt.solver.KSolverStatus
+import org.ksmt.solver.portfolio.KPortfolioSolver
+import org.ksmt.solver.portfolio.KPortfolioSolverManager
+import org.ksmt.solver.runner.KSolverExecutorTimeoutException
+import org.ksmt.solver.z3.KZ3Solver
+import org.ksmt.sort.KBoolSort
+import org.ksmt.sort.KBvSort
+import org.ksmt.sort.KSort
 import org.vorpal.research.kex.ExecutionContext
 import org.vorpal.research.kex.config.kexConfig
 import org.vorpal.research.kex.ktype.KexArray
 import org.vorpal.research.kex.ktype.KexInt
+import org.vorpal.research.kex.ktype.KexNull
 import org.vorpal.research.kex.ktype.KexReference
 import org.vorpal.research.kex.ktype.KexType
 import org.vorpal.research.kex.ktype.isArray
 import org.vorpal.research.kex.ktype.isString
 import org.vorpal.research.kex.ktype.kexType
+import org.vorpal.research.kex.smt.AbstractAsyncIncrementalSMTSolver
 import org.vorpal.research.kex.smt.AbstractAsyncSMTSolver
+import org.vorpal.research.kex.smt.AbstractIncrementalSMTSolver
 import org.vorpal.research.kex.smt.AbstractSMTSolver
+import org.vorpal.research.kex.smt.AsyncIncrementalSolver
 import org.vorpal.research.kex.smt.AsyncSolver
+import org.vorpal.research.kex.smt.IncrementalSolver
 import org.vorpal.research.kex.smt.MemoryShape
 import org.vorpal.research.kex.smt.Solver
 import org.vorpal.research.kex.smt.Result
 import org.vorpal.research.kex.smt.SMTModel
 import org.vorpal.research.kex.smt.ksmt.KSMTEngine.asExpr
+import org.vorpal.research.kex.state.PredicateQuery
 import org.vorpal.research.kex.state.PredicateState
 import org.vorpal.research.kex.state.term.ArrayIndexTerm
 import org.vorpal.research.kex.state.term.ArrayLoadTerm
@@ -52,7 +59,9 @@ import org.vorpal.research.kex.state.term.Term
 import org.vorpal.research.kex.state.term.numericValue
 import org.vorpal.research.kex.state.term.term
 import org.vorpal.research.kex.state.transformer.collectPointers
+import org.vorpal.research.kex.state.transformer.collectTypes
 import org.vorpal.research.kex.state.transformer.collectVariables
+import org.vorpal.research.kex.state.transformer.getConstStringMap
 import org.vorpal.research.kex.state.transformer.memspace
 import org.vorpal.research.kex.util.kapitalize
 import org.vorpal.research.kthelper.assert.ktassert
@@ -76,14 +85,18 @@ private val ksmtRunners = kexConfig.getIntValue("ksmt", "runners", 4)
 private val ksmtSolvers = kexConfig.getMultipleStringValue("ksmt", "solver")
 
 @Suppress("UNCHECKED_CAST")
-@Solver("ksmt")
 @AsyncSolver("ksmt")
-class KSMTSolver(private val executionContext: ExecutionContext) : AbstractSMTSolver, AbstractAsyncSMTSolver {
+@AsyncIncrementalSolver("ksmt")
+@Solver("ksmt")
+@IncrementalSolver("ksmt")
+class KSMTSolver(
+    private val executionContext: ExecutionContext
+) : AbstractSMTSolver, AbstractAsyncSMTSolver, AbstractIncrementalSMTSolver, AbstractAsyncIncrementalSMTSolver {
     companion object {
         private val portfolioSolverManager: KPortfolioSolverManager by lazy {
             KPortfolioSolverManager(
                 solvers = ksmtSolvers.map {
-                    Class.forName("io.ksmt.solver.${it}.K${it.kapitalize()}Solver").kotlin
+                    Class.forName("org.ksmt.solver.${it}.K${it.kapitalize()}Solver").kotlin
                             as KClass<out KSolver<out KSolverConfiguration>>
                 },
                 portfolioPoolSize = ksmtRunners,
@@ -127,10 +140,13 @@ class KSMTSolver(private val executionContext: ExecutionContext) : AbstractSMTSo
             }
         }
 
-        val ctx = KSMTContext(ef)
+        val types = collectTypes(executionContext, state).filter { it !is KexNull }
+            .mapTo(mutableSetOf()) { it.getKfgType(executionContext.types) }
+        ef.initTypes(types)
+        ef.initStrings(getConstStringMap(state))
 
+        val ctx = KSMTContext(ef)
         val converter = KSMTConverter(executionContext)
-        converter.init(state, ef)
         val ksmtState = converter.convert(state, ef, ctx)
         val ksmtQuery = converter.convert(query, ef, ctx)
 
@@ -597,6 +613,175 @@ class KSMTSolver(private val executionContext: ExecutionContext) : AbstractSMTSo
             }.toMap(),
             typeMap
         )
+    }
+
+    override fun isSatisfiable(state: PredicateState, queries: List<PredicateQuery>): List<Result> = runBlocking {
+        isSatisfiableAsync(state, queries)
+    }
+
+    override suspend fun isSatisfiableAsync(state: PredicateState, queries: List<PredicateQuery>): List<Result> = try {
+        if (logQuery) {
+            log.run {
+                debug("KSMT solver check")
+                debug("State: $state")
+                debug("Queries: ${queries.joinToString("\n")}")
+            }
+        }
+
+        val allTypes = buildSet {
+            addAll(collectTypes(executionContext, state))
+            for (query in queries) {
+                addAll(collectTypes(executionContext, query.hardConstraints))
+                for (softConstraint in query.softConstraints) {
+                    addAll(collectTypes(executionContext, query.hardConstraints))
+                }
+            }
+        }.filter { it !is KexNull }.mapTo(mutableSetOf()) { it.getKfgType(executionContext.types) }
+        val allConstStrings = buildMap {
+            putAll(getConstStringMap(state))
+            for (query in queries) {
+                putAll(getConstStringMap(query.hardConstraints))
+            }
+        }
+        ef.initTypes(allTypes)
+        ef.initStrings(allConstStrings)
+
+        val ctx = KSMTContext(ef)
+        val converter = KSMTConverter(executionContext)
+        val ksmtState = converter.convert(state, ef, ctx)
+        val ksmtQueries = queries.map { (hard, soft) ->
+            converter.convert(hard, ef, ctx) to soft.map { converter.convert(it, ef, ctx) }
+        }
+
+        log.debug("Check started")
+        val results = checkIncremental(ksmtState, ksmtQueries)
+        log.debug("Check finished")
+        results.mapIndexed { index, (status, any) ->
+            when (status) {
+                KSolverStatus.UNSAT -> Result.UnsatResult
+                KSolverStatus.UNKNOWN -> Result.UnknownResult(any as String)
+                KSolverStatus.SAT -> Result.SatResult(
+                    collectModel(
+                        ctx,
+                        any as KModel,
+                        state + queries[index].hardConstraints
+                    )
+                )
+            }
+        }
+    } catch (e: KSolverException) {
+        when (e.cause) {
+            is TimeoutCancellationException ->
+                queries.map { Result.UnknownResult(e.message ?: "Exception in KSMT") }
+
+            is KSolverExecutorTimeoutException ->
+                queries.map { Result.UnknownResult(e.message ?: "Exception in KSMT") }
+
+            else -> {
+                log.warn("KSMT thrown an exception during check", e)
+                throw e
+            }
+        }
+    } catch (e: WorkerInitializationFailedException) {
+        if (e.cause !is TimeoutCancellationException) {
+            log.warn("KSMT thrown an exception during worker initialization", e)
+        }
+        queries.map { Result.UnknownResult(e.message ?: "Exception in KSMT") }
+    }
+
+    private suspend fun checkIncremental(
+        state: Bool_,
+        queries: List<Pair<Bool_, List<Bool_>>>
+    ): List<Pair<KSolverStatus, Any>> = buildSolver().use { solver ->
+        solver.assertAndTrackAsync(
+            state.asAxiom() as KExpr<KBoolSort>,
+            ef.ctx.mkConstDecl("State", ef.ctx.boolSort)
+        )
+        solver.assertAndTrackAsync(
+            ef.buildConstClassAxioms().asAxiom() as KExpr<KBoolSort>,
+            ef.ctx.mkConstDecl("ClassAxioms", ef.ctx.boolSort)
+        )
+        solver.push()
+
+        return queries.map { (hardConstraints, softConstraints) ->
+            solver.assertAndTrackAsync(
+                hardConstraints.asAxiom() as KExpr<KBoolSort>,
+                ef.ctx.mkConstDecl("HardConstraints", ef.ctx.boolSort)
+            )
+            val softConstraintsMap = when {
+                softConstraints.isNotEmpty() -> {
+                    solver.push()
+                    softConstraints.withIndex().associate { (index, softConstraint) ->
+                        val expr = ef.ctx.mkConstDecl("SoftConstraint$index", ef.ctx.boolSort)
+                        solver.assertAndTrack(softConstraint.asAxiom() as KExpr<KBoolSort>, expr)
+                        (expr as KConstDecl<KBoolSort>) to softConstraint.asAxiom() as KExpr<KBoolSort>
+                    }
+                }
+
+                else -> emptyMap()
+            }
+
+            log.debug("Running z3 solver")
+            if (printSMTLib) {
+                log.debug("SMTLib formula:")
+                log.debug(solver)
+            }
+
+            when (val result = solver.checkAndMinimize(softConstraintsMap)) {
+                KSolverStatus.SAT -> {
+                    val model = solver.modelAsync()
+                    if (logFormulae) log.debug(model)
+                    result to model
+                }
+
+                KSolverStatus.UNSAT -> {
+                    val core = solver.unsatCoreAsync()
+                    log.debug("Unsat core: $core")
+                    result to core
+                }
+
+                KSolverStatus.UNKNOWN -> {
+                    val reason = solver.reasonOfUnknownAsync()
+                    log.debug(reason)
+                    result to reason
+                }
+            }.also {
+                solver.pop()
+                if (softConstraints.isNotEmpty()) {
+                    solver.pop()
+                }
+                solver.push()
+            }
+        }
+    }
+
+    private suspend fun KPortfolioSolver.checkAndMinimize(
+        softConstraintsMap: Map<KConstDecl<KBoolSort>, KExpr<KBoolSort>>
+    ): KSolverStatus {
+        var result = this.check()
+        return when (result) {
+            KSolverStatus.UNSAT -> {
+                while (result == KSolverStatus.UNSAT && softConstraintsMap.isNotEmpty()) {
+                    val softCopies = softConstraintsMap.toMutableMap()
+                    val exprToDeclMappings = softConstraintsMap.keys
+                        .associateBy { it.asExpr(ef.ctx) as KExpr<KBoolSort> }
+                    val core = this.unsatCoreAsync().toSet()
+                    if (core.any { exprToDeclMappings[it] !in softCopies }) break
+                    else {
+                        this.pop()
+                        this.push()
+                        for (key in core) softCopies.remove(exprToDeclMappings[key])
+                        for ((expr, softConstraint) in softCopies) {
+                            this.assertAndTrackAsync(softConstraint, expr)
+                        }
+                        result = this.checkAsync(timeout.seconds)
+                    }
+                }
+                result
+            }
+
+            else -> result
+        }
     }
 
     override fun close() {

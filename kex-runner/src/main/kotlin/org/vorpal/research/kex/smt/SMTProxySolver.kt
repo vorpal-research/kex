@@ -39,6 +39,34 @@ class SMTProxySolver(
 
     constructor(ctx: ExecutionContext, engine: String) : this(ctx, getSolver(ctx, engine))
 }
+class IncrementalSMTProxySolver(
+    ctx: ExecutionContext,
+    private val solver: AbstractIncrementalSMTSolver = getSolver(ctx, engine)
+) : AbstractIncrementalSMTSolver by solver {
+
+    companion object {
+        private val solvers = run {
+            val loader = Thread.currentThread().contextClassLoader
+            val resource = loader.getResourceAsStream("incremental-solvers.json")
+                ?: fail { log.error("Could not load smt solver inheritance info") }
+            val inheritanceInfo = InheritanceInfo.fromJson(resource.bufferedReader().readText())
+            resource.close()
+
+            inheritanceInfo.inheritors.associate {
+                it.name to loader.loadClass(it.inheritorClass)
+            }
+        }
+
+        fun getSolver(ctx: ExecutionContext, engine: String): AbstractIncrementalSMTSolver {
+            val solverClass = solvers[engine] ?: unreachable { log.error("Unknown engine name: $engine") }
+            val constructor = solverClass.getConstructor(ExecutionContext::class.java)
+            return constructor.newInstance(ctx) as AbstractIncrementalSMTSolver
+        }
+    }
+
+    constructor(ctx: ExecutionContext, engine: String) : this(ctx, getSolver(ctx, engine))
+}
+
 
 class AsyncSMTProxySolver(
     ctx: ExecutionContext,
@@ -62,6 +90,34 @@ class AsyncSMTProxySolver(
             val solverClass = solvers[engine] ?: unreachable { log.error("Unknown engine name: $engine") }
             val constructor = solverClass.getConstructor(ExecutionContext::class.java)
             return constructor.newInstance(ctx) as AbstractAsyncSMTSolver
+        }
+    }
+
+    constructor(ctx: ExecutionContext, engine: String) : this(ctx, getSolver(ctx, engine))
+}
+
+class AsyncIncrementalSMTProxySolver(
+    ctx: ExecutionContext,
+    private val solver: AbstractAsyncIncrementalSMTSolver = getSolver(ctx, engine)
+) : AbstractAsyncIncrementalSMTSolver by solver {
+
+    companion object {
+        private val solvers = run {
+            val loader = Thread.currentThread().contextClassLoader
+            val resource = loader.getResourceAsStream("async-incremental-solvers.json")
+                ?: fail { log.error("Could not load smt solver inheritance info") }
+            val inheritanceInfo = InheritanceInfo.fromJson(resource.bufferedReader().readText())
+            resource.close()
+
+            inheritanceInfo.inheritors.associate {
+                it.name to loader.loadClass(it.inheritorClass)
+            }
+        }
+
+        fun getSolver(ctx: ExecutionContext, engine: String): AbstractAsyncIncrementalSMTSolver {
+            val solverClass = solvers[engine] ?: unreachable { log.error("Unknown engine name: $engine") }
+            val constructor = solverClass.getConstructor(ExecutionContext::class.java)
+            return constructor.newInstance(ctx) as AbstractAsyncIncrementalSMTSolver
         }
     }
 

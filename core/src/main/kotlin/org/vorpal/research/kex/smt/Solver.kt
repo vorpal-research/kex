@@ -1,5 +1,6 @@
 package org.vorpal.research.kex.smt
 
+import org.vorpal.research.kex.state.PredicateQuery
 import org.vorpal.research.kex.state.PredicateState
 import java.io.Closeable
 
@@ -42,4 +43,30 @@ interface AbstractAsyncSMTSolver : Closeable {
     suspend fun isReachableAsync(state: PredicateState): Result
     suspend fun isPathPossibleAsync(state: PredicateState, path: PredicateState): Result
     suspend fun isViolatedAsync(state: PredicateState, query: PredicateState): Result
+}
+
+@AbstractIncrementalSolver
+interface AbstractIncrementalSMTSolver : AbstractSMTSolver, Closeable {
+    fun isSatisfiable(
+        state: PredicateState,
+        query: PredicateQuery
+    ): Result = isSatisfiable(state, listOf(query)).single()
+
+    fun isSatisfiable(
+        state: PredicateState,
+        queries: List<PredicateQuery>
+    ): List<Result>
+}
+
+@AbstractAsyncIncrementalSolver
+interface AbstractAsyncIncrementalSMTSolver : AbstractAsyncSMTSolver, Closeable {
+    suspend fun isSatisfiableAsync(
+        state: PredicateState,
+        query: PredicateQuery
+    ): Result = isSatisfiableAsync(state, listOf(query)).single()
+
+    suspend fun isSatisfiableAsync(
+        state: PredicateState,
+        queries: List<PredicateQuery>
+    ): List<Result>
 }

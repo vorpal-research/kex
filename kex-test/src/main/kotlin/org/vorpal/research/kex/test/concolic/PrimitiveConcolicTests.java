@@ -14,11 +14,11 @@ public class PrimitiveConcolicTests {
     }
 
     public void testDouble(double d) {
-        if (d > 0.0) {
+        if (d > 1.0) {
             AssertIntrinsics.kexAssert(true);
         } else if (d == 0.0) {
             AssertIntrinsics.kexAssert(true);
-        } else {
+        } else if (d < -1.0) {
             AssertIntrinsics.kexAssert(true);
         }
     }

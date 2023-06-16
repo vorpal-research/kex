@@ -1,23 +1,81 @@
 package org.vorpal.research.kex.state.transformer
 
-import org.vorpal.research.kex.ktype.*
+import kotlinx.collections.immutable.toPersistentList
+import org.vorpal.research.kex.ktype.KexBool
+import org.vorpal.research.kex.ktype.KexByte
+import org.vorpal.research.kex.ktype.KexChar
+import org.vorpal.research.kex.ktype.KexDouble
+import org.vorpal.research.kex.ktype.KexFloat
+import org.vorpal.research.kex.ktype.KexInt
+import org.vorpal.research.kex.ktype.KexLong
+import org.vorpal.research.kex.ktype.KexNull
+import org.vorpal.research.kex.ktype.KexShort
+import org.vorpal.research.kex.state.IncrementalPredicateState
+import org.vorpal.research.kex.state.PredicateQuery
 import org.vorpal.research.kex.state.predicate.EqualityPredicate
 import org.vorpal.research.kex.state.predicate.InequalityPredicate
 import org.vorpal.research.kex.state.predicate.Predicate
 import org.vorpal.research.kex.state.predicate.predicate
-import org.vorpal.research.kex.state.term.*
+import org.vorpal.research.kex.state.term.BinaryTerm
+import org.vorpal.research.kex.state.term.CharAtTerm
+import org.vorpal.research.kex.state.term.CmpTerm
+import org.vorpal.research.kex.state.term.ConcatTerm
+import org.vorpal.research.kex.state.term.ConstBoolTerm
+import org.vorpal.research.kex.state.term.ConstByteTerm
+import org.vorpal.research.kex.state.term.ConstCharTerm
+import org.vorpal.research.kex.state.term.ConstClassTerm
+import org.vorpal.research.kex.state.term.ConstDoubleTerm
+import org.vorpal.research.kex.state.term.ConstFloatTerm
+import org.vorpal.research.kex.state.term.ConstIntTerm
+import org.vorpal.research.kex.state.term.ConstLongTerm
+import org.vorpal.research.kex.state.term.ConstShortTerm
+import org.vorpal.research.kex.state.term.ConstStringTerm
+import org.vorpal.research.kex.state.term.IndexOfTerm
+import org.vorpal.research.kex.state.term.NegTerm
+import org.vorpal.research.kex.state.term.StringContainsTerm
+import org.vorpal.research.kex.state.term.StringLengthTerm
+import org.vorpal.research.kex.state.term.StringParseTerm
+import org.vorpal.research.kex.state.term.SubstringTerm
+import org.vorpal.research.kex.state.term.Term
+import org.vorpal.research.kex.state.term.ToStringTerm
+import org.vorpal.research.kex.state.term.term
 import org.vorpal.research.kfg.ir.value.instruction.BinaryOpcode
 import org.vorpal.research.kfg.ir.value.instruction.CmpOpcode
-import org.vorpal.research.kthelper.*
+import org.vorpal.research.kthelper.and
+import org.vorpal.research.kthelper.compareTo
+import org.vorpal.research.kthelper.div
+import org.vorpal.research.kthelper.minus
+import org.vorpal.research.kthelper.or
+import org.vorpal.research.kthelper.plus
+import org.vorpal.research.kthelper.rem
+import org.vorpal.research.kthelper.shl
+import org.vorpal.research.kthelper.shr
+import org.vorpal.research.kthelper.times
+import org.vorpal.research.kthelper.toInt
+import org.vorpal.research.kthelper.unaryMinus
+import org.vorpal.research.kthelper.ushr
+import org.vorpal.research.kthelper.xor
 import kotlin.math.abs
 
-object ConstantPropagator : Transformer<ConstantPropagator> {
+object ConstantPropagator : Transformer<ConstantPropagator>, IncrementalTransformer {
     private const val epsilon = 1e-5
 
     infix fun Double.eq(other: Double) = (this - other) < epsilon
     infix fun Double.neq(other: Double) = (this - other) >= epsilon
     infix fun Float.eq(other: Float) = (this - other) < epsilon
     infix fun Float.neq(other: Float) = (this - other) >= epsilon
+
+    override fun apply(state: IncrementalPredicateState): IncrementalPredicateState {
+        return IncrementalPredicateState(
+            apply(state.state),
+            state.queries.map { query ->
+                PredicateQuery(
+                    apply(query.hardConstraints),
+                    query.softConstraints.map { transform(it) }.toPersistentList()
+                )
+            }
+        )
+    }
 
     override fun transformBinaryTerm(term: BinaryTerm): Term {
         val lhv = getConstantValue(term.lhv) ?: return term

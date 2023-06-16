@@ -2,10 +2,23 @@ package org.vorpal.research.kex.state.transformer
 
 import org.vorpal.research.kex.state.BasicState
 import org.vorpal.research.kex.state.ChainState
+import org.vorpal.research.kex.state.IncrementalPredicateState
+import org.vorpal.research.kex.state.PredicateQuery
 import org.vorpal.research.kex.state.PredicateState
 
-class Optimizer : Transformer<Optimizer> {
+class Optimizer : Transformer<Optimizer>, IncrementalTransformer {
     private val cache = hashMapOf<Pair<PredicateState, PredicateState>, PredicateState?>()
+    override fun apply(state: IncrementalPredicateState): IncrementalPredicateState {
+        return IncrementalPredicateState(
+            apply(state.state),
+            state.queries.map { query ->
+                PredicateQuery(
+                    apply(query.hardConstraints),
+                    query.softConstraints
+                )
+            }
+        )
+    }
 
     override fun transformChainState(ps: ChainState): PredicateState {
         val merged = merge(ps.base, ps.curr)

@@ -2,6 +2,8 @@
 
 package org.vorpal.research.kex.state
 
+import kotlinx.collections.immutable.PersistentList
+import kotlinx.collections.immutable.persistentListOf
 import kotlinx.serialization.Serializable
 import org.vorpal.research.kex.BaseType
 import org.vorpal.research.kex.InheritanceInfo
@@ -272,3 +274,14 @@ abstract class PredicateState : InheritanceTypeInfo {
     operator fun plus(state: PredicateState) = (builder() + state).apply()
     operator fun plus(states: List<PredicateState>) = (builder() + states).apply()
 }
+
+
+data class PredicateQuery(
+    val hardConstraints: PredicateState,
+    val softConstraints: PersistentList<Predicate> = persistentListOf()
+)
+
+data class IncrementalPredicateState(
+    val state: PredicateState,
+    val queries: List<PredicateQuery>
+)

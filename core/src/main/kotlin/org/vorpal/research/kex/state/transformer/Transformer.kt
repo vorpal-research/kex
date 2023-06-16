@@ -2,6 +2,7 @@ package org.vorpal.research.kex.state.transformer
 
 import org.vorpal.research.kex.TransformerBase
 import org.vorpal.research.kex.state.ChoiceState
+import org.vorpal.research.kex.state.IncrementalPredicateState
 import org.vorpal.research.kex.state.PredicateState
 import org.vorpal.research.kex.state.StateBuilder
 import org.vorpal.research.kex.state.predicate.Predicate
@@ -19,7 +20,10 @@ interface RecollectingTransformer<T> : Transformer<RecollectingTransformer<T>> {
 
     override fun apply(ps: PredicateState): PredicateState {
         super.transform(ps)
-        return state.simplify()
+        return state.simplify().also {
+            builders.pop()
+            builders.push(StateBuilder())
+        }
     }
 
     override fun transformChoice(ps: ChoiceState): PredicateState {
@@ -40,4 +44,8 @@ interface RecollectingTransformer<T> : Transformer<RecollectingTransformer<T>> {
         if (result != nothing()) currentBuilder += result
         return result
     }
+}
+
+interface IncrementalTransformer {
+    fun apply(state: IncrementalPredicateState): IncrementalPredicateState
 }
