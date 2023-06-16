@@ -102,12 +102,18 @@ class ExceptionPreconditionBuilderImpl(
                     persistentSymbolicState(
                         path = persistentPathConditionOf(
                             PathClause(PathClauseType.BOUNDS_CHECK, location, path {
+                                (arrayTerm eq null) equality false
+                            }),
+                            PathClause(PathClauseType.BOUNDS_CHECK, location, path {
                                 (indexTerm ge 0) equality false
                             })
                         )
                     ),
                     persistentSymbolicState(
                         path = persistentPathConditionOf(
+                            PathClause(PathClauseType.BOUNDS_CHECK, location, path {
+                                (arrayTerm eq null) equality false
+                            }),
                             PathClause(PathClauseType.BOUNDS_CHECK, location, path {
                                 (indexTerm lt arrayTerm.length()) equality false
                             }),

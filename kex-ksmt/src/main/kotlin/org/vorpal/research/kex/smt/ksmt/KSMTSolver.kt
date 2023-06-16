@@ -656,11 +656,17 @@ class KSMTSolver(
         log.debug("Check started")
         val results = checkIncremental(ksmtState, ksmtQueries)
         log.debug("Check finished")
-        results.map { (status, any) ->
+        results.mapIndexed { index, (status, any) ->
             when (status) {
                 KSolverStatus.UNSAT -> Result.UnsatResult
                 KSolverStatus.UNKNOWN -> Result.UnknownResult(any as String)
-                KSolverStatus.SAT -> Result.SatResult(collectModel(ctx, any as KModel, state))
+                KSolverStatus.SAT -> Result.SatResult(
+                    collectModel(
+                        ctx,
+                        any as KModel,
+                        state + queries[index].hardConstraints
+                    )
+                )
             }
         }
     } catch (e: KSolverException) {
@@ -686,9 +692,7 @@ class KSMTSolver(
     private suspend fun checkIncremental(
         state: Bool_,
         queries: List<Pair<Bool_, List<Bool_>>>
-    ): List<Pair<KSolverStatus, Any>> {
-        val solver = buildSolver()
-
+    ): List<Pair<KSolverStatus, Any>> = buildSolver().use { solver ->
         solver.assertAndTrackAsync(
             state.asAxiom() as KExpr<KBoolSort>,
             ef.ctx.mkConstDecl("State", ef.ctx.boolSort)

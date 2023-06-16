@@ -36,7 +36,8 @@ private val maxArrayLength = kexConfig.getIntValue("smt", "maxArrayLength", 1000
 @IncrementalSolver("z3")
 class Z3Solver(
     private val executionContext: ExecutionContext
-) : Z3NativeLoader(), AbstractSMTSolver, AbstractAsyncSMTSolver, AbstractIncrementalSMTSolver, AbstractAsyncIncrementalSMTSolver {
+) : Z3NativeLoader(), AbstractSMTSolver, AbstractAsyncSMTSolver, AbstractIncrementalSMTSolver,
+    AbstractAsyncIncrementalSMTSolver {
     private val ef = Z3ExprFactory()
 
     override fun isReachable(state: PredicateState) =
@@ -107,11 +108,13 @@ class Z3Solver(
                 if (logFormulae) log.debug(model)
                 result to model
             }
+
             Status.UNSATISFIABLE -> {
                 val core = solver.unsatCore.toList()
                 log.debug("Unsat core: $core")
                 result to core
             }
+
             Status.UNKNOWN -> {
                 val reason = solver.reasonUnknown
                 log.debug(reason)
@@ -306,6 +309,7 @@ class Z3Solver(
                     arrayPair.first[modelIndex] = initialValue
                     arrayPair.second[modelIndex] = value
                 }
+
                 is FieldLoadTerm -> {}
                 is FieldTerm -> {
                     val name = "${ptr.klass}.${ptr.fieldName}"
@@ -319,6 +323,7 @@ class Z3Solver(
                     )
                     properties.recoverBitvectorProperty(ctx, ptr.owner, memspace, model, "type")
                 }
+
                 else -> {
                     val startMem = ctx.getWordInitialMemory(memspace)
                     val endMem = ctx.getWordMemory(memspace)
@@ -367,7 +372,13 @@ class Z3Solver(
                                 indices += indexTerm
                         }
                     } else if (ptr is ConstClassTerm || ptr is ClassAccessTerm) {
-                        properties.recoverBitvectorProperty(ctx, ptr, memspace, model, ConstClassTerm.TYPE_INDEX_PROPERTY)
+                        properties.recoverBitvectorProperty(
+                            ctx,
+                            ptr,
+                            memspace,
+                            model,
+                            ConstClassTerm.TYPE_INDEX_PROPERTY
+                        )
                     }
 
                     properties.recoverBitvectorProperty(ctx, ptr, memspace, model, "type")
@@ -476,11 +487,17 @@ class Z3Solver(
         log.debug("Check started")
         val results = checkIncremental(z3State, z3Queries)
         log.debug("Check finished")
-        return results.map { (status, any) ->
+        return results.mapIndexed { index, (status, any) ->
             when (status) {
                 Status.UNSATISFIABLE -> Result.UnsatResult
                 Status.UNKNOWN -> Result.UnknownResult(any as String)
-                Status.SATISFIABLE -> Result.SatResult(collectModel(ctx, any as Model, state))
+                Status.SATISFIABLE -> Result.SatResult(
+                    collectModel(
+                        ctx,
+                        any as Model,
+                        state + queries[index].hardConstraints
+                    )
+                )
             }
         }
     }
@@ -515,6 +532,7 @@ class Z3Solver(
                         expr to softConstraint.asAxiom() as BoolExpr
                     }
                 }
+
                 else -> emptyMap()
             }
 
@@ -573,6 +591,7 @@ class Z3Solver(
                 }
                 result
             }
+
             else -> result
         }
     }

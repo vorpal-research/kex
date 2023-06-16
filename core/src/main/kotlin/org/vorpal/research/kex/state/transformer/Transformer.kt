@@ -20,7 +20,10 @@ interface RecollectingTransformer<T> : Transformer<RecollectingTransformer<T>> {
 
     override fun apply(ps: PredicateState): PredicateState {
         super.transform(ps)
-        return state.simplify()
+        return state.simplify().also {
+            builders.pop()
+            builders.push(StateBuilder())
+        }
     }
 
     override fun transformChoice(ps: ChoiceState): PredicateState {

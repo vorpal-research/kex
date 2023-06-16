@@ -2,7 +2,6 @@ package org.vorpal.research.kex.state.transformer
 
 import org.vorpal.research.kex.ExecutionContext
 import org.vorpal.research.kex.config.kexConfig
-import org.vorpal.research.kex.ktype.KexClass
 import org.vorpal.research.kex.ktype.KexInt
 import org.vorpal.research.kex.ktype.KexReference
 import org.vorpal.research.kex.ktype.KexString
@@ -12,6 +11,7 @@ import org.vorpal.research.kex.state.IncrementalPredicateState
 import org.vorpal.research.kex.state.PredicateState
 import org.vorpal.research.kex.state.StateBuilder
 import org.vorpal.research.kex.state.basic
+import org.vorpal.research.kex.state.emptyState
 import org.vorpal.research.kex.state.predicate.axiom
 import org.vorpal.research.kex.state.term.FieldLoadTerm
 import org.vorpal.research.kex.state.term.StaticClassRefTerm
@@ -23,7 +23,7 @@ import org.vorpal.research.kex.util.asmString
 import org.vorpal.research.kex.util.isStatic
 import org.vorpal.research.kex.util.loadClass
 import org.vorpal.research.kfg.type.ClassType
-import org.vorpal.research.kthelper.collection.dequeOf
+import org.vorpal.research.kthelper.assert.ktassert
 import org.vorpal.research.kthelper.logging.log
 import org.vorpal.research.kthelper.tryOrNull
 
@@ -34,54 +34,51 @@ val ignores by lazy {
 
 class ConstEnumAdapter(
     val context: ExecutionContext
-) : RecollectingTransformer<ConstEnumAdapter>, IncrementalTransformer {
+) : Transformer<ConstEnumAdapter>, IncrementalTransformer {
     val cm get() = context.cm
-    override val builders = dequeOf(StateBuilder())
-
     private val Term.isEnum get() = (this.type.getKfgType(cm.type) as? ClassType)?.klass?.isEnum ?: false
 
-    private fun getEnumFields(klass: Class<*>): List<Any> =
-        klass.allFields
-            .filter { it.isStatic && it.isEnumConstant }
-            .map {
-                it.isAccessible = true
-                it.get(null)
-            }
+    companion object {
+        private val enumConstantsMap = mutableMapOf<KexType, Pair<Set<Term>, PredicateState>>()
+        private fun getEnumInitializers(context: ExecutionContext, type: KexType) = enumConstantsMap.getOrPut(type) {
+            prepareEnumConstants(context, type)
+        }
 
-    private fun getEnumName(obj: Any): String {
-        return (obj as Enum<*>).name
-    }
-
-    private fun getEnumOrdinal(obj: Any): Int {
-        return (obj as Enum<*>).ordinal
-    }
-
-    private fun prepareEnumConstants(ps: PredicateState): Map<KexType, Set<Term>> {
-        val enumClasses = TermCollector
-            .getFullTermSet(ps)
-            .mapNotNullTo(mutableSetOf()) {
-                val kfgType = it.type.getKfgType(context.types)
-                when {
-                    kfgType is ClassType && kfgType.klass.isEnum -> kfgType.kexType
-                    else -> null
+        private fun getEnumFields(klass: Class<*>): List<Any> =
+            klass.allFields
+                .filter { it.isStatic && it.isEnumConstant }
+                .map {
+                    it.isAccessible = true
+                    it.get(null)
                 }
-            }
-            .filterNot { it.toString() in ignores }
-            .mapTo(mutableSetOf()) { term { staticRef(it as KexClass) } }
 
-        val enumFields = mutableMapOf<KexType, Set<Term>>()
+        private fun getEnumName(obj: Any): String {
+            return (obj as Enum<*>).name
+        }
 
-        for (staticClass in enumClasses) {
+        private fun getEnumOrdinal(obj: Any): Int {
+            return (obj as Enum<*>).ordinal
+        }
+
+        private fun prepareEnumConstants(
+            context: ExecutionContext,
+            type: KexType
+        ): Pair<Set<Term>, PredicateState> {
+            val kfgType = type.getKfgType(context.types)
+            ktassert(kfgType is ClassType && kfgType.klass.isEnum)
+            val staticClass = term { staticRef((kfgType as ClassType).klass) }
+            val enumFields = mutableSetOf<Term>()
+            val state = emptyState().builder()
+
             try {
-                val enumKlass = context.loader.loadClass(cm.type, staticClass.type)
-                val fields = mutableSetOf<Term>()
+                val enumKlass = context.loader.loadClass(context.cm.type, staticClass.type)
 
                 for (enumField in getEnumFields(enumKlass)) {
                     val enumName = getEnumName(enumField)
                     val enumOrdinal = getEnumOrdinal(enumField)
                     val enumFieldTerm = staticClass.field(staticClass.type, enumName)
 
-                    currentBuilder += basic {
+                    state += basic {
                         val enumLoad = generate(staticClass.type)
                         state { enumLoad.initializeNew() }
                         state {
@@ -93,18 +90,22 @@ class ConstEnumAdapter(
                         state {
                             enumFieldTerm.initialize(enumLoad)
                         }
-                        fields += enumLoad
+                        enumFields += enumLoad
                     }
                 }
-                enumFields[staticClass.type] = fields
             } catch (e: Throwable) {
                 log.error("Error while inlining enum constant ${staticClass.type}", e)
             }
+            return enumFields to state.apply()
         }
-        return enumFields
     }
 
-    private fun mapEnumTerms(ps: PredicateState, enumConstantsMap: Map<KexType, Set<Term>>) {
+    private fun mapEnumTerms(ps: PredicateState, enumClasses: Set<KexType>): PredicateState {
+        val builder = StateBuilder()
+        for (enumClass in enumClasses) {
+            builder += getEnumInitializers(context, enumClass).second
+        }
+
         val enumValueTerms = TermCollector
             .getFullTermSet(ps)
             .asSequence()
@@ -112,12 +113,15 @@ class ConstEnumAdapter(
             .filterNot { it.type is KexReference }
             .filterNot { it is FieldLoadTerm }
             .filterNot { it is StaticClassRefTerm }
-            .filterNot { it in enumConstantsMap.getOrElse(it.type, ::setOf) }
-            .toList()
+            .filterNotTo(mutableListOf()) {
+                it in getEnumInitializers(context, it.type).first
+            }
+
+        builder += ps
 
         for (enumValueTerm in enumValueTerms) {
             var constraint: Term? = null
-            for (constant in enumConstantsMap.getOrElse(enumValueTerm.type, ::setOf)) {
+            for (constant in getEnumInitializers(context, enumValueTerm.type).first) {
                 constraint = when (constraint) {
                     null -> term { enumValueTerm eq constant }
                     else -> term { constraint!! or (enumValueTerm eq constant) }
@@ -125,28 +129,34 @@ class ConstEnumAdapter(
             }
 
             constraint?.apply {
-                currentBuilder += axiom { constraint equality true }
+                builder += axiom { constraint equality true }
             }
         }
+        return builder.apply()
     }
 
-    override fun apply(ps: PredicateState): PredicateState = tryOrNull {
-        val enumConstantsMap = prepareEnumConstants(ps)
-        apply(ps, enumConstantsMap)
-    } ?: ps
+    private fun findAccessedEnums(ps: PredicateState): Set<KexType> = TermCollector
+        .getFullTermSet(ps)
+        .mapNotNullTo(mutableSetOf()) {
+            val kfgType = it.type.getKfgType(context.types)
+            when {
+                kfgType is ClassType && kfgType.klass.isEnum -> kfgType.kexType
+                else -> null
+            }
+        }
+        .filterNotTo(mutableSetOf()) { it.toString() in ignores }
 
-    private fun apply(ps: PredicateState, enumConstantsMap: Map<KexType, Set<Term>>) = tryOrNull {
-        super.apply(ps)
-        mapEnumTerms(ps, enumConstantsMap)
-        state.simplify()
-    } ?: ps
+    override fun apply(ps: PredicateState): PredicateState = apply(ps, findAccessedEnums(ps))
 
+    private fun apply(ps: PredicateState, enumClasses: Set<KexType>) = tryOrNull {
+        mapEnumTerms(ps, enumClasses).simplify()
+    } ?: ps
 
     override fun apply(state: IncrementalPredicateState): IncrementalPredicateState {
-        val enumConstantsMap = buildMap {
-            putAll(prepareEnumConstants(state.state))
+        val enumConstantsMap = buildSet {
+            addAll(findAccessedEnums(state.state))
             for (query in state.queries) {
-                putAll(prepareEnumConstants(query.hardConstraints))
+                addAll(findAccessedEnums(query.hardConstraints))
             }
         }
         return IncrementalPredicateState(

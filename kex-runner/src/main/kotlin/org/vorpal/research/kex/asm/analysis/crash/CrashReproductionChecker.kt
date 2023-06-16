@@ -10,12 +10,16 @@ import org.vorpal.research.kex.asm.analysis.crash.precondition.ConstraintExcepti
 import org.vorpal.research.kex.asm.analysis.crash.precondition.DescriptorExceptionPreconditionBuilder
 import org.vorpal.research.kex.asm.analysis.crash.precondition.ExceptionPreconditionBuilder
 import org.vorpal.research.kex.asm.analysis.crash.precondition.ExceptionPreconditionBuilderImpl
+import org.vorpal.research.kex.asm.analysis.symbolic.ConditionCheckQuery
 import org.vorpal.research.kex.asm.analysis.symbolic.DefaultCallResolver
+import org.vorpal.research.kex.asm.analysis.symbolic.EmptyQuery
 import org.vorpal.research.kex.asm.analysis.symbolic.SymbolicCallResolver
 import org.vorpal.research.kex.asm.analysis.symbolic.SymbolicInvokeDynamicResolver
 import org.vorpal.research.kex.asm.analysis.symbolic.SymbolicPathSelector
 import org.vorpal.research.kex.asm.analysis.symbolic.SymbolicTraverser
-import org.vorpal.research.kex.asm.analysis.util.checkAsyncAndSlice
+import org.vorpal.research.kex.asm.analysis.symbolic.UpdateAction
+import org.vorpal.research.kex.asm.analysis.symbolic.UpdateAndReportQuery
+import org.vorpal.research.kex.asm.analysis.util.checkAsyncIncrementalAndSlice
 import org.vorpal.research.kex.compile.CompilationException
 import org.vorpal.research.kex.config.kexConfig
 import org.vorpal.research.kex.descriptor.Descriptor
@@ -145,7 +149,7 @@ class CrashReproductionChecker(
     private val generatedTestClasses = mutableSetOf<String>()
     private val descriptors = mutableMapOf<String, Parameters<Descriptor>>()
     private val preconditions = mutableMapOf<String, ConstraintExceptionPrecondition>()
-    private var lastPrecondition: ConstraintExceptionPrecondition? = null
+    private var lastPrecondition = mutableMapOf<Parameters<Descriptor>, ConstraintExceptionPrecondition>()
 
     init {
         ktassert(
@@ -352,39 +356,50 @@ class CrashReproductionChecker(
         }
 
         if (inst in targetInstructions) {
-            val state = currentState ?: return
-            for (preCondition in preconditionBuilder.build(inst, state)) {
-                val triggerState = state.copy(
-                    symbolicState = state.symbolicState + preCondition
+            val traverserState = currentState ?: return
+            checkReachabilityIncremental(
+                traverserState,
+                ConditionCheckQuery(
+                    preconditionBuilder.build(inst, traverserState).map { precondition ->
+                        UpdateAndReportQuery(
+                            precondition,
+                            { state -> state },
+                            { state, parameters ->
+                                throwExceptionAndReport(
+                                    state,
+                                    parameters,
+                                    inst,
+                                    generate(preconditionBuilder.targetException.symbolicClass)
+                                )
+                            }
+                        )
+                    }
                 )
-                checkExceptionAndReport(triggerState, inst, generate(preconditionBuilder.targetException.symbolicClass))
-            }
+            )
         }
 
         super.traverseInstruction(inst)
     }
 
-    override suspend fun traverseCallInst(inst: CallInst) {
-        var traverserState = currentState ?: return
 
+    override suspend fun traverseCallInst(inst: CallInst) = acquireState { traverserState ->
         val callee = when {
             inst.isStatic -> staticRef(inst.method.klass)
             else -> traverserState.mkTerm(inst.callee)
         }
         val argumentTerms = inst.args.map { traverserState.mkTerm(it) }
-        if (!inst.isStatic) {
-            traverserState = nullabilityCheck(traverserState, inst, callee) ?: return nullableCurrentState()
-        }
-
         val candidates = callResolver.resolve(traverserState, inst)
-        for (candidate in candidates) {
-            processMethodCall(traverserState, inst, candidate, callee, argumentTerms)
-        }
-        currentState = run {
+
+        val handler: (UpdateAction) = { state ->
+            for (candidate in candidates) {
+                processMethodCall(state, inst, candidate, callee, argumentTerms)
+            }
+
+            var varState = state
             val receiver = when {
                 inst.isNameDefined -> {
                     val res = generate(inst.type.symbolicType)
-                    traverserState = traverserState.copy(
+                    varState = varState.copy(
                         valueMap = traverserState.valueMap.put(inst, res)
                     )
                     res
@@ -398,21 +413,27 @@ class CrashReproductionChecker(
                     receiver?.call(callTerm) ?: call(callTerm)
                 }
             )
-            checkReachability(
-                traverserState.copy(
-                    symbolicState = traverserState.symbolicState.copy(
-                        clauses = traverserState.symbolicState.clauses.add(callClause)
-                    )
-                ), inst
-            )
+            (varState + callClause).also {
+                currentState = it
+            }
         }
+
+        val nullQuery = when {
+            inst.isStatic -> EmptyQuery()
+            else -> nullabilityCheckInc(traverserState, inst, callee)
+        }.withHandler(handler)
+
+        checkReachabilityIncremental(traverserState, nullQuery)
     }
 
-
-    override suspend fun check(method: Method, state: SymbolicState): Parameters<Descriptor>? {
-        val (params, precondition) = method.checkAsyncAndSlice(ctx, state) ?: return null
-        lastPrecondition = precondition
-        return params
+    override suspend fun checkIncremental(
+        method: Method,
+        state: SymbolicState,
+        queries: List<SymbolicState>
+    ): List<Parameters<Descriptor>?> {
+        val result = method.checkAsyncIncrementalAndSlice(ctx, state, queries)
+        lastPrecondition.putAll(result.filterNotNull().toMap())
+        return result.map { it?.first }
     }
 
     override fun report(inst: Instruction, parameters: Parameters<Descriptor>, testPostfix: String): Boolean {
@@ -428,8 +449,7 @@ class CrashReproductionChecker(
             }
             generatedTestClasses += generator.testKlassName
             descriptors[generator.testKlassName] = parameters
-            preconditions[generator.testKlassName] = lastPrecondition!!
-            lastPrecondition = null
+            preconditions[generator.testKlassName] = lastPrecondition[parameters]!!
             return true
         } catch (e: CompilationException) {
             log.error("Failed to compile test file $testFile")
