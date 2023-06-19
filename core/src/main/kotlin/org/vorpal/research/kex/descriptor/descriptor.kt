@@ -1,3 +1,5 @@
+@file:Suppress("DuplicatedCode")
+
 package org.vorpal.research.kex.descriptor
 
 import org.vorpal.research.kex.asm.manager.instantiationManager
@@ -20,12 +22,12 @@ import org.vorpal.research.kex.ktype.KexRtManager.rtUnmapped
 import org.vorpal.research.kex.ktype.KexShort
 import org.vorpal.research.kex.ktype.KexString
 import org.vorpal.research.kex.ktype.KexType
-import org.vorpal.research.kex.ktype.asArray
 import org.vorpal.research.kex.state.PredicateState
 import org.vorpal.research.kex.state.basic
 import org.vorpal.research.kex.state.emptyState
 import org.vorpal.research.kex.state.term.Term
 import org.vorpal.research.kex.state.term.term
+import org.vorpal.research.kex.util.StringInfoContext
 import org.vorpal.research.kfg.ClassManager
 import org.vorpal.research.kthelper.assert.unreachable
 import org.vorpal.research.kthelper.logging.log
@@ -575,7 +577,7 @@ class ArrayDescriptor(val elementType: KexType, val length: Int) :
     }
 }
 
-open class DescriptorBuilder {
+open class DescriptorBuilder : StringInfoContext {
     val `null` = ConstantDescriptor.Null
     fun const(@Suppress("UNUSED_PARAMETER") nothing: Nothing?) = `null`
     fun const(value: Boolean) = ConstantDescriptor.Bool(value)
@@ -629,12 +631,18 @@ open class DescriptorBuilder {
 
     fun default(type: KexType): Descriptor = default(type, true)
 
+    fun Char.asType(type: KexType): ConstantDescriptor = when (type) {
+        KexChar -> const(this)
+        KexByte -> const(this.code.toByte())
+        else -> unreachable { log.error("Unexpected cast from char to $type") }
+    }
+
     fun string(str: String): Descriptor {
         val string = `object`(KexString())
-        val valueArray = array(str.length, KexChar)
+        val valueArray = array(str.length, valueArrayType.element)
         for (index in str.indices)
-            valueArray[index] = const(str[index])
-        string["value", KexChar.asArray()] = valueArray
+            valueArray[index] = str[index].asType(valueArrayType.element)
+        string[valueArrayName, valueArrayType] = valueArray
         return string
     }
 

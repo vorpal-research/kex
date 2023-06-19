@@ -1,12 +1,9 @@
 package org.vorpal.research.kex.state.transformer
 
 import org.vorpal.research.kex.ExecutionContext
-import org.vorpal.research.kex.ktype.KexArray
-import org.vorpal.research.kex.ktype.KexChar
 import org.vorpal.research.kex.ktype.KexInt
 import org.vorpal.research.kex.ktype.KexReference
 import org.vorpal.research.kex.ktype.KexString
-import org.vorpal.research.kex.ktype.asArray
 import org.vorpal.research.kex.ktype.unreferenced
 import org.vorpal.research.kex.state.IncrementalPredicateState
 import org.vorpal.research.kex.state.PredicateState
@@ -32,12 +29,13 @@ import org.vorpal.research.kex.state.term.InstanceOfTerm
 import org.vorpal.research.kex.state.term.LambdaTerm
 import org.vorpal.research.kex.state.term.Term
 import org.vorpal.research.kex.state.term.term
+import org.vorpal.research.kex.util.StringInfoContext
 import org.vorpal.research.kfg.type.TypeFactory
 import org.vorpal.research.kthelper.collection.dequeOf
 
 class ConstStringAdapter(
     val tf: TypeFactory
-) : RecollectingTransformer<ConstStringAdapter>, IncrementalTransformer {
+) : StringInfoContext, RecollectingTransformer<ConstStringAdapter>, IncrementalTransformer {
     override val builders = dequeOf(StateBuilder())
     private val strings = mutableMapOf<String, Term>()
 
@@ -66,14 +64,14 @@ class ConstStringAdapter(
         return apply(ps, strings)
     }
 
+    @Suppress("DuplicatedCode")
     private fun buildStr(string: String): PredicateState = basic {
         val strTerm = generate(KexString())
         state { strTerm.initializeNew() }
 
-        val charArray = KexArray(KexChar)
-        val valueArray = generate(charArray)
-        state { valueArray.initializeNew(string.length, string.map { const(it) }) }
-        state { strTerm.field(charArray, "value").initialize(valueArray) }
+        val valueArray = generate(valueArrayType)
+        state { valueArray.initializeNew(string.length, string.map { it.asType(valueArrayType.element) }) }
+        state { strTerm.field(valueArrayType, valueArrayName).initialize(valueArray) }
         strings[string] = strTerm
     }
 
@@ -156,7 +154,7 @@ class ConstStringAdapter(
 
 class TypeNameAdapter(
     val ctx: ExecutionContext
-) : RecollectingTransformer<TypeNameAdapter>, IncrementalTransformer {
+) : StringInfoContext, RecollectingTransformer<TypeNameAdapter>, IncrementalTransformer {
     override val builders = dequeOf(StateBuilder())
 
     override fun apply(state: IncrementalPredicateState): IncrementalPredicateState {
@@ -176,8 +174,8 @@ class TypeNameAdapter(
             .toMutableSet()
         if (strings.isNotEmpty()) {
             strings += term { const(KexString().javaName) } as ConstStringTerm
-            strings += term { const(KexChar.asArray().javaName) } as ConstStringTerm
-            strings += term { const(KexChar.javaName) } as ConstStringTerm
+            strings += term { const(valueArrayType.javaName) } as ConstStringTerm
+            strings += term { const(valueArrayType.element.javaName) } as ConstStringTerm
             strings += term { const(KexInt.javaName) } as ConstStringTerm
         }
 
@@ -187,13 +185,13 @@ class TypeNameAdapter(
         return super.apply(ps)
     }
 
+    @Suppress("DuplicatedCode")
     private fun buildStr(string: String): PredicateState = basic {
         val strTerm = generate(KexString())
         state { strTerm.initializeNew() }
 
-        val charArray = KexArray(KexChar)
-        val valueArray = generate(charArray)
-        state { valueArray.initializeNew(string.length, string.map { const(it) }) }
-        state { strTerm.field(charArray, "value").initialize(valueArray) }
+        val valueArray = generate(valueArrayType)
+        state { valueArray.initializeNew(string.length, string.map { it.asType(valueArrayType.element) }) }
+        state { strTerm.field(valueArrayType, valueArrayName).initialize(valueArray) }
     }
 }

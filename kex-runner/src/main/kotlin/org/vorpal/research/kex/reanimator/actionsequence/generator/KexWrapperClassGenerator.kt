@@ -9,7 +9,7 @@ import org.vorpal.research.kex.ktype.kexType
 import org.vorpal.research.kex.reanimator.actionsequence.ActionList
 import org.vorpal.research.kex.reanimator.actionsequence.ActionSequence
 import org.vorpal.research.kex.reanimator.actionsequence.ConstructorCall
-import org.vorpal.research.kex.state.transformer.getCtor
+import org.vorpal.research.kex.util.getCtor
 import org.vorpal.research.kex.util.getPrimitive
 import org.vorpal.research.kfg.boolWrapper
 import org.vorpal.research.kfg.byteWrapper
