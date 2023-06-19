@@ -5,6 +5,8 @@ import org.vorpal.research.kex.config.kexConfig
 import org.vorpal.research.kfg.Package
 import org.vorpal.research.kfg.container.Container
 import org.vorpal.research.kfg.container.JarContainer
+import org.vorpal.research.kthelper.assert.unreachable
+import org.vorpal.research.kthelper.logging.log
 import java.nio.file.Path
 import kotlin.io.path.readLines
 
@@ -78,6 +80,8 @@ fun getJvmVersion(): Int {
 }
 
 fun getJvmModuleParams(): List<String> = when (getJvmVersion()) {
+    in 1..7 -> unreachable { log.error("Unsupported version of JVM: ${getJvmVersion()}") }
+    8 -> emptyList()
     else -> buildList {
         val modules = kexConfig.runtimeDepsPath?.resolve("modules.info")?.readLines().orEmpty()
         for (module in modules) {

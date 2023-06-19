@@ -158,8 +158,27 @@ class TypeNameAdapter(
     override val builders = dequeOf(StateBuilder())
 
     override fun apply(state: IncrementalPredicateState): IncrementalPredicateState {
+        if (!hasClassAccesses(state)) return state
+
+        val constStrings = getConstStringMap(state)
+        val strings = collectTypes(ctx, state)
+            .map { it.unreferenced() }
+            .map { term { const(it.javaName) } as ConstStringTerm }
+            .toMutableSet()
+        if (strings.isNotEmpty()) {
+            strings += term { const(KexString().javaName) } as ConstStringTerm
+            strings += term { const(valueArrayType.javaName) } as ConstStringTerm
+            strings += term { const(valueArrayType.element.javaName) } as ConstStringTerm
+            strings += term { const(KexInt.javaName) } as ConstStringTerm
+        }
+
+        val newState = StateBuilder()
+        for (str in strings.filter { it.value !in constStrings }) {
+            newState += buildStr(str.value)
+        }
+        newState += state.state
         return IncrementalPredicateState(
-            apply(state.state),
+            newState.apply(),
             state.queries
         )
     }
