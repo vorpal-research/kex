@@ -128,3 +128,6 @@ fun TypeFactory.getPrimitive(type: Type): Type = when (type) {
 
 val String.asmString get() = replace(Package.CANONICAL_SEPARATOR, Package.SEPARATOR)
 val String.javaString get() = replace(Package.SEPARATOR, Package.CANONICAL_SEPARATOR)
+
+fun Class.getCtor(vararg argTypes: Type) =
+    getMethod("<init>", cm.type.voidType, *argTypes)
