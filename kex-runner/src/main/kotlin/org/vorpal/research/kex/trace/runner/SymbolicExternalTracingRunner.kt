@@ -13,6 +13,7 @@ import org.vorpal.research.kex.trace.symbolic.protocol.Client2MasterSocketConnec
 import org.vorpal.research.kex.trace.symbolic.protocol.TestExecutionRequest
 import org.vorpal.research.kex.util.getIntrinsics
 import org.vorpal.research.kex.util.getJunit
+import org.vorpal.research.kex.util.getJvmModuleParams
 import org.vorpal.research.kex.util.getPathSeparator
 import org.vorpal.research.kex.util.outputDirectory
 import org.vorpal.research.kfg.ClassManager
@@ -37,13 +38,16 @@ internal object ExecutorMasterController : AutoCloseable {
 
     fun start(ctx: ExecutionContext) {
         val outputDir = kexConfig.outputDirectory
-        val executorPath = (kexConfig.getPathValue(
-            "executor", "executorPath"
-        ) ?: Paths.get("kex-executor/target/kex-executor-0.0.1-jar-with-dependencies.jar")).toAbsolutePath()
+        val executorPath = kexConfig.getPathValue("executor", "executorPath") {
+            Paths.get("kex-executor/target/kex-executor-0.0.1-jar-with-dependencies.jar")
+        }.toAbsolutePath()
         val executorKlass = "org.vorpal.research.kex.launcher.MasterLauncherKt"
-        val executorConfigPath = (kexConfig.getPathValue(
-            "executor", "executorConfigPath"
-        ) ?: Paths.get("kex.ini")).toAbsolutePath()
+        val executorConfigPath = kexConfig.getPathValue("executor", "executorConfigPath") {
+            Paths.get("kex.ini")
+        }.toAbsolutePath()
+        val executorPolicyPath = kexConfig.getPathValue("executor", "executorPolicyPath") {
+            Paths.get("kex.policy")
+        }.toAbsolutePath()
         val masterJvmParams = kexConfig.getMultipleStringValue("executor", "masterJvmParams", ",").toTypedArray()
         val numberOfWorkers = kexConfig.getIntValue("executor", "numberOfWorkers", 1)
         val instrumentedCodeDir = outputDir.resolve(
@@ -63,8 +67,11 @@ internal object ExecutorMasterController : AutoCloseable {
         val kfgClassPath = ctx.classPath
         val pb = ProcessBuilder(
             "java",
-            "-classpath", executorPath.toString(),
+            "-Djava.security.manager", "-Djava.security.policy==${executorPolicyPath}",
+            "-Dlogback.statusListenerClass=ch.qos.logback.core.status.NopStatusListener",
+            *getJvmModuleParams().toTypedArray(),
             *masterJvmParams,
+            "-classpath", executorPath.toString(),
             executorKlass,
             "--output", "${outputDir.toAbsolutePath()}",
             "--config", "$executorConfigPath",
@@ -108,8 +115,8 @@ class SymbolicExternalTracingRunner(val ctx: ExecutionContext) {
             }
             val result = it.receive()
             when (result) {
-                is ExecutionCompletedResult -> log.debug("Execution result: ${result.trace}")
-                else -> log.debug("Execution result: $result")
+                is ExecutionCompletedResult -> log.debug("Execution result: {}", result.trace)
+                else -> log.debug("Execution result: {}", result)
             }
             return result
         }
