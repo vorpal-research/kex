@@ -6,6 +6,7 @@ import org.vorpal.research.kfg.Package
 import org.vorpal.research.kfg.container.Container
 import org.vorpal.research.kfg.container.JarContainer
 import java.nio.file.Path
+import kotlin.io.path.readLines
 
 val Config.outputDirectory: Path get() = getPathValue("kex", "outputDir")!!
 
@@ -69,4 +70,20 @@ fun getKexRuntime(): Container? {
     val libPath = kexConfig.libPath ?: return null
     val runtimeVersion = kexConfig.getStringValue("kex", "kexRtVersion") ?: return null
     return JarContainer(libPath.resolve("kex-rt-${runtimeVersion}.jar"), Package.defaultPackage)
+}
+
+fun getJvmVersion(): Int {
+    val versionStr = System.getProperty("java.version")
+    return "(1\\.)?(\\d+)".toRegex().find(versionStr)?.groupValues?.getOrNull(2)!!.toInt()
+}
+
+fun getJvmModuleParams(): List<String> = when (getJvmVersion()) {
+    else -> buildList {
+        val modules = kexConfig.runtimeDepsPath?.resolve("modules.info")?.readLines().orEmpty()
+        for (module in modules) {
+            add("--add-opens")
+            add(module)
+        }
+        add("--illegal-access=warn")
+    }
 }

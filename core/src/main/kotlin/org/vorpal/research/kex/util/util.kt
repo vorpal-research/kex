@@ -98,6 +98,7 @@ fun deleteOnExit(directoryToBeDeleted: Path) = Runtime.getRuntime().addShutdownH
 })
 
 fun deleteDirectory(directoryToBeDeleted: Path) = deleteDirectory(directoryToBeDeleted.toFile())
+
 @OptIn(ExperimentalPathApi::class)
 fun deleteDirectory(directoryToBeDeleted: File) {
     directoryToBeDeleted.toPath().deleteRecursively()
