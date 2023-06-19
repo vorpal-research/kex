@@ -2,6 +2,7 @@ package org.vorpal.research.kex
 
 import org.vorpal.research.kthelper.assert.unreachable
 import javax.annotation.processing.AbstractProcessor
+import javax.lang.model.SourceVersion
 import javax.lang.model.element.Element
 import javax.tools.Diagnostic
 import kotlin.reflect.KClass
@@ -29,5 +30,9 @@ abstract class KexProcessor : AbstractProcessor() {
     protected fun <T : Annotation> T.getProperty(name: String): Any? {
         val prop = this::class.memberFunctions.first { it.name == name }
         return prop.call(this)
+    }
+
+    override fun getSupportedSourceVersion(): SourceVersion {
+        return SourceVersion.latestSupported()
     }
 }
