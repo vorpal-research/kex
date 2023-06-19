@@ -3,6 +3,7 @@
 package org.vorpal.research.kex.state.transformer
 
 import org.vorpal.research.kex.ktype.KexString
+import org.vorpal.research.kex.state.IncrementalPredicateState
 import org.vorpal.research.kex.state.PredicateState
 import org.vorpal.research.kex.state.predicate.ArrayInitializerPredicate
 import org.vorpal.research.kex.state.predicate.ArrayStorePredicate
@@ -105,5 +106,14 @@ class ConstStringCollector : StringInfoContext, Transformer<ConstStringCollector
 fun getConstStringMap(ps: PredicateState): Map<String, Term> {
     val collector = ConstStringCollector()
     collector.apply(ps)
+    return collector.strings.map { it.value.joinToString("") to it.key }.toMap()
+}
+
+fun getConstStringMap(state: IncrementalPredicateState): Map<String, Term> {
+    val collector = ConstStringCollector()
+    collector.apply(state.state)
+    for (query in state.queries) {
+        collector.apply(query.hardConstraints)
+    }
     return collector.strings.map { it.value.joinToString("") to it.key }.toMap()
 }
