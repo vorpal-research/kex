@@ -135,8 +135,8 @@ class KSMTSolver(
         if (logQuery) {
             log.run {
                 debug("KSMT solver check")
-                debug("State: $state")
-                debug("Query: $query")
+                debug("State: {}", state)
+                debug("Query: {}", query)
             }
         }
 
@@ -240,8 +240,8 @@ class KSMTSolver(
     private suspend fun check(state: Bool_, query: Bool_): Pair<KSolverStatus, Any> = buildSolver().use { solver ->
         if (logFormulae) {
             log.run {
-                debug("State: $state")
-                debug("Query: $query")
+                debug("State: {}", state)
+                debug("Query: {}", query)
             }
         }
 
@@ -279,7 +279,7 @@ class KSMTSolver(
 
             KSolverStatus.UNSAT -> {
                 val core = solver.unsatCoreAsync()
-                log.debug("Unsat core: $core")
+                log.debug("Unsat core: {}", core)
                 result to core
             }
 
@@ -623,8 +623,8 @@ class KSMTSolver(
         if (logQuery) {
             log.run {
                 debug("KSMT solver check")
-                debug("State: $state")
-                debug("Queries: ${queries.joinToString("\n")}")
+                debug("State: {}", state)
+                debug("Queries: {}", queries.joinToString("\n"))
             }
         }
 
@@ -721,7 +721,7 @@ class KSMTSolver(
                 else -> emptyMap()
             }
 
-            log.debug("Running z3 solver")
+            log.debug("Running KSMT solver")
             if (printSMTLib) {
                 log.debug("SMTLib formula:")
                 log.debug(solver)
@@ -736,12 +736,12 @@ class KSMTSolver(
 
                 KSolverStatus.UNSAT -> {
                     val core = solver.unsatCoreAsync()
-                    log.debug("Unsat core: $core")
+                    log.debug("Unsat core: {}", core)
                     result to core
                 }
 
                 KSolverStatus.UNKNOWN -> {
-                    val reason = solver.reasonOfUnknownAsync()
+                    val reason = tryOrNull { solver.reasonOfUnknown() } ?: "unknown"
                     log.debug(reason)
                     result to reason
                 }

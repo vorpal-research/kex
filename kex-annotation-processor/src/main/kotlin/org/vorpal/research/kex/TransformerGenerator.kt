@@ -5,13 +5,10 @@ import java.io.File
 import javax.annotation.processing.RoundEnvironment
 import javax.annotation.processing.SupportedAnnotationTypes
 import javax.annotation.processing.SupportedOptions
-import javax.annotation.processing.SupportedSourceVersion
-import javax.lang.model.SourceVersion
 import javax.lang.model.element.Element
 import javax.lang.model.element.TypeElement
 
 @Suppress("SameParameterValue")
-@SupportedSourceVersion(SourceVersion.RELEASE_8)
 @SupportedAnnotationTypes("org.vorpal.research.kex.TransformerBase")
 @SupportedOptions(TransformerGenerator.KEX_RESOURCES, TransformerGenerator.KAPT_GENERATED_SOURCES)
 class TransformerGenerator : KexProcessor() {

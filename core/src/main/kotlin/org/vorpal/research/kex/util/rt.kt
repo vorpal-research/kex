@@ -5,7 +5,10 @@ import org.vorpal.research.kex.config.kexConfig
 import org.vorpal.research.kfg.Package
 import org.vorpal.research.kfg.container.Container
 import org.vorpal.research.kfg.container.JarContainer
+import org.vorpal.research.kthelper.assert.unreachable
+import org.vorpal.research.kthelper.logging.log
 import java.nio.file.Path
+import kotlin.io.path.readLines
 
 val Config.outputDirectory: Path get() = getPathValue("kex", "outputDir")!!
 
@@ -69,4 +72,24 @@ fun getKexRuntime(): Container? {
     val libPath = kexConfig.libPath ?: return null
     val runtimeVersion = kexConfig.getStringValue("kex", "kexRtVersion") ?: return null
     return JarContainer(libPath.resolve("kex-rt-${runtimeVersion}.jar"), Package.defaultPackage)
+}
+
+fun getJvmVersion(): Int {
+    val versionStr = System.getProperty("java.version")
+    return """(1.)?(\d+)""".toRegex().find(versionStr)?.let {
+        it.groupValues[2].toInt()
+    } ?: unreachable { log.error("Could not detect JVM version: \"{}\"", versionStr) }
+}
+
+fun getJvmModuleParams(): List<String> = when (getJvmVersion()) {
+    in 1..7 -> unreachable { log.error("Unsupported version of JVM: ${getJvmVersion()}") }
+    8 -> emptyList()
+    else -> buildList {
+        val modules = kexConfig.runtimeDepsPath?.resolve("modules.info")?.readLines().orEmpty()
+        for (module in modules) {
+            add("--add-opens")
+            add(module)
+        }
+        add("--illegal-access=warn")
+    }
 }

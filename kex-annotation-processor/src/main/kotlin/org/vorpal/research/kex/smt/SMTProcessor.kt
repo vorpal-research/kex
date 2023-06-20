@@ -7,13 +7,10 @@ import java.io.File
 import javax.annotation.processing.RoundEnvironment
 import javax.annotation.processing.SupportedAnnotationTypes
 import javax.annotation.processing.SupportedOptions
-import javax.annotation.processing.SupportedSourceVersion
-import javax.lang.model.SourceVersion
 import javax.lang.model.element.Element
 import javax.lang.model.element.TypeElement
 import kotlin.reflect.KClass
 
-@SupportedSourceVersion(SourceVersion.RELEASE_8)
 @SupportedAnnotationTypes(
         "org.vorpal.research.kex.smt.SMTExpr",
         "org.vorpal.research.kex.smt.SMTMemory",

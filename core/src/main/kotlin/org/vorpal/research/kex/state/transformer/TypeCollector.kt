@@ -2,10 +2,20 @@ package org.vorpal.research.kex.state.transformer
 
 import org.vorpal.research.kex.ExecutionContext
 import org.vorpal.research.kex.asm.manager.instantiationManager
-import org.vorpal.research.kex.ktype.*
+import org.vorpal.research.kex.ktype.KexArray
+import org.vorpal.research.kex.ktype.KexJavaClass
+import org.vorpal.research.kex.ktype.KexReference
+import org.vorpal.research.kex.ktype.KexType
+import org.vorpal.research.kex.ktype.kexType
+import org.vorpal.research.kex.state.IncrementalPredicateState
 import org.vorpal.research.kex.state.PredicateState
 import org.vorpal.research.kex.state.predicate.Predicate
-import org.vorpal.research.kex.state.term.*
+import org.vorpal.research.kex.state.term.ClassAccessTerm
+import org.vorpal.research.kex.state.term.ConstClassTerm
+import org.vorpal.research.kex.state.term.ConstStringTerm
+import org.vorpal.research.kex.state.term.InstanceOfTerm
+import org.vorpal.research.kex.state.term.LambdaTerm
+import org.vorpal.research.kex.state.term.Term
 import org.vorpal.research.kex.util.parseAsConcreteType
 import org.vorpal.research.kfg.ir.Class
 import org.vorpal.research.kfg.type.ClassType
@@ -28,6 +38,16 @@ private class ClassAccessDetector : Transformer<ClassAccessDetector> {
 
 fun hasClassAccesses(ps: PredicateState) = ClassAccessDetector().let {
     it.apply(ps)
+    it.hasClassAccess
+}
+fun hasClassAccesses(state: IncrementalPredicateState) = ClassAccessDetector().let {
+    it.apply(state.state)
+    for (query in state.queries) {
+        it.apply(query.hardConstraints)
+        for (softConstraint in query.softConstraints) {
+            it.transform(softConstraint)
+        }
+    }
     it.hasClassAccess
 }
 
@@ -109,12 +129,25 @@ class TypeCollector(
     }
 }
 
+fun collectTypes(ctx: ExecutionContext, state: IncrementalPredicateState): Set<KexType> {
+    val tc = TypeCollector(ctx, hasClassAccesses(state))
+    tc.apply(state.state)
+    for (query in state.queries) {
+        tc.apply(query.hardConstraints)
+        for (soft in query.softConstraints) {
+            tc.transform(soft)
+        }
+    }
+    return tc.types
+}
+
 fun collectTypes(ctx: ExecutionContext, ps: PredicateState): Set<KexType> {
     val tc = TypeCollector(ctx, hasClassAccesses(ps))
     tc.apply(ps)
     return tc.types
 }
 
+@Suppress("unused")
 fun collectTypes(ctx: ExecutionContext, predicate: Predicate): Set<KexType> {
     val tc = TypeCollector(ctx, hasClassAccesses(predicate))
     tc.transform(predicate)

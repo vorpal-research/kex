@@ -238,6 +238,13 @@ interface TermBuilder {
     fun const(str: String) = termFactory.getString(str)
     fun const(char: Char) = termFactory.getChar(char)
     fun <T : Number> const(number: T) = termFactory.getConstant(number)
+
+    fun Char.asType(type: KexType): Term = when (type) {
+        is KexChar ->  termFactory.getChar(this)
+        is KexByte -> termFactory.getByte(this.code.toByte())
+        else -> unreachable { log.error("Unexpected cast from char to $type") }
+    }
+
     fun const(nothing: Nothing?) = termFactory.getNull()
     fun `class`(klass: Class) = termFactory.getClass(klass)
     fun `class`(type: KexType, constantType: KexType) = termFactory.getClass(type, constantType)

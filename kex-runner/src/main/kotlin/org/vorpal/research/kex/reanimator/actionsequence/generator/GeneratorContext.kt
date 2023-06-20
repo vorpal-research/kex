@@ -25,7 +25,6 @@ import org.vorpal.research.kex.ktype.KexLong
 import org.vorpal.research.kex.ktype.KexReference
 import org.vorpal.research.kex.ktype.KexShort
 import org.vorpal.research.kex.ktype.KexType
-import org.vorpal.research.kex.ktype.asArray
 import org.vorpal.research.kex.ktype.kexType
 import org.vorpal.research.kex.parameters.Parameters
 import org.vorpal.research.kex.reanimator.actionsequence.ActionList
@@ -72,6 +71,7 @@ import org.vorpal.research.kex.state.transformer.collectPlainTypeInfos
 import org.vorpal.research.kex.state.transformer.collectStaticTypeInfo
 import org.vorpal.research.kex.state.transformer.generateInitialDescriptors
 import org.vorpal.research.kex.state.transformer.transform
+import org.vorpal.research.kex.util.StringInfoContext
 import org.vorpal.research.kfg.ir.Class
 import org.vorpal.research.kfg.ir.Field
 import org.vorpal.research.kfg.ir.Method
@@ -83,7 +83,7 @@ import org.vorpal.research.kthelper.tryOrNull
 class GeneratorContext(
     val context: ExecutionContext,
     val psa: PredicateStateAnalysis
-) {
+) : StringInfoContext {
     private val useRecCtors by lazy {
         kexConfig.getBooleanValue(
             "reanimator",
@@ -225,7 +225,7 @@ class GeneratorContext(
 
     fun Method.executeAsConstructor(descriptor: ObjectDescriptor): Parameters<Descriptor>? {
         if (body.isEmpty()) return null
-        log.debug("Executing constructor $this for $descriptor")
+        log.debug("Executing constructor {} for {}", this, descriptor)
 
         val mapper = descriptor.mapper
         val preState = mapper.apply(descriptor.preState)
@@ -241,7 +241,7 @@ class GeneratorContext(
 
     fun Method.executeAsExternalConstructor(descriptor: ObjectDescriptor): Parameters<Descriptor>? {
         if (body.isEmpty()) return null
-        log.debug("Executing external constructor $this for $descriptor")
+        log.debug("Executing external constructor {} for {}", this, descriptor)
 
         val externalMapper = TermRemapper(
             mapOf(
@@ -262,7 +262,7 @@ class GeneratorContext(
         preStateGetter: (Method, ObjectDescriptor) -> PredicateState?
     ): Parameters<Descriptor>? {
         if (body.isEmpty()) return null
-        log.debug("Executing method $this for $descriptor")
+        log.debug("Executing method {} for {}", this, descriptor)
 
         val mapper = descriptor.mapper
         val preState = preStateGetter(this, descriptor) ?: return null
@@ -304,7 +304,7 @@ class GeneratorContext(
         preStateGetter: (Method, ClassDescriptor) -> PredicateState?
     ): Parameters<Descriptor>? {
         if (body.isEmpty()) return null
-        log.debug("Executing method $this for $descriptor")
+        log.debug("Executing method {} for {}", this, descriptor)
 
         val preState = preStateGetter(this, descriptor) ?: return null
         val preStateFieldTerms = collectFieldTerms(context, preState)
@@ -334,7 +334,7 @@ class GeneratorContext(
         val checkedState = state + query
         return when (val result = checker.check(checkedState)) {
             is Result.SatResult -> {
-                log.debug("Model: ${result.model}")
+                log.debug("Model: {}", result.model)
                 generateInitialDescriptors(this, context, result.model, checker.state)
             }
 
@@ -378,6 +378,7 @@ class GeneratorContext(
         return collectFieldAccesses(context, transformed)
     }
 
+    @Suppress("DuplicatedCode")
     fun Method.getMethodPreState(descriptor: ObjectDescriptor, initializer: (KexType) -> Term): PredicateState? {
         val mapper = descriptor.mapper
 
@@ -495,10 +496,14 @@ class GeneratorContext(
 
     val Descriptor.asStringValue: String?
         get() = (this as? ObjectDescriptor)?.let { obj ->
-            val valueDescriptor = obj["value", KexChar.asArray()] as? ArrayDescriptor
+            val valueDescriptor = obj[valueArrayName, valueArrayType] as? ArrayDescriptor
             valueDescriptor?.let { array ->
                 (0 until array.length).map {
-                    (array.elements.getOrDefault(it, descriptor { const(' ') }) as ConstantDescriptor.Char).value
+                    when (val value = array.elements.getOrDefault(it, descriptor { const(' ') })) {
+                        is ConstantDescriptor.Char -> value.value
+                        is ConstantDescriptor.Byte -> value.value.toInt().toChar()
+                        else -> unreachable { log.error("Unexpected element type in string: $value") }
+                    }
                 }.joinToString("")
             }
         }

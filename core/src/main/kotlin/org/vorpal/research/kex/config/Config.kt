@@ -15,17 +15,32 @@ abstract class Config {
     open fun getBooleanValue(section: String, name: String, default: Boolean = false) =
             getBooleanValue(section, name) ?: default
 
+    open fun getBooleanValue(section: String, name: String, defaultProvider: () -> Boolean) =
+        getBooleanValue(section, name) ?: defaultProvider()
+
     open fun getStringValue(section: String, name: String, default: String = "") =
             getStringValue(section, name) ?: default
+
+    open fun getStringValue(section: String, name: String, defaultProvider: () -> String) =
+        getStringValue(section, name) ?: defaultProvider()
 
     open fun getIntValue(section: String, name: String, default: Int = 0) =
             getIntValue(section, name) ?: default
 
+    open fun getIntValue(section: String, name: String, defaultProvider: () -> Int) =
+        getIntValue(section, name) ?: defaultProvider()
+
     open fun getLongValue(section: String, name: String, default: Long = 0L) =
             getLongValue(section, name) ?: default
 
+    open fun getLongValue(section: String, name: String, defaultProvider: () -> Long) =
+        getLongValue(section, name) ?: defaultProvider()
+
     open fun getDoubleValue(section: String, name: String, default: Double = 0.0) =
             getStringValue(section, name)?.toDouble() ?: default
+
+    open fun getDoubleValue(section: String, name: String, defaultProvider: () -> Double) =
+        getStringValue(section, name)?.toDouble() ?: defaultProvider()
 
     open fun getMultipleStringValue(section: String, name: String, delimiter: String = ",") =
             getStringValue(section, name)
