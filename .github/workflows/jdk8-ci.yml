@@ -1,4 +1,4 @@
-name: Java CI
+name: JDK 8 CI
 
 on:
   push:
