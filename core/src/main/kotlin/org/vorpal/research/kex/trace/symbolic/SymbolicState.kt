@@ -101,6 +101,9 @@ sealed class ClauseList : Iterable<Clause> {
 
     abstract operator fun plus(other: ClauseList): ClauseList
     abstract operator fun plus(other: Clause): ClauseList
+    override fun toString(): String {
+        return "ClauseList(state=${state.joinToString(separator = "\n", prefix = "{\n", postfix = "\n}")})"
+    }
 }
 
 @Serializable
@@ -186,6 +189,9 @@ sealed class PathCondition : Iterable<PathClause> {
 
     abstract operator fun plus(other: PathCondition): PathCondition
     abstract operator fun plus(other: PathClause): PathCondition
+    override fun toString(): String {
+        return "PathCondition(state=${path.joinToString(separator = "\n", prefix = "{\n", postfix = "\n}")})"
+    }
 }
 
 @Serializable
@@ -313,6 +319,10 @@ internal data class SymbolicStateImpl(
     override fun plus(other: PathCondition): SymbolicState = copy(
         path = path + other,
     )
+
+    override fun toString(): String {
+        return "SymbolicStateImpl(clauses=$clauses, path=$path)"
+    }
 }
 
 @Serializable
