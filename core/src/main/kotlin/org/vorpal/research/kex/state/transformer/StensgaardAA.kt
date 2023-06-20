@@ -2,8 +2,27 @@ package org.vorpal.research.kex.state.transformer
 
 import org.vorpal.research.kex.config.kexConfig
 import org.vorpal.research.kex.ktype.KexType
-import org.vorpal.research.kex.state.predicate.*
-import org.vorpal.research.kex.state.term.*
+import org.vorpal.research.kex.state.predicate.ArrayInitializerPredicate
+import org.vorpal.research.kex.state.predicate.ArrayStorePredicate
+import org.vorpal.research.kex.state.predicate.EqualityPredicate
+import org.vorpal.research.kex.state.predicate.FieldInitializerPredicate
+import org.vorpal.research.kex.state.predicate.FieldStorePredicate
+import org.vorpal.research.kex.state.predicate.NewArrayInitializerPredicate
+import org.vorpal.research.kex.state.predicate.NewArrayPredicate
+import org.vorpal.research.kex.state.predicate.NewInitializerPredicate
+import org.vorpal.research.kex.state.predicate.NewPredicate
+import org.vorpal.research.kex.state.predicate.Predicate
+import org.vorpal.research.kex.state.predicate.PredicateType
+import org.vorpal.research.kex.state.term.ArrayContainsTerm
+import org.vorpal.research.kex.state.term.ArrayLoadTerm
+import org.vorpal.research.kex.state.term.BinaryTerm
+import org.vorpal.research.kex.state.term.CastTerm
+import org.vorpal.research.kex.state.term.CmpTerm
+import org.vorpal.research.kex.state.term.ConcatTerm
+import org.vorpal.research.kex.state.term.EqualsTerm
+import org.vorpal.research.kex.state.term.FieldLoadTerm
+import org.vorpal.research.kex.state.term.Term
+import org.vorpal.research.kex.state.term.isNamed
 import org.vorpal.research.kthelper.assert.unreachable
 import org.vorpal.research.kthelper.collection.DisjointSet
 import org.vorpal.research.kthelper.collection.Subset
@@ -303,5 +322,6 @@ class StensgaardAA : Transformer<StensgaardAA>, AliasAnalysis, Viewable {
             return values.toList()
         }
 
+    @Suppress("unused")
     fun view() = view("StensgaardAA", dot, viewer)
 }

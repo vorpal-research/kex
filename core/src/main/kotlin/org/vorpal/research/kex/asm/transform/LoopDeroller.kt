@@ -11,10 +11,21 @@ import org.vorpal.research.kfg.ir.BasicBlock
 import org.vorpal.research.kfg.ir.BodyBlock
 import org.vorpal.research.kfg.ir.CatchBlock
 import org.vorpal.research.kfg.ir.Method
-import org.vorpal.research.kfg.ir.value.*
+import org.vorpal.research.kfg.ir.value.BlockUser
 import org.vorpal.research.kfg.ir.value.EmptyUsageContext.addUser
 import org.vorpal.research.kfg.ir.value.EmptyUsageContext.users
-import org.vorpal.research.kfg.ir.value.instruction.*
+import org.vorpal.research.kfg.ir.value.IntConstant
+import org.vorpal.research.kfg.ir.value.NullConstant
+import org.vorpal.research.kfg.ir.value.Value
+import org.vorpal.research.kfg.ir.value.instruction.BinaryInst
+import org.vorpal.research.kfg.ir.value.instruction.BinaryOpcode
+import org.vorpal.research.kfg.ir.value.instruction.BranchInst
+import org.vorpal.research.kfg.ir.value.instruction.CmpInst
+import org.vorpal.research.kfg.ir.value.instruction.CmpOpcode
+import org.vorpal.research.kfg.ir.value.instruction.Instruction
+import org.vorpal.research.kfg.ir.value.instruction.JumpInst
+import org.vorpal.research.kfg.ir.value.instruction.PhiInst
+import org.vorpal.research.kfg.ir.value.usageContext
 import org.vorpal.research.kfg.visitor.Loop
 import org.vorpal.research.kthelper.assert.unreachable
 import org.vorpal.research.kthelper.graph.GraphTraversal
@@ -133,7 +144,7 @@ class LoopDeroller(override val cm: ClassManager) : LoopOptimizer(cm) {
         val state = State.createState(loop)
         val body = loop.body.toMutableList().onEach { loop.removeBlock(it) }
 
-        log.debug("Method $method, unrolling loop $loop to $derollCount iterations")
+        log.debug("Method {}, unrolling loop {} to {} iterations", method, loop, derollCount)
 
         // save current phi instructions of method
         val methodPhis = method.body.bodyBlocks.filter { it !in body }.flatten().mapNotNull { it as? PhiInst }

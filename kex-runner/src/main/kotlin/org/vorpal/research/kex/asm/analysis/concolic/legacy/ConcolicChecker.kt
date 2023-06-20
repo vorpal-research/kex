@@ -44,7 +44,6 @@ import org.vorpal.research.kthelper.collection.firstOrElse
 import org.vorpal.research.kthelper.collection.stackOf
 import org.vorpal.research.kthelper.logging.log
 import org.vorpal.research.kthelper.tryOrNull
-import java.util.*
 
 private val timeLimit by lazy {
     kexConfig.getLongValue("concolic", "timeLimit", 10000L)
@@ -92,12 +91,12 @@ class ConcolicChecker(
                     try {
                         process(method)
                     } catch (e: TimeoutException) {
-                        log.debug("Timeout on running $method")
+                        log.debug("Timeout on running {}", method)
                     }
                 }
             }
         } catch (e: TimeoutCancellationException) {
-            log.debug("Processing of method $method is stopped due timeout")
+            log.debug("Processing of method {} is stopped due timeout", method)
         }
         generator.emit()
     }
@@ -269,8 +268,8 @@ class ConcolicChecker(
             log.debug("Could not generate new trace")
             return null
         }
-        log.debug("Collected trace: $state")
-        log.debug("Mutated trace: $mutated")
+        log.debug("Collected trace: {}", state)
+        log.debug("Mutated trace: {}", mutated)
 
         val checker = Checker(method, ctx, psa)
         val result = checker.prepareAndCheck(mutated)

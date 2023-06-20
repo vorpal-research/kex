@@ -8,9 +8,20 @@ import org.vorpal.research.kex.KexTest
 import org.vorpal.research.kex.descriptor.Descriptor
 import org.vorpal.research.kex.descriptor.DescriptorBuilder
 import org.vorpal.research.kex.descriptor.convertToDescriptor
-import org.vorpal.research.kex.ktype.*
+import org.vorpal.research.kex.ktype.KexArray
+import org.vorpal.research.kex.ktype.KexBool
+import org.vorpal.research.kex.ktype.KexClass
+import org.vorpal.research.kex.ktype.KexDouble
+import org.vorpal.research.kex.ktype.KexInt
+import org.vorpal.research.kex.ktype.KexType
+import org.vorpal.research.kex.ktype.KexVoid
+import org.vorpal.research.kex.ktype.kexType
 import org.vorpal.research.kex.state.PredicateState
-import org.vorpal.research.kex.state.predicate.*
+import org.vorpal.research.kex.state.predicate.Predicate
+import org.vorpal.research.kex.state.predicate.PredicateType
+import org.vorpal.research.kex.state.predicate.assume
+import org.vorpal.research.kex.state.predicate.path
+import org.vorpal.research.kex.state.predicate.state
 import org.vorpal.research.kex.state.term.FieldLoadTerm
 import org.vorpal.research.kex.state.term.Term
 import org.vorpal.research.kex.state.term.term
@@ -20,19 +31,16 @@ import kotlin.test.assertTrue
 @ExperimentalSerializationApi
 @InternalSerializationApi
 class KexSerializerTest : KexTest("kex-serializer") {
-    val serializer = KexSerializer(cm)
+    private val serializer = KexSerializer(cm)
 
     @Test
     fun typeSerializationTest() {
-        val voidType = KexVoid
-        val intType = KexInt
-        val doubleType = KexDouble
         val klassType = KexClass("org/vorpal/research/kex/Test")
         val arrayType = KexArray(klassType, memspace = 15)
 
-        val serializedVoid = serializer.toJson<KexType>(voidType)
-        val serializedInt = serializer.toJson<KexType>(intType)
-        val serializedDouble = serializer.toJson<KexType>(doubleType)
+        val serializedVoid = serializer.toJson<KexType>(KexVoid)
+        val serializedInt = serializer.toJson<KexType>(KexInt)
+        val serializedDouble = serializer.toJson<KexType>(KexDouble)
         val serializedKlass = serializer.toJson<KexType>(klassType)
         val serializedArray = serializer.toJson<KexType>(arrayType)
 
@@ -42,9 +50,9 @@ class KexSerializerTest : KexTest("kex-serializer") {
         val deserializedKlass = serializer.fromJson<KexType>(serializedKlass)
         val deserializedArray = serializer.fromJson<KexType>(serializedArray)
 
-        assertEquals(voidType, deserializedVoid)
-        assertEquals(intType, deserializedInt)
-        assertEquals(doubleType, deserializedDouble)
+        assertEquals(KexVoid, deserializedVoid)
+        assertEquals(KexInt, deserializedInt)
+        assertEquals(KexDouble, deserializedDouble)
         assertEquals(klassType, deserializedKlass)
         assertEquals(arrayType, deserializedArray)
     }

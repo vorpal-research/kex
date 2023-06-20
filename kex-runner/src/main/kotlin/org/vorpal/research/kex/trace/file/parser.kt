@@ -1,6 +1,12 @@
 package org.vorpal.research.kex.trace.file
 
-import com.github.h0tk3y.betterParse.combinators.*
+import com.github.h0tk3y.betterParse.combinators.and
+import com.github.h0tk3y.betterParse.combinators.optional
+import com.github.h0tk3y.betterParse.combinators.or
+import com.github.h0tk3y.betterParse.combinators.separatedTerms
+import com.github.h0tk3y.betterParse.combinators.unaryMinus
+import com.github.h0tk3y.betterParse.combinators.use
+import com.github.h0tk3y.betterParse.combinators.zeroOrMore
 import com.github.h0tk3y.betterParse.grammar.Grammar
 import com.github.h0tk3y.betterParse.grammar.parser
 import com.github.h0tk3y.betterParse.lexer.literalToken
@@ -74,7 +80,6 @@ class ActionParser(val cm: ClassManager, val ctx: NameMapperContext) : Grammar<A
     private val closeBracket by literalToken(")")
     private val percent by literalToken("%")
     private val colon by literalToken(":")
-    private val semicolon by literalToken(";")
     private val comma by literalToken(",")
     private val minus by literalToken("-")
     private val doubleNum by regexToken("\\d+\\.\\d+(E(-)?\\d+)?")
@@ -86,9 +91,7 @@ class ActionParser(val cm: ClassManager, val ctx: NameMapperContext) : Grammar<A
     private val string by regexToken("\"[\\w\\sа-яА-ЯёЁ\\-.@>=<+*,'\\(\\):\\[\\]/\\n{}]*\"")
 
     private val colonAndSpace by colon and space
-    private val semicolonAndSpace by semicolon and space
     private val commaAndSpace by comma and space
-    private val spacedSemicolon by semicolon and optional(space)
 
     private val anyWord by (word use { text }) or
             ((keyword and word) use { t1.text + t2.text }) or
@@ -126,8 +129,8 @@ class ActionParser(val cm: ClassManager, val ctx: NameMapperContext) : Grammar<A
         val klass = cm[t1.dropLast(1).fold("") { acc, curr -> "$acc/$curr" }.drop(1)]
         val methodName = t1.takeLast(1).firstOrNull() ?: throw UnknownNameException(t1.toString())
         val args = t2
-        val rettype = t3
-        klass.getMethod(methodName, MethodDescriptor(args, rettype))
+        val returnType = t3
+        klass.getMethod(methodName, MethodDescriptor(args, returnType))
     }
 
     private val kfgValueParser by valueName use { KfgValue(this) }

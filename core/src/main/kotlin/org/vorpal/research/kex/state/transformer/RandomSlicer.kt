@@ -178,14 +178,14 @@ class DeltaDebugger(
                 ++failedAttempts
                 if (failedAttempts > fails) {
                     log.debug("Too many failed attempts in a row, stopping reduction")
-                    log.debug("Resulting state: $current")
+                    log.debug("Resulting state: {}", current)
                     break
                 }
             }
         }
 
-        log.debug("Reduced $ps")
-        log.debug("To $current")
+        log.debug("Reduced {}", ps)
+        log.debug("To {}", current)
         return current
     }
 }
@@ -217,14 +217,14 @@ class LambdaBodyDeltaDebugger(
                 ++failedAttempts
                 if (failedAttempts > fails) {
                     log.debug("Too many failed attempts in a row, stopping reduction")
-                    log.debug("Resulting state: $current")
+                    log.debug("Resulting state: {}", current)
                     break
                 }
             }
         }
 
-        log.debug("Reduced $ps")
-        log.debug("To $current")
+        log.debug("Reduced {}", ps)
+        log.debug("To {}", current)
         return current
     }
 }

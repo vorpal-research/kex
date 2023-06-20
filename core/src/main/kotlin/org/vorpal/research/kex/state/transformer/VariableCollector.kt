@@ -2,7 +2,11 @@ package org.vorpal.research.kex.state.transformer
 
 import org.vorpal.research.kex.ktype.KexVoid
 import org.vorpal.research.kex.state.PredicateState
-import org.vorpal.research.kex.state.term.*
+import org.vorpal.research.kex.state.term.ArgumentTerm
+import org.vorpal.research.kex.state.term.FieldTerm
+import org.vorpal.research.kex.state.term.ReturnValueTerm
+import org.vorpal.research.kex.state.term.Term
+import org.vorpal.research.kex.state.term.ValueTerm
 
 val Term.isVariable: Boolean get() = when (this) {
     is ArgumentTerm -> true

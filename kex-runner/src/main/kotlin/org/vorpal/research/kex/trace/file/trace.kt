@@ -1,3 +1,5 @@
+@file:Suppress("unused", "KotlinConstantConditions")
+
 package org.vorpal.research.kex.trace.file
 
 import org.vorpal.research.kex.trace.AbstractTrace
@@ -27,7 +29,7 @@ data class BlockInfo internal constructor(
     }
 }
 
-data class FileTrace constructor(
+data class FileTrace(
     val method: Method,
     val instance: ActionValue?,
     val args: Array<ActionValue>,
@@ -35,7 +37,7 @@ data class FileTrace constructor(
     val retval: ActionValue?,
     val throwable: ActionValue?,
     val exception: Throwable?,
-    val subtraces: List<FileTrace>
+    val subTraces: List<FileTrace>
 ) : AbstractTrace() {
     fun getBlockInfo(bb: BasicBlock) = blocks.getValue(bb)
 
@@ -44,8 +46,8 @@ data class FileTrace constructor(
             class Info(
                 var instance: ActionValue?,
                 var args: Array<ActionValue>, var blocks: MutableMap<BasicBlock, MutableList<BlockInfo>>,
-                var retval: ActionValue?, var throwval: ActionValue?,
-                val exception: Throwable?, val subinfos: MutableList<Pair<Method, Info>>
+                var retval: ActionValue?, var throwValue: ActionValue?,
+                val exception: Throwable?, val subInfos: MutableList<Pair<Method, Info>>
             ) {
                 fun toTrace(method: Method): FileTrace =
                     FileTrace(
@@ -54,9 +56,9 @@ data class FileTrace constructor(
                         args,
                         blocks,
                         retval,
-                        throwval,
+                        throwValue,
                         exception,
-                        subinfos.map { it.second.toTrace(it.first) })
+                        subInfos.map { it.second.toTrace(it.first) })
             }
 
             val infos = ArrayDeque<Info>()
@@ -69,7 +71,7 @@ data class FileTrace constructor(
                     is MethodEntry -> {
                         methodStack.push(action.method)
                         val newInfo = Info(null, arrayOf(), hashMapOf(), null, null, exception, arrayListOf())
-                        infos.peek()?.subinfos?.add(action.method to newInfo)
+                        infos.peek()?.subInfos?.add(action.method to newInfo)
                         infos.push(newInfo)
                     }
                     is MethodInstance -> {
@@ -89,7 +91,7 @@ data class FileTrace constructor(
                     }
                     is MethodThrow -> {
                         val info = infos.peek()
-                        info.throwval = action.throwable.rhv
+                        info.throwValue = action.throwable.rhv
 
                         result.add(methodStack.pop() to info)
                         infos.pop()
@@ -120,7 +122,7 @@ data class FileTrace constructor(
             }
             ktassert(result.isNotEmpty())
             return result.map { it.second.toTrace(it.first) }.reduceRight { trace, acc ->
-                trace.copy(subtraces = trace.subtraces + acc)
+                trace.copy(subTraces = trace.subTraces + acc)
             }
         }
     }
@@ -136,9 +138,7 @@ data class FileTrace constructor(
         if (retval != other.retval) return false
         if (throwable != other.throwable) return false
         if (exception != other.exception) return false
-        if (subtraces != other.subtraces) return false
-
-        return true
+        return subTraces == other.subTraces
     }
 
     override fun hashCode(): Int {
@@ -149,7 +149,7 @@ data class FileTrace constructor(
         result = 31 * result + (retval?.hashCode() ?: 0)
         result = 31 * result + (throwable?.hashCode() ?: 0)
         result = 31 * result + (exception?.hashCode() ?: 0)
-        result = 31 * result + subtraces.hashCode()
+        result = 31 * result + subTraces.hashCode()
         return result
     }
 }

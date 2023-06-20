@@ -4,7 +4,12 @@ import org.vorpal.research.kex.ktype.KexReference
 import org.vorpal.research.kex.state.PredicateState
 import org.vorpal.research.kex.state.predicate.Predicate
 import org.vorpal.research.kex.state.predicate.PredicateType
-import org.vorpal.research.kex.state.term.*
+import org.vorpal.research.kex.state.term.ConstClassTerm
+import org.vorpal.research.kex.state.term.ConstStringTerm
+import org.vorpal.research.kex.state.term.FieldTerm
+import org.vorpal.research.kex.state.term.LambdaTerm
+import org.vorpal.research.kex.state.term.Term
+import org.vorpal.research.kex.state.term.term
 
 class TermCollector(val filter: (Term) -> Boolean) : Transformer<TermCollector> {
     companion object {
@@ -57,6 +62,7 @@ fun collectPredicateTypeTerms(type: PredicateType, state: PredicateState): Set<T
     return collector.terms.filterTo(mutableSetOf()) { it.isVariable }
 }
 
+@Suppress("unused")
 fun collectPredicateTerms(state: PredicateState, filter: (Predicate) -> Boolean): Set<Term> {
     val collector = PredicateTermCollector(filter)
     collector.apply(state)
@@ -65,6 +71,7 @@ fun collectPredicateTerms(state: PredicateState, filter: (Predicate) -> Boolean)
 
 fun collectRequiredTerms(state: PredicateState) = collectPredicateTypeTerms(PredicateType.Require(), state)
 fun collectAssumedTerms(state: PredicateState) = collectPredicateTypeTerms(PredicateType.Assume(), state)
+@Suppress("unused")
 fun collectAxiomTerms(state: PredicateState) = collectPredicateTypeTerms(PredicateType.Axiom(), state)
 
 class StringTermCollector : Transformer<StringTermCollector> {

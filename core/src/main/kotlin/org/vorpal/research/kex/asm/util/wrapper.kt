@@ -9,7 +9,13 @@ import org.vorpal.research.kfg.ir.value.Value
 import org.vorpal.research.kfg.ir.value.instruction.Instruction
 import org.vorpal.research.kfg.ir.value.instruction.InstructionBuilder
 import org.vorpal.research.kfg.ir.value.instruction.InstructionFactory
-import org.vorpal.research.kfg.type.*
+import org.vorpal.research.kfg.type.ArrayType
+import org.vorpal.research.kfg.type.CharType
+import org.vorpal.research.kfg.type.ClassType
+import org.vorpal.research.kfg.type.NullType
+import org.vorpal.research.kfg.type.TypeFactory
+import org.vorpal.research.kfg.type.objectType
+import org.vorpal.research.kfg.type.stringType
 
 interface Wrapper : InstructionBuilder
 

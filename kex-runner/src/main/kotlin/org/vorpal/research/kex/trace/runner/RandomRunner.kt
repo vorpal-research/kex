@@ -3,7 +3,11 @@ package org.vorpal.research.kex.trace.runner
 import org.vorpal.research.kex.parameters.Parameters
 import org.vorpal.research.kex.random.GenerationException
 import org.vorpal.research.kex.random.Randomizer
-import org.vorpal.research.kex.util.*
+import org.vorpal.research.kex.util.TimeoutException
+import org.vorpal.research.kex.util.getConstructor
+import org.vorpal.research.kex.util.getMethod
+import org.vorpal.research.kex.util.isStatic
+import org.vorpal.research.kex.util.loadClass
 import org.vorpal.research.kthelper.collection.mapToArray
 import org.vorpal.research.kthelper.logging.log
 import sun.misc.Unsafe
@@ -25,7 +29,7 @@ fun Randomizer.generateParameters(klass: Class<*>, method: Method): Parameters<A
     val a = method.genericParameterTypes.mapToArray { next(it) }
     Parameters(i, a.toList(), setOf())
 } catch (e: GenerationException) {
-    log.debug("Cannot invoke $method")
+    log.debug("Cannot invoke {}", method)
     log.debug("Cause: ${e.message}")
     null
 }
@@ -37,8 +41,8 @@ fun Randomizer.generateParameters(method: Constructor<*>): Parameters<Any?>? = t
         setOf()
     )
 } catch (e: GenerationException) {
-    log.debug("Cannot invoke $method")
-    log.debug("Cause: ${e.message}")
+    log.debug("Cannot invoke {}", method)
+    log.debug("Cause: {}", e.message)
     null
 }
 
@@ -73,8 +77,8 @@ fun generateDefaultParameters(method: Constructor<*>): Parameters<Any?>? = try {
         setOf()
     )
 } catch (e: GenerationException) {
-    log.debug("Cannot invoke $method")
-    log.debug("Cause: ${e.message}")
+    log.debug("Cannot invoke {}", method)
+    log.debug("Cause: {}", e.message)
     null
 }
 
@@ -85,8 +89,8 @@ fun generateDefaultParameters(klass: Class<*>, method: Method): Parameters<Any?>
         setOf()
     )
 } catch (e: GenerationException) {
-    log.debug("Cannot invoke $method")
-    log.debug("Cause: ${e.message}")
+    log.debug("Cannot invoke {}", method)
+    log.debug("Cause: {}", e.message)
     null
 }
 
@@ -106,6 +110,7 @@ fun generateDefaultParameters(loader: ClassLoader, method: KfgMethod): Parameter
     }
 }
 
+@Suppress("unused")
 open class RandomRunner(
     method: KfgMethod,
     loader: ClassLoader,

@@ -4,7 +4,13 @@ import org.vorpal.research.kex.state.ChoiceState
 import org.vorpal.research.kex.state.PredicateState
 import org.vorpal.research.kex.state.StateBuilder
 import org.vorpal.research.kex.state.predicate.assume
-import org.vorpal.research.kex.state.term.*
+import org.vorpal.research.kex.state.term.ArrayIndexTerm
+import org.vorpal.research.kex.state.term.ArrayLengthTerm
+import org.vorpal.research.kex.state.term.CallTerm
+import org.vorpal.research.kex.state.term.ConstClassTerm
+import org.vorpal.research.kex.state.term.FieldTerm
+import org.vorpal.research.kex.state.term.StaticClassRefTerm
+import org.vorpal.research.kex.state.term.Term
 import org.vorpal.research.kthelper.collection.dequeOf
 
 class NullityInfoAdapter : RecollectingTransformer<NullityInfoAdapter> {

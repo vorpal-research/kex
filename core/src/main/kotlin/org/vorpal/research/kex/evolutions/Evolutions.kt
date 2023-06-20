@@ -13,7 +13,24 @@ import org.vorpal.research.kfg.ir.value.instruction.PhiInst
 import org.vorpal.research.kfg.ir.value.instruction.UnaryInst
 import org.vorpal.research.kfg.visitor.Loop
 import org.vorpal.research.kfg.visitor.MethodVisitor
-import ru.spbstu.*
+import ru.spbstu.Apply
+import ru.spbstu.Const
+import ru.spbstu.Product
+import ru.spbstu.RowProduct
+import ru.spbstu.RowSum
+import ru.spbstu.ShiftLeft
+import ru.spbstu.ShiftRight
+import ru.spbstu.Sum
+import ru.spbstu.Symbolic
+import ru.spbstu.Var
+import ru.spbstu.div
+import ru.spbstu.minus
+import ru.spbstu.partitionTo
+import ru.spbstu.plus
+import ru.spbstu.pow
+import ru.spbstu.subst
+import ru.spbstu.times
+import ru.spbstu.vars
 import ru.spbstu.wheels.mapToArray
 
 /**
