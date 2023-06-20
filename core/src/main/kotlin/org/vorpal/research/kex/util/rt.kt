@@ -76,7 +76,7 @@ fun getKexRuntime(): Container? {
 
 fun getJvmVersion(): Int {
     val versionStr = System.getProperty("java.version")
-    return "(1\\.)?(\\d+)".toRegex().find(versionStr)?.groupValues?.getOrNull(2)!!.toInt()
+    return """(1.)?(d+)""".toRegex().find(versionStr)?.groupValues?.getOrNull(2)!!.toInt()
 }
 
 fun getJvmModuleParams(): List<String> = when (getJvmVersion()) {
