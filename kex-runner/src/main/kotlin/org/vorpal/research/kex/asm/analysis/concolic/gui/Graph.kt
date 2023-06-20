@@ -1,6 +1,5 @@
 package org.vorpal.research.kex.asm.analysis.concolic.gui
 
-import com.jetbrains.rd.util.firstOrNull
 import kotlinx.serialization.Serializable
 import org.vorpal.research.kex.trace.symbolic.Clause
 import org.vorpal.research.kex.trace.symbolic.PathClause
@@ -16,6 +15,7 @@ class Graph {
     val depth: Int
         get() = vertexId
 
+    @Suppress("MemberVisibilityCanBePrivate")
     val vertices: List<Vertex>
         get() = nodes.values.toList()
 
@@ -31,10 +31,7 @@ class Graph {
     }
 
     fun findClauseByVertex(vertex: Vertex): Clause? {
-        return nodes
-            .filterValues { it == vertex }
-            .firstOrNull()
-            ?.key
+        return nodes.firstNotNullOfOrNull { if (it.value == vertex) it.key else null }
     }
 
     fun findStateByPathClause(pathClause: PathClause): PersistentSymbolicState? = states[pathClause]
