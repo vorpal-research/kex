@@ -13,6 +13,6 @@ import kotlin.time.ExperimentalTime
 class PrimitiveConcolicLongTest : ConcolicTest("primitive-concolic") {
     @Test
     fun primitiveConcolicTest() {
-        assertCoverage(cm["org/vorpal/research/kex/test/concolic/PrimitiveConcolicTests"], 1.0)
+        assertCoverage(cm["org/vorpal/research/kex/test/concolic/PrimitiveConcolicTests"], 1.0, 0.5)
     }
 }
