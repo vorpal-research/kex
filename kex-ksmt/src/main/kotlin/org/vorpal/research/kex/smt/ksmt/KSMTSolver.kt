@@ -42,9 +42,9 @@ import org.vorpal.research.kex.smt.AsyncIncrementalSolver
 import org.vorpal.research.kex.smt.AsyncSolver
 import org.vorpal.research.kex.smt.IncrementalSolver
 import org.vorpal.research.kex.smt.MemoryShape
-import org.vorpal.research.kex.smt.Solver
 import org.vorpal.research.kex.smt.Result
 import org.vorpal.research.kex.smt.SMTModel
+import org.vorpal.research.kex.smt.Solver
 import org.vorpal.research.kex.smt.ksmt.KSMTEngine.asExpr
 import org.vorpal.research.kex.state.PredicateQuery
 import org.vorpal.research.kex.state.PredicateState
@@ -68,6 +68,7 @@ import org.vorpal.research.kthelper.assert.ktassert
 import org.vorpal.research.kthelper.assert.unreachable
 import org.vorpal.research.kthelper.logging.debug
 import org.vorpal.research.kthelper.logging.log
+import org.vorpal.research.kthelper.`try`
 import org.vorpal.research.kthelper.tryOrNull
 import kotlin.math.log2
 import kotlin.reflect.KClass
@@ -271,20 +272,22 @@ class KSMTSolver(
         log.debug("Solver finished")
 
         return when (result) {
-            KSolverStatus.SAT -> {
+            KSolverStatus.SAT -> `try`<Pair<KSolverStatus, Any>> {
                 val model = solver.modelAsync()
                 if (logFormulae) log.debug(model)
                 result to model
+            }.getOrElse {
+                KSolverStatus.UNKNOWN to (it.message ?: "Exception during model acquisition")
             }
 
             KSolverStatus.UNSAT -> {
-                val core = solver.unsatCoreAsync()
+                val core = tryOrNull { solver.unsatCoreAsync() } ?: "Solver executor is not alive"
                 log.debug("Unsat core: {}", core)
                 result to core
             }
 
             KSolverStatus.UNKNOWN -> {
-                val reason = tryOrNull { solver.reasonOfUnknown() } ?: "Solver executor is not alive"
+                val reason = tryOrNull { solver.reasonOfUnknownAsync() } ?: "Solver executor is not alive"
                 log.debug(reason)
                 result to reason
             }
@@ -728,20 +731,22 @@ class KSMTSolver(
             }
 
             when (val result = solver.checkAndMinimize(softConstraintsMap)) {
-                KSolverStatus.SAT -> {
+                KSolverStatus.SAT -> `try`<Pair<KSolverStatus, Any>> {
                     val model = solver.modelAsync()
                     if (logFormulae) log.debug(model)
                     result to model
+                }.getOrElse {
+                    KSolverStatus.UNKNOWN to (it.message ?: "Exception during model acquisition")
                 }
 
                 KSolverStatus.UNSAT -> {
-                    val core = solver.unsatCoreAsync()
+                    val core = tryOrNull { solver.unsatCoreAsync() } ?: "Solver executor is not alive"
                     log.debug("Unsat core: {}", core)
                     result to core
                 }
 
                 KSolverStatus.UNKNOWN -> {
-                    val reason = tryOrNull { solver.reasonOfUnknown() } ?: "unknown"
+                    val reason = tryOrNull { solver.reasonOfUnknownAsync() } ?: "unknown"
                     log.debug(reason)
                     result to reason
                 }
