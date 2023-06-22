@@ -155,7 +155,7 @@ class Z3Solver(
         model: Model,
         name: String
     ): Pair<Term, Term> {
-        val ptrExpr = Z3Converter(executionContext).convert(ptr, ef, this) as? Ptr_
+        val ptrExpr = Z3Converter(executionContext, noAxioms = true).convert(ptr, ef, this) as? Ptr_
             ?: unreachable { log.error("Non-ptr expr for pointer $ptr") }
         val startProp = getBitvectorInitialProperty(memspace, name)
         val endProp = getBitvectorProperty(memspace, name)
@@ -175,7 +175,7 @@ class Z3Solver(
         model: Model,
         name: String
     ): Pair<Term, Term> {
-        val ptrExpr = Z3Converter(executionContext).convert(ptr, ef, this) as? Ptr_
+        val ptrExpr = Z3Converter(executionContext, noAxioms = true).convert(ptr, ef, this) as? Ptr_
             ?: unreachable { log.error("Non-ptr expr for pointer $ptr") }
         val typeSize = Z3ExprFactory.getTypeSize(type)
         val startProp = when (typeSize) {
@@ -203,7 +203,7 @@ class Z3Solver(
         model: Model,
         name: String
     ): Pair<Term, Term> {
-        val ptrExpr = Z3Converter(executionContext).convert(ptr, ef, ctx) as? Ptr_
+        val ptrExpr = Z3Converter(executionContext, noAxioms = true).convert(ptr, ef, ctx) as? Ptr_
             ?: unreachable { log.error("Non-ptr expr for pointer $ptr") }
         val modelPtr = Z3Unlogic.undo(model.evaluate(ptrExpr.expr, true))
 
@@ -223,7 +223,7 @@ class Z3Solver(
         model: Model,
         name: String
     ): Pair<Term, Term> {
-        val ptrExpr = Z3Converter(executionContext).convert(ptr, ef, ctx) as? Ptr_
+        val ptrExpr = Z3Converter(executionContext, noAxioms = true).convert(ptr, ef, ctx) as? Ptr_
             ?: unreachable { log.error("Non-ptr expr for pointer $ptr") }
         val modelPtr = Z3Unlogic.undo(model.evaluate(ptrExpr.expr, true))
 
@@ -242,7 +242,7 @@ class Z3Solver(
         }
 
         val assignments = vars.associateWith {
-            val expr = Z3Converter(executionContext).convert(it, ef, ctx)
+            val expr = Z3Converter(executionContext, noAxioms = true).convert(it, ef, ctx)
             val z3expr = expr.expr
 
             val evaluatedExpr = model.evaluate(z3expr, true)
@@ -269,9 +269,9 @@ class Z3Solver(
             when (ptr) {
                 is ArrayLoadTerm -> {}
                 is ArrayIndexTerm -> {
-                    val arrayPtrExpr = Z3Converter(executionContext).convert(ptr.arrayRef, ef, ctx) as? Ptr_
+                    val arrayPtrExpr = Z3Converter(executionContext, noAxioms = true).convert(ptr.arrayRef, ef, ctx) as? Ptr_
                         ?: unreachable { log.error("Non-ptr expr for pointer $ptr") }
-                    val indexExpr = Z3Converter(executionContext).convert(ptr.index, ef, ctx) as? Int_
+                    val indexExpr = Z3Converter(executionContext, noAxioms = true).convert(ptr.index, ef, ctx) as? Int_
                         ?: unreachable { log.error("Non integer expr for index in $ptr") }
 
                     val modelPtr = Z3Unlogic.undo(model.evaluate(arrayPtrExpr.expr, true))
@@ -328,7 +328,7 @@ class Z3Solver(
                     val startMem = ctx.getWordInitialMemory(memspace)
                     val endMem = ctx.getWordMemory(memspace)
 
-                    val ptrExpr = Z3Converter(executionContext).convert(ptr, ef, ctx) as? Ptr_
+                    val ptrExpr = Z3Converter(executionContext, noAxioms = true).convert(ptr, ef, ctx) as? Ptr_
                         ?: unreachable { log.error("Non-ptr expr for pointer $ptr") }
 
                     val startV = startMem.load(ptrExpr)
@@ -390,9 +390,9 @@ class Z3Solver(
         for (ptr in indices) {
             ptr as ArrayIndexTerm
             val memspace = ptr.arrayRef.memspace
-            val arrayPtrExpr = Z3Converter(executionContext).convert(ptr.arrayRef, ef, ctx) as? Ptr_
+            val arrayPtrExpr = Z3Converter(executionContext, noAxioms = true).convert(ptr.arrayRef, ef, ctx) as? Ptr_
                 ?: unreachable { log.error("Non-ptr expr for pointer $ptr") }
-            val indexExpr = Z3Converter(executionContext).convert(ptr.index, ef, ctx) as? Int_
+            val indexExpr = Z3Converter(executionContext, noAxioms = true).convert(ptr.index, ef, ctx) as? Int_
                 ?: unreachable { log.error("Non integer expr for index in $ptr") }
 
             val modelPtr = Z3Unlogic.undo(model.evaluate(arrayPtrExpr.expr, true))

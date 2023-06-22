@@ -21,10 +21,12 @@ private typealias Factory_ = $factory
 private typealias Context_ = ${solver}Context
 
 @Suppress("UNUSED_PARAMETER", "UNUSED_VARIABLE")
-class ${solver}Converter(val executionContext: ExecutionContext) : ${solver}SMTConverter() {
+class ${solver}Converter(
+    val executionContext: ExecutionContext,
+    private var noAxioms: Boolean = false
+) : ${solver}SMTConverter() {
     private val bounds = dequeOf< Map< Term, Dynamic_ >>()
     private val axiomedTerms = mutableSetOf< Term >()
-    private var noAxioms = false
 
     private inline fun < reified T: Dynamic_ > withNoAxioms(body: ${solver}Converter.()-> T): T {
         noAxioms = true

@@ -12,6 +12,7 @@ import org.vorpal.research.kex.trace.symbolic.StateClause
 import org.vorpal.research.kex.trace.symbolic.persistentClauseStateOf
 import org.vorpal.research.kex.trace.symbolic.persistentPathConditionOf
 import org.vorpal.research.kex.trace.symbolic.persistentSymbolicState
+import org.vorpal.research.kfg.charSequence
 import org.vorpal.research.kfg.charWrapper
 import org.vorpal.research.kfg.illegalArgumentClass
 import org.vorpal.research.kfg.intWrapper
@@ -22,7 +23,6 @@ import org.vorpal.research.kfg.ir.value.instruction.Instruction
 import org.vorpal.research.kfg.numberFormatClass
 import org.vorpal.research.kfg.stringClass
 import org.vorpal.research.kfg.stringIndexOOB
-import org.vorpal.research.kfg.type.SystemTypeNames
 
 
 class ExceptionPreconditionManager(
@@ -34,7 +34,7 @@ class ExceptionPreconditionManager(
 
 
     init {
-        val charSequenceClass = cm[SystemTypeNames.charSequence]
+        val charSequenceClass = cm.charSequence
         val integerClass = cm.intWrapper
         val stringClass = cm.stringClass
 

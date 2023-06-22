@@ -305,7 +305,7 @@ class KSMTSolver(
         model: KModel,
         name: String
     ): Pair<Term, Term> {
-        val ptrExpr = KSMTConverter(executionContext).convert(ptr, ef, this) as? Ptr_
+        val ptrExpr = KSMTConverter(executionContext, noAxioms = true).convert(ptr, ef, this) as? Ptr_
             ?: unreachable { log.error("Non-ptr expr for pointer $ptr") }
         val startProp = getBitvectorInitialProperty(memspace, name)
         val endProp = getBitvectorProperty(memspace, name)
@@ -326,7 +326,7 @@ class KSMTSolver(
         model: KModel,
         name: String
     ): Pair<Term, Term> {
-        val ptrExpr = KSMTConverter(executionContext).convert(ptr, ef, this) as? Ptr_
+        val ptrExpr = KSMTConverter(executionContext, noAxioms = true).convert(ptr, ef, this) as? Ptr_
             ?: unreachable { log.error("Non-ptr expr for pointer $ptr") }
         val typeSize = KSMTExprFactory.getTypeSize(type)
         val startProp = when (typeSize) {
@@ -356,7 +356,7 @@ class KSMTSolver(
         name: String
     ): Pair<Term, Term> {
         val kCtx = ctx.factory.ctx
-        val ptrExpr = KSMTConverter(executionContext).convert(ptr, ef, ctx) as? Ptr_
+        val ptrExpr = KSMTConverter(executionContext, noAxioms = true).convert(ptr, ef, ctx) as? Ptr_
             ?: unreachable { log.error("Non-ptr expr for pointer $ptr") }
         val modelPtr = KSMTUnlogic.undo(model.eval(ptrExpr.expr.asExpr(kCtx), true), kCtx, model)
 
@@ -377,7 +377,7 @@ class KSMTSolver(
         name: String
     ): Pair<Term, Term> {
         val kCtx = ctx.factory.ctx
-        val ptrExpr = KSMTConverter(executionContext).convert(ptr, ef, ctx) as? Ptr_
+        val ptrExpr = KSMTConverter(executionContext, noAxioms = true).convert(ptr, ef, ctx) as? Ptr_
             ?: unreachable { log.error("Non-ptr expr for pointer $ptr") }
         val modelPtr = KSMTUnlogic.undo(model.eval(ptrExpr.expr.asExpr(kCtx), true), kCtx, model)
 
@@ -397,7 +397,7 @@ class KSMTSolver(
         }
 
         val assignments = vars.associateWith {
-            val expr = KSMTConverter(executionContext).convert(it, ef, ctx)
+            val expr = KSMTConverter(executionContext, noAxioms = true).convert(it, ef, ctx)
             val ksmtExpr = expr.expr
 
             val evaluatedExpr = model.eval(ksmtExpr.asExpr(kCtx), true)
@@ -428,9 +428,9 @@ class KSMTSolver(
             when (ptr) {
                 is ArrayLoadTerm -> {}
                 is ArrayIndexTerm -> {
-                    val arrayPtrExpr = KSMTConverter(executionContext).convert(ptr.arrayRef, ef, ctx) as? Ptr_
+                    val arrayPtrExpr = KSMTConverter(executionContext, noAxioms = true).convert(ptr.arrayRef, ef, ctx) as? Ptr_
                         ?: unreachable { log.error("Non-ptr expr for pointer $ptr") }
-                    val indexExpr = KSMTConverter(executionContext).convert(ptr.index, ef, ctx) as? Int_
+                    val indexExpr = KSMTConverter(executionContext, noAxioms = true).convert(ptr.index, ef, ctx) as? Int_
                         ?: unreachable { log.error("Non integer expr for index in $ptr") }
 
                     val modelPtr = KSMTUnlogic.undo(
@@ -495,7 +495,7 @@ class KSMTSolver(
                     val startMem = ctx.getWordInitialMemory(memspace)
                     val endMem = ctx.getWordMemory(memspace)
 
-                    val ptrExpr = KSMTConverter(executionContext).convert(ptr, ef, ctx) as? Ptr_
+                    val ptrExpr = KSMTConverter(executionContext, noAxioms = true).convert(ptr, ef, ctx) as? Ptr_
                         ?: unreachable { log.error("Non-ptr expr for pointer $ptr") }
 
                     val startV = startMem.load(ptrExpr)
@@ -563,9 +563,9 @@ class KSMTSolver(
         for (ptr in indices) {
             ptr as ArrayIndexTerm
             val memspace = ptr.arrayRef.memspace
-            val arrayPtrExpr = KSMTConverter(executionContext).convert(ptr.arrayRef, ef, ctx) as? Ptr_
+            val arrayPtrExpr = KSMTConverter(executionContext, noAxioms = true).convert(ptr.arrayRef, ef, ctx) as? Ptr_
                 ?: unreachable { log.error("Non-ptr expr for pointer $ptr") }
-            val indexExpr = KSMTConverter(executionContext).convert(ptr.index, ef, ctx) as? Int_
+            val indexExpr = KSMTConverter(executionContext, noAxioms = true).convert(ptr.index, ef, ctx) as? Int_
                 ?: unreachable { log.error("Non integer expr for index in $ptr") }
 
             val modelPtr =
@@ -770,7 +770,7 @@ class KSMTSolver(
                     val softCopies = softConstraintsMap.toMutableMap()
                     val exprToDeclMappings = softConstraintsMap.keys
                         .associateBy { it.asExpr(ef.ctx) as KExpr<KBoolSort> }
-                    val core = this.unsatCoreAsync().toSet()
+                    val core = tryOrNull { this.unsatCoreAsync().toSet() } ?: return result
                     if (core.any { exprToDeclMappings[it] !in softCopies }) break
                     else {
                         this.pop()

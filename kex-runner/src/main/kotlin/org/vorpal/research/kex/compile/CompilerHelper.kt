@@ -9,12 +9,15 @@ import java.nio.file.Path
 
 class CompilerHelper(val ctx: ExecutionContext) {
     private val junitJar = getJunit()!!
+    private val enabled: Boolean = kexConfig.getBooleanValue("compile", "enabled", true)
     private val compileDir: Path = kexConfig.compiledCodeDirectory.also {
         it.toFile().mkdirs()
     }
     private val testDirectory = kexConfig.testcaseDirectory
 
     fun compileFile(file: Path) {
+        if (!enabled) return
+
         val compilerDriver = JavaCompilerDriver(
             listOf(*ctx.classPath.toTypedArray(), junitJar.path, testDirectory), compileDir
         )

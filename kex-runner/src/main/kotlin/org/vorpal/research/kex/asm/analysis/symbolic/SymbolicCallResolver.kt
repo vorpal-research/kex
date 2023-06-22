@@ -10,6 +10,7 @@ import org.vorpal.research.kex.ktype.KexRtManager.rtMapped
 import org.vorpal.research.kex.ktype.kexType
 import org.vorpal.research.kex.state.term.term
 import org.vorpal.research.kex.state.transformer.TermRenamer
+import org.vorpal.research.kfg.charSequence
 import org.vorpal.research.kfg.ir.Method
 import org.vorpal.research.kfg.ir.OuterClass
 import org.vorpal.research.kfg.ir.value.instruction.CallInst
@@ -39,7 +40,7 @@ class DefaultCallResolver(
 
     private fun shouldResolve(inst: CallInst): Boolean = when (inst.klass) {
         ctx.cm.stringClass -> false
-        ctx.cm["java/lang/CharSequence"] -> false
+        ctx.cm.charSequence -> false
         MethodManager.KexIntrinsicManager.unknownIntrinsics(ctx.cm) -> false
         MethodManager.KexIntrinsicManager.collectionIntrinsics(ctx.cm) -> false
         MethodManager.KexIntrinsicManager.assertionsIntrinsics(ctx.cm) -> false
