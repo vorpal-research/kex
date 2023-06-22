@@ -114,9 +114,9 @@ abstract class KexAnalysisLauncher(classPaths: List<String>, targetName: String)
         cm.initialize(analysisJars)
 
         analysisLevel = AnalysisLevel.parse(cm, targetName)
-        log.debug("Target: $analysisLevel")
+        log.debug("Target: {}", analysisLevel)
         accessLevel = analysisLevel.accessLevel
-        log.debug("Access level: $accessLevel")
+        log.debug("Access level: {}", accessLevel)
 
         val classLoader = URLClassLoader(arrayOf(instrumentedCodeDir.toUri().toURL()))
         val klassPath = containers.map { it.path }

@@ -410,14 +410,13 @@ class KSMTSolver(
         val typeMap = hashMapOf<Term, KexType>()
 
         for ((type, value) in ef.typeMap) {
-            val index =
-                when (val actualValue = KSMTUnlogic.undo(value.expr.asExpr(kCtx), kCtx, model)) {
-                    is ConstStringTerm -> term {
-                        const(actualValue.value.length - actualValue.value.indexOf('1') - 1)
-                    }
-
-                    else -> term { const(log2(actualValue.numericValue.toDouble()).toInt()) }
+            val index = when (val actualValue = KSMTUnlogic.undo(value.expr.asExpr(kCtx), kCtx, model)) {
+                is ConstStringTerm -> term {
+                    const(actualValue.value.length - actualValue.value.indexOf('1') - 1)
                 }
+
+                else -> term { const(log2(actualValue.numericValue.toDouble()).toInt()) }
+            }
             typeMap[index] = type.kexType
         }
 
@@ -428,10 +427,12 @@ class KSMTSolver(
             when (ptr) {
                 is ArrayLoadTerm -> {}
                 is ArrayIndexTerm -> {
-                    val arrayPtrExpr = KSMTConverter(executionContext, noAxioms = true).convert(ptr.arrayRef, ef, ctx) as? Ptr_
-                        ?: unreachable { log.error("Non-ptr expr for pointer $ptr") }
-                    val indexExpr = KSMTConverter(executionContext, noAxioms = true).convert(ptr.index, ef, ctx) as? Int_
-                        ?: unreachable { log.error("Non integer expr for index in $ptr") }
+                    val arrayPtrExpr =
+                        KSMTConverter(executionContext, noAxioms = true).convert(ptr.arrayRef, ef, ctx) as? Ptr_
+                            ?: unreachable { log.error("Non-ptr expr for pointer $ptr") }
+                    val indexExpr =
+                        KSMTConverter(executionContext, noAxioms = true).convert(ptr.index, ef, ctx) as? Int_
+                            ?: unreachable { log.error("Non integer expr for index in $ptr") }
 
                     val modelPtr = KSMTUnlogic.undo(
                         model.eval(arrayPtrExpr.expr.asExpr(kCtx), true),

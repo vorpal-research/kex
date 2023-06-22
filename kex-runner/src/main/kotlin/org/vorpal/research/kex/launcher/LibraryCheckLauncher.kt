@@ -23,7 +23,7 @@ class LibraryCheckLauncher(
         runPipeline(context, analysisLevel) {
             +CallCiteChecker(context, callCitePackage, psa)
         }
-        log.debug("Analysis finished, emitting results info ${DefectManager.defectFile}")
+        log.debug("Analysis finished, emitting results info {}", DefectManager.defectFile)
         DefectManager.emit()
     }
 
