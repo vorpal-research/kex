@@ -24,13 +24,13 @@ import org.vorpal.research.kex.util.asSet
 import org.vorpal.research.kfg.arrayIndexOOBClass
 import org.vorpal.research.kfg.classCastClass
 import org.vorpal.research.kfg.ir.Class
-import org.vorpal.research.kfg.ir.value.instruction.Instruction
 import org.vorpal.research.kfg.ir.value.instruction.ArrayLoadInst
 import org.vorpal.research.kfg.ir.value.instruction.ArrayStoreInst
 import org.vorpal.research.kfg.ir.value.instruction.CallInst
 import org.vorpal.research.kfg.ir.value.instruction.CastInst
 import org.vorpal.research.kfg.ir.value.instruction.FieldLoadInst
 import org.vorpal.research.kfg.ir.value.instruction.FieldStoreInst
+import org.vorpal.research.kfg.ir.value.instruction.Instruction
 import org.vorpal.research.kfg.ir.value.instruction.NewArrayInst
 import org.vorpal.research.kfg.ir.value.instruction.NewInst
 import org.vorpal.research.kfg.ir.value.instruction.ThrowInst
@@ -198,16 +198,19 @@ class DescriptorExceptionPreconditionBuilder(
 
     private fun Descriptor.asSymbolicState(
         location: Instruction,
-        mapping: MutableMap<Term, Term>
+        mapping: MutableMap<Term, Term>,
+        visited: MutableSet<Descriptor> = mutableSetOf()
     ): PersistentSymbolicState = when (this) {
-        is ConstantDescriptor -> this.asSymbolicState(location, mapping)
-        is FieldContainingDescriptor<*> -> this.asSymbolicState(location, mapping)
-        is ArrayDescriptor -> this.asSymbolicState(location, mapping)
+        in visited -> persistentSymbolicState()
+        is ConstantDescriptor -> this.asSymbolicState(location, mapping, visited)
+        is FieldContainingDescriptor<*> -> this.asSymbolicState(location, mapping, visited)
+        is ArrayDescriptor -> this.asSymbolicState(location, mapping, visited)
     }
 
     private fun ConstantDescriptor.asSymbolicState(
         location: Instruction,
-        mapping: MutableMap<Term, Term>
+        mapping: MutableMap<Term, Term>,
+        visited: MutableSet<Descriptor>
     ) = persistentSymbolicState(
         path = persistentPathConditionOf(
             PathClause(
@@ -231,12 +234,14 @@ class DescriptorExceptionPreconditionBuilder(
                 }
             )
         )
-    )
+    ).also { visited += this }
 
     private fun FieldContainingDescriptor<*>.asSymbolicState(
         location: Instruction,
-        mapping: MutableMap<Term, Term>
+        mapping: MutableMap<Term, Term>,
+        visited: MutableSet<Descriptor>
     ): PersistentSymbolicState {
+        visited += this
         var current = persistentSymbolicState()
         val objectTerm = run {
             val objectTerm = mapping.getOrDefault(this.term, this.term)
@@ -263,7 +268,7 @@ class DescriptorExceptionPreconditionBuilder(
             )
         )
         for ((field, descriptor) in this.fields) {
-            current += descriptor.asSymbolicState(location, mapping)
+            current += descriptor.asSymbolicState(location, mapping, visited)
             current += persistentSymbolicState(
                 path = persistentPathConditionOf(
                     PathClause(PathClauseType.CONDITION_CHECK, location, path {
@@ -278,8 +283,10 @@ class DescriptorExceptionPreconditionBuilder(
 
     private fun ArrayDescriptor.asSymbolicState(
         location: Instruction,
-        mapping: MutableMap<Term, Term>
+        mapping: MutableMap<Term, Term>,
+        visited: MutableSet<Descriptor>
     ): PersistentSymbolicState {
+        visited += this
         var current = persistentSymbolicState()
         val arrayTerm = run {
             val arrayTerm = mapping.getOrDefault(this.term, this.term)
@@ -313,7 +320,7 @@ class DescriptorExceptionPreconditionBuilder(
             )
         )
         for ((index, descriptor) in this.elements) {
-            current += descriptor.asSymbolicState(location, mapping)
+            current += descriptor.asSymbolicState(location, mapping, visited)
             current += persistentSymbolicState(
                 path = persistentPathConditionOf(
                     PathClause(PathClauseType.CONDITION_CHECK, location, path {
