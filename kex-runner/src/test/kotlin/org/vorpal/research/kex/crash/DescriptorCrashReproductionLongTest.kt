@@ -23,11 +23,11 @@ class DescriptorCrashReproductionLongTest : CrashReproductionTest(
         assertCrash(expectedStackTrace)
     }
 
-//    @Test
-//    fun testAssertionError() {
-//        val expectedStackTrace = produceStackTrace { CrashTrigger().triggerAssert() }
-//        assertCrash(expectedStackTrace)
-//    }
+    @Test
+    fun testAssertionError() {
+        val expectedStackTrace = produceStackTrace { CrashTrigger().triggerAssert() }
+        assertCrash(expectedStackTrace)
+    }
 
     @Test
     fun testArithmeticException() {

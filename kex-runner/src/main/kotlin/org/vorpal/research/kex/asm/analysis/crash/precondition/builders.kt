@@ -39,12 +39,15 @@ import org.vorpal.research.kfg.nullptrClass
 import org.vorpal.research.kthelper.assert.unreachable
 import org.vorpal.research.kthelper.logging.log
 
-class ExceptionPreconditionBuilderImpl(
+class ExceptionPreconditionBuilderImpl<T>(
     val ctx: ExecutionContext,
     override val targetException: Class,
-) : ExceptionPreconditionBuilder {
+) : ExceptionPreconditionBuilder<T> {
     val cm get() = ctx.cm
-    private val preconditionManager = ExceptionPreconditionManager(ctx)
+    private val preconditionManager = ExceptionPreconditionManager<T>(ctx)
+
+    override fun addPrecondition(precondition: T) = false
+
     override fun build(location: Instruction, state: TraverserState): Set<PersistentSymbolicState> =
         when (targetException) {
             cm.nullptrClass -> persistentSymbolicState(
@@ -173,8 +176,14 @@ class ExceptionPreconditionBuilderImpl(
 class DescriptorExceptionPreconditionBuilder(
     val ctx: ExecutionContext,
     override val targetException: Class,
-    private val parameterSet: Set<Parameters<Descriptor>>,
-) : ExceptionPreconditionBuilder {
+    parameterSet: Set<Parameters<Descriptor>>,
+) : ExceptionPreconditionBuilder<Parameters<Descriptor>> {
+    private val parameterSet = parameterSet.toMutableSet()
+
+    override fun addPrecondition(precondition: Parameters<Descriptor>): Boolean {
+        return parameterSet.add(precondition)
+    }
+
     override fun build(location: Instruction, state: TraverserState): Set<PersistentSymbolicState> {
         val callInst = (location as? CallInst)
             ?: unreachable { log.error("Descriptor precondition is not valid for non-call instructions") }
@@ -344,8 +353,14 @@ data class ConstraintExceptionPrecondition(
 class ConstraintExceptionPreconditionBuilder(
     val ctx: ExecutionContext,
     override val targetException: Class,
-    private val parameterSet: Set<ConstraintExceptionPrecondition>,
-) : ExceptionPreconditionBuilder {
+    parameterSet: Set<ConstraintExceptionPrecondition>,
+) : ExceptionPreconditionBuilder<ConstraintExceptionPrecondition> {
+    private val parameterSet = parameterSet.toMutableSet()
+
+    override fun addPrecondition(precondition: ConstraintExceptionPrecondition): Boolean {
+        return parameterSet.add(precondition)
+    }
+
     override fun build(location: Instruction, state: TraverserState): Set<PersistentSymbolicState> {
         val callInst = (location as? CallInst)
             ?: unreachable { log.error("Descriptor precondition is not valid for non-call instructions") }
