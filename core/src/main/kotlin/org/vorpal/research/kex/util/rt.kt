@@ -10,7 +10,7 @@ import org.vorpal.research.kthelper.logging.log
 import java.nio.file.Path
 import kotlin.io.path.readLines
 
-val Config.outputDirectory: Path get() = getPathValue("kex", "outputDir")!!
+val Config.outputDirectory: Path get() = getPathValue("kex", "outputDir")!!.normalize()
 
 val Config.instrumentedCodeDirectory: Path
     get() {
@@ -19,7 +19,7 @@ val Config.instrumentedCodeDirectory: Path
         if (!getBooleanValue("debug", "saveInstrumentedCode", false)) {
             deleteOnExit(instrumentedCodeDir)
         }
-        return instrumentedCodeDir
+        return instrumentedCodeDir.normalize()
     }
 
 val Config.compiledCodeDirectory: Path
@@ -29,21 +29,21 @@ val Config.compiledCodeDirectory: Path
         if (!getBooleanValue("debug", "saveCompiledCode", false)) {
             deleteOnExit(compiledCodeDir)
         }
-        return compiledCodeDir
+        return compiledCodeDir.normalize()
     }
 
 val Config.testcaseDirectory: Path
     get() {
         val testcaseDirName = getPathValue("testGen", "testsDir", "tests")
-        return outputDirectory.resolve(testcaseDirName).toAbsolutePath()
+        return outputDirectory.resolve(testcaseDirName).toAbsolutePath().normalize()
     }
 
 val Config.runtimeDepsPath: Path?
-    get() = getPathValue("kex", "runtimeDepsPath")
+    get() = getPathValue("kex", "runtimeDepsPath")?.normalize()
 
 val Config.libPath: Path?
     get() = getStringValue("kex", "libPath")?.let {
-        runtimeDepsPath?.resolve(it)
+        runtimeDepsPath?.resolve(it)?.normalize()
     }
 
 fun getRuntime(): Container? {

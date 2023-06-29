@@ -25,12 +25,12 @@ import org.vorpal.research.kfg.stringClass
 import org.vorpal.research.kfg.stringIndexOOB
 
 
-class ExceptionPreconditionManager(
+class ExceptionPreconditionManager<T>(
     val ctx: ExecutionContext
 ) : TermBuilder {
     private val cm get() = ctx.cm
     private val tf get() = ctx.types
-    private val conditions = mutableMapOf<Method, MutableMap<Class, ExceptionPreconditionBuilder>>()
+    private val conditions = mutableMapOf<Method, MutableMap<Class, ExceptionPreconditionBuilder<T>>>()
 
 
     init {
@@ -39,9 +39,11 @@ class ExceptionPreconditionManager(
         val stringClass = cm.stringClass
 
         conditions.getOrPut(charSequenceClass.getMethod("charAt", tf.charType, tf.intType)) {
-            val contracts = mutableMapOf<Class, ExceptionPreconditionBuilder>()
-            contracts[cm.stringIndexOOB] = object : ExceptionPreconditionBuilder {
+            val contracts = mutableMapOf<Class, ExceptionPreconditionBuilder<T>>()
+            contracts[cm.stringIndexOOB] = object : ExceptionPreconditionBuilder<T> {
                 override val targetException get() = cm.stringIndexOOB
+
+                override fun addPrecondition(precondition: T): Boolean = false
 
                 override fun build(location: Instruction, state: TraverserState): Set<PersistentSymbolicState> {
                     location as CallInst
@@ -74,9 +76,11 @@ class ExceptionPreconditionManager(
         }
 
         conditions.getOrPut(stringClass.getMethod("charAt", tf.charType, tf.intType)) {
-            val contracts = mutableMapOf<Class, ExceptionPreconditionBuilder>()
-            contracts[cm.stringIndexOOB] = object : ExceptionPreconditionBuilder {
+            val contracts = mutableMapOf<Class, ExceptionPreconditionBuilder<T>>()
+            contracts[cm.stringIndexOOB] = object : ExceptionPreconditionBuilder<T> {
                 override val targetException get() = cm.stringIndexOOB
+
+                override fun addPrecondition(precondition: T): Boolean = false
 
                 override fun build(location: Instruction, state: TraverserState): Set<PersistentSymbolicState> {
                     location as CallInst
@@ -109,9 +113,11 @@ class ExceptionPreconditionManager(
         }
 
         conditions.getOrPut(stringClass.getMethod("substring", stringClass.asType, tf.intType)) {
-            val contracts = mutableMapOf<Class, ExceptionPreconditionBuilder>()
-            contracts[cm.stringIndexOOB] = object : ExceptionPreconditionBuilder {
+            val contracts = mutableMapOf<Class, ExceptionPreconditionBuilder<T>>()
+            contracts[cm.stringIndexOOB] = object : ExceptionPreconditionBuilder<T> {
                 override val targetException get() = cm.stringIndexOOB
+
+                override fun addPrecondition(precondition: T): Boolean = false
 
                 override fun build(location: Instruction, state: TraverserState): Set<PersistentSymbolicState> {
                     location as CallInst
@@ -144,9 +150,11 @@ class ExceptionPreconditionManager(
         }
 
         conditions.getOrPut(stringClass.getMethod("substring", stringClass.asType, tf.intType, tf.intType)) {
-            val contracts = mutableMapOf<Class, ExceptionPreconditionBuilder>()
-            contracts[cm.stringIndexOOB] = object : ExceptionPreconditionBuilder {
+            val contracts = mutableMapOf<Class, ExceptionPreconditionBuilder<T>>()
+            contracts[cm.stringIndexOOB] = object : ExceptionPreconditionBuilder<T> {
                 override val targetException get() = cm.stringIndexOOB
+
+                override fun addPrecondition(precondition: T): Boolean = false
 
                 override fun build(location: Instruction, state: TraverserState): Set<PersistentSymbolicState> {
                     location as CallInst
@@ -198,9 +206,11 @@ class ExceptionPreconditionManager(
         }
 
         conditions.getOrPut(integerClass.getMethod("decode", integerClass.asType, stringClass.asType)) {
-            val contracts = mutableMapOf<Class, ExceptionPreconditionBuilder>()
-            contracts[cm.numberFormatClass] = object : ExceptionPreconditionBuilder {
+            val contracts = mutableMapOf<Class, ExceptionPreconditionBuilder<T>>()
+            contracts[cm.numberFormatClass] = object : ExceptionPreconditionBuilder<T> {
                 override val targetException get() = cm.numberFormatClass
+
+                override fun addPrecondition(precondition: T): Boolean = false
 
                 override fun build(location: Instruction, state: TraverserState): Set<PersistentSymbolicState> {
                     location as CallInst
@@ -246,9 +256,11 @@ class ExceptionPreconditionManager(
                 stringClass.asType
             )
         ) {
-            val contracts = mutableMapOf<Class, ExceptionPreconditionBuilder>()
-            contracts[cm.illegalArgumentClass] = object : ExceptionPreconditionBuilder {
+            val contracts = mutableMapOf<Class, ExceptionPreconditionBuilder<T>>()
+            contracts[cm.illegalArgumentClass] = object : ExceptionPreconditionBuilder<T> {
                 override val targetException get() = cm.illegalArgumentClass
+
+                override fun addPrecondition(precondition: T): Boolean = false
 
                 override fun build(location: Instruction, state: TraverserState): Set<PersistentSymbolicState> {
                     location as CallInst
@@ -285,9 +297,11 @@ class ExceptionPreconditionManager(
 
         val charClass = cm.charWrapper
         conditions.getOrPut(charClass.getMethod("codePointAt", tf.intType, charSequenceClass.asType, tf.intType)) {
-            val contracts = mutableMapOf<Class, ExceptionPreconditionBuilder>()
-            contracts[cm.stringIndexOOB] = object : ExceptionPreconditionBuilder {
+            val contracts = mutableMapOf<Class, ExceptionPreconditionBuilder<T>>()
+            contracts[cm.stringIndexOOB] = object : ExceptionPreconditionBuilder<T> {
                 override val targetException get() = cm.stringIndexOOB
+
+                override fun addPrecondition(precondition: T): Boolean = false
 
                 override fun build(location: Instruction, state: TraverserState): Set<PersistentSymbolicState> {
                     location as CallInst
@@ -321,7 +335,7 @@ class ExceptionPreconditionManager(
         }
     }
 
-    fun resolve(callInst: CallInst, exception: Class): ExceptionPreconditionBuilder? =
+    fun resolve(callInst: CallInst, exception: Class): ExceptionPreconditionBuilder<T>? =
         conditions.getOrDefault(callInst.method, emptyMap())[exception]
 }
 

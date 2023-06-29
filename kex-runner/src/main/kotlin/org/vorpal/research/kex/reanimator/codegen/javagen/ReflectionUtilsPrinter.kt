@@ -10,7 +10,7 @@ class ReflectionUtilsPrinter(
     val packageName: String
 ) {
     private val builder = JavaBuilder(packageName)
-    val klass = builder.run { klass(packageName, "ReflectionUtils") }
+    val klass = builder.run { klass(packageName, REFLECTION_UTILS_CLASS) }
     val newInstance: JavaBuilder.JavaFunction
     val newArray: JavaBuilder.JavaFunction
     val newObjectArray: JavaBuilder.JavaFunction
@@ -25,6 +25,7 @@ class ReflectionUtilsPrinter(
     val callMethod: JavaBuilder.JavaFunction
 
     companion object {
+        const val REFLECTION_UTILS_CLASS = "ReflectionUtils"
         private val reflectionUtilsInstances = mutableMapOf<Pair<Path, String>, ReflectionUtilsPrinter>()
         fun reflectionUtils(packageName: String): ReflectionUtilsPrinter {
             val testDirectory = kexConfig.testcaseDirectory
@@ -41,6 +42,7 @@ class ReflectionUtilsPrinter(
             }
         }
 
+        @Suppress("unused")
         fun invalidateAll() {
             reflectionUtilsInstances.clear()
         }
