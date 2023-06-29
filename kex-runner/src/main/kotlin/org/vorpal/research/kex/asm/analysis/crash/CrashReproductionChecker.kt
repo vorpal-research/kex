@@ -498,13 +498,17 @@ object CrashReproductionChecker {
             val testCasePaths = filteredTestCases.mapTo(mutableSetOf()) {
                 kexConfig.testcaseDirectory.resolve("${it.asmString}.java").toAbsolutePath().normalize()
             }
-            Files.walk(kexConfig.testcaseDirectory)
-                .filter { !it.isDirectory() }
-                .filter { it !in testCasePaths }
-                .forEach {
-                    Files.deleteIfExists(it)
+            kexConfig.testcaseDirectory
+                .takeIf { Files.exists(it) }
+                ?.let { testCaseDir ->
+                    Files.walk(testCaseDir)
+                        .filter { !it.isDirectory() }
+                        .filter { it !in testCasePaths }
+                        .filter { !it.endsWith("${ReflectionUtilsPrinter.REFLECTION_UTILS_CLASS}.java") }
+                        .forEach {
+                            Files.deleteIfExists(it)
+                        }
                 }
-            ReflectionUtilsPrinter.invalidateAll()
             filteredTestCases
         }
     }
