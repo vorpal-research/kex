@@ -76,7 +76,7 @@ operator fun ClassManager.get(frame: StackTraceElement): Method {
     }
 }
 
-private val Instruction.isNullptrThrowing
+internal val Instruction.isNullptrThrowing
     get() = when (this) {
         is ArrayLoadInst -> this.arrayRef !is ThisRef
         is ArrayStoreInst -> this.arrayRef !is ThisRef
@@ -86,7 +86,7 @@ private val Instruction.isNullptrThrowing
         else -> false
     }
 
-private fun Instruction.dominates(other: Instruction): Boolean {
+internal fun Instruction.dominates(other: Instruction): Boolean {
     var current = this.parent
     while (current != other.parent) {
         if (current.successors.size != 1) return false
@@ -96,10 +96,10 @@ private fun Instruction.dominates(other: Instruction): Boolean {
 }
 
 
-private fun StackTrace.targetException(context: ExecutionContext): Class =
+internal fun StackTrace.targetException(context: ExecutionContext): Class =
     context.cm[firstLine.takeWhile { it != ':' }.asmString]
 
-private fun StackTrace.targetInstructions(context: ExecutionContext): Set<Instruction> {
+internal fun StackTrace.targetInstructions(context: ExecutionContext): Set<Instruction> {
     val targetException = targetException(context)
     val candidates = context.cm[stackTraceLines.first()].body.flatten()
         .filter { it.location.line == stackTraceLines.first().lineNumber }
@@ -159,8 +159,9 @@ abstract class AbstractCrashReproductionChecker<T>(
 ) : SymbolicTraverser(ctx, ctx.cm[stackTrace.stackTraceLines.last()]) {
     abstract val result: CrashReproductionResult<T>
 
-    override val pathSelector: SymbolicPathSelector =
-        RandomizedDistancePathSelector(ctx, rootMethod, targetInstructions, stackTrace)
+    override val pathSelector: SymbolicPathSelector = RandomizedDistancePathSelector(
+        ctx, rootMethod, targetInstructions, stackTrace
+    )
     override val callResolver: SymbolicCallResolver = StackTraceCallResolver(
         stackTrace, DefaultCallResolver(ctx)
     )
