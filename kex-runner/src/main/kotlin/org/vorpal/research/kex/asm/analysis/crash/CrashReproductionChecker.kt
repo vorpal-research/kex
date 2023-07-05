@@ -60,6 +60,7 @@ import org.vorpal.research.kfg.negativeArrayClass
 import org.vorpal.research.kfg.nullptrClass
 import org.vorpal.research.kfg.runtimeException
 import org.vorpal.research.kthelper.assert.ktassert
+import org.vorpal.research.kthelper.assert.unreachable
 import org.vorpal.research.kthelper.logging.log
 import java.nio.file.Files
 import kotlin.coroutines.coroutineContext
@@ -69,11 +70,11 @@ import kotlin.time.ExperimentalTime
 
 operator fun ClassManager.get(frame: StackTraceElement): Method {
     val entryClass = this[frame.className.asmString]
-    return entryClass.allMethods.filter { it.name == frame.methodName }.first { method ->
+    return entryClass.allMethods.filter { it.name == frame.methodName }.firstOrNull { method ->
         method.body.flatten().any { inst ->
             inst.location.file == frame.fileName && inst.location.line == frame.lineNumber
         }
-    }
+    } ?: unreachable("Could not find an owner method of\n\"\"\"$frame\"\"\"")
 }
 
 internal val Instruction.isNullptrThrowing
