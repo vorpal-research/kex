@@ -191,9 +191,8 @@ suspend fun Method.checkAsyncIncrementalAndSlice(
             is Result.SatResult -> try {
                 val fullPS = checker.state + checker.queries[index].hardConstraints
                 val (params, aa) = generateInitialDescriptorsAndAA(this, ctx, result.model, fullPS)
-                val filteredParams = params.concreteParameters(ctx.cm, ctx.accessLevel, ctx.random).also {
-                    log.debug { "Generated params:\n$it" }
-                }
+                val filteredParams = params.concreteParameters(ctx.cm, ctx.accessLevel, ctx.random)
+                    .also { log.debug { "Generated params:\n$it" } }
                     .filterStaticFinals(ctx.cm)
                     .filterIgnoredStatic()
 

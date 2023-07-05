@@ -23,6 +23,7 @@ import org.vorpal.research.kex.asm.analysis.symbolic.SymbolicCallResolver
 import org.vorpal.research.kex.asm.analysis.symbolic.SymbolicInvokeDynamicResolver
 import org.vorpal.research.kex.asm.analysis.symbolic.SymbolicPathSelector
 import org.vorpal.research.kex.asm.analysis.symbolic.SymbolicTraverser
+import org.vorpal.research.kex.asm.analysis.symbolic.TraverserState
 import org.vorpal.research.kex.asm.analysis.symbolic.UpdateAction
 import org.vorpal.research.kex.asm.analysis.symbolic.UpdateAndReportQuery
 import org.vorpal.research.kex.asm.analysis.util.checkAsyncIncremental
@@ -35,8 +36,10 @@ import org.vorpal.research.kex.reanimator.UnsafeGenerator
 import org.vorpal.research.kex.reanimator.codegen.javagen.ReflectionUtilsPrinter
 import org.vorpal.research.kex.reanimator.codegen.klassName
 import org.vorpal.research.kex.state.predicate.state
+import org.vorpal.research.kex.trace.symbolic.PersistentSymbolicState
 import org.vorpal.research.kex.trace.symbolic.StateClause
 import org.vorpal.research.kex.trace.symbolic.SymbolicState
+import org.vorpal.research.kex.trace.symbolic.persistentSymbolicState
 import org.vorpal.research.kex.util.asmString
 import org.vorpal.research.kex.util.newFixedThreadPoolContextWithMDC
 import org.vorpal.research.kex.util.testcaseDirectory
@@ -177,6 +180,12 @@ abstract class AbstractCrashReproductionChecker<T>(
         )
     }
 
+    protected abstract suspend fun checkSetOfPreconditions(
+        inst: Instruction,
+        state: TraverserState,
+        preconditions: Set<PersistentSymbolicState>
+    )
+
     private suspend fun checkNewPreconditions() {
         if (!preconditionProvider.hasNewPreconditions) return
         val newPreconditions = preconditionProvider.getNewPreconditions()
@@ -184,25 +193,7 @@ abstract class AbstractCrashReproductionChecker<T>(
 
         for ((key, preconditions) in newPreconditions) {
             val (checkedInst, checkedState) = key
-            checkReachabilityIncremental(
-                checkedState,
-                ConditionCheckQuery(
-                    preconditions.map { precondition ->
-                        UpdateAndReportQuery(
-                            precondition,
-                            { state -> state },
-                            { state, parameters ->
-                                throwExceptionAndReport(
-                                    state,
-                                    parameters,
-                                    checkedInst,
-                                    generate(preconditionProvider.targetException.symbolicClass)
-                                )
-                            }
-                        )
-                    }
-                )
-            )
+            checkSetOfPreconditions(checkedInst, checkedState, preconditions)
         }
     }
 
@@ -222,25 +213,7 @@ abstract class AbstractCrashReproductionChecker<T>(
         checkNewPreconditions()
         if (inst in targetInstructions) {
             val traverserState = currentState ?: return
-            checkReachabilityIncremental(
-                traverserState,
-                ConditionCheckQuery(
-                    preconditionProvider.getPreconditions(inst, traverserState).map { precondition ->
-                        UpdateAndReportQuery(
-                            precondition,
-                            { state -> state },
-                            { state, parameters ->
-                                throwExceptionAndReport(
-                                    state,
-                                    parameters,
-                                    inst,
-                                    generate(preconditionProvider.targetException.symbolicClass)
-                                )
-                            }
-                        )
-                    }
-                )
-            )
+            checkSetOfPreconditions(inst, traverserState, preconditionProvider.getPreconditions(inst, traverserState))
         }
 
         super.traverseInstruction(inst)
@@ -333,6 +306,29 @@ class DescriptorCrashReproductionChecker(
     override val result: CrashReproductionResult<Parameters<Descriptor>>
         get() = DescriptorCrashReproductionResult(resultsInner.toMap())
 
+    override suspend fun checkSetOfPreconditions(
+        inst: Instruction,
+        state: TraverserState,
+        preconditions: Set<PersistentSymbolicState>
+    ) {
+        checkReachabilityIncremental(
+            state,
+            ConditionCheckQuery(
+                preconditions.map { precondition ->
+                    UpdateAndReportQuery(
+                        precondition,
+                        { newState -> newState },
+                        { newState, parameters ->
+                            throwExceptionAndReport(
+                                newState, parameters, inst, generate(preconditionProvider.targetException.symbolicClass)
+                            )
+                        }
+                    )
+                }
+            )
+        )
+    }
+
     override suspend fun checkAndBuildPrecondition(
         method: Method,
         state: SymbolicState,
@@ -344,6 +340,7 @@ class DescriptorCrashReproductionChecker(
         parameters: Parameters<Descriptor>,
         testPostfix: String
     ): Boolean {
+        if (!preconditionProvider.ready) return false
         if (inst !in targetInstructions) return false
         val testName = rootMethod.klassName + testPostfix + testIndex.getAndIncrement()
         val generator = UnsafeGenerator(ctx, rootMethod, testName)
@@ -385,6 +382,33 @@ class ConstraintCrashReproductionChecker(
         get() = ConstraintCrashReproductionResult(resultsInner.toMap())
 
     private var lastPrecondition = mutableMapOf<Parameters<Descriptor>, ConstraintExceptionPrecondition>()
+
+    override suspend fun checkSetOfPreconditions(
+        inst: Instruction,
+        state: TraverserState,
+        preconditions: Set<PersistentSymbolicState>
+    ) {
+        for (precondition in preconditions) {
+            checkReachabilityIncremental(
+                state + precondition,
+                ConditionCheckQuery(
+                    UpdateAndReportQuery(
+                        persistentSymbolicState(),
+                        { newState -> newState },
+                        { newState, parameters ->
+                            throwExceptionAndReport(
+                                newState,
+                                parameters,
+                                inst,
+                                generate(preconditionProvider.targetException.symbolicClass)
+                            )
+                        }
+                    )
+                )
+            )
+        }
+    }
+
 
     override suspend fun checkAndBuildPrecondition(
         method: Method,
@@ -466,9 +490,11 @@ object CrashReproductionChecker {
                 var index = 0
                 var producerChannel = ExceptionPreconditionChannel<T>(
                     "${index++}",
-                    ExceptionPreconditionBuilderImpl(context, stackTrace.targetException(context))
+                    ExceptionPreconditionBuilderImpl(context, stackTrace.targetException(context)),
+                    readyInternal = true
                 )
-                var receiverChannel = ExceptionPreconditionChannel("${index++}", preconditionBuilder())
+                var receiverChannel =
+                    ExceptionPreconditionChannel("${index++}", preconditionBuilder(), readyInternal = false)
                 var targetInstructions = stackTrace.targetInstructions(context)
 
                 stackTrace.stackTraceLines.zip(stackTrace.stackTraceLines.drop(1) + null).map { (line, next) ->
@@ -484,7 +510,8 @@ object CrashReproductionChecker {
                     )
                     resultGetter = { checker.result }
                     producerChannel = receiverChannel
-                    receiverChannel = ExceptionPreconditionChannel("${index++}", preconditionBuilder())
+                    receiverChannel =
+                        ExceptionPreconditionChannel("${index++}", preconditionBuilder(), readyInternal = false)
                     next?.let {
                         targetInstructions = context.cm[next].body.flatten()
                             .filter { it.location.line == next.lineNumber }
