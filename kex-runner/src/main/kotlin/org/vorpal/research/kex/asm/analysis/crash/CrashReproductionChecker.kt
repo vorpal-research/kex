@@ -3,6 +3,7 @@ package org.vorpal.research.kex.asm.analysis.crash
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeoutOrNull
@@ -68,6 +69,7 @@ import org.vorpal.research.kthelper.logging.log
 import java.nio.file.Files
 import kotlin.coroutines.coroutineContext
 import kotlin.io.path.isDirectory
+import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.ExperimentalTime
 
@@ -159,7 +161,6 @@ abstract class AbstractCrashReproductionChecker<T>(
     protected val preconditionProvider: ExceptionPreconditionProvider<T>,
     protected val preconditionReceiver: ExceptionPreconditionReceiver<T>,
     protected val reproductionChecker: ExceptionReproductionChecker,
-    protected val shouldStopAfterFirst: Boolean
 ) : SymbolicTraverser(ctx, ctx.cm[stackTrace.stackTraceLines.last()]) {
     abstract val result: CrashReproductionResult<T>
 
@@ -200,13 +201,19 @@ abstract class AbstractCrashReproductionChecker<T>(
     override suspend fun processMethod(method: Method) {
         super.processMethod(method)
         while (coroutineContext.isActive) {
+            if (preconditionReceiver.stoppedReceiving) {
+                preconditionProvider.stopProviding()
+                break
+            }
             checkNewPreconditions()
             yield()
         }
     }
 
     final override suspend fun traverseInstruction(inst: Instruction) {
-        if (shouldStopAfterFirst && resultsInner.isNotEmpty()) {
+        if (preconditionReceiver.stoppedReceiving) {
+            currentState = null
+            preconditionProvider.stopProviding()
             return
         }
 
@@ -293,15 +300,13 @@ class DescriptorCrashReproductionChecker(
     preconditionProvider: ExceptionPreconditionProvider<Parameters<Descriptor>>,
     preconditionReceiver: ExceptionPreconditionReceiver<Parameters<Descriptor>>,
     reproductionChecker: ExceptionReproductionChecker,
-    shouldStopAfterFirst: Boolean
 ) : AbstractCrashReproductionChecker<Parameters<Descriptor>>(
     ctx,
     stackTrace,
     targetInstructions,
     preconditionProvider,
     preconditionReceiver,
-    reproductionChecker,
-    shouldStopAfterFirst
+    reproductionChecker
 ) {
     override val result: CrashReproductionResult<Parameters<Descriptor>>
         get() = DescriptorCrashReproductionResult(resultsInner.toMap())
@@ -368,7 +373,6 @@ class ConstraintCrashReproductionChecker(
     preconditionProvider: ExceptionPreconditionProvider<ConstraintExceptionPrecondition>,
     preconditionReceiver: ExceptionPreconditionReceiver<ConstraintExceptionPrecondition>,
     reproductionChecker: ExceptionReproductionChecker,
-    shouldStopAfterFirst: Boolean
 ) : AbstractCrashReproductionChecker<ConstraintExceptionPrecondition>(
     ctx,
     stackTrace,
@@ -376,7 +380,6 @@ class ConstraintCrashReproductionChecker(
     preconditionProvider,
     preconditionReceiver,
     reproductionChecker,
-    shouldStopAfterFirst
 ) {
     override val result: CrashReproductionResult<ConstraintExceptionPrecondition>
         get() = ConstraintCrashReproductionResult(resultsInner.toMap())
@@ -475,11 +478,10 @@ object CrashReproductionChecker {
         preconditionBuilder: () -> ExceptionPreconditionBuilder<T>,
         crashReproductionBuilder: (
             ExecutionContext, StackTrace, targetInstructions: Set<Instruction>, ExceptionPreconditionProvider<T>,
-            ExceptionPreconditionReceiver<T>, ExceptionReproductionChecker, Boolean
+            ExceptionPreconditionReceiver<T>, ExceptionReproductionChecker
         ) -> AbstractCrashReproductionChecker<T>
     ): Set<String> {
         val timeLimit = kexConfig.getIntValue("crash", "timeLimit", 100).seconds
-        val stopAfterFirstCrash = kexConfig.getBooleanValue("crash", "stopAfterFirstCrash", false)
         val executors = kexConfig.getIntValue("symbolic", "numberOfExecutors", 8)
 
         val actualNumberOfExecutors = maxOf(1, minOf(executors, stackTrace.stackTraceLines.size))
@@ -493,32 +495,48 @@ object CrashReproductionChecker {
                     ExceptionPreconditionBuilderImpl(context, stackTrace.targetException(context)),
                     readyInternal = true
                 )
-                var receiverChannel =
-                    ExceptionPreconditionChannel("${index++}", preconditionBuilder(), readyInternal = false)
+                var receiverChannel = ExceptionPreconditionChannel(
+                    "${index++}",
+                    preconditionBuilder(),
+                    readyInternal = false
+                )
                 var targetInstructions = stackTrace.targetInstructions(context)
 
-                stackTrace.stackTraceLines.zip(stackTrace.stackTraceLines.drop(1) + null).map { (line, next) ->
-                    val oneLineStackTrace = StackTrace(stackTrace.firstLine, listOf(line))
-                    val checker = crashReproductionBuilder(
-                        context,
-                        oneLineStackTrace,
-                        targetInstructions,
-                        producerChannel,
-                        receiverChannel,
-                        ExceptionReproductionCheckerImpl(context, oneLineStackTrace),
-                        stopAfterFirstCrash
-                    )
-                    resultGetter = { checker.result }
-                    producerChannel = receiverChannel
-                    receiverChannel =
-                        ExceptionPreconditionChannel("${index++}", preconditionBuilder(), readyInternal = false)
-                    next?.let {
-                        targetInstructions = context.cm[next].body.flatten()
-                            .filter { it.location.line == next.lineNumber }
-                            .filterTo(mutableSetOf()) { it is CallInst && it.method.name == line.methodName }
+                val stackTraceLines = mutableListOf<StackTraceElement>()
+                val allJobs = stackTrace.stackTraceLines
+                    .zip(stackTrace.stackTraceLines.drop(1) + null)
+                    .mapTo(mutableListOf()) { (line, next) ->
+                        stackTraceLines += line
+                        val currentStackTrace = StackTrace(stackTrace.firstLine, stackTraceLines.toList())
+                        val checker = crashReproductionBuilder(
+                            context,
+                            currentStackTrace,
+                            targetInstructions,
+                            producerChannel,
+                            receiverChannel,
+                            ExceptionReproductionCheckerImpl(context, currentStackTrace)
+                        )
+                        resultGetter = { checker.result }
+                        producerChannel = receiverChannel
+                        receiverChannel = ExceptionPreconditionChannel(
+                            "${index++}",
+                            preconditionBuilder(),
+                            readyInternal = false
+                        )
+                        next?.let {
+                            targetInstructions = context.cm[next].body.flatten()
+                                .filter { it.location.line == next.lineNumber }
+                                .filterTo(mutableSetOf()) { it is CallInst && it.method.name == line.methodName }
+                        }
+                        async { checker.analyze() }
                     }
-                    async { checker.analyze() }
-                }.awaitAll()
+                allJobs += async {
+                    while (!producerChannel.ready) {
+                        delay(500.milliseconds)
+                    }
+                    producerChannel.stopProviding()
+                }
+                allJobs.awaitAll()
             }
             val reproductionChecker = ExceptionReproductionCheckerImpl(context, stackTrace)
             val filteredTestCases = resultGetter().preconditions.keys.filterTo(mutableSetOf()) {

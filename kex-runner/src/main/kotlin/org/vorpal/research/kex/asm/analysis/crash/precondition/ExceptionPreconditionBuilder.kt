@@ -21,22 +21,31 @@ interface ExceptionPreconditionProvider<T> {
     val hasNewPreconditions: Boolean
     val ready: Boolean
 
+    fun stopProviding()
+
     fun getNewPreconditions(): Map<Pair<Instruction, TraverserState>, Set<PersistentSymbolicState>>
     fun getPreconditions(location: Instruction, state: TraverserState): Set<PersistentSymbolicState>
 }
 
 interface ExceptionPreconditionReceiver<T> {
+    val stoppedReceiving: Boolean
     fun addPrecondition(precondition: T)
 }
 
 class ExceptionPreconditionChannel<T>(
     val name: String,
     val builder: ExceptionPreconditionBuilder<T>,
-    private var readyInternal: Boolean
+    private var readyInternal: Boolean,
+    private var stoppedReceivingInternal: Boolean = false
 ) : ExceptionPreconditionProvider<T>, ExceptionPreconditionReceiver<T> {
     private val mappings = mutableMapOf<Pair<Instruction, TraverserState>, MutableSet<PersistentSymbolicState>>()
     override val ready: Boolean
         get() = synchronized(lock) { readyInternal }
+    override var stoppedReceiving: Boolean
+        get() = synchronized(lock) { stoppedReceivingInternal }
+        set(value) {
+            synchronized(lock) { stoppedReceivingInternal = value }
+        }
 
     override val targetException: Class
         get() = builder.targetException
@@ -45,6 +54,15 @@ class ExceptionPreconditionChannel<T>(
         private set
 
     private val lock = Any()
+
+    override fun stopProviding() {
+        synchronized(lock) {
+            if (!stoppedReceivingInternal) {
+                log.debug("Channel $name stopped providing")
+            }
+            stoppedReceivingInternal = true
+        }
+    }
 
     override fun addPrecondition(precondition: T): Unit = synchronized(lock) {
         if (!readyInternal) {
