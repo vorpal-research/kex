@@ -60,6 +60,7 @@ import org.vorpal.research.kfg.negativeArrayClass
 import org.vorpal.research.kfg.nullptrClass
 import org.vorpal.research.kfg.runtimeException
 import org.vorpal.research.kthelper.assert.ktassert
+import org.vorpal.research.kthelper.assert.unreachable
 import org.vorpal.research.kthelper.logging.log
 import java.nio.file.Files
 import kotlin.coroutines.coroutineContext
@@ -69,14 +70,14 @@ import kotlin.time.ExperimentalTime
 
 operator fun ClassManager.get(frame: StackTraceElement): Method {
     val entryClass = this[frame.className.asmString]
-    return entryClass.allMethods.filter { it.name == frame.methodName }.first { method ->
+    return entryClass.allMethods.filter { it.name == frame.methodName }.firstOrNull { method ->
         method.body.flatten().any { inst ->
             inst.location.file == frame.fileName && inst.location.line == frame.lineNumber
         }
-    }
+    } ?: unreachable("Could not find an owner method of\n\"\"\"$frame\"\"\"")
 }
 
-private val Instruction.isNullptrThrowing
+internal val Instruction.isNullptrThrowing
     get() = when (this) {
         is ArrayLoadInst -> this.arrayRef !is ThisRef
         is ArrayStoreInst -> this.arrayRef !is ThisRef
@@ -86,7 +87,7 @@ private val Instruction.isNullptrThrowing
         else -> false
     }
 
-private fun Instruction.dominates(other: Instruction): Boolean {
+internal fun Instruction.dominates(other: Instruction): Boolean {
     var current = this.parent
     while (current != other.parent) {
         if (current.successors.size != 1) return false
@@ -96,10 +97,10 @@ private fun Instruction.dominates(other: Instruction): Boolean {
 }
 
 
-private fun StackTrace.targetException(context: ExecutionContext): Class =
+internal fun StackTrace.targetException(context: ExecutionContext): Class =
     context.cm[firstLine.takeWhile { it != ':' }.asmString]
 
-private fun StackTrace.targetInstructions(context: ExecutionContext): Set<Instruction> {
+internal fun StackTrace.targetInstructions(context: ExecutionContext): Set<Instruction> {
     val targetException = targetException(context)
     val candidates = context.cm[stackTraceLines.first()].body.flatten()
         .filter { it.location.line == stackTraceLines.first().lineNumber }
@@ -159,8 +160,9 @@ abstract class AbstractCrashReproductionChecker<T>(
 ) : SymbolicTraverser(ctx, ctx.cm[stackTrace.stackTraceLines.last()]) {
     abstract val result: CrashReproductionResult<T>
 
-    override val pathSelector: SymbolicPathSelector =
-        RandomizedDistancePathSelector(ctx, rootMethod, targetInstructions, stackTrace)
+    override val pathSelector: SymbolicPathSelector = RandomizedDistancePathSelector(
+        ctx, rootMethod, targetInstructions, stackTrace
+    )
     override val callResolver: SymbolicCallResolver = StackTraceCallResolver(
         stackTrace, DefaultCallResolver(ctx)
     )
