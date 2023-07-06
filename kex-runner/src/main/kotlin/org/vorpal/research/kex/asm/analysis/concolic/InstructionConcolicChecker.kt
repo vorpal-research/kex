@@ -112,7 +112,7 @@ class InstructionConcolicChecker(
     }
 
     private suspend fun check(method: Method, state: SymbolicState): ExecutionResult? = tryOrNull {
-        method.checkAsync(ctx, state)?.let { collectTrace(method, it) }
+        method.checkAsync(ctx, state, enableInlining = true)?.let { collectTrace(method, it) }
     }
 
     private fun buildPathSelector() = when (searchStrategy) {

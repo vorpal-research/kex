@@ -33,12 +33,12 @@ import org.vorpal.research.kex.state.transformer.Slicer
 import org.vorpal.research.kex.state.transformer.StensgaardAA
 import org.vorpal.research.kex.state.transformer.StringMethodAdapter
 import org.vorpal.research.kex.state.transformer.TermCollector
-import org.vorpal.research.kex.state.transformer.transform
 import org.vorpal.research.kex.state.transformer.TypeInfoMap
 import org.vorpal.research.kex.state.transformer.TypeNameAdapter
 import org.vorpal.research.kex.state.transformer.collectRequiredTerms
 import org.vorpal.research.kex.state.transformer.collectVariables
 import org.vorpal.research.kex.state.transformer.toTypeMap
+import org.vorpal.research.kex.state.transformer.transform
 import org.vorpal.research.kfg.ir.Method
 import org.vorpal.research.kthelper.logging.debug
 import org.vorpal.research.kthelper.logging.log
@@ -60,28 +60,31 @@ class AsyncChecker(
     fun prepareState(
         method: Method,
         state: PredicateState,
-        typeMap: TypeInfoMap
+        typeMap: TypeInfoMap,
+        enableInlining: Boolean
     ): PredicateState = transform(state) {
         +KexRtAdapter(ctx.cm)
-        +RecursiveInliner(psa) { index, psa ->
-            ConcolicInliner(
-                ctx,
-                typeMap,
-                psa,
-                inlineSuffix = "inlined",
-                inlineIndex = index,
-                kexRtOnly = false
-            )
-        }
-        +RecursiveInliner(psa) { index, psa ->
-            ConcolicInliner(
-                ctx,
-                typeMap,
-                psa,
-                inlineSuffix = "rt.inlined",
-                inlineIndex = index,
-                kexRtOnly = true
-            )
+        if (enableInlining) {
+            +RecursiveInliner(psa) { index, psa ->
+                ConcolicInliner(
+                    ctx,
+                    typeMap,
+                    psa,
+                    inlineSuffix = "inlined",
+                    inlineIndex = index,
+                    kexRtOnly = false
+                )
+            }
+            +RecursiveInliner(psa) { index, psa ->
+                ConcolicInliner(
+                    ctx,
+                    typeMap,
+                    psa,
+                    inlineSuffix = "rt.inlined",
+                    inlineIndex = index,
+                    kexRtOnly = true
+                )
+            }
         }
         +ClassAdapter(ctx.cm)
         +AnnotationAdapter(method, AnnotationManager.defaultLoader)
@@ -105,9 +108,10 @@ class AsyncChecker(
     suspend fun prepareAndCheck(
         method: Method,
         state: PredicateState,
-        typeMap: TypeInfoMap = emptyMap<Term, KexType>().toTypeMap()
+        typeMap: TypeInfoMap = emptyMap<Term, KexType>().toTypeMap(),
+        enableInlining: Boolean = false
     ): Result {
-        val preparedState = prepareState(method, state, typeMap)
+        val preparedState = prepareState(method, state, typeMap, enableInlining)
         log.debug { "Prepared state: $preparedState" }
         return check(preparedState)
     }
@@ -115,7 +119,7 @@ class AsyncChecker(
     suspend fun check(ps: PredicateState, qry: PredicateState = emptyState()): Result {
         state = ps
         query = qry
-        if (logQuery) log.debug("State: $state")
+        if (logQuery) log.debug("State: {}", state)
 
         if (isSlicingEnabled) {
             log.debug("Slicing started...")
@@ -145,16 +149,16 @@ class AsyncChecker(
         state = Optimizer().apply(state)
         query = Optimizer().apply(query)
         if (logQuery) {
-            log.debug("Simplified state: $state")
-            log.debug("State size: ${state.size}")
-            log.debug("Query: $query")
-            log.debug("Query size: ${query.size}")
+            log.debug("Simplified state: {}", state)
+            log.debug("State size: {}", state.size)
+            log.debug("Query: {}", query)
+            log.debug("Query size: {}", query.size)
         }
 
         val result = AsyncSMTProxySolver(ctx).use {
             it.isPathPossibleAsync(state, query)
         }
-        log.debug("Acquired $result")
+        log.debug("Acquired {}", result)
         return result
     }
 }

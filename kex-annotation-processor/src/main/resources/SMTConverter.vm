@@ -446,12 +446,14 @@ class ${solver}Converter(
 
         val typeVar = ef.getTypeVar(newarray.lhv.type.getKfgType(executionContext.types))
         val initialType = ctx.readBitvectorInitialProperty(lhv, memspace, "type")
+        val initialLength = ctx.readWordInitialProperty(lhv, memspace, "length")
 
         val lengthProperty = ctx.readWordProperty(lhv, memspace, "length")
         return lhv
             .withPtrAxioms(ef, ctx, TermType.LOCAL_PTR)
             .withAxiom(lengthProperty ge ef.makeIntConst(0)) eq ptr
             .withAxiom(initialType eq typeVar)
+            .withAxiom(initialLength eq length)
             .withAxiom(initialArrayMemory eq array)
     }
 

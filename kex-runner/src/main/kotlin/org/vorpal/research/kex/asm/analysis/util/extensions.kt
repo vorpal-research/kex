@@ -49,7 +49,11 @@ suspend fun Method.analyzeOrTimeout(
     }
 }
 
-suspend fun Method.checkAsync(ctx: ExecutionContext, state: SymbolicState): Parameters<Descriptor>? {
+suspend fun Method.checkAsync(
+    ctx: ExecutionContext,
+    state: SymbolicState,
+    enableInlining: Boolean = false
+): Parameters<Descriptor>? {
     val checker = AsyncChecker(this, ctx)
     val clauses = state.clauses.asState()
     val query = state.path.asState()
@@ -58,7 +62,7 @@ suspend fun Method.checkAsync(ctx: ExecutionContext, state: SymbolicState): Para
         .filterValues { it.isJavaRt }
         .mapValues { it.value.rtMapped }
         .toTypeMap()
-    val result = checker.prepareAndCheck(this, clauses + query, concreteTypeInfo)
+    val result = checker.prepareAndCheck(this, clauses + query, concreteTypeInfo, enableInlining)
     if (result !is Result.SatResult) {
         return null
     }
@@ -79,7 +83,8 @@ suspend fun Method.checkAsync(ctx: ExecutionContext, state: SymbolicState): Para
 @Suppress("unused")
 suspend fun Method.checkAsyncAndSlice(
     ctx: ExecutionContext,
-    state: SymbolicState
+    state: SymbolicState,
+    enableInlining: Boolean = false
 ): Pair<Parameters<Descriptor>, ConstraintExceptionPrecondition>? {
     val checker = AsyncChecker(this, ctx)
     val clauses = state.clauses.asState()
@@ -89,7 +94,7 @@ suspend fun Method.checkAsyncAndSlice(
         .filterValues { it.isJavaRt }
         .mapValues { it.value.rtMapped }
         .toTypeMap()
-    val result = checker.prepareAndCheck(this, clauses + query, concreteTypeInfo)
+    val result = checker.prepareAndCheck(this, clauses + query, concreteTypeInfo, enableInlining)
     if (result !is Result.SatResult) {
         return null
     }
@@ -121,7 +126,8 @@ suspend fun Method.checkAsyncAndSlice(
 suspend fun Method.checkAsyncIncremental(
     ctx: ExecutionContext,
     state: SymbolicState,
-    queries: List<SymbolicState>
+    queries: List<SymbolicState>,
+    enableInlining: Boolean = false
 ): List<Parameters<Descriptor>?> {
     val checker = AsyncIncrementalChecker(this, ctx)
     val clauses = state.clauses.asState()
@@ -138,7 +144,8 @@ suspend fun Method.checkAsyncIncremental(
             clauses + query,
             queries.map { PredicateQuery(it.clauses.asState() + it.path.asState()) }.toPersistentList()
         ),
-        concreteTypeInfo
+        concreteTypeInfo,
+        enableInlining
     )
 
     return results.mapIndexed { index, result ->
@@ -166,7 +173,8 @@ suspend fun Method.checkAsyncIncremental(
 suspend fun Method.checkAsyncIncrementalAndSlice(
     ctx: ExecutionContext,
     state: SymbolicState,
-    queries: List<SymbolicState>
+    queries: List<SymbolicState>,
+    enableInlining: Boolean = false
 ): List<Pair<Parameters<Descriptor>, ConstraintExceptionPrecondition>?> {
     val checker = AsyncIncrementalChecker(this, ctx)
     val clauses = state.clauses.asState()
@@ -183,7 +191,8 @@ suspend fun Method.checkAsyncIncrementalAndSlice(
             clauses + query,
             queries.map { PredicateQuery(it.clauses.asState() + it.path.asState()) }.toPersistentList()
         ),
-        concreteTypeInfo
+        concreteTypeInfo,
+        enableInlining
     )
 
     return results.mapIndexed { index, result ->
