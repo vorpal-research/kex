@@ -8,7 +8,7 @@ import org.vorpal.research.kfg.ir.Method
 import org.vorpal.research.kfg.ir.value.instruction.Instruction
 import org.vorpal.research.kthelper.assert.unreachable
 import org.vorpal.research.kthelper.logging.log
-import java.util.PriorityQueue
+import java.util.*
 import kotlin.random.nextULong
 
 @Suppress("unused", "CanBeParameter")
@@ -50,7 +50,6 @@ class RandomizedDistancePathSelector(
     )
     private val queue = mutableSetOf<Triple<TraverserState, BasicBlock, ULong>>()
     private var maxScore = 0UL
-//    private val executionTree = ExecutionTree()
 
     private fun score(state: TraverserState, block: BasicBlock) =
         state.stackTrace.sumOf { distanceCounter.score(it.instruction.parent) } +
@@ -62,8 +61,6 @@ class RandomizedDistancePathSelector(
         if (triple.third >= MethodDistanceCounter.INF) return
         queue += triple
         maxScore += triple.third
-//        executionTree.addTrace(state.symbolicState)
-//        executionTree.view()
     }
 
     private val ULong.normalized: ULong get() = maxScore - this

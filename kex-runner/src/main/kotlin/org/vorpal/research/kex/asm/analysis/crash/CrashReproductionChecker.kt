@@ -45,6 +45,7 @@ import org.vorpal.research.kfg.arrayIndexOOBClass
 import org.vorpal.research.kfg.classCastClass
 import org.vorpal.research.kfg.ir.Class
 import org.vorpal.research.kfg.ir.Method
+import org.vorpal.research.kfg.ir.OuterClass
 import org.vorpal.research.kfg.ir.value.ThisRef
 import org.vorpal.research.kfg.ir.value.instruction.ArrayLoadInst
 import org.vorpal.research.kfg.ir.value.instruction.ArrayStoreInst
@@ -75,7 +76,8 @@ operator fun ClassManager.get(frame: StackTraceElement): Method {
         method.body.flatten().any { inst ->
             inst.location.file == frame.fileName && inst.location.line == frame.lineNumber
         }
-    } ?: unreachable("Could not find an owner method of\n\"\"\"$frame\"\"\"")
+    }
+        ?: unreachable("Could not find an owner method of\n\"\"\"$frame\"\"\"")
 }
 
 internal val Instruction.isNullptrThrowing
@@ -113,8 +115,9 @@ internal fun StackTrace.targetInstructions(context: ExecutionContext): Set<Instr
                 context.cm.classCastClass -> it is CastInst
                 else -> when (it) {
                     is ThrowInst -> targetException.asType.isSubtypeOf(it.throwable.type)
-                    is CallInst -> targetException.isInheritorOf(context.cm.runtimeException)
-                            || targetException in it.method.exceptions
+                    is CallInst -> targetException is OuterClass
+                            || targetException.isInheritorOf(context.cm.runtimeException)
+                            || it.method.exceptions.any { exception -> exception.isAncestorOf(targetException) }
 
                     else -> false
                 }
@@ -438,7 +441,7 @@ object CrashReproductionChecker {
         val actualNumberOfExecutors = maxOf(1, minOf(executors, stackTrace.stackTraceLines.size))
         val coroutineContext = newFixedThreadPoolContextWithMDC(actualNumberOfExecutors, "crash-dispatcher")
         return runBlocking(coroutineContext) {
-            lateinit var resultGetter: () -> CrashReproductionResult<T>
+            val checkers = mutableListOf<AbstractCrashReproductionChecker<*>>()
             withTimeoutOrNull(timeLimit) {
                 var index = 0
                 var producerChannel = ExceptionPreconditionChannel<T>(
@@ -467,7 +470,7 @@ object CrashReproductionChecker {
                             receiverChannel,
                             ExceptionReproductionCheckerImpl(context, currentStackTrace)
                         )
-                        resultGetter = { checker.result }
+                        checkers += checker
                         producerChannel = receiverChannel
                         receiverChannel = ExceptionPreconditionChannel(
                             "${index++}",
@@ -490,7 +493,7 @@ object CrashReproductionChecker {
                 allJobs.awaitAll()
             }
             val reproductionChecker = ExceptionReproductionCheckerImpl(context, stackTrace)
-            val filteredTestCases = resultGetter().preconditions.keys.filterTo(mutableSetOf()) {
+            val filteredTestCases = checkers.last().result.preconditions.keys.filterTo(mutableSetOf()) {
                 reproductionChecker.isReproduced(it)
             }
             val testCasePaths = filteredTestCases.mapTo(mutableSetOf()) {

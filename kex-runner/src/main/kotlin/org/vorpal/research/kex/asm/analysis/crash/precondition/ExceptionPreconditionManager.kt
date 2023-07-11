@@ -3,7 +3,9 @@ package org.vorpal.research.kex.asm.analysis.crash.precondition
 import org.vorpal.research.kex.ExecutionContext
 import org.vorpal.research.kex.asm.analysis.symbolic.TraverserState
 import org.vorpal.research.kex.ktype.KexInt
+import org.vorpal.research.kex.ktype.kexType
 import org.vorpal.research.kex.state.predicate.path
+import org.vorpal.research.kex.state.predicate.state
 import org.vorpal.research.kex.state.term.TermBuilder
 import org.vorpal.research.kex.trace.symbolic.PathClause
 import org.vorpal.research.kex.trace.symbolic.PathClauseType
@@ -59,7 +61,7 @@ class ExceptionPreconditionManager<T>(
                         ),
                         persistentSymbolicState(
                             state = persistentClauseStateOf(
-                                StateClause(location, org.vorpal.research.kex.state.predicate.state {
+                                StateClause(location, state {
                                     lengthTerm.call(state.mkTerm(location.callee).call(lengthMethod))
                                 })
                             ),
@@ -96,7 +98,7 @@ class ExceptionPreconditionManager<T>(
                         ),
                         persistentSymbolicState(
                             state = persistentClauseStateOf(
-                                StateClause(location, org.vorpal.research.kex.state.predicate.state {
+                                StateClause(location, state {
                                     lengthTerm.call(state.mkTerm(location.callee).call(lengthMethod))
                                 })
                             ),
@@ -133,7 +135,7 @@ class ExceptionPreconditionManager<T>(
                         ),
                         persistentSymbolicState(
                             state = persistentClauseStateOf(
-                                StateClause(location, org.vorpal.research.kex.state.predicate.state {
+                                StateClause(location, state {
                                     lengthTerm.call(state.mkTerm(location.callee).call(lengthMethod))
                                 })
                             ),
@@ -170,7 +172,7 @@ class ExceptionPreconditionManager<T>(
                         ),
                         persistentSymbolicState(
                             state = persistentClauseStateOf(
-                                StateClause(location, org.vorpal.research.kex.state.predicate.state {
+                                StateClause(location, state {
                                     lengthTerm.call(state.mkTerm(location.callee).call(lengthMethod))
                                 })
                             ),
@@ -182,7 +184,7 @@ class ExceptionPreconditionManager<T>(
                         ),
                         persistentSymbolicState(
                             state = persistentClauseStateOf(
-                                StateClause(location, org.vorpal.research.kex.state.predicate.state {
+                                StateClause(location, state {
                                     lengthTerm.call(state.mkTerm(location.callee).call(lengthMethod))
                                 })
                             ),
@@ -223,7 +225,7 @@ class ExceptionPreconditionManager<T>(
                     return setOf(
                         persistentSymbolicState(
                             state = persistentClauseStateOf(
-                                StateClause(location, org.vorpal.research.kex.state.predicate.state { lengthTerm.call(argTerm.call(lengthMethod)) })
+                                StateClause(location, state { lengthTerm.call(argTerm.call(lengthMethod)) })
                             ),
                             path = persistentPathConditionOf(
                                 PathClause(PathClauseType.BOUNDS_CHECK, location, path {
@@ -233,7 +235,7 @@ class ExceptionPreconditionManager<T>(
                         ),
                         persistentSymbolicState(
                             state = persistentClauseStateOf(
-                                StateClause(location, org.vorpal.research.kex.state.predicate.state { lengthTerm.call(argTerm.call(lengthMethod)) })
+                                StateClause(location, state { lengthTerm.call(argTerm.call(lengthMethod)) })
                             ),
                             path = persistentPathConditionOf(
                                 PathClause(PathClauseType.BOUNDS_CHECK, location, path {
@@ -271,7 +273,7 @@ class ExceptionPreconditionManager<T>(
                     return setOf(
                         persistentSymbolicState(
                             state = persistentClauseStateOf(
-                                StateClause(location, org.vorpal.research.kex.state.predicate.state { lengthTerm.call(argTerm.call(lengthMethod)) })
+                                StateClause(location, state { lengthTerm.call(argTerm.call(lengthMethod)) })
                             ),
                             path = persistentPathConditionOf(
                                 PathClause(PathClauseType.BOUNDS_CHECK, location, path {
@@ -281,7 +283,7 @@ class ExceptionPreconditionManager<T>(
                         ),
                         persistentSymbolicState(
                             state = persistentClauseStateOf(
-                                StateClause(location, org.vorpal.research.kex.state.predicate.state { lengthTerm.call(argTerm.call(lengthMethod)) })
+                                StateClause(location, state { lengthTerm.call(argTerm.call(lengthMethod)) })
                             ),
                             path = persistentPathConditionOf(
                                 PathClause(PathClauseType.BOUNDS_CHECK, location, path {
@@ -320,11 +322,52 @@ class ExceptionPreconditionManager<T>(
                         ),
                         persistentSymbolicState(
                             state = persistentClauseStateOf(
-                                StateClause(location, org.vorpal.research.kex.state.predicate.state { lengthTerm.call(charSeqTerm.call(lengthMethod)) })
+                                StateClause(location, state { lengthTerm.call(charSeqTerm.call(lengthMethod)) })
                             ),
                             path = persistentPathConditionOf(
                                 PathClause(PathClauseType.BOUNDS_CHECK, location, path {
                                     (indexTerm lt lengthTerm) equality false
+                                })
+                            )
+                        ),
+                    )
+                }
+            }
+            contracts
+        }
+
+        val nioFilesClass = cm["java/nio/file/Files"]
+        val pathClass = cm["java/nio/file/Path"]
+        conditions.getOrPut(
+            nioFilesClass.getMethod(
+                "createDirectory",
+                pathClass.asType,
+                pathClass.asType, cm["java/nio/file/attribute/FileAttribute"].asType.asArray
+            )
+        ) {
+            val contracts = mutableMapOf<Class, ExceptionPreconditionBuilder<T>>()
+            contracts[cm["java/nio/file/FileAlreadyExistsException"]] = object : ExceptionPreconditionBuilder<T> {
+                override val targetException get() = cm.stringIndexOOB
+
+                override fun addPrecondition(precondition: T): Boolean = false
+
+                override fun build(location: Instruction, state: TraverserState): Set<PersistentSymbolicState> {
+                    location as CallInst
+
+                    val toStringMethod = pathClass.getMethod("toString", cm.stringClass.asType)
+                    val pathArg = state.mkTerm(location.args[0])
+                    val stringVal = generate(cm.stringClass.kexType)
+
+                    return setOf(
+                        persistentSymbolicState(
+                            state = persistentClauseStateOf(
+                                StateClause(location, state {
+                                    stringVal.call(pathArg.call(toStringMethod))
+                                })
+                            ),
+                            path = persistentPathConditionOf(
+                                PathClause(PathClauseType.CONDITION_CHECK, location, path {
+                                    (stringVal eq const("/usr/bin")) equality true
                                 })
                             )
                         ),
