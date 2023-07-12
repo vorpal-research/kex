@@ -11,7 +11,7 @@ import org.vorpal.research.kfg.type.SystemTypeNames
 import org.vorpal.research.kthelper.assert.unreachable
 import org.vorpal.research.kthelper.logging.log
 
-class StringGenerator(private val fallback: Generator) : StringInfoContext, Generator {
+class StringGenerator(private val fallback: Generator) : StringInfoContext(), Generator {
     override val context: GeneratorContext
         get() = fallback.context
 

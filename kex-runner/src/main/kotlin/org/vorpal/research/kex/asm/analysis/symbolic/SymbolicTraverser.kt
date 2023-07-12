@@ -38,6 +38,7 @@ import org.vorpal.research.kex.trace.symbolic.StateClause
 import org.vorpal.research.kex.trace.symbolic.SymbolicState
 import org.vorpal.research.kex.trace.symbolic.persistentPathConditionOf
 import org.vorpal.research.kex.trace.symbolic.persistentSymbolicState
+import org.vorpal.research.kex.util.isSubtypeOfCached
 import org.vorpal.research.kfg.ClassManager
 import org.vorpal.research.kfg.arrayIndexOOBClass
 import org.vorpal.research.kfg.classCastClass
@@ -524,7 +525,7 @@ abstract class SymbolicTraverser(
             symbolicState = traverserState.symbolicState + clause,
             valueMap = traverserState.valueMap.put(inst, resultTerm),
             typeCheckedTerms = when {
-                previouslyCheckedType != null && currentlyCheckedType.isSubtypeOf(previouslyCheckedType) ->
+                previouslyCheckedType != null && currentlyCheckedType.isSubtypeOfCached(previouslyCheckedType) ->
                     traverserState.typeCheckedTerms.put(operandTerm, inst.targetType)
 
                 else -> traverserState.typeCheckedTerms
@@ -570,7 +571,7 @@ abstract class SymbolicTraverser(
 
             else -> typeCheckInc(traverserState, inst, callee, candidate.klass.symbolicClass).withHandler { state ->
                 when {
-                    candidate.klass.asType.isSubtypeOf(callee.type.getKfgType(types)) -> {
+                    candidate.klass.asType.isSubtypeOfCached(callee.type.getKfgType(types)) -> {
                         val newCalleeTerm = generate(candidate.klass.symbolicClass)
                         val convertClause = StateClause(inst, state {
                             newCalleeTerm equality (callee `as` candidate.klass.symbolicClass)
@@ -902,7 +903,7 @@ abstract class SymbolicTraverser(
         if (type !is KexPointer) return EmptyQuery()
         val previouslyCheckedType = state.typeCheckedTerms[term]
         val currentlyCheckedType = type.getKfgType(ctx.types)
-        if (previouslyCheckedType != null && currentlyCheckedType.isSubtypeOf(previouslyCheckedType)) {
+        if (previouslyCheckedType != null && currentlyCheckedType.isSubtypeOfCached(previouslyCheckedType)) {
             return EmptyQuery()
         }
 
@@ -1038,7 +1039,7 @@ abstract class SymbolicTraverser(
         if (type !is KexPointer) return state
         val previouslyCheckedType = state.typeCheckedTerms[term]
         val currentlyCheckedType = type.getKfgType(ctx.types)
-        if (previouslyCheckedType != null && currentlyCheckedType.isSubtypeOf(previouslyCheckedType)) {
+        if (previouslyCheckedType != null && currentlyCheckedType.isSubtypeOfCached(previouslyCheckedType)) {
             return state
         }
 
@@ -1139,11 +1140,11 @@ abstract class SymbolicTraverser(
     ) {
         val throwableType = throwable.type.getKfgType(types)
         val catchFrame: Pair<BasicBlock, PersistentMap<Value, Term>>? = state.run {
-            var catcher = inst.parent.handlers.firstOrNull { throwableType.isSubtypeOf(it.exception) }
+            var catcher = inst.parent.handlers.firstOrNull { throwableType.isSubtypeOfCached(it.exception) }
             if (catcher != null) return@run catcher to this.valueMap
             for (i in stackTrace.indices.reversed()) {
                 val block = stackTrace[i].instruction.parent
-                catcher = block.handlers.firstOrNull { throwableType.isSubtypeOf(it.exception) }
+                catcher = block.handlers.firstOrNull { throwableType.isSubtypeOfCached(it.exception) }
                 if (catcher != null) return@run catcher to stackTrace[i].valueMap
             }
             null

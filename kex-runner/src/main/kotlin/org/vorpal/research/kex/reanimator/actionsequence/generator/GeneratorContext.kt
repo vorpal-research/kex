@@ -84,7 +84,7 @@ import org.vorpal.research.kthelper.tryOrNull
 class GeneratorContext(
     val context: ExecutionContext,
     val psa: PredicateStateAnalysis
-) : StringInfoContext {
+) : StringInfoContext() {
     private val useRecCtors by lazy {
         kexConfig.getBooleanValue(
             "reanimator",

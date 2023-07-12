@@ -22,7 +22,7 @@ import org.vorpal.research.kex.state.term.isConst
 import org.vorpal.research.kex.state.term.numericValue
 import org.vorpal.research.kex.util.StringInfoContext
 
-class ConstStringCollector : StringInfoContext, Transformer<ConstStringCollector> {
+class ConstStringCollector : StringInfoContext(), Transformer<ConstStringCollector> {
     val strings = mutableMapOf<Term, MutableList<Char>>()
     private val valueArrays = mutableMapOf<Term, MutableList<Char>>()
 

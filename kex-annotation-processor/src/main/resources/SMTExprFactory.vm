@@ -6,6 +6,7 @@ import org.vorpal.research.kfg.type.TypeFactory
 import org.vorpal.research.kfg.type.Type
 import org.vorpal.research.kex.state.term.Term
 import org.vorpal.research.kex.util.javaDesc
+import org.vorpal.research.kex.util.isSubtypeOfCached
 
 typealias Bool_ = $Bool
 typealias Ptr_ = $Bitvector32
@@ -102,7 +103,7 @@ class $factory : ${solver}SMTExprFactory() {
     fun getSubTypeMask(type: Type): Bitvector_ {
         var res: Bitvector_? = null
         for ((t, v) in innerTypeMap) {
-            if (t.isSubtypeOf(type))
+            if (t.isSubtypeOfCached(type))
                 res = if (res == null) v else (res or v)
         }
         return res!!
@@ -111,7 +112,7 @@ class $factory : ${solver}SMTExprFactory() {
     fun getFullTypeMask(type: Type): Bitvector_ {
         var res: Bitvector_ = getSubTypeMask(type)
         for ((t, v) in innerTypeMap) {
-            if (type.isSubtypeOf(t))
+            if (type.isSubtypeOfCached(t))
                 res = res or v
         }
         return res
@@ -229,5 +230,17 @@ class $factory : ${solver}SMTExprFactory() {
             result = `if`(result gt values[index]).then(result).`else`(values[index])
         }
         return result
+    }
+
+    fun makeAnd(bools: List< Bool_ >): Bool_ {
+        val expr = engine.conjunction(ctx, bools.map { it.expr })
+        val axioms = engine.conjunction(ctx, bools.map { it.axiom })
+        return Bool_(ctx, expr, axioms)
+    }
+
+    fun makeOr(bools: List< Bool_ >): Bool_ {
+        val expr = engine.disjunction(ctx, bools.map { it.expr })
+        val axioms = engine.conjunction(ctx, bools.map { it.axiom })
+        return Bool_(ctx, expr, axioms)
     }
 }

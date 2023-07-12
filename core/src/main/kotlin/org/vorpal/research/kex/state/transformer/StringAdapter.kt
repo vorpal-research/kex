@@ -26,6 +26,7 @@ import org.vorpal.research.kex.state.term.Term
 import org.vorpal.research.kex.state.term.term
 import org.vorpal.research.kex.state.wrap
 import org.vorpal.research.kex.util.StringInfoContext
+import org.vorpal.research.kex.util.isSubtypeOfCached
 import org.vorpal.research.kfg.ClassManager
 import org.vorpal.research.kfg.charSequence
 import org.vorpal.research.kfg.stringClass
@@ -35,7 +36,7 @@ import org.vorpal.research.kthelper.collection.dequeOf
 
 @Suppress("DEPRECATION")
 @Deprecated("use StringMethodAdapter instead")
-class StringAdapter(val cm: ClassManager) : StringInfoContext, RecollectingTransformer<StringAdapter> {
+class StringAdapter(val cm: ClassManager) : StringInfoContext(), RecollectingTransformer<StringAdapter> {
     override val builders = dequeOf(StateBuilder())
     val types get() = cm.type
 
@@ -201,7 +202,7 @@ class StringAdapter(val cm: ClassManager) : StringInfoContext, RecollectingTrans
 
 class StringMethodAdapter(
     val cm: ClassManager
-) : StringInfoContext, RecollectingTransformer<StringMethodAdapter>, IncrementalTransformer {
+) : StringInfoContext(), RecollectingTransformer<StringMethodAdapter>, IncrementalTransformer {
     override val builders = dequeOf(StateBuilder())
     val types get() = cm.type
 
@@ -719,7 +720,7 @@ class StringMethodAdapter(
         val kfgString = cm.stringClass
         val kfgCharSequence = cm.charSequence
         val kfgOwnerType = (call.owner.type.getKfgType(cm.type) as ClassType).klass
-        if (!kfgOwnerType.asType.isSubtypeOf(kfgCharSequence.asType)) return predicate
+        if (!kfgOwnerType.asType.isSubtypeOfCached(kfgCharSequence.asType)) return predicate
 
 
         val `this` = when (kfgOwnerType) {
@@ -777,7 +778,7 @@ class StringMethodAdapter(
 
 }
 
-class TermExprStringAdapter(val cm: ClassManager) : StringInfoContext, Transformer<TermExprStringAdapter> {
+class TermExprStringAdapter(val cm: ClassManager) : StringInfoContext(), Transformer<TermExprStringAdapter> {
     private fun Term.valueArray(): Term = term { this@valueArray.field(kexCharArray(), "value") }
     private fun kexCharArray() = KexChar.asArray()
 

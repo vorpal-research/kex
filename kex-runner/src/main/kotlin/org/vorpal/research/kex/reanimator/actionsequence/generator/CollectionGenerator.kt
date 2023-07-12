@@ -5,6 +5,7 @@ import org.vorpal.research.kex.descriptor.ObjectDescriptor
 import org.vorpal.research.kex.ktype.KexClass
 import org.vorpal.research.kex.reanimator.actionsequence.ActionList
 import org.vorpal.research.kex.reanimator.actionsequence.CodeAction
+import org.vorpal.research.kex.util.isSubtypeOfCached
 import org.vorpal.research.kfg.ir.Class
 
 // difference from any generator -- ignore all external and recursive ctors
@@ -28,7 +29,7 @@ class CollectionGenerator(fallback: Generator) : AnyGenerator(fallback) {
         val type = descriptor.type
         val klass = type as? KexClass ?: return false
         val tf = context.types
-        return klass.getKfgType(tf).isSubtypeOf(tf.cm["java/util/Collection"].asType)
+        return klass.getKfgType(tf).isSubtypeOfCached(tf.cm["java/util/Collection"].asType)
     }
 
     override fun checkCtors(
@@ -57,7 +58,7 @@ class CollectionGenerator(fallback: Generator) : AnyGenerator(fallback) {
             klass.accessibleMethods
                 .filter { it.name !in ignoredMethods }
                 .filterNotTo(mutableSetOf()) {
-                    it.argTypes.any { arg -> arg.isSubtypeOf(collectionKlass) }
+                    it.argTypes.any { arg -> arg.isSubtypeOfCached(collectionKlass) }
                 }
         }
     }

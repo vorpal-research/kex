@@ -31,6 +31,7 @@ import org.vorpal.research.kex.reanimator.actionsequence.UnknownSequence
 import org.vorpal.research.kex.reanimator.codegen.ActionSequencePrinter
 import org.vorpal.research.kex.util.getConstructor
 import org.vorpal.research.kex.util.getMethod
+import org.vorpal.research.kex.util.isSubtypeOfCached
 import org.vorpal.research.kex.util.kex
 import org.vorpal.research.kex.util.loadClass
 import org.vorpal.research.kfg.ir.Class
@@ -139,7 +140,7 @@ open class ActionSequence2KotlinPrinter(
     ) : ASType {
         override fun isSubtype(other: ASType): Boolean = when (other) {
             is ASClass -> when {
-                !type.isSubtypeOf(other.type) -> false
+                !type.isSubtypeOfCached(other.type) -> false
                 typeParams.size != other.typeParams.size -> false
                 typeParams.zip(other.typeParams).any { (a, b) -> !a.isSubtype(b) } -> false
                 else -> !(!nullable && other.nullable)

@@ -577,7 +577,7 @@ class ArrayDescriptor(val elementType: KexType, val length: Int) :
     }
 }
 
-open class DescriptorBuilder : StringInfoContext {
+open class DescriptorBuilder : StringInfoContext() {
     val `null` = ConstantDescriptor.Null
     fun const(@Suppress("UNUSED_PARAMETER") nothing: Nothing?) = `null`
     fun const(value: Boolean) = ConstantDescriptor.Bool(value)
@@ -653,8 +653,10 @@ open class DescriptorBuilder : StringInfoContext {
     }
 }
 
+private object DescriptorBuilderImpl : DescriptorBuilder()
+
 fun descriptor(body: DescriptorBuilder.() -> Descriptor): Descriptor =
-    DescriptorBuilder().body()
+    DescriptorBuilderImpl.body()
 
 class DescriptorRtMapper(private val mode: KexRtManager.Mode) : DescriptorBuilder() {
     private val cache = mutableMapOf<Descriptor, Descriptor>()

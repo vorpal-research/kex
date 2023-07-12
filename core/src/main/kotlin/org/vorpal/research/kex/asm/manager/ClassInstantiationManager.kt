@@ -8,6 +8,7 @@ import org.vorpal.research.kex.ktype.KexReference
 import org.vorpal.research.kex.ktype.KexRtManager.rtMapped
 import org.vorpal.research.kex.ktype.KexType
 import org.vorpal.research.kex.ktype.kexType
+import org.vorpal.research.kex.util.isSubtypeOfCached
 import org.vorpal.research.kfg.ClassManager
 import org.vorpal.research.kfg.ir.Class
 import org.vorpal.research.kfg.ir.ConcreteClass
@@ -292,7 +293,7 @@ class ClassInstantiationDetector(
         val returnType = (method.returnType as? ClassType) ?: return
         if (!baseAccessLevel.canAccess(method.accessModifier)) return
         if (!baseAccessLevel.canAccess(method.klass.accessModifier)) return
-        if (!method.isStatic || method.argTypes.any { it.isSubtypeOf(returnType) } || method.isSynthetic) return
+        if (!method.isStatic || method.argTypes.any { it.isSubtypeOfCached(returnType) } || method.isSynthetic) return
 
         addExternalCtor(returnType.klass, method)
     }

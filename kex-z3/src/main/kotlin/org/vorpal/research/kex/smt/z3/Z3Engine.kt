@@ -233,6 +233,14 @@ object Z3Engine : SMTEngine<ExtendedContext, Expr<*>, Sort, FuncDecl<*>, Pattern
         return ctx.mkAnd(*exprs.mapToArray { it as BoolExpr })
     }
 
+    override fun disjunction(ctx: ExtendedContext, vararg exprs: Expr<*>): Expr<*> {
+        return ctx.mkOr(*exprs.mapToArray { it as BoolExpr })
+    }
+
+    override fun disjunction(ctx: ExtendedContext, exprs: Collection<Expr<*>>): Expr<*> {
+        return ctx.mkOr(*exprs.mapToArray { it as BoolExpr })
+    }
+
     override fun sext(ctx: ExtendedContext, n: Int, expr: Expr<*>): Expr<*> {
         val exprBitSize = bvBitSize(ctx, getSort(ctx, expr))
         return if (exprBitSize < n) ctx.mkSignExt(n - exprBitSize, expr as BitVecExpr) else expr

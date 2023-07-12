@@ -12,12 +12,12 @@ import org.vorpal.research.kthelper.assert.unreachable
 import org.vorpal.research.kthelper.logging.log
 
 @Suppress("unused")
-interface StringInfoContext {
-    private val jvmVersion get() = getJvmVersion()
+abstract class StringInfoContext {
+    private val jvmVersion = getJvmVersion()
 
-    val valueArrayName: String get() = "value"
+    val valueArrayName: String = "value"
 
-    val valueArrayType: KexArray get() = when {
+    val valueArrayType: KexArray = when {
         jvmVersion == 8 -> KexChar.asArray()
         jvmVersion > 8 -> KexByte.asArray()
         else -> unreachable { log.error("Unsupported JVM version: $jvmVersion") }

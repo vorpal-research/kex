@@ -16,6 +16,7 @@ import org.vorpal.research.kex.state.term.ConstStringTerm
 import org.vorpal.research.kex.state.term.InstanceOfTerm
 import org.vorpal.research.kex.state.term.LambdaTerm
 import org.vorpal.research.kex.state.term.Term
+import org.vorpal.research.kex.util.isSubtypeOfCached
 import org.vorpal.research.kex.util.parseAsConcreteType
 import org.vorpal.research.kfg.ir.Class
 import org.vorpal.research.kfg.type.ClassType
@@ -83,7 +84,7 @@ class TypeCollector(
         val kfgChecked = term.checkedType.getKfgType(ctx.types)
         val kfgCurrent = term.operand.type.getKfgType(ctx.types)
         addType(term.checkedType)
-        if (!kfgCurrent.isSubtypeOf(kfgChecked) && kfgCurrent is ClassType && kfgChecked is ClassType) {
+        if (!kfgCurrent.isSubtypeOfCached(kfgChecked) && kfgCurrent is ClassType && kfgChecked is ClassType) {
             val intersection = instanceOfCache.getOrPut(setOf(kfgChecked, kfgCurrent)) {
                 val checkedSubtypes = instantiationManager.getAllConcreteSubtypes(kfgChecked.klass, ctx.accessLevel)
                 val currentSubtypes = instantiationManager.getAllConcreteSubtypes(kfgCurrent.klass, ctx.accessLevel)

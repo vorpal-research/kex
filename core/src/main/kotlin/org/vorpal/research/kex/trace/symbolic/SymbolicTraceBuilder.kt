@@ -27,6 +27,7 @@ import org.vorpal.research.kex.state.term.Term
 import org.vorpal.research.kex.state.term.term
 import org.vorpal.research.kex.state.transformer.TermRenamer
 import org.vorpal.research.kex.util.cmp
+import org.vorpal.research.kex.util.isSubtypeOfCached
 import org.vorpal.research.kex.util.next
 import org.vorpal.research.kex.util.parseValue
 import org.vorpal.research.kex.util.parseValueOrNull
@@ -38,9 +39,9 @@ import org.vorpal.research.kfg.ir.MethodDescriptor
 import org.vorpal.research.kfg.ir.value.Argument
 import org.vorpal.research.kfg.ir.value.Constant
 import org.vorpal.research.kfg.ir.value.NameMapperContext
+import org.vorpal.research.kfg.ir.value.NullConstant
 import org.vorpal.research.kfg.ir.value.ThisRef
 import org.vorpal.research.kfg.ir.value.Value
-import org.vorpal.research.kfg.ir.value.NullConstant
 import org.vorpal.research.kfg.ir.value.instruction.ArrayLoadInst
 import org.vorpal.research.kfg.ir.value.instruction.ArrayStoreInst
 import org.vorpal.research.kfg.ir.value.instruction.BinaryInst
@@ -445,8 +446,8 @@ class SymbolicTraceBuilder(
     private fun restoreCatchFrame(exceptionType: Type) {
         do {
             val frame = currentFrame
-            val candidates = frame.catchMap.keys.filter { exceptionType.isSubtypeOf(it) }
-            val candidate = candidates.find { candidate -> candidates.all { candidate.isSubtypeOf(it) } }
+            val candidates = frame.catchMap.keys.filter { exceptionType.isSubtypeOfCached(it) }
+            val candidate = candidates.find { candidate -> candidates.all { candidate.isSubtypeOfCached(it) } }
 
             if (callStack.isNotEmpty() && frames.peek().method overrides callStack.peek().call.parent.method) {
                 callStack.pop()
@@ -1217,7 +1218,7 @@ class SymbolicTraceBuilder(
         val kfgType = descriptorValue.type.getKfgType(ctx.types)
         if (termValue in typeChecked) {
             val checkedType = typeChecked.getValue(termValue)
-            if (checkedType.isSubtypeOf(kfgType)) return@safeCall
+            if (checkedType.isSubtypeOfCached(kfgType)) return@safeCall
         }
         typeChecked[termValue] = kfgType
 
@@ -1243,13 +1244,13 @@ class SymbolicTraceBuilder(
             else -> {
                 val descriptorValue = concreteValue.getAsDescriptor()
                 val actualKfgType = descriptorValue.type.getKfgType(ctx.types)
-                actualKfgType.isSubtypeOf(expectedKfgType)
+                actualKfgType.isSubtypeOfCached(expectedKfgType)
             }
         }
         if (kfgValue is NullConstant) return@safeCall
         if (termValue in typeChecked) {
             val checkedType = typeChecked.getValue(termValue)
-            if (checkedType.isSubtypeOf(expectedKfgType)) return@safeCall
+            if (checkedType.isSubtypeOfCached(expectedKfgType)) return@safeCall
         }
         typeChecked[termValue] = expectedKfgType
 

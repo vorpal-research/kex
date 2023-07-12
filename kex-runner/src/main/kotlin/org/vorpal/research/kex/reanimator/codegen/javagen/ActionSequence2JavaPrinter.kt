@@ -35,11 +35,12 @@ import org.vorpal.research.kex.reanimator.actionsequence.StringValue
 import org.vorpal.research.kex.reanimator.actionsequence.TestCall
 import org.vorpal.research.kex.reanimator.actionsequence.UnknownSequence
 import org.vorpal.research.kex.reanimator.codegen.ActionSequencePrinter
-import org.vorpal.research.kex.util.kex
-import org.vorpal.research.kex.util.loadClass
 import org.vorpal.research.kex.util.getConstructor
 import org.vorpal.research.kex.util.getMethod
+import org.vorpal.research.kex.util.isSubtypeOfCached
 import org.vorpal.research.kex.util.javaString
+import org.vorpal.research.kex.util.kex
+import org.vorpal.research.kex.util.loadClass
 import org.vorpal.research.kfg.ir.Class
 import org.vorpal.research.kfg.type.ArrayType
 import org.vorpal.research.kfg.type.BoolType
@@ -168,7 +169,7 @@ open class ActionSequence2JavaPrinter(
     inner class ASClass(val type: Type, val typeParams: List<ASType> = emptyList()) : ASType {
         override fun isSubtype(other: ASType): Boolean = when (other) {
             is ASClass -> when {
-                !type.isSubtypeOf(other.type) -> false
+                !type.isSubtypeOfCached(other.type) -> false
                 typeParams.isEmpty() && other.typeParams.isNotEmpty() -> true
                 typeParams.size != other.typeParams.size -> false
                 else -> typeParams.zip(other.typeParams).all { (a, b) -> a.isSubtype(b) }

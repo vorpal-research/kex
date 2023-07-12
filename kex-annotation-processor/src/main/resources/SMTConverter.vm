@@ -246,27 +246,33 @@ class ${solver}Converter(
         else -> unreachable { log.error("Unknown PS type: ${ ps }") }
     }
 
-    fun convert(basic: BasicState, ef: Factory_, ctx: Context_, extractPath: Boolean = false): Bool_ =
-        basic.predicates.fold(ef.makeTrue()) { acc, predicate -> acc and convert(predicate, ef, ctx) }
+    fun convert(basic: BasicState, ef: Factory_, ctx: Context_, extractPath: Boolean = false): Bool_ {
+        val predicates = buildList {
+            for (predicate in basic.predicates) {
+                add(convert(predicate, ef, ctx))
+            }
+        }
+        return ef.makeAnd(predicates)
+    }
 
     fun convert(chain: ChainState, ef: Factory_, ctx: Context_, extractPath: Boolean = false): Bool_ =
-        ef.makeTrue() and convert(chain.base, ef, ctx) and convert(chain.curr, ef, ctx)
+        convert(chain.base, ef, ctx) and convert(chain.curr, ef, ctx)
 
     fun convert(choice: ChoiceState, ef: Factory_, ctx: Context_, extractPath: Boolean = false): Bool_ {
-        var res = ef.makeFalse()
         val contexts = IdentityHashMap< Bool_, Context_ >()
-        for (branch in choice) {
-            val newCtx = Context_(ctx)
-            val state = convert(branch, ef, newCtx, extractPath)
+        val choices = buildList {
+            for (branch in choice) {
+                val newCtx = Context_(ctx)
+                add(convert(branch, ef, newCtx, extractPath))
 
-            res = res or state
-            if (!extractPath) {
-                val path = branch.filterByType(PredicateType.Path())
-                contexts[convert(path, ef, newCtx, true)] = newCtx
+                if (!extractPath) {
+                    val path = branch.filterByType(PredicateType.Path())
+                    contexts[convert(path, ef, newCtx, true)] = newCtx
+                }
             }
         }
         ctx.switchOn("choice", contexts)
-        return res
+        return ef.makeOr(choices)
     }
 
 #set($predicates = ["ArrayInitializer", "ArrayStore", "Call", "Catch", "DefaultSwitch", "Inequality", "EnterMonitor",

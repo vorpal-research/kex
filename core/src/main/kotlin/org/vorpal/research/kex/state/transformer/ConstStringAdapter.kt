@@ -35,7 +35,7 @@ import org.vorpal.research.kthelper.collection.dequeOf
 
 class ConstStringAdapter(
     val tf: TypeFactory
-) : StringInfoContext, RecollectingTransformer<ConstStringAdapter>, IncrementalTransformer {
+) : StringInfoContext(), RecollectingTransformer<ConstStringAdapter>, IncrementalTransformer {
     override val builders = dequeOf(StateBuilder())
     private val strings = mutableMapOf<String, Term>()
 
@@ -154,7 +154,7 @@ class ConstStringAdapter(
 
 class TypeNameAdapter(
     val ctx: ExecutionContext
-) : StringInfoContext, RecollectingTransformer<TypeNameAdapter>, IncrementalTransformer {
+) : StringInfoContext(), RecollectingTransformer<TypeNameAdapter>, IncrementalTransformer {
     override val builders = dequeOf(StateBuilder())
 
     override fun apply(state: IncrementalPredicateState): IncrementalPredicateState {

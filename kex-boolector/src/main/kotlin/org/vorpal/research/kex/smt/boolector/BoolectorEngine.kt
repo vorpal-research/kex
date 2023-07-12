@@ -330,6 +330,18 @@ object BoolectorEngine :
         return ans
     }
 
+    override fun disjunction(ctx: Btor, vararg exprs: BoolectorNode): BoolectorNode {
+        var ans = BoolNode.constBool(ctx, true)
+        for (i in exprs) ans = ans.or(i.toBoolNode())
+        return ans
+    }
+
+    override fun disjunction(ctx: Btor, exprs: Collection<BoolectorNode>): BoolectorNode {
+        var ans = BoolNode.constBool(ctx, true)
+        for (i in exprs) ans = ans.or(i.toBoolNode())
+        return ans
+    }
+
     override fun zext(ctx: Btor, n: Int, expr: BoolectorNode): BoolectorNode = expr.toBitvecNode().uext(n)
 
     override fun sext(ctx: Btor, n: Int, expr: BoolectorNode): BoolectorNode {

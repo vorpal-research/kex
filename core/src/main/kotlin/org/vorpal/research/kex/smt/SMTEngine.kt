@@ -118,6 +118,9 @@ abstract class SMTEngine<in Context_t : Any, Expr_t : Any, Sort_t : Any, Functio
     abstract fun conjunction(ctx: Context_t, vararg exprs: Expr_t): Expr_t
     abstract fun conjunction(ctx: Context_t, exprs: Collection<Expr_t>): Expr_t
 
+    abstract fun disjunction(ctx: Context_t, vararg exprs: Expr_t): Expr_t
+    abstract fun disjunction(ctx: Context_t, exprs: Collection<Expr_t>): Expr_t
+
     abstract fun zext(ctx: Context_t, n: Int, expr: Expr_t): Expr_t
     abstract fun sext(ctx: Context_t, n: Int, expr: Expr_t): Expr_t
 

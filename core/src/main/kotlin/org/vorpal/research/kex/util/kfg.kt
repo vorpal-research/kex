@@ -144,3 +144,12 @@ val String.javaString get() = replace(Package.SEPARATOR, Package.CANONICAL_SEPAR
 
 fun Class.getCtor(vararg argTypes: Type) =
     getMethod("<init>", cm.type.voidType, *argTypes)
+
+private object SubTypeInfoCache {
+    private val subtypeCache = mutableMapOf<Pair<Type, Type>, Boolean>()
+    fun check(lhv: Type, rhv: Type): Boolean = subtypeCache.getOrPut(lhv to rhv) {
+        lhv.isSubtypeOf(rhv)
+    }
+}
+
+fun Type.isSubtypeOfCached(other: Type): Boolean = SubTypeInfoCache.check(this, other)

@@ -550,10 +550,17 @@ object KSMTEngine : SMTEngine<KContext, KAst, KSort, KFuncDecl<*>, KAst>() {
 
     override fun conjunction(ctx: KContext, exprs: Collection<KAst>): KExpr<*> {
         val boolExpressions = exprs.map { it.asExpr(ctx) as KExpr<KBoolSort> }
-        return when (boolExpressions.size) {
-            1 -> boolExpressions.single()
-            else -> ctx.mkAnd(boolExpressions)
-        }
+        return ctx.mkAnd(boolExpressions)
+    }
+
+    override fun disjunction(ctx: KContext, vararg exprs: KAst): KExpr<*> {
+        val boolExpressions = exprs.map { it.asExpr(ctx) as KExpr<KBoolSort> }
+        return ctx.mkOr(boolExpressions)
+    }
+
+    override fun disjunction(ctx: KContext, exprs: Collection<KAst>): KExpr<*> {
+        val boolExpressions = exprs.map { it.asExpr(ctx) as KExpr<KBoolSort> }
+        return ctx.mkOr(boolExpressions)
     }
 
     override fun zext(ctx: KContext, n: Int, expr: KAst): KExpr<*> {

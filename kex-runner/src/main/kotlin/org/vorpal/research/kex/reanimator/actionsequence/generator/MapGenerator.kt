@@ -5,6 +5,7 @@ import org.vorpal.research.kex.descriptor.ObjectDescriptor
 import org.vorpal.research.kex.ktype.KexClass
 import org.vorpal.research.kex.reanimator.actionsequence.ActionList
 import org.vorpal.research.kex.reanimator.actionsequence.CodeAction
+import org.vorpal.research.kex.util.isSubtypeOfCached
 import org.vorpal.research.kfg.ir.Class
 import org.vorpal.research.kfg.ir.Method
 
@@ -16,7 +17,7 @@ class MapGenerator(fallback: Generator) : AnyGenerator(fallback) {
         val type = descriptor.type
         val klass = type as? KexClass ?: return false
         val tf = context.types
-        return klass.getKfgType(tf).isSubtypeOf(tf.cm["java/util/Map"].asType)
+        return klass.getKfgType(tf).isSubtypeOfCached(tf.cm["java/util/Map"].asType)
     }
 
     override fun checkCtors(
