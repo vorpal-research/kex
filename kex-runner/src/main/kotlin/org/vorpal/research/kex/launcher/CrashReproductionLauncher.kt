@@ -98,7 +98,7 @@ class CrashReproductionLauncher(
         executePipeline(context.cm, Package.defaultPackage) {
             +ClassInstantiationDetector(context, context.accessLevel)
         }
-        val testCases = CrashReproductionChecker.runWithConstraintPreconditions(context, stackTrace)
+        val testCases = CrashReproductionChecker.runWithDescriptorPreconditions(context, stackTrace)
         if (testCases.isNotEmpty()) {
             log.info("Reproducing test cases:\n${testCases.joinToString("\n")}")
         }

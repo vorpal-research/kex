@@ -506,9 +506,7 @@ object CrashReproductionChecker {
                         .filter { !it.isDirectory() }
                         .filter { it !in testCasePaths }
                         .filter { !it.endsWith("${ReflectionUtilsPrinter.REFLECTION_UTILS_CLASS}.java") }
-                        .forEach {
-                            Files.deleteIfExists(it)
-                        }
+                        .forEach { Files.deleteIfExists(it) }
                 }
             filteredTestCases
         }
