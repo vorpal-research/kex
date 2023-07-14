@@ -51,7 +51,7 @@ class TestExecutor(
             log.error("Execution failed with an exception", e)
         }
         TraceCollectorProxy.disableCollector()
-        log.debug("Collected state: ${collector.symbolicState}")
+        log.debug("Collected state: {}", collector.symbolicState)
         return when {
             exception != null -> ExceptionResult(convertToDescriptor(exception), collector.symbolicState)
             else -> SuccessResult(collector.symbolicState)
