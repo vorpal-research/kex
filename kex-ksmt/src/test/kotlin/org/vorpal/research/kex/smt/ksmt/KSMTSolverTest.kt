@@ -12,6 +12,7 @@ import org.ksmt.sort.KBoolSort
 import org.vorpal.research.kex.ExecutionContext
 import org.vorpal.research.kex.KexTest
 import org.vorpal.research.kex.ktype.KexInt
+import org.vorpal.research.kex.ktype.KexString
 import org.vorpal.research.kex.random.StubRandomizer
 import org.vorpal.research.kex.smt.Result
 import org.vorpal.research.kex.smt.ksmt.KSMTEngine.asExpr
@@ -19,6 +20,7 @@ import org.vorpal.research.kex.state.PredicateQuery
 import org.vorpal.research.kex.state.basic
 import org.vorpal.research.kex.state.predicate.path
 import org.vorpal.research.kex.state.term.term
+import org.vorpal.research.kex.util.StringInfoContext
 import org.vorpal.research.kfg.ClassManager
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -276,6 +278,71 @@ class KSMTSolverTest : KexTest("ksmt-solver") {
         assertIs<Result.UnsatResult>(results[1])
         assertIs<Result.SatResult>(results[2])
         assertIs<Result.SatResult>(results[3])
+    }
+
+    @Test
+    fun testIncrementalMemory() {
+        with(object : StringInfoContext {}) {
+            val string = term { generate(KexString()) }
+            val charArray = term { generate(valueArrayType) }
+
+            val state = basic {
+                state { charArray.initializeNew(3, 'a', 'b', 'c') }
+                state { string.new() }
+                state { string.field(valueArrayType, valueArrayName).store(const(null)) }
+            }
+
+            val paths = mutableListOf(
+                PredicateQuery(
+                    basic {
+                        state { string.field(valueArrayType, valueArrayName).store(charArray) }
+                        val field = term { generate(valueArrayType) }
+                        state { field equality string.field(valueArrayType, valueArrayName).load() }
+                        path { field.length() equality 3 }
+                        path { field[0].load() equality 'a' }
+                    }
+                ),
+                PredicateQuery(
+                    basic {
+                        val field = term { generate(valueArrayType) }
+                        val loaded = term { generate(valueArrayType) }
+                        state { field.new(10) }
+                        state { field[0].store(const('0')) }
+                        state { string.field(valueArrayType, valueArrayName).store(field) }
+                        state { loaded equality string.field(valueArrayType, valueArrayName).load() }
+                        path { loaded.length() equality 10 }
+                        path { loaded[0].load() equality '0' }
+                    }
+                ),
+                PredicateQuery(
+                    basic {
+                        path { string.field(valueArrayType, valueArrayName).load() equality null }
+                    }
+                ),
+                PredicateQuery(
+                    basic {
+                        val loaded = term { generate(valueArrayType) }
+                        state { loaded equality string.field(valueArrayType, valueArrayName) }
+                        path { loaded equality charArray }
+                    }
+                ),
+            )
+
+            val solver = KSMTSolver(
+                ExecutionContext(
+                    ClassManager(),
+                    this.javaClass.classLoader,
+                    StubRandomizer(),
+                    emptyList()
+                )
+            )
+
+            val results = solver.isSatisfiable(state, paths)
+            assertIs<Result.SatResult>(results[0])
+            assertIs<Result.SatResult>(results[1])
+            assertIs<Result.SatResult>(results[2])
+            assertIs<Result.UnsatResult>(results[3])
+        }
     }
 }
 

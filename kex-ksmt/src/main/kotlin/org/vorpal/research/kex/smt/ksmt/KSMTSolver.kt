@@ -64,6 +64,7 @@ import org.vorpal.research.kex.state.transformer.collectVariables
 import org.vorpal.research.kex.state.transformer.getConstStringMap
 import org.vorpal.research.kex.state.transformer.memspace
 import org.vorpal.research.kex.util.kapitalize
+import org.vorpal.research.kex.util.with
 import org.vorpal.research.kthelper.assert.ktassert
 import org.vorpal.research.kthelper.assert.unreachable
 import org.vorpal.research.kthelper.logging.debug
@@ -657,13 +658,14 @@ class KSMTSolver(
         val converter = KSMTConverter(executionContext)
         val ksmtState = converter.convert(state, ef, ctx)
         val ksmtQueries = queries.map { (hard, soft) ->
-            converter.convert(hard, ef, ctx) to soft.map { converter.convert(it, ef, ctx) }
+            val ctxCopy = KSMTContext(ctx)
+            Triple(converter.convert(hard, ef, ctx), soft.map { converter.convert(it, ef, ctx) }, ctxCopy)
         }
 
         log.debug("Check started")
         val results = checkIncremental(ksmtState, ksmtQueries)
         log.debug("Check finished")
-        results.mapIndexed { index, (status, any) ->
+        results.mapIndexed { index, (status, any, ctx) ->
             when (status) {
                 KSolverStatus.UNSAT -> Result.UnsatResult
                 KSolverStatus.UNKNOWN -> Result.UnknownResult(any as String)
@@ -698,8 +700,8 @@ class KSMTSolver(
 
     private suspend fun checkIncremental(
         state: Bool_,
-        queries: List<Pair<Bool_, List<Bool_>>>
-    ): List<Pair<KSolverStatus, Any>> = buildSolver().use { solver ->
+        queries: List<Triple<Bool_, List<Bool_>, KSMTContext>>
+    ): List<Triple<KSolverStatus, Any, KSMTContext>> = buildSolver().use { solver ->
         solver.assertAndTrackAsync(
             state.asAxiom() as KExpr<KBoolSort>,
             ef.ctx.mkConstDecl("State", ef.ctx.boolSort)
@@ -710,7 +712,7 @@ class KSMTSolver(
         )
         solver.push()
 
-        return queries.map { (hardConstraints, softConstraints) ->
+        return queries.map { (hardConstraints, softConstraints, ctx) ->
             solver.assertAndTrackAsync(
                 hardConstraints.asAxiom() as KExpr<KBoolSort>,
                 ef.ctx.mkConstDecl("HardConstraints", ef.ctx.boolSort)
@@ -760,7 +762,7 @@ class KSMTSolver(
                     solver.pop()
                 }
                 solver.push()
-            }
+            }.with(ctx)
         }
     }
 
