@@ -2,6 +2,7 @@ package org.vorpal.research.kex.asm.analysis.util
 
 import kotlinx.collections.immutable.toPersistentList
 import kotlinx.coroutines.TimeoutCancellationException
+import org.slf4j.LoggerFactory
 import org.vorpal.research.kex.ExecutionContext
 import org.vorpal.research.kex.asm.analysis.crash.precondition.ConstraintExceptionPrecondition
 import org.vorpal.research.kex.asm.manager.MethodManager
@@ -55,6 +56,7 @@ suspend fun Method.analyzeOrTimeout(
     }
 }
 
+private val statLogger = LoggerFactory.getLogger("StatLogger")
 
 suspend fun Method.checkAsync(
     ctx: ExecutionContext,
@@ -69,6 +71,7 @@ suspend fun Method.checkAsync(
         .mapValues { it.value.rtMapped }
         .toTypeMap()
     val result = checker.prepareAndCheck(this, clauses + query, concreteTypeInfo, enableInlining)
+    statLogger.debug("SAT Solver: {}", result)
     if (result !is Result.SatResult) {
         return null
     }

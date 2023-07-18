@@ -77,14 +77,14 @@ import kotlin.reflect.jvm.isAccessible
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.ExperimentalTime
 
-private val timeout = kexConfig.getIntValue("smt", "timeout", 3)
-private val logQuery = kexConfig.getBooleanValue("smt", "logQuery", false)
-private val logFormulae = kexConfig.getBooleanValue("smt", "logFormulae", false)
-private val printSMTLib = kexConfig.getBooleanValue("smt", "logSMTLib", false)
-private val maxArrayLength = kexConfig.getIntValue("smt", "maxArrayLength", 1000)
-private val ksmtRunners = kexConfig.getIntValue("ksmt", "runners", 4)
-private val ksmtSolvers = kexConfig.getMultipleStringValue("ksmt", "solver")
-private val ksmtSeed = kexConfig.getIntValue("ksmt", "seed", 42)
+private val timeout get() = kexConfig.getIntValue("smt", "timeout", 3)
+private val logQuery get() = kexConfig.getBooleanValue("smt", "logQuery", false)
+private val logFormulae get() = kexConfig.getBooleanValue("smt", "logFormulae", false)
+private val printSMTLib get() = kexConfig.getBooleanValue("smt", "logSMTLib", false)
+private val maxArrayLength get() = kexConfig.getIntValue("smt", "maxArrayLength", 1000)
+private val ksmtRunners get() = kexConfig.getIntValue("ksmt", "runners", 4)
+private val ksmtSolvers get() = kexConfig.getMultipleStringValue("ksmt", "solver")
+private val ksmtSeed get() = kexConfig.getIntValue("ksmt", "seed", 42)
 
 @Suppress("UNCHECKED_CAST")
 @AsyncSolver("ksmt")

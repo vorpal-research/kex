@@ -387,6 +387,7 @@ class JavaBuilder(val pkg: String = "") {
         val constructors = mutableListOf<JavaConstructor>()
         val staticInits = mutableListOf<JavaStaticInitializer>()
         val methods = mutableListOf<JavaMethod>()
+        val annotations = mutableListOf<String>()
         val staticClasses = mutableListOf<JavaClass>()
 
         data class JavaField(
@@ -455,6 +456,7 @@ class JavaBuilder(val pkg: String = "") {
         }
 
         override fun print(level: Int): String = buildString {
+            annotations.forEach { appendLine("@$it") }
             appendLine("${level.asOffset}public class $name {")
             fields.forEach { appendLine("${(level + 1).asOffset}$it") }
             appendLine()

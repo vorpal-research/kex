@@ -3,11 +3,13 @@ package org.vorpal.research.kex.launcher
 import org.vorpal.research.kex.ExecutionContext
 import org.vorpal.research.kex.asm.manager.ClassInstantiationDetector
 import org.vorpal.research.kex.asm.util.AccessModifier
+import org.vorpal.research.kex.config.kexConfig
 import org.vorpal.research.kex.random.easyrandom.EasyRandomDriver
-import org.vorpal.research.kex.util.PathClassLoader
 import org.vorpal.research.kex.util.getIntrinsics
 import org.vorpal.research.kex.util.getKexRuntime
+import org.vorpal.research.kex.util.getPathSeparator
 import org.vorpal.research.kex.util.getRuntime
+import org.vorpal.research.kex.util.instrumentedCodeDirectory
 import org.vorpal.research.kfg.ClassManager
 import org.vorpal.research.kfg.KfgConfig
 import org.vorpal.research.kfg.Package
@@ -21,19 +23,22 @@ import org.vorpal.research.kfg.visitor.executePackagePipeline
 import org.vorpal.research.kthelper.KtException
 import org.vorpal.research.kthelper.collection.mapToArray
 import org.vorpal.research.kthelper.logging.log
+import java.net.URLClassLoader
+import java.nio.file.Path
 import java.nio.file.Paths
 
 
 class LauncherException(message: String) : KtException(message)
 
-internal fun prepareInstrumentedClasspath(
+fun prepareInstrumentedClasspath(
     containers: List<Container>,
     classLoader: ClassLoader,
     target: Package,
-    prepareClassPath: (ExecutionContext) -> Pipeline.() -> Unit
+    path: Path,
+    prepareClassPath: (ExecutionContext) -> Pipeline.() -> Unit,
+    withUnpacking: Boolean = true
 ) {
     val klassPath = containers.map { it.path }
-    val random = EasyRandomDriver()
     for (jar in containers) {
         log.info("Preparing ${jar.path}")
         val cm = ClassManager(
@@ -46,7 +51,16 @@ internal fun prepareInstrumentedClasspath(
             )
         )
         cm.initialize(jar)
-        val context = ExecutionContext(cm, classLoader, random, klassPath)
+        val context = ExecutionContext(
+            cm,
+            classLoader,
+            EasyRandomDriver(),
+            klassPath
+        )
+
+        if (withUnpacking) {
+            jar.unpack(cm, path, true)
+        }
 
         executePackagePipeline(cm, target) {
             +ClassInstantiationDetector(context)
@@ -65,6 +79,8 @@ internal fun runPipeline(context: ExecutionContext, analysisLevel: AnalysisLevel
 
 
 abstract class KexAnalysisLauncher(classPaths: List<String>, targetName: String) : KexLauncher {
+    private val classPath: String = System.getProperty("java.class.path")
+
     val containers: List<Container>
     val context: ExecutionContext
     val analysisLevel: AnalysisLevel
@@ -72,7 +88,7 @@ abstract class KexAnalysisLauncher(classPaths: List<String>, targetName: String)
 
     init {
         val containerPaths = classPaths.map { Paths.get(it).toAbsolutePath() }
-        val containerClassLoader = PathClassLoader(containerPaths)
+        val containerClassLoader = URLClassLoader(containerPaths.mapToArray { it.toUri().toURL() })
         containers = listOfNotNull(
             *containerPaths.mapToArray {
                 it.asContainer() ?: throw LauncherException("Can't represent ${it.toAbsolutePath()} as class container")
@@ -81,10 +97,12 @@ abstract class KexAnalysisLauncher(classPaths: List<String>, targetName: String)
         )
         val analysisJars = listOfNotNull(*containers.toTypedArray(), getRuntime(), getIntrinsics())
 
+        val instrumentedCodeDir = kexConfig.instrumentedCodeDirectory
         prepareInstrumentedClasspath(
             analysisJars,
             containerClassLoader,
             Package.defaultPackage,
+            instrumentedCodeDir,
             ::prepareClassPath
         )
 
@@ -104,12 +122,19 @@ abstract class KexAnalysisLauncher(classPaths: List<String>, targetName: String)
         accessLevel = analysisLevel.accessLevel
         log.debug("Access level: {}", accessLevel)
 
+        val classLoader = URLClassLoader(arrayOf(instrumentedCodeDir.toUri().toURL()))
         val klassPath = containers.map { it.path }
+        updateClassPath(classLoader)
         val randomDriver = EasyRandomDriver()
-        context = ExecutionContext(cm, containerClassLoader, randomDriver, klassPath, accessLevel)
+        context = ExecutionContext(cm, classLoader, randomDriver, klassPath, accessLevel)
 
         log.debug("Running with class path:\n${containers.joinToString("\n") { it.name }}")
     }
 
     protected abstract fun prepareClassPath(ctx: ExecutionContext): Pipeline.() -> Unit
+
+    private fun updateClassPath(loader: URLClassLoader) {
+        val urlClassPath = loader.urLs.joinToString(separator = getPathSeparator()) { "${it.path}." }
+        System.setProperty("java.class.path", "$classPath${getPathSeparator()}$urlClassPath")
+    }
 }

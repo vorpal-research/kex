@@ -180,7 +180,7 @@ fun ClassLoader.loadClass(type: Type): Class<*> = try {
         is FloatType -> Float::class.java
         is DoubleType -> Double::class.java
         is ArrayType -> try {
-            Class.forName(type.canonicalDesc)
+            this.loadClass(type.canonicalDesc)
         } catch (e: ClassNotFoundException) {
             val element = this.loadClass(type.component)
             // this is fucked up

@@ -67,8 +67,10 @@ class ReflectionUtilsPrinter(
             import("java.lang.reflect.Modifier")
             import("sun.misc.Unsafe")
             import("java.lang.reflect.InvocationTargetException")
+            import("org.junit.Ignore")
 
             with(klass) {
+                annotations += "Ignore"
                 field("UNSAFE", type("Unsafe")) {
                     visibility = Visibility.PUBLIC
                     modifiers += "static"

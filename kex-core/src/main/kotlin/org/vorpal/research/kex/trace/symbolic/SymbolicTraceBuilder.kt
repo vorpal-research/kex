@@ -11,36 +11,14 @@ import org.vorpal.research.kex.descriptor.Descriptor
 import org.vorpal.research.kex.descriptor.Object2DescriptorConverter
 import org.vorpal.research.kex.descriptor.ObjectDescriptor
 import org.vorpal.research.kex.descriptor.descriptor
-import org.vorpal.research.kex.ktype.KexBool
-import org.vorpal.research.kex.ktype.KexByte
-import org.vorpal.research.kex.ktype.KexChar
-import org.vorpal.research.kex.ktype.KexClass
-import org.vorpal.research.kex.ktype.KexDouble
-import org.vorpal.research.kex.ktype.KexFloat
-import org.vorpal.research.kex.ktype.KexInt
-import org.vorpal.research.kex.ktype.KexInteger
-import org.vorpal.research.kex.ktype.KexLong
-import org.vorpal.research.kex.ktype.KexReal
-import org.vorpal.research.kex.ktype.KexShort
-import org.vorpal.research.kex.ktype.KexType
-import org.vorpal.research.kex.ktype.kexType
+import org.vorpal.research.kex.ktype.*
 import org.vorpal.research.kex.parameters.Parameters
 import org.vorpal.research.kex.state.predicate.Predicate
 import org.vorpal.research.kex.state.predicate.path
 import org.vorpal.research.kex.state.predicate.state
-import org.vorpal.research.kex.state.term.ConstClassTerm
-import org.vorpal.research.kex.state.term.ConstStringTerm
-import org.vorpal.research.kex.state.term.NullTerm
-import org.vorpal.research.kex.state.term.StaticClassRefTerm
-import org.vorpal.research.kex.state.term.Term
-import org.vorpal.research.kex.state.term.term
+import org.vorpal.research.kex.state.term.*
 import org.vorpal.research.kex.state.transformer.TermRenamer
-import org.vorpal.research.kex.util.cmp
-import org.vorpal.research.kex.util.isOuterThis
-import org.vorpal.research.kex.util.isSubtypeOfCached
-import org.vorpal.research.kex.util.next
-import org.vorpal.research.kex.util.parseValue
-import org.vorpal.research.kex.util.parseValueOrNull
+import org.vorpal.research.kex.util.*
 import org.vorpal.research.kfg.ir.BasicBlock
 import org.vorpal.research.kfg.ir.Class
 import org.vorpal.research.kfg.ir.ConcreteClass
@@ -138,7 +116,7 @@ class SymbolicTraceBuilder(
      */
     private val cm get() = ctx.cm
     private var converter = Object2DescriptorConverter()
-    private val stateBuilder = arrayListOf<Clause>()
+    val stateBuilder = arrayListOf<Clause>()
     private val traceBuilder = arrayListOf<Instruction>()
     private val pathBuilder = arrayListOf<PathClause>()
     private val concreteTypeMap = mutableMapOf<Term, KexType>()
@@ -155,7 +133,7 @@ class SymbolicTraceBuilder(
      */
     private val frames = FrameStack()
 
-    private val nameGenerator = NameGenerator()
+    val nameGenerator = NameGenerator()
     private val currentFrame get() = frames.peek()
     private val currentMethod get() = currentFrame.method
     private val valueMap get() = currentFrame.valueMap
@@ -168,7 +146,7 @@ class SymbolicTraceBuilder(
     /**
      * necessary runtime info
      */
-    private var lastCall: Call? = null
+    var lastCall: Call? = null
     private var thrownException: Term? = null
     private var previousBlock: BasicBlock
         get() = currentFrame.previousBlock
@@ -215,7 +193,7 @@ class SymbolicTraceBuilder(
 
     }
 
-    private class NameGenerator {
+    class NameGenerator {
         private val names = mutableMapOf<String, Int>()
         fun nextName(name: String): String {
             val index = names.getOrPut(name) { 0 }
@@ -224,7 +202,7 @@ class SymbolicTraceBuilder(
         }
     }
 
-    private data class Call(
+    data class Call(
         val call: CallInst,
         val method: Method,
         val receiver: Pair<Value, Term>?,
@@ -1131,8 +1109,10 @@ class SymbolicTraceBuilder(
             val predicate = state(instruction.location) {
                 termReceiver equality termReturn
             }
-            terms[termReceiver] = kfgReceiver.wrapped()
-            concreteTypeMap[termReceiver] = concreteValue.getConcreteType(termReceiver.type)
+            if (frames.isNotEmpty()) {
+                terms[termReceiver] = kfgReceiver.wrapped()
+                concreteTypeMap[termReceiver] = concreteValue.getConcreteType(termReceiver.type)
+            }
 
             postProcess(instruction, predicate)
         } else {
