@@ -123,7 +123,7 @@ class KSMTSolver(
     }
 
     override suspend fun isReachableAsync(state: PredicateState) =
-        isPathPossible(state, state.path)
+        isPathPossibleAsync(state, state.path)
 
     override suspend fun isPathPossibleAsync(state: PredicateState, path: PredicateState): Result =
         check(state, path) { it }
