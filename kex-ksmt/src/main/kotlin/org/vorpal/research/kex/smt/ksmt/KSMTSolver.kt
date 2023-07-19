@@ -85,6 +85,7 @@ private val printSMTLib = kexConfig.getBooleanValue("smt", "logSMTLib", false)
 private val maxArrayLength = kexConfig.getIntValue("smt", "maxArrayLength", 1000)
 private val ksmtRunners = kexConfig.getIntValue("ksmt", "runners", 4)
 private val ksmtSolvers = kexConfig.getMultipleStringValue("ksmt", "solver")
+private val ksmtSeed = kexConfig.getIntValue("ksmt", "seed", 42)
 
 @Suppress("UNCHECKED_CAST")
 @AsyncSolver("ksmt")
@@ -300,7 +301,12 @@ class KSMTSolver(
 
     private suspend fun buildSolver(): KPortfolioSolver {
         if (!currentCoroutineContext().isActive) yield()
-        return portfolioSolverManager.createPortfolioSolver(ef.ctx)
+        return portfolioSolverManager.createPortfolioSolver(ef.ctx).also {
+            it.configureAsync {
+                setIntParameter("random_seed", ksmtSeed)
+                setIntParameter("seed", ksmtSeed)
+            }
+        }
     }
 
     private fun KSMTContext.recoverBitvectorProperty(
