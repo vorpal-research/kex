@@ -298,19 +298,15 @@ class ClassInstantiationDetector(
     }
 
     private fun addInstantiableClass(klass: Class, instantiableKlass: Class) {
-        if (!instantiableKlass.isEnum) {
-            for (parent in klass.allAncestors) {
-                addInstantiableClass(parent, instantiableKlass)
-            }
+        for (parent in klass.allAncestors) {
+            addInstantiableClass(parent, instantiableKlass)
         }
         StringClassInstantiationManagerImpl[klass] = instantiableKlass
     }
 
     private fun addExternalCtor(klass: Class, method: Method) {
-        if (!klass.isEnum) {
-            for (parent in klass.allAncestors) {
-                addExternalCtor(parent, method)
-            }
+        for (parent in klass.allAncestors) {
+            addExternalCtor(parent, method)
         }
         StringClassInstantiationManagerImpl[klass] = method
     }

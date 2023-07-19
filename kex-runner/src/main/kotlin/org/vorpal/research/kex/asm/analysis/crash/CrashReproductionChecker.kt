@@ -19,13 +19,11 @@ import org.vorpal.research.kex.asm.analysis.crash.precondition.ExceptionPrecondi
 import org.vorpal.research.kex.asm.analysis.crash.precondition.ExceptionPreconditionReceiver
 import org.vorpal.research.kex.asm.analysis.symbolic.ConditionCheckQuery
 import org.vorpal.research.kex.asm.analysis.symbolic.DefaultCallResolver
-import org.vorpal.research.kex.asm.analysis.symbolic.EmptyQuery
 import org.vorpal.research.kex.asm.analysis.symbolic.SymbolicCallResolver
 import org.vorpal.research.kex.asm.analysis.symbolic.SymbolicInvokeDynamicResolver
 import org.vorpal.research.kex.asm.analysis.symbolic.SymbolicPathSelector
 import org.vorpal.research.kex.asm.analysis.symbolic.SymbolicTraverser
 import org.vorpal.research.kex.asm.analysis.symbolic.TraverserState
-import org.vorpal.research.kex.asm.analysis.symbolic.UpdateAction
 import org.vorpal.research.kex.asm.analysis.symbolic.UpdateAndReportQuery
 import org.vorpal.research.kex.asm.analysis.util.checkAsyncIncremental
 import org.vorpal.research.kex.asm.analysis.util.checkAsyncIncrementalAndSlice
@@ -36,9 +34,7 @@ import org.vorpal.research.kex.parameters.Parameters
 import org.vorpal.research.kex.reanimator.UnsafeGenerator
 import org.vorpal.research.kex.reanimator.codegen.javagen.ReflectionUtilsPrinter
 import org.vorpal.research.kex.reanimator.codegen.klassName
-import org.vorpal.research.kex.state.predicate.state
 import org.vorpal.research.kex.trace.symbolic.PersistentSymbolicState
-import org.vorpal.research.kex.trace.symbolic.StateClause
 import org.vorpal.research.kex.trace.symbolic.SymbolicState
 import org.vorpal.research.kex.trace.symbolic.persistentSymbolicState
 import org.vorpal.research.kex.util.asmString
@@ -224,51 +220,6 @@ abstract class AbstractCrashReproductionChecker<T>(
         }
 
         super.traverseInstruction(inst)
-    }
-
-
-    final override suspend fun traverseCallInst(inst: CallInst) = acquireState { traverserState ->
-        val callee = when {
-            inst.isStatic -> staticRef(inst.method.klass)
-            else -> traverserState.mkTerm(inst.callee)
-        }
-        val argumentTerms = inst.args.map { traverserState.mkTerm(it) }
-        val candidates = callResolver.resolve(traverserState, inst)
-
-        val handler: (UpdateAction) = { state ->
-            for (candidate in candidates) {
-                processMethodCall(state, inst, candidate, callee, argumentTerms)
-            }
-
-            var varState = state
-            val receiver = when {
-                inst.isNameDefined -> {
-                    val res = generate(inst.type.symbolicType)
-                    varState = varState.copy(
-                        valueMap = traverserState.valueMap.put(inst, res)
-                    )
-                    res
-                }
-
-                else -> null
-            }
-            val callClause = StateClause(
-                inst, state {
-                    val callTerm = callee.call(inst.method, argumentTerms)
-                    receiver?.call(callTerm) ?: call(callTerm)
-                }
-            )
-            (varState + callClause).also {
-                currentState = it
-            }
-        }
-
-        val nullQuery = when {
-            inst.isStatic -> EmptyQuery()
-            else -> nullabilityCheckInc(traverserState, inst, callee)
-        }.withHandler(handler)
-
-        checkReachabilityIncremental(traverserState, nullQuery)
     }
 
     final override suspend fun checkIncremental(
