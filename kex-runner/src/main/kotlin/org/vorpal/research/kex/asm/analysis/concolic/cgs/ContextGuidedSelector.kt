@@ -40,7 +40,7 @@ import org.vorpal.research.kthelper.`try`
 class ContextGuidedSelector(
     override val ctx: ExecutionContext,
 ) : ConcolicPathSelector {
-    private val executionTree = ExecutionTree()
+    private val executionTree = ExecutionTree(ctx)
     private var currentDepth = 0
     private var k = 1
     private var branchIterator: Iterator<PathVertex> = listOf<PathVertex>().iterator()
@@ -140,7 +140,6 @@ class ContextGuidedSelector(
                     (lhv.operand `is` newType.kexType) equality true
                 })
             } catch (e: NoConcreteInstanceException) {
-                executionTree.markExhausted(this)
                 null
             }
         }
