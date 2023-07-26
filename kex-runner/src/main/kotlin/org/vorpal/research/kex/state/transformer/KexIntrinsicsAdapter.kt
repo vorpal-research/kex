@@ -80,13 +80,6 @@ class KexIntrinsicsAdapter : RecollectingTransformer<KexIntrinsicsAdapter>, Incr
                 state {
                     lhv() equality (value `in` array)
                 }
-                val temp = generate(KexBool)
-                state {
-                    temp equality (length gt 0)
-                }
-                assume {
-                    temp equality true
-                }
             }
             kim.kexContains(method.cm) -> {
                 val (array, value) = call.arguments
@@ -102,13 +95,6 @@ class KexIntrinsicsAdapter : RecollectingTransformer<KexIntrinsicsAdapter>, Incr
                             array[index].load() equls value
                         }
                     }
-                }
-                val temp = generate(KexBool)
-                state {
-                    temp equality (length gt 0)
-                }
-                assume {
-                    temp equality true
                 }
             }
             in kim.kexGenerateArrayMethods(method.cm) -> {
