@@ -11,7 +11,7 @@ class IntrinsicsTest : KexRunnerTest("intrinsic") {
 
     @Test
     fun testBasicReachability() {
-        val `class` = cm["$packageName/IntrinsicsTest"]
+        val `class` = cm["${`package`.concretePackage}/IntrinsicsTest"]
         testClassReachability(`class`)
     }
 }

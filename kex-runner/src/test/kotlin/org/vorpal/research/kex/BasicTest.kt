@@ -10,7 +10,7 @@ class BasicTest : KexRunnerTest("basic") {
 
     @Test
     fun testBasicReachability() {
-        val `class` = cm["$packageName/BasicTests"]
+        val `class` = cm["${`package`.concretePackage}/BasicTests"]
         testClassReachability(`class`)
     }
 

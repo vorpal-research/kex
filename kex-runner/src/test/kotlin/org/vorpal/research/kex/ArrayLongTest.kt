@@ -9,7 +9,7 @@ import kotlin.test.Test
 class ArrayLongTest : KexRunnerTest("array-long") {
     @Test
     fun testArrays() {
-        val `class` = cm["$packageName/ArrayLongTests"]
+        val `class` = cm["${`package`.concretePackage}/ArrayLongTests"]
         testClassReachability(`class`)
     }
 }

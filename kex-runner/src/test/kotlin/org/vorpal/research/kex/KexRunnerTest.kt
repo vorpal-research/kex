@@ -113,7 +113,7 @@ abstract class KexRunnerTest(
 
         val types = cm.type
         val methodName = "kexAssert"
-        val assertReachable = intrinsics.getMethod(methodName, types.voidType, types.getArrayType(types.boolType))
+        val assertReachable = intrinsics.getMethod(methodName, types.voidType, types.boolType)
         return method.body.flatten().asSequence()
             .mapNotNull { it as? CallInst }
             .filter { it.method == assertReachable && it.klass == intrinsics }

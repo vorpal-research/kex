@@ -39,7 +39,7 @@ class AnnotationsTest : KexRunnerTest("annotation") {
 
     @Test
     fun `Test reachability with annotations`() {
-        val `class` = cm["$packageName/NotAnnotatedMethods"]
+        val `class` = cm["${`package`.concretePackage}/NotAnnotatedMethods"]
         testClassReachability(`class`)
     }
 }
