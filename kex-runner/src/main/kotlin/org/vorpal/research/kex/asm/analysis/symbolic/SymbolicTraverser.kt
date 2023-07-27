@@ -797,7 +797,7 @@ abstract class SymbolicTraverser(
     }
 
     protected open suspend fun traverseUnreachableInst(inst: UnreachableInst) {
-        unreachable<Unit>("Unexpected visit of $inst in symbolic traverser")
+        currentState = null
     }
 
     protected open suspend fun traverseUnknownValueInst(inst: UnknownValueInst) {
