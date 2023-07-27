@@ -41,16 +41,16 @@ class ConcolicLauncher(classPaths: List<String>, targetName: String) : KexAnalys
             for (setOfTargets in batchedTargets) {
                 InstructionConcolicChecker.run(context, setOfTargets)
             }
+        }
 
-            if (kexConfig.getBooleanValue("kex", "computeCoverage", true)) {
-                val coverageInfo = CoverageReporter(containers).execute(context.cm, analysisLevel)
-                log.info(
-                    coverageInfo.print(kexConfig.getBooleanValue("kex", "printDetailedCoverage", false))
-                )
+        if (kexConfig.getBooleanValue("kex", "computeCoverage", true)) {
+            val coverageInfo = CoverageReporter(containers).execute(context.cm, analysisLevel)
+            log.info(
+                coverageInfo.print(kexConfig.getBooleanValue("kex", "printDetailedCoverage", false))
+            )
 
-                PermanentCoverageInfo.putNewInfo("concolic", analysisLevel.toString(), coverageInfo)
-                PermanentCoverageInfo.emit()
-            }
+            PermanentCoverageInfo.putNewInfo("concolic", analysisLevel.toString(), coverageInfo)
+            PermanentCoverageInfo.emit()
         }
     }
 }
