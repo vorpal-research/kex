@@ -139,7 +139,7 @@ class KexSerializerTest : KexTest("kex-serializer") {
 
     @Test
     fun predicateStateSerializationTest() {
-        val basicClass = cm["$packageName/BasicTests"]
+        val basicClass = cm["${`package`.concretePackage}/BasicTests"]
 
         for (method in basicClass.allMethods) {
             val psa = getPSA(method)

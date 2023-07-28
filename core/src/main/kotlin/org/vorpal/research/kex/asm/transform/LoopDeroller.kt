@@ -28,6 +28,7 @@ import org.vorpal.research.kfg.ir.value.instruction.PhiInst
 import org.vorpal.research.kfg.ir.value.usageContext
 import org.vorpal.research.kfg.visitor.Loop
 import org.vorpal.research.kthelper.assert.unreachable
+import org.vorpal.research.kthelper.collection.queueOf
 import org.vorpal.research.kthelper.graph.GraphTraversal
 import org.vorpal.research.kthelper.graph.NoTopologicalSortingException
 import org.vorpal.research.kthelper.logging.log
@@ -38,6 +39,7 @@ import kotlin.math.min
 
 private val derollCount = kexConfig.getIntValue("loop", "derollCount", 3)
 private val maxDerollCount = kexConfig.getIntValue("loop", "maxDerollCount", 0)
+private val useBackstabbing = kexConfig.getBooleanValue("loop", "useBackstabbing", true)
 
 class LoopDeroller(override val cm: ClassManager) : LoopOptimizer(cm) {
     companion object {
@@ -57,7 +59,10 @@ class LoopDeroller(override val cm: ClassManager) : LoopOptimizer(cm) {
         var lastHeader: BasicBlock,
         var lastLatch: BasicBlock,
         val blockMappings: MutableMap<BasicBlock, BasicBlock>,
-        val instMappings: MutableMap<Value, Value>
+        val instMappings: MutableMap<Value, Value>,
+        val exits: Set<BasicBlock>,
+        val exitingBlocks: Set<BasicBlock>,
+        val exitPhis: MutableMap<Pair<BasicBlock, Value>, MutableMap<BasicBlock, Value>>
     ) {
         companion object {
             fun createState(loop: Loop): State {
@@ -77,7 +82,8 @@ class LoopDeroller(override val cm: ClassManager) : LoopOptimizer(cm) {
                 val state = State(
                     loop.header, loop.latch, terminatingBlock,
                     continueOnTrue, loop.header, loop.preheader,
-                    hashMapOf(), hashMapOf()
+                    hashMapOf(), hashMapOf(),
+                    loop.loopExits, loop.exitingBlocks, mutableMapOf()
                 )
                 loop.body.flatten().forEach { state[it] = it }
 
@@ -110,8 +116,10 @@ class LoopDeroller(override val cm: ClassManager) : LoopOptimizer(cm) {
         ctx = it
         try {
             val loops = method.getLoopInfo()
-            precalculateEvolutions(loops)
-            loops.forEach { loop -> freshVars[loop] = Var.fresh("iteration") }
+            if (useBackstabbing) {
+                precalculateEvolutions(loops)
+                loops.forEach { loop -> freshVars[loop] = Var.fresh("iteration") }
+            }
             loops.forEach { loop -> visitLoop(loop) }
             updateLoopInfo(method)
         } catch (e: InvalidLoopException) {
@@ -219,6 +227,7 @@ class LoopDeroller(override val cm: ClassManager) : LoopOptimizer(cm) {
         // cleanup loop
         cleanupBody(method, body)
         remapMethodPhis(methodPhis, methodPhiMappings)
+        remapExitPhis(state)
     }
 
     private fun getMinDerollCount(count: Int): Int = when {
@@ -260,6 +269,7 @@ class LoopDeroller(override val cm: ClassManager) : LoopOptimizer(cm) {
                 if (incomings.size != 2) return -1
                 incomings.getValue(preheader) to incomings.getValue(latch)
             }
+
             else -> return -1
         }
 
@@ -279,6 +289,7 @@ class LoopDeroller(override val cm: ClassManager) : LoopOptimizer(cm) {
                     else -> return -1
                 }
             }
+
             else -> return -1
         }
 
@@ -309,6 +320,7 @@ class LoopDeroller(override val cm: ClassManager) : LoopOptimizer(cm) {
                 state.lastLatch.replaceUsesOf(state.lastHeader, derolled)
                 derolled.addPredecessor(state.lastLatch)
             }
+
             else -> {
                 val predecessors = original.predecessors.map { state[it] }
                 derolled.addPredecessors(*predecessors.toTypedArray())
@@ -333,6 +345,7 @@ class LoopDeroller(override val cm: ClassManager) : LoopOptimizer(cm) {
         derolled.addSuccessors(*successors.toTypedArray())
         successors.forEach { it.addPredecessor(derolled) }
     }
+
 
     private fun copyBlockInstructions(state: State, original: BasicBlock) = with(ctx) {
         val newBlock = state[original]
@@ -362,6 +375,18 @@ class LoopDeroller(override val cm: ClassManager) : LoopOptimizer(cm) {
                     state[inst] = mappedActual
                 }
             }
+
+            val users = inst.users.filterIsInstance<Instruction>()
+            if (users.any {
+                it.hasParent && it.parent !in state.blockMappings && it.parent in method.body && it !is PhiInst
+            }) {
+                for (exit in state.exits) {
+                    val mappings = exit.predecessors
+                        .filter { it in state.exitingBlocks }
+                        .associate { state[it] to state[inst] }
+                    state.exitPhis.getOrPut(exit to inst, ::mutableMapOf).putAll(mappings)
+                }
+            }
         }
     }
 
@@ -375,6 +400,7 @@ class LoopDeroller(override val cm: ClassManager) : LoopOptimizer(cm) {
                         bb -= new
                         incomings.values.first()
                     }
+
                     else -> {
                         val newPhi = inst(cm) { phi(new.type, incomings) }
                         bb.replace(new, newPhi)
@@ -403,6 +429,28 @@ class LoopDeroller(override val cm: ClassManager) : LoopOptimizer(cm) {
         }
     }
 
+    private fun remapExitPhis(state: State) = with(ctx) {
+        for ((key, mappings) in state.exitPhis) {
+            val block = key.first
+            val value = key.second
+            val newPhi = inst(cm) { phi(value.type, mappings) }
+            block.insertBefore(block.first(), newPhi)
+
+            val queue = queueOf(block)
+            val visited = mutableSetOf<BasicBlock>()
+            while (queue.isNotEmpty()) {
+                val top = queue.poll()
+                if (top in visited) continue
+                visited += top
+
+                for (inst in top) {
+                    inst.replaceUsesOf(value, newPhi)
+                }
+                queue.addAll(top.successors)
+            }
+        }
+    }
+
     private fun cleanupBody(method: Method, body: List<BasicBlock>) = with(ctx) {
         for (block in body) {
             block.predecessors.toTypedArray().forEach { block.removePredecessor(it) }
@@ -424,6 +472,8 @@ class LoopDeroller(override val cm: ClassManager) : LoopOptimizer(cm) {
 
 
     private fun tryBackstabbing(loop: Loop, firstBlock: BasicBlock): Boolean {
+        if (!useBackstabbing) return false
+
         if (loop.latches.isEmpty()) {
             return false
         }
@@ -453,7 +503,7 @@ class LoopDeroller(override val cm: ClassManager) : LoopOptimizer(cm) {
         val p = rebuild(loop) ?: return false
         val block = p.first
         val phiList = p.second
-        val instructionList = listOf(inst) +  block
+        val instructionList = listOf(inst) + block
 
         firstBlock.first().insertBefore(instructionList)
         phiList.forEach { (phi, value) ->

@@ -28,15 +28,15 @@ class LoopDerollerTest : KexTest("loop-deroller") {
 
     @Test
     fun simpleLoopTest() {
-        val `class` = cm["$packageName/LoopTests"]
+        val `class` = cm["${`package`.concretePackage}/LoopTests"]
         for (method in `class`.allMethods) {
             checkLoops(method)
         }
     }
 
     @Test
-    fun icfpcLoopTest() {
-        val `class` = cm["$packageName/Icfpc2018Test"]
+    fun treeMapLoopTest() {
+        val `class` = cm["${`package`.concretePackage}/javadebug/TreeMap"]
         for (method in `class`.allMethods) {
             checkLoops(method)
         }
