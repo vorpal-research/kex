@@ -65,6 +65,7 @@ class StaticFieldInliner(
             +IntrinsicAdapter
             +KexIntrinsicsAdapter()
             +EqualsTransformer()
+            +BasicInvariantsTransformer(method)
             +ReflectionInfoAdapter(method, ctx.loader, ignores)
             +Optimizer()
             +ConstantPropagator
@@ -112,7 +113,7 @@ class StaticFieldInliner(
             val checker = Checker(staticInit, ctx, psa)
             val params = when (val result = checker.check(state + query)) {
                 is Result.SatResult -> {
-                    log.debug("Model: ${result.model}")
+                    log.debug("Model: {}", result.model)
                     generateFinalDescriptors(staticInit, ctx, result.model, checker.state)
                 }
                 else -> return null

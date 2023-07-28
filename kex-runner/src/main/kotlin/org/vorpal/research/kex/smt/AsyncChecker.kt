@@ -12,6 +12,7 @@ import org.vorpal.research.kex.state.term.FieldTerm
 import org.vorpal.research.kex.state.term.Term
 import org.vorpal.research.kex.state.term.ValueTerm
 import org.vorpal.research.kex.state.transformer.AnnotationAdapter
+import org.vorpal.research.kex.state.transformer.BasicInvariantsTransformer
 import org.vorpal.research.kex.state.transformer.BoolTypeAdapter
 import org.vorpal.research.kex.state.transformer.ClassAdapter
 import org.vorpal.research.kex.state.transformer.ClassMethodAdapter
@@ -91,6 +92,7 @@ class AsyncChecker(
         +IntrinsicAdapter
         +KexIntrinsicsAdapter()
         +EqualsTransformer()
+        +BasicInvariantsTransformer(method)
         +ReflectionInfoAdapter(method, ctx.loader)
         +Optimizer()
         +ConstantPropagator

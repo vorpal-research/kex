@@ -23,6 +23,7 @@ import org.vorpal.research.kex.state.term.FieldTerm
 import org.vorpal.research.kex.state.term.Term
 import org.vorpal.research.kex.state.term.term
 import org.vorpal.research.kex.state.transformer.AnnotationAdapter
+import org.vorpal.research.kex.state.transformer.BasicInvariantsTransformer
 import org.vorpal.research.kex.state.transformer.BoolTypeAdapter
 import org.vorpal.research.kex.state.transformer.ClassMethodAdapter
 import org.vorpal.research.kex.state.transformer.ConcreteImplInliner
@@ -212,7 +213,7 @@ class CallCiteChecker(
         id: String? = null
     ): Boolean {
         log.debug("Checking for assertion failure: ${inst.print()} at ${callCite.print()}")
-        log.debug("State: $state")
+        log.debug("State: {}", state)
         val assertionQuery = assertions.map {
             when (it.type) {
                 is KexBool -> require { it equality true }
@@ -250,6 +251,7 @@ class CallCiteChecker(
         +KexIntrinsicsAdapter()
         +EqualsTransformer()
         +DoubleTypeAdapter()
+        +BasicInvariantsTransformer(method)
         +ReflectionInfoAdapter(method, ctx.loader)
         +Optimizer()
         +ConstantPropagator
@@ -315,14 +317,14 @@ class CallCiteChecker(
         state = Optimizer().apply(state)
         query = Optimizer().apply(query)
         if (logQuery) {
-            log.debug("Simplified state: $state")
-            log.debug("Query: $query")
+            log.debug("Simplified state: {}", state)
+            log.debug("Query: {}", query)
         }
 
         val result = SMTProxySolver(ctx).use {
             it.isViolated(state, query)
         }
-        log.debug("Acquired $result")
+        log.debug("Acquired {}", result)
         return state to result
     }
 

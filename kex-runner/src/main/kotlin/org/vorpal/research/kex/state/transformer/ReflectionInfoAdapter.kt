@@ -5,7 +5,6 @@ import org.vorpal.research.kex.ktype.KexArray
 import org.vorpal.research.kex.ktype.KexClass
 import org.vorpal.research.kex.ktype.KexPointer
 import org.vorpal.research.kex.ktype.KexReference
-import org.vorpal.research.kex.ktype.KexRtManager.rtMapped
 import org.vorpal.research.kex.ktype.kexType
 import org.vorpal.research.kex.state.PredicateState
 import org.vorpal.research.kex.state.StateBuilder
@@ -20,7 +19,6 @@ import org.vorpal.research.kex.state.term.CallTerm
 import org.vorpal.research.kex.state.term.FieldLoadTerm
 import org.vorpal.research.kex.state.term.FieldTerm
 import org.vorpal.research.kex.state.term.Term
-import org.vorpal.research.kex.state.term.term
 import org.vorpal.research.kex.util.getKFunction
 import org.vorpal.research.kex.util.getKProperty
 import org.vorpal.research.kex.util.isElementNullable
@@ -50,21 +48,10 @@ class ReflectionInfoAdapter(
         val useReflectionInfo = kexConfig.getBooleanValue("kex", "useReflectionInfo", true)
         if (!useReflectionInfo) return ps
 
-        val (`this`, arguments) = collectArguments(ps)
-
-        if (`this` != null) {
-            currentBuilder += assume { `this` inequality null }
-        } else if (!method.isStatic) {
-            val nThis = term { `this`(method.klass.kexType.rtMapped) }
-            currentBuilder += assume { nThis inequality null }
-        }
-
+        val (_, arguments) = collectArguments(ps)
         val methodClassType = KexClass(method.klass.fullName).getKfgType(types)
         val klass = `try` { loader.loadKClass(methodClassType) }.getOrNull() ?: return super.apply(ps)
-        val kFunction = klass.getKFunction(method) ?: run {
-//            log.warn("Could not load kFunction for $method")
-            return super.apply(ps)
-        }
+        val kFunction = klass.getKFunction(method) ?: return super.apply(ps)
 
         val parameters = when {
             method.isAbstract -> kFunction.parameters.map { it.index to it }

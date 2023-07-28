@@ -1,5 +1,6 @@
 package org.vorpal.research.kex.test.javadebug;
 
+@SuppressWarnings("ALL")
 public class Stack {
 
     private Stack() {}

@@ -41,6 +41,7 @@ import org.vorpal.research.kex.state.term.Term
 import org.vorpal.research.kex.state.term.term
 import org.vorpal.research.kex.state.transformer.AnnotationAdapter
 import org.vorpal.research.kex.state.transformer.ArrayBoundsAdapter
+import org.vorpal.research.kex.state.transformer.BasicInvariantsTransformer
 import org.vorpal.research.kex.state.transformer.BoolTypeAdapter
 import org.vorpal.research.kex.state.transformer.CastTypeInfo
 import org.vorpal.research.kex.state.transformer.ClassAdapter
@@ -65,8 +66,8 @@ import org.vorpal.research.kex.state.transformer.TypeInfo
 import org.vorpal.research.kex.state.transformer.TypeInfoMap
 import org.vorpal.research.kex.state.transformer.TypeNameAdapter
 import org.vorpal.research.kex.state.transformer.collectArguments
-import org.vorpal.research.kex.state.transformer.collectFieldTerms
 import org.vorpal.research.kex.state.transformer.collectFieldAccesses
+import org.vorpal.research.kex.state.transformer.collectFieldTerms
 import org.vorpal.research.kex.state.transformer.collectPlainTypeInfos
 import org.vorpal.research.kex.state.transformer.collectStaticTypeInfo
 import org.vorpal.research.kex.state.transformer.generateInitialDescriptors
@@ -133,6 +134,7 @@ class GeneratorContext(
         +IntrinsicAdapter
         +KexIntrinsicsAdapter()
         +EqualsTransformer()
+        +BasicInvariantsTransformer(method)
         +ReflectionInfoAdapter(method, context.loader, ignores)
         +Optimizer()
         +ConstantPropagator

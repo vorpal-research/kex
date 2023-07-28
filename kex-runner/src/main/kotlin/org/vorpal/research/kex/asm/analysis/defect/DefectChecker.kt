@@ -20,6 +20,7 @@ import org.vorpal.research.kex.state.term.FieldTerm
 import org.vorpal.research.kex.state.term.Term
 import org.vorpal.research.kex.state.term.term
 import org.vorpal.research.kex.state.transformer.AnnotationAdapter
+import org.vorpal.research.kex.state.transformer.BasicInvariantsTransformer
 import org.vorpal.research.kex.state.transformer.BoolTypeAdapter
 import org.vorpal.research.kex.state.transformer.ClassMethodAdapter
 import org.vorpal.research.kex.state.transformer.ConcreteImplInliner
@@ -103,7 +104,7 @@ class DefectChecker                                                             
         this.method = method
         if (!method.hasBody) return
 
-        log.debug("Checking method $method")
+        log.debug("Checking method {}", method)
         log.debug(method.print())
 
         initializeGenerator()
@@ -187,7 +188,7 @@ class DefectChecker                                                             
     private fun checkNullity(inst: Instruction, state: PredicateState, `object`: Value): Boolean {
         if (`object` in nonNulls) return true
         log.debug("Checking for null pointer exception: ${inst.print()}")
-        log.debug("State: $state")
+        log.debug("State: {}", state)
         val objectTerm = term { value(`object`) }
         val refQuery = require { objectTerm inequality null }.wrap()
 
@@ -209,7 +210,7 @@ class DefectChecker                                                             
 
     private fun checkOutOfBounds(inst: Instruction, state: PredicateState, length: Term, index: Term): Boolean {
         log.debug("Checking for out of bounds exception: ${inst.print()}")
-        log.debug("State: $state")
+        log.debug("State: {}", state)
         var indexQuery = require { (index ge 0) equality true }.wrap()
         indexQuery += require { (index lt length) equality true }
 
@@ -231,8 +232,8 @@ class DefectChecker                                                             
         assertions: Set<Term>,
         id: String? = null
     ): Boolean {
-        log.debug("Checking for assertion failure: ${inst.print()}")
-        log.debug("State: $state")
+        log.debug("Checking for assertion failure: {}", inst.print())
+        log.debug("State: {}", state)
         val assertionQuery = assertions.map {
             when (it.type) {
                 is KexBool -> require { it equality true }
@@ -274,6 +275,7 @@ class DefectChecker                                                             
         +EqualsTransformer()
         +NullityAnnotator(nonNulls.mapTo(mutableSetOf()) { term { value(it) } })
         +DoubleTypeAdapter()
+        +BasicInvariantsTransformer(method)
         +ReflectionInfoAdapter(method, loader)
         +Optimizer()
         +ConstantPropagator
@@ -328,14 +330,14 @@ class DefectChecker                                                             
         state = Optimizer().apply(state)
         query = Optimizer().apply(query)
         if (logQuery) {
-            log.debug("Simplified state: $state")
-            log.debug("Query: $query")
+            log.debug("Simplified state: {}", state)
+            log.debug("Query: {}", query)
         }
 
         val result = SMTProxySolver(ctx).use {
             it.isViolated(state, query)
         }
-        log.debug("Acquired $result")
+        log.debug("Acquired {}", result)
         return state to result
     }
 }
