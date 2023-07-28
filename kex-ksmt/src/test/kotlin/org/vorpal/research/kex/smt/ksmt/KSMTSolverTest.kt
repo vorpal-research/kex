@@ -282,7 +282,7 @@ class KSMTSolverTest : KexTest("ksmt-solver") {
 
     @Test
     fun testIncrementalMemory() {
-        with(object : StringInfoContext {}) {
+        with(object : StringInfoContext() {}) {
             val string = term { generate(KexString()) }
             val charArray = term { generate(valueArrayType) }
 
