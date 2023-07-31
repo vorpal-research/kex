@@ -1,5 +1,3 @@
-#!/bin/python
-
 import subprocess
 import typing
 import re

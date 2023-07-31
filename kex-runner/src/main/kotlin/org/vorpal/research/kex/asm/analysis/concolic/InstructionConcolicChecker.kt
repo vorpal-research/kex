@@ -51,6 +51,8 @@ class InstructionConcolicChecker(
     private val compilerHelper = CompilerHelper(ctx)
 
     private val searchStrategy = kexConfig.getStringValue("concolic", "searchStrategy", "bfs")
+    private val guiEnabled = kexConfig.getBooleanValue("gui", "enabled", false)
+
     private var testIndex = AtomicInteger(0)
 
     companion object {
@@ -115,12 +117,14 @@ class InstructionConcolicChecker(
         method.checkAsync(ctx, state, enableInlining = true)?.let { collectTrace(method, it) }
     }
 
-    private fun buildPathSelector() = when (searchStrategy) {
-        "bfs" -> BfsPathSelectorImpl(ctx)
-        "cgs" -> ContextGuidedSelector(ctx)
-        "bfs-gui" -> GUIProxySelector(BfsPathSelectorImpl(ctx))
-        "cgs-gui" -> GUIProxySelector(ContextGuidedSelector(ctx))
-        else -> unreachable { log.error("Unknown type of search strategy $searchStrategy") }
+    private fun buildPathSelector(): ConcolicPathSelector {
+        val pathSelector = when (searchStrategy) {
+            "bfs" -> BfsPathSelectorImpl(ctx)
+            "cgs" -> ContextGuidedSelector(ctx)
+            else -> unreachable { log.error("Unknown type of search strategy $searchStrategy") }
+        }
+
+        return if (guiEnabled) GUIProxySelector(pathSelector) else pathSelector
     }
 
     private suspend fun handleStartingTrace(
