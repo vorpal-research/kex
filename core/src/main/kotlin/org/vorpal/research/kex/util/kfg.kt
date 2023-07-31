@@ -146,10 +146,10 @@ fun Class.getCtor(vararg argTypes: Type) =
     getMethod("<init>", cm.type.voidType, *argTypes)
 
 private object SubTypeInfoCache {
-    private val subtypeCache = mutableMapOf<Pair<Type, Type>, Boolean>()
-    fun check(lhv: Type, rhv: Type): Boolean = subtypeCache.getOrPut(lhv to rhv) {
+    private val subtypeCache = mutableMapOf<Pair<String, String>, Boolean>()
+    fun check(lhv: Type, rhv: Type): Boolean = subtypeCache.getOrPut(lhv.toString() to rhv.toString()) {
         lhv.isSubtypeOf(rhv)
     }
 }
 
-fun Type.isSubtypeOfCached(other: Type): Boolean = SubTypeInfoCache.check(this, other)
+fun Type.isSubtypeOfCached(other: Type): Boolean = this.isSubtypeOf(other)
