@@ -81,7 +81,7 @@ class SymbolicRandomChecker(
 
         repeat(runs) { _ ->
             try {
-                log.debug("Running method $method")
+                log.debug("Running method {}", method)
                 val trace = randomRunner.run() ?: return@repeat
                 log.debug(trace)
             } catch (e: TimeoutException) {

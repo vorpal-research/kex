@@ -2,6 +2,7 @@ package org.vorpal.research.kex.test.concolic;
 
 import org.vorpal.research.kex.intrinsics.AssertIntrinsics;
 
+@SuppressWarnings("ALL")
 public class StringConcolicTests {
     public void testStringCharAt(String s) {
         if (s.charAt(0) == '0') {

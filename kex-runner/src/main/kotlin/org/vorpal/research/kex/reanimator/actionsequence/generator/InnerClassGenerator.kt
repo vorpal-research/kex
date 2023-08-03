@@ -76,7 +76,7 @@ class InnerClassGenerator(fallback: Generator) : AnyGenerator(fallback) {
             val (thisDesc, args) = method.executeAsConstructor(this@checkInnerCtor) ?: return null
 
             if ((thisDesc as ObjectDescriptor).isFinal(this@checkInnerCtor)) {
-                log.debug("Found constructor $method for $this, generating arguments $args")
+                log.debug("Found constructor {} for {}, generating arguments {}", method, this, args)
                 val generatedArgs = generateArgs(args, generationDepth + 1) ?: return null
                 ktassert(generatedArgs.size > 1) { log.error("Unknown number of arguments of inner class") }
                 InnerClassConstructorCall(method, generatedArgs.first(), generatedArgs.drop(1))

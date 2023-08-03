@@ -12,7 +12,7 @@ import org.vorpal.research.kthelper.assert.asserted
 import org.vorpal.research.kthelper.logging.log
 import org.vorpal.research.kthelper.`try`
 import java.lang.Class
-import java.util.Locale
+import java.util.*
 import kotlin.reflect.KMutableProperty
 import kotlin.reflect.KType
 import kotlin.reflect.full.memberProperties
@@ -54,7 +54,7 @@ class SetterCollector(val ctx: ExecutionContext) : ClassVisitor {
             }
         }
 
-        log.debug("$klass is not from kotlin")
+        log.debug("{} is not from kotlin", klass)
         super.visit(klass)
     }
 

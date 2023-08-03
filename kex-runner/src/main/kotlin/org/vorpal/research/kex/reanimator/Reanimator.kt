@@ -70,11 +70,11 @@ class Reanimator(
             .filterStaticFinals(cm)
             .filterIgnoredStatic()
             .concreteParameters(cm, ctx.accessLevel, ctx.random).rtMapped
-        log.debug("Generated descriptors:\n$descriptors")
+        log.debug("Generated descriptors:\n{}", descriptors)
         val actionSequences = descriptors.actionSequences
-        log.debug("Generated action sequences:\n$actionSequences")
+        log.debug("Generated action sequences:\n{}", actionSequences)
         val unmapped = actionSequences.rtUnmapped
-        log.debug("Unmapped action sequences:\n$unmapped")
+        log.debug("Unmapped action sequences:\n{}", unmapped)
         printer.print(testName, method, unmapped)
         unmapped.executed
     } catch (e: GenerationException) {

@@ -74,10 +74,10 @@ abstract class AbstractRunner(val method: Method, protected val loader: ClassLoa
         }
 
 
-        if (output.size() != 0) log.debug("Invocation output:\n$output")
-        if (error.size() != 0) log.debug("Invocation error:\n$error")
+        if (output.size() != 0) log.debug("Invocation output:\n{}", output)
+        if (error.size() != 0) log.debug("Invocation error:\n{}", error)
         if (throwable != null)
-            log.debug("Invocation exception: $throwable")
+            log.debug("Invocation exception: ", throwable)
 
         return InvocationResult(output.toByteArray(), error.toByteArray(), returnValue, throwable)
     }
@@ -109,10 +109,10 @@ abstract class AbstractRunner(val method: Method, protected val loader: ClassLoa
         }
 
 
-        if (output.size() != 0) log.debug("Invocation output:\n$output")
-        if (error.size() != 0) log.debug("Invocation error:\n$error")
+        if (output.size() != 0) log.debug("Invocation output:\n{}", output)
+        if (error.size() != 0) log.debug("Invocation error:\n{}", error)
         if (throwable != null)
-            log.debug("Invocation exception: $throwable")
+            log.debug("Invocation exception: ", throwable)
 
         return InvocationResult(output.toByteArray(), error.toByteArray(), returnValue, throwable)
     }
@@ -148,4 +148,5 @@ abstract class TracingAbstractRunner<T>(method: Method, loader: ClassLoader)
     }
 }
 
+@Suppress("unused")
 class DefaultRunner(method: Method, loader: ClassLoader) : AbstractRunner(method, loader)

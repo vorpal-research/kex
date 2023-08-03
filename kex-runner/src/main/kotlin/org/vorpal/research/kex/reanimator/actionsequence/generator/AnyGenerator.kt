@@ -149,7 +149,7 @@ open class AnyGenerator(private val fallback: Generator) : Generator {
         descriptor.concretize(cm, accessLevel, context.random)
         descriptor.reduce()
 
-        log.debug("Generating $descriptor")
+        log.debug("Generating {}", descriptor)
 
         val klass = descriptor.klass.kfgClass(types)
         if (klass.orderedCtors.isEmpty()) {
@@ -209,7 +209,7 @@ open class AnyGenerator(private val fallback: Generator) : Generator {
             val (thisDesc, args) = method.executeAsConstructor(this@checkCtor) ?: return null
 
             if ((thisDesc as ObjectDescriptor).isFinal(this@checkCtor)) {
-                log.debug("Found constructor $method for $this, generating arguments $args")
+                log.debug("Found constructor {} for {}, generating arguments {}", method, this, args)
                 when {
                     method.argTypes.isEmpty() -> DefaultConstructorCall(klass)
                     else -> {
@@ -239,7 +239,7 @@ open class AnyGenerator(private val fallback: Generator) : Generator {
             val kfgField = kfgKlass.getField(field.first, field.second.getKfgType(types))
 
             if (accessLevel.canAccess(kfgField.accessModifier)) {
-                log.debug("Directly setting field $field value")
+                log.debug("Directly setting field {} value", field)
                 calls += FieldSetter(kfgField, fallback.generate(value, generationDepth + 1))
                 fields.remove(field)
                 reduce()

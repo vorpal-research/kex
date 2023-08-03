@@ -104,7 +104,7 @@ class KexExecutor(args: Array<String>) {
             exception = e
         } finally {
             TraceCollectorProxy.disableCollector()
-            log.debug("Collected state: ${collector.symbolicState}")
+            log.debug("Collected state: {}", collector.symbolicState)
             val result = when {
                 exception != null -> ExceptionResult(convertToDescriptor(exception), collector.symbolicState)
                 else -> SuccessResult(collector.symbolicState)

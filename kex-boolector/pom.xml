@@ -104,12 +104,6 @@
                     <execution>
                         <id>compile</id>
                         <phase>compile</phase>
-                        <configuration>
-                            <sourceDirs>
-                                <source>target/generated-sources/kaptKotlin</source>
-                                <source>src/main/kotlin</source>
-                            </sourceDirs>
-                        </configuration>
                         <goals>
                             <goal>compile</goal>
                         </goals>

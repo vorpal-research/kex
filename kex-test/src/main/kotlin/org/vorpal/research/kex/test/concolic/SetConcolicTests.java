@@ -5,6 +5,7 @@ import org.vorpal.research.kex.intrinsics.AssertIntrinsics;
 import java.util.HashSet;
 import java.util.Iterator;
 
+@SuppressWarnings("ALL")
 public class SetConcolicTests {
     public static void testCharHashSetIterator(HashSet<Character> chars) {
         if (chars.contains(null)) {

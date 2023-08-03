@@ -35,7 +35,7 @@ object AnnotationManager {
                 loadFrom(path.toFile())
             }
             if (printAnnotationInfo) {
-                log.debug("Loaded annotated calls $this")
+                log.debug("Loaded annotated calls {}", this)
             }
         } ?: unreachable {
             log.error("Annotations not loaded")

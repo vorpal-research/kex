@@ -25,6 +25,13 @@ class LambdaTerm (
         }
     }
 
+    override fun hashCode(): Int {
+        var result = type.hashCode()
+        result = 31 * result + parameters.hashCode()
+        result = 31 * result + body.hashCode()
+        return result
+    }
+
     override fun equals(other: Any?): Boolean {
         return other is LambdaTerm && type == other.type && parameters == other.parameters && body == other.body
     }

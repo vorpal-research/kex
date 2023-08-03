@@ -141,7 +141,7 @@ class Client2MasterSocketConnection(
     }
 
     override fun send(request: TestExecutionRequest) {
-        log.debug("Client sending a request: $request")
+        log.debug("Client sending a request: {}", request)
         val json = serializer.toJson(request)
         writer.write(json)
         writer.newLine()

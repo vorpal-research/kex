@@ -1,7 +1,8 @@
 package org.vorpal.research.kex.test.crash;
 
+@SuppressWarnings("ALL")
 public class UnsignedInteger {
-    private long value = 0;
+    private long value;
 
     public UnsignedInteger() {
         this.value = 0;

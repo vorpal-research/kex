@@ -57,7 +57,7 @@ private fun symbolicComputeEnumConstants(ctx: GeneratorContext, enumType: KexTyp
         val checker = Checker(staticInit, context, psa)
         val params = when (val result = checker.check(preparedState + preparedQuery)) {
             is Result.SatResult -> {
-                log.debug("Model: ${result.model}")
+                log.debug("Model: {}", result.model)
                 generateFinalDescriptors(staticInit, context, result.model, checker.state)
             }
             else -> null

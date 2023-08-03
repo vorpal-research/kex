@@ -239,7 +239,12 @@ class EasyRandomDriver(val config: BeansConfig = defaultConfig) : Randomizer() {
 
     private fun generateTypeVariable(type: TypeVariable<*>, depth: Int): Any? {
         val bounds = type.bounds
-        assert(bounds.size == 1) { log.debug("Unexpected size of type variable bounds: ${bounds.map { it.typeName }}") }
+        assert(bounds.size == 1) {
+            log.debug(
+                "Unexpected size of type variable bounds: {}",
+                bounds.map { it.typeName }
+            )
+        }
         return next(bounds.first(), depth)
     }
 
@@ -248,7 +253,7 @@ class EasyRandomDriver(val config: BeansConfig = defaultConfig) : Randomizer() {
         is ParameterizedType -> generateParameterized(type, depth)
         is TypeVariable<*> -> generateTypeVariable(type, depth)
         is WildcardType -> {
-            assert(type.upperBounds.size == 1) { log.debug("Unexpected size of wildcard type upper bounds: $type") }
+            assert(type.upperBounds.size == 1) { log.debug("Unexpected size of wildcard type upper bounds: {}", type) }
             generateType(type.upperBounds.first(), depth)
         }
 

@@ -40,7 +40,6 @@ import org.vorpal.research.kex.state.transformer.memspace
 import org.vorpal.research.kex.util.getActualField
 import org.vorpal.research.kex.util.isFinal
 import org.vorpal.research.kex.util.loadClass
-import org.vorpal.research.kfg.ir.Method
 import org.vorpal.research.kthelper.assert.ktassert
 import org.vorpal.research.kthelper.assert.unreachable
 import org.vorpal.research.kthelper.logging.log
@@ -358,7 +357,7 @@ class ObjectReanimator(
         ) as? KexArray//(reanimateType(type.memspace, addr) ?: type) as? KexArray
             ?: unreachable { log.error("Non-array type in reanimate array") }
         val elementType = loader.loadClass(context.types, actualType.element)
-        log.debug("Creating array of type $elementType with size $length")
+        log.debug("Creating array of type {} with size {}", elementType, length)
         return Array.newInstance(elementType, length)
     }
 }
@@ -627,7 +626,7 @@ abstract class DescriptorReanimator(
     private fun newArrayInstance(memspace: Int, arrayType: KexArray, addr: Term?) = descriptor {
         val length = (reanimateFromProperties(memspace, "length", addr) as? ConstIntTerm)?.value ?: 0
 
-        log.debug("Creating array of type $arrayType with size $length")
+        log.debug("Creating array of type {} with size {}", arrayType, length)
         array(length, arrayType.element)
     }
 }

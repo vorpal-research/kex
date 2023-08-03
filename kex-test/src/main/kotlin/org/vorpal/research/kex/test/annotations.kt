@@ -1,4 +1,4 @@
-@file:Suppress("unused", "UNUSED_PARAMETER")
+@file:Suppress("unused", "UNUSED_PARAMETER", "KotlinConstantConditions")
 
 package org.vorpal.research.kex.test
 
@@ -28,6 +28,7 @@ object AnnotatedMethodsThere {
     fun makeBeautifulList(n: Int) = MutableList(n) { 0 }
 }
 
+@Suppress("KotlinConstantConditions", "RedundantNullableReturnType")
 class NotAnnotatedMethods {
     fun test1(): Int {
         val n = AnnotatedMethodsThere.rangeExample(Any(), 500)

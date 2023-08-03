@@ -1,5 +1,6 @@
 package org.vorpal.research.kex.test.crash;
 
+@SuppressWarnings("ALL")
 public class CrashTrigger {
 
     public void foo(

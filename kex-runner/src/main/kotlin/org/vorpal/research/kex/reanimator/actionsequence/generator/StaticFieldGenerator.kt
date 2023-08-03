@@ -51,7 +51,7 @@ class StaticFieldGenerator(private val fallback: Generator) : Generator {
         descriptor.reduce()
         if (descriptor.isFinal(original)) return true
 
-        log.debug("Generating $descriptor")
+        log.debug("Generating {}", descriptor)
 
         val klass = descriptor.klass.kfgClass(types)
         val setters = descriptor.generateSetters(generationDepth)
@@ -121,13 +121,13 @@ class StaticFieldGenerator(private val fallback: Generator) : Generator {
             val kfgField = kfgKlass.getField(field.first, field.second.getKfgType(types))
 
             if (accessLevel.canAccess(kfgField.accessModifier)) {
-                log.debug("Directly setting field $field value")
+                log.debug("Directly setting field {} value", field)
                 calls += StaticFieldSetter(kfgField, fallback.generate(value, generationDepth + 1))
                 fields.remove(field)
                 reduce()
 
             } else if (kfgField.hasSetter && accessLevel.canAccess(kfgField.setter.accessModifier)) {
-                log.info("Using setter for $field")
+                log.info("Using setter for {}", field)
 
                 val (instance, args, statics) = kfgField.setter.executeAsStaticSetter(this@generateSetters) ?: continue
                 ktassert(instance == null) { log.error("`this` descriptor is not null in static") }
