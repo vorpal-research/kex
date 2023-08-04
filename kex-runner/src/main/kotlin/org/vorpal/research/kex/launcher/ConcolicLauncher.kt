@@ -11,6 +11,7 @@ import org.vorpal.research.kex.config.kexConfig
 import org.vorpal.research.kex.jacoco.CoverageReporter
 import org.vorpal.research.kex.trace.runner.ExecutorMasterController
 import org.vorpal.research.kex.util.PermanentCoverageInfo
+import org.vorpal.research.kex.util.PermanentSaturationCoverageInfo
 import org.vorpal.research.kex.util.instrumentedCodeDirectory
 import org.vorpal.research.kfg.ir.Method
 import org.vorpal.research.kfg.visitor.Pipeline
@@ -44,7 +45,22 @@ class ConcolicLauncher(classPaths: List<String>, targetName: String) : KexAnalys
         }
 
         if (kexConfig.getBooleanValue("kex", "computeCoverage", true)) {
-            val coverageInfo = CoverageReporter(containers).execute(context.cm, analysisLevel)
+            val coverageInfo = when {
+                kexConfig.getBooleanValue("kex", "computeSaturationCoverage", true) -> {
+                    val saturationCoverage = CoverageReporter(containers)
+                        .computeSaturationCoverage(context.cm, analysisLevel)
+                    PermanentSaturationCoverageInfo.putNewInfo(
+                        "concolic",
+                        analysisLevel.toString(),
+                        saturationCoverage.toList()
+                    )
+                    PermanentSaturationCoverageInfo.emit()
+                    saturationCoverage[saturationCoverage.lastKey()]!!
+                }
+
+                else -> CoverageReporter(containers).execute(context.cm, analysisLevel)
+            }
+
             log.info(
                 coverageInfo.print(kexConfig.getBooleanValue("kex", "printDetailedCoverage", false))
             )
