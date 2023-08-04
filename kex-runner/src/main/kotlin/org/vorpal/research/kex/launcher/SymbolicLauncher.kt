@@ -5,12 +5,9 @@ import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.InternalSerializationApi
 import org.vorpal.research.kex.ExecutionContext
 import org.vorpal.research.kex.asm.analysis.symbolic.InstructionSymbolicChecker
-import org.vorpal.research.kex.config.kexConfig
-import org.vorpal.research.kex.jacoco.CoverageReporter
-import org.vorpal.research.kex.util.PermanentCoverageInfo
+import org.vorpal.research.kex.jacoco.reportCoverage
 import org.vorpal.research.kfg.ir.Method
 import org.vorpal.research.kfg.visitor.Pipeline
-import org.vorpal.research.kthelper.logging.log
 import kotlin.time.ExperimentalTime
 
 @ExperimentalTime
@@ -32,15 +29,6 @@ class SymbolicLauncher(classPaths: List<String>, targetName: String) : KexAnalys
         for (setOfTargets in batchedTargets) {
             InstructionSymbolicChecker.run(context, setOfTargets)
         }
-
-        if (kexConfig.getBooleanValue("kex", "computeCoverage", true)) {
-            val coverageInfo = CoverageReporter(containers).execute(context.cm, analysisLevel)
-            log.info(
-                coverageInfo.print(kexConfig.getBooleanValue("kex", "printDetailedCoverage", false))
-            )
-
-            PermanentCoverageInfo.putNewInfo("symbolic", analysisLevel.toString(), coverageInfo)
-            PermanentCoverageInfo.emit()
-        }
+        reportCoverage(containers, context.cm, analysisLevel)
     }
 }

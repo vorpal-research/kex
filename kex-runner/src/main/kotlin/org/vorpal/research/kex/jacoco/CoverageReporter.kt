@@ -21,6 +21,8 @@ import org.vorpal.research.kex.launcher.AnalysisLevel
 import org.vorpal.research.kex.launcher.ClassLevel
 import org.vorpal.research.kex.launcher.MethodLevel
 import org.vorpal.research.kex.launcher.PackageLevel
+import org.vorpal.research.kex.util.PermanentCoverageInfo
+import org.vorpal.research.kex.util.PermanentSaturationCoverageInfo
 import org.vorpal.research.kex.util.asmString
 import org.vorpal.research.kex.util.compiledCodeDirectory
 import org.vorpal.research.kex.util.deleteOnExit
@@ -37,7 +39,7 @@ import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.attribute.BasicFileAttributes
-import java.util.SortedMap
+import java.util.*
 import kotlin.io.path.exists
 import kotlin.io.path.inputStream
 import kotlin.io.path.name
@@ -483,5 +485,32 @@ class CoverageReporter(
             }
             return parent?.loadClass(name) ?: throw ClassNotFoundException()
         }
+    }
+}
+
+fun reportCoverage(containers: List<Container>, cm: ClassManager, analysisLevel: AnalysisLevel) {
+    if (kexConfig.getBooleanValue("kex", "computeCoverage", true)) {
+        val coverageInfo = when {
+            kexConfig.getBooleanValue("kex", "computeSaturationCoverage", true) -> {
+                val saturationCoverage = CoverageReporter(containers)
+                    .computeSaturationCoverage(cm, analysisLevel)
+                PermanentSaturationCoverageInfo.putNewInfo(
+                    "concolic",
+                    analysisLevel.toString(),
+                    saturationCoverage.toList()
+                )
+                PermanentSaturationCoverageInfo.emit()
+                saturationCoverage[saturationCoverage.lastKey()]!!
+            }
+
+            else -> CoverageReporter(containers).execute(cm, analysisLevel)
+        }
+
+        log.info(
+            coverageInfo.print(kexConfig.getBooleanValue("kex", "printDetailedCoverage", false))
+        )
+
+        PermanentCoverageInfo.putNewInfo("concolic", analysisLevel.toString(), coverageInfo)
+        PermanentCoverageInfo.emit()
     }
 }

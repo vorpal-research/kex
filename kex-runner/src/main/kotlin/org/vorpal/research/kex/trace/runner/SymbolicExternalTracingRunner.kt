@@ -6,10 +6,10 @@ import kotlinx.serialization.InternalSerializationApi
 import org.vorpal.research.kex.ExecutionContext
 import org.vorpal.research.kex.config.kexConfig
 import org.vorpal.research.kex.serialization.KexSerializer
-import org.vorpal.research.kex.trace.symbolic.protocol.ExecutionCompletedResult
-import org.vorpal.research.kex.trace.symbolic.protocol.ExecutionResult
 import org.vorpal.research.kex.trace.symbolic.protocol.Client2MasterConnection
 import org.vorpal.research.kex.trace.symbolic.protocol.Client2MasterSocketConnection
+import org.vorpal.research.kex.trace.symbolic.protocol.ExecutionCompletedResult
+import org.vorpal.research.kex.trace.symbolic.protocol.ExecutionResult
 import org.vorpal.research.kex.trace.symbolic.protocol.TestExecutionRequest
 import org.vorpal.research.kex.util.getIntrinsics
 import org.vorpal.research.kex.util.getJunit
@@ -20,6 +20,7 @@ import org.vorpal.research.kfg.ClassManager
 import org.vorpal.research.kthelper.logging.log
 import java.net.ServerSocket
 import java.nio.file.Paths
+import kotlin.concurrent.thread
 
 @ExperimentalSerializationApi
 @InternalSerializationApi
@@ -34,6 +35,9 @@ internal object ExecutorMasterController : AutoCloseable {
         tempSocket.close()
         // this is fucked up
         Thread.sleep(2000)
+        Runtime.getRuntime().addShutdownHook(thread {
+            if (process.isAlive) process.destroy()
+        })
     }
 
     fun start(ctx: ExecutionContext) {
