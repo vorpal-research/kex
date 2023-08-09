@@ -5,11 +5,14 @@ import kotlinx.collections.immutable.toPersistentList
 import org.vorpal.research.kex.ExecutionContext
 import org.vorpal.research.kex.asm.manager.instantiationManager
 import org.vorpal.research.kex.state.predicate.PredicateType
+import org.vorpal.research.kex.state.predicate.state
 import org.vorpal.research.kex.trace.symbolic.Clause
 import org.vorpal.research.kex.trace.symbolic.PathClause
 import org.vorpal.research.kex.trace.symbolic.PathClauseType
 import org.vorpal.research.kex.trace.symbolic.PersistentPathCondition
 import org.vorpal.research.kex.trace.symbolic.PersistentSymbolicState
+import org.vorpal.research.kex.trace.symbolic.StateClause
+import org.vorpal.research.kfg.ir.value.EmptyUsageContext
 import org.vorpal.research.kfg.ir.value.instruction.CallInst
 import org.vorpal.research.kfg.ir.value.instruction.Instruction
 import org.vorpal.research.kfg.ir.value.instruction.SwitchInst
@@ -70,20 +73,23 @@ private typealias Branch = Pair<Instruction, PathClauseType>
 private val PathVertex.branch get() = Branch(pathClause.instruction, pathClause.type)
 
 class ExecutionTree(val ctx: ExecutionContext) : PredecessorGraph<Vertex>, Viewable {
-    private val _nodes = mutableMapOf<Clause, Vertex>()
-    private var _root: Vertex? = null
+    private val root: Vertex = ClauseVertex(
+        StateClause(
+            ctx.cm.instruction.getUnreachable(EmptyUsageContext),
+            state { const(true) equality true })
+    )
+    private val _nodes = mutableMapOf(root.clause to root)
     private var dominators: DominatorTree<Vertex>? = null
     private val edges = mutableMapOf<Clause, PathVertex>()
     private val exhaustiveness = mutableMapOf<Branch, MutableSet<PathVertex>>()
-    private val hasEntry get() = _root != null
 
-    override val entry get() = _root!!
+    override val entry get() = root
     override val nodes: Set<Vertex>
         get() = _nodes.values.toSet()
     var depth: Int = 0
         private set
 
-    fun isEmpty(): Boolean = _root == null
+    fun isEmpty(): Boolean = root.downEdges.isEmpty()
 
     fun getPathVertex(clause: Clause) = edges.getValue(clause)
 
@@ -98,11 +104,13 @@ class ExecutionTree(val ctx: ExecutionContext) : PredecessorGraph<Vertex>, Viewa
             PathClauseType.OVERLOAD_CHECK -> instantiationManager.getAllConcreteSubtypes(
                 ((vertex.pathClause.instruction as CallInst).callee.type as ClassType).klass, ctx.accessLevel
             ).size
+
             PathClauseType.CONDITION_CHECK -> when (val inst = branch.first) {
                 is SwitchInst -> inst.branches.size + 1
                 is TableSwitchInst -> inst.branches.size + 1
                 else -> 2
             }
+
             PathClauseType.BOUNDS_CHECK -> 2
         }
     }
@@ -110,8 +118,7 @@ class ExecutionTree(val ctx: ExecutionContext) : PredecessorGraph<Vertex>, Viewa
     fun getBranches(depth: Int): Set<PathVertex> = getBranchDepths().filter { it.value == depth }.keys
 
     fun addTrace(symbolicState: PersistentSymbolicState) {
-        var prevVertex: Vertex? = null
-
+        var prevVertex = root
         var pathClauses = 1
         for (current in symbolicState.clauses) {
             val currentVertex = _nodes.getOrPut(current) {
@@ -120,18 +127,14 @@ class ExecutionTree(val ctx: ExecutionContext) : PredecessorGraph<Vertex>, Viewa
                         edges[current] = it
                     }
 
-                    else -> ClauseVertex(current).also {
-                        if (_root == null) {
-                            _root = it
-                        }
-                    }
+                    else -> ClauseVertex(current)
                 }
             }
             if (currentVertex is PathVertex) {
                 currentVertex[symbolicState.path.subPath(0, pathClauses++)] = symbolicState
             }
 
-            prevVertex?.let { prev ->
+            prevVertex.let { prev ->
                 prev.addDownEdge(currentVertex)
                 currentVertex.addUpEdge(prev)
             }
@@ -168,8 +171,6 @@ class ExecutionTree(val ctx: ExecutionContext) : PredecessorGraph<Vertex>, Viewa
     }
 
     private fun getBranchDepths(): Map<PathVertex, Int> {
-        if (!hasEntry) return emptyMap()
-
         val search = mutableMapOf<PathVertex, Int>()
         val visited = mutableSetOf<Vertex>()
         val queue = queueOf<Pair<Vertex, Int>>()
@@ -203,9 +204,11 @@ class ExecutionTree(val ctx: ExecutionContext) : PredecessorGraph<Vertex>, Viewa
                             vertex is PathVertex && isExhausted(vertex) -> {
                                 info.leadinglight.jdot.enums.Color.X11.green
                             }
+
                             vertex is PathVertex -> {
                                 info.leadinglight.jdot.enums.Color.X11.red
                             }
+
                             else -> {
                                 info.leadinglight.jdot.enums.Color.X11.blue
                             }
