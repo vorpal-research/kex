@@ -52,10 +52,6 @@ import kotlin.Float
 import kotlin.Int
 import kotlin.Long
 import kotlin.Short
-import kotlin.String
-import kotlin.Suppress
-import kotlin.also
-import kotlin.require
 import org.vorpal.research.kfg.Package as KfgPackage
 import org.vorpal.research.kfg.ir.Class as KfgClass
 import org.vorpal.research.kfg.ir.Field as KfgField
@@ -197,6 +193,8 @@ fun ClassLoader.loadClass(type: Type): Class<*> = try {
 } catch (e: NoClassDefFoundError) {
     throw ClassNotFoundException(e.localizedMessage)
 }
+
+fun Class<*>.asArray(): Class<*> = Array.newInstance(this, 0).javaClass
 
 fun Class<*>.getMethod(method: Method, loader: ClassLoader): java.lang.reflect.Method {
     val argumentTypes = method.argTypes.mapToArray { loader.loadClass(it) }

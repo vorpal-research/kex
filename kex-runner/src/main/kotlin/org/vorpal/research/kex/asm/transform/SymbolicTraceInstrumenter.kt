@@ -21,6 +21,7 @@ import org.vorpal.research.kfg.ir.value.instruction.ArrayStoreInst
 import org.vorpal.research.kfg.ir.value.instruction.BinaryInst
 import org.vorpal.research.kfg.ir.value.instruction.BranchInst
 import org.vorpal.research.kfg.ir.value.instruction.CallInst
+import org.vorpal.research.kfg.ir.value.instruction.CallOpcode
 import org.vorpal.research.kfg.ir.value.instruction.CastInst
 import org.vorpal.research.kfg.ir.value.instruction.CatchInst
 import org.vorpal.research.kfg.ir.value.instruction.CmpInst
@@ -279,7 +280,9 @@ class SymbolicTraceInstrumenter(
         val instrumented = buildList {
             if (!inst.isStatic && !inst.method.isConstructor) {
                 addAll(addNullityConstraint(inst, inst.callee))
-                addAll(addTypeConstraints(inst, inst.callee))
+                if (inst.opcode != CallOpcode.SPECIAL) {
+                    addAll(addTypeConstraints(inst, inst.callee))
+                }
             }
 
             val arrayListKlass = cm.arrayListClass

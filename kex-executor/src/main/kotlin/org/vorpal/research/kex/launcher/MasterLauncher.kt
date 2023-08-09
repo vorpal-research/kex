@@ -56,7 +56,7 @@ class MasterLauncher(args: Array<String>) {
             numberOfWorkers
         )
 
-        Runtime.getRuntime().addShutdownHook(thread {
+        Runtime.getRuntime().addShutdownHook(thread(start = false) {
             master.destroy()
         })
 

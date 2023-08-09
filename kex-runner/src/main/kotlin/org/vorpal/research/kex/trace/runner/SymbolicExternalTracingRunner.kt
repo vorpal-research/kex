@@ -35,7 +35,7 @@ internal object ExecutorMasterController : AutoCloseable {
         tempSocket.close()
         // this is fucked up
         Thread.sleep(2000)
-        Runtime.getRuntime().addShutdownHook(thread {
+        Runtime.getRuntime().addShutdownHook(thread(start = false) {
             if (process.isAlive) process.destroy()
         })
     }
