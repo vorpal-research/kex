@@ -32,10 +32,8 @@ class ExecutorMaster(
     numberOfWorkers: Int
 ) : Runnable {
     private val timeout = kexConfig.getIntValue("runner", "timeout", 100).seconds
-    private val workers = List(numberOfWorkers) { WorkerWrapper(it) }
-    private val workerQueue = ArrayBlockingQueue<WorkerWrapper>(numberOfWorkers).also {
-        it.addAll(workers)
-    }
+    private val workers: List<WorkerWrapper>
+    private val workerQueue = ArrayBlockingQueue<WorkerWrapper>(numberOfWorkers)
     private val outputDir = kexConfig.outputDirectory
     private val workerJvmParams = kexConfig.getMultipleStringValue("executor", "workerJvmParams", ",").toTypedArray()
     private val executorPolicyPath = (kexConfig.getPathValue(
@@ -53,6 +51,11 @@ class ExecutorMaster(
         useArrayPolymorphism = false
         classDiscriminator = "className"
         allowStructuredMapKeys = true
+    }
+
+    init {
+        workers = List(numberOfWorkers) { WorkerWrapper(it) }
+        workerQueue.addAll(workers)
     }
 
     inner class WorkerWrapper(val id: Int) {
