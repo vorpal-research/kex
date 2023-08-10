@@ -716,7 +716,7 @@ class KSMTSolver(
             ef.buildConstClassAxioms().asAxiom() as KExpr<KBoolSort>,
             ef.ctx.mkConstDecl("ClassAxioms", ef.ctx.boolSort)
         )
-        solver.push()
+        solver.pushAsync()
 
         return queries.map { (hardConstraints, softConstraints, ctx) ->
             solver.assertAndTrackAsync(
@@ -725,10 +725,10 @@ class KSMTSolver(
             )
             val softConstraintsMap = when {
                 softConstraints.isNotEmpty() -> {
-                    solver.push()
+                    solver.pushAsync()
                     softConstraints.withIndex().associate { (index, softConstraint) ->
                         val expr = ef.ctx.mkConstDecl("SoftConstraint$index", ef.ctx.boolSort)
-                        solver.assertAndTrack(softConstraint.asAxiom() as KExpr<KBoolSort>, expr)
+                        solver.assertAndTrackAsync(softConstraint.asAxiom() as KExpr<KBoolSort>, expr)
                         (expr as KConstDecl<KBoolSort>) to softConstraint.asAxiom() as KExpr<KBoolSort>
                     }
                 }
@@ -763,11 +763,11 @@ class KSMTSolver(
                     result to reason
                 }
             }.also {
-                solver.pop()
+                solver.popAsync(1u)
                 if (softConstraints.isNotEmpty()) {
-                    solver.pop()
+                    solver.popAsync(1u)
                 }
-                solver.push()
+                solver.pushAsync()
             }.with(ctx)
         }
     }
@@ -775,7 +775,7 @@ class KSMTSolver(
     private suspend fun KPortfolioSolver.checkAndMinimize(
         softConstraintsMap: Map<KConstDecl<KBoolSort>, KExpr<KBoolSort>>
     ): KSolverStatus {
-        var result = this.check()
+        var result = this.checkAsync(timeout.seconds)
         return when (result) {
             KSolverStatus.UNSAT -> {
                 while (result == KSolverStatus.UNSAT && softConstraintsMap.isNotEmpty()) {
@@ -785,8 +785,8 @@ class KSMTSolver(
                     val core = tryOrNull { this.unsatCoreAsync().toSet() } ?: return result
                     if (core.any { exprToDeclMappings[it] !in softCopies }) break
                     else {
-                        this.pop()
-                        this.push()
+                        this.popAsync(1u)
+                        this.pushAsync()
                         for (key in core) softCopies.remove(exprToDeclMappings[key])
                         for ((expr, softConstraint) in softCopies) {
                             this.assertAndTrackAsync(softConstraint, expr)
