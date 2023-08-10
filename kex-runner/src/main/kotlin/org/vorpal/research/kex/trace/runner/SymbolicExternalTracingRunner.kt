@@ -10,6 +10,7 @@ import org.vorpal.research.kex.trace.symbolic.protocol.Client2MasterConnection
 import org.vorpal.research.kex.trace.symbolic.protocol.Client2MasterSocketConnection
 import org.vorpal.research.kex.trace.symbolic.protocol.ExecutionCompletedResult
 import org.vorpal.research.kex.trace.symbolic.protocol.ExecutionResult
+import org.vorpal.research.kex.trace.symbolic.protocol.ExecutionTimedOutResult
 import org.vorpal.research.kex.trace.symbolic.protocol.TestExecutionRequest
 import org.vorpal.research.kex.util.getIntrinsics
 import org.vorpal.research.kex.util.getJunit
@@ -21,6 +22,7 @@ import org.vorpal.research.kthelper.logging.log
 import java.net.ServerSocket
 import java.nio.file.Paths
 import kotlin.concurrent.thread
+import kotlin.time.Duration.Companion.seconds
 
 @ExperimentalSerializationApi
 @InternalSerializationApi
@@ -104,6 +106,7 @@ internal object ExecutorMasterController : AutoCloseable {
 }
 
 class SymbolicExternalTracingRunner(val ctx: ExecutionContext) {
+    private val timeout = kexConfig.getIntValue("runner", "timeout", 100).seconds
 
     @ExperimentalSerializationApi
     @InternalSerializationApi
@@ -112,7 +115,7 @@ class SymbolicExternalTracingRunner(val ctx: ExecutionContext) {
 
         val connection = ExecutorMasterController.getClientConnection(ctx)
         connection.use {
-            it.connect()
+            if (!it.connect(timeout)) return ExecutionTimedOutResult("Could not connect")
             it.send(TestExecutionRequest(klass, test, setup))
             while (!it.ready()) {
                 yield()

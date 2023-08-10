@@ -1,18 +1,22 @@
 package org.vorpal.research.kex.worker
 
 import org.vorpal.research.kex.ExecutionContext
+import org.vorpal.research.kex.config.kexConfig
 import org.vorpal.research.kex.trace.symbolic.protocol.ExecutionFailedResult
 import org.vorpal.research.kex.trace.symbolic.protocol.Worker2MasterConnection
+import org.vorpal.research.kthelper.assert.ktassert
 import org.vorpal.research.kthelper.logging.log
+import kotlin.time.Duration.Companion.seconds
 
 class ExecutorWorker(
     val ctx: ExecutionContext,
     private val connection: Worker2MasterConnection
 ) : Runnable {
     val executor: TestExecutor = TestExecutor(ctx)
+    private val timeout = kexConfig.getIntValue("runner", "timeout", 100).seconds
 
     init {
-        connection.connect()
+        ktassert(connection.connect(timeout))
     }
 
     override fun run() {

@@ -31,8 +31,11 @@ class ExecutorMaster(
     val workerClassPath: List<Path>,
     numberOfWorkers: Int
 ) : Runnable {
-    private val timeout = kexConfig.getIntValue("runner", "timeout", 100)
-    private val workerQueue = ArrayBlockingQueue<WorkerWrapper>(numberOfWorkers)
+    private val timeout = kexConfig.getIntValue("runner", "timeout", 100).seconds
+    private val workers = List(numberOfWorkers) { WorkerWrapper(it) }
+    private val workerQueue = ArrayBlockingQueue<WorkerWrapper>(numberOfWorkers).also {
+        it.addAll(workers)
+    }
     private val outputDir = kexConfig.outputDirectory
     private val workerJvmParams = kexConfig.getMultipleStringValue("executor", "workerJvmParams", ",").toTypedArray()
     private val executorPolicyPath = (kexConfig.getPathValue(
@@ -42,13 +45,6 @@ class ExecutorMaster(
     private val executorConfigPath = (kexConfig.getPathValue(
         "executor", "executorConfigPath"
     ) ?: Paths.get("kex.ini")).toAbsolutePath()
-
-
-    init {
-        repeat(numberOfWorkers) {
-            workerQueue.add(WorkerWrapper(it))
-        }
-    }
 
     private val json = Json {
         encodeDefaults = false
@@ -72,7 +68,7 @@ class ExecutorMaster(
                 process = createProcess()
                 if (this::workerConnection.isInitialized)
                     workerConnection.close()
-                workerConnection = connection.receiveWorkerConnection(timeout.seconds)
+                workerConnection = connection.receiveWorkerConnection(timeout)
                 log.debug("Worker $id connected")
             }
         }
@@ -148,8 +144,7 @@ class ExecutorMaster(
     }
 
     fun destroy() {
-        while (workerQueue.isNotEmpty()) {
-            val worker = workerQueue.poll()
+        for (worker in workers) {
             worker.destroy()
         }
     }

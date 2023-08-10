@@ -6,8 +6,10 @@ import org.vorpal.research.kex.serialization.KexSerializer
 import org.vorpal.research.kthelper.logging.log
 import java.io.BufferedReader
 import java.io.BufferedWriter
+import java.net.InetSocketAddress
 import java.net.ServerSocket
 import java.net.Socket
+import java.net.SocketTimeoutException
 import kotlin.time.Duration
 
 interface MasterProtocolHandler {
@@ -32,14 +34,14 @@ interface Master2WorkerConnection : AutoCloseable {
 }
 
 interface Client2MasterConnection : AutoCloseable {
-    fun connect(): Boolean
+    fun connect(timeout: Duration): Boolean
     fun ready(): Boolean
     fun send(request: TestExecutionRequest)
     fun receive(): ExecutionResult
 }
 
 interface Worker2MasterConnection : AutoCloseable {
-    fun connect(): Boolean
+    fun connect(timeout: Duration): Boolean
     fun ready(): Boolean
     fun receive(): TestExecutionRequest
     fun send(result: ExecutionResult)
@@ -131,9 +133,15 @@ class Client2MasterSocketConnection(
     private lateinit var writer: BufferedWriter
     private lateinit var reader: BufferedReader
 
-    override fun connect(): Boolean {
+    override fun connect(timeout: Duration): Boolean {
         log.debug("Trying to connect to master at port $port")
-        socket = Socket("localhost", port)
+        socket = Socket()
+        try {
+            socket.connect(InetSocketAddress("localhost", port), timeout.inWholeMilliseconds.toInt())
+        } catch (_: SocketTimeoutException) {
+            log.error("Could not connect to master, timeout exception")
+            return false
+        }
         writer = socket.getOutputStream().bufferedWriter()
         reader = socket.getInputStream().bufferedReader()
         log.debug("Connected to master")
@@ -175,9 +183,15 @@ class Worker2MasterSocketConnection(val serializer: KexSerializer, private val p
     private lateinit var writer: BufferedWriter
     private lateinit var reader: BufferedReader
 
-    override fun connect(): Boolean {
+    override fun connect(timeout: Duration): Boolean {
         log.debug("Trying to connect to master at port $port")
-        socket = Socket("localhost", port)
+        socket = Socket()
+        try {
+            socket.connect(InetSocketAddress("localhost", port), timeout.inWholeMilliseconds.toInt())
+        } catch (_: SocketTimeoutException) {
+            log.error("Could not connect to master, timeout exception")
+            return false
+        }
         writer = socket.getOutputStream().bufferedWriter()
         reader = socket.getInputStream().bufferedReader()
         log.debug("Connected to master")
