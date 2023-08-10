@@ -105,7 +105,10 @@ data class GenericCoverageInfo(
     override val total: Int,
     val unit: CoverageUnit
 ) : CoverageInfo {
-    override val ratio: Double get() = covered.toDouble() / total
+    override val ratio: Double get() = when (total) {
+        0 -> 0.0
+        else -> covered.toDouble() / total
+    }
     override fun toString(): String = buildString {
         append(String.format("%s of %s %s covered", covered, total, unit))
         if (total > 0) {
