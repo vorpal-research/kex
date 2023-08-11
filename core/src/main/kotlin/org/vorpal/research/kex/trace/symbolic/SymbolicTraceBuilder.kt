@@ -10,12 +10,14 @@ import org.vorpal.research.kex.descriptor.Object2DescriptorConverter
 import org.vorpal.research.kex.descriptor.ObjectDescriptor
 import org.vorpal.research.kex.descriptor.descriptor
 import org.vorpal.research.kex.ktype.KexBool
+import org.vorpal.research.kex.ktype.KexByte
 import org.vorpal.research.kex.ktype.KexChar
 import org.vorpal.research.kex.ktype.KexClass
 import org.vorpal.research.kex.ktype.KexInt
 import org.vorpal.research.kex.ktype.KexInteger
 import org.vorpal.research.kex.ktype.KexLong
 import org.vorpal.research.kex.ktype.KexReal
+import org.vorpal.research.kex.ktype.KexShort
 import org.vorpal.research.kex.ktype.KexType
 import org.vorpal.research.kex.ktype.kexType
 import org.vorpal.research.kex.parameters.Parameters
@@ -301,6 +303,16 @@ class SymbolicTraceBuilder(
                 type is KexInt && this.type == KexClass(SystemTypeNames.charClass) -> {
                     val value = this["value", KexChar]!! as ConstantDescriptor.Char
                     descriptor { const(value.value.code) }
+                }
+
+                type is KexInt && this.type == KexClass(SystemTypeNames.byteClass) -> {
+                    val value = this["value", KexByte]!! as ConstantDescriptor.Byte
+                    descriptor { const(value.value.toInt()) }
+                }
+
+                type is KexInt && this.type == KexClass(SystemTypeNames.shortClass) -> {
+                    val value = this["value", KexShort]!! as ConstantDescriptor.Short
+                    descriptor { const(value.value.toInt()) }
                 }
 
                 type is KexInt && this.type == KexClass(SystemTypeNames.longClass) -> {
