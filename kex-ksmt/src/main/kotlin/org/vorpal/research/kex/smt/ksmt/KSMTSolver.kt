@@ -7,23 +7,22 @@ import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.yield
-import org.ksmt.decl.KConstDecl
-import org.ksmt.expr.KAndBinaryExpr
-import org.ksmt.expr.KAndNaryExpr
-import org.ksmt.expr.KExpr
-import org.ksmt.runner.core.WorkerInitializationFailedException
-import org.ksmt.solver.KModel
-import org.ksmt.solver.KSolver
-import org.ksmt.solver.KSolverConfiguration
-import org.ksmt.solver.KSolverException
-import org.ksmt.solver.KSolverStatus
-import org.ksmt.solver.portfolio.KPortfolioSolver
-import org.ksmt.solver.portfolio.KPortfolioSolverManager
-import org.ksmt.solver.runner.KSolverExecutorTimeoutException
-import org.ksmt.solver.z3.KZ3Solver
-import org.ksmt.sort.KBoolSort
-import org.ksmt.sort.KBvSort
-import org.ksmt.sort.KSort
+import io.ksmt.expr.KAndBinaryExpr
+import io.ksmt.expr.KAndNaryExpr
+import io.ksmt.expr.KExpr
+import io.ksmt.runner.core.WorkerInitializationFailedException
+import io.ksmt.solver.KModel
+import io.ksmt.solver.KSolver
+import io.ksmt.solver.KSolverConfiguration
+import io.ksmt.solver.KSolverException
+import io.ksmt.solver.KSolverStatus
+import io.ksmt.solver.portfolio.KPortfolioSolver
+import io.ksmt.solver.portfolio.KPortfolioSolverManager
+import io.ksmt.solver.runner.KSolverExecutorTimeoutException
+import io.ksmt.solver.z3.KZ3Solver
+import io.ksmt.sort.KBoolSort
+import io.ksmt.sort.KBvSort
+import io.ksmt.sort.KSort
 import org.vorpal.research.kex.ExecutionContext
 import org.vorpal.research.kex.config.kexConfig
 import org.vorpal.research.kex.ktype.KexArray
@@ -99,7 +98,7 @@ class KSMTSolver(
         private val portfolioSolverManager: KPortfolioSolverManager by lazy {
             KPortfolioSolverManager(
                 solvers = ksmtSolvers.map {
-                    Class.forName("org.ksmt.solver.${it}.K${it.kapitalize()}Solver").kotlin
+                    Class.forName("io.ksmt.solver.${it}.K${it.kapitalize()}Solver").kotlin
                             as KClass<out KSolver<out KSolverConfiguration>>
                 },
                 portfolioPoolSize = ksmtRunners,
@@ -709,31 +708,28 @@ class KSMTSolver(
         queries: List<Triple<Bool_, List<Bool_>, KSMTContext>>
     ): List<Triple<KSolverStatus, Any, KSMTContext>> = buildSolver().use { solver ->
         solver.assertAndTrackAsync(
-            state.asAxiom() as KExpr<KBoolSort>,
-            ef.ctx.mkConstDecl("State", ef.ctx.boolSort)
+            state.asAxiom() as KExpr<KBoolSort>
         )
         solver.assertAndTrackAsync(
-            ef.buildConstClassAxioms().asAxiom() as KExpr<KBoolSort>,
-            ef.ctx.mkConstDecl("ClassAxioms", ef.ctx.boolSort)
+            ef.buildConstClassAxioms().asAxiom() as KExpr<KBoolSort>
         )
         solver.pushAsync()
 
         return queries.map { (hardConstraints, softConstraints, ctx) ->
             solver.assertAndTrackAsync(
-                hardConstraints.asAxiom() as KExpr<KBoolSort>,
-                ef.ctx.mkConstDecl("HardConstraints", ef.ctx.boolSort)
+                hardConstraints.asAxiom() as KExpr<KBoolSort>
             )
-            val softConstraintsMap = when {
+            val softConstraintsSet = when {
                 softConstraints.isNotEmpty() -> {
                     solver.pushAsync()
-                    softConstraints.withIndex().associate { (index, softConstraint) ->
-                        val expr = ef.ctx.mkConstDecl("SoftConstraint$index", ef.ctx.boolSort)
-                        solver.assertAndTrackAsync(softConstraint.asAxiom() as KExpr<KBoolSort>, expr)
-                        (expr as KConstDecl<KBoolSort>) to softConstraint.asAxiom() as KExpr<KBoolSort>
+                    softConstraints.mapTo(mutableSetOf()) { softConstraint ->
+                        (softConstraint.asAxiom() as KExpr<KBoolSort>).also {
+                            solver.assertAndTrackAsync(it)
+                        }
                     }
                 }
 
-                else -> emptyMap()
+                else -> emptySet()
             }
 
             log.debug("Running KSMT solver")
@@ -742,7 +738,7 @@ class KSMTSolver(
                 log.debug(stringify(state, hardConstraints, softConstraints))
             }
 
-            when (val result = solver.checkAndMinimize(softConstraintsMap)) {
+            when (val result = solver.checkAndMinimize(softConstraintsSet)) {
                 KSolverStatus.SAT -> `try`<Pair<KSolverStatus, Any>> {
                     val model = solver.modelAsync()
                     if (logFormulae) log.debug(model)
@@ -773,23 +769,21 @@ class KSMTSolver(
     }
 
     private suspend fun KPortfolioSolver.checkAndMinimize(
-        softConstraintsMap: Map<KConstDecl<KBoolSort>, KExpr<KBoolSort>>
+        softConstraintsMap: Set<KExpr<KBoolSort>>
     ): KSolverStatus {
         var result = this.checkAsync(timeout.seconds)
         return when (result) {
             KSolverStatus.UNSAT -> {
                 while (result == KSolverStatus.UNSAT && softConstraintsMap.isNotEmpty()) {
-                    val softCopies = softConstraintsMap.toMutableMap()
-                    val exprToDeclMappings = softConstraintsMap.keys
-                        .associateBy { it.asExpr(ef.ctx) as KExpr<KBoolSort> }
+                    val softCopies = softConstraintsMap.toMutableSet()
                     val core = tryOrNull { this.unsatCoreAsync().toSet() } ?: return result
-                    if (core.any { exprToDeclMappings[it] !in softCopies }) break
+                    if (core.all { it !in softCopies }) break
                     else {
                         this.popAsync(1u)
                         this.pushAsync()
-                        for (key in core) softCopies.remove(exprToDeclMappings[key])
-                        for ((expr, softConstraint) in softCopies) {
-                            this.assertAndTrackAsync(softConstraint, expr)
+                        for (key in core) softCopies.remove(key)
+                        for (softConstraint in softCopies) {
+                            this.assertAndTrackAsync(softConstraint)
                         }
                         result = this.checkAsync(timeout.seconds)
                     }
