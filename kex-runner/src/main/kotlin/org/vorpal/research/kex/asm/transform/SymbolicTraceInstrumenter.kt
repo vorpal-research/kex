@@ -9,6 +9,7 @@ import org.vorpal.research.kex.util.insertBefore
 import org.vorpal.research.kex.util.wrapValue
 import org.vorpal.research.kfg.Package
 import org.vorpal.research.kfg.arrayListClass
+import org.vorpal.research.kfg.ir.CatchBlock
 import org.vorpal.research.kfg.ir.Class
 import org.vorpal.research.kfg.ir.Method
 import org.vorpal.research.kfg.ir.value.EmptyUsageContext
@@ -382,13 +383,24 @@ class SymbolicTraceInstrumenter(
             stringType, objectType
         )
 
-        val instrumented = collectorClass.interfaceCall(
-            catchMethod, traceCollector,
-            listOf(
-                "$inst".asValue,
-                inst
+        val instrumented = buildList {
+            add(
+                collectorClass.interfaceCall(
+                    catchMethod, traceCollector,
+                    listOf(
+                        "$inst".asValue,
+                        inst
+                    )
+                )
             )
-        )
+            // we need to manually handle all the phi insts of a catch block
+            for (phi in inst.parent) {
+                when (phi) {
+                    is PhiInst -> addAll(buildPhi(phi))
+                    else -> break
+                }
+            }
+        }
         inst.insertAfter(instrumented)
     }
 
@@ -677,22 +689,24 @@ class SymbolicTraceInstrumenter(
     }
 
     override fun visitPhiInst(inst: PhiInst) {
+        // if phi is part of a catch block, we need to handle the `CatchInst` first
+        if (inst.parent is CatchBlock) return
+        inst.insertAfter(buildPhi(inst))
+    }
+
+    private fun buildPhi(inst: PhiInst): List<Instruction> = buildList {
         val phiMethod = collectorClass.getMethod(
             "phi", types.voidType, stringType, objectType
         )
-
-        val instrumented = buildList {
-            add(
-                collectorClass.interfaceCall(
-                    phiMethod, traceCollector,
-                    listOf(
-                        "$inst".asValue,
-                        inst.wrapped(this)
-                    )
+        add(
+            collectorClass.interfaceCall(
+                phiMethod, traceCollector,
+                listOf(
+                    "$inst".asValue,
+                    inst.wrapped(this)
                 )
             )
-        }
-        inst.insertAfter(instrumented)
+        )
     }
 
     override fun visitReturnInst(inst: ReturnInst) {
