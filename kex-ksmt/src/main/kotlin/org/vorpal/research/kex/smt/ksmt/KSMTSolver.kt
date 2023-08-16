@@ -2,11 +2,6 @@
 
 package org.vorpal.research.kex.smt.ksmt
 
-import kotlinx.coroutines.TimeoutCancellationException
-import kotlinx.coroutines.currentCoroutineContext
-import kotlinx.coroutines.isActive
-import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.yield
 import io.ksmt.expr.KAndBinaryExpr
 import io.ksmt.expr.KAndNaryExpr
 import io.ksmt.expr.KExpr
@@ -23,6 +18,11 @@ import io.ksmt.solver.z3.KZ3Solver
 import io.ksmt.sort.KBoolSort
 import io.ksmt.sort.KBvSort
 import io.ksmt.sort.KSort
+import kotlinx.coroutines.TimeoutCancellationException
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.yield
 import org.vorpal.research.kex.ExecutionContext
 import org.vorpal.research.kex.config.kexConfig
 import org.vorpal.research.kex.ktype.KexArray
@@ -769,13 +769,15 @@ class KSMTSolver(
     }
 
     private suspend fun KPortfolioSolver.checkAndMinimize(
-        softConstraintsMap: Set<KExpr<KBoolSort>>
+        softConstraints: Set<KExpr<KBoolSort>>
     ): KSolverStatus {
+        log.debug("Check started")
         var result = this.checkAsync(timeout.seconds)
+        log.debug("Check ended, result {}", result)
         return when (result) {
             KSolverStatus.UNSAT -> {
-                while (result == KSolverStatus.UNSAT && softConstraintsMap.isNotEmpty()) {
-                    val softCopies = softConstraintsMap.toMutableSet()
+                val softCopies = softConstraints.toMutableSet()
+                while (result == KSolverStatus.UNSAT && softCopies.isNotEmpty()) {
                     val core = tryOrNull { this.unsatCoreAsync().toSet() } ?: return result
                     if (core.all { it !in softCopies }) break
                     else {
