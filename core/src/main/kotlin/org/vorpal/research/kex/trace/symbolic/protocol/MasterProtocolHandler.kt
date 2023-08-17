@@ -76,9 +76,6 @@ class Master2ClientSocketConnection(private val socket: Socket) : Master2ClientC
     }
 
     override fun receive(): String {
-        while (!reader.ready()) {
-            log.debug("Waiting, reader is not ready yet")
-        }
         return reader.readLine().also {
             log.debug("Master received a request $it")
         }
@@ -114,6 +111,7 @@ class Master2WorkerSocketConnection(private val socket: Socket) : Master2WorkerC
     }
 
     override fun receive(): String {
+        log.debug("Receiving a message from {} to {}", socket.remoteSocketAddress, socket.localAddress)
         return reader.readLine()
     }
 
@@ -141,7 +139,7 @@ class Client2MasterSocketConnection(
     }
 
     override fun send(request: TestExecutionRequest) {
-        log.debug("Client sending a request: {}", request)
+        log.debug("Client sending a request: {} from {} to {}", request, socket.localAddress, socket.remoteSocketAddress)
         val json = serializer.toJson(request)
         writer.write(json)
         writer.newLine()
