@@ -139,7 +139,7 @@ class ExecutorMaster(
                 val client = connection.receiveClientConnection()
                 log.debug("Master received a client connection")
                 launch {
-                    client.use { handleClient(it) }
+                    handleClient(client)
                 }
                 yield()
             }

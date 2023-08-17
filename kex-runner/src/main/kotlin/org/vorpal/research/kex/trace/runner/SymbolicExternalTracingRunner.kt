@@ -28,7 +28,7 @@ import kotlin.time.Duration.Companion.seconds
 @InternalSerializationApi
 internal object ExecutorMasterController : AutoCloseable {
     private lateinit var process: Process
-    private val controllerSocket = ServerSocket(0)
+    private lateinit var controllerSocket: ServerSocket
     private val serializers = mutableMapOf<ClassManager, KexSerializer>()
 
     init {
@@ -38,6 +38,7 @@ internal object ExecutorMasterController : AutoCloseable {
     }
 
     fun start(ctx: ExecutionContext) {
+        controllerSocket = ServerSocket(0)
         val outputDir = kexConfig.outputDirectory
         val executorPath = kexConfig.getPathValue("executor", "executorPath") {
             Paths.get("kex-executor/target/kex-executor-0.0.1-jar-with-dependencies.jar")
@@ -96,6 +97,7 @@ internal object ExecutorMasterController : AutoCloseable {
 
     override fun close() {
         process.destroy()
+        controllerSocket.close()
     }
 }
 

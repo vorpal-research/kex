@@ -56,7 +56,9 @@ class MasterProtocolSocketHandler(
     override val workerPort get() = workerListener.localPort
 
     override fun receiveClientConnection(): Master2ClientConnection {
-        val socket = Socket("localhost", clientPort)
+        val socket = Socket()
+        socket.connect(InetSocketAddress("localhost", clientPort))
+        log.debug("Client {} connected to master {}", socket.remoteSocketAddress, socket.localSocketAddress)
         return Master2ClientSocketConnection(socket)
     }
 
@@ -76,6 +78,7 @@ class Master2ClientSocketConnection(private val socket: Socket) : Master2ClientC
     }
 
     override fun receive(): String {
+        log.debug("Receiving a message from {} to {}", socket.remoteSocketAddress, socket.localSocketAddress)
         return reader.readLine().also {
             log.debug("Master received a request $it")
         }
@@ -111,7 +114,6 @@ class Master2WorkerSocketConnection(private val socket: Socket) : Master2WorkerC
     }
 
     override fun receive(): String {
-        log.debug("Receiving a message from {} to {}", socket.remoteSocketAddress, socket.localAddress)
         return reader.readLine()
     }
 
@@ -134,12 +136,12 @@ class Client2MasterSocketConnection(
     override fun connect(timeout: Duration): Boolean {
         writer = socket.getOutputStream().bufferedWriter()
         reader = socket.getInputStream().bufferedReader()
-        log.debug("Connected to master")
+        log.debug("Client {} connected to master {}", socket.localSocketAddress, socket.remoteSocketAddress)
         return true
     }
 
     override fun send(request: TestExecutionRequest) {
-        log.debug("Client sending a request: {} from {} to {}", request, socket.localAddress, socket.remoteSocketAddress)
+        log.debug("Client sending a request: {} from {} to {}", request, socket.localSocketAddress, socket.remoteSocketAddress)
         val json = serializer.toJson(request)
         writer.write(json)
         writer.newLine()
