@@ -28,17 +28,12 @@ import kotlin.time.Duration.Companion.seconds
 @InternalSerializationApi
 internal object ExecutorMasterController : AutoCloseable {
     private lateinit var process: Process
-    private val masterPort: Int
+    private val controllerSocket = ServerSocket(0)
     private val serializers = mutableMapOf<ClassManager, KexSerializer>()
 
     init {
-        val tempSocket = ServerSocket(0)
-        masterPort = tempSocket.localPort
-        tempSocket.close()
-        // this is fucked up
-        Thread.sleep(2000)
         Runtime.getRuntime().addShutdownHook(thread(start = false) {
-            if (process.isAlive) process.destroy()
+            if (::process.isInitialized && process.isAlive) process.destroy()
         })
     }
 
@@ -81,14 +76,13 @@ internal object ExecutorMasterController : AutoCloseable {
             executorKlass,
             "--output", "${outputDir.toAbsolutePath()}",
             "--config", "$executorConfigPath",
-            "--port", "$masterPort",
+            "--port", "${controllerSocket.localPort}",
             "--kfgClassPath", kfgClassPath.joinToString(getPathSeparator()),
             "--workerClassPath", workerClassPath.joinToString(getPathSeparator()),
             "--numOfWorkers", "$numberOfWorkers"
         )
         log.debug("Starting executor master process with command: '${pb.command().joinToString(" ")}'")
         process = pb.start()
-        Thread.sleep(1000)
     }
 
     fun getClientConnection(ctx: ExecutionContext): Client2MasterConnection {
@@ -97,7 +91,7 @@ internal object ExecutorMasterController : AutoCloseable {
                 ctx.cm,
                 prettyPrint = false
             )
-        }, masterPort)
+        }, controllerSocket.accept())
     }
 
     override fun close() {

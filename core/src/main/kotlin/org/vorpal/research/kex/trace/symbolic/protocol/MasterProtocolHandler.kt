@@ -50,16 +50,13 @@ interface Worker2MasterConnection : AutoCloseable {
 // Impl
 
 class MasterProtocolSocketHandler(
-    clientPort: Int
+    override val clientPort: Int
 ) : MasterProtocolHandler {
-    private val clientListener = ServerSocket(clientPort)
     private val workerListener = ServerSocket(0)
-
-    override val clientPort get() = clientListener.localPort
     override val workerPort get() = workerListener.localPort
 
     override fun receiveClientConnection(): Master2ClientConnection {
-        val socket = clientListener.accept()
+        val socket = Socket("localhost", clientPort)
         return Master2ClientSocketConnection(socket)
     }
 
@@ -79,6 +76,9 @@ class Master2ClientSocketConnection(private val socket: Socket) : Master2ClientC
     }
 
     override fun receive(): String {
+        while (!reader.ready()) {
+            log.debug("Waiting, reader is not ready yet")
+        }
         return reader.readLine().also {
             log.debug("Master received a request $it")
         }
@@ -88,6 +88,7 @@ class Master2ClientSocketConnection(private val socket: Socket) : Master2ClientC
         log.debug("Master sends a response")
         writer.write(result)
         writer.newLine()
+        writer.flush()
     }
 
     override fun close() {
@@ -127,21 +128,12 @@ class Master2WorkerSocketConnection(private val socket: Socket) : Master2WorkerC
 @InternalSerializationApi
 class Client2MasterSocketConnection(
     val serializer: KexSerializer,
-    private val port: Int
+    private val socket: Socket
 ) : Client2MasterConnection {
-    private lateinit var socket: Socket
     private lateinit var writer: BufferedWriter
     private lateinit var reader: BufferedReader
 
     override fun connect(timeout: Duration): Boolean {
-        log.debug("Trying to connect to master at port $port")
-        socket = Socket()
-        try {
-            socket.connect(InetSocketAddress("localhost", port), timeout.inWholeMilliseconds.toInt())
-        } catch (_: SocketTimeoutException) {
-            log.error("Could not connect to master, timeout exception")
-            return false
-        }
         writer = socket.getOutputStream().bufferedWriter()
         reader = socket.getInputStream().bufferedReader()
         log.debug("Connected to master")

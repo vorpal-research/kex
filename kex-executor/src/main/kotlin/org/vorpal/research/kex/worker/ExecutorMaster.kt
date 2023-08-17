@@ -101,7 +101,7 @@ class ExecutorMaster(
                 reInit()
 
             val request = clientConnection.receive()
-            log.debug("Worker $id receiver request $request")
+            log.debug("Worker $id received request $request")
             workerConnection.send(request)
             val result = try {
                 workerConnection.receive()
