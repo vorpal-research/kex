@@ -254,7 +254,7 @@ class KSMTSolver(
         z3SolverInternal.toString()
     }
 
-    private suspend fun check(state: Bool_, query: Bool_): Pair<KSolverStatus, Any> = buildSolver().use { solver ->
+    private suspend fun check(state: Bool_, query: Bool_): Pair<KSolverStatus, Any> = runSolver { solver ->
         if (logFormulae) {
             log.run {
                 debug("State: {}", state)
@@ -275,7 +275,7 @@ class KSMTSolver(
         val result = solver.checkAsync(timeout.seconds)
         log.debug("Solver finished")
 
-        return when (result) {
+        return@runSolver when (result) {
             KSolverStatus.SAT -> `try`<Pair<KSolverStatus, Any>> {
                 val model = solver.modelAsync()
                 if (logFormulae) log.debug(model)
@@ -298,13 +298,14 @@ class KSMTSolver(
         }
     }
 
-    private suspend fun buildSolver(): KPortfolioSolver {
+    private suspend fun <R> runSolver(body: suspend (KPortfolioSolver) -> R): R {
         if (!currentCoroutineContext().isActive) yield()
-        return portfolioSolverManager.createPortfolioSolver(ef.ctx).also {
+        return portfolioSolverManager.createPortfolioSolver(ef.ctx).use {
             it.configureAsync {
                 setIntParameter("random_seed", ksmtSeed)
                 setIntParameter("seed", ksmtSeed)
             }
+            body(it)
         }
     }
 
@@ -706,7 +707,7 @@ class KSMTSolver(
     private suspend fun checkIncremental(
         state: Bool_,
         queries: List<Triple<Bool_, List<Bool_>, KSMTContext>>
-    ): List<Triple<KSolverStatus, Any, KSMTContext>> = buildSolver().use { solver ->
+    ): List<Triple<KSolverStatus, Any, KSMTContext>> = runSolver { solver ->
         solver.assertAndTrackAsync(
             state.asAxiom() as KExpr<KBoolSort>
         )
@@ -715,7 +716,7 @@ class KSMTSolver(
         )
         solver.pushAsync()
 
-        return queries.map { (hardConstraints, softConstraints, ctx) ->
+        return@runSolver queries.map { (hardConstraints, softConstraints, ctx) ->
             solver.assertAndTrackAsync(
                 hardConstraints.asAxiom() as KExpr<KBoolSort>
             )
