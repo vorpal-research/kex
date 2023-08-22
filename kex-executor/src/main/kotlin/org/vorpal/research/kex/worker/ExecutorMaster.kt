@@ -17,11 +17,10 @@ import org.vorpal.research.kex.util.getJvmModuleParams
 import org.vorpal.research.kex.util.getPathSeparator
 import org.vorpal.research.kex.util.outputDirectory
 import org.vorpal.research.kthelper.logging.log
-import java.net.SocketTimeoutException
+import org.vorpal.research.kthelper.tryOrNull
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.concurrent.ArrayBlockingQueue
-import kotlin.time.Duration.Companion.seconds
 
 @ExperimentalSerializationApi
 @InternalSerializationApi
@@ -31,7 +30,6 @@ class ExecutorMaster(
     val workerClassPath: List<Path>,
     numberOfWorkers: Int
 ) : Runnable {
-    private val timeout = kexConfig.getIntValue("runner", "timeout", 100).seconds
     private val workers: List<WorkerWrapper>
     private val workerQueue = ArrayBlockingQueue<WorkerWrapper>(numberOfWorkers)
     private val outputDir = kexConfig.outputDirectory
@@ -71,7 +69,14 @@ class ExecutorMaster(
                 process = createProcess()
                 if (this::workerConnection.isInitialized)
                     workerConnection.close()
-                workerConnection = connection.receiveWorkerConnection(timeout)
+                workerConnection = when (val tempConnection = connection.receiveWorkerConnection()) {
+                    null -> {
+                        log.debug("Worker $id connection timeout")
+                        process.destroy()
+                        return
+                    }
+                    else -> tempConnection
+                }
                 log.debug("Worker $id connected")
             }
         }
@@ -96,19 +101,20 @@ class ExecutorMaster(
             return pb.start()
         }
 
-        fun processTask(clientConnection: Master2ClientConnection) {
+        fun processTask(clientConnection: Master2ClientConnection): Boolean = tryOrNull {
             while (!process.isAlive)
                 reInit()
 
-            val request = clientConnection.receive()
-            log.debug("Worker $id received request $request")
-            workerConnection.send(request)
+            val request = clientConnection.receive() ?: return false
+            log.debug("Worker {} received request {}", id, request)
+
             val result = try {
-                workerConnection.receive()
-            } catch (e: SocketTimeoutException) {
-                process.destroy()
-                log.debug("Received socket timeout exception")
-                json.encodeToString(ExecutionTimedOutResult::class.serializer(), ExecutionTimedOutResult("timeout"))
+                if (!workerConnection.send(request)) {
+                    json.encodeToString(ExecutionTimedOutResult::class.serializer(), ExecutionTimedOutResult("timeout"))
+                } else when (val result = workerConnection.receive()) {
+                    null -> json.encodeToString(ExecutionTimedOutResult::class.serializer(), ExecutionTimedOutResult("timeout"))
+                    else -> result
+                }
             } catch (e: Throwable) {
                 process.destroy()
                 log.debug("Worker failed with an error", e)
@@ -116,9 +122,10 @@ class ExecutorMaster(
             }
             log.debug("Worker $id processed result")
             clientConnection.send(result)
-        }
+        } ?: false
 
         fun destroy() {
+            workerConnection.close()
             process.destroy()
         }
     }
@@ -126,17 +133,23 @@ class ExecutorMaster(
     private fun handleClient(clientConnection: Master2ClientConnection) = try {
         val worker = workerQueue.take()
         log.debug("Selected a worker ${worker.id}")
-        worker.processTask(clientConnection)
+        if (!worker.processTask(clientConnection)) {
+            worker.destroy()
+        } else {
+            log.debug("Worker {} failed to handle client request", worker.id)
+        }
         workerQueue.add(worker)
     } catch (e: Throwable) {
         log.error("Error while working with client: ", e)
+    } finally {
+        clientConnection.close()
     }
 
     override fun run() {
         runBlocking {
             while (true) {
                 log.debug("Master is waiting for clients")
-                val client = connection.receiveClientConnection()
+                val client = connection.receiveClientConnection() ?: continue
                 log.debug("Master received a client connection")
                 launch {
                     handleClient(client)

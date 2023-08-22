@@ -26,7 +26,6 @@ import java.net.URLClassLoader
 import java.nio.file.Files
 import java.nio.file.Paths
 import kotlin.system.exitProcess
-import kotlin.time.Duration
 
 @ExperimentalSerializationApi
 @InternalSerializationApi
@@ -89,7 +88,7 @@ class WorkerLauncherDebug(args: Array<String>) {
 
     fun debug() {
         val worker = ExecutorWorker(ctx, object : Worker2MasterConnection {
-            override fun connect(timeout: Duration): Boolean {
+            override fun connect(): Boolean {
                 return true
             }
             //            {"klass":"org.vorpal.research.kex.test.javadebug.JavaTest_foo_15237490801","testMethod":"test","setupMethod":"setup"}
@@ -105,14 +104,15 @@ class WorkerLauncherDebug(args: Array<String>) {
                 return true
             }
 
-            override fun send(result: ExecutionResult) {
+            override fun send(result: ExecutionResult): Boolean {
                 KexSerializer(ctx.cm, prettyPrint = false).toJson(result)
+                return true
             }
 
             override fun close() {
             }
 
         })
-        worker.run()
+        worker.use { it.run() }
     }
 }

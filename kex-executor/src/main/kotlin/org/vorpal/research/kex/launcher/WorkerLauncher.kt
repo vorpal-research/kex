@@ -88,6 +88,6 @@ class WorkerLauncher(args: Array<String>) {
             ctx,
             Worker2MasterSocketConnection(KexSerializer(ctx.cm, prettyPrint = false), port)
         )
-        worker.run()
+        worker.use { it.run() }
     }
 }

@@ -5,9 +5,9 @@ import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.InternalSerializationApi
 import org.vorpal.research.kex.ExecutionContext
 import org.vorpal.research.kex.config.kexConfig
-import org.vorpal.research.kex.serialization.KexSerializer
 import org.vorpal.research.kex.trace.symbolic.protocol.Client2MasterConnection
-import org.vorpal.research.kex.trace.symbolic.protocol.Client2MasterSocketConnection
+import org.vorpal.research.kex.trace.symbolic.protocol.ControllerProtocolHandler
+import org.vorpal.research.kex.trace.symbolic.protocol.ControllerProtocolSocketHandler
 import org.vorpal.research.kex.trace.symbolic.protocol.ExecutionCompletedResult
 import org.vorpal.research.kex.trace.symbolic.protocol.ExecutionResult
 import org.vorpal.research.kex.trace.symbolic.protocol.ExecutionTimedOutResult
@@ -17,19 +17,15 @@ import org.vorpal.research.kex.util.getJunit
 import org.vorpal.research.kex.util.getJvmModuleParams
 import org.vorpal.research.kex.util.getPathSeparator
 import org.vorpal.research.kex.util.outputDirectory
-import org.vorpal.research.kfg.ClassManager
 import org.vorpal.research.kthelper.logging.log
-import java.net.ServerSocket
 import java.nio.file.Paths
 import kotlin.concurrent.thread
-import kotlin.time.Duration.Companion.seconds
 
 @ExperimentalSerializationApi
 @InternalSerializationApi
 internal object ExecutorMasterController : AutoCloseable {
     private lateinit var process: Process
-    private lateinit var controllerSocket: ServerSocket
-    private val serializers = mutableMapOf<ClassManager, KexSerializer>()
+    private lateinit var controllerSocket: ControllerProtocolHandler
 
     init {
         Runtime.getRuntime().addShutdownHook(thread(start = false) {
@@ -38,7 +34,7 @@ internal object ExecutorMasterController : AutoCloseable {
     }
 
     fun start(ctx: ExecutionContext) {
-        controllerSocket = ServerSocket(0)
+        controllerSocket = ControllerProtocolSocketHandler(ctx)
         val outputDir = kexConfig.outputDirectory
         val executorPath = kexConfig.getPathValue("executor", "executorPath") {
             Paths.get("kex-executor/target/kex-executor-0.0.1-jar-with-dependencies.jar")
@@ -77,7 +73,7 @@ internal object ExecutorMasterController : AutoCloseable {
             executorKlass,
             "--output", "${outputDir.toAbsolutePath()}",
             "--config", "$executorConfigPath",
-            "--port", "${controllerSocket.localPort}",
+            "--port", "${controllerSocket.controllerPort}",
             "--kfgClassPath", kfgClassPath.joinToString(getPathSeparator()),
             "--workerClassPath", workerClassPath.joinToString(getPathSeparator()),
             "--numOfWorkers", "$numberOfWorkers"
@@ -86,13 +82,8 @@ internal object ExecutorMasterController : AutoCloseable {
         process = pb.start()
     }
 
-    fun getClientConnection(ctx: ExecutionContext): Client2MasterConnection {
-        return Client2MasterSocketConnection(serializers.getOrPut(ctx.cm) {
-            KexSerializer(
-                ctx.cm,
-                prettyPrint = false
-            )
-        }, controllerSocket.accept())
+    fun getClientConnection(): Client2MasterConnection? {
+        return controllerSocket.getClient2MasterConnection()
     }
 
     override fun close() {
@@ -102,26 +93,26 @@ internal object ExecutorMasterController : AutoCloseable {
 }
 
 class SymbolicExternalTracingRunner(val ctx: ExecutionContext) {
-    private val timeout = kexConfig.getIntValue("runner", "timeout", 100).seconds
-
     @ExperimentalSerializationApi
     @InternalSerializationApi
     suspend fun run(klass: String, setup: String, test: String): ExecutionResult {
         log.debug("Executing test $klass")
 
-        val connection = ExecutorMasterController.getClientConnection(ctx)
+        val connection = ExecutorMasterController.getClientConnection()
+            ?: return ExecutionTimedOutResult("Connection timeout")
         connection.use {
-            if (!it.connect(timeout)) return ExecutionTimedOutResult("Could not connect")
-            it.send(TestExecutionRequest(klass, test, setup))
+            if (!it.send(TestExecutionRequest(klass, test, setup)))
+                return ExecutionTimedOutResult("Connection timeout")
             while (!it.ready()) {
                 yield()
             }
             val result = it.receive()
             when (result) {
+                null -> log.debug("Connection timeout")
                 is ExecutionCompletedResult -> log.debug("Execution result: {}", result.trace)
                 else -> log.debug("Execution result: {}", result)
             }
-            return result
+            return result ?: ExecutionTimedOutResult("Connection timeout")
         }
     }
 }
