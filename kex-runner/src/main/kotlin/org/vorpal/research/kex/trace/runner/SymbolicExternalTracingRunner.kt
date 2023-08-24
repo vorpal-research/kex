@@ -1,6 +1,6 @@
 package org.vorpal.research.kex.trace.runner
 
-import kotlinx.coroutines.yield
+import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.InternalSerializationApi
 import org.vorpal.research.kex.ExecutionContext
@@ -80,9 +80,12 @@ internal object ExecutorMasterController : AutoCloseable {
         )
         log.debug("Starting executor master process with command: '${pb.command().joinToString(" ")}'")
         process = pb.start()
+        runBlocking {
+            controllerSocket.init()
+        }
     }
 
-    fun getClientConnection(): Client2MasterConnection? {
+    suspend fun getClientConnection(): Client2MasterConnection? {
         return controllerSocket.getClient2MasterConnection()
     }
 
@@ -99,12 +102,14 @@ class SymbolicExternalTracingRunner(val ctx: ExecutionContext) {
         log.debug("Executing test $klass")
 
         val connection = ExecutorMasterController.getClientConnection()
-            ?: return ExecutionTimedOutResult("Connection timeout")
+        if (connection == null) {
+            log.debug("Test $klass executed with result connection timeout")
+            return ExecutionTimedOutResult("Connection timeout")
+        }
         connection.use {
-            if (!it.send(TestExecutionRequest(klass, test, setup)))
+            if (!it.send(TestExecutionRequest(klass, test, setup))) {
+                log.debug("Test $klass executed with result connection timeout")
                 return ExecutionTimedOutResult("Connection timeout")
-            while (!it.ready()) {
-                yield()
             }
             val result = it.receive()
             when (result) {
@@ -112,6 +117,7 @@ class SymbolicExternalTracingRunner(val ctx: ExecutionContext) {
                 is ExecutionCompletedResult -> log.debug("Execution result: {}", result.trace)
                 else -> log.debug("Execution result: {}", result)
             }
+            log.debug("Test {} executed with result {}", klass, result)
             return result ?: ExecutionTimedOutResult("Connection timeout")
         }
     }

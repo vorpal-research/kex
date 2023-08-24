@@ -1,8 +1,9 @@
 package org.vorpal.research.kex.worker
 
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.channels.Channel.Factory.UNLIMITED
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.yield
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.InternalSerializationApi
 import kotlinx.serialization.json.Json
@@ -15,12 +16,11 @@ import org.vorpal.research.kex.trace.symbolic.protocol.Master2WorkerConnection
 import org.vorpal.research.kex.trace.symbolic.protocol.MasterProtocolHandler
 import org.vorpal.research.kex.util.getJvmModuleParams
 import org.vorpal.research.kex.util.getPathSeparator
+import org.vorpal.research.kex.util.newFixedThreadPoolContextWithMDC
 import org.vorpal.research.kex.util.outputDirectory
 import org.vorpal.research.kthelper.logging.log
-import org.vorpal.research.kthelper.tryOrNull
 import java.nio.file.Path
 import java.nio.file.Paths
-import java.util.concurrent.ArrayBlockingQueue
 
 @ExperimentalSerializationApi
 @InternalSerializationApi
@@ -28,19 +28,22 @@ class ExecutorMaster(
     val connection: MasterProtocolHandler,
     val kfgClassPath: List<Path>,
     val workerClassPath: List<Path>,
-    numberOfWorkers: Int
+    private val numberOfWorkers: Int
 ) : Runnable {
+    @Suppress("JoinDeclarationAndAssignment")
     private val workers: List<WorkerWrapper>
-    private val workerQueue = ArrayBlockingQueue<WorkerWrapper>(numberOfWorkers)
+    private val workerQueue = Channel<WorkerWrapper>(UNLIMITED)
     private val outputDir = kexConfig.outputDirectory
-    private val workerJvmParams = kexConfig.getMultipleStringValue("executor", "workerJvmParams", ",").toTypedArray()
-    private val executorPolicyPath = (kexConfig.getPathValue(
+    private val workerJvmParams = kexConfig.getMultipleStringValue(
+        "executor", "workerJvmParams", ","
+    ).toTypedArray()
+    private val executorPolicyPath = kexConfig.getPathValue(
         "executor", "executorPolicyPath"
-    ) ?: Paths.get("kex.policy")).toAbsolutePath()
+    ) { Paths.get("kex.policy") }.toAbsolutePath()
     private val executorKlass = "org.vorpal.research.kex.launcher.WorkerLauncherKt"
-    private val executorConfigPath = (kexConfig.getPathValue(
+    private val executorConfigPath = kexConfig.getPathValue(
         "executor", "executorConfigPath"
-    ) ?: Paths.get("kex.ini")).toAbsolutePath()
+    ) { Paths.get("kex.ini") }.toAbsolutePath()
 
     private val json = Json {
         encodeDefaults = false
@@ -53,7 +56,6 @@ class ExecutorMaster(
 
     init {
         workers = List(numberOfWorkers) { WorkerWrapper(it) }
-        workerQueue.addAll(workers)
     }
 
     inner class WorkerWrapper(val id: Int) {
@@ -64,21 +66,20 @@ class ExecutorMaster(
             reInit()
         }
 
-        private fun reInit() {
-            synchronized(connection) {
-                process = createProcess()
-                if (this::workerConnection.isInitialized)
-                    workerConnection.close()
-                workerConnection = when (val tempConnection = connection.receiveWorkerConnection()) {
-                    null -> {
-                        log.debug("Worker $id connection timeout")
-                        process.destroy()
-                        return
-                    }
-                    else -> tempConnection
+        private fun reInit() = runBlocking {
+            process = createProcess()
+            if (this@WorkerWrapper::workerConnection.isInitialized)
+                workerConnection.close()
+            workerConnection = when (val tempConnection = connection.receiveWorkerConnection()) {
+                null -> {
+                    log.debug("Worker $id connection timeout")
+                    process.destroy()
+                    return@runBlocking
                 }
-                log.debug("Worker $id connected")
+
+                else -> tempConnection
             }
+            log.debug("Worker $id connected")
         }
 
         private fun createProcess(): Process {
@@ -101,7 +102,8 @@ class ExecutorMaster(
             return pb.start()
         }
 
-        fun processTask(clientConnection: Master2ClientConnection): Boolean = tryOrNull {
+        suspend fun processTask(clientConnection: Master2ClientConnection): Boolean {
+            log.debug("Worker {} started work", id)
             while (!process.isAlive)
                 reInit()
 
@@ -109,11 +111,20 @@ class ExecutorMaster(
             log.debug("Worker {} received request {}", id, request)
 
             val result = try {
-                if (!workerConnection.send(request)) {
-                    json.encodeToString(ExecutionTimedOutResult::class.serializer(), ExecutionTimedOutResult("timeout"))
-                } else when (val result = workerConnection.receive()) {
-                    null -> json.encodeToString(ExecutionTimedOutResult::class.serializer(), ExecutionTimedOutResult("timeout"))
-                    else -> result
+                when {
+                    !workerConnection.send(request) -> json.encodeToString(
+                        ExecutionTimedOutResult::class.serializer(),
+                        ExecutionTimedOutResult("timeout")
+                    )
+
+                    else -> when (val result = workerConnection.receive()) {
+                        null -> json.encodeToString(
+                            ExecutionTimedOutResult::class.serializer(),
+                            ExecutionTimedOutResult("timeout")
+                        )
+
+                        else -> result
+                    }
                 }
             } catch (e: Throwable) {
                 process.destroy()
@@ -121,8 +132,8 @@ class ExecutorMaster(
                 json.encodeToString(ExecutionFailedResult::class.serializer(), ExecutionFailedResult(e.message ?: ""))
             }
             log.debug("Worker $id processed result")
-            clientConnection.send(result)
-        } ?: false
+            return clientConnection.send(result)
+        }
 
         fun destroy() {
             workerConnection.close()
@@ -130,15 +141,14 @@ class ExecutorMaster(
         }
     }
 
-    private fun handleClient(clientConnection: Master2ClientConnection) = try {
-        val worker = workerQueue.take()
+    private suspend fun handleClient(clientConnection: Master2ClientConnection) = try {
+        val worker = workerQueue.receive()
         log.debug("Selected a worker ${worker.id}")
         if (!worker.processTask(clientConnection)) {
-            worker.destroy()
-        } else {
             log.debug("Worker {} failed to handle client request", worker.id)
+            worker.destroy()
         }
-        workerQueue.add(worker)
+        workerQueue.send(worker)
     } catch (e: Throwable) {
         log.error("Error while working with client: ", e)
     } finally {
@@ -146,15 +156,26 @@ class ExecutorMaster(
     }
 
     override fun run() {
-        runBlocking {
+        runBlocking(newFixedThreadPoolContextWithMDC(maxOf(1, numberOfWorkers / 2), "master")) {
+            for (worker in workers) {
+                workerQueue.send(worker)
+            }
+
+            val clientChannel = Channel<Master2ClientConnection>(numberOfWorkers)
+
+            launch {
+                while (true) {
+                    val nextClient = clientChannel.receive()
+                    launch { handleClient(nextClient) }
+                }
+            }
+
             while (true) {
                 log.debug("Master is waiting for clients")
                 val client = connection.receiveClientConnection() ?: continue
                 log.debug("Master received a client connection")
-                launch {
-                    handleClient(client)
-                }
-                yield()
+                clientChannel.send(client)
+                log.debug("Master sent a client to handler")
             }
         }
     }
@@ -164,5 +185,4 @@ class ExecutorMaster(
             worker.destroy()
         }
     }
-
 }

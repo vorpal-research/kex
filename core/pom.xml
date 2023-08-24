@@ -16,6 +16,7 @@
         <reflections.version>0.10.2</reflections.version>
         <symkt.version>0.0.0.6</symkt.version>
         <easy-random.version>4.3.0-kex-0.0.3</easy-random.version>
+        <ktor.version>2.3.3</ktor.version>
     </properties>
 
     <dependencies>
@@ -67,6 +68,18 @@
             <groupId>org.jetbrains.kotlinx</groupId>
             <artifactId>kotlinx-serialization-json-jvm</artifactId>
             <version>${serialization.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>io.ktor</groupId>
+            <artifactId>ktor-network-jvm</artifactId>
+            <version>${ktor.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>io.ktor</groupId>
+            <artifactId>ktor-network-tls-jvm</artifactId>
+            <version>${ktor.version}</version>
         </dependency>
 
         <dependency>

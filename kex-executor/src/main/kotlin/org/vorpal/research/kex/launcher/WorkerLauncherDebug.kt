@@ -88,11 +88,11 @@ class WorkerLauncherDebug(args: Array<String>) {
 
     fun debug() {
         val worker = ExecutorWorker(ctx, object : Worker2MasterConnection {
-            override fun connect(): Boolean {
+            override suspend fun connect(): Boolean {
                 return true
             }
             //            {"klass":"org.vorpal.research.kex.test.javadebug.JavaTest_foo_15237490801","testMethod":"test","setupMethod":"setup"}
-            override fun receive(): TestExecutionRequest {
+            override suspend fun receive(): TestExecutionRequest {
                 return TestExecutionRequest(
                     "org.vorpal.research.kex.test.javadebug.JavaTest_foo_15237490801",
                     testMethod = "test",
@@ -100,11 +100,11 @@ class WorkerLauncherDebug(args: Array<String>) {
                 )
             }
 
-            override fun ready(): Boolean {
+            override suspend fun ready(): Boolean {
                 return true
             }
 
-            override fun send(result: ExecutionResult): Boolean {
+            override suspend fun send(result: ExecutionResult): Boolean {
                 KexSerializer(ctx.cm, prettyPrint = false).toJson(result)
                 return true
             }
