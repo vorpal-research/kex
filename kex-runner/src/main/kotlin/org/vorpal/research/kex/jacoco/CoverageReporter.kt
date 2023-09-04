@@ -510,7 +510,12 @@ class CoverageReporter(
     }
 }
 
-fun reportCoverage(containers: List<Container>, cm: ClassManager, analysisLevel: AnalysisLevel) {
+fun reportCoverage(
+    containers: List<Container>,
+    cm: ClassManager,
+    analysisLevel: AnalysisLevel,
+    mode: String
+) {
     if (kexConfig.getBooleanValue("kex", "computeCoverage", true)) {
         val coverageInfo = when {
             kexConfig.getBooleanValue("kex", "computeSaturationCoverage", true) -> {
@@ -532,7 +537,7 @@ fun reportCoverage(containers: List<Container>, cm: ClassManager, analysisLevel:
             coverageInfo.print(kexConfig.getBooleanValue("kex", "printDetailedCoverage", false))
         )
 
-        PermanentCoverageInfo.putNewInfo("concolic", analysisLevel.toString(), coverageInfo)
+        PermanentCoverageInfo.putNewInfo(mode, analysisLevel.toString(), coverageInfo)
         PermanentCoverageInfo.emit()
     }
 }
