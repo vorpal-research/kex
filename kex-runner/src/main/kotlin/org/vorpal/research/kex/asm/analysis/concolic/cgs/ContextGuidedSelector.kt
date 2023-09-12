@@ -56,6 +56,9 @@ class ContextGuidedSelector(
 
     override suspend fun isEmpty(): Boolean = executionTree.isEmpty()
 
+    // mark_7: hasNext checks for states those were not visited. If we don't have one, we take next vertex and take the
+    // list of all possible destinations from this list - and when taking reverse of this destination,
+    // For example: if we took null check predicate, and it returned true, when we're changing this predicate to false
     override suspend fun hasNext(): Boolean = `try` {
         if (states.isNotEmpty()) return true
 

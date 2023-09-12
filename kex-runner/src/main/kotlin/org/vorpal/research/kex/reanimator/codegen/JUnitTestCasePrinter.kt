@@ -4,6 +4,7 @@ import org.vorpal.research.kex.ExecutionContext
 import org.vorpal.research.kex.compile.JavaCompilerDriver
 import org.vorpal.research.kex.config.kexConfig
 import org.vorpal.research.kex.parameters.Parameters
+import org.vorpal.research.kex.reanimator.UnsafeGenerator
 import org.vorpal.research.kex.reanimator.actionsequence.ActionSequence
 import org.vorpal.research.kex.reanimator.codegen.javagen.ActionSequence2JavaPrinter
 import org.vorpal.research.kex.reanimator.codegen.javagen.ExecutorAS2JavaPrinter
@@ -126,8 +127,24 @@ class ExecutorTestCasePrinter(
         printer.printActionSequence(validateString(testName), method, actionSequences)
     }
 
+    fun printWithAssertions(
+            testName: String,
+            method: Method,
+            actionSequences: Parameters<ActionSequence>,
+            previousExecutionResult: UnsafeGenerator.TestCaseResultInfo?
+    ) {
+        printer.printActionSequence(validateString(testName), method, actionSequences, previousExecutionResult)
+    }
+
     fun print(method: Method, actionSequences: Parameters<ActionSequence>) {
         print(TEST_METHOD, method, actionSequences)
+    }
+
+    fun printWithAssertions(
+            method: Method,
+            actionSequences: Parameters<ActionSequence>,
+            previousExecutionResult: UnsafeGenerator.TestCaseResultInfo?) {
+        printWithAssertions(TEST_METHOD, method, actionSequences, previousExecutionResult)
     }
 
     override fun emit() {

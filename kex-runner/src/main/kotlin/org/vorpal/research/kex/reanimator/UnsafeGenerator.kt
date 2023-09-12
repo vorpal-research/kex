@@ -2,6 +2,7 @@ package org.vorpal.research.kex.reanimator
 
 import org.vorpal.research.kex.ExecutionContext
 import org.vorpal.research.kex.asm.state.PredicateStateAnalysis
+import org.vorpal.research.kex.asserter.ExecutionFinalInfo
 import org.vorpal.research.kex.descriptor.Descriptor
 import org.vorpal.research.kex.parameters.Parameters
 import org.vorpal.research.kex.parameters.concreteParameters
@@ -30,6 +31,20 @@ class UnsafeGenerator(
     fun generate(descriptors: Parameters<Descriptor>) = try {
         val sequences = descriptors.actionSequences
         printer.print(method, sequences.rtUnmapped)
+    } catch (e: GenerationException) {
+        log.warn("Generation error when generating action sequences:", e)
+        throw e
+    } catch (e: Exception) {
+        log.warn("Exception when generating action sequences:", e)
+        throw GenerationException(e)
+    } catch (e: Error) {
+        log.warn("Error when generating action sequences:", e)
+        throw GenerationException(e)
+    }
+
+    fun generate(descriptors: Parameters<Descriptor>, prevResultInfo: TestCaseResultInfo?) = try {
+        val sequences = descriptors.actionSequences
+        printer.printWithAssertions(method, sequences.rtUnmapped, prevResultInfo)
     } catch (e: GenerationException) {
         log.warn("Generation error when generating action sequences:", e)
         throw e
@@ -85,4 +100,16 @@ class UnsafeGenerator(
             val staticFields = statics.mapTo(mutableSetOf()) { it.actionSequence }
             return Parameters(thisSequence, argSequences, staticFields)
         }
+
+    fun constructTestCaseResultInfo(executionFinalInfo: ExecutionFinalInfo?): TestCaseResultInfo? {
+        if (executionFinalInfo == null) return null
+        return TestCaseResultInfo(
+                executionFinalInfo.instance?.actionSequence,
+                executionFinalInfo.args.map { it.actionSequence },
+                executionFinalInfo.retValue?.actionSequence
+        )
+    }
+
+    data class TestCaseResultInfo(val instance: ActionSequence?, val args: List<ActionSequence>, val retValue: ActionSequence?)
 }
+

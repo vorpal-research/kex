@@ -1,6 +1,7 @@
 package org.vorpal.research.kex.reanimator.codegen.javagen
 
 import org.vorpal.research.kex.ExecutionContext
+import org.vorpal.research.kex.asserter.ExecutionFinalInfo
 import org.vorpal.research.kex.config.kexConfig
 import org.vorpal.research.kex.ktype.KexBool
 import org.vorpal.research.kex.ktype.KexByte
@@ -13,6 +14,7 @@ import org.vorpal.research.kex.ktype.KexShort
 import org.vorpal.research.kex.ktype.KexType
 import org.vorpal.research.kex.ktype.kexType
 import org.vorpal.research.kex.parameters.Parameters
+import org.vorpal.research.kex.reanimator.UnsafeGenerator
 import org.vorpal.research.kex.reanimator.actionsequence.ActionList
 import org.vorpal.research.kex.reanimator.actionsequence.ActionSequence
 import org.vorpal.research.kex.reanimator.actionsequence.ConstructorCall
@@ -76,9 +78,10 @@ class ExecutorAS2JavaPrinter(
     }
 
     override fun printActionSequence(
-        testName: String,
-        method: org.vorpal.research.kfg.ir.Method,
-        actionSequences: Parameters<ActionSequence>
+            testName: String,
+            method: org.vorpal.research.kfg.ir.Method,
+            actionSequences: Parameters<ActionSequence>,
+            previousExecutionResult: UnsafeGenerator.TestCaseResultInfo?
     ) {
         cleanup()
 
@@ -136,6 +139,43 @@ class ExecutorAS2JavaPrinter(
                             testParams += field(arg.name, fieldType)
                         }
                     }
+
+                    previousExecutionResult?.let { results ->
+                        results.args.forEach { arg ->
+                            val type = when (arg) {
+                                is UnknownSequence -> arg.type
+                                is ActionList -> arg.firstNotNullOfOrNull {
+                                    when (it) {
+                                        is DefaultConstructorCall -> it.klass.asType
+                                        is ConstructorCall -> it.constructor.klass.asType
+                                        is NewArray -> it.asArray
+                                        is ExternalConstructorCall -> it.constructor.returnType
+                                        is ExternalMethodCall -> it.method.returnType
+                                        is InnerClassConstructorCall -> it.constructor.klass.asType
+                                        is EnumValueCreation -> it.klass.asType
+                                        is StaticFieldGetter -> it.field.type
+                                        else -> null
+                                    }
+                                } ?: unreachable { log.error("Unexpected call in arg") }
+
+                                is ReflectionList -> arg.firstNotNullOfOrNull {
+                                    when (it) {
+                                        is ReflectionNewInstance -> it.type
+                                        is ReflectionNewArray -> it.type
+                                        else -> null
+                                    }
+                                } ?: unreachable { log.error("Unexpected call in arg") }
+
+                                is PrimaryValue<*> -> return@forEach
+                                is StringValue -> return@forEach
+                                else -> unreachable { log.error("Unexpected call in arg") }
+                            }
+                            val fieldType = type.kexType.primitiveName?.let { type(it) } ?: type("Object")
+                            if (testParams.all { it.name != arg.name }) {
+                                testParams += field(arg.name, fieldType)
+                            }
+                        }
+                    }
                 }
 
                 current = if (generateSetup) method(setupName) {
@@ -157,6 +197,9 @@ class ExecutorAS2JavaPrinter(
             }
             for (cs in actionSequences.asList)
                 cs.printAsJava()
+
+            previousExecutionResult?.args?.forEach { it.printAsJava() }
+
             if (surroundInTryCatch) statement("} catch (Throwable e) {}")
         }
 
@@ -175,7 +218,7 @@ class ExecutorAS2JavaPrinter(
 
         with(current) {
             if (surroundInTryCatch) statement("try {")
-            printTestCall(method, actionSequences)
+            printTestCall(method, actionSequences, previousExecutionResult)
             if (surroundInTryCatch) statement("} catch (Throwable e) {}")
         }
     }
@@ -196,7 +239,8 @@ class ExecutorAS2JavaPrinter(
 
     private fun printTestCall(
         method: org.vorpal.research.kfg.ir.Method,
-        actionSequences: Parameters<ActionSequence>
+        actionSequences: Parameters<ActionSequence>,
+        previousExecutionResult: UnsafeGenerator.TestCaseResultInfo?
     ) =
         with(current) {
             +"Class<?> klass = Class.forName(\"${method.klass.canonicalDesc}\")"
@@ -212,6 +256,12 @@ class ExecutorAS2JavaPrinter(
                 method.isConstructor -> "${reflectionUtils.callConstructor.name}(klass, argTypes, args)"
                 else -> "${reflectionUtils.callMethod.name}(klass, \"${method.name}\", argTypes, ${actionSequences.instance?.name}, args)"
             }
+            previousExecutionResult?.args?.let { args ->
+                for ((i, arg) in actionSequences.arguments.withIndex()) {
+                    +"assert(${arg.stackName} == ${args[i].stackName})"
+                }
+            }
+
         }
 
     override fun printConstructorCall(owner: ActionSequence, call: ConstructorCall): List<String> {

@@ -20,11 +20,7 @@ import org.vorpal.research.kex.smt.Result
 import org.vorpal.research.kex.state.IncrementalPredicateState
 import org.vorpal.research.kex.state.PredicateQuery
 import org.vorpal.research.kex.state.term.term
-import org.vorpal.research.kex.state.transformer.SymbolicStateForwardSlicer
-import org.vorpal.research.kex.state.transformer.collectArguments
-import org.vorpal.research.kex.state.transformer.generateInitialDescriptors
-import org.vorpal.research.kex.state.transformer.generateInitialDescriptorsAndAA
-import org.vorpal.research.kex.state.transformer.toTypeMap
+import org.vorpal.research.kex.state.transformer.*
 import org.vorpal.research.kex.trace.symbolic.SymbolicState
 import org.vorpal.research.kfg.ir.Method
 import org.vorpal.research.kthelper.logging.debug
@@ -62,10 +58,14 @@ suspend fun Method.checkAsync(
         .filterValues { it.isJavaRt }
         .mapValues { it.value.rtMapped }
         .toTypeMap()
+    // mark_8: the result is the SAT model that finds the solution for the list of clauses (clauses + query)
     val result = checker.prepareAndCheck(this, clauses + query, concreteTypeInfo, enableInlining)
     if (result !is Result.SatResult) {
         return null
     }
+
+    val finalState = generateFinalDescriptors(this, ctx, result.model, checker.state)
+    log.debug(finalState)
 
     return try {
         generateInitialDescriptors(this, ctx, result.model, checker.state)
@@ -73,7 +73,7 @@ suspend fun Method.checkAsync(
                 log.debug { "Generated params:\n$it" }
             }
             .filterStaticFinals(ctx.cm)
-            .filterIgnoredStatic()
+            .filterIgnoredStatic().also { log.debug(finalState) }
     } catch (e: Throwable) {
         log.error("Error during descriptor generation: ", e)
         null

@@ -3,37 +3,12 @@ package org.vorpal.research.kex.reanimator.codegen.javagen
 import org.vorpal.research.kex.ExecutionContext
 import org.vorpal.research.kex.asm.util.Visibility
 import org.vorpal.research.kex.asm.util.accessModifier
+import org.vorpal.research.kex.asserter.ExecutionFinalInfo
 import org.vorpal.research.kex.config.kexConfig
 import org.vorpal.research.kex.ktype.KexType
 import org.vorpal.research.kex.parameters.Parameters
-import org.vorpal.research.kex.reanimator.actionsequence.ActionList
-import org.vorpal.research.kex.reanimator.actionsequence.ActionSequence
-import org.vorpal.research.kex.reanimator.actionsequence.ArrayWrite
-import org.vorpal.research.kex.reanimator.actionsequence.CodeAction
-import org.vorpal.research.kex.reanimator.actionsequence.ConstructorCall
-import org.vorpal.research.kex.reanimator.actionsequence.DefaultConstructorCall
-import org.vorpal.research.kex.reanimator.actionsequence.EnumValueCreation
-import org.vorpal.research.kex.reanimator.actionsequence.ExternalConstructorCall
-import org.vorpal.research.kex.reanimator.actionsequence.ExternalMethodCall
-import org.vorpal.research.kex.reanimator.actionsequence.FieldSetter
-import org.vorpal.research.kex.reanimator.actionsequence.InnerClassConstructorCall
-import org.vorpal.research.kex.reanimator.actionsequence.MethodCall
-import org.vorpal.research.kex.reanimator.actionsequence.NewArray
-import org.vorpal.research.kex.reanimator.actionsequence.NewArrayWithInitializer
-import org.vorpal.research.kex.reanimator.actionsequence.PrimaryValue
-import org.vorpal.research.kex.reanimator.actionsequence.ReflectionArrayWrite
-import org.vorpal.research.kex.reanimator.actionsequence.ReflectionCall
-import org.vorpal.research.kex.reanimator.actionsequence.ReflectionList
-import org.vorpal.research.kex.reanimator.actionsequence.ReflectionNewArray
-import org.vorpal.research.kex.reanimator.actionsequence.ReflectionNewInstance
-import org.vorpal.research.kex.reanimator.actionsequence.ReflectionSetField
-import org.vorpal.research.kex.reanimator.actionsequence.ReflectionSetStaticField
-import org.vorpal.research.kex.reanimator.actionsequence.StaticFieldGetter
-import org.vorpal.research.kex.reanimator.actionsequence.StaticFieldSetter
-import org.vorpal.research.kex.reanimator.actionsequence.StaticMethodCall
-import org.vorpal.research.kex.reanimator.actionsequence.StringValue
-import org.vorpal.research.kex.reanimator.actionsequence.TestCall
-import org.vorpal.research.kex.reanimator.actionsequence.UnknownSequence
+import org.vorpal.research.kex.reanimator.UnsafeGenerator
+import org.vorpal.research.kex.reanimator.actionsequence.*
 import org.vorpal.research.kex.reanimator.codegen.ActionSequencePrinter
 import org.vorpal.research.kex.util.getConstructor
 import org.vorpal.research.kex.util.getMethod
@@ -131,7 +106,8 @@ open class ActionSequence2JavaPrinter(
     override fun printActionSequence(
         testName: String,
         method: org.vorpal.research.kfg.ir.Method,
-        actionSequences: Parameters<ActionSequence>
+        actionSequences: Parameters<ActionSequence>,
+        previousExecutionResult: UnsafeGenerator.TestCaseResultInfo?
     ) {
         cleanup()
         val actionSequence = buildMethodCall(method, actionSequences)
@@ -394,6 +370,8 @@ open class ActionSequence2JavaPrinter(
             is StringValue -> listOf<String>().also {
                 asConstant
             }
+
+            is AssertActionSequence -> listOf(this.print())
         }
         with(current) {
             for (statement in statements)

@@ -1,5 +1,8 @@
 package org.vorpal.research.kex.reanimator.actionsequence
 
+import org.vorpal.research.kex.asserter.ExecutionExceptionFinalInfo
+import org.vorpal.research.kex.asserter.ExecutionFinalInfo
+import org.vorpal.research.kex.asserter.ExecutionSuccessFinalInfo
 import org.vorpal.research.kex.descriptor.Descriptor
 import org.vorpal.research.kex.descriptor.DescriptorRtMapper
 import org.vorpal.research.kex.ktype.KexRtManager
@@ -14,6 +17,26 @@ import org.vorpal.research.kthelper.collection.queueOf
 import org.vorpal.research.kthelper.logging.log
 import ru.spbstu.wheels.mapToArray
 
+class AssertActionSequence(val descriptor1: Descriptor, val descriptor2: Descriptor) : ActionSequence("assert") {
+    override fun print(): String = "assert(${descriptor1.term.name} == ${descriptor2.term.name})"
+
+    override fun print(builder: StringBuilder, visited: MutableSet<ActionSequence>) {
+        if (this in visited) return
+        visited += this
+        builder.appendLine(print())
+    }
+
+    override fun clone(): ActionSequence = this
+
+}
+
+fun ExecutionFinalInfo.toAssertionActionSequences(other: ExecutionFinalInfo): List<ActionSequence> = when(this) {
+    is ExecutionSuccessFinalInfo -> {
+        if (other !is ExecutionSuccessFinalInfo) throw IllegalArgumentException("")
+        listOf()
+    }
+    is ExecutionExceptionFinalInfo -> listOf()
+}
 
 sealed class ActionSequence(val name: String) {
     open val isConstantValue: Boolean get() = false
@@ -419,7 +442,7 @@ data class ReflectionSetField(val field: Field, val value: ActionSequence) : Ref
 
     override fun print(owner: ActionSequence, builder: StringBuilder, visited: MutableSet<ActionSequence>) {
         value.print(builder, visited)
-        builder.appendLine("setField(${owner.name}, ${field.name}, $value")
+        builder.appendLine("setField(${owner.name}, ${field.name}, $value)")
     }
 }
 
@@ -455,6 +478,7 @@ class ActionSequenceRtMapper(private val mode: KexRtManager.Mode) {
     private val cache = mutableMapOf<ActionSequence, ActionSequence>()
 
     fun map(ct: ActionSequence): ActionSequence = when (ct) {
+        is AssertActionSequence -> ct
         is PrimaryValue<*> -> ct
         is StringValue -> ct
         is UnknownSequence -> {

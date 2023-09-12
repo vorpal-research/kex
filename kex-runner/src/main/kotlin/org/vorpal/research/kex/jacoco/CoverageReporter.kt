@@ -39,6 +39,7 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.attribute.BasicFileAttributes
 import java.util.*
+import java.util.stream.Collectors
 import kotlin.io.path.exists
 import kotlin.io.path.inputStream
 import kotlin.io.path.name
@@ -240,7 +241,7 @@ class CoverageReporter(
         cm: ClassManager,
         analysisLevel: AnalysisLevel,
     ): CommonCoverageInfo {
-        val testClasses = Files.walk(compileDir).filter { it.isClass }.toList()
+        val testClasses = Files.walk(compileDir).filter { it.isClass }.collect(Collectors.toList())
         val result = when (analysisLevel) {
             is PackageLevel -> {
                 val classes = Files.walk(jacocoInstrumentedDir)
@@ -251,7 +252,7 @@ class CoverageReporter(
                                 .asmString
                         )
                     }
-                    .toList()
+                    .collect(Collectors.toList())
                 val coverageBuilder = getCoverageBuilder(classes, testClasses)
                 getPackageCoverage(analysisLevel.pkg, cm, coverageBuilder)
             }
@@ -303,7 +304,7 @@ class CoverageReporter(
         cm: ClassManager,
         analysisLevel: AnalysisLevel,
     ): SortedMap<Duration, CommonCoverageInfo> {
-        val testClasses = Files.walk(compileDir).filter { it.isClass }.toList()
+        val testClasses = Files.walk(compileDir).filter { it.isClass }.collect(Collectors.toList())
         val batchedTestClasses = testClasses.batchByTime()
         val maxTime = batchedTestClasses.lastKey()
         return when (analysisLevel) {
@@ -316,7 +317,7 @@ class CoverageReporter(
                                 .asmString
                         )
                     }
-                    .toList()
+                    .collect(Collectors.toList())
                 batchedTestClasses.mapValues { (duration, batchedTests) ->
                     log.debug("Running tests for batch {} / {}", duration.inWholeSeconds, maxTime.inWholeSeconds)
                     val coverageBuilder = getCoverageBuilder(classes, batchedTests, logProgress = false)
