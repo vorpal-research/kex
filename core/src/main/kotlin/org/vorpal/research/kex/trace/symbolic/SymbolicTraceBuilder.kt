@@ -294,6 +294,16 @@ class SymbolicTraceBuilder(
                     else descriptor { const(true) }
                 }
 
+                type is KexByte && this.type == KexClass(SystemTypeNames.integerClass) -> {
+                    val value = this["value", KexInt]!! as ConstantDescriptor.Int
+                    descriptor { const(value.value.toByte()) }
+                }
+
+                type is KexShort && this.type == KexClass(SystemTypeNames.integerClass) -> {
+                    val value = this["value", KexInt]!! as ConstantDescriptor.Int
+                    descriptor { const(value.value.toShort()) }
+                }
+
                 type is KexInt && this.type == KexClass(SystemTypeNames.booleanClass) -> {
                     val value = this["value", KexBool]!! as ConstantDescriptor.Bool
                     if (value.value) descriptor { const(1) }
