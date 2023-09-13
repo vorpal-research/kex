@@ -1130,7 +1130,7 @@ class SymbolicTraceBuilder(
         val kfgValue = parseValue(value)
         val termValue = mkValue(kfgValue)
 
-        val intValue = concreteValue as Int
+        val intValue = numericValue(concreteValue).toInt()
         termValue.updateInfo(kfgValue, concreteValue.getAsDescriptor(termValue.type))
 
         val predicate = path(instruction.location) {
