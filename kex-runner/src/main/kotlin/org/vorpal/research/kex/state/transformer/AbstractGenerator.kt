@@ -44,10 +44,13 @@ interface AbstractGenerator<T> : Transformer<AbstractGenerator<T>> {
     var thisTerm: Term?
     val argTerms: MutableMap<Int, Term>
     val staticFieldOwners: MutableSet<Term>
+    val allTerms: MutableSet<Term>
+        get() = memory.keys
 
     val instance get() = thisTerm?.let { memory[it] }
     val args get() = argTerms.map { memory[it.value] }
     val staticFields get() = staticFieldOwners.mapTo(mutableSetOf()) { memory[it]!! }
+    val allValues get() = allTerms.mapTo(mutableSetOf()) { memory[it]!! } // TODO check is !! correct
 
     fun generateThis() = thisTerm?.let {
         memory[it] = modelReanimator.reanimate(it)
@@ -56,6 +59,18 @@ interface AbstractGenerator<T> : Transformer<AbstractGenerator<T>> {
     fun generateArgs() = argTerms.values.forEach { term ->
         reanimateTerm(term)
     }
+
+
+    fun generateOtherTerms() {
+        hashSetOf<Term>().apply {
+            addAll(model.assignments.keys)
+            addAll(model.assignments.values)
+            model.arrays.values.forEach { addAll(it.keys) }
+            addAll(model.typeMap.keys)
+        }
+            .forEach { term -> reanimateTerm(term) }
+    }
+
 
     fun reanimateTerm(term: Term): T? = memory.getOrPut(term) {
         modelReanimator.reanimate(term)
@@ -81,6 +96,8 @@ interface AbstractGenerator<T> : Transformer<AbstractGenerator<T>> {
         }
         generateThis()
         generateArgs()
+//         TODO generateOther
+//        generateOtherTerms()
         return instance to args
     }
 

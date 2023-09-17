@@ -16,9 +16,10 @@ import kotlin.random.Random
 data class Parameters<T>(
     val instance: T?,
     val arguments: List<T>,
-    val statics: Set<T> = setOf()
+    val statics: Set<T> = setOf(),
+    val others: Set<T> = setOf()
 ) {
-    val asList get() = listOfNotNull(instance) + arguments + statics
+    val asList get() = listOfNotNull(instance) + arguments + statics + others
 
     override fun toString(): String = buildString {
         appendLine("instance: $instance")
@@ -26,6 +27,9 @@ data class Parameters<T>(
             appendLine("args: ${arguments.joinToString("\n")}")
         if (statics.isNotEmpty())
             appendLine("statics: ${statics.joinToString("\n")}")
+        if (others.isNotEmpty()) {
+            appendLine("others: ${others.joinToString("\n")}")
+        }
     }
 }
 
@@ -35,7 +39,8 @@ val Parameters<Any?>.asDescriptors: Parameters<Descriptor>
         return Parameters(
             context.convert(instance),
             arguments.map { context.convert(it) },
-            statics.mapTo(mutableSetOf()) { context.convert(it) }
+            statics.mapTo(mutableSetOf()) { context.convert(it) },
+            others.mapTo(mutableSetOf()) { context.convert(it) }
         )
     }
 
@@ -46,7 +51,8 @@ fun Parameters<Descriptor>.concreteParameters(
 ) = Parameters(
     instance?.concretize(cm, accessLevel, random),
     arguments.map { it.concretize(cm, accessLevel, random) },
-    statics.mapTo(mutableSetOf()) { it.concretize(cm, accessLevel, random) }
+    statics.mapTo(mutableSetOf()) { it.concretize(cm, accessLevel, random) },
+    others.mapTo(mutableSetOf()) { it.concretize(cm, accessLevel, random) }
 )
 
 fun Parameters<Descriptor>.filterStaticFinals(cm: ClassManager): Parameters<Descriptor> {
@@ -64,7 +70,7 @@ fun Parameters<Descriptor>.filterStaticFinals(cm: ClassManager): Parameters<Desc
                 else -> null
             }
         }
-    return Parameters(instance, arguments, filteredStatics)
+    return Parameters(instance, arguments, filteredStatics, others)
 }
 
 private val ignoredStatics: Set<Package> by lazy {
@@ -84,7 +90,7 @@ fun Parameters<Descriptor>.filterIgnoredStatic(): Parameters<Descriptor> {
                 !ignored.isParent(typeName)
             }
         }
-    return Parameters(instance, arguments, filteredStatics)
+    return Parameters(instance, arguments, filteredStatics, others)
 }
 
 

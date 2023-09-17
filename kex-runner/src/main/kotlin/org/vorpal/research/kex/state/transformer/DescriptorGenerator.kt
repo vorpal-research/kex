@@ -50,12 +50,21 @@ class DescriptorGenerator(
                 is ConstantDescriptor.Float -> this.value
                 is ConstantDescriptor.Double -> this.value
             }
+
             else -> this
         }
 
     override fun checkPath(path: Predicate): Boolean = when (path) {
-        is EqualityPredicate -> checkTerms(path.lhv, path.rhv) { a, b -> a.numericValue == b.numericValue }
-        is InequalityPredicate -> checkTerms(path.lhv, path.rhv) { a, b -> a.numericValue != b.numericValue }
+        is EqualityPredicate -> checkTerms(
+            path.lhv,
+            path.rhv
+        ) { a, b -> a.numericValue == b.numericValue }
+
+        is InequalityPredicate -> checkTerms(
+            path.lhv,
+            path.rhv
+        ) { a, b -> a.numericValue != b.numericValue }
+
         is DefaultSwitchPredicate -> {
             val lhv = path.cond
             val conditions = path.cases
@@ -63,6 +72,7 @@ class DescriptorGenerator(
             val condValues = conditions.map { (it as ConstIntTerm).value }
             lhvValue !in condValues
         }
+
         else -> unreachable { log.error("Unexpected predicate in path: $path") }
     }
 }
@@ -133,7 +143,8 @@ fun generateInitialDescriptors(
         generator.args.mapIndexed { index, arg ->
             arg ?: descriptor { default(method.argTypes[index].kexType) }
         },
-        generator.staticFields
+        generator.staticFields,
+        generator.allValues
     )
 }
 
@@ -150,6 +161,7 @@ fun generateInitialDescriptorsAndAA(
         generator.args.mapIndexed { index, arg ->
             arg ?: descriptor { default(method.argTypes[index].kexType) }
         },
-        generator.staticFields
+        generator.staticFields,
+        generator.allValues
     ) to SMTModelALiasAnalysis(generator)
 }

@@ -35,7 +35,8 @@ val Parameters<Descriptor>.rtMapped: Parameters<Descriptor>
         val instance = instance?.let { mapper.map(it) }
         val args = arguments.map { mapper.map(it) }
         val statics = statics.mapTo(mutableSetOf()) { mapper.map(it) }
-        return Parameters(instance, args, statics)
+        val others = others.mapTo(mutableSetOf()) { mapper.map(it) }
+        return Parameters(instance, args, statics, others)
     }
 
 val Parameters<ActionSequence>.rtUnmapped: Parameters<ActionSequence>
@@ -44,7 +45,8 @@ val Parameters<ActionSequence>.rtUnmapped: Parameters<ActionSequence>
         val instance = instance?.let { mapper.map(it) }
         val args = arguments.map { mapper.map(it) }
         val statics = statics.mapTo(mutableSetOf()) { mapper.map(it) }
-        return Parameters(instance, args, statics)
+        val others = others.mapTo(mutableSetOf()) { mapper.map(it) }
+        return Parameters(instance, args, statics, others)
     }
 
 class Reanimator(
@@ -65,7 +67,12 @@ class Reanimator(
         method.klassName
     )
 
-    override fun generate(testName: String, method: Method, state: PredicateState, model: SMTModel) = try {
+    override fun generate(
+        testName: String,
+        method: Method,
+        state: PredicateState,
+        model: SMTModel
+    ) = try {
         val descriptors = generateFinalDescriptors(method, ctx, model, state)
             .filterStaticFinals(cm)
             .filterIgnoredStatic()

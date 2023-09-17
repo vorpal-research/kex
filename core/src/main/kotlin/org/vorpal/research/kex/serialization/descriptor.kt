@@ -10,13 +10,7 @@ import kotlinx.serialization.descriptors.element
 import kotlinx.serialization.encoding.CompositeDecoder
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
-import org.vorpal.research.kex.descriptor.ArrayDescriptor
-import org.vorpal.research.kex.descriptor.ClassDescriptor
-import org.vorpal.research.kex.descriptor.ConstantDescriptor
-import org.vorpal.research.kex.descriptor.Descriptor
-import org.vorpal.research.kex.descriptor.FieldContainingDescriptor
-import org.vorpal.research.kex.descriptor.ObjectDescriptor
-import org.vorpal.research.kex.descriptor.descriptor
+import org.vorpal.research.kex.descriptor.*
 import org.vorpal.research.kex.ktype.KexArray
 import org.vorpal.research.kex.ktype.KexClass
 import org.vorpal.research.kex.ktype.KexType
@@ -169,6 +163,7 @@ private fun Descriptor.toWrapper(visited: MutableMap<Id, DescriptorWrapper>) {
                 field.toWrapper(visited)
             }
         }
+        is MockDescriptor -> TODO ("not implemented")
     }
 }
 

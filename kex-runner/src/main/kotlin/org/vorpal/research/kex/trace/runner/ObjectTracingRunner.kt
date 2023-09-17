@@ -78,7 +78,10 @@ class ReanimatingRandomObjectTracingRunner(
 
     private val Parameters<Any?>.descriptors
         get() = with(Object2DescriptorConverter()) {
-            Parameters(convert(instance), arguments.map { convert(it) }, statics.mapTo(mutableSetOf()) { convert(it) })
+            Parameters(convert(instance),
+                arguments.map { convert(it) },
+                statics.mapTo(mutableSetOf()) { convert(it) },
+                others.mapTo(mutableSetOf()) { convert(it) })
         }
 
     override fun generateArguments(): Parameters<Any?>? {
@@ -87,14 +90,14 @@ class ReanimatingRandomObjectTracingRunner(
             log.error("Cannot generate parameters to invoke method $method")
             return null
         }
-        val parameters = Parameters(randomInstance, randomArgs.toList(), setOf())
+        val parameters = Parameters(randomInstance, randomArgs.toList(), setOf(), setOf())
         val (instance, args) = with(reanimator) {
             val descriptors = parameters.descriptors
             val callStacks = descriptors.actionSequences
             printer.print("test_$testCounter", method, callStacks)
             callStacks.executed
         }
-        return Parameters(instance, args, setOf())
+        return Parameters(instance, args, setOf(), setOf())
     }
 
     fun emit() {
