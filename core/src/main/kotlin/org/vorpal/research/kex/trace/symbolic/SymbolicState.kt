@@ -282,7 +282,7 @@ abstract class SymbolicState {
     operator fun get(term: Term) = termMap.getValue(term)
 
     fun isEmpty() = clauses.state.isEmpty()
-    fun isNotEmpty() = clauses.state.isEmpty()
+    fun isNotEmpty() = clauses.state.isNotEmpty()
 
     override fun toString() = clauses.joinToString("\n") { it.predicate.toString() }
 
