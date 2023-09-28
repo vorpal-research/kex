@@ -1,5 +1,6 @@
 package org.vorpal.research.kex.asm.analysis.util
 
+import com.jetbrains.rd.util.printlnError
 import kotlinx.collections.immutable.toPersistentList
 import kotlinx.coroutines.TimeoutCancellationException
 import org.vorpal.research.kex.ExecutionContext
@@ -19,12 +20,10 @@ import org.vorpal.research.kex.smt.AsyncIncrementalChecker
 import org.vorpal.research.kex.smt.Result
 import org.vorpal.research.kex.state.IncrementalPredicateState
 import org.vorpal.research.kex.state.PredicateQuery
+import org.vorpal.research.kex.state.predicate.CallPredicate
+import org.vorpal.research.kex.state.term.Term
 import org.vorpal.research.kex.state.term.term
-import org.vorpal.research.kex.state.transformer.SymbolicStateForwardSlicer
-import org.vorpal.research.kex.state.transformer.collectArguments
-import org.vorpal.research.kex.state.transformer.generateInitialDescriptors
-import org.vorpal.research.kex.state.transformer.generateInitialDescriptorsAndAA
-import org.vorpal.research.kex.state.transformer.toTypeMap
+import org.vorpal.research.kex.state.transformer.*
 import org.vorpal.research.kex.trace.symbolic.SymbolicState
 import org.vorpal.research.kfg.ir.Method
 import org.vorpal.research.kthelper.logging.debug
@@ -49,6 +48,28 @@ suspend fun Method.analyzeOrTimeout(
     }
 }
 
+fun funcCalls(
+    state: SymbolicState,
+    termToDescriptor: Map<Term, Descriptor>
+): List<Pair<CallPredicate, Descriptor?>> {
+    return state.clauses
+        .asSequence()
+        .map { clause -> clause.predicate }
+        .filter { predicate -> predicate.type.name == "S" }
+        .filterIsInstance<CallPredicate>()
+        .map { predicate ->
+            val term = predicate.lhv
+            predicate to termToDescriptor[term]
+                .also { descriptor ->
+                    if (descriptor == null) {
+                        log.debug { "Error. No descriptor for $term, type: ${term.type}" }
+                        printlnError("Error. No descriptor for $term, type: ${term.type}")
+                    }
+                }
+        }
+        .toList()
+}
+
 suspend fun Method.checkAsync(
     ctx: ExecutionContext,
     state: SymbolicState,
@@ -68,7 +89,16 @@ suspend fun Method.checkAsync(
     }
 
     return try {
-        generateInitialDescriptors(this, ctx, result.model, checker.state)
+        val (initialDescriptors, termToDescriptor) = generateInitialDescriptors(
+            this,
+            ctx,
+            result.model,
+            checker.state
+        )
+        val funcCalls = funcCalls(state, termToDescriptor)
+        print(funcCalls)
+
+        initialDescriptors
             .concreteParameters(ctx.cm, ctx.accessLevel, ctx.random).also {
                 log.debug { "Generated params:\n$it" }
             }
@@ -108,9 +138,10 @@ suspend fun Method.checkAsyncAndSlice(
             .filterIgnoredStatic()
 
         val (thisTerm, argTerms) = collectArguments(checker.state)
-        val termParams = Parameters(thisTerm, this@checkAsyncAndSlice.argTypes.mapIndexed { index, type ->
-            argTerms[index] ?: term { arg(type.kexType, index) }
-        })
+        val termParams =
+            Parameters(thisTerm, this@checkAsyncAndSlice.argTypes.mapIndexed { index, type ->
+                argTerms[index] ?: term { arg(type.kexType, index) }
+            })
 
         filteredParams to ConstraintExceptionPrecondition(
             termParams,
@@ -152,7 +183,7 @@ suspend fun Method.checkAsyncIncremental(
         when (result) {
             is Result.SatResult -> try {
                 val fullPS = checker.state + checker.queries[index].hardConstraints
-                generateInitialDescriptors(this, ctx, result.model, fullPS)
+                generateInitialDescriptors(this, ctx, result.model, fullPS).first
                     .concreteParameters(ctx.cm, ctx.accessLevel, ctx.random).also {
                         log.debug { "Generated params:\n$it" }
                     }

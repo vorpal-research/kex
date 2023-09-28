@@ -135,7 +135,7 @@ fun generateInitialDescriptors(
     ctx: ExecutionContext,
     model: SMTModel,
     state: PredicateState
-): Parameters<Descriptor> {
+): Pair<Parameters<Descriptor>, Map<Term, Descriptor>> {
     val generator = DescriptorGenerator(method, ctx, model, InitialDescriptorReanimator(model, ctx))
     generator.apply(state)
     return Parameters(
@@ -144,9 +144,9 @@ fun generateInitialDescriptors(
             arg ?: descriptor { default(method.argTypes[index].kexType) }
         },
         generator.staticFields,
-        generator.allValues
-    )
+    ) to generator.memory
 }
+
 
 fun generateInitialDescriptorsAndAA(
     method: Method,
@@ -162,6 +162,6 @@ fun generateInitialDescriptorsAndAA(
             arg ?: descriptor { default(method.argTypes[index].kexType) }
         },
         generator.staticFields,
-        generator.allValues
+//        generator.allValues
     ) to SMTModelALiasAnalysis(generator)
 }
