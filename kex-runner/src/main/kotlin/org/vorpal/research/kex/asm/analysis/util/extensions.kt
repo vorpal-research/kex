@@ -1,6 +1,5 @@
 package org.vorpal.research.kex.asm.analysis.util
 
-import com.jetbrains.rd.util.printlnError
 import kotlinx.collections.immutable.toPersistentList
 import kotlinx.coroutines.TimeoutCancellationException
 import org.vorpal.research.kex.ExecutionContext
@@ -11,10 +10,7 @@ import org.vorpal.research.kex.descriptor.Descriptor
 import org.vorpal.research.kex.ktype.KexRtManager.isJavaRt
 import org.vorpal.research.kex.ktype.KexRtManager.rtMapped
 import org.vorpal.research.kex.ktype.kexType
-import org.vorpal.research.kex.parameters.Parameters
-import org.vorpal.research.kex.parameters.concreteParameters
-import org.vorpal.research.kex.parameters.filterIgnoredStatic
-import org.vorpal.research.kex.parameters.filterStaticFinals
+import org.vorpal.research.kex.parameters.*
 import org.vorpal.research.kex.smt.AsyncChecker
 import org.vorpal.research.kex.smt.AsyncIncrementalChecker
 import org.vorpal.research.kex.smt.Result
@@ -48,10 +44,10 @@ suspend fun Method.analyzeOrTimeout(
     }
 }
 
-fun funcCalls(
+fun methodCalls(
     state: SymbolicState,
     termToDescriptor: Map<Term, Descriptor>
-): List<Pair<CallPredicate, Descriptor?>> {
+): List<Pair<CallPredicate, Descriptor>> {
     return state.clauses
         .asSequence()
         .map { clause -> clause.predicate }
@@ -59,14 +55,12 @@ fun funcCalls(
         .filterIsInstance<CallPredicate>()
         .map { predicate ->
             val term = predicate.lhv
-            predicate to termToDescriptor[term]
-                .also { descriptor ->
-                    if (descriptor == null) {
-                        log.debug { "Error. No descriptor for $term, type: ${term.type}" }
-                        printlnError("Error. No descriptor for $term, type: ${term.type}")
-                    }
-                }
+            val descriptor = termToDescriptor[term]
+            if (descriptor == null) log.debug { "Error. No descriptor for $term, type: ${term.type}\n" }
+            predicate to descriptor
         }
+        .filter { (_, value) -> value != null }
+        .map { (call, value) -> call to value!! }
         .toList()
 }
 
@@ -88,6 +82,7 @@ suspend fun Method.checkAsync(
         return null
     }
 
+
     return try {
         val (initialDescriptors, termToDescriptor) = generateInitialDescriptors(
             this,
@@ -95,10 +90,18 @@ suspend fun Method.checkAsync(
             result.model,
             checker.state
         )
-        val funcCalls = funcCalls(state, termToDescriptor)
-        print(funcCalls)
+        val methodCalls = methodCalls(state, termToDescriptor)
+//        println(methodCalls)
 
-        initialDescriptors
+        val withMocks = initialDescriptors.generateMocks(
+            methodCalls,
+            termToDescriptor.toMutableMap(),
+            ctx.cm,
+            ctx.accessLevel
+        )
+        assert(initialDescriptors == withMocks)
+        withMocks
+//            initialDescriptors
             .concreteParameters(ctx.cm, ctx.accessLevel, ctx.random).also {
                 log.debug { "Generated params:\n$it" }
             }
@@ -124,18 +127,25 @@ suspend fun Method.checkAsyncAndSlice(
         .filterValues { it.isJavaRt }
         .mapValues { it.value.rtMapped }
         .toTypeMap()
-    val result = checker.prepareAndCheck(this, clauses + query, concreteTypeInfo, enableInlining)
+    val result =
+        checker.prepareAndCheck(this, clauses + query, concreteTypeInfo, enableInlining)
     if (result !is Result.SatResult) {
         return null
     }
 
     return try {
-        val (params, aa) = generateInitialDescriptorsAndAA(this, ctx, result.model, checker.state)
-        val filteredParams = params.concreteParameters(ctx.cm, ctx.accessLevel, ctx.random).also {
-            log.debug { "Generated params:\n$it" }
-        }
-            .filterStaticFinals(ctx.cm)
-            .filterIgnoredStatic()
+        val (params, aa) = generateInitialDescriptorsAndAA(
+            this,
+            ctx,
+            result.model,
+            checker.state
+        )
+        val filteredParams =
+            params.concreteParameters(ctx.cm, ctx.accessLevel, ctx.random).also {
+                log.debug { "Generated params:\n$it" }
+            }
+                .filterStaticFinals(ctx.cm)
+                .filterIgnoredStatic()
 
         val (thisTerm, argTerms) = collectArguments(checker.state)
         val termParams =
@@ -173,7 +183,8 @@ suspend fun Method.checkAsyncIncremental(
         this,
         IncrementalPredicateState(
             clauses + query,
-            queries.map { PredicateQuery(it.clauses.asState() + it.path.asState()) }.toPersistentList()
+            queries.map { PredicateQuery(it.clauses.asState() + it.path.asState()) }
+                .toPersistentList()
         ),
         concreteTypeInfo,
         enableInlining
@@ -220,7 +231,8 @@ suspend fun Method.checkAsyncIncrementalAndSlice(
         this,
         IncrementalPredicateState(
             clauses + query,
-            queries.map { PredicateQuery(it.clauses.asState() + it.path.asState()) }.toPersistentList()
+            queries.map { PredicateQuery(it.clauses.asState() + it.path.asState()) }
+                .toPersistentList()
         ),
         concreteTypeInfo,
         enableInlining
@@ -230,11 +242,17 @@ suspend fun Method.checkAsyncIncrementalAndSlice(
         when (result) {
             is Result.SatResult -> try {
                 val fullPS = (checker.state + checker.queries[index].hardConstraints).simplify()
-                val (params, aa) = generateInitialDescriptorsAndAA(this, ctx, result.model, fullPS)
-                val filteredParams = params.concreteParameters(ctx.cm, ctx.accessLevel, ctx.random)
-                    .also { log.debug { "Generated params:\n$it" } }
-                    .filterStaticFinals(ctx.cm)
-                    .filterIgnoredStatic()
+                val (params, aa) = generateInitialDescriptorsAndAA(
+                    this,
+                    ctx,
+                    result.model,
+                    fullPS
+                )
+                val filteredParams =
+                    params.concreteParameters(ctx.cm, ctx.accessLevel, ctx.random)
+                        .also { log.debug { "Generated params:\n$it" } }
+                        .filterStaticFinals(ctx.cm)
+                        .filterIgnoredStatic()
 
                 val (thisTerm, argTerms) = collectArguments(fullPS)
                 val termParams = Parameters(
@@ -246,7 +264,10 @@ suspend fun Method.checkAsyncIncrementalAndSlice(
 
                 filteredParams to ConstraintExceptionPrecondition(
                     termParams,
-                    SymbolicStateForwardSlicer(termParams.asList.toSet(), aa).apply(state + queries[index])
+                    SymbolicStateForwardSlicer(
+                        termParams.asList.toSet(),
+                        aa
+                    ).apply(state + queries[index])
                 )
             } catch (e: Throwable) {
                 log.error("Error during descriptor generation: ", e)
