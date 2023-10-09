@@ -12,12 +12,11 @@ import org.vorpal.research.kex.trace.symbolic.protocol.ExecutionCompletedResult
 import org.vorpal.research.kex.trace.symbolic.protocol.ExecutionResult
 import org.vorpal.research.kex.trace.symbolic.protocol.ExecutionTimedOutResult
 import org.vorpal.research.kex.trace.symbolic.protocol.TestExecutionRequest
-import org.vorpal.research.kex.util.getIntrinsics
-import org.vorpal.research.kex.util.getJunit
 import org.vorpal.research.kex.util.getJvmModuleParams
 import org.vorpal.research.kex.util.getPathSeparator
 import org.vorpal.research.kex.util.outputDirectory
 import org.vorpal.research.kthelper.logging.log
+import ru.spbstu.wheels.mapToArray
 import java.nio.file.Paths
 import kotlin.concurrent.thread
 
@@ -48,18 +47,11 @@ internal object ExecutorMasterController : AutoCloseable {
         }.toAbsolutePath()
         val masterJvmParams = kexConfig.getMultipleStringValue("executor", "masterJvmParams", ",").toTypedArray()
         val numberOfWorkers = kexConfig.getIntValue("executor", "numberOfWorkers", 1)
-        val instrumentedCodeDir = outputDir.resolve(
-            kexConfig.getStringValue("output", "instrumentedDir", "instrumented")
-        ).toAbsolutePath()
-        val compiledCodeDir = outputDir.resolve(
-            kexConfig.getStringValue("compile", "compileDir", "compiled")
-        ).toAbsolutePath()
         val workerClassPath = listOfNotNull(
             executorPath,
-            instrumentedCodeDir,
-            compiledCodeDir,
-            getIntrinsics()?.path,
-            getJunit()?.path
+            // this is really stupid, but currently required
+            // because EasyRandom can generate some objects that are only available in kex-runner classpath
+            *System.getProperty("java.class.path").split(getPathSeparator()).mapToArray { Paths.get(it) }
         )
 
         val kfgClassPath = ctx.classPath

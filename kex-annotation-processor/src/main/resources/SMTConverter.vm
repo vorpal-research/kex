@@ -81,6 +81,15 @@ class ${solver}Converter(
         return resultExpr
     }
 
+    private fun buildTypeAxioms(ef: Factory_, typeVar: Bitvector_, subTypeMask: Bitvector_): Bool_ {
+        val bvZero = ef.makeBitvectorConst("0", 2, ef.typeWidth)
+        val bvOne = ef.makeBitvectorConst("1", 2, ef.typeWidth)
+        val isPowerOfTwo = (typeVar and (typeVar - bvOne)) eq bvZero
+        val isSubtype = (typeVar and subTypeMask) eq typeVar
+        val isGreaterThanZero = typeVar neq ef.makeBitvectorConst("0", 2, ef.typeWidth)
+        return isSubtype and isPowerOfTwo and isGreaterThanZero
+    }
+
     private fun Term.withInitialAxioms(expr: Dynamic_, ef: Factory_, ctx: Context_): Dynamic_ {
         if (this in axiomedTerms) return expr
         var resultExpr = expr
@@ -91,10 +100,7 @@ class ${solver}Converter(
                 val kfgType = this.type.getKfgType(executionContext.types)
                 var typeCond: Bool_? = null
                 if (kfgType.isConcrete && kfgType !is NullType) {
-                    val isPowerOfTwo = (typeVar and (typeVar - ef.makeBitvectorConst("1", 2, ef.typeWidth))) eq ef.makeBitvectorConst("0", 2, ef.typeWidth)
-                    val isSubtype = (typeVar and ef.getSubTypeMask(kfgType)) eq typeVar
-                    val isGreaterThanZero = typeVar neq ef.makeBitvectorConst("0", 2, ef.typeWidth)
-                    typeCond = isSubtype and isPowerOfTwo and isGreaterThanZero
+                    typeCond = buildTypeAxioms(ef, typeVar, ef.getSubTypeMask(kfgType))
                 }
                 typeCond?.apply {
                     resultExpr = resultExpr.withAxiom((expr neq ef.makeNull()) implies this)
@@ -116,7 +122,7 @@ class ${solver}Converter(
                                             val array = ctx.readArrayInitialMemory(expr, this.memspace)
                                             val element = array.load(Int_.forceCast(index))
                                             val elementTypeVar = ctx.readBitvectorInitialProperty(Ptr_.forceCast(element), this.memspace, "type")
-                                            (elementTypeVar and componentTypeVar) eq elementTypeVar
+                                            buildTypeAxioms(ef, elementTypeVar, componentTypeVar)
                                         })
                                         .`else`(
                                             ef.makeTrue()
@@ -146,10 +152,7 @@ class ${solver}Converter(
                 val kfgType = this.type.getKfgType(executionContext.types)
                 var typeCond: Bool_? = null
                 if (kfgType.isConcrete && kfgType !is NullType) {
-                    val isPowerOfTwo = (typeVar and (typeVar - ef.makeBitvectorConst("1", 2, ef.typeWidth))) eq ef.makeBitvectorConst("0", 2, ef.typeWidth)
-                    val isSubtype = (typeVar and ef.getSubTypeMask(kfgType)) eq typeVar
-                    val isGreaterThanZero = typeVar neq ef.makeBitvectorConst("0", 2, ef.typeWidth)
-                    typeCond = isSubtype and isPowerOfTwo and isGreaterThanZero
+                    typeCond = buildTypeAxioms(ef, typeVar, ef.getSubTypeMask(kfgType))
                 }
                 typeCond?.apply {
                     resultExpr = resultExpr.withAxiom((expr neq ef.makeNull()) implies this)
@@ -171,7 +174,7 @@ class ${solver}Converter(
                                             val array = ctx.readArrayMemory(expr, this.memspace)
                                             val element = array.load(Int_.forceCast(index))
                                             val elementTypeVar = ctx.readBitvectorProperty(Ptr_.forceCast(element), this.memspace, "type")
-                                            (elementTypeVar and componentTypeVar) eq elementTypeVar
+                                            buildTypeAxioms(ef, elementTypeVar, componentTypeVar)
                                         })
                                         .`else`(
                                             ef.makeTrue()
@@ -307,6 +310,7 @@ class ${solver}Converter(
             ?: unreachable { log.error("Non-ptr ref term in `initializer`") }
         val index = Int_.forceCast(convert(indexTerm.index, ef, ctx))
         val value = convert(store.value, ef, ctx)
+        val length = ctx.readWordProperty(ptr, memspace, "length")
 
         var array = ctx.readArrayMemory(ptr, memspace)
 
@@ -316,7 +320,13 @@ class ${solver}Converter(
 
         array = array.store(listOf(index to DWord_.forceCast(value)))
         ctx.writeArrayMemory(ptr, memspace, array)
-        return ptr.axiomExpr() and value.axiomExpr() and arrayLoad.withAxioms(cast(elementType, previousValue), ef, ctx).axiomExpr()
+        return ptr.axiomExpr() and
+                value.axiomExpr() and
+                arrayLoad
+                    .withAxioms(cast(elementType, previousValue), ef, ctx)
+                    .withAxiom(index ge ef.makeIntConst(0))
+                    .withAxiom(index lt length)
+                    .axiomExpr()
     }
 
     fun convert(call: CallPredicate, ef: Factory_, ctx: Context_): Bool_ = when {
@@ -588,10 +598,13 @@ class ${solver}Converter(
         val ptr = convert(indexTerm.arrayRef, ef, ctx) as? Ptr_
             ?: unreachable { log.error("Non-ptr ref term in `initializer`") }
         val index = Int_.forceCast(convert(indexTerm.index, ef, ctx))
+        val length = ctx.readWordProperty(ptr, memspace, "length")
 
         val array = ctx.readArrayMemory(ptr, memspace)
         val ret = array.load(index)
         return cast(arrayload.type, ret)
+            .withAxiom(index ge ef.makeIntConst(0))
+            .withAxiom(index lt length)
     }
 
     fun convert(binary: BinaryTerm, ef: Factory_, ctx: Context_): Dynamic_ {

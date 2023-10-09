@@ -2,11 +2,12 @@ package org.vorpal.research.kex.reanimator.actionsequence
 
 import org.vorpal.research.kex.ExecutionContext
 import org.vorpal.research.kex.config.kexConfig
+import org.vorpal.research.kex.util.asArray
 import org.vorpal.research.kex.util.getConstructor
 import org.vorpal.research.kex.util.getFieldByName
-import org.vorpal.research.kex.util.loadClass
 import org.vorpal.research.kex.util.getMethod
 import org.vorpal.research.kex.util.isFinal
+import org.vorpal.research.kex.util.loadClass
 import org.vorpal.research.kex.util.runWithTimeout
 import org.vorpal.research.kthelper.assert.unreachable
 import org.vorpal.research.kthelper.logging.error
@@ -196,6 +197,8 @@ class ActionSequenceExecutor(val ctx: ExecutionContext) {
                         val fieldReflect = reflection.getDeclaredField(call.field.name)
                         fieldReflect.get(null)
                     }
+                    is ClassConstantGetter -> ctx.loader.loadClass(call.type)
+                    is ArrayClassConstantGetter -> (execute(call.elementType) as Class<*>).asArray()
                 }
             }
             else -> log.error { "Unexpected type of action sequence in executor: $actionSequence" }

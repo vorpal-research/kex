@@ -4,6 +4,7 @@ package org.vorpal.research.kex.trace.symbolic
 
 import org.vorpal.research.kex.ExecutionContext
 import org.vorpal.research.kex.asm.state.asTermExpr
+import org.vorpal.research.kex.asm.transform.SymbolicTraceInstrumenter
 import org.vorpal.research.kex.descriptor.ConstantDescriptor
 import org.vorpal.research.kex.descriptor.Descriptor
 import org.vorpal.research.kex.descriptor.Object2DescriptorConverter
@@ -225,8 +226,16 @@ class SymbolicTraceBuilder(
         SymbolicTraceException("", it)
     }
 
+    private val Instruction.nextOriginal: Instruction? get() {
+        var current = this.next ?: return null
+        while (current.location == SymbolicTraceInstrumenter.SYMBOLIC_TRACE_LOCATION) {
+            current = current.next ?: return null
+        }
+        return current
+    }
+
     private fun addToCallTrace(call: CallInst) {
-        callStack.push(CallFrame(call, call.next!!))
+        callStack.push(CallFrame(call, call.nextOriginal!!))
     }
 
     private fun popFromCallTrace() {
