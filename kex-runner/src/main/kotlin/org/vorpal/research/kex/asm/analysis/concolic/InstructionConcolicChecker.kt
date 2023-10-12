@@ -14,12 +14,12 @@ import org.vorpal.research.kex.asm.analysis.concolic.cgs.ContextGuidedSelector
 import org.vorpal.research.kex.asm.analysis.concolic.gui.GUIProxySelector
 import org.vorpal.research.kex.asm.analysis.util.analyzeOrTimeout
 import org.vorpal.research.kex.asm.analysis.util.checkAsync
-import org.vorpal.research.kex.asserter.extractFinalInfo
 import org.vorpal.research.kex.compile.CompilerHelper
 import org.vorpal.research.kex.config.kexConfig
 import org.vorpal.research.kex.descriptor.Descriptor
 import org.vorpal.research.kex.parameters.Parameters
 import org.vorpal.research.kex.parameters.asDescriptors
+import org.vorpal.research.kex.reanimator.ExecutionFinalInfoGenerator
 import org.vorpal.research.kex.reanimator.UnsafeGenerator
 import org.vorpal.research.kex.reanimator.codegen.ExecutorTestCasePrinter
 import org.vorpal.research.kex.reanimator.codegen.klassName
@@ -29,6 +29,7 @@ import org.vorpal.research.kex.trace.runner.generateParameters
 import org.vorpal.research.kex.trace.symbolic.SymbolicState
 import org.vorpal.research.kex.trace.symbolic.protocol.ExecutionCompletedResult
 import org.vorpal.research.kex.trace.symbolic.protocol.ExecutionResult
+import org.vorpal.research.kex.trace.symbolic.protocol.SuccessResult
 import org.vorpal.research.kex.util.newFixedThreadPoolContextWithMDC
 import org.vorpal.research.kfg.ClassManager
 import org.vorpal.research.kfg.ir.Method
@@ -111,15 +112,19 @@ class InstructionConcolicChecker(
         val testFile = generator.emit()
 
         compilerHelper.compileFile(testFile)
-        collectTrace(generator.testKlassName)
-        /*val result = collectTrace(generator.testKlassName)
-        val generator2 = UnsafeGenerator(ctx, method, method.klassName + testIndex.getAndIncrement())
-        val testResult = generator2.constructTestCaseResultInfo(result.extractFinalInfo())
-        generator2.generate(parameters, testResult)
-        val testFile2 = generator2.emit()
+        val result = collectTrace(generator.testKlassName)
+
+        val executionFinalInfoGenerator = ExecutionFinalInfoGenerator(ctx, method)
+        val testWithAssertionsGenerator = UnsafeGenerator(ctx, method, method.klassName + testIndex.getAndIncrement())
+        val finalInfoDescriptors = executionFinalInfoGenerator.extractFinalInfo(result)
+        val finalInfoActionSequences = finalInfoDescriptors?.let {
+            executionFinalInfoGenerator.generateFinalInfoActionSequences(it)
+        }
+        testWithAssertionsGenerator.generate(parameters, finalInfoActionSequences)
+        val testFile2 = testWithAssertionsGenerator.emit()
 
         compilerHelper.compileFile(testFile2)
-        collectTrace(generator2.testKlassName)*/
+        collectTrace(testWithAssertionsGenerator.testKlassName)
     }
 
     private suspend fun collectTrace(klassName: String): ExecutionResult {
@@ -175,6 +180,9 @@ class InstructionConcolicChecker(
             yield()
 
             val newState = check(method, state) ?: continue
+            if (newState is SuccessResult) {
+                log.debug(newState)
+            }
             when (newState) {
                 is ExecutionCompletedResult -> when {
                     newState.trace.isEmpty() -> log.warn { "Collected empty state from $state" }

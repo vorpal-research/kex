@@ -28,23 +28,9 @@ class UnsafeGenerator(
     private val printer = ExecutorTestCasePrinter(ctx, method.packageName, testName)
     val testKlassName = printer.fullKlassName
 
-    fun generate(descriptors: Parameters<Descriptor>) = try {
+    fun generate(descriptors: Parameters<Descriptor>, prevResultInfo: ExecutionFinalInfo<ActionSequence>? = null) = try {
         val sequences = descriptors.actionSequences
-        printer.print(method, sequences.rtUnmapped)
-    } catch (e: GenerationException) {
-        log.warn("Generation error when generating action sequences:", e)
-        throw e
-    } catch (e: Exception) {
-        log.warn("Exception when generating action sequences:", e)
-        throw GenerationException(e)
-    } catch (e: Error) {
-        log.warn("Error when generating action sequences:", e)
-        throw GenerationException(e)
-    }
-
-    fun generate(descriptors: Parameters<Descriptor>, prevResultInfo: TestCaseResultInfo?) = try {
-        val sequences = descriptors.actionSequences
-        printer.printWithAssertions(method, sequences.rtUnmapped, prevResultInfo)
+        printer.print(method, sequences.rtUnmapped, prevResultInfo)
     } catch (e: GenerationException) {
         log.warn("Generation error when generating action sequences:", e)
         throw e
@@ -101,15 +87,5 @@ class UnsafeGenerator(
             return Parameters(thisSequence, argSequences, staticFields)
         }
 
-    fun constructTestCaseResultInfo(executionFinalInfo: ExecutionFinalInfo?): TestCaseResultInfo? {
-        if (executionFinalInfo == null) return null
-        return TestCaseResultInfo(
-                executionFinalInfo.instance?.actionSequence,
-                executionFinalInfo.args.map { it.actionSequence },
-                executionFinalInfo.retValue?.actionSequence
-        )
-    }
-
-    data class TestCaseResultInfo(val instance: ActionSequence?, val args: List<ActionSequence>, val retValue: ActionSequence?)
 }
 

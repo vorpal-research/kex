@@ -79,7 +79,7 @@ open class ActionSequence2KotlinPrinter(
         testName: String,
         method: org.vorpal.research.kfg.ir.Method,
         actionSequences: Parameters<ActionSequence>,
-        previousExecutionResult: UnsafeGenerator.TestCaseResultInfo?
+        executionFinalInfo: ExecutionFinalInfo<ActionSequence>?
     ) {
         resolvedTypes.clear()
         actualTypes.clear()

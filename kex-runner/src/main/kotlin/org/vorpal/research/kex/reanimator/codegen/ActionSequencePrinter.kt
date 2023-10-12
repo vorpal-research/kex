@@ -14,7 +14,7 @@ interface ActionSequencePrinter {
             testName: String,
             method: Method,
             actionSequences: Parameters<ActionSequence>,
-            previousExecutionResult: UnsafeGenerator.TestCaseResultInfo? = null
+            executionFinalInfo: ExecutionFinalInfo<ActionSequence>? = null
     )
 
     fun emit(): String

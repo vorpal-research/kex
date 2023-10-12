@@ -30,14 +30,6 @@ class AssertActionSequence(val descriptor1: Descriptor, val descriptor2: Descrip
 
 }
 
-fun ExecutionFinalInfo.toAssertionActionSequences(other: ExecutionFinalInfo): List<ActionSequence> = when(this) {
-    is ExecutionSuccessFinalInfo -> {
-        if (other !is ExecutionSuccessFinalInfo) throw IllegalArgumentException("")
-        listOf()
-    }
-    is ExecutionExceptionFinalInfo -> listOf()
-}
-
 sealed class ActionSequence(val name: String) {
     open val isConstantValue: Boolean get() = false
 
