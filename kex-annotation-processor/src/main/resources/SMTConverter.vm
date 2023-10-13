@@ -320,13 +320,14 @@ class ${solver}Converter(
 
         array = array.store(listOf(index to DWord_.forceCast(value)))
         ctx.writeArrayMemory(ptr, memspace, array)
-        return ptr.axiomExpr() and
-                value.axiomExpr() and
-                arrayLoad
-                    .withAxioms(cast(elementType, previousValue), ef, ctx)
-                    .withAxiom(index ge ef.makeIntConst(0))
-                    .withAxiom(index lt length)
-                    .axiomExpr()
+        return ptr.axiomExpr() and value.axiomExpr() and arrayLoad.withAxioms(cast(elementType, previousValue), ef, ctx).axiomExpr()
+##        return ptr.axiomExpr() and
+##                value.axiomExpr() and
+##                arrayLoad
+##                    .withAxioms(cast(elementType, previousValue), ef, ctx)
+##                    .withAxiom(index ge ef.makeIntConst(0))
+##                    .withAxiom(index lt length)
+##                    .axiomExpr()
     }
 
     fun convert(call: CallPredicate, ef: Factory_, ctx: Context_): Bool_ = when {
@@ -603,8 +604,8 @@ class ${solver}Converter(
         val array = ctx.readArrayMemory(ptr, memspace)
         val ret = array.load(index)
         return cast(arrayload.type, ret)
-            .withAxiom(index ge ef.makeIntConst(0))
-            .withAxiom(index lt length)
+##            .withAxiom(index ge ef.makeIntConst(0))
+##            .withAxiom(index lt length)
     }
 
     fun convert(binary: BinaryTerm, ef: Factory_, ctx: Context_): Dynamic_ {

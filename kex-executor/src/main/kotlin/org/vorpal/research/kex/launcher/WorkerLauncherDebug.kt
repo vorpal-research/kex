@@ -109,7 +109,7 @@ class WorkerLauncherDebug(args: Array<String>) {
 
             override suspend fun receive(): TestExecutionRequest {
                 return TestExecutionRequest(
-                    "com.alibaba.fastjson.serializer.BooleanCodec_write_15528590783",
+                    "org.vorpal.research.kex.test.concolic.ListConcolicTests_testLinkedList_17887373691",
                     testMethod = "test",
                     setupMethod = "setup"
                 )
