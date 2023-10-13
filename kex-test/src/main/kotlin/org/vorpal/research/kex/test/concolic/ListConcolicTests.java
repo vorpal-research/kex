@@ -9,29 +9,17 @@ public class ListConcolicTests {
 
     int innerValue = 10;
 
-    public Point firstTestFunction(Point point) {
-        String x = "BBBBBB";
-        Point a = new Point(7, 13);
-        Point b = new Point(13, 7);
-        if (point.x > point.y) a = b;
-        else a = point;
-        if (x != "bbb") b = a;
-        else a = b;
-        return b;
+    public String firstTestFunction(String x) {
+        if (x.contains("\n")) throw new IllegalStateException();
+        String y = x + "\n";
+        if (y.contains("\t")) throw new IllegalStateException();
+        return y;
     }
 
-    public String secondTestFunction() {
-        String a = "AAAAAAAA";
-        return a;
-    }
-
-    public Point thirdTestFunction(Point point) {
-        Point b;
-        if (point.x > innerValue) b = new Point(innerValue, point.x);
-        else b = new Point(point.y, innerValue);
-        Point c = new Point(b.y, b.x);
-        return b;
-    }
+    /*public Integer secondTestFunction() {
+        if (innerValue == -2) throw new IllegalStateException();
+        return innerValue;
+    }*/
 
     public static int testArrayList(ArrayList<Point> points) {
         points.get(0).x = 5;
@@ -40,12 +28,10 @@ public class ListConcolicTests {
         else return points.get(0).y;
     }
 
-    public static Point testLinkedList(LinkedList<Point> points) {
-        if (points.size() != 0) return points.get(0);
-        return null;
-        /*if (points.get(0).getX() == 10) {
+    public static void testLinkedList(LinkedList<Point> points) {
+        if (points.get(0).getX() == 10) {
             throw new IllegalStateException();
-        }*/
+        }
     }
 
     public static void testArrayListIterator(ArrayList<Character> chars) {

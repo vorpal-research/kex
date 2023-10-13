@@ -151,11 +151,11 @@ class ExecutorAS2JavaPrinter(
                 current = if (generateSetup) method(setupName) {
                     returnType = void
                     annotations += "Before"
-                    exceptions += exceptionClassName ?: "Throwable"
+                    exceptions += "Throwable"
                 } else method(testName) {
                     returnType = void
                     annotations += "Test"
-                    exceptions += "Throwable"
+                    exceptions += exceptionClassName ?: "Throwable"
                 }
             }
         }
@@ -180,7 +180,7 @@ class ExecutorAS2JavaPrinter(
                     current = method(testName) {
                         returnType = void
                         annotations += "Test"
-                        exceptions += "Throwable"
+                        exceptions += exceptionClassName ?: "Throwable"
                     }
                 }
             }
