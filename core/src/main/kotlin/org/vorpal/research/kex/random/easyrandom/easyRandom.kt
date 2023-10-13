@@ -15,21 +15,27 @@ import org.vorpal.research.kex.config.kexConfig
 import org.vorpal.research.kex.random.GenerationException
 import org.vorpal.research.kex.random.Randomizer
 import org.vorpal.research.kex.random.UnknownTypeException
+import org.vorpal.research.kex.util.KfgTargetFilter
+import org.vorpal.research.kex.util.asmString
 import org.vorpal.research.kex.util.isAbstract
 import org.vorpal.research.kex.util.isPublic
 import org.vorpal.research.kex.util.isStatic
-import org.vorpal.research.kfg.Package
 import org.vorpal.research.kthelper.assert.ktassert
+import org.vorpal.research.kthelper.assert.unreachable
 import org.vorpal.research.kthelper.logging.log
 import org.vorpal.research.kthelper.tryOrNull
+import java.lang.reflect.Array
 import java.lang.reflect.Field
+import java.lang.reflect.GenericArrayType
 import java.lang.reflect.ParameterizedType
 import java.lang.reflect.Type
 import java.lang.reflect.TypeVariable
 import java.lang.reflect.WildcardType
 import java.net.URLClassLoader
 
-class EasyRandomDriver(val config: BeansConfig = defaultConfig) : Randomizer() {
+class EasyRandomDriver(
+    val config: BeansConfig = defaultConfig
+) : Randomizer() {
     companion object {
 
         data class BeansConfig(
@@ -38,7 +44,7 @@ class EasyRandomDriver(val config: BeansConfig = defaultConfig) : Randomizer() {
             val collectionSize: IntRange,
             val stringLength: IntRange,
             val attempts: Int,
-            val excludes: Set<Package>,
+            val excludes: Set<KfgTargetFilter>,
             val ignoreErrors: Boolean,
             val bypassSetters: Boolean,
             val ignoreFieldInitializationErrors: Boolean
@@ -53,7 +59,7 @@ class EasyRandomDriver(val config: BeansConfig = defaultConfig) : Randomizer() {
             val maxStringLength = kexConfig.getIntValue("easy-random", "maxStringLength", 1000)
             val attempts = kexConfig.getIntValue("easy-random", "generationAttempts", 1)
             val excludes = kexConfig.getMultipleStringValue("easy-random", "exclude")
-                .mapTo(mutableSetOf()) { Package.parse(it) }
+                .mapTo(mutableSetOf()) { KfgTargetFilter.parse(it) }
             val ignoreErrors = kexConfig.getBooleanValue("easy-random", "ignoreErrors", true)
             val bypassSetters = kexConfig.getBooleanValue("easy-random", "bypassSetters", true)
             val ignoreFieldInitializationErrors =
@@ -74,7 +80,7 @@ class EasyRandomDriver(val config: BeansConfig = defaultConfig) : Randomizer() {
 
     private val Class<*>.shouldBeExcluded: Boolean
         get() {
-            return config.excludes.any { it.isParent(Package.parse(name)) }
+            return config.excludes.any { it.matches(name.asmString) }
         }
 
     private inner class KexReflectionFacade : ReflectionFacade {
@@ -86,9 +92,10 @@ class EasyRandomDriver(val config: BeansConfig = defaultConfig) : Randomizer() {
                 Reflections(
                     ConfigurationBuilder()
                         .addUrls(
-                            (type.classLoader as? URLClassLoader)?.urLs?.toList() ?: emptyList()
+                            *(type.classLoader as? URLClassLoader)?.urLs ?: emptyArray()
                         )
                         .addClassLoaders(type.classLoader)
+                        .setParallel(false)
                 )
             }
         } ?: defaultReflections
@@ -96,7 +103,6 @@ class EasyRandomDriver(val config: BeansConfig = defaultConfig) : Randomizer() {
         override fun <T : Any> getPublicConcreteSubTypesOf(type: Class<T>): List<Class<*>> {
             return getReflections(type).getSubTypesOf(type).filter { it.isPublic && !it.isAbstract }
         }
-
     }
 
     private inner class KexObjectFactory : ObjectFactory {
@@ -248,9 +254,27 @@ class EasyRandomDriver(val config: BeansConfig = defaultConfig) : Randomizer() {
         return next(bounds.first(), depth)
     }
 
+    private fun getRawType(type: Type): Class<*> = when (type) {
+        is Class<*> -> type
+        is ParameterizedType -> getRawType(type.rawType)
+        is GenericArrayType -> Array.newInstance(getRawType(type.genericComponentType), 0).javaClass
+        is TypeVariable<*> -> getRawType(type.bounds.first())
+        is WildcardType -> getRawType(type.upperBounds.first())
+        else -> unreachable { log.error("Unknown type $type") }
+    }
+
     private fun generateType(type: Type, depth: Int): Any? = when (type) {
         is Class<*> -> generateClass(type)
         is ParameterizedType -> generateParameterized(type, depth)
+        is GenericArrayType -> {
+            val length = config.collectionSize.random()
+            val elementType = getRawType(type.genericComponentType)
+            val array = Array.newInstance(elementType, length)
+            for (i in 0 until length) {
+                Array.set(array, i, generateType(type.genericComponentType, depth + 1))
+            }
+            array
+        }
         is TypeVariable<*> -> generateTypeVariable(type, depth)
         is WildcardType -> {
             assert(type.upperBounds.size == 1) { log.debug("Unexpected size of wildcard type upper bounds: {}", type) }

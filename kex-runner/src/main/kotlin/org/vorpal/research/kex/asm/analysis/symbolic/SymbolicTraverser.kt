@@ -28,6 +28,7 @@ import org.vorpal.research.kex.state.predicate.inverse
 import org.vorpal.research.kex.state.predicate.path
 import org.vorpal.research.kex.state.predicate.state
 import org.vorpal.research.kex.state.term.ConstClassTerm
+import org.vorpal.research.kex.state.term.NullTerm
 import org.vorpal.research.kex.state.term.StaticClassRefTerm
 import org.vorpal.research.kex.state.term.Term
 import org.vorpal.research.kex.state.term.TermBuilder
@@ -270,6 +271,12 @@ abstract class SymbolicTraverser(
         val arrayTerm = traverserState.mkTerm(inst.arrayRef)
         val indexTerm = traverserState.mkTerm(inst.index)
         val res = generate(inst.type.symbolicType)
+
+        if (arrayTerm is NullTerm) {
+            checkReachabilityIncremental(traverserState, nullabilityCheckInc(traverserState, inst, arrayTerm))
+            return null
+        }
+
         val clause = StateClause(inst, state { res equality arrayTerm[indexTerm].load() })
 
         val nullQueries = nullabilityCheckInc(traverserState, inst, arrayTerm)
@@ -295,6 +302,12 @@ abstract class SymbolicTraverser(
         val arrayTerm = traverserState.mkTerm(inst.arrayRef)
         val indexTerm = traverserState.mkTerm(inst.index)
         val valueTerm = traverserState.mkTerm(inst.value)
+
+        if (arrayTerm is NullTerm) {
+            checkReachabilityIncremental(traverserState, nullabilityCheckInc(traverserState, inst, arrayTerm))
+            return null
+        }
+
         val clause = StateClause(inst, state { arrayTerm[indexTerm].store(valueTerm) })
 
         val nullQueries = nullabilityCheckInc(traverserState, inst, arrayTerm)
@@ -488,6 +501,12 @@ abstract class SymbolicTraverser(
             inst.isStatic -> staticRef(field.klass)
             else -> traverserState.mkTerm(inst.owner)
         }
+
+        if (objectTerm is NullTerm) {
+            checkReachabilityIncremental(traverserState, nullabilityCheckInc(traverserState, inst, objectTerm))
+            return null
+        }
+
         val res = generate(inst.type.symbolicType)
         val clause = StateClause(
             inst,
@@ -523,6 +542,12 @@ abstract class SymbolicTraverser(
             inst.isStatic -> staticRef(inst.field.klass)
             else -> traverserState.mkTerm(inst.owner)
         }
+
+        if (objectTerm is NullTerm) {
+            checkReachabilityIncremental(traverserState, nullabilityCheckInc(traverserState, inst, objectTerm))
+            return null
+        }
+
         val valueTerm = traverserState.mkTerm(inst.value)
         val clause = StateClause(
             inst,

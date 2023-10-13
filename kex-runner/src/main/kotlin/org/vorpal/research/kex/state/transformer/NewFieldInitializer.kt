@@ -29,7 +29,7 @@ class NewFieldInitializer(
         fields = TermCollector { it is FieldTerm }
             .also { it.apply(ps) }
             .terms
-            .mapNotNullTo(hashSetOf()) { tryOrNull { (it as FieldTerm).unmappedKfgField(ctx.cm) } }
+            .mapNotNullTo(mutableSetOf()) { tryOrNull { (it as FieldTerm).unmappedKfgField(ctx.cm) } }
         return super.apply(ps)
     }
 

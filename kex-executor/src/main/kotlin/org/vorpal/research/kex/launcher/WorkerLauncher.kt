@@ -3,6 +3,7 @@ package org.vorpal.research.kex.launcher
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.InternalSerializationApi
 import org.vorpal.research.kex.ExecutionContext
+import org.vorpal.research.kex.asm.transform.SymbolicTraceInstrumenter
 import org.vorpal.research.kex.config.FileConfig
 import org.vorpal.research.kex.config.RuntimeConfig
 import org.vorpal.research.kex.config.WorkerCmdConfig
@@ -10,7 +11,10 @@ import org.vorpal.research.kex.config.kexConfig
 import org.vorpal.research.kex.random.easyrandom.EasyRandomDriver
 import org.vorpal.research.kex.serialization.KexSerializer
 import org.vorpal.research.kex.trace.symbolic.protocol.Worker2MasterSocketConnection
+import org.vorpal.research.kex.util.KfgClassLoader
+import org.vorpal.research.kex.util.compiledCodeDirectory
 import org.vorpal.research.kex.util.getIntrinsics
+import org.vorpal.research.kex.util.getJunit
 import org.vorpal.research.kex.util.getPathSeparator
 import org.vorpal.research.kex.util.getRuntime
 import org.vorpal.research.kex.worker.ExecutorWorker
@@ -19,8 +23,6 @@ import org.vorpal.research.kfg.KfgConfig
 import org.vorpal.research.kfg.container.asContainer
 import org.vorpal.research.kfg.util.Flags
 import org.vorpal.research.kthelper.logging.log
-import ru.spbstu.wheels.mapToArray
-import java.net.URLClassLoader
 import java.nio.file.Files
 import java.nio.file.Paths
 import kotlin.system.exitProcess
@@ -57,7 +59,6 @@ class WorkerLauncher(args: Array<String>) {
         val classPaths = cmd.getCmdValue("classpath")!!
             .split(getPathSeparator())
             .map { Paths.get(it).toAbsolutePath() }
-        val containerClassLoader = URLClassLoader(classPaths.mapToArray { it.toUri().toURL() })
 
         val containers = classPaths.map {
             it.asContainer() ?: run {
@@ -73,10 +74,22 @@ class WorkerLauncher(args: Array<String>) {
                 getIntrinsics()
             ).toTypedArray()
         )
+        val kfgClassLoader = KfgClassLoader(
+            classManager, listOfNotNull(
+                *classPaths.toTypedArray(),
+                kexConfig.compiledCodeDirectory,
+                getJunit()?.path
+            )
+        ) { kfgClass ->
+            val instrumenter = SymbolicTraceInstrumenter(classManager)
+            for (method in kfgClass.allMethods) {
+                instrumenter.visit(method)
+            }
+        }
 
         ctx = ExecutionContext(
             classManager,
-            containerClassLoader,
+            kfgClassLoader,
             EasyRandomDriver(),
             containers.map { it.path }
         )

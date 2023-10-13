@@ -5,6 +5,7 @@ import org.vorpal.research.kex.descriptor.DescriptorRtMapper
 import org.vorpal.research.kex.ktype.KexRtManager
 import org.vorpal.research.kex.ktype.KexRtManager.rtMapped
 import org.vorpal.research.kex.ktype.KexRtManager.rtUnmapped
+import org.vorpal.research.kex.util.javaDesc
 import org.vorpal.research.kfg.ir.Class
 import org.vorpal.research.kfg.ir.Field
 import org.vorpal.research.kfg.ir.Method
@@ -383,6 +384,26 @@ data class StaticFieldGetter(val field: Field) : CodeAction {
     }
 }
 
+data class ClassConstantGetter(val type: Type) : CodeAction {
+    override val parameters = emptyList<ActionSequence>()
+
+    override fun toString(): String = "${type.javaDesc}.class"
+
+    override fun print(owner: ActionSequence, builder: StringBuilder, visited: MutableSet<ActionSequence>) {
+        builder.appendLine("${owner.name} = ${type.javaDesc}.class")
+    }
+}
+
+data class ArrayClassConstantGetter(val elementType: ActionSequence) : CodeAction {
+    override val parameters get() = listOf(elementType)
+
+    override fun toString(): String = "Array.newInstance(${elementType.name}, 0).getClass()"
+
+    override fun print(owner: ActionSequence, builder: StringBuilder, visited: MutableSet<ActionSequence>) {
+        builder.appendLine("${owner.name} = Array.newInstance(${elementType.name}, 0).getClass()")
+    }
+}
+
 sealed interface ReflectionCall {
     val parameters: List<ActionSequence>
 
@@ -600,5 +621,7 @@ class ActionSequenceRtMapper(private val mode: KexRtManager.Mode) {
             )
             StaticMethodCall(unmappedMethod, api.args.map { map(it) })
         }
+        is ClassConstantGetter -> ClassConstantGetter(api.type.mapped)
+        is ArrayClassConstantGetter -> ArrayClassConstantGetter(map(api.elementType))
     }
 }

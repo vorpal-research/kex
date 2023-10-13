@@ -8,7 +8,9 @@ import org.vorpal.research.kex.ktype.KexType
 import org.vorpal.research.kex.parameters.Parameters
 import org.vorpal.research.kex.reanimator.actionsequence.ActionList
 import org.vorpal.research.kex.reanimator.actionsequence.ActionSequence
+import org.vorpal.research.kex.reanimator.actionsequence.ArrayClassConstantGetter
 import org.vorpal.research.kex.reanimator.actionsequence.ArrayWrite
+import org.vorpal.research.kex.reanimator.actionsequence.ClassConstantGetter
 import org.vorpal.research.kex.reanimator.actionsequence.CodeAction
 import org.vorpal.research.kex.reanimator.actionsequence.ConstructorCall
 import org.vorpal.research.kex.reanimator.actionsequence.DefaultConstructorCall
@@ -55,6 +57,7 @@ import org.vorpal.research.kfg.type.NullType
 import org.vorpal.research.kfg.type.ShortType
 import org.vorpal.research.kfg.type.Type
 import org.vorpal.research.kfg.type.VoidType
+import org.vorpal.research.kfg.type.classType
 import org.vorpal.research.kfg.type.objectType
 import org.vorpal.research.kthelper.assert.ktassert
 import org.vorpal.research.kthelper.assert.unreachable
@@ -471,6 +474,8 @@ open class ActionSequence2JavaPrinter(
         is StaticFieldSetter -> printStaticFieldSetter(codeAction)
         is EnumValueCreation -> printEnumValueCreation(owner, codeAction)
         is StaticFieldGetter -> printStaticFieldGetter(owner, codeAction)
+        is ClassConstantGetter -> printClassConstantGetter(owner, codeAction)
+        is ArrayClassConstantGetter -> printArrayClassConstantGetter(owner, codeAction)
     }
 
     protected val <T> PrimaryValue<T>.asConstant: String
@@ -850,6 +855,33 @@ open class ActionSequence2JavaPrinter(
                     actualType
                 )
             } = ${call.field.klass.javaString}.${call.field.name}"
+        )
+    }
+
+    protected open fun printClassConstantGetter(owner: ActionSequence, call: ClassConstantGetter): List<String> {
+        val actualType = ASClass(ctx.types.classType)
+        actualTypes[owner] = actualType
+        return listOf(
+            "${
+                printVarDeclaration(
+                    owner.name,
+                    actualType
+                )
+            } = ${call.type.javaString}.class"
+        )
+    }
+
+    protected open fun printArrayClassConstantGetter(owner: ActionSequence, call: ArrayClassConstantGetter): List<String> {
+        call.elementType.printAsJava()
+        val actualType = ASClass(ctx.types.classType)
+        actualTypes[owner] = actualType
+        return listOf(
+            "${
+                printVarDeclaration(
+                    owner.name,
+                    actualType
+                )
+            } = Array.newInstance(${call.elementType.stackName}, 0).getClass()"
         )
     }
 

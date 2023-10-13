@@ -3,6 +3,7 @@ package org.vorpal.research.kex.launcher
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.InternalSerializationApi
 import org.vorpal.research.kex.ExecutionContext
+import org.vorpal.research.kex.asm.transform.SymbolicTraceInstrumenter
 import org.vorpal.research.kex.config.FileConfig
 import org.vorpal.research.kex.config.RuntimeConfig
 import org.vorpal.research.kex.config.WorkerCmdConfig
@@ -12,7 +13,10 @@ import org.vorpal.research.kex.serialization.KexSerializer
 import org.vorpal.research.kex.trace.symbolic.protocol.ExecutionResult
 import org.vorpal.research.kex.trace.symbolic.protocol.TestExecutionRequest
 import org.vorpal.research.kex.trace.symbolic.protocol.Worker2MasterConnection
+import org.vorpal.research.kex.util.KfgClassLoader
+import org.vorpal.research.kex.util.compiledCodeDirectory
 import org.vorpal.research.kex.util.getIntrinsics
+import org.vorpal.research.kex.util.getJunit
 import org.vorpal.research.kex.util.getPathSeparator
 import org.vorpal.research.kex.util.getRuntime
 import org.vorpal.research.kex.worker.ExecutorWorker
@@ -21,8 +25,6 @@ import org.vorpal.research.kfg.KfgConfig
 import org.vorpal.research.kfg.container.asContainer
 import org.vorpal.research.kfg.util.Flags
 import org.vorpal.research.kthelper.logging.log
-import ru.spbstu.wheels.mapToArray
-import java.net.URLClassLoader
 import java.nio.file.Files
 import java.nio.file.Paths
 import kotlin.system.exitProcess
@@ -38,6 +40,7 @@ fun main(args: Array<String>) {
 class WorkerLauncherDebug(args: Array<String>) {
     private val cmd = WorkerCmdConfig(args)
     private val properties = cmd.getCmdValue("config", "kex.ini")
+
     @Suppress("unused")
     private val port = cmd.getCmdValue("port")!!.toInt()
 
@@ -60,7 +63,6 @@ class WorkerLauncherDebug(args: Array<String>) {
         val classPaths = cmd.getCmdValue("classpath")!!
             .split(getPathSeparator())
             .map { Paths.get(it).toAbsolutePath() }
-        val containerClassLoader = URLClassLoader(classPaths.mapToArray { it.toUri().toURL() })
 
         val containers = classPaths.map {
             it.asContainer() ?: run {
@@ -73,13 +75,26 @@ class WorkerLauncherDebug(args: Array<String>) {
             listOfNotNull(
                 *containers.toTypedArray(),
                 getRuntime(),
-                getIntrinsics()
+                getIntrinsics(),
             )
         )
+        val kfgClassLoader = KfgClassLoader(
+            classManager, listOfNotNull(
+                *classPaths.toTypedArray(),
+//                kexConfig.instrumentedCodeDirectory,
+                kexConfig.compiledCodeDirectory,
+                getJunit()?.path
+            )
+        ) { kfgClass ->
+            val instrumenter = SymbolicTraceInstrumenter(classManager)
+            for (method in kfgClass.allMethods) {
+                instrumenter.visit(method)
+            }
+        }
 
         ctx = ExecutionContext(
             classManager,
-            containerClassLoader,
+            kfgClassLoader,
             EasyRandomDriver(),
             containers.map { it.path }
         )
@@ -91,10 +106,10 @@ class WorkerLauncherDebug(args: Array<String>) {
             override suspend fun connect(): Boolean {
                 return true
             }
-            //            {"klass":"org.vorpal.research.kex.test.javadebug.JavaTest_foo_15237490801","testMethod":"test","setupMethod":"setup"}
+
             override suspend fun receive(): TestExecutionRequest {
                 return TestExecutionRequest(
-                    "org.vorpal.research.kex.test.javadebug.JavaTest_foo_15237490801",
+                    "org.vorpal.research.kex.test.concolic.ListConcolicTests_testLinkedList_17887373691",
                     testMethod = "test",
                     setupMethod = "setup"
                 )
