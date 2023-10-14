@@ -392,7 +392,7 @@ sealed class AbstractFieldContainingDescriptor<T : AbstractFieldContainingDescri
         if (this.klass != other.klass) return false
 
         map += this to other
-        for ((field, type) in this.fields.keys.union(other.fields.keys)) { // TODO: maybe `union` ???
+        for ((field, type) in this.fields.keys.union(other.fields.keys)) {
             val thisValue = this[field, type] ?: return false
             val otherValue = other[field, type] ?: return false
             if (!thisValue.structuralEquality(otherValue, map)) return false
@@ -605,7 +605,6 @@ class ArrayDescriptor(val elementType: KexType, val length: Int) :
         if (this.length != other.length) return false
 
         map += this to other
-        // TODO: maybe `union`
         for (index in this.elements.keys.union(other.elements.keys)) {
             val thisValue = this[index] ?: return false
             val otherValue = other[index] ?: return false
@@ -722,7 +721,7 @@ class MockDescriptor(term: Term, type: KexClass, methods: Collection<Method> = e
 
         map += this to other
 
-        for (key in this.fields.keys.union(other.fields.keys)) { // union or intersect???
+        for (key in this.fields.keys.union(other.fields.keys)) {
             val thisValue = this[key] ?: return false
             val otherValue = other[key] ?: return false
             if (!thisValue.structuralEquality(otherValue, map)) return false

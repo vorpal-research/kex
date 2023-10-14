@@ -196,7 +196,7 @@ class DescriptorExceptionPreconditionBuilder(
         is ConstantDescriptor -> this.asSymbolicState(location, mapping, visited)
         is FieldContainingDescriptor<*> -> this.asSymbolicState(location, mapping, visited)
         is ArrayDescriptor -> this.asSymbolicState(location, mapping, visited)
-        is MockDescriptor -> TODO("Mock. Unimplemented")
+        is MockDescriptor -> TODO("Mock. Implement later")
     }
 
     private fun ConstantDescriptor.asSymbolicState(
