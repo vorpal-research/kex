@@ -203,10 +203,13 @@ private fun Descriptor.toWrapper(visited: MutableMap<Id, DescriptorWrapper>) {
             for (field in this.fields.values) {
                 field.toWrapper(visited)
             }
-            for (value in this.allReturns){
+
+            for ((method, returns) in this.methodReturns) {
+                instance.methodReturns += method to returns.mapTo(mutableListOf()) { value -> value.id }
+            }
+            for (value in this.allReturns) {
                 value.toWrapper(visited)
             }
-
         }
     }
 }
