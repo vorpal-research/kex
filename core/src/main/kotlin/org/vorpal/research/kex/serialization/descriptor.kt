@@ -1,5 +1,6 @@
 package org.vorpal.research.kex.serialization
 
+import kotlinx.serialization.Contextual
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.SerializationException
@@ -14,6 +15,7 @@ import org.vorpal.research.kex.descriptor.*
 import org.vorpal.research.kex.ktype.KexArray
 import org.vorpal.research.kex.ktype.KexClass
 import org.vorpal.research.kex.ktype.KexType
+import org.vorpal.research.kfg.ir.Method
 
 @JvmInline
 @Serializable
@@ -61,6 +63,31 @@ internal sealed class DescriptorWrapper {
             for ((field, fieldId) in fields) {
                 map.getValue(fieldId).toDescriptor(map, output)
                 instance[field] = output[fieldId]!!
+            }
+        }
+    }
+
+    @Serializable
+    class Mock(
+        override val id: Id,
+        override val type: KexType,
+        val fields: MutableList<Pair<Pair<String, KexType>, Id>>,
+        val methodReturns: MutableList<Pair<@Contextual Method, MutableList<Id>>>
+    ) : DescriptorWrapper() {
+        override fun convert(map: Map<Id, DescriptorWrapper>, output: MutableMap<Id, Descriptor>) {
+            if (id in output) return
+            val methods = methodReturns.map { (method, _) -> method }
+            val instance = descriptor { mock(type as KexClass, methods) }.also {
+                output[id] = it
+            } as MockDescriptor
+
+            for ((field, fieldId) in fields) {
+                map.getValue(fieldId).toDescriptor(map, output)
+                instance[field] = output[fieldId]!!
+            }
+
+            for ((method, values) in methodReturns) {
+                instance[method] = values.map { id -> map.getValue(id).toDescriptor(map, output) }
             }
         }
     }
@@ -141,6 +168,7 @@ private fun Descriptor.toWrapper(visited: MutableMap<Id, DescriptorWrapper>) {
                 element.toWrapper(visited)
             }
         }
+
         is ClassDescriptor -> {
             val klass = DescriptorWrapper.Klass(id, this.type, mutableListOf()).also {
                 visited[id] = it
@@ -152,6 +180,7 @@ private fun Descriptor.toWrapper(visited: MutableMap<Id, DescriptorWrapper>) {
                 field.toWrapper(visited)
             }
         }
+
         is ObjectDescriptor -> {
             val instance = DescriptorWrapper.Object(id, this.type, mutableListOf()).also {
                 visited[id] = it
@@ -163,7 +192,22 @@ private fun Descriptor.toWrapper(visited: MutableMap<Id, DescriptorWrapper>) {
                 field.toWrapper(visited)
             }
         }
-        is MockDescriptor -> TODO ("not implemented")
+
+        is MockDescriptor -> {
+            val instance = DescriptorWrapper.Mock(id, this.type, mutableListOf(), mutableListOf()).also {
+                visited[id] = it
+            }
+            for ((field, value) in this.fields) {
+                instance.fields += field to value.id
+            }
+            for (field in this.fields.values) {
+                field.toWrapper(visited)
+            }
+            for (value in this.allReturns){
+                value.toWrapper(visited)
+            }
+
+        }
     }
 }
 

@@ -10,9 +10,7 @@ import org.vorpal.research.kex.ktype.KexType
 import org.vorpal.research.kex.ktype.kexType
 import org.vorpal.research.kex.util.isSubtypeOfCached
 import org.vorpal.research.kfg.ClassManager
-import org.vorpal.research.kfg.ir.Class
-import org.vorpal.research.kfg.ir.ConcreteClass
-import org.vorpal.research.kfg.ir.Method
+import org.vorpal.research.kfg.ir.*
 import org.vorpal.research.kfg.type.ArrayType
 import org.vorpal.research.kfg.type.ClassType
 import org.vorpal.research.kfg.type.SystemTypeNames

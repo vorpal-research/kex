@@ -102,18 +102,18 @@ fun Parameters<Descriptor>.filterIgnoredStatic(): Parameters<Descriptor> {
 private fun Collection<Descriptor>.replaceUninstantiableWithMocks(
     types: TypeFactory,
     termToDescriptor: MutableMap<Term, Descriptor>
-): Sequence<Descriptor> {
-    return asSequence().map { descriptor ->
+): Collection<Descriptor> {
+    return map { descriptor ->
         val klass = (descriptor.type.getKfgType(types) as? ClassType)?.klass
         if (klass == null || !instantiationManager.isInstantiable(klass) || descriptor.type.isKexRt) {
             descriptor
         } else {
             val mock = if (descriptor is ObjectDescriptor) {
-                MockDescriptor(descriptor.term, descriptor.type as KexClass, klass.methods, descriptor)
+                MockDescriptor(klass.methods, descriptor)
             } else {
                 MockDescriptor(descriptor.term, descriptor.type as KexClass, klass.methods)
             }
-            termToDescriptor[descriptor.term] = mock;
+            termToDescriptor[descriptor.term] = mock
             mock
         }
     }

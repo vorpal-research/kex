@@ -15,6 +15,8 @@ import org.vorpal.research.kex.state.term.term
 import org.vorpal.research.kex.util.StringInfoContext
 import org.vorpal.research.kfg.ClassManager
 import org.vorpal.research.kfg.ir.Method
+import org.vorpal.research.kfg.type.ClassType
+import org.vorpal.research.kfg.type.TypeFactory
 import org.vorpal.research.kthelper.assert.unreachable
 import org.vorpal.research.kthelper.logging.debug
 import org.vorpal.research.kthelper.logging.log
@@ -236,9 +238,8 @@ sealed class ConstantDescriptor(term: Term, type: KexType) : Descriptor(term, ty
     }
 }
 
-
 @Suppress("UNCHECKED_CAST")
-sealed class FieldContainingDescriptorBase<T : FieldContainingDescriptorBase<T>>(
+sealed class AbstractFieldContainingDescriptor<T : AbstractFieldContainingDescriptor<T>>(
     term: Term,
     klass: KexClass
 ) :
@@ -364,13 +365,13 @@ sealed class FieldContainingDescriptorBase<T : FieldContainingDescriptorBase<T>>
 
         val instanceOfTerm = term { generate(KexBool) }
         return basic {
-            axiom { instanceOfTerm equality (term `is` this@FieldContainingDescriptorBase.type) }
+            axiom { instanceOfTerm equality (term `is` this@AbstractFieldContainingDescriptor.type) }
             axiom { instanceOfTerm equality true }
-            for ((key, field) in this@FieldContainingDescriptorBase.fields) {
+            for ((key, field) in this@AbstractFieldContainingDescriptor.fields) {
                 val typeInfo = field.generateTypeInfo(visited)
                 if (typeInfo.isNotEmpty) {
                     state {
-                        field.term equality this@FieldContainingDescriptorBase.term.field(
+                        field.term equality this@AbstractFieldContainingDescriptor.term.field(
                             key.second,
                             key.first
                         ).load()
@@ -391,7 +392,7 @@ sealed class FieldContainingDescriptorBase<T : FieldContainingDescriptorBase<T>>
         if (this.klass != other.klass) return false
 
         map += this to other
-        for ((field, type) in this.fields.keys.intersect(other.fields.keys)) { // TODO: maybe `union` ???
+        for ((field, type) in this.fields.keys.union(other.fields.keys)) { // TODO: maybe `union` ???
             val thisValue = this[field, type] ?: return false
             val otherValue = other[field, type] ?: return false
             if (!thisValue.structuralEquality(otherValue, map)) return false
@@ -412,139 +413,11 @@ sealed class FieldContainingDescriptorBase<T : FieldContainingDescriptorBase<T>>
     }
 }
 
-class MockDescriptor(term: Term, type: KexClass, methods: Collection<Method>) :
-    FieldContainingDescriptorBase<MockDescriptor>(term, type) {
-
-    constructor(term: Term, type: KexClass, methods: Collection<Method>, original: ObjectDescriptor) : this(
-        term,
-        type,
-        methods
-    ) {
-        for ((field, value) in original.fields) {
-            fields[field] = value
-        }
-    }
-
-    val methodReturns: Map<Method, MutableList<Descriptor>> =
-        mutableMapOf<Method, MutableList<Descriptor>>().apply {
-            methods.forEach { method -> put(method,  mutableListOf()) }
-        }
-
-    val allReturns: Iterable<Descriptor>
-        get() = methodReturns.values.asSequence().flatMap { it.asSequence() }.asIterable()
-
-    val methods: Set<Method>
-        get() = methodReturns.keys
-
-    fun addReturnValue(method: Method, value: Descriptor) {
-        methodReturns[method]?.add(value) ?: log.debug { "Error. No method $method in mockDescriptor $this" }
-    }
-
-    override fun concretize(
-        cm: ClassManager,
-        accessLevel: AccessModifier,
-        random: Random,
-        visited: MutableSet<Descriptor>
-    ): MockDescriptor {
-        if (this in visited) return this
-        visited += this
-        concretizeFields(cm, accessLevel, random, visited)
-        //  allReturns.forEach { descriptor -> descriptor.concretize(cm, accessLevel, random, visited) }
-        for (list in methodReturns.values) {
-            list.map { descriptor -> descriptor.concretize(cm, accessLevel, random, visited) }
-        }
-
-        return this
-    }
-
-    override fun reduce(visited: MutableSet<Descriptor>): MockDescriptor {
-        if (this in visited) return this
-        visited += this
-        reduceFields(visited)
-        for ((method, list) in methodReturns) {
-            val type = method.returnType.kexType
-            while (list.isNotEmpty() && list.last() eq descriptor { default(type) }) {
-                list.removeLast()
-            }
-        }
-        allReturns.forEach { descriptor -> descriptor.reduce() }
-        return this
-    }
-
-    override fun contains(other: Descriptor, visited: MutableSet<Descriptor>): Boolean {
-        if (this in visited) return false
-        if (this == other) return true
-        visited += this
-        return allReturns.any { it.contains(other, visited) } || fields.values.any { it.contains(other, visited) }
-    }
-
-    override fun countDepth(visited: Set<Descriptor>, cache: MutableMap<Descriptor, Int>): Int {
-        if (this in cache) return cache[this]!!
-        if (this in visited) return 0
-        val newVisited = visited + this
-        var maxDepth = 0
-        for (value in fields.values) {
-            maxDepth = maxOf(maxDepth, value.countDepth(newVisited, cache))
-        }
-        for (value in allReturns) {
-            maxDepth = maxOf(maxDepth, value.countDepth(newVisited, cache))
-        }
-        cache[this] = maxDepth + 1
-        return maxDepth + 1
-    }
-
-    override fun structuralEquality(other: Descriptor, map: MutableSet<Pair<Descriptor, Descriptor>>): Boolean {
-        if (this == other) return true
-        if (other !is MockDescriptor) return false
-        if (this to other in map) return true
-        if (this.klass != other.klass) return false
-
-        map += this to other
-
-        for (key in this.fields.keys.union(other.fields.keys)) { // union or intersect???
-            val thisValue = this[key] ?: return false
-            val otherValue = other[key] ?: return false
-            if (!thisValue.structuralEquality(otherValue, map)) return false
-        }
-        for (method in this.methods.union(other.methods)) {
-            val thisValues = this.methodReturns[method] ?: return false
-            val otherValues = other.methodReturns[method] ?: return false
-            if (thisValues.size != otherValues.size) return false
-            for (i in 0..thisValues.lastIndex) {
-                if (!thisValues[i].structuralEquality(otherValues[i], map)) return false
-            }
-        }
-        return true
-    }
-
-    override fun collectQuery(set: MutableSet<Descriptor>): PredicateState {
-        TODO("Mock. Unimplemented")
-    }
-
-
-
-    override fun deepCopy(copied: MutableMap<Descriptor, Descriptor>): Descriptor {
-        if (this in copied) return copied[this]!!
-        val copy = MockDescriptor(term, type as KexClass, methodReturns.keys)
-        copied[this] = copy
-
-        for ((method, list) in methodReturns) {
-            list.forEach { value -> copy.addReturnValue(method, value.deepCopy(copied)) }
-        }
-        for ((field, value) in fields) {
-            copy[field] = value.deepCopy(copied)
-        }
-
-        return copy
-    }
-}
-
-//@Suppress("UNCHECKED_CAST")
 sealed class FieldContainingDescriptor<T : FieldContainingDescriptor<T>>(
     term: Term,
     klass: KexClass
 ) :
-    FieldContainingDescriptorBase<T>(term, klass) {
+    AbstractFieldContainingDescriptor<T>(term, klass) {
 }
 
 class ObjectDescriptor(klass: KexClass) :
@@ -732,7 +605,8 @@ class ArrayDescriptor(val elementType: KexType, val length: Int) :
         if (this.length != other.length) return false
 
         map += this to other
-        for (index in this.elements.keys.intersect(other.elements.keys)) {
+        // TODO: maybe `union`
+        for (index in this.elements.keys.union(other.elements.keys)) {
             val thisValue = this[index] ?: return false
             val otherValue = other[index] ?: return false
             val res = thisValue.structuralEquality(otherValue, map)
@@ -751,6 +625,136 @@ class ArrayDescriptor(val elementType: KexType, val length: Int) :
         }
         cache[this] = maxDepth + 1
         return maxDepth + 1
+    }
+}
+
+class MockDescriptor(term: Term, type: KexClass, methods: Collection<Method> = emptyList()) :
+    AbstractFieldContainingDescriptor<MockDescriptor>(term, type) {
+
+    constructor(type: KexClass, methods: Collection<Method>) : this(term { generate(type) }, type, methods)
+    constructor(methods: Collection<Method>, original: ObjectDescriptor) : this(
+        original.term,
+        original.type as KexClass,
+        methods
+    ) {
+        for ((field, value) in original.fields) {
+            fields[field] = value
+        }
+    }
+
+    val methodReturns: Map<Method, MutableList<Descriptor>> =
+        mutableMapOf<Method, MutableList<Descriptor>>().apply {
+            methods.forEach { method -> put(method, mutableListOf()) }
+        }
+
+    val allReturns: Iterable<Descriptor>
+        get() = methodReturns.values.asSequence().flatMap { it.asSequence() }.asIterable()
+
+    val methods: Set<Method>
+        get() = methodReturns.keys
+
+    operator fun get(method: Method) = methodReturns[method]
+    operator fun set(method: Method, values: List<Descriptor>) {
+        methodReturns[method]?.clear()
+        methodReturns[method]?.addAll(values)
+    }
+
+    fun addReturnValue(method: Method, value: Descriptor) {
+        methodReturns[method]?.add(value) ?: log.debug { "Error. No method $method in mockDescriptor $this" }
+    }
+
+    override fun concretize(
+        cm: ClassManager,
+        accessLevel: AccessModifier,
+        random: Random,
+        visited: MutableSet<Descriptor>
+    ): MockDescriptor {
+        if (this in visited) return this
+        visited += this
+        concretizeFields(cm, accessLevel, random, visited)
+        for (list in methodReturns.values) {
+            list.replaceAll { descriptor -> descriptor.concretize(cm, accessLevel, random, visited) }
+        }
+        return this
+    }
+
+    override fun reduce(visited: MutableSet<Descriptor>): MockDescriptor {
+        if (this in visited) return this
+        visited += this
+        reduceFields(visited)
+        for ((method, list) in methodReturns) {
+            val type = method.returnType.kexType
+            while (list.isNotEmpty() && list.last() eq descriptor { default(type) }) {
+                list.removeLast()
+            }
+        }
+        allReturns.forEach { descriptor -> descriptor.reduce() }
+        return this
+    }
+
+    override fun contains(other: Descriptor, visited: MutableSet<Descriptor>): Boolean {
+        if (this in visited) return false
+        if (this == other) return true
+        visited += this
+        return allReturns.any { it.contains(other, visited) } || fields.values.any { it.contains(other, visited) }
+    }
+
+    override fun countDepth(visited: Set<Descriptor>, cache: MutableMap<Descriptor, Int>): Int {
+        if (this in cache) return cache[this]!!
+        if (this in visited) return 0
+        val newVisited = visited + this
+        var maxDepth = 0
+        for (value in fields.values) {
+            maxDepth = maxOf(maxDepth, value.countDepth(newVisited, cache))
+        }
+        for (value in allReturns) {
+            maxDepth = maxOf(maxDepth, value.countDepth(newVisited, cache))
+        }
+        cache[this] = maxDepth + 1
+        return maxDepth + 1
+    }
+
+    override fun structuralEquality(other: Descriptor, map: MutableSet<Pair<Descriptor, Descriptor>>): Boolean {
+        if (this == other) return true
+        if (other !is MockDescriptor) return false
+        if (this to other in map) return true
+        if (this.klass != other.klass) return false
+
+        map += this to other
+
+        for (key in this.fields.keys.union(other.fields.keys)) { // union or intersect???
+            val thisValue = this[key] ?: return false
+            val otherValue = other[key] ?: return false
+            if (!thisValue.structuralEquality(otherValue, map)) return false
+        }
+        for (method in this.methods.union(other.methods)) {
+            val thisValues = this.methodReturns[method] ?: return false
+            val otherValues = other.methodReturns[method] ?: return false
+            if (thisValues.size != otherValues.size) return false
+            for ((thisValue, otherValue) in thisValues.zip(otherValues)) {
+                if (!thisValue.structuralEquality(otherValue, map)) return false
+            }
+        }
+        return true
+    }
+
+    override fun collectQuery(set: MutableSet<Descriptor>): PredicateState {
+        TODO("Mock. Unimplemented")
+    }
+
+    override fun deepCopy(copied: MutableMap<Descriptor, Descriptor>): Descriptor {
+        if (this in copied) return copied[this]!!
+        val copy = MockDescriptor(term, type as KexClass, methodReturns.keys)
+        copied[this] = copy
+
+        for ((method, list) in methodReturns) {
+            list.forEach { value -> copy.addReturnValue(method, value.deepCopy(copied)) }
+        }
+        for ((field, value) in fields) {
+            copy[field] = value.deepCopy(copied)
+        }
+
+        return copy
     }
 }
 
@@ -790,7 +794,9 @@ open class DescriptorBuilder : StringInfoContext() {
     fun array(length: Int, elementType: KexType): ArrayDescriptor =
         ArrayDescriptor(elementType, length)
 
-    fun mock(type: KexClass, methods: Set<Method>): MockDescriptor = TODO("Mock. How to get term?")
+    fun mock(type: KexClass, methods: Collection<Method> = emptyList()) = MockDescriptor(type, methods)
+    fun mock(type: KexClass, types: TypeFactory): MockDescriptor =
+        MockDescriptor(type, (type.getKfgType(types) as ClassType).klass.methods)
 
     fun default(type: KexType, nullable: Boolean): Descriptor = descriptor {
         when (type) {
