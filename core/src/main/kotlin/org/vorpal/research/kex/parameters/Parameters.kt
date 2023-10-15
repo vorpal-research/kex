@@ -105,7 +105,7 @@ private fun Collection<Descriptor>.replaceUninstantiableWithMocks(
 ): Collection<Descriptor> {
     return map { descriptor ->
         val klass = (descriptor.type.getKfgType(types) as? ClassType)?.klass
-        if (klass == null || !instantiationManager.isInstantiable(klass) || descriptor.type.isKexRt) {
+        if (klass == null || instantiationManager.isInstantiable(klass) || descriptor.type.isKexRt) {
             descriptor
         } else {
             val mock = if (descriptor is ObjectDescriptor) {

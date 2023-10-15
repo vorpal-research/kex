@@ -99,9 +99,7 @@ suspend fun Method.checkAsync(
             ctx.cm,
             ctx.accessLevel
         )
-        assert(initialDescriptors == withMocks)
         withMocks
-//            initialDescriptors
             .concreteParameters(ctx.cm, ctx.accessLevel, ctx.random).also {
                 log.debug { "Generated params:\n$it" }
             }

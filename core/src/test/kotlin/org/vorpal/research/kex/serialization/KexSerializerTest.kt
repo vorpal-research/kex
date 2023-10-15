@@ -8,20 +8,9 @@ import org.vorpal.research.kex.KexTest
 import org.vorpal.research.kex.descriptor.Descriptor
 import org.vorpal.research.kex.descriptor.DescriptorBuilder
 import org.vorpal.research.kex.descriptor.convertToDescriptor
-import org.vorpal.research.kex.ktype.KexArray
-import org.vorpal.research.kex.ktype.KexBool
-import org.vorpal.research.kex.ktype.KexClass
-import org.vorpal.research.kex.ktype.KexDouble
-import org.vorpal.research.kex.ktype.KexInt
-import org.vorpal.research.kex.ktype.KexType
-import org.vorpal.research.kex.ktype.KexVoid
-import org.vorpal.research.kex.ktype.kexType
+import org.vorpal.research.kex.ktype.*
 import org.vorpal.research.kex.state.PredicateState
-import org.vorpal.research.kex.state.predicate.Predicate
-import org.vorpal.research.kex.state.predicate.PredicateType
-import org.vorpal.research.kex.state.predicate.assume
-import org.vorpal.research.kex.state.predicate.path
-import org.vorpal.research.kex.state.predicate.state
+import org.vorpal.research.kex.state.predicate.*
 import org.vorpal.research.kex.state.term.FieldLoadTerm
 import org.vorpal.research.kex.state.term.Term
 import org.vorpal.research.kex.state.term.term
@@ -185,5 +174,18 @@ class KexSerializerTest : KexTest("kex-serializer") {
         val recursiveJson = serializer.toJson(recursiveInstance)
         val recursiveFromJson = serializer.fromJson<Descriptor>(recursiveJson)
         assertTrue { recursiveInstance eq recursiveFromJson }
+    }
+
+
+    @Test
+    fun mockDescriptorSerializationTest() {
+        return with(DescriptorBuilder()) {
+            val klass = KexClass("java/util/stream/Stream")
+            val instance = mock(klass, cm.type)
+            instance["string" to cm.stringClass.kexType] = convertToDescriptor("test")
+            val instanceJson = serializer.toJson<Descriptor>(instance) // TODO register MockDescriptor to remove <Descriptor>
+            val instanceFromJson = serializer.fromJson<Descriptor>(instanceJson)
+            assertTrue { instance eq instanceFromJson }
+        }
     }
 }
