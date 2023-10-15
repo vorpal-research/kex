@@ -7,6 +7,8 @@ import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.persistentMapOf
 import kotlinx.collections.immutable.persistentSetOf
 import kotlinx.collections.immutable.toPersistentMap
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.yield
 import org.vorpal.research.kex.ExecutionContext
 import org.vorpal.research.kex.asm.analysis.util.analyzeOrTimeout
@@ -26,6 +28,7 @@ import org.vorpal.research.kex.state.predicate.inverse
 import org.vorpal.research.kex.state.predicate.path
 import org.vorpal.research.kex.state.predicate.state
 import org.vorpal.research.kex.state.term.ConstClassTerm
+import org.vorpal.research.kex.state.term.NullTerm
 import org.vorpal.research.kex.state.term.StaticClassRefTerm
 import org.vorpal.research.kex.state.term.Term
 import org.vorpal.research.kex.state.term.TermBuilder
@@ -148,7 +151,6 @@ abstract class SymbolicTraverser(
     abstract val callResolver: SymbolicCallResolver
     abstract val invokeDynamicResolver: SymbolicInvokeDynamicResolver
 
-    protected var currentState: TraverserState? = null
     protected var testIndex = AtomicInteger(0)
     protected val compilerHelper = CompilerHelper(ctx)
 
@@ -211,98 +213,116 @@ abstract class SymbolicTraverser(
             )
         }
 
-        pathSelector.add(initialState, method.body.entry)
+        withContext(currentCoroutineContext()) {
+            pathSelector += initialState to method.body.entry
 
-        while (pathSelector.hasNext()) {
-            val (currentState, currentBlock) = pathSelector.next()
-            this.currentState = currentState
-            traverseBlock(currentBlock)
-            yield()
+            while (pathSelector.hasNext()) {
+                val (currentState, currentBlock) = pathSelector.next()
+                traverseBlock(currentState, currentBlock)
+                yield()
+            }
         }
     }
 
-    protected open suspend fun traverseBlock(bb: BasicBlock, startIndex: Int = 0) {
+    protected open suspend fun traverseBlock(state: TraverserState, bb: BasicBlock, startIndex: Int = 0) {
+        var currentState: TraverserState? = state
         for (index in startIndex..bb.instructions.lastIndex) {
+            if (currentState == null) return
             val inst = bb.instructions[index]
-            traverseInstruction(inst)
+            currentState = traverseInstruction(currentState, inst)
         }
     }
 
 
-    protected open suspend fun traverseInstruction(inst: Instruction) {
+    protected open suspend fun traverseInstruction(state: TraverserState, inst: Instruction): TraverserState? =
         when (inst) {
-            is ArrayLoadInst -> traverseArrayLoadInst(inst)
-            is ArrayStoreInst -> traverseArrayStoreInst(inst)
-            is BinaryInst -> traverseBinaryInst(inst)
-            is CallInst -> traverseCallInst(inst)
-            is CastInst -> traverseCastInst(inst)
-            is CatchInst -> traverseCatchInst(inst)
-            is CmpInst -> traverseCmpInst(inst)
-            is EnterMonitorInst -> traverseEnterMonitorInst(inst)
-            is ExitMonitorInst -> traverseExitMonitorInst(inst)
-            is FieldLoadInst -> traverseFieldLoadInst(inst)
-            is FieldStoreInst -> traverseFieldStoreInst(inst)
-            is InstanceOfInst -> traverseInstanceOfInst(inst)
-            is InvokeDynamicInst -> traverseInvokeDynamicInst(inst)
-            is NewArrayInst -> traverseNewArrayInst(inst)
-            is NewInst -> traverseNewInst(inst)
-            is PhiInst -> traversePhiInst(inst)
-            is UnaryInst -> traverseUnaryInst(inst)
-            is BranchInst -> traverseBranchInst(inst)
-            is JumpInst -> traverseJumpInst(inst)
-            is ReturnInst -> traverseReturnInst(inst)
-            is SwitchInst -> traverseSwitchInst(inst)
-            is TableSwitchInst -> traverseTableSwitchInst(inst)
-            is ThrowInst -> traverseThrowInst(inst)
-            is UnreachableInst -> traverseUnreachableInst(inst)
-            is UnknownValueInst -> traverseUnknownValueInst(inst)
+            is ArrayLoadInst -> traverseArrayLoadInst(state, inst)
+            is ArrayStoreInst -> traverseArrayStoreInst(state, inst)
+            is BinaryInst -> traverseBinaryInst(state, inst)
+            is CallInst -> traverseCallInst(state, inst)
+            is CastInst -> traverseCastInst(state, inst)
+            is CatchInst -> traverseCatchInst(state, inst)
+            is CmpInst -> traverseCmpInst(state, inst)
+            is EnterMonitorInst -> traverseEnterMonitorInst(state, inst)
+            is ExitMonitorInst -> traverseExitMonitorInst(state, inst)
+            is FieldLoadInst -> traverseFieldLoadInst(state, inst)
+            is FieldStoreInst -> traverseFieldStoreInst(state, inst)
+            is InstanceOfInst -> traverseInstanceOfInst(state, inst)
+            is InvokeDynamicInst -> traverseInvokeDynamicInst(state, inst)
+            is NewArrayInst -> traverseNewArrayInst(state, inst)
+            is NewInst -> traverseNewInst(state, inst)
+            is PhiInst -> traversePhiInst(state, inst)
+            is UnaryInst -> traverseUnaryInst(state, inst)
+            is BranchInst -> traverseBranchInst(state, inst)
+            is JumpInst -> traverseJumpInst(state, inst)
+            is ReturnInst -> traverseReturnInst(state, inst)
+            is SwitchInst -> traverseSwitchInst(state, inst)
+            is TableSwitchInst -> traverseTableSwitchInst(state, inst)
+            is ThrowInst -> traverseThrowInst(state, inst)
+            is UnreachableInst -> traverseUnreachableInst(state, inst)
+            is UnknownValueInst -> traverseUnknownValueInst(state, inst)
             else -> unreachable("Unknown instruction ${inst.print()}")
         }
-    }
 
-    protected inline fun acquireState(body: (TraverserState) -> Unit) {
-        val traverserState = currentState ?: return
-        currentState = null
-        body(traverserState)
-    }
-
-    protected open suspend fun traverseArrayLoadInst(inst: ArrayLoadInst) = acquireState { traverserState ->
+    protected open suspend fun traverseArrayLoadInst(
+        traverserState: TraverserState,
+        inst: ArrayLoadInst
+    ): TraverserState? {
         val arrayTerm = traverserState.mkTerm(inst.arrayRef)
         val indexTerm = traverserState.mkTerm(inst.index)
         val res = generate(inst.type.symbolicType)
+
+        if (arrayTerm is NullTerm) {
+            checkReachabilityIncremental(traverserState, nullabilityCheckInc(traverserState, inst, arrayTerm))
+            return null
+        }
+
         val clause = StateClause(inst, state { res equality arrayTerm[indexTerm].load() })
 
         val nullQueries = nullabilityCheckInc(traverserState, inst, arrayTerm)
         val boundQueries = boundsCheckInc(traverserState, inst, indexTerm, arrayTerm.length())
 
+        var result: TraverserState? = null
         val fullQueries = (nullQueries + boundQueries.addExtraCondition(nullQueries.normalQuery))
             .withHandler { state: TraverserState ->
                 state.copy(
                     symbolicState = state.symbolicState + clause,
                     valueMap = state.valueMap.put(inst, res)
-                ).also { currentState = it }
+                ).also { result = it }
             }
 
         checkReachabilityIncremental(traverserState, fullQueries)
+        return result
     }
 
-    protected open suspend fun traverseArrayStoreInst(inst: ArrayStoreInst) = acquireState { traverserState ->
+    protected open suspend fun traverseArrayStoreInst(
+        traverserState: TraverserState,
+        inst: ArrayStoreInst
+    ): TraverserState? {
         val arrayTerm = traverserState.mkTerm(inst.arrayRef)
         val indexTerm = traverserState.mkTerm(inst.index)
         val valueTerm = traverserState.mkTerm(inst.value)
+
+        if (arrayTerm is NullTerm) {
+            checkReachabilityIncremental(traverserState, nullabilityCheckInc(traverserState, inst, arrayTerm))
+            return null
+        }
+
         val clause = StateClause(inst, state { arrayTerm[indexTerm].store(valueTerm) })
 
         val nullQueries = nullabilityCheckInc(traverserState, inst, arrayTerm)
         val boundQueries = boundsCheckInc(traverserState, inst, indexTerm, arrayTerm.length())
 
+        var result: TraverserState? = null
         val fullQueries = (nullQueries + boundQueries.addExtraCondition(nullQueries.normalQuery))
             .withHandler { state: TraverserState ->
-                (state + clause).also { currentState = it }
+                (state + clause).also { result = it }
             }
         checkReachabilityIncremental(traverserState, fullQueries)
+        return result
     }
 
-    protected open suspend fun traverseBinaryInst(inst: BinaryInst) = acquireState { traverserState ->
+    protected open suspend fun traverseBinaryInst(traverserState: TraverserState, inst: BinaryInst): TraverserState? {
         val lhvTerm = traverserState.mkTerm(inst.lhv)
         val rhvTerm = traverserState.mkTerm(inst.rhv)
         val resultTerm = generate(inst.type.symbolicType)
@@ -311,13 +331,13 @@ abstract class SymbolicTraverser(
             inst,
             state { resultTerm equality lhvTerm.apply(resultTerm.type, inst.opcode, rhvTerm) }
         )
-        currentState = traverserState.copy(
+        return traverserState.copy(
             symbolicState = traverserState.symbolicState + clause,
             valueMap = traverserState.valueMap.put(inst, resultTerm)
         )
     }
 
-    protected open suspend fun traverseBranchInst(inst: BranchInst) = acquireState { traverserState ->
+    protected open suspend fun traverseBranchInst(traverserState: TraverserState, inst: BranchInst): TraverserState? {
         val condTerm = traverserState.mkTerm(inst.cond)
 
         val trueClause = PathClause(
@@ -345,15 +365,17 @@ abstract class SymbolicTraverser(
                 },
             )
         )
+        return null
     }
 
-    protected open suspend fun traverseCallInst(inst: CallInst) = acquireState { traverserState ->
+    protected open suspend fun traverseCallInst(traverserState: TraverserState, inst: CallInst): TraverserState? {
         val callee = when {
             inst.isStatic -> staticRef(inst.method.klass)
             else -> traverserState.mkTerm(inst.callee)
         }
         val argumentTerms = inst.args.map { traverserState.mkTerm(it) }
         val candidates = callResolver.resolve(traverserState, inst)
+        var result: TraverserState? = null
 
         val handler: (UpdateAction) = { state ->
             when {
@@ -377,7 +399,7 @@ abstract class SymbolicTraverser(
                         }
                     )
                     (varState + callClause).also {
-                        currentState = it
+                        result = it
                     }
                 }
 
@@ -396,9 +418,10 @@ abstract class SymbolicTraverser(
         }.withHandler(handler)
 
         checkReachabilityIncremental(traverserState, nullQuery)
+        return result
     }
 
-    protected open suspend fun traverseCastInst(inst: CastInst) = acquireState { traverserState ->
+    protected open suspend fun traverseCastInst(traverserState: TraverserState, inst: CastInst): TraverserState? {
         val operandTerm = traverserState.mkTerm(inst.operand)
         val resultTerm = generate(inst.type.symbolicType)
         val clause = StateClause(
@@ -406,20 +429,23 @@ abstract class SymbolicTraverser(
             state { resultTerm equality (operandTerm `as` resultTerm.type) }
         )
 
+        var result: TraverserState? = null
         val typeQuery = typeCheckInc(traverserState, inst, operandTerm, resultTerm.type).withHandler { state ->
             state.copy(
                 symbolicState = state.symbolicState + clause,
                 valueMap = state.valueMap.put(inst, resultTerm)
-            ).copyTermInfo(operandTerm, resultTerm).also { currentState = it }
+            ).copyTermInfo(operandTerm, resultTerm).also { result = it }
         }
 
         checkReachabilityIncremental(traverserState, typeQuery)
+        return result
     }
 
-    protected open suspend fun traverseCatchInst(inst: CatchInst) {
+    protected open suspend fun traverseCatchInst(traverserState: TraverserState, inst: CatchInst): TraverserState? {
+        return traverserState
     }
 
-    protected open suspend fun traverseCmpInst(inst: CmpInst) = acquireState { traverserState ->
+    protected open suspend fun traverseCmpInst(traverserState: TraverserState, inst: CmpInst): TraverserState? {
         val lhvTerm = traverserState.mkTerm(inst.lhv)
         val rhvTerm = traverserState.mkTerm(inst.rhv)
         val resultTerm = generate(inst.type.symbolicType)
@@ -428,48 +454,66 @@ abstract class SymbolicTraverser(
             inst,
             state { resultTerm equality lhvTerm.apply(inst.opcode, rhvTerm) }
         )
-        currentState = traverserState.copy(
+        return traverserState.copy(
             symbolicState = traverserState.symbolicState + clause,
             valueMap = traverserState.valueMap.put(inst, resultTerm)
         )
     }
 
-    protected open suspend fun traverseEnterMonitorInst(inst: EnterMonitorInst) = acquireState { traverserState ->
+    protected open suspend fun traverseEnterMonitorInst(
+        traverserState: TraverserState,
+        inst: EnterMonitorInst
+    ): TraverserState? {
         val monitorTerm = traverserState.mkTerm(inst.owner)
         val clause = StateClause(
             inst,
             state { enterMonitor(monitorTerm) }
         )
 
+        var result: TraverserState? = null
         val nullQuery = nullabilityCheckInc(traverserState, inst, monitorTerm).withHandler { state ->
             (state + clause).also {
-                currentState = it
+                result = it
             }
         }
         checkReachabilityIncremental(traverserState, nullQuery)
+        return result
     }
 
-    protected open suspend fun traverseExitMonitorInst(inst: ExitMonitorInst) = acquireState { traverserState ->
+    protected open suspend fun traverseExitMonitorInst(
+        traverserState: TraverserState,
+        inst: ExitMonitorInst
+    ): TraverserState? {
         val monitorTerm = traverserState.mkTerm(inst.owner)
         val clause = StateClause(
             inst,
             state { exitMonitor(monitorTerm) }
         )
-        currentState = traverserState + clause
+        return traverserState + clause
     }
 
-    protected open suspend fun traverseFieldLoadInst(inst: FieldLoadInst) = acquireState { traverserState ->
+    protected open suspend fun traverseFieldLoadInst(
+        traverserState: TraverserState,
+        inst: FieldLoadInst
+    ): TraverserState? {
         val field = inst.field
         val objectTerm = when {
             inst.isStatic -> staticRef(field.klass)
             else -> traverserState.mkTerm(inst.owner)
         }
+
+        if (objectTerm is NullTerm) {
+            checkReachabilityIncremental(traverserState, nullabilityCheckInc(traverserState, inst, objectTerm))
+            return null
+        }
+
         val res = generate(inst.type.symbolicType)
         val clause = StateClause(
             inst,
             state { res equality objectTerm.field(field.type.symbolicType, field.name).load() }
         )
 
+        var result: TraverserState? = null
         val nullQuery = nullabilityCheckInc(traverserState, inst, objectTerm).withHandler { state ->
             val newNullChecked = when {
                 field.isStatic && field.isFinal -> when (field.defaultValue) {
@@ -484,32 +528,47 @@ abstract class SymbolicTraverser(
                 symbolicState = state.symbolicState + clause,
                 valueMap = state.valueMap.put(inst, res),
                 nullCheckedTerms = newNullChecked
-            ).also { currentState = it }
+            ).also { result = it }
         }
         checkReachabilityIncremental(traverserState, nullQuery)
+        return result
     }
 
-    protected open suspend fun traverseFieldStoreInst(inst: FieldStoreInst) = acquireState { traverserState ->
+    protected open suspend fun traverseFieldStoreInst(
+        traverserState: TraverserState,
+        inst: FieldStoreInst
+    ): TraverserState? {
         val objectTerm = when {
             inst.isStatic -> staticRef(inst.field.klass)
             else -> traverserState.mkTerm(inst.owner)
         }
+
+        if (objectTerm is NullTerm) {
+            checkReachabilityIncremental(traverserState, nullabilityCheckInc(traverserState, inst, objectTerm))
+            return null
+        }
+
         val valueTerm = traverserState.mkTerm(inst.value)
         val clause = StateClause(
             inst,
             state { objectTerm.field(inst.field.type.symbolicType, inst.field.name).store(valueTerm) }
         )
 
+        var result: TraverserState? = null
         val nullQuery = nullabilityCheckInc(traverserState, inst, objectTerm).withHandler { state ->
             state.copy(
                 symbolicState = state.symbolicState + clause,
                 valueMap = state.valueMap.put(inst, valueTerm)
-            ).also { currentState = it }
+            ).also { result = it }
         }
         checkReachabilityIncremental(traverserState, nullQuery)
+        return result
     }
 
-    protected open suspend fun traverseInstanceOfInst(inst: InstanceOfInst) = acquireState { traverserState ->
+    protected open suspend fun traverseInstanceOfInst(
+        traverserState: TraverserState,
+        inst: InstanceOfInst
+    ): TraverserState? {
         val operandTerm = traverserState.mkTerm(inst.operand)
         val resultTerm = generate(inst.type.symbolicType)
 
@@ -521,7 +580,7 @@ abstract class SymbolicTraverser(
         val previouslyCheckedType = traverserState.typeCheckedTerms[operandTerm]
         val currentlyCheckedType = operandTerm.type.getKfgType(ctx.types)
 
-        currentState = traverserState.copy(
+        return traverserState.copy(
             symbolicState = traverserState.symbolicState + clause,
             valueMap = traverserState.valueMap.put(inst, resultTerm),
             typeCheckedTerms = when {
@@ -533,8 +592,11 @@ abstract class SymbolicTraverser(
         )
     }
 
-    protected open suspend fun traverseInvokeDynamicInst(inst: InvokeDynamicInst) = acquireState { traverserState ->
-        currentState = when (invokeDynamicResolver.resolve(traverserState, inst)) {
+    protected open suspend fun traverseInvokeDynamicInst(
+        traverserState: TraverserState,
+        inst: InvokeDynamicInst
+    ): TraverserState? {
+        return when (invokeDynamicResolver.resolve(traverserState, inst)) {
             null -> traverserState.copy(
                 valueMap = traverserState.valueMap.put(inst, generate(inst.type.kexType))
             )
@@ -599,11 +661,15 @@ abstract class SymbolicTraverser(
         checkReachabilityIncremental(traverserState, checks)
     }
 
-    protected open suspend fun traverseNewArrayInst(inst: NewArrayInst) = acquireState { traverserState ->
+    protected open suspend fun traverseNewArrayInst(
+        traverserState: TraverserState,
+        inst: NewArrayInst
+    ): TraverserState? {
         val dimensions = inst.dimensions.map { traverserState.mkTerm(it) }
         val resultTerm = generate(inst.type.symbolicType)
         val clause = StateClause(inst, state { resultTerm.new(dimensions) })
 
+        var result: TraverserState? = null
         val checks = dimensions.fold<Term, OptionalErrorCheckQuery>(EmptyQuery()) { acc, dimension ->
             acc + newArrayBoundsCheckInc(traverserState, inst, dimension)
         }.withHandler { state ->
@@ -613,18 +679,19 @@ abstract class SymbolicTraverser(
                 valueMap = state.valueMap.put(inst, resultTerm),
                 nullCheckedTerms = state.nullCheckedTerms.add(resultTerm),
                 typeCheckedTerms = state.typeCheckedTerms.put(resultTerm, inst.type)
-            ).also { currentState = it }
+            ).also { result = it }
         }
         checkReachabilityIncremental(traverserState, checks)
+        return result
     }
 
-    protected open suspend fun traverseNewInst(inst: NewInst) = acquireState { traverserState ->
+    protected open suspend fun traverseNewInst(traverserState: TraverserState, inst: NewInst): TraverserState? {
         val resultTerm = generate(inst.type.symbolicType)
         val clause = StateClause(
             inst,
             state { resultTerm.new() }
         )
-        currentState = traverserState.copy(
+        return traverserState.copy(
             symbolicState = traverserState.symbolicState + clause,
             typeInfo = traverserState.typeInfo.put(resultTerm, inst.type.rtMapped),
             valueMap = traverserState.valueMap.put(inst, resultTerm),
@@ -633,15 +700,15 @@ abstract class SymbolicTraverser(
         )
     }
 
-    protected open suspend fun traversePhiInst(inst: PhiInst) = acquireState { traverserState ->
+    protected open suspend fun traversePhiInst(traverserState: TraverserState, inst: PhiInst): TraverserState? {
         val previousBlock = traverserState.blockPath.last { it.method == inst.parent.method }
         val value = traverserState.mkTerm(inst.incomings.getValue(previousBlock))
-        currentState = traverserState.copy(
+        return traverserState.copy(
             valueMap = traverserState.valueMap.put(inst, value)
         )
     }
 
-    protected open suspend fun traverseUnaryInst(inst: UnaryInst) = acquireState { traverserState ->
+    protected open suspend fun traverseUnaryInst(traverserState: TraverserState, inst: UnaryInst): TraverserState? {
         val operandTerm = traverserState.mkTerm(inst.operand)
         val resultTerm = generate(inst.type.symbolicType)
         val clause = StateClause(
@@ -649,6 +716,7 @@ abstract class SymbolicTraverser(
             state { resultTerm equality operandTerm.apply(inst.opcode) }
         )
 
+        var result: TraverserState? = null
         val checks = when (inst.opcode) {
             UnaryOpcode.LENGTH -> nullabilityCheckInc(traverserState, inst, operandTerm)
             else -> EmptyQuery()
@@ -656,13 +724,14 @@ abstract class SymbolicTraverser(
             state.copy(
                 symbolicState = state.symbolicState + clause,
                 valueMap = state.valueMap.put(inst, resultTerm)
-            ).also { currentState = it }
+            ).also { result = it }
         }
 
         checkReachabilityIncremental(traverserState, checks)
+        return result
     }
 
-    protected open suspend fun traverseJumpInst(inst: JumpInst) = acquireState { traverserState ->
+    protected open suspend fun traverseJumpInst(traverserState: TraverserState, inst: JumpInst): TraverserState? {
         checkReachabilityIncremental(
             traverserState,
             ConditionCheckQuery(
@@ -672,13 +741,14 @@ abstract class SymbolicTraverser(
                 }
             )
         )
+        return null
     }
 
-    protected open suspend fun traverseReturnInst(inst: ReturnInst) = acquireState { traverserState ->
+    protected open suspend fun traverseReturnInst(traverserState: TraverserState, inst: ReturnInst): TraverserState? {
         val stackTrace = traverserState.stackTrace
         val stackTraceElement = stackTrace.lastOrNull()
         val receiver = stackTraceElement?.instruction
-        currentState = when {
+        val result = when {
             receiver == null -> {
                 checkReachabilityIncremental(
                     traverserState,
@@ -690,7 +760,7 @@ abstract class SymbolicTraverser(
                         )
                     )
                 )
-                null
+                return null
             }
 
             inst.hasReturnValue && receiver.isNameDefined -> {
@@ -706,13 +776,12 @@ abstract class SymbolicTraverser(
                 stackTrace = stackTrace.removeAt(stackTrace.lastIndex)
             )
         }
-        if (receiver != null) {
-            val nextInst = receiver.parent.indexOf(receiver) + 1
-            traverseBlock(receiver.parent, nextInst)
-        }
+        val nextInst = receiver.parent.indexOf(receiver) + 1
+        traverseBlock(result, receiver.parent, nextInst)
+        return null
     }
 
-    protected open suspend fun traverseSwitchInst(inst: SwitchInst) = acquireState { traverserState ->
+    protected open suspend fun traverseSwitchInst(traverserState: TraverserState, inst: SwitchInst): TraverserState? {
         val key = traverserState.mkTerm(inst.key)
         checkReachabilityIncremental(
             traverserState,
@@ -743,9 +812,13 @@ abstract class SymbolicTraverser(
                 })
             })
         )
+        return null
     }
 
-    protected open suspend fun traverseTableSwitchInst(inst: TableSwitchInst) = acquireState { traverserState ->
+    protected open suspend fun traverseTableSwitchInst(
+        traverserState: TraverserState,
+        inst: TableSwitchInst
+    ): TraverserState? {
         val key = traverserState.mkTerm(inst.index)
         val min = inst.range.first
         checkReachabilityIncremental(
@@ -777,9 +850,10 @@ abstract class SymbolicTraverser(
                 })
             })
         )
+        return null
     }
 
-    protected open suspend fun traverseThrowInst(inst: ThrowInst) = acquireState { traverserState ->
+    protected open suspend fun traverseThrowInst(traverserState: TraverserState, inst: ThrowInst): TraverserState? {
         val throwableTerm = traverserState.mkTerm(inst.throwable)
         val throwClause = StateClause(
             inst,
@@ -795,14 +869,21 @@ abstract class SymbolicTraverser(
             )
         }
         checkReachabilityIncremental(traverserState, checks)
+        return null
     }
 
-    protected open suspend fun traverseUnreachableInst(inst: UnreachableInst) {
-        currentState = null
+    protected open suspend fun traverseUnreachableInst(
+        traverserState: TraverserState,
+        inst: UnreachableInst
+    ): TraverserState? {
+        return null
     }
 
-    protected open suspend fun traverseUnknownValueInst(inst: UnknownValueInst) {
-        unreachable<Unit>("Unexpected visit of $inst in symbolic traverser")
+    protected open suspend fun traverseUnknownValueInst(
+        traverserState: TraverserState,
+        inst: UnknownValueInst
+    ): TraverserState? {
+        return unreachable("Unexpected visit of $inst in symbolic traverser")
     }
 
     protected open suspend fun nullabilityCheckInc(

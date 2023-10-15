@@ -3,16 +3,13 @@ package org.vorpal.research.kex.symbolic
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.InternalSerializationApi
-import org.vorpal.research.kex.ExecutionContext
 import org.vorpal.research.kex.KexRunnerTest
 import org.vorpal.research.kex.asm.analysis.symbolic.InstructionSymbolicChecker
 import org.vorpal.research.kex.asm.manager.ClassInstantiationDetector
 import org.vorpal.research.kex.jacoco.CoverageReporter
 import org.vorpal.research.kex.launcher.ClassLevel
-import org.vorpal.research.kfg.ClassManager
 import org.vorpal.research.kfg.Package
 import org.vorpal.research.kfg.ir.Class
-import org.vorpal.research.kfg.visitor.MethodVisitor
 import org.vorpal.research.kfg.visitor.executePipeline
 import org.vorpal.research.kthelper.logging.log
 import kotlin.test.assertEquals
@@ -25,13 +22,6 @@ import kotlin.time.ExperimentalTime
 abstract class SymbolicTest(
     testDirectoryName: String
 ) : KexRunnerTest(testDirectoryName) {
-
-    override fun createTraceCollector(context: ExecutionContext) = object : MethodVisitor {
-        override val cm: ClassManager
-            get() = context.cm
-
-        override fun cleanup() {}
-    }
 
     fun assertCoverage(klass: Class, expectedCoverage: Double = 1.0, eps: Double = 0.0) {
         executePipeline(analysisContext.cm, Package.defaultPackage) {

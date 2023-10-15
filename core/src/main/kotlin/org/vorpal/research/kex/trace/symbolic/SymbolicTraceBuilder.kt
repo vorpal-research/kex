@@ -4,6 +4,7 @@ package org.vorpal.research.kex.trace.symbolic
 
 import org.vorpal.research.kex.ExecutionContext
 import org.vorpal.research.kex.asm.state.asTermExpr
+import org.vorpal.research.kex.asm.transform.SymbolicTraceInstrumenter
 import org.vorpal.research.kex.descriptor.ConstantDescriptor
 import org.vorpal.research.kex.descriptor.Descriptor
 import org.vorpal.research.kex.descriptor.Object2DescriptorConverter
@@ -225,8 +226,16 @@ class SymbolicTraceBuilder(
         SymbolicTraceException("", it)
     }
 
+    private val Instruction.nextOriginal: Instruction? get() {
+        var current = this.next ?: return null
+        while (current.location == SymbolicTraceInstrumenter.SYMBOLIC_TRACE_LOCATION) {
+            current = current.next ?: return null
+        }
+        return current
+    }
+
     private fun addToCallTrace(call: CallInst) {
-        callStack.push(CallFrame(call, call.next!!))
+        callStack.push(CallFrame(call, call.nextOriginal!!))
     }
 
     private fun popFromCallTrace() {
@@ -292,6 +301,16 @@ class SymbolicTraceBuilder(
                     val value = this["value", KexInt]!! as ConstantDescriptor.Int
                     if (value.value == 0) descriptor { const(false) }
                     else descriptor { const(true) }
+                }
+
+                type is KexByte && this.type == KexClass(SystemTypeNames.integerClass) -> {
+                    val value = this["value", KexInt]!! as ConstantDescriptor.Int
+                    descriptor { const(value.value.toByte()) }
+                }
+
+                type is KexShort && this.type == KexClass(SystemTypeNames.integerClass) -> {
+                    val value = this["value", KexInt]!! as ConstantDescriptor.Int
+                    descriptor { const(value.value.toShort()) }
                 }
 
                 type is KexInt && this.type == KexClass(SystemTypeNames.booleanClass) -> {
@@ -1120,7 +1139,7 @@ class SymbolicTraceBuilder(
         val kfgValue = parseValue(value)
         val termValue = mkValue(kfgValue)
 
-        val intValue = concreteValue as Int
+        val intValue = numericValue(concreteValue).toInt()
         termValue.updateInfo(kfgValue, concreteValue.getAsDescriptor(termValue.type))
 
         val predicate = path(instruction.location) {

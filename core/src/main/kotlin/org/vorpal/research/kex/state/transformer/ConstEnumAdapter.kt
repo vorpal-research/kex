@@ -18,8 +18,8 @@ import org.vorpal.research.kex.state.term.StaticClassRefTerm
 import org.vorpal.research.kex.state.term.Term
 import org.vorpal.research.kex.state.term.TermBuilder.Terms.field
 import org.vorpal.research.kex.state.term.term
+import org.vorpal.research.kex.util.KfgTargetFilter
 import org.vorpal.research.kex.util.allFields
-import org.vorpal.research.kex.util.asmString
 import org.vorpal.research.kex.util.isStatic
 import org.vorpal.research.kex.util.loadClass
 import org.vorpal.research.kfg.type.ClassType
@@ -29,7 +29,7 @@ import org.vorpal.research.kthelper.tryOrNull
 
 val ignores by lazy {
     kexConfig.getMultipleStringValue("inliner", "ignoreStatic")
-        .mapTo(mutableSetOf()) { it.asmString }
+        .mapTo(mutableSetOf()) { KfgTargetFilter.parse(it) }
 }
 
 class ConstEnumAdapter(
@@ -144,7 +144,10 @@ class ConstEnumAdapter(
                 else -> null
             }
         }
-        .filterNotTo(mutableSetOf()) { it.toString() in ignores }
+        .filterNotTo(mutableSetOf()) { type ->
+            val kfgType = type.getKfgType(context.types)
+            ignores.any { filter -> filter.matches(kfgType) }
+        }
 
     override fun apply(ps: PredicateState): PredicateState = apply(ps, findAccessedEnums(ps))
 

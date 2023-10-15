@@ -831,9 +831,11 @@ open class DescriptorBuilder : StringInfoContext() {
         return string
     }
 
-    fun klass(type: KexType): ObjectDescriptor {
+    fun klass(type: KexType): ObjectDescriptor = klass("$type")
+
+    fun klass(typeName: String): ObjectDescriptor {
         val klass = `object`(KexJavaClass())
-        klass["name", KexString()] = string("$type")
+        klass["name", KexString()] = string(typeName)
         return klass
     }
 }

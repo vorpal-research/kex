@@ -12,8 +12,16 @@ import org.vorpal.research.kfg.ir.value.instruction.CmpOpcode
 import org.vorpal.research.kfg.ir.value.instruction.Instruction
 import org.vorpal.research.kfg.ir.value.instruction.InstructionBuilder
 import org.vorpal.research.kfg.type.ArrayType
+import org.vorpal.research.kfg.type.BoolType
+import org.vorpal.research.kfg.type.ByteType
+import org.vorpal.research.kfg.type.CharType
 import org.vorpal.research.kfg.type.ClassType
+import org.vorpal.research.kfg.type.DoubleType
+import org.vorpal.research.kfg.type.FloatType
+import org.vorpal.research.kfg.type.IntType
+import org.vorpal.research.kfg.type.LongType
 import org.vorpal.research.kfg.type.PrimitiveType
+import org.vorpal.research.kfg.type.ShortType
 import org.vorpal.research.kfg.type.Type
 import org.vorpal.research.kfg.type.TypeFactory
 import org.vorpal.research.kfg.type.boolWrapper
@@ -38,6 +46,23 @@ fun InstructionBuilder.wrapValue(value: Value): Instruction {
     val wrapperType = cm.type.getWrapper(value.type as PrimitiveType) as ClassType
     val wrapperClass = wrapperType.klass
     val valueOfMethod = wrapperClass.getMethod("valueOf", wrapperType, value.type)
+    return valueOfMethod.staticCall(wrapperClass, listOf(value))
+}
+
+fun InstructionBuilder.wrapUpValue(value: Value): Instruction {
+    val (wrapperType, argType) = when (value.type) {
+        is BoolType -> types.boolWrapper to BoolType
+        is ByteType -> types.intWrapper to IntType
+        is CharType -> types.intWrapper to IntType
+        is ShortType -> types.intWrapper to IntType
+        is IntType -> types.intWrapper to IntType
+        is LongType -> types.longWrapper to LongType
+        is FloatType -> types.floatWrapper to FloatType
+        is DoubleType -> types.doubleWrapper to DoubleType
+        else -> unreachable { log.error("Non-primitive value") }
+    }
+    val wrapperClass = (wrapperType as ClassType).klass
+    val valueOfMethod = wrapperClass.getMethod("valueOf", wrapperType, argType)
     return valueOfMethod.staticCall(wrapperClass, listOf(value))
 }
 
@@ -103,8 +128,7 @@ fun NameMapper.parseValueOrNull(valueName: String): Value? {
         valueName.matches(Regex("-?\\d+")) -> values.getInt(valueName.toInt())
         valueName.matches(Regex("-?\\d+.\\d+f")) -> values.getFloat(valueName.toFloat())
         valueName.matches(Regex("-?\\d+.\\d+")) -> values.getDouble(valueName.toDouble())
-        valueName.matches(Regex("\".*\"")) -> values.getString(valueName.substring(1, valueName.lastIndex))
-        valueName.matches(Regex("\"[\n\\s]*\"")) -> values.getString(valueName.substring(1, valueName.lastIndex))
+        valueName.matches(Regex("\".*\"", RegexOption.DOT_MATCHES_ALL)) -> values.getString(valueName.substring(1, valueName.lastIndex))
         valueName.matches(Regex(".*(/.*)+.class")) -> values.getClass("L${valueName.removeSuffix(".class")};")
         valueName == "null" -> values.nullConstant
         valueName == "true" -> values.trueConstant
@@ -150,7 +174,7 @@ private object SubTypeInfoCache {
     private val subtypeCache = LRUCache<Pair<String, String>, Boolean>(100_000U)
     fun check(lhv: Type, rhv: Type): Boolean {
         val key = lhv.toString() to rhv.toString()
-        return subtypeCache[key] ?: lhv.isSubtypeOf(rhv).also {
+        return subtypeCache[key] ?: lhv.isSubtypeOf(rhv, outerClassBehavior = false).also {
             subtypeCache[key] = it
         }
     }

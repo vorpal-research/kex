@@ -3,9 +3,8 @@ package org.vorpal.research.kex.asm.manager
 import org.vorpal.research.kex.asm.util.AccessModifier
 import org.vorpal.research.kex.asm.util.accessModifier
 import org.vorpal.research.kex.config.kexConfig
-import org.vorpal.research.kex.util.asmString
+import org.vorpal.research.kex.util.KfgTargetFilter
 import org.vorpal.research.kfg.ClassManager
-import org.vorpal.research.kfg.Package
 import org.vorpal.research.kfg.ir.Method
 import org.vorpal.research.kfg.ir.value.instruction.ReturnInst
 import org.vorpal.research.kfg.type.objectType
@@ -29,26 +28,19 @@ object MethodManager {
 
     object InlineManager {
         val inliningEnabled = kexConfig.getBooleanValue("inliner", "enabled", true)
-        private val ignorePackages = hashSetOf<Package>()
-        private val ignoreClasses = hashSetOf<String>()
+        private val ignores = hashSetOf<KfgTargetFilter>()
 
         init {
-            ignorePackages.addAll(
-                kexConfig.getMultipleStringValue("inliner", "ignorePackage", ",").map {
-                    Package.parse(it)
+            ignores.addAll(
+                kexConfig.getMultipleStringValue("inliner", "ignore", ",").map {
+                    KfgTargetFilter.parse(it)
                 }
             )
-            ignoreClasses.addAll(
-                kexConfig.getMultipleStringValue("inliner", "ignoreClass", ",").map {
-                    it.asmString
-                }
-            )
-            ignorePackages += Package.parse("org.vorpal.research.kex.intrinsics.*")
+            ignores += KfgTargetFilter.parse("package org.vorpal.research.kex.intrinsics.*")
         }
 
         fun isIgnored(method: Method) = when {
-            ignorePackages.any { it.isParent(method.klass.pkg) } -> true
-            ignoreClasses.any { method.cm[it] == method.klass } -> true
+            ignores.any { it.matches(method.klass) } -> true
             else -> false
         }
 

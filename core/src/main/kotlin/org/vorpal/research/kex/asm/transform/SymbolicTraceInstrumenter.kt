@@ -1,16 +1,17 @@
 package org.vorpal.research.kex.asm.transform
 
-import org.vorpal.research.kex.ExecutionContext
 import org.vorpal.research.kex.trace.symbolic.InstructionTraceCollector
 import org.vorpal.research.kex.trace.symbolic.TraceCollectorProxy
 import org.vorpal.research.kex.util.asmString
 import org.vorpal.research.kex.util.insertAfter
 import org.vorpal.research.kex.util.insertBefore
-import org.vorpal.research.kex.util.wrapValue
+import org.vorpal.research.kex.util.wrapUpValue
+import org.vorpal.research.kfg.ClassManager
 import org.vorpal.research.kfg.Package
 import org.vorpal.research.kfg.arrayListClass
 import org.vorpal.research.kfg.ir.CatchBlock
 import org.vorpal.research.kfg.ir.Class
+import org.vorpal.research.kfg.ir.Location
 import org.vorpal.research.kfg.ir.Method
 import org.vorpal.research.kfg.ir.value.EmptyUsageContext
 import org.vorpal.research.kfg.ir.value.ThisRef
@@ -54,10 +55,16 @@ import org.vorpal.research.kfg.type.stringType
 import org.vorpal.research.kfg.visitor.MethodVisitor
 
 class SymbolicTraceInstrumenter(
-    private val executionContext: ExecutionContext,
+    override val cm: ClassManager,
     private val ignores: Set<Package> = setOf()
 ) : MethodVisitor, InstructionBuilder {
     companion object {
+        val SYMBOLIC_TRACE_LOCATION = Location(
+            pkg = Package.parse("org.vorpal.research.kex.asm.transform"),
+            file = "SymbolicTraceInstrumenter",
+            line = 62
+        )
+
         private val INSTRUCTION_TRACE_COLLECTOR = InstructionTraceCollector::class.java
             .canonicalName
             .asmString
@@ -68,8 +75,6 @@ class SymbolicTraceInstrumenter(
     }
 
     override val ctx: UsageContext = EmptyUsageContext
-    override val cm get() = executionContext.cm
-
     override val instructions: InstructionFactory
         get() = cm.instruction
     override val types: TypeFactory
@@ -86,6 +91,18 @@ class SymbolicTraceInstrumenter(
     private lateinit var traceCollector: Instruction
 
     override fun cleanup() {}
+
+    private fun Instruction.mapLocation(): Instruction {
+        this.withLocation(SYMBOLIC_TRACE_LOCATION)
+        return this
+    }
+
+    private fun List<Instruction>.mapLocation(): List<Instruction> {
+        for (inst in this) {
+            inst.withLocation(SYMBOLIC_TRACE_LOCATION)
+        }
+        return this
+    }
 
     private fun prepareStaticInitializer(method: Method) {
         val entryInstructions = buildList {
@@ -161,7 +178,7 @@ class SymbolicTraceInstrumenter(
             )
         }
         super.visit(method)
-        method.body.entry.first().insertBefore(methodEntryInstructions)
+        method.body.entry.first().insertBefore(methodEntryInstructions.mapLocation())
     }
 
     override fun visitArrayLoadInst(inst: ArrayLoadInst) {
@@ -190,8 +207,8 @@ class SymbolicTraceInstrumenter(
                 )
             )
         }
-        inst.insertBefore(before)
-        inst.insertAfter(after)
+        inst.insertBefore(before.mapLocation())
+        inst.insertAfter(after.mapLocation())
     }
 
     override fun visitArrayStoreInst(inst: ArrayStoreInst) {
@@ -221,8 +238,8 @@ class SymbolicTraceInstrumenter(
                 )
             )
         }
-        inst.insertBefore(before)
-        inst.insertAfter(after)
+        inst.insertBefore(before.mapLocation())
+        inst.insertAfter(after.mapLocation())
     }
 
     override fun visitBinaryInst(inst: BinaryInst) {
@@ -247,7 +264,7 @@ class SymbolicTraceInstrumenter(
                 )
             )
         }
-        inst.insertAfter(instrumented)
+        inst.insertAfter(instrumented.mapLocation())
     }
 
     override fun visitBranchInst(inst: BranchInst) {
@@ -263,7 +280,7 @@ class SymbolicTraceInstrumenter(
                 "${inst.cond}".asValue
             )
         )
-        inst.insertBefore(instrumented)
+        inst.insertBefore(instrumented.mapLocation())
     }
 
     override fun visitCallInst(inst: CallInst) {
@@ -347,7 +364,7 @@ class SymbolicTraceInstrumenter(
                 )
             )
         }
-        inst.insertBefore(instrumented)
+        inst.insertBefore(instrumented.mapLocation())
     }
 
     override fun visitCastInst(inst: CastInst) {
@@ -373,8 +390,8 @@ class SymbolicTraceInstrumenter(
                 )
             )
         }
-        inst.insertBefore(before)
-        inst.insertAfter(after)
+        inst.insertBefore(before.mapLocation())
+        inst.insertAfter(after.mapLocation())
     }
 
     override fun visitCatchInst(inst: CatchInst) {
@@ -401,7 +418,7 @@ class SymbolicTraceInstrumenter(
                 }
             }
         }
-        inst.insertAfter(instrumented)
+        inst.insertAfter(instrumented.mapLocation())
     }
 
     override fun visitCmpInst(inst: CmpInst) {
@@ -425,7 +442,7 @@ class SymbolicTraceInstrumenter(
                 )
             )
         }
-        inst.insertAfter(instrumented)
+        inst.insertAfter(instrumented.mapLocation())
     }
 
     override fun visitEnterMonitorInst(inst: EnterMonitorInst) {
@@ -441,7 +458,7 @@ class SymbolicTraceInstrumenter(
                 inst.owner
             )
         )
-        inst.insertAfter(instrumented)
+        inst.insertAfter(instrumented.mapLocation())
     }
 
     override fun visitExitMonitorInst(inst: ExitMonitorInst) {
@@ -457,7 +474,7 @@ class SymbolicTraceInstrumenter(
                 inst.owner
             )
         )
-        inst.insertAfter(instrumented)
+        inst.insertAfter(instrumented.mapLocation())
     }
 
     override fun visitFieldLoadInst(inst: FieldLoadInst) {
@@ -496,8 +513,8 @@ class SymbolicTraceInstrumenter(
                 )
             )
         }
-        inst.insertBefore(before)
-        inst.insertAfter(after)
+        inst.insertBefore(before.mapLocation())
+        inst.insertAfter(after.mapLocation())
     }
 
     override fun visitFieldStoreInst(inst: FieldStoreInst) {
@@ -543,8 +560,8 @@ class SymbolicTraceInstrumenter(
                 )
             )
         }
-        inst.insertBefore(before)
-        inst.insertAfter(after)
+        inst.insertBefore(before.mapLocation())
+        inst.insertAfter(after.mapLocation())
     }
 
     override fun visitInstanceOfInst(inst: InstanceOfInst) {
@@ -567,7 +584,7 @@ class SymbolicTraceInstrumenter(
                 )
             )
         }
-        inst.insertAfter(instrumented)
+        inst.insertAfter(instrumented.mapLocation())
     }
 
     override fun visitInvokeDynamicInst(inst: InvokeDynamicInst) {
@@ -613,7 +630,7 @@ class SymbolicTraceInstrumenter(
                 )
             )
         }
-        inst.insertAfter(instrumented)
+        inst.insertAfter(instrumented.mapLocation())
     }
 
     override fun visitJumpInst(inst: JumpInst) {
@@ -624,7 +641,7 @@ class SymbolicTraceInstrumenter(
         val instrumented = collectorClass.interfaceCall(
             jumpMethod, traceCollector, listOf("$inst".asValue)
         )
-        inst.insertBefore(instrumented)
+        inst.insertBefore(instrumented.mapLocation())
     }
 
     override fun visitNewArrayInst(inst: NewArrayInst) {
@@ -674,7 +691,7 @@ class SymbolicTraceInstrumenter(
                 )
             )
         }
-        inst.insertAfter(instrumented)
+        inst.insertAfter(instrumented.mapLocation())
     }
 
     override fun visitNewInst(inst: NewInst) {
@@ -685,13 +702,13 @@ class SymbolicTraceInstrumenter(
         val instrumented = collectorClass.interfaceCall(
             newMethod, traceCollector, listOf("$inst".asValue)
         )
-        inst.insertAfter(instrumented)
+        inst.insertAfter(instrumented.mapLocation())
     }
 
     override fun visitPhiInst(inst: PhiInst) {
         // if phi is part of a catch block, we need to handle the `CatchInst` first
         if (inst.parent is CatchBlock) return
-        inst.insertAfter(buildPhi(inst))
+        inst.insertAfter(buildPhi(inst).mapLocation())
     }
 
     private fun buildPhi(inst: PhiInst): List<Instruction> = buildList {
@@ -732,7 +749,7 @@ class SymbolicTraceInstrumenter(
                 )
             )
         }
-        inst.insertBefore(instrumented)
+        inst.insertBefore(instrumented.mapLocation())
     }
 
     override fun visitSwitchInst(inst: SwitchInst) {
@@ -753,7 +770,7 @@ class SymbolicTraceInstrumenter(
                 )
             )
         }
-        inst.insertBefore(instrumented)
+        inst.insertBefore(instrumented.mapLocation())
     }
 
     override fun visitTableSwitchInst(inst: TableSwitchInst) {
@@ -774,7 +791,7 @@ class SymbolicTraceInstrumenter(
                 )
             )
         }
-        inst.insertBefore(instrumented)
+        inst.insertBefore(instrumented.mapLocation())
     }
 
     override fun visitThrowInst(inst: ThrowInst) {
@@ -791,7 +808,7 @@ class SymbolicTraceInstrumenter(
                 inst.throwable
             )
         )
-        inst.insertBefore(instrumented)
+        inst.insertBefore(instrumented.mapLocation())
     }
 
     override fun visitUnaryInst(inst: UnaryInst) {
@@ -818,8 +835,8 @@ class SymbolicTraceInstrumenter(
                 )
             )
         }
-        inst.insertBefore(before)
-        inst.insertAfter(after)
+        inst.insertBefore(before.mapLocation())
+        inst.insertAfter(after.mapLocation())
     }
 
     private fun addNullityConstraint(inst: Instruction, value: Value): List<Instruction> = buildList {
@@ -959,7 +976,7 @@ class SymbolicTraceInstrumenter(
     ) = method.specialCall(this, instance, args)
 
     private fun Value.wrapped(list: MutableList<Instruction>): Value = when {
-        this.type.isPrimitive -> wrapValue(this).also {
+        this.type.isPrimitive -> wrapUpValue(this).also {
             list += it
         }
 

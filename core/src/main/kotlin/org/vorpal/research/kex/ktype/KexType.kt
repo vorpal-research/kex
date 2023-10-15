@@ -4,8 +4,12 @@ import kotlinx.serialization.Serializable
 import org.vorpal.research.kex.BaseType
 import org.vorpal.research.kex.InheritanceInfo
 import org.vorpal.research.kex.InheritorOf
+import org.vorpal.research.kex.util.KfgClassTargetFilter
+import org.vorpal.research.kex.util.KfgPackageTargetFilter
+import org.vorpal.research.kex.util.KfgTargetFilter
 import org.vorpal.research.kex.util.getKexRuntime
 import org.vorpal.research.kex.util.javaString
+import org.vorpal.research.kfg.Package
 import org.vorpal.research.kfg.ir.Method
 import org.vorpal.research.kfg.type.ArrayType
 import org.vorpal.research.kfg.type.BoolType
@@ -14,9 +18,9 @@ import org.vorpal.research.kfg.type.CharType
 import org.vorpal.research.kfg.type.ClassType
 import org.vorpal.research.kfg.type.DoubleType
 import org.vorpal.research.kfg.type.FloatType
+import org.vorpal.research.kfg.type.Integer
 import org.vorpal.research.kfg.type.LongType
 import org.vorpal.research.kfg.type.NullType
-import org.vorpal.research.kfg.type.Integer
 import org.vorpal.research.kfg.type.Real
 import org.vorpal.research.kfg.type.Reference
 import org.vorpal.research.kfg.type.ShortType
@@ -31,8 +35,8 @@ import org.vorpal.research.kthelper.logging.log
 import ru.spbstu.wheels.mapToArray
 import kotlin.reflect.KClass
 import org.vorpal.research.kfg.ir.Class as KfgClass
-import org.vorpal.research.kfg.ir.Method as KfgMethod
 import org.vorpal.research.kfg.ir.Field as KfgField
+import org.vorpal.research.kfg.ir.Method as KfgMethod
 
 @Suppress("unused", "RecursivePropertyAccessor")
 object KexRtManager {
@@ -111,6 +115,18 @@ object KexRtManager {
             is KexReference -> KexReference(reference.rtUnmapped)
             is KexArray -> KexArray(element.rtUnmapped)
             else -> this
+        }
+
+    val KfgTargetFilter.rtMapped: KfgTargetFilter
+        get() = when (this) {
+            is KfgClassTargetFilter -> KfgClassTargetFilter(klassName.rtMapped)
+            is KfgPackageTargetFilter -> KfgPackageTargetFilter(Package(pkg.concreteName.rtMapped))
+        }
+
+    val KfgTargetFilter.rtUnmapped: KfgTargetFilter
+        get() = when (this) {
+            is KfgClassTargetFilter -> KfgClassTargetFilter(klassName.rtUnmapped)
+            is KfgPackageTargetFilter -> KfgPackageTargetFilter(Package(pkg.concreteName.rtUnmapped))
         }
 
 

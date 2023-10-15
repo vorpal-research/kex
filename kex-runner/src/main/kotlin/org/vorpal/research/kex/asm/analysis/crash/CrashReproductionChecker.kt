@@ -209,20 +209,18 @@ abstract class AbstractCrashReproductionChecker<T>(
         }
     }
 
-    final override suspend fun traverseInstruction(inst: Instruction) {
+    final override suspend fun traverseInstruction(state: TraverserState, inst: Instruction): TraverserState? {
         if (preconditionReceiver.stoppedReceiving) {
-            currentState = null
             preconditionProvider.stopProviding()
-            return
+            return null
         }
 
         checkNewPreconditions()
         if (inst in targetInstructions) {
-            val traverserState = currentState ?: return
-            checkSetOfPreconditions(inst, traverserState, preconditionProvider.getPreconditions(inst, traverserState))
+            checkSetOfPreconditions(inst, state, preconditionProvider.getPreconditions(inst, state))
         }
 
-        super.traverseInstruction(inst)
+        return super.traverseInstruction(state, inst)
     }
 
     final override suspend fun checkIncremental(

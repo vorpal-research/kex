@@ -12,9 +12,9 @@ import org.vorpal.research.kex.state.predicate.CallPredicate
 import org.vorpal.research.kex.state.term.CallTerm
 import org.vorpal.research.kex.state.term.Term
 import org.vorpal.research.kfg.ClassManager
-import org.vorpal.research.kfg.Package
 import org.vorpal.research.kfg.type.ClassType
 import org.vorpal.research.kfg.type.TypeFactory
+import org.vorpal.research.kex.util.KfgTargetFilter
 import kotlin.random.Random
 
 @Serializable
@@ -78,11 +78,10 @@ fun Parameters<Descriptor>.filterStaticFinals(cm: ClassManager): Parameters<Desc
     return Parameters(instance, arguments, filteredStatics, others)
 }
 
-private val ignoredStatics: Set<Package> by lazy {
+private val ignoredStatics: Set<KfgTargetFilter> by lazy {
     kexConfig.getMultipleStringValue("testGen", "ignoreStatic").flatMapTo(mutableSetOf()) {
-        val originalPackage = Package.parse(it)
-        val rtMapped = Package(originalPackage.concreteName.rtMapped)
-        listOf(originalPackage, rtMapped)
+        val filter = KfgTargetFilter.parse(it)
+        listOf(filter, filter.rtMapped)
     }
 }
 
@@ -90,9 +89,9 @@ fun Parameters<Descriptor>.filterIgnoredStatic(): Parameters<Descriptor> {
     val filteredStatics = statics
         .filterIsInstance<ClassDescriptor>()
         .filterTo(mutableSetOf()) { descriptor ->
-            val typeName = Package.parse(descriptor.type.toString())
+            val typeName = descriptor.type.toString()
             ignoredStatics.all { ignored ->
-                !ignored.isParent(typeName)
+                !ignored.matches(typeName)
             }
         }
     return Parameters(instance, arguments, filteredStatics, others)
