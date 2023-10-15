@@ -182,8 +182,9 @@ class KexSerializerTest : KexTest("kex-serializer") {
         return with(DescriptorBuilder()) {
             val klass = KexClass("java/util/stream/Stream")
             val instance = mock(klass, cm.type)
-            instance["string" to cm.stringClass.kexType] = convertToDescriptor("test")
-            val instanceJson = serializer.toJson<Descriptor>(instance) // TODO register MockDescriptor to remove <Descriptor>
+            instance["selfReference" to klass] = instance
+            // TODO register MockDescriptor to remove <Descriptor>
+            val instanceJson = serializer.toJson<Descriptor>(instance)
             val instanceFromJson = serializer.fromJson<Descriptor>(instanceJson)
             assertTrue { instance eq instanceFromJson }
         }
