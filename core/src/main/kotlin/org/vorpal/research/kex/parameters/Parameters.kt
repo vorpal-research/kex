@@ -11,10 +11,10 @@ import org.vorpal.research.kex.ktype.KexRtManager.rtMapped
 import org.vorpal.research.kex.state.predicate.CallPredicate
 import org.vorpal.research.kex.state.term.CallTerm
 import org.vorpal.research.kex.state.term.Term
+import org.vorpal.research.kex.util.KfgTargetFilter
 import org.vorpal.research.kfg.ClassManager
 import org.vorpal.research.kfg.type.ClassType
 import org.vorpal.research.kfg.type.TypeFactory
-import org.vorpal.research.kex.util.KfgTargetFilter
 import kotlin.random.Random
 
 @Serializable

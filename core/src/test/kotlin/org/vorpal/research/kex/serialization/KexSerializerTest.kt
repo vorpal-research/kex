@@ -15,6 +15,7 @@ import org.vorpal.research.kex.state.term.FieldLoadTerm
 import org.vorpal.research.kex.state.term.Term
 import org.vorpal.research.kex.state.term.term
 import org.vorpal.research.kfg.stringClass
+import org.vorpal.research.kfg.type.ClassType
 import kotlin.test.assertTrue
 
 @ExperimentalSerializationApi
@@ -181,7 +182,9 @@ class KexSerializerTest : KexTest("kex-serializer") {
     fun mockDescriptorSerializationTest() {
         return with(DescriptorBuilder()) {
             val klass = KexClass("java/util/stream/Stream")
+            val toArrayMethod = (klass.getKfgType(cm.type) as ClassType).klass.methods.first { it.name == "toArray" }
             val instance = mock(klass, cm.type)
+            instance.addReturnValue(toArrayMethod, convertToDescriptor(Array(2) { Any() }))
             instance["selfReference" to klass] = instance
             instance["string" to cm.stringClass.kexType] = convertToDescriptor("test")
             val instanceJson = serializer.toJson(instance)

@@ -793,7 +793,7 @@ open class DescriptorBuilder : StringInfoContext() {
     fun array(length: Int, elementType: KexType): ArrayDescriptor =
         ArrayDescriptor(elementType, length)
 
-    fun mock(type: KexClass, methods: Collection<Method> = emptyList()) = MockDescriptor(type, methods)
+    fun mock(type: KexClass, methods: Collection<Method>) = MockDescriptor(type, methods)
     fun mock(type: KexClass, types: TypeFactory): MockDescriptor =
         MockDescriptor(type, (type.getKfgType(types) as ClassType).klass.methods)
 
