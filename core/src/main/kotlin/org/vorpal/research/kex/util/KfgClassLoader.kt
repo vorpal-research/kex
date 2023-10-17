@@ -4,8 +4,6 @@ import org.vorpal.research.kfg.ClassManager
 import org.vorpal.research.kfg.ir.ConcreteClass
 import org.vorpal.research.kfg.util.toByteArray
 import org.vorpal.research.kthelper.tryOrNull
-import ru.spbstu.wheels.mapToArray
-import java.net.URLClassLoader
 import java.nio.file.Path
 import java.util.jar.JarFile
 import kotlin.io.path.exists
@@ -20,7 +18,7 @@ class KfgClassLoader(
     val transformation: (ConcreteClass) -> Unit = {}
 ) : ClassLoader() {
     private val cache = hashMapOf<String, Class<*>>()
-    val fallback = URLClassLoader(paths.mapToArray { it.toUri().toURL() })
+    val fallback = PathClassLoader(paths)
 
     companion object {
         private val INCLUDES = setOf(
