@@ -73,7 +73,7 @@ class AsyncChecker(
                     psa,
                     inlineSuffix = "inlined",
                     inlineIndex = index,
-                    kexRtOnly = false
+                    kexRtOnly = true
                 )
             }
             +RecursiveInliner(psa) { index, psa ->
