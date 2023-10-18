@@ -109,7 +109,7 @@ class WorkerLauncherDebug(args: Array<String>) {
 
             override suspend fun receive(): TestExecutionRequest {
                 return TestExecutionRequest(
-                    "org.vorpal.research.kex.test.concolic.ListConcolicTests_testLinkedList_17887373691",
+                    "org.vorpal.research.kex.test.debug.ObjectGenerationTests_init_1984063210",
                     testMethod = "test",
                     setupMethod = "setup"
                 )

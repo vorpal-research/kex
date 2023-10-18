@@ -31,6 +31,7 @@ class KfgClassLoader(
             "class org.vorpal.research.kex.test.concolic.SetConcolicTests",
             "class org.vorpal.research.kex.test.concolic.StringConcolicTests",
             "class org.vorpal.research.kex.test.concolic.TestEnum",
+            "class org.vorpal.research.kex.test.debug.ObjectGenerationTests",
         ).mapTo(mutableSetOf()) { KfgTargetFilter.parse(it) }
         private val EXCLUDES = setOf(
             "package java.*",

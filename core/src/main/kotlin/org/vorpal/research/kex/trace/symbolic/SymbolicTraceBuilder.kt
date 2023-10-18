@@ -701,6 +701,9 @@ class SymbolicTraceBuilder(
         concreteValues[termValue] = concreteValue.getAsDescriptor(termValue.type)
 
         termOperand.updateInfo(kfgOperand, concreteOperand.getAsDescriptor(termOperand.type))
+        if (termOperand in nullChecked) {
+            nullChecked += termValue
+        }
 
         val predicate = state(kfgValue.location) {
             termValue equality (termOperand `as` kfgValue.type.kexType)
@@ -1040,6 +1043,9 @@ class SymbolicTraceBuilder(
 
         val termValue = mkNewValue(kfgValue)
         val termIncoming = mkValue(kfgIncoming)
+        if (termIncoming in nullChecked) {
+            nullChecked += termValue
+        }
 
         terms[termValue] = kfgValue.wrapped()
         terms[termIncoming] = kfgIncoming.wrapped()
@@ -1070,6 +1076,9 @@ class SymbolicTraceBuilder(
         val receiver = stack.returnReceiver
         if (termReturn != null && receiver != null) {
             val (kfgReceiver, termReceiver) = receiver
+            if (termReturn in nullChecked) {
+                nullChecked += termReceiver
+            }
             val predicate = state(instruction.location) {
                 termReceiver equality termReturn
             }
