@@ -23,6 +23,7 @@ class ConcolicSequenceGenerator(override val context: GeneratorContext) : Genera
         typeGenerators += FieldGenerator(this)
         typeGenerators += ReflectionEnumGenerator(this)
         typeGenerators += KexRtGenerator(this)
+        typeGenerators += MockGenerator(this)
         typeGenerators += UnknownGenerator(this)
     }
 

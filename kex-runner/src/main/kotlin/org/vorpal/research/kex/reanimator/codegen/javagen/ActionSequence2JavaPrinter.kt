@@ -6,69 +6,17 @@ import org.vorpal.research.kex.asm.util.accessModifier
 import org.vorpal.research.kex.config.kexConfig
 import org.vorpal.research.kex.ktype.KexType
 import org.vorpal.research.kex.parameters.Parameters
-import org.vorpal.research.kex.reanimator.actionsequence.ActionList
-import org.vorpal.research.kex.reanimator.actionsequence.ActionSequence
-import org.vorpal.research.kex.reanimator.actionsequence.ArrayClassConstantGetter
-import org.vorpal.research.kex.reanimator.actionsequence.ArrayWrite
-import org.vorpal.research.kex.reanimator.actionsequence.ClassConstantGetter
-import org.vorpal.research.kex.reanimator.actionsequence.CodeAction
-import org.vorpal.research.kex.reanimator.actionsequence.ConstructorCall
-import org.vorpal.research.kex.reanimator.actionsequence.DefaultConstructorCall
-import org.vorpal.research.kex.reanimator.actionsequence.EnumValueCreation
-import org.vorpal.research.kex.reanimator.actionsequence.ExternalConstructorCall
-import org.vorpal.research.kex.reanimator.actionsequence.ExternalMethodCall
-import org.vorpal.research.kex.reanimator.actionsequence.FieldSetter
-import org.vorpal.research.kex.reanimator.actionsequence.InnerClassConstructorCall
-import org.vorpal.research.kex.reanimator.actionsequence.MethodCall
-import org.vorpal.research.kex.reanimator.actionsequence.NewArray
-import org.vorpal.research.kex.reanimator.actionsequence.NewArrayWithInitializer
-import org.vorpal.research.kex.reanimator.actionsequence.PrimaryValue
-import org.vorpal.research.kex.reanimator.actionsequence.ReflectionArrayWrite
-import org.vorpal.research.kex.reanimator.actionsequence.ReflectionCall
-import org.vorpal.research.kex.reanimator.actionsequence.ReflectionList
-import org.vorpal.research.kex.reanimator.actionsequence.ReflectionNewArray
-import org.vorpal.research.kex.reanimator.actionsequence.ReflectionNewInstance
-import org.vorpal.research.kex.reanimator.actionsequence.ReflectionSetField
-import org.vorpal.research.kex.reanimator.actionsequence.ReflectionSetStaticField
-import org.vorpal.research.kex.reanimator.actionsequence.StaticFieldGetter
-import org.vorpal.research.kex.reanimator.actionsequence.StaticFieldSetter
-import org.vorpal.research.kex.reanimator.actionsequence.StaticMethodCall
-import org.vorpal.research.kex.reanimator.actionsequence.StringValue
-import org.vorpal.research.kex.reanimator.actionsequence.TestCall
-import org.vorpal.research.kex.reanimator.actionsequence.UnknownSequence
+import org.vorpal.research.kex.reanimator.actionsequence.*
 import org.vorpal.research.kex.reanimator.codegen.ActionSequencePrinter
-import org.vorpal.research.kex.util.getConstructor
-import org.vorpal.research.kex.util.getMethod
-import org.vorpal.research.kex.util.isSubtypeOfCached
-import org.vorpal.research.kex.util.javaString
-import org.vorpal.research.kex.util.kex
-import org.vorpal.research.kex.util.loadClass
+import org.vorpal.research.kex.util.*
 import org.vorpal.research.kfg.ir.Class
-import org.vorpal.research.kfg.type.ArrayType
-import org.vorpal.research.kfg.type.BoolType
-import org.vorpal.research.kfg.type.ByteType
-import org.vorpal.research.kfg.type.CharType
-import org.vorpal.research.kfg.type.ClassType
-import org.vorpal.research.kfg.type.DoubleType
-import org.vorpal.research.kfg.type.FloatType
-import org.vorpal.research.kfg.type.IntType
-import org.vorpal.research.kfg.type.LongType
-import org.vorpal.research.kfg.type.NullType
-import org.vorpal.research.kfg.type.ShortType
+import org.vorpal.research.kfg.type.*
 import org.vorpal.research.kfg.type.Type
-import org.vorpal.research.kfg.type.VoidType
-import org.vorpal.research.kfg.type.classType
-import org.vorpal.research.kfg.type.objectType
 import org.vorpal.research.kthelper.assert.ktassert
 import org.vorpal.research.kthelper.assert.unreachable
 import org.vorpal.research.kthelper.logging.log
 import org.vorpal.research.kthelper.tryOrNull
-import java.lang.reflect.Constructor
-import java.lang.reflect.GenericArrayType
-import java.lang.reflect.Method
-import java.lang.reflect.ParameterizedType
-import java.lang.reflect.TypeVariable
-import java.lang.reflect.WildcardType
+import java.lang.reflect.*
 
 private val testTimeout by lazy {
     kexConfig.getIntValue("testGen", "testTimeout", 10)
@@ -397,6 +345,8 @@ open class ActionSequence2JavaPrinter(
             is StringValue -> listOf<String>().also {
                 asConstant
             }
+
+            is MockSequence -> TODO("Mock. Unimplemented")
         }
         with(current) {
             for (statement in statements)
@@ -871,7 +821,10 @@ open class ActionSequence2JavaPrinter(
         )
     }
 
-    protected open fun printArrayClassConstantGetter(owner: ActionSequence, call: ArrayClassConstantGetter): List<String> {
+    protected open fun printArrayClassConstantGetter(
+        owner: ActionSequence,
+        call: ArrayClassConstantGetter
+    ): List<String> {
         call.elementType.printAsJava()
         val actualType = ASClass(ctx.types.classType)
         actualTypes[owner] = actualType

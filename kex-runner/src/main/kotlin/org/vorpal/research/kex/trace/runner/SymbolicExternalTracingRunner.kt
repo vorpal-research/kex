@@ -5,13 +5,7 @@ import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.InternalSerializationApi
 import org.vorpal.research.kex.ExecutionContext
 import org.vorpal.research.kex.config.kexConfig
-import org.vorpal.research.kex.trace.symbolic.protocol.Client2MasterConnection
-import org.vorpal.research.kex.trace.symbolic.protocol.ControllerProtocolHandler
-import org.vorpal.research.kex.trace.symbolic.protocol.ControllerProtocolSocketHandler
-import org.vorpal.research.kex.trace.symbolic.protocol.ExecutionCompletedResult
-import org.vorpal.research.kex.trace.symbolic.protocol.ExecutionResult
-import org.vorpal.research.kex.trace.symbolic.protocol.ExecutionTimedOutResult
-import org.vorpal.research.kex.trace.symbolic.protocol.TestExecutionRequest
+import org.vorpal.research.kex.trace.symbolic.protocol.*
 import org.vorpal.research.kex.util.getJvmModuleParams
 import org.vorpal.research.kex.util.getPathSeparator
 import org.vorpal.research.kex.util.outputDirectory
@@ -109,7 +103,7 @@ class SymbolicExternalTracingRunner(val ctx: ExecutionContext) {
                 is ExecutionCompletedResult -> log.debug("Execution result: {}", result.trace)
                 else -> log.debug("Execution result: {}", result)
             }
-            //log.debug("Test {} executed with result {}", klass, result)
+            log.debug("Test {} executed with result {}", klass, result)
             return result ?: ExecutionTimedOutResult("Connection timeout")
         }
     }

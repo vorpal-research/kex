@@ -2,13 +2,12 @@ package org.vorpal.research.kex.test.concolic;
 
 import org.vorpal.research.kex.intrinsics.AssertIntrinsics;
 
-interface Unimplemented {
-
-    int foo();
-}
 
 @SuppressWarnings("ALL")
 public class UnimplementedInterfaceTests {
+    public interface Unimplemented {
+        int foo();
+    }
 
     public void testUnimplemented(Unimplemented i) {
         if (i.foo() == 42) {

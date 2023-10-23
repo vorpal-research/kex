@@ -2,43 +2,12 @@ package org.vorpal.research.kex.reanimator.codegen.javagen
 
 import org.vorpal.research.kex.ExecutionContext
 import org.vorpal.research.kex.config.kexConfig
-import org.vorpal.research.kex.ktype.KexBool
-import org.vorpal.research.kex.ktype.KexByte
-import org.vorpal.research.kex.ktype.KexChar
-import org.vorpal.research.kex.ktype.KexDouble
-import org.vorpal.research.kex.ktype.KexFloat
-import org.vorpal.research.kex.ktype.KexInt
-import org.vorpal.research.kex.ktype.KexLong
-import org.vorpal.research.kex.ktype.KexShort
-import org.vorpal.research.kex.ktype.KexType
-import org.vorpal.research.kex.ktype.kexType
+import org.vorpal.research.kex.ktype.*
 import org.vorpal.research.kex.parameters.Parameters
-import org.vorpal.research.kex.reanimator.actionsequence.ActionList
-import org.vorpal.research.kex.reanimator.actionsequence.ActionSequence
-import org.vorpal.research.kex.reanimator.actionsequence.ConstructorCall
-import org.vorpal.research.kex.reanimator.actionsequence.DefaultConstructorCall
-import org.vorpal.research.kex.reanimator.actionsequence.EnumValueCreation
-import org.vorpal.research.kex.reanimator.actionsequence.ExternalConstructorCall
-import org.vorpal.research.kex.reanimator.actionsequence.ExternalMethodCall
-import org.vorpal.research.kex.reanimator.actionsequence.InnerClassConstructorCall
-import org.vorpal.research.kex.reanimator.actionsequence.MethodCall
-import org.vorpal.research.kex.reanimator.actionsequence.NewArray
-import org.vorpal.research.kex.reanimator.actionsequence.PrimaryValue
-import org.vorpal.research.kex.reanimator.actionsequence.ReflectionArrayWrite
-import org.vorpal.research.kex.reanimator.actionsequence.ReflectionList
-import org.vorpal.research.kex.reanimator.actionsequence.ReflectionNewArray
-import org.vorpal.research.kex.reanimator.actionsequence.ReflectionNewInstance
-import org.vorpal.research.kex.reanimator.actionsequence.ReflectionSetField
-import org.vorpal.research.kex.reanimator.actionsequence.ReflectionSetStaticField
-import org.vorpal.research.kex.reanimator.actionsequence.StaticFieldGetter
-import org.vorpal.research.kex.reanimator.actionsequence.StringValue
-import org.vorpal.research.kex.reanimator.actionsequence.UnknownSequence
-import org.vorpal.research.kfg.type.ArrayType
-import org.vorpal.research.kfg.type.ClassType
-import org.vorpal.research.kfg.type.PrimitiveType
-import org.vorpal.research.kfg.type.Type
-import org.vorpal.research.kfg.type.objectType
+import org.vorpal.research.kex.reanimator.actionsequence.*
+import org.vorpal.research.kfg.type.*
 import org.vorpal.research.kthelper.assert.unreachable
+import org.vorpal.research.kthelper.logging.error
 import org.vorpal.research.kthelper.logging.log
 import org.vorpal.research.kthelper.runIf
 
@@ -126,6 +95,13 @@ class ExecutorAS2JavaPrinter(
                                     else -> null
                                 }
                             } ?: unreachable { log.error("Unexpected call in arg") }
+
+                            is MockSequence -> arg.mockitoCalls.firstNotNullOfOrNull {
+                                when (it) {
+                                    is MockitoNewInstance -> it.klass.asType
+                                    else -> null
+                                }
+                            } ?: unreachable { log.error { "Unexpected call in arg" } }
 
                             is PrimaryValue<*> -> return@forEach
                             is StringValue -> return@forEach
