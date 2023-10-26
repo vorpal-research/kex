@@ -1,6 +1,7 @@
 package org.vorpal.research.kex.state.transformer
 
 import kotlinx.collections.immutable.toPersistentList
+import org.vorpal.research.kex.ktype.KexRtManager.rtMapped
 import org.vorpal.research.kex.ktype.kexType
 import org.vorpal.research.kex.state.IncrementalPredicateState
 import org.vorpal.research.kex.state.PredicateQuery
@@ -27,10 +28,10 @@ class FieldNormalizer(
         return when (field.klass.fullName) {
             term.klass -> term
             else -> {
-                val casted = term { value(field.klass.kexType, "${term.owner.name}$prefix${counter++}") }
-                currentBuilder += state { casted equality (term.owner `as` field.klass.kexType) }
+                val casted = term { value(field.klass.kexType.rtMapped, "${term.owner.name}$prefix${counter++}") }
+                currentBuilder += state { casted equality (term.owner `as` field.klass.kexType.rtMapped) }
                 remapping[term.owner] = casted
-                term { casted.field(field.type.kexType, term.fieldName) }
+                term { casted.field(field.type.kexType.rtMapped, term.fieldName) }
             }
         }
     }

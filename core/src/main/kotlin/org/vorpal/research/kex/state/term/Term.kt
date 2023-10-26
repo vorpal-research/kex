@@ -9,6 +9,7 @@ import org.vorpal.research.kex.state.transformer.Transformer
 import org.vorpal.research.kthelper.assert.fail
 import org.vorpal.research.kthelper.assert.unreachable
 import org.vorpal.research.kthelper.logging.log
+import org.vorpal.research.kthelper.toInt
 
 @BaseType("Term")
 @Serializable
@@ -86,6 +87,7 @@ val Term.isConst
     }
 
 val Term.numericValue: Number get() = when (this) {
+    is ConstBoolTerm -> value.toInt()
     is ConstByteTerm -> value
     is ConstCharTerm -> value.code
     is ConstShortTerm -> value
