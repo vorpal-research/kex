@@ -3,6 +3,7 @@
 package org.vorpal.research.kex.trace.symbolic
 
 import org.vorpal.research.kex.ExecutionContext
+import org.vorpal.research.kex.asm.manager.MethodManager
 import org.vorpal.research.kex.asm.state.asTermExpr
 import org.vorpal.research.kex.asm.transform.SymbolicTraceInstrumenter
 import org.vorpal.research.kex.descriptor.ConstantDescriptor
@@ -14,6 +15,8 @@ import org.vorpal.research.kex.ktype.KexBool
 import org.vorpal.research.kex.ktype.KexByte
 import org.vorpal.research.kex.ktype.KexChar
 import org.vorpal.research.kex.ktype.KexClass
+import org.vorpal.research.kex.ktype.KexDouble
+import org.vorpal.research.kex.ktype.KexFloat
 import org.vorpal.research.kex.ktype.KexInt
 import org.vorpal.research.kex.ktype.KexInteger
 import org.vorpal.research.kex.ktype.KexLong
@@ -30,6 +33,7 @@ import org.vorpal.research.kex.state.term.Term
 import org.vorpal.research.kex.state.term.term
 import org.vorpal.research.kex.state.transformer.TermRenamer
 import org.vorpal.research.kex.util.cmp
+import org.vorpal.research.kex.util.isOuterThis
 import org.vorpal.research.kex.util.isSubtypeOfCached
 import org.vorpal.research.kex.util.next
 import org.vorpal.research.kex.util.parseValue
@@ -226,20 +230,23 @@ class SymbolicTraceBuilder(
         SymbolicTraceException("", it)
     }
 
-    private val Instruction.nextOriginal: Instruction? get() {
-        var current = this.next ?: return null
-        while (current.location == SymbolicTraceInstrumenter.SYMBOLIC_TRACE_LOCATION) {
-            current = current.next ?: return null
+    private val Instruction.nextOriginal: Instruction?
+        get() {
+            var current = this.next ?: return null
+            while (current.location == SymbolicTraceInstrumenter.SYMBOLIC_TRACE_LOCATION) {
+                current = current.next ?: return null
+            }
+            return current
         }
-        return current
-    }
 
     private fun addToCallTrace(call: CallInst) {
         callStack.push(CallFrame(call, call.nextOriginal!!))
     }
 
     private fun popFromCallTrace() {
-        if (callStack.isNotEmpty()) callStack.pop()
+        if (callStack.isNotEmpty()) {
+            callStack.pop()
+        }
     }
 
     private fun preCheck(name: String) {
@@ -347,6 +354,11 @@ class SymbolicTraceBuilder(
                 type is KexChar && this.type == KexClass(SystemTypeNames.integerClass) -> {
                     val value = this["value", KexInt]!! as ConstantDescriptor.Int
                     descriptor { const(value.value.toChar()) }
+                }
+
+                type is KexDouble && this.type == KexClass(SystemTypeNames.floatClass) -> {
+                    val value = this["value", KexFloat]!! as ConstantDescriptor.Float
+                    descriptor { const(value.value.toDouble()) }
                 }
 
                 else -> this["value", type]
@@ -665,7 +677,7 @@ class SymbolicTraceBuilder(
                 else -> call(actualCallee.call(calledMethod, termArguments))
             }
         }
-
+        handleIntrinsics(calledMethod, termCallee, termArguments, termReturn)
         lastCall = Call(
             instruction,
             calledMethod,
@@ -701,9 +713,7 @@ class SymbolicTraceBuilder(
         concreteValues[termValue] = concreteValue.getAsDescriptor(termValue.type)
 
         termOperand.updateInfo(kfgOperand, concreteOperand.getAsDescriptor(termOperand.type))
-        if (termOperand in nullChecked) {
-            nullChecked += termValue
-        }
+        copyTermInfo(termOperand, termValue)
 
         val predicate = state(kfgValue.location) {
             termValue equality (termOperand `as` kfgValue.type.kexType)
@@ -841,6 +851,9 @@ class SymbolicTraceBuilder(
         concreteValues[termValue] = concreteValue.getAsDescriptor(termValue.type)
 
         termOwner?.apply { this.updateInfo(kfgOwner, concreteOwner.getAsDescriptor(termOwner.type)) }
+        if (kfgField.isOuterThis()) {
+            nullChecked += termValue
+        }
 
         val predicate = state(kfgValue.location) {
             val actualOwner = termOwner ?: staticRef(kfgField.klass)
@@ -1043,9 +1056,7 @@ class SymbolicTraceBuilder(
 
         val termValue = mkNewValue(kfgValue)
         val termIncoming = mkValue(kfgIncoming)
-        if (termIncoming in nullChecked) {
-            nullChecked += termValue
-        }
+        copyTermInfo(termIncoming, termValue)
 
         terms[termValue] = kfgValue.wrapped()
         terms[termIncoming] = kfgIncoming.wrapped()
@@ -1076,9 +1087,7 @@ class SymbolicTraceBuilder(
         val receiver = stack.returnReceiver
         if (termReturn != null && receiver != null) {
             val (kfgReceiver, termReceiver) = receiver
-            if (termReturn in nullChecked) {
-                nullChecked += termReceiver
-            }
+            copyTermInfo(termReturn, termReceiver)
             val predicate = state(instruction.location) {
                 termReceiver equality termReturn
             }
@@ -1404,4 +1413,51 @@ class SymbolicTraceBuilder(
             is Array<*> -> this.size
             else -> 0
         }
+
+    private fun handleIntrinsics(
+        method: Method,
+        @Suppress("UNUSED_PARAMETER") instance: Term?,
+        arguments: List<Term>,
+        returnValue: Term?
+    ) {
+        val im = MethodManager.IntrinsicManager
+        when (method) {
+            im.requireNonNull(cm) -> {
+                nullChecked += arguments[0]
+                copyTermInfo(arguments[0], returnValue!!)
+            }
+
+            im.checkParameterIsNotNull(cm) -> {
+                nullChecked += arguments[0]
+            }
+
+            im.checkNotNullParameter(cm) -> {
+                nullChecked += arguments[0]
+            }
+            // TODO: add more intrinsics
+        }
+    }
+
+    private fun copyTermInfo(from: Term, to: Term) {
+        if (from in nullChecked) {
+            nullChecked += to
+        }
+        if (from in typeChecked) {
+            val fromType = typeChecked[from]!!
+            when (to) {
+                in typeChecked -> {
+                    val toType = typeChecked[to]!!
+                    when {
+                        toType.isSubtypeOf(fromType) -> typeChecked[from] = toType
+                        else -> typeChecked[to] = fromType
+                    }
+                }
+
+                else -> typeChecked[to] = typeChecked[from]!!
+            }
+        }
+        if (from in lengthChecked) {
+            lengthChecked += to
+        }
+    }
 }

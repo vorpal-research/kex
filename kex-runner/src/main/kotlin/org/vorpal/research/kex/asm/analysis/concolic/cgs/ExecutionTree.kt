@@ -66,6 +66,18 @@ data class Context(
     @Suppress("unused")
     val condition get() = context.last()
     val size get() = context.size
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as Context
+
+        return context == other.context
+    }
+
+    override fun hashCode(): Int {
+        return context.hashCode()
+    }
 }
 
 private typealias Branch = Pair<Instruction, PathClauseType>
@@ -158,12 +170,12 @@ class ExecutionTree(val ctx: ExecutionContext) : PredecessorGraph<Vertex>, Viewa
         tree[this]?.dominates(other)
     } ?: false
 
-    fun contexts(pathVertex: PathVertex, k: Int): List<Context> = pathVertex.states.map { (path, state) ->
+    fun contexts(pathVertex: PathVertex, k: Int): Set<Context> = pathVertex.states.mapTo(mutableSetOf()) { (path, state) ->
         Context(
             path.builder()
                 .map { edges[it]!! }
                 .filter { !it.dominates(pathVertex) }
-                .take(k)
+                .takeLast(k)
                 .toPersistentList(),
             path,
             state

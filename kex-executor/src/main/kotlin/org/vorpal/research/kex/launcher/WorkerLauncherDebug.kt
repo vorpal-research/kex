@@ -109,7 +109,7 @@ class WorkerLauncherDebug(args: Array<String>) {
 
             override suspend fun receive(): TestExecutionRequest {
                 return TestExecutionRequest(
-                    "org.vorpal.research.kex.test.debug.ObjectGenerationTests_init_1984063210",
+                    "org.apache.commons.collections4.map.LinkedMap_remove_4179222670",
                     testMethod = "test",
                     setupMethod = "setup"
                 )
