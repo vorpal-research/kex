@@ -1,7 +1,15 @@
 package org.vorpal.research.kex.state.transformer
 
 import kotlinx.collections.immutable.toPersistentList
+import org.vorpal.research.kex.ktype.KexBool
+import org.vorpal.research.kex.ktype.KexByte
+import org.vorpal.research.kex.ktype.KexChar
+import org.vorpal.research.kex.ktype.KexDouble
+import org.vorpal.research.kex.ktype.KexFloat
+import org.vorpal.research.kex.ktype.KexInt
+import org.vorpal.research.kex.ktype.KexLong
 import org.vorpal.research.kex.ktype.KexPointer
+import org.vorpal.research.kex.ktype.KexShort
 import org.vorpal.research.kex.smt.Result
 import org.vorpal.research.kex.state.ChoiceState
 import org.vorpal.research.kex.state.IncrementalPredicateState
@@ -12,6 +20,7 @@ import org.vorpal.research.kex.state.predicate.InequalityPredicate
 import org.vorpal.research.kex.state.predicate.Predicate
 import org.vorpal.research.kex.state.predicate.PredicateType
 import org.vorpal.research.kex.state.term.BinaryTerm
+import org.vorpal.research.kex.state.term.CastTerm
 import org.vorpal.research.kex.state.term.CmpTerm
 import org.vorpal.research.kex.state.term.ConstBoolTerm
 import org.vorpal.research.kex.state.term.ConstByteTerm
@@ -39,6 +48,7 @@ import org.vorpal.research.kthelper.rem
 import org.vorpal.research.kthelper.shl
 import org.vorpal.research.kthelper.shr
 import org.vorpal.research.kthelper.times
+import org.vorpal.research.kthelper.toBoolean
 import org.vorpal.research.kthelper.ushr
 import org.vorpal.research.kthelper.xor
 
@@ -52,9 +62,9 @@ class ConstantSolver : Transformer<ConstantSolver>, IncrementalTransformer {
         private set
 
     infix fun Double.eq(other: Double) = (this - other) < EPS
-    infix fun Double.neq(other: Double) = (this - other) >= EPS
+    private infix fun Double.neq(other: Double) = (this - other) >= EPS
     infix fun Float.eq(other: Float) = (this - other) < EPS
-    infix fun Float.neq(other: Float) = (this - other) >= EPS
+    private infix fun Float.neq(other: Float) = (this - other) >= EPS
 
     override fun apply(state: IncrementalPredicateState): IncrementalPredicateState {
         return IncrementalPredicateState(
@@ -126,6 +136,31 @@ class ConstantSolver : Transformer<ConstantSolver>, IncrementalTransformer {
                 BinaryOpcode.XOR -> {
                     val (nLhv, nRhv) = toCompatibleTypes(lhv, rhv)
                     const(nLhv xor nRhv)
+                }
+            }
+        }
+        return term
+    }
+
+    override fun transformCastTerm(term: CastTerm): Term {
+        val operand = getConstantValue(term.operand) ?: return term
+        when (operand) {
+            is NullTerm -> constantValues[term] = operand
+
+            else -> {
+                val numericValue = operand.numericValue
+                constantValues[term] = term {
+                    when (term.type) {
+                        is KexBool -> const(numericValue.toBoolean())
+                        is KexByte -> const(numericValue.toByte())
+                        is KexChar -> const(numericValue.toChar())
+                        is KexShort -> const(numericValue.toShort())
+                        is KexInt -> const(numericValue.toInt())
+                        is KexLong -> const(numericValue.toLong())
+                        is KexFloat -> const(numericValue.toFloat())
+                        is KexDouble -> const(numericValue.toDouble())
+                        else -> operand
+                    }
                 }
             }
         }
