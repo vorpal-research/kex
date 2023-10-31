@@ -252,6 +252,11 @@ open class ActionSequence2JavaPrinter(
                 actionSequence.args.forEach { resolveTypes(it, visited) }
             }
 
+            is MockSequence -> {
+                actionSequence.mockCalls.reversed().map { resolveTypes(it, visited) }
+                actionSequence.reflectionCalls.reversed().map { resolveTypes(it, visited) }
+            }
+
             else -> {}
         }
     }
@@ -330,6 +335,11 @@ open class ActionSequence2JavaPrinter(
         is ReflectionNewInstance -> {}
     }
 
+    private fun resolveTypes(mockCall: MockCall, visited: MutableSet<String>): Unit = when (mockCall) {
+        is MockNewInstance -> {}
+        is MockSetupMethod -> mockCall.returnValues.forEach { value -> resolveTypes(value, visited) }
+    }
+
     protected open fun ActionSequence.printAsJava() {
         if (name in printedStacks) return
         printedStacks += name
@@ -346,7 +356,7 @@ open class ActionSequence2JavaPrinter(
                 asConstant
             }
 
-            is MockSequence -> TODO("Mock. Unimplemented")
+            is MockSequence -> printMockSequence(this)
         }
         with(current) {
             for (statement in statements)
@@ -359,6 +369,12 @@ open class ActionSequence2JavaPrinter(
 
     protected open fun printReflectionList(reflectionList: ReflectionList): List<String> =
         reflectionList.flatMap { printReflectionCall(reflectionList, it) }
+
+    protected open fun printMockSequence(mockSequence: MockSequence): List<String> = mutableListOf<String>().apply {
+        addAll(mockSequence.mockCalls.flatMap { printMockCall(mockSequence, it) })
+        addAll(mockSequence.reflectionCalls.flatMap { printReflectionCall(mockSequence, it)})
+    }
+
 
     protected val Class.javaString: String get() = this.asType.javaString
 
@@ -426,6 +442,11 @@ open class ActionSequence2JavaPrinter(
         is StaticFieldGetter -> printStaticFieldGetter(owner, codeAction)
         is ClassConstantGetter -> printClassConstantGetter(owner, codeAction)
         is ArrayClassConstantGetter -> printArrayClassConstantGetter(owner, codeAction)
+    }
+
+    private fun printMockCall(owner: MockSequence, mockCall: MockCall): List<String> = when (mockCall) {
+        is MockNewInstance -> printMockNewInstance(owner, mockCall)
+        is MockSetupMethod -> printMockSetupMethod(owner, mockCall)
     }
 
     protected val <T> PrimaryValue<T>.asConstant: String
@@ -868,6 +889,12 @@ open class ActionSequence2JavaPrinter(
 
     protected open fun printReflectionArrayWrite(owner: ActionSequence, call: ReflectionArrayWrite): List<String> =
         unreachable { log.error("Reflection calls are not supported in AS 2 Java printer") }
+
+    protected open fun printMockNewInstance(owner: ActionSequence, call: MockNewInstance): List<String> =
+        unreachable { log.error("Mock calls are not supported in AS 2 Java printer") }
+
+    protected open fun printMockSetupMethod(owner: ActionSequence, call: MockSetupMethod): List<String> =
+        unreachable { log.error("Mock calls are not supported in AS 2 Java printer") }
 
     protected open fun printUnknownSequence(sequence: UnknownSequence): List<String> {
         val actualType = sequence.target.type.asType

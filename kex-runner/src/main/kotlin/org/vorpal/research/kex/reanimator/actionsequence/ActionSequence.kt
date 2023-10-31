@@ -190,8 +190,8 @@ class ReflectionList(
 
 class MockSequence(
     name: String,
-    val mockitoCalls: MutableList<MockitoCall>, // creates instance and setup methods
-    val reflectionActions: MutableList<ReflectionCall> // only setup fields
+    val mockCalls: MutableList<MockCall>, // create instance and setup methods
+    val reflectionCalls: MutableList<ReflectionCall> // only setup fields
 ) : ActionSequence(name) {
     constructor(name: String) : this(name, mutableListOf(), mutableListOf())
 
@@ -204,24 +204,24 @@ class MockSequence(
     override fun print(builder: StringBuilder, visited: MutableSet<ActionSequence>) {
         if (this in visited) return
         visited += this
-        for (mockCall in mockitoCalls) {
+        for (mockCall in mockCalls) {
             mockCall.print(this, builder, visited)
         }
-        for (reflectionCall in reflectionActions) {
+        for (reflectionCall in reflectionCalls) {
             reflectionCall.print(this, builder, visited)
         }
     }
 
-    override fun clone() = MockSequence(name, mockitoCalls.toMutableList(), reflectionActions.toMutableList())
+    override fun clone() = MockSequence(name, mockCalls.toMutableList(), reflectionCalls.toMutableList())
 }
 
-sealed interface MockitoCall {
+sealed interface MockCall {
     val parameters: List<ActionSequence>
 
     fun print(owner: ActionSequence, builder: StringBuilder, visited: MutableSet<ActionSequence>)
 }
 
-data class MockitoNewInstance(val klass: Class) : MockitoCall {
+data class MockNewInstance(val klass: Class) : MockCall {
     override val parameters: List<ActionSequence>
         get() = listOf()
 
@@ -232,9 +232,9 @@ data class MockitoNewInstance(val klass: Class) : MockitoCall {
     }
 }
 
-data class MockitoSetupMethod(
+data class MockSetupMethod(
     val method: Method, val returnValues: List<ActionSequence>
-) : MockitoCall {
+) : MockCall {
     override val parameters: List<ActionSequence>
         get() = returnValues
 
@@ -578,11 +578,11 @@ class ActionSequenceRtMapper(private val mode: KexRtManager.Mode) {
             else -> {
                 val res = MockSequence(ct.name.mapped)
                 cache[ct] = res
-                for (mockCall in ct.mockitoCalls) {
-                    res.mockitoCalls += map(mockCall)
+                for (mockCall in ct.mockCalls) {
+                    res.mockCalls += map(mockCall)
                 }
-                for (reflectionCall in ct.reflectionActions) {
-                    res.reflectionActions += map(reflectionCall)
+                for (reflectionCall in ct.reflectionCalls) {
+                    res.reflectionCalls += map(reflectionCall)
                 }
 
                 // TODO: Mock. Not sure if it works
@@ -725,8 +725,8 @@ class ActionSequenceRtMapper(private val mode: KexRtManager.Mode) {
         is ArrayClassConstantGetter -> ArrayClassConstantGetter(map(api.elementType))
     }
 
-    fun map(api: MockitoCall): MockitoCall = when (api) {
-        is MockitoNewInstance -> MockitoNewInstance(api.klass.mapped)
-        is MockitoSetupMethod -> MockitoSetupMethod(api.method.mapped, api.returnValues.map { value -> map(value) })
+    fun map(api: MockCall): MockCall = when (api) {
+        is MockNewInstance -> MockNewInstance(api.klass.mapped)
+        is MockSetupMethod -> MockSetupMethod(api.method.mapped, api.returnValues.map { value -> map(value) })
     }
 }

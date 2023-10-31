@@ -24,7 +24,7 @@ class MockGenerator(private val fallback: Generator) : Generator {
         val actionSequence = MockSequence(name)
         saveToCache(descriptor, actionSequence)
         val kfgClass = (descriptor.type.getKfgType(types) as ClassType).klass
-        actionSequence.mockitoCalls.add(MockitoNewInstance(kfgClass))
+        actionSequence.mockCalls.add(MockNewInstance(kfgClass))
 
         for ((method, returnValuesDesc) in descriptor.methodReturns) {
             if (method !in kfgClass.methods) {
@@ -32,10 +32,10 @@ class MockGenerator(private val fallback: Generator) : Generator {
                 continue
             }
             val returnValues = returnValuesDesc.map { value -> fallback.generate(value) }
-            actionSequence.mockitoCalls += MockitoSetupMethod(method, returnValues)
+            actionSequence.mockCalls += MockSetupMethod(method, returnValues)
         }
 
-        actionSequence.reflectionActions.addSetupFieldsCalls(descriptor.fields, kfgClass, types, fallback)
+        actionSequence.reflectionCalls.addSetupFieldsCalls(descriptor.fields, kfgClass, types, fallback)
 
         getFromCache(descriptor)!!
     }

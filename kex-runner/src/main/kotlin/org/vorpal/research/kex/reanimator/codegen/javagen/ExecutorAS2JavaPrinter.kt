@@ -61,6 +61,7 @@ class ExecutorAS2JavaPrinter(
             import("java.lang.reflect.Constructor")
             import("java.lang.reflect.Field")
             import("java.lang.reflect.Array")
+            import("org.mockito.Mockito") // TODO make configurable
             importStatic("${reflectionUtils.klass.pkg}.${reflectionUtils.klass.name}.*")
 
             with(klass) {
@@ -96,9 +97,9 @@ class ExecutorAS2JavaPrinter(
                                 }
                             } ?: unreachable { log.error("Unexpected call in arg") }
 
-                            is MockSequence -> arg.mockitoCalls.firstNotNullOfOrNull {
+                            is MockSequence -> arg.mockCalls.firstNotNullOfOrNull {
                                 when (it) {
-                                    is MockitoNewInstance -> it.klass.asType
+                                    is MockNewInstance -> it.klass.asType
                                     else -> null
                                 }
                             } ?: unreachable { log.error { "Unexpected call in arg" } }
@@ -401,5 +402,38 @@ class ExecutorAS2JavaPrinter(
         val setElementMethod = elementType.kexType.primitiveName?.let { reflectionUtils.setPrimitiveElementMap[it]!! }
             ?: reflectionUtils.setElement
         return listOf("${setElementMethod.name}(${owner.name}, ${call.index.stackName}, ${call.value.stackName})")
+    }
+
+    override fun printMockNewInstance(owner: ActionSequence, call: MockNewInstance): List<String> {
+        val actualType = ASClass(ctx.types.objectType)
+        val kfgClass = call.klass
+        return listOf(
+            if (resolvedTypes[owner] != null) {
+                val rest = resolvedTypes[owner]!!
+                val type = actualType.merge(rest)
+                actualTypes[owner] = type
+                "${
+                    printVarDeclaration(
+                        owner.name,
+                        type
+                    )
+                } = Mockito.mock(Class.forName(\"${kfgClass.canonicalDesc}\"))"
+            } else {
+                actualTypes[owner] = actualType
+                "${
+                    printVarDeclaration(
+                        owner.name,
+                        actualType
+                    )
+                } = Mockito.mock(Class.forName(\"${kfgClass.canonicalDesc}\"))"
+            }
+        )
+    }
+
+    override fun printMockSetupMethod(owner: ActionSequence, call: MockSetupMethod): List<String> {
+        if (call.returnValues.isEmpty()){
+            return emptyList()
+        }
+        TODO("Mock. Unimplemented.")
     }
 }
