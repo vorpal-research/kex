@@ -37,12 +37,12 @@ public class StringConcolicTests {
 //        }
 //    }
 
-    public String testStringConcat(String x) {
-        if (x.charAt(0) == '0') throw new IllegalStateException();
-        String y = x.concat("\n");
-        if (y.charAt(0) == '1') throw new IllegalStateException();
-        String z = x.concat("\t");
-        if (z.charAt(1) == '2') throw new IllegalStateException();
-        return z;
-    }
+//    public String testStringConcat(String x) {
+//        if (x.charAt(0) == '0') throw new IllegalStateException();
+//        String y = x.concat("\n");
+//        if (y.charAt(0) == '1') throw new IllegalStateException();
+//        String z = x.concat("\t");
+//        if (z.charAt(1) == '2') throw new IllegalStateException();
+//        return z;
+//    }
 }

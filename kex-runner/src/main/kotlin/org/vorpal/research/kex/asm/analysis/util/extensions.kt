@@ -63,7 +63,7 @@ suspend fun Method.checkAsync(
         .mapValues { it.value.rtMapped }
         .toTypeMap()
     val result = checker.prepareAndCheck(this, clauses + query, concreteTypeInfo, enableInlining)
-    log.error("Checking clause type ${state.path.last().type}, acquired $result")
+//    log.error("Checking clause type ${state.path.last().type}, acquired $result")
     if (result !is Result.SatResult) {
         return null
     }
