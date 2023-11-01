@@ -73,7 +73,7 @@ class BoolectorSolver(
         val result = check(boolectorState, boolectorQuery)
         log.debug("Check finished")
         return when (result) {
-            Btor.Status.UNSAT -> Result.UnsatResult
+            Btor.Status.UNSAT -> Result.UnsatResult()
             Btor.Status.UNKNOWN -> Result.UnknownResult("should not happen")
             Btor.Status.SAT -> Result.SatResult(collectModel(ctx, state))
         }
