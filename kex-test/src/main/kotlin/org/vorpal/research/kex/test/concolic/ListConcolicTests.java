@@ -6,29 +6,15 @@ import java.util.LinkedList;
 
 @SuppressWarnings("ALL")
 public class ListConcolicTests {
-
-    int innerValue = 10;
-
-    public String firstTestFunction(String x) {
-        if (x.contains("\n")) throw new IllegalStateException();
-        String y = x + "\n";
-        if (y.contains("\t")) throw new IllegalStateException();
-        return y;
-    }
-
-    /*public Integer secondTestFunction() {
-        if (innerValue == -2) throw new IllegalStateException();
-        return innerValue;
-    }*/
-
-    public static int testArrayList(ArrayList<Point> points) {
-        points.get(0).x = 5;
-        points.get(1).y++;
-        if (points.get(1).y != 10) return points.get(0).x;
-        else return points.get(0).y;
+    public static void testArrayList(ArrayList<Point> points) {
+        if (points.size() == 0) return;
+        if (points.get(0).getX() == 10) {
+            throw new IllegalStateException();
+        }
     }
 
     public static void testLinkedList(LinkedList<Point> points) {
+        if (points.size() == 0) return;
         if (points.get(0).getX() == 10) {
             throw new IllegalStateException();
         }

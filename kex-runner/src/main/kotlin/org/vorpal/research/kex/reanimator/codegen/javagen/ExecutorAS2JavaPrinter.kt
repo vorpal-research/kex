@@ -54,6 +54,7 @@ class ExecutorAS2JavaPrinter(
 ) : ActionSequence2JavaPrinter(ctx, packageName, klassName) {
     private val surroundInTryCatch = kexConfig.getBooleanValue("testGen", "surroundInTryCatch", true)
     private val testParams = mutableListOf<JavaBuilder.JavaClass.JavaField>()
+    private val equalityUtils = EqualityUtilsPrinter.equalityUtils(packageName)
     private val reflectionUtils = ReflectionUtilsPrinter.reflectionUtils(packageName)
     private val printedDeclarations = hashSetOf<String>()
     private val printedInsides = hashSetOf<String>()
@@ -155,7 +156,7 @@ class ExecutorAS2JavaPrinter(
                 } else method(testName) {
                     returnType = void
                     annotations += "Test"
-                    exceptions += exceptionClassName ?: "Throwable"
+                    if (executionFinalInfo == null) exceptions += "Throwable"
                 }
             }
         }
@@ -180,16 +181,23 @@ class ExecutorAS2JavaPrinter(
                     current = method(testName) {
                         returnType = void
                         annotations += "Test"
-                        exceptions += exceptionClassName ?: "Throwable"
+                        if (executionFinalInfo == null) exceptions += "Throwable"
                     }
                 }
             }
         }
 
         with(current) {
-            if (surroundInTryCatch) statement("try {")
-            printTestCall(method, actionSequences, executionFinalInfo)
-            if (surroundInTryCatch) statement("} catch (${exceptionClassName ?: "Throwable"} e) {}")
+            if (executionFinalInfo != null) {
+                aTry {
+                    printTestCall(method, actionSequences, executionFinalInfo, this)
+                }.catch {
+                    exceptions += JavaBuilder.StringType("Throwable")
+                    if (exceptionClassName != null)
+                        +"assert(e instanceof $exceptionClassName)"
+                }
+            }
+            else printTestCall(method, actionSequences, executionFinalInfo, current)
         }
     }
 
@@ -210,9 +218,10 @@ class ExecutorAS2JavaPrinter(
     private fun printTestCall(
         method: org.vorpal.research.kfg.ir.Method,
         actionSequences: Parameters<ActionSequence>,
-        executionFinalInfo: ExecutionFinalInfo<ActionSequence>?
+        executionFinalInfo: ExecutionFinalInfo<ActionSequence>?,
+        methodBuilder: JavaBuilder.ControlStatement
     ) =
-        with(current) {
+        with(methodBuilder) {
             +"Class<?> klass = Class.forName(\"${method.klass.canonicalDesc}\")"
             +"Class<?>[] argTypes = new Class<?>[${method.argTypes.size}]"
             for ((index, type) in method.argTypes.withIndex()) {
@@ -226,12 +235,16 @@ class ExecutorAS2JavaPrinter(
                 method.isConstructor -> "${reflectionUtils.callConstructor.name}(klass, argTypes, args)"
                 else -> "${reflectionUtils.callMethod.name}(klass, \"${method.name}\", argTypes, ${actionSequences.instance?.name}, args)"
             }
-            executionFinalInfo?.args?.let { args ->
+            if (executionFinalInfo?.isException() == false) {
                 for ((i, arg) in actionSequences.arguments.withIndex()) {
-                    +"assert(${arg.stackName} == ${args[i].stackName})"
+                    if (!arg.isConstantValue)
+                        +"assert(${arg.stackName} == ${executionFinalInfo.args[i].stackName})"
+                }
+                executionFinalInfo.instance?.let { instanceInfo ->
+                    if (!instanceInfo.isConstantValue)
+                        +"assert(${actionSequences.instance?.stackName} == ${instanceInfo.stackName})"
                 }
             }
-
         }
 
     override fun printConstructorCall(owner: ActionSequence, call: ConstructorCall): List<String> {

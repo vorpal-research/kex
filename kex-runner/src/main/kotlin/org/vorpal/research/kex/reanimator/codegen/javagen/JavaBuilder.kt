@@ -83,6 +83,13 @@ class JavaBuilder(val pkg: String = "") {
             subStatements += StringStatement(this)
         }
 
+        fun aFor(iterateStatement: String, body: ForStatement.() -> Unit): ForStatement {
+            val forStatement = ForStatement(iterateStatement = StringConditionStatement(iterateStatement))
+            forStatement.body()
+            subStatements += forStatement
+            return forStatement
+        }
+
         fun aDo(body: DoWhileStatement.() -> Unit): DoWhileStatement {
             val doStatement = DoWhileStatement()
             doStatement.body()
@@ -165,6 +172,27 @@ class JavaBuilder(val pkg: String = "") {
         }
 
         fun ifElse(condition: String, body: ElseIfStatement.() -> Unit) = ifElse(StringConditionStatement(condition), body)
+    }
+    // TODO: add iterateStatement as Data Class
+    data class ForStatement(
+        override val subStatements: MutableList<JavaStatement> = mutableListOf(),
+        var iterateStatement: StringConditionStatement
+    ) : ControlStatement {
+        override fun print(level: Int) = buildString {
+            appendLine("${level.asOffset}for (${iterateStatement.print(0)}) {")
+            subStatements.forEach {
+                appendLine(it.print(level + 1))
+            }
+            appendLine("${level.asOffset}}")
+        }
+
+        fun aFor(iterateStatement: StringConditionStatement) {
+            this.iterateStatement = iterateStatement
+        }
+
+        fun aFor(iterateStatement: String) {
+            this.iterateStatement = StringConditionStatement(iterateStatement)
+        }
     }
 
     data class DoWhileStatement(

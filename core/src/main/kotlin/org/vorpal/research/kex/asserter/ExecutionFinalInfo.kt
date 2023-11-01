@@ -1,6 +1,8 @@
 package org.vorpal.research.kex.asserter
 
-sealed class ExecutionFinalInfo<T>(val instance: T?, val args: List<T>)
+sealed class ExecutionFinalInfo<T>(val instance: T?, val args: List<T>) {
+    fun isException(): Boolean = this is ExecutionExceptionFinalInfo
+}
 
 class ExecutionSuccessFinalInfo<T>(instance: T?, args: List<T>, val retValue: T?) :
         ExecutionFinalInfo<T>(instance, args) {

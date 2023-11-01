@@ -7,6 +7,9 @@ import org.vorpal.research.kex.asserter.ExecutionFinalInfo
 import org.vorpal.research.kex.asserter.ExecutionSuccessFinalInfo
 import org.vorpal.research.kex.descriptor.Descriptor
 import org.vorpal.research.kex.descriptor.DescriptorBuilder
+import org.vorpal.research.kex.descriptor.ObjectDescriptor
+import org.vorpal.research.kex.ktype.KexClass
+import org.vorpal.research.kex.ktype.KexType
 import org.vorpal.research.kex.parameters.Parameters
 import org.vorpal.research.kex.reanimator.actionsequence.ActionSequence
 import org.vorpal.research.kex.reanimator.actionsequence.generator.ConcolicSequenceGenerator
@@ -18,6 +21,7 @@ import org.vorpal.research.kex.trace.symbolic.protocol.SuccessResult
 import org.vorpal.research.kfg.ir.Method
 import org.vorpal.research.kfg.ir.value.Constant
 import org.vorpal.research.kfg.ir.value.instruction.ReturnInst
+import org.vorpal.research.kthelper.logging.log
 
 class ExecutionFinalInfoGenerator(val ctx: ExecutionContext, val method: Method) {
     private val asGenerator = ConcolicSequenceGenerator(ctx, PredicateStateAnalysis(ctx.cm))
@@ -31,7 +35,13 @@ class ExecutionFinalInfoGenerator(val ctx: ExecutionContext, val method: Method)
 
             when(executionResult) {
                 is ExceptionResult -> {
-                    val exceptionClassName = executionResult.cause.type.javaName
+                    var exceptionDescriptor: ObjectDescriptor = executionResult.cause as ObjectDescriptor
+                    val exceptionType = KexClass("java/lang/Throwable")
+                    while (exceptionDescriptor.fields["target" to exceptionType] as? ObjectDescriptor != null) {
+                        exceptionDescriptor = exceptionDescriptor.fields["target" to exceptionType] as ObjectDescriptor
+                    }
+                    val exceptionClassName = exceptionDescriptor.type.javaName
+
                     ExecutionExceptionFinalInfo(instance, args, executionResult.cause, exceptionClassName)
                 }
                 is SuccessResult -> {
