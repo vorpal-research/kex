@@ -15,8 +15,8 @@ sealed class Result {
         override fun match(other: Result) = other is SatResult
     }
 
-    object UnsatResult : Result() {
-        override fun toString() = "unsat"
+    class UnsatResult(val message: String = "unsat") : Result() {
+        override fun toString() = message
 
         override fun match(other: Result) = other is UnsatResult
     }

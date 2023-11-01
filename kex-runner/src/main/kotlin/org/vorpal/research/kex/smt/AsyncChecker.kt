@@ -38,9 +38,9 @@ import org.vorpal.research.kex.state.transformer.TypeInfoMap
 import org.vorpal.research.kex.state.transformer.TypeNameAdapter
 import org.vorpal.research.kex.state.transformer.collectRequiredTerms
 import org.vorpal.research.kex.state.transformer.collectVariables
+import org.vorpal.research.kex.state.transformer.domain.tryAbstractDomainSolve
 import org.vorpal.research.kex.state.transformer.toTypeMap
 import org.vorpal.research.kex.state.transformer.transform
-import org.vorpal.research.kex.state.transformer.tryConstantSolve
 import org.vorpal.research.kfg.ir.Method
 import org.vorpal.research.kthelper.logging.debug
 import org.vorpal.research.kthelper.logging.log
@@ -158,7 +158,7 @@ class AsyncChecker(
             log.debug("Query size: {}", query.size)
         }
 
-        tryConstantSolve(state, query)?.let {
+        tryAbstractDomainSolve(state, query)?.let {
             log.debug("Constant solver acquired {}", it)
             return it
         }

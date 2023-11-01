@@ -28,7 +28,10 @@ import org.vorpal.research.kex.parameters.Parameters
 import org.vorpal.research.kex.state.predicate.Predicate
 import org.vorpal.research.kex.state.predicate.path
 import org.vorpal.research.kex.state.predicate.state
+import org.vorpal.research.kex.state.term.ConstClassTerm
+import org.vorpal.research.kex.state.term.ConstStringTerm
 import org.vorpal.research.kex.state.term.NullTerm
+import org.vorpal.research.kex.state.term.StaticClassRefTerm
 import org.vorpal.research.kex.state.term.Term
 import org.vorpal.research.kex.state.term.term
 import org.vorpal.research.kex.state.transformer.TermRenamer
@@ -1234,6 +1237,9 @@ class SymbolicTraceBuilder(
         if (kfgValue is ThisRef) return@safeCall
         else if (termValue in nullChecked) return@safeCall
         else if (termValue is NullTerm) return@safeCall
+        else if (termValue is ConstStringTerm) return@safeCall
+        else if (termValue is ConstClassTerm) return@safeCall
+        else if (termValue is StaticClassRefTerm) return@safeCall
         nullChecked += termValue
 
         val checkName = term { value(KexBool, "${termValue}NullCheck") }
