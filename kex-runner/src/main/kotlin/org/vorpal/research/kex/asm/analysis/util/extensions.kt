@@ -1,5 +1,6 @@
 package org.vorpal.research.kex.asm.analysis.util
 
+import com.jetbrains.rd.util.first
 import kotlinx.collections.immutable.toPersistentList
 import kotlinx.coroutines.TimeoutCancellationException
 import org.vorpal.research.kex.ExecutionContext
@@ -7,6 +8,8 @@ import org.vorpal.research.kex.asm.analysis.crash.precondition.ConstraintExcepti
 import org.vorpal.research.kex.asm.manager.MethodManager
 import org.vorpal.research.kex.asm.util.AccessModifier
 import org.vorpal.research.kex.descriptor.Descriptor
+import org.vorpal.research.kex.descriptor.MockDescriptor
+import org.vorpal.research.kex.descriptor.descriptor
 import org.vorpal.research.kex.ktype.KexRtManager.isJavaRt
 import org.vorpal.research.kex.ktype.KexRtManager.rtMapped
 import org.vorpal.research.kex.ktype.kexType
@@ -99,6 +102,16 @@ suspend fun Method.checkAsync(
             ctx.cm,
             ctx.accessLevel
         )
+
+        // TODO: remove testing
+        when (val arg = withMocks.arguments[0]) {
+            is MockDescriptor -> {
+                arg.methodReturns.first().value.add(descriptor { const(1) })
+                arg.methodReturns.first().value.add(descriptor { const(10) })
+            }
+
+            else -> {}
+        }
 
         withMocks
             .concreteParameters(ctx.cm, ctx.accessLevel, ctx.random).also {
