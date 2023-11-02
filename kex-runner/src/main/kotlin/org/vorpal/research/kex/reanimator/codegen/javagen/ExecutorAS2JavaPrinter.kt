@@ -430,10 +430,36 @@ class ExecutorAS2JavaPrinter(
         )
     }
 
+    private fun mockitoAnyFromType(type: Type): String = "Mockito." + when (type) {
+        is PrimitiveType -> when (type) {
+            is IntType -> "anyInt()"
+            is BoolType -> "anyBoolean()"
+            is ByteType -> "anyByte()"
+            is CharType -> "anyChar()"
+            is LongType -> "anyLong()"
+            is ShortType -> "anyShort()"
+            is DoubleType -> "anyDouble()"
+            is FloatType -> "anyFloat()"
+        }
+
+        else -> "any()"
+    }
+
+
     override fun printMockSetupMethod(owner: ActionSequence, call: MockSetupMethod): List<String> {
-        if (call.returnValues.isEmpty()){
+        if (call.returnValues.isEmpty()) {
             return emptyList()
         }
-        TODO("Mock. Unimplemented.")
+        call.returnValues.forEach { it.printAsJava() }
+
+        val returnValues = call.returnValues.joinToString(", ") {
+            it.forceCastIfNull(resolvedTypes[it])
+        }
+        val method = call.method
+        val anys = call.method.argTypes.joinToString(", ") { type -> mockitoAnyFromType(type) }
+
+        val type = call.method.klass.asType.asType
+        // TODO: Mock. Call method using ReflectionUtils, so it can mock package-private methods
+        return listOf("Mockito.when((${owner.cast(type)}).${method.name}($anys)).thenReturn(${returnValues})")
     }
 }
