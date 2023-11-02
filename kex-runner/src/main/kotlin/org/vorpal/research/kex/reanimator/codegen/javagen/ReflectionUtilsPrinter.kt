@@ -179,7 +179,7 @@ class ReflectionUtilsPrinter(
                             exceptions += type("Throwable")
                         }
                         +"current = current.getSuperclass()"
-                    }.aWhile("current != null")
+                    }.aWhile("current != null && result == null")
                     anIf("result == null") {
                         +"throw new NoSuchFieldException()"
                     }
