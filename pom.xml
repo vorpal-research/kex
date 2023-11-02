@@ -31,7 +31,7 @@
         <collections.version>0.3.5</collections.version>
         <compiler-plugin.version>3.5.1</compiler-plugin.version>
 
-        <kt-helper.version>0.1.12</kt-helper.version>
+        <kt-helper.version>0.1.13</kt-helper.version>
         <kfg.version>0.4.11</kfg.version>
 
         <logback.version>1.2.11</logback.version>
