@@ -188,26 +188,28 @@ data class IntervalDomainValue<T : Number>(val min: T, val max: T) : NumberAbstr
 
             CmpOpcode.NEQ -> Top
             CmpOpcode.LT -> when {
-                other.max < min -> IntervalDomainValue(true.toInt())
-                other.min > max -> IntervalDomainValue(false.toInt())
-                else -> Top
-            }
-
-            CmpOpcode.GT -> when {
                 other.max < min -> IntervalDomainValue(false.toInt())
                 other.min > max -> IntervalDomainValue(true.toInt())
                 else -> Top
             }
 
+            CmpOpcode.GT -> when {
+                other.max < min -> IntervalDomainValue(true.toInt())
+                other.min > max -> IntervalDomainValue(false.toInt())
+                else -> Top
+            }
+
             CmpOpcode.LE -> when {
-                other.max <= min -> IntervalDomainValue(true.toInt())
-                other.min >= max -> IntervalDomainValue(false.toInt())
+                other.max < min -> IntervalDomainValue(false.toInt())
+                other.min > max -> IntervalDomainValue(true.toInt())
+                this.isConstant && other.isConstant && min == other.min -> IntervalDomainValue(true.toInt())
                 else -> Top
             }
 
             CmpOpcode.GE -> when {
-                other.max <= min -> IntervalDomainValue(false.toInt())
-                other.min >= max -> IntervalDomainValue(true.toInt())
+                other.max < min -> IntervalDomainValue(true.toInt())
+                other.min > max -> IntervalDomainValue(false.toInt())
+                this.isConstant && other.isConstant && min == other.min -> IntervalDomainValue(true.toInt())
                 else -> Top
             }
 

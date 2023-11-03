@@ -194,14 +194,12 @@ class AbstractDomainSolver : Transformer<AbstractDomainSolver>, IncrementalTrans
                 val lhv = getDomainValue(predicate.lhv)
                 val rhv = getDomainValue(predicate.rhv)
                 isSat = isSat.meet(lhv.satisfiesEquality(rhv))
-                storageValue(predicate.lhv).value = rhv
             }
 
             else -> {
                 val lhv = getDomainValue(predicate.lhv)
                 val rhv = getDomainValue(predicate.rhv)
                 isSat = isSat.meet(lhv.satisfiesEquality(rhv))
-                storageValue(predicate.lhv).value = rhv
             }
         }
         return predicate
