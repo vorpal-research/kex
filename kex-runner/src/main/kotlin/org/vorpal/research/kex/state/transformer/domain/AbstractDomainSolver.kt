@@ -39,10 +39,23 @@ import org.vorpal.research.kthelper.assert.unreachable
 import org.vorpal.research.kthelper.logging.log
 import org.vorpal.research.kthelper.toInt
 
+
+private val AbstractDomainValue.isSat: Boolean
+    get() = when (this) {
+        is Top -> true
+        is SatDomainValue -> true
+        is UnsatDomainValue -> false
+        is Bottom -> false
+        else -> unreachable { log.error("Unexpected value for satisfiability domain value: $this") }
+    }
+
+private val AbstractDomainValue.isUnsat: Boolean get() = !isSat
+
 class AbstractDomainSolver : Transformer<AbstractDomainSolver>, IncrementalTransformer {
     private var abstractDomainValues = persistentMapOf<Term, DomainStorage>()
+//    private var equalities = persistentMapOf<Term, Term>()
 
-    var isSat: AbstractDomainValue = Top
+    var satisfiabilityDomainValue: AbstractDomainValue = Top
         private set
 
     private fun storageValue(term: Term) = when (term) {
@@ -91,23 +104,33 @@ class AbstractDomainSolver : Transformer<AbstractDomainSolver>, IncrementalTrans
         )
     }
 
+    private val PersistentMap<Term, DomainStorage>.deepCopy: PersistentMap<Term, DomainStorage>
+        get() {
+            return persistentMapOf<Term, DomainStorage>().builder().also {
+                val tempMap = mutableMapOf<DomainStorage, DomainStorage>()
+                for ((key, value) in this) {
+                    it[key] = tempMap.getOrPut(value) { DomainStorage(value.value) }
+                }
+            }.build()
+        }
+
     override fun transformChoice(ps: ChoiceState): PredicateState {
-        val oldIsSat = isSat
+        val oldIsSat = satisfiabilityDomainValue
         val oldConstValues = abstractDomainValues
         var result: AbstractDomainValue = Bottom
         val newConstantValues = mutableSetOf<PersistentMap<Term, DomainStorage>>()
         val allKeys = oldConstValues.keys.toMutableSet()
         for (choice in ps.choices) {
-            isSat = oldIsSat
-            abstractDomainValues = oldConstValues
+            satisfiabilityDomainValue = oldIsSat
+            abstractDomainValues = oldConstValues.deepCopy
             super.transformBase(choice)
-            result = result.join(isSat)
-            if (isSat !is UnsatDomainValue) {
+            result = result.join(satisfiabilityDomainValue)
+            if (satisfiabilityDomainValue.isSat) {
                 newConstantValues += abstractDomainValues
                 allKeys += abstractDomainValues.keys
             }
         }
-        isSat = result
+        satisfiabilityDomainValue = result
         abstractDomainValues = oldConstValues
         for (key in allKeys) {
             storageValue(key).value = newConstantValues.mapNotNullTo(mutableSetOf()) { it[key]?.value }
@@ -188,18 +211,27 @@ class AbstractDomainSolver : Transformer<AbstractDomainSolver>, IncrementalTrans
             is PredicateType.State -> {
                 val rhv = getDomainValue(predicate.rhv)
                 storageValue(predicate.lhv).value = rhv
+//                equalities = equalities.put(predicate.lhv, predicate.rhv)
             }
 
             is PredicateType.Path -> {
                 val lhv = getDomainValue(predicate.lhv)
                 val rhv = getDomainValue(predicate.rhv)
-                isSat = isSat.meet(lhv.satisfiesEquality(rhv))
+                satisfiabilityDomainValue = satisfiabilityDomainValue.meet(lhv.satisfiesEquality(rhv))
+                if (satisfiabilityDomainValue.isSat) {
+                    storageValue(predicate.lhv).value = rhv
+//                    equalities[predicate.lhv]?.let { propagateEquality(it) }
+                }
             }
 
             else -> {
                 val lhv = getDomainValue(predicate.lhv)
                 val rhv = getDomainValue(predicate.rhv)
-                isSat = isSat.meet(lhv.satisfiesEquality(rhv))
+                satisfiabilityDomainValue = satisfiabilityDomainValue.meet(lhv.satisfiesEquality(rhv))
+                if (satisfiabilityDomainValue.isSat) {
+                    storageValue(predicate.lhv).value = rhv
+//                    equalities[predicate.lhv]?.let { propagateEquality(it) }
+                }
             }
         }
         return predicate
@@ -211,11 +243,45 @@ class AbstractDomainSolver : Transformer<AbstractDomainSolver>, IncrementalTrans
             else -> {
                 val lhv = getDomainValue(predicate.lhv)
                 val rhv = getDomainValue(predicate.rhv)
-                isSat = isSat.meet(lhv.satisfiesInequality(rhv))
+                satisfiabilityDomainValue = satisfiabilityDomainValue.meet(lhv.satisfiesInequality(rhv))
             }
         }
         return predicate
     }
+
+//    private fun propagateEquality(term: Term) {
+//        when (term) {
+//            is CmpTerm -> {
+//                val lhvValue = getDomainValue(term.lhv)
+//                val rhvValue = getDomainValue(term.rhv)
+//                when (term.opcode) {
+//                    CmpOpcode.EQ -> {
+//                        storageValue(term.lhv).value = rhvValue
+//                    }
+//                    CmpOpcode.NEQ -> when (rhvValue) {
+//                        is NullDomainValue -> storageValue(term.lhv).value = when (lhvValue) {
+//                            is Top -> NonNullableDomainValue
+//                            is NullableDomainValue -> NonNullableDomainValue
+//                            is ArrayDomainValue -> ArrayDomainValue(NonNullableDomainValue, lhvValue.length)
+//                            else -> TODO()
+//                        }
+//                        is IntervalDomainValue<*> -> {
+//                            TODO()
+//                        }
+//                        else -> TODO()
+//                    }
+//                    CmpOpcode.LT -> TODO()
+//                    CmpOpcode.GT -> TODO()
+//                    CmpOpcode.LE -> TODO()
+//                    CmpOpcode.GE -> TODO()
+//                    CmpOpcode.CMP -> TODO()
+//                    CmpOpcode.CMPG -> TODO()
+//                    CmpOpcode.CMPL -> TODO()
+//                }
+//                val a = 10
+//            }
+//        }
+//    }
 }
 
 
@@ -223,11 +289,8 @@ fun tryAbstractDomainSolve(state: PredicateState, query: PredicateState): Result
     val solver = AbstractDomainSolver()
     solver.apply(state)
     solver.apply(query)
-    return when (solver.isSat) {
-        is Top -> null
-        is SatDomainValue -> null
-        is UnsatDomainValue -> Result.UnsatResult("abstract domain unsat")
-        is Bottom -> Result.UnsatResult("abstract domain unsat")
-        else -> unreachable { log.error("Unexpected satisfiability result from abstract domain solver: ${solver.isSat}") }
+    return when {
+        solver.satisfiabilityDomainValue.isUnsat -> Result.UnsatResult("abstract domain unsat")
+        else -> null
     }
 }

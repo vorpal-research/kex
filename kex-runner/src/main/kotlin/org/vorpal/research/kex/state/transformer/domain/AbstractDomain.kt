@@ -56,9 +56,11 @@ sealed interface AbstractDomainValue {
 
     fun satisfiesEquality(other: AbstractDomainValue): AbstractDomainValue
     fun satisfiesInequality(other: AbstractDomainValue): AbstractDomainValue
+
+    fun deepCopy(mappings: MutableMap<DomainStorage, DomainStorage>): AbstractDomainValue = this
 }
 
-object Top : AbstractDomainValue {
+data object Top : AbstractDomainValue {
     override fun join(other: AbstractDomainValue): AbstractDomainValue = Top
     override fun meet(other: AbstractDomainValue): AbstractDomainValue = other
 
@@ -77,7 +79,7 @@ object Top : AbstractDomainValue {
     override fun satisfiesInequality(other: AbstractDomainValue): AbstractDomainValue = Top
 }
 
-object Bottom : AbstractDomainValue {
+data object Bottom : AbstractDomainValue {
     override fun join(other: AbstractDomainValue): AbstractDomainValue = other
     override fun meet(other: AbstractDomainValue): AbstractDomainValue = Bottom
 
@@ -97,7 +99,7 @@ data class IntervalDomainValue<T : Number>(val min: T, val max: T) : NumberAbstr
         else -> false
     }
 
-    fun intersect(other: AbstractDomainValue): Boolean = when (other) {
+    private fun intersect(other: AbstractDomainValue): Boolean = when (other) {
         is IntervalDomainValue<*> -> maxOf(min, other.min) <= minOf(max, other.max)
         else -> false
     }
@@ -249,7 +251,7 @@ data class IntervalDomainValue<T : Number>(val min: T, val max: T) : NumberAbstr
         }
 
         is KexByte -> IntervalDomainValue(min.toByte(), max.toByte())
-        is KexChar -> IntervalDomainValue(min.toChar().code, max.toChar().code)
+        is KexChar -> IntervalDomainValue(min.toInt().toChar().code, max.toInt().toChar().code)
         is KexShort -> IntervalDomainValue(min.toShort(), max.toShort())
         is KexInt -> IntervalDomainValue(min.toInt(), max.toInt())
         is KexLong -> IntervalDomainValue(min.toLong(), max.toLong())
@@ -281,7 +283,7 @@ sealed interface NullityAbstractDomainValue : AbstractDomainValue {
     override fun cast(type: KexType): AbstractDomainValue = this
 }
 
-object NonNullableDomainValue : NullityAbstractDomainValue {
+data object NonNullableDomainValue : NullityAbstractDomainValue {
     override fun join(other: AbstractDomainValue): AbstractDomainValue = when (other) {
         is NonNullableDomainValue -> NonNullableDomainValue
         is Bottom -> NonNullableDomainValue
@@ -324,7 +326,7 @@ object NonNullableDomainValue : NullityAbstractDomainValue {
     }
 }
 
-object NullDomainValue : NullityAbstractDomainValue {
+data object NullDomainValue : NullityAbstractDomainValue {
     override fun join(other: AbstractDomainValue): AbstractDomainValue = when (other) {
         is NullDomainValue -> NullDomainValue
         is Bottom -> NullDomainValue
@@ -372,7 +374,7 @@ object NullDomainValue : NullityAbstractDomainValue {
     }
 }
 
-object NullableDomainValue : NullityAbstractDomainValue {
+data object NullableDomainValue : NullityAbstractDomainValue {
     override fun join(other: AbstractDomainValue): AbstractDomainValue = when (other) {
         is NullableDomainValue -> NullableDomainValue
         is Bottom -> NullableDomainValue
@@ -454,7 +456,7 @@ sealed interface SatisfiabilityAbstractDomainValue : AbstractDomainValue {
         unreachable { log.error("$this is unexpected satisfiability check") }
 }
 
-object SatDomainValue : SatisfiabilityAbstractDomainValue {
+data object SatDomainValue : SatisfiabilityAbstractDomainValue {
     override fun join(other: AbstractDomainValue): AbstractDomainValue = when (other) {
         is SatDomainValue -> SatDomainValue
         is Bottom -> SatDomainValue
@@ -468,7 +470,7 @@ object SatDomainValue : SatisfiabilityAbstractDomainValue {
     }
 }
 
-object UnsatDomainValue : SatisfiabilityAbstractDomainValue {
+data object UnsatDomainValue : SatisfiabilityAbstractDomainValue {
     override fun join(other: AbstractDomainValue): AbstractDomainValue = when (other) {
         is UnsatDomainValue -> UnsatDomainValue
         is Bottom -> UnsatDomainValue
