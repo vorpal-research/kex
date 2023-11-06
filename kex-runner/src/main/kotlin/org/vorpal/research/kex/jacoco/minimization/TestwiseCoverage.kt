@@ -61,11 +61,10 @@ class TestwiseCoverage(
     fun execute(
         cm: ClassManager,
         analysisLevel: AnalysisLevel,
-    ): CommonCoverageInfo {
+    ): TestwiseCoverageInfo {
         val testClasses = Files.walk(compileDir).filter { it.isClass }.toList()
         val result = when (analysisLevel) {
             is PackageLevel -> {
-                println("Package level")
                 val classes = Files.walk(jacocoInstrumentedDir)
                     .filter { it.isClass }
                     .filter {
@@ -75,33 +74,18 @@ class TestwiseCoverage(
                         )
                     }
                     .toList()
-                val coverageBuilder = getCoverageBuilder(classes, testClasses)
-                getPackageCoverage(analysisLevel.pkg, cm, coverageBuilder)
+                getTestwiseCoverage(classes, testClasses)
             }
 
             is ClassLevel -> {
-                println("Class level")
                 val klass = analysisLevel.klass.fullName.replace(Package.SEPARATOR, File.separatorChar)
-                println(klass)
-                val coverageBuilder =
-                    getCoverageBuilder(listOf(jacocoInstrumentedDir.resolve("$klass.class")), testClasses)
-                // Let's dump some metrics and line coverage information:
-                for (cc in coverageBuilder.classes) {
-                    println("Coverage of class ${cc.name}")
-                    for (i in cc.firstLine..cc.lastLine) {
-                        println("Line $i: ${getColor(cc.getLine(i).status)}")
-                    }
-                }
-                getClassCoverage(cm, coverageBuilder).first()
+                getTestwiseCoverage(listOf(jacocoInstrumentedDir.resolve("$klass.class")), testClasses)
             }
 
             is MethodLevel -> {
-                println("Method level")
                 val method = analysisLevel.method
                 val klass = method.klass.fullName.replace(Package.SEPARATOR, File.separatorChar)
-                val coverageBuilder =
-                    getCoverageBuilder(listOf(jacocoInstrumentedDir.resolve("$klass.class")), testClasses)
-                getMethodCoverage(coverageBuilder, method)!!
+                getTestwiseCoverage(listOf(jacocoInstrumentedDir.resolve("$klass.class")), testClasses)
             }
         }
         return result
@@ -132,60 +116,6 @@ class TestwiseCoverage(
         return batches.toSortedMap()
     }
 
-    fun computeSaturationCoverage(
-        cm: ClassManager,
-        analysisLevel: AnalysisLevel,
-    ): SortedMap<Duration, CommonCoverageInfo> {
-        val testClasses = Files.walk(compileDir).filter { it.isClass }.toList()
-        val batchedTestClasses = testClasses.batchByTime()
-        val maxTime = batchedTestClasses.lastKey()
-        return when (analysisLevel) {
-            is PackageLevel -> {
-                val classes = Files.walk(jacocoInstrumentedDir)
-                    .filter { it.isClass }
-                    .filter {
-                        analysisLevel.pkg.isParent(
-                            it.fullyQualifiedName(jacocoInstrumentedDir)
-                                .asmString
-                        )
-                    }
-                    .toList()
-                batchedTestClasses.mapValues { (duration, batchedTests) ->
-                    org.vorpal.research.kthelper.logging.log.debug("Running tests for batch {} / {}", duration.inWholeSeconds, maxTime.inWholeSeconds)
-                    val coverageBuilder = getCoverageBuilder(classes, batchedTests, logProgress = false)
-                    getPackageCoverage(analysisLevel.pkg, cm, coverageBuilder)
-                }
-            }
-
-            is ClassLevel -> {
-                val klass = analysisLevel.klass.fullName.replace(Package.SEPARATOR, File.separatorChar)
-                batchedTestClasses.mapValues { (duration, batchedTests) ->
-                    org.vorpal.research.kthelper.logging.log.debug("Running tests for batch {} / {}", duration.inWholeSeconds, maxTime.inWholeSeconds)
-                    val coverageBuilder = getCoverageBuilder(
-                        listOf(jacocoInstrumentedDir.resolve("$klass.class")),
-                        batchedTests,
-                        logProgress = false
-                    )
-                    getClassCoverage(cm, coverageBuilder).first()
-                }
-            }
-
-            is MethodLevel -> {
-                val method = analysisLevel.method
-                val klass = method.klass.fullName.replace(Package.SEPARATOR, File.separatorChar)
-                batchedTestClasses.mapValues { (duration, batchedTests) ->
-                    org.vorpal.research.kthelper.logging.log.debug("Running tests for batch {} / {}", duration.inWholeSeconds, maxTime.inWholeSeconds)
-                    val coverageBuilder = getCoverageBuilder(
-                        listOf(jacocoInstrumentedDir.resolve("$klass.class")),
-                        batchedTests,
-                        logProgress = false
-                    )
-                    getMethodCoverage(coverageBuilder, method)!!
-                }
-            }
-        }.toSortedMap()
-    }
-
     @Suppress("unused")
     class TestLogger : RunListener() {
         override fun testRunFinished(result: Result) {
@@ -199,32 +129,32 @@ class TestwiseCoverage(
         }
     }
 
-    private fun getCoverageBuilder(
+    private fun getTestwiseCoverage(
         classes: List<Path>,
         testClasses: List<Path>,
         logProgress: Boolean = true
-    ): CoverageBuilder {
-        println("getCoverageBuilder parameters:")
-        println(classes)
-        println("------")
-        println(testClasses)
-        val runtime = LoggerRuntime()
-        val originalClasses = mutableMapOf<Path, ByteArray>()
-        for (classPath in classes) {
-            originalClasses[classPath] = classPath.readBytes()
-            val instrumented = classPath.inputStream().use {
-                val fullyQualifiedName = classPath.fullyQualifiedName(jacocoInstrumentedDir)
-                val instr = Instrumenter(runtime)
-                instr.instrument(it, fullyQualifiedName)
-            }
-            classPath.writeBytes(instrumented)
-        }
-        val data = RuntimeData()
-        runtime.startup(data)
+    ): TestwiseCoverageInfo {
+        var req: List<Int> = emptyList()
+        val tests = mutableListOf<TestCoverageInfo>()
 
-        if (logProgress) org.vorpal.research.kthelper.logging.log.debug("Running tests...")
-        val classLoader = PathClassLoader(listOf(jacocoInstrumentedDir, compileDir))
         for (testPath in testClasses) {
+            val runtime = LoggerRuntime()
+            val originalClasses = mutableMapOf<Path, ByteArray>()
+            for (classPath in classes) {
+                originalClasses[classPath] = classPath.readBytes()
+                val instrumented = classPath.inputStream().use {
+                    val fullyQualifiedName = classPath.fullyQualifiedName(jacocoInstrumentedDir)
+                    val instr = Instrumenter(runtime)
+                    instr.instrument(it, fullyQualifiedName)
+                }
+                classPath.writeBytes(instrumented)
+            }
+
+            val data = RuntimeData()
+            runtime.startup(data)
+
+            if (logProgress) org.vorpal.research.kthelper.logging.log.debug("Running tests...")
+            val classLoader = PathClassLoader(listOf(jacocoInstrumentedDir, compileDir))
             val testClassName = testPath.fullyQualifiedName(compileDir)
             val testClass = classLoader.loadClass(testClassName)
             if (logProgress) org.vorpal.research.kthelper.logging.log.debug("Running test $testClassName")
@@ -240,27 +170,29 @@ class TestwiseCoverage(
             jcClass.getMethod("run", computerClass, Class::class.java.asArray())
                 .invoke(jc, computerClass.newInstance(), arrayOf(testClass))
 //            jc.run(Computer(), testClass)
-        }
 
-        if (logProgress) org.vorpal.research.kthelper.logging.log.debug("Analyzing Coverage...")
-        val executionData = ExecutionDataStore()
-        val sessionInfos = SessionInfoStore()
-        data.collect(executionData, sessionInfos, false)
-        runtime.shutdown()
+            if (logProgress) org.vorpal.research.kthelper.logging.log.debug("Analyzing Coverage...")
+            val executionData = ExecutionDataStore()
+            val sessionInfos = SessionInfoStore()
+            data.collect(executionData, sessionInfos, false)
+            runtime.shutdown()
 
-        println("Execution data:")
-        println(executionData.get(0))
-        val coverageBuilder = CoverageBuilder()
-        val analyzer = Analyzer(executionData, coverageBuilder)
-        for (className in classes) {
-            originalClasses[className]?.inputStream()?.use {
-                tryOrNull {
-                    analyzer.analyzeClass(it, className.fullyQualifiedName(jacocoInstrumentedDir))
+            val coverageBuilder = CoverageBuilder()
+            val analyzer = Analyzer(executionData, coverageBuilder)
+            for (className in classes) {
+                originalClasses[className]?.inputStream()?.use {
+                    tryOrNull {
+                        analyzer.analyzeClass(it, className.fullyQualifiedName(jacocoInstrumentedDir))
+                    }
                 }
+                className.writeBytes(originalClasses[className]!!)
             }
-            className.writeBytes(originalClasses[className]!!)
+
+            req = getRequirements(coverageBuilder)
+            val satisfied = getSatisfiedLines(coverageBuilder)
+            tests.add(TestCoverageInfo(testClassName, satisfied))
         }
-        return coverageBuilder
+        return TestwiseCoverageInfo(req, tests)
     }
 
     private val String.fullyQualifiedName: String
@@ -278,8 +210,6 @@ class TestwiseCoverage(
         coverageBuilder: CoverageBuilder
     ): Set<ClassCoverageInfo> =
         coverageBuilder.classes.mapTo(mutableSetOf()) {
-            println("coverageBuilder extraction:")
-            println(it.name)
             val kfgClass = cm[it.name]
             val classCov = getCommonCounters<ClassCoverageInfo>(it.name, it)
             for (mc in it.methods) {
@@ -329,13 +259,37 @@ class TestwiseCoverage(
         } as T
     }
 
-    private fun getColor(status: Int): String {
-        when (status) {
-            ICounter.NOT_COVERED -> return "red"
-            ICounter.PARTLY_COVERED -> return "yellow"
-            ICounter.FULLY_COVERED -> return "green"
+    private fun getRequirements(cb: CoverageBuilder): List<Int> {
+        val res = mutableListOf<Int>()
+        for (cc in cb.classes) {
+            for (i in cc.firstLine..cc.lastLine) {
+                if (getStatus(cc.getLine(i).status) != null) {
+                    res.add(i)
+                }
+            }
         }
-        return ""
+        return res
+    }
+
+    private fun getSatisfiedLines(cb: CoverageBuilder): List<Int> {
+        val res = mutableListOf<Int>()
+        for (cc in cb.classes) {
+            for (i in cc.firstLine..cc.lastLine) {
+                if (getStatus(cc.getLine(i).status) == true) {
+                    res.add(i)
+                }
+            }
+        }
+        return res
+    }
+
+    private fun getStatus(status: Int): Boolean? {
+        when (status) {
+            ICounter.NOT_COVERED -> return false
+            ICounter.PARTLY_COVERED -> return true
+            ICounter.FULLY_COVERED -> return true
+        }
+        return null
     }
 
     class PathClassLoader(val paths: List<Path>) : ClassLoader() {

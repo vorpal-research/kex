@@ -7,6 +7,7 @@ import org.vorpal.research.kex.KexRunnerTest
 import org.vorpal.research.kex.asm.analysis.symbolic.InstructionSymbolicChecker
 import org.vorpal.research.kex.asm.manager.ClassInstantiationDetector
 import org.vorpal.research.kex.jacoco.CoverageReporter
+import org.vorpal.research.kex.jacoco.minimization.Minimizer
 import org.vorpal.research.kex.jacoco.minimization.TestwiseCoverage
 import org.vorpal.research.kex.launcher.ClassLevel
 import org.vorpal.research.kfg.Package
@@ -33,11 +34,9 @@ abstract class SymbolicTest(
             InstructionSymbolicChecker.run(analysisContext, setOf(method))
         }
 
-        println("TestwiseCoverage execution start")
-        val testCoverage = TestwiseCoverage(listOf(jar)).execute(klass.cm, ClassLevel(klass))
-        println()
-        println("TestCoverage results:")
-        println(testCoverage)
+        println("Minimizer execution start")
+        Minimizer(listOf(jar), klass.cm, ClassLevel(klass)).execute()
+
         val coverage = CoverageReporter(listOf(jar)).execute(klass.cm, ClassLevel(klass))
         log.debug(coverage.print(true))
         assertEquals(expectedCoverage, coverage.instructionCoverage.ratio, eps)
