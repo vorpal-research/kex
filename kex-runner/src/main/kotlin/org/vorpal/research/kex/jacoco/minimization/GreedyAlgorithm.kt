@@ -1,24 +1,21 @@
 package org.vorpal.research.kex.jacoco.minimization
 
+import java.io.File
+
 interface TestReduction
 
-class Test {
-    var power = 0
-    val reqs: MutableList<Int> = mutableListOf<Int>()
-
-    fun addRequirements(req: List<Int>) {
-        for (elem in req)
-            reqs.add(elem)
-        power += req.size
-    }
+class Test(
+    val reqs: List<Int>
+) {
+    var power: Int = reqs.size
 }
 
 class Requirement {
-    val tests: MutableList<Int> =mutableListOf<Int>()
+    val tests: MutableList<String> =mutableListOf<String>()
     var visited = false
 
-    fun addTest(test: Int) {
-        tests.add(test)
+    fun addTest(testName: String) {
+        tests.add(testName)
     }
 
     fun visit(tests: List<Test>) {
@@ -29,31 +26,54 @@ class Requirement {
 }
 
 public class GreedyAlgorithm(
-    _req: Int,
-    _test: Int,
-    _dependecies: Map<Int, List<Int>>
+    testCoverage: TestwiseCoverageInfo,
+    file: File
 ) :TestReduction{
-    private var tests = List(_test) { Test() }
-    private var requirements = List(_req) { Requirement() }
+    private val files = file
+    private var tests: MutableMap<String, Test> = mutableMapOf()
+    private var requirements: MutableMap<Int, Requirement> = mutableMapOf()
 
     init {
-        for (test_num in _dependecies) {
-            tests[test_num.key].addRequirements(test_num.value)
-            for (requirement in test_num.value)
-                requirements[requirement].addTest(test_num.key)
+        testCoverage.req.forEach{ requirements[it] = Requirement() }
+        for (test in testCoverage.tests) {
+            tests[test.testName] = Test(test.satisfize)
+            for (requirement in test.satisfize)
+                requirements[requirement]!!.addTest(test.testName)
         }
     }
 
-    fun minimized(): List<Test> {
-        val satisfied_req: Int = 0
-        val result = emptyList<Test>().toMutableList()
-        while (satisfied_req < requirements.size) {
-            var max_test = tests[0]
-            tests.forEach { if (it.power > max_test.power) max_test = it }
-            if (max_test.power == 0) break
-            max_test.reqs.forEach { requirements[it].visit(tests) }
-            result.add(result.size, max_test)
+    fun minimized(): List<String> {
+        val reqs_set = mutableSetOf<Int>()
+        for (test in tests) {
+            test.value.reqs.forEach { reqs_set.add(it) }
         }
+
+        var satisfied_req: Int = 0
+        val result = emptyList<String>().toMutableList()
+        while (satisfied_req < requirements.size) {
+            var max_test: String? = null
+            tests.forEach { if (it.value.power > (tests[max_test]?.power ?: -1)) max_test = it.key }
+            if ((tests[max_test]?.power ?: 0) == 0) break
+
+            satisfied_req += tests[max_test]!!.power
+            tests[max_test]!!.reqs.forEach { requirements[it]!!.tests.forEach{ tests[it]!!.power-- } }
+            result.add(result.size, max_test!!)
+        }
+
+        val fileWriter = files.writer()
+
+        // Запишите текст в файл
+        fileWriter.write("Result: ${result}\n")
+        fileWriter.write("Initial Coverage: ${String.format("%.2f", reqs_set.size.toDouble() / requirements.size.toDouble())}\n")
+        fileWriter.write("Coverage: ${String.format("%.2f", satisfied_req.toDouble() / requirements.size.toDouble())}\n")
+        fileWriter.write("Reduced: ${String.format("%.2f", result.size.toDouble() / tests.size.toDouble())}\n")
+
+        // Закройте файл, чтобы сохранить изменения
+        fileWriter.close()
+        println("Result: ${result}")
+        println("Initial Coverage: ${String.format("%.2f", reqs_set.size.toDouble() / requirements.size.toDouble())}")
+        println("Coverage: ${String.format("%.2f", satisfied_req.toDouble() / requirements.size.toDouble())}")
+        println("Reduced: ${String.format("%.2f", result.size.toDouble() / tests.size.toDouble())}")
         return result
     }
 }

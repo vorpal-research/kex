@@ -5,6 +5,10 @@ import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.InternalSerializationApi
 import org.vorpal.research.kex.ExecutionContext
 import org.vorpal.research.kex.asm.analysis.concolic.InstructionConcolicChecker
+import org.vorpal.research.kex.asm.transform.SymbolicTraceInstrumenter
+import org.vorpal.research.kex.asm.util.ClassWriter
+import org.vorpal.research.kex.config.kexConfig
+import org.vorpal.research.kex.jacoco.minimization.Minimizer
 import org.vorpal.research.kex.jacoco.reportCoverage
 import org.vorpal.research.kex.trace.runner.ExecutorMasterController
 import org.vorpal.research.kfg.ir.Method
@@ -36,6 +40,7 @@ class ConcolicLauncher(classPaths: List<String>, targetName: String) : KexAnalys
                 InstructionConcolicChecker.run(context, setOfTargets)
             }
         }
+        Minimizer(containers, context.cm, analysisLevel).execute()
         reportCoverage(containers, context.cm, analysisLevel, "concolic")
     }
 }
