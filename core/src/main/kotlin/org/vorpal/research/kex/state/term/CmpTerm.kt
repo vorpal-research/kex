@@ -10,21 +10,22 @@ import org.vorpal.research.kfg.ir.value.instruction.CmpOpcode
 @InheritorOf("Term")
 @Serializable
 class CmpTerm(
-        override val type: KexType,
-        @Contextual val opcode: CmpOpcode,
-        val lhv: Term,
-        val rhv: Term) : Term() {
+    override val type: KexType,
+    @Contextual val opcode: CmpOpcode,
+    val lhv: Term,
+    val rhv: Term
+) : Term() {
 
     override val name = "$lhv $opcode $rhv"
     override val subTerms by lazy { listOf(lhv, rhv) }
 
-    override fun <T: Transformer<T>> accept(t: Transformer<T>): Term {
+    override fun <T : Transformer<T>> accept(t: Transformer<T>): Term {
         val tLhv = t.transform(lhv)
         val tRhv = t.transform(rhv)
         return when {
             tLhv == lhv && tRhv == rhv -> this
             else -> term { termFactory.getCmp(opcode, tLhv, tRhv) }
-         }
+        }
     }
 
     override fun hashCode() = 31 * super.hashCode() + opcode.hashCode()

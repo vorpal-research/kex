@@ -32,7 +32,6 @@ import org.vorpal.research.kfg.type.doubleWrapper
 import org.vorpal.research.kfg.type.floatWrapper
 import org.vorpal.research.kfg.type.intWrapper
 import org.vorpal.research.kfg.type.longWrapper
-import org.vorpal.research.kfg.type.mergeTypes
 import org.vorpal.research.kfg.type.parseStringToType
 import org.vorpal.research.kfg.type.shortWrapper
 import org.vorpal.research.kthelper.assert.unreachable
@@ -186,10 +185,4 @@ fun Type.isSubtypeOfCached(other: Type): Boolean = SubTypeInfoCache.check(this, 
 
 fun Field.isOuterThis(): Boolean {
     return klass.outerClass != null && name.matches("this\\$\\d+".toRegex())  && type == klass.outerClass!!.asType
-}
-
-fun Type.commonSupertype(tf: TypeFactory, other: Type): Type = mergeTypes(tf, setOf(this, other))!!
-
-fun Type.commonSubtype(other: Type): Type = when (this) {
-    else -> TODO()
 }

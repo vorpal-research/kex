@@ -12,8 +12,6 @@ import org.vorpal.research.kex.state.term.ConstLongTerm
 import org.vorpal.research.kex.state.term.ConstShortTerm
 import org.vorpal.research.kex.state.term.NullTerm
 import org.vorpal.research.kex.state.term.Term
-import org.vorpal.research.kex.util.commonSubtype
-import org.vorpal.research.kex.util.commonSupertype
 import org.vorpal.research.kex.util.isSubtypeOfCached
 import org.vorpal.research.kfg.ir.value.instruction.BinaryOpcode
 import org.vorpal.research.kfg.ir.value.instruction.CmpOpcode
@@ -30,6 +28,7 @@ import org.vorpal.research.kfg.type.Reference
 import org.vorpal.research.kfg.type.ShortType
 import org.vorpal.research.kfg.type.Type
 import org.vorpal.research.kfg.type.TypeFactory
+import org.vorpal.research.kfg.type.commonSupertype
 import org.vorpal.research.kthelper.and
 import org.vorpal.research.kthelper.assert.unreachable
 import org.vorpal.research.kthelper.compareTo
@@ -542,7 +541,7 @@ data class TypeDomainValue(val type: Type) : AbstractDomainValue {
         is TypeDomainValue -> when {
             other.type.isSubtypeOfCached(type) -> this
             this.type.isSubtypeOfCached(other.type) -> other
-            else -> TypeDomainValue(type.commonSupertype(other.type))
+            else -> TypeDomainValue(commonSupertype(setOf(type, other.type))!!)
         }
 
         else -> unreachable { log.error("Attempting to join $this and $other") }
@@ -554,7 +553,7 @@ data class TypeDomainValue(val type: Type) : AbstractDomainValue {
         is TypeDomainValue -> when {
             other.type.isSubtypeOfCached(type) -> other
             this.type.isSubtypeOfCached(other.type) -> this
-            else -> TypeDomainValue(type.commonSubtype(other.type))
+            else -> unreachable { log.error("Unexpected meet on $this and $other") }
         }
 
         else -> unreachable { log.error("Attempting to meet $this and $other") }

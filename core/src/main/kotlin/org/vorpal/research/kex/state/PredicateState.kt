@@ -23,6 +23,13 @@ interface InheritanceTypeInfo {
 fun emptyState(): PredicateState = BasicState()
 fun Predicate.wrap() = emptyState() + this
 
+fun chain(base: PredicateState, curr: PredicateState): PredicateState = when {
+    base.isEmpty -> curr
+    curr.isEmpty -> base
+    base is BasicState && curr is BasicState -> BasicState(base.predicates + curr.predicates)
+    else -> ChainState(base, curr)
+}
+
 open class StateBuilder() : PredicateBuilder {
     override val type = PredicateType.State()
     override val location = Location()
@@ -48,22 +55,22 @@ open class StateBuilder() : PredicateBuilder {
     operator fun plus(state: PredicateState) = when {
         state.isEmpty -> this
         current.isEmpty -> StateBuilder(state)
-        else -> StateBuilder(ChainState(current, state))
+        else -> StateBuilder(chain(current, state))
     }
 
     operator fun plusAssign(state: PredicateState) {
-        current = ChainState(current, state)
+        current = chain(current, state)
     }
 
     operator fun plus(choices: List<PredicateState>) = when {
         choices.isEmpty() -> this
         current.isEmpty -> StateBuilder(ChoiceState(choices))
-        else -> StateBuilder(ChainState(current, ChoiceState(choices)))
+        else -> StateBuilder(chain(current, ChoiceState(choices)))
     }
 
     operator fun plusAssign(choices: List<PredicateState>) {
         val choice = ChoiceState(choices)
-        current = ChainState(current, choice)
+        current = chain(current, choice)
     }
 
     open fun apply() = current

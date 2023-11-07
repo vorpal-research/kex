@@ -57,7 +57,7 @@ import org.vorpal.research.kfg.ir.value.instruction.TerminateInst
 import org.vorpal.research.kfg.ir.value.instruction.ThrowInst
 import org.vorpal.research.kfg.ir.value.instruction.UnaryInst
 import org.vorpal.research.kfg.ir.value.instruction.UnaryOpcode
-import org.vorpal.research.kfg.type.mergeTypes
+import org.vorpal.research.kfg.type.commonSupertype
 import org.vorpal.research.kfg.visitor.MethodVisitor
 import org.vorpal.research.kthelper.assert.ktassert
 import org.vorpal.research.kthelper.collection.mapToArray
@@ -123,7 +123,7 @@ class PredicateBuilderTest : KexTest("predicate-builder") {
                 assertTrue(rhv is BinaryTerm)
 
                 assertEquals(rhv.opcode, inst.opcode)
-                assertEquals(mergeTypes(cm.type, setOf(inst.lhv.type, inst.rhv.type))?.kexType, rhv.type)
+                assertEquals(commonSupertype(setOf(inst.lhv.type, inst.rhv.type))?.kexType, rhv.type)
                 assertEquals(rhv.lhv, tf.getValue(inst.lhv))
                 assertEquals(rhv.rhv, tf.getValue(inst.rhv))
             }
