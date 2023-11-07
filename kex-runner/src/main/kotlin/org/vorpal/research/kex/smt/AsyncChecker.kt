@@ -158,7 +158,7 @@ class AsyncChecker(
             log.debug("Query size: {}", query.size)
         }
 
-        tryAbstractDomainSolve(state, query)?.let {
+        tryAbstractDomainSolve(ctx, state, query)?.let {
             log.debug("Constant solver acquired {}", it)
             return it
         }
@@ -166,6 +166,11 @@ class AsyncChecker(
         val result = AsyncSMTProxySolver(ctx).use {
             it.isPathPossibleAsync(state, query)
         }
+//        val aiResult = tryAbstractDomainSolve(state, query)
+//        if (aiResult is Result.UnsatResult && result !is Result.UnsatResult) {
+//            val a = tryAbstractDomainSolve(state, query)
+//            log.error("AAAAAAAAAAAA")
+//        }
         log.debug("Acquired {}", result)
         return result
     }

@@ -186,3 +186,11 @@ fun Type.isSubtypeOfCached(other: Type): Boolean = SubTypeInfoCache.check(this, 
 fun Field.isOuterThis(): Boolean {
     return klass.outerClass != null && name.matches("this\\$\\d+".toRegex())  && type == klass.outerClass!!.asType
 }
+
+fun Type.commonSupertype(other: Type): Type = when (this) {
+    else -> TODO()
+}
+
+fun Type.commonSubtype(other: Type): Type = when (this) {
+    else -> TODO()
+}
