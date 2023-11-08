@@ -4,6 +4,17 @@ import kotlinx.collections.immutable.PersistentMap
 import kotlinx.collections.immutable.persistentMapOf
 import kotlinx.collections.immutable.toPersistentList
 import org.vorpal.research.kex.ExecutionContext
+import org.vorpal.research.kex.ktype.KexBool
+import org.vorpal.research.kex.ktype.KexByte
+import org.vorpal.research.kex.ktype.KexChar
+import org.vorpal.research.kex.ktype.KexDouble
+import org.vorpal.research.kex.ktype.KexFloat
+import org.vorpal.research.kex.ktype.KexInt
+import org.vorpal.research.kex.ktype.KexInteger
+import org.vorpal.research.kex.ktype.KexLong
+import org.vorpal.research.kex.ktype.KexPointer
+import org.vorpal.research.kex.ktype.KexShort
+import org.vorpal.research.kex.ktype.KexType
 import org.vorpal.research.kex.smt.Result
 import org.vorpal.research.kex.state.ChoiceState
 import org.vorpal.research.kex.state.IncrementalPredicateState
@@ -24,10 +35,17 @@ import org.vorpal.research.kex.state.term.CmpTerm
 import org.vorpal.research.kex.state.term.InstanceOfTerm
 import org.vorpal.research.kex.state.term.NegTerm
 import org.vorpal.research.kex.state.term.Term
+import org.vorpal.research.kex.state.term.ValueTerm
+import org.vorpal.research.kex.state.term.term
 import org.vorpal.research.kex.state.transformer.ConstantPropagator
 import org.vorpal.research.kex.state.transformer.IncrementalTransformer
 import org.vorpal.research.kex.state.transformer.Transformer
+import org.vorpal.research.kfg.ir.value.instruction.CmpOpcode
 import org.vorpal.research.kfg.ir.value.instruction.UnaryOpcode
+import org.vorpal.research.kthelper.assert.unreachable
+import org.vorpal.research.kthelper.logging.log
+import org.vorpal.research.kthelper.maxOf
+import org.vorpal.research.kthelper.minOf
 
 class AbstractDomainSolver(val ctx: ExecutionContext) : Transformer<AbstractDomainSolver>, IncrementalTransformer {
     private var abstractDomainValues = persistentMapOf<Term, DomainStorage>()
@@ -191,13 +209,28 @@ class AbstractDomainSolver(val ctx: ExecutionContext) : Transformer<AbstractDoma
             is PredicateType.State -> {
                 val rhv = domainValue(predicate.rhv)
                 storageValue(predicate.lhv).value = rhv
-                equalities = equalities.put(predicate.lhv, predicate.rhv)
+                equalities = equalities.put(predicate.lhv, equalities[predicate.rhv] ?: predicate.rhv)
             }
 
             else -> {
                 val lhv = domainValue(predicate.lhv)
                 val rhv = domainValue(predicate.rhv)
                 satisfiabilityDomainValue = satisfiabilityDomainValue.meet(lhv.satisfiesEquality(rhv))
+                if (satisfiabilityDomainValue.isSat) {
+                    val condition = equalities[predicate.lhv] ?: predicate.lhv
+                    when (condition) {
+                        is CmpTerm -> when {
+                            rhv.isTrue -> propagateCmpCondition(condition)
+                            rhv.isFalse -> propagateCmpCondition(condition.reversed())
+                        }
+
+                        is InstanceOfTerm -> when {
+                            rhv.isTrue -> propagateInstanceOfCondition(condition, true)
+                            rhv.isFalse -> propagateInstanceOfCondition(condition, false)
+                        }
+                        is ValueTerm -> propagateCondition(condition)
+                    }
+                }
             }
         }
         return predicate
@@ -213,6 +246,119 @@ class AbstractDomainSolver(val ctx: ExecutionContext) : Transformer<AbstractDoma
             }
         }
         return predicate
+    }
+
+    private fun CmpTerm.reversed(): CmpTerm = term {
+        when (opcode) {
+            CmpOpcode.EQ -> lhv neq rhv
+            CmpOpcode.NEQ -> lhv eq rhv
+            CmpOpcode.LT -> lhv ge rhv
+            CmpOpcode.GT -> lhv le rhv
+            CmpOpcode.LE -> lhv gt rhv
+            CmpOpcode.GE -> lhv lt rhv
+            CmpOpcode.CMP -> rhv cmp lhv
+            CmpOpcode.CMPG -> rhv cmpg lhv
+            CmpOpcode.CMPL -> rhv cmpl lhv
+        }
+    } as CmpTerm
+
+    private fun propagateCondition(term: Term) {
+        System.err.println(term)
+    }
+
+    private fun propagateCmpCondition(term: CmpTerm) {
+        val lhv = storageValue(term.lhv)
+        val rhv = storageValue(term.rhv)
+        when {
+            term.lhv.type is KexPointer && rhv.value.isNull -> when (term.opcode) {
+                CmpOpcode.EQ -> lhv.value.assign(NullDomainValue)
+                CmpOpcode.NEQ -> lhv.value.assign(NonNullableDomainValue)
+                else -> {
+                    log.error("Could not propagate cmp condition $term for ${lhv.value} and ${rhv.value}")
+                }
+            }
+
+            term.lhv.type is KexInteger && rhv.value.isConstant -> when (term.opcode) {
+                CmpOpcode.EQ -> lhv.value.assign(rhv.value)
+                CmpOpcode.NEQ -> {} // nothing
+                CmpOpcode.LT, CmpOpcode.LE -> when (val lhvValue = lhv.value) {
+                    is IntervalDomainValue<*> -> lhv.value.assign(
+                        IntervalDomainValue(
+                            lhvValue.min,
+                            minOf(lhvValue.max, (rhv.value as IntervalDomainValue<*>).min)
+                        )
+                    )
+
+                    is Top -> lhv.value.assign(
+                        IntervalDomainValue(
+                            lowerBound(term.lhv.type),
+                            (rhv.value as IntervalDomainValue<*>).min
+                        )
+                    )
+
+                    else -> {
+                        log.error("Could not propagate cmp condition $term for ${lhv.value} and ${rhv.value}")
+                    }
+                }
+
+                CmpOpcode.GT, CmpOpcode.GE -> when (val lhvValue = lhv.value) {
+                    is IntervalDomainValue<*> -> lhv.value.assign(
+                        IntervalDomainValue(
+                            maxOf(lhvValue.min, (rhv.value as IntervalDomainValue<*>).min),
+                            lhvValue.max
+                        )
+                    )
+
+                    is Top -> lhv.value.assign(
+                        IntervalDomainValue(
+                            (rhv.value as IntervalDomainValue<*>).min,
+                            upperBound(term.lhv.type)
+                        )
+                    )
+
+                    else -> {
+                        log.error("Could not propagate cmp condition $term for ${lhv.value} and ${rhv.value}")
+                    }
+                }
+
+                else -> {
+                    log.error("Could not propagate cmp condition $term for ${lhv.value} and ${rhv.value}")
+                }
+            }
+        }
+    }
+
+    private fun propagateInstanceOfCondition(term: InstanceOfTerm, positive: Boolean) {
+        val operand = storageValue(term.operand)
+        if (positive) {
+            operand.value.assign(TypeDomainValue(term.checkedType.getKfgType(ctx.types)))
+        } else {
+            log.error("Could not propagate cmp condition $term for ${operand.value}")
+        }
+    }
+
+    private fun lowerBound(type: KexType): Number = when (type) {
+        is KexBool -> 0
+        is KexByte -> Byte.MAX_VALUE
+        is KexChar -> Char.MIN_VALUE.code
+        is KexShort -> Short.MIN_VALUE
+        is KexInt -> Int.MIN_VALUE
+        is KexLong -> Long.MIN_VALUE
+        is KexFloat -> Float.NEGATIVE_INFINITY
+        is KexDouble -> Double.NEGATIVE_INFINITY
+        else -> unreachable { log.error("Unknown type $type for lower bound") }
+    }
+
+    private fun upperBound(type: KexType): Number = when (type) {
+        is KexBool -> 1
+        is KexByte -> Byte.MAX_VALUE
+        is KexChar -> Char.MAX_VALUE.code
+        is KexShort -> Short.MAX_VALUE
+        is KexInt -> Int.MAX_VALUE
+        is KexLong -> Long.MAX_VALUE
+        is KexFloat -> Float.POSITIVE_INFINITY
+        is KexDouble -> Double.POSITIVE_INFINITY
+        else -> unreachable { log.error("Unknown type $type for lower bound") }
     }
 }
 

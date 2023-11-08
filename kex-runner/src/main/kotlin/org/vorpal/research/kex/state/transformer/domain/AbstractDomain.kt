@@ -66,6 +66,12 @@ val AbstractDomainValue.isTrue: Boolean
 val AbstractDomainValue.isFalse: Boolean
     get() = this == DomainStorage.falseDomain
 
+val AbstractDomainValue.isNull: Boolean
+    get() = this is NullDomainValue
+
+val AbstractDomainValue.isConstant: Boolean
+    get() = this is IntervalDomainValue<*> && this.isConstant
+
 class DomainStorage(value: AbstractDomainValue) {
 
     var value = value
@@ -559,12 +565,16 @@ data class TypeDomainValue(val type: Type) : AbstractDomainValue {
         else -> unreachable { log.error("Attempting to meet $this and $other") }
     }
 
-    override fun assign(other: AbstractDomainValue): AbstractDomainValue = other
+    override fun assign(other: AbstractDomainValue): AbstractDomainValue = when (other) {
+        is TypeDomainValue -> if (other.type.isSubtypeOfCached(type)) other else this
+        else -> other
+    }
 
     override fun cast(type: Type): AbstractDomainValue = when {
         type.isSubtypeOfCached(this.type) -> TypeDomainValue(type)
         else -> this
     }
+
     override fun satisfiesType(type: Type): AbstractDomainValue = when {
         type.isSubtypeOfCached(this.type) -> DomainStorage.trueDomain
         this.type.isSubtypeOfCached(type) -> DomainStorage.trueDomain
@@ -609,6 +619,7 @@ data class PtrDomainValue(
         is Bottom -> other
         is NullityAbstractDomainValue -> PtrDomainValue(nullity.join(other), type)
         is PtrDomainValue -> PtrDomainValue(nullity.join(other.nullity), type.join(other.type))
+        is ArrayDomainValue -> PtrDomainValue(nullity.join(other.nullity), type.join(other.type))
         else -> unreachable { log.error("Attempting to join $this and $other") }
     }
 
@@ -621,7 +632,12 @@ data class PtrDomainValue(
     }
 
     override fun assign(other: AbstractDomainValue): AbstractDomainValue = when (other) {
-        is NullityAbstractDomainValue -> PtrDomainValue(other, type)
+        is NullityAbstractDomainValue -> PtrDomainValue(nullity.assign(other), type)
+        is TypeDomainValue -> when {
+            other.type is ArrayType -> ArrayDomainValue(nullity, type.assign(other), ArrayDomainValue.TOP_LENGTH)
+            else -> PtrDomainValue(nullity, type.assign(other))
+        }
+
         else -> other
     }
 
@@ -644,6 +660,10 @@ data class ArrayDomainValue(
         is Top -> Top
         is Bottom -> this
         is NullityAbstractDomainValue -> ArrayDomainValue(nullity.join(other), type, length)
+        is PtrDomainValue -> PtrDomainValue(
+            nullity.join(other.nullity),
+            type.join(other.type)
+        )
         is ArrayDomainValue -> ArrayDomainValue(
             nullity.join(other.nullity),
             type.join(other.type),
@@ -667,8 +687,15 @@ data class ArrayDomainValue(
     }
 
     override fun assign(other: AbstractDomainValue): AbstractDomainValue = when (other) {
-        is NullityAbstractDomainValue -> PtrDomainValue(other, type)
-        is PtrDomainValue -> ArrayDomainValue(other.nullity, other.type, length)
+        is NullityAbstractDomainValue -> PtrDomainValue(nullity.assign(other), type)
+        is PtrDomainValue -> ArrayDomainValue(nullity.assign(other.nullity), type.assign(other.type), length)
+        is ArrayDomainValue -> ArrayDomainValue(
+            nullity.assign(other.nullity),
+            type.assign(other.type),
+            length.assign(other.length)
+        )
+
+        is TypeDomainValue -> ArrayDomainValue(nullity, type.assign(other), length)
         else -> other
     }
 
