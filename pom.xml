@@ -11,7 +11,7 @@
     <version>0.0.1</version>
     <modules>
         <module>kex-test</module>
-        <module>core</module>
+        <module>kex-core</module>
         <module>kex-annotation-processor</module>
         <module>kex-runner</module>
         <module>kex-executor</module>
