@@ -35,7 +35,6 @@ import org.vorpal.research.kex.state.term.CmpTerm
 import org.vorpal.research.kex.state.term.InstanceOfTerm
 import org.vorpal.research.kex.state.term.NegTerm
 import org.vorpal.research.kex.state.term.Term
-import org.vorpal.research.kex.state.term.ValueTerm
 import org.vorpal.research.kex.state.term.term
 import org.vorpal.research.kex.state.transformer.ConstantPropagator
 import org.vorpal.research.kex.state.transformer.IncrementalTransformer
@@ -228,7 +227,6 @@ class AbstractDomainSolver(val ctx: ExecutionContext) : Transformer<AbstractDoma
                             rhv.isTrue -> propagateInstanceOfCondition(condition, true)
                             rhv.isFalse -> propagateInstanceOfCondition(condition, false)
                         }
-                        is ValueTerm -> propagateCondition(condition)
                     }
                 }
             }
@@ -243,6 +241,9 @@ class AbstractDomainSolver(val ctx: ExecutionContext) : Transformer<AbstractDoma
                 val lhv = domainValue(predicate.lhv)
                 val rhv = domainValue(predicate.rhv)
                 satisfiabilityDomainValue = satisfiabilityDomainValue.meet(lhv.satisfiesInequality(rhv))
+                if (satisfiabilityDomainValue.isSat) {
+                    propagateCmpCondition(term { predicate.lhv neq predicate.rhv } as CmpTerm)
+                }
             }
         }
         return predicate
@@ -262,10 +263,6 @@ class AbstractDomainSolver(val ctx: ExecutionContext) : Transformer<AbstractDoma
         }
     } as CmpTerm
 
-    private fun propagateCondition(term: Term) {
-        System.err.println(term)
-    }
-
     private fun propagateCmpCondition(term: CmpTerm) {
         val lhv = storageValue(term.lhv)
         val rhv = storageValue(term.rhv)
@@ -273,9 +270,7 @@ class AbstractDomainSolver(val ctx: ExecutionContext) : Transformer<AbstractDoma
             term.lhv.type is KexPointer && rhv.value.isNull -> when (term.opcode) {
                 CmpOpcode.EQ -> lhv.value.assign(NullDomainValue)
                 CmpOpcode.NEQ -> lhv.value.assign(NonNullableDomainValue)
-                else -> {
-                    log.error("Could not propagate cmp condition $term for ${lhv.value} and ${rhv.value}")
-                }
+                else -> {}
             }
 
             term.lhv.type is KexInteger && rhv.value.isConstant -> when (term.opcode) {
@@ -296,9 +291,7 @@ class AbstractDomainSolver(val ctx: ExecutionContext) : Transformer<AbstractDoma
                         )
                     )
 
-                    else -> {
-                        log.error("Could not propagate cmp condition $term for ${lhv.value} and ${rhv.value}")
-                    }
+                    else -> {}
                 }
 
                 CmpOpcode.GT, CmpOpcode.GE -> when (val lhvValue = lhv.value) {
@@ -316,14 +309,10 @@ class AbstractDomainSolver(val ctx: ExecutionContext) : Transformer<AbstractDoma
                         )
                     )
 
-                    else -> {
-                        log.error("Could not propagate cmp condition $term for ${lhv.value} and ${rhv.value}")
-                    }
+                    else -> {}
                 }
 
-                else -> {
-                    log.error("Could not propagate cmp condition $term for ${lhv.value} and ${rhv.value}")
-                }
+                else -> {}
             }
         }
     }
@@ -332,8 +321,6 @@ class AbstractDomainSolver(val ctx: ExecutionContext) : Transformer<AbstractDoma
         val operand = storageValue(term.operand)
         if (positive) {
             operand.value.assign(TypeDomainValue(term.checkedType.getKfgType(ctx.types)))
-        } else {
-            log.error("Could not propagate cmp condition $term for ${operand.value}")
         }
     }
 

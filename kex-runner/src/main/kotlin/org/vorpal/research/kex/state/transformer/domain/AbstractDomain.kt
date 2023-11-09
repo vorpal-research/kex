@@ -69,6 +69,14 @@ val AbstractDomainValue.isFalse: Boolean
 val AbstractDomainValue.isNull: Boolean
     get() = this is NullDomainValue
 
+val AbstractDomainValue.canBeNull: Boolean
+    get() = when (this) {
+        is NullDomainValue -> true
+        is NullableDomainValue -> true
+        is Top -> true
+        else -> false
+    }
+
 val AbstractDomainValue.isConstant: Boolean
     get() = this is IntervalDomainValue<*> && this.isConstant
 
@@ -233,21 +241,71 @@ data class IntervalDomainValue<T : Number>(val min: T, val max: T) : NumberAbstr
 
     override fun assign(other: AbstractDomainValue): AbstractDomainValue = other
 
+    @Suppress("UNCHECKED_CAST")
+    private fun <T : Number> lowerBound(num: T): T = when (num) {
+        is Byte -> Byte.MIN_VALUE
+        is Short -> Short.MIN_VALUE
+        is Int -> Int.MIN_VALUE
+        is Long -> Long.MIN_VALUE
+        is Float -> Float.NEGATIVE_INFINITY
+        is Double -> Double.NEGATIVE_INFINITY
+        else -> unreachable { log.error("Unknown number impl $num") }
+    } as T
+
+    @Suppress("UNCHECKED_CAST")
+    private fun <T : Number> upperBound(num: T) = when (num) {
+        is Byte -> Byte.MAX_VALUE
+        is Short -> Short.MAX_VALUE
+        is Int -> Int.MAX_VALUE
+        is Long -> Long.MAX_VALUE
+        is Float -> Float.POSITIVE_INFINITY
+        is Double -> Double.POSITIVE_INFINITY
+        else -> unreachable { log.error("Unknown number impl $num") }
+    } as T
+
     override fun apply(opcode: BinaryOpcode, other: AbstractDomainValue): AbstractDomainValue = when (other) {
         is Top -> Top
 
         is IntervalDomainValue<*> -> when (opcode) {
-            BinaryOpcode.ADD -> IntervalDomainValue(other.min + other.min, max + other.max)
-            BinaryOpcode.SUB -> IntervalDomainValue(min - other.max, max + other.min)
-            BinaryOpcode.MUL -> IntervalDomainValue(
-                minOf(min * other.min, max * other.min, min * other.max, max * other.max),
-                maxOf(min * other.min, max * other.min, min * other.max, max * other.max)
-            )
+            BinaryOpcode.ADD -> {
+                val lb = min + other.min
+                val ub = max + other.max
+                when {
+                    lb < min || lb < other.min -> IntervalDomainValue(lowerBound(min), upperBound(max))
+                    ub < max || ub < other.max -> IntervalDomainValue(lowerBound(min), upperBound(max))
+                    else -> IntervalDomainValue(lb, ub)
+                }
+            }
 
-            BinaryOpcode.DIV -> IntervalDomainValue(
-                minOf(min / other.min, max / other.min, min / other.max, max / other.max),
-                maxOf(min / other.min, max / other.min, min / other.max, max / other.max)
-            )
+            BinaryOpcode.SUB -> {
+                val lb = min - other.max
+                val ub = max - other.min
+                when {
+                    lb > min -> IntervalDomainValue(lowerBound(min), upperBound(max))
+                    ub < max -> IntervalDomainValue(lowerBound(min), upperBound(max))
+                    else -> IntervalDomainValue(lb, ub)
+                }
+            }
+
+            BinaryOpcode.MUL -> {
+                val lb = minOf(min * other.min, max * other.min, min * other.max, max * other.max)
+                val ub = maxOf(min * other.min, max * other.min, min * other.max, max * other.max)
+                when {
+                    lb > min -> IntervalDomainValue(lowerBound(min), upperBound(max))
+                    ub < max -> IntervalDomainValue(lowerBound(min), upperBound(max))
+                    else -> IntervalDomainValue(lb, ub)
+                }
+            }
+
+            BinaryOpcode.DIV -> {
+                val lb = minOf(min / other.min, max / other.min, min / other.max, max / other.max)
+                val ub = maxOf(min / other.min, max / other.min, min / other.max, max / other.max)
+                when {
+                    lb > min -> IntervalDomainValue(lowerBound(min), upperBound(max))
+                    ub < max -> IntervalDomainValue(lowerBound(min), upperBound(max))
+                    else -> IntervalDomainValue(lb, ub)
+                }
+            }
 
             BinaryOpcode.REM -> when {
                 this.isConstant && other.isConstant -> IntervalDomainValue(min % other.min)
@@ -607,7 +665,11 @@ sealed interface TermDomainValue : AbstractDomainValue {
         else -> unreachable { log.error("$this == $other is unexpected satisfiability check") }
     }
 
-    override fun satisfiesType(type: Type): AbstractDomainValue = this.type.satisfiesType(type)
+    override fun satisfiesType(type: Type): AbstractDomainValue = when {
+        nullity.isNull -> DomainStorage.falseDomain
+        nullity.canBeNull -> Top
+        else -> this.type.satisfiesType(type)
+    }
 }
 
 data class PtrDomainValue(
@@ -664,6 +726,7 @@ data class ArrayDomainValue(
             nullity.join(other.nullity),
             type.join(other.type)
         )
+
         is ArrayDomainValue -> ArrayDomainValue(
             nullity.join(other.nullity),
             type.join(other.type),
