@@ -67,6 +67,20 @@ fun getJunit(): Container? {
     return JarContainer(libPath.resolve("junit-$junitVersion.jar").toAbsolutePath(), Package.defaultPackage)
 }
 
+fun getMockito(): Container? {
+    val libPath = kexConfig.libPath ?: return null
+    val mockitoVersion = "4.11.0" // TODO: Mock. Make configurable
+    return JarContainer(libPath.resolve("mockito-core-$mockitoVersion.jar").toAbsolutePath(), Package.defaultPackage)
+//    return JarContainer(libPath.resolve("mockito-subclass-$mockitoVersion.jar").toAbsolutePath(), Package.defaultPackage)
+}
+
+fun getMockitoInline(): Container? {
+    val libPath = kexConfig.libPath ?: return null
+    val mockitoVersion = "4.11.0" // TODO: Mock. Make configurable
+    return JarContainer(libPath.resolve("mockito-inline-$mockitoVersion.jar").toAbsolutePath(), Package.defaultPackage)
+}
+
+
 fun getKexRuntime(): Container? {
     if (!kexConfig.getBooleanValue("kex", "useKexRuntime", true)) return null
     val libPath = kexConfig.libPath ?: return null
