@@ -23,6 +23,10 @@ import java.util.*
 private val maxGenerationDepth by lazy {
     kexConfig.getIntValue("reanimator", "maxConversionDepth", 10)
 }
+private val maxArrayLength by lazy {
+    kexConfig.getIntValue("reanimator", "maxArrayLength", 10_000)
+}
+
 
 class Object2DescriptorConverter : DescriptorBuilder() {
     private val objectToDescriptor = IdentityHashMap<Any, Descriptor>()
@@ -151,7 +155,7 @@ class Object2DescriptorConverter : DescriptorBuilder() {
             val type = field.type.kex
 
             val actualValue = field.get(any)
-            if (field.name == "hashCode" && any.hashCode() == actualValue) {
+            if (field.name == "hashCode") {
                 continue
             }
 
@@ -186,6 +190,7 @@ class Object2DescriptorConverter : DescriptorBuilder() {
         val elementType = array.javaClass.componentType.kex
         val result = array(array.size, elementType)
         for ((index, element) in array.withIndex()) {
+            if (index > maxArrayLength) break
             val elementDescriptor = convertElement(array.javaClass.componentType, element, depth + 1)
             result[index] = elementDescriptor
         }
@@ -197,6 +202,7 @@ class Object2DescriptorConverter : DescriptorBuilder() {
 
         val result = array(array.size, KexBool)
         for ((index, element) in array.withIndex()) {
+            if (index > maxArrayLength) break
             result[index] = const(element)
         }
         return result
@@ -207,6 +213,7 @@ class Object2DescriptorConverter : DescriptorBuilder() {
 
         val result = array(array.size, KexByte)
         for ((index, element) in array.withIndex()) {
+            if (index > maxArrayLength) break
             result[index] = const(element)
         }
         return result
@@ -217,6 +224,7 @@ class Object2DescriptorConverter : DescriptorBuilder() {
 
         val result = array(array.size, KexChar)
         for ((index, element) in array.withIndex()) {
+            if (index > maxArrayLength) break
             result[index] = const(element)
         }
         return result
@@ -227,6 +235,7 @@ class Object2DescriptorConverter : DescriptorBuilder() {
 
         val result = array(array.size, KexShort)
         for ((index, element) in array.withIndex()) {
+            if (index > maxArrayLength) break
             result[index] = const(element)
         }
         return result
@@ -237,6 +246,7 @@ class Object2DescriptorConverter : DescriptorBuilder() {
 
         val result = array(array.size, KexInt)
         for ((index, element) in array.withIndex()) {
+            if (index > maxArrayLength) break
             result[index] = const(element)
         }
         return result
@@ -247,6 +257,7 @@ class Object2DescriptorConverter : DescriptorBuilder() {
 
         val result = array(array.size, KexLong)
         for ((index, element) in array.withIndex()) {
+            if (index > maxArrayLength) break
             result[index] = const(element)
         }
         return result
@@ -257,6 +268,7 @@ class Object2DescriptorConverter : DescriptorBuilder() {
 
         val result = array(array.size, KexFloat)
         for ((index, element) in array.withIndex()) {
+            if (index > maxArrayLength) break
             result[index] = const(element)
         }
         return result
@@ -267,6 +279,7 @@ class Object2DescriptorConverter : DescriptorBuilder() {
 
         val result = array(array.size, KexDouble)
         for ((index, element) in array.withIndex()) {
+            if (index > maxArrayLength) break
             result[index] = const(element)
         }
         return result

@@ -270,6 +270,7 @@ fun Field.eq(cl: ClassLoader, field: KfgField): Boolean {
 fun findSubtypesOf(loader: ClassLoader, vararg classes: Class<*>): Set<Class<*>> {
     val reflections = Reflections(
         ConfigurationBuilder()
+            .addUrls(classes.mapNotNull { (it.classLoader as? PathClassLoader)?.paths?.map { path -> path.toUri().toURL() } }.flatten())
             .addUrls(classes.mapNotNull { (it.classLoader as? URLClassLoader)?.urLs }.flatMap { it.toList() })
             .addClassLoaders(*classes.map { it.classLoader }.toTypedArray())
             .addClassLoaders(loader)

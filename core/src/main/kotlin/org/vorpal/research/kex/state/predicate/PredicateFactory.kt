@@ -63,6 +63,7 @@ object PredicateFactory {
         location: Location = Location()
     ) = GenerateArrayPredicate(lhv, length, generator, type, location)
 
+    @Suppress("unused")
     fun getLoad(lhv: Term, loadTerm: Term, location: Location = Location()) =
         getEquality(lhv, loadTerm, location = location)
 
@@ -110,6 +111,7 @@ object PredicateFactory {
         location: Location = Location()
     ) = InequalityPredicate(lhv, rhv, type, location)
 
+    @Suppress("unused")
     fun getBoolean(lhv: Term, rhv: Term, location: Location = Location()) =
         getEquality(lhv, rhv, PredicateType.Path(), location)
 
@@ -178,7 +180,7 @@ interface PredicateBuilder : TermBuilder {
     infix fun Term.equality(other: Term) =
         predicateFactory.getEquality(this, other, this@PredicateBuilder.type, location)
 
-    infix fun Term.equality(@Suppress("UNUSED_PARAMETER") other: Nothing?) =
+    infix fun Term.equality(other: Nothing?) =
         predicateFactory.getEquality(this, termFactory.getNull(), this@PredicateBuilder.type, location)
 
     infix fun <T : Number> Term.equality(rhv: T) =
@@ -210,7 +212,7 @@ interface PredicateBuilder : TermBuilder {
     infix fun <T : Number> Term.inequality(rhv: T) =
         predicateFactory.getInequality(this, const(rhv), this@PredicateBuilder.type, location)
 
-    infix fun Term.inequality(@Suppress("UNUSED_PARAMETER") other: Nothing?) =
+    infix fun Term.inequality(other: Nothing?) =
         predicateFactory.getInequality(this, termFactory.getNull(), this@PredicateBuilder.type, location)
 
     infix fun Nothing?.inequality(other: Term) =

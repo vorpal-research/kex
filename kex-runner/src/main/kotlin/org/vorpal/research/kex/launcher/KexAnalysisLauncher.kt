@@ -4,6 +4,7 @@ import org.vorpal.research.kex.ExecutionContext
 import org.vorpal.research.kex.asm.manager.ClassInstantiationDetector
 import org.vorpal.research.kex.asm.util.AccessModifier
 import org.vorpal.research.kex.random.easyrandom.EasyRandomDriver
+import org.vorpal.research.kex.util.PathClassLoader
 import org.vorpal.research.kex.util.getIntrinsics
 import org.vorpal.research.kex.util.getKexRuntime
 import org.vorpal.research.kex.util.getRuntime
@@ -18,7 +19,6 @@ import org.vorpal.research.kfg.visitor.executePipeline
 import org.vorpal.research.kthelper.KtException
 import org.vorpal.research.kthelper.logging.log
 import ru.spbstu.wheels.mapToArray
-import java.net.URLClassLoader
 import java.nio.file.Paths
 
 
@@ -70,7 +70,7 @@ abstract class KexAnalysisLauncher(classPaths: List<String>, targetName: String)
 
     init {
         val containerPaths = classPaths.map { Paths.get(it).toAbsolutePath() }
-        val containerClassLoader = URLClassLoader(containerPaths.mapToArray { it.toUri().toURL() })
+        val containerClassLoader = PathClassLoader(containerPaths)
         containers = listOfNotNull(
             *containerPaths.mapToArray {
                 it.asContainer() ?: throw LauncherException("Can't represent ${it.toAbsolutePath()} as class container")

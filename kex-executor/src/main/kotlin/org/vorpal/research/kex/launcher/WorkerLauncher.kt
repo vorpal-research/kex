@@ -73,6 +73,8 @@ class WorkerLauncher(args: Array<String>) {
             classManager, listOfNotNull(
                 *classPaths.toTypedArray(),
                 kexConfig.compiledCodeDirectory,
+                getJunit()?.path,
+                getIntrinsics()?.path,
                 getJunit()?.path
                 // TODO: Mock. Add mockito
             )

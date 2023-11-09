@@ -57,6 +57,7 @@ object MethodManager {
 
     object IntrinsicManager {
         private const val intrinsicsClass = "kotlin/jvm/internal/Intrinsics"
+        private const val objectsClass = "java/util/Objects"
 
         fun checkParameterIsNotNull(cm: ClassManager) = synchronized(KexIntrinsicManager) {
             cm[intrinsicsClass].getMethod(
@@ -79,6 +80,9 @@ object MethodManager {
             )
         }
 
+        fun requireNonNull(cm: ClassManager) = synchronized(KexIntrinsicManager) {
+            cm[objectsClass].getMethod("requireNonNull", cm.type.objectType, cm.type.objectType, cm.type.stringType)
+        }
     }
 
     object KexIntrinsicManager {
@@ -100,7 +104,8 @@ object MethodManager {
         fun collectionIntrinsics(cm: ClassManager) = cm[collectionIntrinsics]
         fun unknownIntrinsics(cm: ClassManager) = cm[unknownIntrinsics]
         fun objectIntrinsics(cm: ClassManager) = cm[objectIntrinsics]
-        private fun getGenerator(cm: ClassManager, name: String) = cm["org/vorpal/research/kex/intrinsics/internal/${name}Generator"]
+        private fun getGenerator(cm: ClassManager, name: String) =
+            cm["org/vorpal/research/kex/intrinsics/internal/${name}Generator"]
 
         /**
          * assert intrinsics

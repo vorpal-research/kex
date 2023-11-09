@@ -1,6 +1,7 @@
 package org.vorpal.research.kex.asm.analysis.concolic
 
 import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.runBlocking
@@ -113,8 +114,13 @@ class InstructionConcolicChecker(
         return runner.run(klassName, ExecutorTestCasePrinter.SETUP_METHOD, ExecutorTestCasePrinter.TEST_METHOD)
     }
 
-    private suspend fun check(method: Method, state: SymbolicState): ExecutionResult? = tryOrNull {
+    private suspend fun check(method: Method, state: SymbolicState): ExecutionResult? = try {
         method.checkAsync(ctx, state, enableInlining = true)?.let { collectTrace(method, it) }
+    } catch (e: Throwable) {
+        if (e !is TimeoutCancellationException) {
+            log.error("Exception during asyncCheck:", e)
+        }
+        null
     }
 
     private fun buildPathSelector(): ConcolicPathSelector {

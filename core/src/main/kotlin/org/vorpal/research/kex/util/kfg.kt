@@ -6,6 +6,7 @@ import org.vorpal.research.kex.ktype.KexType
 import org.vorpal.research.kex.ktype.kexType
 import org.vorpal.research.kfg.Package
 import org.vorpal.research.kfg.ir.Class
+import org.vorpal.research.kfg.ir.Field
 import org.vorpal.research.kfg.ir.value.NameMapper
 import org.vorpal.research.kfg.ir.value.Value
 import org.vorpal.research.kfg.ir.value.instruction.CmpOpcode
@@ -181,3 +182,7 @@ private object SubTypeInfoCache {
 }
 
 fun Type.isSubtypeOfCached(other: Type): Boolean = SubTypeInfoCache.check(this, other)
+
+fun Field.isOuterThis(): Boolean {
+    return klass.outerClass != null && name.matches("this\\$\\d+".toRegex())  && type == klass.outerClass!!.asType
+}

@@ -38,6 +38,7 @@ import org.vorpal.research.kex.state.transformer.TypeInfoMap
 import org.vorpal.research.kex.state.transformer.TypeNameAdapter
 import org.vorpal.research.kex.state.transformer.collectRequiredTerms
 import org.vorpal.research.kex.state.transformer.collectVariables
+import org.vorpal.research.kex.state.transformer.domain.tryAbstractDomainSolve
 import org.vorpal.research.kex.state.transformer.toTypeMap
 import org.vorpal.research.kex.state.transformer.transform
 import org.vorpal.research.kfg.ir.Method
@@ -155,6 +156,11 @@ class AsyncChecker(
             log.debug("State size: {}", state.size)
             log.debug("Query: {}", query)
             log.debug("Query size: {}", query.size)
+        }
+
+        tryAbstractDomainSolve(state, query)?.let {
+            log.debug("Constant solver acquired {}", it)
+            return it
         }
 
         val result = AsyncSMTProxySolver(ctx).use {

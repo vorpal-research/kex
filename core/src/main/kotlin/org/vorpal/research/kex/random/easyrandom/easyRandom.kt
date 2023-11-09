@@ -31,7 +31,6 @@ import java.lang.reflect.ParameterizedType
 import java.lang.reflect.Type
 import java.lang.reflect.TypeVariable
 import java.lang.reflect.WildcardType
-import java.net.URLClassLoader
 
 class EasyRandomDriver(
     val config: BeansConfig = defaultConfig
@@ -91,9 +90,6 @@ class EasyRandomDriver(
             reflectionsMap.getOrPut(type.classLoader) {
                 Reflections(
                     ConfigurationBuilder()
-                        .addUrls(
-                            *(type.classLoader as? URLClassLoader)?.urLs ?: emptyArray()
-                        )
                         .addClassLoaders(type.classLoader)
                         .setParallel(false)
                 )

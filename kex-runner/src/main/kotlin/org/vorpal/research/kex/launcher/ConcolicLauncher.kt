@@ -23,7 +23,7 @@ class ConcolicLauncher(classPaths: List<String>, targetName: String) : KexAnalys
 
     private val batchedTargets: Set<Set<Method>>
         get() = when (analysisLevel) {
-            is ClassLevel -> setOf(analysisLevel.klass.allMethods)
+            is ClassLevel -> setOf(analysisLevel.klass.allMethods) //analysisLevel.klass.allMethods.mapTo(mutableSetOf()) { setOf(it) } //
             is MethodLevel -> setOf(setOf(analysisLevel.method))
             is PackageLevel -> context.cm.getByPackage(analysisLevel.pkg).mapTo(mutableSetOf()) { it.allMethods }
         }

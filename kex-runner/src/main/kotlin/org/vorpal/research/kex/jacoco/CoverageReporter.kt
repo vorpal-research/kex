@@ -19,6 +19,7 @@ import org.vorpal.research.kex.launcher.AnalysisLevel
 import org.vorpal.research.kex.launcher.ClassLevel
 import org.vorpal.research.kex.launcher.MethodLevel
 import org.vorpal.research.kex.launcher.PackageLevel
+import org.vorpal.research.kex.util.PathClassLoader
 import org.vorpal.research.kex.util.PermanentCoverageInfo
 import org.vorpal.research.kex.util.PermanentSaturationCoverageInfo
 import org.vorpal.research.kex.util.asArray
@@ -39,7 +40,6 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.attribute.BasicFileAttributes
 import java.util.*
-import kotlin.io.path.exists
 import kotlin.io.path.inputStream
 import kotlin.io.path.name
 import kotlin.io.path.readBytes
@@ -488,26 +488,26 @@ class CoverageReporter(
         } as T
     }
 
-    class PathClassLoader(val paths: List<Path>) : ClassLoader() {
-        private val cache = hashMapOf<String, Class<*>>()
-        override fun loadClass(name: String): Class<*> {
-            synchronized(this.getClassLoadingLock(name)) {
-                if (name in cache) return cache[name]!!
-
-                val fileName = name.replace(Package.CANONICAL_SEPARATOR, File.separatorChar) + ".class"
-                for (path in paths) {
-                    val resolved = path.resolve(fileName)
-                    if (resolved.exists()) {
-                        val bytes = resolved.readBytes()
-                        val klass = defineClass(name, bytes, 0, bytes.size)
-                        cache[name] = klass
-                        return klass
-                    }
-                }
-            }
-            return parent?.loadClass(name) ?: throw ClassNotFoundException()
-        }
-    }
+//    class PathClassLoader(val paths: List<Path>) : ClassLoader() {
+//        private val cache = hashMapOf<String, Class<*>>()
+//        override fun loadClass(name: String): Class<*> {
+//            synchronized(this.getClassLoadingLock(name)) {
+//                if (name in cache) return cache[name]!!
+//
+//                val fileName = name.replace(Package.CANONICAL_SEPARATOR, File.separatorChar) + ".class"
+//                for (path in paths) {
+//                    val resolved = path.resolve(fileName)
+//                    if (resolved.exists()) {
+//                        val bytes = resolved.readBytes()
+//                        val klass = defineClass(name, bytes, 0, bytes.size)
+//                        cache[name] = klass
+//                        return klass
+//                    }
+//                }
+//            }
+//            return parent?.loadClass(name) ?: throw ClassNotFoundException()
+//        }
+//    }
 }
 
 fun reportCoverage(

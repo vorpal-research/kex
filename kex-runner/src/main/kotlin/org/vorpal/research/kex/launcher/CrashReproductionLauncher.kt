@@ -9,6 +9,7 @@ import org.vorpal.research.kex.asm.util.AccessModifier
 import org.vorpal.research.kex.asm.util.Visibility
 import org.vorpal.research.kex.config.kexConfig
 import org.vorpal.research.kex.random.easyrandom.EasyRandomDriver
+import org.vorpal.research.kex.util.PathClassLoader
 import org.vorpal.research.kex.util.getIntrinsics
 import org.vorpal.research.kex.util.getKexRuntime
 import org.vorpal.research.kex.util.getPathSeparator
@@ -22,7 +23,6 @@ import org.vorpal.research.kfg.util.Flags
 import org.vorpal.research.kfg.visitor.executePipeline
 import org.vorpal.research.kthelper.logging.log
 import ru.spbstu.wheels.mapToArray
-import java.net.URLClassLoader
 import java.nio.file.Paths
 import kotlin.io.path.exists
 import kotlin.io.path.readText
@@ -44,7 +44,7 @@ class CrashReproductionLauncher(
 
     init {
         val containerPaths = classPaths.map { Paths.get(it).toAbsolutePath() }
-        val containerClassLoader = URLClassLoader(containerPaths.mapToArray { it.toUri().toURL() })
+        val containerClassLoader = PathClassLoader(containerPaths)
         containers = listOfNotNull(
             *containerPaths
                 .filter { it.exists() }
@@ -89,8 +89,8 @@ class CrashReproductionLauncher(
         log.debug("Running on stack trace:\n${stackTrace.originalStackTrace}")
     }
 
-    private fun updateClassPath(loader: URLClassLoader) {
-        val urlClassPath = loader.urLs.joinToString(separator = getPathSeparator()) { "${it.path}." }
+    private fun updateClassPath(loader: PathClassLoader) {
+        val urlClassPath = loader.paths.joinToString(separator = getPathSeparator()) { "${it.toAbsolutePath()}" }
         System.setProperty("java.class.path", "$classPath${getPathSeparator()}$urlClassPath")
     }
 
