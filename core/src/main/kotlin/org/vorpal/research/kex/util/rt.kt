@@ -70,8 +70,7 @@ fun getJunit(): Container? {
 fun getMockito(): Container? {
     val libPath = kexConfig.libPath ?: return null
     val mockitoVersion = "4.11.0" // TODO: Mock. Make configurable
-    return JarContainer(libPath.resolve("mockito-core-$mockitoVersion.jar").toAbsolutePath(), Package.defaultPackage)
-//    return JarContainer(libPath.resolve("mockito-subclass-$mockitoVersion.jar").toAbsolutePath(), Package.defaultPackage)
+    return JarContainer(libPath.resolve("mockito-core-$mockitoVersion.jar").toAbsolutePath(), Package("org.mockito"))
 }
 
 fun getMockitoInline(): Container? {

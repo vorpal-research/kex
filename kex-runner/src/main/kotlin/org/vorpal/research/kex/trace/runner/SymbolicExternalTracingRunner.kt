@@ -103,7 +103,7 @@ class SymbolicExternalTracingRunner(val ctx: ExecutionContext) {
                 is ExecutionCompletedResult -> log.debug("Execution result: {}", result.trace)
                 else -> log.debug("Execution result: {}", result)
             }
-            log.debug("Test {} executed with result {}", klass, result)
+//            log.debug("Test {} executed with result {}", klass, result)
             return result ?: ExecutionTimedOutResult("Connection timeout")
         }
     }

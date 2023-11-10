@@ -3,19 +3,27 @@ package org.vorpal.research.kex.worker
 import org.vorpal.research.kex.ExecutionContext
 import org.vorpal.research.kex.descriptor.convertToDescriptor
 import org.vorpal.research.kex.trace.symbolic.TraceCollectorProxy
-import org.vorpal.research.kex.trace.symbolic.protocol.ExceptionResult
-import org.vorpal.research.kex.trace.symbolic.protocol.ExecutionResult
-import org.vorpal.research.kex.trace.symbolic.protocol.SetupFailedResult
-import org.vorpal.research.kex.trace.symbolic.protocol.SuccessResult
-import org.vorpal.research.kex.trace.symbolic.protocol.TestExecutionRequest
+import org.vorpal.research.kex.trace.symbolic.protocol.*
+import org.vorpal.research.kex.util.asArray
 import org.vorpal.research.kfg.ir.value.NameMapperContext
+import org.vorpal.research.kthelper.logging.debug
 import org.vorpal.research.kthelper.logging.log
 
 class TestExecutor(
     val ctx: ExecutionContext
 ) {
+    companion object {
+        var cnt: Int = 0;
+    }
+
     fun executeTest(request: TestExecutionRequest): ExecutionResult {
         val javaClass = ctx.loader.loadClass(request.klass)
+        if (cnt == 0) {
+            firstJunitRun(javaClass)
+            cnt++;
+        } else {
+            log.debug { "No JUnit run" }
+        }
         val instance = javaClass.getConstructor().newInstance()
         log.debug("Loaded a test class and created an instance")
 
@@ -38,7 +46,7 @@ class TestExecutor(
             test.invoke(instance)
         } catch (e: Throwable) {
             exception = e
-            log.error("Execution failed with an exception $e")
+            log.error("Execution failed with an exception $e") // no stacktrace???
         }
         TraceCollectorProxy.disableCollector()
         log.debug("Collected state: {}", collector.symbolicState)
@@ -48,4 +56,14 @@ class TestExecutor(
         }
     }
 
+    private fun firstJunitRun(testClass: Class<*>?): Unit = try {
+        val jcClass = ctx.loader.loadClass("org.junit.runner.JUnitCore")
+        val jc = jcClass.getConstructor().newInstance()
+        log.debug { "Created JUnitCoreInstance" }
+        jcClass.getMethod("run", Class::class.java.asArray())
+            .invoke(jc, arrayOf(testClass))
+        log.debug { "JUnit successfully executed" }
+    } catch (e: Throwable) {
+        log.error("JUnit execution failed with an exception", e)
+    }
 }

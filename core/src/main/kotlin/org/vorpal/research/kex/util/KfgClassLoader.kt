@@ -32,12 +32,15 @@ class KfgClassLoader(
             "class org.vorpal.research.kex.test.concolic.StringConcolicTests",
             "class org.vorpal.research.kex.test.concolic.TestEnum",
             "class org.vorpal.research.kex.test.concolic.UnimplementedInterfaceTests",
-            "class org.vorpal.research.kex.test.concolic.Unimplemented"
+//            "class org.vorpal.research.kex.test.concolic.Unimplemented",
             "class org.vorpal.research.kex.test.debug.ObjectGenerationTests",
         ).mapTo(mutableSetOf()) { KfgTargetFilter.parse(it) }
         private val EXCLUDES = setOf(
             "package java.*",
             "package org.vorpal.research.kex.*",
+            "package org.mockito.*",
+            "package net.bytebuddy.*",
+            "package org.objenesis.*"
         ).mapTo(mutableSetOf()) { KfgTargetFilter.parse(it) }
     }
 

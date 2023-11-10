@@ -75,8 +75,7 @@ class WorkerLauncher(args: Array<String>) {
                 kexConfig.compiledCodeDirectory,
                 getJunit()?.path,
                 getIntrinsics()?.path,
-                getJunit()?.path
-                // TODO: Mock. Add mockito
+                getMockito()?.path,
             )
         ) { kfgClass ->
             val instrumenter = SymbolicTraceInstrumenter(classManager)
