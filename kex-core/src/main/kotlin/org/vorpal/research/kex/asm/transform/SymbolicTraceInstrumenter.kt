@@ -839,6 +839,21 @@ class SymbolicTraceInstrumenter(
         inst.insertAfter(after.mapLocation())
     }
 
+    private fun track(value: Value): List<Instruction> = buildList {
+        val trackMethod = collectorClass.getMethod(
+            "track", types.voidType, stringType, objectType
+        )
+        add(
+            collectorClass.interfaceCall(
+                trackMethod, traceCollector,
+                listOf(
+                    "$value".asValue,
+                    value.wrapped(this)
+                )
+            )
+        )
+    }
+
     private fun addNullityConstraint(inst: Instruction, value: Value): List<Instruction> = buildList {
         if (inst.parent.method.isConstructor && value is ThisRef) return@buildList
 

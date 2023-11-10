@@ -11,7 +11,11 @@ import org.vorpal.research.kex.ktype.KexDouble
 import org.vorpal.research.kex.ktype.KexFloat
 import org.vorpal.research.kex.ktype.KexInt
 import org.vorpal.research.kex.ktype.KexLong
+import org.vorpal.research.kex.ktype.KexNull
 import org.vorpal.research.kex.ktype.KexShort
+import org.vorpal.research.kex.ktype.KexString
+import org.vorpal.research.kex.ktype.KexType
+import org.vorpal.research.kex.ktype.asArray
 import org.vorpal.research.kex.util.allFields
 import org.vorpal.research.kex.util.isStatic
 import org.vorpal.research.kex.util.kex
@@ -30,6 +34,42 @@ private val maxArrayLength by lazy {
 
 class Object2DescriptorConverter : DescriptorBuilder() {
     private val objectToDescriptor = IdentityHashMap<Any, Descriptor>()
+
+    fun type(any: Any?): KexType {
+        if (any == null) return KexNull()
+
+        return when (any.javaClass) {
+            Boolean::class.javaObjectType -> KexClass(SystemTypeNames.booleanClass)
+            Byte::class.javaObjectType -> KexClass(SystemTypeNames.byteClass)
+            Char::class.javaObjectType -> KexClass(SystemTypeNames.charClass)
+            Short::class.javaObjectType -> KexClass(SystemTypeNames.shortClass)
+            Int::class.javaObjectType -> KexClass(SystemTypeNames.integerClass)
+            Long::class.javaObjectType -> KexClass(SystemTypeNames.longClass)
+            Float::class.javaObjectType -> KexClass(SystemTypeNames.floatClass)
+            Double::class.javaObjectType -> KexClass(SystemTypeNames.doubleClass)
+            else -> when (any) {
+                is Boolean -> KexBool
+                is Byte -> KexByte
+                is Char -> KexChar
+                is Short -> KexShort
+                is Int -> KexInt
+                is Long -> KexLong
+                is Float -> KexFloat
+                is Double -> KexDouble
+                is BooleanArray -> KexBool.asArray()
+                is ByteArray -> KexByte.asArray()
+                is CharArray -> KexChar.asArray()
+                is ShortArray -> KexShort.asArray()
+                is IntArray -> KexInt.asArray()
+                is LongArray -> KexLong.asArray()
+                is FloatArray -> KexFloat.asArray()
+                is DoubleArray -> KexDouble.asArray()
+                is Array<*> -> any.javaClass.componentType.kex
+                is String -> KexString()
+                else -> any.javaClass.kex
+            }
+        }
+    }
 
     fun convert(any: Any?, depth: Int = 0): Descriptor {
         if (any == null) return `null`
