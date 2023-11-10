@@ -24,12 +24,12 @@
 
         <dependency>
             <groupId>org.vorpal.research</groupId>
-            <artifactId>core</artifactId>
+            <artifactId>kex-core</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>org.vorpal.research</groupId>
-            <artifactId>core</artifactId>
+            <artifactId>kex-core</artifactId>
             <version>${project.version}</version>
             <classifier>tests</classifier>
             <type>test-jar</type>
