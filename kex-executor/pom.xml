@@ -31,7 +31,7 @@
 
         <dependency>
             <groupId>org.vorpal.research</groupId>
-            <artifactId>core</artifactId>
+            <artifactId>kex-core</artifactId>
             <version>${project.version}</version>
         </dependency>
 
@@ -56,7 +56,6 @@
 
     <build>
         <sourceDirectory>src/main/kotlin</sourceDirectory>
-        <testSourceDirectory>src/test/kotlin</testSourceDirectory>
 
         <plugins>
             <plugin>
