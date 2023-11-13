@@ -262,14 +262,12 @@ class ExecutorAS2JavaPrinter(
         owner: ActionSequence,
         result: MutableList<String>
     ) {
-        val printDeclarations = { api: ReflectionCall ->
-            when (api) {
-                is ReflectionNewInstance -> result += printReflectionNewInstance(owner, api)
-                is ReflectionNewArray -> result += printReflectionNewArray(owner, api)
-                is ReflectionSetField -> printDeclarations(api.value, result)
-                is ReflectionSetStaticField -> printDeclarations(api.value, result)
-                is ReflectionArrayWrite -> printDeclarations(api.value, result)
-            }
+        fun printDeclarations(api: ReflectionCall): Unit = when (api) {
+            is ReflectionNewInstance -> result += printReflectionNewInstance(owner, api)
+            is ReflectionNewArray -> result += printReflectionNewArray(owner, api)
+            is ReflectionSetField -> printDeclarations(api.value, result)
+            is ReflectionSetStaticField -> printDeclarations(api.value, result)
+            is ReflectionArrayWrite -> printDeclarations(api.value, result)
         }
 
 
@@ -309,25 +307,23 @@ class ExecutorAS2JavaPrinter(
         owner: ActionSequence,
         result: MutableList<String>
     ) {
-        val printInsides = { api: ReflectionCall ->
-            when (api) {
-                is ReflectionSetField -> {
-                    printInsides(api.value, result)
-                    result += printReflectionSetField(owner, api)
-                }
-
-                is ReflectionSetStaticField -> {
-                    printInsides(api.value, result)
-                    result += printReflectionSetStaticField(owner, api)
-                }
-
-                is ReflectionArrayWrite -> {
-                    printInsides(api.value, result)
-                    result += printReflectionArrayWrite(owner, api)
-                }
-
-                else -> {}
+        fun printInsides(api: ReflectionCall): Unit = when (api) {
+            is ReflectionSetField -> {
+                printInsides(api.value, result)
+                result += printReflectionSetField(owner, api)
             }
+
+            is ReflectionSetStaticField -> {
+                printInsides(api.value, result)
+                result += printReflectionSetStaticField(owner, api)
+            }
+
+            is ReflectionArrayWrite -> {
+                printInsides(api.value, result)
+                result += printReflectionArrayWrite(owner, api)
+            }
+
+            else -> {}
         }
 
 
