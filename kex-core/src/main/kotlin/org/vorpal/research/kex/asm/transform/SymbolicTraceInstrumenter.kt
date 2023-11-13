@@ -738,6 +738,16 @@ class SymbolicTraceInstrumenter(
             else -> values.nullConstant to values.nullConstant
         }
         val instrumented = buildList {
+            if (inst.hasReturnValue) {
+                addAll(track(inst.returnValue))
+            }
+            val currentMethod = inst.parent.method
+            if (!currentMethod.isStatic) {
+                addAll(track(values.getThis(currentMethod.klass)))
+            }
+            for ((index, type) in currentMethod.argTypes.withIndex()) {
+                addAll(track(values.getArgument(index, currentMethod, type)))
+            }
             add(
                 collectorClass.interfaceCall(
                     returnMethod, traceCollector,
