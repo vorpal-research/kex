@@ -88,7 +88,8 @@ class ContextGuidedSelector(
         return persistentSymbolicState(
             state,
             currentState.path + currentState.revertedClause,
-            currentStateState.concreteValueMap,
+            currentStateState.concreteTypes,
+            currentStateState.concreteValues,
             currentStateState.termMap
         )
     }

@@ -109,7 +109,7 @@ class WorkerLauncherDebug(args: Array<String>) {
 
             override suspend fun receive(): TestExecutionRequest {
                 return TestExecutionRequest(
-                    "org.apache.commons.collections4.map.LinkedMap_init_20033568880",
+                    "org.vorpal.research.kex.test.concolic.ListConcolicTests_testArrayList_21314842770",
                     testMethod = "test",
                     setupMethod = "setup"
                 )

@@ -11,7 +11,7 @@
     <version>0.0.1</version>
     <modules>
         <module>kex-test</module>
-        <module>core</module>
+        <module>kex-core</module>
         <module>kex-annotation-processor</module>
         <module>kex-runner</module>
         <module>kex-executor</module>
@@ -24,15 +24,15 @@
         <maven.compiler.source>${jvm.version}</maven.compiler.source>
         <maven.compiler.target>${jvm.version}</maven.compiler.target>
 
-        <kotlin.version>1.8.21</kotlin.version>
+        <kotlin.version>1.9.20</kotlin.version>
         <kotlin.code.style>official</kotlin.code.style>
         <serialization.version>1.5.1</serialization.version>
         <coroutines.version>1.6.4</coroutines.version>
         <collections.version>0.3.5</collections.version>
         <compiler-plugin.version>3.5.1</compiler-plugin.version>
 
-        <kt-helper.version>0.1.12</kt-helper.version>
-        <kfg.version>0.4.11</kfg.version>
+        <kt-helper.version>0.1.13</kt-helper.version>
+        <kfg.version>0.4.12</kfg.version>
 
         <logback.version>1.2.11</logback.version>
         <slf4j.version>1.7.36</slf4j.version>

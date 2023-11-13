@@ -45,7 +45,7 @@ class Contract(val value: String = ""/*, pure: Boolean = false*/) : AnnotationIn
         New("new"), This("this"), Param("param"), Empty("empty");
 
         companion object {
-            private val byLiteral = values().associateBy { it.literal }
+            private val byLiteral = entries.associateBy { it.literal }
             operator fun get(literal: String) = byLiteral[literal]
                     ?: throw AnnotationParserException("Unsupported value constraint \"$literal\"")
         }

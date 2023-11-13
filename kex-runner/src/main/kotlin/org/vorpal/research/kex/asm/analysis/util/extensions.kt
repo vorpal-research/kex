@@ -79,13 +79,11 @@ suspend fun Method.checkAsync(
     val checker = AsyncChecker(this, ctx)
     val clauses = state.clauses.asState()
     val query = state.path.asState()
-    val concreteTypeInfo = state.concreteValueMap
-        .mapValues { it.value.type }
+    val concreteTypeInfo = state.concreteTypes
         .filterValues { it.isJavaRt }
         .mapValues { it.value.rtMapped }
         .toTypeMap()
     val result = checker.prepareAndCheck(this, clauses + query, concreteTypeInfo, enableInlining)
-//    log.error("Checking clause type ${state.path.last().type}, acquired $result")
     if (result !is Result.SatResult) {
         return null
     }
@@ -127,8 +125,7 @@ suspend fun Method.checkAsyncAndSlice(
     val checker = AsyncChecker(this, ctx)
     val clauses = state.clauses.asState()
     val query = state.path.asState()
-    val concreteTypeInfo = state.concreteValueMap
-        .mapValues { it.value.type }
+    val concreteTypeInfo = state.concreteTypes
         .filterValues { it.isJavaRt }
         .mapValues { it.value.rtMapped }
         .toTypeMap()
@@ -178,8 +175,7 @@ suspend fun Method.checkAsyncIncremental(
     val checker = AsyncIncrementalChecker(this, ctx)
     val clauses = state.clauses.asState()
     val query = state.path.asState()
-    val concreteTypeInfo = state.concreteValueMap
-        .mapValues { it.value.type }
+    val concreteTypeInfo = state.concreteTypes
         .filterValues { it.isJavaRt }
         .mapValues { it.value.rtMapped }
         .toTypeMap()
@@ -226,8 +222,7 @@ suspend fun Method.checkAsyncIncrementalAndSlice(
     val checker = AsyncIncrementalChecker(this, ctx)
     val clauses = state.clauses.asState()
     val query = state.path.asState()
-    val concreteTypeInfo = state.concreteValueMap
-        .mapValues { it.value.type }
+    val concreteTypeInfo = state.concreteTypes
         .filterValues { it.isJavaRt }
         .mapValues { it.value.rtMapped }
         .toTypeMap()

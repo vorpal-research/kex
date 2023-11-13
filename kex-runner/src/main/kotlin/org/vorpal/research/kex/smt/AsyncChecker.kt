@@ -158,7 +158,7 @@ class AsyncChecker(
             log.debug("Query size: {}", query.size)
         }
 
-        tryAbstractDomainSolve(state, query)?.let {
+        tryAbstractDomainSolve(ctx, state, query)?.let {
             log.debug("Constant solver acquired {}", it)
             return it
         }
