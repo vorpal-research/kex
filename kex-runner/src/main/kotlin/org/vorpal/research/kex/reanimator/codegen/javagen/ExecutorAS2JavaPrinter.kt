@@ -251,58 +251,115 @@ class ExecutorAS2JavaPrinter(
         return res
     }
 
+    override fun printMockSequence(mockSequence: MockSequence): List<String> {
+        val res = mutableListOf<String>()
+        printDeclarations(mockSequence, res)
+        printInsides(mockSequence, res)
+        return res
+    }
+
     private fun printDeclarations(
         owner: ActionSequence,
         result: MutableList<String>
     ) {
-        if (owner is ReflectionList) {
-            if (owner.name in printedDeclarations) return
-            printedDeclarations += owner.name
+        val printDeclarations = { api: ReflectionCall ->
+            when (api) {
+                is ReflectionNewInstance -> result += printReflectionNewInstance(owner, api)
+                is ReflectionNewArray -> result += printReflectionNewArray(owner, api)
+                is ReflectionSetField -> printDeclarations(api.value, result)
+                is ReflectionSetStaticField -> printDeclarations(api.value, result)
+                is ReflectionArrayWrite -> printDeclarations(api.value, result)
+            }
+        }
 
-            for (api in owner) {
-                when (api) {
-                    is ReflectionNewInstance -> result += printReflectionNewInstance(owner, api)
-                    is ReflectionNewArray -> result += printReflectionNewArray(owner, api)
-                    is ReflectionSetField -> printDeclarations(api.value, result)
-                    is ReflectionSetStaticField -> printDeclarations(api.value, result)
-                    is ReflectionArrayWrite -> printDeclarations(api.value, result)
+
+        when (owner) {
+            is ReflectionList -> {
+                if (owner.name in printedDeclarations) return
+                printedDeclarations += owner.name
+
+                for (api in owner) {
+                    printDeclarations(api)
                 }
             }
-        } else {
-            owner.printAsJava()
+
+            is MockSequence -> {
+                if (owner.name in printedDeclarations) return
+                printedDeclarations += owner.name
+
+                for (mockCall in owner.mockCalls) {
+                    when (mockCall) {
+                        is MockNewInstance -> result += printMockNewInstance(owner, mockCall)
+                        is MockSetupMethod -> mockCall.returnValues.forEach { printDeclarations(it, result) }
+                    }
+                }
+                for (reflectionCall in owner.reflectionCalls) {
+                    printDeclarations(reflectionCall)
+                }
+            }
+
+            else -> {
+                owner.printAsJava()
+            }
         }
     }
+
 
     private fun printInsides(
         owner: ActionSequence,
         result: MutableList<String>
     ) {
-        if (owner is ReflectionList) {
-            if (owner.name in printedInsides) return
-            printedInsides += owner.name
+        val printInsides = { api: ReflectionCall ->
+            when (api) {
+                is ReflectionSetField -> {
+                    printInsides(api.value, result)
+                    result += printReflectionSetField(owner, api)
+                }
 
-            for (api in owner) {
-                when (api) {
-                    is ReflectionSetField -> {
-                        printInsides(api.value, result)
-                        result += printReflectionSetField(owner, api)
-                    }
+                is ReflectionSetStaticField -> {
+                    printInsides(api.value, result)
+                    result += printReflectionSetStaticField(owner, api)
+                }
 
-                    is ReflectionSetStaticField -> {
-                        printInsides(api.value, result)
-                        result += printReflectionSetStaticField(owner, api)
-                    }
+                is ReflectionArrayWrite -> {
+                    printInsides(api.value, result)
+                    result += printReflectionArrayWrite(owner, api)
+                }
 
-                    is ReflectionArrayWrite -> {
-                        printInsides(api.value, result)
-                        result += printReflectionArrayWrite(owner, api)
-                    }
+                else -> {}
+            }
+        }
 
-                    else -> {}
+
+        when (owner) {
+            is ReflectionList -> {
+                if (owner.name in printedInsides) return
+                printedInsides += owner.name
+
+                for (api in owner) {
+                    printInsides(api)
                 }
             }
-        } else {
-            owner.printAsJava()
+
+            is MockSequence -> {
+                if (owner.name in printedInsides) return
+                printedInsides += owner.name
+
+                for (mockCall in owner.mockCalls) {
+                    when (mockCall) {
+                        is MockSetupMethod -> {
+                            mockCall.returnValues.forEach { printInsides(it, result) }
+                            result += printMockSetupMethod(owner, mockCall)
+                        }
+
+                        is MockNewInstance -> {}
+                    }
+                }
+            }
+
+            else -> {
+                owner.printAsJava()
+            }
         }
     }
 

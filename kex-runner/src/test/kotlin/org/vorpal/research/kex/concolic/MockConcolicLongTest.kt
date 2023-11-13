@@ -10,9 +10,9 @@ import kotlin.time.ExperimentalTime
 @ExperimentalSerializationApi
 @InternalSerializationApi
 @DelicateCoroutinesApi
-class UnimplementedInterfaceConcolicLongTest : ConcolicTest("unimplemented-interface-concolic") {
+class MockConcolicLongTest : ConcolicTest("mock-concolic") {
     @Test
-    fun unimplementedInterfaceTest() {
-        assertCoverage(cm["org/vorpal/research/kex/test/concolic/UnimplementedInterfaceTests"], 1.0)
+    fun mockTest() {
+        assertCoverage(cm["org/vorpal/research/kex/test/concolic/MockTests"], 1.0)
     }
 }

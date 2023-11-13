@@ -22,6 +22,7 @@ class KfgClassLoader(
 
     companion object {
         private val INCLUDES = setOf(
+            // TODO: Mock. Config file!
             "class org.vorpal.research.kex.test.concolic.kaf.Lesson2",
             "class org.vorpal.research.kex.test.concolic.kaf.Lesson6",
             "class org.vorpal.research.kex.test.concolic.EnumConcolicTests",
@@ -31,8 +32,7 @@ class KfgClassLoader(
             "class org.vorpal.research.kex.test.concolic.SetConcolicTests",
             "class org.vorpal.research.kex.test.concolic.StringConcolicTests",
             "class org.vorpal.research.kex.test.concolic.TestEnum",
-            "class org.vorpal.research.kex.test.concolic.UnimplementedInterfaceTests",
-//            "class org.vorpal.research.kex.test.concolic.Unimplemented",
+            "class org.vorpal.research.kex.test.concolic.MockTests",
             "class org.vorpal.research.kex.test.debug.ObjectGenerationTests",
         ).mapTo(mutableSetOf()) { KfgTargetFilter.parse(it) }
         private val EXCLUDES = setOf(
