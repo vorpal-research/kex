@@ -12,10 +12,7 @@ import org.vorpal.research.kthelper.logging.log
 class TestExecutor(
     val ctx: ExecutionContext
 ) {
-    // TODO: Mock. move property to class
-    companion object {
-        var isFirstRun: Boolean = true
-    }
+    private var isFirstRun: Boolean = true
 
     fun executeTest(request: TestExecutionRequest): ExecutionResult {
         val javaClass = ctx.loader.loadClass(request.klass)

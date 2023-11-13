@@ -100,7 +100,7 @@ fun Parameters<Descriptor>.filterIgnoredStatic(): Parameters<Descriptor> {
 
 private fun Collection<Descriptor>.replaceUninstantiableWithMocks(
     types: TypeFactory,
-    descriptorToMock: MutableMap<Descriptor, Descriptor>
+    descriptorToMock: MutableMap<Descriptor, MockDescriptor>
 ): Collection<Descriptor> {
     return map { descriptor ->
         val klass = (descriptor.type.getKfgType(types) as? ClassType)?.klass
@@ -120,8 +120,8 @@ private fun Collection<Descriptor>.replaceUninstantiableWithMocks(
 
 fun Parameters<Descriptor>.generateInitialMocks(
     types: TypeFactory
-): Pair<Parameters<Descriptor>, Map<Descriptor, Descriptor>> {
-    val descriptorToMock = mutableMapOf<Descriptor, Descriptor>()
+): Pair<Parameters<Descriptor>, Map<Descriptor, MockDescriptor>> {
+    val descriptorToMock = mutableMapOf<Descriptor, MockDescriptor>()
     val mockedArguments = arguments.replaceUninstantiableWithMocks(types, descriptorToMock).toList()
     val mockedStatics = statics.replaceUninstantiableWithMocks(types, descriptorToMock).toSet()
     val mockedOthers = others.replaceUninstantiableWithMocks(types, descriptorToMock).toSet()
@@ -146,7 +146,7 @@ fun Parameters<Descriptor>.generateMocks(
 fun setupMocks(
     methodCalls: List<Pair<CallPredicate, Descriptor>>,
     termToDescriptor: Map<Term, Descriptor>,
-    descriptorToMock: Map<Descriptor, Descriptor>
+    descriptorToMock: Map<Descriptor, MockDescriptor>
 ) {
     for ((callPredicate, value) in methodCalls) {
         val call = callPredicate.call as CallTerm

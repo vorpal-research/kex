@@ -7,7 +7,6 @@ import org.vorpal.research.kex.asm.analysis.crash.precondition.ConstraintExcepti
 import org.vorpal.research.kex.asm.manager.MethodManager
 import org.vorpal.research.kex.asm.util.AccessModifier
 import org.vorpal.research.kex.descriptor.Descriptor
-import org.vorpal.research.kex.ktype.KexClass
 import org.vorpal.research.kex.ktype.KexRtManager.isJavaRt
 import org.vorpal.research.kex.ktype.KexRtManager.rtMapped
 import org.vorpal.research.kex.ktype.kexType
@@ -18,15 +17,10 @@ import org.vorpal.research.kex.smt.Result
 import org.vorpal.research.kex.state.IncrementalPredicateState
 import org.vorpal.research.kex.state.PredicateQuery
 import org.vorpal.research.kex.state.predicate.CallPredicate
-import org.vorpal.research.kex.state.predicate.EqualityPredicate
 import org.vorpal.research.kex.state.term.CallTerm
-import org.vorpal.research.kex.state.term.InstanceOfTerm
 import org.vorpal.research.kex.state.term.Term
 import org.vorpal.research.kex.state.term.term
 import org.vorpal.research.kex.state.transformer.*
-import org.vorpal.research.kex.trace.symbolic.Clause
-import org.vorpal.research.kex.trace.symbolic.PathClause
-import org.vorpal.research.kex.trace.symbolic.PathClauseType
 import org.vorpal.research.kex.trace.symbolic.SymbolicState
 import org.vorpal.research.kfg.ir.Method
 import org.vorpal.research.kthelper.logging.debug
@@ -77,24 +71,6 @@ fun methodCalls(
         .toList()
 }
 
-fun isIsMockClause(clause: Clause): Boolean {
-    if (clause !is PathClause || clause.type != PathClauseType.OVERLOAD_CHECK) {
-        return false
-    }
-    val mbName =
-        (((clause.predicate as? EqualityPredicate)?.lhv as? InstanceOfTerm)?.checkedType as? KexClass)?.klass
-    clause.predicate
-    return mbName != null && mbName.contains("\$MockitoMock\$")
-}
-
-fun fixIsMockitoMockInstance(clause: Clause): Clause {
-    if (clause !is PathClause || clause.type != PathClauseType.OVERLOAD_CHECK) {
-        return clause
-    }
-    val name = (((clause.predicate as? EqualityPredicate)?.lhv as? InstanceOfTerm)?.checkedType as? KexClass)?.klass
-    TODO("Mock. unimplemented")
-}
-
 suspend fun Method.checkAsync(
     ctx: ExecutionContext,
     state: SymbolicState,
@@ -108,8 +84,6 @@ suspend fun Method.checkAsync(
         .filterValues { it.isJavaRt }
         .mapValues { it.value.rtMapped }
         .toTypeMap()
-//    val query = PersistentClauseList(state.clauses.filterNot { isIsMockClause(it) }.toPersistentList()).asState()
-//    val clauses = PersistentClauseList(state.clauses.filterNot { isIsMockClause(it) }.toPersistentList()).asState()
     val result = checker.prepareAndCheck(this, clauses + query, concreteTypeInfo, enableInlining)
 //    log.error("Checking clause type ${state.path.last().type}, acquired $result")
     if (result !is Result.SatResult) {
