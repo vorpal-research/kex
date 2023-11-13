@@ -19,6 +19,7 @@ import org.vorpal.research.kex.state.IncrementalPredicateState
 import org.vorpal.research.kex.state.PredicateQuery
 import org.vorpal.research.kex.state.predicate.CallPredicate
 import org.vorpal.research.kex.state.predicate.EqualityPredicate
+import org.vorpal.research.kex.state.term.CallTerm
 import org.vorpal.research.kex.state.term.InstanceOfTerm
 import org.vorpal.research.kex.state.term.Term
 import org.vorpal.research.kex.state.term.term
@@ -50,9 +51,14 @@ suspend fun Method.analyzeOrTimeout(
     }
 }
 
+fun CallTerm.replaceOwner(owner: Term): CallTerm {
+    return CallTerm(type, owner, method, arguments)
+}
+
 fun methodCalls(
     state: SymbolicState,
-    termToDescriptor: Map<Term, Descriptor>
+    termToDescriptor: Map<Term, Descriptor>,
+    descriptorToMock: Map<Descriptor, Descriptor>
 ): List<Pair<CallPredicate, Descriptor>> {
     return state.clauses
         .asSequence()
@@ -67,17 +73,26 @@ fun methodCalls(
         }
         .filter { (_, value) -> value != null }
         .map { (call, value) -> call to value!! }
+        .map { (call, value) -> call to descriptorToMock.getOrElse(value) { value } }
         .toList()
 }
 
 fun isIsMockClause(clause: Clause): Boolean {
     if (clause !is PathClause || clause.type != PathClauseType.OVERLOAD_CHECK) {
-        return false;
+        return false
     }
     val mbName =
         (((clause.predicate as? EqualityPredicate)?.lhv as? InstanceOfTerm)?.checkedType as? KexClass)?.klass
     clause.predicate
     return mbName != null && mbName.contains("\$MockitoMock\$")
+}
+
+fun fixIsMockitoMockInstance(clause: Clause): Clause {
+    if (clause !is PathClause || clause.type != PathClauseType.OVERLOAD_CHECK) {
+        return clause
+    }
+    val name = (((clause.predicate as? EqualityPredicate)?.lhv as? InstanceOfTerm)?.checkedType as? KexClass)?.klass
+    TODO("Mock. unimplemented")
 }
 
 suspend fun Method.checkAsync(
@@ -109,14 +124,12 @@ suspend fun Method.checkAsync(
             result.model,
             checker.state
         )
-        val methodCalls = methodCalls(state, termToDescriptor)
 
-        val withMocks = initialDescriptors.generateMocks(
-            methodCalls,
-            termToDescriptor.toMutableMap(),
-            ctx.cm,
-            ctx.accessLevel
-        )
+        val (withMocks, descriptorToMock) = initialDescriptors.generateInitialMocks(ctx.types)
+        val methodCalls = methodCalls(state, termToDescriptor, descriptorToMock)
+        setupMocks(methodCalls, termToDescriptor, descriptorToMock)
+
+
 
 
         withMocks

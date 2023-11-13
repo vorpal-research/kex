@@ -12,18 +12,21 @@ import org.vorpal.research.kthelper.logging.log
 class TestExecutor(
     val ctx: ExecutionContext
 ) {
+    // TODO: Mock. move property to class
     companion object {
-        var cnt: Int = 0;
+        var isFirstRun: Boolean = true
     }
 
     fun executeTest(request: TestExecutionRequest): ExecutionResult {
         val javaClass = ctx.loader.loadClass(request.klass)
-        if (cnt == 0) {
-            firstJunitRun(javaClass)
-            cnt++;
+        if (isFirstRun) {
+            log.debug { "First run with JUnit" }
+            executeTestFromJUnit(javaClass)
+            isFirstRun = false
         } else {
             log.debug { "No JUnit run" }
         }
+
         val instance = javaClass.getConstructor().newInstance()
         log.debug("Loaded a test class and created an instance")
 
@@ -56,7 +59,7 @@ class TestExecutor(
         }
     }
 
-    private fun firstJunitRun(testClass: Class<*>?): Unit = try {
+    private fun executeTestFromJUnit(testClass: Class<*>?): Unit = try {
         val jcClass = ctx.loader.loadClass("org.junit.runner.JUnitCore")
         val jc = jcClass.getConstructor().newInstance()
         log.debug { "Created JUnitCoreInstance" }

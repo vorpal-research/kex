@@ -100,7 +100,7 @@ fun Parameters<Descriptor>.filterIgnoredStatic(): Parameters<Descriptor> {
 
 private fun Collection<Descriptor>.replaceUninstantiableWithMocks(
     types: TypeFactory,
-    termToDescriptor: MutableMap<Term, Descriptor>
+    descriptorToMock: MutableMap<Descriptor, Descriptor>
 ): Collection<Descriptor> {
     return map { descriptor ->
         val klass = (descriptor.type.getKfgType(types) as? ClassType)?.klass
@@ -112,35 +112,47 @@ private fun Collection<Descriptor>.replaceUninstantiableWithMocks(
             } else {
                 MockDescriptor(descriptor.term, descriptor.type as KexClass, klass.methods)
             }
-            termToDescriptor[descriptor.term] = mock
+            descriptorToMock[descriptor] = mock
             mock
         }
     }
 }
 
-private fun Parameters<Descriptor>.generateInitialMocks(
-    types: TypeFactory, termToDescriptor: MutableMap<Term, Descriptor>
-): Parameters<Descriptor> {
-    val mockedArguments = arguments.replaceUninstantiableWithMocks(types, termToDescriptor).toList()
-    val mockedStatics = statics.replaceUninstantiableWithMocks(types, termToDescriptor).toSet()
-    val mockedOthers = others.replaceUninstantiableWithMocks(types, termToDescriptor).toSet()
+fun Parameters<Descriptor>.generateInitialMocks(
+    types: TypeFactory
+): Pair<Parameters<Descriptor>, Map<Descriptor, Descriptor>> {
+    val descriptorToMock = mutableMapOf<Descriptor, Descriptor>()
+    val mockedArguments = arguments.replaceUninstantiableWithMocks(types, descriptorToMock).toList()
+    val mockedStatics = statics.replaceUninstantiableWithMocks(types, descriptorToMock).toSet()
+    val mockedOthers = others.replaceUninstantiableWithMocks(types, descriptorToMock).toSet()
 
-    return Parameters(instance, mockedArguments, mockedStatics, mockedOthers)
+    return Parameters(instance, mockedArguments, mockedStatics, mockedOthers) to descriptorToMock
 }
 
+
+/*
 fun Parameters<Descriptor>.generateMocks(
     methodCalls: List<Pair<CallPredicate, Descriptor>>,
     termToDescriptor: MutableMap<Term, Descriptor>,
     cm: ClassManager,
     accessLevel: AccessModifier
 ): Parameters<Descriptor> {
-    val withMocks = this.generateInitialMocks(cm.type, termToDescriptor)
+    val withMocks = this.generateInitialMocks(cm.type)
+    setupMocks(methodCalls, termToDescriptor)
+    return withMocks
+}
+*/
+
+fun setupMocks(
+    methodCalls: List<Pair<CallPredicate, Descriptor>>,
+    termToDescriptor: Map<Term, Descriptor>,
+    descriptorToMock: Map<Descriptor, Descriptor>
+) {
     for ((callPredicate, value) in methodCalls) {
         val call = callPredicate.call as CallTerm
-        val mock = termToDescriptor[call.owner]
+        val mock = termToDescriptor[call.owner]?.let { descriptorToMock[it] ?: it }
         if (mock is MockDescriptor) {
             mock.addReturnValue(call.method, value)
         }
     }
-    return withMocks
 }
