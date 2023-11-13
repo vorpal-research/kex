@@ -738,6 +738,16 @@ class SymbolicTraceInstrumenter(
             else -> values.nullConstant to values.nullConstant
         }
         val instrumented = buildList {
+            if (inst.hasReturnValue) {
+                addAll(track(inst.returnValue))
+            }
+            val currentMethod = inst.parent.method
+            if (!currentMethod.isStatic) {
+                addAll(track(values.getThis(currentMethod.klass)))
+            }
+            for ((index, type) in currentMethod.argTypes.withIndex()) {
+                addAll(track(values.getArgument(index, currentMethod, type)))
+            }
             add(
                 collectorClass.interfaceCall(
                     returnMethod, traceCollector,
@@ -837,6 +847,21 @@ class SymbolicTraceInstrumenter(
         }
         inst.insertBefore(before.mapLocation())
         inst.insertAfter(after.mapLocation())
+    }
+
+    private fun track(value: Value): List<Instruction> = buildList {
+        val trackMethod = collectorClass.getMethod(
+            "track", types.voidType, stringType, objectType
+        )
+        add(
+            collectorClass.interfaceCall(
+                trackMethod, traceCollector,
+                listOf(
+                    "$value".asValue,
+                    value.wrapped(this)
+                )
+            )
+        )
     }
 
     private fun addNullityConstraint(inst: Instruction, value: Value): List<Instruction> = buildList {

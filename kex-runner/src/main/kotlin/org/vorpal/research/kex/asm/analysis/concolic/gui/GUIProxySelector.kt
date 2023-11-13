@@ -75,7 +75,8 @@ class GUIProxySelector(private val concolicPathSelector: ConcolicPathSelector) :
         return persistentSymbolicState(
             clauses,
             path + revertedClause,
-            state.concreteValueMap,
+            state.concreteTypes,
+            state.concreteValues,
             state.termMap
         )
     }

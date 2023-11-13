@@ -12,6 +12,7 @@ import kotlinx.serialization.Contextual
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import org.vorpal.research.kex.descriptor.Descriptor
+import org.vorpal.research.kex.ktype.KexType
 import org.vorpal.research.kex.state.BasicState
 import org.vorpal.research.kex.state.predicate.Predicate
 import org.vorpal.research.kex.state.term.Term
@@ -276,7 +277,8 @@ data class WrappedValue(val method: @Contextual Method, val value: @Contextual V
 abstract class SymbolicState {
     abstract val clauses: ClauseList
     abstract val path: PathCondition
-    abstract val concreteValueMap: Map<Term, @Contextual Descriptor>
+    abstract val concreteTypes: Map<Term, KexType>
+    abstract val concreteValues: Map<Term, @Contextual Descriptor>
     abstract val termMap: Map<Term, @Contextual WrappedValue>
 
     operator fun get(term: Term) = termMap.getValue(term)
@@ -298,13 +300,15 @@ abstract class SymbolicState {
 internal data class SymbolicStateImpl(
     override val clauses: ClauseList,
     override val path: PathCondition,
-    override val concreteValueMap: @Contextual Map<Term, @Contextual Descriptor>,
+    override val concreteTypes: @Contextual Map<Term, KexType>,
+    override val concreteValues: @Contextual Map<Term, @Contextual Descriptor>,
     override val termMap: @Contextual Map<Term, @Contextual WrappedValue>,
 ) : SymbolicState() {
     override fun plus(other: SymbolicState): SymbolicState = SymbolicStateImpl(
         clauses = clauses + other.clauses,
         path = path + other.path,
-        concreteValueMap = concreteValueMap + other.concreteValueMap,
+        concreteTypes = concreteTypes + other.concreteTypes,
+        concreteValues = concreteValues + other.concreteValues,
         termMap = termMap + other.termMap
     )
     override fun plus(other: StateClause): SymbolicState = copy(
@@ -330,7 +334,8 @@ internal data class SymbolicStateImpl(
 data class PersistentSymbolicState(
     override val clauses: PersistentClauseList,
     override val path: PersistentPathCondition,
-    override val concreteValueMap: @Contextual PersistentMap<Term, @Contextual Descriptor>,
+    override val concreteTypes: @Contextual PersistentMap<Term, KexType>,
+    override val concreteValues: @Contextual PersistentMap<Term, @Contextual Descriptor>,
     override val termMap: @Contextual PersistentMap<Term, @Contextual WrappedValue>,
 ) : SymbolicState() {
     override fun toString() = clauses.joinToString("\n") { it.predicate.toString() }
@@ -338,7 +343,8 @@ data class PersistentSymbolicState(
     override fun plus(other: SymbolicState): PersistentSymbolicState = PersistentSymbolicState(
         clauses = clauses + other.clauses,
         path = path + other.path,
-        concreteValueMap = concreteValueMap.putAll(other.concreteValueMap),
+        concreteTypes = concreteTypes.putAll(other.concreteTypes),
+        concreteValues = concreteValues.putAll(other.concreteValues),
         termMap = termMap.putAll(other.termMap)
     )
     override fun plus(other: StateClause): PersistentSymbolicState = copy(
@@ -359,19 +365,21 @@ data class PersistentSymbolicState(
 fun symbolicState(
     state: ClauseList = ClauseListImpl(),
     path: PathCondition = PathConditionImpl(),
+    concreteTypeMap: Map<Term, KexType> = emptyMap(),
     concreteValueMap: Map<Term, Descriptor> = emptyMap(),
     termMap: Map<Term, WrappedValue> = emptyMap(),
 ): SymbolicState = SymbolicStateImpl(
-    state, path, concreteValueMap, termMap
+    state, path, concreteTypeMap, concreteValueMap, termMap
 )
 
 fun persistentSymbolicState(
     state: PersistentClauseList = PersistentClauseList(),
     path: PersistentPathCondition = PersistentPathCondition(),
+    concreteTypeMap: PersistentMap<Term, KexType> = persistentMapOf(),
     concreteValueMap: PersistentMap<Term, Descriptor> = persistentMapOf(),
     termMap: PersistentMap<Term, WrappedValue> = persistentMapOf(),
 ): PersistentSymbolicState = PersistentSymbolicState(
-    state, path, concreteValueMap, termMap
+    state, path, concreteTypeMap, concreteValueMap, termMap
 )
 
 fun List<Clause>.toClauseState(): ClauseList = ClauseListImpl(this.toList())
@@ -401,7 +409,8 @@ fun SymbolicState.toPersistentState(): PersistentSymbolicState = when (this) {
     else -> PersistentSymbolicState(
         this.clauses.toPersistentClauseState(),
         this.path.toPersistentPathCondition(),
-        this.concreteValueMap.toPersistentMap(),
+        this.concreteTypes.toPersistentMap(),
+        this.concreteValues.toPersistentMap(),
         this.termMap.toPersistentMap()
     )
 }

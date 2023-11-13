@@ -3,6 +3,8 @@ package org.vorpal.research.kex.trace.symbolic
 interface InstructionTraceCollector {
     val symbolicState: SymbolicState
 
+    fun track(value: String, concreteValue: Any?)
+
     fun methodEnter(
         className: String,
         methodName: String,
