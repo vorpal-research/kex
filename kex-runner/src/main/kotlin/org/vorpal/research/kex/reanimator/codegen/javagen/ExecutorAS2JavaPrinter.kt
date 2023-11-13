@@ -452,9 +452,11 @@ class ExecutorAS2JavaPrinter(
         }
         call.returnValues.forEach { it.printAsJava() }
 
-        val returnValues = call.returnValues.joinToString(", ") {
-            it.forceCastIfNull(resolvedTypes[it])
-        }
+        val returnValues = call.returnValues
+            .map { value -> value.cast(call.method.returnType.asType) }
+            .joinToString(", ") {
+                it
+            }
         val method = call.method
         val anys = call.method.argTypes.joinToString(", ") { type -> mockitoAnyFromType(type) }
 

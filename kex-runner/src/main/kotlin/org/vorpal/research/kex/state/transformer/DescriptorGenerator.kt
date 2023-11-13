@@ -144,6 +144,7 @@ fun generateInitialDescriptors(
             arg ?: descriptor { default(method.argTypes[index].kexType) }
         },
         generator.staticFields,
+        generator.allValues
     ) to generator.memory
 }
 
@@ -162,6 +163,5 @@ fun generateInitialDescriptorsAndAA(
             arg ?: descriptor { default(method.argTypes[index].kexType) }
         },
         generator.staticFields,
-//        generator.allValues
     ) to SMTModelALiasAnalysis(generator)
 }
